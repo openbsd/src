@@ -1638,8 +1638,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/varargs.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/vmparam.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/miscfs
-./usr/libdata/perl5/site_perl/mips64-openbsd/miscfs/fdesc
-./usr/libdata/perl5/site_perl/mips64-openbsd/miscfs/fdesc/fdesc.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/mips64-openbsd/miscfs/fifofs/fifo.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/miscfs/portal

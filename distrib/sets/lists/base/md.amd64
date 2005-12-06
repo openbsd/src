@@ -1663,8 +1663,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/memory.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/menu.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/miscfs
-./usr/libdata/perl5/site_perl/amd64-openbsd/miscfs/fdesc
-./usr/libdata/perl5/site_perl/amd64-openbsd/miscfs/fdesc/fdesc.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/amd64-openbsd/miscfs/fifofs/fifo.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/miscfs/portal

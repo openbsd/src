@@ -936,8 +936,6 @@
 ./usr/include/memory.h
 ./usr/include/menu.h
 ./usr/include/miscfs
-./usr/include/miscfs/fdesc
-./usr/include/miscfs/fdesc/fdesc.h
 ./usr/include/miscfs/fifofs
 ./usr/include/miscfs/fifofs/fifo.h
 ./usr/include/miscfs/portal

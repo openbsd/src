@@ -1673,8 +1673,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/memory.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/menu.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/miscfs
-./usr/libdata/perl5/site_perl/i386-openbsd/miscfs/fdesc
-./usr/libdata/perl5/site_perl/i386-openbsd/miscfs/fdesc/fdesc.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/i386-openbsd/miscfs/fifofs/fifo.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/miscfs/portal

@@ -1634,8 +1634,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/memory.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/menu.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs
-./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fdesc
-./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fdesc/fdesc.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/fifofs/fifo.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/miscfs/portal

@@ -1633,8 +1633,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/memory.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/menu.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/miscfs
-./usr/libdata/perl5/site_perl/alpha-openbsd/miscfs/fdesc
-./usr/libdata/perl5/site_perl/alpha-openbsd/miscfs/fdesc/fdesc.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/alpha-openbsd/miscfs/fifofs/fifo.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/miscfs/portal

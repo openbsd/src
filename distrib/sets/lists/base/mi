@@ -113,7 +113,6 @@
 ./sbin/mount_ados
 ./sbin/mount_cd9660
 ./sbin/mount_ext2fs
-./sbin/mount_fdesc
 ./sbin/mount_ffs
 ./sbin/mount_mfs
 ./sbin/mount_msdos

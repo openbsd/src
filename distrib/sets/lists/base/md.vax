@@ -972,8 +972,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/memory.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/menu.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/miscfs
-./usr/libdata/perl5/site_perl/vax-openbsd/miscfs/fdesc
-./usr/libdata/perl5/site_perl/vax-openbsd/miscfs/fdesc/fdesc.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/miscfs/fifofs
 ./usr/libdata/perl5/site_perl/vax-openbsd/miscfs/fifofs/fifo.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/miscfs/portal
