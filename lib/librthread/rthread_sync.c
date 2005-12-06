@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.1 2005/12/03 18:16:19 tedu Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.2 2005/12/06 06:19:31 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -472,6 +472,19 @@ pthread_rwlockattr_destory(pthread_rwlockattr_t *attrp)
 {
 	free(*attrp);
 	*attrp = NULL;
+
+	return (0);
+}
+
+int
+pthread_once(pthread_once_t *once_control, void (*init_routine)(void))
+{
+	pthread_mutex_lock(&once_control->mutex);
+	if (once_control->state == PTHREAD_NEEDS_INIT) {
+		init_routine();
+		once_control->state = PTHREAD_DONE_INIT;
+	}
+	pthread_mutex_unlock(&once_control->mutex);
 
 	return (0);
 }
