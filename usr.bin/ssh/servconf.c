@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: servconf.c,v 1.144 2005/08/06 10:03:12 dtucker Exp $");
+RCSID("$OpenBSD: servconf.c,v 1.145 2005/12/06 22:38:27 reyk Exp $");
 
 #include "ssh.h"
 #include "log.h"
@@ -96,6 +96,7 @@ initialize_server_options(ServerOptions *options)
 	options->authorized_keys_file = NULL;
 	options->authorized_keys_file2 = NULL;
 	options->num_accept_env = 0;
+	options->permit_tun = -1;
 
 	/* Needs to be accessable in many places */
 	use_privsep = -1;
@@ -219,6 +220,8 @@ fill_default_server_options(ServerOptions *options)
 	}
 	if (options->authorized_keys_file == NULL)
 		options->authorized_keys_file = _PATH_SSH_USER_PERMITTED_KEYS;
+	if (options->permit_tun == -1)
+		options->permit_tun = 0;
 
 	/* Turn privilege separation on by default */
 	if (use_privsep == -1)
@@ -247,7 +250,7 @@ typedef enum {
 	sBanner, sUseDNS, sHostbasedAuthentication,
 	sHostbasedUsesNameFromPacketOnly, sClientAliveInterval,
 	sClientAliveCountMax, sAuthorizedKeysFile, sAuthorizedKeysFile2,
-	sGssAuthentication, sGssCleanupCreds, sAcceptEnv,
+	sGssAuthentication, sGssCleanupCreds, sAcceptEnv, sPermitTunnel,
 	sUsePrivilegeSeparation,
 	sDeprecated, sUnsupported
 } ServerOpCodes;
@@ -338,6 +341,7 @@ static struct {
 	{ "authorizedkeysfile2", sAuthorizedKeysFile2 },
 	{ "useprivilegeseparation", sUsePrivilegeSeparation},
 	{ "acceptenv", sAcceptEnv },
+	{ "permittunnel", sPermitTunnel },
 	{ NULL, sBadOption }
 };
 
@@ -920,6 +924,10 @@ parse_flag:
 			    xstrdup(arg);
 		}
 		break;
+
+	case sPermitTunnel:
+		intptr = &options->permit_tun;
+		goto parse_flag;
 
 	case sDeprecated:
 		logit("%s line %d: Deprecated option %s",
