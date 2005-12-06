@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.108 2005/11/30 12:16:04 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.109 2005/12/06 20:40:02 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -1554,12 +1554,13 @@ the escape codes with this non-printing character.
 By the way, don't blame me for
 this hack; it's in the original
 .Nm .
-The default is
+.Pp
+The default prompt is
 .Sq $\ \&
 for non-root users,
 .Sq #\ \&
 for root.
-Additionally, if
+If
 .Nm
 is invoked by root and
 .Ev PS1
