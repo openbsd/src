@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.355 2005/11/24 12:08:16 pedro Exp $
+#	$OpenBSD: files,v 1.356 2005/12/06 20:18:57 pedro Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -660,8 +660,6 @@ file kern/vfs_syscalls.c
 file kern/vfs_vnops.c
 file kern/vnode_if.c
 file miscfs/deadfs/dead_vnops.c
-file miscfs/fdesc/fdesc_vfsops.c	fdesc
-file miscfs/fdesc/fdesc_vnops.c		fdesc
 file miscfs/fifofs/fifo_vnops.c		fifo
 file miscfs/portal/portal_vfsops.c	portal
 file miscfs/portal/portal_vnops.c	portal

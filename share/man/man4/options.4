@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.172 2005/11/30 11:18:27 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.173 2005/12/06 20:18:57 pedro Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -423,28 +423,6 @@ Experimental and read only.
 See
 .Xr mount_ntfs 8
 for details.
-.It Cd option FDESC
-Includes code for a file system which can be mounted on
-.Pa /dev/fd .
-This filesystem permits access to the per-process file descriptor
-space via special files in the file system.
-See
-.Xr mount_fdesc 8
-for details.
-Note that this facility is redundant, and thus unneeded on most
-.Ox
-systems, since the
-.Xr fd 4
-pseudo-device driver already provides identical functionality.
-On most systems, instances of
-.Xr fd 4
-are mknoded under
-.Pa /dev/fd/
-and on
-.Pa /dev/stdin ,
-.Pa /dev/stdout ,
-and
-.Pa /dev/stderr .
 .It Cd option PORTAL
 Includes the (experimental) portal filesystem.
 This permits interesting tricks like opening TCP sockets by opening files in
@@ -1096,7 +1074,6 @@ is zero, the hardware realtime clock device is not in Daylight Saving Time.
 .Xr edquota 8 ,
 .Xr init 8 ,
 .Xr mount_cd9660 8 ,
-.Xr mount_fdesc 8 ,
 .Xr mount_mfs 8 ,
 .Xr mount_msdos 8 ,
 .Xr mount_nfs 8 ,

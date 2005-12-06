@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.52 2005/11/24 12:08:15 pedro Exp $
+#	$OpenBSD: daily,v 1.53 2005/12/06 20:18:56 pedro Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
@@ -56,7 +56,7 @@ if [ -d /var/rwho -a ! -L /var/rwho ] ; then
 	find . ! -name . -mtime +7 -execdir rm -f -- {} \; ; }
 fi
 
-#find / \( ! -fstype local -o -fstype rdonly -o -fstype fdesc \
+#find / \( ! -fstype local -o -fstype rdonly \
 #		-o -fstype procfs \) -a -prune -o \
 #	-name 'lost+found' -a -prune -o \
 #	-name '*.core' -a -print -o \

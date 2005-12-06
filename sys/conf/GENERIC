@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.121 2005/11/24 12:08:16 pedro Exp $
+#	$OpenBSD: GENERIC,v 1.122 2005/12/06 20:18:57 pedro Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -52,7 +52,6 @@ option		NFSSERVER	# Network File System server
 option		CD9660		# ISO 9660 + Rock Ridge file system
 option		UDF		# UDF (DVD) file system
 option		MSDOSFS		# MS-DOS file system
-option		FDESC		# /dev/fd
 option		FIFO		# FIFOs; RECOMMENDED
 option		PORTAL		# dynamically created filesystem objects
 option		PROCFS		# /proc

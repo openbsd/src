@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.53 2005/08/28 05:30:43 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.54 2005/12/06 20:18:57 pedro Exp $
 #
 # Diskless kernel config
 #
@@ -14,7 +14,6 @@ option		NFSCLIENT		# Network File System client
 option		CD9660			# ISO 9660 + Rock Ridge file system
 option		UDF			# UDF (DVD) file system
 option		MSDOSFS			# MS-DOS file system
-option		FDESC			# /dev/fd
 option		FIFO			# FIFOs; RECOMMENDED
 option		INET			# IP + ICMP + TCP + UDP
 option		INET6			# IPv6 (needs INET)

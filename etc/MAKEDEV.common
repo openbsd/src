@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.21 2005/10/06 06:43:19 otto Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.22 2005/12/06 20:18:56 pedro Exp $-})dnl
 divert(1)dnl
 dnl
 dnl Common device definitions.
@@ -466,7 +466,7 @@ _mkdev(music, music*, {-M music$U     c major_music_c $U
 __devitem(radio, radio*, FM tuner devices)dnl
 _mkdev(radio, radio*, {-M radio$U     c major_radio_c $U
 	MKlist[${#MKlist[*]}]=";[ -e radio ] || ln -s radio$U radio"-})dnl
-__devitem(fdesc, fd, fd/* nodes for fdescfs,mount_fdesc 8)dnl
+__devitem(fdesc, fd, fd/* nodes for the file descriptor pseudo-device)dnl
 _mkdev(fdesc, fd, {-RMlist[${#RMlist[*]}]=";mkdir -p fd;rm -f" n=0
 	while [ $n -lt 64 ];do M fd/$n c major_fdesc_c $n;n=Add($n, 1);done
 	MKlist[${#MKlist[*]}]=";chmod 555 fd"-})dnl
