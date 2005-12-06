@@ -132,10 +132,12 @@
 ./usr/include/luna88k/intr.h
 ./usr/include/luna88k/kcore.h
 ./usr/include/luna88k/limits.h
+./usr/include/luna88k/lock.h
 ./usr/include/luna88k/locore.h
 ./usr/include/luna88k/m88100.h
 ./usr/include/luna88k/m8820x.h
 ./usr/include/luna88k/mmu.h
+./usr/include/luna88k/mutex.h
 ./usr/include/luna88k/param.h
 ./usr/include/luna88k/pcb.h
 ./usr/include/luna88k/pmap.h
@@ -172,9 +174,11 @@
 ./usr/include/m88k/intr.h
 ./usr/include/m88k/kcore.h
 ./usr/include/m88k/limits.h
+./usr/include/m88k/lock.h
 ./usr/include/m88k/m88100.h
 ./usr/include/m88k/m8820x.h
 ./usr/include/m88k/mmu.h
+./usr/include/m88k/mutex.h
 ./usr/include/m88k/param.h
 ./usr/include/m88k/pcb.h
 ./usr/include/m88k/pmap.h

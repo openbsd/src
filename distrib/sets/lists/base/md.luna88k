@@ -1484,10 +1484,12 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/intr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/kcore.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/limits.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/lock.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/locore.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/m88100.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/m8820x.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/mmu.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/mutex.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/param.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/pcb.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/luna88k/pmap.ph
@@ -1524,9 +1526,11 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/intr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/kcore.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/limits.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/lock.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/m88100.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/m8820x.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/mmu.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/mutex.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/param.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/pcb.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/pmap.ph
