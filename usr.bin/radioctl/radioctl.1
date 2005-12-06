@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radioctl.1,v 1.9 2005/12/05 16:30:24 robert Exp $
+.\"	$OpenBSD: radioctl.1,v 1.10 2005/12/06 12:58:50 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -46,7 +46,8 @@
 The
 .Nm
 command displays or sets various variables that affect the radio tuner
-behavior. If a variable is present on the command line,
+behavior.
+If a variable is present on the command line,
 .Nm
 prints the current value of this variable for the specified device.
 By default,
@@ -81,8 +82,7 @@ to denote an increase or decrease, respectively.
 .Pp
 The exact set of controls that can be manipulated depends on
 the tuner.
-The general format (in both getting and setting a value) is
-.Pp
+The general format (in both getting and setting a value) is:
 .Bd -filled -offset indent
 .Ar name Ns Li = Ns Ar value
 .Ed
@@ -92,22 +92,25 @@ The
 indicates what part of the tuner the control affects.
 .Pp
 Write only controls:
-.Bl -tag -width search
+.Bl -tag -width Ds
 .It Ar search
-Only for cards that allow hardware search. Can be
+Only for cards that allow hardware search.
+Can be
 .Ql up
 or
 .Ql down .
 .El
 .Pp
 Read-write controls:
-.Bl -tag -width volume
+.Bl -tag -width Ds
 .It Ar channel
 Integer value from 0 to 150.
 .It Ar chnlset
 Specifies the TV channel set currently being used
-(weurope being the default):
-.Bl -tag -width indent
+.Pf ( Dq weurope
+being the default):
+.Pp
+.Bl -tag -width "australiaXX" -offset indent -compact
 .It nabcst
 U.S.A. Broadcast
 .It cableirc
@@ -121,7 +124,7 @@ Japan Broadcast
 .It jpncable
 Japan Cable
 .It xussr
-Former U.S.S.R. and C.I.S. Countries
+Former U.S.S.R. and C.I.S. countries
 .It australia
 Australia
 .It france
@@ -143,11 +146,13 @@ or
 .Ql off .
 Only for cards that allow forced mono.
 .It Ar reference
-Reference frequency. Can be 25 kHz, 50 kHz and 100 kHz. Not all cards allow
-the reference frequency to be changed.
+Reference frequency.
+Can be 25 kHz, 50 kHz and 100 kHz.
+Not all cards allow the reference frequency to be changed.
 .It Ar sensitivity
-Station locking sensitivity. Can be 5 mkV, 10 mkV, 30 mkV and 150 mkV. Not all
-cards allow the station locking sensitivity to be changed.
+Station locking sensitivity.
+Can be 5 mkV, 10 mkV, 30 mkV and 150 mkV.
+Not all cards allow the station locking sensitivity to be changed.
 .El
 .Pp
 All the remaining controls (signal, stereo and card capabilities) are read-only
@@ -166,12 +171,10 @@ The radio tuner device to use.
 radio tuner device
 .El
 .Sh EXAMPLES
-The command
-.Pp
-.Dl "$ radioctl -a"
-.Pp
-can produce
-.Bd -literal
+Print all device variables,
+along with their current values:
+.Bd -literal -offset indent
+$ radioctl -a
 volume=255
 channel=0
 chnlset=weurope
