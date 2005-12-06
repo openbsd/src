@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.38 2005/12/06 14:27:57 markus Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.39 2005/12/06 16:55:28 markus Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -151,10 +151,14 @@ ipsecctl_commit(int action, struct ipsecctl *ipsec)
 
 		if (rp->type & RULE_IKE) {
 			if (ike_ipsec_establish(action, rp) == -1)
-				warnx("failed to add rule %d", rp->nr);
+				warnx("failed to %s rule %d",
+				    action == ACTION_DELETE ? "delete" : "add",
+				    rp->nr);
 		} else {
 			if (pfkey_ipsec_establish(action, rp) == -1)
-				warnx("failed to add rule %d", rp->nr);
+				warnx("failed to %s rule %d",
+				    action == ACTION_DELETE ? "delete" : "add",
+				    rp->nr);
 		}
 
 		/* src and dst are always used. */
