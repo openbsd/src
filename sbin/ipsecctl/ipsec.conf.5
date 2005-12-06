@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.27 2005/11/24 13:53:41 hshoexer Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.28 2005/12/06 14:27:57 markus Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -49,6 +49,12 @@ authentication, integrity, replay protection, and confidentiality of the data.
 .It Ic flow ah
 AH provides authentication, integrity, and replay protection, but no
 confidentiality.
+.It Ic flow ipip
+IPIP provides neither authentication, integrity, replay protection, nor
+confidentiality.
+However, it allows you to tunnel IP traffic over IP, without setting up
+.Xr gif 4
+interfaces.
 .El
 .Pp
 For details on ESP and AH see
@@ -124,6 +130,8 @@ Enter an ESP SA.
 Enter an AH SA.
 .It Ic ipcomp
 Enter an IPCOMP SA.
+.It Ic ipip
+Enter an IPIP pseudo SA.
 .El
 .Pp
 Parameters specify the peers, Security Parameter Index (SPI),

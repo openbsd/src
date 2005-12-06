@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.31 2005/11/24 11:52:07 hshoexer Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.32 2005/12/06 14:27:57 markus Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -358,7 +358,7 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 	sa.sadb_sa_spi = htonl(spi);
 	sa.sadb_sa_state = SADB_SASTATE_MATURE;
 
-	if (tmode == IPSEC_TUNNEL)
+	if (satype != SADB_X_SATYPE_IPIP && tmode == IPSEC_TUNNEL)
 		sa.sadb_sa_flags |= SADB_X_SAFLAGS_TUNNEL;
 
 	if (xfs && xfs->authxf) {
@@ -444,7 +444,7 @@ pfkey_sa(int sd, u_int8_t satype, u_int8_t action, u_int32_t spi,
 	sa_dst.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
 
 	if (action == SADB_ADD && !authkey && !enckey && satype !=
-	    SADB_X_SATYPE_IPCOMP) { /* XXX ENCNULL */
+	    SADB_X_SATYPE_IPCOMP && satype != SADB_X_SATYPE_IPIP) { /* XXX ENCNULL */
 		warnx("no key specified");
 		return -1;
 	}
@@ -578,6 +578,9 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 		break;
 	case SADB_X_SATYPE_IPCOMP:
 		rule->proto = IPSEC_IPCOMP;
+		break;
+	case SADB_X_SATYPE_IPIP:
+		rule->proto = IPSEC_IPIP;
 		break;
 	default:
 		return (1);
@@ -835,6 +838,9 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 		case IPSEC_IPCOMP:
 			satype = SADB_X_SATYPE_IPCOMP;
 			break;
+		case IPSEC_IPIP:
+			satype = SADB_X_SATYPE_IPIP;
+			break;
 		default:
 			return -1;
 		}
@@ -876,6 +882,9 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 			break;
 		case IPSEC_TCPMD5:
 			satype = SADB_X_SATYPE_TCPSIGNATURE;
+			break;
+		case IPSEC_IPIP:
+			satype = SADB_X_SATYPE_IPIP;
 			break;
 		default:
 			return -1;

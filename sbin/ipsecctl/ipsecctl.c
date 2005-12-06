@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.37 2005/12/01 10:36:42 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.38 2005/12/06 14:27:57 markus Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -69,7 +69,7 @@ static const char *showopt_list[] = {
 static const char *direction[] = {"?", "in", "out"};
 static const char *flowtype[] = {"?", "use", "acquire", "require", "deny",
     "bypass", "dontacq"};
-static const char *proto[] = {"?", "esp", "ah", "ipcomp", "tcpmd5"};
+static const char *proto[] = {"?", "esp", "ah", "ipcomp", "tcpmd5", "ipip"};
 static const char *tmode[] = {"?", "transport", "tunnel"};
 static const char *auth[] = {"?", "psk", "rsa"};
 
@@ -264,7 +264,7 @@ ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 {
 	printf("%s ", proto[r->proto]);
 	/* tunnel/transport is only meaningful esp/ah/ipcomp */
-	if (r->proto != IPSEC_TCPMD5)
+	if (r->proto != IPSEC_TCPMD5 && r->proto != IPSEC_IPIP)
 		printf("%s ", tmode[r->tmode]);
 	printf("from ");
 	ipsecctl_print_addr(r->src);

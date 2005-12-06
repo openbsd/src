@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.45 2005/12/01 15:14:47 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.46 2005/12/06 14:27:57 markus Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -190,7 +190,7 @@ typedef struct {
 
 %token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI
 %token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK PASSIVE
-%token	ACTIVE ANY IPCOMP COMPXF TUNNEL TRANSPORT
+%token	ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT
 %token	<v.string>		STRING
 %type	<v.dir>			dir
 %type	<v.protocol>		protocol
@@ -332,6 +332,7 @@ protocol	: /* empty */			{ $$ = IPSEC_ESP; }
 		| ESP				{ $$ = IPSEC_ESP; }
 		| AH				{ $$ = IPSEC_AH; }
 		| IPCOMP			{ $$ = IPSEC_IPCOMP; }
+		| IPIP				{ $$ = IPSEC_IPIP; }
 		;
 
 tmode		: /* empty */			{ $$ = IPSEC_TUNNEL; }
@@ -626,6 +627,7 @@ lookup(char *s)
 		{ "ike",		IKE },
 		{ "in",			IN },
 		{ "ipcomp",		IPCOMP },
+		{ "ipip",		IPIP },
 		{ "main",		MAIN },
 		{ "out",		OUT },
 		{ "passive",		PASSIVE },
@@ -1336,6 +1338,17 @@ validate_sa(u_int32_t spi, u_int8_t protocol, struct ipsec_transforms *xfs,
 		}
 		if (!xfs->compxf)
 			xfs->compxf = &compxfs[COMPXF_DEFLATE];
+	}
+	if (protocol == IPSEC_IPIP) {
+		if (!xfs) {
+			yyerror("no transform specified");
+			return (0);
+		}
+		if (xfs->authxf || xfs->encxf || xfs->compxf) {
+			yyerror("no encryption, authenticaion or compression"
+			   " with ipip");
+			return (0);
+		}
 	}
 	if (protocol == IPSEC_TCPMD5 && authkey == NULL && tmode !=
 	    IPSEC_TRANSPORT) {
