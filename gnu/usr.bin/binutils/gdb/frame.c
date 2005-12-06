@@ -1235,6 +1235,18 @@ get_prev_frame (struct frame_info *this_frame)
       return NULL;
     }
 
+  /* Assume that the only way to get a zero PC is through something
+     like a SIGSEGV or a dummy frame, and hence that NORMAL frames
+     will never unwind a zero PC.  */
+  if (this_frame->level > 0
+      && get_frame_type (this_frame) == NORMAL_FRAME
+      && get_frame_type (get_next_frame (this_frame)) == NORMAL_FRAME
+      && get_frame_pc (this_frame) == 0)
+    {
+      frame_debug_got_null_frame (gdb_stdlog, this_frame, "zero PC");
+      return NULL;
+    }
+
   return get_prev_frame_1 (this_frame);
 }
 
