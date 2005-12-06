@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.108 2005/06/01 11:22:07 hshoexer Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.109 2005/12/06 14:25:21 markus Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2395,6 +2395,8 @@ pfkeyv2_sysctl_policydumper(struct ipsec_policy *ipo, void *arg)
 			msg.sadb_msg_satype = SADB_SATYPE_AH;
 		else if (ipo->ipo_sproto == IPPROTO_IPCOMP)
 			msg.sadb_msg_satype = SADB_X_SATYPE_IPCOMP;
+		else if (ipo->ipo_sproto == IPPROTO_IPIP)
+			msg.sadb_msg_satype = SADB_X_SATYPE_IPIP;
 		msg.sadb_msg_type = SADB_X_SPDDUMP;
 		msg.sadb_msg_len = (sizeof(msg) + buflen) / sizeof(uint64_t);
 		if ((error = copyout(&msg, w->w_where, sizeof(msg))) != 0)
