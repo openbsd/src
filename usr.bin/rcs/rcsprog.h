@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.28 2005/12/05 19:49:20 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.29 2005/12/06 10:29:12 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -30,22 +30,22 @@
 #define RCS_TMPDIR_DEFAULT	"/tmp"
 
 /* flags specific to ci.c */
-#define CI_SYMFORCE     (1<<0)
-#define CI_DEFAULT      (1<<1)
-#define CI_INIT         (1<<2)
+#define CI_SYMFORCE	(1<<0)
+#define CI_DEFAULT	(1<<1)
+#define CI_INIT		(1<<2)
 
 /* flags specific to co.c */
-#define CO_ACLAPPEND    (1<<3)
+#define CO_ACLAPPEND	(1<<3)
 #define CO_AUTHOR	(1<<4)
-#define CO_LOCK	        (1<<5)
-#define CO_REVDATE      (1<<6)
-#define CO_STATE        (1<<7)
-#define CO_UNLOCK       (1<<8)
+#define CO_LOCK		(1<<5)
+#define CO_REVDATE	(1<<6)
+#define CO_STATE	(1<<7)
+#define CO_UNLOCK	(1<<8)
 
 /* shared flags  */
-#define FORCE           (1<<9)
-#define INTERACTIVE     (1<<10)
-#define NEWFILE         (1<<11)
+#define FORCE		(1<<9)
+#define INTERACTIVE	(1<<10)
+#define NEWFILE		(1<<11)
 #define PRESERVETIME	(1<<12)
 
 extern char	*__progname;
