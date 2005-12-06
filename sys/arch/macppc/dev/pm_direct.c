@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.14 2005/10/21 22:07:45 kettenis Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.15 2005/12/06 02:38:24 pedro Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -379,7 +379,7 @@ pm_pmgrop_pm2(PMData *pmdata)
 
 	s = splhigh();
 
-	/* disable all inetrrupts but PM */
+	/* disable all interrupts but PM */
 	via1_vIER = 0x10;
 	via1_vIER &= read_via_reg(VIA1, vIER);
 	write_via_reg(VIA1, vIER, via1_vIER);
