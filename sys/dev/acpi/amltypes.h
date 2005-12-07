@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.1 2005/12/07 04:24:31 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.2 2005/12/07 07:46:51 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -35,7 +35,7 @@
 #define AMLOP_METHOD           0x14
 #define AMLOP_DUALNAMEPREFIX   0x2E
 #define AMLOP_MULTINAMEPREFIX  0x2F
-#define AMLOP_EXTOPPREFIX      0x5B
+#define AMLOP_EXTPREFIX        0x5B
 #define AMLOP_MUTEX            0x5B01
 #define AMLOP_EVENT            0x5B02
 #define AMLOP_CONDREFOF        0x5B12
@@ -173,5 +173,32 @@ enum aml_objecttype {
 	AML_OBJTYPE_DDBHANDLE,
 	AML_OBJTYPE_DEBUGOBJ
 };
+
+/* AML Opcode Arguments */
+#define AML_ARG_INTEGER     'i'
+#define AML_ARG_BYTE        'b'
+#define AML_ARG_WORD        'w'
+#define AML_ARG_DWORD       'd'
+#define AML_ARG_QWORD       'q'
+#define AML_ARG_ZERO        '0'
+#define AML_ARG_ONE         '1'
+#define AML_ARG_ONES        '!'
+#define AML_ARG_OBJLEN      'p'
+#define AML_ARG_STRING      's'
+#define AML_ARG_BYTELIST    'B'
+#define AML_ARG_REVISION    'R'
+#define AML_ARG_RESULT      'r'
+
+#define AML_ARG_NAMESTRING  'N'
+#define AML_ARG_NAMEREF     'n'
+#define AML_ARG_FIELDLIST   'F'
+#define AML_ARG_FIELDFLAG   'f'
+#define AML_ARG_METHODFLAG  'm'
+
+#define AML_ARG_TERMOBJLIST 'T'
+#define AML_ARG_TERMOBJ     't'
+#define AML_ARG_DATAOBJLIST 'O'
+#define AML_ARG_DATAOBJ     'o'
+
 
 #endif /* __AMLPARSE_H__ */
