@@ -785,6 +785,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/acpi
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/acpi/acpireg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/acpi/acpivar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/acpi/amltypes.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/acpi/hpetreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ata
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ata/atareg.ph

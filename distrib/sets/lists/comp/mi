@@ -102,6 +102,7 @@
 ./usr/include/dev/acpi
 ./usr/include/dev/acpi/acpireg.h
 ./usr/include/dev/acpi/acpivar.h
+./usr/include/dev/acpi/amltypes.h
 ./usr/include/dev/acpi/hpetreg.h
 ./usr/include/dev/ata
 ./usr/include/dev/ata/atareg.h

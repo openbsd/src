@@ -577,6 +577,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/acpi
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/acpi/acpireg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/acpi/acpivar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/acpi/amltypes.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/acpi/hpetreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ata
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ata/atareg.ph
