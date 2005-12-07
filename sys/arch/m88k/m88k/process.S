@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.11 2005/12/03 14:30:06 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.12 2005/12/07 07:39:35 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -60,11 +60,11 @@ ASLOCAL(Lswsrunpanic)
 #endif
 
 /*
- * At exit of a process, do a cpu_switch for the last time.
- * The mapping of the pcb at p->p_addr has already been deleted,
- * and the memory for the pcb+stack has been freed.
- * The ipl is high enough to prevent the memory from being reallocated.
- * switch_exit(proc *p)
+ * void switch_exit(struct proc *p)
+ *
+ * Do the final work to exit from a process. After switching to the
+ * idle stack and pcb, invoke exit2() on behalf of the exiting process,
+ * then continue into cpu_switch() to select another process to run.
  */
 
 ENTRY(switch_exit)
@@ -121,7 +121,16 @@ ENTRY(cpu_switch)
 	bsr.n	_C_LABEL(pmap_deactivate)
 	 st	r0,  r11, CI_CURPROC		/* curproc = NULL */
 
+#ifdef MULTIPROCESSOR
+ASGLOBAL(cpu_switch_search)
+#else
 ASLOCAL(cpu_switch_search)
+#endif
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bsr	_C_LABEL(sched_unlock_idle)
+#endif
+
 	/*
 	 * This is the start of the idle loop. Find the highest-priority
 	 * queue that isn't empty, then take the first proc from that queue.
@@ -144,7 +153,7 @@ ASLOCAL(cpu_switch_idle)
 	ldcr	r2, PSR
 	bb0.n	PSR_INTERRUPT_DISABLE_BIT, r2, 2f
 	 or.u	r7, r0, hi16(_C_LABEL(whichqs))
-	clr	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>	/* ...and enable them */
+	clr	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r2, PSR
 	FLUSH_PIPELINE
 2:
@@ -156,13 +165,21 @@ ASLOCAL(cpu_switch_found)
 	bsr.n	_C_LABEL(setipl)		/* disable interrupts */
 	 or	r2, r0, IPL_HIGH
 
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bsr	_C_LABEL(sched_lock_idle)
+#endif
+
 	/*
 	 * An interrupt could have occured between the last whichqs check
 	 * and the call to setipl(). Check again that whichqs is nonzero.
 	 */
 	or.u	r7, r0, hi16(_C_LABEL(whichqs))	/* reload whichqs */
 	ld	r7, r7, lo16(_C_LABEL(whichqs))
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bcnd	eq0, r7, _ASM_LABEL(cpu_switch_search)
+#else
 	bcnd	eq0, r7, _ASM_LABEL(cpu_switch_idle)
+#endif
 
 	/* XXX use ff1, like powerpc... needs *runqueue() adjustments */
 	xor	r6, r6, r6		/* set r6 to 0 */
