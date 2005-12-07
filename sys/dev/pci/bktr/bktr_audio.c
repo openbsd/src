@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_audio.c,v 1.6 2004/06/29 12:24:57 mickey Exp $	*/
+/*	$OpenBSD: bktr_audio.c,v 1.7 2005/12/07 12:39:23 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.8 2000/10/31 13:09:56 roger Exp $ */
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -480,7 +480,8 @@ void msp_autodetect( bktr_ptr_t bktr ) {
   int stereo;
 
   /* MSP3430G - countries with mono and DBX stereo */
-  if (strncmp("3430G", bktr->msp_version_string, 5) == 0){
+  if (strncmp("3430G", bktr->msp_version_string, 5) == 0 ||
+      strncmp("3435G", bktr->msp_version_string, 5) == 0) {
 
     msp_dpl_write(bktr, bktr->msp_addr, 0x10, 0x0030,0x2003);/* Enable Auto format detection */
     msp_dpl_write(bktr, bktr->msp_addr, 0x10, 0x0020,0x0020);/* Standard Select Reg. = BTSC-Stereo*/
