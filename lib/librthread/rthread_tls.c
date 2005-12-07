@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_tls.c,v 1.1 2005/12/03 18:16:19 tedu Exp $ */
+/*	$OpenBSD: rthread_tls.c,v 1.2 2005/12/07 02:56:59 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -46,9 +46,10 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void*))
 
 	last_key++;
 
-	rkey = malloc(sizeof(*key));
+	rkey = malloc(sizeof(*rkey));
 	if (!rkey)
 		return (errno);
+	memset(rkey, 0, sizeof(*rkey));
 	rkey->keyid = last_key;
 	rkey->destructor = destructor;
 	rkey->next = rthread_key_list;
@@ -82,6 +83,7 @@ rthread_findstorage(pthread_key_t key)
 		rs = malloc(sizeof(*rs));
 		if (!rs)
 			return (NULL);
+		memset(rs, 0, sizeof(*rs));
 		rs->keyid = key;
 		rs->data = NULL;
 		rs->next = self->local_storage;
