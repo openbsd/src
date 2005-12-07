@@ -1,4 +1,4 @@
-/*	$OpenBSD: lint1.h,v 1.7 2005/12/03 01:14:39 cloder Exp $	*/
+/*	$OpenBSD: lint1.h,v 1.8 2005/12/07 01:55:12 cloder Exp $	*/
 /*	$NetBSD: lint1.h,v 1.6 1995/10/02 17:31:41 jpo Exp $	*/
 
 /*
@@ -73,8 +73,16 @@ typedef enum {
  * attributes
  */
 typedef enum {
-	NORETURN
+	AT_UNKNOWN, AT_NORETURN, AT_VOLATILE
 } attr_t;
+
+/*
+ * A node in an attribute list.
+ */
+typedef struct attrnode {
+	attr_t		an_attr;
+	struct attrnode	*an_nxt;
+} attrnode_t;
 
 /*
  * Integer and floating point values are stored in this structure
@@ -146,6 +154,7 @@ typedef	struct type {
 			u_int	_t_foffs : 24;	/* offset of bit-field */
 		} _t_u;
 	} t_u;
+	struct	attrnode *t_attr; /* attributes */
 	struct	type *t_subt;	/* element type (arrays), return value
 				   (functions), or type pointer points to */
 } type_t;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs1.h,v 1.3 2002/02/16 21:27:59 millert Exp $	*/
+/*	$OpenBSD: externs1.h,v 1.4 2005/12/07 01:55:12 cloder Exp $	*/
 /*	$NetBSD: externs1.h,v 1.7 1995/10/02 17:31:39 jpo Exp $	*/
 
 /*
@@ -72,6 +72,7 @@ extern	pos_t	csrc_pos;
 extern	symt_t	symtyp;
 extern	FILE	*yyin;
 extern	u_quad_t qbmasks[], qlmasks[], qumasks[];
+attr_t	getkwattr(int, int);
 
 extern	void	initscan(void);
 extern	int	sign(quad_t, tspec_t, int);
@@ -258,6 +259,17 @@ extern	void	printflike(int);
 extern	void	scanflike(int);
 extern	void	protolib(int);
 extern	void	longlong(int);
+
+/*
+ * attr.c
+ */
+extern	attr_t		getattr(const char *);
+extern	attr_t		getqualattr(tqual_t);
+extern	attrnode_t	*newattrnode(attr_t);
+extern	void		appendattr(attrnode_t*, attr_t);
+extern	void		appendattrnode(attrnode_t*, attrnode_t*);
+extern	void		addattr(type_t *, attrnode_t*);
+extern	int		hasattr(type_t *, attr_t);
 
 /*
  * init.c

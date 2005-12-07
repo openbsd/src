@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.20 2005/12/03 01:14:39 cloder Exp $	*/
+/*	$OpenBSD: scan.l,v 1.21 2005/12/07 01:55:12 cloder Exp $	*/
 /*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scan.l,v 1.20 2005/12/03 01:14:39 cloder Exp $";
+static char rcsid[] = "$OpenBSD: scan.l,v 1.21 2005/12/07 01:55:12 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -184,7 +184,6 @@ static	struct	kwtab {
 		scl_t	kw_scl;		/* storage class if kw_token T_SCLASS */
 		tspec_t	kw_tspec;	/* type spec. if kw_token T_TYPE or T_SOU */
 		tqual_t	kw_tqual;	/* type qual. if kw_token T_QUAL */
-		attr_t	kw_attr;	/* attribute spec. if kw_token T_ATTR */
 	} kw_u;
 	u_int	kw_stdc : 1;	/* STDC keyword */
 	u_int	kw_gcc : 1;	/* GCC keyword */
@@ -218,7 +217,6 @@ static	struct	kwtab {
 	{ "int",		T_TYPE,		{ INT },	0, 0 },
 	{ "__lint_equal__",	T_LEQUAL,	{ 0 },		0, 0 },
 	{ "long",		T_TYPE,		{ LONG },	0, 0 },
-	{ "__noreturn__",	T_ATTR,		{ NORETURN },	0, 1 },
 	{ "register",		T_SCLASS,	{ REG },	0, 0 },
 	{ "__restrict",		T_QUAL,		{ RESTRICT },	0, 0 },
 	{ "__restrict__",	T_QUAL,		{ RESTRICT },	0, 0 },
@@ -245,7 +243,6 @@ static	struct	kwtab {
 #define kw_scl		kw_u.kw_scl
 #define kw_tspec	kw_u.kw_tspec
 #define kw_tqual	kw_u.kw_tqual
-#define kw_attr		kw_u.kw_attr
 
 /* Symbol table */
 static	sym_t	*symtab[HSHSIZ1];
@@ -293,8 +290,6 @@ initscan(void)
 			sym->s_scl = kw->kw_scl;
 		} else if (kw->kw_token == T_QUAL) {
 			sym->s_tqual = kw->kw_tqual;
-		} else if (kw->kw_token == T_ATTR) {
-			sym->s_attr = kw->kw_attr;
 		}
 		h = hash(sym->s_name);
 		if ((sym->s_link = symtab[h]) != NULL)
@@ -447,8 +442,6 @@ keyw(sym_t *sym)
 		yylval.y_tspec = sym->s_tspec;
 	} else if (t == T_QUAL) {
 		yylval.y_tqual = sym->s_tqual;
-	} else if (t == T_ATTR) {
-		yylval.y_attr = sym->s_attr;
 	}
 	return (t);
 }
@@ -1418,4 +1411,38 @@ freeyyv(void *sp, int tok)
 		}
 		free(strg);
 	}
+}
+
+/*
+ * Return the corresponding attr_t constant for a particular C keyword,
+ * or AT_UNKNOWN if not known.
+ */
+attr_t
+getkwattr(int tok, int val)
+{
+	struct	kwtab *kw;
+	int	eq;
+	
+	eq = 0;
+	for (kw = kwtab; !eq && kw->kw_name != NULL; kw++) {
+		if (kw->kw_token == tok) {
+			switch (tok) {
+			case T_QUAL:
+				eq = (val == kw->kw_tqual);
+				break;
+			case T_TYPE:
+			case T_SOU:
+				eq = (val == kw->kw_tspec);
+				break;
+			case T_SCLASS:
+				eq = (val == kw->kw_scl);
+				break;
+			}
+
+			if (eq)
+				return getattr(kw->kw_name);
+		}
+	}
+
+	return AT_UNKNOWN;
 }

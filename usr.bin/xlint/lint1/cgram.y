@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: cgram.y,v 1.14 2005/12/03 00:27:54 cloder Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.15 2005/12/07 01:55:12 cloder Exp $	*/
 /*	$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: cgram.y,v 1.14 2005/12/03 00:27:54 cloder Exp $";
+static char rcsid[] = "$OpenBSD: cgram.y,v 1.15 2005/12/07 01:55:12 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -72,6 +72,7 @@ static	void	ignuptorp(void);
 	tspec_t	y_tspec;
 	tqual_t	y_tqual;
 	attr_t	y_attr;
+	attrnode_t *y_attrnode;
 	type_t	*y_type;
 	tnode_t	*y_tnode;
 	strg_t	*y_strg;
@@ -213,6 +214,10 @@ static	void	ignuptorp(void);
 %type	<y_strg>	string
 %type	<y_strg>	string2
 
+%type	<y_attr>        attribute_name
+%type	<y_attr>        attribute_spec
+%type	<y_attrnode>    attribute_specs
+%type	<y_attrnode>    opt_attribute_specs
 
 %%
 
@@ -473,22 +478,53 @@ declmod:
 	| attribute_spec
 	;
 
-attribute_spec:
-	  T_ATTRIBUTE T_LPARN T_LPARN T_ATTR T_RPARN T_RPARN {
-		/* XXX: addattr($4) */
+attribute_name:
+	  T_QUAL {
+		$$ = getkwattr(T_QUAL, $1);
 	  }
-	| T_ATTRIBUTE T_LPARN T_LPARN T_NAME read_until_rparn T_RPARN
-	| T_ATTRIBUTE T_LPARN T_LPARN T_QUAL read_until_rparn T_RPARN
+	| T_SCLASS {
+		$$ = getkwattr(T_SCLASS, $1);
+	  }
+	| T_TYPENAME {
+		$$ = getattr($1->sb_name);
+	  }
+	| T_NAME {
+		$$ = getattr($1->sb_name);
+	  }
+	;
+
+attribute_spec:
+	  T_ATTRIBUTE T_LPARN T_LPARN attribute_name T_RPARN T_RPARN {
+		$$ = $4;
+	  }
+	| T_ATTRIBUTE T_LPARN T_LPARN attribute_name T_COMMA read_until_rparn T_RPARN {
+		/* some other exotic syntax that we don't understand */
+		$$ = AT_UNKNOWN;
+	  }
+	| T_ATTRIBUTE T_LPARN T_LPARN attribute_name T_LPARN read_until_rparn T_RPARN T_RPARN {
+		/* some other exotic syntax that we don't understand */
+		$$ = AT_UNKNOWN;
+	  }
 	;
 
 attribute_specs:
-	  attribute_spec
-	| attribute_specs attribute_spec
+	  attribute_spec {
+		/*$$ = newattrnode($1);*/
+		$$ = NULL;
+          }
+	| attribute_specs attribute_spec {
+		/*appendattr($1, $2);*/
+		$$ = $1;
+	  }
 	;
 
 opt_attribute_specs:
-	/* EMPTY */
-	| attribute_specs
+	  /* EMPTY */ {
+		$$ = NULL;
+	  }
+	| attribute_specs {
+		$$ = $1;
+	  }
 	;
 
 clrtyp_typespec:
