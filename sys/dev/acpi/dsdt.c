@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.3 2005/12/07 07:46:51 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.4 2005/12/07 08:09:05 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -46,7 +46,7 @@ struct cfdriver dsdt_cd = {
 };
 
 #ifdef AML_DEBUG
-int amldebug=0;
+int amldebug=3;
 #define dprintf(x...)     do { if (amldebug) printf(x); } while(0)
 #define dnprintf(n,x...)  do { if (amldebug > (n)) printf(x); } while(0)
 #else
@@ -69,7 +69,7 @@ dsdtmatch(struct device *parent, void *match, void *aux)
 	if (memcmp(hdr->signature, DSDT_SIG, sizeof(DSDT_SIG) - 1) == 0)
 		return (1);
 
-#if 0
+#if 1
 	/* Attach SSDT tables */
 	if (memcmp(hdr->signature, SSDT_SIG, sizeof(SSDT_SIG) - 1) == 0)
 		return (1);
@@ -395,6 +395,10 @@ aml_parseargs(struct dsdt_softc *sc, u_int8_t *pos, const char *arg)
 			dprintf("qword: %x\n", *(u_int32_t *)pos);
 			nxtpos = pos+8;
 			break;
+		case AML_ARG_FIELDLIST:
+			dprintf("fieldlist\n");
+			nxtpos = endpos;
+			break;
 		case AML_ARG_BYTELIST:
 			dprintf("bytelist\n");
 			nxtpos = endpos;
@@ -416,6 +420,7 @@ aml_parseargs(struct dsdt_softc *sc, u_int8_t *pos, const char *arg)
 		case AML_ARG_INTEGER:
 		case AML_ARG_TERMOBJ:
 		case AML_ARG_RESULT:
+		case AML_ARG_VAROBJ:
 			nxtpos = aml_parse_object(sc, pos);
 			break;
 		case AML_ARG_TERMOBJLIST:
@@ -425,7 +430,7 @@ aml_parseargs(struct dsdt_softc *sc, u_int8_t *pos, const char *arg)
 			}
 			break;
 		default:
-			dprintf("Unknown arg: %c\n", *arg);
+			printf("Unknown arg: %c\n", *arg);
 			break;
 		}
 		pos = nxtpos;
