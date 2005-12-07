@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: bktr.4,v 1.21 2005/09/30 20:34:24 jaredy Exp $
+.\" $OpenBSD: bktr.4,v 1.22 2005/12/07 12:29:05 jmc Exp $
 .\" $FreeBSD: /c/ncvs/src/share/man/man4/bktr.4,v 1.9.2.5 2001/03/06 19:08:09 ru Exp $
 .\"
 .Dd January 28, 1998
@@ -370,46 +370,46 @@ This fixed random hangs and lockups with the VideoLogic Captivator PCI card.
 Select a specific card (overrides autodetection).
 `nnn' is set to one of the names listed and explained below.
 .Pp
-.Bl -tag -compact -width 28n
-.It ASKEY_DYNALINK_MAGIC_TVIEW
+.Bl -tag -width "CARD_ASKEY_DYNALINK_MAGIC_TVIEW" -compact
+.It CARD_ASKEY_DYNALINK_MAGIC_TVIEW
 Askey/Dynalink Magic TView
-.It AVER_MEDIA
+.It CARD_AVER_MEDIA
 AverMedia
-.It FLYVIDEO
+.It CARD_FLYVIDEO
 Animation Technologies FlyVideo
-.It AOPEN_VA1000
+.It CARD_AOPEN_VA1000
 AOpen VA1000
-.It TVWONDER
+.It CARD_TVWONDER
 ATI TV-Wonder/VE
-.It HAUPPAUGE
+.It CARD_HAUPPAUGE
 Hauppauge Wincast TV and WinTV
-.It IMS_TURBO
+.It CARD_IMS_TURBO
 IMS TV Turbo
-.It INTEL
+.It CARD_INTEL
 Intel Smart Video Recorder III
-.It IO_GV
+.It CARD_IO_GV
 I/O DATA GV-BCTV2/PCI
-.It IO_BCTV3
+.It CARD_IO_BCTV3
 I/O DATA GV-BCTV3/PCI
-.It KISS
+.It CARD_KISS
 KISS TV/FM PCI
-.It LEADTEK
+.It CARD_LEADTEK
 Leadtek Winfast TV 2000
-.It MIRO
+.It CARD_MIRO
 Miro PC TV
-.It OSPREY
+.It CARD_OSPREY
 MMAC Osprey
-.It NEC_PK
+.It CARD_NEC_PK
 NEC PK-UG-X017
-.It STB
+.It CARD_STB
 STB TV PCI Television Tuner
-.It TERRATVPLUS
+.It CARD_TERRATVPLUS
 Terratec TerraTVplus
-.It VIDEO_HIGHWAY_XTREME
+.It CARD_VIDEO_HIGHWAY_XTREME
 Video Highway XTreme
-.It ZOLTRIX
+.It CARD_ZOLTRIX
 Zoltrix TV
-.It ZOLTRIX_GENIE_FM
+.It CARD_ZOLTRIX_GENIE_FM
 Zoltrix Genie TV/FM
 .El
 .It Cd option BKTR_OVERRIDE_MSP=n
