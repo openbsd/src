@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.16 2005/09/25 21:05:04 jmc Exp $	*/
+/*	$OpenBSD: cal.c,v 1.17 2005/12/07 12:31:05 tom Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-static const char rcsid[] = "$OpenBSD: cal.c,v 1.16 2005/09/25 21:05:04 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: cal.c,v 1.17 2005/12/07 12:31:05 tom Exp $";
 #endif
 #endif /* not lint */
 
@@ -434,13 +434,12 @@ parsemonth(const char *s)
 	int v;
 
 	v = (int)strtol(s, &cp, 10);
-	if (cp != s)
-		;
-	else if (strptime(s, "%B", &tm) != NULL)
-		v = tm.tm_mon + 1;
-	else if (strptime(s, "%b", &tm) != NULL)
-		v = tm.tm_mon + 1;
+	if (*cp != '\0') {		/* s wasn't purely numeric */
+		v = 0;
+		if ((cp = strptime(s, "%b", &tm)) != NULL && *cp == '\0')
+			v = tm.tm_mon + 1;
+	}
 	if (v <= 0 || v > 12)
-		errx(1, "illegal month value: use 1-12");
+		errx(1, "invalid month: use 1-12 or a name");
 	return (v);
 }
