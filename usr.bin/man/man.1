@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.26 2005/12/06 20:18:57 pedro Exp $
+.\"	$OpenBSD: man.1,v 1.27 2005/12/07 12:02:08 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -104,25 +104,32 @@ For instance:
 .Dl $ man -k mount
 .Pp
 will list all man pages which contain
-.Ar keyword
+.Dq mount
 in the
 .Dq NAME
 line of the man page;
 in this case a list much like this:
 .Bd -literal
-amd (8) \- automatically mount file systems
-amq (8) \- automounter query tool
-mount (8) \- mount file systems
-mount, unmount (2) \- mount or dismount a filesystem
-mount_ados (8) \- mount an AmigaDOS file system
-mount_cd9660 (8) \- mount an ISO 9660 filesystem
-mount_ext2fs (8) \- mount a ext2fs file system
-mount_ffs, mount_ufs (8) \- mount a Berkeley Fast File System
-mount_procfs (8) \- mount the process file system
-mount_xfs (8) \- mount the xfs filesystem
-mountd (8) \- service remote NFS mount requests
-newfs, mount_mfs (8) \- construct a new file system
-umount (8) \- unmount file systems
+amd (8) \(en automatically mount file systems
+amq (8) \(en automounter query tool
+domountroothooks (9) \(en run all mountroot hooks
+exports (5) \(en define remote mount points for NFS mount requests
+getfsstat (2) \(en get list of all mounted file systems
+getmntinfo (3) \(en get information about mounted file systems
+mount (8) \(en mount file systems
+mount, unmount (2) \(en mount or dismount a filesystem
+mount_ados (8) \(en mount an AmigaDOS file system
+mount_cd9660 (8) \(en mount an ISO-9660 filesystem
+mount_ext2fs (8) \(en mount an ext2fs file system
+mount_ffs (8) \(en mount a Berkeley Fast File System
+mount_msdos (8) \(en mount an MS-DOS file system
+mount_nfs (8) \(en mount NFS file systems
+mount_ntfs (8) \(en mount an NTFS file system
+mount_portal (8) \(en mount the portal daemon
+mount_procfs (8) \(en mount the process file system
+mount_udf (8) \(en mount a UDF filesystem
+mount_xfs (8) \(en mount the xfs filesystem
+mountd (8) \(en service remote NFS mount requests
 \&...
 .Ed
 .It Fl M Ar path
