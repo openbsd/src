@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.49 2005/11/07 02:57:45 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.50 2005/12/07 22:48:38 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -437,6 +437,7 @@ vr_miibus_readreg(dev, phy, reg)
 
 	switch (sc->vr_revid) {
 	case REV_ID_VT6102_APOLLO:
+	case REV_ID_VT6103:
 		if (phy != 1)
 			return 0;
 	default:
@@ -462,6 +463,7 @@ vr_miibus_writereg(dev, phy, reg, data)
 
 	switch (sc->vr_revid) {
 	case REV_ID_VT6102_APOLLO:
+	case REV_ID_VT6103:
 		if (phy != 1)
 			return;
 	default:
