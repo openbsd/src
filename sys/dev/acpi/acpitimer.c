@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpitimer.c,v 1.2 2005/07/10 19:39:01 grange Exp $	*/
+/*	$OpenBSD: acpitimer.c,v 1.3 2005/12/07 03:47:44 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -108,8 +108,7 @@ acpitimerattach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 		address = psc->sc_fadt->x_pm_tmr_blk.address;
-	}
-	else {
+	} else {
 		sc->sc_iot = aa->aaa_iot;
 		address = psc->sc_fadt->pm_tmr_blk;
 	}
