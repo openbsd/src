@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.2 2005/12/06 06:19:31 tedu Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.3 2005/12/07 03:18:39 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -46,7 +46,7 @@ int thrwakeup(long);
 int
 _sem_wait(sem_t sem, int tryonly, int timo)
 {
-	int sleep;
+	int do_sleep;
 
 	_spinlock(&sem->lock);
 again:
@@ -56,13 +56,13 @@ again:
 			return (0);
 		}
 		sem->waitcount++;
-		sleep = 1;
+		do_sleep = 1;
 	} else {
 		sem->value--;
-		sleep = 0;
+		do_sleep = 0;
 	}
 
-	if (sleep) {
+	if (do_sleep) {
 		if (thrsleep((long)sem, timo, &sem->lock) == EWOULDBLOCK)
 			return (0);
 		_spinlock(&sem->lock);
@@ -100,6 +100,87 @@ _sem_wakeall(sem_t sem)
 	_spinunlock(&sem->lock);
 
 	return (rv);
+}
+
+/*
+ * exported semaphores
+ */
+int
+sem_init(sem_t *semp, int pshared, unsigned int value)
+{
+	sem_t sem;
+
+	if (pshared) {
+		errno = EPERM;
+		return (-1);
+	}
+
+	sem = malloc(sizeof(*sem));
+	if (!sem)
+		return (-1);
+	memset(sem, 0, sizeof(*sem));
+	sem->value = value;
+	*semp = sem;
+
+	return (0);
+}
+
+int
+sem_destroy(sem_t *semp)
+{
+	/* should check for waiters */
+	free(*semp);
+	*semp = NULL;
+
+	return (0);
+}
+
+int
+sem_getvalue(sem_t *semp, int *sval)
+{
+	sem_t sem = *semp;
+
+	_spinlock(&sem->lock);
+	*sval = sem->value;
+	_spinunlock(&sem->lock);
+
+	return (0);
+}
+
+int
+sem_post(sem_t *semp)
+{
+	sem_t sem = *semp;
+
+	_sem_wakeup(sem);
+
+	return (0);
+}
+
+int
+sem_wait(sem_t *semp)
+{
+	sem_t sem = *semp;
+
+	_sem_wait(sem, 0, 0);
+
+	return (0);
+}
+
+int
+sem_trywait(sem_t *semp)
+{
+	sem_t sem = *semp;
+	int rv;
+
+	rv = _sem_wait(sem, 1, 0);
+
+	if (!rv) {
+		errno = EAGAIN;
+		return (-1);
+	}
+
+	return (0);
 }
 
 /*
@@ -476,6 +557,9 @@ pthread_rwlockattr_destory(pthread_rwlockattr_t *attrp)
 	return (0);
 }
 
+/*
+ * pthread_once
+ */
 int
 pthread_once(pthread_once_t *once_control, void (*init_routine)(void))
 {
