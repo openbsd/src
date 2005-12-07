@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.1 2005/12/07 04:24:31 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.2 2005/12/07 04:28:29 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -32,9 +32,9 @@ struct dsdt_softc {
 	bus_space_handle_t	sc_ioh;
 };
 
-int dsdtmatch(struct device *, void *, void *);
-void dsdtattach(struct device *, struct device *, void *);
-int dsdt_parse_aml(struct dsdt_softc *, u_int8_t *, u_int32_t);
+int	dsdtmatch(struct device *, void *, void *);
+void	dsdtattach(struct device *, struct device *, void *);
+int	dsdt_parse_aml(struct dsdt_softc *, u_int8_t *, u_int32_t);
 
 struct cfattach dsdt_ca = {
 	sizeof(struct dsdt_softc), dsdtmatch, dsdtattach
@@ -47,18 +47,14 @@ struct cfdriver dsdt_cd = {
 int
 dsdtmatch(struct device *parent, void *match, void *aux)
 {
-	struct acpi_attach_args *aaa = aux;
-	struct acpi_table_header *hdr;
+	struct acpi_attach_args		*aaa = aux;
+	struct acpi_table_header	*hdr;
 
-	/*
-	 * If we do not have a table, it is not us
-	 */
+	/* if we do not have a table, it is not us */
 	if (aaa->aaa_table == NULL)
 		return (0);
 
-	/*
-	 * If it is an DSDT table, we can attach
-	 */
+	/* if it is an DSDT table, we can attach */
 	hdr = (struct acpi_table_header *)aaa->aaa_table;
 	if (memcmp(hdr->signature, DSDT_SIG, sizeof(DSDT_SIG) - 1) != 0)
 		return (0);
@@ -69,9 +65,9 @@ dsdtmatch(struct device *parent, void *match, void *aux)
 void
 dsdtattach(struct device *parent, struct device *self, void *aux)
 {
-	struct dsdt_softc *sc = (struct dsdt_softc *) self;
-	struct acpi_attach_args *aa = aux;
-	struct acpi_dsdt *dsdt = (struct acpi_dsdt *)aa->aaa_table;
+	struct dsdt_softc	*sc = (struct dsdt_softc *) self;
+	struct acpi_attach_args	*aa = aux;
+	struct acpi_dsdt	*dsdt = (struct acpi_dsdt *)aa->aaa_table;
 
 	dsdt_parse_aml(sc, dsdt->aml, dsdt->hdr_length - sizeof(dsdt->hdr));
 }
