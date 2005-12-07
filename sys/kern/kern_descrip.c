@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.71 2005/11/28 00:14:28 jsg Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.72 2005/12/07 19:04:53 deraadt Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -1174,6 +1174,17 @@ int
 dupfdopen(struct filedesc *fdp, int indx, int dfd, int mode, int error)
 {
 	struct file *wfp;
+
+	/*
+	 * Assume that the filename was user-specified; applications do
+	 * not tend to opens of /dev/fd/# when they can just call dup()
+	 */
+	if ((curproc->p_flag & (P_SUGIDEXEC | P_SUGID))) {
+		if (curproc->p_descfd == 255)
+			return (EPERM);
+		if (curproc->p_descfd != curproc->p_dupfd)
+			return (EPERM);
+	}
 
 	/*
 	 * If the to-be-dup'd fd number is greater than the allowed number
