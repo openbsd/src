@@ -1,4 +1,4 @@
-/*	$OpenBSD: attr.c,v 1.1 2005/12/07 01:55:12 cloder Exp $	*/
+/*	$OpenBSD: attr.c,v 1.2 2005/12/07 02:11:26 cloder Exp $	*/
 
 /*
  * Copyright (c) 2005 Chad Loder
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: attr.c,v 1.1 2005/12/07 01:55:12 cloder Exp $";
+static char rcsid[] = "$OpenBSD: attr.c,v 1.2 2005/12/07 02:11:26 cloder Exp $";
 #endif
 
 #include "lint1.h"
@@ -96,7 +96,6 @@ appendattrnode(attrnode_t *an, attrnode_t *apn)
 void
 addattr(type_t *t, attrnode_t *an)
 {
-	printf("adding attribute %p to type %p\n", an, t);
 	if (t->t_attr == NULL)
 		t->t_attr = an;
 	else
@@ -108,8 +107,6 @@ hasattr(type_t *t, attr_t a)
 {
 	attrnode_t *an = t->t_attr;
 
-	printf("seeing if type %p has attribute %d\n", t, a);
-
 	while (an != NULL) {
 		if (an->an_attr == a)
 			return 1;
@@ -117,10 +114,8 @@ hasattr(type_t *t, attr_t a)
 		an = an->an_nxt;
 	}
 
-	printf("subtypes of type %p are:\n", t);
 	while (t != NULL) {
 		t = t->t_subt;
-		printf("\ttype %p\n", t);
 	}
 
 	return 0;
