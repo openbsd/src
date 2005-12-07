@@ -1,5 +1,5 @@
-Host to use OpenSSH-based virtual private networks
---------------------------------------------------
+How to use OpenSSH-based virtual private networks
+-------------------------------------------------
 
 OpenSSH contains support for VPN tunneling using the tun(4) network
 tunnel pseudo-device which is available on most platforms, either for
@@ -129,4 +129,4 @@ interconnect corporate networks.
 
 	Reyk Floeter
 
-$OpenBSD: README.tun,v 1.1 2005/12/06 22:48:36 reyk Exp $
+$OpenBSD: README.tun,v 1.2 2005/12/07 09:38:26 reyk Exp $
