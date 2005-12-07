@@ -1,5 +1,5 @@
 .\"	$RuOBSD: radio.4,v 1.4 2001/10/26 05:38:43 form Exp $
-.\"	$OpenBSD: radio.4,v 1.22 2005/12/05 15:19:44 mickey Exp $
+.\"	$OpenBSD: radio.4,v 1.23 2005/12/07 10:57:21 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -165,6 +165,7 @@ The
 specifies the TV channel set currently being used
 (Western Europe being the default):
 .Bl -tag -width indent -compact
+.Pp
 .It 1
 U.S.A. Broadcast
 .It 2
@@ -189,9 +190,8 @@ France
 Either
 .Va freq
 or
-.Va chan ,
-.Va chnlset
-have to be used to tune into FM radio stations or TV channels
+.Va chan Ns / Ns Va chnlset
+have to be used to tune into FM radio stations or TV channels,
 respectively.
 Some devices may not support both functionalities.
 .Sh CHIPSETS
