@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.4 2005/12/07 08:09:05 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.5 2005/12/07 22:34:20 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -69,11 +69,9 @@ dsdtmatch(struct device *parent, void *match, void *aux)
 	if (memcmp(hdr->signature, DSDT_SIG, sizeof(DSDT_SIG) - 1) == 0)
 		return (1);
 
-#if 1
 	/* Attach SSDT tables */
 	if (memcmp(hdr->signature, SSDT_SIG, sizeof(SSDT_SIG) - 1) == 0)
 		return (1);
-#endif
 
 	return (0);
 }
@@ -88,6 +86,19 @@ dsdtattach(struct device *parent, struct device *self, void *aux)
 	dsdt_parse_aml(sc, dsdt->aml, dsdt->hdr_length - sizeof(dsdt->hdr));
 }
 
+struct aml_node
+{
+	struct aml_node *parent;
+	struct aml_node *child;
+	struct aml_node *sibling;
+
+	u_int16_t   opcode;
+	u_int8_t   *start;
+	u_int8_t   *end;
+	u_int8_t    flag;
+	const char *name;
+};
+
 struct aml_optable
 {
 	u_int16_t    opcode;
@@ -95,12 +106,30 @@ struct aml_optable
 	const char  *args;
 };
 
-int aml_isnamedop(uint16_t);
-u_int8_t *aml_decodelength(u_int8_t *, int *);
-u_int8_t *aml_decodename(u_int8_t *);
+int aml_isnamedop(uint16_t);u_int8_t *aml_decodelength(u_int8_t *, int *);
+u_int8_t *aml_decodename(u_int8_t *, const char **);
 u_int8_t *aml_getopcode(u_int8_t *, u_int16_t *);
-u_int8_t *aml_parseargs(struct dsdt_softc *, u_int8_t *, const char *);
-u_int8_t *aml_parse_object(struct dsdt_softc *, u_int8_t *);
+u_int8_t *aml_parseargs(struct dsdt_softc *, struct aml_node *, u_int8_t *, const char *);
+u_int8_t *aml_parse_object(struct dsdt_softc *, struct aml_node *, u_int8_t *);
+int aml_lsb(uint32_t val);
+int aml_msb(uint32_t val);
+void aml_addchildnode(struct aml_node *, struct aml_node *);
+
+long aml_evalmath(u_int16_t, long, long);
+int  aml_evallogical(u_int16_t, long, long);
+
+#if 0
+void aml_eval_opregion(struct dsdt_softc *sc, struct aml_value *result, 
+		       struct aml_node *node)
+{
+	result->type = AML_TYPE_GAS;
+	result->v_gas.address_space_id = node->flag;
+	result->v_gas.register_bit_width = ..;
+	result->v_gas.register_bit_offset = ..;
+	result->v_gas.access_size = aml_eval_integer(result, node->child[0]);
+	result->v_gas.address = aml_eval_integer(result, node->child[1]);
+}
+#endif
 
 /* Decode AML Package length
  * Upper two bits of first byte denote length
@@ -134,40 +163,56 @@ aml_decodelength(u_int8_t *pos, int *length)
 }
 
 u_int8_t *
-aml_decodename(u_int8_t *pos)
+aml_decodename(u_int8_t *pos, const char **ref)
 {
-	int count;
+	int count, pfxlen, idx;
 	char *name;
+	u_int8_t *base;
 
+	base = pos;
 	if (*pos == AMLOP_ROOTCHAR) {
-		dprintf(" root ");
 		pos++;
 	}
 	while (*pos == AMLOP_PARENTPREFIX) {
-		dprintf(" parent ");
 		pos++;
 	}
+	pfxlen = pos - base;
 
-	count = 1;
+	count = 0;
 	if (*pos == AMLOP_MULTINAMEPREFIX) {
-		dprintf(" multi ");
 		count = *(++pos);
 		pos++;
 	}
-	if (*pos == AMLOP_DUALNAMEPREFIX) {
-		dprintf(" dual ");
+	else if (*pos == AMLOP_DUALNAMEPREFIX) {
 		count = 2;
 		pos++;
 	}
-
-	name = malloc(count * 4 + 1, M_DEVBUF, M_WAITOK);
-	if (name != NULL) {
-		memset(name, 0, count * 4 + 1);
-		memcpy(name, pos, count * 4);
-		dprintf("acpi_name: %s\n", name);
-		free(name, M_DEVBUF);
+	else if (*pos == AMLOP_NAMECHAR || (*pos >= 'A' && *pos <= 'Z')) {
+		count = 1;
 	}
-	pos += count*4;
+
+	name = malloc(pfxlen + count * 5, M_DEVBUF, M_WAITOK);
+	if (name != NULL) {
+		if (pfxlen > 0) {
+			memcpy(name, base, pfxlen);
+		}
+		/* Copy name segments in chunks of 4 bytes */
+		base = name+pfxlen;
+		for(idx=0; idx<count; idx++) {
+			if (idx) *(base++) = '.';
+			memcpy(base, pos, 4);
+			pos += 4;
+			base += 4;
+		}
+		*base = 0;
+		dprintf("acpi_name: %s\n", name);
+		if (ref != NULL) {
+			*ref = name;
+		}
+		else {
+			free(name, M_DEVBUF);
+		}
+	}
 
 	return pos;
 }
@@ -189,6 +234,103 @@ aml_isnamedop(uint16_t opcode)
 		return (1);
 
 	return (0);
+}
+
+/* Calculate LSB */
+int aml_lsb(uint32_t val)
+{
+	int n = 31;
+
+	if (!val) return -1;
+	if (val & 0x0000FFFF) { val <<= 16; n -= 16; };
+	if (val & 0x00FF0000) { val <<= 8;  n -= 8; };
+	if (val & 0x0F000000) { val <<= 4;  n -= 4; };
+	if (val & 0x30000000) { val <<= 2;  n -= 2; };
+	return (val & 0x40000000) ? n-1 : n;
+}
+
+/* Calculate MSB */
+int aml_msb(uint32_t val)
+{
+	int n=0;
+
+	if (!val) return -1;
+	if (val & 0xFFFF0000) { val >>= 16; n += 16; };
+	if (val & 0x0000FF00) { val >>= 8;  n += 8; };
+	if (val & 0x000000F0) { val >>= 4;  n += 4; };
+	if (val & 0x0000000C) { val >>= 2;  n += 2; };
+	return (val & 0x00000002) ? n+1 : n;
+}
+
+/* Evaluate Math operands */
+long
+aml_evalmath(u_int16_t opcode, long lhs, long rhs)
+{
+	switch (opcode) {
+	case AMLOP_ADD:
+		return (lhs + rhs);
+	case AMLOP_SUBTRACT:
+		return (lhs - rhs);
+	case AMLOP_MULTIPLY:
+		return (lhs * rhs);
+	case AMLOP_DIVIDE:
+		return (lhs / rhs);
+	case AMLOP_MOD:
+		return (lhs % rhs);
+	case AMLOP_SHL:
+		return (lhs << rhs);
+	case AMLOP_SHR:
+		return (lhs >> rhs);
+	case AMLOP_AND:
+		return (lhs & rhs);
+	case AMLOP_NAND:
+		return ~(lhs & rhs);
+	case AMLOP_OR:
+		return (lhs | rhs); 
+	case AMLOP_NOR:
+		return ~(lhs | rhs); 
+	case AMLOP_XOR:
+		return (lhs ^ rhs);
+	case AMLOP_INCREMENT:
+		return (lhs + 1);
+	case AMLOP_DECREMENT:
+		return (lhs - 1);
+	case AMLOP_FINDSETLEFTBIT:
+		return aml_msb(lhs);
+	case AMLOP_FINDSETRIGHTBIT:
+		return aml_lsb(lhs);
+	case AMLOP_NOT:
+		return ~(lhs);
+	}
+
+	return (0);
+}
+
+/* Evaluate logical test operands */
+int
+aml_evallogical(u_int16_t opcode, long lhs, long rhs)
+{
+	switch(opcode) {
+	case AMLOP_LAND:
+		return (lhs && rhs);
+	case AMLOP_LOR:
+		return (lhs || rhs);
+	case AMLOP_LNOT:
+		return (!lhs);
+	case AMLOP_LNOTEQUAL:
+		return (lhs != rhs);
+	case AMLOP_LLESSEQUAL:
+		return (lhs <= rhs);
+	case AMLOP_LGREATEREQUAL:
+		return (lhs >= rhs);
+	case AMLOP_LEQUAL:
+		return (lhs == rhs);
+	case AMLOP_LGREATER:
+		return (lhs > rhs);
+	case AMLOP_LLESS:
+		return (lhs < rhs);
+	}
+	return 0;
 }
 
 /* Extract opcode from AML bytestream 
@@ -266,8 +408,8 @@ struct aml_optable aml_table[] = {
 	{ AMLOP_BREAKPOINT,       "BreakPoint",      "",    },
 
 	/* Arithmetic operations */
-	{ AMLOP_INCREMENT,        "Increment",       "v",     },
-	{ AMLOP_DECREMENT,        "Decrement",       "v",     },
+	{ AMLOP_INCREMENT,        "Increment",       "S",     },
+	{ AMLOP_DECREMENT,        "Decrement",       "S",     },
 	{ AMLOP_ADD,              "Add",             "iir",   },
 	{ AMLOP_SUBTRACT,         "Subtract",        "iir",   },
 	{ AMLOP_MULTIPLY,         "Multiply",        "iir",   },
@@ -303,7 +445,7 @@ struct aml_optable aml_table[] = {
 	{ AMLOP_DEVICE,           "Device",          "pNO" },
 	{ AMLOP_POWERRSRC,        "Power Resource",  "pNbwO" },
 	{ AMLOP_THERMALZONE,      "ThermalZone",     "pNT" },
-	{ AMLOP_METHOD,           "Method",          "pNmT",  },
+	{ AMLOP_METHOD,           "Method",          "pNfT",  },
 	{ AMLOP_PROCESSOR,        "Processor",       "pNbdbO", },
 	{ AMLOP_FIELD,            "Field",           "pNfF" },
 	{ AMLOP_INDEXFIELD,       "IndexField",      "pNnbF" },
@@ -331,55 +473,50 @@ struct aml_optable aml_table[] = {
 	{ AMLOP_MID,              "Mid",             "tiir",   },
 
 	/* Mutex/Signal operations */
-	{ AMLOP_ACQUIRE,          "Acquire",         "vw",     },
-	{ AMLOP_RELEASE,          "Release",         "v",      },
-	{ AMLOP_SIGNAL,           "Signal",          "v",      },
-	{ AMLOP_WAIT,             "Wait",            "vi",     },
-	{ AMLOP_RESET,            "Reset",           "v",      },
+	{ AMLOP_ACQUIRE,          "Acquire",         "Sw",     },
+	{ AMLOP_RELEASE,          "Release",         "S",      },
+	{ AMLOP_SIGNAL,           "Signal",          "S",      },
+	{ AMLOP_WAIT,             "Wait",            "Si",     },
+	{ AMLOP_RESET,            "Reset",           "S",      },
  
 	{ AMLOP_INDEX,            "Index",           "ttr",    },
 	{ AMLOP_PACKAGE,          "Package",         "pfT",    },
 	{ AMLOP_VARPACKAGE,       "VarPackage",      "piT",    },
 	{ AMLOP_DEREFOF,          "DerefOf",         "t",      },
-	{ AMLOP_REFOF,            "RefOf",           "v",      },
-	{ AMLOP_CONDREFOF,        "CondRef",         "vv",     },
+	{ AMLOP_REFOF,            "RefOf",           "S",      },
+	{ AMLOP_CONDREFOF,        "CondRef",         "SS",     },
 
 	{ AMLOP_LOADTABLE,        "LoadTable",       "tttttt" },
 	{ AMLOP_STALL,            "Stall",           "i",      },
 	{ AMLOP_SLEEP,            "Sleep",           "i",      },
-	{ AMLOP_LOAD,             "Load",            "Nv" },
-	{ AMLOP_UNLOAD,           "Unload",          "v" }, 
-	{ AMLOP_STORE,            "Store",           "tv",     },
+	{ AMLOP_LOAD,             "Load",            "NS" },
+	{ AMLOP_UNLOAD,           "Unload",          "S" }, 
+	{ AMLOP_STORE,            "Store",           "tS",     },
 	{ AMLOP_CONCAT,           "Concat",          "ttr" },
 	{ AMLOP_CONCATRES,        "ConcatRes",       "ttr" },
-	{ AMLOP_NOTIFY,           "Notify",          "vi" },
-	{ AMLOP_SIZEOF,           "Sizeof",          "v",      },
+	{ AMLOP_NOTIFY,           "Notify",          "Si" },
+	{ AMLOP_SIZEOF,           "Sizeof",          "S",      },
 	{ AMLOP_MATCH,            "Match",           "tbibii", },
-	{ AMLOP_OBJECTTYPE,       "ObjectType",      "v", },
+	{ AMLOP_OBJECTTYPE,       "ObjectType",      "S", },
 	{ AMLOP_COPYOBJECT,       "CopyObject",      "tn" },
 	{ 0xFFFF }
 };
 
-#if 0
-u_int8_t *aml_createinteger(uint8_t *pos, int len)
-{
-	return pos+len;
-}
-#endif
-
 u_int8_t *
-aml_parseargs(struct dsdt_softc *sc, u_int8_t *pos, const char *arg)
+aml_parseargs(struct dsdt_softc *sc, struct aml_node *node, u_int8_t *pos, const char *arg)
 {
 	int len;
-	u_int8_t *nxtpos, *endpos;
+	u_int8_t *nxtpos;
 
-	endpos = NULL;
 	nxtpos = pos;
 	while (*arg) {
 		switch (*arg) {
+		case AML_ARG_FLAG:
+			dprintf("flag: %x\n", *(u_int8_t *)pos);
+			node->flag = *(u_int8_t *)pos;
+			nxtpos = pos+1;
+			break;
 		case AML_ARG_BYTE:
-		case AML_ARG_FIELDFLAG:
-		case AML_ARG_METHODFLAG:
 			dprintf("byte: %x\n", *(u_int8_t *)pos);
 			nxtpos = pos+1;
 			break;
@@ -397,11 +534,11 @@ aml_parseargs(struct dsdt_softc *sc, u_int8_t *pos, const char *arg)
 			break;
 		case AML_ARG_FIELDLIST:
 			dprintf("fieldlist\n");
-			nxtpos = endpos;
+			nxtpos = node->end;
 			break;
 		case AML_ARG_BYTELIST:
 			dprintf("bytelist\n");
-			nxtpos = endpos;
+			nxtpos = node->end;
 			break;
 		case AML_ARG_STRING:
 			dprintf("string: %s\n", pos);
@@ -409,24 +546,23 @@ aml_parseargs(struct dsdt_softc *sc, u_int8_t *pos, const char *arg)
 			nxtpos = pos + len + 1;
 			break;
 		case AML_ARG_NAMESTRING:
-			dprintf("getting name..\n");
-			nxtpos = aml_decodename(pos);
+			nxtpos = aml_decodename(pos, NULL);
 			break;
 		case AML_ARG_OBJLEN:
 			nxtpos = aml_decodelength(pos, &len);
-			endpos = pos + len;
+			node->end = pos + len;
 			break;
-		case AML_ARG_DATAOBJ:
 		case AML_ARG_INTEGER:
+		case AML_ARG_DATAOBJ:
 		case AML_ARG_TERMOBJ:
 		case AML_ARG_RESULT:
-		case AML_ARG_VAROBJ:
-			nxtpos = aml_parse_object(sc, pos);
+		case AML_ARG_SUPERNAME:
+			nxtpos = aml_parse_object(sc, node, pos);
 			break;
 		case AML_ARG_TERMOBJLIST:
 		case AML_ARG_DATAOBJLIST:
-			while (nxtpos && nxtpos < endpos) {
-				nxtpos = aml_parse_object(sc, nxtpos);
+			while (nxtpos && nxtpos < node->end) {
+				nxtpos = aml_parse_object(sc, node, nxtpos);
 			}
 			break;
 		default:
@@ -440,26 +576,52 @@ aml_parseargs(struct dsdt_softc *sc, u_int8_t *pos, const char *arg)
 	return pos;
 }
 
+void
+aml_addchildnode(struct aml_node *parent, struct aml_node *child)
+{
+	struct aml_node *psib;
+
+	child->parent = parent;
+	child->sibling = NULL;
+	for (psib = parent->child; psib; psib = psib->sibling) {
+		if (psib->sibling == NULL) {
+			psib->sibling = child;
+			return;
+		}
+	}
+	parent->child = child;
+}
+
 u_int8_t *
-aml_parse_object(struct dsdt_softc *sc, u_int8_t *pos)
+aml_parse_object(struct dsdt_softc *sc, struct aml_node *parent, u_int8_t *pos)
 {
 	struct aml_optable *optab = aml_table;
 	u_int8_t  *nxtpos;
-	u_int16_t  opcode;
+	struct aml_node *node;
+
+	node = malloc(sizeof(struct aml_node), M_DEVBUF, M_WAITOK);
+	if (node == NULL) 
+		return pos;
+	memset(node, 0, sizeof(struct aml_node));
 
 	/* Get AML Opcode; if it is an embedded name, extract name */
-	nxtpos = aml_getopcode(pos, &opcode);
-	if (opcode == AMLOP_NAMECHAR) {
-		return aml_decodename(pos);
+	node->start = pos;
+	nxtpos = aml_getopcode(pos, &node->opcode);
+	if (node->opcode == AMLOP_NAMECHAR) {
+		return aml_decodename(pos, &node->name);
 	}
 	while (optab->opcode != 0xFFFF) {
-		if  (optab->opcode == opcode) {
-			dprintf("opcode: %.4x = %s\n", opcode, optab->mnem);
-			return aml_parseargs(sc, nxtpos, optab->args);
+		if  (optab->opcode == node->opcode) {
+			dprintf("opcode: %.4x = %s\n", node->opcode, optab->mnem);
+			aml_addchildnode(parent, node);
+
+			return aml_parseargs(sc, node, nxtpos, optab->args);
 		}
 		optab++;
 	}
-	printf("Invalid AML Opcode : %.4x\n", opcode);
+	printf("Invalid AML Opcode : %.4x\n", node->opcode);
+	free(node, M_DEVBUF);
+
 	return NULL;
 }
 
@@ -467,9 +629,11 @@ int
 dsdt_parse_aml(struct dsdt_softc *sc, u_int8_t *start, u_int32_t length)
 {
 	u_int8_t  *pos, *nxtpos;
+	struct aml_node root;
 
+	memset(&root, 0, sizeof(root));
 	for (pos = start; pos && pos < start+length; pos=nxtpos) {
-		nxtpos = aml_parse_object(sc, pos);
+		nxtpos = aml_parse_object(sc, &root, pos);
 	}
 	printf(" : parsed %d AML bytes\n", length);
 	return (0);

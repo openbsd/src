@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.3 2005/12/07 08:09:05 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.4 2005/12/07 22:34:20 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -188,13 +188,12 @@ enum aml_objecttype {
 #define AML_ARG_BYTELIST    'B'
 #define AML_ARG_REVISION    'R'
 #define AML_ARG_RESULT      'r'
-#define AML_ARG_VAROBJ      'v'
+#define AML_ARG_SUPERNAME   'S'
 
 #define AML_ARG_NAMESTRING  'N'
 #define AML_ARG_NAMEREF     'n'
 #define AML_ARG_FIELDLIST   'F'
-#define AML_ARG_FIELDFLAG   'f'
-#define AML_ARG_METHODFLAG  'm'
+#define AML_ARG_FLAG        'f'
 
 #define AML_ARG_TERMOBJLIST 'T'
 #define AML_ARG_TERMOBJ     't'
