@@ -719,7 +719,7 @@ get_next_command(void) {
 	buf = isc_mem_allocate(mctx, COMMSIZE);
 	if (buf == NULL)
 		fatal("memory allocation failure");
-	fputs("> ", stderr);
+	fputs("> ", stdout);
 	isc_app_block();
 	ptr = fgets(buf, COMMSIZE, stdin);
 	isc_app_unblock();
