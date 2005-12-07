@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.26 2005/12/04 12:14:10 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.27 2005/12/07 07:38:58 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -307,6 +307,7 @@ m88100_trap(unsigned type, struct trapframe *frame)
 			panic("trap: bad kernel access at %x", fault_addr);
 		}
 
+		KERNEL_LOCK(LK_CANRECURSE | LK_EXCLUSIVE);
 		vm = p->p_vmspace;
 		map = kernel_map;
 
@@ -327,6 +328,7 @@ m88100_trap(unsigned type, struct trapframe *frame)
 			data_access_emulation((unsigned *)frame);
 			frame->tf_dpfsr = 0;
 			frame->tf_dmt0 = 0;
+			KERNEL_UNLOCK();
 			return;
 		case CMMU_PFSR_SFAULT:
 		case CMMU_PFSR_PFAULT:
@@ -344,6 +346,7 @@ m88100_trap(unsigned type, struct trapframe *frame)
 				data_access_emulation((unsigned *)frame);
 				frame->tf_dpfsr = 0;
 				frame->tf_dmt0 = 0;
+				KERNEL_UNLOCK();
 				return;
 			}
 			break;
@@ -352,6 +355,7 @@ m88100_trap(unsigned type, struct trapframe *frame)
 		printf("PBUS Fault %d (%s) va = 0x%x\n", pbus_type,
 		    pbus_exception_type[pbus_type], va);
 #endif
+		KERNEL_UNLOCK();
 		panictrap(frame->tf_vector, frame);
 		/* NOTREACHED */
 	case T_INSTFLT+T_USER:
@@ -386,6 +390,7 @@ user_fault:
 
 		va = trunc_page((vaddr_t)fault_addr);
 
+		KERNEL_PROC_LOCK(p);
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
 		if ((pcb_onfault = p->p_addr->u_pcb.pcb_onfault) != 0)
@@ -412,6 +417,7 @@ user_fault:
 			else if (result == EACCES)
 				result = EFAULT;
 		}
+		KERNEL_PROC_UNLOCK(p);
 
 		/*
 		 * This could be a fault caused in copyin*()
@@ -563,7 +569,9 @@ user_fault:
 		p->p_md.md_astpending = 0;
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
+			KERNEL_PROC_LOCK(p);
 			ADDUPROF(p);
+			KERNEL_PROC_UNLOCK(p);
 		}
 		break;
 	}
@@ -576,7 +584,9 @@ user_fault:
 
 	if (sig) {
 		sv.sival_int = fault_addr;
+		KERNEL_PROC_LOCK(p);
 		trapsignal(p, sig, fault_code, fault_type, sv);
+		KERNEL_PROC_UNLOCK(p);
 		/*
 		 * don't want multiple faults - we are going to
 		 * deliver signal.
@@ -752,6 +762,7 @@ m88110_trap(unsigned type, struct trapframe *frame)
 			panic("trap: bad kernel access at %x", fault_addr);
 		}
 
+		KERNEL_LOCK(LK_CANRECURSE | LK_EXCLUSIVE);
 		vm = p->p_vmspace;
 		map = kernel_map;
 
@@ -765,8 +776,10 @@ m88110_trap(unsigned type, struct trapframe *frame)
 				p->p_addr->u_pcb.pcb_onfault = 0;
 			result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
 			p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
-			if (result == 0)
+			if (result == 0) {
+				KERNEL_UNLOCK();
 				return;
+			}
 		}
 		if (frame->tf_dsr & CMMU_DSR_WE) {	/* write fault  */
 			/*
@@ -781,8 +794,10 @@ m88110_trap(unsigned type, struct trapframe *frame)
 			 */
 			pte = pmap_pte(map->pmap, va);
 #ifdef DEBUG
-			if (pte == NULL)
+			if (pte == NULL) {
+				KERNEL_UNLOCK();
 				panic("NULL pte on write fault??");
+			}
 #endif
 			if (!(*pte & PG_M) && !(*pte & PG_RO)) {
 				/* Set modified bit and try the write again. */
@@ -791,6 +806,7 @@ m88110_trap(unsigned type, struct trapframe *frame)
 				    map->pmap, *pte);
 #endif
 				*pte |= PG_M;
+				KERNEL_UNLOCK();
 				return;
 #if 1	/* shouldn't happen */
 			} else {
@@ -803,11 +819,14 @@ m88110_trap(unsigned type, struct trapframe *frame)
 					p->p_addr->u_pcb.pcb_onfault = 0;
 				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
 				p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
-				if (result == 0)
+				if (result == 0) {
+					KERNEL_UNLOCK();
 					return;
+				}
 #endif
 			}
 		}
+		KERNEL_UNLOCK();
 		panictrap(frame->tf_vector, frame);
 		/* NOTREACHED */
 	case T_INSTFLT+T_USER:
@@ -839,6 +858,7 @@ m88110_user_fault:
 
 		va = trunc_page((vaddr_t)fault_addr);
 
+		KERNEL_PROC_LOCK(p);
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
 		if ((pcb_onfault = p->p_addr->u_pcb.pcb_onfault) != 0)
@@ -877,8 +897,10 @@ m88110_user_fault:
 				 */
 				pte = pmap_pte(vm_map_pmap(map), va);
 #ifdef DEBUG
-				if (pte == NULL)
+				if (pte == NULL) {
+					KERNEL_PROC_UNLOCK(p);
 					panic("NULL pte on write fault??");
+				}
 #endif
 				if (!(*pte & PG_M) && !(*pte & PG_RO)) {
 					/*
@@ -895,6 +917,7 @@ m88110_user_fault:
 					 * table search
 					 */
 					set_dcmd(CMMU_DCMD_INV_UATC);
+					KERNEL_PROC_UNLOCK(p);
 					return;
 				} else {
 					/* must be a real wp fault */
@@ -910,6 +933,7 @@ m88110_user_fault:
 				printf("Unexpected Data access fault dsr %x\n",
 				    frame->tf_dsr);
 #endif
+				KERNEL_PROC_UNLOCK(p);
 				panictrap(frame->tf_vector, frame);
 			}
 		} else {
@@ -928,6 +952,7 @@ m88110_user_fault:
 				printf("Unexpected Instruction fault isr %x\n",
 				    frame->tf_isr);
 #endif
+				KERNEL_PROC_UNLOCK(p);
 				panictrap(frame->tf_vector, frame);
 			}
 		}
@@ -938,6 +963,7 @@ m88110_user_fault:
 			else if (result == EACCES)
 				result = EFAULT;
 		}
+		KERNEL_PROC_UNLOCK(p);
 
 		/*
 		 * This could be a fault caused in copyin*()
@@ -1058,7 +1084,9 @@ m88110_user_fault:
 		p->p_md.md_astpending = 0;
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
+			KERNEL_PROC_LOCK(p);
 			ADDUPROF(p);
+			KERNEL_PROC_UNLOCK(p);
 		}
 		break;
 	}
@@ -1071,7 +1099,9 @@ m88110_user_fault:
 
 	if (sig) {
 		sv.sival_int = fault_addr;
+		KERNEL_PROC_LOCK(p);
 		trapsignal(p, sig, fault_code, fault_type, sv);
+		KERNEL_PROC_UNLOCK(p);
 	}
 
 	userret(p, frame, sticks);
@@ -1151,6 +1181,7 @@ m88100_syscall(register_t code, struct trapframe *tf)
 		bcopy((caddr_t)ap, (caddr_t)args, i * sizeof(register_t));
 	}
 
+	KERNEL_PROC_LOCK(p);
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args);
 #endif
@@ -1198,6 +1229,7 @@ m88100_syscall(register_t code, struct trapframe *tf)
 	 *    any pointers.
 	 */
 
+	KERNEL_PROC_UNLOCK(p);
 	switch (error) {
 	case 0:
 		tf->tf_r[2] = rval[0];
@@ -1207,20 +1239,14 @@ m88100_syscall(register_t code, struct trapframe *tf)
 		tf->tf_sfip = tf->tf_snip + 4;
 		break;
 	case ERESTART:
-		/*
-		 * If (error == ERESTART), back up the pipe line. This
-		 * will end up reexecuting the trap.
-		 */
 		tf->tf_epsr &= ~PSR_C;
 		tf->tf_sfip = tf->tf_snip & ~FIP_E;
 		tf->tf_snip = tf->tf_sxip & ~NIP_E;
 		break;
 	case EJUSTRETURN:
-		/* if (error == EJUSTRETURN), leave the ip's alone */
 		tf->tf_epsr &= ~PSR_C;
 		break;
 	default:
-		/* error != ERESTART && error != EJUSTRETURN*/
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		tf->tf_r[2] = error;
@@ -1230,12 +1256,17 @@ m88100_syscall(register_t code, struct trapframe *tf)
 		break;
 	}
 #ifdef SYSCALL_DEBUG
+	KERNEL_PROC_LOCK(p);
 	scdebug_ret(p, code, error, rval);
+	KERNEL_PROC_UNLOCK(p);
 #endif
 	userret(p, tf, sticks);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
 		ktrsysret(p, code, error, rval[0]);
+		KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 }
 #endif /* M88100 */
@@ -1299,6 +1330,7 @@ m88110_syscall(register_t code, struct trapframe *tf)
 		 */
 		bcopy((caddr_t)ap, (caddr_t)args, i * sizeof(register_t));
 	}
+	KERNEL_PROC_LOCK(p);
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args);
 #endif
@@ -1342,6 +1374,7 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	 *    exip += 4
 	 */
 
+	KERNEL_PROC_UNLOCK(p);
 	switch (error) {
 	case 0:
 		tf->tf_r[2] = rval[0];
@@ -1383,12 +1416,17 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	}
 
 #ifdef SYSCALL_DEBUG
+	KERNEL_PROC_LOCK(p);
 	scdebug_ret(p, code, error, rval);
+	KERNEL_PROC_UNLOCK(p);
 #endif
 	userret(p, tf, sticks);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
 		ktrsysret(p, code, error, rval[0]);
+		KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 }
 #endif	/* M88110 */
@@ -1408,6 +1446,7 @@ child_return(arg)
 	tf->tf_r[2] = 0;
 	tf->tf_r[3] = 0;
 	tf->tf_epsr &= ~PSR_C;
+	/* skip br instruction as in syscall() */
 #ifdef M88100
 	if (CPU_IS88100) {
 		tf->tf_snip = tf->tf_sfip & XIP_ADDR;
@@ -1424,12 +1463,16 @@ child_return(arg)
 	}
 #endif
 
+	KERNEL_PROC_UNLOCK(p);
 	userret(p, tf, p->p_sticks);
 
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
 		ktrsysret(p,
 		    (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
+		KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 }
 
