@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.21 2005/10/10 20:06:11 krw Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.22 2005/12/08 14:02:47 krw Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -378,18 +378,16 @@ scsi_do_ioctl( struct scsi_link *sc_link, dev_t dev, u_long cmd, caddr_t addr,
 	case SCIOCCOMMAND: {
 		scsireq_t *screq = (scsireq_t *)addr;
 		struct scsi_ioctl *si;
-		int len;
 
 		si = si_get();
 		si->si_screq = *screq;
 		si->si_sc_link = sc_link;
-		len = screq->datalen;
-		if (len) {
+		if (screq->datalen) {
 			si->si_iov.iov_base = screq->databuf;
-			si->si_iov.iov_len = len;
+			si->si_iov.iov_len = screq->datalen;
 			si->si_uio.uio_iov = &si->si_iov;
 			si->si_uio.uio_iovcnt = 1;
-			si->si_uio.uio_resid = len;
+			si->si_uio.uio_resid = screq->datalen;
 			si->si_uio.uio_offset = 0;
 			si->si_uio.uio_segflg = UIO_USERSPACE;
 			si->si_uio.uio_rw = 

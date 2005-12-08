@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.23 2005/11/28 00:14:28 jsg Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.24 2005/12/08 14:02:47 krw Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -124,8 +124,17 @@ physio(void (*strategy)(struct buf *), struct buf *bp, dev_t dev, int flags,
 
 			/* [set up the buffer for a maximum-sized transfer] */
 			bp->b_blkno = btodb(uio->uio_offset);
-			bp->b_bcount = iovp->iov_len;
 			bp->b_data = iovp->iov_base;
+
+			/*
+			 * Because iov_len is unsigned but b_bcount is signed,
+			 * an overflow is possible. Therefore bound to MAXPHYS
+			 * before calling minphys.
+			 */
+			if (iovp->iov_len > MAXPHYS)
+				bp->b_bcount = MAXPHYS;
+			else
+				bp->b_bcount = iovp->iov_len;
 
 			/*
 			 * [call minphys to bound the tranfer size]
