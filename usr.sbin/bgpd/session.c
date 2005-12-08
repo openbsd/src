@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.238 2005/11/01 10:58:29 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.239 2005/12/08 15:55:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1773,7 +1773,7 @@ parse_open(struct peer *peer)
 	memcpy(&optparamlen, p, sizeof(optparamlen));
 	p += sizeof(optparamlen);
 
-	if (optparamlen > msglen - MSGSIZE_OPEN_MIN) {
+	if (optparamlen != msglen - MSGSIZE_OPEN_MIN) {
 			log_peer_warnx(&peer->conf,
 			    "corrupt OPEN message received: length mismatch");
 			session_notification(peer, ERR_OPEN, 0, NULL, 0);
