@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.15 2005/09/28 20:53:56 miod Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.16 2005/12/08 08:49:30 otto Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -301,7 +301,7 @@ bpf_filter(pc, p, wirelen, buflen)
 					return 0;
 				m = (struct mbuf *)p;
 				MINDEX(len, m, k);
-				A = mtod(m, char *)[k];
+				A = mtod(m, u_char *)[k];
 				continue;
 #else
 				return 0;
@@ -321,7 +321,7 @@ bpf_filter(pc, p, wirelen, buflen)
 					return 0;
 				m = (struct mbuf *)p;
 				MINDEX(len, m, k);
-				X = (mtod(m, char *)[k] & 0xf) << 2;
+				X = (mtod(m, u_char *)[k] & 0xf) << 2;
 				continue;
 #else
 				return 0;
