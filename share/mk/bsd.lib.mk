@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.48 2005/12/01 22:08:43 deraadt Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.49 2005/12/08 19:56:56 kettenis Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -24,8 +24,8 @@ SHLIB_MINOR=${minor}
 
 .c.o:
 	@echo "${COMPILE.c} ${DEBUG1} ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${DEBUG1} ${.IMPSRC}  -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@${COMPILE.c} ${.IMPSRC}  -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .c.go:
@@ -35,25 +35,24 @@ SHLIB_MINOR=${minor}
 	@rm -f ${.TARGET}.o
 
 .c.po:
-	@echo "${COMPILE.c} ${DEBUG1} -p ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${DEBUG1} -p ${.IMPSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.c} -p ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.c} -p ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .c.so:
-	@echo "${COMPILE.c} ${DEBUG1} ${PICFLAG} -DPIC ${.IMPSRC} \
-		-o ${.TARGET}"
-	@${COMPILE.c} ${DEBUG1} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@echo "${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .c.ln:
 	${LINT} ${LINTFLAGS} ${CFLAGS:M-[IDU]*} ${CPPFLAGS:M-[IDU]*} -i ${.IMPSRC}
 
 .cc.o .C.o .cxx.o:
-	@echo "${COMPILE.cc} ${DEBUG1} ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.cc} ${DEBUG1} ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@echo "${COMPILE.cc} ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.cc} ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .cc.go .C.go .cxx.go:
@@ -63,23 +62,22 @@ SHLIB_MINOR=${minor}
 	@rm -f ${.TARGET}.o
 
 .cc.po .C.po .cxx.po:
-	@echo "${COMPILE.cc} ${DEBUG1} -p ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.cc} ${DEBUG1} -p ${.IMPSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.cc} $-p ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.cc} -p ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .cc.so .C.so .cxx.so:
-	@echo "${COMPILE.cc} ${DEBUG1} ${PICFLAG} -DPIC ${.IMPSRC} \
-		-o ${.TARGET}"
-	@${COMPILE.cc} ${DEBUG1} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@echo "${COMPILE.cc} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.cc} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 # Fortran 77
 .f.o:
-	@echo "${COMPILE.f} ${DEBUG1} ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.f} ${DEBUG1} ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@echo "${COMPILE.f} ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.f} ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .f.go:
@@ -89,16 +87,15 @@ SHLIB_MINOR=${minor}
 	@rm -f ${.TARGET}.o
 
 .f.po:
-	@echo "${COMPILE.f} ${DEBUG1} -p ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.f} ${DEBUG1} -p ${.IMPSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.f} -p ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.f} -p ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .f.so:
-	@echo "${COMPILE.f} ${DEBUG1} ${PICFLAG} -DPIC ${.IMPSRC} \
-		-o ${.TARGET}"
-	@${COMPILE.f} ${DEBUG1} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@echo "${COMPILE.f} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.f} ${PICFLAG} -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .S.o .s.o:
@@ -111,7 +108,7 @@ SHLIB_MINOR=${minor}
 	@${CPP} ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
 	    ${AS} -o ${.TARGET}.o
 .endif
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .S.go .s.go:
@@ -135,7 +132,7 @@ SHLIB_MINOR=${minor}
 	    ${AS} ${ASPICFLAG} -o ${.TARGET}"
 	@${CPP} -DPIC ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
 	    ${AS} ${ASPICFLAG} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .if ${WARNINGS:L} == "yes"
@@ -145,9 +142,7 @@ CXXFLAGS+=	${CXXDIAGFLAGS}
 CFLAGS+=	${COPTS}
 CXXFLAGS+=	${CXXOPTS}
 
-.if !defined(DEBUG)
-DEBUG1?=	-g1
-.endif
+DEBUG?=	-g
 
 _LIBS=lib${LIB}.a
 .if (${DEBUGLIBS:L} == "yes")
