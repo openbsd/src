@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.108 2005/12/08 01:00:46 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.109 2005/12/08 02:32:21 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -259,7 +259,6 @@ const struct pci_matchid bge_devices[] = {
 #define	BGE_QUIRK_5700_PCIX_REG_BUG	0x00000010
 #define	BGE_QUIRK_PRODUCER_BUG		0x00000020
 #define	BGE_QUIRK_PCIX_DMA_ALIGN_BUG	0x00000040
-#define	BGE_QUIRK_FEWER_MBUFS		0x00000080
 
 /* following bugs are common to bcm5700 rev B, all flavours */
 #define BGE_QUIRK_5700_COMMON \
@@ -367,23 +366,23 @@ static const struct bge_revision {
 	  "BCM5703 A3" },
 
 	{ BGE_CHIPID_BCM5704_A0,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_FEWER_MBUFS,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5704 A0" },
 
 	{ BGE_CHIPID_BCM5704_A1,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_FEWER_MBUFS,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5704 A1" },
 
 	{ BGE_CHIPID_BCM5704_A2,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_FEWER_MBUFS,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5704 A2" },
 
 	{ BGE_CHIPID_BCM5704_A3,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_FEWER_MBUFS,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5704 A3" },
 
 	{ BGE_CHIPID_BCM5704_B0,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_FEWER_MBUFS,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5704 B0" },
 
 	{ BGE_CHIPID_BCM5705_A0,
@@ -467,7 +466,7 @@ static const struct bge_revision bge_majorrevs[] = {
 	  "unknown BCM5703" },
 
 	{ BGE_ASICREV_BCM5704,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_FEWER_MBUFS,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "unknown BCM5704" },
 
 	{ BGE_ASICREV_BCM5705,
@@ -1328,21 +1327,17 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* Configure mbuf memory pool */
 	if (!(BGE_IS_5705_OR_BEYOND(sc))) {
-		if (sc->bge_extram) {
+		if (sc->bge_extram)
 			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_BASEADDR,
 			    BGE_EXT_SSRAM);
-			if ((sc->bge_quirks & BGE_QUIRK_FEWER_MBUFS) == 0)
-				CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_LEN, 0x18000);
-			else
-				CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_LEN, 0x10000);
-		} else {
+		else
 			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_BASEADDR,
 			    BGE_BUFFPOOL_1);
-			if ((sc->bge_quirks & BGE_QUIRK_FEWER_MBUFS) == 0)
-				CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_LEN, 0x18000);
-			else
-				CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_LEN, 0x10000);
-		}
+
+		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_LEN, 0x10000);
+		else
+			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_LEN, 0x18000);
 
 		/* Configure DMA resource pool */
 		CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_BASEADDR,
