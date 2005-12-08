@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.110 2005/12/08 03:27:18 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.111 2005/12/08 03:53:38 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -274,15 +274,15 @@ const struct pci_matchid bge_devices[] = {
 
 #define BGE_IS_575X_PLUS(sc)  \
 	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_AISCREV_BCM5714_A0 || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714_A0 || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752)
 
 #define BGE_IS_5714_FAMILY(sc)  \
-	(BGE_ASICREV(sc->bge_chipid) == BGE_AISCREV_BCM5714_A0 || \
+	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714_A0 || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_AISCREV_BCM5714)
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714)
 
 #define BGE_IS_JUMBO_CAPABLE(sc)  \
 	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700    || \
@@ -1366,22 +1366,20 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_HIWAT, 10);
 
 	/* Enable buffer manager */
-	if (!(BGE_IS_5705_OR_BEYOND(sc))) {
-		CSR_WRITE_4(sc, BGE_BMAN_MODE,
-		    BGE_BMANMODE_ENABLE|BGE_BMANMODE_LOMBUF_ATTN);
+	CSR_WRITE_4(sc, BGE_BMAN_MODE,
+	    BGE_BMANMODE_ENABLE|BGE_BMANMODE_LOMBUF_ATTN);
 
-		/* Poll for buffer manager start indication */
-		for (i = 0; i < BGE_TIMEOUT; i++) {
-			if (CSR_READ_4(sc, BGE_BMAN_MODE) & BGE_BMANMODE_ENABLE)
-				break;
-			DELAY(10);
-		}
+	/* Poll for buffer manager start indication */
+	for (i = 0; i < BGE_TIMEOUT; i++) {
+		if (CSR_READ_4(sc, BGE_BMAN_MODE) & BGE_BMANMODE_ENABLE)
+			break;
+		DELAY(10);
+	}
 
-		if (i == BGE_TIMEOUT) {
-			printf("%s: buffer manager failed to start\n",
-			    sc->bge_dev.dv_xname);
-			return (ENXIO);
-		}
+	if (i == BGE_TIMEOUT) {
+		printf("%s: buffer manager failed to start\n",
+		    sc->bge_dev.dv_xname);
+		return (ENXIO);
 	}
 
 	/* Enable flow-through queues */
@@ -2095,7 +2093,12 @@ bge_reset(struct bge_softc *sc)
 	bge_writereg_ind(sc, BGE_MISC_CFG, (65 << 1));
 
 	/* Enable memory arbiter. */
-	if (!(BGE_IS_5705_OR_BEYOND(sc)))
+	if (BGE_IS_5714_FAMILY(sc)) {
+		u_int32_t val;
+
+		val = CSR_READ_4(sc, BGE_MARB_MODE);
+		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | val);
+	} else
 		CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
 
 	/*
