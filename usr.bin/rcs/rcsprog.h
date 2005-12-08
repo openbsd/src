@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.29 2005/12/06 10:29:12 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.30 2005/12/08 18:56:10 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -67,7 +67,8 @@ void	checkin_usage(void);
 
 /* co.c */
 int	checkout_main(int, char **);
-int	checkout_rev(RCSFILE *, RCSNUM *, const char *, int, const char *);
+int	checkout_rev(RCSFILE *, RCSNUM *, const char *, int, const char *,
+	    const char *, const char *);
 void	checkout_usage(void);
 
 /* ident.c */

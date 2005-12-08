@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.18 2005/11/28 14:43:59 xsa Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.19 2005/12/08 18:56:10 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -43,6 +43,7 @@ static int nflag = 0;
 static int kflag = RCS_KWEXP_ERR;
 static int uflag = 0;
 static int flags = 0;
+static char *locker = NULL;
 
 int
 rcsclean_main(int argc, char **argv)
@@ -96,6 +97,9 @@ rcsclean_main(int argc, char **argv)
 
 	argc -= rcs_optind;
 	argv += rcs_optind;
+
+	if ((locker = getlogin()) == NULL)
+		exit(1);
 
 	if (argc == 0) {
 		if ((dirp = opendir(".")) == NULL) {
@@ -196,7 +200,7 @@ rcsclean_file(char *fname, RCSNUM *rev)
 				    rcsnum_tostr(frev, numb, sizeof(numb)),
 				    fpath);
 			}
-			(void)rcs_lock_remove(file, frev);
+			(void)rcs_lock_remove(file, locker, frev);
 		}
 
 		if (TAILQ_EMPTY(&(file->rf_locks))) {

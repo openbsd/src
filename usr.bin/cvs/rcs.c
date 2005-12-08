@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.108 2005/12/03 15:31:53 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.109 2005/12/08 18:56:10 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -308,6 +308,8 @@ rcs_open(const char *path, int flags, ...)
 	RCSFILE *rfp;
 	struct stat st;
 	va_list vap;
+	struct rcs_delta *rdp;
+	struct rcs_lock *lkr;
 
 	fmode = 0;
 	flags &= 0xffff;	/* ditch any internal flags */
@@ -356,6 +358,20 @@ rcs_open(const char *path, int flags, ...)
 	} else if (rcs_parse(rfp) < 0) {
 		rcs_close(rfp);
 		return (NULL);
+	}
+
+	/* fill in rd_locker */
+	TAILQ_FOREACH(lkr, &(rfp->rf_locks), rl_list) {
+		if ((rdp = rcs_findrev(rfp, lkr->rl_num)) == NULL) {
+			rcs_close(rfp);
+			return (NULL);
+		}
+
+		rdp->rd_locker = strdup(lkr->rl_name);
+		if (rdp->rd_locker == NULL) {
+			rcs_close(rfp);
+			return (NULL);
+		}
 	}
 
 	return (rfp);
@@ -993,7 +1009,8 @@ rcs_lock_add(RCSFILE *file, const char *user, RCSNUM *rev)
 
 	/* first look for duplication */
 	TAILQ_FOREACH(lkp, &(file->rf_locks), rl_list) {
-		if (strcmp(lkp->rl_name, user) == 0) {
+		if ((strcmp(lkp->rl_name, user) == 0) &&
+		    (rcsnum_cmp(rev, lkp->rl_num, 0) == 0)) {
 			rcs_errno = RCS_ERR_DUPENT;
 			return (-1);
 		}
@@ -1036,13 +1053,15 @@ rcs_lock_add(RCSFILE *file, const char *user, RCSNUM *rev)
  * Returns 0 on success, or -1 on failure.
  */
 int
-rcs_lock_remove(RCSFILE *file, const RCSNUM *rev)
+rcs_lock_remove(RCSFILE *file, const char *user, RCSNUM *rev)
 {
 	struct rcs_lock *lkp;
 
-	TAILQ_FOREACH(lkp, &(file->rf_locks), rl_list)
-		if (rcsnum_cmp(lkp->rl_num, rev, 0) == 0)
+	TAILQ_FOREACH(lkp, &(file->rf_locks), rl_list) {
+		if ((strcmp(lkp->rl_name, user) == 0) &&
+		    (rcsnum_cmp(lkp->rl_num, rev, 0) == 0))
 			break;
+	}
 
 	if (lkp == NULL) {
 		rcs_errno = RCS_ERR_NOENT;
@@ -2465,6 +2484,8 @@ rcs_freedelta(struct rcs_delta *rdp)
 
 	if (rdp->rd_author != NULL)
 		free(rdp->rd_author);
+	if (rdp->rd_locker != NULL)
+		free(rdp->rd_locker);
 	if (rdp->rd_state != NULL)
 		free(rdp->rd_state);
 	if (rdp->rd_log != NULL)

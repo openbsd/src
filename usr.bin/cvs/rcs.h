@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.41 2005/12/03 15:31:53 joris Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.42 2005/12/08 18:56:10 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -155,6 +155,7 @@ struct rcs_delta {
 	char		*rd_author;
 	char		*rd_state;
 	char		*rd_log;
+	char		*rd_locker;
 	u_char		*rd_text;
 	size_t		 rd_tlen;
 
@@ -206,7 +207,7 @@ int			 rcs_sym_check(const char *);
 int			 rcs_lock_getmode(RCSFILE *);
 int			 rcs_lock_setmode(RCSFILE *, int);
 int			 rcs_lock_add(RCSFILE *, const char *, RCSNUM *);
-int			 rcs_lock_remove(RCSFILE *, const RCSNUM *);
+int			 rcs_lock_remove(RCSFILE *, const char *, RCSNUM *);
 BUF			*rcs_getrev(RCSFILE *, RCSNUM *);
 int			 rcs_deltatext_set(RCSFILE *, RCSNUM *, const char *);
 const char		*rcs_desc_get(RCSFILE *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.81 2005/12/03 17:11:58 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.82 2005/12/08 18:56:10 joris Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -59,6 +59,7 @@ struct checkin_params {
 	RCSFILE *file;
 	RCSNUM *frev, *newrev;
 	char fpath[MAXPATHLEN], *rcs_msg, *username, *deltatext, *filename;
+	char *author;
 	const char *symbol, *state, *description;
 };
 
@@ -100,7 +101,7 @@ checkin_main(int argc, char **argv)
 
 	pb.date = DATE_NOW;
 	pb.file = NULL;
-	pb.rcs_msg = pb.username = NULL;
+	pb.rcs_msg = pb.username = pb.author = NULL;
 	pb.state = pb.symbol = pb.description = NULL;
 	pb.newrev =  NULL;
 	pb.fmode = pb.flags = status = 0;
@@ -207,7 +208,10 @@ checkin_main(int argc, char **argv)
 			printf("%s\n", rcs_version);
 			exit(0);
 		case 'w':
-			pb.username = rcs_optarg;
+			if ((pb.author = strdup(rcs_optarg)) == NULL) {
+				cvs_log(LP_ERRNO, "out of memory");
+				exit(1);
+			}
 			break;
 		case 'x':
 			rcs_suffixes = rcs_optarg;
@@ -227,7 +231,7 @@ checkin_main(int argc, char **argv)
 		exit(1);
 	}
 
-	if ((pb.username == NULL) && (pb.username = getlogin()) == NULL) {
+	if ((pb.username = getlogin()) == NULL) {
 		cvs_log(LP_ERRNO, "failed to get username");
 		exit(1);
 	}
@@ -444,9 +448,20 @@ checkin_update(struct checkin_params *pb)
 	char  *filec, numb1[64], numb2[64];
 	BUF *bp;
 
+	/*
+	 * XXX this is wrong, we need to get the revision the user
+	 * has the lock for. So we can decide if we want to create a 
+	 * branch or not. (if it's not current HEAD we need to branch).
+	 */
 	pb->frev = pb->file->rf_head;
 
-	/* If revision passed on command line is less than HEAD, bail. */
+	if (checkin_checklock(pb) < 0)
+		return (-1);
+
+	/* If revision passed on command line is less than HEAD, bail.
+	 * XXX only applies to ci -r1.2 foo for example if HEAD is > 1.2 and
+	 * there is no lock set for the user.
+	 */
 	if ((pb->newrev != NULL)
 	    && (rcsnum_cmp(pb->newrev, pb->frev, 0) > 0)) {
 		cvs_log(LP_ERR,
@@ -457,9 +472,6 @@ checkin_update(struct checkin_params *pb)
 		rcs_close(pb->file);
 		return (-1);
 	}
-
-	if (checkin_checklock(pb) < 0)
-		return (-1);
 
 	/* Load file contents */
 	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
@@ -491,9 +503,12 @@ checkin_update(struct checkin_params *pb)
 	if (pb->flags & INTERACTIVE)
 		pb->rcs_msg = checkin_getlogmsg(pb->frev, pb->newrev);
 
-	if (rcs_lock_remove(pb->file, pb->frev) < 0) {
+	if (rcs_lock_remove(pb->file, pb->username, pb->frev) < 0) {
 		if (rcs_errno != RCS_ERR_NOENT)
-		    cvs_log(LP_WARN, "failed to remove lock");
+			cvs_log(LP_WARN, "failed to remove lock");
+		else if (!(pb->flags & CO_LOCK))
+			cvs_log(LP_WARN, "previous revision was not locked; "
+			    "ignoring -l option");
 	}
 
 	/* Current head revision gets the RCS patch as rd_text */
@@ -514,7 +529,7 @@ checkin_update(struct checkin_params *pb)
 	/* Now add our new revision */
 	if (rcs_rev_add(pb->file,
 	    (pb->newrev == NULL ? RCS_HEAD_REV : pb->newrev),
-	    pb->rcs_msg, pb->date, pb->username) != 0) {
+	    pb->rcs_msg, pb->date, pb->author) != 0) {
 		cvs_log(LP_ERR, "failed to add new revision");
 		return (-1);
 	}
@@ -551,7 +566,7 @@ checkin_update(struct checkin_params *pb)
 	if (((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
 	    && !(pb->flags & CI_DEFAULT))
 		checkout_rev(pb->file, pb->newrev, pb->filename, pb->flags,
-		    pb->username);
+		    pb->username, pb->author, NULL);
 
 	/* File will NOW be synced */
 	rcs_close(pb->file);
@@ -613,7 +628,7 @@ checkin_init(struct checkin_params *pb)
 	rcs_desc_set(pb->file, rcs_desc);
 
 	/* Now add our new revision */
-	if (rcs_rev_add(pb->file, RCS_HEAD_REV, LOG_INIT, -1, pb->username) != 0) {
+	if (rcs_rev_add(pb->file, RCS_HEAD_REV, LOG_INIT, -1, pb->author) != 0) {
 		cvs_log(LP_ERR, "failed to add new revision");
 		return (-1);
 	}
@@ -647,7 +662,7 @@ checkin_init(struct checkin_params *pb)
 	if (((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
 	    && !(pb->flags & CI_DEFAULT))
 		checkout_rev(pb->file, pb->newrev, pb->filename, pb->flags,
-		    pb->username);
+		    pb->username, pb->author, NULL);
 
 	/* File will NOW be synced */
 	rcs_close(pb->file);
@@ -707,8 +722,8 @@ checkin_revert(struct checkin_params *pb)
 	(void)unlink(pb->filename);
 	if ((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
 		checkout_rev(pb->file, pb->frev, pb->filename,
-		    pb->flags, pb->username);
-	rcs_lock_remove(pb->file, pb->frev);
+		    pb->flags, pb->username, pb->author, NULL);
+	rcs_lock_remove(pb->file, pb->username, pb->frev);
 	rcs_close(pb->file);
 	if (verbose == 1)
 		printf("done\n");
@@ -723,29 +738,19 @@ checkin_revert(struct checkin_params *pb)
 static int
 checkin_checklock(struct checkin_params *pb)
 {
-	int found = 0, notlocked = 1;
+	int notlocked = 1;
 	struct rcs_lock *lkp;
 
-	if (!TAILQ_EMPTY(&(pb->file->rf_locks))) {
-		TAILQ_FOREACH(lkp, &(pb->file->rf_locks), rl_list) {
-			if (!strcmp(lkp->rl_name, pb->username))
-				notlocked = 0;
-
-			if ((!strcmp(lkp->rl_name, pb->username)) &&
-			    (!rcsnum_cmp(lkp->rl_num, pb->frev, 0))) {
-				found = 1;
-				return (0);
-			}
-		}
+	TAILQ_FOREACH(lkp, &(pb->file->rf_locks), rl_list) {
+		if ((!strcmp(lkp->rl_name, pb->username)) &&
+		    (!rcsnum_cmp(lkp->rl_num, pb->frev, 0)))
+			return (0);
 	}
 
-	if ((found == 0) && (notlocked == 1)) {
-		cvs_log(LP_ERR,
-		    "%s: no lock set by %s", pb->file->rf_path, pb->username);
-		rcs_close(pb->file);
-		return (-1);
-	}
-	return (0);
+	cvs_log(LP_ERR,
+	    "%s: no lock set by %s", pb->file->rf_path, pb->username);
+	rcs_close(pb->file);
+	return (-1);
 }
 
 /*
