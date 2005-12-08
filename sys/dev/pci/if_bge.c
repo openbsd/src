@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.107 2005/11/29 20:35:58 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.108 2005/12/08 01:00:46 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -244,6 +244,7 @@ const struct pci_matchid bge_devices[] = {
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5789 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5901 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5901A2 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5903M },
 
 	{ PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK9D21 },
 
@@ -266,24 +267,32 @@ const struct pci_matchid bge_devices[] = {
 
 
 #define BGE_IS_5705_OR_BEYOND(sc)  \
-	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705 || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780 || \
+	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714_A0 || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752)
 
 #define BGE_IS_575X_PLUS(sc)  \
-	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780 || \
+	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_AISCREV_BCM5714_A0 || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752)
 
 #define BGE_IS_5714_FAMILY(sc)  \
-	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780)
+	(BGE_ASICREV(sc->bge_chipid) == BGE_AISCREV_BCM5714_A0 || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_AISCREV_BCM5714)
 
 #define BGE_IS_JUMBO_CAPABLE(sc)  \
-	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701 || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703 || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780 || \
+	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714_A0 || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
 
 
@@ -429,6 +438,14 @@ static const struct bge_revision {
 	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5752 A1" },
 
+	{ BGE_CHIPID_BCM5715_A0,
+	  BGE_QUIRK_ONLY_PHY_1,
+	  "BCM5715 A0" },
+
+	{ BGE_CHIPID_BCM5715_A1,
+	  BGE_QUIRK_ONLY_PHY_1,
+	  "BCM5715 A1" },
+
 	{ 0, 0, NULL }
 };
 
@@ -461,7 +478,7 @@ static const struct bge_revision bge_majorrevs[] = {
 	  BGE_QUIRK_ONLY_PHY_1,
 	  "unknown BCM5750" },
 
-	{ BGE_ASICREV_BCM5714,
+	{ BGE_ASICREV_BCM5714_A0,
 	  BGE_QUIRK_ONLY_PHY_1,
 	  "unknown BCM5714" },
 
@@ -472,6 +489,10 @@ static const struct bge_revision bge_majorrevs[] = {
 	{ BGE_ASICREV_BCM5780,
 	  BGE_QUIRK_ONLY_PHY_1,
 	  "unknown BCM5780" },
+
+	{ BGE_ASICREV_BCM5714,
+	  BGE_QUIRK_ONLY_PHY_1,
+	  "unknown BCM5714" },
 
 	{ 0,
 	  0,
