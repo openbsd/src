@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.30 2005/12/08 05:32:55 tedu Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.31 2005/12/08 05:53:45 tedu Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -1142,7 +1142,6 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 		if ((row < 0) || (row >= raidPtr->numRow) ||
 		    (column < 0) || (column >= raidPtr->numCol)) {
-			RF_Free( clabel, sizeof(RF_ComponentLabel_t));
 			return(EINVAL);
 		}
 
