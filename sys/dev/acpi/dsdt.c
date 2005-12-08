@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.5 2005/12/07 22:34:20 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.6 2005/12/08 00:01:13 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -97,6 +97,7 @@ struct aml_node
 	u_int8_t   *end;
 	u_int8_t    flag;
 	const char *name;
+	const char *mnem;
 };
 
 struct aml_optable
@@ -114,6 +115,11 @@ u_int8_t *aml_parse_object(struct dsdt_softc *, struct aml_node *, u_int8_t *);
 int aml_lsb(uint32_t val);
 int aml_msb(uint32_t val);
 void aml_addchildnode(struct aml_node *, struct aml_node *);
+void aml_walktree(struct aml_node *, int);
+void aml_walkroot(void);
+int aml_find_node(struct aml_node *, const char *, 
+		  void (*)(struct aml_node *, void *),
+		  void *);
 
 long aml_evalmath(u_int16_t, long, long);
 int  aml_evallogical(u_int16_t, long, long);
@@ -178,7 +184,7 @@ aml_decodename(u_int8_t *pos, const char **ref)
 	}
 	pfxlen = pos - base;
 
-	count = 0;
+	count = 1;
 	if (*pos == AMLOP_MULTINAMEPREFIX) {
 		count = *(++pos);
 		pos++;
@@ -187,31 +193,34 @@ aml_decodename(u_int8_t *pos, const char **ref)
 		count = 2;
 		pos++;
 	}
-	else if (*pos == AMLOP_NAMECHAR || (*pos >= 'A' && *pos <= 'Z')) {
-		count = 1;
+	else if (*pos == 0) {
+		count = 0;
+		pos++;
 	}
 
 	name = malloc(pfxlen + count * 5, M_DEVBUF, M_WAITOK);
-	if (name != NULL) {
-		if (pfxlen > 0) {
-			memcpy(name, base, pfxlen);
-		}
-		/* Copy name segments in chunks of 4 bytes */
-		base = name+pfxlen;
-		for(idx=0; idx<count; idx++) {
-			if (idx) *(base++) = '.';
-			memcpy(base, pos, 4);
-			pos += 4;
-			base += 4;
-		}
-		*base = 0;
-		dprintf("acpi_name: %s\n", name);
-		if (ref != NULL) {
-			*ref = name;
-		}
-		else {
-			free(name, M_DEVBUF);
-		}
+	if (name == NULL) 
+		return pos;
+
+	if (pfxlen > 0) {
+		memcpy(name, base, pfxlen);
+	}
+	/* Copy name segments in chunks of 4 bytes */
+	base = name+pfxlen;
+	for(idx=0; idx<count; idx++) {
+		if (idx) *(base++) = '.';
+		memcpy(base, pos, 4);
+		pos += 4;
+		base += 4;
+	}
+	*base = 0;
+
+	dprintf("acpi_name: %s\n", name);
+	if (ref != NULL) {
+		*ref = name;
+	}
+	else {
+		free(name, M_DEVBUF);
 	}
 
 	return pos;
@@ -398,7 +407,7 @@ struct aml_optable aml_table[] = {
 	/* Control flow */
 	{ AMLOP_IF,               "If",              "piT",  },
 	{ AMLOP_ELSE,             "Else",            "pT",   },
-	{ AMLOP_WHILE,            "While",           "ptT",  },
+	{ AMLOP_WHILE,            "While",           "piT",  },
 	{ AMLOP_BREAK,            "Break",           "",     },
 	{ AMLOP_CONTINUE,         "Continue",        "",     },
 	{ AMLOP_RETURN,           "Return",          "t",     },
@@ -480,7 +489,7 @@ struct aml_optable aml_table[] = {
 	{ AMLOP_RESET,            "Reset",           "S",      },
  
 	{ AMLOP_INDEX,            "Index",           "ttr",    },
-	{ AMLOP_PACKAGE,          "Package",         "pfT",    },
+	{ AMLOP_PACKAGE,          "Package",         "pbT",    },
 	{ AMLOP_VARPACKAGE,       "VarPackage",      "piT",    },
 	{ AMLOP_DEREFOF,          "DerefOf",         "t",      },
 	{ AMLOP_REFOF,            "RefOf",           "S",      },
@@ -546,7 +555,7 @@ aml_parseargs(struct dsdt_softc *sc, struct aml_node *node, u_int8_t *pos, const
 			nxtpos = pos + len + 1;
 			break;
 		case AML_ARG_NAMESTRING:
-			nxtpos = aml_decodename(pos, NULL);
+			nxtpos = aml_decodename(pos, &node->name);
 			break;
 		case AML_ARG_OBJLEN:
 			nxtpos = aml_decodelength(pos, &len);
@@ -608,13 +617,14 @@ aml_parse_object(struct dsdt_softc *sc, struct aml_node *parent, u_int8_t *pos)
 	node->start = pos;
 	nxtpos = aml_getopcode(pos, &node->opcode);
 	if (node->opcode == AMLOP_NAMECHAR) {
-		return aml_decodename(pos, &node->name);
+		aml_addchildnode(parent, node);
+		return aml_decodename(pos, &node->mnem);
 	}
 	while (optab->opcode != 0xFFFF) {
 		if  (optab->opcode == node->opcode) {
 			dprintf("opcode: %.4x = %s\n", node->opcode, optab->mnem);
 			aml_addchildnode(parent, node);
-
+			node->mnem = optab->mnem;
 			return aml_parseargs(sc, node, nxtpos, optab->args);
 		}
 		optab++;
@@ -625,16 +635,115 @@ aml_parse_object(struct dsdt_softc *sc, struct aml_node *parent, u_int8_t *pos)
 	return NULL;
 }
 
+void
+aml_walktree(struct aml_node *node, int depth)
+{
+	int idx;
+
+	while(node) {
+		printf(" %d ", depth);
+		for(idx=0; idx<depth; idx++) {
+			printf("..");
+		}
+		printf(" opcode:%.4x  mnem:%s %s ",
+		       node->opcode, node->mnem, node->name ? node->name : "");
+		switch(node->opcode) {
+		case AMLOP_BYTEPREFIX:
+			printf("byte: %.2x", *(u_int8_t *)(node->start+1));
+			break;
+		case AMLOP_WORDPREFIX:
+			printf("word: %.4x", *(u_int16_t *)(node->start+1));
+			break;
+		case AMLOP_DWORDPREFIX:
+			printf("dword: %.4x", *(u_int32_t *)(node->start+1));
+			break;
+		case AMLOP_STRINGPREFIX:
+			printf("string: %s", (const char *)(node->start+1));
+			break;
+		}
+		printf("\n");
+		aml_walktree(node->child, depth+1);
+
+		node = node->sibling;
+	}
+}
+
+struct aml_node aml_root;
+
+void
+aml_walkroot()
+{
+	aml_walktree(aml_root.child, 0);
+}
+
+int
+aml_find_node(struct aml_node *node, const char *name, 
+	      void (*cbproc)(struct aml_node *, void *arg),
+	      void *arg)
+{
+	while (node) {
+		if (node->name && !strcmp(name, node->name)) 
+			cbproc(node, arg);
+		aml_find_node(node->child, name, cbproc, arg);
+		node = node->sibling;
+	}
+	return (0);
+}
+
+void foundhid(struct aml_node *, void *);
+const char *aml_pnpid(uint32_t pid);
+
+const char hext[] = "0123456789ABCDEF";
+
+const char *
+aml_pnpid(uint32_t pid)
+{
+	static char pnpid[8];
+
+	pnpid[0] = '@' + ((pid >> 2) & 0x1F);
+	pnpid[1] = '@' + ((pid << 3) & 0x18) + ((pid >> 13) & 0x7);
+	pnpid[2] = '@' + ((pid >> 8) & 0x1F);
+	pnpid[3] = hext[(pid >> 20) & 0xF];
+	pnpid[4] = hext[(pid >> 16) & 0xF];
+	pnpid[5] = hext[(pid >> 28) & 0xF];
+	pnpid[6] = hext[(pid >> 24) & 0xF];
+	pnpid[7] = 0;
+
+	return pnpid;
+}
+
+void
+foundhid(struct aml_node *node, void *arg)
+{
+	const char *dev;
+
+	printf("found hid device: %s ", node->parent->name);
+	switch(node->child->opcode) {
+	case AMLOP_STRINGPREFIX:
+		dev = (const char *)node->child->start+1;
+		break;
+	case AMLOP_BYTEPREFIX:
+		dev = aml_pnpid(*(u_int8_t *)(node->child->start+1));
+		break;
+	case AMLOP_WORDPREFIX:
+		dev = aml_pnpid(*(u_int16_t *)(node->child->start+1));
+		break;
+	case AMLOP_DWORDPREFIX:
+		dev = aml_pnpid(*(u_int32_t *)(node->child->start+1));
+		break;
+	}
+	printf("  device: %s\n", dev);
+}
+
 int
 dsdt_parse_aml(struct dsdt_softc *sc, u_int8_t *start, u_int32_t length)
 {
 	u_int8_t  *pos, *nxtpos;
-	struct aml_node root;
 
-	memset(&root, 0, sizeof(root));
 	for (pos = start; pos && pos < start+length; pos=nxtpos) {
-		nxtpos = aml_parse_object(sc, &root, pos);
+		nxtpos = aml_parse_object(sc, &aml_root, pos);
 	}
 	printf(" : parsed %d AML bytes\n", length);
+
 	return (0);
 }
