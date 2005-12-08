@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.c,v 1.15 2005/05/03 08:09:52 art Exp $	*/
+/*	$OpenBSD: gprof.c,v 1.16 2005/12/08 22:34:00 millert Exp $	*/
 /*	$NetBSD: gprof.c,v 1.8 1995/04/19 07:15:59 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)gprof.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: gprof.c,v 1.15 2005/05/03 08:09:52 art Exp $";
+static char rcsid[] = "$OpenBSD: gprof.c,v 1.16 2005/12/08 22:34:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -250,7 +250,8 @@ openpfile(char *filename)
 
     if((pfile = fopen(filename, "r")) == NULL)
 	err(1, "fopen: %s", filename);
-    fread(&tmp, sizeof(struct gmonhdr), 1, pfile);
+    if (fread(&tmp, sizeof(struct gmonhdr), 1, pfile) != 1)
+	errx(1, "%s: bad gmon header", filename);
     if ( s_highpc != 0 && ( tmp.lpc != gmonhdr.lpc ||
 	 tmp.hpc != gmonhdr.hpc || tmp.ncnt != gmonhdr.ncnt))
 	errx(1, "%s: incompatible with first gmon file", filename);
