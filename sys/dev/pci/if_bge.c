@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.109 2005/12/08 02:32:21 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.110 2005/12/08 03:27:18 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -254,11 +254,10 @@ const struct pci_matchid bge_devices[] = {
 /* Various chip quirks. */
 #define	BGE_QUIRK_LINK_STATE_BROKEN	0x00000001
 #define	BGE_QUIRK_CSUM_BROKEN		0x00000002
-#define	BGE_QUIRK_ONLY_PHY_1		0x00000004
-#define	BGE_QUIRK_5700_SMALLDMA		0x00000008
-#define	BGE_QUIRK_5700_PCIX_REG_BUG	0x00000010
-#define	BGE_QUIRK_PRODUCER_BUG		0x00000020
-#define	BGE_QUIRK_PCIX_DMA_ALIGN_BUG	0x00000040
+#define	BGE_QUIRK_5700_SMALLDMA		0x00000004
+#define	BGE_QUIRK_5700_PCIX_REG_BUG	0x00000008
+#define	BGE_QUIRK_PRODUCER_BUG		0x00000010
+#define	BGE_QUIRK_PCIX_DMA_ALIGN_BUG	0x00000020
 
 /* following bugs are common to bcm5700 rev B, all flavours */
 #define BGE_QUIRK_5700_COMMON \
@@ -342,11 +341,11 @@ static const struct bge_revision {
 	  "BCM5701 B0" },
 
 	{ BGE_CHIPID_BCM5701_B2,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
+	  BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
 	  "BCM5701 B2" },
 
 	{ BGE_CHIPID_BCM5701_B5,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
+	  BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
 	  "BCM5701 B5" },
 
 	{ BGE_CHIPID_BCM5703_A0,
@@ -358,91 +357,91 @@ static const struct bge_revision {
 	  "BCM5703 A1" },
 
 	{ BGE_CHIPID_BCM5703_A2,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5703 A2" },
 
 	{ BGE_CHIPID_BCM5703_A3,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5703 A3" },
 
 	{ BGE_CHIPID_BCM5704_A0,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5704 A0" },
 
 	{ BGE_CHIPID_BCM5704_A1,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5704 A1" },
 
 	{ BGE_CHIPID_BCM5704_A2,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5704 A2" },
 
 	{ BGE_CHIPID_BCM5704_A3,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5704 A3" },
 
 	{ BGE_CHIPID_BCM5704_B0,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5704 B0" },
 
 	{ BGE_CHIPID_BCM5705_A0,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5705 A0" },
 
 	{ BGE_CHIPID_BCM5705_A1,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5705 A1" },
 
 	{ BGE_CHIPID_BCM5705_A2,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5705 A2" },
 
 	{ BGE_CHIPID_BCM5705_A3,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5705 A3" },
 
 	{ BGE_CHIPID_BCM5750_A0,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5750 A0" },
 
 	{ BGE_CHIPID_BCM5750_A1,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5750 A1" },
 
 	{ BGE_CHIPID_BCM5750_A3,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5750 A3" },
 
 	{ BGE_CHIPID_BCM5750_B0,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5750 B0" },
 
 	{ BGE_CHIPID_BCM5750_B1,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5750 B1" },
 
 	{ BGE_CHIPID_BCM5750_C0,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5750 C0" },
 
 	{ BGE_CHIPID_BCM5714_A0,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5714 A0" },
 
 	{ BGE_CHIPID_BCM5752_A0,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5752 A0" },
 
 	{ BGE_CHIPID_BCM5752_A1,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5752 A1" },
 
 	{ BGE_CHIPID_BCM5715_A0,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5715 A0" },
 
 	{ BGE_CHIPID_BCM5715_A1,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "BCM5715 A1" },
 
 	{ 0, 0, NULL }
@@ -466,31 +465,31 @@ static const struct bge_revision bge_majorrevs[] = {
 	  "unknown BCM5703" },
 
 	{ BGE_ASICREV_BCM5704,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "unknown BCM5704" },
 
 	{ BGE_ASICREV_BCM5705,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "unknown BCM5705" },
 
 	{ BGE_ASICREV_BCM5750,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "unknown BCM5750" },
 
 	{ BGE_ASICREV_BCM5714_A0,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "unknown BCM5714" },
 
 	{ BGE_ASICREV_BCM5752,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "unknown BCM5752" },
 
 	{ BGE_ASICREV_BCM5780,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "unknown BCM5780" },
 
 	{ BGE_ASICREV_BCM5714,
-	  BGE_QUIRK_ONLY_PHY_1,
+	  0,
 	  "unknown BCM5714" },
 
 	{ 0,
@@ -598,10 +597,15 @@ bge_miibus_readreg(struct device *dev, int phy, int reg)
 	int i;
 
 	/*
-	 * Several chips with builtin PHYs will incorrectly answer to
-	 * other PHY instances than the builtin PHY at id 1.
+	 * Broadcom's own driver always assumes the internal
+	 * PHY is at GMII address 1. On some chips, the PHY responds
+	 * to accesses at all addresses, which could cause us to
+	 * bogusly attach the PHY 32 times at probe type. Always
+	 * restricting the lookup to address 1 is simpler than
+	 * trying to figure out which chips revisions should be
+	 * special-cased.
 	 */
-	if (phy != 1 && (sc->bge_quirks & BGE_QUIRK_ONLY_PHY_1))
+	if (phy != 1)
 		return (0);
 
 	/* Reading with autopolling on may trigger PCI errors */
