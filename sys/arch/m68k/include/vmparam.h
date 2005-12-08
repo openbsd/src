@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.4 2005/04/11 15:13:01 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.5 2005/12/08 23:50:54 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -111,9 +111,6 @@
 
 /* # of kernel PT pages (initial only, can grow dynamically) */
 #define VM_KERNEL_PT_PAGES	((vsize_t)2)
-
-/* pcb base */
-#define	pcbb(p)			((u_int)(p)->p_addr)
 
 /*
  * Constants which control the way the VM system deals with memory segments.
