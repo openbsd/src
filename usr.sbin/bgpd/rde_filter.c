@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.38 2005/11/29 20:45:21 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.39 2005/12/08 17:17:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
