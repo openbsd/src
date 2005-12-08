@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.91 2005/05/23 22:50:23 henning Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.92 2005/12/08 23:03:11 beck Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -92,6 +92,7 @@ main(int argc, char *argv[])
 	struct in6_addr	 ina;
 	struct passwd	*pw;
 	char		*cp;
+	gid_t		 gid;
 	uid_t		 uid;
 	char		*shell;
 	login_cap_t	*lc;
@@ -255,6 +256,13 @@ main(int argc, char *argv[])
 		 */
 		fclose(pidfp);
 	} while (1);
+	
+	/* whack the group list */
+	gid = getegid();
+	if (setgroups(1, &gid) == -1) {
+		syslog(LOG_INFO, "setgroups: %s", strerror(errno));
+		do_death(0);
+	}
 
 	/* revoke privs */
 	uid = getuid();
@@ -262,7 +270,6 @@ main(int argc, char *argv[])
 		syslog(LOG_INFO, "setresuid: %s", strerror(errno));
 		do_death(0);
 	}
-
 	openlog("authpf", LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
 	if (!check_luser(PATH_BAN_DIR, luser) || !allowed_luser(luser)) {
@@ -635,6 +642,7 @@ change_filter(int add, const char *luser, const char *ipsrc)
 	char	*fdpath = NULL, *userstr = NULL, *ipstr = NULL;
 	char	*rsn = NULL, *fn = NULL;
 	pid_t	pid;
+	gid_t   gid;
 	int	s;
 
 	if (luser == NULL || !luser[0] || ipsrc == NULL || !ipsrc[0]) {
@@ -676,6 +684,12 @@ change_filter(int add, const char *luser, const char *ipsrc)
 	case -1:
 		err(1, "fork failed");
 	case 0:
+		/* revoke group privs before exec */
+		gid = getgid();
+		if (setregid(gid, gid) == -1) {
+			err(1, "setregid: %s", strerror(errno));
+			do_death(0);
+		}
 		execvp(PATH_PFCTL, pargv);
 		warn("exec of %s failed", PATH_PFCTL);
 		_exit(1);
