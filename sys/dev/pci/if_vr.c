@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.50 2005/12/07 22:48:38 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.51 2005/12/08 23:45:49 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -190,8 +190,6 @@ vr_mii_sync(sc)
 		SIO_CLR(VR_MIICMD_CLK);
 		DELAY(1);
 	}
-
-	return;
 }
 
 /*
@@ -338,7 +336,7 @@ fail:
 
 	frame->mii_data = CSR_READ_2(sc, VR_MIIDATA);
 
-	(void)splx(s);
+	splx(s);
 
 	return(0);
 }      
@@ -421,7 +419,7 @@ vr_mii_writereg(sc, frame)
 		DELAY(1); 
 	}
 
-	(void)splx(s);
+	splx(s);
 
 	return(0);
 }
@@ -477,8 +475,6 @@ vr_miibus_writereg(dev, phy, reg, data)
 	frame.mii_data = data;
 
 	vr_mii_writereg(sc, &frame);
-
-	return;
 }
 
 void
@@ -548,8 +544,6 @@ allmulti:
 	CSR_WRITE_4(sc, VR_MAR0, hashes[0]);
 	CSR_WRITE_4(sc, VR_MAR1, hashes[1]);
 	CSR_WRITE_1(sc, VR_RXCFG, rxfilt);
-
-	return;
 }
 
 /*
@@ -576,8 +570,6 @@ vr_setcfg(sc, media)
 
 	if (restart)
 		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_ON|VR_CMD_RX_ON);
-
-	return;
 }
 
 void
@@ -1065,8 +1057,6 @@ vr_rxeof(sc)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
 	    0, sc->sc_listmap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-	return;
 }
 
 void
@@ -1099,8 +1089,6 @@ vr_rxeoc(sc)
 	CSR_WRITE_4(sc, VR_RXADDR, sc->vr_cdata.vr_rx_head->vr_paddr);
 	VR_SETBIT16(sc, VR_COMMAND, VR_CMD_RX_ON);
 	VR_SETBIT16(sc, VR_COMMAND, VR_CMD_RX_GO);
-
-	return;
 }
 
 /*
@@ -1642,8 +1630,6 @@ vr_watchdog(ifp)
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		vr_start(ifp);
-
-	return;
 }
 
 /*
@@ -1714,8 +1700,6 @@ vr_stop(sc)
 
 	bzero((char *)&sc->vr_ldata->vr_tx_list,
 		sizeof(sc->vr_ldata->vr_tx_list));
-
-	return;
 }
 
 /*
