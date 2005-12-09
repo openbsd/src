@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.4 2005/12/07 22:34:20 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.5 2005/12/09 02:26:40 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -180,9 +180,7 @@ enum aml_objecttype {
 #define AML_ARG_WORD        'w'
 #define AML_ARG_DWORD       'd'
 #define AML_ARG_QWORD       'q'
-#define AML_ARG_ZERO        '0'
-#define AML_ARG_ONE         '1'
-#define AML_ARG_ONES        '!'
+#define AML_ARG_IMPBYTE     '!'
 #define AML_ARG_OBJLEN      'p'
 #define AML_ARG_STRING      's'
 #define AML_ARG_BYTELIST    'B'
@@ -200,5 +198,62 @@ enum aml_objecttype {
 #define AML_ARG_DATAOBJLIST 'O'
 #define AML_ARG_DATAOBJ     'o'
 
+#define AML_METHOD_ARGCOUNT(v)     (((v) >> 0) & 0x7)
+#define AML_METHOD_SERIALIZED(v)   (((v) >> 3) & 0x1)
+#define AML_METHOD_SYNCLEVEL(v)    (((v) >> 4) & 0xF)
+
+#define AML_FIELD_ACCESS(v)        (((v) >> 0) & 0xF)
+#define AML_FIELD_LOCK(v)          (((v) >> 4) & 0x1)
+#define AML_FIELD_UPDATE(v)        (((v) >> 5) & 0x3)
+
+struct aml_node;
+
+/* AML Object Value */
+struct aml_value
+{
+	int    type;
+	int    length;
+	union {
+		int64_t           vinteger;
+		const char       *vstring;
+		u_int8_t         *vbuffer;
+		struct aml_value *vpackage;
+		struct acpi_gas   vgas;
+		struct {
+			int               argcount;
+			struct aml_value *args;
+			struct aml_value *locals;
+			struct aml_value *result;
+		} vmethod;
+		struct {
+			int              bitpos;
+			int              bitlen;
+			struct aml_node *ref;
+		} vfield;
+	} _;
+};
+#define v_integer   _.vinteger
+#define v_string    _.vstring
+#define v_buffer    _.vbuffer
+#define v_package   _.vpackage
+#define v_field     _.vfield
+#define v_gas       _.vgas
+#define v_method    _.vmethod
+
+struct aml_node
+{
+	struct aml_node *parent;
+	struct aml_node *child;
+	struct aml_node *sibling;
+
+	u_int16_t   opcode;
+	u_int8_t   *start;
+	u_int8_t   *end;
+	u_int8_t    flag;
+	const char *name;
+	const char *mnem;
+
+	struct aml_value value;
+};
 
 #endif /* __AMLPARSE_H__ */
