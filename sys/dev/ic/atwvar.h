@@ -1,4 +1,4 @@
-/*	$OpenBSD: atwvar.h,v 1.9 2005/09/24 09:12:10 jsg Exp $	*/
+/*	$OpenBSD: atwvar.h,v 1.10 2005/12/09 03:46:42 jsg Exp $	*/
 /*	$NetBSD: atwvar.h,v 1.13 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*
@@ -277,7 +277,7 @@ struct atw_softc {
 	u_int8_t	sc_sram[ATW_SRAM_MAXSIZE];
 	u_int		sc_sramlen;
 	u_int8_t	sc_bssid[IEEE80211_ADDR_LEN];
-	u_int8_t	sc_rev;;
+	u_int8_t	sc_rev;
 	u_int8_t	sc_rf3000_options1;
 	u_int8_t	sc_rf3000_options2;
 
