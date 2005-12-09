@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.111 2005/12/08 03:53:38 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.112 2005/12/09 21:06:45 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -116,7 +116,7 @@
 
 #include <dev/pci/if_bgereg.h>
 
-const struct bge_revision * bge_lookup_rev(uint32_t);
+const struct bge_revision * bge_lookup_rev(u_int32_t);
 int bge_probe(struct device *, void *, void *);
 void bge_attach(struct device *, struct device *, void *);
 
@@ -141,7 +141,7 @@ int bge_intr(void *);
 void bge_start(struct ifnet *);
 int bge_ioctl(struct ifnet *, u_long, caddr_t);
 void bge_init(void *);
-void bge_stop_block(struct bge_softc *, bus_size_t, uint32_t);
+void bge_stop_block(struct bge_softc *, bus_size_t, u_int32_t);
 void bge_stop(struct bge_softc *);
 void bge_watchdog(struct ifnet *);
 void bge_shutdown(void *);
@@ -295,8 +295,8 @@ const struct pci_matchid bge_devices[] = {
 
 
 static const struct bge_revision {
-	uint32_t		br_chipid;
-	uint32_t		br_quirks;
+	u_int32_t		br_chipid;
+	u_int32_t		br_quirks;
 	const char		*br_name;
 } bge_revisions[] = {
 	{ BGE_CHIPID_BCM5700_A0,
@@ -1693,7 +1693,7 @@ bge_blockinit(struct bge_softc *sc)
 }
 
 const struct bge_revision *
-bge_lookup_rev(uint32_t chipid)
+bge_lookup_rev(u_int32_t chipid)
 {
 	const struct bge_revision *br;
 
@@ -2055,9 +2055,8 @@ bge_reset(struct bge_softc *sc)
 
 	reset = BGE_MISCCFG_RESET_CORE_CLOCKS|(65<<1);
 
-	/* XXX: Broadcom Linux driver. */
 	if (sc->bge_pcie) {
-		if (CSR_READ_4(sc, 0x7e2c) == 0x60)	/* PCI-E 1.0 */
+		if (CSR_READ_4(sc, 0x7e2c) == 0x60)	/* PCI-E 1.0 system */
 			CSR_WRITE_4(sc, 0x7e2c, 0x20);
 		if (sc->bge_chipid != BGE_CHIPID_BCM5750_A0) {
 			/* Prevent PCI-E link training during global reset */
@@ -2071,7 +2070,6 @@ bge_reset(struct bge_softc *sc)
 
 	DELAY(1000);
 
-	/* XXX: Broadcom Linux driver. */
 	if (sc->bge_pcie) {
 		if (sc->bge_chipid == BGE_CHIPID_BCM5750_A0) {
 			pcireg_t v;
@@ -2158,16 +2156,18 @@ bge_reset(struct bge_softc *sc)
 	 * adjustment to insure the SERDES drive level is set
 	 * to 1.2V.
 	 */
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704 && sc->bge_tbi) {
-		uint32_t serdescfg;
+	if (sc->bge_tbi && BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704) {
+		u_int32_t serdescfg;
+
 		serdescfg = CSR_READ_4(sc, BGE_SERDES_CFG);
 		serdescfg = (serdescfg & ~0xFFF) | 0x880;
 		CSR_WRITE_4(sc, BGE_SERDES_CFG, serdescfg);
 	}
 
-	/* XXX: Broadcom Linux driver. */
 	if (sc->bge_pcie && sc->bge_chipid != BGE_CHIPID_BCM5750_A0) {
-		uint32_t v;
+		u_int32_t v;
+
+		/* Enable PCI-E bug fix */
 		v = CSR_READ_4(sc, 0x7c00);
 		CSR_WRITE_4(sc, 0x7c00, v | (1<<25));
 	}
@@ -3052,7 +3052,7 @@ bge_ifmedia_upd(struct ifnet *ifp)
 			 * advertisement registers in TBI mode.
 			 */
 			if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704) {
-				uint32_t sgdig;
+				u_int32_t sgdig;
 				CSR_WRITE_4(sc, BGE_TX_TBI_AUTONEG, 0);
 				sgdig = CSR_READ_4(sc, BGE_SGDIG_CFG);
 				sgdig |= BGE_SGDIGCFG_AUTO|
@@ -3237,7 +3237,7 @@ bge_watchdog(struct ifnet *ifp)
 }
 
 void
-bge_stop_block(struct bge_softc *sc, bus_size_t reg, uint32_t bit)
+bge_stop_block(struct bge_softc *sc, bus_size_t reg, u_int32_t bit)
 {
 	int i;
 
