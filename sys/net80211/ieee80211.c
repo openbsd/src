@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.14 2005/10/07 23:30:02 reyk Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.15 2005/12/09 03:48:11 jsg Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -894,7 +894,7 @@ ieee80211_rate2media(struct ieee80211com *ic, int rate,
 			break;
 		}
 		/* NB: hack, 11g matches both 11b+11a rates */
-		/* fall thru... */
+		/* FALLTHROUGH */
 	case IEEE80211_MODE_11G:
 		mask |= IFM_IEEE80211_11G;
 		break;
