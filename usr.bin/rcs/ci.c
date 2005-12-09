@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.82 2005/12/08 18:56:10 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.83 2005/12/09 04:27:01 joris Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -738,7 +738,6 @@ checkin_revert(struct checkin_params *pb)
 static int
 checkin_checklock(struct checkin_params *pb)
 {
-	int notlocked = 1;
 	struct rcs_lock *lkp;
 
 	TAILQ_FOREACH(lkp, &(pb->file->rf_locks), rl_list) {

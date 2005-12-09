@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.44 2005/12/08 18:56:10 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.45 2005/12/09 04:27:01 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -47,10 +47,9 @@ checkout_main(int argc, char **argv)
 	int i, ch, flags, kflag;
 	RCSNUM *frev, *rev;
 	RCSFILE *file;
-	char fpath[MAXPATHLEN], buf[16];
+	char fpath[MAXPATHLEN];
 	char *author, *username;
 	const char *state;
-	struct rcs_delta *rdp;
 	time_t rcs_mtime = -1;
 
 	flags = 0;
