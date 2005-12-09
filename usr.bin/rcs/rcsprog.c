@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.51 2005/11/30 09:36:48 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.52 2005/12/09 07:00:43 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -75,7 +75,7 @@ rcs_set_rev(const char *str, RCSNUM **rev)
 	if (str == NULL)
 		return;
 
-	if (*rev != RCS_HEAD_REV)
+	if ((*rev != NULL) && (*rev != RCS_HEAD_REV))
 		cvs_log(LP_WARN, "redefinition of revision number");
 
 	if ((*rev = rcsnum_parse(str)) == NULL) {
