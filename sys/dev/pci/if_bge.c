@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.112 2005/12/09 21:06:45 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.113 2005/12/09 21:35:44 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -144,7 +144,6 @@ void bge_init(void *);
 void bge_stop_block(struct bge_softc *, bus_size_t, u_int32_t);
 void bge_stop(struct bge_softc *);
 void bge_watchdog(struct ifnet *);
-void bge_shutdown(void *);
 int bge_ifmedia_upd(struct ifnet *);
 void bge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
@@ -3349,17 +3348,4 @@ bge_stop(struct bge_softc *sc)
 	sc->bge_link = 0;
 
 	sc->bge_tx_saved_considx = BGE_TXCONS_UNSET;
-}
-
-/*
- * Stop all chip I/O so that the kernel's probe routines don't
- * get confused by errant DMAs when rebooting.
- */
-void
-bge_shutdown(void *xsc)
-{
-	struct bge_softc *sc = (struct bge_softc *)xsc;
-
-	bge_stop(sc);
-	bge_reset(sc);
 }
