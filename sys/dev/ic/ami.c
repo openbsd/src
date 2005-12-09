@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.101 2005/12/03 16:53:15 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.102 2005/12/09 07:49:25 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -371,6 +371,9 @@ ami_attach(struct ami_softc *sc)
 	(sc->sc_init)(sc);
 	{
 		paddr_t	pa = htole32(idatamap->dm_segs[0].ds_addr);
+		int s;
+
+		s = splbio();
 
 		ccb = ami_get_ccb(sc);
 		cmd = &ccb->ccb_cmd;
@@ -429,6 +432,7 @@ ami_attach(struct ami_softc *sc)
 				cmd->acc_io.aio_param = 0;
 				cmd->acc_io.aio_data = pa;
 				if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) != 0) {
+					splx(s);
 					printf(": cannot do inquiry\n");
 					goto destroy;
 				}
@@ -525,6 +529,7 @@ ami_attach(struct ami_softc *sc)
 				sc->sc_link.openings = sc->sc_maxcmds;
 		}
 
+		splx(s);
 	}
 	ami_freemem(idata, sc->dmat, &idatamap, NBPG, 1, "init data");
 
