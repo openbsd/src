@@ -1,4 +1,4 @@
-/*	$OpenBSD: lint1.h,v 1.8 2005/12/07 01:55:12 cloder Exp $	*/
+/*	$OpenBSD: lint1.h,v 1.9 2005/12/09 03:13:08 cloder Exp $	*/
 /*	$NetBSD: lint1.h,v 1.6 1995/10/02 17:31:41 jpo Exp $	*/
 
 /*
@@ -89,6 +89,7 @@ typedef struct attrnode {
  */
 typedef struct {
 	tspec_t	v_tspec;
+	tspec_t v_lspec;		/* the underlying type of a literal */
 	int	v_ansiu;		/* set if an integer constant is
 					   unsigned in ANSI C */
 	union {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.18 2005/11/29 19:50:33 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.19 2005/12/09 03:13:08 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.18 2005/11/29 19:50:33 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.19 2005/12/09 03:13:08 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -256,6 +256,7 @@ getcnode(type_t *tp, val_t *v)
 	n->tn_type = tp;
 	n->tn_val = tgetblk(sizeof (val_t));
 	n->tn_val->v_tspec = tp->t_tspec;
+	n->tn_val->v_lspec = v->v_lspec;
 	n->tn_val->v_ansiu = v->v_ansiu;
 	n->tn_val->v_u = v->v_u;
 	free(v);
@@ -2017,7 +2018,14 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 			 *	i = c;			** yields -128 **
 			 *	i = (unsigned char)c;	** yields 128 **
 			 */
-			if (op == ASSIGN && tp->t_isfield) {
+			if ((nt == CHAR || nt == UCHAR || nt == SCHAR) &&
+			   v->v_lspec == CHAR) {
+				/*
+				 * Don't warn when assigning a character
+				 * literal to any kind of character (signed,
+				 * unsigned, or unspecified).
+				 */                             
+			} else if (op == ASSIGN && tp->t_isfield) {
 				/* precision lost in bit-field assignment */
 				warning(166);
 			} else if (op == ASSIGN) {
@@ -2041,7 +2049,14 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 				warning(119, tyname(gettyp(ot)), tyname(tp));
 			}
 		} else if (nv->v_quad != v->v_quad) {
-			if (op == ASSIGN && tp->t_isfield) {
+			if ((nt == CHAR || nt == UCHAR || nt == SCHAR) &&
+			    v->v_lspec == CHAR) {
+				/*
+				 * Don't warn when assigning a character
+				 * literal to any kind of character (signed,
+				 * unsigned, or unspecified).
+				 */
+			} else if (op == ASSIGN && tp->t_isfield) {
 				/* precision lost in bit-field assignment */
 				warning(166);
 			} else if (op == INIT && tp->t_isfield) {

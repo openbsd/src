@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.21 2005/12/07 01:55:12 cloder Exp $	*/
+/*	$OpenBSD: scan.l,v 1.22 2005/12/09 03:13:08 cloder Exp $	*/
 /*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scan.l,v 1.21 2005/12/07 01:55:12 cloder Exp $";
+static char rcsid[] = "$OpenBSD: scan.l,v 1.22 2005/12/09 03:13:08 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -688,7 +688,7 @@ operator(int t, op_t o)
 }
 
 /*
- * Called if lex found a leading \'.
+ * Called if lex found a leading '.
  */
 static int
 ccon(void)
@@ -724,6 +724,7 @@ ccon(void)
 
 	yylval.y_val = xcalloc(1, sizeof (val_t));
 	yylval.y_val->v_tspec = INT;
+	yylval.y_val->v_lspec = CHAR;
 	yylval.y_val->v_quad = val;
 
 	return (T_CON);
