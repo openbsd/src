@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.8 2005/11/19 02:18:00 pedro Exp $	*/
+/*	$OpenBSD: smu.c,v 1.9 2005/12/09 22:55:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -25,6 +25,7 @@
 #include <sys/sensors.h>
 
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
 
 #include <dev/clock_subr.h>
 #include <dev/i2c/i2cvar.h>
@@ -123,6 +124,9 @@ struct smu_cmd {
 #define SMU_I2C_NORMAL		0x01
 #define SMU_I2C_COMBINED	0x02
 
+/* Power Management */
+#define SMU_POWER		0xaa
+
 /* Miscellaneous */
 #define SMU_MISC		0xee
 #define SMU_MISC_GET_DATA	0x02
@@ -142,6 +146,8 @@ int	smu_i2c_acquire_bus(void *, int);
 void	smu_i2c_release_bus(void *, int);
 int	smu_i2c_exec(void *, i2c_op_t, i2c_addr_t,
 	    const void *, size_t, void *buf, size_t, int);
+
+void	smu_slew_voltage(u_int);
 
 #define GPIO_DDR        0x04    /* Data direction */
 #define GPIO_DDR_OUTPUT 0x04    /* Output */
@@ -332,6 +338,8 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 
 	sensor_task_register(sc, smu_refresh_sensors, 5);
 	printf("\n");
+
+	ppc64_slew_voltage = smu_slew_voltage;
 
 	sc->sc_i2c_tag.ic_cookie = sc;
 	sc->sc_i2c_tag.ic_acquire_bus = smu_i2c_acquire_bus;
@@ -667,4 +675,20 @@ smu_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	if (I2C_OP_READ_P(op))
 		memcpy(buf, &cmd->data[1], len);
 	return (0);
+}
+
+void
+smu_slew_voltage(u_int freq_scale)
+{
+	struct smu_softc *sc = smu_cd.cd_devs[0];
+	struct smu_cmd *cmd = (struct smu_cmd *)sc->sc_cmd;
+
+	cmd->cmd = SMU_POWER;
+	cmd->len = 8;
+	memcpy(cmd->data, "VSLEW", 5);
+	cmd->data[5] = 0xff;
+	cmd->data[6] = 1;
+	cmd->data[7] = freq_scale;
+
+	smu_do_cmd(sc, 250);
 }
