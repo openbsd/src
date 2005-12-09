@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.20 2005/12/09 03:33:11 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.21 2005/12/09 04:28:28 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.20 2005/12/09 03:33:11 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.21 2005/12/09 04:28:28 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -3297,7 +3297,7 @@ expr(tnode_t *tn, int vctx, int tctx)
 
 	chkmisc(tn, vctx, tctx, !tctx, 0, 0, 0);
 	if (tn->tn_op == ASSIGN) {
-		if (hflag && tctx)
+		if (hflag && tctx && !tn->tn_parn)
 			/* assignment in conditional context */
 			warning(159);
 	} else if (tn->tn_op == CON) {
