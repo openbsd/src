@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.174 2005/11/30 20:25:59 xsa Exp $
+$OpenBSD: usbdevs,v 1.175 2005/12/09 05:19:06 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -741,6 +741,7 @@ product CHPRODUCTS FLIGHTYOKE	0x00ff	Flight Sim Yoke
 product CISCOLINKSYS WUSB54G 	0x000d	RT2570
 product CISCOLINKSYS WUSB54GP	0x0011	RT2570
 product CISCOLINKSYS USB200MV2	0x0018	USB200M v2
+product CISCOLINKSYS HU200TS	0x001a	HU200-TS
 
 /* Compaq products */
 product COMPAQ IPAQPOCKETPC	0x0003	iPAQ PocketPC
