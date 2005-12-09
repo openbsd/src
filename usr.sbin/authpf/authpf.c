@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.92 2005/12/08 23:03:11 beck Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.93 2005/12/09 23:41:57 beck Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -440,7 +440,7 @@ static int
 allowed_luser(char *luser)
 {
 	char	*buf, *lbuf;
-	int	 matched;
+	int	 matched = 0;
 	size_t	 len;
 	FILE	*f;
 
@@ -489,7 +489,7 @@ allowed_luser(char *luser)
 			}
 
 			if (matched)
-				return (1); /* matched an allowed username */
+				goto done; /* matched an allowed username */
 		}
 		syslog(LOG_INFO, "denied access to %s: not listed in %s",
 		    luser, PATH_ALLOWFILE);
@@ -498,13 +498,15 @@ allowed_luser(char *luser)
 		buf = "\n\nSorry, you are not allowed to use this facility!\n";
 		fputs(buf, stdout);
 	}
+done:
+	fclose(f);
 	fflush(stdout);
-	return (0);
+	return (matched);
 }
 
 /*
  * check_luser checks to see if user "luser" has been banned
- * from using us by virtue of having an file of the same name
+ * from using us by virtue of having a file of the same name
  * in the "luserdir" directory.
  *
  * If the user has been banned, we copy the contents of the file
@@ -560,6 +562,7 @@ check_luser(char *luserdir, char *luser)
 			}
 		}
 	}
+	fclose(f);
 	fflush(stdout);
 	return (0);
 }
@@ -641,13 +644,14 @@ change_filter(int add, const char *luser, const char *ipsrc)
 	};
 	char	*fdpath = NULL, *userstr = NULL, *ipstr = NULL;
 	char	*rsn = NULL, *fn = NULL;
+	int 	ret = -1;
 	pid_t	pid;
 	gid_t   gid;
 	int	s;
 
 	if (luser == NULL || !luser[0] || ipsrc == NULL || !ipsrc[0]) {
 		syslog(LOG_ERR, "invalid luser/ipsrc");
-		goto error;
+		goto done;
 	}
 
 	if (asprintf(&rsn, "%s/%s", anchorname, rulesetname) == -1)
@@ -687,8 +691,7 @@ change_filter(int add, const char *luser, const char *ipsrc)
 		/* revoke group privs before exec */
 		gid = getgid();
 		if (setregid(gid, gid) == -1) {
-			err(1, "setregid: %s", strerror(errno));
-			do_death(0);
+			err(1, "setregid failed:");
 		}
 		execvp(PATH_PFCTL, pargv);
 		warn("exec of %s failed", PATH_PFCTL);
@@ -700,7 +703,7 @@ change_filter(int add, const char *luser, const char *ipsrc)
 	if (s != 0) {
 		if (WIFEXITED(s)) {
 			syslog(LOG_ERR, "pfctl exited abnormally");
-			goto error;
+			goto done;
 		}
 	}
 
@@ -712,10 +715,11 @@ change_filter(int add, const char *luser, const char *ipsrc)
 		syslog(LOG_INFO, "removed %s, user %s - duration %ld seconds",
 		    ipsrc, luser, Tend.tv_sec - Tstart.tv_sec);
 	}
-	return (0);
+	ret = 0;
+	goto done;
 no_mem:
 	syslog(LOG_ERR, "malloc failed");
-error:
+done:
 	free(fdpath);
 	fdpath = NULL;
 	free(rsn);
@@ -727,7 +731,7 @@ error:
 	free(fn);
 	fn = NULL;
 	infile = NULL;
-	return (-1);
+	return (ret);
 }
 
 /*
