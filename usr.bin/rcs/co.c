@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.45 2005/12/09 04:27:01 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.46 2005/12/09 06:59:27 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -301,8 +301,10 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		if (verbose == 1)
 			printf(" (locked)");
 	} else if (flags & CO_UNLOCK) {
-		if (rcs_lock_remove(file, lockname, frev) < 0)
-			return (-1);
+		if (rcs_lock_remove(file, lockname, frev) < 0) {
+			if (rcs_errno != RCS_ERR_NOENT)
+				return (-1);
+		}
 
 		mode = 0444;
 		if (verbose == 1)
