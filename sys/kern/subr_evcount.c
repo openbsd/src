@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_evcount.c,v 1.6 2004/12/24 17:28:13 miod Exp $ */
+/*	$OpenBSD: subr_evcount.c,v 1.7 2005/12/09 09:09:52 jsg Exp $ */
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
  * Copyright (c) 2004 Aaron Campbell <aaron@openbsd.org>
@@ -53,11 +53,8 @@ evcount_init(void)
 
 
 void
-evcount_attach(ec, name, data, parent)
-	struct evcount *ec;
-	const char *name;
-	void *data;
-	struct evcount *parent;
+evcount_attach(struct evcount *ec, const char *name, void *data,
+    struct evcount *parent)
 {
 	static int nextid = 0;
 
@@ -75,8 +72,7 @@ evcount_attach(ec, name, data, parent)
 }
 
 void
-evcount_detach(ec)
-	struct evcount *ec;
+evcount_detach(struct evcount *ec)
 {
 	if (evcount_next_sync == ec)
 		evcount_next_sync = TAILQ_NEXT(ec, next);
@@ -87,13 +83,8 @@ evcount_detach(ec)
 #ifndef	SMALL_KERNEL
 
 int
-evcount_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+evcount_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
 {
 	int error = 0, s, nintr, i;
 	struct evcount *ec;

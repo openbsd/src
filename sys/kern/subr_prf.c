@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.62 2005/09/27 12:26:13 grunk Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.63 2005/12/09 09:09:52 jsg Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -153,9 +153,7 @@ void (*v_putc)(int) = cnputc;	/* start with cnputc (normal cons) */
  *	commonly found in userland.
  */
 void
-__assert(t, f, l, e)
-	const char *t, *f, *e;
-	int l;
+__assert(const char *t, const char *f, int l, const char *e)
 {
 
 	panic("kernel %sassertion \"%s\" failed: file \"%s\", line %d",
@@ -167,8 +165,7 @@ __assert(t, f, l, e)
  */
 
 void
-tablefull(tab)
-	const char *tab;
+tablefull(const char *tab)
 {
 	log(LOG_ERR, "%s: table is full\n", tab);
 }

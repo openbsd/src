@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.30 2005/11/19 02:18:01 pedro Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.31 2005/12/09 09:09:52 jsg Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -85,10 +85,9 @@ int	disk_change;		/* set if a disk has been attached/detached
  */
 
 void
-disksort(ap, bp)
-	register struct buf *ap, *bp;
+disksort(struct buf *ap, struct buf *bp)
 {
-	register struct buf *bq;
+	struct buf *bq;
 
 	/* If the queue is empty, then it's easy. */
 	if (ap->b_actf == NULL) {
@@ -166,11 +165,10 @@ insert:	bp->b_actf = bq->b_actf;
  * Compute checksum for disk label.
  */
 u_int
-dkcksum(lp)
-	register struct disklabel *lp;
+dkcksum(struct disklabel *lp)
 {
-	register u_int16_t *start, *end;
-	register u_int16_t sum = 0;
+	u_int16_t *start, *end;
+	u_int16_t sum = 0;
 
 	start = (u_int16_t *)lp;
 	end = (u_int16_t *)&lp->d_partitions[lp->d_npartitions];
@@ -194,14 +192,11 @@ hp0g: hard error reading fsbn 12345 of 12344-12347 (hp0 bn %d cn %d tn %d sn %d)
  * or addlog, respectively.  There is no trailing space.
  */
 void
-diskerr(bp, dname, what, pri, blkdone, lp)
-	register struct buf *bp;
-	char *dname, *what;
-	int pri, blkdone;
-	register struct disklabel *lp;
+diskerr(struct buf *bp, char *dname, char *what, int pri, int blkdone,
+    struct disklabel *lp)
 {
 	int unit = DISKUNIT(bp->b_dev), part = DISKPART(bp->b_dev);
-	register int (*pr)(const char *, ...);
+	int (*pr)(const char *, ...);
 	char partname = 'a' + part;
 	int sn;
 
@@ -237,7 +232,7 @@ diskerr(bp, dname, what, pri, blkdone, lp)
  * Initialize the disklist.  Called by main() before autoconfiguration.
  */
 void
-disk_init()
+disk_init(void)
 {
 
 	TAILQ_INIT(&disklist);
@@ -249,8 +244,7 @@ disk_init()
  * name provided.
  */
 struct disk *
-disk_find(name)
-	char *name;
+disk_find(char *name)
 {
 	struct disk *diskp;
 
@@ -265,9 +259,7 @@ disk_find(name)
 }
 
 int
-disk_construct(diskp, lockname)
-	struct disk *diskp;
-	char *lockname;
+disk_construct(struct disk *diskp, char *lockname)
 {
 	lockinit(&diskp->dk_lock, PRIBIO | PCATCH, lockname,
 		 0, LK_CANRECURSE);
@@ -281,8 +273,7 @@ disk_construct(diskp, lockname)
  * Attach a disk.
  */
 void
-disk_attach(diskp)
-	struct disk *diskp;
+disk_attach(struct disk *diskp)
 {
 
 	if (!diskp->dk_flags & DKF_CONSTRUCTED)
@@ -319,8 +310,7 @@ disk_attach(diskp)
  * Detach a disk.
  */
 void
-disk_detach(diskp)
-	struct disk *diskp;
+disk_detach(struct disk *diskp)
 {
 
 	/*
@@ -343,8 +333,7 @@ disk_detach(diskp)
  * 0 to 1, set the timestamp.
  */
 void
-disk_busy(diskp)
-	struct disk *diskp;
+disk_busy(struct disk *diskp)
 {
 
 	/*
@@ -361,10 +350,7 @@ disk_busy(diskp)
  * time, and reset the timestamp.
  */
 void
-disk_unbusy(diskp, bcount, read)
-	struct disk *diskp;
-	long bcount;
-	int read;
+disk_unbusy(struct disk *diskp, long bcount, int read)
 {
 	struct timeval dv_time, diff_time;
 
@@ -392,8 +378,7 @@ disk_unbusy(diskp, bcount, read)
 }
 
 int
-disk_lock(dk)
-	struct disk *dk;
+disk_lock(struct disk *dk)
 {
 	int error;
 
@@ -403,8 +388,7 @@ disk_lock(dk)
 }
 
 void
-disk_unlock(dk)
-	struct disk *dk;
+disk_unlock(struct disk *dk)
 {
 	lockmgr(&dk->dk_lock, LK_RELEASE, NULL);
 }
@@ -416,8 +400,7 @@ disk_unlock(dk)
  * may skew any pending transfer results.
  */
 void
-disk_resetstat(diskp)
-	struct disk *diskp;
+disk_resetstat(struct disk *diskp)
 {
 	int s = splbio();
 
@@ -436,7 +419,7 @@ disk_resetstat(diskp)
 
 
 int
-dk_mountroot()
+dk_mountroot(void)
 {
 	dev_t rawdev, rrootdev;
 	int part = DISKPART(rootdev);

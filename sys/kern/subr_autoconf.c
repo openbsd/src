@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.40 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.41 2005/12/09 09:09:52 jsg Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ __volatile int config_pending;		/* semaphore for mountroot */
  * this means that malloc et al. isn't yet available.
  */
 void
-config_init()
+config_init(void)
 {
 	TAILQ_INIT(&deferred_config_queue);
 	TAILQ_INIT(&alldevs);
@@ -124,11 +124,9 @@ config_init()
  * a few times and we want to keep the code small.
  */
 void
-mapply(m, cf)
-	register struct matchinfo *m;
-	register struct cfdata *cf;
+mapply(struct matchinfo *m, struct cfdata *cf)
 {
-	register int pri;
+	int pri;
 	void *match;
 
 	if (m->indirect)
@@ -179,13 +177,10 @@ mapply(m, cf)
  * can be ignored).
  */
 void *
-config_search(fn, parent, aux)
-	cfmatch_t fn;
-	register struct device *parent;
-	void *aux;
+config_search(cfmatch_t fn, struct device *parent, void *aux)
 {
-	register struct cfdata *cf;
-	register short *p;
+	struct cfdata *cf;
+	short *p;
 	struct matchinfo m;
 	struct cftable *t;
 
@@ -235,12 +230,10 @@ config_search(fn, parent, aux)
  * can be ignored).
  */
 void
-config_scan(fn, parent)
-	cfscan_t fn;
-	register struct device *parent;
+config_scan(cfscan_t fn, struct device *parent)
 {
-	register struct cfdata *cf;
-	register short *p;
+	struct cfdata *cf;
+	short *p;
 	void *match;
 	int indirect;
 	struct cftable *t;
@@ -274,13 +267,10 @@ config_scan(fn, parent)
  * This is much like config_search, but there is no parent.
  */
 void *
-config_rootsearch(fn, rootname, aux)
-	register cfmatch_t fn;
-	register char *rootname;
-	register void *aux;
+config_rootsearch(cfmatch_t fn, char *rootname, void *aux)
 {
-	register struct cfdata *cf;
-	register short *p;
+	struct cfdata *cf;
+	short *p;
 	struct matchinfo m;
 
 	m.fn = fn;
@@ -313,11 +303,8 @@ char *msgs[3] = { "", " not configured\n", " unsupported\n" };
  * not configured, call the given `print' function and return 0.
  */
 struct device *
-config_found_sm(parent, aux, print, submatch)
-	struct device *parent;
-	void *aux;
-	cfprint_t print;
-	cfmatch_t submatch;
+config_found_sm(struct device *parent, void *aux, cfprint_t print,
+    cfmatch_t submatch)
 {
 	void *match;
 
@@ -332,9 +319,7 @@ config_found_sm(parent, aux, print, submatch)
  * As above, but for root devices.
  */
 struct device *
-config_rootfound(rootname, aux)
-	char *rootname;
-	void *aux;
+config_rootfound(char *rootname, void *aux)
 {
 	void *match;
 
@@ -348,16 +333,12 @@ config_rootfound(rootname, aux)
  * Attach a found device.  Allocates memory for device variables.
  */
 struct device *
-config_attach(parent, match, aux, print)
-	register struct device *parent;
-	void *match;
-	register void *aux;
-	cfprint_t print;
+config_attach(struct device *parent, void *match, void *aux, cfprint_t print)
 {
-	register struct cfdata *cf;
-	register struct device *dev;
-	register struct cfdriver *cd;
-	register struct cfattach *ca;
+	struct cfdata *cf;
+	struct device *dev;
+	struct cfdriver *cd;
+	struct cfattach *ca;
 	struct cftable *t;
 
 	if (parent && parent->dv_cfdata->cf_driver->cd_indirect) {
@@ -422,13 +403,11 @@ config_attach(parent, match, aux, print)
 }
 
 struct device *
-config_make_softc(parent, cf)
-	struct device *parent;
-	struct cfdata *cf;
+config_make_softc(struct device *parent, struct cfdata *cf)
 {
-	register struct device *dev;
-	register struct cfdriver *cd;
-	register struct cfattach *ca;
+	struct device *dev;
+	struct cfdriver *cd;
+	struct cfattach *ca;
 
 	cd = cf->cf_driver;
 	ca = cf->cf_attach;
@@ -504,9 +483,7 @@ config_make_softc(parent, cf)
  * open to run and unwind their stacks.
  */
 int
-config_detach(dev, flags)
-	struct device *dev;
-	int flags;
+config_detach(struct device *dev, int flags)
 {
 	struct cfdata *cf;
 	struct cfattach *ca;
@@ -629,8 +606,7 @@ config_detach(dev, flags)
 }
 
 int
-config_activate(dev)
-	struct device *dev;
+config_activate(struct device *dev)
 {
 	struct cfattach *ca = dev->dv_cfdata->cf_attach;
 	int rv = 0, oflags = dev->dv_flags;
@@ -648,8 +624,7 @@ config_activate(dev)
 }
 
 int
-config_deactivate(dev)
-	struct device *dev;
+config_deactivate(struct device *dev)
 {
 	struct cfattach *ca = dev->dv_cfdata->cf_attach;
 	int rv = 0, oflags = dev->dv_flags;
@@ -671,9 +646,7 @@ config_deactivate(dev)
  * of its parent's devices have been attached.
  */
 void
-config_defer(dev, func)
-	struct device *dev;
-	void (*func)(struct device *);
+config_defer(struct device *dev, void (*func)(struct device *))
 {
 	struct deferred_config *dc;
 
@@ -701,8 +674,7 @@ config_defer(dev, func)
  * Process the deferred configuration queue for a device.
  */
 void
-config_process_deferred_children(parent)
-	struct device *parent;
+config_process_deferred_children(struct device *parent)
 {
 	struct deferred_config *dc, *ndc;
 
@@ -742,9 +714,7 @@ config_pending_decr(void)
 }
 
 int
-config_detach_children(parent, flags)
-	struct device *parent;
-	int flags;
+config_detach_children(struct device *parent, int flags)
 {
 	struct device *dev, *next_dev;
 	int  rv = 0;
@@ -767,9 +737,7 @@ config_detach_children(parent, flags)
 }
 
 int
-config_activate_children(parent, act)
-	struct device *parent;
-	enum devact act;
+config_activate_children(struct device *parent, enum devact act)
 {
 	struct device *dev, *next_dev;
 	int  rv = 0;
@@ -818,9 +786,7 @@ config_activate_children(parent, act)
  * Context: process only 
  */
 struct device *
-device_lookup(cd, unit)
-	struct cfdriver *cd;
-	int unit;
+device_lookup(struct cfdriver *cd, int unit)
 {
 	struct device *dv = NULL;
 
@@ -847,8 +813,7 @@ device_lookup(cd, unit)
  * Context: process or interrupt
  */
 void
-device_ref(dv)
-	struct device *dv;
+device_ref(struct device *dv)
 {
 	dv->dv_ref++;
 }
@@ -862,8 +827,7 @@ device_ref(dv)
  * Context: process or interrupt
  */
 void
-device_unref(dv)
-	struct device *dv;
+device_unref(struct device *dv)
 {
 	dv->dv_ref--;
 	if (dv->dv_ref == 0) {
@@ -880,10 +844,7 @@ device_unref(dv)
  * device instance variables.
  */
 void
-evcnt_attach(dev, name, ev)
-	struct device *dev;
-	const char *name;
-	struct evcnt *ev;
+evcnt_attach(struct device *dev, const char *name, struct evcnt *ev)
 {
 
 #ifdef DIAGNOSTIC

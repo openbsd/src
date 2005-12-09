@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.33 2003/06/02 21:14:47 maja Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.34 2005/12/09 09:09:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -115,7 +115,7 @@ char *userconf_cmds[] = {
 };
 
 void
-userconf_init()
+userconf_init(void)
 {
 	int i = 0;
 	struct cfdata *cd;
@@ -143,7 +143,7 @@ userconf_init()
 }
 
 int
-userconf_more()
+userconf_more(void)
 {
 	int quit = 0;
 	char c = '\0';
@@ -163,8 +163,7 @@ userconf_more()
 }
 
 void
-userconf_hist_cmd(cmd)
-	char cmd;
+userconf_hist_cmd(char cmd)
 {
 	userconf_histcur = userconf_histlen;
 	if (userconf_histcur < userconf_histsz) {
@@ -174,8 +173,7 @@ userconf_hist_cmd(cmd)
 }
 
 void
-userconf_hist_int(val)
-	int val;
+userconf_hist_int(int val)
 {
 	snprintf(userconf_histbuf, sizeof userconf_histbuf, " %d",val);
 	if (userconf_histcur + strlen(userconf_histbuf) < userconf_histsz) {
@@ -187,7 +185,7 @@ userconf_hist_int(val)
 }
 
 void
-userconf_hist_eoc()
+userconf_hist_eoc(void)
 {
 	if (userconf_histcur < userconf_histsz) {
 		userconf_history[userconf_histcur] = '\n';
@@ -197,8 +195,7 @@ userconf_hist_eoc()
 }
 
 void
-userconf_pnum(val)
-	int val;
+userconf_pnum(int val)
 {
 	if (val > -2 && val < 16) {
 		printf("%d",val);
@@ -220,8 +217,7 @@ userconf_pnum(val)
 }
 
 void
-userconf_pdevnam(dev)
-	short dev;
+userconf_pdevnam(short dev)
 {
 	struct cfdata *cd;
 
@@ -246,8 +242,7 @@ userconf_pdevnam(dev)
 }
 
 void
-userconf_pdev(devno)
-	short devno;
+userconf_pdev(short devno)
 {
 	struct cfdata *cd;
 	short *p;
@@ -311,9 +306,7 @@ userconf_pdev(devno)
 }
 
 int
-userconf_number(c, val)
-	char *c;
-	int *val;
+userconf_number(char *c, int *val)
 {
 	u_int num = 0;
 	int neg = 0;
@@ -356,10 +349,7 @@ userconf_number(c, val)
 }
 
 int
-userconf_device(cmd, len, unit, state)
-	char *cmd;
-	int *len;
-	short *unit, *state;
+userconf_device(char *cmd, int *len, short *unit, short *state)
 {
 	short u = 0, s = FSTATE_FOUND;
 	int l = 0;
@@ -394,9 +384,7 @@ userconf_device(cmd, len, unit, state)
 }
 
 int
-userconf_attr(cmd, val)
-	char *cmd;
-	int *val;
+userconf_attr(char *cmd, int *val)
 {
 	char *c;
 	short attr = -1, i = 0, l = 0;
@@ -425,9 +413,7 @@ userconf_attr(cmd, val)
 }
 
 void
-userconf_modify(item, val)
-	char *item;
-	int  *val;
+userconf_modify(char *item, int *val)
 {
 	int ok = 0;
 	int a;
@@ -458,8 +444,7 @@ userconf_modify(item, val)
 }
 
 void
-userconf_change(devno)
-	int devno;
+userconf_change(int devno)
 {
 	struct cfdata *cd;
 	char c = '\0';
@@ -570,8 +555,7 @@ userconf_change(devno)
 }
 
 void
-userconf_disable(devno)
-	int devno;
+userconf_disable(int devno)
 {
 	int done = 0;
 
@@ -623,8 +607,7 @@ userconf_disable(devno)
 }
 
 void
-userconf_enable(devno)
-	int devno;
+userconf_enable(int devno)
 {
 	int done = 0;
 
@@ -675,7 +658,7 @@ userconf_enable(devno)
 }
 
 void
-userconf_help()
+userconf_help(void)
 {
 	int j = 0, k;
 
@@ -743,7 +726,7 @@ userconf_help()
 }
 
 void
-userconf_list()
+userconf_list(void)
 {
 	int i = 0;
 
@@ -759,7 +742,7 @@ userconf_list()
 }
 
 void
-userconf_show()
+userconf_show(void)
 {
 	int i = 0;
 
@@ -775,10 +758,7 @@ userconf_show()
 }
 
 void
-userconf_common_attr_val(attr, val, routine)
-	short attr;
-	int   *val;
-	char  routine;
+userconf_common_attr_val(short attr, int *val, char routine)
 {
 	struct cfdata *cd;
 	int   *l;
@@ -831,8 +811,7 @@ userconf_common_attr_val(attr, val, routine)
 }
 
 void
-userconf_show_attr(cmd)
-	char *cmd;
+userconf_show_attr(char *cmd)
 {
 	char *c;
 	short attr = -1, i = 0, l = 0;
@@ -872,11 +851,7 @@ userconf_show_attr(cmd)
 }
 
 void
-userconf_common_dev(dev, len, unit, state, routine)
-	char *dev;
-	int len;
-	short unit, state;
-	char routine;
+userconf_common_dev(char *dev, int len, short unit, short state, char routine)
 {
 	int i = 0;
 
@@ -965,10 +940,7 @@ userconf_common_dev(dev, len, unit, state, routine)
 }
 
 void
-userconf_common_attr(cmd, attr, routine)
-	char *cmd;
-	int attr;
-	char routine;
+userconf_common_attr(char *cmd, int attr, char routine)
 {
 	char *c;
 	short l = 0;
@@ -995,12 +967,7 @@ userconf_common_attr(cmd, attr, routine)
 }
 
 void
-userconf_add_read(prompt, field, dev, len, val)
-	char *prompt;
-	char field;
-	char *dev;
-	int len;
-	int *val;
+userconf_add_read(char *prompt, char field, char *dev, int len, int *val)
 {
 	int ok = 0;
 	int a;
@@ -1046,10 +1013,7 @@ userconf_add_read(prompt, field, dev, len, val)
 }
 
 void
-userconf_add(dev, len, unit, state)
-	char *dev;
-	int len;
-	short unit, state;
+userconf_add(char *dev, int len, short unit, short state)
 {
 	int i = 0, found = 0;
 	struct cfdata new;
@@ -1192,8 +1156,7 @@ userconf_add(dev, len, unit, state)
 }
 
 int
-userconf_parse(cmd)
-	char *cmd;
+userconf_parse(char *cmd)
 {
 	char *c, *v;
 	int i = 0, j = 0, k, a;
@@ -1359,7 +1322,7 @@ userconf_parse(cmd)
 }
 
 void
-user_config()
+user_config(void)
 {
 	userconf_init();
 	printf("User Kernel Config\n");

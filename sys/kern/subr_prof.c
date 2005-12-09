@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.14 2003/09/01 18:06:03 henning Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.15 2005/12/09 09:09:52 jsg Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -56,7 +56,7 @@ extern char etext[];
 
 
 void
-kmstartup()
+kmstartup(void)
 {
 	char *cp;
 	struct gmonparam *p = &_gmonparam;
@@ -97,13 +97,8 @@ kmstartup()
  * Return kernel profiling information.
  */
 int
-sysctl_doprof(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+sysctl_doprof(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen)
 {
 	struct gmonparam *gp = &_gmonparam;
 	int error;
@@ -148,18 +143,15 @@ sysctl_doprof(name, namelen, oldp, oldlenp, newp, newlen)
  */
 /* ARGSUSED */
 int
-sys_profil(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_profil(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_profil_args /* {
+	struct sys_profil_args /* {
 		syscallarg(caddr_t) samples;
 		syscallarg(size_t) size;
 		syscallarg(u_long) offset;
 		syscallarg(u_int) scale;
 	} */ *uap = v;
-	register struct uprof *upp;
+	struct uprof *upp;
 	int s;
 
 	if (SCARG(uap, scale) > (1 << 16))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.13 2005/04/20 00:08:50 deraadt Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.14 2005/12/09 09:09:52 jsg Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -73,9 +73,7 @@ struct filterops logread_filtops =
 	{ 1, NULL, filt_logrdetach, filt_logread};
 
 void
-initmsgbuf(buf, bufsize)
-	caddr_t buf;
-	size_t bufsize;
+initmsgbuf(caddr_t buf, size_t bufsize)
 {
 	struct msgbuf *mbp;
 	long new_bufs;
@@ -131,10 +129,7 @@ msgbuf_putchar(const char c)
 
 /*ARGSUSED*/
 int
-logopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+logopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	if (log_open)
 		return (EBUSY);
@@ -144,10 +139,7 @@ logopen(dev, flags, mode, p)
 
 /*ARGSUSED*/
 int
-logclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+logclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	log_open = 0;
@@ -157,10 +149,7 @@ logclose(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-logread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+logread(dev_t dev, struct uio *uio, int flag)
 {
 	struct msgbuf *mbp = msgbufp;
 	long l;
@@ -203,10 +192,7 @@ logread(dev, uio, flag)
 
 /*ARGSUSED*/
 int
-logpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+logpoll(dev_t dev, int events, struct proc *p)
 {
 	int revents = 0;
 	int s = splhigh();
@@ -265,7 +251,7 @@ filt_logread(struct knote *kn, long hint)
 }
 
 void
-logwakeup()
+logwakeup(void)
 {
 	if (!log_open)
 		return;
@@ -282,12 +268,7 @@ logwakeup()
 
 /*ARGSUSED*/
 int
-logioctl(dev, com, data, flag, p)
-	dev_t dev;
-	u_long com;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+logioctl(dev_t dev, u_long com, caddr_t data, int flag, struct proc *p)
 {
 	long l;
 	int s;

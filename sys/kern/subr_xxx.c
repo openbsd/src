@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_xxx.c,v 1.8 2003/06/02 23:28:06 millert Exp $	*/
+/*	$OpenBSD: subr_xxx.c,v 1.9 2005/12/09 09:09:52 jsg Exp $	*/
 /*	$NetBSD: subr_xxx.c,v 1.10 1996/02/04 02:16:51 christos Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
  * Unsupported device function (e.g. writing to read-only device).
  */
 int
-enodev()
+enodev(void)
 {
 
 	return (ENODEV);
@@ -57,7 +57,7 @@ enodev()
  * Unconfigured device function; driver not configured.
  */
 int
-enxio()
+enxio(void)
 {
 
 	return (ENXIO);
@@ -67,7 +67,7 @@ enxio()
  * Unsupported ioctl function.
  */
 int
-enoioctl()
+enoioctl(void)
 {
 
 	return (ENOTTY);
@@ -79,7 +79,7 @@ enoioctl()
  * that is not supported by the current system binary.
  */
 int
-enosys ()
+enosys(void)
 {
 
 	return (ENOSYS);
@@ -91,8 +91,7 @@ enosys ()
  */
 /*ARGSUSED*/
 int
-eopnotsupp(v)
-	void *v;
+eopnotsupp(void *v)
 {
 
 	return (EOPNOTSUPP);
@@ -103,8 +102,7 @@ eopnotsupp(v)
  */
 /*ARGSUSED*/
 int
-nullop(v)
-	void *v;
+nullop(void *v)
 {
 
 	return (0);
@@ -126,8 +124,7 @@ cdevsw_lookup(dev_t dev)
  * Convert a character device number to a block device number.
  */
 dev_t
-chrtoblk(dev)
-	dev_t dev;
+chrtoblk(dev_t dev)
 {
 	int blkmaj;
 
@@ -143,8 +140,7 @@ chrtoblk(dev)
  * Convert a block device number to a character device number.
  */
 dev_t
-blktochr(dev)
-	dev_t dev;
+blktochr(dev_t dev)
 {
 	int blkmaj = major(dev);
 	int i;
