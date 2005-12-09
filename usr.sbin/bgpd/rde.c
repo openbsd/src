@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.182 2005/12/08 16:02:56 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.183 2005/12/09 16:17:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1116,6 +1116,8 @@ rde_attr_parse(u_char *p, u_int16_t len, struct rde_aspath *a, int ebgp,
 		plen += attr_len;
 		break;
 	default:
+		if ((flags & ATTR_OPTIONAL) == 0)
+			return (-1);
 optattr:
 		if (attr_optadd(a, flags, type, p, attr_len) == -1)
 			return (-1);
