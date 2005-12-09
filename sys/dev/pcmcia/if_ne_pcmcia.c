@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.85 2005/12/05 18:07:27 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.86 2005/12/09 06:23:49 uwe Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -860,7 +860,10 @@ ne_pcmcia_activate(dev, act)
 		ifp->if_timer = 0;
 		if (ifp->if_flags & IFF_RUNNING)
 			dp8390_stop(esc);
-		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		if (sc->sc_ih != NULL) {
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+			sc->sc_ih = NULL;
+		}
 		pcmcia_function_disable(sc->sc_pf);
 		break;
 	}
