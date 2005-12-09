@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.19 2005/12/09 03:13:08 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.20 2005/12/09 03:33:11 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.19 2005/12/09 03:13:08 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.20 2005/12/09 03:33:11 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1984,7 +1984,14 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 			}
 		} else if ((nt != PTR && isutyp(nt)) &&
 			   (ot != PTR && !isutyp(ot)) && v->v_quad < 0) {
-			if (op == ASSIGN) {
+			if ((nt == CHAR || nt == UCHAR || nt == SCHAR) &&
+			   v->v_lspec == CHAR) {
+				/*
+				 * Don't warn when assigning a character
+				 * literal to any kind of character (signed,
+				 * unsigned, or unspecified).
+				 */
+			} else if (op == ASSIGN) {
 				/* assignment of negative constant to ... */
 				warning(164);
 			} else if (op == INIT) {
@@ -2024,7 +2031,7 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 				 * Don't warn when assigning a character
 				 * literal to any kind of character (signed,
 				 * unsigned, or unspecified).
-				 */                             
+				 */
 			} else if (op == ASSIGN && tp->t_isfield) {
 				/* precision lost in bit-field assignment */
 				warning(166);
