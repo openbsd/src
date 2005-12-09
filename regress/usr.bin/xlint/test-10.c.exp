@@ -1,3 +1,2 @@
-test-10.c(21): warning: constant in conditional context
-test-10.c(24): warning: constant in conditional context
+test-10.c(17): warning: assignment of negative constant to unsigned type
 Lint pass2:

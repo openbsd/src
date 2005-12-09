@@ -1,27 +1,23 @@
-/*	$OpenBSD: test-10.c,v 1.1 2005/12/02 21:24:09 grunk Exp $	*/
+/*	$OpenBSD: test-10.c,v 1.2 2005/12/09 03:34:34 cloder Exp $	*/
 
 /*
- * Placed in the public domain by Alexander von Gernler <grunk@openbsd.org>
+ * Placed in the public domain by Chad Loder <cloder@openbsd.org>.
  *
- * Test if lint keywords in #define macros are preserved
+ * Test lint warning about literal char assignments.
  */
-
-/* ARGSUSED */
-void
-foo(int bar) {
-}
-
-#define	S(x)	do { foo(x); } while (/* CONSTCOND */ 0)
-#define	T(x)	do { foo(x); } while (0)
+#include <limits.h>
 
 /* ARGSUSED */
 int
-main(int argc, char *argv[]) {
-	S(1);
-	T(1);
+main(int argc, char *argv[])
+{
+	unsigned char c;
 
-	do { foo(1); } while (/* CONSTCOND */ 0);
-	do { foo(1); } while (0);
-
-	return (0);
+	c = '\377';	/* should not warn, because c is a char type */
+	c = -1;		/* should warn, because rvalue is not a char literal */
+	c++;
+	
+	return 0;
 }
+
+
