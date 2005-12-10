@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.73 2005/09/28 00:24:03 pedro Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.74 2005/12/10 11:45:43 miod Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -545,7 +545,7 @@ uvm_map_init()
 	UVMCNT_INIT(uvm_mlk_hint,  UVMCNT_CNT, 0, "# map lookup hint hits", 0);
 
 	/*
-	 * now set up static pool of kernel map entrys ...
+	 * now set up static pool of kernel map entries ...
 	 */
 
 	simple_lock_init(&uvm.kentry_lock);
@@ -1670,7 +1670,7 @@ uvm_map_reserve(map, size, offset, align, raddr)
  *
  * => caller must WRITE-LOCK the map 
  * => we return TRUE if replacement was a success
- * => we expect the newents chain to have nnewents entrys on it and
+ * => we expect the newents chain to have nnewents entries on it and
  *    we expect newents->prev to point to the last entry on the list
  * => note newents is allowed to be NULL
  */

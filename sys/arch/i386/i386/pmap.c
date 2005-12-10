@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.85 2005/11/18 17:05:04 brad Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.86 2005/12/10 11:45:41 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -360,7 +360,7 @@ static vaddr_t virtual_end;	/* VA of last free KVA */
  */
 
 TAILQ_HEAD(pv_pagelist, pv_page);
-static struct pv_pagelist pv_freepages;	/* list of pv_pages with free entrys */
+static struct pv_pagelist pv_freepages;	/* list of pv_pages with free entries */
 static struct pv_pagelist pv_unusedpgs; /* list of unused pv_pages */
 static int pv_nfpvents;			/* # of free pv entries */
 static struct pv_page *pv_initpage;	/* bootstrap page from kernel_map */
@@ -1340,7 +1340,7 @@ pmap_alloc_pvpage(pmap, mode)
 		goto steal_one;
 
 	/*
-	 * add a mapping for our new pv_page and free its entrys (save one!)
+	 * add a mapping for our new pv_page and free its entries (save one!)
 	 *
 	 * NOTE: If we are allocating a PV page for the kernel pmap, the
 	 * pmap is already locked!  (...but entering the mapping is safe...)
@@ -3265,7 +3265,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		if (wired)
 			pmap->pm_stats.wired_count++;
 		if (ptp)
-			ptp->wire_count++;      /* count # of valid entrys */
+			ptp->wire_count++;      /* count # of valid entries */
 	}
 
 	/*

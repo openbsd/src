@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcreg.h,v 1.14 2005/08/27 14:08:38 jsg Exp $     */
+/*      $OpenBSD: wdcreg.h,v 1.15 2005/12/10 11:45:43 miod Exp $     */
 /*	$NetBSD: wdcreg.h,v 1.22 1999/03/07 14:02:54 bouyer Exp $	*/
 
 /*-
@@ -80,7 +80,7 @@
 #define WDCC_READ	0x20	/* disk read code */
 #define WDCC_WRITE	0x30	/* disk write code */
 #define WDCC__LONG	0x02	/* modifier -- access ecc bytes */
-#define WDCC__NORETRY	0x01	/* modifier -- no retrys */
+#define WDCC__NORETRY	0x01	/* modifier -- no entries */
 
 #define WDCC_FORMAT	0x50	/* disk format code */
 #define WDCC_DIAGNOSE	0x90	/* controller diagnostic */

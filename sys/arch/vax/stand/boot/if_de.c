@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.1 2002/06/11 09:36:23 hugh Exp $ */
+/*	$OpenBSD: if_de.c,v 1.2 2005/12/10 11:45:43 miod Exp $ */
 /*	$NetBSD: if_de.c,v 1.2 2002/05/24 21:41:40 ragge Exp $	*/
 
 /*
@@ -69,8 +69,8 @@ struct netif_driver de_driver = {
 struct de_cdata {
 	/* the following structures are always mapped in */
         struct  de_pcbb dc_pcbb;        /* port control block */
-        struct  de_ring dc_xrent[NXMT]; /* transmit ring entrys */
-        struct  de_ring dc_rrent[NRCV]; /* receive ring entrys */
+        struct  de_ring dc_xrent[NXMT]; /* transmit ring entries */
+        struct  de_ring dc_rrent[NRCV]; /* receive ring entries */
         struct  de_udbbuf dc_udbbuf;    /* UNIBUS data buffer */
 	char	dc_rbuf[NRCV][ETHER_MAX_LEN];
 	char	dc_xbuf[NXMT][ETHER_MAX_LEN];

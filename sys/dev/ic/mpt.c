@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.c,v 1.20 2005/12/03 04:00:08 marco Exp $	*/
+/*	$OpenBSD: mpt.c,v 1.21 2005/12/10 11:45:43 miod Exp $	*/
 /*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 
 #include <dev/ic/mpt.h>
 
-#define MPT_MAX_TRYS 3
+#define MPT_MAX_TRIES 3
 #define MPT_MAX_WAIT 300000
 
 static int maxwait_ack = 0;
@@ -1542,7 +1542,7 @@ mpt_init(struct mpt_softc *mpt, u_int32_t who)
 		break;
 	}
 
-	for (try = 0; try < MPT_MAX_TRYS; try++) {
+	for (try = 0; try < MPT_MAX_TRIES; try++) {
 		/*
 		 * No need to reset if the IOC is already in the READY state.
 		 *
@@ -1744,7 +1744,7 @@ mpt_init(struct mpt_softc *mpt, u_int32_t who)
 		break;
 	}
 
-	if (try >= MPT_MAX_TRYS) {
+	if (try >= MPT_MAX_TRIES) {
 		mpt_prt(mpt, "failed to initialize IOC");
 		return (EIO);
 	}

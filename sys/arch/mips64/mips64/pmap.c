@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.17 2004/10/20 12:49:15 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.18 2005/12/10 11:45:43 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -170,7 +170,7 @@ pmap_bootstrap()
 	/*
 	 * The 64 bit Mips architecture stores the AND result
 	 * of the Global bits in the pte pair in the on chip
-	 * translation lookaside buffer. Thus invalid entrys
+	 * translation lookaside buffer. Thus invalid entries
 	 * must have the Global bit set so when Entry LO and
 	 * Entry HI G bits are ANDed together they will produce
 	 * a global bit to store in the tlb.

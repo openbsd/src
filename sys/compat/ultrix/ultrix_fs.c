@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_fs.c,v 1.12 2004/06/22 23:52:18 jfb Exp $	*/
+/*	$OpenBSD: ultrix_fs.c,v 1.13 2005/12/10 11:45:43 miod Exp $	*/
 /*	$NetBSD: ultrix_fs.c,v 1.4 1996/04/07 17:23:06 jonathan Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ struct ultrix_getmnt_args {
 #define ULTRIX_NM_WSIZE    0x0004  /* set write size */
 #define ULTRIX_NM_RSIZE    0x0008  /* set read size */
 #define ULTRIX_NM_TIMEO    0x0010  /* set initial timeout */
-#define ULTRIX_NM_RETRANS  0x0020  /* set number of request retrys */
+#define ULTRIX_NM_RETRANS  0x0020  /* set number of request retries */
 #define ULTRIX_NM_HOSTNAME 0x0040  /* set hostname for error printf */
 #define ULTRIX_NM_PGTHRESH 0x0080  /* set page threshold for exec */
 #define ULTRIX_NM_INT      0x0100  /* allow hard mount keyboard interrupts */

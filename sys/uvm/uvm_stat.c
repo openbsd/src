@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_stat.c,v 1.16 2005/09/30 02:37:06 pedro Exp $	 */
+/*	$OpenBSD: uvm_stat.c,v 1.17 2005/12/10 11:45:43 miod Exp $	 */
 /*	$NetBSD: uvm_stat.c,v 1.18 2001/03/09 01:02:13 chs Exp $	 */
 
 /*
@@ -231,7 +231,7 @@ uvmexp_print(int (*pr)(const char *, ...))
 	(*pr)("    noram=%d, noanon=%d, pgwait=%d, pgrele=%d\n",
 	    uvmexp.fltnoram, uvmexp.fltnoanon, uvmexp.fltpgwait,
 	    uvmexp.fltpgrele);
-	(*pr)("    ok relocks(total)=%d(%d), anget(retrys)=%d(%d), "
+	(*pr)("    ok relocks(total)=%d(%d), anget(retries)=%d(%d), "
 	    "amapcopy=%d\n", uvmexp.fltrelckok, uvmexp.fltrelck,
 	    uvmexp.fltanget, uvmexp.fltanretry, uvmexp.fltamcopy);
 	(*pr)("    neighbor anon/obj pg=%d/%d, gets(lock/unlock)=%d/%d\n",

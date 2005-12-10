@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.h,v 1.15 2005/06/01 21:49:54 miod Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.h,v 1.16 2005/12/10 11:45:43 miod Exp $	*/
 /*	$NetBSD: aic7xxx_osm.h,v 1.7 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ typedef struct pci_attach_args * ahc_dev_softc_t;
 /************************ Tunable Driver Parameters  **************************/
 /*
  * The number of DMA segments supported.  The sequencer can handle any number
- * of physically contiguous S/G entrys.  To reduce the driver's memory
+ * of physically contiguous S/G entries.  To reduce the driver's memory
  * consumption, we limit the number supported to be sufficient to handle
  * the largest mapping supported by the kernel, MAXPHYS.  Assuming the
  * transfer is as fragmented as possible and unaligned, this turns out to
