@@ -1,11 +1,11 @@
-test-2.c(17): warning: bitwise operation on signed value possibly nonportable
-test-2.c(22): warning: bitwise operation on signed value possibly nonportable
-test-2.c(22): warning: right shift of 8-bit quantity by 8 bits
-test-2.c(24): warning: right shift of 8-bit quantity by 8 bits
-test-2.c(27): warning: bitwise operation on signed value possibly nonportable
-test-2.c(27): warning: right shift of 8-bit quantity by 9 bits
-test-2.c(29): warning: right shift of 8-bit quantity by 9 bits
-test-2.c(32): warning: bitwise operation on signed value possibly nonportable
-test-2.c(32): warning: right shift of 8-bit quantity by 10 bits
-test-2.c(34): warning: right shift of 8-bit quantity by 10 bits
+test-2.c:17: warning: bitwise operation on signed value possibly nonportable
+test-2.c:22: warning: bitwise operation on signed value possibly nonportable
+test-2.c:22: warning: right shift of 8-bit quantity by 8 bits
+test-2.c:24: warning: right shift of 8-bit quantity by 8 bits
+test-2.c:27: warning: bitwise operation on signed value possibly nonportable
+test-2.c:27: warning: right shift of 8-bit quantity by 9 bits
+test-2.c:29: warning: right shift of 8-bit quantity by 9 bits
+test-2.c:32: warning: bitwise operation on signed value possibly nonportable
+test-2.c:32: warning: right shift of 8-bit quantity by 10 bits
+test-2.c:34: warning: right shift of 8-bit quantity by 10 bits
 Lint pass2:

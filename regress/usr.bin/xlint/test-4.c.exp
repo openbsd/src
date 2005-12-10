@@ -1,2 +1,2 @@
-test-4.c(22): warning: case ranges are illegal in ANSI C
+test-4.c:22: warning: case ranges are illegal in ANSI C
 Lint pass2:

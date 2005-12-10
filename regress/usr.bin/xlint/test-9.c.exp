@@ -1,2 +1,2 @@
-test-9.c(15): warning: comparison of unsigned int with 0, op >=
+test-9.c:15: warning: comparison of unsigned int with 0, op >=
 Lint pass2:

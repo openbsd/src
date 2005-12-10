@@ -1,4 +1,4 @@
-/*	$OpenBSD: test-12.c,v 1.1 2005/12/09 04:30:58 cloder Exp $	*/
+/*	$OpenBSD: test-12.c,v 1.2 2005/12/10 19:20:21 cloder Exp $	*/
 
 /*
  * Placed in the public domain by Chad Loder <cloder@openbsd.org>.
@@ -20,6 +20,9 @@ main(int argc, char *argv[])
 
 	if ((a = argc))		/* should not warn */
 		return 1;
+
+	for (a = 0; a < 10; a++)
+		a = a;
 
 	return 0;
 }
