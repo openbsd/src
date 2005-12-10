@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.74 2005/12/10 11:45:43 miod Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.75 2005/12/10 16:06:10 krw Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -845,9 +845,6 @@ uvm_map_p(map, startp, size, uobj, uoffset, align, flags, p)
 			error = amap_extend(prev_entry, size);
 			if (error) {
 				vm_map_unlock(map);
-				if (new_entry) {
-					uvm_mapent_free(new_entry);
-				}
 				return (error);
 			}
 		}
