@@ -1,2 +1,2 @@
 Lint pass2:
-foo declared( test-7.c(9) ), but never used or defined
+test-7.c:9: foo declared, but never used or defined
