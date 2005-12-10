@@ -1,4 +1,4 @@
-/*	$OpenBSD: emit.c,v 1.8 2005/12/10 18:51:54 martin Exp $	*/
+/*	$OpenBSD: emit.c,v 1.9 2005/12/10 18:58:50 martin Exp $	*/
 /*	$NetBSD: emit.c,v 1.2 1995/07/03 21:24:00 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: emit.c,v 1.8 2005/12/10 18:51:54 martin Exp $";
+static char rcsid[] = "$OpenBSD: emit.c,v 1.9 2005/12/10 18:58:50 martin Exp $";
 #endif
 
 #include <stdio.h>
@@ -66,7 +66,7 @@ outopen(const char *name)
 		err(1, "cannot open '%s'", name);
 
 	/* generate output buffer */
-	oa.o_len = 1024;
+	ob.o_len = 1024;
 	ob.o_end = (ob.o_buf = ob.o_nxt = xmalloc(ob.o_len)) + ob.o_len;
 }
 
