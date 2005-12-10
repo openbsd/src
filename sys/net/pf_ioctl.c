@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.160 2005/10/27 12:34:40 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.161 2005/12/10 14:41:07 krw Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -730,7 +730,7 @@ pf_tagname2tag(char *tagname)
 void
 pf_tag2tagname(u_int16_t tagid, char *p)
 {
-	return (tag2tagname(&pf_tags, tagid, p));
+	tag2tagname(&pf_tags, tagid, p);
 }
 
 void
@@ -748,7 +748,7 @@ pf_tag_ref(u_int16_t tag)
 void
 pf_tag_unref(u_int16_t tag)
 {
-	return (tag_unref(&pf_tags, tag));
+	tag_unref(&pf_tags, tag);
 }
 
 int
@@ -792,13 +792,13 @@ pf_qname2qid(char *qname)
 void
 pf_qid2qname(u_int32_t qid, char *p)
 {
-	return (tag2tagname(&pf_qids, (u_int16_t)qid, p));
+	tag2tagname(&pf_qids, (u_int16_t)qid, p);
 }
 
 void
 pf_qid_unref(u_int32_t qid)
 {
-	return (tag_unref(&pf_qids, (u_int16_t)qid));
+	tag_unref(&pf_qids, (u_int16_t)qid);
 }
 
 int
