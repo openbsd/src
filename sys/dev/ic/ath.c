@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.43 2005/11/11 14:11:40 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.44 2005/12/10 15:43:11 krw Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -1297,7 +1297,7 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 	int error;
 	u_int8_t rate;
 	const HAL_RATE_TABLE *rt;
-	u_int flags;
+	u_int flags = 0;
 
 	bf = sc->sc_bcbuf;
 	if (bf->bf_m != NULL) {
