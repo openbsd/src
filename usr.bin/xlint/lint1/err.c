@@ -1,4 +1,4 @@
-/*	$OpenBSD: err.c,v 1.13 2005/12/10 18:42:45 cloder Exp $	*/
+/*	$OpenBSD: err.c,v 1.14 2005/12/10 19:19:31 cloder Exp $	*/
 /*	$NetBSD: err.c,v 1.8 1995/10/02 17:37:00 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: err.c,v 1.13 2005/12/10 18:42:45 cloder Exp $";
+static char rcsid[] = "$OpenBSD: err.c,v 1.14 2005/12/10 19:19:31 cloder Exp $";
 #endif
 
 /* number of errors found */
@@ -396,7 +396,7 @@ verror(int n, va_list ap)
 	const	char *fn;
 
 	fn = lbasename(curr_pos.p_file);
-	(void)printf("%s(%d): ", fn, curr_pos.p_line);
+	(void)printf("%s:%d: ", fn, curr_pos.p_line);
 	(void)vprintf(msgs[n], ap);
 	(void)printf("\n");
 	nerr++;
@@ -416,7 +416,7 @@ vwarning(int n, va_list ap)
 		return;
 
 	fn = lbasename(curr_pos.p_file);
-	(void)printf("%s(%d): warning: ", fn, curr_pos.p_line);
+	(void)printf("%s:%d: warning: ", fn, curr_pos.p_line);
 	(void)vprintf(msgs[n], ap);
 	(void)printf("\n");
 
@@ -442,7 +442,7 @@ lerror(const char *msg, ...)
 
 	va_start(ap, msg);
 	fn = lbasename(curr_pos.p_file);
-	(void)fprintf(stderr, "%s(%d): lint error: ", fn, curr_pos.p_line);
+	(void)fprintf(stderr, "%s:%d: lint error: ", fn, curr_pos.p_line);
 	(void)vfprintf(stderr, msg, ap);
 	(void)fprintf(stderr, "\n");
 	va_end(ap);
@@ -467,7 +467,7 @@ message(int n, ...)
 
 	va_start(ap, n);
 	fn = lbasename(curr_pos.p_file);
-	(void)printf("%s(%d): ", fn, curr_pos.p_line);
+	(void)printf("%s:%d: ", fn, curr_pos.p_line);
 	(void)vprintf(msgs[n], ap);
 	(void)printf("\n");
 	va_end(ap);
@@ -540,7 +540,7 @@ excerpt(pos_t *pos)
 	}
 
 	if (buf)
-		printf("%s(%d):    %s\n", pos->p_file, lineno, buf);
+		printf("%s:%d:   %s\n", pos->p_file, lineno, buf);
 
 	free(lbuf);
 }
