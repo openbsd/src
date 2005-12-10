@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.17 2005/12/10 17:56:37 cloder Exp $	*/
+/*	$OpenBSD: decl.c,v 1.18 2005/12/10 18:51:54 martin Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.17 2005/12/10 17:56:37 cloder Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.18 2005/12/10 18:51:54 martin Exp $";
 #endif
 
 #include <sys/param.h>
@@ -856,7 +856,7 @@ length(type_t *tp, const char *name)
 }
 
 /*
- * Get the alignment of the given Type in bits.
+ * Get the alignment of the given type in bits.
  */
 int
 getbound(type_t *tp)
@@ -1209,7 +1209,7 @@ mergepq(pqinf_t *p1, pqinf_t *p2)
  * Followint 3 functions extend the type of a declarator with
  * pointer, function and array types.
  *
- * The current type is the Type built by deftyp() (dcs->d_type) and
+ * The current type is the type built by deftyp() (dcs->d_type) and
  * pointer, function and array types already added for this
  * declarator. The new type extension is inserted between both.
  */
@@ -1586,7 +1586,7 @@ mktag(sym_t *tag, tspec_t kind, int decl, int semi)
 			tp->t_enum = getblk(sizeof (enum_t));
 			tp->t_enum->etag = tag;
 		}
-		/* ist unvollstaendiger Typ */
+		/* is incomplete type */
 		setcompl(tp, 1);
 	}
 
@@ -2173,7 +2173,7 @@ compltyp(sym_t *dsym, sym_t *ssym)
 			if (dst->t_dim == 0 && src->t_dim != 0) {
 				*dstp = dst = duptyp(dst);
 				dst->t_dim = src->t_dim;
-				/* now a complete Typ */
+				/* now a complete type */
 				setcompl(dst, 0);
 			}
 		} else if (dst->t_tspec == FUNC) {

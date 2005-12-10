@@ -1,4 +1,4 @@
-/*	$OpenBSD: lint.h,v 1.2 1996/06/26 05:44:14 deraadt Exp $	*/
+/*	$OpenBSD: lint.h,v 1.3 2005/12/10 18:51:54 martin Exp $	*/
 /*	$NetBSD: lint.h,v 1.2 1995/07/03 21:24:18 cgd Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ typedef	struct {
 	u_int	tt_isftyp : 1;		/* 1 if floating point type */
 	u_int	tt_isatyp : 1;		/* 1 if arithmetic type */
 	u_int	tt_issclt : 1;		/* 1 if scalar type */
-	char	*tt_name;		/* Bezeichnung des Typs */
+	char	*tt_name;		/* type name */
 } ttab_t;
 
 #define size(t)		(ttab[t].tt_sz)
