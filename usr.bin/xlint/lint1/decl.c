@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.15 2005/11/23 18:47:41 cloder Exp $	*/
+/*	$OpenBSD: decl.c,v 1.16 2005/12/10 05:35:15 cloder Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.15 2005/11/23 18:47:41 cloder Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.16 2005/12/10 05:35:15 cloder Exp $";
 #endif
 
 #include <sys/param.h>
@@ -1046,6 +1046,12 @@ decl1str(sym_t *dsym)
 				/* nonportable bit-field type */
 				warning(34);
 			}
+			if (isutyp(t))
+				tp->t_tspec = UINT;
+			else
+				tp->t_tspec = INT;
+
+			tp->t_isenum = 0;
 		} else if (t == INT && dcs->d_smod == NOTSPEC) {
 			if (pflag) {
 				/* nonportable bit-field type */
@@ -1156,6 +1162,8 @@ bitfield(sym_t *dsym, int len)
 	}
 	dsym->s_type = duptyp(dsym->s_type);
 	dsym->s_type->t_isfield = 1;
+	dsym->s_type->t_proto = 0;
+	dsym->s_type->t_isenum = 0;
 	dsym->s_type->t_flen = len;
 	dsym->s_field = 1;
 	return (dsym);
