@@ -1,4 +1,4 @@
-/*	$OpenBSD: main1.c,v 1.7 2005/11/29 19:38:09 cloder Exp $	*/
+/*	$OpenBSD: main1.c,v 1.8 2005/12/10 17:51:49 cloder Exp $	*/
 /*	$NetBSD: main1.c,v 1.3 1995/10/02 17:29:56 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main1.c,v 1.7 2005/11/29 19:38:09 cloder Exp $";
+static char rcsid[] = "$OpenBSD: main1.c,v 1.8 2005/12/10 17:51:49 cloder Exp $";
 #endif
 
 #include <stdio.h>
@@ -68,6 +68,9 @@ int	eflag;
 
 /* Print complete pathnames, not only the basename. */
 int	Fflag = 1;
+
+/* After an error or warning, print the actual text of the program source code */
+int	fflag = 0;
 
 /* Enable some extensions of gcc */
 int	gflag;
@@ -112,7 +115,7 @@ main(int argc, char *argv[])
 {
 	int	c;
 
-	while ((c = getopt(argc, argv, "abcdeghprstuvyzF")) != -1) {
+	while ((c = getopt(argc, argv, "abcdefghprstuvyzF")) != -1) {
 		switch (c) {
 		case 'a':	aflag++;	break;
 		case 'b':	bflag = 1;	break;
@@ -122,6 +125,7 @@ main(int argc, char *argv[])
 		case 'F':	Fflag = 1;	break;
 		case 'g':	gflag = 1;	break;
 		case 'h':	hflag = 1;	break;
+		case 'f':	fflag = 1;	break;
 		case 'p':	pflag = 1;	break;
 		case 'r':	rflag = 1;	break;
 		case 's':	sflag = 1;	break;

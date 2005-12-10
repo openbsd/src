@@ -1,4 +1,4 @@
-/*	$OpenBSD: err.c,v 1.11 2005/11/23 22:25:37 cloder Exp $	*/
+/*	$OpenBSD: err.c,v 1.12 2005/12/10 17:51:49 cloder Exp $	*/
 /*	$NetBSD: err.c,v 1.8 1995/10/02 17:37:00 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: err.c,v 1.11 2005/11/23 22:25:37 cloder Exp $";
+static char rcsid[] = "$OpenBSD: err.c,v 1.12 2005/12/10 17:51:49 cloder Exp $";
 #endif
 
 /* number of errors found */
@@ -50,7 +50,7 @@ int	sytxerr;
 static	const	char *lbasename(const char *);
 static	void	verror(int, va_list);
 static	void	vwarning(int, va_list);
-
+static	void	excerpt(pos_t *);
 
 const	char *msgs[] = {
 	"syntax error: empty declaration",			      /* 0 */
@@ -399,6 +399,10 @@ verror(int n, va_list ap)
 	(void)vprintf(msgs[n], ap);
 	(void)printf("\n");
 	nerr++;
+
+	if (fflag)
+		excerpt(&curr_pos);
+
 }
 
 static void
@@ -414,6 +418,9 @@ vwarning(int n, va_list ap)
 	(void)printf("%s(%d): warning: ", fn, curr_pos.p_line);
 	(void)vprintf(msgs[n], ap);
 	(void)printf("\n");
+
+	if (fflag)
+		excerpt(&curr_pos);
 }
 
 void
@@ -463,6 +470,9 @@ message(int n, ...)
 	(void)vprintf(msgs[n], ap);
 	(void)printf("\n");
 	va_end(ap);
+
+	if (fflag)
+		excerpt(&curr_pos);
 }
 
 int
@@ -484,4 +494,52 @@ gnuism(int n, ...)
 	va_end(ap);
 
 	return (msg);
+}
+
+static void
+excerpt(pos_t *pos)
+{
+	static	FILE *fp = NULL;
+	static	const char *file = NULL;
+	static	int lineno = 0;
+	char	*buf, *lbuf;
+	size_t	len;
+
+	if (!pos || !pos->p_file)
+		return;
+
+	/* don't print the same line twice */
+	if (pos->p_line == lineno)
+		return;
+
+	if (fp == NULL || file != pos->p_file || pos->p_line < lineno) {
+		if (fp)
+			fclose(fp);
+
+		if (!(fp = fopen(pos->p_file, "r")))
+			return;
+
+		file = pos->p_file;
+		lineno = 0;
+	}
+
+	lbuf = NULL;
+	while (lineno < pos->p_line && (buf = fgetln(fp, &len))) {
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = '\0';
+		else {
+			/* EOF without EOL, copy and add the NUL */
+			if (!(lbuf = malloc(len + 1)))
+				err(1, NULL);
+
+			lbuf[len] = '\0';
+			buf = lbuf;
+		}
+		lineno++;
+	}
+
+	if (buf)
+		printf("%s(%d):    %s\n", pos->p_file, lineno, buf);
+
+	free(lbuf);
 }

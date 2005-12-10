@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lint.1,v 1.17 2004/01/23 23:08:47 jmc Exp $
+.\"	$OpenBSD: lint.1,v 1.18 2005/12/10 17:51:49 cloder Exp $
 .\"	$NetBSD: lint.1,v 1.3 1995/10/23 13:45:31 jpo Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 .Nd a C program verifier
 .Sh SYNOPSIS
 .Nm lint
-.Op Fl abceghprvxzHFV
+.Op Fl abcefghprvxzHFV
 .Op Fl s Ns | Ns Fl t
 .Op Fl i Ns | Ns Fl nu
 .Op Fl D Ns Ar name Ns Op =def
@@ -49,7 +49,7 @@
 .Op Fl o Ns Ar outputfile
 .Ar
 .Nm lint
-.Op Fl abceghprvzHFV
+.Op Fl abcefghprvzHFV
 .Op Fl s Ns | Ns Fl t
 .Fl C Ns Ar library
 .Op Fl D Ns Ar name Ns Op =def
@@ -180,6 +180,9 @@ and combinations of
 .Sy enum Ns -
 and
 .Sy integer Ns -Types.
+.It Fl f
+For each warning or error, print the offending line of the
+corresponding source code file.
 .It Fl g
 Don't print warnings for some extensions of
 .Xr gcc 1
