@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.51 2005/04/06 02:51:13 krw Exp $	*/
+/*	$OpenBSD: ss.c,v 1.52 2005/12/10 01:36:01 deraadt Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -877,9 +877,9 @@ ricoh_is410_sw(ss, sio, wcmd, vwd)
 		struct scsi_window_data	window_data;
 		u_int8_t res1;
 		u_int8_t res2;
-		u_int8_t mrif:1; /* reverse image format (grayscale negative) */
-		u_int8_t filtering:3;
-		u_int8_t gamma_id:4;
+		u_int    mrif:1; /* reverse image format (grayscale negative) */
+		u_int    filtering:3;
+		u_int    gamma_id:4;
 	} *rwd = (struct ricoh_is410_window_data*)vwd;
 	struct scsi_link *sc_link = ss->sc_link;
 
@@ -950,10 +950,10 @@ fujitsu_m3096g_sw(ss, sio, wcmd, vwd)
 		u_int8_t mirroring;
 		u_int8_t res2[5];
 		u_int8_t subwindow_list[2];
-		u_int8_t paper_size_std:2;
-		u_int8_t res3:1;
-		u_int8_t paper_orientaton:1;
-		u_int8_t paper_size_type:4;
+		u_int    paper_size_std:2;
+		u_int    res3:1;
+		u_int    paper_orientaton:1;
+		u_int    paper_size_type:4;
 /* defines for Paper Size Type: */
 #define FUJITSU_PST_A3			0x03
 #define FUJITSU_PST_A4			0x04
