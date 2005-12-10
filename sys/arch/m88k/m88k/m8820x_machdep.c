@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.16 2005/12/04 15:00:26 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.17 2005/12/10 22:31:38 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -94,19 +94,20 @@
 #include <machine/m8820x.h>
 #include <machine/psl.h>
 
-cpuid_t m8820x_init(void);
-void m8820x_cpu_configuration_print(int);
-void m8820x_shutdown(void);
-void m8820x_set_sapr(cpuid_t, apr_t);
-void m8820x_set_uapr(apr_t);
-void m8820x_flush_tlb(cpuid_t, u_int, vaddr_t, u_int);
-void m8820x_flush_cache(cpuid_t, paddr_t, psize_t);
-void m8820x_flush_inst_cache(cpuid_t, paddr_t, psize_t);
-void m8820x_flush_data_cache(cpuid_t, paddr_t, psize_t);
-int m8820x_dma_cachectl(pmap_t, vaddr_t, vsize_t, int);
-int m8820x_dma_cachectl_pa(paddr_t, psize_t, int);
+cpuid_t	m8820x_init(void);
+void	m8820x_cpu_configuration_print(int);
+void	m8820x_shutdown(void);
+void	m8820x_set_sapr(cpuid_t, apr_t);
+void	m8820x_set_uapr(apr_t);
+void	m8820x_flush_tlb(cpuid_t, u_int, vaddr_t, u_int);
+void	m8820x_flush_cache(cpuid_t, paddr_t, psize_t);
+void	m8820x_flush_inst_cache(cpuid_t, paddr_t, psize_t);
+void	m8820x_flush_data_cache(cpuid_t, paddr_t, psize_t);
+int	m8820x_dma_cachectl(pmap_t, vaddr_t, vsize_t, int);
+int	m8820x_dma_cachectl_pa(paddr_t, psize_t, int);
+void	m8820x_initialize_cpu(cpuid_t);
 
-/* This is the function table for the mc8820x CMMUs */
+/* This is the function table for the MC8820x CMMUs */
 struct cmmu_p cmmu8820x = {
 	m8820x_init,
 	m8820x_setup_board_config,
@@ -235,11 +236,11 @@ const char *mmutypes[8] = {
 
 /*
  * Should only be called after the calling cpus knows its cpu
- * number and master/slave status . Should be called first
- * by the master, before the slaves are started.
+ * number and main/secondary status. Should be called first
+ * by the main processor, before the others are started.
 */
 void
-m8820x_cpu_configuration_print(int master)
+m8820x_cpu_configuration_print(int main)
 {
 	struct m8820x_cmmu *cmmu;
 	int pid = get_cpu_pid();
@@ -251,7 +252,7 @@ m8820x_cpu_configuration_print(int master)
 	int aline, abit, amask;
 #endif
 
-	if (master)
+	if (main)
 		__cpu_simple_lock_init(&print_lock);
 
 	__cpu_simple_lock(&print_lock);
@@ -338,17 +339,29 @@ m8820x_cpu_configuration_print(int master)
 cpuid_t
 m8820x_init()
 {
-	struct m8820x_cmmu *cmmu;
-	unsigned int line, cmmu_num;
-	int cssp, type;
-	apr_t apr;
 	cpuid_t cpu;
+
+	cpu = m8820x_cpu_number();
+	m8820x_initialize_cpu(cpu);
+	return (cpu);
+}
+
+/*
+ * Initialize the set of CMMUs tied to a particular CPU.
+ */
+void
+m8820x_initialize_cpu(cpuid_t cpu)
+{
+	struct m8820x_cmmu *cmmu;
+	u_int line, cnt;
+	int cssp, sctr, type;
+	apr_t apr;
 
 	apr = ((0x00000 << PG_BITS) | CACHE_WT | CACHE_GLOBAL | CACHE_INH) &
 	    ~APR_V;
 
-	cmmu = m8820x_cmmu;
-	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++, cmmu++) {
+	cmmu = m8820x_cmmu + (cpu << cmmu_shift);
+	for (cnt = 1 << cmmu_shift; cnt != 0; cnt--, cmmu++) {
 		type = CMMU_TYPE(cmmu->cmmu_regs[CMMU_IDR]);
 
 		/*
@@ -370,11 +383,16 @@ m8820x_init()
 
 		/*
 		 * Set the SCTR, SAPR, and UAPR to some known state.
+		 * Snooping is enabled on multiprocessor systems; for
+		 * instruction CMMUs as well so that we can share breakpoints.
 		 * XXX Investigate why enabling parity at this point
 		 * doesn't work.
 		 */
-		cmmu->cmmu_regs[CMMU_SCTR] &=
+		sctr = cmmu->cmmu_regs[CMMU_SCTR] &
 		    ~(CMMU_SCTR_PE | CMMU_SCTR_SE | CMMU_SCTR_PR);
+		if (max_cpus > 1)
+			sctr |= CMMU_SCTR_SE;
+		cmmu->cmmu_regs[CMMU_SCTR] = sctr;
 
 		cmmu->cmmu_regs[CMMU_SAPR] = cmmu->cmmu_regs[CMMU_UAPR] = apr;
 
@@ -390,39 +408,11 @@ m8820x_init()
 	}
 
 	/*
-	 * Enable snooping on multiprocessor systems.
-	 * Snooping is enabled for instruction cmmus as well so that
-	 * we can share breakpoints.
-	 */
-	if (max_cpus > 1) {
-		for (cpu = 0; cpu < max_cpus; cpu++) {
-			m8820x_cmmu_set(CMMU_SCTR, CMMU_SCTR_SE, MODE_VAL, cpu,
-			    DATA_CMMU, 0);
-			m8820x_cmmu_set(CMMU_SCTR, CMMU_SCTR_SE, MODE_VAL, cpu,
-			    INST_CMMU, 0);
-
-			m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_SUPER_ALL,
-			    0, cpu, 0, 0);
-			m8820x_cmmu_wait(cpu);
-			/* Icache gets flushed just below */
-		}
-	}
-
-	/*
 	 * Enable instruction cache.
-	 * Data cache can not be enabled at this point, because some device
-	 * addresses can never be cached, and the no-caching zones are not
-	 * set up yet.
+	 * Data cache will be enabled later.
 	 */
 	apr &= ~CACHE_INH;
-	for (cpu = 0; cpu < max_cpus; cpu++) {
-		m8820x_cmmu_set(CMMU_SAPR, apr, MODE_VAL, cpu, INST_CMMU, 0);
-		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_SUPER_ALL,
-		    0, cpu, 0, 0);
-		m8820x_cmmu_wait(cpu);
-	}
-
-	return (m8820x_cpu_number());
+	m8820x_cmmu_set(CMMU_SAPR, apr, MODE_VAL, cpu, INST_CMMU, 0);
 }
 
 /*
