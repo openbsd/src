@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ahc.4,v 1.32 2004/09/30 19:59:24 mickey Exp $
+.\"	$OpenBSD: ahc.4,v 1.33 2005/12/10 22:58:46 martin Exp $
 .\"	$NetBSD: ahc.4,v 1.1.2.1 1996/08/25 17:22:14 thorpej Exp $
 .\"
 .\" Copyright (c) 1995, 1996
@@ -34,17 +34,12 @@
 .Nm ahc
 .Nd Adaptec VL/EISA/PCI SCSI host adapter driver
 .Sh SYNOPSIS
-For VL cards:
-.Cd "ahc0	at isa?"
-.Pp
-For EISA cards:
-.Cd "ahc*	at eisa?"
-.Pp
-For PCI cards:
-.Cd "ahc*	at pci?"
-.Pp
-For SCSI buses:
+.Cd "ahc0	at isa?	" Pq VL
+.Cd "ahc*	at eisa?	" Pq EISA
+.Cd "ahc*	at pci?	" Pq PCI
 .Cd "scsibus* at ahc?"
+.Cd "option AHC_ALLOW_MEMIO"
+.Cd "option AHC_TMODE_ENABLE"
 .Sh DESCRIPTION
 This driver provides access to the
 .Tn SCSI
@@ -118,6 +113,7 @@ The typical symptom of this problem is a system hang if memory mapped I/O
 is attempted.
 Most modern motherboards perform the initialization correctly and work fine
 with this option enabled.
+This is the default mode of operation on every architecture except i386.
 .Pp
 Individual controllers may be configured to operate in the target role through
 the
@@ -295,7 +291,7 @@ Setting a maximum synchronous negotiation rate of 8MHz in the
 .Tn SCSI-Select
 utility will allow normal operation.
 .Pp
-Although the Ultra2 and Ultra160 products have sufficient instruction ram space
+Although the Ultra2 and Ultra160 products have sufficient instruction RAM space
 to support both the initiator and target roles concurrently,
 this configuration is disabled in favor of allowing the target role to respond
 on multiple target ids.
