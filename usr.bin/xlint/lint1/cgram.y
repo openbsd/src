@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: cgram.y,v 1.15 2005/12/07 01:55:12 cloder Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.16 2005/12/10 17:41:03 cloder Exp $	*/
 /*	$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: cgram.y,v 1.15 2005/12/07 01:55:12 cloder Exp $";
+static char rcsid[] = "$OpenBSD: cgram.y,v 1.16 2005/12/10 17:41:03 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -71,8 +71,6 @@ static	void	ignuptorp(void);
 	scl_t	y_scl;
 	tspec_t	y_tspec;
 	tqual_t	y_tqual;
-	attr_t	y_attr;
-	attrnode_t *y_attrnode;
 	type_t	*y_type;
 	tnode_t	*y_tnode;
 	strg_t	*y_strg;
@@ -111,9 +109,6 @@ static	void	ignuptorp(void);
 
 /* qualifiers (const, volatile, restrict) */
 %token	<y_tqual>	T_QUAL
-
-/* attributes (noreturn, format, etc.) */
-%token	<y_attr>	T_ATTR
 
 /* struct or union */
 %token	<y_tspec>	T_SOU
@@ -214,10 +209,6 @@ static	void	ignuptorp(void);
 %type	<y_strg>	string
 %type	<y_strg>	string2
 
-%type	<y_attr>        attribute_name
-%type	<y_attr>        attribute_spec
-%type	<y_attrnode>    attribute_specs
-%type	<y_attrnode>    opt_attribute_specs
 
 %%
 
@@ -315,7 +306,7 @@ data_def: T_SEMI
 			warning(2);
 		}
 	  }
-	| declspecs deftyp type_init_decls T_SEMI
+	| declspecs deftyp type_init_decls opt_attribute_spec T_SEMI
 	| error T_SEMI {
 		globclup();
 	  }
@@ -348,6 +339,11 @@ func_def:
 		funcend();
 		popctrl(0);
 	  }
+	;
+
+opt_attribute_spec:
+	/* empty */
+	| T_ATTRIBUTE T_LPARN T_LPARN read_until_rparn T_RPARN
 	;
 
 func_decl:
@@ -464,7 +460,6 @@ declmods:
 	| clrtyp T_SCLASS {
 		addscl($2);
 	  }
-	| clrtyp attribute_spec
 	| declmods declmod
 	;
 
@@ -474,56 +469,6 @@ declmod:
 	  }
 	| T_SCLASS {
 		addscl($1);
-	  }
-	| attribute_spec
-	;
-
-attribute_name:
-	  T_QUAL {
-		$$ = getkwattr(T_QUAL, $1);
-	  }
-	| T_SCLASS {
-		$$ = getkwattr(T_SCLASS, $1);
-	  }
-	| T_TYPENAME {
-		$$ = getattr($1->sb_name);
-	  }
-	| T_NAME {
-		$$ = getattr($1->sb_name);
-	  }
-	;
-
-attribute_spec:
-	  T_ATTRIBUTE T_LPARN T_LPARN attribute_name T_RPARN T_RPARN {
-		$$ = $4;
-	  }
-	| T_ATTRIBUTE T_LPARN T_LPARN attribute_name T_COMMA read_until_rparn T_RPARN {
-		/* some other exotic syntax that we don't understand */
-		$$ = AT_UNKNOWN;
-	  }
-	| T_ATTRIBUTE T_LPARN T_LPARN attribute_name T_LPARN read_until_rparn T_RPARN T_RPARN {
-		/* some other exotic syntax that we don't understand */
-		$$ = AT_UNKNOWN;
-	  }
-	;
-
-attribute_specs:
-	  attribute_spec {
-		/*$$ = newattrnode($1);*/
-		$$ = NULL;
-          }
-	| attribute_specs attribute_spec {
-		/*appendattr($1, $2);*/
-		$$ = $1;
-	  }
-	;
-
-opt_attribute_specs:
-	  /* EMPTY */ {
-		$$ = NULL;
-	  }
-	| attribute_specs {
-		$$ = $1;
 	  }
 	;
 
@@ -634,10 +579,10 @@ member_declaration_list_with_rbrace:
 	;
 
 member_declaration_list:
-	  member_declaration opt_attribute_specs {
+	  member_declaration {
 		$$ = $1;
 	  }
-	| member_declaration_list T_SEMI member_declaration opt_attribute_specs {
+	| member_declaration_list T_SEMI member_declaration {
 		$$ = lnklst($1, $3);
 	  }
 	;
@@ -847,7 +792,7 @@ type_init_decls:
 	;
 
 notype_init_decl:
-	  notype_decl opt_asm_spec {
+	  notype_decl opt_attribute_spec opt_asm_spec {
 		idecl($1, 0);
 		chksz($1);
 	  }
@@ -871,10 +816,10 @@ type_init_decl:
 	;
 
 notype_decl:
-	  notype_direct_decl opt_attribute_specs {
+	  notype_direct_decl {
 		$$ = $1;
 	  }
-	| pointer notype_direct_decl opt_attribute_specs {
+	| pointer notype_direct_decl {
 		$$ = addptr($2, $1);
 	  }
 	;
@@ -900,10 +845,10 @@ notype_direct_decl:
 	;
 
 type_decl:
-	  type_direct_decl opt_attribute_specs {
+	  type_direct_decl {
 		$$ = $1;
 	  }
-	| pointer type_direct_decl opt_attribute_specs {
+	| pointer type_direct_decl {
 		$$ = addptr($2, $1);
 	  }
 	;
@@ -994,17 +939,17 @@ direct_notype_param_decl:
 	;
 
 pointer:
-	  asterisk opt_attribute_specs {
+	  asterisk {
 		$$ = $1;
 	  }
-	| asterisk opt_attribute_specs type_qualifier_list {
-		$$ = mergepq($1, $3);
+	| asterisk type_qualifier_list {
+		$$ = mergepq($1, $2);
 	  }
-	| asterisk opt_attribute_specs pointer {
-		$$ = mergepq($1, $3);
+	| asterisk pointer {
+		$$ = mergepq($1, $2);
 	  }
-	| asterisk opt_attribute_specs type_qualifier_list pointer {
-		$$ = mergepq(mergepq($1, $3), $4);
+	| asterisk type_qualifier_list pointer {
+		$$ = mergepq(mergepq($1, $2), $3);
 	  }
 	;
 
@@ -1105,10 +1050,10 @@ vararg_parameter_type_list:
 	;
 
 parameter_type_list:
-	  parameter_declaration opt_attribute_specs opt_asm_spec {
+	  parameter_declaration opt_asm_spec {
 		$$ = $1;
 	  }
-	| parameter_type_list T_COMMA parameter_declaration opt_attribute_specs opt_asm_spec {
+	| parameter_type_list T_COMMA parameter_declaration opt_asm_spec {
 		$$ = lnklst($1, $3);
 	  }
 	;

@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.22 2005/12/09 03:13:08 cloder Exp $	*/
+/*	$OpenBSD: scan.l,v 1.23 2005/12/10 17:41:03 cloder Exp $	*/
 /*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scan.l,v 1.22 2005/12/09 03:13:08 cloder Exp $";
+static char rcsid[] = "$OpenBSD: scan.l,v 1.23 2005/12/10 17:41:03 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -184,14 +184,13 @@ static	struct	kwtab {
 		scl_t	kw_scl;		/* storage class if kw_token T_SCLASS */
 		tspec_t	kw_tspec;	/* type spec. if kw_token T_TYPE or T_SOU */
 		tqual_t	kw_tqual;	/* type qual. if kw_token T_QUAL */
-	} kw_u;
+	};
 	u_int	kw_stdc : 1;	/* STDC keyword */
 	u_int	kw_gcc : 1;	/* GCC keyword */
 } kwtab[] = {
 	{ "asm",		T_ASM,		{ 0 },		0, 1 },
 	{ "__asm",		T_ASM,		{ 0 },		0, 0 },
 	{ "__asm__",		T_ASM,		{ 0 },		0, 0 },
-	{ "__attribute",	T_ATTRIBUTE,	{ 0 },		0, 0 },
 	{ "__attribute__",	T_ATTRIBUTE,	{ 0 },		0, 0 },
 	{ "auto",		T_SCLASS,	{ AUTO },	0, 0 },
 	{ "break",		T_BREAK,	{ 0 },		0, 0 },
@@ -239,10 +238,6 @@ static	struct	kwtab {
 	{ "while",		T_WHILE,	{ 0 },		0, 0 },
 	{ NULL,			0,		{ 0 },		0, 0 }
 };
-
-#define kw_scl		kw_u.kw_scl
-#define kw_tspec	kw_u.kw_tspec
-#define kw_tqual	kw_u.kw_tqual
 
 /* Symbol table */
 static	sym_t	*symtab[HSHSIZ1];
@@ -1412,38 +1407,4 @@ freeyyv(void *sp, int tok)
 		}
 		free(strg);
 	}
-}
-
-/*
- * Return the corresponding attr_t constant for a particular C keyword,
- * or AT_UNKNOWN if not known.
- */
-attr_t
-getkwattr(int tok, int val)
-{
-	struct	kwtab *kw;
-	int	eq;
-	
-	eq = 0;
-	for (kw = kwtab; !eq && kw->kw_name != NULL; kw++) {
-		if (kw->kw_token == tok) {
-			switch (tok) {
-			case T_QUAL:
-				eq = (val == kw->kw_tqual);
-				break;
-			case T_TYPE:
-			case T_SOU:
-				eq = (val == kw->kw_tspec);
-				break;
-			case T_SCLASS:
-				eq = (val == kw->kw_scl);
-				break;
-			}
-
-			if (eq)
-				return getattr(kw->kw_name);
-		}
-	}
-
-	return AT_UNKNOWN;
 }

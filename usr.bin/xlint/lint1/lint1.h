@@ -1,4 +1,4 @@
-/*	$OpenBSD: lint1.h,v 1.9 2005/12/09 03:13:08 cloder Exp $	*/
+/*	$OpenBSD: lint1.h,v 1.10 2005/12/10 17:41:03 cloder Exp $	*/
 /*	$NetBSD: lint1.h,v 1.6 1995/10/02 17:31:41 jpo Exp $	*/
 
 /*
@@ -70,28 +70,13 @@ typedef enum {
 } tqual_t;
 
 /*
- * attributes
- */
-typedef enum {
-	AT_UNKNOWN, AT_NORETURN, AT_VOLATILE
-} attr_t;
-
-/*
- * A node in an attribute list.
- */
-typedef struct attrnode {
-	attr_t		an_attr;
-	struct attrnode	*an_nxt;
-} attrnode_t;
-
-/*
  * Integer and floating point values are stored in this structure
  */
 typedef struct {
 	tspec_t	v_tspec;
-	tspec_t v_lspec;		/* the underlying type of a literal */
 	int	v_ansiu;		/* set if an integer constant is
 					   unsigned in ANSI C */
+	tspec_t	v_lspec;		/* the underlying type of a literal */
 	union {
 		quad_t	_v_quad;	/* integers */
 		ldbl_t	_v_ldbl;	/* floats */
@@ -155,7 +140,6 @@ typedef	struct type {
 			u_int	_t_foffs : 24;	/* offset of bit-field */
 		} _t_u;
 	} t_u;
-	struct	attrnode *t_attr; /* attributes */
 	struct	type *t_subt;	/* element type (arrays), return value
 				   (functions), or type pointer points to */
 } type_t;
@@ -237,7 +221,6 @@ typedef	struct sym {
 		enum_t	*_s_et;	/* tag, if it is a enumerator */
 		tspec_t	_s_tsp;	/* type (only for keywords) */
 		tqual_t	_s_tqu;	/* qualifier (only for keywords) */
-		attr_t	_s_att;	/* attribute (only for keywords) */
 		struct	sym *_s_args; /* arguments in old style function
 					 definitions */
 	} u;
@@ -252,7 +235,6 @@ typedef	struct sym {
 #define	s_etyp	u._s_et
 #define	s_tspec	u._s_tsp
 #define	s_tqual	u._s_tqu
-#define	s_attr	u._s_att
 #define	s_args	u._s_args
 
 /*
