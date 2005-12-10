@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.53 2005/12/10 18:29:12 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.54 2005/12/10 18:34:11 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1119,7 +1119,7 @@ vr_txeof(struct vr_softc *sc)
 		ifp->if_collisions +=(txstat & VR_TXSTAT_COLLCNT) >> 3;
 
 		ifp->if_opackets++;
-		if (cur_tx->vr_map != NULL && cur_tx->vr_map->dm_segs > 0)
+		if (cur_tx->vr_map != NULL && cur_tx->vr_map->dm_nsegs > 0)
 			bus_dmamap_unload(sc->sc_dmat, cur_tx->vr_map);
 
 		m_freem(cur_tx->vr_mbuf);
@@ -1624,7 +1624,7 @@ vr_stop(struct vr_softc *sc)
 
 		map = sc->vr_cdata.vr_rx_chain[i].vr_map;
 		if (map != NULL) {
-			if (map->dm_segs > 0)
+			if (map->dm_nsegs > 0)
 				bus_dmamap_unload(sc->sc_dmat, map);
 			bus_dmamap_destroy(sc->sc_dmat, map);
 			sc->vr_cdata.vr_rx_chain[i].vr_map = NULL;
