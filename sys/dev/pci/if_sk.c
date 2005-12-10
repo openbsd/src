@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.88 2005/11/26 19:16:28 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.89 2005/12/10 19:03:02 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -747,15 +747,14 @@ sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 	/* Grab a big chunk o' storage. */
 	if (bus_dmamem_alloc(sc->sc_dmatag, SK_JMEM, PAGE_SIZE, 0,
 			     &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf("%s: can't alloc rx buffers\n", sc->sk_dev.dv_xname);
+		printf(": can't alloc rx buffers");
 		return (ENOBUFS);
 	}
 
 	state = 1;
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg, SK_JMEM, &kva,
 			   BUS_DMA_NOWAIT)) {
-		printf("%s: can't map dma buffers (%d bytes)\n",
-		    sc->sk_dev.dv_xname, SK_JMEM);
+		printf(": can't map dma buffers (%d bytes)", SK_JMEM);
 		error = ENOBUFS;
 		goto out;
 	}
@@ -763,7 +762,7 @@ sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 	state = 2;
 	if (bus_dmamap_create(sc->sc_dmatag, SK_JMEM, 1, SK_JMEM, 0,
 	    BUS_DMA_NOWAIT, &sc_if->sk_cdata.sk_rx_jumbo_map)) {
-		printf("%s: can't create dma map\n", sc->sk_dev.dv_xname);
+		printf(": can't create dma map");
 		error = ENOBUFS;
 		goto out;
 	}
@@ -771,7 +770,7 @@ sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 	state = 3;
 	if (bus_dmamap_load(sc->sc_dmatag, sc_if->sk_cdata.sk_rx_jumbo_map,
 			    kva, SK_JMEM, NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: can't load dma map\n", sc->sk_dev.dv_xname);
+		printf(": can't load dma map");
 		error = ENOBUFS;
 		goto out;
 	}
@@ -794,17 +793,16 @@ sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 		entry = malloc(sizeof(struct sk_jpool_entry),
 		    M_DEVBUF, M_NOWAIT);
 		if (entry == NULL) {
-			printf("%s: no memory for jumbo buffer queue!\n",
-			    sc->sk_dev.dv_xname);
+			printf(": no memory for jumbo buffer queue!");
 			error = ENOBUFS;
 			goto out;
 		}
 		entry->slot = i;
 		if (i)
-		LIST_INSERT_HEAD(&sc_if->sk_jfree_listhead,
+			LIST_INSERT_HEAD(&sc_if->sk_jfree_listhead,
 				 entry, jpool_entries);
 		else
-		LIST_INSERT_HEAD(&sc_if->sk_jinuse_listhead,
+			LIST_INSERT_HEAD(&sc_if->sk_jinuse_listhead,
 				 entry, jpool_entries);
 	}
 out:
@@ -1169,7 +1167,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 		    sk_win_read_1(sc, SK_MAC0_0 + (sa->skc_port * 8) + i);
 
 
-	printf(": address %s\n",
+	printf(", address %s\n",
 	    ether_sprintf(sc_if->arpcom.ac_enaddr));
 
 	/*
@@ -1227,9 +1225,9 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 		sc_if->sk_phyaddr = SK_PHYADDR_MARV;
 		break;
 	default:
-		printf("%s: unsupported PHY type: %d\n",
-		    sc->sk_dev.dv_xname, sc_if->sk_phytype);
-		return;
+		printf(": unsupported PHY type: %d\n",
+		    sc_if->sk_phytype);
+		goto fail;
 	}
 	if (SK_IS_YUKON2(sc) && sc_if->sk_phytype < SK_PHYTYPE_MARV_COPPER &&
 	    sc->sk_pmd != IFM_1000_SX && sc->sk_pmd != IFM_1000_LX) {
@@ -1241,24 +1239,24 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	/* Allocate the descriptor queues. */
 	if (bus_dmamem_alloc(sc->sc_dmatag, sizeof(struct sk_ring_data),
 	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf("%s: can't alloc rx buffers\n", sc->sk_dev.dv_xname);
+		printf(": can't alloc rx buffers\n");
 		goto fail;
 	}
 	if (bus_dmamem_map(sc->sc_dmatag, &seg, rseg,
 	    sizeof(struct sk_ring_data), &kva, BUS_DMA_NOWAIT)) {
-		printf("%s: can't map dma buffers (%d bytes)\n",
-		       sc_if->sk_dev.dv_xname, sizeof(struct sk_ring_data));
+		printf(": can't map dma buffers (%d bytes)\n",
+		       sizeof(struct sk_ring_data));
 		goto fail_1;
 	}
 	if (bus_dmamap_create(sc->sc_dmatag, sizeof(struct sk_ring_data), 1,
 	    sizeof(struct sk_ring_data), 0, BUS_DMA_NOWAIT,
             &sc_if->sk_ring_map)) {
-		printf("%s: can't create dma map\n", sc_if->sk_dev.dv_xname);
+		printf(": can't create dma map\n");
 		goto fail_2;
 	}
 	if (bus_dmamap_load(sc->sc_dmatag, sc_if->sk_ring_map, kva,
 	    sizeof(struct sk_ring_data), NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: can't load dma map\n", sc_if->sk_dev.dv_xname);
+		printf(": can't load dma map\n");
 		goto fail_3;
 	}
         sc_if->sk_rdata = (struct sk_ring_data *)kva;
@@ -1266,7 +1264,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Try to allocate memory for jumbo buffers. */
 	if (sk_alloc_jumbo_mem(sc_if)) {
-		printf("%s: jumbo buffer allocation failed\n", ifp->if_xname);
+		printf(": jumbo buffer allocation failed\n");
 		goto fail_3;
 	}
 
@@ -1299,8 +1297,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 		sk_init_yukon(sc_if);
 		break;
 	default:
-		printf("%s: unknown device type %d\n", sc->sk_dev.dv_xname,
-		    sc->sk_type);
+		printf(": unknown device type %d\n", sc->sk_type);
 		/* dealloc jumbo on error */
 		goto fail_3;
 	}
@@ -1334,8 +1331,6 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 
 	timeout_set(&sc_if->sk_tick_ch, sk_tick, sc_if);
 	timeout_add(&sc_if->sk_tick_ch, hz);
-
-	DPRINTFN(2, ("sk_attach: 1\n"));
 
 	/*
 	 * Call MI attach routines.
@@ -1451,7 +1446,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* bail out here if chip is not recognized */
 	if (sc->sk_type != SK_GENESIS && ! SK_YUKON_FAMILY(sc->sk_type)) {
-		printf("%s: unknown chip type\n",sc->sk_dev.dv_xname);
+		printf(": unknown chip type: %d\n", sc->sk_type);
 		goto fail_1;
 	}
 	DPRINTFN(2, ("skc_attach: allocate interrupt\n"));
@@ -1472,7 +1467,6 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		goto fail_1;
 	}
-	printf(": %s\n", intrstr);
 
 	/* Reset the adapter. */
 	sk_reset(sc);
@@ -1498,8 +1492,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 			sc->sk_rboff = SK_RBOFF_0;
 			break;
 		default:
-			printf("%s: unknown ram size: %d\n",
-			    sc->sk_dev.dv_xname, skrs);
+			printf(": unknown ram size: %d\n", skrs);
 			goto fail_2;
 			break;
 		}
@@ -1547,8 +1540,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 			sc->sk_pmd = IFM_1000_T;
 			break;
 		default:
-			printf("%s: unknown media type: 0x%x\n",
-			    sc->sk_dev.dv_xname, sk_win_read_1(sc, SK_PMDTYPE));
+			printf(": unknown media type: 0x%x\n", skrs);
 			goto fail_2;
 		}
 	}
@@ -1619,10 +1611,11 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Announce the product name. */
-	printf("%s: %s", sc->sk_dev.dv_xname, sc->sk_name);
+	printf(", %s", sc->sk_name);
 	if (revstr != NULL)
 		printf(" rev. %s", revstr);
-	printf(" (0x%x)\n", sc->sk_rev);
+	printf(" (0x%x)", sc->sk_rev);
+	printf(": %s\n", intrstr);
 
 	skca.skc_port = SK_PORT_A;
 	skca.skc_type = sc->sk_type;
