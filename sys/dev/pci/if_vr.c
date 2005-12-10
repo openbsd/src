@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.52 2005/12/10 04:22:39 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.53 2005/12/10 18:29:12 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1248,10 +1248,7 @@ int
 vr_encap(struct vr_softc *sc, struct vr_chain *c, struct mbuf *m_head)
 {
 	struct vr_desc		*f = NULL;
-	struct mbuf		*m = m_head;
 	struct mbuf		*m_new = NULL;
-
-	m = m_head;
 
 	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 	if (m_new == NULL)
