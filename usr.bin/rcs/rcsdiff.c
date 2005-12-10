@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.25 2005/12/05 14:47:24 xsa Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.26 2005/12/10 19:44:36 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -160,7 +160,7 @@ rcsdiff_main(int argc, char **argv)
 		rcs_close(file);
 	}
 
-	exit(status);
+	return (status);
 }
 
 void
