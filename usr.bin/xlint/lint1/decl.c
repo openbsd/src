@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.16 2005/12/10 05:35:15 cloder Exp $	*/
+/*	$OpenBSD: decl.c,v 1.17 2005/12/10 17:56:37 cloder Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.16 2005/12/10 05:35:15 cloder Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.17 2005/12/10 17:56:37 cloder Exp $";
 #endif
 
 #include <sys/param.h>
@@ -1034,8 +1034,8 @@ decl1str(sym_t *dsym)
 		/*
 		 * bit field
 		 *
-		 * only unsigned und signed int are protable bit-field types
-		 *(at least in ANSI C, in traditional C only unsigned int)
+		 * only unsigned and signed int are portable bit-field types
+		 * (at least in ANSI C, in traditional C only unsigned int)
 		 */
 		if (t == CHAR || t == UCHAR || t == SCHAR ||
 		    t == SHORT || t == USHORT || t == ENUM) {
