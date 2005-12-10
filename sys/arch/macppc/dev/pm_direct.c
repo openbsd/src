@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.15 2005/12/06 02:38:24 pedro Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.16 2005/12/10 13:45:38 pedro Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -562,6 +562,7 @@ pm_adb_op(u_char *buffer, void *compRout, void *data, int command)
 	int s;
 	int rval;
 	int ndelay;
+	int waitfor;	/* interrupts to poll for */
 	PMData pmdata;
 	struct adbCommand packet;
 
@@ -588,6 +589,11 @@ pm_adb_op(u_char *buffer, void *compRout, void *data, int command)
 			pmdata.num_data = buffer[0] + 3;
 	} else
 		pmdata.num_data = 3;
+
+	if (command == PMU_RESET_ADB)
+		waitfor = PMU_INT_ADB_AUTO | PMU_INT_ADB;
+	else
+		waitfor = PMU_INT_ALL;
 
 	pmdata.data[0] = (u_char)(command & 0xff);
 	pmdata.data[1] = 0;
@@ -635,7 +641,7 @@ pm_adb_op(u_char *buffer, void *compRout, void *data, int command)
 	/* wait until the PM interrupt is occurred */
 	ndelay = 0x8000;
 	while (adbWaiting == 1) {
-		if (read_via_reg(VIA1, vIFR) != 0)
+		if (read_via_reg(VIA1, vIFR) & waitfor)
 			pm_intr();
 #ifdef PM_GRAB_SI
 			(void)intr_dispatch(0x70);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.h,v 1.7 2005/11/16 12:28:54 kettenis Exp $	*/
+/*	$OpenBSD: pm_direct.h,v 1.8 2005/12/10 13:45:38 pedro Exp $	*/
 /*	$NetBSD: pm_direct.h,v 1.5 1999/07/12 15:54:55 tsubai Exp $	*/
 
 /*
@@ -76,6 +76,7 @@ void pm_init_brightness(void);
 void pm_eject_pcmcia(int);
 
 /* PMU commands */
+#define PMU_RESET_ADB		0x00	/* Reset ADB */
 #define PMU_POWER_OFF		0x7e	/* Turn Power off */
 #define PMU_RESET_CPU		0xd0	/* Reset CPU */
 
@@ -108,6 +109,7 @@ void pm_eject_pcmcia(int);
 #define PMU_INT_BATTERY		0x20
 #define PMU_INT_WAKEUP		0x40
 #define PMU_INT_TICK		0x80	/* 1-second tick interrupt */
+#define PMU_INT_ALL		0xff	/* Mask of all interrupts */
 
 /* Bits to use with the PMU_POWER_CTRL0 command */
 #define PMU_POW0_ON		0x80	/* OR this to power ON the device */
