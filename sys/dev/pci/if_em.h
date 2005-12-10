@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.19 2005/11/18 18:13:29 brad Exp $ */
+/* $OpenBSD: if_em.h,v 1.20 2005/12/10 04:01:36 brad Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -389,7 +389,6 @@ struct em_softc {
 
         /* For 82544 PCI-X Workaround */
         boolean_t       pcix_82544;
-        boolean_t       in_detach;
 
 	struct em_hw_stats stats;
 };
