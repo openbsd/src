@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.6 2005/09/27 21:10:47 deraadt Exp $	*/
+/*	$OpenBSD: clock.c,v 1.7 2005/12/10 02:08:04 krw Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -112,13 +112,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <i386/isa/nvram.h>
 #include <dev/clock_subr.h>
 #include <machine/specialreg.h> 
-
-#ifndef __x86_64__
-#include "mca.h"
-#endif
-#if NMCA > 0
-#include <machine/mca_machdep.h>	/* for MCA_system */
-#endif
 
 #include "pcppi.h"
 #if (NPCPPI > 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i8259.c,v 1.2 2004/06/25 11:03:27 art Exp $	*/
+/*	$OpenBSD: i8259.c,v 1.3 2005/12/10 02:08:04 krw Exp $	*/
 /*	$NetBSD: i8259.c,v 1.2 2003/03/02 18:27:15 fvdl Exp $	*/
 
 /*
@@ -89,14 +89,6 @@
 #include <machine/cpu.h>
 #include <machine/pic.h>
 #include <machine/i8259.h>
-
-
-#ifndef __x86_64__
-#include "mca.h"
-#if NMCA > 0
-#include <machine/mca_machdep.h>                /* for MCA_system */
-#endif
-#endif
 
 static void i8259_hwmask(struct pic *, int);
 static void i8259_hwunmask(struct pic *, int);
