@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.34 2005/11/26 05:49:47 marco Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.35 2005/12/10 12:03:24 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -26,6 +26,17 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+struct ami_mem {
+	bus_dmamap_t		am_map;
+	bus_dma_segment_t	am_seg;
+	size_t			am_size;
+	caddr_t			am_kva;
+};
+
+#define AMIMEM_MAP(_am)		((_am)->am_map)
+#define AMIMEM_DVA(_am)		((_am)->am_map->dm_segs[0].ds_addr)
+#define AMIMEM_KVA(_am)		((void *)(_am)->am_kva)
 
 struct ami_ccbmem {
 	struct ami_passthrough	cd_pt;
@@ -101,15 +112,14 @@ struct ami_softc {
 	bus_space_handle_t	ioh;
 	bus_dma_tag_t		dmat;
 
+	struct ami_mem		*sc_mbox_am;
 	volatile struct ami_iocmd *sc_mbox;
 	paddr_t			sc_mbox_pa;
-	bus_dmamap_t		sc_mbox_map;
 
 	struct ami_ccb		sc_ccbs[AMI_MAXCMDS];
 	ami_queue_head		sc_free_ccb, sc_ccbq, sc_ccbdone;
 
-	struct ami_ccbmem	*sc_ccbmem;
-	bus_dmamap_t		sc_ccbmap;
+	struct ami_mem		*sc_ccbmem_am;
 
 	int			sc_timeout;
 	struct timeout		sc_requeue_tmo;
