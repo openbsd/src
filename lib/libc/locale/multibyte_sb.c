@@ -1,4 +1,4 @@
-/*	$OpenBSD: multibyte_sb.c,v 1.5 2005/08/11 20:51:56 espie Exp $	*/
+/*	$OpenBSD: multibyte_sb.c,v 1.6 2005/12/10 02:01:51 deraadt Exp $	*/
 /*	$NetBSD: multibyte_sb.c,v 1.4 2003/08/07 16:43:04 agc Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ mbrlen(const char *s, size_t n, mbstate_t *ps)
 	if (s == NULL || *s == '\0')
 		return 0;
 	if (n == 0)
-		return -1;
+		return (size_t)-1;
 	return 1;
 }
 
