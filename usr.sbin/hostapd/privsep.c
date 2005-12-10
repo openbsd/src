@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.16 2005/12/01 01:11:30 reyk Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.17 2005/12/10 13:10:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -443,6 +443,7 @@ hostapd_may_read(int fd, void *buf, size_t n)
 		case -1:
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
+			/* FALLTHROUGH */
 		case 0:
 			return (1);
 		default:
@@ -468,8 +469,10 @@ hostapd_must_read(int fd, void *buf, size_t n)
 		case -1:
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
+			/* FALLTHROUGH */
 		case 0:
 			_exit(0);
+			break;
 		default:
 			pos += res;
 		}
@@ -492,8 +495,10 @@ hostapd_must_write(int fd, void *buf, size_t n)
 		case -1:
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
+			/* FALLTHROUGH */
 		case 0:
 			_exit(0);
+			break;
 		default:
 			pos += res;
 		}
