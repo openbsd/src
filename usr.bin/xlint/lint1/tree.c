@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.21 2005/12/09 04:28:28 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.22 2005/12/10 18:42:45 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.21 2005/12/09 04:28:28 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.22 2005/12/10 18:42:45 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -2934,6 +2934,26 @@ foldflt(tnode_t *tn)
 	}
 
 	return (getcnode(tn->tn_type, v));
+}
+
+/*
+ * Create a constant node for sizeof(term).
+ */
+tnode_t *
+bldszoftrm(tnode_t *tn)
+{
+	switch (tn->tn_op) {
+	case POINT:
+	case STAR:
+	case NAME:
+	case STRING:
+		break;
+	default:
+		warning(312, modtab[tn->tn_op].m_name);
+	}
+
+
+	return bldszof(tn->tn_type);
 }
 
 /*

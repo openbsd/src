@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs1.h,v 1.6 2005/12/10 17:51:49 cloder Exp $	*/
+/*	$OpenBSD: externs1.h,v 1.7 2005/12/10 18:42:45 cloder Exp $	*/
 /*	$NetBSD: externs1.h,v 1.7 1995/10/02 17:31:39 jpo Exp $	*/
 
 /*
@@ -196,6 +196,7 @@ extern	tnode_t	*convert(op_t, int, type_t *, tnode_t *);
 extern	void	cvtcon(op_t, int, type_t *, val_t *, val_t *);
 extern	const	char *tyname(type_t *);
 extern	tnode_t	*bldszof(type_t *);
+extern	tnode_t	*bldszoftrm(tnode_t *);
 extern	tnode_t	*cast(tnode_t *, type_t *);
 extern	tnode_t	*funcarg(tnode_t *, tnode_t *);
 extern	tnode_t	*funccall(tnode_t *, tnode_t *);

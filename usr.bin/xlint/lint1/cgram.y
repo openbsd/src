@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: cgram.y,v 1.16 2005/12/10 17:41:03 cloder Exp $	*/
+/*	$OpenBSD: cgram.y,v 1.17 2005/12/10 18:42:45 cloder Exp $	*/
 /*	$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: cgram.y,v 1.16 2005/12/10 17:41:03 cloder Exp $";
+static char rcsid[] = "$OpenBSD: cgram.y,v 1.17 2005/12/10 18:42:45 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1545,7 +1545,7 @@ term:
 		}
 	  }
 	| T_SIZEOF term					%prec T_SIZEOF {
-		if (($$ = $2 == NULL ? NULL : bldszof($2->tn_type)) != NULL)
+		if (($$ = $2 == NULL ? NULL : bldszoftrm($2)) != NULL)
 			chkmisc($2, 0, 0, 0, 0, 0, 1);
 	  }
 	| T_SIZEOF T_LPARN type_name T_RPARN		%prec T_SIZEOF {
