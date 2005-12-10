@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.7 2005/11/20 18:23:59 cloder Exp $	*/
+/*	$OpenBSD: msg.c,v 1.8 2005/12/10 20:26:10 cloder Exp $	*/
 /*	$NetBSD: msg.c,v 1.2 1995/07/03 21:24:56 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: msg.c,v 1.7 2005/11/20 18:23:59 cloder Exp $";
+static char rcsid[] = "$OpenBSD: msg.c,v 1.8 2005/12/10 20:26:10 cloder Exp $";
 #endif
 
 #include <string.h>
@@ -45,24 +45,24 @@ static char rcsid[] = "$OpenBSD: msg.c,v 1.7 2005/11/20 18:23:59 cloder Exp $";
 
 
 static	const	char *msgs[] = {
-	"%s used( %s ), but not defined",			      /* 0 */
-	"%s defined( %s ), but never used",			      /* 1 */
-	"%s declared( %s ), but never used or defined",		      /* 2 */
-	"%s multiply defined  \t%s  ::  %s",			      /* 3 */
-	"%s value used inconsistently  \t%s  ::  %s",		      /* 4 */
-	"%s value declared inconsistently  \t%s  ::  %s",	      /* 5 */
-	"%s, arg %d used inconsistently  \t%s  ::  %s",		      /* 6 */
-	"%s: variable # of args  \t%s  ::  %s",			      /* 7 */
+	"%s: %s used, but not defined",				      /* 0 */
+	"%s: %s defined, but never used",			      /* 1 */
+	"%s: %s declared, but never used or defined",		      /* 2 */
+	"%s: %s multiply defined (%s)",				      /* 3 */
+	"%s: %s used inconsistently (%s)",			      /* 4 */
+	"%s: %s declared inconsistently (%s)",			      /* 5 */
+	"%s: %s arg %d used inconsistently (%s)",		      /* 6 */
+	"%s: %s called with varying # of args (%s)",		      /* 7 */
 	"%s returns value which is always ignored",		      /* 8 */
 	"%s returns value which is sometimes ignored",		      /* 9 */
-	"%s value is used( %s ), but none returned",		      /* 10 */
-	"%s, arg %d declared inconsistently  \t%s :: %s",	      /* 11 */
-	"%s: variable # of args declared  \t%s  ::  %s",	      /* 12 */
-	"%s: malformed format string  \t%s",			      /* 13 */
-	"%s, arg %d inconsistent with format  \t%s",		      /* 14 */
-	"%s: too few args for format  \t%s",			      /* 15 */
-	"%s: too many args for format  \t%s",			      /* 16 */
-	"%s function value must be declared before use  \t%s  ::  %s",/* 17 */
+	"%s: return value of %s is used, but none returned",	      /* 10 */
+	"%s: %s arg %d declared inconsistently (%s)",		      /* 11 */
+	"%s: %s declared with varying # of args (%s)",		      /* 12 */
+	"%s: malformed format string to %s",			      /* 13 */
+	"%s, arg %d to %s inconsistent with format",		      /* 14 */
+	"%s: too few format args to %s",			      /* 15 */
+	"%s: too many format args to %s",			      /* 16 */
+	"%s: %s must be declared before use (%s)",		      /* 17 */
 };
 
 static	const	char *lbasename(const char *);
@@ -128,7 +128,7 @@ mkpos(pos_t *posp)
 	if (len > blen)
 		buf = xrealloc(buf, blen = len);
 	if (line != 0) {
-		(void)snprintf(buf, blen, "%s%s(%hu)",
+		(void)snprintf(buf, blen, "%s%s:%hu",
 			      fn, qm ? "?" : "", line);
 	} else {
 		(void)snprintf(buf, blen, "%s", fn);
