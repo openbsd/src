@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.89 2005/12/10 19:03:02 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.90 2005/12/10 19:06:10 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -135,6 +135,7 @@
 
 int skc_probe(struct device *, void *, void *);
 void skc_attach(struct device *, struct device *self, void *aux);
+void skc_shutdown(void *);
 int sk_probe(struct device *, void *, void *);
 void sk_attach(struct device *, struct device *self, void *aux);
 int skcprint(void *, const char *);
@@ -152,7 +153,6 @@ void sk_init_xmac(struct sk_if_softc *);
 void sk_init_yukon(struct sk_if_softc *);
 void sk_stop(struct sk_if_softc *);
 void sk_watchdog(struct ifnet *);
-void sk_shutdown(void *);
 int sk_ifmedia_upd(struct ifnet *);
 void sk_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 void sk_reset(struct sk_softc *);
@@ -1338,8 +1338,9 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	DPRINTFN(2, ("sk_attach: end\n"));
+	shutdownhook_establish(skc_shutdown, sc);
 
+	DPRINTFN(2, ("sk_attach: end\n"));
 	return;
 
 fail_3:
@@ -1817,7 +1818,7 @@ sk_watchdog(struct ifnet *ifp)
 }
 
 void
-sk_shutdown(void *v)
+skc_shutdown(void *v)
 {
 	struct sk_softc		*sc = v;
 
