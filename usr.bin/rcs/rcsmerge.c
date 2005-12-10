@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.10 2005/11/28 14:43:59 xsa Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.11 2005/12/10 20:27:46 joris Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -136,7 +136,7 @@ rcsmerge_main(int argc, char **argv)
 
 			fcont = cvs_buf_release(bp);
 			printf("%s", fcont);
-			free(fcont);
+			xfree(fcont);
 		} else {
 			/* XXX mode */
 			if (cvs_buf_write(bp, argv[i], 0644) < 0)

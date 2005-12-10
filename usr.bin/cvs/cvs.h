@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.90 2005/12/03 15:07:21 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.91 2005/12/10 20:27:45 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -34,6 +34,7 @@
 
 #include "rcs.h"
 #include "file.h"
+#include "xmalloc.h"
 
 #define CVS_VERSION_MAJOR	0
 #define CVS_VERSION_MINOR	3
@@ -427,6 +428,7 @@ struct cvs_lines {
 	struct cvs_tqh	l_lines;
 };
 
+void	  fatal(const char *, ...);
 int	  cvs_readrepo(const char *, char *, size_t);
 int	  cvs_modetostr(mode_t, char *, size_t);
 int	  cvs_strtomode(const char *, mode_t *);
@@ -458,4 +460,4 @@ void			cvs_freelines(struct cvs_lines *);
 int			rcs_patch_lines(struct cvs_lines *, struct cvs_lines *);
 int	cvs_checkout_rev(RCSFILE *, RCSNUM *, CVSFILE *, char *, int, int, ...);
 
-#endif	/* CVS_H */
+#endif

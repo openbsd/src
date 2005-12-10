@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.18 2005/08/14 19:49:18 xsa Exp $	*/
+/*	$OpenBSD: buf.c,v 1.19 2005/12/10 20:27:45 joris Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include "buf.h"
 #include "log.h"
-
+#include "xmalloc.h"
 
 #define BUF_INCR	128
 
@@ -76,18 +76,8 @@ cvs_buf_alloc(size_t len, u_int flags)
 {
 	BUF *b;
 
-	b = (BUF *)malloc(sizeof(*b));
-	if (b == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate buffer");
-		return (NULL);
-	}
-
-	b->cb_buf = malloc(len);
-	if (b->cb_buf == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate buffer");
-		free(b);
-		return (NULL);
-	}
+	b = (BUF *)xmalloc(sizeof(*b));
+	b->cb_buf = xmalloc(len);
 	memset(b->cb_buf, 0, len);
 
 	b->cb_flags = flags;
@@ -162,8 +152,8 @@ cvs_buf_load(const char *path, u_int flags)
 void
 cvs_buf_free(BUF *b)
 {
-	free(b->cb_buf);
-	free(b);
+	xfree(b->cb_buf);
+	xfree(b);
 }
 
 
@@ -180,7 +170,7 @@ cvs_buf_release(BUF *b)
 	u_char *tmp;
 
 	tmp = b->cb_buf;
-	free(b);
+	xfree(b);
 	return (tmp);
 }
 
@@ -339,7 +329,7 @@ cvs_buf_fappend(BUF *b, const char *fmt, ...)
 	}
 
 	ret = cvs_buf_append(b, str, (size_t)ret);
-	free(str);
+	xfree(str);
 	return (ret);
 }
 
@@ -473,11 +463,7 @@ cvs_buf_grow(BUF *b, size_t len)
 	size_t diff;
 
 	diff = b->cb_cur - b->cb_buf;
-	tmp = realloc(b->cb_buf, b->cb_size + len);
-	if (tmp == NULL) {
-		cvs_log(LP_ERRNO, "failed to grow buffer");
-		return (-1);
-	}
+	tmp = xrealloc(b->cb_buf, b->cb_size + len);
 	b->cb_buf = (u_char *)tmp;
 	b->cb_size += len;
 

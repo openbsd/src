@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.38 2005/12/03 01:02:08 joris Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.39 2005/12/10 20:27:45 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -230,11 +230,8 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	 * This allows us to correctly fill in the repository
 	 * string for CVSFILE's fetched inside the repository itself.
 	 */
-	if (cvs_cmdop == CVS_OP_SERVER) {
-		cvs_rootstr = strdup(root->cr_str);
-		if (cvs_rootstr == NULL)
-			return (CVS_EX_DATA);
-	}
+	if (cvs_cmdop == CVS_OP_SERVER)
+		cvs_rootstr = xstrdup(root->cr_str);
 
 	cvs_log(LP_TRACE, "cvs_startcmd() CVSROOT=%s", root->cr_str);
 

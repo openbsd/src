@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.30 2005/12/03 01:02:09 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.31 2005/12/10 20:27:45 joris Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -100,11 +100,7 @@ cvs_import_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 		case 'k':
 			break;
 		case 'm':
-			cvs_msg = strdup(optarg);
-			if (cvs_msg == NULL) {
-				cvs_log(LP_ERRNO, "failed to copy message");
-				return (CVS_EX_DATA);
-			}
+			cvs_msg = xstrdup(optarg);
 			break;
 		default:
 			return (CVS_EX_USAGE);

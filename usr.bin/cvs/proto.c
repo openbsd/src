@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.79 2005/10/17 16:16:00 moritz Exp $	*/
+/*	$OpenBSD: proto.c,v 1.80 2005/12/10 20:27:45 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -313,10 +313,10 @@ cvs_connect(struct cvsroot *root)
 
 	if (cvs_sendreq(root, CVS_REQ_VALIDRESP, vresp) < 0) {
 		cvs_log(LP_ERR, "failed to get valid responses");
-		free(vresp);
+		xfree(vresp);
 		return (-1);
 	}
-	free(vresp);
+	xfree(vresp);
 
 	if (cvs_sendreq(root, CVS_REQ_VALIDREQ, NULL) < 0) {
 		cvs_log(LP_ERR, "failed to get valid requests from server");
@@ -459,12 +459,7 @@ cvs_req_getvalid(void)
 	}
 
 	len = cvs_buf_len(buf);
-	vrstr = (char *)malloc(len);
-	if (vrstr == NULL) {
-		cvs_buf_free(buf);
-		return (NULL);
-	}
-
+	vrstr = (char *)xmalloc(len);
 	cvs_buf_copy(buf, (size_t)0, vrstr, len);
 	cvs_buf_free(buf);
 
@@ -542,12 +537,7 @@ cvs_resp_getvalid(void)
 	}
 
 	len = cvs_buf_len(buf);
-	vrstr = (char *)malloc(len);
-	if (vrstr == NULL) {
-		cvs_buf_free(buf);
-		return (NULL);
-	}
-
+	vrstr = (char *)xmalloc(len);
 	cvs_buf_copy(buf, (size_t)0, vrstr, len);
 	cvs_buf_free(buf);
 
@@ -1100,15 +1090,13 @@ cvs_initlog(void)
 	if (env == NULL)
 		return (0);
 
-	if ((envdup = strdup(env)) == NULL)
-		return (-1);
-
+	envdup = xstrdup(env);
 	if ((s = strchr(envdup, '%')) != NULL)
 		*s = '\0';
 
 	strlcpy(buf, env, sizeof(buf));
 	strlcpy(rpath, envdup, sizeof(rpath));
-	free(envdup);
+	xfree(envdup);
 
 	s = buf;
 	while ((s = strchr(s, '%')) != NULL) {

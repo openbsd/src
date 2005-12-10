@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.87 2005/12/03 15:07:20 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.88 2005/12/10 20:27:45 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -180,7 +180,7 @@ main(int argc, char **argv)
 
 			cvs_getopt(i, targv);
 			cvs_freeargv(targv, i);
-			free(targv);
+			xfree(targv);
 		}
 	}
 
@@ -256,7 +256,7 @@ main(int argc, char **argv)
 	if (cvs_files != NULL)
 		cvs_file_free(cvs_files);
 	if (cvs_msg != NULL)
-		free(cvs_msg);
+		xfree(cvs_msg);
 
 	return (ret);
 }
@@ -419,10 +419,7 @@ cvs_read_rcfile(void)
 			 * argument processing.
 			 */
 			*lp = ' ';
-			cvs_defargs = strdup(p);
-			if (cvs_defargs == NULL)
-				cvs_log(LP_ERRNO,
-				    "failed to copy global arguments");
+			cvs_defargs = xstrdup(p);
 		} else {
 			lp++;
 			cmdp = cvs_findcmd(p);
@@ -433,11 +430,7 @@ cvs_read_rcfile(void)
 				continue;
 			}
 
-			cmdp->cmd_defargs = strdup(lp);
-			if (cmdp->cmd_defargs == NULL)
-				cvs_log(LP_ERRNO,
-				    "failed to copy default arguments for %s",
-				    cmdp->cmd_name);
+			cmdp->cmd_defargs = xstrdup(lp);
 		}
 	}
 	if (ferror(fp)) {
@@ -480,33 +473,16 @@ cvs_var_set(const char *var, const char *val)
 		if (strcmp(vp->cv_name, var) == 0)
 			break;
 
-	valcp = strdup(val);
-	if (valcp == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate variable");
-		return (-1);
-	}
-
+	valcp = xstrdup(val);
 	if (vp == NULL) {
-		vp = (struct cvs_var *)malloc(sizeof(*vp));
-		if (vp == NULL) {
-			cvs_log(LP_ERRNO, "failed to allocate variable");
-			free(valcp);
-			return (-1);
-		}
+		vp = (struct cvs_var *)xmalloc(sizeof(*vp));
 		memset(vp, 0, sizeof(*vp));
 
-		vp->cv_name = strdup(var);
-		if (vp->cv_name == NULL) {
-			cvs_log(LP_ERRNO, "failed to allocate variable");
-			free(valcp);
-			free(vp);
-			return (-1);
-		}
-
+		vp->cv_name = xstrdup(var);
 		TAILQ_INSERT_TAIL(&cvs_variables, vp, cv_link);
 
 	} else	/* free the previous value */
-		free(vp->cv_val);
+		xfree(vp->cv_val);
 
 	vp->cv_val = valcp;
 
@@ -528,9 +504,9 @@ cvs_var_unset(const char *var)
 	TAILQ_FOREACH(vp, &cvs_variables, cv_link)
 		if (strcmp(vp->cv_name, var) == 0) {
 			TAILQ_REMOVE(&cvs_variables, vp, cv_link);
-			free(vp->cv_name);
-			free(vp->cv_val);
-			free(vp);
+			xfree(vp->cv_name);
+			xfree(vp->cv_val);
+			xfree(vp);
 			return (0);
 		}
 

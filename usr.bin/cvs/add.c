@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.34 2005/10/07 21:47:32 reyk Exp $	*/
+/*	$OpenBSD: add.c,v 1.35 2005/12/10 20:27:45 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -90,10 +90,7 @@ cvs_add_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 			}
 			break;
 		case 'm':
-			if ((cvs_msg = strdup(optarg)) == NULL) {
-				cvs_log(LP_ERRNO, "failed to copy message");
-				return (CVS_EX_DATA);
-			}
+			cvs_msg = xstrdup(optarg);
 			break;
 		default:
 			return (CVS_EX_USAGE);

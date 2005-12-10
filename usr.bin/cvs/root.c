@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.25 2005/09/11 14:16:48 joris Exp $	*/
+/*	$OpenBSD: root.c,v 1.26 2005/12/10 20:27:45 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -98,11 +98,7 @@ cvsroot_parse(const char *str)
 		}
 	}
 
-	root = (struct cvsroot *)malloc(sizeof(*root));
-	if (root == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate CVS root data");
-		return (NULL);
-	}
+	root = (struct cvsroot *)xmalloc(sizeof(*root));
 	memset(root, 0, sizeof(*root));
 	root->cr_ref = 1;
 	root->cr_method = CVS_METHOD_NONE;
@@ -112,17 +108,8 @@ cvsroot_parse(const char *str)
 	CVS_SETVR(root, CVS_REQ_VALIDREQ);
 	CVS_SETVR(root, CVS_REQ_VALIDRESP);
 
-	root->cr_str = strdup(str);
-	if (root->cr_str == NULL) {
-		free(root);
-		return (NULL);
-	}
-	root->cr_buf = strdup(str);
-	if (root->cr_buf == NULL) {
-		cvs_log(LP_ERRNO, "failed to copy CVS root");
-		cvsroot_free(root);
-		return (NULL);
-	}
+	root->cr_str = xstrdup(str);
+	root->cr_buf = xstrdup(str);
 
 	sp = root->cr_buf;
 	cp = root->cr_buf;
@@ -246,12 +233,12 @@ static void
 cvsroot_free(struct cvsroot *root)
 {
 	if (root->cr_str != NULL)
-		free(root->cr_str);
+		xfree(root->cr_str);
 	if (root->cr_buf != NULL)
-		free(root->cr_buf);
+		xfree(root->cr_buf);
 	if (root->cr_version != NULL)
-		free(root->cr_version);
-	free(root);
+		xfree(root->cr_version);
+	xfree(root);
 }
 
 /*

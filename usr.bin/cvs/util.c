@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.58 2005/12/03 15:07:21 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.59 2005/12/10 20:27:45 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -340,19 +340,14 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 			break;
 		}
 
-		argv[argc] = strdup(arg);
-		if (argv[argc] == NULL) {
-			cvs_log(LP_ERRNO, "failed to copy argument");
-			err++;
-			break;
-		}
+		argv[argc] = xstrdup(arg);
 		argc++;
 	}
 
 	if (err != 0) {
 		/* ditch the argument vector */
 		for (i = 0; i < (u_int)argc; i++)
-			free(argv[i]);
+			xfree(argv[i]);
 		argc = -1;
 	}
 
@@ -378,12 +373,7 @@ cvs_makeargv(const char *line, int *argc)
 		return (NULL);
 
 	size = (ret + 1) * sizeof(char *);
-	copy = (char **)malloc(size);
-	if (copy == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate argument vector");
-		cvs_freeargv(argv, ret);
-		return (NULL);
-	}
+	copy = (char **)xmalloc(size);
 	memset(copy, 0, size);
 
 	for (i = 0; i < ret; i++)
@@ -407,7 +397,7 @@ cvs_freeargv(char **argv, int argc)
 
 	for (i = 0; i < argc; i++)
 		if (argv[i] != NULL)
-			free(argv[i]);
+			xfree(argv[i]);
 }
 
 
@@ -644,22 +634,20 @@ cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
 		return (-1);
 	}
 
-	if ((s = strdup(path)) == NULL)
-		return (-1);
-
+	s = xstrdup(path);
 	rpath[0] = '\0';
 	if (repo != NULL) {
 		if (strlcpy(rpath, repo, sizeof(rpath)) >= sizeof(rpath)) {
 			errno = ENAMETOOLONG;
 			cvs_log(LP_ERRNO, "%s", rpath);
-			free(s);
+			xfree(s);
 			return (-1);
 		}
 
 		if (strlcat(rpath, "/", sizeof(rpath)) >= sizeof(rpath)) {
 			errno = ENAMETOOLONG;
 			cvs_log(LP_ERRNO, "%s", rpath);
-			free(s);
+			xfree(s);
 			return (-1);
 		}
 	}
@@ -742,7 +730,7 @@ cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
 done:
 	if (entf != NULL)
 		cvs_ent_close(entf);
-	free(s);
+	xfree(s);
 	return (ret);
 }
 
@@ -904,15 +892,15 @@ cvs_parse_tagfile(char **tagp, char **datep, int *nbp)
 		switch (*linebuf) {
 		case 'T':
 			if (tagp != NULL)
-				*tagp = strdup(linebuf);
+				*tagp = xstrdup(linebuf);
 			break;
 		case 'D':
 			if (datep != NULL)
-				*datep = strdup(linebuf);
+				*datep = xstrdup(linebuf);
 			break;
 		case 'N':
 			if (tagp != NULL)
-				*tagp = strdup(linebuf);
+				*tagp = xstrdup(linebuf);
 			if (nbp != NULL)
 				*nbp = 1;
 			break;
@@ -938,35 +926,18 @@ cvs_splitlines(const char *fcont)
 	struct cvs_lines *lines;
 	struct cvs_line *lp;
 
-	lines = (struct cvs_lines *)malloc(sizeof(*lines));
-	if (lines == NULL)
-		return (NULL);
-
+	lines = (struct cvs_lines *)xmalloc(sizeof(*lines));
 	TAILQ_INIT(&(lines->l_lines));
 	lines->l_nblines = 0;
-	lines->l_data = strdup(fcont);
-	if (lines->l_data == NULL) {
-		free(lines);
-		return (NULL);
-	}
+	lines->l_data = xstrdup(fcont);
 
-	lp = (struct cvs_line *)malloc(sizeof(*lp));
-	if (lp == NULL) {
-		cvs_freelines(lines);
-		return (NULL);
-	}
-
+	lp = (struct cvs_line *)xmalloc(sizeof(*lp));
 	lp->l_line = NULL;
 	lp->l_lineno = 0;
 	TAILQ_INSERT_TAIL(&(lines->l_lines), lp, l_list);
 
 	for (dcp = lines->l_data; *dcp != '\0';) {
-		lp = (struct cvs_line *)malloc(sizeof(*lp));
-		if (lp == NULL) {
-			cvs_freelines(lines);
-			return (NULL);
-		}
-
+		lp = (struct cvs_line *)xmalloc(sizeof(*lp));
 		lp->l_line = dcp;
 		lp->l_lineno = ++(lines->l_nblines);
 		TAILQ_INSERT_TAIL(&(lines->l_lines), lp, l_list);
@@ -987,11 +958,11 @@ cvs_freelines(struct cvs_lines *lines)
 
 	while ((lp = TAILQ_FIRST(&(lines->l_lines))) != NULL) {
 		TAILQ_REMOVE(&(lines->l_lines), lp, l_list);
-		free(lp);
+		xfree(lp);
 	}
 
-	free(lines->l_data);
-	free(lines);
+	xfree(lines->l_data);
+	xfree(lines);
 }
 
 BUF *

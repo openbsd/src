@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.52 2005/12/09 07:00:43 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.53 2005/12/10 20:27:46 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -153,19 +153,13 @@ rcs_init(char *envstr, char **argv, int argvlen)
 			break;
 		}
 
-		argv[argc] = strdup(cp);
-		if (argv[argc] == NULL) {
-			cvs_log(LP_ERRNO, "failed to copy argument");
-			error++;
-			break;
-		}
-
+		argv[argc] = xstrdup(cp);
 		argc++;
 	}
 
 	if (error != 0) {
 		for (i = 0; i < (u_int)argc; i++)
-			free(argv[i]);
+			xfree(argv[i]);
 		argc = -1;
 	}
 
@@ -421,10 +415,7 @@ rcs_main(int argc, char **argv)
 			lkmode = RCS_LOCK_STRICT;
 			break;
 		case 'm':
-			if ((logstr = strdup(rcs_optarg)) == NULL) {
-				cvs_log(LP_ERRNO, "failed to copy logstring");
-				exit(1);
-			}
+			logstr = xstrdup(rcs_optarg);
 			break;
 		case 'M':
 			/* ignore for the moment */
@@ -551,7 +542,7 @@ rcs_main(int argc, char **argv)
 	}
 
 	if (logstr != NULL)
-		free(logstr);
+		xfree(logstr);
 
 	return (0);
 }

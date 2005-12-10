@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.131 2005/12/04 17:39:02 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.132 2005/12/10 20:27:45 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -181,12 +181,7 @@ cvs_file_ignore(const char *pat)
 	char *cp;
 	struct cvs_ignpat *ip;
 
-	ip = (struct cvs_ignpat *)malloc(sizeof(*ip));
-	if (ip == NULL) {
-		cvs_log(LP_ERR, "failed to allocate space for ignore pattern");
-		return (-1);
-	}
-
+	ip = (struct cvs_ignpat *)xmalloc(sizeof(*ip));
 	strlcpy(ip->ip_pat, pat, sizeof(ip->ip_pat));
 
 	/* check if we will need globbing for that pattern */
@@ -278,12 +273,7 @@ cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 			return (NULL);
 		}
 
-		cfp->cf_repo = strdup(repo);
-		if (cfp->cf_repo == NULL) {
-			cvs_file_free(cfp);
-			return (NULL);
-		}
-
+		cfp->cf_repo = xstrdup(repo);
 		if (((mkdir(path, mode) == -1) && (errno != EEXIST)) ||
 		    (cvs_mkadmin(path, cfp->cf_root->cr_str, cfp->cf_repo,
 		    NULL, NULL, 0) < 0)) {
@@ -405,25 +395,15 @@ cvs_file_getspec(char **fspec, int fsn, int flags, int (*cb)(CVSFILE *, void *),
 	 */
 	if (cf->cf_repo != NULL) {
 		if (cvs_repo_base != NULL)
-			free(cvs_repo_base);
-		cvs_repo_base = strdup(cf->cf_repo);
-		if (cvs_repo_base == NULL) {
-			cvs_log(LP_ERRNO, "strdup failed");
-			cvs_file_free(cf);
-			return (-1);
-		}
+			xfree(cvs_repo_base);
+		cvs_repo_base = xstrdup(cf->cf_repo);
 	}
 
 	/*
 	 * This will go away when we have support for multiple Roots.
 	 */
 	if (cvs_rootstr == NULL && cf->cf_root != NULL) {
-		cvs_rootstr = strdup(cf->cf_root->cr_str);
-		if (cvs_rootstr == NULL) {
-			cvs_log(LP_ERRNO, "strdup failed");
-			cvs_file_free(cf);
-			return (-1);
-		}
+		cvs_rootstr = xstrdup(cf->cf_root->cr_str);
 	}
 
 	cvs_error = CVS_EX_OK;
@@ -789,14 +769,8 @@ cvs_load_dirinfo(CVSFILE *cf, int flags)
 	}
 
 	if ((stat(pbuf, &st) == 0) && S_ISDIR(st.st_mode)) {
-		if (cvs_readrepo(fpath, pbuf, sizeof(pbuf)) == 0) {
-			cf->cf_repo = strdup(pbuf);
-			if (cf->cf_repo == NULL) {
-				cvs_log(LP_ERRNO,
-				    "failed to dup repository string");
-				return (-1);
-			}
-		}
+		if (cvs_readrepo(fpath, pbuf, sizeof(pbuf)) == 0)
+			cf->cf_repo = xstrdup(pbuf);
 	} else {
 		/*
 		 * Fill in the repo path ourselfs.
@@ -807,11 +781,7 @@ cvs_load_dirinfo(CVSFILE *cf, int flags)
 			if (l == -1 || l >= (int)sizeof(pbuf))
 				return (-1);
 
-			cf->cf_repo = strdup(pbuf);
-			if (cf->cf_repo == NULL) {
-				cvs_log(LP_ERRNO, "failed to dup repo string");
-				return (-1);
-			}
+			cf->cf_repo = xstrdup(pbuf);
 		} else
 			cf->cf_repo = NULL;
 	}
@@ -855,9 +825,8 @@ cvs_file_getdir(CVSFILE *cf, int flags, int (*cb)(CVSFILE *, void *),
 		    (cf->cf_dir != NULL) ? cf->cf_dir : "");
 		if (ret == -1 || ret >= (int)sizeof(fpath))
 			return (-1);
-		free(cf->cf_dir);
-		if ((cf->cf_dir = strdup(fpath)) == NULL)
-			return (-1);
+		xfree(cf->cf_dir);
+		cf->cf_dir = xstrdup(fpath);
 	}
 
 	nfiles = ndirs = 0;
@@ -1052,16 +1021,16 @@ cvs_file_free(CVSFILE *cf)
 	CVSFILE *child;
 
 	if (cf->cf_name != NULL)
-		free(cf->cf_name);
+		xfree(cf->cf_name);
 
 	if (cf->cf_dir != NULL)
-		free(cf->cf_dir);
+		xfree(cf->cf_dir);
 
 	if (cf->cf_type == DT_DIR) {
 		if (cf->cf_root != NULL)
 			cvsroot_remove(cf->cf_root);
 		if (cf->cf_repo != NULL)
-			free(cf->cf_repo);
+			xfree(cf->cf_repo);
 		while (!SIMPLEQ_EMPTY(&(cf->cf_files))) {
 			child = SIMPLEQ_FIRST(&(cf->cf_files));
 			SIMPLEQ_REMOVE_HEAD(&(cf->cf_files), cf_list);
@@ -1069,12 +1038,12 @@ cvs_file_free(CVSFILE *cf)
 		}
 	} else {
 		if (cf->cf_tag != NULL)
-			free(cf->cf_tag);
+			xfree(cf->cf_tag);
 		if (cf->cf_opts != NULL)
-			free(cf->cf_opts);
+			xfree(cf->cf_opts);
 	}
 
-	free(cf);
+	xfree(cf);
 }
 
 
@@ -1106,7 +1075,7 @@ cvs_file_sort(struct cvs_flist *flp, u_int nfiles)
 			/* rebuild the list and abort sorting */
 			while (--i >= 0)
 				SIMPLEQ_INSERT_HEAD(flp, cfvec[i], cf_list);
-			free(cfvec);
+			xfree(cfvec);
 			return (-1);
 		}
 		cfvec[i++] = cf;
@@ -1127,7 +1096,7 @@ cvs_file_sort(struct cvs_flist *flp, u_int nfiles)
 	for (i = (int)nb - 1; i >= 0; i--)
 		SIMPLEQ_INSERT_HEAD(flp, cfvec[i], cf_list);
 
-	free(cfvec);
+	xfree(cfvec);
 	return (0);
 }
 
@@ -1153,11 +1122,7 @@ cvs_file_alloc(const char *path, u_int type)
 	CVSFILE *cfp;
 	char *p;
 
-	cfp = (CVSFILE *)malloc(sizeof(*cfp));
-	if (cfp == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate CVS file data");
-		return (NULL);
-	}
+	cfp = (CVSFILE *)xmalloc(sizeof(*cfp));
 	memset(cfp, 0, sizeof(*cfp));
 
 	cfp->cf_type = type;
@@ -1167,24 +1132,12 @@ cvs_file_alloc(const char *path, u_int type)
 		SIMPLEQ_INIT(&(cfp->cf_files));
 	}
 
-	cfp->cf_name = strdup(basename(path));
-	if (cfp->cf_name == NULL) {
-		cvs_log(LP_ERR, "failed to copy file name");
-		cvs_file_free(cfp);
-		return (NULL);
-	}
-
+	cfp->cf_name = xstrdup(basename(path));
 	if ((p = strrchr(path, '/')) != NULL) {
 		*p = '\0';
-		if (strcmp(path, ".")) {
-			cfp->cf_dir = strdup(path);
-			if (cfp->cf_dir == NULL) {
-				cvs_log(LP_ERR,
-				    "failed to copy directory");
-				cvs_file_free(cfp);
-				return (NULL);
-			}
-		} else
+		if (strcmp(path, "."))
+			cfp->cf_dir = xstrdup(path);
+		else
 			cfp->cf_dir = NULL;
 		*p = '/';
 	} else
@@ -1301,21 +1254,11 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, CVSENTRIES *pent,
 		cfp->cf_lrev = ent->ce_rev;
 
 		if (ent->ce_type == CVS_ENT_FILE) {
-			if (ent->ce_tag[0] != '\0') {
-				cfp->cf_tag = strdup(ent->ce_tag);
-				if (cfp->cf_tag == NULL) {
-					cvs_file_free(cfp);
-					return (NULL);
-				}
-			}
+			if (ent->ce_tag[0] != '\0')
+				cfp->cf_tag = xstrdup(ent->ce_tag);
 
-			if (ent->ce_opts[0] != '\0') {
-				cfp->cf_opts = strdup(ent->ce_opts);
-				if (cfp->cf_opts == NULL) {
-					cvs_file_free(cfp);
-					return (NULL);
-				}
-			}
+			if (ent->ce_opts[0] != '\0')
+				cfp->cf_opts = xstrdup(ent->ce_opts);
 		}
 	}
 
@@ -1332,26 +1275,18 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, CVSENTRIES *pent,
 		cfp->cf_mode = 0644;
 		cfp->cf_cvstat = CVS_FST_LOST;
 
-		if ((c = strdup(cfp->cf_dir)) == NULL) {
-			cvs_file_free(cfp);
-			return (NULL);
-		}
-
-		free(cfp->cf_dir);
+		c = xstrdup(cfp->cf_dir);
+		xfree(cfp->cf_dir);
 
 		if (strcmp(c, root->cr_dir)) {
 			c += strlen(root->cr_dir) + 1;
-			if ((cfp->cf_dir = strdup(c)) == NULL) {
-				cvs_file_free(cfp);
-				return (NULL);
-			}
-
+			cfp->cf_dir = xstrdup(c);
 			c -= strlen(root->cr_dir) + 1;
 		} else {
 			cfp->cf_dir = NULL;
 		}
 
-		free(c);
+		xfree(c);
 	}
 
 	if ((cfp->cf_repo != NULL) && (cfp->cf_type == DT_DIR) &&

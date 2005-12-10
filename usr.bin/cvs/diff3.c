@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.7 2005/12/03 01:02:08 joris Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.8 2005/12/10 20:27:45 joris Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -71,7 +71,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff3.c,v 1.7 2005/12/03 01:02:08 joris Exp $";
+static const char rcsid[] = "$OpenBSD: diff3.c,v 1.8 2005/12/10 20:27:45 joris Exp $";
 #endif /* not lint */
 
 #include <sys/queue.h>
@@ -270,8 +270,8 @@ cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)
 		    diff3_conflicts, (diff3_conflicts > 1) ? "s" : "");
 	}
 
-	free(data);
-	free(patch);
+	xfree(data);
+	xfree(patch);
 
 out:
 	if (b1 != NULL)
@@ -508,8 +508,7 @@ getline(FILE *b, size_t *n)
 		do {
 			bufsize += 1024;
 		} while (len + 1 > bufsize);
-		if ((buf = realloc(buf, bufsize)) == NULL)
-			err(EXIT_FAILURE, NULL);
+		buf = xrealloc(buf, bufsize);
 	}
 	memcpy(buf, cp, len - 1);
 	buf[len - 1] = '\n';
@@ -808,24 +807,16 @@ increase(void)
 	newsz = szchanges == 0 ? 64 : 2 * szchanges;
 	incr = newsz - szchanges;
 
-	p = realloc(d13, newsz * sizeof(struct diff));
-	if (p == NULL)
-		err(1, NULL);
+	p = xrealloc(d13, newsz * sizeof(struct diff));
 	memset(p + szchanges, 0, incr * sizeof(struct diff));
 	d13 = p;
-	p = realloc(d23, newsz * sizeof(struct diff));
-	if (p == NULL)
-		err(1, NULL);
+	p = xrealloc(d23, newsz * sizeof(struct diff));
 	memset(p + szchanges, 0, incr * sizeof(struct diff));
 	d23 = p;
-	p = realloc(de, newsz * sizeof(struct diff));
-	if (p == NULL)
-		err(1, NULL);
+	p = xrealloc(de, newsz * sizeof(struct diff));
 	memset(p + szchanges, 0, incr * sizeof(struct diff));
 	de = p;
-	q = realloc(overlap, newsz * sizeof(char));
-	if (q == NULL)
-		err(1, NULL);
+	q = xrealloc(overlap, newsz * sizeof(char));
 	memset(q + szchanges, 0, incr * sizeof(char));
 	overlap = q;
 	szchanges = newsz;

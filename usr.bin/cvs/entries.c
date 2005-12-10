@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.52 2005/12/03 15:02:55 joris Exp $	*/
+/*	$OpenBSD: entries.c,v 1.53 2005/12/10 20:27:45 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -112,29 +112,11 @@ cvs_ent_open(const char *dir, int flags)
 		return (NULL);
 	}
 
-	ep = (CVSENTRIES *)malloc(sizeof(CVSENTRIES));
-	if (ep == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate Entries data");
-		(void)fclose(fp);
-		return (NULL);
-	}
+	ep = (CVSENTRIES *)xmalloc(sizeof(CVSENTRIES));
 	memset(ep, 0, sizeof(*ep));
 
-	ep->cef_path = strdup(entpath);
-	if (ep->cef_path == NULL) {
-		cvs_log(LP_ERRNO, "failed to copy Entries path");
-		free(ep);
-		(void)fclose(fp);
-		return (NULL);
-	}
-
-	ep->cef_bpath = strdup(bpath);
-	if (ep->cef_bpath == NULL) {
-		cvs_ent_close(ep);
-		(void)fclose(fp);
-		return (NULL);
-	}
-
+	ep->cef_path = xstrdup(entpath);
+	ep->cef_bpath = xstrdup(bpath);
 	ep->cef_cur = NULL;
 	TAILQ_INIT(&(ep->cef_ent));
 
@@ -224,10 +206,10 @@ cvs_ent_close(CVSENTRIES *ep)
 	}
 
 	if (ep->cef_path != NULL)
-		free(ep->cef_path);
+		xfree(ep->cef_path);
 
 	if (ep->cef_bpath != NULL)
-		free(ep->cef_bpath);
+		xfree(ep->cef_bpath);
 
 	while (!TAILQ_EMPTY(&(ep->cef_ent))) {
 		ent = TAILQ_FIRST(&(ep->cef_ent));
@@ -235,7 +217,7 @@ cvs_ent_close(CVSENTRIES *ep)
 		cvs_ent_free(ent);
 	}
 
-	free(ep);
+	xfree(ep);
 }
 
 
@@ -389,12 +371,7 @@ cvs_ent_parse(const char *entry)
 	char *fields[CVS_ENTRIES_NFIELDS], *buf, *sp, *dp;
 	struct cvs_ent *ent;
 
-	buf = strdup(entry);
-	if (buf == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate entry copy");
-		return (NULL);
-	}
-
+	buf = xstrdup(entry);
 	sp = buf;
 	i = 0;
 	do {
@@ -410,11 +387,7 @@ cvs_ent_parse(const char *entry)
 		return (NULL);
 	}
 
-	ent = (struct cvs_ent *)malloc(sizeof(*ent));
-	if (ent == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate CVS entry");
-		return (NULL);
-	}
+	ent = (struct cvs_ent *)xmalloc(sizeof(*ent));
 	memset(ent, 0, sizeof(*ent));
 	ent->ce_buf = buf;
 
@@ -472,8 +445,8 @@ cvs_ent_free(struct cvs_ent *ent)
 	if (ent->ce_rev != NULL)
 		rcsnum_free(ent->ce_rev);
 	if (ent->ce_buf != NULL)
-		free(ent->ce_buf);
-	free(ent);
+		xfree(ent->ce_buf);
+	xfree(ent);
 }
 
 /*

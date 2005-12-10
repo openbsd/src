@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.46 2005/12/09 06:59:27 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.47 2005/12/10 20:27:46 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -94,10 +94,7 @@ checkout_main(int argc, char **argv)
 			rcs_set_rev(rcs_optarg, &rev);
 			break;
 		case 's':
-			if ((state = strdup(rcs_optarg)) == NULL) {
-				cvs_log(LP_ERRNO, "out of memory");
-				exit(1);
-			}
+			state = xstrdup(rcs_optarg);
 			flags |= CO_STATE;
 			break;
 		case 'T':
@@ -118,11 +115,8 @@ checkout_main(int argc, char **argv)
 					    "could not get login");
 					exit(1);
 				}
-			} else if ((author = strdup(rcs_optarg)) == NULL) {
-				cvs_log(LP_ERRNO, "out of memory");
-				exit(1);
-			}
-
+			} else
+				author = xstrdup(rcs_optarg);
 			flags |= CO_AUTHOR;
 			break;
 		case 'x':
@@ -350,7 +344,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		cvs_buf_putc(bp, '\0');
 		content = cvs_buf_release(bp);
 		printf("%s", content);
-		free(content);
+		xfree(content);
 	} else {
 		if (cvs_buf_write(bp, dst, mode) < 0) {
 			cvs_log(LP_ERR, "failed to write revision to file");

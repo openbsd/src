@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.7 2005/10/17 16:16:00 moritz Exp $	*/
+/*	$OpenBSD: watch.c,v 1.8 2005/12/10 20:27:45 joris Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2005 Moritz Jodeit <moritz@openbsd.org>
@@ -123,10 +123,7 @@ cvs_watch_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 			    strcmp(optarg, "all") != 0 &&
 			    strcmp(optarg, "none") != 0)
 				return (CVS_EX_USAGE);
-			if ((aoptstr = strdup(optarg)) == NULL) {
-				cvs_log(LP_ERRNO, "failed to copy action");
-				return (CVS_EX_DATA);
-			}
+			aoptstr = xstrdup(optarg);
 			break;
 		case 'l':
 			cmd->file_flags &= ~CF_RECURSE;
@@ -164,18 +161,18 @@ cvs_watch_pre_exec(struct cvsroot *root)
 			    (cvs_sendarg(root, "unedit", 0) < 0) ||
 			    (cvs_sendarg(root, "-a", 0) < 0) ||
 			    (cvs_sendarg(root, "commit", 0) < 0)) {
-				free(aoptstr);
+				xfree(aoptstr);
 				return (CVS_EX_PROTO);
 			}
 		} else {
 			if ((cvs_sendarg(root, "-a", 0) < 0) ||
 			    (cvs_sendarg(root, aoptstr, 0) < 0)) {
-				free(aoptstr);
+				xfree(aoptstr);
 				return (CVS_EX_PROTO);
 			}
 		}
 	}
-	free(aoptstr);
+	xfree(aoptstr);
 
 	return (CVS_EX_OK);
 }

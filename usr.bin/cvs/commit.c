@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.46 2005/07/27 16:42:19 xsa Exp $	*/
+/*	$OpenBSD: commit.c,v 1.47 2005/12/10 20:27:45 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -88,11 +88,7 @@ cvs_commit_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 			cmd->file_flags &= ~CF_RECURSE;
 			break;
 		case 'm':
-			cvs_msg = strdup(optarg);
-			if (cvs_msg == NULL) {
-				cvs_log(LP_ERRNO, "failed to copy message");
-				return (CVS_EX_USAGE);
-			}
+			cvs_msg = xstrdup(optarg);
 			break;
 		case 'R':
 			cmd->file_flags |= CF_RECURSE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.63 2005/12/03 01:02:09 joris Exp $	*/
+/*	$OpenBSD: resp.c,v 1.64 2005/12/10 20:27:45 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -228,7 +228,7 @@ cvs_resp_m(struct cvsroot *root, int type, char *line)
 			 * remote server's version string.
 			 */
 			cvs_version_sent = 0;
-			root->cr_version = strdup(line);
+			root->cr_version = xstrdup(line);
 			return (0);
 		}
 		stream = stdout;
@@ -243,9 +243,7 @@ cvs_resp_m(struct cvsroot *root, int type, char *line)
 				    "MT scope stack has reached max depth");
 				return (-1);
 			}
-			cvs_mt_stack[cvs_mtstk_depth] = strdup(line + 1);
-			if (cvs_mt_stack[cvs_mtstk_depth] == NULL)
-				return (-1);
+			cvs_mt_stack[cvs_mtstk_depth] = xstrdup(line + 1);
 			cvs_mtstk_depth++;
 		} else if (*line == '-') {
 			if (cvs_mtstk_depth == 0) {
@@ -256,7 +254,7 @@ cvs_resp_m(struct cvsroot *root, int type, char *line)
 				cvs_log(LP_ERR, "mismatch in MT scope stack");
 				return (-1);
 			}
-			free(cvs_mt_stack[cvs_mtstk_depth--]);
+			xfree(cvs_mt_stack[cvs_mtstk_depth--]);
 		} else {
 			if (strcmp(line, "newline") == 0)
 				putc('\n', stdout);
@@ -550,14 +548,10 @@ cvs_resp_cksum(struct cvsroot *root, int type, char *line)
 {
 	if (cvs_fcksum != NULL) {
 		cvs_log(LP_WARN, "unused checksum");
-		free(cvs_fcksum);
+		xfree(cvs_fcksum);
 	}
 
-	cvs_fcksum = strdup(line);
-	if (cvs_fcksum == NULL) {
-		cvs_log(LP_ERRNO, "failed to copy checksum string");
-		return (-1);
-	}
+	cvs_fcksum = xstrdup(line);
 
 	return (0);
 }
@@ -716,7 +710,7 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 			ret = -1;
 		}
 
-		free(cvs_fcksum);
+		xfree(cvs_fcksum);
 		cvs_fcksum = NULL;
 	}
 
@@ -854,7 +848,7 @@ cvs_resp_rcsdiff(struct cvsroot *root, int type, char *line)
 			(void)unlink(file);
 		}
 
-		free(cvs_fcksum);
+		xfree(cvs_fcksum);
 		cvs_fcksum = NULL;
 	}
 

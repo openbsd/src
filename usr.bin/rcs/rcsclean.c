@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.19 2005/12/08 18:56:10 joris Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.20 2005/12/10 20:27:46 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -190,8 +190,8 @@ rcsclean_file(char *fname, RCSNUM *rev)
 		}
 	}
 
-	free(c1);
-	free(c2);
+	xfree(c1);
+	xfree(c2);
 
 	if (match == 1) {
 		if ((uflag == 1) && (!TAILQ_EMPTY(&(file->rf_locks)))) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.70 2005/12/05 19:53:00 niallo Exp $	*/
+/*	$OpenBSD: diff.c,v 1.71 2005/12/10 20:27:45 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -357,9 +357,7 @@ cvs_diff_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
 
-	dap = (struct diff_arg *)malloc(sizeof(*dap));
-	if (dap == NULL)
-		return (CVS_EX_DATA);
+	dap = (struct diff_arg *)xmalloc(sizeof(*dap));
 	dap->date1 = dap->date2 = dap->rev1 = dap->rev2 = NULL;
 	strlcpy(diffargs, argv[0], sizeof(diffargs));
 
@@ -434,7 +432,7 @@ int
 cvs_diff_cleanup(void)
 {
 	if (dap != NULL) {
-		free(dap);
+		xfree(dap);
 		dap = NULL;
 	}
 	return (0);
@@ -767,65 +765,35 @@ cvs_diffreg(const char *file1, const char *file2, BUF *out)
 
 	member = (int *)file[1];
 	equiv(sfile[0], slen[0], sfile[1], slen[1], member);
-	if ((tmp = realloc(member, (slen[1] + 2) * sizeof(int))) == NULL) {
-		free(member);
-		member = NULL;
-		cvs_log(LP_ERRNO, "failed to resize member");
-		goto closem;
-	}
+	tmp = xrealloc(member, (slen[1] + 2) * sizeof(int));
 	member = (int *)tmp;
 
 	class = (int *)file[0];
 	unsort(sfile[0], slen[0], class);
-	if ((tmp = realloc(class, (slen[0] + 2) * sizeof(int))) == NULL) {
-		free(class);
-		class = NULL;
-		cvs_log(LP_ERRNO, "failed to resize class");
-		goto closem;
-	}
+	tmp = xrealloc(class, (slen[0] + 2) * sizeof(int));
 	class = (int *)tmp;
 
-	if ((klist = malloc((slen[0] + 2) * sizeof(int))) == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate klist");
-		goto closem;
-	}
+	klist = xmalloc((slen[0] + 2) * sizeof(int));
 	clen = 0;
 	clistlen = 100;
-	if ((clist = malloc(clistlen * sizeof(cand))) == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate clist");
-		goto closem;
-	}
+	clist = xmalloc(clistlen * sizeof(cand));
 
 	if ((i = stone(class, slen[0], member, klist)) < 0)
 		goto closem;
 
-	free(member);
-	free(class);
+	xfree(member);
+	xfree(class);
 
-	if ((tmp = realloc(J, (diff_len[0] + 2) * sizeof(int))) == NULL) {
-		free(J);
-		J = NULL;
-		cvs_log(LP_ERRNO, "failed to resize J");
-		goto closem;
-	}
+	tmp = xrealloc(J, (diff_len[0] + 2) * sizeof(int));
 	J = (int *)tmp;
 	unravel(klist[i]);
-	free(clist);
-	free(klist);
+	xfree(clist);
+	xfree(klist);
 
-	if ((tmp = realloc(ixold, (diff_len[0] + 2) * sizeof(long))) == NULL) {
-		free(ixold);
-		ixold = NULL;
-		cvs_log(LP_ERRNO, "failed to resize ixold");
-		goto closem;
-	}
+	tmp = xrealloc(ixold, (diff_len[0] + 2) * sizeof(long));
 	ixold = (long *)tmp;
-	if ((tmp = realloc(ixnew, (diff_len[1] + 2) * sizeof(long))) == NULL) {
-		free(ixnew);
-		ixnew = NULL;
-		cvs_log(LP_ERRNO, "failed to resize ixnew");
-		goto closem;
-	}
+
+	tmp = xrealloc(ixnew, (diff_len[1] + 2) * sizeof(long));
 	ixnew = (long *)tmp;
 	check(f1, f2);
 	output(file1, f1, file2, f2);
@@ -885,20 +853,11 @@ prepare(int i, FILE *fd, off_t filesize)
 	if (sz < 100)
 		sz = 100;
 
-	p = (struct line *)malloc((sz + 3) * sizeof(struct line));
-	if (p == NULL) {
-		cvs_log(LP_ERRNO, "failed to prepare line array");
-		return (-1);
-	}
+	p = (struct line *)xmalloc((sz + 3) * sizeof(struct line));
 	for (j = 0; (h = readhash(fd));) {
 		if (j == (int)sz) {
 			sz = sz * 3 / 2;
-			tmp = realloc(p, (sz + 3) * sizeof(struct line));
-			if (tmp == NULL) {
-				cvs_log(LP_ERRNO, "failed to grow line array");
-				free(p);
-				return (-1);
-			}
+			tmp = xrealloc(p, (sz + 3) * sizeof(struct line));
 			p = (struct line *)tmp;
 		}
 		p[++j].value = h;
@@ -1038,11 +997,7 @@ newcand(int x, int y, int pred)
 
 	if (clen == clistlen) {
 		newclistlen = clistlen * 11 / 10;
-		tmp = realloc(clist, newclistlen * sizeof(cand));
-		if (tmp == NULL) {
-			cvs_log(LP_ERRNO, "failed to resize clist");
-			return (-1);
-		}
+		tmp = xrealloc(clist, newclistlen * sizeof(cand));
 		clist = tmp;
 		clistlen = newclistlen;
 	}
@@ -1232,15 +1187,12 @@ unsort(struct line *f, int l, int *b)
 {
 	int *a, i;
 
-	if ((a = (int *)malloc((l + 1) * sizeof(int))) == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate sort array");
-		return;
-	}
+	a = (int *)xmalloc((l + 1) * sizeof(int));
 	for (i = 1; i <= l; i++)
 		a[f[i].serial] = f[i].value;
 	for (i = 1; i <= l; i++)
 		b[i] = a[i];
-	free(a);
+	xfree(a);
 }
 
 static int
@@ -1318,11 +1270,7 @@ preadline(int fd, size_t rlen, off_t off)
 	char *line;
 	ssize_t nr;
 
-	line = malloc(rlen + 1);
-	if (line == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate line");
-		return (NULL);
-	}
+	line = xmalloc(rlen + 1);
 	if ((nr = pread(fd, line, rlen, off)) < 0) {
 		cvs_log(LP_ERRNO, "preadline failed");
 		return (NULL);
@@ -1337,7 +1285,7 @@ ignoreline(char *line)
 	int ret;
 
 	ret = regexec(&ignore_re, line, (size_t)0, NULL, 0);
-	free(line);
+	xfree(line);
 	return (ret == 0);	/* if it matched, it should be ignored. */
 }
 
@@ -1391,14 +1339,8 @@ proceed:
 			struct context_vec *tmp;
 			ptrdiff_t offset = context_vec_ptr - context_vec_start;
 			max_context <<= 1;
-			if ((tmp = realloc(context_vec_start, max_context *
-			    sizeof(struct context_vec))) == NULL) {
-				free(context_vec_start);
-				context_vec_start = NULL;
-				cvs_log(LP_ERRNO,
-				    "failed to resize context_vec_start");
-				return;
-			}
+			tmp = xrealloc(context_vec_start, max_context *
+			    sizeof(struct context_vec));
 			context_vec_start = tmp;
 			context_vec_end = context_vec_start + max_context;
 			context_vec_ptr = context_vec_start + offset;
@@ -1836,6 +1778,6 @@ diff_output(const char *fmt, ...)
 		cvs_buf_append(diffbuf, str, strlen(str));
 	else
 		cvs_printf("%s", str);
-	free(str);
+	xfree(str);
 	va_end(vap);
 }

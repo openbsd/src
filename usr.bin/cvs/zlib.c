@@ -1,4 +1,4 @@
-/*	$OpenBSD: zlib.c,v 1.3 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: zlib.c,v 1.4 2005/12/10 20:27:45 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -60,7 +60,7 @@ cvs_zlib_newctx(int level)
 		return (NULL);
 	}
 
-	ctx = (CVSZCTX *)malloc(sizeof(*ctx));
+	ctx = (CVSZCTX *)xmalloc(sizeof(*ctx));
 	if (ctx == NULL) {
 		cvs_log(LP_ERRNO, "failed to allocate zlib context");
 		return (NULL);
@@ -79,7 +79,7 @@ cvs_zlib_newctx(int level)
 	if ((inflateInit(&(ctx->z_instrm)) != Z_OK) ||
 	    (deflateInit(&(ctx->z_destrm), level) != Z_OK)) {
 		cvs_log(LP_ERR, "failed to initialize zlib streams");
-		free(ctx);
+		xfree(ctx);
 		return (NULL);
 	}
 
@@ -98,7 +98,7 @@ cvs_zlib_free(CVSZCTX *ctx)
 	if (ctx != NULL) {
 		(void)inflateEnd(&(ctx->z_instrm));
 		(void)deflateEnd(&(ctx->z_destrm));
-		free(ctx);
+		xfree(ctx);
 	}
 }
 

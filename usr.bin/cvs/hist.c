@@ -1,4 +1,4 @@
-/*	$OpenBSD: hist.c,v 1.11 2005/09/05 19:45:42 xsa Exp $	*/
+/*	$OpenBSD: hist.c,v 1.12 2005/12/10 20:27:45 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -54,20 +54,10 @@ cvs_hist_open(const char *path)
 {
 	CVSHIST *histp;
 
-	histp = (CVSHIST *)malloc(sizeof(*histp));
-	if (histp == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate CVS history");
-		return (NULL);
-	}
+	histp = (CVSHIST *)xmalloc(sizeof(*histp));
 	memset(histp, 0, sizeof(*histp));
 
-	histp->chf_buf = (char *)malloc((size_t)CVS_HIST_BUFSIZE);
-	if (histp->chf_buf == NULL) {
-		cvs_log(LP_ERRNO,
-		    "failed to allocate CVS history parse buffer");
-		free(histp);
-		return (NULL);
-	}
+	histp->chf_buf = (char *)xmalloc((size_t)CVS_HIST_BUFSIZE);
 	histp->chf_blen = CVS_HIST_BUFSIZE;
 	histp->chf_off = 0;
 
@@ -82,8 +72,8 @@ cvs_hist_open(const char *path)
 		cvs_log(LP_ERRNO,
 		    "failed to open CVS history file `%s'", path);
 		cvs_nolog = 1;
-		free(histp->chf_buf);
-		free(histp);
+		xfree(histp->chf_buf);
+		xfree(histp);
 		return (NULL);
 	}
 
@@ -103,8 +93,8 @@ cvs_hist_close(CVSHIST *histp)
 {
 	if (histp->chf_fd >= 0)
 		(void)close(histp->chf_fd);
-	free(histp->chf_buf);
-	free(histp);
+	xfree(histp->chf_buf);
+	xfree(histp);
 }
 
 

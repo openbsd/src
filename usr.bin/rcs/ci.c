@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.83 2005/12/09 04:27:01 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.84 2005/12/10 20:27:46 joris Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -154,10 +154,7 @@ checkin_main(int argc, char **argv)
 			pb.flags &= ~INTERACTIVE;
 			break;
 		case 'N':
-			if ((pb.symbol = strdup(rcs_optarg)) == NULL) {
-				cvs_log(LP_ERRNO, "out of memory");
-				exit(1);
-			}
+			pb.symbol = xstrdup(rcs_optarg);
 			if (rcs_sym_check(pb.symbol) != 1) {
 				cvs_log(LP_ERR, "invalid symbol `%s'",
 				    pb.symbol);
@@ -166,10 +163,7 @@ checkin_main(int argc, char **argv)
 			pb.flags |= CI_SYMFORCE;
 			break;
 		case 'n':
-			if ((pb.symbol = strdup(rcs_optarg)) == NULL) {
-				cvs_log(LP_ERRNO, "out of memory");
-				exit(1);
-			}
+			pb.symbol = xstrdup(rcs_optarg);
 			if (rcs_sym_check(pb.symbol) != 1) {
 				cvs_log(LP_ERR, "invalid symbol `%s'",
 				    pb.symbol);
@@ -195,10 +189,7 @@ checkin_main(int argc, char **argv)
 			pb.flags |= PRESERVETIME;
 			break;
 		case 't':
-			if ((pb.description = strdup(rcs_optarg)) == NULL) {
-				cvs_log(LP_ERRNO, "out of memory");
-				exit(1);
-			}
+			pb.description = xstrdup(rcs_optarg);
 			break;
 		case 'u':
 			rcs_set_rev(rcs_optarg, &pb.newrev);
@@ -208,10 +199,7 @@ checkin_main(int argc, char **argv)
 			printf("%s\n", rcs_version);
 			exit(0);
 		case 'w':
-			if ((pb.author = strdup(rcs_optarg)) == NULL) {
-				cvs_log(LP_ERRNO, "out of memory");
-				exit(1);
-			}
+			pb.author = xstrdup(rcs_optarg);
 			break;
 		case 'x':
 			rcs_suffixes = rcs_optarg;
@@ -271,7 +259,7 @@ checkin_main(int argc, char **argv)
 				continue;
 			}
 			strlcpy(pb.fpath, fpath, sizeof(pb.fpath));
-			free(fpath);
+			xfree(fpath);
 		}
 
 		pb.file = rcs_open(pb.fpath, pb.openflags, pb.fmode);
@@ -558,8 +546,8 @@ checkin_update(struct checkin_params *pb)
 	if (pb->state != NULL)
 		(void)rcs_state_set(pb->file, pb->newrev, pb->state);
 
-	free(pb->deltatext);
-	free(filec);
+	xfree(pb->deltatext);
+	xfree(filec);
 	(void)unlink(pb->filename);
 
 	/* Do checkout if -u or -l are specified. */
@@ -572,7 +560,7 @@ checkin_update(struct checkin_params *pb)
 	rcs_close(pb->file);
 
 	if (pb->flags & INTERACTIVE) {
-		free(pb->rcs_msg);
+		xfree(pb->rcs_msg);
 		pb->rcs_msg = NULL;
 	}
 	return (0);
@@ -615,11 +603,11 @@ checkin_init(struct checkin_params *pb)
 				cvs_log(LP_ERR,
 				    "failed to load description file '%s'",
 				    pb->description);
-				free(filec);
+				xfree(filec);
 				return (-1);
 			}
 			if (cvs_buf_putc(dp, '\0') < 0) {
-				free(filec);
+				xfree(filec);
 				return (-1);
 			}
 			rcs_desc = (const char *)cvs_buf_release(dp);
@@ -655,7 +643,7 @@ checkin_init(struct checkin_params *pb)
 	if (pb->state != NULL)
 		(void)rcs_state_set(pb->file, pb->newrev, pb->state);
 
-	free(filec);
+	xfree(filec);
 	(void)unlink(pb->filename);
 
 	/* Do checkout if -u or -l are specified. */
@@ -789,10 +777,7 @@ checkin_choose_rcsfile(const char *filename)
 	size_t len;
 	struct stat sb;
 
-	if ((basepath = malloc(MAXPATHLEN)) == NULL) {
-		cvs_log(LP_ERRNO, "could not allocate memory");
-		return (NULL);
-	}
+	basepath = xmalloc(MAXPATHLEN);
 	if (strchr(filename, '/') == NULL) {
 		strlcat(basepath, RCSDIR"/", MAXPATHLEN);
 		if ((stat(basepath, &sb) == 0) && (sb.st_mode & S_IFDIR)) {
@@ -820,7 +805,7 @@ checkin_choose_rcsfile(const char *filename)
 		 */
 		len += 2;
 		if (len > MAXPATHLEN) {
-			free(basepath);
+			xfree(basepath);
 			return (NULL);
 		}
 		strlcpy(basepath, filename, len);

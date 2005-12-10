@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.17 2005/10/10 13:06:24 joris Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.18 2005/12/10 20:27:45 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -50,11 +50,7 @@ rcsnum_alloc(void)
 {
 	RCSNUM *rnp;
 
-	rnp = (RCSNUM *)malloc(sizeof(*rnp));
-	if (rnp == NULL) {
-		rcs_errno = RCS_ERR_ERRNO;
-		return (NULL);
-	}
+	rnp = (RCSNUM *)xmalloc(sizeof(*rnp));
 	rnp->rn_len = 0;
 	rnp->rn_id = NULL;
 
@@ -94,8 +90,8 @@ void
 rcsnum_free(RCSNUM *rn)
 {
 	if (rn->rn_id != NULL)
-		free(rn->rn_id);
-	free(rn);
+		xfree(rn->rn_id);
+	xfree(rn);
 }
 
 /*
@@ -145,12 +141,7 @@ rcsnum_cpy(const RCSNUM *nsrc, RCSNUM *ndst, u_int depth)
 		len = depth;
 	sz = len * sizeof(u_int16_t);
 
-	tmp = realloc(ndst->rn_id, sz);
-	if (tmp == NULL) {
-		rcs_errno = RCS_ERR_ERRNO;
-		return (-1);
-	}
-
+	tmp = xrealloc(ndst->rn_id, sz);
 	ndst->rn_id = (u_int16_t *)tmp;
 	ndst->rn_len = len;
 	memcpy(ndst->rn_id, nsrc->rn_id, sz);
@@ -210,13 +201,8 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 	void *tmp;
 	char *s;
 
-	if (nump->rn_id == NULL) {
-		nump->rn_id = (u_int16_t *)malloc(sizeof(u_int16_t));
-		if (nump->rn_id == NULL) {
-			rcs_errno = RCS_ERR_ERRNO;
-			return (-1);
-		}
-	}
+	if (nump->rn_id == NULL)
+		nump->rn_id = (u_int16_t *)xmalloc(sizeof(u_int16_t));
 
 	nump->rn_len = 0;
 	nump->rn_id[0] = 0;
@@ -232,10 +218,8 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 			}
 
 			nump->rn_len++;
-			tmp = realloc(nump->rn_id,
+			tmp = xrealloc(nump->rn_id,
 			    (nump->rn_len + 1) * sizeof(u_int16_t));
-			if (tmp == NULL)
-				goto rcsnum_aton_failed;
 			nump->rn_id = (u_int16_t *)tmp;
 			nump->rn_id[nump->rn_len] = 0;
 			continue;
@@ -306,7 +290,7 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 
 rcsnum_aton_failed:
 	nump->rn_len = 0;
-	free(nump->rn_id);
+	xfree(nump->rn_id);
 	nump->rn_id = NULL;
 	return (-1);
 }
@@ -401,12 +385,7 @@ rcsnum_setsize(RCSNUM *num, u_int len)
 {
 	void *tmp;
 
-	tmp = realloc(num->rn_id, len * sizeof(u_int16_t));
-	if (tmp == NULL) {
-		rcs_errno = RCS_ERR_ERRNO;
-		return (-1);
-	}
-
+	tmp = xrealloc(num->rn_id, len * sizeof(u_int16_t));
 	num->rn_id = (u_int16_t *)tmp;
 	num->rn_len = len;
 	return (0);
