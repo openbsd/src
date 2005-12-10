@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.17 2005/12/01 02:03:58 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.18 2005/12/10 13:42:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -127,7 +127,7 @@ u_int negative;
 %token	ERROR CONST TABLE NODE DELETE ADD LOG VERBOSE LIMIT QUICK SKIP
 %token	REASON UNSPECIFIED EXPIRE LEAVE ASSOC TOOMANY NOT AUTHED ASSOCED
 %token	RESERVED RSN REQUIRED INCONSISTENT IE INVALID MIC FAILURE OPEN
-%token	ADDRESS PORT ON NOTIFY
+%token	ADDRESS PORT ON NOTIFY TTL
 %token	<v.string>	STRING
 %token	<v.val>		VALUE
 %type	<v.val>		number
@@ -175,7 +175,7 @@ option		: SET HOSTAP INTERFACE hostapifaces
 		| SET IAPP HANDLE SUBTYPE iappsubtypes
 		;
 
-iappmode	: MULTICAST iappmodeaddr iappmodeport
+iappmode	: MULTICAST iappmodeaddr iappmodeport iappmodettl
 		{
 			hostapd_cfg.c_flags &= ~HOSTAPD_CFG_F_BRDCAST;
 		}
@@ -197,6 +197,13 @@ iappmodeport	: /* empty */
 		| PORT number
 		{
 			hostapd_cfg.c_iapp.i_addr.sin_port = htons($2);
+		}
+		;
+
+iappmodettl	: /* empty */
+		| TTL number
+		{
+			hostapd_cfg.c_iapp.i_ttl = $2;
 		}
 		;
 
@@ -1026,6 +1033,7 @@ lookup(char *token)
 		{ "table",		TABLE },
 		{ "to",			TO },
 		{ "toomany",		TOOMANY },
+		{ "ttl",		TTL },
 		{ "type",		TYPE },
 		{ "unspecified",	UNSPECIFIED },
 		{ "usec",		USEC },
@@ -1327,6 +1335,7 @@ hostapd_parse_file(struct hostapd_config *cfg)
 	TAILQ_INIT(&cfg->c_frames);
 	cfg->c_iapp.i_multicast.sin_addr.s_addr = INADDR_ANY;
 	cfg->c_iapp.i_flags = HOSTAPD_IAPP_F_DEFAULT;
+	cfg->c_iapp.i_ttl = IP_DEFAULT_MULTICAST_TTL;
 
 	lineno = 1;
 	errors = 0;

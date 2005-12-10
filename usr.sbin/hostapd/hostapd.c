@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.24 2005/12/01 01:11:30 reyk Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.25 2005/12/10 13:42:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -255,19 +255,16 @@ hostapd_udp_init(struct hostapd_config *cfg)
 		/*
 		 * Enable broadcast
 		 */
-
-		hostapd_log(HOSTAPD_LOG_DEBUG, "using broadcast mode\n");
-
 		if (setsockopt(iapp->i_udp, SOL_SOCKET, SO_BROADCAST,
 		    &brd, sizeof(brd)) == -1)
 			hostapd_fatal("failed to enable broadcast on socket\n");
+
+		hostapd_log(HOSTAPD_LOG_DEBUG, "%s: using broadcast mode "
+		    "(address %s)\n", iapp->i_iface, inet_ntoa(addr->sin_addr));
 	} else {
 		/*
 		 * Enable multicast
 		 */
-
-		hostapd_log(HOSTAPD_LOG_DEBUG, "using multicast mode\n");
-
 		bzero(&mreq, sizeof(mreq));
 
 		iapp->i_multicast.sin_family = AF_INET;
@@ -285,6 +282,15 @@ hostapd_udp_init(struct hostapd_config *cfg)
 		    IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) == -1)
 			hostapd_fatal("failed to add multicast membership to "
 			    "%s: %s\n", IAPP_MCASTADDR, strerror(errno));
+
+		if (setsockopt(iapp->i_udp, IPPROTO_IP, IP_MULTICAST_TTL,
+		    &iapp->i_ttl, sizeof(iapp->i_ttl)) < 0)
+			hostapd_fatal("failed to set multicast ttl to "
+			    "%u: %s\n", iapp->i_ttl, strerror(errno));
+
+		hostapd_log(HOSTAPD_LOG_DEBUG, "%s: using multicast mode "
+		    "(ttl %u, group %s)\n", iapp->i_iface, iapp->i_ttl,
+		    inet_ntoa(iapp->i_multicast.sin_addr));
 	}
 }
 
