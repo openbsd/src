@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_scanner.h,v 1.9 2001/06/22 14:35:43 deraadt Exp $	*/
+/*	$OpenBSD: scsi_scanner.h,v 1.10 2005/12/10 01:30:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -47,8 +47,8 @@
 struct scsi_r_scanner {
 #define	READ_BIG		0x28
 	u_int8_t opcode;
-	u_int8_t lun:3;
-	u_int8_t res1:5;
+	u_int    lun:3;
+	u_int    res1:5;
 	u_int8_t code;
 	u_int8_t res2;
 	u_int8_t qualifier;
@@ -59,9 +59,9 @@ struct scsi_r_scanner {
 struct scsi_get_buffer_status {
 #define GET_BUFFER_STATUS	0x34
 	u_int8_t opcode;
-	u_int8_t lun:3;
-	u_int8_t res1:4;
-	u_int8_t wait:1;
+	u_int	 lun:3;
+	u_int    res1:4;
+	u_int    wait:1;
 	u_int8_t res2[5];
 	u_int8_t len[2];
 	u_int8_t control;
@@ -103,8 +103,8 @@ struct scsi_window_data {
 	u_int8_t reserved[6];		/* window header */
 	u_int8_t window_desc_len[2];	/* ditto */
 	u_int8_t window_id;		/* must be zero */
-	u_int8_t res1:7;
-	u_int8_t auto_bit:1;
+	u_int    res1:7;
+	u_int    auto_bit:1;
 	u_int8_t x_res[2];
 	u_int8_t y_res[2];
 	u_int8_t x_org[4];
@@ -117,9 +117,9 @@ struct scsi_window_data {
 	u_int8_t image_comp;		/* image composition (data type) */
 	u_int8_t bits_per_pixel;
 	u_int8_t halftone_pattern[2];
-	u_int8_t rif:1;			/* reverse image format (mono negative) */
-	u_int8_t res2:4;
-	u_int8_t pad_type:3;
+	u_int    rif:1;			/* reverse image format (mono negative) */
+	u_int    res2:4;
+	u_int    pad_type:3;
 	u_int8_t bit_ordering[2];
 	u_int8_t compression_type;
 	u_int8_t compression_arg;

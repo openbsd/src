@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.h,v 1.10 2003/06/02 23:28:14 millert Exp $	*/
+/*	$OpenBSD: ip.h,v 1.11 2005/12/10 01:30:14 deraadt Exp $	*/
 /*	$NetBSD: ip.h,v 1.9 1995/05/15 01:22:44 cgd Exp $	*/
 
 /*
@@ -46,11 +46,11 @@
  */
 struct ip {
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_int8_t  ip_hl:4,		/* header length */
+	u_int     ip_hl:4,		/* header length */
 		  ip_v:4;		/* version */
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int8_t  ip_v:4,		/* version */
+	u_int     ip_v:4,		/* version */
 		  ip_hl:4;		/* header length */
 #endif
 	u_int8_t  ip_tos;		/* type of service */
@@ -142,11 +142,11 @@ struct	ip_timestamp {
 	u_int8_t ipt_len;		/* size of structure (variable) */
 	u_int8_t ipt_ptr;		/* index of current entry */
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_int8_t ipt_flg:4,		/* flags, see below */
+	u_int    ipt_flg:4,		/* flags, see below */
 		 ipt_oflw:4;		/* overflow counter */
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int8_t ipt_oflw:4,		/* overflow counter */
+	u_int    ipt_oflw:4,		/* overflow counter */
 		 ipt_flg:4;		/* flags, see below */
 #endif
 	union ipt_timestamp {

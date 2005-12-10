@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.51 2004/08/10 20:12:15 markus Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.52 2005/12/10 01:30:14 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ struct inpcb {
 #define SL_ESP_TRANS      1             /* ESP transport level */
 #define SL_ESP_NETWORK    2             /* ESP network (encapsulation) level */
 #define SL_IPCOMP         3             /* Compression level */
-	u_int8_t  inp_secrequire:4,     /* Condensed State from above */
+	u_int     inp_secrequire:4,     /* Condensed State from above */
 	          inp_secresult:4;	/* Result from Key Management */
 #define SR_FAILED         1             /* Negotiation failed permanently */
 #define SR_SUCCESS        2             /* SA successfully established */

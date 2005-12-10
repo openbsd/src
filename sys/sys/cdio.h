@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.h,v 1.12 2002/10/17 17:11:12 mickey Exp $	*/
+/*	$OpenBSD: cdio.h,v 1.13 2005/12/10 01:30:14 deraadt Exp $	*/
 /*	$NetBSD: cdio.h,v 1.11 1996/02/19 18:29:04 scottr Exp $	*/
 
 #ifndef _SYS_CDIO_H_
@@ -23,12 +23,12 @@ union msf_lba {
 struct cd_toc_entry {
 	u_char	nothing1;
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_char	control:4;
-	u_char	addr_type:4;
+	u_int	control:4;
+	u_int	addr_type:4;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_char	addr_type:4;
-	u_char	control:4;
+	u_int	addr_type:4;
+	u_int	control:4;
 #endif
 	u_char	track;
 	u_char	nothing2;
@@ -50,33 +50,33 @@ struct cd_sub_channel_header {
 struct cd_sub_channel_q_data {
 	u_char	data_format;
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_char	control:4;
-	u_char	addr_type:4;
+	u_int	control:4;
+	u_int	addr_type:4;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_char	addr_type:4;
-	u_char	control:4;
+	u_int	addr_type:4;
+	u_int	control:4;
 #endif
 	u_char	track_number;
 	u_char	index_number;
 	u_char	absaddr[4];
 	u_char	reladdr[4];
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_char	:7;
-	u_char	mc_valid:1;
+	u_int	:7;
+	u_int	mc_valid:1;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_char	mc_valid:1;
-	u_char	:7;
+	u_int	mc_valid:1;
+	u_int	:7;
 #endif
 	u_char	mc_number[15]; 
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_char	:7;
-	u_char	ti_valid:1;   
+	u_int	:7;
+	u_int	ti_valid:1;   
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_char	ti_valid:1;   
-	u_char	:7;
+	u_int	ti_valid:1;   
+	u_int	:7;
 #endif
 	u_char	ti_number[15]; 
 };
@@ -84,12 +84,12 @@ struct cd_sub_channel_q_data {
 struct cd_sub_channel_position_data {
 	u_char	data_format;
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_char	control:4;
-	u_char	addr_type:4;
+	u_int	control:4;
+	u_int	addr_type:4;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_char	addr_type:4;
-	u_char	control:4;
+	u_int	addr_type:4;
+	u_int	control:4;
 #endif
 	u_char	track_number;
 	u_char	index_number;
@@ -103,12 +103,12 @@ struct cd_sub_channel_media_catalog {
 	u_char	nothing2;
 	u_char	nothing3;
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_char	:7;
-	u_char	mc_valid:1;
+	u_int	:7;
+	u_int	mc_valid:1;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_char	mc_valid:1;
-	u_char	:7;
+	u_int	mc_valid:1;
+	u_int	:7;
 #endif
 	u_char	mc_number[15];
 };
@@ -119,12 +119,12 @@ struct cd_sub_channel_track_info {
 	u_char	track_number;
 	u_char	nothing2;
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_char	:7;
-	u_char	ti_valid:1;
+	u_int	:7;
+	u_int	ti_valid:1;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_char	ti_valid:1;
-	u_char	:7;
+	u_int	ti_valid:1;
+	u_int	:7;
 #endif
 	u_char	ti_number[15];
 };
