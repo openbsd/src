@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.51 2005/12/08 23:45:49 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.52 2005/12/10 04:22:39 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -177,8 +177,7 @@ int vr_list_tx_init(struct vr_softc *);
  * Sync the PHYs by setting data bit and strobing the clock 32 times.
  */
 void
-vr_mii_sync(sc)
-	struct vr_softc		*sc;
+vr_mii_sync(struct vr_softc *sc)
 {
 	register int		i;
 
@@ -196,10 +195,7 @@ vr_mii_sync(sc)
  * Clock a series of bits through the MII.
  */
 void
-vr_mii_send(sc, bits, cnt)
-	struct vr_softc		*sc;
-	u_int32_t		bits;
-	int			cnt;
+vr_mii_send(struct vr_softc *sc, u_int32_t bits, int cnt)
 {
 	int			i;
 
@@ -223,10 +219,7 @@ vr_mii_send(sc, bits, cnt)
  * Read an PHY register through the MII.
  */
 int
-vr_mii_readreg(sc, frame)
-	struct vr_softc		*sc;
-	struct vr_mii_frame	*frame;
-	
+vr_mii_readreg(struct vr_softc *sc, struct vr_mii_frame *frame)
 #ifdef VR_USESWSHIFT
 {
 	int			i, ack, s;
@@ -347,10 +340,7 @@ fail:
  * Write to a PHY register through the MII.
  */
 int
-vr_mii_writereg(sc, frame)
-	struct vr_softc		*sc;
-	struct vr_mii_frame	*frame;
-	
+vr_mii_writereg(struct vr_softc *sc, struct vr_mii_frame *frame)
 #ifdef VR_USESWSHIFT
 {
 	int			s;
@@ -426,9 +416,7 @@ vr_mii_writereg(sc, frame)
 #endif                 
 
 int
-vr_miibus_readreg(dev, phy, reg)
-	struct device *dev;
-	int phy, reg;
+vr_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct vr_softc *sc = (struct vr_softc *)dev;
 	struct vr_mii_frame frame;
@@ -452,9 +440,7 @@ vr_miibus_readreg(dev, phy, reg)
 }
 
 void
-vr_miibus_writereg(dev, phy, reg, data)
-	struct device *dev;
-	int phy, reg, data;
+vr_miibus_writereg(struct device *dev, int phy, int reg, int data)
 {
 	struct vr_softc *sc = (struct vr_softc *)dev;
 	struct vr_mii_frame frame;
@@ -478,8 +464,7 @@ vr_miibus_writereg(dev, phy, reg, data)
 }
 
 void
-vr_miibus_statchg(dev)
-	struct device *dev;
+vr_miibus_statchg(struct device *dev)
 {
 	struct vr_softc *sc = (struct vr_softc *)dev;
 
@@ -490,8 +475,7 @@ vr_miibus_statchg(dev)
  * Program the 64-bit multicast hash filter.
  */
 void
-vr_setmulti(sc)
-	struct vr_softc		*sc;
+vr_setmulti(struct vr_softc *sc)
 {
 	struct ifnet		*ifp;
 	int			h = 0;
@@ -552,9 +536,7 @@ allmulti:
  * first have to put the transmit and/or receive logic in the idle state.
  */
 void
-vr_setcfg(sc, media)
-	struct vr_softc *sc;
-	int media;
+vr_setcfg(struct vr_softc *sc, int media)
 {
 	int restart = 0;
 
@@ -573,8 +555,7 @@ vr_setcfg(sc, media)
 }
 
 void
-vr_reset(sc)
-	struct vr_softc		*sc;
+vr_reset(struct vr_softc *sc)
 {
 	register int		i;
 
@@ -617,9 +598,7 @@ const struct pci_matchid vr_devices[] = {
  * Probe for a VIA Rhine chip.
  */
 int
-vr_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+vr_probe(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, vr_devices,
 	    sizeof(vr_devices)/sizeof(vr_devices[0])));
@@ -630,9 +609,7 @@ vr_probe(parent, match, aux)
  * setup and ethernet/BPF attach.
  */
 void
-vr_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+vr_attach(struct device *parent, struct device *self, void *aux)
 {
 	int			i;
 	pcireg_t		command;
@@ -834,8 +811,7 @@ fail_1:
  * Initialize the transmit descriptors.
  */
 int
-vr_list_tx_init(sc)
-	struct vr_softc		*sc;
+vr_list_tx_init(struct vr_softc *sc)
 {
 	struct vr_chain_data	*cd;
 	struct vr_list_data	*ld;
@@ -873,8 +849,7 @@ vr_list_tx_init(sc)
  * points back to the first.
  */
 int
-vr_list_rx_init(sc)
-	struct vr_softc		*sc;
+vr_list_rx_init(struct vr_softc *sc)
 {
 	struct vr_chain_data	*cd;
 	struct vr_list_data	*ld;
@@ -942,8 +917,7 @@ vr_list_rx_init(sc)
  * the higher level protocols.
  */
 void
-vr_rxeof(sc)
-	struct vr_softc		*sc;
+vr_rxeof(struct vr_softc *sc)
 {
 	struct mbuf		*m0;
 	struct ifnet		*ifp;
@@ -1060,8 +1034,7 @@ vr_rxeof(sc)
 }
 
 void
-vr_rxeoc(sc)
-	struct vr_softc		*sc;
+vr_rxeoc(struct vr_softc *sc)
 {
 	struct ifnet		*ifp;
 	int			i;
@@ -1097,8 +1070,7 @@ vr_rxeoc(sc)
  */
 
 void
-vr_txeof(sc)
-	struct vr_softc		*sc;
+vr_txeof(struct vr_softc *sc)
 {
 	struct vr_chain		*cur_tx;
 	struct ifnet		*ifp;
@@ -1163,8 +1135,7 @@ vr_txeof(sc)
 }
 
 void
-vr_tick(xsc)
-	void *xsc;
+vr_tick(void *xsc)
 {
 	struct vr_softc *sc = xsc;
 	int s;
@@ -1184,8 +1155,7 @@ vr_tick(xsc)
 }
 
 int
-vr_intr(arg)
-	void			*arg;
+vr_intr(void *arg)
 {
 	struct vr_softc		*sc;
 	struct ifnet		*ifp;
@@ -1275,10 +1245,7 @@ vr_intr(arg)
  * pointers to the fragment pointers.
  */
 int
-vr_encap(sc, c, m_head)
-	struct vr_softc		*sc;
-	struct vr_chain		*c;
-	struct mbuf		*m_head;
+vr_encap(struct vr_softc *sc, struct vr_chain *c, struct mbuf *m_head)
 {
 	struct vr_desc		*f = NULL;
 	struct mbuf		*m = m_head;
@@ -1343,8 +1310,7 @@ vr_encap(sc, c, m_head)
  */
 
 void
-vr_start(ifp)
-	struct ifnet		*ifp;
+vr_start(struct ifnet *ifp)
 {
 	struct vr_softc		*sc;
 	struct mbuf		*m_head;
@@ -1400,8 +1366,7 @@ vr_start(ifp)
 }
 
 void
-vr_init(xsc)
-	void			*xsc;
+vr_init(void *xsc)
 {
 	struct vr_softc		*sc = xsc;
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
@@ -1514,8 +1479,7 @@ vr_init(xsc)
  * Set media options.
  */
 int
-vr_ifmedia_upd(ifp)
-	struct ifnet		*ifp;
+vr_ifmedia_upd(struct ifnet *ifp)
 {
 	struct vr_softc		*sc = ifp->if_softc;
 
@@ -1529,9 +1493,7 @@ vr_ifmedia_upd(ifp)
  * Report current media status.
  */
 void
-vr_ifmedia_sts(ifp, ifmr)
-	struct ifnet		*ifp;
-	struct ifmediareq	*ifmr;
+vr_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct vr_softc		*sc = ifp->if_softc;
 	struct mii_data		*mii = &sc->sc_mii;
@@ -1542,10 +1504,7 @@ vr_ifmedia_sts(ifp, ifmr)
 }
 
 int
-vr_ioctl(ifp, command, data)
-	struct ifnet		*ifp;
-	u_long			command;
-	caddr_t			data;
+vr_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct vr_softc		*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *) data;
@@ -1614,8 +1573,7 @@ vr_ioctl(ifp, command, data)
 }
 
 void
-vr_watchdog(ifp)
-	struct ifnet		*ifp;
+vr_watchdog(struct ifnet *ifp)
 {
 	struct vr_softc		*sc;
 
@@ -1637,8 +1595,7 @@ vr_watchdog(ifp)
  * RX and TX lists.
  */
 void
-vr_stop(sc)
-	struct vr_softc		*sc;
+vr_stop(struct vr_softc *sc)
 {
 	int		i;
 	struct ifnet	*ifp;
@@ -1707,8 +1664,7 @@ vr_stop(sc)
  * get confused by errant DMAs when rebooting.
  */
 void
-vr_shutdown(arg)
-	void			*arg;
+vr_shutdown(void *arg)
 {
 	struct vr_softc		*sc = (struct vr_softc *)arg;
 
