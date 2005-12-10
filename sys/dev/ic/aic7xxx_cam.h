@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_cam.h,v 1.5 2004/10/24 14:36:59 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_cam.h,v 1.6 2005/12/10 02:45:20 krw Exp $	*/
 /*	$NetBSD: aic7xxx_cam.h,v 1.3 2003/04/20 11:17:20 fvdl Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ typedef enum {
 
 typedef enum {
   	CAM_DIR_IN		= SCSI_DATA_IN,
-	CAM_DIR_OUT		= SCSI_DATA_OUT,
+	CAM_DIR_OUT		= SCSI_DATA_OUT
 } ccb_flags;
 
 typedef enum {
@@ -163,7 +163,7 @@ typedef enum {
 	AC_LOST_DEVICE          =       0x100,
 	AC_TRANSFER_NEG         =       0x200,
 	AC_INQ_CHANGED          =       0x400,
-	AC_GETDEV_CHANGED       =       0x800,
+	AC_GETDEV_CHANGED       =       0x800
 } ac_code;
 
 #endif /* _AIC7XXX_CAM_H */
