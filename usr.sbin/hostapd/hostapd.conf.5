@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.26 2005/12/10 13:42:37 reyk Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.27 2005/12/10 22:16:22 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -176,9 +176,11 @@ The supported modes are:
 .Op Ic port Ar number
 .Op Ic ttl Ar number
 .Xc
-Use multicast frames.
-A multicast ttl (time-to-live) of 2 or higher is required to allow
-multicast forwarding, for example with
+Use
+.Xr multicast 4
+frames.
+A multicast time-to-live (TTL) of 2 or higher is required to allow
+multicast forwarding, for example for use with
 .Xr mrouted 8 .
 .It Xo
 .Ic broadcast
@@ -187,7 +189,7 @@ multicast forwarding, for example with
 Use broadcast frames.
 .El
 .Pp
-The default is multicast using the multicast address 224.0.1.178 with a ttl
+The default is multicast using the multicast address 224.0.1.178 with a TTL
 limited to 1 hop.
 .El
 .Sh EVENT RULES
