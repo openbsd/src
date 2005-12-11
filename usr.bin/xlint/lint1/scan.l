@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.24 2005/12/10 18:51:54 martin Exp $	*/
+/*	$OpenBSD: scan.l,v 1.25 2005/12/11 20:02:09 deraadt Exp $	*/
 /*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scan.l,v 1.24 2005/12/10 18:51:54 martin Exp $";
+static char rcsid[] = "$OpenBSD: scan.l,v 1.25 2005/12/11 20:02:09 deraadt Exp $";
 #endif
 
 #include <stdlib.h>
@@ -184,7 +184,7 @@ static	struct	kwtab {
 		scl_t	kw_scl;		/* storage class if kw_token T_SCLASS */
 		tspec_t	kw_tspec;	/* type spec. if kw_token T_TYPE or T_SOU */
 		tqual_t	kw_tqual;	/* type qual. if kw_token T_QUAL */
-	};
+	} kw_u;
 	u_int	kw_stdc : 1;	/* STDC keyword */
 	u_int	kw_gcc : 1;	/* GCC keyword */
 } kwtab[] = {
@@ -238,6 +238,10 @@ static	struct	kwtab {
 	{ "while",		T_WHILE,	{ 0 },		0, 0 },
 	{ NULL,			0,		{ 0 },		0, 0 }
 };
+
+#define kw_scl		kw_u.kw_scl
+#define kw_tspec	kw_u.kw_tspec
+#define kw_tqual	kw_u.kw_tqual
 
 /* Symbol table */
 static	sym_t	*symtab[HSHSIZ1];
