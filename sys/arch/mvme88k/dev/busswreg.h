@@ -1,4 +1,4 @@
-/*	$OpenBSD: busswreg.h,v 1.6 2004/04/24 19:51:47 miod Exp $ */
+/*	$OpenBSD: busswreg.h,v 1.7 2005/12/11 21:31:36 miod Exp $ */
 
 /*
  * Memory map for BusSwitch chip found in mvme197 boards.
@@ -82,22 +82,22 @@
 #define	BUSSWITCH_ID	0x21	/* value at CHIPID */
 
 /* GCSR bit definitions */
-#define BS_GCSR_APRI0	0x00000001	/* Bus Request 0 Priority indicator (CPU0)*/
-#define BS_GCSR_APRI1	0x00000002	/* Bus Request 1 Priority indicator (CPU1)*/
-#define BS_GCSR_APRI2	0x00000003	/* Bus Request 2 Priority indicator (mc88410)*/
-#define BS_GCSR_AMOD	0x00000004	/* Arbitration Mode */
-#define BS_GCSR_BREN	0x00000008	/* Bus Request Enable */
-#define BS_GCSR_CPUID	0x00000010	/* CPU ID */
-#define BS_GCSR_B410	0x00000020	/* BUS410 indicator */
-#define BS_GCSR_INVD	0x00000040	/* Invalidate Decoder */
-#define BS_GCSR_USR	0x00000080	/* User Access Enable */
-#define BS_GCSR_XIPL	0x00000100	/* External IPL Enable */
-#define BS_GCSR_TCPU1	0x00000200	/* Test CPU 1 Registers */
-#define BS_GCSR_XCC	0x00000400	/* External Cache Controller */
-#define BS_GCSR_INCB	0x00000800	/* Increment On Burst */
-#define BS_GCSR_TDPR	0x00002000	/* Test Dual Processor Registers */
-#define BS_GCSR_TBB	0x00004000	/* Test Bus Busy */
-#define BS_GCSR_POR	0x00008000	/* Power On Reset */
+#define BS_GCSR_APRI0	0x0001	/* Bus Request 0 Priority indicator (CPU0)*/
+#define BS_GCSR_APRI1	0x0002	/* Bus Request 1 Priority indicator (CPU1)*/
+#define BS_GCSR_APRI2	0x0003	/* Bus Request 2 Priority indicator (mc88410)*/
+#define BS_GCSR_AMOD	0x0004	/* Arbitration Mode */
+#define BS_GCSR_BREN	0x0008	/* Bus Request Enable */
+#define BS_GCSR_CPUID	0x0010	/* CPU ID */
+#define BS_GCSR_B410	0x0020	/* BUS410 indicator */
+#define BS_GCSR_INVD	0x0040	/* Invalidate Decoder */
+#define BS_GCSR_USR	0x0080	/* User Access Enable */
+#define BS_GCSR_XIPL	0x0100	/* External IPL Enable */
+#define BS_GCSR_TCPU1	0x0200	/* Test CPU 1 Registers */
+#define BS_GCSR_XCC	0x0400	/* External Cache Controller */
+#define BS_GCSR_INCB	0x0800	/* Increment On Burst */
+#define BS_GCSR_TDPR	0x2000	/* Test Dual Processor Registers */
+#define BS_GCSR_TBB	0x4000	/* Test Bus Busy */
+#define BS_GCSR_POR	0x8000	/* Power On Reset */
 
 /* System Attribute Registers bit definitions */
 #define BS_SAR_DEN	0x01	/* Decode Enable */
@@ -121,10 +121,10 @@
 #define BS_PADJUST_25	0xe7	/* 25 MHz clock */
 
 /* ROM Control Register bit definitions */
-#define BS_ROMCR_WEN0	0x01000000
-#define BS_ROMCR_WEN1   0x02000000
-#define BS_ROMCR_SGLB	0x04000000
-#define BS_ROMCR_ROM0	0x80000000
+#define BS_ROMCR_WEN0	0x0100
+#define BS_ROMCR_WEN1   0x0200
+#define BS_ROMCR_SGLB	0x0400
+#define BS_ROMCR_ROM0	0x8000
 
 /* External Cache Control Register bit definitions */
 #define BS_XCC_F0	0x00000001
