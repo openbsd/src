@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.42 2005/12/11 20:46:28 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.43 2005/12/11 21:06:10 pedro Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -1047,7 +1047,7 @@ ext2fs_sbupdate(mp, waitfor)
 	int error = 0;
 
 	bp = getblk(mp->um_devvp, SBLOCK, SBSIZE, 0, 0);
-	bcopy((caddr_t)(&fs->e2fs), bp->b_data, SBSIZE);
+	e2fs_sbsave(&fs->e2fs, (struct ext2fs *) bp->b_data);
 	if (waitfor == MNT_WAIT)
 		error = bwrite(bp);
 	else
