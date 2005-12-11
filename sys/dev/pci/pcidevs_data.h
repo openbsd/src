@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.977 2005/12/10 09:05:23 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.978 2005/12/11 02:50:17 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3923,8 +3923,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PRO/100 VE",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_3,
-	    "PRO/100 VE",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_LAN,
+	    "82801DB LAN",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_3,
@@ -4377,6 +4377,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_LPC,
 	    "82801DB LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DBL_IDE,
+	    "82801DBL IDE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_1,
