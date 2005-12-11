@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.978 2005/12/11 02:50:17 brad Exp $
+$OpenBSD: pcidevs,v 1.979 2005/12/11 23:49:34 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1073,6 +1073,7 @@ product COMPAQ CSA5300		0x4070	Smart Array 5300
 product COMPAQ CSA5i		0x4080	Smart Array 5i
 product COMPAQ CSA532		0x4082	Smart Array 532
 product COMPAQ CSA5312		0x4083	Smart Array 5312
+product COMPAQ CSA6i		0x4091	Smart Array 6i
 product COMPAQ CSA641		0x409a	Smart Array 641
 product COMPAQ CSA642		0x409b	Smart Array 642
 product COMPAQ CSA6400		0x409c	Smart Array 6400
@@ -1351,10 +1352,28 @@ product HP ZX1_IOC		0x122a	zx1 IOC
 product HP MERCURY		0x122e	Mercury Ropes-PCI
 product HP QUICKSILVER		0x12b4	QuickSilver Ropes-PCI
 product HP HPSAV100		0x3210	Smart Array V100
-product HP HPSASP600		0x3220	Smart Array P600 SAS
+product HP HPSAE200I_1		0x3211	Smart Array E200i
+product HP HPSAE200		0x3212	Smart Array E200
+product HP HPSAE200I_2		0x3213	Smart Array E200i
+product HP HPSAE200I_3		0x3214	Smart Array E200i
+product HP HPSAE200I_4		0x3215	Smart Array E200i
+product HP HPSA_1		0x3220	Smart Array
+product HP HPSA_2		0x3222	Smart Array
 product HP HPSAP800		0x3223	Smart Array P800
 product HP HPSAP600		0x3225	Smart Array P600
-product HP HPSAE400		0x3231	Smart Array E400
+product HP HPSA_3		0x3230	Smart Array
+product HP HPSA_4		0x3231	Smart Array
+product HP HPSA_5		0x3232	Smart Array
+product HP HPSA_6		0x3233	Smart Array
+product HP HPSAP400		0x3234	Smart Array P400
+product HP HPSAP400I		0x3235	Smart Array P400i
+product HP HPSA_7		0x3236	Smart Array
+product HP HPSA_8		0x3237	Smart Array
+product HP HPSA_9		0x3238	Smart Array
+product HP HPSA_10		0x3239	Smart Array
+product HP HPSA_11		0x323a	Smart Array
+product HP HPSA_12		0x323b	Smart Array
+product HP HPSA_13		0x323c	Smart Array
 
 /* Hifn products */
 product HIFN 7751		0x0005	7751
