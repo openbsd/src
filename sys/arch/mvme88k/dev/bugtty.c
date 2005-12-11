@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugtty.c,v 1.22 2004/05/16 22:23:06 miod Exp $ */
+/*	$OpenBSD: bugtty.c,v 1.23 2005/12/11 21:44:04 miod Exp $ */
 
 /* Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -43,8 +43,6 @@
 #include <machine/cpu.h>
 
 #include <mvme88k/dev/bugttyfunc.h>
-
-#include "bugtty.h"
 
 int bugttymatch(struct device *parent, void *self, void *aux);
 void bugttyattach(struct device *parent, struct device *self, void *aux);
