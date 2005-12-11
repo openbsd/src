@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.4 2005/09/19 01:28:04 deraadt Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.5 2005/12/11 20:13:33 krw Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -367,71 +367,8 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 	void *ih_arg;
 	char *ih_what;
 {
-	struct intrhand **p, *q, *ih;
-	static struct intrhand fakehand = {fakeintr};
-
 	return intr_establish(irq, &i8259_pic, irq, type, level, ih_fun,
 	    ih_arg, ih_what);
-
-	/* no point in sleeping unless someone can free memory. */
-	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL) {
-		printf("%s: isa_intr_establish: can't malloc handler info\n",
-		    ih_what);
-		return NULL;
-	}
-
-	if (!LEGAL_IRQ(irq) || type == IST_NONE) {
-		printf("%s: intr_establish: bogus irq or type\n", ih_what);
-		return NULL;
-	}
-	switch (intrtype[irq]) {
-	case IST_NONE:
-		intrtype[irq] = type;
-		break;
-	case IST_EDGE:
-	case IST_LEVEL:
-		if (type == intrtype[irq])
-			break;
-	case IST_PULSE:
-		if (type != IST_NONE) {
-			/*printf("%s: intr_establish: can't share %s with %s, irq %d\n",
-			    ih_what, isa_intr_typename(intrtype[irq]),
-			    isa_intr_typename(type), irq);*/
-			return NULL;
-		}
-		break;
-	}
-
-	/*
-	 * Figure out where to put the handler.
-	 * This is O(N^2), but we want to preserve the order, and N is
-	 * generally small.
-	 */
-	for (p = &intrhand[irq]; (q = *p) != NULL; p = &q->ih_next)
-		;
-
-	/*
-	 * Actually install a fake handler momentarily, since we might be doing
-	 * this with interrupts enabled and don't want the real routine called
-	 * until masking is set up.
-	 */
-	fakehand.ih_level = level;
-	*p = &fakehand;
-
-	/*
-	 * Poke the real handler in now.
-	 */
-	ih->ih_fun = ih_fun;
-	ih->ih_arg = ih_arg;
-	ih->ih_next = NULL;
-	ih->ih_level = level;
-	ih->ih_irq = irq;
-	evcount_attach(&ih->ih_count, ih_what, (void *)&ih->ih_irq,
-	    &evcount_intr);
-	*p = ih;
-
-	return (ih);
 }
 
 /*
@@ -442,31 +379,8 @@ isa_intr_disestablish(ic, arg)
 	isa_chipset_tag_t ic;
 	void *arg;
 {
-	struct intrhand *ih = arg;
-	int irq = ih->ih_irq;
-	struct intrhand **p, *q;
-
 	intr_disestablish(arg);
 	return;
-
-	if (!LEGAL_IRQ(irq))
-		panic("intr_disestablish: bogus irq");
-
-	/*
-	 * Remove the handler from the chain.
-	 * This is O(n^2), too.
-	 */
-	for (p = &intrhand[irq]; (q = *p) != NULL && q != ih; p = &q->ih_next)
-		;
-	if (q)
-		*p = q->ih_next;
-	else
-		panic("intr_disestablish: handler not registered");
-	evcount_detach(&ih->ih_count);
-	free(ih, M_DEVBUF);
-
-	if (intrhand[irq] == NULL)
-		intrtype[irq] = IST_NONE;
 }
 
 void
