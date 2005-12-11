@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.103 2005/12/10 12:03:23 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.104 2005/12/11 03:32:07 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -276,8 +276,6 @@ ami_freemem(struct ami_softc *sc, struct ami_mem *am)
 	bus_dmamap_destroy(sc->dmat, am->am_map);
 	free(am, M_DEVBUF);
 }
-
-
 
 void
 ami_copyhds(struct ami_softc *sc, const u_int32_t *sizes,
@@ -1641,10 +1639,7 @@ ami_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
 
 #if NBIO > 0
 int
-ami_ioctl(dev, cmd, addr)
-	struct device *dev;
-	u_long cmd;
-	caddr_t addr;
+ami_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 {
 	struct ami_softc *sc = (struct ami_softc *)dev;
 	int s;
