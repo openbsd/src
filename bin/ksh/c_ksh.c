@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.27 2005/03/30 17:16:37 deraadt Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.28 2005/12/11 20:31:21 otto Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -432,9 +432,9 @@ c_whence(char **wp)
 	while ((vflag || ret == 0) && (id = *wp++) != NULL) {
 		tp = NULL;
 		if ((iam_whence || vflag) && !pflag)
-			tp = tsearch(&keywords, id, hash(id));
+			tp = ktsearch(&keywords, id, hash(id));
 		if (!tp && !pflag) {
-			tp = tsearch(&aliases, id, hash(id));
+			tp = ktsearch(&aliases, id, hash(id));
 			if (tp && !(tp->flag & ISSET))
 				tp = NULL;
 		}
@@ -700,7 +700,7 @@ c_typeset(char **wp)
 	flag = fset | fclr; /* no difference at this point.. */
 	if (func) {
 		for (l = e->loc; l; l = l->next) {
-			for (p = tsort(&l->funs); (vp = *p++); ) {
+			for (p = ktsort(&l->funs); (vp = *p++); ) {
 				if (flag && (vp->flag & flag) == 0)
 					continue;
 				if (thing == '-')
@@ -713,7 +713,7 @@ c_typeset(char **wp)
 		}
 	} else {
 		for (l = e->loc; l; l = l->next) {
-			for (p = tsort(&l->vars); (vp = *p++); ) {
+			for (p = ktsort(&l->vars); (vp = *p++); ) {
 				struct tbl *tvp;
 				int any_set = 0;
 				/*
@@ -882,7 +882,7 @@ c_alias(char **wp)
 	if (*wp == NULL) {
 		struct tbl *ap, **p;
 
-		for (p = tsort(t); (ap = *p++) != NULL; )
+		for (p = ktsort(t); (ap = *p++) != NULL; )
 			if ((ap->flag & (ISSET|xflag)) == (ISSET|xflag)) {
 				if (pflag)
 					shf_puts("alias ", shl_stdout);
@@ -906,7 +906,7 @@ c_alias(char **wp)
 			alias = str_nsave(alias, val++ - alias, ATEMP);
 		h = hash(alias);
 		if (val == NULL && !tflag && !xflag) {
-			ap = tsearch(t, alias, h);
+			ap = ktsearch(t, alias, h);
 			if (ap != NULL && (ap->flag&ISSET)) {
 				if (pflag)
 					shf_puts("alias ", shl_stdout);
@@ -922,7 +922,7 @@ c_alias(char **wp)
 			}
 			continue;
 		}
-		ap = tenter(t, alias, h);
+		ap = ktenter(t, alias, h);
 		ap->type = tflag ? CTALIAS : CALIAS;
 		/* Are we setting the value or just some flags? */
 		if ((val && !tflag) || (!val && tflag && !Uflag)) {
@@ -976,7 +976,7 @@ c_unalias(char **wp)
 	wp += builtin_opt.optind;
 
 	for (; *wp != NULL; wp++) {
-		ap = tsearch(t, *wp, hash(*wp));
+		ap = ktsearch(t, *wp, hash(*wp));
 		if (ap == NULL) {
 			rv = 1;	/* POSIX */
 			continue;
@@ -991,7 +991,7 @@ c_unalias(char **wp)
 	if (all) {
 		struct tstate ts;
 
-		for (twalk(&ts, t); (ap = tnext(&ts)); ) {
+		for (ktwalk(&ts, t); (ap = ktnext(&ts)); ) {
 			if (ap->flag&ALLOC) {
 				ap->flag &= ~(ALLOC|ISSET);
 				afree((void*)ap->val.s, APERM);

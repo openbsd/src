@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.22 2005/03/30 17:16:37 deraadt Exp $	*/
+/*	$OpenBSD: syn.c,v 1.23 2005/12/11 20:31:21 otto Exp $	*/
 
 /*
  * shell parser (C version)
@@ -661,10 +661,10 @@ initkeywords(void)
 	struct tokeninfo const *tt;
 	struct tbl *p;
 
-	tinit(&keywords, APERM, 32); /* must be 2^n (currently 20 keywords) */
+	ktinit(&keywords, APERM, 32); /* must be 2^n (currently 20 keywords) */
 	for (tt = tokentab; tt->name; tt++) {
 		if (tt->reserved) {
-			p = tenter(&keywords, tt->name, hash(tt->name));
+			p = ktenter(&keywords, tt->name, hash(tt->name));
 			p->flag |= DEFINED|ISSET;
 			p->type = CKEYWD;
 			p->val.i = tt->val;

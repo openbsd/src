@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.21 2005/03/30 17:16:37 deraadt Exp $	*/
+/*	$OpenBSD: vi.c,v 1.22 2005/12/11 20:31:21 otto Exp $	*/
 
 /*
  *	vi command editing
@@ -722,7 +722,7 @@ vi_cmd(int argcnt, const char *cmd)
 
 				/* lookup letter in alias list... */
 				alias[1] = cmd[1];
-				ap = tsearch(&aliases, alias, hash(alias));
+				ap = ktsearch(&aliases, alias, hash(alias));
 				if (!cmd[1] || !ap || !(ap->flag & ISSET))
 					return -1;
 				/* check if this is a recursive call... */

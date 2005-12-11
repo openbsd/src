@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.28 2005/12/11 18:53:51 deraadt Exp $	*/
+/*	$OpenBSD: proto.h,v 1.29 2005/12/11 20:31:21 otto Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -206,13 +206,13 @@ void	initkeywords(void);
 struct op * compile(Source *);
 /* table.c */
 unsigned int	hash(const char *);
-void		tinit(struct table *, Area *, int);
-struct tbl *	tsearch(struct table *, const char *, unsigned int);
-struct tbl *	tenter(struct table *, const char *, unsigned int);
-void		tdelete(struct tbl *);
-void		twalk(struct tstate *, struct table *);
-struct tbl *	tnext(struct tstate *);
-struct tbl **	tsort(struct table *);
+void		ktinit(struct table *, Area *, int);
+struct tbl *	ktsearch(struct table *, const char *, unsigned int);
+struct tbl *	ktenter(struct table *, const char *, unsigned int);
+void		ktdelete(struct tbl *);
+void		ktwalk(struct tstate *, struct table *);
+struct tbl *	ktnext(struct tstate *);
+struct tbl **	ktsort(struct table *);
 /* trace.c */
 /* trap.c */
 void	inittraps(void);

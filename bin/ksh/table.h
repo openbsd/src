@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.h,v 1.6 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: table.h,v 1.7 2005/12/11 20:31:21 otto Exp $	*/
 
 /* $From: table.h,v 1.3 1994/05/31 13:34:34 michael Exp $ */
 
@@ -129,7 +129,7 @@ struct block {
 #define BF_DOGETOPTS	BIT(0)	/* save/restore getopts state */
 
 /*
- * Used by twalk() and tnext() routines.
+ * Used by ktwalk() and ktnext() routines.
  */
 struct tstate {
 	int left;
