@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.26 2005/11/06 10:26:56 martin Exp $	*/
+/*	$OpenBSD: trap.c,v 1.27 2005/12/11 21:30:30 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -630,7 +630,8 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 				uio.uio_segflg = UIO_SYSSPACE;
 				uio.uio_rw = UIO_WRITE;
 				uio.uio_procp = curproc;
-				error = procfs_domem(p, p, NULL, &uio);
+				error = process_domem(curproc, p, &uio,
+				    PT_WRITE_I);
 				Mips_SyncCache();
 
 				if (error)
@@ -1067,7 +1068,7 @@ cpu_singlestep(p)
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_READ;
 	uio.uio_procp = curproc;
-	procfs_domem(curproc, p, NULL, &uio);
+	process_domem(curproc, p, &uio, PT_READ_I);
 
 	/* compute next address after current location */
 	if (curinstr != 0) {
@@ -1094,7 +1095,7 @@ cpu_singlestep(p)
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_READ;
 	uio.uio_procp = curproc;
-	procfs_domem(curproc, p, NULL, &uio);
+	process_domem(curproc, p, &uio, PT_READ_I);
 
 	/*
 	 * Store breakpoint instruction at the "next" location now.
@@ -1108,7 +1109,7 @@ cpu_singlestep(p)
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_WRITE;
 	uio.uio_procp = curproc;
-	error = procfs_domem(curproc, p, NULL, &uio);
+	error = process_domem(curproc, p, &uio, PT_WRITE_I);
 	Mips_SyncCache();
 	if (error)
 		return (EFAULT);

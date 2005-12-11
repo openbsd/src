@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.9 2005/09/14 20:55:59 kettenis Exp $	*/
+/*	$OpenBSD: ptrace.h,v 1.10 2005/12/11 21:30:31 miod Exp $	*/
 /*	$NetBSD: ptrace.h,v 1.21 1996/02/09 18:25:26 christos Exp $	*/
 
 /*-
@@ -106,6 +106,8 @@ int	process_sstep(struct proc *p, int sstep);
 int	process_write_fpregs(struct proc *p, struct fpreg *regs);
 #endif
 int	process_write_regs(struct proc *p, struct reg *regs);
+int	process_checkioperm(struct proc *, struct proc *);
+int	process_domem(struct proc *, struct proc *, struct uio *, int);
 
 #ifndef FIX_SSTEP
 #define FIX_SSTEP(p)

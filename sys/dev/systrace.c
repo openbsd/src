@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.39 2005/11/19 02:18:00 pedro Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.40 2005/12/11 21:30:30 miod Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -47,10 +47,9 @@
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/poll.h>
+#include <sys/ptrace.h>
 
 #include <compat/common/compat_util.h>
-
-#include <miscfs/procfs/procfs.h>
 
 #include <dev/systrace.h>
 
@@ -1211,7 +1210,7 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 	uio.uio_segflg = UIO_USERSPACE;
 	uio.uio_procp = p;
 
-	error = procfs_domem(p, t, NULL, &uio);
+	error = process_domem(p, t, &uio, PT_WRITE_I);
 	io->strio_len -= uio.uio_resid;
  out:
 

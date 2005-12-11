@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_cmdline.c,v 1.5 2005/11/04 21:48:07 miod Exp $	*/
+/*	$OpenBSD: procfs_cmdline.c,v 1.6 2005/12/11 21:30:31 miod Exp $	*/
 /*	$NetBSD: procfs_cmdline.c,v 1.3 1999/03/13 22:26:48 thorpej Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ procfs_docmdline(curp, p, pfs, uio)
 	}
 
 	/*
-	 * NOTE: Don't bother doing a procfs_checkioperm() here
+	 * NOTE: Don't bother doing a process_checkioperm() here
 	 * because the psstrings info is available by using ps(1),
 	 * so it's not like there's anything to protect here.
 	 */

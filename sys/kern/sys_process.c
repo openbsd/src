@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.32 2005/09/14 20:55:59 kettenis Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.33 2005/12/11 21:30:31 miod Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -67,8 +67,6 @@
 
 #include <machine/reg.h>
 
-#include <miscfs/procfs/procfs.h>
-
 /*
  * Process debugging system call.
  */
@@ -101,6 +99,7 @@ sys_ptrace(p, v, retval)
 #endif
 	int error, write;
 	int temp;
+	int req;
 	int s;
 
 	/* "A foolish consistency..." XXX */
@@ -258,7 +257,8 @@ sys_ptrace(p, v, retval)
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		uio.uio_procp = p;
-		error = procfs_domem(p, t, NULL, &uio);
+		error = process_domem(p, t, &uio, write ? PT_WRITE_I :
+				PT_READ_I);
 		if (write == 0)
 			*retval = temp;
 		return (error);
@@ -275,18 +275,26 @@ sys_ptrace(p, v, retval)
 		uio.uio_segflg = UIO_USERSPACE;
 		uio.uio_procp = p;
 		switch (piod.piod_op) {
-		case PIOD_READ_D:
 		case PIOD_READ_I:
+			req = PT_READ_I;
 			uio.uio_rw = UIO_READ;
 			break;
-		case PIOD_WRITE_D:
+		case PIOD_READ_D:
+			req = PT_READ_D;
+			uio.uio_rw = UIO_READ;
+			break;
 		case PIOD_WRITE_I:
+			req = PT_WRITE_I;
+			uio.uio_rw = UIO_WRITE;
+			break;
+		case PIOD_WRITE_D:
+			req = PT_WRITE_D;
 			uio.uio_rw = UIO_WRITE;
 			break;
 		default:
 			return (EINVAL);
 		}
-		error = procfs_domem(p, t, NULL, &uio);
+		error = process_domem(p, t, &uio, req);
 		piod.piod_len -= uio.uio_resid;
 		(void) copyout(&piod, SCARG(uap, addr), sizeof(piod));
 		return (error);
@@ -439,7 +447,7 @@ sys_ptrace(p, v, retval)
 
 	case  PT_SETREGS:
 		KASSERT((p->p_flag & P_SYSTEM) == 0);
-		if ((error = procfs_checkioperm(p, t)) != 0)
+		if ((error = process_checkioperm(p, t)) != 0)
 			return (error);
 
 		regs = malloc(sizeof(*regs), M_TEMP, M_WAITOK);
@@ -453,7 +461,7 @@ sys_ptrace(p, v, retval)
 		return (error);
 	case  PT_GETREGS:
 		KASSERT((p->p_flag & P_SYSTEM) == 0);
-		if ((error = procfs_checkioperm(p, t)) != 0)
+		if ((error = process_checkioperm(p, t)) != 0)
 			return (error);
 
 		regs = malloc(sizeof(*regs), M_TEMP, M_WAITOK);
@@ -468,7 +476,7 @@ sys_ptrace(p, v, retval)
 #ifdef PT_SETFPREGS
 	case  PT_SETFPREGS:
 		KASSERT((p->p_flag & P_SYSTEM) == 0);
-		if ((error = procfs_checkioperm(p, t)) != 0)
+		if ((error = process_checkioperm(p, t)) != 0)
 			return (error);
 
 		fpregs = malloc(sizeof(*fpregs), M_TEMP, M_WAITOK);
@@ -484,7 +492,7 @@ sys_ptrace(p, v, retval)
 #ifdef PT_GETFPREGS
 	case  PT_GETFPREGS:
 		KASSERT((p->p_flag & P_SYSTEM) == 0);
-		if ((error = procfs_checkioperm(p, t)) != 0)
+		if ((error = process_checkioperm(p, t)) != 0)
 			return (error);
 
 		fpregs = malloc(sizeof(*fpregs), M_TEMP, M_WAITOK);
@@ -500,7 +508,7 @@ sys_ptrace(p, v, retval)
 #ifdef PT_SETXMMREGS
 	case  PT_SETXMMREGS:
 		KASSERT((p->p_flag & P_SYSTEM) == 0);
-		if ((error = procfs_checkioperm(p, t)) != 0)
+		if ((error = process_checkioperm(p, t)) != 0)
 			return (error);
 
 		xmmregs = malloc(sizeof(*xmmregs), M_TEMP, M_WAITOK);
@@ -516,7 +524,7 @@ sys_ptrace(p, v, retval)
 #ifdef PT_GETXMMREGS
 	case  PT_GETXMMREGS:
 		KASSERT((p->p_flag & P_SYSTEM) == 0);
-		if ((error = procfs_checkioperm(p, t)) != 0)
+		if ((error = process_checkioperm(p, t)) != 0)
 			return (error);
 
 		xmmregs = malloc(sizeof(*xmmregs), M_TEMP, M_WAITOK);
@@ -541,4 +549,70 @@ sys_ptrace(p, v, retval)
 	panic("ptrace: impossible");
 #endif
 	return 0;
+}
+
+/*
+ * Check if a process is allowed to fiddle with the memory of another.
+ *
+ * p = tracer
+ * t = tracee
+ *
+ * 1.  You can't attach to a process not owned by you or one that has raised
+ *     its privileges.
+ * 1a. ...unless you are root.
+ *
+ * 2.  init is always off-limits because it can control the securelevel.
+ * 2a. ...unless securelevel is permanently set to insecure.
+ *
+ * 3.  Processes that are in the process of doing an exec() are always
+ *     off-limits because of the can of worms they are. Just wait a
+ *     second.
+ */
+int
+process_checkioperm(struct proc *p, struct proc *t)
+{
+	int error;
+
+	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
+	    ISSET(t->p_flag, P_SUGIDEXEC) ||
+	    ISSET(t->p_flag, P_SUGID)) &&
+	    (error = suser(p, 0)) != 0)
+		return (error);
+
+	if ((t->p_pid == 1) && (securelevel > -1))
+		return (EPERM);
+
+	if (t->p_flag & P_INEXEC)
+		return (EAGAIN);
+
+	return (0);
+}
+
+int
+process_domem(struct proc *curp, struct proc *p, struct uio *uio, int req)
+{
+	int error;
+	vaddr_t addr;
+	vsize_t len;
+
+	len = uio->uio_resid;
+	if (len == 0)
+		return (0);
+
+	if ((error = process_checkioperm(curp, p)) != 0)
+		return (error);
+
+	/* XXXCDC: how should locking work here? */
+	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) 
+		return(EFAULT);
+	addr = uio->uio_offset;
+	p->p_vmspace->vm_refcnt++;  /* XXX */
+	error = uvm_io(&p->p_vmspace->vm_map, uio,
+	    (req == PT_WRITE_I) ? UVM_IO_FIXPROT : 0);
+	uvmspace_free(p->p_vmspace);
+
+	if (error == 0 && req == PT_WRITE_I)
+		pmap_proc_iflush(p, addr, len);
+
+	return (error);
 }

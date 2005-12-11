@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.27 2005/12/07 07:38:58 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.28 2005/12/11 21:30:30 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -80,9 +80,6 @@
 
 #define USERMODE(PSR)   (((PSR) & PSR_MODE) == 0)
 #define SYSTEMMODE(PSR) (((PSR) & PSR_MODE) != 0)
-
-/* sigh */
-extern int procfs_domem(struct proc *, struct proc *, void *, struct uio *);
 
 __dead void panictrap(int, struct trapframe *);
 __dead void error_fatal(struct trapframe *);
@@ -1506,7 +1503,7 @@ ss_get_value(struct proc *p, vaddr_t addr, u_int *value)
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_READ;
 	uio.uio_procp = curproc;
-	return (procfs_domem(curproc, p, NULL, &uio));
+	return (process_domem(curproc, p, &uio, PT_READ_I));
 }
 
 int
@@ -1524,7 +1521,7 @@ ss_put_value(struct proc *p, vaddr_t addr, u_int value)
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_WRITE;
 	uio.uio_procp = curproc;
-	return (procfs_domem(curproc, p, NULL, &uio));
+	return (process_domem(curproc, p, &uio, PT_WRITE_I));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_ctl.c,v 1.16 2005/05/31 11:35:33 art Exp $	*/
+/*	$OpenBSD: procfs_ctl.c,v 1.17 2005/12/11 21:30:31 miod Exp $	*/
 /*	$NetBSD: procfs_ctl.c,v 1.14 1996/02/09 22:40:48 christos Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ procfs_control(curp, p, op)
 		if (ISSET(p->p_flag, P_TRACED))
 			return (EBUSY);
 
-		if ((error = procfs_checkioperm(curp, p)) != 0)
+		if ((error = process_checkioperm(curp, p)) != 0)
 			return (error);
 
 		/*

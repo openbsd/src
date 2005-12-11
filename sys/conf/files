@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.356 2005/12/06 20:18:57 pedro Exp $
+#	$OpenBSD: files,v 1.357 2005/12/11 21:30:30 miod Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -666,7 +666,6 @@ file miscfs/portal/portal_vnops.c	portal
 file miscfs/procfs/procfs_cmdline.c	procfs
 file miscfs/procfs/procfs_ctl.c		procfs
 file miscfs/procfs/procfs_linux.c	procfs
-file miscfs/procfs/procfs_mem.c
 file miscfs/procfs/procfs_note.c	procfs
 file miscfs/procfs/procfs_status.c	procfs
 file miscfs/procfs/procfs_subr.c	procfs
