@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.4 2005/11/19 00:00:47 kettenis Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.5 2005/12/11 20:56:01 kettenis Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -59,8 +59,9 @@ static int gpio_read(char *);
 static void gpio_write(char *, int);
 void i2s_mute_speaker(struct i2s_softc *, int);
 void i2s_mute_headphone(struct i2s_softc *, int);
+void i2s_mute_lineout(struct i2s_softc *, int);
 int i2s_cint(void *);
-u_char *i2s_gpio_map(struct i2s_softc *, char *);
+u_char *i2s_gpio_map(struct i2s_softc *, char *, int *);
 void i2s_init(struct i2s_softc *, int);
 
 static void mono16_to_stereo16(void *, u_char *, int);
@@ -76,9 +77,12 @@ struct cfdriver i2s_cd = {
 
 static u_char *amp_mute;
 static u_char *headphone_mute;
+static u_char *lineout_mute;
 static u_char *audio_hw_reset;
 static u_char *headphone_detect;
 static int headphone_detect_active;
+static u_char *lineout_detect;
+static int lineout_detect_active;
 
 
 /* I2S registers */
@@ -530,10 +534,13 @@ i2s_set_port(h, mc)
 
 		i2s_mute_speaker(sc, 1);
 		i2s_mute_headphone(sc, 1);
+		i2s_mute_lineout(sc, 1);
 		if (mc->un.mask & 1 << 0)
 			i2s_mute_speaker(sc, 0);
 		if (mc->un.mask & 1 << 1)
 			i2s_mute_headphone(sc, 0);
+		if (mc->un.mask & 1 << 2)
+			i2s_mute_lineout(sc, 0);
 
 		sc->sc_output_mask = mc->un.mask;
 		return 0;
@@ -625,6 +632,8 @@ i2s_query_devinfo(h, dip)
 	void *h;
 	mixer_devinfo_t *dip;
 {
+	int n = 0;
+
 	switch (dip->index) {
 
 	case I2S_OUTPUT_SELECT:
@@ -632,13 +641,21 @@ i2s_query_devinfo(h, dip)
 		strlcpy(dip->label.name, AudioNselect, sizeof(dip->label.name));
 		dip->type = AUDIO_MIXER_SET;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		dip->un.s.num_mem = 2;
-		strlcpy(dip->un.s.member[0].label.name, AudioNspeaker,
-		    sizeof(dip->un.s.member[0].label.name));
-		dip->un.s.member[0].mask = 1 << 0;
-		strlcpy(dip->un.s.member[1].label.name, AudioNheadphone,
-		    sizeof(dip->un.s.member[1].label.name));
-		dip->un.s.member[1].mask = 1 << 1;
+		strlcpy(dip->un.s.member[n].label.name, AudioNspeaker,
+		    sizeof(dip->un.s.member[n].label.name));
+		dip->un.s.member[n++].mask = 1 << 0;
+		if (headphone_mute) {
+			strlcpy(dip->un.s.member[n].label.name,
+			    AudioNheadphone,
+			    sizeof(dip->un.s.member[n].label.name));
+			dip->un.s.member[n++].mask = 1 << 1;
+		}
+		if (lineout_mute) {
+			strlcpy(dip->un.s.member[n].label.name,	AudioNline,
+			    sizeof(dip->un.s.member[n].label.name));
+			dip->un.s.member[n++].mask = 1 << 2;
+		}
+		dip->un.s.num_mem = n;
 		return 0;
 
 	case I2S_VOL_OUTPUT:
@@ -969,8 +986,9 @@ gpio_write(addr, val)
 	asm volatile ("eieio" ::: "memory");
 }
 
-#define headphone_active 0	/* XXX OF */
 #define amp_active 0		/* XXX OF */
+#define headphone_active 0	/* XXX OF */
+#define lineout_active 0	/* XXX OF */
 
 void
 i2s_mute_speaker(sc, mute)
@@ -978,6 +996,9 @@ i2s_mute_speaker(sc, mute)
 	int mute;
 {
 	u_int x;
+
+	if (amp_mute == NULL)
+		return;
 
 	DPRINTF(("ampmute %d --> ", gpio_read(amp_mute)));
 
@@ -998,6 +1019,9 @@ i2s_mute_headphone(sc, mute)
 {
 	u_int x;
 
+	if (headphone_mute == NULL)
+		return;
+
 	DPRINTF(("headphonemute %d --> ", gpio_read(headphone_mute)));
 
 	if (mute)
@@ -1010,6 +1034,28 @@ i2s_mute_headphone(sc, mute)
 	DPRINTF(("%d\n", gpio_read(headphone_mute)));
 }
 
+void
+i2s_mute_lineout(sc, mute)
+	struct i2s_softc *sc;
+	int mute;
+{
+	u_int x;
+
+	if (lineout_mute == NULL)
+		return;
+
+	DPRINTF(("lineout %d --> ", gpio_read(lineout_mute)));
+
+	if (mute)
+		x = lineout_active;	/* mute */
+	else
+		x = !lineout_active;	/* unmute */
+	if (x != gpio_read(lineout_mute))
+		gpio_write(lineout_mute, x);
+
+	DPRINTF(("%d\n", gpio_read(lineout_mute)));
+}
+
 int
 i2s_cint(v)
 	void *v;
@@ -1017,28 +1063,52 @@ i2s_cint(v)
 	struct i2s_softc *sc = v;
 	u_int sense;
 
-	sense = *headphone_detect;
+	sc->sc_output_mask = 0;
+	i2s_mute_speaker(sc, 1);
+	i2s_mute_headphone(sc, 1);
+	i2s_mute_lineout(sc, 1);
+
+	if (headphone_detect)
+		sense = *headphone_detect;
+	else
+		sense = !headphone_detect_active << 1;
 	DPRINTF(("headphone detect = 0x%x\n", sense));
 
 	if (((sense & 0x02) >> 1) == headphone_detect_active) {
 		DPRINTF(("headphone is inserted\n"));
-		i2s_mute_speaker(sc, 1);
+		sc->sc_output_mask |= 1 << 1;
 		i2s_mute_headphone(sc, 0);
-		sc->sc_output_mask = 1 << 1;
 	} else {
 		DPRINTF(("headphone is NOT inserted\n"));
+	}
+
+	if (lineout_detect)
+		sense = *lineout_detect;
+	else
+		sense = !lineout_detect_active << 1;
+	DPRINTF(("lineout detect = 0x%x\n", sense));
+
+	if (((sense & 0x02) >> 1) == lineout_detect_active) {
+		DPRINTF(("lineout is inserted\n"));
+		sc->sc_output_mask |= 1 << 2;
+		i2s_mute_lineout(sc, 0);
+	} else {
+		DPRINTF(("lineout is NOT inserted\n"));
+	}
+
+	if (sc->sc_output_mask == 0) {
+		sc->sc_output_mask |= 1 << 0;
 		i2s_mute_speaker(sc, 0);
-		i2s_mute_headphone(sc, 1);
-		sc->sc_output_mask = 1 << 0;
 	}
 
 	return 1;
 }
 
 u_char *
-i2s_gpio_map(struct i2s_softc *sc, char *name)
+i2s_gpio_map(struct i2s_softc *sc, char *name, int *irq)
 {
 	u_int32_t reg[2];
+	u_int32_t intr[2];
 	int gpio;
 
 	if (OF_getprop(sc->sc_node, name, &gpio,
@@ -1048,6 +1118,11 @@ i2s_gpio_map(struct i2s_softc *sc, char *name)
 	    OF_getprop(OF_parent(gpio), "reg", &reg[1],
 	    sizeof(reg[1])) != sizeof(reg[1]))
 		return NULL;
+
+	if (irq && OF_getprop(gpio, "interrupts",
+	    intr, sizeof(intr)) == sizeof(intr)) {
+		*irq = intr[0];
+	}
 
 	return mapiodev(sc->sc_baseaddr + reg[0] + reg[1], 1);
 }
@@ -1060,10 +1135,17 @@ i2s_gpio_init(sc, node, parent)
 {
 	int gpio;
 	int headphone_detect_intr = -1, headphone_detect_intrtype;
+	int lineout_detect_intr = -1;
 
 	/* Map gpios. */
-	amp_mute = i2s_gpio_map(sc, "platform-amp-mute");
-	audio_hw_reset = i2s_gpio_map(sc, "platform-hw-reset");
+	amp_mute = i2s_gpio_map(sc, "platform-amp-mute", NULL);
+	headphone_mute = i2s_gpio_map(sc, "platform-headphone-mute", NULL);
+	headphone_detect = i2s_gpio_map(sc, "platform-headphone-detect",
+	    &headphone_detect_intr);
+	lineout_mute = i2s_gpio_map(sc, "platform-lineout-mute", NULL);
+	lineout_detect = i2s_gpio_map(sc, "platform-lineout-detect",
+	    &lineout_detect_intr);
+	audio_hw_reset = i2s_gpio_map(sc, "platform-hw-reset", NULL);
 
 	gpio = OF_getnodebyname(OF_parent(node), "gpio");
 	DPRINTF((" /gpio 0x%x\n", gpio));
@@ -1109,16 +1191,24 @@ i2s_gpio_init(sc, node, parent)
 
 		gpio = OF_peer(gpio);
 	}
-	DPRINTF((" headphone-mute %p\n", headphone_mute));
 	DPRINTF((" amp-mute %p\n", amp_mute));
+	DPRINTF((" headphone-mute %p\n", headphone_mute));
 	DPRINTF((" headphone-detect %p\n", headphone_detect));
 	DPRINTF((" headphone-detect active %x\n", headphone_detect_active));
 	DPRINTF((" headphone-detect intr %x\n", headphone_detect_intr));
+	DPRINTF((" lineout-mute %p\n", lineout_mute));
+	DPRINTF((" lineout-detect %p\n", lineout_detect));
+	DPRINTF((" lineout-detect active %x\n", lineout_detect_active));
+	DPRINTF((" lineout-detect intr %x\n", lineout_detect_intr));
 	DPRINTF((" audio-hw-reset %p\n", audio_hw_reset));
 
 	if (headphone_detect_intr != -1)
 		mac_intr_establish(parent, headphone_detect_intr, IST_EDGE,
 		    IPL_AUDIO, i2s_cint, sc, "i2s_h");
+
+	if (lineout_detect_intr != -1)
+		mac_intr_establish(parent, lineout_detect_intr, IST_EDGE,
+		    IPL_AUDIO, i2s_cint, sc, "i2s_l");
 
 	/* Enable headphone interrupt? */
 	*headphone_detect |= 0x80;
