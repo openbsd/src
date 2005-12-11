@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.174 2005/12/11 17:05:37 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.175 2005/12/11 21:36:06 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -66,8 +66,6 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 
-#include <net/netisr.h>
-
 #include <machine/asm.h>
 #include <machine/asm_macro.h>
 #include <machine/bug.h>
@@ -96,7 +94,6 @@ typedef struct {
 
 caddr_t	allocsys(caddr_t);
 void	consinit(void);
-void	dosoftint(void);
 void	dumpconf(void);
 void	dumpsys(void);
 int	getcpuspeed(struct mvmeprom_brdid *);
@@ -139,8 +136,6 @@ volatile u_int8_t *ivec[8 + 1];
 #else
 volatile u_int8_t *ivec[8];
 #endif
-
-int ssir;
 
 int physmem;	  /* available physical memory, in pages */
 
@@ -979,47 +974,6 @@ myetheraddr(cp)
 
 	bugbrdid(&brdid);
 	bcopy(&brdid.etheraddr, cp, 6);
-}
-
-int netisr;
-
-void
-dosoftint()
-{
-	if (ssir & SIR_NET) {
-		siroff(SIR_NET);
-		uvmexp.softs++;
-#define DONETISR(bit, fn) \
-	do { \
-		if (netisr & (1 << bit)) { \
-			netisr &= ~(1 << bit); \
-			fn(); \
-		} \
-	} while (0)
-#include <net/netisr_dispatch.h>
-#undef DONETISR
-	}
-
-	if (ssir & SIR_CLOCK) {
-		siroff(SIR_CLOCK);
-		uvmexp.softs++;
-		softclock();
-	}
-}
-
-int
-spl0()
-{
-	int x;
-	x = splsoftclock();
-
-	if (ssir) {
-		dosoftint();
-	}
-
-	setipl(0);
-
-	return (x);
 }
 
 /*

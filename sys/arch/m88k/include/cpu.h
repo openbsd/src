@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.10 2005/12/03 14:30:05 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.11 2005/12/11 21:36:06 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -177,13 +177,22 @@ struct clockframe {
 #define SIR_NET		1
 #define SIR_CLOCK	2
 
+#ifdef MULTIPROCESSOR
+extern void setsoftint(int);
+extern int clrsoftint(int);
+#else
+extern int ssir;
 #define setsoftint(x)	(ssir |= (x))
+#define	clrsoftint(x)	\
+({									\
+	int tmpsir = ssir & (x);					\
+	ssir ^= tmpsir;							\
+	tmpsir;								\
+})
+#endif	/* MULTIPROCESSOR */
+
 #define setsoftnet()	setsoftint(SIR_NET)
 #define setsoftclock()	setsoftint(SIR_CLOCK)
-
-#define siroff(x)	(ssir &= ~(x))
-
-extern int	ssir;
 
 #define	aston(p)	((p)->p_md.md_astpending = 1)
 

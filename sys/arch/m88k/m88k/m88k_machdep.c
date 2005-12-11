@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.12 2005/12/04 12:12:17 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.13 2005/12/11 21:36:06 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -52,11 +52,11 @@
 #include <sys/msgbuf.h>
 #include <sys/exec.h>
 #include <sys/errno.h>
+#include <sys/lock.h>
 
 #include <machine/asm_macro.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
-#include <machine/lock.h>
 #include <machine/locore.h>
 #include <machine/reg.h>
 #ifdef M88100
@@ -65,16 +65,18 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <net/netisr.h>
+
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
 #endif /* DDB */
 
-/* prototypes */
-void regdump(struct trapframe *f);
-void dumpsys(void);
-void dumpconf(void);
+void	dosoftint(void);
+void	dumpconf(void);
+void	dumpsys(void);
+void	regdump(struct trapframe *f);
 
 /*
  * CMMU and CPU variables
@@ -342,4 +344,74 @@ set_cpu_number(cpuid_t number)
 	}
 
 	ci->ci_alive = 1;
+}
+
+/*
+ * Soft interrupt interface
+ */
+
+int ssir;
+int netisr;
+
+#ifdef MULTIPROCESSOR
+#include <sys/lock.h>
+
+__cpu_simple_lock_t sir_lock = __SIMPLELOCK_UNLOCKED;
+
+void
+setsoftint(int sir)
+{
+	__cpu_simple_lock(&sir_lock);
+	ssir |= sir;
+	__cpu_simple_unlock(&sir_lock);
+}
+
+int
+clrsoftint(int sir)
+{
+	int tmpsir;
+
+	__cpu_simple_lock(&sir_lock);
+	tmpsir = ssir & sir;
+	ssir ^= tmpsir;
+	__cpu_simple_unlock(&sir_lock);
+
+	return (tmpsir);
+}
+#endif
+
+void
+dosoftint()
+{
+	if (clrsoftint(SIR_NET)) {
+		uvmexp.softs++;
+#define DONETISR(bit, fn) \
+	do { \
+		if (netisr & (1 << bit)) { \
+			netisr &= ~(1 << bit); \
+			fn(); \
+		} \
+	} while (0)
+#include <net/netisr_dispatch.h>
+#undef DONETISR
+	}
+
+	if (clrsoftint(SIR_CLOCK)) {
+		uvmexp.softs++;
+		softclock();
+	}
+}
+
+int
+spl0()
+{
+	int s;
+
+	s = splsoftclock();
+
+	if (ssir)
+		dosoftint();
+
+	setipl(0);
+	return (s);
 }
