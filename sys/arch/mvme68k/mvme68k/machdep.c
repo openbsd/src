@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.92 2005/11/24 22:43:19 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.93 2005/12/11 17:05:35 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -635,10 +635,12 @@ haltsys:
 	doshutdownhooks();
 
 	if (howto & RB_HALT) {
-		printf("halted\n\n");
-	} else {
-		doboot();
+		printf("System halted. Press any key to reboot...\n\n");
+		cngetc();
 	}
+
+	doboot();
+
 	for (;;);
 	/*NOTREACHED*/
 }
