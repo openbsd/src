@@ -628,7 +628,6 @@ case ${target} in
     char *found;
     if ((found = gld${EMULATION_NAME}_search_dir_needed(path, name)) != NULL) {
       if (gld${EMULATION_NAME}_try_needed (found, force)) {
-	free(found);
 	return TRUE;
       }
       free(found);
