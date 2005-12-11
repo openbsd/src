@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.15 2005/12/04 15:00:25 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.16 2005/12/11 21:45:28 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -67,6 +67,9 @@ struct cmmu_p {
 	void (*flush_data_cache)(cpuid_t, paddr_t, psize_t);
 	int (*dma_cachectl)(pmap_t, vaddr_t, vsize_t, int);
 	int (*dma_cachectl_pa)(paddr_t, psize_t, int);
+#ifdef MULTIPROCESSOR
+	void (*initialize_cpu)(cpuid_t);
+#endif
 };
 
 extern struct cmmu_p *cmmu;
@@ -84,6 +87,7 @@ extern struct cmmu_p *cmmu;
 #define	cmmu_flush_data_cache(a, b, c)	(cmmu->flush_data_cache)(a, b, c)
 #define	dma_cachectl(a, b, c, d)	(cmmu->dma_cachectl)(a, b, c, d)
 #define	dma_cachectl_pa(a, b, c)	(cmmu->dma_cachectl_pa)(a, b, c)
+#define	cmmu_initialize_cpu(a)		(cmmu->initialize_cpu)(a)
 
 /*
  * dma_cachectl() modes

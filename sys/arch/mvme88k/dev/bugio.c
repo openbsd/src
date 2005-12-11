@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.c,v 1.15 2005/10/13 19:43:43 miod Exp $ */
+/*	$OpenBSD: bugio.c,v 1.16 2005/12/11 21:45:31 miod Exp $ */
 /*  Copyright (c) 1998 Steve Murphree, Jr. */
 
 #include <sys/param.h>
@@ -8,13 +8,23 @@
 #include <machine/bugio.h>
 #include <machine/prom.h>
 
-register_t ossr0, ossr1, ossr2, ossr3;	/* XXX ought to be per-cpu */
+register_t ossr0, ossr1, ossr2, ossr3;
 register_t bugsr3;
 
 unsigned long bugvec[2], sysbugvec[2];
 
 void bug_vector(void);
 void sysbug_vector(void);
+
+#ifdef MULTIPROCESSOR
+#include <sys/lock.h>
+__cpu_simple_lock_t bug_lock = __SIMPLELOCK_UNLOCKED;
+#define	BUG_LOCK()	__cpu_simple_lock(&bug_lock)
+#define	BUG_UNLOCK()	__cpu_simple_unlock(&bug_lock)
+#else
+#define	BUG_LOCK()	do { } while (0)
+#define	BUG_UNLOCK()	do { } while (0)
+#endif
 
 #define MVMEPROM_CALL(x)						\
 	__asm__ __volatile__ ("or r9,r0," __STRING(x));			\
@@ -44,6 +54,7 @@ sysbug_vector()
 
 #define	BUGCTXT()							\
 {									\
+	BUG_LOCK();							\
 	disable_interrupt(psr);			/* paranoia */		\
 	bug_vector();							\
 	__asm__ __volatile__ ("ldcr %0, cr17" : "=r" (ossr0));		\
@@ -64,6 +75,7 @@ sysbug_vector()
 	__asm__ __volatile__ ("stcr %0, cr20" :: "r"(ossr3));		\
 	sysbug_vector();						\
 	set_psr(psr);							\
+	BUG_UNLOCK();							\
 }
 
 static void
@@ -123,7 +135,7 @@ buginstat(void)
 	MVMEPROM_CALL(MVMEPROM_INSTAT);
 	__asm__ __volatile__  ("or %0,r0,r2" : "=r" (ret));
 	OSCTXT();
-	return (ret & 0x4 ? 0 : 1);
+	return ((ret & 0x08) >> 3);
 }
 
 void
@@ -180,3 +192,26 @@ bugdiskrd(struct mvmeprom_dskio *dio)
 	MVMEPROM_CALL(MVMEPROM_DSKRD);
 	OSCTXT();
 }
+
+#ifdef MULTIPROCESSOR
+
+/*
+ * Ask the BUG to start a particular cpu at our provided address.
+ */
+int
+spin_cpu(cpuid_t cpu, vaddr_t address)
+{
+	u_int psr;
+	int ret;
+
+	BUGCTXT();
+	__asm__ __volatile__ ("or r2, r0, %0" : : "r" (cpu));
+	__asm__ __volatile__ ("or r3, r0, %0" : : "r" (address));
+	MVMEPROM_CALL(MVMEPROM_FORKMPU);
+	__asm__ __volatile__ ("or %0,r0,r2" : "=r" (ret));
+	OSCTXT();
+
+	return (ret);
+}
+
+#endif	/* MULTIPROCESSOR */

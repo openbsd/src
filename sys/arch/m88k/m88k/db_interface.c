@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.3 2005/12/04 12:20:19 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.4 2005/12/11 21:45:30 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -74,6 +74,13 @@ void	m88k_db_translate(db_expr_t, int, db_expr_t, char *);
 void	m88k_db_cmmucfg(db_expr_t, int, db_expr_t, char *);
 
 db_regs_t ddb_regs;
+
+#ifdef MULTIPROCESSOR
+#include <sys/mplock.h>
+struct __mp_lock ddb_mp_lock;
+
+void	m88k_db_cpu_cmd(db_expr_t, int, db_expr_t, char *);
+#endif
 
 /*
  * If you really feel like understanding the following procedure and
@@ -399,6 +406,12 @@ m88k_db_trap(type, frame)
 		}
 	}
 
+#ifdef MULTIPROCESSOR
+	curcpu()->ci_ddb_state = CI_DDB_ENTERDDB;
+	__mp_lock(&ddb_mp_lock);
+	curcpu()->ci_ddb_state = CI_DDB_INDDB;
+#endif
+
 	ddb_regs = frame->tf_regs;
 
 	cnpollc(TRUE);
@@ -406,6 +419,11 @@ m88k_db_trap(type, frame)
 	cnpollc(FALSE);
 
 	frame->tf_regs = ddb_regs;
+
+#ifdef MULTIPROCESSOR
+	curcpu()->ci_ddb_state = CI_DDB_RUNNING;
+	__mp_release_all(&ddb_mp_lock);
+#endif
 }
 
 extern const char *trap_type[];
@@ -598,11 +616,45 @@ m88k_db_frame_search(addr, have_addr, count, modif)
 	db_printf("(Walked back until 0x%x)\n",addr);
 }
 
+#ifdef MULTIPROCESSOR
+
+void
+m88k_db_cpu_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	cpuid_t cpu;
+	struct cpu_info *ci;
+
+	CPU_INFO_FOREACH(cpu, ci) {
+		db_printf("%c%4d: ", (cpu == cpu_number()) ? '*' : ' ',
+		    CPU_INFO_UNIT(ci));
+		switch (ci->ci_ddb_state) {
+		case CI_DDB_RUNNING:
+			db_printf("running\n");
+			break;
+		case CI_DDB_ENTERDDB:
+			db_printf("entering ddb\n");
+			break;
+		case CI_DDB_INDDB:
+			db_printf("ddb\n");
+			break;
+		default:
+			db_printf("? (%d)\n",
+			    ci->ci_ddb_state);
+			break;
+		}
+	}
+}
+
+#endif	/* MULTIPROCESSOR */
+
 /************************/
 /* COMMAND TABLE / INIT */
 /************************/
 
 struct db_command db_machine_cmds[] = {
+#ifdef MULTIPROCESSOR
+	{ "cpu",	m88k_db_cpu_cmd,	0,	NULL },
+#endif
 	{ "frame",	m88k_db_print_frame,	0,	NULL },
 	{ "regs",	m88k_db_registers,	0,	NULL },
 	{ "searchframe",m88k_db_frame_search,	0,	NULL },
@@ -617,4 +669,7 @@ void
 db_machine_init()
 {
 	db_machine_commands_install(db_machine_cmds);
+#ifdef MULTIPROCESSOR
+	__mp_lock_init(&ddb_mp_lock);
+#endif
 }

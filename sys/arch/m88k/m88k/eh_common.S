@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.15 2005/12/03 18:20:50 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.16 2005/12/11 21:45:30 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -222,9 +222,9 @@
  *	in a rather precarious state and so special cautions must
  * 	be taken.
  */
-#define FLAG_IGNORE_DATA_EXCEPTION	5
-#define FLAG_ENABLING_FPU		7
-#define FLAG_FROM_KERNEL		8
+#define FLAG_IGNORE_DATA_EXCEPTION	0
+#define FLAG_ENABLING_FPU		1
+#define FLAG_FROM_KERNEL		2
 
 /* REGister OFFset into the E.F. (exception frame) */
 #define REG_OFF(reg_num)  ((reg_num) * 4) /* (num * sizeof(register_t))  */
@@ -1591,6 +1591,9 @@ ASLOCAL(m88100_fpu_enable)
  */
 
 ENTRY(proc_trampoline)
+#ifdef MULTIPROCESSOR
+	bsr	_C_LABEL(proc_trampoline_mp)
+#endif
 	ld	r1, r31, 0		/* load func */
 	ld	r2, r31, 4 		/* load proc pointer */
 	jsr.n	r1

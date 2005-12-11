@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.17 2005/12/10 22:31:38 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.18 2005/12/11 21:45:30 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -121,7 +121,10 @@ struct cmmu_p cmmu8820x = {
 	m8820x_flush_inst_cache,
 	m8820x_flush_data_cache,
 	m8820x_dma_cachectl,
-	m8820x_dma_cachectl_pa
+	m8820x_dma_cachectl_pa,
+#ifdef MULTIPROCESSOR
+	m8820x_initialize_cpu,
+#endif
 };
 
 /*
@@ -247,15 +250,9 @@ m8820x_cpu_configuration_print(int main)
 	int proctype = (pid & PID_ARN) >> ARN_SHIFT;
 	int procvers = (pid & PID_VN) >> VN_SHIFT;
 	int mmu, cnt, cpu = cpu_number();
-	static __cpu_simple_lock_t print_lock;
 #ifdef M88200_HAS_SPLIT_ADDRESS
 	int aline, abit, amask;
 #endif
-
-	if (main)
-		__cpu_simple_lock_init(&print_lock);
-
-	__cpu_simple_lock(&print_lock);
 
 	printf("cpu%d: ", cpu);
 	switch (proctype) {
@@ -266,8 +263,8 @@ m8820x_cpu_configuration_print(int main)
 	case ARN_88100:
 		printf("M88100 rev 0x%x", procvers);
 #ifdef MULTIPROCESSOR
-		if (max_cpus > 1)
-			printf(", %s", master ? "master" : "slave");
+		if (main == 0)
+			printf(", secondary");
 #endif
 		printf(", %d CMMU", 1 << cmmu_shift);
 
@@ -329,8 +326,6 @@ m8820x_cpu_configuration_print(int main)
 		}
 	}
 #endif
-
-	__cpu_simple_unlock(&print_lock);
 }
 
 /*
@@ -390,8 +385,10 @@ m8820x_initialize_cpu(cpuid_t cpu)
 		 */
 		sctr = cmmu->cmmu_regs[CMMU_SCTR] &
 		    ~(CMMU_SCTR_PE | CMMU_SCTR_SE | CMMU_SCTR_PR);
+#ifdef MULTIPROCESSOR
 		if (max_cpus > 1)
 			sctr |= CMMU_SCTR_SE;
+#endif
 		cmmu->cmmu_regs[CMMU_SCTR] = sctr;
 
 		cmmu->cmmu_regs[CMMU_SAPR] = cmmu->cmmu_regs[CMMU_UAPR] = apr;

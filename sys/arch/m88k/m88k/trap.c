@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.28 2005/12/11 21:30:30 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.29 2005/12/11 21:45:30 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1109,9 +1109,9 @@ __dead void
 error_fatal(struct trapframe *frame)
 {
 	if (frame->tf_vector == 0)
-		printf("\nReset Exception\n");
+		printf("\nCPU %d Reset Exception\n", cpu_number());
 	else
-		printf("\nError Exception\n");
+		printf("\nCPU %d Error Exception\n", cpu_number());
 
 #ifdef DDB
 	regdump((struct trapframe*)frame);

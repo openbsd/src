@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.20 2005/12/03 19:06:11 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.21 2005/12/11 21:45:30 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -55,6 +55,7 @@
 
 #include <machine/asm_macro.h>
 #include <machine/cmmu.h>
+#include <machine/cpu.h>
 #include <machine/lock.h>
 #include <machine/pmap_table.h>
 
@@ -157,14 +158,14 @@ vaddr_t kmapva = 0;
  */
 static void flush_atc_entry(long, vaddr_t, boolean_t);
 pt_entry_t *pmap_expand_kmap(vaddr_t, vm_prot_t, int);
-void pmap_remove_pte(pmap_t, vaddr_t, pt_entry_t *);
-void pmap_remove_range(pmap_t, vaddr_t, vaddr_t);
-void pmap_expand(pmap_t, vaddr_t);
-void pmap_release(pmap_t);
-vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t, u_int);
+void	pmap_remove_pte(pmap_t, vaddr_t, pt_entry_t *);
+void	pmap_remove_range(pmap_t, vaddr_t, vaddr_t);
+void	pmap_expand(pmap_t, vaddr_t);
+void	pmap_release(pmap_t);
+vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t, u_int);
 pt_entry_t *pmap_pte(pmap_t, vaddr_t);
-void pmap_remove_all(struct vm_page *);
-void pmap_changebit(struct vm_page *, int, int);
+void	pmap_remove_all(struct vm_page *);
+void	pmap_changebit(struct vm_page *, int, int);
 boolean_t pmap_unsetbit(struct vm_page *, int);
 boolean_t pmap_testbit(struct vm_page *, int);
 
@@ -739,6 +740,25 @@ pmap_bootstrap(vaddr_t load_start)
 #endif	/* MULTIPROCESSOR */
 }
 
+#ifdef MULTIPROCESSOR
+void
+pmap_bootstrap_cpu(cpuid_t cpu)
+{
+	if (cpu != master_cpu) {
+		cmmu_initialize_cpu(cpu);
+	} else {
+		cmmu_flush_tlb(cpu, TRUE, VM_MIN_KERNEL_ADDRESS,
+		    btoc(VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS));
+	}
+	/* Load supervisor pointer to segment table. */
+	cmmu_set_sapr(cpu, kernel_pmap->pm_apr);
+#ifdef DEBUG
+	printf("cpu%d: running virtual\n", cpu);
+#endif
+	SETBIT_CPUSET(cpu, &kernel_pmap->pm_cpus);
+}
+#endif
+
 /*
  * Routine:	PMAP_INIT
  *
@@ -1021,7 +1041,6 @@ pmap_destroy(pmap_t pmap)
 void
 pmap_reference(pmap_t pmap)
 {
-
 	PMAP_LOCK(pmap);
 	pmap->pm_count++;
 	PMAP_UNLOCK(pmap);
@@ -1270,7 +1289,6 @@ pmap_remove(pmap_t pmap, vaddr_t s, vaddr_t e)
  *	pv lists
  *
  * Calls:
- *	__cpu_simple_lock
  *	pmap_pte
  *	pool_put
  *
@@ -2211,7 +2229,6 @@ next:
  *	pv lists
  *
  * Calls:
- *	simple_lock, simple_unlock
  *	pmap_pte
  *
  * If the attribute list for the given page has the bit, this routine

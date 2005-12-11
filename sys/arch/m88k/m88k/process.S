@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.12 2005/12/07 07:39:35 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.13 2005/12/11 21:45:30 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -121,16 +121,7 @@ ENTRY(cpu_switch)
 	bsr.n	_C_LABEL(pmap_deactivate)
 	 st	r0,  r11, CI_CURPROC		/* curproc = NULL */
 
-#ifdef MULTIPROCESSOR
-ASGLOBAL(cpu_switch_search)
-#else
 ASLOCAL(cpu_switch_search)
-#endif
-
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	bsr	_C_LABEL(sched_unlock_idle)
-#endif
-
 	/*
 	 * This is the start of the idle loop. Find the highest-priority
 	 * queue that isn't empty, then take the first proc from that queue.
@@ -139,35 +130,41 @@ ASLOCAL(cpu_switch_search)
 	ld	r7, r7, lo16(_C_LABEL(whichqs))
 	bcnd	ne0, r7, _ASM_LABEL(cpu_switch_found)
 
-ASLOCAL(cpu_switch_idle)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bsr	_C_LABEL(sched_unlock_idle)
+#endif
+
+#ifdef MULTIPROCESSOR
+ASGLOBAL(cpu_switch_idle)
+#endif
 	/*
 	 * There were no runnable processes. Enable all interrupts and
 	 * busy-wait for this to change.
-	 * Note that, besides doing spl0(), this will actually enable
+	 * Note that, besides doing setipl(IPL_NONE), this will actually enable
 	 * interrupts in the psr. Bootstrap of secondary processors
 	 * relies upon this.
 	 */
-	bsr.n	_C_LABEL(setipl)
-	 or	r2, r0, IPL_NONE
-
 	ldcr	r2, PSR
-	bb0.n	PSR_INTERRUPT_DISABLE_BIT, r2, 2f
-	 or.u	r7, r0, hi16(_C_LABEL(whichqs))
+	bb0	PSR_INTERRUPT_DISABLE_BIT, r2, 2f
 	clr	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r2, PSR
 	FLUSH_PIPELINE
 2:
-	ld	r7, r7, lo16(_C_LABEL(whichqs))
-	bcnd	eq0, r7, _ASM_LABEL(cpu_switch_idle)
-	/* XXX run fancy things here, such as page zeroing... */
+	bsr.n	_C_LABEL(setipl)
+	 or	r2, r0, IPL_NONE
 
-ASLOCAL(cpu_switch_found)
-	bsr.n	_C_LABEL(setipl)		/* disable interrupts */
-	 or	r2, r0, IPL_HIGH
+	or.u	r7, r0, hi16(_C_LABEL(whichqs))
+	ld	r7, r7, lo16(_C_LABEL(whichqs))
+	bcnd	eq0, r7, 2b
+	/* XXX run fancy things here, such as page zeroing... */
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bsr	_C_LABEL(sched_lock_idle)
 #endif
+
+ASLOCAL(cpu_switch_found)
+	bsr.n	_C_LABEL(setipl)		/* disable interrupts */
+	 or	r2, r0, IPL_HIGH
 
 	/*
 	 * An interrupt could have occured between the last whichqs check
@@ -175,11 +172,7 @@ ASLOCAL(cpu_switch_found)
 	 */
 	or.u	r7, r0, hi16(_C_LABEL(whichqs))	/* reload whichqs */
 	ld	r7, r7, lo16(_C_LABEL(whichqs))
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bcnd	eq0, r7, _ASM_LABEL(cpu_switch_search)
-#else
-	bcnd	eq0, r7, _ASM_LABEL(cpu_switch_idle)
-#endif
 
 	/* XXX use ff1, like powerpc... needs *runqueue() adjustments */
 	xor	r6, r6, r6		/* set r6 to 0 */
@@ -240,10 +233,6 @@ ASLOCAL(cpu_switch_found)
 	bsr.n	_C_LABEL(pmap_activate)
 	 or	r2, r0, r9
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	bsr	_C_LABEL(sched_unlock_idle)
-#endif
-
 	ldcr	r10,  CPU
 	ld	r10,  r10, CI_CURPCB
 
@@ -273,8 +262,11 @@ ASLOCAL(cpu_switch_found)
 	ld	r1,  r14, PCB_PC
 	ld	r30, r14, PCB_R30	/* restore frame pointer & stack */
 	ld	r31, r14, PCB_SP
-
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	br.n	_C_LABEL(sched_unlock_idle)
+#else
 	jmp.n	r1
+#endif
 	 ld	r14, r14, PCB_R14
 
 /*

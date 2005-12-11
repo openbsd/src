@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.34 2005/12/04 15:00:26 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.35 2005/12/11 21:45:31 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -62,6 +62,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/asm_macro.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/lock.h>
@@ -71,21 +72,24 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 
-cpuid_t m88110_init(void);
-void m88110_setup_board_config(void);
-void m88110_cpu_configuration_print(int);
-void m88110_shutdown(void);
-cpuid_t m88110_cpu_number(void);
-void m88110_set_sapr(cpuid_t, apr_t);
-void m88110_set_uapr(apr_t);
-void m88110_flush_tlb(cpuid_t, unsigned, vaddr_t, u_int);
-void m88110_flush_cache(cpuid_t, paddr_t, psize_t);
-void m88110_flush_inst_cache(cpuid_t, paddr_t, psize_t);
-void m88110_flush_data_cache(cpuid_t, paddr_t, psize_t);
-int m88110_dma_cachectl(pmap_t, vaddr_t, vsize_t, int);
-int m88110_dma_cachectl_pa(paddr_t, psize_t, int);
+#include <mvme88k/dev/busswreg.h>
 
-/* This is the function table for the mc88110 built-in CMMUs */
+cpuid_t	m88110_init(void);
+void	m88110_setup_board_config(void);
+void	m88110_cpu_configuration_print(int);
+void	m88110_shutdown(void);
+cpuid_t	m88110_cpu_number(void);
+void	m88110_set_sapr(cpuid_t, apr_t);
+void	m88110_set_uapr(apr_t);
+void	m88110_flush_tlb(cpuid_t, unsigned, vaddr_t, u_int);
+void	m88110_flush_cache(cpuid_t, paddr_t, psize_t);
+void	m88110_flush_inst_cache(cpuid_t, paddr_t, psize_t);
+void	m88110_flush_data_cache(cpuid_t, paddr_t, psize_t);
+int	m88110_dma_cachectl(pmap_t, vaddr_t, vsize_t, int);
+int	m88110_dma_cachectl_pa(paddr_t, psize_t, int);
+void	m88110_initialize_cpu(cpuid_t);
+
+/* This is the function table for the MC88110 built-in CMMUs */
 struct cmmu_p cmmu88110 = {
         m88110_init,
 	m88110_setup_board_config,
@@ -100,6 +104,9 @@ struct cmmu_p cmmu88110 = {
 	m88110_flush_data_cache,
 	m88110_dma_cachectl,
 	m88110_dma_cachectl_pa,
+#ifdef MULTIPROCESSOR
+	m88110_initialize_cpu,
+#endif
 };
 
 void patc_clear(void);
@@ -126,8 +133,11 @@ patc_clear(void)
 void
 m88110_setup_board_config(void)
 {
-	/* we could print something here... */
+#ifdef MULTIPROCESSOR
+	max_cpus = 2;
+#else
 	max_cpus = 1;
+#endif
 }
 
 /*
@@ -142,13 +152,6 @@ m88110_cpu_configuration_print(int master)
 	int proctype = (pid & PID_ARN) >> ARN_SHIFT;
 	int procvers = (pid & PID_VN) >> VN_SHIFT;
 	int cpu = cpu_number();
-	static __cpu_simple_lock_t print_lock;
-
-	CMMU_LOCK;
-	if (master)
-		__cpu_simple_lock_init(&print_lock);
-
-	__cpu_simple_lock(&print_lock);
 
 	printf("cpu%d: ", cpu);
 	switch (proctype) {
@@ -163,9 +166,6 @@ m88110_cpu_configuration_print(int master)
 		break;
 	}
 	printf("\n");
-
-	__cpu_simple_unlock(&print_lock);
-        CMMU_UNLOCK;
 }
 
 /*
@@ -173,6 +173,16 @@ m88110_cpu_configuration_print(int master)
  */
 cpuid_t
 m88110_init(void)
+{
+	cpuid_t cpu;
+
+	cpu = m88110_cpu_number();
+	m88110_initialize_cpu(cpu);
+	return (cpu);
+}
+
+void
+m88110_initialize_cpu(cpuid_t cpu)
 {
 	int i;
 
@@ -212,8 +222,6 @@ m88110_init(void)
 
 	set_isr(0);
 	set_dsr(0);
-
-	return (m88110_cpu_number());
 }
 
 /*
@@ -222,22 +230,16 @@ m88110_init(void)
 void
 m88110_shutdown(void)
 {
-#if 0
-	CMMU_LOCK;
-        CMMU_UNLOCK;
-#endif
 }
-
-/*
- * Find out the CPU number from accessing CMMU
- * Better be at splhigh, or even better, with interrupts
- * disabled.
- */
 
 cpuid_t
 m88110_cpu_number(void)
 {
-	return (0);	/* XXXSMP - need to tell DP processors apart */
+	u_int16_t gcsr;
+
+	gcsr = *(volatile u_int16_t *)(BS_BASE + BS_GCSR);
+
+	return ((gcsr & BS_GCSR_CPUID) != 0 ? 1 : 0);
 }
 
 void

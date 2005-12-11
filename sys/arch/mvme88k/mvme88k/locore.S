@@ -1,5 +1,6 @@
-/*	$OpenBSD: locore.S,v 1.45 2005/12/03 18:20:51 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.46 2005/12/11 21:45:31 miod Exp $	*/
 /*
+ * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -60,13 +61,11 @@
 #include "assym.h"
 #include "ksyms.h"
 
-#include <sys/errno.h>
-
 #include <machine/asm.h>
-#include <machine/trap.h>
 #include <machine/m88100.h>
-#include <machine/psl.h>
 #include <machine/param.h>
+#include <machine/psl.h>
+#include <machine/trap.h>
 #include <machine/vmparam.h>
 
 /*
@@ -79,68 +78,29 @@
 	text
 
 GLOBAL(kernelstart)
-GLOBAL(kernel_text)
-GLOBAL(start)
 ASGLOBAL(start)
-	br	_C_LABEL(start_text)
-	br	_C_LABEL(start_text)
-	br	_C_LABEL(start_text)
-	br	_C_LABEL(start_text)
-
-GLOBAL(doboot)
 	/*
-	 * Try hitting the SRST bit in VMEchip2 to reset the system.
+	 * A few identical jump instructions to make sure the pipeline is
+	 * in a good state. Probably overkill, but it's cheap.
 	 */
-#ifdef MVME188
-	/* check if it's a mvme188 */
-	or.u	r4, r0, hi16(_C_LABEL(brdtyp))
-	ld	r3, r4, lo16(_C_LABEL(brdtyp))
-	cmp	r4, r3, BRD_188
-	bb1	ne, r4, 1f
-	bsr	_C_LABEL(m188_reset)
-	br	8f
-1:
-#endif	/* MVME188 */
-	or.u	r3, r0, 0xfff4
-	ld	r4, r3, 0x0060		/* read offset (LCSR + 0x60) */
-	bb0.n	30, r4, 1f		/* if not SYSCON, don't SYSRST */
-	 set	r4, r4, 1<23>		/* set SYSRST bit - bit 23 */
-	st	r4, r3, 0x0060		/* and store it back  */
-1:
-	ld	r4, r3, 0x0104		/* try local reset, then */
-	set	r4, r4, 1<7>
-	st	r4, r3, 0x0104
+	br	_ASM_LABEL(main_start)
+	br	_ASM_LABEL(main_start)
+	br	_ASM_LABEL(main_start)
+	br	_ASM_LABEL(main_start)
 
 	/*
-	 * We will be here if the reset above failed. In this case,
-	 * we will try to return to bug.
-	 *
-	 * Switch to interrupt stack and call _doboot to take care
-	 * going to BUG. Need to do this since _doboot turns off the
-	 * the MMU and we need to be on a 1-to-1 mapped stack so that
-	 * further calls don't get data access exceptions.
+	 * Startup code for main processor.
 	 */
-
-	/* Should we use idle_u instead? XXX nivas */
-8:
-	or.u	r31, r0,  hi16(_ASM_LABEL(intstack_end))
-	or	r31, r31, lo16(_ASM_LABEL(intstack_end))
-	clr	r31, r31, 3<0>	/* round down to 8-byte boundary */
-
-	bsr	_C_LABEL(_doboot)
-	/*NOTREACHED*/
-
-	/* This is the *real* start upon poweron or reset */
-GLOBAL(start_text)
+ASLOCAL(main_start)
 	/*
-	 * Args passed by boot loader
-	 * 	r2 howto
-	 *	r3 boot controller address
-	 *	r4 esym
-	 *	r5 start of mini
-	 *	r6 end miniroot
-	 *	r7 ((Clun << 8) ; Dlun & FF) -> bootdev
-	 *	r8 cpu type (0x187, 0x188, 0x197)
+	 * Save the arguments passed by the boot loader
+	 * 	r2 boot flags
+	 *	r3 boot controller physical address
+	 *	r4 esym (if applicable)
+	 *	r5 start of miniroot (unused)
+	 *	r6 end of miniroot (unused)
+	 *	r7 ((Clun << 8) | Dlun): encoded bootdev
+	 *	r8 board type (0x187, 0x188, 0x197)
 	 */
 /*
  * (*entry)(flag, bugargs.ctrl_addr, cp, kernel.smini,kernel.emini,
@@ -161,7 +121,7 @@ GLOBAL(start_text)
 	or.u	r13, r0,  hi16(_C_LABEL(brdtyp))
 	st	r8,  r13, lo16(_C_LABEL(brdtyp))
 
-	/* set _cputyp */
+	/* set cputyp */
 	cmp	r2,  r8, BRD_197	/* r8 contains brdtyp */
 	bb1	ne, r2, 1f	/* if it's a '197, CPU is 88110 */
 	or.u	r13, r0,  hi16(CPU_88110)
@@ -177,10 +137,7 @@ GLOBAL(start_text)
 	/*
 	 * CPU Initialization
 	 *
-	 * Every CPU starts from here..
-	 * (well, from 'start' above, which just jumps here).
-	 *
-	 * I use r11 and r22 here 'cause they're easy to not
+	 * I use r11 and r22 here because they're easy to not
 	 * get mixed up -- r10, for example, looks too similar
 	 * to r0 when not being careful....
 	 *
@@ -233,89 +190,25 @@ GLOBAL(start_text)
 	FLUSH_PIPELINE
 	stcr	r0,  VBR	/* set Vector Base Register to 0, ALWAYS! */
 	FLUSH_PIPELINE
-	cmp	r2, r8, CPU_88110	/* r8 contains cputyp */
-	bb1	eq, r2, _ASM_LABEL(master_start) /* if it's a '197, skip */
 
-#if 0
-	/* clear BSS. Boot loader might have already done this... */
-	or.u	r2, r0, hi16(_C_LABEL(edata))
-	or	r2, r2, lo16(_C_LABEL(edata))
-	or.u	r4, r0, hi16(_C_LABEL(end))
-	or	r4, r4, lo16(_C_LABEL(end))
-	bsr.n	_bzero		/* bzero(edata, end-edata) */
-	 subu	r3, r4, r2
-#endif
+#ifdef MULTIPROCESSOR
 	/*
-	 * First time to count how many CPUs to attach
+	 * Have curcpu() point at the dummy cpuinfo structure,
+	 * so that cpu_number() does not dereference random memory.
+	 * This is necessary for early spl usage, despite the fact that
+	 * interrupts are disabled...
 	 */
-	or.u	r11, r0,  hi16(_ASM_LABEL(initialized_cpu_lock))
-	or	r11, r11, lo16(_ASM_LABEL(initialized_cpu_lock))
-1:
-	FLUSH_PIPELINE
-	or	r22, r0,  1
-	xmem	r22, r11, r0	/* If r22 gets 0, we have the lock.. */
-	bcnd	eq0, r22, 3f	/* ..but if not, we must wait */
-2:
-	/* just watch the lock until it looks clear */
-	ld	r22, r11, r0
-	bcnd	eq0, r22, 1b
-	br	2b		/* looks clear -- try to grab */
-3:
-	FLUSH_PIPELINE
-	or.u	r11, r0,  hi16(_ASM_LABEL(initialized_cpus))
-	ld	r22, r11, lo16(_ASM_LABEL(initialized_cpus))
-	add	r23, r22, 1
-	st	r23, r11, lo16(_ASM_LABEL(initialized_cpus))
-
-	or.u	r11, r0,  hi16(_ASM_LABEL(initialized_cpu_lock))
-	st	r0,  r11, lo16(_ASM_LABEL(initialized_cpu_lock))
-	/*
-	 * Now we view with any other processors to see who's the master.
-	 * We first try to obtain a lock to see who's allowed
-	 * to check/set the master lock.
-	 */
-	or.u	r11, r0,  hi16(_ASM_LABEL(inter_processor_lock))
-	or	r11, r11, lo16(_ASM_LABEL(inter_processor_lock))
-1:
-	FLUSH_PIPELINE
-	or	r22, r0,  1
-	xmem	r22, r11, r0		/* If r22 gets 0, we have the lock.. */
-	bcnd	eq0, r22, 4f		/* ..but if not, we must wait */
-2:
-	/* just watch the lock until it looks clear */
-	ld	r22, r11, r0
-	bcnd	ne0, r22, 2b
-	/* since we can be here with caches off, add a few nops to
-	   keep the bus from getting overloaded */
-	or	r2, r0, lo16(1000)
-3:
-	subu	r2, r2, 1
-	bcnd	eq0, r2, 3b
-	br	1b			/* looks clear -- try to grab */
-4:
-	/* now try to grab the master_processor_chosen prize */
-	FLUSH_PIPELINE
-	or.u	r11, r0,  hi16(_ASM_LABEL(master_processor_chosen))
-	or	r11, r11, lo16(_ASM_LABEL(master_processor_chosen))
-	or	r22, r0,  1
-	xmem	r22, r11, r0
+	or.u	r11, r0,  hi16(_ASM_LABEL(dummy_cpu))
+	or	r11, r11, lo16(_ASM_LABEL(dummy_cpu))
+	stcr	r11, CPU
 
 	/*
-	 * If r22 is not clear we're a slave,
-	 * otherwise we're first and the master.
-	 *
-	 * Note that we haven't released the interprocessor lock....
-	 * We'll do that when we're ready for another CPU to go.
-	 * (if we're the master, we'll do that in master_start below.
-	 *  if we're a slave, we'll do it in slave_start below).
+	 * MVME BUG idles all secondary MPUs upon startup, so at this point
+	 * we do not have to compete with them.
 	 */
-	bcnd	ne0, r22, _ASM_LABEL(slave_start)
-	/* fall through to master start if that's appropriate */
+#endif	/* MULTIPROCESSOR */
 
-ASLOCAL(master_start)
-	/*
-	 * Switch to interrupt stack
-	 */
+	/* Switch to interrupt stack */
 	or.u	r31, r0,  hi16(_ASM_LABEL(intstack_end))
 	or	r31, r31, lo16(_ASM_LABEL(intstack_end))
 
@@ -349,10 +242,10 @@ ASLOCAL(master_start)
 	 */
 	ldcr	r10, CPU
 	ld	r31, r10, CI_CURPCB
-	addu	r31, r31, USIZE
 
 	/* call main() - no arguments although main() still defines one */
-	bsr	_C_LABEL(main)
+	bsr.n	_C_LABEL(main)
+	 addu	r31, r31, USIZE
 
 	or.u	r2, r0, hi16(_ASM_LABEL(main_panic))
 	bsr.n	_C_LABEL(panic)
@@ -365,44 +258,145 @@ ASLOCAL(main_panic)
 	text
 	.align	8
 
-/*
- *	slave CPUs starts here
- */
-ASLOCAL(slave_start)
-	/*
-	 * While holding the inter_processor_lock, the slave cpu can use
-	 * the slavestack to call slave_pre_main and determine its cpu number.
-	 * After that, however, it should switch over to the interrupt stack
-	 * associated with its cpu.
-	 */
+#ifdef MULTIPROCESSOR
 
-	/* r31 <-- slavestack */
+	/*
+	 * Startup code for secondary processors.
+	 * Some of these initializations are very close to main_start; refer
+	 * to the comments there for details.
+	 */
+GLOBAL(secondary_start)
 	or.u	r31, r0,  hi16(_ASM_LABEL(slavestack_end))
 	or	r31, r31, lo16(_ASM_LABEL(slavestack_end))
 
-	bsr.n	_C_LABEL(slave_pre_main)	/* set cpu number */
-	 clr	r31, r31, 3<0>	/* round down to 8-byte boundary */
+	or.u	r13, r0,  hi16(_C_LABEL(cputyp))
+	ld	r8,  r13, lo16(_C_LABEL(cputyp))
 
-	bsr	_C_LABEL(get_slave_stack)
-	addu	r31, r2, INTSTACK_SIZE
+	cmp	r2, r8, CPU_88110
+	bb1	eq, r2, 1f
+	stcr	r0, SSBR
+1:
+	stcr	r0, SR1
+
+	set	r11, r0,  1<PSR_SUPERVISOR_MODE_BIT>
+	set	r11, r11, 1<PSR_INTERRUPT_DISABLE_BIT>
+	set	r11, r11, 1<PSR_GRAPHICS_DISABLE_BIT>
+	/*
+	 * XXX On 88110 processors, force serial instruction execution for now.
+	 * Situation where OoO would break will be hopefully taken care of in
+	 * the near future -- miod
+	 */
+#if 0
+	clr	r11, r11, 1<PSR_SERIAL_MODE_BIT>
+#else
+	set	r11, r11, 1<PSR_SERIAL_MODE_BIT>
+#endif
+	set	r11, r11, 1<PSR_SERIALIZE_BIT>
+	stcr	r11, PSR
+	FLUSH_PIPELINE
+	stcr	r0,  VBR	/* set Vector Base Register to 0, ALWAYS! */
+	FLUSH_PIPELINE
 
 	/*
-	 * SR1 now contains our cpu number. We can now release the
-	 * inter_processor_lock, as we are done with the slavestack.
-	 * We also have an interrupt stack
+	 * Have curcpu() point at the dummy cpuinfo structure,
+	 * so that cpu_number() does not dereference random memory.
+	 * This is necessary for early spl usage, despite the fact that
+	 * interrupts are disabled...
+	 */
+	or.u	r11, r0,  hi16(_ASM_LABEL(dummy_cpu))
+	or	r11, r11, lo16(_ASM_LABEL(dummy_cpu))
+	stcr	r11, CPU
+
+	/*
+	 * Since there may be more than one secondary MPU, compete with them
+	 * to initialize safely.
+	 */
+	or.u	r11, r0,  hi16(_C_LABEL(cpu_mutex))
+	or	r11, r11, lo16(_C_LABEL(cpu_mutex))
+1:
+	or	r22, r0,  1
+	xmem	r22, r11, r0		/* If r22 gets 0, we have the lock... */
+	bcnd	eq0, r22, 4f		/* ...but if not, we must wait */
+2:
+	/* just watch the lock until it looks clear */
+	ld	r22, r11, r0
+	bcnd	eq0, r22, 1b
+	/* since we can be here with caches off, add a few nops to
+	   keep the bus from getting overloaded */
+	or	r2,  r0,  lo16(1000)
+3:
+	subu	r2,  r2,  1
+	bcnd	ne0, r2,  3b
+	br	1b
+4:
+	
+	/*
+	 * While holding the cpu_mutex, the secondary cpu can use the slavestack
+	 * to call secondary_pre_main() to determine its cpu number.
+	 * After that, however, it should allocate its own stack and switch
+	 * to it.
 	 */
 
-	or.u	r10, r0, hi16(_ASM_LABEL(inter_processor_lock))
-	st	r0, r10, lo16(_ASM_LABEL(inter_processor_lock))
+	bsr	_C_LABEL(secondary_pre_main)	/* set cpu number */
 
-	br	_C_LABEL(slave_main)	/* does not return */
+	ldcr	r2, CPU
+	ld	r3, r2, CI_IDLE_PCB
+	bsr.n	_C_LABEL(secondary_main)
+	 addu	r31, r3, USIZE			/* switch to idle stack */
 
-GLOBAL(spin_cpu)
-	or.u	r3,   r0,  hi16(_C_LABEL(start_text))
-	or	r3,   r3,  lo16(_C_LABEL(start_text))
-	or	r9,   r0,  0x100		/* .FORKMPU */
-	tb0	0,    r0,  0x200-16		/* call 188Bug */
-	jmp	r1
+	/*
+	 * At this point, the CPU has been correctly initialized and has
+	 * identified itself on the console.
+	 * All it needs now is to jump to the idle loop and wait for work to
+	 * be offered.
+	 */
+	br	_ASM_LABEL(cpu_switch_idle)
+
+#endif	/* MULTIPROCESSOR */
+
+/*
+ * Reset code.
+ * Should be rewritten in C eventually.
+ */
+GLOBAL(doboot)
+#ifdef MVME188
+	/* check if it's a mvme188 */
+	or.u	r4, r0, hi16(_C_LABEL(brdtyp))
+	ld	r3, r4, lo16(_C_LABEL(brdtyp))
+	cmp	r4, r3, BRD_188
+	bb1	ne, r4, 1f
+	bsr	_C_LABEL(m188_reset)
+	br	8f
+1:
+#endif	/* MVME188 */
+	/*
+	 * Try hitting the SRST bit in VMEchip2 to reset the system.
+	 */
+	or.u	r3, r0, 0xfff4
+	ld	r4, r3, 0x0060		/* read offset (LCSR + 0x60) */
+	bb0.n	30, r4, 1f		/* if not SYSCON, don't SYSRST */
+	 set	r4, r4, 1<23>		/* set SYSRST bit - bit 23 */
+	st	r4, r3, 0x0060		/* and store it back  */
+1:
+	ld	r4, r3, 0x0104		/* try local reset, then */
+	set	r4, r4, 1<7>
+	st	r4, r3, 0x0104
+
+	/*
+	 * We will be here if the reset above failed. In this case,
+	 * we will try to return to bug.
+	 *
+	 * Switch to interrupt stack and call _doboot to take care
+	 * going to BUG. Need to do this since _doboot turns off the
+	 * the MMU and we need to be on a 1-to-1 mapped stack so that
+	 * further calls don't get data access exceptions.
+	 */
+
+8:
+	or.u	r31, r0,  hi16(_ASM_LABEL(intstack_end))
+	bsr.n	_C_LABEL(_doboot)
+	 or	r31, r31, lo16(_ASM_LABEL(intstack_end))
+	/*NOTREACHED*/
 
 /*
  * MVME188 specific support routines
@@ -441,17 +435,14 @@ GLOBAL(kernel_sdt)		/* SDT (segment descriptor table */
 ASGLOBAL(intstack)
 	space	USIZE
 ASGLOBAL(intstack_end)
-ASGLOBAL(slavestack)
+
+#ifdef MULTIPROCESSOR
 	space	PAGE_SIZE	/* 4K, small, interim stack */
-ASGLOBAL(slavestack_end)
+ASLOCAL(slavestack_end)
+#endif
 
 /*
- * When a process exits and its u. area goes away, we set curpcb to point
- * to this `u.', leaving us with something to use for an interrupt stack,
- * and letting all the register save code have a pcb_uw to examine.
- * This is also carefully arranged (to come just before u0, so that
- * process 0's kernel stack can quietly overrun into it during bootup, if
- * we feel like doing that).
+ * Main processor's idle pcb and stack.
  * Should be page aligned.
  */
 	.align	PAGE_SIZE
@@ -460,8 +451,7 @@ GLOBAL(idle_u)
 
 /*
  * Process 0's u.
- *
- * This must be page aligned
+ * Should be page aligned.
  */
 	.align	PAGE_SIZE
 ASLOCAL(u0)
@@ -469,20 +459,14 @@ ASLOCAL(u0)
 GLOBAL(proc0paddr)
 	word	_ASM_LABEL(u0)	/*  KVA of proc0 uarea */
 
-GLOBAL(ret_addr)
-	word 0
-/* XMEM spin lock -- to count CPUs */
-ASLOCAL(initialized_cpu_lock)
-	word 0
-/* CPU counter to initialize */
-ASLOCAL(initialized_cpus)
-	word 0
-/* The first processor that XMEMs this becomes the master */
-ASLOCAL(master_processor_chosen)
-	word 0
-/* XMEM spin lock -- controls access to master_processor_chosen */
-ASLOCAL(inter_processor_lock)
-	word 0
+#ifdef MULTIPROCESSOR
+/* Dummy cpuinfo structure, for cpu_number() to work early. */
+ASLOCAL(dummy_cpu)
+	word	1	/* ci_alive */
+	word	0	/* ci_curproc */
+	word	0	/* ci_curpcb */
+	word	0	/* ci_cpuid */
+#endif	/* MULTIPROCESSOR */
 
 #if defined(DDB) || NKSYMS > 0
 GLOBAL(esym)

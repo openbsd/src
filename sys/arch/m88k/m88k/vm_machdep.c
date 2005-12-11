@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.9 2005/12/08 07:02:36 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.10 2005/12/11 21:45:30 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -146,10 +146,9 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 void
 cpu_exit(struct proc *p)
 {
-	pmap_deactivate(p);
-
 	splhigh();
 
+	pmap_deactivate(p);
 	uvmexp.swtch++;
 	switch_exit(p);
 	/* NOTREACHED */

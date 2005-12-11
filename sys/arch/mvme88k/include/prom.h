@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.14 2004/08/02 14:38:40 miod Exp $ */
+/*	$OpenBSD: prom.h,v 1.15 2005/12/11 21:45:31 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -69,6 +69,10 @@
 #define ENVIRONTYPE_ROMBOOT	3
 #define ENVIRONTYPE_NETBOOT	4
 #define ENVIRONTYPE_MEMSIZE	5
+
+#define	FORKMPU_NOT_IDLE	-1
+#define	FORKMPU_BAD_ADDRESS	-2
+#define	FORKMPU_NO_MPU		-3
 
 #ifndef LOCORE
 struct mvmeprom_netctrl {

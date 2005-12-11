@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.175 2005/12/11 21:36:06 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.176 2005/12/11 21:45:31 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -97,13 +97,12 @@ void	consinit(void);
 void	dumpconf(void);
 void	dumpsys(void);
 int	getcpuspeed(struct mvmeprom_brdid *);
-vaddr_t	get_slave_stack(void);
 void	identifycpu(void);
 void	mvme_bootstrap(void);
 void	savectx(struct pcb *);
+void	secondary_main(void);
+void	secondary_pre_main(void);
 void	setupiackvectors(void);
-void	slave_pre_main(void);
-int	slave_main(void);
 void	vector_init(m88k_exception_vector_area *, unsigned *);
 void	_doboot(void);
 
@@ -153,6 +152,10 @@ vaddr_t iomapbase;
 
 struct extent *iomap_extent;
 struct vm_map *iomap_map;
+
+#ifdef MULTIPROCESSOR
+__cpu_simple_lock_t cpu_mutex = __SIMPLELOCK_UNLOCKED;
+#endif
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -433,7 +436,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t)buffers + (i * MAXBSIZE);
-		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base + 1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -806,43 +809,64 @@ setupiackvectors()
 	}
 }
 
-/* gets an interrupt stack for slave processors */
-vaddr_t
-get_slave_stack()
+#ifdef MULTIPROCESSOR
+
+/*
+ * Secondary CPU early initialization routine.
+ * Determine CPU number and set it, then allocate the idle pcb (and stack).
+ *
+ * Running on a minimal stack here, with interrupts disabled; do nothing fancy.
+ */
+void
+secondary_pre_main()
 {
-	vaddr_t addr;
+	struct cpu_info *ci;
 
-	addr = (vaddr_t)uvm_km_zalloc(kernel_map, INTSTACK_SIZE);
+	set_cpu_number(cmmu_cpu_number()); /* Determine cpu number by CMMU */
+	ci = curcpu();
+	ci->ci_curproc = &proc0;
 
-	if (addr == NULL)
-		panic("Cannot allocate slave stack for cpu %d",
-		    cpu_number());
+	splhigh();
 
-	return addr;
+	/*
+	 * Setup CMMUs and translation tables (shared with the master cpu).
+	 */
+	pmap_bootstrap_cpu(ci->ci_cpuid);
+
+	/*
+	 * Allocate UPAGES contiguous pages for the idle PCB and stack.
+	 */
+	ci->ci_idle_pcb = (struct pcb *)uvm_km_zalloc(kernel_map, USPACE);
+	if (ci->ci_idle_pcb == NULL) {
+		printf("cpu%d: unable to allocate idle stack\n", ci->ci_cpuid);
+	}
 }
 
 /*
- * Slave CPU pre-main routine.
- * Determine CPU number and set it.
+ * Further secondary CPU initialization.
  *
- * Running on an interrupt stack here; do nothing fancy.
+ * We are now running on our idle stack, with proper page tables.
+ * There is nothing to do but display some details about the CPU and its CMMUs.
  */
 void
-slave_pre_main()
+secondary_main()
 {
-	set_cpu_number(cmmu_cpu_number()); /* Determine cpu number by CMMU */
-	splhigh();
-	set_psr(get_psr() & ~PSR_IND);
+	struct cpu_info *ci = curcpu();
+
+	cpu_configuration_print(0);
+	__cpu_simple_unlock(&cpu_mutex);
+
+	microuptime(&ci->ci_schedstate.spc_runtime);
+	ci->ci_curproc = NULL;
+
+	/*
+	 * Upon return, the secondary cpu bootstrap code in locore will
+	 * enter the idle loop, waiting for some food to process on this
+	 * processor.
+	 */
 }
 
-/* dummy main routine for slave processors */
-int
-slave_main()
-{
-	printf("slave CPU%d started\n", cpu_number());
-	while (1); /* spin forever */
-	return 0;
-}
+#endif	/* MULTIPROCESSOR */
 
 /*
  * Search for the first available interrupt vector in the range start, end.
@@ -1062,39 +1086,6 @@ mvme_bootstrap()
 	curproc = &proc0;
 	curpcb = &proc0paddr->u_pcb;
 
-	/*
-	 * If we have more than one CPU, mention which one is the master.
-	 * We will also want to spin up slave CPUs on the long run...
-	 */
-	switch (brdtyp) {
-#ifdef MVME188
-	case BRD_188:
-		printf("CPU%d is master CPU\n", master_cpu);
-
-#if 0
-		int i;
-		for (i = 0; i < MAX_CPUS; i++) {
-			if (!spin_cpu(i))
-				printf("CPU%d started\n", i);
-		}
-#endif
-		break;
-#endif
-#ifdef MVME197
-	case BRD_197:
-		/*
-		 * In the 197DP case, mention which CPU is the master
-		 * there too...
-		 * XXX TBD
-		 */
-		break;
-#endif
-#ifdef MVME187
-	default:
-		break;
-#endif
-	}
-
 	avail_start = first_addr;
 	avail_end = last_addr;
 
@@ -1125,6 +1116,38 @@ mvme_bootstrap()
 	printf("leaving mvme_bootstrap()\n");
 #endif
 }
+
+#ifdef MULTIPROCESSOR
+void
+cpu_boot_secondary_processors()
+{
+	cpuid_t cpu;
+	int rc;
+	extern void secondary_start(void);
+
+	switch (brdtyp) {
+#if defined(MVME188) || defined(MVME197)
+#ifdef MVME188
+	case BRD_188:
+#endif
+#ifdef MVME197
+	case BRD_197:
+#endif
+		for (cpu = 0; cpu < max_cpus; cpu++) {
+			if (cpu != curcpu()->ci_cpuid) {
+				rc = spin_cpu(cpu, (vaddr_t)secondary_start);
+				if (rc != 0 && rc != FORKMPU_NO_MPU)
+					printf("cpu%d: spin_cpu error %d\n",
+					    cpu, rc);
+			}
+		}
+		break;
+#endif
+	default:
+		break;
+	}
+}
+#endif
 
 /*
  * Boot console routines:
@@ -1169,7 +1192,7 @@ bootcnputc(dev, c)
 #define NO_OP 		0xf4005800	/* "or r0, r0, r0" */
 
 #define BRANCH(FROM, TO) \
-	(EMPTY_BR | ((unsigned)(TO) - (unsigned)(FROM)) >> 2)
+	(EMPTY_BR | ((vaddr_t)(TO) - (vaddr_t)(FROM)) >> 2)
 
 #define SET_VECTOR(NUM, VALUE) \
 	do { \

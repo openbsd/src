@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.17 2005/11/25 22:14:31 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.18 2005/12/11 21:45:31 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -276,7 +276,7 @@ mainbus_attach(parent, self, args)
 	printf(": %s\n", cpu_model);
 
 	/*
-	 * Display cpu/mmu details. Only for the master CPU so far.
+	 * Display cpu/mmu details for the main processor.
 	 */
 	cpu_configuration_print(1);
 
