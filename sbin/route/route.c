@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.91 2005/06/09 08:07:45 markus Exp $	*/
+/*	$OpenBSD: route.c,v 1.92 2005/12/11 12:33:43 aaron Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -859,7 +859,7 @@ prefixlen(char *s)
 	}
 
 	rtm_addrs |= RTA_NETMASK;
-	if (len < -1 || len > max)
+	if (len < 0 || len > max)
 		errx(1, "%s: bad value", s);
 
 	q = len >> 3;
