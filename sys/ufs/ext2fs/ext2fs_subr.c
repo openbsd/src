@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_subr.c,v 1.12 2005/07/03 20:14:01 drahn Exp $	*/
+/*	$OpenBSD: ext2fs_subr.c,v 1.13 2005/12/11 20:46:28 pedro Exp $	*/
 /*	$NetBSD: ext2fs_subr.c,v 1.1 1997/06/11 09:34:03 bouyer Exp $	*/
 
 /*
@@ -46,6 +46,28 @@
 
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
+
+#include <miscfs/specfs/specdev.h>
+#include <miscfs/fifofs/fifo.h>
+
+union _qcvt {
+	int64_t qcvt;
+	int32_t val[2];
+};
+
+#define SETHIGH(q, h) {			\
+	union _qcvt tmp;		\
+	tmp.qcvt = (q);			\
+	tmp.val[_QUAD_HIGHWORD] = (h);	\
+	(q) = tmp.qcvt;			\
+}
+
+#define SETLOW(q, l) {			\
+	union _qcvt tmp;		\
+	tmp.qcvt = (q);			\
+	tmp.val[_QUAD_LOWWORD] = (l);	\
+	(q) = tmp.qcvt;			\
+}
 
 #ifdef _KERNEL
 
@@ -112,3 +134,71 @@ ext2fs_checkoverlap(bp, ip)
 	}
 }
 #endif /* DIAGNOSTIC */
+
+/*
+ * Initialize the vnode associated with a new inode, handle aliased vnodes.
+ */
+int
+ext2fs_vinit(struct mount *mp, int (**specops)(void *),
+    int (**fifoops)(void *), struct vnode **vpp)
+{
+	struct inode *ip;
+	struct vnode *vp, *nvp;
+	struct timeval tv;
+
+	vp = *vpp;
+	ip = VTOI(vp);
+	vp->v_type = IFTOVT(ip->i_e2fs_mode);
+
+	switch(vp->v_type) {
+	case VCHR:
+	case VBLK:
+		vp->v_op = specops;
+
+		nvp = checkalias(vp, ip->i_e2din->e2di_rdev, mp);
+		if (nvp != NULL) {
+			/*
+			 * Discard unneeded vnode, but save its inode. Note
+			 * that the lock is carried over in the inode to the
+			 * replacement vnode.
+			 */
+			nvp->v_data = vp->v_data;
+			vp->v_data = NULL;
+			vp->v_op = spec_vnodeop_p;
+#ifdef VFSDEBUG
+			vp->v_flag &= ~VLOCKSWORK;
+#endif
+			vrele(vp);
+			vgone(vp);
+			/* Reinitialize aliased vnode. */
+			vp = nvp;
+			ip->i_vnode = vp;
+		}
+
+		break;
+
+	case VFIFO:
+#ifdef FIFO
+		vp->v_op = fifoops;
+		break;
+#else
+		return (EOPNOTSUPP);
+#endif /* FIFO */
+
+	default:
+
+		break;
+	}
+
+	if (ip->i_number == EXT2_ROOTINO)
+		vp->v_flag |= VROOT;
+
+	/* Initialize modrev times */
+	getmicrouptime(&tv);
+	SETHIGH(ip->i_modrev, tv.tv_sec);
+	SETLOW(ip->i_modrev, tv.tv_usec * 4294);
+
+	*vpp = vp;
+
+	return (0);
+}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.53 2005/10/15 18:33:51 otto Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.54 2005/12/11 20:46:29 pedro Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.53 2005/10/15 18:33:51 otto Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.54 2005/12/11 20:46:29 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -413,10 +413,16 @@ ext2fs_print(struct vnode *vp)
 {
 	int flag;
 	struct inode inode, *ip = &inode;
+	struct ext2fs_dinode di;
 	char flagbuf[16], *flags = flagbuf;
 
 	KGETRET(VTOI(vp), &inode, sizeof(struct inode), "vnode's inode");
+	KGETRET(inode.i_e2din, &di, sizeof(struct ext2fs_dinode),
+	    "vnode's dinode");
+
+	inode.i_e2din = &di;
 	flag = ip->i_flag;
+
 #if 0
 	if (flag & IN_LOCKED)
 		*flags++ = 'L';

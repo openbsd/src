@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.28 2005/10/06 17:43:14 pedro Exp $	*/
+/*	$OpenBSD: inode.h,v 1.29 2005/12/11 20:46:28 pedro Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -102,6 +102,7 @@ struct inode {
 		struct ext2fs_inode_ext   e2fs;
 		struct dirhash *dirhash;
 	} inode_ext;
+
 #define i_e2fs_last_lblk	inode_ext.e2fs.ext2fs_last_lblk
 #define i_e2fs_last_blk		inode_ext.e2fs.ext2fs_last_blk
 #define i_e2fs_uid		inode_ext.e2fs.ext2fs_effective_uid
@@ -112,9 +113,10 @@ struct inode {
 	 * The on-disk dinode itself.
 	 */
 	union {
-		struct ufs1_dinode ffs1_din;
-		struct ext2fs_dinode e2fs_din;
+		struct ufs1_dinode	ffs1_din;
+		struct ext2fs_dinode   *e2fs_din;
 	} dinode_u;
+
 #define i_din1 dinode_u.ffs1_din
 #define	i_e2din	dinode_u.e2fs_din
 
@@ -204,26 +206,26 @@ struct inode_vtbl {
 #define	i_uid			i_din1.di_uid
 #endif	/* _KERNEL */
 
-#define i_e2fs_mode		i_e2din.e2di_mode
-#define i_e2fs_size		i_e2din.e2di_size
-#define i_e2fs_atime		i_e2din.e2di_atime
-#define i_e2fs_ctime		i_e2din.e2di_ctime
-#define i_e2fs_mtime		i_e2din.e2di_mtime
-#define i_e2fs_dtime		i_e2din.e2di_dtime
-#define i_e2fs_nlink		i_e2din.e2di_nlink
-#define i_e2fs_nblock		i_e2din.e2di_nblock
-#define i_e2fs_flags		i_e2din.e2di_flags
-#define i_e2fs_blocks		i_e2din.e2di_blocks
-#define i_e2fs_gen		i_e2din.e2di_gen
-#define i_e2fs_facl		i_e2din.e2di_facl
-#define i_e2fs_dacl		i_e2din.e2di_dacl
-#define i_e2fs_faddr		i_e2din.e2di_faddr
-#define i_e2fs_nfrag		i_e2din.e2di_nfrag
-#define i_e2fs_fsize		i_e2din.e2di_fsize
-#define i_e2fs_uid_low		i_e2din.e2di_uid_low
-#define i_e2fs_gid_low		i_e2din.e2di_gid_low
-#define i_e2fs_uid_high		i_e2din.e2di_uid_high
-#define i_e2fs_gid_high		i_e2din.e2di_gid_high
+#define i_e2fs_mode		i_e2din->e2di_mode
+#define i_e2fs_size		i_e2din->e2di_size
+#define i_e2fs_atime		i_e2din->e2di_atime
+#define i_e2fs_ctime		i_e2din->e2di_ctime
+#define i_e2fs_mtime		i_e2din->e2di_mtime
+#define i_e2fs_dtime		i_e2din->e2di_dtime
+#define i_e2fs_nlink		i_e2din->e2di_nlink
+#define i_e2fs_nblock		i_e2din->e2di_nblock
+#define i_e2fs_flags		i_e2din->e2di_flags
+#define i_e2fs_blocks		i_e2din->e2di_blocks
+#define i_e2fs_gen		i_e2din->e2di_gen
+#define i_e2fs_facl		i_e2din->e2di_facl
+#define i_e2fs_dacl		i_e2din->e2di_dacl
+#define i_e2fs_faddr		i_e2din->e2di_faddr
+#define i_e2fs_nfrag		i_e2din->e2di_nfrag
+#define i_e2fs_fsize		i_e2din->e2di_fsize
+#define i_e2fs_uid_low		i_e2din->e2di_uid_low
+#define i_e2fs_gid_low		i_e2din->e2di_gid_low
+#define i_e2fs_uid_high		i_e2din->e2di_uid_high
+#define i_e2fs_gid_high		i_e2din->e2di_gid_high
 
 /* These flags are kept in i_flag. */
 #define	IN_ACCESS	0x0001		/* Access time update request. */

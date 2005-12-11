@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_extern.h,v 1.22 2005/07/28 23:11:25 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_extern.h,v 1.23 2005/12/11 20:46:28 pedro Exp $	*/
 /*	$NetBSD: ext2fs_extern.h,v 1.1 1997/06/11 09:33:55 bouyer Exp $	*/
 
 /*-
@@ -52,6 +52,7 @@ struct mbuf;
 struct componentname;
 
 /* extern struct pool ext2fs_inode_pool; */	/* memory pool for inodes */
+extern struct pool ext2fs_dinode_pool;		/* memory pool for dinodes */
 
 __BEGIN_DECLS
 
@@ -96,6 +97,8 @@ int ext2fs_checkpath(struct inode *, struct inode *, struct ucred *);
 
 /* ext2fs_subr.c */
 int ext2fs_bufatoff(struct inode *, off_t, char **, struct buf **);
+int ext2fs_vinit(struct mount *, int (**)(void *), int (**)(void *),
+    struct vnode **);
 void ext2fs_fragacct(struct m_ext2fs *, int, int32_t[], int);
 #ifdef DIAGNOSTIC
 void	ext2fs_checkoverlap(struct buf *, struct inode *);

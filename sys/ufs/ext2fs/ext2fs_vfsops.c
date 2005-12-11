@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.41 2005/11/30 10:35:08 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.42 2005/12/11 20:46:28 pedro Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -101,6 +101,7 @@ const struct vfsops ext2fs_vfsops = {
 };
 
 /* struct pool ext2fs_inode_pool; */
+struct pool ext2fs_dinode_pool;
 
 extern u_long ext2gennumber;
 
@@ -108,6 +109,9 @@ int
 ext2fs_init(vfsp)
 	struct vfsconf *vfsp;
 {
+	pool_init(&ext2fs_dinode_pool, sizeof(struct ext2fs_dinode), 0, 0, 0,
+	    "ext2dinopl", &pool_allocator_nointr);
+
 	return (ufs_init(vfsp));
 }
 
@@ -363,7 +367,7 @@ ext2fs_reload_vnode(struct vnode *vp, void *args) {
 	}
 	cp = (caddr_t)bp->b_data +
 	    (ino_to_fsbo(era->fs, ip->i_number) * EXT2_DINODE_SIZE);
-	e2fs_iload((struct ext2fs_dinode *)cp, &ip->i_e2din);
+	e2fs_iload((struct ext2fs_dinode *)cp, ip->i_e2din);
 	brelse(bp);
 	vput(vp);
 	return (0);
@@ -831,6 +835,7 @@ ext2fs_vget(mp, ino, vpp)
 {
 	register struct m_ext2fs *fs;
 	register struct inode *ip;
+	struct ext2fs_dinode *dp;
 	struct ufsmount *ump;
 	struct buf *bp;
 	struct vnode *vp;
@@ -893,8 +898,12 @@ ext2fs_vget(mp, ino, vpp)
 		*vpp = NULL;
 		return (error);
 	}
-	bcopy(((struct ext2fs_dinode*)bp->b_data + ino_to_fsbo(fs, ino)),
-				&ip->i_e2din, sizeof(struct ext2fs_dinode));
+
+	dp = (struct ext2fs_dinode *) bp->b_data + ino_to_fsbo(fs, ino);
+	ip->i_e2din = pool_get(&ext2fs_dinode_pool, PR_WAITOK);
+	e2fs_iload(dp, ip->i_e2din);
+	brelse(bp);
+
 	ip->i_effnlink = ip->i_e2fs_nlink;
 
 	/*
@@ -908,8 +917,6 @@ ext2fs_vget(mp, ino, vpp)
 	ip->i_e2fs_uid = ip->i_e2fs_uid_low | (ip->i_e2fs_uid_high << 16);
 	ip->i_e2fs_gid = ip->i_e2fs_gid_low | (ip->i_e2fs_gid_high << 16);
 
-	brelse(bp);
-
 	/* If the inode was deleted, reset all fields */
 	if (ip->i_e2fs_dtime != 0) {
 		ip->i_e2fs_mode = ip->i_e2fs_nblock = 0;
@@ -920,12 +927,13 @@ ext2fs_vget(mp, ino, vpp)
 	 * Initialize the vnode from the inode, check for aliases.
 	 * Note that the underlying vnode may have changed.
 	 */
-	error = ufs_vinit(mp, ext2fs_specop_p, EXT2FS_FIFOOPS, &vp);
+	error = ext2fs_vinit(mp, ext2fs_specop_p, EXT2FS_FIFOOPS, &vp);
 	if (error) {
 		vput(vp);
 		*vpp = NULL;
 		return (error);
 	}
+
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */

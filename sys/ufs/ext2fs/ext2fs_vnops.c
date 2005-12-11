@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.41 2005/08/14 12:41:44 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.42 2005/12/11 20:46:28 pedro Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -70,26 +70,8 @@
 #include <ufs/ext2fs/ext2fs_extern.h>
 #include <ufs/ext2fs/ext2fs_dir.h>
 
-
 static int ext2fs_chmod(struct vnode *, mode_t, struct ucred *, struct proc *);
 static int ext2fs_chown(struct vnode *, uid_t, gid_t, struct ucred *, struct proc *);
-
-union _qcvt {
-	int64_t	qcvt;
-	int32_t val[2];
-};
-#define SETHIGH(q, h) { \
-	union _qcvt tmp; \
-	tmp.qcvt = (q); \
-	tmp.val[_QUAD_HIGHWORD] = (h); \
-	(q) = tmp.qcvt; \
-}
-#define SETLOW(q, l) { \
-	union _qcvt tmp; \
-	tmp.qcvt = (q); \
-	tmp.val[_QUAD_LOWWORD] = (l); \
-	(q) = tmp.qcvt; \
-}
 
 /*
  * Create a regular file
@@ -139,7 +121,7 @@ ext2fs_mknod(v)
 		 * Want to be able to use this to make badblock
 		 * inodes, so don't truncate the dev number.
 		 */
-		ip->i_e2din.e2di_rdev = h2fs32(vap->va_rdev);
+		ip->i_e2din->e2di_rdev = h2fs32(vap->va_rdev);
 	}
 	/*
 	 * Remove inode so that it will be reloaded by VFS_VGET and
@@ -228,7 +210,7 @@ ext2fs_getattr(v)
 	vap->va_nlink = ip->i_e2fs_nlink;
 	vap->va_uid = ip->i_e2fs_uid;
 	vap->va_gid = ip->i_e2fs_gid;
-	vap->va_rdev = (dev_t)fs2h32(ip->i_e2din.e2di_rdev);
+	vap->va_rdev = (dev_t)fs2h32(ip->i_e2din->e2di_rdev);
 	vap->va_size = ext2fs_size(ip);
 	vap->va_atime.tv_sec = ip->i_e2fs_atime;
 	vap->va_atime.tv_nsec = 0;
@@ -1184,7 +1166,7 @@ ext2fs_symlink(v)
 	len = strlen(ap->a_target);
 	if (len < vp->v_mount->mnt_maxsymlinklen) {
 		ip = VTOI(vp);
-		bcopy(ap->a_target, (char *)ip->i_e2din.e2di_shortlink, len);
+		bcopy(ap->a_target, (char *)ip->i_e2din->e2di_shortlink, len);
 		error = ext2fs_setsize(ip, len);
 		if (error)
 			goto bad;
@@ -1217,7 +1199,7 @@ ext2fs_readlink(v)
 	isize = ext2fs_size(ip);
 	if (isize < vp->v_mount->mnt_maxsymlinklen ||
 	    (vp->v_mount->mnt_maxsymlinklen == 0 && ip->i_e2fs_nblock == 0)) {
-		uiomove((char *)ip->i_e2din.e2di_shortlink, isize, ap->a_uio);
+		uiomove((char *)ip->i_e2din->e2di_shortlink, isize, ap->a_uio);
 		return (0);
 	}
 	return (VOP_READ(vp, ap->a_uio, 0, ap->a_cred));
@@ -1363,7 +1345,11 @@ ext2fs_reclaim(v)
 	if (ip->i_devvp)
 		vrele(ip->i_devvp);
 
+	if (ip->i_e2din != NULL)
+		pool_put(&ext2fs_dinode_pool, ip->i_e2din);
+
 	FREE(vp->v_data, M_EXT2FSNODE);
+
 	vp->v_data = NULL;
 
 	return (0);
