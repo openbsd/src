@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.h,v 1.5 2005/03/30 17:16:37 deraadt Exp $	*/
+/*	$OpenBSD: shf.h,v 1.6 2005/12/11 18:53:51 deraadt Exp $	*/
 
 #ifndef SHF_H
 # define SHF_H
@@ -66,9 +66,7 @@ struct shf *shf_sopen(char *, int, int, struct shf *);
 int	    shf_close(struct shf *);
 int	    shf_fdclose(struct shf *);
 char	   *shf_sclose(struct shf *);
-int	    shf_finish(struct shf *);
 int	    shf_flush(struct shf *);
-int	    shf_seek(struct shf *, off_t, int);
 int	    shf_read(char *, int, struct shf *);
 char	   *shf_getse(char *, int, struct shf *);
 int	    shf_getchar(struct shf *s);

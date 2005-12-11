@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.42 2005/09/11 18:02:27 otto Exp $	*/
+/*	$OpenBSD: exec.c,v 1.43 2005/12/11 18:53:51 deraadt Exp $	*/
 
 /*
  * execute command tree
@@ -1246,7 +1246,7 @@ struct select_menu_info {
 	char	*const *args;
 	int	arg_width;
 	int	num_width;
-} info;
+};
 
 static char *select_fmt_entry(void *arg, int i, char *buf, int buflen);
 

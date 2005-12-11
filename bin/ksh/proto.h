@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.27 2005/10/06 06:39:36 otto Exp $	*/
+/*	$OpenBSD: proto.h,v 1.28 2005/12/11 18:53:51 deraadt Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -89,7 +89,6 @@ int	c_fc(char **);
 void	sethistsize(int);
 void	sethistfile(const char *);
 char **	histpos(void);
-int	histN(void);
 int	histnum(int);
 int	findhist(int, int, const char *, int);
 int	findhistrel(const char *);
@@ -167,7 +166,6 @@ void	newenv(int);
 void	quitenv(struct shf *);
 void	cleanup_parents_env(void);
 void	cleanup_proc_env(void);
-void	aerror(Area *, const char *) __attribute__((__noreturn__));
 /* misc.c */
 void	setctypes(const char *, int);
 void	initctypes(void);
