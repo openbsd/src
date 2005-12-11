@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.8 2005/12/10 17:41:03 cloder Exp $
+#	$OpenBSD: Makefile,v 1.9 2005/12/11 20:03:03 deraadt Exp $
 #	$NetBSD: Makefile,v 1.3 1995/07/04 01:53:05 cgd Exp $
 
 PROG=	lint1
-SRCS=	cgram.c scan.c mem1.c mem.c err.c main1.c decl.c tree.c func.c \
+SRCS=	cgram.y scan.l mem1.c mem.c err.c main1.c decl.c tree.c func.c \
 	init.c emit.c emit1.c
 NOMAN=
 LDADD+=	-ll
