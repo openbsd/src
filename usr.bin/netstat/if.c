@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.45 2005/10/17 19:09:36 otto Exp $	*/
+/*	$OpenBSD: if.c,v 1.46 2005/12/11 17:25:03 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.45 2005/10/17 19:09:36 otto Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.46 2005/12/11 17:25:03 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -545,6 +545,7 @@ loop:
  * Called if an interval expires before sidewaysintpr has completed a loop.
  * Sets a flag to not wait for the alarm.
  */
+/* ARGSUSED */
 static void
 catchalarm(int signo)
 {
