@@ -1,4 +1,4 @@
-.\" $OpenBSD: bge.4,v 1.28 2005/11/25 03:48:46 brad Exp $
+.\" $OpenBSD: bge.4,v 1.29 2005/12/11 20:42:22 brad Exp $
 .\" Copyright (c) 2001 Wind River Systems
 .\" Copyright (c) 1997, 1998, 1999, 2000, 2001
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
@@ -35,7 +35,7 @@
 .Os
 .Sh NAME
 .Nm bge
-.Nd Broadcom Gigabit Ethernet adapter driver
+.Nd Broadcom BCM57xx/BCM590x Ethernet adapter driver
 .Sh SYNOPSIS
 .Cd "bge* at pci?"
 .Cd "brgphy* at mii?"
@@ -43,8 +43,9 @@
 The
 .Nm
 driver provides support for various NICs based on the Broadcom BCM570x,
-571x, 572x, 575x, 578x, and 5901 families of Gigabit Ethernet controller
-chips, including the following:
+571x, 572x, 575x and 578x families of Gigabit Ethernet controller
+chips and the 590x family of Fast Ethernet controller chips, including
+the following:
 .Pp
 .Bl -bullet -compact
 .It
@@ -93,9 +94,9 @@ SysKonnect SK-9D21 (10/100/1000baseT)
 SysKonnect SK-9D41 (1000baseSX)
 .El
 .Pp
-All of these NICs are capable of 10, 100 and 1000Mbps speeds over CAT5
-copper cable, except for the SysKonnect SK-9D41 which supports only
-1000Mbps over multimode fiber.
+All of these NICs are capable of 10, 100 speeds over CAT5 copper cable;
+the Gigabit controller chips also support 1000Mbps, except for the
+SysKonnect SK-9D41 which supports only 1000Mbps over multimode fiber.
 It has two R4000 CPU cores and is PCI v2.2 and PCI-X v1.0 compliant.
 It supports
 .\"IP, TCP
@@ -104,7 +105,7 @@ multiple RX and TX DMA rings for QoS applications, rules-based
 receive filtering, and VLAN tag stripping/insertion as well as
 a 256-bit multicast hash filter.
 Additional features may be provided via value-add firmware updates.
-The BCM570x supports TBI (ten bit interface) and GMII transceivers, which
+The BCM57xx supports TBI (ten bit interface) and GMII transceivers, which
 means it can be used with either copper or 1000baseX fiber applications.
 Note however the device only supports a single speed in TBI mode.
 .Pp
@@ -113,9 +114,8 @@ copper Gigabit transceivers,
 which support autonegotiation of 10, 100 and 1000Mbps modes in
 full or half duplex.
 .Pp
-The BCM570x (excluding the BCM5705 and derivatives)
-also supports Jumbo frames, which can be configured
-via the interface MTU setting.
+The BCM5700, BCM5701, BCM5703, BCM5704, BCM5714 and BCM5780 are capable of
+supporting Jumbo frames, which can be configured via the interface MTU setting.
 Selecting an MTU larger than 1500 bytes with the
 .Xr ifconfig 8
 utility configures the adapter to receive and transmit Jumbo frames.
