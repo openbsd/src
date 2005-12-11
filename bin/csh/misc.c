@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.9 2003/06/11 21:09:50 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.10 2005/12/11 02:41:01 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/03/21 09:03:09 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.9 2003/06/11 21:09:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.10 2005/12/11 02:41:01 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,15 +57,6 @@ any(char *s, int c)
 	if (*s++ == c)
 	    return (1);
     return (0);
-}
-
-void
-setzero(char *cp, int i)
-{
-    if (i != 0)
-	do
-	    *cp++ = 0;
-	while (--i);
 }
 
 char   *

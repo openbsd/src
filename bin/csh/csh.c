@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.22 2005/02/25 16:07:10 deraadt Exp $	*/
+/*	$OpenBSD: csh.c,v 1.23 2005/12/11 02:41:01 deraadt Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-static char rcsid[] = "$OpenBSD: csh.c,v 1.22 2005/02/25 16:07:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: csh.c,v 1.23 2005/12/11 02:41:01 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,9 +62,6 @@ static char rcsid[] = "$OpenBSD: csh.c,v 1.22 2005/02/25 16:07:10 deraadt Exp $"
 #include "proc.h"
 #include "extern.h"
 #include "pathnames.h"
-
-extern bool MapsAreInited;
-extern bool NLSMapsAreInited;
 
 /*
  * C Shell

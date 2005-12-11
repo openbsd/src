@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.14 2003/06/25 21:12:39 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.15 2005/12/11 02:41:01 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.8 1996/10/31 23:50:54 christos Exp $	*/
 
 /*-
@@ -210,7 +210,6 @@ void	  lshift(Char **, int);
 int	  number(Char *);
 int	  prefix(Char *, Char *);
 Char	**saveblk(Char **);
-void	  setzero(char *, int);
 Char	 *strip(Char *);
 Char	 *quote(Char *);
 char	 *strsave(char *);
