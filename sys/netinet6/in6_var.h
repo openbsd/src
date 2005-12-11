@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.25 2005/09/19 19:36:49 brad Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.26 2005/12/11 17:21:53 deraadt Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -272,10 +272,10 @@ struct	in6_aliasreq {
  * user land command(ifconfig) and daemon(rtadvd).
  */
 struct prf_ra {
-	u_char onlink : 1;
-	u_char autonomous : 1;
-	u_char router : 1;
-	u_char reserved : 5;
+	u_int onlink : 1;
+	u_int autonomous : 1;
+	u_int router : 1;
+	u_int reserved : 5;
 };
 
 struct in6_prflags {
@@ -284,9 +284,9 @@ struct in6_prflags {
 	u_short prf_reserved2;
 	/* want to put this on 4byte offset */
 	struct prf_rr {
-		u_char decrvalid : 1;
-		u_char decrprefd : 1;
-		u_char reserved : 6;
+		u_int decrvalid : 1;
+		u_int decrprefd : 1;
+		u_int reserved : 6;
 	} prf_rr;
 	u_char prf_reserved3;
 	u_short prf_reserved4;
@@ -324,9 +324,9 @@ struct	in6_rrenumreq {
 	u_char	irr_u_uselen;	/* uselen for adding prefix */
 	u_char	irr_u_keeplen;	/* keeplen from matching prefix */
 	struct irr_raflagmask {
-		u_char onlink : 1;
-		u_char autonomous : 1;
-		u_char reserved : 6;
+		u_int onlink : 1;
+		u_int autonomous : 1;
+		u_int reserved : 6;
 	} irr_raflagmask;
 	u_int32_t irr_vltime;
 	u_int32_t irr_pltime;

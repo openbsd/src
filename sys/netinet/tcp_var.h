@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.79 2005/11/20 19:25:16 brad Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.80 2005/12/11 17:21:53 deraadt Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -290,8 +290,8 @@ struct syn_cache {
 	struct mbuf *sc_ipopts;			/* IP options */
 	u_int16_t sc_peermaxseg;
 	u_int16_t sc_ourmaxseg;
-	u_int8_t sc_request_r_scale	: 4,
-		 sc_requested_s_scale	: 4;
+	u_int     sc_request_r_scale	: 4,
+		  sc_requested_s_scale	: 4;
 
 	struct tcpcb *sc_tp;			/* tcb for listening socket */
 	LIST_ENTRY(syn_cache) sc_tpq;		/* list of entries by same tp */

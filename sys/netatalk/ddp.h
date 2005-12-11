@@ -1,4 +1,4 @@
-/*	$OpenBSD: ddp.h,v 1.1 1997/07/23 03:39:53 denny Exp $	*/
+/*	$OpenBSD: ddp.h,v 1.2 2005/12/11 17:21:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -125,19 +125,19 @@ struct ddpehdr {
     union {
 	struct {
 #if BYTE_ORDER == BIG_ENDIAN
-    unsigned		dub_pad:2;
-    unsigned		dub_hops:4;
-    unsigned		dub_len:10;
-    unsigned		dub_sum:16;
+    unsigned int	dub_pad:2;
+    unsigned int	dub_hops:4;
+    unsigned int	dub_len:10;
+    unsigned int	dub_sum:16;
 #endif
 #if BYTE_ORDER == LITTLE_ENDIAN
-    unsigned		dub_sum:16;
-    unsigned		dub_len:10;
-    unsigned		dub_hops:4;
-    unsigned		dub_pad:2;
+    unsigned int	dub_sum:16;
+    unsigned int	dub_len:10;
+    unsigned int	dub_hops:4;
+    unsigned int	dub_pad:2;
 #endif
 	} du_bits;
-	unsigned	du_bytes;
+	unsigned int	du_bytes;
     } deh_u;
 #define deh_pad		deh_u.du_bits.dub_pad
 #define deh_hops	deh_u.du_bits.dub_hops
@@ -158,19 +158,19 @@ struct ddpshdr {
     union {
 	struct {
 #if BYTE_ORDER == BIG_ENDIAN
-    unsigned		dub_pad:6;
-    unsigned		dub_len:10;
-    unsigned		dub_dport:8;
-    unsigned		dub_sport:8;
+    unsigned int	dub_pad:6;
+    unsigned int	dub_len:10;
+    unsigned int	dub_dport:8;
+    unsigned int	dub_sport:8;
 #endif
 #if BYTE_ORDER == LITTLE_ENDIAN
-    unsigned		dub_sport:8;
-    unsigned		dub_dport:8;
-    unsigned		dub_len:10;
-    unsigned		dub_pad:6;
+    unsigned int	dub_sport:8;
+    unsigned int	dub_dport:8;
+    unsigned int	dub_len:10;
+    unsigned int	dub_pad:6;
 #endif
 	} du_bits;
-	unsigned	du_bytes;
+	unsigned int	du_bytes;
     } dsh_u;
 #define dsh_pad		dsh_u.du_bits.dub_pad
 #define dsh_len		dsh_u.du_bits.dub_len
