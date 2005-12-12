@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.23 2005/12/12 23:35:59 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.24 2005/12/12 23:40:37 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.23 2005/12/12 23:35:59 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.24 2005/12/12 23:40:37 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -3322,9 +3322,9 @@ expr(tnode_t *tn, int vctx, int tctx)
 			warning(159);
 	} else if (tn->tn_op == CON) {
 		if (hflag && tctx && !ccflg) {
-			if (isityp(tn->tn_type->t_tspec) &&
-			    tn->tn_val->v_quad != 0 &&
-			    tn->tn_val->v_quad != 1) {
+			if (!isityp(tn->tn_type->t_tspec) ||
+			    (tn->tn_val->v_quad != 0 &&
+			    tn->tn_val->v_quad != 1)) {
 				/* constant in conditional context */
 				warning(161);
 			}
