@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.10 2005/12/11 21:30:27 miod Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.11 2005/12/12 19:44:30 miod Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.7 1996/07/11 20:14:21 cgd Exp $	*/
 
 /*-
@@ -89,7 +89,6 @@
 #include <machine/frame.h>
 
 #include <alpha/alpha/db_instruction.h>
-#include <miscfs/procfs/procfs.h>
 
 #define	process_frame(p)	((p)->p_md.md_tf)
 #define	process_pcb(p)		(&(p)->p_addr->u_pcb)
