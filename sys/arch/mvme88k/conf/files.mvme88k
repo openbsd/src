@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.38 2005/10/24 19:28:29 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.39 2005/12/12 20:36:30 miod Exp $
 #
 maxpartitions 16
 
@@ -82,6 +82,7 @@ file	arch/mvme88k/mvme88k/m188_machdep.c		mvme188
 file	arch/mvme88k/mvme88k/m197_machdep.c		mvme197
 file	arch/mvme88k/mvme88k/m88110.c			m88110
 file	arch/mvme88k/mvme88k/m8820x.c			m88100
+file	arch/mvme88k/mvme88k/m88410.c			m88110
 file	arch/mvme88k/mvme88k/mem.c
 file	arch/mvme88k/mvme88k/pmap_bootstrap.c
 file	arch/mvme88k/mvme88k/pmap_table.c

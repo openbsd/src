@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88410.h,v 1.11 2005/04/30 16:42:37 miod Exp $ */
+/*	$OpenBSD: m88410.h,v 1.12 2005/12/12 20:36:32 miod Exp $ */
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * All rights reserved.
@@ -36,132 +36,15 @@
 #ifdef _KERNEL
 
 /*
- *	MC88410 External Cache Controller definitions
- *	This is only available on MVME197DP/SP models.
+ *	MC88410 External Cache Controller definitions.
+ *	This is only available on MVME197 SP, DP and QP models.
  */
 
-#include <machine/asm_macro.h>
-#include <machine/psl.h>
 #include <mvme88k/dev/busswreg.h>
 
-#define XCC_NOP		"0x00"
-#define XCC_FLUSH_PAGE	"0x01"
-#define XCC_FLUSH_ALL	"0x02"
-#define XCC_INVAL_ALL	"0x03"
-#define XCC_ADDR	0xff800000
-
-static __inline__ void
-mc88410_flush_page(paddr_t physaddr)
-{
-	paddr_t xccaddr = XCC_ADDR | (physaddr >> PGSHIFT);
-	u_int psr;
-	u_int16_t bs_gcsr, bs_romcr;
-
-	bs_gcsr = *(volatile u_int16_t *)(BS_BASE + BS_GCSR);
-	bs_romcr = *(volatile u_int16_t *)(BS_BASE + BS_ROMCR);
-	/* mask misaligned exceptions */
-	set_psr((psr = get_psr()) | PSR_MXM);
-	/* clear WEN0 and WEN1 in ROMCR (disables writes to FLASH) */
-	*(volatile u_int16_t *)(BS_BASE + BS_ROMCR) =
-	    bs_romcr & ~(BS_ROMCR_WEN0 | BS_ROMCR_WEN1);
-	/* set XCC bit in GCSR (0xff8xxxxx now decodes to mc88410) */
-	*(volatile u_int16_t *)(BS_BASE + BS_GCSR) = bs_gcsr | BS_GCSR_XCC;
-
-	/* load the value of upper32 into r2 */
-	__asm__ __volatile__("or   r2,r0," XCC_FLUSH_PAGE);
-	/* load the value of lower32 into r3 (always 0) */
-	__asm__ __volatile__("or   r3,r0,r0");
-	/* load the value of xccaddr into r4 */
-	__asm__ __volatile__("or.u r5,r0,hi16(%0)" : : "r" (xccaddr));
-	__asm__ __volatile__("ld   r4,r5,lo16(%0)" : : "r" (xccaddr));
-	/* make the double write. bang! */
-	__asm__ __volatile__("st.d r2,r4,0");
-
-	/* spin until the operation starts */
-	while ((*(volatile u_int32_t *)(BS_BASE + BS_XCCR) & BS_XCC_FBSY) == 0)
-		;
-
-	/* restore PSR and friends */
-        set_psr(psr);
-	flush_pipeline();
-	*(volatile u_int16_t *)(BS_BASE + BS_GCSR) = bs_gcsr;
-	*(volatile u_int16_t *)(BS_BASE + BS_ROMCR) = bs_romcr;
-}
-
-static __inline__ void
-mc88410_flush(void)
-{
-	u_int psr;
-	u_int16_t bs_gcsr, bs_romcr;
-
-	bs_gcsr = *(volatile u_int16_t *)(BS_BASE + BS_GCSR);
-	bs_romcr = *(volatile u_int16_t *)(BS_BASE + BS_ROMCR);
-	/* mask misaligned exceptions */
-	set_psr((psr = get_psr()) | PSR_MXM);
-	/* clear WEN0 and WEN1 in ROMCR (disables writes to FLASH) */
-	*(volatile u_int16_t *)(BS_BASE + BS_ROMCR) =
-	    bs_romcr & ~(BS_ROMCR_WEN0 | BS_ROMCR_WEN1);
-	/* set XCC bit in GCSR (0xFF8xxxxx now decodes to mc88410) */
-	*(volatile u_int16_t *)(BS_BASE + BS_GCSR) = bs_gcsr | BS_GCSR_XCC;
-
-	/* load the value of upper32 into r2 */
-	__asm__ __volatile__("or   r2,r0," XCC_FLUSH_ALL);
-	/* load the value of lower32 into r3 (always 0) */
-	__asm__ __volatile__("or   r3,r0,r0");
-	/* load the value of xccaddr into r4 */
-	__asm__ __volatile__("or.u r5,r0,hi16(0xff800000)");
-	__asm__ __volatile__("or   r4,r5,r0");
-	/* make the double write. bang! */
-	__asm__ __volatile__("st.d r2,r4,0");
-
-	/* spin until the operation starts */
-	while ((*(volatile u_int32_t *)(BS_BASE + BS_XCCR) & BS_XCC_FBSY) == 0)
-		;
-
-	/* restore PSR and friends */
-        set_psr(psr);
-	flush_pipeline();
-	*(volatile u_int16_t *)(BS_BASE + BS_GCSR) = bs_gcsr;
-	*(volatile u_int16_t *)(BS_BASE + BS_ROMCR) = bs_romcr;
-}
-
-static __inline__ void
-mc88410_inval(void)
-{
-	u_int psr;
-	u_int16_t bs_gcsr, bs_romcr;
-
-	bs_gcsr = *(volatile u_int16_t *)(BS_BASE + BS_GCSR);
-	bs_romcr = *(volatile u_int16_t *)(BS_BASE + BS_ROMCR);
-
-	/* mask misaligned exceptions */
-	set_psr((psr = get_psr()) | PSR_MXM);
-	/* clear WEN0 and WEN1 in ROMCR (disables writes to FLASH) */
-	*(volatile u_int16_t *)(BS_BASE + BS_ROMCR) =
-	    bs_romcr & ~(BS_ROMCR_WEN0 | BS_ROMCR_WEN1);
-	/* set XCC bit in GCSR (0xFF8xxxxx now decodes to mc88410) */
-	*(volatile u_int16_t *)(BS_BASE + BS_GCSR) = bs_gcsr | BS_GCSR_XCC;
-
-	/* load the value of upper32 into r2 */
-	__asm__ __volatile__("or   r2,r0," XCC_INVAL_ALL);
-	/* load the value of lower32 into r3 (always 0) */
-	__asm__ __volatile__("or   r3,r0,r0");
-	/* load the value of xccaddr into r4 */
-	__asm__ __volatile__("or.u r5,r0,hi16(0xff800000)");
-	__asm__ __volatile__("or   r4,r5,r0");
-	/* make the double write. bang! */
-	__asm__ __volatile__("st.d r2,r4,0");
-
-	/* spin until the operation starts */
-	while ((*(volatile u_int32_t *)(BS_BASE + BS_XCCR) & BS_XCC_FBSY) == 0)
-		;
-
-	/* restore PSR and friends */
-        set_psr(psr);
-	flush_pipeline();
-	*(volatile u_int16_t *)(BS_BASE + BS_GCSR) = bs_gcsr;
-	*(volatile u_int16_t *)(BS_BASE + BS_ROMCR) = bs_romcr;
-}
+void	mc88410_flush_page(paddr_t);
+void	mc88410_flush(void);
+void	mc88410_inval(void);
 
 static __inline__ void
 mc88410_sync(void)
