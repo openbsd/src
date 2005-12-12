@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.18 2005/12/10 20:27:45 joris Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.19 2005/12/12 17:47:03 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -68,9 +68,7 @@ rcsnum_parse(const char *str)
 	char *ep;
 	RCSNUM *num;
 
-	if ((num = rcsnum_alloc()) == NULL)
-		return (NULL);
-
+	num = rcsnum_alloc();
 	if ((rcsnum_aton(str, &ep, num) < 0) || (*ep != '\0')) {
 		rcsnum_free(num);
 		num = NULL;
@@ -340,9 +338,7 @@ rcsnum_revtobr(const RCSNUM *num)
 	if (num->rn_len < 2)
 		return (NULL);
 
-	if ((brnum = rcsnum_alloc()) == NULL)
-		return (NULL);
-
+	brnum = rcsnum_alloc();
 	rcsnum_cpy(num, brnum, 0);
 
 	if (!RCSNUM_ISBRANCH(brnum))
@@ -366,9 +362,7 @@ rcsnum_brtorev(const RCSNUM *brnum)
 		return (NULL);
 	}
 
-	if ((num = rcsnum_alloc()) == NULL)
-		return (NULL);
-
+	num = rcsnum_alloc();
 	if (rcsnum_setsize(num, brnum->rn_len + 1) < 0) {
 		rcsnum_free(num);
 		return (NULL);

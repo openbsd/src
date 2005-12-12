@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.110 2005/12/10 20:27:45 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.111 2005/12/12 17:47:03 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -671,13 +671,10 @@ rcs_head_set(RCSFILE *file, const RCSNUM *rev)
 	if ((rd = rcs_findrev(file, rev)) == NULL)
 		return (-1);
 
-	if ((file->rf_head == NULL) &&
-	    ((file->rf_head = rcsnum_alloc()) == NULL))
-		return (-1);
+	if (file->rf_head == NULL)
+		file->rf_head = rcsnum_alloc();
 
-	if (rcsnum_cpy(rev, file->rf_head, 0) < 0)
-		return (-1);
-
+	rcsnum_cpy(rev, file->rf_head, 0);
 	file->rf_flags &= ~RCS_SYNCED;
 	return (0);
 }
@@ -705,16 +702,10 @@ rcs_branch_get(RCSFILE *file)
 int
 rcs_branch_set(RCSFILE *file, const RCSNUM *bnum)
 {
-	if ((file->rf_branch == NULL) &&
-	    ((file->rf_branch = rcsnum_alloc()) == NULL))
-		return (-1);
+	if (file->rf_branch == NULL)
+		file->rf_branch = rcsnum_alloc();
 
-	if (rcsnum_cpy(bnum, file->rf_branch, 0) < 0) {
-		rcsnum_free(file->rf_branch);
-		file->rf_branch = NULL;
-		return (-1);
-	}
-
+	rcsnum_cpy(bnum, file->rf_branch, 0);
 	file->rf_flags &= ~RCS_SYNCED;
 	return (0);
 }
@@ -804,11 +795,7 @@ rcs_sym_add(RCSFILE *rfp, const char *sym, RCSNUM *snum)
 
 	symp = (struct rcs_sym *)xmalloc(sizeof(*symp));
 	symp->rs_name = xstrdup(sym);
-	if ((symp->rs_num = rcsnum_alloc()) == NULL) {
-		xfree(symp->rs_name);
-		xfree(symp);
-		return (-1);
-	}
+	symp->rs_num = rcsnum_alloc();
 	rcsnum_cpy(snum, symp->rs_num, 0);
 
 	TAILQ_INSERT_HEAD(&(rfp->rf_symbols), symp, rs_list);
@@ -879,12 +866,11 @@ rcs_sym_getrev(RCSFILE *file, const char *sym)
 		if (strcmp(symp->rs_name, sym) == 0)
 			break;
 
-	if (symp == NULL)
+	if (symp == NULL) {
 		rcs_errno = RCS_ERR_NOENT;
-	else if (((num = rcsnum_alloc()) != NULL) &&
-	    (rcsnum_cpy(symp->rs_num, num, 0) < 0)) {
-		rcsnum_free(num);
-		num = NULL;
+	} else {
+		num = rcsnum_alloc();
+		rcsnum_cpy(symp->rs_num, num, 0);
 	}
 
 	return (num);
@@ -975,11 +961,7 @@ rcs_lock_add(RCSFILE *file, const char *user, RCSNUM *rev)
 
 	lkp = (struct rcs_lock *)xmalloc(sizeof(*lkp));
 	lkp->rl_name = xstrdup(user);
-	if ((lkp->rl_num = rcsnum_alloc()) == NULL) {
-		xfree(lkp->rl_name);
-		xfree(lkp);
-		return (-1);
-	}
+	lkp->rl_num = rcsnum_alloc();
 	rcsnum_cpy(rev, lkp->rl_num, 0);
 
 	TAILQ_INSERT_TAIL(&(file->rf_locks), lkp, rl_list);
@@ -1351,17 +1333,12 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 	struct rcs_delta *ordp, *rdp;
 	RCSNUM *old;
 
-	if ((old = rcsnum_alloc()) == NULL)
-		return (-1);
-
+	old = rcsnum_alloc();
 	if (rev == RCS_HEAD_REV) {
 		if (rf->rf_flags & RCS_CREATE) {
 			if ((rev = rcsnum_parse(RCS_HEAD_INIT)) == NULL)
 				return (-1);
-			if ((rf->rf_head = rcsnum_alloc()) == NULL) {
-				rcsnum_free(rev);
-				return (-1);
-			}
+			rf->rf_head = rcsnum_alloc();
 			rcsnum_cpy(rev, rf->rf_head, 0);
 		} else {
 			rcsnum_cpy(rf->rf_head, old, 0);
@@ -1396,18 +1373,10 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 	TAILQ_INIT(&(rdp->rd_branches));
 	TAILQ_INIT(&(rdp->rd_snodes));
 
-	if ((rdp->rd_num = rcsnum_alloc()) == NULL) {
-		rcs_freedelta(rdp);
-		rcsnum_free(old);
-		return (-1);
-	}
+	rdp->rd_num = rcsnum_alloc();
 	rcsnum_cpy(rev, rdp->rd_num, 0);
 
-	if ((rdp->rd_next = rcsnum_alloc()) == NULL) {
-		rcs_freedelta(rdp);
-		rcsnum_free(old);
-		return (-1);
-	}
+	rdp->rd_next = rcsnum_alloc();
 
 	if (!(rf->rf_flags & RCS_CREATE))
 		rcsnum_cpy(old, rdp->rd_next, 0);
@@ -1771,19 +1740,13 @@ rcs_parse_admin(RCSFILE *rfp)
 			}
 
 			if (tok == RCS_TOK_HEAD) {
-				if (rfp->rf_head == NULL) {
+				if (rfp->rf_head == NULL)
 					rfp->rf_head = rcsnum_alloc();
-					if (rfp->rf_head == NULL)
-						return (-1);
-				}
 				rcsnum_aton(RCS_TOKSTR(rfp), NULL,
 				    rfp->rf_head);
 			} else if (tok == RCS_TOK_BRANCH) {
-				if (rfp->rf_branch == NULL) {
+				if (rfp->rf_branch == NULL)
 					rfp->rf_branch = rcsnum_alloc();
-					if (rfp->rf_branch == NULL)
-						return (-1);
-				}
 				if (rcsnum_aton(RCS_TOKSTR(rfp), NULL,
 				    rfp->rf_branch) < 0)
 					return (-1);
@@ -1849,15 +1812,7 @@ rcs_parse_delta(RCSFILE *rfp)
 	memset(rdp, 0, sizeof(*rdp));
 
 	rdp->rd_num = rcsnum_alloc();
-	if (rdp->rd_num == NULL) {
-		rcs_freedelta(rdp);
-		return (-1);
-	}
 	rdp->rd_next = rcsnum_alloc();
-	if (rdp->rd_next == NULL) {
-		rcs_freedelta(rdp);
-		return (-1);
-	}
 
 	TAILQ_INIT(&(rdp->rd_branches));
 	TAILQ_INIT(&(rdp->rd_snodes));
@@ -2035,8 +1990,6 @@ rcs_parse_deltatext(RCSFILE *rfp)
 	}
 
 	tnum = rcsnum_alloc();
-	if (tnum == NULL)
-		return (-1);
 	rcsnum_aton(RCS_TOKSTR(rfp), NULL, tnum);
 
 	TAILQ_FOREACH(rdp, &(rfp->rf_delta), rd_list) {
@@ -2143,12 +2096,6 @@ rcs_parse_symbols(RCSFILE *rfp)
 		symp = (struct rcs_sym *)xmalloc(sizeof(*symp));
 		symp->rs_name = xstrdup(RCS_TOKSTR(rfp));
 		symp->rs_num = rcsnum_alloc();
-		if (symp->rs_num == NULL) {
-			cvs_log(LP_ERRNO, "failed to allocate rcsnum info");
-			xfree(symp->rs_name);
-			xfree(symp);
-			return (-1);
-		}
 
 		type = rcs_gettok(rfp);
 		if (type != RCS_TOK_COLON) {
@@ -2214,11 +2161,6 @@ rcs_parse_locks(RCSFILE *rfp)
 		lkp = (struct rcs_lock *)xmalloc(sizeof(*lkp));
 		lkp->rl_name = xstrdup(RCS_TOKSTR(rfp));
 		lkp->rl_num = rcsnum_alloc();
-		if (lkp->rl_num == NULL) {
-			xfree(lkp->rl_name);
-			xfree(lkp);
-			return (-1);
-		}
 
 		type = rcs_gettok(rfp);
 		if (type != RCS_TOK_COLON) {
@@ -2948,11 +2890,8 @@ cvs_checkout_rev(RCSFILE *rf, RCSNUM *rev, CVSFILE *cf, char *fpath,
 	}
 
 	if (type == CHECKOUT_REV_MERGED) {
-		if ((oldrev = rcsnum_alloc()) == NULL)
-			goto out;
-
-		if (rcsnum_cpy(rev, oldrev, 0) < 0)
-			goto out;
+		oldrev = rcsnum_alloc();
+		rcsnum_cpy(rev, oldrev, 0);
 
 		if (rcsnum_dec(oldrev) == NULL)
 			goto out;
