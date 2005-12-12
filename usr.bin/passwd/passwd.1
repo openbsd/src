@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.30 2005/03/07 22:51:46 jmc Exp $
+.\"	$OpenBSD: passwd.1,v 1.31 2005/12/12 22:46:51 jmc Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -37,12 +37,8 @@
 .Nd modify a user's password
 .Sh SYNOPSIS
 .Nm passwd
-.Bk -words
-.Op Fl l
-.Op Fl y
-.Op Fl K
+.Op Fl Kly
 .Op Ar user
-.Ek
 .Sh DESCRIPTION
 .Nm
 changes the user's local, Kerberos, or YP password.
@@ -66,6 +62,12 @@ variable in
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl K
+Forces the change to affect the Kerberos 5 database, even
+if the user has a password in the local database.
+Once the password has been verified,
+.Nm
+communicates the new password information to the Kerberos authenticating host.
 .It Fl l
 Causes the password to be updated only in the local password file.
 When changing only the local password,
@@ -77,12 +79,6 @@ the user has an entry in the local database.
 The
 .Xr rpc.yppasswdd 8
 daemon should be running on the YP master server.
-.It Fl K
-Forces the change to affect the Kerberos 5 database, even
-if the user has a password in the local database.
-Once the password has been verified,
-.Nm
-communicates the new password information to the Kerberos authenticating host.
 .El
 .Pp
 This is the behavior if no flags are specified:
