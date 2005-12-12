@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.79 2005/10/27 02:45:01 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.80 2005/12/12 20:39:35 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -30,6 +30,7 @@ option		USER_PCICONF	# user-space PCI configuration
 
 option		COMPAT_HPUX
 #option		COMPAT_LINUX
+#option		PROCFS		# /proc
 
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight saving time used by RTC

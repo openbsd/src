@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.85 2005/08/03 02:10:44 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.86 2005/12/12 20:39:36 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -28,6 +28,7 @@ option		SUN4M		# sun4m - SS10, SS20, Classic, etc.
 # Options for SPARCstation hardware
 option		COMPAT_SUNOS	# compatibility with SunOS binaries
 option		COMPAT_SVR4	# compatibility with SVR4 binaries
+option		PROCFS		# /proc
 
 # Generic swap; second partition of root disk or network.
 config		bsd	swap generic

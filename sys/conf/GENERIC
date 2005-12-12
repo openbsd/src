@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.122 2005/12/06 20:18:57 pedro Exp $
+#	$OpenBSD: GENERIC,v 1.123 2005/12/12 20:39:36 miod Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -54,7 +54,6 @@ option		UDF		# UDF (DVD) file system
 option		MSDOSFS		# MS-DOS file system
 option		FIFO		# FIFOs; RECOMMENDED
 option		PORTAL		# dynamically created filesystem objects
-option		PROCFS		# /proc
 
 option		INET		# IP + ICMP + TCP + UDP
 option		ALTQ		# ALTQ base

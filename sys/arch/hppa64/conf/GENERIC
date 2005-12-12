@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.8 2005/08/03 16:30:34 martin Exp $
+#	$OpenBSD: GENERIC,v 1.9 2005/12/12 20:39:35 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -20,6 +20,7 @@ option		DST=0		# daylight saving time used by RTC
 
 #option	COMPAT_HPUX
 #option	COMPAT_LINUX
+#option		PROCFS		# /proc
 
 config	bsd swap generic
 

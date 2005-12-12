@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.90 2005/12/09 01:48:21 beck Exp $
+#	$OpenBSD: GENERIC,v 1.91 2005/12/12 20:39:32 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -29,6 +29,7 @@ option		APERTURE	# in-kernel aperture driver for XFree86
 #option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
 #option		COMPAT_BSDOS	# binary compatibility with BSD/OS
 #option		COMPAT_AOUT	# a.out binaries are emulated
+#option		PROCFS		# /proc
 
 #option		NTFS		# Experimental NTFS support
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4,v 1.31 2005/05/01 07:54:42 david Exp $
+#	$OpenBSD: SUN4,v 1.32 2005/12/12 20:39:36 miod Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -13,6 +13,7 @@ option		SUN4		# sun4/100, sun4/200, sun4/300
 # Options for SPARCstation hardware
 option		COMPAT_SUNOS	# compatibility with SunOS binaries
 option		COMPAT_SVR4	# compatibility with SVR4 binaries
+option		PROCFS		# /proc
 
 maxusers	16		# estimated number of users
 
