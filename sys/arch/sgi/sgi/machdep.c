@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.24 2005/08/06 14:26:52 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.25 2005/12/12 20:58:49 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -44,7 +44,7 @@
 #include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#include <sys/exec_olf.h>
+#include <sys/exec_elf.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -53,9 +53,6 @@
 #endif
 #ifdef SYSVMSG
 #include <sys/msg.h>
-#endif
-#ifdef MFS
-#include <ufs/mfs/mfs_extern.h>
 #endif
 
 #include <uvm/uvm_extern.h>
@@ -71,7 +68,7 @@
 #include <machine/autoconf.h>
 #include <machine/memconf.h>
 #include <machine/regnum.h>
-#if defined(TGT_ORIGIN200) | defined(TGT_ORIGIN2000)
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
 #include <machine/mnode.h>
 #endif
 
@@ -84,7 +81,7 @@
 #include <machine/bus.h>
 
 #include <sgi/localbus/macebus.h>
-#if defined(TGT_ORIGIN200) | defined(TGT_ORIGIN2000)
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
 #include <sgi/localbus/xbowmux.h>
 #endif
 
@@ -711,11 +708,11 @@ cpu_startup()
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr, 16 * NCARGS,
-					TRUE, FALSE, NULL);
+	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 	/* Allocate a submap for physio */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, TRUE, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
 #ifdef DEBUG
 	pmapdebugflag = opmapdebugflag;
