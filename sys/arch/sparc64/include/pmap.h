@@ -159,7 +159,6 @@ extern struct pmap kernel_pmap_;
 int pmap_count_res(pmap_t pmap);
 /* int pmap_change_wiring(pmap_t pm, vaddr_t va, boolean_t wired); */
 #define	pmap_resident_count(pm)		pmap_count_res((pm))
-#define pmap_from_phys_address(x,f)	((x)&~PGOFSET)
 #define	pmap_phys_address(x)		(x)
 #define	pmap_update(pm)			/* nothing (yet) */
 
