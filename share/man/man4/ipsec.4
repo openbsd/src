@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.68 2005/11/27 10:58:23 jmc Exp $
+.\" $OpenBSD: ipsec.4,v 1.69 2005/12/12 11:56:47 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -245,7 +245,7 @@ between NAT and the IPsec flow matching, especially on the packet output path.
 Inside the TCP/IP stack, packets go through the following stages:
 .Bd -literal -offset indent
 UL/R -\*(Gt [X] -\*(Gt PF/NAT(enc0) -\*(Gt IPsec -\*(Gt PF/NAT(IF) -\*(Gt IF
-UL/R \*(Lt-------- PF/NAT(enc0) \*(Lt- IPsec -\*(Gt PF/NAT(IF) \*(Lt- IF
+UL/R \*(Lt-------- PF/NAT(enc0) \*(Lt- IPsec \*(Lt- PF/NAT(IF) \*(Lt- IF
 .Ed
 .Pp
 With IF being the real interface and UL/R the Upper Layer or Routing code.
