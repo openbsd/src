@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.20 2005/09/28 00:13:02 deraadt Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.21 2005/12/12 22:54:20 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)passwd.c	5.5 (Berkeley) 7/6/91";*/
-static const char rcsid[] = "$OpenBSD: passwd.c,v 1.20 2005/09/28 00:13:02 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: passwd.c,v 1.21 2005/12/12 22:54:20 jmc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -167,7 +167,6 @@ main(int argc, char **argv)
 void
 usage(int retval)
 {
-	fprintf(stderr, "usage: passwd [-l] [-y] [-k [-n name] [-i instance] "
-	    "[-r realm] [-u username[.instance][@realm]] [user]\n");
+	fprintf(stderr, "usage: passwd [-Kly] [user]\n");
 	exit(retval);
 }
