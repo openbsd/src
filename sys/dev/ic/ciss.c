@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.10 2005/12/02 11:35:10 mickey Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.11 2005/12/12 11:31:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -48,12 +48,14 @@
 #define	CISS_D_MISC	0x0004
 #define	CISS_D_DMA	0x0008
 #define	CISS_D_IOCTL	0x0010
+#define	CISS_D_ERR	0x0020
 int ciss_debug = 0
 	| CISS_D_CMD
 	| CISS_D_INTR
 	| CISS_D_MISC
 	| CISS_D_DMA
 	| CISS_D_IOCTL
+	| CISS_D_ERR
 	;
 #else
 #define	CISS_DPRINTF(m,a)	/* m, a */
@@ -636,8 +638,9 @@ ciss_error(struct ciss_ccb *ccb)
 				break;
 
 			default:
-				printf("%s: cmd_stat %x scsi_stat 0x%x\n",
-				    sc->sc_dev.dv_xname, rv, err->scsi_stat);
+				CISS_DPRINTF(CISS_D_ERR, ("%s: "
+				    "cmd_stat %x scsi_stat 0x%x\n",
+				    sc->sc_dev.dv_xname, rv, err->scsi_stat));
 				xs->error = XS_DRIVER_STUFFUP;
 				break;
 			}
