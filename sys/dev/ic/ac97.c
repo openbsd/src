@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.56 2005/06/18 21:23:59 canacar Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.57 2005/12/12 14:13:58 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -287,18 +287,18 @@ struct ac97_softc {
 	u_int16_t shadow_reg[128];
 };
 
-int ac97_mixer_get_port(struct ac97_codec_if *self, mixer_ctrl_t *cp);
-int ac97_mixer_set_port(struct ac97_codec_if *self, mixer_ctrl_t *);
-int ac97_query_devinfo(struct ac97_codec_if *self, mixer_devinfo_t *);
-int ac97_get_portnum_by_name(struct ac97_codec_if *, char *, char *,
+int	ac97_mixer_get_port(struct ac97_codec_if *, mixer_ctrl_t *);
+int	ac97_mixer_set_port(struct ac97_codec_if *, mixer_ctrl_t *);
+int	ac97_query_devinfo(struct ac97_codec_if *, mixer_devinfo_t *);
+int	ac97_get_portnum_by_name(struct ac97_codec_if *, char *, char *,
 				  char *);
-void ac97_restore_shadow(struct ac97_codec_if *self);
+void	ac97_restore_shadow(struct ac97_codec_if *);
 
-void ac97_ad1886_init(struct ac97_softc *);
-void ac97_ad198x_init(struct ac97_softc *);
-void ac97_alc655_init(struct ac97_softc *);
-void ac97_cx20468_init(struct ac97_softc *);
-void ac97_cx_init(struct ac97_softc *);
+void	ac97_ad1886_init(struct ac97_softc *);
+void	ac97_ad198x_init(struct ac97_softc *);
+void	ac97_alc655_init(struct ac97_softc *);
+void	ac97_cx20468_init(struct ac97_softc *);
+void	ac97_cx_init(struct ac97_softc *);
 
 struct ac97_codec_if_vtbl ac97civ = {
 	ac97_mixer_get_port,
@@ -529,11 +529,11 @@ const char * const ac97feature[] = {
 };
 
 
-int ac97_str_equal(const char *, const char *);
-void ac97_setup_source_info(struct ac97_softc *);
-void ac97_setup_defaults(struct ac97_softc *);
-int ac97_read(struct ac97_softc *, u_int8_t, u_int16_t *);
-int ac97_write(struct ac97_softc *, u_int8_t, u_int16_t);
+int	ac97_str_equal(const char *, const char *);
+void	ac97_setup_source_info(struct ac97_softc *);
+void	ac97_setup_defaults(struct ac97_softc *);
+int	ac97_read(struct ac97_softc *, u_int8_t, u_int16_t *);
+int	ac97_write(struct ac97_softc *, u_int8_t, u_int16_t);
 
 #define AC97_DEBUG 10
 
@@ -551,10 +551,7 @@ int	ac97debug = 0;
 #endif
 
 int
-ac97_read(as, reg, val)
-	struct ac97_softc *as;
-	u_int8_t	reg;
-	u_int16_t	*val;
+ac97_read(struct ac97_softc *as, u_int8_t reg, u_int16_t *val)
 {
 	int error;
 
@@ -572,18 +569,14 @@ ac97_read(as, reg, val)
 }
 
 int
-ac97_write(as, reg, val)
-	struct ac97_softc *as;
-	u_int8_t	reg;
-	u_int16_t	val;
+ac97_write(struct ac97_softc *as, u_int8_t reg, u_int16_t val)
 {
 	as->shadow_reg[reg >> 1] = val;
 	return (as->host_if->write(as->host_if->arg, reg, val));
 }
 
 void
-ac97_setup_defaults(as)
-	struct ac97_softc *as;
+ac97_setup_defaults(struct ac97_softc *as)
 {
 	int idx;
 
@@ -597,8 +590,7 @@ ac97_setup_defaults(as)
 }
 
 void
-ac97_restore_shadow(self)
-	struct ac97_codec_if *self;
+ac97_restore_shadow(struct ac97_codec_if *self)
 {
 	struct ac97_softc *as = (struct ac97_softc *)self;
 	int idx;
@@ -611,15 +603,13 @@ ac97_restore_shadow(self)
 }
 
 int
-ac97_str_equal(a, b)
-	const char *a, *b;
+ac97_str_equal(const char *a, const char *b)
 {
 	return ((a == b) || (a && b && (!strcmp(a, b))));
 }
 
 void
-ac97_setup_source_info(as)
-	struct ac97_softc *as;
+ac97_setup_source_info(struct ac97_softc *as)
 {
 	struct ac97_source_info *si, *si2;
 	int idx, ouridx;
@@ -709,8 +699,7 @@ ac97_setup_source_info(as)
 }
 
 int
-ac97_attach(host_if)
-	struct ac97_host_if *host_if;
+ac97_attach(struct ac97_host_if *host_if)
 {
 	struct ac97_softc *as;
 	u_int16_t id1, id2;
@@ -836,9 +825,7 @@ ac97_attach(host_if)
 }
 
 int
-ac97_query_devinfo(codec_if, dip)
-	struct ac97_codec_if *codec_if;
-	mixer_devinfo_t *dip;
+ac97_query_devinfo(struct ac97_codec_if *codec_if, mixer_devinfo_t *dip)
 {
 	struct ac97_softc *as = (struct ac97_softc *)codec_if;
 
@@ -874,9 +861,7 @@ ac97_query_devinfo(codec_if, dip)
 }
 
 int
-ac97_mixer_set_port(codec_if, cp)
-	struct ac97_codec_if *codec_if;
-	mixer_ctrl_t *cp;
+ac97_mixer_set_port(struct ac97_codec_if *codec_if, mixer_ctrl_t *cp)
 {
 	struct ac97_softc *as = (struct ac97_softc *)codec_if;
 	struct ac97_source_info *si = &as->source_info[cp->dev];
@@ -961,9 +946,8 @@ ac97_mixer_set_port(codec_if, cp)
 }
 
 int
-ac97_get_portnum_by_name(codec_if, class, device, qualifier)
-	struct ac97_codec_if *codec_if;
-	char *class, *device, *qualifier;
+ac97_get_portnum_by_name(struct ac97_codec_if *codec_if, char *class,
+    char *device, char *qualifier)
 {
 	struct ac97_softc *as = (struct ac97_softc *)codec_if;
 	int idx;
@@ -980,9 +964,7 @@ ac97_get_portnum_by_name(codec_if, class, device, qualifier)
 }
 
 int
-ac97_mixer_get_port(codec_if, cp)
-	struct ac97_codec_if *codec_if;
-	mixer_ctrl_t *cp;
+ac97_mixer_get_port(struct ac97_codec_if *codec_if, mixer_ctrl_t *cp)
 {
 	struct ac97_softc *as = (struct ac97_softc *)codec_if;
 	struct ac97_source_info *si = &as->source_info[cp->dev];
@@ -1055,10 +1037,8 @@ ac97_mixer_get_port(codec_if, cp)
 }
 
 int
-ac97_set_rate(codec_if, p, mode)
-	struct ac97_codec_if *codec_if;
-	struct audio_params *p;
-	int mode;
+ac97_set_rate(struct ac97_codec_if *codec_if, struct audio_params *p,
+    int mode)
 {
 	struct ac97_softc *as = (struct ac97_softc *)codec_if;
 	u_int16_t reg, val, regval, id = 0;
