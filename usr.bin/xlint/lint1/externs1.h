@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs1.h,v 1.7 2005/12/10 18:42:45 cloder Exp $	*/
+/*	$OpenBSD: externs1.h,v 1.8 2005/12/12 23:35:59 cloder Exp $	*/
 /*	$NetBSD: externs1.h,v 1.7 1995/10/02 17:31:39 jpo Exp $	*/
 
 /*
@@ -205,6 +205,7 @@ extern	void	expr(tnode_t *, int, int);
 extern	void	chkmisc(tnode_t *, int, int, int, int, int, int);
 extern	int	conaddr(tnode_t *, sym_t **, ptrdiff_t *);
 extern	strg_t	*catstrg(strg_t *, strg_t *);
+extern	void	displexpr(tnode_t *, int);
 
 /*
  * func.c

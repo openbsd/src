@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.22 2005/12/10 18:42:45 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.23 2005/12/12 23:35:59 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.22 2005/12/10 18:42:45 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.23 2005/12/12 23:35:59 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -79,7 +79,6 @@ static	tnode_t	*chkfarg(type_t *, tnode_t *);
 static	tnode_t	*parg(int, type_t *, tnode_t *);
 static	int	chkdbz(op_t, tnode_t *);
 static	void	nulleff(tnode_t *);
-static	void	displexpr(tnode_t *, int);
 static	void	chkaidx(tnode_t *, int);
 static	void	chkcomp(op_t, tnode_t *, tnode_t *);
 static	void	precconf(tnode_t *);
@@ -672,9 +671,10 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	if (mp->m_tctx) {
 		if (ln->tn_op == CON ||
 		    ((mp->m_binary && op != QUEST) && rn->tn_op == CON)) {
-			if (hflag && !ccflg)
+			if (hflag && !ccflg) {
 				/* constant in conditional context */
 				warning(161);
+			}
 		}
 	}
 
@@ -3321,9 +3321,14 @@ expr(tnode_t *tn, int vctx, int tctx)
 			/* assignment in conditional context */
 			warning(159);
 	} else if (tn->tn_op == CON) {
-		if (hflag && tctx && !ccflg)
-			/* constant in conditional context */
-			warning(161);
+		if (hflag && tctx && !ccflg) {
+			if (isityp(tn->tn_type->t_tspec) &&
+			    tn->tn_val->v_quad != 0 &&
+			    tn->tn_val->v_quad != 1) {
+				/* constant in conditional context */
+				warning(161);
+			}
+		}
 	}
 	if (!modtab[tn->tn_op].m_sideeff) {
 		/*
@@ -3386,7 +3391,7 @@ nulleff(tnode_t *tn)
  * Dump an expression to stdout
  * only used for debugging
  */
-static void
+void
 displexpr(tnode_t *tn, int offs)
 {
 	u_quad_t uq;
