@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.84 2005/12/10 20:27:46 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.85 2005/12/12 09:40:08 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -81,7 +81,7 @@ checkin_usage(void)
 	fprintf(stderr,
 	    "usage: ci [-MNqTV] [-d[date]] [-f[rev]] [-i[rev]] [-j[rev]]\n"
 	    "          [-kmode] [-l[rev]] [-M[rev]] [-mmsg] [-Nsymbol]\n"
-	    "          [-nsymbol] [-r[rev]] [-sstate] [-tfile] [-u[rev]]\n"
+	    "          [-nsymbol] [-r[rev]] [-sstate] [-tfile|str] [-u[rev]]\n"
 	    "          [-wusername] [-xsuffixes] file ...\n");
 }
 
@@ -438,7 +438,7 @@ checkin_update(struct checkin_params *pb)
 
 	/*
 	 * XXX this is wrong, we need to get the revision the user
-	 * has the lock for. So we can decide if we want to create a 
+	 * has the lock for. So we can decide if we want to create a
 	 * branch or not. (if it's not current HEAD we need to branch).
 	 */
 	pb->frev = pb->file->rf_head;
