@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.35 2005/12/10 12:03:24 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.36 2005/12/12 09:39:29 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -92,11 +92,11 @@ struct ami_softc {
 	void			*sc_ih;
 	struct scsi_link	sc_link;
 
-/* don't use 0x0001 */
+	int			sc_flags;
+#define AMI_CHECK_SIGN	0x0001
 #define AMI_BROKEN 	0x0002
 #define	AMI_CMDWAIT	0x0004
 #define AMI_QUARTZ	0x0008
-	u_int			sc_flags;
 
 	/* low-level interface */
 	int			(*sc_init)(struct ami_softc *sc);
