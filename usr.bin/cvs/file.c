@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.132 2005/12/10 20:27:45 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.133 2005/12/12 21:30:33 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -825,7 +825,9 @@ cvs_file_getdir(CVSFILE *cf, int flags, int (*cb)(CVSFILE *, void *),
 		    (cf->cf_dir != NULL) ? cf->cf_dir : "");
 		if (ret == -1 || ret >= (int)sizeof(fpath))
 			return (-1);
-		xfree(cf->cf_dir);
+
+		if (cf->cf_dir != NULL)
+			xfree(cf->cf_dir);
 		cf->cf_dir = xstrdup(fpath);
 	}
 
