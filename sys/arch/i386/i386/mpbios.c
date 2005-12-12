@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.6 2005/11/23 09:24:46 mickey Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.7 2005/12/12 13:54:09 mickey Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -576,28 +576,39 @@ mpbios_scan(self)
 		/*
 		 * Walk the table once, counting items
 		 */
-		position = (const u_int8_t *)(mp_cth);
-		end = position + mp_cth->base_len;
-		position += sizeof(*mp_cth);
+		for (count = mp_cth->entry_count,
+		    position = (const u_int8_t *)mp_cth + sizeof(*mp_cth),
+		    end = position + mp_cth->base_len;
+		    count-- && position < end;
+		    position += mp_conf[type].length) {
 
-		count = mp_cth->entry_count;
-		intr_cnt = 15;	/* presume all isa irqs being missing */
-
-		while ((count--) && (position < end)) {
 			type = *position;
 			if (type >= MPS_MCT_NTYPES) {
 				printf("%s: unknown entry type %x"
 				    " in MP config table\n",
 				    self->dv_xname, type);
+				end = position;
 				break;
 			}
 			mp_conf[type].count++;
+		}
+
+		/*
+		 * Walk the table twice, counting int and bus entries
+		 */
+		for (count = mp_cth->entry_count,
+		    intr_cnt = 15,	/* presume all isa irqs missing */
+		    position = (const u_int8_t *)mp_cth + sizeof(*mp_cth);
+		    count-- && position < end;
+		    position += mp_conf[type].length) {
+			type = *position;
 			if (type == MPS_MCT_BUS) {
 				const struct mpbios_bus *bp =
 				    (const struct mpbios_bus *)position;
 				if (bp->bus_id >= mp_nbus)
 					mp_nbus = bp->bus_id + 1;
 			}
+
 			/*
 			 * Count actual interrupt instances.
 			 * dst_apic_id of MPS_ALL_APICS means "wired to all
@@ -615,7 +626,6 @@ mpbios_scan(self)
 				else
 					intr_cnt += mp_conf[MPS_MCT_CPU].count;
 			}
-			position += mp_conf[type].length;
 		}
 
 		mp_busses = malloc(sizeof(struct mp_bus) * mp_nbus,
