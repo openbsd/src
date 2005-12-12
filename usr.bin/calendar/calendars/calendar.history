@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.42 2005/09/12 21:07:28 sturm Exp $
+ * $OpenBSD: calendar.history,v 1.43 2005/12/12 18:50:31 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -136,6 +136,7 @@
 04/27	Magellan killed in Philippines, 1521
 04/29	Zipper patented by Gideon Sindback, 1913
 05/01	Beltaine; Feast of the god Bel, sun god
+05/01	Adam Weishaupt founded the Illuminati of Bavaria, 1776
 05/03	Anti-war protest disrupts business in Washington, 1971
 05/04	Four Kent State students are shot down by the National Guard, 1970
 05/05	John Scopes arrested for teaching evolution, Dayton, TN, 1925
@@ -437,8 +438,8 @@
 11/16	Opening of the Suez Canal, 1869
 11/17	46,000 meteoroids fall over AZ in 20 minutes, 1966
 11/17	Richard Nixon says "I am not a crook.", 1973
-11/18	First hydrogen bomb blasts Enewetok, 1952
 11/18	Local standard time zones established for US, 1883
+11/18	First hydrogen bomb blasts Enewetok, 1952
 11/19	Gettysburg Address delivered, 1863
 11/21	Announcement of 18 1/2 minute gap on Watergate tape, 1973
 11/22	Kennedy shot in Dallas, Texas by Lee Harvey Oswald, 1963

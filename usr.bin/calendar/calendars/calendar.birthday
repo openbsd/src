@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.33 2005/11/24 09:22:45 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.34 2005/12/12 18:50:31 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -49,6 +49,7 @@
 02/03	Gertrude Stein born, 1874
 02/03	Paul Auster born in Newark, N.J., 1947
 02/05	Alex Harvey (SAHB) is born in Glasgow, Scotland, 1935
+02/06	Adam Weishaupt was born in Ingoldstadt, 1748
 02/06	King George VI of UK dies; his daughter becomes Elizabeth II, 1952
 02/07	Sinclair Lewis born, 1885
 02/08	Friedleib F. Runge born, 1795, father of paper chromatography
@@ -279,8 +280,9 @@
 11/11	Kurt Vonnegut, Jr, born in Indianapolis, 1922
 11/13	Robert Louis Stevenson born, 1850
 11/13	St. Augustine of Hippo born in Numidia, Algeria, 354
-11/18	Imogene Coca born, 1908
+11/18	Adam Weishaupt died in Gotha, 1830
 11/18	William S. Gilbert born, 1836
+11/18	Imogene Coca born, 1908
 11/20	Robert Fitzgerald Kennedy born, 1925
 11/24	Emir Kusturica born in Sarajevo, Bosnia-Herzegovina, 1954
 11/25	Chaucer's death (according to tradition), 1400
