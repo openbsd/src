@@ -1,4 +1,4 @@
-/*	$OpenBSD: isr.c,v 1.5 2005/07/18 02:43:25 fgsch Exp $	*/
+/*	$OpenBSD: isr.c,v 1.6 2005/12/12 19:15:19 miod Exp $	*/
 /*	$NetBSD: isr.c,v 1.5 2000/07/09 08:08:20 nisimura Exp $	*/
 
 /*-
@@ -187,21 +187,4 @@ isrdispatch_autovec(int ipl)
 		panic("isr_dispatch_autovec: too many stray interrupts");
 	else
 		printf("isrdispatch_autovec: stray level %d interrupt\n", ipl);
-}
-
-void netintr(void);
-
-void
-netintr()
-{
-#define DONETISR(bit, fn) do {		\
-	if (netisr & (1 << bit)) {	\
-		netisr &= ~(1 << bit);	\
-		fn();			\
-	}				\
-} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
 }
