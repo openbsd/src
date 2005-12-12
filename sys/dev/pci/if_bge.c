@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.115 2005/12/11 01:37:21 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.116 2005/12/12 05:25:07 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1829,6 +1829,14 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
 	    NULL, NULL) != 0)
 		sc->bge_pcie = 1;
+
+	/*
+	 * PCI-X check.
+	 */
+	sc->bge_pcix = 0;
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIX,
+	    NULL, NULL) != 0)
+		sc->bge_pcix = 1;
 
 	/* Try to reset the chip. */
 	DPRINTFN(5, ("bge_reset\n"));
