@@ -1,4 +1,4 @@
-/*	$OpenBSD: mc6845.h,v 1.4 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: mc6845.h,v 1.5 2005/12/12 12:35:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -15,7 +15,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Michael Shalayeff.
+ *	This product includes software developed by
+ *	Hellmuth Michaelis, Brian Dunford-Shore and Joerg Wunsch.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
