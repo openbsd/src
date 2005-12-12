@@ -1,3 +1,4 @@
 test-14.c:26: warning: constant in conditional context
 test-14.c:36: warning: constant in conditional context
+test-14.c:40: warning: constant in conditional context
 Lint pass2:

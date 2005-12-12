@@ -1,4 +1,4 @@
-/*	$OpenBSD: test-14.c,v 1.1 2005/12/12 23:37:51 cloder Exp $	*/
+/*	$OpenBSD: test-14.c,v 1.2 2005/12/12 23:41:08 cloder Exp $	*/
 
 /*
  * Placed in the public domain by Chad Loder <cloder@openbsd.org>.
@@ -35,6 +35,9 @@ main(int argc, char *argv[])
 
 	if (argc && 1) {		/* warn because of compound expression */
 		argc++;
+	}
+
+	if (1.0) {			/* warn */
 	}
 
 	return 0;
