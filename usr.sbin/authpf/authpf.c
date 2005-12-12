@@ -1,19 +1,28 @@
-/*	$OpenBSD: authpf.c,v 1.94 2005/12/09 23:51:21 beck Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.95 2005/12/12 16:02:32 beck Exp $	*/
 
 /*
- * Copyright (C) 1998 - 2005 Bob Beck (beck@openbsd.org).
+ * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include <sys/types.h>
@@ -431,7 +440,7 @@ static int
 allowed_luser(char *luser)
 {
 	char	*buf, *lbuf;
-	int	 matched = 0;
+	int	 matched;
 	size_t	 len;
 	FILE	*f;
 
@@ -480,7 +489,7 @@ allowed_luser(char *luser)
 			}
 
 			if (matched)
-				goto done; /* matched an allowed username */
+				return (1); /* matched an allowed username */
 		}
 		syslog(LOG_INFO, "denied access to %s: not listed in %s",
 		    luser, PATH_ALLOWFILE);
@@ -489,15 +498,13 @@ allowed_luser(char *luser)
 		buf = "\n\nSorry, you are not allowed to use this facility!\n";
 		fputs(buf, stdout);
 	}
-done:
-	fclose(f);
 	fflush(stdout);
-	return (matched);
+	return (0);
 }
 
 /*
  * check_luser checks to see if user "luser" has been banned
- * from using us by virtue of having a file of the same name
+ * from using us by virtue of having an file of the same name
  * in the "luserdir" directory.
  *
  * If the user has been banned, we copy the contents of the file
@@ -553,7 +560,6 @@ check_luser(char *luserdir, char *luser)
 			}
 		}
 	}
-	fclose(f);
 	fflush(stdout);
 	return (0);
 }
@@ -635,14 +641,13 @@ change_filter(int add, const char *luser, const char *ipsrc)
 	};
 	char	*fdpath = NULL, *userstr = NULL, *ipstr = NULL;
 	char	*rsn = NULL, *fn = NULL;
-	int 	ret = -1;
 	pid_t	pid;
 	gid_t   gid;
 	int	s;
 
 	if (luser == NULL || !luser[0] || ipsrc == NULL || !ipsrc[0]) {
 		syslog(LOG_ERR, "invalid luser/ipsrc");
-		goto done;
+		goto error;
 	}
 
 	if (asprintf(&rsn, "%s/%s", anchorname, rulesetname) == -1)
@@ -682,7 +687,8 @@ change_filter(int add, const char *luser, const char *ipsrc)
 		/* revoke group privs before exec */
 		gid = getgid();
 		if (setregid(gid, gid) == -1) {
-			err(1, "setregid failed:");
+			err(1, "setregid: %s", strerror(errno));
+			do_death(0);
 		}
 		execvp(PATH_PFCTL, pargv);
 		warn("exec of %s failed", PATH_PFCTL);
@@ -694,7 +700,7 @@ change_filter(int add, const char *luser, const char *ipsrc)
 	if (s != 0) {
 		if (WIFEXITED(s)) {
 			syslog(LOG_ERR, "pfctl exited abnormally");
-			goto done;
+			goto error;
 		}
 	}
 
@@ -706,11 +712,10 @@ change_filter(int add, const char *luser, const char *ipsrc)
 		syslog(LOG_INFO, "removed %s, user %s - duration %ld seconds",
 		    ipsrc, luser, Tend.tv_sec - Tstart.tv_sec);
 	}
-	ret = 0;
-	goto done;
+	return (0);
 no_mem:
 	syslog(LOG_ERR, "malloc failed");
-done:
+error:
 	free(fdpath);
 	fdpath = NULL;
 	free(rsn);
@@ -722,7 +727,7 @@ done:
 	free(fn);
 	fn = NULL;
 	infile = NULL;
-	return (ret);
+	return (-1);
 }
 
 /*
