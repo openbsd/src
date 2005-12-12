@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.46 2005/12/06 14:27:57 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.47 2005/12/12 09:41:51 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1217,6 +1217,8 @@ ifa_lookup(const char *ifa_name)
 		if (ipa == NULL)
 			err(1, "ifa_lookup: calloc");
 		memcpy(ipa, &p->addr, sizeof(struct ipsec_addr_wrap));
+		if ((ipa->name = strdup(p->addr.name)) == NULL)
+			err(1, "ifa_lookup: strdup");
 		break;
 	}
 
