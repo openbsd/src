@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.10 2005/11/24 11:52:07 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.11 2005/12/12 09:44:06 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -361,7 +361,7 @@ ike_ipsec_establish(int action, struct ipsec_rule *r)
 	int	 ret = 0;
 
 	if ((fd = fopen("/var/run/isakmpd.fifo", "w")) == NULL)
-		errx(1, "ike_ipsec_establish: fopen");
+		err(1, "ike_ipsec_establish: fopen");
 
 	switch (action) {
 	case ACTION_ADD:
