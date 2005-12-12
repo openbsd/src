@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.31 2004/05/10 20:05:48 wilfried Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.32 2005/12/12 20:43:10 deraadt Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: chpass.c,v 1.31 2004/05/10 20:05:48 wilfried Exp $";
+static char rcsid[] = "$OpenBSD: chpass.c,v 1.32 2005/12/12 20:43:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -257,6 +257,7 @@ baduser(void)
 	errx(1, "%s", strerror(EACCES));
 }
 
+/* ARGSUSED */
 void
 kbintr(int signo)
 {
