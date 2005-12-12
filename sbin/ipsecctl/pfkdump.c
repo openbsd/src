@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.8 2005/11/13 18:39:19 deraadt Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.9 2005/12/12 23:24:10 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -242,6 +242,7 @@ print_sa(struct sadb_ext *ext, struct sadb_msg *msg)
 	printf("\n");
 }
 
+/* ARGSUSED1 */
 static void
 print_addr(struct sadb_ext *ext, struct sadb_msg *msg)
 {
@@ -273,6 +274,7 @@ print_addr(struct sadb_ext *ext, struct sadb_msg *msg)
 	}
 }
 
+/* ARGSUSED1 */
 static void
 print_key(struct sadb_ext *ext, struct sadb_msg *msg)
 {
@@ -289,6 +291,7 @@ print_key(struct sadb_ext *ext, struct sadb_msg *msg)
 	printf("\n");
 }
 
+/* ARGSUSED1 */
 static void
 print_life(struct sadb_ext *ext, struct sadb_msg *msg)
 {
@@ -301,6 +304,7 @@ print_life(struct sadb_ext *ext, struct sadb_msg *msg)
 	    life->sadb_lifetime_usetime);
 }
 
+/* ARGSUSED1 */
 static void
 print_ident(struct sadb_ext *ext, struct sadb_msg *msg)
 {
@@ -311,6 +315,7 @@ print_ident(struct sadb_ext *ext, struct sadb_msg *msg)
 	    ident->sadb_ident_id, (char *)(ident + 1));
 }
 
+/* ARGSUSED1 */
 static void
 print_auth(struct sadb_ext *ext, struct sadb_msg *msg)
 {
@@ -320,6 +325,7 @@ print_auth(struct sadb_ext *ext, struct sadb_msg *msg)
 	    lookup_name(xauth_types, x_cred->sadb_x_cred_type));
 }
 
+/* ARGSUSED1 */
 static void
 print_cred(struct sadb_ext *ext, struct sadb_msg *msg)
 {
@@ -328,6 +334,7 @@ print_cred(struct sadb_ext *ext, struct sadb_msg *msg)
 	    lookup_name(cred_types, x_cred->sadb_x_cred_type));
 }
 
+/* ARGSUSED1 */
 static void
 print_udpenc(struct sadb_ext *ext, struct sadb_msg *msg)
 {
