@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.92 2005/12/11 21:30:30 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.93 2005/12/12 18:59:02 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -53,7 +53,6 @@
 #endif
 
 #ifdef PTRACE
-#include <miscfs/procfs/procfs.h>
 void ss_clear_breakpoints(struct proc *p);
 #endif
 

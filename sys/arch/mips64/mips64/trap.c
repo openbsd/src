@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.27 2005/12/11 21:30:30 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.28 2005/12/12 18:59:04 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -60,8 +60,10 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+#ifdef PTRACE
+#include <sys/ptrace.h>
+#endif
 #include <net/netisr.h>
-#include <miscfs/procfs/procfs.h>
 
 #include <uvm/uvm_extern.h>
 
