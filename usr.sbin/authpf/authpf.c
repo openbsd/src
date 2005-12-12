@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.95 2005/12/12 16:02:32 beck Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.96 2005/12/12 16:06:01 beck Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -687,8 +687,7 @@ change_filter(int add, const char *luser, const char *ipsrc)
 		/* revoke group privs before exec */
 		gid = getgid();
 		if (setregid(gid, gid) == -1) {
-			err(1, "setregid: %s", strerror(errno));
-			do_death(0);
+			err(1, "setregid");
 		}
 		execvp(PATH_PFCTL, pargv);
 		warn("exec of %s failed", PATH_PFCTL);
