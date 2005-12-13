@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_obsd.c,v 1.9 2005/04/01 21:42:36 canacar Exp $	*/
+/*	$OpenBSD: if_san_obsd.c,v 1.10 2005/12/13 05:56:22 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -382,7 +382,6 @@ wanpipe_generic_input(struct ifnet *ifp, struct mbuf *m)
 		bpf_mtap(ifp->if_bpf, m);
 #endif /* NBPFILTER > 0 */
 	ifp->if_ipackets ++;
-	ifp->if_ibytes += m->m_len;
 	sppp_input(ifp, m);
 	return (0);
 }
