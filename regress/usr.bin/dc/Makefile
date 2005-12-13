@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.16 2005/04/02 18:06:10 otto Exp $
+# $OpenBSD: Makefile,v 1.17 2005/12/13 19:29:43 otto Exp $
 
 DC=dc -x
 
 REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 \
-	t18 t19 t20 t21 t22 t23 t24 t25
+	t18 t19 t20 t21 t22 t23 t24 t25 t26
 
 # .in: input file
 # .out: desired result
@@ -33,6 +33,7 @@ REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 \
 # t23: factorial 1000
 # t24: line continuations
 # t25: exp
+# t26: non-decimal fractions
 
 all: clean ${REGRESS_TARGET}
 
