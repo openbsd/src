@@ -1,0 +1,388 @@
+/*
+ * Discordian calendar 
+ *
+ * $OpenBSD: calendar.discord,v 1.1 2005/12/13 22:59:58 mickey Exp $
+ */
+
+#ifndef _calendar_discord_
+#define _calendar_discord_
+
+01/01	Today is Sweetmorn, day 1 in the season of Chaos, 3172.
+01/02	Today is Boomtime, day 2 in the season of Chaos, 3172.
+01/03	Today is Pungenday, day 3 in the season of Chaos, 3172.
+01/04	Today is Prickle-Prickle, day 4 in the season of Chaos, 3172.
+01/05	Today is Setting Orange, day 5 in the season of Chaos, 3172.
+	It is the sacred Apostle Holyday of Mungday.
+01/06	Today is Sweetmorn, day 6 in the season of Chaos, 3172.
+01/07	Today is Boomtime, day 7 in the season of Chaos, 3172.
+01/08	Today is Pungenday, day 8 in the season of Chaos, 3172.
+01/09	Today is Prickle-Prickle, day 9 in the season of Chaos, 3172.
+01/10	Today is Setting Orange, day 10 in the season of Chaos, 3172.
+01/11	Today is Sweetmorn, day 11 in the season of Chaos, 3172.
+01/12	Today is Boomtime, day 12 in the season of Chaos, 3172.
+01/13	Today is Pungenday, day 13 in the season of Chaos, 3172.
+01/14	Today is Prickle-Prickle, day 14 in the season of Chaos, 3172.
+01/15	Today is Setting Orange, day 15 in the season of Chaos, 3172.
+01/16	Today is Sweetmorn, day 16 in the season of Chaos, 3172.
+01/17	Today is Boomtime, day 17 in the season of Chaos, 3172.
+01/18	Today is Pungenday, day 18 in the season of Chaos, 3172.
+01/19	Today is Prickle-Prickle, day 19 in the season of Chaos, 3172.
+01/20	Today is Setting Orange, day 20 in the season of Chaos, 3172.
+01/21	Today is Sweetmorn, day 21 in the season of Chaos, 3172.
+01/22	Today is Boomtime, day 22 in the season of Chaos, 3172.
+01/23	Today is Pungenday, day 23 in the season of Chaos, 3172.
+01/24	Today is Prickle-Prickle, day 24 in the season of Chaos, 3172.
+01/25	Today is Setting Orange, day 25 in the season of Chaos, 3172.
+01/26	Today is Sweetmorn, day 26 in the season of Chaos, 3172.
+01/27	Today is Boomtime, day 27 in the season of Chaos, 3172.
+01/28	Today is Pungenday, day 28 in the season of Chaos, 3172.
+01/29	Today is Prickle-Prickle, day 29 in the season of Chaos, 3172.
+01/30	Today is Setting Orange, day 30 in the season of Chaos, 3172.
+01/31	Today is Sweetmorn, day 31 in the season of Chaos, 3172.
+02/01	Today is Boomtime, day 32 in the season of Chaos, 3172.
+02/02	Today is Pungenday, day 33 in the season of Chaos, 3172.
+02/03	Today is Prickle-Prickle, day 34 in the season of Chaos, 3172.
+02/04	Today is Setting Orange, day 35 in the season of Chaos, 3172.
+02/05	Today is Sweetmorn, day 36 in the season of Chaos, 3172.
+02/06	Today is Boomtime, day 37 in the season of Chaos, 3172.
+02/07	Today is Pungenday, day 38 in the season of Chaos, 3172.
+02/08	Today is Prickle-Prickle, day 39 in the season of Chaos, 3172.
+02/09	Today is Setting Orange, day 40 in the season of Chaos, 3172.
+02/10	Today is Sweetmorn, day 41 in the season of Chaos, 3172.
+02/11	Today is Boomtime, day 42 in the season of Chaos, 3172.
+02/12	Today is Pungenday, day 43 in the season of Chaos, 3172.
+02/13	Today is Prickle-Prickle, day 44 in the season of Chaos, 3172.
+02/14	Today is Setting Orange, day 45 in the season of Chaos, 3172.
+02/15	Today is Sweetmorn, day 46 in the season of Chaos, 3172.
+02/16	Today is Boomtime, day 47 in the season of Chaos, 3172.
+02/17	Today is Pungenday, day 48 in the season of Chaos, 3172.
+02/18	Today is Prickle-Prickle, day 49 in the season of Chaos, 3172.
+02/19	Today is Setting Orange, day 50 in the season of Chaos, 3172.
+	It is the sacred Season Holyday of Chaoflux.
+02/20	Today is Sweetmorn, day 51 in the season of Chaos, 3172.
+02/21	Today is Boomtime, day 52 in the season of Chaos, 3172.
+02/22	Today is Pungenday, day 53 in the season of Chaos, 3172.
+02/23	Today is Prickle-Prickle, day 54 in the season of Chaos, 3172.
+02/24	Today is Setting Orange, day 55 in the season of Chaos, 3172.
+02/25	Today is Sweetmorn, day 56 in the season of Chaos, 3172.
+02/26	Today is Boomtime, day 57 in the season of Chaos, 3172.
+02/27	Today is Pungenday, day 58 in the season of Chaos, 3172.
+02/28	Today is Prickle-Prickle, day 59 in the season of Chaos, 3172.
+	Today is Saint Tib's Day, day between 59 and 60 in the season of Chaos, 3172.
+03/01	Today is Setting Orange, day 60 in the season of Chaos, 3172.
+03/02	Today is Sweetmorn, day 61 in the season of Chaos, 3172.
+03/03	Today is Boomtime, day 62 in the season of Chaos, 3172.
+03/04	Today is Pungenday, day 63 in the season of Chaos, 3172.
+03/05	Today is Prickle-Prickle, day 64 in the season of Chaos, 3172.
+03/06	Today is Setting Orange, day 65 in the season of Chaos, 3172.
+03/07	Today is Sweetmorn, day 66 in the season of Chaos, 3172.
+03/08	Today is Boomtime, day 67 in the season of Chaos, 3172.
+03/09	Today is Pungenday, day 68 in the season of Chaos, 3172.
+03/10	Today is Prickle-Prickle, day 69 in the season of Chaos, 3172.
+03/11	Today is Setting Orange, day 70 in the season of Chaos, 3172.
+03/12	Today is Sweetmorn, day 71 in the season of Chaos, 3172.
+03/13	Today is Boomtime, day 72 in the season of Chaos, 3172.
+03/14	Today is Pungenday, day 73 in the season of Chaos, 3172.
+03/15	Today is Prickle-Prickle, day 1 in the season of Discord, 3172.
+03/16	Today is Setting Orange, day 2 in the season of Discord, 3172.
+03/17	Today is Sweetmorn, day 3 in the season of Discord, 3172.
+03/18	Today is Boomtime, day 4 in the season of Discord, 3172.
+03/19	Today is Pungenday, day 5 in the season of Discord, 3172.
+	It is the sacred Apostle Holyday of Mojoday.
+03/20	Today is Prickle-Prickle, day 6 in the season of Discord, 3172.
+03/21	Today is Setting Orange, day 7 in the season of Discord, 3172.
+03/22	Today is Sweetmorn, day 8 in the season of Discord, 3172.
+03/23	Today is Boomtime, day 9 in the season of Discord, 3172.
+03/24	Today is Pungenday, day 10 in the season of Discord, 3172.
+03/25	Today is Prickle-Prickle, day 11 in the season of Discord, 3172.
+03/26	Today is Setting Orange, day 12 in the season of Discord, 3172.
+03/27	Today is Sweetmorn, day 13 in the season of Discord, 3172.
+03/28	Today is Boomtime, day 14 in the season of Discord, 3172.
+03/29	Today is Pungenday, day 15 in the season of Discord, 3172.
+03/30	Today is Prickle-Prickle, day 16 in the season of Discord, 3172.
+03/31	Today is Setting Orange, day 17 in the season of Discord, 3172.
+04/01	Today is Sweetmorn, day 18 in the season of Discord, 3172.
+04/02	Today is Boomtime, day 19 in the season of Discord, 3172.
+04/03	Today is Pungenday, day 20 in the season of Discord, 3172.
+04/04	Today is Prickle-Prickle, day 21 in the season of Discord, 3172.
+04/05	Today is Setting Orange, day 22 in the season of Discord, 3172.
+04/06	Today is Sweetmorn, day 23 in the season of Discord, 3172.
+04/07	Today is Boomtime, day 24 in the season of Discord, 3172.
+04/08	Today is Pungenday, day 25 in the season of Discord, 3172.
+04/09	Today is Prickle-Prickle, day 26 in the season of Discord, 3172.
+04/10	Today is Setting Orange, day 27 in the season of Discord, 3172.
+04/11	Today is Sweetmorn, day 28 in the season of Discord, 3172.
+04/12	Today is Boomtime, day 29 in the season of Discord, 3172.
+04/13	Today is Pungenday, day 30 in the season of Discord, 3172.
+04/14	Today is Prickle-Prickle, day 31 in the season of Discord, 3172.
+04/15	Today is Setting Orange, day 32 in the season of Discord, 3172.
+04/16	Today is Sweetmorn, day 33 in the season of Discord, 3172.
+04/17	Today is Boomtime, day 34 in the season of Discord, 3172.
+04/18	Today is Pungenday, day 35 in the season of Discord, 3172.
+04/19	Today is Prickle-Prickle, day 36 in the season of Discord, 3172.
+04/20	Today is Setting Orange, day 37 in the season of Discord, 3172.
+04/21	Today is Sweetmorn, day 38 in the season of Discord, 3172.
+04/22	Today is Boomtime, day 39 in the season of Discord, 3172.
+04/23	Today is Pungenday, day 40 in the season of Discord, 3172.
+04/24	Today is Prickle-Prickle, day 41 in the season of Discord, 3172.
+04/25	Today is Setting Orange, day 42 in the season of Discord, 3172.
+04/26	Today is Sweetmorn, day 43 in the season of Discord, 3172.
+04/27	Today is Boomtime, day 44 in the season of Discord, 3172.
+04/28	Today is Pungenday, day 45 in the season of Discord, 3172.
+04/29	Today is Prickle-Prickle, day 46 in the season of Discord, 3172.
+04/30	Today is Setting Orange, day 47 in the season of Discord, 3172.
+05/01	Today is Sweetmorn, day 48 in the season of Discord, 3172.
+05/02	Today is Boomtime, day 49 in the season of Discord, 3172.
+05/03	Today is Pungenday, day 50 in the season of Discord, 3172.
+	It is the sacred Season Holyday of Discoflux.
+05/04	Today is Prickle-Prickle, day 51 in the season of Discord, 3172.
+05/05	Today is Setting Orange, day 52 in the season of Discord, 3172.
+05/06	Today is Sweetmorn, day 53 in the season of Discord, 3172.
+05/07	Today is Boomtime, day 54 in the season of Discord, 3172.
+05/08	Today is Pungenday, day 55 in the season of Discord, 3172.
+05/09	Today is Prickle-Prickle, day 56 in the season of Discord, 3172.
+05/10	Today is Setting Orange, day 57 in the season of Discord, 3172.
+05/11	Today is Sweetmorn, day 58 in the season of Discord, 3172.
+05/12	Today is Boomtime, day 59 in the season of Discord, 3172.
+05/13	Today is Pungenday, day 60 in the season of Discord, 3172.
+05/14	Today is Prickle-Prickle, day 61 in the season of Discord, 3172.
+05/15	Today is Setting Orange, day 62 in the season of Discord, 3172.
+05/16	Today is Sweetmorn, day 63 in the season of Discord, 3172.
+05/17	Today is Boomtime, day 64 in the season of Discord, 3172.
+05/18	Today is Pungenday, day 65 in the season of Discord, 3172.
+05/19	Today is Prickle-Prickle, day 66 in the season of Discord, 3172.
+05/20	Today is Setting Orange, day 67 in the season of Discord, 3172.
+05/21	Today is Sweetmorn, day 68 in the season of Discord, 3172.
+05/22	Today is Boomtime, day 69 in the season of Discord, 3172.
+05/23	Today is Pungenday, day 70 in the season of Discord, 3172.
+05/24	Today is Prickle-Prickle, day 71 in the season of Discord, 3172.
+05/25	Today is Setting Orange, day 72 in the season of Discord, 3172.
+05/26	Today is Sweetmorn, day 73 in the season of Discord, 3172.
+05/27	Today is Boomtime, day 1 in the season of Confusion, 3172.
+05/28	Today is Pungenday, day 2 in the season of Confusion, 3172.
+05/29	Today is Prickle-Prickle, day 3 in the season of Confusion, 3172.
+05/30	Today is Setting Orange, day 4 in the season of Confusion, 3172.
+05/31	Today is Sweetmorn, day 5 in the season of Confusion, 3172.
+	It is the sacred Apostle Holyday of Syaday.
+06/01	Today is Boomtime, day 6 in the season of Confusion, 3172.
+06/02	Today is Pungenday, day 7 in the season of Confusion, 3172.
+06/03	Today is Prickle-Prickle, day 8 in the season of Confusion, 3172.
+06/04	Today is Setting Orange, day 9 in the season of Confusion, 3172.
+06/05	Today is Sweetmorn, day 10 in the season of Confusion, 3172.
+06/06	Today is Boomtime, day 11 in the season of Confusion, 3172.
+06/07	Today is Pungenday, day 12 in the season of Confusion, 3172.
+06/08	Today is Prickle-Prickle, day 13 in the season of Confusion, 3172.
+06/09	Today is Setting Orange, day 14 in the season of Confusion, 3172.
+06/10	Today is Sweetmorn, day 15 in the season of Confusion, 3172.
+06/11	Today is Boomtime, day 16 in the season of Confusion, 3172.
+06/12	Today is Pungenday, day 17 in the season of Confusion, 3172.
+06/13	Today is Prickle-Prickle, day 18 in the season of Confusion, 3172.
+06/14	Today is Setting Orange, day 19 in the season of Confusion, 3172.
+06/15	Today is Sweetmorn, day 20 in the season of Confusion, 3172.
+06/16	Today is Boomtime, day 21 in the season of Confusion, 3172.
+06/17	Today is Pungenday, day 22 in the season of Confusion, 3172.
+06/18	Today is Prickle-Prickle, day 23 in the season of Confusion, 3172.
+06/19	Today is Setting Orange, day 24 in the season of Confusion, 3172.
+06/20	Today is Sweetmorn, day 25 in the season of Confusion, 3172.
+06/21	Today is Boomtime, day 26 in the season of Confusion, 3172.
+06/22	Today is Pungenday, day 27 in the season of Confusion, 3172.
+06/23	Today is Prickle-Prickle, day 28 in the season of Confusion, 3172.
+06/24	Today is Setting Orange, day 29 in the season of Confusion, 3172.
+06/25	Today is Sweetmorn, day 30 in the season of Confusion, 3172.
+06/26	Today is Boomtime, day 31 in the season of Confusion, 3172.
+06/27	Today is Pungenday, day 32 in the season of Confusion, 3172.
+06/28	Today is Prickle-Prickle, day 33 in the season of Confusion, 3172.
+06/29	Today is Setting Orange, day 34 in the season of Confusion, 3172.
+06/30	Today is Sweetmorn, day 35 in the season of Confusion, 3172.
+07/01	Today is Boomtime, day 36 in the season of Confusion, 3172.
+07/02	Today is Pungenday, day 37 in the season of Confusion, 3172.
+07/03	Today is Prickle-Prickle, day 38 in the season of Confusion, 3172.
+07/04	Today is Setting Orange, day 39 in the season of Confusion, 3172.
+07/05	Today is Sweetmorn, day 40 in the season of Confusion, 3172.
+07/06	Today is Boomtime, day 41 in the season of Confusion, 3172.
+07/07	Today is Pungenday, day 42 in the season of Confusion, 3172.
+07/08	Today is Prickle-Prickle, day 43 in the season of Confusion, 3172.
+07/09	Today is Setting Orange, day 44 in the season of Confusion, 3172.
+07/10	Today is Sweetmorn, day 45 in the season of Confusion, 3172.
+07/11	Today is Boomtime, day 46 in the season of Confusion, 3172.
+07/12	Today is Pungenday, day 47 in the season of Confusion, 3172.
+07/13	Today is Prickle-Prickle, day 48 in the season of Confusion, 3172.
+07/14	Today is Setting Orange, day 49 in the season of Confusion, 3172.
+07/15	Today is Sweetmorn, day 50 in the season of Confusion, 3172.
+	It is the sacred Season Holyday of Confuflux.
+07/16	Today is Boomtime, day 51 in the season of Confusion, 3172.
+07/17	Today is Pungenday, day 52 in the season of Confusion, 3172.
+07/18	Today is Prickle-Prickle, day 53 in the season of Confusion, 3172.
+07/19	Today is Setting Orange, day 54 in the season of Confusion, 3172.
+07/20	Today is Sweetmorn, day 55 in the season of Confusion, 3172.
+07/21	Today is Boomtime, day 56 in the season of Confusion, 3172.
+07/22	Today is Pungenday, day 57 in the season of Confusion, 3172.
+07/23	Today is Prickle-Prickle, day 58 in the season of Confusion, 3172.
+07/24	Today is Setting Orange, day 59 in the season of Confusion, 3172.
+07/25	Today is Sweetmorn, day 60 in the season of Confusion, 3172.
+07/26	Today is Boomtime, day 61 in the season of Confusion, 3172.
+07/27	Today is Pungenday, day 62 in the season of Confusion, 3172.
+07/28	Today is Prickle-Prickle, day 63 in the season of Confusion, 3172.
+07/29	Today is Setting Orange, day 64 in the season of Confusion, 3172.
+07/30	Today is Sweetmorn, day 65 in the season of Confusion, 3172.
+07/31	Today is Boomtime, day 66 in the season of Confusion, 3172.
+08/01	Today is Pungenday, day 67 in the season of Confusion, 3172.
+08/02	Today is Prickle-Prickle, day 68 in the season of Confusion, 3172.
+08/03	Today is Setting Orange, day 69 in the season of Confusion, 3172.
+08/04	Today is Sweetmorn, day 70 in the season of Confusion, 3172.
+08/05	Today is Boomtime, day 71 in the season of Confusion, 3172.
+08/06	Today is Pungenday, day 72 in the season of Confusion, 3172.
+08/07	Today is Prickle-Prickle, day 73 in the season of Confusion, 3172.
+08/08	Today is Setting Orange, day 1 in the season of Bureaucracy, 3172.
+08/09	Today is Sweetmorn, day 2 in the season of Bureaucracy, 3172.
+08/10	Today is Boomtime, day 3 in the season of Bureaucracy, 3172.
+08/11	Today is Pungenday, day 4 in the season of Bureaucracy, 3172.
+08/12	Today is Prickle-Prickle, day 5 in the season of Bureaucracy, 3172.
+	It is the sacred Apostle Holyday of Zaraday.
+08/13	Today is Setting Orange, day 6 in the season of Bureaucracy, 3172.
+08/14	Today is Sweetmorn, day 7 in the season of Bureaucracy, 3172.
+08/15	Today is Boomtime, day 8 in the season of Bureaucracy, 3172.
+08/16	Today is Pungenday, day 9 in the season of Bureaucracy, 3172.
+08/17	Today is Prickle-Prickle, day 10 in the season of Bureaucracy, 3172.
+08/18	Today is Setting Orange, day 11 in the season of Bureaucracy, 3172.
+08/19	Today is Sweetmorn, day 12 in the season of Bureaucracy, 3172.
+08/20	Today is Boomtime, day 13 in the season of Bureaucracy, 3172.
+08/21	Today is Pungenday, day 14 in the season of Bureaucracy, 3172.
+08/22	Today is Prickle-Prickle, day 15 in the season of Bureaucracy, 3172.
+08/23	Today is Setting Orange, day 16 in the season of Bureaucracy, 3172.
+08/24	Today is Sweetmorn, day 17 in the season of Bureaucracy, 3172.
+08/25	Today is Boomtime, day 18 in the season of Bureaucracy, 3172.
+08/26	Today is Pungenday, day 19 in the season of Bureaucracy, 3172.
+08/27	Today is Prickle-Prickle, day 20 in the season of Bureaucracy, 3172.
+08/28	Today is Setting Orange, day 21 in the season of Bureaucracy, 3172.
+08/29	Today is Sweetmorn, day 22 in the season of Bureaucracy, 3172.
+08/30	Today is Boomtime, day 23 in the season of Bureaucracy, 3172.
+08/31	Today is Pungenday, day 24 in the season of Bureaucracy, 3172.
+09/01	Today is Prickle-Prickle, day 25 in the season of Bureaucracy, 3172.
+09/02	Today is Setting Orange, day 26 in the season of Bureaucracy, 3172.
+09/03	Today is Sweetmorn, day 27 in the season of Bureaucracy, 3172.
+09/04	Today is Boomtime, day 28 in the season of Bureaucracy, 3172.
+09/05	Today is Pungenday, day 29 in the season of Bureaucracy, 3172.
+09/06	Today is Prickle-Prickle, day 30 in the season of Bureaucracy, 3172.
+09/07	Today is Setting Orange, day 31 in the season of Bureaucracy, 3172.
+09/08	Today is Sweetmorn, day 32 in the season of Bureaucracy, 3172.
+09/09	Today is Boomtime, day 33 in the season of Bureaucracy, 3172.
+09/10	Today is Pungenday, day 34 in the season of Bureaucracy, 3172.
+09/11	Today is Prickle-Prickle, day 35 in the season of Bureaucracy, 3172.
+09/12	Today is Setting Orange, day 36 in the season of Bureaucracy, 3172.
+09/13	Today is Sweetmorn, day 37 in the season of Bureaucracy, 3172.
+09/14	Today is Boomtime, day 38 in the season of Bureaucracy, 3172.
+09/15	Today is Pungenday, day 39 in the season of Bureaucracy, 3172.
+09/16	Today is Prickle-Prickle, day 40 in the season of Bureaucracy, 3172.
+09/17	Today is Setting Orange, day 41 in the season of Bureaucracy, 3172.
+09/18	Today is Sweetmorn, day 42 in the season of Bureaucracy, 3172.
+09/19	Today is Boomtime, day 43 in the season of Bureaucracy, 3172.
+09/20	Today is Pungenday, day 44 in the season of Bureaucracy, 3172.
+09/21	Today is Prickle-Prickle, day 45 in the season of Bureaucracy, 3172.
+09/22	Today is Setting Orange, day 46 in the season of Bureaucracy, 3172.
+09/23	Today is Sweetmorn, day 47 in the season of Bureaucracy, 3172.
+09/24	Today is Boomtime, day 48 in the season of Bureaucracy, 3172.
+09/25	Today is Pungenday, day 49 in the season of Bureaucracy, 3172.
+09/26	Today is Prickle-Prickle, day 50 in the season of Bureaucracy, 3172.
+	It is the sacred Season Holyday of Bureflux.
+09/27	Today is Setting Orange, day 51 in the season of Bureaucracy, 3172.
+09/28	Today is Sweetmorn, day 52 in the season of Bureaucracy, 3172.
+09/29	Today is Boomtime, day 53 in the season of Bureaucracy, 3172.
+09/30	Today is Pungenday, day 54 in the season of Bureaucracy, 3172.
+10/01	Today is Prickle-Prickle, day 55 in the season of Bureaucracy, 3172.
+10/02	Today is Setting Orange, day 56 in the season of Bureaucracy, 3172.
+10/03	Today is Sweetmorn, day 57 in the season of Bureaucracy, 3172.
+10/04	Today is Boomtime, day 58 in the season of Bureaucracy, 3172.
+10/05	Today is Pungenday, day 59 in the season of Bureaucracy, 3172.
+10/06	Today is Prickle-Prickle, day 60 in the season of Bureaucracy, 3172.
+10/07	Today is Setting Orange, day 61 in the season of Bureaucracy, 3172.
+10/08	Today is Sweetmorn, day 62 in the season of Bureaucracy, 3172.
+10/09	Today is Boomtime, day 63 in the season of Bureaucracy, 3172.
+10/10	Today is Pungenday, day 64 in the season of Bureaucracy, 3172.
+10/11	Today is Prickle-Prickle, day 65 in the season of Bureaucracy, 3172.
+10/12	Today is Setting Orange, day 66 in the season of Bureaucracy, 3172.
+10/13	Today is Sweetmorn, day 67 in the season of Bureaucracy, 3172.
+10/14	Today is Boomtime, day 68 in the season of Bureaucracy, 3172.
+10/15	Today is Pungenday, day 69 in the season of Bureaucracy, 3172.
+10/16	Today is Prickle-Prickle, day 70 in the season of Bureaucracy, 3172.
+10/17	Today is Setting Orange, day 71 in the season of Bureaucracy, 3172.
+10/18	Today is Sweetmorn, day 72 in the season of Bureaucracy, 3172.
+10/19	Today is Boomtime, day 73 in the season of Bureaucracy, 3172.
+10/20	Today is Pungenday, day 1 in the season of The Aftermath, 3172.
+10/21	Today is Prickle-Prickle, day 2 in the season of The Aftermath, 3172.
+10/22	Today is Setting Orange, day 3 in the season of The Aftermath, 3172.
+10/23	Today is Sweetmorn, day 4 in the season of The Aftermath, 3172.
+10/24	Today is Boomtime, day 5 in the season of The Aftermath, 3172.
+	It is the sacred Apostle Holyday of Maladay.
+10/25	Today is Pungenday, day 6 in the season of The Aftermath, 3172.
+10/26	Today is Prickle-Prickle, day 7 in the season of The Aftermath, 3172.
+10/27	Today is Setting Orange, day 8 in the season of The Aftermath, 3172.
+10/28	Today is Sweetmorn, day 9 in the season of The Aftermath, 3172.
+10/29	Today is Boomtime, day 10 in the season of The Aftermath, 3172.
+10/30	Today is Pungenday, day 11 in the season of The Aftermath, 3172.
+10/31	Today is Prickle-Prickle, day 12 in the season of The Aftermath, 3172.
+11/01	Today is Setting Orange, day 13 in the season of The Aftermath, 3172.
+11/02	Today is Sweetmorn, day 14 in the season of The Aftermath, 3172.
+11/03	Today is Boomtime, day 15 in the season of The Aftermath, 3172.
+11/04	Today is Pungenday, day 16 in the season of The Aftermath, 3172.
+11/05	Today is Prickle-Prickle, day 17 in the season of The Aftermath, 3172.
+11/06	Today is Setting Orange, day 18 in the season of The Aftermath, 3172.
+11/07	Today is Sweetmorn, day 19 in the season of The Aftermath, 3172.
+11/08	Today is Boomtime, day 20 in the season of The Aftermath, 3172.
+11/09	Today is Pungenday, day 21 in the season of The Aftermath, 3172.
+11/10	Today is Prickle-Prickle, day 22 in the season of The Aftermath, 3172.
+11/11	Today is Setting Orange, day 23 in the season of The Aftermath, 3172.
+11/12	Today is Sweetmorn, day 24 in the season of The Aftermath, 3172.
+11/13	Today is Boomtime, day 25 in the season of The Aftermath, 3172.
+11/14	Today is Pungenday, day 26 in the season of The Aftermath, 3172.
+11/15	Today is Prickle-Prickle, day 27 in the season of The Aftermath, 3172.
+11/16	Today is Setting Orange, day 28 in the season of The Aftermath, 3172.
+11/17	Today is Sweetmorn, day 29 in the season of The Aftermath, 3172.
+11/18	Today is Boomtime, day 30 in the season of The Aftermath, 3172.
+11/19	Today is Pungenday, day 31 in the season of The Aftermath, 3172.
+11/20	Today is Prickle-Prickle, day 32 in the season of The Aftermath, 3172.
+11/21	Today is Setting Orange, day 33 in the season of The Aftermath, 3172.
+11/22	Today is Sweetmorn, day 34 in the season of The Aftermath, 3172.
+11/23	Today is Boomtime, day 35 in the season of The Aftermath, 3172.
+11/24	Today is Pungenday, day 36 in the season of The Aftermath, 3172.
+11/25	Today is Prickle-Prickle, day 37 in the season of The Aftermath, 3172.
+11/26	Today is Setting Orange, day 38 in the season of The Aftermath, 3172.
+11/27	Today is Sweetmorn, day 39 in the season of The Aftermath, 3172.
+11/28	Today is Boomtime, day 40 in the season of The Aftermath, 3172.
+11/29	Today is Pungenday, day 41 in the season of The Aftermath, 3172.
+11/30	Today is Prickle-Prickle, day 42 in the season of The Aftermath, 3172.
+12/01	Today is Setting Orange, day 43 in the season of The Aftermath, 3172.
+12/02	Today is Sweetmorn, day 44 in the season of The Aftermath, 3172.
+12/03	Today is Boomtime, day 45 in the season of The Aftermath, 3172.
+12/04	Today is Pungenday, day 46 in the season of The Aftermath, 3172.
+12/05	Today is Prickle-Prickle, day 47 in the season of The Aftermath, 3172.
+12/06	Today is Setting Orange, day 48 in the season of The Aftermath, 3172.
+12/07	Today is Sweetmorn, day 49 in the season of The Aftermath, 3172.
+12/08	Today is Boomtime, day 50 in the season of The Aftermath, 3172.
+	It is the sacred Season Holyday of Afflux.
+12/09	Today is Pungenday, day 51 in the season of The Aftermath, 3172.
+12/10	Today is Prickle-Prickle, day 52 in the season of The Aftermath, 3172.
+12/11	Today is Setting Orange, day 53 in the season of The Aftermath, 3172.
+12/12	Today is Sweetmorn, day 54 in the season of The Aftermath, 3172.
+12/13	Today is Boomtime, day 55 in the season of The Aftermath, 3172.
+12/14	Today is Pungenday, day 56 in the season of The Aftermath, 3172.
+12/15	Today is Prickle-Prickle, day 57 in the season of The Aftermath, 3172.
+12/16	Today is Setting Orange, day 58 in the season of The Aftermath, 3172.
+12/17	Today is Sweetmorn, day 59 in the season of The Aftermath, 3172.
+12/18	Today is Boomtime, day 60 in the season of The Aftermath, 3172.
+12/19	Today is Pungenday, day 61 in the season of The Aftermath, 3172.
+12/20	Today is Prickle-Prickle, day 62 in the season of The Aftermath, 3172.
+12/21	Today is Setting Orange, day 63 in the season of The Aftermath, 3172.
+12/22	Today is Sweetmorn, day 64 in the season of The Aftermath, 3172.
+12/23	Today is Boomtime, day 65 in the season of The Aftermath, 3172.
+12/24	Today is Pungenday, day 66 in the season of The Aftermath, 3172.
+12/25	Today is Prickle-Prickle, day 67 in the season of The Aftermath, 3172.
+12/26	Today is Setting Orange, day 68 in the season of The Aftermath, 3172.
+12/27	Today is Sweetmorn, day 69 in the season of The Aftermath, 3172.
+12/28	Today is Boomtime, day 70 in the season of The Aftermath, 3172.
+12/29	Today is Pungenday, day 71 in the season of The Aftermath, 3172.
+12/30	Today is Prickle-Prickle, day 72 in the season of The Aftermath, 3172.
+12/31	Today is Setting Orange, day 73 in the season of The Aftermath, 3172.
+
+#endif /* !_calendar_discord_ */
+
