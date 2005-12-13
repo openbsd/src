@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.24 2005/11/18 20:56:53 deraadt Exp $	*/
+/*	$OpenBSD: grep.c,v 1.25 2005/12/13 02:08:06 kjell Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.
  * Copyright (c) 2005 Kjell Wooding <kjell@openbsd.org>.
@@ -41,6 +41,7 @@ static int	 compile(int, int);
 static int	 gid(int, int);
 static struct buffer	*compile_mode(const char *, const char *, const char *);
 static int	 getbufcwd(char *, size_t);
+static int	 xlint(int, int);
 
 void grep_init(void);
 
@@ -73,6 +74,7 @@ grep_init(void)
 	funmap_add(compile_goto_error, "compile-goto-error");
 	funmap_add(next_error, "next-error");
 	funmap_add(grep, "grep");
+	funmap_add(xlint, "lint");
 	funmap_add(compile, "compile");
 	funmap_add(gid, "gid");
 	maps_add((KEYMAP *)&compilemap, "compile");
@@ -82,8 +84,8 @@ grep_init(void)
 static int
 grep(int f, int n)
 {
-	char	 command[NFILEN + 20];
-	char	 prompt[NFILEN], *bufp;
+	char	 command[NFILEN + 21];
+	char	 cprompt[NFILEN], *bufp;
 	struct buffer	*bp;
 	struct mgwin	*wp;
 	char	 path[NFILEN];
@@ -95,8 +97,8 @@ grep(int f, int n)
 		return (FALSE);
 	}
 
-	(void)strlcpy(prompt, "grep -n ", sizeof(prompt));
-	if ((bufp = eread("Run grep: ", prompt, NFILEN,
+	(void)strlcpy(cprompt, "grep -n ", sizeof(cprompt));
+	if ((bufp = eread("Run grep: ", cprompt, NFILEN,
 	    EFDEF | EFNEW | EFCR)) == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')
@@ -114,10 +116,10 @@ grep(int f, int n)
 
 /* ARGSUSED */
 static int
-compile(int f, int n)
+xlint(int f, int n)
 {
-	char	 command[NFILEN + 20];
-	char	 prompt[NFILEN], *bufp;
+	char	 command[NFILEN + 16];
+	char	 cprompt[NFILEN], *bufp;
 	struct buffer	*bp;
 	struct mgwin	*wp;
 	char	 path[NFILEN];
@@ -129,8 +131,42 @@ compile(int f, int n)
 		return (FALSE);
 	}
 
-	(void)strlcpy(prompt, compile_last_command, sizeof(prompt));
-	if ((bufp = eread("Compile command: ", prompt, NFILEN,
+	(void)strlcpy(cprompt, "make lint ", sizeof(cprompt));
+	if ((bufp = eread("Run lint: ", cprompt, NFILEN,
+	    EFDEF | EFNEW | EFCR)) == NULL)
+		return (ABORT);
+	else if (bufp[0] == '\0')
+		return (FALSE);
+	(void)snprintf(command, sizeof(command), "%s 2>&1", bufp);
+
+	if ((bp = compile_mode("*lint*", command, path)) == NULL)
+		return (FALSE);
+	if ((wp = popbuf(bp)) == NULL)
+		return (FALSE);
+	curbp = bp;
+	compile_win = curwp = wp;
+	return (TRUE);
+}
+
+/* ARGSUSED */
+static int
+compile(int f, int n)
+{
+	char	 command[NFILEN + 20];
+	char	 cprompt[NFILEN], *bufp;
+	struct buffer	*bp;
+	struct mgwin	*wp;
+	char	 path[NFILEN];
+
+	/* get buffer cwd */
+	if (getbufcwd(path, sizeof(path)) == FALSE) {
+		ewprintf("Failed. "
+		    "Can't get working directory of current buffer.");
+		return (FALSE);
+	}
+
+	(void)strlcpy(cprompt, compile_last_command, sizeof(cprompt));
+	if ((bufp = eread("Compile command: ", cprompt, NFILEN,
 	    EFDEF | EFNEW | EFCR)) == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')
@@ -156,7 +192,7 @@ static int
 gid(int f, int n)
 {
 	char	 command[NFILEN + 20];
-	char	 prompt[NFILEN], c, *bufp;
+	char	 cprompt[NFILEN], c, *bufp;
 	struct buffer	*bp;
 	struct mgwin	*wp;
 	int	 i, j;
@@ -187,22 +223,22 @@ gid(int f, int n)
 		if (!isalnum(c) && c != '_')
 			break;
 	}
-	/* Fill the symbol in prompt[] */
-	for (j = 0; j < sizeof(prompt) - 1 && i < llength(curwp->w_dotp);
+	/* Fill the symbol in cprompt[] */
+	for (j = 0; j < sizeof(cprompt) - 1 && i < llength(curwp->w_dotp);
 	    j++, i++) {
 		c = lgetc(curwp->w_dotp, i);
 		if (!isalnum(c) && c != '_')
 			break;
-		prompt[j] = c;
+		cprompt[j] = c;
 	}
-	prompt[j] = '\0';
+	cprompt[j] = '\0';
 
-	if ((bufp = eread("Run gid (with args): ", prompt, NFILEN,
+	if ((bufp = eread("Run gid (with args): ", cprompt, NFILEN,
 	    (j ? EFDEF : 0) | EFNEW | EFCR)) == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
-	(void)snprintf(command, sizeof(command), "gid %s", prompt);
+	(void)snprintf(command, sizeof(command), "gid %s", cprompt);
 
 	if ((bp = compile_mode("*gid*", command, path)) == NULL)
 		return (FALSE);
