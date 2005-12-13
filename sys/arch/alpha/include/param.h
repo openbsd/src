@@ -1,4 +1,4 @@
-/* $OpenBSD: param.h,v 1.28 2005/10/28 19:10:26 martin Exp $ */
+/* $OpenBSD: param.h,v 1.29 2005/12/13 01:56:43 martin Exp $ */
 /* $NetBSD: param.h,v 1.30 2000/06/09 16:03:04 thorpej Exp $ */
 
 /*
@@ -75,7 +75,6 @@
 #define PAGE_MASK	(PAGE_SIZE - 1)
 
 #define	KERNBASE	0xfffffc0000230000	/* start of kernel virtual */
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */

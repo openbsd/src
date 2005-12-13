@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.10 2005/12/13 00:18:19 jsg Exp $	*/
+/*	$OpenBSD: param.h,v 1.11 2005/12/13 01:56:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,7 +75,6 @@
 
 #define	KERNBASE	0xffffffff80000000 /* start of kernel virtual space */
 #define KERNTEXTOFF	(KERNBASE+0x100000)	/* start of kernel text */
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define KERNTEXTOFF_HI	0xffffffff
 #define KERNTEXTOFF_LO	0x80100000

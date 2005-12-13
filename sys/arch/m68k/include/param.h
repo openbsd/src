@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.16 2005/11/12 23:14:03 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.17 2005/12/13 01:56:43 martin Exp $	*/
 /*	$NetBSD: param.h,v 1.2 1997/06/10 18:21:23 veego Exp $	*/
 
 /*
@@ -66,8 +66,6 @@
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
-
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)
