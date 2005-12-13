@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.21 2005/11/30 18:02:53 deraadt Exp $	*/
+/*	$OpenBSD: ipmi.c,v 1.22 2005/12/13 03:36:12 marco Exp $	*/
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1642,8 +1642,16 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	ipmi_map_regs(sc, ia);
 
 	/* Identify BMC device */
-	ipmi_sendcmd(sc, BMC_SA, 0, APP_NETFN, APP_GET_DEVICE_ID, 0, NULL);
-	ipmi_recvcmd(sc, sizeof(cmd), &len, cmd);
+	if (ipmi_sendcmd(sc, BMC_SA, 0, APP_NETFN, APP_GET_DEVICE_ID, 0, NULL)){
+		printf("%s: unable to send get device id command\n",
+		    DEVNAME(sc));
+		return;
+	}
+	if (ipmi_recvcmd(sc, sizeof(cmd), &len, cmd)) {
+		printf("%s: unable to retrieve device id\n",
+		    DEVNAME(sc));
+		return;
+	}
 	dbg_dump(1, "bmc data", len, cmd);
 
 	/* Scan SDRs, add sensors */
