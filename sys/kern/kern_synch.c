@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.67 2005/12/03 18:09:08 tedu Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.68 2005/12/13 06:03:54 tedu Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -384,7 +384,7 @@ int
 sys_thrsleep(struct proc *p, void *v, register_t *revtal)
 {
 	struct sys_thrsleep_args *uap = v;
-	long ident = SCARG(uap, ident);
+	long ident = (long)SCARG(uap, ident);
 	int timo = SCARG(uap, timeout);
 	_spinlock_lock_t *lock = SCARG(uap, lock);
 	_spinlock_lock_t unlocked = _SPINLOCK_UNLOCKED;
@@ -422,7 +422,7 @@ int
 sys_thrwakeup(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_thrwakeup_args *uap = v;
-	long ident = SCARG(uap, ident);
+	long ident = (void *)SCARG(uap, ident);
 	struct twaitnode *n;
 	
 	LIST_FOREACH(n, &p->p_thrparent->p_sleepers, t_next) {
