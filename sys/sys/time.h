@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.20 2005/11/29 00:28:18 deraadt Exp $	*/
+/*	$OpenBSD: time.h,v 1.21 2005/12/13 00:35:23 millert Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -35,7 +35,12 @@
 #ifndef _SYS_TIME_H_
 #define _SYS_TIME_H_
 
+#include <sys/cdefs.h>
 #include <sys/types.h>
+
+#if __XPG_VISIBLE >= 420 && __XPG_VISIBLE < 600
+#include <sys/select.h>
+#endif
 
 /*
  * Structure returned by gettimeofday(2) system call,
@@ -46,6 +51,8 @@ struct timeval {
 	long	tv_usec;	/* and microseconds */
 };
 
+#ifndef _TIMESPEC_DECLARED
+#define _TIMESPEC_DECLARED
 /*
  * Structure defined by POSIX.1b to be like a timeval.
  */
@@ -53,6 +60,7 @@ struct timespec {
 	time_t	tv_sec;		/* seconds */
 	long	tv_nsec;	/* and nanoseconds */
 };
+#endif
 
 #define	TIMEVAL_TO_TIMESPEC(tv, ts) {					\
 	(ts)->tv_sec = (tv)->tv_sec;					\
@@ -306,11 +314,12 @@ int	ppsratecheck(struct timeval *, int *, int);
 #else /* !_KERNEL */
 #include <time.h>
 
-#ifndef _POSIX_SOURCE
-#include <sys/cdefs.h>
-
+#if __BSD_VISIBLE || __XPG_VISIBLE
 __BEGIN_DECLS
+#if __BSD_VISIBLE
 int	adjtime(const struct timeval *, struct timeval *);
+#endif
+#if __XPG_VISIBLE
 int	clock_getres(clockid_t, struct timespec *);
 int	clock_gettime(clockid_t, struct timespec *);
 int	clock_settime(clockid_t, const struct timespec *);
@@ -320,8 +329,9 @@ int	gettimeofday(struct timeval *, struct timezone *);
 int	setitimer(int, const struct itimerval *, struct itimerval *);
 int	settimeofday(const struct timeval *, const struct timezone *);
 int	utimes(const char *, const struct timeval *);
+#endif /* __XPG_VISIBLE */
 __END_DECLS
-#endif /* !POSIX */
+#endif /* __BSD_VISIBLE || __XPG_VISIBLE */
 
 #endif /* !_KERNEL */
 

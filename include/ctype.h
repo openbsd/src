@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.18 2005/08/08 05:53:00 espie Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.19 2005/12/13 00:35:22 millert Exp $	*/
 /*	$NetBSD: ctype.h,v 1.14 1994/10/26 00:55:47 cgd Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 
 #ifndef _CTYPE_H_
 #define _CTYPE_H_
+
 #include <sys/cdefs.h>
 
 #define	_U	0x01
@@ -78,13 +79,17 @@ int	isxdigit(int);
 int	tolower(int);
 int	toupper(int);
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#if __BSD_VISIBLE || __ISO_C_VISIBLE >= 1999 || __POSIX_VISIBLE > 200112 \
+    || __XPG_VISIBLE > 600
 int	isblank(int);
+#endif
+
+#if __BSD_VISIBLE || __XPG_VISIBLE
 int	isascii(int);
 int	toascii(int);
 int	_tolower(int);
 int	_toupper(int);
-#endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
+#endif /* __BSD_VISIBLE || __XPG_VISIBLE */
 
 #endif /* __GNUC__ || _ANSI_LIBRARY || lint */
 
@@ -159,12 +164,15 @@ __CTYPE_INLINE int toupper(int c)
 	return ((_toupper_tab_ + 1)[c]);
 }
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#if __BSD_VISIBLE || __ISO_C_VISIBLE >= 1999 || __POSIX_VISIBLE > 200112 \
+    || __XPG_VISIBLE > 600
 __CTYPE_INLINE int isblank(int c)
 {
 	return (c == ' ' || c == '\t');
 }
+#endif
 
+#if __BSD_VISIBLE || __XPG_VISIBLE
 __CTYPE_INLINE int isascii(int c)
 {
 	return ((unsigned int)c <= 0177);
@@ -184,7 +192,7 @@ __CTYPE_INLINE int _toupper(int c)
 {
 	return (c - 'a' + 'A');
 }
-#endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
+#endif /* __BSD_VISIBLE || __XPG_VISIBLE */
 
 #endif /* !_ANSI_LIBRARY && !lint */
 

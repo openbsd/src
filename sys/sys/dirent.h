@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirent.h,v 1.6 2005/06/18 18:09:43 millert Exp $	*/
+/*	$OpenBSD: dirent.h,v 1.7 2005/12/13 00:35:23 millert Exp $	*/
 /*	$NetBSD: dirent.h,v 1.12 1996/04/09 20:55:25 cgd Exp $	*/
 
 /*-
@@ -32,6 +32,11 @@
  *	@(#)dirent.h	8.3 (Berkeley) 8/10/94
  */
 
+#ifndef _SYS_DIRENT_H_
+#define _SYS_DIRENT_H_
+
+#include <sys/cdefs.h>
+
 /*
  * The dirent structure defines the format of directory entries returned by
  * the getdirentries(2) system call.
@@ -48,14 +53,15 @@ struct dirent {
 	u_int16_t d_reclen;		/* length of this record */
 	u_int8_t  d_type; 		/* file type, see below */
 	u_int8_t  d_namlen;		/* length of string in d_name */
-#ifdef _POSIX_SOURCE
-	char	d_name[255 + 1];	/* name must be no longer than this */
-#else
+#if __BSD_VISIBLE
 #define	MAXNAMLEN	255
 	char	d_name[MAXNAMLEN + 1];	/* name must be no longer than this */
+#else
+	char	d_name[255 + 1];	/* name must be no longer than this */
 #endif
 };
 
+#if __BSD_VISIBLE
 /*
  * File types
  */
@@ -74,7 +80,6 @@ struct dirent {
 #define	IFTODT(mode)	(((mode) & 0170000) >> 12)
 #define	DTTOIF(dirtype)	((dirtype) << 12)
 
-#if defined(_KERNEL)
 /*
  * The DIRENT_SIZE macro gives the minimum record length which will hold
  * the directory entry.  This requires the amount of space in struct dirent
@@ -84,4 +89,6 @@ struct dirent {
 #define	DIRENT_SIZE(dp) \
     ((sizeof (struct dirent) - (MAXNAMLEN+1)) + (((dp)->d_namlen+1 + 3) &~ 3))
 
-#endif	/* !_KERNEL */
+#endif /* __BSD_VISIBLE */
+
+#endif /* _SYS_DIRENT_H_ */

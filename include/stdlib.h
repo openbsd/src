@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.34 2005/05/27 17:45:56 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.35 2005/12/13 00:35:22 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -36,7 +36,8 @@
 #define _STDLIB_H_
 #include <machine/ansi.h>
 
-#if !defined(_ANSI_SOURCE)	/* for quad_t, etc. */
+#include <sys/cdefs.h>
+#if __BSD_VISIBLE	/* for quad_t, etc. */
 #include <sys/types.h>
 #endif
 
@@ -63,7 +64,7 @@ typedef struct {
 	long rem;		/* remainder */
 } ldiv_t;
 
-#if !defined(_ANSI_SOURCE)
+#if __BSD_VISIBLE
 typedef struct {
 	quad_t quot;		/* quotient */
 	quad_t rem;		/* remainder */
@@ -105,7 +106,6 @@ int	 atexit(void (*)(void));
 double	 atof(const char *);
 int	 atoi(const char *);
 long	 atol(const char *);
-long long atoll(const char *);
 void	*bsearch(const void *, const void *, size_t, size_t,
 	    int (*)(const void *, const void *));
 void	*calloc(size_t, size_t);
@@ -119,28 +119,15 @@ char	*gcvt(double, int, char *);
 char	*getenv(const char *);
 long	 labs(long);
 ldiv_t	 ldiv(long, long);
-long long
-	 llabs(long long);
 void	*malloc(size_t);
-char	*mkdtemp(char *);
-int	 mkstemp(char *);
-int	 mkstemps(char *, int);
-char	*mktemp(char *);
 void	 qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 int	 rand(void);
-int	 rand_r(unsigned int *);
 void	*realloc(void *, size_t);
 void	 srand(unsigned);
 double	 strtod(const char *, char **);
 long	 strtol(const char *, char **, int);
-long long
-	 strtoll(const char *, char **, int);
-long long
-	 strtonum(const char *, long long, long long, const char **);
 unsigned long
 	 strtoul(const char *, char **, int);
-unsigned long long
-	 strtoull(const char *, char **, int);
 int	 system(const char *);
 
 /* these are currently just stubs */
@@ -150,7 +137,73 @@ int	 wctomb(char *, wchar_t);
 int	 mbtowc(wchar_t *, const char *, size_t);
 size_t	 wcstombs(char *, const wchar_t *, size_t);
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+/*
+ * IEEE Std 1003.1c-95, also adopted by X/Open CAE Spec Issue 5 Version 2
+ */
+#if __BSD_VISIBLE || __POSIX_VISIBLE >= 199506 || __XPG_VISIBLE >= 500 || \
+	defined(_REENTRANT)
+int	 rand_r(unsigned int *);
+#endif
+
+#if __BSD_VISIBLE || __XPG_VISIBLE >= 400
+double	 drand48(void);
+double	 erand48(unsigned short[3]);
+long	 jrand48(unsigned short[3]);
+void	 lcong48(unsigned short[7]);
+long	 lrand48(void);
+long	 mrand48(void);
+long	 nrand48(unsigned short[3]);
+unsigned short *seed48(unsigned short[3]);
+void	 srand48(long);
+
+int	 putenv(const char *);
+#endif
+
+#if __BSD_VISIBLE || __XPG_VISIBLE >= 420
+long	 a64l(const char *);
+char	*l64a(long);
+
+char	*initstate(unsigned int, char *, size_t)
+		__attribute__((__bounded__ (__string__,2,3)));
+long	 random(void);
+char	*setstate(const char *);
+void	 srandom(unsigned int);
+
+int	 mkstemp(char *);
+char	*mktemp(char *);
+
+char	*realpath(const char *, char *);
+
+int	 setkey(const char *);
+
+int	 ttyslot(void);
+
+void	*valloc(size_t);		/* obsoleted by malloc() */
+#endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
+
+/*
+ * ISO C99
+ */
+#if __BSD_VISIBLE || __ISO_C_VISIBLE >= 1999
+long long
+	 atoll(const char *);
+long long
+	 llabs(long long);
+long long
+	 strtoll(const char *, char **, int);
+unsigned long long
+	 strtoull(const char *, char **, int);
+#endif
+
+/*
+ * The Open Group Base Specifications, Issue 6; IEEE Std 1003.1-2001 (POSIX)
+ */
+#if __BSD_VISIBLE || __POSIX_VISIBLE >= 200112 || __XPG_VISIBLE >= 600
+int	 setenv(const char *, const char *, int);
+void	 unsetenv(const char *);
+#endif
+
+#if __BSD_VISIBLE
 #if defined(alloca) && (alloca == __builtin_alloca) && (__GNUC__ < 2)
 void  *alloca(int);     /* built-in for gcc */ 
 #else 
@@ -174,22 +227,19 @@ int	 daemon(int, int);
 char	*devname(int, int);
 int	 getloadavg(double [], int);
 
-long	 a64l(const char *);
-char	*l64a(long);
-
 void	 cfree(void *);
 
 #ifndef _GETOPT_DEFINED_
 #define _GETOPT_DEFINED_
 int	 getopt(int, char * const *, const char *);
 extern	 char *optarg;			/* getopt(3) external variables */
-extern	 int opterr;
-extern	 int optind;
-extern	 int optopt;
-extern	 int optreset;
+extern	 int opterr, optind, optopt, optreset;
 int	 getsubopt(char **, char * const *, char **);
 extern	 char *suboptarg;		/* getsubopt(3) external variable */
 #endif /* _GETOPT_DEFINED_ */
+
+char	*mkdtemp(char *);
+int	 mkstemps(char *, int);
 
 int	 heapsort(void *, size_t, size_t, int (*)(const void *, const void *));
 int	 mergesort(void *, size_t, size_t, int (*)(const void *, const void *));
@@ -198,17 +248,10 @@ int	 radixsort(const unsigned char **, int, const unsigned char *,
 int	 sradixsort(const unsigned char **, int, const unsigned char *,
 	    unsigned);
 
-char	*initstate(unsigned int, char *, size_t)
-		__attribute__((__bounded__ (__string__,2,3)));
-long	 random(void);
-char	*realpath(const char *, char *);
-char	*setstate(const char *);
-void	 srandom(unsigned int);
 void	 srandomdev(void);
+long long
+	 strtonum(const char *, long long, long long, const char **);
 
-int	 putenv(const char *);
-int	 setenv(const char *, const char *, int);
-void	 unsetenv(const char *);
 void	 setproctitle(const char *, ...)
 	__attribute__((__format__ (__printf__, 1, 2)));
 
@@ -217,21 +260,11 @@ qdiv_t	 qdiv(quad_t, quad_t);
 quad_t	 strtoq(const char *, char **, int);
 u_quad_t strtouq(const char *, char **, int);
 
-double	 drand48(void);
-double	 erand48(unsigned short[3]);
-long	 jrand48(unsigned short[3]);
-void	 lcong48(unsigned short[7]);
-long	 lrand48(void);
-long	 mrand48(void);
-long	 nrand48(unsigned short[3]);
-unsigned short *seed48(unsigned short[3]);
-void	 srand48(long);
-
 u_int32_t arc4random(void);
 void	arc4random_stir(void);
 void	arc4random_addrandom(unsigned char *, int)
 	__attribute__((__bounded__ (__string__,1,2)));
-#endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
+#endif /* __BSD_VISIBLE */
 
 __END_DECLS
 

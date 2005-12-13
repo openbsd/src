@@ -1,4 +1,4 @@
-/*	$OpenBSD: grp.h,v 1.7 2003/06/25 21:06:33 deraadt Exp $	*/
+/*	$OpenBSD: grp.h,v 1.8 2005/12/13 00:35:22 millert Exp $	*/
 /*	$NetBSD: grp.h,v 1.7 1995/04/29 05:30:40 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
+#if __BSD_VISIBLE
 #define	_PATH_GROUP		"/etc/group"
 #endif
 
@@ -56,21 +56,21 @@ struct group {
 
 __BEGIN_DECLS
 struct group	*getgrgid(gid_t);
-int		getgrgid_r(gid_t, struct group *, char *,
-		    size_t, struct group **);
 struct group	*getgrnam(const char *);
-int		getgrnam_r(const char *, struct group *, char *,
-		    size_t, struct group **);
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE || __POSIX_VISIBLE >= 200112 || __XPG_VISIBLE
 struct group	*getgrent(void);
 void		 setgrent(void);
 void		 endgrent(void);
+int		 getgrgid_r(gid_t, struct group *, char *,
+		    size_t, struct group **);
+int		 getgrnam_r(const char *, struct group *, char *,
+		    size_t, struct group **);
+#endif
+#if __BSD_VISIBLE
 void		 setgrfile(const char *);
-#ifndef _XOPEN_SOURCE
-char		*group_from_gid(gid_t, int);
 int		 setgroupent(int);
-#endif /* !_XOPEN_SOURCE */
-#endif /* !_POSIX_SOURCE */
+char		*group_from_gid(gid_t, int);
+#endif
 __END_DECLS
 
 #endif /* !_GRP_H_ */

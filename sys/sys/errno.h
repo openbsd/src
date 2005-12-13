@@ -1,4 +1,4 @@
-/*	$OpenBSD: errno.h,v 1.14 2005/06/17 21:48:03 espie Exp $	*/
+/*	$OpenBSD: errno.h,v 1.15 2005/12/13 00:35:23 millert Exp $	*/
 /*	$NetBSD: errno.h,v 1.10 1996/01/20 01:33:53 jtc Exp $	*/
 
 /*
@@ -38,17 +38,18 @@
  */
 
 #ifndef _KERNEL
+#include <sys/cdefs.h>
+
 extern int errno;			/* global error number */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) && !defined(__SYS_ERRLIST)
+#if __BSD_VISIBLE && !defined(__SYS_ERRLIST)
 #define __SYS_ERRLIST
 
 extern int sys_nerr;
 extern char *sys_errlist[];
-#endif
+#endif /* __BSD_VISIBLE && !defined(__SYS_ERRLIST) */
 
 #if !defined(errno) && !defined(_STANDALONE)
-#include <sys/cdefs.h>
 __BEGIN_DECLS
 int *__errno(void);
 int *___errno(void);
@@ -73,7 +74,7 @@ __END_DECLS
 #define	ENOMEM		12		/* Cannot allocate memory */
 #define	EACCES		13		/* Permission denied */
 #define	EFAULT		14		/* Bad address */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	ENOTBLK		15		/* Block device required */
 #endif
 #define	EBUSY		16		/* Device busy */
@@ -111,13 +112,13 @@ __END_DECLS
 #define	EPROTOTYPE	41		/* Protocol wrong type for socket */
 #define	ENOPROTOOPT	42		/* Protocol not available */
 #define	EPROTONOSUPPORT	43		/* Protocol not supported */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	ESOCKTNOSUPPORT	44		/* Socket type not supported */
-#endif /* _POSIX_SOURCE */
+#endif
 #define	EOPNOTSUPP	45		/* Operation not supported */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	EPFNOSUPPORT	46		/* Protocol family not supported */
-#endif /* _POSIX_SOURCE */
+#endif
 #define	EAFNOSUPPORT	47		/* Address family not supported by protocol family */
 #define	EADDRINUSE	48		/* Address already in use */
 #define	EADDRNOTAVAIL	49		/* Can't assign requested address */
@@ -131,10 +132,10 @@ __END_DECLS
 #define	ENOBUFS		55		/* No buffer space available */
 #define	EISCONN		56		/* Socket is already connected */
 #define	ENOTCONN	57		/* Socket is not connected */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	ESHUTDOWN	58		/* Can't send after socket shutdown */
 #define	ETOOMANYREFS	59		/* Too many references: can't splice */
-#endif /* _POSIX_SOURCE */
+#endif /* __BSD_VISIBLE */
 #define	ETIMEDOUT	60		/* Operation timed out */
 #define	ECONNREFUSED	61		/* Connection refused */
 
@@ -142,34 +143,34 @@ __END_DECLS
 #define	ENAMETOOLONG	63		/* File name too long */
 
 /* should be rearranged */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	EHOSTDOWN	64		/* Host is down */
 #define	EHOSTUNREACH	65		/* No route to host */
-#endif /* _POSIX_SOURCE */
+#endif /* __BSD_VISIBLE */
 #define	ENOTEMPTY	66		/* Directory not empty */
 
 /* quotas & mush */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	EPROCLIM	67		/* Too many processes */
 #define	EUSERS		68		/* Too many users */
-#endif /* _POSIX_SOURCE */
+#endif /* __BSD_VISIBLE */
 #define	EDQUOT		69		/* Disk quota exceeded */
 
 /* Network File System */
 #define	ESTALE		70		/* Stale NFS file handle */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	EREMOTE		71		/* Too many levels of remote in path */
 #define	EBADRPC		72		/* RPC struct is bad */
 #define	ERPCMISMATCH	73		/* RPC version wrong */
 #define	EPROGUNAVAIL	74		/* RPC prog. not avail */
 #define	EPROGMISMATCH	75		/* Program version wrong */
 #define	EPROCUNAVAIL	76		/* Bad procedure for program */
-#endif /* _POSIX_SOURCE */
+#endif /* __BSD_VISIBLE */
 
 #define	ENOLCK		77		/* No locks available */
 #define	ENOSYS		78		/* Function not implemented */
 
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	EFTYPE		79		/* Inappropriate file type or format */
 #define	EAUTH		80		/* Authentication error */
 #define	ENEEDAUTH	81		/* Need authenticator */
@@ -177,7 +178,7 @@ __END_DECLS
 #define	ENOATTR		83		/* Attribute not found */
 #define	EILSEQ		84		/* Illegal byte sequence */
 #define	ELAST		84		/* Must be equal largest errno */
-#endif /* _POSIX_SOURCE */
+#endif /* __BSD_VISIBLE */
 
 #ifdef _KERNEL
 /* pseudo-errors returned inside kernel to modify return to process */

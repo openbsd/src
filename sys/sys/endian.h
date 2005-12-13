@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.14 2004/01/11 19:17:31 brad Exp $	*/
+/*	$OpenBSD: endian.h,v 1.15 2005/12/13 00:35:23 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -29,22 +29,25 @@
  * has to be dealt with in the specific machine/endian.h file for that port.
  *
  * This file is meant to be included from a little- or big-endian port's
- * machine/endian.h after setting BYTE_ORDER to either 1234 for little endian
+ * machine/endian.h after setting _BYTE_ORDER to either 1234 for little endian
  * or 4321 for big..
  */
 
 #ifndef _SYS_ENDIAN_H_
 #define _SYS_ENDIAN_H_
 
-#ifndef _POSIX_SOURCE
-
 #include <sys/cdefs.h>
 
-#define LITTLE_ENDIAN	1234
+#define _LITTLE_ENDIAN	1234
+#define _BIG_ENDIAN	4321
+#define _PDP_ENDIAN	3412
 
-
-#define BIG_ENDIAN	4321
-#define PDP_ENDIAN	3412
+#if __BSD_VISIBLE
+#define LITTLE_ENDIAN	_LITTLE_ENDIAN
+#define BIG_ENDIAN	_BIG_ENDIAN
+#define PDP_ENDIAN	_PDP_ENDIAN
+#define BYTE_ORDER	_BYTE_ORDER
+#endif
 
 #ifdef __GNUC__
 
@@ -109,21 +112,21 @@
 #ifdef MD_SWAP
 #if __GNUC__
 
-#define swap16(x) __extension__({					\
+#define __swap16(x) __extension__({					\
 	u_int16_t __swap16_x = (x);					\
 									\
 	__builtin_constant_p(x) ? __swap16gen(__swap16_x) :		\
 	    __swap16md(__swap16_x);					\
 })
 
-#define swap32(x) __extension__({					\
+#define __swap32(x) __extension__({					\
 	u_int32_t __swap32_x = (x);					\
 									\
 	__builtin_constant_p(x) ? __swap32gen(__swap32_x) :		\
 	    __swap32md(__swap32_x);					\
 })
 
-#define swap64(x) __extension__({					\
+#define __swap64(x) __extension__({					\
 	u_int64_t __swap64_x = (x);					\
 									\
 	__builtin_constant_p(x) ? __swap64gen(__swap64_x) :		\
@@ -133,12 +136,12 @@
 #endif /* __GNUC__  */
 
 #else /* MD_SWAP */
-#define swap16 __swap16gen
-#define swap32 __swap32gen
-#define swap64 __swap64gen
+#define __swap16 __swap16gen
+#define __swap32 __swap32gen
+#define __swap64 __swap64gen
 #endif /* MD_SWAP */
 
-#define swap16_multi(v, n) do {						\
+#define __swap16_multi(v, n) do {						\
 	size_t __swap16_multi_n = (n);					\
 	u_int16_t *__swap16_multi_v = (v);				\
 									\
@@ -148,6 +151,12 @@
 		__swap16_multi_n--;					\
 	}								\
 } while (0)
+
+#if __BSD_VISIBLE
+#define swap16 __swap16
+#define swap32 __swap32
+#define swap64 __swap64
+#define swap16_multi __swap16_multi
 
 __BEGIN_DECLS
 u_int64_t	htobe64(u_int64_t);
@@ -164,8 +173,9 @@ u_int64_t	letoh64(u_int64_t);
 u_int32_t	letoh32(u_int32_t);
 u_int16_t	letoh16(u_int16_t);
 __END_DECLS
+#endif /* __BSD_VISIBLE */
 
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if _BYTE_ORDER == _LITTLE_ENDIAN
 
 /* Can be overridden by machine/endian.h before inclusion of this file.  */
 #ifndef _QUAD_HIGHWORD
@@ -175,12 +185,13 @@ __END_DECLS
 #define _QUAD_LOWWORD 0
 #endif
 
-#define htobe16 swap16
-#define htobe32 swap32
-#define htobe64 swap64
-#define betoh16 swap16
-#define betoh32 swap32
-#define betoh64 swap64
+#if __BSD_VISIBLE
+#define htobe16 __swap16
+#define htobe32 __swap32
+#define htobe64 __swap64
+#define betoh16 __swap16
+#define betoh32 __swap32
+#define betoh64 __swap64
 
 #define htole16(x) (x)
 #define htole32(x) (x)
@@ -188,10 +199,16 @@ __END_DECLS
 #define letoh16(x) (x)
 #define letoh32(x) (x)
 #define letoh64(x) (x)
+#endif /* __BSD_VISIBLE */
 
-#endif /* BYTE_ORDER */
+#define htons(x) __swap16(x)
+#define htonl(x) __swap32(x)
+#define ntohs(x) __swap16(x)
+#define ntohl(x) __swap32(x)
 
-#if BYTE_ORDER == BIG_ENDIAN
+#endif /* _BYTE_ORDER */
+
+#if _BYTE_ORDER == _BIG_ENDIAN
 
 /* Can be overridden by machine/endian.h before inclusion of this file.  */
 #ifndef _QUAD_HIGHWORD
@@ -201,12 +218,13 @@ __END_DECLS
 #define _QUAD_LOWWORD 1
 #endif
 
-#define htole16 swap16
-#define htole32 swap32
-#define htole64 swap64
-#define letoh16 swap16
-#define letoh32 swap32
-#define letoh64 swap64
+#if __BSD_VISIBLE
+#define htole16 __swap16
+#define htole32 __swap32
+#define htole64 __swap64
+#define letoh16 __swap16
+#define letoh32 __swap32
+#define letoh64 __swap64
 
 #define htobe16(x) (x)
 #define htobe32(x) (x)
@@ -214,18 +232,20 @@ __END_DECLS
 #define betoh16(x) (x)
 #define betoh32(x) (x)
 #define betoh64(x) (x)
+#endif /* __BSD_VISIBLE */
 
-#endif /* BYTE_ORDER */
+#define htons(x) (x)
+#define htonl(x) (x)
+#define ntohs(x) (x)
+#define ntohl(x) (x)
 
-#define htons htobe16
-#define htonl htobe32
-#define ntohs betoh16
-#define ntohl betoh32
+#endif /* _BYTE_ORDER */
 
+#if __BSD_VISIBLE
 #define	NTOHL(x) (x) = ntohl((u_int32_t)(x))
 #define	NTOHS(x) (x) = ntohs((u_int16_t)(x))
 #define	HTONL(x) (x) = htonl((u_int32_t)(x))
 #define	HTONS(x) (x) = htons((u_int16_t)(x))
+#endif
 
-#endif /* _POSIX_SOURCE */
 #endif /* _SYS_ENDIAN_H_ */

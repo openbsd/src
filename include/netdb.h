@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.24 2005/06/08 18:32:32 millert Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.25 2005/12/13 00:35:22 millert Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -88,9 +88,6 @@
 #define _NETDB_H_
 
 #include <sys/param.h>
-#if (!defined(BSD)) || (BSD < 199306)
-# include <sys/bitypes.h>
-#endif
 #include <sys/cdefs.h>
 
 #define	_PATH_HEQUIV	"/etc/hosts.equiv"
@@ -236,7 +233,7 @@ struct rrsetinfo {
 	struct rdatainfo	*rri_sigs;	/* individual signatures */
 };
 
-#ifndef POSIX_SOURCE
+#if __BSD_VISIBLE
 struct servent_data {
 	void *fp;
 	char **aliases;
@@ -258,11 +255,11 @@ __BEGIN_DECLS
 void		endhostent(void);
 void		endnetent(void);
 void		endprotoent(void);
-#ifndef POSIX_SOURCE
+#if __BSD_VISIBLE
 void		endprotoent_r(struct protoent_data *);
 #endif
 void		endservent(void);
-#ifndef POSIX_SOURCE
+#if __BSD_VISIBLE
 void		endservent_r(struct servent_data *);
 #endif
 struct hostent	*gethostbyaddr(const void *, socklen_t, int);
@@ -275,7 +272,7 @@ struct netent	*getnetent(void);
 struct protoent	*getprotobyname(const char *);
 struct protoent	*getprotobynumber(int);
 struct protoent	*getprotoent(void);
-#ifndef POSIX_SOURCE
+#if __BSD_VISIBLE
 int		getprotobyname_r(const char *, struct protoent *,
 		    struct protoent_data *);
 int		getprotobynumber_r(int, struct protoent *,
@@ -285,7 +282,7 @@ int		getprotoent_r(struct protoent *, struct protoent_data *);
 struct servent	*getservbyname(const char *, const char *);
 struct servent	*getservbyport(int, const char *);
 struct servent	*getservent(void);
-#ifndef POSIX_SOURCE
+#if __BSD_VISIBLE
 int		getservbyname_r(const char *, const char *, struct servent *,
 		    struct servent_data *);
 int		getservbyport_r(int, const char *, struct servent *,
@@ -298,11 +295,11 @@ void		sethostent(int);
 /* void		sethostfile(const char *); */
 void		setnetent(int);
 void		setprotoent(int);
-#ifndef POSIX_SOURCE
+#if __BSD_VISIBLE
 void		setprotoent_r(int, struct protoent_data *);
 #endif
 void		setservent(int);
-#ifndef POSIX_SOURCE
+#if __BSD_VISIBLE
 void		setservent_r(int, struct servent_data *);
 #endif
 

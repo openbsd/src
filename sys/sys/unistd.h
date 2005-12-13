@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.12 2004/05/07 18:39:19 millert Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.13 2005/12/13 00:35:24 millert Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
@@ -35,6 +35,8 @@
 #ifndef _SYS_UNISTD_H_
 #define	_SYS_UNISTD_H_
 
+#include <sys/cdefs.h>
+
 /* compile-time symbolic constants */
 #define	_POSIX_JOB_CONTROL	/* implementation supports job control */
 
@@ -64,7 +66,7 @@
 #define	SEEK_CUR	1	/* set file offset to current plus offset */
 #define	SEEK_END	2	/* set file offset to EOF plus offset */
 
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 /* old BSD whence values for lseek(2); renamed by POSIX 1003.1 */
 #define	L_SET		SEEK_SET
 #define	L_INCR		SEEK_CUR

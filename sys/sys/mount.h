@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.66 2005/12/06 20:18:57 pedro Exp $	*/
+/*	$OpenBSD: mount.h,v 1.67 2005/12/13 00:35:23 millert Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #ifndef _SYS_MOUNT_H_
 #define _SYS_MOUNT_H_
 
+#include <sys/cdefs.h>
 #ifndef _KERNEL
 #include <sys/ucred.h>
 #endif
@@ -598,8 +599,6 @@ int	vfs_register(struct vfsconf *);
 int	vfs_unregister(struct vfsconf *);
 #else /* _KERNEL */
 
-#include <sys/cdefs.h>
-
 #ifndef _SYS_STAT_H_
 struct stat;
 #endif
@@ -612,11 +611,11 @@ int	getmntinfo(struct statfs **, int);
 int	mount(const char *, const char *, int, void *);
 int	statfs(const char *, struct statfs *);
 int	unmount(const char *, int);
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if __BSD_VISIBLE
 int	fhopen(const fhandle_t *, int);
 int	fhstat(const fhandle_t *, struct stat *);
 int	fhstatfs(const fhandle_t *, struct statfs *);
-#endif /* !_POSIX_C_SOURCE */
+#endif /* __BSD_VISIBLE */
 
 __END_DECLS
 

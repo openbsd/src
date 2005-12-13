@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.h,v 1.4 2003/06/02 19:34:12 millert Exp $	*/
+/*	$OpenBSD: setjmp.h,v 1.5 2005/12/13 00:35:22 millert Exp $	*/
 /*	$NetBSD: setjmp.h,v 1.11 1994/12/20 10:35:44 cgd Exp $	*/
 
 /*-
@@ -40,30 +40,29 @@
 #ifndef _SETJMP_H_
 #define _SETJMP_H_
 
+#include <sys/cdefs.h>
 #include <machine/setjmp.h>
 
-#ifndef _ANSI_SOURCE
+#if __BSD_VISIBLE || __POSIX_VISIBLE || __XPG_VISIBLE
 typedef long sigjmp_buf[_JBLEN + 1];
-#endif /* not ANSI */
+#endif /* __BSD_VISIBLE || __POSIX_VISIBLE || __XPG_VISIBLE */
 
 typedef long jmp_buf[_JBLEN];
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 int	setjmp(jmp_buf);
 void	longjmp(jmp_buf, int);
 
-#ifndef _ANSI_SOURCE
+#if __BSD_VISIBLE || __POSIX_VISIBLE || __XPG_VISIBLE
 int	sigsetjmp(sigjmp_buf, int);
 void	siglongjmp(sigjmp_buf, int);
-#endif /* not ANSI */
+#endif /* __BSD_VISIBLE || __POSIX_VISIBLE || __XPG_VISIBLE */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#if __BSD_VISIBLE || __XPG_VISIBLE
 int	_setjmp(jmp_buf);
 void	_longjmp(jmp_buf, int);
 void	longjmperror(void);
-#endif /* neither ANSI nor POSIX */
+#endif /* __BSD_VISIBLE || __XPG_VISIBLE */
 __END_DECLS
 
 #endif /* !_SETJMP_H_ */

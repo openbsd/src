@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.18 2004/07/15 11:24:46 millert Exp $	*/
+/*	$OpenBSD: sem.h,v 1.19 2005/12/13 00:35:23 millert Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -10,12 +10,13 @@
 #ifndef _SYS_SEM_H_
 #define _SYS_SEM_H_
 
+#include <sys/cdefs.h>
 #ifndef _SYS_IPC_H_
 #include <sys/ipc.h>
 #endif
 #include <sys/queue.h>
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if __BSD_VISIBLE
 
 /* sem-specific sysctl variables corresponding to members of struct seminfo */
 #define	KERN_SEMINFO_SEMMNI	1	/* int: # of semaphore identifiers */
@@ -42,7 +43,7 @@
 	{ "semaem", CTLTYPE_INT }, \
 }
 
-#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif /* __BSD_VISIBLE */
 
 struct sem {
 	unsigned short	semval;		/* semaphore value */
@@ -205,8 +206,6 @@ extern struct	semid_ds **sema;	/* semaphore id list */
 #endif /* _KERNEL */
 
 #ifndef _KERNEL
-#include <sys/cdefs.h>
-
 __BEGIN_DECLS
 int	semctl(int, int, int, ...);
 int	__semctl(int, int, int, union semun *);

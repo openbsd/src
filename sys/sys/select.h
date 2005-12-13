@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.h,v 1.7 2005/11/21 18:16:46 millert Exp $	*/
+/*	$OpenBSD: select.h,v 1.8 2005/12/13 00:35:23 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,8 @@
 #ifndef _SYS_SELECT_H_
 #define	_SYS_SELECT_H_
 
-#include <sys/time.h>
+#include <sys/cdefs.h>
+#include <sys/time.h>		/* for types and struct timeval */
 
 /*
  * Select uses bit masks of file descriptors in longs.  These macros
@@ -48,7 +49,7 @@
 
 /*
  * We don't want to pollute the namespace with select(2) internals.
- * Non-underscore versions are exposed later.
+ * Non-underscore versions are exposed later #if __BSD_VISIBLE
  */
 #define	__NBBY	8				/* number of bits in a byte */
 typedef int32_t	__fd_mask;
@@ -73,19 +74,18 @@ typedef	struct fd_set {
 #define	FD_ZERO(p)	memset(p, 0, sizeof(*(p)))
 #endif
 
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
+#if __BSD_VISIBLE
 #define	NBBY	__NBBY
 #define fd_mask	__fd_mask
 #define NFDBITS	__NFDBITS
 #ifndef howmany
 #define howmany(x, y)	__howmany(x, y)
 #endif
-#endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE */
+#endif /* __BSD_VISIBLE */
 
 #ifndef _KERNEL
 #ifndef _SELECT_DEFINED_
 #define _SELECT_DEFINED_
-#include <sys/cdefs.h>
 __BEGIN_DECLS
 struct timeval;
 int	select(int, fd_set *, fd_set *, fd_set *, struct timeval *);

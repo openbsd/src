@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.17 2005/05/24 18:06:10 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.18 2005/12/13 00:35:23 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.21 1996/02/09 18:25:32 christos Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 
 #define _NSIG	32		/* counting 0; could be 33 (mask is 1-32) */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#if __BSD_VISIBLE
 #define NSIG _NSIG
 #endif
 
@@ -55,7 +55,7 @@
 #define	SIGILL	4	/* illegal instruction (not reset when caught) */
 #define	SIGTRAP	5	/* trace trap (not reset when caught) */
 #define	SIGABRT	6	/* abort() */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	SIGIOT	SIGABRT	/* compatibility */
 #define	SIGEMT	7	/* EMT instruction */
 #endif
@@ -74,14 +74,14 @@
 #define	SIGCHLD	20	/* to parent on child stop or exit */
 #define	SIGTTIN	21	/* to readers pgrp upon background tty read */
 #define	SIGTTOU	22	/* like TTIN for output if (tp->t_local&LTOSTOP) */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	SIGIO	23	/* input/output possible signal */
 #endif
 #define	SIGXCPU	24	/* exceeded CPU time limit */
 #define	SIGXFSZ	25	/* exceeded file size limit */
 #define	SIGVTALRM 26	/* virtual time alarm */
 #define	SIGPROF	27	/* profiling time alarm */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define SIGWINCH 28	/* window size changes */
 #define SIGINFO	29	/* information request */
 #endif
@@ -96,7 +96,7 @@
 #define	SIG_IGN		(void (*)(int))1
 #define	SIG_ERR		(void (*)(int))-1
 
-#ifndef _ANSI_SOURCE
+#if __POSIX_VISIBLE || __XPG_VISIBLE
 typedef unsigned int sigset_t;
 
 #include <sys/siginfo.h>
@@ -117,7 +117,7 @@ struct	sigaction {
 #define sa_handler      __sigaction_u.__sa_handler
 #define sa_sigaction    __sigaction_u.__sa_sigaction
 
-#ifndef _POSIX_SOURCE
+#if __XPG_VISIBLE >= 500
 #define SA_ONSTACK	0x0001	/* take signal on signal stack */
 #define SA_RESTART	0x0002	/* restart system on signal return */
 #define SA_RESETHAND	0x0004	/* reset to SIG_DFL when taking signal */
@@ -126,9 +126,11 @@ struct	sigaction {
 #ifdef COMPAT_SUNOS
 #define	SA_USERTRAMP	0x0100	/* do not bounce off kernel's sigtramp */
 #endif
-#endif
+#endif /* __XPG_VISIBLE >= 500 */
 #define SA_NOCLDSTOP	0x0008	/* do not generate SIGCHLD on child stop */
+#if __POSIX_VISIBLE >= 199309 || __XPG_VISIBLE >= 500
 #define SA_SIGINFO	0x0040	/* generate siginfo_t */
+#endif
 
 /*
  * Flags for sigprocmask:
@@ -136,8 +138,9 @@ struct	sigaction {
 #define	SIG_BLOCK	1	/* block specified signal set */
 #define	SIG_UNBLOCK	2	/* unblock specified signal set */
 #define	SIG_SETMASK	3	/* set specified signal set */
+#endif	/* __POSIX_VISIBLE || __XPG_VISIBLE */
 
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 typedef	void (*sig_t)(int);	/* type of signal function */
 
 /*
@@ -193,8 +196,7 @@ typedef struct sigcontext ucontext_t;
 
 #define	BADSIG		SIG_ERR
 
-#endif	/* !_POSIX_SOURCE */
-#endif	/* !_ANSI_SOURCE */
+#endif	/* __BSD_VISIBLE */
 
 /*
  * For historical reasons; programs expect signal's return value to be

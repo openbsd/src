@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.11 2003/08/03 19:25:49 millert Exp $	*/
+/*	$OpenBSD: wait.h,v 1.12 2005/12/13 00:35:24 millert Exp $	*/
 /*	$NetBSD: wait.h,v 1.11 1996/04/09 20:55:51 cgd Exp $	*/
 
 /*
@@ -35,6 +35,8 @@
 #ifndef _SYS_WAIT_H_
 #define _SYS_WAIT_H_
 
+#include <sys/cdefs.h>
+
 /*
  * This file holds definitions relevent to the wait4 system call
  * and the alternate interfaces that use it (wait, wait3, waitpid).
@@ -44,11 +46,10 @@
  * Macros to test the exit status returned by wait
  * and extract the relevant values.
  */
-#ifdef _POSIX_SOURCE
-#define	_W_INT(i)	(i)
-#else
+#if __BSD_VISIBLE
 #define	_W_INT(w)	(*(int *)&(w))	/* convert union wait to int */
-#define	WCOREFLAG	0200
+#else
+#define	_W_INT(i)	(i)
 #endif
 
 #define	_WSTATUS(x)	(_W_INT(x) & 0177)
@@ -61,7 +62,8 @@
 #define WIFEXITED(x)	(_WSTATUS(x) == 0)
 #define WEXITSTATUS(x)	((_W_INT(x) >> 8) & 0xff)
 #define WIFCONTINUED(x)	((_W_INT(x) & _WCONTINUED) == _WCONTINUED)
-#ifndef _POSIX_SOURCE
+#if __XPG_VISIBLE
+#define	WCOREFLAG	0200
 #define WCOREDUMP(x)	(_W_INT(x) & WCOREFLAG)
 
 #define	W_EXITCODE(ret, sig)	((ret) << 8 | (sig))
@@ -79,14 +81,12 @@
  */
 #define WNOHANG		1	/* don't hang in wait */
 #define WUNTRACED	2	/* tell about stopped, untraced children */
-#ifndef _POSIX_SOURCE
+#if __XPG_VISIBLE
 #define	WALTSIG		4	/* wait for child with alternate exit signal */
 #endif
 #define	WCONTINUED	8	/* report a job control continued process */
 
-#ifndef _POSIX_SOURCE
-/* POSIX extensions and 4.2/4.3 compatibility: */
-
+#if __BSD_VISIBLE
 /*
  * Tokens for special values of the "pid" parameter to wait4.
  */
@@ -145,18 +145,17 @@ union wait {
 #define w_stopsig	w_S.w_Stopsig
 
 #define	WSTOPPED	_WSTOPPED
-#endif /* _POSIX_SOURCE */
+#endif /* __BSD_VISIBLE */
 
 #ifndef _KERNEL
 #include <sys/types.h>
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 struct rusage;	/* forward declaration */
 
 pid_t	wait(int *);
 pid_t	waitpid(pid_t, int *, int);
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 pid_t	wait3(int *, int, struct rusage *);
 pid_t	wait4(pid_t, int *, int, struct rusage *);
 #endif

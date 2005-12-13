@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.h,v 1.9 2004/10/07 16:56:11 millert Exp $	*/
+/*	$OpenBSD: glob.h,v 1.10 2005/12/13 00:35:22 millert Exp $	*/
 /*	$NetBSD: glob.h,v 1.5 1994/10/26 00:55:56 cgd Exp $	*/
 
 /*
@@ -62,7 +62,6 @@ typedef struct {
 	int (*gl_stat)(const char *, struct stat *);
 } glob_t;
 
-/* Flags */
 #define	GLOB_APPEND	0x0001	/* Append to output from previous call. */
 #define	GLOB_DOOFFS	0x0002	/* Use gl_offs. */
 #define	GLOB_ERR	0x0004	/* Return on error. */
@@ -71,7 +70,12 @@ typedef struct {
 #define	GLOB_NOSORT	0x0020	/* Don't sort. */
 #define	GLOB_NOESCAPE	0x1000	/* Disable backslash escaping. */
 
-#ifndef _POSIX_SOURCE
+#define	GLOB_NOSPACE	(-1)	/* Malloc call failed. */
+#define	GLOB_ABORTED	(-2)	/* Unignored error. */
+#define	GLOB_NOMATCH	(-3)	/* No match and GLOB_NOCHECK not set. */
+#define	GLOB_NOSYS	(-4)	/* Function not supported. */
+
+#if __BSD_VISIBLE
 #define	GLOB_ALTDIRFUNC	0x0040	/* Use alternately specified directory funcs. */
 #define	GLOB_BRACE	0x0080	/* Expand braces ala csh. */
 #define	GLOB_MAGCHAR	0x0100	/* Pattern had globbing characters. */
@@ -79,14 +83,8 @@ typedef struct {
 #define	GLOB_QUOTE	0x0400	/* Quote special chars with \. */
 #define	GLOB_TILDE	0x0800	/* Expand tilde names from the passwd file. */
 #define GLOB_LIMIT	0x2000	/* Limit pattern match output to ARG_MAX */
+#define GLOB_ABEND	GLOB_ABORTED /* backward compatibility */
 #endif
-
-/* Error values returned by glob(3) */
-#define	GLOB_NOSPACE	(-1)	/* Malloc call failed. */
-#define	GLOB_ABORTED	(-2)	/* Unignored error. */
-#define	GLOB_NOMATCH	(-3)	/* No match and GLOB_NOCHECK not set. */
-#define	GLOB_NOSYS	(-4)	/* Function not supported. */
-#define GLOB_ABEND	GLOB_ABORTED
 
 __BEGIN_DECLS
 int	glob(const char *, int, int (*)(const char *, int), glob_t *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: midiio.h,v 1.2 2002/03/14 03:16:12 millert Exp $	*/
+/*	$OpenBSD: midiio.h,v 1.3 2005/12/13 00:35:23 millert Exp $	*/
 /*	$NetBSD: midiio.h,v 1.7 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*-
@@ -45,15 +45,8 @@
  * for naming.
  */
 
-#ifndef _POSIX_SOURCE
-#define __MIDIIO_UNSET_POSIX_SOURCE
-#define _POSIX_SOURCE		/* make sure we don't get all the gunk */
-#endif
-#include <machine/endian.h>
-#ifdef __MIDIIO_UNSET_POSIX_SOURCE
-#undef _POSIX_SOURCE
-#undef __MIDIIO_UNSET_POSIX_SOURCE
-#endif
+#include <sys/cdefs.h>
+#include <machine/endian.h>	/* for _QUAD_LOWWORD */
 
 /*
  * ioctl() commands for /dev/midi##

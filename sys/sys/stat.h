@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.h,v 1.15 2005/06/18 18:09:43 millert Exp $	*/
+/*	$OpenBSD: stat.h,v 1.16 2005/12/13 00:35:23 millert Exp $	*/
 /*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
@@ -40,6 +40,7 @@
 #ifndef _SYS_STAT_H_
 #define	_SYS_STAT_H_
 
+#include <sys/cdefs.h>
 #include <sys/time.h>
 
 #ifdef _KERNEL
@@ -91,7 +92,7 @@ struct stat {
 	gid_t	  st_gid;		/* group ID of the file's group */
 	dev_t	  st_rdev;		/* device type */
 	int32_t	  st_lspare0;
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 	struct	timespec st_atimespec;	/* time of last access */
 	struct	timespec st_mtimespec;	/* time of last data modification */
 	struct	timespec st_ctimespec;	/* time of last file status change */
@@ -102,14 +103,14 @@ struct stat {
 	long	  st_mtimensec;		/* nsec of last data modification */
 	time_t	  st_ctime;		/* time of last file status change */
 	long	  st_ctimensec;		/* nsec of last file status change */
-#endif
+#endif /* __BSD_VISIBLE */
 	off_t	  st_size;		/* file size, in bytes */
 	int64_t	  st_blocks;		/* blocks allocated for file */
 	u_int32_t st_blksize;		/* optimal blocksize for I/O */
 	u_int32_t st_flags;		/* user defined flags for file */
 	u_int32_t st_gen;		/* file generation number */
 	int32_t	  st_lspare1;
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 	struct	timespec __st_birthtimespec; /* time of file creation */
 #else
 	time_t	  __st_birthtime;	/* time of file creation */
@@ -117,7 +118,7 @@ struct stat {
 #endif
 	int64_t	  st_qspare[2];
 };
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	st_atime	st_atimespec.tv_sec
 #define	st_atimensec	st_atimespec.tv_nsec
 #define	st_mtime	st_mtimespec.tv_sec
@@ -128,7 +129,7 @@ struct stat {
 
 #define	S_ISUID	0004000			/* set user id on execution */
 #define	S_ISGID	0002000			/* set group id on execution */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	S_ISTXT	0001000			/* sticky bit */
 #endif
 
@@ -137,7 +138,7 @@ struct stat {
 #define	S_IWUSR	0000200			/* W for owner */
 #define	S_IXUSR	0000100			/* X for owner */
 
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	S_IREAD		S_IRUSR
 #define	S_IWRITE	S_IWUSR
 #define	S_IEXEC		S_IXUSR
@@ -153,7 +154,7 @@ struct stat {
 #define	S_IWOTH	0000002			/* W for other */
 #define	S_IXOTH	0000001			/* X for other */
 
-#ifndef _POSIX_SOURCE
+#if __XPG_VISIBLE || __BSD_VISIBLE
 #define	S_IFMT	 0170000		/* type of file mask */
 #define	S_IFIFO	 0010000		/* named pipe (fifo) */
 #define	S_IFCHR	 0020000		/* character special */
@@ -170,12 +171,12 @@ struct stat {
 #define	S_ISBLK(m)	((m & 0170000) == 0060000)	/* block special */
 #define	S_ISREG(m)	((m & 0170000) == 0100000)	/* regular file */
 #define	S_ISFIFO(m)	((m & 0170000) == 0010000)	/* fifo */
-#ifndef _POSIX_SOURCE
+#if __POSIX_VISIBLE >= 200112 || __BSD_VISIBLE
 #define	S_ISLNK(m)	((m & 0170000) == 0120000)	/* symbolic link */
 #define	S_ISSOCK(m)	((m & 0170000) == 0140000)	/* socket */
 #endif
 
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	ACCESSPERMS	(S_IRWXU|S_IRWXG|S_IRWXO)	/* 00777 */
 							/* 07777 */
 #define	ALLPERMS	(S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
@@ -209,12 +210,10 @@ struct stat {
 #define	OPAQUE		(UF_OPAQUE)
 #define	APPEND		(UF_APPEND | SF_APPEND)
 #define	IMMUTABLE	(UF_IMMUTABLE | SF_IMMUTABLE)
-#endif
-#endif
+#endif /* _KERNEL */
+#endif /* __BSD_VISIBLE */
 
 #ifndef _KERNEL
-#include <sys/cdefs.h>
-
 __BEGIN_DECLS
 int	chmod(const char *, mode_t);
 int	fstat(int, struct stat *);
@@ -223,7 +222,7 @@ int	mkdir(const char *, mode_t);
 int	mkfifo(const char *, mode_t);
 int	stat(const char *, struct stat *);
 mode_t	umask(mode_t);
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 int	chflags(const char *, unsigned int);
 int	fchflags(int, unsigned int);
 int	fchmod(int, mode_t);

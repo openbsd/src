@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.84 2005/10/26 17:22:00 mickey Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.85 2005/12/13 00:35:23 millert Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -459,6 +459,7 @@ struct kinfo_proc2 {
 	char    p_emul[KI_EMULNAMELEN];	/* syscall emulation name */
 	u_int64_t p_rlim_rss_cur;	/* RLIM_T: soft limit for rss */
 	u_int64_t p_cpuid;		/* LONG: CPU id */
+	u_int64_t p_vm_map_size;	/* VSIZE_T: virtual size */
 };
 
 /*

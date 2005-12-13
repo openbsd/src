@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslimits.h,v 1.8 2004/05/31 18:34:41 millert Exp $	*/
+/*	$OpenBSD: syslimits.h,v 1.9 2005/12/13 00:35:23 millert Exp $	*/
 /*	$NetBSD: syslimits.h,v 1.12 1995/10/05 05:26:19 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,9 @@
  *	@(#)syslimits.h	8.1 (Berkeley) 6/2/93
  */
 
-#if !defined(_ANSI_SOURCE)
+#include <sys/cdefs.h>
+
+#if __POSIX_VISIBLE || __XPG_VISIBLE
 #define	ARG_MAX		 (256 * 1024)	/* max bytes for an exec function */
 #define	CHILD_MAX		   80	/* max simultaneous processes */
 #define	LINK_MAX		32767	/* max file link count */
@@ -57,10 +59,9 @@
 #define	RE_DUP_MAX		  255	/* max RE's in interval notation */
 #endif
 
-#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
+#if __XPG_VISIBLE
 #define	IOV_MAX			 1024	/* max # of iov's (readv,sendmsg,etc) */
 #define	NZERO			   20	/* default "nice" */
-#endif /* !_POSIX_C_SOURCE || _XOPEN_SOURCE */
+#endif /* __XPG_VISIBLE */
 
-#endif
-
+#endif /* __POSIX_VISIBLE || __XPG_VISIBLE */

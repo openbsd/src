@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.36 2004/06/21 23:50:37 tholo Exp $	*/
+/*	$OpenBSD: in6.h,v 1.37 2005/12/13 00:35:23 millert Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ struct in6_addr {
 /*
  * Socket address for IPv6
  */
-#ifndef _XOPEN_SOURCE
+#if __BSD_VISIBLE
 #define SIN6_LEN
 #endif
 struct sockaddr_in6 {
@@ -198,6 +198,7 @@ extern const struct in6_addr in6mask128;
 /*
  * Definition of some useful macros to handle IP6 addresses
  */
+#if __BSD_VISIBLE
 #define IN6ADDR_ANY_INIT \
 	{{{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
 	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }}}
@@ -213,12 +214,15 @@ extern const struct in6_addr in6mask128;
 #define IN6ADDR_LINKLOCAL_ALLROUTERS_INIT \
 	{{{ 0xff, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
 	    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02 }}}
+#endif
 
 extern const struct in6_addr in6addr_any;
 extern const struct in6_addr in6addr_loopback;
+#if __BSD_VISIBLE
 extern const struct in6_addr in6addr_nodelocal_allnodes;
 extern const struct in6_addr in6addr_linklocal_allnodes;
 extern const struct in6_addr in6addr_linklocal_allrouters;
+#endif
 
 /*
  * Equality
@@ -230,8 +234,10 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 #define IN6_ARE_ADDR_EQUAL(a, b)			\
     (bcmp(&(a)->s6_addr[0], &(b)->s6_addr[0], sizeof(struct in6_addr)) == 0)
 #else
+#if __BSD_VISIBLE
 #define IN6_ARE_ADDR_EQUAL(a, b)			\
     (memcmp(&(a)->s6_addr[0], &(b)->s6_addr[0], sizeof(struct in6_addr)) == 0)
+#endif
 #endif
 
 /*
@@ -366,7 +372,7 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 /*
  * IP6 route structure
  */
-#ifndef _XOPEN_SOURCE
+#if __BSD_VISIBLE
 struct route_in6 {
 	struct	rtentry *ro_rt;
 	struct	sockaddr_in6 ro_dst;
@@ -453,7 +459,7 @@ struct in6_pktinfo {
 #define	IPV6_PORTRANGE_HIGH	1	/* "high" - request firewall bypass */
 #define	IPV6_PORTRANGE_LOW	2	/* "low" - vouchsafe security */
 
-#ifndef _XOPEN_SOURCE
+#if __BSD_VISIBLE
 /*
  * Definitions for inet6 sysctl operations.
  *
@@ -636,7 +642,7 @@ struct in6_pktinfo {
 	&ip6_maxfrags, \
 }
 
-#endif /* !_XOPEN_SOURCE */
+#endif /* __BSD_VISIBLE */
 
 #ifdef _KERNEL
 struct cmsghdr;

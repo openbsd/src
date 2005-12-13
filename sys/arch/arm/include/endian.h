@@ -1,9 +1,9 @@
-/*	$OpenBSD: endian.h,v 1.2 2005/01/20 15:04:54 drahn Exp $	*/
+/*	$OpenBSD: endian.h,v 1.3 2005/12/13 00:35:23 millert Exp $	*/
 
 #ifdef __ARMEB__
-#define BYTE_ORDER BIG_ENDIAN
+#define _BYTE_ORDER _BIG_ENDIAN
 #else
-#define BYTE_ORDER LITTLE_ENDIAN
+#define _BYTE_ORDER _LITTLE_ENDIAN
 #endif
 #define	__STRICT_ALIGNMENT
 #include <sys/endian.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siginfo.h,v 1.8 2003/06/02 04:04:54 deraadt Exp $	*/
+/*	$OpenBSD: siginfo.h,v 1.9 2005/12/13 00:35:23 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Theo de Raadt
@@ -27,6 +27,8 @@
 
 #ifndef _SYS_SIGINFO_H
 #define _SYS_SIGINFO_H
+
+#include <sys/cdefs.h>
  
 union sigval {
 	int	sival_int;	/* integer value */
@@ -46,7 +48,7 @@ union sigval {
 #define SI_QUEUE	(-2)	/* user generated signal via sigqueue()*/
 #define SI_TIMER	(-3)	/* from timer expiration */
 
-#if !defined(_POSIX_C_SOURCE)
+#if __POSIX_VISIBLE >= 199309 || __XPG_VISIBLE
 /*
  * The machine dependent signal codes (SIGILL, SIGFPE,
  * SIGSEGV, and SIGBUS)
@@ -83,7 +85,7 @@ union sigval {
 #define BUS_OBJERR	3	/* object specific hardware error */
 #define NSIGBUS		3
 
-#endif /* _POSIX_C_SOURCE */
+#endif /* __POSIX_VISIBLE >= 199309 || __XPG_VISIBLE */
 
 /*
  * SIGTRAP signal codes

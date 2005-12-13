@@ -1,4 +1,4 @@
-/* $OpenBSD: limits.h,v 1.5 2004/09/16 13:10:57 miod Exp $ */
+/* $OpenBSD: limits.h,v 1.6 2005/12/13 00:35:23 millert Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -25,6 +25,8 @@
  */
 #ifndef _SYS_LIMITS_H_
 #define _SYS_LIMITS_H_
+
+#include <sys/cdefs.h>
 
 /* Common definitions for limits.h. */
 
@@ -78,8 +80,7 @@
 # define LONG_MIN	(-0x7fffffffL-1)/* min value for a long */
 #endif
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
-     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L
+#if __BSD_VISIBLE || __ISO_C_VISIBLE >= 1999
 # define ULLONG_MAX	0xffffffffffffffffULL	
 					/* max value for unsigned long long */
 # define LLONG_MAX	0x7fffffffffffffffLL	
@@ -88,13 +89,13 @@
 					/* min value for a signed long long */
 #endif
 
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
+#if __BSD_VISIBLE
 # define UID_MAX	UINT_MAX	/* max value for a uid_t */
 # define GID_MAX	UINT_MAX	/* max value for a gid_t */
 #endif
 
 
-#if (!defined(_ANSI_SOURCE)&&!defined(_POSIX_SOURCE)) || defined(_XOPEN_SOURCE)
+#if __XPG_VISIBLE
 # ifdef __LP64__
 #  define LONG_BIT	64
 # else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirent.h,v 1.14 2005/06/18 18:09:42 millert Exp $	*/
+/*	$OpenBSD: dirent.h,v 1.15 2005/12/13 00:35:22 millert Exp $	*/
 /*	$NetBSD: dirent.h,v 1.9 1995/03/26 20:13:37 jtc Exp $	*/
 
 /*-
@@ -35,10 +35,12 @@
 #ifndef _DIRENT_H_
 #define _DIRENT_H_
 
+#include <sys/cdefs.h>
+
 /*
  * POSIX doesn't mandate this, but X/Open XPG 4.2 does.
  */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE || __XPG_VISIBLE >= 420
 #include <sys/types.h>
 #endif
 
@@ -48,11 +50,11 @@
  */
 #include <sys/dirent.h>
 
-#ifdef _POSIX_SOURCE
-typedef void *	DIR;
-#else
-
+#if __BSD_VISIBLE || __XPG_VISIBLE
 #define	d_ino		d_fileno	/* backward compatibility */
+#endif
+
+#if __BSD_VISIBLE
 
 /* definitions for library routines operating on directories. */
 #define	DIRBLKSIZ	1024
@@ -80,31 +82,36 @@ typedef struct _dirdesc {
 #define	NULL	__null
 #else
 #define	NULL	0L
-#endif
-#endif
+#endif /* __GNUG__ */
+#endif /* !NULL */
 
-#endif /* _POSIX_SOURCE */
+#else /* !__BSD_VISIBLE */
+
+typedef void *	DIR;
+
+#endif /* !__BSD_VISIBLE */
 
 #ifndef _KERNEL
-
-#include <sys/cdefs.h>
-
 __BEGIN_DECLS
 DIR *opendir(const char *);
 struct dirent *readdir(DIR *);
 void rewinddir(DIR *);
 int closedir(DIR *);
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 DIR *__opendir2(const char *, int);
-long telldir(const DIR *);
-void seekdir(DIR *, long);
 int scandir(const char *, struct dirent ***,
     int (*)(struct dirent *), int (*)(const void *, const void *));
 int alphasort(const void *, const void *);
 int getdirentries(int, char *, int, long *)
 		__attribute__ ((__bounded__(__string__,2,3)));
-#endif /* not POSIX */
+#endif /* __BSD_VISIBLE */
+#if __XPG_VISIBLE
+long telldir(const DIR *);
+void seekdir(DIR *, long);
+#endif
+#if __POSIX_VISIBLE >= 199506 || __XPG_VISIBLE >= 500
 int readdir_r(DIR *, struct dirent *, struct dirent **);
+#endif
 __END_DECLS
 
 #endif /* !_KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.11 2004/06/09 17:32:10 millert Exp $	*/
+/*	$OpenBSD: limits.h,v 1.12 2005/12/13 00:35:22 millert Exp $	*/
 /*	$NetBSD: limits.h,v 1.7 1994/10/26 00:56:00 cgd Exp $	*/
 
 /*
@@ -35,7 +35,9 @@
 #ifndef _LIMITS_H_
 #define	_LIMITS_H_
 
-#if !defined(_ANSI_SOURCE)
+#include <sys/cdefs.h>
+
+#if __POSIX_VISIBLE
 #define	_POSIX_ARG_MAX		4096
 #define	_POSIX_CHILD_MAX	25
 #define	_POSIX_LINK_MAX		8
@@ -62,12 +64,17 @@
 #define	_POSIX2_LINE_MAX	2048
 #define	_POSIX2_RE_DUP_MAX	_POSIX_RE_DUP_MAX
 
-/* P1003.1c */
+#if __POSIX_VISIBLE >= 200112
 #define _POSIX_TTY_NAME_MAX	260
 #define _POSIX_LOGIN_NAME_MAX	MAXLOGNAME
 
-#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
-#define PASS_MAX		128
+#define TTY_NAME_MAX		_POSIX_TTY_NAME_MAX
+#define LOGIN_NAME_MAX		MAXLOGNAME
+#endif
+#endif /* __POSIX_VISIBLE */
+
+#if __XPG_VISIBLE
+#define PASS_MAX		128	/* _PASSWORD_LEN from <pwd.h> */
 
 #define NL_ARGMAX		9
 #define NL_LANGMAX		14
@@ -77,15 +84,12 @@
 #define NL_TEXTMAX		255
 
 #define TMP_MAX                 308915776
-#endif /* !_POSIX_C_SOURCE || _XOPEN_SOURCE */
-
-#endif /* !_ANSI_SOURCE */
-
-/* where does this belong? it is defined by P1003.1c */
-#define TTY_NAME_MAX		_POSIX_TTY_NAME_MAX
-#define LOGIN_NAME_MAX		MAXLOGNAME
+#endif /* __XPG_VISIBLE */
 
 #include <sys/limits.h>
+
+#if __POSIX_VISIBLE
 #include <sys/syslimits.h>
+#endif
 
 #endif /* !_LIMITS_H_ */

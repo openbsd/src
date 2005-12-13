@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.3 2004/08/10 21:10:56 pefo Exp $ */
+/*	$OpenBSD: endian.h,v 1.4 2005/12/13 00:35:23 millert Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -30,13 +30,13 @@
 #define _MIPS64_ENDIAN_H_
 
 #if defined(__MIPSEL__)
-#define BYTE_ORDER 1234		/* Little endian */
+#define _BYTE_ORDER _LITTLE_ENDIAN
 #endif
 #if defined(__MIPSEB__)
-#define BYTE_ORDER 4321		/* Big endian */
+#define _BYTE_ORDER _BIG_ENDIAN
 #endif
 
-#if !defined(BYTE_ORDER) && !defined(lint)
+#if !defined(_BYTE_ORDER) && !defined(lint)
 #error "__MIPSEL__ or __MIPSEB__ must be defined to define BYTE_ORDER!!!"
 #endif
 

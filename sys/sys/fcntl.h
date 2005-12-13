@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl.h,v 1.9 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: fcntl.h,v 1.10 2005/12/13 00:35:23 millert Exp $	*/
 /*	$NetBSD: fcntl.h,v 1.8 1995/03/26 20:24:12 jtc Exp $	*/
 
 /*-
@@ -46,6 +46,7 @@
  * related kernel definitions.
  */
 
+#include <sys/cdefs.h>
 #ifndef _KERNEL
 #include <sys/types.h>
 #endif
@@ -71,20 +72,22 @@
  * FREAD and FWRITE are excluded from the #ifdef _KERNEL so that TIOCFLUSH,
  * which was documented to use FREAD/FWRITE, continues to work.
  */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	FREAD		0x0001
 #define	FWRITE		0x0002
 #endif
 #define	O_NONBLOCK	0x0004		/* no delay */
 #define	O_APPEND	0x0008		/* set append mode */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	O_SHLOCK	0x0010		/* open with shared file lock */
 #define	O_EXLOCK	0x0020		/* open with exclusive file lock */
 #define	O_ASYNC		0x0040		/* signal pgrp when data ready */
-#define	O_FSYNC		O_SYNC		/* backwards compatibility */
+#define	O_FSYNC		0x0080		/* backwards compatibility */
 #define	O_NOFOLLOW	0x0100		/* if path is a symlink, don't follow */
 #endif
+#if __POSIX_VISIBLE >= 199309 || __XPG_VISIBLE >= 420
 #define	O_SYNC		0x0080		/* synchronous writes */
+#endif
 #define	O_CREAT		0x0200		/* create if nonexistant */
 #define	O_TRUNC		0x0400		/* truncate to zero length */
 #define	O_EXCL		0x0800		/* error if already exists */
@@ -124,7 +127,7 @@
  * and by fcntl.  We retain the F* names for the kernel f_flags field
  * and for backward compatibility for fcntl.
  */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	FAPPEND		O_APPEND	/* kernel/compat */
 #define	FASYNC		O_ASYNC		/* kernel/compat */
 #define	FFSYNC		O_SYNC		/* kernel */
@@ -143,7 +146,7 @@
 #define	F_SETFD		2		/* set file descriptor flags */
 #define	F_GETFL		3		/* get file status flags */
 #define	F_SETFL		4		/* set file status flags */
-#ifndef _POSIX_SOURCE
+#if __POSIX_VISIBLE >= 200112 || __XPG_VISIBLE >= 500
 #define	F_GETOWN	5		/* get SIGIO/SIGURG proc/pgrp */
 #define F_SETOWN	6		/* set SIGIO/SIGURG proc/pgrp */
 #endif
@@ -177,7 +180,7 @@ struct flock {
 };
 
 
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 /* lock operations for flock(2) */
 #define	LOCK_SH		0x01		/* shared file lock */
 #define	LOCK_EX		0x02		/* exclusive file lock */
@@ -187,15 +190,13 @@ struct flock {
 
 
 #ifndef _KERNEL
-#include <sys/cdefs.h>
-
 __BEGIN_DECLS
 int	open(const char *, int, ...);
 int	creat(const char *, mode_t);
 int	fcntl(int, int, ...);
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 int	flock(int, int);
-#endif /* !_POSIX_SOURCE */
+#endif
 __END_DECLS
 #endif
 

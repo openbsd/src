@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.56 2005/11/24 02:09:13 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.57 2005/12/13 00:35:22 millert Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -43,6 +43,13 @@
 #define	STDOUT_FILENO	1	/* standard output file descriptor */
 #define	STDERR_FILENO	2	/* standard error file descriptor */
 
+#if __XPG_VISIBLE || __POSIX_VISIBLE >= 200112
+#define F_ULOCK         0	/* unlock locked section */
+#define F_LOCK          1	/* lock a section for exclusive use */
+#define F_TLOCK         2	/* test and lock a section for exclusive use */
+#define F_TEST          3	/* test a section for locks by other procs */
+#endif
+
 #ifndef NULL
 #ifdef 	__GNUG__
 #define	NULL	__null
@@ -58,9 +65,6 @@ unsigned int alarm(unsigned int);
 int	 chdir(const char *);
 int	 chown(const char *, uid_t, gid_t);
 int	 close(int);
-size_t	 confstr(int, char *, size_t)
-		__attribute__((__bounded__(__string__,2,3)));
-char	*cuserid(char *);
 int	 dup(int);
 int	 dup2(int, int);
 int	 execl(const char *, const char *, ...) 
@@ -82,14 +86,9 @@ uid_t	 geteuid(void);
 gid_t	 getgid(void);
 int	 getgroups(int, gid_t *);
 char	*getlogin(void);
-int	 getlogin_r(char *, size_t)
-		__attribute__((__bounded__(__string__,1,2)))
-		__attribute__((__bounded__(__minbytes__,1,32)));
 pid_t	 getpgrp(void);
 pid_t	 getpid(void);
-pid_t	 getpgid(pid_t);
 pid_t	 getppid(void);
-pid_t	 getsid(pid_t);
 uid_t	 getuid(void);
 int	 isatty(int);
 int	 link(const char *, const char *);
@@ -101,76 +100,129 @@ ssize_t	 read(int, void *, size_t)
 		__attribute__((__bounded__(__buffer__,2,3)));
 int	 rmdir(const char *);
 int	 setgid(gid_t);
-int	 setpgid(pid_t, pid_t);
-pid_t	 setsid(void);
 int	 setuid(uid_t);
 unsigned int sleep(unsigned int);
 long	 sysconf(int);
 pid_t	 tcgetpgrp(int);
 int	 tcsetpgrp(int, pid_t);
 char	*ttyname(int);
-int	 ttyname_r(int, char *, size_t)
-		__attribute__((__bounded__(__string__,2,3)));
 int	 unlink(const char *);
 ssize_t	 write(int, const void *, size_t)
 		__attribute__((__bounded__(__buffer__,2,3)));
 
-#ifndef	_POSIX_SOURCE
-
-/* structure timeval required for select() */
-#include <sys/time.h>
-
-/*
- * X/Open CAE Specification Issue 5 Version 2
- */
-#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
-    (_XOPEN_VERSION - 0) >= 500
-ssize_t  pread(int, void *, size_t, off_t);
-ssize_t  pwrite(int, const void *, size_t, off_t);
+#if __POSIX_VISIBLE || __XPG_VISIBLE >= 300
+pid_t	 setsid(void);
+int	 setpgid(pid_t, pid_t);
 #endif
 
-int	 acct(const char *);
-void	*brk(void *);
-int	 chroot(const char *);
-#if !defined(_XOPEN_SOURCE)
-int	 closefrom(int);
+#if __POSIX_VISIBLE >= 199209 || __XPG_VISIBLE
+size_t	 confstr(int, char *, size_t)
+		__attribute__((__bounded__(__string__,2,3)));
+#ifndef _GETOPT_DEFINED_
+#define _GETOPT_DEFINED_
+int	 getopt(int, char * const *, const char *);
+extern	 char *optarg;			/* getopt(3) external variables */
+extern	 int opterr, optind, optopt, optreset;
+/* XXX - getsubopt does not belong here */
+int	 getsubopt(char **, char * const *, char **);
+extern	 char *suboptarg;		/* getsubopt(3) external variable */
+#endif /* _GETOPT_DEFINED_ */
 #endif
-char	*crypt(const char *, const char *);
-int	 des_cipher(const char *, char *, int32_t, int);
-int	 des_setkey(const char *key);
-int	 encrypt(char *, int);
-void	 endusershell(void);
-int	 exect(const char *, char * const *, char * const *);
-int	 fchdir(int);
-int	 fchown(int, uid_t, gid_t);
-char	*fflagstostr(u_int32_t);
+
+#if __POSIX_VISIBLE >= 199506 || __XPG_VISIBLE
 int	 fsync(int);
 int	 ftruncate(int, off_t);
-int	 getdomainname(char *, size_t)
-		__attribute__ ((__bounded__(__string__,1,2)));
-int	 getdtablesize(void);
-int	 getgrouplist(const char *, gid_t, gid_t *, int *);
+int	 getlogin_r(char *, size_t)
+		__attribute__((__bounded__(__string__,1,2)))
+		__attribute__((__bounded__(__minbytes__,1,32)));
+#endif
+
+#if __XPG_VISIBLE || __BSD_VISIBLE
+char	*crypt(const char *, const char *);
+int	 encrypt(char *, int);
+int	 fchdir(int);
+int	 fchown(int, uid_t, gid_t);
 long	 gethostid(void);
-int	 gethostname(char *, size_t)
-		__attribute__ ((__bounded__(__string__,1,2)));
-mode_t	 getmode(const void *, mode_t);
-int	 getpagesize(void);
-int	 getresgid(gid_t *, gid_t *, gid_t *);
-int	 getresuid(uid_t *, uid_t *, uid_t *);
-char	*getpass(const char *);
-char	*getusershell(void);
 char	*getwd(char *)
 		__attribute__ ((__bounded__(__minbytes__,1,1024)));
+int	 lchown(const char *, uid_t, gid_t);
+int	 mkstemp(char *);
+char	*mktemp(char *);
+int	 nice(int);
+int	 readlink(const char *, char *, size_t)
+		__attribute__ ((__bounded__(__string__,2,3)));
+int	 setkey(const char *);
+int	 setpgrp(pid_t pid, pid_t pgrp);	/* obsoleted by setpgid() */
+int	 setregid(gid_t, gid_t);
+int	 setreuid(uid_t, uid_t);
+void	 swab(const void *, void *, size_t);
+void	 sync(void);
+int	 truncate(const char *, off_t);
+unsigned int	 ualarm(unsigned int, unsigned int);
+int	 usleep(useconds_t);
+pid_t	 vfork(void);
+#endif
+
+#if __XPG_VISIBLE >= 420
+pid_t	 getpgid(pid_t);
+pid_t	 getsid(pid_t);
+#endif
+
+#if __XPG_VISIBLE >= 500
+ssize_t  pread(int, void *, size_t, off_t);
+ssize_t  pwrite(int, const void *, size_t, off_t);
+int	 ttyname_r(int, char *, size_t)
+	    __attribute__((__bounded__(__string__,2,3)));
+#endif
+
+#if __BSD_VISIBLE ||  __XPG_VISIBLE <= 500
+/* Interfaces withdrawn by X/Open Issue 5 Version 0 */
+void	 *brk(void *);
+int	 chroot(const char *);
+int	 getdtablesize(void);
+int	 getpagesize(void);
+char	*getpass(const char *);
+void	*sbrk(int);
+#endif
+
+#if __POSIX_VISIBLE >= 200112 || __XPG_VISIBLE >= 420
+int     lockf(int, int, off_t);
+#endif
+
+#if __POSIX_VISIBLE >= 200112 || __XPG_VISIBLE >= 420 || __BSD_VISIBLE
+int	 symlink(const char *, const char *);
+int	 gethostname(char *, size_t)
+		__attribute__ ((__bounded__(__string__,1,2)));
+int	 setegid(gid_t);
+int	 seteuid(uid_t);
+#endif
+
+#if __BSD_VISIBLE
+int	 acct(const char *);
+int	 closefrom(int);
+int	 des_cipher(const char *, char *, int32_t, int);
+int	 des_setkey(const char *key);
+void	 endusershell(void);
+int	 exect(const char *, char * const *, char * const *);
+char	*fflagstostr(u_int32_t);
+int	 getdomainname(char *, size_t)
+		__attribute__ ((__bounded__(__string__,1,2)));
+int	 getgrouplist(const char *, gid_t, gid_t *, int *);
+mode_t	 getmode(const void *, mode_t);
+int	 getresgid(gid_t *, gid_t *, gid_t *);
+int	 getresuid(uid_t *, uid_t *, uid_t *);
+char	*getusershell(void);
 int	 initgroups(const char *, gid_t);
 int	 iruserok(u_int32_t, int, const char *, const char *);
 int	 iruserok_sa(const void *, int, int, const char *, const char *);
-int	 lchown(const char *, uid_t, gid_t);
+int	 issetugid(void);
+char	*mkdtemp(char *);
+int	 mkstemps(char *, int);
 int	 nfssvc(int, void *);
-int	 nice(int);
 void	 psignal(unsigned int, const char *);
-extern __const char *__const sys_siglist[];
 int	 profil(char *, size_t, unsigned long, unsigned int)
 		__attribute__ ((__bounded__(__string__,1,2)));
+int	 quotactl(const char *, int, int, char *);
 int	 rcmd(char **, int, const char *,
 	    const char *, const char *, int *);
 int	 rcmd_af(char **, int, const char *,
@@ -179,75 +231,33 @@ int	 rcmdsh(char **, int, const char *,
 	    const char *, const char *, char *);
 char	*re_comp(const char *);
 int	 re_exec(const char *);
-int	 readlink(const char *, char *, size_t)
-		__attribute__ ((__bounded__(__string__,2,3)));
 int	 reboot(int);
 int	 revoke(const char *);
 int	 rfork(int opts);
 int	 rresvport(int *);
 int	 rresvport_af(int *, int);
 int	 ruserok(const char *, int, const char *, const char *);
-int	 quotactl(const char *, int, int, char *);
-void	*sbrk(int);
-
-#if !defined(_XOPEN_SOURCE) && !defined(_SELECT_DEFINED_)
-#define _SELECT_DEFINED_
+#ifndef _SELECT_DEFINED_
+#define _SELECT_DECLARED
+struct timeval;
 int	 select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 #endif
-
 int	 setdomainname(const char *, size_t);
-int	 setegid(gid_t);
-int	 seteuid(uid_t);
 int	 setgroups(int, const gid_t *);
 int	 sethostid(long);
 int	 sethostname(const char *, size_t);
-int	 setkey(const char *);
 int	 setlogin(const char *);
 void	*setmode(const char *);
-int	 setpgrp(pid_t pid, pid_t pgrp);	/* obsoleted by setpgid() */
-int	 setregid(gid_t, gid_t);
 int	 setresgid(gid_t, gid_t, gid_t);
 int	 setresuid(uid_t, uid_t, uid_t);
-int	 setreuid(uid_t, uid_t);
 int	 setrgid(gid_t);
 int	 setruid(uid_t);
 void	 setusershell(void);
 int	 strtofflags(char **, u_int32_t *, u_int32_t *);
-void	 swab(const void *, void *, size_t);
 int	 swapctl(int cmd, const void *arg, int misc);
-int	 symlink(const char *, const char *);
-void	 sync(void);
 int	 syscall(int, ...);
-int	 truncate(const char *, off_t);
-int	 ttyslot(void);
-unsigned int	 ualarm(unsigned int, unsigned int);
-int	 usleep(useconds_t);
-void	*valloc(size_t);		/* obsoleted by malloc() */
-pid_t	 vfork(void);
-int	 issetugid(void);
-
-#ifndef _GETOPT_DEFINED_
-#define _GETOPT_DEFINED_
-int	 getopt(int, char * const *, const char *);
-extern	 char *optarg;			/* getopt(3) external variables */
-extern	 int opterr;
-extern	 int optind;
-extern	 int optopt;
-extern	 int optreset;
-int	 getsubopt(char **, char * const *, char **);
-extern	 char *suboptarg;		/* getsubopt(3) external variable */
-#endif /* _GETOPT_DEFINED_ */
-#endif /* !_POSIX_SOURCE */
-
-#if (!defined(_POSIX_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-     !defined(_XOPEN_SOURCE)) || \
-    (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE_EXTENDED - 0 == 1)
-#define F_ULOCK         0
-#define F_LOCK          1
-#define F_TLOCK         2
-#define F_TEST          3
-int     lockf(int, int, off_t);
-#endif /* (!defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)) || ... */
+extern __const char *__const sys_siglist[]; /* XXX - also in signal.h */
+#endif /* __BSD_VISIBLE */
 __END_DECLS
 
 #endif /* !_UNISTD_H_ */

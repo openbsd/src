@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.32 2005/05/11 18:39:19 espie Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.33 2005/12/13 00:35:22 millert Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -38,11 +38,12 @@
 #ifndef	_STDIO_H_
 #define	_STDIO_H_
 
-#if !defined(_ANSI_SOURCE) && !defined(__STRICT_ANSI__)
+#include <sys/cdefs.h>
+
+#if __BSD_VISIBLE || __POSIX_VISIBLE || __XPG_VISIBLE
 #include <sys/types.h>
 #endif
 
-#include <sys/cdefs.h>
 #include <machine/ansi.h>
 
 #ifdef	_BSD_SIZE_T_
@@ -184,7 +185,7 @@ __END_DECLS
 #define	FILENAME_MAX	1024	/* must be <= PATH_MAX <sys/syslimits.h> */
 
 /* System V/ANSI C; this is the wrong way to do this, do *not* use these. */
-#ifndef _ANSI_SOURCE
+#if __BSD_VISIBLE || __XPG_VISIBLE
 #define	P_tmpdir	"/tmp/"
 #endif
 #define	L_tmpnam	1024	/* XXX must be == PATH_MAX */
@@ -235,7 +236,7 @@ size_t	 fwrite(const void *, size_t, size_t, FILE *)
 int	 getc(FILE *);
 int	 getchar(void);
 char	*gets(char *);
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) && !defined(__SYS_ERRLIST)
+#if __BSD_VISIBLE && !defined(__SYS_ERRLIST)
 #define __SYS_ERRLIST
 
 extern int sys_nerr;			/* perror(3) external variables */
@@ -260,12 +261,34 @@ int	 ungetc(int, FILE *);
 int	 vfprintf(FILE *, const char *, _BSD_VA_LIST_);
 int	 vprintf(const char *, _BSD_VA_LIST_);
 int	 vsprintf(char *, const char *, _BSD_VA_LIST_);
+
+#if __ISO_C_VISIBLE >= 1999 || __BSD_VISIBLE
+int	 snprintf(char *, size_t, const char *, ...)
+		__attribute__((__format__ (printf, 3, 4)))
+		__attribute__((__nonnull__ (3)))
+		__attribute__((__bounded__ (__string__,1,2)));
+int	 vfscanf(FILE *, const char *, _BSD_VA_LIST_)
+		__attribute__((__format__ (scanf, 2, 0)))
+		__attribute__((__nonnull__ (2)));
+int	 vscanf(const char *, _BSD_VA_LIST_)
+		__attribute__((__format__ (scanf, 1, 0)))
+		__attribute__((__nonnull__ (1)));
+int	 vsnprintf(char *, size_t, const char *, _BSD_VA_LIST_)
+		__attribute__((__format__ (printf, 3, 0)))
+		__attribute__((__nonnull__ (3)))
+		__attribute__((__bounded__(__string__,1,2)));
+int	 vsscanf(const char *, const char *, _BSD_VA_LIST_)
+		__attribute__((__format__ (scanf, 2, 0)))
+		__attribute__((__nonnull__ (2)));
+#endif /* __ISO_C_VISIBLE >= 1999 || __BSD_VISIBLE */
+
 __END_DECLS
+
 
 /*
  * Functions defined in POSIX 1003.1.
  */
-#ifndef _ANSI_SOURCE
+#if __BSD_VISIBLE || __POSIX_VISIBLE || __XPG_VISIBLE
 #define	L_ctermid	1024	/* size for ctermid(); PATH_MAX */
 #define L_cuserid	9	/* size for cuserid(); UT_NAMESIZE + 1 */
 
@@ -275,13 +298,30 @@ char	*ctermid_r(char *);
 char	*cuserid(char *);
 FILE	*fdopen(int, const char *);
 int	 fileno(FILE *);
+
+#if __POSIX_VISIBLE >= 199209
+int	 pclose(FILE *);
+FILE	*popen(const char *, const char *);
+#endif
+
+#if __POSIX_VISIBLE >= 199506
 void	 flockfile(FILE *);
 int	 ftrylockfile(FILE *);
 void	 funlockfile(FILE *);
+
+/*
+ * These are normally used through macros as defined below, but POSIX
+ * requires functions as well.
+ */
 int	 getc_unlocked(FILE *);
-int	 putc_unlocked(int, FILE *);
 int	 getchar_unlocked(void);
+int	 putc_unlocked(int, FILE *);
 int	 putchar_unlocked(int);
+#endif /* __POSIX_VISIBLE >= 199506 */
+
+#if __XPG_VISIBLE
+char	*tempnam(const char *, const char *);
+#endif
 __END_DECLS
 
 #ifndef _POSIX_THREADS
@@ -290,13 +330,12 @@ __END_DECLS
 #  define funlockfile(fp)		/* nothing */
 #endif
 
-
-#endif /* not ANSI */
+#endif /* __BSD_VISIBLE || __POSIX_VISIBLE || __XPG_VISIBLE */
 
 /*
  * Routines that are purely local.
  */
-#if !defined (_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#if __BSD_VISIBLE
 __BEGIN_DECLS
 int	 asprintf(char **, const char *, ...)
 		__attribute__((__format__ (printf, 2, 3)))
@@ -304,31 +343,11 @@ int	 asprintf(char **, const char *, ...)
 char	*fgetln(FILE *, size_t *);
 int	 fpurge(FILE *);
 int	 getw(FILE *);
-int	 pclose(FILE *);
-FILE	*popen(const char *, const char *);
 int	 putw(int, FILE *);
 void	 setbuffer(FILE *, char *, int);
 int	 setlinebuf(FILE *);
-char	*tempnam(const char *, const char *);
-int	 snprintf(char *, size_t, const char *, ...)
-		__attribute__((__format__ (printf, 3, 4)))
-		__attribute__((__nonnull__ (3)))
-		__attribute__((__bounded__ (__string__,1,2)));
 int	 vasprintf(char **, const char *, _BSD_VA_LIST_)
 		__attribute__((__format__ (printf, 2, 0)))
-		__attribute__((__nonnull__ (2)));
-int	 vsnprintf(char *, size_t, const char *, _BSD_VA_LIST_)
-		__attribute__((__format__ (printf, 3, 0)))
-		__attribute__((__nonnull__ (3)))
-		__attribute__((__bounded__(__string__,1,2)));
-int	 vscanf(const char *, _BSD_VA_LIST_)
-		__attribute__((__format__ (scanf, 1, 0)))
-		__attribute__((__nonnull__ (1)));
-int	 vsscanf(const char *, const char *, _BSD_VA_LIST_)
-		__attribute__((__format__ (scanf, 2, 0)))
-		__attribute__((__nonnull__ (2)));
-int	 vfscanf(FILE *, const char *, _BSD_VA_LIST_)
-		__attribute__((__format__ (scanf, 2, 0)))
 		__attribute__((__nonnull__ (2)));
 __END_DECLS
 
@@ -344,7 +363,7 @@ FILE	*funopen(const void *,
 __END_DECLS
 #define	fropen(cookie, fn) funopen(cookie, fn, 0, 0, 0)
 #define	fwopen(cookie, fn) funopen(cookie, 0, fn, 0, 0)
-#endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
+#endif /* __BSD_VISIBLE */
 
 /*
  * Functions internal to the implementation.
@@ -392,7 +411,7 @@ static __inline int __sputc(int _c, FILE *_p) {
 #define	clearerr(p)	__sclearerr(p)
 #endif
 
-#ifndef _ANSI_SOURCE
+#if __POSIX_VISIBLE
 #define	fileno(p)	__sfileno(p)
 #endif
 
@@ -405,12 +424,12 @@ static __inline int __sputc(int _c, FILE *_p) {
  * The macro implementations of putc and putc_unlocked are not
  * fully POSIX compliant; they do not set errno on failure
  */
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #ifndef _POSIX_THREADS
 #define putc(x, fp)	__sputc(x, fp)
 #endif /* _POSIX_THREADS */
 #define putc_unlocked(x, fp)	__sputc(x, fp)
-#endif /* _POSIX_SOURCE */
+#endif /* __BSD_VISIBLE */
 #endif /* lint */
 
 #define	getchar()	getc(stdin)

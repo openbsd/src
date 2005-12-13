@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.27 2005/11/21 18:16:46 millert Exp $	*/
+/*	$OpenBSD: types.h,v 1.28 2005/12/13 00:35:23 millert Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -40,13 +40,12 @@
 #ifndef _SYS_TYPES_H_
 #define	_SYS_TYPES_H_
 
-/* Machine type dependent parameters. */
+#include <sys/cdefs.h>
 #include <machine/types.h>
-
 #include <machine/ansi.h>
 #include <machine/endian.h>
 
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
+#if __BSD_VISIBLE
 typedef	unsigned char	u_char;
 typedef	unsigned short	u_short;
 typedef	unsigned int	u_int;
@@ -134,26 +133,24 @@ typedef	_BSD_OFF_T_	off_t;
  * long arguments will be promoted to off_t if the program fails to
  * include that header or explicitly cast them to off_t.
  */
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
-#ifndef _KERNEL
-#include <sys/cdefs.h>
+#if __BSD_VISIBLE && !defined(_KERNEL)
 __BEGIN_DECLS
 off_t	 lseek(int, off_t, int);
 int	 ftruncate(int, off_t);
 int	 truncate(const char *, off_t);
 __END_DECLS
-#endif /* !_KERNEL */
-#endif /* !defined(_POSIX_SOURCE) ... */
+#endif /* __BSD_VISIBLE && !_KERNEL */
 
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
+#if __BSD_VISIBLE
 /* Major, minor numbers, dev_t's. */
 #define	major(x)	((int32_t)(((u_int32_t)(x) >> 8) & 0xff))
 #define	minor(x)	((int32_t)((x) & 0xff) | (((x) & 0xffff0000) >> 8))
 #define	makedev(x,y)	((dev_t)((((x) & 0xff) << 8) | ((y) & 0xff) | (((y) & 0xffff00) << 8)))
 #endif
 
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
+#if __BSD_VISIBLE
 #include <sys/select.h>	/* must be after type declarations */
+#endif
 
 #if defined(__STDC__) && defined(_KERNEL)
 /*
@@ -171,5 +168,4 @@ struct	tty;
 struct	uio;
 #endif
 
-#endif /* !defined(_POSIX_SOURCE) ... */
 #endif /* !_SYS_TYPES_H_ */

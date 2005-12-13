@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.19 2004/07/15 11:24:46 millert Exp $	*/
+/*	$OpenBSD: shm.h,v 1.20 2005/12/13 00:35:23 millert Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -39,11 +39,12 @@
 #ifndef _SYS_SHM_H_
 #define _SYS_SHM_H_
 
+#include <sys/cdefs.h>
 #ifndef _SYS_IPC_H_
 #include <sys/ipc.h>
 #endif
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if __BSD_VISIBLE
 
 /* shm-specific sysctl variables corresponding to members of struct shminfo */
 #define KERN_SHMINFO_SHMMAX	1	/* int: max shm segment size (bytes) */
@@ -69,7 +70,7 @@
 #define SHM_R		IPC_R
 #define SHM_W		IPC_W
 
-#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif /* __BSD_VISIBLE */
 
 /*
  * Shared memory operation flags for shmat(2).
@@ -134,7 +135,7 @@ struct shmid_ds35 {
 };
 #endif
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if __BSD_VISIBLE
 /*
  * System V style catch-all structure for shared memory constants that
  * might be of interest to user programs.  Do we really want/need this?
@@ -151,7 +152,7 @@ struct shm_sysctl_info {
 	struct	shminfo shminfo;
 	struct	shmid_ds shmids[1];
 };
-#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif /* __BSD_VISIBLE */
 
 #ifdef _KERNEL
 extern struct shminfo shminfo;
@@ -174,8 +175,6 @@ int	shmctl1(struct proc *, int, int, caddr_t,
 	    int (*)(const void *, void *, size_t));
 
 #else /* !_KERNEL */
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 void *shmat(int, const void *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd.h,v 1.17 2004/07/13 21:09:47 millert Exp $	*/
+/*	$OpenBSD: pwd.h,v 1.18 2005/12/13 00:35:22 millert Exp $	*/
 /*	$NetBSD: pwd.h,v 1.9 1996/05/15 21:36:45 jtc Exp $	*/
 
 /*-
@@ -41,9 +41,10 @@
 #ifndef _PWD_H_
 #define	_PWD_H_
 
+#include <sys/cdefs.h>
 #include <sys/types.h>
 
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE
 #define	_PATH_PASSWD		"/etc/passwd"
 #define	_PATH_MASTERPASSWD	"/etc/master.passwd"
 #define	_PATH_MASTERPASSWD_LOCK	"/etc/ptmp"
@@ -89,23 +90,21 @@ struct passwd {
 	time_t	pw_expire;		/* account expiration */
 };
 
-#include <sys/cdefs.h>
-
 __BEGIN_DECLS
 struct passwd	*getpwuid(uid_t);
 struct passwd	*getpwnam(const char *);
-#ifndef _POSIX_SOURCE
+#if __BSD_VISIBLE || __XPG_VISIBLE
 struct passwd	*getpwent(void);
-#ifndef _XOPEN_SOURCE
+void		 setpwent(void);
+void		 endpwent(void);
+#endif
+#if __BSD_VISIBLE
 int		 setpassent(int);
 char		*user_from_uid(uid_t, int);
 char		*bcrypt_gensalt(u_int8_t);
 char		*bcrypt(const char *, const char *);
 char		*md5crypt(const char *, const char *);
 struct passwd	*pw_dup(const struct passwd *);
-#endif
-void		 setpwent(void);
-void		 endpwent(void);
 #endif
 __END_DECLS
 
