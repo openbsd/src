@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.19 2005/11/18 20:56:53 deraadt Exp $	*/
+/*	$OpenBSD: region.c,v 1.20 2005/12/13 05:23:03 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -348,16 +348,15 @@ region_get_data(struct region *reg, char *buf, int len)
 	return (i);
 }
 
-int
+void
 region_put_data(const char *buf, int len)
 {
 	int i;
 
-	for (i = 0; buf[i]; i++) {
+	for (i = 0; buf[i] != NULL && i < len; i++) {
 		if (buf[i] == '\n')
 			lnewline();
 		else
 			linsert(1, buf[i]);
 	}
-	return (0);
 }
