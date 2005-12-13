@@ -1,3 +1,4 @@
+/*	$OpenBSD: fatal.c,v 1.2 2005/12/13 17:46:10 xsa Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *

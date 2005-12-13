@@ -1,3 +1,4 @@
+/*	$OpenBSD: xmalloc.c,v 1.2 2005/12/13 17:46:10 xsa Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
