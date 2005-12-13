@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.26 2005/12/03 16:53:15 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.27 2005/12/13 01:01:40 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -94,7 +94,7 @@ void	aac_host_command(struct aac_softc *);
 void	aac_host_response(struct aac_softc *);
 int	aac_init(struct aac_softc *);
 int	aac_check_firmware(struct aac_softc *);
-int	aac_internal_cache_cmd(struct scsi_xfer *);
+void	aac_internal_cache_cmd(struct scsi_xfer *);
 
 /* Command Processing */
 void	aac_timeout(struct aac_softc *);
@@ -2345,7 +2345,7 @@ aac_copy_internal_data(struct scsi_xfer *xs, u_int8_t *data, size_t size)
 }
 
 /* Emulated SCSI operation on cache device */
-int
+void
 aac_internal_cache_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
@@ -2409,11 +2409,10 @@ aac_internal_cache_cmd(struct scsi_xfer *xs)
 		printf("aac_internal_cache_cmd got bad opcode: %#x\n",
 		    xs->cmd->opcode);
 		xs->error = XS_DRIVER_STUFFUP;
-		return (0);
+		return;
 	}
 
 	xs->error = XS_NOERROR;
-	return (1);
 }
 
 void
@@ -2501,10 +2500,7 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 #if 0
 	case VERIFY:
 #endif
-		if (!aac_internal_cache_cmd(xs)) {
-			splx(s);
-			return (TRY_AGAIN_LATER);
-		}
+		aac_internal_cache_cmd(xs);
 		xs->flags |= ITSDONE;
 		scsi_done(xs);
 		goto ready;
