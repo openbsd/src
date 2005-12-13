@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.5 2005/12/09 02:26:40 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.6 2005/12/13 04:16:56 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -55,6 +55,7 @@
 #define AMLOP_REVISION         0x5B30
 #define AMLOP_DEBUG            0x5B31
 #define AMLOP_FATAL            0x5B32
+#define AMLOP_TIMER            0x5B33
 #define AMLOP_OPREGION         0x5B80
 #define AMLOP_FIELD            0x5B81
 #define AMLOP_DEVICE           0x5B82
@@ -203,8 +204,19 @@ enum aml_objecttype {
 #define AML_METHOD_SYNCLEVEL(v)    (((v) >> 4) & 0xF)
 
 #define AML_FIELD_ACCESS(v)        (((v) >> 0) & 0xF)
+# define AML_FIELD_ANYACC            0x0
+# define AML_FIELD_BYTEACC           0x1
+# define AML_FIELD_WORDACC           0x2
+# define AML_FIELD_DWORDACC          0x3
+# define AML_FIELD_QWORDACC          0x4
+# define AML_FIELD_BUFFERACC         0x5
 #define AML_FIELD_LOCK(v)          (((v) >> 4) & 0x1)
+# define AML_FIELD_LOCK_OFF          0x0
+# define AML_FIELD_LOCK_ON           0x1
 #define AML_FIELD_UPDATE(v)        (((v) >> 5) & 0x3)
+# define AML_FIELD_PRESERVE          0x0
+# define AML_FIELD_WRITEASONES       0x1
+# define AML_FIELD_WRITEASZEROES     0x2
 
 struct aml_node;
 
@@ -218,7 +230,7 @@ struct aml_value
 		const char       *vstring;
 		u_int8_t         *vbuffer;
 		struct aml_value *vpackage;
-		struct acpi_gas   vgas;
+		struct acpi_gas   vopregion;
 		struct {
 			int               argcount;
 			struct aml_value *args;
@@ -230,6 +242,15 @@ struct aml_value
 			int              bitlen;
 			struct aml_node *ref;
 		} vfield;
+		struct {
+			u_int8_t      proc_id;
+			u_int32_t     proc_addr;
+			u_int8_t      proc_len;
+		} vprocessor;
+		struct {
+			u_int8_t      pwr_level;
+			u_int16_t     pwr_order;
+		} vpowerrsrc;
 	} _;
 };
 #define v_integer   _.vinteger
@@ -237,8 +258,11 @@ struct aml_value
 #define v_buffer    _.vbuffer
 #define v_package   _.vpackage
 #define v_field     _.vfield
-#define v_gas       _.vgas
+#define v_opregion  _.vopregion
 #define v_method    _.vmethod
+#define v_processor _.vprocessor
+#define v_powerrsrc _.vpowerrsrc
+#define v_thrmzone  _.vthrmzone
 
 struct aml_node
 {
