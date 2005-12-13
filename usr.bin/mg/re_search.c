@@ -1,4 +1,4 @@
-/*	$OpenBSD: re_search.c,v 1.21 2005/11/18 20:56:53 deraadt Exp $	*/
+/*	$OpenBSD: re_search.c,v 1.22 2005/12/13 06:01:27 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -166,6 +166,7 @@ retry:
 
 		case CCHR('G'):				/* ^G */
 			(void)ctrlg(FFRAND, 0);
+			goto stopsearch;
 		case CCHR('['):				/* ESC */
 		case '`':
 			goto stopsearch;
@@ -446,6 +447,7 @@ re_readpattern(char *prompt)
  * Cause case to not matter in searches.  This is the default.	If called
  * with argument cause case to matter.
  */
+/* ARGSUSED*/
 int
 setcasefold(int f, int n)
 {
@@ -468,6 +470,7 @@ setcasefold(int f, int n)
 /*
  * Delete all lines after dot that contain a string matching regex.
  */
+/* ARGSUSED */
 int
 delmatchlines(int f, int n)
 {
@@ -484,6 +487,7 @@ delmatchlines(int f, int n)
 /*
  * Delete all lines after dot that don't contain a string matching regex.
  */
+/* ARGSUSED */
 int
 delnonmatchlines(int f, int n)
 {
@@ -543,6 +547,7 @@ killmatches(int cond)
 /*
  * Count lines matching regex.
  */
+/* ARGSUSED */
 int
 cntmatchlines(int f, int n)
 {
@@ -558,6 +563,7 @@ cntmatchlines(int f, int n)
 /*
  * Count lines that fail to match regex.
  */
+/* ARGSUSED */
 int
 cntnonmatchlines(int f, int n)
 {

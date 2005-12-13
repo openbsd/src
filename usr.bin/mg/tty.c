@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.23 2005/11/19 20:16:35 kjell Exp $	*/
+/*	$OpenBSD: tty.c,v 1.24 2005/12/13 06:01:27 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
+
 #include <term.h>
 #include <signal.h>
 

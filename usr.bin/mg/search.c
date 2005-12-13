@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.26 2005/12/13 05:40:33 kjell Exp $	*/
+/*	$OpenBSD: search.c,v 1.27 2005/12/13 06:01:27 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -338,7 +338,8 @@ isearch(int dir)
 				ewprintf("Mark set");
 				curwp->w_flag |= WFMOVE;
 				return (TRUE);
-			}	/* FALLTHRU */
+			}
+			/* FALLTHRU */
 		case CCHR('I'):
 		case CCHR('J'):
 	addchar:
@@ -419,6 +420,7 @@ is_undo(int *pptr, int *dir)
 	case SRCH_BEGIN:
 	case SRCH_NOPR:
 		*pptr = -1;
+		break;
 	case SRCH_MARK:
 		break;
 	case SRCH_FORW:
@@ -565,6 +567,7 @@ retry:
 		/* ^G, CR or ESC */
 		case CCHR('G'):
 			(void)ctrlg(FFRAND, 0);
+			goto stopsearch;
 		case CCHR('['):
 		case CCHR('M'):
 			goto stopsearch;

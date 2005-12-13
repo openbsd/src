@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.79 2005/12/13 05:23:03 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.80 2005/12/13 06:01:27 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -310,7 +310,7 @@ int		 ttputc(int);
 void		 ttflush(void);
 int		 ttgetc(void);
 int		 ttwait(int);
-int		 typeahead(void);
+int		 charswaiting(void);
 
 /* dir.c */
 void		 dirinit(void);
@@ -362,7 +362,7 @@ int		 yank(int, int);
 struct mgwin	*new_window(struct buffer *);
 void		 free_window(struct mgwin *);
 int		 reposition(int, int);
-int		 refresh(int, int);
+int		 redraw(int, int);
 int		 nextwind(int, int);
 int		 prevwind(int, int);
 int		 onlywind(int, int);
@@ -441,7 +441,7 @@ int		 quit(int, int);
 void		 panic(char *);
 
 /* cinfo.c */
-char		*keyname(char  *, size_t, int);
+char		*getkeyname(char  *, size_t, int);
 
 /* basic.c */
 int		 gotobol(int, int);
@@ -482,7 +482,7 @@ int		 space_to_tabstop(int, int);
 int		 insert(int, int);
 int		 bindtokey(int, int);
 int		 localbind(int, int);
-int		 define_key(int, int);
+int		 redefine_key(int, int);
 int		 unbindtokey(int, int);
 int		 localunbind(int, int);
 int		 extend(int, int);
@@ -564,7 +564,7 @@ int		 blinkparen(int, int);
 #ifdef NOTAB
 int		 notabmode(int, int);
 #endif	/* NOTAB */
-int		 overwrite(int, int);
+int		 overwrite_mode(int, int);
 int		 set_default_mode(int,int);
 
 #ifdef REGEX

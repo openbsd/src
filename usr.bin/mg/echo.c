@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.41 2005/11/19 20:16:35 kjell Exp $	*/
+/*	$OpenBSD: echo.c,v 1.42 2005/12/13 06:01:27 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -461,7 +461,6 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 			ttflush();
 		}
 	}
-	ret = buf;
 done:
 	if (cwin == TRUE) {
 		/* blow away cpltion window */
@@ -802,7 +801,7 @@ eformat(const char *fp, va_list ap)
 			c = *fp++;
 			switch (c) {
 			case 'c':
-				keyname(kname, sizeof(kname), va_arg(ap, int));
+				getkeyname(kname, sizeof(kname), va_arg(ap, int));
 				eputs(kname);
 				break;
 
@@ -810,7 +809,7 @@ eformat(const char *fp, va_list ap)
 				for (cp = kname, c = 0; c < key.k_count; c++) {
 					if (c)
 						*cp++ = ' ';
-					cp = keyname(cp, sizeof(kname) -
+					cp = getkeyname(cp, sizeof(kname) -
 					    (cp - kname) - 1, key.k_chars[c]);
 				}
 				eputs(kname);

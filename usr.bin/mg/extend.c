@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.41 2005/12/13 05:40:33 kjell Exp $	*/
+/*	$OpenBSD: extend.c,v 1.42 2005/12/13 06:01:27 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -360,7 +360,7 @@ dobind(KEYMAP *curmap, const char *p, int unbind)
 		for (;;) {
 			ewprintf("%s", bprompt);
 			pep[-1] = ' ';
-			pep = keyname(pep, sizeof(bprompt) -
+			pep = getkeyname(pep, sizeof(bprompt) -
 			    (pep - bprompt), c = getkey(FALSE));
 			if (doscan(curmap, c, &curmap) != NULL)
 				break;
@@ -498,7 +498,7 @@ localbind(int f, int n)
  */
 /* ARGSUSED */
 int
-define_key(int f, int n)
+redefine_key(int f, int n)
 {
 	static char	 buf[48];
 	char		 tmp[32], *bufp;
@@ -747,7 +747,7 @@ excline(char *line)
 	} else if (fp == localbind || fp == localunbind) {
 		bind = BINDARG;
 		curmap = curbp->b_modes[curbp->b_nmodes]->p_map;
-	} else if (fp == define_key)
+	} else if (fp == redefine_key)
 		bind = BINDNEXT;
 	else
 		bind = BINDNO;

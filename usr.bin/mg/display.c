@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.25 2005/12/13 05:40:33 kjell Exp $	*/
+/*	$OpenBSD: display.c,v 1.26 2005/12/13 06:01:27 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -371,7 +371,7 @@ update(void)
 	int	 currow, curcol;
 	int	 offs, size;
 
-	if (typeahead())
+	if (charswaiting())
 		return;
 	if (sgarbf) {		/* must update everything */
 		wp = wheadp;

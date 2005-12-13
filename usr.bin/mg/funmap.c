@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.21 2005/11/20 18:47:11 kjell Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.22 2005/12/13 06:01:27 kjell Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -69,7 +69,7 @@ static struct funmap functnames[] = {
 	{cntmatchlines, "count-matches",},
 	{cntnonmatchlines, "count-non-matches",},
 #endif /* REGEX */
-	{define_key, "define-key",},
+	{redefine_key, "define-key",},
 	{backdel, "delete-backward-char",},
 	{deblank, "delete-blank-lines",},
 	{forwdel, "delete-char",},
@@ -146,7 +146,7 @@ static struct funmap functnames[] = {
 	{notmodified, "not-modified",},
 	{openline, "open-line",},
 	{nextwind, "other-window",},
-	{overwrite, "overwrite-mode",},
+	{overwrite_mode, "overwrite-mode",},
 #ifdef PREFIXREGION
 	{prefixregion, "prefix-region",},
 #endif /* PREFIXREGION */
@@ -166,7 +166,7 @@ static struct funmap functnames[] = {
 	{re_forwsearch, "re-search-forward",},
 #endif /* REGEX */
 	{reposition, "recenter",},
-	{refresh, "redraw-display",},
+	{redraw, "redraw-display",},
 	{filesave, "save-buffer",},
 	{quit, "save-buffers-kill-emacs",},
 	{savebuffers, "save-some-buffers",},

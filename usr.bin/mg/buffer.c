@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.52 2005/11/18 20:56:52 deraadt Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.53 2005/12/13 06:01:26 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -425,18 +425,18 @@ anycb(int f)
 {
 	struct buffer	*bp;
 	int		 s = FALSE, save = FALSE, ret;
-	char		 prompt[NFILEN + 11];
+	char		 pbuf[NFILEN + 11];
 
 	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
 		if (bp->b_fname != NULL && *(bp->b_fname) != '\0' &&
 		    (bp->b_flag & BFCHG) != 0) {
-			ret = snprintf(prompt, sizeof(prompt), "Save file %s",
+			ret = snprintf(pbuf, sizeof(pbuf), "Save file %s",
 			    bp->b_fname);
-			if (ret < 0 || ret >= sizeof(prompt)) {
+			if (ret < 0 || ret >= sizeof(pbuf)) {
 				ewprintf("Error: filename too long!");
 				return (ABORT);
 			}
-			if ((f == TRUE || (save = eyorn(prompt)) == TRUE) &&
+			if ((f == TRUE || (save = eyorn(pbuf)) == TRUE) &&
 			    buffsave(bp) == TRUE) {
 				bp->b_flag &= ~BFCHG;
 				upmodes(bp);

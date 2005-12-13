@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.28 2005/12/13 05:40:33 kjell Exp $	*/
+/*	$OpenBSD: help.c,v 1.29 2005/12/13 06:01:27 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -48,7 +48,7 @@ desckey(int f, int n)
 		for (;;) {
 			ewprintf("%s", dprompt);
 			pep[-1] = ' ';
-			pep = keyname(pep, sizeof(dprompt) - (pep - dprompt),
+			pep = getkeyname(pep, sizeof(dprompt) - (pep - dprompt),
 			    key.k_chars[key.k_count++] = c = getkey(FALSE));
 			if ((funct = doscan(curmap, c, &curmap)) != NULL)
 				break;
@@ -140,7 +140,7 @@ showall(struct buffer *bp, KEYMAP *map, char *prefix)
 		fun = doscan(map, c, &newmap);
 		if (fun == rescan || fun == selfinsert)
 			continue;
-		keyname(buf, sizeof(buf), c);
+		getkeyname(buf, sizeof(buf), c);
 		(void)snprintf(key, sizeof(key), "%s%s ", prefix, buf);
 		if (fun == NULL) {
 			if (showall(bp, newmap, key) == FALSE)
@@ -220,12 +220,12 @@ findbind(KEYMAP *map, PF fun, char *buf, size_t len)
 	for (c = 0; c < 256; c++) {
 		nfun = doscan(map, c, &newmap);
 		if (nfun == fun) {
-			keyname(buf, len, c);
+			getkeyname(buf, len, c);
 			return (TRUE);
 		}
 		if (nfun == NULL) {
 			if (findbind(newmap, fun, buf2, sizeof(buf2)) == TRUE) {
-				keyname(key, sizeof(key), c);
+				getkeyname(key, sizeof(key), c);
 				(void)snprintf(buf, len, "%s %s", key, buf2);
 				return (TRUE);
 			}

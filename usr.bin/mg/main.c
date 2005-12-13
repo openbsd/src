@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.47 2005/11/20 18:47:11 kjell Exp $	*/
+/*	$OpenBSD: main.c,v 1.48 2005/12/13 06:01:27 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -140,7 +140,7 @@ notnum:
 			eerase();
 #endif	/* !NO_DPROMPT */
 		if (winch_flag) {
-			refresh(0, 0);
+			redraw(0, 0);
 			winch_flag = 0;
 		}
 		update();
@@ -152,7 +152,7 @@ notnum:
 			break;
 		case ABORT:
 			ewprintf("Quit");
-			/* and fall through */
+			/* FALLTHRU */
 		case FALSE:
 		default:
 			ttbeep();

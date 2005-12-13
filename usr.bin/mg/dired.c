@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.32 2005/11/20 03:24:17 deraadt Exp $	*/
+/*	$OpenBSD: dired.c,v 1.33 2005/12/13 06:01:27 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -175,20 +175,20 @@ dired_init(void)
 int
 dired(int f, int n)
 {
-	char		 dirname[NFILEN], *bufp, *slash;
+	char		 dname[NFILEN], *bufp, *slash;
 	struct buffer	*bp;
 
 	if (curbp->b_fname && curbp->b_fname[0] != '\0') {
-		(void)strlcpy(dirname, curbp->b_fname, sizeof(dirname));
-		if ((slash = strrchr(dirname, '/')) != NULL) {
+		(void)strlcpy(dname, curbp->b_fname, sizeof(dname));
+		if ((slash = strrchr(dname, '/')) != NULL) {
 			*(slash + 1) = '\0';
 		}
 	} else {
-		if (getcwd(dirname, sizeof(dirname)) == NULL)
-			dirname[0] = '\0';
+		if (getcwd(dname, sizeof(dname)) == NULL)
+			dname[0] = '\0';
 	}
 
-	if ((bufp = eread("Dired: ", dirname, NFILEN,
+	if ((bufp = eread("Dired: ", dname, NFILEN,
 	    EFDEF | EFNEW | EFCR)) == NULL)
 		return (ABORT);
 	if (bufp[0] == '\0')
@@ -204,21 +204,21 @@ dired(int f, int n)
 int
 d_otherwindow(int f, int n)
 {
-	char		 dirname[NFILEN], *bufp, *slash;
+	char		 dname[NFILEN], *bufp, *slash;
 	struct buffer	*bp;
 	struct mgwin	*wp;
 
 	if (curbp->b_fname && curbp->b_fname[0] != '\0') {
-		(void)strlcpy(dirname, curbp->b_fname, sizeof(dirname));
-		if ((slash = strrchr(dirname, '/')) != NULL) {
+		(void)strlcpy(dname, curbp->b_fname, sizeof(dname));
+		if ((slash = strrchr(dname, '/')) != NULL) {
 			*(slash + 1) = '\0';
 		}
 	} else {
-		if (getcwd(dirname, sizeof(dirname)) == NULL)
-			dirname[0] = '\0';
+		if (getcwd(dname, sizeof(dname)) == NULL)
+			dname[0] = '\0';
 	}
 
-	if ((bufp = eread("Dired other window: ", dirname, NFILEN,
+	if ((bufp = eread("Dired other window: ", dname, NFILEN,
 	    EFDEF | EFNEW | EFCR)) == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')
@@ -370,7 +370,7 @@ int
 d_copy(int f, int n)
 {
 	char	frname[NFILEN], toname[NFILEN], *bufp;
-	int	stat;
+	int	ret;
 	size_t	off;
 	struct buffer *bp;
 
@@ -388,9 +388,9 @@ d_copy(int f, int n)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
-	stat = (copy(frname, toname) >= 0) ? TRUE : FALSE;
-	if (stat != TRUE)
-		return (stat);
+	ret = (copy(frname, toname) >= 0) ? TRUE : FALSE;
+	if (ret != TRUE)
+		return (ret);
 	bp = dired_(curbp->b_fname);
 	return (showbuffer(bp, curwp, WFHARD | WFMODE));
 }
@@ -400,7 +400,7 @@ int
 d_rename(int f, int n)
 {
 	char		 frname[NFILEN], toname[NFILEN], *bufp;
-	int		 stat;
+	int		 ret;
 	size_t		 off;
 	struct buffer	*bp;
 
@@ -418,9 +418,9 @@ d_rename(int f, int n)
 		return (ABORT);
 	else if (bufp[0] == '\0')
 		return (FALSE);
-	stat = (rename(frname, toname) >= 0) ? TRUE : FALSE;
-	if (stat != TRUE)
-		return (stat);
+	ret = (rename(frname, toname) >= 0) ? TRUE : FALSE;
+	if (ret != TRUE)
+		return (ret);
 	bp = dired_(curbp->b_fname);
 	return (showbuffer(bp, curwp, WFHARD | WFMODE));
 }
@@ -581,34 +581,34 @@ d_makename(struct line *lp, char *fn, int len)
 }
 
 /*
- * XXX dirname needs to have enough place to store an additional '/'.
+ * XXX dname needs to have enough place to store an additional '/'.
  */
 struct buffer *
-dired_(char *dirname)
+dired_(char *dname)
 {
 	struct buffer	*bp;
 	FILE	*dirpipe;
 	char	 line[256];
 	int	 len, ret;
 
-	if ((dirname = adjustname(dirname)) == NULL) {
+	if ((dname = adjustname(dname)) == NULL) {
 		ewprintf("Bad directory name");
 		return (NULL);
 	}
 	/* this should not be done, instead adjustname() should get a flag */
-	len = strlen(dirname);
-	if (dirname[len - 1] != '/') {
-		dirname[len++] = '/';
-		dirname[len] = '\0';
+	len = strlen(dname);
+	if (dname[len - 1] != '/') {
+		dname[len++] = '/';
+		dname[len] = '\0';
 	}
-	if ((bp = findbuffer(dirname)) == NULL) {
+	if ((bp = findbuffer(dname)) == NULL) {
 		ewprintf("Could not create buffer");
 		return (NULL);
 	}
 	if (bclear(bp) != TRUE)
 		return (NULL);
 	bp->b_flag |= BFREADONLY;
-	ret = snprintf(line, sizeof(line), "ls -al %s", dirname);
+	ret = snprintf(line, sizeof(line), "ls -al %s", dname);
 	if (ret < 0 || ret  >= sizeof(line)) {
 		ewprintf("Path too long");
 		return (NULL);
@@ -628,7 +628,7 @@ dired_(char *dirname)
 		return (NULL);
 	}
 	bp->b_dotp = lforw(bp->b_linep);	/* go to first line */
-	(void) strlcpy(bp->b_fname, dirname, sizeof(bp->b_fname));
+	(void) strlcpy(bp->b_fname, dname, sizeof(bp->b_fname));
 	if ((bp->b_modes[1] = name_mode("dired")) == NULL) {
 		bp->b_modes[0] = name_mode("fundamental");
 		ewprintf("Could not find mode dired");

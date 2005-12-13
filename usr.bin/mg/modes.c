@@ -1,4 +1,4 @@
-/*	$OpenBSD: modes.c,v 1.14 2005/11/22 04:23:14 kjell Exp $	*/
+/*	$OpenBSD: modes.c,v 1.15 2005/12/13 06:01:27 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -98,7 +98,7 @@ notabmode(int f, int n)
 #endif	/* NOTAB */
 
 int
-overwrite(int f, int n)
+overwrite_mode(int f, int n)
 {
 	if (changemode(f, n, "overwrite") == FALSE)
 		return (FALSE);
