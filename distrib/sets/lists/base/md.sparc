@@ -147,6 +147,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi/acpireg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi/acpivar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi/amltypes.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi/dsdt.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi/hpetreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ata
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ata/atareg.ph

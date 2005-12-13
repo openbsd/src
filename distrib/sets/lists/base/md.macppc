@@ -691,6 +691,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/acpi/acpireg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/acpi/acpivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/acpi/amltypes.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/acpi/dsdt.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/acpi/hpetreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ata
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ata/atareg.ph
