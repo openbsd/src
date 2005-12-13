@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.3 2005/07/10 19:39:01 grange Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.4 2005/12/13 07:23:34 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -19,6 +19,15 @@
 #define _DEV_ACPI_ACPIVAR_H_
 
 #include <sys/timeout.h>
+
+/* #define ACPI_DEBUG */
+#ifdef ACPI_DEBUG
+#define dprintf(x...)     do { if (acpi_debug) printf(x); } while(0)
+#define dnprintf(n,x...)  do { if (acpi_debug > (n)) printf(x); } while(0)
+#else
+#define dprintf(x...)
+#define dnprintf(n,x...)
+#endif
 
 struct klist;
 

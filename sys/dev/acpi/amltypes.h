@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.6 2005/12/13 04:16:56 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.7 2005/12/13 07:23:34 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -15,8 +15,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __AMLPARSE_H__
-#define __AMLPARSE_H__
+#ifndef __DEV_ACPI_AMLTYPES_H__
+#define __DEV_ACPI_AMLTYPES_H__
 
 /* AML Opcodes */
 #define AMLOP_ZERO             0x00
@@ -280,4 +280,4 @@ struct aml_node
 	struct aml_value value;
 };
 
-#endif /* __AMLPARSE_H__ */
+#endif /* __DEV_ACPI_AMLTYPES_H__ */

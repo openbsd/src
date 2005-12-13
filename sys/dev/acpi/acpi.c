@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.3 2005/12/07 03:44:36 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.4 2005/12/13 07:23:33 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -28,6 +28,12 @@
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/amltypes.h>
+#include <dev/acpi/dsdt.h>
+
+#ifdef ACPI_DEBUG
+int acpi_debug = 3;
+#endif
 
 int	acpimatch(struct device *, void *, void *);
 void	acpiattach(struct device *, struct device *, void *);
@@ -39,9 +45,13 @@ void	acpi_load_dsdt(paddr_t, struct acpi_q **);
 void	acpi_softintr(void *);
 void	acpi_filtdetach(struct knote *);
 int	acpi_filtread(struct knote *, long);
+void	acpi_foundhid(struct aml_node *, void *);
 
 #define	ACPI_LOCK(sc)
 #define	ACPI_UNLOCK(sc)
+
+/* XXX move this into dsdt softc at some point */
+extern struct	aml_node aml_root;
 
 struct filterops acpiread_filtops = {
 	1, NULL, acpi_filtdetach, acpi_filtread
@@ -57,6 +67,82 @@ struct cfdriver acpi_cd = {
 
 int acpi_evindex;
 struct acpi_softc *acpi_softc;
+
+#if 0
+void
+acpi_read_pm1_status(struct acpi_softc *sc, uint32_t *status_a, uint32_t *status_b)
+{
+  *status_a = bus_space_read_2(sc->sc_iot, sc->sc_ioh_pm1a_evt, ACPI_PM1_STATUS);
+  *status_b = 0;
+}
+void
+acpi_write_pm1_status(struct acpi_softc *sc, uint32_t status_a, uint32_t status_b)
+{
+  bus_space_write_2(sc->sc_iot, sc->sc_ioh_pm1a_evt, ACPI_PM1_STATUS, status_a);
+}
+void
+acpi_read_pm1_enable(struct acpi_softc *sc, uint32_t *enable_a, uint32_t *enable_b)
+{
+  *status_a = bus_space_read_2(sc->sc_iot, sc->sc_ioh_pm1a_evt, ACPI_PM1_STATUS);
+  *status_b = 0;
+}
+void
+acpi_write_pm1_enable(struct acpi_softc *sc, uint32_t enable_a, uint32_t enable_b)
+{
+  bus_space_write_2(sc->sc_iot, sc->sc_ioh_pm1a_evt, ACPI_PM1_STATUS, status_a);
+}
+
+void
+acpi_read_gpe_status(struct acpi_softc *sc, uint32_t *status_0, uint32_t *status_1)
+{
+}
+void
+acpi_write_gpe_status(struct acpi_softc *sc, uint32_t status_0, uint32_t status_1)
+{
+}
+void
+acpi_read_gpe_enable(struct acpi_softc *sc, uint32_t *enable_0, uint32_t *enable_1)
+{
+}
+void
+acpi_write_gpe_enable(struct acpi_softc *sc, uint32_t enable_0, uint32_t enable_1)
+{
+}
+#endif
+
+void
+acpi_foundhid(struct aml_node *node, void *arg)
+{
+	struct acpi_softc	*sc = (struct acpi_softc *)arg;
+	struct device		*self = (struct device *)arg;
+	const char		*dev;
+
+	dnprintf(1, "found hid device: %s ", node->parent->name);
+	switch(node->child->value.type) {
+	case AML_OBJTYPE_STRING:
+		dev = node->child->value.v_string;
+		break;
+	case AML_OBJTYPE_INTEGER:
+		dev = aml_eisaid(node->child->value.v_integer);
+		break;
+	default:
+		dev = "unknown";
+		break;
+	}
+	dnprintf(1, "  device: %s\n", dev);
+
+	if (!strcmp(dev, ACPI_DEV_CMB))
+	{
+		struct acpi_attach_args aaa;
+
+		memset(&aaa, 0, sizeof(aaa));
+		aaa.aaa_name = "acpibat";
+		aaa.aaa_iot = sc->sc_iot;
+		aaa.aaa_memt = sc->sc_memt;
+		config_found(self, &aaa, acpi_print);
+	}
+
+}
 
 int
 acpimatch(struct device *parent, void *match, void *aux)
@@ -193,11 +279,18 @@ acpiattach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_interrupt) {
 		int16_t flags;
 
+#if 0
+		acpi_read_pm1_enable(sc, &ena, &enb);
+		ena |= (ACPI_PM1_PWRBTN_EN|ACPI_PM1_SLPBTN_EN);
+		enb |= (ACPI_PM1_PWRBTN_EN|ACPI_PM1_SLPBTN_EN);
+		acpi_write_pm1_enable(sc, ena, enb);
+#else
 		flags = bus_space_read_2(sc->sc_iot, sc->sc_ioh_pm1a_evt,
 					 sc->sc_fadt->pm1_evt_len / 2);
 		flags |= ACPI_PM1_PWRBTN_EN | ACPI_PM1_SLPBTN_EN;
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh_pm1a_evt,
 				  sc->sc_fadt->pm1_evt_len / 2, flags);
+#endif
 	}
 
 	printf("attached\n");
@@ -239,6 +332,9 @@ acpiattach(struct device *parent, struct device *self, void *aux)
 
 	acpi_softc = sc;
 
+	/* attach devices found in dsdt */
+	aml_find_node(aml_root.child, "_HID", acpi_foundhid, sc);
+
 	return;
 
 fail:
@@ -259,9 +355,11 @@ acpi_submatch(struct device *parent, void *match, void *aux)
 int
 acpi_print(void *aux, const char *pnp)
 {
+	/* XXX ACPIVERBOSE should be replaced with dnprintf */
 	struct acpi_attach_args *aa = aux;
 #ifdef ACPIVERBOSE
-	struct acpi_table_header *hdr = (struct acpi_table_header *)aa->aaa_table;
+	struct acpi_table_header *hdr =
+	    (struct acpi_table_header *)aa->aaa_table;
 #endif
 
 	if (pnp) {
@@ -312,7 +410,8 @@ acpi_loadtables(struct acpi_softc *sc, struct acpi_rsdp *rsdp)
 		for (i = 0; i < ntables; i++) {
 			acpi_map(xsdt->table_offsets[i], sizeof(*hdr), &handle);
 			hdr = (struct acpi_table_header *)handle.va;
-			acpi_load_table(xsdt->table_offsets[i], hdr->length, &sc->sc_tables);
+			acpi_load_table(xsdt->table_offsets[i], hdr->length,
+			    &sc->sc_tables);
 			acpi_unmap(&handle);
 		}
 		acpi_unmap(&hrsdt);
@@ -333,12 +432,13 @@ acpi_loadtables(struct acpi_softc *sc, struct acpi_rsdp *rsdp)
 		rsdt = (struct acpi_rsdt *)hrsdt.va;
 
 		ntables = (len - sizeof(struct acpi_table_header)) /
-			  sizeof(rsdt->table_offsets[0]);
+		    sizeof(rsdt->table_offsets[0]);
 
 		for (i = 0; i < ntables; i++) {
 			acpi_map(rsdt->table_offsets[i], sizeof(*hdr), &handle);
 			hdr = (struct acpi_table_header *)handle.va;
-			acpi_load_table(rsdt->table_offsets[i], hdr->length, &sc->sc_tables);
+			acpi_load_table(rsdt->table_offsets[i], hdr->length,
+			    &sc->sc_tables);
 			acpi_unmap(&handle);
 		}
 		acpi_unmap(&hrsdt);
@@ -400,11 +500,17 @@ acpi_interrupt(void *arg)
 	struct acpi_softc *sc = (struct acpi_softc *)arg;
 	u_int16_t flags;
 
-	flags = bus_space_read_2(sc->sc_iot, sc->sc_ioh_pm1a_evt, ACPI_PM1_STATUS);
+#if 0
+	acpi_read_pm1_status(sc, &sts_a, &sts_b);
+	if ((sts_a & ACPI_PM1_PWRBTN_STS) && (sts_b & ACPI_PM1_PWRBTN_STS) {
+		acpi_write_pm1_status(sc, 
+#else
+	flags = bus_space_read_2(sc->sc_iot, sc->sc_ioh_pm1a_evt,
+	    ACPI_PM1_STATUS);
 	if (flags & (ACPI_PM1_PWRBTN_STS | ACPI_PM1_SLPBTN_STS)) {
 		if (flags & ACPI_PM1_PWRBTN_STS) {
 			bus_space_write_2(sc->sc_iot, sc->sc_ioh_pm1a_evt,
-					  ACPI_PM1_STATUS, ACPI_PM1_PWRBTN_STS);
+			    ACPI_PM1_STATUS, ACPI_PM1_PWRBTN_STS);
 			/*
 			 * Power-button has been pressed, do something!
 			 */
@@ -412,7 +518,7 @@ acpi_interrupt(void *arg)
 		}
 		if (flags & ACPI_PM1_SLPBTN_STS) {
 			bus_space_write_2(sc->sc_iot, sc->sc_ioh_pm1a_evt,
-					  ACPI_PM1_STATUS, ACPI_PM1_SLPBTN_STS);
+			    ACPI_PM1_STATUS, ACPI_PM1_SLPBTN_STS);
 			/*
 			 * Sleep-button has been pressed, do something!
 			 */
@@ -426,6 +532,7 @@ acpi_interrupt(void *arg)
 #endif
 		return (1);
 	}
+#endif
 	return (0);
 }
 
@@ -437,12 +544,14 @@ acpi_softintr(void *arg)
 	if (sc->sc_powerbtn) {
 		sc->sc_powerbtn = 0;
 		acpi_evindex++;
-		KNOTE(sc->sc_note, ACPI_EVENT_COMPOSE(ACPI_EV_PWRBTN, acpi_evindex));
+		KNOTE(sc->sc_note, ACPI_EVENT_COMPOSE(ACPI_EV_PWRBTN,
+		    acpi_evindex));
 	}
 	if (sc->sc_sleepbtn) {
 		sc->sc_sleepbtn = 0;
 		acpi_evindex++;
-		KNOTE(sc->sc_note, ACPI_EVENT_COMPOSE(ACPI_EV_SLPBTN, acpi_evindex));
+		KNOTE(sc->sc_note, ACPI_EVENT_COMPOSE(ACPI_EV_SLPBTN,
+		    acpi_evindex));
 	}
 }
 
@@ -533,7 +642,8 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 					} else if (hdr->length > table->size)
 						error = ENOSPC;
 					else
-						error = copyout(hdr, table->table, hdr->length);
+						error = copyout(hdr,
+						    table->table, hdr->length);
 					break;
 				}
 			}

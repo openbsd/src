@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.8 2005/12/13 04:16:56 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.9 2005/12/13 07:23:34 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -25,6 +25,7 @@
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/amltypes.h>
+#include <dev/acpi/dsdt.h>
 
 struct dsdt_softc {
 	struct device		sc_dev;
@@ -45,14 +46,7 @@ struct cfdriver dsdt_cd = {
 	NULL, "dsdt", DV_DULL
 };
 
-#ifdef AML_DEBUG
-int amldebug=3;
-#define dprintf(x...)     do { if (amldebug) printf(x); } while(0)
-#define dnprintf(n,x...)  do { if (amldebug > (n)) printf(x); } while(0)
-#else
-#define dprintf(x...)
-#define dnprintf(n,x...)
-#endif
+extern int acpi_debug;
 
 int
 dsdtmatch(struct device *parent, void *match, void *aux)
@@ -115,9 +109,6 @@ int aml_msb(u_int32_t val);
 void aml_addchildnode(struct aml_node *, struct aml_node *);
 void aml_walktree(struct aml_node *, int);
 void aml_walkroot(void);
-int aml_find_node(struct aml_node *, const char *, 
-		  void (*)(struct aml_node *, void *),
-		  void *);
 
 int64_t aml_evalmath(u_int16_t, int64_t, int64_t);
 int  aml_testlogical(u_int16_t, long, long);
@@ -1369,9 +1360,6 @@ aml_find_node(struct aml_node *node, const char *name,
 	return (0);
 }
 
-void foundhid(struct aml_node *, void *);
-const char *aml_eisaid(u_int32_t pid);
-
 const char hext[] = "0123456789ABCDEF";
 
 const char *
@@ -1391,26 +1379,6 @@ aml_eisaid(u_int32_t pid)
 	return id;
 }
 
-void
-foundhid(struct aml_node *node, void *arg)
-{
-	const char *dev;
-
-	printf("found hid device: %s ", node->parent->name);
-	switch(node->child->value.type) {
-	case AML_OBJTYPE_STRING:
-		dev = node->child->value.v_string;
-		break;
-	case AML_OBJTYPE_INTEGER:
-		dev = aml_eisaid(node->child->value.v_integer);
-		break;
-	default:
-		dev = "unknown";
-		break;
-	}
-	printf("  device: %s\n", dev);
-}
-
 int
 dsdt_parse_aml(struct dsdt_softc *sc, u_int8_t *start, u_int32_t length)
 {
@@ -1420,8 +1388,6 @@ dsdt_parse_aml(struct dsdt_softc *sc, u_int8_t *start, u_int32_t length)
 		nxtpos = aml_parse_object(sc, &aml_root, pos);
 	}
 	printf(" : parsed %d AML bytes\n", length);
-
-	/* aml_find_node(aml_root.child, "_HID", foundhid, NULL); */
 
 	return (0);
 }
