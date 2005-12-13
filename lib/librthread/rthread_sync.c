@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.4 2005/12/13 05:56:55 tedu Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.5 2005/12/13 06:04:53 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -38,8 +38,8 @@
 #include "rthread.h"
 
 
-int thrsleep(long, int, void *);
-int thrwakeup(long);
+int thrsleep(void *, int, void *);
+int thrwakeup(void *);
 
 /*
  * Internal implementation of semaphores
@@ -64,7 +64,7 @@ again:
 	}
 
 	if (do_sleep) {
-		if (thrsleep((long)sem, timo, &sem->lock) == EWOULDBLOCK)
+		if (thrsleep(sem, timo, &sem->lock) == EWOULDBLOCK)
 			return (0);
 		_spinlock(&sem->lock);
 		sem->waitcount--;
@@ -83,7 +83,7 @@ _sem_post(sem_t sem)
 	_spinlock(&sem->lock);
 	sem->value++;
 	if (sem->waitcount) {
-		thrwakeup((long)sem);
+		thrwakeup(sem);
 		rv = 1;
 	}
 	_spinunlock(&sem->lock);
@@ -99,7 +99,7 @@ _sem_wakeup(sem_t sem)
 	_spinlock(&sem->lock);
 	if (sem->waitcount) {
 		sem->value++;
-		thrwakeup((long)sem);
+		thrwakeup(sem);
 		rv = 1;
 	}
 	_spinunlock(&sem->lock);
@@ -115,7 +115,7 @@ _sem_wakeall(sem_t sem)
 	_spinlock(&sem->lock);
 	rv = sem->waitcount;
 	sem->value += rv;
-	thrwakeup((long)sem);
+	thrwakeup(sem);
 	_spinunlock(&sem->lock);
 
 	return (rv);

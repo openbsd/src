@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sig.c,v 1.1 2005/12/03 18:16:19 tedu Exp $ */
+/*	$OpenBSD: rthread_sig.c,v 1.2 2005/12/13 06:04:53 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -36,8 +36,8 @@
 
 #include "rthread.h"
 
-int thrwakeup(long);
-int thrsleep(long, int, void *);
+int thrwakeup(void *);
+int thrsleep(void *, int, void *);
 int thrsigdivert(const sigset_t *);
 
 int
@@ -60,7 +60,7 @@ sigwait_handler(int sig)
 {
 	pthread_t self = pthread_self();
 	self->sigpend = sig;
-	thrwakeup((long)&self->sigpend);
+	thrwakeup(&self->sigpend);
 }
 
 typedef void (*sigfn)(int);
@@ -79,7 +79,7 @@ sigwait(const sigset_t *set, int *sig)
 	}
 
 	thrsigdivert(set);
-	thrsleep((long)&self->sigpend, 0, NULL);
+	thrsleep(&self->sigpend, 0, NULL);
 
 	for (i = 0; i < NSIG; i++) {
 		if (mask & (1 << i))
