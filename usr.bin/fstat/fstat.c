@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.52 2005/07/04 01:54:09 djm Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.53 2005/12/13 22:21:02 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.52 2005/07/04 01:54:09 djm Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.53 2005/12/13 22:21:02 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -260,10 +260,10 @@ main(int argc, char *argv[])
 		errx(1, "%s", kvm_geterr(kd));
 	if (nflg)
 		printf("%s",
-"USER     CMD          PID   FD  DEV    INUM       MODE R/W    DV|SZ");
+"USER     CMD          PID   FD  DEV      INUM       MODE R/W    DV|SZ");
 	else
 		printf("%s",
-"USER     CMD          PID   FD MOUNT      INUM MODE       R/W    DV|SZ");
+"USER     CMD          PID   FD MOUNT        INUM MODE       R/W    DV|SZ");
 	if (oflg)
 		printf("%s", ":OFFSET  ");
 	if (checkfile && fsflg == 0)
@@ -462,7 +462,7 @@ vtrans(struct vnode *vp, int i, int flag, off_t offset)
 	}
 	PREFIX(i);
 	if (badtype) {
-		(void)printf(" -         -  %10s    -\n", badtype);
+		(void)printf(" -           -  %10s    -\n", badtype);
 		return;
 	}
 	if (nflg)
@@ -474,7 +474,7 @@ vtrans(struct vnode *vp, int i, int flag, off_t offset)
 		(void)snprintf(mode, sizeof mode, "%o", fst.mode);
 	else
 		strmode(fst.mode, mode);
-	(void)printf(" %6ld %11s", fst.fileid, mode);
+	(void)printf(" %8ld %11s", fst.fileid, mode);
 	rw[0] = '\0';
 	if (flag & FREAD)
 		strlcat(rw, "r", sizeof rw);
