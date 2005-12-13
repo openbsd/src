@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.57 2005/12/03 18:09:08 tedu Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.58 2005/12/13 07:38:40 tedu Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -126,35 +126,29 @@ exit1(struct proc *p, int rv, int flags)
 	 */
 	if (flags == EXIT_NORMAL && p != p->p_thrparent &&
 	    (p->p_thrparent->p_flag & P_WEXIT) == 0) {
-		printf("thread exiting normally %d\n", p->p_pid);
 		/*
 		 * we are one of the threads.  we SIGKILL the parent,
-		 * then wait for it to kill us back.  as soon as we return,
-		 * we'll exit again.
+		 * it will wake us up again, then we proceed.
 		 */
 		p->p_thrparent->p_flag |= P_IGNEXITRV;
 		p->p_thrparent->p_xstat = rv;
 		psignal(p->p_thrparent, SIGKILL);
-		tsleep(&p->p_thrparent->p_thrchildren, PUSER | PCATCH, "dying",
-		    0);
-		printf("thread got sig %d\n", p->p_pid);
-		return;
+		tsleep(&p->p_thrparent->p_thrchildren, PUSER, "thrdying", 0);
 	} else if (p == p->p_thrparent) {
 		p->p_flag |= P_WEXIT;
 		if (flags == EXIT_NORMAL) {
 			q = LIST_FIRST(&p->p_thrchildren);
-			for (; q != 0; q = nq) {
+			for (; q != NULL; q = nq) {
 				nq = LIST_NEXT(q, p_thrsib);
 				q->p_flag |= P_IGNEXITRV;
 				q->p_xstat = rv;
-				printf("parent killing child %d\n", q->p_pid);
 				psignal(q, SIGKILL);
 			}
 		}
+		wakeup(&p->p_thrchildren);
 		while (!LIST_EMPTY(&p->p_thrchildren))
 			tsleep(&p->p_thrchildren, PUSER, "thrdeath", 0);
 	}
-
 
 	if (p->p_flag & P_PROFIL)
 		stopprofclock(p);
