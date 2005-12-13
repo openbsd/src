@@ -1,4 +1,4 @@
-/*	$OpenBSD: esmreg.h,v 1.9 2005/11/30 11:46:57 dlg Exp $ */
+/*	$OpenBSD: esmreg.h,v 1.10 2005/12/13 02:31:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -212,11 +212,34 @@ struct esm_smb_resp {
 #define resp_thr _._thr
 } __packed;
 
-#define ESM2_VS_VALID		0x07
-#define ESM2_VS_SLOT		0x04
+/* esm_smb_resp_val drive values */
+#define ESM2_V_DRV_EMPTY	1
+#define ESM2_V_DRV_READY	2
+#define ESM2_V_DRV_POWERUP	3
+#define ESM2_V_DRV_ONLINE	4
+#define ESM2_V_DRV_IDLE		5
+#define ESM2_V_DRV_ACTIVE	6
+#define ESM2_V_DRV_REBUILD	7
+#define ESM2_V_DRV_POWERDOWN	8
+#define ESM2_V_DRV_FAIL		9
+#define ESM2_V_DRV_PFAIL	10
 
-#define isValidSensor(state) (((state) & ESM_STATE_MASK) == ESM_VALID_SENSOR)
-#define isValidSlot(state)   (((state) & ESM_VALID_SLOT) == ESM_VALID_SLOT)
+/* esm_smb_resp_val powersupply values */
+#define ESM2_V_PSU_ID(x)	((x)>>8 & 0xff)
+#define ESM2_V_PSU_AC		(1<<0)
+#define ESM2_V_PSU_SW		(1<<1)
+#define ESM2_V_PSU_OK		(1<<2)
+#define ESM2_V_PSU_ON		(1<<3)
+#define ESM2_V_PSU_FFAN		(1<<4)
+#define ESM2_V_PSU_OTMP		(1<<5)
+
+/* esm_smb_resp_val status */
+#define ESM2_VS_VALID		(1<<2)
+/* the powersupplies have a special status field */
+#define ESM2_VS_PSU_INST	(1<<0)
+#define ESM2_VS_PSU_PSON	(1<<1)
+#define ESM2_VS_PSU_FAIL	(1<<2)
+#define ESM2_VS_PSU_PSDB	(1<<3)
 
 enum esm_dev_type {
 	ESM2_DEV_ESM2 = 1,

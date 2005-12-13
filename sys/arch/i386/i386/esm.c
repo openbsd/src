@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.26 2005/12/01 00:19:14 deraadt Exp $ */
+/*	$OpenBSD: esm.c,v 1.27 2005/12/13 02:31:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -385,6 +385,15 @@ esm_refresh(void *arg)
 			if (val->v_reading >= es->es_thresholds.th_hi_warn ||
 			    val->v_reading <= es->es_thresholds.th_lo_warn) {
 				es->es_sensor->status = SENSOR_S_WARN;
+				break;
+			}
+
+			es->es_sensor->status = SENSOR_S_OK;
+			break;
+
+		case ESM_S_PWRSUP:
+			if (val->v_status & ESM2_VS_PSU_FAIL) {
+				es->es_sensor->status = SENSOR_S_CRIT;
 				break;
 			}
 
@@ -780,8 +789,16 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 		    DEVNAME(sc), devmap->index, i, sensor_map[i].name,
 		    val->v_reading, val->v_status, val->v_checksum);
 
-		if ((val->v_status & ESM2_VS_VALID) != ESM2_VS_VALID)
-			continue;
+		switch (sensor_map[i].type) {
+		case ESM_S_PWRSUP:
+			if (!(val->v_status & ESM2_VS_PSU_INST))
+				continue;
+			break;
+		default:
+			if (!(val->v_status & ESM2_VS_VALID))
+				continue;
+			break;
+		}
 
 		es = malloc(sizeof(struct esm_sensor), M_DEVBUF, M_NOWAIT);
 		if (es == NULL)
