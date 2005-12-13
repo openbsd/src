@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.104 2005/12/11 03:32:07 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.105 2005/12/13 12:13:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -182,8 +182,8 @@ ami_write_inbound_db(struct ami_softc *sc, u_int32_t v)
 {
 	AMI_DPRINTF(AMI_D_CMD, ("awi %x ", v));
 
-	bus_space_write_4(sc->iot, sc->ioh, AMI_QIDB, v);
-	bus_space_barrier(sc->iot, sc->ioh,
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, AMI_QIDB, v);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh,
 	    AMI_QIDB, 4, BUS_SPACE_BARRIER_WRITE);
 }
 
@@ -192,9 +192,9 @@ ami_read_inbound_db(struct ami_softc *sc)
 {
 	u_int32_t rv;
 
-	bus_space_barrier(sc->iot, sc->ioh,
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh,
 	    AMI_QIDB, 4, BUS_SPACE_BARRIER_READ);
-	rv = bus_space_read_4(sc->iot, sc->ioh, AMI_QIDB);
+	rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, AMI_QIDB);
 	AMI_DPRINTF(AMI_D_CMD, ("ari %x ", rv));
 
 	return (rv);
@@ -205,8 +205,8 @@ ami_write_outbound_db(struct ami_softc *sc, u_int32_t v)
 {
 	AMI_DPRINTF(AMI_D_CMD, ("awo %x ", v));
 
-	bus_space_write_4(sc->iot, sc->ioh, AMI_QODB, v);
-	bus_space_barrier(sc->iot, sc->ioh,
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, AMI_QODB, v);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh,
 	    AMI_QODB, 4, BUS_SPACE_BARRIER_WRITE);
 }
 
@@ -215,9 +215,9 @@ ami_read_outbound_db(struct ami_softc *sc)
 {
 	u_int32_t rv;
 
-	bus_space_barrier(sc->iot, sc->ioh,
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh,
 	    AMI_QODB, 4, BUS_SPACE_BARRIER_READ);
-	rv = bus_space_read_4(sc->iot, sc->ioh, AMI_QODB);
+	rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, AMI_QODB);
 	AMI_DPRINTF(AMI_D_CMD, ("aro %x ", rv));
 
 	return (rv);
@@ -236,19 +236,19 @@ ami_allocmem(struct ami_softc *sc, size_t size)
 	memset(am, 0, sizeof(struct ami_mem));
 	am->am_size = size;
 
-	if (bus_dmamap_create(sc->dmat, size, 1, size, 0,
+	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &am->am_map) != 0)
 		goto amfree; 
 
-	if (bus_dmamem_alloc(sc->dmat, size, PAGE_SIZE, 0, &am->am_seg, 1,
+	if (bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &am->am_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT) != 0)
 		goto destroy;
 
-	if (bus_dmamem_map(sc->dmat, &am->am_seg, nsegs, size, &am->am_kva,
+	if (bus_dmamem_map(sc->sc_dmat, &am->am_seg, nsegs, size, &am->am_kva,
 	    BUS_DMA_NOWAIT) != 0)
 		goto free;
 
-	if (bus_dmamap_load(sc->dmat, am->am_map, am->am_kva, size, NULL,
+	if (bus_dmamap_load(sc->sc_dmat, am->am_map, am->am_kva, size, NULL,
 	    BUS_DMA_NOWAIT) != 0)
 		goto unmap;
 
@@ -256,11 +256,11 @@ ami_allocmem(struct ami_softc *sc, size_t size)
 	return (am);
 
 unmap:
-	bus_dmamem_unmap(sc->dmat, am->am_kva, size);
+	bus_dmamem_unmap(sc->sc_dmat, am->am_kva, size);
 free:
-	bus_dmamem_free(sc->dmat, &am->am_seg, 1);
+	bus_dmamem_free(sc->sc_dmat, &am->am_seg, 1);
 destroy:
-	bus_dmamap_destroy(sc->dmat, am->am_map);
+	bus_dmamap_destroy(sc->sc_dmat, am->am_map);
 amfree:
 	free(am, M_DEVBUF);
 
@@ -270,10 +270,10 @@ amfree:
 void
 ami_freemem(struct ami_softc *sc, struct ami_mem *am)
 {
-	bus_dmamap_unload(sc->dmat, am->am_map);
-	bus_dmamem_unmap(sc->dmat, am->am_kva, am->am_size);
-	bus_dmamem_free(sc->dmat, &am->am_seg, 1);
-	bus_dmamap_destroy(sc->dmat, am->am_map);
+	bus_dmamap_unload(sc->sc_dmat, am->am_map);
+	bus_dmamem_unmap(sc->sc_dmat, am->am_kva, am->am_size);
+	bus_dmamem_free(sc->sc_dmat, &am->am_seg, 1);
+	bus_dmamap_destroy(sc->sc_dmat, am->am_map);
 	free(am, M_DEVBUF);
 }
 
@@ -335,9 +335,9 @@ ami_attach(struct ami_softc *sc)
 		ccb = &sc->sc_ccbs[i];
 		mem = &ccbmem[i];
 
-		error = bus_dmamap_create(sc->dmat, AMI_MAXFER, AMI_MAXOFFSETS,
-		    AMI_MAXFER, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
-		    &ccb->ccb_dmamap);
+		error = bus_dmamap_create(sc->sc_dmat, AMI_MAXFER,
+		    AMI_MAXOFFSETS, AMI_MAXFER, 0,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ccb->ccb_dmamap);
 		if (error) {
 			printf(": cannot create ccb dmamap (%d)\n", error);
 			goto destroy;
@@ -615,7 +615,7 @@ ami_attach(struct ami_softc *sc)
 destroy:
 	for (ccb = &sc->sc_ccbs[AMI_MAXCMDS - 1]; ccb > sc->sc_ccbs; ccb--)
 		if (ccb->ccb_dmamap)
-			bus_dmamap_destroy(sc->dmat, ccb->ccb_dmamap);
+			bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
 
 	ami_freemem(sc, sc->sc_ccbmem_am);
 free_mbox:
@@ -650,7 +650,7 @@ ami_quartz_exec(struct ami_softc *sc, struct ami_iocmd *cmd)
 	}
 
 	memcpy((struct ami_iocmd *)sc->sc_mbox, cmd, 16);
-	bus_dmamap_sync(sc->dmat, AMIMEM_MAP(sc->sc_mbox_am), 0,
+	bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_mbox_am), 0,
 	    sizeof(struct ami_iocmd), BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
 	sc->sc_mbox->acc_busy = 1;
@@ -684,21 +684,21 @@ ami_quartz_done(struct ami_softc *sc, struct ami_iocmd *mbox)
 	 */
 	i = 0;
 	while ((nstat = sc->sc_mbox->acc_nstat) == 0xff) {
-		bus_dmamap_sync(sc->dmat, AMIMEM_MAP(sc->sc_mbox_am), 0,
+		bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_mbox_am), 0,
 		    sizeof(struct ami_iocmd), BUS_DMASYNC_POSTREAD);
 		delay(1);
 		if (i++ > 1000000)
 			return (0); /* nothing to do */
 	}
 	sc->sc_mbox->acc_nstat = 0xff;
-	bus_dmamap_sync(sc->dmat, AMIMEM_MAP(sc->sc_mbox_am), 0,
+	bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_mbox_am), 0,
 	    sizeof(struct ami_iocmd), BUS_DMASYNC_POSTWRITE);
 
 	/* wait until fw wrote out all completions */
 	i = 0;
 	AMI_DPRINTF(AMI_D_CMD, ("aqd %d ", nstat));
 	for (n = 0; n < nstat; n++) {
-		bus_dmamap_sync(sc->dmat, AMIMEM_MAP(sc->sc_mbox_am), 0,
+		bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_mbox_am), 0,
 		    sizeof(struct ami_iocmd), BUS_DMASYNC_PREREAD);
 		while ((completed[n] = sc->sc_mbox->acc_cmplidl[n]) ==
 		    0xff) {
@@ -707,7 +707,7 @@ ami_quartz_done(struct ami_softc *sc, struct ami_iocmd *mbox)
 				return (0); /* nothing to do */
 		}
 		sc->sc_mbox->acc_cmplidl[n] = 0xff;
-		bus_dmamap_sync(sc->dmat, AMIMEM_MAP(sc->sc_mbox_am), 0,
+		bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_mbox_am), 0,
 		    sizeof(struct ami_iocmd), BUS_DMASYNC_POSTWRITE);
 	}
 
@@ -718,7 +718,7 @@ ami_quartz_done(struct ami_softc *sc, struct ami_iocmd *mbox)
 	sc->sc_mbox->acc_status = 0xff;
 
 	/* copy mailbox to temporary one and fixup other changed values */
-	bus_dmamap_sync(sc->dmat, AMIMEM_MAP(sc->sc_mbox_am), 0, 16,
+	bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_mbox_am), 0, 16,
 	    BUS_DMASYNC_POSTWRITE);
 	memcpy(mbox, (struct ami_iocmd *)sc->sc_mbox, 16);
 	mbox->acc_nstat = nstat;
@@ -753,7 +753,7 @@ ami_quartz_poll(struct ami_softc *sc, struct ami_iocmd *cmd)
 	}
 
 	memcpy((struct ami_iocmd *)sc->sc_mbox, cmd, 16);
-	bus_dmamap_sync(sc->dmat, AMIMEM_MAP(sc->sc_mbox_am), 0, 16,
+	bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_mbox_am), 0, 16,
 	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
 	sc->sc_mbox->acc_id = 0xfe;
@@ -851,13 +851,13 @@ ami_schwartz_init(struct ami_softc *sc)
 {
 	u_int32_t a = (u_int32_t)sc->sc_mbox_pa;
 
-	bus_space_write_4(sc->iot, sc->ioh, AMI_SMBADDR, a);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, AMI_SMBADDR, a);
 	/* XXX 40bit address ??? */
-	bus_space_write_1(sc->iot, sc->ioh, AMI_SMBENA, 0);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMI_SMBENA, 0);
 
-	bus_space_write_1(sc->iot, sc->ioh, AMI_SCMD, AMI_SCMD_ACK);
-	bus_space_write_1(sc->iot, sc->ioh, AMI_SIEM, AMI_SEIM_ENA |
-	    bus_space_read_1(sc->iot, sc->ioh, AMI_SIEM));
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMI_SCMD, AMI_SCMD_ACK);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMI_SIEM, AMI_SEIM_ENA |
+	    bus_space_read_1(sc->sc_iot, sc->sc_ioh, AMI_SIEM));
 
 	return (0);
 }
@@ -865,7 +865,8 @@ ami_schwartz_init(struct ami_softc *sc)
 int
 ami_schwartz_exec(struct ami_softc *sc, struct ami_iocmd *cmd)
 {
-	if (bus_space_read_1(sc->iot, sc->ioh, AMI_SMBSTAT) & AMI_SMBST_BUSY) {
+	if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, AMI_SMBSTAT) &
+	    AMI_SMBST_BUSY) {
 		AMI_DPRINTF(AMI_D_CMD, ("mbox_busy "));
 		return (EBUSY);
 	}
@@ -875,7 +876,7 @@ ami_schwartz_exec(struct ami_softc *sc, struct ami_iocmd *cmd)
 	sc->sc_mbox->acc_poll = 0;
 	sc->sc_mbox->acc_ack = 0;
 
-	bus_space_write_1(sc->iot, sc->ioh, AMI_SCMD, AMI_SCMD_EXEC);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMI_SCMD, AMI_SCMD_EXEC);
 	return (0);
 }
 
@@ -889,17 +890,19 @@ ami_schwartz_done(struct ami_softc *sc, struct ami_iocmd *mbox)
 	if (sc->sc_mbox->acc_busy)
 		return (0);
 #endif
-	if (bus_space_read_1(sc->iot, sc->ioh, AMI_SMBSTAT) & AMI_SMBST_BUSY)
+	if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, AMI_SMBSTAT) &
+	    AMI_SMBST_BUSY)
 		return (0);
 
-	stat = bus_space_read_1(sc->iot, sc->ioh, AMI_ISTAT);
+	stat = bus_space_read_1(sc->sc_iot, sc->sc_ioh, AMI_ISTAT);
 	if (stat & AMI_ISTAT_PEND) {
-		bus_space_write_1(sc->iot, sc->ioh, AMI_ISTAT, stat);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMI_ISTAT, stat);
 
 		*mbox = *sc->sc_mbox;
 		AMI_DPRINTF(AMI_D_CMD, ("asd %d ", mbox->acc_nstat));
 
-		bus_space_write_1(sc->iot, sc->ioh, AMI_SCMD, AMI_SCMD_ACK);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMI_SCMD,
+		    AMI_SCMD_ACK);
 
 		return (1);
 	}
@@ -918,7 +921,7 @@ ami_schwartz_poll(struct ami_softc *sc, struct ami_iocmd *mbox)
 		return (1); /* fail */
 
 	for (i = 0; i < AMI_MAX_POLLWAIT; i++) {
-		if (!(bus_space_read_1(sc->iot, sc->ioh, AMI_SMBSTAT) &
+		if (!(bus_space_read_1(sc->sc_iot, sc->sc_ioh, AMI_SMBSTAT) &
 		    AMI_SMBST_BUSY))
 			break;
 		delay(1);
@@ -929,18 +932,18 @@ ami_schwartz_poll(struct ami_softc *sc, struct ami_iocmd *mbox)
 	}
 
 	memcpy((struct ami_iocmd *)sc->sc_mbox, mbox, 16);
-	bus_dmamap_sync(sc->dmat, AMIMEM_MAP(sc->sc_mbox_am), 0, 16,
+	bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_mbox_am), 0, 16,
 	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
 	sc->sc_mbox->acc_busy = 1;
 	sc->sc_mbox->acc_poll = 0;
 	sc->sc_mbox->acc_ack = 0;
 	/* send command to firmware */
-	bus_space_write_1(sc->iot, sc->ioh, AMI_SCMD, AMI_SCMD_EXEC);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMI_SCMD, AMI_SCMD_EXEC);
 
 	/* wait until no longer busy */
 	for (i = 0; i < AMI_MAX_POLLWAIT; i++) {
-		if (!(bus_space_read_1(sc->iot, sc->ioh, AMI_SMBSTAT) &
+		if (!(bus_space_read_1(sc->sc_iot, sc->sc_ioh, AMI_SMBSTAT) &
 		    AMI_SMBST_BUSY))
 			break;
 		delay(1);
@@ -954,7 +957,7 @@ ami_schwartz_poll(struct ami_softc *sc, struct ami_iocmd *mbox)
 
 	/* wait for interrupt bit */
 	for (i = 0; i < AMI_MAX_POLLWAIT; i++) {
-		status = bus_space_read_1(sc->iot, sc->ioh, AMI_ISTAT);
+		status = bus_space_read_1(sc->sc_iot, sc->sc_ioh, AMI_ISTAT);
 		if (status & AMI_ISTAT_PEND)
 			break;
 		delay(1);
@@ -967,16 +970,16 @@ ami_schwartz_poll(struct ami_softc *sc, struct ami_iocmd *mbox)
 	}
 
 	/* write ststus back to firmware */
-	bus_space_write_1(sc->iot, sc->ioh, AMI_ISTAT, status);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMI_ISTAT, status);
 
 	/* copy mailbox and status back */
-	bus_dmamap_sync(sc->dmat, AMIMEM_MAP(sc->sc_mbox_am), 0,
+	bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_mbox_am), 0,
 	    sizeof(struct ami_iocmd), BUS_DMASYNC_PREREAD);
 	*mbox = *sc->sc_mbox;
 	rv = sc->sc_mbox->acc_status;
 
 	/* ack interrupt */
-	bus_space_write_1(sc->iot, sc->ioh, AMI_SCMD, AMI_SCMD_ACK);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMI_SCMD, AMI_SCMD_ACK);
 
 	return (rv);
 }
@@ -992,7 +995,7 @@ ami_cmd(struct ami_ccb *ccb, int flags, int wait)
 		struct ami_iocmd *cmd = &ccb->ccb_cmd;
 		bus_dma_segment_t *sgd;
 
-		error = bus_dmamap_load(sc->dmat, dmap, ccb->ccb_data,
+		error = bus_dmamap_load(sc->sc_dmat, dmap, ccb->ccb_data,
 		    ccb->ccb_len, NULL, flags);
 		if (error) {
 			if (error == EFBIG)
@@ -1044,11 +1047,11 @@ ami_cmd(struct ami_ccb *ccb, int flags, int wait)
 		}
 		AMI_DPRINTF(AMI_D_DMA, ("> "));
 
-		bus_dmamap_sync(sc->dmat, AMIMEM_MAP(sc->sc_ccbmem_am),
+		bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_ccbmem_am),
 		    ccb->ccb_offset, sizeof(struct ami_ccbmem),
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-		bus_dmamap_sync(sc->dmat, dmap, 0, dmap->dm_mapsize,
+		bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 		    (ccb->ccb_dir == AMI_CCB_IN) ?
 		    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	} else
@@ -1063,16 +1066,17 @@ ami_cmd(struct ami_ccb *ccb, int flags, int wait)
 			AMI_DPRINTF(AMI_D_MISC, ("pf "));
 #endif
 		if (ccb->ccb_data) {
-			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
+			bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
 			    ccb->ccb_dmamap->dm_mapsize,
 			    (ccb->ccb_dir == AMI_CCB_IN) ?
 			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 
-			bus_dmamap_sync(sc->dmat, AMIMEM_MAP(sc->sc_ccbmem_am),
+			bus_dmamap_sync(sc->sc_dmat,
+			    AMIMEM_MAP(sc->sc_ccbmem_am),
 			    ccb->ccb_offset, sizeof(struct ami_ccbmem),
 			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-			bus_dmamap_unload(sc->dmat, dmap);
+			bus_dmamap_unload(sc->sc_dmat, dmap);
 		}
 		if (ccb->ccb_wakeup)
 			ccb->ccb_wakeup = 0;
@@ -1082,16 +1086,17 @@ ami_cmd(struct ami_ccb *ccb, int flags, int wait)
 		AMI_DPRINTF(AMI_D_DMA, ("error=%d ", error));
 		__asm __volatile(".globl _bpamierr\n_bpamierr:");
 		if (ccb->ccb_data) {
-			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
+			bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
 			    ccb->ccb_dmamap->dm_mapsize,
 			    (ccb->ccb_dir == AMI_CCB_IN) ?
 			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 
-			bus_dmamap_sync(sc->dmat, AMIMEM_MAP(sc->sc_ccbmem_am),
+			bus_dmamap_sync(sc->sc_dmat,
+			    AMIMEM_MAP(sc->sc_ccbmem_am),
 			    ccb->ccb_offset, sizeof(struct ami_ccbmem),
 			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-			bus_dmamap_unload(sc->dmat, dmap);
+			bus_dmamap_unload(sc->sc_dmat, dmap);
 		}
 		ami_put_ccb(ccb);
 	}
@@ -1193,12 +1198,12 @@ ami_stimeout(void *v)
 		AMI_DPRINTF(AMI_D_CMD, ("timeout(%d) ", cmd->acc_id));
 		if (xs->cmd->opcode != PREVENT_ALLOW &&
 		    xs->cmd->opcode != SYNCHRONIZE_CACHE) {
-			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
+			bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
 			    ccb->ccb_dmamap->dm_mapsize,
 			    (xs->flags & SCSI_DATA_IN) ?
 			    BUS_DMASYNC_POSTREAD :
 			    BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
+			bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
 		}
 		TAILQ_REMOVE(&sc->sc_ccbq, ccb, ccb_link);
 		ami_put_ccb(ccb);
@@ -1233,16 +1238,16 @@ ami_done(struct ami_softc *sc, int idx)
 	TAILQ_REMOVE(&sc->sc_ccbq, ccb, ccb_link);
 
 	if (ccb->ccb_data != NULL) {
-		bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
+		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
 		    ccb->ccb_dmamap->dm_mapsize,
 		    (ccb->ccb_dir == AMI_CCB_IN) ?
 		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 
-		bus_dmamap_sync(sc->dmat, AMIMEM_MAP(sc->sc_ccbmem_am),
+		bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_ccbmem_am),
 		    ccb->ccb_offset, sizeof(struct ami_ccbmem),
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-		bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
+		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
 	}
 
 	if (ccb->ccb_wakeup) {

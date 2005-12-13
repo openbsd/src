@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.34 2005/12/13 11:32:27 dlg Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.35 2005/12/13 12:13:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -194,7 +194,7 @@ ami_pci_attach(struct device *parent, struct device *self, void *aux)
 	csr = pci_mapreg_type(pa->pa_pc, pa->pa_tag, AMI_BAR);
 	csr |= PCI_MAPREG_MEM_TYPE_32BIT;
 	if (pci_mapreg_map(pa, AMI_BAR, csr, 0,
-	    &sc->iot, &sc->ioh, NULL, &size, AMI_PCI_MEMSIZE)) {
+	    &sc->sc_iot, &sc->sc_ioh, NULL, &size, AMI_PCI_MEMSIZE)) {
 		printf(": can't map controller pci space\n");
 		return;
 	}
@@ -211,11 +211,11 @@ ami_pci_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_poll = ami_quartz_poll;
 		sc->sc_flags |= AMI_QUARTZ;
 	}
-	sc->dmat = pa->pa_dmat;
+	sc->sc_dmat = pa->pa_dmat;
 
 	if (pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt\n");
-		bus_space_unmap(sc->iot, sc->ioh, size);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
@@ -226,7 +226,7 @@ ami_pci_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr)
 			printf(" at %s", intrstr);
 		printf("\n");
-		bus_space_unmap(sc->iot, sc->ioh, size);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 		return;
 	}
 
@@ -290,6 +290,6 @@ ami_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (ami_attach(sc)) {
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 		sc->sc_ih = NULL;
-		bus_space_unmap(sc->iot, sc->ioh, size);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 	}
 }
