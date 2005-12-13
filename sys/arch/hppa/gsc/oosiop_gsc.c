@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop_gsc.c,v 1.1 2004/03/12 00:04:57 miod Exp $	*/
+/*	$OpenBSD: oosiop_gsc.c,v 1.2 2005/12/13 23:13:45 mickey Exp $	*/
 /*	$NetBSD: oosiop_gsc.c,v 1.2 2003/07/15 02:29:25 lukem Exp $	*/
 
 /*
@@ -39,10 +39,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
