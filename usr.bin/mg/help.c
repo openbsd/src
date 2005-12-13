@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.29 2005/12/13 06:01:27 kjell Exp $	*/
+/*	$OpenBSD: help.c,v 1.30 2005/12/13 07:20:13 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -128,7 +128,7 @@ static int
 showall(struct buffer *bp, KEYMAP *map, char *prefix)
 {
 	KEYMAP	*newmap;
-	char	 buf[80], key[16];
+	char	 buf[80], keybuf[16];
 	PF	 fun;
 	int	 c;
 
@@ -141,9 +141,9 @@ showall(struct buffer *bp, KEYMAP *map, char *prefix)
 		if (fun == rescan || fun == selfinsert)
 			continue;
 		getkeyname(buf, sizeof(buf), c);
-		(void)snprintf(key, sizeof(key), "%s%s ", prefix, buf);
+		(void)snprintf(keybuf, sizeof(keybuf), "%s%s ", prefix, buf);
 		if (fun == NULL) {
-			if (showall(bp, newmap, key) == FALSE)
+			if (showall(bp, newmap, keybuf) == FALSE)
 				return (FALSE);
 		} else {
 			if (addlinef(bp, "%-16s%s", key,
@@ -213,7 +213,7 @@ findbind(KEYMAP *map, PF fun, char *buf, size_t len)
 {
 	KEYMAP	*newmap;
 	PF	 nfun;
-	char	 buf2[16], key[16];
+	char	 buf2[16], keybuf[16];
 	int	 c;
 
 	/* XXX - 256 ? */
@@ -225,8 +225,8 @@ findbind(KEYMAP *map, PF fun, char *buf, size_t len)
 		}
 		if (nfun == NULL) {
 			if (findbind(newmap, fun, buf2, sizeof(buf2)) == TRUE) {
-				getkeyname(key, sizeof(key), c);
-				(void)snprintf(buf, len, "%s %s", key, buf2);
+				getkeyname(keybuf, sizeof(keybuf), c);
+				(void)snprintf(buf, len, "%s %s", keybuf, buf2);
 				return (TRUE);
 			}
 		}

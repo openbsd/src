@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.33 2005/12/13 06:01:27 kjell Exp $	*/
+/*	$OpenBSD: dired.c,v 1.34 2005/12/13 07:20:13 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -35,7 +35,7 @@ static int	 d_del(int, int);
 static int	 d_rename(int, int);
 static int	 d_shell_command(int, int);
 static int	 d_create_directory(int, int);
-static int	 d_makename(struct line *, char *, int);
+static int	 d_makename(struct line *, char *, size_t);
 
 extern struct keymap_s helpmap, cXmap, metamap;
 
@@ -556,7 +556,7 @@ d_create_directory(int f, int n)
 #define NAME_FIELD	8
 
 static int
-d_makename(struct line *lp, char *fn, int len)
+d_makename(struct line *lp, char *fn, size_t len)
 {
 	int	 i;
 	char	*p, *ep;

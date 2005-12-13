@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.80 2005/12/13 06:01:27 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.81 2005/12/13 07:20:13 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -585,7 +585,7 @@ int		 cntnonmatchlines(int, int);
 void		 free_undo_record(struct undo_rec *);
 int		 undo_dump(int, int);
 int		 undo_enable(int);
-int		 undo_add_boundary(void);
+void		 undo_add_boundary(void);
 int		 undo_add_insert(struct line *, int, int);
 int		 undo_add_delete(struct line *, int, int);
 void		 undo_no_boundary(int);

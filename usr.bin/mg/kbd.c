@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.20 2005/12/13 06:01:27 kjell Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.21 2005/12/13 07:20:13 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -173,12 +173,12 @@ rescan(int f, int n)
 	KEYMAP	*curmap;
 	int	 i;
 	PF	 fp = NULL;
-	int	 mode = curbp->b_nmodes;
+	int	 md = curbp->b_nmodes;
 
 	for (;;) {
 		if (ISUPPER(key.k_chars[key.k_count - 1])) {
 			c = TOLOWER(key.k_chars[key.k_count - 1]);
-			curmap = curbp->b_modes[mode]->p_map;
+			curmap = curbp->b_modes[md]->p_map;
 			for (i = 0; i < key.k_count - 1; i++) {
 				if ((fp = doscan(curmap, (key.k_chars[i]), &curmap))
 				    != NULL)
@@ -201,9 +201,9 @@ rescan(int f, int n)
 			}
 		}
 		/* try previous mode */
-		if (--mode < 0)
+		if (--md < 0)
 			return (ABORT);
-		curmap = curbp->b_modes[mode]->p_map;
+		curmap = curbp->b_modes[md]->p_map;
 		for (i = 0; i < key.k_count; i++) {
 			if ((fp = doscan(curmap, (key.k_chars[i]), &curmap)) != NULL)
 				break;
