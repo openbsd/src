@@ -1,4 +1,4 @@
-/*	$OpenBSD: ki2c.c,v 1.10 2005/11/19 21:46:41 brad Exp $	*/
+/*	$OpenBSD: ki2c.c,v 1.11 2005/12/13 19:21:45 kettenis Exp $	*/
 /*	$NetBSD: ki2c.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -40,6 +40,7 @@
 
 int ki2c_match(struct device *, void *, void *);
 void ki2c_attach(struct device *, struct device *, void *);
+void ki2c_attach_bus(struct ki2c_softc *, struct ki2c_bus *, int);
 inline u_int ki2c_readreg(struct ki2c_softc *, int);
 inline void ki2c_writereg(struct ki2c_softc *, int, u_int);
 u_int ki2c_getmode(struct ki2c_softc *);
@@ -85,9 +86,9 @@ ki2c_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ki2c_softc *sc = (struct ki2c_softc *)self;
 	struct confargs *ca = aux;
-	struct maci2cbus_attach_args iba;
 	int node = ca->ca_node;
-	int rate;
+	int rate, count = 0;
+	char name[32];
 
 	ca->ca_reg[0] += ca->ca_baseaddr;
 
@@ -117,13 +118,43 @@ ki2c_attach(struct device *parent, struct device *self, void *aux)
 	lockinit(&sc->sc_buslock, PZERO, sc->sc_dev.dv_xname, 0, 0);
 	ki2c_writereg(sc, IER,I2C_INT_DATA|I2C_INT_ADDR|I2C_INT_STOP);
 
-	sc->sc_i2c_tag.ic_cookie = sc;
-	sc->sc_i2c_tag.ic_acquire_bus = ki2c_i2c_acquire_bus;
-	sc->sc_i2c_tag.ic_release_bus = ki2c_i2c_release_bus;
-	sc->sc_i2c_tag.ic_exec = ki2c_i2c_exec;
+	for (node = OF_child(ca->ca_node); node; node = OF_peer(node)) {
+		if (OF_getprop(node, "name", &name, sizeof name) > 0) {
+			if (strcmp(name, "i2c-bus") == 0) {
+				ki2c_attach_bus(sc, &sc->sc_bus[count], node);
+				if (++count >= KI2C_MAX_BUSSES)
+					break;
+			}
+		}
+	}
+
+	/* 
+	 * If we didn't find any i2c-bus nodes, there is only a single
+	 * i2c bus.
+	 */
+
+	if (count == 0)
+		ki2c_attach_bus(sc, &sc->sc_bus[0], ca->ca_node);
+}
+
+void
+ki2c_attach_bus(struct ki2c_softc *sc, struct ki2c_bus *bus, int node)
+{
+	struct maci2cbus_attach_args iba;
+	u_int32_t reg;
+
+	if (OF_getprop(node, "reg", &reg, sizeof reg) != sizeof reg)
+		return;
+
+	bus->sc = sc;
+	bus->i2c_tag.ic_cookie = bus;
+	bus->i2c_tag.ic_acquire_bus = ki2c_i2c_acquire_bus;
+	bus->i2c_tag.ic_release_bus = ki2c_i2c_release_bus;
+	bus->i2c_tag.ic_exec = ki2c_i2c_exec;
+	bus->reg = reg;
 
 	iba.iba_node = node;
-	iba.iba_tag = &sc->sc_i2c_tag;
+	iba.iba_tag = &bus->i2c_tag;
 	config_found(&sc->sc_dev, &iba, NULL);
 }
 
@@ -317,24 +348,24 @@ ki2c_write(struct ki2c_softc *sc, int addr, int subaddr, const void *data, int l
 int
 ki2c_i2c_acquire_bus(void *cookie, int flags)
 {
-	struct ki2c_softc *sc = cookie;
+	struct ki2c_bus *bus = cookie;
 
-	return (lockmgr(&sc->sc_buslock, LK_EXCLUSIVE, NULL));
+	return (lockmgr(&bus->sc->sc_buslock, LK_EXCLUSIVE, NULL));
 }
 
 void
 ki2c_i2c_release_bus(void *cookie, int flags)
 {
-	struct ki2c_softc *sc = cookie;
+	struct ki2c_bus *bus = cookie;
 
-	(void) lockmgr(&sc->sc_buslock, LK_RELEASE, NULL);
+	(void) lockmgr(&bus->sc->sc_buslock, LK_RELEASE, NULL);
 }
 
 int
 ki2c_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
     const void *cmdbuf, size_t cmdlen, void *buf, size_t len, int flags)
 {
-	struct ki2c_softc *sc = cookie;
+	struct ki2c_bus *bus = cookie;
 	u_int mode = I2C_STDSUBMODE;
 	u_int8_t cmd = 0;
 
@@ -349,14 +380,14 @@ ki2c_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	if (cmdlen > 0)
 		cmd = *(u_int8_t *)cmdbuf;
 
-	ki2c_setmode(sc, mode, addr & 0x80);
+	ki2c_setmode(bus->sc, mode, bus->reg || addr & 0x80);
 	addr &= 0x7f;
 
 	if (I2C_OP_READ_P(op)) {
-		if (ki2c_read(sc, (addr << 1), cmd, buf, len) != 0)
+		if (ki2c_read(bus->sc, (addr << 1), cmd, buf, len) != 0)
 			return (EIO);
 	} else {
-		if (ki2c_write(sc, (addr << 1), cmd, buf, len) != 0)
+		if (ki2c_write(bus->sc, (addr << 1), cmd, buf, len) != 0)
 			return (EIO);
 	}
 	return (0);
