@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.2 2004/11/25 23:08:13 deraadt Exp $ */
+/*	$OpenBSD: if.c,v 1.3 2005/12/13 09:52:20 dlg Exp $ */
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
  *
@@ -149,10 +149,11 @@ fetchifstat(void)
 			    ifm.ifm_addrs, info);
 			if ((sdl = (struct sockaddr_dl *)info[RTAX_IFP])) {
 				if (sdl->sdl_family == AF_LINK &&
-				    sdl->sdl_nlen > 0)
-					strlcpy(ifs->ifs_name,
-					    sdl->sdl_data,
-					    sizeof(ifs->ifs_name));
+				    sdl->sdl_nlen > 0) {
+					bcopy(sdl->sdl_data, ifs->ifs_name,
+					    sdl->sdl_nlen);
+					ifs->ifs_name[sdl->sdl_nlen] = '\0';
+				}
 			}
 			if (ifs->ifs_name[0] == '\0')
 				continue;
