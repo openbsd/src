@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.24 2005/12/13 06:01:27 kjell Exp $	*/
+/*	$OpenBSD: tty.c,v 1.25 2005/12/13 19:01:32 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -440,7 +440,7 @@ fakec(int c)
 static int
 charcost(char *s)
 {
-	int	cci = 0;
+	cci = 0;
 
 	tputs(s, nrow, fakec);
 	return (cci);
