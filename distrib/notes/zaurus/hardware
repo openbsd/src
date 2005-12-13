@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.18 2005/11/19 08:23:42 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.19 2005/12/13 06:01:34 uwe Exp $
 dnl When more than one model is supported, turn this into a list...
 OpenBSD/MACHINE runs on the Sharp Zaurus C3000 and C3100 only, at
 the moment. Support for the C760 and C860 is under development.
@@ -80,7 +80,9 @@ Supported devices {:-include-:}:
 		NE2000 compatible CF Ethernet adapters
 		    Billionton Systems CFLT2-10N
 		    Buffalo LPC-CF-CLT
+		    Hawking CF686TX
 		    Tamarack TC3299CE
+		    TRENDnet TE-CF100
 		RealTek RTL8150L based USB adapters, including:
 		    Abocom RTL8151
 		    BAFO BF-310
