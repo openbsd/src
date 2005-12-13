@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.11 2005/12/12 11:31:54 mickey Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.12 2005/12/13 15:55:58 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -141,12 +141,6 @@ ciss_attach(struct ciss_softc *sc)
 
 	if (sc->cfg.signature != CISS_SIGNATURE) {
 		printf(": bad sign 0x%08x\n", sc->cfg.signature);
-		return -1;
-	}
-
-	if (sc->cfg.version != CISS_VERSION &&
-	    sc->cfg.version != CISS_VERSION3) {
-		printf(": unsupported version 0x%08x\n", sc->cfg.version);
 		return -1;
 	}
 
