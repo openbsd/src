@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.3 2005/12/07 03:18:39 tedu Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.4 2005/12/13 05:56:55 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -37,6 +37,7 @@
 
 #include "rthread.h"
 
+
 int thrsleep(long, int, void *);
 int thrwakeup(long);
 
@@ -73,8 +74,9 @@ again:
 	return (1);
 }
 
+/* always increment count */
 int
-_sem_wakeup(sem_t sem)
+_sem_post(sem_t sem)
 {
 	int rv = 0;
 
@@ -87,6 +89,23 @@ _sem_wakeup(sem_t sem)
 	_spinunlock(&sem->lock);
 	return (rv);
 }
+
+/* only increment count if a waiter */
+int
+_sem_wakeup(sem_t sem)
+{
+	int rv = 0;
+
+	_spinlock(&sem->lock);
+	if (sem->waitcount) {
+		sem->value++;
+		thrwakeup((long)sem);
+		rv = 1;
+	}
+	_spinunlock(&sem->lock);
+	return (rv);
+}
+
 
 int
 _sem_wakeall(sem_t sem)
@@ -152,7 +171,7 @@ sem_post(sem_t *semp)
 {
 	sem_t sem = *semp;
 
-	_sem_wakeup(sem);
+	_sem_post(sem);
 
 	return (0);
 }
@@ -261,7 +280,7 @@ pthread_mutex_unlock(pthread_mutex_t *mutexp)
 
 	if (--mutex->count == 0) {
 		mutex->owner = NULL;
-		_sem_wakeup((void *)&mutex->sem);
+		_sem_post((void *)&mutex->sem);
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.2 2005/12/03 18:17:55 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.3 2005/12/13 05:56:55 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -143,7 +143,7 @@ pthread_exit(void *retval)
 
 	thread->retval = retval;
 	thread->flags |= THREAD_DONE;
-	_sem_wakeup(&thread->donesem);
+	_sem_post(&thread->donesem);
 #if 0
 	if (thread->flags & THREAD_DETACHED)
 		free(thread);
@@ -157,7 +157,6 @@ pthread_join(pthread_t thread, void **retval)
 {
 
 	_sem_wait(&thread->donesem, 0, 0);
-	printf("joined %d %p\n", thread->tid, thread->retval);
 	if (retval)
 		*retval = thread->retval;
 
@@ -203,7 +202,6 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	    thread->stack->sp, thread_start, thread);
 	/* new thread will appear thread_start */
 	thread->tid = tid;
-	printf("new thread %d\n", tid);
 	*threadp = thread;
 	_spinunlock(&thread_lock);
 

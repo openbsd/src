@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.1 2005/12/03 18:16:19 tedu Exp $ */
+/*	$OpenBSD: rthread.h,v 1.2 2005/12/13 05:56:55 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -105,6 +105,7 @@ struct pthread {
 void	_spinlock(_spinlock_lock_t *);
 void	_spinunlock(_spinlock_lock_t *);
 int	_sem_wait(sem_t, int, int);
+int	_sem_post(sem_t);
 int	_sem_wakeup(sem_t);
 int	_sem_wakeall(sem_t);
 
