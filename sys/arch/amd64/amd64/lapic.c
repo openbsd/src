@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.3 2004/06/28 01:52:24 deraadt Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.4 2005/12/13 23:33:25 mickey Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -321,7 +321,8 @@ lapic_calibrate_timer(ci)
 
 	lapic_per_second = tmp;
 
-	printf("%s: apic clock running at %lldHz\n", ci->ci_dev->dv_xname, tmp);
+	printf("%s: apic clock running at %lldMHz\n",
+	    ci->ci_dev->dv_xname, tmp / (1000 * 1000));
 
 	if (lapic_per_second != 0) {
 		/*
