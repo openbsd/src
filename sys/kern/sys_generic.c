@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.50 2005/08/01 06:26:16 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.51 2005/12/13 10:33:14 jsg Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -71,10 +71,7 @@ void pollscan(struct proc *, struct pollfd *, u_int, register_t *);
  */
 /* ARGSUSED */
 int
-sys_read(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_read(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_read_args /* {
 		syscallarg(int) fd;
@@ -98,14 +95,8 @@ sys_read(p, v, retval)
 }
 
 int
-dofileread(p, fd, fp, buf, nbyte, offset, retval)
-	struct proc *p;
-	int fd;
-	struct file *fp;
-	void *buf;
-	size_t nbyte;
-	off_t *offset;
-	register_t *retval;
+dofileread(struct proc *p, int fd, struct file *fp, void *buf, size_t nbyte,
+    off_t *offset, register_t *retval)
 {
 	struct uio auio;
 	struct iovec aiov;
@@ -161,10 +152,7 @@ dofileread(p, fd, fp, buf, nbyte, offset, retval)
  * Scatter read system call.
  */
 int
-sys_readv(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_readv(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_readv_args /* {
 		syscallarg(int) fd;
@@ -188,14 +176,8 @@ sys_readv(p, v, retval)
 }
 
 int
-dofilereadv(p, fd, fp, iovp, iovcnt, offset, retval)
-	struct proc *p;
-	int fd;
-	struct file *fp;
-	const struct iovec *iovp;
-	int iovcnt;
-	off_t *offset;
-	register_t *retval;
+dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
+    int iovcnt, off_t *offset, register_t *retval)
 {
 	struct uio auio;
 	struct iovec *iov;
@@ -282,10 +264,7 @@ dofilereadv(p, fd, fp, iovp, iovcnt, offset, retval)
  * Write system call
  */
 int
-sys_write(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_write(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_write_args /* {
 		syscallarg(int) fd;
@@ -309,14 +288,8 @@ sys_write(p, v, retval)
 }
 
 int
-dofilewrite(p, fd, fp, buf, nbyte, offset, retval)
-	struct proc *p;
-	int fd;
-	struct file *fp;
-	const void *buf;
-	size_t nbyte;
-	off_t *offset;
-	register_t *retval;
+dofilewrite(struct proc *p, int fd, struct file *fp, const void *buf,
+    size_t nbyte, off_t *offset, register_t *retval)
 {
 	struct uio auio;
 	struct iovec aiov;
@@ -375,10 +348,7 @@ dofilewrite(p, fd, fp, buf, nbyte, offset, retval)
  * Gather write system call
  */
 int
-sys_writev(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_writev(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_writev_args /* {
 		syscallarg(int) fd;
@@ -402,14 +372,8 @@ sys_writev(p, v, retval)
 }
 
 int
-dofilewritev(p, fd, fp, iovp, iovcnt, offset, retval)
-	struct proc *p;
-	int fd;
-	struct file *fp;
-	const struct iovec *iovp;
-	int iovcnt;
-	off_t *offset;
-	register_t *retval;
+dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
+    int iovcnt, off_t *offset, register_t *retval)
 {
 	struct uio auio;
 	struct iovec *iov;
@@ -500,10 +464,7 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, retval)
  */
 /* ARGSUSED */
 int
-sys_ioctl(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_ioctl(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_ioctl_args /* {
 		syscallarg(int) fd;
@@ -761,17 +722,13 @@ done:
 }
 
 int
-selscan(p, ibits, obits, nfd, ni, retval)
-	struct proc *p;
-	fd_set *ibits, *obits;
-	int nfd;
-	int ni;
-	register_t *retval;
+selscan(struct proc *p, fd_set *ibits, fd_set *obits, int nfd, int ni,
+    register_t *retval)
 {
 	caddr_t cibits = (caddr_t)ibits, cobits = (caddr_t)obits;
-	register struct filedesc *fdp = p->p_fd;
-	register int msk, i, j, fd;
-	register fd_mask bits;
+	struct filedesc *fdp = p->p_fd;
+	int msk, i, j, fd;
+	fd_mask bits;
 	struct file *fp;
 	int n = 0;
 	static const int flag[3] = { POLLIN, POLLOUT, POLLPRI };
@@ -801,10 +758,7 @@ selscan(p, ibits, obits, nfd, ni, retval)
 
 /*ARGSUSED*/
 int
-seltrue(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+seltrue(dev_t dev, int events, struct proc *p)
 {
 
 	return (events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
@@ -814,9 +768,7 @@ seltrue(dev, events, p)
  * Record a select request.
  */
 void
-selrecord(selector, sip)
-	struct proc *selector;
-	struct selinfo *sip;
+selrecord(struct proc *selector, struct selinfo *sip)
 {
 	struct proc *p;
 	pid_t mypid;
@@ -835,10 +787,9 @@ selrecord(selector, sip)
  * Do a wakeup when a selectable event occurs.
  */
 void
-selwakeup(sip)
-	register struct selinfo *sip;
+selwakeup(struct selinfo *sip)
 {
-	register struct proc *p;
+	struct proc *p;
 	int s;
 
 	if (sip->si_selpid == 0)
@@ -864,11 +815,7 @@ selwakeup(sip)
 }
 
 void
-pollscan(p, pl, nfd, retval)
-	struct proc *p;
-	struct pollfd *pl;
-	u_int nfd;
-	register_t *retval;
+pollscan(struct proc *p, struct pollfd *pl, u_int nfd, register_t *retval)
 {
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;

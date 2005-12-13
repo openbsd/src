@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.33 2005/12/11 21:30:31 miod Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.34 2005/12/13 10:33:14 jsg Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -71,10 +71,7 @@
  * Process debugging system call.
  */
 int
-sys_ptrace(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_ptrace(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_ptrace_args /* {
 		syscallarg(int) req;

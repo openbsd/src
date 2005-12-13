@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.9 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.10 2005/12/13 10:33:14 jsg Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -54,11 +54,7 @@ struct	fileops socketops = {
 
 /* ARGSUSED */
 int
-soo_read(fp, poff, uio, cred)
-	struct file *fp;
-	off_t *poff;
-	struct uio *uio;
-	struct ucred *cred;
+soo_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
 
 	return (soreceive((struct socket *)fp->f_data, (struct mbuf **)0,
@@ -67,11 +63,7 @@ soo_read(fp, poff, uio, cred)
 
 /* ARGSUSED */
 int
-soo_write(fp, poff, uio, cred)
-	struct file *fp;
-	off_t *poff;
-	struct uio *uio;
-	struct ucred *cred;
+soo_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
 
 	return (sosend((struct socket *)fp->f_data, (struct mbuf *)0,
@@ -79,13 +71,9 @@ soo_write(fp, poff, uio, cred)
 }
 
 int
-soo_ioctl(fp, cmd, data, p)
-	struct file *fp;
-	u_long cmd;
-	register caddr_t data;
-	struct proc *p;
+soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 {
-	register struct socket *so = (struct socket *)fp->f_data;
+	struct socket *so = (struct socket *)fp->f_data;
 
 	switch (cmd) {
 
@@ -140,10 +128,7 @@ soo_ioctl(fp, cmd, data, p)
 }
 
 int
-soo_poll(fp, events, p)
-	struct file *fp;
-	int events;
-	struct proc *p;
+soo_poll(struct file *fp, int events, struct proc *p)
 {
 	struct socket *so = (struct socket *)fp->f_data;
 	int revents = 0;
@@ -176,10 +161,7 @@ soo_poll(fp, events, p)
 }
 
 int
-soo_stat(fp, ub, p)
-	struct file *fp;
-	struct stat *ub;
-	struct proc *p;
+soo_stat(struct file *fp, struct stat *ub, struct proc *p)
 {
 	struct socket *so = (struct socket *)fp->f_data;
 
@@ -192,9 +174,7 @@ soo_stat(fp, ub, p)
 
 /* ARGSUSED */
 int
-soo_close(fp, p)
-	struct file *fp;
-	struct proc *p;
+soo_close(struct file *fp, struct proc *p)
 {
 	int error = 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.49 2004/07/22 06:13:08 tedu Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.50 2005/12/13 10:33:14 jsg Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -101,10 +101,7 @@ int	pipespace(struct pipe *, u_int);
 
 /* ARGSUSED */
 int
-sys_opipe(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_opipe(struct proc *p, void *v, register_t *retval)
 {
 	struct filedesc *fdp = p->p_fd;
 	struct file *rf, *wf;
@@ -169,9 +166,7 @@ free1:
  * If it fails it will return ENOMEM.
  */
 int
-pipespace(cpipe, size)
-	struct pipe *cpipe;
-	u_int size;
+pipespace(struct pipe *cpipe, u_int size)
 {
 	caddr_t buffer;
 
@@ -197,8 +192,7 @@ pipespace(cpipe, size)
  * initialize and allocate VM and memory for pipe
  */
 int
-pipe_create(cpipe)
-	struct pipe *cpipe;
+pipe_create(struct pipe *cpipe)
 {
 	int error;
 
@@ -230,8 +224,7 @@ pipe_create(cpipe)
  * lock a pipe for I/O, blocking other access
  */
 static __inline int
-pipelock(cpipe)
-	struct pipe *cpipe;
+pipelock(struct pipe *cpipe)
 {
 	int error;
 	while (cpipe->pipe_state & PIPE_LOCK) {
@@ -247,8 +240,7 @@ pipelock(cpipe)
  * unlock a pipe I/O lock
  */
 static __inline void
-pipeunlock(cpipe)
-	struct pipe *cpipe;
+pipeunlock(struct pipe *cpipe)
 {
 	cpipe->pipe_state &= ~PIPE_LOCK;
 	if (cpipe->pipe_state & PIPE_LWANT) {
@@ -258,8 +250,7 @@ pipeunlock(cpipe)
 }
 
 static __inline void
-pipeselwakeup(cpipe)
-	struct pipe *cpipe;
+pipeselwakeup(struct pipe *cpipe)
 {
 	if (cpipe->pipe_state & PIPE_SEL) {
 		cpipe->pipe_state &= ~PIPE_SEL;
@@ -272,11 +263,7 @@ pipeselwakeup(cpipe)
 
 /* ARGSUSED */
 int
-pipe_read(fp, poff, uio, cred)
-	struct file *fp;
-	off_t *poff;
-	struct uio *uio;
-	struct ucred *cred;
+pipe_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
 	struct pipe *rpipe = (struct pipe *) fp->f_data;
 	int error;
@@ -393,11 +380,7 @@ unlocked_error:
 }
 
 int
-pipe_write(fp, poff, uio, cred)
-	struct file *fp;
-	off_t *poff;
-	struct uio *uio;
-	struct ucred *cred;
+pipe_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
 	int error = 0;
 	int orig_resid;
@@ -620,11 +603,7 @@ retrywrite:
  * we implement a very minimal set of ioctls for compatibility with sockets.
  */
 int
-pipe_ioctl(fp, cmd, data, p)
-	struct file *fp;
-	u_long cmd;
-	caddr_t data;
-	struct proc *p;
+pipe_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 {
 	struct pipe *mpipe = (struct pipe *)fp->f_data;
 
@@ -658,10 +637,7 @@ pipe_ioctl(fp, cmd, data, p)
 }
 
 int
-pipe_poll(fp, events, p)
-	struct file *fp;
-	int events;
-	struct proc *p;
+pipe_poll(struct file *fp, int events, struct proc *p)
 {
 	struct pipe *rpipe = (struct pipe *)fp->f_data;
 	struct pipe *wpipe;
@@ -698,10 +674,7 @@ pipe_poll(fp, events, p)
 }
 
 int
-pipe_stat(fp, ub, p)
-	struct file *fp;
-	struct stat *ub;
-	struct proc *p;
+pipe_stat(struct file *fp, struct stat *ub, struct proc *p)
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
 
@@ -724,9 +697,7 @@ pipe_stat(fp, ub, p)
 
 /* ARGSUSED */
 int
-pipe_close(fp, p)
-	struct file *fp;
-	struct proc *p;
+pipe_close(struct file *fp, struct proc *p)
 {
 	struct pipe *cpipe = (struct pipe *)fp->f_data;
 
@@ -737,8 +708,7 @@ pipe_close(fp, p)
 }
 
 void
-pipe_free_kmem(cpipe)
-	struct pipe *cpipe;
+pipe_free_kmem(struct pipe *cpipe)
 {
 	if (cpipe->pipe_buffer.buffer != NULL) {
 		if (cpipe->pipe_buffer.size > PIPE_SIZE)
@@ -754,8 +724,7 @@ pipe_free_kmem(cpipe)
  * shutdown the pipe
  */
 void
-pipeclose(cpipe)
-	struct pipe *cpipe;
+pipeclose(struct pipe *cpipe)
 {
 	struct pipe *ppipe;
 	if (cpipe) {
@@ -870,7 +839,7 @@ filt_pipewrite(struct knote *kn, long hint)
 }
 
 void
-pipe_init()
+pipe_init(void)
 {
 	pool_init(&pipe_pool, sizeof(struct pipe), 0, 0, 0, "pipepl",
 	    &pool_allocator_nointr);

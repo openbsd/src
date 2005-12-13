@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.18 2004/07/15 11:24:46 millert Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.19 2005/12/13 10:33:14 jsg Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 
 /*
@@ -55,9 +55,9 @@ struct msqid_ds *msqids;	/* MSGMNI msqid_ds struct's */
 void msg_freehdr(struct msg *);
 
 void
-msginit()
+msginit(void)
 {
-	register int i;
+	int i;
 
 	/*
 	 * msginfo.msgssz should be a power of two for efficiency reasons.
@@ -106,8 +106,7 @@ msginit()
 }
 
 void
-msg_freehdr(msghdr)
-	struct msg *msghdr;
+msg_freehdr(struct msg *msghdr)
 {
 	while (msghdr->msg_ts > 0) {
 		short next;
@@ -135,12 +134,9 @@ msg_freehdr(msghdr)
 }
 
 int
-sys_msgctl(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_msgctl(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_msgctl_args /* {
+	struct sys_msgctl_args /* {
 		syscallarg(int) msqid;
 		syscallarg(int) cmd;
 		syscallarg(struct msqid_ds *) buf;
@@ -151,13 +147,9 @@ sys_msgctl(p, v, retval)
 }
 
 int
-msgctl1(p, msqid, cmd, buf, ds_copyin, ds_copyout)
-	struct proc *p;
-	int msqid;
-	int cmd;
-	caddr_t buf;
-	int (*ds_copyin)(const void *, void *, size_t);
-	int (*ds_copyout)(const void *, void *, size_t);
+msgctl1(struct proc *p, int msqid, int cmd, caddr_t buf,
+    int (*ds_copyin)(const void *, void *, size_t),
+    int (*ds_copyout)(const void *, void *, size_t))
 {
 	struct ucred *cred = p->p_ucred;
 	struct msqid_ds msqbuf, *msqptr;
@@ -254,12 +246,9 @@ msgctl1(p, msqid, cmd, buf, ds_copyin, ds_copyout)
 }
 
 int
-sys_msgget(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_msgget(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_msgget_args /* {
+	struct sys_msgget_args /* {
 		syscallarg(key_t) key;
 		syscallarg(int) msgflg;
 	} */ *uap = v;
@@ -267,7 +256,7 @@ sys_msgget(p, v, retval)
 	int key = SCARG(uap, key);
 	int msgflg = SCARG(uap, msgflg);
 	struct ucred *cred = p->p_ucred;
-	register struct msqid_ds *msqptr = NULL;
+	struct msqid_ds *msqptr = NULL;
 
 	DPRINTF(("msgget(0x%x, 0%o)\n", key, msgflg));
 
@@ -342,12 +331,9 @@ found:
 }
 
 int
-sys_msgsnd(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_msgsnd(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_msgsnd_args /* {
+	struct sys_msgsnd_args /* {
 		syscallarg(int) msqid;
 		syscallarg(const void *) msgp;
 		syscallarg(size_t) msgsz;
@@ -359,8 +345,8 @@ sys_msgsnd(p, v, retval)
 	int msgflg = SCARG(uap, msgflg);
 	int segs_needed, eval;
 	struct ucred *cred = p->p_ucred;
-	register struct msqid_ds *msqptr;
-	register struct msg *msghdr;
+	struct msqid_ds *msqptr;
+	struct msg *msghdr;
 	short next;
 
 	DPRINTF(("call to msgsnd(%d, %p, %d, %d)\n", msqid, user_msgp, msgsz,
@@ -629,12 +615,9 @@ sys_msgsnd(p, v, retval)
 }
 
 int
-sys_msgrcv(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_msgrcv(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_msgrcv_args /* {
+	struct sys_msgrcv_args /* {
 		syscallarg(int) msqid;
 		syscallarg(void *) msgp;
 		syscallarg(size_t) msgsz;
@@ -648,8 +631,8 @@ sys_msgrcv(p, v, retval)
 	int msgflg = SCARG(uap, msgflg);
 	size_t len;
 	struct ucred *cred = p->p_ucred;
-	register struct msqid_ds *msqptr;
-	register struct msg *msghdr;
+	struct msqid_ds *msqptr;
+	struct msg *msghdr;
 	int eval;
 	short next;
 
