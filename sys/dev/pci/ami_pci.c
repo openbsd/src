@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.33 2005/12/12 09:39:29 dlg Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.34 2005/12/13 11:32:27 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -76,7 +76,7 @@ struct	ami_pci_device {
 	int	product;
 	int	flags;
 } ami_pci_devices[] = {
-	{ PCI_VENDOR_AMI,	PCI_PRODUCT_AMI_MEGARAID,	AMI_BROKEN },
+	{ PCI_VENDOR_AMI,	PCI_PRODUCT_AMI_MEGARAID,	0 },
 	{ PCI_VENDOR_AMI,	PCI_PRODUCT_AMI_MEGARAID428,	AMI_BROKEN },
 	{ PCI_VENDOR_AMI,	PCI_PRODUCT_AMI_MEGARAID434,	AMI_BROKEN },
 	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC_4DI,	0 },
@@ -93,21 +93,24 @@ struct	ami_pci_device {
 
 static const
 struct	ami_pci_subsys {
-	pcireg_t id;
-	char	name[14];
+	pcireg_t	id;
+	const char	*name;
+	int		flags;
 } ami_pci_subsys[] = {
-	/* only those of a special name are listed here */
-	{ 0x09A0101E,	"Dell 466v1" },
-	{ 0x11111111,	"Dell 466v2" },
-	{ 0x11121111,	"Dell 438" },
-	{ 0x11111028,	"Dell 466v3" },
-	{ 0x10c6103c,	"HP 438" },
-	{ 0x10c7103c,	"HP T5/T6" },
-	{ 0x10cc103c,	"HP T7" },
-	{ 0x10cd103c,	"HP 466" },
-	{ 0x45231000,	"LSI 523" },
-	{ 0x05328086,	"Intel SRCU42X" },
-	{ 0 }
+	/* only those of a special name or quirk are listed here */
+	{ 0x0511101e,	"AMI MegaRAID i4", AMI_BROKEN },
+	{ 0x04931028,	"Dell PERC3/DC", 0 },
+	{ 0x09A0101E,	"Dell 466v1", 0 },
+	{ 0x11111111,	"Dell 466v2", 0 },
+	{ 0x11121111,	"Dell 438", 0 },
+	{ 0x11111028,	"Dell 466v3", 0 },
+	{ 0x10c6103c,	"HP 438", 0 },
+	{ 0x10c7103c,	"HP T5/T6", 0 },
+	{ 0x10cc103c,	"HP T7", 0 },
+	{ 0x10cd103c,	"HP 466", 0 },
+	{ 0x45231000,	"LSI 523", 0 },
+	{ 0x05328086,	"Intel SRCU42X", 0 },
+	{ 0, NULL, 0 }
 };
 
 static const
@@ -230,11 +233,13 @@ ami_pci_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s", intrstr);
 
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
-	for (ssp = ami_pci_subsys; ssp->id; ssp++)
+	for (ssp = ami_pci_subsys; ssp->id; ssp++) {
 		if (ssp->id == csr) {
 			model = ssp->name;
+			sc->sc_flags |= ssp->flags;
 			break;
 		}
+	}
 
 	if (!model && PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMI) {
 		switch (PCI_PRODUCT(pa->pa_id)) {
@@ -280,7 +285,7 @@ ami_pci_attach(struct device *parent, struct device *self, void *aux)
 		panic("ami device dissapeared between match() and attach()");
 	}
 
-	printf(" %s/%s\n%s", model, lhc, sc->sc_dev.dv_xname);
+	printf(" %s %s\n%s", model, lhc, sc->sc_dev.dv_xname);
 
 	if (ami_attach(sc)) {
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
