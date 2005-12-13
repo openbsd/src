@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.23 2005/12/13 03:49:32 deraadt Exp $	*/
+/*	$OpenBSD: ipmi.c,v 1.24 2005/12/13 04:00:18 marco Exp $	*/
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1028,7 +1028,8 @@ ipmi_recvcmd(struct ipmi_softc *sc, int maxlen, int *rxlen, void *data)
 		return -1;
 	}
 	/* Receive message from interface, copy out result data */
-	sc->sc_if->recvmsg(sc, maxlen + 3, &rawlen, buf);
+	if (sc->sc_if->recvmsg(sc, maxlen + 3, &rawlen, buf))
+		return (-1);
 
 	*rxlen = rawlen - IPMI_MSG_DATARCV;
 	if (*rxlen > 0 && data)
@@ -1643,10 +1644,12 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	/* Identify BMC device */
 	if (ipmi_sendcmd(sc, BMC_SA, 0, APP_NETFN, APP_GET_DEVICE_ID, 0, NULL)){
 		printf(": unable to send get device id command\n");
+		ipmi_unmap_regs(sc, ia);
 		return;
 	}
 	if (ipmi_recvcmd(sc, sizeof(cmd), &len, cmd)) {
 		printf(": unable to retrieve device id\n");
+		ipmi_unmap_regs(sc, ia);
 		return;
 	}
 	dbg_dump(1, "bmc data", len, cmd);
