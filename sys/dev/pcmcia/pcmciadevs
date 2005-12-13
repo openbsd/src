@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.125 2005/12/05 18:06:16 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.126 2005/12/13 23:06:47 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -421,6 +421,7 @@ vendor GEMTEK			-1	GEMTEK
 vendor GVC			-1	GVC
 vendor ICOM			-1	ICOM Inc
 vendor INTERSIL			-1	Intersil
+vendor NOVATEL			-1	Novatel
 vendor PLANET			-1	Planet
 vendor PLANEX			-1	Planex
 vendor PREMAX			-1	Premax
@@ -517,3 +518,4 @@ product GVC NP0335		{ "ETHER-C16", "ETHER-C16", "Fast&spEthernet", NULL }
 product RELIA RE2408T		{ "PCMCIA&spLAN", "Ethernet", "A", "004743118001" }
 product ALLIEDTELESIS WR211PCM	{ "Allied&spTelesis&spK.K.", "WR211PCM", NULL, NULL }
 product BILLIONTON CFLT2	{ "CF", "10Base-Ethernet", NULL, NULL }
+product NOVATEL NRM6831		{ "Novatel&spWireless", "Merlin&spUMTS&spModem", "NRM6831", NULL }

@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.128 2005/12/05 18:06:36 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.129 2005/12/13 23:07:31 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.125 2005/12/05 18:06:16 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.126 2005/12/13 23:06:47 mickey Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -586,6 +586,7 @@
 #define	PCMCIA_VENDOR_GVC	-1	/* GVC */
 #define	PCMCIA_VENDOR_ICOM	-1	/* ICOM Inc */
 #define	PCMCIA_VENDOR_INTERSIL	-1	/* Intersil */
+#define	PCMCIA_VENDOR_NOVATEL	-1	/* Novatel */
 #define	PCMCIA_VENDOR_PLANET	-1	/* Planet */
 #define	PCMCIA_VENDOR_PLANEX	-1	/* Planex */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
@@ -756,3 +757,5 @@
 #define	PCMCIA_PRODUCT_ALLIEDTELESIS_WR211PCM	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_BILLIONTON_CFLT2	{ "CF", "10Base-Ethernet", NULL, NULL }
 #define	PCMCIA_PRODUCT_BILLIONTON_CFLT2	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_NOVATEL_NRM6831	{ "Novatel Wireless", "Merlin UMTS Modem", "NRM6831", NULL }
+#define	PCMCIA_PRODUCT_NOVATEL_NRM6831	PCMCIA_PRODUCT_INVALID
