@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.68 2005/12/13 06:03:54 tedu Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.69 2005/12/13 07:34:38 tedu Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -422,7 +422,7 @@ int
 sys_thrwakeup(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_thrwakeup_args *uap = v;
-	long ident = (void *)SCARG(uap, ident);
+	long ident = (long)SCARG(uap, ident);
 	struct twaitnode *n;
 	
 	LIST_FOREACH(n, &p->p_thrparent->p_sleepers, t_next) {
