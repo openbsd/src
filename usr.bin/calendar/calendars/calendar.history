@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.43 2005/12/12 18:50:31 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.44 2005/12/13 23:39:21 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -302,7 +302,6 @@
 08/31	Non-aggression pact signed by USSR and Afghanistan, 1926
 08/31	Independent union "Solidarnosc" born, Gdansk, 1980
 09/01	Bobby Fischer defeats Boris Spassky in World Chess Match, 1972
-09/01	Joshua A. Norton proclaims himself 'Emperor Norton I', 1859
 09/02	Great Britain adopts Gregorian Calendar, 1752
 09/02	Japan signs unconditional surrender on US battleship `Missouri', 1945
 09/03	Anniversary of the Founding of the Republic in San Marino
@@ -329,6 +328,7 @@
 09/15	Soviet Premier Nikita Khrushchev begins his 13 day tour of the US, 1959
 09/15	The U.S. Foreign Affairs Dept. becomes the U.S. State Department, 1789
 09/16	The village of Shawmut, Massachusetts, becomes the city of Boston, 1630
+09/17	Joshua A. Norton proclaims himself 'Emperor Norton I', 1859
 09/17	Battle of Antietam, 1862
 09/18	Victory of Uprona in Burundi
 09/20	Equal Rights Party nominates Belva Lockwood for President, 1884
