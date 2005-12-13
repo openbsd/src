@@ -35,6 +35,26 @@ Boston, MA 02111-1307, USA.  */
     }						\
   while (0)
 
+/* Override the default from rs6000.h to avoid conflicts with macros
+   defined in OpenBSD header files.  */
+
+#undef RS6000_CPU_CPP_ENDIAN_BUILTINS
+#define RS6000_CPU_CPP_ENDIAN_BUILTINS()	\
+  do						\
+    {						\
+      if (BYTES_BIG_ENDIAN)			\
+	{					\
+	  builtin_define ("__BIG_ENDIAN__");	\
+	  builtin_assert ("machine=bigendian");	\
+	}					\
+      else					\
+	{					\
+	  builtin_define ("__LITTLE_ENDIAN__");	\
+	  builtin_assert ("machine=littleendian"); \
+	}					\
+    }						\
+  while (0)
+
 #undef	CPP_OS_DEFAULT_SPEC
 #define CPP_OS_DEFAULT_SPEC "%(cpp_os_openbsd)"
 
