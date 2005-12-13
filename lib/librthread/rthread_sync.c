@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.5 2005/12/13 06:04:53 tedu Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.6 2005/12/13 07:04:34 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -64,7 +64,8 @@ again:
 	}
 
 	if (do_sleep) {
-		if (thrsleep(sem, timo, &sem->lock) == EWOULDBLOCK)
+		if (thrsleep(sem, timo, &sem->lock) == -1 &&
+		    errno == EWOULDBLOCK)
 			return (0);
 		_spinlock(&sem->lock);
 		sem->waitcount--;
@@ -354,17 +355,18 @@ pthread_cond_timedwait(pthread_cond_t *condp, pthread_mutex_t *mutexp,
     const struct timespec *abstime)
 {
 	int error;
+	int rv;
 
 	if (!*condp)
 		if ((error = pthread_cond_init(condp, NULL)))
 			return (error);
 
 	pthread_mutex_unlock(mutexp);
-	_sem_wait(&(*condp)->sem, 0, (abstime ?
-	    abstime->tv_sec * 100 + abstime->tv_nsec / 10000000 : 0));
+	rv = _sem_wait(&(*condp)->sem, 0, (abstime ?
+	    abstime->tv_sec * 1000 + abstime->tv_nsec / 1000000 : 0));
 	error = pthread_mutex_lock(mutexp);
 
-	return (error);
+	return (error ? error : rv ? 0 : ETIMEDOUT);
 }
 
 int
