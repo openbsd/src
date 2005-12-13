@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.6 2004/12/24 22:50:29 miod Exp $	*/
+/*	$OpenBSD: vector.s,v 1.7 2005/12/13 16:14:49 aaron Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -86,11 +86,22 @@
  * On exit, we jump to Xdoreti(), to process soft interrupts and ASTs.
  */
 #define	INTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
+IDTVEC(resume_/**/name/**/num)						;\
+	push	%ebx							;\
+	cli								;\
+	jmp	1f							;\
 IDTVEC(recurse_/**/name/**/num)						;\
 	pushfl								;\
 	pushl	%cs							;\
 	pushl	%esi							;\
+	pushl	$0			/* dummy error code */		;\
+	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
+	movl	%ebx,%esi						;\
+	INTRENTRY							;\
+	MAKE_FRAME							;\
+	push	%esi							;\
 	cli								;\
+	jmp	1f							;\
 _C_LABEL(Xintr_/**/name/**/num):					;\
 	pushl	$0			/* dummy error code */		;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
@@ -103,9 +114,9 @@ _C_LABEL(Xintr_/**/name/**/num):					;\
 	movl	CPL,%ebx						;\
 	cmpl	%eax,%ebx						;\
 	jae	_C_LABEL(Xhold_/**/name/**/num)/* currently masked; hold it */;\
-Xresume_/**/name/**/num/**/:						;\
 	movl	CPL,%eax		/* cpl to restore on exit */	;\
 	pushl	%eax							;\
+1:									;\
 	movl	_C_LABEL(imaxlevel) + (num) * 4,%eax			;\
 	movl	%eax,CPL		/* block enough for this irq */	;\
 	sti				/* safe to take intrs now */	;\

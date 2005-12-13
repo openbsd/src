@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.22 2005/01/07 02:03:17 pascoe Exp $	*/
+/*	$OpenBSD: icu.s,v 1.23 2005/12/13 16:14:49 aaron Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -59,13 +59,17 @@ IDTVEC(spllower)
 1:	movl	%ebx,%eax		# get cpl
 	shrl	$4,%eax			# find its mask.
 	movl	_C_LABEL(iunmask)(,%eax,4),%eax
+	cli
 	andl	_C_LABEL(ipending),%eax		# any non-masked bits left?
 	jz	2f
+	sti
 	bsfl	%eax,%eax
 	btrl	%eax,_C_LABEL(ipending)
 	jnc	1b
 	jmp	*_C_LABEL(Xrecurse)(,%eax,4)
-2:	popl	%edi
+2:	movl	%ebx,CPL
+	sti
+	popl	%edi
 	popl	%esi
 	popl	%ebx
 	ret
@@ -80,13 +84,14 @@ IDTVEC(spllower)
  */
 IDTVEC(doreti)
 	popl	%ebx			# get previous priority
-	movl	%ebx,CPL
 	movl	$1f,%esi		# address to resume loop at
 1:	movl	%ebx,%eax
 	shrl	$4,%eax
 	movl	_C_LABEL(iunmask)(,%eax,4),%eax
+	cli
 	andl	_C_LABEL(ipending),%eax
 	jz	2f
+	sti
 	bsfl    %eax,%eax               # slow, but not worth optimizing
 	btrl    %eax,_C_LABEL(ipending)
 	jnc     1b			# some intr cleared the in-memory bit
@@ -94,7 +99,7 @@ IDTVEC(doreti)
 	jmp	*_C_LABEL(Xresume)(,%eax,4)
 2:	/* Check for ASTs on exit to user mode. */
 	CHECK_ASTPENDING(%ecx)
-	cli
+	movl	%ebx,CPL
 	je	3f
 	testb   $SEL_RPL,TF_CS(%esp)
 #ifdef VM86
@@ -130,7 +135,6 @@ IDTVEC(softtty)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(i386_softintunlock)
 #endif
-	movl	%ebx,CPL
 #endif
 	jmp	*%esi
 
@@ -154,7 +158,6 @@ IDTVEC(softnet)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(i386_softintunlock)
 #endif
- 	movl	%ebx,CPL
 	jmp	*%esi
 #undef DONETISR
 
@@ -169,6 +172,5 @@ IDTVEC(softclock)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(i386_softintunlock)
 #endif
-	movl	%ebx,CPL
 	jmp	*%esi
 
