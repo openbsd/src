@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.27 2005/11/18 20:56:53 deraadt Exp $	*/
+/*	$OpenBSD: help.c,v 1.28 2005/12/13 05:40:33 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -31,24 +31,24 @@ desckey(int f, int n)
 	PF	 funct;
 	int	 c, m, i, num;
 	char	*pep;
-	char	 prompt[80];
+	char	 dprompt[80];
 
 #ifndef NO_MACRO
 	if (inmacro)
 		return (TRUE);	/* ignore inside keyboard macro */
 #endif /* !NO_MACRO */
-	num = strlcpy(prompt, "Describe key briefly: ", sizeof(prompt));
-	if (num >= sizeof(prompt))
-		num = sizeof(prompt) - 1;
-	pep = prompt + num;
+	num = strlcpy(dprompt, "Describe key briefly: ", sizeof(dprompt));
+	if (num >= sizeof(dprompt))
+		num = sizeof(dprompt) - 1;
+	pep = dprompt + num;
 	key.k_count = 0;
 	m = curbp->b_nmodes;
 	curmap = curbp->b_modes[m]->p_map;
 	for (;;) {
 		for (;;) {
-			ewprintf("%s", prompt);
+			ewprintf("%s", dprompt);
 			pep[-1] = ' ';
-			pep = keyname(pep, sizeof(prompt) - (pep - prompt),
+			pep = keyname(pep, sizeof(dprompt) - (pep - dprompt),
 			    key.k_chars[key.k_count++] = c = getkey(FALSE));
 			if ((funct = doscan(curmap, c, &curmap)) != NULL)
 				break;

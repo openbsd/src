@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.33 2005/11/22 05:02:44 kjell Exp $	*/
+/*	$OpenBSD: line.c,v 1.34 2005/12/13 05:40:33 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -462,7 +462,7 @@ ldelete(RSIZE n, int kflag)
 		}
 		n -= chunk;
 	}
-	if (kchunk(sv, len, kflag) != TRUE)
+	if (kchunk(sv, (RSIZE)len, kflag) != TRUE)
 		return (FALSE);
 	free(sv);
 	return (TRUE);

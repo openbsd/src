@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.25 2005/11/18 20:56:53 deraadt Exp $	*/
+/*	$OpenBSD: search.c,v 1.26 2005/12/13 05:40:33 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -338,7 +338,7 @@ isearch(int dir)
 				ewprintf("Mark set");
 				curwp->w_flag |= WFMOVE;
 				return (TRUE);
-			}	/* and continue */
+			}	/* FALLTHRU */
 		case CCHR('I'):
 		case CCHR('J'):
 	addchar:

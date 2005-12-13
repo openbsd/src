@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.40 2005/11/18 20:56:52 deraadt Exp $	*/
+/*	$OpenBSD: extend.c,v 1.41 2005/12/13 05:40:33 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -326,7 +326,7 @@ dobind(KEYMAP *curmap, const char *p, int unbind)
 {
 	KEYMAP	*pref_map = NULL;
 	PF	 funct;
-	char	 prompt[80], *bufp, *pep;
+	char	 bprompt[80], *bufp, *pep;
 	int	 c, s, n;
 
 #ifndef NO_MACRO
@@ -353,15 +353,15 @@ dobind(KEYMAP *curmap, const char *p, int unbind)
 	} else {
 #endif /* !NO_STARTUP */
 #endif /* !NO_MACRO */
-		n = strlcpy(prompt, p, sizeof(prompt));
-		if (n >= sizeof(prompt))
-			n = sizeof(prompt) - 1;
-		pep = prompt + n;
+		n = strlcpy(bprompt, p, sizeof(bprompt));
+		if (n >= sizeof(bprompt))
+			n = sizeof(bprompt) - 1;
+		pep = bprompt + n;
 		for (;;) {
-			ewprintf("%s", prompt);
+			ewprintf("%s", bprompt);
 			pep[-1] = ' ';
-			pep = keyname(pep, sizeof(prompt) - (pep - prompt),
-			    c = getkey(FALSE));
+			pep = keyname(pep, sizeof(bprompt) -
+			    (pep - bprompt), c = getkey(FALSE));
 			if (doscan(curmap, c, &curmap) != NULL)
 				break;
 			*pep++ = '-';
@@ -373,13 +373,13 @@ dobind(KEYMAP *curmap, const char *p, int unbind)
 	if (unbind)
 		funct = rescan;
 	else {
-		if ((bufp = eread("%s to command: ", prompt, sizeof(prompt),
-		    EFFUNC | EFNEW, prompt)) == NULL)
+		if ((bufp = eread("%s to command: ", bprompt, sizeof(bprompt),
+		    EFFUNC | EFNEW, bprompt)) == NULL)
 			return (ABORT);
 		else if (bufp[0] == '\0')
 			return (FALSE);
-		if (((funct = name_function(prompt)) == NULL) ?
-		    (pref_map = name_map(prompt)) == NULL : funct == NULL) {
+		if (((funct = name_function(bprompt)) == NULL) ?
+		    (pref_map = name_map(bprompt)) == NULL : funct == NULL) {
 			ewprintf("[No match]");
 			return (FALSE);
 		}

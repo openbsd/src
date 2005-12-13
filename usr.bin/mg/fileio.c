@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.65 2005/11/20 18:47:11 kjell Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.66 2005/12/13 05:40:33 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -57,12 +57,12 @@ int
 ffwopen(const char *fn, struct buffer *bp)
 {
 	int	fd;
-	mode_t	mode = DEFFILEMODE;
+	mode_t	fmode = DEFFILEMODE;
 
 	if (bp && bp->b_fi.fi_mode)
-		mode = bp->b_fi.fi_mode & 07777;
+		fmode = bp->b_fi.fi_mode & 07777;
 
-	fd = open(fn, O_RDWR | O_CREAT | O_TRUNC, mode);
+	fd = open(fn, O_RDWR | O_CREAT | O_TRUNC, fmode);
 	if (fd == -1) {
 		ffp = NULL;
 		ewprintf("Cannot open file for writing : %s", strerror(errno));
@@ -353,7 +353,7 @@ copy(char *frname, char *toname)
 {
 	int	ifd, ofd, n;
 	char	buf[BUFSIZ];
-	mode_t	mode = DEFFILEMODE;	/* XXX?? */
+	mode_t	fmode = DEFFILEMODE;	/* XXX?? */
 	struct	stat orig;
 
 	if ((ifd = open(frname, O_RDONLY)) == -1)
@@ -364,7 +364,7 @@ copy(char *frname, char *toname)
 		return (FALSE);
 	}
 
-	if ((ofd = open(toname, O_WRONLY|O_CREAT|O_TRUNC, mode)) == -1) {
+	if ((ofd = open(toname, O_WRONLY|O_CREAT|O_TRUNC, fmode)) == -1) {
 		close(ifd);
 		return (FALSE);
 	}
