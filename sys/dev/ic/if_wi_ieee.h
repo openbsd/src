@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.26 2005/11/19 07:04:52 jsg Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.27 2005/12/13 10:30:35 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -292,7 +292,7 @@ struct wi_ltv_keys {
 #define WI_RID_MFI_SUP_RANGE	0xFD0C /* modem supplier compatibility */
 #define WI_RID_CFI_SUP_RANGE	0xFD0D /* controller sup. compatibility */
 #define WI_RID_CHANNEL_LIST	0xFD10 /* allowed comm. frequencies. */
-#define WI_RID_REG_DOMAINS	0xFD11 /* list of intendted regulatory doms */
+#define WI_RID_REG_DOMAINS	0xFD11 /* list of intended regulatory doms */
 #define WI_RID_TEMP_TYPE	0xFD12 /* hw temp range code */
 #define WI_RID_CIS		0xFD13 /* PC card info struct */
 #define WI_RID_STA_IDENTITY	0xFD20 /* station funcs firmware ident */
@@ -310,7 +310,7 @@ struct wi_ltv_keys {
 #define WI_RID_COMMS_QUALITY	0xFD43 /* quality of BSS connection */
 #define WI_RID_CUR_TX_RATE	0xFD44 /* current TX rate */
 #define WI_RID_OWN_BEACON_INT	0xFD45 /* beacon xmit time for BSS creation */
-#define WI_RID_CUR_SCALE_THRESH	0xFD46 /* actual system scane thresh setting */
+#define WI_RID_CUR_SCALE_THRESH	0xFD46 /* actual system scale thresh setting */
 #define WI_RID_PROT_RESP_TIME	0xFD47 /* time to wait for resp to req msg */
 #define WI_RID_SHORT_RTR_LIM	0xFD48 /* max tx attempts for short frames */
 #define WI_RID_LONG_RTS_LIM	0xFD49 /* max tx attempts for long frames */
