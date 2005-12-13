@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.6 2005/12/13 07:04:34 tedu Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.7 2005/12/13 17:22:46 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -47,9 +47,16 @@ int thrwakeup(void *);
 int
 _sem_wait(sem_t sem, int tryonly, int timo)
 {
-	int do_sleep;
 
 	_spinlock(&sem->lock);
+	return (_sem_waitl(sem, tryonly, timo));
+}
+
+int
+_sem_waitl(sem_t sem, int tryonly, int timo)
+{
+	int do_sleep;
+
 again:
 	if (sem->value == 0) {
 		if (tryonly) {
@@ -361,8 +368,9 @@ pthread_cond_timedwait(pthread_cond_t *condp, pthread_mutex_t *mutexp,
 		if ((error = pthread_cond_init(condp, NULL)))
 			return (error);
 
+	_spinlock(&(*condp)->sem.lock);
 	pthread_mutex_unlock(mutexp);
-	rv = _sem_wait(&(*condp)->sem, 0, (abstime ?
+	rv = _sem_waitl(&(*condp)->sem, 0, (abstime ?
 	    abstime->tv_sec * 1000 + abstime->tv_nsec / 1000000 : 0));
 	error = pthread_mutex_lock(mutexp);
 
