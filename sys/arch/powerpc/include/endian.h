@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.13 2005/12/13 00:35:23 millert Exp $ */
+/*	$OpenBSD: endian.h,v 1.14 2005/12/13 14:13:53 millert Exp $ */
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -27,7 +27,7 @@
 #ifndef _POWERPC_ENDIAN_H_
 #define _POWERPC_ENDIAN_H_
 
-#undef _BYTE_ORDER	/* XXX - gcc may define _BYTE_ORDER too */
+#undef _BIG_ENDIAN	/* XXX - gcc may define _BIG_ENDIAN too */
 #define _BYTE_ORDER _BIG_ENDIAN
 #include <sys/endian.h>
 
