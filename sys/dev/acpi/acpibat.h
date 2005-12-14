@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.h,v 1.1 2005/12/13 23:19:15 marco Exp $ */
+/* $OpenBSD: acpibat.h,v 1.2 2005/12/14 03:35:04 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -18,26 +18,27 @@
 #ifndef __DEV_ACPI_ACPIBAT_H__
 #define __DEV_ACPI_ACPIBAT_H__
 
-#if 0
-Arguments: none
-Results  : package _BIF (Battery InFormation)
-Package {
-	// ASCIIZ is ASCII character string terminated with a 0x00.
-	Power Unit			//DWORD
-	Design Capacity			//DWORD
-	Last Full Charge Capacity	//DWORD
-	Battery Technology		//DWORD
-	Design Voltage			//DWORD
-	Design Capacity of Warning	//DWORD
-	Design Capacity of Low		//DWORD
-	Battery Capacity Granularity 1	//DWORD
-	Battery Capacity Granularity 2	//DWORD
-	Model Number			//ASCIIZ
-	Serial Number			//ASCIIZ
-	Battery Type			//ASCIIZ
-	OEM Information			//ASCIIZ
-}
-#endif
+/*
+ * _BIF (Battery InFormation)
+ * Arguments: none
+ * Results  : package _BIF (Battery InFormation)
+ * Package {
+ * 	// ASCIIZ is ASCII character string terminated with a 0x00.
+ * 	Power Unit			//DWORD
+ * 	Design Capacity			//DWORD
+ * 	Last Full Charge Capacity	//DWORD
+ * 	Battery Technology		//DWORD
+ * 	Design Voltage			//DWORD
+ * 	Design Capacity of Warning	//DWORD
+ * 	Design Capacity of Low		//DWORD
+ * 	Battery Capacity Granularity 1	//DWORD
+ * 	Battery Capacity Granularity 2	//DWORD
+ * 	Model Number			//ASCIIZ
+ * 	Serial Number			//ASCIIZ
+ * 	Battery Type			//ASCIIZ
+ * 	OEM Information			//ASCIIZ
+ * }
+ */
 struct acpibat_bif {
 	u_int32_t	bif_power_unit;
 #define BIF_POWER_MW		0x00
@@ -56,32 +57,33 @@ struct acpibat_bif {
 	char		bif_data[];	/* 4 strings */
 };
 
-#if 0
-Arguments: none
-Results  : DWORD _OSC Definition for Control Method Battery
-#endif
+/*
+ * _OSC Definition for Control Method Battery
+ * Arguments: none
+ * Results  : DWORD flags
+ */
 #define CMB_OSC_UUID		"f18fc78b-0f15-4978-b793-53f833a1d35b"
 #define   CMB_OSC_GRANULARITY	0x01
 #define   CMB_OSC_WAKE_ON_LOW	0x02
 
-#if 0
-Arguments: none
-Results  : package _BST (Battery STatus)
-Package {
-	Battery State			//DWORD
-	Battery Present Rate		//DWORD
-	Battery Remaining Capacity	//DWORD
-	Battery Present Voltage		//DWORD
-}
-
-Per the spec section 10.2.2.3
-Remaining Battery Percentage[%] = (Battery Remaining Capacity [=0 ~ 100] /
-    Last Full Charged Capacity[=100]) * 100
-
-Remaining Battery Life [h] = Battery Remaining Capacity [mAh/mWh] /
-    Battery Present Rate [=0xFFFFFFFF] = unknown
-
-#endif
+/*
+ * _BST (Battery STatus)
+ * Arguments: none
+ * Results  : package _BST (Battery STatus)
+ * Package {
+ * 	Battery State			//DWORD
+ * 	Battery Present Rate		//DWORD
+ * 	Battery Remaining Capacity	//DWORD
+ * 	Battery Present Voltage		//DWORD
+ * }
+ * 
+ * Per the spec section 10.2.2.3
+ * Remaining Battery Percentage[%] = (Battery Remaining Capacity [=0 ~ 100] /
+ *     Last Full Charged Capacity[=100]) * 100
+ * 
+ * Remaining Battery Life [h] = Battery Remaining Capacity [mAh/mWh] /
+ *     Battery Present Rate [=0xFFFFFFFF] = unknown
+ */
 struct acpibat_bst {
 	u_int32_t	bst_state;
 #define BST_DISCHARGE		0x01
@@ -93,34 +95,36 @@ struct acpibat_bst {
 	u_int32_t	bst_voltage;
 };
 
-#if 0
-Arguments: DWORD _BTP (Battery Trip Point) level
-Results  : none
-#endif
+/*
+ * _BTP (Battery Trip Point)
+ * Arguments: DWORD level
+ * Results  : none
+ */
 #define BTP_CLEAR_TRIP_POINT	0x00
 
-#if 0
-_BTM (Battery TiMe)
-Arguments: DWORD rate of discharge
-Results  : DWORD time in seconds or error/unknown
-#endif
+/*
+ * _BTM (Battery TiMe)
+ * Arguments: DWORD rate of discharge
+ * Results  : DWORD time in seconds or error/unknown
+ */
 #define BTM_CURRENT_RATE	0x00
 
 #define BTM_RATE_TOO_LARGE	0x00
 #define BTM_CRITICAL		0x00
 #define BTM_UNKNOWN		0xffffffff
 
-#if 0
-Arguments: none
-Results  : package _BMD (Battery Maintenance Data)
-Package {
-	Status Flags		//DWORD
-	Capability Flags	//DWORD
-	Recalibrate Count	//DWORD
-	Quick Recalibrate Time	//DWORD
-	Slow Recalibrate Time	//DWORD
-}
-#endif
+/*
+ * _BMD (Battery Maintenance Data)
+ * Arguments: none
+ * Results  : package _BMD (Battery Maintenance Data)
+ * Package {
+ * 	Status Flags		//DWORD
+ * 	Capability Flags	//DWORD
+ * 	Recalibrate Count	//DWORD
+ * 	Quick Recalibrate Time	//DWORD
+ * 	Slow Recalibrate Time	//DWORD
+ * }
+ */
 struct acpibat_bmd {
 	u_int32_t	bmd_status;
 #define BMD_AML_CALIBRATE_CYCLE	0x01
@@ -140,5 +144,14 @@ struct acpibat_bmd {
 #define BMD_UNKNOWN		0xffffffff
 	u_int32_t	bmd_slow_recalibrate_time;
 };
+
+/*
+ * _BMC (Battery Maintenance Control)
+ * Arguments: DWORD flags
+ * Results  : none
+ */
+#define BMC_AML_CALIBRATE	0x01
+#define BMC_DISABLE_CHARGING	0x02
+#define BMC_ALLOW_AC_DISCHARGE	0x04
 
 #endif /* __DEV_ACPI_ACPIBAT_H__ */
