@@ -679,6 +679,8 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/des.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/acpi
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/acpi/acpiac.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/acpi/acpibat.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/acpi/acpireg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/acpi/acpivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/acpi/amltypes.ph

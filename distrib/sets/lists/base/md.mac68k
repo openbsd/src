@@ -644,6 +644,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/des.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/acpi
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/acpi/acpiac.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/acpi/acpibat.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/acpi/acpireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/acpi/acpivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/acpi/amltypes.ph

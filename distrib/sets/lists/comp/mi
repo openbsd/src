@@ -100,6 +100,8 @@
 ./usr/include/des.h
 ./usr/include/dev
 ./usr/include/dev/acpi
+./usr/include/dev/acpi/acpiac.h
+./usr/include/dev/acpi/acpibat.h
 ./usr/include/dev/acpi/acpireg.h
 ./usr/include/dev/acpi/acpivar.h
 ./usr/include/dev/acpi/amltypes.h

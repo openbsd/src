@@ -738,6 +738,8 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/des.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/acpi
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/acpi/acpiac.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/acpi/acpibat.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/acpi/acpireg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/acpi/acpivar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/acpi/amltypes.ph
