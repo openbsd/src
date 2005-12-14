@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.4 2005/12/13 07:23:33 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.5 2005/12/14 03:46:38 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -32,7 +32,7 @@
 #include <dev/acpi/dsdt.h>
 
 #ifdef ACPI_DEBUG
-int acpi_debug = 3;
+int acpi_debug = 20;
 #endif
 
 int	acpimatch(struct device *, void *, void *);
@@ -117,7 +117,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	struct device		*self = (struct device *)arg;
 	const char		*dev;
 
-	dnprintf(1, "found hid device: %s ", node->parent->name);
+	dnprintf(10, "found hid device: %s ", node->parent->name);
 	switch(node->child->value.type) {
 	case AML_OBJTYPE_STRING:
 		dev = node->child->value.v_string;
@@ -129,7 +129,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 		dev = "unknown";
 		break;
 	}
-	dnprintf(1, "  device: %s\n", dev);
+	dnprintf(10, "  device: %s\n", dev);
 
 	if (!strcmp(dev, ACPI_DEV_CMB))
 	{

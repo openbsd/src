@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.9 2005/12/13 07:23:34 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.10 2005/12/14 03:46:38 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -272,7 +272,7 @@ aml_decodename(u_int8_t *pos, const char **ref, const char *lbl)
 	}
 	*base = 0;
 
-	dprintf(" acpi_name (%s): %s\n", lbl, name);
+	dnprintf(50, " acpi_name (%s): %s\n", lbl, name);
 	if (ref != NULL) {
 		*ref = name;
 	}
@@ -1053,11 +1053,11 @@ aml_evalnode(struct dsdt_softc *sc, struct aml_node *node, struct aml_value *res
 
 	case AMLOP_STALL:
 		aml_evalnode(sc, childOf(node, 0), &lhs, env);
-		dprintf("aml_stall: %d\n", lhs.v_integer);
+		dnprintf(50, "aml_stall: %d\n", lhs.v_integer);
 		break;
 	case AMLOP_SLEEP:
 		aml_evalnode(sc, childOf(node, 0), &lhs, env);
-		dprintf("aml_sleep: %d\n", lhs.v_integer);
+		dnprintf(50, "aml_sleep: %d\n", lhs.v_integer);
 		break;
 	case AMLOP_OBJECTTYPE:
 		aml_evalnode(sc, childOf(node, 0), &lhs, env);
@@ -1141,14 +1141,14 @@ aml_parseargs(struct dsdt_softc *sc, struct aml_node *node, u_int8_t *pos,
 		case AML_ARG_FLAG:
 			node->flag = *(u_int8_t *)pos;
 			if (node->opcode == AMLOP_METHOD) {
-				dprintf(" method %s %.2x argcount:%d serialized:%d synclevel:%d\n",
+				dnprintf(50, " method %s %.2x argcount:%d serialized:%d synclevel:%d\n",
 					node->name, node->flag,
 					AML_METHOD_ARGCOUNT(node->flag),
 					AML_METHOD_SERIALIZED(node->flag),
 					AML_METHOD_SYNCLEVEL(node->flag));
 			}
 			else {
-				dprintf(" field %s %.2x access:%d lock:%d update:%d\n",
+				dnprintf(50, " field %s %.2x access:%d lock:%d update:%d\n",
 					node->name, node->flag,
 					AML_FIELD_ACCESS(node->flag),
 					AML_FIELD_LOCK(node->flag),
@@ -1158,48 +1158,48 @@ aml_parseargs(struct dsdt_softc *sc, struct aml_node *node, u_int8_t *pos,
 			break;
 		case AML_ARG_IMPBYTE:
 			/* Implied byte: same as opcode */
-			dprintf(" ibyte: %x\n", (int8_t)node->opcode);
+			dnprintf(50, " ibyte: %x\n", (int8_t)node->opcode);
 			aml_setinteger(&node->value, 1, (int8_t)node->opcode);
 			break;
 		case AML_ARG_BYTE:
-			dprintf(" byte: %x\n", *(u_int8_t *)pos);
+			dnprintf(50, " byte: %x\n", *(u_int8_t *)pos);
 			if (node->opcode == AMLOP_BYTEPREFIX) {
 				aml_setinteger(&node->value, 1, *(int8_t *)pos);
 			}
 			nxtpos = pos+1;
 			break;
 		case AML_ARG_WORD:
-			dprintf(" word: %x\n", *(u_int16_t *)pos);
+			dnprintf(50, " word: %x\n", *(u_int16_t *)pos);
 			if (node->opcode == AMLOP_WORDPREFIX) {
 				aml_setinteger(&node->value, 2, (int16_t)letoh16(*(u_int16_t *)pos));
 			}
 			nxtpos = pos+2;
 			break;
                 case AML_ARG_DWORD:
-			dprintf(" dword: %x\n", *(u_int32_t *)pos);
+			dnprintf(50, " dword: %x\n", *(u_int32_t *)pos);
 			if (node->opcode == AMLOP_DWORDPREFIX) {
 				aml_setinteger(&node->value, 4, (int32_t)letoh32(*(u_int32_t *)pos));
 			}
 			nxtpos = pos+4;
 			break;
 		case AML_ARG_QWORD:
-			dprintf(" qword: %x\n", *(u_int32_t *)pos);
+			dnprintf(50, " qword: %x\n", *(u_int32_t *)pos);
 			if (node->opcode == AMLOP_QWORDPREFIX) {
 				aml_setinteger(&node->value, 8, (int64_t)letoh64(*(u_int64_t *)pos));
 			}
 			nxtpos = pos+8;
 			break;
 		case AML_ARG_FIELDLIST:
-			dprintf(" fieldlist\n");
+			dnprintf(50, " fieldlist\n");
 			nxtpos = node->end;
 			break;
 		case AML_ARG_BYTELIST:
-			dprintf(" bytelist\n");
+			dnprintf(50, " bytelist\n");
 			aml_setbuffer(&node->value, node->end - pos, pos);
 			nxtpos = node->end;
 			break;
 		case AML_ARG_STRING:
-			dprintf(" string: %s\n", pos);
+			dnprintf(50, " string: %s\n", pos);
 			len = strlen((const char *)pos);
 			aml_setstring(&node->value, (const char *)pos);
 			nxtpos = pos + len + 1;
@@ -1272,12 +1272,12 @@ aml_parse_object(struct dsdt_softc *sc, struct aml_node *parent, u_int8_t *pos)
 	nxtpos = aml_getopcode(pos, &node->opcode);
 	if (node->opcode == AMLOP_NAMECHAR) {
 		aml_addchildnode(parent, node);
-		dprintf("opcode: xxxx <name>\n");
+		dnprintf(50, "opcode: xxxx <name>\n");
 		return aml_decodename(pos, &node->mnem, "embed");
 	}
 	while (optab->opcode != 0xFFFF) {
 		if  (optab->opcode == node->opcode) {
-			dprintf("opcode: %.4x = %s\n", node->opcode, optab->mnem);
+			dnprintf(50, "opcode: %.4x = %s\n", node->opcode, optab->mnem);
 			aml_addchildnode(parent, node);
 			node->mnem = optab->mnem;
 			return aml_parseargs(sc, node, nxtpos, optab->args);
@@ -1312,7 +1312,7 @@ aml_walktree(struct aml_node *node, int depth)
 		case AMLOP_FIELD:
 		case AMLOP_BANKFIELD:
 		case AMLOP_INDEXFIELD:
-			dprintf(" access:%d lock:%d update:%d\n",
+			dnprintf(50, " access:%d lock:%d update:%d\n",
 				AML_FIELD_ACCESS(node->flag),
 				AML_FIELD_LOCK(node->flag),
 				AML_FIELD_UPDATE(node->flag));
