@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.57 2005/12/12 14:13:58 fgsch Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.58 2005/12/14 13:59:04 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -265,10 +265,15 @@ const struct ac97_source_info {
 		AudioCoutputs,	AudioNlfe,	NULL,	AUDIO_MIXER_VALUE,
 		WRAP(ac97_volume_mono),
 		AC97_REG_CENTER_LFE_VOLUME, 6, 8, 1, 0, 0x8080
+	}, {
+		/* External Amp */
+		AudioCoutputs,	AudioNextamp,	NULL,	AUDIO_MIXER_ENUM,
+		WRAP(ac97_on_off),
+		AC97_REG_POWER, 1, 15, 0, 0, 0x0000
 	}
 
 	/* Missing features: Simulated Stereo, POP, Loopback mode */
-} ;
+};
 
 #define SOURCE_INFO_SIZE (sizeof(source_info)/sizeof(source_info[0]))
 
@@ -291,14 +296,13 @@ int	ac97_mixer_get_port(struct ac97_codec_if *, mixer_ctrl_t *);
 int	ac97_mixer_set_port(struct ac97_codec_if *, mixer_ctrl_t *);
 int	ac97_query_devinfo(struct ac97_codec_if *, mixer_devinfo_t *);
 int	ac97_get_portnum_by_name(struct ac97_codec_if *, char *, char *,
-				  char *);
+	    char *);
 void	ac97_restore_shadow(struct ac97_codec_if *);
 
 void	ac97_ad1886_init(struct ac97_softc *);
 void	ac97_ad198x_init(struct ac97_softc *);
 void	ac97_alc655_init(struct ac97_softc *);
 void	ac97_cx20468_init(struct ac97_softc *);
-void	ac97_cx_init(struct ac97_softc *);
 
 struct ac97_codec_if_vtbl ac97civ = {
 	ac97_mixer_get_port,
@@ -373,7 +377,7 @@ const struct ac97_codecid {
 }, ac97_cx[] = {
 	{ 0x21, 0xff, 0, 0,	"HSD11246" },
 	{ 0x28, 0xf8, 7, 0,	"CX20468",	ac97_cx20468_init },
-	{ 0x30, 0xff, 0, 0,	"CX?????",	ac97_cx_init },
+	{ 0x30, 0xff, 0, 0,	"CX?????", },
 }, ac97_dt[] = {
 	{ 0x00, 0xff, 0, 0,	"DT0398" },
 }, ac97_em[] = {
@@ -1143,20 +1147,4 @@ ac97_cx20468_init(struct ac97_softc *as)
 	ac97_read(as, AC97_CX_REG_MISC, &misc);
 	ac97_write(as, AC97_CX_REG_MISC,
 	    AC97_CX_SPDIFEN | AC97_CX_COPYRIGHT | AC97_CX_MASK);
-}
-
-void
-ac97_cx_init(struct ac97_softc *as)
-{
-	u_int16_t misc, new;
-
-	ac97_read(as, AC97_CX_REG_MISC, &misc);
-	ac97_write(as, AC97_CX_REG_MISC,
-	    AC97_CX_SPDIFEN | AC97_CX_COPYRIGHT | AC97_CX_MASK);
-
-	ac97_read(as, AC97_REG_POWER, &misc);
-	new = misc | AC97_POWER_EAMP;
-	if (new != misc) {
-		ac97_write(as, AC97_REG_POWER, new);
-	}
 }
