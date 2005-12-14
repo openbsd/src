@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.15 2005/12/13 00:35:23 millert Exp $	*/
+/*	$OpenBSD: endian.h,v 1.16 2005/12/14 18:28:40 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -51,14 +51,14 @@
 
 #ifdef __GNUC__
 
-#define __swap16gen(x) __extension__({					\
+#define __swap16gen(x) __statement({					\
 	u_int16_t __swap16gen_x = (x);					\
 									\
 	(u_int16_t)((__swap16gen_x & 0xff) << 8 |			\
 	    (__swap16gen_x & 0xff00) >> 8);				\
 })
 
-#define __swap32gen(x) __extension__({					\
+#define __swap32gen(x) __statement({					\
 	u_int32_t __swap32gen_x = (x);					\
 									\
 	(u_int32_t)((__swap32gen_x & 0xff) << 24 |			\
@@ -67,7 +67,7 @@
 	    (__swap32gen_x & 0xff000000) >> 24);			\
 })
 
-#define __swap64gen(x) __extension__({					\
+#define __swap64gen(x) __statement({					\
 	u_int64_t __swap64gen_x = (x);					\
 									\
 	(u_int64_t)((__swap64gen_x & 0xff) << 56 |			\
@@ -112,21 +112,21 @@
 #ifdef MD_SWAP
 #if __GNUC__
 
-#define __swap16(x) __extension__({					\
+#define __swap16(x) __statement({					\
 	u_int16_t __swap16_x = (x);					\
 									\
 	__builtin_constant_p(x) ? __swap16gen(__swap16_x) :		\
 	    __swap16md(__swap16_x);					\
 })
 
-#define __swap32(x) __extension__({					\
+#define __swap32(x) __statement({					\
 	u_int32_t __swap32_x = (x);					\
 									\
 	__builtin_constant_p(x) ? __swap32gen(__swap32_x) :		\
 	    __swap32md(__swap32_x);					\
 })
 
-#define __swap64(x) __extension__({					\
+#define __swap64(x) __statement({					\
 	u_int64_t __swap64_x = (x);					\
 									\
 	__builtin_constant_p(x) ? __swap64gen(__swap64_x) :		\
