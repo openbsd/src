@@ -1,4 +1,4 @@
-/*	$OpenBSD: ansi.h,v 1.2 2005/04/16 15:44:38 miod Exp $	*/
+/*	$OpenBSD: ansi.h,v 1.3 2005/12/14 16:30:03 millert Exp $	*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
  *	#undef	_BSD_SIZE_T_
  *	#endif
  */
-#define	_BSD_CLOCK_T_	unsigned long		/* clock() */
+#define	_BSD_CLOCK_T_	int			/* clock() */
 #define	_BSD_PTRDIFF_T_	int			/* ptr1 - ptr2 */
 #define	_BSD_SIZE_T_	unsigned int		/* sizeof() */
 #define	_BSD_SSIZE_T_	int			/* byte count or error */
