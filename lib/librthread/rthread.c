@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.5 2005/12/14 04:43:04 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.6 2005/12/14 05:44:49 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -211,6 +211,12 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	_spinunlock(&thread_lock);
 
 	return (0);
+}
+
+int
+pthread_kill(pthread_t thread, int sig)
+{
+	return (kill(thread->tid, sig));
 }
 
 int
