@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.19 2005/11/11 23:50:03 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.20 2005/12/14 14:39:38 uwe Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -233,7 +233,7 @@ extern int pmap_debug_level;
 #define	KERNEL_PT_KERNEL_NUM	32
 #define KERNEL_PT_VMDATA	(KERNEL_PT_KERNEL+KERNEL_PT_KERNEL_NUM)
 				        /* Page tables for mapping kernel VM */
-#define	KERNEL_PT_VMDATA_NUM	8	/* start with 16MB of KVM */
+#define	KERNEL_PT_VMDATA_NUM	8	/* start with 32MB of KVM */
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
@@ -386,12 +386,6 @@ struct l1_sec_map {
 	    ZAURUS_CLKMAN_VBASE,
 	    PXA2X0_CLKMAN_BASE,
 	    PXA2X0_CLKMAN_SIZE,
-	    PTE_NOCACHE,
-    },
-    {
-	    ZAURUS_INTCTL_VBASE,
-	    PXA2X0_INTCTL_BASE,
-	    PXA2X0_INTCTL_SIZE,
 	    PTE_NOCACHE,
     },
     {
@@ -726,24 +720,8 @@ initarm(void *arg)
 	/* Talk to the user */
 	printf("\nOpenBSD/zaurus booting ...\n");
 
-	/* Tweak memory controller */
-	{
-		/* Modify access timing for CS3 (91c96) */
-
-		uint32_t tmp = 
-			ioreg_read(PXA2X0_MEMCTL_BASE+MEMCTL_MSC1);
-		ioreg_write(PXA2X0_MEMCTL_BASE+MEMCTL_MSC1,
-			     (tmp & 0xffff) | (0x3881<<16));
-		/* RRR=3, RDN=8, RDF=8
-		 * XXX: can be faster?
-		 */
-	}
-
-
 	/* Initialize for PCMCIA/CF sockets */
 	{
-		uint32_t tmp;
-
 		/* Activate two sockets.
 		   XXX: This code segment should be moved to
 		        pcmcia MD attach routine.
@@ -752,12 +730,7 @@ initarm(void *arg)
 		*/
 		ioreg_write(PXA2X0_MEMCTL_BASE+MEMCTL_MECR,
 			     MECR_NOS|MECR_CIT);
-
-		tmp = ioreg_read(ZAURUS_SACC_PBASE+SACCSBI_SKCR);
-		ioreg_write(ZAURUS_SACC_PBASE+SACCSBI_SKCR,
-			     (tmp & ~(1<<4)) | (1<<0));
 	}
-
 
 	{
 		/* XXX - all Zaurus have this for now, fix memory sizing */

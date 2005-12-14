@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_reg.h,v 1.6 2005/11/17 05:26:31 uwe Exp $	*/
+/*	$OpenBSD: zaurus_reg.h,v 1.7 2005/12/14 14:39:38 uwe Exp $	*/
 /*	$NetBSD: lubbock_reg.h,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -34,9 +34,6 @@
 #define _ZAURUS_REG_H
 
 #include <arm/xscale/pxa2x0reg.h>
-
-/* SA-1111 companion chip registers */
-#define ZAURUS_SACC_PBASE	PXA2X0_CS4_START
 
 /*
  * Logical mapping for onboard/integrated peripherals
