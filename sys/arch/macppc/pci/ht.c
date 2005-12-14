@@ -1,4 +1,4 @@
-/*	$OpenBSD: ht.c,v 1.7 2005/11/13 21:48:16 drahn Exp $	*/
+/*	$OpenBSD: ht.c,v 1.8 2005/12/14 20:06:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -263,8 +263,8 @@ ht_conf_read(void *cpv, pcitag_t tag, int offset)
 		reg = bus_space_read_4(sc->sc_iot, sc->sc_config0_ioh, tag);
 		reg = letoh32(reg);
 	} else if (bus == 0) {
-		/* XXX Needed on some PowerMac G5's.  Why? */
-		if (fcn > 1)
+		/* XXX Why can we only access function 0? */
+		if (fcn > 0)
 			return ~0;
 		tag |= offset;
 		reg = bus_space_read_4(sc->sc_memt, sc->sc_config0_memh, tag);
@@ -282,19 +282,22 @@ void
 ht_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	struct ht_softc *sc = cpv;
-	int bus, dev;
+	int bus, dev, fcn;
 
 #ifdef DEBUG
 	printf("ht_conf_write: tag=%x, offset=%x, data = %x\n",
 	       tag, offset, data);
 #endif
-	ht_decompose_tag(NULL, tag, &bus, &dev, NULL);
+	ht_decompose_tag(NULL, tag, &bus, &dev, &fcn);
 	if (bus == 0 && dev == 0) {
 		tag |= (offset << 2);
 		data = htole32(data);
 		bus_space_write_4(sc->sc_iot, sc->sc_config0_ioh, tag, data);
 		bus_space_read_4(sc->sc_iot, sc->sc_config0_ioh, tag);
 	} else if (bus == 0) {
+		/* XXX Why can we only access function 0? */
+		if (fcn > 0)
+			return;
 		tag |= offset;
 		bus_space_write_4(sc->sc_memt, sc->sc_config0_memh, tag, data);
 		bus_space_read_4(sc->sc_memt, sc->sc_config0_memh, tag);
