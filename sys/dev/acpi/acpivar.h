@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.4 2005/12/13 07:23:34 marco Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.5 2005/12/14 03:45:38 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -36,7 +36,7 @@ struct acpi_attach_args {
 	bus_space_tag_t	 aaa_iot;
 	bus_space_tag_t	 aaa_memt;
 	void		*aaa_table;
-	paddr_t		 aaa_pbase;	/* Physical base address of ACPI tables */
+	paddr_t		 aaa_pbase; /* Physical base address of ACPI tables */
 };
 
 struct acpi_mem_map {
