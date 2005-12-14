@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.1 2005/12/14 21:54:57 jsg Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.2 2005/12/14 22:08:20 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -561,7 +561,6 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring, int count)
 
 	ring->count = count;
 	ring->cur = ring->next = 0;
-	ring->cur_decrypt = 0;
 
 	error = bus_dmamap_create(sc->sc_dmat, count * descsize, 1,
 	    count * descsize, 0, BUS_DMA_NOWAIT, &ring->map);
@@ -694,7 +693,6 @@ nfe_reset_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 	    BUS_DMASYNC_PREWRITE);
 
 	ring->cur = ring->next = 0;
-	ring->cur_decrypt = 0;
 }
 
 void
@@ -765,7 +763,6 @@ nfe_alloc_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring, int count)
 	ring->count = count;
 	ring->queued = 0;
 	ring->cur = ring->next = 0;
-	ring->cur_encrypt = ring->next_encrypt = 0;
 
 	error = bus_dmamap_create(sc->sc_dmat, count * descsize, 1,
 	    count * descsize, 0, BUS_DMA_NOWAIT, &ring->map);
@@ -865,7 +862,6 @@ nfe_reset_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 
 	ring->queued = 0;
 	ring->cur = ring->next = 0;
-	ring->cur_encrypt = ring->next_encrypt = 0;
 }
 
 void

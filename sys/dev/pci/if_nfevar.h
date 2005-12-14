@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfevar.h,v 1.1 2005/12/14 21:54:58 jsg Exp $	*/
+/*	$OpenBSD: if_nfevar.h,v 1.2 2005/12/14 22:08:20 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -33,8 +33,6 @@ struct nfe_tx_ring {
 	int			queued;
 	int			cur;
 	int			next;
-	int			cur_encrypt;
-	int			next_encrypt;
 };
 
 struct nfe_rx_data {
@@ -53,7 +51,6 @@ struct nfe_rx_ring {
 	int			count;
 	int			cur;
 	int			next;
-	int			cur_decrypt;
 };
 
 struct nfe_softc {
