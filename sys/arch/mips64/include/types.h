@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.7 2005/08/07 07:29:44 miod Exp $	*/
+/*	$OpenBSD: types.h,v 1.8 2005/12/14 21:46:31 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -47,10 +47,12 @@
 
 #include <sys/cdefs.h>
 
+#if __BSD_VISIBLE
 typedef unsigned long	vaddr_t;
 typedef unsigned long	paddr_t;
 typedef unsigned long	vsize_t;
 typedef unsigned long	psize_t;
+#endif
 
 /*
  * Basic integral types.  Omit the typedef if
@@ -81,7 +83,7 @@ typedef int32_t		       register_t;
 typedef int32_t		     f_register_t;
 #endif
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#if defined(_KERNEL)
 typedef struct label_t {
 	register_t val[14];
 } label_t;

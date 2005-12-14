@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.9 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: limits.h,v 1.10 2005/12/14 21:46:30 millert Exp $	*/
 /*	$NetBSD: limits.h,v 1.11 1995/12/21 01:08:59 mycroft Exp $	*/
 
 /*
@@ -35,20 +35,22 @@
 #ifndef _MACHINE_LIMITS_H_
 #define _MACHINE_LIMITS_H_
 
+#include <sys/cdefs.h>
+
 #define	MB_LEN_MAX	1		/* no multibyte characters */
 
-#if !defined(_ANSI_SOURCE)
+#if __POSIX_VISIBLE || __XPG_VISIBLE
 #define	SIZE_MAX	UINT_MAX	/* max value for a size_t */
 #define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
+#endif
 
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
-#define	SIZE_T_MAX	UINT_MAX	/* max value for a size_t */
+#if __BSD_VISIBLE
+#define	SIZE_T_MAX	UINT_MAX	/* max value for a size_t (historic) */
 
 #define	UQUAD_MAX	0xffffffffffffffffULL		/* max unsigned quad */
 #define	QUAD_MAX	0x7fffffffffffffffLL		/* max signed quad */
 #define	QUAD_MIN	(-0x7fffffffffffffffLL-1)	/* min signed quad */
 
-#endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE */
-#endif /* !_ANSI_SOURCE */
+#endif /* __BSD_VISIBLE */
 
 #endif /* _MACHINE_LIMITS_H_ */

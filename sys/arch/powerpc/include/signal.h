@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.4 2001/09/01 15:49:05 drahn Exp $	*/
+/*	$OpenBSD: signal.h,v 1.5 2005/12/14 21:46:31 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.1 1996/09/30 16:34:34 ws Exp $	*/
 
 /*
@@ -34,8 +34,11 @@
 #ifndef	_POWERPC_SIGNAL_H_
 #define	_POWERPC_SIGNAL_H_
 
+#include <sys/cdefs.h>
+
 typedef int sig_atomic_t;
 
+#if __BSD_VISIBLE
 #include <machine/types.h>
 
 /*
@@ -65,4 +68,5 @@ struct sigcontext {
 	int sc_mask;			/* saved signal mask */
 	struct trapframe sc_frame;	/* saved registers */
 };
+#endif /* __BSD_VISIBLE */
 #endif	/* _POWERPC_SIGNAL_H_ */

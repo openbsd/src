@@ -1,9 +1,11 @@
-/*	$OpenBSD: va-m88k.h,v 1.5 2004/07/28 08:47:12 miod Exp $	*/
+/*	$OpenBSD: va-m88k.h,v 1.6 2005/12/14 21:46:31 millert Exp $	*/
 
 /* Define __gnuc_va_list.  */
 
 #ifndef __GNUC_VA_LIST
 #define __GNUC_VA_LIST
+
+#include <sys/cdefs.h>
 
 typedef struct __va_list_tag {
 	unsigned int  __va_arg;		/* argument number */
@@ -84,9 +86,7 @@ __extension__ ({ \
 	*(dest) = *(src);\
   })
 
-#if !defined(_ANSI_SOURCE) && \
-    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
-	defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
+#if __ISO_VISIBLE >= 1999
 #define va_copy(dest, src) __va_copy(dest, src)
 #endif
 

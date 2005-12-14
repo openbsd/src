@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.2 2005/08/07 07:29:44 miod Exp $	*/
+/*	$OpenBSD: limits.h,v 1.3 2005/12/14 21:46:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,6 +34,8 @@
 #ifndef _MIPS_LIMITS_H_
 #define _MIPS_LIMITS_H_
 
+#include <sys/cdefs.h>
+
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	MB_LEN_MAX	6		/* Allow 31 bit UTF2 */
 
@@ -62,15 +64,16 @@
 #define	INT_MAX		0x7fffffff	/* max value for an int */
 #define	INT_MIN		(-0x7fffffff-1)	/* min value for an int */
 
-#if !defined(_ANSI_SOURCE)
-#define SIZE_MAX	ULONG_MAX	/* max value for a size_t */
-#define	SSIZE_MAX	LONG_MAX	/* max value for a ssize_t */
-
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
-#define	SIZE_T_MAX	ULONG_MAX	/* max value for a size_t */
-
 #define	UID_MAX		UINT_MAX	/* max value for a uid_t */
 #define	GID_MAX		UINT_MAX	/* max value for a gid_t */
+
+#if __POSIX_VISIBLE || __XPG_VISIBLE
+#define SIZE_MAX	ULONG_MAX	/* max value for a size_t */
+#define	SSIZE_MAX	LONG_MAX	/* max value for a ssize_t */
+#endif
+
+#if __BSD_VISIBLE
+#define	SIZE_T_MAX	ULONG_MAX	/* max value for a size_t (historic) */
 
 /* GCC requires that quad constants be written as expressions. */
 #define	UQUAD_MAX	((u_quad_t)0-1)	/* max value for a uquad_t */
@@ -78,17 +81,6 @@
 #define	QUAD_MAX	((quad_t)(UQUAD_MAX >> 1))
 #define	QUAD_MIN	(-QUAD_MAX-1)	/* min value for a quad_t */
 
-#endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE */
-#endif /* !_ANSI_SOURCE */
-
-#if (!defined(_ANSI_SOURCE)&&!defined(_POSIX_SOURCE)) || defined(_XOPEN_SOURCE)
-#define DBL_DIG		15
-#define DBL_MAX		1.797693134862316E+308
-#define DBL_MIN		2.225073858507201E-308
-
-#define FLT_DIG		6
-#define FLT_MAX		3.40282347E+38F
-#define FLT_MIN		1.17549435E-38F
-#endif
+#endif /* __BSD_VISIBLE */
 
 #endif /* !_MIPS_LIMITS_H_ */

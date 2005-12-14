@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.5 2004/04/03 01:03:11 mickey Exp $	*/
+/*	$OpenBSD: signal.h,v 1.6 2005/12/14 21:46:30 millert Exp $	*/
 
 /* 
  * Copyright (c) 1994, The University of Utah and
@@ -26,13 +26,15 @@
 #ifndef	_HPPA_SIGNAL_H_
 #define	_HPPA_SIGNAL_H_
 
+#include <sys/cdefs.h>
+
 /*
  * Machine-dependent signal definitions
  */
 
 typedef int sig_atomic_t;
 
-#ifndef _ANSI_SOURCE
+#if __BSD_VISIBLE
 #include <machine/trap.h>
 
 /*
@@ -53,5 +55,5 @@ struct	sigcontext {
 	unsigned	sc_regs[32];
 	unsigned	sc_fpregs[64];
 };
-#endif  /* !_ANSI_SOURCE */
+#endif  /* __BSD_VISIBLE */
 #endif  /* !_HPPA_SIGNAL_H_ */

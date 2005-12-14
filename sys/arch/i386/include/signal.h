@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.4 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.5 2005/12/14 21:46:30 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.6 1996/01/08 13:51:43 mycroft Exp $	*/
 
 /*
@@ -35,9 +35,11 @@
 #ifndef _I386_SIGNAL_H_
 #define _I386_SIGNAL_H_
 
+#include <sys/cdefs.h>
+
 typedef int sig_atomic_t;
 
-#ifndef _ANSI_SOURCE
+#if __BSD_VISIBLE
 /*
  * Get the "code" values
  */
@@ -81,5 +83,5 @@ struct	sigcontext {
 #define sc_pc sc_eip
 #define sc_ps sc_eflags
 
-#endif	/* !_ANSI_SOURCE */
+#endif	/* __BSD_VISIBLE */
 #endif	/* !_I386_SIGNAL_H_ */

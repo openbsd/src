@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: signal.h,v 1.2 2005/12/14 21:46:30 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.5 2003/10/18 17:57:21 briggs Exp $	*/
 
 /*
@@ -47,13 +47,15 @@
 #ifndef _ARM32_SIGNAL_H_
 #define _ARM32_SIGNAL_H_
 
+#include <sys/cdefs.h>
+
 #ifndef _LOCORE
 typedef int sig_atomic_t;
 #endif
 
 #define __HAVE_SIGINFO
 
-
+#if __BSD_VISIBLE
 #ifndef _LOCORE
 /*
  * Information pushed on stack when a signal is delivered.
@@ -129,6 +131,5 @@ struct sigcontext {
 #define SIG_CODE_SEGV_ADDR_MASK	SIG_CODE_BUS_ADDR_MASK
 #define SIG_CODE_SEGV_TYPE_MASK	SIG_CODE_BUS_TYPE_MASK
 
-#endif	/* !_ARM_SIGNAL_H_ */
-
-/* End of signal.h */
+#endif /* __BSD_VISIBLE */
+#endif	/* !_ARM32_SIGNAL_H_ */

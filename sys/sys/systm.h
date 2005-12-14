@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.66 2005/01/14 04:31:33 djm Exp $	*/
+/*	$OpenBSD: systm.h,v 1.67 2005/12/14 21:46:31 millert Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -287,8 +287,10 @@ void	dopowerhooks(int);
 struct uio;
 int	uiomove(void *, int, struct uio *);
 
+#if defined(_KERNEL)
 int	setjmp(label_t *);
 void	longjmp(label_t *);
+#endif
 
 void	consinit(void);
 

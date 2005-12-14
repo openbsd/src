@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.2 2005/12/13 00:18:19 jsg Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.3 2005/12/14 21:46:30 millert Exp $	*/
 /*	$NetBSD: stdarg.h,v 1.2 2003/04/28 23:16:17 bjh21 Exp $	*/
 
 /*-
@@ -35,6 +35,7 @@
 #ifndef _AMD64_STDARG_H_
 #define	_AMD64_STDARG_H_
 
+#include <sys/cdefs.h>
 #include <machine/ansi.h>
 
 typedef _BSD_VA_LIST_	va_list;
@@ -44,9 +45,7 @@ typedef _BSD_VA_LIST_	va_list;
 #define	va_end(ap)		__builtin_va_end(ap)
 #define	__va_copy(dest, src)	__builtin_va_copy((dest), (src))
 
-#if !defined(_ANSI_SOURCE) && \
-    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
-     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
+#if __ISO_C_VISIBLE >= 1999
 #define	va_copy(dest, src)	__va_copy((dest), (src))
 #endif
 

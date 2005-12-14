@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.1 2005/04/01 10:40:48 mickey Exp $	*/
+/*	$OpenBSD: types.h,v 1.2 2005/12/14 21:46:30 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,9 @@
 #ifndef	_MACHINE_TYPES_H_
 #define	_MACHINE_TYPES_H_
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#include <sys/cdefs.h>
+
+#if defined(_KERNEL)
 typedef struct label_t {
 	int	lbl_rp;
 	int	lbl_sp;
@@ -42,7 +44,9 @@ typedef struct label_t {
 	int	lbl_ss[1];
 	double	lbl_sf[10];	/* hp800:fr12-fr15, hp700:fr12-fr21 */
 } label_t;
+#endif
 
+#if __BSD_VISIBLE
 typedef	unsigned long		hppa_hpa_t;
 typedef	unsigned long		hppa_spa_t;
 typedef	unsigned int		pa_space_t;

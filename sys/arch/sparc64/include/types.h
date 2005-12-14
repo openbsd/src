@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.9 2004/11/26 21:23:06 miod Exp $	*/
+/*	$OpenBSD: types.h,v 1.10 2005/12/14 21:46:31 millert Exp $	*/
 /*	$NetBSD: types.h,v 1.17 2001/05/12 22:42:07 kleink Exp $ */
 
 /*
@@ -47,7 +47,7 @@
 #include <sys/cdefs.h>
 #include <machine/int_types.h>
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#if defined(_KERNEL)
 typedef struct label_t {
 	int val[2];
 } label_t;
@@ -58,7 +58,7 @@ typedef unsigned long int	register_t;
 typedef unsigned int		register32_t;
 typedef unsigned long int	register64_t;
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if __BSD_VISIBLE
 typedef unsigned long int	vaddr_t;
 typedef vaddr_t			vsize_t;
 typedef unsigned long int	paddr_t;

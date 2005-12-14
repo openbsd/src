@@ -1,4 +1,4 @@
-/*      $OpenBSD: signal.h,v 1.3 2003/06/02 23:27:57 millert Exp $   */
+/*      $OpenBSD: signal.h,v 1.4 2005/12/14 21:46:31 millert Exp $   */
 /*      $NetBSD: signal.h,v 1.4 1995/01/10 19:01:52 jtc Exp $   */
 
 /*
@@ -37,9 +37,11 @@
 #ifndef _VAX_SIGNAL_H_
 #define _VAX_SIGNAL_H_
 
+#include <sys/cdefs.h>
+
 typedef int sig_atomic_t;
 
-#ifndef _ANSI_SOURCE
+#if __BSD_VISIBLE
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
@@ -57,5 +59,5 @@ struct	sigcontext {
 	int	sc_ps;			/* psl to restore */
 };
 
-#endif	/* !_ANSI_SOURCE */
+#endif	/* __BSD_VISIBLE */
 #endif	/* !_VAX_SIGNAL_H_ */

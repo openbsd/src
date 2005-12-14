@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.10 2003/06/02 23:27:43 millert Exp $	*/
+/*	$OpenBSD: limits.h,v 1.11 2005/12/14 21:46:29 millert Exp $	*/
 /*	$NetBSD: limits.h,v 1.2 1996/04/12 01:38:25 cgd Exp $	*/
 
 /*
@@ -35,21 +35,23 @@
 #ifndef _MACHINE_LIMITS_H_
 #define _MACHINE_LIMITS_H_
 
+#include <sys/cdefs.h>
+
 #define	MB_LEN_MAX	6		/* Allow 31 bit UTF2 */
 
-#if !defined(_ANSI_SOURCE)
+#if __POSIX_VISIBLE || __XPG_VISIBLE
 #define	SIZE_MAX	ULONG_MAX	/* max value for a size_t */
 #define	SSIZE_MAX	LONG_MAX	/* max value for a ssize_t */
+#endif
 
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
-#define	SIZE_T_MAX	ULONG_MAX	/* max value for a size_t */
+#if __BSD_VISIBLE
+#define	SIZE_T_MAX	ULONG_MAX	/* max value for a size_t (historic) */
 
 /* Quads and longs are the same on the alpha */
 #define	UQUAD_MAX	(ULONG_MAX)	/* max value for a uquad_t */
 #define	QUAD_MAX	(LONG_MAX)	/* max value for a quad_t */
 #define	QUAD_MIN	(LONG_MIN)	/* min value for a quad_t */
 
-#endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE */
-#endif /* !_ANSI_SOURCE */
+#endif /* __BSD_VISIBLE */
 
 #endif /* _MACHINE_LIMITS_H_ */

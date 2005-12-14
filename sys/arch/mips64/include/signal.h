@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.5 2005/11/29 02:26:49 deraadt Exp $	*/
+/*	$OpenBSD: signal.h,v 1.6 2005/12/14 21:46:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,6 +37,8 @@
 #ifndef _MIPS_SIGNAL_H_
 #define _MIPS_SIGNAL_H_
 
+#include <sys/cdefs.h>
+
 #if !defined(__LANGUAGE_ASSEMBLY)
 #include <sys/types.h>
 
@@ -45,8 +47,7 @@
  */
 typedef int sig_atomic_t;
 
-#ifndef _ANSI_SOURCE
-
+#if __BSD_VISIBLE
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
@@ -66,7 +67,7 @@ struct	sigcontext {
 	long	sc_fpc_eir;	/* floating point exception instruction reg */
 	long	xxx[8];		/* XXX reserved */
 };
-#endif	/* !_ANSI_SOURCE */
+#endif	/* __BSD_VISIBLE */
 
 #else /* __LANGUAGE_ASSEMBLY */
 #define SC_ONSTACK	(0 * REGSZ)

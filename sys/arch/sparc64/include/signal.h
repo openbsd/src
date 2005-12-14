@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.5 2003/06/02 23:27:56 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.6 2005/12/14 21:46:31 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.10 2001/05/09 19:50:49 kleink Exp $ */
 
 /*
@@ -41,15 +41,16 @@
  *	@(#)signal.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifndef	_SPARC_SIGNAL_H_
-#define _SPARC_SIGNAL_H_
+#ifndef	_SPARC64_SIGNAL_H_
+#define _SPARC64_SIGNAL_H_
+
+#include <sys/cdefs.h>
 
 #ifndef _LOCORE
 typedef int sig_atomic_t;
 #endif
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if __BSD_VISIBLE
 #ifndef _LOCORE
 
 /*
@@ -88,5 +89,5 @@ struct sigcontext {
 #define	FPE_FLTOPERR_TRAP	0xd0	/* operand error */
 #define	FPE_FLTOVF_TRAP		0xd4	/* overflow */
 
-#endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
-#endif	/* !_SPARC_SIGNAL_H_ */
+#endif	/* __BSD_VISIBLE */
+#endif	/* !_SPARC64_SIGNAL_H_ */

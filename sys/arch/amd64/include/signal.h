@@ -1,3 +1,4 @@
+/*	$OpenBSD: signal.h,v 1.4 2005/12/14 21:46:30 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.2 2003/04/28 23:16:17 bjh21 Exp $	*/
 
 /*
@@ -34,9 +35,11 @@
 #ifndef _AMD64_SIGNAL_H_
 #define _AMD64_SIGNAL_H_
 
+#include <sys/cdefs.h>
+
 typedef int sig_atomic_t;
 
-#ifndef _ANSI_SOURCE
+#if __BSD_VISIBLE
 #include <machine/trap.h>
 
 /*
@@ -80,6 +83,5 @@ struct sigcontext {
 	int	sc_mask;
 };
 
-#endif	/* !_ANSI_SOURCE */
+#endif	/* __BSD_VISIBLE */
 #endif	/* !_AMD64_SIGNAL_H_ */
-

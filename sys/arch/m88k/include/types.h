@@ -1,5 +1,5 @@
 /*	$NetBSD: types.h,v 1.7 1995/07/05 17:46:11 pk Exp $ */
-/*	$OpenBSD: types.h,v 1.5 2005/12/03 19:01:14 miod Exp $ */
+/*	$OpenBSD: types.h,v 1.6 2005/12/14 21:46:31 millert Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,10 +52,12 @@ typedef struct label_t {
 } label_t;
 #endif
 
+#if __BSD_VISIBLE
 typedef unsigned long	vaddr_t;
 typedef unsigned long	paddr_t;
 typedef unsigned long	vsize_t;
 typedef unsigned long	psize_t;
+#endif
 
 /*
  * Basic integral types.  Omit the typedef if

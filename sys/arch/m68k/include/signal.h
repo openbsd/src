@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.3 2003/06/02 23:27:48 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.4 2005/12/14 21:46:31 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.4 1995/01/10 19:01:31 jtc Exp $	*/
 
 /*
@@ -35,9 +35,11 @@
 #ifndef _M68K_SIGNAL_H_
 #define _M68K_SIGNAL_H_
 
+#include <sys/cdefs.h>
+
 typedef int sig_atomic_t;
 
-#ifndef _ANSI_SOURCE
+#if __BSD_VISIBLE
 /*
  * Get the "code" values
  */
@@ -59,6 +61,5 @@ struct	sigcontext {
 	int	sc_pc;			/* pc to restore */
 	int	sc_ps;			/* psl to restore */
 };
-
-#endif	/* !_ANSI_SOURCE */
+#endif	/* __BSD_VISIBLE */
 #endif	/* !_M68K_SIGNAL_H_ */

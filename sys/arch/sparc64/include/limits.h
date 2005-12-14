@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.7 2003/06/15 04:35:54 brad Exp $	*/
+/*	$OpenBSD: limits.h,v 1.8 2005/12/14 21:46:31 millert Exp $	*/
 /*	$NetBSD: limits.h,v 1.8 2000/08/08 22:31:14 tshiozak Exp $ */
 
 /*
@@ -35,14 +35,17 @@
 #ifndef	_MACHINE_LIMITS_H_
 #define	_MACHINE_LIMITS_H_
 
+#include <sys/cdefs.h>
+
 #define	MB_LEN_MAX	32		/* no multibyte characters */
 
-#if !defined(_ANSI_SOURCE)
+#if __POSIX_VISIBLE || __XPG_VISIBLE
 #define	SIZE_MAX	ULONG_MAX	/* max value for a size_t */
 #define	SSIZE_MAX	LONG_MAX	/* max value for a ssize_t */
+#endif
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
-#define	SIZE_T_MAX	ULONG_MAX	/* max value for a size_t */
+#if __BSD_VISIBLE
+#define	SIZE_T_MAX	ULONG_MAX	/* max value for a size_t (historic) */
 
 /* GCC requires that quad constants be written as expressions. */
 #define	UQUAD_MAX	((u_quad_t)0-1)	/* max value for a uquad_t */
@@ -50,7 +53,6 @@
 #define	QUAD_MAX	((quad_t)(UQUAD_MAX >> 1))
 #define	QUAD_MIN	(-QUAD_MAX-1)	/* min value for a quad_t */
 
-#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
-#endif /* !_ANSI_SOURCE */
+#endif /* __BSD_VISIBLE */
 
 #endif	/* _MACHINE_LIMITS_H_ */

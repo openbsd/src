@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.2 2005/08/07 07:29:44 miod Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.3 2005/12/14 21:46:31 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,6 +34,7 @@
 #ifndef _MIPS_STDARG_H_
 #define	_MIPS_STDARG_H_
 
+#include <sys/cdefs.h>
 #include <machine/ansi.h>
 
 typedef _BSD_VA_LIST_	va_list;
@@ -242,6 +243,8 @@ void va_end (__gnuc_va_list);		/* Defined in libgcc.a */
 
 /* Copy __gnuc_va_list into another variable of this type.  */
 #define __va_copy(dest, src) (dest) = (src)
+#if __ISO_C_VISIBLE >= 1999
 #define va_copy __va_copy
+#endif
 
 #endif /* !_MIPS_STDARG_H_ */

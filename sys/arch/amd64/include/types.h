@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.8 2005/12/13 00:18:19 jsg Exp $	*/
+/*	$OpenBSD: types.h,v 1.9 2005/12/14 21:46:30 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,10 +42,12 @@ typedef struct label_t {
 } label_t;
 #endif
 
+#if __BSD_VISIBLE
 typedef unsigned long	paddr_t;
 typedef unsigned long	psize_t;
 typedef unsigned long	vaddr_t;
 typedef unsigned long	vsize_t;
+#endif
 
 #define	__BIT_TYPES_DEFINED__
 typedef __signed char		int8_t;
