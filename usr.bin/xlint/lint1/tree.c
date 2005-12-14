@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.24 2005/12/12 23:40:37 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.25 2005/12/14 22:09:40 kjell Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.24 2005/12/12 23:40:37 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.25 2005/12/14 22:09:40 kjell Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1690,8 +1690,8 @@ ptconv(int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 			if (ptn->tn_op == CON) {
 				/* ok. promote() warns if constant out of range */
 			} else {
-				/* conversion to '%s' due to prototype, arg #%d */
-				warning(259, tyname(tp), arg);
+				/* arg #%d converted to '%s' by prototype */
+				warning(259, arg, tyname(tp));
 			}
 		}
 	} else if (hflag) {
@@ -1706,8 +1706,8 @@ ptconv(int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 		    msb(ptn->tn_val->v_quad, ot, -1) == 0) {
 			/* ok */
 		} else {
-			/* conversion to '%s' due to prototype, arg #%d */
-			warning(259, tyname(tp), arg);
+			/* arg #%d converted to '%s' by prototype */
+			warning(259, arg, tyname(tp));
 		}
 	}
 }
