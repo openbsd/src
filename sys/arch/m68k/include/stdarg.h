@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.7 2005/12/14 21:46:31 millert Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.8 2005/12/14 23:51:32 deraadt Exp $	*/
 /*	$NetBSD: stdarg.h,v 1.14 1995/12/25 23:15:33 mycroft Exp $	*/
 
 /*-
@@ -62,6 +62,6 @@ typedef _BSD_VA_LIST_	va_list;
 	((dest) = (src))
 #endif
 
-#define	va_end(ap)	((void)0)
+#define	va_end(ap)	
 
 #endif /* !_M68K_STDARG_H_ */
