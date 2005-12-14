@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.4 2005/12/14 04:01:44 tedu Exp $ */
+/*	$OpenBSD: rthread.h,v 1.5 2005/12/14 04:43:04 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -86,7 +86,7 @@ struct rthread_storage {
 struct pthread {
 	pid_t tid;
 	struct semaphore donesem;
-	int flags;
+	unsigned int flags;
 	void *retval;
 	void *(*fn)(void *);
 	void *arg;
@@ -98,8 +98,11 @@ struct pthread {
 	struct rthread_storage *local_storage;
 	int sigpend;
 };
-#define	THREAD_DONE	0x001
-#define	THREAD_DETACHED	0x002
+#define	THREAD_DONE		0x001
+#define	THREAD_DETACHED		0x002
+#define THREAD_CANCELLED	0x004
+#define THREAD_CANCEL_ENABLE	0x008
+#define THREAD_CANCEL_DEFERRED	0x010
 
 void	_spinlock(_spinlock_lock_t *);
 void	_spinunlock(_spinlock_lock_t *);

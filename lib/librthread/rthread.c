@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.4 2005/12/14 04:01:44 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.5 2005/12/14 04:43:04 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -103,6 +103,7 @@ thread_init(void)
 	thread = malloc(sizeof(*thread));
 	memset(thread, 0, sizeof(*thread));
 	thread->tid = getthrid();
+	thread->flags |= THREAD_CANCEL_ENABLE|THREAD_CANCEL_DEFERRED;
 	snprintf(thread->name, sizeof(thread->name), "Main process");
 	thread_list = thread;
 	threads_ready = 1;
@@ -205,6 +206,7 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	    thread->stack->sp, thread_start, thread);
 	/* new thread will appear thread_start */
 	thread->tid = tid;
+	thread->flags |= THREAD_CANCEL_ENABLE|THREAD_CANCEL_DEFERRED;
 	*threadp = thread;
 	_spinunlock(&thread_lock);
 
@@ -215,6 +217,67 @@ int
 pthread_equal(pthread_t t1, pthread_t t2)
 {
 	return (t1 == t2);
+}
+
+int
+pthread_cancel(pthread_t thread)
+{
+
+	thread->flags |= THREAD_CANCELLED;
+	return (0);
+}
+
+void
+pthread_testcancel(void)
+{
+	if ((pthread_self()->flags & (THREAD_CANCELLED|THREAD_CANCEL_ENABLE)) ==
+	    (THREAD_CANCELLED|THREAD_CANCEL_ENABLE))
+		pthread_exit(PTHREAD_CANCELED);
+
+}
+
+int
+pthread_setcancelstate(int state, int *oldstatep)
+{
+	pthread_t self = pthread_self();
+	int oldstate;
+
+	oldstate = self->flags & THREAD_CANCEL_ENABLE ?
+	    PTHREAD_CANCEL_ENABLE : PTHREAD_CANCEL_DISABLE;
+	if (state == PTHREAD_CANCEL_ENABLE) {
+		self->flags |= THREAD_CANCEL_ENABLE;
+		pthread_testcancel();
+	} else if (state == PTHREAD_CANCEL_DISABLE) {
+		self->flags &= ~THREAD_CANCEL_ENABLE;
+	} else {
+		return (EINVAL);
+	}
+	if (oldstatep)
+		*oldstatep = oldstate;
+
+	return (0);
+}
+
+int
+pthread_setcanceltype(int type, int *oldtypep)
+{
+	pthread_t self = pthread_self();
+	int oldtype;
+
+	oldtype = self->flags & THREAD_CANCEL_DEFERRED ?
+	    PTHREAD_CANCEL_DEFERRED : PTHREAD_CANCEL_ASYNCHRONOUS;
+	if (type == PTHREAD_CANCEL_DEFERRED) {
+		self->flags |= THREAD_CANCEL_DEFERRED;
+		pthread_testcancel();
+	} else if (type == PTHREAD_CANCEL_ASYNCHRONOUS) {
+		self->flags &= ~THREAD_CANCEL_DEFERRED;
+	} else {
+		return (EINVAL);
+	}
+	if (oldtypep)
+		*oldtypep = oldtype;
+
+	return (0);
 }
 
 /*
