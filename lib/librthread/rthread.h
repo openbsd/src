@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.5 2005/12/14 04:43:04 tedu Exp $ */
+/*	$OpenBSD: rthread.h,v 1.6 2005/12/14 06:07:54 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -83,6 +83,12 @@ struct rthread_storage {
 	void *data;
 };
 
+struct rthread_cleanup_fn {
+	void (*fn)(void *);
+	void *arg;
+	struct rthread_cleanup_fn *next;
+};
+
 struct pthread {
 	pid_t tid;
 	struct semaphore donesem;
@@ -97,6 +103,7 @@ struct pthread {
 	struct sched_param sched_param;
 	struct rthread_storage *local_storage;
 	int sigpend;
+	struct rthread_cleanup_fn *cleanup_fns;
 };
 #define	THREAD_DONE		0x001
 #define	THREAD_DETACHED		0x002

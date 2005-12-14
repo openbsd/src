@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.6 2005/12/14 05:44:49 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.7 2005/12/14 06:07:54 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -141,12 +141,19 @@ pthread_self(void)
 void
 pthread_exit(void *retval)
 {
+	struct rthread_cleanup_fn *clfn;
 	pthread_t thread = pthread_self();
 
 	thread->retval = retval;
 	thread->flags |= THREAD_DONE;
 	
 	_sem_post(&thread->donesem);
+	for (clfn = thread->cleanup_fns; clfn; ) {
+		struct rthread_cleanup_fn *oclfn = clfn;
+		clfn = clfn->next;
+		oclfn->fn(oclfn->arg);
+		free(oclfn);
+	}
 	rthread_tls_destructors(thread);
 #if 0
 	if (thread->flags & THREAD_DETACHED)
@@ -284,6 +291,37 @@ pthread_setcanceltype(int type, int *oldtypep)
 		*oldtypep = oldtype;
 
 	return (0);
+}
+
+void
+pthread_cleanup_push(void (*fn)(void *), void *arg)
+{
+	struct rthread_cleanup_fn *clfn;
+	pthread_t self = pthread_self();
+
+	clfn = malloc(sizeof(*clfn));
+	if (!clfn)
+		return;
+	memset(clfn, 0, sizeof(*clfn));
+	clfn->fn = fn;
+	clfn->arg = arg;
+	clfn->next = self->cleanup_fns;
+	self->cleanup_fns = clfn;
+}
+
+void
+pthread_cleanup_pop(int execute)
+{
+	struct rthread_cleanup_fn *clfn;
+	pthread_t self = pthread_self();
+
+	clfn = self->cleanup_fns;
+	if (clfn) {
+		self->cleanup_fns = clfn->next;
+		if (execute)
+			clfn->fn(clfn->arg);
+		free(clfn);
+	}
 }
 
 /*
