@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.4 2005/12/13 07:23:34 marco Exp $
+#	$OpenBSD: files.acpi,v 1.5 2005/12/14 04:16:25 marco Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -14,7 +14,12 @@ device	acpitimer
 attach	acpitimer at acpi
 file	dev/acpi/acpitimer.c		acpitimer
 
-# generic device
+# AC device
+device	acpiac
+attach	acpiac at acpi
+file	dev/acpi/acpiac.c		acpiac
+
+# battery device
 device	acpibat
 attach	acpibat at acpi
 file	dev/acpi/acpibat.c		acpibat

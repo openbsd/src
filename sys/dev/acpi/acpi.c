@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.5 2005/12/14 03:46:38 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.6 2005/12/14 04:16:25 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -131,8 +131,15 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	}
 	dnprintf(10, "  device: %s\n", dev);
 
-	if (!strcmp(dev, ACPI_DEV_CMB))
-	{
+	if (!strcmp(dev, ACPI_DEV_AC)) {
+		struct acpi_attach_args aaa;
+
+		memset(&aaa, 0, sizeof(aaa));
+		aaa.aaa_name = "acpiac";
+		aaa.aaa_iot = sc->sc_iot;
+		aaa.aaa_memt = sc->sc_memt;
+		config_found(self, &aaa, acpi_print);
+	} else if (!strcmp(dev, ACPI_DEV_CMB)) {
 		struct acpi_attach_args aaa;
 
 		memset(&aaa, 0, sizeof(aaa));
@@ -141,7 +148,6 @@ acpi_foundhid(struct aml_node *node, void *arg)
 		aaa.aaa_memt = sc->sc_memt;
 		config_found(self, &aaa, acpi_print);
 	}
-
 }
 
 int

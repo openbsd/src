@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.3 2005/12/07 23:29:00 marco Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.4 2005/12/14 04:16:25 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@opebsd.org>
@@ -447,7 +447,7 @@ struct acpi_facs {
 #define ACPI_DEV_MEMD	"PNP0C80"	/* Memory Device */
 #define ACPI_DEV_SHC	"ACPI0001"	/* SMBus 1.0 Host Controller */
 #define ACPI_DEV_SMS1	"ACPI0002"	/* Smart Battery Subsystem */
-#define ACPI_DEV_AD	"ACPI0003"	/* AC Device */
+#define ACPI_DEV_AC	"ACPI0003"	/* AC Device */
 #define ACPI_DEV_MD	"ACPI0004"	/* Module Device */
 #define ACPI_DEV_SMS2	"ACPI0005"	/* SMBus 2.0 Host Controller */
 #define ACPI_DEV_GBD	"ACPI0006"	/* GPE Block Device */
