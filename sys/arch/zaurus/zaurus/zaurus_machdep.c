@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.20 2005/12/14 14:39:38 uwe Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.21 2005/12/14 15:08:51 uwe Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -719,18 +719,6 @@ initarm(void *arg)
 
 	/* Talk to the user */
 	printf("\nOpenBSD/zaurus booting ...\n");
-
-	/* Initialize for PCMCIA/CF sockets */
-	{
-		/* Activate two sockets.
-		   XXX: This code segment should be moved to
-		        pcmcia MD attach routine.
-		   XXX: These bits should be toggled based on
-		        existene of PCMCIA/CF cards
-		*/
-		ioreg_write(PXA2X0_MEMCTL_BASE+MEMCTL_MECR,
-			     MECR_NOS|MECR_CIT);
-	}
 
 	{
 		/* XXX - all Zaurus have this for now, fix memory sizing */

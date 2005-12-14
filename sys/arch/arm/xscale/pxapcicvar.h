@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxapcicvar.h,v 1.6 2005/07/01 23:51:55 uwe Exp $ */
+/*	$OpenBSD: pxapcicvar.h,v 1.7 2005/12/14 15:08:51 uwe Exp $ */
 
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
@@ -67,6 +67,7 @@ struct pxapcic_softc {
 	struct pxapcic_socket sc_socket[2];
 
         bus_space_tag_t sc_iot;
+        bus_space_handle_t sc_memctl_ioh;
 
 	void *sc_irq;
         int sc_shutdown;
