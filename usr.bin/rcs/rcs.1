@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.19 2005/12/02 14:49:06 xsa Exp $
+.\"	$OpenBSD: rcs.1,v 1.20 2005/12/14 10:34:48 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -31,15 +31,18 @@
 .Nd RCS file management program
 .Sh SYNOPSIS
 .Nm
-.Op Fl ehiLMqTUV
+.Op Fl ehIiLMqTUV
 .Op Fl A Ns Ar oldfile
 .Op Fl a Ns Ar users
 .Op Fl b Ns Op Ar rev
 .Op Fl c Ns Ar string
 .Op Fl e Ns Op Ar users
 .Op Fl k Ns Ar mode
-.Op Fl m Ns Ar rev : Ns Ar log
+.Oo Fl m Ns Ar rev Ns :
+.Ar msg Oc
 .Op Fl o Ns Ar rev
+.Oo Fl s Ns Ar state Ns
+.Op : Ns Ar rev Oc
 .Oo Fl t Ns Ar file Ns \*(Ba
 .Ar str Oc
 .Op Fl x Ns Ar suffixes
@@ -76,6 +79,8 @@ If
 is not specified, all users are removed from the access list.
 .It Fl h
 Display the program's usage and exit.
+.It Fl I
+Interactive mode.
 .It Fl i
 Create and initialize a new RCS file.
 If the RCS file has no path prefix, try to first create it in the
@@ -134,8 +139,20 @@ until the last revision of the branch.
 .It Fl q
 Be quiet about reporting.
 .Sm off
+.It Fl s Ar state Op : Ar rev
+.Sm on
+Sets the state of revision
+.Ar rev
+to the identifier
+.Ar state .
+The specified value may not contain a space character.
+If
+.Ar rev
+is not specified, the latest revision of the default branch
+is assumed.
 .It Fl T
 Preserve the modification time of RCS files.
+.Sm off
 .It Fl t Ar file \*(Ba Ar str
 .Sm on
 Change the descriptive text.
