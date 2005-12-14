@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.70 2005/12/14 04:03:51 tedu Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.71 2005/12/14 06:54:38 tedu Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -412,6 +412,8 @@ sys_thrsleep(struct proc *p, void *v, register_t *revtal)
 		timo = timo * (hz / 1000);
 	else
 		timo = timo / (1000 / hz);
+	if (timo < 0)
+		timo = 0;
 	error = tsleep(n, PUSER | PCATCH, "thrsleep", timo);
 
 	return (error);
