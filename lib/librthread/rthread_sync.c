@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.8 2005/12/14 04:14:19 tedu Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.9 2005/12/14 07:02:47 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -375,15 +375,29 @@ pthread_cond_timedwait(pthread_cond_t *condp, pthread_mutex_t *mutexp,
 {
 	int error;
 	int rv;
+	int timo = 0;
+	struct timeval timenow;
+	struct timespec tmspec;
 
 	if (!*condp)
 		if ((error = pthread_cond_init(condp, NULL)))
 			return (error);
 
+	if (abstime && gettimeofday(&timenow, NULL) == 0) {
+		TIMEVAL_TO_TIMESPEC(&timenow, &tmspec);
+		if (timespeccmp(abstime, &tmspec, <)) {
+			pthread_mutex_unlock(mutexp);
+			error = pthread_mutex_lock(mutexp);
+			return (error ? error : ETIMEDOUT);
+		}
+		timespecsub(abstime, &tmspec, &tmspec);
+		timo = tmspec.tv_sec * 1000 + tmspec.tv_nsec / 1000000;
+	}
+
+
 	_spinlock(&(*condp)->sem.lock);
 	pthread_mutex_unlock(mutexp);
-	rv = _sem_waitl(&(*condp)->sem, 0, (abstime ?
-	    abstime->tv_sec * 1000 + abstime->tv_nsec / 1000000 : 0));
+	rv = _sem_waitl(&(*condp)->sem, 0, timo);
 	error = pthread_mutex_lock(mutexp);
 
 	return (error ? error : rv ? 0 : ETIMEDOUT);
