@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.7 2005/12/13 17:22:46 tedu Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.8 2005/12/14 04:14:19 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -155,7 +155,14 @@ sem_init(sem_t *semp, int pshared, unsigned int value)
 int
 sem_destroy(sem_t *semp)
 {
-	/* should check for waiters */
+	if (!*semp)
+		return (EINVAL);
+	if ((*semp)->waitcount) {
+#define MSG "sem_destroy on semaphore with waiters!\n"
+		write(2, MSG, sizeof(MSG));
+#undef MSG
+		return (EBUSY);
+	}
 	free(*semp);
 	*semp = NULL;
 
@@ -233,7 +240,12 @@ int
 pthread_mutex_destroy(pthread_mutex_t *mutexp)
 {
 
-	/* check for waiters */
+	if ((*mutexp) && (*mutexp)->count) {
+#define MSG "pthread_mutex_destroy on mutex with waiters!\n"
+		write(2, MSG, sizeof(MSG));
+#undef MSG
+		return (EBUSY);
+	}
 	free((void *)*mutexp);
 	*mutexp = NULL;
 	return (0);
