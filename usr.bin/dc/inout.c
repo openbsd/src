@@ -1,4 +1,4 @@
-/*	$OpenBSD: inout.c,v 1.12 2005/03/29 10:53:54 otto Exp $	*/
+/*	$OpenBSD: inout.c,v 1.13 2005/12/14 08:10:02 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: inout.c,v 1.12 2005/03/29 10:53:54 otto Exp $";
+static const char rcsid[] = "$OpenBSD: inout.c,v 1.13 2005/12/14 08:10:02 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -192,6 +192,7 @@ readnumber(struct source *src, u_int base)
 	bool		sign = false;
 	bool		dot = false;
 	BN_ULONG	v;
+	u_int		i;
 
 	n = new_number();
 	bn_check(BN_zero(n->number));
@@ -224,6 +225,11 @@ readnumber(struct source *src, u_int base)
 		if (v > 0)
 #endif
 			bn_check(BN_add_word(n->number, v));
+	}
+	if (base != 10) {
+		scale_number(n->number, n->scale);
+		for (i = 0; i < n->scale; i++)
+			BN_div_word(n->number, base);
 	}
 	if (sign)
 		negate(n);
