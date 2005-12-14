@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_tls.c,v 1.2 2005/12/07 02:56:59 tedu Exp $ */
+/*	$OpenBSD: rthread_tls.c,v 1.3 2005/12/14 04:01:44 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -36,26 +36,29 @@
 
 #include "rthread.h"
 
-struct rthread_key *rthread_key_list;
+static struct rthread_key rkeys[PTHREAD_KEYS_MAX];
 
 int
 pthread_key_create(pthread_key_t *key, void (*destructor)(void*))
 {
-	static int last_key;
-	struct rthread_key *rkey;
+	static int hint;
+	int i;
 
-	last_key++;
+	if (rkeys[hint].used) {
+		for (i = 0; i < PTHREAD_KEYS_MAX; i++) {
+			if (!rkeys[i].used)
+				break;
+		}
+		if (i == PTHREAD_KEYS_MAX)
+			return (EAGAIN);
+		hint = i;
+	}
+	rkeys[hint].used = 1;
+	rkeys[hint].destructor = destructor;
 
-	rkey = malloc(sizeof(*rkey));
-	if (!rkey)
-		return (errno);
-	memset(rkey, 0, sizeof(*rkey));
-	rkey->keyid = last_key;
-	rkey->destructor = destructor;
-	rkey->next = rthread_key_list;
-	rthread_key_list = rkey;
-	
-	*key = last_key;
+	*key = hint++;
+	if (hint >= PTHREAD_KEYS_MAX)
+		hint = 0;
 
 	return (0);
 }
@@ -63,6 +66,9 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void*))
 int
 pthread_key_delete(pthread_key_t key)
 {
+
+	rkeys[key].used = 0;
+	rkeys[key].destructor = NULL;
 
 	return (0);
 }
@@ -116,4 +122,22 @@ pthread_setspecific(pthread_key_t key, const void *data)
 	rs->data = (void *)data;
 
 	return (0);
+}
+
+void
+rthread_tls_destructors(pthread_t thread)
+{
+	struct rthread_storage *rs;
+	int i;
+
+	for (i = 0; i < PTHREAD_DESTRUCTOR_ITERATIONS; i++) {
+		for (rs = thread->local_storage; rs; rs = rs->next) {
+			if (!rs->data)
+				continue;
+			if (rkeys[rs->keyid].destructor) {
+				rkeys[rs->keyid].destructor(rs->data);
+				rs->data = NULL;
+			}
+		}
+	}
 }

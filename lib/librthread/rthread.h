@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.3 2005/12/13 17:22:46 tedu Exp $ */
+/*	$OpenBSD: rthread.h,v 1.4 2005/12/14 04:01:44 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -73,8 +73,7 @@ struct pthread_attr {
 };
 
 struct rthread_key {
-	int keyid;
-	struct rthread_key *next;
+	int used;
 	void (*destructor)(void *);
 };
 
@@ -109,5 +108,7 @@ int	_sem_waitl(sem_t, int, int);
 int	_sem_post(sem_t);
 int	_sem_wakeup(sem_t);
 int	_sem_wakeall(sem_t);
+
+void rthread_tls_destructors(pthread_t);
 
 int	_atomic_lock(register volatile _spinlock_lock_t *);

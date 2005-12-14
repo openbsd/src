@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.3 2005/12/13 05:56:55 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.4 2005/12/14 04:01:44 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -96,6 +96,8 @@ thread_init(void)
 	pthread_t thread;
 	extern int __isthreaded;
 
+	printf("rthread init\n");
+
 	__isthreaded = 1;
 
 	thread = malloc(sizeof(*thread));
@@ -116,7 +118,6 @@ alloc_stack(size_t len)
 	stack->sp = (void *)(((size_t)stack->base + len - 16) & ~15);
 	return (stack);
 }
-
 
 /*
  * real pthread functions
@@ -143,7 +144,9 @@ pthread_exit(void *retval)
 
 	thread->retval = retval;
 	thread->flags |= THREAD_DONE;
+	
 	_sem_post(&thread->donesem);
+	rthread_tls_destructors(thread);
 #if 0
 	if (thread->flags & THREAD_DETACHED)
 		free(thread);
