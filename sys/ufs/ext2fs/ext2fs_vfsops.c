@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.43 2005/12/11 21:06:10 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.44 2005/12/14 22:03:01 pedro Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ const struct vfsops ext2fs_vfsops = {
 	ufs_check_export
 };
 
-/* struct pool ext2fs_inode_pool; */
+struct pool ext2fs_inode_pool;
 struct pool ext2fs_dinode_pool;
 
 extern u_long ext2gennumber;
@@ -109,6 +109,8 @@ int
 ext2fs_init(vfsp)
 	struct vfsconf *vfsp;
 {
+	pool_init(&ext2fs_inode_pool, sizeof(struct inode), 0, 0, 0,
+	    "ext2inopl", &pool_allocator_nointr);
 	pool_init(&ext2fs_dinode_pool, sizeof(struct ext2fs_dinode), 0, 0, 0,
 	    "ext2dinopl", &pool_allocator_nointr);
 
@@ -854,8 +856,9 @@ ext2fs_vget(mp, ino, vpp)
 		*vpp = NULL;
 		return (error);
 	}
-	MALLOC(ip, struct inode *, sizeof(struct inode), M_EXT2FSNODE, M_WAITOK);
-	bzero((caddr_t)ip, sizeof(struct inode));
+
+	ip = pool_get(&ext2fs_inode_pool, PR_WAITOK);
+	memset(ip, 0, sizeof(struct inode));
 	lockinit(&ip->i_lock, PINOD, "inode", 0, 0);
 	vp->v_data = ip;
 	ip->i_vnode = vp;

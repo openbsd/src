@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.42 2005/12/11 20:46:28 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.43 2005/12/14 22:03:01 pedro Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -1348,7 +1348,7 @@ ext2fs_reclaim(v)
 	if (ip->i_e2din != NULL)
 		pool_put(&ext2fs_dinode_pool, ip->i_e2din);
 
-	FREE(vp->v_data, M_EXT2FSNODE);
+	pool_put(&ext2fs_inode_pool, ip);
 
 	vp->v_data = NULL;
 

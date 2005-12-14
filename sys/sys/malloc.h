@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.81 2005/11/15 07:02:37 miod Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.82 2005/12/14 22:03:01 pedro Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -123,8 +123,7 @@
 #define	M_ANODE		68	/* adosfs anode structures and tables. */
 /* 69-70 - free */
 #define	M_ADOSFSBITMAP	71	/* adosfs bitmap */
-#define	M_EXT2FSNODE	72	/* EXT2FS vnode private part */
-/* 73 - free */
+/* 72-73 - free */
 #define	M_PFKEY		74	/* pfkey data */
 #define	M_TDB		75	/* Transforms database */
 #define	M_XDATA		76	/* IPsec data */
@@ -258,7 +257,7 @@
 	NULL, \
 	NULL, \
 	"adosfs bitmap", /* 71 M_ADOSFSBITMAP */ \
-	"EXT2FS node",	/* 72 M_EXT2FSNODE */ \
+	NULL, \
 	NULL, \
 	"pfkey data",	/* 74 M_PFKEY */ \
 	"tdb",		/* 75 M_TDB */ \
