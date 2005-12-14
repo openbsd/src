@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_tls.c,v 1.3 2005/12/14 04:01:44 tedu Exp $ */
+/*	$OpenBSD: rthread_tls.c,v 1.4 2005/12/14 05:38:31 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -37,6 +37,7 @@
 #include "rthread.h"
 
 static struct rthread_key rkeys[PTHREAD_KEYS_MAX];
+static _spinlock_lock_t rkeyslock;
 
 int
 pthread_key_create(pthread_key_t *key, void (*destructor)(void*))
@@ -44,13 +45,16 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void*))
 	static int hint;
 	int i;
 
+	_spinlock(&rkeyslock);
 	if (rkeys[hint].used) {
 		for (i = 0; i < PTHREAD_KEYS_MAX; i++) {
 			if (!rkeys[i].used)
 				break;
 		}
-		if (i == PTHREAD_KEYS_MAX)
+		if (i == PTHREAD_KEYS_MAX) {
+			_spinunlock(&rkeyslock);
 			return (EAGAIN);
+		}
 		hint = i;
 	}
 	rkeys[hint].used = 1;
@@ -59,6 +63,7 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void*))
 	*key = hint++;
 	if (hint >= PTHREAD_KEYS_MAX)
 		hint = 0;
+	_spinunlock(&rkeyslock);
 
 	return (0);
 }
@@ -67,8 +72,10 @@ int
 pthread_key_delete(pthread_key_t key)
 {
 
+	_spinlock(&rkeyslock);
 	rkeys[key].used = 0;
 	rkeys[key].destructor = NULL;
+	_spinunlock(&rkeyslock);
 
 	return (0);
 }
@@ -130,14 +137,21 @@ rthread_tls_destructors(pthread_t thread)
 	struct rthread_storage *rs;
 	int i;
 
+	_spinlock(&rkeyslock);
 	for (i = 0; i < PTHREAD_DESTRUCTOR_ITERATIONS; i++) {
 		for (rs = thread->local_storage; rs; rs = rs->next) {
 			if (!rs->data)
 				continue;
 			if (rkeys[rs->keyid].destructor) {
-				rkeys[rs->keyid].destructor(rs->data);
+				void (*destructor)(void *) =
+				    rkeys[rs->keyid].destructor;
+				void *data = rs->data;
+				_spinunlock(&rkeyslock);
 				rs->data = NULL;
+				destructor(data);
+				_spinlock(&rkeyslock);
 			}
 		}
 	}
+	_spinunlock(&rkeyslock);
 }
