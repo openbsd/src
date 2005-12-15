@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.26 2004/12/28 04:16:14 deraadt Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.27 2005/12/15 13:49:03 krw Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -308,9 +308,10 @@ scanjet_read(ss, bp)
 	    SCSI_NOSLEEP | SCSI_DATA_IN) != SUCCESSFULLY_QUEUED)
 		printf("%s: not queued\n", ss->sc_dev.dv_xname);
 	else {
-		ss->sio.scan_window_size -= bp->b_bcount;
-		if (ss->sio.scan_window_size < 0)
+		if (bp->b_bcount >= ss->sio.scan_window_size)
 			ss->sio.scan_window_size = 0;
+		else
+			ss->sio.scan_window_size -= bp->b_bcount;
 	}
 
 	return (0);
