@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.21 2005/12/14 18:28:40 millert Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.22 2005/12/15 17:48:32 millert Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -35,8 +35,8 @@
  *	@(#)cdefs.h	8.7 (Berkeley) 1/21/94
  */
 
-#ifndef	_CDEFS_H_
-#define	_CDEFS_H_
+#ifndef	_SYS_CDEFS_H_
+#define	_SYS_CDEFS_H_
 
 #include <machine/cdefs.h>
 
@@ -323,4 +323,4 @@
 # define __BSD_VISIBLE		1
 #endif
 
-#endif /* !_CDEFS_H_ */
+#endif /* !_SYS_CDEFS_H_ */
