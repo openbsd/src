@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.27 2005/12/13 02:31:45 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.28 2005/12/15 07:49:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -69,7 +69,7 @@ enum sensor_type esm_typemap[] = {
 	SENSOR_FANRPM,
 	SENSOR_VOLTS_DC,
 	SENSOR_AMPS,
-	SENSOR_INTEGER,
+	SENSOR_INDICATOR,
 	SENSOR_INTEGER,
 	SENSOR_INDICATOR,
 	SENSOR_DRIVE,
@@ -344,6 +344,10 @@ esm_refresh(void *arg)
 			for (i = 0; i < 4; i++)
 				es->es_sensor[i].flags |= SENSOR_FINVALID;
 			break;
+		case ESM_S_PWRSUP:
+			for (i = 0; i < 6; i++)
+				es->es_sensor[i].flags |= SENSOR_FINVALID;
+			break;
 		default:
 			es->es_sensor->flags |= SENSOR_FINVALID;
 			break;
@@ -363,6 +367,13 @@ esm_refresh(void *arg)
 			for (i = 0; i < 4; i++) {
 				es->es_sensor[i].value =
 				    (val->v_reading >> i * 8) & 0xf;
+				es->es_sensor[i].flags &= ~SENSOR_FINVALID;
+			}
+			break;
+		case ESM_S_PWRSUP:
+			for (i = 0; i < 6; i++) {
+				es->es_sensor[i].value =
+				    (val->v_reading >> i) & 0x1;
 				es->es_sensor[i].flags &= ~SENSOR_FINVALID;
 			}
 			break;
@@ -393,11 +404,11 @@ esm_refresh(void *arg)
 
 		case ESM_S_PWRSUP:
 			if (val->v_status & ESM2_VS_PSU_FAIL) {
-				es->es_sensor->status = SENSOR_S_CRIT;
+				es->es_sensor[3].status = SENSOR_S_CRIT;
 				break;
 			}
 
-			es->es_sensor->status = SENSOR_S_OK;
+			es->es_sensor[3].status = SENSOR_S_OK;
 			break;
 
 		default:
@@ -504,8 +515,8 @@ struct esm_sensor_map esm_sensors_esm2[] = {
 	{ ESM_S_VOLTS,		0,		"CPU 3 cache" },
 	{ ESM_S_VOLTS,		0,		"CPU 4 cache" },
 	{ ESM_S_UNKNOWN,	0,		"Power Ctrl" },
-	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_1,	"Power Supply 1" },
-	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_2,	"Power Supply 2" },
+	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_1,	"Power Supply 1 %s" },
+	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_2,	"Power Supply 2 %s" },
 
 	{ ESM_S_VOLTS,		0,		"Mainboard +1.5V" }, /* 30 */
 	{ ESM_S_VOLTS,		0,		"Motherboard +2.8V" },
@@ -528,7 +539,7 @@ struct esm_sensor_map esm_sensors_esm2[] = {
 	{ ESM_S_VOLTS,		0,		"Gigabit NIC +2.5V" },
 	{ ESM_S_VOLTS,		0,		"Memory +3.3V" },
 	{ ESM_S_VOLTS,		0,		"Video +2.5V" },
-	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_3,	"Power Supply 3" },
+	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_3,	"Power Supply 3 %s" },
 	{ ESM_S_FANRPM,		0,		"Fan 4" },
 
 	{ ESM_S_FANRPM,		0,		"Power Supply Fan" }, /* 50 */
@@ -614,10 +625,10 @@ struct esm_sensor_map esm_sensors_powerunit[] = {
 	{ ESM_S_FANRPM,		ESM_A_PWRSUP_1,	"Power Supply 1 Fan" },
 	{ ESM_S_FANRPM,		ESM_A_PWRSUP_2,	"Power Supply 2 Fan" },
 	{ ESM_S_FANRPM,		ESM_A_PWRSUP_3,	"Power Supply 3 Fan" },
-	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_1,	"Power Supply 1" },
+	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_1,	"Power Supply 1 %s" },
 
-	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_2,	"Power Supply 2" },
-	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_3,	"Power Supply 3" },
+	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_2,	"Power Supply 2 %s" },
+	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_3,	"Power Supply 3 %s" },
 	{ ESM_S_UNKNOWN,	0,		"PSPB Fan Control" },
 	{ ESM_S_FANRPM,		0,		"Fan 1" },
 	{ ESM_S_FANRPM,		0,		"Fan 2" },
@@ -770,6 +781,9 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 	struct esm_sensor	*es;
 	struct sensor		*s;
 	int			nsensors, i, j;
+	const char		*psulabels[] = {
+				    "AC", "SW", "OK", "ON", "FFAN", "OTMP"
+				};
 
 	memset(&req, 0, sizeof(req));
 	req.h_cmd = ESM2_CMD_SMB_XMIT_RECV;
@@ -791,7 +805,7 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 
 		switch (sensor_map[i].type) {
 		case ESM_S_PWRSUP:
-			if (!(val->v_status & ESM2_VS_PSU_INST))
+			if (val->v_status == 0x00)
 				continue;
 			break;
 		default:
@@ -829,6 +843,25 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 				    sensor_map[i].name, sensor_map[i].arg + j);
 			}
 			break;
+		case ESM_S_PWRSUP:
+			/*
+			 * the esm pwrsup sensor has a bitfield for its value,
+			 * this expands it out to 6 separate indicators/
+			 */
+			nsensors = 6;
+			s = malloc(sizeof(struct sensor) * nsensors, M_DEVBUF,
+			    M_NOWAIT);
+			if (s == NULL) {
+				free(es, M_DEVBUF);
+				return;
+			}
+			memset(s, 0, sizeof(struct sensor) * nsensors);
+
+			for (j = 0; j < nsensors; j++) {
+				snprintf(s[j].desc, sizeof(s[j].desc),
+				    sensor_map[i].name, psulabels[j]);
+			}
+			break;
 
 		case ESM_S_TEMP:
 		case ESM_S_FANRPM:
@@ -853,7 +886,7 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 		}
 
 		for (j = 0; j < nsensors; j++) {
-			s->type = esm_typemap[es->es_type];
+			s[j].type = esm_typemap[es->es_type];
 			strlcpy(s[j].device, DEVNAME(sc), sizeof(s[j].device));
 			SENSOR_ADD(&s[j]);
 		}
