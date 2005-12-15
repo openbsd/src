@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.41 2005/03/07 23:41:54 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.42 2005/12/15 01:37:32 miod Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -225,6 +225,8 @@ look at by bytes (8 bits)
 look at by half words (16 bits)
 .It Cm /l
 look at by long words (32 bits) (default)
+.It Cm /q
+look at by long longs (64 bits)
 .It Cm /a
 print the location being displayed
 .It Cm /A
@@ -257,12 +259,20 @@ display as an alternate format instruction depending on the
 machine:
 .Pp
 .Bl -tag -width powerpc_ -compact
+.It alpha
+Print affected register contents for every instruction.
+.It amd64 ,
+.It i386
+Do not skip padding to the next long word boundary for unconditional jumps.
+.It m68k
+Use
+.Tn Motorola
+assembly syntax.
+.\" .It m88k
+.\" Decode instructions for the opposite CPU (i.e. m88110 when running on an
+.\" m88100 processor, and the opposite).
 .It vax
 Don't assume that each external label is a procedure entry mask.
-.It i386
-Don't round to the next long word boundary.
-.It mips
-Print register contents.
 .El
 .El
 .Pp
