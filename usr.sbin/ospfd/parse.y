@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.21 2005/11/04 10:15:43 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.22 2005/12/15 20:19:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -217,12 +217,13 @@ conf_main	: METRIC number {
 			}
 			defaults.rxmt_interval = $2;
 		}
-		| ROUTERID string {
+		| ROUTERID STRING {
 			if (!inet_aton($2, &conf->rtr_id)) {
 				yyerror("error parsing router-id");
 				free($2);
 				YYERROR;
 			}
+			free($2);
 		}
 		| FIBUPDATE yesno {
 			if ($2 == 0)
@@ -331,7 +332,8 @@ authkey		: AUTHKEY STRING {
 					YYERROR;
 				}
 				iface->auth_key = $2;
-			}
+			} else
+				free($2);
 		}
 		;
 
@@ -342,7 +344,7 @@ optnl		: '\n' optnl
 nl		: '\n' optnl		/* one newline or more */
 		;
 
-area		: AREA string {
+area		: AREA STRING {
 			struct in_addr	id;
 			if (inet_aton($2, &id) == 0) {
 				yyerror("error parsing area");
@@ -968,8 +970,14 @@ conf_get_if(struct kif *kif)
 void
 clear_config(struct ospfd_conf *xconf)
 {
-	/* XXX clear conf */
-		/* ... */
+	struct area	*a;
+
+	while ((a = LIST_FIRST(&xconf->area_list)) != NULL) {
+		LIST_REMOVE(a, entry);
+		area_del(a);
+	}
+
+	free(xconf);
 }
 
 u_int32_t
