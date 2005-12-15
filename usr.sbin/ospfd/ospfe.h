@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.18 2005/12/04 20:49:47 norby Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.19 2005/12/15 20:29:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -183,7 +183,7 @@ void		 orig_net_lsa(struct iface *);
 int		 if_fsm(struct iface *, enum iface_event);
 
 struct iface	*if_new(struct kif *);
-int		 if_del(struct iface *);
+void		 if_del(struct iface *);
 void		 if_init(struct ospfd_conf *, struct iface *);
 
 int		 if_act_start(struct iface *);
@@ -254,7 +254,7 @@ void		 lsa_cache_put(struct lsa_ref *, struct nbr *);
 /* neighbor.c */
 void		 nbr_init(u_int32_t);
 struct nbr	*nbr_new(u_int32_t, struct iface *, int);
-int		 nbr_del(struct nbr *);
+void		 nbr_del(struct nbr *);
 
 struct nbr	*nbr_find_id(struct iface *, u_int32_t);
 struct nbr	*nbr_find_peerid(u_int32_t);

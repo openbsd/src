@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.25 2005/10/19 21:46:21 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.26 2005/12/15 20:29:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -316,12 +316,9 @@ nbr_new(u_int32_t nbr_id, struct iface *iface, int self)
 	return (nbr);
 }
 
-int
+void
 nbr_del(struct nbr *nbr)
 {
-	if (nbr == nbr->iface->self)
-		return (0);
-
 	ospfe_imsg_compose_rde(IMSG_NEIGHBOR_DOWN, nbr->peerid, 0, NULL, 0);
 
 	/* clear lists */
@@ -333,8 +330,6 @@ nbr_del(struct nbr *nbr)
 	LIST_REMOVE(nbr, hash);
 
 	free(nbr);
-
-	return (0);
 }
 
 struct nbr *
@@ -571,6 +566,9 @@ int
 nbr_act_delete(struct nbr *nbr)
 {
 	struct timeval	tv;
+
+	if (nbr == nbr->iface->self)
+		return (0);
 
 	/* stop timers */
 	if (nbr_stop_itimer(nbr)) {

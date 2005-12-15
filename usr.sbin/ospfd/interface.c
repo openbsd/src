@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.39 2005/12/04 20:49:47 norby Exp $ */
+/*	$OpenBSD: interface.c,v 1.40 2005/12/15 20:29:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -231,7 +231,7 @@ if_new(struct kif *kif)
 	return (iface);
 }
 
-int
+void
 if_del(struct iface *iface)
 {
 	struct nbr	*nbr = NULL;
@@ -239,17 +239,13 @@ if_del(struct iface *iface)
 	log_debug("if_del: interface %s", iface->name);
 
 	/* clear lists etc */
-	iface->self = NULL; /* trick neighbor.c code to remove self too */
-	while ((nbr = LIST_FIRST(&iface->nbr_list)) != NULL) {
-		LIST_REMOVE(nbr, entry);
+	while ((nbr = LIST_FIRST(&iface->nbr_list)) != NULL)
 		nbr_del(nbr);
-	}
 
 	ls_ack_list_clr(iface);
 	md_list_clr(iface);
 	free(iface->auth_key);
-
-	return (-1);
+	free(iface);
 }
 
 void
