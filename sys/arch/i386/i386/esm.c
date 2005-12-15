@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.29 2005/12/15 07:58:52 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.30 2005/12/15 08:45:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -325,7 +325,7 @@ esm_refresh(void *arg)
 	struct esm_smb_req	req;
 	struct esm_smb_resp	resp;
 	struct esm_smb_resp_val	*val = &resp.resp_val;
-	int			i;
+	int			nsensors, i;
 
 	memset(&req, 0, sizeof(req));
 	req.h_cmd = ESM2_CMD_SMB_XMIT_RECV;
@@ -335,51 +335,46 @@ esm_refresh(void *arg)
 	req.req_val.v_cmd = ESM2_SMB_SENSOR_VALUE;
 	req.req_val.v_sensor = es->es_id;
 
+	switch (es->es_type) {
+	case ESM_S_DRIVES:
+		nsensors = 4;
+		break;
+	case ESM_S_PWRSUP:
+		nsensors = 6;
+		break;
+	default:
+		nsensors = 1;
+		break;
+	}
+
 	if (esm_smb_cmd(sc, &req, &resp, 0) != 0) {
 		if (++sc->sc_retries < 10)
 			goto tick;
 
-		switch (es->es_type) {
-		case ESM_S_DRIVES:
-			for (i = 0; i < 4; i++)
-				es->es_sensor[i].flags |= SENSOR_FINVALID;
-			break;
-		case ESM_S_PWRSUP:
-			for (i = 0; i < 6; i++)
-				es->es_sensor[i].flags |= SENSOR_FINVALID;
-			break;
-		default:
-			es->es_sensor->flags |= SENSOR_FINVALID;
-			break;
-		}
-
+		for (i = 0; i < nsensors; i++)
+			es->es_sensor[i].flags |= SENSOR_FINVALID;
 	} else {
 		switch (es->es_type) {
 		case ESM_S_TEMP:
 			es->es_sensor->value = esm_val2temp(val->v_reading);
-			es->es_sensor->flags &= ~SENSOR_FINVALID;
 			break;
 		case ESM_S_VOLTS:
 			es->es_sensor->value = esm_val2volts(val->v_reading);
-			es->es_sensor->flags &= ~SENSOR_FINVALID;
 			break;
 		case ESM_S_DRIVES:
-			for (i = 0; i < 4; i++) {
+			for (i = 0; i < nsensors; i++) {
 				es->es_sensor[i].value =
 				    (val->v_reading >> i * 8) & 0xf;
-				es->es_sensor[i].flags &= ~SENSOR_FINVALID;
 			}
 			break;
 		case ESM_S_PWRSUP:
-			for (i = 0; i < 6; i++) {
+			for (i = 0; i < nsensors; i++) {
 				es->es_sensor[i].value =
 				    (val->v_reading >> i) & 0x1;
-				es->es_sensor[i].flags &= ~SENSOR_FINVALID;
 			}
 			break;
 		default:
 			es->es_sensor->value = val->v_reading;
-			es->es_sensor->flags &= ~SENSOR_FINVALID;
 			break;
 		}
 
@@ -415,6 +410,8 @@ esm_refresh(void *arg)
 			break;
 		}
 
+		for (i = 0; i < nsensors; i++)
+			es->es_sensor->flags &= ~SENSOR_FINVALID;
 	}
 
 	sc->sc_nextsensor = TAILQ_NEXT(es, es_entry);
