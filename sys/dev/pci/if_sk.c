@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.90 2005/12/10 19:06:10 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.91 2005/12/15 23:56:00 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1615,8 +1615,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	printf(", %s", sc->sk_name);
 	if (revstr != NULL)
 		printf(" rev. %s", revstr);
-	printf(" (0x%x)", sc->sk_rev);
-	printf(": %s\n", intrstr);
+	printf(" (0x%x): %s\n", sc->sk_rev, intrstr);
 
 	skca.skc_port = SK_PORT_A;
 	skca.skc_type = sc->sk_type;
