@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.10 2005/05/26 20:05:29 norby Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.11 2005/12/15 20:39:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -103,7 +103,6 @@ recv_ls_req(struct nbr *nbr, char *buf, u_int16_t len)
 		log_debug("recv_ls_req: packet ignored in state %s, "
 		    "neighbor ID %s", nbr_state_name(nbr->state),
 		    inet_ntoa(nbr->id));
-		nbr_fsm(nbr, NBR_EVT_ADJ_OK);
 		break;
 	case NBR_STA_XCHNG:
 	case NBR_STA_LOAD:
