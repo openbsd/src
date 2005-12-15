@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.28 2005/12/15 07:49:42 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.29 2005/12/15 07:58:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -515,8 +515,8 @@ struct esm_sensor_map esm_sensors_esm2[] = {
 	{ ESM_S_VOLTS,		0,		"CPU 3 cache" },
 	{ ESM_S_VOLTS,		0,		"CPU 4 cache" },
 	{ ESM_S_UNKNOWN,	0,		"Power Ctrl" },
-	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_1,	"Power Supply 1 %s" },
-	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_2,	"Power Supply 2 %s" },
+	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_1,	"Power Supply 1" },
+	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_2,	"Power Supply 2" },
 
 	{ ESM_S_VOLTS,		0,		"Mainboard +1.5V" }, /* 30 */
 	{ ESM_S_VOLTS,		0,		"Motherboard +2.8V" },
@@ -539,7 +539,7 @@ struct esm_sensor_map esm_sensors_esm2[] = {
 	{ ESM_S_VOLTS,		0,		"Gigabit NIC +2.5V" },
 	{ ESM_S_VOLTS,		0,		"Memory +3.3V" },
 	{ ESM_S_VOLTS,		0,		"Video +2.5V" },
-	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_3,	"Power Supply 3 %s" },
+	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_3,	"Power Supply 3" },
 	{ ESM_S_FANRPM,		0,		"Fan 4" },
 
 	{ ESM_S_FANRPM,		0,		"Power Supply Fan" }, /* 50 */
@@ -570,8 +570,8 @@ struct esm_sensor_map esm_sensors_backplane[] = {
 	{ ESM_S_SCSICONN,	ESM_A_SCSI_B,	"Backplane SCSI B Connected" },
 	{ ESM_S_VOLTS,		ESM_A_SCSI_B,	"Backplane SCSI B External" },
 	{ ESM_S_VOLTS,		ESM_A_SCSI_B,	"Backplane SCSI B Internal" },
-	{ ESM_S_DRIVES,		1,		"Drive %d" },
-	{ ESM_S_DRIVES,		5,		"Drive %d" },
+	{ ESM_S_DRIVES,		1,		"Drive" },
+	{ ESM_S_DRIVES,		5,		"Drive" },
 	{ ESM_S_DRIVE,		0,		"Drive 1" },
 	{ ESM_S_DRIVE,		0,		"Drive 2" },
 	{ ESM_S_DRIVE,		0,		"Drive 3" },
@@ -625,10 +625,10 @@ struct esm_sensor_map esm_sensors_powerunit[] = {
 	{ ESM_S_FANRPM,		ESM_A_PWRSUP_1,	"Power Supply 1 Fan" },
 	{ ESM_S_FANRPM,		ESM_A_PWRSUP_2,	"Power Supply 2 Fan" },
 	{ ESM_S_FANRPM,		ESM_A_PWRSUP_3,	"Power Supply 3 Fan" },
-	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_1,	"Power Supply 1 %s" },
+	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_1,	"Power Supply 1" },
 
-	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_2,	"Power Supply 2 %s" },
-	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_3,	"Power Supply 3 %s" },
+	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_2,	"Power Supply 2" },
+	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_3,	"Power Supply 3" },
 	{ ESM_S_UNKNOWN,	0,		"PSPB Fan Control" },
 	{ ESM_S_FANRPM,		0,		"Fan 1" },
 	{ ESM_S_FANRPM,		0,		"Fan 2" },
@@ -839,7 +839,7 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 			memset(s, 0, sizeof(struct sensor) * nsensors);
 
 			for (j = 0; j < nsensors; j++) {
-				snprintf(s[j].desc, sizeof(s[j].desc),
+				snprintf(s[j].desc, sizeof(s[j].desc), "%s %d",
 				    sensor_map[i].name, sensor_map[i].arg + j);
 			}
 			break;
@@ -858,7 +858,7 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 			memset(s, 0, sizeof(struct sensor) * nsensors);
 
 			for (j = 0; j < nsensors; j++) {
-				snprintf(s[j].desc, sizeof(s[j].desc),
+				snprintf(s[j].desc, sizeof(s[j].desc), "%s %s",
 				    sensor_map[i].name, psulabels[j]);
 			}
 			break;
