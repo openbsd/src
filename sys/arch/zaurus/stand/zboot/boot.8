@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.3 2005/09/17 20:18:14 uwe Exp $
+.\"	$OpenBSD: boot.8,v 1.4 2005/12/15 02:50:50 deraadt Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -320,6 +320,43 @@ Once booted, such changes can be made permanent by using
 option.
 .Pp
 .Dl boot> boot hd1a:/bsd -c
+.Sh UPDATING BOOTBLOCKS
+Since the bootblocks actually live in a Linux flash filesystem, a
+rather obtuse method must currently be used to upgrade them.
+.Pp
+.Bl -enum -offset indent -compact
+.It
+Place
+.Pa zboot
+and
+.Pa zbsdmod.o
+onto an MSDOS filesystem on a CF card, and then insert into the Zaurus.
+.It
+Remove power from the Zaurus.
+.It
+Unplug the battery
+.It
+Start holding down the 'b' and 'd' keys.
+.It
+Wait 30 seconds, then re-insert the battery and power up the Zaurus.
+.It
+When you see text start to appear on the Zaurus, release the 'b' and
+'d' keys.
+.It
+Login as root and perform the following steps:
+.El
+.Pp
+.Bd -literal -offset indent
+# mount /dev/mtdblock2 /tmp
+# cp /mnt/cf/z* /tmp/home/etc/rc.d
+# reboot
+.Ed
+.Pp
+A SD card with an MSDOS filesystem may be used instead, in which case
+the Linux pathname will be
+.Pa /mnt/card
+instead of
+.Pa /mnt/cf .
 .Sh SEE ALSO
 .\" .Xr gzip 1 ,
 .Xr autoconf 4 ,
