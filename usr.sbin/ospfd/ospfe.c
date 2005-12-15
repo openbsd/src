@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.34 2005/12/04 20:49:47 norby Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.35 2005/12/15 20:30:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -196,7 +196,7 @@ ospfe_shutdown(void)
 	struct iface	*iface;
 
 	/* stop all interfaces and remove all areas */
-	LIST_FOREACH(area, &oeconf->area_list, entry) {
+	while ((area = LIST_FIRST(&oeconf->area_list)) != NULL) {
 		LIST_FOREACH(iface, &area->iface_list, entry) {
 			if (!iface->passive) {
 				if (if_fsm(iface, IF_EVT_DOWN)) {
@@ -205,6 +205,7 @@ ospfe_shutdown(void)
 				}
 			}
 		}
+		LIST_REMOVE(area, entry);
 		area_del(area);
 	}
 
@@ -217,6 +218,7 @@ ospfe_shutdown(void)
 	msgbuf_write(&ibuf_main->w);
 	msgbuf_clear(&ibuf_main->w);
 	free(ibuf_main);
+	free(oeconf);
 
 	log_info("ospf engine exiting");
 	_exit(0);
