@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.32 2005/09/06 23:28:23 jmc Exp $
+.\"	$OpenBSD: fstat.1,v 1.33 2005/12/15 12:15:45 pedro Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -122,9 +122,7 @@ tr	\- kernel trace file
 .Pp
 If the file number is followed by an asterisk
 .Pq Ql * ,
-the file is not an inode, but rather a socket,
-.Tn FIFO ,
-or there is an error.
+the file is not an inode, but rather a socket, or there is an error.
 In this case the remainder of the line doesn't
 correspond to the remaining headers -- the format of the line
 is described later under
