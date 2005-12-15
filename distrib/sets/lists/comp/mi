@@ -510,6 +510,8 @@
 ./usr/include/dev/pci/if_lmc_types.h
 ./usr/include/dev/pci/if_lmcioctl.h
 ./usr/include/dev/pci/if_lmcvar.h
+./usr/include/dev/pci/if_nfereg.h
+./usr/include/dev/pci/if_nfevar.h
 ./usr/include/dev/pci/if_ngereg.h
 ./usr/include/dev/pci/if_pcnreg.h
 ./usr/include/dev/pci/if_san_common.h

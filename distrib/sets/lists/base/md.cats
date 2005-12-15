@@ -1193,6 +1193,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_lmc_types.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_lmcioctl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_lmcvar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_nfereg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_nfevar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_ngereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_pcnreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_san_common.ph
