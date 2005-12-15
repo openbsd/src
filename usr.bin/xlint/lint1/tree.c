@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.25 2005/12/14 22:09:40 kjell Exp $	*/
+/*	$OpenBSD: tree.c,v 1.26 2005/12/15 05:49:49 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.25 2005/12/14 22:09:40 kjell Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.26 2005/12/15 05:49:49 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1192,6 +1192,15 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	if ((rt = (rtp = rn->tn_type)->t_tspec) == PTR)
 		rst = (rstp = rtp->t_subt)->t_tspec;
 	mp = &modtab[op];
+
+	/* be picky about conversion of function return types */
+	if (rn->tn_op == CALL) {
+		if (size(lt) < size(rt) ||
+		    (size(lt) == size(rt) && isutyp(lt) && !isutyp(rt))) {
+			warning(313, rn->tn_left->tn_left->tn_sym->s_name,
+			    tyname(rn->tn_type), tyname(ln->tn_type));
+		}
+	}
 
 	if (isatyp(lt) && isatyp(rt))
 		return (1);
