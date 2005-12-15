@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_epic_pci.c,v 1.3 2005/07/02 21:51:05 brad Exp $	*/
+/*	$OpenBSD: if_epic_pci.c,v 1.4 2005/12/15 23:17:23 krw Exp $	*/
 /*	$NetBSD: if_epic_pci.c,v 1.28 2005/02/27 00:27:32 perry Exp $	*/
 
 /*-
@@ -223,8 +223,7 @@ epic_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, epic_intr, sc,
 	    self->dv_xname);
 	if (psc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt",
-		    sc->sc_dev.dv_xname);
+		printf(": unable to establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
