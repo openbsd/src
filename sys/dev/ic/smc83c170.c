@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170.c,v 1.6 2005/12/15 23:17:24 krw Exp $	*/
+/*	$OpenBSD: smc83c170.c,v 1.7 2005/12/15 23:40:19 krw Exp $	*/
 /*	$NetBSD: smc83c170.c,v 1.59 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
@@ -250,15 +250,15 @@ epic_attach(struct epic_softc *sc, const char *intrstr)
 		devname[i * 2 + 1] = mydevname[i] >> 8;
 	}
 
-	devname[sizeof(mydevname)] = '\0';
-	for (i = sizeof(mydevname) - 1; i >= 0; i--) {
-		if (devname[i] == ' ')
-			devname[i] = '\0';
-		else
+	devname[sizeof(devname) - 1] = ' ';
+	for (i = sizeof(devname) - 1; devname[i] == ' '; i--) {
+		devname[i] = '\0';
+		if (i == 0)
 			break;
 	}
 
-	printf(": %s, address %s\n", intrstr, ether_sprintf(enaddr));
+	printf(", %s : %s, address %s\n", devname, intrstr,
+	    ether_sprintf(enaddr));
 
 	miiflags = 0;
 	if (sc->sc_hwflags & EPIC_HAS_MII_FIBER)
