@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.39 2005/10/21 22:10:56 brad Exp $	*/
+/*	$OpenBSD: hme.c,v 1.40 2005/12/16 06:08:13 brad Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -936,7 +936,9 @@ hme_eint(sc, status)
 	if (status == 0)
 		return (1);
 
+#ifdef HME_DEBUG
 	printf("%s: status=%b\n", sc->sc_dev.dv_xname, status, HME_SEB_STAT_BITS);
+#endif
 	return (1);
 }
 
