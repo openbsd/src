@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.69 2005/11/19 02:18:02 pedro Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.70 2005/12/16 04:52:24 pedro Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1482,14 +1482,17 @@ ufs_readdir(void *v)
 	} */ *ap = v;
 	struct uio *uio = ap->a_uio;
 	int error;
-	size_t count, lost;
+	size_t count, lost, entries;
 	off_t off = uio->uio_offset;
 
 	count = uio->uio_resid;
+	entries = (uio->uio_offset + count) & (DIRBLKSIZ - 1);
+
 	/* Make sure we don't return partial entries. */
-	count -= (uio->uio_offset + count) & (DIRBLKSIZ -1);
-	if (count <= 0)
+	if (count <= entries)
 		return (EINVAL);
+
+	count -= entries;
 	lost = uio->uio_resid - count;
 	uio->uio_resid = count;
 	uio->uio_iov->iov_len = count;
