@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.1 2005/12/14 04:15:43 marco Exp $ */
+/* $OpenBSD: acpiac.c,v 1.2 2005/12/16 04:16:59 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -24,7 +24,7 @@
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpiac.h>
+#include <dev/acpi/acpidev.h>
 
 int acpiac_match(struct device *, void *, void *);
 void acpiac_attach(struct device *, struct device *, void *);

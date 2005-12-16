@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.2 2005/12/13 23:19:48 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.3 2005/12/16 04:16:59 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -24,7 +24,7 @@
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpibat.h>
+#include <dev/acpi/acpidev.h>
 
 int acpibat_match(struct device *, void *, void *);
 void acpibat_attach(struct device *, struct device *, void *);
