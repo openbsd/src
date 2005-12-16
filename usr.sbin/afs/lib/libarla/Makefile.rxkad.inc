@@ -4,6 +4,6 @@ SRCS	+= rxk_locl.c \
 	   rxk_crpt.c \
 	   osi_alloc.c
 
-CFLAGS	+= -I${AFSSRC}/rxkad -I${DESTDIR}/usr/include/kerberosIV
+CFLAGS	+= -I${AFSSRC}/rxkad
 
 .PATH: ${AFSSRC}/rxkad

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2003/08/05 14:46:44 hin Exp $
+#	$OpenBSD: Makefile,v 1.7 2005/12/16 19:38:40 todd Exp $
 
 AFSTOPDIR=	../..
 .include <../../Makefile.inc>
@@ -13,7 +13,7 @@ LDADD	+= ${LIBARLA} -lkrb5 -lasn1 -lcrypto
 DPADD	+= ${LIBARLA}
 
 CFLAGS	+=  -I${AFSSRC}/util -I${AFSSRC}/arlad \
-	   -I${AFSSRC} -I${DESTDIR}/usr/include/kerberosIV
+	   -I${AFSSRC}
 
 SRCS	= adir.c \
 	  arla.c \
