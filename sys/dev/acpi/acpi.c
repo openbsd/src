@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.9 2005/12/16 18:11:55 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.10 2005/12/16 18:59:41 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -30,6 +30,9 @@
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
+
+#include <sys/signalvar.h>
+#include <sys/proc.h>
 
 #ifdef ACPI_DEBUG
 int acpi_debug = 20;
@@ -71,6 +74,7 @@ struct cfdriver acpi_cd = {
 	NULL, "acpi", DV_DULL
 };
 
+int acpi_s5;
 int acpi_evindex;
 struct acpi_softc *acpi_softc;
 
@@ -721,13 +725,19 @@ void
 acpi_softintr(void *arg)
 {
 	struct acpi_softc *sc = arg;
-
+	extern int kbd_reset;
+	
 	if (sc->sc_powerbtn) {
 		sc->sc_powerbtn = 0;
 		acpi_evindex++;
 		dnprintf(1,"power button pressed\n");
 		KNOTE(sc->sc_note, ACPI_EVENT_COMPOSE(ACPI_EV_PWRBTN,
 						      acpi_evindex));
+		acpi_s5 = 1;
+		if (kbd_reset == 1) {
+			kbd_reset = 0;
+			psignal(initproc, SIGUSR1);
+		}
 	}
 	if (sc->sc_sleepbtn) {
 		sc->sc_sleepbtn = 0;
@@ -736,6 +746,25 @@ acpi_softintr(void *arg)
 		KNOTE(sc->sc_note, ACPI_EVENT_COMPOSE(ACPI_EV_SLPBTN,
 						      acpi_evindex));
 	}
+}
+
+
+void
+acpi_enter_sleep_state(struct acpi_softc *sc, int state)
+{
+#ifdef ACPI_ENABLE
+	u_int16_t flag;
+
+	flag = acpi_read_pmreg(sc, ACPIREG_PM1_CNT);
+	acpi_write_pmreg(sc, ACPIREG_PM1_CNT,  flag |= (state << 10));
+	acpi_write_pmreg(sc, ACPIREG_PM1_CNT,  flag |= ACPI_PM1_SLP_EN);
+#endif
+}
+
+void
+acpi_powerdown(void)
+{
+	acpi_enter_sleep_state(acpi_softc, 5);
 }
 
 int
@@ -752,18 +781,6 @@ acpiopen(dev_t dev, int flag, int mode, struct proc *p)
 		error = EINVAL;
 
 	return (error);
-}
-
-void
-acpi_enter_sleep_state(struct acpi_softc *sc, int state)
-{
-#ifdef ACPI_ENABLE
-	u_int16_t flag;
-
-	flag = acpi_read_pmreg(sc, ACPIREG_PM1_CNT);
-	acpi_write_pmreg(sc, ACPIREG_PM1_CNT,  flag |= (state << 10));
-	acpi_write_pmreg(sc, ACPIREG_PM1_CNT,  flag |= ACPI_PM1_SLP_EN);
-#endif
 }
 
 int
