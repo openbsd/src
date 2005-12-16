@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.4 2005/12/14 04:16:25 marco Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.5 2005/12/16 00:08:53 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@opebsd.org>
@@ -456,5 +456,19 @@ struct acpi_facs {
 #define ACPI_DEV_IOXA	"ACPI0009"	/* IO x APIC Device */
 #define ACPI_DEV_IOA	"ACPI000A"	/* IO APIC Device */
 #define ACPI_DEV_IOSA	"ACPI000B"	/* IO SAPIC Device */
+
+#define ACPIREG_PM1A_STS    0x00
+#define ACPIREG_PM1A_EN     0x01
+#define ACPIREG_PM1A_CNT    0x02
+#define ACPIREG_PM1B_STS    0x03
+#define ACPIREG_PM1B_EN     0x04
+#define ACPIREG_PM1B_CNT    0x05
+#define ACPIREG_PM2_CNT     0x06
+#define ACPIREG_PM_TMR      0x07
+#define ACPIREG_GPE0_STS    0x08
+#define ACPIREG_GPE0_EN     0x09
+#define ACPIREG_GPE1_STS    0x0A
+#define ACPIREG_GPE1_EN     0x0B
+#define ACPIREG_SMICMD      0x0C
 
 #endif	/* !_DEV_ACPI_ACPIREG_H_ */

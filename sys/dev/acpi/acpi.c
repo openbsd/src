@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.6 2005/12/14 04:16:25 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.7 2005/12/16 00:08:53 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -69,44 +69,119 @@ int acpi_evindex;
 struct acpi_softc *acpi_softc;
 
 #if 0
-void
-acpi_read_pm1_status(struct acpi_softc *sc, uint32_t *status_a, uint32_t *status_b)
+int
+acpi_mapregister(struct acpi_softc *sc, int reg, bus_space_handle_t *ioh)
 {
-  *status_a = bus_space_read_2(sc->sc_iot, sc->sc_ioh_pm1a_evt, ACPI_PM1_STATUS);
-  *status_b = 0;
-}
-void
-acpi_write_pm1_status(struct acpi_softc *sc, uint32_t status_a, uint32_t status_b)
-{
-  bus_space_write_2(sc->sc_iot, sc->sc_ioh_pm1a_evt, ACPI_PM1_STATUS, status_a);
-}
-void
-acpi_read_pm1_enable(struct acpi_softc *sc, uint32_t *enable_a, uint32_t *enable_b)
-{
-  *status_a = bus_space_read_2(sc->sc_iot, sc->sc_ioh_pm1a_evt, ACPI_PM1_STATUS);
-  *status_b = 0;
-}
-void
-acpi_write_pm1_enable(struct acpi_softc *sc, uint32_t enable_a, uint32_t enable_b)
-{
-  bus_space_write_2(sc->sc_iot, sc->sc_ioh_pm1a_evt, ACPI_PM1_STATUS, status_a);
+	bus_addr_t addr;
+	bus_size_t size;
+
+	size = 0;
+	switch (reg) {
+	case ACPIREG_SMICMD:
+		size = 1;
+		addr = sc->sc_fadt->smi_cmd;
+		break;
+
+	case ACPIREG_PM1A_STS:
+	case ACPIREG_PM1A_EN:
+		size = sc->sc_fadt->pm1_evt_len >> 1;
+		addr = sc->sc_fadt->pm1a_evt_blk;
+		if (reg == ACPIREG_PM1A_EN)
+			addr += size;
+		break;
+	case ACPIREG_PM1A_CNT:
+		size = sc->sc_fadt->pm1_cnt_len;
+		addr = sc->sc_fadt->pm1a_cnt_blk;
+		break;
+
+	case ACPIREG_PM1B_STS:
+	case ACPIREG_PM1B_EN:
+		size = sc->sc_fadt->pm1_evt_len >> 1;
+		addr = sc->sc_fadt->pm1b_evt_blk;
+		if (reg == ACPIREG_PM1B_EN)
+			addr += size;
+		break;
+	case ACPIREG_PM1B_CNT:
+		size = sc->sc_fadt->pm1_cnt_len;
+		addr = sc->sc_fadt->pm1b_cnt_blk;
+		break;
+
+	case ACPIREG_PM2_CNT:
+		size = sc->sc_fadt->pm2_cnt_len;
+		addr = sc->sc_fadt->pm2_cnt_blk;
+		break;
+
+	case ACPIREG_PM_TMR:
+		size = sc->sc_fadt->pm_tmr_len;
+		addr = sc->sc_fadt->pm_tmr_blk;
+		break;
+
+	case ACPIREG_GPE0_STS:
+	case ACPIREG_GPE0_EN:
+		size = sc->sc_fadt->gpe0_len >> 1;
+		addr = sc->sc_fadt->gpe0_blk;
+		if (reg == ACPIREG_GPE0_EN)
+			addr += size;
+		break;
+
+	case ACPIREG_GPE1_STS:
+	case ACPIREG_GPE1_EN:
+		size = sc->sc_fadt->gpe1_len >> 1;
+		addr = sc->sc_fadt->gpe1_blk;
+		if (reg == ACPIREG_GPE1_EN)
+			addr += size;
+		break;
+	}
+	if (size) {
+		bus_space_map(sc->sc_iot, addr, size, 0, ioh);
+
+	return (size);
 }
 
-void
-acpi_read_gpe_status(struct acpi_softc *sc, uint32_t *status_0, uint32_t *status_1)
+uint32_t
+acpi_read_pm_reg(struct acpi_softc *sc, int reg)
 {
+	bus_space_handle_t ioh;
+	int size;
+	uint32_t rval;
+
+	rval = 0;
+	size = acpi_mapregister(sc, reg, &ioh);
+	switch (size) {
+	case 1:
+		rval = bus_space_read_1(sc->sc_ioh, ioh, 0);
+		break;
+	case 2:
+		rval = bus_space_read_2(sc->sc_ioh, ioh, 0);
+		break;
+	case 4:
+		rval = bus_space_read_4(sc->sc_ioh, ioh, 0);
+		break;
+	}
+	if (size) 
+		bus_space_unmap(sc->sc_iot, ioh, size);
+
+	return rval;
 }
 void
-acpi_write_gpe_status(struct acpi_softc *sc, uint32_t status_0, uint32_t status_1)
+acpi_write_pm_reg(struct acpi_softc *sc, int reg, uint32_t regval)
 {
-}
-void
-acpi_read_gpe_enable(struct acpi_softc *sc, uint32_t *enable_0, uint32_t *enable_1)
-{
-}
-void
-acpi_write_gpe_enable(struct acpi_softc *sc, uint32_t enable_0, uint32_t enable_1)
-{
+	bus_space_handle_t ioh;
+	int size, offset;
+
+	size = acpi_mapregister(sc, &ioh);
+	switch (size) {
+	case 1:
+		bus_space_write_1(sc->sc_iot, ioh, 0, regval);
+		break;
+	case 2:
+		bus_space_write_2(sc->sc_iot, ioh, 0, regval);
+		break;
+	case 4:
+		bus_space_write_4(sc->sc_iot, ioh, 0, regval);
+		break;
+	}
+	acpi_unmapregister(sc, reg, ioh);
 }
 #endif
 
@@ -177,6 +252,7 @@ acpiattach(struct device *parent, struct device *self, void *aux)
 	struct acpi_mem_map handle;
 	struct acpi_rsdp *rsdp;
 	struct acpi_q *entry;
+	struct acpi_dsdt *p_dsdt;
 	paddr_t facspa;
 
 	sc->sc_iot = aaa->aaa_iot;
@@ -237,6 +313,9 @@ acpiattach(struct device *parent, struct device *self, void *aux)
 	if (entry == NULL)
 		printf("!DSDT ");
 	SIMPLEQ_INSERT_HEAD(&sc->sc_tables, entry, q_next);
+
+	p_dsdt = entry->q_table;
+	acpi_parse_aml(sc, p_dsdt->aml, p_dsdt->hdr_length - sizeof(p_dsdt->hdr));
 
 	/*
 	 * Set up a pointer to the firmware control structure
@@ -506,11 +585,6 @@ acpi_interrupt(void *arg)
 	struct acpi_softc *sc = (struct acpi_softc *)arg;
 	u_int16_t flags;
 
-#if 0
-	acpi_read_pm1_status(sc, &sts_a, &sts_b);
-	if ((sts_a & ACPI_PM1_PWRBTN_STS) && (sts_b & ACPI_PM1_PWRBTN_STS) {
-		acpi_write_pm1_status(sc, 
-#else
 	flags = bus_space_read_2(sc->sc_iot, sc->sc_ioh_pm1a_evt,
 	    ACPI_PM1_STATUS);
 	if (flags & (ACPI_PM1_PWRBTN_STS | ACPI_PM1_SLPBTN_STS)) {
@@ -538,7 +612,6 @@ acpi_interrupt(void *arg)
 #endif
 		return (1);
 	}
-#endif
 	return (0);
 }
 

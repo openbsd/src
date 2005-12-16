@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.10 2005/12/14 03:46:38 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.11 2005/12/16 00:08:53 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -27,58 +27,7 @@
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
 
-struct dsdt_softc {
-	struct device		sc_dev;
-
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-};
-
-int	dsdtmatch(struct device *, void *, void *);
-void	dsdtattach(struct device *, struct device *, void *);
-int	dsdt_parse_aml(struct dsdt_softc *, u_int8_t *, u_int32_t);
-
-struct cfattach dsdt_ca = {
-	sizeof(struct dsdt_softc), dsdtmatch, dsdtattach
-};
-
-struct cfdriver dsdt_cd = {
-	NULL, "dsdt", DV_DULL
-};
-
 extern int acpi_debug;
-
-int
-dsdtmatch(struct device *parent, void *match, void *aux)
-{
-	struct acpi_attach_args		*aaa = aux;
-	struct acpi_table_header	*hdr;
-
-	/* if we do not have a table, it is not us */
-	if (aaa->aaa_table == NULL)
-		return (0);
-
-	/* if it is an DSDT table, we can attach */
-	hdr = (struct acpi_table_header *)aaa->aaa_table;
-	if (memcmp(hdr->signature, DSDT_SIG, sizeof(DSDT_SIG) - 1) == 0)
-		return (1);
-
-	/* Attach SSDT tables */
-	if (memcmp(hdr->signature, SSDT_SIG, sizeof(SSDT_SIG) - 1) == 0)
-		return (1);
-
-	return (0);
-}
-
-void
-dsdtattach(struct device *parent, struct device *self, void *aux)
-{
-	struct acpi_attach_args	*aa = aux;
-	struct dsdt_softc	*sc = (struct dsdt_softc *) self;
-	struct acpi_dsdt	*dsdt = (struct acpi_dsdt *)aa->aaa_table;
-
-	dsdt_parse_aml(sc, dsdt->aml, dsdt->hdr_length - sizeof(dsdt->hdr));
-}
 
 struct aml_optable
 {
@@ -98,8 +47,8 @@ int aml_isnamedop(u_int16_t);
 u_int8_t *aml_decodelength(u_int8_t *, int *);
 u_int8_t *aml_decodename(u_int8_t *, const char **, const char *);
 u_int8_t *aml_getopcode(u_int8_t *, u_int16_t *);
-u_int8_t *aml_parseargs(struct dsdt_softc *, struct aml_node *, u_int8_t *, const char *);
-u_int8_t *aml_parse_object(struct dsdt_softc *, struct aml_node *, u_int8_t *);
+u_int8_t *aml_parseargs(struct acpi_softc *, struct aml_node *, u_int8_t *, const char *);
+u_int8_t *aml_parse_object(struct acpi_softc *, struct aml_node *, u_int8_t *);
 
 u_int64_t  aml_bcd2dec(u_int64_t);
 u_int64_t  aml_dec2bcd(u_int64_t);
@@ -122,11 +71,11 @@ void aml_setopregion(struct aml_value *, int, int, u_int64_t);
 void aml_setpackage(struct aml_value *, struct aml_node *);
 void aml_setprocessor(struct aml_value *, u_int8_t, u_int32_t, u_int8_t);
 
-void aml_setnodevalue(struct dsdt_softc *, struct aml_node *, const struct aml_value *);
-void aml_setnodeinteger(struct dsdt_softc *, struct aml_node *, int64_t);
+void aml_setnodevalue(struct acpi_softc *, struct aml_node *, const struct aml_value *);
+void aml_setnodeinteger(struct acpi_softc *, struct aml_node *, int64_t);
 
-int aml_match(struct dsdt_softc *, int, const struct aml_value *, const struct aml_value *);
-int aml_cmpobj(struct dsdt_softc *, const struct aml_value *, const struct aml_value *);
+int aml_match(struct acpi_softc *, int, const struct aml_value *, const struct aml_value *);
+int aml_cmpobj(struct acpi_softc *, const struct aml_value *, const struct aml_value *);
 
 void
 aml_setinteger(struct aml_value *val, int size, int64_t value)
@@ -609,7 +558,7 @@ struct aml_optable aml_table[] = {
 	{ 0xFFFF }
 };
 
-int aml_evalnode(struct dsdt_softc *, struct aml_node *, struct aml_value *, 
+int aml_evalnode(struct acpi_softc *, struct aml_node *, struct aml_value *, 
 		 struct aml_value *);
 void aml_copyvalue(struct aml_value *, const struct aml_value *);
 
@@ -651,7 +600,7 @@ childOf(struct aml_node *parent, int child)
 struct aml_value aml_debug;
 
 void
-aml_setnodevalue(struct dsdt_softc *sc, struct aml_node *node, const struct aml_value *val)
+aml_setnodevalue(struct acpi_softc *sc, struct aml_node *node, const struct aml_value *val)
 {
 	switch (node->opcode) {
 	case AMLOP_DEBUG:
@@ -676,7 +625,7 @@ aml_setnodevalue(struct dsdt_softc *sc, struct aml_node *node, const struct aml_
 }
 
 void
-aml_setnodeinteger(struct dsdt_softc *sc, struct aml_node *node, int64_t value)
+aml_setnodeinteger(struct acpi_softc *sc, struct aml_node *node, int64_t value)
 {
 	struct aml_value ival;
 
@@ -686,7 +635,7 @@ aml_setnodeinteger(struct dsdt_softc *sc, struct aml_node *node, int64_t value)
 
 #if 0
 int
-aml_callmethod(struct dsdt_softc *sc, struct aml_node *parent, const char *method, 
+aml_callmethod(struct acpi_softc *sc, struct aml_node *parent, const char *method, 
 	       int nargs, struct aml_value *args, struct aml_value *result)
 {
 	struct aml_node *pnode;
@@ -708,17 +657,17 @@ aml_callmethod(struct dsdt_softc *sc, struct aml_node *parent, const char *metho
 }
 
 int
-aml_readfield(struct dsdt_softc *sc, const struct aml_value *field, struct aml_value *dest)
+aml_readfield(struct acpi_softc *sc, const struct aml_value *field, struct aml_value *dest)
 {
 }
 
 int
-aml_writefield(struct dsdt_softc *sc, const struct aml_value *field, const struct aml_value *src)
+aml_writefield(struct acpi_softc *sc, const struct aml_value *field, const struct aml_value *src)
 {
 }
 #endif
 
-int aml_cmpobj(struct dsdt_softc *sc, const struct aml_value *lhs,
+int aml_cmpobj(struct acpi_softc *sc, const struct aml_value *lhs,
 	       const struct aml_value *rhs)
 {
 	/* ASSERT: lhs and rhs are of same type */
@@ -736,7 +685,7 @@ int aml_cmpobj(struct dsdt_softc *sc, const struct aml_value *lhs,
 }
 
 int
-aml_match(struct dsdt_softc *sc, int mtype, const struct aml_value *lhs, 
+aml_match(struct acpi_softc *sc, int mtype, const struct aml_value *lhs, 
 	  const struct aml_value *rhs)
 {
 	int rc;
@@ -765,7 +714,7 @@ aml_match(struct dsdt_softc *sc, int mtype, const struct aml_value *lhs,
 }
 
 int
-aml_evalnode(struct dsdt_softc *sc, struct aml_node *node, struct aml_value *result, 
+aml_evalnode(struct acpi_softc *sc, struct aml_node *node, struct aml_value *result, 
 	     struct aml_value *env)
 {
 	struct  aml_value lhs, rhs, tmp, pkg, op1, op2;
@@ -1129,7 +1078,7 @@ aml_evalnode(struct dsdt_softc *sc, struct aml_node *node, struct aml_value *res
 }
 
 u_int8_t *
-aml_parseargs(struct dsdt_softc *sc, struct aml_node *node, u_int8_t *pos, 
+aml_parseargs(struct acpi_softc *sc, struct aml_node *node, u_int8_t *pos, 
 	      const char *arg)
 {
 	int len;
@@ -1256,7 +1205,7 @@ aml_addchildnode(struct aml_node *parent, struct aml_node *child)
 }
 
 u_int8_t *
-aml_parse_object(struct dsdt_softc *sc, struct aml_node *parent, u_int8_t *pos)
+aml_parse_object(struct acpi_softc *sc, struct aml_node *parent, u_int8_t *pos)
 {
 	struct aml_optable *optab = aml_table;
 	u_int8_t  *nxtpos;
@@ -1380,7 +1329,7 @@ aml_eisaid(u_int32_t pid)
 }
 
 int
-dsdt_parse_aml(struct dsdt_softc *sc, u_int8_t *start, u_int32_t length)
+acpi_parse_aml(struct acpi_softc *sc, u_int8_t *start, u_int32_t length)
 {
 	u_int8_t  *pos, *nxtpos;
 

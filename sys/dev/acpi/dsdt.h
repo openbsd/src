@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.1 2005/12/13 07:22:18 marco Exp $ */
+/* $OpenBSD: dsdt.h,v 1.2 2005/12/16 00:08:53 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -21,5 +21,6 @@
 const char	*aml_eisaid(u_int32_t);
 int		aml_find_node(struct aml_node *, const char *,
 		    void (*)(struct aml_node *, void *), void *);
+int	acpi_parse_aml(struct acpi_softc *, u_int8_t *, u_int32_t);
 
 #endif /* __DEV_ACPI_DSDT_H__ */
