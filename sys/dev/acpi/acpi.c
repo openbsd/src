@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.7 2005/12/16 00:08:53 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.8 2005/12/16 04:00:35 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -132,10 +132,19 @@ acpi_mapregister(struct acpi_softc *sc, int reg, bus_space_handle_t *ioh)
 			addr += size;
 		break;
 	}
-	if (size) {
+	if (size && addr) {
 		bus_space_map(sc->sc_iot, addr, size, 0, ioh);
+		return size;
+	}
+	return (0);
+}
 
-	return (size);
+void
+acpi_unmapregister(struct acpi_softc *sc, int reg, bus_space_handle_t ioh,
+		   int size)
+{
+	if (size)
+		bus_space_unmap(sc->sc_iot, ioh, size);
 }
 
 uint32_t
@@ -145,7 +154,6 @@ acpi_read_pm_reg(struct acpi_softc *sc, int reg)
 	int size;
 	uint32_t rval;
 
-	rval = 0;
 	size = acpi_mapregister(sc, reg, &ioh);
 	switch (size) {
 	case 1:
@@ -157,9 +165,11 @@ acpi_read_pm_reg(struct acpi_softc *sc, int reg)
 	case 4:
 		rval = bus_space_read_4(sc->sc_ioh, ioh, 0);
 		break;
+	default:
+		rval = 0;
+		break;
 	}
-	if (size) 
-		bus_space_unmap(sc->sc_iot, ioh, size);
+	acpi_unmapregister(sc, reg, ioh, size);
 
 	return rval;
 }
@@ -377,8 +387,6 @@ acpiattach(struct device *parent, struct device *self, void *aux)
 				  sc->sc_fadt->pm1_evt_len / 2, flags);
 #endif
 	}
-
-	printf("attached\n");
 
 	/*
 	 * ACPI is enabled now -- attach timer
