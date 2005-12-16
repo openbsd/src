@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.5 2005/12/14 03:45:38 marco Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.6 2005/12/16 18:11:55 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -54,6 +54,33 @@ struct acpi_q {
 
 typedef SIMPLEQ_HEAD(, acpi_q) acpi_qhead_t;
 
+#define ACPIREG_PM1A_STS    0x00
+#define ACPIREG_PM1A_EN     0x01
+#define ACPIREG_PM1A_CNT    0x02
+#define ACPIREG_PM1B_STS    0x03
+#define ACPIREG_PM1B_EN     0x04
+#define ACPIREG_PM1B_CNT    0x05
+#define ACPIREG_PM2_CNT     0x06
+#define ACPIREG_PM_TMR      0x07
+#define ACPIREG_GPE0_STS    0x08
+#define ACPIREG_GPE0_EN     0x09
+#define ACPIREG_GPE1_STS    0x0A
+#define ACPIREG_GPE1_EN     0x0B
+#define ACPIREG_SMICMD      0x0C
+#define ACPIREG_MAXREG      0x0D
+
+/* Special registers */
+#define ACPIREG_PM1_STS     0x0E
+#define ACPIREG_PM1_EN      0x0F
+#define ACPIREG_PM1_CNT     0x10
+
+struct acpi_reg_map {
+	bus_space_handle_t  ioh;
+	int                 addr;
+	int                 size;
+	const char         *name;
+};
+
 struct acpi_softc {
 	struct device		 sc_dev;
 
@@ -76,8 +103,9 @@ struct acpi_softc {
 	struct acpi_facs	*sc_facs;	/* Shared with firmware! */
 
 	struct klist		*sc_note;
-	bus_space_handle_t	 sc_ioh_pm1a_evt;
-
+	struct acpi_reg_map      sc_pmregs[ACPIREG_MAXREG];
+	bus_space_handle_t       sc_ioh_pm1a_evt;
+  
 	void			*sc_interrupt;
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	void			*sc_softih;
@@ -97,6 +125,7 @@ struct acpi_table {
 
 #define	ACPI_IOC_GETFACS	_IOR('A', 0, struct acpi_facs)
 #define	ACPI_IOC_GETTABLE	_IOWR('A', 1, struct acpi_table)
+#define ACPI_IOC_SETSLEEPSTATE  _IOW('A', 2, int)
 
 #define	ACPI_EV_PWRBTN		0x0001	/* Power button was pushed */
 #define	ACPI_EV_SLPBTN		0x0002	/* Sleep button was pushed */
