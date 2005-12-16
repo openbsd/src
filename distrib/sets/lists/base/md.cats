@@ -783,13 +783,11 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/des.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/acpi
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/acpi/acpiac.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/acpi/acpibat.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/acpi/acpidev.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/acpi/acpireg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/acpi/acpivar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/acpi/amltypes.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/acpi/dsdt.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/acpi/hpetreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ata
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ata/atareg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ata/atavar.ph

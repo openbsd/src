@@ -144,13 +144,11 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/des.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi/acpiac.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi/acpibat.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi/acpidev.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi/acpireg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi/acpivar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi/amltypes.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi/dsdt.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi/hpetreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ata
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ata/atareg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ata/atavar.ph
