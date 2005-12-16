@@ -1,0 +1,9 @@
+test-15.c:27: warning: division by 0
+test-15.c:28: warning: division by 0
+test-15.c:29: warning: division by 0
+test-15.c:30: warning: division by 0
+test-15.c:32: warning: division by 0
+test-15.c:33: warning: division by 0
+test-15.c:34: warning: division by 0
+test-15.c:35: warning: division by 0
+Lint pass2:
