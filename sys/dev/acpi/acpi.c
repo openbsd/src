@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.10 2005/12/16 18:59:41 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.11 2005/12/16 19:09:31 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -22,6 +22,8 @@
 #include <sys/fcntl.h>
 #include <sys/ioccom.h>
 #include <sys/event.h>
+#include <sys/signalvar.h>
+#include <sys/proc.h>
 
 #include <machine/conf.h>
 #include <machine/bus.h>
@@ -30,9 +32,6 @@
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
-
-#include <sys/signalvar.h>
-#include <sys/proc.h>
 
 #ifdef ACPI_DEBUG
 int acpi_debug = 20;
@@ -725,7 +724,6 @@ void
 acpi_softintr(void *arg)
 {
 	struct acpi_softc *sc = arg;
-	extern int kbd_reset;
 	
 	if (sc->sc_powerbtn) {
 		sc->sc_powerbtn = 0;
@@ -733,11 +731,10 @@ acpi_softintr(void *arg)
 		dnprintf(1,"power button pressed\n");
 		KNOTE(sc->sc_note, ACPI_EVENT_COMPOSE(ACPI_EV_PWRBTN,
 						      acpi_evindex));
+
+		/* power down */
 		acpi_s5 = 1;
-		if (kbd_reset == 1) {
-			kbd_reset = 0;
-			psignal(initproc, SIGUSR1);
-		}
+		psignal(initproc, SIGUSR1);
 	}
 	if (sc->sc_sleepbtn) {
 		sc->sc_sleepbtn = 0;
