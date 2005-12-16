@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpet.c,v 1.2 2005/07/10 19:39:01 grange Exp $	*/
+/*	$OpenBSD: hpet.c,v 1.3 2005/12/16 21:11:51 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -27,7 +27,7 @@
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/hpetreg.h>
+#include <dev/acpi/acpidev.h>
 
 int hpetmatch(struct device *, void *, void *);
 void hpetattach(struct device *, struct device *, void *);
