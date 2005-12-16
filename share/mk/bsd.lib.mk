@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.50 2005/12/16 02:29:49 deraadt Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.51 2005/12/16 19:45:19 kettenis Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -62,7 +62,7 @@ SHLIB_MINOR=${minor}
 	@rm -f ${.TARGET}.o
 
 .cc.po .C.po .cxx.po:
-	@echo "${COMPILE.cc} $-p ${.IMPSRC} -o ${.TARGET}"
+	@echo "${COMPILE.cc} -p ${.IMPSRC} -o ${.TARGET}"
 	@${COMPILE.cc} -p ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
