@@ -1,4 +1,4 @@
-/*      $OpenBSD: pcb.h,v 1.2 2005/08/07 07:29:44 miod Exp $	*/
+/*      $OpenBSD: pcb.h,v 1.3 2005/12/16 03:55:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,10 +45,11 @@
 /*
  * MIPS process control block. This is first in the U-area.
  */
-struct pcb
-{
+struct pcb {
 	struct trap_frame pcb_regs;	/* saved CPU and registers */
-	label_t	pcb_context;		/* kernel context for resume */
+	struct {
+		register_t val[14];
+	} pcb_context;			/* kernel context for resume */
 	int	pcb_onfault;		/* for copyin/copyout faults */
 	int	pcb_kernel;
 	void	*pcb_segtab;		/* copy of pmap pm_segtab */
