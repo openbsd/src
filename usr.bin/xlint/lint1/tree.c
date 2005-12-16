@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.28 2005/12/16 02:56:53 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.29 2005/12/16 03:01:35 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.28 2005/12/16 02:56:53 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.29 2005/12/16 03:01:35 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -2583,13 +2583,13 @@ chkdbz(op_t op, tnode_t *rn)
 	if (isftyp(rn->tn_type->t_tspec)) {
 		if (rn->tn_val->v_ldbl == 0.0) {
 			/* division by 0 */
-			error(code);
+			warning(code);
 			return 1;
 		}
 	} else {
 		if (rn->tn_val->v_quad == 0) {
 			/* division by 0 */
-			error(code);
+			warning(code);
 			return 1;
 		}
 	}
