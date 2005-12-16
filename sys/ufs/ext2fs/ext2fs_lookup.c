@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.19 2005/07/03 20:14:01 drahn Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.20 2005/12/16 15:37:24 pedro Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /* 
@@ -139,7 +139,7 @@ ext2fs_readdir(v)
 	} */ *ap = v;
 	struct uio *uio = ap->a_uio;
 	int error;
-	size_t e2fs_count, readcnt;
+	size_t e2fs_count, readcnt, entries;
 	struct vnode *vp = ap->a_vp;
 	struct m_ext2fs *fs = VTOI(vp)->i_e2fs;
 
@@ -157,11 +157,13 @@ ext2fs_readdir(v)
 		return (ENOTDIR);
 
 	e2fs_count = uio->uio_resid;
+	entries = (uio->uio_offset + e2fs_count) & (fs->e2fs_bsize - 1);
+
 	/* Make sure we don't return partial entries. */
-	e2fs_count -= (uio->uio_offset + e2fs_count) & (fs->e2fs_bsize -1);
-	if (e2fs_count <= 0)
+	if (e2fs_count <= entries)
 		return (EINVAL);
 
+	e2fs_count -= entries;
 	auio = *uio;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
