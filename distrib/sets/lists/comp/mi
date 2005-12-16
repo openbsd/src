@@ -1660,8 +1660,6 @@
 ./usr/lib/libpthread_p.a
 ./usr/lib/libreadline.a
 ./usr/lib/libreadline_p.a
-./usr/lib/libresolv.a
-./usr/lib/libresolv_p.a
 ./usr/lib/librpcsvc.a
 ./usr/lib/librpcsvc_p.a
 ./usr/lib/libsectok.a
@@ -1708,7 +1706,6 @@
 ./usr/libdata/lint/llib-lpcap.ln
 ./usr/libdata/lint/llib-lposix.ln
 ./usr/libdata/lint/llib-lpthread.ln
-./usr/libdata/lint/llib-lresolv.ln
 ./usr/libdata/lint/llib-lrpcsvc.ln
 ./usr/libdata/lint/llib-lsectok.ln
 ./usr/libdata/lint/llib-lskey.ln
