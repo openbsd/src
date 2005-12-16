@@ -2644,3 +2644,5 @@
 ./usr/share/texinfo
 ./usr/share/texinfo/texinfo.dtd
 ./usr/share/texinfo/texinfo.xsl
+./usr/share/info/as.info
+./usr/share/info/as.info-1

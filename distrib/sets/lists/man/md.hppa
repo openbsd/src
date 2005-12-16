@@ -1,5 +1,3 @@
-./usr/share/info/as.info
-./usr/share/info/as.info-1
 ./usr/share/info/bfd.info
 ./usr/share/info/bfd.info-1
 ./usr/share/info/binutils.info
