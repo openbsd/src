@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.26 2005/12/15 05:49:49 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.27 2005/12/16 02:12:30 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.26 2005/12/15 05:49:49 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.27 2005/12/16 02:12:30 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -2709,14 +2709,14 @@ fold(tnode_t *tn)
 			ovfl = 1;
 		break;
 	case DIV:
-		if (chkdbz(tn->tn_op, tn)) {
+		if (chkdbz(tn->tn_op, tn->tn_right)) {
 			q = utyp ? UQUAD_MAX : QUAD_MAX;
 		} else {
 			q = utyp ? ul / ur : sl / sr;
 		}
 		break;
 	case MOD:
-		if (chkdbz(tn->tn_op, tn)) {
+		if (chkdbz(tn->tn_op, tn->tn_right)) {
 			q = 0;
 		} else {
 			q = utyp ? ul % ur : sl % sr;
@@ -2884,7 +2884,7 @@ foldflt(tnode_t *tn)
 		v->v_ldbl = l * r;
 		break;
 	case DIV:
-		if (chkdbz(tn->tn_op, tn)) {
+		if (chkdbz(tn->tn_op, tn->tn_right)) {
 			if (t == FLOAT) {
 				v->v_ldbl = l < 0 ? -FLT_MAX : FLT_MAX;
 			} else if (t == DOUBLE) {
