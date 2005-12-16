@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.333 2005/11/23 09:32:46 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.334 2005/12/16 19:00:30 marco Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -131,6 +131,11 @@
 #include <dev/ic/mc146818reg.h>
 #include <i386/isa/isa_machdep.h>
 #include <i386/isa/nvram.h>
+
+#include "acpi.h"
+#if NACPI > 0
+#include <dev/acpi/acpivar.h>
+#endif
 
 #include "apm.h"
 #if NAPM > 0
@@ -2318,6 +2323,13 @@ haltsys:
 	doshutdownhooks();
 
 	if (howto & RB_HALT) {
+#if NACPI > 0
+		extern int acpi_s5;
+
+		if (acpi_s5)
+			acpi_powerdown();
+#endif
+
 #if NAPM > 0
 		if (howto & RB_POWERDOWN) {
 			int rv;
