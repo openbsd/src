@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.24 2005/12/13 04:00:18 marco Exp $	*/
+/*	$OpenBSD: ipmi.c,v 1.25 2005/12/16 03:16:47 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -161,8 +161,10 @@ void	ipmi_sensor_name(char *, int, u_int8_t, u_int8_t *);
 /* BMC Helper Functions */
 u_int8_t bmc_read(struct ipmi_softc *, int);
 void	bmc_write(struct ipmi_softc *, int, u_int8_t);
-int	bmc_io_wait(struct ipmi_softc *, int, u_int8_t, u_int8_t, long,
-	    const char *);
+int	bmc_io_wait(struct ipmi_softc *, int, u_int8_t, u_int8_t, const char *);
+int	bmc_io_wait_cold(struct ipmi_softc *, int, u_int8_t, u_int8_t,
+    const char *);
+void	_bmc_io_wait(void *);
 
 void	*bt_buildmsg(struct ipmi_softc *, int, int, int, const void *, int *);
 void	*cmn_buildmsg(struct ipmi_softc *, int, int, int, const void *, int *);
@@ -257,21 +259,79 @@ bmc_write(struct ipmi_softc *sc, int offset, u_int8_t val)
 	    offset * sc->sc_if_iospacing, val);
 }
 
-int
-bmc_io_wait(struct ipmi_softc *sc, int offset, u_int8_t mask,
-    u_int8_t value, long count, const char *lbl)
+void
+_bmc_io_wait(void *arg)
 {
-	volatile u_int8_t v;
+	struct ipmi_softc	*sc = arg;
+	struct ipmi_bmc_args	*a = sc->sc_iowait_args;
 
-	/* Spin loop (ugly) */
+	*a->v = bmc_read(sc, a->offset);
+	if ((*a->v & a->mask) == a->value) {
+		sc->sc_wakeup = 0;
+		wakeup(sc);
+		return;
+	}
+
+	if (++sc->sc_retries > sc->sc_max_retries) {
+		sc->sc_wakeup = 0;
+		wakeup(sc);
+		return;
+	}
+
+	timeout_add(&sc->sc_timeout, 50);
+}
+
+int
+bmc_io_wait(struct ipmi_softc *sc, int offset, u_int8_t mask, u_int8_t value,
+    const char *lbl)
+{
+	volatile u_int8_t	v;
+	struct ipmi_bmc_args	args;
+
+	if (cold)
+		return (bmc_io_wait_cold(sc, offset, mask, value, lbl));
+
+	sc->sc_retries = 0;
+	sc->sc_wakeup = 1;
+
+	args.offset = offset;
+	args.mask = mask;
+	args.value = value;
+	args.v = &v;
+	sc->sc_iowait_args = &args;
+
+	_bmc_io_wait(sc);
+
+	while (sc->sc_wakeup)
+		tsleep(sc, PWAIT, lbl, 0);
+
+	if (sc->sc_retries > sc->sc_max_retries) {
+		printf("bmc_io_wait fails : v=%.2x m=%.2x b=%.2x %s\n",
+		    v, mask, value, lbl);
+		return (-1);
+	}
+
+	return (v);
+}
+
+int
+bmc_io_wait_cold(struct ipmi_softc *sc, int offset, u_int8_t mask,
+    u_int8_t value, const char *lbl)
+{
+	volatile u_int8_t	v;
+	int			count = 1000;
+
 	while (count--) {
 		v = bmc_read(sc, offset);
 		if ((v & mask) == value)
 			return v;
+		delay(50);
 	}
-	printf("bmc_io_wait fails : v=%.2x m=%.2x b=%.2x %s\n",
+
+	printf("bmc_io_wait_cold fails : *v=%.2x m=%.2x b=%.2x %s\n",
 	    v, mask, value, lbl);
 	return (-1);
+
 }
 
 #define NETFN_LUN(nf,ln) (((nf) << 2) | ((ln) & 0x3))
@@ -304,7 +364,7 @@ bt_sendmsg(struct ipmi_softc *sc, int len, const u_int8_t *data)
 {
 	int i;
 
-	if (bmc_io_wait(sc, _BT_CTRL_REG, BT_READY, 0, 0xFFFFF, "btsend") < 0)
+	if (bmc_io_wait(sc, _BT_CTRL_REG, BT_READY, 0, "btsend") < 0)
 		return -1;
 
 	bmc_write(sc, _BT_CTRL_REG, BT_CLR_WR_PTR);
@@ -314,8 +374,8 @@ bt_sendmsg(struct ipmi_softc *sc, int len, const u_int8_t *data)
 	bmc_write(sc, _BT_CTRL_REG, BT_HOST2BMC_ATN);
 
 	if (bmc_io_wait(sc, _BT_CTRL_REG, BT_BMC2HOST_ATN, BT_BMC2HOST_ATN,
-		0xFFFFF, "btswait") < 0)
-		return -1;
+		"btswait") < 0)
+		return (-1);
 
 	return (0);
 }
@@ -417,7 +477,7 @@ smic_wait(struct ipmi_softc *sc, u_int8_t mask, u_int8_t val, const char *lbl)
 	int v;
 
 	/* Wait for expected flag bits */
-	v = bmc_io_wait(sc, _SMIC_FLAG_REG, mask, val, 0xFFFFF, "smicwait");
+	v = bmc_io_wait(sc, _SMIC_FLAG_REG, mask, val, "smicwait");
 	if (v < 0)
 		return (-1);
 
@@ -568,12 +628,12 @@ kcs_wait(struct ipmi_softc *sc, u_int8_t mask, u_int8_t value, const char *lbl)
 {
 	int v;
 
-	v = bmc_io_wait(sc, _KCS_STATUS_REGISTER, mask, value, 0xFFFFF, lbl);
+	v = bmc_io_wait(sc, _KCS_STATUS_REGISTER, mask, value, lbl);
 	if (v < 0)
 		return (v);
 
 	/* Check if output buffer full, read dummy byte	 */
-	if (value == 0 && (v & KCS_OBF))
+	if ((v & (KCS_OBF | KCS_STATE_MASK)) == (KCS_OBF | KCS_WRITE_STATE))
 		bmc_read(sc, _KCS_DATAIN_REGISTER);
 
 	/* Check for error state */
@@ -645,9 +705,10 @@ kcs_sendmsg(struct ipmi_softc *sc, int len, const u_int8_t * data)
 	if (sts != KCS_READ_STATE) {
 		dbg_printf(1, "kcs sendmsg = %d/%d <%.2x>\n", idx, len, sts);
 		dumpb("kcs_sendmsg", len, data);
+		return (-1);
 	}
 
-	return (sts != KCS_READ_STATE);
+	return (0);
 }
 
 int
@@ -662,12 +723,14 @@ kcs_recvmsg(struct ipmi_softc *sc, int maxlen, int *rxlen, u_int8_t * data)
 	}
 	sts = kcs_wait(sc, KCS_IBF, 0, "recv");
 	*rxlen = idx;
-	if (sts != KCS_IDLE_STATE)
+	if (sts != KCS_IDLE_STATE) {
 		dbg_printf(1, "kcs read = %d/%d <%.2x>\n", idx, maxlen, sts);
+		return (-1);
+	}
 
 	dbg_dump(50, "kcs recvmsg", idx, data);
 
-	return (sts != KCS_IDLE_STATE);
+	return (0);
 }
 
 int
@@ -874,7 +937,7 @@ dumpb(const char *lbl, int len, const u_int8_t *data)
 void
 smbios_ipmi_probe(void *ptr, void *arg)
 {
-	struct ipmi_attach_args	*ia = arg;
+	struct ipmi_attach_args *ia = arg;
 	smbios_ipmi_t		*pipmi = (smbios_ipmi_t *)ptr;
 
 	ia->iaa_if_type = pipmi->smipmi_if_type;
@@ -1577,7 +1640,7 @@ ipmi_create_thread(void *arg)
 int
 ipmi_probe(void *aux)
 {
-	struct ipmi_attach_args	*ia = aux;
+	struct ipmi_attach_args *ia = aux;
 
 	if (scan_smbios(SMBIOS_TYPE_IPMI, smbios_ipmi_probe, ia) == 0) {
 		dmd_ipmi_t *pipmi;
@@ -1604,7 +1667,7 @@ int
 ipmi_match(struct device *parent, void *match, void *aux)
 {
 	struct ipmi_softc	sc;
-	struct ipmi_attach_args	*ia = aux;
+	struct ipmi_attach_args *ia = aux;
 	struct cfdata		*cf = match;
 
 	if (strcmp(ia->iaa_name, cf->cf_driver->cd_name))
@@ -1625,7 +1688,7 @@ void
 ipmi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ipmi_softc	*sc = (void *) self;
-	struct ipmi_attach_args	*ia = aux;
+	struct ipmi_attach_args *ia = aux;
 	u_int8_t		cmd[32];
 	int			len;
 	u_int16_t		rec;
@@ -1673,6 +1736,12 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	/* Setup Watchdog timer */
 	sc->sc_wdog_period = 0;
 	wdog_register(sc, ipmi_watchdog);
+
+	/* setup ticker */
+	sc->sc_retries = 0;
+	sc->sc_wakeup = 0;
+	sc->sc_max_retries = 1000; /* XXX 50ms the right value? */
+	timeout_set(&sc->sc_timeout, _bmc_io_wait, sc);
 }
 
 int

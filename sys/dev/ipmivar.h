@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.7 2005/11/28 23:47:42 jordan Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.8 2005/12/16 03:16:47 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -30,6 +30,8 @@
 #ifndef _IPMIVAR_H_
 #define _IPMIVAR_H_
 
+#include <sys/timeout.h>
+
 #define IPMI_IF_KCS		1
 #define IPMI_IF_SMIC		2
 #define IPMI_IF_BT		3
@@ -40,6 +42,13 @@
 
 struct ipmi_thread;
 struct ipmi_softc;
+
+struct ipmi_bmc_args{
+	int			offset;
+	u_int8_t		mask;
+	u_int8_t		value;
+	volatile u_int8_t	*v;
+};
 
 struct ipmi_attach_args {
 	char		*iaa_name;
@@ -82,6 +91,13 @@ struct ipmi_softc {
 	int		    sc_wdog_period;
 
 	struct ipmi_thread  *sc_thread;
+
+	struct timeout      sc_timeout;
+	int                 sc_max_retries;
+	int                 sc_retries;
+	int                 sc_wakeup;
+
+	struct ipmi_bmc_args *sc_iowait_args;
 };
 
 struct ipmi_thread {
