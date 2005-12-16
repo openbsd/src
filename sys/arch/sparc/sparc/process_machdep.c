@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.8 2004/03/02 23:45:27 miod Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.9 2005/12/16 18:48:27 kettenis Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.6 1996/03/14 21:09:26 christos Exp $ */
 
 /*
@@ -70,6 +70,8 @@
 #include <machine/frame.h>
 #include <sys/ptrace.h>
 
+#include <sparc/sparc/cpuvar.h>
+
 int
 process_read_regs(p, regs)
 	struct proc *p;
@@ -89,8 +91,11 @@ process_read_fpregs(p, regs)
 	struct fpstate		*statep = &initfpstate;
 
 	/* NOTE: struct fpreg == struct fpstate */
-	if (p->p_md.md_fpstate)
+	if (p->p_md.md_fpstate) {
+		if (p == cpuinfo.fpproc)
+			savefpstate(p->p_md.md_fpstate);
 		statep = p->p_md.md_fpstate;
+	}
 	bcopy(statep, regs, sizeof(struct fpreg));
 	return 0;
 }
@@ -142,6 +147,12 @@ process_write_fpregs(p, regs)
 {
 	if (p->p_md.md_fpstate == NULL)
 		return EINVAL;
+
+	if (p == cpuinfo.fpproc) {
+		/* Release the fpu. */
+		savefpstate(p->p_md.md_fpstate);
+		cpuinfo.fpproc = NULL;
+	}
 
 	bcopy(regs, p->p_md.md_fpstate, sizeof(struct fpreg));
 	return 0;
