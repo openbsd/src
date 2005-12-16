@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.27 2005/12/16 02:12:30 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.28 2005/12/16 02:56:53 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.27 2005/12/16 02:12:30 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.28 2005/12/16 02:56:53 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -2710,7 +2710,7 @@ fold(tnode_t *tn)
 		break;
 	case DIV:
 		if (chkdbz(tn->tn_op, tn->tn_right)) {
-			q = utyp ? UQUAD_MAX : QUAD_MAX;
+			q = utyp ? 0U: 0;
 		} else {
 			q = utyp ? ul / ur : sl / sr;
 		}
