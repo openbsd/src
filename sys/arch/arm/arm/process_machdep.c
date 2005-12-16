@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.2 2004/02/01 14:58:34 miod Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.3 2005/12/16 21:36:31 miod Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.11 2003/08/07 16:26:52 agc Exp $	*/
 
 /*
@@ -204,7 +204,8 @@ process_write_fpregs(struct proc *p,  struct fpreg *regs)
 int
 process_sstep(struct proc *p, int sstep)
 {
-	/* XXX */
+	if (sstep)
+		return (EINVAL);
 	return 0;
 }
 
