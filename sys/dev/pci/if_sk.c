@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.91 2005/12/15 23:56:00 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.92 2005/12/16 01:52:29 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -127,9 +127,6 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#define	SK_VERBOSE
-/* #define SK_USEIOSPACE */
-
 #include <dev/pci/if_skreg.h>
 #include <dev/pci/if_skvar.h>
 
@@ -246,67 +243,37 @@ const struct pci_matchid skc_devices[] = {
 static inline u_int32_t
 sk_win_read_4(struct sk_softc *sc, u_int32_t reg)
 {
-#ifdef SK_USEIOSPACE
-	CSR_WRITE_4(sc, SK_RAP, SK_WIN(reg));
-	return CSR_READ_4(sc, SK_WIN_BASE + SK_REG(reg));
-#else
 	return CSR_READ_4(sc, reg);
-#endif
 }
 
 static inline u_int16_t
 sk_win_read_2(struct sk_softc *sc, u_int32_t reg)
 {
-#ifdef SK_USEIOSPACE
-	CSR_WRITE_4(sc, SK_RAP, SK_WIN(reg));
-	return CSR_READ_2(sc, SK_WIN_BASE + SK_REG(reg));
-#else
 	return CSR_READ_2(sc, reg);
-#endif
 }
 
 static inline u_int8_t
 sk_win_read_1(struct sk_softc *sc, u_int32_t reg)
 {
-#ifdef SK_USEIOSPACE
-	CSR_WRITE_4(sc, SK_RAP, SK_WIN(reg));
-	return CSR_READ_1(sc, SK_WIN_BASE + SK_REG(reg));
-#else
 	return CSR_READ_1(sc, reg);
-#endif
 }
 
 static inline void
 sk_win_write_4(struct sk_softc *sc, u_int32_t reg, u_int32_t x)
 {
-#ifdef SK_USEIOSPACE
-	CSR_WRITE_4(sc, SK_RAP, SK_WIN(reg));
-	CSR_WRITE_4(sc, SK_WIN_BASE + SK_REG(reg), x);
-#else
 	CSR_WRITE_4(sc, reg, x);
-#endif
 }
 
 static inline void
 sk_win_write_2(struct sk_softc *sc, u_int32_t reg, u_int16_t x)
 {
-#ifdef SK_USEIOSPACE
-	CSR_WRITE_4(sc, SK_RAP, SK_WIN(reg));
-	CSR_WRITE_2(sc, SK_WIN_BASE + SK_REG(reg), x);
-#else
 	CSR_WRITE_2(sc, reg, x);
-#endif
 }
 
 static inline void
 sk_win_write_1(struct sk_softc *sc, u_int32_t reg, u_int8_t x)
 {
-#ifdef SK_USEIOSPACE
-	CSR_WRITE_4(sc, SK_RAP, SK_WIN(reg));
-	CSR_WRITE_1(sc, SK_WIN_BASE + SK_REG(reg), x);
-#else
 	CSR_WRITE_1(sc, reg, x);
-#endif
 }
 
 int
@@ -1420,13 +1387,6 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	 * Map control/status registers.
 	 */
 
-#ifdef SK_USEIOSPACE
-	if (pci_mapreg_map(pa, SK_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->sk_btag, &sc->sk_bhandle, NULL, &size, 0)) {
-		printf(": can't map i/o space\n");
-		return;
- 	}
-#else
 	memtype = pci_mapreg_type(pc, pa->pa_tag, SK_PCI_LOMEM);
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
@@ -1439,7 +1399,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map mem space\n");
 		return;
 	}
-#endif
+
 	sc->sc_dmatag = pa->pa_dmat;
 
 	sc->sk_type = sk_win_read_1(sc, SK_CHIPVER);
