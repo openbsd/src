@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.51 2005/04/18 16:07:31 millert Exp $
+#	$OpenBSD: Makefile,v 1.52 2005/12/16 17:35:01 deraadt Exp $
 #	$NetBSD: Makefile,v 1.20.4.1 1996/06/14 17:22:38 cgd Exp $
 
 SUBDIR=	csu libarch libc libcompat libcurses \
 	libdes libedit libevent libform libkeynote libkvm libl libm libmenu \
-	libocurses libossaudio libpanel libpcap libpthread libresolv librpcsvc \
+	libocurses libossaudio libpanel libpcap libpthread librpcsvc \
 	libskey libsectok libssl libusbhid libutil libwrap liby libz
 
 .include <bsd.own.mk>
