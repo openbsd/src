@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.980 2005/12/17 20:06:52 brad Exp 
+ *	OpenBSD: pcidevs,v 1.981 2005/12/17 21:25:55 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4039,6 +4039,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PRO/100 VE",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_6,
+	    "PRO/100 VM",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_7,
+	    "PRO/100 VM",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_M,
 	    "PRO/100 M",
 	},
@@ -4055,16 +4063,36 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PRO/1000 PB (82571EB)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LAN,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LAN_2,
 	    "82801FB LAN",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_7,
+	    "PRO/100 VE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_8,
+	    "PRO/100 VM",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_9,
+	    "PRO/100 VM",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FBM_LAN,
 	    "82801FBM LAN",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GB_LAN,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GB_LAN_2,
 	    "82801GB LAN",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_8,
+	    "PRO/100 VE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_9,
+	    "PRO/100 VE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547GI,
@@ -4981,6 +5009,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_SMB,
 	    "82801FB SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LAN,
+	    "82801FB LAN",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_ACM,
