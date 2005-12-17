@@ -1,4 +1,4 @@
-/*	$OpenBSD: func.c,v 1.9 2005/12/17 20:19:46 cloder Exp $	*/
+/*	$OpenBSD: func.c,v 1.10 2005/12/17 21:08:27 cloder Exp $	*/
 /*	$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: func.c,v 1.9 2005/12/17 20:19:46 cloder Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.10 2005/12/17 21:08:27 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -82,6 +82,12 @@ cstk_t	*cstk;
  */
 int	nargusg = -1;
 pos_t	aupos;
+
+/*
+ * If the following function has been declared NORETURN, noretflg is set
+ * to 1. Otherwise it is set to 0.
+ */
+int	noretflg = 0;
 
 /*
  * Number of arguments of the following function definition whose types
@@ -386,6 +392,10 @@ funcend(void)
 		n++;
 	}
 	nargusg = -1;
+
+	if (noretflg)
+		funcsym->s_noreturn = 1;
+	noretflg = 0;
 
 	/*
 	 * write the information about the function definition to the
@@ -1098,6 +1108,18 @@ argsused(int n)
 	}
 	nargusg = n;
 	STRUCT_ASSIGN(aupos, curr_pos);
+}
+
+/*
+ * NORETURN comment
+ *
+ * The following function will never return, which means any code
+ * following a call to this function is unreachable.
+ */
+void
+noreturn(int n)
+{
+	noretflg = 1;
 }
 
 /*

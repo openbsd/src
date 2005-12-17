@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.29 2005/12/16 03:01:35 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.30 2005/12/17 21:08:27 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.29 2005/12/16 03:01:35 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.30 2005/12/17 21:08:27 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -3130,6 +3130,9 @@ funccall(tnode_t *func, tnode_t *args)
 	} else {
 		fcop = ICALL;
 	}
+
+	if (func->tn_sym->s_noreturn)
+		notreach(0);
 
 	/*
 	 * after cconv() func will always be a pointer to a function

@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs1.h,v 1.8 2005/12/12 23:35:59 cloder Exp $	*/
+/*	$OpenBSD: externs1.h,v 1.9 2005/12/17 21:08:27 cloder Exp $	*/
 /*	$NetBSD: externs1.h,v 1.7 1995/10/02 17:31:39 jpo Exp $	*/
 
 /*
@@ -251,6 +251,7 @@ extern	void	dobreak(void);
 extern	void	doreturn(tnode_t *);
 extern	void	glclup(int);
 extern	void	argsused(int);
+extern	void	noreturn(int);
 extern	void	constcond(int);
 extern	void	fallthru(int);
 extern	void	notreach(int);

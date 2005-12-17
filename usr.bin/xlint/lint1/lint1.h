@@ -1,4 +1,4 @@
-/*	$OpenBSD: lint1.h,v 1.10 2005/12/10 17:41:03 cloder Exp $	*/
+/*	$OpenBSD: lint1.h,v 1.11 2005/12/17 21:08:27 cloder Exp $	*/
 /*	$NetBSD: lint1.h,v 1.6 1995/10/02 17:31:41 jpo Exp $	*/
 
 /*
@@ -208,6 +208,7 @@ typedef	struct sym {
 	u_int	s_rimpl : 1;	/* return value of function implicit decl. */
 	u_int	s_osdef : 1;	/* symbol stems from old style function def. */
 	u_int	s_inline : 1;	/* true if this is a inline function */
+	u_int	s_noreturn : 1;	/* true if this is a NORETURN function */
 	struct	sym *s_xsym;	/* for local declared external symbols pointer
 				   to external symbol with same name */
 	def_t	s_def;		/* declared, tentative defined, defined */
