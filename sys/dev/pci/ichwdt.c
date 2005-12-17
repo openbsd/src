@@ -1,6 +1,7 @@
-/*	$OpenBSD: ichwdt.c,v 1.1 2005/05/02 17:26:00 grange Exp $	*/
+/*	$OpenBSD: ichwdt.c,v 1.2 2005/12/17 21:05:50 grange Exp $	*/
+
 /*
- * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
+ * Copyright (c) 2004, 2005 Alexander Yurchenko <grange@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -31,12 +32,10 @@
 
 #include <dev/pci/ichreg.h>
 
-#define ICHWDT_DEBUG
-
 #ifdef ICHWDT_DEBUG
-#define DPRINTF(fmt, args...) printf(fmt, ##args)
+#define DPRINTF(x) printf x
 #else
-#define DPRINTF(fmt, args...)
+#define DPRINTF(x)
 #endif
 
 struct ichwdt_softc {
@@ -48,8 +47,8 @@ struct ichwdt_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 
-	int sc_enabled;
 	int sc_divisor;
+	int sc_period;
 };
 
 int	ichwdt_match(struct device *, void *, void *);
@@ -107,21 +106,33 @@ ichwdt_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	/* Read current configuration */
 	reg = pci_conf_read(sc->sc_pc, sc->sc_tag, ICH_WDT_CONF);
-	DPRINTF(": conf 0x%x", reg);
+	DPRINTF((": conf 0x%x", reg));
 
-	/* Disable interrupts for now */
+	/* Get clock divisor */
+	sc->sc_divisor = (reg & ICH_WDT_CONF_PRE ? 32 : 32768);
+	printf(": %s clock", (reg & ICH_WDT_CONF_PRE ? "1MHz" : "1kHz"));
+
+	/* Disable interrupts since we don't use first stage timeout alarm */
 	reg &= ~ICH_WDT_CONF_INT_MASK;
 	reg |= ICH_WDT_CONF_INT_DIS;
+	pci_conf_write(sc->sc_pc, sc->sc_tag, ICH_WDT_CONF, reg);
 
-	sc->sc_divisor = (reg & ICH_WDT_CONF_PRE ? 2 ^ 5 : 2 ^ 15);
-
+	/* Check for reboot on timeout */
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ICH_WDT_RELOAD);
 	if (reg & ICH_WDT_RELOAD_TIMEOUT) {
 		printf(": reboot on timeout");
-		ichwdt_unlock_write(sc, ICH_WDT_RELOAD, reg);
+
+		/* Clear timeout bit */
+		ichwdt_unlock_write(sc, ICH_WDT_RELOAD,
+		    ICH_WDT_RELOAD_TIMEOUT);
 	}
 
+	/* Disable watchdog */
+	pci_conf_write(sc->sc_pc, sc->sc_tag, ICH_WDT_LOCK, 0);
+	sc->sc_period = 0;
+	
 	printf("\n");
 
 	/* Register new watchdog */
@@ -132,23 +143,48 @@ int
 ichwdt_cb(void *arg, int period)
 {
 	struct ichwdt_softc *sc = arg;
-	pcireg_t reg;
+	int ticks;
 
 	if (period == 0) {
-		/* Disable watchdog timer */
-		reg = pci_conf_read(sc->sc_pc, sc->sc_tag, ICH_WDT_LOCK);
-		reg &= ~ICH_WDT_LOCK_ENABLED;
-		pci_conf_write(sc->sc_pc, sc->sc_tag, ICH_WDT_LOCK, reg);
+		if (sc->sc_period != 0) {
+			/* Disable watchdog */
+			ichwdt_unlock_write(sc, ICH_WDT_RELOAD,
+			    ICH_WDT_RELOAD_RLD);
+			pci_conf_write(sc->sc_pc, sc->sc_tag, ICH_WDT_LOCK, 0);
+			DPRINTF(("%s: disabled, conf 0x%x\n",
+			    sc->sc_dev.dv_xname,
+			    pci_conf_read(sc->sc_pc, sc->sc_tag,
+			    ICH_WDT_LOCK)));
+		}
 	} else {
-		/* Reset watchdog timer */
-		ichwdt_unlock_write(sc, ICH_WDT_PRE1, 1);
-		ichwdt_unlock_write(sc, ICH_WDT_PRE2, 1);
+		/* 1000s should be enough for everyone */
+		if (period > 1000)
+			period = 1000;
 
-		reg = pci_conf_read(sc->sc_pc, sc->sc_tag, ICH_WDT_LOCK);
-		reg &= ~ICH_WDT_LOCK_FREERUN;
-		reg |= ICH_WDT_LOCK_ENABLED;
-		pci_conf_write(sc->sc_pc, sc->sc_tag, ICH_WDT_LOCK, reg);
+		if (sc->sc_period != period) {
+			/* Set new timeout */
+			ticks = (period * 33000000) / sc->sc_divisor;
+			ichwdt_unlock_write(sc, ICH_WDT_PRE1, ticks);
+			ichwdt_unlock_write(sc, ICH_WDT_PRE2, 2);
+			DPRINTF(("%s: timeout %ds (%d ticks)\n",
+			    sc->sc_dev.dv_xname, period, ticks));
+		}
+		if (sc->sc_period == 0) {
+			/* Enable watchdog */
+			pci_conf_write(sc->sc_pc, sc->sc_tag, ICH_WDT_LOCK,
+			    ICH_WDT_LOCK_ENABLED);
+			DPRINTF(("%s: enabled, conf 0x%x\n",
+			    sc->sc_dev.dv_xname,
+			    pci_conf_read(sc->sc_pc, sc->sc_tag,
+			    ICH_WDT_LOCK)));
+		} else {
+			/* Reset timer */
+			ichwdt_unlock_write(sc, ICH_WDT_RELOAD,
+			    ICH_WDT_RELOAD_RLD);
+			DPRINTF(("%s: reloaded\n", sc->sc_dev.dv_xname));
+		}
 	}
+	sc->sc_period = period;
 
 	return (period);
 }
