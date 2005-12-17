@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ospf.c,v 1.9 2003/07/08 10:58:27 markus Exp $	*/
+/*	$OpenBSD: print-ospf.c,v 1.10 2005/12/17 17:24:30 stevesk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ospf.c,v 1.9 2003/07/08 10:58:27 markus Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ospf.c,v 1.10 2005/12/17 17:24:30 stevesk Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -126,7 +126,7 @@ ospf_print_ls_type(register u_int ls_type,
 	switch (ls_type) {
 
 	case LS_TYPE_ROUTER:
-		printf(" rtr %s ", ipaddr_string(ls_router));
+		printf(" rtr %s", ipaddr_string(ls_router));
 		break;
 
 	case LS_TYPE_NETWORK:
