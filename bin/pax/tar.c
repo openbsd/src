@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.39 2005/06/13 19:20:05 otto Exp $	*/
+/*	$OpenBSD: tar.c,v 1.40 2005/12/17 19:47:02 otto Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: tar.c,v 1.39 2005/06/13 19:20:05 otto Exp $";
+static const char rcsid[] = "$OpenBSD: tar.c,v 1.40 2005/12/17 19:47:02 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -640,7 +640,7 @@ tar_wr(ARCHD *arcn)
 	if (ul_oct((u_long)arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 0) ||
 	    ul_oct((u_long)arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 0) ||
 	    ul_oct((u_long)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 0) ||
-	    ul_oct((u_long)arcn->sb.st_mtime, hd->mtime, sizeof(hd->mtime), 1))
+	    ul_oct((u_long)(u_int)arcn->sb.st_mtime, hd->mtime, sizeof(hd->mtime), 1))
 		goto out;
 
 	/*
@@ -1067,7 +1067,7 @@ ustar_wr(ARCHD *arcn)
 			goto out;
 	}
 	if (ul_oct((u_long)arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 3) ||
-	    ul_oct((u_long)arcn->sb.st_mtime,hd->mtime,sizeof(hd->mtime),3))
+	    ul_oct((u_long)(u_int)arcn->sb.st_mtime,hd->mtime,sizeof(hd->mtime),3))
 		goto out;
 	strncpy(hd->uname, name_uid(arcn->sb.st_uid, 0), sizeof(hd->uname));
 	strncpy(hd->gname, name_gid(arcn->sb.st_gid, 0), sizeof(hd->gname));
