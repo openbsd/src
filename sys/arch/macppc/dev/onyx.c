@@ -1,4 +1,4 @@
-/*	$OpenBSD: onyx.c,v 1.4 2005/11/20 19:54:04 brad Exp $	*/
+/*	$OpenBSD: onyx.c,v 1.5 2005/12/17 00:04:10 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -120,8 +120,8 @@ int
 onyx_match(struct device *parent, void *match, void *aux)
 {
 	struct confargs *ca = aux;
-	int soundbus, soundchip;
-	char compat[32];
+	int soundbus, soundchip, soundcodec;
+	int32_t layout = 0;
 
 	if (strcmp(ca->ca_name, "i2s") != 0)
 		return (0);
@@ -130,10 +130,19 @@ onyx_match(struct device *parent, void *match, void *aux)
 	    (soundchip = OF_child(soundbus)) == 0)
 		return (0);
 
-	bzero(compat, sizeof compat);
-	OF_getprop(soundchip, "compatible", compat, sizeof compat);
+	if (OF_getprop(soundchip, "platform-onyx-codec-ref",
+	    &soundcodec, sizeof soundcodec))
+		return (1);
 
-	if (strcmp(compat, "AOAbase") == 0)
+	/* 
+	 * Apple really messed up.  First and second generation iMac
+	 * G5 (PowerMac8,1 and PowerMac8,2) have a "deq" i2c device
+	 * listed in the OF device tree, which is a telltale sign of
+	 * snapper(4).  But in reality that chip isn't there.  So we
+	 * match on "layout-id" instead.
+	 */
+	if (OF_getprop(soundchip, "layout-id", &layout, sizeof layout) &&
+	    (layout == 0x2d || layout == 0x56))
 		return (1);
 
 	return (0);

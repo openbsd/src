@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.25 2005/11/05 04:26:22 brad Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.26 2005/12/17 00:04:10 kettenis Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -282,7 +282,7 @@ int
 snapper_match(struct device *parent, void *match, void *aux)
 {
 	struct confargs *ca = aux;
-	int soundbus, soundchip;
+	int soundbus, soundchip, soundcodec;
 	char compat[32];
 
 	if (strcmp(ca->ca_name, "i2s") != 0)
@@ -295,10 +295,14 @@ snapper_match(struct device *parent, void *match, void *aux)
 	bzero(compat, sizeof compat);
 	OF_getprop(soundchip, "compatible", compat, sizeof compat);
 
-	if (strcmp(compat, "snapper") != 0)
-		return (0);
+	if (strcmp(compat, "snapper"))
+		return (1);
 
-	return (1);
+	if (OF_getprop(soundchip, "platform-tas-codec-ref",
+	    &soundcodec, sizeof soundcodec))
+		return (1);
+
+	return (0);
 }
 
 void
