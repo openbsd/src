@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.3 2005/12/17 09:03:14 jsg Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.4 2005/12/17 11:12:54 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -68,11 +68,11 @@ int	nfe_match(struct device *, void *, void *);
 void	nfe_attach(struct device *, struct device *, void *);
 
 int	nfe_intr(void *);
-int	nfe_alloc_rx_ring(struct nfe_softc *, struct nfe_rx_ring *, int);
+int	nfe_alloc_rx_ring(struct nfe_softc *, struct nfe_rx_ring *);
 void	nfe_reset_rx_ring(struct nfe_softc *, struct nfe_rx_ring *);
 void	nfe_free_rx_ring(struct nfe_softc *, struct nfe_rx_ring *);
 int	nfe_rxintr(struct nfe_softc *);
-int	nfe_alloc_tx_ring(struct nfe_softc *, struct nfe_tx_ring *, int);
+int	nfe_alloc_tx_ring(struct nfe_softc *, struct nfe_tx_ring *);
 void	nfe_reset_tx_ring(struct nfe_softc *, struct nfe_tx_ring *);
 void	nfe_free_tx_ring(struct nfe_softc *, struct nfe_tx_ring *);
 int	nfe_txintr(struct nfe_softc *);
@@ -221,19 +221,20 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Allocate Tx and Rx rings.
 	 */
-	if (nfe_alloc_tx_ring(sc, &sc->txq, NFE_TX_RING_COUNT) != 0) {
+	if (nfe_alloc_tx_ring(sc, &sc->txq) != 0) {
 		printf("%s: could not allocate Tx ring\n",
 		    sc->sc_dev.dv_xname);
 		goto fail1;
 	}
 
-	if (nfe_alloc_rx_ring(sc, &sc->rxq, NFE_RX_RING_COUNT) != 0) {
+	if (nfe_alloc_rx_ring(sc, &sc->rxq) != 0) {
 		printf("%s: could not allocate Rx ring\n",
 		    sc->sc_dev.dv_xname);
 		goto fail2;
 	}
 
-	NFE_WRITE(sc, NFE_RING_SIZE, sc->rxq.count << 16 | sc->txq.count);
+	NFE_WRITE(sc, NFE_RING_SIZE, NFE_RX_RING_COUNT << 16 |
+	    NFE_TX_RING_COUNT);
 
 	ifp = &sc->sc_arpcom.ac_if;
 	ifp->if_softc = sc;
@@ -540,7 +541,7 @@ nfe_reset(struct nfe_softc *sc)
 }
 
 int
-nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring, int count)
+nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 {
 	struct nfe_rx_data *data;
 	struct nfe_desc *desc_v1;
@@ -556,18 +557,17 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring, int count)
 		descsize = sizeof(struct nfe_desc);
 	}
 
-	ring->count = count;
 	ring->cur = ring->next = 0;
 
-	error = bus_dmamap_create(sc->sc_dmat, count * descsize, 1,
-	    count * descsize, 0, BUS_DMA_NOWAIT, &ring->map);
+	error = bus_dmamap_create(sc->sc_dmat, NFE_RX_RING_COUNT * descsize, 1,
+	    NFE_RX_RING_COUNT * descsize, 0, BUS_DMA_NOWAIT, &ring->map);
 	if (error != 0) {
 		printf("%s: could not create desc DMA map\n",
 		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
-	error = bus_dmamem_alloc(sc->sc_dmat, count * descsize,
+	error = bus_dmamem_alloc(sc->sc_dmat, NFE_RX_RING_COUNT * descsize,
 	    PAGE_SIZE, 0, &ring->seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not allocate DMA memory\n",
@@ -576,7 +576,7 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring, int count)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &ring->seg, nsegs,
-	    count * descsize, (caddr_t *)desc, BUS_DMA_NOWAIT);
+	    NFE_RX_RING_COUNT * descsize, (caddr_t *)desc, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not map desc DMA memory\n",
 		    sc->sc_dev.dv_xname);
@@ -584,30 +584,21 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring, int count)
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, ring->map, *desc,
-	    count * descsize, NULL, BUS_DMA_NOWAIT);
+	    NFE_RX_RING_COUNT * descsize, NULL, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not load desc DMA map\n",
 		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
-	memset(*desc, 0, count * descsize);
+	memset(*desc, 0, NFE_RX_RING_COUNT * descsize);
 	ring->physaddr = ring->map->dm_segs->ds_addr;
-
-	ring->data = malloc(count * sizeof (struct nfe_rx_data), M_DEVBUF,
-	    M_NOWAIT);
-	if (ring->data == NULL) {
-		printf("%s: could not allocate soft data\n",
-		    sc->sc_dev.dv_xname);
-		error = ENOMEM;
-		goto fail;
-	}
 
 	/*
 	 * Pre-allocate Rx buffers and populate Rx ring.
 	 */
-	memset(ring->data, 0, count * sizeof (struct nfe_rx_data));
-	for (i = 0; i < count; i++) {
+	
+	for (i = 0; i < NFE_RX_RING_COUNT; i++) {
 		data = &sc->rxq.data[i];
 
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
@@ -677,7 +668,7 @@ nfe_reset_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 {
 	int i;
 
-	for (i = 0; i < ring->count; i++) {
+	for (i = 0; i < NFE_RX_RING_COUNT; i++) {
 		if (sc->sc_flags & NFE_40BIT_ADDR) {
 			ring->desc_v3[i].length = htole16(MCLBYTES);
 			ring->desc_v3[i].flags = htole16(NFE_RX_READY);
@@ -713,26 +704,23 @@ nfe_free_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 		    ring->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, ring->map);
 		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)desc,
-		    ring->count * descsize);
+		    NFE_RX_RING_COUNT * descsize);
 		bus_dmamem_free(sc->sc_dmat, &ring->seg, 1);
 	}
 
-	if (ring->data != NULL) {
-		for (i = 0; i < ring->count; i++) {
-			data = &ring->data[i];
+	for (i = 0; i < NFE_RX_RING_COUNT; i++) {
+		data = &ring->data[i];
 
-			if (data->m != NULL) {
-				bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-				    data->map->dm_mapsize,
-				    BUS_DMASYNC_POSTREAD);
-				bus_dmamap_unload(sc->sc_dmat, data->map);
-				m_freem(data->m);
-			}
-
-			if (data->map != NULL)
-				bus_dmamap_destroy(sc->sc_dmat, data->map);
+		if (data->m != NULL) {
+			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+			    data->map->dm_mapsize,
+			    BUS_DMASYNC_POSTREAD);
+			bus_dmamap_unload(sc->sc_dmat, data->map);
+			m_freem(data->m);
 		}
-		free(ring->data, M_DEVBUF);
+
+		if (data->map != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, data->map);
 	}
 }
 
@@ -744,7 +732,7 @@ nfe_rxintr(struct nfe_softc *sc)
 }
 
 int
-nfe_alloc_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring, int count)
+nfe_alloc_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 {
 	int i, nsegs, error;
 	void **desc;
@@ -758,12 +746,11 @@ nfe_alloc_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring, int count)
 		descsize = sizeof(struct nfe_desc);
 	}
 
-	ring->count = count;
 	ring->queued = 0;
 	ring->cur = ring->next = 0;
 
-	error = bus_dmamap_create(sc->sc_dmat, count * descsize, 1,
-	    count * descsize, 0, BUS_DMA_NOWAIT, &ring->map);
+	error = bus_dmamap_create(sc->sc_dmat, NFE_TX_RING_COUNT * descsize, 1,
+	    NFE_TX_RING_COUNT * descsize, 0, BUS_DMA_NOWAIT, &ring->map);
 	    
 	if (error != 0) {
 		printf("%s: could not create desc DMA map\n",
@@ -771,7 +758,7 @@ nfe_alloc_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring, int count)
 		goto fail;
 	}
 
-	error = bus_dmamem_alloc(sc->sc_dmat, count * descsize,
+	error = bus_dmamem_alloc(sc->sc_dmat, NFE_TX_RING_COUNT * descsize,
 	    PAGE_SIZE, 0, &ring->seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not allocate DMA memory\n",
@@ -780,7 +767,7 @@ nfe_alloc_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring, int count)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &ring->seg, nsegs,
-	    count * sizeof(struct nfe_desc), (caddr_t *)desc,
+	    NFE_TX_RING_COUNT * sizeof(struct nfe_desc), (caddr_t *)desc,
 	    BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not map desc DMA memory\n",
@@ -789,27 +776,17 @@ nfe_alloc_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring, int count)
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, ring->map, *desc,
-	    count * descsize, NULL, BUS_DMA_NOWAIT);
+	    NFE_TX_RING_COUNT * descsize, NULL, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not load desc DMA map\n",
 		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
-	memset(desc, 0, count * sizeof(struct nfe_desc));
+	memset(*desc, 0, NFE_TX_RING_COUNT * descsize);
 	ring->physaddr = ring->map->dm_segs->ds_addr;
 
-	ring->data = malloc(count * sizeof(struct nfe_tx_data), M_DEVBUF,
-	    M_NOWAIT);
-	if (ring->data == NULL) {
-		printf("%s: could not allocate soft data\n",
-		    sc->sc_dev.dv_xname);
-		error = ENOMEM;
-		goto fail;
-	}
-
-	memset(ring->data, 0, count * sizeof (struct nfe_tx_data));
-	for (i = 0; i < count; i++) {
+	for (i = 0; i < NFE_TX_RING_COUNT; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    NFE_MAX_SCATTER, MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &ring->data[i].map);
@@ -833,7 +810,7 @@ nfe_reset_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 	struct nfe_tx_data *data;
 	int i;
 
-	for (i = 0; i < ring->count; i++) {
+	for (i = 0; i < NFE_TX_RING_COUNT; i++) {
 		if (sc->sc_flags & NFE_40BIT_ADDR)
 			desc = &ring->desc_v3[i];
 		else
@@ -882,26 +859,23 @@ nfe_free_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 		    ring->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, ring->map);
 		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)desc,
-		    ring->count * descsize);
+		    NFE_TX_RING_COUNT * descsize);
 		bus_dmamem_free(sc->sc_dmat, &ring->seg, 1);
 	}
 
-	if (ring->data != NULL) {
-		for (i = 0; i < ring->count; i++) {
-			data = &ring->data[i];
+	for (i = 0; i < NFE_TX_RING_COUNT; i++) {
+		data = &ring->data[i];
 
-			if (data->m != NULL) {
-				bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-				    data->map->dm_mapsize,
-				    BUS_DMASYNC_POSTWRITE);
-				bus_dmamap_unload(sc->sc_dmat, data->map);
-				m_freem(data->m);
-			}
-
-			if (data->map != NULL)
-				bus_dmamap_destroy(sc->sc_dmat, data->map);
+		if (data->m != NULL) {
+			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+			    data->map->dm_mapsize,
+			    BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, data->map);
+			m_freem(data->m);
 		}
-		free(ring->data, M_DEVBUF);
+
+		if (data->map != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, data->map);
 	}
 }
 

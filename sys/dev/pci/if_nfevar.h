@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfevar.h,v 1.2 2005/12/14 22:08:20 jsg Exp $	*/
+/*	$OpenBSD: if_nfevar.h,v 1.3 2005/12/17 11:12:54 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -28,8 +28,7 @@ struct nfe_tx_ring {
 	bus_addr_t		physaddr;
 	struct nfe_desc		*desc_v1;
 	struct nfe_desc_v3	*desc_v3;
-	struct nfe_tx_data	*data;
-	int			count;
+	struct nfe_tx_data	data[NFE_TX_RING_COUNT];
 	int			queued;
 	int			cur;
 	int			next;
@@ -47,8 +46,7 @@ struct nfe_rx_ring {
 	bus_addr_t		physaddr;
 	struct nfe_desc		*desc_v1;
 	struct nfe_desc_v3	*desc_v3;
-	struct nfe_rx_data	*data;
-	int			count;
+	struct nfe_rx_data	data[NFE_RX_RING_COUNT];
 	int			cur;
 	int			next;
 };
