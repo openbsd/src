@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.35 2005/11/08 02:29:51 pedro Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.36 2005/12/17 13:56:01 pedro Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -288,14 +288,20 @@ ffs_reclaim(void *v)
 		struct vnode *a_vp;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
 	int error;
 
 	if ((error = ufs_reclaim(vp, ap->a_p)) != 0)
 		return (error);
-	/* XXX - same for for both mfs and ffs */
-	pool_put(&ffs_ino_pool, vp->v_data);
+
+	if (ip->i_din1 != NULL)
+		pool_put(&ffs_dinode1_pool, ip->i_din1);
+
+	pool_put(&ffs_ino_pool, ip);
+
 	vp->v_data = NULL;
+
 	return (0);
 }
 

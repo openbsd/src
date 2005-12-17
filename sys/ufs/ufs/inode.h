@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.29 2005/12/11 20:46:28 pedro Exp $	*/
+/*	$OpenBSD: inode.h,v 1.30 2005/12/17 13:56:01 pedro Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -113,11 +113,13 @@ struct inode {
 	 * The on-disk dinode itself.
 	 */
 	union {
-		struct ufs1_dinode	ffs1_din;
+		struct ufs1_dinode     *ffs1_din;
+		struct ufs2_dinode     *ffs2_din;
 		struct ext2fs_dinode   *e2fs_din;
 	} dinode_u;
 
-#define i_din1 dinode_u.ffs1_din
+#define i_din1	dinode_u.ffs1_din
+#define i_din2	dinode_u.ffs2_din
 #define	i_e2din	dinode_u.e2fs_din
 
 	struct inode_vtbl *i_vtbl;
@@ -160,50 +162,49 @@ struct inode_vtbl {
     ((ip)->i_vtbl->iv_bufatoff)((ip), (offset), (res), (bpp))
 
 
-#define	i_ffs_atime		i_din1.di_atime
-#define	i_ffs_atimensec		i_din1.di_atimensec
-#define	i_ffs_blocks		i_din1.di_blocks
-#define	i_ffs_ctime		i_din1.di_ctime
-#define	i_ffs_ctimensec		i_din1.di_ctimensec
-#define	i_ffs_db		i_din1.di_db
-#define	i_ffs_flags		i_din1.di_flags
-#define	i_ffs_gen		i_din1.di_gen
-#define	i_ffs_gid		i_din1.di_gid
-#define	i_ffs_ib		i_din1.di_ib
-#define	i_ffs_mode		i_din1.di_mode
-#define	i_ffs_mtime		i_din1.di_mtime
-#define	i_ffs_mtimensec		i_din1.di_mtimensec
-#define	i_ffs_nlink		i_din1.di_nlink
-#define	i_ffs_rdev		i_din1.di_rdev
-#define	i_ffs_shortlink		i_din1.di_shortlink
-#define	i_ffs_size		i_din1.di_size
-#define	i_ffs_uid		i_din1.di_uid
-#define i_size			i_din1.di_size
+#define	i_ffs_atime		i_din1->di_atime
+#define	i_ffs_atimensec		i_din1->di_atimensec
+#define	i_ffs_blocks		i_din1->di_blocks
+#define	i_ffs_ctime		i_din1->di_ctime
+#define	i_ffs_ctimensec		i_din1->di_ctimensec
+#define	i_ffs_db		i_din1->di_db
+#define	i_ffs_flags		i_din1->di_flags
+#define	i_ffs_gen		i_din1->di_gen
+#define	i_ffs_gid		i_din1->di_gid
+#define	i_ffs_ib		i_din1->di_ib
+#define	i_ffs_mode		i_din1->di_mode
+#define	i_ffs_mtime		i_din1->di_mtime
+#define	i_ffs_mtimensec		i_din1->di_mtimensec
+#define	i_ffs_nlink		i_din1->di_nlink
+#define	i_ffs_rdev		i_din1->di_rdev
+#define	i_ffs_shortlink		i_din1->di_shortlink
+#define	i_ffs_size		i_din1->di_size
+#define	i_ffs_uid		i_din1->di_uid
+#define i_size			i_din1->di_size
 
 #ifndef _KERNEL
 /*
  * These are here purely for backwards compatibility for userland.
  * They allow direct references to FFS structures using the old names.
  */
-
-#define	i_atime			i_din1.di_atime
-#define	i_atimensec		i_din1.di_atimensec
-#define	i_blocks		i_din1.di_blocks
-#define	i_ctime			i_din1.di_ctime
-#define	i_ctimensec		i_din1.di_ctimensec
-#define	i_db			i_din1.di_db
-#define	i_flags			i_din1.di_flags
-#define	i_gen			i_din1.di_gen
-#define	i_gid			i_din1.di_gid
-#define	i_ib			i_din1.di_ib
-#define	i_mode			i_din1.di_mode
-#define	i_mtime			i_din1.di_mtime
-#define	i_mtimensec		i_din1.di_mtimensec
-#define	i_nlink			i_din1.di_nlink
-#define	i_rdev			i_din1.di_rdev
-#define	i_shortlink		i_din1.di_shortlink
-#define	i_size			i_din1.di_size
-#define	i_uid			i_din1.di_uid
+#define	i_atime			i_din1->di_atime
+#define	i_atimensec		i_din1->di_atimensec
+#define	i_blocks		i_din1->di_blocks
+#define	i_ctime			i_din1->di_ctime
+#define	i_ctimensec		i_din1->di_ctimensec
+#define	i_db			i_din1->di_db
+#define	i_flags			i_din1->di_flags
+#define	i_gen			i_din1->di_gen
+#define	i_gid			i_din1->di_gid
+#define	i_ib			i_din1->di_ib
+#define	i_mode			i_din1->di_mode
+#define	i_mtime			i_din1->di_mtime
+#define	i_mtimensec		i_din1->di_mtimensec
+#define	i_nlink			i_din1->di_nlink
+#define	i_rdev			i_din1->di_rdev
+#define	i_shortlink		i_din1->di_shortlink
+#define	i_size			i_din1->di_size
+#define	i_uid			i_din1->di_uid
 #endif	/* _KERNEL */
 
 #define i_e2fs_mode		i_e2din->e2di_mode

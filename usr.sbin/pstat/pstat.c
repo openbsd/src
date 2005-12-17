@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.54 2005/12/11 20:46:29 pedro Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.55 2005/12/17 13:56:02 pedro Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.54 2005/12/11 20:46:29 pedro Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.55 2005/12/17 13:56:02 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -356,11 +356,16 @@ ufs_print(struct vnode *vp)
 {
 	int flag;
 	struct inode inode, *ip = &inode;
+	struct ufs1_dinode di1;
 	char flagbuf[16], *flags = flagbuf;
 	char *name;
 	mode_t type;
 
 	KGETRET(VTOI(vp), &inode, sizeof(struct inode), "vnode's inode");
+	KGETRET(inode.i_din1, &di1, sizeof(struct ufs1_dinode),
+	    "vnode's dinode");
+
+	inode.i_din1 = &di1;
 	flag = ip->i_flag;
 #if 0
 	if (flag & IN_LOCKED)

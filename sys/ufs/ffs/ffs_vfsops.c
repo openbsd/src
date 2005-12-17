@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.76 2005/11/30 17:01:17 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.77 2005/12/17 13:56:01 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -100,6 +100,7 @@ extern u_long nextgennumber;
  */
 
 struct pool ffs_ino_pool;
+struct pool ffs_dinode1_pool;
 
 int
 ffs_mountroot(void)
@@ -488,7 +489,7 @@ ffs_reload_vnode(struct vnode *vp, void *args)
 		vput(vp);
 		return (error);
 	}
-	ip->i_din1 = *((struct ufs1_dinode *)bp->b_data +
+	*ip->i_din1 = *((struct ufs1_dinode *)bp->b_data +
 	    ino_to_fsbo(fra->fs, ip->i_number));
 	ip->i_effnlink = ip->i_ffs_nlink;
 	brelse(bp);
@@ -1087,6 +1088,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
 	register struct fs *fs;
 	register struct inode *ip;
+	struct ufs1_dinode *dp1;
 	struct ufsmount *ump;
 	struct buf *bp;
 	struct vnode *vp;
@@ -1157,12 +1159,17 @@ retry:
 		*vpp = NULL;
 		return (error);
 	}
-	ip->i_din1 = *((struct ufs1_dinode *)bp->b_data + ino_to_fsbo(fs, ino));
+
+	ip->i_din1 = pool_get(&ffs_dinode1_pool, PR_WAITOK);
+	dp1 = (struct ufs1_dinode *) bp->b_data + ino_to_fsbo(fs, ino);
+	*ip->i_din1 = *dp1;
+
+	brelse(bp);
+
 	if (DOINGSOFTDEP(vp))
 		softdep_load_inodeblock(ip);
 	else
 		ip->i_effnlink = ip->i_ffs_nlink;
-	brelse(bp);
 
 	/*
 	 * Initialize the vnode from the inode, check for aliases.
@@ -1189,10 +1196,10 @@ retry:
 	 * Ensure that uid and gid are correct. This is a temporary
 	 * fix until fsck has been changed to do the update.
 	 */
-	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
-		ip->i_ffs_uid = ip->i_din1.di_ouid;		/* XXX */
-		ip->i_ffs_gid = ip->i_din1.di_ogid;		/* XXX */
-	}							/* XXX */
+	if (fs->fs_inodefmt < FS_44INODEFMT) {
+		ip->i_ffs_uid = ip->i_din1->di_ouid;
+		ip->i_ffs_gid = ip->i_din1->di_ogid;
+	}
 
 	*vpp = vp;
 	return (0);
@@ -1312,8 +1319,12 @@ ffs_init(struct vfsconf *vfsp)
 		return (0);
 
 	done = 1;
+
 	pool_init(&ffs_ino_pool, sizeof(struct inode), 0, 0, 0, "ffsino",
 	    &pool_allocator_nointr);
+	pool_init(&ffs_dinode1_pool, sizeof(struct ufs1_dinode), 0, 0, 0,
+	    "dino1pl", &pool_allocator_nointr);
+
 	softdep_initialize();
 
 	return (ufs_init(vfsp));

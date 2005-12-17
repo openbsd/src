@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.31 2005/11/10 22:01:14 pedro Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.32 2005/12/17 13:56:01 pedro Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ ufs_inactive(void *v)
 	/*
 	 * Ignore inodes related to stale file handles.
 	 */
-	if (ip->i_ffs_mode == 0)
+	if (ip->i_din1 == NULL || ip->i_ffs_mode == 0)
 		goto out;
 
 	if (ip->i_ffs_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
@@ -122,7 +122,7 @@ out:
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
-	if (ip->i_ffs_mode == 0)
+	if (ip->i_din1 == NULL || ip->i_ffs_mode == 0)
 		vrecycle(vp, NULL, p);
 
 	return (error);

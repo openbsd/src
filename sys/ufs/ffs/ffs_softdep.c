@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.65 2005/12/14 22:04:56 pedro Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.66 2005/12/17 13:56:01 pedro Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -1630,7 +1630,7 @@ newfreefrag(ip, blkno, size)
 		panic("newfreefrag: frag size");
 	freefrag = pool_get(&freefrag_pool, PR_WAITOK);
 	freefrag->ff_list.wk_type = D_FREEFRAG;
-	freefrag->ff_state = ip->i_ffs_uid & ~ONWORKLIST; /* XXX - used below */
+	freefrag->ff_state = ip->i_ffs_uid & ~ONWORKLIST; /* used below */
 	freefrag->ff_inum = ip->i_number;
 	freefrag->ff_mnt = ITOV(ip)->v_mount;
 	freefrag->ff_devvp = ip->i_devvp;
@@ -1648,13 +1648,15 @@ handle_workitem_freefrag(freefrag)
 	struct freefrag *freefrag;
 {
 	struct inode tip;
+	struct ufs1_dinode dtip1;
 
 	tip.i_vnode = NULL;
+	tip.i_din1 = &dtip1;
 	tip.i_fs = VFSTOUFS(freefrag->ff_mnt)->um_fs;
 	tip.i_ump = VFSTOUFS(freefrag->ff_mnt);
 	tip.i_dev = freefrag->ff_devvp->v_rdev;
 	tip.i_number = freefrag->ff_inum;
-	tip.i_ffs_uid = freefrag->ff_state & ~ONWORKLIST; /* XXX - set above */
+	tip.i_ffs_uid = freefrag->ff_state & ~ONWORKLIST; /* set above */
 	ffs_blkfree(&tip, freefrag->ff_blkno, freefrag->ff_fragsize);
 	pool_put(&freefrag_pool, freefrag);
 }
@@ -1949,7 +1951,7 @@ softdep_setup_freeblocks(ip, length)
 	    (int)fs->fs_bsize, NOCRED, &bp)) != 0)
 		softdep_error("softdep_setup_freeblocks", error);
 	*((struct ufs1_dinode *)bp->b_data + ino_to_fsbo(fs, ip->i_number)) =
-	    ip->i_din1;
+	    *ip->i_din1;
 	/*
 	 * Find and eliminate any inode dependencies.
 	 */
@@ -2367,6 +2369,7 @@ handle_workitem_freeblocks(freeblks)
 	struct freeblks *freeblks;
 {
 	struct inode tip;
+	struct ufs1_dinode dtip1;
 	daddr_t bn;
 	struct fs *fs;
 	int i, level, bsize;
@@ -2374,6 +2377,7 @@ handle_workitem_freeblocks(freeblks)
 	int error, allerror = 0;
 	ufs_lbn_t baselbns[NIADDR], tmpval;
 
+	tip.i_din1 = &dtip1;
 	tip.i_fs = fs = VFSTOUFS(freeblks->fb_mnt)->um_fs;
 	tip.i_number = freeblks->fb_previousinum;
 	tip.i_ump = VFSTOUFS(freeblks->fb_mnt);

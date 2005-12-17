@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.53 2005/12/13 22:21:02 mickey Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.54 2005/12/17 13:56:02 pedro Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.53 2005/12/13 22:21:02 mickey Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.54 2005/12/17 13:56:02 pedro Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -509,12 +509,22 @@ int
 ufs_filestat(struct vnode *vp, struct filestat *fsp)
 {
 	struct inode inode;
+	struct ufs1_dinode di1;
 
 	if (!KVM_READ(VTOI(vp), &inode, sizeof (inode))) {
 		dprintf("can't read inode at %p for pid %ld",
 		    VTOI(vp), (long)Pid);
 		return 0;
 	}
+
+	if (!KVM_READ(inode.i_din1, &di1, sizeof(struct ufs1_dinode))) {
+		dprintf("can't read dinode at %p for pid %ld",
+		    inode.i_din1, (long)Pid);
+		return (0);
+	}
+
+	inode.i_din1 = &di1;
+
 	fsp->fsid = inode.i_dev & 0xffff;
 	fsp->fileid = (long)inode.i_number;
 	fsp->mode = inode.i_ffs_mode;
@@ -528,12 +538,22 @@ int
 ext2fs_filestat(struct vnode *vp, struct filestat *fsp)
 {
 	struct inode inode;
+	struct ext2fs_dinode e2di;
 
 	if (!KVM_READ(VTOI(vp), &inode, sizeof (inode))) {
 		dprintf("can't read inode at %p for pid %ld",
 		    VTOI(vp), (long)Pid);
 		return 0;
 	}
+
+	if (!KVM_READ(inode.i_e2din, &e2di, sizeof(struct ext2fs_dinode))) {
+		dprintf("can't read dinode at %p for pid %ld",
+		    inode.i_e2din, (long)Pid);
+		return (0);
+	}
+
+	inode.i_e2din = &e2di;
+
 	fsp->fsid = inode.i_dev & 0xffff;
 	fsp->fileid = (long)inode.i_number;
 	fsp->mode = inode.i_e2fs_mode;

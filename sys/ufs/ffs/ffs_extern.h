@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.25 2005/11/09 15:35:53 pedro Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.26 2005/12/17 13:56:01 pedro Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*
@@ -194,4 +194,5 @@ extern int (**ffs_fifoop_p)(void *);
 #define FFS_FIFOOPS NULL
 #endif
 
-extern struct pool ffs_ino_pool;
+extern struct pool ffs_ino_pool;	/* memory pool for inodes */
+extern struct pool ffs_dinode1_pool;	/* memory pool for UFS1 dinodes */
