@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.126 2005/12/13 23:06:47 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.127 2005/12/17 02:59:25 jsg Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -126,6 +126,7 @@ product 3COM 3CCFEM556BI	0x0556 3Com 3CCFEM556BI
 product 3COM 3C562		0x0562 3Com 3c562
 product 3COM 3C589		0x0589 3Com 3c589
 product 3COM 3C574		0x0574 3Com 3c574
+product 3COM 3CRWE62092B	0x0620 3Com 3CRWE62092B
 product 3COM 3C1		0x0cf1 3Com 3C1
 product 3COM 3CRWE62092A	0x2092 3Com Wireless LAN
 
@@ -208,6 +209,7 @@ product ELSA MC2_IEEE		0x0001 AirLancer MC-2 IEEE
 product ELSA XI300_IEEE		0x0002 XI300 Wireless LAN
 product ELSA XI800_IEEE		0x0004 XI800 CF Wireless LAN
 product ELSA XI325_IEEE		0x0005 XI325 Wireless LAN
+product ELSA CONNECTPLUS	0x0101 SanDisk ConnectPlus
 
 /* EMTAC */
 product EMTAC WLAN		0x0002 EMTAC A2424i 11Mbps WLAN Card
