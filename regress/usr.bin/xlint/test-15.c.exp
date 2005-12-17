@@ -6,4 +6,6 @@ test-15.c:32: warning: division by 0
 test-15.c:33: warning: division by 0
 test-15.c:34: warning: division by 0
 test-15.c:35: warning: division by 0
+test-15.c:37: warning: modulus by 0
+test-15.c:38: warning: modulus by 0
 Lint pass2:
