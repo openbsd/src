@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.28 2005/12/12 18:59:04 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.29 2005/12/17 20:13:44 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -251,7 +251,7 @@ trap(trapframe)
 		    trunc_page(trapframe->badvaddr), entry)) {
 			/* write to read only page */
 			ftype = VM_PROT_WRITE;
-			goto dofault;
+			goto fault_common;
 		}
 		entry |= PG_M;
 		pte->pt_entry = entry;
@@ -294,21 +294,21 @@ trap(trapframe)
 #define szsigcode ((long)(p->p_emul->e_esigcode - p->p_emul->e_sigcode))
 		if (trapframe->badvaddr < VM_MAXUSER_ADDRESS &&
 		    trapframe->badvaddr >= (long)STACKGAPBASE)
-			goto dofault;
+			goto fault_common;
 
 		if ((i = p->p_addr->u_pcb.pcb_onfault) == 0) {
-			goto dofault;
+			goto fault_common;
 		}
 #undef szsigcode
-		goto dofault;
+		goto fault_common;
 
 	case T_TLB_LD_MISS+T_USER:
 		ftype = VM_PROT_READ;
-		goto dofault;
+		goto fault_common;
 
 	case T_TLB_ST_MISS+T_USER:
 		ftype = VM_PROT_WRITE;
-	dofault:
+fault_common:
 	    {
 		vaddr_t va;
 		struct vmspace *vm;
