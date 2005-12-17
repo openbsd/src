@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.6 2004/11/02 21:05:34 pefo Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.7 2005/12/17 21:10:24 kettenis Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -71,8 +71,6 @@
 #include <sys/syscallargs.h>
 
 #include <machine/regnum.h>
-
-struct proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
 
 /*
  * WARNING: code in locore.s assumes the layout shown for sf_signum
@@ -229,6 +227,7 @@ sys_sigreturn(p, v, retval)
 	struct trap_frame *regs;
 	struct sigcontext ksc;
 	int error;
+	extern struct proc *machFPCurProcPtr;
 
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
