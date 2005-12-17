@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_pci.c,v 1.24 2005/11/23 11:30:14 mickey Exp $	*/
+/*	$OpenBSD: if_le_pci.c,v 1.25 2005/12/17 07:31:27 miod Exp $	*/
 /*	$NetBSD: if_le_pci.c,v 1.13 1996/10/25 21:33:32 cgd Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@
 #ifdef __alpha__			/* XXX */
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */ 
 #undef vtophys
-#define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t)(va))
+#define	vtophys(va)	alpha_XXX_dmamap((vaddr_t)(va))
 #endif
 
 int le_pci_match(struct device *, void *, void *);

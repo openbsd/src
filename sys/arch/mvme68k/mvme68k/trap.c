@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.60 2005/11/12 23:14:03 miod Exp $ */
+/*	$OpenBSD: trap.c,v 1.61 2005/12/17 07:31:26 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -527,7 +527,7 @@ copyfault:
 	case T_MMUFLT:		/* kernel mode page fault */
 	case T_MMUFLT|T_USER:	/* page fault */
 	    {
-		vm_offset_t va;
+		vaddr_t va;
 		struct vmspace *vm = NULL;
 		struct vm_map *map;
 		int rv;
@@ -561,7 +561,7 @@ copyfault:
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		} else
 			vftype = ftype = VM_PROT_READ;
-		va = trunc_page((vm_offset_t)v);
+		va = trunc_page((vaddr_t)v);
 
 		if (map == kernel_map && va == 0) {
 			printf("trap: bad kernel access at %x\n", v);
@@ -569,7 +569,7 @@ copyfault:
 		}
 #ifdef COMPAT_HPUX
 		if (ISHPMMADDR(p, va)) {
-			vm_offset_t bva;
+			vaddr_t bva;
 
 			rv = pmap_mapmulti(map->pmap, va);
 			if (rv) {
@@ -700,15 +700,15 @@ writeback(fp, docachepush)
 		if (docachepush) {
 			paddr_t pa;
 
-			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
+			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 						  trunc_page(f->f_fa), VM_PROT_WRITE, VM_PROT_WRITE|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
-			pmap_extract(pmap_kernel(), (vm_offset_t)fa, &pa);
+			pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL(pa);
-			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
-							(vm_offset_t)&vmmap[NBPG]);
+			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
+							(vaddr_t)&vmmap[NBPG]);
 			pmap_update(pmap_kernel());
 		} else
 			printf("WARNING: pid %d(%s) uid %u: CPUSH not done\n",
@@ -953,14 +953,14 @@ dumpwb(num, s, a, d)
 	u_int a, d;
 {
 	register struct proc *p = curproc;
-	vm_offset_t pa;
+	paddr_t pa;
 	int tmp;
 
 	printf(" writeback #%d: VA %x, data %x, SZ=%s, TT=%s, TM=%s\n",
 			 num, a, d, f7sz[(s & SSW4_SZMASK) >> 5],
 			 f7tt[(s & SSW4_TTMASK) >> 3], f7tm[s & SSW4_TMMASK]);
 	printf("	       PA ");
-	if (pmap_extract(p->p_vmspace->vm_map.pmap, (vm_offset_t)a, &pa) == FALSE)
+	if (pmap_extract(p->p_vmspace->vm_map.pmap, (vaddr_t)a, &pa) == FALSE)
 		printf("<invalid address>");
 	else {
 		if (copyin((caddr_t)a, &tmp, sizeof(int)) == 0)

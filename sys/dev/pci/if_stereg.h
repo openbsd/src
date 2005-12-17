@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stereg.h,v 1.9 2005/04/21 06:48:05 fgsch Exp $ */
+/*	$OpenBSD: if_stereg.h,v 1.10 2005/12/17 07:31:27 miod Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -539,5 +539,5 @@ struct ste_mii_frame {
 
 #ifdef __alpha__
 #undef vtophys
-#define vtophys(va)		alpha_XXX_dmamap((vm_offset_t)va)
+#define vtophys(va)		alpha_XXX_dmamap((vaddr_t)va)
 #endif

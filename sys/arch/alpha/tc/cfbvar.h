@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfbvar.h,v 1.6 2002/03/14 01:26:28 millert Exp $	*/
+/*	$OpenBSD: cfbvar.h,v 1.7 2005/12/17 07:31:25 miod Exp $	*/
 /*	$NetBSD: cfbvar.h,v 1.1 1996/05/01 23:25:04 cgd Exp $	*/
 
 /*
@@ -38,16 +38,16 @@ struct fbcursor;
 struct fbcurpos;
 
 struct cfb_devconfig {
-	vm_offset_t dc_vaddr;		/* memory space virtual base address */
-	vm_offset_t dc_paddr;		/* memory space physical base address */
-	vm_offset_t dc_size;		/* size of slot memory */
+	vaddr_t dc_vaddr;		/* memory space virtual base address */
+	paddr_t dc_paddr;		/* memory space physical base address */
+	vsize_t dc_size;		/* size of slot memory */
 
 	int	    dc_wid;		/* width of frame buffer */
 	int	    dc_ht;		/* height of frame buffer */
 	int	    dc_depth;		/* depth, bits per pixel */
 	int	    dc_rowbytes;	/* bytes in a FB scan line */
 
-	vm_offset_t dc_videobase;	/* base of flat frame buffer */
+	vaddr_t	dc_videobase;		/* base of flat frame buffer */
 
 	struct raster	dc_raster;	/* raster description */
 	struct rcons	dc_rcons;	/* raster blitter control info */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.16 2005/11/24 22:43:16 miod Exp $ */
+/*	$OpenBSD: flash.c,v 1.17 2005/12/17 07:31:26 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -350,9 +350,9 @@ flashread(dev, uio, flags)
 {
 	int unit = minor(dev);
 	struct flashsoftc *sc = (struct flashsoftc *) flash_cd.cd_devs[unit];
-	register vm_offset_t v;
-	register int c;
-	register struct iovec *iov;
+	vaddr_t v;
+	int c;
+	struct iovec *iov;
 	int error = 0;
 
 	while (uio->uio_resid > 0 && error == 0) {
@@ -385,9 +385,9 @@ flashwrite(dev, uio, flags)
 {
 	int unit = minor(dev);
 	struct flashsoftc *sc = (struct flashsoftc *) flash_cd.cd_devs[unit];
-	register vm_offset_t v;
-	register int c, i, r;
-	register struct iovec *iov;
+	vaddr_t v;
+	int c, i, r;
+	struct iovec *iov;
 	int error = 0;
 	u_char *cmpbuf;
 	int neederase = 0, needwrite = 0;

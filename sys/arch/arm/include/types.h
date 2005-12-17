@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.4 2005/12/14 21:46:30 millert Exp $	*/
+/*	$OpenBSD: types.h,v 1.5 2005/12/17 07:31:25 miod Exp $	*/
 /*	$NetBSD: types.h,v 1.4 2002/02/28 03:17:25 simonb Exp $	*/
 
 /*
@@ -54,13 +54,10 @@ typedef struct label_t {	/* Used by setjmp & longjmp */
          
 /* NB: This should probably be if defined(_KERNEL) */
 #if __BSD_VISIBLE
-typedef	unsigned long	vm_offset_t;
-typedef	unsigned long	vm_size_t;
-
-typedef vm_offset_t	paddr_t;
-typedef vm_size_t	psize_t;
-typedef vm_offset_t	vaddr_t;
-typedef vm_size_t	vsize_t;
+typedef unsigned long	paddr_t;
+typedef unsigned long	psize_t;
+typedef unsigned long	vaddr_t;
+typedef unsigned long	vsize_t;
 #endif
 
 #define	__HAVE_MINIMAL_EMUL

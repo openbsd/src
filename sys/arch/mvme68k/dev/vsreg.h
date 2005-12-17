@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsreg.h,v 1.5 2003/09/29 09:08:17 miod Exp $ */
+/*	$OpenBSD: vsreg.h,v 1.6 2005/12/17 07:31:26 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -741,12 +741,6 @@ typedef struct ipsg
 
 M328_SG vs_alloc_scatter_gather(void);
 void    vs_dealloc_scatter_gather(M328_SG sg);
-void    vs_link_scatter_gather_element(sg_list_element_t *element,
-                                            register vm_offset_t phys_add,
-                                            register int len);
-void    vs_link_scatter_gather_list(sg_list_element_t *list,
-                                         register vm_offset_t phys_add,
-                                         register int elements);
 M328_SG vs_build_memory_structure(struct scsi_xfer *xs, M328_IOPB *iopb);
 
 #endif /* _M328REG_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.26 2005/06/08 19:08:23 drahn Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.27 2005/12/17 07:31:26 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -131,9 +131,9 @@ int OF_stdin;
  */
 static int N_mapping;
 static struct {
-	vm_offset_t va;
+	vaddr_t va;
 	int len;
-	vm_offset_t pa;
+	paddr_t pa;
 	int mode;
 } ofw_mapping[256];
 
@@ -189,8 +189,8 @@ restore_ofw_mapping()
 	ofw_pmap.pm_sr[PPC_KERNEL_SR] = PPC_KERNEL_SEGMENT;
 
 	for (i = 0; i < N_mapping; i++) {
-		vm_offset_t pa = ofw_mapping[i].pa;
-		vm_offset_t va = ofw_mapping[i].va;
+		paddr_t pa = ofw_mapping[i].pa;
+		vaddr_t va = ofw_mapping[i].va;
 		int size = ofw_mapping[i].len;
 
 		if (va < 0xf8000000)			/* XXX */

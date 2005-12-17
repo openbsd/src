@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.30 2005/11/24 22:43:16 miod Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.31 2005/12/17 07:31:26 miod Exp $ */
 
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr. 
@@ -366,7 +366,7 @@ ie_obreset(arg)
 	ieo->portlow = a >> 16;
 	delay(1000);
 
-	pmap_extract(pmap_kernel(), (vm_offset_t)sc->scp, &a);
+	pmap_extract(pmap_kernel(), (vaddr_t)sc->scp, &a);
 	a |= IE_PORT_NEWSCPADDR;
 	ieo->porthigh = a & 0xffff;
 	t = 0; t = 1;
@@ -423,7 +423,7 @@ ieattach(parent, self, aux)
 	/* get the first available etherbuf */
 	sc->sc_maddr = etherbuf;	/* maddr = vaddr */
 	if (sc->sc_maddr == NULL) panic("ie: too many ethernet boards");
-	if (pmap_extract(pmap_kernel(), (vm_offset_t)sc->sc_maddr, &pa) == FALSE)
+	if (pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_maddr, &pa) == FALSE)
 		panic("ie: pmap_extract");
 	sc->sc_iobase = (caddr_t)pa;	/* iobase = paddr (24 bit) */
 
@@ -439,7 +439,7 @@ ieattach(parent, self, aux)
 	/*printf("scpV %x iscpV %x scbV %x\n", sc->scp, sc->iscp, sc->scb);*/
 
 	sc->scp->ie_bus_use = 0x44;
-	pmap_extract(pmap_kernel(), (vm_offset_t)sc->iscp, &pa);
+	pmap_extract(pmap_kernel(), (vaddr_t)sc->iscp, &pa);
 	SWT_32(sc->scp->ie_iscp_ptr, pa);
 	/*
 	 * rest of first page is unused (wasted!), rest of ram

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.7 2003/06/02 23:27:53 millert Exp $	*/
+/*	$OpenBSD: mem.c,v 1.8 2005/12/17 07:31:26 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.1 1996/09/30 16:34:50 ws Exp $ */
 
 /*
@@ -88,7 +88,7 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	vm_offset_t v;
+	vaddr_t v;
 	u_int c;
 	struct iovec *iov;
 	int error = 0;
@@ -110,7 +110,7 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 			c = uio->uio_resid;
 			/* This doesn't allow device mapping!	XXX */
-			pmap_real_memory(&v, (vm_size_t *)&c);
+			pmap_real_memory(&v, (vsize_t *)&c);
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 

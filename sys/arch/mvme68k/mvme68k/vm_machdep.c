@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.39 2005/09/25 22:26:16 miod Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.40 2005/12/17 07:31:26 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -200,7 +200,7 @@ pagemove(from, to, size)
 	caddr_t from, to;
 	size_t size;
 {
-	vm_offset_t pa;
+	paddr_t pa;
 	boolean_t rv;
 
 #ifdef DEBUG
@@ -208,15 +208,15 @@ pagemove(from, to, size)
 		panic("pagemove");
 #endif
 	while (size > 0) {
-		rv = pmap_extract(pmap_kernel(), (vm_offset_t)from, &pa);
+		rv = pmap_extract(pmap_kernel(), (vaddr_t)from, &pa);
 #ifdef DEBUG
 		if (rv == FALSE)
 			panic("pagemove 2");
-		if (pmap_extract(pmap_kernel(), (vm_offset_t)to, NULL) == TRUE)
+		if (pmap_extract(pmap_kernel(), (vaddr_t)to, NULL) == TRUE)
 			panic("pagemove 3");
 #endif
-		pmap_kremove((vm_offset_t)from, PAGE_SIZE);
-		pmap_kenter_pa((vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE);
+		pmap_kremove((vaddr_t)from, PAGE_SIZE);
+		pmap_kenter_pa((vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -270,7 +270,7 @@ kvtop(addr)
 {
 	paddr_t pa;
 
-	if (pmap_extract(pmap_kernel(), (vm_offset_t)addr, &pa) == FALSE)
+	if (pmap_extract(pmap_kernel(), addr, &pa) == FALSE)
 		panic("kvtop: zero page frame");
 
 	return (pa);
@@ -286,15 +286,15 @@ kvtop(addr)
  */
 void
 vmapbuf(bp, siz)
-	register struct buf *bp;
-	vm_size_t siz;
+	struct buf *bp;
+	vsize_t siz;
 {
-	register int npf;
-	register caddr_t addr;
+	int npf;
+	caddr_t addr;
 	struct proc *p;
 	int off;
-	vm_offset_t kva;
-	vm_offset_t pa;
+	vaddr_t kva;
+	paddr_t pa;
 
 #ifdef DIAGNOSTIC
 	if ((bp->b_flags & B_PHYS) == 0)
@@ -309,7 +309,7 @@ vmapbuf(bp, siz)
 	bp->b_data = (caddr_t)(kva + off);
 	while (npf--) {
 		if (pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
-		    (vm_offset_t)addr, &pa) == FALSE)
+		    (vaddr_t)addr, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),
 			   VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
@@ -324,12 +324,12 @@ vmapbuf(bp, siz)
  */
 void
 vunmapbuf(bp, siz)
-	register struct buf *bp;
-	vm_size_t siz;
+	struct buf *bp;
+	vsize_t siz;
 {
-	register caddr_t addr;
-	register int npf;
-	vm_offset_t kva;
+	caddr_t addr;
+	int npf;
+	vaddr_t kva;
 
 #ifdef DIAGNOSTIC
 	if ((bp->b_flags & B_PHYS) == 0)
@@ -338,7 +338,7 @@ vunmapbuf(bp, siz)
 
 	addr = bp->b_data;
 	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
-	kva = (vm_offset_t)((int)addr & ~PGOFSET);
+	kva = (vaddr_t)((int)addr & ~PGOFSET);
 	uvm_km_free_wakeup(phys_map, kva, ctob(npf));
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;

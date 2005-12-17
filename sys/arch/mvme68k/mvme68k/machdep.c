@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.93 2005/12/11 17:05:35 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.94 2005/12/17 07:31:26 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -118,7 +118,7 @@ char machine[] = MACHINE;		/* cpu "architecture" */
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 
-extern vm_offset_t avail_end;
+extern vaddr_t avail_end;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -197,7 +197,7 @@ caddr_t allocsys(caddr_t);
 void
 mvme68k_init()
 {
-	extern vm_offset_t avail_start, avail_end;
+	extern vaddr_t avail_start;
 
 	/*
 	 * Tell the VM system about available physical memory.  The
@@ -255,7 +255,7 @@ cpu_startup()
 	int base, residual;
 	
 	vaddr_t minaddr, maxaddr;
-	vm_size_t size;
+	vsize_t size;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -268,7 +268,7 @@ cpu_startup()
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_kenter_pa((vm_offset_t)msgbufp + i * PAGE_SIZE,
+		pmap_kenter_pa((vaddr_t)msgbufp + i * PAGE_SIZE,
 		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
@@ -284,7 +284,7 @@ cpu_startup()
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
 	 */
-	size = (vm_size_t)allocsys((caddr_t)0);
+	size = (vsize_t)allocsys((caddr_t)0);
 	if ((v = (caddr_t) uvm_km_zalloc(kernel_map, round_page(size))) == 0)
 		panic("startup: no room for tables");
 	if (allocsys(v) - v != size)
@@ -319,7 +319,7 @@ cpu_startup()
 		 * for the first "residual" buffers, and then we allocate
 		 * "base" pages for the rest.
 		 */
-		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
+		curbuf = (vaddr_t)buffers + (i * MAXBSIZE);
 		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {

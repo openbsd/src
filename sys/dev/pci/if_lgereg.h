@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lgereg.h,v 1.4 2004/09/28 04:37:33 brad Exp $	*/
+/*	$OpenBSD: if_lgereg.h,v 1.5 2005/12/17 07:31:27 miod Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -593,5 +593,5 @@ struct lge_softc {
 
 #ifdef __alpha__
 #undef vtophys
-#define vtophys(va)		alpha_XXX_dmamap((vm_offset_t)va)
+#define vtophys(va)		alpha_XXX_dmamap((vaddr_t)va)
 #endif

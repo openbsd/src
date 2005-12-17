@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.23 2005/10/26 18:57:51 martin Exp $	*/
+/*	$OpenBSD: dma.c,v 1.24 2005/12/17 07:31:26 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -57,7 +57,7 @@
 #include <machine/bus.h>
 int _dmamem_alloc_range( bus_dma_tag_t t, bus_size_t size,
     bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs,
-    int nsegs, int *rsegs, int flags, vm_offset_t low, vm_offset_t high);
+    int nsegs, int *rsegs, int flags, vaddr_t low, vaddr_t high);
 int _dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
     struct proc *, int, bus_addr_t *, int *, int);
 /*
@@ -440,7 +440,7 @@ int
 _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
     caddr_t *kvap, int flags)
 {
-	vm_offset_t va;
+	vaddr_t va;
 	bus_addr_t addr;
 	int curseg;
 
@@ -481,7 +481,7 @@ _dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 #endif
 
 	size = round_page(size);
-	uvm_km_free(kernel_map, (vm_offset_t)kva, size);
+	uvm_km_free(kernel_map, (vaddr_t)kva, size);
 }
 
 /*
@@ -527,9 +527,9 @@ _dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 int
 _dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
-    int flags, vm_offset_t low, vm_offset_t high)
+    int flags, vaddr_t low, vaddr_t high)
 {
-	vm_offset_t curaddr, lastaddr;
+	vaddr_t curaddr, lastaddr;
 	struct vm_page *m;
 	struct pglist mlist;
 	int curseg, error;

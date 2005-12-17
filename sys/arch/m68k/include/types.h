@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.11 2005/12/14 21:46:31 millert Exp $	*/
+/*	$OpenBSD: types.h,v 1.12 2005/12/17 07:31:25 miod Exp $	*/
 /*	$NetBSD: types.h,v 1.9 1995/07/06 03:39:38 cgd Exp $	*/
 
 /*-
@@ -43,9 +43,6 @@ typedef struct label_t {		/* consistent with HP-UX */
 #endif
 
 #if __BSD_VISIBLE
-typedef	unsigned long	vm_offset_t;
-typedef	unsigned long	vm_size_t;
-
 typedef unsigned long	vaddr_t;
 typedef unsigned long	paddr_t;
 typedef unsigned long	vsize_t;

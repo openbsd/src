@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.39 2005/10/09 14:52:12 drahn Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.40 2005/12/17 07:31:27 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	pcb->pcb_pm = p2->p_vmspace->vm_map.pmap;
 
 	pmap_extract(pmap_kernel(),
-	    (vm_offset_t)pcb->pcb_pm, (paddr_t *)&pcb->pcb_pmreal);
+	    (vaddr_t)pcb->pcb_pm, (paddr_t *)&pcb->pcb_pmreal);
 	
 	/*
 	 * Setup the trap frame for the new process
@@ -131,7 +131,7 @@ cpu_swapin(struct proc *p)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	
 	pmap_extract(pmap_kernel(),
-	    (vm_offset_t)pcb->pcb_pm, (paddr_t *)&pcb->pcb_pmreal);
+	    (vaddr_t)pcb->pcb_pm, (paddr_t *)&pcb->pcb_pmreal);
 }
 
 /*
@@ -143,10 +143,10 @@ pagemove(caddr_t from, caddr_t to, size_t size)
 	vaddr_t va;
 	paddr_t pa;
 	
-	for (va = (vm_offset_t)from; size > 0; size -= NBPG) {
+	for (va = (vaddr_t)from; size > 0; size -= NBPG) {
 		pmap_extract(pmap_kernel(), va, &pa);
 		pmap_kremove(va, NBPG);
-		pmap_kenter_pa((vm_offset_t)to, pa,
+		pmap_kenter_pa((vaddr_t)to, pa,
 			   VM_PROT_READ | VM_PROT_WRITE );
 		va += NBPG;
 		to += NBPG;
@@ -226,17 +226,17 @@ cpu_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
  * Map an IO request into kernel virtual address space.
  */
 void
-vmapbuf(struct buf *bp, vm_size_t len)
+vmapbuf(struct buf *bp, vsize_t len)
 {
-	vm_offset_t faddr, taddr, off;
-	vm_offset_t pa;
+	vaddr_t faddr, taddr, off;
+	paddr_t pa;
 	
 #ifdef	DIAGNOSTIC
 	if (!(bp->b_flags & B_PHYS))
 		panic("vmapbuf");
 #endif
 	faddr = trunc_page((vaddr_t)(bp->b_saveaddr = bp->b_data));
-	off = (vm_offset_t)bp->b_data - faddr;
+	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr = uvm_km_valloc_wait(phys_map, len);
 	bp->b_data = (caddr_t)(taddr + off);
@@ -255,16 +255,16 @@ vmapbuf(struct buf *bp, vm_size_t len)
  * Free the io map addresses associated with this IO operation.
  */
 void
-vunmapbuf(struct buf *bp, vm_size_t len)
+vunmapbuf(struct buf *bp, vsize_t len)
 {
-	vm_offset_t addr, off;
+	vaddr_t addr, off;
 	
 #ifdef	DIAGNOSTIC
 	if (!(bp->b_flags & B_PHYS))
 		panic("vunmapbuf");
 #endif
 	addr = trunc_page((vaddr_t)bp->b_data);
-	off = (vm_offset_t)bp->b_data - addr;
+	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;

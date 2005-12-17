@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_io.c,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: isa_io.c,v 1.2 2005/12/17 07:31:25 miod Exp $	*/
 /*	$NetBSD: isa_io.c,v 1.2 2002/09/27 15:35:44 provos Exp $	*/
 
 /*
@@ -221,8 +221,8 @@ struct bus_space isa_mem_bs_tag = {
 
 void
 isa_io_init(isa_io_addr, isa_mem_addr)
-	vm_offset_t isa_io_addr;
-	vm_offset_t isa_mem_addr;
+	vaddr_t isa_io_addr;
+	vaddr_t isa_mem_addr;
 {
 	isa_io_bs_tag.bs_cookie = (void *)isa_io_addr;
 	isa_mem_bs_tag.bs_cookie = (void *)isa_mem_addr;
@@ -233,16 +233,16 @@ isa_io_init(isa_io_addr, isa_mem_addr)
  * (e.g. X servers) need to map ISA space directly.  use these
  * functions sparingly!
  */
-vm_offset_t
+vaddr_t
 isa_io_data_vaddr(void)
 {
-	return (vm_offset_t)isa_io_bs_tag.bs_cookie;
+	return (vaddr_t)isa_io_bs_tag.bs_cookie;
 }
 
-vm_offset_t
+vaddr_t
 isa_mem_data_vaddr(void)
 {
-	return (vm_offset_t)isa_mem_bs_tag.bs_cookie;
+	return (vaddr_t)isa_mem_bs_tag.bs_cookie;
 }
 
 int

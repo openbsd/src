@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tlreg.h,v 1.8 2003/06/30 02:52:51 avsm Exp $	*/
+/*	$OpenBSD: if_tlreg.h,v 1.9 2005/12/17 07:31:27 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -597,5 +597,5 @@ struct tl_stats {
 
 #ifdef __alpha__
 #undef vtophys
-#define vtophys(va)		alpha_XXX_dmamap((vm_offset_t)va)
+#define vtophys(va)		alpha_XXX_dmamap((vaddr_t)va)
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netboot.c,v 1.6 2004/07/05 19:59:20 deraadt Exp $	*/
+/*	$OpenBSD: netboot.c,v 1.7 2005/12/17 07:31:25 miod Exp $	*/
 /*	$NetBSD: netboot.c,v 1.1 1996/09/18 20:03:12 cgd Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ char boot_flags[128];
 
 extern char bootprog_name[], bootprog_rev[];
 
-vm_offset_t ffp_save, ptbr_save;
+vaddr_t ffp_save, ptbr_save;
 
 int debug;
 

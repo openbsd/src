@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.82 2005/11/12 00:23:43 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.83 2005/12/17 07:31:26 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -491,7 +491,7 @@ cpu_startup()
 {
 	int sz, i;
 	caddr_t v;
-	vm_offset_t minaddr, maxaddr;
+	vaddr_t minaddr, maxaddr;
 	int base, residual;
 	v = (caddr_t)proc0paddr + USPACE;
 
@@ -531,11 +531,11 @@ cpu_startup()
 		residual = 0;
 	}
 	for (i = 0; i < nbuf; i++) {
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
 		struct vm_page *pg;
 
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
 		curbufsize = PAGE_SIZE * (i < residual ? base + 1 : base);
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -1222,7 +1222,7 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	}
 }
 
-vm_offset_t ppc_kvm_stolen = VM_KERN_ADDRESS_SIZE;
+vaddr_t ppc_kvm_stolen = VM_KERN_ADDRESS_SIZE;
 
 int
 bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.21 2005/12/14 15:08:51 uwe Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.22 2005/12/17 07:31:27 miod Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -197,12 +197,11 @@ BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
 char *boot_file = NULL;
 
-vm_offset_t physical_start;
-vm_offset_t physical_freestart;
-vm_offset_t physical_freeend;
-vm_offset_t physical_end;
+paddr_t physical_start;
+paddr_t physical_freestart;
+paddr_t physical_freeend;
+paddr_t physical_end;
 u_int free_pages;
-vm_offset_t pagetables_start;
 int physmem = 0;
 
 /*int debug_flags;*/
@@ -218,7 +217,7 @@ pv_addr_t abtstack;
 extern pv_addr_t kernelstack;
 pv_addr_t minidataclean;
 
-vm_offset_t msgbufphys;
+paddr_t msgbufphys;
 
 extern u_int data_abort_handler_address;
 extern u_int prefetch_abort_handler_address;
@@ -419,7 +418,7 @@ map_io_area(paddr_t pagedir)
 	 */
 	loop = 0;
 	while (l1_sec_table[loop].size) {
-		vm_size_t sz;
+		vsize_t sz;
 
 #define VERBOSE_INIT_ARM
 #ifdef VERBOSE_INIT_ARM

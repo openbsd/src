@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.94 2005/11/13 03:56:26 brad Exp $ */
+/*	$OpenBSD: pmap.c,v 1.95 2005/12/17 07:31:27 miod Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn.
@@ -2067,7 +2067,7 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
  * Restrict given range to physical memory
  */
 void
-pmap_real_memory(paddr_t *start, vm_size_t *size)
+pmap_real_memory(paddr_t *start, vsize_t *size)
 {
 	struct mem_region *mp;
 

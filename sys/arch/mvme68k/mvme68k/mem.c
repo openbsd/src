@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.22 2005/10/27 16:04:08 martin Exp $ */
+/*	$OpenBSD: mem.c,v 1.23 2005/12/17 07:31:26 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -114,9 +114,9 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vm_offset_t o, v;
-	register int c;
-	register struct iovec *iov;
+	vaddr_t o, v;
+	int c;
+	struct iovec *iov;
 	int error = 0;
 	static int physlock;
 
@@ -153,7 +153,7 @@ mmrw(dev, uio, flags)
 			}
 #endif
 			
-			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, 
+			pmap_enter(pmap_kernel(), (vaddr_t)vmmap, 
 				   trunc_page(v), 
 				   uio->uio_rw == UIO_READ ? VM_PROT_READ : VM_PROT_WRITE,
 				   (uio->uio_rw == UIO_READ ? VM_PROT_READ : VM_PROT_WRITE) | PMAP_WIRED); 
@@ -161,8 +161,8 @@ mmrw(dev, uio, flags)
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
-			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
-			    (vm_offset_t)vmmap + NBPG);
+			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
+			    (vaddr_t)vmmap + NBPG);
 			pmap_update(pmap_kernel());
 			continue;
 

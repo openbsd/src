@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppc1_machdep.c,v 1.15 2004/11/17 20:24:44 miod Exp $	*/
+/*	$OpenBSD: ppc1_machdep.c,v 1.16 2005/12/17 07:31:26 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ unsigned long PPC1_tps(void);
 int PPC1_clock_read(int *sec, int *min, int *hour, int *day, int *mon, int *yr);
 int PPC1_clock_write(int sec, int min, int hour, int day, int mon, int yr);
 
-vm_offset_t size_memory(void);
+vsize_t size_memory(void);
 
 struct firmware ppc1_firmware = {
 	PPC1_mem_regions,
@@ -85,20 +85,20 @@ struct mem_region PPC1mem[PPC1_REGIONS + 1], PPC1avail[PPC1_REGIONS + 3];
  */
 #define MAXPHYSMEM	0x10000000	/* max physical memory */
 
-vm_offset_t
+vsize_t
 size_memory(void)
 {
 	volatile unsigned int *look;
 	unsigned int *max;
 	extern char *end;
-	vm_offset_t total_mem;
+	vsize_t total_mem;
 #ifdef USE_BUG
-	vm_offset_t local_mem;
+	vsize_t local_mem;
 #endif
 
 #ifdef USE_BUG
 	bugenvrd();	/* read the bug environment */
-	local_mem = (vm_offset_t)bug_localmemsize();
+	local_mem = (vsize_t)bug_localmemsize();
 #endif 
 #define PATTERN   0x5a5a5a5a
 #define STRIDE    (4*1024) 	/* 4k at a time */

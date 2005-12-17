@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.18 2005/01/04 21:14:35 espie Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.19 2005/12/17 07:31:23 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -44,7 +44,7 @@ struct opcode {
 extern struct opcode opcode[];
 
 /* types the generic ddb module needs */
-typedef	vm_offset_t db_addr_t;
+typedef	vaddr_t db_addr_t;
 typedef	long db_expr_t;
 typedef struct trapframe db_regs_t;
 

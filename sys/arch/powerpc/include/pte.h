@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.8 2005/10/03 02:18:50 drahn Exp $	*/
+/*	$OpenBSD: pte.h,v 1.9 2005/12/17 07:31:26 miod Exp $	*/
 /*	$NetBSD: pte.h,v 1.1 1996/09/30 16:34:32 ws Exp $	*/
 
 /*-
@@ -142,7 +142,7 @@ extern int ptab_cnt;
 #ifdef	_KERNEL
 #ifndef	_LOCORE
 extern u_int dsisr(void);
-extern vm_offset_t dar(void);
+extern vaddr_t dar(void);
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */
 #endif	/* _POWERPC_PTE_H_ */

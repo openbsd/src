@@ -1,4 +1,4 @@
-/*	$OpenBSD: cats_machdep.c,v 1.11 2005/02/17 18:07:37 jfb Exp $	*/
+/*	$OpenBSD: cats_machdep.c,v 1.12 2005/12/17 07:31:25 miod Exp $	*/
 /*	$NetBSD: cats_machdep.c,v 1.50 2003/10/04 14:28:28 chris Exp $	*/
 
 /*
@@ -117,12 +117,11 @@ static char bootargs[MAX_BOOT_STRING + 1];
 char *boot_args = NULL;
 char *boot_file = NULL;
 
-vm_offset_t physical_start;
-vm_offset_t physical_freestart;
-vm_offset_t physical_freeend;
-vm_offset_t physical_end;
+paddr_t physical_start;
+paddr_t physical_freestart;
+paddr_t physical_freeend;
+paddr_t physical_end;
 u_int free_pages;
-vm_offset_t pagetables_start;
 int physmem = 0;
 
 /*int debug_flags;*/
@@ -137,7 +136,7 @@ pv_addr_t undstack;
 pv_addr_t abtstack;
 extern pv_addr_t kernelstack;
 
-vm_offset_t msgbufphys;
+paddr_t msgbufphys;
 
 extern u_int data_abort_handler_address;
 extern u_int prefetch_abort_handler_address;
@@ -290,9 +289,9 @@ boot(howto)
  * time with section mappings.
  */
 struct l1_sec_map {
-	vm_offset_t	va;
-	vm_offset_t	pa;
-	vm_size_t	size;
+	vaddr_t		va;
+	paddr_t		pa;
+	vsize_t		size;
 	vm_prot_t	prot;
 	int		cache;
 } l1_sec_table[] = {
@@ -639,7 +638,7 @@ initarm(bootargs)
 	/* Map the core memory needed before autoconfig */
 	loop = 0;
 	while (l1_sec_table[loop].size) {
-		vm_size_t sz;
+		vsize_t sz;
 
 #ifdef VERBOSE_INIT_ARM
 		printf("%08lx -> %08lx @ %08lx\n", l1_sec_table[loop].pa,

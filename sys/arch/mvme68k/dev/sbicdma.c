@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbicdma.c,v 1.12 2004/09/29 19:17:40 miod Exp $ */
+/*	$OpenBSD: sbicdma.c,v 1.13 2005/12/17 07:31:26 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -163,7 +163,7 @@ sbicdma_dmago(sc, va, count, flags)
 	u_char	csr;
 	u_long	pa;
 
-	pmap_extract(pmap_kernel(), (vm_offset_t)va, &pa);
+	pmap_extract(pmap_kernel(), (vaddr_t)va, &pa);
 #ifdef DEBUG
 	if (sbicdma_debug)
 		printf("%s: dmago: va 0x%x pa 0x%x cnt %d flags %x\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.18 2005/08/01 11:54:25 miod Exp $ */
+/*	$OpenBSD: sys_machdep.c,v 1.19 2005/12/17 07:31:26 miod Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -78,7 +78,7 @@ dma_cachectl(addr, len)
 			 * Convert to physical address.
 			 */
 			if (pa == 0 || ((int)addr & PGOFSET) == 0) {
-				pa = kvtop ((vm_offset_t)addr);
+				pa = kvtop((vaddr_t)addr);
 			}
 			if (inc == 16) {
 				DCFL(pa);

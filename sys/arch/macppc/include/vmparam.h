@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.15 2005/04/11 15:13:01 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.16 2005/12/17 07:31:26 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 1996/09/30 16:34:38 ws Exp $	*/
 
 /*-
@@ -75,15 +75,15 @@
 /*
  * Would like to have MAX addresses = 0, but this doesn't (currently) work
  */
-#define	VM_MIN_ADDRESS		((vm_offset_t)0)
-#define	VM_MAXUSER_ADDRESS	((vm_offset_t)0xfffff000)
+#define	VM_MIN_ADDRESS		((vaddr_t)0)
+#define	VM_MAXUSER_ADDRESS	((vaddr_t)0xfffff000)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
-#define	VM_MIN_KERNEL_ADDRESS	((vm_offset_t)(PPC_KERNEL_SR << ADDR_SR_SHIFT))
+#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)(PPC_KERNEL_SR << ADDR_SR_SHIFT))
 
 /* ppc_kvm_stolen is so that vm space can be stolen before vm is fully
  * initialized.
  */
-extern vm_offset_t ppc_kvm_stolen;
+extern vaddr_t ppc_kvm_stolen;
 #define VM_KERN_ADDRESS_SIZE  (PPC_SEGMENT_LENGTH - (32 * 1024 * 1024))
 #define	VM_MAX_KERNEL_ADDRESS	(VM_MIN_KERNEL_ADDRESS + VM_KERN_ADDRESS_SIZE)
 
