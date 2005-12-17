@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.2 2005/12/14 22:08:20 jsg Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.3 2005/12/17 09:03:14 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -542,14 +542,11 @@ nfe_reset(struct nfe_softc *sc)
 int
 nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring, int count)
 {
-	struct arpcom *ac = &sc->sc_arpcom;
-	struct ifnet *ifp = &ac->ac_if;
 	struct nfe_rx_data *data;
 	struct nfe_desc *desc_v1;
 	struct nfe_desc_v3 *desc_v3;
 	void **desc;
 	int i, nsegs, error, descsize;
-	int bufsz = ifp->if_mtu + 64;
 
 	if (sc->sc_flags & NFE_40BIT_ADDR) {
 		desc = (void **)&ring->desc_v3;
@@ -654,12 +651,15 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring, int count)
 			    0;
 			desc_v3->physaddr[1] =
 			    htole64(data->map->dm_segs->ds_addr) & 0xffffffff;
-			desc_v3->flags = htole32(bufsz | NFE_RX_READY);
+
+			desc_v3->length = htole16(MCLBYTES);
+			desc_v3->flags = htole16(NFE_RX_READY);
 		} else {
 			desc_v1 = &sc->rxq.desc_v1[i];
 			desc_v1->physaddr =
 			    htole32(data->map->dm_segs->ds_addr);
-			desc_v1->flags = htole32(bufsz | NFE_RX_READY);
+			desc_v1->length = htole16(MCLBYTES);
+			desc_v1->flags = htole16(NFE_RX_READY);
 		}
 	}
 
@@ -675,17 +675,15 @@ fail:	nfe_free_rx_ring(sc, ring);
 void
 nfe_reset_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 {
-	struct arpcom *ac = &sc->sc_arpcom;
-	struct ifnet *ifp = &ac->ac_if;
-	int i, bufsz = ifp->if_mtu + 64;
+	int i;
 
 	for (i = 0; i < ring->count; i++) {
 		if (sc->sc_flags & NFE_40BIT_ADDR) {
-			ring->desc_v3[i].flags =
-			    htole32(bufsz | NFE_RX_READY);
+			ring->desc_v3[i].length = htole16(MCLBYTES);
+			ring->desc_v3[i].flags = htole16(NFE_RX_READY);
 		} else {
-			ring->desc_v1[i].flags =
-			    htole32(bufsz | NFE_RX_READY);
+			ring->desc_v1[i].length = htole16(MCLBYTES);
+			ring->desc_v1[i].flags = htole16(NFE_RX_READY);
 		}
 	}
 

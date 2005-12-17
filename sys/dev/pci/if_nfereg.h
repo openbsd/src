@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfereg.h,v 1.1 2005/12/14 21:54:57 jsg Exp $	*/
+/*	$OpenBSD: if_nfereg.h,v 1.2 2005/12/17 09:03:14 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -117,14 +117,16 @@
 /* Rx/Tx descriptor */
 struct nfe_desc {
 	uint32_t	physaddr;
-	uint32_t	flags;
+	uint16_t	length;
+	uint16_t	flags;
 } __packed;
 
-#define NFE_RX_READY	0x80000000
+#define NFE_RX_READY	0x8000
 
 /* V2 Rx/Tx descriptor */
 struct nfe_desc_v3 {
 	uint32_t	physaddr[2];
 	uint32_t	reserved;
-	uint32_t	flags;
+	uint16_t	length;
+	uint16_t	flags;
 } __packed;
