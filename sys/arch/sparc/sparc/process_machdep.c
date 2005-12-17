@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.10 2005/12/16 21:37:04 miod Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.11 2005/12/17 03:54:30 deraadt Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.6 1996/03/14 21:09:26 christos Exp $ */
 
 /*
@@ -117,7 +117,6 @@ process_write_regs(p, regs)
 	return (0);
 }
 
-#ifdef PT_STEP
 int
 process_sstep(p, sstep)
 	struct proc *p;
@@ -127,7 +126,6 @@ process_sstep(p, sstep)
 		return EINVAL;
 	return (0);
 }
-#endif
 
 int
 process_set_pc(p, addr)
