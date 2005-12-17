@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.4 2004/10/08 07:16:53 grange Exp $
+#	$OpenBSD: genassym.cf,v 1.5 2005/12/17 20:17:48 miod Exp $
 #
 # Copyright (c) 1997 Per Fogelstrom / Opsycon AB
 #
@@ -31,6 +31,8 @@ include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/user.h>
 
+include <uvm/uvm.h>
+
 export	SONPROC
 
 struct	proc
@@ -55,3 +57,5 @@ member	U_PCB_SEGTAB	u_pcb.pcb_segtab
 
 export	VM_MIN_KERNEL_ADDRESS
 export	SIGFPE
+
+export	PMAP_SEGTABSIZE

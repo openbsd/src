@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.10 2004/10/20 12:49:15 pefo Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.11 2005/12/17 20:17:46 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -69,7 +69,7 @@ tlb_miss:
 	PTR_L	k1, curprocpaddr
 	PTR_L	k1, U_PCB_SEGTAB(k1)
 	PTR_SRL	k0, k0, SEGSHIFT - LOGREGSZ
-	andi	k0, k0, 0x1ff << LOGREGSZ
+	andi	k0, k0, (PMAP_SEGTABSIZE - 1) << LOGREGSZ
 	PTR_ADDU k1, k1, k0
 	PTR_L	k0, 0(k1)		# get pointer to page table
 	PTR_L	k1, tlbtrcptr
@@ -100,13 +100,13 @@ tlb_miss:
 	bltz	k0, _k_miss		# kernel address space
 	PTR_SRL	k0, k0, SEGSHIFT - LOGREGSZ
 	PTR_L	k1, U_PCB_SEGTAB(k1)
-	andi	k0, k0, 0x1ff << LOGREGSZ
+	andi	k0, k0, (PMAP_SEGTABSIZE - 1) << LOGREGSZ
 	PTR_ADDU k1, k1, k0
 	PTR_L	k1, 0(k1)		# get pointer to page table
 	dmfc0	k0, COP_0_BAD_VADDR
 	PTR_SRL	k0, k0, PGSHIFT - 2
 	andi	k0, k0, ((NPTEPG/2) - 1) << 3
-	beq	k1, zero, _inv_seg	# invalid segment map
+	beqz	k1, _inv_seg		# invalid segment map
 	PTR_ADDU k1, k1, k0		# index into segment map
 	lw	k0, 0(k1)		# get page PTE
 tlb_load:
@@ -133,23 +133,24 @@ e_tlb_miss:
 
 /*---------------------------------------------------------------- xtlb_miss
  *	Low level XTLB exception handler.
- * XXX!	This handler should be changed to handle larger segtabs.
  */
 	.globl	xtlb_miss	/* 0xffffffff80000080 */
 	.set	noat
 xtlb_miss:
-	PTR_L	k1, curprocpaddr
 	dmfc0	k0, COP_0_BAD_VADDR
-	bltz	k0, _k_miss
-	PTR_SRL	k0, k0, SEGSHIFT - LOGREGSZ
+	bltz	k0, _k_miss		# kernel address space
+	PTR_SRL	k0, k0, SEGSHIFT
+	sltiu	k1, k0, PMAP_SEGTABSIZE
+	beqz	k1, _inv_seg		# wrong if outside pm_segtab
+	PTR_SLL	k0, k0, LOGREGSZ
+	PTR_L	k1, curprocpaddr
 	PTR_L	k1, U_PCB_SEGTAB(k1)
-	andi	k0, k0, 0x1ff << LOGREGSZ
 	PTR_ADDU k1, k1, k0
 	PTR_L	k1, 0(k1)		# get pointer to page table
 	dmfc0	k0, COP_0_BAD_VADDR
 	PTR_SRL	k0, k0, PGSHIFT - 2
 	andi	k0, k0, ((NPTEPG/2) - 1) << 3
-	beq	k1, zero, _inv_seg
+	beqz	k1, _inv_seg
 	PTR_ADDU k1, k1, k0
 	b	tlb_load		# rest is same as 'tlb_miss'
 	lw	k0, 0(k1)
