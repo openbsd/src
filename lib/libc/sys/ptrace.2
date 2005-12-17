@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ptrace.2,v 1.21 2005/09/15 14:07:40 jmc Exp $
+.\"	$OpenBSD: ptrace.2,v 1.22 2005/12/17 20:26:25 miod Exp $
 .\"	$NetBSD: ptrace.2,v 1.3 1996/02/23 01:39:41 jtc Exp $
 .\"
 .\" This file is in the public domain.
@@ -302,18 +302,18 @@ argument should be set to
 .El
 .Pp
 Additionally, machine-specific requests can exist.
-All
-.Ox
-platforms support the following requests:
+Depending on the architecture, the following requests may be available
+under
+.Ox :
 .Bl -tag -width 12n
-.It Dv PT_GETREGS
+.It Dv PT_GETREGS Pq all platforms
 This request reads the traced process' machine registers into the
 .Dq Li struct reg
 (defined in
 .Aq Pa machine/reg.h )
 pointed to by
 .Fa addr .
-.It Dv PT_SETREGS
+.It Dv PT_SETREGS Pq all platforms
 This request is the converse of
 .Dv PT_GETREGS ;
 it loads the traced process' machine registers from the
@@ -417,12 +417,19 @@ pointed to by
 .\" can usefully be changed; they are set to the values returned by the
 .\" syscall and will be passed back to the traced process by the normal
 .\" syscall return mechanism.
-.El
-.Pp
-In addition, all platforms but luna88k, mvme88k, sgi and vax
-support these additional requests:
-.Bl -tag -width 12n
-.It Dv PT_GETFPREGS
+.It Xo Dv PT_STEP
+.No (not available on sparc and sparc64)
+.Xc
+The traced process continues execution, as in request
+.Dv PT_CONTINUE ;
+however, execution stops as soon as possible after execution of at least
+one instruction
+.Pq single-step .
+.\" m88k - vax (no general fp registers)
+.\" mips64 - powerpc (fp registers in the main reg structure)
+.It Xo Dv PT_GETFPREGS
+.No (not available on luna88k, macppc, mvme88k, sgi and vax)
+.Xc
 This request reads the traced process' floating-point registers into
 the
 .Dq Li struct fpreg
@@ -430,7 +437,9 @@ the
 .Aq Pa machine/reg.h )
 pointed to by
 .Fa addr .
-.It Dv PT_SETFPREGS
+.It Xo Dv PT_SETFPREGS
+.No (not available on luna88k, macppc, mvme88k, sgi and vax)
+.Xc
 This request is the converse of
 .Dv PT_GETFPREGS ;
 it loads the traced process' floating-point registers from the
@@ -439,18 +448,14 @@ it loads the traced process' floating-point registers from the
 .Aq Pa machine/reg.h )
 pointed to by
 .Fa addr .
-.El
-.Pp
-The following requests are available on i386:
-.Bl -tag -width 12n
-.It Dv PT_GETXMMREGS
+.It Dv PT_GETXMMREGS Pq i386 only
 This request reads the traced process' XMM registers into the
 .Dq Li struct xmmregs
 (defined in
 .Aq Pa machine/reg.h )
 pointed to by
 .Fa addr .
-.It Dv PT_SETXMMREGS
+.It Dv PT_SETXMMREGS Pq i386 only
 This request is the converse of
 .Dv PT_GETXMMREGS ;
 it loads the traced process' XMM registers from the
@@ -459,11 +464,7 @@ it loads the traced process' XMM registers from the
 .Aq Pa machine/reg.h )
 pointed to by
 .Fa addr .
-.El
-.Pp
-Finally, the following request is available on sparc and sparc64:
-.Bl -tag -width 12n
-.It Dv PT_WCOOKIE
+.It Dv PT_WCOOKIE Pq sparc and sparc64 only
 This request reads the traced process'
 .Sq window cookie
 into the
@@ -554,10 +555,12 @@ on a system process.
 .El
 .El
 .Sh BUGS
-On the SPARC, the PC is set to the provided PC value for
+On several RISC architectures (such as luna88k, mvme88k, sparc and sparc64),
+the PC is set to the provided PC value for
 .Dv PT_CONTINUE
-and similar calls, but the NPC is set willy-nilly to 4 greater than the
-PC value.
+and similar calls, and the remainder of the execution pipeline registers
+are set to the following instructions, even if the instruction at PC
+is a branch instruction.
 Using
 .Dv PT_GETREGS
 and
@@ -569,8 +572,6 @@ to
 .Fn ptrace
 .Ec ,
 should be able to sidestep this.
-.Pp
-Single-stepping is not available.
 .\" .Pp
 .\" When using
 .\" .Dv PT_SYSCALL ,
