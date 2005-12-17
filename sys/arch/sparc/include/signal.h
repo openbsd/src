@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.5 2005/12/14 21:46:31 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.6 2005/12/17 05:02:18 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.4 1996/02/01 22:32:35 mycroft Exp $ */
 
 /*
@@ -44,15 +44,12 @@
 #ifndef	_SPARC_SIGNAL_H_
 #define _SPARC_SIGNAL_H_
 
+#ifndef _LOCORE
 #include <sys/cdefs.h>
 
-#ifndef _LOCORE
 typedef int sig_atomic_t;
-#endif
 
 #if __BSD_VISIBLE
-#ifndef _LOCORE
-
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
@@ -73,6 +70,7 @@ struct sigcontext {
 	int	sc_g1;			/* %g1 to restore */
 	int	sc_o0;			/* %o0 to restore */
 };
+#endif /* __BSD_VISIBLE */
 #else /* _LOCORE */
 #define	SC_SP_OFFSET	8
 #define	SC_PC_OFFSET	12
@@ -95,5 +93,4 @@ struct sigcontext {
 #define	FPE_FLTOPERR_TRAP	0xd0	/* operand error */
 #define	FPE_FLTOVF_TRAP		0xd4	/* overflow */
 
-#endif	/* __BSD_VISIBLE */
 #endif	/* !_SPARC_SIGNAL_H_ */
