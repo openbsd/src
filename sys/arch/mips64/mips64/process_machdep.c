@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.5 2005/01/31 21:35:50 grange Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.6 2005/12/17 14:56:31 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -40,7 +40,7 @@
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: process_machdep.c,v 1.5 2005/01/31 21:35:50 grange Exp $
+ *	$Id: process_machdep.c,v 1.6 2005/12/17 14:56:31 kettenis Exp $
  */
 
 /*
@@ -80,11 +80,20 @@
 #define	REGSIZE sizeof(struct trap_frame)
 
 extern void cpu_singlestep(struct proc *);
+
 int
 process_read_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
+	extern struct proc *machFPCurProcPtr;
+
+	if (p == machFPCurProcPtr) {
+		if (p->p_md.md_regs->sr & SR_FR_32)
+			MipsSaveCurFPState(p);
+		else
+			MipsSaveCurFPState16(p);
+	}
 	bcopy((caddr_t)p->p_md.md_regs, (caddr_t)regs, REGSIZE);
 	return (0);
 }
@@ -96,6 +105,14 @@ process_write_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
+	extern struct proc *machFPCurProcPtr;
+
+	if (p == machFPCurProcPtr) {
+		if (p->p_md.md_regs->sr & SR_FR_32)
+			MipsSaveCurFPState(p);
+		else
+			MipsSaveCurFPState16(p);
+	}
 	bcopy((caddr_t)regs, (caddr_t)p->p_md.md_regs, REGSIZE);
 /*XXX Clear to user set bits!! */
 	return (0);
