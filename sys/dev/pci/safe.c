@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.16 2005/11/09 05:59:50 brad Exp $	*/
+/*	$OpenBSD: safe.c,v 1.17 2005/12/17 17:42:56 krw Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -1600,10 +1600,7 @@ safe_mcopy(struct mbuf *srcm, struct mbuf *dstm, u_int offset)
 	/*
 	 * Advance src and dst to offset.
 	 */
-	j = offset;
-	while (j >= 0) {
-		if (srcm->m_len > j)
-			break;
+	for (j = offset; srcm->m_len <= j;) {
 		j -= srcm->m_len;
 		srcm = srcm->m_next;
 		if (srcm == NULL)
@@ -1612,10 +1609,7 @@ safe_mcopy(struct mbuf *srcm, struct mbuf *dstm, u_int offset)
 	sptr = mtod(srcm, caddr_t) + j;
 	slen = srcm->m_len - j;
 
-	j = offset;
-	while (j >= 0) {
-		if (dstm->m_len > j)
-			break;
+	for (j = offset; dstm->m_len <= j;) {
 		j -= dstm->m_len;
 		dstm = dstm->m_next;
 		if (dstm == NULL)
