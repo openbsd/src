@@ -1,4 +1,4 @@
-/*	$OpenBSD: func.c,v 1.8 2005/11/29 19:38:09 cloder Exp $	*/
+/*	$OpenBSD: func.c,v 1.9 2005/12/17 20:19:46 cloder Exp $	*/
 /*	$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: func.c,v 1.8 2005/11/29 19:38:09 cloder Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.9 2005/12/17 20:19:46 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -376,6 +376,10 @@ funcend(void)
 	/* Print warnings for unused arguments */
 	arg = dcs->d_fargs;
 	n = 0;
+	if (arg == NULL && nargusg == 0) {
+		warning(314, funcsym->s_name, "ARGSUSED");
+	}
+
 	while (arg != NULL && (nargusg == -1 || n < nargusg)) {
 		chkusg1(dcs->d_asm, arg);
 		arg = arg->s_nxt;
