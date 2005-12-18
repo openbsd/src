@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_tis.c,v 1.3 2005/03/08 22:02:08 cloder Exp $	*/
+/*	$OpenBSD: login_tis.c,v 1.4 2005/12/18 16:06:09 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -60,8 +60,8 @@ ssize_t tis_send(struct tis_connection *, u_char *, size_t);
 void quit(int);
 void send_fd(struct tis_connection *, int);
 void tis_getconf(struct tis_connection *, char *);
-int tis_decode(u_char *, size_t);
-int tis_encode(u_char *, size_t, size_t);
+ssize_t tis_decode(u_char *, size_t);
+ssize_t tis_encode(u_char *, size_t, size_t);
 int tis_getkey(struct tis_connection *);
 int tis_open(struct tis_connection *, const char *, char *);
 int tis_verify(struct tis_connection *, const char *, char *);
@@ -466,21 +466,20 @@ tis_recv(struct tis_connection *tc, u_char *buf, size_t bufsiz)
 {
 	des_key_schedule ks;
 	des_cblock iv;
-	ssize_t nread;
-	size_t len;
+	ssize_t len;
 	u_char *cp, *ep, tbuf[TIS_BUFSIZ];
 
 	for (cp = buf, ep = buf + bufsiz; cp < ep; cp++) {
 		alarm(tc->timeout);
-		nread = read(tc->fd, cp, 1);
+		len = read(tc->fd, cp, 1);
 		alarm(0);
-		if (nread != 1) {
-			if (nread == -1)
+		if (len != 1) {
+			if (len == -1)
 				syslog(LOG_ERR,
 				    "error reading data from authsrv: %m");
 			else
 				syslog(LOG_ERR, "EOF reading data from authsrv");
-			return (nread);
+			return (-1);
 		}
 		if (*cp == '\n')
 			break;
@@ -568,7 +567,7 @@ tis_send(struct tis_connection *tc, u_char *buf, size_t len)
  * The passed in buffer must have space for len*2 bytes
  * plus a NUL.
  */
-int
+ssize_t
 tis_encode(u_char *buf, size_t inlen, size_t bufsiz)
 {
 	u_char *in, *out;
@@ -592,7 +591,7 @@ tis_encode(u_char *buf, size_t inlen, size_t bufsiz)
 /*
  * Convert a stream of hex digits to bytes in place.
  */
-int
+ssize_t
 tis_decode(u_char *buf, size_t len)
 {
 	u_char *end, *in, *out;
