@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.11 2005/12/16 19:09:31 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.12 2005/12/18 15:53:00 sturm Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -753,6 +753,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	u_int16_t flag;
 
 	flag = acpi_read_pmreg(sc, ACPIREG_PM1_CNT);
+	/* XXX This is sick and wrong and illegal! */
 	acpi_write_pmreg(sc, ACPIREG_PM1_CNT,  flag |= (state << 10));
 	acpi_write_pmreg(sc, ACPIREG_PM1_CNT,  flag |= ACPI_PM1_SLP_EN);
 #endif
