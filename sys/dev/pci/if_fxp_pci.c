@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.41 2005/12/17 21:35:11 brad Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.42 2005/12/18 00:02:32 brad Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -145,6 +145,7 @@ fxp_pci_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
+	const char *chipname = NULL;
 	const char *intrstr = NULL;
 	bus_size_t iosize;
 
@@ -183,8 +184,7 @@ fxp_pci_attach(parent, self, aux)
 	case PCI_PRODUCT_INTEL_82559:
 	case PCI_PRODUCT_INTEL_82559ER:
 	{
-		const char *chipname = NULL;
-
+		chipname = "i82557";
 		if (sc->sc_revision >= FXP_REV_82558_A4)
 			chipname = "i82558";
 		if (sc->sc_revision >= FXP_REV_82559_A0)
@@ -195,16 +195,16 @@ fxp_pci_attach(parent, self, aux)
 			chipname = "i82550";
 		if (sc->sc_revision >= FXP_REV_82551_E)
 			chipname = "i82551";
-
-		if (chipname != NULL)
-			printf(", %s", chipname);
-
 		break;
 	}
 		break;
 	default:
+		chipname = "i82562";
 		break;
 	}
+
+	if (chipname != NULL)
+		printf(", %s", chipname);
 
 	/*
 	 * Cards for which we should WRITE TO THE EEPROM
