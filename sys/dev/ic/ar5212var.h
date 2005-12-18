@@ -1,7 +1,7 @@
-/*	$OpenBSD: ar5212var.h,v 1.9 2005/10/07 22:03:25 reyk Exp $	*/
+/*	$OpenBSD: ar5212var.h,v 1.10 2005/12/18 17:59:58 reyk Exp $	*/
 
 /*
- * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
+ * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
