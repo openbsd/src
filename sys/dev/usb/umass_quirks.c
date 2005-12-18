@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_quirks.c,v 1.20 2005/06/02 02:03:33 krw Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.21 2005/12/18 12:34:43 kettenis Exp $	*/
 /*	$NetBSD: umass_quirks.c,v 1.67 2004/06/28 07:49:16 mycroft Exp $	*/
 
 /*
@@ -359,7 +359,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 
 	{ { USB_VENDOR_SCANLOGIC, USB_PRODUCT_SCANLOGIC_SL11R },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UFI,
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  UMASS_QUIRK_WRONG_CSWTAG,
 	  0,
 	  UMATCH_VENDOR_PRODUCT,
