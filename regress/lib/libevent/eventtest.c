@@ -1,4 +1,4 @@
-/*	$OpenBSD: eventtest.c,v 1.6 2005/04/22 01:28:04 brad Exp $	*/
+/*	$OpenBSD: eventtest.c,v 1.7 2005/12/18 03:57:02 brad Exp $	*/
 /*	$NetBSD: eventtest.c,v 1.3 2004/08/07 21:09:47 provos Exp $	*/
 
 /*
@@ -262,7 +262,7 @@ cleanup_test(void)
 }
 
 void
-test1(void)
+test_simpleread(void)
 {
 	struct event ev;
 
@@ -281,7 +281,7 @@ test1(void)
 }
 
 void
-test2(void)
+test_simplewrite(void)
 {
 	struct event ev;
 
@@ -297,7 +297,7 @@ test2(void)
 }
 
 void
-test3(void)
+test_multiple(void)
 {
 	struct event ev, ev2;
 	int i;
@@ -326,7 +326,7 @@ test3(void)
 }
 
 void
-test4(void)
+test_persistent(void)
 {
 	struct event ev, ev2;
 	int i;
@@ -355,7 +355,7 @@ test4(void)
 }
 
 void
-test5(void)
+test_combined(void)
 {
 	struct both r1, r2, w1, w2;
 
@@ -390,7 +390,7 @@ test5(void)
 }
 
 void
-test6(void)
+test_simpletimeout(void)
 {
 	struct timeval tv;
 	struct event ev;
@@ -409,7 +409,7 @@ test6(void)
 }
 
 void
-test7(void)
+test_simplesignal(void)
 {
 	struct event ev;
 	struct itimerval itv;
@@ -431,7 +431,7 @@ test7(void)
 }
 
 void
-test8(void)
+test_loopexit(void)
 {
 	struct timeval tv, tv_start, tv_end;
 	struct event ev;
@@ -483,7 +483,7 @@ errorcb(struct bufferevent *bev, short what, void *arg)
 }
 
 void
-test9(void)
+test_bufferevent(void)
 {
 	struct bufferevent *bev1, *bev2;
 	char buffer[8333];
@@ -597,23 +597,23 @@ main (int argc, char **argv)
 	/* Initalize the event library */
 	event_base = event_init();
 
-	test1();
+	test_simpleread();
 
-	test2();
+	test_simplewrite();
 
-	test3();
+	test_multiple();
 
-	test4();
+	test_persistent();
 
-	test5();
+	test_combined();
 
-	test6();
+	test_simpletimeout();
 
-	test7();
+	test_simplesignal();
 
-	test8();
+	test_loopexit();
 
-	test9();
+	test_bufferevent();
 
 	test_priorities(1);
 	test_priorities(2);
