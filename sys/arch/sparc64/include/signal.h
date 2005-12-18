@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.6 2005/12/14 21:46:31 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.7 2005/12/18 15:42:53 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.10 2001/05/09 19:50:49 kleink Exp $ */
 
 /*
@@ -44,15 +44,12 @@
 #ifndef	_SPARC64_SIGNAL_H_
 #define _SPARC64_SIGNAL_H_
 
+#ifndef _LOCORE
 #include <sys/cdefs.h>
 
-#ifndef _LOCORE
 typedef int sig_atomic_t;
-#endif
 
 #if __BSD_VISIBLE
-#ifndef _LOCORE
-
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
@@ -74,8 +71,10 @@ struct sigcontext {
 	long		sc_o0;		/* %o0 to restore */
 	int		sc_mask;	/* signal mask to restore (new style) */
 };
+#endif	/* __BSD_VISIBLE */
 #endif /* _LOCORE */
 
+#if defined(_LOCORE) || __BSD_VISIBLE
 /*
  * `Code' arguments to signal handlers.  The names, and the funny numbering.
  * are defined so as to match up with what SunOS uses; I have no idea why
@@ -88,6 +87,6 @@ struct sigcontext {
 #define	FPE_FLTUND_TRAP		0xcc	/* underflow */
 #define	FPE_FLTOPERR_TRAP	0xd0	/* operand error */
 #define	FPE_FLTOVF_TRAP		0xd4	/* overflow */
+#endif
 
-#endif	/* __BSD_VISIBLE */
 #endif	/* !_SPARC64_SIGNAL_H_ */
