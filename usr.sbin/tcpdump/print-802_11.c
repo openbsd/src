@@ -1,7 +1,7 @@
-/*	$OpenBSD: print-802_11.c,v 1.5 2005/11/22 11:36:12 reyk Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.6 2005/12/18 17:52:46 reyk Exp $	*/
 
 /*
- * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
+ * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

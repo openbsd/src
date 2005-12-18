@@ -1,7 +1,7 @@
-/*	$OpenBSD: iapp.c,v 1.13 2005/12/01 02:03:58 reyk Exp $	*/
+/*	$OpenBSD: iapp.c,v 1.14 2005/12/18 17:54:12 reyk Exp $	*/
 
 /*
- * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
+ * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

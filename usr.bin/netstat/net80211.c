@@ -1,7 +1,7 @@
-/*	$OpenBSD: net80211.c,v 1.2 2005/05/15 18:26:13 reyk Exp $	*/
+/*	$OpenBSD: net80211.c,v 1.3 2005/12/18 17:53:12 reyk Exp $	*/
 
 /*
- * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
+ * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

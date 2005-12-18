@@ -1,7 +1,7 @@
-/*	$OpenBSD: hostapd.h,v 1.15 2005/12/10 13:42:37 reyk Exp $	*/
+/*	$OpenBSD: hostapd.h,v 1.16 2005/12/18 17:54:12 reyk Exp $	*/
 
 /*
- * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
+ * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
