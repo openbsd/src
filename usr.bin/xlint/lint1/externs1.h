@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs1.h,v 1.9 2005/12/17 21:08:27 cloder Exp $	*/
+/*	$OpenBSD: externs1.h,v 1.10 2005/12/18 19:21:02 cloder Exp $	*/
 /*	$NetBSD: externs1.h,v 1.7 1995/10/02 17:31:39 jpo Exp $	*/
 
 /*
@@ -225,6 +225,7 @@ extern	pos_t	scflpos;
 extern	int	ccflg;
 extern	int	llibflg;
 extern	int	nowarn;
+extern	int	noretflg;
 extern	int	plibflg;
 extern	int	quadflg;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.18 2005/12/10 18:51:54 martin Exp $	*/
+/*	$OpenBSD: decl.c,v 1.19 2005/12/18 19:21:02 cloder Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.18 2005/12/10 18:51:54 martin Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.19 2005/12/18 19:21:02 cloder Exp $";
 #endif
 
 #include <sys/param.h>
@@ -1789,6 +1789,12 @@ decl1ext(sym_t *dsym, int initflg)
 			warning(268, dsym->s_name);
 		}
 	}
+
+	if (dsym->s_type->t_tspec == FUNC) {
+		if (noretflg)
+			dsym->s_noreturn = 1;
+	}
+	noretflg = 0;
 
 	/* Write the declaration into the output file */
 	if (plibflg && llibflg &&
