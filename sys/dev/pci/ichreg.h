@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichreg.h,v 1.6 2005/12/18 10:49:49 grange Exp $	*/
+/*	$OpenBSD: ichreg.h,v 1.7 2005/12/18 12:09:04 grange Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -66,6 +66,7 @@
 #define ICH_SMB_HS_SMBAL	(1 << 5)	/* SMBALERT# asserted */
 #define ICH_SMB_HS_INUSE	(1 << 6)	/* bus semaphore */
 #define ICH_SMB_HS_BDONE	(1 << 7)	/* byte received/transmitted */
+#define ICH_SMB_HS_BITS		"\020\001BUSY\002INTR\003DEVERR\004BUSERR\005FAILED\006SMBAL\007INUSE\010BDONE"
 #define ICH_SMB_HC	0x02		/* host control */
 #define ICH_SMB_HC_INTREN	(1 << 0)	/* enable interrupts */
 #define ICH_SMB_HC_KILL		(1 << 1)	/* kill current transaction */
