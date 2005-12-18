@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.31 2005/12/12 22:46:51 jmc Exp $
+.\"	$OpenBSD: passwd.1,v 1.32 2005/12/18 12:29:26 biorn Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Nd modify a user's password
 .Sh SYNOPSIS
 .Nm passwd
-.Op Fl Kly
+.Op Fl K | l | y
 .Op Ar user
 .Sh DESCRIPTION
 .Nm
@@ -68,6 +68,11 @@ if the user has a password in the local database.
 Once the password has been verified,
 .Nm
 communicates the new password information to the Kerberos authenticating host.
+.Pp
+The
+.Ar user
+argument specifies a principal and optional realm, for example
+.Dq user@DOMAIN.COM .
 .It Fl l
 Causes the password to be updated only in the local password file.
 When changing only the local password,

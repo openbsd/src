@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.21 2005/12/12 22:54:20 jmc Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.22 2005/12/18 12:29:26 biorn Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)passwd.c	5.5 (Berkeley) 7/6/91";*/
-static const char rcsid[] = "$OpenBSD: passwd.c,v 1.21 2005/12/12 22:54:20 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: passwd.c,v 1.22 2005/12/18 12:29:26 biorn Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -141,15 +141,6 @@ main(int argc, char **argv)
 	case 0:
 		break;
 	case 1:
-#if defined(KERBEROS5)
-		if (use_kerberos && strcmp(argv[0], username)) {
-			(void)fprintf(stderr, "passwd: %s\n\t%s\n%s\n",
-			    "to change another user's Kerberos password, do",
-			    "\"passwd -K -u <user>\";",
-			    "to change a user's local passwd, use \"passwd -l <user>\"");
-			exit(1);
-		}
-#endif
 		username = argv[0];
 		break;
 	default:
@@ -167,6 +158,6 @@ main(int argc, char **argv)
 void
 usage(int retval)
 {
-	fprintf(stderr, "usage: passwd [-Kly] [user]\n");
+	fprintf(stderr, "usage: passwd [-K | -l | -y] [user]\n");
 	exit(retval);
 }
