@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.7 2005/12/14 06:07:54 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.8 2005/12/18 01:35:06 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -39,7 +39,7 @@
 
 static int threads_ready;
 static pthread_t thread_list;
-static _spinlock_lock_t thread_lock;
+static _spinlock_lock_t thread_lock = _SPINLOCK_UNLOCKED;
 
 int getthrid();
 void threxit(int);
@@ -103,6 +103,7 @@ thread_init(void)
 	thread = malloc(sizeof(*thread));
 	memset(thread, 0, sizeof(*thread));
 	thread->tid = getthrid();
+	thread->donesem.lock = _SPINLOCK_UNLOCKED;
 	thread->flags |= THREAD_CANCEL_ENABLE|THREAD_CANCEL_DEFERRED;
 	snprintf(thread->name, sizeof(thread->name), "Main process");
 	thread_list = thread;
@@ -200,6 +201,7 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 
 	thread = malloc(sizeof(*thread));
 	memset(thread, 0, sizeof(*thread));
+	thread->donesem.lock = _SPINLOCK_UNLOCKED;
 	thread->fn = start_routine;
 	thread->arg = arg;
 
@@ -352,7 +354,7 @@ _thread_dump_info(void)
 /*
  * the malloc lock
  */
-static _spinlock_lock_t malloc_lock;
+static _spinlock_lock_t malloc_lock = _SPINLOCK_UNLOCKED;
 
 void
 _thread_malloc_lock()

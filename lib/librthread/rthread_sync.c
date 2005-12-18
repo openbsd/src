@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.9 2005/12/14 07:02:47 tedu Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.10 2005/12/18 01:35:06 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -229,6 +229,7 @@ pthread_mutex_init(pthread_mutex_t *mutexp, const pthread_mutexattr_t *attr)
 	if (!mutex)
 		return (errno);
 	memset((void *)mutex, 0, sizeof(*mutex));
+	mutex->sem.lock = _SPINLOCK_UNLOCKED;
 	mutex->sem.value = 1;	/* unlocked */
 	mutex->type = attr ? (*attr)->type : PTHREAD_MUTEX_ERRORCHECK;
 	*mutexp = mutex;
@@ -353,6 +354,7 @@ pthread_cond_init(pthread_cond_t *condp, const pthread_condattr_t *attrp)
 	if (!cond)
 		return (errno);
 	memset(cond, 0, sizeof(*cond));
+	cond->sem.lock = _SPINLOCK_UNLOCKED;
 
 	*condp = cond;
 
@@ -472,6 +474,8 @@ pthread_rwlock_init(pthread_rwlock_t *lockp, const pthread_rwlockattr_t *attrp)
 	if (!lock)
 		return (errno);
 	memset(lock, 0, sizeof(*lock));
+	lock->lock = _SPINLOCK_UNLOCKED;
+	lock->sem.lock = _SPINLOCK_UNLOCKED;
 	*lockp = lock;
 
 	return (0);
