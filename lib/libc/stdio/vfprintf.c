@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.34 2005/12/19 19:39:25 millert Exp $ */
+/*	$OpenBSD: vfprintf.c,v 1.35 2005/12/19 19:43:01 millert Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -147,6 +147,7 @@ static int exponent(char *, int, int);
 #define FPT		0x100		/* Floating point number */
 #define PTRINT		0x200		/* (unsigned) ptrdiff_t */
 #define SIZEINT		0x400		/* (signed) size_t */
+#define CHARINT		0x800		/* 8 bit integer */
 
 int
 vfprintf(FILE *fp, const char *fmt0, _BSD_VA_LIST_ ap)
