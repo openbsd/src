@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcrm.c,v 1.9 2005/02/22 14:56:21 jmc Exp $*/
+/*	$OpenBSD: ipcrm.c,v 1.10 2005/12/19 19:13:50 millert Exp $*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -84,7 +84,7 @@ shmrm(key_t key, int id)
 		id = shmget(key, 0, 0);
 		if (id == -1)
 			return (-1);
-	    }
+	}
 	return (shmctl(id, IPC_RMID, NULL));
 }
 
