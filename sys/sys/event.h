@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.9 2004/01/12 04:47:01 tedu Exp $	*/
+/*	$OpenBSD: event.h,v 1.10 2005/12/19 19:09:20 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -109,7 +109,7 @@ struct kevent {
 
 /*
  * This is currently visible to userland to work around broken
- * programs which pull in <sys/proc.h> or <sys/select.h>.
+ * programs which pull in <sys/proc.h> or <sys/selinfo.h>.
  */
 #include <sys/queue.h>
 struct knote;
