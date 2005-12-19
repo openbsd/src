@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_mutex.c,v 1.5 2005/10/30 23:59:43 fgsch Exp $	*/
+/*	$OpenBSD: pthread_mutex.c,v 1.6 2005/12/19 05:22:57 tedu Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -75,6 +75,7 @@ test_contention_lock(pthread_mutex_t *mutex)
 	pthread_yield();
 	contention_variable = 1;
 	CHECKr(pthread_mutex_unlock(mutex));
+	pthread_yield();
 	CHECKr(pthread_mutex_lock(mutex));
 	ASSERT(contention_variable == 2);
 	CHECKr(pthread_mutex_unlock(mutex));
