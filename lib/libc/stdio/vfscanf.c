@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfscanf.c,v 1.15 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: vfscanf.c,v 1.16 2005/12/19 19:39:25 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,13 +46,15 @@
 /*
  * Flags used during conversion.
  */
-#define	LONG		0x01	/* l: long or double */
-#define	LONGDBL		0x02	/* L: long double; unimplemented */
-#define	SHORT		0x04	/* h: short */
-#define QUAD		0x08	/* q: quad */
-#define	SUPPRESS	0x10	/* suppress assignment */
-#define	POINTER		0x20	/* weird %p pointer (`fake hex') */
-#define	NOSKIP		0x40	/* do not skip blanks */
+#define	LONG		0x0001	/* l: long or double */
+#define	LONGDBL		0x0002	/* L: long double; unimplemented */
+#define	SHORT		0x0004	/* h: short */
+#define QUAD		0x0008	/* q: quad */
+#define	SUPPRESS	0x0010	/* suppress assignment */
+#define	POINTER		0x0020	/* weird %p pointer (`fake hex') */
+#define	NOSKIP		0x0040	/* do not skip blanks */
+#define	SHORTSHORT	0x0080	/* hh: 8 bit integer */
+#define	SIZEINT		0x0100	/* z: (signed) size_t */
 
 /*
  * The following are used in numeric conversions only:
@@ -153,7 +155,12 @@ literal:
 			flags |= LONGDBL;
 			goto again;
 		case 'h':
-			flags |= SHORT;
+			if (*fmt == 'h') {
+				fmt++;
+				flags |= SHORTSHORT;
+			} else {
+				flags |= SHORT;
+			}
 			goto again;
 		case 'l':
 			if (*fmt == 'l') {
@@ -165,6 +172,9 @@ literal:
 			goto again;
 		case 'q':
 			flags |= QUAD;
+			goto again;
+		case 'z':
+			flags |= SIZEINT;
 			goto again;
 
 		case '0': case '1': case '2': case '3': case '4':
@@ -252,10 +262,16 @@ literal:
 		case 'n':
 			if (flags & SUPPRESS)	/* ??? */
 				continue;
-			if (flags & SHORT)
+			if (flags & SHORTSHORT)
+				*va_arg(ap, __signed char *) = nread;
+			else if (flags & SHORT)
 				*va_arg(ap, short *) = nread;
 			else if (flags & LONG)
 				*va_arg(ap, long *) = nread;
+			else if (flags & QUAD)
+				*va_arg(ap, quad_t *) = nread;
+			else if (flags & SIZEINT)
+				*va_arg(ap, ssize_t *) = nread;
 			else
 				*va_arg(ap, int *) = nread;
 			continue;
@@ -537,12 +553,16 @@ literal:
 				if (flags & POINTER)
 					*va_arg(ap, void **) =
 					    (void *)(long)res;
+				else if (flags & SIZEINT)
+					*va_arg(ap, ssize_t *) = res;
 				else if (flags & QUAD)
 					*va_arg(ap, quad_t *) = res;
 				else if (flags & LONG)
 					*va_arg(ap, long *) = res;
 				else if (flags & SHORT)
 					*va_arg(ap, short *) = res;
+				else if (flags & SHORTSHORT)
+					*va_arg(ap, __signed char *) = res;
 				else
 					*va_arg(ap, int *) = res;
 				nassigned++;

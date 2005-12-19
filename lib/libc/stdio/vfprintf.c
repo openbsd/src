@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.33 2005/09/23 02:33:34 tedu Exp $ */
+/*	$OpenBSD: vfprintf.c,v 1.34 2005/12/19 19:39:25 millert Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -246,6 +246,7 @@ vfprintf(FILE *fp, const char *fmt0, _BSD_VA_LIST_ ap)
 	    flags&PTRINT ? GETARG(ptrdiff_t) : \
 	    flags&SIZEINT ? GETARG(ssize_t) : \
 	    flags&SHORTINT ? (long)(short)GETARG(int) : \
+	    flags&CHARINT ? (long)(__signed char)GETARG(int) : \
 	    (long)GETARG(int))
 #define	UARG() \
 	(flags&QUADINT ? GETARG(u_quad_t) : \
@@ -253,6 +254,7 @@ vfprintf(FILE *fp, const char *fmt0, _BSD_VA_LIST_ ap)
 	    flags&PTRINT ? GETARG(ptrdiff_t) : /* XXX */ \
 	    flags&SIZEINT ? GETARG(size_t) : \
 	    flags&SHORTINT ? (u_long)(u_short)GETARG(int) : \
+	    flags&CHARINT ? (u_long)(u_char)GETARG(int) : \
 	    (u_long)GETARG(u_int))
 
 	 /*
@@ -934,7 +936,12 @@ reswitch:	switch (ch) {
 			goto rflag;
 #endif
 		case 'h':
-			flags |= SHORTINT;
+			if (*fmt == 'h') {
+				fmt++;
+				flags |= CHARINT;
+			} else {
+				flags |= SHORTINT;
+			}
 			goto rflag;
 		case 'l':
 			if (*fmt == 'l') {
