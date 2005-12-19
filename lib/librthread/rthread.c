@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.10 2005/12/19 06:47:40 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.11 2005/12/19 15:41:00 brad Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -334,7 +334,7 @@ pthread_getconcurrency(void)
 }
 
 int
-pthread_concurrency(int new_level)
+pthread_setconcurrency(int new_level)
 {
 	if (new_level < 0)
 		return (EINVAL);
