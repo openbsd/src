@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.8 2005/12/19 06:47:40 tedu Exp $ */
+/*	$OpenBSD: rthread.h,v 1.9 2005/12/19 21:30:10 marco Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -19,6 +19,10 @@
  * Private data structures that back up the typedefs in pthread.h.
  * Since only the thread library cares about their size or arrangement,
  * it should be possible to switch libraries without relinking.
+ *
+ * Do not reorder _spinlock_lock_t and sem_t variables in the structs.
+ * This is due to alignment requirements of certain arches like hppa.
+ * The current requirement is 16 bytes.
  */
 
 struct stack {
@@ -28,9 +32,10 @@ struct stack {
 };
 
 typedef struct semaphore {
+	_spinlock_lock_t lock;
 	volatile int waitcount;
 	volatile int value;
-	_spinlock_lock_t lock;
+	int pad;
 } *sem_t;
 
 struct pthread_mutex {
@@ -53,10 +58,10 @@ struct pthread_cond_attr {
 };
 
 struct pthread_rwlock {
+	struct semaphore sem;
 	_spinlock_lock_t lock;
 	int readers;
 	int writer;
-	struct semaphore sem;
 };
 
 struct pthread_rwlockattr {
@@ -91,8 +96,8 @@ struct rthread_cleanup_fn {
 };
 
 struct pthread {
-	pid_t tid;
 	struct semaphore donesem;
+	pid_t tid;
 	unsigned int flags;
 	void *retval;
 	void *(*fn)(void *);

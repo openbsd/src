@@ -1,4 +1,4 @@
-/* $OpenBSD: _atomic_lock.c,v 1.3 2005/12/17 05:28:59 marco Exp $ */
+/* $OpenBSD: _atomic_lock.c,v 1.4 2005/12/19 21:30:10 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -18,13 +18,20 @@
 #include <machine/spinlock.h>
 
 int
-_atomic_lock(register volatile _spinlock_lock_t *lock)
+_atomic_lock(volatile _spinlock_lock_t *lock)
 {
 	_spinlock_lock_t old;
+
+#ifdef DIAGNOSTIC
+	if ((unsigned long)lock & 0xf) {
+		printf("lock not 16 byte aligned\n");
+		abort();
+	}
+#endif
 
 	asm volatile ("ldcw %1,%0"
 		     : "=r" (old), "=m" (*lock)
 		     : "m" (*lock));
 
-	return (old == _SPINLOCK_UNLOCKED);
+	return (old == _SPINLOCK_LOCKED);
 }
