@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.12 2005/07/27 15:45:44 xsa Exp $	*/
+/*	$OpenBSD: log.h,v 1.13 2005/12/19 18:21:31 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -67,5 +67,6 @@ int	cvs_log(u_int, const char *, ...);
 int	cvs_vlog(u_int, const char *, va_list);
 int	cvs_printf(const char *, ...);
 void	cvs_putchar(int);
+void	fatal(const char *, ...);
 
 #endif	/* LOG_H */
