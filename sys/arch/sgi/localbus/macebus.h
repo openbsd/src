@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.h,v 1.6 2005/01/24 20:44:37 kettenis Exp $	*/
+/*	$OpenBSD: macebus.h,v 1.7 2005/12/19 21:37:48 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.com).
@@ -45,6 +45,7 @@
 #define	MACE_VOUT_OFFS		0x00200000
 #define	MACE_IO_OFFS		0x00300000
 #define	MACE_ISAX_OFFS		0x00380000
+#define	MACE_ISAX_SIZE		0x00020000
 
 /*
  *  PCI control registers (relative MACE_PCI_OFFS)

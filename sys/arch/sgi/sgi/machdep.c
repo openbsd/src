@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.25 2005/12/12 20:58:49 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.26 2005/12/19 21:37:49 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -217,8 +217,8 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 	case SGI_O2:
 		bios_printf("Found SGI-IP32, setting up.\n");
 		strlcpy(cpu_model, "SGI-O2 (IP32)", sizeof(cpu_model));
-		sys_config.cons_ioaddr[0] = 0x00390000;	/*XXX*/
-		sys_config.cons_ioaddr[1] = 0x00398000;	/*XXX*/
+		sys_config.cons_ioaddr[0] = MACE_ISA_SER1_OFFS;
+		sys_config.cons_ioaddr[1] = MACE_ISA_SER2_OFFS;
 		sys_config.cons_baudclk = 1843200;		/*XXX*/
 		sys_config.cons_iot = &macebus_tag;
 		sys_config.local.bus_base = 0x0;		/*XXX*/

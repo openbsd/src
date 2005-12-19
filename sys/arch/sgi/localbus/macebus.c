@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.13 2005/08/14 11:02:32 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.14 2005/12/19 21:37:47 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -367,7 +367,8 @@ mace_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 	bpa = t->bus_base + offs;
 
 	/* Handle special mapping separately */
-	if ((bpa >= 0x1f380000 && (bpa+size) <= 0x1f3a0000) ) {
+	if (bpa >= (MACEBUS_BASE + MACE_ISAX_OFFS) &&
+	    (bpa + size) < (MACEBUS_BASE + MACE_ISAX_OFFS + MACE_ISAX_SIZE)) {
 		*bshp = PHYS_TO_KSEG1(bpa);
 		return 0;
 	}
