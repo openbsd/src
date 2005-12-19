@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.88 2005/12/10 20:27:45 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.89 2005/12/19 17:43:01 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -129,12 +129,8 @@ main(int argc, char **argv)
 		cvs_readonly = 1;
 
 	if ((cvs_homedir = getenv("HOME")) == NULL) {
-		pw = getpwuid(getuid());
-		if (pw == NULL) {
-			cvs_log(LP_NOTICE,
-				"failed to get user's password entry");
-			exit(CVS_EX_DATA);
-		}
+		if ((pw = getpwuid(getuid())) == NULL)
+			fatal("getpwuid failed");
 		cvs_homedir = pw->pw_dir;
 	}
 

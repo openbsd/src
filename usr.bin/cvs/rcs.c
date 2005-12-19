@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.111 2005/12/12 17:47:03 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.112 2005/12/19 17:43:01 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1361,11 +1361,8 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 		}
 	}
 
-	if ((pw = getpwuid(getuid())) == NULL) {
-		rcs_errno = RCS_ERR_ERRNO;
-		rcsnum_free(old);
-		return (-1);
-	}
+	if ((pw = getpwuid(getuid())) == NULL)
+		fatal("getpwuid failed");
 
 	rdp = (struct rcs_delta *)xmalloc(sizeof(*rdp));
 	memset(rdp, 0, sizeof(*rdp));
