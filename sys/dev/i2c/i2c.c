@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c.c,v 1.2 2005/11/15 16:23:31 deraadt Exp $	*/
+/*	$OpenBSD: i2c.c,v 1.3 2005/12/19 19:36:46 grange Exp $	*/
 /*	$NetBSD: i2c.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/event.h>
 #include <sys/conf.h>
 
+#define _I2C_PRIVATE
 #include <dev/i2c/i2cvar.h>
 
 #define IICCF_ADDR	0
@@ -132,4 +133,9 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 	 * configuration file.
 	 */
 	config_search(iic_search, self, NULL);
+
+	/*
+	 * Scan for known device signatures.
+	 */
+	iic_scan(self, aux);
 }

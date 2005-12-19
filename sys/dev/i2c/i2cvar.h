@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2cvar.h,v 1.2 2005/11/15 16:23:31 deraadt Exp $	*/
+/*	$OpenBSD: i2cvar.h,v 1.3 2005/12/19 19:36:46 grange Exp $	*/
 /*	$NetBSD: i2cvar.h,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -125,6 +125,8 @@ int	iicbus_print(void *, const char *);
 	(*(ic)->ic_read_byte)((ic)->ic_cookie, (bytep), (flags))
 #define	iic_write_byte(ic, byte, flags)					\
 	(*(ic)->ic_write_byte)((ic)->ic_cookie, (byte), (flags))
+
+void	iic_scan(struct device *, struct i2cbus_attach_args *);
 #endif /* _I2C_PRIVATE */
 
 /*
