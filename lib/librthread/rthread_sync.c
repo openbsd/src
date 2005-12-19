@@ -1,6 +1,6 @@
-/*	$OpenBSD: rthread_sync.c,v 1.10 2005/12/18 01:35:06 tedu Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.11 2005/12/19 06:47:40 tedu Exp $ */
 /*
- * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
+ * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any

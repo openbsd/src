@@ -1,6 +1,6 @@
-/*	$OpenBSD: rthread_tls.c,v 1.7 2005/12/19 05:13:44 tedu Exp $ */
+/*	$OpenBSD: rthread_tls.c,v 1.8 2005/12/19 06:47:40 tedu Exp $ */
 /*
- * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
+ * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
