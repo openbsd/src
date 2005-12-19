@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.14 2005/06/26 16:39:14 millert Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.15 2005/12/19 17:07:43 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -301,9 +301,8 @@ auth_usercheck(char *name, char *style, char *type, char *password)
 	struct passwd *pwd;
 	char *sep, save;
 
-	if (strlen(name) >= sizeof(namebuf))
+	if (strlcpy(namebuf, name, sizeof(namebuf)) >= sizeof(namebuf))
 		return (NULL);
-	strlcpy(namebuf, name, sizeof namebuf);
 	name = namebuf;
 
 	/*
