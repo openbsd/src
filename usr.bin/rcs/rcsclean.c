@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.20 2005/12/10 20:27:46 joris Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.21 2005/12/19 18:24:12 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -99,7 +99,7 @@ rcsclean_main(int argc, char **argv)
 	argv += rcs_optind;
 
 	if ((locker = getlogin()) == NULL)
-		exit(1);
+		fatal("getlogin failed");
 
 	if (argc == 0) {
 		if ((dirp = opendir(".")) == NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.47 2005/12/10 20:27:46 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.48 2005/12/19 18:24:12 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -110,11 +110,8 @@ checkout_main(int argc, char **argv)
 		case 'w':
 			/* if no argument, assume current user */
 			if (rcs_optarg == NULL) {
-				if ((author = getlogin()) == NULL) {
-					cvs_log(LP_ERRNO,
-					    "could not get login");
-					exit(1);
-				}
+				if ((author = getlogin()) == NULL)
+					fatal("getlogin failed");
 			} else
 				author = xstrdup(rcs_optarg);
 			flags |= CO_AUTHOR;

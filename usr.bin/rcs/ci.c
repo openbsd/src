@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.85 2005/12/12 09:40:08 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.86 2005/12/19 18:24:12 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -219,10 +219,8 @@ checkin_main(int argc, char **argv)
 		exit(1);
 	}
 
-	if ((pb.username = getlogin()) == NULL) {
-		cvs_log(LP_ERRNO, "failed to get username");
-		exit(1);
-	}
+	if ((pb.username = getlogin()) == NULL)
+		fatal("getlogin failed");
 
 
 	for (i = 0; i < argc; i++) {
