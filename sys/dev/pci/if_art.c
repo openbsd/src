@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_art.c,v 1.9 2005/10/26 09:26:56 claudio Exp $ */
+/*	$OpenBSD: if_art.c,v 1.10 2005/12/19 15:49:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -38,6 +38,9 @@
 #include <dev/pci/musyccvar.h>
 #include <dev/pci/if_art.h>
 
+#define ART_E1_MASK 0xffffffff
+#define ART_T1_MASK 0x00ffffff
+
 int	art_match(struct device *, void *, void *);
 void	art_softc_attach(struct device *, struct device *, void *);
 
@@ -47,6 +50,7 @@ void	art_ifm_status(struct ifnet *, struct ifmediareq *);
 int	art_ifm_options(struct ifnet *, struct channel_softc *, u_int);
 void	art_onesec(void *);
 void	art_linkstate(void *);
+u_int	art_mask_tsmap(u_int, u_int32_t);
 
 struct cfattach art_ca = {
 	sizeof(struct art_softc), art_match, art_softc_attach
@@ -201,6 +205,11 @@ art_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		rv = copyin(ifr->ifr_data, &tsmap, sizeof(tsmap));
 		if (rv)
 			break;
+		if (art_mask_tsmap(IFM_SUBTYPE(ac->art_media), tsmap) !=
+		    tsmap) {
+			rv = EINVAL;
+			break;
+		}
 		cc->cc_tslots = tsmap;
 		rv = musycc_init_channel(cc, ac->art_slot);
 		break;
@@ -264,7 +273,16 @@ art_ifm_change(struct ifnet *ifp)
 		    IFM_MODE(ifm->ifm_media)));
 		bt8370_set_frame_mode(ac, ac->art_type,
 		    IFM_SUBTYPE(ifm->ifm_media), IFM_MODE(ifm->ifm_media));
+	}
+
+	if (IFM_SUBTYPE(ifm->ifm_media) != IFM_SUBTYPE(ac->art_media)) {
 		/* adjust timeslot map on media change */
+		cc->cc_tslots = art_mask_tsmap(IFM_SUBTYPE(ifm->ifm_media),
+		    cc->cc_tslots);
+
+		/* re-init the card */
+		if ((rv = musycc_init_channel(cc, ac->art_slot)))
+			return (rv);
 	}
 
 	baudrate = ifmedia_baudrate(ac->art_media);
@@ -385,3 +403,18 @@ art_linkstate(void *arg)
 		ebus_set_led(ac->art_channel, 1, MUSYCC_LED_RED);
 }
 
+u_int
+art_mask_tsmap(u_int mode, u_int32_t tsmap)
+{
+	switch (mode) {
+	case IFM_TDM_E1:
+	case IFM_TDM_E1_G704:
+	case IFM_TDM_E1_G704_CRC4:
+		return (tsmap & ART_E1_MASK);
+	case IFM_TDM_T1_AMI:
+	case IFM_TDM_T1:
+		return (tsmap & ART_T1_MASK);
+	default:
+		return (tsmap);
+	}
+}
