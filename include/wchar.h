@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.6 2005/07/01 08:59:27 espie Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.7 2005/12/19 17:05:20 millert Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -155,8 +155,8 @@ long int wcstol(const wchar_t * __restrict, wchar_t ** __restrict, int base);
 unsigned long int wcstoul(const wchar_t * __restrict, wchar_t ** __restrict,
 		int base);
 
-#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
-    defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) > 199901L
+#if (defined(__GNUC__) && __GNUC__ >= 2 && !defined(__STRICT_ANSI__)) || \
+    __ISO_C_VISIBLE >= 1999
 /* LONGLONG */
 long long int wcstoll(const wchar_t * __restrict,
 	wchar_t ** __restrict, int base);
