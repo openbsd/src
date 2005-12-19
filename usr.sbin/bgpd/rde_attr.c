@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.49 2005/06/13 15:16:50 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.50 2005/12/19 20:10:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -98,7 +98,7 @@ attr_optadd(struct rde_aspath *asp, u_int8_t flags, u_int8_t type,
 	/* keep a sorted list */
 	TAILQ_FOREACH_REVERSE(p, &asp->others, attr_list, entry) {
 		if (type == p->type) {
-			/* attribute only once allowed */
+			/* attribute allowed only once */
 			free(a->data);
 			free(a);
 			return (-1);
