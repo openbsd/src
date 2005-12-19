@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_tls.c,v 1.6 2005/12/18 01:35:06 tedu Exp $ */
+/*	$OpenBSD: rthread_tls.c,v 1.7 2005/12/19 05:13:44 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -72,7 +72,7 @@ int
 pthread_key_delete(pthread_key_t key)
 {
 
-	if (rkeys[key].used)
+	if (!rkeys[key].used)
 		return (EINVAL);
 
 	_spinlock(&rkeyslock);
