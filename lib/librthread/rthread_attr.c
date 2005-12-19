@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_attr.c,v 1.1 2005/12/03 18:16:19 tedu Exp $ */
+/*	$OpenBSD: rthread_attr.c,v 1.2 2005/12/19 06:45:14 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -76,18 +76,52 @@ pthread_attr_setdetachstate(pthread_attr_t *attrp, int detachstate)
 }
 
 int
+pthread_attr_getstack(const pthread_attr_t *attrp, void **stackaddr,
+    size_t *stacksize)
+{
+	*stackaddr = (*attrp)->stack_addr;
+	*stacksize = (*attrp)->stack_size;
+
+	return (0);
+}
+
+int
+pthread_attr_setstack(pthread_attr_t *attrp, void *stackaddr, size_t stacksize)
+{
+	(*attrp)->stack_addr = stackaddr;
+	(*attrp)->stack_size = stacksize;
+
+	return (0);
+}
+
+int
 pthread_attr_getstacksize(const pthread_attr_t *attrp, size_t *stacksize)
 {
 	*stacksize = (*attrp)->stack_size;
 
 	return (0);
-
 }
 
 int
 pthread_attr_setstacksize(pthread_attr_t *attrp, size_t stacksize)
 {
 	(*attrp)->stack_size = stacksize;
+
+	return (0);
+}
+
+int
+pthread_attr_getstackaddr(const pthread_attr_t *attrp, void **stackaddr)
+{
+	*stackaddr = (*attrp)->stack_addr;
+
+	return (0);
+}
+
+int
+pthread_attr_setstackaddr(pthread_attr_t *attrp, void *stackaddr)
+{
+	(*attrp)->stack_addr = stackaddr;
 
 	return (0);
 }

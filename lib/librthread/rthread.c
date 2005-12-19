@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.8 2005/12/18 01:35:06 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.9 2005/12/19 06:45:14 tedu Exp $ */
 /*
  * Copyright (c) 2004 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -40,6 +40,7 @@
 static int threads_ready;
 static pthread_t thread_list;
 static _spinlock_lock_t thread_lock = _SPINLOCK_UNLOCKED;
+static int concurrency_level;	/* not used */
 
 int getthrid();
 void threxit(int);
@@ -325,6 +326,22 @@ pthread_cleanup_pop(int execute)
 		free(clfn);
 	}
 }
+
+int
+pthread_getconcurrency(void)
+{
+	return (concurrency_level);
+}
+
+int
+pthread_concurrency(int new_level)
+{
+	if (new_level < 0)
+		return (EINVAL);
+	concurrency_level = new_level;
+	return (0);
+}
+
 
 /*
  * _np functions
