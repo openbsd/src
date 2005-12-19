@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.447 2005/12/16 03:41:55 marco Exp $
+#	$OpenBSD: GENERIC,v 1.448 2005/12/19 19:31:56 grange Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -109,6 +109,9 @@ viaenv*	at pci?				# VIA VT82C686A hardware monitor
 viasio*	at isa? port 0x2e flags 0x0000	# VIA VT1211 LPC Super I/O
 viasio*	at isa? port 0x4e flags 0x0000
 aps0	at isa? port 0x1600		# ThinkPad Active Protection System
+
+#ichiic* at pci?			# Intel ICH SMBus controller
+#iic*	at ichiic?
 
 # ISA PCMCIA controllers
 #option PCMCIAVERBOSE

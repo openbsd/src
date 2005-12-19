@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.191 2005/12/14 21:54:58 jsg Exp $
+#	$OpenBSD: files.pci,v 1.192 2005/12/19 19:31:56 grange Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -568,3 +568,8 @@ device	art: musycc, ifnet, ifmedia, sppp
 attach	art at musycc
 file	dev/pci/if_art.c		art
 file	dev/pci/bt8370.c		art
+
+# Intel ICH SMBus controller
+device	ichiic: i2cbus
+attach	ichiic at pci
+file	dev/pci/ichiic.c		ichiic
