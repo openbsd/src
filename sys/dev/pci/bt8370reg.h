@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt8370reg.h,v 1.2 2005/08/13 23:52:49 claudio Exp $ */
+/*	$OpenBSD: bt8370reg.h,v 1.3 2005/12/19 15:53:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -25,7 +25,7 @@
 #define		CR0_E1_FAS	0x00		/* E1 FAS only */
 #define		CR0_E1_FAS_CRC	0x08		/* E1 FAS+CRC4 */
 #define		CR0_T1_SF	0x09		/* T1 SF */
-#define		CR0_T1_ESF	0x1A		/* T1 ESF+ForceCRC */
+#define		CR0_T1_ESF	0x1B		/* T1 ESF+ForceCRC */
 #define	Bt8370_JAT_CR	0x002		/* Jitter attenuator conf */
 #define		JAT_CR_JEN	0x80		/* Jitter anntenuator enable */
 #define		JAT_CR_JFREE	0x40		/* Free running JCLK and CLADO */

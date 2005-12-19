@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt8370.c,v 1.4 2005/08/27 13:32:01 claudio Exp $ */
+/*	$OpenBSD: bt8370.c,v 1.5 2005/12/19 15:53:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -40,6 +40,9 @@
 #include "musyccvar.h"
 #include "if_art.h"
 #include "bt8370reg.h"
+
+#define	FRAMER_LIU_E1_120	1
+#define	FRAMER_LIU_T1_133	2
 
 void	bt8370_set_sbi_clock_mode(struct art_softc *, enum art_sbi_type,
 	    u_int, int);
@@ -105,6 +108,8 @@ bt8370_set_frame_mode(struct art_softc *ac, enum art_sbi_type type, u_int mode,
 		bt8370_set_sbi_clock_mode(ac, type, clockmode, channels);
 
 		/* Receiver RLIU, RCVR */
+		bt8370_set_line_buildout(ac, FRAMER_LIU_E1_120);
+		/* This one is critical */
 		ebus_write(&ac->art_ebus, Bt8370_RCR0, RCR0_HDB3 |
 		    RCR0_RABORT | RCR0_LFA_FAS | RCR0_RZCS_NBPV);
 		ebus_write(&ac->art_ebus, Bt8370_RALM, 0x00);
@@ -151,7 +156,7 @@ bt8370_set_frame_mode(struct art_softc *ac, enum art_sbi_type type, u_int mode,
 		bt8370_set_sbi_clock_mode(ac, type, clockmode, channels);
 
 		/* Receiver RLIU, RCVR */
-		bt8370_set_line_buildout(ac, 0);
+		bt8370_set_line_buildout(ac, FRAMER_LIU_E1_120);
 		/* This one is critical */
 		ebus_write(&ac->art_ebus, Bt8370_RCR0, RCR0_RFORCE |
 		    RCR0_HDB3 | RCR0_LFA_FAS | RCR0_RZCS_NBPV);
@@ -207,7 +212,7 @@ bt8370_set_frame_mode(struct art_softc *ac, enum art_sbi_type type, u_int mode,
 		bt8370_set_sbi_clock_mode(ac, type, clockmode, channels);
 
 		/* Receiver RLIU, RCVR */
-		bt8370_set_line_buildout(ac, 0);
+		bt8370_set_line_buildout(ac, FRAMER_LIU_E1_120);
 		/* This one is critical */
 		ebus_write(&ac->art_ebus, Bt8370_RCR0, RCR0_RFORCE |
 		    RCR0_HDB3 | RCR0_LFA_FASCRC | RCR0_RZCS_NBPV);
@@ -257,7 +262,7 @@ bt8370_set_frame_mode(struct art_softc *ac, enum art_sbi_type type, u_int mode,
 		bt8370_set_sbi_clock_mode(ac, type, clockmode, channels);
 
 		/* Receiver RLIU, RCVR */
-		bt8370_set_line_buildout(ac, 0);
+		bt8370_set_line_buildout(ac, FRAMER_LIU_T1_133);
 		/* This one is critical */
 		ebus_write(&ac->art_ebus, Bt8370_RCR0, RCR0_RFORCE |
 		    RCR0_AMI | RCR0_LFA_26F | RCR0_RZCS_NBPV);
@@ -307,7 +312,7 @@ bt8370_set_frame_mode(struct art_softc *ac, enum art_sbi_type type, u_int mode,
 		bt8370_set_sbi_clock_mode(ac, type, clockmode, channels);
 
 		/* Receiver RLIU, RCVR */
-		bt8370_set_line_buildout(ac, 0);
+		bt8370_set_line_buildout(ac, FRAMER_LIU_T1_133);
 		/* This one is critical */
 		ebus_write(&ac->art_ebus, Bt8370_RCR0, RCR0_RFORCE |
 		    RCR0_B8ZS | RCR0_LFA_26F | RCR0_RZCS_NBPV);
@@ -607,7 +612,7 @@ bt8370_set_bus_mode(struct art_softc *ac, enum art_sbi_mode mode, int nchannels)
 		ebus_write(&ac->art_ebus, channel, SBCn_RINDO |
 		    SBCn_TINDO | SBCn_ASSIGN);
 		/* In T1 mode timeslot 0 must not be used. */
-		if (nchannels == 24 && channel == 0)
+		if (nchannels == 25 && channel == Bt8370_SBCn)
 			ebus_write(&ac->art_ebus, channel, 0x00);
 	}
 	for (channel = Bt8370_TPCn; channel < Bt8370_TPCn +
@@ -634,23 +639,22 @@ bt8370_set_line_buildout(struct art_softc *ac, int mode)
 	    RLIU_CR_AGC2048 | RLIU_CR_LONG_EYE);
 
 	switch (mode) {
-#if 0
 	case FRAMER_LIU_T1_133:
-		/* fallthrough */
+		/* Short haul */
+		ebus_write(&ac->art_ebus, Bt8370_VGA_MAX, 0x1F);
+		/* Force EQ off */
+		ebus_write(&ac->art_ebus, Bt8370_PRE_EQ, 0xA6);
+
+		ebus_write(&ac->art_ebus, Bt8370_TLIU_CR, TLIU_CR_100);
+		break;
+#if 0
 	case FRAMER_LIU_T1_266:
-		/* fallthrough */
 	case FRAMER_LIU_T1_399:
-		/* fallthrough */
 	case FRAMER_LIU_T1_533:
-		/* fallthrough */
 	case FRAMER_LIU_T1_655:
-		/* fallthrough */
 	case FRAMER_LIU_T1_LH68:
-		/* fallthrough */
-	case FRAMER_LIU_E1_120:
-		/* fallthrough */
 #endif
-	default:
+	case FRAMER_LIU_E1_120:
 		/* Short haul */
 		ebus_write(&ac->art_ebus, Bt8370_VGA_MAX, 0x1F);
 		/* Force EQ off */
