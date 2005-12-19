@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdbutil.c,v 1.10 2003/08/25 23:28:15 tedu Exp $	*/
+/*	$OpenBSD: fsdbutil.c,v 1.11 2005/12/19 15:18:01 pedro Exp $	*/
 /*	$NetBSD: fsdbutil.c,v 1.5 1996/09/28 19:30:37 christos Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fsdbutil.c,v 1.10 2003/08/25 23:28:15 tedu Exp $";
+static char rcsid[] = "$OpenBSD: fsdbutil.c,v 1.11 2005/12/19 15:18:01 pedro Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -119,7 +119,7 @@ printstat(const char *cp, ino_t inum, struct ufs1_dinode *dp)
 		break;
 	case IFLNK:
 		fputs("symlink",stdout);
-		if (dp->di_size > 0 && dp->di_size < MAXSYMLINKLEN &&
+		if (dp->di_size > 0 && dp->di_size < MAXSYMLINKLEN_UFS1 &&
 		    dp->di_blocks == 0)
 			printf(" to `%.*s'\n", (int) dp->di_size,
 			    (char *)dp->di_shortlink);

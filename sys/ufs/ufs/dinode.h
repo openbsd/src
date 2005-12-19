@@ -1,4 +1,4 @@
-/*	$OpenBSD: dinode.h,v 1.10 2005/06/18 18:09:43 millert Exp $	*/
+/*	$OpenBSD: dinode.h,v 1.11 2005/12/19 15:18:01 pedro Exp $	*/
 /*	$NetBSD: dinode.h,v 1.7 1995/06/15 23:22:48 cgd Exp $	*/
 
 /*
@@ -65,7 +65,6 @@ typedef int64_t ufs_time_t;
 #define	NDADDR	12			/* Direct addresses in inode. */
 #define	NIADDR	3			/* Indirect addresses in inode. */
 
-
 struct	ufs1_dinode {
 	u_int16_t	di_mode;	/*   0: IFMT, permissions; see below. */
 	int16_t		di_nlink;	/*   2: File link count. */
@@ -116,7 +115,6 @@ struct ufs2_dinode {
 	int64_t		di_spare[3];	/* 232: Reserved; currently unused */
 };
 
-
 /*
  * The di_db fields may be overlaid with other information for
  * file types that do not have associated disk storage. Block
@@ -129,7 +127,13 @@ struct ufs2_dinode {
 #define	di_ouid		di_u.oldids[0]
 #define	di_rdev		di_db[0]
 #define	di_shortlink	di_db
-#define	MAXSYMLINKLEN	((NDADDR + NIADDR) * sizeof(ufs1_daddr_t))
+
+#define MAXSYMLINKLEN_UFS1	((NDADDR + NIADDR) * sizeof(ufs1_daddr_t))
+#define MAXSYMLINKLEN_UFS2	((NDADDR + NIADDR) * sizeof(ufs2_daddr_t))
+
+#define MAXSYMLINKLEN(ip) \
+	((ip)->i_ump->um_fstype == UM_UFS1) ? \
+	MAXSYMLINKLEN_UFS1 : MAXSYMLINKLEN_UFS2
 
 /* File permissions. */
 #define	IEXEC		0000100		/* Executable. */

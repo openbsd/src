@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.21 2003/09/25 04:19:39 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.22 2005/12/19 15:18:01 pedro Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: setup.c,v 1.21 2003/09/25 04:19:39 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: setup.c,v 1.22 2005/12/19 15:18:01 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -241,10 +241,10 @@ setup(char *dev)
 				dirty(&asblk);
 			}
 		}
-		if (sblock.fs_maxsymlinklen != MAXSYMLINKLEN) {
+		if (sblock.fs_maxsymlinklen != MAXSYMLINKLEN_UFS1) {
 			pwarn("INCORRECT MAXSYMLINKLEN=%d IN SUPERBLOCK",
 				sblock.fs_maxsymlinklen);
-			sblock.fs_maxsymlinklen = MAXSYMLINKLEN;
+			sblock.fs_maxsymlinklen = MAXSYMLINKLEN_UFS1;
 			if (preen)
 				printf(" (FIXED)\n");
 			if (preen || reply("FIX") == 1) {
@@ -291,7 +291,7 @@ setup(char *dev)
 		doinglevel2++;
 		sblock.fs_inodefmt = FS_44INODEFMT;
 		sblock.fs_maxfilesize = maxfilesize;
-		sblock.fs_maxsymlinklen = MAXSYMLINKLEN;
+		sblock.fs_maxsymlinklen = MAXSYMLINKLEN_UFS1;
 		sblock.fs_qbmask = ~sblock.fs_bmask;
 		sblock.fs_qfmask = ~sblock.fs_fmask;
 		sbdirty();

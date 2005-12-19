@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.12 2005/04/14 19:58:32 deraadt Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.13 2005/12/19 15:18:01 pedro Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -46,7 +46,7 @@ static const char copyright[] =
 Copyright (c) 1980, 1989, 1993 The Regents of the University of California.\n\
 All rights reserved.\n";
 
-static const char rcsid[] = "$OpenBSD: growfs.c,v 1.12 2005/04/14 19:58:32 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: growfs.c,v 1.13 2005/12/19 15:18:01 pedro Exp $";
 #endif /* not lint */
 
 /* ********************************************************** INCLUDES ***** */
@@ -2243,7 +2243,8 @@ updrefs(int cg, ino_t in, struct gfs_bpp *bp, int fsi, int fso, unsigned int
 		DBG_LEAVE;
 		return; /* only check DIR, FILE, LINK */
 	}
-	if (((ino->di_mode & IFMT) == IFLNK) && (ino->di_size < MAXSYMLINKLEN)) {
+	if (((ino->di_mode & IFMT) == IFLNK) &&
+	    (ino->di_size < MAXSYMLINKLEN_UFS1)) {
 		DBG_LEAVE;
 		return;	/* skip short symlinks */
 	}
