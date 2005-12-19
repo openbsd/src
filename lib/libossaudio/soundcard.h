@@ -1,4 +1,4 @@
-/*	$OpenBSD: soundcard.h,v 1.10 2003/05/03 19:01:48 avsm Exp $	*/
+/*	$OpenBSD: soundcard.h,v 1.11 2005/12/19 16:16:19 millert Exp $	*/
 /*	$NetBSD: soundcard.h,v 1.11 2001/05/09 21:49:58 augustss Exp $	*/
 
 /*-
@@ -113,10 +113,12 @@
  * include all of endian.h because it contains a lot
  * junk symbols.  [augustss]
  */
-#ifndef _POSIX_SOURCE
-#define _POSIX_SOURCE		/* avoid dragging in a lot of junk */
+#if  __BSD_VISIBLE
+#undef __BSD_VISIBLE
+#define  __BSD_VISIBLE	0	/* avoid dragging in a lot of junk */
 #include <machine/endian.h>
-#undef _POSIX_SOURCE
+#undef __BSD_VISIBLE
+#define  __BSD_VISIBLE	1
 #else
 #include <machine/endian.h>
 #endif
