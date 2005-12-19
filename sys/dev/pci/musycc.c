@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc.c,v 1.9 2005/10/26 09:26:56 claudio Exp $ */
+/*	$OpenBSD: musycc.c,v 1.10 2005/12/19 15:49:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -1190,7 +1190,7 @@ musycc_rxeom(struct musycc_group *mg, int channel, int forcekick)
 		 */
 		if (rxstat & MUSYCC_STATUS_ERROR) {
 			ifp->if_ierrors++;
-			ACCOOM_PRINTF(0, ("%s: rx error %08x\n",
+			ACCOOM_PRINTF(1, ("%s: rx error %08x\n",
 			    ifp->if_xname, rxstat));
 			musycc_newbuf(mg, cur_rx, m);
 			cur_rx = cur_rx->nextdesc;
@@ -1432,6 +1432,9 @@ musycc_intr(void *arg)
 					ifp->if_ierrors++;
 					musycc_rxeom(mg, chan, 1);
 				}
+				break;
+			case MUSYCC_INTERR_OOF:
+				/* ignore */
 				break;
 			default:
 				ACCOOM_PRINTF(0, ("%s: unhandled error: %s\n",
