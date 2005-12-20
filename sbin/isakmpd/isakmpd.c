@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.89 2005/06/25 23:20:43 hshoexer Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.90 2005/12/20 22:03:53 moritz Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -99,7 +99,7 @@ void            daemon_shutdown_now(int);
 void		set_slave_signals(void);
 
 /* The default path of the PID file.  */
-static char    *pid_file = "/var/run/isakmpd.pid";
+char	       *pid_file = "/var/run/isakmpd.pid";
 
 /* The path of the IKE packet capture log file.  */
 static char    *pcap_file = 0;
@@ -330,9 +330,6 @@ daemon_shutdown(void)
 		 */
 
 		log_packet_stop();
-		/* Remove FIFO and pid files.  */
-		unlink(ui_fifo);
-		unlink(pid_file);
 		log_print("isakmpd: exit");
 		exit(0);
 	}
@@ -352,10 +349,9 @@ write_pid_file(void)
 {
 	FILE	*fp;
 
-	/* Ignore errors. This fails with privsep.  */
 	unlink(pid_file);
 
-	fp = monitor_fopen(pid_file, "w");
+	fp = fopen(pid_file, "w");
 	if (fp != NULL) {
 		if (fprintf(fp, "%ld\n", (long) getpid()) < 0)
 			log_error("write_pid_file: failed to write PID to "
@@ -402,6 +398,8 @@ main(int argc, char *argv[])
 	/* Set timezone before priv'separation */
 	tzset();
 
+	write_pid_file();
+
 	if (monitor_init(debug)) {
 		/* The parent, with privileges enters infinite monitor loop. */
 		monitor_loop(debug);
@@ -410,8 +408,6 @@ main(int argc, char *argv[])
 	/* Child process only from this point on, no privileges left.  */
 
 	init();
-
-	write_pid_file();
 
 	/* If we wanted IKE packet capture to file, initialize it now.  */
 	if (pcap_file != 0)

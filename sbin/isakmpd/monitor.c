@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.61 2005/11/26 22:17:20 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.62 2005/12/20 22:03:53 moritz Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -58,8 +58,7 @@ struct monitor_state {
 	char            root[MAXPATHLEN];
 } m_state;
 
-volatile sig_atomic_t sigchlded = 0;
-extern volatile sig_atomic_t sigtermed;
+extern char *pid_file;
 
 extern void	set_slave_signals(void);
 
@@ -78,7 +77,6 @@ static int      m_priv_check_sockopt(int, int);
 static int      m_priv_check_bind(const struct sockaddr *, socklen_t);
 
 static void	set_monitor_signals(void);
-static void	monitor_got_sigchld(int);
 static void	sig_pass_to_chld(int);
 
 /*
@@ -149,8 +147,21 @@ monitor_init(int debug)
 void
 monitor_exit(int code)
 {
-	if (m_state.pid != 0)
-		kill(m_state.pid, SIGKILL);
+	int status;
+	pid_t pid;
+
+	if (m_state.pid != 0) {
+		/* When called from the monitor, kill slave and wait for it  */
+		kill(m_state.pid, SIGTERM);
+
+		do {
+			pid = waitpid(m_state.pid, &status, 0);
+		} while (pid == -1 && errno == EINTR);
+
+		/* Remove FIFO and pid files.  */
+		unlink(ui_fifo);
+		unlink(pid_file);
+	}
 
 	close(m_state.s);
 	exit(code);
@@ -414,20 +425,10 @@ set_monitor_signals(void)
 	for (n = 0; n < _NSIG; n++)
 		signal(n, SIG_DFL);
 
-	/* If the child dies, we should shutdown also.  */
-	signal(SIGCHLD, monitor_got_sigchld);
-
 	/* Forward some signals to the child. */
 	signal(SIGTERM, sig_pass_to_chld);
 	signal(SIGHUP, sig_pass_to_chld);
 	signal(SIGUSR1, sig_pass_to_chld);
-}
-
-/* ARGSUSED */
-static void
-monitor_got_sigchld(int sig)
-{
-	sigchlded = 1;
 }
 
 static void
@@ -444,33 +445,12 @@ sig_pass_to_chld(int sig)
 void
 monitor_loop(int debug)
 {
-	pid_t	 pid;
-	int	 msgcode, status;
+	int	 msgcode;
 
 	if (!debug)
 		log_to(0);
 
 	for (;;) {
-		/*
-		 * Currently, there is no need for us to hang around if the
-		 * child is in the process of shutting down.
-		 */
-		if (sigtermed) {
-			kill(m_state.pid, SIGTERM);
-			break;
-		}
-
-		if (sigchlded) {
-			do {
-				pid = waitpid(m_state.pid, &status, WNOHANG);
-			} while (pid == -1 && errno == EINTR);
-
-			if (pid == m_state.pid && (WIFEXITED(status) ||
-			    WIFSIGNALED(status))) {
-				break;
-			}
-		}
-
 		must_read(&msgcode, sizeof msgcode);
 
 		switch (msgcode) {
@@ -737,7 +717,7 @@ must_read(void *buf, size_t n)
                         if (errno == EINTR || errno == EAGAIN)
                                 continue;
                 case 0:
-			_exit(0);
+			monitor_exit(0);
                 default:
                         pos += res;
                 }
@@ -762,7 +742,7 @@ must_write(const void *buf, size_t n)
                         if (errno == EINTR || errno == EAGAIN)
                                 continue;
                 case 0:
-			_exit(0);
+			monitor_exit(0);
                 default:
                         pos += res;
                 }
