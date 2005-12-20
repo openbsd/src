@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.14 2005/12/19 21:37:47 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.15 2005/12/20 06:59:27 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -67,9 +67,6 @@ void macebus_intr_makemasks(void);
 void macebus_do_pending_int(int);
 intrmask_t macebus_iointr(intrmask_t, struct trap_frame *);
 intrmask_t macebus_aux(intrmask_t, struct trap_frame *);
-
-long mace_ext_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof (long)];
-long crime_ext_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof (long)];
 
 int maceticks;		/* Time tracker for special events */
 
@@ -200,13 +197,11 @@ macebusattach(struct device *parent, struct device *self, void *aux)
 	 */
 	macebus_tag.bus_extent = extent_create("mace_space",
 	    macebus_tag.bus_base, macebus_tag.bus_base + 0x00400000,
-	    M_DEVBUF, (caddr_t)mace_ext_storage,
-	    sizeof(mace_ext_storage), EX_NOCOALESCE|EX_NOWAIT);
+	    M_DEVBUF, NULL, 0, EX_NOCOALESCE | EX_NOWAIT);
 
 	crimebus_tag.bus_extent = extent_create("crime_space",
 	    crimebus_tag.bus_base, crimebus_tag.bus_base + 0x00400000,
-	    M_DEVBUF, (caddr_t)crime_ext_storage,
-	    sizeof(crime_ext_storage), EX_NOCOALESCE|EX_NOWAIT);
+	    M_DEVBUF, NULL, 0, EX_NOCOALESCE | EX_NOWAIT);
 
 	/*
 	 *  Map and set up CRIME control registers.
