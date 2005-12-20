@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.22 2005/12/13 06:01:27 kjell Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.23 2005/12/20 06:17:36 kjell Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -273,7 +273,7 @@ struct list *
 complete_function_list(const char *fname)
 {
 	struct funmap	*fn;
-	struct list		*head, *el;
+	struct list	*head, *el;
 	int		 len;
 
 	len = strlen(fname);
@@ -284,7 +284,7 @@ complete_function_list(const char *fname)
 				free_file_list(head);
 				return (NULL);
 			}
-			el->l_name = fn->fn_name;
+			el->l_name = strdup(fn->fn_name);
 			el->l_next = head;
 			head = el;
 		}

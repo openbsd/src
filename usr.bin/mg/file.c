@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.49 2005/12/20 05:04:28 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.50 2005/12/20 06:17:36 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -495,8 +495,7 @@ filewrite(int f, int n)
 			p++;
 		else
 			p = curbp->b_fname;
-		if (curbp->b_bname)
-			free((char *)curbp->b_bname);
+		free(curbp->b_bname);
 		curbp->b_bname = strdup(p);
 		curbp->b_flag &= ~(BFBAK | BFCHG);
 		upmodes(curbp);

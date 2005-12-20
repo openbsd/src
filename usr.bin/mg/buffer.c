@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.53 2005/12/13 06:01:26 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.54 2005/12/20 06:17:35 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -184,7 +184,7 @@ killbuffer(struct buffer *bp)
 		rec = next;
 	}
 
-	free((char *)bp->b_bname);		/* Release name block	 */
+	free(bp->b_bname);			/* Release name block	 */
 	free(bp);				/* Release buffer block */
 	return (TRUE);
 }
@@ -486,7 +486,7 @@ bfind(const char *bname, int cflag)
 		return (NULL);
 	}
 	if ((lp = lalloc(0)) == NULL) {
-		free((char *) bp->b_bname);
+		free(bp->b_bname);
 		free(bp);
 		return (NULL);
 	}

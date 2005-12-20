@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.67 2005/12/20 05:04:28 kjell Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.68 2005/12/20 06:17:36 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -396,11 +396,6 @@ copy(char *frname, char *toname)
 	return (TRUE);
 }
 
-struct filelist {
-	struct list	fl_l;
-	char	fl_name[NFILEN + 2];
-};
-
 /*
  * return list of file names that match the name in buf.
  */
@@ -411,8 +406,8 @@ make_file_list(char *buf)
 	int		 len, preflen, ret;
 	DIR		*dirp;
 	struct dirent	*dent;
-	struct list		*last;
-	struct filelist *current;
+	struct list	*last, *current;
+	char		 fl_name[NFILEN + 2];
 	char		 prefixx[NFILEN + 1];
 
 	/*
@@ -514,19 +509,19 @@ make_file_list(char *buf)
 				isdir = 1;
 		}
 
-		current = malloc(sizeof(struct filelist));
-		if (current == NULL)
-			break;
-
-		ret = snprintf(current->fl_name, sizeof(current->fl_name),
+		if ((current = malloc(sizeof(struct list))) == NULL) {
+			free_file_list(last);
+			return (NULL);
+		}
+		ret = snprintf(fl_name, sizeof(fl_name),
 		    "%s%s%s", prefixx, dent->d_name, isdir ? "/" : "");
-		if (ret < 0 || ret >= sizeof(current->fl_name)) {
+		if (ret < 0 || ret >= sizeof(fl_name)) {
 			free(current);
 			continue;
 		}
-		current->fl_l.l_next = last;
-		current->fl_l.l_name = current->fl_name;
-		last = (struct list *) current;
+		current->l_next = last;
+		current->l_name = strdup(fl_name);
+		last = current;
 	}
 	closedir(dirp);
 

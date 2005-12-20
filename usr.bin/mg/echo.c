@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.42 2005/12/13 06:01:27 kjell Exp $	*/
+/*	$OpenBSD: echo.c,v 1.43 2005/12/20 06:17:36 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -99,7 +99,7 @@ eyesno(const char *sp)
 
 				maclcur = lp->l_bp;
 				maclcur->l_fp = lp->l_fp;
-				free((char *)lp);
+				free(lp);
 			}
 #endif /* !NO_MACRO */
 			if ((rep[0] == 'y' || rep[0] == 'Y') &&
@@ -594,7 +594,7 @@ complt_list(int flags, char *buf, int cpos)
 	int	 oldhue = tthue;
 	char	 *linebuf;
 	size_t	 linesize, len;
-	const char *cp;
+	char *cp;
 
 	lh = NULL;
 
@@ -700,7 +700,8 @@ complt_list(int flags, char *buf, int cpos)
 				linebuf[0] = '\0';
 				width = 0;
 			}
-			len = strlcat(linebuf, lh2->l_name + preflen, linesize);
+			len = strlcat(linebuf, lh2->l_name + preflen,
+			    linesize);
 			width += maxwidth;
 			if (len < width && width < linesize) {
 				/* pad so the objects nicely line up */
@@ -923,6 +924,7 @@ free_file_list(struct list *lp)
 
 	while (lp) {
 		next = lp->l_next;
+		free(lp->l_name);
 		free(lp);
 		lp = next;
 	}
@@ -937,14 +939,16 @@ copy_list(struct list *lp)
 	while (lp) {
 		current = (struct list *)malloc(sizeof(struct list));
 		if (current == NULL) {
+			/* Free what we have allocated so far */
 			for (current = last; current; current = nxt) {
 				nxt = current->l_next;
+				free(current->l_name);
 				free(current);
 			}
 			return (NULL);
 		}
 		current->l_next = last;
-		current->l_name = lp->l_name;
+		current->l_name = strdup(lp->l_name);
 		last = current;
 		lp = lp->l_next;
 	}

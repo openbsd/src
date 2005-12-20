@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.81 2005/12/13 07:20:13 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.82 2005/12/20 06:17:36 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -173,7 +173,7 @@ struct list {
 		struct buffer	*x_bp;	/* l_bp is used by struct line */
 		struct list	*l_nxt;
 	} l_p;
-	const char *l_name;
+	char *l_name;
 };
 
 /*

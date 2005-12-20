@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.36 2005/12/20 05:04:28 kjell Exp $	*/
+/*	$OpenBSD: line.c,v 1.37 2005/12/20 06:17:36 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -508,7 +508,7 @@ ldelnewline(void)
 		lp1->l_used += lp2->l_used;
 		lp1->l_fp = lp2->l_fp;
 		lp2->l_fp->l_bp = lp1;
-		free((char *)lp2);
+		free(lp2);
 		return (TRUE);
 	}
 	if ((lp3 = lalloc(lp1->l_used + lp2->l_used)) == NULL)
@@ -535,8 +535,8 @@ ldelnewline(void)
 			wp->w_marko += lp1->l_used;
 		}
 	}
-	free((char *)lp1);
-	free((char *)lp2);
+	free(lp1);
+	free(lp2);
 	return (TRUE);
 }
 
