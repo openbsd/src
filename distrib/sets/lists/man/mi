@@ -1385,6 +1385,7 @@
 ./usr/share/man/cat4/macppc/pi2c.0
 ./usr/share/man/cat4/macppc/smu.0
 ./usr/share/man/cat4/macppc/snapper.0
+./usr/share/man/cat4/macppc/tpms.0
 ./usr/share/man/cat4/macppc/tumbler.0
 ./usr/share/man/cat4/macppc/zs.0
 ./usr/share/man/cat4/macppc/zsc.0
@@ -2167,7 +2168,6 @@
 ./usr/share/man/cat8/macppc/hotplugd.0
 ./usr/share/man/cat8/macppc/kbd.0
 ./usr/share/man/cat8/macppc/pdisk.0
-./usr/share/man/cat8/macppc/tpms.0
 ./usr/share/man/cat8/macppc/wsconscfg.0
 ./usr/share/man/cat8/macppc/wsconsctl.0
 ./usr/share/man/cat8/macppc/zzz.0
