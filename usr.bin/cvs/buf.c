@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.19 2005/12/10 20:27:45 joris Exp $	*/
+/*	$OpenBSD: buf.c,v 1.20 2005/12/20 16:55:21 xsa Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -94,7 +94,7 @@ cvs_buf_alloc(size_t len, u_int flags)
  *
  * Open the file specified by <path> and load all of its contents into a
  * buffer.
- * Returns the loaded buffer on success, or NULL on failure.
+ * Returns the loaded buffer on success.
  */
 BUF *
 cvs_buf_load(const char *path, u_int flags)
@@ -106,32 +106,21 @@ cvs_buf_load(const char *path, u_int flags)
 	struct stat st;
 	BUF *buf;
 
-	fd = open(path, O_RDONLY, 0600);
-	if (fd == -1) {
-		cvs_log(LP_ERRNO, "failed to open buffer source");
-		return (NULL);
-	}
+	if ((fd = open(path, O_RDONLY, 0600)) == -1)
+		fatal("cvs_buf_load: open: `%s': %s", path, strerror(errno));
 
-	if (fstat(fd, &st) == -1) {
-		cvs_log(LP_ERRNO, "failed to stat buffer source");
-		(void)close(fd);
-		return (NULL);
-	}
+	if (fstat(fd, &st) == -1)
+		fatal("cvs_buf_load: fstat: %s", strerror(errno));
 
-	buf = cvs_buf_alloc((size_t)st.st_size, flags);
-	if (buf == NULL) {
-		(void)close(fd);
-		return (NULL);
-	}
+	if ((buf = cvs_buf_alloc((size_t)st.st_size, flags)) == NULL)
+		fatal("cvs_buf_load: cvs_buf_alloc failed");
 
 	for (bp = buf->cb_cur; ; bp += (size_t)ret) {
 		len = SIZE_LEFT(buf);
 		ret = read(fd, bp, len);
 		if (ret == -1) {
-			cvs_log(LP_ERRNO, "read failed from buffer source");
-			(void)close(fd);
 			cvs_buf_free(buf);
-			return (NULL);
+			fatal("cvs_buf_load: read: %s", strerror(errno));
 		} else if (ret == 0)
 			break;
 
@@ -224,9 +213,9 @@ cvs_buf_set(BUF *b, const void *src, size_t len, size_t off)
 	size_t rlen;
 
 	if (b->cb_size < (len + off)) {
-		if ((b->cb_flags & BUF_AUTOEXT) && (cvs_buf_grow(b,
-		    len + off - b->cb_size) < 0))
-			return (-1);
+		if ((b->cb_flags & BUF_AUTOEXT) &&
+		    (cvs_buf_grow(b, len + off - b->cb_size) < 0))
+			fatal("cvs_buf_set failed");
 		else
 			rlen = b->cb_size - off;
 	} else
@@ -295,7 +284,7 @@ cvs_buf_append(BUF *b, const void *data, size_t len)
 	if (left < len) {
 		if (b->cb_flags & BUF_AUTOEXT) {
 			if (cvs_buf_grow(b, len - left) < 0)
-				return (-1);
+				fatal("cvs_buf_append failed");
 			bp = b->cb_cur + b->cb_len;
 		} else
 			rlen = bep - bp;
@@ -323,10 +312,8 @@ cvs_buf_fappend(BUF *b, const char *fmt, ...)
 	ret = vasprintf(&str, fmt, vap);
 	va_end(vap);
 
-	if (ret == -1) {
-		cvs_log(LP_ERRNO, "failed to format data");
-		return (-1);
-	}
+	if (ret == -1)
+		fatal("cvs_buf_fappend: failed to format data");
 
 	ret = cvs_buf_append(b, str, (size_t)ret);
 	xfree(str);
@@ -381,7 +368,7 @@ cvs_buf_write_fd(BUF *b, int fd)
 		if (ret == -1) {
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
-			return (-1);
+			fatal("cvs_buf_write_fd failed");
 		}
 
 		len -= (size_t)ret;
@@ -403,11 +390,8 @@ cvs_buf_write(BUF *b, const char *path, mode_t mode)
 {
 	int ret, fd;
 
-	fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, mode);
-	if (fd == -1) {
-		cvs_log(LP_ERRNO, "failed to open file `%s'", path);
-		return (-1);
-	}
+	if ((fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, mode)) == -1)
+		fatal("open: `%s': %s", path, strerror(errno));
 
 	ret = cvs_buf_write_fd(b, fd);
 	if (ret == -1) {
@@ -432,11 +416,8 @@ cvs_buf_write_stmp(BUF *b, char *template, mode_t mode)
 {
 	int ret, fd;
 
-	fd = mkstemp(template);
-	if (fd == -1) {
-		cvs_log(LP_ERRNO, "failed to mkstemp file `%s'", template);
-		return (-1);
-	}
+	if ((fd = mkstemp(template)) == -1)
+		fatal("mkstemp: `%s': %s", template, strerror(errno));
 
 	ret = cvs_buf_write_fd(b, fd);
 	if (ret == -1) {

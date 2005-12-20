@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.24 2005/10/14 13:46:36 moritz Exp $	*/
+/*	$OpenBSD: server.c,v 1.25 2005/12/20 16:55:21 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -76,9 +76,8 @@ cvs_server(int argc, char **argv)
 	size_t len;
 	char reqbuf[512];
 
-	if (argc != 1) {
+	if (argc != 1)
 		return (CVS_EX_USAGE);
-	}
 
 	/* make sure standard in and standard out are line-buffered */
 	(void)setvbuf(stdin, NULL, _IOLBF, (size_t)0);
@@ -89,19 +88,17 @@ cvs_server(int argc, char **argv)
 	    "%s/cvs-serv%d", cvs_tmpdir, getpid());
 	if (l == -1 || l >= (int)sizeof(cvs_server_tmpdir)) {
 		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", cvs_server_tmpdir);
-		return (CVS_EX_DATA);
+		fatal("cvs_server: tmpdir path too long: `%s'",
+		    cvs_server_tmpdir);
 	}
 
-	if (mkdir(cvs_server_tmpdir, 0700) == -1) {
-		cvs_log(LP_ERRNO, "failed to create temporary directory '%s'",
-		    cvs_server_tmpdir);
-		return (CVS_EX_FILE);
-	}
+	if (mkdir(cvs_server_tmpdir, 0700) == -1)
+		fatal("cvs_server: mkdir: `%s': %s",
+		    cvs_server_tmpdir, strerror(errno));
 
 	if (cvs_chdir(cvs_server_tmpdir) == -1) {
-		cvs_rmdir(cvs_server_tmpdir);
-		return (CVS_EX_FILE);
+		(void)cvs_rmdir(cvs_server_tmpdir);
+		fatal("cvs_server: cvs_chdir failed");
 	}
 
 	for (;;) {
@@ -109,8 +106,8 @@ cvs_server(int argc, char **argv)
 			if (feof(stdin))
 				break;
 			else if (ferror(stdin)) {
-				cvs_rmdir(cvs_server_tmpdir);
-				return (CVS_EX_DATA);
+				(void)cvs_rmdir(cvs_server_tmpdir);
+				fatal("cvs_server: fgets failed");
 			}
 		}
 
@@ -118,9 +115,8 @@ cvs_server(int argc, char **argv)
 		if (len == 0)
 			continue;
 		else if (reqbuf[len - 1] != '\n') {
-			cvs_log(LP_ERR, "truncated request");
-			cvs_rmdir(cvs_server_tmpdir);
-			return (CVS_EX_PROTO);
+			(void)cvs_rmdir(cvs_server_tmpdir);
+			fatal("cvs_server: truncated request");
 		}
 		reqbuf[--len] = '\0';
 

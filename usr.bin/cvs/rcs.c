@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.112 2005/12/19 17:43:01 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.113 2005/12/20 16:55:21 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -457,16 +457,13 @@ rcs_write(RCSFILE *rfp)
 		return (0);
 
 	strlcpy(fn, "/tmp/rcs.XXXXXXXXXX", sizeof(fn));
-	if ((fd = mkstemp(fn)) == -1 ||
-	    (fp = fdopen(fd, "w+")) == NULL) {
-		if (fd != -1) {
-			unlink(fn);
-			close(fd);
-		}
-		rcs_errno = RCS_ERR_ERRNO;
-		cvs_log(LP_ERRNO, "failed to open temp RCS output file `%s'",
-		    fn);
-		return (-1);
+	if ((fd = mkstemp(fn)) == -1)
+		fatal("mkstemp: `%s': %s", fn, strerror(errno));
+
+	if ((fp = fdopen(fd, "w+")) == NULL) {
+		fd = errno;
+		unlink(fn);
+		fatal("fdopen: %s", strerror(fd));
 	}
 
 	if (rfp->rf_head != NULL)
@@ -584,9 +581,8 @@ rcs_write(RCSFILE *rfp)
 			/* rename() not supported so we have to copy. */
 			if ((chmod(rfp->rf_path, S_IWUSR) == -1)
 			    && !(rfp->rf_flags & RCS_CREATE)) {
-				cvs_log(LP_ERRNO, "failed to chmod `%s'",
-				    rfp->rf_path);
-				return (-1);
+				fatal("chmod(%s, 0%o) failed",
+				    rfp->rf_path, S_IWUSR);
 			}
 
 			if ((from_fd = open(fn, O_RDONLY)) == -1) {
@@ -1609,13 +1605,8 @@ rcs_parse(RCSFILE *rfp)
 	pdp->rp_lines = 0;
 	pdp->rp_pttype = RCS_TOK_ERR;
 
-	pdp->rp_file = fopen(rfp->rf_path, "r");
-	if (pdp->rp_file == NULL) {
-		rcs_errno = RCS_ERR_ERRNO;
-		cvs_log(LP_ERRNO, "failed to open RCS file `%s'", rfp->rf_path);
-		rcs_freepdata(pdp);
-		return (-1);
-	}
+	if ((pdp->rp_file = fopen(rfp->rf_path, "r")) == NULL)
+		fatal("fopen: `%s': %s", rfp->rf_path, strerror(errno));
 
 	pdp->rp_buf = (char *)xmalloc((size_t)RCS_BUFSIZE);
 	pdp->rp_blen = RCS_BUFSIZE;
