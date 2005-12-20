@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.21 2005/12/20 17:11:48 xsa Exp $	*/
+/*	$OpenBSD: buf.c,v 1.22 2005/12/20 17:55:10 xsa Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -368,7 +368,7 @@ cvs_buf_write_fd(BUF *b, int fd)
 		if (ret == -1) {
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
-			fatal("cvs_buf_write_fd failed");
+			return (-1);
 		}
 
 		len -= (size_t)ret;
@@ -388,19 +388,18 @@ cvs_buf_write_fd(BUF *b, int fd)
 int
 cvs_buf_write(BUF *b, const char *path, mode_t mode)
 {
-	int ret, fd;
+	int fd;
 
 	if ((fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, mode)) == -1)
 		fatal("open: `%s': %s", path, strerror(errno));
 
-	ret = cvs_buf_write_fd(b, fd);
-	if (ret == -1) {
-		cvs_log(LP_ERRNO, "failed to write to file `%s'",  path);
+	if (cvs_buf_write_fd(b, fd) == -1) {
 		(void)unlink(path);
+		fatal("cvs_buf_write: cvs_buf_write_fd: `%s'", path);
 	}
 	(void)close(fd);
 
-	return (ret);
+	return (0);
 }
 
 /*
@@ -414,20 +413,18 @@ cvs_buf_write(BUF *b, const char *path, mode_t mode)
 int
 cvs_buf_write_stmp(BUF *b, char *template, mode_t mode)
 {
-	int ret, fd;
+	int fd;
 
 	if ((fd = mkstemp(template)) == -1)
 		fatal("mkstemp: `%s': %s", template, strerror(errno));
 
-	ret = cvs_buf_write_fd(b, fd);
-	if (ret == -1) {
-		cvs_log(LP_ERRNO, "failed to write to temp file `%s'",
-		    template);
+	if (cvs_buf_write_fd(b, fd) == -1) {
 		(void)unlink(template);
+		fatal("cvs_buf_write_stmp: cvs_buf_write_fd: `%s'", template);
 	}
 	(void)close(fd);
 
-	return (ret);
+	return (0);
 }
 
 /*
