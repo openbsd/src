@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.41 2005/11/19 00:43:41 kettenis Exp $
+#	$OpenBSD: files.macppc,v 1.42 2005/12/20 01:36:10 brad Exp $
 
 #
 # macppc-specific configuration info
@@ -291,3 +291,7 @@ file	dev/ic/hme.c
 
 attach	hme at pci with hme_pci
 file	dev/pci/if_hme_pci.c				hme_pci
+
+device	tpms: hid, wsmousedev
+attach	tpms at uhidbus
+file	arch/macppc/dev/tpms.c				tpms
