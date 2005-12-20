@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_art.c,v 1.10 2005/12/19 15:49:53 claudio Exp $ */
+/*	$OpenBSD: if_art.c,v 1.11 2005/12/20 15:27:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -27,9 +27,7 @@
 #include <sys/syslog.h>
 #include <sys/systm.h>
 
-#include <machine/cpu.h>
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -231,8 +229,6 @@ art_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
-		ac = (struct art_softc *)
-		    ((struct channel_softc *)ifp->if_softc)->cc_parent;
 		if (ac != NULL)
 			rv = ifmedia_ioctl(ifp, ifr, &ac->art_ifm, command);
 		else
