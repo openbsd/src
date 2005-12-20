@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.7 2005/12/17 21:10:24 kettenis Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.8 2005/12/20 06:58:19 miod Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -147,7 +147,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	ksc.sc_pc = regs->pc;
 	ksc.mullo = regs->mullo;
 	ksc.mulhi = regs->mulhi;
-	ksc.sc_regs[0] = 0xACEDBADE;		/* magic number */
+	ksc.sc_regs[ZERO] = 0xACEDBADE;		/* magic number */
 	bcopy((caddr_t)&regs->ast, (caddr_t)&ksc.sc_regs[1],
 		sizeof(ksc.sc_regs) - sizeof(register_t));
 	ksc.sc_fpused = p->p_md.md_flags & MDP_FPUSED;
@@ -256,7 +256,7 @@ sys_sigreturn(p, v, retval)
 	/*
 	 * Restore the user supplied information
 	 */
-	if (scp->sc_onstack & 01)
+	if (scp->sc_onstack & SA_ONSTACK)
 		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
