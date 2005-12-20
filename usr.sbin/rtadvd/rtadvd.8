@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.8,v 1.21 2005/10/27 18:26:13 jmc Exp $
+.\"	$OpenBSD: rtadvd.8,v 1.22 2005/12/20 09:22:16 jmc Exp $
 .\"	$KAME: rtadvd.8,v 1.18 2002/04/28 10:43:02 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -41,8 +41,7 @@
 .Ar interface ...
 .Sh DESCRIPTION
 .Nm
-sends router advertisement packets to the specified
-.Ar interfaces .
+sends router advertisement packets to the specified interfaces.
 .Pp
 The program will daemonize itself on invocation.
 It will then send router advertisement packets periodically, as well
@@ -53,7 +52,7 @@ described in
 .Xr rtadvd.conf 5 .
 .Pp
 If there is no configuration file entry for an interface,
-or if the configuration file does not exist altogether,
+or if the configuration file does not exist at all,
 .Nm
 sets all the parameters to their default values.
 In particular,
@@ -83,7 +82,7 @@ However, it would sometimes be useful to allow hosts to advertise some
 parameters such as prefix information and link MTU.
 Thus,
 .Nm
-can be invoked if router lifetime is explicitly set zero on every
+can be invoked if router lifetime is explicitly set to zero on every
 advertising interface.
 .Pp
 The command line options are:
@@ -97,7 +96,9 @@ By default,
 .Pa /etc/rtadvd.conf
 is used.
 .It Fl D
-Even more debugging information is printed.
+Even more debugging information than that offered by the
+.Fl d
+option is printed.
 .It Fl d
 Print debugging information.
 .It Fl f
@@ -118,7 +119,9 @@ option, which enables routing renumbering protocol support.
 .\"permitted configuration directives.
 .It Fl R
 Accept router renumbering requests.
-If you enable it, certain IPsec setup is suggested for security reasons.
+If you enable it, an
+.Xr ipsec 4
+setup is suggested for security reasons.
 .\"On KAME-based systems,
 .\".Xr rrenumd 8
 .\"generates router renumbering request packets.
@@ -146,17 +149,15 @@ In this case,
 will transmit router advertisement with router lifetime 0
 to all the interfaces
 .Pq in accordance with RFC 2461 6.2.5 .
-.Sh RETURN VALUES
-The
-.Nm
-program exits 0 on success, and >0 on failures.
+.Pp
+.Ex -std rtadvd
 .Sh FILES
-.Bl -tag -width Pa -compact
+.Bl -tag -width "/var/run/rtadvd.dumpXX" -compact
 .It Pa /etc/rtadvd.conf
 The default configuration file.
 .It Pa /var/run/rtadvd.pid
-contains the pid of the currently running
-.Nm rtadvd .
+Contains the PID of the currently running
+.Nm .
 .It Pa /var/run/rtadvd.dump
 The file in which
 .Nm
@@ -176,6 +177,6 @@ advertise Router Advertisement messages on an upstream link to avoid
 undesirable
 .Xr icmp6 4
 redirect messages.
-However, based on the later discussion in the IETF IPng working group,
+However, based on later discussion in the IETF IPng working group,
 all routers should rather advertise the messages regardless of
 the network topology, in order to ensure reachability.
