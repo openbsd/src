@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.15 2005/08/06 14:26:51 miod Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.16 2005/12/20 19:23:57 drahn Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -139,6 +139,7 @@ struct ztsscale {
 	int ts_maxy;
 };
 extern struct ztsscale zts_scale;
+extern int xscale_maxspeed;
 #endif
 
 /* Prototypes */
@@ -510,6 +511,20 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		}
 #endif /* NZTS > 0 */
 		return (err);
+	}
+#endif
+#ifdef __zaurus__	 /* ??? */
+	case CPU_MAXSPEED:
+	{
+		int err = EINVAL;
+		void pxa2x0_maxspeed(int *);
+		if (!newp && newlen == 0)
+			return (sysctl_int(oldp, oldlenp, 0, 0,
+			    &xscale_maxspeed));
+		err = (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &xscale_maxspeed));
+		pxa2x0_maxspeed(&xscale_maxspeed);
+		return err;
 	}
 #endif
 

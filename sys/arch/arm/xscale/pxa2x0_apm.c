@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.22 2005/12/20 02:37:09 drahn Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.23 2005/12/20 19:23:57 drahn Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -1393,17 +1393,73 @@ pxa2x0_pi2c_print(struct pxa2x0_apm_softc *sc)
 }
 #endif
 
+struct {
+	int maxspeed;
+	int numspeeds;
+	int hz [6];
+	int rate [6]; /* could this be simplfied by not having 100% in table? */
+}
+speedtables[] = {
+	{ 91, 1, { 91 }, { 100 }},
+	{ 208, 2, { 91, 208}, {50, 100}},
+	{ 416, 3, { 91, 208, 416}, {25, 50, 100}},
+	{ 520, 4, { 91, 208, 416, 520}, {18, 40 ,80, 100}},
+	{ 624, 5, { 91, 208, 416, 520, 624}, {15, 34, 67, 82, 100}},
+	{ 0 }
+};
+int xscale_maxspeed = 416; /* XXX */
+
+int speed_to_freq(int speed);
+
+int
+speed_to_freq(int speed)
+{
+	int i, j;
+	int newspeed = 0;
+	int numspeeds;
+	for (i = 0; speedtables[i].maxspeed != 0; i++) {
+		if (speedtables[i].maxspeed != xscale_maxspeed)
+			continue;
+
+		if (speed <= speedtables[i].rate[0]) {
+			return speedtables[i].hz[0];
+			
+		}
+		numspeeds = speedtables[i].numspeeds;
+		if (speed == speedtables[i].rate[numspeeds-1]) {
+			return speedtables[i].hz[numspeeds-1];
+		}
+		for (j = 1; j < numspeeds; j++) {
+			if (speed < speedtables[i].rate[j]) {
+				return speedtables[i].hz[j-1];
+			}
+		}
+	}
+	return newspeed;
+}
+
+
 int
 pxa2x0_setperf(int speed)
 {
 	struct pxa2x0_apm_softc *sc;
 	int s;
+	int newfreq;
 
 	sc = apm_cd.cd_devs[0];
 
+	newfreq = speed_to_freq(speed);
+
+	if (newfreq == 0) {
+		printf("bogus new frequency 0 for rate %d maxclock %d\n",
+		    speed, xscale_maxspeed);
+	}
+	printf("setperf speed %d newfreq %d, maxfreq %d\n",
+	    speed, newfreq, xscale_maxspeed);
+
 	s = disable_interrupts(I32_bit|F32_bit);
 
-	if (speed <= 30) {
+	if (newfreq == 91) {
 		if (freq > 91) {
 			pxa27x_run_mode();
 			pxa27x_fastbus_run_mode(0, MDREFR_LOW);
@@ -1412,7 +1468,7 @@ pxa2x0_setperf(int speed)
 			    PI2C_VOLTAGE_LOW);
 			freq = 91;
 		}
-	} else if (speed < 60) {
+	} else if (newfreq == 208) {
 		if (freq < 208)
 			pxa2x0_pi2c_setvoltage(sc->sc_iot, sc->sc_pm_ioh,
 			    PI2C_VOLTAGE_HIGH);
@@ -1422,7 +1478,7 @@ pxa2x0_setperf(int speed)
 			pxa27x_fastbus_run_mode(1, pxa2x0_memcfg.mdrefr_high);
 			freq = 208;
 		}
-	} else {
+	} else if (newfreq == 416) {
 		if (freq < 208) {
 			pxa2x0_pi2c_setvoltage(sc->sc_iot, sc->sc_pm_ioh,
 			    PI2C_VOLTAGE_HIGH);
@@ -1430,11 +1486,40 @@ pxa2x0_setperf(int speed)
 			    CCCR_RUN_X16, CLKCFG_F, &pxa2x0_memcfg);
 			pxa27x_fastbus_run_mode(1, pxa2x0_memcfg.mdrefr_high);
 		}
-		if (freq < 416) {
+		if (freq != 416) {
 			pxa27x_frequency_change(CCCR_A | CCCR_TURBO_X2 |
 			    CCCR_RUN_X16, CLKCFG_B | CLKCFG_F | CLKCFG_T,
 			    &pxa2x0_memcfg);
 			freq = 416;
+		}
+	} else if (newfreq == 520) {
+		if (freq < 208) {
+			pxa2x0_pi2c_setvoltage(sc->sc_iot, sc->sc_pm_ioh,
+			    PI2C_VOLTAGE_HIGH);
+			pxa27x_frequency_change(CCCR_A | CCCR_TURBO_X2 |
+			    CCCR_RUN_X16, CLKCFG_F, &pxa2x0_memcfg);
+			pxa27x_fastbus_run_mode(1, pxa2x0_memcfg.mdrefr_high);
+		}
+		if (freq != 520) {
+			printf("would switch to 520\n");
+			pxa27x_frequency_change(CCCR_A | CCCR_TURBO_X25 |
+			    CCCR_RUN_X16, CLKCFG_B | CLKCFG_F | CLKCFG_T,
+			    &pxa2x0_memcfg);
+			freq = 520;
+		}
+	} else if (newfreq == 624) {
+		if (freq < 208) {
+			pxa2x0_pi2c_setvoltage(sc->sc_iot, sc->sc_pm_ioh,
+			    PI2C_VOLTAGE_HIGH);
+			pxa27x_frequency_change(CCCR_A | CCCR_TURBO_X2 |
+			    CCCR_RUN_X16, CLKCFG_F, &pxa2x0_memcfg);
+			pxa27x_fastbus_run_mode(1, pxa2x0_memcfg.mdrefr_high);
+		}
+		if (freq != 624) {
+			pxa27x_frequency_change(CCCR_A | CCCR_TURBO_X3 |
+			    CCCR_RUN_X16, CLKCFG_B | CLKCFG_F | CLKCFG_T,
+			    &pxa2x0_memcfg);
+			freq = 624;
 		}
 	}
 
@@ -1448,4 +1533,30 @@ pxa2x0_cpuspeed(int *freqp)
 {
 	*freqp = freq;
 	return 0;
+}
+
+void pxa2x0_maxspeed(int *speedp);
+
+void
+pxa2x0_maxspeed(int *speedp)
+{
+	/* XXX assumes a pxa270 */
+
+	if (*speedp < 207) {
+		*speedp = 91;
+	} else if (*speedp < 415) {
+		*speedp = 208;
+	} else if (*speedp < 519) {
+		*speedp = 416;
+	} else if (*speedp < 624) {
+		*speedp = 520;
+#if 0
+	} else if (*speedp < 651) {
+		*speedp = 624;
+#endif
+	} else {
+		*speedp = 520; /* hope this is safe. */
+	}
+	xscale_maxspeed = *speedp;
+	pxa2x0_setperf(perflevel);
 }
