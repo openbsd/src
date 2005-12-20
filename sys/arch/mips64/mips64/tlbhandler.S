@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.11 2005/12/17 20:17:46 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.12 2005/12/20 07:06:26 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -67,7 +67,7 @@ tlb_miss:
 	PTR_S	k0, REGSZ(k1)
 
 	PTR_L	k1, curprocpaddr
-	PTR_L	k1, U_PCB_SEGTAB(k1)
+	PTR_L	k1, PCB_SEGTAB(k1)
 	PTR_SRL	k0, k0, SEGSHIFT - LOGREGSZ
 	andi	k0, k0, (PMAP_SEGTABSIZE - 1) << LOGREGSZ
 	PTR_ADDU k1, k1, k0
@@ -99,7 +99,7 @@ tlb_miss:
 	dmfc0	k0, COP_0_BAD_VADDR
 	bltz	k0, _k_miss		# kernel address space
 	PTR_SRL	k0, k0, SEGSHIFT - LOGREGSZ
-	PTR_L	k1, U_PCB_SEGTAB(k1)
+	PTR_L	k1, PCB_SEGTAB(k1)
 	andi	k0, k0, (PMAP_SEGTABSIZE - 1) << LOGREGSZ
 	PTR_ADDU k1, k1, k0
 	PTR_L	k1, 0(k1)		# get pointer to page table
@@ -144,7 +144,7 @@ xtlb_miss:
 	beqz	k1, _inv_seg		# wrong if outside pm_segtab
 	PTR_SLL	k0, k0, LOGREGSZ
 	PTR_L	k1, curprocpaddr
-	PTR_L	k1, U_PCB_SEGTAB(k1)
+	PTR_L	k1, PCB_SEGTAB(k1)
 	PTR_ADDU k1, k1, k0
 	PTR_L	k1, 0(k1)		# get pointer to page table
 	dmfc0	k0, COP_0_BAD_VADDR

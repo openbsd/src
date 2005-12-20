@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.7 2004/09/27 19:20:49 pefo Exp $ */
+/*	$OpenBSD: exception.S,v 1.8 2005/12/20 07:06:26 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -535,28 +535,28 @@ NNON_LEAF(u_syscall, FRAMESZ(CF_SZ), ra)
 	.set	noat
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
 
-	REG_S	a0, UADDR+U_PCB_REGS+(A0 * REGSZ)
-	REG_S	a1, UADDR+U_PCB_REGS+(A1 * REGSZ)
-	REG_S	a2, UADDR+U_PCB_REGS+(A2 * REGSZ)
-	REG_S	a3, UADDR+U_PCB_REGS+(A3 * REGSZ)
+	REG_S	a0, UADDR+PCB_REGS+(A0 * REGSZ)
+	REG_S	a1, UADDR+PCB_REGS+(A1 * REGSZ)
+	REG_S	a2, UADDR+PCB_REGS+(A2 * REGSZ)
+	REG_S	a3, UADDR+PCB_REGS+(A3 * REGSZ)
 	mfc0	a0, COP_0_STATUS_REG	# First arg is the status reg.
 	mfc0	a1, COP_0_CAUSE_REG	# Second arg is the cause reg.
 	dmfc0	a3, COP_0_EXC_PC		# Fourth arg is the pc.
-	REG_S	sp, UADDR+U_PCB_REGS+(SP * REGSZ)
+	REG_S	sp, UADDR+PCB_REGS+(SP * REGSZ)
 	LA	sp, KERNELSTACK - FRAMESZ(CF_SZ)	# switch to kernel SP
-	REG_S	ra, UADDR+U_PCB_REGS+(RA * REGSZ)
-	REG_S	a0, UADDR+U_PCB_REGS+(SR * REGSZ)
-	REG_S	a1, UADDR+U_PCB_REGS+(CAUSE * REGSZ)
-	REG_S	a3, UADDR+U_PCB_REGS+(PC * REGSZ)
+	REG_S	ra, UADDR+PCB_REGS+(RA * REGSZ)
+	REG_S	a0, UADDR+PCB_REGS+(SR * REGSZ)
+	REG_S	a1, UADDR+PCB_REGS+(CAUSE * REGSZ)
+	REG_S	a3, UADDR+PCB_REGS+(PC * REGSZ)
 	REG_S	a3, CF_RA_OFFS(sp)		# for debugging
 	LA	gp, _gp				# switch to kernel GP
 	lw	a3, cpl
-	sw	a3, UADDR+U_PCB_REGS+(CPL * REGSZ)
+	sw	a3, UADDR+PCB_REGS+(CPL * REGSZ)
 	.set	at
 # Turn off fpu and enter kernel mode
 	and	t0, a0, ~(SR_COP_1_BIT | SR_EXL | SR_KSU_MASK | SR_INT_ENAB)
 	mtc0	t0, COP_0_STATUS_REG
-	li	a0, UADDR+U_PCB_REGS
+	li	a0, UADDR+PCB_REGS
 	ITLBNOPFIX
 /*
  *  If CPU is a RM7000 save away performance stuff.
@@ -614,20 +614,20 @@ NNON_LEAF(u_syscall, FRAMESZ(CF_SZ), ra)
 	nop;nop;nop;nop
 1:
 #endif
-	lw	a3, UADDR+U_PCB_REGS+(CPL * REGSZ)
+	lw	a3, UADDR+PCB_REGS+(CPL * REGSZ)
 	sw	a3, cpl
 
 	.set	noat
 
-	REG_L	a0, UADDR+U_PCB_REGS+(SR * REGSZ)
+	REG_L	a0, UADDR+PCB_REGS+(SR * REGSZ)
 	mtc0	a0, COP_0_STATUS_REG	# still exeption level
-	REG_L	a0, UADDR+U_PCB_REGS+(PC * REGSZ)
-	REG_L	v0, UADDR+U_PCB_REGS+(V0 * REGSZ)
+	REG_L	a0, UADDR+PCB_REGS+(PC * REGSZ)
+	REG_L	v0, UADDR+PCB_REGS+(V0 * REGSZ)
 	dmtc0	a0, COP_0_EXC_PC		# set return address
-	REG_L	v1, UADDR+U_PCB_REGS+(V1 * REGSZ)
-	REG_L	gp, UADDR+U_PCB_REGS+(GP * REGSZ)
-	REG_L	sp, UADDR+U_PCB_REGS+(SP * REGSZ)
-	REG_L	ra, UADDR+U_PCB_REGS+(RA * REGSZ)
+	REG_L	v1, UADDR+PCB_REGS+(V1 * REGSZ)
+	REG_L	gp, UADDR+PCB_REGS+(GP * REGSZ)
+	REG_L	sp, UADDR+PCB_REGS+(SP * REGSZ)
+	REG_L	ra, UADDR+PCB_REGS+(RA * REGSZ)
 	sync
 	eret
 	.set	at

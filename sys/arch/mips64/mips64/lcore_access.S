@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_access.S,v 1.8 2004/10/20 12:49:15 pefo Exp $ */
+/*	$OpenBSD: lcore_access.S,v 1.9 2005/12/20 07:06:26 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -79,7 +79,7 @@ LEAF(badaddr, 0)
 	li	v0, KT_BADERR
 	PTR_L	t3, curprocpaddr
 	bne	a1, 1, 2f
-	sw	v0, U_PCB_ONFAULT(t3)
+	sw	v0, PCB_ONFAULT(t3)
 	lbu	v0, (a0)		# don't put in bd-slot!
 	b	5f
 	nop
@@ -93,7 +93,7 @@ LEAF(badaddr, 0)
 	lw	v0, (a0)
 5:
 	sync
-	sw	zero, U_PCB_ONFAULT(t3)
+	sw	zero, PCB_ONFAULT(t3)
 	j	ra
 	move	v0, zero		# made it w/o errors
 baderr:
@@ -351,11 +351,11 @@ NON_LEAF(copyinstr, FRAMESZ(CF_SZ), ra)
 	li	v0, KT_COPYERR
 	PTR_L	t3, curprocpaddr
 	jal	copystr
-	sw	v0, U_PCB_ONFAULT(t3)
+	sw	v0, PCB_ONFAULT(t3)
 
 	PTR_L	ra, CF_RA_OFFS(sp)
 	PTR_L	t3, curprocpaddr
-	sw	zero, U_PCB_ONFAULT(t3)
+	sw	zero, PCB_ONFAULT(t3)
 	PTR_ADDU sp, sp, FRAMESZ(CF_SZ)
 	j	ra
 	move	v0, zero
@@ -379,11 +379,11 @@ NON_LEAF(copyoutstr, FRAMESZ(CF_SZ), ra)
 	li	v0, KT_COPYERR
 	PTR_L	t3, curprocpaddr
 	jal	copystr
-	sw	v0, U_PCB_ONFAULT(t3)
+	sw	v0, PCB_ONFAULT(t3)
 
 	PTR_L	ra, CF_RA_OFFS(sp)
 	PTR_L	t3, curprocpaddr
-	sw	zero, U_PCB_ONFAULT(t3)
+	sw	zero, PCB_ONFAULT(t3)
 	PTR_ADDU sp, sp, FRAMESZ(CF_SZ)
 	j	ra
 	move	v0, zero
@@ -404,11 +404,11 @@ NON_LEAF(copyin, FRAMESZ(CF_SZ), ra)
 	li	v0, KT_COPYERR
 	PTR_L	t3, curprocpaddr
 	jal	bcopy
-	sw	v0, U_PCB_ONFAULT(t3)
+	sw	v0, PCB_ONFAULT(t3)
 
 	PTR_L	ra, CF_RA_OFFS(sp)
 	PTR_L	t3, curprocpaddr
-	sw	zero, U_PCB_ONFAULT(t3)
+	sw	zero, PCB_ONFAULT(t3)
 	PTR_ADDU sp, sp, FRAMESZ(CF_SZ)
 	j	ra
 	move	v0, zero
@@ -429,11 +429,11 @@ NON_LEAF(copyout, FRAMESZ(CF_SZ), ra)
 	li	v0, KT_COPYERR
 	PTR_L	t3, curprocpaddr
 	jal	bcopy
-	sw	v0, U_PCB_ONFAULT(t3)
+	sw	v0, PCB_ONFAULT(t3)
 
 	PTR_L	ra, CF_RA_OFFS(sp)
 	PTR_L	t3, curprocpaddr
-	sw	zero, U_PCB_ONFAULT(t3)
+	sw	zero, PCB_ONFAULT(t3)
 	PTR_ADDU sp, sp, FRAMESZ(CF_SZ)
 	j	ra
 	move	v0, zero
@@ -442,7 +442,7 @@ END(copyout)
 _copyerr:
 	PTR_L	ra, CF_RA_OFFS(sp)
 	PTR_L	t3, curprocpaddr
-	sw	zero, U_PCB_ONFAULT(t3)
+	sw	zero, PCB_ONFAULT(t3)
 	PTR_ADDU sp, sp, FRAMESZ(CF_SZ)
 	j	ra
 	li	v0, EFAULT		# return error
@@ -457,11 +457,11 @@ NON_LEAF(kcopy, FRAMESZ(CF_SZ), ra)
 	li	v0, KT_KCOPYERR
 	PTR_L	t3, curprocpaddr
 	jal	bcopy
-	sw	v0, U_PCB_ONFAULT(t3)
+	sw	v0, PCB_ONFAULT(t3)
 
 	PTR_L	ra, CF_RA_OFFS(sp)
 	PTR_L	t3, curprocpaddr
-	sw	zero, U_PCB_ONFAULT(t3)
+	sw	zero, PCB_ONFAULT(t3)
 	PTR_ADDU sp, sp, FRAMESZ(CF_SZ)
 	j	ra
 	move	v0, zero

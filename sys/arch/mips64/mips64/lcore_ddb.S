@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_ddb.S,v 1.7 2004/09/27 19:16:06 pefo Exp $ */
+/*	$OpenBSD: lcore_ddb.S,v 1.8 2005/12/20 07:06:26 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -46,17 +46,17 @@ LEAF(kdbpeekd, 0)
 	li	v0, KT_DDBERR
 	and	v1, a0, 7			# unaligned ?
 	bne	v1, zero, 1f
-	sw	v0, U_PCB_ONFAULT(t0)
+	sw	v0, PCB_ONFAULT(t0)
 
 	ld	v0, (a0)
 	jr	ra
-	sw	zero, U_PCB_ONFAULT(t0)
+	sw	zero, PCB_ONFAULT(t0)
 
 1:
 	LDHI	v0, 0(a0)
 	LDLO	v0, 7(a0)
 	jr	ra
-	sw	zero, U_PCB_ONFAULT(t0)
+	sw	zero, PCB_ONFAULT(t0)
 END(kdbpeekd)
 #endif
 
@@ -65,17 +65,17 @@ LEAF(kdbpeek, 0)
 	li	v0, KT_DDBERR
 	and	v1, a0, 3			# unaligned ?
 	bne	v1, zero, 1f
-	sw	v0, U_PCB_ONFAULT(t0)
+	sw	v0, PCB_ONFAULT(t0)
 
 	lw	v0, (a0)
 	jr	ra
-	sw	zero, U_PCB_ONFAULT(t0)
+	sw	zero, PCB_ONFAULT(t0)
 
 1:
 	LWHI	v0, 0(a0)
 	LWLO	v0, 3(a0)
 	jr	ra
-	sw	zero, U_PCB_ONFAULT(t0)
+	sw	zero, PCB_ONFAULT(t0)
 END(kdbpeek)
 
 LEAF(kdbpeekw, 0)
@@ -83,25 +83,25 @@ LEAF(kdbpeekw, 0)
 	li	v0, KT_DDBERR
 	and	v1, a0, 1			# unaligned ?
 	bne	v1, zero, 1f
-	sw	v0, U_PCB_ONFAULT(t0)
+	sw	v0, PCB_ONFAULT(t0)
 
 	lh	v0, (a0)
 	jr	ra
-	sw	zero, U_PCB_ONFAULT(t0)
+	sw	zero, PCB_ONFAULT(t0)
 
 1:
 	li	v0, -1				# error!
 	jr	ra
-	sw	zero, U_PCB_ONFAULT(t0)
+	sw	zero, PCB_ONFAULT(t0)
 END(kdbpeekw)
 
 LEAF(kdbpeekb, 0)
 	PTR_L	t0, curprocpaddr
 	li	v0, KT_DDBERR
-	sw	v0, U_PCB_ONFAULT(t0)
+	sw	v0, PCB_ONFAULT(t0)
 	lb	v0, 0(a0)
 	jr	ra
-	sw	zero, U_PCB_ONFAULT(t0)
+	sw	zero, PCB_ONFAULT(t0)
 END(kdbpeekb)
 
 	.globl	kt_ddberr
@@ -115,17 +115,17 @@ LEAF(kdbpoked, 0)
 	li	v0, KT_DDBERR
 	and	v1, a0, 7			# unaligned ?
 	bne	v1, zero, 1f
-	sw	v0, U_PCB_ONFAULT(t0)
+	sw	v0, PCB_ONFAULT(t0)
 
 	sd	a1, (a0)
 	jr	ra
-	sw	zero, U_PCB_ONFAULT(t0)
+	sw	zero, PCB_ONFAULT(t0)
 
 1:
 	SDHI	a1, 0(a0)
 	SDLO	a1, 7(a0)
 	jr	ra
-	sw	zero, U_PCB_ONFAULT(t0)
+	sw	zero, PCB_ONFAULT(t0)
 END(kdbpoked)
 #endif
 
@@ -135,17 +135,17 @@ LEAF(kdbpoke, 0)
 	li	v0, KT_DDBERR
 	and	v1, a0, 3			# unaligned ?
 	bne	v1, zero, 1f
-	sw	v0, U_PCB_ONFAULT(t0)
+	sw	v0, PCB_ONFAULT(t0)
 
 	sw	a1, (a0)
 	jr	ra
-	sw	zero, U_PCB_ONFAULT(t0)
+	sw	zero, PCB_ONFAULT(t0)
 
 1:
 	SWHI	a1, 0(a0)
 	SWLO	a1, 3(a0)
 	jr	ra
-	sw	zero, U_PCB_ONFAULT(t0)
+	sw	zero, PCB_ONFAULT(t0)
 END(kdbpoke)
 
 LEAF(kdbpokew, 0)
@@ -153,24 +153,24 @@ LEAF(kdbpokew, 0)
 	li	v0, KT_DDBERR
 	and	v1, a0, 1			# unaligned ?
 	bne	v1, zero, 1f
-	sw	v0, U_PCB_ONFAULT(t0)
+	sw	v0, PCB_ONFAULT(t0)
 
 	sh	a1, (a0)
 	jr	ra
-	sw	zero, U_PCB_ONFAULT(t0)
+	sw	zero, PCB_ONFAULT(t0)
 
 1:
 	jr	ra
-	sw	zero, U_PCB_ONFAULT(t0)
+	sw	zero, PCB_ONFAULT(t0)
 END(kdbpokew)
 
 LEAF(kdbpokeb, 0)
 	PTR_L	t0, curprocpaddr
 	li	v0, KT_DDBERR
-	sw	v0, U_PCB_ONFAULT(t0)
+	sw	v0, PCB_ONFAULT(t0)
 	sb	a1, 0(a0)
 	jr	ra
-	sw	zero, U_PCB_ONFAULT(t0)
+	sw	zero, PCB_ONFAULT(t0)
 END(kdbpokeb)
 
 LEAF(Debugger, 0)

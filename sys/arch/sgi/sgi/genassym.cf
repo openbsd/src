@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.5 2005/12/17 20:17:48 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.6 2005/12/20 07:06:29 miod Exp $
 #
 # Copyright (c) 1997 Per Fogelstrom / Opsycon AB
 #
@@ -48,12 +48,12 @@ member	P_WATCH_1	p_md.md_watch_1
 member	P_WATCH_2	p_md.md_watch_2
 member	P_WATCH_M	p_md.md_watch_m
 
-struct	user
-member	U_PCB_REGS	u_pcb.pcb_regs.zero
-member	U_PCB_FPREGS	u_pcb.pcb_regs.f0
-member	U_PCB_CONTEXT	u_pcb.pcb_context
-member	U_PCB_ONFAULT	u_pcb.pcb_onfault
-member	U_PCB_SEGTAB	u_pcb.pcb_segtab
+struct	pcb
+member	pcb_regs
+member	PCB_FPREGS	pcb_regs.f0
+member	pcb_context
+member	pcb_onfault
+member	pcb_segtab
 
 export	VM_MIN_KERNEL_ADDRESS
 export	SIGFPE

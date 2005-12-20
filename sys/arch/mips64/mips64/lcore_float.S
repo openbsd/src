@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_float.S,v 1.10 2004/11/08 20:55:45 miod Exp $ */
+/*	$OpenBSD: lcore_float.S,v 1.11 2005/12/20 07:06:26 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -76,83 +76,83 @@ LEAF(MipsSwitchFPState, 0)
 	cfc1	t0, FPC_CSR		# stall til FP done
 	cfc1	t0, FPC_CSR		# now get status
 	li	t3, ~SR_COP_1_BIT
-	REG_L	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# get CPU status register
-	REG_S	t0, U_PCB_FPREGS+(32 * REGSZ)(a0)	# save FP status
+	REG_L	t2, PCB_REGS+(PS * REGSZ)(a0)	# get CPU status register
+	REG_S	t0, PCB_FPREGS+(32 * REGSZ)(a0)	# save FP status
 	and	t2, t2, t3			# clear COP_1 enable bit
-	REG_S	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# save new status register
+	REG_S	t2, PCB_REGS+(PS * REGSZ)(a0)	# save new status register
 /*
  * Save the floating point registers.
  */
-	sdc1	$f0, U_PCB_FPREGS+(0 * REGSZ)(a0)
-	sdc1	$f1, U_PCB_FPREGS+(1 * REGSZ)(a0)
-	sdc1	$f2, U_PCB_FPREGS+(2 * REGSZ)(a0)
-	sdc1	$f3, U_PCB_FPREGS+(3 * REGSZ)(a0)
-	sdc1	$f4, U_PCB_FPREGS+(4 * REGSZ)(a0)
-	sdc1	$f5, U_PCB_FPREGS+(5 * REGSZ)(a0)
-	sdc1	$f6, U_PCB_FPREGS+(6 * REGSZ)(a0)
-	sdc1	$f7, U_PCB_FPREGS+(7 * REGSZ)(a0)
-	sdc1	$f8, U_PCB_FPREGS+(8 * REGSZ)(a0)
-	sdc1	$f9, U_PCB_FPREGS+(9 * REGSZ)(a0)
-	sdc1	$f10, U_PCB_FPREGS+(10 * REGSZ)(a0)
-	sdc1	$f11, U_PCB_FPREGS+(11 * REGSZ)(a0)
-	sdc1	$f12, U_PCB_FPREGS+(12 * REGSZ)(a0)
-	sdc1	$f13, U_PCB_FPREGS+(13 * REGSZ)(a0)
-	sdc1	$f14, U_PCB_FPREGS+(14 * REGSZ)(a0)
-	sdc1	$f15, U_PCB_FPREGS+(15 * REGSZ)(a0)
-	sdc1	$f16, U_PCB_FPREGS+(16 * REGSZ)(a0)
-	sdc1	$f17, U_PCB_FPREGS+(17 * REGSZ)(a0)
-	sdc1	$f18, U_PCB_FPREGS+(18 * REGSZ)(a0)
-	sdc1	$f19, U_PCB_FPREGS+(19 * REGSZ)(a0)
-	sdc1	$f20, U_PCB_FPREGS+(20 * REGSZ)(a0)
-	sdc1	$f21, U_PCB_FPREGS+(21 * REGSZ)(a0)
-	sdc1	$f22, U_PCB_FPREGS+(22 * REGSZ)(a0)
-	sdc1	$f23, U_PCB_FPREGS+(23 * REGSZ)(a0)
-	sdc1	$f24, U_PCB_FPREGS+(24 * REGSZ)(a0)
-	sdc1	$f25, U_PCB_FPREGS+(25 * REGSZ)(a0)
-	sdc1	$f26, U_PCB_FPREGS+(26 * REGSZ)(a0)
-	sdc1	$f27, U_PCB_FPREGS+(27 * REGSZ)(a0)
-	sdc1	$f28, U_PCB_FPREGS+(28 * REGSZ)(a0)
-	sdc1	$f29, U_PCB_FPREGS+(29 * REGSZ)(a0)
-	sdc1	$f30, U_PCB_FPREGS+(30 * REGSZ)(a0)
-	sdc1	$f31, U_PCB_FPREGS+(31 * REGSZ)(a0)
+	sdc1	$f0, PCB_FPREGS+(0 * REGSZ)(a0)
+	sdc1	$f1, PCB_FPREGS+(1 * REGSZ)(a0)
+	sdc1	$f2, PCB_FPREGS+(2 * REGSZ)(a0)
+	sdc1	$f3, PCB_FPREGS+(3 * REGSZ)(a0)
+	sdc1	$f4, PCB_FPREGS+(4 * REGSZ)(a0)
+	sdc1	$f5, PCB_FPREGS+(5 * REGSZ)(a0)
+	sdc1	$f6, PCB_FPREGS+(6 * REGSZ)(a0)
+	sdc1	$f7, PCB_FPREGS+(7 * REGSZ)(a0)
+	sdc1	$f8, PCB_FPREGS+(8 * REGSZ)(a0)
+	sdc1	$f9, PCB_FPREGS+(9 * REGSZ)(a0)
+	sdc1	$f10, PCB_FPREGS+(10 * REGSZ)(a0)
+	sdc1	$f11, PCB_FPREGS+(11 * REGSZ)(a0)
+	sdc1	$f12, PCB_FPREGS+(12 * REGSZ)(a0)
+	sdc1	$f13, PCB_FPREGS+(13 * REGSZ)(a0)
+	sdc1	$f14, PCB_FPREGS+(14 * REGSZ)(a0)
+	sdc1	$f15, PCB_FPREGS+(15 * REGSZ)(a0)
+	sdc1	$f16, PCB_FPREGS+(16 * REGSZ)(a0)
+	sdc1	$f17, PCB_FPREGS+(17 * REGSZ)(a0)
+	sdc1	$f18, PCB_FPREGS+(18 * REGSZ)(a0)
+	sdc1	$f19, PCB_FPREGS+(19 * REGSZ)(a0)
+	sdc1	$f20, PCB_FPREGS+(20 * REGSZ)(a0)
+	sdc1	$f21, PCB_FPREGS+(21 * REGSZ)(a0)
+	sdc1	$f22, PCB_FPREGS+(22 * REGSZ)(a0)
+	sdc1	$f23, PCB_FPREGS+(23 * REGSZ)(a0)
+	sdc1	$f24, PCB_FPREGS+(24 * REGSZ)(a0)
+	sdc1	$f25, PCB_FPREGS+(25 * REGSZ)(a0)
+	sdc1	$f26, PCB_FPREGS+(26 * REGSZ)(a0)
+	sdc1	$f27, PCB_FPREGS+(27 * REGSZ)(a0)
+	sdc1	$f28, PCB_FPREGS+(28 * REGSZ)(a0)
+	sdc1	$f29, PCB_FPREGS+(29 * REGSZ)(a0)
+	sdc1	$f30, PCB_FPREGS+(30 * REGSZ)(a0)
+	sdc1	$f31, PCB_FPREGS+(31 * REGSZ)(a0)
 
 1:
 /*
  *  Restore the floating point registers.
  */
-	REG_L	t0, U_PCB_FPREGS+(32 * REGSZ)(a1)	# get status register
-	ldc1	$f0, U_PCB_FPREGS+(0 * REGSZ)(a1)
-	ldc1	$f1, U_PCB_FPREGS+(1 * REGSZ)(a1)
-	ldc1	$f2, U_PCB_FPREGS+(2 * REGSZ)(a1)
-	ldc1	$f3, U_PCB_FPREGS+(3 * REGSZ)(a1)
-	ldc1	$f4, U_PCB_FPREGS+(4 * REGSZ)(a1)
-	ldc1	$f5, U_PCB_FPREGS+(5 * REGSZ)(a1)
-	ldc1	$f6, U_PCB_FPREGS+(6 * REGSZ)(a1)
-	ldc1	$f7, U_PCB_FPREGS+(7 * REGSZ)(a1)
-	ldc1	$f8, U_PCB_FPREGS+(8 * REGSZ)(a1)
-	ldc1	$f9, U_PCB_FPREGS+(9 * REGSZ)(a1)
-	ldc1	$f10, U_PCB_FPREGS+(10 * REGSZ)(a1)
-	ldc1	$f11, U_PCB_FPREGS+(11 * REGSZ)(a1)
-	ldc1	$f12, U_PCB_FPREGS+(12 * REGSZ)(a1)
-	ldc1	$f13, U_PCB_FPREGS+(13 * REGSZ)(a1)
-	ldc1	$f14, U_PCB_FPREGS+(14 * REGSZ)(a1)
-	ldc1	$f15, U_PCB_FPREGS+(15 * REGSZ)(a1)
-	ldc1	$f16, U_PCB_FPREGS+(16 * REGSZ)(a1)
-	ldc1	$f17, U_PCB_FPREGS+(17 * REGSZ)(a1)
-	ldc1	$f18, U_PCB_FPREGS+(18 * REGSZ)(a1)
-	ldc1	$f19, U_PCB_FPREGS+(19 * REGSZ)(a1)
-	ldc1	$f20, U_PCB_FPREGS+(20 * REGSZ)(a1)
-	ldc1	$f21, U_PCB_FPREGS+(21 * REGSZ)(a1)
-	ldc1	$f22, U_PCB_FPREGS+(22 * REGSZ)(a1)
-	ldc1	$f23, U_PCB_FPREGS+(23 * REGSZ)(a1)
-	ldc1	$f24, U_PCB_FPREGS+(24 * REGSZ)(a1)
-	ldc1	$f25, U_PCB_FPREGS+(25 * REGSZ)(a1)
-	ldc1	$f26, U_PCB_FPREGS+(26 * REGSZ)(a1)
-	ldc1	$f27, U_PCB_FPREGS+(27 * REGSZ)(a1)
-	ldc1	$f28, U_PCB_FPREGS+(28 * REGSZ)(a1)
-	ldc1	$f29, U_PCB_FPREGS+(29 * REGSZ)(a1)
-	ldc1	$f30, U_PCB_FPREGS+(30 * REGSZ)(a1)
-	ldc1	$f31, U_PCB_FPREGS+(31 * REGSZ)(a1)
+	REG_L	t0, PCB_FPREGS+(32 * REGSZ)(a1)	# get status register
+	ldc1	$f0, PCB_FPREGS+(0 * REGSZ)(a1)
+	ldc1	$f1, PCB_FPREGS+(1 * REGSZ)(a1)
+	ldc1	$f2, PCB_FPREGS+(2 * REGSZ)(a1)
+	ldc1	$f3, PCB_FPREGS+(3 * REGSZ)(a1)
+	ldc1	$f4, PCB_FPREGS+(4 * REGSZ)(a1)
+	ldc1	$f5, PCB_FPREGS+(5 * REGSZ)(a1)
+	ldc1	$f6, PCB_FPREGS+(6 * REGSZ)(a1)
+	ldc1	$f7, PCB_FPREGS+(7 * REGSZ)(a1)
+	ldc1	$f8, PCB_FPREGS+(8 * REGSZ)(a1)
+	ldc1	$f9, PCB_FPREGS+(9 * REGSZ)(a1)
+	ldc1	$f10, PCB_FPREGS+(10 * REGSZ)(a1)
+	ldc1	$f11, PCB_FPREGS+(11 * REGSZ)(a1)
+	ldc1	$f12, PCB_FPREGS+(12 * REGSZ)(a1)
+	ldc1	$f13, PCB_FPREGS+(13 * REGSZ)(a1)
+	ldc1	$f14, PCB_FPREGS+(14 * REGSZ)(a1)
+	ldc1	$f15, PCB_FPREGS+(15 * REGSZ)(a1)
+	ldc1	$f16, PCB_FPREGS+(16 * REGSZ)(a1)
+	ldc1	$f17, PCB_FPREGS+(17 * REGSZ)(a1)
+	ldc1	$f18, PCB_FPREGS+(18 * REGSZ)(a1)
+	ldc1	$f19, PCB_FPREGS+(19 * REGSZ)(a1)
+	ldc1	$f20, PCB_FPREGS+(20 * REGSZ)(a1)
+	ldc1	$f21, PCB_FPREGS+(21 * REGSZ)(a1)
+	ldc1	$f22, PCB_FPREGS+(22 * REGSZ)(a1)
+	ldc1	$f23, PCB_FPREGS+(23 * REGSZ)(a1)
+	ldc1	$f24, PCB_FPREGS+(24 * REGSZ)(a1)
+	ldc1	$f25, PCB_FPREGS+(25 * REGSZ)(a1)
+	ldc1	$f26, PCB_FPREGS+(26 * REGSZ)(a1)
+	ldc1	$f27, PCB_FPREGS+(27 * REGSZ)(a1)
+	ldc1	$f28, PCB_FPREGS+(28 * REGSZ)(a1)
+	ldc1	$f29, PCB_FPREGS+(29 * REGSZ)(a1)
+	ldc1	$f30, PCB_FPREGS+(30 * REGSZ)(a1)
+	ldc1	$f31, PCB_FPREGS+(31 * REGSZ)(a1)
 
 	and	t0, t0, ~FPC_EXCEPTION_BITS
 	ctc1	t0, FPC_CSR
@@ -180,83 +180,83 @@ LEAF(MipsSwitchFPState16, 0)
 	cfc1	t0, FPC_CSR		# stall til FP done
 	cfc1	t0, FPC_CSR		# now get status
 	li	t3, ~SR_COP_1_BIT
-	REG_L	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# get CPU status register
-	REG_S	t0, U_PCB_FPREGS+(32 * REGSZ)(a0)	# save FP status
+	REG_L	t2, PCB_REGS+(PS * REGSZ)(a0)	# get CPU status register
+	REG_S	t0, PCB_FPREGS+(32 * REGSZ)(a0)	# save FP status
 	and	t2, t2, t3			# clear COP_1 enable bit
-	REG_S	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# save new status register
+	REG_S	t2, PCB_REGS+(PS * REGSZ)(a0)	# save new status register
 /*
  * Save the floating point registers.
  */
-	swc1	$f0, U_PCB_FPREGS+(0 * REGSZ)(a0)
-	swc1	$f1, U_PCB_FPREGS+(1 * REGSZ)(a0)
-	swc1	$f2, U_PCB_FPREGS+(2 * REGSZ)(a0)
-	swc1	$f3, U_PCB_FPREGS+(3 * REGSZ)(a0)
-	swc1	$f4, U_PCB_FPREGS+(4 * REGSZ)(a0)
-	swc1	$f5, U_PCB_FPREGS+(5 * REGSZ)(a0)
-	swc1	$f6, U_PCB_FPREGS+(6 * REGSZ)(a0)
-	swc1	$f7, U_PCB_FPREGS+(7 * REGSZ)(a0)
-	swc1	$f8, U_PCB_FPREGS+(8 * REGSZ)(a0)
-	swc1	$f9, U_PCB_FPREGS+(9 * REGSZ)(a0)
-	swc1	$f10, U_PCB_FPREGS+(10 * REGSZ)(a0)
-	swc1	$f11, U_PCB_FPREGS+(11 * REGSZ)(a0)
-	swc1	$f12, U_PCB_FPREGS+(12 * REGSZ)(a0)
-	swc1	$f13, U_PCB_FPREGS+(13 * REGSZ)(a0)
-	swc1	$f14, U_PCB_FPREGS+(14 * REGSZ)(a0)
-	swc1	$f15, U_PCB_FPREGS+(15 * REGSZ)(a0)
-	swc1	$f16, U_PCB_FPREGS+(16 * REGSZ)(a0)
-	swc1	$f17, U_PCB_FPREGS+(17 * REGSZ)(a0)
-	swc1	$f18, U_PCB_FPREGS+(18 * REGSZ)(a0)
-	swc1	$f19, U_PCB_FPREGS+(19 * REGSZ)(a0)
-	swc1	$f20, U_PCB_FPREGS+(20 * REGSZ)(a0)
-	swc1	$f21, U_PCB_FPREGS+(21 * REGSZ)(a0)
-	swc1	$f22, U_PCB_FPREGS+(22 * REGSZ)(a0)
-	swc1	$f23, U_PCB_FPREGS+(23 * REGSZ)(a0)
-	swc1	$f24, U_PCB_FPREGS+(24 * REGSZ)(a0)
-	swc1	$f25, U_PCB_FPREGS+(25 * REGSZ)(a0)
-	swc1	$f26, U_PCB_FPREGS+(26 * REGSZ)(a0)
-	swc1	$f27, U_PCB_FPREGS+(27 * REGSZ)(a0)
-	swc1	$f28, U_PCB_FPREGS+(28 * REGSZ)(a0)
-	swc1	$f29, U_PCB_FPREGS+(29 * REGSZ)(a0)
-	swc1	$f30, U_PCB_FPREGS+(30 * REGSZ)(a0)
-	swc1	$f31, U_PCB_FPREGS+(31 * REGSZ)(a0)
+	swc1	$f0, PCB_FPREGS+(0 * REGSZ)(a0)
+	swc1	$f1, PCB_FPREGS+(1 * REGSZ)(a0)
+	swc1	$f2, PCB_FPREGS+(2 * REGSZ)(a0)
+	swc1	$f3, PCB_FPREGS+(3 * REGSZ)(a0)
+	swc1	$f4, PCB_FPREGS+(4 * REGSZ)(a0)
+	swc1	$f5, PCB_FPREGS+(5 * REGSZ)(a0)
+	swc1	$f6, PCB_FPREGS+(6 * REGSZ)(a0)
+	swc1	$f7, PCB_FPREGS+(7 * REGSZ)(a0)
+	swc1	$f8, PCB_FPREGS+(8 * REGSZ)(a0)
+	swc1	$f9, PCB_FPREGS+(9 * REGSZ)(a0)
+	swc1	$f10, PCB_FPREGS+(10 * REGSZ)(a0)
+	swc1	$f11, PCB_FPREGS+(11 * REGSZ)(a0)
+	swc1	$f12, PCB_FPREGS+(12 * REGSZ)(a0)
+	swc1	$f13, PCB_FPREGS+(13 * REGSZ)(a0)
+	swc1	$f14, PCB_FPREGS+(14 * REGSZ)(a0)
+	swc1	$f15, PCB_FPREGS+(15 * REGSZ)(a0)
+	swc1	$f16, PCB_FPREGS+(16 * REGSZ)(a0)
+	swc1	$f17, PCB_FPREGS+(17 * REGSZ)(a0)
+	swc1	$f18, PCB_FPREGS+(18 * REGSZ)(a0)
+	swc1	$f19, PCB_FPREGS+(19 * REGSZ)(a0)
+	swc1	$f20, PCB_FPREGS+(20 * REGSZ)(a0)
+	swc1	$f21, PCB_FPREGS+(21 * REGSZ)(a0)
+	swc1	$f22, PCB_FPREGS+(22 * REGSZ)(a0)
+	swc1	$f23, PCB_FPREGS+(23 * REGSZ)(a0)
+	swc1	$f24, PCB_FPREGS+(24 * REGSZ)(a0)
+	swc1	$f25, PCB_FPREGS+(25 * REGSZ)(a0)
+	swc1	$f26, PCB_FPREGS+(26 * REGSZ)(a0)
+	swc1	$f27, PCB_FPREGS+(27 * REGSZ)(a0)
+	swc1	$f28, PCB_FPREGS+(28 * REGSZ)(a0)
+	swc1	$f29, PCB_FPREGS+(29 * REGSZ)(a0)
+	swc1	$f30, PCB_FPREGS+(30 * REGSZ)(a0)
+	swc1	$f31, PCB_FPREGS+(31 * REGSZ)(a0)
 
 1:
 /*
  *  Restore the floating point registers.
  */
-	REG_L	t0, U_PCB_FPREGS+(32 * REGSZ)(a1)	# get status register
-	lwc1	$f0, U_PCB_FPREGS+(0 * REGSZ)(a1)
-	lwc1	$f1, U_PCB_FPREGS+(1 * REGSZ)(a1)
-	lwc1	$f2, U_PCB_FPREGS+(2 * REGSZ)(a1)
-	lwc1	$f3, U_PCB_FPREGS+(3 * REGSZ)(a1)
-	lwc1	$f4, U_PCB_FPREGS+(4 * REGSZ)(a1)
-	lwc1	$f5, U_PCB_FPREGS+(5 * REGSZ)(a1)
-	lwc1	$f6, U_PCB_FPREGS+(6 * REGSZ)(a1)
-	lwc1	$f7, U_PCB_FPREGS+(7 * REGSZ)(a1)
-	lwc1	$f8, U_PCB_FPREGS+(8 * REGSZ)(a1)
-	lwc1	$f9, U_PCB_FPREGS+(9 * REGSZ)(a1)
-	lwc1	$f10, U_PCB_FPREGS+(10 * REGSZ)(a1)
-	lwc1	$f11, U_PCB_FPREGS+(11 * REGSZ)(a1)
-	lwc1	$f12, U_PCB_FPREGS+(12 * REGSZ)(a1)
-	lwc1	$f13, U_PCB_FPREGS+(13 * REGSZ)(a1)
-	lwc1	$f14, U_PCB_FPREGS+(14 * REGSZ)(a1)
-	lwc1	$f15, U_PCB_FPREGS+(15 * REGSZ)(a1)
-	lwc1	$f16, U_PCB_FPREGS+(16 * REGSZ)(a1)
-	lwc1	$f17, U_PCB_FPREGS+(17 * REGSZ)(a1)
-	lwc1	$f18, U_PCB_FPREGS+(18 * REGSZ)(a1)
-	lwc1	$f19, U_PCB_FPREGS+(19 * REGSZ)(a1)
-	lwc1	$f20, U_PCB_FPREGS+(20 * REGSZ)(a1)
-	lwc1	$f21, U_PCB_FPREGS+(21 * REGSZ)(a1)
-	lwc1	$f22, U_PCB_FPREGS+(22 * REGSZ)(a1)
-	lwc1	$f23, U_PCB_FPREGS+(23 * REGSZ)(a1)
-	lwc1	$f24, U_PCB_FPREGS+(24 * REGSZ)(a1)
-	lwc1	$f25, U_PCB_FPREGS+(25 * REGSZ)(a1)
-	lwc1	$f26, U_PCB_FPREGS+(26 * REGSZ)(a1)
-	lwc1	$f27, U_PCB_FPREGS+(27 * REGSZ)(a1)
-	lwc1	$f28, U_PCB_FPREGS+(28 * REGSZ)(a1)
-	lwc1	$f29, U_PCB_FPREGS+(29 * REGSZ)(a1)
-	lwc1	$f30, U_PCB_FPREGS+(30 * REGSZ)(a1)
-	lwc1	$f31, U_PCB_FPREGS+(31 * REGSZ)(a1)
+	REG_L	t0, PCB_FPREGS+(32 * REGSZ)(a1)	# get status register
+	lwc1	$f0, PCB_FPREGS+(0 * REGSZ)(a1)
+	lwc1	$f1, PCB_FPREGS+(1 * REGSZ)(a1)
+	lwc1	$f2, PCB_FPREGS+(2 * REGSZ)(a1)
+	lwc1	$f3, PCB_FPREGS+(3 * REGSZ)(a1)
+	lwc1	$f4, PCB_FPREGS+(4 * REGSZ)(a1)
+	lwc1	$f5, PCB_FPREGS+(5 * REGSZ)(a1)
+	lwc1	$f6, PCB_FPREGS+(6 * REGSZ)(a1)
+	lwc1	$f7, PCB_FPREGS+(7 * REGSZ)(a1)
+	lwc1	$f8, PCB_FPREGS+(8 * REGSZ)(a1)
+	lwc1	$f9, PCB_FPREGS+(9 * REGSZ)(a1)
+	lwc1	$f10, PCB_FPREGS+(10 * REGSZ)(a1)
+	lwc1	$f11, PCB_FPREGS+(11 * REGSZ)(a1)
+	lwc1	$f12, PCB_FPREGS+(12 * REGSZ)(a1)
+	lwc1	$f13, PCB_FPREGS+(13 * REGSZ)(a1)
+	lwc1	$f14, PCB_FPREGS+(14 * REGSZ)(a1)
+	lwc1	$f15, PCB_FPREGS+(15 * REGSZ)(a1)
+	lwc1	$f16, PCB_FPREGS+(16 * REGSZ)(a1)
+	lwc1	$f17, PCB_FPREGS+(17 * REGSZ)(a1)
+	lwc1	$f18, PCB_FPREGS+(18 * REGSZ)(a1)
+	lwc1	$f19, PCB_FPREGS+(19 * REGSZ)(a1)
+	lwc1	$f20, PCB_FPREGS+(20 * REGSZ)(a1)
+	lwc1	$f21, PCB_FPREGS+(21 * REGSZ)(a1)
+	lwc1	$f22, PCB_FPREGS+(22 * REGSZ)(a1)
+	lwc1	$f23, PCB_FPREGS+(23 * REGSZ)(a1)
+	lwc1	$f24, PCB_FPREGS+(24 * REGSZ)(a1)
+	lwc1	$f25, PCB_FPREGS+(25 * REGSZ)(a1)
+	lwc1	$f26, PCB_FPREGS+(26 * REGSZ)(a1)
+	lwc1	$f27, PCB_FPREGS+(27 * REGSZ)(a1)
+	lwc1	$f28, PCB_FPREGS+(28 * REGSZ)(a1)
+	lwc1	$f29, PCB_FPREGS+(29 * REGSZ)(a1)
+	lwc1	$f30, PCB_FPREGS+(30 * REGSZ)(a1)
+	lwc1	$f31, PCB_FPREGS+(31 * REGSZ)(a1)
 
 	and	t0, t0, ~FPC_EXCEPTION_BITS
 	ctc1	t0, FPC_CSR
@@ -296,48 +296,48 @@ LEAF(MipsSaveCurFPState, 0)
  * First read out the status register to make sure that all FP operations
  * have completed.
  */
-	REG_L	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# get CPU status register
+	REG_L	t2, PCB_REGS+(PS * REGSZ)(a0)	# get CPU status register
 	li	t3, ~SR_COP_1_BIT
 	and	t2, t2, t3			# clear COP_1 enable bit
 	cfc1	t0, FPC_CSR		# stall til FP done
 	cfc1	t0, FPC_CSR		# now get status
-	REG_S	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# save new status register
-	REG_S	t0, U_PCB_FPREGS+(32 * REGSZ)(a0)	# save FP status
+	REG_S	t2, PCB_REGS+(PS * REGSZ)(a0)	# save new status register
+	REG_S	t0, PCB_FPREGS+(32 * REGSZ)(a0)	# save FP status
 /*
  * Save the floating point registers.
  */
-	sdc1	$f0, U_PCB_FPREGS+(0 * REGSZ)(a0)
-	sdc1	$f1, U_PCB_FPREGS+(1 * REGSZ)(a0)
-	sdc1	$f2, U_PCB_FPREGS+(2 * REGSZ)(a0)
-	sdc1	$f3, U_PCB_FPREGS+(3 * REGSZ)(a0)
-	sdc1	$f4, U_PCB_FPREGS+(4 * REGSZ)(a0)
-	sdc1	$f5, U_PCB_FPREGS+(5 * REGSZ)(a0)
-	sdc1	$f6, U_PCB_FPREGS+(6 * REGSZ)(a0)
-	sdc1	$f7, U_PCB_FPREGS+(7 * REGSZ)(a0)
-	sdc1	$f8, U_PCB_FPREGS+(8 * REGSZ)(a0)
-	sdc1	$f9, U_PCB_FPREGS+(9 * REGSZ)(a0)
-	sdc1	$f10, U_PCB_FPREGS+(10 * REGSZ)(a0)
-	sdc1	$f11, U_PCB_FPREGS+(11 * REGSZ)(a0)
-	sdc1	$f12, U_PCB_FPREGS+(12 * REGSZ)(a0)
-	sdc1	$f13, U_PCB_FPREGS+(13 * REGSZ)(a0)
-	sdc1	$f14, U_PCB_FPREGS+(14 * REGSZ)(a0)
-	sdc1	$f15, U_PCB_FPREGS+(15 * REGSZ)(a0)
-	sdc1	$f16, U_PCB_FPREGS+(16 * REGSZ)(a0)
-	sdc1	$f17, U_PCB_FPREGS+(17 * REGSZ)(a0)
-	sdc1	$f18, U_PCB_FPREGS+(18 * REGSZ)(a0)
-	sdc1	$f19, U_PCB_FPREGS+(19 * REGSZ)(a0)
-	sdc1	$f20, U_PCB_FPREGS+(20 * REGSZ)(a0)
-	sdc1	$f21, U_PCB_FPREGS+(21 * REGSZ)(a0)
-	sdc1	$f22, U_PCB_FPREGS+(22 * REGSZ)(a0)
-	sdc1	$f23, U_PCB_FPREGS+(23 * REGSZ)(a0)
-	sdc1	$f24, U_PCB_FPREGS+(24 * REGSZ)(a0)
-	sdc1	$f25, U_PCB_FPREGS+(25 * REGSZ)(a0)
-	sdc1	$f26, U_PCB_FPREGS+(26 * REGSZ)(a0)
-	sdc1	$f27, U_PCB_FPREGS+(27 * REGSZ)(a0)
-	sdc1	$f28, U_PCB_FPREGS+(28 * REGSZ)(a0)
-	sdc1	$f29, U_PCB_FPREGS+(29 * REGSZ)(a0)
-	sdc1	$f30, U_PCB_FPREGS+(30 * REGSZ)(a0)
-	sdc1	$f31, U_PCB_FPREGS+(31 * REGSZ)(a0)
+	sdc1	$f0, PCB_FPREGS+(0 * REGSZ)(a0)
+	sdc1	$f1, PCB_FPREGS+(1 * REGSZ)(a0)
+	sdc1	$f2, PCB_FPREGS+(2 * REGSZ)(a0)
+	sdc1	$f3, PCB_FPREGS+(3 * REGSZ)(a0)
+	sdc1	$f4, PCB_FPREGS+(4 * REGSZ)(a0)
+	sdc1	$f5, PCB_FPREGS+(5 * REGSZ)(a0)
+	sdc1	$f6, PCB_FPREGS+(6 * REGSZ)(a0)
+	sdc1	$f7, PCB_FPREGS+(7 * REGSZ)(a0)
+	sdc1	$f8, PCB_FPREGS+(8 * REGSZ)(a0)
+	sdc1	$f9, PCB_FPREGS+(9 * REGSZ)(a0)
+	sdc1	$f10, PCB_FPREGS+(10 * REGSZ)(a0)
+	sdc1	$f11, PCB_FPREGS+(11 * REGSZ)(a0)
+	sdc1	$f12, PCB_FPREGS+(12 * REGSZ)(a0)
+	sdc1	$f13, PCB_FPREGS+(13 * REGSZ)(a0)
+	sdc1	$f14, PCB_FPREGS+(14 * REGSZ)(a0)
+	sdc1	$f15, PCB_FPREGS+(15 * REGSZ)(a0)
+	sdc1	$f16, PCB_FPREGS+(16 * REGSZ)(a0)
+	sdc1	$f17, PCB_FPREGS+(17 * REGSZ)(a0)
+	sdc1	$f18, PCB_FPREGS+(18 * REGSZ)(a0)
+	sdc1	$f19, PCB_FPREGS+(19 * REGSZ)(a0)
+	sdc1	$f20, PCB_FPREGS+(20 * REGSZ)(a0)
+	sdc1	$f21, PCB_FPREGS+(21 * REGSZ)(a0)
+	sdc1	$f22, PCB_FPREGS+(22 * REGSZ)(a0)
+	sdc1	$f23, PCB_FPREGS+(23 * REGSZ)(a0)
+	sdc1	$f24, PCB_FPREGS+(24 * REGSZ)(a0)
+	sdc1	$f25, PCB_FPREGS+(25 * REGSZ)(a0)
+	sdc1	$f26, PCB_FPREGS+(26 * REGSZ)(a0)
+	sdc1	$f27, PCB_FPREGS+(27 * REGSZ)(a0)
+	sdc1	$f28, PCB_FPREGS+(28 * REGSZ)(a0)
+	sdc1	$f29, PCB_FPREGS+(29 * REGSZ)(a0)
+	sdc1	$f30, PCB_FPREGS+(30 * REGSZ)(a0)
+	sdc1	$f31, PCB_FPREGS+(31 * REGSZ)(a0)
 
 	mtc0	t1, COP_0_STATUS_REG	# Restore the status register.
 	ITLBNOPFIX
@@ -356,48 +356,48 @@ LEAF(MipsSaveCurFPState16, 0)
  * First read out the status register to make sure that all FP operations
  * have completed.
  */
-	REG_L	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# get CPU status register
+	REG_L	t2, PCB_REGS+(PS * REGSZ)(a0)	# get CPU status register
 	li	t3, ~SR_COP_1_BIT
 	and	t2, t2, t3			# clear COP_1 enable bit
 	cfc1	t0, FPC_CSR		# stall til FP done
 	cfc1	t0, FPC_CSR		# now get status
-	REG_S	t2, U_PCB_REGS+(PS * REGSZ)(a0)	# save new status register
-	REG_S	t0, U_PCB_FPREGS+(32 * REGSZ)(a0)	# save FP status
+	REG_S	t2, PCB_REGS+(PS * REGSZ)(a0)	# save new status register
+	REG_S	t0, PCB_FPREGS+(32 * REGSZ)(a0)	# save FP status
 /*
  * Save the floating point registers.
  */
-	swc1	$f0, U_PCB_FPREGS+(0 * REGSZ)(a0)
-	swc1	$f1, U_PCB_FPREGS+(1 * REGSZ)(a0)
-	swc1	$f2, U_PCB_FPREGS+(2 * REGSZ)(a0)
-	swc1	$f3, U_PCB_FPREGS+(3 * REGSZ)(a0)
-	swc1	$f4, U_PCB_FPREGS+(4 * REGSZ)(a0)
-	swc1	$f5, U_PCB_FPREGS+(5 * REGSZ)(a0)
-	swc1	$f6, U_PCB_FPREGS+(6 * REGSZ)(a0)
-	swc1	$f7, U_PCB_FPREGS+(7 * REGSZ)(a0)
-	swc1	$f8, U_PCB_FPREGS+(8 * REGSZ)(a0)
-	swc1	$f9, U_PCB_FPREGS+(9 * REGSZ)(a0)
-	swc1	$f10, U_PCB_FPREGS+(10 * REGSZ)(a0)
-	swc1	$f11, U_PCB_FPREGS+(11 * REGSZ)(a0)
-	swc1	$f12, U_PCB_FPREGS+(12 * REGSZ)(a0)
-	swc1	$f13, U_PCB_FPREGS+(13 * REGSZ)(a0)
-	swc1	$f14, U_PCB_FPREGS+(14 * REGSZ)(a0)
-	swc1	$f15, U_PCB_FPREGS+(15 * REGSZ)(a0)
-	swc1	$f16, U_PCB_FPREGS+(16 * REGSZ)(a0)
-	swc1	$f17, U_PCB_FPREGS+(17 * REGSZ)(a0)
-	swc1	$f18, U_PCB_FPREGS+(18 * REGSZ)(a0)
-	swc1	$f19, U_PCB_FPREGS+(19 * REGSZ)(a0)
-	swc1	$f20, U_PCB_FPREGS+(20 * REGSZ)(a0)
-	swc1	$f21, U_PCB_FPREGS+(21 * REGSZ)(a0)
-	swc1	$f22, U_PCB_FPREGS+(22 * REGSZ)(a0)
-	swc1	$f23, U_PCB_FPREGS+(23 * REGSZ)(a0)
-	swc1	$f24, U_PCB_FPREGS+(24 * REGSZ)(a0)
-	swc1	$f25, U_PCB_FPREGS+(25 * REGSZ)(a0)
-	swc1	$f26, U_PCB_FPREGS+(26 * REGSZ)(a0)
-	swc1	$f27, U_PCB_FPREGS+(27 * REGSZ)(a0)
-	swc1	$f28, U_PCB_FPREGS+(28 * REGSZ)(a0)
-	swc1	$f29, U_PCB_FPREGS+(29 * REGSZ)(a0)
-	swc1	$f30, U_PCB_FPREGS+(30 * REGSZ)(a0)
-	swc1	$f31, U_PCB_FPREGS+(31 * REGSZ)(a0)
+	swc1	$f0, PCB_FPREGS+(0 * REGSZ)(a0)
+	swc1	$f1, PCB_FPREGS+(1 * REGSZ)(a0)
+	swc1	$f2, PCB_FPREGS+(2 * REGSZ)(a0)
+	swc1	$f3, PCB_FPREGS+(3 * REGSZ)(a0)
+	swc1	$f4, PCB_FPREGS+(4 * REGSZ)(a0)
+	swc1	$f5, PCB_FPREGS+(5 * REGSZ)(a0)
+	swc1	$f6, PCB_FPREGS+(6 * REGSZ)(a0)
+	swc1	$f7, PCB_FPREGS+(7 * REGSZ)(a0)
+	swc1	$f8, PCB_FPREGS+(8 * REGSZ)(a0)
+	swc1	$f9, PCB_FPREGS+(9 * REGSZ)(a0)
+	swc1	$f10, PCB_FPREGS+(10 * REGSZ)(a0)
+	swc1	$f11, PCB_FPREGS+(11 * REGSZ)(a0)
+	swc1	$f12, PCB_FPREGS+(12 * REGSZ)(a0)
+	swc1	$f13, PCB_FPREGS+(13 * REGSZ)(a0)
+	swc1	$f14, PCB_FPREGS+(14 * REGSZ)(a0)
+	swc1	$f15, PCB_FPREGS+(15 * REGSZ)(a0)
+	swc1	$f16, PCB_FPREGS+(16 * REGSZ)(a0)
+	swc1	$f17, PCB_FPREGS+(17 * REGSZ)(a0)
+	swc1	$f18, PCB_FPREGS+(18 * REGSZ)(a0)
+	swc1	$f19, PCB_FPREGS+(19 * REGSZ)(a0)
+	swc1	$f20, PCB_FPREGS+(20 * REGSZ)(a0)
+	swc1	$f21, PCB_FPREGS+(21 * REGSZ)(a0)
+	swc1	$f22, PCB_FPREGS+(22 * REGSZ)(a0)
+	swc1	$f23, PCB_FPREGS+(23 * REGSZ)(a0)
+	swc1	$f24, PCB_FPREGS+(24 * REGSZ)(a0)
+	swc1	$f25, PCB_FPREGS+(25 * REGSZ)(a0)
+	swc1	$f26, PCB_FPREGS+(26 * REGSZ)(a0)
+	swc1	$f27, PCB_FPREGS+(27 * REGSZ)(a0)
+	swc1	$f28, PCB_FPREGS+(28 * REGSZ)(a0)
+	swc1	$f29, PCB_FPREGS+(29 * REGSZ)(a0)
+	swc1	$f30, PCB_FPREGS+(30 * REGSZ)(a0)
+	swc1	$f31, PCB_FPREGS+(31 * REGSZ)(a0)
 
 	mtc0	t1, COP_0_STATUS_REG	# Restore the status register.
 	ITLBNOPFIX
@@ -472,7 +472,7 @@ NON_LEAF(MipsFPTrap, FRAMESZ(CF_SZ), ra)
 	PTR_ADDU v0, a2, 4		# v0 = next pc
 2:
 	PTR_L	a3, curprocpaddr	# first arg is ptr to CPU regs
-	PTR_S	v0, U_PCB_REGS+(PC * REGSZ)(a3)	# save new pc
+	PTR_S	v0, PCB_REGS+(PC * REGSZ)(a3)	# save new pc
 /*
  * Check to see if the instruction to be emulated is a floating-point
  * instruction.
