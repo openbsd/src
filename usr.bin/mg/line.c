@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.35 2005/12/20 04:58:10 kjell Exp $	*/
+/*	$OpenBSD: line.c,v 1.36 2005/12/20 05:04:28 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -381,23 +381,24 @@ lnewline(void)
 }
 
 /*
- * This function deletes "n" bytes, starting at dot. It understands how to
- * deal with end of lines, etc.  It returns TRUE if all of the characters
- * were deleted, and FALSE if they were not (because dot ran into the end
- * of the buffer.  The "kflag" indicates either no insertion, or direction
- * of insertion into the kill buffer.
+ * This function deletes "n" bytes, starting at dot. (actually, n+1, as the
+ * newline is included) It understands how to deal with end of lines, etc.
+ * It returns TRUE if all of the characters were deleted, and FALSE if
+ * they were not (because dot ran into the end of the buffer).
+ * The "kflag" indicates either no insertion, or direction  of insertion
+ * into the kill buffer.
  */
 int
 ldelete(RSIZE n, int kflag)
 {
 	struct line	*dotp;
-	RSIZE	 chunk;
+	RSIZE		 chunk;
 	struct mgwin	*wp;
-	int	 doto;
-	char	*cp1, *cp2;
-	size_t	 len;
-	char	*sv;
-	int	 end;
+	int		 doto;
+	char		*cp1, *cp2;
+	size_t		 len;
+	char		*sv;
+	int		 end;
 
 	if (curbp->b_flag & BFREADONLY) {
 		ewprintf("Buffer is read only");

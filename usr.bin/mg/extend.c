@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.42 2005/12/13 06:01:27 kjell Exp $	*/
+/*	$OpenBSD: extend.c,v 1.43 2005/12/20 05:04:28 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -504,7 +504,7 @@ redefine_key(int f, int n)
 	char		 tmp[32], *bufp;
 	KEYMAP		*mp;
 
-	strlcpy(buf, "Define key map: ", sizeof(buf));
+	(void)strlcpy(buf, "Define key map: ", sizeof(buf));
 	if ((bufp = eread(buf, tmp, sizeof(tmp), EFNEW)) == NULL)
 		return (ABORT);
 	else if (bufp[0] == '\0')
@@ -514,7 +514,8 @@ redefine_key(int f, int n)
 		ewprintf("Unknown map %s", tmp);
 		return (FALSE);
 	}
-	strlcat(buf, "key: ", sizeof(buf));
+	if (strlcat(buf, "key: ", sizeof(buf)) >= sizeof(buf))
+		return (FALSE);
 
 	return (dobind(mp, buf, FALSE));
 }

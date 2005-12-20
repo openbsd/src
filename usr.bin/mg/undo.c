@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.37 2005/12/13 07:20:13 kjell Exp $ */
+/* $OpenBSD: undo.c,v 1.38 2005/12/20 05:04:28 kjell Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque <vincent@openbsd.org>
  * All rights reserved.
@@ -371,18 +371,18 @@ undo_dump(int f, int n)
 	    rec = LIST_NEXT(rec, next)) {
 		num++;
 		snprintf(buf, sizeof(buf),
-		    "Record %d =>\t %s at %d ", num,
+		    "%d:\t %s at %d ", num,
 		    (rec->type == DELETE) ? "DELETE":
 		    (rec->type == INSERT) ? "INSERT":
 		    (rec->type == BOUNDARY) ? "----" : "UNKNOWN",
 		    rec->pos);
 
 		if (rec->content) {
-			strlcat(buf, "\"", sizeof(buf));
+			(void)strlcat(buf, "\"", sizeof(buf));
 			snprintf(tmp, sizeof(tmp), "%.*s", rec->region.r_size,
 			    rec->content);
-			strlcat(buf, tmp, sizeof(buf));
-			strlcat(buf, "\"", sizeof(buf));
+			(void)strlcat(buf, tmp, sizeof(buf));
+			(void)strlcat(buf, "\"", sizeof(buf));
 		}
 		snprintf(tmp, sizeof(tmp), " [%d]", rec->region.r_size);
 		if (strlcat(buf, tmp, sizeof(buf)) >= sizeof(buf)) {

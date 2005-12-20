@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.34 2005/12/13 07:20:13 kjell Exp $	*/
+/*	$OpenBSD: dired.c,v 1.35 2005/12/20 05:04:28 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -561,7 +561,8 @@ d_makename(struct line *lp, char *fn, size_t len)
 	int	 i;
 	char	*p, *ep;
 
-	strlcpy(fn, curbp->b_fname, len);
+	if (strlcpy(fn, curbp->b_fname, len) >= len)
+		return (FALSE);
 	if ((p = lp->l_text) == NULL)
 		return (ABORT);
 	ep = lp->l_text + llength(lp);
@@ -576,7 +577,8 @@ d_makename(struct line *lp, char *fn, size_t len)
 		if (p == ep)
 			return (ABORT);
 	}
-	strlcat(fn, p, len);
+	if (strlcat(fn, p, len) >= len)
+		return (FALSE);
 	return ((lgetc(lp, 2) == 'd') ? TRUE : FALSE);
 }
 

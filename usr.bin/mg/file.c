@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.48 2005/12/13 06:01:27 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.49 2005/12/20 05:04:28 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -46,7 +46,8 @@ filevisit(int f, int n)
 	int	 status;
 
 	if (curbp->b_fname && curbp->b_fname[0] != '\0') {
-		strlcpy(fname, curbp->b_fname, sizeof(fname));
+		if (strlcpy(fname, curbp->b_fname, sizeof(fname)) >= sizeof(fname))
+			return (FALSE);
 		if ((slash = strrchr(fname, '/')) != NULL) {
 			*(slash + 1) = '\0';
 		}
@@ -91,7 +92,8 @@ filevisitalt(int f, int n)
 	int	 status;
 
 	if (curbp->b_fname && curbp->b_fname[0] != '\0') {
-		strlcpy(fname, curbp->b_fname, sizeof(fname));
+		if (strlcpy(fname, curbp->b_fname, sizeof(fname)) >= sizeof(fname))
+			return (FALSE);
 		if ((slash = strrchr(fname, '/')) != NULL) {
 			*(slash + 1) = '\0';
 		}
