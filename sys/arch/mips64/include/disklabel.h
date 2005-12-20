@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.2 2004/08/23 14:24:56 pefo Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.3 2005/12/20 06:57:02 miod Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.1 1995/02/13 23:07:34 cgd Exp $	*/
 
 /*
@@ -372,7 +372,7 @@ struct devparms {
         u_int16_t       dp_xgap2;
         u_int16_t       dp_xrgate;
         u_int16_t       dp_xwcont;
-} __attribute__((__packed__));
+} __packed;
 
 struct sgilabel {
 #define SGILABEL_MAGIC  0xbe5a941
@@ -393,7 +393,7 @@ struct sgilabel {
 	} partitions[MAXPARTITIONS];
 	int32_t         checksum;
 	int32_t         _pad;
-} __attribute__((__packed__));
+} __packed;
 
 #define SGI_PTYPE_VOLHDR        0
 #define SGI_PTYPE_RAW           3
