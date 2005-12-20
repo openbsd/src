@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.80 2005/12/10 20:27:45 joris Exp $	*/
+/*	$OpenBSD: proto.c,v 1.81 2005/12/20 18:17:01 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -444,19 +444,13 @@ cvs_req_getvalid(void)
 	    strlen(cvs_requests[0].req_str), (size_t)0);
 
 	for (i = 1; i < CVS_NBREQ; i++) {
-		if ((cvs_buf_putc(buf, ' ') < 0) ||
-		    (cvs_buf_append(buf, cvs_requests[i].req_str,
-		    strlen(cvs_requests[i].req_str)) < 0)) {
-			cvs_buf_free(buf);
-			return (NULL);
-		}
+		cvs_buf_putc(buf, ' ');
+		cvs_buf_append(buf, cvs_requests[i].req_str,
+		    strlen(cvs_requests[i].req_str));
 	}
 
 	/* NUL-terminate */
-	if (cvs_buf_putc(buf, '\0') < 0) {
-		cvs_buf_free(buf);
-		return (NULL);
-	}
+	cvs_buf_putc(buf, '\0');
 
 	len = cvs_buf_len(buf);
 	vrstr = (char *)xmalloc(len);
@@ -522,19 +516,13 @@ cvs_resp_getvalid(void)
 	    strlen(cvs_responses[0].resp_str), (size_t)0);
 
 	for (i = 1; i < CVS_NBRESP; i++) {
-		if ((cvs_buf_putc(buf, ' ') < 0) ||
-		    (cvs_buf_append(buf, cvs_responses[i].resp_str,
-		    strlen(cvs_responses[i].resp_str)) < 0)) {
-			cvs_buf_free(buf);
-			return (NULL);
-		}
+		cvs_buf_putc(buf, ' ');
+		cvs_buf_append(buf, cvs_responses[i].resp_str,
+		    strlen(cvs_responses[i].resp_str));
 	}
 
 	/* NUL-terminate */
-	if (cvs_buf_putc(buf, '\0') < 0) {
-		cvs_buf_free(buf);
-		return (NULL);
-	}
+	cvs_buf_putc(buf, '\0');
 
 	len = cvs_buf_len(buf);
 	vrstr = (char *)xmalloc(len);

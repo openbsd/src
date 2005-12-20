@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.64 2005/12/10 20:27:45 joris Exp $	*/
+/*	$OpenBSD: resp.c,v 1.65 2005/12/20 18:17:01 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -682,10 +682,7 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 
 	if ((fbuf = cvs_recvfile(root, &fmode)) == NULL)
 		return (-1);
-	if (cvs_buf_write(fbuf, path, fmode) < 0) {
-		cvs_buf_free(fbuf);
-		return (-1);
-	}
+	cvs_buf_write(fbuf, path, fmode);
 	cvs_buf_free(fbuf);
 
 	if (cvs_modtime != CVS_DATE_DMSEC) {

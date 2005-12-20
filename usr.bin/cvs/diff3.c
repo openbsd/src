@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.8 2005/12/10 20:27:45 joris Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.9 2005/12/20 18:17:01 xsa Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -71,7 +71,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff3.c,v 1.8 2005/12/10 20:27:45 joris Exp $";
+static const char rcsid[] = "$OpenBSD: diff3.c,v 1.9 2005/12/20 18:17:01 xsa Exp $";
 #endif /* not lint */
 
 #include <sys/queue.h>
@@ -197,16 +197,13 @@ cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)
 		goto out;
 
 	strlcpy(path1, "/tmp/diff1.XXXXXXXXXX", sizeof(path1));
-	if (cvs_buf_write_stmp(b1, path1, 0600) == -1)
-		goto out;
+	cvs_buf_write_stmp(b1, path1, 0600);
 
 	strlcpy(path2, "/tmp/diff2.XXXXXXXXXX", sizeof(path2));
-	if (cvs_buf_write_stmp(b2, path2, 0600) == -1)
-		goto out;
+	cvs_buf_write_stmp(b2, path2, 0600);
 
 	strlcpy(path3, "/tmp/diff3.XXXXXXXXXX", sizeof(path3));
-	if (cvs_buf_write_stmp(b3, path3, 0600) == -1)
-		goto out;
+	cvs_buf_write_stmp(b3, path3, 0600);
 
 	cvs_buf_free(b2);
 	b2 = NULL;
@@ -215,15 +212,13 @@ cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)
 	cvs_diffreg(path2, path3, d2);
 
 	strlcpy(dp13, "/tmp/d13.XXXXXXXXXX", sizeof(dp13));
-	if (cvs_buf_write_stmp(d1, dp13, 0600) < 0)
-		goto out;
+	cvs_buf_write_stmp(d1, dp13, 0600);
 
 	cvs_buf_free(d1);
 	d1 = NULL;
 
 	strlcpy(dp23, "/tmp/d23.XXXXXXXXXX", sizeof(dp23));
-	if (cvs_buf_write_stmp(d2, dp23, 0600) < 0)
-		goto out;
+	cvs_buf_write_stmp(d2, dp23, 0600);
 
 	cvs_buf_free(d2);
 	d2 = NULL;
@@ -243,17 +238,8 @@ cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)
 		goto out;
 	}
 
-	if (cvs_buf_putc(diffb, '\0') < 0) {
-		cvs_buf_free(diffb);
-		diffb = NULL;
-		goto out;
-	}
-
-	if (cvs_buf_putc(b1, '\0') < 0) {
-		cvs_buf_free(diffb);
-		diffb = NULL;
-		goto out;
-	}
+	cvs_buf_putc(diffb, '\0');
+	cvs_buf_putc(b1, '\0');
 
 	patch = cvs_buf_release(diffb);
 	data = cvs_buf_release(b1);

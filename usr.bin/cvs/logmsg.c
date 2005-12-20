@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.22 2005/12/10 20:27:45 joris Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.23 2005/12/20 18:17:01 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -141,10 +141,7 @@ cvs_logmsg_open(const char *path)
 	}
 	(void)fclose(fp);
 
-	if (cvs_buf_putc(bp, '\0') < 0) {
-		cvs_buf_free(bp);
-		return (NULL);
-	}
+	cvs_buf_putc(bp, '\0');
 
 	msg = (char *)cvs_buf_release(bp);
 

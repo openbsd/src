@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.113 2005/12/20 16:55:21 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.114 2005/12/20 18:17:01 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1257,10 +1257,8 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 				return (NULL);
 			}
 
-			if (cvs_buf_putc(rbuf, '\0') < 0) {
-				cvs_buf_free(rbuf);
-				return (NULL);
-			}
+			cvs_buf_putc(rbuf, '\0');
+
 			bp = cvs_buf_release(rbuf);
 			rbuf = cvs_patchfile((char *)bp, (char *)rdp->rd_text,
 			    rcs_patch_lines);
@@ -1284,10 +1282,7 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 		if ((rdp = rcs_findrev(rfp, rev)) == NULL)
 			return (rbuf);
 
-		if (cvs_buf_putc(rbuf, '\0') < 0) {
-			cvs_buf_free(dbuf);
-			return (rbuf);
-		}
+		cvs_buf_putc(rbuf, '\0');
 
 		bp = cvs_buf_release(rbuf);
 		if ((lines = cvs_splitlines((char *)bp)) != NULL) {
@@ -2929,12 +2924,7 @@ cvs_checkout_rev(RCSFILE *rf, RCSNUM *rev, CVSFILE *cf, char *fpath,
 			/* XXX move the old file when merging */
 		case CHECKOUT_REV_UPDATED:
 		case CHECKOUT_REV_CREATED:
-			if (cvs_buf_write(bp, fpath, cf->cf_mode) < 0) {
-				cvs_log(LP_ERR, "failed to update file '%s'",
-				    fpath);
-				goto out;
-			}
-
+			cvs_buf_write(bp, fpath, cf->cf_mode);
 			/*
 			 * correct the time first
 			 */
@@ -2973,8 +2963,7 @@ cvs_checkout_rev(RCSFILE *rf, RCSNUM *rev, CVSFILE *cf, char *fpath,
 
 			fsize = cvs_buf_len(bp);
 			cvs_modetostr(cf->cf_mode, modestr, sizeof(modestr));
-			if (cvs_buf_putc(bp, '\0') < 0)
-				goto out;
+			cvs_buf_putc(bp, '\0');
 			content = cvs_buf_release(bp);
 			bp = NULL;
 		}
