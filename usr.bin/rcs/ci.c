@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.86 2005/12/19 18:24:12 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.87 2005/12/20 09:04:17 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -114,10 +114,8 @@ checkin_main(int argc, char **argv)
 		case 'd':
 			if (rcs_optarg == NULL)
 				pb.date = DATE_MTIME;
-			else if ((pb.date = cvs_date_parse(rcs_optarg)) <= 0) {
-				cvs_log(LP_ERR, "invalide date");
-				exit(1);
-			}
+			else if ((pb.date = cvs_date_parse(rcs_optarg)) <= 0)
+				fatal("invalid date");
 			break;
 		case 'f':
 			rcs_set_rev(rcs_optarg, &pb.newrev);
@@ -146,29 +144,20 @@ checkin_main(int argc, char **argv)
 			break;
 		case 'm':
 			pb.rcs_msg = rcs_optarg;
-			if (pb.rcs_msg == NULL) {
-				cvs_log(LP_ERR,
-				    "missing message for -m option");
-				exit(1);
-			}
+			if (pb.rcs_msg == NULL)
+				fatal("missing message for -m option");
 			pb.flags &= ~INTERACTIVE;
 			break;
 		case 'N':
 			pb.symbol = xstrdup(rcs_optarg);
-			if (rcs_sym_check(pb.symbol) != 1) {
-				cvs_log(LP_ERR, "invalid symbol `%s'",
-				    pb.symbol);
-				exit(1);
-			}
+			if (rcs_sym_check(pb.symbol) != 1)
+				fatal("invalid symbol `%s'", pb.symbol);
 			pb.flags |= CI_SYMFORCE;
 			break;
 		case 'n':
 			pb.symbol = xstrdup(rcs_optarg);
-			if (rcs_sym_check(pb.symbol) != 1) {
-				cvs_log(LP_ERR, "invalid symbol `%s'",
-				    pb.symbol);
-				exit(1);
-			}
+			if (rcs_sym_check(pb.symbol) != 1)
+				fatal("invalid symbol `%s'", pb.symbol);
 			break;
 		case 'q':
 			verbose = 0;
@@ -179,11 +168,8 @@ checkin_main(int argc, char **argv)
 			break;
 		case 's':
 			pb.state = rcs_optarg;
-			if (rcs_state_check(pb.state) < 0) {
-				cvs_log(LP_ERR, "invalid state `%s'",
-				    pb.state);
-				exit(1);
-			}
+			if (rcs_state_check(pb.state) < 0)
+				fatal("invalid state `%s'", pb.state);
 			break;
 		case 'T':
 			pb.flags |= PRESERVETIME;
@@ -262,11 +248,8 @@ checkin_main(int argc, char **argv)
 
 		pb.file = rcs_open(pb.fpath, pb.openflags, pb.fmode);
 
-		if (pb.file == NULL) {
-			cvs_log(LP_ERR, "failed to open rcsfile '%s'",
-			    pb.fpath);
-			exit(1);
-		}
+		if (pb.file == NULL)
+			fatal("failed to open rcsfile '%s'", pb.fpath);
 
 		if (verbose == 1)
 			printf("%s  <--  %s\n", pb.fpath, pb.filename);
@@ -498,11 +481,8 @@ checkin_update(struct checkin_params *pb)
 	}
 
 	/* Current head revision gets the RCS patch as rd_text */
-	if (rcs_deltatext_set(pb->file, pb->frev, pb->deltatext) == -1) {
-		cvs_log(LP_ERR,
-		    "failed to set new rd_text for head rev");
-		exit (1);
-	}
+	if (rcs_deltatext_set(pb->file, pb->frev, pb->deltatext) == -1)
+		fatal("failed to set new rd_text for head rev");
 
 	/*
 	 * Set the date of the revision to be the last modification
@@ -530,10 +510,8 @@ checkin_update(struct checkin_params *pb)
 		pb->newrev = pb->file->rf_head;
 
 	/* New head revision has to contain entire file; */
-        if (rcs_deltatext_set(pb->file, pb->frev, filec) == -1) {
-		cvs_log(LP_ERR, "failed to set new head revision");
-		exit(1);
-	}
+        if (rcs_deltatext_set(pb->file, pb->frev, filec) == -1)
+		fatal("failed to set new head revision");
 
 	/* Attach a symbolic name to this revision if specified. */
 	if (pb->symbol != NULL

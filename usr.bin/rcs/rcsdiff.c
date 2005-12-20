@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.26 2005/12/10 19:44:36 niallo Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.27 2005/12/20 09:04:17 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -84,15 +84,11 @@ rcsdiff_main(int argc, char **argv)
 			break;
 		case 'r':
 			if (rev == RCS_HEAD_REV) {
-				if ((rev = rcsnum_parse(rcs_optarg)) == NULL) {
-					cvs_log(LP_ERR, "bad revision number");
-					exit(1);
-				}
+				if ((rev = rcsnum_parse(rcs_optarg)) == NULL)
+					fatal("bad revision number");
 			} else {
-				if ((rev2 = rcsnum_parse(rcs_optarg)) == NULL) {
-					cvs_log(LP_ERR, "bad revision number");
-					exit(1);
-				}
+				if ((rev2 = rcsnum_parse(rcs_optarg)) == NULL)
+					fatal("bad revision number");
 			}
 			break;
 		case 'T':
