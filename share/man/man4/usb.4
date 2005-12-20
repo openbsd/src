@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.51 2005/12/14 22:29:56 pedro Exp $
+.\"	$OpenBSD: usb.4,v 1.52 2005/12/20 01:54:02 brad Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -191,6 +191,8 @@ D-Link DSB-R100 USB radio.
 .El
 .Ss Human Interface Devices
 .Bl -tag -width 12n -offset ind -compact
+.It Xr tpms 4
+Apple touchpad mouse device.
 .It Xr uhid 4
 Generic driver for Human Interface Devices.
 .It Xr uhidev 4
@@ -533,6 +535,7 @@ Human Interface Devices
 .Xr pci 4 ,
 .Xr pcmcia 4 ,
 .Xr scsi 4 ,
+.Xr tpms 4 ,
 .Xr uaudio 4 ,
 .Xr ubsa 4 ,
 .Xr ubt 4 ,
