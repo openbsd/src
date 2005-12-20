@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.25 2005/11/11 18:17:40 deraadt Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.26 2005/12/20 04:28:19 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -585,10 +585,5 @@ zkbd_cnpollc(void *v, int on)
 void
 zkbd_power(int why, void *arg)
 {
-	struct zkbd_softc *sc = arg;
-	int a = pxa2x0_gpio_get_bit(sc->sc_swa_pin) ? 1 : 0;
-	int b = pxa2x0_gpio_get_bit(sc->sc_swb_pin) ? 2 : 0;
-
-	/* probably should check why */
-	sc->sc_hinge = a | b;
+	zkbd_hinge(arg);
 }
