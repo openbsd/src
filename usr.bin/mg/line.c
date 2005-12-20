@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.34 2005/12/13 05:40:33 kjell Exp $	*/
+/*	$OpenBSD: line.c,v 1.35 2005/12/20 04:58:10 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -315,17 +315,14 @@ lnewline_at(struct line *lp1, int doto)
 	struct line	*lp2;
 	int	 nlen;
 	struct mgwin	*wp;
-	int	 retval = TRUE;
 
 	lchange(WFHARD);
 
-	/* avoid unnecessary copying */
+	/* If start of line, allocate a new line instead of copying */
 	if (doto == 0) {
 		/* new first part */
-		if ((lp2 = lalloc(0)) == NULL) {
-			retval = FALSE;
-			goto lnl_done;
-		}
+		if ((lp2 = lalloc(0)) == NULL)
+			return (FALSE);
 		lp2->l_bp = lp1->l_bp;
 		lp1->l_bp->l_fp = lp2;
 		lp2->l_fp = lp1;
@@ -333,17 +330,18 @@ lnewline_at(struct line *lp1, int doto)
 		for (wp = wheadp; wp != NULL; wp = wp->w_wndp)
 			if (wp->w_linep == lp1)
 				wp->w_linep = lp2;
-		goto lnl_done;
+		undo_add_boundary();
+		undo_add_insert(lp2, 0, 1);
+		undo_add_boundary();
+		return (TRUE);
 	}
 
 	/* length of new part */
 	nlen = llength(lp1) - doto;
 
 	/* new second half line */
-	if ((lp2 = lalloc(nlen)) == NULL) {
-		retval = FALSE;
-		goto lnl_done;
-	}
+	if ((lp2 = lalloc(nlen)) == NULL)
+		return (FALSE);
 	if (nlen != 0)
 		bcopy(&lp1->l_text[doto], &lp2->l_text[0], nlen);
 	lp1->l_used = doto;
@@ -362,11 +360,10 @@ lnewline_at(struct line *lp1, int doto)
 			wp->w_marko -= doto;
 		}
 	}
-lnl_done:
 	undo_add_boundary();
 	undo_add_insert(lp1, llength(lp1), 1);
 	undo_add_boundary();
-	return (retval);
+	return (TRUE);
 }
 
 /*
