@@ -4,6 +4,8 @@
 ./usr/share/info/amdref.info-2
 ./usr/share/info/amdref.info-3
 ./usr/share/info/annotate.info
+./usr/share/info/as.info
+./usr/share/info/as.info-1
 ./usr/share/info/cpp.info
 ./usr/share/info/cpp.info-1
 ./usr/share/info/cpp.info-2
@@ -1288,6 +1290,7 @@
 ./usr/share/man/cat4/i386/wdt.0
 ./usr/share/man/cat4/i386/wss.0
 ./usr/share/man/cat4/i386/wt.0
+./usr/share/man/cat4/ichiic.0
 ./usr/share/man/cat4/ichwdt.0
 ./usr/share/man/cat4/icmp.0
 ./usr/share/man/cat4/icmp6.0
@@ -2644,5 +2647,3 @@
 ./usr/share/texinfo
 ./usr/share/texinfo/texinfo.dtd
 ./usr/share/texinfo/texinfo.xsl
-./usr/share/info/as.info
-./usr/share/info/as.info-1
