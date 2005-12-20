@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.20 2005/12/20 16:55:21 xsa Exp $	*/
+/*	$OpenBSD: buf.c,v 1.21 2005/12/20 17:11:48 xsa Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -191,7 +191,7 @@ cvs_buf_copy(BUF *b, size_t off, void *dst, size_t len)
 	size_t rc;
 
 	if (off > b->cb_len)
-		return (-1);
+		fatal("cvs_buf_copy failed");
 
 	rc = MIN(len, (b->cb_len - off));
 	memcpy(dst, b->cb_buf + off, rc);
@@ -236,7 +236,7 @@ cvs_buf_set(BUF *b, const void *src, size_t len, size_t off)
  * cvs_buf_putc()
  *
  * Append a single character <c> to the end of the buffer <b>.
- * Returns 0 on success, or -1 on failure.
+ * Returns 0 on success.
  */
 int
 cvs_buf_putc(BUF *b, int c)
@@ -248,7 +248,7 @@ cvs_buf_putc(BUF *b, int c)
 		/* extend */
 		if (!(b->cb_flags & BUF_AUTOEXT) ||
 		    (cvs_buf_grow(b, (size_t)BUF_INCR) < 0))
-			return (-1);
+			fatal("cvs_buf_putc failed");
 
 		/* the buffer might have been moved */
 		bp = b->cb_cur + b->cb_len;
