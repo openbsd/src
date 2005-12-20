@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.18 2005/07/02 07:15:13 grunk Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.19 2005/12/20 02:15:28 brad Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -266,10 +266,8 @@ kq_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 		if (!which)
 			continue;
 
-		if (!(ev->ev_events & EV_PERSIST)) {
-			ev->ev_flags &= ~EVLIST_X_KQINKERNEL;
+		if (!(ev->ev_events & EV_PERSIST))
 			event_del(ev);
-		}
 
 		event_active(ev, which,
 		    ev->ev_events & EV_SIGNAL ? events[i].data : 1);
