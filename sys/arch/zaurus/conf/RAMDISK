@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.31 2005/08/28 05:30:43 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.32 2005/12/20 02:37:10 drahn Exp $
 
 machine	zaurus	arm
 
@@ -50,7 +50,7 @@ pxaintc0	at pxaip?	# interrupt controller
 pxagpio0	at pxaip?	# GPIO
 scoop0		at pxaip?
 scoop1		at pxaip?
-saost0		at pxaip? addr 0x40a00000 size 0x20
+pxaost0		at pxaip? addr 0x40a00000 size 0x20
 
 # touch screen
 zts0		at pxaip?

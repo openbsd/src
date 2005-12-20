@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.21 2005/12/05 21:13:13 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.22 2005/12/20 02:37:09 drahn Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -828,6 +828,9 @@ struct pxa2x0_sleep_data {
 	/* OS timer registers */
 	u_int32_t sd_osmr0, sd_osmr1, sd_osmr2, sd_osmr3;
 	u_int32_t sd_oscr0;
+	u_int32_t sd_osmr4, sd_osmr5;
+	u_int32_t sd_oscr4;
+	u_int32_t sd_omcr4, sd_omcr5;
 	u_int32_t sd_oier;
 	/* GPIO registers */
 	u_int32_t sd_gpdr0, sd_gpdr1, sd_gpdr2, sd_gpdr3;
@@ -867,10 +870,15 @@ pxa2x0_apm_sleep(struct pxa2x0_apm_softc *sc)
 	save = disable_interrupts(I32_bit|F32_bit);
 
 	sd.sd_oscr0 = bus_space_read_4(sc->sc_iot, ost_ioh, OST_OSCR0);
+	sd.sd_oscr4 = bus_space_read_4(sc->sc_iot, ost_ioh, OST_OSCR4);
+	sd.sd_omcr4 = bus_space_read_4(sc->sc_iot, ost_ioh, OST_OMCR4);
+	sd.sd_omcr5 = bus_space_read_4(sc->sc_iot, ost_ioh, OST_OMCR5);
 	sd.sd_osmr0 = bus_space_read_4(sc->sc_iot, ost_ioh, OST_OSMR0);
 	sd.sd_osmr1 = bus_space_read_4(sc->sc_iot, ost_ioh, OST_OSMR1);
 	sd.sd_osmr2 = bus_space_read_4(sc->sc_iot, ost_ioh, OST_OSMR2);
 	sd.sd_osmr3 = bus_space_read_4(sc->sc_iot, ost_ioh, OST_OSMR3);
+	sd.sd_osmr4 = bus_space_read_4(sc->sc_iot, ost_ioh, OST_OSMR4);
+	sd.sd_osmr5 = bus_space_read_4(sc->sc_iot, ost_ioh, OST_OSMR5);
 	sd.sd_oier = bus_space_read_4(sc->sc_iot, ost_ioh, OST_OIER);
 
 	/* Bring the PXA27x into 416Mhz turbo mode. */
@@ -1119,6 +1127,18 @@ suspend_again:
 	scoop_check_mcr();
 	scoop_resume();
 
+	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR0, sd.sd_osmr0);
+	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR1, sd.sd_osmr1);
+	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR2, sd.sd_osmr2);
+	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR3, sd.sd_osmr3);
+	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR4, sd.sd_osmr4);
+	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR5, sd.sd_osmr5);
+	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OMCR4, sd.sd_omcr4);
+	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OMCR5, sd.sd_omcr5);
+	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSCR0, sd.sd_oscr0);
+	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSCR4, sd.sd_oscr4);
+	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OIER, sd.sd_oier);
+
 	pxa2x0_pi2c_setvoltage(sc->sc_iot, sc->sc_pm_ioh, PI2C_VOLTAGE_HIGH);
 
 	/* Change to 208Mhz run mode with fast-bus still disabled. */
@@ -1132,12 +1152,6 @@ suspend_again:
 	    CLKCFG_B | CLKCFG_F | CLKCFG_T, &pxa2x0_memcfg);
 
 	if (sc->sc_resume != NULL) {
-		/* Restore OS timers only to allow the use of delay(). */
-		bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR1, sd.sd_osmr1);
-		bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR2, sd.sd_osmr2);
-		bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR3, sd.sd_osmr3);
-		bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSCR0, sd.sd_oscr0);
-		bus_space_write_4(sc->sc_iot, ost_ioh, OST_OIER, sd.sd_oier);
 		if (!sc->sc_resume(sc))
 			goto suspend_again;
 	}
@@ -1148,12 +1162,6 @@ suspend_again:
 	 */
 	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PMCR, 0);
 
-	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR0, sd.sd_osmr0);
-	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR1, sd.sd_osmr1);
-	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR2, sd.sd_osmr2);
-	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR3, sd.sd_osmr3);
-	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSCR0, sd.sd_oscr0);
-	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OIER, sd.sd_oier);
 
 	restore_interrupts(save);
 
@@ -1395,8 +1403,6 @@ pxa2x0_setperf(int speed)
 
 	s = disable_interrupts(I32_bit|F32_bit);
 
-#if 0
-	/* Not yet, because OSCR0 does not run in low-power mode. */
 	if (speed <= 30) {
 		if (freq > 91) {
 			pxa27x_run_mode();
@@ -1406,9 +1412,7 @@ pxa2x0_setperf(int speed)
 			    PI2C_VOLTAGE_LOW);
 			freq = 91;
 		}
-	} else
-#endif
-	if (speed < 60) {
+	} else if (speed < 60) {
 		if (freq < 208)
 			pxa2x0_pi2c_setvoltage(sc->sc_iot, sc->sc_pm_ioh,
 			    PI2C_VOLTAGE_HIGH);

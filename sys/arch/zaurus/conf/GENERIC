@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.45 2005/11/17 05:26:31 uwe Exp $
+#	$OpenBSD: GENERIC,v 1.46 2005/12/20 02:37:10 drahn Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -50,7 +50,7 @@ pxaip0		at mainbus?
 pxaintc0	at pxaip?		# interrupt controller
 pxagpio0	at pxaip?		# GPIO controller
 pxadmac0	at pxaip?		# DMA controller
-saost0		at pxaip? addr 0x40a00000 size 0x20
+pxaost0		at pxaip? addr 0x40a00000 size 0x20
 
 # PCMCIA/CF socket and GPIO controllers
 scoop0		at pxaip?
