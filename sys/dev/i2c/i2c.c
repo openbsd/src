@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c.c,v 1.3 2005/12/19 19:36:46 grange Exp $	*/
+/*	$OpenBSD: i2c.c,v 1.4 2005/12/20 05:42:32 grange Exp $	*/
 /*	$NetBSD: i2c.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -137,5 +137,6 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Scan for known device signatures.
 	 */
-	iic_scan(self, aux);
+	if (iba->iba_scan)
+		iic_scan(self, aux);
 }
