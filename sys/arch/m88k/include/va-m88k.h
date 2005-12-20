@@ -1,4 +1,4 @@
-/*	$OpenBSD: va-m88k.h,v 1.6 2005/12/14 21:46:31 millert Exp $	*/
+/*	$OpenBSD: va-m88k.h,v 1.7 2005/12/20 14:42:05 millert Exp $	*/
 
 /* Define __gnuc_va_list.  */
 
@@ -86,7 +86,7 @@ __extension__ ({ \
 	*(dest) = *(src);\
   })
 
-#if __ISO_VISIBLE >= 1999
+#if __ISO_C_VISIBLE >= 1999
 #define va_copy(dest, src) __va_copy(dest, src)
 #endif
 
