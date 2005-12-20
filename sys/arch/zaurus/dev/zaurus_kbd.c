@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.26 2005/12/20 04:28:19 deraadt Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.27 2005/12/20 18:53:09 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -407,11 +407,6 @@ zkbd_poll(void *v)
 			type = keystate ? WSCONS_EVENT_KEY_DOWN :
 			    WSCONS_EVENT_KEY_UP;
 
-#if 0
-			printf("key %d %s\n", i,
-			    keystate ? "pressed" : "released");
-#endif
-
 			if (sc->sc_polling) {
 				sc->sc_pollkey = i;
 				sc->sc_pollUD = type;
@@ -483,18 +478,12 @@ zkbd_on(void *v)
 		zkbdondown = 0;
 	}
 #endif
-#if 0
-	printf("on key pressed\n");
-#endif
 	return 1;
 }
 
 int
 zkbd_sync(void *v)
 {
-#if 0
-	printf("sync button pressed\n");
-#endif
 	return 1;
 }
 
@@ -506,9 +495,6 @@ zkbd_hinge(void *v)
 	int b = pxa2x0_gpio_get_bit(sc->sc_swb_pin) ? 2 : 0;
 	extern void lcd_blank(int);
 
-#if 0
-	printf("hinge event A %d B %d\n", a, b);
-#endif
 	sc->sc_hinge = a | b;
 
 	if (sc->sc_hinge == 3)
