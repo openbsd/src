@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_clock.c,v 1.1 2005/12/20 02:37:09 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_clock.c,v 1.2 2005/12/20 19:36:26 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
@@ -28,7 +28,7 @@
 
 #include <arm/cpufunc.h>
 
-#include <arm/sa11x0/sa11x0_reg.h> 
+#include <arm/sa11x0/sa11x0_reg.h>
 #include <arm/sa11x0/sa11x0_var.h>
 #include <arm/sa11x0/sa11x0_ostreg.h>
 #include <arm/xscale/pxa2x0reg.h>
@@ -81,7 +81,6 @@ pxaost_match(parent, match, aux)
 	return (1);
 }
 
-
 void
 pxaost_attach(parent, self, aux)
 	struct device *parent;
@@ -97,7 +96,7 @@ pxaost_attach(parent, self, aux)
 
 	pxaost_sc = sc;
 
-	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0, 
+	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0,
 	    &sc->sc_ioh))
 		panic("%s: Cannot map registers", self->dv_xname);
 
@@ -154,7 +153,6 @@ clockintr(arg)
 	bus_space_write_4(pxaost_sc->sc_iot, pxaost_sc->sc_ioh, OST_OSMR4,
 	    match);
 
-
 	return(1);
 }
 
@@ -188,7 +186,6 @@ statintr(arg)
 	return(1);
 }
 
-
 void
 setstatclockrate(hz)
 	int hz;
@@ -208,7 +205,7 @@ doclockintr(void *arg)
 {
 	u_int32_t status;
 	int result = 0;
-	
+
 	status = bus_space_read_4(pxaost_sc->sc_iot, pxaost_sc->sc_ioh, SAOST_SR);
 	if (status & 0x10)
 		result |= clockintr(arg);
@@ -237,7 +234,6 @@ cpu_initclocks()
 	pxaost_sc->sc_statclock_count = CLK4_TIMER_FREQUENCY / stathz;
 
 	pxa2x0_intr_establish(7, IPL_CLOCK, doclockintr, 0, "clock");
-
 
 	clk = bus_space_read_4(pxaost_sc->sc_iot, pxaost_sc->sc_ioh, OST_OSCR4);
 
@@ -295,12 +291,13 @@ delay(usecs)
 	u_int usecs;
 {
 	u_int32_t clock, oclock, delta, delaycnt;
-	int j, csec, usec;
+	volatile int j;
+	int csec, usec;
 
 	if (usecs > (0x80000000 / (CLK4_TIMER_FREQUENCY))) {
 		csec = usecs / 10000;
 		usec = usecs % 10000;
-		
+
 		delaycnt = (CLK4_TIMER_FREQUENCY / 100) * csec +
 		    (CLK4_TIMER_FREQUENCY / 100) * usec / 10000;
 	} else {
@@ -308,13 +305,13 @@ delay(usecs)
 	}
 
 	if (delaycnt <= 1)
-		for(j = 100; j > 0; j--)
+		for (j = 100; j > 0; j--)
 			;
 
 	if (!pxaost_sc) {
 		/* clock isn't initialized yet */
-		for(; usecs > 0; usecs--)
-			for(j = 100; j > 0; j--)
+		for (; usecs > 0; usecs--)
+			for (j = 100; j > 0; j--)
 				;
 		return;
 	}
@@ -323,7 +320,7 @@ delay(usecs)
 	    OST_OSCR4);
 
 	while (1) {
-		for(j = 100; j > 0; j--)
+		for (j = 100; j > 0; j--)
 			;
 		clock = bus_space_read_4(pxaost_sc->sc_iot, pxaost_sc->sc_ioh,
 		    OST_OSCR4);
