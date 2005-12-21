@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.54 2005/12/14 11:39:12 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.55 2005/12/21 16:10:50 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -78,10 +78,8 @@ rcs_set_rev(const char *str, RCSNUM **rev)
 	if ((*rev != NULL) && (*rev != RCS_HEAD_REV))
 		cvs_log(LP_WARN, "redefinition of revision number");
 
-	if ((*rev = rcsnum_parse(str)) == NULL) {
-		cvs_log(LP_ERR, "bad revision number '%s'", str);
-		exit (1);
-	}
+	if ((*rev = rcsnum_parse(str)) == NULL)
+		fatal("bad revision number '%s'", str);
 }
 
 /*
@@ -262,21 +260,15 @@ rcs_statfile(char *fname, char *out, size_t len)
 			*slash = '\0';
 
 		l = snprintf(filev, sizeof(filev), "%s%s", fname, ext);
-		if (l == -1 || l >= (int)sizeof(filev)) {
-			errno = ENAMETOOLONG;
-			cvs_log(LP_ERRNO, "%s", filev);
-			return (-1);
-		}
+		if (l == -1 || l >= (int)sizeof(filev))
+			fatal("rcs_statfile: path truncation");
 
 		if ((strdir == 0) &&
 		    (stat(RCSDIR, &st) != -1) && (st.st_mode & S_IFDIR)) {
 			l = snprintf(fpath, sizeof(fpath), "%s/%s",
 			    RCSDIR, filev);
-			if (l == -1 || l >= (int)sizeof(fpath)) {
-				errno = ENAMETOOLONG;
-				cvs_log(LP_ERRNO, "%s", fpath);
-				return (-1);
-			}
+			if (l == -1 || l >= (int)sizeof(fpath))
+				fatal("rcs_statfile: path truncation");
 		} else {
 			strlcpy(fpath, filev, sizeof(fpath));
 		}
