@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.12 2005/12/21 00:49:07 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.13 2005/12/21 00:53:28 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -115,19 +115,28 @@ thread_init(void)
 }
 
 static struct stack *
-alloc_stack(size_t len)
+alloc_stack(size_t len, void *base)
 {
 	struct stack *stack;
 
 	stack = malloc(sizeof(*stack));
 	if (!stack)
 		return (NULL);
-	stack->base = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
-	if (stack->base == MAP_FAILED) {
-		free(stack);
-		return (NULL);
+	if (base) {
+		stack->base = base;
+	} else {
+		stack->base = mmap(NULL, len, PROT_READ | PROT_WRITE,
+		    MAP_ANON, -1, 0);
+		if (stack->base == MAP_FAILED) {
+			free(stack);
+			return (NULL);
+		}
 	}
+#ifdef MACHINE_STACK_GROWS_UP
+	stack->sp = (void *)(((size_t)stack->base + 16) & ~15);
+#else
 	stack->sp = (void *)(((size_t)stack->base + len - 16) & ~15);
+#endif
 	stack->len = len;
 	return (stack);
 }
@@ -222,7 +231,7 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	if (!thread)
 		return (errno);
 	memset(thread, 0, sizeof(*thread));
-	thread->stack = alloc_stack(64 * 1024);
+	thread->stack = alloc_stack(64 * 1024, NULL);
 	if (!thread->stack) {
 		rc = errno;
 		goto fail1;
