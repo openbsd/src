@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.105 2005/12/13 12:13:58 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.106 2005/12/21 12:26:24 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -118,10 +118,8 @@ struct scsi_device ami_raw_dev = {
 struct ami_ccb	*ami_get_ccb(struct ami_softc *);
 void		ami_put_ccb(struct ami_ccb *);
 
-void		ami_write_inbound_db(struct ami_softc *, u_int32_t);
-void		ami_write_outbound_db(struct ami_softc *, u_int32_t);
-u_int32_t	ami_read_inbound_db(struct ami_softc *);
-u_int32_t	ami_read_outbound_db(struct ami_softc *);
+u_int32_t	ami_read(struct ami_softc *, bus_size_t);
+void		ami_write(struct ami_softc *, bus_size_t, u_int32_t);
 
 void		ami_copyhds(struct ami_softc *, const u_int32_t *,
 		    const u_int8_t *, const u_int8_t *);
@@ -177,50 +175,27 @@ ami_put_ccb(struct ami_ccb *ccb)
 	TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
 }
 
-void
-ami_write_inbound_db(struct ami_softc *sc, u_int32_t v)
-{
-	AMI_DPRINTF(AMI_D_CMD, ("awi %x ", v));
-
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, AMI_QIDB, v);
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh,
-	    AMI_QIDB, 4, BUS_SPACE_BARRIER_WRITE);
-}
-
 u_int32_t
-ami_read_inbound_db(struct ami_softc *sc)
+ami_read(struct ami_softc *sc, bus_size_t r)
 {
 	u_int32_t rv;
 
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh,
-	    AMI_QIDB, 4, BUS_SPACE_BARRIER_READ);
-	rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, AMI_QIDB);
-	AMI_DPRINTF(AMI_D_CMD, ("ari %x ", rv));
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
+	    BUS_SPACE_BARRIER_READ);
+	rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, r);
 
+	AMI_DPRINTF(AMI_D_CMD, ("ari 0x%x 0x08%x ", r, rv));
 	return (rv);
 }
 
 void
-ami_write_outbound_db(struct ami_softc *sc, u_int32_t v)
+ami_write(struct ami_softc *sc, bus_size_t r, u_int32_t v)
 {
-	AMI_DPRINTF(AMI_D_CMD, ("awo %x ", v));
+	AMI_DPRINTF(AMI_D_CMD, ("awo 0x%x 0x%08x", r, v));
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, AMI_QODB, v);
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh,
-	    AMI_QODB, 4, BUS_SPACE_BARRIER_WRITE);
-}
-
-u_int32_t
-ami_read_outbound_db(struct ami_softc *sc)
-{
-	u_int32_t rv;
-
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh,
-	    AMI_QODB, 4, BUS_SPACE_BARRIER_READ);
-	rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, AMI_QODB);
-	AMI_DPRINTF(AMI_D_CMD, ("aro %x ", rv));
-
-	return (rv);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, r, v);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
+	    BUS_SPACE_BARRIER_WRITE);
 }
 
 struct ami_mem *
@@ -629,7 +604,7 @@ free_idata:
 int
 ami_quartz_init(struct ami_softc *sc)
 {
-	ami_write_inbound_db(sc, 0);
+	ami_write(sc, AMI_QIDB, 0);
 
 	return (0);
 }
@@ -637,7 +612,7 @@ ami_quartz_init(struct ami_softc *sc)
 int
 ami_quartz_exec(struct ami_softc *sc, struct ami_iocmd *cmd)
 {
-	u_int32_t qidb, i;
+	u_int32_t i;
 
 	i = 0;
 	while (sc->sc_mbox->acc_busy && (i < AMI_MAX_BUSYWAIT)) {
@@ -657,8 +632,7 @@ ami_quartz_exec(struct ami_softc *sc, struct ami_iocmd *cmd)
 	sc->sc_mbox->acc_poll = 0;
 	sc->sc_mbox->acc_ack = 0;
 
-	qidb = sc->sc_mbox_pa | htole32(AMI_QIDB_EXEC);
-	ami_write_inbound_db(sc, qidb);
+	ami_write(sc, AMI_QIDB, sc->sc_mbox_pa | htole32(AMI_QIDB_EXEC));
 
 	return (0);
 }
@@ -666,15 +640,14 @@ ami_quartz_exec(struct ami_softc *sc, struct ami_iocmd *cmd)
 int
 ami_quartz_done(struct ami_softc *sc, struct ami_iocmd *mbox)
 {
-	u_int32_t qdb, i, n;
+	u_int32_t i, n;
 	u_int8_t nstat, status;
 	u_int8_t completed[AMI_MAXSTATACK];
 
-	qdb = ami_read_outbound_db(sc);
-	if (qdb != AMI_QODB_READY)
+	if (ami_read(sc, AMI_QODB) != AMI_QODB_READY)
 		return (0); /* nothing to do */
 
-	ami_write_outbound_db(sc, AMI_QODB_READY);
+	ami_write(sc, AMI_QODB, AMI_QODB_READY);
 
 	/*
 	 * The following sequence is not supposed to have a timeout clause
@@ -700,8 +673,7 @@ ami_quartz_done(struct ami_softc *sc, struct ami_iocmd *mbox)
 	for (n = 0; n < nstat; n++) {
 		bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_mbox_am), 0,
 		    sizeof(struct ami_iocmd), BUS_DMASYNC_PREREAD);
-		while ((completed[n] = sc->sc_mbox->acc_cmplidl[n]) ==
-		    0xff) {
+		while ((completed[n] = sc->sc_mbox->acc_cmplidl[n]) == 0xff) {
 			delay(1);
 			if (i++ > 1000000)
 				return (0); /* nothing to do */
@@ -727,7 +699,7 @@ ami_quartz_done(struct ami_softc *sc, struct ami_iocmd *mbox)
 		mbox->acc_cmplidl[n] = completed[n];
 
 	/* ack interrupt */
-	ami_write_inbound_db(sc, AMI_QIDB_ACK);
+	ami_write(sc, AMI_QIDB, AMI_QIDB_ACK);
 
 	return (1);	/* ready to complete all IOs in acc_cmplidl */
 }
@@ -736,7 +708,7 @@ int
 ami_quartz_poll(struct ami_softc *sc, struct ami_iocmd *cmd)
 {
 	/* struct scsi_xfer *xs = ccb->ccb_xs; */
-	u_int32_t qidb, i;
+	u_int32_t i;
 	u_int8_t status, ready;
 
 	if (sc->sc_dis_poll)
@@ -765,8 +737,7 @@ ami_quartz_poll(struct ami_softc *sc, struct ami_iocmd *cmd)
 	sc->sc_mbox->acc_status = 0xff;
 
 	/* send command to firmware */
-	qidb = sc->sc_mbox_pa | htole32(AMI_QIDB_EXEC);
-	ami_write_inbound_db(sc, qidb);
+	ami_write(sc, AMI_QIDB, sc->sc_mbox_pa | htole32(AMI_QIDB_EXEC));
 
 	while ((sc->sc_mbox->acc_nstat == 0xff) && (i < AMI_MAX_POLLWAIT)) {
 		delay(1);
@@ -810,10 +781,9 @@ ami_quartz_poll(struct ami_softc *sc, struct ami_iocmd *cmd)
 	sc->sc_mbox->acc_ack = 0x77;
 
 	/* ack */
-	qidb = sc->sc_mbox_pa | htole32(AMI_QIDB_ACK);
-	ami_write_inbound_db(sc, qidb);
+	ami_write(sc, AMI_QIDB, sc->sc_mbox_pa | htole32(AMI_QIDB_ACK));
 
-	while((ami_read_inbound_db(sc) & AMI_QIDB_ACK) &&
+	while((ami_read(sc, AMI_QIDB) & AMI_QIDB_ACK) &&
 	    (i < AMI_MAX_POLLWAIT)) {
 		delay(1);
 		i++;
