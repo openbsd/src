@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.16 2005/12/18 17:59:59 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.17 2005/12/21 18:41:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -496,7 +496,11 @@ trunk_port_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
  fallback:
 	splx(s);
-	return ((*tp->tp_ioctl)(ifp, cmd, data));
+
+	if (tp != NULL)
+		return ((*tp->tp_ioctl)(ifp, cmd, data));
+
+	return (EINVAL);
 }
 
 void
@@ -938,7 +942,7 @@ trunk_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 	return (0);
 
  bad:
-	if (trifp)
+	if (trifp != NULL)
 		trifp->if_ierrors++;
 	return (error);
 }
@@ -970,17 +974,16 @@ trunk_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 }
 
 void
-trunk_port_state(void *v)
+trunk_port_state(void *arg)
 {       
-	struct trunk_port *tp = v;
-        struct trunk_softc *tr;
+	struct trunk_port *tp = (struct trunk_port *)arg;
+        struct trunk_softc *tr = NULL;
 
-	if (v)
+	if (tp != NULL)
 		tr = (struct trunk_softc *)tp->tp_trunk;
-
-	if (!tr)
+	if (tr == NULL)
 		return;
-	
+
 	trunk_link_active(tr, tp);
 }
 
