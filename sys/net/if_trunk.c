@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.17 2005/12/21 18:41:55 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.18 2005/12/21 18:44:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -256,16 +256,16 @@ trunk_port_lladdr(struct trunk_port *tp, u_int8_t *lladdr)
 
 	/* Reset the port to update the lladdr */
 	if (ifp->if_flags & IFF_UP) {
-	        int s = splimp();
+		int s = splimp();
 		ifp->if_flags &= ~IFF_UP;
 		(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr);
 		ifp->if_flags |= IFF_UP;
 		(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr);
 		splx(s);
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-		        if (ifa->ifa_addr != NULL &&
+			if (ifa->ifa_addr != NULL &&
 			    ifa->ifa_addr->sa_family == AF_INET)
-			        arp_ifinit((struct arpcom *)ifp, ifa);
+				arp_ifinit((struct arpcom *)ifp, ifa);
 		}
 	}
 }
@@ -349,8 +349,8 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	trunk_ether_cmdmulti(tp, SIOCADDMULTI);
 
 	/* Register callback for physical link state changes */
-        tp->lh_cookie = hook_establish(ifp->if_linkstatehooks, 1,
-            trunk_port_state, tp);
+	tp->lh_cookie = hook_establish(ifp->if_linkstatehooks, 1,
+	    trunk_port_state, tp);
 
 	if (tr->tr_port_create != NULL)
 		error = (*tr->tr_port_create)(tp);
@@ -975,9 +975,9 @@ trunk_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 
 void
 trunk_port_state(void *arg)
-{       
+{
 	struct trunk_port *tp = (struct trunk_port *)arg;
-        struct trunk_softc *tr = NULL;
+	struct trunk_softc *tr = NULL;
 
 	if (tp != NULL)
 		tr = (struct trunk_softc *)tp->tp_trunk;
@@ -1029,7 +1029,7 @@ trunk_link_active(struct trunk_softc *tr, struct trunk_port *tp)
 		tr->tr_ac.ac_if.if_link_state = new_link;
 		if_link_state_change(&tr->tr_ac.ac_if);
 	}
-	
+
 	return (rval);
 }
 
@@ -1165,8 +1165,8 @@ trunk_fail_input(struct trunk_softc *tr, struct trunk_port *tp,
 {
 	struct ifnet *ifp = &tr->tr_ac.ac_if;
 	struct trunk_port *tmp_tp;
-	
-	if (tp == tr->tr_primary) { 
+
+	if (tp == tr->tr_primary) {
 		m->m_pkthdr.rcvif = ifp;
 		return (0);
 	}
