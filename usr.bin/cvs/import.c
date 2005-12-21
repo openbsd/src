@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.32 2005/12/20 18:17:01 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.33 2005/12/21 20:06:25 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -124,9 +124,8 @@ cvs_import_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 
 	*arg = optind + 3;
 
-	if ((cvs_msg == NULL) &&
-	    (cvs_msg = cvs_logmsg_get(NULL, NULL, NULL, NULL)) == NULL)
-		return (CVS_EX_DATA);
+	if (cvs_msg == NULL)
+		cvs_msg = cvs_logmsg_get(NULL, NULL, NULL, NULL);
 
 	return (0);
 }

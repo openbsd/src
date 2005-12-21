@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.47 2005/12/10 20:27:45 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.48 2005/12/21 20:06:25 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -106,8 +106,8 @@ cvs_commit_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 		return (CVS_EX_USAGE);
 	}
 
-	if ((mfile != NULL) && (cvs_msg = cvs_logmsg_open(mfile)) == NULL)
-		return (CVS_EX_DATA);
+	if (mfile != NULL)
+		cvs_msg = cvs_logmsg_open(mfile);
 
 	*arg = optind;
 
