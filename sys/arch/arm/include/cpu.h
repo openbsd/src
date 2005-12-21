@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.10 2005/12/20 19:23:57 drahn Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.11 2005/12/21 20:36:02 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -64,8 +64,9 @@
 #define CPU_KBDRESET		8	/* int: console keyboard reset */
 #define CPU_ZTSRAWMODE		9	/* int: zts returns unscaled x/y */
 #define CPU_ZTSSCALE		10	/* struct: zts scaling parameters */
-#define	CPU_MAXSPEED		11	/* number of valid machdep ids */
-#define	CPU_MAXID		12	/* number of valid machdep ids */
+#define	CPU_MAXSPEED		11	/* int: number of valid machdep ids */
+#define CPU_LIDSUSPEND		12	/* int: closing lid causes suspend */
+#define	CPU_MAXID		13	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -79,7 +80,8 @@
 	{ "kbdreset", CTLTYPE_INT }, \
 	{ "ztsrawmode", CTLTYPE_INT }, \
 	{ "ztsscale", CTLTYPE_STRUCT }, \
-	{ "maxspeed", CTLTYPE_INT } \
+	{ "maxspeed", CTLTYPE_INT }, \
+	{ "lidsuspend", CTLTYPE_INT } \
 }    
 
 #ifdef _KERNEL

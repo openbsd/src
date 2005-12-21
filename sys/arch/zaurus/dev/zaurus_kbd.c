@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.27 2005/12/20 18:53:09 deraadt Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.28 2005/12/21 20:36:03 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -443,6 +443,7 @@ static	int zkbdondown;				/* on key is pressed */
 static	struct timeval zkbdontv = { 0, 0 };	/* last on key event */
 const	struct timeval zkbdhalttv = { 3, 0 };	/*  3s for safe shutdown */
 const	struct timeval zkbdsleeptv = { 0, 250000 };	/* .25s for suspend */
+extern	int lid_suspend;
 #endif
 
 int
@@ -497,10 +498,15 @@ zkbd_hinge(void *v)
 
 	sc->sc_hinge = a | b;
 
-	if (sc->sc_hinge == 3)
+	if (sc->sc_hinge == 3) {
+#if NAPM > 0 
+		if (lid_suspend)
+			apm_suspends++;
+#endif
 		lcd_blank(1);
-	else
+	} else
 		lcd_blank(0);
+
 
 	return 1;
 }
