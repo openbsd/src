@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.72 2005/12/20 18:17:00 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.73 2005/12/21 09:09:02 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -682,11 +682,7 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 
 	strlcpy(path_tmp2, cvs_tmpdir, sizeof(path_tmp2));
 	strlcat(path_tmp2, "/diff2.XXXXXXXXXX", sizeof(path_tmp2));
-	if (cvs_buf_write_stmp(b2, path_tmp2, 0600) == -1) {
-		cvs_buf_free(b2);
-		(void)unlink(path_tmp1);
-		return (CVS_EX_DATA);
-	}
+	cvs_buf_write_stmp(b2, path_tmp2, 0600);
 	cvs_buf_free(b2);
 	if (utimes(path_tmp2, (const struct timeval *)&tv2) < 0)
 		cvs_log(LP_ERRNO, "error setting utimes");
