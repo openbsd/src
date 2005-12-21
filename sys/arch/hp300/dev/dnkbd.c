@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnkbd.c,v 1.9 2005/11/06 16:45:20 miod Exp $	*/
+/*	$OpenBSD: dnkbd.c,v 1.10 2005/12/21 19:40:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -39,6 +39,8 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+
+#include <dev/cons.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -273,6 +275,7 @@ dnkbd_attach_subdevices(struct dnkbd_softc *sc)
 #if NHILKBD > 0
 	extern int hil_is_console;
 #endif
+	extern struct consdev wsdisplay_cons;
 
 	/*
 	 * If both hilkbd and dnkbd are configured, prefer the Domain
@@ -282,15 +285,19 @@ dnkbd_attach_subdevices(struct dnkbd_softc *sc)
 	 * Unfortunately, the hil code will claim the console keyboard
 	 * even if no HIL keyboard is connected...
 	 */
+	if (cn_tab == &wsdisplay_cons) {
 #if NHILKBD > 0
-	if (hil_is_console == -1) {
+		if (hil_is_console == -1) {
+			ka.console = 1;
+			hil_is_console = 0;
+		} else
+			ka.console = 0;
+#else
 		ka.console = 1;
-		hil_is_console = 0;
+#endif
 	} else
 		ka.console = 0;
-#else
-	ka.console = 1;
-#endif
+
 	ka.keymap = &dnkbd_keymapdata;
 	ka.accessops = &dnkbd_accessops;
 	ka.accesscookie = sc;
