@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.9 2005/12/13 00:35:22 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.10 2005/12/21 19:09:01 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.8 1996/02/29 00:04:57 jtc Exp $	*/
 
 /*-
@@ -64,10 +64,10 @@ int	sigsuspend(const sigset_t *);
 
 #if defined(__GNUC__)
 extern __inline int sigaddset(sigset_t *set, int signo) {
-	extern int errno;
+	int *__errno(void);
 
 	if (signo <= 0 || signo >= _NSIG) {
-		errno = 22;			/* EINVAL */
+		*__errno() = 22;		/* EINVAL */
 		return -1;
 	}
 	*set |= (1 << ((signo)-1));		/* sigmask(signo) */
@@ -75,10 +75,10 @@ extern __inline int sigaddset(sigset_t *set, int signo) {
 }
 
 extern __inline int sigdelset(sigset_t *set, int signo) {
-	extern int errno;
+	int *__errno(void);
 
 	if (signo <= 0 || signo >= _NSIG) {
-		errno = 22;			/* EINVAL */
+		*__errno() = 22;		/* EINVAL */
 		return -1;
 	}
 	*set &= ~(1 << ((signo)-1));		/* sigmask(signo) */
@@ -86,10 +86,10 @@ extern __inline int sigdelset(sigset_t *set, int signo) {
 }
 
 extern __inline int sigismember(const sigset_t *set, int signo) {
-	extern int errno;
+	int *__errno(void);
 
 	if (signo <= 0 || signo >= _NSIG) {
-		errno = 22;			/* EINVAL */
+		*__errno() = 22;		/* EINVAL */
 		return -1;
 	}
 	return ((*set & (1 << ((signo)-1))) != 0);
