@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.87 2005/12/20 09:04:17 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.88 2005/12/21 19:59:58 alek Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -754,6 +754,7 @@ checkin_choose_rcsfile(const char *filename)
 	struct stat sb;
 
 	basepath = xmalloc(MAXPATHLEN);
+	basepath[0] = '\0';
 	if (strchr(filename, '/') == NULL) {
 		strlcat(basepath, RCSDIR"/", MAXPATHLEN);
 		if ((stat(basepath, &sb) == 0) && (sb.st_mode & S_IFDIR)) {
@@ -762,7 +763,6 @@ checkin_choose_rcsfile(const char *filename)
 			strlcat(basepath, RCS_FILE_EXT, MAXPATHLEN);
 		} else {
 			/* <path>/<filename>,v */
-			memset(basepath, '\0', MAXPATHLEN);
 			strlcpy(basepath, filename, MAXPATHLEN);
 			strlcat(basepath, RCS_FILE_EXT, MAXPATHLEN);
 		}
@@ -793,7 +793,6 @@ checkin_choose_rcsfile(const char *filename)
 			strlcat(basepath, RCS_FILE_EXT, MAXPATHLEN);
 		} else {
 			/* <path>/<filename>,v */
-			memset(basepath, '\0', MAXPATHLEN);
 			strlcpy(basepath, filename, MAXPATHLEN);
 			strlcat(basepath, RCS_FILE_EXT, MAXPATHLEN);
 		}
