@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.5 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: obio.c,v 1.6 2005/12/21 18:52:28 miod Exp $	*/
 /*	$NetBSD: obio.c,v 1.7 1997/02/13 19:01:07 scottr Exp $	*/
 
 /*
@@ -109,8 +109,6 @@ obio_search(parent, vcf, aux)
 	struct cfdata	*cf = (struct cfdata *) vcf;
 
 	oa.oa_addr = cf->cf_loc[0];
-	oa.oa_drq = cf->cf_loc[1];
-	oa.oa_hsk = cf->cf_loc[2];
 	oa.oa_tag = MAC68K_BUS_SPACE_MEM;
 
 	if ((*cf->cf_attach->ca_match)(parent, cf, &oa) > 0)

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mac68k,v 1.33 2005/03/08 20:00:23 tdeval Exp $
+#	$OpenBSD: files.mac68k,v 1.34 2005/12/21 18:52:27 miod Exp $
 #	$NetBSD: files.mac68k,v 1.61 1997/03/01 20:22:16 scottr Exp $
 
 # mac68k-specific configuration info
@@ -11,9 +11,7 @@ maxusers 2 8 64
 device mainbus {}			# no locators (yet?)
 attach mainbus at root
 
-define obio_norm {[addr = -1], ["no drq" = -1], ["no hsk" = -1]}
-define obio_scsi5380 {[addr = -1], [drq = -1], [hsk = -1]}
-device	obio: obio_norm, obio_scsi5380
+device	obio {[ addr = -1 ]}
 attach	obio at mainbus
 file	arch/mac68k/dev/obio.c		obio
 
@@ -22,7 +20,7 @@ attach	nubus at mainbus
 file	arch/mac68k/dev/nubus.c		nubus
 
 device	adb
-attach	adb at obio_norm
+attach	adb at obio
 file	arch/mac68k/dev/adb.c		adb
 file	arch/mac68k/dev/adbsys.c
 file	arch/mac68k/dev/adbsysasm.s
@@ -30,14 +28,14 @@ file	arch/mac68k/dev/adb_direct.c
 file	arch/mac68k/dev/pm_direct.c
 
 device	asc
-attach	asc at obio_norm
+attach	asc at obio
 file	arch/mac68k/dev/asc.c		asc needs-flag
 
 define grfbus {}
 file	arch/mac68k/dev/grf_subr.c	grfbus
 
 device	intvid: grfbus
-attach	intvid at obio_norm
+attach	intvid at obio
 file	arch/mac68k/dev/grf_iv.c	intvid
 
 device	macvid: grfbus
@@ -58,14 +56,14 @@ attach	ite at grf
 file	arch/mac68k/dev/ite.c		ite needs-flag
 
 device	sn: ifnet, ether
-attach	sn at obio_norm with sn_obio
+attach	sn at obio with sn_obio
 attach	sn at nubus with sn_nubus
 file	arch/mac68k/dev/if_sn.c		sn
 file	arch/mac68k/dev/if_sn_obio.c	sn_obio
 file	arch/mac68k/dev/if_sn_nubus.c	sn_nubus
 
 device	mc: ifnet, ether
-attach	mc at obio_norm with mc_obio
+attach	mc at obio with mc_obio
 file	arch/mac68k/dev/if_mc.c
 file	arch/mac68k/dev/if_mc_obio.c
 
@@ -73,20 +71,20 @@ include "scsi/files.scsi"
 
 # Option 1 for ncr5380 support
 device	ncrscsi: scsi
-attach	ncrscsi at obio_scsi5380
+attach	ncrscsi at obio
 file	arch/mac68k/dev/mac68k5380.c	ncrscsi needs-flag
 
 # Option 2 for ncr5380 support
 device	sbc: scsi, ncr5380sbc
-attach	sbc at obio_scsi5380 with sbc_obio
+attach	sbc at obio with sbc_obio
 file	arch/mac68k/dev/sbc_obio.c	sbc_obio
 file	arch/mac68k/dev/sbc.c		sbc
 
-attach	esp at obio_norm
+attach	esp at obio
 file	arch/mac68k/dev/esp.c		esp
 
 device	zsc {[channel = -1]}
-attach	zsc at obio_norm
+attach	zsc at obio
 file	arch/mac68k/dev/zs.c		zsc needs-flag
 file	arch/mac68k/dev/z8530sc.c	zsc
 #file	dev/ic/z8530sc.c		zsc
