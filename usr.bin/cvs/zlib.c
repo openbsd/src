@@ -1,4 +1,4 @@
-/*	$OpenBSD: zlib.c,v 1.4 2005/12/10 20:27:45 joris Exp $	*/
+/*	$OpenBSD: zlib.c,v 1.5 2005/12/21 10:49:29 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -54,17 +54,11 @@ cvs_zlib_newctx(int level)
 {
 	CVSZCTX *ctx;
 
-	if ((level < 0) || (level > 9)) {
-		cvs_log(LP_ERR, "invalid compression level %d "
-		    "(must be between 0 and 9)", level);
-		return (NULL);
-	}
+	if ((level < 0) || (level > 9))
+		fatal("invalid compression level %d (must be between 0 and 9)",
+		    level);
 
 	ctx = (CVSZCTX *)xmalloc(sizeof(*ctx));
-	if (ctx == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate zlib context");
-		return (NULL);
-	}
 	memset(ctx, 0, sizeof(*ctx));
 
 	ctx->z_level = level;
@@ -77,11 +71,8 @@ cvs_zlib_newctx(int level)
 	ctx->z_destrm.opaque = Z_NULL;
 
 	if ((inflateInit(&(ctx->z_instrm)) != Z_OK) ||
-	    (deflateInit(&(ctx->z_destrm), level) != Z_OK)) {
-		cvs_log(LP_ERR, "failed to initialize zlib streams");
-		xfree(ctx);
-		return (NULL);
-	}
+	    (deflateInit(&(ctx->z_destrm), level) != Z_OK))
+		fatal("failed to initialize zlib streams");
 
 	return (ctx);
 }
@@ -128,10 +119,8 @@ cvs_zlib_inflate(CVSZCTX *ctx, BUF *dst, u_char *src, size_t slen)
 
 		ret = inflate(&(ctx->z_instrm), Z_FINISH);
 		if ((ret == Z_MEM_ERROR) || (ret == Z_BUF_ERROR) ||
-		    (ret == Z_STREAM_ERROR) || (ret == Z_DATA_ERROR)) {
-			cvs_log(LP_ERR, "inflate error: %s", ctx->z_instrm.msg);
-			return (-1);
-		}
+		    (ret == Z_STREAM_ERROR) || (ret == Z_DATA_ERROR))
+			fatal("inflate error: %s", ctx->z_instrm.msg);
 
 		cvs_buf_append(dst, buf, ctx->z_instrm.avail_out);
 		bytes += sizeof(buf) - ctx->z_instrm.avail_out;
@@ -165,10 +154,8 @@ cvs_zlib_deflate(CVSZCTX *ctx, BUF *dst, u_char *src, size_t slen)
 		ctx->z_destrm.next_out = buf;
 		ctx->z_destrm.avail_out = sizeof(buf);
 		ret = deflate(&(ctx->z_destrm), Z_FINISH);
-		if ((ret == Z_STREAM_ERROR) || (ret == Z_BUF_ERROR)) {
-			cvs_log(LP_ERR, "deflate error: %s", ctx->z_destrm.msg);
-			return (-1);
-		}
+		if ((ret == Z_STREAM_ERROR) || (ret == Z_BUF_ERROR))
+			fatal("deflate error: %s", ctx->z_destrm.msg);
 
 		if (cvs_buf_append(dst, buf,
 		    sizeof(buf) - ctx->z_destrm.avail_out) < 0)
