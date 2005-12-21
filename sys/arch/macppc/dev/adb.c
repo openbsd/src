@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.15 2005/11/21 18:16:37 millert Exp $	*/
+/*	$OpenBSD: adb.c,v 1.16 2005/12/21 18:50:52 miod Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 
 /*-
@@ -47,7 +47,6 @@
 #include <macppc/dev/akbdvar.h>
 #include <macppc/dev/viareg.h>
 
-#include "aed.h"
 #include "apm.h"
 
 /*
@@ -148,14 +147,6 @@ adbattach(struct device *parent, struct device *self, void *aux)
 
 	printf(", %d targets\n", totaladbs);
 
-#if NAED > 0
-	/* ADB event device for compatibility */
-	aa_args.origaddr = 0;
-	aa_args.adbaddr = 0;
-	aa_args.handler_id = 0;
-	(void)config_found(self, &aa_args, adbprint);
-#endif
-
 	/* for each ADB device */
 	for (adbindex = 1; adbindex <= totaladbs; adbindex++) {
 		/* Get the ADB information */
@@ -206,12 +197,6 @@ adbprint(void *args, const char *name)
 		printf("%s addr %d: ", name, aa_args->adbaddr);
 		switch(aa_args->origaddr) {
 #ifdef DIAGNOSTIC
-#if NAED > 0
-		case 0:
-			printf("ADB event device");
-			rv = UNCONF;
-			break;
-#endif
 		case ADBADDR_SECURE:
 			printf("security dongle (%d)", aa_args->handler_id);
 			break;

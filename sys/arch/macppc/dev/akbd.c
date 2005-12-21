@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.18 2005/11/21 18:16:37 millert Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.19 2005/12/21 18:50:52 miod Exp $	*/
 /*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
 
 /*
@@ -52,12 +52,9 @@
 
 #include <macppc/dev/keyboard.h>
 #include <macppc/dev/adbvar.h>
-#include <macppc/dev/aedvar.h>
 #include <macppc/dev/akbdmap.h>
 #include <macppc/dev/akbdvar.h>
 #include <macppc/dev/amsvar.h>
-
-#include "aed.h"
 
 /*
  * Function declarations.
@@ -311,17 +308,11 @@ kbd_processevent(adb_event_t *event, struct akbd_softc *ksc)
 	new_event.u.k.key = event->bytes[0];
 	new_event.bytes[1] = 0xff;
 	akbd_intr(&new_event);
-#if NAED > 0
-	aed_input(&new_event);
-#endif
 	if (event->bytes[1] != 0xff) {
 		new_event.u.k.key = event->bytes[1];
 		new_event.bytes[0] = event->bytes[1];
 		new_event.bytes[1] = 0xff;
 		akbd_intr(&new_event);
-#if NAED > 0
-		aed_input(&new_event);
-#endif
 	}
 
 }

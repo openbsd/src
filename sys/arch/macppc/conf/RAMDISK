@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.58 2005/11/17 15:03:52 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.59 2005/12/21 18:50:51 miod Exp $
 #
 # PPC GENERIC config file
 #
@@ -117,7 +117,6 @@ adb*		at macobio?	# Apple Desktop Bus
 wi*		at macobio?	# Apple Airport 802.11DS
 macgpio*	at macobio?	# GPIO, PMU interrupt router.
 macgpio*	at macgpio?	# GPIO, PMU interrupt router.
-aed*		at adb?		# ADB Event Device
 akbd*		at adb?		# ADB keyboard
 wskbd*		at akbd? mux 1
 #ams*		at adb?		# ADB mouse

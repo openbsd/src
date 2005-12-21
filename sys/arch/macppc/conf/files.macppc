@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.42 2005/12/20 01:36:10 brad Exp $
+#	$OpenBSD: files.macppc,v 1.43 2005/12/21 18:50:51 miod Exp $
 
 #
 # macppc-specific configuration info
@@ -162,10 +162,6 @@ file	arch/macppc/dev/pm_direct.c			adb
 device	apm
 attach	apm at adb
 file	arch/macppc/dev/apm.c				apm needs-count
-
-device	aed
-attach	aed at adb
-file	arch/macppc/dev/aed.c				aed needs-flag
 
 device	akbd: wskbddev
 attach	akbd at adb

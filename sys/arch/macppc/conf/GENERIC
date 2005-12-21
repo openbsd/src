@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.115 2005/12/20 01:36:10 brad Exp $g
+#	$OpenBSD: GENERIC,v 1.116 2005/12/21 18:50:51 miod Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -133,7 +133,6 @@ pi2c0		at adb?		# PMU I2C
 wi*		at macobio?	# airport
 macgpio*	at macobio?	# GPIO, PMU interrupt router.
 macgpio*	at macgpio?	# GPIO, PMU interrupt router.
-aed*		at adb?		# ADB Event Device
 akbd*		at adb?		# ADB keyboard
 
 wskbd*		at akbd? mux 1

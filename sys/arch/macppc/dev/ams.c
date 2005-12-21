@@ -1,4 +1,4 @@
-/*	$OpenBSD: ams.c,v 1.11 2005/11/21 18:16:37 millert Exp $	*/
+/*	$OpenBSD: ams.c,v 1.12 2005/12/21 18:50:52 miod Exp $	*/
 /*	$NetBSD: ams.c,v 1.11 2000/12/19 03:13:40 tsubai Exp $	*/
 
 /*
@@ -46,10 +46,7 @@
 #include <dev/wscons/wsmousevar.h>
 
 #include <macppc/dev/adbvar.h>
-#include <macppc/dev/aedvar.h>
 #include <macppc/dev/amsvar.h>
-
-#include "aed.h"
 
 /*
  * Function declarations.
@@ -513,9 +510,6 @@ ms_processevent(adb_event_t *event, struct ams_softc *sc)
 		wsmouse_input(sc->sc_wsmousedev, new_event.u.m.buttons,
 		    new_event.u.m.dx, -new_event.u.m.dy, 0,
 		    WSMOUSE_INPUT_DELTA);
-#if NAED > 0
-	aed_input(&new_event);
-#endif
 }
 
 int

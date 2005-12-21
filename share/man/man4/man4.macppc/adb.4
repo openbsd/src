@@ -1,4 +1,4 @@
-.\" $OpenBSD: adb.4,v 1.10 2005/11/20 10:10:46 jmc Exp $
+.\" $OpenBSD: adb.4,v 1.11 2005/12/21 18:50:49 miod Exp $
 .\"
 .\" Copyright (c) 2001 Peter Philipp
 .\" Copyright (c) 1997 Colin Wood
@@ -39,7 +39,6 @@
 .Sh SYNOPSIS
 .Cd "adb at macobio?"
 .Cd "abtn* at adb?"
-.Cd "aed* at adb?"
 .Cd "akbd* at adb?"
 .Cd "ams* at adb?"
 .Cd "apm0 at adb?"
@@ -61,9 +60,6 @@ event device was split into many smaller subsystems, namely:
 .Pp
 .Bl -enum -compact
 .It
-Apple Event Device driver
-.Pq Xr aed 4 .
-.It
 Apple Keyboard driver
 .Pq Xr akbd 4 .
 .It
@@ -82,7 +78,6 @@ and i2c controller
 were added to the PowerPC port later to complement the ADB system.
 .Sh SEE ALSO
 .Xr abtn 4 ,
-.Xr aed 4 ,
 .Xr akbd 4 ,
 .Xr ams 4 ,
 .Xr apm 4 ,
