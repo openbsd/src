@@ -1,4 +1,4 @@
-/* $OpenBSD: elf2ecoff.c,v 1.5 2003/11/27 10:33:20 henning Exp $	 */
+/* $OpenBSD: elf2ecoff.c,v 1.6 2005/12/21 01:40:24 millert Exp $	 */
 /* $NetBSD: elf2ecoff.c,v 1.8 1997/07/20 03:50:54 jonathan Exp $	 */
 
 /*
@@ -47,7 +47,7 @@
 #include <machine/elf_abi.h>
 #include <stdio.h>
 #include <sys/exec_ecoff.h>
-#include <sys/errno.h>
+#include <errno.h>
 #include <string.h>
 #include <limits.h>
 

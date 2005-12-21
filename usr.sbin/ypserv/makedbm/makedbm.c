@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.24 2005/05/14 02:32:32 deraadt Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.25 2005/12/21 01:40:24 millert Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: makedbm.c,v 1.24 2005/05/14 02:32:32 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: makedbm.c,v 1.25 2005/12/21 01:40:24 millert Exp $";
 #endif
 
 #include <stdio.h>
@@ -38,7 +38,7 @@ static const char rcsid[] = "$OpenBSD: makedbm.c,v 1.24 2005/05/14 02:32:32 dera
 #include <sys/param.h>
 #include <unistd.h>
 #include <string.h>
-#include <sys/errno.h>
+#include <errno.h>
 #include "ypdb.h"
 #include "ypdef.h"
 #include "db.h"

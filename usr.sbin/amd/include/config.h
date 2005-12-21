@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.h	8.1 (Berkeley) 6/6/93
- *	$Id: config.h,v 1.6 2004/05/31 10:38:20 otto Exp $
+ *	$Id: config.h,v 1.7 2005/12/21 01:40:24 millert Exp $
  */
 
 #ifdef __GNUC__
@@ -47,9 +47,9 @@
 #include "os-defaults.h"
 #include OS_HDR
 
+#include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include <sys/errno.h>
 #include <sys/time.h>
 
 #define clocktime() (clock_valid ? clock_valid : time(&clock_valid))

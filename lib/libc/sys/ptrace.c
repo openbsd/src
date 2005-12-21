@@ -1,9 +1,9 @@
-/*	$OpenBSD: ptrace.c,v 1.3 2003/06/11 21:03:10 deraadt Exp $	*/
+/*	$OpenBSD: ptrace.c,v 1.4 2005/12/21 01:40:23 millert Exp $	*/
 /* David Leonard <d@openbsd.org>, 1999. Public domain. */
 
 #include <sys/types.h>
 #include <sys/ptrace.h>
-#include <sys/errno.h>
+#include <errno.h>
 
 int _ptrace(int, pid_t, caddr_t, int);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.33 2004/09/14 22:13:03 deraadt Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.34 2005/12/21 01:40:23 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -38,9 +38,9 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <net/if_bridge.h>
-#include <sys/errno.h>
 #include <string.h>
 #include <err.h>
+#include <errno.h>
 #include <sysexits.h>
 #include <limits.h>
 

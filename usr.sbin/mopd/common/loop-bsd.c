@@ -1,4 +1,4 @@
-/*	$OpenBSD: loop-bsd.c,v 1.9 2004/04/14 20:37:28 henning Exp $ */
+/*	$OpenBSD: loop-bsd.c,v 1.10 2005/12/21 01:40:24 millert Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,9 +26,10 @@
 
 #ifndef LINT
 static const char rcsid[] =
-    "$OpenBSD: loop-bsd.c,v 1.9 2004/04/14 20:37:28 henning Exp $";
+    "$OpenBSD: loop-bsd.c,v 1.10 2005/12/21 01:40:24 millert Exp $";
 #endif
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -37,7 +38,6 @@ static const char rcsid[] =
 #endif
 #include <net/bpf.h>
 #include <sys/ioctl.h>
-#include <sys/errno.h>
 
 #include "os.h"
 #include "common/common.h"

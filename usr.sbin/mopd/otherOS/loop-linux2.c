@@ -23,9 +23,10 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$Id: loop-linux2.c,v 1.4 2003/12/01 00:56:51 avsm Exp $";
+static const char rcsid[] = "$Id: loop-linux2.c,v 1.5 2005/12/21 01:40:24 millert Exp $";
 #endif
 
+#include <errno.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <unistd.h>
@@ -33,7 +34,6 @@ static const char rcsid[] = "$Id: loop-linux2.c,v 1.4 2003/12/01 00:56:51 avsm E
 #include <sys/time.h>
 #endif
 #include <sys/ioctl.h>
-#include <sys/errno.h>
 
 #include "os.h"
 #include "common/common.h"

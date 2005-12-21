@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_generic.c,v 1.5 2005/08/08 08:05:35 espie Exp $ */
+/*	$OpenBSD: clnt_generic.c,v 1.6 2005/12/21 01:40:22 millert Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -31,10 +31,10 @@
 /*
  * Copyright (C) 1987, Sun Microsystems, Inc.
  */
+#include <errno.h>
 #include <string.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
-#include <sys/errno.h>
 #include <netdb.h>
 
 /*

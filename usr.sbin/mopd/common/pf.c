@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.11 2004/05/08 20:23:21 canacar Exp $ */
+/*	$OpenBSD: pf.c,v 1.12 2005/12/21 01:40:24 millert Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #ifndef LINT
 static const char rcsid[] =
-    "$OpenBSD: pf.c,v 1.11 2004/05/08 20:23:21 canacar Exp $";
+    "$OpenBSD: pf.c,v 1.12 2005/12/21 01:40:24 millert Exp $";
 #endif
 
 #include <stdio.h>
@@ -44,7 +44,6 @@ static const char rcsid[] =
 #include <net/if.h>
 
 #include <net/bpf.h>
-#include <sys/errno.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -53,6 +52,7 @@ static const char rcsid[] =
 #include <ctype.h>
 #include <string.h>
 #include <err.h>
+#include <errno.h>
 
 #include <syslog.h>
 

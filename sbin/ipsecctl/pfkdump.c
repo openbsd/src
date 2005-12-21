@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.9 2005/12/12 23:24:10 hshoexer Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.10 2005/12/21 01:40:23 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -25,7 +25,6 @@
  */
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/sysctl.h>
 #include <net/pfkeyv2.h>
@@ -36,6 +35,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <err.h>
+#include <errno.h>
 
 #include "ipsecctl.h"
 #include "pfkey.h"

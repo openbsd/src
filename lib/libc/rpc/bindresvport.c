@@ -1,4 +1,4 @@
-/*	$OpenBSD: bindresvport.c,v 1.16 2005/04/01 07:44:03 otto Exp $	*/
+/*	$OpenBSD: bindresvport.c,v 1.17 2005/12/21 01:40:22 millert Exp $	*/
 
 /*
  * Copyright 1996, Jason Downs.  All rights reserved.
@@ -25,9 +25,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <errno.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/errno.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
