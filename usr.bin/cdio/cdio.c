@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.39 2005/01/22 10:21:26 robert Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.40 2005/12/21 15:50:38 millert Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -132,7 +132,7 @@ struct cmdtab {
 { CMD_VOLUME,   "volume",       1, "<l> <r> | left | right | mute | mono | stereo" },
 { CMD_CDDB,   	"cddbinfo",     2, "[n]" },
 { CMD_CDID,	"cdid",		3, "" },
-{ CMD_QUIT,	"exit",		1, "" },
+{ CMD_QUIT,	"exit",		2, "" },
 { 0, 0, 0, 0}
 };
 
