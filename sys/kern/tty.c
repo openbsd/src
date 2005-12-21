@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.68 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: tty.c,v 1.69 2005/12/21 12:43:49 jsg Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -172,9 +172,7 @@ int64_t tk_cancc, tk_nin, tk_nout, tk_rawcc;
  * Initial open of tty, or (re)entry to standard tty line discipline.
  */
 int
-ttyopen(device, tp)
-	dev_t device;
-	register struct tty *tp;
+ttyopen(dev_t device, struct tty *tp)
 {
 	int s;
 
@@ -198,8 +196,7 @@ ttyopen(device, tp)
  * can detect recycling of the tty.
  */
 int
-ttyclose(tp)
-	register struct tty *tp;
+ttyclose(struct tty *tp)
 {
 	extern struct tty *constty;	/* Temporary virtual console. */
 
@@ -232,12 +229,10 @@ ttyclose(tp)
  * Process input of a single character received on a tty.
  */
 int
-ttyinput(c, tp)
-	register int c;
-	register struct tty *tp;
+ttyinput(int c, struct tty *tp)
 {
-	register int iflag, lflag;
-	register u_char *cc;
+	int iflag, lflag;
+	u_char *cc;
 	int i, error;
 	int s;
 
@@ -596,12 +591,10 @@ startoutput:
  * Must be recursive.
  */
 int
-ttyoutput(c, tp)
-	register int c;
-	register struct tty *tp;
+ttyoutput(int c, struct tty *tp)
 {
-	register long oflag;
-	register int col, notout, s, c2;
+	long oflag;
+	int col, notout, s, c2;
 
 	oflag = tp->t_oflag;
 	if (!ISSET(oflag, OPOST)) {
@@ -722,12 +715,7 @@ ttyoutput(c, tp)
  */
 /* ARGSUSED */
 int
-ttioctl(tp, cmd, data, flag, p)
-	register struct tty *tp;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	extern struct tty *constty;	/* Temporary virtual console. */
 	extern int nlinesw;
@@ -796,7 +784,7 @@ ttioctl(tp, cmd, data, flag, p)
 		splx(s);
 		break;
 	case TIOCFLUSH: {		/* flush buffers */
-		register int flags = *(int *)data;
+		int flags = *(int *)data;
 
 		if (flags == 0)
 			flags = FREAD | FWRITE;
@@ -870,7 +858,7 @@ ttioctl(tp, cmd, data, flag, p)
 	case TIOCSETA:			/* set termios struct */
 	case TIOCSETAW:			/* drain output, set */
 	case TIOCSETAF: {		/* drn out, fls in, set */
-		register struct termios *t = (struct termios *)data;
+		struct termios *t = (struct termios *)data;
 
 		s = spltty();
 		if (cmd == TIOCSETAW || cmd == TIOCSETAF) {
@@ -938,7 +926,7 @@ ttioctl(tp, cmd, data, flag, p)
 		break;
 	}
 	case TIOCSETD: {		/* set line discipline */
-		register int t = *(int *)data;
+		int t = *(int *)data;
 		dev_t device = tp->t_dev;
 
 		if ((u_int)t >= nlinesw)
@@ -997,7 +985,7 @@ ttioctl(tp, cmd, data, flag, p)
 		p->p_flag |= P_CONTROLT;
 		break;
 	case TIOCSPGRP: {		/* set pgrp of tty */
-		register struct pgrp *pgrp = pgfind(*(int *)data);
+		struct pgrp *pgrp = pgfind(*(int *)data);
 
 		if (!isctty(p, tp))
 			return (ENOTTY);
@@ -1029,10 +1017,7 @@ ttioctl(tp, cmd, data, flag, p)
 }
 
 int
-ttpoll(device, events, p)
-	dev_t device;
-	int events;
-	struct proc *p;
+ttpoll(dev_t device, int events, struct proc *p)
 {
 	struct tty *tp;
 	int revents, s;
@@ -1066,9 +1051,7 @@ struct filterops ttywrite_filtops =
 	{ 1, NULL, filt_ttywdetach, filt_ttywrite };
 
 int
-ttkqfilter(dev, kn)
-	dev_t dev;
-	struct knote *kn;
+ttkqfilter(dev_t dev, struct knote *kn)
 {
 	struct tty *tp = (*cdevsw[major(dev)].d_tty)(dev);
 	struct klist *klist;
@@ -1136,9 +1119,7 @@ filt_ttywdetach(struct knote *kn)
 }
 
 int
-filt_ttywrite(kn, hint)
-	struct knote *kn;
-	long hint;
+filt_ttywrite(struct knote *kn, long hint)
 {
 	dev_t dev = (dev_t)((u_long)kn->kn_hook);
 	struct tty *tp = (*cdevsw[major(dev)].d_tty)(dev);
@@ -1148,8 +1129,7 @@ filt_ttywrite(kn, hint)
 }
 
 static int
-ttnread(tp)
-	struct tty *tp;
+ttnread(struct tty *tp)
 {
 	int nread;
 
@@ -1170,8 +1150,7 @@ ttnread(tp)
  * Wait for output to drain.
  */
 int
-ttywait(tp)
-	register struct tty *tp;
+ttywait(struct tty *tp)
 {
 	int error, s;
 
@@ -1199,8 +1178,7 @@ ttywait(tp)
  * Flush if successfully wait.
  */
 int
-ttywflush(tp)
-	struct tty *tp;
+ttywflush(struct tty *tp)
 {
 	int error;
 
@@ -1213,11 +1191,9 @@ ttywflush(tp)
  * Flush tty read and/or write queues, notifying anyone waiting.
  */
 void
-ttyflush(tp, rw)
-	register struct tty *tp;
-	int rw;
+ttyflush(struct tty *tp, int rw)
 {
-	register int s;
+	int s;
 
 	s = spltty();
 	if (rw & FREAD) {
@@ -1243,8 +1219,7 @@ ttyflush(tp, rw)
  * Copy in the default termios characters.
  */
 void
-ttychars(tp)
-	struct tty *tp;
+ttychars(struct tty *tp)
 {
 
 	bcopy(ttydefchars, tp->t_cc, sizeof(ttydefchars));
@@ -1254,10 +1229,9 @@ ttychars(tp)
  * Send stop character on input overflow.
  */
 static void
-ttyblock(tp)
-	register struct tty *tp;
+ttyblock(struct tty *tp)
 {
-	register int total;
+	int total;
 
 	total = tp->t_rawq.c_cc + tp->t_canq.c_cc;
 	if (tp->t_rawq.c_cc > TTYHOG) {
@@ -1285,8 +1259,7 @@ ttyblock(tp)
 }
 
 void
-ttrstrt(tp_arg)
-	void *tp_arg;
+ttrstrt(void *tp_arg)
 {
 	struct tty *tp;
 	int s;
@@ -1305,8 +1278,7 @@ ttrstrt(tp_arg)
 }
 
 int
-ttstart(tp)
-	struct tty *tp;
+ttstart(struct tty *tp)
 {
 
 	if (tp->t_oproc != NULL)	/* XXX: Kludge for pty. */
@@ -1318,9 +1290,7 @@ ttstart(tp)
  * "close" a line discipline
  */
 int
-ttylclose(tp, flag)
-	struct tty *tp;
-	int flag;
+ttylclose(struct tty *tp, int flag)
 {
 
 	if (flag & FNONBLOCK)
@@ -1336,9 +1306,7 @@ ttylclose(tp, flag)
  * Returns 0 if the line should be turned off, otherwise 1.
  */
 int
-ttymodem(tp, flag)
-	register struct tty *tp;
-	int flag;
+ttymodem(struct tty *tp, int flag)
 {
 
 	if (!ISSET(tp->t_state, TS_WOPEN) && ISSET(tp->t_cflag, MDMBUF)) {
@@ -1379,9 +1347,7 @@ ttymodem(tp, flag)
  * Return argument flag, to turn off device on carrier drop.
  */
 int
-nullmodem(tp, flag)
-	register struct tty *tp;
-	int flag;
+nullmodem(struct tty *tp, int flag)
 {
 
 	if (flag)
@@ -1435,10 +1401,7 @@ ttvtimeout(void *arg)
  * Process a read call on a tty device.
  */
 int
-ttread(tp, uio, flag)
-	register struct tty *tp;
-	struct uio *uio;
-	int flag;
+ttread(struct tty *tp, struct uio *uio, int flag)
 {
 	struct timeout *stime = NULL;
 	struct proc *p = curproc;
@@ -1650,9 +1613,7 @@ ttyunblock(struct tty *tp)
  * arrive.
  */
 int
-ttycheckoutq(tp, wait)
-	register struct tty *tp;
-	int wait;
+ttycheckoutq(struct tty *tp, int wait)
 {
 	int hiwat, s, oldsig;
 
@@ -1677,10 +1638,7 @@ ttycheckoutq(tp, wait)
  * Process a write call on a tty device.
  */
 int
-ttwrite(tp, uio, flag)
-	struct tty *tp;
-	struct uio *uio;
-	int flag;
+ttwrite(struct tty *tp, struct uio *uio, int flag)
 {
 	u_char *cp = NULL;
 	int cc, ce;
@@ -1861,12 +1819,10 @@ ovhiwat:
  * as cleanly as possible.
  */
 void
-ttyrub(c, tp)
-	int c;
-	register struct tty *tp;
+ttyrub(int c, struct tty *tp)
 {
-	register u_char *cp;
-	register int savecol;
+	u_char *cp;
+	int savecol;
 	int tabc, s;
 
 	if (!ISSET(tp->t_lflag, ECHO) || ISSET(tp->t_lflag, EXTPROC))
@@ -1944,9 +1900,7 @@ ttyrub(c, tp)
  * Back over cnt characters, erasing them.
  */
 static void
-ttyrubo(tp, cnt)
-	register struct tty *tp;
-	int cnt;
+ttyrubo(struct tty *tp, int cnt)
 {
 
 	while (cnt-- > 0) {
@@ -1962,10 +1916,9 @@ ttyrubo(tp, cnt)
  *	been checked.
  */
 void
-ttyretype(tp)
-	register struct tty *tp;
+ttyretype(struct tty *tp)
 {
-	register u_char *cp;
+	u_char *cp;
 	int s, c;
 
 	/* Echo the reprint character. */
@@ -1990,9 +1943,7 @@ ttyretype(tp)
  * Echo a typed character to the terminal.
  */
 static void
-ttyecho(c, tp)
-	register int c;
-	register struct tty *tp;
+ttyecho(int c, struct tty *tp)
 {
 
 	if (!ISSET(tp->t_state, TS_CNTTB))
@@ -2018,8 +1969,7 @@ ttyecho(c, tp)
  * Wake up any readers on a tty.
  */
 void
-ttwakeup(tp)
-	register struct tty *tp;
+ttwakeup(struct tty *tp)
 {
 
 	selwakeup(&tp->t_rsel);
@@ -2034,9 +1984,7 @@ ttwakeup(tp)
  * used by drivers to map software speed values to hardware parameters.
  */
 int
-ttspeedtab(speed, table)
-	int speed;
-	const struct speedtab *table;
+ttspeedtab(int speed, const struct speedtab *table)
 {
 
 	for ( ; table->sp_speed != -1; table++)
@@ -2052,10 +2000,9 @@ ttspeedtab(speed, table)
  * from hi to low water.
  */
 void
-ttsetwater(tp)
-	struct tty *tp;
+ttsetwater(struct tty *tp)
 {
-	register int cps, x;
+	int cps, x;
 
 #define CLAMP(x, h, l)	((x) > h ? h : ((x) < l) ? l : (x))
 
@@ -2071,10 +2018,9 @@ ttsetwater(tp)
  * Report on state of foreground process group.
  */
 void
-ttyinfo(tp)
-	register struct tty *tp;
+ttyinfo(struct tty *tp)
 {
-	register struct proc *p, *pick;
+	struct proc *p, *pick;
 	struct timeval utime, stime;
 	int tmp;
 
@@ -2154,8 +2100,7 @@ ttyinfo(tp)
 #define BOTH    3
 
 static int
-proc_compare(p1, p2)
-	register struct proc *p1, *p2;
+proc_compare(struct proc *p1, struct proc *p2)
 {
 
 	if (p1 == NULL)
@@ -2210,11 +2155,9 @@ proc_compare(p1, p2)
  * Output char to tty; console putchar style.
  */
 int
-tputchar(c, tp)
-	int c;
-	struct tty *tp;
+tputchar(int c, struct tty *tp)
 {
-	register int s;
+	int s;
 
 	s = spltty();
 	if (ISSET(tp->t_state,
@@ -2237,11 +2180,7 @@ tputchar(c, tp)
  * at the start of the call.
  */
 int
-ttysleep(tp, chan, pri, wmesg, timo)
-	struct tty *tp;
-	void *chan;
-	int pri, timo;
-	char *wmesg;
+ttysleep(struct tty *tp, void *chan, int pri, char *wmesg, int timo)
 {
 	int error;
 	short gen;
@@ -2256,7 +2195,7 @@ ttysleep(tp, chan, pri, wmesg, timo)
  * Initialise the global tty list.
  */
 void
-tty_init()
+tty_init(void)
 {
 
 	TAILQ_INIT(&ttylist);
@@ -2268,7 +2207,7 @@ tty_init()
  * tty list.
  */
 struct tty *
-ttymalloc()
+ttymalloc(void)
 {
 	struct tty *tp;
 
@@ -2292,8 +2231,7 @@ ttymalloc()
  * Free a tty structure and its buffers, after removing it from the tty list.
  */
 void
-ttyfree(tp)
-	struct tty *tp;
+ttyfree(struct tty *tp)
 {
 
 	--tty_count;
@@ -2343,13 +2281,8 @@ ttystats_init(void)
  * Return tty-related information.
  */
 int
-sysctl_tty(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+sysctl_tty(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen)
 {
 	int err;
 

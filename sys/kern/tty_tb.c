@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_tb.c,v 1.5 2003/08/11 09:56:49 mickey Exp $	*/
+/*	$OpenBSD: tty_tb.c,v 1.6 2005/12/21 12:43:49 jsg Exp $	*/
 /*	$NetBSD: tty_tb.c,v 1.18 1996/02/04 02:17:36 christos Exp $	*/
 
 /*-
@@ -117,11 +117,9 @@ void	tbattach(int);
  */
 /*ARGSUSED*/
 int
-tbopen(dev, tp)
-	dev_t dev;
-	register struct tty *tp;
+tbopen(dev_t dev, struct tty *tp)
 {
-	register struct tb *tbp;
+	struct tb *tbp;
 
 	if (tp->t_line == TABLDISC)
 		return (ENODEV);
@@ -144,8 +142,7 @@ tbopen(dev, tp)
  * Line discipline change or last device close.
  */
 void
-tbclose(tp)
-	register struct tty *tp;
+tbclose(struct tty *tp)
 {
 	int modebits = TBPOINT|TBSTOP;
 
@@ -157,9 +154,7 @@ tbclose(tp)
  * Characters have been buffered in a buffer and decoded.
  */
 int
-tbread(tp, uio)
-	register struct tty *tp;
-	struct uio *uio;
+tbread(struct tty *tp, struct uio *uio)
 {
 	struct tb *tbp = (struct tb *)tp->t_sc;
 	const struct tbconf *tc = &tbconf[tbp->tbflags & TBTYPE];
@@ -182,9 +177,7 @@ tbread(tp, uio)
  * interrupt routine to make it run as fast as possible.
  */
 void
-tbinput(c, tp)
-	register int c;
-	register struct tty *tp;
+tbinput(int c, struct tty *tp)
 {
 	struct tb *tbp = (struct tb *)tp->t_sc;
 	const struct tbconf *tc = &tbconf[tbp->tbflags & TBTYPE];
@@ -210,10 +203,7 @@ tbinput(c, tp)
  * Decode GTCO 8 byte format (high res, tilt, and pressure).
  */
 static void
-gtcodecode(tc, cp, u)
-	const struct tbconf *tc;
-	register char *cp;
-	register union tbpos *u;
+gtcodecode(const struct tbconf *tc, char *cp, union tbpos *u)
 {
 	struct gtcopos *pos = &u->gtcopos;
 	pos->pressure = *cp >> 2;
@@ -233,13 +223,10 @@ gtcodecode(tc, cp, u)
  * Decode old Hitachi 5 byte format (low res).
  */
 static void
-tbolddecode(tc, cp, u)
-	const struct tbconf *tc;
-	register char *cp;
-	register union tbpos *u;
+tbolddecode(const struct tbconf *tc, char *cp, union tbpos *u)
 {
 	struct hitpos *pos = &u->hitpos;
-	register char byte;
+	char byte;
 
 	byte = *cp++;
 	pos->status = (byte&0100) ? TBINPROX : 0;
@@ -259,10 +246,7 @@ tbolddecode(tc, cp, u)
  * Decode new Hitach 5-byte format (low res).
  */
 static void
-tblresdecode(tc, cp, u)
-	const struct tbconf *tc;
-	register char *cp;
-	register union tbpos *u;
+tblresdecode(const struct tbconf *tc, char *cp, union tbpos *u)
 {
 	struct hitpos *pos = &u->hitpos;
 
@@ -281,10 +265,7 @@ tblresdecode(tc, cp, u)
  * Decode new Hitach 6-byte format (high res).
  */
 static void
-tbhresdecode(tc, cp, u)
-	const struct tbconf *tc;
-	register char *cp;
-	register union tbpos *u;
+tbhresdecode(const struct tbconf *tc, char *cp, union tbpos *u)
 {
 	struct hitpos *pos = &u->hitpos;
 	char byte;
@@ -306,10 +287,7 @@ tbhresdecode(tc, cp, u)
  * Polhemus decode.
  */
 static void
-poldecode(tc, cp, u)
-	const struct tbconf *tc;
-	register char *cp;
-	register union tbpos *u;
+poldecode(const struct tbconf *tc, char *cp, union tbpos *u)
 {
 	struct polpos *pos = &u->polpos;
 
@@ -326,14 +304,9 @@ poldecode(tc, cp, u)
 
 /*ARGSUSED*/
 int
-tbtioctl(tp, cmd, data, flag, p)
-	struct tty *tp;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+tbtioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	register struct tb *tbp = (struct tb *)tp->t_sc;
+	struct tb *tbp = (struct tb *)tp->t_sc;
 
 	switch (cmd) {
 
@@ -391,8 +364,7 @@ tbtioctl(tp, cmd, data, flag, p)
 }
 
 void
-tbattach(dummy)
-       int dummy;
+tbattach(int dummy)
 {
     /* stub to handle side effect of new config */
 }

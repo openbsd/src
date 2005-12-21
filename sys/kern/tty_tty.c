@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_tty.c,v 1.8 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: tty_tty.c,v 1.9 2005/12/21 12:43:49 jsg Exp $	*/
 /*	$NetBSD: tty_tty.c,v 1.13 1996/03/30 22:24:46 christos Exp $	*/
 
 /*-
@@ -49,10 +49,7 @@
 
 /*ARGSUSED*/
 int
-cttyopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+cttyopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct vnode *ttyvp = cttyvp(p);
 	int error;
@@ -80,13 +77,10 @@ cttyopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-cttyread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+cttyread(dev_t dev, struct uio *uio, int flag)
 {
 	struct proc *p = uio->uio_procp;
-	register struct vnode *ttyvp = cttyvp(uio->uio_procp);
+	struct vnode *ttyvp = cttyvp(uio->uio_procp);
 	int error;
 
 	if (ttyvp == NULL)
@@ -99,13 +93,10 @@ cttyread(dev, uio, flag)
 
 /*ARGSUSED*/
 int
-cttywrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+cttywrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct proc *p = uio->uio_procp;
-	register struct vnode *ttyvp = cttyvp(uio->uio_procp);
+	struct vnode *ttyvp = cttyvp(uio->uio_procp);
 	int error;
 
 	if (ttyvp == NULL)
@@ -118,12 +109,7 @@ cttywrite(dev, uio, flag)
 
 /*ARGSUSED*/
 int
-cttyioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+cttyioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct vnode *ttyvp = cttyvp(p);
 
@@ -143,10 +129,7 @@ cttyioctl(dev, cmd, addr, flag, p)
 
 /*ARGSUSED*/
 int
-cttypoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+cttypoll(dev_t dev, int events, struct proc *p)
 {
 	struct vnode *ttyvp = cttyvp(p);
 
