@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.11 2005/12/19 15:41:00 brad Exp $ */
+/*	$OpenBSD: rthread.c,v 1.12 2005/12/21 00:49:07 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -31,6 +31,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <err.h>
 #include <errno.h>
 
 #include <pthread.h>
@@ -102,6 +103,8 @@ thread_init(void)
 	__isthreaded = 1;
 
 	thread = malloc(sizeof(*thread));
+	if (!thread) /* should never happen, but have to do something */
+		err(1, "rthread_init");
 	memset(thread, 0, sizeof(*thread));
 	thread->tid = getthrid();
 	thread->donesem.lock = _SPINLOCK_UNLOCKED;
@@ -117,9 +120,23 @@ alloc_stack(size_t len)
 	struct stack *stack;
 
 	stack = malloc(sizeof(*stack));
+	if (!stack)
+		return (NULL);
 	stack->base = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
+	if (stack->base == MAP_FAILED) {
+		free(stack);
+		return (NULL);
+	}
 	stack->sp = (void *)(((size_t)stack->base + len - 16) & ~15);
+	stack->len = len;
 	return (stack);
+}
+
+static void
+free_stack(struct stack *stack)
+{
+	munmap(stack->base, stack->len);
+	free(stack);
 }
 
 /*
@@ -196,31 +213,51 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 {
 	pthread_t thread;
 	pid_t tid;
+	int rc = 0;
 
 	if (!threads_ready)
 		thread_init();
 
 	thread = malloc(sizeof(*thread));
+	if (!thread)
+		return (errno);
 	memset(thread, 0, sizeof(*thread));
+	thread->stack = alloc_stack(64 * 1024);
+	if (!thread->stack) {
+		rc = errno;
+		goto fail1;
+	}
+
 	thread->donesem.lock = _SPINLOCK_UNLOCKED;
 	thread->fn = start_routine;
 	thread->arg = arg;
 
 	_spinlock(&thread_lock);
+
 	thread->next = thread_list;
 	thread_list = thread;
 
-	thread->stack = alloc_stack(64 * 1024);
-
 	tid = rfork_thread(RFPROC | RFTHREAD | RFMEM | RFNOWAIT,
 	    thread->stack->sp, thread_start, thread);
+	if (tid == -1) {
+		rc = errno;
+		goto fail2;
+	}
 	/* new thread will appear thread_start */
 	thread->tid = tid;
 	thread->flags |= THREAD_CANCEL_ENABLE|THREAD_CANCEL_DEFERRED;
 	*threadp = thread;
 	_spinunlock(&thread_lock);
-
 	return (0);
+
+fail2:
+	thread_list = thread->next;
+	_spinunlock(&thread_lock);
+	free_stack(thread->stack);
+fail1:
+	free(thread);
+
+	return (rc);
 }
 
 int
