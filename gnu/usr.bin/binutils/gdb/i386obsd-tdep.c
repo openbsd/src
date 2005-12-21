@@ -1,7 +1,7 @@
 /* Target-dependent code for OpenBSD/i386.
 
    Copyright 1988, 1989, 1991, 1992, 1994, 1996, 2000, 2001, 2002,
-   2003, 2004
+   2003, 2004, 2005
    Free Software Foundation, Inc.
 
    This file is part of GDB.
@@ -24,6 +24,7 @@
 #include "defs.h"
 #include "arch-utils.h"
 #include "frame.h"
+#include "frame-unwind.h"
 #include "gdbcore.h"
 #include "regcache.h"
 #include "regset.h"
@@ -31,6 +32,7 @@
 #include "objfiles.h"
 #include "osabi.h"
 #include "target.h"
+#include "trad-frame.h"
 
 #include "gdb_assert.h"
 #include "gdb_string.h"
@@ -258,7 +260,6 @@ i386obsd_supply_uthread (struct regcache *regcache,
 	  regcache_raw_supply (regcache, i, buf);
 	}
     }
-
 }
 
 static void
@@ -306,6 +307,118 @@ i386obsd_collect_uthread (const struct regcache *regcache,
 	}
     }
 }
+/* Kernel debugging support.  */
+
+/* From <machine/frame.h>.  Note that %esp and %ess are only saved in
+   a trap frame when entering the kernel from user space.  */
+static int i386obsd_tf_reg_offset[] =
+{
+  10 * 4,			/* %eax */
+  9 * 4,			/* %ecx */
+  8 * 4,			/* %edx */
+  7 * 4,			/* %ebx */
+  -1,				/* %esp */
+  6 * 4,			/* %ebp */
+  5 * 4,			/* %esi */
+  4 * 4,			/* %edi */
+  13 * 4,			/* %eip */
+  15 * 4,			/* %eflags */
+  14 * 4,			/* %cs */
+  -1,				/* %ss */
+  3 * 4,			/* %ds */
+  2 * 4,			/* %es */
+  0 * 4,			/* %fs */
+  1 * 4				/* %gs */
+};
+
+static struct trad_frame_cache *
+i386obsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
+{
+  struct trad_frame_cache *cache;
+  CORE_ADDR func, sp, addr;
+  ULONGEST cs;
+  int i;
+
+  if (*this_cache)
+    return *this_cache;
+
+  cache = trad_frame_cache_zalloc (next_frame);
+  *this_cache = cache;
+
+  func = frame_func_unwind (next_frame);
+  sp = frame_unwind_register_unsigned (next_frame, I386_ESP_REGNUM);
+  for (i = 0; i < ARRAY_SIZE (i386obsd_tf_reg_offset); i++)
+    if (i386obsd_tf_reg_offset[i] != -1)
+      trad_frame_set_reg_addr (cache, i, sp + i386obsd_tf_reg_offset[i]);
+
+  /* Read %cs from trap frame.  */
+  addr = sp + i386obsd_tf_reg_offset[I386_CS_REGNUM];
+  cs = read_memory_unsigned_integer (addr, 4); 
+  if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
+    {
+      /* Trap from use space; terminate backtrace.  */
+      trad_frame_set_id (cache, null_frame_id);
+    }
+  else
+    {
+      /* Construct the frame ID using the function start.  */
+      trad_frame_set_id (cache, frame_id_build (sp + 8, func));
+    }
+
+  return cache;
+}
+
+static void
+i386obsd_trapframe_this_id (struct frame_info *next_frame,
+			    void **this_cache, struct frame_id *this_id)
+{
+  struct trad_frame_cache *cache =
+    i386obsd_trapframe_cache (next_frame, this_cache);
+  
+  trad_frame_get_id (cache, this_id);
+}
+
+static void
+i386obsd_trapframe_prev_register (struct frame_info *next_frame,
+				  void **this_cache, int regnum,
+				  int *optimizedp, enum lval_type *lvalp,
+				  CORE_ADDR *addrp, int *realnump,
+				  void *valuep)
+{
+  struct trad_frame_cache *cache =
+    i386obsd_trapframe_cache (next_frame, this_cache);
+
+  trad_frame_get_register (cache, next_frame, regnum,
+			   optimizedp, lvalp, addrp, realnump, valuep);
+}
+
+static const struct frame_unwind i386obsd_trapframe_unwind = {
+  /* FIXME: kettenis/20051219: This really is more like an interrupt
+     frame, but SIGTRAMP_FRAME would print <signal handler called>,
+     which really is not what we want here.  */
+  NORMAL_FRAME,
+  i386obsd_trapframe_this_id,
+  i386obsd_trapframe_prev_register
+};
+
+static const struct frame_unwind *
+i386obsd_trapframe_sniffer (struct frame_info *next_frame)
+{
+  ULONGEST cs;
+  char *name;
+
+  cs = frame_unwind_register_unsigned (next_frame, I386_CS_REGNUM);
+  if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
+    return NULL;
+
+  find_pc_partial_function (frame_pc_unwind (next_frame), &name, NULL, NULL);
+  if (name && ((strcmp ("calltrap", name) == 0)
+	       || (strcmp ("syscall1", name) == 0)))
+    return &i386obsd_trapframe_unwind;
+
+  return NULL;
+}
+
 
 static void 
 i386obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
@@ -336,6 +449,9 @@ i386obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* OpenBSD provides a user-level threads implementation.  */
   bsd_uthread_set_supply_uthread (gdbarch, i386obsd_supply_uthread);
   bsd_uthread_set_collect_uthread (gdbarch, i386obsd_collect_uthread);
+
+  /* Unwind kernel trap frames correctly.  */
+  frame_unwind_append_sniffer (gdbarch, i386obsd_trapframe_sniffer);
 }
 
 /* OpenBSD a.out.  */

@@ -2028,9 +2028,10 @@ i386-nto-tdep.o: i386-nto-tdep.c $(gdb_string_h) $(gdb_assert_h) $(defs_h) \
 	$(nto_tdep_h) $(osabi_h) $(i387_tdep_h)
 i386obsd-nat.o: i386obsd-nat.c $(defs_h) $(i386_tdep_h)
 i386obsd-tdep.o: i386obsd-tdep.c $(defs_h) $(arch_utils_h) $(frame_h) \
-	$(gdbcore_h) $(regcache_h) $(regset_h) $(symtab_h) $(objfiles_h) \
-	$(osabi_h) $(target_h) $(gdb_assert_h) $(gdb_string_h) \
-	$(i386_tdep_h) $(i387_tdep_h) $(solib_svr4_h)
+	$(frame_unwind_h) $(gdbcore_h) $(regcache_h) $(regset_h) $(symtab_h) \
+	$(objfiles_h) $(osabi_h) $(target_h) $(trad_frame_h) $(gdb_assert_h) \
+	$(gdb_string_h) $(i386_tdep_h) $(i387_tdep_h) $(solib_svr4_h) \
+	$(bsd_uthread_h)
 i386-sol2-tdep.o: i386-sol2-tdep.c $(defs_h) $(value_h) $(osabi_h) \
 	$(gdb_string_h) $(i386_tdep_h) $(solib_svr4_h)
 i386-stub.o: i386-stub.c
