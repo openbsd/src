@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.35 2005/12/20 17:33:40 xsa Exp $	*/
+/*	$OpenBSD: req.c,v 1.36 2005/12/21 20:04:36 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -178,13 +178,10 @@ cvs_req_handle(char *line)
 	if (cp != NULL)
 		*(cp++) = '\0';
 
-	req = cvs_req_getbyname(cmd);
-	if (req == NULL)
-		return (-1);
-	else if (cvs_req_swtab[req->req_id].hdlr == NULL) {
-		cvs_log(LP_ERR, "handler for `%s' not implemented", cmd);
-		return (-1);
-	}
+	if ((req = cvs_req_getbyname(cmd)) == NULL)
+		fatal("cvs_req_handle: cvs_req_getbyname failed");
+	else if (cvs_req_swtab[req->req_id].hdlr == NULL)
+		fatal("handler for `%s' not implemented", cmd);
 
 	return (*cvs_req_swtab[req->req_id].hdlr)(req->req_id, cp);
 }
@@ -214,11 +211,6 @@ cvs_req_root(int reqid, char *line)
 	}
 
 	cvs_req_rootpath = xstrdup(line);
-	if (cvs_req_rootpath == NULL) {
-		cvs_log(LP_ERRNO, "failed to copy Root path");
-		return (-1);
-	}
-
 	cvs_rootstr = cvs_req_rootpath;
 
 	return (0);
@@ -283,10 +275,6 @@ cvs_req_directory(int reqid, char *line)
 		xfree(cvs_req_currentdir);
 
 	cvs_req_currentdir = xstrdup(rdir);
-	if (cvs_req_currentdir == NULL) {
-		cvs_log(LP_ERR, "failed to duplicate directory");
-		return (-1);
-	}
 
 	dirlen = strlen(cvs_req_currentdir);
 
@@ -302,17 +290,12 @@ cvs_req_directory(int reqid, char *line)
 	 */
 	if (strlen(cvs_req_rootpath) < dirlen) {
 		s = cvs_req_currentdir + strlen(cvs_req_rootpath) + 1;
-		if (s >= (cvs_req_currentdir + dirlen)) {
-			cvs_log(LP_ERR, "you're bad, go away");
-			return (-1);
-		}
+		if (s >= (cvs_req_currentdir + dirlen))
+			fatal("you're bad, go away");
 	} else
 		s = cvs_req_currentdir;
 
-	if ((repo = xstrdup(s)) == NULL) {
-		cvs_log(LP_ERR, "failed to save repository path");
-		return (-1);
-	}
+	repo = xstrdup(s);
 
 	/*
 	 * Skip back "foo/bar" part, so we can feed the repo
@@ -320,11 +303,8 @@ cvs_req_directory(int reqid, char *line)
 	 */
 	if (!pwd) {
 		s = repo + strlen(repo) - strlen(line) - 1;
-		if (*s != '/') {
-			cvs_log(LP_ERR, "malformed directory");
-			xfree(repo);
-			return (-1);
-		}
+		if (*s != '/')
+			fatal("cvs_req_directory: malformed directory");
 
 		*s = '\0';
 	}
@@ -337,11 +317,7 @@ cvs_req_directory(int reqid, char *line)
 		if ((p = strchr(repo, '/')) != NULL)
 			*p = '\0';
 
-		if ((cvs_req_modulename = xstrdup(repo)) == NULL) {
-			cvs_log(LP_ERR, "failed to save modulename");
-			xfree(repo);
-			return (-1);
-		}
+		cvs_req_modulename = xstrdup(repo);
 
 		if (p != NULL)
 			*p = '/';
@@ -373,11 +349,8 @@ cvs_req_directory(int reqid, char *line)
 	if (cvs_req_entf != NULL)
 		cvs_ent_close(cvs_req_entf);
 	cvs_req_entf = cvs_ent_open(".", O_RDWR);
-	if (cvs_req_entf == NULL) {
-		cvs_log(LP_ERR, "failed to open Entry file for %s", line);
-		xfree(repo);
-		return (-1);
-	}
+	if (cvs_req_entf == NULL)
+		fatal("failed to open Entry file for %s", line);
 
 	xfree(repo);
 	return (0);
@@ -393,11 +366,8 @@ cvs_req_entry(int reqid, char *line)
 		return (-1);
 
 	/* add it to the entry file and done */
-	if (cvs_ent_add(cvs_req_entf, ent) < 0) {
-		cvs_log(LP_ERR, "failed to add '%s' to the Entry file",
-		    ent->ce_name);
-		return (-1);
-	}
+	if (cvs_ent_add(cvs_req_entf, ent) < 0)
+		fatal("cvs_req_entry: cvs_ent_add: `%s'", ent->ce_name);
 
 	/* XXX */
 	cvs_ent_write(cvs_req_entf);
@@ -508,17 +478,10 @@ cvs_req_set(int reqid, char *line)
 {
 	char *cp, *lp;
 
-	if ((lp = xstrdup(line)) == NULL) {
-		cvs_log(LP_ERRNO, "failed to copy Set argument");
-		return (-1);
-	}
+	lp = xstrdup(line);
+	if ((cp = strchr(lp, '=')) == NULL)
+		fatal("error in Set request (no = in variable assignment)");
 
-	if ((cp = strchr(lp, '=')) == NULL) {
-		cvs_log(LP_ERR, "error in Set request "
-		    "(no = in variable assignment)");
-		xfree(lp);
-		return (-1);
-	}
 	*(cp++) = '\0';
 
 	if (cvs_var_set(lp, cp) < 0) {
@@ -537,17 +500,11 @@ cvs_req_argument(int reqid, char *line)
 {
 	char *nap;
 
-	if (cvs_req_nargs == CVS_PROTO_MAXARG) {
-		cvs_log(LP_ERR, "too many arguments");
-		return (-1);
-	}
+	if (cvs_req_nargs == CVS_PROTO_MAXARG)
+		fatal("too many arguments");
 
 	if (reqid == CVS_REQ_ARGUMENT) {
 		cvs_req_args[cvs_req_nargs] = xstrdup(line);
-		if (cvs_req_args[cvs_req_nargs] == NULL) {
-			cvs_log(LP_ERRNO, "failed to copy argument");
-			return (-1);
-		}
 		cvs_req_nargs++;
 	} else if (reqid == CVS_REQ_ARGUMENTX) {
 		if (cvs_req_nargs == 0)
@@ -555,11 +512,9 @@ cvs_req_argument(int reqid, char *line)
 		else {
 			asprintf(&nap, "%s%s", cvs_req_args[cvs_req_nargs - 1],
 			    line);
-			if (nap == NULL) {
-				cvs_log(LP_ERRNO,
-				    "failed to append to argument");
-				return (-1);
-			}
+			if (nap == NULL)
+				fatal("cvs_req_argument: asprintf failed");
+
 			xfree(cvs_req_args[cvs_req_nargs - 1]);
 			cvs_req_args[cvs_req_nargs - 1] = nap;
 		}
@@ -572,11 +527,8 @@ cvs_req_argument(int reqid, char *line)
 static int
 cvs_req_globalopt(int reqid, char *line)
 {
-	if ((*line != '-') || (*(line + 2) != '\0')) {
-		cvs_log(LP_ERR,
-		    "invalid `Global_option' request format");
-		return (-1);
-	}
+	if ((*line != '-') || (*(line + 2) != '\0'))
+		fatal("invalid `Global_option' request format");
 
 	switch (*(line + 1)) {
 	case 'l':
@@ -621,13 +573,10 @@ cvs_req_gzipstream(int reqid, char *line)
 	long val;
 
 	val = strtol(line, &ep, 10);
-	if ((line[0] == '\0') || (*ep != '\0')) {
-		cvs_log(LP_ERR, "invalid Gzip-stream level `%s'", line);
-		return (-1);
-	} else if ((errno == ERANGE) && ((val < 0) || (val > 9))) {
-		cvs_log(LP_ERR, "Gzip-stream level %ld out of range", val);
-		return (-1);
-	}
+	if ((line[0] == '\0') || (*ep != '\0'))
+		fatal("invalid Gzip-stream level `%s'", line);
+	else if ((errno == ERANGE) && ((val < 0) || (val > 9)))
+		fatal("Gzip-stream level %ld out of range", val);
 
 	cvs_compress = (int)val;
 

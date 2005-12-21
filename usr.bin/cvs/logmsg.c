@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.23 2005/12/20 18:17:01 xsa Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.24 2005/12/21 20:04:36 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -69,26 +69,19 @@ cvs_logmsg_open(const char *path)
 	FILE *fp;
 	BUF *bp;
 
-	if (stat(path, &st) == -1) {
-		cvs_log(LP_ERRNO, "failed to stat `%s'", path);
-		return (NULL);
-	}
+	if (stat(path, &st) == -1)
+		fatal("cvs_logmsg_open: stat: `%s': %s", path, strerror(errno));
 
-	if (!S_ISREG(st.st_mode)) {
-		cvs_log(LP_ERR, "message file must be a regular file");
-		return (NULL);
-	}
+	if (!S_ISREG(st.st_mode))
+		fatal("cvs_logmsg_open: message file must be a regular file");
 
 	if (st.st_size > CVS_LOGMSG_BIGMSG) {
 		do {
 			fprintf(stderr,
 			    "The specified message file seems big.  "
 			    "Proceed anyways? (y/n) ");
-			if (fgets(lbuf, (int)sizeof(lbuf), stdin) == NULL) {
-				cvs_log(LP_ERRNO,
-				    "failed to read from standard input");
-				return (NULL);
-			}
+			if (fgets(lbuf, (int)sizeof(lbuf), stdin) == NULL)
+				fatal("cvs_logmsg_open: fgets failed");
 
 			len = strlen(lbuf);
 			if ((len == 0) || (len > 2) ||
@@ -97,24 +90,17 @@ cvs_logmsg_open(const char *path)
 				continue;
 			} else if (lbuf[0] == 'y')
 				break;
-			else if (lbuf[0] == 'n') {
-				cvs_log(LP_ERR, "aborted by user");
-				return (NULL);
-			}
+			else if (lbuf[0] == 'n')
+				fatal("aborted by user");
 
 		} while (1);
 	}
 
-	if ((fp = fopen(path, "r")) == NULL) {
-		cvs_log(LP_ERRNO, "failed to open message file `%s'", path);
-		return (NULL);
-	}
+	if ((fp = fopen(path, "r")) == NULL)
+		fatal("cvs_logmsg_open: fopen: `%s': %s",
+		    path, strerror(errno));
 
 	bp = cvs_buf_alloc((size_t)128, BUF_AUTOEXT);
-	if (bp == NULL) {
-		(void)fclose(fp);
-		return (NULL);
-	}
 
 	/* lcont is used to tell if a buffer returned by fgets is a start
 	 * of line or just line continuation because the buffer isn't
@@ -131,11 +117,7 @@ cvs_logmsg_open(const char *path)
 			/* skip lines starting with the prefix */
 			continue;
 
-		if (cvs_buf_append(bp, lbuf, strlen(lbuf)) < 0) {
-			cvs_buf_free(bp);
-			(void)fclose(fp);
-			return (NULL);
-		}
+		cvs_buf_append(bp, lbuf, strlen(lbuf));
 
 		lcont = (lbuf[len - 1] == '\n') ? 0 : 1;
 	}
@@ -187,18 +169,14 @@ cvs_logmsg_get(const char *dir, struct cvs_flist *added,
 	argv[argc++] = path;
 	argv[argc] = NULL;
 
-	if ((fd = mkstemp(path)) == -1) {
-		cvs_log(LP_ERRNO, "failed to create temporary file");
-		return (NULL);
-	}
+	if ((fd = mkstemp(path)) == -1)
+		fatal("cvs_logmsg_get: mkstemp: `%s': %s",
+		    path, strerror(errno));
 
-	fp = fdopen(fd, "w");
-	if (fp == NULL) {
-		cvs_log(LP_ERRNO, "failed to fdopen");
-		(void)close(fd);
+	if ((fp = fdopen(fd, "w")) == NULL) {
 		if (unlink(path) == -1)
 			cvs_log(LP_ERRNO, "failed to unlink temporary file");
-		return (NULL);
+		fatal("cvs_logmsg_get: fdopen failed");
 	}
 
 	fprintf(fp, "\n%s %s\n%s Enter Log.  Lines beginning with `%s' are "
@@ -242,12 +220,9 @@ cvs_logmsg_get(const char *dir, struct cvs_flist *added,
 	(void)fflush(fp);
 
 	if (fstat(fd, &st1) == -1) {
-		cvs_log(LP_ERRNO, "failed to stat log message file");
-
-		(void)fclose(fp);
 		if (unlink(path) == -1)
 			cvs_log(LP_ERRNO, "failed to unlink log file %s", path);
-		return (NULL);
+		fatal("cvs_logmsg_get: fstat failed");
 	}
 
 	for (;;) {
@@ -313,10 +288,8 @@ cvs_logmsg_send(struct cvsroot *root, const char *msg)
 	const char *mp;
 	char *np, buf[256];
 
-	if (cvs_sendarg(root, "-m", 0) < 0) {
-		cvs_log(LP_ERR, "failed to send log message");
-		return (-1);
-	}
+	if (cvs_sendarg(root, "-m", 0) < 0)
+		fatal("cvs_logmsg_send: cvs_sendarg failed");
 
 	for (mp = msg; mp != NULL; mp = strchr(mp, '\n')) {
 		if (*mp == '\n')
@@ -327,10 +300,8 @@ cvs_logmsg_send(struct cvsroot *root, const char *msg)
 		np = strchr(buf, '\n');
 		if (np != NULL)
 			*np = '\0';
-		if (cvs_sendarg(root, buf, (mp == msg) ? 0 : 1) < 0) {
-			cvs_log(LP_ERR, "failed to send log message");
-			return (-1);
-		}
+		if (cvs_sendarg(root, buf, (mp == msg) ? 0 : 1) < 0)
+			fatal("cvs_logmsg_send: cvs_sendarg failed");
 	}
 
 	return (0);
