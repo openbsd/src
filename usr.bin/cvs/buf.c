@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.22 2005/12/20 17:55:10 xsa Exp $	*/
+/*	$OpenBSD: buf.c,v 1.23 2005/12/21 16:03:56 xsa Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -210,7 +210,7 @@ cvs_buf_copy(BUF *b, size_t off, void *dst, size_t len)
 ssize_t
 cvs_buf_set(BUF *b, const void *src, size_t len, size_t off)
 {
-	size_t rlen;
+	size_t rlen = 0;
 
 	if (b->cb_size < (len + off)) {
 		if ((b->cb_flags & BUF_AUTOEXT) &&
