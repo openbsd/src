@@ -1,4 +1,4 @@
-/*	$OpenBSD: tpms.c,v 1.1 2005/12/20 01:36:10 brad Exp $	*/
+/*	$OpenBSD: tpms.c,v 1.2 2005/12/21 22:19:41 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -107,8 +107,6 @@
  * Take care of the XXXs.
  *
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -253,7 +251,7 @@ struct tpms_softc {
 	signed char sc_sample[TPMS_SENSORS]; /* Current sample. */
 	struct device *sc_wsmousedev; /* WSMouse device. */
 	int sc_noise;		      /* Amount of noise. */
-	int sc_theshold;	      /* Threshold value. */
+	int sc_threshold;	      /* Threshold value. */
 	int sc_x;		      /* Virtual position in horizontal 
 				       * direction (wsmouse position). */
 	int sc_x_factor;	      /* X-coordinate factor. */
@@ -335,10 +333,6 @@ USB_ATTACH(tpms)
 	int i;
 	uint16_t vendor, product;
 
-	sc->sc_hdev.sc_intr = tpms_intr;
-	sc->sc_hdev.sc_parent = uha->parent;
-	sc->sc_hdev.sc_report_id = uha->reportid;
-
 	/* Fill in device-specific parameters. */
 	if ((udd = usbd_get_device_descriptor(uha->parent->sc_udev)) != NULL) {
 		product = UGETW(udd->idProduct);
@@ -348,7 +342,7 @@ USB_ATTACH(tpms)
 			if (product == pd->product && vendor == pd->vendor) {
 				printf(": %s\n", pd->descr);
 				sc->sc_noise = pd->noise;
-				sc->sc_theshold = pd->threshold;
+				sc->sc_threshold = pd->threshold;
 				sc->sc_x_factor = pd->x_factor;
 				sc->sc_x_sensors = pd->x_sensors;
 				sc->sc_y_factor = pd->y_factor;
@@ -357,14 +351,23 @@ USB_ATTACH(tpms)
 			}
 		}
 	}
-	KASSERT(0 <= sc->sc_x_sensors && sc->sc_x_sensors <= TPMS_X_SENSORS);
-	KASSERT(0 <= sc->sc_y_sensors && sc->sc_y_sensors <= TPMS_Y_SENSORS);
+	if (sc->sc_x_sensors <= 0 || sc->sc_x_sensors >= TPMS_X_SENSORS ||
+	    sc->sc_y_sensors <= 0 || sc->sc_y_sensors >= TPMS_Y_SENSORS) {
+		printf(": unexpected sensors configuration (%d:%d)\n",
+		    sc->sc_x_sensors, sc->sc_y_sensors);
+		USB_ATTACH_ERROR_RETURN;
+	}
+
+	sc->sc_hdev.sc_intr = tpms_intr;
+	sc->sc_hdev.sc_parent = uha->parent;
+	sc->sc_hdev.sc_report_id = uha->reportid;
 
 	sc->sc_status = 0;
 
+	printf("\n");
+
 	a.accessops = &tpms_accessops;
 	a.accesscookie = sc;
-
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 
 	USB_ATTACH_SUCCESS_RETURN;
@@ -439,12 +442,16 @@ tpms_disable(void *v)
 	uhidev_close(&sc->sc_hdev);
 }
 
-/* XXX ioctl not implemented. */
-
 Static int
 tpms_ioctl(void *v, unsigned long cmd, caddr_t data, int flag, usb_proc_ptr p)
 {
-	return (ENOTTY);
+	switch (cmd) {
+	case WSMOUSEIO_GTYPE:
+		*(u_int *)data = WSMOUSE_TYPE_TPANEL;
+		return (0);
+	}
+
+	return (-1);
 }
 
 /*
@@ -551,10 +558,10 @@ compute_delta(struct tpms_softc *sc, int *dx, int *dy, int *dz,
 {
 	int x_det, y_det, x_raw, y_raw, x_fingers, y_fingers, fingers, x, y;
 
-	x_det = detect_pos(sc->sc_acc, sc->sc_x_sensors, sc->sc_theshold,
+	x_det = detect_pos(sc->sc_acc, sc->sc_x_sensors, sc->sc_threshold,
 			   sc->sc_x_factor, &x_raw, &x_fingers);
 	y_det = detect_pos(sc->sc_acc + TPMS_X_SENSORS, sc->sc_y_sensors,
-			   sc->sc_theshold, sc->sc_y_factor,
+			   sc->sc_threshold, sc->sc_y_factor,
 			   &y_raw, &y_fingers);
 	fingers = max(x_fingers, y_fingers);
 
