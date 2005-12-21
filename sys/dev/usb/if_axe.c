@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.42 2005/12/09 04:51:55 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.43 2005/12/21 12:33:07 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -470,34 +470,28 @@ axe_ax88178_init(struct axe_softc *sc)
 		gpio0 = 1;
 	} else {
 		phymode = eeprom & 7;
-		if (eeprom & 0x80)
-			gpio0 = 0;
+		gpio0 = (eeprom & 0x80) ? 0 : 1;
 	}
 
 	DPRINTF(("use gpio0: %d, phymode %d\n", gpio0, phymode));
 
-	/* GPIO voodoo required to turn on PHY */
-	if (gpio0)
-		printf("gpio0 path not done! PHY not enabled\n");
-	else {
-		axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x008c, NULL);
-		usbd_delay_ms(sc->axe_udev, 40);
-		if (phymode != 1) {
-			axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x003c, NULL);
-			usbd_delay_ms(sc->axe_udev, 30);
+	axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x008c, NULL);
+	usbd_delay_ms(sc->axe_udev, 40);
+	if ((eeprom >> 8) != 1) {
+		axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x003c, NULL);
+		usbd_delay_ms(sc->axe_udev, 30);
 
-			axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x001c, NULL);
-			usbd_delay_ms(sc->axe_udev, 300);
+		axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x001c, NULL);
+		usbd_delay_ms(sc->axe_udev, 300);
 
-			axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x003c, NULL);
-			usbd_delay_ms(sc->axe_udev, 30);
-		} else {
-			DPRINTF(("axe gpio phymode == 1 path\n"));
-			axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x0004, NULL);
-			usbd_delay_ms(sc->axe_udev, 30);
-			axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x000c, NULL);
-			usbd_delay_ms(sc->axe_udev, 30);
-		}
+		axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x003c, NULL);
+		usbd_delay_ms(sc->axe_udev, 30);
+	} else {
+		DPRINTF(("axe gpio phymode == 1 path\n"));
+		axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x0004, NULL);
+		usbd_delay_ms(sc->axe_udev, 30);
+		axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x000c, NULL);
+		usbd_delay_ms(sc->axe_udev, 30);
 	}
 
 	/* soft reset */
@@ -507,8 +501,6 @@ axe_ax88178_init(struct axe_softc *sc)
 	    AXE_178_RESET_PRL | AXE_178_RESET_MAGIC, NULL);
 	usbd_delay_ms(sc->axe_udev, 150);
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, 0, NULL);
-	/* XXX is a delay this long required for PHY to work? */
-	usbd_delay_ms(sc->axe_udev, 1500);
 }
 
 Static void
