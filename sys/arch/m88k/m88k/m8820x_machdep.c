@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.18 2005/12/11 21:45:30 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.19 2005/12/21 22:15:24 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -227,14 +227,14 @@ m8820x_cmmu_wait(int cpu)
 }
 
 const char *mmutypes[8] = {
-	"Unknown (0)",
-	"Unknown (1)",
-	"Unknown (2)",
-	"Unknown (3)",
-	"Unknown (4)",
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 	"M88200 (16K)",
 	"M88204 (64K)",
-	"Unknown (7)"
+	NULL
 };
 
 /*
@@ -279,7 +279,7 @@ m8820x_cpu_configuration_print(int main)
 			else
 				printf(", ");
 
-			if (mmutypes[mmuid][0] == 'U')
+			if (mmutypes[mmuid] == NULL)
 				printf("unknown model id 0x%x", mmuid);
 			else
 				printf("%s", mmutypes[mmuid]);
