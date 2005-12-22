@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_tls.c,v 1.9 2005/12/22 06:49:48 tedu Exp $ */
+/*	$OpenBSD: rthread_tls.c,v 1.10 2005/12/22 20:48:57 brad Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -135,7 +135,7 @@ pthread_setspecific(pthread_key_t key, const void *data)
 }
 
 void
-rthread_tls_destructors(pthread_t thread)
+_rthread_tls_destructors(pthread_t thread)
 {
 	struct rthread_storage *rs;
 	int i;
