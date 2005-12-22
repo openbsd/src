@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_tls.c,v 1.8 2005/12/19 06:47:40 tedu Exp $ */
+/*	$OpenBSD: rthread_tls.c,v 1.9 2005/12/22 06:49:48 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -84,7 +84,7 @@ pthread_key_delete(pthread_key_t key)
 }
 
 static struct rthread_storage *
-rthread_findstorage(pthread_key_t key)
+_rthread_findstorage(pthread_key_t key)
 {
 	struct rthread_storage *rs;
 	pthread_t self;
@@ -114,7 +114,7 @@ pthread_getspecific(pthread_key_t key)
 {
 	struct rthread_storage *rs;
 
-	rs = rthread_findstorage(key);
+	rs = _rthread_findstorage(key);
 	if (!rs)
 		return (NULL);
 
@@ -126,7 +126,7 @@ pthread_setspecific(pthread_key_t key, const void *data)
 {
 	struct rthread_storage *rs;
 
-	rs = rthread_findstorage(key);
+	rs = _rthread_findstorage(key);
 	if (!rs)
 		return (ENOMEM);
 	rs->data = (void *)data;

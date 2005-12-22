@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.16 2005/12/22 06:33:12 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.17 2005/12/22 06:49:48 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -68,7 +68,7 @@ _spinunlock(_spinlock_lock_t *lock)
 }
 
 static pthread_t
-thread_findself(void)
+_rthread_findself(void)
 {
 	pthread_t me;
 	pid_t tid = getthrid();
@@ -82,7 +82,7 @@ thread_findself(void)
 
 
 static void
-thread_start(void *v)
+_rthread_start(void *v)
 {
 	pthread_t thread = v;
 	void *retval;
@@ -95,9 +95,9 @@ thread_start(void *v)
 }
 
 static int
-thread_init(void)
+_rthread_init(void)
 {
-	pthread_t thread = &inital_thread;
+	pthread_t thread = &initial_thread;
 	extern int __isthreaded;
 
 	printf("rthread init\n");
@@ -114,7 +114,7 @@ thread_init(void)
 }
 
 static struct stack *
-alloc_stack(size_t len, void *base)
+_rthread_alloc_stack(size_t len, void *base)
 {
 	struct stack *stack;
 
@@ -141,7 +141,7 @@ alloc_stack(size_t len, void *base)
 }
 
 static void
-free_stack(struct stack *stack)
+_rthread_free_stack(struct stack *stack)
 {
 	munmap(stack->base, stack->len);
 	free(stack);
@@ -156,11 +156,11 @@ pthread_self(void)
 	pthread_t thread;
 
 	if (!threads_ready)
-		if (thread_init())
+		if (_rthread_init())
 			return (NULL);
 
 	_spinlock(&thread_lock);
-	thread = thread_findself();
+	thread = _rthread_findself();
 	_spinunlock(&thread_lock);
 
 	return (thread);
@@ -182,7 +182,7 @@ pthread_exit(void *retval)
 		oclfn->fn(oclfn->arg);
 		free(oclfn);
 	}
-	rthread_tls_destructors(thread);
+	_rthread_tls_destructors(thread);
 #if 0
 	if (thread->flags & THREAD_DETACHED)
 		free(thread);
@@ -225,14 +225,14 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	int rc = 0;
 
 	if (!threads_ready)
-		if ((rc = thread_init()))
+		if ((rc = _rthread_init()))
 		    return (rc);
 
 	thread = malloc(sizeof(*thread));
 	if (!thread)
 		return (errno);
 	memset(thread, 0, sizeof(*thread));
-	thread->stack = alloc_stack(64 * 1024, NULL);
+	thread->stack = _rthread_alloc_stack(64 * 1024, NULL);
 	if (!thread->stack) {
 		rc = errno;
 		goto fail1;
@@ -248,12 +248,12 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	thread_list = thread;
 
 	tid = rfork_thread(RFPROC | RFTHREAD | RFMEM | RFNOWAIT,
-	    thread->stack->sp, thread_start, thread);
+	    thread->stack->sp, _rthread_start, thread);
 	if (tid == -1) {
 		rc = errno;
 		goto fail2;
 	}
-	/* new thread will appear thread_start */
+	/* new thread will appear _rthread_start */
 	thread->tid = tid;
 	thread->flags |= THREAD_CANCEL_ENABLE|THREAD_CANCEL_DEFERRED;
 	*threadp = thread;
@@ -263,7 +263,7 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 fail2:
 	thread_list = thread->next;
 	_spinunlock(&thread_lock);
-	free_stack(thread->stack);
+	_rthread_free_stack(thread->stack);
 fail1:
 	free(thread);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.11 2005/12/19 06:47:40 tedu Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.12 2005/12/22 06:49:48 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -253,7 +253,7 @@ pthread_mutex_destroy(pthread_mutex_t *mutexp)
 }
 
 int
-rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait)
+_rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait)
 {
 	pthread_mutex_t mutex = *mutexp;
 	pthread_t thread = pthread_self();
@@ -281,13 +281,13 @@ rthread_mutex_lock(pthread_mutex_t *mutexp, int trywait)
 int
 pthread_mutex_lock(pthread_mutex_t *p)
 {
-	return (rthread_mutex_lock(p, 0));
+	return (_rthread_mutex_lock(p, 0));
 }
 
 int
 pthread_mutex_trylock(pthread_mutex_t *p)
 {
-	return (rthread_mutex_lock(p, 1));
+	return (_rthread_mutex_lock(p, 1));
 }
 
 int
