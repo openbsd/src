@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.14 2005/12/21 23:44:56 marco Exp $ */
+/*	$OpenBSD: rthread.c,v 1.15 2005/12/22 00:37:25 marco Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -133,8 +133,7 @@ alloc_stack(size_t len, void *base)
 		}
 	}
 #ifdef MACHINE_STACK_GROWS_UP
-	stack->sp = (void *)(((size_t)stack->base + MACHINE_STACK_ALIGN) &
-	    ~(MACHINE_STACK_ALIGN - 1));
+	stack->sp = (void *)(((size_t)stack->base + 64) & ~63);
 #else
 	stack->sp = (void *)(((size_t)stack->base + len - 16) & ~15);
 #endif
