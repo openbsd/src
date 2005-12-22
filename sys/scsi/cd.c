@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.98 2005/12/22 03:21:57 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.99 2005/12/22 23:06:23 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -953,21 +953,22 @@ cdioctl(dev, cmd, addr, flag, p)
 		int len = te->data_len;
 		int ntracks;
 
-		MALLOC (toc, struct cd_toc *, sizeof (struct cd_toc),
-			M_DEVBUF, M_WAITOK);
+		MALLOC(toc, struct cd_toc *, sizeof(struct cd_toc), M_TEMP,
+		    M_WAITOK);
+		bzero(toc, sizeof(*toc));
 
 		th = &toc->header;
 
 		if (len > sizeof(toc->entries) ||
 		    len < sizeof(struct cd_toc_entry)) {
-			FREE(toc, M_DEVBUF);
+			FREE(toc, M_TEMP);
 			error = EINVAL;
 			break;
 		}
 		error = cd_read_toc(cd, te->address_format, te->starting_track,
 		    toc, len + sizeof(struct ioc_toc_header), 0);
 		if (error) {
-			FREE(toc, M_DEVBUF);
+			FREE(toc, M_TEMP);
 			break;
 		}
 		if (te->address_format == CD_LBA_FORMAT)
@@ -992,7 +993,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		    sizeof(th->ending_track)));
 
 		error = copyout(toc->entries, te->data, len);
-		FREE(toc, M_DEVBUF);
+		FREE(toc, M_TEMP);
 		break;
 	}
 	case CDIOREADMSADDR: {
@@ -1005,15 +1006,16 @@ cdioctl(dev, cmd, addr, flag, p)
 			break;
 		}
 
-		MALLOC (toc, struct cd_toc *, sizeof (struct cd_toc),
-			M_DEVBUF, M_WAITOK);
+		MALLOC(toc, struct cd_toc *, sizeof(struct cd_toc), M_TEMP,
+		    M_WAITOK);
+		bzero(toc, sizeof(*toc));
 
 		error = cd_read_toc(cd, 0, 0, toc,
 		  sizeof(struct ioc_toc_header) + sizeof(struct cd_toc_entry),
 		  0x40 /* control word for "get MS info" */);
 
 		if (error) {
-			FREE(toc, M_DEVBUF);
+			FREE(toc, M_TEMP);
 			break;
 		}
 
@@ -1032,7 +1034,7 @@ cdioctl(dev, cmd, addr, flag, p)
 
 		*(int *)addr = (toc->header.len >= 10 && cte->track > 1) ?
 			cte->addr.lba : 0;
-		FREE(toc, M_DEVBUF);
+		FREE(toc, M_TEMP);
 		break;
 	}
 	case CDIOCSETPATCH: {
@@ -1539,7 +1541,7 @@ cd_play_tracks(cd, strack, sindex, etrack, eindex)
 	struct cd_softc *cd;
 	int strack, sindex, etrack, eindex;
 {
-	struct cd_toc toc;
+	struct cd_toc *toc;
 	u_char endf, ends, endm;
 	int error;
 
@@ -1548,37 +1550,48 @@ cd_play_tracks(cd, strack, sindex, etrack, eindex)
 	if (strack > etrack)
 		return (EINVAL);
 
-	if ((error = cd_load_toc(cd, &toc)) != 0)
-		return (error);
+	MALLOC(toc, struct cd_toc *, sizeof(struct cd_toc), M_TEMP, M_WAITOK);
+	bzero(toc, sizeof(*toc));
 
-	if (++etrack > (toc.header.ending_track+1))
-		etrack = toc.header.ending_track+1;
+	if ((error = cd_load_toc(cd, toc)) != 0)
+		goto done;
 
-	strack -= toc.header.starting_track;
-	etrack -= toc.header.starting_track;
-	if (strack < 0)
-		return (EINVAL);
+	if (++etrack > (toc->header.ending_track+1))
+		etrack = toc->header.ending_track+1;
+
+	strack -= toc->header.starting_track;
+	etrack -= toc->header.starting_track;
+	if (strack < 0) {
+		error = EINVAL;
+		goto done;
+	}
 
 	/*
 	 * The track ends one frame before the next begins.  The last track
 	 * is taken care of by the leadoff track.
 	 */
-	endm = toc.entries[etrack].addr.msf.minute;
-	ends = toc.entries[etrack].addr.msf.second;
-	endf = toc.entries[etrack].addr.msf.frame;
+	endm = toc->entries[etrack].addr.msf.minute;
+	ends = toc->entries[etrack].addr.msf.second;
+	endf = toc->entries[etrack].addr.msf.frame;
 	if (endf-- == 0) {
 		endf = CD_FRAMES - 1;
 		if (ends-- == 0) {
 			ends = CD_SECS - 1;
-			if (endm-- == 0)
-				return (EINVAL);
+			if (endm-- == 0) {
+				error = EINVAL;
+				goto done;
+			}
 		}
 	}
 
-	return (cd_play_msf(cd, toc.entries[strack].addr.msf.minute,
-	    toc.entries[strack].addr.msf.second,
-	    toc.entries[strack].addr.msf.frame,
-	    endm, ends, endf));
+	error = cd_play_msf(cd, toc->entries[strack].addr.msf.minute,
+	    toc->entries[strack].addr.msf.second,
+	    toc->entries[strack].addr.msf.frame,
+	    endm, ends, endf);
+
+done:
+	FREE(toc, M_TEMP);
+	return (error);
 }
 
 /*
