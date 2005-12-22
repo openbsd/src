@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.8 2005/09/27 23:56:12 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.9 2005/12/22 03:02:48 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -401,11 +401,6 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 			wander = 0;
 			if (part_blkno < extoff)
 				part_blkno = extoff;
-
-			if (spoofonly) {
-				bzero(dp, NDOSPART * sizeof(*dp));
-				goto donot;
-			}
 
 			/* read boot record */
 			bp->b_blkno = part_blkno;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.12 2005/09/29 23:02:17 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.13 2005/12/22 03:02:48 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -104,10 +104,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
-	/* don't read the on-disk label if we are in spoofed-only mode */
-	if (spoofonly)
-		goto done;
-
 	/* DPME (HFS) disklabel */
 
 	bp->b_blkno = 1;
@@ -164,6 +160,10 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	}
 	lp->d_npartitions = MAXPARTITIONS;
 
+	/* don't read the on-disk label if we are in spoofed-only mode */
+	if (spoofonly)
+		goto done;
+
 	/* next, dig out disk label */
 	bp->b_blkno = hfspartoff;
 	bp->b_cylin = hfspartoff/lp->d_secpercyl; /* XXX */
@@ -200,11 +200,6 @@ hfs_done:
 			wander = 0;
 			if (part_blkno < extoff)
 				part_blkno = extoff;
-
-			if (spoofonly) {
-				bzero(dp, NDOSPART * sizeof(*dp));
-				goto donot;
-			}
 
 			/* read boot record */
 			bp->b_blkno = part_blkno;
