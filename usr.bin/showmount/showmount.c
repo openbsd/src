@@ -1,4 +1,4 @@
-/*	$OpenBSD: showmount.c,v 1.14 2003/12/12 02:14:36 deraadt Exp $	*/
+/*	$OpenBSD: showmount.c,v 1.15 2005/12/22 23:22:37 deraadt Exp $	*/
 /*	$NetBSD: showmount.c,v 1.7 1996/05/01 18:14:10 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: showmount.c,v 1.14 2003/12/12 02:14:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: showmount.c,v 1.15 2005/12/22 23:22:37 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -214,7 +214,7 @@ main(int argc, char *argv[])
 		exp = exports;
 		while (exp) {
 			strnvis(vp, exp->ex_dirp, sizeof vp, VIS_CSTYLE);
-			printf("%-35s", vp);
+			printf("%-34s ", vp);
 			grp = exp->ex_groups;
 			if (grp == NULL) {
 				printf("Everyone\n");
