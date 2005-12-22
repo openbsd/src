@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.78 2005/12/03 18:09:08 tedu Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.79 2005/12/22 06:58:20 tedu Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -705,7 +705,8 @@ pgsignal(struct pgrp *pgrp, int signum, int checkctty)
 
 	if (pgrp)
 		LIST_FOREACH(p, &pgrp->pg_members, p_pglist)
-			if (checkctty == 0 || p->p_flag & P_CONTROLT)
+			if ((checkctty == 0 || p->p_flag & P_CONTROLT) &&
+			    (p->p_flag & P_THREAD) == 0)
 				psignal(p, signum);
 }
 
@@ -831,10 +832,15 @@ psignal(struct proc *p, int signum)
 		}
 	}
 
-	if (prop & SA_CONT)
+	if (prop & SA_CONT) {
+		LIST_FOREACH(q, &p->p_thrchildren, p_thrsib)
+			psignal(q, signum);
 		p->p_siglist &= ~stopsigmask;
+	}
 
 	if (prop & SA_STOP) {
+		LIST_FOREACH(q, &p->p_thrchildren, p_thrsib)
+			psignal(q, signum);
 		p->p_siglist &= ~contsigmask;
 		p->p_flag &= ~P_CONTINUED;
 	}
