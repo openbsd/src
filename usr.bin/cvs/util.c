@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.60 2005/12/22 14:16:18 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.61 2005/12/22 14:31:44 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -697,11 +697,8 @@ cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
 			entf = NULL;
 		}
 
-		/*
-		 * All went ok, switch to the newly created directory.
-		 */
-		if (cvs_chdir(d) == -1)
-			goto done;
+		/* All went ok, switch to the newly created directory. */
+		cvs_chdir(d);
 
 		d = strtok(NULL, "/");
 	}
