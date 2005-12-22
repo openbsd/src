@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.20 2005/09/15 20:23:10 miod Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.21 2005/12/22 18:45:46 deraadt Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -89,8 +89,6 @@ void	pxa2x0_lcd_setup_rasops(struct rasops_info *,
 void	pxa2x0_lcd_start_dma(bus_space_tag_t, bus_space_handle_t,
 	    struct pxa2x0_lcd_screen *);
 void	pxa2x0_lcd_stop_dma(bus_space_tag_t, bus_space_handle_t);
-void	pxa2x0_lcd_suspend(struct pxa2x0_lcd_softc *);
-void	pxa2x0_lcd_resume(struct pxa2x0_lcd_softc *);
 
 /*
  * Setup display geometry parameters.
@@ -191,8 +189,7 @@ pxa2x0_lcd_initialize(bus_space_tag_t iot, bus_space_handle_t ioh,
 	    LCDPANEL_DUAL)) {
 		/* active and color dual panel need L_DD[15:0] */
 		nldd = 16;
-	} else
-	if ((geom->panel_info & LCDPANEL_DUAL) ||
+	} else if ((geom->panel_info & LCDPANEL_DUAL) ||
 	    !(geom->panel_info & LCDPANEL_MONOCHROME)) {
 		/* dual or color need L_DD[7:0] */
 		nldd = 8;
@@ -827,8 +824,8 @@ pxa2x0_lcd_suspend(struct pxa2x0_lcd_softc *sc)
 
 	if (sc->active != NULL) {
 		pxa2x0_lcd_stop_dma(sc->iot, sc->ioh);
+
 		pxa2x0_clkman_config(CKEN_LCD, 0);
-		delay(1000000);	/* XXX */
 	}
 }
 
@@ -840,8 +837,6 @@ pxa2x0_lcd_resume(struct pxa2x0_lcd_softc *sc)
 		pxa2x0_lcd_initialize(sc->iot, sc->ioh, sc->geometry,
 		    pxa2x0_clkman_config);
 		pxa2x0_lcd_start_dma(sc->iot, sc->ioh, sc->active);
-		/* XXX wait here to avoid a weird fade-in effect. */
-		delay(1000000);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.24 2005/12/02 19:22:21 deraadt Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.25 2005/12/22 18:45:47 deraadt Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -121,7 +121,7 @@
 #define PXA2X0_LCDC_BASE	0x44000000 /* LCD Controller */
 #define PXA2X0_LCDC_SIZE	0x220
 #define PXA2X0_MEMCTL_BASE	0x48000000 /* Memory Controller */
-#define PXA2X0_MEMCTL_SIZE	0x48
+#define PXA2X0_MEMCTL_SIZE	0x84
 #define PXA2X0_USBHC_BASE	0x4c000000 /* USB Host Controller */
 #define PXA2X0_USBHC_SIZE	0x70
 
@@ -517,6 +517,8 @@ struct pxa2x0_dma_desc {
 #define MECR_CIT	(1<<1)	/* Card-is-there */
 
 #define MEMCTL_MDMRS	0x0040
+
+#define MEMCTL_ARB_CNTRL 0x0048	/* System Bus Arbiter */
 
 /*
  * LCD Controller
