@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1030.c,v 1.1 2005/11/15 23:25:24 deraadt Exp $	*/
+/*	$OpenBSD: adm1030.c,v 1.2 2005/12/22 22:56:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -23,7 +23,7 @@
 
 #include <dev/i2c/i2cvar.h>
 
-/* Maxim 6690 registers */
+/* adm 1030 registers */
 #define ADM1030_INT_TEMP	0x0a
 #define ADM1030_EXT_TEMP	0x0b
 #define ADM1030_FAN		0x08
