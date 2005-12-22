@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.48 2005/12/21 20:06:25 xsa Exp $	*/
+/*	$OpenBSD: commit.c,v 1.49 2005/12/22 14:59:54 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -292,9 +292,7 @@ cvs_commit_local(CVSFILE *cf, void *arg)
 	}
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
-
-	if (cvs_rcs_getpath(cf, rcspath, sizeof(rcspath)) == NULL)
-		return (CVS_EX_DATA);
+	cvs_rcs_getpath(cf, rcspath, sizeof(rcspath));
 
 	return (0);
 }

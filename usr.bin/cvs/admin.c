@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.23 2005/07/27 16:42:19 xsa Exp $	*/
+/*	$OpenBSD: admin.c,v 1.24 2005/12/22 14:59:54 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -374,8 +374,7 @@ cvs_admin_local(CVSFILE *cf, void *arg)
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
-	if (cvs_rcs_getpath(cf, rcspath, sizeof(rcspath)) == NULL)
-		return (CVS_EX_DATA);
+	cvs_rcs_getpath(cf, rcspath, sizeof(rcspath));
 
 	rf = rcs_open(rcspath, RCS_RDWR);
 	if (rf == NULL)

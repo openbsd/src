@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.23 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.24 2005/12/22 14:59:54 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -191,8 +191,7 @@ cvs_annotate_local(CVSFILE *cf, void *arg)
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN)
 		return (0);
 
-	if (cvs_rcs_getpath(cf, rcspath, sizeof(rcspath)) == NULL)
-		return (CVS_EX_DATA);
+	cvs_rcs_getpath(cf, rcspath, sizeof(rcspath));
 
 	rf = rcs_open(rcspath, RCS_READ);
 	if (rf == NULL)

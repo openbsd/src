@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.47 2005/12/03 15:31:53 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.48 2005/12/22 14:59:54 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -244,12 +244,10 @@ cvs_update_local(CVSFILE *cf, void *arg)
 	if (cf->cf_type == DT_DIR) {
 		if (verbosity > 1)
 			cvs_log(LP_NOTICE, "Updating %s", fpath);
-
 		return (CVS_EX_OK);
 	}
 
-	if (cvs_rcs_getpath(cf, rcspath, sizeof(rcspath)) == NULL)
-		return (CVS_EX_DATA);
+	cvs_rcs_getpath(cf, rcspath, sizeof(rcspath));
 
 	/*
 	 * Only open the RCS file for files that have not been added.
