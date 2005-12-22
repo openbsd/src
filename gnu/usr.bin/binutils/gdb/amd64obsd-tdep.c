@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/amd64.
 
-   Copyright 2003, 2004 Free Software Foundation, Inc.
+   Copyright 2003, 2004, 2005 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 
 #include "defs.h"
 #include "frame.h"
+#include "frame-unwind.h"
 #include "gdbcore.h"
 #include "symtab.h"
 #include "objfiles.h"
@@ -28,6 +29,7 @@
 #include "regcache.h"
 #include "regset.h"
 #include "target.h"
+#include "trad-frame.h"
 
 #include "gdb_assert.h"
 #include "gdb_string.h"
@@ -331,6 +333,113 @@ amd64obsd_collect_uthread (const struct regcache *regcache,
 	}
     }
 }
+
+
+/* Kernel debugging support.  */
+
+/* From <machine/frame.h>.  Easy since `struct trapframe' matches
+   `struct sigcontext'.  */
+#define amd64obsd_tf_reg_offset amd64obsd_sc_reg_offset
+
+static struct trad_frame_cache *
+amd64obsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
+{
+  struct trad_frame_cache *cache;
+  CORE_ADDR func, sp, addr;
+  ULONGEST cs;
+  char *name;
+  int i;
+
+  if (*this_cache)
+    return *this_cache;
+
+  cache = trad_frame_cache_zalloc (next_frame);
+  *this_cache = cache;
+
+  func = frame_func_unwind (next_frame);
+  sp = frame_unwind_register_unsigned (next_frame, AMD64_RSP_REGNUM);
+
+  find_pc_partial_function (func, &name, NULL, NULL);
+  if (name && strncmp(name, "Xintr", 5) == 0)
+    addr = sp + 8;		/* It's an interrupt frame.  */
+  else
+    addr = sp;
+
+  for (i = 0; i < ARRAY_SIZE (amd64obsd_tf_reg_offset); i++)
+    if (amd64obsd_tf_reg_offset[i] != -1)
+      trad_frame_set_reg_addr (cache, i, addr + amd64obsd_tf_reg_offset[i]);
+
+  /* Read %cs from trap frame.  */
+  addr += amd64obsd_tf_reg_offset[AMD64_CS_REGNUM];
+  cs = read_memory_unsigned_integer (addr, 8); 
+  if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
+    {
+      /* Trap from use space; terminate backtrace.  */
+      trad_frame_set_id (cache, null_frame_id);
+    }
+  else
+    {
+      /* Construct the frame ID using the function start.  */
+      trad_frame_set_id (cache, frame_id_build (sp + 16, func));
+    }
+
+  return cache;
+}
+
+static void
+amd64obsd_trapframe_this_id (struct frame_info *next_frame,
+			     void **this_cache, struct frame_id *this_id)
+{
+  struct trad_frame_cache *cache =
+    amd64obsd_trapframe_cache (next_frame, this_cache);
+  
+  trad_frame_get_id (cache, this_id);
+}
+
+static void
+amd64obsd_trapframe_prev_register (struct frame_info *next_frame,
+				   void **this_cache, int regnum,
+				   int *optimizedp, enum lval_type *lvalp,
+				   CORE_ADDR *addrp, int *realnump,
+				   void *valuep)
+{
+  struct trad_frame_cache *cache =
+    amd64obsd_trapframe_cache (next_frame, this_cache);
+
+  trad_frame_get_register (cache, next_frame, regnum,
+			   optimizedp, lvalp, addrp, realnump, valuep);
+}
+
+static int
+amd64obsd_trapframe_sniffer (const struct frame_unwind *self,
+			     struct frame_info *next_frame,
+			     void **this_prologue_cache)
+{
+  ULONGEST cs;
+  char *name;
+
+  cs = frame_unwind_register_unsigned (next_frame, AMD64_CS_REGNUM);
+  if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
+    return 0;
+
+  find_pc_partial_function (frame_pc_unwind (next_frame), &name, NULL, NULL);
+  return (name && ((strcmp (name, "calltrap") == 0)
+		   || (strcmp (name, "osyscall1") == 0)
+		   || (strcmp (name, "Xsyscall") == 0)
+		   || (strncmp (name, "Xintr", 5) == 0)));
+}
+
+static const struct frame_unwind amd64obsd_trapframe_unwind = {
+  /* FIXME: kettenis/20051219: This really is more like an interrupt
+     frame, but SIGTRAMP_FRAME would print <signal handler called>,
+     which really is not what we want here.  */
+  NORMAL_FRAME,
+  amd64obsd_trapframe_this_id,
+  amd64obsd_trapframe_prev_register,
+  NULL,
+  amd64obsd_trapframe_sniffer
+};
+
 
 static void
 amd64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
@@ -361,6 +470,9 @@ amd64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* OpenBSD uses SVR4-style shared libraries.  */
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_lp64_fetch_link_map_offsets);
+
+  /* Unwind kernel trap frames correctly.  */
+  frame_unwind_prepend_unwinder (gdbarch, &amd64obsd_trapframe_unwind);
 }
 
 

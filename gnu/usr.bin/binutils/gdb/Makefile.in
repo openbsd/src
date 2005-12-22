@@ -1681,10 +1681,11 @@ amd64nbsd-tdep.o: amd64nbsd-tdep.c $(defs_h) $(arch_utils_h) $(frame_h) \
 amd64obsd-nat.o: amd64obsd-nat.c $(defs_h) $(gdbcore_h) $(regcache_h) \
 	$(target_h) $(gdb_assert_h) $(amd64_tdep_h) $(amd64_nat_h) \
 	$(bsd_kvm_h)
-amd64obsd-tdep.o: amd64obsd-tdep.c $(defs_h) $(frame_h) $(gdbcore_h) \
-	$(symtab_h) $(objfiles_h) $(osabi_h) $(regset_h) $(target_h) \
-	$(gdb_assert_h) $(gdb_string_h) $(amd64_tdep_h) $(i387_tdep_h) \
-	$(solib_svr4_h)
+amd64obsd-tdep.o: amd64obsd-tdep.c $(defs_h) $(frame_h) $(frame_unwind_h) \
+	$(gdbcore_h) $(symtab_h) $(objfiles_h) $(osabi_h) $(regcache_h) \
+	$(regset_h) $(target_h) $(trad_frame_h) $(gdb_assert_h) \
+	$(gdb_string_h) $(amd64_tdep_h) $(i387_tdep_h) $(solib_svr4_h) \
+	$(bsd_uthread_h)
 amd64-tdep.o: amd64-tdep.c $(defs_h) $(arch_utils_h) $(block_h) \
 	$(dummy_frame_h) $(frame_h) $(frame_base_h) $(frame_unwind_h) \
 	$(inferior_h) $(gdbcmd_h) $(gdbcore_h) $(objfiles_h) $(regcache_h) \
