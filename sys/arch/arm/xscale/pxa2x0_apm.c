@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.23 2005/12/20 19:23:57 drahn Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.24 2005/12/22 00:38:23 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -1454,8 +1454,9 @@ pxa2x0_setperf(int speed)
 		printf("bogus new frequency 0 for rate %d maxclock %d\n",
 		    speed, xscale_maxspeed);
 	}
-	printf("setperf speed %d newfreq %d, maxfreq %d\n",
-	    speed, newfreq, xscale_maxspeed);
+
+	DPRINTF(("setperf speed %d newfreq %d, maxfreq %d\n",
+	    speed, newfreq, xscale_maxspeed));
 
 	s = disable_interrupts(I32_bit|F32_bit);
 
