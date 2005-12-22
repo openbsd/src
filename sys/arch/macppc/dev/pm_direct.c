@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.16 2005/12/10 13:45:38 pedro Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.17 2005/12/22 22:55:25 miod Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -79,9 +79,6 @@
  * Variables for internal use
  */
 int	pmHardware = PM_HW_UNKNOWN;
-u_short	pm_existent_ADB_devices = 0x0;	/* each bit expresses the existent ADB device */
-u_int	pm_LCD_brightness = 0x0;
-u_int	pm_LCD_contrast = 0x0;
 
 /* these values shows that number of data returned after 'send' cmd is sent */
 signed char pm_send_cmd_type[] = {
@@ -174,9 +171,6 @@ int	pm_send_pm2(u_char);
 int	pm_pmgrop_pm2(PMData *);
 void	pm_intr_pm2(void);
 
-/* this function is MRG-Based (for testing) */
-int	pm_pmgrop_mrg(PMData *);
-
 /* these functions also use the variables of adb_direct.c */
 void	pm_adb_get_TALK_result(PMData *);
 void	pm_adb_get_ADB_data(PMData *);
@@ -236,19 +230,6 @@ void
 pm_setup_adb()
 {
 	pmHardware = PM_HW_PB5XX;	/* XXX */
-}
-
-
-/*
- * Check the existent ADB devices
- */
-void
-pm_check_adb_devices(int id)
-{
-	u_short ed = 0x1;
-
-	ed <<= id;
-	pm_existent_ADB_devices |= ed;
 }
 
 
@@ -765,47 +746,7 @@ pm_set_date_time(time_t time)
 	pmgrop(&p);
 }
 
-int
-pm_read_brightness()
-{
-	PMData p;
-
-	p.command = PMU_READ_BRIGHTNESS;
-	p.num_data = 1;		/* XXX why 1? */
-	p.s_buf = p.r_buf = p.data;
-	p.data[0] = 0;
-	pmgrop(&p);
-
-	return p.data[0];
-}
-
-void
-pm_set_brightness(int val)
-{
-	PMData p;
-
-	val = 0x7f - val / 2;
-	if (val < 0x08)
-		val = 0x08;
-	if (val > 0x78)
-		val = 0x78;
-
-	p.command = PMU_SET_BRIGHTNESS;
-	p.num_data = 1;
-	p.s_buf = p.r_buf = p.data;
-	p.data[0] = val;
-	pmgrop(&p);
-}
-
-void
-pm_init_brightness()
-{
-	int val;
-
-	val = pm_read_brightness();
-	pm_set_brightness(val);
-}
-
+#if 0
 void
 pm_eject_pcmcia(int slot)
 {
@@ -820,6 +761,7 @@ pm_eject_pcmcia(int slot)
 	p.data[0] = 5 + slot;	/* XXX */
 	pmgrop(&p);
 }
+#endif
 
 
 /*
@@ -864,35 +806,4 @@ pm_battery_info(int battery, struct pmu_battery_info *info)
 	}
 
 	return 1;
-}
-
-
-
-int
-pm_read_nvram(int addr)
-{
-	PMData p;
-
-	p.command = PMU_READ_NVRAM;
-	p.num_data = 2;
-	p.s_buf = p.r_buf = p.data;
-	p.data[0] = addr >> 8;
-	p.data[1] = addr;
-	pmgrop(&p);
-
-	return p.data[0];
-}
-
-void
-pm_write_nvram(int addr, int val)
-{
-	PMData p;
-
-	p.command = PMU_WRITE_NVRAM;
-	p.num_data = 3;
-	p.s_buf = p.r_buf = p.data;
-	p.data[0] = addr >> 8;
-	p.data[1] = addr;
-	p.data[2] = val;
-	pmgrop(&p);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.13 2005/10/21 22:07:45 kettenis Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.14 2005/12/22 22:55:25 miod Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
 /*
@@ -182,8 +182,6 @@ u_char	*adbBuffer = (long)0;	/* pointer to user data area */
 void	*adbCompRout = (long)0;	/* pointer to the completion routine */
 void	*adbCompData = (long)0;	/* pointer to the completion routine data */
 int	adbStarting = 1;	/* doing ADBReInit so do polling differently */
-int	adbPolling = 0;		/* we are polling for service request */
-int	adbPollCmd = 0;		/* the last poll command we sent */
 
 u_char	adbInputBuffer[ADB_MAX_MSG_LENGTH];	/* data input buffer */
 u_char	adbOutputBuffer[ADB_MAX_MSG_LENGTH];	/* data output buffer */
@@ -1016,8 +1014,6 @@ adb_reinit(void)
 			ADBDevTable[ADBNumDevices].DataAreaAddr =
 			    (long)0;
 			ADBDevTable[ADBNumDevices].ServiceRtPtr = (void *)0;
-			pm_check_adb_devices(i);	/* tell pm driver device
-							 * is here */
 		}
 	}
 
@@ -1126,8 +1122,6 @@ adb_reinit(void)
 					    saveptr);
 #endif
 				nonewtimes = 0;
-				/* tell pm driver device is here */
-				pm_check_adb_devices(device);
 			} else {
 #ifdef ADB_DEBUG
 				if (adb_debug & 0x80)
@@ -1514,12 +1508,6 @@ int
 GetIndADB(ADBDataBlock * info, int index)
 {
 	return (get_ind_adb_info(info, index));
-}
-
-int
-GetADBInfo(ADBDataBlock * info, int adbAddr)
-{
-	return (get_adb_info(info, adbAddr));
 }
 
 int

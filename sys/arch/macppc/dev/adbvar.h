@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbvar.h,v 1.6 2005/10/21 22:07:45 kettenis Exp $	*/
+/*	$OpenBSD: adbvar.h,v 1.7 2005/12/22 22:55:25 miod Exp $	*/
 /*	$NetBSD: adbvar.h,v 1.3 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*-
@@ -89,7 +89,6 @@ int	adb_poweroff(void);
 int	CountADBs(void);
 void	ADBReInit(void);
 int	GetIndADB(ADBDataBlock * info, int index);
-int	GetADBInfo(ADBDataBlock * info, int adbAddr);
 int	SetADBInfo(ADBSetInfoBlock * info, int adbAddr);
 int	adb_read_date_time(time_t *t);
 int	adb_set_date_time(time_t t);
