@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.52 2005/04/08 21:11:08 kettenis Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.53 2005/12/22 18:15:01 kettenis Exp $
 
 MAN=		gcc.1 cpp.1 gcov.1 protoize.1
 MLINKS+=	protoize.1 unprotoize.1
@@ -164,7 +164,7 @@ depend: config.status
 	exec ${MAKE} ${MAKE_FLAGS} generated-manpages
 
 FILES= ${.CURDIR}/gcc/unwind.h
-.if ${MACHINE_ARCH} == "i386"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "amd64"
 FILES+=${.CURDIR}/gcc/config/i386/mmintrin.h \
 	${.CURDIR}/gcc/config/i386/xmmintrin.h \
 	${.CURDIR}/gcc/config/i386/emmintrin.h \
