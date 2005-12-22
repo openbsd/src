@@ -1,4 +1,4 @@
-.\"	$OpenBSD: config.8,v 1.44 2005/11/30 11:53:32 jmc Exp $
+.\"	$OpenBSD: config.8,v 1.45 2005/12/22 09:26:34 jmc Exp $
 .\"	$NetBSD: config.8,v 1.10 1996/08/31 20:58:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -103,7 +103,7 @@ When this option is specified,
 acts as if the lines
 .Dq makeoptions PROF="-pg"
 and
-.Dq options GPROF
+.Dq option GPROF
 appeared in the specified kernel configuration file.
 In addition,
 .Dq .PROF
@@ -159,7 +159,7 @@ flag is deprecated and no longer supported.
 Instead, add
 .Dq makeoptions DEBUG="-g"
 to the kernel configuration file, along with (typically)
-.Dq options KGDB .
+.Dq option KGDB .
 .Pp
 The output of
 .Nm
