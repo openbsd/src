@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.15 2005/12/22 00:37:25 marco Exp $ */
+/*	$OpenBSD: rthread.c,v 1.16 2005/12/22 06:33:12 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -43,7 +43,9 @@ static pthread_t thread_list;
 static _spinlock_lock_t thread_lock = _SPINLOCK_UNLOCKED;
 static int concurrency_level;	/* not used */
 
-int getthrid();
+static struct pthread initial_thread __attribute__((__aligned__(16)));
+
+int getthrid(void);
 void threxit(int);
 int rfork_thread(int, void *, void (*)(void *), void *);
 
@@ -92,26 +94,23 @@ thread_start(void *v)
 	pthread_exit(retval);
 }
 
-static void
+static int
 thread_init(void)
 {
-	pthread_t thread;
+	pthread_t thread = &inital_thread;
 	extern int __isthreaded;
 
 	printf("rthread init\n");
 
-	__isthreaded = 1;
-
-	thread = malloc(sizeof(*thread));
-	if (!thread) /* should never happen, but have to do something */
-		err(1, "rthread_init");
-	memset(thread, 0, sizeof(*thread));
 	thread->tid = getthrid();
 	thread->donesem.lock = _SPINLOCK_UNLOCKED;
 	thread->flags |= THREAD_CANCEL_ENABLE|THREAD_CANCEL_DEFERRED;
-	snprintf(thread->name, sizeof(thread->name), "Main process");
+	strlcpy(thread->name, "Main process", sizeof(thread->name));
 	thread_list = thread;
 	threads_ready = 1;
+	__isthreaded = 1;
+
+	return (0);
 }
 
 static struct stack *
@@ -157,7 +156,8 @@ pthread_self(void)
 	pthread_t thread;
 
 	if (!threads_ready)
-		thread_init();
+		if (thread_init())
+			return (NULL);
 
 	_spinlock(&thread_lock);
 	thread = thread_findself();
@@ -225,7 +225,8 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	int rc = 0;
 
 	if (!threads_ready)
-		thread_init();
+		if ((rc = thread_init()))
+		    return (rc);
 
 	thread = malloc(sizeof(*thread));
 	if (!thread)
