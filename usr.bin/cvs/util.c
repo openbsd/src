@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.59 2005/12/10 20:27:45 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.60 2005/12/22 14:16:18 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -191,7 +191,6 @@ cvs_strtomode(const char *str, mode_t *mode)
 int
 cvs_modetostr(mode_t mode, char *buf, size_t len)
 {
-	size_t l;
 	char tmp[16], *bp;
 	mode_t um, gm, om;
 
@@ -201,11 +200,10 @@ cvs_modetostr(mode_t mode, char *buf, size_t len)
 
 	bp = buf;
 	*bp = '\0';
-	l = 0;
 
 	if (um) {
 		snprintf(tmp, sizeof(tmp), "u=%s", cvs_modestr[um]);
-		l = strlcat(buf, tmp, len);
+		strlcat(buf, tmp, len);
 	}
 	if (gm) {
 		if (um)
@@ -262,7 +260,7 @@ cvs_splitpath(const char *path, char *base, size_t blen, char **file)
 	char *sp;
 
 	if ((rlen = strlcpy(base, path, blen)) >= blen)
-		return (-1);
+		fatal("cvs_splitpath: path truncation");
 
 	while ((rlen > 0) && (base[rlen - 1] == '/'))
 		base[--rlen] = '\0';
@@ -423,12 +421,10 @@ cvs_mkadmin(const char *dpath, const char *rootpath, const char *repopath,
 
 	l = cvs_path_cat(dpath, CVS_PATH_CVSDIR, path, sizeof(path));
 	if (l >= sizeof(path))
-		return (-1);
+		fatal("cvs_mkadmin: path truncation");
 
-	if ((mkdir(path, 0755) == -1) && (errno != EEXIST)) {
-		cvs_log(LP_ERRNO, "failed to create directory %s", path);
-		return (-1);
-	}
+	if ((mkdir(path, 0755) == -1) && (errno != EEXIST))
+		fatal("cvs_mkadmin: mkdir: `%s': %s", path, strerror(errno));
 
 	/* just create an empty Entries file */
 	ef = cvs_ent_open(dpath, O_WRONLY);
@@ -437,14 +433,13 @@ cvs_mkadmin(const char *dpath, const char *rootpath, const char *repopath,
 
 	l = cvs_path_cat(dpath, CVS_PATH_ROOTSPEC, path, sizeof(path));
 	if (l >= sizeof(path))
-		return (-1);
+		fatal("cvs_mkadmin: path truncation");
 
 	if ((stat(path, &st) == -1) && (errno == ENOENT)) {
-		fp = fopen(path, "w");
-		if (fp == NULL) {
-			cvs_log(LP_ERRNO, "failed to open %s", path);
-			return (-1);
-		}
+		if ((fp = fopen(path, "w")) == NULL)
+			fatal("cvs_mkadmin: fopen: `%s': %s",
+			    path, strerror(errno));
+
 		if (rootpath != NULL)
 			fprintf(fp, "%s\n", rootpath);
 		(void)fclose(fp);
@@ -452,14 +447,13 @@ cvs_mkadmin(const char *dpath, const char *rootpath, const char *repopath,
 
 	l = cvs_path_cat(dpath, CVS_PATH_REPOSITORY, path, sizeof(path));
 	if (l >= sizeof(path))
-		return (-1);
+		fatal("cvs_mkadmin: path truncation");
 
 	if ((stat(path, &st) == -1) && (errno == ENOENT)) {
-		fp = fopen(path, "w");
-		if (fp == NULL) {
-			cvs_log(LP_ERRNO, "failed to open %s", path);
-			return (-1);
-		}
+		if ((fp = fopen(path, "w")) == NULL)
+			fatal("cvs_mkadmin: fopen: `%s': %s",
+			    path, strerror(errno));
+
 		if (repopath != NULL)
 			fprintf(fp, "%s\n", repopath);
 		(void)fclose(fp);
@@ -503,15 +497,13 @@ cvs_exec(int argc, char **argv, int fds[3])
  *
  * Change to directory.
  * chdir() wrapper with an error message.
- * Returns 0 on success, or -1 on failure.
+ * Returns 0 on success.
  */
 int
 cvs_chdir(const char *path)
 {
-	if (chdir(path) == -1) {
-		cvs_log(LP_ERRNO, "cannot change to dir `%s'", path);
-		return (-1);
-	}
+	if (chdir(path) == -1)
+		fatal("cvs_chdir: `%s': %s", path, strerror(errno));
 
 	return (0);
 }
@@ -520,7 +512,7 @@ cvs_chdir(const char *path)
  * cvs_rename()
  * Change the name of a file.
  * rename() wrapper with an error message.
- * Returns 0 on success, or -1 on failure.
+ * Returns 0 on success.
  */
 int
 cvs_rename(const char *from, const char *to)
@@ -530,10 +522,8 @@ cvs_rename(const char *from, const char *to)
 	if (cvs_noexec == 1)
 		return (0);
 
-	if (rename(from, to) == -1) {
-		cvs_log(LP_ERRNO, "cannot rename file `%s' to `%s'", from, to);
-		return (-1);
-	}
+	if (rename(from, to) == -1)
+		fatal("cvs_rename: `%s'->`%s': %s", from, to, strerror(errno));
 
 	return (0);
 }
@@ -629,27 +619,17 @@ cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
 	CVSENTRIES *entf;
 	struct cvs_ent *ent;
 
-	if (create_adm == 1 && (root == NULL)) {
-		cvs_log(LP_ERR, "missing stuff in cvs_create_dir");
-		return (-1);
-	}
+	if ((create_adm == 1) && (root == NULL))
+		fatal("cvs_create_dir failed");
 
 	s = xstrdup(path);
 	rpath[0] = '\0';
 	if (repo != NULL) {
-		if (strlcpy(rpath, repo, sizeof(rpath)) >= sizeof(rpath)) {
-			errno = ENAMETOOLONG;
-			cvs_log(LP_ERRNO, "%s", rpath);
-			xfree(s);
-			return (-1);
-		}
+		if (strlcpy(rpath, repo, sizeof(rpath)) >= sizeof(rpath))
+			fatal("cvs_create_dir: path truncation");
 
-		if (strlcat(rpath, "/", sizeof(rpath)) >= sizeof(rpath)) {
-			errno = ENAMETOOLONG;
-			cvs_log(LP_ERRNO, "%s", rpath);
-			xfree(s);
-			return (-1);
-		}
+		if (strlcat(rpath, "/", sizeof(rpath)) >= sizeof(rpath))
+			fatal("cvs_create_dir: path truncation");
 	}
 
 	ret = -1;
@@ -786,11 +766,8 @@ cvs_rcs_getpath(CVSFILE *file, char *buf, size_t len)
 
 	l = snprintf(buf, len, "%s/%s/%s%s",
 	    root->cr_dir, repo, file->cf_name, RCS_FILE_EXT);
-	if (l == -1 || l >= (int)len) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", buf);
-		return (NULL);
-	}
+	if (l == -1 || l >= (int)len)
+		fatal("cvs_rcs_getpath: path truncation");
 
 	return (buf);
 }
