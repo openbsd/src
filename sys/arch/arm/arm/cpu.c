@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.4 2005/05/21 03:27:05 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.5 2005/12/22 18:44:42 deraadt Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -237,6 +237,13 @@ static const char * const pxa255_steppings[16] = {
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
+/* Steppings for PXA270 */
+static const char * const pxa27x_steppings[16] = {
+	"step A-0",	"step A-1",	"step B-0",	"step B-1",
+	"step C-0",	"step ?,	"step ?",	"step C-5",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+}
 static const char * const ixp425_steppings[16] = {
 	"step 0",	"rev 1",	"rev 2",	"rev 3",
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
@@ -342,7 +349,7 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_PXA250C, 	CPU_CLASS_XSCALE,	"PXA250",
 	  pxa2x0_steppings },
 	{ CPU_ID_PXA27X,        CPU_CLASS_XSCALE,       "PXA27x",
-	  pxa255_steppings },
+	  pxa27x_steppings },
 	{ CPU_ID_PXA210C, 	CPU_CLASS_XSCALE,	"PXA210",
 	  pxa2x0_steppings },
 
