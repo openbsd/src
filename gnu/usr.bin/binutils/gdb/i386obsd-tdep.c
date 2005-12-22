@@ -307,6 +307,7 @@ i386obsd_collect_uthread (const struct regcache *regcache,
 	}
     }
 }
+
 /* Kernel debugging support.  */
 
 /* From <machine/frame.h>.  Note that %esp and %ess are only saved in
@@ -337,6 +338,7 @@ i386obsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
   struct trad_frame_cache *cache;
   CORE_ADDR func, sp, addr;
   ULONGEST cs;
+  char *name;
   int i;
 
   if (*this_cache)
@@ -347,16 +349,23 @@ i386obsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
 
   func = frame_func_unwind (next_frame);
   sp = frame_unwind_register_unsigned (next_frame, I386_ESP_REGNUM);
+
+  find_pc_partial_function (func, &name, NULL, NULL);
+  if (name && strncmp (name, "Xintr", 5) == 0)
+    addr = sp + 8;		/* It's an interrupt frame.  */
+  else
+    addr = sp;
+
   for (i = 0; i < ARRAY_SIZE (i386obsd_tf_reg_offset); i++)
     if (i386obsd_tf_reg_offset[i] != -1)
-      trad_frame_set_reg_addr (cache, i, sp + i386obsd_tf_reg_offset[i]);
+      trad_frame_set_reg_addr (cache, i, addr + i386obsd_tf_reg_offset[i]);
 
   /* Read %cs from trap frame.  */
-  addr = sp + i386obsd_tf_reg_offset[I386_CS_REGNUM];
+  addr += i386obsd_tf_reg_offset[I386_CS_REGNUM];
   cs = read_memory_unsigned_integer (addr, 4); 
   if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
     {
-      /* Trap from use space; terminate backtrace.  */
+      /* Trap from user space; terminate backtrace.  */
       trad_frame_set_id (cache, null_frame_id);
     }
   else
@@ -392,32 +401,36 @@ i386obsd_trapframe_prev_register (struct frame_info *next_frame,
 			   optimizedp, lvalp, addrp, realnump, valuep);
 }
 
+static int
+i386obsd_trapframe_sniffer (const struct frame_unwind *self,
+			    struct frame_info *next_frame,
+			    void **this_prologue_cache)
+{
+  ULONGEST cs;
+  char *name;
+
+  /* Check Current Privilege Level and bail out if we're not executing
+     in kernel space.  */
+  cs = frame_unwind_register_unsigned (next_frame, I386_CS_REGNUM);
+  if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
+    return 0;
+
+  find_pc_partial_function (frame_pc_unwind (next_frame), &name, NULL, NULL);
+  return (name && ((strcmp (name, "calltrap") == 0)
+		   || (strcmp (name, "syscall1") == 0)
+		   || (strncmp (name, "Xintr", 5) == 0)));
+}
+
 static const struct frame_unwind i386obsd_trapframe_unwind = {
   /* FIXME: kettenis/20051219: This really is more like an interrupt
      frame, but SIGTRAMP_FRAME would print <signal handler called>,
      which really is not what we want here.  */
   NORMAL_FRAME,
   i386obsd_trapframe_this_id,
-  i386obsd_trapframe_prev_register
+  i386obsd_trapframe_prev_register,
+  NULL,
+  i386obsd_trapframe_sniffer
 };
-
-static const struct frame_unwind *
-i386obsd_trapframe_sniffer (struct frame_info *next_frame)
-{
-  ULONGEST cs;
-  char *name;
-
-  cs = frame_unwind_register_unsigned (next_frame, I386_CS_REGNUM);
-  if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
-    return NULL;
-
-  find_pc_partial_function (frame_pc_unwind (next_frame), &name, NULL, NULL);
-  if (name && ((strcmp ("calltrap", name) == 0)
-	       || (strcmp ("syscall1", name) == 0)))
-    return &i386obsd_trapframe_unwind;
-
-  return NULL;
-}
 
 
 static void 
@@ -451,7 +464,7 @@ i386obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   bsd_uthread_set_collect_uthread (gdbarch, i386obsd_collect_uthread);
 
   /* Unwind kernel trap frames correctly.  */
-  frame_unwind_append_sniffer (gdbarch, i386obsd_trapframe_sniffer);
+  frame_unwind_prepend_unwinder (gdbarch, &i386obsd_trapframe_unwind);
 }
 
 /* OpenBSD a.out.  */
