@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.24 2005/12/21 20:04:36 xsa Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.25 2005/12/22 13:19:12 moritz Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -168,6 +168,7 @@ cvs_logmsg_get(const char *dir, struct cvs_flist *added,
 	argv[argc++] = cvs_editor;
 	argv[argc++] = path;
 	argv[argc] = NULL;
+	tlen = 0;
 
 	if ((fd = mkstemp(path)) == -1)
 		fatal("cvs_logmsg_get: mkstemp: `%s': %s",
