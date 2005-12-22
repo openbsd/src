@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.71 2005/12/14 06:54:38 tedu Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.72 2005/12/22 06:55:03 tedu Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -378,8 +378,6 @@ sys_sched_yield(struct proc *p, void *v, register_t *retval)
 
 #ifdef RTHREADS
 
-struct pool sleeper_pool;
-
 int
 sys_thrsleep(struct proc *p, void *v, register_t *revtal)
 {
@@ -388,23 +386,9 @@ sys_thrsleep(struct proc *p, void *v, register_t *revtal)
 	int timo = SCARG(uap, timeout);
 	_spinlock_lock_t *lock = SCARG(uap, lock);
 	_spinlock_lock_t unlocked = _SPINLOCK_UNLOCKED;
-
-	struct twaitnode *n, *n2;
 	int error;
 
-	n = pool_get(&sleeper_pool, PR_WAITOK);
-	n->t_ident = ident;
-	/* we may have slept */
-	LIST_FOREACH(n2, &p->p_thrparent->p_sleepers, t_next) {
-		if (n2->t_ident == ident)
-			break;
-	}
-	if (n2) {
-		pool_put(&sleeper_pool, n);
-		n = n2;
-	} else {
-		LIST_INSERT_HEAD(&p->p_thrparent->p_sleepers, n, t_next);
-	}
+	p->p_thrslpid = ident;
 
 	if (lock)
 		copyout(&unlocked, lock, sizeof(unlocked));
@@ -414,7 +398,7 @@ sys_thrsleep(struct proc *p, void *v, register_t *revtal)
 		timo = timo / (1000 / hz);
 	if (timo < 0)
 		timo = 0;
-	error = tsleep(n, PUSER | PCATCH, "thrsleep", timo);
+	error = tsleep(&p->p_thrslpid, PUSER | PCATCH, "thrsleep", timo);
 
 	return (error);
 
@@ -425,19 +409,23 @@ sys_thrwakeup(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_thrwakeup_args *uap = v;
 	long ident = (long)SCARG(uap, ident);
-	struct twaitnode *n;
+	struct proc *q;
+	int found = 0;
 	
-	LIST_FOREACH(n, &p->p_thrparent->p_sleepers, t_next) {
-		if (n->t_ident == ident) {
-			LIST_REMOVE(n, t_next);
-			break;
+	/* have to check the parent, it's not in the thread list */
+	if (p->p_thrparent->p_thrslpid == ident) {
+		wakeup(&p->p_thrparent->p_thrslpid);
+		found = 1;
+	}
+	LIST_FOREACH(q, &p->p_thrparent->p_thrchildren, p_thrsib) {
+		if (q->p_thrslpid == ident) {
+			wakeup(&q->p_thrslpid);
+			q->p_thrslpid = 0;
+			found = 1;
 		}
 	}
-	if (!n)
+	if (!found)
 		return (ESRCH);
-	wakeup(n);
-	pool_put(&sleeper_pool, n);
-	yield();
 
 	return (0);
 }

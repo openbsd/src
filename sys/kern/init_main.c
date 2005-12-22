@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.126 2005/12/03 18:09:08 tedu Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.127 2005/12/22 06:55:03 tedu Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -272,7 +272,6 @@ main(void *framep)
 
 	p->p_thrparent = p;
 	LIST_INIT(&p->p_thrchildren);
-	LIST_INIT(&p->p_sleepers);
 
 	p->p_flag = P_INMEM | P_SYSTEM | P_NOCLDWAIT;
 	p->p_stat = SONPROC;

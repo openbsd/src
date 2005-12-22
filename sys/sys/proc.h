@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.83 2005/12/07 19:04:50 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.84 2005/12/22 06:55:03 tedu Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -113,11 +113,6 @@ struct	emul {
 extern struct emul *emulsw[];		/* All emuls in system */
 extern int nemuls;			/* Number of emuls */
 
-struct	twaitnode {
-	long t_ident;
-	LIST_ENTRY(twaitnode) t_next;
-};
-
 /*
  * Description of a process.
  *
@@ -170,7 +165,7 @@ struct	proc {
 	struct	proc *p_thrparent;
 	LIST_ENTRY(proc) p_thrsib;
 	LIST_HEAD(, proc) p_thrchildren;
-	LIST_HEAD(, twaitnode) p_sleepers;
+	long p_thrslpid;	/* for thrsleep syscall */
 
 
 	/* scheduling */
