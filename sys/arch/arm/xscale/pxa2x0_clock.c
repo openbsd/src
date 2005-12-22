@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_clock.c,v 1.2 2005/12/20 19:36:26 deraadt Exp $ */
+/*	$OpenBSD: pxa2x0_clock.c,v 1.3 2005/12/22 23:23:51 drahn Exp $ */
 
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
@@ -58,7 +58,7 @@ static struct pxaost_softc *pxaost_sc = NULL;
 
 #define CLK4_TIMER_FREQUENCY	32768		/* 32.768KHz */
 
-#define CLK0_TIMER_FREQUENCY	3250000         /* 3.2500MHz */
+#define CLK0_TIMER_FREQUENCY	3250000		/* 3.2500MHz */
 
 #ifndef STATHZ
 #define STATHZ	64
@@ -130,7 +130,7 @@ clockintr(arg)
 	match = pxaost_sc->sc_clock_count;
 
 	do {
-		match += CLK4_TIMER_FREQUENCY / hz;
+		match += pxaost_sc->sc_clock_step;
 		pxaost_sc->sc_clock_step_error +=
 		    pxaost_sc->sc_clock_step_err_cnt;
 		if (pxaost_sc->sc_clock_count > hz) {
@@ -187,12 +187,10 @@ statintr(arg)
 }
 
 void
-setstatclockrate(hz)
-	int hz;
+setstatclockrate(int newstathz)
 {
 	u_int32_t count;
-
-	pxaost_sc->sc_statclock_step = CLK4_TIMER_FREQUENCY / hz;
+	pxaost_sc->sc_statclock_step = CLK4_TIMER_FREQUENCY / newstathz;
 	count = bus_space_read_4(pxaost_sc->sc_iot, pxaost_sc->sc_ioh, OST_OSCR4);
 	count += pxaost_sc->sc_statclock_step;
 	pxaost_sc->sc_statclock_count = count;
@@ -230,7 +228,7 @@ cpu_initclocks()
 	printf("clock: hz=%d stathz=%d\n", hz, stathz);
 
 	/* Use the channels 0 and 1 for hardclock and statclock, respectively */
-	pxaost_sc->sc_clock_count = CLK4_TIMER_FREQUENCY / hz;
+	pxaost_sc->sc_clock_count = pxaost_sc->sc_clock_step;
 	pxaost_sc->sc_statclock_count = CLK4_TIMER_FREQUENCY / stathz;
 
 	pxa2x0_intr_establish(7, IPL_CLOCK, doclockintr, 0, "clock");
@@ -249,8 +247,8 @@ void
 microtime(tvp)
 	register struct timeval *tvp;
 {
-	int s, tm, deltatm;
-	static struct timeval lasttime;
+	int s, deltacnt;
+	u_int32_t counter, expected; 
 
 	if (pxaost_sc == NULL) {
 		tvp->tv_sec = 0;
@@ -259,31 +257,22 @@ microtime(tvp)
 	}
 
 	s = splhigh();
-	/* XXX will not work in slow mode */
-	tm = bus_space_read_4(pxaost_sc->sc_iot, pxaost_sc->sc_ioh,
-	    SAOST_CR);
-
-	deltatm = pxaost_sc->sc_clock_count - tm;
-
-#ifdef OST_DEBUG
-	printf("deltatm = %d\n",deltatm);
-#endif
+	counter = bus_space_read_4(pxaost_sc->sc_iot, pxaost_sc->sc_ioh,
+	    OST_OSCR4);
+	expected = pxaost_sc->sc_clock_count;
 
 	*tvp = time;
-	tvp->tv_usec++;		/* XXX */
+	splx(s);
+
+	/* number of CLK4_TIMER_FREQUENCY ticks past time */
+	deltacnt = counter - expected + pxaost_sc->sc_clock_step;
+
+	tvp->tv_usec += deltacnt * 1000000ULL / CLK4_TIMER_FREQUENCY;
+
 	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
-
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
 }
 
 void
