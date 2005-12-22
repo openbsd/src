@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.24 2005/12/22 00:38:23 deraadt Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.25 2005/12/22 00:42:14 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -1502,7 +1502,6 @@ pxa2x0_setperf(int speed)
 			pxa27x_fastbus_run_mode(1, pxa2x0_memcfg.mdrefr_high);
 		}
 		if (freq != 520) {
-			printf("would switch to 520\n");
 			pxa27x_frequency_change(CCCR_A | CCCR_TURBO_X25 |
 			    CCCR_RUN_X16, CLKCFG_B | CLKCFG_F | CLKCFG_T,
 			    &pxa2x0_memcfg);
