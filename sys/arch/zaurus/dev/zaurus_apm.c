@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.11 2005/12/20 04:24:56 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.12 2005/12/22 00:38:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -585,7 +585,6 @@ int
 zapm_resume(struct pxa2x0_apm_softc *pxa_sc)
 {
 	struct zapm_softc *sc = (struct zapm_softc *)pxa_sc;
-	extern int perflevel;
 	int	a, b;
 	u_int	wsrc;
 	int	wakeup = 0;
@@ -626,10 +625,6 @@ zapm_resume(struct pxa2x0_apm_softc *pxa_sc)
 		pxa2x0_rtc_setalarm(pxa2x0_rtc_getsecs() + 5);
 #endif
 	}
-
-	/* restore hw.setperf */
-	if (cpu_setperf != NULL)
-		cpu_setperf(perflevel);
 
 	return (wakeup);
 }
