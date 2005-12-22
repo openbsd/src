@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.25 2005/05/01 18:56:36 deraadt Exp $	*/
+/*	$OpenBSD: mt.c,v 1.26 2005/12/22 17:23:27 deraadt Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mt.c,v 1.25 2005/05/01 18:56:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mt.c,v 1.26 2005/12/22 17:23:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -194,8 +194,12 @@ main(int argc, char *argv[])
 		else
 			mt_com.mt_count = 1;
 		if ((host ? rmtioctl(mt_com.mt_op, mt_com.mt_count) :
-		    ioctl(mtfd, MTIOCTOP, &mt_com)) < 0)
-			err(2, "%s: %s", tape, comp->c_name);
+		    ioctl(mtfd, MTIOCTOP, &mt_com)) < 0) {
+			if (eject)
+				err(2, "%s", tape);
+			else
+				err(2, "%s: %s", tape, comp->c_name);
+		}
 	} else {
 		if (host)
 			status(rmtstatus());
