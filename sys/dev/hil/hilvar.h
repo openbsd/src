@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilvar.h,v 1.8 2005/01/11 00:11:05 miod Exp $	*/
+/*	$OpenBSD: hilvar.h,v 1.9 2005/12/22 07:09:52 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -72,7 +72,7 @@ struct hil_softc {
 	struct device	sc_dev;
 	bus_space_handle_t sc_bsh;
 	bus_space_tag_t	sc_bst;
-	int		sc_console;	/* console path set to hil */
+	int		*sc_console;	/* console path set to hil */
 
 	int		sc_cmddone;
 	int		sc_cmdending;
@@ -100,7 +100,7 @@ int	send_hildev_cmd(struct hildev_softc *, u_int, u_int8_t *, u_int *);
 void	hil_set_poll(struct hil_softc *, int);
 int	hil_poll_data(struct hildev_softc *, u_int8_t *, u_int8_t *);
 
-void	hil_attach(struct hil_softc *, int);
+void	hil_attach(struct hil_softc *, int *);
 void	hil_attach_deferred(void *);
 int	hil_intr(void *);
 int	hildevprint(void *, const char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil_gsc.c,v 1.4 2004/02/13 21:28:19 mickey Exp $	*/
+/*	$OpenBSD: hil_gsc.c,v 1.5 2005/12/22 07:09:52 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -46,8 +46,13 @@
 int	hil_gsc_match(struct device *, void *, void *);
 void	hil_gsc_attach(struct device *, struct device *, void *);
 
+struct hil_gsc_softc {
+	struct hil_softc sc_hs;
+	int		 sc_hil_console;
+};
+
 struct cfattach hil_gsc_ca = {
-	sizeof(struct hil_softc), hil_gsc_match, hil_gsc_attach
+	sizeof(struct hil_gsc_softc), hil_gsc_match, hil_gsc_attach
 };
 
 int
@@ -65,9 +70,9 @@ hil_gsc_match(struct device *parent, void *match, void *aux)
 void
 hil_gsc_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct hil_softc *sc = (void *)self;
+	struct hil_gsc_softc *gsc = (void *)self;
+	struct hil_softc *sc = &gsc->sc_hs;
 	struct gsc_attach_args *ga = aux;
-	int hil_is_console;
 
 	sc->sc_bst = ga->ga_iot;
 	if (bus_space_map(ga->ga_iot, ga->ga_hpa,
@@ -76,10 +81,10 @@ hil_gsc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	hil_is_console = ga->ga_dp.dp_mod == PAGE0->mem_kbd.pz_dp.dp_mod &&
+	gsc->sc_hil_console = ga->ga_dp.dp_mod == PAGE0->mem_kbd.pz_dp.dp_mod &&
 	    bcmp(ga->ga_dp.dp_bc, PAGE0->mem_kbd.pz_dp.dp_bc, 6) == 0;
 
-	hil_attach(sc, hil_is_console);
+	hil_attach(sc, &gsc->sc_hil_console);
 
 	gsc_intr_establish((struct gsc_softc *)parent, ga->ga_irq, IPL_TTY,
 	    hil_intr, sc, sc->sc_dev.dv_xname);

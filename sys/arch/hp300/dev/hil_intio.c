@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil_intio.c,v 1.5 2005/11/16 21:37:02 miod Exp $	*/
+/*	$OpenBSD: hil_intio.c,v 1.6 2005/12/22 07:09:49 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -68,7 +68,7 @@ static	int hil_matched = 0;
 }
 
 struct isr hil_isr;
-int hil_is_console = -1;
+int hil_is_console = -1;	/* undecided */
 
 void
 hil_intio_attach(struct device *parent, struct device *self, void *aux)
@@ -86,16 +86,8 @@ hil_intio_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Check that the configured console device is a wsdisplay.
 	 */
-	if (cn_tab == &wsdisplay_cons) {
-		/*
-		 * If we did not find and attach a Domain keyboard earlier,
-		 * claim the console keyboard.
-		 */
-		if (hil_is_console == -1)
-			hil_is_console = 1;
-	} else {
+	if (cn_tab != &wsdisplay_cons)
 		hil_is_console = 0;
-	}
 
 	hil_isr.isr_func = hil_intr;
 	hil_isr.isr_arg = sc;
@@ -104,7 +96,7 @@ hil_intio_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(" ipl %d", hil_isr.isr_ipl);
 
-	hil_attach(sc, hil_is_console);
+	hil_attach(sc, &hil_is_console);
 	intr_establish(&hil_isr, self->dv_xname);
 
 	startuphook_establish(hil_attach_deferred, sc);

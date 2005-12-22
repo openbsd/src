@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.20 2005/05/13 15:22:37 miod Exp $	*/
+/*	$OpenBSD: hil.c,v 1.21 2005/12/22 07:09:52 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  * All rights reserved.
@@ -82,6 +82,8 @@
 #include <dev/hil/hildevs.h>
 #include <dev/hil/hildevs_data.h>
 
+#include "hilkbd.h"
+
 /*
  * splhigh is extremely conservative but insures atomic operation,
  * splvm (clock only interrupts) seems to be good enough in practice.
@@ -140,7 +142,7 @@ hildatawait(struct hil_softc *sc)
  */
 
 void
-hil_attach(struct hil_softc *sc, int hil_is_console)
+hil_attach(struct hil_softc *sc, int *hil_is_console)
 {
 	printf("\n");
 
@@ -500,7 +502,7 @@ hilconfig(struct hil_softc *sc, u_int knowndevs)
 			if (sc->sc_cmdbuf[0] >= hd->minid &&
 			    sc->sc_cmdbuf[0] <= hd->maxid) {
 
-			ha.ha_console = sc->sc_console;
+			ha.ha_console = *sc->sc_console;
 			ha.ha_code = id;
 			ha.ha_type = hd->type;
 			ha.ha_descr = hd->descr;
@@ -510,6 +512,17 @@ hilconfig(struct hil_softc *sc, u_int knowndevs)
 			sc->sc_devices[id] = (struct hildev_softc *)
 			    config_found_sm(&sc->sc_dev, &ha, hildevprint,
 			        hilsubmatch);
+
+#if NHILKBD > 0
+			/*
+			 * If we just attached a keyboard as console,
+			 * console choice is not indeterminate anymore.
+			 */
+			if (sc->sc_devices[id] != NULL &&
+			    ha.ha_type == HIL_DEVICE_KEYBOARD &&
+			    ha.ha_console != 0)
+				*sc->sc_console = 1;
+#endif
 		}
 	}
 
