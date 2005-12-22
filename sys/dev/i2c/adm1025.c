@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1025.c,v 1.2 2005/12/22 23:16:49 deraadt Exp $	*/
+/*	$OpenBSD: adm1025.c,v 1.3 2005/12/22 23:19:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -34,6 +34,8 @@
 #define ADM1025_INT_TEMP	0x27
 #define ADM1025_STATUS2		0x42
 #define  ADM1025_STATUS2_EXT	0x40
+#define ADM1025_COMPANY		0x3e	/* contains 0x41 */
+#define ADM1025_STEPPING	0x3f	/* contains 0x2? */
 
 /* Sensors */
 #define ADMTM_INT		0
