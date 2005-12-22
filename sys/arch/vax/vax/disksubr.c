@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.24 2005/11/12 03:44:24 pedro Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.25 2005/12/22 02:51:25 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	}
 	if (lp->d_partitions[i].p_size == 0)
 		lp->d_partitions[i].p_size = 0x1fffffff;
-	lp->d_partitions[0].p_offset = 0;
+	lp->d_partitions[i].p_offset = 0;
 	lp->d_bbsize = 8192;
 	lp->d_sbsize = 64 * 1024;
 
