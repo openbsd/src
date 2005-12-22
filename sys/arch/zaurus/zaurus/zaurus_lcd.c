@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.17 2005/09/15 20:23:10 miod Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.18 2005/12/22 18:47:25 deraadt Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -13,7 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of Genetec Corporation may not be used to endorse or 
+ * 3. The name of Genetec Corporation may not be used to endorse or
  *    promote products derived from this software without specific prior
  *    written permission.
  *
@@ -47,9 +47,9 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 
-#include <dev/cons.h> 
+#include <dev/cons.h>
 #include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wsdisplayvar.h> 
+#include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wscons_callbacks.h>
 
 #include <machine/bus.h>
@@ -109,7 +109,7 @@ const struct wsdisplay_accessops lcd_accessops = {
 struct cfattach lcd_pxaip_ca = {
 	sizeof (struct pxa2x0_lcd_softc), lcd_match, lcd_attach
 };
-	 
+
 struct cfdriver lcd_cd = {
 	NULL, "lcd_pxaip", DV_DULL
 };
@@ -169,6 +169,8 @@ lcd_match(struct device *parent, void *cf, void *aux)
 	return 1;
 }
 
+struct pxa2x0_lcd_softc *lcd_softc;
+
 void
 lcd_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -191,6 +193,7 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 	/* Start with approximately 40% of full brightness. */
 	lcd_set_brightness(3);
 
+	lcd_softc = sc;
 	(void)powerhook_establish(lcd_power, sc);
 }
 
@@ -239,7 +242,7 @@ lcd_show_screen(void *v, void *cookie, int waitok,
 
 	if ((rc = pxa2x0_lcd_show_screen(v, cookie, waitok, cb, cbarg)) != 0)
 		return (rc);
-	
+
 	/* Turn on LCD */
 	lcd_burner(v, 1, 0);
 
@@ -303,7 +306,8 @@ lcd_max_brightness(void)
 {
 	int i;
 
-	for (i = 0; CURRENT_BACKLIGHT[i].duty != -1; i++);
+	for (i = 0; CURRENT_BACKLIGHT[i].duty != -1; i++)
+		;
 	return i - 1;
 }
 
@@ -388,8 +392,10 @@ lcd_blank(int blank)
 	if (blank) {
 		lcd_set_brightness(0);
 		lcdisblank = 1;
+		pxa2x0_lcd_suspend(lcd_softc);
 	} else {
 		lcdisblank = 0;
+		pxa2x0_lcd_resume(lcd_softc);
 		lcd_set_brightness(lcd_get_brightness());
 	}
 }
