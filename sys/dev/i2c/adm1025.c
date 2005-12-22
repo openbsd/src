@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1025.c,v 1.3 2005/12/22 23:19:07 deraadt Exp $	*/
+/*	$OpenBSD: adm1025.c,v 1.4 2005/12/22 23:49:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -73,10 +73,16 @@ admtm_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (ia->ia_compat) {
-		if (strcmp(ia->ia_compat, "adm1025") == 0)
-			return (1);
-		return (0);
+	if (strcmp(ia->ia_name, "adm1025") == 0 || 
+	    strcmp(ia->ia_name, "ne1619") == 0) {
+		/*
+		 * should also ensure that
+		 * config & 0x80 == 0x00
+		 * status1 & 0xc0 == 0x00
+		 * status2 & 0xbc == 0x00
+		 * before accepting this to be for real
+		 */
+		return (1);
 	}
 	return (1);
 }
