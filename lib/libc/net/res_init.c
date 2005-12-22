@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.33 2005/08/06 20:30:04 espie Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.34 2005/12/22 06:52:11 tedu Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -178,27 +178,24 @@ _res_init(int usercall)
 	int dots;
 #endif
 
-	if (usercall == 0) {
-		if (_resp->options & RES_INIT &&
-		    _resp->reschktime >= time(NULL))
+	if (!usercall && _resp->options & RES_INIT &&
+	    _resp->reschktime >= time(NULL))
+		return (0);
+	_resp->reschktime = time(NULL) + __res_chktime;
+	if (stat(_PATH_RESCONF, &sb) != -1) {
+		if (!usercall && timespeccmp(&sb.st_mtimespec,
+		    &_resp->restimespec, ==))
 			return (0);
-		_resp->reschktime = time(NULL) + __res_chktime;
-		if (stat(_PATH_RESCONF, &sb) != -1) {
-			if (timespeccmp(&sb.st_mtimespec,
-			    &_resp->restimespec, ==))
-				return (0);
-			else
-				_resp->restimespec = sb.st_mtimespec;
-		} else {
-			/*
-			 * Lost the file, in chroot?
-			 * Don' trash settings
-			 */
-			if (timespecisset(&_resp->restimespec))
-				return (0);
-		}
-	} else
-		_resp->reschktime = time(NULL) + __res_chktime;
+		else
+			_resp->restimespec = sb.st_mtimespec;
+	} else {
+		/*
+		 * Lost the file, in chroot?
+		 * Don't trash settings
+		 */
+		if (!usercall && timespecisset(&_resp->restimespec))
+			return (0);
+	}
 
 
 	/*
