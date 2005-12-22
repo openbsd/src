@@ -1,4 +1,4 @@
-/*	$OpenBSD: tpms.c,v 1.2 2005/12/21 22:19:41 miod Exp $	*/
+/*	$OpenBSD: tpms.c,v 1.3 2005/12/22 13:47:31 xsa Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -351,8 +351,8 @@ USB_ATTACH(tpms)
 			}
 		}
 	}
-	if (sc->sc_x_sensors <= 0 || sc->sc_x_sensors >= TPMS_X_SENSORS ||
-	    sc->sc_y_sensors <= 0 || sc->sc_y_sensors >= TPMS_Y_SENSORS) {
+	if (sc->sc_x_sensors <= 0 || sc->sc_x_sensors > TPMS_X_SENSORS ||
+	    sc->sc_y_sensors <= 0 || sc->sc_y_sensors > TPMS_Y_SENSORS) {
 		printf(": unexpected sensors configuration (%d:%d)\n",
 		    sc->sc_x_sensors, sc->sc_y_sensors);
 		USB_ATTACH_ERROR_RETURN;
@@ -363,8 +363,6 @@ USB_ATTACH(tpms)
 	sc->sc_hdev.sc_report_id = uha->reportid;
 
 	sc->sc_status = 0;
-
-	printf("\n");
 
 	a.accessops = &tpms_accessops;
 	a.accesscookie = sc;

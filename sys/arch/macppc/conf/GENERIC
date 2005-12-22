@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.116 2005/12/21 18:50:51 miod Exp $g
+#	$OpenBSD: GENERIC,v 1.117 2005/12/22 13:47:31 xsa Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -222,7 +222,7 @@ scsibus* at umass?
 atapiscsi* at umass?
 uhidev*	at uhub?		# Human Interface Devices
 tpms*	at uhidev?		# Apple trackpad mouse
-wsmouse* at ums? mux 0
+wsmouse* at tpms? mux 0
 ums*	at uhidev?		# USB mouse
 wsmouse* at ums? mux 0
 ukbd*	at uhidev?		# USB keyboard
