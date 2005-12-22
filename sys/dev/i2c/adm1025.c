@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1025.c,v 1.1 2005/12/22 22:57:27 deraadt Exp $	*/
+/*	$OpenBSD: adm1025.c,v 1.2 2005/12/22 23:16:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -32,6 +32,8 @@
 #define ADM1025_Vcc		0x25
 #define ADM1025_EXT_TEMP	0x26
 #define ADM1025_INT_TEMP	0x27
+#define ADM1025_STATUS2		0x42
+#define  ADM1025_STATUS2_EXT	0x40
 
 /* Sensors */
 #define ADMTM_INT		0
@@ -48,7 +50,6 @@ struct admtm_softc {
 	struct device	sc_dev;
 	i2c_tag_t	sc_tag;
 	i2c_addr_t	sc_addr;
-	int		sc_fanmul;
 
 	struct sensor	sc_sensor[ADMTM_NUM_SENSORS];
 };
@@ -154,6 +155,14 @@ admtm_refresh(void *arg)
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
 		sc->sc_sensor[ADMTM_EXT].value = 273150000 + 1000000 * data;
 
+	cmd = ADM1025_STATUS2;
+	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0) {
+		if (data & ADM1025_STATUS2_EXT)
+			sc->sc_sensor[ADMTM_EXT].flags |= SENSOR_FINVALID;
+		else
+			sc->sc_sensor[ADMTM_EXT].flags &= ~SENSOR_FINVALID;
+	}
 
 	cmd = ADM1025_V25;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
