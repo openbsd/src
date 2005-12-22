@@ -1465,6 +1465,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/disktab.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dlfcn.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/elf_abi.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/emmintrin.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/err.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/errno.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/eti.ph
@@ -1675,6 +1676,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/miscfs/procfs/procfs.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/miscfs/specfs
 ./usr/libdata/perl5/site_perl/amd64-openbsd/miscfs/specfs/specdev.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/mmintrin.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/ncurses.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/ndbm.ph
@@ -1917,6 +1919,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/pcap-namedb.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/pcap.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/pmmintrin.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/poll.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/protocols
 ./usr/libdata/perl5/site_perl/amd64-openbsd/protocols/dumprestore.ph
@@ -2241,6 +2244,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/xfs/xfs_vfsops.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/xfs/xfs_vnodeops.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/xfs/xfs_vopdefs.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/xmmintrin.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/zconf.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/zlib.ph
 ./usr/libexec/ld.so
