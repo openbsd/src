@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.140 2005/11/29 02:59:42 jolan Exp $	*/
+/*	$OpenBSD: if.c,v 1.141 2005/12/22 23:55:18 canacar Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -518,9 +518,7 @@ if_detach(struct ifnet *ifp)
 #endif
 
 #if NBPFILTER > 0
-	/* If there is a bpf device attached, detach from it.  */
-	if (ifp->if_bpf)
-		bpfdetach(ifp);
+	bpfdetach(ifp);
 #endif
 #ifdef ALTQ
 	if (ALTQ_IS_ENABLED(&ifp->if_snd))
