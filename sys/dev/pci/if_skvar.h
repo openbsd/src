@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skvar.h,v 1.1 2005/09/20 00:24:04 brad Exp $	*/
+/*	$OpenBSD: if_skvar.h,v 1.2 2005/12/22 20:54:47 brad Exp $	*/
 /*	$NetBSD: if_skvar.h,v 1.6 2005/05/30 04:35:22 christos Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*	$OpenBSD: if_skvar.h,v 1.1 2005/09/20 00:24:04 brad Exp $	*/
+/*	$OpenBSD: if_skvar.h,v 1.2 2005/12/22 20:54:47 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -192,12 +192,14 @@ struct sk_softc {
 	bus_space_handle_t	sk_bhandle;	/* bus space handle */
 	bus_space_tag_t		sk_btag;	/* bus space tag */
 	void			*sk_intrhand;	/* irq handler handle */
+	u_int8_t		sk_coppertype;
+	u_int8_t		sk_pmd;		/* physical media type */
 	u_int8_t		sk_type;
 	u_int8_t		sk_rev;
+	u_int8_t		sk_macs;	/* # of MACs */
 	char			*sk_name;
 	u_int32_t		sk_rboff;	/* RAMbuffer offset */
 	u_int32_t		sk_ramsize;	/* amount of RAM on NIC */
-	u_int32_t		sk_pmd;		/* physical media type */
 	u_int32_t		sk_intrmask;
 	bus_dma_tag_t		sc_dmatag;
 	struct sk_if_softc	*sk_if[2];
@@ -214,7 +216,7 @@ struct sk_if_softc {
 	u_int32_t		sk_rx_ramend;
 	u_int32_t		sk_tx_ramstart;
 	u_int32_t		sk_tx_ramend;
-	int			sk_phytype;
+	u_int8_t		sk_phytype;
 	int			sk_phyaddr;
 	int			sk_cnt;
 	int			sk_link;

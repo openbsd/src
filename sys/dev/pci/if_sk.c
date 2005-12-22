@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.92 2005/12/16 01:52:29 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.93 2005/12/22 20:54:46 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1179,28 +1179,38 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 		     sc_if->sk_rx_ramstart, sc_if->sk_rx_ramend,
 		     sc_if->sk_tx_ramstart, sc_if->sk_tx_ramend));
 
-	/* Read and save PHY type and set PHY address */
+	/* Read and save PHY type */
 	sc_if->sk_phytype = sk_win_read_1(sc, SK_EPROM1) & 0xF;
-	switch (sc_if->sk_phytype) {
-	case SK_PHYTYPE_XMAC:
-		sc_if->sk_phyaddr = SK_PHYADDR_XMAC;
-		break;
-	case SK_PHYTYPE_BCOM:
-		sc_if->sk_phyaddr = SK_PHYADDR_BCOM;
-		break;
-	case SK_PHYTYPE_MARV_COPPER:
-		sc_if->sk_phyaddr = SK_PHYADDR_MARV;
-		break;
-	default:
-		printf(": unsupported PHY type: %d\n",
-		    sc_if->sk_phytype);
-		goto fail;
+
+	/* Set PHY address */
+	if (SK_IS_GENESIS(sc)) {
+		switch (sc_if->sk_phytype) {
+			case SK_PHYTYPE_XMAC:
+				sc_if->sk_phyaddr = SK_PHYADDR_XMAC;
+				break;
+			case SK_PHYTYPE_BCOM:
+				sc_if->sk_phyaddr = SK_PHYADDR_BCOM;
+				break;
+			default:
+				printf("%s: unsupported PHY type: %d\n",
+				    sc->sk_dev.dv_xname, sc_if->sk_phytype);
+				return;
+		}
 	}
-	if (SK_IS_YUKON2(sc) && sc_if->sk_phytype < SK_PHYTYPE_MARV_COPPER &&
-	    sc->sk_pmd != IFM_1000_SX && sc->sk_pmd != IFM_1000_LX) {
-		/* not initialized, punt */
-		sc_if->sk_phytype = SK_PHYTYPE_MARV_COPPER;
+
+	if (SK_IS_YUKON(sc)) {
+		if ((sc_if->sk_phytype < SK_PHYTYPE_MARV_COPPER &&
+		    sc->sk_pmd != 'L' && sc->sk_pmd != 'S')) {
+			/* not initialized, punt */
+			sc_if->sk_phytype = SK_PHYTYPE_MARV_COPPER;
+
+			sc->sk_coppertype = 1;
+		}
+
 		sc_if->sk_phyaddr = SK_PHYADDR_MARV;
+
+		if (!(sc->sk_coppertype))
+			sc_if->sk_phytype = SK_PHYTYPE_MARV_FIBER;
 	}
 
 	/* Allocate the descriptor queues. */
@@ -1277,7 +1287,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 		sc_if->sk_mii.mii_writereg = sk_xmac_miibus_writereg;
 		sc_if->sk_mii.mii_statchg = sk_xmac_miibus_statchg;
 	} else {
-		/* yukon/yukon2 */
+		/* Yukon/Yukon-2 */
 		sc_if->sk_mii.mii_readreg = sk_marv_miibus_readreg;
 		sc_if->sk_mii.mii_writereg = sk_marv_miibus_writereg;
 		sc_if->sk_mii.mii_statchg = sk_marv_miibus_statchg;
@@ -1470,41 +1480,14 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		     sc->sk_rboff));
 
 	/* Read and save physical media type */
-	skrs = sk_win_read_1(sc, SK_PMDTYPE);
-	if (SK_IS_YUKON2(sc)) {
-		switch (skrs) {
-		case 'L':
-			sc->sk_pmd = IFM_1000_LX;
-			break;
-		case 'S':
-			sc->sk_pmd = IFM_1000_SX;
-			break;
-		case SK_PMD_1000BASETX:
-		case SK_PMD_1000BASETX_ALT:
-		default:
-			sc->sk_pmd = IFM_1000_T;
-			break;
-		}
-	} else {
-		switch (skrs) {
-		case SK_PMD_1000BASESX:
-			sc->sk_pmd = IFM_1000_SX;
-			break;
-		case SK_PMD_1000BASELX:
-			sc->sk_pmd = IFM_1000_LX;
-			break;
-		case SK_PMD_1000BASECX:
-			sc->sk_pmd = IFM_1000_CX;
-			break;
-		case SK_PMD_1000BASETX:
-		case SK_PMD_1000BASETX_ALT:
-			sc->sk_pmd = IFM_1000_T;
-			break;
-		default:
-			printf(": unknown media type: 0x%x\n", skrs);
-			goto fail_2;
-		}
-	}
+	sc->sk_pmd = sk_win_read_1(sc, SK_PMDTYPE);
+
+	if (sc->sk_pmd == 'T' || sc->sk_pmd == '1' ||
+	    (SK_IS_YUKON2(sc) && !(sc->sk_pmd == 'L' ||
+	    sc->sk_pmd == 'S')))
+		sc->sk_coppertype = 1;
+	else
+		sc->sk_coppertype = 0;
 
 	switch (sc->sk_type) {
 	case SK_GENESIS:
@@ -1537,8 +1520,8 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Yukon Lite Rev A0 needs special test, from sk98lin driver */
 	if (sc->sk_type == SK_YUKON || sc->sk_type == SK_YUKON_LP) {
-		uint32_t flashaddr;
-		uint8_t testbyte;
+		u_int32_t flashaddr;
+		u_int8_t testbyte;
 
 		flashaddr = sk_win_read_4(sc, SK_EP_ADDR);
 
@@ -1577,10 +1560,7 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		printf(" rev. %s", revstr);
 	printf(" (0x%x): %s\n", sc->sk_rev, intrstr);
 
-	skca.skc_port = SK_PORT_A;
-	skca.skc_type = sc->sk_type;
-	skca.skc_rev = sc->sk_rev;
-	(void)config_found(&sc->sk_dev, &skca, skcprint);
+	sc->sk_macs = 1;
 
 	if (SK_IS_YUKON2(sc)) {
 		u_int8_t hw;
@@ -1588,21 +1568,24 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		hw = sk_win_read_1(sc, SK_Y2_HWRES);
 		if ((hw & SK_Y2_HWRES_LINK_MASK) == SK_Y2_HWRES_LINK_DUAL) {
 			if ((sk_win_read_1(sc, SK_Y2_CLKGATE) &
-			    SK_Y2_CLKGATE_LINK2_INACTIVE) == 0) {
-				skca.skc_port = SK_PORT_B;
-				skca.skc_type = sc->sk_type;
-				skca.skc_rev = sc->sk_rev;
-				(void)config_found(&sc->sk_dev, &skca,
-				    skcprint);
-			}
+			    SK_Y2_CLKGATE_LINK2_INACTIVE) == 0)
+				sc->sk_macs++;
 		}
 	} else {
-		if (!(sk_win_read_1(sc, SK_CONFIG) & SK_CONFIG_SINGLEMAC)) {
-			skca.skc_port = SK_PORT_B;
-			skca.skc_type = sc->sk_type;
-			skca.skc_rev = sc->sk_rev;
-			(void)config_found(&sc->sk_dev, &skca, skcprint);
-		}
+		if (!(sk_win_read_1(sc, SK_CONFIG) & SK_CONFIG_SINGLEMAC))
+			sc->sk_macs++;
+	}
+
+	skca.skc_port = SK_PORT_A;
+	skca.skc_type = sc->sk_type;
+	skca.skc_rev = sc->sk_rev;
+	(void)config_found(&sc->sk_dev, &skca, skcprint);
+
+	if (sc->sk_macs > 1) {
+		skca.skc_port = SK_PORT_B;
+		skca.skc_type = sc->sk_type;
+		skca.skc_rev = sc->sk_rev;
+		(void)config_found(&sc->sk_dev, &skca, skcprint);
 	}
 
 	/* Turn on the 'driver is loaded' LED. */
@@ -2443,17 +2426,10 @@ void sk_init_yukon(sc_if)
 	phy = SK_GPHY_INT_POL_HI | SK_GPHY_DIS_FC | SK_GPHY_DIS_SLEEP |
 		SK_GPHY_ENA_XC | SK_GPHY_ANEG_ALL | SK_GPHY_ENA_PAUSE;
 
-	switch(sc_if->sk_softc->sk_pmd) {
-	case IFM_1000_SX:
-	case IFM_1000_LX:
-		phy |= SK_GPHY_FIBER;
-		break;
-
-	case IFM_1000_CX:
-	case IFM_1000_T:
+	if (sc->sk_coppertype)
 		phy |= SK_GPHY_COPPER;
-		break;
-	}
+	else
+		phy |= SK_GPHY_FIBER;
 
 	DPRINTFN(3, ("sk_init_yukon: phy=%#x\n", phy));
 
