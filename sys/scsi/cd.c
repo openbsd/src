@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.97 2005/10/15 18:18:36 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.98 2005/12/22 03:21:57 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1179,7 +1179,7 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	u_int32_t lba, nlba;
 	u_int8_t hdr[TOC_HEADER_SZ], *ent, *toc = NULL;
 	char *errstring;
-	int tocidx, n, len, is_data, data_track;
+	int tocidx, n, len, is_data, data_track = 0;
 
 	bzero(lp, sizeof(struct disklabel));
 	bzero(clp, sizeof(struct cpu_disklabel));
@@ -1248,7 +1248,6 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	if (cd->sc_link->quirks & ADEV_LITTLETOC)
 		lba = swap32(lba);
 
-	data_track = 0;
 	for (tocidx = 1; tocidx <= n && data_track < MAXPARTITIONS; tocidx++) {
 		is_data = ent[TOC_ENTRY_CONTROL_ADDR_TYPE] & 4;
 		ent += TOC_ENTRY_SZ;
