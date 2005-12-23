@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.99 2005/12/22 23:06:23 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.100 2005/12/23 16:18:19 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ int	cd_read_subchannel(struct cd_softc *, int, int, int,
 	    struct cd_sub_channel_info *, int );
 int	cd_read_toc(struct cd_softc *, int, int, void *, int, int);
 int	cd_get_parms(struct cd_softc *, int);
-int	cd_load_toc(struct cd_softc *, struct cd_toc *);
+int	cd_load_toc(struct cd_softc *, struct cd_toc *, int);
 
 int    dvd_auth(struct cd_softc *, union dvd_authinfo *);
 int    dvd_read_physical(struct cd_softc *, union dvd_struct *);
@@ -1553,7 +1553,7 @@ cd_play_tracks(cd, strack, sindex, etrack, eindex)
 	MALLOC(toc, struct cd_toc *, sizeof(struct cd_toc), M_TEMP, M_WAITOK);
 	bzero(toc, sizeof(*toc));
 
-	if ((error = cd_load_toc(cd, toc)) != 0)
+	if ((error = cd_load_toc(cd, toc, CD_MSF_FORMAT)) != 0)
 		goto done;
 
 	if (++etrack > (toc->header.ending_track+1))
@@ -1697,21 +1697,25 @@ cd_read_toc(cd, mode, start, data, len, control)
 }
 
 int
-cd_load_toc(cd, toc)
+cd_load_toc(cd, toc, fmt)
 	struct cd_softc *cd;
 	struct cd_toc *toc;
+	int fmt;
 {
-	int ntracks, len, error;
+	int n, len, error;
 
-	if ((error = cd_read_toc(cd, 0, 0, toc, sizeof(toc->header), 0)) != 0)
-		return (error);
+	error = cd_read_toc(cd, 0, 0, toc, sizeof(toc->header), 0);
 
-	ntracks = toc->header.ending_track - toc->header.starting_track + 1;
-	len = (ntracks + 1) * sizeof(struct cd_toc_entry) +
-	    sizeof(toc->header);
-	if ((error = cd_read_toc(cd, CD_MSF_FORMAT, 0, toc, len, 0)) != 0)
-		return (error);
-	return (0);
+	if (error == 0) {
+		if (toc->header.ending_track < toc->header.starting_track)
+			return (EIO);
+		/* +2 to account for leading out track. */
+		n = toc->header.ending_track - toc->header.starting_track + 2;
+		len = n * sizeof(struct cd_toc_entry) + sizeof(toc->header);
+		error = cd_read_toc(cd, fmt, 0, toc, len, 0);
+	}
+
+	return (error);
 }
 
 
