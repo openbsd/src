@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.10 2005/12/23 20:54:24 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.11 2005/12/23 21:23:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -93,10 +93,6 @@ u_int8_t fprobereg[] = {
 #define Pf_58	9
 u_int8_t fprobeval[sizeof(fprobereg)/sizeof(fprobereg[0])];
 
-u_int8_t wprobereg[] = { 0x4f };
-#define PW_4f	0
-u_int16_t wprobeval[sizeof(wprobereg)/sizeof(wprobereg[0])];
-
 void
 iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 {
@@ -104,8 +100,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	i2c_tag_t ic = iba->iba_tag;
 	char *name = NULL;
 	u_int8_t data;
-	u_int16_t data2;
-	int i, widetest = 0;
+	int i;
 
 	/* Load registers used by many vendors as vendor/ID */
 	ic->ic_acquire_bus(ic->ic_cookie, I2C_F_POLL);
@@ -185,8 +180,6 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		name = "lm87";
 	} else if (probeval[P_fe] == 0x4d && probeval[P_ff] == 0x08) {
 		name = "maxim6690";	/* somewhat similar to lm90 */
-	} else if (probeval[P_4f] == 0x5c) {
-		widetest = 1;
 	} else if ((addr & 0xfc) == 0x48) {
 		/* address for lm75/77 ... */
 	}
@@ -215,30 +208,13 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	}
 	ic->ic_release_bus(ic->ic_cookie, I2C_F_POLL);
 
-	if (widetest) {
-		printf(";");
-		/* Load registers used by many vendors as vendor/ID */
-		ic->ic_acquire_bus(ic->ic_cookie, I2C_F_POLL);
-		for (i = 0; i < sizeof(wprobereg)/sizeof(wprobereg[0]); i++) {
-			wprobeval[i] = 0xff;
-			if (ic->ic_exec(ic->ic_cookie,
-			    I2C_OP_READ_WITH_STOP, addr,
-			    &wprobereg[i], 1, &data2, 2,
-			    I2C_F_POLL) == 0) {
-				wprobeval[i] = data2;
-				printf(" %02x=%04x", wprobereg[0], data2);
-			}
-		}
-		ic->ic_release_bus(ic->ic_cookie, I2C_F_POLL);
-
-		if (wprobeval[PW_4f] == 0x5ca3 && (probeval[P_4e] & 0x80)) {
-			if (fprobeval[Pf_58] == 0x10)
-				name = "w83781d";
-			else if (fprobeval[Pf_58] == 0x30)
-				name = "w83782d";
-			else if (fprobeval[Pf_58] == 0x31)
-				name = "as99127f";
-		}
+	if (probeval[P_4f] == 0x5c && (probeval[P_4e] & 0x80)) {
+		/*
+		 * We should toggle 0x4e bit 0x80, then re-read
+		 * 0x4f to see if it is 0xa3 (for Winbond)
+		 */
+		if (fprobeval[Pf_58] == 0x31)
+			name = "as99127f";
 	}
 
 gotname:
