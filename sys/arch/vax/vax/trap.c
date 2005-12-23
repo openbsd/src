@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.32 2005/09/15 21:14:27 miod Exp $     */
+/*	$OpenBSD: trap.c,v 1.33 2005/12/23 19:49:00 miod Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -472,8 +472,13 @@ child_return(arg)
 	void *arg;
 {
 	struct proc *p = arg;
+	struct trapframe *frame;
 
-	userret(p, p->p_addr->u_pcb.framep, 0);
+	frame = p->p_addr->u_pcb.framep;
+	frame->r1 = frame->r0 = 0;
+	frame->psl &= ~PSL_C;
+
+	userret(p, frame, 0);
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
