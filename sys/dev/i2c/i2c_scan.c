@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.4 2005/12/23 04:09:56 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.5 2005/12/23 07:07:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -89,8 +89,8 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 
 	if (probeval[P_3e] == 0x41) {
 		/*
-		 * Analog Devices adt/adm product code at 0x3e == 0x41
-		 * probe newer to older.  newer chips have a valid 0x3d
+		 * Analog Devices adt/adm product code at 0x3e == 0x41.
+		 * We probe newer to older.  newer chips have a valid 0x3d
 		 * product number, while older ones encoded the product
 		 * into the upper half of the step at 0x3f
 		 */
@@ -125,6 +125,10 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		/*
 		 * Most newer National products use a vendor code at
 		 * 0x3e of 0x01, and then 0x3f contains a product code
+		 * But some older products are missing a product code,
+		 * and contain who knows what in that register.  We assume
+		 * that some employee was smart enough to keep the numbers
+		 * unique.
 		 */
 		if (probeval[P_3f] == 0x49)
 			name = "lm99";
@@ -138,8 +142,14 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "lm86";
 		else if (probeval[P_3f] == 0x03)	/* and higher? */
 			name = "lm81";
-	} else if (probeval[P_3e] == 0x02 && probeval[P_3f] == 0x6)
+	} else if (probeval[P_fe] == 0x01) {
+		/* Some more National devices ...*/
+		if (probeval[P_ff] == 0x33)
+			name = "lm90";
+	} else if (probeval[P_3e] == 0x02 && probeval[P_3f] == 0x6) {
 		name = "lm87";
+	} else if (probeval[P_fe] == 0x4d && probeval[P_ff] == 0x08)
+		name = "maxim6690";	/* somewhat similar to lm90 */
 
 	printf("addr 0x%x at %s:", addr, self->dv_xname);
 	for (i = 0; i < sizeof(probeval); i++)
