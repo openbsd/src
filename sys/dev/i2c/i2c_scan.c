@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.6 2005/12/23 15:06:18 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.7 2005/12/23 15:09:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -76,7 +76,9 @@ u_int8_t probereg[] = { 0x3d, 0x3e, 0x3f, 0xfe, 0xff };
 u_int8_t probeval[sizeof(probereg)];
 
 /* additional registers to load later, for debugging... */
-u_int8_t fprobereg[] = { 0x00, 0x01, 0x02, 0x03, 0x07, 0x4d, 0x4e, 0x4f, 0x58 };
+u_int8_t fprobereg[] = {
+	0x00, 0x01, 0x02, 0x03, 0x07, 0x4c, 0x4d, 0x4e, 0x4f, 0x58
+};
 
 void
 iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
