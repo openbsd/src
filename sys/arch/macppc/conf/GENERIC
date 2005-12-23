@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.118 2005/12/23 03:56:48 brad Exp $g
+#	$OpenBSD: GENERIC,v 1.119 2005/12/23 04:01:11 brad Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -216,7 +216,6 @@ ucom*	at uipaq?
 uaudio* at uhub?		# USB Audio
 audio*	at uaudio?
 umidi*	at uhub?		# USB MIDI
-midi*	at umidi?
 ulpt*	at uhub?		# USB Printers
 umass*	at uhub?		# USB Mass Storage devices
 scsibus* at umass?
@@ -287,6 +286,7 @@ wsdisplay*	at vgafb?
 
 # MIDI support
 midi*		at eap?
+midi*		at umidi?
 
 # Audio support
 audio*		at awacs?
