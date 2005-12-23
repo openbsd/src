@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.23 2005/12/21 16:03:56 xsa Exp $	*/
+/*	$OpenBSD: buf.c,v 1.24 2005/12/23 00:27:04 joris Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -398,6 +398,9 @@ cvs_buf_write(BUF *b, const char *path, mode_t mode)
 		fatal("cvs_buf_write: cvs_buf_write_fd: `%s'", path);
 	}
 	(void)close(fd);
+
+	if (chmod(path, mode) < 0)
+		fatal("cvs_buf_write: chmod failed: %s", strerror(errno));
 
 	return (0);
 }
