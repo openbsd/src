@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.17 2005/12/22 06:49:48 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.18 2005/12/23 03:27:06 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -232,18 +232,17 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	if (!thread)
 		return (errno);
 	memset(thread, 0, sizeof(*thread));
-	thread->stack = _rthread_alloc_stack(64 * 1024, NULL);
-	if (!thread->stack) {
-		rc = errno;
-		goto fail1;
-	}
-
 	thread->donesem.lock = _SPINLOCK_UNLOCKED;
 	thread->fn = start_routine;
 	thread->arg = arg;
 
 	_spinlock(&thread_lock);
 
+	thread->stack = _rthread_alloc_stack(64 * 1024, NULL);
+	if (!thread->stack) {
+		rc = errno;
+		goto fail1;
+	}
 	thread->next = thread_list;
 	thread_list = thread;
 
@@ -258,13 +257,14 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	thread->flags |= THREAD_CANCEL_ENABLE|THREAD_CANCEL_DEFERRED;
 	*threadp = thread;
 	_spinunlock(&thread_lock);
+
 	return (0);
 
 fail2:
-	thread_list = thread->next;
-	_spinunlock(&thread_lock);
 	_rthread_free_stack(thread->stack);
 fail1:
+	thread_list = thread->next;
+	_spinunlock(&thread_lock);
 	free(thread);
 
 	return (rc);
