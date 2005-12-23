@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.176 2005/12/13 17:40:31 drahn Exp $
+$OpenBSD: usbdevs,v 1.177 2005/12/23 08:01:43 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1284,6 +1284,7 @@ product MCT ML_4500		0x0302	ML-4500
 /* Melco, Inc products */
 product MELCO LUATX1		0x0001	LUA-TX Ethernet
 product MELCO LUATX5		0x0005	LUA-TX Ethernet
+product MELCO NINWIFI		0x008b	Nintendo Wi-Fi
 product MELCO LUA2TX5		0x0009	LUA2-TX Ethernet
 product MELCO LUAKTX		0x0012	LUA-KTX Ethernet
 product MELCO S11		0x0016	WLI-USB-S11
