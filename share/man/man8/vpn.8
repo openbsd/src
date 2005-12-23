@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.106 2005/08/19 15:38:39 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.107 2005/12/23 18:19:30 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -246,7 +246,7 @@ Note that when no authentication and encryption algorithms are defined,
 will automatically use HMAC-SHA2-256 for authentication and AES-128 in
 countermode for encryption.
 Therefore the authentication key needs to be 256 bits long; the encryption key
-128 bits.
+160 bits.
 For details see
 .Xr ipsec.conf 5 .
 .Ss Creating IPsec Flows [manual keying]
