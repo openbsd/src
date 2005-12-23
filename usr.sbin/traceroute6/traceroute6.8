@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute6.8,v 1.8 2003/01/18 23:53:49 deraadt Exp $
+.\"	$OpenBSD: traceroute6.8,v 1.9 2005/12/23 15:00:18 jmc Exp $
 .\"	$KAME: traceroute6.8,v 1.9 2002/08/30 03:56:20 onoe Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,6 +101,16 @@ Set UDP port number to
 Set the number of probes per hop count to
 .Ar probes .
 .It Fl r
+Bypass the normal routing tables and send directly to a host on an attached
+network.
+If the host is not on a directly attached network,
+an error is returned.
+This option corresponds to the
+.Dv SO_DONTROUTE
+socket option;
+it can be used to ping a local host through an interface
+that has no route through it
+(e.g., after the interface was dropped by a routing daemon).
 .It Fl s Ar src
 .Ar Src
 specifies the source IPv6 address to be used.
