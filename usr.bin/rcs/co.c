@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.48 2005/12/19 18:24:12 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.49 2005/12/23 00:59:56 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include "rcs.h"
 #include "rcsprog.h"
 
-#define CO_OPTSTRING	"f::k:l::M::p::q::r::s:Tu::Vw::x:"
+#define CO_OPTSTRING	"d:f::k:l::M::p::q::r::s:Tu::Vw::x:"
 
 static void	checkout_err_nobranch(RCSFILE *, const char *, const char *,
     const char *, int);
@@ -48,7 +48,7 @@ checkout_main(int argc, char **argv)
 	RCSNUM *frev, *rev;
 	RCSFILE *file;
 	char fpath[MAXPATHLEN];
-	char *author, *username;
+	char *author, *username, *date;
 	const char *state;
 	time_t rcs_mtime = -1;
 
@@ -58,9 +58,13 @@ checkout_main(int argc, char **argv)
 	frev = NULL;
 	state = NULL;
 	author = NULL;
+	date = NULL;
 
 	while ((ch = rcs_getopt(argc, argv, CO_OPTSTRING)) != -1) {
 		switch (ch) {
+		case 'd':
+			date = xstrdup(rcs_optarg);
+			break;
 		case 'f':
 			rcs_set_rev(rcs_optarg, &rev);
 			flags |= FORCE;
@@ -167,7 +171,7 @@ checkout_main(int argc, char **argv)
 			frev = rev;
 
 		if (checkout_rev(file, frev, argv[i], flags,
-		    username, author, state) < 0) {
+		    username, author, state, date) < 0) {
 				rcs_close(file);
 				continue;
 		}
@@ -197,13 +201,14 @@ checkout_usage(void)
  * Checkout revision <rev> from RCSFILE <file>, writing it to the path <dst>
  * Currenly recognised <flags> are CO_LOCK, CO_UNLOCK and CO_REVDATE.
  *
- * Looks up revision based upon <lockname>, <author>, <state>
+ * Looks up revision based upon <lockname>, <author>, <state> and <date>
  *
  * Returns 0 on success, -1 on failure.
  */
 int
 checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
-    const char *lockname, const char *author, const char *state)
+    const char *lockname, const char *author, const char *state,
+    const char *date)
 {
 	BUF *bp;
 	int lcount;
@@ -212,7 +217,12 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	struct stat st;
 	struct rcs_delta *rdp;
 	struct rcs_lock *lkp;
-	char *content, msg[128];
+	char *content, msg[128], *fdate;
+	time_t rcsdate, givendate;
+
+	rcsdate = givendate = -1;
+	if (date != NULL)
+		givendate = cvs_date_parse(date);
 
 	/* Check out the latest revision if <frev> is greater than HEAD */
 	if (rcsnum_cmp(frev, file->rf_head, 0) == -1)
@@ -240,9 +250,17 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		}
 
 		TAILQ_FOREACH(rdp, &file->rf_delta, rd_list) {
+			if (date != NULL) {
+				fdate = asctime(&rdp->rd_date);
+				rcsdate = cvs_date_parse(fdate);
+				if (givendate <= rcsdate)
+					continue;
+			}
+
 			if ((author != NULL) &&
 			    (strcmp(rdp->rd_author, author)))
 				continue;
+
 			if ((state != NULL) &&
 			    (strcmp(rdp->rd_state, state)))
 				continue;
@@ -255,7 +273,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	}
 
 	if (rdp == NULL) {
-		checkout_err_nobranch(file, author, NULL, state, flags);
+		checkout_err_nobranch(file, author, date, state, flags);
 		return (-1);
 	}
 

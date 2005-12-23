@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.88 2005/12/21 19:59:58 alek Exp $	*/
+/*	$OpenBSD: ci.c,v 1.89 2005/12/23 00:59:55 joris Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -530,7 +530,7 @@ checkin_update(struct checkin_params *pb)
 	if (((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
 	    && !(pb->flags & CI_DEFAULT))
 		checkout_rev(pb->file, pb->newrev, pb->filename, pb->flags,
-		    pb->username, pb->author, NULL);
+		    pb->username, pb->author, NULL, NULL);
 
 	/* File will NOW be synced */
 	rcs_close(pb->file);
@@ -626,7 +626,7 @@ checkin_init(struct checkin_params *pb)
 	if (((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
 	    && !(pb->flags & CI_DEFAULT))
 		checkout_rev(pb->file, pb->newrev, pb->filename, pb->flags,
-		    pb->username, pb->author, NULL);
+		    pb->username, pb->author, NULL, NULL);
 
 	/* File will NOW be synced */
 	rcs_close(pb->file);
@@ -686,7 +686,7 @@ checkin_revert(struct checkin_params *pb)
 	(void)unlink(pb->filename);
 	if ((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
 		checkout_rev(pb->file, pb->frev, pb->filename,
-		    pb->flags, pb->username, pb->author, NULL);
+		    pb->flags, pb->username, pb->author, NULL, NULL);
 	rcs_lock_remove(pb->file, pb->username, pb->frev);
 	rcs_close(pb->file);
 	if (verbose == 1)
