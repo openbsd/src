@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.37 2005/11/02 11:35:54 jmc Exp $
+.\"	$OpenBSD: traceroute.8,v 1.38 2005/12/23 14:58:35 jmc Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -151,9 +151,12 @@ Bypass the normal routing tables and send directly to a host on an attached
 network.
 If the host is not on a directly attached network,
 an error is returned.
-This option can be used to ping a local host through an interface
-that has no route through it (e.g., after the interface was dropped by
-.Xr routed 8 ) .
+This option corresponds to the
+.Dv SO_DONTROUTE
+socket option;
+it can be used to ping a local host through an interface
+that has no route through it
+(e.g., after the interface was dropped by a routing daemon).
 .It Fl S
 Print how many probes were not answered for each hop.
 .It Fl s Ar src_addr
