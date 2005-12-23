@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1025.c,v 1.10 2005/12/23 22:56:44 deraadt Exp $	*/
+/*	$OpenBSD: adm1025.c,v 1.11 2005/12/23 23:39:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -170,7 +170,8 @@ void
 admtm_refresh(void *arg)
 {
 	struct admtm_softc *sc = arg;
-	u_int8_t cmd, data, sdata;
+	u_int8_t cmd, data;
+	int8_t sdata;
 
 	iic_acquire_bus(sc->sc_tag, 0);
 
