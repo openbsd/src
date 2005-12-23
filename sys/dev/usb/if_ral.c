@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.52 2005/12/09 05:22:08 jsg Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.53 2005/12/23 08:10:12 jsg Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -95,6 +95,7 @@ static const struct usb_devno ural_devs[] = {
 	{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_KG54 },
 	{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_KG54AI },
 	{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_KG54YB },
+	{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_NINWIFI },
 	{ USB_VENDOR_MSI,		USB_PRODUCT_MSI_RT2570 },
 	{ USB_VENDOR_MSI,		USB_PRODUCT_MSI_RT2570_2 },
 	{ USB_VENDOR_MSI,		USB_PRODUCT_MSI_RT2570_3 },
