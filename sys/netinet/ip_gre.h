@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.h,v 1.6 2002/06/09 16:26:10 itojun Exp $ */
+/*      $OpenBSD: ip_gre.h,v 1.7 2005/12/23 13:01:23 claudio Exp $ */
 /*	$NetBSD: ip_gre.h,v 1.3 1998/10/07 23:33:02 thorpej Exp $ */
 
 /*
@@ -77,8 +77,5 @@ void gre_mobile_input(struct mbuf *, ...);
 int     ipmobile_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int     gre_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
-#ifndef MROUTING
-void gre_ipip_input(struct mbuf *, ...);
-#endif /* MROUTING */
 #endif /* _KERNEL */
 #endif /* _NETINET_IP_GRE_H_ */
