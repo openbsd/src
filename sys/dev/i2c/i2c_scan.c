@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.5 2005/12/23 07:07:20 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.6 2005/12/23 15:06:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -58,34 +58,46 @@ void	iic_probe(struct device *, struct i2cbus_attach_args *, u_int8_t);
  * 0x54    Microchip (at 0x7)
  */
 
-/* ports to probe for sensors */
+/* addresses at which to probe for sensors */
 struct {
 	u_int8_t start, end;
-} probe_paddrs[] = {
+} probe_addrs[] = {
 	{ 0x20, 0x2f },
-	{ 0x48, 0x4f },
-	{ 0xad, 0xad }
+	{ 0x48, 0x4f }
 };
 
-u_int8_t probereg[] = { 0x3e, 0x3f, 0xfe, 0xff, 0x07, 0x4d, 0x4e, 0x4f, 0x58, 0x3d };
-#define P_3e	0
-#define P_3f	1
-#define P_fe	2
-#define P_ff	3
-#define P_07	4
-#define P_4d	5
-#define P_4e	6
-#define P_4f	7
-#define P_58	8
-#define P_3d	9
+/* registers to load by default */
+u_int8_t probereg[] = { 0x3d, 0x3e, 0x3f, 0xfe, 0xff };
+#define P_3d	0
+#define P_3e	1
+#define P_3f	2
+#define P_fe	3
+#define P_ff	4
 u_int8_t probeval[sizeof(probereg)];
+
+/* additional registers to load later, for debugging... */
+u_int8_t fprobereg[] = { 0x00, 0x01, 0x02, 0x03, 0x07, 0x4d, 0x4e, 0x4f, 0x58 };
 
 void
 iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 {
 	struct i2c_attach_args ia;
+	i2c_tag_t ic = iba->iba_tag;
 	char *name = NULL;
+	u_int8_t data;
 	int i;
+
+	/* Load registers used by many vendors as vendor/ID */
+	ic->ic_acquire_bus(ic->ic_cookie, I2C_F_POLL);
+	for (i = 0; i < sizeof(probereg); i++) {
+		probeval[i] = 0xff;
+		if (ic->ic_exec(ic->ic_cookie,
+		    I2C_OP_READ_WITH_STOP, addr,
+		    &probereg[i], 1, &data, 1,
+		    I2C_F_POLL) == 0)
+			probeval[i] = data;
+	}
+	ic->ic_release_bus(ic->ic_cookie, I2C_F_POLL);
 
 	if (probeval[P_3e] == 0x41) {
 		/*
@@ -116,11 +128,14 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		else if ((probeval[P_ff] & 0xf0) == 0x90)
 			name = "adm1022";
 		else
-			name = "adm1021";
+			name = "adm1021";	/* getting desperate.. */
 	} else if (probeval[P_3e] == 0xa1) {
 		/* Philips vendor code 0xa1 at 0x3e */
 		if ((probeval[P_3f] & 0xf0) == 0x20)
 			name = "ne1619";	/* adm1025 compat */
+	} else if (probeval[P_3e] == 0x55) {
+		if (probeval[P_3f] == 0x20)
+			name = "47m192";	/* adm1025 compat */
 	} else if (probeval[P_3e] == 0x01) {
 		/*
 		 * Most newer National products use a vendor code at
@@ -140,7 +155,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "lm89";
 		else if (probeval[P_3f] == 0x17)
 			name = "lm86";
-		else if (probeval[P_3f] == 0x03)	/* and higher? */
+		else if (probeval[P_3f] == 0x03)	/* are there others? */
 			name = "lm81";
 	} else if (probeval[P_fe] == 0x01) {
 		/* Some more National devices ...*/
@@ -150,6 +165,11 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		name = "lm87";
 	} else if (probeval[P_fe] == 0x4d && probeval[P_ff] == 0x08)
 		name = "maxim6690";	/* somewhat similar to lm90 */
+#if 0
+	} else if ((addr & 0xfc) == 0x48)
+		/* address for lm75/77 ... */
+	}
+#endif
 
 	printf("addr 0x%x at %s:", addr, self->dv_xname);
 	for (i = 0; i < sizeof(probeval); i++)
@@ -157,6 +177,28 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			printf(" %02x=%02x", probereg[i], probeval[i]);
 	if (name)
 		printf(": %s", name);
+	else {
+		u_int16_t data2;
+
+		/* print out some more test register values.... */
+		printf(",");
+		ic->ic_acquire_bus(ic->ic_cookie, I2C_F_POLL);
+		for (i = 0; i < sizeof(fprobereg); i++) {
+			if (ic->ic_exec(ic->ic_cookie,
+			    I2C_OP_READ_WITH_STOP, addr, &fprobereg[i],
+			    1, &data, 1, I2C_F_POLL) == 0 &&
+			    data != 0xff)
+				printf(" %02x=%02x", fprobereg[i], data);
+		}
+		/* And include a 16-bit one (LM77?) */
+		if (ic->ic_exec(ic->ic_cookie,
+		    I2C_OP_READ_WITH_STOP, addr, &fprobereg[0],
+		    1, &data2, sizeof data2, I2C_F_POLL) == 0 &&
+		    data2 != 0xffff)
+			printf(", %02x=%04x", fprobereg[0], data2);
+
+		ic->ic_release_bus(ic->ic_cookie, I2C_F_POLL);
+	}
 	printf("\n");
 
 	if (name) {
@@ -173,26 +215,23 @@ void
 iic_scan(struct device *self, struct i2cbus_attach_args *iba)
 {
 	i2c_tag_t ic = iba->iba_tag;
-	u_int8_t cmd = 0, addr, data;
-	int i, j;
+	u_int8_t cmd = 0, addr;
+	int i;
 
-	for (j = 0; j < sizeof(probe_paddrs)/sizeof(probe_paddrs[0]); j++) {
-		for (addr = probe_paddrs[j].start; addr <= probe_paddrs[j].end;
+	for (i = 0; i < sizeof(probe_addrs)/sizeof(probe_addrs[0]); i++) {
+		for (addr = probe_addrs[i].start; addr <= probe_addrs[i].end;
 		    addr++) {
 			/* Perform RECEIVE BYTE command */
 			ic->ic_acquire_bus(ic->ic_cookie, I2C_F_POLL);
 			if (ic->ic_exec(ic->ic_cookie, I2C_OP_READ_WITH_STOP, addr,
 			    &cmd, 1, NULL, 0, I2C_F_POLL) == 0) {
+				ic->ic_release_bus(ic->ic_cookie, I2C_F_POLL);
 
-				for (i = 0; i < sizeof(probereg); i++) {
-					cmd = probereg[i];
-					probeval[i] = 0xff;
-					if (ic->ic_exec(ic->ic_cookie,
-					    I2C_OP_READ_WITH_STOP, addr,
-					    &cmd, 1, &data, 1, I2C_F_POLL) == 0)
-						probeval[i] = data;
-				}
+				/* Some device exists, so go scope it out */
 				iic_probe(self, iba, addr);
+
+				ic->ic_acquire_bus(ic->ic_cookie, I2C_F_POLL);
+
 			}
 			ic->ic_release_bus(ic->ic_cookie, I2C_F_POLL);
 		}
