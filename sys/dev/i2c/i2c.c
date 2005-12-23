@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c.c,v 1.5 2005/12/22 23:53:58 deraadt Exp $	*/
+/*	$OpenBSD: i2c.c,v 1.6 2005/12/23 01:26:22 deraadt Exp $	*/
 /*	$NetBSD: i2c.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -95,15 +95,16 @@ iic_search(struct device *parent, void *arg, void *aux)
 	struct cfdata *cf = arg;
 	struct i2c_attach_args ia;
 
-	ia.ia_tag = sc->sc_tag;
-	ia.ia_addr = cf->cf_loc[IICCF_ADDR];
-	ia.ia_size = cf->cf_loc[IICCF_SIZE];
-	ia.ia_name = NULL;
-	ia.ia_compat = NULL;
+	if (cf->cf_loc[IICCF_ADDR] != -1) {
+		ia.ia_tag = sc->sc_tag;
+		ia.ia_addr = cf->cf_loc[IICCF_ADDR];
+		ia.ia_size = cf->cf_loc[IICCF_SIZE];
+		ia.ia_name = NULL;
+		ia.ia_compat = NULL;
 
-	if (cf->cf_attach->ca_match(parent, cf, &ia) > 0)
-		config_attach(parent, cf, &ia, iic_print);
-
+		if (cf->cf_attach->ca_match(parent, cf, &ia) > 0)
+			config_attach(parent, cf, &ia, iic_print);
+	}
 	return (0);
 }
 
