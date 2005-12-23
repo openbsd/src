@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.8 2005/12/23 15:53:35 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.9 2005/12/23 20:51:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -67,18 +67,35 @@ struct {
 };
 
 /* registers to load by default */
-u_int8_t probereg[] = { 0x3d, 0x3e, 0x3f, 0xfe, 0xff };
+u_int8_t probereg[] = { 0x3d, 0x3e, 0x3f, 0xfe, 0xff, 0x4e, 0x4f };
 #define P_3d	0
 #define P_3e	1
 #define P_3f	2
 #define P_fe	3
 #define P_ff	4
-u_int8_t probeval[sizeof(probereg)];
+#define P_4e	5
+#define P_4f	6
+u_int8_t probeval[sizeof(probereg)/sizeof(probereg[0])];
 
 /* additional registers to load later, for debugging... */
 u_int8_t fprobereg[] = {
 	0x00, 0x01, 0x02, 0x03, 0x07, 0x4c, 0x4d, 0x4e, 0x4f, 0x58
 };
+#define Pf_00	0
+#define Pf_01	1
+#define Pf_02	2
+#define Pf_03	3
+#define Pf_07	4
+#define Pf_4c	5
+#define Pf_4d	6
+#define Pf_4e	7
+#define Pf_4f	8
+#define Pf_58	9
+u_int8_t fprobeval[sizeof(fprobereg)/sizeof(fprobereg[0])];
+
+u_int8_t wprobereg[] = { 0x4f };
+#define PW_4f	0
+u_int16_t wprobeval[sizeof(wprobereg)/sizeof(wprobereg[0])];
 
 void
 iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
@@ -87,7 +104,8 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	i2c_tag_t ic = iba->iba_tag;
 	char *name = NULL;
 	u_int8_t data;
-	int i;
+	u_int16_t data2;
+	int i, widetest = 0;
 
 	/* Load registers used by many vendors as vendor/ID */
 	ic->ic_acquire_bus(ic->ic_cookie, I2C_F_POLL);
@@ -165,42 +183,67 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "lm90";
 	} else if (probeval[P_3e] == 0x02 && probeval[P_3f] == 0x6) {
 		name = "lm87";
-	} else if (probeval[P_fe] == 0x4d && probeval[P_ff] == 0x08)
+	} else if (probeval[P_fe] == 0x4d && probeval[P_ff] == 0x08) {
 		name = "maxim6690";	/* somewhat similar to lm90 */
-#if 0
-	} else if ((addr & 0xfc) == 0x48)
+	} else if (probeval[P_4f] == 0x5c) {
+		widetest = 1;
+	} else if ((addr & 0xfc) == 0x48) {
 		/* address for lm75/77 ... */
 	}
-#endif
 
-	printf("addr 0x%x at %s:", addr, self->dv_xname);
+	printf("%s: addr 0x%x", self->dv_xname, addr);
 	for (i = 0; i < sizeof(probeval); i++)
 		if (probeval[i] != 0xff)
 			printf(" %02x=%02x", probereg[i], probeval[i]);
+
+	if (name)
+		goto gotname;
+
+	printf(",");
+
+	/* print out some more test register values.... */
+	ic->ic_acquire_bus(ic->ic_cookie, I2C_F_POLL);
+	for (i = 0; i < sizeof(fprobereg); i++) {
+		fprobeval[i] = 0xff;
+		if (ic->ic_exec(ic->ic_cookie,
+		    I2C_OP_READ_WITH_STOP, addr, &fprobereg[i],
+		    1, &data, 1, I2C_F_POLL) == 0 &&
+		    data != 0xff) {
+			fprobeval[i] = data;
+			printf(" %02x=%02x", fprobereg[i], data);
+		}
+	}
+	ic->ic_release_bus(ic->ic_cookie, I2C_F_POLL);
+
+	if (widetest) {
+		printf(";");
+		/* Load registers used by many vendors as vendor/ID */
+		ic->ic_acquire_bus(ic->ic_cookie, I2C_F_POLL);
+		for (i = 0; i < sizeof(wprobereg)/sizeof(wprobereg[0]); i++) {
+			wprobeval[i] = 0xff;
+			if (ic->ic_exec(ic->ic_cookie,
+			    I2C_OP_READ_WITH_STOP, addr,
+			    &wprobereg[i], 1, &data2, 2,
+			    I2C_F_POLL) == 0) {
+				wprobeval[i] = data2;
+				printf(" %02x=%04x", wprobereg[0], data2);
+			}
+		}
+		ic->ic_release_bus(ic->ic_cookie, I2C_F_POLL);
+
+		if (wprobeval[PW_4f] == 0x5ca3 && (probeval[P_4e] & 0x80)) {
+			if (fprobeval[Pf_58] == 0x10)
+				name = "w83781d";
+			else if (fprobeval[Pf_58] == 0x30)
+				name = "w83782d";
+			else if (fprobeval[Pf_58] == 0x30)
+				name = "as99127f";
+		}
+	}
+
+gotname:
 	if (name)
 		printf(": %s", name);
-	else {
-		u_int16_t data2;
-
-		/* print out some more test register values.... */
-		printf(",");
-		ic->ic_acquire_bus(ic->ic_cookie, I2C_F_POLL);
-		for (i = 0; i < sizeof(fprobereg); i++) {
-			if (ic->ic_exec(ic->ic_cookie,
-			    I2C_OP_READ_WITH_STOP, addr, &fprobereg[i],
-			    1, &data, 1, I2C_F_POLL) == 0 &&
-			    data != 0xff)
-				printf(" %02x=%02x", fprobereg[i], data);
-		}
-		/* And include a 16-bit one (LM77?) */
-		if (ic->ic_exec(ic->ic_cookie,
-		    I2C_OP_READ_WITH_STOP, addr, &fprobereg[0],
-		    1, &data2, sizeof data2, I2C_F_POLL) == 0 &&
-		    data2 != 0xffff)
-			printf(", %02x=%04x", fprobereg[0], data2);
-
-		ic->ic_release_bus(ic->ic_cookie, I2C_F_POLL);
-	}
 	printf("\n");
 
 	if (name) {
