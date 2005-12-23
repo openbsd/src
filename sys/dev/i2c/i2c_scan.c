@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.11 2005/12/23 21:23:43 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.12 2005/12/23 22:56:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -66,92 +66,99 @@ struct {
 	{ 0x48, 0x4f }
 };
 
-/* registers to load by default */
-u_int8_t probereg[] = { 0x3d, 0x3e, 0x3f, 0xfe, 0xff, 0x4e, 0x4f };
-#define P_3d	0
-#define P_3e	1
-#define P_3f	2
-#define P_fe	3
-#define P_ff	4
-#define P_4e	5
-#define P_4f	6
-u_int8_t probeval[sizeof(probereg)/sizeof(probereg[0])];
-
-/* additional registers to load later, for debugging... */
-u_int8_t fprobereg[] = {
-	0x00, 0x01, 0x02, 0x03, 0x07, 0x4c, 0x4d, 0x4e, 0x4f, 0x58
+/* registers to print if we fail to probe */
+u_int8_t probereg[] = {
+	0x00, 0x01, 0x02, 0x03, 0x07,
+	0x3d, 0x3e, 0x3f,
+	0x4c, 0x4d, 0x4e, 0x4f,
+	0x58, 0xfe, 0xff
 };
-#define Pf_00	0
-#define Pf_01	1
-#define Pf_02	2
-#define Pf_03	3
-#define Pf_07	4
-#define Pf_4c	5
-#define Pf_4d	6
-#define Pf_4e	7
-#define Pf_4f	8
-#define Pf_58	9
-u_int8_t fprobeval[sizeof(fprobereg)/sizeof(fprobereg[0])];
+
+static i2c_tag_t probe_ic;
+static u_int8_t probe_addr;
+static u_int8_t probe_val[256];
+
+static void	probeinit(struct i2cbus_attach_args *, u_int8_t);
+static u_int8_t	probenc(u_int8_t);
+static u_int8_t	probe(u_int8_t);
+
+static void
+probeinit(struct i2cbus_attach_args *iba, u_int8_t addr)
+{
+	probe_ic = iba->iba_tag;
+	probe_addr = addr;
+	memset(probe_val, 0xff, sizeof probe_val);
+}
+
+static u_int8_t
+probenc(u_int8_t cmd)
+{
+	u_int8_t data;
+
+	probe_ic->ic_acquire_bus(probe_ic->ic_cookie, I2C_F_POLL);
+	if (probe_ic->ic_exec(probe_ic->ic_cookie, I2C_OP_READ_WITH_STOP,
+	    probe_addr, &cmd, 1, &data, 1, I2C_F_POLL) != 0)
+		data = 0xff;
+	probe_ic->ic_release_bus(probe_ic->ic_cookie, I2C_F_POLL);
+	return (data);
+}
+
+static u_int8_t
+probe(u_int8_t cmd)
+{
+	if (probe_val[cmd] != 0xff)
+		return probe_val[cmd];
+	probe_val[cmd] = probenc(cmd);
+	return (probe_val[cmd]);
+}
 
 void
 iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 {
 	struct i2c_attach_args ia;
-	i2c_tag_t ic = iba->iba_tag;
 	char *name = NULL;
-	u_int8_t data;
 	int i;
 
-	/* Load registers used by many vendors as vendor/ID */
-	ic->ic_acquire_bus(ic->ic_cookie, I2C_F_POLL);
-	for (i = 0; i < sizeof(probereg); i++) {
-		probeval[i] = 0xff;
-		if (ic->ic_exec(ic->ic_cookie,
-		    I2C_OP_READ_WITH_STOP, addr,
-		    &probereg[i], 1, &data, 1,
-		    I2C_F_POLL) == 0)
-			probeval[i] = data;
-	}
-	ic->ic_release_bus(ic->ic_cookie, I2C_F_POLL);
+	probeinit(iba, addr);
 
-	if (probeval[P_3e] == 0x41) {
+	if (probe(0x3e) == 0x41) {
 		/*
 		 * Analog Devices adt/adm product code at 0x3e == 0x41.
 		 * We probe newer to older.  newer chips have a valid 0x3d
 		 * product number, while older ones encoded the product
 		 * into the upper half of the step at 0x3f
 		 */
-		if (probeval[P_3d] == 0x03 || probeval[P_3d] == 0x08 ||
-		    probeval[P_3d] == 0x07)
+		if (probe(0x3d) == 0x03 || probe(0x3d) == 0x08 ||
+		    probe(0x3d) == 0x07)
 			name = "adt7516";	/* adt7517, adt7519 */
-		if (probeval[P_3d] == 0x76)
+		if (probe(0x3d) == 0x76)
 			name = "adt7476";
-		else if (probeval[P_3d] == 0x70)
+		else if (probe(0x3d) == 0x70)
 			name = "adt7470";
-		else if (probeval[P_3d] == 0x27)
+		else if (probe(0x3d) == 0x27)
 			name = "adt7460";	/* adt746x */
-		else if (probeval[P_3d] == 0x33)
+		else if (probe(0x3d) == 0x33)
 			name = "adm1033";
-		else if (probeval[P_3d] == 0x30)
+		else if (probe(0x3d) == 0x30)
 			name = "adm1030";
-		else if ((probeval[P_3f] & 0xf0) == 0x20)
+		else if ((probe(0x3f) & 0xf0) == 0x20)
 			name = "adm1025";
-		else if ((probeval[P_ff] & 0xf0) == 0x10)
+		else if ((probe(0xff) & 0xf0) == 0x10)
 			name = "adm1024";
-		else if ((probeval[P_ff] & 0xf0) == 0x30)
+		else if ((probe(0xff) & 0xf0) == 0x30)
 			name = "adm1023";
-		else if ((probeval[P_ff] & 0xf0) == 0x90)
+		else if ((probe(0xff) & 0xf0) == 0x90)
 			name = "adm1022";
 		else
 			name = "adm1021";	/* getting desperate.. */
-	} else if (probeval[P_3e] == 0xa1) {
+	} else if (probe(0x3e) == 0xa1) {
 		/* Philips vendor code 0xa1 at 0x3e */
-		if ((probeval[P_3f] & 0xf0) == 0x20)
+		if ((probe(0x3f) & 0xf0) == 0x20)
 			name = "ne1619";	/* adm1025 compat */
-	} else if (probeval[P_3e] == 0x55) {
-		if (probeval[P_3f] == 0x20)
+	} else if (probe(0x3e) == 0x55) {
+		if (probe(0x3f) == 0x20)
 			name = "47m192";	/* adm1025 compat */
-	} else if (probeval[P_3e] == 0x01) {
+	} else if (probe(0x3e) == 0x01) {
 		/*
 		 * Most newer National products use a vendor code at
 		 * 0x3e of 0x01, and then 0x3f contains a product code
@@ -160,64 +167,41 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		 * that some employee was smart enough to keep the numbers
 		 * unique.
 		 */
-		if (probeval[P_3f] == 0x49)
+		if (probe(0x3f) == 0x49)
 			name = "lm99";
-		else if (probeval[P_3f] == 0x73)
+		else if (probe(0x3f) == 0x73)
 			name = "lm93";
-		else if (probeval[P_3f] == 0x33)
+		else if (probe(0x3f) == 0x33)
 			name = "lm90";
-		else if (probeval[P_3f] == 0x52)
+		else if (probe(0x3f) == 0x52)
 			name = "lm89";
-		else if (probeval[P_3f] == 0x17)
+		else if (probe(0x3f) == 0x17)
 			name = "lm86";
-		else if (probeval[P_3f] == 0x03)	/* are there others? */
+		else if (probe(0x3f) == 0x03)	/* are there others? */
 			name = "lm81";
-	} else if (probeval[P_fe] == 0x01) {
+	} else if (probe(0xfe) == 0x01) {
 		/* Some more National devices ...*/
-		if (probeval[P_ff] == 0x33)
+		if (probe(0xff) == 0x33)
 			name = "lm90";
-	} else if (probeval[P_3e] == 0x02 && probeval[P_3f] == 0x6) {
+	} else if (probe(0x3e) == 0x02 && probe(0x3f) == 0x6) {
 		name = "lm87";
-	} else if (probeval[P_fe] == 0x4d && probeval[P_ff] == 0x08) {
+	} else if (probe(0xfe) == 0x4d && probe(0xff) == 0x08) {
 		name = "maxim6690";	/* somewhat similar to lm90 */
 	} else if ((addr & 0xfc) == 0x48) {
 		/* address for lm75/77 ... */
-	}
-
-	printf("%s: addr 0x%x", self->dv_xname, addr);
-	for (i = 0; i < sizeof(probeval); i++)
-		if (probeval[i] != 0xff)
-			printf(" %02x=%02x", probereg[i], probeval[i]);
-
-	if (name)
-		goto gotname;
-
-	printf(",");
-
-	/* print out some more test register values.... */
-	ic->ic_acquire_bus(ic->ic_cookie, I2C_F_POLL);
-	for (i = 0; i < sizeof(fprobereg); i++) {
-		fprobeval[i] = 0xff;
-		if (ic->ic_exec(ic->ic_cookie,
-		    I2C_OP_READ_WITH_STOP, addr, &fprobereg[i],
-		    1, &data, 1, I2C_F_POLL) == 0 &&
-		    data != 0xff) {
-			fprobeval[i] = data;
-			printf(" %02x=%02x", fprobereg[i], data);
-		}
-	}
-	ic->ic_release_bus(ic->ic_cookie, I2C_F_POLL);
-
-	if (probeval[P_4f] == 0x5c && (probeval[P_4e] & 0x80)) {
+	} else if (probe(0x4f) == 0x5c && (probe(0x4e) & 0x80)) {
 		/*
 		 * We should toggle 0x4e bit 0x80, then re-read
 		 * 0x4f to see if it is 0xa3 (for Winbond)
 		 */
-		if (fprobeval[Pf_58] == 0x31)
+		if (probe(0x58) == 0x31)
 			name = "as99127f";
 	}
 
-gotname:
+	printf("%s: addr 0x%x", self->dv_xname, addr);
+	for (i = 0; i < sizeof(probereg); i++)
+		if (probe(probereg[i]) != 0xff)
+			printf(" %02x=%02x", probereg[i], probe(probereg[i]));
 	if (name)
 		printf(": %s", name);
 	printf("\n");

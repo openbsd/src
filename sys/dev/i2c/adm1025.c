@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1025.c,v 1.9 2005/12/23 21:13:18 deraadt Exp $	*/
+/*	$OpenBSD: adm1025.c,v 1.10 2005/12/23 22:56:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -109,7 +109,7 @@ admtm_attach(struct device *parent, struct device *self, void *aux)
 		printf(": cannot get control register\n");
 		return;
 	}
-	data |= 0x01;
+	data &= ~0x01;
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
@@ -170,19 +170,19 @@ void
 admtm_refresh(void *arg)
 {
 	struct admtm_softc *sc = arg;
-	u_int8_t cmd, data;
+	u_int8_t cmd, data, sdata;
 
 	iic_acquire_bus(sc->sc_tag, 0);
 
 	cmd = ADM1025_INT_TEMP;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
-		sc->sc_sensor[ADMTM_INT].value = 273150000 + 1000000 * data;
+	    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, 0) == 0)
+		sc->sc_sensor[ADMTM_INT].value = 273150000 + 1000000 * sdata;
 
 	cmd = ADM1025_EXT_TEMP;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
-		sc->sc_sensor[ADMTM_EXT].value = 273150000 + 1000000 * data;
+	    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, 0) == 0)
+		sc->sc_sensor[ADMTM_EXT].value = 273150000 + 1000000 * sdata;
 
 	cmd = ADM1025_STATUS2;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
