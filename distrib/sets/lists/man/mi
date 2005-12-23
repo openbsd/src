@@ -1069,6 +1069,8 @@
 ./usr/share/man/cat4/acphy.0
 ./usr/share/man/cat4/adc.0
 ./usr/share/man/cat4/addcom.0
+./usr/share/man/cat4/admtemp.0
+./usr/share/man/cat4/admtm.0
 ./usr/share/man/cat4/admtmp.0
 ./usr/share/man/cat4/adt.0
 ./usr/share/man/cat4/adv.0
