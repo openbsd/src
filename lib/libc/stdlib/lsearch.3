@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lsearch.3,v 1.6 2005/07/26 04:20:23 jaredy Exp $
+.\"	$OpenBSD: lsearch.3,v 1.7 2005/12/23 21:34:16 millert Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,6 +37,7 @@
 .Nm lfind
 .Nd linear searching routines
 .Sh SYNOPSIS
+.Fd #include <search.h>
 .Ft char *
 .Fn lsearch "const void *key" "const void *base" "size_t *nelp" \
     "size_t width" "int (*compar)(void *, void *)"
