@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.981 2005/12/17 21:25:55 brad Exp 
+ *	OpenBSD: pcidevs,v 1.982 2005/12/23 01:50:34 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -563,6 +563,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "M1689 PCI",
 	},
 	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1695,
+	    "M1695 PCI",
+	},
+	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M3309,
 	    "M3309 MPEG",
 	},
@@ -601,6 +605,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5249,
 	    "M5249 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M524B,
+	    "M524B PCIE",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M524C,
+	    "M524C PCIE",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M524D,
+	    "M524D PCIE",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5263,
@@ -3779,7 +3795,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "80312 I/O Companion",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOXAPIC,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOXAPIC_A,
+	    "IOxAPIC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOXAPIC_B,
 	    "IOxAPIC",
 	},
 	{
@@ -5523,6 +5543,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "IT8330G",
 	},
 	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB360,
+	    "JMB360 SATA II",
+	},
+	{
 	    PCI_VENDOR_KTI, PCI_PRODUCT_KTI_KTIE,
 	    "KTI",
 	},
@@ -6181,6 +6205,30 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83820,
 	    "DP83820 10/100/1000",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_HB,
+	    "CS5535 Host",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_ISA,
+	    "CS5535 ISA",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_IDE,
+	    "CS5535 IDE",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_AUDIO,
+	    "CS5535 AUDIO",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_USB,
+	    "CS5535 USB",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_VIDEO,
+	    "CS5535 VIDEO",
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SATURN,
@@ -11177,6 +11225,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_XGI,
 	    "XGI Technology",
+	},
+	{
+	    PCI_VENDOR_JMICRON,
+	    "JMicron",
 	},
 	{
 	    PCI_VENDOR_SYMPHONY2,
