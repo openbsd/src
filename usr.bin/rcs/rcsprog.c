@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.56 2005/12/24 03:48:09 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.57 2005/12/24 16:37:46 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -284,7 +284,7 @@ rcs_statfile(char *fname, char *out, size_t len)
 		} else {
 			len1 = strlcpy(fpath, filev, sizeof(fpath));
 			if (len1 >= sizeof(fpath))
-				fatal("path truncation in rcs_statfile");
+				fatal("rcs_statfile: path truncation");
 		}
 
 		if ((stat(fpath, &st) != -1) || (rcsflags & RCS_CREATE)) {
@@ -308,7 +308,7 @@ rcs_statfile(char *fname, char *out, size_t len)
 
 	len1 = strlcpy(out, fpath, len);
 	if (len1 >= len)
-		fatal("path truncation in rcs_statfile");
+		fatal("rcs_statfile: path truncation");
 
 	return (0);
 }
