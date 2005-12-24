@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.24 2005/12/22 14:31:44 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.25 2005/12/24 19:07:52 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -161,7 +161,7 @@ cvs_release_dir(CVSFILE *cf, void *arg)
 			return (0);
 
 		/* chdir before running the `cvs update' command */
-		cvs_chdir(dpath);
+		cvs_chdir(dpath, 0);
 
 		/* test if dir has CVS/ directory */
 		if (stat(CVS_PATH_CVSDIR, &st) == -1) {
@@ -199,7 +199,7 @@ cvs_release_dir(CVSFILE *cf, void *arg)
 		cvs_log(LP_ERR, "unable to release `%s'", dpath);
 
 		/* change back to original working dir */
-		cvs_chdir(wdir);
+		cvs_chdir(wdir, 0);
 	}
 
 	printf("You have [%d] altered file%s in this repository.\n",
@@ -218,13 +218,13 @@ cvs_release_dir(CVSFILE *cf, void *arg)
 		    "** `%s' aborted by user choice.\n", cvs_command);
 
 		/* change back to original working dir */
-		cvs_chdir(wdir);
+		cvs_chdir(wdir, 0);
 
 		return (-1);
 	}
 
 	/* change back to original working dir */
-	cvs_chdir(wdir);
+	cvs_chdir(wdir, 0);
 
 	if (dflag == 1) {
 		if (cvs_rmdir(dpath) != 0)

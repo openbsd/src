@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.62 2005/12/24 04:10:51 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.63 2005/12/24 19:07:52 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -495,15 +495,19 @@ cvs_exec(int argc, char **argv, int fds[3])
 /*
  * cvs_chdir()
  *
- * Change to directory.
- * chdir() wrapper with an error message.
+ * Change to directory <path>.
+ * If <rm> is equal to `1', <path> is removed if chdir() fails so we
+ * do not have temporary directories leftovers.
  * Returns 0 on success.
  */
 int
-cvs_chdir(const char *path)
+cvs_chdir(const char *path, int rm)
 {
-	if (chdir(path) == -1)
+	if (chdir(path) == -1) {
+		if (rm == 1)
+			cvs_unlink(path);
 		fatal("cvs_chdir: `%s': %s", path, strerror(errno));
+	}
 
 	return (0);
 }
@@ -698,7 +702,7 @@ cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
 		}
 
 		/* All went ok, switch to the newly created directory. */
-		cvs_chdir(d);
+		cvs_chdir(d, 0);
 
 		d = strtok(NULL, "/");
 	}
