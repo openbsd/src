@@ -1,4 +1,4 @@
-.\"	$OpenBSD: admtemp.4,v 1.1 2005/12/23 04:13:52 deraadt Exp $
+.\"	$OpenBSD: admtemp.4,v 1.2 2005/12/24 22:14:15 deraadt Exp $
 .\"
 .\" Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -31,6 +31,10 @@ The device possesses internal and external temperature sensors.
 These values are made available through the
 .Xr sysctl 8
 interface.
+.Pp
+On i386 machines, this driver also supports the Xeon embedded
+i2c temperature probes.
+In this case, however, only one temperature value is provided.
 .Sh SEE ALSO
 .Xr iic 4 ,
 .Xr intro 4 ,
