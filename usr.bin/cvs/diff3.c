@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.9 2005/12/20 18:17:01 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.10 2005/12/24 04:10:51 joris Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -71,7 +71,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff3.c,v 1.9 2005/12/20 18:17:01 xsa Exp $";
+static const char rcsid[] = "$OpenBSD: diff3.c,v 1.10 2005/12/24 04:10:51 joris Exp $";
 #endif /* not lint */
 
 #include <sys/queue.h>
@@ -187,14 +187,9 @@ cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)
 	if ((b3 = rcs_getrev(rf, rev2)) == NULL)
 		goto out;
 
-	if ((d1 = cvs_buf_alloc((size_t)128, BUF_AUTOEXT)) == NULL)
-		goto out;
-
-	if ((d2 = cvs_buf_alloc((size_t)128, BUF_AUTOEXT)) == NULL)
-		goto out;
-
-	if ((diffb = cvs_buf_alloc((size_t)128, BUF_AUTOEXT)) == NULL)
-		goto out;
+	d1 = cvs_buf_alloc((size_t)128, BUF_AUTOEXT);
+	d2 = cvs_buf_alloc((size_t)128, BUF_AUTOEXT);
+	diffb = cvs_buf_alloc((size_t)128, BUF_AUTOEXT);
 
 	strlcpy(path1, "/tmp/diff1.XXXXXXXXXX", sizeof(path1));
 	cvs_buf_write_stmp(b1, path1, 0600);

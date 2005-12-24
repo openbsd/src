@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.115 2005/12/22 02:26:33 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.116 2005/12/24 04:10:51 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1245,9 +1245,8 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 		cvs_buf_empty(rbuf);
 		return (rbuf);
 	}
-	if ((rbuf = cvs_buf_alloc(len, BUF_AUTOEXT)) == NULL)
-		return (NULL);
 
+	rbuf = cvs_buf_alloc(len, BUF_AUTOEXT);
 	cvs_buf_append(rbuf, rdp->rd_text, len);
 
 	if (res != 0) {
@@ -1282,8 +1281,7 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 		expmode = RCS_KWEXP_DEFAULT;
 
 	if ((rbuf != NULL) && !(expmode & RCS_KWEXP_NONE)) {
-		if ((dbuf = cvs_buf_alloc(len, BUF_AUTOEXT)) == NULL)
-			return (rbuf);
+		dbuf = cvs_buf_alloc(len, BUF_AUTOEXT);
 		if ((rdp = rcs_findrev(rfp, rev)) == NULL)
 			return (rbuf);
 

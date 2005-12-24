@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.61 2005/12/22 14:31:44 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.62 2005/12/24 04:10:51 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -963,13 +963,8 @@ cvs_patchfile(const char *data, const char *patch,
 		return (NULL);
 	}
 
-	if ((res = cvs_buf_alloc(len, BUF_AUTOEXT)) == NULL) {
-		cvs_freelines(dlines);
-		cvs_freelines(plines);
-		return (NULL);
-	}
-
 	lineno = 0;
+	res = cvs_buf_alloc(len, BUF_AUTOEXT);
 	TAILQ_FOREACH(lp, &dlines->l_lines, l_list) {
 		if (lineno != 0)
 			cvs_buf_fappend(res, "%s\n", lp->l_line);

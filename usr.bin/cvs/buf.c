@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.24 2005/12/23 00:27:04 joris Exp $	*/
+/*	$OpenBSD: buf.c,v 1.25 2005/12/24 04:10:51 joris Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -112,9 +112,7 @@ cvs_buf_load(const char *path, u_int flags)
 	if (fstat(fd, &st) == -1)
 		fatal("cvs_buf_load: fstat: %s", strerror(errno));
 
-	if ((buf = cvs_buf_alloc((size_t)st.st_size, flags)) == NULL)
-		fatal("cvs_buf_load: cvs_buf_alloc failed");
-
+	buf = cvs_buf_alloc((size_t)st.st_size, flags);
 	for (bp = buf->cb_cur; ; bp += (size_t)ret) {
 		len = SIZE_LEFT(buf);
 		ret = read(fd, bp, len);
