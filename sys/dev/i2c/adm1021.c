@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.4 2005/12/24 22:08:17 deraadt Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.5 2005/12/24 23:09:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -44,6 +44,7 @@ struct admtemp_softc {
 	i2c_addr_t	sc_addr;
 
 	struct sensor	sc_sensor[ADMTEMP_NUM_SENSORS];
+	int		sc_xeon;
 };
 
 int	admtemp_match(struct device *, void *, void *);
@@ -88,6 +89,11 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
+	if (ia->ia_name && strcmp(ia->ia_name, "xeon") == 0) {
+		printf(": Xeon\n");
+		sc->sc_xeon = 1;
+	}
+
 //	iic_acquire_bus(sc->sc_tag, 0);
 //	cmd = ADM1021_CONFIG_READ;
 //	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
@@ -114,8 +120,8 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sensor[ADMTEMP_INT].type = SENSOR_TEMP;
 	strlcpy(sc->sc_sensor[ADMTEMP_INT].desc, "Internal",
 	    sizeof(sc->sc_sensor[ADMTEMP_INT].desc));
-	if (ia->ia_name && strcmp(ia->ia_name, "xeon") == 0)
-		sc->sc_sensor[ADMTEMP_INT].flags |= SENSOR_FINVALID;
+	if (sc->sc_xeon)
+		sc->sc_sensor[ADMTEMP_INT].flags |= SENSOR_FINVALID;	
 
 	sc->sc_sensor[ADMTEMP_EXT].type = SENSOR_TEMP;
 	strlcpy(sc->sc_sensor[ADMTEMP_EXT].desc, "External",
@@ -141,14 +147,19 @@ admtemp_refresh(void *arg)
 
 	iic_acquire_bus(sc->sc_tag, 0);
 
-	cmd = ADM1021_INT_TEMP;
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, I2C_F_POLL) == 0)
-		sc->sc_sensor[ADMTEMP_INT].value = 273150000 + 1000000 * sdata;
+	if (sc->sc_xeon == 0) {
+		cmd = ADM1021_INT_TEMP;
+		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+		    sc->sc_addr, &cmd, sizeof cmd, &sdata,
+		    sizeof sdata, I2C_F_POLL) == 0)
+			sc->sc_sensor[ADMTEMP_INT].value =
+			    273150000 + 1000000 * sdata;
+	}
 
 	cmd = ADM1021_EXT_TEMP;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, I2C_F_POLL) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &sdata,
+	    sizeof sdata, I2C_F_POLL) == 0)
 		sc->sc_sensor[ADMTEMP_EXT].value = 273150000 + 1000000 * sdata;
 
 	iic_release_bus(sc->sc_tag, 0);
