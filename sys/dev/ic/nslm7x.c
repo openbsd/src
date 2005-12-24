@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7x.c,v 1.8 2004/06/24 19:35:23 tholo Exp $	*/
+/*	$OpenBSD: nslm7x.c,v 1.9 2005/12/24 23:30:55 kettenis Exp $	*/
 /*	$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $ */
 
 /*-
@@ -43,7 +43,6 @@
 #include <sys/kernel.h>
 #include <sys/queue.h>
 #include <sys/sensors.h>
-#include <sys/timeout.h>
 #include <machine/bus.h>
 
 #include <dev/ic/nslm7xvar.h>
@@ -105,8 +104,6 @@ struct lm_chip lm_chips[] = {
 	{ def_match } /* Must be last */
 };
 
-struct timeout lm_timeout;
-
 int
 lm_generic_banksel(struct lm_softc *lmsc, int bank)
 {
@@ -160,6 +157,12 @@ lm_attach(struct lm_softc *lmsc)
 		if (lm_chips[i].chip_match(lmsc))
 			break;
 
+	if (sensor_task_register(lmsc, lm_refresh, 5)) {
+		printf("%s: unable to register update task\n",
+		    lmsc->sc_dev.dv_xname);
+		return;
+	}
+
 	/* Start the monitoring loop */
 	(*lmsc->lm_writereg)(lmsc, LMD_CONFIG, 0x01);
 
@@ -169,10 +172,6 @@ lm_attach(struct lm_softc *lmsc)
 		    sizeof(lmsc->sensors[i].device));
 		SENSOR_ADD(&lmsc->sensors[i]);
 	}
-
-	/* Refresh sensors data every 1.5 seconds */
-	timeout_set(&lm_timeout, lm_refresh, lmsc);
-	timeout_add(&lm_timeout, (15 * hz) / 10);
 }
 
 int
@@ -853,5 +852,4 @@ lm_refresh(void *arg)
 	struct lm_softc *sc = (struct lm_softc *)arg;
 
 	sc->refresh_sensor_data(sc);
-	timeout_add(&lm_timeout, (15 * hz) / 10);
 }
