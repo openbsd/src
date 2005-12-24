@@ -1,4 +1,4 @@
-/*	$OpenBSD: fatal.c,v 1.2 2005/12/13 17:46:10 xsa Exp $ */
+/*	$OpenBSD: fatal.c,v 1.3 2005/12/24 04:05:40 joris Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -35,8 +35,9 @@ void
 fatal(const char *fmt,...)
 {
 	va_list args;
+
 	va_start(args, fmt);
-	cvs_log(LP_ERR, fmt, args);
+	cvs_vlog(LP_ERR, fmt, args);
 	va_end(args);
 	exit(255);
 }
