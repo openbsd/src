@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.177 2005/12/23 08:01:43 jsg Exp $
+$OpenBSD: usbdevs,v 1.178 2005/12/24 12:45:54 robert Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1264,6 +1264,7 @@ product LOGITECH RK53		0xc501	Cordless mouse
 product LOGITECH RB6		0xc503	Cordless keyboard
 product LOGITECH CDO		0xc504	Cordless Desktop Optical
 product LOGITECH QUICKCAMPRO2	0xd001	QuickCam Pro
+product LOGITECH QUICKCAMZOOM	0x08b3	QuickCam Zoom
 
 /* Longshine products */
 product ABOCOM LCS8138TX	0x401a	LCS-8138TX
