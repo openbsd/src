@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_puc.c,v 1.10 2005/11/21 18:16:42 millert Exp $	*/
+/*	$OpenBSD: com_puc.c,v 1.11 2005/12/24 04:42:19 djm Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -109,7 +109,7 @@ com_puc_attach(parent, self, aux)
 	/* Grab a PCI interrupt. */
 	intrstr = pci_intr_string(pa->pc, pa->intrhandle);
 	sc->sc_ih = pci_intr_establish(pa->pc, pa->intrhandle,
-			IPL_HIGH, comintr, sc,
+			IPL_TTY, comintr, sc,
 			sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt");
