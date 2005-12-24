@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1025.c,v 1.11 2005/12/23 23:39:10 deraadt Exp $	*/
+/*	$OpenBSD: adm1025.c,v 1.12 2005/12/24 19:46:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -101,17 +101,16 @@ admtm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_addr = ia->ia_addr;
 
 	iic_acquire_bus(sc->sc_tag, 0);
-
 	cmd = ADM1025_CONFIG;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL)) {
 		iic_release_bus(sc->sc_tag, 0);
 		printf(": cannot get control register\n");
 		return;
 	}
-	data &= ~0x01;
+	data |= 0x01;
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL)) {
 		iic_release_bus(sc->sc_tag, 0);
 		printf(": cannot set control register\n");
 		return;
@@ -177,17 +176,17 @@ admtm_refresh(void *arg)
 
 	cmd = ADM1025_INT_TEMP;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, 0) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, I2C_F_POLL) == 0)
 		sc->sc_sensor[ADMTM_INT].value = 273150000 + 1000000 * sdata;
 
 	cmd = ADM1025_EXT_TEMP;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, 0) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, I2C_F_POLL) == 0)
 		sc->sc_sensor[ADMTM_EXT].value = 273150000 + 1000000 * sdata;
 
 	cmd = ADM1025_STATUS2;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0) {
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0) {
 		if (data & ADM1025_STATUS2_EXT)
 			sc->sc_sensor[ADMTM_EXT].flags |= SENSOR_FINVALID;
 		else
@@ -196,32 +195,32 @@ admtm_refresh(void *arg)
 
 	cmd = ADM1025_V25;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
 		sc->sc_sensor[ADMTM_V25].value = 2500000 * data / 192;
 
 	cmd = ADM1025_Vccp;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
 		sc->sc_sensor[ADMTM_Vcc].value = 2249000 * data / 192;
 
 	cmd = ADM1025_V33;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
 		sc->sc_sensor[ADMTM_V33].value = 3300000 * data / 192;
 
 	cmd = ADM1025_V5;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
 		sc->sc_sensor[ADMTM_V5].value = 5000000 * data / 192;
 
 	cmd = ADM1025_V12;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
 		sc->sc_sensor[ADMTM_V12].value = 12000000 * data / 192;
 
 	cmd = ADM1025_Vcc;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
 		sc->sc_sensor[ADMTM_Vcc].value = 3300000 * data / 192;
 
 	iic_release_bus(sc->sc_tag, 0);
