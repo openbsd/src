@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.12 2005/12/23 22:56:44 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.13 2005/12/24 19:33:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -81,6 +81,8 @@ static u_int8_t probe_val[256];
 static void	probeinit(struct i2cbus_attach_args *, u_int8_t);
 static u_int8_t	probenc(u_int8_t);
 static u_int8_t	probe(u_int8_t);
+static u_int16_t probew(u_int8_t);
+static int	lm75probe(void);
 
 static void
 probeinit(struct i2cbus_attach_args *iba, u_int8_t addr)
@@ -103,6 +105,19 @@ probenc(u_int8_t cmd)
 	return (data);
 }
 
+static u_int16_t
+probew(u_int8_t cmd)
+{
+	u_int16_t data2;
+
+	probe_ic->ic_acquire_bus(probe_ic->ic_cookie, I2C_F_POLL);
+	if (probe_ic->ic_exec(probe_ic->ic_cookie, I2C_OP_READ_WITH_STOP,
+	    probe_addr, &cmd, 1, &data2, 2, I2C_F_POLL) != 0)
+		data2 = 0xffff;
+	probe_ic->ic_release_bus(probe_ic->ic_cookie, I2C_F_POLL);
+	return (data2);
+}
+
 static u_int8_t
 probe(u_int8_t cmd)
 {
@@ -110,6 +125,50 @@ probe(u_int8_t cmd)
 		return probe_val[cmd];
 	probe_val[cmd] = probenc(cmd);
 	return (probe_val[cmd]);
+}
+
+/*
+ * 0x06 and 0x07 return whatever value was read before, and the
+ * chip loops every 8 registers.
+ */
+static int
+lm75probe(void)
+{
+	u_int16_t mains[6];
+	u_int8_t main;
+	int i;
+
+	main = probenc(0x01);
+	mains[0] = probew(0x02);
+	mains[1] = probew(0x03);
+
+	mains[2] = probew(0x04);	/* read Low Limit */
+	if (probew(0x07) != mains[2] || probew(0x07) != mains[2])
+		return (0);
+
+	mains[3] = probew(0x05);	/* read High limit */
+	mains[4] = probew(0x06);
+	mains[5] = probew(0x07);
+	if (mains[4] != mains[3] || mains[5] != mains[3])
+		return (0);
+
+	printf("lm75: %02x %04x %04x %04x %04x %04x %04x\n", main,
+	    mains[0], mains[1], mains[2], mains[3], mains[4], mains[5]);
+
+	/* a real lm75/77 repeats it's registers.... */
+	for (i = 0x08; i < 0xff; i += 8) {
+		if (main != probenc(0x01 + i) ||
+		    mains[0] != probew(0x02 + i) ||
+		    mains[1] != probew(0x03 + i) ||
+		    mains[2] != probew(0x04 + i) ||
+		    mains[3] != probew(0x05 + i) ||
+		    mains[4] != probew(0x06 + i) ||
+		    mains[5] != probew(0x07 + i))
+			return (0);
+	}
+
+	/* We hope */
+	return (1);
 }
 
 void
@@ -141,6 +200,8 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "adm1033";
 		else if (probe(0x3d) == 0x30)
 			name = "adm1030";
+		else if (probe(0x3d) == 0x31)
+			name = "adm1031";
 		else if ((probe(0x3f) & 0xf0) == 0x20)
 			name = "adm1025";
 		else if ((probe(0xff) & 0xf0) == 0x10)
@@ -187,8 +248,6 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		name = "lm87";
 	} else if (probe(0xfe) == 0x4d && probe(0xff) == 0x08) {
 		name = "maxim6690";	/* somewhat similar to lm90 */
-	} else if ((addr & 0xfc) == 0x48) {
-		/* address for lm75/77 ... */
 	} else if (probe(0x4f) == 0x5c && (probe(0x4e) & 0x80)) {
 		/*
 		 * We should toggle 0x4e bit 0x80, then re-read
@@ -196,12 +255,17 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		 */
 		if (probe(0x58) == 0x31)
 			name = "as99127f";
+	} else if ((addr & 0xfc) == 0x48 && lm75probe()) {
+		name = "lm75";
 	}
 
 	printf("%s: addr 0x%x", self->dv_xname, addr);
-	for (i = 0; i < sizeof(probereg); i++)
-		if (probe(probereg[i]) != 0xff)
-			printf(" %02x=%02x", probereg[i], probe(probereg[i]));
+//	for (i = 0; i < sizeof(probereg); i++)
+//		if (probe(probereg[i]) != 0xff)
+//			printf(" %02x=%02x", probereg[i], probe(probereg[i]));
+	for (i = 0; i < 0xff; i++)
+		if (probe(i) != 0xff)
+			printf(" %02x=%02x", i, probe(i));
 	if (name)
 		printf(": %s", name);
 	printf("\n");
