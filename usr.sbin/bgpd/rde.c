@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.183 2005/12/09 16:17:28 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.184 2005/12/24 13:52:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -200,7 +200,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	log_info("route decision engine ready");
 
 	while (rde_quit == 0) {
-		bzero(&pfd, sizeof(pfd));
+		bzero(pfd, sizeof(pfd));
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main->fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
 		if (ibuf_main->w.queued > 0)
