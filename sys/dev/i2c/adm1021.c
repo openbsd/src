@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.5 2005/12/24 23:09:19 deraadt Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.6 2005/12/24 23:10:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -90,7 +90,7 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_addr = ia->ia_addr;
 
 	if (ia->ia_name && strcmp(ia->ia_name, "xeon") == 0) {
-		printf(": Xeon\n");
+		printf(": Xeon");
 		sc->sc_xeon = 1;
 	}
 
