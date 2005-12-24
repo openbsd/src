@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.14 2005/12/24 22:08:17 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.15 2005/12/24 23:29:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -236,8 +236,8 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "adm1023";
 		else if ((probe(0xff) & 0xf0) == 0x90)
 			name = "adm1022";
-		else
-			name = "adm1021";	/* getting desperate.. */
+		else if ((probe(0xff) & 0xf0) == 0x00)
+			name = "adm1021";
 	} else if (probe(0x3e) == 0xa1) {
 		/* Philips vendor code 0xa1 at 0x3e */
 		if ((probe(0x3f) & 0xf0) == 0x20)
@@ -286,8 +286,8 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 #ifdef __i386__
 	} else if (xeonprobe(addr)) {
 		name = "xeon";
-	}
 #endif
+	}
 
 	printf("%s: addr 0x%x", self->dv_xname, addr);
 //	for (i = 0; i < sizeof(probereg); i++)
