@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.2 2005/12/23 01:15:06 deraadt Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.3 2005/12/24 19:41:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -27,6 +27,8 @@
 #define ADM1021_INT_TEMP	0x00
 #define ADM1021_EXT_TEMP	0x01
 #define ADM1021_STATUS		0x02
+#define ADM1021_CONFIG_READ	0x03
+#define ADM1021_CONFIG_WRITE	0x09
 
 #define ADM1021_COMPANY		0xfe	/* contains 0x41 */
 #define ADM1021_STEPPING	0xff	/* contains 0x3? */
@@ -79,10 +81,29 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct admtemp_softc *sc = (struct admtemp_softc *)self;
 	struct i2c_attach_args *ia = aux;
+//	u_int8_t cmd, data;
 	int i;
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
+
+//	iic_acquire_bus(sc->sc_tag, 0);
+//	cmd = ADM1021_CONFIG_READ;
+//	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+//	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+//		iic_release_bus(sc->sc_tag, 0);
+//		printf(": cannot get control register\n");
+//		return;
+//	}
+//	data &= ~0x40;
+//	cmd = ADM1021_CONFIG_WRITE;
+//	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+//	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+//		iic_release_bus(sc->sc_tag, 0);
+//		printf(": cannot set control register\n");
+//		return;
+//	}
+//	iic_release_bus(sc->sc_tag, 0);
 
 	/* Initialize sensor data. */
 	for (i = 0; i < ADMTEMP_NUM_SENSORS; i++)
@@ -112,19 +133,20 @@ void
 admtemp_refresh(void *arg)
 {
 	struct admtemp_softc *sc = arg;
-	u_int8_t cmd, data;
+	u_int8_t cmd;
+	int8_t sdata;
 
 	iic_acquire_bus(sc->sc_tag, 0);
 
 	cmd = ADM1021_INT_TEMP;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
-		sc->sc_sensor[ADMTEMP_INT].value = 273150000 + 1000000 * data;
+	    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, I2C_F_POLL) == 0)
+		sc->sc_sensor[ADMTEMP_INT].value = 273150000 + 1000000 * sdata;
 
 	cmd = ADM1021_EXT_TEMP;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
-		sc->sc_sensor[ADMTEMP_EXT].value = 273150000 + 1000000 * data;
+	    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, I2C_F_POLL) == 0)
+		sc->sc_sensor[ADMTEMP_EXT].value = 273150000 + 1000000 * sdata;
 
 	iic_release_bus(sc->sc_tag, 0);
 }
