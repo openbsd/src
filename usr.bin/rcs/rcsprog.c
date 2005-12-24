@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.55 2005/12/21 16:10:50 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.56 2005/12/24 03:48:09 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -43,11 +43,19 @@
 
 #define RCS_CMD_MAXARG	128
 #define RCS_DEFAULT_SUFFIX	",v/"
-#define RCSPROG_OPTSTRING	"A:a:b::c:e::hik:Lm:MqTUVx:z:"
+#define RCSPROG_OPTSTRING	"A:a:b::c:e::hik:Lm:Mn:N:qt::TUVx:z:"
+
+#define DESC_PROMPT	"enter description, terminated with single '.' "      \
+			"or end of file:\nNOTE: This is NOT the log message!" \
+			"\n>> "
 
 const char rcs_version[] = "OpenCVS RCS version 3.6";
 int verbose = 1;
 int pipeout = 0;
+
+#define RCS_NFLAG	1
+#define RCS_TFLAG	2
+static int rcsflags = 0;
 
 int	 rcs_optind;
 char	*rcs_optarg;
@@ -68,6 +76,9 @@ struct rcs_prog {
 	{ "rlog",	rlog_main,	rlog_usage	},
 	{ "ident",	ident_main,	ident_usage	},
 };
+
+static void rcs_set_description(RCSFILE *, const char *);
+static void rcs_attach_symbol(RCSFILE *, const char *);
 
 void
 rcs_set_rev(const char *str, RCSNUM **rev)
@@ -223,6 +234,7 @@ rcs_getopt(int argc, char **argv, const char *optstr)
 int
 rcs_statfile(char *fname, char *out, size_t len)
 {
+	size_t len1;
 	int l, found, strdir;
 	char defaultsuffix[] = RCS_DEFAULT_SUFFIX;
 	char filev[MAXPATHLEN], fpath[MAXPATHLEN];
@@ -270,10 +282,12 @@ rcs_statfile(char *fname, char *out, size_t len)
 			if (l == -1 || l >= (int)sizeof(fpath))
 				fatal("rcs_statfile: path truncation");
 		} else {
-			strlcpy(fpath, filev, sizeof(fpath));
+			len1 = strlcpy(fpath, filev, sizeof(fpath));
+			if (len1 >= sizeof(fpath))
+				fatal("path truncation in rcs_statfile");
 		}
 
-		if (stat(fpath, &st) != -1) {
+		if ((stat(fpath, &st) != -1) || (rcsflags & RCS_CREATE)) {
 			found++;
 			break;
 		}
@@ -292,7 +306,9 @@ rcs_statfile(char *fname, char *out, size_t len)
 		return (-1);
 	}
 
-	strlcpy(out, fpath, len);
+	len1 = strlcpy(out, fpath, len);
+	if (len1 >= len)
+		fatal("path truncation in rcs_statfile");
 
 	return (0);
 }
@@ -357,7 +373,7 @@ rcs_main(int argc, char **argv)
 {
 	int i, ch, flags, kflag, lkmode;
 	char fpath[MAXPATHLEN], ofpath[MAXPATHLEN];
-	char *logstr, *logmsg;
+	char *logstr, *logmsg, *nflag, *descfile;
 	char *alist, *comment, *elist, *unp, *sp;
 	mode_t fmode;
 	RCSFILE *file, *oldfile;
@@ -368,6 +384,7 @@ rcs_main(int argc, char **argv)
 	kflag = lkmode = -1;
 	fmode = 0;
 	flags = RCS_RDWR;
+	descfile = nflag = NULL;
 	logstr = alist = comment = elist = NULL;
 
 	while ((ch = rcs_getopt(argc, argv, RCSPROG_OPTSTRING)) != -1) {
@@ -375,7 +392,7 @@ rcs_main(int argc, char **argv)
 		case 'A':
 			if (rcs_statfile(rcs_optarg, ofpath, sizeof(ofpath)) < 0)
 				exit(1);
-			flags |= CO_ACLAPPEND;
+			rcsflags |= CO_ACLAPPEND;
 			break;
 		case 'a':
 			alist = rcs_optarg;
@@ -391,6 +408,7 @@ rcs_main(int argc, char **argv)
 			exit(0);
 		case 'i':
 			flags |= RCS_CREATE;
+			rcsflags |= RCS_CREATE;
 			break;
 		case 'k':
 			kflag = rcs_kflag_get(rcs_optarg);
@@ -412,11 +430,22 @@ rcs_main(int argc, char **argv)
 		case 'M':
 			/* ignore for the moment */
 			break;
+		case 'n':
+			nflag = xstrdup(rcs_optarg);
+			break;
+		case 'N':
+			nflag = xstrdup(rcs_optarg);
+			rcsflags |= RCS_NFLAG;
+			break;
 		case 'q':
 			verbose = 0;
 			break;
+		case 't':
+			descfile = rcs_optarg;
+			rcsflags |= RCS_TFLAG;
+			break;
 		case 'T':
-			flags |= PRESERVETIME;
+			rcsflags |= PRESERVETIME;
 			break;
 		case 'U':
 			if (lkmode == RCS_LOCK_STRICT)
@@ -459,8 +488,17 @@ rcs_main(int argc, char **argv)
 		if ((file = rcs_open(fpath, flags, fmode)) == NULL)
 			continue;
 
-		if (flags & PRESERVETIME)
+		if (rcsflags & RCS_CREATE)
+			rcs_set_description(file, NULL);
+
+		if (rcsflags & RCS_TFLAG)
+			rcs_set_description(file, descfile);
+
+		if (rcsflags & PRESERVETIME)
 			rcs_mtime = rcs_get_mtime(file->rf_path);
+
+		if (nflag != NULL)
+			rcs_attach_symbol(file, nflag);
 
 		if (logstr != NULL) {
 			if ((logmsg = strchr(logstr, ':')) == NULL) {
@@ -490,7 +528,7 @@ rcs_main(int argc, char **argv)
 		}
 
 		/* entries to add from <oldfile> */
-		if (flags & CO_ACLAPPEND) {
+		if (rcsflags & CO_ACLAPPEND) {
 			/* XXX */
 			if ((oldfile = rcs_open(ofpath, RCS_READ)) == NULL)
 				exit(1);
@@ -526,7 +564,7 @@ rcs_main(int argc, char **argv)
 
 		rcs_close(file);
 
-		if (flags & PRESERVETIME)
+		if (rcsflags & PRESERVETIME)
 			rcs_set_mtime(fpath, rcs_mtime);
 
 		if (verbose == 1)
@@ -536,5 +574,85 @@ rcs_main(int argc, char **argv)
 	if (logstr != NULL)
 		xfree(logstr);
 
+	if (nflag != NULL)
+		xfree(nflag);
+
 	return (0);
+}
+
+static void
+rcs_attach_symbol(RCSFILE *file, const char *symname)
+{
+	char *rnum;
+	RCSNUM *rev;
+	char rbuf[16];
+	int rm;
+
+	rm = 0;
+	rev = NULL;
+	if ((rnum = strrchr(symname, ':')) != NULL) {
+		if (rnum[1] == '\0')
+			rev = file->rf_head;
+		*(rnum++) = '\0';
+	} else {
+		rm = 1;
+	}
+
+	if (rev == NULL && rm != 1) {
+		if ((rev = rcsnum_parse(rnum)) == NULL)
+			fatal("bad revision %s", rnum);
+	}
+
+	if (rcsflags & RCS_NFLAG)
+		rm = 1;
+
+	if (rm == 1) {
+		if (rcs_sym_remove(file, symname) < 0) {
+			if ((rcs_errno == RCS_ERR_NOENT) &&
+			    !(rcsflags & RCS_NFLAG))
+				cvs_log(LP_WARN,
+				    "can't delete nonexisting symbol %s", symname);
+		} else {
+			if (rcsflags & RCS_NFLAG)
+				rm = 0;
+		}
+	}
+
+	if (rm == 0) {
+		if ((rcs_sym_add(file, symname, rev) < 0) &&
+		    (rcs_errno == RCS_ERR_DUPENT)) {
+			rcsnum_tostr(rcs_sym_getrev(file, symname),
+			    rbuf, sizeof(rbuf));
+			fatal("symbolic name %s already bound to %s",
+			    symname, rbuf);
+		}
+	}
+}
+
+static void
+rcs_set_description(RCSFILE *file, const char *in)
+{
+	BUF *bp;
+	char *content, buf[128];
+
+	content = NULL;
+	if (in != NULL) {
+		bp = cvs_buf_load(in, BUF_AUTOEXT);
+	} else {
+		bp = cvs_buf_alloc(64, BUF_AUTOEXT);
+
+		printf(DESC_PROMPT);
+		for (;;) {
+			fgets(buf, sizeof(buf), stdin);
+			if (feof(stdin) || ferror(stdin) || buf[0] == '.')
+				break;
+			cvs_buf_append(bp, buf, strlen(buf));
+			printf(">> ");
+		}
+	}
+
+	cvs_buf_putc(bp, '\0');
+	content = cvs_buf_release(bp);
+
+	rcs_desc_set(file, content);
 }
