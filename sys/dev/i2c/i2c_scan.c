@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.13 2005/12/24 19:33:40 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.14 2005/12/24 22:08:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -62,6 +62,8 @@ void	iic_probe(struct device *, struct i2cbus_attach_args *, u_int8_t);
 struct {
 	u_int8_t start, end;
 } probe_addrs[] = {
+	{ 0x18, 0x18 },
+	{ 0x1a, 0x1a },
 	{ 0x20, 0x2f },
 	{ 0x48, 0x4f }
 };
@@ -171,6 +173,30 @@ lm75probe(void)
 	return (1);
 }
 
+#ifdef __i386__
+static int	xeonprobe(u_int8_t);
+
+static int
+xeonprobe(u_int8_t addr)
+{
+	if (addr == 0x18 || addr == 0x1a || addr == 0x29 ||
+	    addr == 0x2b || addr == 0x4c || addr == 0x4e) {
+		int reg;
+
+		for (reg = 0x00; reg < 0x09; reg++)
+			if (probe(reg) == 0xff)
+				return (0);
+		for (reg = 0x09; reg < 0xff; reg++)
+			if (probe(reg) != 0xff)
+				return (0);
+		return (1);
+	}
+	return (0);
+}	
+#endif
+
+
+
 void
 iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 {
@@ -257,7 +283,11 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "as99127f";
 	} else if ((addr & 0xfc) == 0x48 && lm75probe()) {
 		name = "lm75";
+#ifdef __i386__
+	} else if (xeonprobe(addr)) {
+		name = "xeon";
 	}
+#endif
 
 	printf("%s: addr 0x%x", self->dv_xname, addr);
 //	for (i = 0; i < sizeof(probereg); i++)

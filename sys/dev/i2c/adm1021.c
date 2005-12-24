@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.3 2005/12/24 19:41:45 deraadt Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.4 2005/12/24 22:08:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -63,7 +63,8 @@ admtemp_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (strcmp(ia->ia_name, "adm1021") == 0) {
+	if (strcmp(ia->ia_name, "adm1021") == 0 ||
+	    strcmp(ia->ia_name, "xeon") == 0) {
 		/*
 		 * should also ensure that
 		 * config & 0x80 == 0x00
@@ -113,6 +114,8 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sensor[ADMTEMP_INT].type = SENSOR_TEMP;
 	strlcpy(sc->sc_sensor[ADMTEMP_INT].desc, "Internal",
 	    sizeof(sc->sc_sensor[ADMTEMP_INT].desc));
+	if (ia->ia_name && strcmp(ia->ia_name, "xeon") == 0)
+		sc->sc_sensor[ADMTEMP_INT].flags |= SENSOR_FINVALID;
 
 	sc->sc_sensor[ADMTEMP_EXT].type = SENSOR_TEMP;
 	strlcpy(sc->sc_sensor[ADMTEMP_EXT].desc, "External",
