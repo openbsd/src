@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.193 2005/12/24 21:21:56 grange Exp $
+#	$OpenBSD: files.pci,v 1.194 2005/12/24 23:36:36 kettenis Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -573,3 +573,8 @@ file	dev/pci/bt8370.c		art
 device	ichiic: i2cbus
 attach	ichiic at pci
 file	dev/pci/ichiic.c		ichiic
+
+# Acer Labs M7101 power management controller
+device	alipm: i2cbus
+attach	alipm at pci
+file	dev/pci/alipm.c			alipm
