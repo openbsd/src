@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.36 2005/09/15 21:09:30 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.37 2005/12/25 00:22:47 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -1449,11 +1449,16 @@ child_return(arg)
 	void *arg;
 {
 	struct proc *p = (struct proc *)arg;
+	struct trapframe64 *tf = p->p_md.md_tf;
 
 	/*
 	 * Return values in the frame set by cpu_fork().
 	 */
-	userret(p, p->p_md.md_tf->tf_pc, 0);
+	tf->tf_out[0] = 0;
+	tf->tf_out[1] = 0;
+	tf->tf_tstate &= ~(((int64_t)(ICC_C|XCC_C))<<TSTATE_CCR_SHIFT);
+
+	userret(p, tf->tf_pc, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p,
