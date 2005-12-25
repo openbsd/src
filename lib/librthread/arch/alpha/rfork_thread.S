@@ -1,50 +1,57 @@
-/*	$OpenBSD: rfork_thread.S,v 1.1 2005/12/25 00:13:09 tedu Exp $ */
+/*	$OpenBSD: rfork_thread.S,v 1.2 2005/12/25 00:21:59 miod Exp $	*/
+
 /*
- * Copyright (c) 2005 KUDO Takashi <takashi@crazyhack.net>
+ * Copyright (c) 2005, Miodrag Vallat
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
-#include "../../../libc/arch/alpha/SYS.h"
+#include  "../../../libc/arch/alpha/SYS.h"
 
 /*
- *                        a0           a1            a2                  a3
  * int rfork_thread(int flags, void *stack, void (*func)(void *), void *arg);
  */
-	.globl	rfork_thread
-	.ent	rfork_thread
-rfork_thread:
-	LDGP(pv)
-	lda	sp, -16(sp)
-	stq	ra, 0(sp)
-	.frame	sp, 16, ra
-	.prologue 1
-
+LEAF(rfork_thread,0)
+	/* a0 = flags, a1 = stack, a2 = func, a3 = arg */
+	mov	a3, a5
 	CALLSYS_ERROR(rfork)
-	beq 	v0, 1f
 
-	/* parent process */
-	ldq	ra, 0(sp)
-	lda	sp, 16(sp)
+	beq	v0, 1f
+
+	/*
+	 * In parent process: just return.
+	 */
 	RET
 
 1:
-	/* child process */
-	mov	a1, sp		/* setup stack */
-	mov	a3, a0		
-	jsr	ra, (a2), 0	/* funcall func(arg) */
-	LDGP(ra)
+	/*
+	 * In child process: switch stack, invoke function, then exit.
+	 */
+	mov	a1, sp		/* stack */
+	mov	a5, a0		/* arg */
+	mov	a2, pv		/* func */
+	jsr	ra, (pv)
 
-	CALLSYS_ERROR(threxit)
-	.end	rfork_thread
+	mov	zero, a0
+	CALLSYS_NOERROR(threxit)
+	
+END(rfork_thread)
