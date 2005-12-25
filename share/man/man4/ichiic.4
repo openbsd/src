@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ichiic.4,v 1.3 2005/12/25 09:01:05 grange Exp $
+.\"	$OpenBSD: ichiic.4,v 1.4 2005/12/25 18:19:26 grange Exp $
 .\"
 .\" Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm ichiic
-.Nd Intel ICH SMBus controller
+.Nd Intel ICH SMBus controllers
 .Sh SYNOPSIS
 .Cd "ichiic* at pci?"
 .Cd "iic* at ichiic?"
@@ -30,6 +30,13 @@ driver provides support for the Intel ICH SMBus controllers to be
 used with the
 .Xr iic 4
 framework.
+.Pp
+Supported chipsets:
+.Bl -bullet -compact -offset indent
+.It
+Intel ICH, ICH2, ICH3, ICH4, ICH4-M, ICH5, ICH5R, ICH6, ICH6-M, ICH6R, ICH7,
+6300ESB
+.El
 .Sh SEE ALSO
 .Xr iic 4 ,
 .Xr intro 4 ,
