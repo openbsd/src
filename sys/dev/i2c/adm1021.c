@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.6 2005/12/24 23:10:55 deraadt Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.7 2005/12/25 03:38:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -34,8 +34,8 @@
 #define ADM1021_STEPPING	0xff	/* contains 0x3? */
 
 /* Sensors */
-#define ADMTEMP_INT		0
-#define ADMTEMP_EXT		1
+#define ADMTEMP_EXT		0
+#define ADMTEMP_INT		1
 #define ADMTEMP_NUM_SENSORS	2
 
 struct admtemp_softc {
@@ -117,22 +117,21 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
 		    sizeof(sc->sc_sensor[i].device));
 
+	sc->sc_sensor[ADMTEMP_EXT].type = SENSOR_TEMP;
+	strlcpy(sc->sc_sensor[ADMTEMP_EXT].desc,
+	    sc->sc_xeon ? "Xeon" : "External",
+	    sizeof(sc->sc_sensor[ADMTEMP_EXT].desc));
+
 	sc->sc_sensor[ADMTEMP_INT].type = SENSOR_TEMP;
 	strlcpy(sc->sc_sensor[ADMTEMP_INT].desc, "Internal",
 	    sizeof(sc->sc_sensor[ADMTEMP_INT].desc));
-	if (sc->sc_xeon)
-		sc->sc_sensor[ADMTEMP_INT].flags |= SENSOR_FINVALID;	
-
-	sc->sc_sensor[ADMTEMP_EXT].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMTEMP_EXT].desc, "External",
-	    sizeof(sc->sc_sensor[ADMTEMP_EXT].desc));
 
 	if (sensor_task_register(sc, admtemp_refresh, 5)) {
 		printf(", unable to register update task\n");
 		return;
 	}
 
-	for (i = 0; i < ADMTEMP_NUM_SENSORS; i++)
+	for (i = 0; i < (sc->sc_xeon ? 1 : ADMTEMP_NUM_SENSORS); i++)
 		SENSOR_ADD(&sc->sc_sensor[i]);
 
 	printf("\n");
@@ -147,20 +146,19 @@ admtemp_refresh(void *arg)
 
 	iic_acquire_bus(sc->sc_tag, 0);
 
+	cmd = ADM1021_EXT_TEMP;
+	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
+	    &cmd, sizeof cmd, &sdata, sizeof sdata, I2C_F_POLL) == 0)
+		sc->sc_sensor[ADMTEMP_EXT].value =
+		    273150000 + 1000000 * sdata;
+
 	if (sc->sc_xeon == 0) {
 		cmd = ADM1021_INT_TEMP;
-		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-		    sc->sc_addr, &cmd, sizeof cmd, &sdata,
-		    sizeof sdata, I2C_F_POLL) == 0)
+		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
+		    &cmd, sizeof cmd, &sdata,  sizeof sdata, I2C_F_POLL) == 0)
 			sc->sc_sensor[ADMTEMP_INT].value =
 			    273150000 + 1000000 * sdata;
 	}
-
-	cmd = ADM1021_EXT_TEMP;
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &sdata,
-	    sizeof sdata, I2C_F_POLL) == 0)
-		sc->sc_sensor[ADMTEMP_EXT].value = 273150000 + 1000000 * sdata;
 
 	iic_release_bus(sc->sc_tag, 0);
 }
