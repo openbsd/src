@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.982 2005/12/23 01:50:34 brad Exp 
+ *	OpenBSD: pcidevs,v 1.983 2005/12/25 09:44:54 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5335,7 +5335,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82371AB USB",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_PMC,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_PM,
 	    "82371AB Power",
 	},
 	{
