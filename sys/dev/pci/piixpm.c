@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.5 2005/12/25 15:04:48 grange Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.6 2005/12/25 15:46:14 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 /*
- * Intel PIIX and compatible power management and SMBus controller driver.
+ * Intel PIIX and compatible SMBus controller driver.
  */
 
 #include <sys/param.h>
@@ -52,6 +52,7 @@ struct piixpm_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	void *			sc_ih;
+	int			sc_poll;
 
 	struct i2c_controller	sc_i2c_tag;
 	struct lock		sc_i2c_lock;
@@ -124,8 +125,11 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_HOSTC);
 	DPRINTF((": conf 0x%x", conf));
 
-	/* Install interrupt handler if IRQ enabled */
-	if ((conf & PIIX_SMB_HOSTC_IRQ) == PIIX_SMB_HOSTC_IRQ) {
+	if ((conf & PIIX_SMB_HOSTC_SMI) == PIIX_SMB_HOSTC_SMI) {
+		printf(": SMI");
+		sc->sc_poll = 1;
+	} else if ((conf & PIIX_SMB_HOSTC_IRQ) == PIIX_SMB_HOSTC_IRQ) {
+		/* Install interrupt handler */
 		if (pci_intr_map(pa, &ih)) {
 			printf(": can't map interrupt\n");
 			goto fail;
@@ -141,6 +145,8 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 			goto fail;
 		}
 		printf(": %s", intrstr);
+	} else {
+		sc->sc_poll = 1;
 	}
 
 	/* Enable controller */
@@ -171,7 +177,7 @@ piixpm_i2c_acquire_bus(void *cookie, int flags)
 {
 	struct piixpm_softc *sc = cookie;
 
-	if (flags & I2C_F_POLL)
+	if (sc->sc_poll || flags & I2C_F_POLL)
 		return (0);
 
 	return (lockmgr(&sc->sc_i2c_lock, LK_EXCLUSIVE, NULL));
@@ -182,7 +188,7 @@ piixpm_i2c_release_bus(void *cookie, int flags)
 {
 	struct piixpm_softc *sc = cookie;
 
-	if (flags & I2C_F_POLL)
+	if (sc->sc_poll || flags & I2C_F_POLL)
 		return;
 
 	lockmgr(&sc->sc_i2c_lock, LK_RELEASE, NULL);
@@ -201,6 +207,9 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	    "flags 0x%x, status 0x%b\n", sc->sc_dev.dv_xname, op, addr,
 	    cmdlen, len, flags, bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 	    PIIX_SMB_HS), PIIX_SMB_HS_BITS));
+
+	if (sc->sc_poll)
+		flags |= I2C_F_POLL;
 
 	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2)
 		return (1);

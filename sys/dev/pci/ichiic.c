@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichiic.c,v 1.3 2005/12/25 14:54:45 grange Exp $	*/
+/*	$OpenBSD: ichiic.c,v 1.4 2005/12/25 15:46:14 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -52,6 +52,7 @@ struct ichiic_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	void *			sc_ih;
+	int			sc_poll;
 
 	struct i2c_controller	sc_i2c_tag;
 	struct lock		sc_i2c_lock;
@@ -109,6 +110,7 @@ ichiic_attach(struct device *parent, struct device *self, void *aux)
 	struct ichiic_softc *sc = (struct ichiic_softc *)self;
 	struct pci_attach_args *pa = aux;
 	struct i2cbus_attach_args iba;
+	pcireg_t conf;
 	bus_size_t iosize;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
@@ -120,26 +122,35 @@ ichiic_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* Install interrupt handler */
-	if (pci_intr_map(pa, &ih)) {
-		printf(": can't map interrupt\n");
-		goto fail;
+	/* Read configuration */
+	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_SMB_HOSTC);
+	DPRINTF((": conf 0x%x", conf));
+
+	if (conf & ICH_SMB_HOSTC_SMIEN) {
+		printf(": SMI");
+		sc->sc_poll = 1;
+	} else {
+		/* Install interrupt handler */
+		if (pci_intr_map(pa, &ih)) {
+			printf(": can't map interrupt\n");
+			goto fail;
+		}
+		intrstr = pci_intr_string(pa->pa_pc, ih);
+		sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
+		    ichiic_intr, sc, sc->sc_dev.dv_xname);
+		if (sc->sc_ih == NULL) {
+			printf(": can't establish interrupt");
+			if (intrstr != NULL)
+				printf(" at %s", intrstr);
+			printf("\n");
+			goto fail;
+		}
+		printf(": %s", intrstr);
 	}
-	intrstr = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ichiic_intr,
-	    sc, sc->sc_dev.dv_xname);
-	if (sc->sc_ih == NULL) {
-		printf(": can't establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		goto fail;
-	}
-	printf(": %s", intrstr);
 
 	/* Enable controller */
 	pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_SMB_HOSTC,
-	    ICH_SMB_HOSTC_HSTEN);
+	    conf | ICH_SMB_HOSTC_HSTEN);
 
 	printf("\n");
 
@@ -165,7 +176,7 @@ ichiic_i2c_acquire_bus(void *cookie, int flags)
 {
 	struct ichiic_softc *sc = cookie;
 
-	if (flags & I2C_F_POLL)
+	if (sc->sc_poll || flags & I2C_F_POLL)
 		return (0);
 
 	return (lockmgr(&sc->sc_i2c_lock, LK_EXCLUSIVE, NULL));
@@ -176,7 +187,7 @@ ichiic_i2c_release_bus(void *cookie, int flags)
 {
 	struct ichiic_softc *sc = cookie;
 
-	if (flags & I2C_F_POLL)
+	if (sc->sc_poll || flags & I2C_F_POLL)
 		return;
 
 	lockmgr(&sc->sc_i2c_lock, LK_RELEASE, NULL);
@@ -192,8 +203,12 @@ ichiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	int retries;
 
 	DPRINTF(("%s: exec op %d, addr 0x%x, cmdlen %d, len %d, "
-	    "flags 0x%x\n", sc->sc_dev.dv_xname, op, addr, cmdlen,
-	    len, flags));
+	    "flags 0x%x, status 0x%b\n", sc->sc_dev.dv_xname, op, addr,
+	    cmdlen, len, flags, bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+	    ICH_SMB_HS), ICH_SMB_HS_BITS));
+
+	if (sc->sc_poll)
+		flags |= I2C_F_POLL;
 
 	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2)
 		return (1);
@@ -252,7 +267,8 @@ ichiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 			DELAY(ICHIIC_DELAY);
 		}
 		if (st & ICH_SMB_HS_BUSY) {
-			printf("%s: timeout\n", sc->sc_dev.dv_xname);
+			printf("%s: timeout, status 0x%b\n",
+			    sc->sc_dev.dv_xname, st, ICH_SMB_HS_BITS);
 			return (1);
 		}
 		ichiic_intr(sc);
