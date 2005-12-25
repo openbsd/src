@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.1 2005/12/04 04:09:33 brad Exp $	*/
+/*	$OpenBSD: rfork_thread.S,v 1.2 2005/12/25 00:46:08 tedu Exp $	*/
 
 /*
  * Copyright (c) 2005 Tim Wiess <tim@nop.cx>
@@ -45,7 +45,7 @@ ENTRY(rfork_thread)
 	blrl
 	
 	/* child returned, call _exit */
-	li	%r0, SYS_exit
+	li	%r0, SYS_threxit
 	sc
 1:
 	li	%r3, -1
