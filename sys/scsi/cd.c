@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.100 2005/12/23 16:18:19 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.101 2005/12/25 20:01:11 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -87,17 +87,6 @@
 #define CD_BLOCK_OFFSET	150
 #define CD_FRAMES	75
 #define CD_SECS		60
-
-#define TOC_HEADER_LEN			0
-#define TOC_HEADER_STARTING_TRACK	2
-#define TOC_HEADER_ENDING_TRACK		3
-#define TOC_HEADER_SZ			4
-
-#define TOC_ENTRY_CONTROL_ADDR_TYPE	1
-#define TOC_ENTRY_TRACK			2
-#define TOC_ENTRY_MSF_LBA		4
-#define TOC_ENTRY_SZ			8
-
 
 struct cd_toc {
 	struct ioc_toc_header header;
@@ -1178,13 +1167,16 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	struct cpu_disklabel *clp;
 	int spoofonly;
 {
+	struct cd_toc *toc;
 	u_int32_t lba, nlba;
-	u_int8_t hdr[TOC_HEADER_SZ], *ent, *toc = NULL;
 	char *errstring;
-	int tocidx, n, len, is_data, data_track = 0;
+	int tocidx, n, data_track = 0;
 
 	bzero(lp, sizeof(struct disklabel));
 	bzero(clp, sizeof(struct cpu_disklabel));
+
+	MALLOC(toc, struct cd_toc *, sizeof(struct cd_toc), M_TEMP, M_WAITOK);
+	bzero(toc, sizeof(*toc));
 
 	lp->d_secsize = cd->params.blksize;
 	lp->d_ntracks = 1;
@@ -1220,44 +1212,32 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 	lp->d_npartitions = RAW_PART + 1;
 
-	if (spoofonly)
-		goto done;
-
 	/*
-	 * Read the TOC and loop through the individual tracks and lay them
-	 * out in our disklabel.  If there is a data track, call the generic
-	 * disklabel read routine.  XXX should we move all data tracks up front
-	 * before any other tracks?
+	 * Read the TOC and loop through the individual tracks laying them
+	 * out in our disklabel.
+	 *
+	 * XXX should we move all data tracks up front before any other tracks?
 	 */
-	if (cd_read_toc(cd, 0, 0, hdr, TOC_HEADER_SZ, 0))
+	if (cd_load_toc(cd, toc, CD_LBA_FORMAT)) {
+		n = 0; /* No valid TOC found. */
 		goto done;
+	}
 
-	n = hdr[TOC_HEADER_ENDING_TRACK] - hdr[TOC_HEADER_STARTING_TRACK] + 1;
-
-	if (n <= 0)
-		goto done;
-
-	/* n + 1 because of leadout track */
-	len = TOC_HEADER_SZ + (n + 1) * TOC_ENTRY_SZ;
-	toc = malloc(len, M_TEMP, M_WAITOK);
-	if (cd_read_toc (cd, CD_LBA_FORMAT, 0, toc, len, 0))
-		goto done;
+	/* +2 to account for leading out track. */
+	n = toc->header.ending_track - toc->header.starting_track + 2;
 
 	/* Create the partition table.  */
 	/* Probably should sanity-check the drive's values */
-	ent = toc + TOC_HEADER_SZ;
-	lba = _4btol(&ent[TOC_ENTRY_MSF_LBA]);
+	lba = betoh32(toc->entries[0].addr.lba);
 	if (cd->sc_link->quirks & ADEV_LITTLETOC)
 		lba = swap32(lba);
 
-	for (tocidx = 1; tocidx <= n && data_track < MAXPARTITIONS; tocidx++) {
-		is_data = ent[TOC_ENTRY_CONTROL_ADDR_TYPE] & 4;
-		ent += TOC_ENTRY_SZ;
-		nlba = _4btol(&ent[TOC_ENTRY_MSF_LBA]);
+	for (tocidx = 1; tocidx < n && data_track < MAXPARTITIONS; tocidx++) {
+		nlba = betoh32(toc->entries[tocidx].addr.lba);
 		if (cd->sc_link->quirks & ADEV_LITTLETOC)
 			nlba = swap32(nlba);
 
-		if (is_data) { 
+		if (toc->entries[tocidx - 1].control & 4) { 
 			lp->d_partitions[data_track].p_fstype = FS_UNUSED;
 			lp->d_partitions[data_track].p_offset = lba;
 			lp->d_partitions[data_track].p_size = nlba - lba;
@@ -1272,16 +1252,18 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	lp->d_npartitions = max((RAW_PART + 1), data_track);
 
 done:
-	if (toc)
-		free(toc, M_TEMP);
+	free(toc, M_TEMP);
 
-	/* If we have a data track, look for a real disklabel. */
-	if (data_track == 0)
-		spoofonly = 1;
-	errstring = readdisklabel(CDLABELDEV(dev), cdstrategy, lp, clp,
-	    spoofonly);
-	/*if (errstring)
-		printf("%s: %s\n", cd->sc_dev.dv_xname, errstring);*/
+	/*
+	 * If there was no valid TOC found or the TOC says we have a data track
+	 * then look for a real disklabel.
+	 */
+	if (n == 0 || data_track > 0) {
+		errstring = readdisklabel(CDLABELDEV(dev), cdstrategy, lp, clp,
+		    spoofonly);
+		/*if (errstring)
+			printf("%s: %s\n", cd->sc_dev.dv_xname, errstring);*/
+	}
 }
 
 /*
