@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1024.c,v 1.1 2005/12/25 12:19:48 deraadt Exp $	*/
+/*	$OpenBSD: adm1024.c,v 1.2 2005/12/25 13:06:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -34,7 +34,7 @@
 #define ADM1024_EXT_TEMP	0x26
 #define ADM1024_INT_TEMP	0x27
 #define ADM1024_FAN1		0x28
-#define ADM1024_FAN2		0x28
+#define ADM1024_FAN2		0x29
 #define ADM1024_STATUS2		0x42
 #define  ADM1024_STATUS2_EXT	0x40
 #define ADM1024_COMPANY		0x3e	/* contains 0x41 */
