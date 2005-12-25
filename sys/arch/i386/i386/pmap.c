@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.86 2005/12/10 11:45:41 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.87 2005/12/25 21:39:06 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -3182,7 +3182,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		ptp = pmap_get_ptp(pmap, pdei(va), FALSE);
 		if (ptp == NULL) {
 			if (flags & PMAP_CANFAIL) {
-				error = KERN_RESOURCE_SHORTAGE;
+				error = ENOMEM;
 				goto out;
 			}
 			panic("pmap_enter: get ptp failed");
@@ -3283,7 +3283,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 			pve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
 			if (pve == NULL) {
 				if (flags & PMAP_CANFAIL) {
-					error = KERN_RESOURCE_SHORTAGE;
+					error = ENOMEM;
 					goto out;
 				}
 				panic("pmap_enter: no pv entries available");

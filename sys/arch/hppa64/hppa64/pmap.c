@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.2 2005/10/26 18:35:45 martin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.3 2005/12/25 21:39:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -710,7 +710,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	    !(pde = pmap_pde_alloc(pmap, va, &ptp))) {
 		if (flags & PMAP_CANFAIL) {
 			simple_unlock(&pmap->pm_lock);
-			return (KERN_RESOURCE_SHORTAGE);
+			return (ENOMEM);
 		}
 
 		panic("pmap_enter: cannot allocate pde");
@@ -759,7 +759,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 			if (flags & PMAP_CANFAIL) {
 				simple_unlock(&pg->mdpage.pvh_lock);
 				simple_unlock(&pmap->pm_lock);
-				return (KERN_RESOURCE_SHORTAGE);
+				return (ENOMEM);
 			}
 			panic("pmap_enter: no pv entries available");
 		}
