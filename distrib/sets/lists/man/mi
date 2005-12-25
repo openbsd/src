@@ -1072,6 +1072,7 @@
 ./usr/share/man/cat4/admtemp.0
 ./usr/share/man/cat4/admtm.0
 ./usr/share/man/cat4/admtmp.0
+./usr/share/man/cat4/admtt.0
 ./usr/share/man/cat4/adt.0
 ./usr/share/man/cat4/adv.0
 ./usr/share/man/cat4/advansys.0
@@ -1081,6 +1082,7 @@
 ./usr/share/man/cat4/ahc.0
 ./usr/share/man/cat4/ahd.0
 ./usr/share/man/cat4/aic.0
+./usr/share/man/cat4/alipm.0
 ./usr/share/man/cat4/alpha
 ./usr/share/man/cat4/alpha/apecs.0
 ./usr/share/man/cat4/alpha/asc.0
