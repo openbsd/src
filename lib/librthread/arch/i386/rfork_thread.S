@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.1 2005/12/03 18:16:19 tedu Exp $ */
+/*	$OpenBSD: rfork_thread.S,v 1.2 2005/12/25 00:45:29 tedu Exp $ */
 /*-
  * Copyright (c) 2000 Peter Wemm <peter@FreeBSD.org>
  * All rights reserved.
@@ -71,9 +71,7 @@ ENTRY(rfork_thread)
 	pushl	$0
 	movl	$SYS_rfork, %eax
 	int	$0x80
-#if 0
 	jb 	2f
-#endif
 
 	/*
 	 * Check to see if we are in the parent or child
@@ -103,11 +101,7 @@ ENTRY(rfork_thread)
 	 */
 	pushl	%eax
 	pushl	$0
-#ifdef SYS_exit
-	movl	$SYS_exit, %eax
-#else
-	movl	$SYS_sys_exit, %eax
-#endif
+	movl	$SYS_threxit, %eax
 	int	$0x80
 
 	/*
@@ -118,9 +112,4 @@ ENTRY(rfork_thread)
 	popl	%esi
 	movl	%ebp, %esp
 	popl	%ebp
-#if 0
-	/* FreeBSD code.  how to translate? */
-	PIC_PROLOGUE
-	jmp	PIC_PLT(HIDENAME(cerror))
-#endif
 	jmp	CERROR
