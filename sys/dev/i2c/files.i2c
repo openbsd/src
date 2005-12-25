@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.19 2005/12/24 19:34:01 deraadt Exp $
+# $OpenBSD: files.i2c,v 1.20 2005/12/25 12:19:48 deraadt Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -44,6 +44,11 @@ file	dev/i2c/tsl2560.c			tsl
 device	admtemp
 attach	admtemp at i2c
 file	dev/i2c/adm1021.c			admtemp
+
+# ADM1025
+device	admlc
+attach	admlc at i2c
+file	dev/i2c/adm1024.c			admlc
 
 # ADM1025
 device	admtm
