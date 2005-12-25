@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.3 2005/12/24 21:04:20 grange Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.4 2005/12/25 09:44:54 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -114,7 +114,7 @@ struct cfdriver piixpm_cd = {
 };
 
 const struct pci_matchid piixpm_ids[] = {
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_PMC },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_PM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_PM },
 	{ PCI_VENDOR_RCC, PCI_PRODUCT_RCC_OSB4 },
 	{ PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB5 },
