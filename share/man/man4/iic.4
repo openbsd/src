@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.15 2005/12/24 23:17:12 deraadt Exp $
+.\"	$OpenBSD: iic.4,v 1.16 2005/12/25 00:03:34 kettenis Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -60,6 +60,8 @@ it with the
 commands.
 .Sh SUPPORTED MASTERS
 .Bl -tag -width 10n -offset ind -compact
+.It Xr alipm 4
+Acer Labs M7101 power management controller
 .It Xr gscsio 4
 National Semiconductor Geode SC1100 Super I/O ACCESS.bus
 .It Xr ichiic 4
