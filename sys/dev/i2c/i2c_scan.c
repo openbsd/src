@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.16 2005/12/25 12:32:35 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.17 2005/12/25 12:41:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -186,7 +186,7 @@ xeonprobe(u_int8_t addr)
 		for (reg = 0x00; reg < 0x09; reg++)
 			if (probe(reg) == 0xff)
 				return (0);
-		for (reg = 0x09; reg < 0xff; reg++)
+		for (reg = 0x09; reg <= 0xff; reg++)
 			if (probe(reg) != 0xff)
 				return (0);
 		return (1);
@@ -324,7 +324,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 //	for (i = 0; i < sizeof(probereg); i++)
 //		if (probe(probereg[i]) != 0xff)
 //			printf(" %02x=%02x", probereg[i], probe(probereg[i]));
-	for (i = 0; i < 0xff; i++)
+	for (i = 0; i <= 0xff; i++)
 		if (probe(i) != 0xff)
 			printf(" %02x=%02x", i, probe(i));
 	if (name)
