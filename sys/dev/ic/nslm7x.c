@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7x.c,v 1.9 2005/12/24 23:30:55 kettenis Exp $	*/
+/*	$OpenBSD: nslm7x.c,v 1.10 2005/12/25 10:23:27 kettenis Exp $	*/
 /*	$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $ */
 
 /*-
@@ -258,7 +258,11 @@ wb_match(struct lm_softc *sc)
 	switch(j) {
 	case WB_CHIPID_83781:
 	case WB_CHIPID_83781_2:
-		printf(": W83781D\n");
+	case AS_CHIPID_99127:
+		if (j == AS_CHIPID_99127)
+			printf(": AS99127F\n");
+		else
+			printf(": W83781D\n");
 
 		for (i = 0; i < 7; ++i) {
 			sc->sensors[i].type = SENSOR_VOLTS_DC;

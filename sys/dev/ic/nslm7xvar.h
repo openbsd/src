@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7xvar.h,v 1.4 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: nslm7xvar.h,v 1.5 2005/12/25 10:23:27 kettenis Exp $	*/
 /*	$NetBSD: nslm7xvar.h,v 1.10 2002/11/15 14:55:42 ad Exp $ */
 
 /*-
@@ -92,6 +92,7 @@
 #define WB_BANK0_CHIPID	0x58
 #define WB_CHIPID_83781		0x10
 #define WB_CHIPID_83781_2	0x11
+#define AS_CHIPID_99127		0x31 /* Asus W83781D clone */
 #define WB_CHIPID_83782		0x30
 #define WB_CHIPID_83627		0x21
 #define WB_CHIPID_83627THF	0x90
