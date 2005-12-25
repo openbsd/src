@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.32 2005/03/23 17:17:15 miod Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.33 2005/12/25 21:47:15 miod Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -347,10 +347,7 @@ cgfourteen_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	 */
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		if (sc->sc_32)
-			*(u_int *)data = WSDISPLAY_TYPE_SUN24;
-		else
-			*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
+		*(u_int *)data = WSDISPLAY_TYPE_SUNCG14;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;

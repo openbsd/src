@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.25 2005/03/23 17:16:34 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.26 2005/12/25 21:47:15 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -276,10 +276,7 @@ tcx_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	 */
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		if (sc->sc_cplane == NULL)
-			*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
-		else
-			*(u_int *)data = WSDISPLAY_TYPE_SUN24;
+		*(u_int *)data = WSDISPLAY_TYPE_SUNTCX;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;
