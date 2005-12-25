@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.4 2005/12/25 09:44:54 grange Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.5 2005/12/25 15:04:48 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -33,6 +33,8 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
+#include <dev/pci/piixreg.h>
+
 #include <dev/i2c/i2cvar.h>
 
 #ifdef PIIXPM_DEBUG
@@ -43,37 +45,6 @@
 
 #define PIIXPM_DELAY	100
 #define PIIXPM_TIMEOUT	1
-
-/* Register definitions */
-#define PIIX_SMB_BASE	0x90		/* SMBus base address */
-#define PIIX_SMB_HOSTC	0xd0		/* host configuration */
-#define PIIX_SMB_HOSTC_HSTEN	(1 << 16)	/* enable host controller */
-#define PIIX_SMB_HOSTC_SMI	(0 << 17)	/* SMI */
-#define PIIX_SMB_HOSTC_IRQ	(4 << 17)	/* IRQ */
-
-#define PIIX_SMB_HS	0x00		/* host status */
-#define PIIX_SMB_HS_BUSY	(1 << 0)	/* running a command */
-#define PIIX_SMB_HS_INTR	(1 << 1)	/* command completed */
-#define PIIX_SMB_HS_DEVERR	(1 << 2)	/* command error */
-#define PIIX_SMB_HS_BUSERR	(1 << 3)	/* transaction collision */
-#define PIIX_SMB_HS_FAILED	(1 << 4)	/* failed bus transaction */
-#define PIIX_SMB_HS_BITS	"\020\001BUSY\002INTR\003DEVERR\004BUSERR\005FAILED"
-#define PIIX_SMB_HC	0x02		/* host control */
-#define PIIX_SMB_HC_INTREN	(1 << 0)	/* enable interrupts */
-#define PIIX_SMB_HC_KILL	(1 << 1)	/* kill current transaction */
-#define PIIX_SMB_HC_CMD_QUICK	(0 << 2)	/* QUICK command */
-#define PIIX_SMB_HC_CMD_BYTE	(1 << 2)	/* BYTE command */
-#define PIIX_SMB_HC_CMD_BDATA	(2 << 2)	/* BYTE DATA command */
-#define PIIX_SMB_HC_CMD_WDATA	(3 << 2)	/* WORD DATA command */
-#define PIIX_SMB_HC_CMD_BLOCK	(5 << 2)	/* BLOCK command */
-#define PIIX_SMB_HC_START	(1 << 6)	/* start transaction */
-#define PIIX_SMB_HCMD	0x03		/* host command */
-#define PIIX_SMB_TXSLVA	0x04		/* transmit slave address */
-#define PIIX_SMB_TXSLVA_READ	(1 << 0)	/* read direction */
-#define PIIX_SMB_TXSLVA_ADDR(x)	(((x) & 0x7f) << 1) /* 7-bit address */
-#define PIIX_SMB_HD0	0x05		/* host data 0 */
-#define PIIX_SMB_HD1	0x06		/* host data 1 */
-#define PIIX_SMB_HBDB	0x07		/* host block data byte */
 
 struct piixpm_softc {
 	struct device		sc_dev;
