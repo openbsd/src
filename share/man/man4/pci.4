@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.129 2005/12/19 21:42:26 grange Exp $
+.\"	$OpenBSD: pci.4,v 1.130 2005/12/25 09:14:54 grange Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -405,6 +405,8 @@ USB OHCI host controller.
 .Tn PCI
 .Tn PCMCIA
 controllers, including the Cirrus Logic GD6729.
+.It Xr piixpm 4
+Intel PIIX and compatible SMBus controllers.
 .It Xr ppb 4
 Generic
 .Tn PCI Ns \- Ns Tn PCI
@@ -568,6 +570,7 @@ driver.
 .Xr pcic 4 ,
 .Xr pcmcia 4 ,
 .Xr pcscp 4 ,
+.Xr piixpm 4 ,
 .Xr ppb 4 ,
 .Xr psycho 4 ,
 .Xr puc 4 ,
