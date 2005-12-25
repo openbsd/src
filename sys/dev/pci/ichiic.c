@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichiic.c,v 1.2 2005/12/20 05:42:32 grange Exp $	*/
+/*	$OpenBSD: ichiic.c,v 1.3 2005/12/25 14:54:45 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -55,12 +55,12 @@ struct ichiic_softc {
 
 	struct i2c_controller	sc_i2c_tag;
 	struct lock		sc_i2c_lock;
-	volatile struct {
-		i2c_op_t op;
-		void *   buf;
-		size_t   len;
-		int      flags;
-		int      error;
+	struct {
+		i2c_op_t     op;
+		void *       buf;
+		size_t       len;
+		int          flags;
+		volatile int error;
 	}			sc_i2c_xfer;
 };
 
@@ -257,6 +257,7 @@ ichiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		}
 		ichiic_intr(sc);
 	} else {
+		/* Wait for interrupt */
 		if (tsleep(sc, PRIBIO, "iicexec", ICHIIC_TIMEOUT * hz))
 			return (1);
 	}	
