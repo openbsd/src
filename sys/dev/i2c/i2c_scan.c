@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.15 2005/12/24 23:29:22 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.16 2005/12/25 12:32:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -154,7 +154,7 @@ lm75probe(void)
 	if (mains[4] != mains[3] || mains[5] != mains[3])
 		return (0);
 
-	printf("lm75: %02x %04x %04x %04x %04x %04x %04x\n", main,
+	printf("lm75probe: %02x %04x %04x %04x %04x %04x %04x\n", main,
 	    mains[0], mains[1], mains[2], mains[3], mains[4], mains[5]);
 
 	/* a real lm75/77 repeats it's registers.... */
@@ -206,7 +206,8 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 
 	probeinit(iba, addr);
 
-	if (probe(0x3e) == 0x41) {
+	switch (probe(0x3e)) {
+	case 0x41:
 		/*
 		 * Analog Devices adt/adm product code at 0x3e == 0x41.
 		 * We probe newer to older.  newer chips have a valid 0x3d
@@ -220,32 +221,53 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "adt7476";
 		else if (probe(0x3d) == 0x70)
 			name = "adt7470";
-		else if (probe(0x3d) == 0x27)
-			name = "adt7460";	/* adt746x */
+		else if (probe(0x3d) == 0x27 &&
+		    (probe(0x3f) == 0x62 || probe(0x3f) == 0x6a))
+			name = "adt7460";	/* complete check */
 		else if (probe(0x3d) == 0x33)
 			name = "adm1033";
-		else if (probe(0x3d) == 0x30)
-			name = "adm1030";
-		else if (probe(0x3d) == 0x31)
-			name = "adm1031";
-		else if ((probe(0x3f) & 0xf0) == 0x20)
-			name = "adm1025";
-		else if ((probe(0xff) & 0xf0) == 0x10)
-			name = "adm1024";
+		else if (probe(0x3d) == 0x30 &&
+		    (probe(0x3f) & 0x70) == 0x00 &&
+		    (probe(0x01) & 0x4a) == 0x00 &&
+		    (probe(0x03) & 0x3f) == 0x00 &&
+		    (probe(0x22) & 0xf0) == 0x00 &&
+		    (probe(0x0d) & 0x70) == 0x00 &&
+		    (probe(0x0e) & 0x70) == 0x00)
+			name = "adm1030";	/* complete check */
+		else if (probe(0x3d) == 0x31 &&
+		    (probe(0x03) & 0x3f) == 0x00 &&
+		    (probe(0x0d) & 0x70) == 0x00 &&
+		    (probe(0x0e) & 0x70) == 0x00 &&
+		    (probe(0x0f) & 0x70) == 0x00)
+			name = "adm1031";	/* complete check */
+		else if ((probe(0x3f) & 0xf0) == 0x20 &&
+		    (probe(0x40) & 0x80) == 0x00 &&
+		    (probe(0x41) & 0xc0) == 0x00 &&
+		    (probe(0x42) & 0xbc) == 0x00)
+			name = "adm1025";	/* complete check */
+		else if ((probe(0x3f) & 0xf0) == 0x10 &&
+		    (probe(0x40) & 0x80) == 0x00)
+			name = "adm1024";	/* complete check */
 		else if ((probe(0xff) & 0xf0) == 0x30)
 			name = "adm1023";
 		else if ((probe(0xff) & 0xf0) == 0x90)
 			name = "adm1022";
 		else if ((probe(0xff) & 0xf0) == 0x00)
 			name = "adm1021";
-	} else if (probe(0x3e) == 0xa1) {
+		break;
+	case 0xa1:
 		/* Philips vendor code 0xa1 at 0x3e */
-		if ((probe(0x3f) & 0xf0) == 0x20)
+		if ((probe(0x3f) & 0xf0) == 0x20 &&
+		    (probe(0x40) & 0x80) == 0x00 &&
+		    (probe(0x41) & 0xc0) == 0x00 &&
+		    (probe(0x42) & 0xbc) == 0x00)
 			name = "ne1619";	/* adm1025 compat */
-	} else if (probe(0x3e) == 0x55) {
+		break;
+	case 0x55:
 		if (probe(0x3f) == 0x20)
 			name = "47m192";	/* adm1025 compat */
-	} else if (probe(0x3e) == 0x01) {
+		break;
+	case 0x01:
 		/*
 		 * Most newer National products use a vendor code at
 		 * 0x3e of 0x01, and then 0x3f contains a product code
@@ -254,24 +276,33 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		 * that some employee was smart enough to keep the numbers
 		 * unique.
 		 */
-		if (probe(0x3f) == 0x49)
-			name = "lm99";
+		if (probe(0x3f) == 0x52 && probe(0xff) == 0x01 &&
+		    (probe(0xfe) == 0x4c || probe(0xfe) == 0x4d))
+			name = "lm89";
+		else if (probe(0x3f) == 0x33 && probe(0xff) == 0x01 &&
+		    probe(0xfe) == 0x21)
+			name = "lm90";
+		else if (probe(0x3f) == 0x49 && probe(0xff) == 0x01 &&
+		    (probe(0xfe) == 0x31 || probe(0xfe) == 0x34))
+			name = "lm99";	/* and lm99-1 */
 		else if (probe(0x3f) == 0x73)
 			name = "lm93";
-		else if (probe(0x3f) == 0x33)
-			name = "lm90";
-		else if (probe(0x3f) == 0x52)
-			name = "lm89";
 		else if (probe(0x3f) == 0x17)
 			name = "lm86";
 		else if (probe(0x3f) == 0x03)	/* are there others? */
 			name = "lm81";
-	} else if (probe(0xfe) == 0x01) {
+		break;
+	case 0x02:
+		if ((probe(0x3f) & 0xfc) == 0x04) {
+			name = "lm87";		/* complete check */
+		}
+		break;
+	}
+
+	if (probe(0xfe) == 0x01) {
 		/* Some more National devices ...*/
 		if (probe(0xff) == 0x33)
 			name = "lm90";
-	} else if (probe(0x3e) == 0x02 && probe(0x3f) == 0x6) {
-		name = "lm87";
 	} else if (probe(0xfe) == 0x4d && probe(0xff) == 0x08) {
 		name = "maxim6690";	/* somewhat similar to lm90 */
 	} else if (probe(0x4f) == 0x5c && (probe(0x4e) & 0x80)) {
