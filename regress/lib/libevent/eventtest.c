@@ -1,4 +1,4 @@
-/*	$OpenBSD: eventtest.c,v 1.7 2005/12/18 03:57:02 brad Exp $	*/
+/*	$OpenBSD: eventtest.c,v 1.8 2005/12/25 02:51:24 brad Exp $	*/
 /*	$NetBSD: eventtest.c,v 1.3 2004/08/07 21:09:47 provos Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <err.h>
 
 #include <event.h>
 
@@ -235,10 +234,10 @@ setup_test(char *name)
 	}
 
         if (fcntl(pair[0], F_SETFL, O_NONBLOCK) == -1)
-                warn("fcntl(O_NONBLOCK)");
+		fprintf(stderr, "fcntl(O_NONBLOCK)");
 
         if (fcntl(pair[1], F_SETFL, O_NONBLOCK) == -1)
-                warn("fcntl(O_NONBLOCK)");
+		fprintf(stderr, "fcntl(O_NONBLOCK)");
 
 	test_ok = 0;
 	called = 0;
@@ -589,6 +588,81 @@ test_priorities(int npriorities)
 	cleanup_test();
 }
 
+static void
+test_multiple_cb(int fd, short event, void *arg)
+{
+	if (event & EV_READ)
+		test_ok |= 1;
+	else if (event & EV_WRITE)
+		test_ok |= 2;
+}
+
+void
+test_multiple_events_for_same_fd(void)
+{
+   struct event e1, e2;
+
+   setup_test("Multiple events for same fd: ");
+
+   event_set(&e1, pair[0], EV_READ, test_multiple_cb, NULL);
+   event_add(&e1, NULL);
+   event_set(&e2, pair[0], EV_WRITE, test_multiple_cb, NULL);
+   event_add(&e2, NULL);
+   event_loop(EVLOOP_ONCE);
+   event_del(&e2);
+   write(pair[1], TEST1, strlen(TEST1)+1);
+   event_loop(EVLOOP_ONCE);
+   event_del(&e1);
+   
+   if (test_ok != 3)
+	   test_ok = 0;
+
+   cleanup_test();
+}
+
+void
+read_once_cb(int fd, short event, void *arg)
+{
+	char buf[256];
+	int len;
+
+	len = read(fd, buf, sizeof(buf));
+
+	if (called) {
+		test_ok = 0;
+	} else if (len) {
+		/* Assumes global pair[0] can be used for writing */
+		write(pair[0], TEST1, strlen(TEST1)+1);
+		test_ok = 1;
+	}
+
+	called++;
+}
+
+void
+test_want_only_once(void)
+{
+	struct event ev;
+	struct timeval tv;
+
+	/* Very simple read test */
+	setup_test("Want read only once: ");
+	
+	write(pair[0], TEST1, strlen(TEST1)+1);
+
+	/* Setup the loop termination */
+	timerclear(&tv);
+	tv.tv_sec = 1;
+	event_loopexit(&tv);
+	
+	event_set(&ev, pair[1], EV_READ, read_once_cb, &ev);
+	if (event_add(&ev, NULL) == -1)
+		exit(1);
+	event_dispatch();
+
+	cleanup_test();
+}
+
 int
 main (int argc, char **argv)
 {
@@ -618,6 +692,10 @@ main (int argc, char **argv)
 	test_priorities(1);
 	test_priorities(2);
 	test_priorities(3);
+
+	test_multiple_events_for_same_fd();
+
+	test_want_only_once();
 
 	return (0);
 }
