@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichiic.c,v 1.4 2005/12/25 15:46:14 grange Exp $	*/
+/*	$OpenBSD: ichiic.c,v 1.5 2005/12/25 18:46:24 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -176,7 +176,7 @@ ichiic_i2c_acquire_bus(void *cookie, int flags)
 {
 	struct ichiic_softc *sc = cookie;
 
-	if (sc->sc_poll || flags & I2C_F_POLL)
+	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
 		return (0);
 
 	return (lockmgr(&sc->sc_i2c_lock, LK_EXCLUSIVE, NULL));
@@ -187,7 +187,7 @@ ichiic_i2c_release_bus(void *cookie, int flags)
 {
 	struct ichiic_softc *sc = cookie;
 
-	if (sc->sc_poll || flags & I2C_F_POLL)
+	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
 		return;
 
 	lockmgr(&sc->sc_i2c_lock, LK_RELEASE, NULL);
@@ -207,7 +207,7 @@ ichiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	    cmdlen, len, flags, bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 	    ICH_SMB_HS), ICH_SMB_HS_BITS));
 
-	if (sc->sc_poll)
+	if (cold || sc->sc_poll)
 		flags |= I2C_F_POLL;
 
 	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2)
