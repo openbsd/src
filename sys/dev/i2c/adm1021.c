@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.9 2005/12/26 01:59:36 deraadt Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.10 2005/12/26 08:14:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -65,7 +65,7 @@ admtemp_match(struct device *parent, void *match, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	if (strcmp(ia->ia_name, "adm1021") == 0 ||
-	    strcmp(ia->ia_name, "xeon") == 0 ||
+	    strcmp(ia->ia_name, "xeontemp") == 0 ||
 	    strcmp(ia->ia_name, "maxim1617") == 0)
 		return (1);
 	return (0);
@@ -82,7 +82,7 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
-	if (ia->ia_name && strcmp(ia->ia_name, "xeon") == 0) {
+	if (ia->ia_name && strcmp(ia->ia_name, "xeontemp") == 0) {
 		printf(": Xeon");
 		sc->sc_xeon = 1;
 	}
@@ -141,16 +141,28 @@ admtemp_refresh(void *arg)
 
 	cmd = ADM1021_EXT_TEMP;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &cmd, sizeof cmd, &sdata, sizeof sdata, I2C_F_POLL) == 0)
-		sc->sc_sensor[ADMTEMP_EXT].value =
-		    273150000 + 1000000 * sdata;
+	    &cmd, sizeof cmd, &sdata, sizeof sdata, I2C_F_POLL) == 0) {
+		if (sdata == 0x7f) {
+			sc->sc_sensor[ADMTEMP_EXT].flags &= ~SENSOR_FINVALID;
+		} else {
+			sc->sc_sensor[ADMTEMP_EXT].value =
+			    273150000 + 1000000 * sdata;
+			sc->sc_sensor[ADMTEMP_EXT].flags &= ~SENSOR_FINVALID;
+		}
+	}
 
 	if (sc->sc_xeon == 0) {
 		cmd = ADM1021_INT_TEMP;
 		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-		    &cmd, sizeof cmd, &sdata,  sizeof sdata, I2C_F_POLL) == 0)
-			sc->sc_sensor[ADMTEMP_INT].value =
-			    273150000 + 1000000 * sdata;
+		    &cmd, sizeof cmd, &sdata,  sizeof sdata, I2C_F_POLL) == 0) {
+			if (sdata == 0x7f) {
+				sc->sc_sensor[ADMTEMP_INT].flags &= ~SENSOR_FINVALID;
+			} else {
+				sc->sc_sensor[ADMTEMP_INT].value =
+				    273150000 + 1000000 * sdata;
+				sc->sc_sensor[ADMTEMP_INT].flags &= ~SENSOR_FINVALID;
+			}
+		}
 	}
 
 	iic_release_bus(sc->sc_tag, 0);

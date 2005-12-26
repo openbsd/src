@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.17 2005/12/25 12:41:40 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.18 2005/12/26 08:14:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -174,24 +174,28 @@ lm75probe(void)
 }
 
 #ifdef __i386__
-static int	xeonprobe(u_int8_t);
+static char 	*xeonprobe(u_int8_t);
 
-static int
+static char *
 xeonprobe(u_int8_t addr)
 {
 	if (addr == 0x18 || addr == 0x1a || addr == 0x29 ||
 	    addr == 0x2b || addr == 0x4c || addr == 0x4e) {
-		int reg;
+		u_int8_t reg, val;
 
 		for (reg = 0x00; reg < 0x09; reg++)
 			if (probe(reg) == 0xff)
-				return (0);
-		for (reg = 0x09; reg <= 0xff; reg++)
-			if (probe(reg) != 0xff)
-				return (0);
-		return (1);
+				return (NULL);
+		val = probe(0x09);
+		for (reg = 0x0a; reg < 0xfe; reg++)
+			if (probe(reg) != val)
+				return (NULL);
+		if (probe(0xfe) == 0x4d)
+			return ("maxim1617");
+		/* 0xfe may be maxim, or some other vendor */
+		return ("xeontemp");
 	}
-	return (0);
+	return (NULL);
 }	
 #endif
 
@@ -214,19 +218,19 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		 * product number, while older ones encoded the product
 		 * into the upper half of the step at 0x3f
 		 */
-		if (probe(0x3d) == 0x03 || probe(0x3d) == 0x08 ||
-		    probe(0x3d) == 0x07)
-			name = "adt7516";	/* adt7517, adt7519 */
-		if (probe(0x3d) == 0x76)
+		if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
+		    probe(0x3d) == 0x76)
 			name = "adt7476";
-		else if (probe(0x3d) == 0x70)
+		else if ((addr == 0x2c || addr == 0x2e || addr == 0x2f) &&
+		    probe(0x3d) == 0x70)
 			name = "adt7470";
 		else if (probe(0x3d) == 0x27 &&
 		    (probe(0x3f) == 0x62 || probe(0x3f) == 0x6a))
 			name = "adt7460";	/* complete check */
 		else if (probe(0x3d) == 0x33)
 			name = "adm1033";
-		else if (probe(0x3d) == 0x30 &&
+		else if ((addr & 0x7c) == 0x2c &&	/* addr 0b01011xx */
+		    probe(0x3d) == 0x30 &&
 		    (probe(0x3f) & 0x70) == 0x00 &&
 		    (probe(0x01) & 0x4a) == 0x00 &&
 		    (probe(0x03) & 0x3f) == 0x00 &&
@@ -234,18 +238,21 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		    (probe(0x0d) & 0x70) == 0x00 &&
 		    (probe(0x0e) & 0x70) == 0x00)
 			name = "adm1030";	/* complete check */
-		else if (probe(0x3d) == 0x31 &&
+		else if ((addr & 0x7c) == 0x2c &&	/* addr 0b01011xx */
+		    probe(0x3d) == 0x31 &&
 		    (probe(0x03) & 0x3f) == 0x00 &&
 		    (probe(0x0d) & 0x70) == 0x00 &&
 		    (probe(0x0e) & 0x70) == 0x00 &&
 		    (probe(0x0f) & 0x70) == 0x00)
 			name = "adm1031";	/* complete check */
-		else if ((probe(0x3f) & 0xf0) == 0x20 &&
+		else if ((addr & 0x7c) == 0x2c &&	/* addr 0b01011xx */
+		    (probe(0x3f) & 0xf0) == 0x20 &&
 		    (probe(0x40) & 0x80) == 0x00 &&
 		    (probe(0x41) & 0xc0) == 0x00 &&
 		    (probe(0x42) & 0xbc) == 0x00)
 			name = "adm1025";	/* complete check */
-		else if ((probe(0x3f) & 0xf0) == 0x10 &&
+		else if ((addr & 0x7c) == 0x2c &&	/* addr 0b01011xx */
+		    (probe(0x3f) & 0xf0) == 0x10 &&
 		    (probe(0x40) & 0x80) == 0x00)
 			name = "adm1024";	/* complete check */
 		else if ((probe(0xff) & 0xf0) == 0x30)
@@ -289,13 +296,20 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "lm93";
 		else if (probe(0x3f) == 0x17)
 			name = "lm86";
-		else if (probe(0x3f) == 0x03)	/* are there others? */
-			name = "lm81";
 		break;
 	case 0x02:
 		if ((probe(0x3f) & 0xfc) == 0x04) {
 			name = "lm87";		/* complete check */
 		}
+		break;
+	}
+	switch (probe(0x4e)) {
+	case 0x41:
+		if ((addr == 0x48 || addr == 0x4a || addr == 0x4b) &&
+		    /* addr 0b1001{000, 010, 011} */
+		    (probe(0x4d) == 0x03 || probe(0x4d) == 0x08 ||
+		    probe(0x4d) == 0x07))
+			name = "adt7516";	/* adt7517, adt7519 */
 		break;
 	}
 
@@ -315,8 +329,8 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	} else if ((addr & 0xfc) == 0x48 && lm75probe()) {
 		name = "lm75";
 #ifdef __i386__
-	} else if (xeonprobe(addr)) {
-		name = "xeon";
+	} else if (name == NULL) {
+		name = xeonprobe(addr);
 #endif
 	}
 
