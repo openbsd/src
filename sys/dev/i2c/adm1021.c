@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.7 2005/12/25 03:38:01 deraadt Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.8 2005/12/26 01:04:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -29,7 +29,7 @@
 #define ADM1021_STATUS		0x02
 #define ADM1021_CONFIG_READ	0x03
 #define ADM1021_CONFIG_WRITE	0x09
-
+#define  ADM1021_CONFIG_RUN	0x40
 #define ADM1021_COMPANY		0xfe	/* contains 0x41 */
 #define ADM1021_STEPPING	0xff	/* contains 0x3? */
 
@@ -83,7 +83,7 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct admtemp_softc *sc = (struct admtemp_softc *)self;
 	struct i2c_attach_args *ia = aux;
-//	u_int8_t cmd, data;
+	u_int8_t cmd, data;
 	int i;
 
 	sc->sc_tag = ia->ia_tag;
@@ -94,23 +94,23 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_xeon = 1;
 	}
 
-//	iic_acquire_bus(sc->sc_tag, 0);
-//	cmd = ADM1021_CONFIG_READ;
-//	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-//	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
-//		iic_release_bus(sc->sc_tag, 0);
-//		printf(": cannot get control register\n");
-//		return;
-//	}
-//	data &= ~0x40;
-//	cmd = ADM1021_CONFIG_WRITE;
-//	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-//	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
-//		iic_release_bus(sc->sc_tag, 0);
-//		printf(": cannot set control register\n");
-//		return;
-//	}
-//	iic_release_bus(sc->sc_tag, 0);
+	iic_acquire_bus(sc->sc_tag, 0);
+	cmd = ADM1021_CONFIG_READ;
+	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL)) {
+		iic_release_bus(sc->sc_tag, 0);
+		printf(": cannot get control register\n");
+		return;
+	}
+	data &= ~ADM1021_CONFIG_RUN;
+	cmd = ADM1021_CONFIG_WRITE;
+	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL)) {
+		iic_release_bus(sc->sc_tag, 0);
+		printf(": cannot set control register\n");
+		return;
+	}
+	iic_release_bus(sc->sc_tag, 0);
 
 	/* Initialize sensor data. */
 	for (i = 0; i < ADMTEMP_NUM_SENSORS; i++)
