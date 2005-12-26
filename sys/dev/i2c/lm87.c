@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm87.c,v 1.7 2005/11/16 23:30:28 kettenis Exp $	*/
+/*	$OpenBSD: lm87.c,v 1.8 2005/12/26 03:52:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -130,12 +130,14 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	data |= LM87_CONFIG1_START;
-	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
-		iic_release_bus(sc->sc_tag, 0);
-		printf(": cannot write Configuration Register 1\n");
-		return;
+	if ((data & LM87_CONFIG1_START) == 0) {
+		data |= LM87_CONFIG1_START;
+		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+		    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+			iic_release_bus(sc->sc_tag, 0);
+			printf(": cannot write Configuration Register 1\n");
+			return;
+		}
 	}
 
 	cmd = LM87_REVISION;
