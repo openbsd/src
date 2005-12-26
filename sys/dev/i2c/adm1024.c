@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1024.c,v 1.2 2005/12/25 13:06:08 deraadt Exp $	*/
+/*	$OpenBSD: adm1024.c,v 1.3 2005/12/26 01:05:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -24,7 +24,6 @@
 #include <dev/i2c/i2cvar.h>
 
 /* ADM 1024 registers */
-#define ADM1024_CHANNEL		0x16
 #define ADM1024_V25		0x20
 #define ADM1024_Vccp		0x21
 #define ADM1024_Vcc		0x22
@@ -39,7 +38,8 @@
 #define  ADM1024_STATUS2_EXT	0x40
 #define ADM1024_COMPANY		0x3e	/* contains 0x41 */
 #define ADM1024_STEPPING	0x3f	/* contains 0x2? */
-#define ADM1024_CONFIG		0x40
+#define ADM1024_CONFIG1		0x40
+#define  ADM1024_CONFIG1_START	0x01
 
 /* Sensors */
 #define ADMLC_INT		0
@@ -96,15 +96,15 @@ admlc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_addr = ia->ia_addr;
 
 	iic_acquire_bus(sc->sc_tag, 0);
-	cmd = ADM1024_CONFIG;
+	cmd = ADM1024_CONFIG1;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL)) {
 		iic_release_bus(sc->sc_tag, 0);
 		printf(": cannot get control register\n");
 		return;
 	}
-	if ((data & 0x01) == 0x00) {
-		data |= 0x01;
+	if ((data & ADM1024_CONFIG1_START) == 0) {
+		data |= ADM1024_CONFIG1_START;
 		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
 		    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL)) {
 			iic_release_bus(sc->sc_tag, 0);
