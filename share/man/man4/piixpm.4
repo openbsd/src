@@ -1,4 +1,4 @@
-.\"	$OpenBSD: piixpm.4,v 1.5 2005/12/25 18:19:47 grange Exp $
+.\"	$OpenBSD: piixpm.4,v 1.6 2005/12/26 08:09:32 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -32,6 +32,7 @@ to be used with the
 framework.
 .Pp
 Supported chipsets:
+.Pp
 .Bl -bullet -compact -offset indent
 .It
 Intel 82371AB PIIX4, 82440MX
@@ -49,13 +50,13 @@ driver first appeared in
 .Ox 3.7
 to provide support for the power management (ACPI) timer.
 In
-.Ox 3.9
+.Ox 3.9 ,
 power management support was dropped in favor of
 .Xr acpitimer 4
-driver and SMBus functionality was added.
+and SMBus functionality was added.
 .Sh AUTHORS
 .An -nosplit
-Current
+The current
 .Nm
 driver was written by
 .An Alexander Yurchenko Aq grange@openbsd.org .
