@@ -1,4 +1,4 @@
-/*	$OpenBSD: alipm.c,v 1.1 2005/12/24 23:36:36 kettenis Exp $	*/
+/*	$OpenBSD: alipm.c,v 1.2 2005/12/26 19:52:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -244,13 +244,13 @@ alipm_smb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		DELAY(ALIPM_DELAY);
 	}
 	if (retries == 0) {
-		printf("%s: timeout waiting until bus is idle\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: timeout st 0x%b\n", sc->sc_dev.dv_xname,
+		    st, ALIPM_SMB_HS_BITS);
 		return (ETIMEDOUT);
 	}
 	if (st & (ALIPM_SMB_HS_FAILED |
 	    ALIPM_SMB_HS_BUSERR | ALIPM_SMB_HS_DEVERR)) {
-		printf("%s: bus error 0x%b\n", sc->sc_dev.dv_xname,
+		printf("%s: error st 0x%b\n", sc->sc_dev.dv_xname,
 		    st, ALIPM_SMB_HS_BITS);
 		return (EIO);
 	}
@@ -299,7 +299,11 @@ alipm_smb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		DELAY(ALIPM_DELAY);
 	}
 	if (retries == 0) {
-		printf("%s: timeout\n", sc->sc_dev.dv_xname);
+		printf("%s: timeout st 0x%b, resetting\n",
+		    sc->sc_dev.dv_xname, st, ALIPM_SMB_HS_BITS);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HC,
+		    ALIPM_SMB_HC_RESET);
+		st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HS);
 		error = ETIMEDOUT;
 		goto done;
 	}
