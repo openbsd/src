@@ -1152,6 +1152,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/pcireg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/pcivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/pcscpreg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/piixreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/ppbreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/pucvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/safereg.ph

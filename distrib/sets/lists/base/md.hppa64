@@ -1157,6 +1157,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/pcireg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/pcivar.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/pcscpreg.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/piixreg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/plx9060reg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/plx9060var.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/dev/pci/ppbreg.ph

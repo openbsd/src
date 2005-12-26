@@ -574,6 +574,7 @@
 ./usr/include/dev/pci/pcireg.h
 ./usr/include/dev/pci/pcivar.h
 ./usr/include/dev/pci/pcscpreg.h
+./usr/include/dev/pci/piixreg.h
 ./usr/include/dev/pci/plx9060reg.h
 ./usr/include/dev/pci/plx9060var.h
 ./usr/include/dev/pci/ppbreg.h
