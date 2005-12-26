@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.18 2005/12/26 08:14:17 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.19 2005/12/26 17:52:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -26,6 +26,8 @@
 
 #define _I2C_PRIVATE
 #include <dev/i2c/i2cvar.h>
+
+#define I2C_DEBUG
 
 void	iic_probe(struct device *, struct i2cbus_attach_args *, u_int8_t);
 
@@ -154,8 +156,10 @@ lm75probe(void)
 	if (mains[4] != mains[3] || mains[5] != mains[3])
 		return (0);
 
+#ifdef I2C_DEBUG
 	printf("lm75probe: %02x %04x %04x %04x %04x %04x %04x\n", main,
 	    mains[0], mains[1], mains[2], mains[3], mains[4], mains[5]);
+#endif /* I2C_DEBUG */
 
 	/* a real lm75/77 repeats it's registers.... */
 	for (i = 0x08; i < 0xff; i += 8) {
@@ -206,7 +210,9 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 {
 	struct i2c_attach_args ia;
 	char *name = NULL;
+#ifdef I2C_DEBUG
 	int i;
+#endif /* I2C_DEBUG */
 
 	probeinit(iba, addr);
 
@@ -334,6 +340,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 #endif
 	}
 
+#ifdef I2C_DEBUG
 	printf("%s: addr 0x%x", self->dv_xname, addr);
 //	for (i = 0; i < sizeof(probereg); i++)
 //		if (probe(probereg[i]) != 0xff)
@@ -344,6 +351,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	if (name)
 		printf(": %s", name);
 	printf("\n");
+#endif /* I2C_DEBUG */
 
 	if (name) {
 		ia.ia_tag = iba->iba_tag;
