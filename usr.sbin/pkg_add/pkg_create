@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.43 2005/11/19 14:45:32 espie Exp $
+# $OpenBSD: pkg_create,v 1.44 2005/12/26 15:50:39 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -475,6 +475,9 @@ for my $contentsfile (@contents) {
 				}
 				if (m/^(\@comment\s+\$(?:Open)BSD\$)$/) {
 					$_ = '@comment $'.'OpenBSD: '.basename($fname).',v$';
+				}
+				if (m/^\@lib\s+.*\.so\.\d+\.\d+$/) {
+					Warn "Shared library without SHARED_LIBS: $_";
 				}
 				&$cont(dosubst($_));
 			}
