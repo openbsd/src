@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.20 2005/12/27 03:46:50 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.21 2005/12/27 09:23:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -224,8 +224,8 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		 * product number, while older ones encoded the product
 		 * into the upper half of the step at 0x3f
 		 */
-		if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
-		    probe(0x3d) == 0x76)
+		if (probe(0x3d) == 0x76 &&
+		    (addr == 0x2c || addr == 0x2d || addr == 0x2e))
 			name = "adt7476";
 		else if ((addr == 0x2c || addr == 0x2e || addr == 0x2f) &&
 		    probe(0x3d) == 0x70)
@@ -233,6 +233,9 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		else if (probe(0x3d) == 0x27 &&
 		    (probe(0x3f) == 0x62 || probe(0x3f) == 0x6a))
 			name = "adt7460";	/* complete check */
+		else if (probe(0x3d) == 0x68 && addr == 0x2e &&
+		    (probe(0x3f) & 0xf0) == 0x70)
+			name = "adt7467";
 		else if (probe(0x3d) == 0x33)
 			name = "adm1033";
 		else if ((addr & 0x7c) == 0x2c &&	/* addr 0b01011xx */
@@ -263,10 +266,16 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "adm1024";	/* complete check */
 		else if ((probe(0xff) & 0xf0) == 0x30)
 			name = "adm1023";
-		else if ((probe(0xff) & 0xf0) == 0x90)
+		if ((probe(0x3f) & 0xf0) == 0xd0 && addr == 0x2e &&
+		    (probe(0x40) & 0x80) == 0x00)
+			name = "adm1028";	/* adm1022 clone? */
+		else if ((probe(0x3f) & 0xf0) == 0xc0 &&
+		    (addr == 0x2c || addr == 0x2e || addr == 0x2f) &&
+		    (probe(0x40) & 0x80) == 0x00)
 			name = "adm1022";
-		else if ((probe(0xff) & 0xf0) == 0x00)
-			name = "adm1021";	/* ????? */
+		else if (probe(0x48) == addr && probe(0x00) == 0x00 &&
+		    (addr & 0x7c) == 0x2c)
+			name = "adm9240";	/* getting desperate! */
 		break;
 	case 0xa1:
 		/* Philips vendor code 0xa1 at 0x3e */
@@ -302,11 +311,32 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "lm93";
 		else if (probe(0x3f) == 0x17)
 			name = "lm86";
+		else if ((probe(0x3f) & 0xf0) == 0x60 &&
+		    (addr == 0x2c || addr == 0x2d || addr == 0x2e))
+			name = "lm85";		/* adt7460 compat */
+		else if (probe(0x3f) == 0x03 && probe(0x48) == addr &&
+		    ((probe(0x40) & 0x80) == 0x00) && ((addr & 0x7c) == 0x2c))
+		    	name = "lm81";
+		break;
+	case 0x49:	/* TI */
+		if ((probe(0x3f) & 0xf0) == 0xc0 &&
+		    (addr == 0x2c || addr == 0x2e || addr == 0x2f) &&
+		    (probe(0x40) & 0x80) == 0x00)
+			name = "thmc50";	/* adm1022 clone */
+		break;
+	case 0x5c:	/* SMSC */
+		if ((probe(0x3f) & 0xf0) == 0x60 &&
+		    (addr == 0x2c || addr == 0x2d || addr == 0x2e))
+			name = "emc6d10x";	/* adt7460 compat */
 		break;
 	case 0x02:
-		if ((probe(0x3f) & 0xfc) == 0x04) {
+		if ((probe(0x3f) & 0xfc) == 0x04)
 			name = "lm87";		/* complete check */
-		}
+		break;
+	case 0xda:
+		if (probe(0x3f) == 0x01 && probe(0x48) == addr &&
+		    probe(0x00) == 0x00)
+			name = "ds1780";	/* getting desperate! */
 		break;
 	}
 	switch (probe(0x4e)) {
@@ -337,6 +367,9 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		 */
 		if (probe(0x58) == 0x31)
 			name = "as99127f";
+	} else if (probe(0x16) == 0x41 && ((probe(0x17) & 0xf0) == 0x40) &&
+	    (addr == 0x2c || addr == 0x2d || addr == 0x2e)) {
+		name = "adm1026";
 	} else if ((addr & 0xfc) == 0x48 && lm75probe()) {
 		name = "lm75";
 #ifdef __i386__

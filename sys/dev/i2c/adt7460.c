@@ -1,4 +1,4 @@
-/*	$OpenBSD: adt7460.c,v 1.2 2005/11/17 01:09:36 deraadt Exp $	*/
+/*	$OpenBSD: adt7460.c,v 1.3 2005/12/27 09:23:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -81,7 +81,10 @@ adt_match(struct device *parent, void *match, void *aux)
 
 	if (ia->ia_compat) {
 		if (strcmp(ia->ia_compat, "adt7460") == 0 ||
-		    strcmp(ia->ia_compat, "adt7467") == 0)
+		    strcmp(ia->ia_compat, "adt7467") == 0 ||
+		    strcmp(ia->ia_compat, "adt7476") == 0 ||
+		    strcmp(ia->ia_compat, "lm85") == 0 ||
+		    strcmp(ia->ia_compat, "emc6d10x") == 0)
 			return (1);
 		return (0);
 	}
@@ -102,7 +105,10 @@ adt_attach(struct device *parent, struct device *self, void *aux)
 	iic_acquire_bus(sc->sc_tag, 0);
 
 	sc->sc_chip = 7460;
-	if (ia->ia_compat && strcmp(ia->ia_compat, "adt7467") == 0)
+	/* check for the fancy "extension" chips XXX */
+	if (ia->ia_compat &&
+	    (strcmp(ia->ia_compat, "adt7467") == 0 ||
+	    strcmp(ia->ia_compat, "adt7467") == 0))
 		sc->sc_chip = 7467;
 
 	cmd = ADT7460_REVISION;

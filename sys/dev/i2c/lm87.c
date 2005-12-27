@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm87.c,v 1.9 2005/12/27 03:54:27 deraadt Exp $	*/
+/*	$OpenBSD: lm87.c,v 1.10 2005/12/27 09:23:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -61,7 +61,8 @@ struct lmenv_softc {
 	i2c_addr_t sc_addr;
 
 	struct sensor sc_sensor[LMENV_NUM_SENSORS];
-	int sc_fan1_div, sc_fan2_div;
+	int	sc_fan1_div, sc_fan2_div;
+	int	sc_family;
 };
 
 int	lmenv_match(struct device *, void *, void *);
@@ -82,13 +83,13 @@ lmenv_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (ia->ia_name) {
-		if (strcmp(ia->ia_name, "lm87") == 0 ||
-		    strcmp(ia->ia_name, "lm87cimt") == 0)
-			return (1);
-		return (0);
-	}
-	return (1);	/* accept the address given */
+	if (strcmp(ia->ia_name, "lm87") == 0 ||
+	    strcmp(ia->ia_name, "lm87cimt") == 0 ||
+	    strcmp(ia->ia_name, "adm9240") == 0 ||
+	    strcmp(ia->ia_name, "lm81") == 0 ||
+	    strcmp(ia->ia_name, "ds1780") == 0)
+		return (1);
+	return (0);
 }
 
 void
@@ -102,6 +103,12 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
+	sc->sc_family = 87;
+	if (strcmp(ia->ia_name, "lm81") == 0 ||
+	    strcmp(ia->ia_name, "adm9240") == 0 ||
+	    strcmp(ia->ia_name, "ds1780") == 0)
+		sc->sc_family = 81;
+
 	iic_acquire_bus(sc->sc_tag, 0);
 
 	cmd = LM87_REVISION;
@@ -111,7 +118,7 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 		printf(": cannot read ID register\n");
 		return;
 	}
-	printf(": LM87 rev %x", data);
+	printf(": %s rev %x", ia->ia_name, data);
 
 	cmd = LM87_FANDIV;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
@@ -123,12 +130,14 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_fan1_div = 1 << ((data >> 4) & 0x03);
 	sc->sc_fan2_div = 1 << ((data >> 6) & 0x03);
 
-	cmd = LM87_CHANNEL;
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &channel, sizeof channel, 0)) {
-		iic_release_bus(sc->sc_tag, 0);
-		printf(", cannot read Channel register\n");
-		return;
+	if (sc->sc_family == 87) {
+		cmd = LM87_CHANNEL;
+		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+		    sc->sc_addr, &cmd, sizeof cmd, &channel, sizeof channel, 0)) {
+			iic_release_bus(sc->sc_tag, 0);
+			printf(", cannot read Channel register\n");
+			return;
+		}
 	}
 
 	cmd = LM87_CONFIG1;
@@ -149,8 +158,6 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 		}
 		printf(", starting scan");
 	}
-
-
 	iic_release_bus(sc->sc_tag, 0);
 
 	/* Initialize sensor data. */
@@ -185,6 +192,8 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sensor[LMENV_EXT_TEMP].type = SENSOR_TEMP;
 	strlcpy(sc->sc_sensor[LMENV_EXT_TEMP].desc, "Ext. Temp.",
 	    sizeof(sc->sc_sensor[LMENV_EXT_TEMP].desc));
+	if (sc->sc_family == 81)
+		sc->sc_sensor[LMENV_EXT_TEMP].flags |= SENSOR_FINVALID;		
 
 	sc->sc_sensor[LMENV_INT_TEMP].type = SENSOR_TEMP;
 	strlcpy(sc->sc_sensor[LMENV_INT_TEMP].desc, "Int. Temp.",
@@ -258,6 +267,9 @@ lmenv_refresh(void *arg)
 			sc->sc_sensor[sensor].value = 3300000 * data / 192;
 			break;
 		case LMENV_EXT_TEMP:
+			if (sc->sc_family == 81)
+				break;		/* missing on LM81 */
+			/* FALLTHROUGH */
 		case LMENV_INT_TEMP:
 			if (data == 0x80)
 				sc->sc_sensor[sensor].flags |= SENSOR_FINVALID;
