@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.19 2005/12/26 17:52:12 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.20 2005/12/27 03:46:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -266,7 +266,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		else if ((probe(0xff) & 0xf0) == 0x90)
 			name = "adm1022";
 		else if ((probe(0xff) & 0xf0) == 0x00)
-			name = "adm1021";
+			name = "adm1021";	/* ????? */
 		break;
 	case 0xa1:
 		/* Philips vendor code 0xa1 at 0x3e */
@@ -325,6 +325,11 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "lm90";
 	} else if (probe(0xfe) == 0x4d && probe(0xff) == 0x08) {
 		name = "maxim6690";	/* somewhat similar to lm90 */
+	} else if (probe(0xfe) == 0x41 && probe(0x3c) == 0x00 &&
+	    (addr == 0x18 || addr == 0x19 || addr == 0x1a ||
+	    addr == 0x29 || addr == 0x2a || addr == 0x2b ||
+	    addr == 0x4c || addr == 0x4d || addr == 0x4e)) {
+		name = "adm1021";	/* lots of addresses... bleah */
 	} else if (probe(0x4f) == 0x5c && (probe(0x4e) & 0x80)) {
 		/*
 		 * We should toggle 0x4e bit 0x80, then re-read
