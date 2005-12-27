@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.26 2005/12/27 21:51:03 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.27 2005/12/27 22:14:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -186,17 +186,24 @@ xeonprobe(u_int8_t addr)
 	if (addr == 0x18 || addr == 0x1a || addr == 0x29 ||
 	    addr == 0x2b || addr == 0x4c || addr == 0x4e) {
 		u_int8_t reg, val;
+		int zero = 0;
 
-		for (reg = 0x00; reg < 0x09; reg++)
+		for (reg = 0x00; reg < 0x09; reg++) {
 			if (probe(reg) == 0xff)
 				return (NULL);
+			if (probe(reg) == 0)
+				zero++;
+		}
+		if (zero > 8)
+			return (NULL);
 		val = probe(0x09);
-		for (reg = 0x0a; reg < 0xfe; reg++)
+		for (reg = 0x0a; reg < 0xfe; reg++) {
 			if (probe(reg) != val)
 				return (NULL);
+		}
+		/* 0xfe may be maxim, or some other vendor */
 		if (probe(0xfe) == 0x4d)
 			return ("maxim1617");
-		/* 0xfe may be maxim, or some other vendor */
 		return ("xeontemp");
 	}
 	return (NULL);
