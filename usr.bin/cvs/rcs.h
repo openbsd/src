@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.42 2005/12/08 18:56:10 joris Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.43 2005/12/27 16:05:21 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -83,15 +83,21 @@
 
 
 /* file flags */
-#define RCS_READ	0x01
-#define RCS_WRITE	0x02
-#define RCS_RDWR	(RCS_READ|RCS_WRITE)
-#define RCS_CREATE	0x04		/* create the file */
+#define RCS_READ	  (1<<0)
+#define RCS_WRITE	  (1<<1)
+#define RCS_RDWR	  (RCS_READ|RCS_WRITE)
+#define RCS_CREATE	  (1<<2)  /* create the file */
+#define RCS_PARSE_FULLY   (1<<3)  /* fully parse it on open */
 
 /* internal flags */
-#define RCS_PARSED	0x010000	/* file has been parsed */
-#define RCS_SYNCED	0x020000	/* in-mem copy is sync with disk copy */
-#define RCS_SLOCK	0x040000	/* strict lock */
+#define RCS_PARSED	  (1<<4)  /* file has been parsed */
+#define RCS_SYNCED	  (1<<5)  /* in-mem copy is sync with disk copy */
+#define RCS_SLOCK	  (1<<6)  /* strict lock */
+
+/* parser flags */
+#define PARSED_DELTAS     (1<<7)  /* all deltas are parsed */
+#define PARSED_DESC       (1<<8)  /* the description is parsed */
+#define PARSED_DELTATEXTS (1<<9)  /* all delta texts are parsed */
 
 /* delta flags */
 #define RCS_RD_DEAD	0x01	/* dead */
@@ -193,13 +199,13 @@ extern int rcs_errno;
 RCSFILE			*rcs_open(const char *, int, ...);
 void			 rcs_close(RCSFILE *);
 const RCSNUM		*rcs_head_get(RCSFILE *);
-int			 rcs_head_set(RCSFILE *, const RCSNUM *);
+int			 rcs_head_set(RCSFILE *, RCSNUM *);
 const RCSNUM		*rcs_branch_get(RCSFILE *);
 int			 rcs_branch_set(RCSFILE *, const RCSNUM *);
 int			 rcs_access_add(RCSFILE *, const char *);
 int			 rcs_access_remove(RCSFILE *, const char *);
 int			 rcs_access_check(RCSFILE *, const char *);
-struct rcs_delta	*rcs_findrev(RCSFILE *, const RCSNUM *);
+struct rcs_delta	*rcs_findrev(RCSFILE *, RCSNUM *);
 int			 rcs_sym_add(RCSFILE *, const char *, RCSNUM *);
 int			 rcs_sym_remove(RCSFILE *, const char *);
 RCSNUM			*rcs_sym_getrev(RCSFILE *, const char *);

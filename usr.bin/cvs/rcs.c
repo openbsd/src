@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.116 2005/12/24 04:10:51 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.117 2005/12/27 16:05:20 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -45,6 +45,7 @@
 
 #define RCS_BUFSIZE	16384
 #define RCS_BUFEXTSIZE	8192
+#define RCS_KWEXP_SIZE  1024
 
 
 /* RCS token types */
@@ -269,10 +270,13 @@ int rcs_errno = RCS_ERR_NOERR;
 
 
 static int	rcs_write(RCSFILE *);
-static int	rcs_parse(RCSFILE *);
+static int	rcs_parse_init(RCSFILE *);
 static int	rcs_parse_admin(RCSFILE *);
 static int	rcs_parse_delta(RCSFILE *);
+static int      rcs_parse_deltas(RCSFILE *, RCSNUM *);
 static int	rcs_parse_deltatext(RCSFILE *);
+static int      rcs_parse_deltatexts(RCSFILE *, RCSNUM *);
+static int      rcs_parse_desc(RCSFILE *, RCSNUM *);
 
 static int	rcs_parse_access(RCSFILE *);
 static int	rcs_parse_symbols(RCSFILE *);
@@ -345,7 +349,7 @@ rcs_open(const char *path, int flags, ...)
 	TAILQ_INIT(&(rfp->rf_locks));
 
 	if (rfp->rf_flags & RCS_CREATE) {
-	} else if (rcs_parse(rfp) < 0) {
+	} else if (rcs_parse_init(rfp) < 0) {
 		rcs_close(rfp);
 		return (NULL);
 	}
@@ -426,6 +430,7 @@ rcs_close(RCSFILE *rfp)
 		xfree(rfp->rf_expand);
 	if (rfp->rf_desc != NULL)
 		xfree(rfp->rf_desc);
+	rcs_freepdata(rfp->rf_pdata);
 	xfree(rfp);
 }
 
@@ -452,6 +457,9 @@ rcs_write(RCSFILE *rfp)
 	int fd, from_fd, to_fd;
 
 	from_fd = to_fd = fd = -1;
+
+	/* Write operations need the whole file parsed */
+	rcs_parse_deltatexts(rfp, NULL);
 
 	if (rfp->rf_flags & RCS_SYNCED)
 		return (0);
@@ -660,7 +668,7 @@ rcs_head_get(RCSFILE *file)
  * <rev>, which must reference a valid revision within the file.
  */
 int
-rcs_head_set(RCSFILE *file, const RCSNUM *rev)
+rcs_head_set(RCSFILE *file, RCSNUM *rev)
 {
 	struct rcs_delta *rd;
 
@@ -1233,12 +1241,16 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 		return (NULL);
 	}
 
+	/* No matter what, we're going to need up the the description parsed */
+	rcs_parse_desc(rfp, NULL);
+
 	rdp = rcs_findrev(rfp, rfp->rf_head);
 	if (rdp == NULL) {
 		cvs_log(LP_ERR, "failed to get RCS HEAD revision");
 		return (NULL);
 	}
-
+	if (rdp->rd_tlen == 0)
+		rcs_parse_deltatexts(rfp, rfp->rf_head);
 	len = rdp->rd_tlen;
 	if (len == 0) {
 		rbuf = cvs_buf_alloc(1, 0);
@@ -1260,8 +1272,10 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 				cvs_buf_free(rbuf);
 				return (NULL);
 			}
-
 			cvs_buf_putc(rbuf, '\0');
+			/* check if we have parsed this rev's deltatext */
+			if (rdp->rd_tlen == 0)
+				rcs_parse_deltatexts(rfp, rdp->rd_num);
 
 			bp = cvs_buf_release(rbuf);
 			rbuf = cvs_patchfile((char *)bp, (char *)rdp->rd_text,
@@ -1434,12 +1448,22 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
  * Returns a pointer to the delta on success, or NULL on failure.
  */
 struct rcs_delta *
-rcs_findrev(RCSFILE *rfp, const RCSNUM *rev)
+rcs_findrev(RCSFILE *rfp, RCSNUM *rev)
 {
 	u_int cmplen;
-	struct rcs_delta *rdp;
+	struct rcs_delta *rdp, *enddelta;
 	struct rcs_dlist *hp;
 	int found;
+
+	/*
+	 * We need to do more parsing if the last revision in the linked list
+	 * is greater than the requested revision.
+	 */
+	enddelta = TAILQ_LAST(&(rfp->rf_delta), rcs_dlist);
+	if ((enddelta == NULL)
+	    || (rcsnum_cmp(enddelta->rd_num, rev, -1) == -1)) {
+		rcs_parse_deltas(rfp, rev);
+	}
 
 	cmplen = 2;
 	hp = &(rfp->rf_delta);
@@ -1582,18 +1606,128 @@ rcs_kflag_usage(void)
 	    "\t-kb\tGenerate binary file unmodified (merges not allowed).\n");
 }
 
-/*
- * rcs_parse()
+/* rcs_parse_deltas()
  *
- * Parse the contents of file <path>, which are in the RCS format.
+ * Parse deltas. If <rev> is not NULL, parse only as far as that
+ * revision. If <rev> is NULL, parse all deltas.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+static int
+rcs_parse_deltas(RCSFILE *rfp, RCSNUM *rev)
+{
+	int ret;
+	struct rcs_delta *enddelta;
+	if ((rfp->rf_flags & PARSED_DELTAS)
+	    || (rfp->rf_flags & RCS_CREATE))
+		return (0);
+	for (;;) {
+		ret = rcs_parse_delta(rfp);
+		if (rev != NULL) {
+			enddelta = TAILQ_LAST(&(rfp->rf_delta), rcs_dlist);
+			if (rcsnum_cmp(enddelta->rd_num, rev, -1) == 0)
+				break;
+		}
+		if (ret == 0) {
+			rfp->rf_flags |= PARSED_DELTAS;
+			break;
+		}
+		else if (ret == -1)
+			fatal("error parsing deltas");
+	}
+	return (0);
+}
+
+/* rcs_parse_deltatexts()
+ *
+ * Parse deltatexts. If <rev> is not NULL, parse only as far as that
+ * revision. If <rev> is NULL, parse everything.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+static int
+rcs_parse_deltatexts(RCSFILE *rfp, RCSNUM *rev)
+{
+	int ret;
+	struct rcs_delta *rdp;
+	if ((rfp->rf_flags & PARSED_DELTATEXTS)
+	    || (rfp->rf_flags & RCS_CREATE))
+		return (0);
+	if (!(rfp->rf_flags & PARSED_DESC))
+		rcs_parse_desc(rfp, rev);
+	for (;;) {
+		if (rev != NULL) {
+			rdp = rcs_findrev(rfp, rev);
+			if (rdp->rd_text != NULL)
+				break;
+			else
+				ret = rcs_parse_deltatext(rfp);
+		} else
+			ret = rcs_parse_deltatext(rfp);
+		if (ret == 0) {
+			rfp->rf_flags |= PARSED_DELTATEXTS;
+			break;
+		}
+		else if (ret == -1) {
+			fatal("problem parsing deltatexts");
+		}
+	}
+
+	return (0);
+}
+
+/* rcs_parse_desc()
+ *
+ * Parse RCS description.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+static int
+rcs_parse_desc(RCSFILE *rfp, RCSNUM *rev)
+{
+	int ret = 0;
+	if ((rfp->rf_flags & PARSED_DESC)
+	    || (rfp->rf_flags & RCS_CREATE))
+		return (0);
+        if (!(rfp->rf_flags & PARSED_DELTAS))
+		rcs_parse_deltas(rfp, rev);
+	/* do parsing */
+	ret = rcs_gettok(rfp);
+	if (ret != RCS_TOK_DESC) {
+		rcs_errno = RCS_ERR_PARSE;
+		cvs_log(LP_ERR, "token `%s' found where RCS desc expected",
+		    RCS_TOKSTR(rfp));
+		fatal("problem parsing RCS desc");
+		return (-1);
+	}
+
+	ret = rcs_gettok(rfp);
+	if (ret != RCS_TOK_STRING) {
+		rcs_errno = RCS_ERR_PARSE;
+		cvs_log(LP_ERR, "token `%s' found where RCS desc expected",
+		    RCS_TOKSTR(rfp));
+		fatal("problem parsing RCS desc");
+	}
+
+	rfp->rf_desc = xstrdup(RCS_TOKSTR(rfp));
+	rfp->rf_flags |= PARSED_DESC;
+	return (0);
+}
+
+/*
+ * rcs_parse_init()
+ *
+ * Initial parsing of file <path>, which are in the RCS format.
+ * Just does admin section
  * Returns 0 on success, or -1 on failure.
  */
 static int
-rcs_parse(RCSFILE *rfp)
+rcs_parse_init(RCSFILE *rfp)
 {
-	int ret;
+	int ret, count;
 	struct rcs_pdata *pdp;
 
+	count = 0;
 	if (rfp->rf_flags & RCS_PARSED)
 		return (0);
 
@@ -1616,53 +1750,13 @@ rcs_parse(RCSFILE *rfp)
 
 	if ((ret = rcs_parse_admin(rfp)) < 0) {
 		rcs_freepdata(pdp);
-		return (-1);
-	} else if (ret == RCS_TOK_NUM) {
-		for (;;) {
-			ret = rcs_parse_delta(rfp);
-			if (ret == 0)
-				break;
-			else if (ret == -1) {
-				rcs_freepdata(pdp);
-				return (-1);
-			}
-		}
+		fatal("could not parse admin data");
 	}
 
-	ret = rcs_gettok(rfp);
-	if (ret != RCS_TOK_DESC) {
-		rcs_errno = RCS_ERR_PARSE;
-		cvs_log(LP_ERR, "token `%s' found where RCS desc expected",
-		    RCS_TOKSTR(rfp));
-		rcs_freepdata(pdp);
-		return (-1);
-	}
+	if (rfp->rf_flags & RCS_PARSE_FULLY)
+		rcs_parse_deltatexts(rfp, NULL);
 
-	ret = rcs_gettok(rfp);
-	if (ret != RCS_TOK_STRING) {
-		rcs_errno = RCS_ERR_PARSE;
-		cvs_log(LP_ERR, "token `%s' found where RCS desc expected",
-		    RCS_TOKSTR(rfp));
-		rcs_freepdata(pdp);
-		return (-1);
-	}
-
-	rfp->rf_desc = xstrdup(RCS_TOKSTR(rfp));
-	for (;;) {
-		ret = rcs_parse_deltatext(rfp);
-		if (ret == 0)
-			break;
-		else if (ret == -1) {
-			rcs_freepdata(pdp);
-			return (-1);
-		}
-	}
-
-	rcs_freepdata(pdp);
-
-	rfp->rf_pdata = NULL;
-	rfp->rf_flags |= RCS_PARSED | RCS_SYNCED;
-
+	rfp->rf_flags |= RCS_SYNCED;
 	return (0);
 }
 
@@ -2669,6 +2763,9 @@ rcs_deltatext_set(RCSFILE *rfp, RCSNUM *rev, const char *dtext)
 {
 	size_t len;
 	struct rcs_delta *rdp;
+
+	/* Write operations require full parsing */
+	rcs_parse_deltatexts(rfp, NULL);
 
 	if ((rdp = rcs_findrev(rfp, rev)) == NULL)
 		return (-1);

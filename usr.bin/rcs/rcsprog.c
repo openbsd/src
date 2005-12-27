@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.57 2005/12/24 16:37:46 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.58 2005/12/27 16:05:21 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -383,7 +383,7 @@ rcs_main(int argc, char **argv)
 
 	kflag = lkmode = -1;
 	fmode = 0;
-	flags = RCS_RDWR;
+	flags = RCS_RDWR|RCS_PARSE_FULLY;
 	descfile = nflag = NULL;
 	logstr = alist = comment = elist = NULL;
 
