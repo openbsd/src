@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.63 2005/12/09 09:09:52 jsg Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.64 2005/12/27 18:35:34 miod Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -375,6 +375,8 @@ uprintf(const char *fmt, ...)
 	}
 }
 
+#if defined(NFSSERVER) || defined(NFSCLIENT)
+
 /*
  * tprintf functions: used to send messages to a specific process
  *
@@ -437,6 +439,8 @@ tprintf(tpr_t tpr, const char *fmt, ...)
 	va_end(ap);
 	logwakeup();
 }
+
+#endif	/* NFSSERVER || NFSCLIENT */
 
 
 /*
