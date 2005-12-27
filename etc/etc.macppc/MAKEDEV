@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.macppc/MAKEDEV.md,v 1.22 2005/11/16 03:44:12 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.21 2005/10/06 06:43:19 otto Exp 
+#	OpenBSD: MAKEDEV.common,v 1.23 2005/12/27 19:02:42 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -47,7 +47,7 @@
 #	pty*	Set of 62 master pseudo terminals
 #	tty*	Set of 62 slave pseudo terminals
 # Console ports:
-#	ttyC0	Minimal wscons devices
+#	wscons	Minimal wscons devices
 #	ttyC-F*	wscons display devices
 #	wskbd*	wscons keyboards
 #	wsmux	wscons keyboard/mouse mux devices
@@ -68,7 +68,7 @@
 #	bktr*	Video frame grabbers
 #	bpf*	Berkeley Packet Filter
 #	crypto	Hardware crypto access driver
-#	fd	fd/* nodes for fdescfs
+#	fd	fd/* nodes
 #	hotplug	devices hot plugging
 #	gpio*	General Purpose Input/Output
 #	iop*	I2O controller devices

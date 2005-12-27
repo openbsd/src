@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.vax/MAKEDEV.md,v 1.21 2005/08/01 22:22:14 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.21 2005/10/06 06:43:19 otto Exp 
+#	OpenBSD: MAKEDEV.common,v 1.23 2005/12/27 19:02:42 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -67,7 +67,7 @@
 #	tty*	Set of 62 slave pseudo terminals
 # Special purpose devices:
 #	bpf*	Berkeley Packet Filter
-#	fd	fd/* nodes for fdescfs
+#	fd	fd/* nodes
 #	lkm	Loadable kernel modules interface
 #	pf*	Packet Filter
 #	*random	In-kernel random data source

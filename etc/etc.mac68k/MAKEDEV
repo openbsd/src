@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.20 2005/10/20 21:44:42 jmc Exp 
-#	OpenBSD: MAKEDEV.common,v 1.21 2005/10/06 06:43:19 otto Exp 
+#	OpenBSD: MAKEDEV.common,v 1.23 2005/12/27 19:02:42 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -51,7 +51,7 @@
 # Special purpose devices:
 #	asc*	ASC Audio device
 #	bpf*	Berkeley Packet Filter
-#	fd	fd/* nodes for fdescfs
+#	fd	fd/* nodes
 #	lkm	Loadable kernel modules interface
 #	pf*	Packet Filter
 #	*random	In-kernel random data source
