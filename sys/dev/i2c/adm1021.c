@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.13 2005/12/27 22:18:44 deraadt Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.14 2005/12/27 22:55:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -166,7 +166,8 @@ admtemp_refresh(void *arg)
 				sc->sc_sensor[ADMTEMP_INT].flags &= ~SENSOR_FINVALID;
 			}
 		}
-	}
+	} else
+		sc->sc_sensor[ADMTEMP_INT].flags &= ~SENSOR_FINVALID;
 
 	iic_release_bus(sc->sc_tag, 0);
 }
