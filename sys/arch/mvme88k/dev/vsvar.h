@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsvar.h,v 1.17 2004/09/06 06:25:28 miod Exp $	*/
+/*	$OpenBSD: vsvar.h,v 1.18 2005/12/27 21:38:13 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -84,10 +84,11 @@ struct m328_sg {
 
 typedef struct m328_sg *M328_SG;
 
-typedef struct {
-	struct scsi_xfer *xs;
-	M328_SG top_sg_list;
-} M328_CMD;
+struct vs_cb {
+	struct scsi_xfer *cb_xs;
+	u_int	cb_q;
+	M328_SG cb_sg;
+};
 
 struct vs_softc {
 	struct device		sc_dev;
@@ -100,6 +101,7 @@ struct vs_softc {
 	int			sc_evec, sc_nvec;
 	int			sc_id[2];
 	struct scsi_link	sc_link[2];
+	struct vs_cb		sc_cb[NUM_WQ];
 };
 
 /* Access macros */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.56 2005/12/03 18:09:37 krw Exp $	*/
+/*	$OpenBSD: vs.c,v 1.57 2005/12/27 21:38:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -97,7 +97,7 @@ M328_SG	vs_build_memory_structure(struct vs_softc *, struct scsi_xfer *,
 void	vs_chksense(struct scsi_xfer *);
 void	vs_dealloc_scatter_gather(M328_SG);
 int	vs_eintr(void *);
-void	vs_free(M328_CMD *);
+void	vs_free(struct vs_cb *);
 bus_addr_t vs_getcqe(struct vs_softc *);
 bus_addr_t vs_getiopb(struct vs_softc *);
 int	vs_initialize(struct vs_softc *);
@@ -105,7 +105,7 @@ int	vs_intr(struct vs_softc *);
 void	vs_link_sg_element(sg_list_element_t *, vaddr_t, int);
 void	vs_link_sg_list(sg_list_element_t *, vaddr_t, int);
 int	vs_nintr(void *);
-int	vs_poll(struct vs_softc *, M328_CMD *);
+int	vs_poll(struct vs_softc *, struct vs_cb *);
 void	vs_print_addr(struct vs_softc *, struct scsi_xfer *);
 int	vs_queue_number(struct scsi_link *, struct vs_softc *);
 void	vs_reset(struct vs_softc *, int);
@@ -274,12 +274,12 @@ do_vspoll(struct vs_softc *sc, struct scsi_xfer *xs, int canreset)
 }
 
 int
-vs_poll(struct vs_softc *sc, M328_CMD *cmd)
+vs_poll(struct vs_softc *sc, struct vs_cb *cmd)
 {
 	struct scsi_xfer *xs;
 	int rc;
 
-	xs = cmd->xs;
+	xs = cmd->cb_xs;
 	rc = do_vspoll(sc, xs, 1);
 	vs_free(cmd);
 
@@ -357,7 +357,13 @@ vs_scsicmd(struct scsi_xfer *xs)
 	int flags, option;
 	unsigned int iopb_len;
 	bus_addr_t cqep, iopb;
-	M328_CMD *m328_cmd;
+	struct vs_cb *cb;
+	u_int queue;
+
+	queue = flags & SCSI_POLL ? 0 : vs_queue_number(slp, sc);
+	cb = &sc->sc_cb[queue];
+	if (cb->cb_xs != NULL)
+		return (TRY_AGAIN_LATER);
 
 	flags = xs->flags;
 	if (flags & SCSI_POLL) {
@@ -425,18 +431,15 @@ vs_scsicmd(struct scsi_xfer *xs)
 
 	vs_write(2, cqep + CQE_IOPB_ADDR, iopb);
 	vs_write(1, cqep + CQE_IOPB_LENGTH, iopb_len);
-	vs_write(1, cqep + CQE_WORK_QUEUE,
-	    flags & SCSI_POLL ? 0 : vs_queue_number(slp, sc));
+	vs_write(1, cqep + CQE_WORK_QUEUE, queue);
 
-	MALLOC(m328_cmd, M328_CMD*, sizeof(M328_CMD), M_DEVBUF, M_WAITOK);
-
-	m328_cmd->xs = xs;
+	cb->cb_xs = xs;
 	if (xs->datalen != 0)
-		m328_cmd->top_sg_list = vs_build_memory_structure(sc, xs, iopb);
+		cb->cb_sg = vs_build_memory_structure(sc, xs, iopb);
 	else
-		m328_cmd->top_sg_list = NULL;
+		cb->cb_sg = NULL;
 
-	vs_write(4, cqep + CQE_CTAG, (u_int32_t)m328_cmd);
+	vs_write(4, cqep + CQE_CTAG, (u_int32_t)cb);
 
 	if (crb_read(2, CRB_CRSW) & M_CRSW_AQ)
 		vs_write(2, cqep + CQE_QECR, M_QECR_AA | M_QECR_GO);
@@ -445,7 +448,7 @@ vs_scsicmd(struct scsi_xfer *xs)
 
 	if (flags & SCSI_POLL) {
 		/* poll for the command to complete */
-		return vs_poll(sc, m328_cmd);
+		return vs_poll(sc, cb);
 	}
 
 	return (SUCCESSFULLY_QUEUED);
@@ -764,13 +767,13 @@ vs_reset(struct vs_softc *sc, int bus)
 }
 
 void
-vs_free(M328_CMD *m328_cmd)
+vs_free(struct vs_cb *cb)
 {
-	if (m328_cmd->top_sg_list != NULL) {
-		vs_dealloc_scatter_gather(m328_cmd->top_sg_list);
-		m328_cmd->top_sg_list = (M328_SG)NULL;
+	if (cb->cb_sg != NULL) {
+		vs_dealloc_scatter_gather(cb->cb_sg);
+		cb->cb_sg = NULL;
 	}
-	FREE(m328_cmd, M_DEVBUF); /* free the command tag */
+	cb->cb_xs = NULL;
 }
 
 /* normal interrupt routine */
@@ -778,7 +781,7 @@ int
 vs_nintr(void *vsc)
 {
 	struct vs_softc *sc = (struct vs_softc *)vsc;
-	M328_CMD *m328_cmd;
+	struct vs_cb *cb;
 	struct scsi_xfer *xs;
 	int s;
 
@@ -787,17 +790,17 @@ vs_nintr(void *vsc)
 
 	/* Got a valid interrupt on this device */
 	s = splbio();
-	m328_cmd = (void *)crb_read(4, CRB_CTAG);
+	cb = (struct vs_cb *)crb_read(4, CRB_CTAG);
 
 	/*
-	 * If this is a controller error, there won't be a m328_cmd
+	 * If this is a controller error, there won't be a cb
 	 * pointer in the CTAG field.  Bad things happen if you try
 	 * to point to address 0.  But then, we should have caught
 	 * the controller error above.
 	 */
-	if (m328_cmd != NULL) {
-		xs = m328_cmd->xs;
-		vs_free(m328_cmd);
+	if (cb != NULL) {
+		xs = cb->cb_xs;
+		vs_free(cb);
 
 		vs_scsidone(sc, xs);
 	}
@@ -818,7 +821,7 @@ int
 vs_eintr(void *vsc)
 {
 	struct vs_softc *sc = (struct vs_softc *)vsc;
-	M328_CMD *m328_cmd;
+	struct vs_cb *cb;
 	struct scsi_xfer *xs;
 	int crsw, ecode;
 	int s;
@@ -828,8 +831,8 @@ vs_eintr(void *vsc)
 
 	crsw = vs_read(2, sh_CEVSB + CEVSB_CRSW);
 	ecode = vs_read(1, sh_CEVSB + CEVSB_ERROR);
-	m328_cmd = (void *)crb_read(4, CRB_CTAG);
-	xs = m328_cmd != NULL ? m328_cmd->xs : NULL;
+	cb = (struct vs_cb *)crb_read(4, CRB_CTAG);
+	xs = cb != NULL ? cb->cb_xs : NULL;
 
 	if (crsw & M_CRSW_RST) {
 		printf("%s: bus reset\n", sc->sc_dev.dv_xname);
