@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.8 2005/12/27 04:43:01 tedu Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.9 2005/12/27 04:46:32 tedu Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -168,7 +168,7 @@ main(int argc, char **argv)
 			break;
 		case 'w':
 			wflag = strtonum(optarg, WIDTH_MIN,
-			    (MIN(SIZE_T_MAX, LLONG_MAX)), &errstr);
+			    INT_MAX, &errstr);
 			if (errstr)
 				errx(2, "width is %s: %s", errstr, optarg);
 			break;
@@ -282,8 +282,7 @@ xstrtonum(const char *nptr)
 		*ptr = '\0';
 
 	/* Parse number. */
-	/* XXX - Is it safe to compare SIZE_T_MAX and LLONG_MAX? */
-	n = strtonum(copy, 0, MIN(SIZE_T_MAX, LLONG_MAX), &errstr);
+	n = strtonum(copy, 0, INT_MAX, &errstr);
 	if (errstr)
 		errx(2, "line number in diff is %s: %s", errstr, nptr);
 
