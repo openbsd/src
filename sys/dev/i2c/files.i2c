@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.22 2005/12/27 20:47:00 kettenis Exp $
+# $OpenBSD: files.i2c,v 1.23 2005/12/27 21:22:51 deraadt Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -71,17 +71,17 @@ attach	pcagpio at i2c
 file	dev/i2c/pca9554.c			pcagpio
 
 # Maxim DS1631
-device	maxds: gpiobus
+device	maxds
 attach	maxds at i2c
 file	dev/i2c/ds1631.c			maxds
 
 # Apple FCU
-device	fcu: gpiobus
+device	fcu
 attach	fcu at i2c
 file	dev/i2c/fcu.c				fcu
 
 # Apple ADT
-device	adt: gpiobus
+device	adt
 attach	adt at i2c
 file	dev/i2c/adt7460.c			adt
 
