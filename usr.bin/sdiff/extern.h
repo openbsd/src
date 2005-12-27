@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.1 2005/12/27 04:04:56 tedu Exp $	*/
+/*	$OpenBSD: extern.h,v 1.2 2005/12/27 04:06:16 tedu Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
