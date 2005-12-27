@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.19 2005/12/12 17:47:03 joris Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.20 2005/12/27 16:08:26 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -37,6 +37,7 @@
 
 
 static int	rcsnum_setsize(RCSNUM *, u_int);
+static char     *rcsnum_itoa(u_int16_t, char *, size_t);
 
 
 /*
@@ -111,13 +112,30 @@ rcsnum_tostr(const RCSNUM *nump, char *buf, size_t blen)
 		return (buf);
 	}
 
-	snprintf(buf, blen, "%u", nump->rn_id[0]);
+	strlcpy(buf, rcsnum_itoa(nump->rn_id[0], buf, blen), blen);
 	for (i = 1; i < nump->rn_len; i++) {
-		snprintf(tmp, sizeof(tmp), ".%u", nump->rn_id[i]);
-		strlcat(buf, tmp, blen);
+		strlcat(buf, ".", blen);
+		strlcat(buf, rcsnum_itoa(nump->rn_id[i], tmp, sizeof(tmp)),
+		    blen);
 	}
 
 	return (buf);
+}
+
+static char *
+rcsnum_itoa(u_int16_t num, char *buf, size_t len)
+{
+        u_int16_t i;
+        char *p;   
+
+        p = buf + len - 1;
+        i = num;
+	bzero(buf, len);
+        while (i) {
+                *--p = '0' + (i % 10);
+                i  /= 10;
+        }
+        return (p);    
 }
 
 /*
