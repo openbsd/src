@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.12 2005/12/27 18:28:51 deraadt Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.13 2005/12/27 22:18:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -96,7 +96,7 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 		printf(", cannot get control register\n");
 		return;
 	}
-	if ((data & ADM1021_CONFIG_RUN) == 0) {
+	if (data & ADM1021_CONFIG_RUN) {
 		data &= ~ADM1021_CONFIG_RUN;
 		cmd = ADM1021_CONFIG_WRITE;
 		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
