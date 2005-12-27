@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.23 2005/12/27 19:46:28 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.24 2005/12/27 21:22:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -289,7 +289,9 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "adm9240";	/* lm87 clone */
 		break;
 	case 0x55:
-		if (probe(0x3f) == 0x20)
+		if (probe(0x3f) == 0x20 && (probe(0x47) & 0x70) == 0x00 &&
+		    (probe(0x49) & 0xfe) == 0x80 &&
+		    (addr & 0x7c) == 0x2c)
 			name = "47m192";	/* adm1025 compat */
 		break;
 	case 0x01:
