@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.6 2005/12/27 04:33:31 tedu Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.7 2005/12/27 04:35:22 tedu Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -776,10 +776,10 @@ astrcat(char **s, const char *append)
 	 * the terminating NUL.  `copied' includes the \n character.
 	 */
 	if (Dflag)
-		assert(offset + copied + sizeof((char)'\0') == newlen);
+		assert(offset + copied + 1 == newlen);
 
 	/* Store generated string's values. */
-	offset = newlen - sizeof((char)'\0');
+	offset = newlen - 1;
 	oldstr = *s;
 }
 
