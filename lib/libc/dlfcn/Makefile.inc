@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2001/11/20 01:09:38 pvalchev Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2005/12/27 18:42:24 drahn Exp $
 
 .PATH: ${LIBCSRCDIR}/dlfcn
 
@@ -6,5 +6,4 @@
 
 .if ${ELF_TOOLCHAIN:L} == "yes"
 SRCS+=		dlfcn_stubs.c
-CPPFLAGS+=	-I${.CURDIR}/dlfcn
 .endif
