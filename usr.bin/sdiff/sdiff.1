@@ -1,0 +1,117 @@
+.\"	$Id: sdiff.1,v 1.1 2005/12/27 04:04:56 tedu Exp $
+.\"
+.\" Written by Raymond Lai <ray@cyth.net>.
+.\" Public domain.
+.\"
+.Dd October 29, 2005
+.Dt SDIFF 1
+.Os
+.Sh NAME
+.Nm sdiff
+.Nd side-by-side diff
+.Sh SYNOPSIS
+.Nm
+.Op Fl abDdilstW
+.Op Fl I Ar regexp
+.Op Fl o Ar outfile
+.Op Fl w Ar width
+.Ar file1
+.Ar file2
+.Sh DESCRIPTION
+Shows a side-by-side comparison of two files.
+.Pp
+The options are:
+.Bl -tag -width Ds
+.It Fl l
+Only print left column for identical lines.
+.It Fl o Ar outfile
+Interactively merge 
+.Ar file1
+and
+.Ar file2
+into
+.Ar outfile .
+In this mode, the user is prompted for each set of differences.
+.Pp
+The commands are:
+.Bl -tag -width Ds
+.It Cm l
+Choose left set of diffs.
+.It Cm r
+Choose right set of diffs.
+.It Cm s
+Silent mode \(en identical lines are not printed.
+.It Cm v
+Verbose mode \(en identical lines are printed.
+.It Cm e
+Start editing an empty file, which will be merged into
+.Ar outfile
+upon exiting the editor.
+.It Cm e Cm l
+Start editing file with left set of diffs.
+.It Cm e Cm r
+Start editing file with right set of diffs.
+.It Cm e Cm b
+Start editing file with both sets of diffs.
+.It Cm q
+Quit
+.Nm .
+.El
+.It Fl s
+Skip identical lines.
+.It Fl D
+Debug mode.
+Verifies whenever possible.
+Used to test how well
+.Nm
+works with various
+.Xr diff 1
+implementations.
+.It Fl w Ar width
+Print a maximum of
+.Ar width
+characters on each line.
+The default is 130 characters.
+.El
+.Pp
+Options passed to
+.Xr diff 1
+are:
+.Bl -tag -width Ds
+.It Fl a
+Treat
+.Ar file1
+and
+.Ar file2
+as text files.
+.It Fl b
+Ignore trailing blank spaces.
+.It Fl d
+Minimize diff size.
+.It Fl I Ar regexp
+Ignore line changes matching
+.Ar regexp .
+.It Fl i
+Do a case-insensitive comparison.
+.It Fl t
+Expand tabs to spaces.
+.It Fl W
+Ignore all spaces.
+(The
+.Fl w
+flag is passed to
+.Xr diff 1 .)
+.El
+.Sh CAVEATS
+Although undocumented,
+.Nm
+supports all options supported by GNU sdiff.
+Some options require GNU diff.
+.Pp
+Tabs are treated as anywhere from one to eight characters wide,
+depending on the current column.
+Terminals that treat tabs as eight characters wide will look best.
+.Sh AUTHORS
+.Nm
+was written from scratch for the public domain by
+.An Ray Lai Aq ray@cyth.net .
