@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.9 2005/12/27 04:46:32 tedu Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.10 2005/12/27 05:04:27 deraadt Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -85,16 +85,10 @@ int
 main(int argc, char **argv)
 {
 	FILE *difffile, *origfile;
-	size_t argc_max, diffargc, wflag;
+	size_t diffargc = 0, wflag = WIDTH;
 	int ch, fd[2], status;
 	pid_t pid;
-	const char *cmd, **diffargv, *diffprog;
-
-	/* Initialize variables. */
-	diffargc = 0;
-	diffprog = "diff";
-	outfile = NULL;
-	wflag = WIDTH;
+	const char *cmd, **diffargv, *diffprog = "diff";
 
 	/*
 	 * Process diff flags.
@@ -107,8 +101,7 @@ main(int argc, char **argv)
 	 * waste some memory; however we need an extra space for the
 	 * NULL at the end, so it sort of works out.
 	 */
-	argc_max = argc * 2;
-	if (!(diffargv = malloc(sizeof(char **) * argc_max)))
+	if (!(diffargv = malloc(sizeof(char **) * argc * 2)))
 		err(2, "main");
 
 	/* Add first argument, the program name. */
