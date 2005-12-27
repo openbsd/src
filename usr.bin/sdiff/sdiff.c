@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.2 2005/12/27 04:06:16 tedu Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.3 2005/12/27 04:18:07 tedu Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -62,6 +62,7 @@ size_t	 file1ln, file2ln;	/* line number of file1 and file2 */
 int	 Dflag;		/* debug - verify lots of things */
 int	 lflag;		/* print only left column for identical lines */
 int	 sflag;		/* skip identical lines */
+FILE	*outfile;	/* file to save changes to */
 
 static struct option longopts[] = {
 	{ "text",			no_argument,		NULL,	'a' },
@@ -369,7 +370,7 @@ prompt(const char *s1, const char *s2)
 	putchar('%');
 
 	/* Get user input. */
-	for (; (cmd = xfgets(stdin)); free((char *)cmd)) {
+	for (; (cmd = xfgets(stdin)); free((void *)cmd)) {
 		const char *p;
 
 		/* Skip leading whitespace. */
@@ -423,7 +424,7 @@ PROMPT:
 			continue;
 		}
 
-		free((char *)cmd);
+		free((void *)cmd);
 		return;
 	}
 
@@ -675,7 +676,7 @@ parsecmd(FILE *difffile, FILE *origfile)
 		errx(2, "invalid diff command: %c: %s", cmd, line);
 	}
 
-	return (!EOF);
+	return (0);
 }
 
 /*
@@ -704,13 +705,13 @@ freediff(const struct diffline *diffp)
 		assert(diffp);
 
 	if (diffp->left)
-		free((char *)diffp->left);
+		free((void *)diffp->left);
 	/*
 	 * Free right string only if it is different than left.
 	 * The strings are the same when the lines are identical.
 	 */
 	if (diffp->right && diffp->right != diffp->left)
-		free((char *)diffp->right);
+		free((void *)diffp->right);
 }
 
 /*
@@ -953,7 +954,7 @@ printc(FILE *file1, size_t file1end, FILE *file2, size_t file2end)
 			    line2, line1);
 
 		/* Unused now. */
-		free((char *)line2);
+		free((void *)line2);
 
 		/* Add to delete queue. */
 		if (!(linep = malloc(sizeof(struct fileline))))
@@ -1050,7 +1051,7 @@ printd(FILE *file1, FILE *file2, size_t file1end)
 		if (Dflag && strcmp(line1, line2 + 2) != 0)
 			warnx("diff differs from file1:\ndiff:\n%s\nfile:\n%s",
 			    line2, line1);
-		free((char *)line2);
+		free((void *)line2);
 		enqueue(line1, '<', NULL);
 	}
 	processq();
