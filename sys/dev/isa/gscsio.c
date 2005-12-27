@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscsio.c,v 1.5 2005/12/25 19:02:32 grange Exp $	*/
+/*	$OpenBSD: gscsio.c,v 1.6 2005/12/27 21:20:02 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -252,6 +252,7 @@ gscsio_acb_init(struct gscsio_acb *acb, i2c_tag_t tag)
 
 	iba.iba_name = "iic";
 	iba.iba_tag = tag;
+	iba.iba_scan = 1;
 	config_found(&sc->sc_dev, &iba, iicbus_print);
 }
 
@@ -271,8 +272,10 @@ gscsio_acb_wait(struct gscsio_acb *acb, int bits, int flags)
 			return (EIO);
 		}
 		if (st & GSCSIO_ACB_ST_NEGACK) {
+#if 0
 			printf("%s: negative ack, flags=0x%x\n",
 			    sc->sc_dev.dv_xname, flags);
+#endif
 			gscsio_acb_reset(acb);
 			return (EIO);
 		}
