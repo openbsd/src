@@ -1,4 +1,4 @@
-/*	$OpenBSD: maci2c.c,v 1.3 2005/11/16 00:09:31 deraadt Exp $	*/
+/*	$OpenBSD: maci2c.c,v 1.4 2005/12/27 17:18:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -48,7 +48,7 @@ maciic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct maci2cbus_attach_args *iba = aux;
 	struct i2c_attach_args ia;
-	char name[32], compat[32];
+	char name[32];
 	u_int32_t reg;
 	int node;
 
@@ -61,16 +61,16 @@ maciic_attach(struct device *parent, struct device *self, void *aux)
 		ia.ia_tag = iba->iba_tag;
 		ia.ia_addr = (reg >> 1);
 		ia.ia_name = NULL;
-		ia.ia_compat = NULL;
-		memset(compat, 0, sizeof compat);
 		memset(name, 0, sizeof name);
-		if (OF_getprop(node, "name", &name,
-		    sizeof name))
+		if (OF_getprop(node, "compatible", &name,
+		    sizeof name) && name[0])
 			ia.ia_name = name;
-		if (OF_getprop(node, "compatible", &compat,
-		    sizeof compat))
-			ia.ia_compat = compat;
-		config_found(self, &ia, maciic_print);
+		if (ia.ia_name == NULL && 
+		    OF_getprop(node, "name", &name,
+		    sizeof name) && name[0])
+			ia.ia_name = name;
+		if (ia.ia_name)
+			config_found(self, &ia, maciic_print);
 	}
 }
 
@@ -80,7 +80,7 @@ maciic_print(void *aux, const char *pnp)
 	struct i2c_attach_args *ia = aux;
 
 	if (pnp != NULL) {
-		printf("%s at %s", ia->ia_name, pnp);
+		printf("\"%s\" at %s", ia->ia_name, pnp);
 	}
 	printf(" addr 0x%x", ia->ia_addr);
 

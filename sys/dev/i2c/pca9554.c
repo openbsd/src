@@ -1,4 +1,4 @@
-/*	$OpenBSD: pca9554.c,v 1.5 2005/12/21 21:53:15 deraadt Exp $	*/
+/*	$OpenBSD: pca9554.c,v 1.6 2005/12/27 17:18:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -70,15 +70,12 @@ pcagpio_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (ia->ia_compat) {
-		if (strcmp(ia->ia_compat, "PCA9554") == 0 ||
-		    strcmp(ia->ia_compat, "PCA9554M") == 0 ||
-		    strcmp(ia->ia_compat, "pca9556") == 0 ||
-		    strcmp(ia->ia_compat, "pca9557") == 0)
-			return (1);
-		return (0);
-	}
-	return (1);
+	if (strcmp(ia->ia_name, "PCA9554") == 0 ||
+	    strcmp(ia->ia_name, "PCA9554M") == 0 ||
+	    strcmp(ia->ia_name, "pca9556") == 0 ||
+	    strcmp(ia->ia_name, "pca9557") == 0)
+		return (1);
+	return (0);
 }
 
 void

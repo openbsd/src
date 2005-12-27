@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1025.c,v 1.12 2005/12/24 19:46:33 deraadt Exp $	*/
+/*	$OpenBSD: adm1025.c,v 1.13 2005/12/27 17:18:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -100,19 +100,21 @@ admtm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
+	printf(": %s", ia->ia_name);
+
 	iic_acquire_bus(sc->sc_tag, 0);
 	cmd = ADM1025_CONFIG;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL)) {
 		iic_release_bus(sc->sc_tag, 0);
-		printf(": cannot get control register\n");
+		printf(", cannot get control register\n");
 		return;
 	}
 	data |= 0x01;
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL)) {
 		iic_release_bus(sc->sc_tag, 0);
-		printf(": cannot set control register\n");
+		printf(", cannot set control register\n");
 		return;
 	}
 	iic_release_bus(sc->sc_tag, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1030.c,v 1.2 2005/12/22 22:56:48 deraadt Exp $	*/
+/*	$OpenBSD: adm1030.c,v 1.3 2005/12/27 17:18:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -62,12 +62,9 @@ admtmp_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (ia->ia_compat) {
-		if (strcmp(ia->ia_compat, "adm1030") == 0)
-			return (1);
-		return (0);
-	}
-	return (1);
+	if (strcmp(ia->ia_name, "adm1030") == 0)
+		return (1);
+	return (0);
 }
 
 void

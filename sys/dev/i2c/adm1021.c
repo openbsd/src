@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.10 2005/12/26 08:14:17 deraadt Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.11 2005/12/27 17:18:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -82,10 +82,11 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
-	if (ia->ia_name && strcmp(ia->ia_name, "xeontemp") == 0) {
+	if (strcmp(ia->ia_name, "xeontemp") == 0) {
 		printf(": Xeon");
 		sc->sc_xeon = 1;
-	}
+	} else
+		printf(": %s", ia->ia_name);
 
 	iic_acquire_bus(sc->sc_tag, 0);
 	cmd = ADM1021_CONFIG_READ;

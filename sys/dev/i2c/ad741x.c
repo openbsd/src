@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad741x.c,v 1.3 2005/11/28 17:58:20 deraadt Exp $	*/
+/*	$OpenBSD: ad741x.c,v 1.4 2005/12/27 17:18:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -69,12 +69,10 @@ adc_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (ia->ia_compat) {
-		if (strcmp(ia->ia_compat, "ad7417") == 0)
-			return (1);
-		return (0);
-	}
-	return (1);
+	if (strcmp(ia->ia_name, "ad7417") == 0 ||
+	    strcmp(ia->ia_name, "ad7418") == 0)		/* XXX? */
+		return (1);
+	return (0);
 }
 
 void
@@ -88,13 +86,13 @@ adc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
-	if (ia->ia_compat) {
-		sc->sc_chip = 0;
-		if (strcmp(ia->ia_compat, "ad7417") == 0)
-			sc->sc_chip = 7417;
-		if (strcmp(ia->ia_compat, "ad7418") == 0)
-			sc->sc_chip = 7418;
-	}
+	printf(": %s", ia->ia_name);
+
+	sc->sc_chip = 0;
+	if (strcmp(ia->ia_name, "ad7417") == 0)
+		sc->sc_chip = 7417;
+	if (strcmp(ia->ia_name, "ad7418") == 0)
+		sc->sc_chip = 7418;
 
 	if (sc->sc_chip != 0) {
 		cmd = AD741X_CONFIG2;

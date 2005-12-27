@@ -1,4 +1,4 @@
-/*	$OpenBSD: adt7460.c,v 1.3 2005/12/27 09:23:28 deraadt Exp $	*/
+/*	$OpenBSD: adt7460.c,v 1.4 2005/12/27 17:18:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -79,16 +79,13 @@ adt_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (ia->ia_compat) {
-		if (strcmp(ia->ia_compat, "adt7460") == 0 ||
-		    strcmp(ia->ia_compat, "adt7467") == 0 ||
-		    strcmp(ia->ia_compat, "adt7476") == 0 ||
-		    strcmp(ia->ia_compat, "lm85") == 0 ||
-		    strcmp(ia->ia_compat, "emc6d10x") == 0)
-			return (1);
-		return (0);
-	}
-	return (1);	/* accept the address given */
+	if (strcmp(ia->ia_name, "adt7460") == 0 ||
+	    strcmp(ia->ia_name, "adt7467") == 0 ||
+	    strcmp(ia->ia_name, "adt7476") == 0 ||
+	    strcmp(ia->ia_name, "lm85") == 0 ||
+	    strcmp(ia->ia_name, "emc6d10x") == 0)
+		return (1);
+	return (0);
 }
 
 void
@@ -106,9 +103,8 @@ adt_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_chip = 7460;
 	/* check for the fancy "extension" chips XXX */
-	if (ia->ia_compat &&
-	    (strcmp(ia->ia_compat, "adt7467") == 0 ||
-	    strcmp(ia->ia_compat, "adt7467") == 0))
+	if (strcmp(ia->ia_name, "adt7467") == 0 ||
+	    strcmp(ia->ia_name, "adt7467") == 0)
 		sc->sc_chip = 7467;
 
 	cmd = ADT7460_REVISION;
@@ -132,7 +128,7 @@ adt_attach(struct device *parent, struct device *self, void *aux)
 
 	iic_release_bus(sc->sc_tag, 0);
 
-	printf(": ADT%d rev %x", sc->sc_chip, rev);
+	printf(": %s (ADT%d) rev %x", ia->ia_name, sc->sc_chip, rev);
 
 	/* Initialize sensor data. */
 	for (i = 0; i < ADT_NUM_SENSORS; i++)

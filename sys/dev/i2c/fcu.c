@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcu.c,v 1.1 2005/11/16 18:51:45 deraadt Exp $	*/
+/*	$OpenBSD: fcu.c,v 1.2 2005/12/27 17:18:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -71,12 +71,9 @@ fcu_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (ia->ia_compat) {
-		if (strcmp(ia->ia_compat, "fcu") == 0)
-			return (1);
-		return (0);
-	}
-	return (0);	/* Apple-only */
+	if (strcmp(ia->ia_name, "fcu") == 0)
+		return (1);
+	return (0);
 }
 
 void

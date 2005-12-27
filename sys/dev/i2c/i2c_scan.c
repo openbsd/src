@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.21 2005/12/27 09:23:28 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.22 2005/12/27 17:18:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -396,7 +396,6 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		ia.ia_addr = addr;
 		ia.ia_size = 1;
 		ia.ia_name = name;
-		ia.ia_compat = name;
 		config_found(self, &ia, iic_print);
 	}
 }

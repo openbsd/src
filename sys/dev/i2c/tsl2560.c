@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsl2560.c,v 1.1 2005/11/15 22:23:20 kettenis Exp $	*/
+/*	$OpenBSD: tsl2560.c,v 1.2 2005/12/27 17:18:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -62,12 +62,9 @@ tsl_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (ia->ia_compat) {
-		if (strcmp(ia->ia_compat, "tsl2560") == 0)
-			return (1);
-		return (0);
-	}
-	return (1);		/* accept the address given */
+	if (strcmp(ia->ia_name, "tsl2560") == 0)
+		return (1);
+	return (0);
 }
 
 void

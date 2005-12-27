@@ -1,4 +1,4 @@
-/*	$OpenBSD: maxim6690.c,v 1.2 2005/11/16 16:27:53 kettenis Exp $	*/
+/*	$OpenBSD: maxim6690.c,v 1.3 2005/12/27 17:18:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -102,15 +102,12 @@ int
 maxtmp_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
-	u_int8_t id, rev;
 
-	if (ia->ia_compat) {
-		if (strcmp(ia->ia_compat, "max6642") == 0 ||
-		    strcmp(ia->ia_compat, "max6690") == 0)
-			return (1);
-		return (0);
-	}
-	return (maxtmp_check(ia, &id, &rev));
+	if (strcmp(ia->ia_name, "max6642") == 0 ||
+	    strcmp(ia->ia_name, "max6690") == 0)
+		return (1);
+	return (0);
+	// return (maxtmp_check(ia, &id, &rev));
 }
 
 void
@@ -129,7 +126,7 @@ maxtmp_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (ia->ia_compat && strcmp(ia->ia_compat, "max6642") == 0) {
+	if (strcmp(ia->ia_name, "max6642") == 0) {
 		sc->sc_temp_invalid = MAX6642_TEMP_INVALID;
 		sc->sc_temp2_mask = MAX6642_TEMP2_MASK;
 		printf(": MAX6642");
