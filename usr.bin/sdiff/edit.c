@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.5 2005/12/27 04:31:06 tedu Exp $ */
+/*	$OpenBSD: edit.c,v 1.6 2005/12/27 04:33:31 tedu Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -92,7 +92,7 @@ xmktemp(const char *s)
 	if (!(tmpdir = getenv("TMPDIR")))
 		tmpdir = "/tmp";
 	if (asprintf(&filename, "%s/sdiff.XXXXXXXXXX", tmpdir) == -1)
-		err(2, "could not allocate memory");
+		err(2, "xmktemp");
 
 	/* Create temp file. */
 	if ((fd = mkstemp(filename)) == -1)

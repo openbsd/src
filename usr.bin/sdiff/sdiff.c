@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.5 2005/12/27 04:31:06 tedu Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.6 2005/12/27 04:33:31 tedu Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -111,7 +111,7 @@ main(int argc, char **argv)
 	 */
 	argc_max = argc * 2;
 	if (!(diffargv = malloc(sizeof(char **) * argc_max)))
-		err(2, "out of memory");
+		err(2, "main");
 
 	/* Add first argument, the program name. */
 	diffargv[diffargc++] = diffprog;
@@ -679,7 +679,7 @@ enqueue(const char *left, const char div, const char *right)
 	struct diffline *diffp;
 
 	if (!(diffp = malloc(sizeof(struct diffline))))
-		err(2, "could not allocate memory");
+		err(2, "enqueue");
 	diffp->left = left;
 	diffp->div = div;
 	diffp->right = right;
@@ -730,7 +730,7 @@ astrcat(char **s, const char *append)
 	 */
 	if (!*s) {
 		if (!(*s = strdup(append)))
-			err(2, "could not allocate memory");
+			err(2, "astrcat");
 
 		/* Keep track of string. */
 		offset = strlen(*s);
@@ -764,7 +764,7 @@ astrcat(char **s, const char *append)
 	/* Resize *s to fit new string. */
 	newstr = realloc(*s, newlen);
 	if (newstr == NULL)
-		err(2, "could not allocate memory");
+		err(2, "astrcat");
 	*s = newstr;
 
 	/* Concatenate. */
@@ -949,7 +949,7 @@ printc(FILE *file1, size_t file1end, FILE *file2, size_t file2end)
 
 		/* Add to delete queue. */
 		if (!(linep = malloc(sizeof(struct fileline))))
-			err(2, "could not allocate memory");
+			err(2, "printc");
 		linep->line = line1;
 		SIMPLEQ_INSERT_TAIL(&delqhead, linep, fileentries);
 	}
