@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.22 2005/12/27 17:18:18 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.23 2005/12/27 19:46:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -266,16 +266,13 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "adm1024";	/* complete check */
 		else if ((probe(0xff) & 0xf0) == 0x30)
 			name = "adm1023";
-		if ((probe(0x3f) & 0xf0) == 0xd0 && addr == 0x2e &&
+		else if ((probe(0x3f) & 0xf0) == 0xd0 && addr == 0x2e &&
 		    (probe(0x40) & 0x80) == 0x00)
 			name = "adm1028";	/* adm1022 clone? */
 		else if ((probe(0x3f) & 0xf0) == 0xc0 &&
 		    (addr == 0x2c || addr == 0x2e || addr == 0x2f) &&
 		    (probe(0x40) & 0x80) == 0x00)
 			name = "adm1022";
-		else if (probe(0x48) == addr && probe(0x00) == 0x00 &&
-		    (addr & 0x7c) == 0x2c)
-			name = "adm9240";	/* getting desperate! */
 		break;
 	case 0xa1:
 		/* Philips vendor code 0xa1 at 0x3e */
@@ -284,6 +281,12 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		    (probe(0x41) & 0xc0) == 0x00 &&
 		    (probe(0x42) & 0xbc) == 0x00)
 			name = "ne1619";	/* adm1025 compat */
+		break;
+	case 0x23:	/* 2nd ADM id? */
+		if (probe(0x48) == addr &&
+		    (probe(0x40) & 0x80) == 0x00 &&
+		    (addr & 0x7c) == 0x2c)
+			name = "adm9240";	/* lm87 clone */
 		break;
 	case 0x55:
 		if (probe(0x3f) == 0x20)
