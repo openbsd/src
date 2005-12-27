@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.7 2005/12/27 04:43:01 tedu Exp $ */
+/*	$OpenBSD: edit.c,v 1.8 2005/12/27 05:00:28 deraadt Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -157,8 +157,8 @@ eparse(const char *cmd, const char *left, const char *right)
 			err(2, "could not allocate memory");
 		break;
 
-LEFT:
 	case 'l':
+LEFT:
 		/* Skip if there is no left column. */
 		if (left == NULL)
 			break;
@@ -168,8 +168,8 @@ LEFT:
 
 		break;
 
-RIGHT:
 	case 'r':
+RIGHT:
 		/* Skip if there is no right column. */
 		if (right == NULL)
 			break;
