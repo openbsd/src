@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.131 2005/12/25 18:20:52 grange Exp $
+.\"	$OpenBSD: pci.4,v 1.132 2005/12/27 23:41:50 kettenis Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -382,6 +382,8 @@ Gemtek PCI FM radio device driver.
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width 10n -offset ind -compact
+.It Xr alipm 4
+Acer Labs M7101 Power Management controller.
 .It Xr amdpm 4
 AMD768 Power Management controller.
 .It Xr bktr 4
@@ -494,6 +496,7 @@ driver.
 .Xr adw 4 ,
 .Xr ahc 4 ,
 .Xr ahd 4 ,
+.Xr alipm 4 ,
 .Xr ami 4 ,
 .Xr an 4 ,
 .Xr apecs 4 ,
