@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.15 2005/11/18 00:16:48 miod Exp $	*/
+/*	$OpenBSD: mt.c,v 1.16 2005/12/27 18:34:58 miod Exp $	*/
 /*	$NetBSD: mt.c,v 1.8 1997/03/31 07:37:29 scottr Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <sys/syslog.h>
 #include <sys/tty.h>
 #include <sys/kernel.h>
-#include <sys/tprintf.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 
@@ -75,7 +74,6 @@ struct	mt_softc {
 	short	sc_density;	/* current density of tape (mtio.h format) */
 	short	sc_type;	/* tape drive model (hardware IDs) */
 	struct	hpibqueue sc_hq; /* HPIB device queue member */
-	tpr_t	sc_ttyp;
 	struct buf sc_tab;	/* buf queue */
 	struct buf sc_bufstore;	/* XXX buffer storage */
 	struct timeout sc_start_to; /* spl_mtstart timeout */
@@ -290,7 +288,6 @@ mtopen(dev, flag, mode, p)
 	if (sc->sc_flags & MTF_OPEN)
 		return (EBUSY);
 	sc->sc_flags |= MTF_OPEN;
-	sc->sc_ttyp = tprintf_open(p);
 	if ((sc->sc_flags & MTF_ALIVE) == 0) {
 		error = mtcommand(dev, MTRESET, 0);
 		if (error != 0 || (sc->sc_flags & MTF_ALIVE) == 0)
@@ -390,7 +387,6 @@ mtclose(dev, flag, fmt, p)
 	if ((minor(dev) & T_NOREWIND) == 0)
 		(void) mtcommand(dev, MTREW, 0);
 	sc->sc_flags &= ~MTF_OPEN;
-	tprintf_close(sc->sc_ttyp);
 	return (0);
 }
 
@@ -446,8 +442,7 @@ mtstrategy(bp)
 #define WRITE_BITS_IGNORED	8
 #if 0
 		if (bp->b_bcount & ((1 << WRITE_BITS_IGNORED) - 1)) {
-			tprintf(sc->sc_ttyp,
-				"%s: write record must be multiple of %d\n",
+			printf("%s: write record must be multiple of %d\n",
 				sc->sc_dev.dv_xname, 1 << WRITE_BITS_IGNORED);
 			goto error;
 		}
@@ -466,8 +461,7 @@ mtstrategy(bp)
 			}
 		}
 		if (bp->b_bcount > s) {
-			tprintf(sc->sc_ttyp,
-				"%s: write record (%ld) too big: limit (%d)\n",
+			printf("%s: write record (%ld) too big: limit (%d)\n",
 				sc->sc_dev.dv_xname, bp->b_bcount, s);
 #if 0 /* XXX see above */
 	    error:
@@ -891,8 +885,7 @@ mtintr(arg)
 			dlog(LOG_DEBUG, "%s intr: bcount %ld, resid %d",
 			    sc->sc_dev.dv_xname, bp->b_bcount, bp->b_resid);
 		} else {
-			tprintf(sc->sc_ttyp,
-				"%s: record (%d) larger than wanted (%ld)\n",
+			printf("%s: record (%d) larger than wanted (%ld)\n",
 				sc->sc_dev.dv_xname, i, bp->b_bcount);
     error:
 			sc->sc_flags &= ~MTF_IO;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct.c,v 1.14 2005/11/18 00:16:48 miod Exp $	*/
+/*	$OpenBSD: ct.c,v 1.15 2005/12/27 18:34:58 miod Exp $	*/
 /*	$NetBSD: ct.c,v 1.21 1997/04/02 22:37:23 scottr Exp $	*/
 
 /*
@@ -55,7 +55,6 @@
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 #include <sys/proc.h>
-#include <sys/tprintf.h>
 
 #include <hp300/dev/hpibvar.h>
 
@@ -86,7 +85,6 @@ struct	ct_softc {
 	char	*sc_addr;
 	int	sc_flags;
 	short	sc_type;
-	tpr_t	sc_tpr;
 	struct	hpibqueue sc_hq;	/* entry on hpib job queue */
 	int	sc_eofp;
 	int	sc_eofs[EOFS];
@@ -357,7 +355,6 @@ ctopen(dev, flag, type, p)
 	if (cc != sizeof(stat))
 		return(EBUSY);
 
-	sc->sc_tpr = tprintf_open(p);
 	sc->sc_flags |= CTF_OPEN;
 	return(0);
 }
@@ -389,7 +386,6 @@ ctclose(dev, flag, fmt, p)
 	if ((minor(dev) & CT_NOREW) == 0)
 		ctcommand(dev, MTREW, 1);
 	sc->sc_flags &= ~(CTF_OPEN | CTF_WRT | CTF_WRTTN);
-	tprintf_close(sc->sc_tpr);
 #ifdef DEBUG
 	if (ctdebug & CDB_FILES)
 		printf("ctclose: flags %x\n", sc->sc_flags);
@@ -760,16 +756,13 @@ ctintr(arg)
 			}
 			if (sc->sc_stat.c_aef & 0x5800) {
 				if (sc->sc_stat.c_aef & 0x4000)
-					tprintf(sc->sc_tpr,
-						"%s: uninitialized media\n",
+					printf("%s: uninitialized media\n",
 						sc->sc_dev.dv_xname);
 				if (sc->sc_stat.c_aef & 0x1000)
-					tprintf(sc->sc_tpr,
-						"%s: not ready\n",
+					printf("%s: not ready\n",
 						sc->sc_dev.dv_xname);
 				if (sc->sc_stat.c_aef & 0x0800)
-					tprintf(sc->sc_tpr,
-						"%s: write protect\n",
+					printf("%s: write protect\n",
 						sc->sc_dev.dv_xname);
 			} else {
 				printf("%s err: v%d u%d ru%d bn%ld, ",
