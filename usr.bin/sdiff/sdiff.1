@@ -1,4 +1,4 @@
-.\" $OpenBSD: sdiff.1,v 1.3 2005/12/27 04:43:01 tedu Exp $
+.\" $OpenBSD: sdiff.1,v 1.4 2005/12/27 12:36:39 jmc Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
@@ -23,9 +23,9 @@ Shows a side-by-side comparison of two files.
 The options are:
 .Bl -tag -width Ds
 .It Fl l
-Only print left column for identical lines.
+Only print the left column for identical lines.
 .It Fl o Ar outfile
-Interactively merge 
+Interactively merge
 .Ar file1
 and
 .Ar file2
@@ -33,7 +33,7 @@ into
 .Ar outfile .
 In this mode, the user is prompted for each set of differences.
 .Pp
-The commands are:
+The commands are as follows:
 .Bl -tag -width Ds
 .It Cm l
 Choose left set of diffs.
@@ -88,12 +88,16 @@ Do a case-insensitive comparison.
 .It Fl t
 Expand tabs to spaces.
 .It Fl W
-Ignore all spaces.
-(The
+Ignore all spaces
+(the
 .Fl w
 flag is passed to
-.Xr diff 1 .)
+.Xr diff 1 ) .
 .El
+.Sh AUTHORS
+.Nm
+was written from scratch for the public domain by
+.An Ray Lai Aq ray@cyth.net .
 .Sh CAVEATS
 Although undocumented,
 .Nm
@@ -103,7 +107,3 @@ Some options require GNU diff.
 Tabs are treated as anywhere from one to eight characters wide,
 depending on the current column.
 Terminals that treat tabs as eight characters wide will look best.
-.Sh AUTHORS
-.Nm
-was written from scratch for the public domain by
-.An Ray Lai Aq ray@cyth.net .
