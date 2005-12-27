@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.59 2005/12/27 22:45:28 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.60 2005/12/27 22:48:01 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -97,7 +97,6 @@ M328_SG	vs_build_memory_structure(struct vs_softc *, struct scsi_xfer *,
 void	vs_chksense(struct scsi_xfer *);
 void	vs_dealloc_scatter_gather(M328_SG);
 int	vs_eintr(void *);
-void	vs_free(struct vs_cb *);
 bus_addr_t vs_getcqe(struct vs_softc *);
 bus_addr_t vs_getiopb(struct vs_softc *);
 int	vs_initialize(struct vs_softc *);
@@ -107,11 +106,12 @@ void	vs_link_sg_list(sg_list_element_t *, vaddr_t, int);
 int	vs_nintr(void *);
 int	vs_poll(struct vs_softc *, struct vs_cb *);
 void	vs_print_addr(struct vs_softc *, struct scsi_xfer *);
-int	vs_queue_number(struct scsi_link *, struct vs_softc *);
+struct vs_cb *vs_find_queue(struct scsi_link *, struct vs_softc *);
 void	vs_reset(struct vs_softc *, int);
 void	vs_resync(struct vs_softc *);
-void	vs_scsidone(struct vs_softc *, struct scsi_xfer *);
+void	vs_scsidone(struct vs_softc *, struct vs_cb *);
 
+static __inline__ void vs_free(struct vs_cb *);
 static __inline__ void vs_clear_return_info(struct vs_softc *);
 static __inline__ paddr_t kvtop(vaddr_t);
 
@@ -274,15 +274,16 @@ do_vspoll(struct vs_softc *sc, struct scsi_xfer *xs, int canreset)
 }
 
 int
-vs_poll(struct vs_softc *sc, struct vs_cb *cmd)
+vs_poll(struct vs_softc *sc, struct vs_cb *cb)
 {
 	struct scsi_xfer *xs;
+	int s;
 	int rc;
 
-	xs = cmd->cb_xs;
+	xs = cb->cb_xs;
 	rc = do_vspoll(sc, xs, 1);
-	vs_free(cmd);
 
+	s = splbio();
 	if (rc != 0) {
 		xs->error = XS_SELTIMEOUT;
 		xs->status = -1;
@@ -290,8 +291,10 @@ vs_poll(struct vs_softc *sc, struct vs_cb *cmd)
 #if 0
 		scsi_done(xs);
 #endif
+		vs_free(cb);
 	} else
-		vs_scsidone(sc, xs);
+		vs_scsidone(sc, cb);
+	splx(s);
 
 	if (CRSW & M_CRSW_ER)
 		CRB_CLR_ER;
@@ -321,11 +324,11 @@ thaw_all_queues(struct vs_softc *sc)
 }
 
 void
-vs_scsidone(struct vs_softc *sc, struct scsi_xfer *xs)
+vs_scsidone(struct vs_softc *sc, struct vs_cb *cb)
 {
+	struct scsi_xfer *xs = cb->cb_xs;
 	u_int32_t len;
 	int error;
-	int tgt;
 
 	len = vs_read(4, sh_RET_IOPB + IOPB_LENGTH);
 	xs->resid = xs->datalen - len;
@@ -337,16 +340,16 @@ vs_scsidone(struct vs_softc *sc, struct scsi_xfer *xs)
 	} else
 		xs->status = error >> 8;
 
-	tgt = vs_queue_number(xs->sc_link, sc);
 	while (xs->status == SCSI_CHECK) {
 		vs_chksense(xs);
-		thaw_queue(sc, tgt);
 	}
 
 	xs->flags |= ITSDONE;
-	thaw_queue(sc, tgt);
+	thaw_queue(sc, cb->cb_q);
 
 	scsi_done(xs);
+
+	vs_free(cb);
 }
 
 int
@@ -359,28 +362,49 @@ vs_scsicmd(struct scsi_xfer *xs)
 	bus_addr_t cqep, iopb;
 	struct vs_cb *cb;
 	u_int queue;
+	int s;
 
 	flags = xs->flags;
-
-	queue = flags & SCSI_POLL ? 0 : vs_queue_number(slp, sc);
-	cb = &sc->sc_cb[queue];
-	if (cb->cb_xs != NULL)
-		return (TRY_AGAIN_LATER);
-
 	if (flags & SCSI_POLL) {
+		cb = &sc->sc_cb[0];
 		cqep = sh_MCE;
 		iopb = sh_MCE_IOPB;
 
+#ifdef VS_DEBUG
+		if (mce_read(2, CQE_QECR) & M_QECR_GO)
+			printf("%s: master command queue busy\n",
+			    sc->sc_dev.dv_xname);
+#endif
 		/* Wait until we can use the command queue entry. */
 		while (mce_read(2, CQE_QECR) & M_QECR_GO)
 			;
+#ifdef VS_DEBUG
+		if (cb->cb_xs != NULL) {
+			printf("%s: master command not idle\n",
+			    sc->sc_dev.dv_xname);
+			return (TRY_AGAIN_LATER);
+		}
+#endif
+		s = splbio();
 	} else {
+		s = splbio();
+		cb = vs_find_queue(slp, sc);
+		if (cb == NULL) {
+			splx(s);
+#ifdef VS_DEBUG
+			printf("%s: no free queues\n", sc->sc_dev.dv_xname);
+#endif
+			return (TRY_AGAIN_LATER);
+		}
 		cqep = vs_getcqe(sc);
 		if (cqep == 0) {
+			splx(s);
 			return (TRY_AGAIN_LATER);
 		}
 		iopb = vs_getiopb(sc);
 	}
+
+	queue = cb->cb_q;
 
 	vs_bzero(iopb, IOPB_LONG_SIZE);
 
@@ -435,6 +459,8 @@ vs_scsicmd(struct scsi_xfer *xs)
 	vs_write(1, cqep + CQE_WORK_QUEUE, queue);
 
 	cb->cb_xs = xs;
+	splx(s);
+
 	if (xs->datalen != 0)
 		cb->cb_sg = vs_build_memory_structure(sc, xs, iopb);
 	else
@@ -549,6 +575,9 @@ int
 vs_initialize(struct vs_softc *sc)
 {
 	int i, msr, dbid;
+
+	for (i = 0; i < NUM_WQ; i++)
+		sc->sc_cb[i].cb_q = i;
 
 	/*
 	 * Reset the board, and wait for it to get ready.
@@ -767,7 +796,8 @@ vs_reset(struct vs_softc *sc, int bus)
 	splx(s);
 }
 
-void
+/* free a cb; invoked at splbio */
+static __inline__ void
 vs_free(struct vs_cb *cb)
 {
 	if (cb->cb_sg != NULL) {
@@ -783,7 +813,6 @@ vs_nintr(void *vsc)
 {
 	struct vs_softc *sc = (struct vs_softc *)vsc;
 	struct vs_cb *cb;
-	struct scsi_xfer *xs;
 	int s;
 
 	if ((CRSW & CONTROLLER_ERROR) == CONTROLLER_ERROR)
@@ -799,12 +828,8 @@ vs_nintr(void *vsc)
 	 * to point to address 0.  But then, we should have caught
 	 * the controller error above.
 	 */
-	if (cb != NULL) {
-		xs = cb->cb_xs;
-		vs_free(cb);
-
-		vs_scsidone(sc, xs);
-	}
+	if (cb != NULL)
+		vs_scsidone(sc, cb);
 
 	/* ack the interrupt */
 	if (CRSW & M_CRSW_ER)
@@ -893,30 +918,31 @@ vs_clear_return_info(struct vs_softc *sc)
 }
 
 /*
- * Choose the work queue number for a specific target.
- *
- * Targets on the primary channel are mapped to queues 1-7, while targets
- * on the secondary channel are mapped to queues 8-14.
- * To do so, we assign each target the queue matching its own number,
- * plus eight on the secondary bus, except for target 0 on the first channel
- * and 7 on the secondary channel which gets assigned to the queue matching
- * the controller id.
+ * Choose the first available work queue (invoked at splbio).
+ * We used a simple round-robin mechanism which is faster than rescanning
+ * from the beginning if we have more than one target on the bus.
  */
-int
-vs_queue_number(struct scsi_link *sl, struct vs_softc *sc)
+struct vs_cb *
+vs_find_queue(struct scsi_link *sl, struct vs_softc *sc)
 {
-	int bus, target;
+	struct vs_cb *cb;
+	static u_int last = 0;
+	u_int q;
 
-	bus = !!(sl->flags & SDEV_2NDBUS);
-	target = sl->target;
+	q = last;
+	for (;;) {
+		if (++q == NUM_WQ)
+			q = 1;
+		if (q == last)
+			break;
 
-	if (target == sc->sc_id[bus])
-		return 0;
+		if ((cb = &sc->sc_cb[q])->cb_xs == NULL) {
+			last = q;
+			return (cb);
+		}
+	}
 
-	if (target > sc->sc_id[bus])
-		target--;
-
-	return (bus == 0 ? 1 : 8) + target;
+	return (NULL);
 }
 
 /*
