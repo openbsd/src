@@ -1,4 +1,4 @@
-/*	$OpenBSD: irq_dispatch.S,v 1.5 2005/05/27 20:14:30 uwe Exp $	*/
+/*	$OpenBSD: irq_dispatch.S,v 1.6 2005/12/27 20:05:34 drahn Exp $	*/
 /*	$NetBSD: irq_dispatch.S,v 1.5 2003/10/30 08:57:24 scw Exp $	*/
 
 /*
@@ -73,14 +73,7 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
-
-#ifdef FOOTBRIDGE_INTR
-#include <arm/footbridge/footbridge_intr.h>
-#elif defined(PXA2x0_INTR)
-#include <arm/xscale/pxa2x0_intr.h>
-#else
-#error ARM_INTR_IMPL not defined
-#endif
+#include <machine/intr.h>
 
 #ifndef ARM_IRQ_HANDLER
 #error ARM_IRQ_HANDLER not defined

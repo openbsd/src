@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.29 2005/08/28 05:30:43 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.30 2005/12/27 20:05:34 drahn Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -14,7 +14,6 @@ include		"../../../conf/GENERIC"
 maxusers	32			# estimated number of users
 
 options		ARM32
-options		FOOTBRIDGE_INTR
 
 #options	UCONSOLE	# users can use TIOCCONS (for xconsole)
 #options	INSECURE	# disable kernel securelevel

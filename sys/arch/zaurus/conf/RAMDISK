@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.32 2005/12/20 02:37:10 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.33 2005/12/27 20:05:34 drahn Exp $
 
 machine	zaurus	arm
 
@@ -14,8 +14,6 @@ options	EXT2FS		# Second Extended Filesystem
 options	FIFO		# FIFOs; RECOMMENDED
 
 options		ARM32
-#options	ARM_INTR_IMPL="<arch/arm/xscale/pxa2x0_intr.h>"
-options		PXA2x0_INTR
 options		PXAGPIO_HAS_GPION_INTRS
 
 options		CACHE_CLEAN_BLOCK_INTR

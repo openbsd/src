@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.3 2005/04/19 15:29:48 mickey Exp $	*/
+/*	$OpenBSD: intr.h,v 1.4 2005/12/27 20:05:34 drahn Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -121,8 +121,6 @@ void	_setsoftintr(int);
  *	}
  */
 
-/* XXX */
-#include <arm/xscale/pxa2x0_intr.h>
 
 #endif /* _LKM */
 
@@ -149,6 +147,8 @@ void	_setsoftintr(int);
 #include <arm/softintr.h>
 
 #endif /* ! _LOCORE */
+
+#include <arm/xscale/pxa2x0_intr.h>
 
 #define splassert(wantipl) do { /* nada */ } while (0)
 
