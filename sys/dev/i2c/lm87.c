@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm87.c,v 1.11 2005/12/27 19:45:28 deraadt Exp $	*/
+/*	$OpenBSD: lm87.c,v 1.12 2005/12/27 20:05:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -37,6 +37,7 @@
 #define LM87_REVISION	0x3f
 #define LM87_CONFIG1	0x40
 #define  LM87_CONFIG1_START	0x01
+#define  LM87_CONFIG1_INTCLR	0x08
 #define LM87_CHANNEL	0x16
 #define  LM87_CHANNEL_AIN1	0x01
 #define  LM87_CHANNEL_AIN2	0x02
@@ -97,7 +98,7 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lmenv_softc *sc = (struct lmenv_softc *)self;
 	struct i2c_attach_args *ia = aux;
-	u_int8_t cmd, data, channel;
+	u_int8_t cmd, data, data2, channel;
 	int i;
 
 	sc->sc_tag = ia->ia_tag;
@@ -149,10 +150,17 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if ((data & LM87_CONFIG1_START) == 0) {
-		data |= LM87_CONFIG1_START;
+	/*
+	 * if chip is not running, try to start it.
+	 * if it is stalled doing an interrupt, unstall it
+	 */
+	data2 = (data | LM87_CONFIG1_START);
+	if (sc->sc_family == 81)
+		data2 = data2 & ~LM87_CONFIG1_INTCLR;
+
+	if (data != data2) {
 		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-		    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+		    sc->sc_addr, &cmd, sizeof cmd, &data2, sizeof data2, 0)) {
 			iic_release_bus(sc->sc_tag, 0);
 			printf(", cannot write Configuration Register 1\n");
 			return;
