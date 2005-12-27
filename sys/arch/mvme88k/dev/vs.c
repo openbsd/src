@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.57 2005/12/27 21:38:13 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.58 2005/12/27 22:05:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -360,12 +360,13 @@ vs_scsicmd(struct scsi_xfer *xs)
 	struct vs_cb *cb;
 	u_int queue;
 
+	flags = xs->flags;
+
 	queue = flags & SCSI_POLL ? 0 : vs_queue_number(slp, sc);
 	cb = &sc->sc_cb[queue];
 	if (cb->cb_xs != NULL)
 		return (TRY_AGAIN_LATER);
 
-	flags = xs->flags;
 	if (flags & SCSI_POLL) {
 		cqep = sh_MCE;
 		iopb = sh_MCE_IOPB;
