@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.24 2005/12/27 21:22:36 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.25 2005/12/27 21:42:07 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -102,7 +102,7 @@ probenc(u_int8_t cmd)
 	u_int8_t data;
 
 	probe_ic->ic_acquire_bus(probe_ic->ic_cookie, I2C_F_POLL);
-	if (probe_ic->ic_exec(probe_ic->ic_cookie, I2C_OP_READ_WITH_STOP,
+	if (iic_exec(probe_ic, I2C_OP_READ_WITH_STOP,
 	    probe_addr, &cmd, 1, &data, 1, I2C_F_POLL) != 0)
 		data = 0xff;
 	probe_ic->ic_release_bus(probe_ic->ic_cookie, I2C_F_POLL);
@@ -115,7 +115,7 @@ probew(u_int8_t cmd)
 	u_int16_t data2;
 
 	probe_ic->ic_acquire_bus(probe_ic->ic_cookie, I2C_F_POLL);
-	if (probe_ic->ic_exec(probe_ic->ic_cookie, I2C_OP_READ_WITH_STOP,
+	if (iic_exec(probe_ic, I2C_OP_READ_WITH_STOP,
 	    probe_addr, &cmd, 1, &data2, 2, I2C_F_POLL) != 0)
 		data2 = 0xffff;
 	probe_ic->ic_release_bus(probe_ic->ic_cookie, I2C_F_POLL);
@@ -417,7 +417,7 @@ iic_scan(struct device *self, struct i2cbus_attach_args *iba)
 		    addr++) {
 			/* Perform RECEIVE BYTE command */
 			ic->ic_acquire_bus(ic->ic_cookie, I2C_F_POLL);
-			if (ic->ic_exec(ic->ic_cookie, I2C_OP_READ_WITH_STOP, addr,
+			if (iic_exec(ic, I2C_OP_READ_WITH_STOP, addr,
 			    &cmd, 1, NULL, 0, I2C_F_POLL) == 0) {
 				ic->ic_release_bus(ic->ic_cookie, I2C_F_POLL);
 
