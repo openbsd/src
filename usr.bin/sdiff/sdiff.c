@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.7 2005/12/27 04:35:22 tedu Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.8 2005/12/27 04:43:01 tedu Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -10,7 +10,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <getopt.h>
@@ -59,7 +58,6 @@ SIMPLEQ_HEAD(, diffline) diffhead = SIMPLEQ_HEAD_INITIALIZER(diffhead);
 size_t	 line_width;	/* width of a line (two columns and divider) */
 size_t	 width;		/* width of each column */
 size_t	 file1ln, file2ln;	/* line number of file1 and file2 */
-int	 Dflag;		/* debug - verify lots of things */
 int	 lflag;		/* print only left column for identical lines */
 int	 sflag;		/* skip identical lines */
 FILE	*outfile;	/* file to save changes to */
@@ -116,7 +114,7 @@ main(int argc, char **argv)
 	/* Add first argument, the program name. */
 	diffargv[diffargc++] = diffprog;
 
-	while ((ch = getopt_long(argc, argv, "aBbDdEHI:ilo:stWw:",
+	while ((ch = getopt_long(argc, argv, "aBbdEHI:ilo:stWw:",
 	    longopts, NULL)) != -1) {
 		const char *errstr;
 
@@ -129,9 +127,6 @@ main(int argc, char **argv)
 			break;
 		case 'b':
 			diffargv[diffargc++] = "-b";
-			break;
-		case 'D':
-			Dflag = 1;
 			break;
 		case 'd':
 			diffargv[diffargc++] = "-d";
@@ -200,8 +195,6 @@ main(int argc, char **argv)
 
 	/* Subtract column divider and divide by two. */
 	width = (wflag - 3) / 2;
-	if (Dflag)
-		assert(width > 0);
 	/* Make sure line_width can fit in size_t. */
 	if (width > (SIZE_T_MAX - 3) / 2)
 		errx(2, "width is too large: %zu", width);
@@ -309,16 +302,9 @@ xstrtonum(const char *nptr)
 static void
 printcol(const char *s, size_t *col, const size_t col_max)
 {
-	if (Dflag) {
-		assert(s);
-		assert(*col <= col_max);
-	}
 
 	for (; *s && *col < col_max; ++s) {
 		size_t new_col;
-
-		if (Dflag)
-			assert(*s != '\n');
 
 		switch (*s) {
 		case '\t':
@@ -443,27 +429,12 @@ println(const char *s1, const char div, const char *s2)
 {
 	size_t col;
 
-	if (Dflag) {
-		/* These are the only legal column dividers. */
-		assert(div == '<' || div == '|' || div == '>' || div == ' ');
-		/* These are the only valid combinations. */
-		assert((s1 != NULL && div == '<' && s2 == NULL) || div != '<');
-		assert((s1 == NULL && div == '>' && s2 != NULL) || div != '>');
-		assert((s1 != NULL && div == '|' && s2 != NULL && s2 != s1) ||
-		    div != '|');
-		assert((s1 != NULL && div == ' ' && (s2 == s1 || s2 == NULL)) ||
-		    div != ' ');
-	}
-
 	/* Print first column.  Skips if s1 == NULL. */
 	col = 0;
 	if (s1) {
 		/* Skip angle bracket and space. */
 		printcol(s1, &col, width);
 
-		/* We should never exceed the width. */
-		if (Dflag)
-			assert(col <= width);
 	}
 
 	/* Only print left column. */
@@ -490,10 +461,6 @@ println(const char *s1, const char div, const char *s2)
 	/* Skip angle bracket and space. */
 	printcol(s2, &col, line_width);
 
-	/* We should never exceed the line width. */
-	if (Dflag)
-		assert(col <= line_width);
-
 	putchar('\n');
 }
 
@@ -507,9 +474,6 @@ xfgets(FILE *file)
 	const char delim[3] = {'\0', '\0', '\0'};
 	char *s;
 
-	if (Dflag)
-		assert(file);
-
 	/* XXX - Is this necessary? */
 	clearerr(file);
 
@@ -518,10 +482,6 @@ xfgets(FILE *file)
 		err(2, "error reading file");
 
 	if (!s) {
-		/* NULL from fparseln() should mean EOF. */
-		if (Dflag)
-			assert(feof(file));
-
 		return (NULL);
 	}
 
@@ -632,22 +592,8 @@ parsecmd(FILE *difffile, FILE *origfile)
 	/* Process unmodified lines. */
 	processq();
 
-	if (Dflag) {
-		/*
-		 * We are now at the line where adds, changes,
-		 * or deletions occur.
-		 */
-		assert(file1start == file1ln);
-		assert(file2start == file2ln);
-		assert(file1start <= file1end);
-		assert(file2start <= file2end);
-	}
 	switch (cmd) {
 	case 'a':
-		/* A range cannot be specified for file1. */
-		if (Dflag)
-			assert(file1start == file1end);
-
 		printa(difffile, file2end);
 		break;
 
@@ -656,10 +602,6 @@ parsecmd(FILE *difffile, FILE *origfile)
 		break;
 
 	case 'd':
-		/* A range cannot be specified for file2. */
-		if (Dflag)
-			assert(file2start == file2end);
-
 		printd(origfile, difffile, file1end);
 		break;
 
@@ -692,8 +634,6 @@ enqueue(const char *left, const char div, const char *right)
 static void
 freediff(const struct diffline *diffp)
 {
-	if (Dflag)
-		assert(diffp);
 
 	if (diffp->left)
 		free((void *)diffp->left);
@@ -722,8 +662,6 @@ astrcat(char **s, const char *append)
 	const static char *oldstr = NULL;
 	char *newstr;
 
-	if (Dflag)
-		assert(append);
 
 	/*
 	 * First string is NULL, so just copy append.
@@ -752,11 +690,6 @@ astrcat(char **s, const char *append)
 		offset = strlen(*s);
 		oldstr = *s;
 	}
-	/* This should always be the end of the string. */
-	if (Dflag) {
-		assert(*(*s + offset) == '\0');
-		assert(strlen(*s) == offset);
-	}
 
 	/* Length = strlen(*s) + \n + strlen(append) + '\0'. */
 	newlen = offset + 1 + strlen(append) + 1;
@@ -770,13 +703,6 @@ astrcat(char **s, const char *append)
 	/* Concatenate. */
 	strlcpy(*s + offset, "\n", newlen - offset);
 	copied = strlcat(*s + offset, append, newlen - offset);
-
-	/*
-	 * We should have copied exactly newlen characters, including
-	 * the terminating NUL.  `copied' includes the \n character.
-	 */
-	if (Dflag)
-		assert(offset + copied + 1 == newlen);
 
 	/* Store generated string's values. */
 	offset = newlen - 1;
@@ -811,8 +737,6 @@ processq(void)
 		 * should be the same.  If div is not set, then store
 		 * this as this set's div.
 		 */
-		if (Dflag)
-			assert(div == diffp->div || !div);
 		if (!div)
 			div = diffp->div;
 
@@ -829,10 +753,6 @@ processq(void)
 		if (diffp->right)
 			astrcat(&right, diffp->right);
 	}
-
-	/* div should no longer be NUL. */
-	if (Dflag)
-		assert(div);
 
 	/* Empty queue and free each diff line and its elements. */
 	while (!SIMPLEQ_EMPTY(&diffhead)) {
@@ -865,17 +785,8 @@ undiff(char *s)
 {
 	size_t len;
 
-	if (Dflag) {
-		assert(s);
-		assert(*s == '<' || *s == '>');
-		assert(*(s + 1) == ' ');
-	}
-
 	/* Remove angle bracket and space but keep the NUL. */
 	len = strlen(s) - 2 + 1;
-	/* Copy at least the NUL. */
-	if (Dflag)
-		assert(len > 0);
 	/* Move everything two characters over. */
 	memmove(s, s + 2, len);
 }
@@ -887,11 +798,6 @@ static void
 printa(FILE *file, size_t line2)
 {
 	char *line;
-
-	if (Dflag) {
-		assert(file);
-		assert(file2ln <= line2);
-	}
 
 	for (; file2ln <= line2; ++file2ln) {
 		if (!(line = xfgets(file)))
@@ -917,15 +823,6 @@ printc(FILE *file1, size_t file1end, FILE *file2, size_t file2end)
 	SIMPLEQ_HEAD(, fileline) delqhead = SIMPLEQ_HEAD_INITIALIZER(delqhead);
 	char *line;
 
-	if (Dflag) {
-		assert(file1);
-		assert(file2);
-		assert(file1ln <= file1end);
-		assert(file2ln <= file2end);
-		/* Change diff sets always start out with an empty queue. */
-		assert(SIMPLEQ_EMPTY(&diffhead));
-	}
-
 	/* Read lines to be deleted. */
 	for (; file1ln <= file1end; ++file1ln) {
 		struct fileline *linep;
@@ -936,13 +833,6 @@ printc(FILE *file1, size_t file1end, FILE *file2, size_t file2end)
 			errx(2, "error reading file1 in delete in change");
 		if (!(line2 = xfgets(file2)))
 			errx(2, "error reading diff in delete in change");
-
-		/* Verify lines. */
-		if (Dflag && strncmp("< ", line2, 2) != 0)
-			errx(2, "invalid del/change diff: %s", line2);
-		if (Dflag && strcmp(line1, line2 + 2))
-			warnx("diff differs from file1:\ndiff:\n%s\nfile:\n%s",
-			    line2, line1);
 
 		/* Unused now. */
 		free((void *)line2);
@@ -957,17 +847,12 @@ printc(FILE *file1, size_t file1end, FILE *file2, size_t file2end)
 	/* There should be a divider here. */
 	if (!(line = xfgets(file2)))
 		errx(2, "error reading diff in change: expected divider");
-	if (Dflag && strcmp("---", line))
-		errx(2, "divider expected: %s", line);
 	free(line);
 
 #define getaddln(add) do {					\
 	/* Read diff for line. */				\
 	if (!((add) = xfgets(file2)))				\
 		errx(2, "error reading add in change");		\
-	/* Verify line. */					\
-	if (Dflag && strncmp("> ", (add), 2))			\
-		errx(2, "invalid add/change diff: %s", (add));	\
 	/* Remove ``> ''. */					\
 	undiff(add);						\
 } while (0)
@@ -1023,14 +908,6 @@ printd(FILE *file1, FILE *file2, size_t file1end)
 {
 	const char *line1, *line2;
 
-	if (Dflag) {
-		assert(file1);
-		assert(file2);
-		assert(file1ln <= file1end);
-		/* Delete diff sets always start with an empty queue. */
-		assert(SIMPLEQ_EMPTY(&diffhead));
-	}
-
 	/* Print out lines file1ln to line2. */
 	for (; file1ln <= file1end; ++file1ln) {
 		/* XXX - Why can't this handle stdin? */
@@ -1038,10 +915,6 @@ printd(FILE *file1, FILE *file2, size_t file1end)
 			errx(2, "file1 ended early in delete");
 		if (!(line2 = xfgets(file2)))
 			errx(2, "diff ended early in delete");
-		/* Compare delete line from diff to file1. */
-		if (Dflag && strcmp(line1, line2 + 2) != 0)
-			warnx("diff differs from file1:\ndiff:\n%s\nfile:\n%s",
-			    line2, line1);
 		free((void *)line2);
 		enqueue(line1, '<', NULL);
 	}
@@ -1071,7 +944,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-abDdilstW] [-I regexp] [-o outfile] [-w width] file1 file2\n",
+	    "usage: %s [-abdilstW] [-I regexp] [-o outfile] [-w width] file1 file2\n",
 	    __progname);
 	exit(2);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.6 2005/12/27 04:33:31 tedu Exp $ */
+/*	$OpenBSD: edit.c,v 1.7 2005/12/27 04:43:01 tedu Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -8,7 +8,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <stdio.h>
@@ -135,8 +134,6 @@ eparse(const char *cmd, const char *left, const char *right)
 	size_t nread, nwritten;
 	const char *filename;
 	char buf[BUFSIZ], *text;
-
-	assert(cmd);
 
 	/* Skip whitespace. */
 	while (isspace(*cmd))
