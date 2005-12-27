@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.25 2005/12/27 21:42:07 grange Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.26 2005/12/27 21:51:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -220,9 +220,9 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	case 0x41:
 		/*
 		 * Analog Devices adt/adm product code at 0x3e == 0x41.
-		 * We probe newer to older.  newer chips have a valid 0x3d
-		 * product number, while older ones encoded the product
-		 * into the upper half of the step at 0x3f
+		 * Newer chips have a valid 0x3d product number, while
+		 * older ones sometimes encoded the product into the
+		 * upper half of the "step register" at 0x3f
 		 */
 		if (probe(0x3d) == 0x76 &&
 		    (addr == 0x2c || addr == 0x2d || addr == 0x2e))
