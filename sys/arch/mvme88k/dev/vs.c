@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.58 2005/12/27 22:05:27 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.59 2005/12/27 22:45:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -835,40 +835,37 @@ vs_eintr(void *vsc)
 	cb = (struct vs_cb *)crb_read(4, CRB_CTAG);
 	xs = cb != NULL ? cb->cb_xs : NULL;
 
-	if (crsw & M_CRSW_RST) {
-		printf("%s: bus reset\n", sc->sc_dev.dv_xname);
-		vs_clear_return_info(sc);
-		splx(s);
-		return 1;
-	}
-
 	vs_print_addr(sc, xs);
 
-	switch (ecode) {
-	case CEVSB_ERR_TYPE:
-		printf("IOPB type error\n");
-		break;
-	case CEVSB_ERR_TO:
-		printf("timeout\n");
-		break;
-	case CEVSB_ERR_TR:
-		printf("reconnect error\n");
-		break;
-	case CEVSB_ERR_OF:
-		printf("overflow\n");
-		break;
-	case CEVSB_ERR_BD:
-		printf("bad direction\n");
-		break;
-	case CEVSB_ERR_NR:
-		printf("non-recoverable error\n");
-		break;
-	case CEVSB_ERR_PANIC:
-		printf("board panic\n");
-		break;
-	default:
-		printf("unexpected error %x\n", ecode);
-		break;
+	if (crsw & M_CRSW_RST) {
+		printf("bus reset\n");
+	} else {
+		switch (ecode) {
+		case CEVSB_ERR_TYPE:
+			printf("IOPB type error\n");
+			break;
+		case CEVSB_ERR_TO:
+			printf("timeout\n");
+			break;
+		case CEVSB_ERR_TR:
+			printf("reconnect error\n");
+			break;
+		case CEVSB_ERR_OF:
+			printf("overflow\n");
+			break;
+		case CEVSB_ERR_BD:
+			printf("bad direction\n");
+			break;
+		case CEVSB_ERR_NR:
+			printf("non-recoverable error\n");
+			break;
+		case CEVSB_ERR_PANIC:
+			printf("board panic\n");
+			break;
+		default:
+			printf("unexpected error %x\n", ecode);
+			break;
+		}
 	}
 
 	if (xs != NULL) {
