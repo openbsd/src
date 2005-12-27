@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1025.c,v 1.15 2005/12/27 21:47:42 deraadt Exp $	*/
+/*	$OpenBSD: adm1025.c,v 1.16 2005/12/27 22:49:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -24,9 +24,9 @@
 #include <dev/i2c/i2cvar.h>
 
 /* ADM 1025 registers */
-#define ADM1025_V25		0x20
+#define ADM1025_V2_5		0x20
 #define ADM1025_Vccp		0x21
-#define ADM1025_V33		0x22
+#define ADM1025_V3_3		0x22
 #define ADM1025_V5		0x23
 #define ADM1025_V12		0x24
 #define ADM1025_Vcc		0x25
@@ -45,9 +45,9 @@
 /* Sensors */
 #define ADMTM_INT		0
 #define ADMTM_EXT		1
-#define ADMTM_V25		2
+#define ADMTM_V2_5		2
 #define ADMTM_Vccp		3
-#define ADMTM_V33		4
+#define ADMTM_V3_3		4
 #define ADMTM_V5		5
 #define ADMTM_V12		6
 #define ADMTM_Vcc		7
@@ -151,17 +151,17 @@ admtm_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensor[ADMTM_EXT].desc, "External",
 	    sizeof(sc->sc_sensor[ADMTM_EXT].desc));
 
-	sc->sc_sensor[ADMTM_V25].type = SENSOR_VOLTS_DC;
-	strlcpy(sc->sc_sensor[ADMTM_V25].desc, "2.5 V",
-	    sizeof(sc->sc_sensor[ADMTM_V25].desc));
+	sc->sc_sensor[ADMTM_V2_5].type = SENSOR_VOLTS_DC;
+	strlcpy(sc->sc_sensor[ADMTM_V2_5].desc, "2.5 V",
+	    sizeof(sc->sc_sensor[ADMTM_V2_5].desc));
 
 	sc->sc_sensor[ADMTM_Vccp].type = SENSOR_VOLTS_DC;
 	strlcpy(sc->sc_sensor[ADMTM_Vccp].desc, "Vccp",
 	    sizeof(sc->sc_sensor[ADMTM_Vccp].desc));
 
-	sc->sc_sensor[ADMTM_V33].type = SENSOR_VOLTS_DC;
-	strlcpy(sc->sc_sensor[ADMTM_V33].desc, "3.3 V",
-	    sizeof(sc->sc_sensor[ADMTM_V33].desc));
+	sc->sc_sensor[ADMTM_V3_3].type = SENSOR_VOLTS_DC;
+	strlcpy(sc->sc_sensor[ADMTM_V3_3].desc, "3.3 V",
+	    sizeof(sc->sc_sensor[ADMTM_V3_3].desc));
 
 	sc->sc_sensor[ADMTM_V5].type = SENSOR_VOLTS_DC;
 	strlcpy(sc->sc_sensor[ADMTM_V5].desc, "5 V",
@@ -226,20 +226,20 @@ admtm_refresh(void *arg)
 			sc->sc_sensor[ADMTM_EXT].flags &= ~SENSOR_FINVALID;
 	}
 
-	cmd = ADM1025_V25;
+	cmd = ADM1025_V2_5;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
-		sc->sc_sensor[ADMTM_V25].value = 2500000 * data / 192;
+		sc->sc_sensor[ADMTM_V2_5].value = 2500000 * data / 192;
 
 	cmd = ADM1025_Vccp;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
 		sc->sc_sensor[ADMTM_Vcc].value = 2249000 * data / 192;
 
-	cmd = ADM1025_V33;
+	cmd = ADM1025_V3_3;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
-		sc->sc_sensor[ADMTM_V33].value = 3300000 * data / 192;
+		sc->sc_sensor[ADMTM_V3_3].value = 3300000 * data / 192;
 
 	cmd = ADM1025_V5;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,

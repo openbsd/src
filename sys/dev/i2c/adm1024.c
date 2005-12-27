@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1024.c,v 1.4 2005/12/27 20:26:46 deraadt Exp $	*/
+/*	$OpenBSD: adm1024.c,v 1.5 2005/12/27 22:49:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -24,7 +24,7 @@
 #include <dev/i2c/i2cvar.h>
 
 /* ADM 1024 registers */
-#define ADM1024_V25		0x20
+#define ADM1024_V2_5		0x20
 #define ADM1024_Vccp		0x21
 #define ADM1024_Vcc		0x22
 #define ADM1024_V5		0x23
@@ -45,7 +45,7 @@
 /* Sensors */
 #define ADMLC_INT		0
 #define ADMLC_EXT		1
-#define ADMLC_V25		2
+#define ADMLC_V2_5		2
 #define ADMLC_Vccp		3
 #define ADMLC_Vcc		4
 #define ADMLC_V5		5
@@ -129,9 +129,9 @@ admlc_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensor[ADMLC_EXT].desc, "External",
 	    sizeof(sc->sc_sensor[ADMLC_EXT].desc));
 
-	sc->sc_sensor[ADMLC_V25].type = SENSOR_VOLTS_DC;
-	strlcpy(sc->sc_sensor[ADMLC_V25].desc, "2.5 V",
-	    sizeof(sc->sc_sensor[ADMLC_V25].desc));
+	sc->sc_sensor[ADMLC_V2_5].type = SENSOR_VOLTS_DC;
+	strlcpy(sc->sc_sensor[ADMLC_V2_5].desc, "2.5 V",
+	    sizeof(sc->sc_sensor[ADMLC_V2_5].desc));
 
 	sc->sc_sensor[ADMLC_Vccp].type = SENSOR_VOLTS_DC;
 	strlcpy(sc->sc_sensor[ADMLC_Vccp].desc, "Vccp",
@@ -201,10 +201,10 @@ admlc_refresh(void *arg)
 			sc->sc_sensor[ADMLC_EXT].flags &= ~SENSOR_FINVALID;
 	}
 
-	cmd = ADM1024_V25;
+	cmd = ADM1024_V2_5;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
-		sc->sc_sensor[ADMLC_V25].value = 2500000 * data / 192;
+		sc->sc_sensor[ADMLC_V2_5].value = 2500000 * data / 192;
 
 	cmd = ADM1024_Vccp;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
