@@ -1,4 +1,4 @@
-/*	$OpenBSD: alipm.c,v 1.2 2005/12/26 19:52:58 kettenis Exp $	*/
+/*	$OpenBSD: alipm.c,v 1.3 2005/12/27 20:42:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -76,6 +76,14 @@
 #define ALIPM_SMB_HBDB		0x06	/* host block data byte */
 #define ALIPM_SMB_HCMD		0x07	/* host command */
 
+/*
+ * Newer chips have a more standard, but different PCI configuration
+ * register layout.
+ */
+
+#define ALIPM_SMB_BASE	0x14		/* SMBus base address */
+#define ALIPM_SMB_HOSTX	0xe0		/* host configuration */
+
 #ifdef ALIPM_DEBUG
 #define DPRINTF(x) printf x
 #else
@@ -133,25 +141,42 @@ alipm_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t iobase;
 	pcireg_t reg;
 
-	/* Map I/O space */
-	iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_BASE) >> 16;
-	sc->sc_iot = pa->pa_iot;
-	if (bus_space_map(sc->sc_iot, iobase,
-	    ALIPM_SMB_SIZE, 0, &sc->sc_ioh)) {
-		printf(": can't map I/O space\n");
-		return;
-	}
+	/* Old chips don't have the PCI 2.2 Capabilities List. */
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	if ((reg & PCI_STATUS_CAPLIST_SUPPORT) == 0) {
+		/* Map I/O space */
+		iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_BASE);
+		sc->sc_iot = pa->pa_iot;
+		if (bus_space_map(sc->sc_iot, iobase >> 16,
+		    ALIPM_SMB_SIZE, 0, &sc->sc_ioh)) {
+			printf(": can't map I/O space\n");
+			return;
+		}
 
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_CONF);
-	if ((reg & ALIPM_CONF_SMBEN) == 0) {
-		printf(": SMBus disabled\n");
-		return;
-	}
+		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_CONF);
+		if ((reg & ALIPM_CONF_SMBEN) == 0) {
+			printf(": SMBus disabled\n");
+			return;
+		}
 
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_SMB_HOSTC);
-	if ((reg & ALIPM_SMB_HOSTC_HSTEN) == 0) {
-		printf(": SMBus host disabled\n");
-		return;
+		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_SMB_HOSTC);
+		if ((reg & ALIPM_SMB_HOSTC_HSTEN) == 0) {
+			printf(": SMBus host disabled\n");
+			return;
+		}
+	} else {
+		/* Map I/O space */
+		if (pci_mapreg_map(pa, ALIPM_SMB_BASE, PCI_MAPREG_TYPE_IO, 0,
+		    &sc->sc_iot, &sc->sc_ioh, NULL, NULL, ALIPM_SMB_SIZE)) {
+			printf(": can't map I/O space\n");
+			return;
+		}
+
+		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_SMB_HOSTX);
+		if ((reg & ALIPM_SMB_HOSTC_HSTEN) == 0) {
+			printf(": SMBus host disabled\n");
+			return;
+		}
 	}
 
 	switch (reg & ALIPM_SMB_HOSTC_CLOCK) {
@@ -312,6 +337,9 @@ alipm_smb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HC,
 		     ALIPM_SMB_HC_KILL);
 		st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ALIPM_SMB_HS);
+		if ((st & ALIPM_SMB_HS_FAILED) == 0)
+			printf("%s: error st 0x%b\n", sc->sc_dev.dv_xname,
+			    st, ALIPM_SMB_HS_BITS);
 	}
 
 	/* Check for errors */
