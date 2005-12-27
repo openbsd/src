@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.14 2005/12/27 22:55:50 deraadt Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.15 2005/12/27 23:03:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -146,7 +146,7 @@ admtemp_refresh(void *arg)
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
 	    &cmd, sizeof cmd, &sdata, sizeof sdata, I2C_F_POLL) == 0) {
 		if (sdata == 0x7f) {
-			sc->sc_sensor[ADMTEMP_EXT].flags &= ~SENSOR_FINVALID;
+			sc->sc_sensor[ADMTEMP_EXT].flags |= SENSOR_FINVALID;
 		} else {
 			sc->sc_sensor[ADMTEMP_EXT].value =
 			    273150000 + 1000000 * sdata;
@@ -159,7 +159,7 @@ admtemp_refresh(void *arg)
 		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
 		    &cmd, sizeof cmd, &sdata,  sizeof sdata, I2C_F_POLL) == 0) {
 			if (sdata == 0x7f) {
-				sc->sc_sensor[ADMTEMP_INT].flags &= ~SENSOR_FINVALID;
+				sc->sc_sensor[ADMTEMP_INT].flags |= SENSOR_FINVALID;
 			} else {
 				sc->sc_sensor[ADMTEMP_INT].value =
 				    273150000 + 1000000 * sdata;
@@ -167,7 +167,7 @@ admtemp_refresh(void *arg)
 			}
 		}
 	} else
-		sc->sc_sensor[ADMTEMP_INT].flags &= ~SENSOR_FINVALID;
+		sc->sc_sensor[ADMTEMP_INT].flags |= SENSOR_FINVALID;
 
 	iic_release_bus(sc->sc_tag, 0);
 }
