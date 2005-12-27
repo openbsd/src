@@ -409,6 +409,7 @@
 ./usr/bin/s2p
 ./usr/bin/scp
 ./usr/bin/script
+./usr/bin/sdiff
 ./usr/bin/sectok
 ./usr/bin/sed
 ./usr/bin/sendbug
