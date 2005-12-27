@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm87.c,v 1.8 2005/12/26 03:52:53 deraadt Exp $	*/
+/*	$OpenBSD: lm87.c,v 1.9 2005/12/27 03:54:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -104,11 +104,20 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 
 	iic_acquire_bus(sc->sc_tag, 0);
 
+	cmd = LM87_REVISION;
+	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+		iic_release_bus(sc->sc_tag, 0);
+		printf(": cannot read ID register\n");
+		return;
+	}
+	printf(": LM87 rev %x", data);
+
 	cmd = LM87_FANDIV;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
-		printf(": cannot read Fan Divisor register\n");
+		printf(", cannot read Fan Divisor register\n");
 		return;
 	}
 	sc->sc_fan1_div = 1 << ((data >> 4) & 0x03);
@@ -118,7 +127,7 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &channel, sizeof channel, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
-		printf(": cannot read Channel register\n");
+		printf(", cannot read Channel register\n");
 		return;
 	}
 
@@ -126,7 +135,7 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
-		printf(": cannot read Configuration Register 1\n");
+		printf(", cannot read Configuration Register 1\n");
 		return;
 	}
 
@@ -135,22 +144,14 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
 		    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 			iic_release_bus(sc->sc_tag, 0);
-			printf(": cannot write Configuration Register 1\n");
+			printf(", cannot write Configuration Register 1\n");
 			return;
 		}
+		printf(", starting scan");
 	}
 
-	cmd = LM87_REVISION;
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
-		iic_release_bus(sc->sc_tag, 0);
-		printf(": cannot read ID register\n");
-		return;
-	}
 
 	iic_release_bus(sc->sc_tag, 0);
-
-	printf(": LM87 rev %x", data);
 
 	/* Initialize sensor data. */
 	for (i = 0; i < LMENV_NUM_SENSORS; i++)
