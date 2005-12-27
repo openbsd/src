@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.27 2005/12/27 22:14:23 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.28 2005/12/27 22:49:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -347,8 +347,8 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		break;
 	case 0xda:
 		if (probe(0x3f) == 0x01 && probe(0x48) == addr &&
-		    probe(0x00) == 0x00)
-			name = "ds1780";	/* getting desperate! */
+		    (probe(0x40) & 0x80) == 0x00)
+			name = "ds1780";	/* lm87 clones */
 		break;
 	}
 	switch (probe(0x4e)) {
