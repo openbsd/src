@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.11 2005/12/27 17:18:18 deraadt Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.12 2005/12/27 18:28:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -93,16 +93,18 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL)) {
 		iic_release_bus(sc->sc_tag, 0);
-		printf(": cannot get control register\n");
+		printf(", cannot get control register\n");
 		return;
 	}
-	data &= ~ADM1021_CONFIG_RUN;
-	cmd = ADM1021_CONFIG_WRITE;
-	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, 0);
-		printf(": cannot set control register\n");
-		return;
+	if ((data & ADM1021_CONFIG_RUN) == 0) {
+		data &= ~ADM1021_CONFIG_RUN;
+		cmd = ADM1021_CONFIG_WRITE;
+		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+		    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL)) {
+			iic_release_bus(sc->sc_tag, 0);
+			printf(", cannot set control register\n");
+			return;
+		}
 	}
 	iic_release_bus(sc->sc_tag, 0);
 
