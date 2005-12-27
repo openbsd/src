@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1025.c,v 1.14 2005/12/27 20:34:59 deraadt Exp $	*/
+/*	$OpenBSD: adm1025.c,v 1.15 2005/12/27 21:47:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -38,6 +38,9 @@
 #define ADM1025_STEPPING	0x3f	/* contains 0x2? */
 #define ADM1025_CONFIG		0x40
 #define  ADM1025_CONFIG_START	0x01
+#define SMSC47M192_V1_5		0x50
+#define SMSC47M192_V1_8		0x51
+#define SMSC47M192_TEMP2	0x52
 
 /* Sensors */
 #define ADMTM_INT		0
@@ -49,13 +52,18 @@
 #define ADMTM_V12		6
 #define ADMTM_Vcc		7
 #define ADMTM_NUM_SENSORS	8
-
+#define SMSC_V1_5		8
+#define SMSC_V1_8		9
+#define SMSC_TEMP2		10
+#define SMSC_NUM_SENSORS	3
 struct admtm_softc {
 	struct device	sc_dev;
 	i2c_tag_t	sc_tag;
 	i2c_addr_t	sc_addr;
 
-	struct sensor	sc_sensor[ADMTM_NUM_SENSORS];
+	struct sensor	sc_sensor[ADMTM_NUM_SENSORS + SMSC_NUM_SENSORS];
+	int		sc_nsensors;
+	int		sc_model;
 };
 
 int	admtm_match(struct device *, void *, void *);
@@ -103,6 +111,13 @@ admtm_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": %s", ia->ia_name);
 
+	sc->sc_nsensors = ADMTM_NUM_SENSORS;
+	sc->sc_model = 1025;
+    	if (strcmp(ia->ia_name, "47m192") == 0) {
+		sc->sc_nsensors += 3;
+		sc->sc_model = 192;
+	}
+
 	iic_acquire_bus(sc->sc_tag, 0);
 	cmd = ADM1025_CONFIG;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
@@ -124,7 +139,7 @@ admtm_attach(struct device *parent, struct device *self, void *aux)
 	iic_release_bus(sc->sc_tag, 0);
 
 	/* Initialize sensor data. */
-	for (i = 0; i < ADMTM_NUM_SENSORS; i++)
+	for (i = 0; i < ADMTM_NUM_SENSORS + SMSC_NUM_SENSORS; i++)
 		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
 		    sizeof(sc->sc_sensor[i].device));
 
@@ -160,12 +175,24 @@ admtm_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensor[ADMTM_Vcc].desc, "Vcc",
 	    sizeof(sc->sc_sensor[ADMTM_Vcc].desc));
 
+	sc->sc_sensor[SMSC_V1_5].type = SENSOR_VOLTS_DC;
+	strlcpy(sc->sc_sensor[SMSC_V1_5].desc, "1.5 V",
+	    sizeof(sc->sc_sensor[SMSC_V1_5].desc));
+
+	sc->sc_sensor[SMSC_V1_8].type = SENSOR_VOLTS_DC;
+	strlcpy(sc->sc_sensor[SMSC_V1_8].desc, "1.8 V",
+	    sizeof(sc->sc_sensor[SMSC_V1_8].desc));
+
+	sc->sc_sensor[SMSC_TEMP2].type = SENSOR_TEMP;
+	strlcpy(sc->sc_sensor[SMSC_TEMP2].desc, "External2",
+	    sizeof(sc->sc_sensor[SMSC_TEMP2].desc));
+
 	if (sensor_task_register(sc, admtm_refresh, 5)) {
 		printf(", unable to register update task\n");
 		return;
 	}
 
-	for (i = 0; i < ADMTM_NUM_SENSORS; i++)
+	for (i = 0; i < sc->sc_nsensors; i++)
 		SENSOR_ADD(&sc->sc_sensor[i]);
 
 	printf("\n");
@@ -228,6 +255,25 @@ admtm_refresh(void *arg)
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
 		sc->sc_sensor[ADMTM_Vcc].value = 3300000 * data / 192;
+
+	if (sc->sc_model == 192) {
+		cmd = SMSC47M192_V1_5;
+		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+		    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
+			sc->sc_sensor[SMSC_V1_5].value = 1500000 * data / 192;
+
+		cmd = SMSC47M192_V1_8;
+		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+		    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
+			sc->sc_sensor[SMSC_V1_8].value = 1800000 * data / 192;
+
+		cmd = SMSC47M192_TEMP2;
+		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+		    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata,
+		    I2C_F_POLL) == 0)
+			sc->sc_sensor[SMSC_TEMP2].value = 273150000 + 1000000 * sdata;
+
+	}
 
 	iic_release_bus(sc->sc_tag, 0);
 }
