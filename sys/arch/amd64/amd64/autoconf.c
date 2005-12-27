@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.10 2005/12/13 00:18:19 jsg Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.11 2005/12/27 18:31:08 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*-
@@ -75,7 +75,6 @@
 
 void setroot(void);
 void rootconf(void);
-void swapconf(void);
 void diskconf(void);
 int findblkmajor(struct device *);
 char *findblkname(int);
@@ -139,26 +138,7 @@ diskconf(void)
 	dkcsumattach();
 
 	rootconf();
-	swapconf();
 	dumpconf();
-}
-
-void
-swapconf(void)
-{
-	struct swdevt *swp;
-	int nblks;
-
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-		if (bdevsw[major(swp->sw_dev)].d_psize) {
-			nblks =
-			    (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
-			if (nblks != -1 &&
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
-		}
-	}
 }
 
 struct device *

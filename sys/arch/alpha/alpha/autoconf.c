@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.25 2005/04/21 00:15:42 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.26 2005/12/27 18:31:05 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -67,7 +67,6 @@ char			boot_dev[128];
 void	parse_prom_bootdev(void);
 int	atoi(char *);
 void	setroot(void);
-void	swapconf(void);
 
 static struct device *parsedisk(char *str, int len, int defpart,
 				     dev_t *devp);
@@ -104,32 +103,8 @@ cpu_configure()
 		printf("WARNING: can't figure what device matches \"%s\"\n",
 		    boot_dev);
 	setroot();
-	swapconf();
-	cold = 0;
-}
-
-/*
- * Configure swap space and related parameters.
- */
-void
-swapconf()
-{
-	struct swdevt *swp;
-	int nblks, maj;
-
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-		maj = major(swp->sw_dev);
-		if (maj > nblkdev)
-			break;
-		if (bdevsw[maj].d_psize) {
-			nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
-			if (nblks != -1 &&
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
-		}
-	}
 	dumpconf();
+	cold = 0;
 }
 
 struct nam2blk {

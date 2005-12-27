@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.69 2005/09/25 20:05:37 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.70 2005/12/27 18:31:10 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -107,7 +107,6 @@ char	*findblkname(int);
 static	struct device *getdisk(char *, int, int, dev_t *);
 static	int mbprint(void *, const char *);
 static	void crazymap(char *, int *);
-void	swapconf(void);
 void	sync_crash(void);
 int	mainbus_match(struct device *, void *, void *);
 static	void mainbus_attach(struct device *, struct device *, void *);
@@ -851,7 +850,7 @@ cpu_configure()
 	 * parameter based on device(s) used.
 	 */
 	setroot();
-	swapconf();
+	dumpconf();
 	cold = 0;
 
 	/*
@@ -1736,27 +1735,6 @@ callrom()
 		fb_unblank();
 #endif
 	promvec->pv_abort();
-}
-
-/*
- * Configure swap space and related parameters.
- */
-void
-swapconf()
-{
-	register struct swdevt *swp;
-	register int nblks;
-
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++)
-		if (bdevsw[major(swp->sw_dev)].d_psize) {
-			nblks =
-			  (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
-			if (nblks != -1 &&
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
-		}
-	dumpconf();
 }
 
 #if 0 /* Unused */

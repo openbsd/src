@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.42 2005/10/06 19:53:40 brad Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.43 2005/12/27 18:31:11 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -111,7 +111,6 @@ int	mainbus_match(struct device *, void *, void *);
 static	void mainbus_attach(struct device *, struct device *, void *);
 static	int getstr(char *, int);
 void	setroot(void);
-void	swapconf(void);
 void	diskconf(void);
 static	struct device *getdisk(char *, int, int, dev_t *);
 int	findblkmajor(struct device *);
@@ -503,25 +502,7 @@ void
 diskconf(void)
 {
 	setroot();
-	swapconf();
 	dumpconf();
-}
-
-void
-swapconf()
-{
-	struct swdevt *swp;
-	int nblks;
-
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++)
-		if (bdevsw[major(swp->sw_dev)].d_psize) {
-			nblks =
-			  (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
-			if (nblks != -1 &&
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
-		}
 }
 
 void

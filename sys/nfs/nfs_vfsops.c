@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.58 2005/11/30 10:35:08 pedro Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.59 2005/12/27 18:31:12 miod Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -357,14 +357,12 @@ nfs_mountroot()
 #ifdef	DEBUG
 		printf("swap size: 0x%lx (blocks)\n", n);
 #endif
-		swdevt[0].sw_nblks = n;
 		return (0);
 	}
 
 	printf("WARNING: no swap\n");
 	swdevt[0].sw_dev = NODEV;
 	swdevt[0].sw_vp = NULL;
-	swdevt[0].sw_nblks = 0;
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rootfil.c,v 1.17 2004/12/25 23:02:26 miod Exp $	*/
+/*	$OpenBSD: rootfil.c,v 1.18 2005/12/27 18:31:11 miod Exp $	*/
 /*	$NetBSD: rootfil.c,v 1.14 1996/10/13 03:35:58 christos Exp $	*/
 
 /*
@@ -407,30 +407,4 @@ getstr(char *buf, int size) {
 	len = getsn(buf, size);
 	cnpollc(0);
 	return (len);
-}
-
-/*
- * Configure swap space and related parameters.
- */
-void
-swapconf()
-{
-	struct swdevt *swp;
-	u_int maj;
-	int nblks;
-
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-
-		maj = major(swp->sw_dev);
-		if (maj > nblkdev) /* paranoid? */
-			break;
-
-		if (bdevsw[maj].d_psize) {
-			nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
-			if (nblks > 0 &&
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
-		}
-	}
 }

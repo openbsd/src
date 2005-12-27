@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.33 2005/02/27 22:08:41 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.34 2005/12/27 18:31:08 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -167,7 +167,6 @@ ddlist_t	dev_data_list_scsi;	/* scsi controller dev_datas */
 
 void	diskconf(void);
 void	setroot(void);
-void	swapconf(void);
 void	findbootdev(void);
 void	findbootdev_slave(ddlist_t *, int, int, int);
 void	setbootdev(void);
@@ -286,7 +285,7 @@ diskconf()
 {
 
 	setroot();
-	swapconf();
+	dumpconf();
 
 	/*
 	 * Set bootdev based on the device we booted from.
@@ -403,30 +402,6 @@ device_register(dev, aux)
 		dev_data_insert(dd, &dev_data_list_scsi);
 		return;
 	}
-}
-
-/*
- * Configure swap space and related parameters.
- */
-void
-swapconf()
-{
-	struct swdevt *swp;
-	int nblks, maj;
-
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-		maj = major(swp->sw_dev);
-		if (maj > nblkdev)
-			break;
-		if (bdevsw[maj].d_psize) {
-			nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
-			if (nblks != -1 &&
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
-		}
-	}
-	dumpconf();
 }
 
 struct nam2blk {

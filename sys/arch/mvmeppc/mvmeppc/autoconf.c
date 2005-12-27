@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.13 2005/04/21 00:15:42 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.14 2005/12/27 18:31:10 miod Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.13 2005/04/21 00:15:42 deraadt Exp $
+ *      $Id: autoconf.c,v 1.14 2005/12/27 18:31:10 miod Exp $
  */
 
 /*
@@ -61,7 +61,6 @@
 
 struct  device *parsedisk(char *, int, int, dev_t *);
 void    setroot(void);
-void	swapconf(void);
 extern void	dumpconf(void);
 int findblkmajor(struct device *);
 char *findblkname(int);
@@ -109,28 +108,6 @@ void
 diskconf()
 {
 	setroot();
-	swapconf();
-}
-
-/*
- * Configure swap space and related parameters.
- */
-void
-swapconf()
-{
-	struct swdevt *swp;
-	int nblks;
-
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-		if (bdevsw[major(swp->sw_dev)].d_psize) {
-			nblks =
-			  (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
-			if (nblks != -1 &&
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
-		}
-	}
 #if 0
 	dumpconf();
 #endif

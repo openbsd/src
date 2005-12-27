@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.55 2005/01/01 02:57:36 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.56 2005/12/27 18:31:09 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -71,7 +71,6 @@ int findblkmajor(struct device *dv);
 char *findblkname(int);
 
 void rootconf(void);
-void swapconf(void);
 void setroot(void);
 void diskconf(void);
 
@@ -172,32 +171,7 @@ diskconf()
 	dkcsumattach();
 
 	rootconf();
-	swapconf();
 	dumpconf();
-}
-
-/*
- * Configure swap space and related parameters.
- */
-void
-swapconf()
-{
-	register struct swdevt *swp;
-	register int nblks;
-
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-		int maj = major(swp->sw_dev);
-
-		if (maj > nblkdev)
-			break;
-		if (bdevsw[maj].d_psize) {
-			nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
-			if (nblks != -1 &&
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
-		}
-	}
 }
 
 #define	DOSWAP			/* change swdevt and dumpdev */

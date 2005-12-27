@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.76 2005/07/31 06:39:07 dlg Exp $	*/
+/*	$OpenBSD: conf.h,v 1.77 2005/12/27 18:31:12 miod Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -506,7 +506,6 @@ extern struct linesw linesw[];
 struct swdevt {
 	dev_t	sw_dev;
 	int	sw_flags;
-	int	sw_nblks;
 	struct	vnode *sw_vp;
 };
 #define	SW_FREED	0x01

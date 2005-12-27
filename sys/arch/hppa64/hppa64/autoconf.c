@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.3 2005/05/25 20:49:26 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.4 2005/12/27 18:31:09 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 Michael Shalayeff
@@ -67,7 +67,6 @@
 #endif
 
 void	setroot(void);
-void	swapconf(void);
 void	dumpconf(void);
 
 int findblkmajor(struct device *dv);
@@ -118,7 +117,6 @@ cpu_configure(void)
 	spl0();
 
 	setroot();
-	swapconf();
 	dumpconf();
 	if (cold_hook)
 		(*cold_hook)(HPPA_COLD_HOT);
@@ -175,29 +173,6 @@ heartbeat(v)
 	    toggle);
 }
 #endif
-
-/*
- * Configure swap space and related parameters.
- */
-void
-swapconf(void)
-{
-	struct swdevt *swp;
-	int nblks, maj;
-
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-		maj = major(swp->sw_dev);
-		if (maj > nblkdev)
-			break;
-		if (bdevsw[maj].d_psize) {
-			nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
-			if (nblks != -1 &&
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
-		}
-	}
-}
 
 /*
  * This is called by configure to set dumplo and dumpsize.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.21 2005/08/01 14:49:55 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.22 2005/12/27 18:31:09 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.38 1996/12/18 05:46:09 scottr Exp $	*/
 
 /*
@@ -83,7 +83,6 @@ void findbootdev(void);
 int target_to_unit(u_long, u_long, u_long);
 
 void	setroot(void);
-void	swapconf(void);
 
 #ifdef RAMDISK_HOOKS
 static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };
@@ -101,32 +100,8 @@ cpu_configure()
 
 	findbootdev();
 	setroot();
-	swapconf();
-	cold = 0;
-}
-
-/*
- * Configure swap space and related parameters.
- */
-void
-swapconf()
-{
-	struct swdevt *swp;
-	int nblks, maj;
-
-	for (swp = swdevt; swp->sw_dev != NODEV ; swp++) {
-		maj = major(swp->sw_dev);
-		if (maj > nblkdev)
-			break;
-		if (bdevsw[maj].d_psize) {
-			nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
-			if (nblks != -1 &&
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
-		}
-	}
 	dumpconf();
+	cold = 0;
 }
 
 struct nam2blk {

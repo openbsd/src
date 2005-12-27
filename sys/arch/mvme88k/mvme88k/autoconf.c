@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.31 2005/04/30 16:42:37 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.32 2005/12/27 18:31:10 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -57,7 +57,6 @@
 
 struct	device *parsedisk(char *, int, int, dev_t *);
 void	setroot(void);
-void	swapconf(void);
 char	buginchr(void);
 void	dumpconf(void);
 int	findblkmajor(struct device *);
@@ -88,7 +87,7 @@ cpu_configure()
 	set_psr(get_psr() & ~PSR_IND);
 	spl0();
 	setroot();
-	swapconf();
+	dumpconf();
 
 	/*
 	 * Finally switch to the real console driver,
@@ -98,27 +97,6 @@ cpu_configure()
 	cninit();
 
 	cold = 0;
-}
-
-/*
- * Configure swap space and related parameters.
- */
-void
-swapconf()
-{
-	struct swdevt *swp;
-	int nblks;
-
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++)
-		if (bdevsw[major(swp->sw_dev)].d_psize) {
-			nblks =
-			    (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
-			if (nblks != -1 &&
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
-		}
-	dumpconf();
 }
 
 struct nam2blk {

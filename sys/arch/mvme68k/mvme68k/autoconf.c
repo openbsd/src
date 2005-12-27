@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.31 2005/12/22 22:56:31 miod Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.32 2005/12/27 18:31:09 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -87,7 +87,6 @@
 #include <machine/pte.h>
 
 void	setroot(void);
-void	swapconf(void);
 int	mainbus_print(void *, const char *);
 int	mainbus_scan(struct device *, void *, void *);
 int	findblkmajor(struct device *);
@@ -197,7 +196,7 @@ cpu_configure()
 		panic("autoconfig failed, no root");
 
 	setroot();
-	swapconf();
+	dumpconf();
 	cold = 0;
 }
 
@@ -250,26 +249,6 @@ unmapiodev(kva, size)
 
 	if (error != 0)
 		printf("unmapiodev: extent_free failed\n");
-}
-
-/*
- * Configure swap space and related parameters.
- */
-void
-swapconf()
-{
-	register struct swdevt *swp;
-	register int nblks;
-
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++)
-		if (bdevsw[major(swp->sw_dev)].d_psize) {
-			nblks =
-			    (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
-			if (nblks != -1 &&
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-		}
-	dumpconf();
 }
 
 /*
