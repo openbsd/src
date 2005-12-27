@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm87.c,v 1.12 2005/12/27 20:05:03 deraadt Exp $	*/
+/*	$OpenBSD: lm87.c,v 1.13 2005/12/27 20:05:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -155,8 +155,7 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 	 * if it is stalled doing an interrupt, unstall it
 	 */
 	data2 = (data | LM87_CONFIG1_START);
-	if (sc->sc_family == 81)
-		data2 = data2 & ~LM87_CONFIG1_INTCLR;
+	data2 = data2 & ~LM87_CONFIG1_INTCLR;
 
 	if (data != data2) {
 		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
