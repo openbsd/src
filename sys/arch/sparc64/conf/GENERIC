@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.137 2005/11/15 01:12:49 brad Exp $
+#	$OpenBSD: GENERIC,v 1.138 2005/12/27 23:19:01 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -304,6 +304,23 @@ rlphy*	at mii?				# RealTek 8139 internal PHYs
 urlphy*	at mii?				# Realtek RTL8150L internal PHY
 rgephy*	at mii?				# Realtek 8169S/8110S PHY
 ukphy*	at mii?				# Unknown PHYs
+
+# sensors
+alipm*	at pci?
+iic*	at alipm?
+
+adc*	at iic?				# Analog Devices AD7416/AD7417/7418
+admtemp* at iic?			# Analog Devices ADM1021
+admlc*	at iic?				# Analog Devices ADM1024
+admtm*	at iic?				# Analog Devices ADM1025
+admtmp*	at iic?				# Analog Devices ADM1030
+admtt*	at iic?				# Analog Devices ADM1031
+adt*	at iic?				# Analog Devices ADT7460
+lm*	at iic?				# LM78/79 and clones
+lmenv*	at iic?				# National Semiconductor LM87
+lmtemp*	at iic?				# NS LM75/LM77 temperature sensor
+maxds*	at iic?				# Maxim DS1631
+maxtmp*	at iic?				# Maxim MAX6642/MAX6690
 
 # Framebuffers
 agten*		at sbus?		# Fujitsu AG-10e framebuffer

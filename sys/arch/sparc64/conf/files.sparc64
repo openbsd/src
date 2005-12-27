@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.61 2005/08/01 03:03:13 david Exp $
+#	$OpenBSD: files.sparc64,v 1.62 2005/12/27 23:19:01 deraadt Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -247,6 +247,11 @@ major	{sd = 7}
 major	{vnd = 8}
 major	{cd = 18}
 major	{rd = 5}
+
+#
+# Machine-independent I2C drivers
+#
+include "dev/i2c/files.i2c"
 
 #
 # Machine-independent USB drivers

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.449 2005/12/22 23:39:05 grange Exp $
+#	$OpenBSD: GENERIC,v 1.450 2005/12/27 23:19:01 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -86,7 +86,6 @@ gpio*	at gscpcib?
 elansc*	at pci?			# AMD Elan SC520 System Controller
 gpio*	at elansc?
 geodesc* at pci?		# Geode SC1100/SCx200 IAOC
-#piixpm* at pci?		# Intel PIIX PM
 #gscpm*	at pci?			# NS Geode SC1100 SMI/ACPI module
 #ichwdt* at pci?		# Intel 6300ESB ICH watchdog timer
 
@@ -99,9 +98,13 @@ nsclpcsio* at isa? port 0x4e
 gpio*	at nsclpcsio?
 gscsio*	at isa?	port 0x2e		# NS Geode SC1100 Super I/O
 gscsio*	at isa?	port 0x15c
-iic0	at gscsio?			# ACCESS.bus 1
-iic1	at gscsio?			# ACCESS.bus 2
-lmtemp0	at iic1 addr 0x48		# NS LM75/LM77 temperature sensor
+iic*	at gscsio?			# ACCESS.bus 1 & 2
+piixpm* at pci?			# Intel PIIX PM
+iic*	at piixpm?
+alipm*	at pci?
+iic*	at alipm?
+ichiic*	at pci?				# Intel ICH SMBus controller
+iic*	at ichiic?
 
 it0	at isa? port 0x290		# IT8705F, IT8712F and SiS970 hardware
 it1	at isa? port 0xc00		# monitors
@@ -110,8 +113,18 @@ viasio*	at isa? port 0x2e flags 0x0000	# VIA VT1211 LPC Super I/O
 viasio*	at isa? port 0x4e flags 0x0000
 aps0	at isa? port 0x1600		# ThinkPad Active Protection System
 
-ichiic*	at pci?				# Intel ICH SMBus controller
-iic*	at ichiic?
+adc*	at iic?				# Analog Devices AD7416/AD7417/7418
+admtemp* at iic?			# Analog Devices ADM1021
+admlc*	at iic?				# Analog Devices ADM1024
+admtm*	at iic?				# Analog Devices ADM1025
+admtmp*	at iic?				# Analog Devices ADM1030
+admtt*	at iic?				# Analog Devices ADM1031
+adt*	at iic?				# Analog Devices ADT7460
+lm*	at iic?				# LM78/79 and clones
+lmenv*	at iic?				# National Semiconductor LM87
+lmtemp*	at iic?				# NS LM75/LM77 temperature sensor
+maxds*	at iic?				# Maxim DS1631
+maxtmp*	at iic?				# Maxim MAX6642/MAX6690
 
 # ISA PCMCIA controllers
 #option PCMCIAVERBOSE

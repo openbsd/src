@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.68 2005/07/14 02:09:46 uwe Exp $
+#	$OpenBSD: files.alpha,v 1.69 2005/12/27 23:18:59 deraadt Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -315,6 +315,11 @@ file	arch/alpha/alpha/osf1_locore.s		compat_osf1
 # NetBSD binary compatibility (COMPAT_NETBSD)
 include	"../../../compat/netbsd/files.netbsd"
 file	arch/alpha/alpha/netbsd_machdep.c	compat_netbsd
+
+#
+# Machine-independent I2C drivers
+#
+include "dev/i2c/files.i2c"
 
 #
 # Machine-independent USB drivers
