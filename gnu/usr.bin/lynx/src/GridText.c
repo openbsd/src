@@ -9389,7 +9389,7 @@ PUBLIC char * HText_setLastOptionValue ARGS7(
 
 	if (checked) {
 	    int curlen = strlen(new_ptr->name);
-	    int newlen = strlen(HTCurSelectedOptionValue);
+	    int newlen = HTCurSelectedOptionValue ? strlen(HTCurSelectedOptionValue) : 0;
 	    FormInfo *last_input = text->last_anchor->input_field;
 	    /*
 	     *  Set the default option as this one.
@@ -9413,6 +9413,8 @@ PUBLIC char * HText_setLastOptionValue ARGS7(
 	    /*
 	     *  Change the value.
 	     */
+	    if (HTCurSelectedOptionValue == NULL)
+		StrAllocCopy(HTCurSelectedOptionValue, "");
 	    text->last_anchor->input_field->size =
 				strlen(HTCurSelectedOptionValue);
 	    ret_Value = HTCurSelectedOptionValue;
