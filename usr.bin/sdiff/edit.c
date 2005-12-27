@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.3 2005/12/27 04:18:07 tedu Exp $ */
+/*	$OpenBSD: edit.c,v 1.4 2005/12/27 04:28:08 tedu Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -244,7 +244,7 @@ RIGHT:
 		warn("could not close: %s", filename);
 
 	/* filename was malloc()ed in xmktemp(). */
-	free(filename);
+	free((void *)filename);
 
 	return (0);
 }

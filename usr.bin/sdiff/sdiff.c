@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.3 2005/12/27 04:18:07 tedu Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.4 2005/12/27 04:28:08 tedu Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -93,7 +93,6 @@ main(int argc, char **argv)
 	const char *cmd, **diffargv, *diffprog;
 
 	/* Initialize variables. */
-	Dflag = lflag = sflag = 0;
 	diffargc = 0;
 	diffprog = "diff";
 	outfile = NULL;
@@ -141,7 +140,7 @@ main(int argc, char **argv)
 			diffargv[diffargc++] = "-E";
 			break;
 		case 'F':
-			diffprog = optarg;
+			diffargv[0] = diffprog = optarg;
 			break;
 		case 'H':
 			diffargv[diffargc++] = "-H";
@@ -183,11 +182,14 @@ main(int argc, char **argv)
 			/* NOTREACHED */
 		}
 
-		/* Don't exceed buffer after adding file1, file2, and NULL. */
-		assert(diffargc + 3 <= argc_max);
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (argc != 2) {
+		usage();
+		/* NOTREACHED */
+	}
 
 	/* file1 */
 	diffargv[diffargc++] = argv[0];
@@ -204,11 +206,6 @@ main(int argc, char **argv)
 	if (width > (SIZE_T_MAX - 3) / 2)
 		errx(2, "width is too large: %zu", width);
 	line_width = width * 2 + 3;
-
-	if (argc != 2) {
-		usage();
-		/* NOTREACHED */
-	}
 
 	if (pipe(fd))
 		err(2, "pipe");
