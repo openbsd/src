@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1024.c,v 1.3 2005/12/26 01:05:13 deraadt Exp $	*/
+/*	$OpenBSD: adm1024.c,v 1.4 2005/12/27 20:26:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -40,6 +40,7 @@
 #define ADM1024_STEPPING	0x3f	/* contains 0x2? */
 #define ADM1024_CONFIG1		0x40
 #define  ADM1024_CONFIG1_START	0x01
+#define  ADM1024_CONFIG1_INTCLR	0x08
 
 /* Sensors */
 #define ADMLC_INT		0
@@ -89,7 +90,7 @@ admlc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct admlc_softc *sc = (struct admlc_softc *)self;
 	struct i2c_attach_args *ia = aux;
-	u_int8_t cmd, data;
+	u_int8_t cmd, data, data2;
 	int i;
 
 	sc->sc_tag = ia->ia_tag;
@@ -103,10 +104,11 @@ admlc_attach(struct device *parent, struct device *self, void *aux)
 		printf(": cannot get control register\n");
 		return;
 	}
-	if ((data & ADM1024_CONFIG1_START) == 0) {
-		data |= ADM1024_CONFIG1_START;
+	data2 = data | ADM1024_CONFIG1_START;
+	data2 = data2 & ~ADM1024_CONFIG1_INTCLR;
+	if (data != data2) {
 		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-		    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL)) {
+		    sc->sc_addr, &cmd, sizeof cmd, &data2, sizeof data2, I2C_F_POLL)) {
 			iic_release_bus(sc->sc_tag, 0);
 			printf(": cannot set control register\n");
 			return;
