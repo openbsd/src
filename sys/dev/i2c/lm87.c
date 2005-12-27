@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm87.c,v 1.10 2005/12/27 09:23:28 deraadt Exp $	*/
+/*	$OpenBSD: lm87.c,v 1.11 2005/12/27 19:45:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -133,7 +133,8 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_family == 87) {
 		cmd = LM87_CHANNEL;
 		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-		    sc->sc_addr, &cmd, sizeof cmd, &channel, sizeof channel, 0)) {
+		    sc->sc_addr, &cmd, sizeof cmd, &channel,
+		    sizeof channel, 0)) {
 			iic_release_bus(sc->sc_tag, 0);
 			printf(", cannot read Channel register\n");
 			return;
@@ -267,8 +268,10 @@ lmenv_refresh(void *arg)
 			sc->sc_sensor[sensor].value = 3300000 * data / 192;
 			break;
 		case LMENV_EXT_TEMP:
-			if (sc->sc_family == 81)
+			if (sc->sc_family == 81) {
+				sc->sc_sensor[sensor].flags |= SENSOR_FINVALID;
 				break;		/* missing on LM81 */
+			}
 			/* FALLTHROUGH */
 		case LMENV_INT_TEMP:
 			if (data == 0x80)
