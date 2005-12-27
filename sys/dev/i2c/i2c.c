@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c.c,v 1.7 2005/12/26 03:52:07 deraadt Exp $	*/
+/*	$OpenBSD: i2c.c,v 1.8 2005/12/27 07:31:53 deraadt Exp $	*/
 /*	$NetBSD: i2c.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ iicbus_print(void *aux, const char *pnp)
 	struct i2cbus_attach_args *iba = aux;
 
 	if (pnp != NULL)
-		printf("%s at %s", iba->iba_name, pnp);
+		printf("\"%s\" at %s", iba->iba_name, pnp);
 
 	return (UNCONF);
 }
