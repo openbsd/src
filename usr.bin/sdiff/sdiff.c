@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.10 2005/12/27 05:04:27 deraadt Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.11 2005/12/27 05:13:14 tedu Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -52,7 +52,6 @@ static void prompt(const char *, const char *);
 static void undiff(char *);
 __dead static void usage(void);
 static char *xfgets(FILE *);
-static size_t xstrtonum(const char *);
 
 SIMPLEQ_HEAD(, diffline) diffhead = SIMPLEQ_HEAD_INITIALIZER(diffhead);
 size_t	 line_width;	/* width of a line (two columns and divider) */
@@ -248,41 +247,6 @@ main(int argc, char **argv)
 
 	/* Return diff exit status. */
 	return (WEXITSTATUS(status));
-}
-
-/*
- * Takes a string nptr and returns a numeric value.  The first character
- * must be a digit.  Parsing ends when a non-numerical character is
- * reached.
- */
-static size_t
-xstrtonum(const char *nptr)
-{
-	size_t n;
-	const char *errstr;
-	char *copy, *ptr;
-
-	/* Make copy of numeric string. */
-	if ((copy = strdup(nptr)) == NULL)
-		err(2, "out of memory");
-
-	/* Look for first non-digit. */
-	for (ptr = copy; isdigit(*ptr); ++ptr)
-		;
-
-	/* End string at first non-digit. */
-	if (*ptr != '\0')
-		*ptr = '\0';
-
-	/* Parse number. */
-	n = strtonum(copy, 0, INT_MAX, &errstr);
-	if (errstr)
-		errx(2, "line number in diff is %s: %s", errstr, nptr);
-
-	/* Free copy of numeric string. */
-	free(copy);
-
-	return (n);
 }
 
 /*
@@ -490,60 +454,69 @@ parsecmd(FILE *difffile, FILE *origfile)
 {
 	size_t file1start, file1end, file2start, file2end;
 	/* ed command line and pointer to characters in line */
-	const char *line, *p;
-	char cmd;
+	char *line, *p, *q;
+	const char *errstr;
+	char c, cmd;
 
 	/* Read ed command. */
 	if (!(line = xfgets(difffile)))
 		return (EOF);
 
-	file1start = xstrtonum(line);
 	p = line;
 	/* Go to character after line number. */
 	while (isdigit(*p))
 		++p;
+	c = *p;
+	*p++ = 0;
+	file1start = strtonum(line, 0, INT_MAX, &errstr);
+	if (errstr)
+		errx(2, "file1 start is %s: %s", errstr, line);
 
 	/* A range is specified for file1. */
-	if (*p == ',') {
-		/* Go to range end. */
-		++p;
+	if (c == ',') {
 
-		file1end = xstrtonum(p);
-		if (file1start > file1end)
-			errx(2, "invalid line range in file1: %s", line);
-
+		q = p;
 		/* Go to character after file2end. */
 		while (isdigit(*p))
 			++p;
+		c = *p;
+		*p++ = 0;
+		file1end = strtonum(q, 0, INT_MAX, &errstr);
+		if (errstr)
+			errx(2, "file1 end is %s: %s", errstr, line);
+		if (file1start > file1end)
+			errx(2, "invalid line range in file1: %s", line);
+
 	} else
 		file1end = file1start;
 
-	/* This character should be the ed command now. */
-	cmd = *p;
-
+	cmd = c;
 	/* Check that cmd is valid. */
 	if (!(cmd == 'a' || cmd == 'c' || cmd == 'd'))
 		errx(2, "ed command not recognized: %c: %s", cmd, line);
 
-	/* Go to file2 line range. */
-	++p;
-
-	file2start = xstrtonum(p);
+	q = p;
 	/* Go to character after line number. */
 	while (isdigit(*p))
 		++p;
+	c = *p;
+	*p++ = 0;
+	file2start = strtonum(q, 0, INT_MAX, &errstr);
+	if (errstr)
+		errx(2, "file2 start is %s: %s", errstr, line);
 
 	/*
 	 * There should either be a comma signifying a second line
 	 * number or the line should just end here.
 	 */
-	if (!(*p == ',' || *p == '\0'))
-		errx(2, "invalid line range in file2: %c: %s", *p, line);
+	if (c != ',' && c != '\0')
+		errx(2, "invalid line range in file2: %c: %s", c, line);
 
-	if (*p == ',') {
-		++p;
+	if (c == ',') {
 
-		file2end = xstrtonum(p);
+		file2end = strtonum(p, 0, INT_MAX, &errstr);
+		if (errstr)
+			errx(2, "file2 end is %s: %s", errstr, line);
 		if (file2start >= file2end)
 			errx(2, "invalid line range in file2: %s", line);
 	} else
