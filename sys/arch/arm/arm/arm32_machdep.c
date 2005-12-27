@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.17 2005/12/21 20:36:00 deraadt Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.18 2005/12/27 18:51:03 drahn Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -95,10 +95,6 @@ int     bufpages = 0;
 int     bufcachepercent = BUFCACHEPERCENT;
 
 int cold = 1;
-
-#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
-extern size_t md_root_size;		/* Memory disc size */
-#endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_ROOT_SIZE */
 
 pv_addr_t kernelstack;
 
@@ -306,8 +302,8 @@ cpu_startup()
 	 */
 	printf(version);
 
-	printf("real mem  = %u (%uK)\n", ctob(physmem), ctob(physmem)/1024);
-
+	printf("real mem  = %u (%uK) %uMB\n", ctob(physmem),
+	    ctob(physmem)/1024, ctob(physmem)/1024/1024);
 
 	/*
 	 * Find out how much space we need, allocate it,
