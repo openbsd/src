@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.4 2005/12/27 04:28:08 tedu Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.5 2005/12/27 04:31:06 tedu Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -214,13 +214,11 @@ main(int argc, char **argv)
 	case 0:
 		/* child */
 		/* We don't read from the pipe. */
-		if (close(fd[0]))
-			err(2, "child could not close pipe input");
+		close(fd[0]);
 		if (dup2(fd[1], STDOUT_FILENO) == -1)
 			err(2, "child could not duplicate descriptor");
 		/* Free unused descriptor. */
-		if (close(fd[1]))
-			err(2, "child could not close pipe output");
+		close(fd[1]);
 
 		execvp(diffprog, (char *const *)diffargv);
 		err(2, "could not execute diff: %s", diffprog);
@@ -230,8 +228,7 @@ main(int argc, char **argv)
 
 	/* parent */
 	/* We don't write to the pipe. */
-	if (close(fd[1]))
-		err(2, "could not close pipe output");
+	close(fd[1]);
 
 	/* Open pipe to diff command. */
 	if ((difffile = fdopen(fd[0], "r")) == NULL)
@@ -249,8 +246,7 @@ main(int argc, char **argv)
 	/* Read and parse diff output. */
 	while (parsecmd(difffile, origfile) != EOF)
 		;
-	if (fclose(difffile))
-		err(2, "could not close diff pipe");
+	fclose(difffile);
 
 	/* Wait for diff to exit. */
 	if (waitpid(pid, &status, 0) == -1 || !WIFEXITED(status) ||
@@ -260,8 +256,7 @@ main(int argc, char **argv)
 	/* No more diffs, so print common lines. */
 	while ((cmd = xfgets(origfile)))
 		enqueue(cmd, ' ', lflag ? NULL : cmd);
-	if (fclose(origfile))
-		err(2, "could not close file1: %s", argv[0]);
+	fclose(origfile);
 	/* Process unmodified lines. */
 	processq();
 
@@ -430,8 +425,7 @@ PROMPT:
 	 * should quit.
 	 */
 QUIT:
-	if (fclose(outfile))
-		err(2, "could not close output file");
+	fclose(outfile);
 	exit(0);
 }
 

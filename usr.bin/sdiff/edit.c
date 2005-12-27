@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.4 2005/12/27 04:28:08 tedu Exp $ */
+/*	$OpenBSD: edit.c,v 1.5 2005/12/27 04:31:06 tedu Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -100,11 +100,7 @@ xmktemp(const char *s)
 
 	/* If we don't write anything to the file, just close. */
 	if (s == NULL) {
-		if (close(fd)) {
-			warn("could not close %s", filename);
-			cleanup(filename);
-			/* NOTREACHED */
-		}
+		close(fd);
 
 		return (filename);
 	}
@@ -124,11 +120,7 @@ xmktemp(const char *s)
 	}
 
 	/* Close temp file. */
-	if (fclose(file)) {
-		warn("could not close %s", filename);
-		cleanup(filename);
-		/* NOTREACHED */
-	}
+	fclose(file);
 
 	return (filename);
 }
@@ -240,8 +232,7 @@ RIGHT:
 	/* We've reached the end of the temporary file, so remove it. */
 	if (unlink(filename))
 		warn("could not delete: %s", filename);
-	if (fclose(file))
-		warn("could not close: %s", filename);
+	fclose(file);
 
 	/* filename was malloc()ed in xmktemp(). */
 	free((void *)filename);
