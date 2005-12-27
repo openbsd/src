@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c.c,v 1.8 2005/12/27 07:31:53 deraadt Exp $	*/
+/*	$OpenBSD: i2c.c,v 1.9 2005/12/27 09:21:03 deraadt Exp $	*/
 /*	$NetBSD: i2c.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -101,8 +101,8 @@ iic_search(struct device *parent, void *arg, void *aux)
 		ia.ia_tag = sc->sc_tag;
 		ia.ia_addr = cf->cf_loc[IICCF_ADDR];
 		ia.ia_size = cf->cf_loc[IICCF_SIZE];
-		ia.ia_name = NULL;
-		ia.ia_compat = NULL;
+		ia.ia_name = "unknown";
+		ia.ia_compat = "unknown";
 
 		if (cf->cf_attach->ca_match(parent, cf, &ia) > 0)
 			config_attach(parent, cf, &ia, iic_print);
