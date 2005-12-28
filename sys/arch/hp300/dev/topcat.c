@@ -1,4 +1,4 @@
-/*	$OpenBSD: topcat.c,v 1.9 2005/01/24 21:36:39 miod Exp $	*/
+/*	$OpenBSD: topcat.c,v 1.10 2005/12/28 21:19:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -525,7 +525,7 @@ topcat_console_scan(int scode, caddr_t va, void *arg)
 		return (0);
 	}
 
-	pri = CN_INTERNAL;
+	pri = CN_NORMAL;
 
 #ifdef CONSCODE
 	/*

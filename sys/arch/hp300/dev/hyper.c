@@ -1,4 +1,4 @@
-/*	$OpenBSD: hyper.c,v 1.10 2005/11/19 01:59:36 aaron Exp $	*/
+/*	$OpenBSD: hyper.c,v 1.11 2005/12/28 21:19:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -500,7 +500,7 @@ hyper_console_scan(int scode, caddr_t va, void *arg)
 	if (fbr->id != GRFHWID || fbr->fbid != GID_HYPERION)
 		return (0);
 
-	pri = CN_INTERNAL;
+	pri = CN_NORMAL;
 
 #ifdef CONSCODE
 	/*

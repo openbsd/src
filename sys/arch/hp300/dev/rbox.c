@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbox.c,v 1.8 2005/01/27 21:24:48 miod Exp $	*/
+/*	$OpenBSD: rbox.c,v 1.9 2005/12/28 21:19:27 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -396,7 +396,7 @@ rbox_console_scan(int scode, caddr_t va, void *arg)
 	if (fbr->id != GRFHWID || fbr->fbid != GID_RENAISSANCE)
 		return (0);
 
-	pri = CN_INTERNAL;
+	pri = CN_NORMAL;
 
 #ifdef CONSCODE
 	/*
