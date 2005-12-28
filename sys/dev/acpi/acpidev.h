@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.2 2005/12/16 21:11:51 marco Exp $ */
+/* $OpenBSD: acpidev.h,v 1.3 2005/12/28 03:08:33 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -18,6 +18,8 @@
 
 #ifndef __DEV_ACPI_ACPIDEV_H__
 #define __DEV_ACPI_ACPIDEV_H__
+
+#define DEVNAME(s)  ((s)->sc_dev.dv_xname)
 
 /*
  * _BIF (Battery InFormation)
@@ -55,7 +57,10 @@ struct acpibat_bif {
 	u_int32_t	bif_low;
 	u_int32_t	bif_cap_granu1;
 	u_int32_t	bif_cap_granu2;
-	char		bif_data[];	/* 4 strings */
+	const char	*bif_model;
+	const char	*bif_serial;
+	const char	*bif_type;
+	const char	*bif_oem;
 };
 
 /*
