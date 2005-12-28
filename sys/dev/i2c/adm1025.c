@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1025.c,v 1.16 2005/12/27 22:49:41 deraadt Exp $	*/
+/*	$OpenBSD: adm1025.c,v 1.17 2005/12/28 18:41:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -114,7 +114,7 @@ admtm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_nsensors = ADMTM_NUM_SENSORS;
 	sc->sc_model = 1025;
     	if (strcmp(ia->ia_name, "47m192") == 0) {
-		sc->sc_nsensors += 3;
+		sc->sc_nsensors += SMSC_NUM_SENSORS;
 		sc->sc_model = 192;
 	}
 
