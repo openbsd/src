@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.7 2005/12/13 07:23:34 marco Exp $ */
+/* $OpenBSD: amltypes.h,v 1.8 2005/12/28 03:04:56 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -172,7 +172,9 @@ enum aml_objecttype {
 	AML_OBJTYPE_THERMZONE,
 	AML_OBJTYPE_BUFFERFIELD,
 	AML_OBJTYPE_DDBHANDLE,
-	AML_OBJTYPE_DEBUGOBJ
+	AML_OBJTYPE_DEBUGOBJ,
+
+	AML_OBJTYPE_NAMEREF = 0x100
 };
 
 /* AML Opcode Arguments */
@@ -186,9 +188,8 @@ enum aml_objecttype {
 #define AML_ARG_STRING      's'
 #define AML_ARG_BYTELIST    'B'
 #define AML_ARG_REVISION    'R'
-#define AML_ARG_RESULT      'r'
-#define AML_ARG_SUPERNAME   'S'
 
+#define AML_ARG_METHOD      'M'
 #define AML_ARG_NAMESTRING  'N'
 #define AML_ARG_NAMEREF     'n'
 #define AML_ARG_FIELDLIST   'F'
@@ -196,8 +197,6 @@ enum aml_objecttype {
 
 #define AML_ARG_TERMOBJLIST 'T'
 #define AML_ARG_TERMOBJ     't'
-#define AML_ARG_DATAOBJLIST 'O'
-#define AML_ARG_DATAOBJ     'o'
 
 #define AML_METHOD_ARGCOUNT(v)     (((v) >> 0) & 0x7)
 #define AML_METHOD_SERIALIZED(v)   (((v) >> 3) & 0x1)
@@ -232,7 +231,6 @@ struct aml_value
 		struct aml_value *vpackage;
 		struct acpi_gas   vopregion;
 		struct {
-			int               argcount;
 			struct aml_value *args;
 			struct aml_value *locals;
 			struct aml_value *result;
@@ -263,6 +261,10 @@ struct aml_value
 #define v_processor _.vprocessor
 #define v_powerrsrc _.vpowerrsrc
 #define v_thrmzone  _.vthrmzone
+
+#define aml_intval(v)   ((v)->v_integer)
+#define aml_strval(v)   ((v)->v_string)
+#define aml_bufval(v)   ((v)->v_buffer)
 
 struct aml_node
 {
