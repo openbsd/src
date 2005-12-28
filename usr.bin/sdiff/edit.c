@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.8 2005/12/27 05:00:28 deraadt Exp $ */
+/*	$OpenBSD: edit.c,v 1.9 2005/12/28 05:57:46 deraadt Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -149,7 +149,7 @@ eparse(const char *cmd, const char *left, const char *right)
 		/* Both strings. */
 		if (left == NULL)
 			goto RIGHT;
-		if (right == NULL) 
+		if (right == NULL)
 			goto LEFT;
 
 		/* Neither column is blank, so print both. */
