@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.118 2005/12/28 20:46:15 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.119 2005/12/28 21:55:53 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1170,17 +1170,11 @@ bge_chipinit(struct bge_softc *sc)
 
 	/* Set up the PCI DMA control register. */
 	if (sc->bge_pcie) {
+		/* PCI Express bus */
 		dma_rw_ctl = BGE_PCI_READ_CMD | BGE_PCI_WRITE_CMD |
 		    (0xf << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
 		    (0x2 << BGE_PCIDMARWCTL_WR_WAT_SHIFT);
-	} else if (pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_PCISTATE) &
-	    BGE_PCISTATE_PCI_BUSMODE) {
-		/* Conventional PCI bus */
-		dma_rw_ctl = BGE_PCI_READ_CMD | BGE_PCI_WRITE_CMD |
-		    (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
-		    (0x7 << BGE_PCIDMARWCTL_WR_WAT_SHIFT) |
-		    (0x0f);
-	} else {
+	} else if (sc->bge_pcix) {
 		/* PCI-X bus */
 		/*
 		 * The 5704 uses a different encoding of read/write
@@ -1208,7 +1202,13 @@ bge_chipinit(struct bge_softc *sc)
 			if (tmp == 0x6 || tmp == 0x7)
 				dma_rw_ctl |= BGE_PCIDMARWCTL_ONEDMA_ATONCE;
 		}
- 	}
+ 	} else {
+		/* Conventional PCI bus */
+		dma_rw_ctl = BGE_PCI_READ_CMD | BGE_PCI_WRITE_CMD |
+		    (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
+		    (0x7 << BGE_PCIDMARWCTL_WR_WAT_SHIFT) |
+		    (0x0f);
+	}
  
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704 ||
@@ -1770,8 +1770,8 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	 * PCI-X check.
 	 */
 	sc->bge_pcix = 0;
-	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIX,
-	    NULL, NULL) != 0)
+	if ((pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_PCISTATE) &
+	    BGE_PCISTATE_PCI_BUSMODE) == 0)
 		sc->bge_pcix = 1;
 
 	/* Try to reset the chip. */
@@ -1953,13 +1953,8 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	 * which do not support unaligned accesses, we will realign the
 	 * payloads by copying the received packets.
 	 */
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701) {
-		/* If in PCI-X mode, work around the alignment bug. */
-		if ((pci_conf_read(pc, pa->pa_tag, BGE_PCI_PCISTATE) &
-		    (BGE_PCISTATE_PCI_BUSMODE | BGE_PCISTATE_PCI_BUSSPEED)) ==
-			BGE_PCISTATE_PCI_BUSSPEED)
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701 && sc->bge_pcix)
 		sc->bge_rx_alignment_bug = 1;
-	}
 
 	/*
 	 * Call MI attach routine.
