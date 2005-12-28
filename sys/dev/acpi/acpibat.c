@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.4 2005/12/28 03:08:33 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.5 2005/12/28 03:18:56 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -52,8 +52,8 @@ struct cfdriver acpibat_cd = {
 	NULL, "acpibat", DV_DULL
 };
 
-void acpibat_getbif(struct acpibat_softc *);
-void acpibat_getbst(struct acpibat_softc *);
+int acpibat_getbif(struct acpibat_softc *);
+int acpibat_getbst(struct acpibat_softc *);
 
 int
 acpibat_match(struct device *parent, void *match, void *aux)
@@ -80,12 +80,12 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node->child;
-	/* acpibat_getbif(sc); */
+	acpibat_getbif(sc);
 
 	printf("\n");
 }
 
-void
+int
 acpibat_getbif(struct acpibat_softc *sc)
 {
 	struct aml_value res, env;
@@ -96,13 +96,13 @@ acpibat_getbif(struct acpibat_softc *sc)
 	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_BIF", &res, &env)) {
 		dprintf(50, "%s: no _BIF\n",
 		    DEVNAME(sc));
-		return;
+		return (1);
 	}
 
 	if (res.length != 13) {
 		printf("%s: invalid _BIF, battery information not saved\n",
 		    DEVNAME(sc));
-		return;
+		return (1);
 	}
 
 	sc->sc_bif.bif_power_unit = aml_intval(&res.v_package[0]);
@@ -135,9 +135,11 @@ acpibat_getbif(struct acpibat_softc *sc)
 	    sc->sc_bif.bif_serial,
 	    sc->sc_bif.bif_type,
 	    sc->sc_bif.bif_oem);
+
+	return (0);
 }
 
-void
+int
 acpibat_getbst(struct acpibat_softc *sc)
 {
 	struct aml_value res, env;
@@ -148,13 +150,13 @@ acpibat_getbst(struct acpibat_softc *sc)
 	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_BST", &res, &env)) {
 		dprintf(50, "%s: no _BST\n",
 		    DEVNAME(sc));
-		return;
+		return (1);
 	}
 
 	if (res.length != 4) {
 		printf("%s: invalid _BST, battery status not saved\n",
 		    DEVNAME(sc));
-		return;
+		return (1);
 	}
 
 	sc->sc_bst.bst_state = aml_intval(&res.v_package[0]);
@@ -167,4 +169,6 @@ acpibat_getbst(struct acpibat_softc *sc)
 	    sc->sc_bst.bst_rate,
 	    sc->sc_bst.bst_capacity,
 	    sc->sc_bst.bst_voltage);
+
+	return (0);
 }
