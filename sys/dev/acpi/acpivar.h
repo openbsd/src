@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.7 2005/12/16 18:59:41 jordan Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.8 2005/12/28 03:06:30 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -20,7 +20,6 @@
 
 #include <sys/timeout.h>
 
-/* #define ACPI_DEBUG */
 #ifdef ACPI_DEBUG
 #define dprintf(x...)	  do { if (acpi_debug) printf(x); } while(0)
 #define dnprintf(n,x...)  do { if (acpi_debug > (n)) printf(x); } while(0)
@@ -37,6 +36,7 @@ struct acpi_attach_args {
 	bus_space_tag_t	 aaa_memt;
 	void		*aaa_table;
 	paddr_t		 aaa_pbase; /* Physical base address of ACPI tables */
+	struct aml_node *aaa_node;
 };
 
 struct acpi_mem_map {
@@ -73,6 +73,13 @@ typedef SIMPLEQ_HEAD(, acpi_q) acpi_qhead_t;
 #define ACPIREG_PM1_STS	    0x0E
 #define ACPIREG_PM1_EN	    0x0F
 #define ACPIREG_PM1_CNT	    0x10
+
+struct acpi_parsestate
+{
+	u_int8_t           *start;
+	u_int8_t           *end;
+	u_int8_t           *pos;
+};
 
 struct acpi_reg_map {
 	bus_space_handle_t  ioh;
@@ -115,6 +122,8 @@ struct acpi_softc {
 
 	int			 sc_powerbtn;
 	int			 sc_sleepbtn;
+
+	struct acpi_parsestate   amlpc;
 };
 
 struct acpi_table {
