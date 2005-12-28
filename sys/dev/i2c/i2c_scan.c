@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.32 2005/12/28 22:35:33 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.33 2005/12/28 23:05:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -369,6 +369,9 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "lm86";
 	} else if (probe(0xfe) == 0x4d && probe(0xff) == 0x08) {
 		name = "maxim6690";	/* somewhat similar to lm90 */
+	} else if (probe(0xfe) == 0x41 && (addr == 0x4c || addr == 0x4d) &&
+	    (probe(0x03) & 0x2a) == 0 && probe(0x04) <= 0x09) {
+		name = "adm1032";
 	} else if (probe(0xfe) == 0x41 && probe(0x3c) == 0x00 &&
 	    (addr == 0x18 || addr == 0x19 || addr == 0x1a ||
 	    addr == 0x29 || addr == 0x2a || addr == 0x2b ||
