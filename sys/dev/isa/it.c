@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.15 2005/07/26 19:08:09 grange Exp $	*/
+/*	$OpenBSD: it.c,v 1.16 2005/12/28 15:27:44 grange Exp $	*/
 
 /*
  * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
@@ -30,7 +30,6 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/sensors.h>
-#include <sys/timeout.h>
 #include <machine/bus.h>
 
 #include <dev/isa/isareg.h>
@@ -68,8 +67,6 @@ struct cfattach it_ca = {
 struct cfdriver it_cd = {
 	NULL, "it", DV_DULL
 };
-
-struct timeout it_timeout;
 
 int
 it_match(struct device *parent, void *match, void *aux)
@@ -136,6 +133,12 @@ it_attach(struct device *parent, struct device *self, void *aux)
 	it_setup_volt(sc, 3, 9);
 	it_setup_temp(sc, 12, 3);
 
+	if (sensor_task_register(sc, it_refresh, 5)) {
+		printf("%s: unable to register update task\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
 	/* Activate monitoring */
 	cr = it_readreg(sc, ITD_CONFIG);
 	cr |= 0x01 | 0x08;
@@ -147,9 +150,6 @@ it_attach(struct device *parent, struct device *self, void *aux)
 		    sizeof(sc->sensors[i].device));
 		SENSOR_ADD(&sc->sensors[i]);
 	}
-
-	timeout_set(&it_timeout, it_refresh, sc);
-	timeout_add(&it_timeout, (15 * hz) / 10);
 }
 
 u_int8_t
@@ -327,5 +327,4 @@ it_refresh(void *arg)
 	struct it_softc *sc = (struct it_softc *)arg;
 
 	it_refresh_sensor_data(sc);
-	timeout_add(&it_timeout, (15 * hz) / 10);
 }
