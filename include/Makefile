@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.136 2005/09/27 16:27:22 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.137 2005/12/28 16:33:56 millert Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -13,7 +13,7 @@ USE_GCC3?=No
 # Missing: mp.h
 FILES=	a.out.h ar.h assert.h bitstring.h blf.h bm.h bsd_auth.h cast.h \
 	cpio.h ctype.h curses.h db.h dbm.h des.h dirent.h disktab.h \
-	dlfcn.h elf_abi.h err.h fnmatch.h fstab.h fts.h ftw.h getopt.h \
+	dlfcn.h elf_abi.h err.h errno.h fnmatch.h fstab.h fts.h ftw.h getopt.h \
 	glob.h grp.h ifaddrs.h inttypes.h iso646.h kvm.h langinfo.h \
 	libgen.h limits.h locale.h login_cap.h malloc.h math.h md4.h \
 	md5.h memory.h mpool.h ndbm.h netdb.h netgroup.h nlist.h nl_types.h \
@@ -31,7 +31,7 @@ FILES+= ieeefp.h
 .endif
 
 MFILES=	float.h frame.h 
-LFILES=	errno.h fcntl.h syslog.h termios.h stdarg.h varargs.h
+LFILES=	fcntl.h syslog.h termios.h stdarg.h varargs.h
 
 DIRS=	arpa protocols rpc rpcsvc
 LDIRS=	crypto ddb dev isofs miscfs net netatalk netinet altq \

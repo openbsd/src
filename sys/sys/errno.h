@@ -1,4 +1,4 @@
-/*	$OpenBSD: errno.h,v 1.15 2005/12/13 00:35:23 millert Exp $	*/
+/*	$OpenBSD: errno.h,v 1.16 2005/12/28 16:33:57 millert Exp $	*/
 /*	$NetBSD: errno.h,v 1.10 1996/01/20 01:33:53 jtc Exp $	*/
 
 /*
@@ -37,27 +37,7 @@
  *	@(#)errno.h	8.5 (Berkeley) 1/21/94
  */
 
-#ifndef _KERNEL
 #include <sys/cdefs.h>
-
-extern int errno;			/* global error number */
-
-#if __BSD_VISIBLE && !defined(__SYS_ERRLIST)
-#define __SYS_ERRLIST
-
-extern int sys_nerr;
-extern char *sys_errlist[];
-#endif /* __BSD_VISIBLE && !defined(__SYS_ERRLIST) */
-
-#if !defined(errno) && !defined(_STANDALONE)
-__BEGIN_DECLS
-int *__errno(void);
-int *___errno(void);
-__END_DECLS
-#define errno (*__errno())
-#endif /* errno */
-
-#endif /* _KERNEL */
 
 #define	EPERM		1		/* Operation not permitted */
 #define	ENOENT		2		/* No such file or directory */
