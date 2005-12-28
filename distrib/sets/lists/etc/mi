@@ -32,6 +32,7 @@
 ./etc/hotplug
 ./etc/ifstated.conf
 ./etc/inetd.conf
+./etc/ipsec.conf
 ./etc/kerberosV
 ./etc/kerberosV/README
 ./etc/kerberosV/krb5.conf.example
