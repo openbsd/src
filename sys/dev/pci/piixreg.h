@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixreg.h,v 1.1 2005/12/25 15:04:48 grange Exp $	*/
+/*	$OpenBSD: piixreg.h,v 1.2 2005/12/28 20:10:44 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -58,5 +58,7 @@
 #define PIIX_SMB_HD0	0x05		/* host data 0 */
 #define PIIX_SMB_HD1	0x06		/* host data 1 */
 #define PIIX_SMB_HBDB	0x07		/* host block data byte */
+
+#define PIIX_SMB_SIZE	0x10		/* SMBus I/O space size */
 
 #endif	/* !_DEV_PCI_PIIXREG_H_ */
