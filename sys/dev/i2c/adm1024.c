@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1024.c,v 1.6 2005/12/28 20:35:42 deraadt Exp $	*/
+/*	$OpenBSD: adm1024.c,v 1.7 2005/12/28 22:04:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -124,8 +124,8 @@ admlc_attach(struct device *parent, struct device *self, void *aux)
 		printf(", unable to read fan setting\n");
 		return;
 	}
-	sc->sc_fan1mul = 8800 * (1 << (data >> 4) & 0x3);
-	sc->sc_fan2mul = 8800 * (1 << (data >> 6) & 0x3);
+	sc->sc_fan1mul = (1 << (data >> 4) & 0x3);
+	sc->sc_fan2mul = (1 << (data >> 6) & 0x3);
 
 	iic_release_bus(sc->sc_tag, 0);
 
@@ -185,6 +185,17 @@ admlc_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 }
+
+static void
+fanval(struct sensor *sens, int mul, u_int8_t data)
+{
+	int tmp = data * mul;
+
+	if (tmp == 0)
+		sens->flags |= SENSOR_FINVALID;
+	else
+		sens->value = 1350000 / tmp;
+}	
 
 void
 admlc_refresh(void *arg)
@@ -247,12 +258,11 @@ admlc_refresh(void *arg)
 	cmd = ADM1024_FAN1;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
-		sc->sc_sensor[ADMLC_FAN1].value = sc->sc_fan1mul * data;
+		fanval(&sc->sc_sensor[ADMLC_FAN1], sc->sc_fan1mul, data);
 
 	cmd = ADM1024_FAN2;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
-		sc->sc_sensor[ADMLC_FAN2].value = sc->sc_fan2mul * data;
-
+		fanval(&sc->sc_sensor[ADMLC_FAN2], sc->sc_fan2mul, data);
 	iic_release_bus(sc->sc_tag, 0);
 }
