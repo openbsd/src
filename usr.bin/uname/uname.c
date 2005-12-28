@@ -1,4 +1,4 @@
-/*	$OpenBSD: uname.c,v 1.8 2003/07/10 00:06:51 david Exp $	*/
+/*	$OpenBSD: uname.c,v 1.9 2005/12/28 15:41:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: uname.c,v 1.8 2003/07/10 00:06:51 david Exp $";
+static char rcsid[] = "$OpenBSD: uname.c,v 1.9 2005/12/28 15:41:29 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -136,7 +136,7 @@ main(int argc, char *argv[])
 		mib[0] = CTL_HW;
 		mib[1] = HW_MODEL;
 		len = sizeof(buf);
-		if (sysctl(mib, 2, &buf, &len, NULL, 0) == -1)
+		if (sysctl(mib, 2, buf, &len, NULL, 0) == -1)
 			err(1, "sysctl");
 		printf("%.*s", (int)len, buf);
 	}		
