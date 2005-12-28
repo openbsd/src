@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.26 2005/02/27 22:08:39 miod Exp $	*/
+/*	$OpenBSD: dca.c,v 1.27 2005/12/28 21:13:40 miod Exp $	*/
 /*	$NetBSD: dca.c,v 1.35 1997/05/05 20:58:18 thorpej Exp $	*/
 
 /*
@@ -999,8 +999,8 @@ dca_console_scan(scode, va, arg)
 		pri = CN_NORMAL;
 		break;
 
-	case DCAREMID0:
-	case DCAREMID1:
+	case DCAID0 | DCACON:
+	case DCAID1 | DCACON:
 		pri = CN_REMOTE;
 		break;
 

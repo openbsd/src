@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcareg.h,v 1.6 2003/06/02 23:27:44 millert Exp $	*/
+/*	$OpenBSD: dcareg.h,v 1.7 2005/12/28 21:13:40 miod Exp $	*/
 /*	$NetBSD: dcareg.h,v 1.6 1996/02/24 00:55:02 thorpej Exp $	*/
 
 /*
@@ -82,9 +82,8 @@ struct dcadevice {
 
 /* interface reset/id (300 only) */
 #define	DCAID0		0x02
-#define DCAREMID0	0x82
 #define	DCAID1		0x42
-#define DCAREMID1	0xC2
+#define DCACON          0x80	/* REMOTE/LOCAL switch */
 
 /* interrupt control (300 only) */
 #define	DCAIPL(x)	((((x) >> 4) & 3) + 3)

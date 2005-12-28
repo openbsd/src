@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.2 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: dca.c,v 1.3 2005/12/28 21:13:45 miod Exp $	*/
 /*	$NetBSD: dca.c,v 1.10 1996/10/06 01:42:48 mycroft Exp $	*/
 
 /*
@@ -76,8 +76,8 @@ dcaprobe(cp)
 	case DCAID1:
 		cp->cn_pri = CN_NORMAL;
 		break;
-	case DCAREMID0:
-	case DCAREMID1:
+	case DCAID0 | DCACON:
+	case DCAID1 | DCACON:
 		cp->cn_pri = CN_REMOTE;
 		break;
 	default:
