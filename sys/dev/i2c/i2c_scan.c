@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.30 2005/12/28 20:35:59 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.31 2005/12/28 22:30:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -295,7 +295,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		break;
 	case 0x01:
 		/*
-		 * Most newer National products use a vendor code at
+		 * Some newer National products use a vendor code at
 		 * 0x3e of 0x01, and then 0x3f contains a product code
 		 * But some older products are missing a product code,
 		 * and contain who knows what in that register.  We assume
@@ -304,13 +304,13 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		 */
 		if (probe(0x3f) == 0x52 && probe(0xff) == 0x01 &&
 		    (probe(0xfe) == 0x4c || probe(0xfe) == 0x4d))
-			name = "lm89";
+			name = "lm89";		/* lm89 "alike" */
 		else if (probe(0x3f) == 0x33 && probe(0xff) == 0x01 &&
 		    probe(0xfe) == 0x21)
-			name = "lm90";
+			name = "lm90";		/* lm90 "alike" */
 		else if (probe(0x3f) == 0x49 && probe(0xff) == 0x01 &&
 		    (probe(0xfe) == 0x31 || probe(0xfe) == 0x34))
-			name = "lm99";	/* and lm99-1 */
+			name = "lm99";		/* lm99 "alike" */
 		else if (probe(0x3f) == 0x73)
 			name = "lm93";
 		else if (probe(0x3f) == 0x17)
@@ -320,7 +320,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "lm85";		/* adt7460 compat */
 		else if (probe(0x3f) == 0x03 && probe(0x48) == addr &&
 		    ((probe(0x40) & 0x80) == 0x00) && ((addr & 0x7c) == 0x2c))
-		    	name = "lm81";
+			name = "lm81";
 		break;
 	case 0x49:	/* TI */
 		if ((probe(0x3f) & 0xf0) == 0xc0 &&
@@ -355,8 +355,18 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 
 	if (probe(0xfe) == 0x01) {
 		/* Some more National devices ...*/
-		if (probe(0xff) == 0x33)
-			name = "lm90";
+		if (probe(0xff) == 0x21 && (probe(0x03) & 0x2a) == 0 &&
+		    probe(0x04) <= 0x09 && probe(0xff))
+			name = "lm90";		/* complete check */
+		else if (probe(0xff) == 0x31 && addr == 0x4c &&
+		    (probe(0x03) & 0x2a) == 0 && probe(0x04) <= 0x09)
+			name = "lm99";
+		else if (probe(0xff) == 0x34 && addr == 0x4d &&
+		    (probe(0x03) & 0x2a) == 0 && probe(0x04) <= 0x09)
+			name = "lm99-1";
+		else if (probe(0xff) == 0x11 && 
+		    (probe(0x03) & 0x2a) == 0 && probe(0x04) <= 0x09)
+			name = "lm86";
 	} else if (probe(0xfe) == 0x4d && probe(0xff) == 0x08) {
 		name = "maxim6690";	/* somewhat similar to lm90 */
 	} else if (probe(0xfe) == 0x41 && probe(0x3c) == 0x00 &&
