@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.116 2005/12/12 05:25:07 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.117 2005/12/28 20:27:38 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -251,19 +251,6 @@ const struct pci_matchid bge_devices[] = {
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C996 },
 };
 
-/* Various chip quirks. */
-#define	BGE_QUIRK_LINK_STATE_BROKEN	0x00000001
-#define	BGE_QUIRK_CSUM_BROKEN		0x00000002
-#define	BGE_QUIRK_5700_SMALLDMA		0x00000004
-#define	BGE_QUIRK_5700_PCIX_REG_BUG	0x00000008
-#define	BGE_QUIRK_PRODUCER_BUG		0x00000010
-#define	BGE_QUIRK_PCIX_DMA_ALIGN_BUG	0x00000020
-
-/* following bugs are common to bcm5700 rev B, all flavours */
-#define BGE_QUIRK_5700_COMMON \
-	(BGE_QUIRK_5700_SMALLDMA|BGE_QUIRK_PRODUCER_BUG)
-
-
 #define BGE_IS_5705_OR_BEYOND(sc)  \
 	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750    || \
@@ -296,159 +283,122 @@ const struct pci_matchid bge_devices[] = {
 
 static const struct bge_revision {
 	u_int32_t		br_chipid;
-	u_int32_t		br_quirks;
 	const char		*br_name;
 } bge_revisions[] = {
 	{ BGE_CHIPID_BCM5700_A0,
-	  BGE_QUIRK_LINK_STATE_BROKEN,
 	  "BCM5700 A0" },
 
 	{ BGE_CHIPID_BCM5700_A1,
-	  BGE_QUIRK_LINK_STATE_BROKEN,
 	  "BCM5700 A1" },
 
 	{ BGE_CHIPID_BCM5700_B0,
-	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_CSUM_BROKEN|BGE_QUIRK_5700_COMMON,
 	  "BCM5700 B0" },
 
 	{ BGE_CHIPID_BCM5700_B1,
-	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_5700_COMMON,
 	  "BCM5700 B1" },
 
 	{ BGE_CHIPID_BCM5700_B2,
-	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_5700_COMMON,
 	  "BCM5700 B2" },
 
 	{ BGE_CHIPID_BCM5700_B3,
-	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_5700_COMMON,
 	  "BCM5700 B3" },
 
 	/* This is treated like a BCM5700 Bx */
 	{ BGE_CHIPID_BCM5700_ALTIMA,
-	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_5700_COMMON,
 	  "BCM5700 Altima" },
 
 	{ BGE_CHIPID_BCM5700_C0,
-	  0,
 	  "BCM5700 C0" },
 
 	{ BGE_CHIPID_BCM5701_A0,
-	  BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
 	  "BCM5701 A0" },
 
 	{ BGE_CHIPID_BCM5701_B0,
-	  BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
 	  "BCM5701 B0" },
 
 	{ BGE_CHIPID_BCM5701_B2,
-	  BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
 	  "BCM5701 B2" },
 
 	{ BGE_CHIPID_BCM5701_B5,
-	  BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
 	  "BCM5701 B5" },
 
 	{ BGE_CHIPID_BCM5703_A0,
-	  0,
 	  "BCM5703 A0" },
 
 	{ BGE_CHIPID_BCM5703_A1,
-	  0,
 	  "BCM5703 A1" },
 
 	{ BGE_CHIPID_BCM5703_A2,
-	  0,
 	  "BCM5703 A2" },
 
 	{ BGE_CHIPID_BCM5703_A3,
-	  0,
 	  "BCM5703 A3" },
 
 	{ BGE_CHIPID_BCM5704_A0,
-	  0,
 	  "BCM5704 A0" },
 
 	{ BGE_CHIPID_BCM5704_A1,
-	  0,
 	  "BCM5704 A1" },
 
 	{ BGE_CHIPID_BCM5704_A2,
-	  0,
 	  "BCM5704 A2" },
 
 	{ BGE_CHIPID_BCM5704_A3,
-	  0,
 	  "BCM5704 A3" },
 
 	{ BGE_CHIPID_BCM5704_B0,
-	  0,
 	  "BCM5704 B0" },
 
 	{ BGE_CHIPID_BCM5705_A0,
-	  0,
 	  "BCM5705 A0" },
 
 	{ BGE_CHIPID_BCM5705_A1,
-	  0,
 	  "BCM5705 A1" },
 
 	{ BGE_CHIPID_BCM5705_A2,
-	  0,
 	  "BCM5705 A2" },
 
 	{ BGE_CHIPID_BCM5705_A3,
-	  0,
 	  "BCM5705 A3" },
 
 	{ BGE_CHIPID_BCM5750_A0,
-	  0,
 	  "BCM5750 A0" },
 
 	{ BGE_CHIPID_BCM5750_A1,
-	  0,
 	  "BCM5750 A1" },
 
 	{ BGE_CHIPID_BCM5750_A3,
-	  0,
 	  "BCM5750 A3" },
 
 	{ BGE_CHIPID_BCM5750_B0,
-	  0,
 	  "BCM5750 B0" },
 
 	{ BGE_CHIPID_BCM5750_B1,
-	  0,
 	  "BCM5750 B1" },
 
 	{ BGE_CHIPID_BCM5750_C0,
-	  0,
 	  "BCM5750 C0" },
 
 	{ BGE_CHIPID_BCM5750_C1,
-	  0,
 	  "BCM5750 C1" },
 
 	{ BGE_CHIPID_BCM5714_A0,
-	  0,
 	  "BCM5714 A0" },
 
 	{ BGE_CHIPID_BCM5752_A0,
-	  0,
 	  "BCM5752 A0" },
 
 	{ BGE_CHIPID_BCM5752_A1,
-	  0,
 	  "BCM5752 A1" },
 
 	{ BGE_CHIPID_BCM5715_A0,
-	  0,
 	  "BCM5715 A0" },
 
 	{ BGE_CHIPID_BCM5715_A1,
-	  0,
 	  "BCM5715 A1" },
 
-	{ 0, 0, NULL }
+	{ 0,
+	  NULL }
 };
 
 /*
@@ -457,47 +407,36 @@ static const struct bge_revision {
  */
 static const struct bge_revision bge_majorrevs[] = {
 	{ BGE_ASICREV_BCM5700,
-	  BGE_QUIRK_LINK_STATE_BROKEN,
 	  "unknown BCM5700" },
 
 	{ BGE_ASICREV_BCM5701,
-	  BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
 	  "unknown BCM5701" },
 
 	{ BGE_ASICREV_BCM5703,
-	  0,
 	  "unknown BCM5703" },
 
 	{ BGE_ASICREV_BCM5704,
-	  0,
 	  "unknown BCM5704" },
 
 	{ BGE_ASICREV_BCM5705,
-	  0,
 	  "unknown BCM5705" },
 
 	{ BGE_ASICREV_BCM5750,
-	  0,
 	  "unknown BCM5750" },
 
 	{ BGE_ASICREV_BCM5714_A0,
-	  0,
 	  "unknown BCM5714" },
 
 	{ BGE_ASICREV_BCM5752,
-	  0,
 	  "unknown BCM5752" },
 
 	{ BGE_ASICREV_BCM5780,
-	  0,
 	  "unknown BCM5780" },
 
 	{ BGE_ASICREV_BCM5714,
-	  0,
 	  "unknown BCM5714" },
 
 	{ 0,
-	  0,
 	  NULL }
 };
 
@@ -1114,12 +1053,12 @@ bge_init_tx_ring(struct bge_softc *sc)
 	/* Initialize transmit producer index for host-memory send ring. */
 	sc->bge_tx_prodidx = 0;
 	CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, sc->bge_tx_prodidx);
-	if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)
+	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5700_BX)
 		CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, sc->bge_tx_prodidx);
 
 	/* NIC-memory send ring not used; initialize to zero. */
 	CSR_WRITE_4(sc, BGE_MBX_TX_NIC_PROD0_LO, 0);
-	if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)
+	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5700_BX)
 		CSR_WRITE_4(sc, BGE_MBX_TX_NIC_PROD0_LO, 0);
 
 	SLIST_INIT(&sc->txdma_list);
@@ -1685,7 +1624,8 @@ bge_blockinit(struct bge_softc *sc)
 		CSR_WRITE_4(sc, BGE_MI_STS, BGE_MISTS_LINK);
  	} else {
 		BGE_SETBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL|10<<16);
-		if (sc->bge_quirks & BGE_QUIRK_LINK_STATE_BROKEN)
+		if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5700_AX ||
+		    BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5700_BX)
 			CSR_WRITE_4(sc, BGE_MAC_EVT_ENB,
 			    BGE_EVTENB_MI_INTERRUPT);
 	}
@@ -1802,8 +1742,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	DELAY(1000);	/* 27 usec is allegedly sufficent */
 
 	/*
-	 * Save ASIC rev.  Look up any quirks
-	 * associated with this ASIC.
+	 * Save ASIC rev.
 	 */
 
 	sc->bge_chipid =
@@ -1812,13 +1751,10 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(", ");
 	br = bge_lookup_rev(sc->bge_chipid);
-	if (br == NULL) {
+	if (br == NULL)
 		printf("unknown ASIC (0x%04x)", sc->bge_chipid >> 16);
-		sc->bge_quirks = 0;
-	} else {
+	else
 		printf("%s (0x%04x)", br->br_name, sc->bge_chipid >> 16);
-		sc->bge_quirks |= br->br_quirks;
-	}
 
 	printf(": %s", intrstr);
 
@@ -2014,7 +1950,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	 * which do not support unaligned accesses, we will realign the
 	 * payloads by copying the received packets.
 	 */
-	if (sc->bge_quirks & BGE_QUIRK_PCIX_DMA_ALIGN_BUG) {
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701) {
 		/* If in PCI-X mode, work around the alignment bug. */
 		if ((pci_conf_read(pc, pa->pa_tag, BGE_PCI_PCISTATE) &
 		    (BGE_PCISTATE_PCI_BUSMODE | BGE_PCISTATE_PCI_BUSSPEED)) ==
@@ -2438,8 +2374,8 @@ bge_intr(void *xsc)
 	 * changes, thereby adding an additional register access to
 	 * the interrupt handler.
 	 */
-
-	if (sc->bge_quirks & BGE_QUIRK_LINK_STATE_BROKEN) {
+	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5700_AX ||
+	    BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5700_BX) {
 		status = CSR_READ_4(sc, BGE_MAC_STS);
 		if (status & BGE_MACSTAT_MI_INTERRUPT) {
 			sc->bge_link = 0;
@@ -2775,7 +2711,7 @@ bge_encap(struct bge_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 #endif
 	}
 #endif
-	if (!(sc->bge_quirks & BGE_QUIRK_5700_SMALLDMA))
+	if (!(BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5700_BX))
 		goto doit;
 	/*
 	 * bcm5700 Revision B silicon cannot handle DMA descriptors with
@@ -2916,7 +2852,7 @@ bge_start(struct ifnet *ifp)
 
 	/* Transmit */
 	CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, prodidx);
-	if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)
+	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5700_BX)
 		CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, prodidx);
 
 	sc->bge_tx_prodidx = prodidx;
