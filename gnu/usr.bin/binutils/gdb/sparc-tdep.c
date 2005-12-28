@@ -1,6 +1,6 @@
 /* Target-dependent code for SPARC.
 
-   Copyright 2003, 2004 Free Software Foundation, Inc.
+   Copyright 2003, 2004, 2005 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -80,6 +80,8 @@ struct regset;
 #define X_OP2(i) (((i) >> 22) & 0x7)
 #define X_IMM22(i) ((i) & 0x3fffff)
 #define X_OP3(i) (((i) >> 19) & 0x3f)
+#define X_RS1(i) (((i) >> 14) & 0x1f)
+#define X_RS2(i) ((i) & 0x1f)
 #define X_I(i) (((i) >> 13) & 1)
 /* Sign extension macros.  */
 #define X_DISP22(i) ((X_IMM22 (i) ^ 0x200000) - 0x200000)
@@ -984,6 +986,23 @@ sparc_analyze_control_transfer (CORE_ADDR pc, CORE_ADDR *npc)
       /* Branch on Integer Condition Codes with Prediction (BPcc).  */
       branch_p = 1;
       offset = 4 * X_DISP19 (insn);
+    }
+  else if (X_OP (insn) == 2 && X_OP3 (insn) == 0x3a)
+    {
+      if ((X_I (insn) == 0 && X_RS1 (insn) == 0 && X_RS2 (insn) == 0)
+	  || (X_I (insn) == 1 && X_RS1 (insn) == 0 && (insn & 0x7f) == 0))
+	{
+	  /* OpenBSD system call.  */
+	  ULONGEST number;
+
+	  regcache_cooked_read_unsigned (current_regcache,
+					 SPARC_G1_REGNUM, &number);
+
+	  if (number & 0x400)
+	    return sparc_address_from_register (SPARC_G2_REGNUM);
+	  if (number & 0x800)
+	    return sparc_address_from_register (SPARC_G7_REGNUM);
+	}
     }
 
   /* FIXME: Handle DONE and RETRY instructions.  */
