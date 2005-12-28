@@ -1,4 +1,4 @@
-/*	$OpenBSD: adt7460.c,v 1.4 2005/12/27 17:18:18 deraadt Exp $	*/
+/*	$OpenBSD: adt7460.c,v 1.5 2005/12/28 00:42:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -82,6 +82,7 @@ adt_match(struct device *parent, void *match, void *aux)
 	if (strcmp(ia->ia_name, "adt7460") == 0 ||
 	    strcmp(ia->ia_name, "adt7467") == 0 ||
 	    strcmp(ia->ia_name, "adt7476") == 0 ||
+	    strcmp(ia->ia_name, "adm1027") == 0 ||
 	    strcmp(ia->ia_name, "lm85") == 0 ||
 	    strcmp(ia->ia_name, "emc6d10x") == 0)
 		return (1);
