@@ -1,4 +1,4 @@
-/*	$OpenBSD: maxim6690.c,v 1.3 2005/12/27 17:18:18 deraadt Exp $	*/
+/*	$OpenBSD: maxim6690.c,v 1.4 2005/12/28 23:05:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -34,9 +34,11 @@
 
 #define MAX6642_TEMP_INVALID	0xff	/* sensor disconnected */
 #define MAX6690_TEMP_INVALID	0x80	/* sensor disconnected */
+#define LM90_TEMP_INVALID	0x7f	/* sensor disconnected */
 
 #define MAX6642_TEMP2_MASK	0xc0	/* significant bits */
 #define MAX6690_TEMP2_MASK	0xe0	/* significant bits */
+#define LM90_TEMP2_MASK		0xe0	/* significant bits */
 
 /* Sensors */
 #define MAXTMP_INT		0
@@ -68,46 +70,19 @@ struct cfdriver maxtmp_cd = {
 };
 
 int
-maxtmp_check(struct i2c_attach_args *ia, u_int8_t *idp, u_int8_t *revp)
-{
-	u_int8_t cmd, id, rev;
-
-	iic_acquire_bus(ia->ia_tag, 0);
-
-	cmd = MAX6690_DEVID;
-	if (iic_exec(ia->ia_tag, I2C_OP_READ_WITH_STOP,
-	    ia->ia_addr, &cmd, sizeof cmd, &id, sizeof id, 0)) {
-		iic_release_bus(ia->ia_tag, 0);
-		return 0;
-	}
-
-	cmd = MAX6690_REVISION;
-	if (iic_exec(ia->ia_tag, I2C_OP_READ_WITH_STOP,
-	    ia->ia_addr, &cmd, sizeof cmd, &rev, sizeof rev, 0)) {
-		iic_release_bus(ia->ia_tag, 0);
-		return 0;
-	}
-
-	iic_release_bus(ia->ia_tag, 0);
-
-	*idp = id;
-	*revp = rev;
-
-	if (id == 0x4d)
-		return (1);
-	return (0);
-}
-
-int
 maxtmp_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
 	if (strcmp(ia->ia_name, "max6642") == 0 ||
-	    strcmp(ia->ia_name, "max6690") == 0)
+	    strcmp(ia->ia_name, "max6690") == 0 ||
+	    strcmp(ia->ia_name, "lm86") == 0 ||
+	    strcmp(ia->ia_name, "lm89") == 0 ||
+	    strcmp(ia->ia_name, "lm90") == 0 ||
+	    strcmp(ia->ia_name, "lm99") == 0 ||
+	    strcmp(ia->ia_name, "lm99-1") == 0)
 		return (1);
 	return (0);
-	// return (maxtmp_check(ia, &id, &rev));
 }
 
 void
@@ -115,27 +90,23 @@ maxtmp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct maxtmp_softc *sc = (struct maxtmp_softc *)self;
 	struct i2c_attach_args *ia = aux;
-	u_int8_t id, rev;
 	int i;
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
-	if (maxtmp_check(ia, &id, &rev) == 0) {
-		printf(": unknown Device ID 0x%x\n", id);
-		return;
-	}
-
 	if (strcmp(ia->ia_name, "max6642") == 0) {
 		sc->sc_temp_invalid = MAX6642_TEMP_INVALID;
 		sc->sc_temp2_mask = MAX6642_TEMP2_MASK;
-		printf(": MAX6642");
-	} else {
+	} if (strcmp(ia->ia_name, "max6690") == 0) {
 		sc->sc_temp_invalid = MAX6690_TEMP_INVALID;
 		sc->sc_temp2_mask = MAX6690_TEMP2_MASK;
-		printf(": MAX6690 rev 0x%x", rev);
+	} else {
+		sc->sc_temp_invalid = LM90_TEMP_INVALID;
+		sc->sc_temp2_mask = LM90_TEMP2_MASK;
 	}
-
+	printf(": %s", ia->ia_name);
+	
 	/* Initialize sensor data. */
 	for (i = 0; i < MAXTMP_NUM_SENSORS; i++)
 		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
