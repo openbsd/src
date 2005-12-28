@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/sparc64.
 
-   Copyright 2004 Free Software Foundation, Inc.
+   Copyright 2004, 2005 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,6 +31,7 @@
 
 #include "gdb_assert.h"
 
+#include "obsd-tdep.h"
 #include "sparc64-tdep.h"
 
 /* OpenBSD uses the traditional NetBSD core file format, even for
@@ -203,9 +204,9 @@ sparc64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* OpenBSD/sparc64 has SVR4-style shared libraries...  */
   set_gdbarch_in_solib_call_trampoline (gdbarch, in_plt_section);
-  set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_lp64_fetch_link_map_offsets);
+  set_gdbarch_skip_solib_resolver (gdbarch, obsd_skip_solib_resolver);
 }
 
 
