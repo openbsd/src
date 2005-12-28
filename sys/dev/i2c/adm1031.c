@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1031.c,v 1.2 2005/12/27 17:18:18 deraadt Exp $	*/
+/*	$OpenBSD: adm1031.c,v 1.3 2005/12/28 20:35:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -89,7 +89,6 @@ admtt_attach(struct device *parent, struct device *self, void *aux)
 		printf(", unable to read fan setting\n");
 		return;
 	}
-
 	sc->sc_fanmul = 11250/8 * (1 << ADM1024_FANC_VAL(data)) * 60;
 
 	/* Initialize sensor data. */
