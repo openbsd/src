@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.h,v 1.16 2005/12/10 11:45:43 miod Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.h,v 1.17 2005/12/28 03:05:39 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.h,v 1.7 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -382,8 +382,7 @@ ahc_platform_scb_free(struct ahc_softc *ahc, struct scb *scb)
 
 	ahc_lock(ahc, &s);
 	
-	if ((ahc->flags & AHC_RESOURCE_SHORTAGE) != 0 ||
-	    (scb->flags & SCB_RECOVERY_SCB) != 0) {
+	if ((ahc->flags & AHC_RESOURCE_SHORTAGE) != 0) {
 		ahc->flags &= ~AHC_RESOURCE_SHORTAGE;
 	}
 	
