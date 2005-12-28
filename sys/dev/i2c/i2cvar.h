@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2cvar.h,v 1.6 2005/12/27 17:18:18 deraadt Exp $	*/
+/*	$OpenBSD: i2cvar.h,v 1.7 2005/12/28 01:02:58 deraadt Exp $	*/
 /*	$NetBSD: i2cvar.h,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -145,5 +145,7 @@ int	iic_exec(i2c_tag_t, i2c_op_t, i2c_addr_t, const void *,
 int	iic_smbus_write_byte(i2c_tag_t, i2c_addr_t, uint8_t, uint8_t, int);
 int	iic_smbus_read_byte(i2c_tag_t, i2c_addr_t, uint8_t, uint8_t *, int);
 int	iic_smbus_receive_byte(i2c_tag_t, i2c_addr_t, uint8_t *, int);
+
+void	iic_ignore_addr(u_int8_t addr);
 
 #endif /* _DEV_I2C_I2CVAR_H_ */

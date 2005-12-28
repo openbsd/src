@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.28 2005/12/27 22:49:57 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.29 2005/12/28 01:02:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -31,35 +31,6 @@
 
 void	iic_probe(struct device *, struct i2cbus_attach_args *, u_int8_t);
 
-/*
- * some basic rules for finding devices...
- * 
- * 0x7 == 0x0001			national lm92
- * 0xfe == 0x4d			maxim (6659/6658/6659) == lm90
- * no 0x7 register??		maxim (6633/6634/6635) lm92
- * 
- * XXX remove this block of text later	
- * 0x00	National (on LM84)
- * 0x01	National
- * 0x12C3	Asus (at 0x4F)
- * 0x23	Analog Devices
- * 0x41	Analog Devices (also at 0x16)
- * 0x49	TI
- * 0x4D	Maxim
- * 0x54	On Semi
- * 0x5C	SMSC
- * 0x5D 	SMSC
- * 0x55	SMSC
- * 0x5CA3	Winbond (at 0x4F)
- * 0x90	ITE (at 0x58)
- * 0xA1	Philips (at 0x05 too)
- * 0xA3	Winbond (at 0x4F)
- * 0xAC	Myson (at 0x58)
- * 0xC3	Asus (at 0x4F)
- * 0xDA	Dallas
- * 0x54    Microchip (at 0x7)
- */
-
 /* addresses at which to probe for sensors */
 struct {
 	u_int8_t start, end;
@@ -69,6 +40,9 @@ struct {
 	{ 0x20, 0x2f },
 	{ 0x48, 0x4f }
 };
+
+#define MAX_IGNORE 8
+u_int8_t ignore_addrs[MAX_IGNORE];
 
 /* registers to print if we fail to probe */
 u_int8_t probereg[] = {
@@ -210,16 +184,28 @@ xeonprobe(u_int8_t addr)
 }	
 #endif
 
+void
+iic_ignore_addr(u_int8_t addr)
+{
+	int i;
 
+	for (i = 0; i < sizeof(ignore_addrs); i++)
+		if (ignore_addrs[i] == 0) {
+			ignore_addrs[i] = addr;
+			return;
+		}
+}
 
 void
 iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 {
 	struct i2c_attach_args ia;
 	char *name = NULL;
-#ifdef I2C_DEBUG
 	int i;
-#endif /* I2C_DEBUG */
+
+	for (i = 0; i < sizeof(ignore_addrs); i++)
+		if (ignore_addrs[i] == addr)
+			return;
 
 	probeinit(iba, addr);
 
@@ -237,6 +223,9 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		else if ((addr == 0x2c || addr == 0x2e || addr == 0x2f) &&
 		    probe(0x3d) == 0x70)
 			name = "adt7470";
+		else if (probe(0x3d) == 0x27 &&
+		    (probe(0x3f) == 0x60 || probe(0x3f) == 0x6a))
+			name = "adm1027";	/* complete check */
 		else if (probe(0x3d) == 0x27 &&
 		    (probe(0x3f) == 0x62 || probe(0x3f) == 0x6a))
 			name = "adt7460";	/* complete check */
@@ -419,6 +408,7 @@ iic_scan(struct device *self, struct i2cbus_attach_args *iba)
 	u_int8_t cmd = 0, addr;
 	int i;
 
+	bzero(ignore_addrs, sizeof(ignore_addrs));
 	for (i = 0; i < sizeof(probe_addrs)/sizeof(probe_addrs[0]); i++) {
 		for (addr = probe_addrs[i].start; addr <= probe_addrs[i].end;
 		    addr++) {

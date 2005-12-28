@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm_i2c.c,v 1.1 2005/12/27 20:47:00 kettenis Exp $	*/
+/*	$OpenBSD: lm_i2c.c,v 1.2 2005/12/28 01:02:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -79,6 +79,8 @@ lm_i2c_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s: satellites at addr 0x%x and addr 0x%x\n",
 	    sc->sc_lmsc.sc_dev.dv_xname,
 	    0x48 + (data & 0x7), 0x48 + ((data >> 4) & 0x7));
+	iic_ignore_addr(0x48 + (data & 0x7));
+	iic_ignore_addr(0x48 + ((data >> 4) & 0x7));
 }
 
 u_int8_t
