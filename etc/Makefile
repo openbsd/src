@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.230 2005/12/27 23:16:28 naddy Exp $
+#	$OpenBSD: Makefile,v 1.231 2005/12/28 04:55:35 david Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -74,7 +74,7 @@ distribution-etc-root-var: distrib-dirs
 	awk -f ${.CURDIR}/mklogin.conf `test -f etc.${MACHINE}/login.conf.overrides && echo etc.${MACHINE}/login.conf.overrides` < ${.CURDIR}/login.conf.in > \
 	    ${DESTDIR}/etc/login.conf && \
 	    chown ${BINOWN}:${BINGRP} ${DESTDIR}/etc/login.conf && \
-	    chmod 644 ${DESTDIR}/etc/login.conf 
+	    chmod 644 ${DESTDIR}/etc/login.conf
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 hosts.equiv ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 crontab ${DESTDIR}/var/cron/tabs/root
@@ -382,7 +382,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.230 2005/12/27 23:16:28 naddy Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.231 2005/12/28 04:55:35 david Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
