@@ -1,6 +1,7 @@
-/*	$OpenBSD: acpi.c,v 1.12 2005/12/18 15:53:00 sturm Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.13 2005/12/28 03:09:21 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
+ * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -34,11 +35,10 @@
 #include <dev/acpi/dsdt.h>
 
 #ifdef ACPI_DEBUG
-int acpi_debug = 20;
+int acpi_debug = 60;
 #endif
 
-#define DEVNAME(s)  ((s)->sc_dev.dv_xname)
-
+#define ACPIEN_RETRIES 15
 int	acpimatch(struct device *, void *, void *);
 void	acpiattach(struct device *, struct device *, void *);
 int	acpi_submatch(struct device *, void *, void *);
@@ -214,7 +214,7 @@ acpi_read_pmreg(struct acpi_softc *sc, int reg)
 			acpi_read_pmreg(sc, ACPIREG_PM1B_CNT);
 	}
 
-	if (reg >= ACPIREG_MAXREG)
+	if (reg >= ACPIREG_MAXREG || sc->sc_pmregs[reg].size == 0)
 		return (0);
 
 	regval = 0;
@@ -288,20 +288,41 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int regval)
 		 regval);
 }
 
+void acpi_gpe(struct aml_node *, void *);
+
+void
+acpi_gpe(struct aml_node *node, void *arg)
+{
+	struct aml_node *child;
+	struct acpi_softc *sc = arg;
+	uint32_t flag;
+
+	flag = acpi_read_pmreg(sc, ACPIREG_GPE0_EN);
+	for (child=node->child; child; child=child->sibling) {
+		printf("gpe: %s\n", child->name);
+		
+	}
+	flag = -1;
+	flag &= ~(1L << 0x1C);
+}
+
 void
 acpi_foundhid(struct aml_node *node, void *arg)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
 	struct device		*self = (struct device *)arg;
 	const char		*dev;
+	struct aml_value         res;
 
 	dnprintf(10, "found hid device: %s ", node->parent->name);
-	switch(node->child->value.type) {
+	aml_eval_object(sc, node->child, &res, NULL);
+
+	switch(res.type) {
 	case AML_OBJTYPE_STRING:
-		dev = node->child->value.v_string;
+		dev = res.v_string;
 		break;
 	case AML_OBJTYPE_INTEGER:
-		dev = aml_eisaid(node->child->value.v_integer);
+		dev = aml_eisaid(res.v_integer);
 		break;
 	default:
 		dev = "unknown";
@@ -316,6 +337,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 		aaa.aaa_name = "acpiac";
 		aaa.aaa_iot = sc->sc_iot;
 		aaa.aaa_memt = sc->sc_memt;
+		aaa.aaa_node = node->parent;
 		config_found(self, &aaa, acpi_print);
 	} else if (!strcmp(dev, ACPI_DEV_CMB)) {
 		struct acpi_attach_args aaa;
@@ -324,6 +346,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 		aaa.aaa_name = "acpibat";
 		aaa.aaa_iot = sc->sc_iot;
 		aaa.aaa_memt = sc->sc_memt;
+		aaa.aaa_node = node->parent;
 		config_found(self, &aaa, acpi_print);
 	}
 }
@@ -354,6 +377,7 @@ acpiattach(struct device *parent, struct device *self, void *aux)
 	struct acpi_q *entry;
 	struct acpi_dsdt *p_dsdt;
 	paddr_t facspa;
+	int idx;
 
 	sc->sc_iot = aaa->aaa_iot;
 	sc->sc_memt = aaa->aaa_memt;
@@ -444,6 +468,11 @@ acpiattach(struct device *parent, struct device *self, void *aux)
 	 */
 #ifdef ACPI_ENABLE
 	acpi_write_pmreg(sc, ACPIREG_SMICMD, sc->sc_fadt->acpi_enable);
+	idx = 0;
+	do {
+		if (idx++ > ACPIEN_RETRIES) 
+			goto fail;
+	} while (!(acpi_read_pmreg(sc, ACPIREG_PM1_CNT) & ACPI_PM1_SCI_EN));
 #endif
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
@@ -452,6 +481,14 @@ acpiattach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->sc_timeout, acpi_softintr, sc);
 #endif
 	acpi_attach_machdep(sc);
+
+	for (idx=0; idx<ACPIREG_MAXREG; idx++) {
+		if (sc->sc_pmregs[idx].name) {
+			printf("%8s = %.8x\n",
+			       sc->sc_pmregs[idx].name,
+			       acpi_read_pmreg(sc, idx));
+		}
+	}
 
 	/*
 	 * If we have an interrupt handler, we can get notification
@@ -475,7 +512,12 @@ acpiattach(struct device *parent, struct device *self, void *aux)
 		}
 		acpi_write_pmreg(sc, ACPIREG_PM1_EN, flag);
 
-		//acpi_write_pmreg(sc, ACPIREG_GPE0_EN, 1L << 0x1D);
+#if 0
+		flag = acpi_read_pmreg(sc, ACPIREG_GPE0_STS);
+		acpi_write_pmreg(sc, ACPIREG_GPE0_STS, flag);
+		acpi_write_pmreg(sc, ACPIREG_GPE0_EN, 0);
+		acpi_write_pmreg(sc, ACPIREG_GPE0_EN, (1L << 0x1D));
+#endif
 	}
 
 	/*
@@ -677,22 +719,28 @@ acpi_load_dsdt(paddr_t pa, struct acpi_q **dsdt)
 	}
 }
 
+int icount;
+
 int
 acpi_interrupt(void *arg)
 {
 	struct acpi_softc *sc = (struct acpi_softc *)arg;
-	u_int16_t processed, sts,en;
+	u_int32_t processed, sts,en;
 
 	processed = 0;
 
 	sts = acpi_read_pmreg(sc, ACPIREG_GPE0_STS);
 	en  = acpi_read_pmreg(sc, ACPIREG_GPE0_EN);
 	if (sts & en) {
-		dnprintf(10,"GPE interrupt: %.4x\n", sts & en);
+		dnprintf(10, "GPE interrupt: %.8x %.8x %.8x\n", sts, en, sts & en);
 		acpi_write_pmreg(sc, ACPIREG_GPE0_EN, en & ~sts);
 		acpi_write_pmreg(sc, ACPIREG_GPE0_STS,en);
 		acpi_write_pmreg(sc, ACPIREG_GPE0_EN, en);
 		processed = 1;
+		for(en=0; en<icount; en++) {
+		  icount = (icount << 1) | 1;
+		}
+		icount++;
 	}
 
 	sts = acpi_read_pmreg(sc, ACPIREG_PM1_STS);
