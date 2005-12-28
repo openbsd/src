@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/sparc.
 
-   Copyright 2004 Free Software Foundation, Inc.
+   Copyright 2004, 2005 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,6 +30,7 @@
 
 #include "gdb_assert.h"
 
+#include "obsd-tdep.h"
 #include "sparc-tdep.h"
 
 /* Signal trampolines.  */
@@ -149,6 +150,8 @@ sparc32obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* OpenBSD/sparc is very similar to NetBSD/sparc ELF.  */
   sparc32nbsd_elf_init_abi (info, gdbarch);
+
+  set_gdbarch_skip_solib_resolver (gdbarch, obsd_skip_solib_resolver);
 
   frame_unwind_append_sniffer (gdbarch, sparc32obsd_sigtramp_frame_sniffer);
 }
