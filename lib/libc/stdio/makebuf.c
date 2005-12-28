@@ -1,4 +1,4 @@
-/*	$OpenBSD: makebuf.c,v 1.7 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: makebuf.c,v 1.8 2005/12/28 18:50:22 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -100,10 +100,8 @@ __swhatbuf(FILE *fp, size_t *bufsize, int *couldbetty)
 	 * __sseek is mainly paranoia.)  It is safe to set _blksize
 	 * unconditionally; it will only be used if __SOPT is also set.
 	 */
-	if ((fp->_flags & __SSTR) == 0) {
-		*bufsize = st.st_blksize;
-		fp->_blksize = st.st_blksize;
-	}
+	*bufsize = st.st_blksize;
+	fp->_blksize = st.st_blksize;
 	return ((st.st_mode & S_IFMT) == S_IFREG && fp->_seek == __sseek ?
 	    __SOPT : __SNPT);
 }
