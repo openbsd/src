@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lm.4,v 1.10 2005/09/30 20:34:24 jaredy Exp $
+.\"	$OpenBSD: lm.4,v 1.11 2005/12/28 16:54:26 kettenis Exp $
 .\"	$NetBSD: lm.4,v 1.11 2001/09/22 01:22:49 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 .Cd "lm1 at isa? port 0x280"
 .Cd "lm2 at isa? port 0x310"
 .\" .Cd "lm0 at pnpbios0"
+.Cd "lm* at iic?
 .Sh DESCRIPTION
 The
 .Nm
@@ -74,41 +75,40 @@ Most supported devices possess 11 sensors:
 .Pp
 For some devices (most Winbond devices), sensors' names and numbers will be
 different.
-.Pp
-Due to hardware limitations, fresh sensor data is only available every
-1.5 seconds.
 .Sh HARDWARE
 Chips supported by the
 .Nm
 driver include:
-.Bl -item -offset indent -compact
+.Pp
+.Bl -dash -offset indent -compact
 .It
-.Tn National Semiconductor
-.Em LM78
-and
-.Em LM78-J
+National Semiconductor LM78 and LM78-J
 .It
-.Tn National Semiconductor
-.Em LM79
+National Semiconductor LM79
 .It
-.Tn Winbond
-.Em W83697HF
+Winbond W83627HF, W83627THF, W83697HF, W83781D, and W83782D
 .It
-.Tn Winbond
-.Em W83627HF ,
-.Em W83627THF ,
-.Em W83781D
-and
-.Em W83782D
+ASUS AS99127F
 .El
+.Pp
+Some devices can attach to both
+.Xr iic 4
+and
+.Xr isa 4 ;
+others can only attach to either one or the other.
+Devices that can attach to both will only attach to
+.Xr isa 4
+to prevent double attachment.
 .Sh SEE ALSO
+.Xr iic 4 ,
+.Xr isa 4 ,
 .Xr sensorsd 8 ,
 .Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
-.Nx 1.5 ,
+.Nx 1.5 ;
 .Ox
 support was added in
 .Ox 3.4 .
