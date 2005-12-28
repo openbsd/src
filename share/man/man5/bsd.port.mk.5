@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.168 2005/11/19 09:32:47 sturm Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.169 2005/12/28 12:20:26 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1112,6 +1112,23 @@ retrieved.
 File recorded in the package and displayed during installation.
 Defaults to ${PKGDIR}/MESSAGE if this file exists.
 Leave empty if no message is needed.
+.It Ev MODGNU_SHARED_LIBS
+Available if
+.Ev CONFIGURE_STYLE
+is gnu (or better).
+Set to a list of the form
+.Sq libname
+.Sq extra-options .
+This sets the variable
+.Ev lib<libname>_la_LDFLAGS
+to the correct invocation for libtool version numbering, based on
+.Ev SHARED_LIBS.
+For instance, with
+SHARED_LIBS=foo 3.5,
+MODGNU_SHARED_LIBS=foo '-no-undefined',
+then
+libfoo_la_LDFLAGS will be set to
+libfoo_la_LDFLAGS=-version-info 3:5:0 -no-undefined
 .It Ev MTREE_FILE
 .Xr mtree 8
 specification to check when creating a PLIST with the
@@ -1461,6 +1478,27 @@ Wipe ${WRKBUILD} to start anew, but skipping the extract/patch stage.
 Set to
 .Sq flavored
 if distinct flavors of the port may share a common source tree.
+.It Ev SHARED_LIBS
+List of shared libraries that the port may build, as a list of the form
+.Sq libname 
+.Sq libversion .
+Used to set variables of the form
+.Ev LIBlibname_VERSION
+that are then used for substitution by
+.Xr pkg_create 1 .
+The porter is responsible to make sure the port uses those version numbers 
+when shared libraries are built.
+.Pp
+The intent is that the
+.Ox
+ports system must have control over shared library versions because of global
+changes that may require bumping the major version of every shared library in
+the system, or simply because the third party programmers do not understand 
+the rules for shared library versions, thus breaking the update mechanism.
+.Pp
+See also
+.Ev MODGNU_SHARED_LIBS
+for libtool-based ports.
 .It Ev SHARED_ONLY
 Set to
 .Sq Yes
