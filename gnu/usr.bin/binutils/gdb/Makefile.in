@@ -739,6 +739,7 @@ ns32k_tdep_h = ns32k-tdep.h
 nto_tdep_h = nto-tdep.h $(defs_h) $(solist_h)
 objc_lang_h = objc-lang.h
 objfiles_h = objfiles.h $(gdb_obstack_h) $(symfile_h)
+obsd_tdep_h = obsd-tdep.h
 ocd_h = ocd.h
 osabi_h = osabi.h
 pa64solib_h = pa64solib.h
@@ -2289,6 +2290,7 @@ objfiles.o: objfiles.c $(defs_h) $(bfd_h) $(symtab_h) $(symfile_h) \
 	$(breakpoint_h) $(block_h) $(dictionary_h)
 observer.o: observer.c $(defs_h) $(observer_h) $(command_h) $(gdbcmd_h) \
 	$(observer_inc)
+obsd-tdep.o: obsd-tdep.c $(defs_h) $(frame_h) $(symtab_h) $(obsd_tdep_h)
 ocd.o: ocd.c $(defs_h) $(gdbcore_h) $(gdb_string_h) $(frame_h) $(inferior_h) \
 	$(bfd_h) $(symfile_h) $(target_h) $(gdbcmd_h) $(objfiles_h) \
 	$(gdb_stabs_h) $(serial_h) $(ocd_h) $(regcache_h)
