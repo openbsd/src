@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.70 2005/12/04 03:56:17 krw Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.71 2005/12/28 03:00:07 krw Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.70 2005/12/04 03:56:17 krw Exp $
+ * $Id: aic7xxx.c,v 1.71 2005/12/28 03:00:07 krw Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -953,8 +953,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		       devinfo.lun);
 		scbindex = ahc_inb(ahc, SCB_TAG);
 		scb = ahc_lookup_scb(ahc, scbindex);
-		if (scb != NULL
-		 && (scb->flags & SCB_RECOVERY_SCB) != 0)
+		if (scb != NULL)
 			/*
 			 * Ensure that we didn't put a second instance of this
 			 * SCB into the QINFIFO.

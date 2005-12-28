@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxxvar.h,v 1.20 2004/08/01 01:36:23 krw Exp $	*/
+/*	$OpenBSD: aic7xxxvar.h,v 1.21 2005/12/28 03:00:07 krw Exp $	*/
 /*
  * Core definitions and data structures shareable across OS platforms.
  *
@@ -38,7 +38,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.20 2004/08/01 01:36:23 krw Exp $
+ * $Id: aic7xxxvar.h,v 1.21 2005/12/28 03:00:07 krw Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.h,v 1.50 2003/12/17 00:02:09 gibbs Exp $
  */
@@ -561,7 +561,6 @@ typedef enum {
 	SCB_DEVICE_RESET	= 0x0004,
 	SCB_SENSE		= 0x0008,
 	SCB_CDB32_PTR		= 0x0010,
-	SCB_RECOVERY_SCB	= 0x0020,
 	SCB_AUTO_NEGOTIATE	= 0x0040,/* Negotiate to achieve goal. */
 	SCB_NEGOTIATE		= 0x0080,/* Negotiation forced for command. */
 	SCB_ABORT		= 0x0100,
@@ -579,15 +578,11 @@ typedef enum {
 					  * to report the error.
 					  */
 	SCB_TARGET_SCB		= 0x2000,
-	SCB_SILENT		= 0x4000,/*
+	SCB_SILENT		= 0x4000 /*
 					  * Be quiet about transmission type
 					  * errors.  They are expected and we
 					  * don't want to upset the user.  This
 					  * flag is typically used during DV.
-					  */
-	SCB_TIMEDOUT		= 0x8000 /*
-					  * SCB has timed out and is on the
-					  * timedout list.
 					  */
 } scb_flag;
 
