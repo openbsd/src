@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.117 2005/12/28 20:27:38 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.118 2005/12/28 20:46:15 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -502,7 +502,7 @@ bge_eeprom_getbyte(struct bge_softc *sc, int addr, u_int8_t *dest)
 
 	if (i == BGE_TIMEOUT * 10) {
 		printf("%s: eeprom read timed out\n", sc->bge_dev.dv_xname);
-		return (0);
+		return (1);
 	}
 
 	/* Get result. */
@@ -1900,8 +1900,11 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	if (bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM_SIG) == BGE_MAGIC_NUMBER)
 		hwcfg = bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM_NICCFG);
 	else {
-		bge_read_eeprom(sc, (caddr_t)&hwcfg, BGE_EE_HWCFG_OFFSET,
-		    sizeof(hwcfg));
+		if (bge_read_eeprom(sc, (caddr_t)&hwcfg, BGE_EE_HWCFG_OFFSET,
+		    sizeof(hwcfg))) {
+			printf(": failed to read media type\n");
+			goto fail_5;
+		}
 		hwcfg = ntohl(hwcfg);
 	}
 	
