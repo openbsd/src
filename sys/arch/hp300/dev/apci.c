@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.23 2005/04/22 11:59:11 miod Exp $	*/
+/*	$OpenBSD: apci.c,v 1.24 2005/12/28 21:12:37 miod Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -912,7 +912,6 @@ apcicnprobe(cp)
 	if (badaddr((caddr_t)frodoregs) == 0 &&
 	    !ISSET(frodoregs[FRODO_IISR], FRODO_IISR_SERVICE)) {
 		cp->cn_pri = CN_REMOTE;
-		conforced = 1;
 		conscode = -2;			/* XXX */
 	} else {
 		cp->cn_pri = CN_NORMAL;
@@ -922,7 +921,7 @@ apcicnprobe(cp)
 	 * If our priority is higher than the currently-remembered
 	 * console, install ourselves.
 	 */
-	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || conforced)
+	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)))
 		cn_tab = cp;
 }
 
