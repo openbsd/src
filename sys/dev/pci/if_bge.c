@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.119 2005/12/28 21:55:53 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.120 2005/12/28 22:02:44 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3126,8 +3126,10 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			    sc->bge_if_flags & IFF_PROMISC) {
 				BGE_CLRBIT(sc, BGE_RX_MODE,
 				    BGE_RXMODE_RX_PROMISC);
-			} else
+			} else {
+				ifp->if_flags &= ~IFF_RUNNING;
 				bge_init(sc);
+			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING) {
 				bge_stop(sc);
