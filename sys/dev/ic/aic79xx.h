@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.19 2005/11/29 03:12:11 krw Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.20 2005/12/28 02:43:54 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -618,7 +618,6 @@ typedef enum {
 	SCB_DEVICE_RESET	= 0x00004,
 	SCB_SENSE		= 0x00008,
 	SCB_CDB32_PTR		= 0x00010,
-	SCB_RECOVERY_SCB	= 0x00020,
 	SCB_AUTO_NEGOTIATE	= 0x00040,/* Negotiate to achieve goal. */
 	SCB_NEGOTIATE		= 0x00080,/* Negotiation forced for command. */
 	SCB_ABORT		= 0x00100,
@@ -635,10 +634,6 @@ typedef enum {
 					   * don't want to upset the user.  This
 					   * flag is typically used during DV.
 					   */
-	SCB_TIMEDOUT		= 0x20000/*
-					  * SCB has timed out and is on the
-					  * timedout list.
-					  */
 } scb_flag;
 
 struct scb {
@@ -1486,7 +1481,6 @@ void			ahd_handle_scsi_status(struct ahd_softc *ahd,
 void			ahd_calc_residual(struct ahd_softc *ahd,
 					  struct scb *scb);
 void			ahd_timeout(void *);
-void			ahd_recover_commands(struct ahd_softc *ahd);
 /*************************** Utility Functions ********************************/
 struct ahd_phase_table_entry*
 			ahd_lookup_phase_entry(int phase);
@@ -1592,6 +1586,5 @@ int			ahd_print_register(ahd_reg_parse_entry_t *table,
 					   u_int *cur_column,
 					   u_int wrap_point);
 void			ahd_dump_scbs(struct ahd_softc *ahd);
-void			ahd_set_recoveryscb(struct ahd_softc *, struct scb *);
 
 #endif /* _AIC79XX_H_ */

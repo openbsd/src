@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.31 2005/11/29 03:12:11 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.32 2005/12/28 02:43:54 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -253,9 +253,6 @@ u_int		ahd_resolve_seqaddr(struct ahd_softc *ahd,
 void		ahd_download_instr(struct ahd_softc *ahd,
 					   u_int instrptr, uint8_t *dconsts);
 int		ahd_probe_stack_size(struct ahd_softc *ahd);
-int		ahd_other_scb_timeout(struct ahd_softc *ahd,
-					      struct scb *scb,
-					      struct scb *other_scb);
 int		ahd_scb_active_in_fifo(struct ahd_softc *ahd,
 					       struct scb *scb);
 void		ahd_run_data_fifo(struct ahd_softc *ahd,
@@ -1420,8 +1417,7 @@ ahd_handle_seqint(struct ahd_softc *ahd, u_int intstat)
 		       devinfo.lun);
 		scbid = ahd_get_scbptr(ahd);
 		scb = ahd_lookup_scb(ahd, scbid);
-		if (scb != NULL
-		 && (scb->flags & SCB_RECOVERY_SCB) != 0)
+		if (scb != NULL)
 			/*
 			 * Ensure that we didn't put a second instance of this
 			 * SCB into the QINFIFO.
@@ -8235,9 +8231,7 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 		 * this is a recovery SCB that is allowed
 		 * to have an active timer.
 		 */
-		if (ahd->scb_data.recovery_scbs == 0
-		 || (scb->flags & SCB_RECOVERY_SCB) != 0)
-			aic_scb_timer_reset(scb, 5 * 1000);
+		aic_scb_timer_reset(scb, 5 * 1000);
 		break;
 	}
 	case SCSI_STATUS_OK:
@@ -9146,307 +9140,50 @@ ahd_dump_scbs(struct ahd_softc *ahd)
 void
 ahd_timeout(void *arg)
 {
-	struct scb *scb = (struct scb *)arg;
+	struct scb *scb, *list_scb;
 	struct ahd_softc *ahd;
+	char channel;
+	long s;
+	int found;
+#ifdef AHD_DEBUG
+	int was_paused;
+#endif
 
+	scb = (struct scb *)arg;
 	ahd = scb->ahd_softc;
-	if ((scb->flags & SCB_ACTIVE) != 0) {
-		if ((scb->flags & SCB_TIMEDOUT) == 0) {
-			LIST_INSERT_HEAD(&ahd->timedout_scbs, scb,
-					 timedout_links);
-			scb->flags |= SCB_TIMEDOUT;
-		}
-		ahd_recover_commands(ahd);
-	}
-}
-
-/*
- * ahd_recover_commands determines if any of the commands that have currently
- * timedout are the root cause for this timeout.  Innocent commands are given
- * a new timeout while we wait for the command executing on the bus to timeout.
- * This routine is invoked from a thread context so we are allowed to sleep.
- * Our lock is not held on entry.
- */
-void
-ahd_recover_commands(struct ahd_softc *ahd)
-{
-	struct	scb *scb;
-	struct	scb *active_scb;
-	long	s;
-	int	found;
-	int	was_paused;
-	u_int	active_scbptr;
-	u_int	last_phase;
 
 	ahd_lock(ahd, &s);
 
-	/*
-	 * Pause the controller and manually flush any
-	 * commands that have just completed but that our
-	 * interrupt handler has yet to see.
-	 */
+#ifdef AHD_DEBUG
 	was_paused = ahd_is_paused(ahd);
-
-	printf("%s: Recovery Initiated - Card was %spaused\n", ahd_name(ahd),
-	       was_paused ? "" : "not ");
+	printf("%s: SCB %d timed out - Card was %spaused\n", ahd_name(ahd),
+	    SCB_GET_TAG(scb), was_paused ? "" : "not ");
 	ahd_dump_card_state(ahd);
+#endif
 
-	ahd_pause_and_flushwork(ahd);
+	ahd_pause(ahd);
 
-	if (LIST_EMPTY(&ahd->timedout_scbs) != 0) {
+	if (scb->flags & SCB_ACTIVE) {
+		aic_set_transaction_status(scb, CAM_CMD_TIMEOUT);
 		/*
-		 * The timedout commands have already
-		 * completed.  This typically means
-		 * that either the timeout value was on
-		 * the hairy edge of what the device
-		 * requires or - more likely - interrupts
-		 * are not happening.
+		 * Go through all of our pending SCBs and remove any scheduled
+		 * timeouts for them. They're about to be aborted so no need
+		 * for them to timeout.
 		 */
-		printf("%s: Timedout SCBs already complete. "
-		       "Interrupts may not be functioning.\n", ahd_name(ahd));
-		ahd_unpause(ahd);
-		ahd_unlock(ahd, &s);
-		return;
-	}
-
-	/*
-	 * Determine identity of SCB acting on the bus.
-	 * This test only catches non-packetized transactions.
-	 * Due to the fleeting nature of packetized operations,
-	 * we can't easily determine that a packetized operation
-	 * is on the bus.
-	 */
-	ahd_set_modes(ahd, AHD_MODE_SCSI, AHD_MODE_SCSI);
-	last_phase = ahd_inb(ahd, LASTPHASE);
-	active_scbptr = ahd_get_scbptr(ahd);
-	active_scb = NULL;
-	if (last_phase != P_BUSFREE
-	 || (ahd_inb(ahd, SEQ_FLAGS) & NOT_IDENTIFIED) == 0)
-		active_scb = ahd_lookup_scb(ahd, active_scbptr);
-
-	while ((scb = LIST_FIRST(&ahd->timedout_scbs)) != NULL) {
-		int	target;
-		int	lun;
-		char	channel;
-
-		target = SCB_GET_TARGET(ahd, scb);
+		LIST_FOREACH(list_scb, &ahd->pending_scbs, pending_links) {
+			if (list_scb->xs)
+				timeout_del(&list_scb->xs->stimeout);
+		}
 		channel = SCB_GET_CHANNEL(ahd, scb);
-		lun = SCB_GET_LUN(scb);
-
-		ahd_print_path(ahd, scb);
-		printf("SCB %d - timed out\n", SCB_GET_TAG(scb));
-
-		if (scb->flags & (SCB_DEVICE_RESET|SCB_ABORT)) {
-			/*
-			 * Been down this road before.
-			 * Do a full bus reset.
-			 */
-			aic_set_transaction_status(scb, CAM_CMD_TIMEOUT);
-bus_reset:
-			found = ahd_reset_channel(ahd, channel,
-						  /*Initiate Reset*/TRUE);
-			printf("%s: Issued Channel %c Bus Reset. "
-			       "%d SCBs aborted\n", ahd_name(ahd), channel,
-			       found);
-			continue;
-		}
-
-		/*
-		 * Remove the command from the timedout list in
-		 * preparation for requeing it.
-		 */
-		LIST_REMOVE(scb, timedout_links);
-		scb->flags &= ~SCB_TIMEDOUT;
-
-		if (active_scb != NULL) {
-
-			if (active_scb != scb) {
-
-				/*
-				 * If the active SCB is not us, assume that
-				 * the active SCB has a longer timeout than
-				 * the timedout SCB, and wait for the active
-				 * SCB to timeout.  As a safeguard, only
-				 * allow this deferral to continue if some
-				 * untimed-out command is outstanding.
-				 */ 
-				if (ahd_other_scb_timeout(ahd, scb,
-							  active_scb) == 0)
-					goto bus_reset;
-				continue;
-			} 
-
-			/*
-			 * We're active on the bus, so assert ATN
-			 * and hope that the target responds.
-			 */
-			ahd_set_recoveryscb(ahd, active_scb);
-                	active_scb->flags |= SCB_RECOVERY_SCB|SCB_DEVICE_RESET;
-			ahd_outb(ahd, MSG_OUT, HOST_MSG);
-			ahd_outb(ahd, SCSISIGO, last_phase|ATNO);
-			ahd_print_path(ahd, active_scb);
-			printf("BDR message in message buffer\n");
-			aic_scb_timer_reset(scb, 2 * 1000);
-			break;
-		} else if (last_phase != P_BUSFREE
-			&& ahd_inb(ahd, SCSIPHASE) == 0) {
-			/*
-			 * SCB is not identified, there
-			 * is no pending REQ, and the sequencer
-			 * has not seen a busfree.  Looks like
-			 * a stuck connection waiting to
-			 * go busfree.  Reset the bus.
-			 */
-			printf("%s: Connection stuck awaiting busfree or "
-			       "Identify Msg.\n", ahd_name(ahd));
-			goto bus_reset;
-		} else if (ahd_search_qinfifo(ahd, target, channel, lun,
-					      SCB_GET_TAG(scb), ROLE_INITIATOR,
-					      /*status*/0, SEARCH_COUNT) > 0) {
-
-			/*
-			 * We haven't even gone out on the bus
-			 * yet, so the timeout must be due to
-			 * some other command.  Reset the timer
-			 * and go on.
-			 */
-			if (ahd_other_scb_timeout(ahd, scb, NULL) == 0)
-				goto bus_reset;
-		} else {
-			/*
-			 * This SCB is for a disconnected transaction
-			 * and we haven't found a better candidate on
-			 * the bus to explain this timeout.
-			 */
-			ahd_set_recoveryscb(ahd, scb);
-
-			/*
-			 * Actually re-queue this SCB in an attempt
-			 * to select the device before it reconnects.
-			 * In either case (selection or reselection),
-			 * we will now issue a target reset to the
-			 * timed-out device.
-			 */
-			scb->flags |= SCB_DEVICE_RESET;
-			scb->hscb->cdb_len = 0;
-			scb->hscb->task_attribute = 0;
-			scb->hscb->task_management = SIU_TASKMGMT_ABORT_TASK;
-
-			ahd_set_scbptr(ahd, SCB_GET_TAG(scb));
-			if ((scb->flags & SCB_PACKETIZED) != 0) {
-				/*
-				 * Mark the SCB has having an outstanding
-				 * task management function.  Should the command
-				 * complete normally before the task management
-				 * function can be sent, the host will be
-				 * notified to abort our requeued SCB.
-				 */
-				ahd_outb(ahd, SCB_TASK_MANAGEMENT,
-					 scb->hscb->task_management);
-			} else {
-				/*
-				 * If non-packetized, set the MK_MESSAGE control
-				 * bit indicating that we desire to send a
-				 * message.  We also set the disconnected flag
-				 * since there is no guarantee that our SCB
-				 * control byte matches the version on the
-				 * card.  We don't want the sequencer to abort
-				 * the command thinking an unsolicited
-				 * reselection occurred.
-				 */
-				scb->hscb->control |= MK_MESSAGE|DISCONNECTED;
-
-				/*
-				 * The sequencer will never re-reference the
-				 * in-core SCB.  To make sure we are notified
-				 * during reslection, set the MK_MESSAGE flag in
-				 * the card's copy of the SCB.
-				 */
-				ahd_outb(ahd, SCB_CONTROL,
-					 ahd_inb(ahd, SCB_CONTROL)|MK_MESSAGE);
-			}
-
-			/*
-			 * Clear out any entries in the QINFIFO first
-			 * so we are the next SCB for this target
-			 * to run.
-			 */
-			ahd_search_qinfifo(ahd, target, channel, lun,
-					   SCB_LIST_NULL, ROLE_INITIATOR,
-					   CAM_REQUEUE_REQ, SEARCH_COMPLETE);
-			ahd_qinfifo_requeue_tail(ahd, scb);
-			ahd_set_scbptr(ahd, active_scbptr);
-			ahd_print_path(ahd, scb);
-			printf("Queuing a BDR SCB\n");
-			aic_scb_timer_reset(scb, 2 * 1000);
-			break;
-		}
-	}
-	
-	/*
-	 * Any remaining SCBs were not the "culprit", so remove
-	 * them from the timeout list.  The timer for these commands
-	 * will be reset once the recovery SCB completes.
-	 */
-	while ((scb = LIST_FIRST(&ahd->timedout_scbs)) != NULL) {
-
-		LIST_REMOVE(scb, timedout_links);
-		scb->flags &= ~SCB_TIMEDOUT;
+		found = ahd_reset_channel(ahd, channel, /*Initiate Reset*/TRUE);
+#ifdef AHD_DEBUG
+		printf("%s: Issued Channel %c Bus Reset. %d SCBs aborted\n",
+		    ahd_name(ahd), channel, found);
+#endif
 	}
 
 	ahd_unpause(ahd);
 	ahd_unlock(ahd, &s);
-}
-
-/*
- * Re-schedule a timeout for the passed in SCB if we determine that some
- * other SCB is in the process of recovery or an SCB with a longer
- * timeout is still pending.  Limit our search to just "other_scb"
- * if it is non-NULL.
- */
-int
-ahd_other_scb_timeout(struct ahd_softc *ahd, struct scb *scb,
-		      struct scb *other_scb)
-{
-	u_int	newtimeout;
-	int	found;
-
-	ahd_print_path(ahd, scb);
-	printf("Other SCB Timeout%s",
- 	       (scb->flags & SCB_OTHERTCL_TIMEOUT) != 0
-	       ? " again\n" : "\n");
-
-	newtimeout = aic_get_timeout(scb);
-	scb->flags |= SCB_OTHERTCL_TIMEOUT;
-	found = 0;
-	if (other_scb != NULL) {
-		if ((other_scb->flags
-		   & (SCB_OTHERTCL_TIMEOUT|SCB_TIMEDOUT)) == 0
-		 || (other_scb->flags & SCB_RECOVERY_SCB) != 0) {
-			found++;
-			newtimeout = MAX(aic_get_timeout(other_scb),
-					 newtimeout);
-		}
-	} else {
-		LIST_FOREACH(other_scb, &ahd->pending_scbs, pending_links) {
-			if ((other_scb->flags
-			   & (SCB_OTHERTCL_TIMEOUT|SCB_TIMEDOUT)) == 0
-			 || (other_scb->flags & SCB_RECOVERY_SCB) != 0) {
-				found++;
-				newtimeout = MAX(aic_get_timeout(other_scb),
-						 newtimeout);
-			}
-		}
-	}
-
-	if (found != 0)
-		aic_scb_timer_reset(scb, newtimeout);
-	else {
-		ahd_print_path(ahd, scb);
-		printf("No other SCB worth waiting for...\n");
-	}
-
-	return (found != 0);
 }
 
 /**************************** Flexport Logic **********************************/
