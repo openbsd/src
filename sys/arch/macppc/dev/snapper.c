@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.26 2005/12/17 00:04:10 kettenis Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.27 2005/12/28 10:08:07 kettenis Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -295,11 +295,11 @@ snapper_match(struct device *parent, void *match, void *aux)
 	bzero(compat, sizeof compat);
 	OF_getprop(soundchip, "compatible", compat, sizeof compat);
 
-	if (strcmp(compat, "snapper"))
+	if (strcmp(compat, "snapper") == 0)
 		return (1);
 
 	if (OF_getprop(soundchip, "platform-tas-codec-ref",
-	    &soundcodec, sizeof soundcodec))
+	    &soundcodec, sizeof soundcodec) == sizeof soundcodec)
 		return (1);
 
 	return (0);

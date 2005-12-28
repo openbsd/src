@@ -1,4 +1,4 @@
-/*	$OpenBSD: onyx.c,v 1.5 2005/12/17 00:04:10 kettenis Exp $	*/
+/*	$OpenBSD: onyx.c,v 1.6 2005/12/28 10:08:07 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -131,7 +131,7 @@ onyx_match(struct device *parent, void *match, void *aux)
 		return (0);
 
 	if (OF_getprop(soundchip, "platform-onyx-codec-ref",
-	    &soundcodec, sizeof soundcodec))
+	    &soundcodec, sizeof soundcodec) == sizeof soundcodec)
 		return (1);
 
 	/* 
