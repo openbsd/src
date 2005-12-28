@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.117 2005/12/27 16:05:20 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.118 2005/12/28 18:27:24 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -430,7 +430,8 @@ rcs_close(RCSFILE *rfp)
 		xfree(rfp->rf_expand);
 	if (rfp->rf_desc != NULL)
 		xfree(rfp->rf_desc);
-	rcs_freepdata(rfp->rf_pdata);
+	if (rfp->rf_pdata != NULL)
+		rcs_freepdata(rfp->rf_pdata);
 	xfree(rfp);
 }
 
