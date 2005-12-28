@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.21 2005/11/30 10:35:08 pedro Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.22 2005/12/28 20:48:18 pedro Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ getinoquota(struct inode *ip)
 	 */
 	if (ip->i_dquot[USRQUOTA] == NODQUOT &&
 	    (error =
-		dqget(vp, ip->i_ffs_uid, ump, USRQUOTA, &ip->i_dquot[USRQUOTA])) &&
+		dqget(vp, DIP(ip, uid), ump, USRQUOTA, &ip->i_dquot[USRQUOTA])) &&
 	    error != EINVAL)
 		return (error);
 	/*
@@ -168,7 +168,7 @@ getinoquota(struct inode *ip)
 	 */
 	if (ip->i_dquot[GRPQUOTA] == NODQUOT &&
 	    (error =
-		dqget(vp, ip->i_ffs_gid, ump, GRPQUOTA, &ip->i_dquot[GRPQUOTA])) &&
+		dqget(vp, DIP(ip, gid), ump, GRPQUOTA, &ip->i_dquot[GRPQUOTA])) &&
 	    error != EINVAL)
 		return (error);
 	return (0);
@@ -267,7 +267,7 @@ chkdqchg(struct inode *ip, long change, struct ucred *cred, int type)
 	 */
 	if (ncurblocks >= dq->dq_bhardlimit && dq->dq_bhardlimit) {
 		if ((dq->dq_flags & DQ_BLKS) == 0 &&
-		    ip->i_ffs_uid == cred->cr_uid) {
+		    DIP(ip, uid) == cred->cr_uid) {
 			uprintf("\n%s: write failed, %s disk limit reached\n",
 			    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
 			    quotatypes[type]);
@@ -283,7 +283,7 @@ chkdqchg(struct inode *ip, long change, struct ucred *cred, int type)
 		if (dq->dq_curblocks < dq->dq_bsoftlimit) {
 			dq->dq_btime = time_second +
 			    ip->i_ump->um_btime[type];
-			if (ip->i_ffs_uid == cred->cr_uid)
+			if (DIP(ip, uid) == cred->cr_uid)
 				uprintf("\n%s: warning, %s %s\n",
 				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
 				    quotatypes[type], "disk quota exceeded");
@@ -291,7 +291,7 @@ chkdqchg(struct inode *ip, long change, struct ucred *cred, int type)
 		}
 		if (time_second > dq->dq_btime) {
 			if ((dq->dq_flags & DQ_BLKS) == 0 &&
-			    ip->i_ffs_uid == cred->cr_uid) {
+			    DIP(ip, uid) == cred->cr_uid) {
 				uprintf("\n%s: write failed, %s %s\n",
 				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
 				    quotatypes[type],
@@ -388,7 +388,7 @@ chkiqchg(struct inode *ip, long change, struct ucred *cred, int type)
 	 */
 	if (ncurinodes >= dq->dq_ihardlimit && dq->dq_ihardlimit) {
 		if ((dq->dq_flags & DQ_INODS) == 0 &&
-		    ip->i_ffs_uid == cred->cr_uid) {
+		    DIP(ip, uid) == cred->cr_uid) {
 			uprintf("\n%s: write failed, %s inode limit reached\n",
 			    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
 			    quotatypes[type]);
@@ -404,7 +404,7 @@ chkiqchg(struct inode *ip, long change, struct ucred *cred, int type)
 		if (dq->dq_curinodes < dq->dq_isoftlimit) {
 			dq->dq_itime = time_second +
 			    ip->i_ump->um_itime[type];
-			if (ip->i_ffs_uid == cred->cr_uid)
+			if (DIP(ip, uid) == cred->cr_uid)
 				uprintf("\n%s: warning, %s %s\n",
 				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
 				    quotatypes[type], "inode quota exceeded");
@@ -412,7 +412,7 @@ chkiqchg(struct inode *ip, long change, struct ucred *cred, int type)
 		}
 		if (time_second > dq->dq_itime) {
 			if ((dq->dq_flags & DQ_INODS) == 0 &&
-			    ip->i_ffs_uid == cred->cr_uid) {
+			    DIP(ip, uid) == cred->cr_uid) {
 				uprintf("\n%s: write failed, %s %s\n",
 				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
 				    quotatypes[type],

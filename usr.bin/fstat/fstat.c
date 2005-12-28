@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.54 2005/12/17 13:56:02 pedro Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.55 2005/12/28 20:48:18 pedro Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.54 2005/12/17 13:56:02 pedro Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.55 2005/12/28 20:48:18 pedro Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -527,9 +527,9 @@ ufs_filestat(struct vnode *vp, struct filestat *fsp)
 
 	fsp->fsid = inode.i_dev & 0xffff;
 	fsp->fileid = (long)inode.i_number;
-	fsp->mode = inode.i_ffs_mode;
-	fsp->size = inode.i_ffs_size;
-	fsp->rdev = inode.i_ffs_rdev;
+	fsp->mode = inode.i_ffs1_mode;
+	fsp->size = inode.i_ffs1_size;
+	fsp->rdev = inode.i_ffs1_rdev;
 
 	return 1;
 }

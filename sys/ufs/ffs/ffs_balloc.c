@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.24 2003/06/02 23:28:22 millert Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.25 2005/12/28 20:48:17 pedro Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
+#include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
 
 #include <ufs/ffs/fs.h>
@@ -85,23 +86,23 @@ ffs_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 	 * and the file is currently composed of a fragment
 	 * this fragment has to be extended to be a full block.
 	 */
-	nb = lblkno(fs, ip->i_ffs_size);
+	nb = lblkno(fs, ip->i_ffs1_size);
 	if (nb < NDADDR && nb < lbn) {
 		osize = blksize(fs, ip, nb);
 		if (osize < fs->fs_bsize && osize > 0) {
 			error = ffs_realloccg(ip, nb,
-			    ffs_blkpref(ip, nb, (int)nb, &ip->i_ffs_db[0]),
+			    ffs_blkpref(ip, nb, (int)nb, &ip->i_ffs1_db[0]),
 			    osize, (int)fs->fs_bsize, cred, bpp, &newb);
 			if (error)
 				return (error);
 			if (DOINGSOFTDEP(vp))
 				softdep_setup_allocdirect(ip, nb, newb,
-				    ip->i_ffs_db[nb], fs->fs_bsize, osize,
+				    ip->i_ffs1_db[nb], fs->fs_bsize, osize,
 				    bpp ? *bpp : NULL);
 
-			ip->i_ffs_size = lblktosize(fs, nb + 1);
-			uvm_vnp_setsize(vp, ip->i_ffs_size);
-			ip->i_ffs_db[nb] = newb;
+			ip->i_ffs1_size = lblktosize(fs, nb + 1);
+			uvm_vnp_setsize(vp, ip->i_ffs1_size);
+			ip->i_ffs1_db[nb] = newb;
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			if (bpp != NULL) {
 				if (flags & B_SYNC)
@@ -115,8 +116,8 @@ ffs_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 	 * The first NDADDR blocks are direct blocks
 	 */
 	if (lbn < NDADDR) {
-		nb = ip->i_ffs_db[lbn];
-		if (nb != 0 && ip->i_ffs_size >= lblktosize(fs, lbn + 1)) {
+		nb = ip->i_ffs1_db[lbn];
+		if (nb != 0 && ip->i_ffs1_size >= lblktosize(fs, lbn + 1)) {
 			/*
 			 * The block is an already-allocated direct block
 			 * and the file already extends past this block,
@@ -138,7 +139,7 @@ ffs_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 			/*
 			 * Consider need to reallocate a fragment.
 			 */
-			osize = fragroundup(fs, blkoff(fs, ip->i_ffs_size));
+			osize = fragroundup(fs, blkoff(fs, ip->i_ffs1_size));
 			nsize = fragroundup(fs, size);
 			if (nsize <= osize) {
 				/*
@@ -162,7 +163,7 @@ ffs_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 				 */
 				error = ffs_realloccg(ip, lbn,
 				    ffs_blkpref(ip, lbn, (int)lbn,
-					&ip->i_ffs_db[0]),
+					&ip->i_ffs1_db[0]),
 				    osize, nsize, cred, bpp, &newb);
 				if (error)
 					return (error);
@@ -177,12 +178,12 @@ ffs_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 			 * allocate a new block or fragment.
 			 */
 
-			if (ip->i_ffs_size < lblktosize(fs, lbn + 1))
+			if (ip->i_ffs1_size < lblktosize(fs, lbn + 1))
 				nsize = fragroundup(fs, size);
 			else
 				nsize = fs->fs_bsize;
 			error = ffs_alloc(ip, lbn,
-			    ffs_blkpref(ip, lbn, (int)lbn, &ip->i_ffs_db[0]),
+			    ffs_blkpref(ip, lbn, (int)lbn, &ip->i_ffs1_db[0]),
 			    nsize, cred, &newb);
 			if (error)
 				return (error);
@@ -196,7 +197,7 @@ ffs_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 				softdep_setup_allocdirect(ip, lbn, newb, 0,
 				    nsize, 0, bpp ? *bpp : NULL);
 		}
-		ip->i_ffs_db[lbn] = newb;
+		ip->i_ffs1_db[lbn] = newb;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (0);
 	}
@@ -215,7 +216,7 @@ ffs_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 	 * Fetch the first indirect block allocating if necessary.
 	 */
 	--num;
-	nb = ip->i_ffs_ib[indirs[0].in_off];
+	nb = ip->i_ffs1_ib[indirs[0].in_off];
 
 	allocib = NULL;
 	allocblk = allociblk;
@@ -244,7 +245,7 @@ ffs_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 			if ((error = bwrite(bp)) != 0)
 				goto fail;
 		}
-		allocib = &ip->i_ffs_ib[indirs[0].in_off];
+		allocib = &ip->i_ffs1_ib[indirs[0].in_off];
 		*allocib = nb;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
@@ -392,7 +393,7 @@ fail:
 		 */
 		(void)ufs_quota_free_blocks(ip, btodb(deallocated), cred);
 
-		ip->i_ffs_blocks -= btodb(deallocated);
+		ip->i_ffs1_blocks -= btodb(deallocated);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 

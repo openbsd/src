@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.20 2005/12/16 15:37:24 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.21 2005/12/28 20:48:17 pedro Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /* 
@@ -781,7 +781,7 @@ ext2fs_direnter(ip, dvp, cnp)
 	newdir.e2d_namlen = cnp->cn_namelen;
 	if (ip->i_e2fs->e2fs.e2fs_rev > E2FS_REV0 &&
 	    (ip->i_e2fs->e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE)) {
-		newdir.e2d_type = inot2ext2dt(IFTODT(ip->i_ffs_mode));
+		newdir.e2d_type = inot2ext2dt(IFTODT(ip->i_e2fs_mode));
 	} else {
 		newdir.e2d_type = 0;
 	};
@@ -961,7 +961,7 @@ ext2fs_dirrewrite(dp, ip, cnp)
 	ep->e2d_ino = h2fs32(ip->i_number);
 	if (ip->i_e2fs->e2fs.e2fs_rev > E2FS_REV0 &&
 	    (ip->i_e2fs->e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE)) {
-		ep->e2d_type = inot2ext2dt(IFTODT(ip->i_ffs_mode));
+		ep->e2d_type = inot2ext2dt(IFTODT(ip->i_e2fs_mode));
 	} else {
 		ep->e2d_type = 0;
 	}

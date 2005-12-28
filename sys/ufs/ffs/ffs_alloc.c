@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.58 2005/11/06 13:22:39 pedro Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.59 2005/12/28 20:48:17 pedro Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
 		cg = dtog(fs, bpref);
 	bno = (daddr_t)ffs_hashalloc(ip, cg, (long)bpref, size, ffs_alloccg);
 	if (bno > 0) {
-		ip->i_ffs_blocks += btodb(size);
+		DIP_ADD(ip, blocks, btodb(size));
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		*bnp = bno;
 		return (0);
@@ -180,11 +180,15 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 #endif /* DIAGNOSTIC */
 	if (cred->cr_uid != 0 && freespace(fs, fs->fs_minfree) <= 0)
 		goto nospace;
-	if ((bprev = ip->i_ffs_db[lbprev]) == 0) {
+
+	bprev = DIP(ip, db[lbprev]);
+
+	if (bprev == 0) {
 		printf("dev = 0x%x, bsize = %d, bprev = %d, fs = %s\n",
 		    ip->i_dev, fs->fs_bsize, bprev, fs->fs_fsmnt);
 		panic("ffs_realloccg: bad bprev");
 	}
+
 	/*
 	 * Allocate the extra space in the buffer.
 	 */
@@ -203,7 +207,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	 */
 	cg = dtog(fs, bprev);
 	if ((bno = ffs_fragextend(ip, cg, (long)bprev, osize, nsize)) != 0) {
-		ip->i_ffs_blocks += btodb(nsize - osize);
+		DIP_ADD(ip, blocks, btodb(nsize - osize));
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		if (bpp != NULL) {
 			if (bp->b_blkno != fsbtodb(fs, bno))
@@ -277,7 +281,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	if (nsize < request)
 		ffs_blkfree(ip, bno + numfrags(fs, nsize),
 		    (long)(request - nsize));
-	ip->i_ffs_blocks += btodb(nsize - osize);
+	DIP_ADD(ip, blocks, btodb(nsize - osize));
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (bpp != NULL) {
 		bp->b_blkno = fsbtodb(fs, bno);
@@ -394,7 +398,7 @@ ffs_reallocblks(void *v)
 	 * Get the starting offset and block map for the first block.
 	 */
 	if (start_lvl == 0) {
-		sbap = &ip->i_ffs_db[0];
+		sbap = &ip->i_ffs1_db[0];
 		soff = start_lbn;
 	} else {
 		idp = &start_ap[start_lvl - 1];
@@ -461,7 +465,7 @@ ffs_reallocblks(void *v)
 			printf(" %d,", *bap);
 #endif
 		if (DOINGSOFTDEP(vp)) {
-			if (sbap == &ip->i_ffs_db[0] && i < ssize)
+			if (sbap == &ip->i_ffs1_db[0] && i < ssize)
 				softdep_setup_allocdirect(ip, start_lbn + i,
 				    blkno, *bap, fs->fs_bsize, fs->fs_bsize,
 				    buflist->bs_children[i]);
@@ -487,7 +491,7 @@ ffs_reallocblks(void *v)
 	 * We can then check below to see if it is set, and do the
 	 * synchronous write only when it has been cleared.
 	 */
-	if (sbap != &ip->i_ffs_db[0]) {
+	if (sbap != &ip->i_ffs1_db[0]) {
 		if (doasyncfree)
 			bdwrite(sbp);
 		else
@@ -536,7 +540,7 @@ ffs_reallocblks(void *v)
 fail:
 	if (ssize < len)
 		brelse(ebp);
-	if (sbap != &ip->i_ffs_db[0])
+	if (sbap != &ip->i_ffs1_db[0])
 		brelse(sbp);
 	return (ENOSPC);
 }
@@ -598,28 +602,36 @@ ffs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *cred,
 		ffs_inode_free(pip, ino, mode);
 		return (error);
 	}
+
 	ip = VTOI(*vpp);
-	if (ip->i_ffs_mode) {
+
+	if (DIP(ip, mode)) {
 		printf("mode = 0%o, inum = %d, fs = %s\n",
-		    ip->i_ffs_mode, ip->i_number, fs->fs_fsmnt);
+		    DIP(ip, mode), ip->i_number, fs->fs_fsmnt);
 		panic("ffs_valloc: dup alloc");
 	}
-	if (ip->i_ffs_blocks) {				/* XXX */
+
+	if (DIP(ip, blocks)) {
 		printf("free inode %s/%d had %d blocks\n",
-		    fs->fs_fsmnt, ino, ip->i_ffs_blocks);
-		ip->i_ffs_blocks = 0;
+		    fs->fs_fsmnt, ino, DIP(ip, blocks));
+		DIP_ASSIGN(ip, blocks, 0);
 	}
-	ip->i_ffs_flags = 0;
+
+	DIP_ASSIGN(ip, flags, 0);
+
 	/*
 	 * Set up a new generation number for this inode.
 	 * XXX - just increment for now, this is wrong! (millert)
 	 *       Need a way to preserve randomization.
 	 */
-	if (ip->i_ffs_gen == 0 || ++(ip->i_ffs_gen) == 0)
-		ip->i_ffs_gen = arc4random() & INT_MAX;
-	if (ip->i_ffs_gen == 0 || ip->i_ffs_gen == -1)
-		ip->i_ffs_gen = 1;			/* shouldn't happen */
+	if (DIP(ip, gen) == 0 || ++(DIP(ip, gen)) == 0)
+		DIP_ASSIGN(ip, gen, arc4random() & INT_MAX);
+
+	if (DIP(ip, gen) == 0 || DIP(ip, gen) == -1)
+		DIP_ASSIGN(ip, gen, 1);	/* Shouldn't happen */
+
 	return (0);
+
 noinodes:
 	ffs_fserr(fs, cred->cr_uid, "out of inodes");
 	uprintf("\n%s: create/symlink failed, no inodes free\n", fs->fs_fsmnt);
@@ -1417,7 +1429,7 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 	cg = dtog(fs, bno);
 	if ((u_int)bno >= fs->fs_size) {
 		printf("bad block %d, ino %u\n", bno, ip->i_number);
-		ffs_fserr(fs, ip->i_ffs_uid, "bad block");
+		ffs_fserr(fs, DIP(ip, uid), "bad block");
 		return;
 	}
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),

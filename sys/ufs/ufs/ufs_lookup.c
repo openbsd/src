@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.34 2005/11/10 22:01:14 pedro Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.35 2005/12/28 20:48:18 pedro Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ ufs_lookup(void *v)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((dp->i_ffs_mode & IFMT) != IFDIR)
+	if ((DIP(dp, mode) & IFMT) != IFDIR)
 		return (ENOTDIR);
 	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_proc)) != 0)
 		return (error);
@@ -206,7 +206,7 @@ ufs_lookup(void *v)
 	 */
 	if (ufsdirhash_build(dp) == 0) {
 		/* Look for a free slot if needed. */
-		enduseful = dp->i_size;
+		enduseful = DIP(dp, size);
 		if (slotstatus != FOUND) {
 			slotoffset = ufsdirhash_findfree(dp, slotneeded,
 			    &slotsize);
@@ -214,7 +214,7 @@ ufs_lookup(void *v)
 				slotstatus = COMPACT;
 				enduseful = ufsdirhash_enduseful(dp);
 				if (enduseful < 0)
-					enduseful = dp->i_size;
+					enduseful = DIP(dp, size);
 			}
 		}
 		/* Look up the component. */
@@ -228,7 +228,7 @@ ufs_lookup(void *v)
 			goto foundentry;
 		case ENOENT:
 #define roundup2(x, y)	(((x)+((y)-1))&(~((y)-1))) /* if y is powers of two */
-			dp->i_offset = roundup2(dp->i_size, DIRBLKSIZ);
+			dp->i_offset = roundup2(DIP(dp, size), DIRBLKSIZ);
 			goto notfound;
 		default:
 			/* Something failed; just do a linear search. */
@@ -238,7 +238,7 @@ ufs_lookup(void *v)
 #endif /* UFS_DIRHASH */
 
 	if (nameiop != LOOKUP || dp->i_diroff == 0 ||
-	    dp->i_diroff >= dp->i_ffs_size) {
+	    dp->i_diroff >= DIP(dp, size)) {
 		entryoffsetinblock = 0;
 		dp->i_offset = 0;
 		numdirpasses = 1;
@@ -251,7 +251,7 @@ ufs_lookup(void *v)
 		nchstats.ncs_2passes++;
 	}
 	prevoff = dp->i_offset;
-	endsearch = roundup(dp->i_ffs_size, DIRBLKSIZ);
+	endsearch = roundup(DIP(dp, size), DIRBLKSIZ);
 	enduseful = 0;
 
 searchloop:
@@ -398,7 +398,7 @@ notfound:
 		 * dp->i_offset + dp->i_count.
 		 */
 		if (slotstatus == NONE) {
-			dp->i_offset = roundup(dp->i_ffs_size, DIRBLKSIZ);
+			dp->i_offset = roundup(DIP(dp, size), DIRBLKSIZ);
 			dp->i_count = 0;
 			enduseful = dp->i_offset;
 		} else if (nameiop == DELETE) {
@@ -449,9 +449,9 @@ found:
 	 * Check that directory length properly reflects presence
 	 * of this entry.
 	 */
-	if (dp->i_offset + DIRSIZ(FSFMT(vdp), ep) > dp->i_ffs_size) {
+	if (dp->i_offset + DIRSIZ(FSFMT(vdp), ep) > DIP(dp, size)) {
 		ufs_dirbad(dp, dp->i_offset, "i_ffs_size too small");
-		dp->i_ffs_size = dp->i_offset + DIRSIZ(FSFMT(vdp), ep);
+		DIP_ASSIGN(dp, size, dp->i_offset + DIRSIZ(FSFMT(vdp), ep));
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 	brelse(bp);
@@ -502,10 +502,10 @@ found:
 		 * may not delete it (unless she's root). This
 		 * implements append-only directories.
 		 */
-		if ((dp->i_ffs_mode & ISVTX) &&
+		if ((DIP(dp, mode) & ISVTX) &&
 		    cred->cr_uid != 0 &&
-		    cred->cr_uid != dp->i_ffs_uid &&
-		    VTOI(tdp)->i_ffs_uid != cred->cr_uid) {
+		    cred->cr_uid != DIP(dp, uid) &&
+		    DIP(VTOI(tdp), uid) != cred->cr_uid) {
 			vput(tdp);
 			return (EPERM);
 		}
@@ -678,7 +678,7 @@ ufs_makedirentry(struct inode *ip, struct componentname *cnp,
 	newdirp->d_namlen = cnp->cn_namelen;
 	bcopy(cnp->cn_nameptr, newdirp->d_name, (unsigned)cnp->cn_namelen + 1);
 	if (ITOV(ip)->v_mount->mnt_maxsymlinklen > 0)
-		newdirp->d_type = IFTODT(ip->i_ffs_mode);
+		newdirp->d_type = IFTODT(DIP(ip, mode));
   	else {
 		newdirp->d_type = 0;
 #		if (BYTE_ORDER == LITTLE_ENDIAN)
@@ -736,9 +736,9 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 				bdwrite(newdirbp);
 			return (error);
 		}
-		dp->i_ffs_size = dp->i_offset + DIRBLKSIZ;
+		DIP_ASSIGN(dp, size, dp->i_offset + DIRBLKSIZ);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
-		uvm_vnp_setsize(dvp, dp->i_ffs_size);
+		uvm_vnp_setsize(dvp, DIP(dp, size));
   		dirp->d_reclen = DIRBLKSIZ;
 		blkoff = dp->i_offset &
 		    (VFSTOUFS(dvp->v_mount)->um_mountp->mnt_stat.f_iosize - 1);
@@ -813,8 +813,8 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 	 *
 	 * N.B. - THIS IS AN ARTIFACT OF 4.2 AND SHOULD NEVER HAPPEN.
 	 */
-	if (dp->i_offset + dp->i_count > dp->i_ffs_size)
-		dp->i_ffs_size = dp->i_offset + dp->i_count;
+	if (dp->i_offset + dp->i_count > DIP(dp, size))
+		DIP_ASSIGN(dp, size, dp->i_offset + dp->i_count);
 	/*
 	 * Get the block containing the space for the new directory entry.
 	 */
@@ -922,7 +922,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
  	 * lock on the newly entered node.
  	 */
 
-	if (error == 0 && dp->i_endoff && dp->i_endoff < dp->i_ffs_size) {
+	if (error == 0 && dp->i_endoff && dp->i_endoff < DIP(dp, size)) {
 		if (tvp != NULL)
 			VOP_UNLOCK(tvp, 0, p);
 #ifdef UFS_DIRHASH
@@ -1006,7 +1006,7 @@ ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
  	} else {
 		if (ip) {
 			ip->i_effnlink--;
-			ip->i_ffs_nlink--;
+			DIP_ADD(ip, nlink, -1);
 			ip->i_flag |= IN_CHANGE;
 		}
 		if (DOINGASYNC(dvp) && dp->i_count != 0) {
@@ -1045,7 +1045,7 @@ ufs_dirrewrite(struct inode *dp, struct inode *oip, ino_t newinum, int newtype,
  		softdep_setup_directory_change(bp, dp, oip, newinum, isrmdir);
  		bdwrite(bp);
  	} else {
- 		oip->i_ffs_nlink--;
+		DIP_ADD(oip, nlink, -1);
 		oip->i_flag |= IN_CHANGE;
 		if (DOINGASYNC(vdp)) {
 			bdwrite(bp);
@@ -1077,7 +1077,7 @@ ufs_dirempty(struct inode *ip, ino_t parentino, struct ucred *cred)
 	size_t count;
 #define	MINDIRSIZ (sizeof (struct dirtemplate) / 2)
 
-	m = ip->i_ffs_size;
+	m = DIP(ip, size);
 	for (off = 0; off < m; off += dp->d_reclen) {
 		error = vn_rdwr(UIO_READ, ITOV(ip), (caddr_t)dp, MINDIRSIZ, off,
 		   UIO_SYSSPACE, IO_NODELOCKED, cred, &count, (struct proc *)0);

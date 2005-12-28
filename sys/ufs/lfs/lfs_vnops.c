@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_vnops.c,v 1.12 2005/05/28 02:02:50 pedro Exp $	*/
+/*	$OpenBSD: lfs_vnops.c,v 1.13 2005/12/28 20:48:18 pedro Exp $	*/
 /*	$NetBSD: lfs_vnops.c,v 1.11 1996/05/11 18:27:41 mycroft Exp $	*/
 
 /*
@@ -374,20 +374,20 @@ lfs_getattr(v)
 	 */
 	vap->va_fsid = ip->i_dev;
 	vap->va_fileid = ip->i_number;
-	vap->va_mode = ip->i_ffs_mode & ~IFMT;
-	vap->va_nlink = ip->i_ffs_nlink;
-	vap->va_uid = ip->i_ffs_uid;
-	vap->va_gid = ip->i_ffs_gid;
-	vap->va_rdev = (dev_t)ip->i_ffs_rdev;
-	vap->va_size = ip->i_ffs_size;
-	vap->va_atime.tv_sec = ip->i_ffs_atime;
-	vap->va_atime.tv_nsec = ip->i_ffs_atimensec;
-	vap->va_mtime.tv_sec = ip->i_ffs_mtime;
-	vap->va_mtime.tv_nsec = ip->i_ffs_mtimensec;
-	vap->va_ctime.tv_sec = ip->i_ffs_ctime;
-	vap->va_ctime.tv_nsec = ip->i_ffs_ctimensec;
-	vap->va_flags = ip->i_ffs_flags;
-	vap->va_gen = ip->i_ffs_gen;
+	vap->va_mode = ip->i_ffs1_mode & ~IFMT;
+	vap->va_nlink = ip->i_ffs1_nlink;
+	vap->va_uid = ip->i_ffs1_uid;
+	vap->va_gid = ip->i_ffs1_gid;
+	vap->va_rdev = (dev_t)ip->i_ffs1_rdev;
+	vap->va_size = ip->i_ffs1_size;
+	vap->va_atime.tv_sec = ip->i_ffs1_atime;
+	vap->va_atime.tv_nsec = ip->i_ffs1_atimensec;
+	vap->va_mtime.tv_sec = ip->i_ffs1_mtime;
+	vap->va_mtime.tv_nsec = ip->i_ffs1_mtimensec;
+	vap->va_ctime.tv_sec = ip->i_ffs1_ctime;
+	vap->va_ctime.tv_nsec = ip->i_ffs1_ctimensec;
+	vap->va_flags = ip->i_ffs1_flags;
+	vap->va_gen = ip->i_ffs1_gen;
 	/* this doesn't belong here */
 	if (vp->v_type == VBLK)
 		vap->va_blocksize = BLKDEV_IOSIZE;
@@ -395,7 +395,7 @@ lfs_getattr(v)
 		vap->va_blocksize = MAXBSIZE;
 	else
 		vap->va_blocksize = vp->v_mount->mnt_stat.f_iosize;
-	vap->va_bytes = dbtob(ip->i_ffs_blocks);
+	vap->va_bytes = dbtob(ip->i_ffs1_blocks);
 	vap->va_type = vp->v_type;
 	vap->va_filerev = ip->i_modrev;
 	return (0);

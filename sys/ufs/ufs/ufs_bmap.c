@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_bmap.c,v 1.18 2005/11/10 22:01:14 pedro Exp $	*/
+/*	$OpenBSD: ufs_bmap.c,v 1.19 2005/12/28 20:48:18 pedro Exp $	*/
 /*	$NetBSD: ufs_bmap.c,v 1.3 1996/02/09 22:36:00 christos Exp $	*/
 
 /*
@@ -134,19 +134,20 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 
 	num = *nump;
 	if (num == 0) {
-		*bnp = blkptrtodb(ump, ip->i_ffs_db[bn]);
+		*bnp = blkptrtodb(ump, DIP(ip, db[bn]));
 		if (*bnp == 0)
 			*bnp = -1;
 		else if (runp)
 			for (++bn; bn < NDADDR && *runp < maxrun &&
-			    is_sequential(ump, ip->i_ffs_db[bn - 1], ip->i_ffs_db[bn]);
+			    is_sequential(ump, DIP(ip, db[bn - 1]),
+			        DIP(ip, db[bn]));
 			    ++bn, ++*runp);
 		return (0);
 	}
 
 
 	/* Get disk address out of indirect block array */
-	daddr = ip->i_ffs_ib[xap->in_off];
+	daddr = DIP(ip, ib[xap->in_off]);
 
 	devvp = VFSTOUFS(vp->v_mount)->um_devvp;
 	for (bp = NULL, ++xap; --num; ++xap) {

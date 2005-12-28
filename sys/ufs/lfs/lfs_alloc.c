@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_alloc.c,v 1.11 2004/06/21 23:50:38 tholo Exp $	*/
+/*	$OpenBSD: lfs_alloc.c,v 1.12 2005/12/28 20:48:18 pedro Exp $	*/
 /*	$NetBSD: lfs_alloc.c,v 1.4 1996/03/25 12:53:37 pk Exp $	*/
 
 /*
@@ -97,10 +97,10 @@ lfs_valloc(v)
 	if (fs->lfs_free == LFS_UNUSED_INUM) {
 		vp = fs->lfs_ivnode;
 		ip = VTOI(vp);
-		blkno = lblkno(fs, ip->i_ffs_size);
+		blkno = lblkno(fs, DIP(ip, size));
 		lfs_balloc(vp, 0, fs->lfs_bsize, blkno, &bp);
-		ip->i_ffs_size += fs->lfs_bsize;
-		vnode_pager_setsize(vp, (u_long)ip->i_ffs_size);
+		DIP_ADD(ip, size, fs->lfs_bsize);
+		vnode_pager_setsize(vp, (u_long) DIP(ip, size));
 		vnode_pager_uncache(vp);
 
 		i = (blkno - fs->lfs_segtabsz - fs->lfs_cleansz) *
@@ -131,7 +131,7 @@ lfs_valloc(v)
 	/* Set a new generation number for this inode. */
 	if (++nextgennumber < (u_long)time_second)
 		nextgennumber = time_second;
-	ip->i_ffs_gen = nextgennumber;
+	DIP_ASSIGN(ip, gen, nextgennumber);
 
 	/* Insert into the inode hash table. */
 	ufs_ihashins(ip);
@@ -192,9 +192,9 @@ lfs_vcreate(mp, ino, vpp)
 #endif
 	ip->i_lockf = 0;
 	ip->i_diroff = 0;
-	ip->i_ffs_mode = 0;
-	ip->i_ffs_size = 0;
-	ip->i_ffs_blocks = 0;
+	ip->i_ffs1_mode = 0;
+	ip->i_ffs1_size = 0;
+	ip->i_ffs1_blocks = 0;
 	++ump->um_lfs->lfs_uinodes;
 	return (0);
 }

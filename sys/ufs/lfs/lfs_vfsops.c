@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_vfsops.c,v 1.21 2005/11/06 00:24:17 pedro Exp $	*/
+/*	$OpenBSD: lfs_vfsops.c,v 1.22 2005/12/28 20:48:18 pedro Exp $	*/
 /*	$NetBSD: lfs_vfsops.c,v 1.11 1996/03/25 12:53:35 pk Exp $	*/
 
 /*
@@ -601,7 +601,7 @@ lfs_vptofh(vp, fhp)
 	ufhp = (struct ufid *)fhp;
 	ufhp->ufid_len = sizeof(struct ufid);
 	ufhp->ufid_ino = ip->i_number;
-	ufhp->ufid_gen = ip->i_ffs_gen;
+	ufhp->ufid_gen = ip->i_ffs1_gen;
 	return (0);
 }
 

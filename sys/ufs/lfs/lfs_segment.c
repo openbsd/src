@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_segment.c,v 1.13 2005/02/17 18:07:37 jfb Exp $	*/
+/*	$OpenBSD: lfs_segment.c,v 1.14 2005/12/28 20:48:18 pedro Exp $	*/
 /*	$NetBSD: lfs_segment.c,v 1.4 1996/02/09 22:28:54 christos Exp $	*/
 
 /*
@@ -622,10 +622,10 @@ lfs_updatemeta(sp)
 		ip = VTOI(vp);
 		switch (num) {
 		case 0:
-			ip->i_ffs_db[lbn] = off;
+			ip->i_ffs1_db[lbn] = off;
 			break;
 		case 1:
-			ip->i_ffs_ib[a[0].in_off] = off;
+			ip->i_ffs1_ib[a[0].in_off] = off;
 			break;
 		default:
 			ap = &a[num - 1];
@@ -637,7 +637,7 @@ lfs_updatemeta(sp)
 			 * to get counted for the inode.
 			 */
 			if (bp->b_blkno == -1 && !(bp->b_flags & B_CACHE)) {
-				ip->i_ffs_blocks += fsbtodb(fs, 1);
+				ip->i_ffs1_blocks += fsbtodb(fs, 1);
 				fs->lfs_bfree -= fragstodb(fs, fs->lfs_frag);
 			}
 			((ufs_daddr_t *)bp->b_data)[ap->in_off] = off;

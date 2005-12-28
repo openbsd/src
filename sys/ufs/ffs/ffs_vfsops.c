@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.77 2005/12/17 13:56:01 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.78 2005/12/28 20:48:17 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -491,7 +491,7 @@ ffs_reload_vnode(struct vnode *vp, void *args)
 	}
 	*ip->i_din1 = *((struct ufs1_dinode *)bp->b_data +
 	    ino_to_fsbo(fra->fs, ip->i_number));
-	ip->i_effnlink = ip->i_ffs_nlink;
+	ip->i_effnlink = DIP(ip, nlink);
 	brelse(bp);
 	vput(vp);
 	return (0);
@@ -1169,7 +1169,7 @@ retry:
 	if (DOINGSOFTDEP(vp))
 		softdep_load_inodeblock(ip);
 	else
-		ip->i_effnlink = ip->i_ffs_nlink;
+		ip->i_effnlink = DIP(ip, nlink);
 
 	/*
 	 * Initialize the vnode from the inode, check for aliases.
@@ -1181,27 +1181,30 @@ retry:
 		*vpp = NULL;
 		return (error);
 	}
+
 	/*
 	 * Set up a generation number for this inode if it does not
 	 * already have one. This should only happen on old filesystems.
 	 */
-	if (ip->i_ffs_gen == 0) {
-		ip->i_ffs_gen = arc4random() & INT_MAX;
-		if (ip->i_ffs_gen == 0 || ip->i_ffs_gen == -1)
-			ip->i_ffs_gen = 1;		/* shouldn't happen */
+	if (DIP(ip, gen) == 0) {
+		DIP_ASSIGN(ip, gen, arc4random() & INT_MAX);
+		if (DIP(ip, gen) == 0 || DIP(ip, gen) == -1)
+			DIP_ASSIGN(ip, gen, 1);	/* Shouldn't happen */
 		if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
 			ip->i_flag |= IN_MODIFIED;
 	}
+
 	/*
 	 * Ensure that uid and gid are correct. This is a temporary
 	 * fix until fsck has been changed to do the update.
 	 */
-	if (fs->fs_inodefmt < FS_44INODEFMT) {
-		ip->i_ffs_uid = ip->i_din1->di_ouid;
-		ip->i_ffs_gid = ip->i_din1->di_ogid;
+	if (fs->fs_magic == FS_UFS1_MAGIC && fs->fs_inodefmt < FS_44INODEFMT) {
+		ip->i_ffs1_uid = ip->i_din1->di_ouid;
+		ip->i_ffs1_gid = ip->i_din1->di_ogid;
 	}
 
 	*vpp = vp;
+
 	return (0);
 }
 
@@ -1241,7 +1244,7 @@ ffs_vptofh(struct vnode *vp, struct fid *fhp)
 	ufhp = (struct ufid *)fhp;
 	ufhp->ufid_len = sizeof(struct ufid);
 	ufhp->ufid_ino = ip->i_number;
-	ufhp->ufid_gen = ip->i_ffs_gen;
+	ufhp->ufid_gen = DIP(ip, gen);
 
 	return (0);
 }

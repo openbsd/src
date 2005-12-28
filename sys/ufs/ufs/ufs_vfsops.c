@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vfsops.c,v 1.13 2005/11/11 16:27:52 pedro Exp $	*/
+/*	$OpenBSD: ufs_vfsops.c,v 1.14 2005/12/28 20:48:18 pedro Exp $	*/
 /*	$NetBSD: ufs_vfsops.c,v 1.4 1996/02/09 22:36:12 christos Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ ufs_fhtovp(struct mount *mp, struct ufid *ufhp, struct vnode **vpp)
 		return (error);
 	}
 	ip = VTOI(nvp);
-	if (ip->i_ffs_mode == 0 || ip->i_ffs_gen != ufhp->ufid_gen) {
+	if (DIP(ip, mode) == 0 || DIP(ip, gen) != ufhp->ufid_gen) {
 		vput(nvp);
 		*vpp = NULLVP;
 		return (ESTALE);

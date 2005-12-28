@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_inode.c,v 1.10 2004/06/24 19:35:27 tholo Exp $	*/
+/*	$OpenBSD: lfs_inode.c,v 1.11 2005/12/28 20:48:18 pedro Exp $	*/
 /*	$NetBSD: lfs_inode.c,v 1.5 1996/05/11 18:27:35 mycroft Exp $	*/
 
 /*
@@ -181,8 +181,8 @@ lfs_truncate(v)
 		if (length != 0)
 			panic("lfs_truncate: partial truncate of symlink");
 #endif
-		bzero((char *)&ip->i_ffs_shortlink, (u_int)ip->i_ffs_size);
-		ip->i_ffs_size = 0;
+		bzero((char *)&ip->i_ffs1_shortlink, (u_int)ip->i_ffs1_size);
+		ip->i_ffs1_size = 0;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(vp, &ts, &ts, 0));
 	}
@@ -191,7 +191,7 @@ lfs_truncate(v)
 	fs = ip->i_lfs;
 
 	/* If length is larger than the file, just update the times. */
-	if (ip->i_ffs_size <= length) {
+	if (ip->i_ffs1_size <= length) {
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(vp, &ts, &ts, 0));
 	}
@@ -202,7 +202,7 @@ lfs_truncate(v)
 	 * file is truncated to 0.
 	 */
 	lastblock = lblkno(fs, length + fs->lfs_bsize - 1);
-	olastblock = lblkno(fs, ip->i_ffs_size + fs->lfs_bsize - 1) - 1;
+	olastblock = lblkno(fs, ip->i_ffs1_size + fs->lfs_bsize - 1) - 1;
 
 	/*
 	 * Update the size of the file. If the file is not being truncated to
@@ -218,7 +218,7 @@ lfs_truncate(v)
 	/* Now set oldsize to the current size of the current last block */
 	oldsize_lastblock = blksize(fs, ip, olastblock);
 	if (offset == 0)
-		ip->i_ffs_size = length;
+		ip->i_ffs1_size = length;
 	else {
 #ifdef QUOTA
 		if ((e1 = getinoquota(ip)) != 0)
@@ -226,7 +226,7 @@ lfs_truncate(v)
 #endif	
 		if ((e1 = bread(vp, lbn, fs->lfs_bsize, NOCRED, &bp)) != 0)
 			return (e1);
-		ip->i_ffs_size = length;
+		ip->i_ffs1_size = length;
 		(void)vnode_pager_uncache(vp);
 		newsize = blksize(fs, ip, lbn);
 		bzero((char *)bp->b_data + offset, (u_int)(newsize - offset));
@@ -236,7 +236,7 @@ lfs_truncate(v)
 	}
 	/*
 	 * Modify sup->su_nbyte counters for each deleted block; keep track
-	 * of number of blocks removed for ip->i_ffs_blocks.
+	 * of number of blocks removed for ip->i_ffs1_blocks.
 	 */
 	fragsreleased = 0;
 	num = 0;
@@ -254,9 +254,9 @@ lfs_truncate(v)
 
 		switch (depth) {
 		case 0:				/* Direct block. */
-			daddr = ip->i_ffs_db[lbn];
+			daddr = ip->i_ffs1_db[lbn];
 			SEGDEC(freesize);
-			ip->i_ffs_db[lbn] = 0;
+			ip->i_ffs1_db[lbn] = 0;
 			--lbn;
 			break;
 #ifdef DIAGNOSTIC
@@ -297,9 +297,9 @@ lfs_truncate(v)
 			}
 			if (depth == 0 && a[1].in_off == 0) {
 				off = a[0].in_off;
-				daddr = ip->i_ffs_ib[off];
+				daddr = ip->i_ffs1_ib[off];
 				SEGDEC(freesize);
-				ip->i_ffs_ib[off] = 0;
+				ip->i_ffs1_ib[off] = 0;
 			}
 			if (lbn == lastblock || lbn <= NDADDR)
 				--lbn;
@@ -320,13 +320,13 @@ lfs_truncate(v)
 	}
 
 #ifdef DIAGNOSTIC
-	if (ip->i_ffs_blocks < fragstodb(fs, fragsreleased)) {
+	if (ip->i_ffs1_blocks < fragstodb(fs, fragsreleased)) {
 		printf("lfs_truncate: frag count < 0\n");
-		fragsreleased = dbtofrags(fs, ip->i_ffs_blocks);
+		fragsreleased = dbtofrags(fs, ip->i_ffs1_blocks);
 		panic("lfs_truncate: frag count < 0");
 	}
 #endif
-	ip->i_ffs_blocks -= fragstodb(fs, fragsreleased);
+	ip->i_ffs1_blocks -= fragstodb(fs, fragsreleased);
 	fs->lfs_bfree +=  fragstodb(fs, fragsreleased);
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	/*
@@ -355,19 +355,19 @@ lfs_truncate(v)
 		}
 	fragsreleased = i_released;
 #ifdef DIAGNOSTIC
-	if (fragsreleased > dbtofrags(fs, ip->i_ffs_blocks)) {
+	if (fragsreleased > dbtofrags(fs, ip->i_ffs1_blocks)) {
 		printf("lfs_inode: Warning! %s\n",
 		    "more frags released from inode than are in inode");
-		fragsreleased = dbtofrags(fs, ip->i_ffs_blocks);
+		fragsreleased = dbtofrags(fs, ip->i_ffs1_blocks);
 		panic("lfs_inode: Warning.  More frags released");
 	}
 #endif
 	fs->lfs_bfree += fragstodb(fs, fragsreleased);
-	ip->i_ffs_blocks -= fragstodb(fs, fragsreleased);
+	ip->i_ffs1_blocks -= fragstodb(fs, fragsreleased);
 #ifdef DIAGNOSTIC
-	if (length == 0 && ip->i_ffs_blocks != 0) {
+	if (length == 0 && ip->i_ffs1_blocks != 0) {
 		printf("lfs_inode: Warning! %s%d%s\n",
-		    "Truncation to zero, but ", ip->i_ffs_blocks,
+		    "Truncation to zero, but ", ip->i_ffs1_blocks,
 		    " blocks left on inode");
 		    panic("lfs_inode");
 	}

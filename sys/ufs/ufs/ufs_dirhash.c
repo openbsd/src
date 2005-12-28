@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.10 2005/10/13 22:03:11 mickey Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.11 2005/12/28 20:48:18 pedro Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -116,11 +116,11 @@ ufsdirhash_build(struct inode *ip)
 
 	/* Check if we can/should use dirhash. */
 	if (ip->i_dirhash == NULL) {
-		if (ip->i_size < ufs_mindirhashsize || OFSFMT(ip->i_vnode))
+		if (DIP(ip, size) < ufs_mindirhashsize || OFSFMT(ip->i_vnode))
 			return (-1);
 	} else {
 		/* Hash exists, but sysctls could have changed. */
-		if (ip->i_size < ufs_mindirhashsize ||
+		if (DIP(ip, size) < ufs_mindirhashsize ||
 		    ufs_dirhashmem > ufs_dirhashmaxmem) {
 			ufsdirhash_free(ip);
 			return (-1);
@@ -138,12 +138,12 @@ ufsdirhash_build(struct inode *ip)
 
 	vp = ip->i_vnode;
 	/* Allocate 50% more entries than this dir size could ever need. */
-	DIRHASH_ASSERT(ip->i_size >= DIRBLKSIZ, ("ufsdirhash_build size"));
-	nslots = ip->i_size / DIRECTSIZ(1);
+	DIRHASH_ASSERT(DIP(ip, size) >= DIRBLKSIZ, ("ufsdirhash_build size"));
+	nslots = DIP(ip, size) / DIRECTSIZ(1);
 	nslots = (nslots * 3 + 1) / 2;
 	narrays = howmany(nslots, DH_NBLKOFF);
 	nslots = narrays * DH_NBLKOFF;
-	dirblocks = howmany(ip->i_size, DIRBLKSIZ);
+	dirblocks = howmany(DIP(ip, size), DIRBLKSIZ);
 	nblocks = (dirblocks * 3 + 1) / 2;
 
 	memreqd = sizeof(*dh) + narrays * sizeof(*dh->dh_hash) +
@@ -207,7 +207,7 @@ ufsdirhash_build(struct inode *ip)
 
 	bmask = VFSTOUFS(vp->v_mount)->um_mountp->mnt_stat.f_iosize - 1;
 	pos = 0;
-	while (pos < ip->i_size) {
+	while (pos < DIP(ip, size)) {
 		/* If necessary, get the next directory block. */
 		if ((pos & bmask) == 0) {
 			if (bp != NULL)
@@ -398,7 +398,7 @@ restart:
 			continue;
 		DIRHASH_UNLOCK(dh);
 
-		if (offset < 0 || offset >= ip->i_size)
+		if (offset < 0 || offset >= DIP(ip, size))
 			panic("ufsdirhash_lookup: bad offset in hash array");
 		if ((offset & ~bmask) != blkoff) {
 			if (bp != NULL)

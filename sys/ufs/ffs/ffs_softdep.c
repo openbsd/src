@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.66 2005/12/17 13:56:01 pedro Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.67 2005/12/28 20:48:17 pedro Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -1505,7 +1505,7 @@ softdep_setup_allocdirect(ip, lbn, newblkno, oldblkno, newsize, oldsize, bp)
 		 * allocate an associated pagedep to track additions and
 		 * deletions.
 		 */
-		if ((ip->i_ffs_mode & IFMT) == IFDIR &&
+		if ((DIP(ip, mode) & IFMT) == IFDIR &&
 		    pagedep_lookup(ip, lbn, DEPALLOC, &pagedep) == 0)
 			WORKLIST_INSERT(&bp->b_dep, &pagedep->pd_list);
 	}
@@ -1630,7 +1630,7 @@ newfreefrag(ip, blkno, size)
 		panic("newfreefrag: frag size");
 	freefrag = pool_get(&freefrag_pool, PR_WAITOK);
 	freefrag->ff_list.wk_type = D_FREEFRAG;
-	freefrag->ff_state = ip->i_ffs_uid & ~ONWORKLIST; /* used below */
+	freefrag->ff_state = DIP(ip, uid) & ~ONWORKLIST; /* used below */
 	freefrag->ff_inum = ip->i_number;
 	freefrag->ff_mnt = ITOV(ip)->v_mount;
 	freefrag->ff_devvp = ip->i_devvp;
@@ -1656,7 +1656,7 @@ handle_workitem_freefrag(freefrag)
 	tip.i_ump = VFSTOUFS(freefrag->ff_mnt);
 	tip.i_dev = freefrag->ff_devvp->v_rdev;
 	tip.i_number = freefrag->ff_inum;
-	tip.i_ffs_uid = freefrag->ff_state & ~ONWORKLIST; /* set above */
+	tip.i_ffs1_uid = freefrag->ff_state & ~ONWORKLIST; /* set above */
 	ffs_blkfree(&tip, freefrag->ff_blkno, freefrag->ff_fragsize);
 	pool_put(&freefrag_pool, freefrag);
 }
@@ -1733,7 +1733,7 @@ softdep_setup_allocindir_page(ip, lbn, bp, ptrno, newblkno, oldblkno, nbp)
 	 * allocate an associated pagedep to track additions and
 	 * deletions.
 	 */
-	if ((ip->i_ffs_mode & IFMT) == IFDIR &&
+	if ((DIP(ip, mode) & IFMT) == IFDIR &&
 	    pagedep_lookup(ip, lbn, DEPALLOC, &pagedep) == 0)
 		WORKLIST_INSERT(&nbp->b_dep, &pagedep->pd_list);
 	if (nbp == NULL) {
@@ -1924,23 +1924,27 @@ softdep_setup_freeblocks(ip, length)
 	bzero(freeblks, sizeof(struct freeblks));
 	freeblks->fb_list.wk_type = D_FREEBLKS;
 	freeblks->fb_state = ATTACHED;
-	freeblks->fb_uid = ip->i_ffs_uid;
+	freeblks->fb_uid = DIP(ip, uid);
 	freeblks->fb_previousinum = ip->i_number;
 	freeblks->fb_devvp = ip->i_devvp;
 	freeblks->fb_mnt = ITOV(ip)->v_mount;
-	freeblks->fb_oldsize = ip->i_ffs_size;
+	freeblks->fb_oldsize = DIP(ip, size);
 	freeblks->fb_newsize = length;
-	freeblks->fb_chkcnt = ip->i_ffs_blocks;
+	freeblks->fb_chkcnt = DIP(ip, blocks);
+
 	for (i = 0; i < NDADDR; i++) {
-		freeblks->fb_dblks[i] = ip->i_ffs_db[i];
-		ip->i_ffs_db[i] = 0;
+		freeblks->fb_dblks[i] = DIP(ip, db[i]);
+		DIP_ASSIGN(ip, db[i], 0);
 	}
+
 	for (i = 0; i < NIADDR; i++) {
-		freeblks->fb_iblks[i] = ip->i_ffs_ib[i];
-		ip->i_ffs_ib[i] = 0;
+		freeblks->fb_iblks[i] = DIP(ip, ib[i]);
+		DIP_ASSIGN(ip, ib[i], 0);
 	}
-	ip->i_ffs_blocks = 0;
-	ip->i_ffs_size = 0;
+
+	DIP_ASSIGN(ip, blocks, 0);
+	DIP_ASSIGN(ip, size, 0);
+
 	/*
 	 * Push the zero'ed inode to to its disk buffer so that we are free
 	 * to delete its dependencies below. Once the dependencies are gone
@@ -2382,8 +2386,8 @@ handle_workitem_freeblocks(freeblks)
 	tip.i_number = freeblks->fb_previousinum;
 	tip.i_ump = VFSTOUFS(freeblks->fb_mnt);
 	tip.i_dev = freeblks->fb_devvp->v_rdev;
-	tip.i_ffs_size = freeblks->fb_oldsize;
-	tip.i_ffs_uid = freeblks->fb_uid;
+	tip.i_ffs1_size = freeblks->fb_oldsize;
+	tip.i_ffs1_uid = freeblks->fb_uid;
 	tip.i_vnode = NULL;
 	tmpval = 1;
 	baselbns[0] = NDADDR;
@@ -3082,12 +3086,12 @@ softdep_change_linkcnt(ip, nodelay)
 	ACQUIRE_LOCK(&lk);
 
 	(void) inodedep_lookup(ip->i_fs, ip->i_number, flags, &inodedep);
-	if (ip->i_ffs_nlink < ip->i_effnlink) {
+	if (DIP(ip, nlink) < ip->i_effnlink) {
 		FREE_LOCK(&lk);
 		panic("softdep_change_linkcnt: bad delta");
 	}
 
-	inodedep->id_nlinkdelta = ip->i_ffs_nlink - ip->i_effnlink;
+	inodedep->id_nlinkdelta = DIP(ip, nlink) - ip->i_effnlink;
 
 	FREE_LOCK(&lk);
 }
@@ -3122,13 +3126,13 @@ handle_workitem_remove(dirrem)
 	 * Normal file deletion.
 	 */
 	if ((dirrem->dm_state & RMDIR) == 0) {
-		ip->i_ffs_nlink--;
+		DIP_ADD(ip, nlink, -1);
 		ip->i_flag |= IN_CHANGE;
-		if (ip->i_ffs_nlink < ip->i_effnlink) {
+		if (DIP(ip, nlink) < ip->i_effnlink) {
 			FREE_LOCK(&lk);
 			panic("handle_workitem_remove: bad file delta");
 		}
-		inodedep->id_nlinkdelta = ip->i_ffs_nlink - ip->i_effnlink;
+		inodedep->id_nlinkdelta = DIP(ip, nlink) - ip->i_effnlink;
 		FREE_LOCK(&lk);
 		vput(vp);
 		num_dirrem -= 1;
@@ -3142,11 +3146,11 @@ handle_workitem_remove(dirrem)
 	 * truncation completes, arrange to have the reference count on
 	 * the parent decremented to account for the loss of "..".
 	 */
-	ip->i_ffs_nlink -= 2;
+	DIP_ADD(ip, nlink, -2);
 	ip->i_flag |= IN_CHANGE;
-	if (ip->i_ffs_nlink < ip->i_effnlink)
+	if (DIP(ip, nlink) < ip->i_effnlink)
 		panic("handle_workitem_remove: bad dir delta");
-	inodedep->id_nlinkdelta = ip->i_ffs_nlink - ip->i_effnlink;
+	inodedep->id_nlinkdelta = DIP(ip, nlink) - ip->i_effnlink;
 	FREE_LOCK(&lk);
 	if ((error = UFS_TRUNCATE(ip, (off_t)0, 0, p->p_ucred)) != 0)
 		softdep_error("handle_workitem_remove: truncate", error);
@@ -4093,7 +4097,7 @@ softdep_load_inodeblock(ip)
 	/*
 	 * Check for alternate nlink count.
 	 */
-	ip->i_effnlink = ip->i_ffs_nlink;
+	ip->i_effnlink = DIP(ip, nlink);
 	ACQUIRE_LOCK(&lk);
 	if (inodedep_lookup(ip->i_fs, ip->i_number, 0, &inodedep) == 0) {
 		FREE_LOCK(&lk);
@@ -4133,11 +4137,11 @@ softdep_update_inodeblock(ip, bp, waitfor)
 	ACQUIRE_LOCK(&lk);
 	if (inodedep_lookup(ip->i_fs, ip->i_number, 0, &inodedep) == 0) {
 		FREE_LOCK(&lk);
-		if (ip->i_effnlink != ip->i_ffs_nlink)
+		if (ip->i_effnlink != DIP(ip, nlink))
 			panic("softdep_update_inodeblock: bad link count");
 		return;
 	}
-	if (inodedep->id_nlinkdelta != ip->i_ffs_nlink - ip->i_effnlink) {
+	if (inodedep->id_nlinkdelta != DIP(ip, nlink) - ip->i_effnlink) {
 		FREE_LOCK(&lk);
 		panic("softdep_update_inodeblock: bad delta");
 	}

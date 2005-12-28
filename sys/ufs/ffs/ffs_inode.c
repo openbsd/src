@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.41 2005/12/17 13:56:01 pedro Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.42 2005/12/28 20:48:17 pedro Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -95,19 +95,19 @@ ffs_update(struct inode *ip, struct timespec *atime,
 	getnanotime(&ts);
 
 	if (ip->i_flag & IN_ACCESS) {
-		ip->i_ffs_atime = atime ? atime->tv_sec : ts.tv_sec;
-		ip->i_ffs_atimensec = atime ? atime->tv_nsec : ts.tv_nsec;
+		DIP_ASSIGN(ip, atime, atime ? atime->tv_sec : ts.tv_sec);
+		DIP_ASSIGN(ip, atimensec, atime ? atime->tv_nsec : ts.tv_nsec);
 	}
 
 	if (ip->i_flag & IN_UPDATE) {
-		ip->i_ffs_mtime = mtime ? mtime->tv_sec : ts.tv_sec;
-		ip->i_ffs_mtimensec = mtime ? mtime->tv_nsec : ts.tv_nsec;
+		DIP_ASSIGN(ip, mtime, mtime ? mtime->tv_sec : ts.tv_sec);
+		DIP_ASSIGN(ip, mtimensec, mtime ? mtime->tv_nsec : ts.tv_nsec);
 		ip->i_modrev++;
 	}
 
 	if (ip->i_flag & IN_CHANGE) {
-		ip->i_ffs_ctime = ts.tv_sec;
-		ip->i_ffs_ctimensec = ts.tv_nsec;
+		DIP_ASSIGN(ip, ctime, ts.tv_sec);
+		DIP_ASSIGN(ip, ctimensec, ts.tv_nsec);
 	}
 
 	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
@@ -117,9 +117,9 @@ ffs_update(struct inode *ip, struct timespec *atime,
 	 * Ensure that uid and gid are correct. This is a temporary
 	 * fix until fsck has been changed to do the update.
 	 */
-	if (fs->fs_inodefmt < FS_44INODEFMT) {
-		ip->i_din1->di_ouid = ip->i_ffs_uid;
-		ip->i_din1->di_ogid = ip->i_ffs_gid;
+	if (fs->fs_magic == FS_UFS1_MAGIC && fs->fs_inodefmt < FS_44INODEFMT) {
+		ip->i_din1->di_ouid = ip->i_ffs1_uid;
+		ip->i_din1->di_ogid = ip->i_ffs1_gid;
 	}
 
 	error = bread(ip->i_devvp, fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
@@ -131,7 +131,7 @@ ffs_update(struct inode *ip, struct timespec *atime,
 
 	if (DOINGSOFTDEP(vp))
 		softdep_update_inodeblock(ip, bp, waitfor);
-	else if (ip->i_effnlink != ip->i_ffs_nlink) 
+	else if (ip->i_effnlink != DIP(ip, nlink))
 		panic("ffs_update: bad link cnt");
 
 	*((struct ufs1_dinode *)bp->b_data +
@@ -175,18 +175,19 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	    ovp->v_type != VLNK)
 		return (0);
 
-	if (oip->i_ffs_size == length)
+	if (DIP(oip, size) == length)
 		return (0);
+
 	if (ovp->v_type == VLNK &&
-	    (oip->i_ffs_size < ovp->v_mount->mnt_maxsymlinklen ||
+	    (DIP(oip, size) < ovp->v_mount->mnt_maxsymlinklen ||
 	     (ovp->v_mount->mnt_maxsymlinklen == 0 &&
 	      oip->i_din1->di_blocks == 0))) {
 #ifdef DIAGNOSTIC
 		if (length != 0)
 			panic("ffs_truncate: partial truncate of symlink");
 #endif
-		bzero((char *)&oip->i_ffs_shortlink, (u_int)oip->i_ffs_size);
-		oip->i_ffs_size = 0;
+		memset(SHORTLINK(oip), 0, (size_t) DIP(oip, size));
+		DIP_ASSIGN(oip, size, 0);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (UFS_UPDATE(oip, MNT_WAIT));
 	}
@@ -213,7 +214,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 					       curproc)) != 0)
 				return (error);
 		} else {
-			(void)ufs_quota_free_blocks(oip, oip->i_ffs_blocks, 
+			(void)ufs_quota_free_blocks(oip, DIP(oip, blocks),
 			    NOCRED);
 			softdep_setup_freeblocks(oip, length);
 			(void) vinvalbuf(ovp, 0, cred, curproc, 0, 0);
@@ -223,7 +224,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	}
 
 	fs = oip->i_fs;
-	osize = oip->i_ffs_size; 
+	osize = DIP(oip, size);
 	/*
 	 * Lengthen the size of the file. We must ensure that the
 	 * last byte of the file is allocated. Since the smallest
@@ -239,7 +240,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 				   cred, aflags, &bp);
 		if (error)
 			return (error);
-		oip->i_ffs_size = length;
+		DIP_ASSIGN(oip, size, length);
 		uvm_vnp_setsize(ovp, length);
 		(void) uvm_vnp_uncache(ovp);
 		if (aflags & B_SYNC)
@@ -261,7 +262,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	 */
 	offset = blkoff(fs, length);
 	if (offset == 0) {
-		oip->i_ffs_size = length;
+		DIP_ASSIGN(oip, size, length);
 	} else {
 		lbn = lblkno(fs, length);
 		aflags = B_CLRBUF;
@@ -283,7 +284,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		    fragroundup(fs, blkoff(fs, length)) < fs->fs_bsize &&
 		    (error = VOP_FSYNC(ovp, cred, MNT_WAIT, curproc)) != 0)
 			return (error);
-		oip->i_ffs_size = length;
+		DIP_ASSIGN(oip, size, length);
 		size = blksize(fs, oip, lbn);
 		(void) uvm_vnp_uncache(ovp);
 		if (ovp->v_type != VDIR)
@@ -306,32 +307,48 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	lastiblock[DOUBLE] = lastiblock[SINGLE] - NINDIR(fs);
 	lastiblock[TRIPLE] = lastiblock[DOUBLE] - NINDIR(fs) * NINDIR(fs);
 	nblocks = btodb(fs->fs_bsize);
+
 	/*
 	 * Update file and block pointers on disk before we start freeing
 	 * blocks.  If we crash before free'ing blocks below, the blocks
 	 * will be returned to the free list.  lastiblock values are also
 	 * normalized to -1 for calls to ffs_indirtrunc below.
 	 */
-	bcopy((caddr_t)&oip->i_ffs_db[0], (caddr_t)oldblks, sizeof oldblks);
+
+	if (fs->fs_magic == FS_UFS2_MAGIC)
+		bcopy(&oip->i_ffs2_db[0], oldblks, sizeof(oldblks));
+	else
+		bcopy(&oip->i_ffs1_db[0], oldblks, sizeof(oldblks));
+
 	for (level = TRIPLE; level >= SINGLE; level--)
 		if (lastiblock[level] < 0) {
-			oip->i_ffs_ib[level] = 0;
+			DIP_ASSIGN(oip, ib[level], 0);
 			lastiblock[level] = -1;
 		}
+
 	for (i = NDADDR - 1; i > lastblock; i--)
-		oip->i_ffs_db[i] = 0;
+		DIP_ASSIGN(oip, db[i], 0);
+
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if ((error = UFS_UPDATE(oip, MNT_WAIT)) != 0)
 		allerror = error;
+
 	/*
 	 * Having written the new inode to disk, save its new configuration
 	 * and put back the old block pointers long enough to process them.
 	 * Note that we save the new block configuration so we can check it
 	 * when we are done.
 	 */
-	bcopy((caddr_t)&oip->i_ffs_db[0], (caddr_t)newblks, sizeof newblks);
-	bcopy((caddr_t)oldblks, (caddr_t)&oip->i_ffs_db[0], sizeof oldblks);
-	oip->i_ffs_size = osize;
+
+	if (fs->fs_magic == FS_UFS2_MAGIC) {
+		bcopy(&oip->i_ffs2_db[0], newblks, sizeof(newblks));
+		bcopy(oldblks, &oip->i_ffs2_db[0], sizeof(oldblks));
+	} else {
+		bcopy(&oip->i_ffs1_db[0], newblks, sizeof(newblks));
+		bcopy(oldblks, &oip->i_ffs1_db[0], sizeof(oldblks));
+	}
+
+	DIP_ASSIGN(oip, size, osize);
 	vflags = ((length > 0) ? V_SAVE : 0) | V_SAVEMETA;
 	allerror = vinvalbuf(ovp, vflags, cred, curproc, 0, 0);
 
@@ -342,7 +359,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	indir_lbn[DOUBLE] = indir_lbn[SINGLE] - NINDIR(fs) - 1;
 	indir_lbn[TRIPLE] = indir_lbn[DOUBLE] - NINDIR(fs) * NINDIR(fs) - 1;
 	for (level = TRIPLE; level >= SINGLE; level--) {
-		bn = oip->i_ffs_ib[level];
+		bn = DIP(oip, ib[level]);
 		if (bn != 0) {
 			error = ffs_indirtrunc(oip, indir_lbn[level],
 			    fsbtodb(fs, bn), lastiblock[level], level, &count);
@@ -350,7 +367,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 				allerror = error;
 			blocksreleased += count;
 			if (lastiblock[level] < 0) {
-				oip->i_ffs_ib[level] = 0;
+				DIP_ASSIGN(oip, ib[level], 0);
 				ffs_blkfree(oip, bn, fs->fs_bsize);
 				blocksreleased += nblocks;
 			}
@@ -365,10 +382,11 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	for (i = NDADDR - 1; i > lastblock; i--) {
 		long bsize;
 
-		bn = oip->i_ffs_db[i];
+		bn = DIP(oip, db[i]);
 		if (bn == 0)
 			continue;
-		oip->i_ffs_db[i] = 0;
+
+		DIP_ASSIGN(oip, db[i], 0);
 		bsize = blksize(fs, oip, i);
 		ffs_blkfree(oip, bn, bsize);
 		blocksreleased += btodb(bsize);
@@ -380,7 +398,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	 * Finally, look for a change in size of the
 	 * last direct block; release any frags.
 	 */
-	bn = oip->i_ffs_db[lastblock];
+	bn = DIP(oip, db[lastblock]);
 	if (bn != 0) {
 		long oldspace, newspace;
 
@@ -389,7 +407,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		 * back as old block size minus new block size.
 		 */
 		oldspace = blksize(fs, oip, lastblock);
-		oip->i_ffs_size = length;
+		DIP_ASSIGN(oip, size, length);
 		newspace = blksize(fs, oip, lastblock);
 		if (newspace == 0)
 			panic("ffs_truncate: newspace");
@@ -407,19 +425,19 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 done:
 #ifdef DIAGNOSTIC
 	for (level = SINGLE; level <= TRIPLE; level++)
-		if (newblks[NDADDR + level] != oip->i_ffs_ib[level])
+		if (newblks[NDADDR + level] != DIP(oip, ib[level]))
 			panic("ffs_truncate1");
 	for (i = 0; i < NDADDR; i++)
-		if (newblks[i] != oip->i_ffs_db[i])
+		if (newblks[i] != DIP(oip, db[i]))
 			panic("ffs_truncate2");
 #endif /* DIAGNOSTIC */
 	/*
 	 * Put back the real size.
 	 */
-	oip->i_ffs_size = length;
-	oip->i_ffs_blocks -= blocksreleased;
-	if (oip->i_ffs_blocks < 0)			/* sanity */
-		oip->i_ffs_blocks = 0;
+	DIP_ASSIGN(oip, size, length);
+	DIP_ADD(oip, blocks, -blocksreleased);
+	if (DIP(oip, blocks) < 0)	/* Sanity */
+		DIP_ASSIGN(oip, blocks, 0);
 	oip->i_flag |= IN_CHANGE;
 	(void)ufs_quota_free_blocks(oip, blocksreleased, NOCRED);
 	return (allerror);
