@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.58 2005/12/14 13:59:04 fgsch Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.59 2005/12/28 14:36:25 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -1145,6 +1145,6 @@ ac97_cx20468_init(struct ac97_softc *as)
 	u_int16_t misc;
 
 	ac97_read(as, AC97_CX_REG_MISC, &misc);
-	ac97_write(as, AC97_CX_REG_MISC,
-	    AC97_CX_SPDIFEN | AC97_CX_COPYRIGHT | AC97_CX_MASK);
+	ac97_write(as, AC97_CX_REG_MISC, misc &
+	    ~(AC97_CX_SPDIFEN | AC97_CX_COPYRIGHT | AC97_CX_MASK));
 }
