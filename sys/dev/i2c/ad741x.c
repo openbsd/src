@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad741x.c,v 1.4 2005/12/27 17:18:18 deraadt Exp $	*/
+/*	$OpenBSD: ad741x.c,v 1.5 2005/12/28 20:35:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -70,7 +70,7 @@ adc_match(struct device *parent, void *match, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	if (strcmp(ia->ia_name, "ad7417") == 0 ||
-	    strcmp(ia->ia_name, "ad7418") == 0)		/* XXX? */
+	    strcmp(ia->ia_name, "ad7418") == 0)
 		return (1);
 	return (0);
 }
