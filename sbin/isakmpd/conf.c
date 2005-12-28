@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.85 2005/11/14 23:25:11 deraadt Exp $	 */
+/* $OpenBSD: conf.c,v 1.86 2005/12/28 10:57:35 hshoexer Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -73,32 +73,6 @@ struct conf_trans {
 #define CONF_SECT_MAX 256
 
 TAILQ_HEAD(conf_trans_head, conf_trans) conf_trans_queue;
-
-/*
- * Radix-64 Encoding.
- */
-const u_int8_t  bin2asc[] =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-const u_int8_t  asc2bin[] =
-{
-	255, 255, 255, 255, 255, 255, 255, 255,
-	255, 255, 255, 255, 255, 255, 255, 255,
-	255, 255, 255, 255, 255, 255, 255, 255,
-	255, 255, 255, 255, 255, 255, 255, 255,
-	255, 255, 255, 255, 255, 255, 255, 255,
-	255, 255, 255, 62, 255, 255, 255, 63,
-	52, 53, 54, 55, 56, 57, 58, 59,
-	60, 61, 255, 255, 255, 255, 255, 255,
-	255, 0, 1, 2, 3, 4, 5, 6,
-	7, 8, 9, 10, 11, 12, 13, 14,
-	15, 16, 17, 18, 19, 20, 21, 22,
-	23, 24, 25, 255, 255, 255, 255, 255,
-	255, 26, 27, 28, 29, 30, 31, 32,
-	33, 34, 35, 36, 37, 38, 39, 40,
-	41, 42, 43, 44, 45, 46, 47, 48,
-	49, 50, 51, 255, 255, 255, 255, 255
-};
 
 struct conf_binding {
 	LIST_ENTRY(conf_binding) link;
@@ -799,65 +773,6 @@ cleanup:
 	if (list)
 		conf_free_list(list);
 	return 0;
-}
-
-/* Decode a PEM encoded buffer.  */
-int
-conf_decode_base64(u_int8_t *out, u_int32_t *len, u_char *buf)
-{
-	u_int32_t	c = 0;
-	u_int8_t	c1, c2, c3, c4;
-
-	while (*buf) {
-		if (*buf > 127 || (c1 = asc2bin[*buf]) == 255)
-			return 0;
-		buf++;
-
-		if (*buf > 127 || (c2 = asc2bin[*buf]) == 255)
-			return 0;
-		buf++;
-
-		if (*buf == '=') {
-			c3 = c4 = 0;
-			c++;
-
-			/* Check last four bit */
-			if (c2 & 0xF)
-				return 0;
-
-			if (strcmp((char *)buf, "==") == 0)
-				buf++;
-			else
-				return 0;
-		} else if (*buf > 127 || (c3 = asc2bin[*buf]) == 255)
-			return 0;
-		else {
-			if (*++buf == '=') {
-				c4 = 0;
-				c += 2;
-
-				/* Check last two bit */
-				if (c3 & 3)
-					return 0;
-
-				if (strcmp((char *)buf, "="))
-					return 0;
-
-			} else if (*buf > 127 || (c4 = asc2bin[*buf]) == 255)
-				return 0;
-			else
-				c += 3;
-		}
-
-		buf++;
-		*out++ = (c1 << 2) | (c2 >> 4);
-		*out++ = (c2 << 4) | (c3 >> 2);
-		*out++ = (c3 << 6) | c4;
-	}
-
-	*len = c;
-	return 1;
-
 }
 
 void

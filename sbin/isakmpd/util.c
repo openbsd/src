@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.59 2005/11/15 21:49:04 cloder Exp $	 */
+/* $OpenBSD: util.c,v 1.60 2005/12/28 10:57:35 hshoexer Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -67,11 +67,6 @@ int	regrand = 0;
 #endif
 
 /*
- * If in regression-test mode, this is the seed used.
- */
-u_long	seed;
-
-/*
  * XXX These might be turned into inlines or macros, maybe even
  * machine-dependent ones, for performance reasons.
  */
@@ -85,14 +80,6 @@ u_int32_t
 decode_32(u_int8_t *cp)
 {
 	return cp[0] << 24 | cp[1] << 16 | cp[2] << 8 | cp[3];
-}
-
-u_int64_t
-decode_64(u_int8_t *cp)
-{
-	return (u_int64_t) cp[0] << 56 | (u_int64_t) cp[1] << 48 |
-	    (u_int64_t) cp[2] << 40 | (u_int64_t) cp[3] << 32 |
-	    cp[4] << 24 | cp[5] << 16 | cp[6] << 8 | cp[7];
 }
 
 void
@@ -111,35 +98,12 @@ encode_32(u_int8_t *cp, u_int32_t x)
 	*cp = x & 0xff;
 }
 
-void
-encode_64(u_int8_t *cp, u_int64_t x)
-{
-	*cp++ = x >> 56;
-	*cp++ = (x >> 48) & 0xff;
-	*cp++ = (x >> 40) & 0xff;
-	*cp++ = (x >> 32) & 0xff;
-	*cp++ = (x >> 24) & 0xff;
-	*cp++ = (x >> 16) & 0xff;
-	*cp++ = (x >> 8) & 0xff;
-	*cp = x & 0xff;
-}
-
 /* Check a buffer for all zeroes.  */
 int
 zero_test(const u_int8_t *p, size_t sz)
 {
 	while (sz-- > 0)
 		if (*p++ != 0)
-			return 0;
-	return 1;
-}
-
-/* Check a buffer for all ones.  */
-int
-ones_test(const u_int8_t *p, size_t sz)
-{
-	while (sz-- > 0)
-		if (*p++ != 0xff)
 			return 0;
 	return 1;
 }

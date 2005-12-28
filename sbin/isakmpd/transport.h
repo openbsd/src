@@ -1,4 +1,4 @@
-/* $OpenBSD: transport.h,v 1.16 2005/10/27 08:19:59 hshoexer Exp $	 */
+/* $OpenBSD: transport.h,v 1.17 2005/12/28 10:57:35 hshoexer Exp $	 */
 /* $EOM: transport.h,v 1.16 2000/07/17 18:57:59 provos Exp $	 */
 
 /*
@@ -148,7 +148,6 @@ extern struct transport *transport_create(char *, char *);
 extern int      transport_fd_set(fd_set *);
 extern void     transport_handle_messages(fd_set *);
 extern void     transport_init(void);
-extern void     transport_map(void (*) (struct transport *));
 extern void     transport_method_add(struct transport_vtbl *);
 extern int      transport_pending_wfd_set(fd_set *);
 extern int      transport_prio_sendqs_empty(void);

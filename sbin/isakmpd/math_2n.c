@@ -1,4 +1,4 @@
-/* $OpenBSD: math_2n.c,v 1.23 2005/05/03 13:50:44 moritz Exp $	 */
+/* $OpenBSD: math_2n.c,v 1.24 2005/12/28 10:57:35 hshoexer Exp $	 */
 /* $EOM: math_2n.c,v 1.15 1999/04/20 09:23:30 niklas Exp $	 */
 
 /*
@@ -513,18 +513,6 @@ b2n_square(b2n_ptr d, b2n_ptr n)
  * These functions are far from optimal in speed.
  */
 int
-b2n_div_q(b2n_ptr d, b2n_ptr n, b2n_ptr m)
-{
-	b2n_t	r;
-	int	rv;
-
-	b2n_init(r);
-	rv = b2n_div(d, r, n, m);
-	b2n_clear(r);
-	return rv;
-}
-
-int
 b2n_div_r(b2n_ptr r, b2n_ptr n, b2n_ptr m)
 {
 	b2n_t	q;
@@ -639,36 +627,6 @@ b2n_mod(b2n_ptr m, b2n_ptr n, b2n_ptr p)
 }
 
 int
-b2n_gcd(b2n_ptr e, b2n_ptr go, b2n_ptr ho)
-{
-	b2n_t	g, h;
-
-	b2n_init(g);
-	b2n_init(h);
-	if (b2n_set(g, go))
-		goto fail;
-	if (b2n_set(h, ho))
-		goto fail;
-
-	while (b2n_cmp_null(h)) {
-		if (b2n_mod(g, g, h))
-			goto fail;
-		B2N_SWAP(g, h);
-	}
-
-	B2N_SWAP(e, g);
-
-	b2n_clear(g);
-	b2n_clear(h);
-	return 0;
-
-fail:
-	b2n_clear(g);
-	b2n_clear(h);
-	return -1;
-}
-
-int
 b2n_mul_inv(b2n_ptr ga, b2n_ptr be, b2n_ptr p)
 {
 	b2n_t	a;
@@ -746,41 +704,6 @@ fail:
 	b2n_clear(r0);
 	b2n_clear(r1);
 	b2n_clear(q);
-	return -1;
-}
-
-/*
- * The trace tells us if there do exist any square roots
- * for 'a' in GF(2)[x]/p(x). The number of square roots is
- * 2 - 2*Trace.
- * If z is a square root, z + 1 is the other.
- */
-int
-b2n_trace(b2n_ptr ho, b2n_ptr a, b2n_ptr p)
-{
-	int	i, m = b2n_sigbit(p) - 1;
-	b2n_t	h;
-
-	b2n_init(h);
-	if (b2n_set(h, a))
-		goto fail;
-
-	for (i = 0; i < m - 1; i++) {
-		if (b2n_square(h, h))
-			goto fail;
-		if (b2n_mod(h, h, p))
-			goto fail;
-
-		if (b2n_add(h, h, a))
-			goto fail;
-	}
-	B2N_SWAP(ho, h);
-
-	b2n_clear(h);
-	return 0;
-
-fail:
-	b2n_clear(h);
 	return -1;
 }
 
@@ -890,45 +813,6 @@ fail:
 	return -1;
 }
 
-/* Exponentiation modulo a polynomial.  */
-int
-b2n_exp_mod(b2n_ptr d, b2n_ptr b0, u_int32_t e, b2n_ptr p)
-{
-	b2n_t	u, b;
-
-	b2n_init(u);
-	b2n_init(b);
-	if (b2n_set_ui(u, 1))
-		goto fail;
-	if (b2n_mod(b, b0, p))
-		goto fail;
-
-	while (e) {
-		if (e & 1) {
-			if (b2n_mul(u, u, b))
-				goto fail;
-			if (b2n_mod(u, u, p))
-				goto fail;
-		}
-		if (b2n_square(b, b))
-			goto fail;
-		if (b2n_mod(b, b, p))
-			goto fail;
-		e >>= 1;
-	}
-
-	B2N_SWAP(d, u);
-
-	b2n_clear(u);
-	b2n_clear(b);
-	return 0;
-
-fail:
-	b2n_clear(u);
-	b2n_clear(b);
-	return -1;
-}
-
 /*
  * Low-level function to speed up scalar multiplication with
  * elliptic curves.
@@ -972,43 +856,6 @@ b2n_nadd(b2n_ptr d0, b2n_ptr a0, b2n_ptr b0)
 		    CHUNK_BYTES * (a->chunks - i));
 
 	d->dirty = 1;
-	B2N_SWAP(d0, d);
-
-	b2n_clear(d);
-	return 0;
-}
-
-/* Very special sub, a > b.  */
-int
-b2n_nsub(b2n_ptr d0, b2n_ptr a, b2n_ptr b)
-{
-	int	i, carry;
-	b2n_t	d;
-
-	if (b2n_cmp(a, b) <= 0)
-		return b2n_set_null(d0);
-
-	b2n_init(d);
-	if (b2n_resize(d, a->chunks)) {
-		b2n_clear(d);
-		return -1;
-	}
-	for (carry = i = 0; i < b->chunks; i++) {
-		d->limp[i] = a->limp[i] - b->limp[i] - carry;
-		carry = (d->limp[i] > a->limp[i] ? 1 : 0);
-	}
-
-	for (; i < a->chunks && carry; i++) {
-		d->limp[i] = a->limp[i] - carry;
-		carry = (d->limp[i] > a->limp[i] ? 1 : 0);
-	}
-
-	if (i < a->chunks)
-		memcpy(d->limp + i, a->limp + i,
-		    CHUNK_BYTES * (a->chunks - i));
-
-	d->dirty = 1;
-
 	B2N_SWAP(d0, d);
 
 	b2n_clear(d);

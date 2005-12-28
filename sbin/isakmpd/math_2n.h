@@ -1,4 +1,4 @@
-/* $OpenBSD: math_2n.h,v 1.8 2005/04/21 01:23:07 cloder Exp $	 */
+/* $OpenBSD: math_2n.h,v 1.9 2005/12/28 10:57:35 hshoexer Exp $	 */
 /* $EOM: math_2n.h,v 1.9 1999/04/17 23:20:32 niklas Exp $	 */
 
 /*
@@ -101,9 +101,7 @@ int             b2n_cmp(b2n_ptr, b2n_ptr);
 int             b2n_cmp_null(b2n_ptr);
 int             b2n_div(b2n_ptr, b2n_ptr, b2n_ptr, b2n_ptr);
 int             b2n_div_mod(b2n_ptr, b2n_ptr, b2n_ptr, b2n_ptr);
-int             b2n_div_q(b2n_ptr, b2n_ptr, b2n_ptr);
 int             b2n_div_r(b2n_ptr, b2n_ptr, b2n_ptr);
-int             b2n_exp_mod(b2n_ptr, b2n_ptr, u_int32_t, b2n_ptr);
 void            b2n_init(b2n_ptr);
 void            b2n_clear(b2n_ptr);
 int             b2n_gcd(b2n_ptr, b2n_ptr, b2n_ptr);
@@ -113,7 +111,6 @@ int             b2n_mod(b2n_ptr, b2n_ptr, b2n_ptr);
 int             b2n_mul(b2n_ptr, b2n_ptr, b2n_ptr);
 int             b2n_mul_inv(b2n_ptr, b2n_ptr, b2n_ptr);
 int             b2n_nadd(b2n_ptr, b2n_ptr, b2n_ptr);
-int             b2n_nsub(b2n_ptr, b2n_ptr, b2n_ptr);
 int             b2n_random(b2n_ptr, u_int32_t);
 int             b2n_resize(b2n_ptr, unsigned int);
 int             b2n_rshift(b2n_ptr, b2n_ptr, unsigned int);
@@ -125,6 +122,5 @@ u_int32_t       b2n_sigbit(b2n_ptr);
 int             b2n_sqrt(b2n_ptr, b2n_ptr, b2n_ptr);
 int             b2n_square(b2n_ptr, b2n_ptr);
 #define b2n_sub b2n_add
-int             b2n_trace(b2n_ptr, b2n_ptr, b2n_ptr);
 
 #endif				/* _MATH_2N_H_ */

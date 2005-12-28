@@ -1,4 +1,4 @@
-/* $OpenBSD: transport.c,v 1.34 2005/10/27 08:19:59 hshoexer Exp $	 */
+/* $OpenBSD: transport.c,v 1.35 2005/12/28 10:57:35 hshoexer Exp $	 */
 /* $EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -167,16 +167,6 @@ void
 transport_method_add(struct transport_vtbl *t)
 {
 	LIST_INSERT_HEAD(&transport_method_list, t, link);
-}
-
-/* Apply a function FUNC on all registered (non-toplevel) transports.  */
-void
-transport_map(void (*func) (struct transport *))
-{
-	struct transport *t;
-
-	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link))
-		(*func) (t);
 }
 
 /*

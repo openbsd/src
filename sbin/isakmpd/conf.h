@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.h,v 1.30 2004/06/25 20:25:34 hshoexer Exp $	 */
+/* $OpenBSD: conf.h,v 1.31 2005/12/28 10:57:35 hshoexer Exp $	 */
 /* $EOM: conf.h,v 1.13 2000/09/18 00:01:47 ho Exp $	 */
 
 /*
@@ -84,7 +84,6 @@ struct conf_list {
 extern char    *conf_path;
 
 extern int      conf_begin(void);
-extern int      conf_decode_base64(u_int8_t *, u_int32_t *, u_char *);
 extern int      conf_end(int, int);
 extern void     conf_free_list(struct conf_list *);
 extern struct sockaddr *conf_get_address(char *, char *);
