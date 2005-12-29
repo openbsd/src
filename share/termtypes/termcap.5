@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termcap.5,v 1.17 2005/03/12 12:21:08 jmc Exp $
+.\"	$OpenBSD: termcap.5,v 1.18 2005/12/29 10:16:06 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -51,7 +51,7 @@ by giving a set of capabilities that they have and by describing
 how operations are performed.
 Padding requirements and initialization sequences
 are included in
-.Nm termcap .
+.Nm .
 .Pp
 Entries in
 .Nm
@@ -361,9 +361,9 @@ lines.
 .It "ta	str	(P)	Tab to next 8-position hardware tab stop."
 .It "tc	str		Entry of similar terminal; must be last."
 .It "te	str		String to end programs that use"
-.Nm termcap .
+.Nm .
 .It "ti	str		String to begin programs that use"
-.Nm termcap .
+.Nm .
 .It "ts	str	(N)	Go to status line, column"
 .Em n .
 .It "UC	bool	(o)	Upper-case only."
@@ -946,7 +946,7 @@ and the starting and ending columns in memory, in that order.
 .Xr terminfo
 capability is described for completeness.
 It is unlikely that any
-.Nm termcap Ns \- using
+.Nm Ns -using
 program will support it.)
 .Pp
 If the terminal can retain display memory above the screen, then the
@@ -964,7 +964,7 @@ may bring down non-blank lines.
 .Ss Insert/Delete Character
 There are two basic kinds of intelligent terminals with respect to
 insert/delete character that can be described using
-.Nm termcap .
+.Nm .
 The most common insert/delete character operations affect only the characters
 on the current line and shift characters off the end of the line rigidly.
 Other terminals, such as the Concept\-100 and the Perkin Elmer Owl, make
@@ -1160,7 +1160,7 @@ Not all modes need be supported by
 .Sy \&sa ,
 only those for which corresponding attribute commands exist.
 (It is unlikely that a
-.Nm termcap Ns \-using
+.Nm Ns -using
 program will support this capability, which is defined for compatibility
 with
 .Xr terminfo . )
@@ -1362,7 +1362,7 @@ the display for cursor addressing to work properly.
 This is also used for the Tektronix 4025, where
 .Sy \&ti
 sets the command character to be the one used by
-.Nm termcap .
+.Nm .
 .Pp
 Other capabilities
 include
@@ -1575,7 +1575,7 @@ the number of times to repeat it.
 (This is a
 .Xr terminfo
 feature that is unlikely to be supported by a program that uses
-.Nm termcap . )
+.Nm . )
 .Pp
 If the terminal has a settable command character, such as the
 Tektronix 4025, this can be indicated with
@@ -1690,7 +1690,7 @@ and
 .Sy \&px
 causes the string to be transmitted to the computer.
 Unfortunately, due to lack of a definition for string parameters in
-.Nm termcap ,
+.Nm ,
 only
 .Xr terminfo
 supports these capabilities.
