@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.34 2005/12/05 13:18:25 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.35 2005/12/29 13:58:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -46,6 +46,7 @@ void		 rde_dispatch_parent(int, short, void *);
 void		 rde_send_summary(pid_t);
 void		 rde_send_summary_area(struct area *, pid_t);
 void		 rde_nbr_init(u_int32_t);
+void		 rde_nbr_free(void);
 struct rde_nbr	*rde_nbr_find(u_int32_t);
 struct rde_nbr	*rde_nbr_new(u_int32_t, struct rde_nbr *);
 void		 rde_nbr_del(struct rde_nbr *);
@@ -59,6 +60,7 @@ int		 rde_redistribute(struct kroute *);
 void		 rde_update_redistribute(int);
 struct lsa	*rde_asext_get(struct kroute *);
 struct lsa	*rde_asext_put(struct kroute *);
+void		 rde_asext_free(void);
 
 struct lsa	*orig_asext_lsa(struct kroute *, u_int16_t);
 struct lsa	*orig_sum_lsa(struct rt_node *, u_int8_t);
@@ -171,16 +173,24 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 void
 rde_shutdown(void)
 {
+	struct area	*a;
+
 	stop_spf_timer(rdeconf);
 	cand_list_clr();
 	rt_clear();
 
-	msgbuf_write(&ibuf_ospfe->w);
+	while ((a = LIST_FIRST(&rdeconf->area_list)) != NULL) {
+		LIST_REMOVE(a, entry);
+		area_del(a);
+	}
+	rde_nbr_free();
+	rde_asext_free();
+
 	msgbuf_clear(&ibuf_ospfe->w);
 	free(ibuf_ospfe);
-	msgbuf_write(&ibuf_main->w);
 	msgbuf_clear(&ibuf_main->w);
 	free(ibuf_main);
+	free(rdeconf);
 
 	log_info("route decision engine exiting");
 	_exit(0);
@@ -754,6 +764,13 @@ rde_nbr_init(u_int32_t hashsize)
 	LIST_INSERT_HEAD(head, nbrself, hash);
 }
 
+void
+rde_nbr_free(void)
+{
+	free(nbrself);
+	free(rdenbrtable.hashtbl);
+}
+
 struct rde_nbr *
 rde_nbr_find(u_int32_t peerid)
 {
@@ -1028,6 +1045,18 @@ rde_asext_put(struct kroute *kr)
 		}
 	return (NULL);
 }
+
+void
+rde_asext_free(void)
+{
+	struct rde_asext	*ae;
+
+	while ((ae = LIST_FIRST(&rde_asext_list)) != NULL) {
+		LIST_REMOVE(ae, entry);
+		free(ae);
+	}
+}
+
 
 /*
  * summary LSA stuff

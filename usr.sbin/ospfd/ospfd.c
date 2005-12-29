@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.24 2005/10/18 15:40:36 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.25 2005/12/29 13:58:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -250,13 +250,19 @@ main(int argc, char *argv[])
 void
 ospfd_shutdown(void)
 {
-	pid_t	pid;
+	struct area	*a;
+	pid_t		 pid;
 
 	if (ospfe_pid)
 		kill(ospfe_pid, SIGTERM);
 
 	if (rde_pid)
 		kill(rde_pid, SIGTERM);
+
+	while ((a = LIST_FIRST(&conf->area_list)) != NULL) {
+		LIST_REMOVE(a, entry);
+		area_del(a);
+	}
 
 	control_cleanup();
 	kr_shutdown();
@@ -271,6 +277,7 @@ ospfd_shutdown(void)
 	free(ibuf_ospfe);
 	msgbuf_clear(&ibuf_rde->w);
 	free(ibuf_rde);
+	free(conf);
 
 	log_info("terminating");
 	exit(0);
