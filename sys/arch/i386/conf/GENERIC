@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.451 2005/12/29 14:42:57 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.452 2005/12/29 14:44:14 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -119,6 +119,7 @@ adc*	at iic?				# Analog Devices AD7416/AD7417/7418
 admtemp* at iic?			# Analog Devices ADM1021
 admlc*	at iic?				# Analog Devices ADM1024
 admtm*	at iic?				# Analog Devices ADM1025
+admcts*	at iic?				# Analog Devices ADM1026
 admtmp*	at iic?				# Analog Devices ADM1030
 admtt*	at iic?				# Analog Devices ADM1031
 adt*	at iic?				# Analog Devices ADT7460
