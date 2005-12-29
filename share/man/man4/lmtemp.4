@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lmtemp.4,v 1.4 2005/11/15 23:14:54 kettenis Exp $
+.\"	$OpenBSD: lmtemp.4,v 1.5 2005/12/29 10:05:52 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -21,11 +21,10 @@
 .Nm lmtemp
 .Nd National Semiconductor LM75/LM77 temperature sensor
 .Sh SYNOPSIS
-.Cd '#'
-.Cd '# i386'
+.Cd "# i386"
 .Cd "lmtemp0 at iic? addr 0x48"
-.Cd '#'
-.Cd '# macppc'
+.Pp
+.Cd "# macppc"
 .Cd "lmtemp* at maciic?"
 .Sh DESCRIPTION
 The
