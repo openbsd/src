@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.28 2005/12/18 17:54:12 reyk Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.29 2005/12/29 04:33:58 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -47,6 +47,13 @@ when receiving specified IEEE 802.11 frames.
 Comments can be put anywhere in the file using a hash mark
 .Pq Sq # ,
 and extend to the end of the current line.
+.Pp
+Additional configuration files can be included with the
+.Ic include
+keyword, for example:
+.Bd -literal -offset indent
+include "/etc/hostapd.conf.local"
+.Ed
 .Sh MACROS
 Much like
 .Xr cpp 1

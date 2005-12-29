@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.19 2005/12/18 17:54:12 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.20 2005/12/29 04:33:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -53,11 +53,17 @@
 #include "hostapd.h"
 
 extern struct hostapd_config hostapd_cfg;
-
-static FILE *fin = NULL;
-static int lineno = 1;
 static int errors = 0;
-char *infile;
+
+TAILQ_HEAD(filehead, file)	 filehead = TAILQ_HEAD_INITIALIZER(filehead);
+struct file {
+	TAILQ_ENTRY(file)	 entry;
+
+	char			*name;
+	FILE			*stream;
+	int			 lineno;
+};
+static struct file *file;
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -68,16 +74,17 @@ struct sym {
 	char			*val;
 };
 
-int	 yyerror(const char *, ...);
-int	 yyparse(void);
-int	 kw_cmp(const void *, const void *);
-int	 lookup(char *);
-int	 lgetc(FILE *);
-int	 lungetc(int);
-int	 findeol(void);
-int	 yylex(void);
-int	 symset(const char *, const char *, int);
-char	*symget(const char *);
+int		 yyerror(const char *, ...);
+int		 yyparse(void);
+int		 kw_cmp(const void *, const void *);
+int		 lookup(char *);
+int		 lgetc(void);
+int		 lungetc(int);
+int		 findeol(void);
+int		 yylex(void);
+int		 symset(const char *, const char *, int);
+char		*symget(const char *);
+struct file	*hostapd_add_file(struct hostapd_config *, const char *);
 
 typedef struct {
 	union {
@@ -127,7 +134,7 @@ u_int negative;
 %token	ERROR CONST TABLE NODE DELETE ADD LOG VERBOSE LIMIT QUICK SKIP
 %token	REASON UNSPECIFIED EXPIRE LEAVE ASSOC TOOMANY NOT AUTHED ASSOCED
 %token	RESERVED RSN REQUIRED INCONSISTENT IE INVALID MIC FAILURE OPEN
-%token	ADDRESS PORT ON NOTIFY TTL
+%token	ADDRESS PORT ON NOTIFY TTL INCLUDE
 %token	<v.string>	STRING
 %token	<v.val>		VALUE
 %type	<v.val>		number
@@ -146,12 +153,29 @@ u_int negative;
 
 grammar		: /* empty */
 		| grammar '\n'
+		| grammar include '\n'
 		| grammar tabledef '\n'
 		| grammar option '\n'
 		| grammar event '\n'
 		| grammar varset '\n'
 		| grammar error '\n'		{ errors++; }
 		;
+
+include		: INCLUDE STRING
+		{
+			struct file *nfile;
+
+			if ((nfile =
+			    hostapd_add_file(&hostapd_cfg, $2)) == NULL) {
+				yyerror("failed to include file %s", $2);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+
+			file = nfile;
+			lungetc('\n');
+		}
 
 option		: SET HOSTAP INTERFACE hostapifaces
 		{
@@ -993,6 +1017,7 @@ lookup(char *token)
 		{ "hostap",		HOSTAP },
 		{ "iapp",		IAPP },
 		{ "ie",			IE },
+		{ "include",		INCLUDE },
 		{ "inconsistent",	INCONSISTENT },
 		{ "interface",		INTERFACE },
 		{ "invalid",		INVALID },
@@ -1056,9 +1081,10 @@ char	 pushback_buffer[MAXPUSHBACK];
 int	 pushback_index = 0;
 
 int
-lgetc(FILE *f)
+lgetc(void)
 {
 	int	c, next;
+	struct file *pfile;
 
 	if (parsebuf) {
 		/* Read character from the parsebuffer instead of input. */
@@ -1074,24 +1100,35 @@ lgetc(FILE *f)
 	if (pushback_index)
 		return (pushback_buffer[--pushback_index]);
 
-	while ((c = getc(f)) == '\\') {
-		next = getc(f);
+	while ((c = getc(file->stream)) == '\\') {
+		next = getc(file->stream);
 		if (next != '\n') {
 			if (isspace(next))
 				yyerror("whitespace after \\");
-			ungetc(next, f);
+			ungetc(next, file->stream);
 			break;
 		}
-		yylval.lineno = lineno;
-		lineno++;
+		yylval.lineno = file->lineno;
+		file->lineno++;
 	}
 	if (c == '\t' || c == ' ') {
 		/* Compress blanks to a single space. */
 		do {
-			c = getc(f);
+			c = getc(file->stream);
 		} while (c == '\t' || c == ' ');
-		ungetc(c, f);
+		ungetc(c, file->stream);
 		c = ' ';
+	}
+
+	while (c == EOF &&
+	    (pfile = TAILQ_PREV(file, filehead, entry)) != NULL) {
+		fclose(file->stream);
+		free(file->name);
+		TAILQ_REMOVE(&filehead, file, entry);
+		free(file);
+
+		file = pfile;
+		c = getc(file->stream);
 	}
 
 	return (c);
@@ -1123,9 +1160,9 @@ findeol(void)
 
 	/* skip to either EOF or the first real EOL */
 	while (1) {
-		c = lgetc(fin);
+		c = lgetc();
 		if (c == '\n') {
-			lineno++;
+			file->lineno++;
 			break;
 		}
 		if (c == EOF)
@@ -1144,16 +1181,16 @@ yylex(void)
 
 top:
 	p = buf;
-	while ((c = lgetc(fin)) == ' ')
+	while ((c = lgetc()) == ' ')
 		; /* nothing */
 
-	yylval.lineno = lineno;
+	yylval.lineno = file->lineno;
 	if (c == '#')
-		while ((c = lgetc(fin)) != '\n' && c != EOF)
+		while ((c = lgetc()) != '\n' && c != EOF)
 			; /* nothing */
 	if (c == '$' && parsebuf == NULL) {
 		while (1) {
-			if ((c = lgetc(fin)) == EOF)
+			if ((c = lgetc()) == EOF)
 				return (0);
 
 			if (p + 1 >= buf + sizeof(buf) - 1) {
@@ -1183,14 +1220,14 @@ top:
 	case '"':
 		endc = c;
 		while (1) {
-			if ((c = lgetc(fin)) == EOF)
+			if ((c = lgetc()) == EOF)
 				return (0);
 			if (c == endc) {
 				*p = '\0';
 				break;
 			}
 			if (c == '\n') {
-				lineno++;
+				file->lineno++;
 				continue;
 			}
 			if (p + 1 >= buf + sizeof(buf) - 1) {
@@ -1218,7 +1255,7 @@ top:
 				yyerror("string too long");
 				return (findeol());
 			}
-		} while ((c = lgetc(fin)) != EOF && (allowed_in_string(c)));
+		} while ((c = lgetc()) != EOF && (allowed_in_string(c)));
 		lungetc(c);
 		*p = '\0';
 		if ((token = lookup(buf)) == STRING)
@@ -1227,8 +1264,8 @@ top:
 		return (token);
 	}
 	if (c == '\n') {
-		yylval.lineno = lineno;
-		lineno++;
+		yylval.lineno = file->lineno;
+		file->lineno++;
 	}
 	if (c == EOF)
 		return (0);
@@ -1313,21 +1350,52 @@ symget(const char *nam)
 	return (NULL);
 }
 
+struct file *
+hostapd_add_file(struct hostapd_config *cfg, const char *name)
+{
+	struct file *nfile = NULL;
+
+	if ((nfile = calloc(1, sizeof(struct file))) == NULL)
+		return (NULL);
+
+	if ((nfile->name = strdup(name)) == NULL)
+		goto err;
+
+	if ((nfile->stream = fopen(name, "rb")) == NULL) {
+		hostapd_log(HOSTAPD_LOG, "failed to open %s\n", name);
+		goto err;
+	}
+
+	if (hostapd_check_file_secrecy(fileno(nfile->stream), name)) {
+		hostapd_log(HOSTAPD_LOG, "invalid permissions for %s\n", name);
+		goto err;
+	}
+
+	nfile->lineno = 1;
+	TAILQ_INSERT_TAIL(&filehead, nfile, entry);
+
+	return (nfile);
+
+ err:
+	if (nfile->name != NULL)
+		free(nfile->name);
+	if (nfile->stream != NULL)
+		fclose(nfile->stream);
+	free(nfile);
+
+	return (NULL);
+}
+
 int
 hostapd_parse_file(struct hostapd_config *cfg)
 {
 	struct sym *sym, *next;
+	struct file *nfile;
 	int ret;
 
-	if ((fin = fopen(cfg->c_config, "r")) == NULL)
-		hostapd_fatal("failed to open %s\n", cfg->c_config);
-
-	infile = cfg->c_config;
-
-	if (hostapd_check_file_secrecy(fileno(fin), cfg->c_config)) {
-		fclose(fin);
-		hostapd_fatal("invalid permissions for %s\n", cfg->c_config);
-	}
+	if ((file = hostapd_add_file(cfg, cfg->c_config)) == NULL)
+		hostapd_fatal("failed to open the main config file: %s\n",
+		    cfg->c_config);
 
 	/* Init tables and data structures */
 	TAILQ_INIT(&cfg->c_apmes);
@@ -1337,12 +1405,17 @@ hostapd_parse_file(struct hostapd_config *cfg)
 	cfg->c_iapp.i_flags = HOSTAPD_IAPP_F_DEFAULT;
 	cfg->c_iapp.i_ttl = IP_DEFAULT_MULTICAST_TTL;
 
-	lineno = 1;
 	errors = 0;
 
 	ret = yyparse();
 
-	fclose(fin);
+	for (file = TAILQ_FIRST(&filehead); file != NULL; file = nfile) {
+		nfile = TAILQ_NEXT(file, entry);
+		fclose(file->stream);
+		free(file->name);
+		TAILQ_REMOVE(&filehead, file, entry);
+		free(file);
+	}
 
 	/* Free macros and check which have not been used. */
 	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
@@ -1370,7 +1443,8 @@ yyerror(const char *fmt, ...)
 	errors = 1;
 
 	va_start(ap, fmt);
-	if (asprintf(&nfmt, "%s:%d: %s\n", infile, yylval.lineno, fmt) == -1)
+	if (asprintf(&nfmt, "%s:%d: %s\n", file->name, yylval.lineno,
+	    fmt) == -1)
 		hostapd_fatal("yyerror asprintf");
 	vfprintf(stderr, nfmt, ap);
 	fflush(stderr);
