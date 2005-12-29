@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.34 2005/12/29 01:25:31 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.35 2005/12/29 09:20:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -52,6 +52,22 @@ u_int8_t probereg[] = {
 	0x58, 0xfe, 0xff
 };
 
+/*
+ * Some Maxim 1617 clones MAY NOT even read cmd 0xfc!  When it is
+ * read, they will power-on-reset.  Their default condition
+ * (control register bit 0x80) therefore will be that they assert
+ * /ALERT for the 5 potential errors that may occur.  One of those
+ * errors is that the external temperature diode is missing.  This
+ * is unfortunately a common choice of system designers, except
+ * suddenly now we get a /ALERT, which may on some chipsets cause
+ * us to receive an entirely unexpected SMI .. and then an NMI.
+ *
+ * As we probe each device, if we hit something which looks suspiciously
+ * like it may potentially be a 1617 or clone, we immediately set this
+ * variable to avoid reading that register offset.
+ */
+int	skip_fc;
+
 static i2c_tag_t probe_ic;
 static u_int8_t probe_addr;
 static u_int8_t probe_val[256];
@@ -75,6 +91,12 @@ iicprobenc(u_int8_t cmd)
 {
 	u_int8_t data;
 
+	/*
+	 * If we think we are talking to an evil Maxim 1617 or clone,
+	 * avoid accessing this register because it is death.
+	 */
+	if (skip_fc && cmd == 0xfc)
+		return (0xff);
 	probe_ic->ic_acquire_bus(probe_ic->ic_cookie, I2C_F_POLL);
 	if (iic_exec(probe_ic, I2C_OP_READ_WITH_STOP,
 	    probe_addr, &cmd, 1, &data, 1, I2C_F_POLL) != 0)
@@ -88,6 +110,12 @@ iicprobew(u_int8_t cmd)
 {
 	u_int16_t data2;
 
+	/*
+	 * If we think we are talking to an evil Maxim 1617 or clone,
+	 * avoid accessing this register because it is death.
+	 */
+	if (skip_fc && cmd == 0xfc)
+		return (0xffff);
 	probe_ic->ic_acquire_bus(probe_ic->ic_cookie, I2C_F_POLL);
 	if (iic_exec(probe_ic, I2C_OP_READ_WITH_STOP,
 	    probe_addr, &cmd, 1, &data2, 2, I2C_F_POLL) != 0)
@@ -174,7 +202,7 @@ xeonprobe(u_int8_t addr)
 		if (zero > 6 || copy > 6)
 			return (NULL);
 		val = iicprobe(0x09);
-		for (reg = 0x0a; reg < 0xfe; reg++) {
+		for (reg = 0x0a; reg < 0xfc; reg++) {
 			if (iicprobe(reg) != val)
 				return (NULL);
 		}
@@ -211,6 +239,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			return;
 
 	iicprobeinit(iba, addr);
+	skip_fc = 0;
 
 	switch (iicprobe(0x3e)) {
 	case 0x41:
@@ -372,11 +401,13 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	} else if (iicprobe(0xfe) == 0x41 && (addr == 0x4c || addr == 0x4d) &&
 	    (iicprobe(0x03) & 0x2a) == 0 && iicprobe(0x04) <= 0x09) {
 		name = "adm1032";
+		skip_fc = 1;
 	} else if (iicprobe(0xfe) == 0x41 && iicprobe(0x3c) == 0x00 &&
 	    (addr == 0x18 || addr == 0x19 || addr == 0x1a ||
 	    addr == 0x29 || addr == 0x2a || addr == 0x2b ||
 	    addr == 0x4c || addr == 0x4d || addr == 0x4e)) {
 		name = "adm1021";	/* lots of addresses... bleah */
+		skip_fc = 1;
 	} else if (iicprobe(0x4f) == 0x5c && (iicprobe(0x4e) & 0x80)) {
 		/*
 		 * We should toggle 0x4e bit 0x80, then re-read
@@ -392,17 +423,21 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 #ifdef __i386__
 	} else if (name == NULL) {
 		name = xeonprobe(addr);
+		if (name)
+			skip_fc = 1;
 #endif
 	}
 
 #ifdef I2C_DEBUG
 	printf("%s: addr 0x%x", self->dv_xname, addr);
-//	for (i = 0; i < sizeof(probereg); i++)
+//	for (i = 0; i < sizeof(probereg); i++) {
 //		if (iicprobe(probereg[i]) != 0xff)
 //			printf(" %02x=%02x", probereg[i], iicprobe(probereg[i]));
-	for (i = 0; i <= 0xff; i++)
+//	}
+	for (i = 0; i <= 0xff; i++) {
 		if (iicprobe(i) != 0xff)
 			printf(" %02x=%02x", i, iicprobe(i));
+	}
 	if (name)
 		printf(": %s", name);
 	printf("\n");
