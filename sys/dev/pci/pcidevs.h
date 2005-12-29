@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.984 2005/12/25 20:49:14 brad Exp 
+ *	OpenBSD: pcidevs,v 1.985 2005/12/29 22:11:24 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2543,6 +2543,7 @@
 #define	PCI_PRODUCT_RCC_CMIC_GC_2	0x0016		/* CMIC-GC Host */
 #define	PCI_PRODUCT_RCC_GCNB_LE	0x0017		/* GCNB-LE Host */
 #define	PCI_PRODUCT_RCC_CIOB_X2	0x0101		/* CIOB-X2 PCIX */
+#define	PCI_PRODUCT_RCC_PCIE_PCIX	0x0103		/* PCIE-PCIX */
 #define	PCI_PRODUCT_RCC_CIOB_E	0x0110		/* CIOB-E */
 #define	PCI_PRODUCT_RCC_OSB4	0x0200		/* OSB4 */
 #define	PCI_PRODUCT_RCC_CSB5	0x0201		/* CSB5 */

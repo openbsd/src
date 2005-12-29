@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.984 2005/12/25 20:49:14 brad Exp 
+ *	OpenBSD: pcidevs,v 1.985 2005/12/29 22:11:24 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -7661,6 +7661,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CIOB_X2,
 	    "CIOB-X2 PCIX",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_PCIE_PCIX,
+	    "PCIE-PCIX",
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CIOB_E,
