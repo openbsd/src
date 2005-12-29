@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.19 2005/12/15 20:29:06 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.20 2005/12/29 13:53:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -87,6 +87,8 @@ struct lsa_entry {
 		struct lsa_hdr	*lu_lsa;
 		struct lsa_ref	*lu_ref;
 	}			 le_data;
+	unsigned short		 le_when;
+	unsigned short		 le_oneshot;
 };
 #define	le_lsa	le_data.lu_lsa
 #define	le_ref	le_data.lu_ref
@@ -235,10 +237,10 @@ int	 stop_ls_req_tx_timer(struct nbr *);
 /* lsupdate.c */
 int		 lsa_flood(struct iface *, struct nbr *, struct lsa_hdr *,
 		     void *, u_int16_t);
-int		 send_ls_update(struct iface *, struct in_addr, void *, int);
 void		 recv_ls_update(struct nbr *, char *, u_int16_t);
 
-void		 ls_retrans_list_add(struct nbr *, struct lsa_hdr *);
+void		 ls_retrans_list_add(struct nbr *, struct lsa_hdr *,
+		     unsigned short, unsigned short);
 int		 ls_retrans_list_del(struct nbr *, struct lsa_hdr *);
 struct lsa_entry	*ls_retrans_list_get(struct nbr *, struct lsa_hdr *);
 void		 ls_retrans_list_free(struct nbr *, struct lsa_entry *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.35 2005/12/15 20:30:44 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.36 2005/12/29 13:53:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -485,15 +485,14 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				break;
 
 			memcpy(&age, imsg.data, sizeof(age));
-			if (ntohs(age) >= MAX_AGE) {
+			ref = lsa_cache_add(imsg.data, l);
+			if (ntohs(age) >= MAX_AGE)
 				/* add to retransmit list */
-				ref = lsa_cache_add(imsg.data, l);
-				ls_retrans_list_add(nbr, imsg.data);
-				lsa_cache_put(ref, nbr);
-			}
+				ls_retrans_list_add(nbr, imsg.data, 0, 0);
+			else
+				ls_retrans_list_add(nbr, imsg.data, 0, 1);
 
-			/* send direct don't add to retransmit list */
-			send_ls_update(nbr->iface, nbr->addr, imsg.data, l);
+			lsa_cache_put(ref, nbr);
 			break;
 		case IMSG_LS_ACK:
 			/*
