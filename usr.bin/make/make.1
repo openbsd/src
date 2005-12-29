@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.64 2005/01/15 20:42:49 mbalmer Exp $
+.\"	$OpenBSD: make.1,v 1.65 2005/12/29 10:09:51 jmc Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -465,7 +465,7 @@ It is also set when there is an implied rule that matches the current
 dependency in scope.
 That is, in
 .Bd -literal -offset indent
-\&.SUFFIXES: .c.o
+\&.SUFFIXES: .c .o
 file.o: file.c
 	cmd1 $<
 
