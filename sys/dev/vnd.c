@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.56 2005/07/20 02:36:13 tedu Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.57 2005/12/29 20:02:03 pedro Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -427,8 +427,8 @@ vndstrategy(bp)
 	}
 
 	bn = bp->b_blkno;
-	sz = howmany(bp->b_bcount, DEV_BSIZE);
 	bp->b_resid = bp->b_bcount;
+
 	if (bn < 0) {
 		bp->b_error = EINVAL;
 		bp->b_flags |= B_ERROR;
@@ -437,14 +437,24 @@ vndstrategy(bp)
 		splx(s);
 		return;
 	}
-	if (DISKPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, vnd->sc_dk.dk_label,
-	    vnd->sc_dk.dk_cpulabel, 1) <= 0) {
-		s = splbio();
-		biodone(bp);
-		splx(s);
-		return;
+
+	/* If we have a label, do a boundary check. */
+	if (vnd->sc_flags & VNF_HAVELABEL) {
+		if (bounds_check_with_label(bp, vnd->sc_dk.dk_label,
+		    vnd->sc_dk.dk_cpulabel, 1) <= 0) {
+			s = splbio();
+			biodone(bp);
+			splx(s);
+			return;
+		}
+
+		/*
+		 * bounds_check_with_label() changes bp->b_resid, reset it
+		 */
+		bp->b_resid = bp->b_bcount;
 	}
+
+	sz = howmany(bp->b_bcount, DEV_BSIZE);
 
 	/* No bypassing of buffer cache?  */
 	if (vndsimple(bp->b_dev)) {
