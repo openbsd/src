@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.95 2005/12/17 07:31:27 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.96 2005/12/29 23:54:49 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn.
@@ -92,7 +92,7 @@ static inline void tlbie(vaddr_t ea);
 void tlbia(void);
 
 void pmap_attr_save(paddr_t pa, u_int32_t bits);
-void pmap_page_ro64(pmap_t pm, vaddr_t va);
+void pmap_page_ro64(pmap_t pm, vaddr_t va, vm_prot_t prot);
 void pmap_page_ro32(pmap_t pm, vaddr_t va);
 
 /*
@@ -517,7 +517,7 @@ pmap_enter(pm, va, pa, prot, flags)
 
 	if (prot & VM_PROT_EXECUTE) {
 		need_sync = 1;
-		 if (pvh != NULL) {
+		if (pvh != NULL) {
 			if (!first_map)
 				need_sync =
 				    (*pattr & (PTE_EXE_32 >> ATTRSHIFT)) == 0;
@@ -938,9 +938,10 @@ pmap_fill_pte64(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 
 	pted->pted_va = va & ~PAGE_MASK;
 
-	/* XXX Per-page execution control. */
 	if (prot & VM_PROT_EXECUTE)
 		pted->pted_va  |= PTED_VA_EXEC_M;
+	else
+		pte64->pte_lo |= PTE_N_64;
 
 	pted->pted_pmap = pm;
 }
@@ -1908,7 +1909,7 @@ pmap_syncicache_user_virt(pmap_t pm, vaddr_t va)
 }
 
 void
-pmap_page_ro64(pmap_t pm, vaddr_t va)
+pmap_page_ro64(pmap_t pm, vaddr_t va, vm_prot_t prot)
 {
 	struct pte_64 *ptp64;
 	struct pte_desc *pted;
@@ -1920,6 +1921,9 @@ pmap_page_ro64(pmap_t pm, vaddr_t va)
 
 	pted->p.pted_pte64.pte_lo &= ~PTE_PP_64;
 	pted->p.pted_pte64.pte_lo |= PTE_RO_64;
+
+	if ((prot & VM_PROT_EXECUTE) == 0)
+		pted->p.pted_pte64.pte_lo |= PTE_N_64;
 
 	sr = ptesr(pm->pm_sr, va);
 	idx = pteidx(sr, va);
@@ -2033,7 +2037,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	
 	LIST_FOREACH(pted, pvh, pted_pv_list) {
 		if (ppc_proc_is_64b)
-			pmap_page_ro64(pted->pted_pmap, pted->pted_va);
+			pmap_page_ro64(pted->pted_pmap, pted->pted_va, prot);
 		else
 			pmap_page_ro32(pted->pted_pmap, pted->pted_va);
 	}
@@ -2044,11 +2048,11 @@ void
 pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	int s;
-	if (prot & VM_PROT_READ) {
+	if (prot & (VM_PROT_READ | VM_PROT_EXECUTE)) {
 		s = splvm();
 		if (ppc_proc_is_64b) {
 			while (sva < eva) {
-				pmap_page_ro64(pm, sva);
+				pmap_page_ro64(pm, sva, prot);
 				sva += PAGE_SIZE;
 			}
 		} else {
