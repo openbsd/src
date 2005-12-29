@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.16 2005/11/07 04:53:15 fgsch Exp $
+#	$OpenBSD: files.amd64,v 1.17 2005/12/29 14:45:11 kettenis Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -163,6 +163,11 @@ file	dev/isa/fd.c				fd needs-flag
 # USB
 #
 include	"dev/usb/files.usb"
+
+#
+# I2C
+#
+include "dev/i2c/files.i2c"
 
 #
 # ACPI
