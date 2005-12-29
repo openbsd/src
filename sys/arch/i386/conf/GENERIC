@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.450 2005/12/27 23:19:01 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.451 2005/12/29 14:42:57 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -105,6 +105,8 @@ alipm*	at pci?
 iic*	at alipm?
 ichiic*	at pci?				# Intel ICH SMBus controller
 iic*	at ichiic?
+viapm*	at pci?				# VIA VT8237 power management
+iic*	at viapm?
 
 it0	at isa? port 0x290		# IT8705F, IT8712F and SiS970 hardware
 it1	at isa? port 0xc00		# monitors
