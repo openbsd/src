@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.984 2005/12/25 20:49:14 brad Exp $
+$OpenBSD: pcidevs,v 1.985 2005/12/29 22:11:24 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2538,6 +2538,7 @@ product RCC CMIC_GC_1		0x0015	CMIC-GC Host
 product RCC CMIC_GC_2		0x0016	CMIC-GC Host
 product RCC GCNB_LE		0x0017	GCNB-LE Host
 product RCC CIOB_X2		0x0101	CIOB-X2 PCIX
+product RCC PCIE_PCIX		0x0103	PCIE-PCIX
 product RCC CIOB_E		0x0110	CIOB-E
 product RCC OSB4		0x0200	OSB4
 product RCC CSB5		0x0201	CSB5
