@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termcap.5,v 1.19 2005/12/29 21:43:07 jmc Exp $
+.\"	$OpenBSD: termcap.5,v 1.20 2005/12/29 21:53:56 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -1694,7 +1694,7 @@ Unfortunately, due to lack of a definition for string parameters in
 only
 .Xr terminfo 5
 supports these capabilities.
-.Ss Glitches and Braindamage
+.Ss Glitches and Brain-damage
 Hazeltine terminals, which do not allow `~' characters to be displayed,
 should indicate
 .Sy \&hz .
@@ -1809,9 +1809,8 @@ The
 .Nm
 file format appeared in
 .Bx 3 .
-.Sh CAVEATS AND BUGS
+.Sh CAVEATS
 The
-.Em Note :
 .Nm
 functions
 were replaced by
@@ -1822,7 +1821,7 @@ Release 2.0.
 The transition will be relatively painless if capabilities flagged as
 .Dq obsolete
 are avoided.
-.Pp
+.Sh BUGS
 Lines and columns are now stored by the kernel as well as in the termcap
 entry.
 Most programs now use the kernel information primarily; the information
