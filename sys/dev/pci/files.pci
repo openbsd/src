@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.194 2005/12/24 23:36:36 kettenis Exp $
+#	$OpenBSD: files.pci,v 1.195 2005/12/29 14:28:50 kettenis Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -578,3 +578,8 @@ file	dev/pci/ichiic.c		ichiic
 device	alipm: i2cbus
 attach	alipm at pci
 file	dev/pci/alipm.c			alipm
+
+# VIA VT8237 bus control and power management controller
+device	viapm: i2cbus
+attach	viapm at pci
+file	dev/pci/viapm.c			viapm
