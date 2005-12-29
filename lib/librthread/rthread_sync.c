@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.12 2005/12/22 06:49:48 tedu Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.13 2005/12/29 11:35:54 otto Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -608,7 +608,7 @@ pthread_rwlockattr_init(pthread_rwlockattr_t *attrp)
 }
 
 int
-pthread_rwlockattr_destory(pthread_rwlockattr_t *attrp)
+pthread_rwlockattr_destroy(pthread_rwlockattr_t *attrp)
 {
 	free(*attrp);
 	*attrp = NULL;
