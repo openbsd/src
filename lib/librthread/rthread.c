@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.19 2005/12/29 19:10:20 otto Exp $ */
+/*	$OpenBSD: rthread.c,v 1.20 2005/12/29 20:34:22 otto Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -43,7 +43,7 @@ static pthread_t thread_list;
 static _spinlock_lock_t thread_lock = _SPINLOCK_UNLOCKED;
 static int concurrency_level;	/* not used */
 
-static struct pthread initial_thread __attribute__((__aligned__(16)));
+struct pthread _initial_thread __attribute__((__aligned__(16)));
 
 int getthrid(void);
 void threxit(int);
@@ -97,7 +97,7 @@ _rthread_start(void *v)
 static int
 _rthread_init(void)
 {
-	pthread_t thread = &initial_thread;
+	pthread_t thread = &_initial_thread;
 	extern int __isthreaded;
 
 	printf("rthread init\n");
@@ -389,28 +389,6 @@ pthread_setconcurrency(int new_level)
 	return (0);
 }
 
-
-/*
- * _np functions
- */
-void
-pthread_set_name_np(pthread_t thread, char *name)
-{
-	strlcpy(thread->name, name, sizeof(thread->name));
-}
-
-int
-pthread_main_np(void)
-{
-	pthread_t me = pthread_self();
-
-	if (me == NULL)
-		return (-1);
-	else
-		return (me == &initial_thread ? 1 : 0);
-}
-
-
 /*
  * compat debug stuff
  */
@@ -425,7 +403,6 @@ _thread_dump_info(void)
 		    thread->tid, thread->flags, thread->name);
 	_spinunlock(&thread_lock);
 }
-
 
 /*
  * the malloc lock
