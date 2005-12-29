@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.36 2005/12/29 14:51:08 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.37 2005/12/29 16:08:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -411,10 +411,44 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	} else if (iicprobe(0x4f) == 0x5c && (iicprobe(0x4e) & 0x80)) {
 		/*
 		 * We should toggle 0x4e bit 0x80, then re-read
-		 * 0x4f to see if it is 0xa3 (for Winbond)
+		 * 0x4f to see if it is 0xa3 (for Winbond).
+		 */
+		switch (iicprobe(0x58)) {
+		case 0x10:
+			name = "w83781d";
+			break;
+		case 0x11:
+			name = "w83781d";	/* rev 2? */
+			break;
+		case 0x21:
+			name = "w83627hf";
+			break;
+		case 0x30:
+			name = "w83782d";
+			break;
+		case 0x31:
+			name = "as99127f";	/* rev 2 */
+			break;
+		case 0x40:
+			name = "w83783s";
+			break;
+		case 0x71:
+			name = "w83791d";
+			break;
+		case 0x72:
+			name = "w12345x";	/* unknown chip id */
+			break;
+		case 0x7a:
+			name = "w83792d";
+			break;
+		}
+	} else if (iicprobe(0x4f) == 0x12 && (iicprobe(0x4e) & 0x80)) {
+		/*
+		 * We should toggle 0x4e bit 0x80, then re-read
+		 * 0x4f to see if it is 0xc3 (for ASUS).
 		 */
 		if (iicprobe(0x58) == 0x31)
-			name = "as99127f";
+			name = "as99127f";	/* rev 1 */
 	} else if (iicprobe(0x16) == 0x41 && ((iicprobe(0x17) & 0xf0) == 0x40) &&
 	    (addr == 0x2c || addr == 0x2d || addr == 0x2e)) {
 		name = "adm1026";

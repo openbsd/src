@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm_i2c.c,v 1.3 2005/12/29 14:51:08 deraadt Exp $	*/
+/*	$OpenBSD: lm_i2c.c,v 1.4 2005/12/29 16:08:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -46,7 +46,21 @@ lm_i2c_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (strcmp(ia->ia_name, "as99127f") == 0) {
+	if (strcmp(ia->ia_name, "as99127f") == 0 ||
+	    strcmp(ia->ia_name, "w83783s") == 0 ||
+	    strcmp(ia->ia_name, "w83791d") == 0 ||
+	    strcmp(ia->ia_name, "w83792d") == 0 ||
+	    strcmp(ia->ia_name, "w12345x") == 0) {
+		return (1);
+	}
+	/*
+	 * XXX These chips also have an ISA bus interface and are
+	 * likely to attach twice. That's ok for now, but we should
+	 * probably disable these.
+	 */
+	if (strcmp(ia->ia_name, "w83781d") == 0 ||
+	    strcmp(ia->ia_name, "w83782d") == 0 ||
+	    strcmp(ia->ia_name, "w83627hf") == 0) {
 		return (1);
 	}
 	return (0);
