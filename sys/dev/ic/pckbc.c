@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.10 2005/08/06 19:49:19 jcs Exp $ */
+/* $OpenBSD: pckbc.c,v 1.11 2005/12/29 12:31:29 martin Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -633,7 +633,6 @@ pckbc_poll_cmd(self, slot, cmd, len, responselen, respbuf, slow)
 	u_char *respbuf;
 	int slow;
 {
-	struct pckbc_internal *t = self;
 	struct pckbc_devcmd nc;
 
 	if ((len > 4) || (responselen > 4))
@@ -645,7 +644,7 @@ pckbc_poll_cmd(self, slot, cmd, len, responselen, respbuf, slow)
 	nc.responselen = responselen;
 	nc.flags = (slow ? KBC_CMDFLAG_SLOW : 0);
 
-	pckbc_poll_cmd1(t, slot, &nc);
+	pckbc_poll_cmd1(self, slot, &nc);
 
 	if (nc.status == 0 && respbuf)
 		bcopy(nc.response, respbuf, responselen);
