@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.17 2005/12/29 00:30:44 deraadt Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.18 2005/12/29 14:51:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -94,7 +94,7 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 	iic_acquire_bus(sc->sc_tag, 0);
 	cmd = ADM1021_CONFIG_READ;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
 		printf(", cannot get control register\n");
 		return;
@@ -102,7 +102,7 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 	if (data & ADM1021_CONFIG_RUN) {
 		cmd = ADM1021_STATUS;
 		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-		    sc->sc_addr, &cmd, sizeof cmd, &stat, sizeof stat, I2C_F_POLL)) {
+		    sc->sc_addr, &cmd, sizeof cmd, &stat, sizeof stat, 0)) {
 			iic_release_bus(sc->sc_tag, 0);
 			printf(", cannot read status register\n");
 			return;
@@ -124,7 +124,7 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 		data &= ~ADM1021_CONFIG_RUN;
 		cmd = ADM1021_CONFIG_WRITE;
 		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-		    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL)) {
+		    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 			iic_release_bus(sc->sc_tag, 0);
 			printf(", cannot set control register\n");
 			return;
@@ -170,7 +170,7 @@ admtemp_refresh(void *arg)
 	if (sc->sc_noexternal == 0) {
 		cmd = ADM1021_EXT_TEMP;
 		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-		    &cmd, sizeof cmd, &sdata, sizeof sdata, I2C_F_POLL) == 0) {
+		    &cmd, sizeof cmd, &sdata, sizeof sdata, 0) == 0) {
 			if (sdata == 0x7f) {
 				sc->sc_sensor[ADMTEMP_EXT].flags |= SENSOR_FINVALID;
 			} else {
@@ -185,7 +185,7 @@ admtemp_refresh(void *arg)
 
 	cmd = ADM1021_INT_TEMP;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &cmd, sizeof cmd, &sdata,  sizeof sdata, I2C_F_POLL) == 0) {
+	    &cmd, sizeof cmd, &sdata,  sizeof sdata, 0) == 0) {
 		if (sdata == 0x7f) {
 			sc->sc_sensor[ADMTEMP_INT].flags |= SENSOR_FINVALID;
 		} else {

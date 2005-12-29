@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm_i2c.c,v 1.2 2005/12/28 01:02:58 deraadt Exp $	*/
+/*	$OpenBSD: lm_i2c.c,v 1.3 2005/12/29 14:51:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -68,13 +68,13 @@ lm_i2c_attach(struct device *parent, struct device *self, void *aux)
 
 	lm_attach(&sc->sc_lmsc);
 
-	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
+	iic_acquire_bus(sc->sc_tag, 0);
 
 	cmd = 0x4a;
 	iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL);
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0);
 
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 
 	printf("%s: satellites at addr 0x%x and addr 0x%x\n",
 	    sc->sc_lmsc.sc_dev.dv_xname,

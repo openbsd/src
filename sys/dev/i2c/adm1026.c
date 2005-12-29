@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1026.c,v 1.3 2005/12/28 22:04:28 deraadt Exp $	*/
+/*	$OpenBSD: adm1026.c,v 1.4 2005/12/29 14:51:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -118,7 +118,7 @@ admcts_attach(struct device *parent, struct device *self, void *aux)
 	iic_acquire_bus(sc->sc_tag, 0);
 	cmd = ADM1026_CONTROL;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
 		printf(": cannot get control register\n");
 		return;
@@ -127,7 +127,7 @@ admcts_attach(struct device *parent, struct device *self, void *aux)
 	data2 = data2 & ~ADM1026_CONTROL_INTCLR;
 	if (data != data2) {
 		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-		    sc->sc_addr, &cmd, sizeof cmd, &data2, sizeof data2, I2C_F_POLL)) {
+		    sc->sc_addr, &cmd, sizeof cmd, &data2, sizeof data2, 0)) {
 			iic_release_bus(sc->sc_tag, 0);
 			printf(": cannot set control register\n");
 			return;
@@ -136,7 +136,7 @@ admcts_attach(struct device *parent, struct device *self, void *aux)
 
 	cmd = ADM1026_FAN0123DIV;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
 		printf(": cannot get fan0123div register\n");
 		return;
@@ -148,7 +148,7 @@ admcts_attach(struct device *parent, struct device *self, void *aux)
 
 	cmd = ADM1026_FAN4567DIV;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL)) {
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
 		iic_release_bus(sc->sc_tag, 0);
 		printf(": cannot get fan0123div register\n");
 		return;
@@ -270,92 +270,92 @@ admcts_refresh(void *arg)
 
 	cmd = ADM1026_TEMP;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, I2C_F_POLL) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, 0) == 0)
 		sc->sc_sensor[ADMCTS_TEMP].value = 273150000 + 1000000 * sdata;
 
 	cmd = ADM1026_EXT1;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, I2C_F_POLL) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, 0) == 0)
 		sc->sc_sensor[ADMCTS_EXT1].value = 273150000 + 1000000 * sdata;
 
 	cmd = ADM1026_EXT2;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, I2C_F_POLL) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, 0) == 0)
 		sc->sc_sensor[ADMCTS_EXT2].value = 273150000 + 1000000 * sdata;
 
 	cmd = ADM1026_Vbat;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
 		sc->sc_sensor[ADMCTS_Vbat].value = 3000000 * data / 192;
 
 	cmd = ADM1026_V3_3stby;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
 		sc->sc_sensor[ADMCTS_V3_3stby].value = 3300000 * data / 192;
 
 	cmd = ADM1026_V3_3main;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
 		sc->sc_sensor[ADMCTS_V3_3main].value = 3300000 * data / 192;
 
 	cmd = ADM1026_V5;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
 		sc->sc_sensor[ADMCTS_V5].value = 5500000 * data / 192;
 
 	cmd = ADM1026_Vccp;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
 		sc->sc_sensor[ADMCTS_Vccp].value = 2250000 * data / 192;
 
 	cmd = ADM1026_V12;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
 		sc->sc_sensor[ADMCTS_V12].value = 12000000 * data / 192;
 
 	cmd = ADM1026_Vminus12;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
 		sc->sc_sensor[ADMCTS_Vminus12].value = -2125000 * data / 192;
 
 	cmd = ADM1026_FAN0;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
 		fanval(&sc->sc_sensor[ADMCTS_FAN0], sc->sc_fanmul[0], data);
 
 	cmd = ADM1026_FAN1;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
 		fanval(&sc->sc_sensor[ADMCTS_FAN1], sc->sc_fanmul[1], data);
 
 	cmd = ADM1026_FAN2;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
 		fanval(&sc->sc_sensor[ADMCTS_FAN2], sc->sc_fanmul[2], data);
 
 	cmd = ADM1026_FAN3;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
 		fanval(&sc->sc_sensor[ADMCTS_FAN3], sc->sc_fanmul[3], data);
 
 	cmd = ADM1026_FAN4;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
 		fanval(&sc->sc_sensor[ADMCTS_FAN4], sc->sc_fanmul[4], data);
 
 	cmd = ADM1026_FAN5;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
 		fanval(&sc->sc_sensor[ADMCTS_FAN5], sc->sc_fanmul[5], data);
 
 	cmd = ADM1026_FAN6;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
 		fanval(&sc->sc_sensor[ADMCTS_FAN6], sc->sc_fanmul[6], data);
 
 	cmd = ADM1026_FAN7;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, I2C_F_POLL) == 0)
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
 		fanval(&sc->sc_sensor[ADMCTS_FAN7], sc->sc_fanmul[7], data);
 
 	iic_release_bus(sc->sc_tag, 0);

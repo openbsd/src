@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm75.c,v 1.5 2005/12/27 17:18:18 deraadt Exp $	*/
+/*	$OpenBSD: lm75.c,v 1.6 2005/12/29 14:51:08 deraadt Exp $	*/
 /*	$NetBSD: lm75.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -115,7 +115,7 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Try to detect LM77 by poking Thigh register */
 	ptr[0] = LM77_REG_THIGH;
-	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
+	iic_acquire_bus(sc->sc_tag, 0);
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_address, ptr, 1, reg, LM75_TEMP_LEN, 0) == 0) {
 		/* Power up default is 64 degC */
@@ -126,17 +126,17 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s (%s)\n", ia->ia_name,
 	    sc->sc_model == LM_MODEL_LM75 ? "LM75" : "LM77");
 
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 
 	/* Set the configuration to defaults */
-	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
+	iic_acquire_bus(sc->sc_tag, 0);
 	if (lmtemp_config_write(sc, 0) != 0) {
 		printf("%s: unable to write config register\n",
 		    sc->sc_dev.dv_xname);
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		iic_release_bus(sc->sc_tag, 0);
 		return;
 	}
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 
 	/* Initialize sensor data */
 	strlcpy(sc->sc_sensor.device, sc->sc_dev.dv_xname,
@@ -159,7 +159,7 @@ lmtemp_config_write(struct lmtemp_softc *sc, uint8_t val)
 	cmdbuf[1] = val;
 
 	return (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-	    sc->sc_address, cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL));
+	    sc->sc_address, cmdbuf, 1, &cmdbuf[1], 1, 0));
 }
 
 int
