@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.49 2005/06/14 20:35:45 deraadt Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.50 2005/12/29 04:26:17 brad Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -251,7 +251,7 @@ pchbattach(parent, self, aux)
 				printf(": Compatibility PB (bus %d)", pbnum);
 				break;
 			case PCISET_INTEL_TYPE_AUX:
-				printf(": Auxiliary PB (bus %d)\n", pbnum);
+				printf(": Auxiliary PB (bus %d)", pbnum);
 				neednl = 0;
 
 				/*
