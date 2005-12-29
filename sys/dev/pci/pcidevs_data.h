@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.986 2005/12/29 22:47:34 reyk Exp 
+ *	OpenBSD: pcidevs,v 1.987 2005/12/29 23:28:47 reyk Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5247,6 +5247,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "E7320 MCH",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_MCH_ERR,
+	    "E7525 MCH ERR",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7520_MCH_DMA,
 	    "E7520 MCH DMA",
 	},
@@ -5273,6 +5277,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MCH_PCIEC1,
 	    "MCH PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_MCH_CFG,
+	    "E7525 MCH Configuration",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_MCH,
