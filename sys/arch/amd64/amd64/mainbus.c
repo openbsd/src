@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.3 2005/10/19 01:41:44 marco Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.4 2005/12/29 00:50:43 kettenis Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -96,7 +96,11 @@ int	isa_has_been_seen;
 struct isabus_attach_args mba_iba = {
 	"isa",
 	X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM,
-	NULL,
+#if NISADMA > 0
+	&isa_bus_dma_tag
+#else
+	NULL
+#endif
 };
 #endif
 
