@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.95 2005/12/29 14:45:11 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.96 2005/12/29 14:46:10 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -78,6 +78,19 @@ viaenv*	at pci?			# VIA VT82C686A hardware monitor
 
 viapm*	at pci?			# VIA VT8237 power management
 iic*	at viapm?
+
+adc*	at iic?			# Analog Devices AD7416/AD7417/7418
+admtemp* at iic?		# Analog Devices ADM1021
+admlc*	at iic?			# Analog Devices ADM1024
+admtm*	at iic?			# Analog Devices ADM1025
+admtmp*	at iic?			# Analog Devices ADM1030
+admtt*	at iic?			# Analog Devices ADM1031
+adt*	at iic?			# Analog Devices ADT7460
+lm*	at iic?			# LM78/79 and clones
+lmenv*	at iic?			# National Semiconductor LM87
+lmtemp*	at iic?			# NS LM75/LM77 temperature sensor
+maxds*	at iic?			# Maxim DS1631
+maxtmp*	at iic?			# Maxim MAX6642/MAX6690
 
 #option PCMCIAVERBOSE
 
