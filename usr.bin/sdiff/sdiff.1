@@ -1,4 +1,4 @@
-.\" $OpenBSD: sdiff.1,v 1.5 2005/12/27 12:45:57 jmc Exp $
+.\" $OpenBSD: sdiff.1,v 1.6 2005/12/29 10:02:17 jmc Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
@@ -32,6 +32,12 @@ and
 into
 .Ar outfile .
 In this mode, the user is prompted for each set of differences.
+See
+.Ev EDITOR
+and
+.Ev VISUAL ,
+below,
+for details of which editor, if any, is invoked.
 .Pp
 The commands are as follows:
 .Bl -tag -width Ds
@@ -94,9 +100,31 @@ Ignore all spaces
 flag is passed to
 .Xr diff 1 ) .
 .El
+.Sh ENVIRONMENT
+.Bl -tag -width Ds
+.It Ev EDITOR , VISUAL
+Specifies an editor to use with the
+.Fl o
+option.
+If both
+.Ev EDITOR
+and
+.Ev VISUAL
+are set,
+.Ev VISUAL
+takes precedence.
+If neither
+.Ev EDITOR
+nor
+.Ev VISUAL
+are set,
+the default is
+.Xr vi 1 .
+.El
 .Sh SEE ALSO
 .Xr diff 1 ,
-.Xr diff3 1
+.Xr diff3 1 ,
+.Xr vi 1
 .Sh AUTHORS
 .Nm
 was written from scratch for the public domain by
