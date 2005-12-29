@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termcap.5,v 1.18 2005/12/29 10:16:06 jmc Exp $
+.\"	$OpenBSD: termcap.5,v 1.19 2005/12/29 21:43:07 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -266,7 +266,7 @@ section below).
 .It "lm	num		Lines of memory if >" Sy \&li
 (0 means varies).
 .It "ma	str	(o)	Arrow key map (used by"
-.Xr \&vi
+.Xr \&vi 1
 version 2 only).
 .It "mb	str		Turn on blinking attribute."
 .It "md	str		Turn on bold (extra bright) attribute."
@@ -477,7 +477,7 @@ ending at the next following `:'.
 A delay in milliseconds may appear after
 the `=' in such a capability,
 which causes padding characters to be supplied by
-.Xr tputs
+.Xr tputs 3
 after the remainder of the string is sent to provide this delay.
 The delay can be either a number,
 such as `20', or a number followed by
@@ -551,14 +551,14 @@ the description of a similar terminal in
 .Nm
 and to build up a description gradually, using partial descriptions
 with
-.Xr \&vi
+.Xr \&vi 1
 to check that they are correct.
 Be aware that a very unusual terminal may expose deficiencies in
 the ability of the
 .Nm
 file to describe it
 or bugs in
-.Xr \&vi .
+.Xr \&vi 1 .
 To easily test a new terminal description you are working on
 you can put it in your home directory in a file called
 .Pa .termcap
@@ -581,7 +581,7 @@ to avoid reading files when starting up a program.
 To get the padding for insert-line right
 (if the terminal manufacturer did not document it),
 a severe test is to use
-.Xr \&vi
+.Xr \&vi 1
 to edit
 .Pa /etc/passwd
 at 9600 baud, delete roughly 16 lines from the middle of the screen,
@@ -767,16 +767,16 @@ encodings have the following meanings:
 .Bl -column xxxxx
 .It "%%	output `%'"
 .It "%d	output value as in"
-.Xr printf
+.Xr printf 3
 %d
 .It "%2	output value as in"
-.Xr printf
+.Xr printf 3
 %2d
 .It "%3	output value as in"
-.Xr printf
+.Xr printf 3
 %3d
 .It "%.	output value as in"
-.Xr printf
+.Xr printf 3
 %c
 .It "%+" Ns Em x Ta No add
 .Em x
@@ -943,7 +943,7 @@ which all commands affect, it should be given as the parameterized string
 The four parameters are the starting and ending lines in memory
 and the starting and ending columns in memory, in that order.
 (This
-.Xr terminfo
+.Xr terminfo 5
 capability is described for completeness.
 It is unlikely that any
 .Nm Ns -using
@@ -1163,7 +1163,7 @@ only those for which corresponding attribute commands exist.
 .Nm Ns -using
 program will support this capability, which is defined for compatibility
 with
-.Xr terminfo . )
+.Xr terminfo 5 . )
 .Pp
 Terminals with the
 .Dq magic cookie
@@ -1376,7 +1376,7 @@ consistent with the rest of the
 .Nm
 description.
 They are normally sent to the terminal by the
-.Xr tset
+.Xr tset 1
 program each time the user logs in.
 They will be printed in the following order:
 .Sy \&is ;
@@ -1402,7 +1402,7 @@ can be analogously given as
 and
 .Sy \&if .
 These strings are output by the
-.Xr reset
+.Xr reset 1
 program, which is used when the terminal gets into a wedged state.
 .Pf ( Xr Terminfo
 uses
@@ -1446,7 +1446,7 @@ positions when the terminal is powered up, then the numeric parameter
 .Sy \&it
 is given, showing the number of positions between tab stops.
 This is normally used by the
-.Xr tset
+.Xr tset 1
 command to determine whether to set the driver mode for hardware tab
 expansion, and whether to set the tab stops.
 If the terminal has tab stops that can be saved in nonvolatile memory, the
@@ -1466,7 +1466,7 @@ or
 .Ss Delays
 Certain capabilities control padding in the terminal driver.
 These are primarily needed by hardcopy terminals and are used by the
-.Xr tset
+.Xr tset 1
 program to set terminal driver modes appropriately.
 Delays embedded in the capabilities
 .Sy \&cr ,
@@ -1483,7 +1483,7 @@ below the value of
 .Sy \&pb .
 For
 .Bx 4.2
-.Xr tset ,
+.Xr tset 1 ,
 the delays are given as numeric capabilities
 .Sy \&dC ,
 .Sy \&dN ,
@@ -1573,7 +1573,7 @@ this can be indicated with the parameterized string
 The first parameter is the character to be repeated and the second is
 the number of times to repeat it.
 (This is a
-.Xr terminfo
+.Xr terminfo 5
 feature that is unlikely to be supported by a program that uses
 .Nm . )
 .Pp
@@ -1605,7 +1605,7 @@ terminal, such as
 .Em dialup ,
 .Em patch ,
 and
-.Xr network ,
+.Em network ,
 should include the
 .Sy \&gn
 (generic) capability so that programs can complain that they do not know
@@ -1692,7 +1692,7 @@ causes the string to be transmitted to the computer.
 Unfortunately, due to lack of a definition for string parameters in
 .Nm ,
 only
-.Xr terminfo
+.Xr terminfo 5
 supports these capabilities.
 .Ss Glitches and Braindamage
 Hazeltine terminals, which do not allow `~' characters to be displayed,
@@ -1801,6 +1801,8 @@ Hash database file containing terminal descriptions (see
 .Xr curses 3 ,
 .Xr printf 3 ,
 .Xr termcap 3 ,
+.Xr terminfo 3 ,
+.Xr terminfo 5 ,
 .Xr term 7
 .Sh HISTORY
 The
@@ -1813,7 +1815,7 @@ The
 .Nm
 functions
 were replaced by
-.Xr terminfo
+.Xr terminfo 5
 in
 .At V
 Release 2.0.
@@ -1826,7 +1828,7 @@ entry.
 Most programs now use the kernel information primarily; the information
 in this file is used only if the kernel does not have any information.
 .Pp
-.Xr \&Vi
+.Xr \&vi 1
 allows only 256 characters for string capabilities, and the routines
 in
 .Xr termcap 3
