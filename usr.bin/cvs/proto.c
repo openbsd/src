@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.82 2005/12/30 02:03:28 joris Exp $	*/
+/*	$OpenBSD: proto.c,v 1.83 2005/12/30 16:47:36 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -559,23 +559,14 @@ cvs_recvfile(struct cvsroot *root, mode_t *mode)
 
 	fbuf = cvs_buf_alloc(sizeof(buf), BUF_AUTOEXT);
 
-	if ((cvs_getln(root, buf, sizeof(buf)) < 0) ||
-	    (cvs_strtomode(buf, mode) < 0)) {
-		cvs_buf_free(fbuf);
-		return (NULL);
-	}
+	cvs_getln(root, buf, sizeof(buf));
+	cvs_strtomode(buf, mode);
 
-	if (cvs_getln(root, buf, sizeof(buf)) < 0) {
-		cvs_buf_free(fbuf);
-		return (NULL);
-	}
+	cvs_getln(root, buf, sizeof(buf));
 
 	fsz = (off_t)strtol(buf, &ep, 10);
-	if (*ep != '\0') {
-		cvs_log(LP_ERR, "parse error in file size transmission");
-		cvs_buf_free(fbuf);
-		return (NULL);
-	}
+	if (*ep != '\0')
+		fatal("parse error in file size transmission");
 
 	cnt = 0;
 	do {
@@ -583,18 +574,7 @@ cvs_recvfile(struct cvsroot *root, mode_t *mode)
 		if (len == 0)
 			break;
 		ret = cvs_recvraw(root, buf, len);
-		if (ret == -1) {
-			cvs_buf_free(fbuf);
-			return (NULL);
-		}
-
-		if (cvs_buf_append(fbuf, buf, (size_t)ret) == -1) {
-			cvs_log(LP_ERR,
-			    "failed to append received file data");
-			cvs_buf_free(fbuf);
-			return (NULL);
-		}
-
+		cvs_buf_append(fbuf, buf, (size_t)ret);
 		cnt += (off_t)ret;
 	} while (cnt < fsz);
 
@@ -696,10 +676,8 @@ cvs_getresp(struct cvsroot *root)
  *
  * Get a line from the remote end and store it in <lbuf>.  The terminating
  * newline character is stripped from the result.
- * Returns the length in bytes of the line (not including the NUL byte), or
- * -1 on failure.
  */
-int
+void
 cvs_getln(struct cvsroot *root, char *lbuf, size_t len)
 {
 	size_t rlen;
@@ -712,8 +690,8 @@ cvs_getln(struct cvsroot *root, char *lbuf, size_t len)
 
 	if (fgets(lbuf, (int)len, in) == NULL) {
 		if (ferror(in)) {
-			cvs_log(LP_ERRNO, "failed to read line");
-			return (-1);
+			fatal("cvs_getln: error reading server: %s",
+			    strerror(errno));
 		}
 
 		if (feof(in))
@@ -726,8 +704,6 @@ cvs_getln(struct cvsroot *root, char *lbuf, size_t len)
 	rlen = strlen(lbuf);
 	if ((rlen > 0) && (lbuf[rlen - 1] == '\n'))
 		lbuf[--rlen] = '\0';
-
-	return (rlen);
 }
 
 
@@ -863,7 +839,7 @@ cvs_sendraw(struct cvsroot *root, const void *src, size_t len)
  *
  * Receive the first <len> bytes from the buffer <src> to the server.
  */
-ssize_t
+size_t
 cvs_recvraw(struct cvsroot *root, void *dst, size_t len)
 {
 	size_t ret;
@@ -875,11 +851,17 @@ cvs_recvraw(struct cvsroot *root, void *dst, size_t len)
 		in = root->cr_srvout;
 
 	ret = fread(dst, sizeof(char), len, in);
-	if (ret == 0)
-		return (-1);
-	if (cvs_server_outlog != NULL)
-		fwrite(dst, sizeof(char), len, cvs_server_outlog);
-	return (ssize_t)ret;
+	if (ret == 0) {
+		if (ferror(in)) {
+			fatal("cvs_recvraw: error reading from server: %s",
+			    strerror(errno));
+		}
+	} else {
+		if (cvs_server_outlog != NULL)
+			fwrite(dst, sizeof(char), len, cvs_server_outlog);
+	}
+
+	return (ret);
 }
 
 

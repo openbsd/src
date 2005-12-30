@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.63 2005/12/24 19:07:52 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.64 2005/12/30 16:47:36 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -124,19 +124,20 @@ cvs_readrepo(const char *dir, char *dst, size_t len)
  * The CVS protocol specification states that any modes or mode types that are
  * not recognized should be silently ignored.  This function does not return
  * an error in such cases, but will issue warnings.
- * Returns 0 on success, or -1 on failure.
  */
-int
+void
 cvs_strtomode(const char *str, mode_t *mode)
 {
 	char type;
+	size_t l;
 	mode_t m;
 	char buf[32], ms[4], *sp, *ep;
 
 	m = 0;
-	if (strlcpy(buf, str, sizeof(buf)) >= sizeof(buf)) {
-		return (-1);
-	}
+	l = strlcpy(buf, str, sizeof(buf));
+	if (l >= sizeof(buf))
+		fatal("cvs_strtomode: string truncation");
+
 	sp = buf;
 	ep = sp;
 
@@ -174,8 +175,6 @@ cvs_strtomode(const char *str, mode_t *mode)
 	}
 
 	*mode = m;
-
-	return (0);
 }
 
 

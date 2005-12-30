@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.38 2005/12/24 19:07:52 xsa Exp $	*/
+/*	$OpenBSD: req.c,v 1.39 2005/12/30 16:47:36 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -266,8 +266,7 @@ cvs_req_directory(int reqid, char *line)
 
 	pwd = (!strcmp(line, "."));
 
-	if (cvs_getln(NULL, rdir, sizeof(rdir)) < 0)
-		return (-1);
+	cvs_getln(NULL, rdir, sizeof(rdir));
 
 	STRIP_SLASH(rdir);
 
