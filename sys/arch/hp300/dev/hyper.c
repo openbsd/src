@@ -1,4 +1,4 @@
-/*	$OpenBSD: hyper.c,v 1.12 2005/12/30 18:03:33 miod Exp $	*/
+/*	$OpenBSD: hyper.c,v 1.13 2005/12/30 18:14:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -495,7 +495,7 @@ hyper_console_scan(int scode, caddr_t va, void *arg)
 {
 	struct diofbreg *fbr = (struct diofbreg *)va;
 	struct consdev *cp = arg;
-	int force = 0, pri;
+	u_int pri;
 
 	if (fbr->id != GRFHWID || fbr->fbid != GID_HYPERION)
 		return (0);
@@ -506,10 +506,8 @@ hyper_console_scan(int scode, caddr_t va, void *arg)
 	/*
 	 * Raise our prioity, if appropriate.
 	 */
-	if (scode == CONSCODE) {
-		pri = CN_REMOTE;
-		force = conforced = 1;
-	}
+	if (scode == CONSCODE)
+		pri = CN_FORCED;
 #endif
 
 	/* Only raise priority. */
@@ -520,7 +518,7 @@ hyper_console_scan(int scode, caddr_t va, void *arg)
 	 * If our priority is higher than the currently-remembered
 	 * console, stash our priority.
 	 */
-	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || force) {
+	if (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri) {
 		cn_tab = cp;
 		conscode = scode;
 		return (DIO_SIZE(scode, va));
@@ -532,10 +530,6 @@ void
 hypercnprobe(struct consdev *cp)
 {
 	int maj;
-
-	/* Abort early if console is already forced. */
-	if (conforced)
-		return;
 
 	for (maj = 0; maj < nchrdev; maj++) {
 		if (cdevsw[maj].d_open == wsdisplayopen)

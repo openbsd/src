@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.106 2005/12/30 18:00:23 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.107 2005/12/30 18:14:12 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -168,7 +168,6 @@ void	nmihand(struct frame);
 int	conscode;
 caddr_t	conaddr;		/* for drivers in cn_init() */
 int	convasize;		/* size of mapped console device */
-int	conforced;		/* console has been forced */
 
 /*
  * Note that the value of delay_divisor is roughly
@@ -214,7 +213,6 @@ consinit()
 	 * Initialize some variables for sanity.
 	 */
 	convasize = 0;
-	conforced = 0;
 	conscode = CONSCODE_INVALID;
 
 	/*

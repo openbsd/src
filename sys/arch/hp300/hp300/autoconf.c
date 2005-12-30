@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.35 2005/12/30 18:03:36 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.36 2005/12/30 18:14:12 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -1115,12 +1115,6 @@ console_scan(func, arg, bus)
 		sctop = DIO_SCMAX(machineid);
 		for (scode = 0; scode < sctop; ++scode) {
 			/*
-			 * Abort mission if console has been forced.
-			 */
-			if (conforced)
-				return;
-
-			/*
 			 * Skip over the select code hole and
 			 * the internal HP-IB controller.
 			 */
@@ -1172,12 +1166,6 @@ console_scan(func, arg, bus)
 		 */
 		for (scode = 0; scode < SGC_NSLOTS; ++scode) {
 			int rv;
-
-			/*
-			 * Abort mission if console has been forced.
-			 */
-			if (conforced)
-				return;
 
 			/* Map current PA. */
 			pa = sgc_slottopa(scode);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.4 2005/12/30 18:03:33 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.5 2005/12/30 18:14:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -166,8 +166,8 @@ sti_console_scan(int slot, caddr_t va, void *arg)
 	struct consdev *cp = arg;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	int force = 0, pri;
 	int devtype;
+	u_int pri;
 
 	iot = HP300_BUS_TAG(HP300_BUS_SGC, slot);
 
@@ -189,10 +189,8 @@ sti_console_scan(int slot, caddr_t va, void *arg)
 	/*
 	 * Raise our priority, if appropriate.
 	 */
-	if (SGC_SLOT_TO_CONSCODE(slot) == CONSCODE) {
-		pri = CN_REMOTE;
-		force = conforced = 1;
-	}
+	if (SGC_SLOT_TO_CONSCODE(slot) == CONSCODE)
+		pri = CN_FORCED;
 #endif
 
 	/* Only raise priority. */
@@ -203,7 +201,7 @@ sti_console_scan(int slot, caddr_t va, void *arg)
 	 * If our priority is higher than the currently-remembered
 	 * console, stash our priority.
 	 */
-	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || force) {
+	if (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri) {
 		cn_tab = cp;
 		conscode = SGC_SLOT_TO_CONSCODE(slot);
 		return (1);
@@ -216,10 +214,6 @@ void
 sticnprobe(struct consdev *cp)
 {
 	int maj;
-
-	/* Abort early if the console is already forced. */
-	if (conforced)
-		return;
 
 	for (maj = 0; maj < nchrdev; maj++) {
 		if (cdevsw[maj].d_open == wsdisplayopen)

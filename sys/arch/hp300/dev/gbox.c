@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbox.c,v 1.11 2005/12/30 18:03:33 miod Exp $	*/
+/*	$OpenBSD: gbox.c,v 1.12 2005/12/30 18:14:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -448,7 +448,7 @@ gbox_console_scan(int scode, caddr_t va, void *arg)
 {
 	struct diofbreg *fbr = (struct diofbreg *)va;
 	struct consdev *cp = arg;
-	int force = 0, pri;
+	u_int pri;
 
 	if (fbr->id != GRFHWID || fbr->fbid != GID_GATORBOX)
 		return (0);
@@ -459,10 +459,8 @@ gbox_console_scan(int scode, caddr_t va, void *arg)
 	/*
 	 * Raise our priority, if appropriate.
 	 */
-	if (scode == CONSCODE) {
-		pri = CN_REMOTE;
-		force = conforced = 1;
-	}
+	if (scode == CONSCODE)
+		pri = CN_FORCED;
 #endif
 
 	/* Only raise priority. */
@@ -473,7 +471,7 @@ gbox_console_scan(int scode, caddr_t va, void *arg)
 	 * If our priority is higher than the currently-remembered
 	 * console, stash our priority.
 	 */
-	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || force) {
+	if (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri) {
 		cn_tab = cp;
 		conscode = scode;
 		return (DIO_SIZE(scode, va));
@@ -487,11 +485,6 @@ gboxcnprobe(struct consdev *cp)
 	int maj;
 	caddr_t va;
 	struct diofbreg *fbr;
-	int force = 0;
-
-	/* Abort early if console already forced. */
-	if (conforced)
-		return;
 
 	for (maj = 0; maj < nchrdev; maj++) {
 		if (cdevsw[maj].d_open == wsdisplayopen)
@@ -512,9 +505,8 @@ gboxcnprobe(struct consdev *cp)
 		cp->cn_pri = CN_INTERNAL;
 
 #ifdef CONSCODE
-		if (CONSCODE == CONSCODE_INTERNAL) {
-			force = conforced = 1;
-		}
+		if (CONSCODE == CONSCODE_INTERNAL)
+			cp->cn_pri = CN_FORCED;
 #endif
 
 		/*
@@ -524,8 +516,7 @@ gboxcnprobe(struct consdev *cp)
 		 * Since we're internal, we set the saved size to 0
 		 * so they don't attempt to unmap our fixed VA later.
 		 */
-		if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri))
-		    || force) {
+		if (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri) {
 			cn_tab = cp;
 			if (convasize)
 				iounmap(conaddr, convasize);

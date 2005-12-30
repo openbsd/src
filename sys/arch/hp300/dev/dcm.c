@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcm.c,v 1.25 2005/12/30 18:03:33 miod Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.26 2005/12/30 18:14:09 miod Exp $	*/
 /*	$NetBSD: dcm.c,v 1.41 1997/05/05 20:59:16 thorpej Exp $	*/
 
 /*
@@ -1504,7 +1504,7 @@ dcm_console_scan(scode, va, arg)
 {
 	struct dcmdevice *dcm = (struct dcmdevice *)va;
 	struct consdev *cp = arg;
-	int force = 0, pri;
+	u_int pri;
 
 	switch (dcm->dcm_rsid) {
 	case DCMID:
@@ -1523,10 +1523,8 @@ dcm_console_scan(scode, va, arg)
 	/*
 	 * Raise our priority, if appropriate.
 	 */
-	if (scode == CONSCODE) {
-		pri = CN_REMOTE;
-		force = conforced = 1;
-	}
+	if (scode == CONSCODE)
+		pri = CN_FORCED;
 #endif
 
 	/* Only raise priority. */
@@ -1537,7 +1535,7 @@ dcm_console_scan(scode, va, arg)
 	 * If our priority is higher than the currently-remembered
 	 * console, stash our priority, for the benefit of dcmcninit().
 	 */
-	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || force) {
+	if (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri) {
 		cn_tab = cp;
 		conscode = scode;
 		return (DIO_SIZE(scode, va));
@@ -1558,10 +1556,6 @@ dcmcnprobe(cp)
 	/* initialize required fields */
 	cp->cn_dev = makedev(dcmmajor, 0);	/* XXX */
 	cp->cn_pri = CN_DEAD;
-
-	/* Abort early if console already forced. */
-	if (conforced)
-		return;
 
 	console_scan(dcm_console_scan, cp, HP300_BUS_DIO);
 
