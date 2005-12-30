@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.184 2005/12/24 13:52:56 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.185 2005/12/30 11:22:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,10 +43,8 @@ void		 rde_sighdlr(int);
 void		 rde_dispatch_imsg_session(struct imsgbuf *);
 void		 rde_dispatch_imsg_parent(struct imsgbuf *);
 int		 rde_update_dispatch(struct imsg *);
-int		 rde_attr_parse(u_char *, u_int16_t, struct rde_aspath *, int,
-		     enum enforce_as, u_int16_t, struct mpattr *);
-u_char		*rde_attr_error(u_char *, u_int16_t, struct rde_aspath *,
-		     u_int8_t *, u_int16_t *);
+int		 rde_attr_parse(u_char *, u_int16_t, struct rde_peer *,
+		     struct rde_aspath *, struct mpattr *);
 u_int8_t	 rde_attr_missing(struct rde_aspath *, int, u_int16_t);
 int		 rde_get_mp_nexthop(u_char *, u_int16_t, u_int16_t,
 		     struct rde_aspath *);
@@ -595,12 +593,12 @@ rde_update_dispatch(struct imsg *imsg)
 {
 	struct rde_peer		*peer;
 	struct rde_aspath	*asp = NULL, *fasp;
-	u_char			*p, *emsg, *mpp = NULL;
+	u_char			*p, *mpp = NULL;
 	int			 pos = 0;
 	u_int16_t		 afi, len, mplen;
 	u_int16_t		 withdrawn_len;
 	u_int16_t		 attrpath_len;
-	u_int16_t		 nlri_len, size;
+	u_int16_t		 nlri_len;
 	u_int8_t		 prefixlen, safi, subtype;
 	struct bgpd_addr	 prefix;
 	struct mpattr		 mpa;
@@ -639,13 +637,8 @@ rde_update_dispatch(struct imsg *imsg)
 		/* parse path attributes */
 		asp = path_get();
 		while (len > 0) {
-			if ((pos = rde_attr_parse(p, len, asp,
-			    peer->conf.ebgp, peer->conf.enforce_as,
-			    peer->conf.remote_as, &mpa)) < 0) {
-				emsg = rde_attr_error(p, len, asp,
-				    &subtype, &size);
-				rde_update_err(peer, ERR_UPDATE, subtype,
-				    emsg, size);
+			if ((pos = rde_attr_parse(p, len, peer, asp,
+			    &mpa)) < 0) {
 				path_put(asp);
 				return (-1);
 			}
@@ -661,6 +654,17 @@ rde_update_dispatch(struct imsg *imsg)
 			path_put(asp);
 			return (-1);
 		}
+
+		/* enforce remote AS if requested */
+		if (asp->flags & F_ATTR_ASPATH &&
+		    peer->conf.enforce_as == ENFORCE_AS_ON)
+			if (peer->conf.remote_as !=
+			    aspath_neighbor(asp->aspath)) {
+				rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
+				    NULL, 0);
+				path_put(asp);
+				return (-1);
+			}
 
 		if (rde_reflector(peer, asp) != 1) {
 			path_put(asp);
@@ -955,15 +959,16 @@ rde_update_dispatch(struct imsg *imsg)
 #define WFLAG(s, t)			\
 	do {				\
 		if ((s) & (t))		\
-			return (-1);	\
+			goto bad_list;	\
 		(s) |= (t);		\
 	} while (0)
 
 int
-rde_attr_parse(u_char *p, u_int16_t len, struct rde_aspath *a, int ebgp,
-    enum enforce_as enforce_as, u_int16_t remote_as, struct mpattr *mpa)
+rde_attr_parse(u_char *p, u_int16_t len, struct rde_peer *peer,
+    struct rde_aspath *a, struct mpattr *mpa)
 {
 	struct bgpd_addr nexthop;
+	u_char		*op = p;
 	u_int32_t	 tmp32;
 	u_int16_t	 attr_len;
 	u_int16_t	 plen = 0;
@@ -971,15 +976,18 @@ rde_attr_parse(u_char *p, u_int16_t len, struct rde_aspath *a, int ebgp,
 	u_int8_t	 type;
 	u_int8_t	 tmp8;
 
-	if (len < 3)
+	if (len < 3) {
+bad_len:
+		rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLEN, op, len);
 		return (-1);
+	}
 
 	UPD_READ(&flags, p, plen, 1);
 	UPD_READ(&type, p, plen, 1);
 
 	if (flags & ATTR_EXTLEN) {
 		if (len - plen < 2)
-			return (-1);
+			goto bad_len;
 		UPD_READ(&attr_len, p, plen, 2);
 		attr_len = ntohs(attr_len);
 	} else {
@@ -988,41 +996,53 @@ rde_attr_parse(u_char *p, u_int16_t len, struct rde_aspath *a, int ebgp,
 	}
 
 	if (len - plen < attr_len)
-		return (-1);
+		goto bad_len;
+
+	/* adjust len to the actual attribute size including header */
+	len = plen + attr_len;
 
 	switch (type) {
 	case ATTR_UNDEF:
-		/* error! */
+		rde_update_err(peer, ERR_UPDATE, ERR_UPD_UNSPECIFIC, NULL, 0);
 		return (-1);
 	case ATTR_ORIGIN:
 		if (attr_len != 1)
+			goto bad_len;
+
+		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0)) {
+bad_flags:
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRFLAGS,
+			    op, attr_len);
 			return (-1);
-		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
-			return (-1);
+		}
+
 		UPD_READ(&a->origin, p, plen, 1);
-		if (a->origin > ORIGIN_INCOMPLETE)
+		if (a->origin > ORIGIN_INCOMPLETE) {
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ORIGIN,
+			    op, attr_len);
 			return (-1);
+		}
 		WFLAG(a->flags, F_ATTR_ORIGIN);
 		break;
 	case ATTR_ASPATH:
 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
+			goto bad_flags;
+		if (aspath_verify(p, attr_len) != 0) {
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
+			    NULL, 0);
 			return (-1);
-		if (aspath_verify(p, attr_len) != 0)
-			return (-1);
+		}
 		WFLAG(a->flags, F_ATTR_ASPATH);
 		a->aspath = aspath_get(p, attr_len);
-		if (enforce_as == ENFORCE_AS_ON &&
-		    remote_as != aspath_neighbor(a->aspath))
-			return (-1);
-
 		plen += attr_len;
 		break;
 	case ATTR_NEXTHOP:
 		if (attr_len != 4)
-			return (-1);
+			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
-			return (-1);
+			goto bad_flags;
 		WFLAG(a->flags, F_ATTR_NEXTHOP);
+
 		bzero(&nexthop, sizeof(nexthop));
 		nexthop.af = AF_INET;
 		UPD_READ(&nexthop.v4.s_addr, p, plen, 4);
@@ -1031,29 +1051,30 @@ rde_attr_parse(u_char *p, u_int16_t len, struct rde_aspath *a, int ebgp,
 		 * multicast and experimental addresses as invalid.
 		 */
 		tmp32 = ntohl(nexthop.v4.s_addr);
-		if (IN_MULTICAST(tmp32) || IN_BADCLASS(tmp32))
+		if (IN_MULTICAST(tmp32) || IN_BADCLASS(tmp32)) {
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
+			    op, attr_len);
 			return (-1);
-
+		}
 		a->nexthop = nexthop_get(&nexthop);
 		break;
 	case ATTR_MED:
 		if (attr_len != 4)
-			return (-1);
+			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
-			return (-1);
+			goto bad_flags;
 		WFLAG(a->flags, F_ATTR_MED);
 		UPD_READ(&tmp32, p, plen, 4);
 		a->med = ntohl(tmp32);
 		break;
 	case ATTR_LOCALPREF:
 		if (attr_len != 4)
-			return (-1);
+			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
-			return (-1);
-		if (ebgp) {
-			/* ignore local-pref attr for non ibgp peers */
-			a->lpref = 0;	/* set a default value ... */
-			plen += 4;	/* and ignore the real value */
+			goto bad_flags;
+		if (peer->conf.ebgp) {
+			/* ignore local-pref attr on non ibgp peers */
+			plen += 4;
 			break;
 		}
 		WFLAG(a->flags, F_ATTR_LOCALPREF);
@@ -1062,40 +1083,40 @@ rde_attr_parse(u_char *p, u_int16_t len, struct rde_aspath *a, int ebgp,
 		break;
 	case ATTR_ATOMIC_AGGREGATE:
 		if (attr_len != 0)
-			return (-1);
+			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
-			return (-1);
+			goto bad_flags;
 		goto optattr;
 	case ATTR_AGGREGATOR:
 		if (attr_len != 6)
-			return (-1);
+			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE, 0))
-			return (-1);
+			goto bad_flags;
 		goto optattr;
 	case ATTR_COMMUNITIES:
 		if ((attr_len & 0x3) != 0)
-			return (-1);
+			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
-			return (-1);
+			goto bad_flags;
 		goto optattr;
 	case ATTR_ORIGINATOR_ID:
 		if (attr_len != 4)
-			return (-1);
+			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
-			return (-1);
+			goto bad_flags;
 		goto optattr;
 	case ATTR_CLUSTER_LIST:
 		if ((attr_len & 0x3) != 0)
-			return (-1);
+			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
-			return (-1);
+			goto bad_flags;
 		goto optattr;
 	case ATTR_MP_REACH_NLRI:
 		if (attr_len < 4)
-			return (-1);
+			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
-			return (-1);
+			goto bad_flags;
 		/* the actually validity is checked in rde_update_dispatch() */
 		WFLAG(a->flags, F_ATTR_MP_REACH);
 
@@ -1105,9 +1126,9 @@ rde_attr_parse(u_char *p, u_int16_t len, struct rde_aspath *a, int ebgp,
 		break;
 	case ATTR_MP_UNREACH_NLRI:
 		if (attr_len < 3)
-			return (-1);
+			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
-			return (-1);
+			goto bad_flags;
 		/* the actually validity is checked in rde_update_dispatch() */
 		WFLAG(a->flags, F_ATTR_MP_UNREACH);
 
@@ -1116,174 +1137,24 @@ rde_attr_parse(u_char *p, u_int16_t len, struct rde_aspath *a, int ebgp,
 		plen += attr_len;
 		break;
 	default:
-		if ((flags & ATTR_OPTIONAL) == 0)
+		if ((flags & ATTR_OPTIONAL) == 0) {
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_UNKNWN_WK_ATTR,
+			    op, len);
 			return (-1);
+		}
 optattr:
-		if (attr_optadd(a, flags, type, p, attr_len) == -1)
+		if (attr_optadd(a, flags, type, p, attr_len) == -1) {
+bad_list:
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST,
+			    NULL, 0);
 			return (-1);
+		}
+
 		plen += attr_len;
 		break;
 	}
 
 	return (plen);
-}
-
-u_char *
-rde_attr_error(u_char *p, u_int16_t len, struct rde_aspath *attr,
-    u_int8_t *suberr, u_int16_t *size)
-{
-	struct attr	*a;
-	u_char		*op;
-	u_int16_t	 attr_len;
-	u_int16_t	 plen = 0;
-	u_int8_t	 flags;
-	u_int8_t	 type;
-	u_int8_t	 tmp8;
-
-	*suberr = ERR_UPD_ATTRLEN;
-	*size = len;
-	op = p;
-	if (len < 3)
-		return (op);
-
-	UPD_READ(&flags, p, plen, 1);
-	UPD_READ(&type, p, plen, 1);
-
-	if (flags & ATTR_EXTLEN) {
-		if (len - plen < 2)
-			return (op);
-		UPD_READ(&attr_len, p, plen, 2);
-		attr_len = ntohs(attr_len);
-	} else {
-		UPD_READ(&tmp8, p, plen, 1);
-		attr_len = tmp8;
-	}
-
-	if (len - plen < attr_len)
-		return (op);
-	*size = attr_len;
-
-	switch (type) {
-	case ATTR_UNDEF:
-		/* error! */
-		*suberr = ERR_UPD_UNSPECIFIC;
-		*size = 0;
-		return (NULL);
-	case ATTR_ORIGIN:
-		if (attr_len != 1)
-			return (op);
-		if (attr->flags & F_ATTR_ORIGIN) {
-			*suberr = ERR_UPD_ATTRLIST;
-			*size = 0;
-			return (NULL);
-		}
-		UPD_READ(&tmp8, p, plen, 1);
-		if (tmp8 > ORIGIN_INCOMPLETE) {
-			*suberr = ERR_UPD_ORIGIN;
-			return (op);
-		}
-		break;
-	case ATTR_ASPATH:
-		if (attr->flags & F_ATTR_ASPATH) {
-			*suberr = ERR_UPD_ATTRLIST;
-			*size = 0;
-			return (NULL);
-		}
-		if (CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0)) {
-			/* malformed aspath detected by exclusion method */
-			*size = 0;
-			*suberr = ERR_UPD_ASPATH;
-			return (NULL);
-		}
-		break;
-	case ATTR_NEXTHOP:
-		if (attr_len != 4)
-			return (op);
-		if (attr->flags & F_ATTR_NEXTHOP) {
-			*suberr = ERR_UPD_ATTRLIST;
-			*size = 0;
-			return (NULL);
-		}
-		if (CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0)) {
-			/* malformed nexthop detected by exclusion method */
-			*suberr = ERR_UPD_NETWORK;
-			return (op);
-		}
-		break;
-	case ATTR_MED:
-		if (attr_len != 4)
-			return (op);
-		if (attr->flags & F_ATTR_MED) {
-			*suberr = ERR_UPD_ATTRLIST;
-			*size = 0;
-			return (NULL);
-		}
-		break;
-	case ATTR_LOCALPREF:
-		if (attr_len != 4)
-			return (op);
-		if (attr->flags & F_ATTR_LOCALPREF) {
-			*suberr = ERR_UPD_ATTRLIST;
-			*size = 0;
-			return (NULL);
-		}
-		break;
-	case ATTR_ATOMIC_AGGREGATE:
-		if (attr_len != 0)
-			return (op);
-		break;
-	case ATTR_AGGREGATOR:
-		if (attr_len != 6)
-			return (op);
-		break;
-	case ATTR_COMMUNITIES:
-		if ((attr_len & 0x3) != 0)
-			return (op);
-		goto optattr;
-	case ATTR_ORIGINATOR_ID:
-		if (attr_len != 4)
-			return (op);
-		goto optattr;
-	case ATTR_CLUSTER_LIST:
-		if ((attr_len & 0x3) != 0)
-			return (op);
-		goto optattr;
-	case ATTR_MP_REACH_NLRI:
-		if (attr_len < 4)
-			return (op);
-		if (attr->flags & F_ATTR_MP_REACH) {
-			*suberr = ERR_UPD_ATTRLIST;
-			*size = 0;
-			return (NULL);
-		}
-		break;
-	case ATTR_MP_UNREACH_NLRI:
-		if (attr_len < 3)
-			return (op);
-		if (attr->flags & F_ATTR_MP_UNREACH) {
-			*suberr = ERR_UPD_ATTRLIST;
-			*size = 0;
-			return (NULL);
-		}
-		break;
-	default:
-optattr:
-		if ((flags & ATTR_OPTIONAL) == 0) {
-			*suberr = ERR_UPD_UNKNWN_WK_ATTR;
-			return (op);
-		}
-		TAILQ_FOREACH(a, &attr->others, entry)
-			if (type == a->type) {
-				*size = 0;
-				*suberr = ERR_UPD_ATTRLIST;
-				return (NULL);
-			}
-		*suberr = ERR_UPD_OPTATTR;
-		return (op);
-	}
-	/* can only be a attribute flag error */
-	*suberr = ERR_UPD_ATTRFLAGS;
-	return (op);
 }
 #undef UPD_READ
 #undef WFLAG
