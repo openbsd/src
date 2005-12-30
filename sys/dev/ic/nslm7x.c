@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7x.c,v 1.10 2005/12/25 10:23:27 kettenis Exp $	*/
+/*	$OpenBSD: nslm7x.c,v 1.11 2005/12/30 09:45:20 kettenis Exp $	*/
 /*	$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $ */
 
 /*-
@@ -300,6 +300,10 @@ wb_match(struct lm_softc *sc)
 		break;
 	case WB_CHIPID_83627THF:
 		printf(": W83627THF\n");
+		break;
+	case WB_CHIPID_83791:
+	case WB_CHIPID_83791_2:
+		printf(": W83791D\n");
 		break;
 	default:
 		printf(": unknown winbond chip ID 0x%x\n", j);
