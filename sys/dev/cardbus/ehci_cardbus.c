@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_cardbus.c,v 1.3 2005/04/11 08:09:32 dlg Exp $ */
+/*	$OpenBSD: ehci_cardbus.c,v 1.4 2005/12/30 03:56:28 dlg Exp $ */
 /*	$NetBSD: ehci_cardbus.c,v 1.6.6.3 2004/09/21 13:27:25 skrll Exp $	*/
 
 /*
@@ -38,11 +38,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef __NetBSD__
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.6.6.3 2004/09/21 13:27:25 skrll Exp $");
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -50,12 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.6.6.3 2004/09/21 13:27:25 skrll E
 #include <sys/proc.h>
 
 #include <machine/bus.h>
-
-#ifdef __NetBSD__
-#if defined pciinc
-#include <dev/pci/pcidevs.h>
-#endif
-#endif /* __NetBSD__ */
 
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/pci/pcidevs.h>
@@ -76,17 +65,9 @@ extern int ehcidebug;
 #endif
 
 
-#ifdef __NetBSD__
-int	ehci_cardbus_match(struct device *, struct cfdata *, void *);
-#else
 int	ehci_cardbus_match(struct device *, void *, void *);
-#endif
 void	ehci_cardbus_attach(struct device *, struct device *, void *);
-#ifdef __NetBSD__
-int	ehci_cardbus_detach(device_ptr_t, int);
-#else
 int	ehci_cardbus_detach(struct device *, int);
-#endif
 
 struct ehci_cardbus_softc {
 	ehci_softc_t		sc;
@@ -96,15 +77,10 @@ struct ehci_cardbus_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
-#ifdef __NetBSD__
-CFATTACH_DECL(ehci_cardbus, sizeof(struct ehci_cardbus_softc),
-    ehci_cardbus_match, ehci_cardbus_attach, ehci_cardbus_detach, ehci_activate);
-#else
 struct cfattach ehci_cardbus_ca = {
 	sizeof(struct ehci_cardbus_softc), ehci_cardbus_match,
 	    ehci_cardbus_attach, ehci_cardbus_detach, ehci_activate
 };
-#endif
 
 #define CARDBUS_INTERFACE_EHCI PCI_INTERFACE_EHCI
 #define CARDBUS_CBMEM PCI_CBMEM
@@ -115,11 +91,7 @@ static TAILQ_HEAD(, usb_cardbus) ehci_cardbus_alldevs =
 	TAILQ_HEAD_INITIALIZER(ehci_cardbus_alldevs);
 
 int
-#ifdef __NetBSD__
-ehci_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
-#else
 ehci_cardbus_match(struct device *parent, void *match, void *aux)
-#endif
 {
 	struct cardbus_attach_args *ca = (struct cardbus_attach_args *)aux;
 
@@ -216,11 +188,7 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 }
 
 int
-#ifdef __NetBSD__
-ehci_cardbus_detach(device_ptr_t self, int flags)
-#else
 ehci_cardbus_detach(struct device *self, int flags)
-#endif
 {
 	struct ehci_cardbus_softc *sc = (struct ehci_cardbus_softc *)self;
 	struct cardbus_devfunc *ct = sc->sc_ct;
