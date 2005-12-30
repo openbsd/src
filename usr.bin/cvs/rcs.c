@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.118 2005/12/28 18:27:24 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.119 2005/12/30 16:45:35 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2549,7 +2549,7 @@ rcs_growbuf(RCSFILE *rf)
 	void *tmp;
 	struct rcs_pdata *pdp = (struct rcs_pdata *)rf->rf_pdata;
 
-	tmp = realloc(pdp->rp_buf, pdp->rp_blen + RCS_BUFEXTSIZE);
+	tmp = xrealloc(pdp->rp_buf, pdp->rp_blen + RCS_BUFEXTSIZE);
 	if (tmp == NULL) {
 		rcs_errno = RCS_ERR_ERRNO;
 		cvs_log(LP_ERRNO, "failed to grow RCS parse buffer");
