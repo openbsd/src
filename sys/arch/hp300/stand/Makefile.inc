@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.5 2004/07/13 21:03:37 marc Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2005/12/30 02:03:48 millert Exp $
 #	$NetBSD: Makefile.inc,v 1.7 1997/05/12 07:43:18 thorpej Exp $
 
 BINDIR=			/usr/mdec
@@ -13,7 +13,6 @@ CPPFLAGS+=		-DHIL_KEYBOARD -DUK_KEYBOARD
 CPPFLAGS+=		-DDOMAIN_KEYBOARD
 CPPFLAGS+=		-DSTANDALONE -Dhp300
 CPPFLAGS+=		-DCOMPAT_UFS -DNO_LSEEK
-CPPFLAGS+=		-Derrno=errno
 
 # Limit the alloc() heap to below the msgbuf and ROM scratch pages.
 CPPFLAGS+=		-DHEAP_LIMIT="0xffffdfff"

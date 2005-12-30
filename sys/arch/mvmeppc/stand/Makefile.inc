@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2004/11/15 14:03:19 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2005/12/30 02:03:49 millert Exp $
 
 MDEC_DIR?=/usr/mdec
-CFLAGS+=	-fno-stack-protector -Derrno=errno
+CFLAGS+=	-fno-stack-protector
 CFLAGS+=	-fno-builtin-vprintf -fno-builtin-printf -fno-builtin-putchar
 
 # Load addresses for first and second stage bootstraps 

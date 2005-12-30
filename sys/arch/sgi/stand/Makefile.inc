@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2004/09/16 18:54:48 pefo Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2005/12/30 02:03:49 millert Exp $
 #	$NetBSD: Makefile.inc,v 1.7 2000/08/20 14:57:16 mrg Exp $
 
 .ifndef __INCLUDED_STAND_MAKEFILE_INC
@@ -13,7 +13,6 @@ STANDALONE?=	-D_STANDALONE
 .if ${MACHINE} == "sgi"
 CPPFLAGS+=	${STANDALONE}
 CPPFLAGS+=	-I.
-CPPFLAGS+=	-Derrno=errno
 
 CFLAGS+=	-fno-stack-protector
 CFLAGS+=	-fno-builtin-vprintf -fno-builtin-printf -fno-builtin-putchar
