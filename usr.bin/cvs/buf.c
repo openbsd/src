@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.25 2005/12/24 04:10:51 joris Exp $	*/
+/*	$OpenBSD: buf.c,v 1.26 2005/12/30 01:59:00 joris Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -42,7 +42,6 @@
 
 #define BUF_INCR	128
 
-
 struct cvs_buf {
 	u_int	cb_flags;
 
@@ -55,14 +54,10 @@ struct cvs_buf {
 	size_t	 cb_len;
 };
 
-
 #define SIZE_LEFT(b)	(b->cb_size - (size_t)(b->cb_cur - b->cb_buf) \
 			    - b->cb_len)
 
-
 static ssize_t	cvs_buf_grow(BUF *, size_t);
-
-
 
 /*
  * cvs_buf_alloc()
@@ -87,7 +82,6 @@ cvs_buf_alloc(size_t len, u_int flags)
 
 	return (b);
 }
-
 
 /*
  * cvs_buf_load()
@@ -130,7 +124,6 @@ cvs_buf_load(const char *path, u_int flags)
 	return (buf);
 }
 
-
 /*
  * cvs_buf_free()
  *
@@ -142,7 +135,6 @@ cvs_buf_free(BUF *b)
 	xfree(b->cb_buf);
 	xfree(b);
 }
-
 
 /*
  * cvs_buf_release()
@@ -161,7 +153,6 @@ cvs_buf_release(BUF *b)
 	return (tmp);
 }
 
-
 /*
  * cvs_buf_empty()
  *
@@ -174,7 +165,6 @@ cvs_buf_empty(BUF *b)
 	b->cb_cur = b->cb_buf;
 	b->cb_len = 0;
 }
-
 
 /*
  * cvs_buf_copy()
@@ -196,7 +186,6 @@ cvs_buf_copy(BUF *b, size_t off, void *dst, size_t len)
 
 	return (ssize_t)rc;
 }
-
 
 /*
  * cvs_buf_set()
@@ -229,7 +218,6 @@ cvs_buf_set(BUF *b, const void *src, size_t len, size_t off)
 	return (rlen);
 }
 
-
 /*
  * cvs_buf_putc()
  *
@@ -256,7 +244,6 @@ cvs_buf_putc(BUF *b, int c)
 
 	return (0);
 }
-
 
 /*
  * cvs_buf_append()
@@ -294,7 +281,6 @@ cvs_buf_append(BUF *b, const void *data, size_t len)
 	return (rlen);
 }
 
-
 /*
  * cvs_buf_fappend()
  *
@@ -318,7 +304,6 @@ cvs_buf_fappend(BUF *b, const char *fmt, ...)
 	return (ret);
 }
 
-
 /*
  * cvs_buf_len()
  *
@@ -329,7 +314,6 @@ cvs_buf_len(BUF *b)
 {
 	return (b->cb_len);
 }
-
 
 /*
  * cvs_buf_peek()
@@ -344,7 +328,6 @@ cvs_buf_peek(BUF *b, size_t off)
 
 	return (b->cb_buf + off);
 }
-
 
 /*
  * cvs_buf_write_fd()
@@ -382,7 +365,6 @@ cvs_buf_write_fd(BUF *b, int fd)
  * Write the contents of the buffer <b> to the file whose path is given in
  * <path>.  If the file does not exist, it is created with mode <mode>.
  */
-
 int
 cvs_buf_write(BUF *b, const char *path, mode_t mode)
 {
@@ -410,7 +392,6 @@ cvs_buf_write(BUF *b, const char *path, mode_t mode)
  * specified using <template> (see mkstemp.3). NB. This function will modify
  * <template>, as per mkstemp
  */
-
 int
 cvs_buf_write_stmp(BUF *b, char *template, mode_t mode)
 {
