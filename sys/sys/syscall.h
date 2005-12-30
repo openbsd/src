@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.90 2005/12/13 06:04:15 tedu Exp $	*/
+/*	$OpenBSD: syscall.h,v 1.91 2005/12/30 04:02:18 tedu Exp $	*/
 
 /*
  * System call numbers.
@@ -679,7 +679,7 @@
 /* syscall: "thrsleep" ret: "int" args: "void *" "int" "void *" */
 #define	SYS_thrsleep	300
 
-/* syscall: "thrwakeup" ret: "int" args: "void *" */
+/* syscall: "thrwakeup" ret: "int" args: "void *" "int" */
 #define	SYS_thrwakeup	301
 
 /* syscall: "threxit" ret: "int" args: "int" */

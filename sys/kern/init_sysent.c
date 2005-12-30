@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.91 2005/12/13 06:04:14 tedu Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.92 2005/12/30 04:02:17 tedu Exp $	*/
 
 /*
  * System call switch table.
@@ -800,7 +800,7 @@ struct sysent sysent[] = {
 	    sys_getthrid },			/* 299 = getthrid */
 	{ 3, s(struct sys_thrsleep_args),
 	    sys_thrsleep },			/* 300 = thrsleep */
-	{ 1, s(struct sys_thrwakeup_args),
+	{ 2, s(struct sys_thrwakeup_args),
 	    sys_thrwakeup },			/* 301 = thrwakeup */
 	{ 1, s(struct sys_threxit_args),
 	    sys_threxit },			/* 302 = threxit */
