@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.74 2005/11/29 21:11:07 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.75 2005/12/30 14:07:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -275,7 +275,6 @@ u_int16_t	 aspath_count(const void *, u_int16_t);
 u_int16_t	 aspath_neighbor(struct aspath *);
 int		 aspath_loopfree(struct aspath *, u_int16_t);
 int		 aspath_compare(struct aspath *, struct aspath *);
-u_int32_t	 aspath_hash(const void *, u_int16_t);
 struct aspath	*aspath_prepend(struct aspath *, u_int16_t, int);
 int		 aspath_snprint(char *, size_t, void *, u_int16_t);
 int		 aspath_asprint(char **, void *, u_int16_t);

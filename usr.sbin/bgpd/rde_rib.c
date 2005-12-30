@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.70 2005/11/29 21:11:07 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.71 2005/12/30 14:07:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/hash.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -42,7 +43,7 @@ struct path_table pathtable;
 
 /* XXX the hash should also include communities and the other attrs */
 #define PATH_HASH(x)				\
-	&pathtable.path_hashtbl[aspath_hash((x)->data, (x)->len) & \
+	&pathtable.path_hashtbl[hash32_buf((x)->data, (x)->len, HASHINIT) & \
 	    pathtable.path_hashmask]
 
 void
@@ -908,7 +909,7 @@ nexthop_lookup(struct bgpd_addr *nexthop)
 struct nexthop_head *
 nexthop_hash(struct bgpd_addr *nexthop)
 {
-	u_int32_t	 i, h = 0;
+	u_int32_t	 h = 0;
 
 	switch (nexthop->af) {
 	case AF_INET:
@@ -917,10 +918,8 @@ nexthop_hash(struct bgpd_addr *nexthop)
 		    nexthoptable.nexthop_hashmask;
 		break;
 	case AF_INET6:
-		h = 8271;
-		for (i = 0; i < sizeof(struct in6_addr); i++)
-			h = ((h << 5) + h) ^ nexthop->v6.s6_addr[i];
-		h &= nexthoptable.nexthop_hashmask;
+		h = hash32_buf(nexthop->v6.s6_addr, sizeof(struct in6_addr),
+		    HASHINIT) & nexthoptable.nexthop_hashmask;
 		break;
 	default:
 		fatalx("nexthop_hash: unsupported AF");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.45 2005/11/29 21:11:07 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.46 2005/12/30 14:07:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,6 +17,7 @@
  */
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/hash.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -33,22 +34,22 @@ int		up_set_prefix(u_char *, int, struct bgpd_addr *, u_int8_t);
 
 /* update stuff. */
 struct update_prefix {
-	struct bgpd_addr		 prefix;
-	int				 prefixlen;
-	struct uplist_prefix		*prefix_h;
 	TAILQ_ENTRY(update_prefix)	 prefix_l;
 	RB_ENTRY(update_prefix)		 entry;
+	struct uplist_prefix		*prefix_h;
+	struct bgpd_addr		 prefix;
+	int				 prefixlen;
 };
 
 struct update_attr {
-	u_int32_t			 attr_hash;
-	u_char				*attr;
-	u_int16_t			 attr_len;
-	u_int16_t			 mpattr_len;
-	u_char				*mpattr;
-	struct uplist_prefix		 prefix_h;
 	TAILQ_ENTRY(update_attr)	 attr_l;
 	RB_ENTRY(update_attr)		 entry;
+	struct uplist_prefix		 prefix_h;
+	u_char				*attr;
+	u_char				*mpattr;
+	u_int32_t			 attr_hash;
+	u_int16_t			 attr_len;
+	u_int16_t			 mpattr_len;
 };
 
 void	up_clear(struct uplist_attr *, struct uplist_prefix *);
@@ -377,8 +378,10 @@ up_generate(struct rde_peer *peer, struct rde_aspath *asp,
 		 * use aspath_hash as attr_hash, this may be unoptimal
 		 * but currently I don't care.
 		 */
-		ua->attr_hash = aspath_hash(asp->aspath->data,
-		    asp->aspath->len);
+		ua->attr_hash = hash32_buf(ua->attr, ua->attr_len, HASHINIT);
+		if (ua->mpattr)
+			ua->attr_hash = hash32_buf(ua->mpattr, ua->mpattr_len,
+			    ua->attr_hash);
 	}
 
 	up = calloc(1, sizeof(struct update_prefix));

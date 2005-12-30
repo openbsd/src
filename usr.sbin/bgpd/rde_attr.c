@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.50 2005/12/19 20:10:55 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.51 2005/12/30 14:07:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/hash.h>
 #include <sys/queue.h>
 
 #include <netinet/in.h>
@@ -150,7 +151,6 @@ attr_optfree(struct rde_aspath *asp)
 
 /* aspath specific functions */
 
-u_int32_t	 aspath_hash(const void *, u_int16_t);
 u_int16_t	 aspath_extract(const void *, int);
 struct aspath	*aspath_lookup(const void *, u_int16_t);
 
@@ -242,7 +242,8 @@ aspath_get(void *data, u_int16_t len)
 		memcpy(aspath->data, data, len);
 
 		/* link */
-		head = ASPATH_HASH(aspath_hash(aspath->data, aspath->len));
+		head = ASPATH_HASH(hash32_buf(aspath->data, aspath->len,
+		    HASHINIT));
 		LIST_INSERT_HEAD(head, aspath, entry);
 	}
 	aspath->refcnt++;
@@ -359,34 +360,6 @@ aspath_compare(struct aspath *a1, struct aspath *a2)
 	return (0);
 }
 
-#define AS_HASH_INITIAL 8271
-
-u_int32_t
-aspath_hash(const void *data, u_int16_t len)
-{
-	const u_int8_t	*seg;
-	u_int32_t	 hash;
-	u_int16_t	 seg_size;
-	u_int8_t	 i, seg_len, seg_type;
-
-	hash = AS_HASH_INITIAL;
-	seg = data;
-	for (; len > 0; len -= seg_size, seg += seg_size) {
-		seg_type = seg[0];
-		seg_len = seg[1];
-		seg_size = 2 + 2 * seg_len;
-
-		for (i = 0; i < seg_len; i++) {
-			hash += (hash << 5);
-			hash ^= aspath_extract(seg, i);
-		}
-
-		if (seg_size > len)
-			fatalx("aspath_hash: bula bula");
-	}
-	return (hash);
-}
-
 /*
  * Extract the asnum out of the as segment at the specified position.
  * Direct access is not possible because of non-aligned reads.
@@ -412,7 +385,7 @@ aspath_lookup(const void *data, u_int16_t len)
 	struct aspath		*aspath;
 	u_int32_t		 hash;
 
-	hash = aspath_hash(data, len);
+	hash = hash32_buf(data, len, HASHINIT);
 	head = ASPATH_HASH(hash);
 
 	LIST_FOREACH(aspath, head, entry) {
