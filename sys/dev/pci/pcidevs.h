@@ -3066,7 +3066,7 @@
 /* ULSI Systems products */
 #define	PCI_PRODUCT_ULSI_US201	0x0201		/* US201 */
 
-/* US Rebotics */
+/* US Robotics */
 #define	PCI_PRODUCT_USR_3CP5610	0x1008		/* 3CP5610 */
 #define	PCI_PRODUCT_USR2_USR997902	0x0116		/* USR997902 */
 #define	PCI_PRODUCT_USR2_WL11000P	0x3685		/* WL11000P */
