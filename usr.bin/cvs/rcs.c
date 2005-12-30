@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.119 2005/12/30 16:45:35 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.120 2005/12/30 16:48:33 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -348,8 +348,8 @@ rcs_open(const char *path, int flags, ...)
 	TAILQ_INIT(&(rfp->rf_symbols));
 	TAILQ_INIT(&(rfp->rf_locks));
 
-	if (rfp->rf_flags & RCS_CREATE) {
-	} else if (rcs_parse_init(rfp) < 0) {
+	if (!(rfp->rf_flags & RCS_CREATE) 
+	    && (rcs_parse_init(rfp) < 0)) {
 		rcs_close(rfp);
 		return (NULL);
 	}
