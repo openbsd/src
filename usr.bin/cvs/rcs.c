@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.120 2005/12/30 16:48:33 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.121 2005/12/30 16:53:55 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -339,7 +339,6 @@ rcs_open(const char *path, int flags, ...)
 	memset(rfp, 0, sizeof(*rfp));
 
 	rfp->rf_path = xstrdup(path);
-	rfp->rf_ref = 1;
 	rfp->rf_flags = flags | RCS_SLOCK;
 	rfp->rf_mode = fmode;
 
@@ -379,11 +378,6 @@ rcs_close(RCSFILE *rfp)
 	struct rcs_access *rap;
 	struct rcs_lock *rlp;
 	struct rcs_sym *rsp;
-
-	if (rfp->rf_ref > 1) {
-		rfp->rf_ref--;
-		return;
-	}
 
 	if ((rfp->rf_flags & RCS_WRITE) && !(rfp->rf_flags & RCS_SYNCED))
 		rcs_write(rfp);
