@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.14 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: cons.c,v 1.15 2005/12/30 18:11:25 miod Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1996/04/08 19:57:30 jonathan Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ cnread(dev, uio, flag)
 	 * input (except a shell in single-user mode, but then,
 	 * one wouldn't TIOCCONS then).
 	 */
-	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
+	if (constty != NULL)
 		return 0;
 	else if (cn_tab == NULL)
 		return ENXIO;
@@ -147,7 +147,7 @@ cnwrite(dev, uio, flag)
 	 * Redirect output, if that's appropriate.
 	 * If there's no real console, return ENXIO.
 	 */
-	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
+	if (constty != NULL)
 		dev = constty->t_dev;
 	else if (cn_tab == NULL)
 		return ENXIO;
@@ -192,7 +192,7 @@ cnioctl(dev, cmd, data, flag, p)
 	 * ioctls on /dev/console, then the console is redirected
 	 * out from under it.
 	 */
-	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
+	if (constty != NULL)
 		dev = constty->t_dev;
 	else if (cn_tab == NULL)
 		return ENXIO;
@@ -214,7 +214,7 @@ cnpoll(dev, rw, p)
 	 * I don't want to think of the possible side effects
 	 * of console redirection here.
 	 */
-	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
+	if (constty != NULL)
 		dev = constty->t_dev;
 	else if (cn_tab == NULL)
 		return ENXIO;
@@ -234,7 +234,7 @@ cnkqfilter(dev, kn)
 	 * Redirect output, if that's appropriate.
 	 * If there's no real console, return 1.
 	 */
-	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
+	if (constty != NULL)
 		dev = constty->t_dev;
 	else if (cn_tab == NULL)
 		return (1);
