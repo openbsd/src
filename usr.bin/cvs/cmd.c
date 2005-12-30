@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.40 2005/12/30 02:03:28 joris Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.41 2005/12/30 17:51:01 reyk Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -179,7 +179,8 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	 * We are not checking for CVS/Root since we fetched the root
 	 * above via cvsroot_get().
 	 *
-	 * checkout, export, import, init and release do not depend on these files.
+	 * checkout, export, import, init and release do not depend on
+	 * these files.
 	 */
 	error = 0;
 	if ((cmd->cmd_op != CVS_OP_CHECKOUT) &&

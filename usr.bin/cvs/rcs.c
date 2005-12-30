@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.121 2005/12/30 16:53:55 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.122 2005/12/30 17:51:01 reyk Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -347,7 +347,7 @@ rcs_open(const char *path, int flags, ...)
 	TAILQ_INIT(&(rfp->rf_symbols));
 	TAILQ_INIT(&(rfp->rf_locks));
 
-	if (!(rfp->rf_flags & RCS_CREATE) 
+	if (!(rfp->rf_flags & RCS_CREATE)
 	    && (rcs_parse_init(rfp) < 0)) {
 		rcs_close(rfp);
 		return (NULL);
@@ -1684,7 +1684,7 @@ rcs_parse_desc(RCSFILE *rfp, RCSNUM *rev)
 	if ((rfp->rf_flags & PARSED_DESC)
 	    || (rfp->rf_flags & RCS_CREATE))
 		return (0);
-        if (!(rfp->rf_flags & PARSED_DELTAS))
+	if (!(rfp->rf_flags & PARSED_DELTAS))
 		rcs_parse_deltas(rfp, rev);
 	/* do parsing */
 	ret = rcs_gettok(rfp);
@@ -2994,8 +2994,8 @@ cvs_checkout_rev(RCSFILE *rf, RCSNUM *rev, CVSFILE *cf, char *fpath,
 			l = 1;
 			cf->cf_entry = cvs_ent_open(cf->cf_dir, O_RDWR);
 			if (cf->cf_entry == NULL) {
-				cvs_log(LP_ERR,
-				    "failed to open Entry file '%s'", cf->cf_dir);
+				cvs_log(LP_ERR, "failed to open Entry "
+				    "file '%s'", cf->cf_dir);
 				goto out;
 			}
 		}

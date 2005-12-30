@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.20 2005/12/27 16:08:26 niallo Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.21 2005/12/30 17:51:01 reyk Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -125,17 +125,17 @@ rcsnum_tostr(const RCSNUM *nump, char *buf, size_t blen)
 static char *
 rcsnum_itoa(u_int16_t num, char *buf, size_t len)
 {
-        u_int16_t i;
-        char *p;   
+	u_int16_t i;
+	char *p;
 
-        p = buf + len - 1;
-        i = num;
+	p = buf + len - 1;
+	i = num;
 	bzero(buf, len);
-        while (i) {
-                *--p = '0' + (i % 10);
-                i  /= 10;
-        }
-        return (p);    
+	while (i) {
+		*--p = '0' + (i % 10);
+		i  /= 10;
+	}
+	return (p);
 }
 
 /*

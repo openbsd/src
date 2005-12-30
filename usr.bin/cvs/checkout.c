@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.42 2005/12/30 02:03:28 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.43 2005/12/30 17:51:01 reyk Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -237,8 +237,8 @@ cvs_checkout_pre_exec(struct cvsroot *root)
 			snprintf(repo, sizeof(repo), "%s/%s", root->cr_dir,
 			    co_mods[i]);
 			currepo = co_mods[i];
-			ret = cvs_file_get(repo, CF_RECURSE | CF_REPO | CF_IGNORE,
-			    cvs_checkout_local, NULL, NULL);
+			ret = cvs_file_get(repo, CF_RECURSE | CF_REPO |
+			    CF_IGNORE, cvs_checkout_local, NULL, NULL);
 			if (ret != CVS_EX_OK) {
 				closedir(dirp);
 				return (ret);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.10 2005/12/24 04:10:51 joris Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.11 2005/12/30 17:51:01 reyk Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -71,7 +71,8 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff3.c,v 1.10 2005/12/24 04:10:51 joris Exp $";
+static const char rcsid[] =
+    "$OpenBSD: diff3.c,v 1.11 2005/12/30 17:51:01 reyk Exp $";
 #endif /* not lint */
 
 #include <sys/queue.h>
@@ -247,8 +248,9 @@ cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)
 		goto out;
 
 	if (diff3_conflicts != 0) {
-		cvs_printf("%d conflict%s found during merge, please correct.\n",
-		    diff3_conflicts, (diff3_conflicts > 1) ? "s" : "");
+		cvs_printf("%d conflict%s found during merge, "
+		    "please correct.\n", diff3_conflicts,
+		    (diff3_conflicts > 1) ? "s" : "");
 	}
 
 	xfree(data);
@@ -760,7 +762,8 @@ edscript(int n)
 		(void)fseek(fp[2], (long)de[n].new.from, 0);
 		for (k = de[n].new.to-de[n].new.from; k > 0; k-= j) {
 			j = k > BUFSIZ ? BUFSIZ : k;
-			if (fread(block, (size_t)1, (size_t)j, fp[2]) != (size_t)j)
+			if (fread(block, (size_t)1, (size_t)j,
+			    fp[2]) != (size_t)j)
 				return (-1);
 			block[j] = '\0';
 			diff_output("%s", block);
