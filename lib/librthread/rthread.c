@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.23 2005/12/30 20:35:11 otto Exp $ */
+/*	$OpenBSD: rthread.c,v 1.24 2005/12/30 21:51:27 otto Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -181,6 +181,9 @@ pthread_exit(void *retval)
 		free(oclfn);
 	}
 	_rthread_tls_destructors(thread);
+	_spinlock(&_thread_lock);
+	LIST_REMOVE(thread, threads);
+	_spinunlock(&_thread_lock);
 #if 0
 	if (thread->flags & THREAD_DETACHED)
 		free(thread);
