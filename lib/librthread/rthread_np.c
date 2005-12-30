@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_np.c,v 1.1 2005/12/29 20:34:22 otto Exp $	*/
+/*	$OpenBSD: rthread_np.c,v 1.2 2005/12/30 20:35:11 otto Exp $	*/
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2005 Otto Moerbeek <otto@openbsd.org>
@@ -31,8 +31,6 @@
 #include <machine/spinlock.h>
 
 #include "rthread.h"
-
-extern struct pthread _initial_thread;
 
 void
 pthread_set_name_np(pthread_t thread, char *name)

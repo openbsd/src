@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.22 2005/12/30 04:10:23 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.23 2005/12/30 20:35:11 otto Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -39,10 +39,10 @@
 #include "rthread.h"
 
 static int threads_ready;
-static pthread_t thread_list;
-static _spinlock_lock_t thread_lock = _SPINLOCK_UNLOCKED;
 static int concurrency_level;	/* not used */
 
+struct listhead _thread_list = LIST_HEAD_INITIALIZER(thread_list);
+_spinlock_lock_t _thread_lock = _SPINLOCK_UNLOCKED;
 struct pthread _initial_thread;
 
 int rfork_thread(int, void *, void (*)(void *), void *);
@@ -71,7 +71,7 @@ _rthread_findself(void)
 	pthread_t me;
 	pid_t tid = getthrid();
 
-	for (me = thread_list; me; me = me->next)
+	LIST_FOREACH(me, &_thread_list, threads) 
 		if (me->tid == tid)
 			break;
 
@@ -86,8 +86,8 @@ _rthread_start(void *v)
 	void *retval;
 
 	/* ensure parent returns from rfork, sets up tid */
-	_spinlock(&thread_lock);
-	_spinunlock(&thread_lock);
+	_spinlock(&_thread_lock);
+	_spinunlock(&_thread_lock);
 	retval = thread->fn(thread->arg);
 	pthread_exit(retval);
 }
@@ -104,7 +104,7 @@ _rthread_init(void)
 	thread->donesem.lock = _SPINLOCK_UNLOCKED;
 	thread->flags |= THREAD_CANCEL_ENABLE|THREAD_CANCEL_DEFERRED;
 	strlcpy(thread->name, "Main process", sizeof(thread->name));
-	thread_list = thread;
+	LIST_INSERT_HEAD(&_thread_list, thread, threads);
 	threads_ready = 1;
 	__isthreaded = 1;
 
@@ -157,9 +157,9 @@ pthread_self(void)
 		if (_rthread_init())
 			return (NULL);
 
-	_spinlock(&thread_lock);
+	_spinlock(&_thread_lock);
 	thread = _rthread_findself();
-	_spinunlock(&thread_lock);
+	_spinunlock(&_thread_lock);
 
 	return (thread);
 }
@@ -203,14 +203,14 @@ pthread_join(pthread_t thread, void **retval)
 int
 pthread_detach(pthread_t thread)
 {
-	_spinlock(&thread_lock);
+	_spinlock(&_thread_lock);
 #if 0
 	if (thread->flags & THREAD_DONE)
 		free(thread);
 	else
 #endif
 		thread->flags |= THREAD_DETACHED;
-	_spinunlock(&thread_lock);
+	_spinunlock(&_thread_lock);
 	return (0);
 }
 
@@ -234,15 +234,14 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	thread->fn = start_routine;
 	thread->arg = arg;
 
-	_spinlock(&thread_lock);
+	_spinlock(&_thread_lock);
 
 	thread->stack = _rthread_alloc_stack(64 * 1024, NULL);
 	if (!thread->stack) {
 		rc = errno;
 		goto fail1;
 	}
-	thread->next = thread_list;
-	thread_list = thread;
+	LIST_INSERT_HEAD(&_thread_list, thread, threads);
 
 	tid = rfork_thread(RFPROC | RFTHREAD | RFMEM | RFNOWAIT,
 	    thread->stack->sp, _rthread_start, thread);
@@ -254,15 +253,15 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	thread->tid = tid;
 	thread->flags |= THREAD_CANCEL_ENABLE|THREAD_CANCEL_DEFERRED;
 	*threadp = thread;
-	_spinunlock(&thread_lock);
+	_spinunlock(&_thread_lock);
 
 	return (0);
 
 fail2:
 	_rthread_free_stack(thread->stack);
+	LIST_REMOVE(thread, threads);
 fail1:
-	thread_list = thread->next;
-	_spinunlock(&thread_lock);
+	_spinunlock(&_thread_lock);
 	free(thread);
 
 	return (rc);
@@ -395,11 +394,11 @@ _thread_dump_info(void)
 {
 	pthread_t thread;
 
-	_spinlock(&thread_lock);
-	for (thread = thread_list; thread; thread = thread->next)
+	_spinlock(&_thread_lock);
+	LIST_FOREACH(thread, &_thread_list, threads)
 		printf("thread %d flags %d name %s\n",
 		    thread->tid, thread->flags, thread->name);
-	_spinunlock(&thread_lock);
+	_spinunlock(&_thread_lock);
 }
 
 /*

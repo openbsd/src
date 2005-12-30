@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.11 2005/12/30 04:05:55 tedu Exp $ */
+/*	$OpenBSD: rthread.h,v 1.12 2005/12/30 20:35:11 otto Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -24,6 +24,8 @@
  * This is due to alignment requirements of certain arches like hppa.
  * The current requirement is 16 bytes.
  */
+
+#include <sys/queue.h>
 
 struct stack {
 	void *sp;
@@ -104,7 +106,7 @@ struct pthread {
 	void *arg;
 	char name[32];
 	struct stack *stack;
-	pthread_t next;
+	LIST_ENTRY(pthread) threads;
 	int sched_policy;
 	struct sched_param sched_param;
 	struct rthread_storage *local_storage;
@@ -116,6 +118,10 @@ struct pthread {
 #define THREAD_CANCELLED	0x004
 #define THREAD_CANCEL_ENABLE	0x008
 #define THREAD_CANCEL_DEFERRED	0x010
+
+extern LIST_HEAD(listhead, pthread) _thread_list;
+extern struct pthread _initial_thread;
+extern _spinlock_lock_t _thread_lock;
 
 void	_spinlock(_spinlock_lock_t *);
 void	_spinunlock(_spinlock_lock_t *);
