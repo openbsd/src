@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.40 2005/12/30 17:39:33 reyk Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.41 2005/12/30 23:19:51 djm Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -448,6 +448,20 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		 */
 		if (iicprobe(0x58) == 0x31)
 			name = "as99127f";	/* rev 1 */
+	} else if (addr == 0x2d &&
+	    ((iicprobe(0x4f) == 0x06 && (iicprobe(0x4e) & 0x80)) ||
+	    (iicprobe(0x4f) == 0x94 && !(iicprobe(0x4e) & 0x80)))) {
+		/*
+		 * We should toggle 0x4e bit 0x80, then re-read
+		 * 0x4f to see if it is 0x94 (for ASUS).
+		 *
+		 * NB. we won't match if the BIOS has selected a non-zero
+		 * register bank (set via 0x4e). We could select bank 0 so
+		 * we see the right registers, but that would require a write
+		 */
+		if ((iicprobe(0x58) & 0x7f) == 0x31 &&
+		    (iicprobe(0x4e) & 0xf) == 0x00)
+			name = "asb100";
 	} else if (iicprobe(0x16) == 0x41 && ((iicprobe(0x17) & 0xf0) == 0x40) &&
 	    (addr == 0x2c || addr == 0x2d || addr == 0x2e)) {
 		name = "adm1026";
