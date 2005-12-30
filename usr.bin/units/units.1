@@ -1,4 +1,4 @@
-.\" $OpenBSD: units.1,v 1.17 2005/12/30 16:48:01 jmc Exp $
+.\" $OpenBSD: units.1,v 1.18 2005/12/30 16:50:17 jmc Exp $
 .\" converted to new format by deraadt@openbsd.org
 .\"
 .\" Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -41,7 +41,6 @@ It cannot convert Celsius
 to Fahrenheit, for example.
 It also does not handle logarithmic units such as bels.
 It works interactively by prompting the user for input:
-.Pp
 .Bd -literal -offset indent
 You have: meters
 You want: feet
@@ -57,7 +56,6 @@ You want: gallons
 The
 .Nm
 program can handle numbers as well:
-.Pp
 .Bd -literal -offset indent
 You have: 60 miles/hr
 You want: km/hr
@@ -109,7 +107,6 @@ or
 If the user enters incompatible unit types, the units program will
 print a message indicating that the units are not conformable and
 it will display the reduced form for each unit:
-.Pp
 .Bd -literal -offset indent
 You have: ergs/hour
 You want: fathoms kg^2 / day
