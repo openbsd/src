@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.37 2005/12/29 16:08:03 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.38 2005/12/30 04:05:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -148,6 +148,8 @@ lm75probe(void)
 	mains[0] = iicprobew(0x02);
 	mains[1] = iicprobew(0x03);
 
+	if (main == 0xff && mains[0] == 0xffff && mains[1] == 0xffff)
+		return (0);
 	mains[2] = iicprobew(0x04);	/* read Low Limit */
 	if (iicprobew(0x07) != mains[2] || iicprobew(0x07) != mains[2])
 		return (0);
@@ -158,10 +160,10 @@ lm75probe(void)
 	if (mains[4] != mains[3] || mains[5] != mains[3])
 		return (0);
 
-#ifdef I2C_DEBUG
+#if 0
 	printf("lm75probe: %02x %04x %04x %04x %04x %04x %04x\n", main,
 	    mains[0], mains[1], mains[2], mains[3], mains[4], mains[5]);
-#endif /* I2C_DEBUG */
+#endif
 
 	/* a real lm75/77 repeats it's registers.... */
 	for (i = 0x08; i < 0xff; i += 8) {
