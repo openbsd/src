@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.26 2005/12/30 01:59:00 joris Exp $	*/
+/*	$OpenBSD: buf.c,v 1.27 2005/12/30 05:28:27 joris Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -252,8 +252,7 @@ cvs_buf_putc(BUF *b, int c)
  * buffer is too small to accept all data, it will attempt to append as much
  * data as possible, or if the BUF_AUTOEXT flag is set for the buffer, it
  * will get resized to an appropriate size to accept all data.
- * Returns the number of bytes successfully appended to the buffer, or -1
- * on failure.
+ * Returns the number of bytes successfully appended to the buffer.
  */
 ssize_t
 cvs_buf_append(BUF *b, const void *data, size_t len)
