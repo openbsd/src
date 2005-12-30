@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.49 2005/12/30 02:03:28 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.50 2005/12/30 16:42:13 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -136,10 +136,10 @@ cvs_update_pre_exec(struct cvsroot *root)
 		if (cvs_cmd_update.cmd_flags & CVS_CMD_PRUNEDIRS)
 			cvs_sendarg(root, "-P", 0);
 
-		if (Aflag)
+		if (Aflag == 1)
 			cvs_sendarg(root, "-A", 0);
 
-		if (dflag)
+		if (dflag == 1)
 			cvs_sendarg(root, "-d", 0);
 
 		if (rev != NULL) {

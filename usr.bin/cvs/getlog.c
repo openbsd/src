@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.49 2005/12/30 02:03:28 joris Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.50 2005/12/30 16:42:13 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -134,16 +134,15 @@ static int
 cvs_getlog_pre_exec(struct cvsroot *root)
 {
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (log_honly)
+		if (log_honly == 1)
 			cvs_sendarg(root, "-h", 0);
-		if (log_notags)
+		if (log_notags == 1)
 			cvs_sendarg(root, "-N", 0);
-		if (log_rfonly)
+		if (log_rfonly == 1)
 			cvs_sendarg(root, "-R", 0);
-		if (log_lhonly)
+		if (log_lhonly == 1)
 			cvs_sendarg(root, "-t", 0);
 	}
-
 	return (0);
 }
 
@@ -224,7 +223,7 @@ cvs_getlog_local(CVSFILE *cf, void *arg)
 
 	cvs_rcs_getpath(cf, rcspath, sizeof(rcspath));
 
-	if (log_rfonly) {
+	if (log_rfonly == 1) {
 		cvs_printf("%s\n", rcspath);
 		return (0);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.25 2005/12/30 02:03:28 joris Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.26 2005/12/30 16:42:13 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -101,7 +101,7 @@ static int
 cvs_annotate_pre_exec(struct cvsroot *root)
 {
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (usehead)
+		if (usehead == 1)
 			cvs_sendarg(root, "-f", 0);
 
 		if (rev != NULL) {
