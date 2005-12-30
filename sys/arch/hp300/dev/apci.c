@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.25 2005/12/28 21:37:34 miod Exp $	*/
+/*	$OpenBSD: apci.c,v 1.26 2005/12/30 18:03:33 miod Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -919,8 +919,10 @@ apcicnprobe(cp)
 	 * If our priority is higher than the currently-remembered
 	 * console, install ourselves.
 	 */
-	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)))
+	if (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri) {
 		cn_tab = cp;
+		conscode = CONSCODE_INVALID;
+	}
 }
 
 /* ARGSUSED */

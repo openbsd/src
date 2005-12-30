@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.3 2005/02/27 22:10:55 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.4 2005/12/30 18:03:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -205,6 +205,7 @@ sti_console_scan(int slot, caddr_t va, void *arg)
 	 */
 	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || force) {
 		cn_tab = cp;
+		conscode = SGC_SLOT_TO_CONSCODE(slot);
 		return (1);
 	}
 

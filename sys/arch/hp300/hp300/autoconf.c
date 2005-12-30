@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.34 2005/12/27 18:31:08 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.35 2005/12/30 18:03:36 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -1147,7 +1147,7 @@ console_scan(func, arg, bus)
 			 */
 			size = (*func)(scode, va, arg);
 			iounmap(va, PAGE_SIZE);
-			if (size != 0) {
+			if (size != 0 && conscode == scode) {
 				/* Free last mapping. */
 				if (convasize)
 					iounmap(conaddr, convasize);
@@ -1159,7 +1159,6 @@ console_scan(func, arg, bus)
 					continue;
 
 				/* Save this state for next time. */
-				conscode = scode;
 				conaddr = va;
 				convasize = size;
 			}
@@ -1197,13 +1196,13 @@ console_scan(func, arg, bus)
 			 * non-zero if console probe successfull
 			 * and worthwhile.
 			 */
-			if ((*func)(scode, NULL, arg) != 0) {
+			if ((*func)(scode, NULL, arg) != 0 &&
+			    conscode == SGC_SLOT_TO_CONSCODE(scode)) {
 				/* Free last mapping. */
 				if (convasize)
 					iounmap(conaddr, convasize);
 
 				/* Save this state for next time. */
-				conscode = SGC_SLOT_TO_CONSCODE(scode);
 				conaddr = NULL;
 				convasize = 0;
 			}
