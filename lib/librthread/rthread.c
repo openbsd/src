@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.21 2005/12/30 04:05:55 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.22 2005/12/30 04:10:23 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -43,7 +43,7 @@ static pthread_t thread_list;
 static _spinlock_lock_t thread_lock = _SPINLOCK_UNLOCKED;
 static int concurrency_level;	/* not used */
 
-struct pthread _initial_thread __attribute__((__aligned__(16)));
+struct pthread _initial_thread;
 
 int rfork_thread(int, void *, void (*)(void *), void *);
 
