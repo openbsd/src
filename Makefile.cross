@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.12 2005/09/18 20:42:49 drahn Exp $
+# $OpenBSD: Makefile.cross,v 1.13 2005/12/30 16:41:23 grange Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-etc-root-var
@@ -248,11 +248,11 @@ cross-lib:	${CROSSGCC}
 	    for lib in csu libc; do \
 	    (cd $$lib; \
 	        eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-		    ${MAKE} depend all install); \
+		    ${MAKE} WANTLINT=no depend all install); \
 	    done; \
 	    eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	        SKIPDIR=\"${NO_CROSS} libocurses/PSD.doc\" \
-	        ${MAKE} depend all install)
+	        ${MAKE} WANTLINT=no depend all install)
 
 cross-bin:	${CROSSOBJ}
 	MACHINE=${TARGET} MACHINE_ARCH=${TARGET_ARCH}; \
