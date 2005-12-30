@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7x.c,v 1.11 2005/12/30 09:45:20 kettenis Exp $	*/
+/*	$OpenBSD: nslm7x.c,v 1.12 2005/12/30 19:47:39 kettenis Exp $	*/
 /*	$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $ */
 
 /*-
@@ -249,7 +249,7 @@ wb_match(struct lm_softc *sc)
 	(*sc->lm_writereg)(sc, WB_BANKSEL, 0);
 	j |= (*sc->lm_readreg)(sc, WB_VENDID);
 	DPRINTF(("winbond vend id 0x%x\n", j));
-	if (j != WB_VENDID_WINBOND)
+	if (j != WB_VENDID_WINBOND && j != WB_VENDID_ASUS)
 		return 0;
 	/* read device ID */
 	(*sc->lm_banksel)(sc, 0);

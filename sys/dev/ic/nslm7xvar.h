@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7xvar.h,v 1.6 2005/12/30 09:45:20 kettenis Exp $	*/
+/*	$OpenBSD: nslm7xvar.h,v 1.7 2005/12/30 19:47:39 kettenis Exp $	*/
 /*	$NetBSD: nslm7xvar.h,v 1.10 2002/11/15 14:55:42 ad Exp $ */
 
 /*-
@@ -88,6 +88,7 @@
 
 #define WB_VENDID	0x4F	/* vendor ID register */
 #define WB_VENDID_WINBOND 0x5CA3
+#define WB_VENDID_ASUS    0x12C3
 /* Bank0 regs */
 #define WB_BANK0_CHIPID	0x58
 #define WB_CHIPID_83781		0x10
