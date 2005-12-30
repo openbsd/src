@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.23 2005/11/29 20:41:30 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.24 2005/12/30 23:13:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -533,7 +533,6 @@ parse_addr(const char *word, struct bgpd_addr *addr)
 int
 parse_prefix(const char *word, struct bgpd_addr *addr, u_int8_t *prefixlen)
 {
-	struct in_addr	 ina;
 	char		*p, *ps;
 	const char	*errstr;
 	int		 mask = -1;
@@ -542,7 +541,6 @@ parse_prefix(const char *word, struct bgpd_addr *addr, u_int8_t *prefixlen)
 		return (0);
 
 	bzero(addr, sizeof(struct bgpd_addr));
-	bzero(&ina, sizeof(ina));
 
 	if ((p = strrchr(word, '/')) != NULL) {
 		mask = strtonum(p + 1, 0, 128, &errstr);
@@ -567,7 +565,7 @@ parse_prefix(const char *word, struct bgpd_addr *addr, u_int8_t *prefixlen)
 			mask = 32;
 		if (mask > 32)
 			errx(1, "invalid netmask: too large");
-		addr->v4.s_addr = ina.s_addr & htonl(prefixlen2mask(mask));
+		addr->v4.s_addr = addr->v4.s_addr & htonl(prefixlen2mask(mask));
 		break;
 	case AF_INET6:
 		if (mask == -1)
