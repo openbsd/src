@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.11 2005/12/17 03:54:30 deraadt Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.12 2005/12/30 00:18:30 kettenis Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.6 1996/03/14 21:09:26 christos Exp $ */
 
 /*
@@ -62,6 +62,7 @@
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/vnode.h>
@@ -145,8 +146,11 @@ process_write_fpregs(p, regs)
 	struct proc	*p;
 	struct fpreg	*regs;
 {
-	if (p->p_md.md_fpstate == NULL)
-		return EINVAL;
+	/* NOTE: struct fpreg == struct fpstate */
+	if (p->p_md.md_fpstate == NULL) {
+		p->p_md.md_fpstate = malloc(sizeof(struct fpstate),
+		    M_SUBPROC, M_WAITOK);
+	}
 
 	if (p == cpuinfo.fpproc) {
 		/* Release the fpu. */
