@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.7 2005/08/09 04:10:11 mickey Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.8 2005/12/30 03:43:04 dlg Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ struct ehci_pci_softc {
 
 int	ehci_pci_match(struct device *, void *, void *);
 void	ehci_pci_attach(struct device *, struct device *, void *);
-int	ehci_pci_detach(device_ptr_t, int);
+int	ehci_pci_detach(struct device *, int);
 void	ehci_pci_givecontroller(struct ehci_pci_softc *);
 void	ehci_pci_takecontroller(struct ehci_pci_softc *);
 void	ehci_pci_shutdown(void *);
@@ -202,7 +202,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ehci_pci_detach(device_ptr_t self, int flags)
+ehci_pci_detach(struct device *self, int flags)
 {
 	struct ehci_pci_softc *sc = (struct ehci_pci_softc *)self;
 	int rv;

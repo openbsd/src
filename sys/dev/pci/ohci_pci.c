@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.26 2005/08/09 04:10:13 mickey Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.27 2005/12/30 03:43:04 dlg Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
 
 int	ohci_pci_match(struct device *, void *, void *);
 void	ohci_pci_attach(struct device *, struct device *, void *);
-int	ohci_pci_detach(device_ptr_t, int);
+int	ohci_pci_detach(struct device *, int);
 
 struct ohci_pci_softc {
 	ohci_softc_t		sc;
@@ -184,7 +184,7 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ohci_pci_detach(device_ptr_t self, int flags)
+ohci_pci_detach(struct device *self, int flags)
 {
 	struct ohci_pci_softc *sc = (struct ohci_pci_softc *)self;
 	int rv;
