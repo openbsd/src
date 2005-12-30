@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.48 2005/12/22 14:59:54 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.49 2005/12/30 02:03:28 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -134,14 +134,14 @@ static int
 cvs_getlog_pre_exec(struct cvsroot *root)
 {
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (log_honly && (cvs_sendarg(root, "-h", 0) < 0))
-			return (CVS_EX_PROTO);
-		if (log_notags && (cvs_sendarg(root, "-N", 0) < 0))
-			return (CVS_EX_PROTO);
-		if (log_rfonly && (cvs_sendarg(root, "-R", 0) < 0))
-			return (CVS_EX_PROTO);
-		if (log_lhonly && (cvs_sendarg(root, "-t", 0) < 0))
-			return (CVS_EX_PROTO);
+		if (log_honly)
+			cvs_sendarg(root, "-h", 0);
+		if (log_notags)
+			cvs_sendarg(root, "-N", 0);
+		if (log_rfonly)
+			cvs_sendarg(root, "-R", 0);
+		if (log_lhonly)
+			cvs_sendarg(root, "-t", 0);
 	}
 
 	return (0);
@@ -154,45 +154,39 @@ cvs_getlog_pre_exec(struct cvsroot *root)
 static int
 cvs_getlog_remote(CVSFILE *cf, void *arg)
 {
-	int ret;
 	char fpath[MAXPATHLEN];
 	struct cvsroot *root;
 
-	ret = 0;
 	root = CVS_DIR_ROOT(cf);
 
 	if (cf->cf_type == DT_DIR) {
 		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
-			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-			    cf->cf_name);
+			cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cf->cf_name);
 		else
-			ret = cvs_senddir(root, cf);
-		return (ret);
+			cvs_senddir(root, cf);
+		return (0);
 	}
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
-	if (cvs_sendentry(root, cf) < 0)
-		return (CVS_EX_PROTO);
+	cvs_sendentry(root, cf);
 
 	switch (cf->cf_cvstat) {
 	case CVS_FST_UNKNOWN:
-		ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cf->cf_name);
+		cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cf->cf_name);
 		break;
 	case CVS_FST_UPTODATE:
-		ret = cvs_sendreq(root, CVS_REQ_UNCHANGED, cf->cf_name);
+		cvs_sendreq(root, CVS_REQ_UNCHANGED, cf->cf_name);
 		break;
 	case CVS_FST_ADDED:
 	case CVS_FST_MODIFIED:
-		ret = cvs_sendreq(root, CVS_REQ_ISMODIFIED, cf->cf_name);
+		cvs_sendreq(root, CVS_REQ_ISMODIFIED, cf->cf_name);
 		break;
 	default:
 		break;
 	}
 
-	if (ret == -1)
-		ret = CVS_EX_PROTO;
-	return (ret);
+	return (0);
 }
 
 

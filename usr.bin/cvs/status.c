@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.49 2005/12/22 14:59:54 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.50 2005/12/30 02:03:28 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -109,8 +109,8 @@ static int
 cvs_status_pre_exec(struct cvsroot *root)
 {
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if ((verbose == 1) && (cvs_sendarg(root, "-v", 0) < 0))
-			return (CVS_EX_PROTO);
+		if (verbose == 1)
+			cvs_sendarg(root, "-v", 0);
 	}
 
 	return (0);
@@ -124,51 +124,39 @@ cvs_status_pre_exec(struct cvsroot *root)
 static int
 cvs_status_remote(CVSFILE *cfp, void *arg)
 {
-	int ret;
 	char fpath[MAXPATHLEN];
 	struct cvsroot *root;
 
-	ret = 0;
 	root = CVS_DIR_ROOT(cfp);
 
 	if (cfp->cf_type == DT_DIR) {
 		if (cfp->cf_cvstat == CVS_FST_UNKNOWN)
-			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-			    cfp->cf_name);
+			cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cfp->cf_name);
 		else
-			ret = cvs_senddir(root, cfp);
-
-		if (ret == -1)
-			ret = CVS_EX_PROTO;
-
-		return (ret);
+			cvs_senddir(root, cfp);
+		return (0);
 	}
 
 	cvs_file_getpath(cfp, fpath, sizeof(fpath));
 
-	if (cvs_sendentry(root, cfp) < 0)
-		return (CVS_EX_PROTO);
+	cvs_sendentry(root, cfp);
 
 	switch (cfp->cf_cvstat) {
 	case CVS_FST_UNKNOWN:
-		ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cfp->cf_name);
+		cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cfp->cf_name);
 		break;
 	case CVS_FST_UPTODATE:
-		ret = cvs_sendreq(root, CVS_REQ_UNCHANGED, cfp->cf_name);
+		cvs_sendreq(root, CVS_REQ_UNCHANGED, cfp->cf_name);
 		break;
 	case CVS_FST_ADDED:
 	case CVS_FST_MODIFIED:
-		ret = cvs_sendreq(root, CVS_REQ_MODIFIED, cfp->cf_name);
-		if (ret == 0)
-			ret = cvs_sendfile(root, fpath);
+		cvs_sendreq(root, CVS_REQ_MODIFIED, cfp->cf_name);
+		cvs_sendfile(root, fpath);
 	default:
 		break;
 	}
 
-	if (ret == -1)
-		ret = CVS_EX_PROTO;
-
-	return (ret);
+	return (0);
 }
 
 static int

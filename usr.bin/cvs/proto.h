@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.8 2005/10/17 16:16:00 moritz Exp $	*/
+/*	$OpenBSD: proto.h,v 1.9 2005/12/30 02:03:28 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -167,8 +167,8 @@ struct cvs_resp {
 
 
 BUF	*cvs_recvfile(struct cvsroot *, mode_t *);
-int	 cvs_sendfile(struct cvsroot *, const char *);
-int	 cvs_connect(struct cvsroot *);
+void	 cvs_sendfile(struct cvsroot *, const char *);
+void	 cvs_connect(struct cvsroot *);
 void	 cvs_disconnect(struct cvsroot *);
 
 int		 cvs_req_handle(char *);
@@ -181,15 +181,15 @@ struct cvs_resp* cvs_resp_getbyid(int);
 struct cvs_resp* cvs_resp_getbyname(const char *);
 char*            cvs_resp_getvalid(void);
 
-int	cvs_sendreq(struct cvsroot *, u_int, const char *);
-int	cvs_getresp(struct cvsroot *);
+void	cvs_sendreq(struct cvsroot *, u_int, const char *);
+void	cvs_getresp(struct cvsroot *);
 int	cvs_sendresp(u_int, const char *);
 int	cvs_getln(struct cvsroot *, char *, size_t);
-int	cvs_senddir(struct cvsroot *, CVSFILE *);
-int	cvs_sendarg(struct cvsroot *, const char *, int);
-int	cvs_sendln(struct cvsroot *, const char *);
-int	cvs_sendentry(struct cvsroot *, const CVSFILE *);
-int	cvs_sendraw(struct cvsroot *, const void *, size_t);
+void	cvs_senddir(struct cvsroot *, CVSFILE *);
+void	cvs_sendarg(struct cvsroot *, const char *, int);
+void	cvs_sendln(struct cvsroot *, const char *);
+void	cvs_sendentry(struct cvsroot *, const CVSFILE *);
+void	cvs_sendraw(struct cvsroot *, const void *, size_t);
 ssize_t	cvs_recvraw(struct cvsroot *, void *, size_t);
 
 

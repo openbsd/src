@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.49 2005/12/22 14:59:54 xsa Exp $	*/
+/*	$OpenBSD: commit.c,v 1.50 2005/12/30 02:03:28 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -187,13 +187,11 @@ cvs_commit_pre_exec(struct cvsroot *root)
 		return (CVS_EX_DATA);
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_logmsg_send(root, cvs_msg) < 0)
-			return (CVS_EX_PROTO);
+		cvs_logmsg_send(root, cvs_msg);
 
 		if (rev != NULL) {
-			if ((cvs_sendarg(root, "-r", 0) < 0) ||
-			    (cvs_sendarg(root, rev, 0) < 0))
-				return (CVS_EX_PROTO);
+			cvs_sendarg(root, "-r", 0);
+			cvs_sendarg(root, rev, 0);
 		}
 	}
 
@@ -243,10 +241,8 @@ cvs_commit_remote(CVSFILE *cf, void *arg)
 	root = CVS_DIR_ROOT(cf);
 
 	if (cf->cf_type == DT_DIR) {
-		if (cf->cf_cvstat != CVS_FST_UNKNOWN) {
-			if (cvs_senddir(root, cf) < 0)
-				return (CVS_EX_PROTO);
-		}
+		if (cf->cf_cvstat != CVS_FST_UNKNOWN)
+			cvs_senddir(root, cf);
 		return (0);
 	}
 
@@ -258,9 +254,7 @@ cvs_commit_remote(CVSFILE *cf, void *arg)
 	if ((cf->cf_cvstat == CVS_FST_ADDED) ||
 	    (cf->cf_cvstat == CVS_FST_MODIFIED) ||
 	    (cf->cf_cvstat == CVS_FST_REMOVED)) {
-		if (cvs_sendentry(root, cf) < 0) {
-			return (CVS_EX_PROTO);
-		}
+		cvs_sendentry(root, cf);
 
 		/* if it's removed, don't bother sending a
 		 * Modified request together with the file its
@@ -269,12 +263,8 @@ cvs_commit_remote(CVSFILE *cf, void *arg)
 		if (cf->cf_cvstat == CVS_FST_REMOVED)
 			return (0);
 
-		if (cvs_sendreq(root, CVS_REQ_MODIFIED, cf->cf_name) < 0)
-			return (CVS_EX_PROTO);
-
-		if (cvs_sendfile(root, fpath) < 0) {
-			return (CVS_EX_PROTO);
-		}
+		cvs_sendreq(root, CVS_REQ_MODIFIED, cf->cf_name);
+		cvs_sendfile(root, fpath);
 	}
 
 	return (0);

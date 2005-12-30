@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.34 2005/12/22 14:59:54 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.35 2005/12/30 02:03:28 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -166,29 +166,29 @@ static int
 cvs_tag_pre_exec(struct cvsroot *root)
 {
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if ((tag_branch == 1) && (cvs_sendarg(root, "-b", 0) < 0))
-			return (CVS_EX_PROTO);
+		if (tag_branch == 1)
+			cvs_sendarg(root, "-b", 0);
 
-		if ((tag_delete ==1) && (cvs_sendarg(root, "-d", 0) < 0))
-			return (CVS_EX_PROTO);
+		if (tag_delete == 1)
+			cvs_sendarg(root, "-d", 0);
 
-		if ((tag_forcemove == 1) && (cvs_sendarg(root, "-F", 0) < 0))
-			return (CVS_EX_PROTO);
+		if (tag_forcemove == 1)
+			cvs_sendarg(root, "-F", 0);
 
-		if ((tag_forcehead == 1) && (cvs_sendarg(root, "-f", 0) < 0))
-			return (CVS_EX_PROTO);
+		if (tag_forcehead == 1)
+			cvs_sendarg(root, "-f", 0);
 
-		if ((tag_oldname != NULL) &&
-		    ((cvs_sendarg(root, "-r", 0) < 0) ||
-		    (cvs_sendarg(root, tag_oldname, 0) < 0)))
-				return (CVS_EX_PROTO);
+		if (tag_oldname != NULL) {
+			cvs_sendarg(root, "-r", 0);
+			cvs_sendarg(root, tag_oldname, 0);
+		}
 
-		if ((tag_date != NULL) && ((cvs_sendarg(root, "-D", 0) < 0) ||
-		    (cvs_sendarg(root, tag_date, 0) < 0)))
-				return (CVS_EX_PROTO);
+		if (tag_date != NULL) {
+			cvs_sendarg(root, "-D", 0);
+			cvs_sendarg(root, tag_date, 0);
+		}
 
-		if (cvs_sendarg(root, tag_name, 0) < 0)
-			return (CVS_EX_PROTO);
+		cvs_sendarg(root, tag_name, 0);
 	}
 
 	return (0);
@@ -203,42 +203,33 @@ cvs_tag_pre_exec(struct cvsroot *root)
 static int
 cvs_tag_remote(CVSFILE *cfp, void *arg)
 {
-	int ret;
 	char fpath[MAXPATHLEN];
 	struct cvsroot *root;
 
-	ret = 0;
 	root = CVS_DIR_ROOT(cfp);
 
 	if (cfp->cf_type == DT_DIR) {
-		if (cvs_senddir(root, cfp) < 0)
-			ret = CVS_EX_PROTO;
-		return (ret);
+		cvs_senddir(root, cfp);
+		return (0);
 	}
 
-	if (cvs_sendentry(root, cfp) < 0) {
-		return (CVS_EX_PROTO);
-	}
-
+	cvs_sendentry(root, cfp);
 	cvs_file_getpath(cfp, fpath, sizeof(fpath));
 
 	switch (cfp->cf_cvstat) {
 	case CVS_FST_UNKNOWN:
-		ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cfp->cf_name);
+		cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cfp->cf_name);
 		break;
 	case CVS_FST_UPTODATE:
-		ret = cvs_sendreq(root, CVS_REQ_UNCHANGED, cfp->cf_name);
+		cvs_sendreq(root, CVS_REQ_UNCHANGED, cfp->cf_name);
 		break;
 	case CVS_FST_MODIFIED:
-		ret = cvs_sendreq(root, CVS_REQ_ISMODIFIED, cfp->cf_name);
+		cvs_sendreq(root, CVS_REQ_ISMODIFIED, cfp->cf_name);
 	default:
 		break;
 	}
 
-	if (ret == -1)
-		ret = CVS_EX_PROTO;
-
-	return (ret);
+	return (0);
 }
 
 

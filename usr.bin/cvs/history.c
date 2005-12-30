@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.23 2005/07/25 12:05:43 xsa Exp $	*/
+/*	$OpenBSD: history.c,v 1.24 2005/12/30 02:03:28 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -170,44 +170,43 @@ static int
 cvs_history_pre_exec(struct cvsroot *root)
 {
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if ((flags & CVS_HF_A) && (cvs_sendarg(root, "-a", 0) < 0))
-			return (CVS_EX_PROTO);
+		if (flags & CVS_HF_A)
+			cvs_sendarg(root, "-a", 0);
 
-		if ((flags & CVS_HF_C) && (cvs_sendarg(root, "-c", 0) < 0))
-			return (CVS_EX_PROTO);
+		if (flags & CVS_HF_C)
+			cvs_sendarg(root, "-c", 0);
 
-		if ((flags & CVS_HF_O) && (cvs_sendarg(root, "-o", 0) < 0))
-			return (CVS_EX_PROTO);
+		if (flags & CVS_HF_O)
+			cvs_sendarg(root, "-o", 0);
 
-		if ((date != NULL) && ((cvs_sendarg(root, "-D", 0) < 0) ||
-		    (cvs_sendarg(root, date, 0) < 0)))
-			return (CVS_EX_PROTO);
+		if (date != NULL) {
+			cvs_sendarg(root, "-D", 0);
+			cvs_sendarg(root, date, 0);
+		}
 
-		if ((rev != NULL) && ((cvs_sendarg(root, "-r", 0) < 0) ||
-		    (cvs_sendarg(root, rev, 0) < 0)))
-			return (CVS_EX_PROTO);
+		if (rev != NULL) {
+			cvs_sendarg(root, "-r", 0);
+			cvs_sendarg(root, rev, 0);
+		}
 
-		if ((tag != NULL) && ((cvs_sendarg(root, "-t", 0) < 0) ||
-		    (cvs_sendarg(root, tag, 0) < 0)))
-			return (CVS_EX_PROTO);
+		if (tag != NULL) {
+			cvs_sendarg(root, "-t", 0);
+			cvs_sendarg(root, tag, 0);
+		}
 
 		/* if no user is specified, get login name of command issuer */
 		if (!(flags & CVS_HF_A) && (user == NULL)) {
-			if ((user = getlogin()) == NULL) {
-				cvs_log(LP_ERRNO, "cannot get login name");
-				return (CVS_EX_DATA);
-			}
+			if ((user = getlogin()) == NULL)
+				fatal("cannot get login name");
 		}
 
 		if (!(flags & CVS_HF_A)) {
-			if ((cvs_sendarg(root, "-u", 0) < 0) ||
-			    (cvs_sendarg(root, user, 0) < 0))
-				return (CVS_EX_PROTO);
+			cvs_sendarg(root, "-u", 0);
+			cvs_sendarg(root, user, 0);
 		}
 
-		if ((cvs_sendarg(root, "-z", 0) < 0) ||
-		    (cvs_sendarg(root, zone, 0) < 0))
-			return (CVS_EX_PROTO);
+		cvs_sendarg(root, "-z", 0);
+		cvs_sendarg(root, zone, 0);
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.41 2005/12/03 01:02:08 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.42 2005/12/30 02:03:28 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -253,50 +253,45 @@ cvs_checkout_pre_exec(struct cvsroot *root)
 		 * a checkout.
 		 */
 		for (i = 0; i < co_nmod; i++)
-			if (cvs_sendarg(root, co_mods[i], 0) < 0)
-				return (CVS_EX_PROTO);
-		if (cvs_sendreq(root, CVS_REQ_DIRECTORY, ".") < 0)
-			return (CVS_EX_PROTO);
-		if (cvs_sendln(root, root->cr_dir) < 0)
-			return (CVS_EX_PROTO);
+			cvs_sendarg(root, co_mods[i], 0);
 
-		if (cvs_sendreq(root, CVS_REQ_XPANDMOD, NULL) < 0)
-			cvs_log(LP_ERR, "failed to expand module");
+		cvs_sendreq(root, CVS_REQ_DIRECTORY, ".");
+		cvs_sendln(root, root->cr_dir);
+		cvs_sendreq(root, CVS_REQ_XPANDMOD, NULL);
 
-		if ((usehead == 1) && (cvs_sendarg(root, "-f", 0) < 0))
-			return (CVS_EX_PROTO);
+		if (usehead == 1)
+			cvs_sendarg(root, "-f", 0);
 
-		if ((tgtdir != NULL) &&
-		    ((cvs_sendarg(root, "-d", 0) < 0) ||
-		    (cvs_sendarg(root, tgtdir, 0) < 0)))
-			return (CVS_EX_PROTO);
+		if (tgtdir != NULL) {
+			cvs_sendarg(root, "-d", 0);
+			cvs_sendarg(root, tgtdir, 0);
+		}
 
-		if ((shorten == 0) && cvs_sendarg(root, "-N", 0) < 0)
-			return (CVS_EX_PROTO);
+		if (shorten == 0)
+			cvs_sendarg(root, "-N", 0);
 
-		if ((cvs_cmd_checkout.cmd_flags & CVS_CMD_PRUNEDIRS) &&
-		    (cvs_sendarg(root, "-P", 0) < 0))
-			return (CVS_EX_PROTO);
+		if (cvs_cmd_checkout.cmd_flags & CVS_CMD_PRUNEDIRS);
+			cvs_sendarg(root, "-P", 0);
 
 		for (i = 0; i < co_nmod; i++)
-			if (cvs_sendarg(root, co_mods[i], 0) < 0)
-				return (CVS_EX_PROTO);
+			cvs_sendarg(root, co_mods[i], 0);
 
-		if ((statmod == CVS_LISTMOD) &&
-		    (cvs_sendarg(root, "-c", 0) < 0))
-			return (CVS_EX_PROTO);
-		else if ((statmod == CVS_STATMOD) &&
-		    (cvs_sendarg(root, "-s", 0) < 0))
-			return (CVS_EX_PROTO);
+		if (statmod == CVS_LISTMOD)
+			cvs_sendarg(root, "-c", 0);
+		else if (statmod == CVS_STATMOD)
+			cvs_sendarg(root, "-s", 0);
 
-		if ((tag != NULL) && ((cvs_sendarg(root, "-r", 0) < 0) ||
-		    (cvs_sendarg(root, tag, 0) < 0)))
-			return (CVS_EX_PROTO);
+		if (tag != NULL) {
+			cvs_sendarg(root, "-r", 0);
+			cvs_sendarg(root, tag, 0);
+		}
 
-		if ((date != NULL) && ((cvs_sendarg(root, "-D", 0) < 0) ||
-		    (cvs_sendarg(root, date, 0) < 0)))
-			return (CVS_EX_PROTO);
+		if (date != NULL) {
+			cvs_sendarg(root, "-D", 0);
+			cvs_sendarg(root, date, 0);
+		}
 	}
+
 	return (0);
 }
 

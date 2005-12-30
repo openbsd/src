@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.8 2005/12/10 20:27:45 joris Exp $	*/
+/*	$OpenBSD: watch.c,v 1.9 2005/12/30 02:03:28 joris Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2005 Moritz Jodeit <moritz@openbsd.org>
@@ -155,23 +155,18 @@ cvs_watch_pre_exec(struct cvsroot *root)
 
 		if (aoptstr == NULL || strcmp(aoptstr, "all") == 0) {
 			/* Defaults to: edit, unedit, commit */
-			if ((cvs_sendarg(root, "-a", 0) < 0) ||
-			    (cvs_sendarg(root, "edit", 0) < 0) ||
-			    (cvs_sendarg(root, "-a", 0) < 0) ||
-			    (cvs_sendarg(root, "unedit", 0) < 0) ||
-			    (cvs_sendarg(root, "-a", 0) < 0) ||
-			    (cvs_sendarg(root, "commit", 0) < 0)) {
-				xfree(aoptstr);
-				return (CVS_EX_PROTO);
-			}
+			cvs_sendarg(root, "-a", 0);
+			cvs_sendarg(root, "edit", 0);
+			cvs_sendarg(root, "-a", 0);
+			cvs_sendarg(root, "unedit", 0);
+			cvs_sendarg(root, "-a", 0);
+			cvs_sendarg(root, "commit", 0);
 		} else {
-			if ((cvs_sendarg(root, "-a", 0) < 0) ||
-			    (cvs_sendarg(root, aoptstr, 0) < 0)) {
-				xfree(aoptstr);
-				return (CVS_EX_PROTO);
-			}
+			cvs_sendarg(root, "-a", 0);
+			cvs_sendarg(root, aoptstr, 0);
 		}
 	}
+
 	xfree(aoptstr);
 
 	return (CVS_EX_OK);
@@ -196,47 +191,36 @@ cvs_watch_local(CVSFILE *cf, void *arg)
 static int
 cvs_watch_remote(CVSFILE *cf, void *arg)
 {
-	int ret;
 	struct cvsroot *root;
 
-	ret = 0;
 	root = CVS_DIR_ROOT(cf);
 
 	if (cf->cf_type == DT_DIR) {
 		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
-			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-			    cf->cf_name);
+			cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cf->cf_name);
 		else
-			ret = cvs_senddir(root, cf);
-
-		if (ret == -1)
-			ret = CVS_EX_PROTO;
-
-		return (ret);
+			cvs_senddir(root, cf);
+		return (0);
 	}
 
-	if (cvs_sendentry(root, cf) < 0)
-		return (CVS_EX_PROTO);
+	cvs_sendentry(root, cf);
 
 	switch (cf->cf_cvstat) {
 	case CVS_FST_UNKNOWN:
-		ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cf->cf_name);
+		cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cf->cf_name);
 		break;
 	case CVS_FST_UPTODATE:
-		ret = cvs_sendreq(root, CVS_REQ_UNCHANGED, cf->cf_name);
+		cvs_sendreq(root, CVS_REQ_UNCHANGED, cf->cf_name);
 		break;
 	case CVS_FST_ADDED:
 	case CVS_FST_MODIFIED:
-		ret = cvs_sendreq(root, CVS_REQ_ISMODIFIED, cf->cf_name);
+		cvs_sendreq(root, CVS_REQ_ISMODIFIED, cf->cf_name);
 		break;
 	default:
 		break;
 	}
 
-	if (ret == -1)
-		ret = CVS_EX_PROTO;
-
-	return (ret);
+	return (0);
 }
 
 

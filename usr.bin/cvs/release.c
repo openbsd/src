@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.25 2005/12/24 19:07:52 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.26 2005/12/30 02:03:28 joris Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -95,8 +95,8 @@ static int
 cvs_release_pre_exec(struct cvsroot *root)
 {
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (dflag && cvs_sendarg(root, "-d", 0) < 0)
-			return (CVS_EX_PROTO);
+		if (dflag)
+			cvs_sendarg(root, "-d", 0);
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.38 2005/12/03 01:02:09 joris Exp $	*/
+/*	$OpenBSD: remove.c,v 1.39 2005/12/30 02:03:28 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -109,14 +109,10 @@ cvs_remove_remote(CVSFILE *cf, void *arg)
 
 	if (cf->cf_type == DT_DIR) {
 		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
-			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-			    cf->cf_name);
+			cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cf->cf_name);
 		else
-			ret = cvs_senddir(root, cf);
-
-		if (ret == -1)
-			ret = CVS_EX_PROTO;
-		return (ret);
+			cvs_senddir(root, cf);
+		return (0);
 	}
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
@@ -124,21 +120,14 @@ cvs_remove_remote(CVSFILE *cf, void *arg)
 	if (cvs_remove_file(fpath) < 0)
 		return (CVS_EX_FILE);
 
-	if (cvs_sendentry(root, cf) < 0)
-		return (CVS_EX_PROTO);
+	cvs_sendentry(root, cf);
 
 	if (cf->cf_cvstat != CVS_FST_LOST && force_remove != 1) {
-		if (cf->cf_cvstat != CVS_FST_ADDED) {
-			if (cvs_sendreq(root, CVS_REQ_MODIFIED,
-			    cf->cf_name) < 0) {
-				return (CVS_EX_PROTO);
-			}
-		}
+		if (cf->cf_cvstat != CVS_FST_ADDED)
+			cvs_sendreq(root, CVS_REQ_MODIFIED, cf->cf_name);
 
-		if (cf->cf_flags & CVS_FILE_ONDISK) {
-			if (cvs_sendfile(root, fpath) < 0)
-				return (CVS_EX_PROTO);
-		}
+		if (cf->cf_flags & CVS_FILE_ONDISK)
+			cvs_sendfile(root, fpath);
 	}
 
 	return (0);

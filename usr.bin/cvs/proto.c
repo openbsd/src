@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.81 2005/12/20 18:17:01 xsa Exp $	*/
+/*	$OpenBSD: proto.c,v 1.82 2005/12/30 02:03:28 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -184,65 +184,44 @@ static char cvs_lastdir[MAXPATHLEN] = "";
  * Once the connection has been established, we first send the list of
  * responses we support and request the list of supported requests from the
  * server.  Then, a version request is sent and various global flags are sent.
- * Returns 0 on success, or -1 on failure.
  */
-int
+void
 cvs_connect(struct cvsroot *root)
 {
+	size_t len;
 	int argc, infd[2], outfd[2], errfd[2];
 	char *argv[16], *cvs_server_cmd, tmsg[1024], *vresp;
 
-	if (root->cr_method == CVS_METHOD_PSERVER) {
-		cvs_log(LP_ERR, "no pserver support due to security issues");
-		return (-1);
-	} else if ((root->cr_method == CVS_METHOD_KSERVER) ||
+	if (root->cr_method == CVS_METHOD_PSERVER)
+		fatal("no pserver support due to security issues");
+	else if ((root->cr_method == CVS_METHOD_KSERVER) ||
 	    (root->cr_method == CVS_METHOD_GSERVER) ||
 	    (root->cr_method == CVS_METHOD_EXT) ||
-	    (root->cr_method == CVS_METHOD_FORK)) {
-		cvs_log(LP_ERR, "connection method not supported yet");
-		return (-1);
-	}
+	    (root->cr_method == CVS_METHOD_FORK))
+		fatal("connection method not supported yet");
 
 	if (root->cr_flags & CVS_ROOT_CONNECTED) {
 		cvs_log(LP_NOTICE, "already connected to CVSROOT");
-		return (0);
+		return;
 	}
 
-	if (pipe(infd) == -1) {
-		cvs_log(LP_ERRNO,
-		    "failed to create input pipe for client connection");
-		return (-1);
-	}
+	if (pipe(infd) == -1)
+		fatal("failed to create input pipe for client connection");
 
-	if (pipe(outfd) == -1) {
-		cvs_log(LP_ERRNO,
-		    "failed to create output pipe for client connection");
-		(void)close(infd[0]);
-		(void)close(infd[1]);
-		return (-1);
-	}
+	if (pipe(outfd) == -1)
+		fatal("failed to create output pipe for client connection");
 
-	if (pipe(errfd) == -1) {
-		cvs_log(LP_ERRNO,
-		    "failed to create error pipe for client connection");
-		(void)close(infd[0]);
-		(void)close(infd[1]);
-		(void)close(outfd[0]);
-		(void)close(outfd[1]);
-		return (-1);
-	}
+	if (pipe(errfd) == -1)
+		fatal("failed to create error pipe for client connection");
 
 	cvs_subproc_pid = fork();
 	if (cvs_subproc_pid == -1) {
-		cvs_log(LP_ERRNO, "failed to fork for cvs server connection");
-		return (-1);
+		fatal("failed to fork for cvs server connection");
 	} else if (cvs_subproc_pid == 0) {
 		if ((dup2(infd[0], STDIN_FILENO) == -1) ||
-		    (dup2(outfd[1], STDOUT_FILENO) == -1)) {
-			cvs_log(LP_ERRNO,
-			    "failed to setup standard streams for cvs server");
-			return (-1);
-		}
+		    (dup2(outfd[1], STDOUT_FILENO) == -1))
+			fatal("failed to setup standard streams for cvs server");
+
 		(void)close(infd[1]);
 		(void)close(outfd[0]);
 		(void)close(errfd[0]);
@@ -267,15 +246,20 @@ cvs_connect(struct cvsroot *root)
 		if (cvs_trace == 1) {
 			tmsg[0] = '\0';
 			for (argc = 0; argv[argc] != NULL; argc++) {
-				strlcat(tmsg, argv[argc], sizeof(tmsg));
-				strlcat(tmsg, " ", sizeof(tmsg));
+				len = strlcat(tmsg, argv[argc], sizeof(tmsg));
+				if (len >= sizeof(tmsg))
+					fatal("truncation in cvs_connect");
+
+				len = strlcat(tmsg, " ", sizeof(tmsg));
+				if (len >= sizeof(tmsg))
+					fatal("truncation in cvs_connect");
 			}
 		}
+
 		cvs_log(LP_TRACE, "Starting server: %s", tmsg);
 
 		execvp(argv[0], argv);
-		cvs_log(LP_ERRNO, "failed to exec");
-		exit(CVS_EX_PROTO);
+		fatal("failed to execute cvs server");
 	}
 
 	/* we are the parent */
@@ -284,16 +268,12 @@ cvs_connect(struct cvsroot *root)
 	(void)close(errfd[1]);
 
 	root->cr_srvin = fdopen(infd[1], "w");
-	if (root->cr_srvin == NULL) {
-		cvs_log(LP_ERRNO, "failed to create pipe stream");
-		return (-1);
-	}
+	if (root->cr_srvin == NULL)
+		fatal("failed to create pipe stream");
 
 	root->cr_srvout = fdopen(outfd[0], "r");
-	if (root->cr_srvout == NULL) {
-		cvs_log(LP_ERRNO, "failed to create pipe stream");
-		return (-1);
-	}
+	if (root->cr_srvout == NULL)
+		fatal("failed to create pipe stream");
 
 	/* make the streams line-buffered */
 	(void)setvbuf(root->cr_srvin, NULL, _IOLBF, (size_t)0);
@@ -306,61 +286,42 @@ cvs_connect(struct cvsroot *root)
 	 * requests.
 	 */
 
-	if ((vresp = cvs_resp_getvalid()) == NULL) {
-		cvs_log(LP_ERR, "can't generate list of valid responses");
-		return (-1);
-	}
-
-	if (cvs_sendreq(root, CVS_REQ_VALIDRESP, vresp) < 0) {
-		cvs_log(LP_ERR, "failed to get valid responses");
-		xfree(vresp);
-		return (-1);
-	}
+	vresp = cvs_resp_getvalid();
+	cvs_sendreq(root, CVS_REQ_VALIDRESP, vresp);
 	xfree(vresp);
 
-	if (cvs_sendreq(root, CVS_REQ_VALIDREQ, NULL) < 0) {
-		cvs_log(LP_ERR, "failed to get valid requests from server");
-		return (-1);
-	}
+	cvs_sendreq(root, CVS_REQ_VALIDREQ, NULL);
 
 	/* send the CVSROOT to the server */
-	if (cvs_sendreq(root, CVS_REQ_ROOT, root->cr_dir) < 0)
-		return (-1);
+	cvs_sendreq(root, CVS_REQ_ROOT, root->cr_dir);
 
 	/* don't fail if this request doesn't work */
-	if (cvs_sendreq(root, CVS_REQ_VERSION, NULL) < 0)
-		cvs_log(LP_WARN, "failed to get remote version");
+	cvs_sendreq(root, CVS_REQ_VERSION, NULL);
 
 	/* now share our global options with the server */
-	if ((verbosity <= 1) &&
-	    (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-q") < 0))
-		return (-1);
-	if ((verbosity == 0) &&
-	    (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-Q") < 0))
-		return (-1);
+	if (verbosity <= 1)
+		cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-q");
+	if (verbosity == 0)
+		cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-Q");
 
-	if ((cvs_noexec == 1) &&
-	    (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-n") < 0))
-		return (-1);
-	if ((cvs_nolog == 1) &&
-	    (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-l") < 0))
-		return (-1);
-	if ((cvs_readonly == 1) &&
-	    (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-r") < 0))
-		return (-1);
-	if ((cvs_trace == 1) &&
-	    (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-t") < 0))
-		return (-1);
+	if (cvs_noexec == 1)
+		cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-n");
+
+	if (cvs_nolog == 1)
+		cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-l");
+
+	if (cvs_readonly == 1)
+		cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-r");
+
+	if (cvs_trace == 1)
+		cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-t");
 
 	/* not sure why, but we have to send this */
-	if (cvs_sendreq(root, CVS_REQ_USEUNCHANGED, NULL) < 0)
-		return (-1);
+	cvs_sendreq(root, CVS_REQ_USEUNCHANGED, NULL);
 
 	cvs_log(LP_DEBUG, "connected to %s", root->cr_host);
 
 	root->cr_flags |= CVS_ROOT_CONNECTED;
-
-	return (0);
 }
 
 
@@ -376,6 +337,7 @@ cvs_disconnect(struct cvsroot *root)
 		return;
 
 	cvs_log(LP_DEBUG, "closing connection to %s", root->cr_host);
+
 	if (root->cr_srvin != NULL) {
 		(void)fclose(root->cr_srvin);
 		root->cr_srvin = NULL;
@@ -437,8 +399,6 @@ cvs_req_getvalid(void)
 	BUF *buf;
 
 	buf = cvs_buf_alloc((size_t)512, BUF_AUTOEXT);
-	if (buf == NULL)
-		return (NULL);
 
 	cvs_buf_set(buf, cvs_requests[0].req_str,
 	    strlen(cvs_requests[0].req_str), (size_t)0);
@@ -509,8 +469,6 @@ cvs_resp_getvalid(void)
 	BUF *buf;
 
 	buf = cvs_buf_alloc((size_t)512, BUF_AUTOEXT);
-	if (buf == NULL)
-		return (NULL);
 
 	cvs_buf_set(buf, cvs_responses[0].resp_str,
 	    strlen(cvs_responses[0].resp_str), (size_t)0);
@@ -539,7 +497,7 @@ cvs_resp_getvalid(void)
  * Send the mode and size of a file followed by the file's contents.
  * Returns 0 on success, or -1 on failure.
  */
-int
+void
 cvs_sendfile(struct cvsroot *root, const char *path)
 {
 	int fd, l;
@@ -550,47 +508,36 @@ cvs_sendfile(struct cvsroot *root, const char *path)
 	cvs_log(LP_TRACE, "Sending file `%s' to server", basename(path));
 
 	if (stat(path, &st) == -1) {
-		cvs_log(LP_ERRNO, "failed to stat `%s'", path);
-		return (-1);
+		fatal("cvs_sendfile(): stat failed on '%s': %s",
+		    path, strerror(errno));
 	}
 
-	if (cvs_modetostr(st.st_mode, buf, sizeof(buf)) < 0)
-		return (-1);
+	cvs_modetostr(st.st_mode, buf, sizeof(buf));
 
 	fd = open(path, O_RDONLY, 0);
 	if (fd == -1) {
-		cvs_log(LP_ERRNO, "failed to open `%s'", path);
-		return (-1);
+		fatal("cvs_sendfile(): failed to open '%s': %s",
+		    path, strerror(errno));
 	}
 
-	if (cvs_sendln(root, buf) < 0) {
-		(void)close(fd);
-		return (-1);
-	}
+	cvs_sendln(root, buf);
+
 	l = snprintf(buf, sizeof(buf), "%lld\n", st.st_size);
 	if (l == -1 || l >= (int)sizeof(buf))
-		return (-1);
+		fatal("overflow in cvs_sendfile");
 
-	if (cvs_sendln(root, buf) < 0) {
-		(void)close(fd);
-		return (-1);
-	}
+	cvs_sendln(root, buf);
 
 	while ((ret = read(fd, buf, sizeof(buf))) != 0) {
 		if (ret == -1) {
 			(void)close(fd);
-			cvs_log(LP_ERRNO, "failed to read file `%s'", path);
-			return (-1);
+			fatal("cvs_sendfile: read error on '%s'", path);
 		}
 
-		if (cvs_sendraw(root, buf, (size_t)ret) < 0) {
-			(void)close(fd);
-			return (-1);
-		}
+		cvs_sendraw(root, buf, (size_t)ret);
 	}
 
 	(void)close(fd);
-	return (0);
 }
 
 
@@ -611,8 +558,6 @@ cvs_recvfile(struct cvsroot *root, mode_t *mode)
 	BUF *fbuf;
 
 	fbuf = cvs_buf_alloc(sizeof(buf), BUF_AUTOEXT);
-	if (fbuf == NULL)
-		return (NULL);
 
 	if ((cvs_getln(root, buf, sizeof(buf)) < 0) ||
 	    (cvs_strtomode(buf, mode) < 0)) {
@@ -663,57 +608,49 @@ cvs_recvfile(struct cvsroot *root, mode_t *mode)
  * contained in <arg>, which should not be terminated by a newline.
  * Returns 0 on success, or -1 on failure.
  */
-int
+void
 cvs_sendreq(struct cvsroot *root, u_int rid, const char *arg)
 {
 	int ret, l;
 	struct cvs_req *req;
 
-	if (root->cr_srvin == NULL) {
-		cvs_log(LP_ERR, "cannot send request %u: Not connected", rid);
-		return (-1);
-	}
+	if (root->cr_srvin == NULL)
+		fatal("cannot send request %u: Not connected", rid);
 
 	req = cvs_req_getbyid(rid);
-	if (req == NULL) {
-		cvs_log(LP_ERR, "unsupported request type %u", rid);
-		return (-1);
-	}
+	if (req == NULL)
+		fatal("unsupported request type %u", rid);
 
 	/* is this request supported by the server? */
 	if (!CVS_GETVR(root, req->req_id)) {
 		if (rid == CVS_REQ_VERSION) {
-			ret = cvs_sendreq(root, CVS_REQ_NOOP, arg);
+			cvs_sendreq(root, CVS_REQ_NOOP, arg);
 		} else {
 			cvs_log(LP_WARN,
 			    "remote end does not support request `%s'",
 			    req->req_str);
-			ret = -1;
 		}
-		return (ret);
+		
+		return;
 	}
 
 	l = snprintf(cvs_proto_buf, sizeof(cvs_proto_buf), "%s%s%s\n",
 	    req->req_str, (arg == NULL) ? "" : " ", (arg == NULL) ? "" : arg);
 	if (l == -1 || l >= (int)sizeof(cvs_proto_buf))
-		return (-1);
+		fatal("overflow in cvs_sendreq");
 
 	if (cvs_server_inlog != NULL)
 		fputs(cvs_proto_buf, cvs_server_inlog);
 
 	ret = fputs(cvs_proto_buf, root->cr_srvin);
-	if (ret == EOF) {
-		cvs_log(LP_ERRNO, "failed to send request to server");
-		return (-1);
-	}
+	if (ret == EOF)
+		fatal("failed to send request to server");
 
 	if (rid == CVS_REQ_VERSION)
 		cvs_version_sent = 1;
 
 	if (req->req_flags & CVS_REQF_RESP)
-		ret = cvs_getresp(root);
-
-	return (ret);
+		cvs_getresp(root);
 }
 
 
@@ -725,23 +662,19 @@ cvs_sendreq(struct cvsroot *root, u_int rid, const char *arg)
  * non-zero (either an error occurred or the end of the response was reached).
  * Returns the number of handled commands on success, or -1 on failure.
  */
-int
+void
 cvs_getresp(struct cvsroot *root)
 {
-	int nbcmd, ret;
+	int ret;
 	size_t len;
-
-	nbcmd = 0;
 
 	do {
 		/* wait for incoming data */
 		if (fgets(cvs_proto_buf, (int)sizeof(cvs_proto_buf),
 		    root->cr_srvout) == NULL) {
 			if (feof(root->cr_srvout))
-				return (0);
-			cvs_log(LP_ERRNO,
-			    "failed to read response from server");
-			return (-1);
+				return;
+			fatal("failed to read response from server");
 		}
 
 		if (cvs_server_outlog != NULL)
@@ -754,12 +687,7 @@ cvs_getresp(struct cvsroot *root)
 		}
 
 		ret = cvs_resp_handle(root, cvs_proto_buf);
-		nbcmd++;
 	} while (ret == 0);
-
-	if (ret > 0)
-		ret = nbcmd;
-	return (ret);
 }
 
 
@@ -878,9 +806,8 @@ cvs_getreq(void)
  *
  * Send a single line <line> string to the remote end.  The line is sent as is,
  * without any modifications.
- * Returns 0 on success, or -1 on failure.
  */
-int
+void
 cvs_sendln(struct cvsroot *root, const char *line)
 {
 	int nl;
@@ -906,7 +833,6 @@ cvs_sendln(struct cvsroot *root, const char *line)
 	fputs(line, out);
 	if (nl)
 		putc('\n', out);
-	return (0);
 }
 
 
@@ -915,7 +841,7 @@ cvs_sendln(struct cvsroot *root, const char *line)
  *
  * Send the first <len> bytes from the buffer <src> to the server.
  */
-int
+void
 cvs_sendraw(struct cvsroot *root, const void *src, size_t len)
 {
 	FILE *out;
@@ -927,12 +853,8 @@ cvs_sendraw(struct cvsroot *root, const void *src, size_t len)
 
 	if (cvs_server_inlog != NULL)
 		fwrite(src, sizeof(char), len, cvs_server_inlog);
-	if (fwrite(src, sizeof(char), len, out) < len) {
-		cvs_log(LP_ERR, "failed to send data");
-		return (-1);
-	}
-
-	return (0);
+	if (fwrite(src, sizeof(char), len, out) < len)
+		fatal("failed to send data");
 }
 
 
@@ -968,36 +890,36 @@ cvs_recvraw(struct cvsroot *root, void *dst, size_t len)
  * the directory info to be sent is the same as the last info sent, the
  * call does nothing and simply returns without an error.
  */
-int
+void
 cvs_senddir(struct cvsroot *root, CVSFILE *dir)
 {
 	size_t len;
 	char lbuf[MAXPATHLEN], rbuf[MAXPATHLEN];
 
 	if (dir->cf_type != DT_DIR)
-		return (-1);
+		fatal("cvs_senddir(): cf_type != DT_DIR: %d", dir->cf_type);
 
 	cvs_file_getpath(dir, lbuf, sizeof(lbuf));
 	if (strcmp(lbuf, cvs_lastdir) == 0 && cvs_cmdop != CVS_OP_CHECKOUT)
-		return (0);
+		return;
 
-	if (dir->cf_repo == NULL)
-		strlcpy(rbuf, root->cr_dir, sizeof(rbuf));
-	else {
+	if (dir->cf_repo == NULL) {
+		len = strlcpy(rbuf, root->cr_dir, sizeof(rbuf));
+		if (len >= sizeof(rbuf))
+			fatal("cvs_senddir: path truncation");
+	} else {
 		len = cvs_path_cat(root->cr_dir, dir->cf_repo, rbuf,
 		    sizeof(rbuf));
 		if (len >= sizeof(rbuf))
-			return (-1);
+			fatal("cvs_senddir: path truncation");
 	}
 
+	cvs_sendreq(root, CVS_REQ_DIRECTORY, lbuf);
+	cvs_sendln(root, rbuf);
 
-	if ((cvs_sendreq(root, CVS_REQ_DIRECTORY, lbuf) < 0) ||
-	    (cvs_sendln(root, rbuf) < 0))
-		return (-1);
-
-	strlcpy(cvs_lastdir, lbuf, sizeof(cvs_lastdir));
-
-	return (0);
+	len = strlcpy(cvs_lastdir, lbuf, sizeof(cvs_lastdir));
+	if (len >= sizeof(lbuf))
+		fatal("path truncation in cvs_senddir");
 }
 
 
@@ -1008,11 +930,11 @@ cvs_senddir(struct cvsroot *root, CVSFILE *dir)
  * determine if the argument should be simply appended to the last argument
  * sent or if it should be created as a new argument (0).
  */
-int
+void
 cvs_sendarg(struct cvsroot *root, const char *arg, int append)
 {
-	return cvs_sendreq(root, ((append == 0) ?
-	    CVS_REQ_ARGUMENT : CVS_REQ_ARGUMENTX), arg);
+	cvs_sendreq(root, ((append == 0) ? CVS_REQ_ARGUMENT :
+	    CVS_REQ_ARGUMENTX), arg);
 }
 
 
@@ -1022,31 +944,26 @@ cvs_sendarg(struct cvsroot *root, const char *arg, int append)
  * Send an `Entry' request to the server along with the mandatory fields from
  * the CVS entry <ent> (which are the name and revision).
  */
-int
+void
 cvs_sendentry(struct cvsroot *root, const CVSFILE *file)
 {
 	int l;
 	char ebuf[CVS_ENT_MAXLINELEN], numbuf[64];
 
-	if (file->cf_type != DT_REG) {
-		cvs_log(LP_ERR, "attempt to send Entry for non-regular file");
-		return (-1);
-	}
+	if (file->cf_type != DT_REG)
+		fatal("cvs_sendentry: cf_type != DT_REG: %d", file->cf_type);
 
 	/* don't send Entry for unknown files */
 	if (file->cf_cvstat == CVS_FST_UNKNOWN)
-		return (0);
+		return;
 
 	l = snprintf(ebuf, sizeof(ebuf), "/%s/%s%s///", file->cf_name,
 	    (file->cf_cvstat == CVS_FST_REMOVED) ? "-" : "",
 	    rcsnum_tostr(file->cf_lrev, numbuf, sizeof(numbuf)));
-	if (l == -1 || l >= (int)sizeof(ebuf)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", ebuf);
-		return (-1);
-	}
+	if (l == -1 || l >= (int)sizeof(ebuf))
+		fatal("cvs_sendentry: overflow when creating entry buffer");
 
-	return cvs_sendreq(root, CVS_REQ_ENTRY, ebuf);
+	cvs_sendreq(root, CVS_REQ_ENTRY, ebuf);
 }
 
 

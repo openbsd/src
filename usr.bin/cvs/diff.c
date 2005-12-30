@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.73 2005/12/21 09:09:02 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.74 2005/12/30 02:03:28 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -447,36 +447,29 @@ cvs_diff_pre_exec(struct cvsroot *root)
 {
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		/* send the flags */
-		if ((Nflag == 1) && (cvs_sendarg(root, "-N", 0) < 0))
-			return (CVS_EX_PROTO);
-		if ((pflag ==1) && (cvs_sendarg(root, "-p", 0) < 0))
-			return (CVS_EX_PROTO);
+		if (Nflag == 1)
+			cvs_sendarg(root, "-N", 0);
+		if (pflag == 1)
+			cvs_sendarg(root, "-p", 0);
 
-		if (diff_format == D_CONTEXT) {
-			if (cvs_sendarg(root, "-c", 0) < 0)
-				return (CVS_EX_PROTO);
-		} else if (diff_format == D_UNIFIED) {
-			if (cvs_sendarg(root, "-u", 0) < 0)
-				return (CVS_EX_PROTO);
-		}
+		if (diff_format == D_CONTEXT)
+			cvs_sendarg(root, "-c", 0);
+		else if (diff_format == D_UNIFIED)
+			cvs_sendarg(root, "-u", 0);
 
 		if (dap->rev1 != NULL) {
-			if ((cvs_sendarg(root, "-r", 0) < 0) ||
-			    (cvs_sendarg(root, dap->rev1, 0) < 0))
-				return (CVS_EX_PROTO);
+			cvs_sendarg(root, "-r", 0);
+			cvs_sendarg(root, dap->rev1, 0);
 		} else if (dap->date1 != NULL) {
-			if ((cvs_sendarg(root, "-D", 0) < 0) ||
-			    (cvs_sendarg(root, dap->date1, 0) < 0))
-				return (CVS_EX_PROTO);
+			cvs_sendarg(root, "-D", 0);
+			cvs_sendarg(root, dap->date1, 0);
 		}
 		if (dap->rev2 != NULL) {
-			if ((cvs_sendarg(root, "-r", 0) < 0) ||
-			    (cvs_sendarg(root, dap->rev2, 0) < 0))
-				return (CVS_EX_PROTO);
+			cvs_sendarg(root, "-r", 0);
+			cvs_sendarg(root, dap->rev2, 0);
 		} else if (dap->date2 != NULL) {
-			if ((cvs_sendarg(root, "-D", 0) < 0) ||
-			    (cvs_sendarg(root, dap->date2, 0) < 0))
-				return  (CVS_EX_PROTO);
+			cvs_sendarg(root, "-D", 0);
+			cvs_sendarg(root, dap->date2, 0);
 		}
 	}
 
@@ -538,8 +531,7 @@ cvs_diff_remote(struct cvs_file *cfp, void *arg)
 		return (0);
 	}
 
-	if (cvs_sendentry(root, cfp) < 0)
-		return (CVS_EX_PROTO);
+	cvs_sendentry(root, cfp);
 
 	if (cfp->cf_cvstat == CVS_FST_UPTODATE) {
 		cvs_sendreq(root, CVS_REQ_UNCHANGED, cfp->cf_name);
@@ -547,9 +539,8 @@ cvs_diff_remote(struct cvs_file *cfp, void *arg)
 	}
 
 	/* at this point, the file is modified */
-	if ((cvs_sendreq(root, CVS_REQ_MODIFIED, cfp->cf_name) < 0) ||
-	    (cvs_sendfile(root, diff_file) < 0))
-		return (CVS_EX_PROTO);
+	cvs_sendreq(root, CVS_REQ_MODIFIED, cfp->cf_name);
+	cvs_sendfile(root, diff_file);
 
 	return (0);
 }

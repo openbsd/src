@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.35 2005/12/10 20:27:45 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.36 2005/12/30 02:03:28 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -110,10 +110,8 @@ cvs_add_pre_exec(struct cvsroot *root)
 		strlcpy(kbuf, "-k", sizeof(kbuf));
 		strlcat(kbuf, koptstr, sizeof(kbuf));
 
-		if (root->cr_method != CVS_METHOD_LOCAL) {
-			if (cvs_sendarg(root, kbuf, 0) < 0)
-				return (CVS_EX_PROTO);
-		}
+		if (root->cr_method != CVS_METHOD_LOCAL)
+			cvs_sendarg(root, kbuf, 0);
 	}
 
 	return (0);
@@ -122,27 +120,19 @@ cvs_add_pre_exec(struct cvsroot *root)
 static int
 cvs_add_remote(CVSFILE *cf, void *arg)
 {
-	int ret;
 	struct cvsroot *root;
 
-	ret = 0;
 	root = CVS_DIR_ROOT(cf);
 
 	if (cf->cf_type == DT_DIR) {
-		ret = cvs_senddir(root, cf);
-		if (ret == -1)
-			ret = CVS_EX_PROTO;
-		return (ret);
+		cvs_senddir(root, cf);
+		return (0);
 	}
 
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN)
-		ret = cvs_sendreq(root, CVS_REQ_ISMODIFIED,
-		    cf->cf_name);
+		cvs_sendreq(root, CVS_REQ_ISMODIFIED, cf->cf_name);
 
-	if (ret == -1)
-		ret = CVS_EX_PROTO;
-
-	return (ret);
+	return (0);
 }
 
 static int

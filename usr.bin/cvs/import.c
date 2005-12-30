@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.33 2005/12/21 20:06:25 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.34 2005/12/30 02:03:28 joris Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -149,13 +149,12 @@ cvs_import_pre_exec(struct cvsroot *root)
 	} else {
 		rcsnum_tostr(imp_brnum, numbuf, sizeof(numbuf));
 
-		if ((cvs_sendarg(root, "-b", 0) < 0) ||
-		    (cvs_sendarg(root, numbuf, 0) < 0) ||
-		    (cvs_logmsg_send(root, cvs_msg) < 0) ||
-		    (cvs_sendarg(root, module, 0) < 0) ||
-		    (cvs_sendarg(root, vendor, 0) < 0) ||
-		    (cvs_sendarg(root, release, 0) < 0))
-			return (CVS_EX_PROTO);
+		cvs_sendarg(root, "-b", 0);
+		cvs_sendarg(root, numbuf, 0);
+		cvs_logmsg_send(root, cvs_msg);
+		cvs_sendarg(root, module, 0);
+		cvs_sendarg(root, vendor, 0);
+		cvs_sendarg(root, release, 0);
 	}
 
 	return (0);
@@ -209,10 +208,8 @@ cvs_import_remote(CVSFILE *cf, void *arg)
 				return (CVS_EX_DATA);
 		}
 
-		if (cvs_sendreq(root, CVS_REQ_DIRECTORY, fpath) < 0)
-			return (CVS_EX_PROTO);
-		if (cvs_sendln(root, repodir) < 0)
-			return (CVS_EX_PROTO);
+		cvs_sendreq(root, CVS_REQ_DIRECTORY, fpath);
+		cvs_sendln(root, repodir);
 		return (0);
 	}
 
@@ -221,13 +218,11 @@ cvs_import_remote(CVSFILE *cf, void *arg)
 		sz = strlen(date);
 		if ((sz > 0) && (date[sz - 1] == '\n'))
 			date[--sz] = '\0';
-		if (cvs_sendreq(root, CVS_REQ_CHECKINTIME, date) < 0)
-			return (CVS_EX_PROTO);
+		cvs_sendreq(root, CVS_REQ_CHECKINTIME, date);
 	}
-	if (cvs_sendreq(root, CVS_REQ_MODIFIED, cf->cf_name) < 0)
-		return (CVS_EX_PROTO);
-	if (cvs_sendfile(root, fpath) < 0)
-		return (CVS_EX_PROTO);
+
+	cvs_sendreq(root, CVS_REQ_MODIFIED, cf->cf_name);
+	cvs_sendfile(root, fpath);
 
 	return (0);
 }

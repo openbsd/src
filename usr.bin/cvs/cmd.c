@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.39 2005/12/10 20:27:45 joris Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.40 2005/12/30 02:03:28 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -235,8 +235,8 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 
 	cvs_log(LP_TRACE, "cvs_startcmd() CVSROOT=%s", root->cr_str);
 
-	if ((root->cr_method != CVS_METHOD_LOCAL) && (cvs_connect(root) < 0))
-		return (CVS_EX_PROTO);
+	if (root->cr_method != CVS_METHOD_LOCAL)
+		cvs_connect(root);
 
 	if (cmd->cmd_pre_exec != NULL) {
 		if ((ret = cmd->cmd_pre_exec(root)) != 0)
@@ -273,24 +273,19 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 			cf = cvs_file_loadinfo(".", CF_NOFILES, NULL, NULL, 1);
 			if (cf == NULL)
 				return (CVS_EX_DATA);
-			if (cvs_senddir(root, cf) < 0) {
-				cvs_file_free(cf);
-				return (CVS_EX_PROTO);
-			}
+			cvs_senddir(root, cf);
 			cvs_file_free(cf);
 		}
 
 		if (cmd->cmd_flags & CVS_CMD_SENDARGS2) {
-			for (i = 0; i < argc; i++) {
-				if (cvs_sendarg(root, argv[i], 0) < 0)
-					return (CVS_EX_PROTO);
-			}
+			for (i = 0; i < argc; i++)
+				cvs_sendarg(root, argv[i], 0);
 		}
 
-		if (cmd->cmd_req != CVS_REQ_NONE &&
-		    cvs_sendreq(root, cmd->cmd_req,
-		    (cmd->cmd_op == CVS_OP_INIT) ? root->cr_dir : NULL) < 0)
-			return (CVS_EX_PROTO);
+		if (cmd->cmd_req != CVS_REQ_NONE) {
+			cvs_sendreq(root, cmd->cmd_req,
+			    (cmd->cmd_op == CVS_OP_INIT) ? root->cr_dir : NULL);
+		}
 	}
 
 	if (cmd->cmd_cleanup != NULL)
