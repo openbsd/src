@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_cardbus.c,v 1.1 2005/05/26 18:57:37 nate Exp $	*/
+/*	$OpenBSD: uhci_cardbus.c,v 1.2 2005/12/30 04:01:18 dlg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 
 int	uhci_cardbus_match(struct device *, void *, void *);
 void	uhci_cardbus_attach(struct device *, struct device *, void *);
-int	uhci_cardbus_detach(device_ptr_t, int);
+int	uhci_cardbus_detach(struct device *, int);
 
 struct uhci_cardbus_softc {
 	uhci_softc_t		sc;
@@ -187,7 +187,7 @@ XXX	(ct->ct_cf->cardbus_io_open)(cc, 0, iob, iob + 0x40);
 }
 
 int
-uhci_cardbus_detach(device_ptr_t self, int flags)
+uhci_cardbus_detach(struct device *self, int flags)
 {
 	struct uhci_cardbus_softc *sc = (struct uhci_cardbus_softc *)self;
 	struct cardbus_devfunc *ct = sc->sc_ct;

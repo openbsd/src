@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_cardbus.c,v 1.3 2005/04/11 08:09:32 dlg Exp $ */
+/*	$OpenBSD: ohci_cardbus.c,v 1.4 2005/12/30 04:01:18 dlg Exp $ */
 /*	$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
@@ -45,10 +45,6 @@
  * USB spec: http://www.teleport.com/cgi-bin/mailmerge.cgi/~usb/cgiform.tpl
  */
 
-#include <sys/cdefs.h>
-#ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Exp $");
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,17 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Ex
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>
 
-#ifdef __NetBSD__
-int	ohci_cardbus_match(struct device *, struct cfdata *, void *);
-#else
 int	ohci_cardbus_match(struct device *, void *, void *);
-#endif
 void	ohci_cardbus_attach(struct device *, struct device *, void *);
-#ifdef __NetBSD__
-int	ohci_cardbus_detach(device_ptr_t, int);
-#else
 int	ohci_cardbus_detach(struct device *, int);
-#endif
 
 struct ohci_cardbus_softc {
 	ohci_softc_t		sc;
@@ -89,15 +77,10 @@ struct ohci_cardbus_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
-#ifdef __NetBSD__
-CFATTACH_DECL(ohci_cardbus, sizeof(struct ohci_cardbus_softc),
-    ohci_cardbus_match, ohci_cardbus_attach, ohci_cardbus_detach, ohci_activate);
-#else
 struct cfattach ohci_cardbus_ca = {
 	sizeof(struct ohci_cardbus_softc), ohci_cardbus_match,
 	    ohci_cardbus_attach, ohci_cardbus_detach, ohci_activate
 };
-#endif
 
 #define CARDBUS_INTERFACE_OHCI PCI_INTERFACE_OHCI
 #define CARDBUS_CBMEM PCI_CBMEM
@@ -105,11 +88,7 @@ struct cfattach ohci_cardbus_ca = {
 #define cardbus_devinfo pci_devinfo
 
 int
-#ifdef __NetBSD__
-ohci_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
-#else
 ohci_cardbus_match(struct device *parent, void *match, void *aux)
-#endif
 {
 	struct cardbus_attach_args *ca = (struct cardbus_attach_args *)aux;
 
@@ -133,13 +112,6 @@ ohci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	usbd_status r;
 	const char *vendor;
 	const char *devname = sc->sc.sc_bus.bdev.dv_xname;
-
-#if defined(__NetBSD__)
-	char devinfo[256];
-	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s (rev. 0x%02x)\n", devinfo,
-	    CARDBUS_REVISION(ca->ca_class));
-#endif
 
 	/* Map I/O registers */
 	if (Cardbus_mapreg_map(ct, CARDBUS_CBMEM, CARDBUS_MAPREG_TYPE_MEM, 0,
@@ -207,11 +179,7 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 }
 
 int
-#ifdef __NetBSD__
-ohci_cardbus_detach(device_ptr_t self, int flags)
-#else
 ohci_cardbus_detach(struct device *self, int flags)
-#endif
 {
 	struct ohci_cardbus_softc *sc = (struct ohci_cardbus_softc *)self;
 	struct cardbus_devfunc *ct = sc->sc_ct;
