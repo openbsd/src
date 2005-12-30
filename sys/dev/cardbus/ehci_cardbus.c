@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_cardbus.c,v 1.4 2005/12/30 03:56:28 dlg Exp $ */
+/*	$OpenBSD: ehci_cardbus.c,v 1.5 2005/12/30 04:11:40 dlg Exp $ */
 /*	$NetBSD: ehci_cardbus.c,v 1.6.6.3 2004/09/21 13:27:25 skrll Exp $	*/
 
 /*
@@ -86,9 +86,6 @@ struct cfattach ehci_cardbus_ca = {
 #define CARDBUS_CBMEM PCI_CBMEM
 #define cardbus_findvendor pci_findvendor
 #define cardbus_devinfo pci_devinfo
-
-static TAILQ_HEAD(, usb_cardbus) ehci_cardbus_alldevs =
-	TAILQ_HEAD_INITIALIZER(ehci_cardbus_alldevs);
 
 int
 ehci_cardbus_match(struct device *parent, void *match, void *aux)
