@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.10 2005/12/22 06:49:48 tedu Exp $ */
+/*	$OpenBSD: rthread.h,v 1.11 2005/12/30 04:05:55 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -128,3 +128,11 @@ int	_sem_wakeall(sem_t);
 void	_rthread_tls_destructors(pthread_t);
 
 int	_atomic_lock(register volatile _spinlock_lock_t *);
+
+/* syscalls */
+int getthrid(void);
+void threxit(int);
+int thrsleep(void *, int, void *);
+int thrwakeup(void *, int n);
+int sched_yield(void);
+int thrsigdivert(const sigset_t *);

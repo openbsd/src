@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sched.c,v 1.3 2005/12/19 06:47:40 tedu Exp $ */
+/*	$OpenBSD: rthread_sched.c,v 1.4 2005/12/30 04:05:55 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -35,8 +35,6 @@
 #include <pthread.h>
 
 #include "rthread.h"
-
-int sched_yield(void);
 
 int
 pthread_getschedparam(pthread_t thread, int *policy,
