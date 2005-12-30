@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbox.c,v 1.9 2005/01/27 21:24:48 miod Exp $	*/
+/*	$OpenBSD: gbox.c,v 1.10 2005/12/30 18:00:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -172,7 +172,7 @@ gbox_intio_attach(struct device *parent, struct device *self, void *aux)
 	struct diofbreg *fbr;
 
 	fbr = (struct diofbreg *)IIOV(GRFIADDR);
-	sc->sc_scode = -1;	/* XXX internal i/o */
+	sc->sc_scode = CONSCODE_INTERNAL;
 
 	if (sc->sc_scode == conscode) {
 		sc->sc_fb = &diofb_cn;
@@ -511,7 +511,7 @@ gboxcnprobe(struct consdev *cp)
 		cp->cn_pri = CN_INTERNAL;
 
 #ifdef CONSCODE
-		if (CONSCODE == -1) {
+		if (CONSCODE == CONSCODE_INTERNAL) {
 			force = conforced = 1;
 		}
 #endif
@@ -528,7 +528,7 @@ gboxcnprobe(struct consdev *cp)
 			cn_tab = cp;
 			if (convasize)
 				iounmap(conaddr, convasize);
-			conscode = -1;
+			conscode = CONSCODE_INTERNAL;
 			conaddr = va;
 			convasize = 0;
 		}

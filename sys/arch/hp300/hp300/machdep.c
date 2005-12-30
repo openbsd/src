@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.105 2005/12/22 22:56:28 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.106 2005/12/30 18:00:23 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ void    straytrap(int, u_short);
 void	nmihand(struct frame);
 
 /*
- * Select code of console.  Set to -1 if console is on
+ * Select code of console.  Set to CONSCODE_INTERNAL if console is on
  * "internal" framebuffer.
  */
 int	conscode;
@@ -215,7 +215,7 @@ consinit()
 	 */
 	convasize = 0;
 	conforced = 0;
-	conscode = 1024;		/* invalid */
+	conscode = CONSCODE_INVALID;
 
 	/*
 	 * Initialize the bus resource map.

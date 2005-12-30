@@ -1,4 +1,4 @@
-/*	$OpenBSD: topcat.c,v 1.10 2005/12/28 21:19:27 miod Exp $	*/
+/*	$OpenBSD: topcat.c,v 1.11 2005/12/30 18:00:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -181,7 +181,7 @@ topcat_intio_attach(struct device *parent, struct device *self, void *aux)
 	struct diofbreg *fbr;
 
 	fbr = (struct diofbreg *)IIOV(GRFIADDR);
-	sc->sc_scode = -1;	/* XXX internal i/o */
+	sc->sc_scode = CONSCODE_INTERNAL;
 
 	if (sc->sc_scode == conscode) {
 		sc->sc_fb = &diofb_cn;
@@ -587,7 +587,7 @@ topcatcnprobe(struct consdev *cp)
 			cp->cn_pri = CN_INTERNAL;
 
 #ifdef CONSCODE
-			if (CONSCODE == -1) {
+			if (CONSCODE == CONSCODE_INTERNAL) {
 				force = conforced = 1;
 			}
 #endif
@@ -604,7 +604,7 @@ topcatcnprobe(struct consdev *cp)
 				cn_tab = cp;
 				if (convasize)
 					iounmap(conaddr, convasize);
-				conscode = -1;
+				conscode = CONSCODE_INTERNAL;
 				conaddr = va;
 				convasize = 0;
 			}

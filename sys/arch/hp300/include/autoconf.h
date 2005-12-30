@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.11 2005/02/27 22:08:43 miod Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.12 2005/12/30 18:00:23 miod Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.4 1997/04/01 03:03:56 scottr Exp $	*/
 
 /*-
@@ -39,6 +39,8 @@
 
 #ifdef _KERNEL
 extern	int conscode;			/* select code of console device */
+#define	CONSCODE_INTERNAL	(-1)
+#define	CONSCODE_INVALID	(-2)
 extern	caddr_t conaddr;		/* KVA of console device */
 extern	int convasize;			/* size of mapping at conaddr */
 extern	int conforced;			/* console has been forced */
