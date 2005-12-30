@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.51 2005/12/30 14:07:40 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.52 2005/12/30 16:40:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -62,15 +62,6 @@ attr_write(void *p, u_int16_t p_len, u_int8_t flags, u_int8_t type,
 		memcpy(b, data, data_len);
 
 	return (tot_len);
-}
-
-int
-attr_optlen(struct attr *a)
-{
-	if (a->len > 255)
-		return (4 + a->len);
-	else
-		return (3 + a->len);
 }
 
 int
