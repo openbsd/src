@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.37 2005/12/25 00:22:47 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.38 2005/12/30 21:14:16 millert Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -1242,10 +1242,7 @@ syscall(tf, code, pc)
 	const struct sysent *callp;
 	struct proc *p;
 	int error = 0, new;
-	union args {
-		register32_t i[8];
-		register64_t l[8];
-	} args;
+	register_t args[8];
 	register_t rval[2];
 	u_quad_t sticks;
 #ifdef DIAGNOSTIC
@@ -1309,7 +1306,7 @@ syscall(tf, code, pc)
 	if (code < 0 || code >= nsys)
 		callp += p->p_emul->e_nosys;
 	else if (tf->tf_out[6] & 1L) {
-		register64_t *argp;
+		register_t *argp;
 
 		callp += code;
 		i = callp->sy_narg; /* Why divide? */
@@ -1319,77 +1316,35 @@ syscall(tf, code, pc)
 			/* Read the whole block in */
 			error = copyin((caddr_t)(u_long)tf->tf_out[6] + BIAS +
 				       offsetof(struct frame64, fr_argx),
-				       (caddr_t)&args.l[nap], (i - nap) * sizeof(register64_t));
+				       (caddr_t)&args[nap], (i - nap) * sizeof(register_t));
 			i = nap;
 		}
 		/* It should be faster to do <=6 longword copies than call bcopy */
-		for (argp = &args.l[0]; i--;) 
+		for (argp = args; i--;) 
 			*argp++ = *ap++;
 		
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
 			ktrsyscall(p, code,
-				   callp->sy_argsize, (register_t*)args.l);
+				   callp->sy_argsize, args);
 #endif
 		if (error)
 			goto bad;
 	} else {
-#if !defined(COMPAT_NETBSD32)
 		error = EFAULT;
 		goto bad;
-#else
-		register32_t *argp;
-		int j = 0;
-
-		/* 32-bit stack */
-		callp += code;
-
-		i = (long)callp->sy_argsize / sizeof(register32_t);
-		if (i > nap) {	/* usually false */
-			register32_t temp[6];
-			if (i > 8)
-				panic("syscall nargs");
-			/* Read the whole block in */
-			error = copyin((caddr_t)(u_long)(tf->tf_out[6] +
-						 offsetof(struct frame32, fr_argx)),
-				       (caddr_t)&temp, (i - nap) * sizeof(register32_t));
-			/* Copy each to the argument array */
-			for (j = 0; nap + j < i; j++)
-				args.i[nap+j] = temp[j];
-			i = nap;
-		}
-		/* Need to convert from int64 to int32 or we lose */
-		for (argp = &args.i[0]; i--;) 
-				*argp++ = *ap++;
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_SYSCALL)) {
-			register_t temp[8];
-			
-			/* Need to xlate 32-bit->64-bit */
-			i = (long)callp->sy_argsize / 
-				sizeof(register32_t);
-			for (j=0; j<i; j++) 
-				temp[j] = args.i[j];
-			ktrsyscall(p, code,
-				   i * sizeof(register_t), (register_t *)temp);
-		}
-#endif
-		if (error) {
-			goto bad;
-		}
-#endif	/* !COMPAT_NETBSD32 */
 	}
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, (register_t *)&args);
+	scdebug_call(p, code, args);
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE))
-		error = systrace_redirect(code, p, &args, rval);
+		error = systrace_redirect(code, p, args, rval);
 	else
 #endif
-		error = (*callp->sy_call)(p, &args, rval);
+		error = (*callp->sy_call)(p, args, rval);
 
 	switch (error) {
 		vaddr_t dest;

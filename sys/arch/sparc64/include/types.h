@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.10 2005/12/14 21:46:31 millert Exp $	*/
+/*	$OpenBSD: types.h,v 1.11 2005/12/30 21:14:16 millert Exp $	*/
 /*	$NetBSD: types.h,v 1.17 2001/05/12 22:42:07 kleink Exp $ */
 
 /*
@@ -53,10 +53,8 @@ typedef struct label_t {
 } label_t;
 #endif
 
-/* The following are unsigned to prevent annoying sign extended pointers. */
+/* register_t is unsigned to prevent annoying sign extended pointers. */
 typedef unsigned long int	register_t;
-typedef unsigned int		register32_t;
-typedef unsigned long int	register64_t;
 
 #if __BSD_VISIBLE
 typedef unsigned long int	vaddr_t;
