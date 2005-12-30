@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_exec.c,v 1.1 2004/07/09 21:33:45 mickey Exp $	*/
+/*	$OpenBSD: hpux_exec.c,v 1.2 2005/12/30 19:46:55 miod Exp $	*/
 /*	$NetBSD: hpux_exec.c,v 1.8 1997/03/16 10:14:44 thorpej Exp $	*/
 
 /*
@@ -101,6 +101,9 @@ exec_hpux_makecmds(p, epp)
 	struct hpux_exec *hpux_ep = epp->ep_hdr;
 	short sysid, magic;
 	int error = ENOEXEC;
+
+	if (epp->ep_hdrvalid < sizeof(struct hpux_exec))
+		return (ENOEXEC);
 
 	magic = HPUX_MAGIC(hpux_ep);
 	sysid = HPUX_SYSID(hpux_ep);

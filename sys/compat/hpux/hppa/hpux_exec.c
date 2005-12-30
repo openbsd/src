@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_exec.c,v 1.2 2005/03/12 18:38:52 mickey Exp $	*/
+/*	$OpenBSD: hpux_exec.c,v 1.3 2005/12/30 19:46:53 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff.  All rights reserved.
@@ -109,7 +109,7 @@ exec_hpux_makecmds(p, epp)
 	/* XXX read in the aux header if it was not following the som header */
 	if (sysid != MID_HPUX && (!(som_ep->som_version == HPUX_SOM_V0 ||
 	    som_ep->som_version == HPUX_SOM_V1) ||
-	    som_ep->som_auxhdr + sizeof(struct som_aux) < epp->ep_hdrvalid)) {
+	    som_ep->som_auxhdr + sizeof(struct som_aux) > epp->ep_hdrvalid)) {
 		return (error);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.23 2004/04/15 00:22:42 tedu Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.24 2005/12/30 19:46:55 miod Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*-
@@ -265,6 +265,9 @@ exec_linux_aout_makecmds(p, epp)
 	struct exec *linux_ep = epp->ep_hdr;
 	int machtype, magic;
 	int error = ENOEXEC;
+
+	if (epp->ep_hdrvalid < sizeof(struct exec))
+		return (ENOEXEC);
 
 	magic = LINUX_N_MAGIC(linux_ep);
 	machtype = LINUX_N_MACHTYPE(linux_ep);
