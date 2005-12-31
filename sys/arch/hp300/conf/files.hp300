@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.29 2005/09/21 21:08:31 miod Exp $
+#	$OpenBSD: files.hp300,v 1.30 2005/12/31 19:30:14 miod Exp $
 #	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
@@ -198,8 +198,6 @@ file	arch/hp300/hp300/sys_machdep.c
 file	arch/hp300/hp300/trap.c
 file	arch/hp300/hp300/vm_machdep.c
 file	arch/hp300/dev/dma.c
-
-file	dev/cninit.c
 
 #
 # HP-UX binary compatibility
