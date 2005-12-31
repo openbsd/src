@@ -1,4 +1,4 @@
-/*	$OpenBSD: consdefs.h,v 1.3 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: consdefs.h,v 1.4 2005/12/31 17:59:47 miod Exp $	*/
 /*	$NetBSD: consdefs.h,v 1.2 1997/05/12 07:45:41 thorpej Exp $	*/
 
 /*
@@ -35,6 +35,8 @@
  */
 extern	int curcons_scode;
 extern	int cons_scode;
+#define	CONSCODE_INTERNAL	(-1)
+#define	CONSCODE_INVALID	(-2)
 
 /*
  * Console routine prototypes.

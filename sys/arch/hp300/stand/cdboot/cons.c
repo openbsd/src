@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.2 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: cons.c,v 1.3 2005/12/31 17:59:43 miod Exp $	*/
 /*	$NetBSD: cons.c,v 1.2 1997/05/12 07:44:53 thorpej Exp $ */
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/param.h>
 #include <dev/cons.h>
 
+#include "consdefs.h"
 #include "samachdep.h"
 
 
@@ -58,7 +59,7 @@ cninit()
 {
 	cn_tab = NULL;
 	noconsole = 1;
-	cons_scode = 256;	/* larger than last valid select code */
+	cons_scode = CONSCODE_INVALID;
 	userom = 1;
 	donottwiddle = 1;
 }

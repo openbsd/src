@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.2 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: cons.c,v 1.3 2005/12/31 17:59:47 miod Exp $	*/
 /*	$NetBSD: cons.c,v 1.2 1997/05/12 07:44:53 thorpej Exp $ */
 
 /*
@@ -74,7 +74,7 @@ cninit()
 
 	cn_tab = NULL;
 	noconsole = 1;
-	cons_scode = 256;	/* larger than last valid select code */
+	cons_scode = CONSCODE_INVALID;
 	for (cp = constab; cp->cn_probe; cp++) {
 		(*cp->cn_probe)(cp);
 		if (cp->cn_pri > CN_DEAD &&
@@ -86,19 +86,6 @@ cninit()
 	if (cn_tab) {
 		(*cn_tab->cn_init)(cn_tab);
 		noconsole = 0;
-#if 0
-		printf("console: ");
-		switch (cons_scode) {
-		case -2:
-			printf("apci\n");
-			break;
-		case -1:
-			printf("internal grf\n");
-			break;
-		default:
-			printf("scode %d\n", cons_scode);
-		}
-#endif
 	}
 }
 

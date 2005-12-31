@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.5 2005/04/22 00:42:16 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.6 2005/12/31 17:59:47 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1997/06/28 07:20:25 thorpej Exp $	*/
 
 /*
@@ -62,12 +62,18 @@ getmachineid()
 		cp = "350"; break;
 	case HP_360:
 		cp = "360"; break;
+#if 0	/* bootblocks do not tell 360 apart from 362 at the moment */
+	case HP_362:
+		cp = "362"; break;
+#endif
 	case HP_370:
 		cp = "370"; break;
 	case HP_375:
 		cp = "375"; break;
 	case HP_380:
 		cp = "380"; break;
+	case HP_382:
+		cp = "382"; break;
 	case HP_385:
 		cp = "385"; break;
 	case HP_400:

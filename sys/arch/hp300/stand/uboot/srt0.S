@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.4 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.5 2005/12/31 17:59:47 miod Exp $	*/
 /*	$NetBSD: srt0.S,v 1.4 1997/05/12 07:56:00 thorpej Exp $	*/
 
 /*
@@ -43,11 +43,8 @@
  * Startup code for standalone system
  */
 
-/* For machineid and mmuid constants */
-#include <machine/hp300spu.h>
-
-/* For _C_LABEL() and friends. */
 #include <machine/asm.h>
+#include <machine/hp300spu.h>
 
 	STACK =	   0xfffff000		| below the ROM page
 	BOOTTYPE = 0xfffffdc0
@@ -64,16 +61,12 @@
 	.data
 GLOBAL(bootdev)
 	.long	0
-
 GLOBAL(howto)
 	.long	0
-
 GLOBAL(lowram)
 	.long	0
-
 GLOBAL(machineid)
 	.long	0
-
 GLOBAL(mmuid)
 	.long	0
 
@@ -101,13 +94,12 @@ ASENTRY_NOPROFILE(begin)
 	tstl	d0			| zero?
 	jeq	not68030		| yes, we have 68020/68040
 
-	movl	#0x808,d0
-	movc	d0,cacr			| clear data freeze bit again
-
 	/*
 	 * 68030 models
 	 */
 
+	movl	#0x808,d0
+	movc	d0,cacr			| clear data freeze bit again
 	movl	#0x80,MMUCMD		| set magic cookie
 	movl	MMUCMD,d0		| read it back
 	btst	#7,d0			| cookie still on?
@@ -125,7 +117,7 @@ not370:
 	movl	#0,MMUCMD		| clear magic cookie2
 	movl	MMUCMD,d0		| read it back
 	btst	#16,d0			| still on?
-	jeq	ihpibcheck		| no, a 360
+	jeq	ihpibcheck		| no, a 360 or a 362
 	lsrl	#MMUID_SHIFT,d0		| save MMU ID
 	andl	#MMUID_MASK,d0
 	movl	d0,_C_LABEL(mmuid)	| save mmuid
@@ -155,16 +147,15 @@ not68030:
 	moveq	#0,d0			| now turn it back off
 	movec	d0,cacr			|   before we access any data
 
+	/*
+	 * 68040 models
+	 */
+
 	.long	0x4e7b0004		| movc d0,itt0
 	.long	0x4e7b0005		| movc d0,itt1
 	.long	0x4e7b0006		| movc d0,dtt0
 	.long	0x4e7b0007		| movc d0,dtt1
 	.word	0xf4d8			| cinva bc
-
-	/*
-	 * 68040 models
-	 */
-
 	movl	MMUCMD,d0		| get MMU ID
 	lsrl	#MMUID_SHIFT,d0
 	andl	#MMUID_MASK,d0
@@ -179,8 +170,10 @@ not68030:
 	jeq	isa433
 	cmpb	#MMUID_433_S,d0		| maybe a 433s?
 	jeq	isa433
-	cmpb	#MMUID_385,d0		| last chance...
+	cmpb	#MMUID_385,d0		| then a 385?
 	jeq	isa385
+	cmpb	#MMUID_382,d0		| last chance...
+	jeq	isa382
 	movl	#HP_380,a0@		| guess we're a 380
 	jra	ihpibcheck
 isa425:
@@ -191,6 +184,9 @@ isa433:
 	jra	ihpibcheck
 isa385:
 	movl	#HP_385,a0@
+	jra	ihpibcheck
+isa382:
+	movl	#HP_382,a0@
 	jra	ihpibcheck
 
 	/*

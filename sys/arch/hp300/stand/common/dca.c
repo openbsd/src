@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.3 2005/12/28 21:13:45 miod Exp $	*/
+/*	$OpenBSD: dca.c,v 1.4 2005/12/31 17:59:47 miod Exp $	*/
 /*	$NetBSD: dca.c,v 1.10 1996/10/06 01:42:48 mycroft Exp $	*/
 
 /*
@@ -67,9 +67,7 @@ dcaprobe(cp)
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
-#ifdef FORCEDCACONSOLE
-	cp->cn_pri = CN_REMOTE;
-#else
+
 	dca = dcacnaddr;
 	switch (dca->dca_id) {
 	case DCAID0:
@@ -85,7 +83,6 @@ dcaprobe(cp)
 		break;
 	}
 
-#endif
 	curcons_scode = DCACONSCODE;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.5 2005/04/22 00:42:16 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.6 2005/12/31 17:59:47 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.12 1997/01/30 10:32:51 thorpej Exp $	*/
 
 /*
@@ -94,21 +94,26 @@ configure()
 		break;
 	case HP_350:
 	case HP_360:
+#if 0	/* bootblocks do not tell 360 apart from 362 at the moment */
+	case HP_362:
+#endif
 		cpuspeed = MHZ_25;
 		break;
 	case HP_370:
 		cpuspeed = MHZ_33;
 		break;
-	case HP_375:
-		cpuspeed = MHZ_50;
-		break;
 	case HP_380:
+	case HP_382:
+	case HP_425:
 		cpuspeed = MHZ_25 * 2;	/* XXX */
 		break;
 	case HP_385:
 	case HP_433:
 		cpuspeed = MHZ_33 * 2;	/* XXX */
 		break;
+	case HP_345:
+	case HP_375:
+	case HP_400:
 	default:	/* assume the fastest (largest delay value) */
 		cpuspeed = MHZ_50;
 		break;
@@ -233,9 +238,12 @@ find_devs()
 			hw->hw_type = D_BITMAP;
 			hw->hw_secid = id_reg[0x15];
 			switch (hw->hw_secid) {
-			case 4:	/* renaissance */
-			case 8: /* davinci */
+			case 4:		/* renaissance */
+			case 8:		/* davinci */
 				sc++;		/* occupy 2 select codes */
+				break;
+			case 0x11:	/* 3x2 internal display */
+				sc += 3;	/* occupy 4 select codes */
 				break;
 			}
 			break;
