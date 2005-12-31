@@ -1,4 +1,4 @@
-/*	$OpenBSD: wm8750reg.h,v 1.1 2005/04/15 01:05:51 pascoe Exp $	*/
+/*	$OpenBSD: wm8750reg.h,v 1.2 2005/12/31 04:31:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <c.pascoe@itee.uq.edu.au>
@@ -182,7 +182,7 @@
 #define  ADCTL1_DACINV 0x2
 #define  ADCTL1_TOEN 0x1
 
-#define ADCTL2_REG 0x18 		/* Additional control(2) */
+#define ADCTL2_REG 0x18			/* Additional control(2) */
 #define  ADCTL2_OUTSW3_MASK 0x180
 #define  ADCTL2_GET_OUTSW3(x) (((x) >> 7) & 0x180)
 #define  ADCTL2_SET_OUTSW3(x) ((x) << 7)

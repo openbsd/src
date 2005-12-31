@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm87.c,v 1.13 2005/12/27 20:05:56 deraadt Exp $	*/
+/*	$OpenBSD: lm87.c,v 1.14 2005/12/31 04:31:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -201,7 +201,7 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensor[LMENV_EXT_TEMP].desc, "Ext. Temp.",
 	    sizeof(sc->sc_sensor[LMENV_EXT_TEMP].desc));
 	if (sc->sc_family == 81)
-		sc->sc_sensor[LMENV_EXT_TEMP].flags |= SENSOR_FINVALID;		
+		sc->sc_sensor[LMENV_EXT_TEMP].flags |= SENSOR_FINVALID;
 
 	sc->sc_sensor[LMENV_INT_TEMP].type = SENSOR_TEMP;
 	strlcpy(sc->sc_sensor[LMENV_INT_TEMP].desc, "Int. Temp.",

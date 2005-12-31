@@ -1,4 +1,4 @@
-/*	$OpenBSD: maxim6690.c,v 1.4 2005/12/28 23:05:21 deraadt Exp $	*/
+/*	$OpenBSD: maxim6690.c,v 1.5 2005/12/31 04:31:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -106,7 +106,7 @@ maxtmp_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_temp2_mask = LM90_TEMP2_MASK;
 	}
 	printf(": %s", ia->ia_name);
-	
+
 	/* Initialize sensor data. */
 	for (i = 0; i < MAXTMP_NUM_SENSORS; i++)
 		strlcpy(sc->sc_sensor[i].device, sc->sc_dev.dv_xname,
@@ -138,7 +138,7 @@ maxtmp_readport(struct maxtmp_softc *sc, u_int8_t cmd1, u_int8_t cmd2,
     int index)
 {
 	u_int8_t data, data2;
-	
+
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd1, sizeof cmd1, &data, sizeof data, 0))
 		goto invalid;

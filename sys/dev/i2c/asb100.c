@@ -1,4 +1,4 @@
-/*	$OpenBSD: asb100.c,v 1.1 2005/12/30 23:19:51 djm Exp $	*/
+/*	$OpenBSD: asb100.c,v 1.2 2005/12/31 04:31:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Damien Miller
@@ -308,7 +308,7 @@ fanval(struct sensor *sens, int mul, u_int8_t data)
 		sens->value = 1350000 / tmp;
 		sens->flags &= ~SENSOR_FINVALID;
 	}
-}	
+}
 
 void
 asbtm_refresh(void *arg)

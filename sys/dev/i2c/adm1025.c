@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1025.c,v 1.18 2005/12/29 14:51:08 deraadt Exp $	*/
+/*	$OpenBSD: adm1025.c,v 1.19 2005/12/31 04:31:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -83,7 +83,7 @@ admtm_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (strcmp(ia->ia_name, "adm1025") == 0 || 
+	if (strcmp(ia->ia_name, "adm1025") == 0 ||
 	    strcmp(ia->ia_name, "47m192") == 0 ||
 	    strcmp(ia->ia_name, "ne1619") == 0) {
 		/*
@@ -113,7 +113,7 @@ admtm_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_nsensors = ADMTM_NUM_SENSORS;
 	sc->sc_model = 1025;
-    	if (strcmp(ia->ia_name, "47m192") == 0) {
+	if (strcmp(ia->ia_name, "47m192") == 0) {
 		sc->sc_nsensors += SMSC_NUM_SENSORS;
 		sc->sc_model = 192;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad741x.c,v 1.5 2005/12/28 20:35:16 deraadt Exp $	*/
+/*	$OpenBSD: ad741x.c,v 1.6 2005/12/31 04:31:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -37,7 +37,7 @@
 #define ADC_TEMP		0
 #define ADC_ADC0		1
 #define ADC_ADC1		2
-#define ADC_ADC2		3	
+#define ADC_ADC2		3
 #define ADC_ADC3		4
 #define ADC_MAX_SENSORS		5
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1024.c,v 1.8 2005/12/29 14:51:08 deraadt Exp $	*/
+/*	$OpenBSD: adm1024.c,v 1.9 2005/12/31 04:31:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -195,7 +195,7 @@ fanval(struct sensor *sens, int mul, u_int8_t data)
 		sens->flags |= SENSOR_FINVALID;
 	else
 		sens->value = 1350000 / tmp;
-}	
+}
 
 void
 admlc_refresh(void *arg)
