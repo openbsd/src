@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.27 2004/11/16 00:31:02 brad Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.28 2005/12/31 04:11:40 dlg Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -436,6 +436,19 @@ typedef u_int8_t pci_revision_t;
  * (PCI rev. 2.1)
  */
 #define PCI_SUBSYS_ID_REG 0x2c
+
+/*
+ * Expansion ROM Base Address register
+ * (PCI rev. 2.0)
+ */
+#define PCI_ROM_REG 0x30
+
+#define PCI_ROM_ENABLE			0x00000001
+#define PCI_ROM_ADDR_MASK		0xfffff800
+#define PCI_ROM_ADDR(mr)						\
+	    ((mr) & PCI_ROM_ADDR_MASK)
+#define PCI_ROM_SIZE(mr)						\
+	    (PCI_ROM_ADDR(mr) & -PCI_ROM_ADDR(mr))
 
 /*
  * capabilities link list (PCI rev. 2.2)
