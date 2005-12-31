@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.43 2005/12/31 02:50:32 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.44 2005/12/31 04:31:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -218,7 +218,7 @@ amd1032cloneprobe(u_int8_t addr)
 		return ("xeontemp");
 	}
 	return (NULL);
-}	
+}
 
 void
 iic_ignore_addr(u_int8_t addr)
@@ -398,7 +398,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		else if (iicprobe(0xff) == 0x34 && addr == 0x4d &&
 		    (iicprobe(0x03) & 0x2a) == 0 && iicprobe(0x04) <= 0x09)
 			name = "lm99-1";
-		else if (iicprobe(0xff) == 0x11 && 
+		else if (iicprobe(0xff) == 0x11 &&
 		    (iicprobe(0x03) & 0x2a) == 0 && iicprobe(0x04) <= 0x09)
 			name = "lm86";
 	} else if (iicprobe(0xfe) == 0x4d && iicprobe(0xff) == 0x08) {
@@ -481,6 +481,15 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			skip_fc = 1;
 	}
 
+	if (name) {
+		ia.ia_tag = iba->iba_tag;
+		ia.ia_addr = addr;
+		ia.ia_size = 1;
+		ia.ia_name = name;
+		if (config_found(self, &ia, iic_print))
+			return;
+	}
+
 #ifdef I2C_DEBUG
 	printf("%s: addr 0x%x", self->dv_xname, addr);
 //	for (i = 0; i < sizeof(probereg); i++) {
@@ -496,13 +505,6 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	printf("\n");
 #endif /* I2C_DEBUG */
 
-	if (name) {
-		ia.ia_tag = iba->iba_tag;
-		ia.ia_addr = addr;
-		ia.ia_size = 1;
-		ia.ia_name = name;
-		config_found(self, &ia, iic_print);
-	}
 }
 
 void
