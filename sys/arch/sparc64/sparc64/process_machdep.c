@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.9 2005/12/17 16:08:35 kettenis Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.10 2005/12/31 23:50:39 kettenis Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.10 2000/09/26 22:05:50 eeh Exp $ */
 
 /*
@@ -62,6 +62,7 @@
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/vnode.h>
@@ -207,14 +208,13 @@ process_write_fpregs(p, regs)
 	struct proc	*p;
 	struct fpreg	*regs;
 {
-	struct fpstate64 *statep;
 	struct fpreg32 *regp = (struct fpreg32 *)regs;
 	int i;
 
-	if (p->p_md.md_fpstate == NULL)
-		return EINVAL;
-	else
-		statep = p->p_md.md_fpstate;
+	if (p->p_md.md_fpstate == NULL) {
+		p->p_md.md_fpstate = malloc(sizeof(struct fpstate64),
+		    M_SUBPROC, M_WAITOK);
+	}
 
 	if (p == fpproc) {
 		/* Release the fpu. */
@@ -224,15 +224,15 @@ process_write_fpregs(p, regs)
 
 	if (!(curproc->p_flag & P_32)) {
 		/* 64-bit mode -- copy in fregs */
-		bcopy(regs, statep, sizeof(struct fpreg64));
-		statep->fs_qsize = 0;
+		bcopy(regs, p->p_md.md_fpstate, sizeof(struct fpreg64));
+		p->p_md.md_fpstate->fs_qsize = 0;
 		return 0;
 	}
 	/* 32-bit mode -- copy in & convert 32-bit fregs */
 	for (i = 0; i < 32; i++)
-		statep->fs_regs[i] = regp->fr_regs[i];
-	statep->fs_fsr = regp->fr_fsr;
-	statep->fs_qsize = 0;
+		p->p_md.md_fpstate->fs_regs[i] = regp->fr_regs[i];
+	p->p_md.md_fpstate->fs_fsr = regp->fr_fsr;
+	p->p_md.md_fpstate->fs_qsize = 0;
 
 	return 0;
 }
