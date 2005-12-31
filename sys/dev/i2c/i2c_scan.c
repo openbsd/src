@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.46 2005/12/31 18:34:26 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.47 2005/12/31 20:54:50 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -159,7 +159,7 @@ lm75probe(void)
 #endif
 
 	/* a real lm75/77 repeats it's registers.... */
-	for (i = 0x08; i < 0xff; i += 8) {
+	for (i = 0x08; i <= 0xf8; i += 8) {
 		if (main != iicprobenc(0x01 + i) ||
 		    mains[0] != iicprobew(0x02 + i) ||
 		    mains[1] != iicprobew(0x03 + i) ||
