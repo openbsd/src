@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldconfig.8,v 1.16 2004/11/22 00:58:39 jmc Exp $
+.\"	$OpenBSD: ldconfig.8,v 1.17 2005/12/31 15:08:22 jmc Exp $
 .\"
 .\" Copyright (c) 1993,1995 Paul Kranenburg
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Nd configure the shared library cache
 .Sh SYNOPSIS
 .Nm ldconfig
-.Op Fl RUmrsv
+.Op Fl mRrsUv
 .Op Ar directory Ar ...
 .Sh DESCRIPTION
 .Nm
@@ -97,15 +97,15 @@ the existing hints file.
 The default action is to build the hints file afresh.
 This option cannot be used with
 .Fl U .
+.It Fl R
+Rescan the previously configured directories.
+This opens the hints file and fetches the directory list from the header.
+Any additional pathnames on the command line are also processed.
 .It Fl r
 List the current contents of
 .Pa ld.so.hints
 on the standard output.
 The hints file will not be modified.
-.It Fl R
-Rescan the previously configured directories.
-This opens the hints file and fetches the directory list from the header.
-Any additional pathnames on the command line are also processed.
 .It Fl s
 Do not scan the built-in system directory
 .Pq Dq /usr/lib

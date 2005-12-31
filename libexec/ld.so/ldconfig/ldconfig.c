@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.16 2004/08/14 03:08:24 drahn Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.17 2005/12/31 15:08:22 jmc Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -113,7 +113,7 @@ main(int argc, char *argv[])
 			break;
 		default:
 			fprintf(stderr,
-			    "usage: %s [-RUmrsv] [dir ...]\n", __progname);
+			    "usage: %s [-mRrsUv] [dir ...]\n", __progname);
 			exit(1);
 			break;
 		}
