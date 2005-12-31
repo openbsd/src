@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.987 2005/12/29 23:28:47 reyk Exp 
+ *	OpenBSD: pcidevs,v 1.989 2005/12/31 03:55:58 fgsch Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -475,12 +475,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "EN1217",
 	},
 	{
-	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139,
-	    "rtl8139",
-	},
-	{
 	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_RHINEII,
 	    "RhineII",
+	},
+	{
+	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139,
+	    "rtl8139",
 	},
 	{
 	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_AWA100,
@@ -1531,6 +1531,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SB200 USB",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_200,
+	    "IXP200 IDE",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_ISA,
 	    "SB200 PCI-ISA",
 	},
@@ -1553,6 +1557,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_300,
 	    "IXP300 AC97",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_300,
+	    "IXP300 IDE",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_400,
@@ -1583,6 +1591,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "IXP400 ISA",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_400,
+	    "IXP400 IDE",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_MODEM_400,
 	    "IXP400 Modem",
 	},
@@ -1593,18 +1605,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_SATA_400_2,
 	    "IXP400 SATA",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_200,
-	    "IXP200 IDE",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_300,
-	    "IXP300 IDE",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_400,
-	    "IXP400 IDE",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_ET,
@@ -2151,16 +2151,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "LP-PCI 4 Serial",
 	},
 	{
+	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_B1,
+	    "BRI ISDN",
+	},
+	{
 	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_FRITZ_CARD,
 	    "Fritz ISDN",
 	},
 	{
 	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_FRITZ_PCI_V2_ISDN,
 	    "Fritz v2.0 ISDN",
-	},
-	{
-	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_B1,
-	    "BRI ISDN",
 	},
 	{
 	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_T1,
@@ -3203,12 +3203,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PERC 3/Di",
 	},
 	{
-	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
-	    "8139",
-	},
-	{
 	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_RHINEII,
 	    "RhineII",
+	},
+	{
+	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
+	    "8139",
 	},
 	{
 	    PCI_VENDOR_DIAMOND, PCI_PRODUCT_DIAMOND_VIPER,
@@ -3251,6 +3251,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "DGE-530T",
 	},
 	{
+	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_MEMCTLR,
+	    "Memory Control",
+	},
+	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_SC_RAID,
 	    "SmartCache/Raid",
 	},
@@ -3265,10 +3269,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_2005S,
 	    "SmartRAID 2005S",
-	},
-	{
-	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_MEMCTLR,
-	    "Memory Control",
 	},
 	{
 	    PCI_VENDOR_DOLPHIN, PCI_PRODUCT_DOLPHIN_PCISCI,
@@ -7467,12 +7467,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "OTI107",
 	},
 	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2183,
-	    "OC2183",
-	},
-	{
 	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2325,
 	    "OC2325",
+	},
+	{
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2183,
+	    "OC2183",
 	},
 	{
 	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2326,
@@ -7807,56 +7807,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "I/O 9080",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_DC5030,
-	    "DC5030",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20246,
-	    "PDC20246",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20262,
-	    "PDC20262",
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20265,
+	    "PDC20265",
 	},
 	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20263,
 	    "PDC20263",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20265,
-	    "PDC20265",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20267,
-	    "PDC20267",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20268,
-	    "PDC20268",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20268R,
-	    "PDC20268R",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20269,
-	    "PDC20269",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20271,
-	    "PDC20271",
-	},
-	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20275,
 	    "PDC20275",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20276,
-	    "PDC20276",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20277,
-	    "PDC20277",
 	},
 	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20318,
@@ -7891,6 +7851,42 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PDC20379",
 	},
 	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20267,
+	    "PDC20267",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20246,
+	    "PDC20246",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20262,
+	    "PDC20262",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20268,
+	    "PDC20268",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20269,
+	    "PDC20269",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20276,
+	    "PDC20276",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_DC5030,
+	    "DC5030",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20268R,
+	    "PDC20268R",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20271,
+	    "PDC20271",
+	},
+	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20617,
 	    "PDC20617",
 	},
@@ -7909,6 +7905,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20621,
 	    "PDC20621",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20277,
+	    "PDC20277",
 	},
 	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP10160,
@@ -8579,20 +8579,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "7018 Audio",
 	},
 	{
-	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_37C665,
-	    "FDC 37C665",
-	},
-	{
-	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_37C922,
-	    "FDC 37C922",
-	},
-	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C170,
 	    "83C170 (EPIC/100)",
 	},
 	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C175,
 	    "83C175 (EPIC/100)",
+	},
+	{
+	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_37C665,
+	    "FDC 37C665",
+	},
+	{
+	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_37C922,
+	    "FDC 37C922",
 	},
 	{
 	    PCI_VENDOR_SMI, PCI_PRODUCT_SMI_SM710,
@@ -9359,12 +9359,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "US201",
 	},
 	{
-	    PCI_VENDOR_USR, PCI_PRODUCT_USR_3CP5610,
-	    "3CP5610",
-	},
-	{
 	    PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR997902,
 	    "USR997902",
+	},
+	{
+	    PCI_VENDOR_USR, PCI_PRODUCT_USR_3CP5610,
+	    "3CP5610",
 	},
 	{
 	    PCI_VENDOR_USR2, PCI_PRODUCT_USR2_WL11000P,
@@ -10151,12 +10151,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82C925",
 	},
 	{
-	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VIRTUAL,
-	    "Virtual SVGA",
-	},
-	{
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VIRTUAL2,
 	    "Virtual SVGA II",
+	},
+	{
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VIRTUAL,
+	    "Virtual SVGA",
 	},
 	{
 	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_NET,
