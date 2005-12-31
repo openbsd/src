@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.111 2005/07/31 06:39:07 dlg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.112 2005/12/31 22:40:37 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -470,7 +470,6 @@ dev_rawpart(dv)
  */
 #include <dev/cons.h>
 
-cons_decl(pc);
 cons_decl(com);
 cons_decl(ws);
 
