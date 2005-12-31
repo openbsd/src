@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.24 2005/12/30 21:51:27 otto Exp $ */
+/*	$OpenBSD: rthread.c,v 1.25 2005/12/31 08:51:20 otto Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -38,10 +38,10 @@
 
 #include "rthread.h"
 
-static int threads_ready;
 static int concurrency_level;	/* not used */
 
-struct listhead _thread_list = LIST_HEAD_INITIALIZER(thread_list);
+int _threads_ready;
+struct listhead _thread_list = LIST_HEAD_INITIALIZER(_thread_list);
 _spinlock_lock_t _thread_lock = _SPINLOCK_UNLOCKED;
 struct pthread _initial_thread;
 
@@ -105,7 +105,7 @@ _rthread_init(void)
 	thread->flags |= THREAD_CANCEL_ENABLE|THREAD_CANCEL_DEFERRED;
 	strlcpy(thread->name, "Main process", sizeof(thread->name));
 	LIST_INSERT_HEAD(&_thread_list, thread, threads);
-	threads_ready = 1;
+	_threads_ready = 1;
 	__isthreaded = 1;
 
 	return (0);
@@ -153,7 +153,7 @@ pthread_self(void)
 {
 	pthread_t thread;
 
-	if (!threads_ready)
+	if (!_threads_ready)
 		if (_rthread_init())
 			return (NULL);
 
@@ -225,7 +225,7 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	pid_t tid;
 	int rc = 0;
 
-	if (!threads_ready)
+	if (!_threads_ready)
 		if ((rc = _rthread_init()))
 		    return (rc);
 
@@ -236,6 +236,8 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	thread->donesem.lock = _SPINLOCK_UNLOCKED;
 	thread->fn = start_routine;
 	thread->arg = arg;
+	if (attr)
+		thread->attr = *(*attr);
 
 	_spinlock(&_thread_lock);
 
@@ -256,6 +258,14 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	thread->tid = tid;
 	thread->flags |= THREAD_CANCEL_ENABLE|THREAD_CANCEL_DEFERRED;
 	*threadp = thread;
+
+	/*
+	 * Since _rthread_start() aquires the thread lock and due to the way
+	 * signal delivery is implemented, this is not a race.
+	 */
+	if (thread->attr.create_suspended)
+		kill(thread->tid, SIGSTOP);
+
 	_spinunlock(&_thread_lock);
 
 	return (0);

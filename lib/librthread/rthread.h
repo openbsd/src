@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.12 2005/12/30 20:35:11 otto Exp $ */
+/*	$OpenBSD: rthread.h,v 1.13 2005/12/31 08:51:20 otto Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -78,6 +78,7 @@ struct pthread_attr {
 	int sched_policy;
 	struct sched_param sched_param;
 	int sched_inherit;
+	int create_suspended;
 };
 
 struct rthread_key {
@@ -108,6 +109,7 @@ struct pthread {
 	struct stack *stack;
 	LIST_ENTRY(pthread) threads;
 	int sched_policy;
+	struct pthread_attr attr;
 	struct sched_param sched_param;
 	struct rthread_storage *local_storage;
 	int sigpend;
@@ -119,6 +121,7 @@ struct pthread {
 #define THREAD_CANCEL_ENABLE	0x008
 #define THREAD_CANCEL_DEFERRED	0x010
 
+extern int _threads_ready;
 extern LIST_HEAD(listhead, pthread) _thread_list;
 extern struct pthread _initial_thread;
 extern _spinlock_lock_t _thread_lock;

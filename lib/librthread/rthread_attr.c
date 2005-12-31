@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_attr.c,v 1.3 2005/12/19 06:47:40 tedu Exp $ */
+/*	$OpenBSD: rthread_attr.c,v 1.4 2005/12/31 08:51:20 otto Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -141,3 +141,11 @@ pthread_attr_setscope(pthread_attr_t *attrp, int contentionscope)
 
 	return (0);
 }
+
+int
+pthread_attr_setcreatesuspend_np(pthread_attr_t *attr)
+{
+	(*attr)->create_suspended = 1;
+	return (0);
+}
+
