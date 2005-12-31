@@ -1,4 +1,4 @@
-/* $OpenBSD: rfork_thread.S,v 1.1 2005/12/14 19:42:25 drahn Exp $ */
+/* $OpenBSD: rfork_thread.S,v 1.2 2005/12/31 21:11:49 drahn Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -24,7 +24,8 @@
  */
 
 ENTRY(rfork_thread)
-	stmdb   sp!, {r1-r4,sl,fp,lr}
+	stmdb   sp!, {r4}
+	mov	r4, r1
 
 
 	SYSTRAP(rfork)
@@ -32,15 +33,16 @@ ENTRY(rfork_thread)
 
 	/* check if we are parent or child */
 	cmp	r0, #0
-	ldmia   sp!, {r1-r4,sl,fp,lr}
+	ldmneia   sp!, {r4}
 	movne	pc, lr
 
 	/* child */
-	mov	sp, r1
+	mov	sp, r4
 	mov	r0, r3
 	mov	lr, pc
 	mov	pc, r2
-	SYSTRAP(exit)
+	nop
+	SYSTRAP(threxit)
 1:
-	ldmia   sp!, {r1-r4,sl,fp,lr}
+	ldmia   sp!, {r4}
 	b     PIC_SYM(CERROR, PLT)
