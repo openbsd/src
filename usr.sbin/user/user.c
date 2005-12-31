@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.65 2005/08/27 23:12:36 deraadt Exp $ */
+/* $OpenBSD: user.c,v 1.66 2005/12/31 19:20:49 millert Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1693,6 +1693,7 @@ useradd(int argc, char **argv)
 #ifdef EXTENSIONS
 		case 'p':
 			memsave(&u.u_password, optarg, strlen(optarg));
+			memset(optarg, 'X', strlen(optarg));
 			break;
 #endif
 #ifdef EXTENSIONS
@@ -1825,6 +1826,7 @@ usermod(int argc, char **argv)
 #ifdef EXTENSIONS
 		case 'p':
 			memsave(&u.u_password, optarg, strlen(optarg));
+			memset(optarg, 'X', strlen(optarg));
 			u.u_flags |= F_PASSWORD;
 			break;
 #endif
