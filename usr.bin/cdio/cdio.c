@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.40 2005/12/21 15:50:38 millert Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.41 2005/12/31 19:51:15 krw Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -538,7 +538,7 @@ play(char *arg)
 				    toc_buffer[n].addr.msf.second,
 				    toc_buffer[n].addr.msf.frame) - blk;
 			else
-				len = ntohl(toc_buffer[n].addr.lba) - blk;
+				len = toc_buffer[n].addr.lba - blk;
 		}
 		return play_blocks(blk, len);
 	}
@@ -631,8 +631,7 @@ Play_Relative_Addresses:
 			ts = toc_buffer[tr1].addr.msf.second;
 			tf = toc_buffer[tr1].addr.msf.frame;
 		} else
-			lba2msf(ntohl(toc_buffer[tr1].addr.lba),
-				&tm, &ts, &tf);
+			lba2msf(toc_buffer[tr1].addr.lba, &tm, &ts, &tf);
 		if ((m1 > tm)
 		    || ((m1 == tm)
 		    && ((s1 > ts)
@@ -681,8 +680,8 @@ Play_Relative_Addresses:
 					s2 = toc_buffer[n].addr.msf.second;
 					f2 = toc_buffer[n].addr.msf.frame;
 				} else {
-					lba2msf(ntohl(toc_buffer[n].addr.lba),
-						&tm, &ts, &tf);
+					lba2msf(toc_buffer[n].addr.lba, &tm,
+					    &ts, &tf);
 					m2 = tm;
 					s2 = ts;
 					f2 = tf;
@@ -699,8 +698,8 @@ Play_Relative_Addresses:
 				ts = toc_buffer[tr2].addr.msf.second;
 				tf = toc_buffer[tr2].addr.msf.frame;
 			} else
-				lba2msf(ntohl(toc_buffer[tr2].addr.lba),
-					&tm, &ts, &tf);
+				lba2msf(toc_buffer[tr2].addr.lba, &tm, &ts,
+				    &tf);
 			f2 += tf;
 			if (f2 >= 75) {
 				s2 += f2 / 75;
@@ -721,8 +720,7 @@ Play_Relative_Addresses:
 			ts = toc_buffer[n].addr.msf.second;
 			tf = toc_buffer[n].addr.msf.frame;
 		} else
-			lba2msf(ntohl(toc_buffer[n].addr.lba),
-				&tm, &ts, &tf);
+			lba2msf(toc_buffer[n].addr.lba, &tm, &ts, &tf);
 		if ((tr2 < n)
 		    && ((m2 > tm)
 		    || ((m2 == tm)
@@ -750,8 +748,7 @@ Try_Absolute_Timed_Addresses:
 				s2 = toc_buffer[n].addr.msf.second;
 				f2 = toc_buffer[n].addr.msf.frame;
 			} else {
-				lba2msf(ntohl(toc_buffer[n].addr.lba),
-					&tm, &ts, &tf);
+				lba2msf(toc_buffer[n].addr.lba, &tm, &ts, &tf);
 				m2 = tm;
 				s2 = ts;
 				f2 = tf;
@@ -1066,7 +1063,7 @@ entry2time(struct cd_toc_entry *e)
 	if (msf) {
 		return (e->addr.msf.minute * 60 + e->addr.msf.second);
 	} else {
-		block = ntohl(e->addr.lba);
+		block = e->addr.lba;
 		lba2msf(block, &m, &s, &f);
 		return (m*60+s);
 	}
@@ -1082,7 +1079,7 @@ entry2frames(struct cd_toc_entry *e)
 		return e->addr.msf.frame + e->addr.msf.second * 75 +
 		    e->addr.msf.minute * 60 * 75;
 	} else {
-		block = ntohl(e->addr.lba);
+		block = e->addr.lba;
 		lba2msf(block, &m, &s, &f);
 		return f + s * 75 + m * 60 * 75;
 	}
@@ -1103,7 +1100,7 @@ prtrack(struct cd_toc_entry *e, int lastflag, char *name)
 		block = msf2lba(e->addr.msf.minute, e->addr.msf.second,
 			e->addr.msf.frame);
 	} else {
-		block = ntohl(e->addr.lba);
+		block = e->addr.lba;
 		if (!name || lastflag) {
 			lba2msf(block, &m, &s, &f);
 			/* Print track start */
@@ -1123,7 +1120,7 @@ prtrack(struct cd_toc_entry *e, int lastflag, char *name)
 		next = msf2lba(e[1].addr.msf.minute, e[1].addr.msf.second,
 			e[1].addr.msf.frame);
 	else
-		next = ntohl(e[1].addr.lba);
+		next = e[1].addr.lba;
 	len = next - block;
 	lba2msf(len, &m, &s, &f);
 
@@ -1234,8 +1231,12 @@ status(int *trk, int *min, int *sec, int *frame)
 		*sec = s.data->what.position.reladdr.msf.second;
 		*frame = s.data->what.position.reladdr.msf.frame;
 	} else {
-		lba2msf(ntohl(s.data->what.position.reladdr.lba),
-		    &mm, &ss, &ff);
+		/*
+		 * NOTE: CDIOCREADSUBCHANNEL does not put the lba info into
+		 * host order like CDIOREADTOCENTRYS does.
+		 */
+		lba2msf(betoh32(s.data->what.position.reladdr.lba), &mm, &ss,
+		    &ff);
 		*min = mm;
 		*sec = ss;
 		*frame = ff;
