@@ -1070,6 +1070,8 @@
 ./usr/share/man/cat4/acphy.0
 ./usr/share/man/cat4/adc.0
 ./usr/share/man/cat4/addcom.0
+./usr/share/man/cat4/admcts.0
+./usr/share/man/cat4/admlc.0
 ./usr/share/man/cat4/admtemp.0
 ./usr/share/man/cat4/admtm.0
 ./usr/share/man/cat4/admtmp.0
@@ -1105,6 +1107,7 @@
 ./usr/share/man/cat4/amd64/intro.0
 ./usr/share/man/cat4/amd64/kmem.0
 ./usr/share/man/cat4/amd64/mem.0
+./usr/share/man/cat4/amdiic.0
 ./usr/share/man/cat4/amdpm.0
 ./usr/share/man/cat4/ami.0
 ./usr/share/man/cat4/amphy.0
@@ -2383,6 +2386,7 @@
 ./usr/share/man/cat8/tcpdmatch.0
 ./usr/share/man/cat8/tcpdrop.0
 ./usr/share/man/cat8/tcpdump.0
+./usr/share/man/cat8/tftp-proxy.0
 ./usr/share/man/cat8/tftpd.0
 ./usr/share/man/cat8/timed.0
 ./usr/share/man/cat8/timedc.0
