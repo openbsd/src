@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.42 2005/12/31 00:52:42 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.43 2005/12/31 02:50:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -77,6 +77,7 @@ u_int8_t	iicprobenc(u_int8_t);
 u_int8_t	iicprobe(u_int8_t);
 u_int16_t	iicprobew(u_int8_t);
 int		lm75probe(void);
+char		*amd1032cloneprobe(u_int8_t);
 
 void
 iicprobeinit(struct i2cbus_attach_args *iba, u_int8_t addr)
@@ -181,11 +182,8 @@ lm75probe(void)
 	return (1);
 }
 
-#ifdef __i386__
-char 	*xeonprobe(u_int8_t);
-
 char *
-xeonprobe(u_int8_t addr)
+amd1032cloneprobe(u_int8_t addr)
 {
 	if (addr == 0x18 || addr == 0x1a || addr == 0x29 ||
 	    addr == 0x2b || addr == 0x4c || addr == 0x4e) {
@@ -211,11 +209,16 @@ xeonprobe(u_int8_t addr)
 		/* 0xfe may be maxim, or some other vendor */
 		if (iicprobe(0xfe) == 0x4d)
 			return ("maxim1617");
+		/*
+		 * "xeontemp" is the name we choose for clone chips
+		 * which have all sorts of buggy bus interactions, such
+		 * as those we just probed.  Why?
+		 * Intel is partly to blame for this situation.
+		 */
 		return ("xeontemp");
 	}
 	return (NULL);
 }	
-#endif
 
 void
 iic_ignore_addr(u_int8_t addr)
@@ -413,8 +416,9 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	} else if ((iicprobe(0x4f) == 0x5c && (iicprobe(0x4e) & 0x80)) ||
 	    (iicprobe(0x4f) == 0xa3 && !(iicprobe(0x4e) & 0x80))) {
 		/*
-		 * We should toggle 0x4e bit 0x80, then re-read
-		 * 0x4f to see if it is 0xa3 (for Winbond).
+		 * We could toggle 0x4e bit 0x80, then re-read 0x4f to
+		 * see if the value changes to 0xa3 (indicating Winbond).
+		 * But we are trying to avoid writes.
 		 */
 		switch (iicprobe(0x58)) {
 		case 0x10:
@@ -443,8 +447,9 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		}
 	} else if (iicprobe(0x4f) == 0x12 && (iicprobe(0x4e) & 0x80)) {
 		/*
-		 * We should toggle 0x4e bit 0x80, then re-read
-		 * 0x4f to see if it is 0xc3 (for ASUS).
+		 * We could toggle 0x4e bit 0x80, then re-read 0x4f to
+		 * see if the value changes to 0xc3 (indicating ASUS).
+		 * But we are trying to avoid writes.
 		 */
 		if (iicprobe(0x58) == 0x31)
 			name = "as99127f";	/* rev 1 */
@@ -452,12 +457,15 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	    ((iicprobe(0x4f) == 0x06 && (iicprobe(0x4e) & 0x80)) ||
 	    (iicprobe(0x4f) == 0x94 && !(iicprobe(0x4e) & 0x80)))) {
 		/*
-		 * We should toggle 0x4e bit 0x80, then re-read
-		 * 0x4f to see if it is 0x94 (for ASUS).
+		 * We could toggle 0x4e bit 0x80, then re-read 0x4f to
+		 * see if the value changes to 0x94 (indicating ASUS).
+		 * But we are trying to avoid writes.
 		 *
 		 * NB. we won't match if the BIOS has selected a non-zero
 		 * register bank (set via 0x4e). We could select bank 0 so
-		 * we see the right registers, but that would require a write
+		 * we see the right registers, but that would require a
+		 * write.  In general though, we bet no BIOS would leave us
+		 * in the wrong state.
 		 */
 		if ((iicprobe(0x58) & 0x7f) == 0x31 &&
 		    (iicprobe(0x4e) & 0xf) == 0x00)
@@ -467,12 +475,10 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		name = "adm1026";
 	} else if ((addr & 0xfc) == 0x48 && lm75probe()) {
 		name = "lm75";
-#ifdef __i386__
 	} else if (name == NULL) {
-		name = xeonprobe(addr);
+		name = amd1032cloneprobe(addr);
 		if (name)
 			skip_fc = 1;
-#endif
 	}
 
 #ifdef I2C_DEBUG
