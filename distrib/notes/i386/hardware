@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.227 2005/12/01 06:57:23 dlg Exp $
+dnl	$OpenBSD: hardware,v 1.228 2005/12/31 18:45:44 miod Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -1287,43 +1287,43 @@ PCI BIOS, or autoconfigured.
 Hardware not listed in the above table doesn't need any specific
 configuration.
 
-
-Special care for PCI BIOS:
-
-	As with all BIOS implementations and subsystems this one has bugs
-	too.
-	Sometimes specifications are unclear about interfaces and/or data
-	validation.
-	These all cause our driver for PCI BIOS to misbehave in more or
-	less fatal ways, such as panics on pcibios0 configuration or PCI
-	device attachments, or unconfigured PCI devices due to IRQ and/or
-	I/O address misconfiguration.
-
-	Fast workaround
-
-	Boot by giving the -c flag to the initial boot request.
-	Following the loading of the kernel, the user is presented with a
-
-	UKC>
-
-	Then type the following commands:
-
-	UKC> change bios0
-	165 bios0 at mainbus0 bus -1 flags 0x0
-	change [n] y
-	bus [-1] ? <enter>
-	flags [0] ? 3
-	165 bios0 changed
-	165 bios0 at mainbus0 bus -1 flags 0x3
-	UKC> quit
-
-	This will disable the pcibios0 attachment.
-	Sometimes, especially when hangs occur on particular PCI device
-	attachments, moving PCI cards into a different slot helps.
-
-	Fixing for good
-
-	Try to gather dmesg output from the failing configuration, for
-	example by using a serial console (see boot(8)), and send it to
-	<mickey@OpenBSD.org> along with descriptions of your hardware setup.
-	Alternatively, dig in the code and fix problems.
+dnl
+dnl Special care for PCI BIOS:
+dnl
+dnl	As with all BIOS implementations and subsystems this one has bugs
+dnl	too.
+dnl	Sometimes specifications are unclear about interfaces and/or data
+dnl	validation.
+dnl	These all cause our driver for PCI BIOS to misbehave in more or
+dnl	less fatal ways, such as panics on pcibios0 configuration or PCI
+dnl	device attachments, or unconfigured PCI devices due to IRQ and/or
+dnl	I/O address misconfiguration.
+dnl
+dnl	Fast workaround
+dnl
+dnl	Boot by giving the -c flag to the initial boot request.
+dnl	Following the loading of the kernel, the user is presented with a
+dnl
+dnl	UKC>
+dnl
+dnl	Then type the following commands:
+dnl
+dnl	UKC> change bios0
+dnl	165 bios0 at mainbus0 bus -1 flags 0x0
+dnl	change [n] y
+dnl	bus [-1] ? <enter>
+dnl	flags [0] ? 3
+dnl	165 bios0 changed
+dnl	165 bios0 at mainbus0 bus -1 flags 0x3
+dnl	UKC> quit
+dnl
+dnl	This will disable the pcibios0 attachment.
+dnl	Sometimes, especially when hangs occur on particular PCI device
+dnl	attachments, moving PCI cards into a different slot helps.
+dnl
+dnl	Fixing for good
+dnl
+dnl	Try to gather dmesg output from the failing configuration, for
+dnl	example by using a serial console (see boot(8)), and send it to
+dnl	<mickey@OpenBSD.org> along with descriptions of your hardware setup.
+dnl	Alternatively, dig in the code and fix problems.
