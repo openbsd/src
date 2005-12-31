@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.45 2005/12/31 18:26:11 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.46 2005/12/31 18:34:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -43,14 +43,6 @@ struct {
 
 #define MAX_IGNORE 8
 u_int8_t ignore_addrs[MAX_IGNORE];
-
-/* registers to print if we fail to probe */
-// u_int8_t probereg[] = {
-//	0x00, 0x01, 0x02, 0x03, 0x07,
-//	0x3d, 0x3e, 0x3f,
-//	0x4c, 0x4d, 0x4e, 0x4f,
-//	0x58, 0xfe, 0xff
-//};
 
 /*
  * Some Maxim 1617 clones MAY NOT even read cmd 0xfc!  When it is
