@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.44 2005/12/31 04:31:20 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.45 2005/12/31 18:26:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -45,12 +45,12 @@ struct {
 u_int8_t ignore_addrs[MAX_IGNORE];
 
 /* registers to print if we fail to probe */
-u_int8_t probereg[] = {
-	0x00, 0x01, 0x02, 0x03, 0x07,
-	0x3d, 0x3e, 0x3f,
-	0x4c, 0x4d, 0x4e, 0x4f,
-	0x58, 0xfe, 0xff
-};
+// u_int8_t probereg[] = {
+//	0x00, 0x01, 0x02, 0x03, 0x07,
+//	0x3d, 0x3e, 0x3f,
+//	0x4c, 0x4d, 0x4e, 0x4f,
+//	0x58, 0xfe, 0xff
+//};
 
 /*
  * Some Maxim 1617 clones MAY NOT even read cmd 0xfc!  When it is
@@ -491,18 +491,25 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	}
 
 #ifdef I2C_DEBUG
-	printf("%s: addr 0x%x", self->dv_xname, addr);
-//	for (i = 0; i < sizeof(probereg); i++) {
-//		if (iicprobe(probereg[i]) != 0xff)
-//			printf(" %02x=%02x", probereg[i], iicprobe(probereg[i]));
-//	}
-	for (i = 0; i <= 0xff; i++) {
-		if (iicprobe(i) != 0xff)
-			printf(" %02x=%02x", i, iicprobe(i));
+	{
+		u_int8_t val = iicprobe(0);
+		int cnt = 0;
+
+		for (i = 1; i <= 0xff; i++) {
+			if (val == iicprobe(i))
+				cnt++;
+		}
+		if (cnt <= 254) {
+			printf("%s: addr 0x%x", self->dv_xname, addr);
+			for (i = 0; i <= 0xff; i++) {
+				if (iicprobe(i) != 0xff)
+					printf(" %02x=%02x", i, iicprobe(i));
+			}
+			if (name)
+				printf(": %s", name);
+			printf("\n");
+		}
 	}
-	if (name)
-		printf(": %s", name);
-	printf("\n");
 #endif /* I2C_DEBUG */
 
 }
