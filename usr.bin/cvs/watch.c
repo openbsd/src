@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.9 2005/12/30 02:03:28 joris Exp $	*/
+/*	$OpenBSD: watch.c,v 1.10 2005/12/31 13:27:51 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2005 Moritz Jodeit <moritz@openbsd.org>
@@ -114,14 +114,14 @@ cvs_watch_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 			 * Only `watch add | remove' support the -a option.
 			 * Check which command has been issued.
 			 */
-			if (watchreq != CVS_REQ_WATCH_ADD &&
-			    watchreq != CVS_REQ_WATCH_REMOVE)
+			if ((watchreq != CVS_REQ_WATCH_ADD) &&
+			    (watchreq != CVS_REQ_WATCH_REMOVE))
 				return (CVS_EX_USAGE);
-			if (strcmp(optarg, "commit") != 0 &&
-			    strcmp(optarg, "edit") != 0 &&
-			    strcmp(optarg, "unedit") != 0 &&
-			    strcmp(optarg, "all") != 0 &&
-			    strcmp(optarg, "none") != 0)
+			if ((strcmp(optarg, "commit") != 0) &&
+			    (strcmp(optarg, "edit") != 0) &&
+			    (strcmp(optarg, "unedit") != 0) &&
+			    (strcmp(optarg, "all") != 0) &&
+			    (strcmp(optarg, "none") != 0))
 				return (CVS_EX_USAGE);
 			aoptstr = xstrdup(optarg);
 			break;
@@ -149,8 +149,8 @@ static int
 cvs_watch_pre_exec(struct cvsroot *root)
 {
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (watchreq != CVS_REQ_WATCH_ADD &&
-		    watchreq != CVS_REQ_WATCH_REMOVE)
+		if ((watchreq != CVS_REQ_WATCH_ADD) &&
+		    (watchreq != CVS_REQ_WATCH_REMOVE))
 			return (CVS_EX_OK);
 
 		if (aoptstr == NULL || strcmp(aoptstr, "all") == 0) {
