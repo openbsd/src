@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.14 2005/12/30 04:05:55 tedu Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.15 2005/12/31 20:07:41 brad Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -335,6 +335,14 @@ int
 pthread_mutexattr_settype(pthread_mutexattr_t *attrp, int type)
 {
 	(*attrp)->type = type;
+
+	return (0);
+}
+
+int
+pthread_mutexattr_gettype(pthread_mutexattr_t *attrp, int *type)
+{
+	*type = (*attrp)->type;
 
 	return (0);
 }
