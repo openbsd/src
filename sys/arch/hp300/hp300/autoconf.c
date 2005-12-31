@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.36 2005/12/30 18:14:12 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.37 2005/12/31 18:13:44 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -1098,105 +1098,61 @@ dev_data_insert(dd, ddlist)
  * hardware.
  */
 void
-console_scan(func, arg, bus)
+console_scan(func, arg)
 	int (*func)(int, caddr_t, void *);
 	void *arg;
-	int bus;
 {
 	int size, scode, sctop;
 	caddr_t pa, va;
 
-	switch (bus) {
-	case HP300_BUS_DIO:
+	/*
+	 * Scan all select codes.  Check each location for some
+	 * hardware.  If there's something there, call (*func)().
+	 */
+	sctop = DIO_SCMAX(machineid);
+	for (scode = 0; scode < sctop; ++scode) {
 		/*
-		 * Scan all select codes.  Check each location for some
-		 * hardware.  If there's something there, call (*func)().
+		 * Skip over the select code hole and
+		 * the internal HP-IB controller.
 		 */
-		sctop = DIO_SCMAX(machineid);
-		for (scode = 0; scode < sctop; ++scode) {
-			/*
-			 * Skip over the select code hole and
-			 * the internal HP-IB controller.
-			 */
-			if (DIO_INHOLE(scode) ||
-			    ((scode == 7) && internalhpib))
-				continue;
+		if (DIO_INHOLE(scode) ||
+		    ((scode == 7) && internalhpib))
+			continue;
 
-			/* Map current PA. */
-			pa = dio_scodetopa(scode);
-			va = iomap(pa, PAGE_SIZE);
+		/* Map current PA. */
+		pa = dio_scodetopa(scode);
+		va = iomap(pa, PAGE_SIZE);
+		if (va == NULL)
+			continue;
+
+		/* Check to see if hardware exists. */
+		if (badaddr(va)) {
+			iounmap(va, PAGE_SIZE);
+			continue;
+		}
+
+		/*
+		 * Hardware present, call callback.  Driver returns
+		 * size of region to map if console probe successful
+		 * and worthwhile.
+		 */
+		size = (*func)(scode, va, arg);
+		iounmap(va, PAGE_SIZE);
+		if (size != 0 && conscode == scode) {
+			/* Free last mapping. */
+			if (convasize)
+				iounmap(conaddr, convasize);
+			convasize = 0;
+
+			/* Remap to correct size. */
+			va = iomap(pa, size);
 			if (va == NULL)
 				continue;
 
-			/* Check to see if hardware exists. */
-			if (badaddr(va)) {
-				iounmap(va, PAGE_SIZE);
-				continue;
-			}
-
-			/*
-			 * Hardware present, call callback.  Driver returns
-			 * size of region to map if console probe successful
-			 * and worthwhile.
-			 */
-			size = (*func)(scode, va, arg);
-			iounmap(va, PAGE_SIZE);
-			if (size != 0 && conscode == scode) {
-				/* Free last mapping. */
-				if (convasize)
-					iounmap(conaddr, convasize);
-				convasize = 0;
-
-				/* Remap to correct size. */
-				va = iomap(pa, size);
-				if (va == NULL)
-					continue;
-
-				/* Save this state for next time. */
-				conaddr = va;
-				convasize = size;
-			}
+			/* Save this state for next time. */
+			conaddr = va;
+			convasize = size;
 		}
-		break;
-#if NSGC > 0
-	case HP300_BUS_SGC:
-		/*
-		 * Scan all slots.  Check each location for some
-		 * hardware.  If there's something there, call (*func)().
-		 */
-		for (scode = 0; scode < SGC_NSLOTS; ++scode) {
-			int rv;
-
-			/* Map current PA. */
-			pa = sgc_slottopa(scode);
-			va = iomap(pa, PAGE_SIZE);
-			if (va == NULL)
-				continue;
-
-			/* Check for hardware. */
-			rv = badaddr(va);
-			iounmap(va, PAGE_SIZE);
-			if (rv != 0)
-				continue;
-
-			/*
-			 * Invoke the callback. Driver will return
-			 * non-zero if console probe successfull
-			 * and worthwhile.
-			 */
-			if ((*func)(scode, NULL, arg) != 0 &&
-			    conscode == SGC_SLOT_TO_CONSCODE(scode)) {
-				/* Free last mapping. */
-				if (convasize)
-					iounmap(conaddr, convasize);
-
-				/* Save this state for next time. */
-				conaddr = NULL;
-				convasize = 0;
-			}
-		}
-		break;
-#endif
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcm.c,v 1.26 2005/12/30 18:14:09 miod Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.27 2005/12/31 18:13:41 miod Exp $	*/
 /*	$NetBSD: dcm.c,v 1.41 1997/05/05 20:59:16 thorpej Exp $	*/
 
 /*
@@ -1557,7 +1557,7 @@ dcmcnprobe(cp)
 	cp->cn_dev = makedev(dcmmajor, 0);	/* XXX */
 	cp->cn_pri = CN_DEAD;
 
-	console_scan(dcm_console_scan, cp, HP300_BUS_DIO);
+	console_scan(dcm_console_scan, cp);
 
 #ifdef KGDB_CHEAT
 	/* XXX this needs to be fixed. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.37 2005/01/14 22:39:27 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.38 2005/12/31 18:13:44 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.39 1997/05/12 08:17:53 thorpej Exp $	*/
 
 /*-
@@ -266,35 +266,7 @@ int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
  */
 #include <dev/cons.h>
 
-#define dvboxcngetc		wscngetc
-#define dvboxcnputc		wscnputc
-#define dvboxcnpollc		wscnpollc
-cons_decl(dvbox);
-
-#define gboxcngetc		wscngetc
-#define gboxcnputc		wscnputc
-#define gboxcnpollc		wscnpollc
-cons_decl(gbox);
-
-#define hypercngetc		wscngetc
-#define hypercnputc		wscnputc
-#define hypercnpollc		wscnpollc
-cons_decl(hyper);
-
-#define rboxcngetc		wscngetc
-#define rboxcnputc		wscnputc
-#define rboxcnpollc		wscnpollc
-cons_decl(rbox);
-
-#define sticngetc		wscngetc
-#define sticnputc		wscnputc
-#define sticnpollc		wscnpollc
-cons_decl(sti);
-
-#define topcatcngetc		wscngetc
-#define topcatcnputc		wscnputc
-#define topcatcnpollc		wscnpollc
-cons_decl(topcat);
+cons_decl(ws);
 
 #define dcacnpollc		nullcnpollc
 cons_decl(dca);
@@ -305,34 +277,10 @@ cons_decl(apci);
 #define dcmcnpollc		nullcnpollc
 cons_decl(dcm);
 
-#include "dvbox.h"
-#include "gbox.h"
-#include "hyper.h"
-#include "rbox.h"
-#include "sti.h"
-#include "topcat.h"
-
 struct	consdev constab[] = {
 #if NWSDISPLAY > 0
-#if NDVBOX > 0
-	cons_init(dvbox),
+	cons_init(ws),
 #endif
-#if NGBOX > 0
-	cons_init(gbox),
-#endif
-#if NHYPER > 0
-	cons_init(hyper),
-#endif
-#if NRBOX > 0
-	cons_init(rbox),
-#endif
-#if NSTI > 0
-	cons_init(sti),
-#endif
-#if NTOPCAT > 0
-	cons_init(topcat),
-#endif
-#endif /* NWSDISPLAY > 0 */
 #if NDCA > 0
 	cons_init(dca),
 #endif

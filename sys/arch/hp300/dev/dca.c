@@ -1,4 +1,4 @@
-/*	$OpenBSD: dca.c,v 1.29 2005/12/30 18:14:09 miod Exp $	*/
+/*	$OpenBSD: dca.c,v 1.30 2005/12/31 18:13:41 miod Exp $	*/
 /*	$NetBSD: dca.c,v 1.35 1997/05/05 20:58:18 thorpej Exp $	*/
 
 /*
@@ -1046,7 +1046,7 @@ dcacnprobe(cp)
 	cp->cn_dev = makedev(dcamajor, 0);	/* XXX */
 	cp->cn_pri = CN_DEAD;
 
-	console_scan(dca_console_scan, cp, HP300_BUS_DIO);
+	console_scan(dca_console_scan, cp);
 
 #ifdef KGDB
 	/* XXX this needs to be fixed. */

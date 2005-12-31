@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.13 2005/12/30 18:14:12 miod Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.14 2005/12/31 18:13:45 miod Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.4 1997/04/01 03:03:56 scottr Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@ extern	int convasize;			/* size of mapping at conaddr */
 extern	int consolepass;		/* console initialization pass */
 
 void	hp300_cninit(void);
-void	console_scan(int (*)(int, caddr_t, void *), void *, int);
+void	console_scan(int (*)(int, caddr_t, void *), void *);
 caddr_t	iomap(caddr_t, int);
 void	iounmap(caddr_t, int);
 #endif /* _KERNEL */
