@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.70 2004/05/27 04:55:28 tedu Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.71 2005/12/31 19:18:05 krw Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -628,18 +628,17 @@ bad:
  * m_pullup2() only works on values of len such that MHLEN < len <= MCLBYTES,
  * it calls m_pullup() for values <= MHLEN.  It also only coagulates the
  * reqested number of bytes.  (For those of us who expect unwieldly option
- * headers.     
- *		      
+ * headers.
+ *
  * KEBE SAYS:  Remember that dtom() calls with data in clusters does not work!
  */
-struct mbuf *   
-m_pullup2(n, len)       
-	register struct mbuf *n;
+struct mbuf *
+m_pullup2(n, len)
+	struct mbuf *n;
 	int len;
 {
-	register struct mbuf *m;
-	register int count;
-	int space; 
+	struct mbuf *m;
+	int count;
 
 	if (len <= MHLEN)
 		return m_pullup(n, len);
@@ -655,7 +654,7 @@ m_pullup2(n, len)
 			goto bad;
 		MGET(m, M_DONTWAIT, n->m_type);
 		if (m == NULL)
-			goto bad; 
+			goto bad;
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0)
 			goto bad;
@@ -663,7 +662,7 @@ m_pullup2(n, len)
 		if (n->m_flags & M_PKTHDR) {
 			/* Too many adverse side effects. */
 			/* M_MOVE_PKTHDR(m, n); */
-			m->m_flags = (n->m_flags & M_COPYFLAGS) | 
+			m->m_flags = (n->m_flags & M_COPYFLAGS) |
 			    M_EXT | M_CLUSTER;
 			M_MOVE_HDR(m, n);
 			/* n->m_data is cool. */
@@ -677,7 +676,6 @@ m_pullup2(n, len)
 		len -= count;
 		m->m_len += count;
 		n->m_len -= count;
-		space -= count;
 		if (n->m_len)
 			n->m_data += count;
 		else
@@ -686,11 +684,11 @@ m_pullup2(n, len)
 	if (len > 0) {
 		(void)m_free(m);
 		goto bad;
-	}	 
+	}
 	m->m_next = n;
-		
+
 	return (m);
-bad:	    
+bad:
 	m_freem(n);
 	MPFail++;
 	return (NULL);
