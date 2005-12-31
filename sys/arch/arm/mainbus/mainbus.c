@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.2 2004/05/19 03:17:07 drahn Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.3 2005/12/31 23:03:58 drahn Exp $	*/
 /* $NetBSD: mainbus.c,v 1.3 2001/06/13 17:52:43 nathanw Exp $ */
 
 /*
@@ -71,7 +71,7 @@ extern struct bus_space mainbus_bs_tag;
 int  mainbusmatch  (struct device *, void *, void *);
 void mainbusattach (struct device *, struct device *, void *);
 int  mainbusprint  (void *aux, const char *mainbus);
-int  mainbussearch (struct device *, struct cfdata *, void *);
+int mainbussearch (struct device *,  void *, void *);
 
 /* attach and device structures for the device */
 
@@ -104,15 +104,24 @@ mainbusmatch(struct device *parent, void *cf, void *aux)
 void
 mainbusattach(struct device *parent, struct device *self, void *aux)
 {
-	struct mainbus_attach_args ma;
 	printf("\n");
 
+	config_search(mainbussearch, self, self);
+}
+
+int
+mainbussearch(struct device *parent, void *c, void *aux)
+{
+	struct mainbus_attach_args ma;
+	struct cfdata *cf = c;
+
+
 	ma.ma_iot = &mainbus_bs_tag;
-	ma.ma_name = "cpu";
-	config_found(self, &ma, mainbusprint); /* XXX */
-	ma.ma_iot = &mainbus_bs_tag;
-	ma.ma_name = "footbridge";
-	config_found(self, &ma, mainbusprint); /* XXX */
+	ma.ma_name = cf->cf_driver->cd_name;
+
+	config_found(parent, &ma, mainbusprint);
+
+	return 1;
 }
 
 /*
