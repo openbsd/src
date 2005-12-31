@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslimits.h,v 1.9 2005/12/13 00:35:23 millert Exp $	*/
+/*	$OpenBSD: syslimits.h,v 1.10 2005/12/31 19:29:39 millert Exp $	*/
 /*	$NetBSD: syslimits.h,v 1.12 1995/10/05 05:26:19 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-#if __POSIX_VISIBLE || __XPG_VISIBLE
+#if __POSIX_VISIBLE || __XPG_VISIBLE || __BSD_VISIBLE
 #define	ARG_MAX		 (256 * 1024)	/* max bytes for an exec function */
 #define	CHILD_MAX		   80	/* max simultaneous processes */
 #define	LINK_MAX		32767	/* max file link count */
@@ -64,4 +64,9 @@
 #define	NZERO			   20	/* default "nice" */
 #endif /* __XPG_VISIBLE */
 
-#endif /* __POSIX_VISIBLE || __XPG_VISIBLE */
+#endif /* __POSIX_VISIBLE || __XPG_VISIBLE || __BSD_VISIBLE */
+
+#if __XPG_VISIBLE >= 500 || __POSIX_VISIBLE >= 199506 || __BSD_VISIBLE
+#define TTY_NAME_MAX		260	/* max tty device name length w/ NUL */
+#define LOGIN_NAME_MAX          32	/* max login name length w/ NUL */
+#endif /* __XPG_VISIBLE >= 500 || __POSIX_VISIBLE >= 199506 || __BSD_VISIBLE */
