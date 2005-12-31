@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.98 2005/12/29 22:53:27 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.99 2005/12/31 06:20:22 grange Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -80,6 +80,8 @@ ichiic*	at pci?			# Intel ICH SMBus controller
 iic*	at ichiic?
 viapm*	at pci?			# VIA VT8237 power management
 iic*	at viapm?
+#amdiic* at pci?		# AMD-8111 SMBus controller
+#iic*	at amdiic?
 
 adc*	at iic?			# Analog Devices AD7416/AD7417/7418
 admtemp* at iic?		# Analog Devices ADM1021
