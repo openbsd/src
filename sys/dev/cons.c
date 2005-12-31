@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.15 2005/12/30 18:11:25 miod Exp $	*/
+/*	$OpenBSD: cons.c,v 1.16 2005/12/31 21:22:34 miod Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1996/04/08 19:57:30 jonathan Exp $	*/
 
 /*
@@ -240,7 +240,7 @@ cnkqfilter(dev, kn)
 		return (1);
 	else
 		dev = cn_tab->cn_dev;
-	if (cdevsw[major(dev)].d_type & D_KQFILTER)
+	if (cdevsw[major(dev)].d_flags & D_KQFILTER)
 		return ((*cdevsw[major(dev)].d_kqfilter)(dev, kn));
 	return (1);
 }

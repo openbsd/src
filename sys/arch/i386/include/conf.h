@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.11 2005/06/02 20:09:39 tholo Exp $	*/
+/*	$OpenBSD: conf.h,v 1.12 2005/12/31 21:22:34 miod Exp $	*/
 /*	$NetBSD: conf.h,v 1.2 1996/05/05 19:28:34 christos Exp $	*/
 
 /*
@@ -53,13 +53,13 @@ cdev_decl(pc);
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
-	(dev_type_mmap((*))) enodev, D_KQFILTER, dev_init(c,n,kqfilter) }
+	(dev_type_mmap((*))) enodev, 0, D_KQFILTER, dev_init(c,n,kqfilter) }
 
 #define	cdev_acpi_init(c,n) {\
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
-	(dev_type_mmap((*))) enodev, D_KQFILTER, dev_init(c,n,kqfilter) }
+	(dev_type_mmap((*))) enodev, 0, D_KQFILTER, dev_init(c,n,kqfilter) }
 
 cdev_decl(spkr);
 

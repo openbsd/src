@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.4 2005/05/13 22:54:00 miod Exp $	*/
+/*	$OpenBSD: conf.h,v 1.5 2005/12/31 21:22:34 miod Exp $	*/
 /*	$NetBSD: conf.h,v 1.7 2002/04/19 01:04:39 wiz Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ cdev_decl(fd);
         dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
         (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
-	(dev_type_mmap((*))) enodev, D_KQFILTER, dev_init(c,n,kqfilter) }
+	(dev_type_mmap((*))) enodev, 0, D_KQFILTER, dev_init(c,n,kqfilter) }
 
 cdev_decl(physcon);
 cdev_decl(vidcconsole);
