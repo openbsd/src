@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_quirks.c,v 1.21 2005/12/18 12:34:43 kettenis Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.22 2005/12/31 04:55:52 fgsch Exp $	*/
 /*	$NetBSD: umass_quirks.c,v 1.67 2004/06/28 07:49:16 mycroft Exp $	*/
 
 /*
@@ -514,10 +514,20 @@ Static void
 umass_fixup_sony(struct umass_softc *sc)
 {
 	usb_interface_descriptor_t *id;
+	usb_device_descriptor_t *dd;
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
-	if (id->bInterfaceSubClass == 0xff)
-		sc->sc_cmd = UMASS_CPROTO_SCSI;
+	if (id->bInterfaceSubClass == 0xff) {
+		dd = usbd_get_device_descriptor(sc->sc_udev);
+
+		/*
+		 * The Sony DSC-P41, rev 5.00 is really UFI.
+		 */
+		if (UGETW(dd->bcdDevice) == 0x500)
+			sc->sc_cmd = UMASS_CPROTO_UFI;
+		else
+			sc->sc_cmd = UMASS_CPROTO_SCSI;
+	}
 }
 
 Static void
