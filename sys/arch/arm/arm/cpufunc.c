@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.3 2004/12/30 23:43:15 drahn Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.4 2005/12/31 22:13:06 drahn Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ int cpu_do_powersave;
 #ifdef CPU_ARM3
 struct cpu_functions arm3_cpufuncs = {
 	/* CPU functions */
-	
+
 	cpufunc_id,			/* id			*/
 	cpufunc_nullop,			/* cpwait		*/
 
@@ -159,10 +159,10 @@ struct cpu_functions arm3_cpufuncs = {
 #ifdef CPU_ARM6
 struct cpu_functions arm6_cpufuncs = {
 	/* CPU functions */
-	
+
 	cpufunc_id,			/* id			*/
 	cpufunc_nullop,			/* cpwait		*/
- 
+
 	/* MMU functions */
 
 	cpufunc_control,		/* control		*/
@@ -221,7 +221,7 @@ struct cpu_functions arm6_cpufuncs = {
 #ifdef CPU_ARM7
 struct cpu_functions arm7_cpufuncs = {
 	/* CPU functions */
-	
+
 	cpufunc_id,			/* id			*/
 	cpufunc_nullop,			/* cpwait		*/
 
@@ -279,7 +279,7 @@ struct cpu_functions arm7_cpufuncs = {
 #ifdef CPU_ARM7TDMI
 struct cpu_functions arm7tdmi_cpufuncs = {
 	/* CPU functions */
-	
+
 	cpufunc_id,			/* id			*/
 	cpufunc_nullop,			/* cpwait		*/
 
@@ -337,7 +337,7 @@ struct cpu_functions arm7tdmi_cpufuncs = {
 #ifdef CPU_ARM8
 struct cpu_functions arm8_cpufuncs = {
 	/* CPU functions */
-	
+
 	cpufunc_id,			/* id			*/
 	cpufunc_nullop,			/* cpwait		*/
 
@@ -388,7 +388,7 @@ struct cpu_functions arm8_cpufuncs = {
 	arm8_context_switch,		/* context_switch	*/
 
 	arm8_setup			/* cpu setup		*/
-};          
+};
 #endif	/* CPU_ARM8 */
 
 #ifdef CPU_ARM9
@@ -511,7 +511,7 @@ struct cpu_functions arm10_cpufuncs = {
 #ifdef CPU_SA110
 struct cpu_functions sa110_cpufuncs = {
 	/* CPU functions */
-	
+
 	cpufunc_id,			/* id			*/
 	cpufunc_nullop,			/* cpwait		*/
 
@@ -562,13 +562,13 @@ struct cpu_functions sa110_cpufuncs = {
 	sa110_context_switch,		/* context_switch	*/
 
 	sa110_setup			/* cpu setup		*/
-};          
+};
 #endif	/* CPU_SA110 */
 
 #if defined(CPU_SA1100) || defined(CPU_SA1110)
 struct cpu_functions sa11x0_cpufuncs = {
 	/* CPU functions */
-	
+
 	cpufunc_id,			/* id			*/
 	cpufunc_nullop,			/* cpwait		*/
 
@@ -619,13 +619,13 @@ struct cpu_functions sa11x0_cpufuncs = {
 	sa11x0_context_switch,		/* context_switch	*/
 
 	sa11x0_setup			/* cpu setup		*/
-};          
+};
 #endif	/* CPU_SA1100 || CPU_SA1110 */
 
 #ifdef CPU_IXP12X0
 struct cpu_functions ixp12x0_cpufuncs = {
 	/* CPU functions */
-	
+
 	cpufunc_id,			/* id			*/
 	cpufunc_nullop,			/* cpwait		*/
 
@@ -676,14 +676,14 @@ struct cpu_functions ixp12x0_cpufuncs = {
 	ixp12x0_context_switch,		/* context_switch	*/
 
 	ixp12x0_setup			/* cpu setup		*/
-};          
+};
 #endif	/* CPU_IXP12X0 */
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
 struct cpu_functions xscale_cpufuncs = {
 	/* CPU functions */
-	
+
 	cpufunc_id,			/* id			*/
 	xscale_cpwait,			/* cpwait		*/
 
@@ -845,15 +845,15 @@ struct cachetab {
 };
 
 struct cachetab cachetab[] = {
-    /* cpuid,           cache type,       u,  dsiz, ls, wy,  isiz, ls, wy */
-    { CPU_ID_ARM2,      0,                1,     0,  0,  0,     0,  0,  0 },
-    { CPU_ID_ARM250,    0,                1,     0,  0,  0,     0,  0,  0 },
-    { CPU_ID_ARM3,      CPU_CT_CTYPE_WT,  1,  4096, 16, 64,     0,  0,  0 },
-    { CPU_ID_ARM610,	CPU_CT_CTYPE_WT,  1,  4096, 16, 64,     0,  0,  0 },
-    { CPU_ID_ARM710,    CPU_CT_CTYPE_WT,  1,  8192, 32,  4,     0,  0,  0 },
-    { CPU_ID_ARM7500,   CPU_CT_CTYPE_WT,  1,  4096, 16,  4,     0,  0,  0 },
-    { CPU_ID_ARM710A,   CPU_CT_CTYPE_WT,  1,  8192, 16,  4,     0,  0,  0 },
-    { CPU_ID_ARM7500FE, CPU_CT_CTYPE_WT,  1,  4096, 16,  4,     0,  0,  0 },
+    /* cpuid,		cache type,	  u,  dsiz, ls, wy,  isiz, ls, wy */
+    { CPU_ID_ARM2,	0,		  1,    0,  0,  0,	0,  0,  0 },
+    { CPU_ID_ARM250,    0,		  1,	0,  0,  0,	0,  0,  0 },
+    { CPU_ID_ARM3,	CPU_CT_CTYPE_WT,  1,  4096, 16, 64,	0,  0,  0 },
+    { CPU_ID_ARM610,	CPU_CT_CTYPE_WT,  1,  4096, 16, 64,	0,  0,  0 },
+    { CPU_ID_ARM710,    CPU_CT_CTYPE_WT,  1,  8192, 32,  4,	0,  0,  0 },
+    { CPU_ID_ARM7500,   CPU_CT_CTYPE_WT,  1,  4096, 16,  4,	0,  0,  0 },
+    { CPU_ID_ARM710A,   CPU_CT_CTYPE_WT,  1,  8192, 16,  4,	0,  0,  0 },
+    { CPU_ID_ARM7500FE, CPU_CT_CTYPE_WT,  1,  4096, 16,  4,	0,  0,  0 },
     /* XXX is this type right for SA-1? */
     { CPU_ID_SA110,	CPU_CT_CTYPE_WB1, 0, 16384, 32, 32, 16384, 32, 32 },
     { CPU_ID_SA1100,	CPU_CT_CTYPE_WB1, 0,  8192, 32, 32, 16384, 32, 32 },
@@ -946,7 +946,7 @@ set_cpufuncs()
 		pmap_pte_init_generic();
 		return 0;
 	}
-#endif	
+#endif
 #ifdef CPU_ARM8
 	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
 	    (cputype & 0x0000f000) == 0x00008000) {
@@ -979,7 +979,7 @@ set_cpufuncs()
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
 		arm10_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
-		arm10_dcache_sets_max = 
+		arm10_dcache_sets_max =
 		    (1U << (arm_dcache_l2_linesize + arm_dcache_l2_nsets)) -
 		    arm10_dcache_sets_inc;
 		arm10_dcache_index_inc = 1U << (32 - arm_dcache_l2_assoc);
@@ -1024,13 +1024,13 @@ set_cpufuncs()
 	}
 #endif	/* CPU_SA1110 */
 #ifdef CPU_IXP12X0
-        if (cputype == CPU_ID_IXP1200) {
-                cpufuncs = ixp12x0_cpufuncs;
-                cpu_reset_needs_v4_MMU_disable = 1;
-                get_cachetype_table();
-                pmap_pte_init_sa1();
-                return 0;
-        }
+	if (cputype == CPU_ID_IXP1200) {
+		cpufuncs = ixp12x0_cpufuncs;
+		cpu_reset_needs_v4_MMU_disable = 1;
+		get_cachetype_table();
+		pmap_pte_init_sa1();
+		return 0;
+	}
 #endif  /* CPU_IXP12X0 */
 #ifdef CPU_XSCALE_80200
 	if (cputype == CPU_ID_80200) {
@@ -1140,7 +1140,7 @@ set_cpufuncs()
 #endif /* CPU_XSCALE_PXA2X0 */
 #ifdef CPU_XSCALE_IXP425
 	if (cputype == CPU_ID_IXP425_533 || cputype == CPU_ID_IXP425_400 ||
-            cputype == CPU_ID_IXP425_266) {
+	    cputype == CPU_ID_IXP425_266) {
 		ixp425_icu_init();
 
 		cpufuncs = xscale_cpufuncs;
@@ -1252,7 +1252,7 @@ early_abort_fixup(arg)
 		int loop;
 		int count;
 		int *registers = &frame->tf_r0;
-        
+
 		DFC_PRINTF(("LDM/STM\n"));
 		DFC_DISASSEMBLE(fault_pc);
 		if (fault_instruction & (1 << 21)) {
@@ -1268,7 +1268,7 @@ early_abort_fixup(arg)
 			}
 			DFC_PRINTF(("%d registers used\n", count));
 			DFC_PRINTF(("Corrected r%d by %d bytes ",
-				       base, count * 4));
+			    base, count * 4));
 			if (fault_instruction & (1 << 23)) {
 				DFC_PRINTF(("down\n"));
 				registers[base] -= count * 4;
@@ -1281,7 +1281,7 @@ early_abort_fixup(arg)
 		int base;
 		int offset;
 		int *registers = &frame->tf_r0;
-	
+
 		/* REGISTER CORRECTION IS REQUIRED FOR THESE INSTRUCTIONS */
 
 		DFC_DISASSEMBLE(fault_pc);
@@ -1403,11 +1403,11 @@ late_abort_fixup(arg)
 		int *registers = &frame->tf_r0;
 
 		DFC_DISASSEMBLE(fault_pc);
-		
+
 		/* This is for late abort only */
 
 		if ((fault_instruction & (1 << 24)) == 0
-		    || (fault_instruction & (1 << 21)) != 0) {	
+		    || (fault_instruction & (1 << 21)) != 0) {
 			/* postindexed ldr/str with no writeback */
 
 			base = (fault_instruction >> 16) & 0x0f;
@@ -1417,7 +1417,7 @@ late_abort_fixup(arg)
 			if (base == 15)
 				return ABORT_FIXUP_FAILED;
 			DFC_PRINTF(("late abt fix: r%d=%08x : ",
-				       base, registers[base]));
+			    base, registers[base]));
 			if ((fault_instruction & (1 << 25)) == 0) {
 				/* Immediate offset - easy */
 
@@ -1433,7 +1433,7 @@ late_abort_fixup(arg)
 				offset = fault_instruction & 0x0f;
 				if (offset == base)
 					return ABORT_FIXUP_FAILED;
-                
+
 				/*
 				 * Register offset - hard we have to
 				 * cope with shifts !
@@ -1473,7 +1473,7 @@ late_abort_fixup(arg)
 				}
 
 				DFC_PRINTF(("abt: fixed LDR/STR with "
-					       "register offset\n"));
+				    "register offset\n"));
 				if ((fault_instruction & (1 << 23)))
 					offset = -offset;
 				DFC_PRINTF(("offset=%08x ", offset));
@@ -1544,8 +1544,8 @@ static u_int parse_cpu_options (char *, struct cpu_option *, u_int);
 static u_int
 parse_cpu_options(args, optlist, cpuctrl)
 	char *args;
-	struct cpu_option *optlist;    
-	u_int cpuctrl; 
+	struct cpu_option *optlist;
+	u_int cpuctrl;
 {
 	int integer;
 
@@ -1799,7 +1799,7 @@ arm8_setup(args)
 		clocktest |= (integer & 7) << 5;
 		setclock = 1;
 	}
-	
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -1807,7 +1807,7 @@ arm8_setup(args)
 	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 
-	/* Set the clock/test register */    
+	/* Set the clock/test register */
 	if (setclock)
 		arm8_clock_config(0x7f, clocktest);
 }
@@ -1884,7 +1884,7 @@ arm10_setup(args)
 	int cpuctrl, cpuctrlmask;
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
-	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE 
+	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
 	    | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_BPRD_ENABLE;
 	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
 	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
@@ -1971,7 +1971,7 @@ sa110_setup(args)
 /*	cpu_control(cpuctrlmask, cpuctrl);*/
 	cpu_control(0xffffffff, cpuctrl);
 
-	/* 
+	/*
 	 * enable clockswitching, note that this doesn't read or write to r0,
 	 * r0 is just to make it valid asm
 	 */
@@ -2030,7 +2030,7 @@ sa11x0_setup(args)
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
-	/* Set the control register */    
+	/* Set the control register */
 	cpu_control(0xffffffff, cpuctrl);
 }
 #endif	/* CPU_SA1100 || CPU_SA1110 */
@@ -2081,7 +2081,7 @@ ixp12x0_setup(args)
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
-	/* Set the control register */    
+	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
 	/* cpu_control(0xffffffff, cpuctrl); */
 	cpu_control(cpuctrlmask, cpuctrl);
