@@ -1,4 +1,4 @@
-/*	$OpenBSD: asb100.c,v 1.2 2005/12/31 04:31:27 deraadt Exp $	*/
+/*	$OpenBSD: asb100.c,v 1.3 2006/01/01 22:27:46 djm Exp $	*/
 
 /*
  * Copyright (c) 2005 Damien Miller
@@ -264,9 +264,9 @@ asbtm_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensor[ASB100_SENSOR_FAN1].desc, "Fan1",
 	    sizeof(sc->sc_sensor[ASB100_SENSOR_FAN1].desc));
 
-	sc->sc_sensor[ASB100_SENSOR_FAN1].type = SENSOR_FANRPM;
-	strlcpy(sc->sc_sensor[ASB100_SENSOR_FAN1].desc, "Fan2",
-	    sizeof(sc->sc_sensor[ASB100_SENSOR_FAN1].desc));
+	sc->sc_sensor[ASB100_SENSOR_FAN2].type = SENSOR_FANRPM;
+	strlcpy(sc->sc_sensor[ASB100_SENSOR_FAN2].desc, "Fan2",
+	    sizeof(sc->sc_sensor[ASB100_SENSOR_FAN2].desc));
 
 	sc->sc_sensor[ASB100_SENSOR_TEMP0].type = SENSOR_TEMP;
 	strlcpy(sc->sc_sensor[ASB100_SENSOR_TEMP0].desc, "External",
