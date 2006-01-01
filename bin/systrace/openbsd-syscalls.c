@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.28 2004/07/09 23:51:42 deraadt Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.29 2006/01/01 11:48:45 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -47,12 +47,14 @@
 #include <compat/ultrix/ultrix_syscall.h>
 
 #define KTRACE
+#define PTRACE
 #define NFSCLIENT
 #define NFSSERVER
 #define SYSVSEM
 #define SYSVMSG
 #define SYSVSHM
 #define LFS
+#define RTHREADS
 #include <kern/syscalls.c>
 
 #include <compat/bsdos/bsdos_syscalls.c>
@@ -68,12 +70,14 @@
 #include <compat/svr4/svr4_syscalls.c>
 #include <compat/ultrix/ultrix_syscalls.c>
 #undef KTRACE
+#undef PTRACE
 #undef NFSCLIENT
 #undef NFSSERVER
 #undef SYSVSEM
 #undef SYSVMSG
 #undef SYSVSHM
 #undef LFS
+#undef RTHREADS
 
 #include <sys/ioctl.h>
 #include <sys/tree.h>
