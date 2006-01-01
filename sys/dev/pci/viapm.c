@@ -1,4 +1,4 @@
-/*	$OpenBSD: viapm.c,v 1.2 2005/12/30 01:15:15 jsg Exp $	*/
+/*	$OpenBSD: viapm.c,v 1.3 2006/01/01 18:40:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis <kettenis@openbsd.org>
@@ -125,10 +125,10 @@ struct cfdriver viapm_cd = {
 };
 
 const struct pci_matchid viapm_ids[] = {
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8366_ISA },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233_ISA },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233A_ISA },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8235_ISA },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237_ISA },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237_ISA }
 };
 
 int
