@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.25 2006/01/01 22:49:25 fgsch Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.26 2006/01/01 22:55:39 fgsch Exp $ */
 /*	$NetBSD: uaudio.c,v 1.67 2003/05/03 18:11:41 wiz Exp $	*/
 
 /*
@@ -1486,7 +1486,7 @@ uaudio_open(void *addr, int flags)
 
 	if ((flags & FWRITE) && !(sc->sc_mode & AUMODE_PLAY))
 		return (EACCES);
-	if ((flags & FREAD) && !(sc->sc_mode | AUMODE_RECORD))
+	if ((flags & FREAD) && !(sc->sc_mode & AUMODE_RECORD))
 		return (EACCES);
 
 	return (0);
@@ -2388,8 +2388,8 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 	if (sc->sc_dying)
 		return (EIO);
 
-	if (((usemode & AUMODE_RECORD) && sc->sc_recchan.pipe != NULL) ||
-	    ((usemode & AUMODE_PLAY) && sc->sc_playchan.pipe != NULL))
+	if (((usemode & AUMODE_PLAY) && sc->sc_playchan.pipe != NULL) ||
+	    ((usemode & AUMODE_RECORD) && sc->sc_recchan.pipe != NULL))
 		return (EBUSY);
 
 	if ((usemode & AUMODE_PLAY) && sc->sc_playchan.altidx != -1)
