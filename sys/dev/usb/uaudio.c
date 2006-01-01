@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.23 2005/11/21 18:16:43 millert Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.24 2006/01/01 22:13:52 fgsch Exp $ */
 /*	$NetBSD: uaudio.c,v 1.67 2003/05/03 18:11:41 wiz Exp $	*/
 
 /*
@@ -608,7 +608,7 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 				 mc->wValue[0], mc->wIndex,
 				 MIX_SIZE(mc->type));
 		if (res > 0)
-			mc->delta = (res * 256 + mc->mul/2) / mc->mul;
+			mc->delta = (res * 255 + mc->mul/2) / mc->mul;
 	} else {
 		mc->minval = 0;
 		mc->maxval = 1;
@@ -1709,7 +1709,7 @@ uaudio_value2bsd(struct mixerctl *mc, int val)
 	if (mc->type == MIX_ON_OFF)
 		val = (val != 0);
 	else
-		val = ((uaudio_signext(mc->type, val) - mc->minval) * 256
+		val = ((uaudio_signext(mc->type, val) - mc->minval) * 255
 			+ mc->mul/2) / mc->mul;
 	DPRINTFN(5, ("val'=%d\n", val));
 	return (val);
@@ -1723,7 +1723,7 @@ uaudio_bsd2value(struct mixerctl *mc, int val)
 	if (mc->type == MIX_ON_OFF)
 		val = (val != 0);
 	else
-		val = (val + mc->delta/2) * mc->mul / 256 + mc->minval;
+		val = (val + mc->delta/2) * mc->mul / 255 + mc->minval;
 	DPRINTFN(5, ("val'=%d\n", val));
 	return (val);
 }
