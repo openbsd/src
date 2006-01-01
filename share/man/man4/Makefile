@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile,v 1.330 2006/01/01 00:37:14 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.331 2006/01/01 22:32:26 djm Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 adc.4 addcom.4 admcts.4 admlc.4 admtemp.4 \
 	admtm.4 admtmp.4 admtt.4 adt.4 adv.4 aha.4 ahb.4 ahc.4 ahd.4 aic.4 \
-	alipm.4 amdiic.4 amdpm.4 ami.4 amphy.4 an.4 aps.4 aria.4 art.4 ast.4 \
-	atalk.4 atapiscsi.4 ath.4 atu.4 atw.4 audio.4 aue.4 auich.4 autri.4 \
-	auixp.4 auvia.4 awi.4 axe.4 az.4 bce.4 bge.4 bha.4 bio.4 bktr.4 \
-	bmtphy.4 boca.4 bpf.4 brgphy.4 bridge.4 cac.4 cardbus.4 \
-	carp.4 ccd.4 cd.4 cdce.4 ch.4 ciphy.4 ciss.4 \
+	alipm.4 amdiic.4 amdpm.4 ami.4 amphy.4 an.4 aps.4 aria.4 art.4 \
+	asbtm.4 ast.4 atalk.4 atapiscsi.4 ath.4 atu.4 atw.4 audio.4 aue.4 \
+	auich.4 autri.4 auixp.4 auvia.4 awi.4 axe.4 az.4 bce.4 bge.4 bha.4 \
+	bio.4 bktr.4 bmtphy.4 boca.4 bpf.4 brgphy.4 bridge.4 cac.4 \
+	cardbus.4 carp.4 ccd.4 cd.4 cdce.4 ch.4 ciphy.4 ciss.4 \
 	clcs.4 clct.4 cmpci.4 cnw.4 \
 	com.4 crypto.4 cue.4 cy.4 cz.4 dc.4 dcphy.4 ddb.4 de.4 dpt.4 \
 	drum.4 eap.4 ec.4 eephy.4 ef.4 eg.4 ehci.4 eisa.4 el.4 em.4 \
