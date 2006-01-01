@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.64 2005/12/30 16:47:36 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.65 2006/01/01 05:05:58 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -93,7 +93,7 @@ cvs_readrepo(const char *dir, char *dst, size_t len)
 
 	l = cvs_path_cat(dir, "CVS/Repository", repo_path, sizeof(repo_path));
 	if (l >= sizeof(repo_path))
-		return (NULL);
+		return (-1);
 
 	fp = fopen(repo_path, "r");
 	if (fp == NULL)
@@ -185,11 +185,12 @@ cvs_strtomode(const char *str, mode_t *mode)
  * from the mode <mode> and store the result in <buf>, which can accept up to
  * <len> bytes (including the terminating NUL byte).  The result is guaranteed
  * to be NUL-terminated.
- * Returns 0 on success, or -1 on failure.
  */
-int
+void
 cvs_modetostr(mode_t mode, char *buf, size_t len)
 {
+	int l;
+	size_t l1;
 	char tmp[16], *bp;
 	mode_t um, gm, om;
 
@@ -201,23 +202,46 @@ cvs_modetostr(mode_t mode, char *buf, size_t len)
 	*bp = '\0';
 
 	if (um) {
-		snprintf(tmp, sizeof(tmp), "u=%s", cvs_modestr[um]);
-		strlcat(buf, tmp, len);
-	}
-	if (gm) {
-		if (um)
-			strlcat(buf, ",", len);
-		snprintf(tmp, sizeof(tmp), "g=%s", cvs_modestr[gm]);
-		strlcat(buf, tmp, len);
-	}
-	if (om) {
-		if (um || gm)
-			strlcat(buf, ",", len);
-		snprintf(tmp, sizeof(tmp), "o=%s", cvs_modestr[gm]);
-		strlcat(buf, tmp, len);
+		l = snprintf(tmp, sizeof(tmp), "u=%s", cvs_modestr[um]);
+		if (l == -1 || l >= (int)sizeof(tmp))
+			fatal("cvs_modetostr: overflow for user mode");
+
+		l1 = strlcat(buf, tmp, len);
+		if (l1 >= len)
+			fatal("cvs_modetostr: string truncation");
 	}
 
-	return (0);
+	if (gm) {
+		if (um) {
+			l1 = strlcat(buf, ",", len);
+			if (l1 >= len)
+				fatal("cvs_modetostr: string truncation");
+		}
+
+		l = snprintf(tmp, sizeof(tmp), "g=%s", cvs_modestr[gm]);
+		if (l == -1 || l >= (int)sizeof(tmp))
+			fatal("cvs_modetostr: overflow for group mode");
+
+		l1 = strlcat(buf, tmp, len);
+		if (l1 >= len)
+			fatal("cvs_modetostr: string truncation");
+	}
+
+	if (om) {
+		if (um || gm) {
+			l1 = strlcat(buf, ",", len);
+			if (l1 >= len)
+				fatal("cvs_modetostr: string truncation");
+		}
+
+		l = snprintf(tmp, sizeof(tmp), "o=%s", cvs_modestr[gm]);
+		if (l == -1 || l >= (int)sizeof(tmp))
+			fatal("cvs_modetostr: overflow for others mode");
+
+		l1 = strlcat(buf, tmp, len);
+		if (l1 >= len)
+			fatal("cvs_modetostr: string truncation");
+	}
 }
 
 /*
@@ -252,7 +276,7 @@ cvs_cksum(const char *file, char *dst, size_t len)
  * that delimiter.
  * Returns 0 on success, or -1 on failure.
  */
-int
+void
 cvs_splitpath(const char *path, char *base, size_t blen, char **file)
 {
 	size_t rlen;
@@ -266,16 +290,20 @@ cvs_splitpath(const char *path, char *base, size_t blen, char **file)
 
 	sp = strrchr(base, '/');
 	if (sp == NULL) {
-		strlcpy(base, "./", blen);
-		strlcat(base, path, blen);
+		rlen = strlcpy(base, "./", blen);
+		if (rlen >= blen)
+			fatal("cvs_splitpath: path truncation");
+
+		rlen = strlcat(base, path, blen);
+		if (rlen >= blen)
+			fatal("cvs_splitpath: path truncation");
+
 		sp = base + 1;
 	}
 
 	*sp = '\0';
 	if (file != NULL)
 		*file = sp + 1;
-
-	return (0);
 }
 
 /*
@@ -289,11 +317,15 @@ cvs_splitpath(const char *path, char *base, size_t blen, char **file)
 int
 cvs_getargv(const char *line, char **argv, int argvlen)
 {
+	size_t l;
 	u_int i;
 	int argc, err;
 	char linebuf[256], qbuf[128], *lp, *cp, *arg;
 
-	strlcpy(linebuf, line, sizeof(linebuf));
+	l = strlcpy(linebuf, line, sizeof(linebuf));
+	if (l >= sizeof(linebuf))
+		fatal("cvs_getargv: string truncation");
+
 	memset(argv, 0, argvlen * sizeof(char *));
 	argc = 0;
 
@@ -586,7 +618,7 @@ cvs_rmdir(const char *path)
 
 		len = cvs_path_cat(path, ent->d_name, fpath, sizeof(fpath));
 		if (len >= sizeof(fpath))
-			goto done;
+			fatal("cvs_rmdir: path truncation");
 
 		if (ent->d_type == DT_DIR) {
 			if (cvs_rmdir(fpath) == -1)
@@ -657,11 +689,11 @@ cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
 		if (create_adm == 1) {
 			l = strlcat(rpath, d, sizeof(rpath));
 			if (l >= sizeof(rpath))
-				goto done;
+				fatal("cvs_create_dir: path truncation");
 
 			l = strlcat(rpath, "/", sizeof(rpath));
 			if (l >= sizeof(rpath))
-				goto done;
+				fatal("cvs_create_dir: path truncation");
 
 			if (cvs_mkadmin(d, root, rpath, NULL, NULL, 0) < 0) {
 				cvs_log(LP_ERR, "failed to create adm files");
@@ -676,11 +708,8 @@ cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
 		entf = cvs_ent_open(".", O_RDWR);
 		if (entf != NULL && strcmp(d, ".")) {
 			len = snprintf(entry, sizeof(entry), "D/%s////", d);
-			if (len == -1 || len >= (int)sizeof(entry)) {
-				errno = ENAMETOOLONG;
-				cvs_log(LP_ERRNO, "%s", entry);
-				goto done;
-			}
+			if (len == -1 || len >= (int)sizeof(entry))
+				fatal("cvs_create_dir: overflow in entry buf");
 
 			if ((ent = cvs_ent_parse(entry)) == NULL) {
 				cvs_log(LP_ERR, "failed to parse entry");
