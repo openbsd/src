@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.5 2003/07/08 20:29:36 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.6 2006/01/01 00:41:02 millert Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -39,7 +39,6 @@
 #ifndef	_SPARC_BUS_H_
 #define	_SPARC_BUS_H_
 
-#include <machine/types.h>
 #include <machine/autoconf.h>
 
 #include <uvm/uvm_extern.h>
