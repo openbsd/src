@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.990 2006/01/01 18:37:58 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.991 2006/01/01 19:02:42 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4251,8 +4251,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "EE Pro 100 Smart",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82557,
-	    "82557",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8255x,
+	    "8255x",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX,
