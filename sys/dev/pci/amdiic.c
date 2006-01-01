@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdiic.c,v 1.1 2005/12/31 06:20:22 grange Exp $	*/
+/*	$OpenBSD: amdiic.c,v 1.2 2006/01/01 20:52:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -186,9 +186,10 @@ amdiic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c_tag.ic_acquire_bus = amdiic_i2c_acquire_bus;
 	sc->sc_i2c_tag.ic_release_bus = amdiic_i2c_release_bus;
 	sc->sc_i2c_tag.ic_exec = amdiic_i2c_exec;
+
+	bzero(&iba, sizeof iba);
 	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c_tag;
-	iba.iba_scan = 1;
 	config_found(self, &iba, iicbus_print);
 
 	return;

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.43 2005/12/21 18:50:51 miod Exp $
+#	$OpenBSD: files.macppc,v 1.44 2006/01/01 20:52:23 deraadt Exp $
 
 #
 # macppc-specific configuration info
@@ -77,7 +77,7 @@ device  ht {} : pcibus
 attach	ht at mainbus
 file	arch/macppc/pci/ht.c				ht
 
-device	smu {} : i2cbus
+device	smu: i2cbus
 attach	smu at mainbus
 file	arch/macppc/dev/smu.c				smu
 file	dev/clock_subr.c				smu
@@ -185,13 +185,13 @@ attach	mediabay at macobio
 file	arch/macppc/dev/mediabay.c			mediabay
 
 # Keywest I2C
-device	ki2c {}
+device	ki2c: i2cbus
 attach	ki2c at macobio
 attach	ki2c at memc	with ki2c_memc
 file	arch/macppc/dev/ki2c.c				ki2c
 
 # PMU I2C
-device	pi2c {}
+device	pi2c: i2cbus
 attach	pi2c at adb
 file	arch/macppc/dev/pi2c.c				pi2c
 
@@ -271,10 +271,7 @@ include "dev/usb/files.usb"
 # Machine-independent I2C drivers
 #
 include "dev/i2c/files.i2c"
-
-device	maciic {} : i2c
-attach	maciic at ki2c, pi2c, smu
-file	arch/macppc/dev/maci2c.c			maciic
+file	arch/macppc/dev/maci2c.c			i2cbus
 
 #
 # Machine-independent GPIO drivers

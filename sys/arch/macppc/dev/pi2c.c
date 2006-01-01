@@ -1,4 +1,4 @@
-/*	$OpenBSD: pi2c.c,v 1.4 2005/11/28 23:56:51 deraadt Exp $	*/
+/*	$OpenBSD: pi2c.c,v 1.5 2006/01/01 20:52:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -63,7 +63,7 @@ pi2c_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pi2c_softc *sc = (struct pi2c_softc *)self;
 	struct confargs *ca = aux;
-	struct maci2cbus_attach_args iba;
+	struct i2cbus_attach_args iba;
 
 	printf("\n");
 
@@ -74,8 +74,11 @@ pi2c_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c_tag.ic_release_bus = pi2c_i2c_release_bus;
 	sc->sc_i2c_tag.ic_exec = pi2c_i2c_exec;
 	
-	iba.iba_node = ca->ca_node;
+	bzero(&iba, sizeof iba);
+	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c_tag;
+	iba.iba_bus_scan = maciic_scan;
+	iba.iba_bus_scan_arg = &ca->ca_node;
 	config_found(&sc->sc_dev, &iba, NULL);
 }
 

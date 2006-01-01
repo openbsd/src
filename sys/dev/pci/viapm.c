@@ -1,4 +1,4 @@
-/*	$OpenBSD: viapm.c,v 1.3 2006/01/01 18:40:08 kettenis Exp $	*/
+/*	$OpenBSD: viapm.c,v 1.4 2006/01/01 20:52:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis <kettenis@openbsd.org>
@@ -204,9 +204,10 @@ viapm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c_tag.ic_acquire_bus = viapm_i2c_acquire_bus;
 	sc->sc_i2c_tag.ic_release_bus = viapm_i2c_release_bus;
 	sc->sc_i2c_tag.ic_exec = viapm_i2c_exec;
+
+	bzero(&iba, sizeof iba);
 	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c_tag;
-	iba.iba_scan = 1;
 	config_found(self, &iba, iicbus_print);
 
 	return;

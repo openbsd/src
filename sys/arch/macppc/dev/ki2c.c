@@ -1,4 +1,4 @@
-/*	$OpenBSD: ki2c.c,v 1.11 2005/12/13 19:21:45 kettenis Exp $	*/
+/*	$OpenBSD: ki2c.c,v 1.12 2006/01/01 20:52:25 deraadt Exp $	*/
 /*	$NetBSD: ki2c.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -140,7 +140,7 @@ ki2c_attach(struct device *parent, struct device *self, void *aux)
 void
 ki2c_attach_bus(struct ki2c_softc *sc, struct ki2c_bus *bus, int node)
 {
-	struct maci2cbus_attach_args iba;
+	struct i2cbus_attach_args iba;
 	u_int32_t reg;
 
 	if (OF_getprop(node, "reg", &reg, sizeof reg) != sizeof reg)
@@ -153,8 +153,11 @@ ki2c_attach_bus(struct ki2c_softc *sc, struct ki2c_bus *bus, int node)
 	bus->i2c_tag.ic_exec = ki2c_i2c_exec;
 	bus->reg = reg;
 
-	iba.iba_node = node;
+	bzero(&iba, sizeof iba);
+	iba.iba_name = "iic";
 	iba.iba_tag = &bus->i2c_tag;
+	iba.iba_bus_scan = maciic_scan;
+	iba.iba_bus_scan_arg = &node;
 	config_found(&sc->sc_dev, &iba, NULL);
 }
 

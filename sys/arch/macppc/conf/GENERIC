@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.119 2005/12/23 04:01:11 brad Exp $g
+#	$OpenBSD: GENERIC,v 1.120 2006/01/01 20:52:23 deraadt Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -250,22 +250,22 @@ radio*	at udsbr?		# USB radio
 ugen*	at uhub?		# USB Generic driver
 
 # I2C bus support
-maciic*		at ki2c?
-maciic*		at pi2c?
-maciic*		at smu?
+iic*		at ki2c?
+iic*		at pi2c?
+iic*		at smu?
 
 # I2C devices
-lmtemp*		at maciic?
-lmenv*		at maciic?
-maxtmp*		at maciic?
-adc*		at maciic?
-tsl*		at maciic?
-admtmp*		at maciic?
-pcagpio*	at maciic?
+lmtemp*		at iic?
+lmenv*		at iic?
+maxtmp*		at iic?
+adc*		at iic?
+tsl*		at iic?
+admtmp*		at iic?
+pcagpio*	at iic?
 gpio*		at pcagpio?
-maxds*		at maciic?
-fcu*		at maciic?
-adt*		at maciic?
+maxds*		at iic?
+fcu*		at iic?
+adt*		at iic?
 
 # CardBus bus support
 cardbus*	at cardslot?

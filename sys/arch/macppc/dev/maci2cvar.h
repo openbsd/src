@@ -1,4 +1,4 @@
-/*	$OpenBSD: maci2cvar.h,v 1.2 2005/11/15 16:23:34 deraadt Exp $	*/
+/*	$OpenBSD: maci2cvar.h,v 1.3 2006/01/01 20:52:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -18,7 +18,4 @@
 
 #include <dev/i2c/i2cvar.h>
 
-struct maci2cbus_attach_args {
-	i2c_tag_t       iba_tag;
-	int		iba_node;
-};
+void	maciic_scan(struct device *sc, struct i2cbus_attach_args *iba, void *aux);

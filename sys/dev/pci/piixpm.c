@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.8 2005/12/28 20:10:44 grange Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.9 2006/01/01 20:52:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -159,9 +159,10 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c_tag.ic_acquire_bus = piixpm_i2c_acquire_bus;
 	sc->sc_i2c_tag.ic_release_bus = piixpm_i2c_release_bus;
 	sc->sc_i2c_tag.ic_exec = piixpm_i2c_exec;
+
+	bzero(&iba, sizeof iba);
 	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c_tag;
-	iba.iba_scan = 1;
 	config_found(self, &iba, iicbus_print);
 
 	return;

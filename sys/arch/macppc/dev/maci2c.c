@@ -1,4 +1,4 @@
-/*	$OpenBSD: maci2c.c,v 1.4 2005/12/27 17:18:18 deraadt Exp $	*/
+/*	$OpenBSD: maci2c.c,v 1.5 2006/01/01 20:52:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -25,36 +25,19 @@
 
 #include <arch/macppc/dev/maci2cvar.h>
 
-int	maciic_match(struct device *, void *, void *);
-void	maciic_attach(struct device *, struct device *, void *);
 int	maciic_print(void *, const char *);
 
-struct cfattach maciic_ca = {
-	sizeof (struct device), maciic_match, maciic_attach
-};
-
-struct cfdriver maciic_cd = {
-	NULL, "maciic", DV_DULL
-};
-
-int
-maciic_match(struct device *parent, void *cf, void *aux)
-{
-	return (1);
-}
-
 void
-maciic_attach(struct device *parent, struct device *self, void *aux)
+maciic_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 {
-	struct maci2cbus_attach_args *iba = aux;
+	int iba_node = *(int *)aux;
+	extern int iic_print(void *, const char *);
 	struct i2c_attach_args ia;
 	char name[32];
 	u_int32_t reg;
 	int node;
 
-	printf("\n");
-
-	for (node = OF_child(iba->iba_node); node; node = OF_peer(node)) {
+	for (node = OF_child(iba_node); node; node = OF_peer(node)) {
 		if (OF_getprop(node, "reg", &reg, sizeof reg) != sizeof reg &&
 		    OF_getprop(node, "i2c-address", &reg, sizeof reg) != sizeof reg)
 			continue;
@@ -70,19 +53,6 @@ maciic_attach(struct device *parent, struct device *self, void *aux)
 		    sizeof name) && name[0])
 			ia.ia_name = name;
 		if (ia.ia_name)
-			config_found(self, &ia, maciic_print);
+			config_found(self, &ia, iic_print);
 	}
-}
-
-int
-maciic_print(void *aux, const char *pnp)
-{
-	struct i2c_attach_args *ia = aux;
-
-	if (pnp != NULL) {
-		printf("\"%s\" at %s", ia->ia_name, pnp);
-	}
-	printf(" addr 0x%x", ia->ia_addr);
-
-	return (UNCONF);
 }

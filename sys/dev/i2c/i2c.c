@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c.c,v 1.10 2005/12/27 17:18:18 deraadt Exp $	*/
+/*	$OpenBSD: i2c.c,v 1.11 2006/01/01 20:52:25 deraadt Exp $	*/
 /*	$NetBSD: i2c.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ iicbus_print(void *aux, const char *pnp)
 	struct i2cbus_attach_args *iba = aux;
 
 	if (pnp != NULL)
-		printf("\"%s\" at %s", iba->iba_name, pnp);
+		printf("%s at %s", iba->iba_name, pnp);
 
 	return (UNCONF);
 }
@@ -84,7 +84,7 @@ iic_print(void *aux, const char *pnp)
 	struct i2c_attach_args *ia = aux;
 
 	if (pnp != NULL)
-		printf("%s at %s", ia->ia_name, pnp);
+		printf("\"%s\" at %s", ia->ia_name, pnp);
 	printf(" addr 0x%x", ia->ia_addr);
 
 	return (UNCONF);
@@ -138,6 +138,8 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Scan for known device signatures.
 	 */
-	if (iba->iba_scan)
+	if (iba->iba_bus_scan)
+		(iba->iba_bus_scan)(self, aux, iba->iba_bus_scan_arg);
+	else
 		iic_scan(self, aux);
 }

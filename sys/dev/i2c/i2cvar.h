@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2cvar.h,v 1.8 2005/12/31 04:31:27 deraadt Exp $	*/
+/*	$OpenBSD: i2cvar.h,v 1.9 2006/01/01 20:52:25 deraadt Exp $	*/
 /*	$NetBSD: i2cvar.h,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -94,7 +94,9 @@ typedef struct i2c_controller {
 struct i2cbus_attach_args {
 	const char *iba_name;		/* bus name ("iic") */
 	i2c_tag_t iba_tag;		/* the controller */
-	int iba_scan;			/* do bus scanning */
+	void	(*iba_bus_scan)(struct device *, struct i2cbus_attach_args *,
+		    void *);
+	void	*iba_bus_scan_arg;
 };
 
 /* Used to attach devices on the i2c bus. */

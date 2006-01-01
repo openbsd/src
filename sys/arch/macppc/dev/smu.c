@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.9 2005/12/09 22:55:10 kettenis Exp $	*/
+/*	$OpenBSD: smu.c,v 1.10 2006/01/01 20:52:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -175,7 +175,7 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 {
         struct smu_softc *sc = (struct smu_softc *)self;
 	struct confargs *ca = aux;
-	struct maci2cbus_attach_args iba;
+	struct i2cbus_attach_args iba;
 	struct smu_fan *fan;
 	struct smu_sensor *sensor;
 	int nseg, node;
@@ -347,10 +347,13 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c_tag.ic_exec = smu_i2c_exec;
 
 	node = OF_getnodebyname(ca->ca_node, "smu-i2c-control");
+	node = OF_child(node);
 
-	/* XXX */
-	iba.iba_node = OF_child(node);
+	bzero(&iba, sizeof iba);
+	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c_tag;
+	iba.iba_bus_scan = maciic_scan;
+	iba.iba_bus_scan_arg = &node;
 	config_found(&sc->sc_dev, &iba, NULL);
 }
 

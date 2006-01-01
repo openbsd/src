@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.24 2006/01/01 13:39:53 kettenis Exp $
+.\"	$OpenBSD: iic.4,v 1.25 2006/01/01 20:52:27 deraadt Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -68,8 +68,12 @@ AMD-8111 SMBus controller
 National Semiconductor Geode SC1100 Super I/O
 .It Xr ichiic 4
 Intel ICH SMBus controllers
-.It Xr maciic 4
-Apple Inter IC (I2C) bus
+.It Xr ki2c 4
+Apple Kauai i2c controller
+.It Xr pi2c 4
+Apple via-pmu i2c controller
+.It Xr fcu 4
+Apple FCU fan controller
 .It Xr piixpm 4
 Intel PIIX and compatible SMBus controllers
 .It Xr viapm 4
