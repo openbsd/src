@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.12 2004/07/07 23:10:46 deraadt Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.13 2006/01/01 11:59:40 miod Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -272,7 +272,6 @@ dzcnprobe(cndev)
 		break;
 
 	default:
-		cndev->cn_pri = CN_DEAD;
 		return;
 	}
 	if (diagcons)

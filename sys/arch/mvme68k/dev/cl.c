@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.41 2005/11/24 22:43:16 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.42 2006/01/01 11:59:39 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -931,7 +931,6 @@ clcnprobe(cp)
 	case CPU_177:
 		break;
 	default:
-		cp->cn_pri = CN_DEAD;
 		return;
 	}
 

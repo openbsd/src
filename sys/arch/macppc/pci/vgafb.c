@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.26 2005/10/26 18:57:51 martin Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.27 2006/01/01 11:59:39 miod Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -373,10 +373,8 @@ vgafb_mmap(void *v, off_t offset, int prot)
 void
 vgafb_cnprobe(struct consdev *cp)
 {
-	if (cons_displaytype != 1) {
-		cp->cn_pri = CN_DEAD;
+	if (cons_displaytype != 1)
 		return;
-	} 
 
 	cp->cn_pri = CN_INTERNAL;
 }

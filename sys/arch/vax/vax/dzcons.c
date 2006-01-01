@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzcons.c,v 1.5 2002/03/14 03:16:02 millert Exp $	*/
+/*	$OpenBSD: dzcons.c,v 1.6 2006/01/01 11:59:40 miod Exp $	*/
 /*	$NetBSD: dzcons.c,v 1.5 1997/03/22 12:51:01 ragge Exp $	*/
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -304,7 +304,6 @@ dzcnprobe(cndev)
 		break;
 
 	default:
-		cndev->cn_pri = CN_DEAD;
 		return;
 	}
 
@@ -314,8 +313,6 @@ dzcnprobe(cndev)
 			cndev->cn_pri = CN_NORMAL;
 			return;
 		}
-	cndev->cn_pri = CN_DEAD;
-	return;
 }
 
 int

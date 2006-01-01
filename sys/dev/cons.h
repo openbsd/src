@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.h,v 1.14 2005/12/30 18:08:12 miod Exp $	*/
+/*	$OpenBSD: cons.h,v 1.15 2006/01/01 11:59:40 miod Exp $	*/
 /*	$NetBSD: cons.h,v 1.14 1996/03/14 19:08:35 christos Exp $	*/
 
 /*
@@ -103,10 +103,12 @@ void	nullcnpollc(dev_t, int);
 
 #define	cons_init(n) { \
 	dev_init(1,n,cnprobe), dev_init(1,n,cninit), dev_init(1,n,cngetc), \
-	dev_init(1,n,cnputc), dev_init(1,n,cnpollc) }
+	dev_init(1,n,cnputc), dev_init(1,n,cnpollc), NULL, \
+	NODEV, CN_DEAD }
 
 #define cons_init_bell(n) { \
 	dev_init(1,n,cnprobe), dev_init(1,n,cninit), dev_init(1,n,cngetc), \
-	dev_init(1,n,cnputc), dev_init(1,n,cnpollc), dev_init(1,n,cnbell) }
+	dev_init(1,n,cnputc), dev_init(1,n,cnpollc), dev_init(1,n,cnbell), \
+	NODEV, CN_DEAD }
 
 #endif

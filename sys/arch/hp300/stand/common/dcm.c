@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcm.c,v 1.3 2005/12/31 17:59:47 miod Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.4 2006/01/01 11:59:39 miod Exp $	*/
 /*	$NetBSD: dcm.c,v 1.2 1997/04/14 05:58:32 scottr Exp $	*/
 
 /*
@@ -62,10 +62,8 @@ dcmprobe(cp)
 	for (hw = sc_table; hw < &sc_table[MAXCTLRS]; hw++)
 		if (HW_ISDEV(hw, D_COMMDCM) && !badaddr((caddr_t)hw->hw_kva))
 			break;
-	if (!HW_ISDEV(hw, D_COMMDCM)) {
-		cp->cn_pri = CN_DEAD;
+	if (!HW_ISDEV(hw, D_COMMDCM))
 		return;
-	}
 	dcmcnaddr = (struct dcmdevice *) hw->hw_kva;
 
 	dcm = dcmcnaddr;
@@ -77,7 +75,6 @@ dcmprobe(cp)
 		cp->cn_pri = CN_REMOTE;
 		break;
 	default:
-		cp->cn_pri = CN_DEAD;
 		break;
 	}
 

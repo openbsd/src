@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.5 2005/12/31 18:13:44 miod Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.6 2006/01/01 11:59:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -179,7 +179,6 @@ wscnprobe(struct consdev *cp)
 	}
 
 	cp->cn_dev = makedev(maj, 0);
-	cp->cn_pri = CN_DEAD;
 	wsfbcninit = NULL;
 
 #if NDVBOX > 0 || NGBOX > 0 || NRBOX > 0 || NTOPCAT > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencons.c,v 1.15 2003/06/26 13:06:26 miod Exp $	*/
+/*	$OpenBSD: gencons.c,v 1.16 2006/01/01 11:59:40 miod Exp $	*/
 /*	$NetBSD: gencons.c,v 1.22 2000/01/24 02:40:33 matt Exp $	*/
 
 /*
@@ -262,8 +262,7 @@ gencnprobe(struct consdev *cndev)
 	    (vax_boardtype == VAX_BTYP_1305)) {
 		cndev->cn_dev = makedev(25, 0);
 		cndev->cn_pri = CN_NORMAL;
-	} else
-		cndev->cn_pri = CN_DEAD;
+	}
 }
 
 void

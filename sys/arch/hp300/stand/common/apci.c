@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.6 2005/12/31 17:59:47 miod Exp $	*/
+/*	$OpenBSD: apci.c,v 1.7 2006/01/01 11:59:39 miod Exp $	*/
 /*	$NetBSD: apci.c,v 1.2 1997/10/04 17:20:15 thorpej Exp $	*/
 
 /*-
@@ -91,8 +91,6 @@ apciprobe(cp)
 	struct consdev *cp;
 {
 	volatile u_int8_t *frodoregs;
-
-	cp->cn_pri = CN_DEAD;
 
 	/*
 	 * Only a 425e can have an APCI console.  On all other 4xx models,

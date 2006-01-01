@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.44 2005/10/13 19:48:34 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.45 2006/01/01 11:59:39 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -1153,8 +1153,6 @@ dartcnprobe(cp)
 	struct consdev *cp;
 {
 	int maj;
-
-	cp->cn_pri = CN_DEAD;
 
 	if (brdtyp != BRD_188 || badaddr(DART_BASE, 2) != 0)
 		return;

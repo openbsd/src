@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.49 2005/11/21 18:16:36 millert Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.50 2006/01/01 11:59:39 miod Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1532,16 +1532,12 @@ comcnprobe(cp)
 	bus_space_handle_t ioh;
 	int found;
 
-	if (bus_space_map(iot, CONADDR, COM_NPORTS, 0, &ioh)) {
-		cp->cn_pri = CN_DEAD;
+	if (bus_space_map(iot, CONADDR, COM_NPORTS, 0, &ioh))
 		return;
-	}
 	found = comprobe1(iot, ioh);
 	bus_space_unmap(iot, ioh, COM_NPORTS);
-	if (!found) {
-		cp->cn_pri = CN_DEAD;
+	if (!found)
 		return;
-	}
 
 	/* locate the major number */
 	for (commajor = 0; commajor < nchrdev; commajor++)

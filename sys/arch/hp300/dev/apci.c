@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.27 2005/12/30 18:14:09 miod Exp $	*/
+/*	$OpenBSD: apci.c,v 1.28 2006/01/01 11:59:37 miod Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -887,7 +887,6 @@ apcicnprobe(cp)
 
 	/* initialize the required fields */
 	cp->cn_dev = makedev(apcimajor, 0);	/* XXX */
-	cp->cn_pri = CN_DEAD;
 
 	/*
 	 * The APCI can only be a console on a 425e; on other 4xx

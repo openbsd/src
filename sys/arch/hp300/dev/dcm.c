@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcm.c,v 1.27 2005/12/31 18:13:41 miod Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.28 2006/01/01 11:59:37 miod Exp $	*/
 /*	$NetBSD: dcm.c,v 1.41 1997/05/05 20:59:16 thorpej Exp $	*/
 
 /*
@@ -123,7 +123,6 @@ struct	dcmischeme {
  */
 static	struct dcmdevice *dcm_cn = NULL;	/* pointer to hardware */
 static	int dcmconsinit;			/* has been initialized */
-/* static	int dcm_lastcnpri = CN_DEAD; */	/* XXX last priority */
 
 int	dcmdefaultrate = DEFAULT_BAUD_RATE;
 int	dcmconbrdbusy = 0;
@@ -1555,7 +1554,6 @@ dcmcnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(dcmmajor, 0);	/* XXX */
-	cp->cn_pri = CN_DEAD;
 
 	console_scan(dcm_console_scan, cp);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.22 2005/11/24 22:43:16 miod Exp $ */
+/*	$OpenBSD: zs.c,v 1.23 2006/01/01 11:59:39 miod Exp $ */
 
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
@@ -1002,7 +1002,6 @@ zscnprobe(cp)
 	case CPU_172:
 		break;
 	default:
-		cp->cn_pri = CN_DEAD;
 		return;
 	}
 

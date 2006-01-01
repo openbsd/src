@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.49 2005/01/25 12:13:22 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.50 2006/01/01 11:59:39 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -885,8 +885,6 @@ clcnprobe(cp)
 	struct consdev *cp;
 {
 	int maj;
-
-	cp->cn_pri = CN_DEAD;
 
 	/* bomb if it'a a MVME188 */
 	if (brdtyp == BRD_188 || badaddr(CD2400_BASE_ADDR, 1) != 0)
