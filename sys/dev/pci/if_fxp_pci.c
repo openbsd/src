@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.42 2005/12/18 00:02:32 brad Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.43 2006/01/01 19:06:44 brad Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -85,7 +85,7 @@ struct cfattach fxp_pci_ca = {
 };
 
 const struct pci_matchid fxp_pci_devices[] = {
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82557 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8255x },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82559 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82559ER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82562 },
@@ -123,9 +123,6 @@ const struct pci_matchid fxp_pci_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GB_LAN_2 },
 };
 
-/*
- * Check if a device is an 82557.
- */
 int
 fxp_pci_match(parent, match, aux)
 	struct device *parent;
@@ -180,7 +177,7 @@ fxp_pci_attach(parent, self, aux)
 	}
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_INTEL_82557:
+	case PCI_PRODUCT_INTEL_8255x:
 	case PCI_PRODUCT_INTEL_82559:
 	case PCI_PRODUCT_INTEL_82559ER:
 	{

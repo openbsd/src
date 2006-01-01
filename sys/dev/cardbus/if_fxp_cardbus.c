@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_cardbus.c,v 1.11 2005/05/16 01:36:25 brad Exp $ */
+/*	$OpenBSD: if_fxp_cardbus.c,v 1.12 2006/01/01 19:06:43 brad Exp $ */
 /*	$NetBSD: if_fxp_cardbus.c,v 1.12 2000/05/08 18:23:36 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 /*
- * CardBus front-end for the Intel i82557 family of Ethernet chips.
+ * CardBus front-end for the Intel i8255x family of Ethernet chips.
  */
 
 #include "bpfilter.h"
@@ -105,7 +105,7 @@ struct cfattach fxp_cardbus_ca = {
 };
 
 const struct cardbus_matchid fxp_cardbus_devices[] = {
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82557 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8255x },
 };
 
 #ifdef CBB_DEBUG
