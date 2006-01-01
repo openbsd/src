@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.24 2006/01/01 22:13:52 fgsch Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.25 2006/01/01 22:49:25 fgsch Exp $ */
 /*	$NetBSD: uaudio.c,v 1.67 2003/05/03 18:11:41 wiz Exp $	*/
 
 /*
@@ -1094,7 +1094,7 @@ uaudio_add_alt(struct uaudio_softc *sc, struct as_info *ai)
 	}
 
 	/* Copy old data, if there was any */
-	if (sc->sc_nalts != 0) { 
+	if (sc->sc_nalts != 0) {
 	    bcopy(sc->sc_alts, nai, sizeof(*ai) * (sc->sc_nalts));
 	    free(sc->sc_alts, M_USBDEV);
 	}
@@ -1292,7 +1292,7 @@ uaudio_identify_as(struct uaudio_softc *sc, usb_config_descriptor_t *cdesc)
 		return (USBD_INVAL);
 	DPRINTF(("uaudio_identify_as: %d alts available\n", sc->sc_nalts));
 
-	if ((sc->sc_mode & (AUMODE_PLAY | AUMODE_RECORD)) == 0) {
+	if (sc->sc_mode == 0) {
 		printf("%s: no usable endpoint found\n",
 		       USBDEVNAME(sc->sc_dev));
 		return (USBD_INVAL);
@@ -1484,20 +1484,10 @@ uaudio_open(void *addr, int flags)
 	if (sc->sc_dying)
 		return (EIO);
 
-	if (sc->sc_mode == 0)
-		return (ENXIO);
-
-	if (flags & FREAD) {
-		if ((sc->sc_mode & AUMODE_RECORD) == 0)
-			return (EACCES);
-		sc->sc_recchan.intr = NULL;
-	}
-
-	if (flags & FWRITE) {
-		if ((sc->sc_mode & AUMODE_PLAY) == 0)
-			return (EACCES);
-		sc->sc_playchan.intr = NULL;
-	}
+	if ((flags & FWRITE) && !(sc->sc_mode & AUMODE_PLAY))
+		return (EACCES);
+	if ((flags & FREAD) && !(sc->sc_mode | AUMODE_RECORD))
+		return (EACCES);
 
 	return (0);
 }
@@ -1508,13 +1498,6 @@ uaudio_open(void *addr, int flags)
 void
 uaudio_close(void *addr)
 {
-	struct uaudio_softc *sc = addr;
-
-	DPRINTF(("uaudio_close: sc=%p\n", sc));
-	uaudio_halt_in_dma(sc);
-	uaudio_halt_out_dma(sc);
-
-	sc->sc_playchan.intr = sc->sc_recchan.intr = NULL;
 }
 
 int
@@ -1537,6 +1520,7 @@ uaudio_halt_out_dma(void *addr)
 		uaudio_chan_close(sc, &sc->sc_playchan);
 		sc->sc_playchan.pipe = NULL;
 		uaudio_chan_free_buffers(sc, &sc->sc_playchan);
+		sc->sc_playchan.intr = NULL;
 	}
 	return (0);
 }
@@ -1551,6 +1535,7 @@ uaudio_halt_in_dma(void *addr)
 		uaudio_chan_close(sc, &sc->sc_recchan);
 		sc->sc_recchan.pipe = NULL;
 		uaudio_chan_free_buffers(sc, &sc->sc_recchan);
+		sc->sc_recchan.intr = NULL;
 	}
 	return (0);
 }
@@ -2403,21 +2388,22 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 	if (sc->sc_dying)
 		return (EIO);
 
-	if ((usemode == AUMODE_RECORD && sc->sc_recchan.pipe != NULL)
-	    || (usemode == AUMODE_PLAY && sc->sc_playchan.pipe != NULL))
+	if (((usemode & AUMODE_RECORD) && sc->sc_recchan.pipe != NULL) ||
+	    ((usemode & AUMODE_PLAY) && sc->sc_playchan.pipe != NULL))
 		return (EBUSY);
 
-	if (usemode & AUMODE_PLAY && sc->sc_playchan.altidx != -1)
+	if ((usemode & AUMODE_PLAY) && sc->sc_playchan.altidx != -1)
 		sc->sc_alts[sc->sc_playchan.altidx].sc_busy = 0;
-	if (usemode & AUMODE_RECORD && sc->sc_recchan.altidx != -1)
+	if ((usemode & AUMODE_RECORD) && sc->sc_recchan.altidx != -1)
 		sc->sc_alts[sc->sc_recchan.altidx].sc_busy = 0;
+
+	/* Some uaudio devices are unidirectional.  Don't try to find a
+	   matching mode for the unsupported direction. */
+	setmode &= sc->sc_mode;
 
 	for (mode = AUMODE_RECORD; mode != -1;
 	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
 		if ((setmode & mode) == 0)
-			continue;
-
-		if ((sc->sc_mode & mode) == 0)
 			continue;
 
 		p = (mode == AUMODE_PLAY) ? play : rec;
@@ -2541,26 +2527,27 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 
 		p->sw_code = swcode;
 		p->factor  = factor;
-		if (usemode & mode) {
-			if (mode == AUMODE_PLAY) {
-				paltidx = i;
-				sc->sc_alts[i].sc_busy = 1;
-			} else {
-				raltidx = i;
-				sc->sc_alts[i].sc_busy = 1;
-			}
-		}
+
+		if (mode == AUMODE_PLAY)
+			paltidx = i;
+		else
+			raltidx = i;
 	}
 
-	if ((usemode & AUMODE_PLAY) /*&& paltidx != sc->sc_playchan.altidx*/) {
+	if ((setmode & AUMODE_PLAY)) {
 		/* XXX abort transfer if currently happening? */
 		uaudio_chan_init(&sc->sc_playchan, paltidx, play, 0);
 	}
-	if ((usemode & AUMODE_RECORD) /*&& raltidx != sc->sc_recchan.altidx*/) {
+	if ((setmode & AUMODE_RECORD)) {
 		/* XXX abort transfer if currently happening? */
 		uaudio_chan_init(&sc->sc_recchan, raltidx, rec,
 		    UGETW(sc->sc_alts[raltidx].edesc->wMaxPacketSize));
 	}
+
+	if ((usemode & AUMODE_PLAY) && sc->sc_playchan.altidx != -1)
+		sc->sc_alts[sc->sc_playchan.altidx].sc_busy = 1;
+	if ((usemode & AUMODE_RECORD) && sc->sc_recchan.altidx != -1)
+		sc->sc_alts[sc->sc_recchan.altidx].sc_busy = 1;
 
 	DPRINTF(("uaudio_set_params: use altidx=p%d/r%d, altno=p%d/r%d\n",
 		 sc->sc_playchan.altidx, sc->sc_recchan.altidx,
