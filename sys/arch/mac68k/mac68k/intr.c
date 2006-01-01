@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.5 2005/12/03 21:37:14 brad Exp $	*/
+/*	$OpenBSD: intr.c,v 1.6 2006/01/01 13:16:01 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.2 1998/08/25 04:03:56 scottr Exp $	*/
 
 /*-
@@ -86,14 +86,22 @@ intr_init()
 	/* Standard spl(9) interrupt priorities */
 	mac68k_ttyipl = (PSL_S | PSL_IPL1);
 	mac68k_bioipl = (PSL_S | PSL_IPL2);
-	mac68k_netipl = (PSL_S | PSL_IPL2);
-	mac68k_impipl = (PSL_S | PSL_IPL2);
-	mac68k_clockipl = (PSL_S | PSL_IPL2);
-	mac68k_statclockipl = (PSL_S | PSL_IPL2);
-	
-	if (current_mac_model->class == MACH_CLASSAV)
-		mac68k_bioipl = mac68k_netipl = (PSL_S | PSL_IPL4);
 
+	if (mac68k_machine.aux_interrupts) {
+		mac68k_netipl = (PSL_S | PSL_IPL3);
+		mac68k_impipl = (PSL_S | PSL_IPL6);
+		mac68k_clockipl = (PSL_S | PSL_IPL6);
+		mac68k_statclockipl = (PSL_S | PSL_IPL6);
+	} else {
+		mac68k_netipl = (PSL_S | PSL_IPL2);
+		mac68k_impipl = (PSL_S | PSL_IPL2);
+		mac68k_clockipl = (PSL_S | PSL_IPL2);
+		mac68k_statclockipl = (PSL_S | PSL_IPL2);
+
+		if (current_mac_model->class == MACH_CLASSAV)
+			mac68k_bioipl = mac68k_netipl = (PSL_S | PSL_IPL4);
+	}
+	
 	intr_computeipl();
 }
 

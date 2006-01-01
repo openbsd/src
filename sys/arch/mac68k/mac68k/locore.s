@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.47 2006/01/01 13:14:44 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.48 2006/01/01 13:16:01 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -858,29 +858,6 @@ Lbrkpt3:
 #define	INTERRUPT_RESTOREREG	moveml	sp@+,#0x0303
 
 ENTRY_NOPROFILE(spurintr)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	_ASM_LABEL(rei)
-
-ENTRY_NOPROFILE(lev1intr)
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	movl	sp, sp@-
-	jbsr	_C_LABEL(via1_intr)
-	addql	#4,sp
-	moveml	sp@+,#0xFFFF
-	addql	#4,sp
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	_ASM_LABEL(rei)
-
-ENTRY_NOPROFILE(lev2intr)
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	movl	sp, sp@-
-	movl	_C_LABEL(real_via2_intr),a2
-	jbsr	a2@
-	addql	#4,sp
-	moveml	sp@+,#0xFFFF
-	addql	#4,sp
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)
 

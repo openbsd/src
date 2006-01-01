@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.34 2005/08/01 11:54:24 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.35 2006/01/01 13:16:01 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -244,6 +244,10 @@ struct mac68k_machine_S {
 	int			scsi96;		/* Has NCR 53C96 */
 	int			scsi96_2;	/* Has 2nd 53C96 */
 	int			sonic;		/* Has SONIC e-net */
+
+	int			via1_ipl;
+	int			via2_ipl;
+	int			aux_interrupts;
 };
 
 	/* What kind of model is this */

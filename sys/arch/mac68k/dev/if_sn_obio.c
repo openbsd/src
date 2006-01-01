@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn_obio.c,v 1.20 2004/11/26 21:21:24 miod Exp $    */
+/*    $OpenBSD: if_sn_obio.c,v 1.21 2006/01/01 13:15:59 miod Exp $    */
 /*    $NetBSD: if_sn_obio.c,v 1.9 1997/04/22 20:56:15 scottr Exp $    */
 
 /*
@@ -181,7 +181,10 @@ sn_obio_attach(parent, self, aux)
 		return;
 	}
 
-	add_nubus_intr(sc->slotno, snintr, sc, sc->sc_dev.dv_xname);
+	if (mac68k_machine.aux_interrupts)
+		intr_establish(snintr, sc, 3, sc->sc_dev.dv_xname);
+	else
+		add_nubus_intr(sc->slotno, snintr, sc, sc->sc_dev.dv_xname);
 }
 
 static int

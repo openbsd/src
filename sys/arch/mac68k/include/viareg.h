@@ -1,4 +1,4 @@
-/*	$OpenBSD: viareg.h,v 1.16 2005/09/27 07:15:19 martin Exp $	*/
+/*	$OpenBSD: viareg.h,v 1.17 2006/01/01 13:16:01 miod Exp $	*/
 /*	$NetBSD: viareg.h,v 1.6 1997/02/28 07:41:41 scottr Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@
 #define DB1I_Par_Err	0x80
 #define DB1O_vSndEnb	0x80
 #define DB1O_Par_Enb	0x40
+#define	DB1O_AuxIntEnb	0x40	/* 0 = enabled, 1 = disabled */
 #define DB1O_vFDesk2	0x20
 #define DB1O_vFDesk1	0x10
 #define DB1I_vFDBInt	0x08

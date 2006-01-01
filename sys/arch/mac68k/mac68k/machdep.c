@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.122 2005/12/17 07:31:26 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.123 2006/01/01 13:16:01 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -2222,7 +2222,6 @@ void	setmachdep(void);
 void
 setmachdep()
 {
-	int setup_mrg_vectors = 0;
 	struct cpu_model_info *cpui;
 
 	/*
@@ -2236,23 +2235,26 @@ setmachdep()
 	cpui = &(cpu_models[mac68k_machine.cpu_model_index]);
 	current_mac_model = cpui;
 
+	mac68k_machine.via1_ipl = 1;
+	mac68k_machine.via2_ipl = 2;
+	mac68k_machine.aux_interrupts = 0;
+
 	/*
 	 * Set up any machine specific stuff that we have to before
 	 * ANYTHING else happens
 	 */
 	switch (cpui->class) {	/* Base this on class of machine... */
 	case MACH_CLASSII:
-		VIA2 = 1;
+		VIA2 = VIA2OFF;
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
 		mac68k_machine.zs_chip = 0;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
-		setup_mrg_vectors = 1;
 		break;
 	case MACH_CLASSPB:
-		VIA2 = 1;
+		VIA2 = VIA2OFF;
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
@@ -2270,7 +2272,7 @@ setmachdep()
 		 * like the VIA2 functions might be on the MSC at the RBV
 		 * locations.  The rest is copied from the Powerbooks.
 		 */
-		VIA2 = 0x13;
+		VIA2 = RBVOFF;
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
@@ -2282,10 +2284,26 @@ setmachdep()
 		break;
 	case MACH_CLASSQ:
 	case MACH_CLASSQ2:
+		VIA2 = VIA2OFF;
+		IOBase = 0x50f00000;
+		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.sonic = 1;
+		mac68k_machine.scsi96 = 1;
+		mac68k_machine.zs_chip = 0;
+		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
+
+		/* Enable A/UX interrupt scheme */
+		mac68k_machine.aux_interrupts = 1;
+		via_reg(VIA1, vBufB) &= (0xff ^ DB1O_AuxIntEnb);
+		via_reg(VIA1, vDirB) |= DB1O_AuxIntEnb;
+		mac68k_machine.via1_ipl = 6;
+		mac68k_machine.via2_ipl = 2;
+
+		break;
 	case MACH_CLASSAV:
 	case MACH_CLASSP580:
-		VIA2 = 1;
+		VIA2 = VIA2OFF;
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi96 = 1;
@@ -2294,7 +2312,7 @@ setmachdep()
 		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
 		break;
 	case MACH_CLASSIIci:
-		VIA2 = 0x13;
+		VIA2 = RBVOFF;
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
@@ -2303,7 +2321,7 @@ setmachdep()
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;
 	case MACH_CLASSIIsi:
-		VIA2 = 0x13;
+		VIA2 = RBVOFF;
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
@@ -2312,7 +2330,7 @@ setmachdep()
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;
 	case MACH_CLASSIIvx:
-		VIA2 = 0x13;
+		VIA2 = RBVOFF;
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
@@ -2321,7 +2339,7 @@ setmachdep()
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;
 	case MACH_CLASSLC:
-		VIA2 = 0x13;
+		VIA2 = RBVOFF;
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
@@ -2330,7 +2348,7 @@ setmachdep()
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;
 	case MACH_CLASSIIfx:
-		VIA2 = 0xd;
+		VIA2 = OSSOFF;
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
@@ -2348,8 +2366,7 @@ setmachdep()
 	 * used later when we re-map the vectors from MacOS Address
 	 * Space to BSD Address Space.
 	 */
-	if ((mac68k_machine.serial_console & 0x03) == 0 || setup_mrg_vectors)
-		mrg_MacOSROMVectors = cpui->rom_vectors;
+	mrg_MacOSROMVectors = cpui->rom_vectors;
 }
 
 /*
