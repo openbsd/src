@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: misc.c,v 1.38 2006/01/01 08:59:27 stevesk Exp $");
+RCSID("$OpenBSD: misc.c,v 1.39 2006/01/01 10:08:48 stevesk Exp $");
 
 #include <net/if.h>
 
@@ -552,7 +552,7 @@ tun_open(int tun, int mode)
 				break;
 		}
 	} else {
-		debug("%s: invalid tunnel %u\n", __func__, tun);
+		debug("%s: invalid tunnel %u", __func__, tun);
 		return (-1);
 	}
 
