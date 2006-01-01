@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.13 2003/06/02 23:27:49 millert Exp $
+#	$OpenBSD: genassym.cf,v 1.14 2006/01/01 13:14:44 miod Exp $
 #	$NetBSD: genassym.cf,v 1.7 1998/01/06 08:46:16 thorpej Exp $
 
 #
@@ -61,7 +61,6 @@ export	PSL_LOWIPL
 export	PSL_USER
 define	PSL_TS			PSL_T | PSL_S
 define	SPL1			PSL_S | PSL_IPL1
-define	SPL2			PSL_S | PSL_IPL2
 
 # pte/ste bits
 export	PG_FRAME

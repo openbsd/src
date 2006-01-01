@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.46 2005/11/13 23:14:34 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.47 2006/01/01 13:14:44 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -914,7 +914,7 @@ ENTRY_NOPROFILE(lev7intr)
 ENTRY_NOPROFILE(rtclock_intr)
 	movl	d2,sp@-			| save d2
 	movw	sr,d2			| save SPL
-	movw	#SPL2,sr		| raise SPL to splclock()
+	movw	_C_LABEL(mac68k_clockipl),sr	| raise SPL to splclock()
 	movl	a6@(8),a1		| get pointer to frame in via1_intr
 	movl	a1@(64),sp@-		| push ps
 	movl	a1@(68),sp@-		| push pc
