@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.14 2005/12/31 21:40:43 marc Exp $ */
+/*	$OpenBSD: rthread.h,v 1.15 2006/01/01 19:32:30 marc Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -27,9 +27,13 @@
 
 #include <sys/queue.h>
 
+#define RTHREAD_STACK_SIZE_DEF (64 * 1024)
+
 struct stack {
 	void *sp;
 	void *base;
+	void *guard;
+	size_t guardsize;
 	size_t len;
 };
 
@@ -73,6 +77,7 @@ struct pthread_rwlockattr {
 struct pthread_attr {
 	void *stack_addr;
 	size_t stack_size;
+	size_t guard_size;
 	int detach_state;
 	int contention_scope;
 	int sched_policy;
@@ -134,9 +139,13 @@ int	_sem_post(sem_t);
 int	_sem_wakeup(sem_t);
 int	_sem_wakeall(sem_t);
 
+struct stack *_rthread_alloc_stack(pthread_t);
+void	_rthread_free_stack(struct stack *);
 void	_rthread_tls_destructors(pthread_t);
 void	_rthread_debug(int, const char *, ...)
 		__attribute__((__format__ (printf, 2, 3)));
+
+void	_thread_dump_info(void);
 
 int	_atomic_lock(register volatile _spinlock_lock_t *);
 

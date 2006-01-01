@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_attr.c,v 1.4 2005/12/31 08:51:20 otto Exp $ */
+/*	$OpenBSD: rthread_attr.c,v 1.5 2006/01/01 19:32:30 marc Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -36,6 +36,17 @@
 
 #include "rthread.h"
 
+/*
+ * Note: stack_size + guard_size == total stack used
+ *
+ * pthread_attr_init MUST be called before any other attribute function
+ * for proper operation.
+ *
+ * Every call to pthread_attr_init MUST be matched with a call to
+ * pthread_attr_destroy to avoid leaking memory.   This is an implementation
+ * requirement, not a POSIX requirement.
+ */
+
 int
 pthread_attr_init(pthread_attr_t *attrp)
 {
@@ -45,6 +56,9 @@ pthread_attr_init(pthread_attr_t *attrp)
 	if (!attr)
 		return (errno);
 	memset(attr, 0, sizeof(*attr));
+	attr->stack_size = RTHREAD_STACK_SIZE_DEF;
+	attr->guard_size = sysconf(_SC_PAGESIZE);
+	attr->stack_size -= attr->guard_size;
 	*attrp = attr;
 
 	return (0);
@@ -60,6 +74,26 @@ pthread_attr_destroy(pthread_attr_t *attrp)
 }
 
 int
+pthread_attr_getguardsize(const pthread_attr_t *attrp, size_t *guardsize)
+{
+	*guardsize = (*attrp)->guard_size;
+
+	return (0);
+}
+
+int
+pthread_attr_setguardsize(pthread_attr_t *attrp, size_t guardsize)
+{
+	if ((*attrp)->guard_size != guardsize) {
+		(*attrp)->stack_size += (*attrp)->guard_size;
+		(*attrp)->guard_size = guardsize;
+		(*attrp)->stack_size -= (*attrp)->guard_size;
+	}
+
+	return 0;
+}
+
+int
 pthread_attr_getdetachstate(const pthread_attr_t *attrp, int *detachstate)
 {
 	*detachstate = (*attrp)->detach_state;
@@ -70,6 +104,7 @@ pthread_attr_getdetachstate(const pthread_attr_t *attrp, int *detachstate)
 int
 pthread_attr_setdetachstate(pthread_attr_t *attrp, int detachstate)
 {
+	/* XXX detachstate should be validated here */
 	(*attrp)->detach_state = detachstate;
 
 	return (0);
@@ -80,7 +115,7 @@ pthread_attr_getstack(const pthread_attr_t *attrp, void **stackaddr,
     size_t *stacksize)
 {
 	*stackaddr = (*attrp)->stack_addr;
-	*stacksize = (*attrp)->stack_size;
+	*stacksize = (*attrp)->stack_size + (*attrp)->guard_size;
 
 	return (0);
 }
@@ -90,6 +125,7 @@ pthread_attr_setstack(pthread_attr_t *attrp, void *stackaddr, size_t stacksize)
 {
 	(*attrp)->stack_addr = stackaddr;
 	(*attrp)->stack_size = stacksize;
+	(*attrp)->stack_size -= (*attrp)->guard_size;
 
 	return (0);
 }
@@ -97,8 +133,8 @@ pthread_attr_setstack(pthread_attr_t *attrp, void *stackaddr, size_t stacksize)
 int
 pthread_attr_getstacksize(const pthread_attr_t *attrp, size_t *stacksize)
 {
-	*stacksize = (*attrp)->stack_size;
-
+	*stacksize = (*attrp)->stack_size + (*attrp)->guard_size;
+	
 	return (0);
 }
 
@@ -106,6 +142,10 @@ int
 pthread_attr_setstacksize(pthread_attr_t *attrp, size_t stacksize)
 {
 	(*attrp)->stack_size = stacksize;
+	if ((*attrp)->stack_size > (*attrp)->guard_size)
+		(*attrp)->stack_size -= (*attrp)->guard_size;
+	else
+		(*attrp)->stack_size = 0;
 
 	return (0);
 }
@@ -137,6 +177,7 @@ pthread_attr_getscope(const pthread_attr_t *attrp, int *contentionscope)
 int
 pthread_attr_setscope(pthread_attr_t *attrp, int contentionscope)
 {
+	/* XXX contentionscope should be validated here */
 	(*attrp)->contention_scope = contentionscope;
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.25 2005/12/31 08:51:20 otto Exp $ */
+/*	$OpenBSD: rthread.c,v 1.26 2006/01/01 19:32:30 marc Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -111,40 +111,6 @@ _rthread_init(void)
 	return (0);
 }
 
-static struct stack *
-_rthread_alloc_stack(size_t len, void *base)
-{
-	struct stack *stack;
-
-	stack = malloc(sizeof(*stack));
-	if (!stack)
-		return (NULL);
-	if (base) {
-		stack->base = base;
-	} else {
-		stack->base = mmap(NULL, len, PROT_READ | PROT_WRITE,
-		    MAP_ANON, -1, 0);
-		if (stack->base == MAP_FAILED) {
-			free(stack);
-			return (NULL);
-		}
-	}
-#ifdef MACHINE_STACK_GROWS_UP
-	stack->sp = (void *)(((size_t)stack->base + 64) & ~63);
-#else
-	stack->sp = (void *)(((size_t)stack->base + len - 16) & ~15);
-#endif
-	stack->len = len;
-	return (stack);
-}
-
-static void
-_rthread_free_stack(struct stack *stack)
-{
-	munmap(stack->base, stack->len);
-	free(stack);
-}
-
 /*
  * real pthread functions
  */
@@ -238,10 +204,15 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 	thread->arg = arg;
 	if (attr)
 		thread->attr = *(*attr);
+	else {
+		thread->attr.stack_size = RTHREAD_STACK_SIZE_DEF;
+		thread->attr.guard_size = sysconf(_SC_PAGESIZE);
+		thread->attr.stack_size -= thread->attr.guard_size;
+	}
 
 	_spinlock(&_thread_lock);
 
-	thread->stack = _rthread_alloc_stack(64 * 1024, NULL);
+	thread->stack = _rthread_alloc_stack(thread);
 	if (!thread->stack) {
 		rc = errno;
 		goto fail1;
