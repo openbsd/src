@@ -1,5 +1,5 @@
-/*	$OpenBSD: uaudio.c,v 1.27 2006/01/02 00:07:13 fgsch Exp $ */
-/*	$NetBSD: uaudio.c,v 1.67 2003/05/03 18:11:41 wiz Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.28 2006/01/02 00:26:48 fgsch Exp $ */
+/*	$NetBSD: uaudio.c,v 1.79 2004/10/03 06:01:09 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ struct mixerctl {
 #define MIX_SIGNED_16	2
 #define MIX_UNSIGNED_16	3
 #define MIX_SIGNED_8	4
+#define MIX_SELECTOR	5
 #define MIX_SIZE(n) ((n) == MIX_SIGNED_16 || (n) == MIX_UNSIGNED_16 ? 2 : 1)
 #define MIX_UNSIGNED(n) ((n) == MIX_UNSIGNED_16)
 	int		minval, maxval;
@@ -581,7 +582,12 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 	sc->sc_ctls = nmc;
 
 	mc->delta = 0;
-	if (mc->type != MIX_ON_OFF) {
+	if (mc->type == MIX_ON_OFF) {
+		mc->minval = 0;
+		mc->maxval = 1;
+	} else if (mc->type == MIX_SELECTOR) {
+		;
+	} else {
 		/* Determine min and max values. */
 		mc->minval = uaudio_signext(mc->type,
 			uaudio_get(sc, GET_MIN, UT_READ_CLASS_INTERFACE,
@@ -599,9 +605,6 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 				 MIX_SIZE(mc->type));
 		if (res > 0)
 			mc->delta = (res * 255 + mc->mul/2) / mc->mul;
-	} else {
-		mc->minval = 0;
-		mc->maxval = 1;
 	}
 
 	sc->sc_ctls[sc->sc_nctls++] = *mc;
@@ -802,14 +805,30 @@ void
 uaudio_add_selector(struct uaudio_softc *sc, const usb_descriptor_t *v,
 		    const usb_descriptor_t **dps)
 {
-#ifdef UAUDIO_DEBUG
 	const struct usb_audio_selector_unit *d =
 		(const struct usb_audio_selector_unit *)v;
+	struct mixerctl mix;
+	int i, wp;
 
 	DPRINTFN(2,("uaudio_add_selector: bUnitId=%d bNrInPins=%d\n",
 		    d->bUnitId, d->bNrInPins));
-#endif
-	printf("uaudio_add_selector: NOT IMPLEMENTED\n");
+	mix.wIndex = MAKE(d->bUnitId, sc->sc_ac_iface);
+	mix.wValue[0] = MAKE(0, 0);
+	mix.class = UAC_OUTPUT;
+	mix.nchan = 1;
+	mix.type = MIX_SELECTOR;
+	mix.ctlunit = "";
+	mix.minval = 1;
+	mix.maxval = d->bNrInPins;
+	mix.mul = mix.maxval - mix.minval;
+	wp = snprintf(mix.ctlname, MAX_AUDIO_DEV_LEN, "fea%d-", d->bUnitId);
+	for (i = 1; i <= d->bNrInPins; i++) {
+		wp += snprintf(mix.ctlname + wp, MAX_AUDIO_DEV_LEN - wp,
+			       "i%d", d->baSourceId[i - 1]);
+		if (wp > MAX_AUDIO_DEV_LEN - 1)
+			break;
+	}
+	uaudio_mixer_add_ctl(sc, &mix);
 }
 
 void
@@ -1404,7 +1423,7 @@ uaudio_query_devinfo(void *addr, mixer_devinfo_t *mi)
 {
 	struct uaudio_softc *sc = addr;
 	struct mixerctl *mc;
-	int n, nctls;
+	int n, nctls, i;
 
 	DPRINTFN(2,("uaudio_query_devinfo: index=%d\n", mi->index));
 	if (sc->sc_dying)
@@ -1455,6 +1474,16 @@ uaudio_query_devinfo(void *addr, mixer_devinfo_t *mi)
 		strlcpy(mi->un.e.member[1].label.name, AudioNon,
 		    sizeof(mi->un.e.member[1].label.name));
 		mi->un.e.member[1].ord = 1;
+		break;
+	case MIX_SELECTOR:
+		mi->type = AUDIO_MIXER_ENUM;
+		mi->un.e.num_mem = mc->maxval - mc->minval + 1;
+		for (i = 0; i <= mc->maxval - mc->minval; i++) {
+			snprintf(mi->un.e.member[i].label.name,
+				 sizeof(mi->un.e.member[i].label.name),
+				 "%d", i + mc->minval);
+			mi->un.e.member[i].ord = i + mc->minval;
+		}
 		break;
 	default:
 		mi->type = AUDIO_MIXER_VALUE;
@@ -1684,9 +1713,12 @@ uaudio_value2bsd(struct mixerctl *mc, int val)
 {
 	DPRINTFN(5, ("uaudio_value2bsd: type=%03x val=%d min=%d max=%d ",
 		     mc->type, val, mc->minval, mc->maxval));
-	if (mc->type == MIX_ON_OFF)
+	if (mc->type == MIX_ON_OFF) {
 		val = (val != 0);
-	else
+	} else if (mc->type == MIX_SELECTOR) {
+		if (val < mc->minval || val > mc->maxval)
+			val = mc->minval;
+	} else
 		val = ((uaudio_signext(mc->type, val) - mc->minval) * 255
 			+ mc->mul/2) / mc->mul;
 	DPRINTFN(5, ("val'=%d\n", val));
@@ -1698,9 +1730,12 @@ uaudio_bsd2value(struct mixerctl *mc, int val)
 {
 	DPRINTFN(5,("uaudio_bsd2value: type=%03x val=%d min=%d max=%d ",
 		    mc->type, val, mc->minval, mc->maxval));
-	if (mc->type == MIX_ON_OFF)
+	if (mc->type == MIX_ON_OFF) {
 		val = (val != 0);
-	else
+	} else if (mc->type == MIX_SELECTOR) {
+		if (val < mc->minval || val > mc->maxval)
+			val = mc->minval;
+	} else
 		val = (val + mc->delta/2) * mc->mul / 255 + mc->minval;
 	DPRINTFN(5, ("val'=%d\n", val));
 	return (val);
@@ -1748,6 +1783,10 @@ uaudio_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 		if (cp->type != AUDIO_MIXER_ENUM)
 			return (EINVAL);
 		cp->un.ord = uaudio_ctl_get(sc, GET_CUR, mc, 0);
+	} else if (mc->type == MIX_SELECTOR) {
+		if (cp->type != AUDIO_MIXER_ENUM)
+			return (EINVAL);
+		cp->un.ord = uaudio_ctl_get(sc, GET_CUR, mc, 0);
 	} else {
 		if (cp->type != AUDIO_MIXER_VALUE)
 			return (EINVAL);
@@ -1785,6 +1824,10 @@ uaudio_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 	mc = &sc->sc_ctls[n];
 
 	if (mc->type == MIX_ON_OFF) {
+		if (cp->type != AUDIO_MIXER_ENUM)
+			return (EINVAL);
+		uaudio_ctl_set(sc, SET_CUR, mc, 0, cp->un.ord);
+	} else if (mc->type == MIX_SELECTOR) {
 		if (cp->type != AUDIO_MIXER_ENUM)
 			return (EINVAL);
 		uaudio_ctl_set(sc, SET_CUR, mc, 0, cp->un.ord);
