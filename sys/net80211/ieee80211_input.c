@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.12 2005/11/03 20:00:18 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.13 2006/01/02 08:05:36 reyk Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1595,7 +1595,7 @@ ieee80211_ibss_merge(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    IEEE80211_ADDR_LEN) == 0) {
 		if (!ieee80211_do_slow_print(ic, &did_print))
 			return 0;
-		printf("%s: tsft offset %s%ull\n", ic->ic_if.if_xname,
+		printf("%s: tsft offset %s%llu\n", ic->ic_if.if_xname,
 		    (sign < 0) ? "-" : "",
 		    (sign < 0)
 			? (local_tsft - beacon_tsft)
@@ -1612,7 +1612,7 @@ ieee80211_ibss_merge(struct ieee80211com *ic, struct ieee80211_node *ni,
 	if (ieee80211_do_slow_print(ic, &did_print)) {
 		printf("%s: ieee80211_ibss_merge: bssid mismatch %s\n",
 		    ic->ic_if.if_xname, ether_sprintf(ni->ni_bssid));
-		printf("%s: my tsft %ull beacon tsft %ull\n",
+		printf("%s: my tsft %llu beacon tsft %llu\n",
 		    ic->ic_if.if_xname, local_tsft, beacon_tsft);
 		printf("%s: sync TSF with %s\n",
 		    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr));
