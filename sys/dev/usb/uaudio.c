@@ -1,5 +1,5 @@
-/*	$OpenBSD: uaudio.c,v 1.28 2006/01/02 00:26:48 fgsch Exp $ */
-/*	$NetBSD: uaudio.c,v 1.79 2004/10/03 06:01:09 kent Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.29 2006/01/02 01:24:18 fgsch Exp $ */
+/*	$NetBSD: uaudio.c,v 1.80 2004/10/16 18:08:50 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,6 +71,8 @@
 
 #include <dev/usb/uaudioreg.h>
 
+/* #define UAUDIO_DEBUG */
+/* #define UAUDIO_MULTIPLE_ENDPOINTS */
 #ifdef UAUDIO_DEBUG
 #define DPRINTF(x)	do { if (uaudiodebug) logprintf x; } while (0)
 #define DPRINTFN(n,x)	do { if (uaudiodebug>(n)) logprintf x; } while (0)
@@ -115,6 +117,7 @@ struct as_info {
 	usbd_interface_handle	ifaceh;
 	const usb_interface_descriptor_t *idesc;
 	const usb_endpoint_descriptor_audio_t *edesc;
+	const usb_endpoint_descriptor_audio_t *edesc1;
 	const struct usb_audio_streaming_type1_descriptor *asf1desc;
 	int		sc_busy;	/* currently used */
 };
@@ -1114,9 +1117,10 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 	const struct usb_audio_streaming_interface_descriptor *asid;
 	const struct usb_audio_streaming_type1_descriptor *asf1d;
 	const usb_endpoint_descriptor_audio_t *ed;
+	const usb_endpoint_descriptor_audio_t *epdesc1;
 	const struct usb_audio_streaming_endpoint_descriptor *sed;
 	int format, chan, prec, enc;
-	int dir, type;
+	int dir, type, sync;
 	struct as_info ai;
 	const char *format_str;
 
@@ -1147,7 +1151,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 	ed = (const void *)(buf + offs);
 	if (ed->bDescriptorType != UDESC_ENDPOINT)
 		return (USBD_INVAL);
-	DPRINTF(("uaudio_process_as: endpoint bLength=%d bDescriptorType=%d "
+	DPRINTF(("uaudio_process_as: endpoint[0] bLength=%d bDescriptorType=%d "
 		 "bEndpointAddress=%d bmAttributes=0x%x wMaxPacketSize=%d "
 		 "bInterval=%d bRefresh=%d bSynchAddress=%d\n",
 		 ed->bLength, ed->bDescriptorType, ed->bEndpointAddress,
@@ -1166,24 +1170,79 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 		type = UE_ISO_ASYNC;
 
 	/* We can't handle endpoints that need a sync pipe yet. */
+	sync = FALSE;
 	if (dir == UE_DIR_IN && type == UE_ISO_ADAPT) {
+		sync = TRUE;
+#ifndef UAUDIO_MULTIPLE_ENDPOINTS
 		printf("%s: ignored input endpoint of type adaptive\n",
 		       USBDEVNAME(sc->sc_dev));
 		return (USBD_NORMAL_COMPLETION);
+#endif
 	}
 	if (dir != UE_DIR_IN && type == UE_ISO_ASYNC) {
+		sync = TRUE;
+#ifndef UAUDIO_MULTIPLE_ENDPOINTS
 		printf("%s: ignored output endpoint of type async\n",
 		       USBDEVNAME(sc->sc_dev));
 		return (USBD_NORMAL_COMPLETION);
+#endif
 	}
 
 	sed = (const void *)(buf + offs);
 	if (sed->bDescriptorType != UDESC_CS_ENDPOINT ||
 	    sed->bDescriptorSubtype != AS_GENERAL)
 		return (USBD_INVAL);
+	DPRINTF((" streadming_endpoint: offset=%d bLength=%d\n", offs, sed->bLength));
 	offs += sed->bLength;
 	if (offs > size)
 		return (USBD_INVAL);
+
+	if (sync && id->bNumEndpoints <= 1) {
+		printf("%s: a sync-pipe endpoint but no other endpoint\n",
+		       USBDEVNAME(sc->sc_dev));
+		return USBD_INVAL;
+	}
+	if (!sync && id->bNumEndpoints > 1) {
+		printf("%s: non sync-pipe endpoint but multiple endpoints\n",
+		       USBDEVNAME(sc->sc_dev));
+		return USBD_INVAL;
+	}
+	epdesc1 = NULL;
+	if (id->bNumEndpoints > 1) {
+		epdesc1 = (const void*)(buf + offs);
+		if (epdesc1->bDescriptorType != UDESC_ENDPOINT)
+			return USBD_INVAL;
+		DPRINTF(("uaudio_process_as: endpoint[1] bLength=%d "
+			 "bDescriptorType=%d bEndpointAddress=%d "
+			 "bmAttributes=0x%x wMaxPacketSize=%d bInterval=%d "
+			 "bRefresh=%d bSynchAddress=%d\n",
+			 epdesc1->bLength, epdesc1->bDescriptorType,
+			 epdesc1->bEndpointAddress, epdesc1->bmAttributes,
+			 UGETW(epdesc1->wMaxPacketSize), epdesc1->bInterval,
+			 epdesc1->bRefresh, epdesc1->bSynchAddress));
+		offs += epdesc1->bLength;
+		if (offs > size)
+			return USBD_INVAL;
+		if (epdesc1->bSynchAddress != 0) {
+			printf("%s: invalid endpoint: bSynchAddress=0\n",
+			       USBDEVNAME(sc->sc_dev));
+			return USBD_INVAL;
+		}
+		if (UE_GET_XFERTYPE(epdesc1->bmAttributes) != UE_ISOCHRONOUS) {
+			printf("%s: invalid endpoint: bmAttributes=0x%x\n",
+			       USBDEVNAME(sc->sc_dev), epdesc1->bmAttributes);
+			return USBD_INVAL;
+		}
+		if (epdesc1->bEndpointAddress != ed->bSynchAddress) {
+			printf("%s: invalid endpoint addresses: "
+			       "ep[0]->bSynchAddress=0x%x "
+			       "ep[1]->bEndpointAddress=0x%x\n",
+			       USBDEVNAME(sc->sc_dev), ed->bSynchAddress,
+			       epdesc1->bEndpointAddress);
+			return USBD_INVAL;
+		}
+		/* UE_GET_ADDR(epdesc1->bEndpointAddress), and epdesc1->bRefresh */
+	}
 
 	format = UGETW(asid->wFormatTag);
 	chan = asf1d->bNrChannels;
@@ -1220,6 +1279,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 		sc->sc_altflags |= HAS_MULAW;
 		format_str = "mulaw";
 		break;
+	case UA_FMT_IEEE_FLOAT:
 	default:
 		printf("%s: ignored setting with format %d\n",
 		       USBDEVNAME(sc->sc_dev), format);
@@ -1244,6 +1304,7 @@ uaudio_process_as(struct uaudio_softc *sc, const char *buf, int *offsp,
 	ai.attributes = sed->bmAttributes;
 	ai.idesc = id;
 	ai.edesc = ed;
+	ai.edesc1 = epdesc1;
 	ai.asf1desc = asf1d;
 	ai.sc_busy = 0;
 	uaudio_add_alt(sc, &ai);
@@ -1278,8 +1339,8 @@ uaudio_identify_as(struct uaudio_softc *sc,
 
 	/* Loop through all the alternate settings. */
 	while (offs <= size) {
-		DPRINTFN(2, ("uaudio_identify: interface %d\n",
-		    id->bInterfaceNumber));
+		DPRINTFN(2, ("uaudio_identify: interface=%d offset=%d\n",
+		    id->bInterfaceNumber, offs));
 		switch (id->bNumEndpoints) {
 		case 0:
 			DPRINTFN(2, ("uaudio_identify: AS null alt=%d\n",
@@ -1287,6 +1348,9 @@ uaudio_identify_as(struct uaudio_softc *sc,
 			sc->sc_nullalt = id->bAlternateSetting;
 			break;
 		case 1:
+#ifdef UAUDIO_MULTIPLE_ENDPOINTS
+		case 2:
+#endif
 			uaudio_process_as(sc, buf, &offs, size, id);
 			break;
 		default:
@@ -2323,13 +2387,13 @@ uaudio_match_alt_sub(int nalts, const struct as_info *alts,
 		if (mode != UE_GET_DIR(alts[i].edesc->bEndpointAddress))
 			continue;
 		if (a1d->bSamFreqType == UA_SAMP_CONTNUOUS) {
-			DPRINTFN(2,("uaudio_match_alt_sub: cont %d-%d\n",
+			DPRINTFN(3,("uaudio_match_alt_sub: cont %d-%d\n",
 				    UA_SAMP_LO(a1d), UA_SAMP_HI(a1d)));
 			if (UA_SAMP_LO(a1d) <= rate && rate <= UA_SAMP_HI(a1d))
 				return i;
 		} else {
 			for (j = 0; j < a1d->bSamFreqType; j++) {
-				DPRINTFN(2,("uaudio_match_alt_sub: disc #%d: %d\n",
+				DPRINTFN(3,("uaudio_match_alt_sub: disc #%d: %d\n",
 					    j, UA_GETSAMP(a1d, j)));
 				/* XXX allow for some slack */
 				if (UA_GETSAMP(a1d, j) == rate)
