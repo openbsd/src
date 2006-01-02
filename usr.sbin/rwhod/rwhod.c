@@ -35,13 +35,12 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.30 2004/09/16 08:55:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.31 2006/01/02 16:29:53 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/signal.h>
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
 
@@ -58,6 +57,7 @@ static char rcsid[] = "$OpenBSD: rwhod.c,v 1.30 2004/09/16 08:55:00 deraadt Exp 
 #include <poll.h>
 #include <netdb.h>
 #include <paths.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
