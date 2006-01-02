@@ -1,4 +1,4 @@
-/*	$OpenBSD: alipm.c,v 1.4 2006/01/01 20:52:26 deraadt Exp $	*/
+/*	$OpenBSD: alipm.c,v 1.5 2006/01/02 01:58:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -28,6 +28,10 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+
+#ifdef __sparc64__
+#include <arch/sparc64/dev/ofwi2cvar.h>
+#endif
 
 /*
  * Acer Labs M7101 Power register definitions.
@@ -215,6 +219,10 @@ alipm_attach(struct device *parent, struct device *self, void *aux)
 	bzero(&iba, sizeof iba);
 	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_smb_tag;
+#ifdef __sparc64__
+	iba.iba_bus_scan = ofwiic_scan;
+	iba.iba_bus_scan_arg = pa;
+#endif
 	config_found(&sc->sc_dev, &iba, iicbus_print);
 }
 
