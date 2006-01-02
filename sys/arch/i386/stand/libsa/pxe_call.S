@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxe_call.S,v 1.3 2005/04/25 23:09:04 tom Exp $ */
+/*	$OpenBSD: pxe_call.S,v 1.4 2006/01/02 00:26:29 tom Exp $ */
 /*	$NetBSD: pxe_call.S,v 1.2 2002/03/27 17:24:22 kanaoka Exp $	*/
 
 /*
@@ -92,14 +92,22 @@ ENTRY(pxecall_pxenv)
 	pushl	%edx
 	pushl	%edi
 
-	/* For simplicity, just move all 32 bits. */
-	movl	8(%ebp), %ebx
+	/*
+         * Using the PXENV+ calling convention, the (16 bit) function
+         * number is passed in %bx, with the address of the command
+         * buffer in %es:%di.
+	 */
+	movl	8(%ebp), %ebx	/* For simplicity, just move all 32 bits. */
+
+	/*
+	 * prot_to_real() will set %es to BOOTSEG, so we just need to set
+	 * %(e)di up here.  Remember to relocate it!
+	 */
+	movl	$_C_LABEL(pxe_command_buf), %edi
+	subl	$LINKADDR, %edi
 
 	call	prot_to_real			/* Enter real mode */
 	.code16
-
-	/* prot_to_real() has already set %es to BOOTSEG */
-	lea	_C_LABEL(pxe_command_buf), %di
 
 	/* The encoding is: 0x9a offlo offhi seglo seghi */
 	lcall	$0, $0xffff
