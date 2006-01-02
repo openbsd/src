@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.10 2005/12/30 16:47:36 joris Exp $	*/
+/*	$OpenBSD: proto.h,v 1.11 2006/01/02 09:42:20 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -26,8 +26,6 @@
 
 #ifndef PROTO_H
 #define PROTO_H
-
-#include <sys/param.h>
 
 #include "buf.h"
 #include "file.h"
