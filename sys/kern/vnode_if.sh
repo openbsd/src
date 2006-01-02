@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$OpenBSD: vnode_if.sh,v 1.14 2005/05/22 21:07:23 pedro Exp $'
+SCRIPT_ID='$OpenBSD: vnode_if.sh,v 1.15 2006/01/02 05:05:11 jsg Exp $'
 # SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.9 1996/02/29 20:58:22 cgd Exp $'
 
 # Script to produce VFS front-end sugar.
@@ -315,14 +315,23 @@ function doit() {
 
 	# Define inline function.
 	printf("\nint %s(", toupper(name));
+	desclen = 5 + length(name);
 	for (i=0; i<argc; i++) {
-		printf("%s", argname[i]);
-		if (i < (argc-1)) printf(", ");
+		arglen = length(argtype[i]) + length(argname[i]);
+		
+		if (arglen + desclen > 77) {
+			printf("\n    ");
+			arglen += 4;
+			desclen = 0;
+		}
+		printf("%s %s", argtype[i], argname[i]);
+		if (i < (argc-1)) {
+			printf(", ");
+			desclen += 2;
+		}
+		desclen += arglen;
 	}
 	printf(")\n");
-	for (i=0; i<argc; i++) {
-		printf("\t%s %s;\n", argtype[i], argname[i]);
-	}
 	printf("{\n\tstruct %s_args a;\n", name);
 	printf("\ta.a_desc = VDESC(%s);\n", name);
 	for (i=0; i<argc; i++) {
