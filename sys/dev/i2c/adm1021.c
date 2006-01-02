@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.18 2005/12/29 14:51:08 deraadt Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.19 2006/01/02 03:13:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -69,7 +69,8 @@ admtemp_match(struct device *parent, void *match, void *aux)
 	if (strcmp(ia->ia_name, "adm1021") == 0 ||
 	    strcmp(ia->ia_name, "adm1032") == 0 ||
 	    strcmp(ia->ia_name, "xeontemp") == 0 ||
-	    strcmp(ia->ia_name, "maxim1617") == 0)
+	    strcmp(ia->ia_name, "maxim1617") == 0 ||
+	    strcmp(ia->ia_name, "max1617") == 0)
 		return (1);
 	return (0);
 }
