@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.79 2005/11/24 22:30:08 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.80 2006/01/02 18:19:41 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1065,14 +1065,6 @@ stackdump()
 	}
 }
 
-
-int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	return (ENOEXEC);
-}
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
