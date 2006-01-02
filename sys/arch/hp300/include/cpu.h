@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.28 2005/11/17 23:56:46 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.29 2006/01/02 18:09:23 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 1998/02/13 07:41:51 scottr Exp $	*/
 
 /*
@@ -182,9 +182,6 @@ void	dumpconf(void);
 /* vm_machdep.c functions */
 void	physaccess(caddr_t, caddr_t, int, int);
 void	physunaccess(caddr_t, int);
-
-/* what is this supposed to do? i.e. how is it different than startrtclock? */
-#define	enablertclock()
 
 #endif /* _KERNEL */
 

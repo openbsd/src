@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.11 2005/08/07 07:29:44 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.12 2006/01/02 18:09:25 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -481,11 +481,6 @@ void	MipsSaveCurFPState16(struct proc *);
 
 extern u_int32_t cpu_counter_interval;  /* Number of counter ticks/tick */
 extern u_int32_t cpu_counter_last;      /* Last compare value loaded    */
-
-/*
- * Enable realtime clock (always enabled).
- */
-#define	enablertclock()
 
 /*
  *  Low level access routines to CPU registers
