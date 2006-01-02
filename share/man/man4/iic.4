@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.27 2006/01/02 01:59:16 deraadt Exp $
+.\"	$OpenBSD: iic.4,v 1.28 2006/01/02 12:32:52 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -52,7 +52,7 @@ The master accesses a particular slave device using its address.
 Devices are found on the bus using a sophisticated scanning routine
 which attempts to identify commonly available devices.
 On other machines (such as sparc64 and macppc) where the machine ROM
-supplies a list of i2c devices, that list is used instead.
+supplies a list of I2C devices, that list is used instead.
 .Pp
 System Management Bus (SMBus) protocol is also supported by emulating
 it with the
@@ -64,6 +64,8 @@ commands.
 Acer Labs M7101 Power Management
 .It Xr amdiic 4
 AMD-8111 SMBus controller
+.It Xr fcu 4
+Apple FCU fan controller
 .It Xr gscsio 4
 National Semiconductor Geode SC1100 Super I/O
 .It Xr ichiic 4
@@ -72,8 +74,6 @@ Intel ICH SMBus controllers
 Apple Kauai i2c controller
 .It Xr pi2c 4
 Apple via-pmu i2c controller
-.It Xr fcu 4
-Apple FCU fan controller
 .It Xr piixpm 4
 Intel PIIX and compatible SMBus controllers
 .It Xr viapm 4
@@ -100,7 +100,7 @@ Analog Devices ADT7460 environmental sensor
 .It Xr asbtm 4
 Asus ASB100 temperature sensor
 .It Xr fcu 4
-Apple fcu fan controller
+Apple FCU fan controller
 .It Xr lmenv 4
 National Semiconductor LM87 temperature sensor
 .It Xr lmtemp 4
