@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwenviron.c,v 1.10 2003/08/01 22:01:37 david Exp $	*/
+/*	$OpenBSD: wwenviron.c,v 1.11 2006/01/02 16:20:56 millert Exp $	*/
 /*	$NetBSD: wwenviron.c,v 1.4 1995/12/21 08:39:50 mycroft Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)wwenviron.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwenviron.c,v 1.10 2003/08/01 22:01:37 david Exp $";
+static char rcsid[] = "$OpenBSD: wwenviron.c,v 1.11 2006/01/02 16:20:56 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -45,7 +45,6 @@ static char rcsid[] = "$OpenBSD: wwenviron.c,v 1.10 2003/08/01 22:01:37 david Ex
 #if !defined(OLD_TTY)
 #include <sys/ioctl.h>
 #endif
-#include <sys/signal.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>

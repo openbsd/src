@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwinit.c,v 1.16 2003/08/01 22:01:37 david Exp $	*/
+/*	$OpenBSD: wwinit.c,v 1.17 2006/01/02 16:20:56 millert Exp $	*/
 /*	$NetBSD: wwinit.c,v 1.11 1996/02/08 21:49:07 mycroft Exp $	*/
 
 /*
@@ -37,14 +37,13 @@
 #if 0
 static char sccsid[] = "@(#)wwinit.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: wwinit.c,v 1.16 2003/08/01 22:01:37 david Exp $";
+static char rcsid[] = "$OpenBSD: wwinit.c,v 1.17 2006/01/02 16:20:56 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include <stdlib.h>
 #include "ww.h"
 #include "tt.h"
-#include <sys/signal.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <string.h>

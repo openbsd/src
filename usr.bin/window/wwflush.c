@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwflush.c,v 1.8 2003/08/01 22:01:37 david Exp $	*/
+/*	$OpenBSD: wwflush.c,v 1.9 2006/01/02 16:20:56 millert Exp $	*/
 /*	$NetBSD: wwflush.c,v 1.5 1995/12/21 10:46:08 mycroft Exp $	*/
 
 /*
@@ -37,13 +37,12 @@
 #if 0
 static char sccsid[] = "@(#)wwflush.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwflush.c,v 1.8 2003/08/01 22:01:37 david Exp $";
+static char rcsid[] = "$OpenBSD: wwflush.c,v 1.9 2006/01/02 16:20:56 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 #include "tt.h"
-#include <sys/signal.h>
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>

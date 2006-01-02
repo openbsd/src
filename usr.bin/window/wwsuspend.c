@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwsuspend.c,v 1.5 2003/07/10 00:06:52 david Exp $	*/
+/*	$OpenBSD: wwsuspend.c,v 1.6 2006/01/02 16:20:56 millert Exp $	*/
 /*	$NetBSD: wwsuspend.c,v 1.3 1995/09/28 10:35:56 tls Exp $	*/
 
 /*
@@ -37,13 +37,12 @@
 #if 0
 static char sccsid[] = "@(#)wwsuspend.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwsuspend.c,v 1.5 2003/07/10 00:06:52 david Exp $";
+static char rcsid[] = "$OpenBSD: wwsuspend.c,v 1.6 2006/01/02 16:20:56 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 #include "tt.h"
-#include <sys/signal.h>
 #include <signal.h>
 
 wwsuspend()
