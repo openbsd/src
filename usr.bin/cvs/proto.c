@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.85 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: proto.c,v 1.86 2006/01/02 17:38:17 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -729,43 +729,6 @@ cvs_sendresp(u_int rid, const char *arg)
 	}
 	return (0);
 }
-
-
-#ifdef notyet
-/*
- * cvs_getreq()
- *
- * Get a request from the client.
- */
-int
-cvs_getreq(void)
-{
-	int nbcmd;
-
-	nbcmd = 0;
-
-	do {
-		/* wait for incoming data */
-		if (fgets(cvs_proto_buf, (int)sizeof(cvs_proto_buf),
-		    stdin) == NULL) {
-			if (feof(stdin))
-				return (0);
-			cvs_log(LP_ERRNO,
-			    "failed to read request from client");
-			return (-1);
-		}
-
-		if ((len = strlen(cvs_proto_buf)) != 0) {
-			if (cvs_proto_buf[len - 1] != '\n') {
-				/* truncated line */
-			} else
-				cvs_proto_buf[--len] = '\0';
-		}
-
-		ret = cvs_resp_handle(cvs_proto_buf);
-	} while (ret == 0);
-}
-#endif
 
 
 /*
