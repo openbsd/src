@@ -1,4 +1,4 @@
-/*	$OpenBSD: includes.h,v 1.1 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: includes.h,v 1.2 2006/01/02 17:06:10 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -37,7 +37,6 @@
 
 #include <ctype.h>
 #include <dirent.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <fnmatch.h>

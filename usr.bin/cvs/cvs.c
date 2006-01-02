@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.90 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.91 2006/01/02 17:06:10 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -94,8 +94,7 @@ main(int argc, char **argv)
 
 	TAILQ_INIT(&cvs_variables);
 
-	if (cvs_log_init(LD_STD, 0) < 0)
-		err(1, "failed to initialize logging");
+	cvs_log_init(LD_STD, 0);
 
 	/* by default, be very verbose */
 	(void)cvs_log_filter(LP_FILTER_UNSET, LP_INFO);
@@ -321,9 +320,9 @@ cvs_getopt(int argc, char **argv)
 		case 'z':
 			cvs_compress = (int)strtol(optarg, &ep, 10);
 			if (*ep != '\0')
-				errx(1, "error parsing compression level");
+				fatal("error parsing compression level");
 			if (cvs_compress < 0 || cvs_compress > 9)
-				errx(1, "gzip compression level must be "
+				fatal("gzip compression level must be "
 				    "between 0 and 9");
 			break;
 		default:

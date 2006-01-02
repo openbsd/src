@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.29 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: log.c,v 1.30 2006/01/02 17:06:10 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -79,9 +79,8 @@ static u_int cvs_log_filters;
  * cvs_log_init()
  *
  * Initialize the logging facility of the server.
- * Returns 0 on success, or -1 on failure.
  */
-int
+void
 cvs_log_init(u_int dest, u_int flags)
 {
 	int slopt;
@@ -107,8 +106,6 @@ cvs_log_init(u_int dest, u_int flags)
 
 		openlog_r(__progname, slopt, LOG_DAEMON, &cvs_sl);
 	}
-
-	return (0);
 }
 
 

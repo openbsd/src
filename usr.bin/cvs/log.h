@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.14 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: log.h,v 1.15 2006/01/02 17:06:10 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -56,7 +56,7 @@
 #define LP_FILTER_SET	0	/* set a filter */
 #define LP_FILTER_UNSET	1	/* remove a filter */
 
-int	cvs_log_init(u_int, u_int);
+void	cvs_log_init(u_int, u_int);
 void	cvs_log_cleanup(void);
 int	cvs_log_filter(u_int, u_int);
 int	cvs_log(u_int, const char *, ...);
