@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.3 2005/04/30 16:44:08 miod Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.4 2006/01/02 19:46:12 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -64,14 +64,11 @@ struct sigstate {
 };
 
 /*
- * WARNING: sigcode() in locore.s assumes the layout shown for sf_signo
- * through sf_handler so... don't screw with them!
+ * WARNING: sigcode() in subr.s assumes sf_scp is the first field of the
+ * sigframe.
  */
 struct sigframe {
-	int			 sf_signo;	/* signo for handler */
-	siginfo_t		*sf_sip;
 	struct sigcontext	*sf_scp;	/* context ptr for handler */
-	sig_t			 sf_handler;	/* handler addr for u_sigc */
 	struct sigcontext	 sf_sc;		/* actual context */
 	siginfo_t		 sf_si;
 };
@@ -133,14 +130,11 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	sf.sf_signo = sig;
 	sf.sf_scp = &fp->sf_sc;
-	sf.sf_handler = catcher;
 	sf.sf_sc.sc_onstack = oonstack;
 	sf.sf_sc.sc_mask = mask;
 
 	if (psp->ps_siginfo & sigmask(sig)) {
-		sf.sf_sip = &fp->sf_si;
 		initsiginfo(&sf.sf_si, sig, code, type, val);
 	}
 
@@ -159,11 +153,14 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
 	}
+
 	/*
-	 * Build the argument list for the signal handler.
-	 * Signal trampoline code is at base of user stack.
+	 * Set up registers for the signal handler invocation.
 	 */
-	addr = p->p_sigcode;
+	tf->tf_r[1] = p->p_sigcode;		/* return to sigcode */
+	tf->tf_r[2] = sig;			/* first arg is signo */
+	tf->tf_r[3] = (vaddr_t)&fp->sf_si;	/* second arg is siginfo */
+	addr = (vaddr_t)catcher;		/* and resume in the handler */
 #ifdef M88100
 	if (CPU_IS88100) {
 		tf->tf_snip = (addr & NIP_ADDR) | NIP_V;
@@ -175,7 +172,8 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 		tf->tf_exip = (addr & XIP_ADDR);
 	}
 #endif
-	tf->tf_r[31] = (unsigned)fp;
+	tf->tf_r[31] = (vaddr_t)fp;
+
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))

@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.10 2005/12/03 16:52:16 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.11 2006/01/02 19:46:12 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -1545,25 +1545,20 @@ ENTRY(longjmp)
 	 or	r2,r0,1
 
 /*
- * Trampoline code. Gets copied to the top of
- * user stack in exec.
+ * Signal trampoline code.
+ * The kernel arranges for the handler to be invoked directly, and return
+ * here.
  */
 GLOBAL(sigcode)			/* r31 points to sigframe */
-	ld	r3, r31, 4	/* siginfo_t* */
-	ld	r4, r31, 8	/* sigcontext* */
-	ld	r5, r31, 12	/* handler */
-	jsr.n	r5
-	 ld	r2, r31, 0	/* signo */
-	ld	r2, r31, 8	/* sigcontext* */
-	or	r13,  r0, SYS_sigreturn
-	tb0	0, r0, 128	/* syscall trap, calling sigreturn */
+	ld	r2,  r31, 0	/* pick sigcontext* */
+	or	r13, r0,  SYS_sigreturn
+	tb0	0,   r0,  128	/* syscall trap, calling sigreturn */
 	NOP			| failure return
-#if 0
+#ifdef dontbother		/* sigreturn will not return unless it fails */
 	NOP			| success return
 #endif
-	/* sigreturn will not return unless it fails */
-	or	r13, r0, SYS_exit
-	tb0	0, r0, 128	/* syscall trap, exit */
+	or	r13, r0,  SYS_exit
+	tb0	0,   r0,  128	/* syscall trap, exit */
 	/*
 	 * this never returns, but we need to provide fetchable instructions
 	 * for the 88100 pipeline.
