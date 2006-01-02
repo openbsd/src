@@ -2064,7 +2064,6 @@ Perl_fold_constants(pTHX_ register OP *o)
 	/* XXX might want a ck_negate() for this */
 	cUNOPo->op_first->op_private &= ~OPpCONST_STRICT;
 	break;
-    case OP_SPRINTF:
     case OP_UCFIRST:
     case OP_LCFIRST:
     case OP_UC:

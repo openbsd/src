@@ -3071,10 +3071,8 @@ EXTCONST char PL_no_myglob[]
   INIT("\"my\" variable %s can't be in a package");
 EXTCONST char PL_no_localize_ref[]
   INIT("Can't localize through a reference");
-#ifdef PERL_MALLOC_WRAP
 EXTCONST char PL_memory_wrap[]
   INIT("panic: memory wrap");
-#endif
 
 EXTCONST char PL_uuemap[65]
   INIT("`!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_");

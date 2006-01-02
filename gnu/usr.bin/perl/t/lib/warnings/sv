@@ -301,12 +301,12 @@ $a = sprintf "%" ;
 printf F "%\x02" ;
 $a = sprintf "%\x02" ;
 EXPECT
-Invalid conversion in sprintf: "%z" at - line 5.
-Invalid conversion in sprintf: end of string at - line 7.
-Invalid conversion in sprintf: "%\002" at - line 9.
 Invalid conversion in printf: "%z" at - line 4.
+Invalid conversion in sprintf: "%z" at - line 5.
 Invalid conversion in printf: end of string at - line 6.
+Invalid conversion in sprintf: end of string at - line 7.
 Invalid conversion in printf: "%\002" at - line 8.
+Invalid conversion in sprintf: "%\002" at - line 9.
 ########
 # sv.c
 use warnings 'misc' ;
