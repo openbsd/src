@@ -1,6 +1,6 @@
-/*	$OpenBSD: version.c,v 1.19 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: includes.h,v 1.1 2006/01/02 08:11:56 xsa Exp $	*/
 /*
- * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
+ * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,43 +24,37 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "includes.h"
+#ifndef INCLUDES_H
+#define INCLUDES_H
 
-#include "cvs.h"
-#include "log.h"
-#include "proto.h"
+#include <sys/time.h>
+#include <sys/timeb.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/param.h>
+#include <sys/queue.h>
+#include <sys/wait.h>
 
-static int	cvs_version_pre_exec(struct cvsroot *);
+#include <ctype.h>
+#include <dirent.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <fnmatch.h>
+#include <libgen.h>
+#include <md5.h>
+#include <paths.h>
+#include <pwd.h>
+#include <regex.h>
+#include <search.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <time.h>
+#include <unistd.h>
 
-struct cvs_cmd cvs_cmd_version = {
-	CVS_OP_VERSION, CVS_REQ_VERSION, "version",
-	{ "ve", "ver" },
-	"Show current CVS version(s)",
-	"",
-	"",
-	NULL,
-	0,
-	NULL,
-	cvs_version_pre_exec,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	0
-};
-
-
-static int
-cvs_version_pre_exec(struct cvsroot *root)
-{
-	if ((root != NULL) && (root->cr_method != CVS_METHOD_LOCAL))
-		printf("Client: ");
-	cvs_printf("%s\n", CVS_VERSION);
-
-	if ((root != NULL) && (root->cr_method != CVS_METHOD_LOCAL)) {
-		cvs_printf("Server: %s\n", root->cr_version == NULL ?
-		    "(unknown)" : root->cr_version);
-	}
-
-	return (0);
-}
+#endif	/* INCLUDES_H */

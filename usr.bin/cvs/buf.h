@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.6 2005/07/26 20:58:44 moritz Exp $	*/
+/*	$OpenBSD: buf.h,v 1.7 2006/01/02 08:11:56 xsa Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -37,9 +37,6 @@
 
 #ifndef BUF_H
 #define BUF_H
-
-#include <sys/types.h>
-
 
 /* flags */
 #define BUF_AUTOEXT	1	/* autoextend on append */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.90 2005/12/27 16:05:21 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.91 2006/01/02 08:13:28 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -24,17 +24,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-
-#include <ctype.h>
-#include <pwd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+#include "includes.h"
 
 #include "log.h"
 #include "rcs.h"

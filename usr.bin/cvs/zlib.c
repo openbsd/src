@@ -1,4 +1,4 @@
-/*	$OpenBSD: zlib.c,v 1.5 2005/12/21 10:49:29 xsa Exp $	*/
+/*	$OpenBSD: zlib.c,v 1.6 2006/01/02 08:11:56 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -24,10 +24,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-
-#include <stdlib.h>
-#include <string.h>
+#include "includes.h"
 
 #include "log.h"
 #include "cvs.h"

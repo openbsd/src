@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.122 2005/12/30 17:51:01 reyk Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.123 2006/01/02 08:11:56 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -24,19 +24,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/stat.h>
-
-#include <ctype.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <libgen.h>
-#include <pwd.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+#include "includes.h"
 
 #include "cvs.h"
 #include "log.h"

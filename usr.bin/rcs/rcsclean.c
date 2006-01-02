@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.21 2005/12/19 18:24:12 xsa Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.22 2006/01/02 08:13:28 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -24,14 +24,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/stat.h>
-
-#include <dirent.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+#include "includes.h"
 
 #include "log.h"
 #include "rcs.h"

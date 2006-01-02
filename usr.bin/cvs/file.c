@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.133 2005/12/12 21:30:33 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.134 2006/01/02 08:11:56 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -24,20 +24,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/stat.h>
-
-#include <dirent.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <fnmatch.h>
-#include <libgen.h>
-#include <pwd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+#include "includes.h"
 
 #include "cvs.h"
 #include "file.h"

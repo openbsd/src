@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.10 2005/12/31 13:27:51 xsa Exp $	*/
+/*	$OpenBSD: watch.c,v 1.11 2006/01/02 08:11:56 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2005 Moritz Jodeit <moritz@openbsd.org>
@@ -25,14 +25,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-
-#include <errno.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+#include "includes.h"
 
 #include "cvs.h"
 #include "log.h"

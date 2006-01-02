@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.13 2005/12/19 18:21:31 xsa Exp $	*/
+/*	$OpenBSD: log.h,v 1.14 2006/01/02 08:11:56 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -26,10 +26,6 @@
 
 #ifndef LOG_H
 #define LOG_H
-
-#include <sys/types.h>
-
-#include <stdarg.h>
 
 /* log destinations */
 #define LD_STD		0x01
