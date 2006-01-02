@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.357 2005/12/11 21:30:30 miod Exp $
+#	$OpenBSD: files,v 1.358 2006/01/02 19:49:23 miod Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -79,10 +79,6 @@ define	wsemuldisplaydev	{[console = -1], [mux = 1]}
 define	wskbddev		{[console = -1], [mux = 1]}
 define	wsmousedev		{[mux = 0]}
 define	wsrasteremulops
-
-# i2c device attributes
-define	i2cexec
-define	i2c_bitbang
 
 # SMC 93Cx6 Serial EEPROM devices
 define	smc93cx6
