@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.75 2005/12/10 16:06:10 krw Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.76 2006/01/02 15:05:45 tom Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -3180,7 +3180,7 @@ uvmspace_alloc(min, max, pageable)
  * uvmspace_init: initialize a vmspace structure.
  *
  * - XXX: no locking on this structure
- * - refcnt set to 1, rest must me init'd by caller
+ * - refcnt set to 1, rest must be init'd by caller
  */
 void
 uvmspace_init(vm, pmap, min, max, pageable)
