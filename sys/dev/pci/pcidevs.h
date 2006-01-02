@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.992 2006/01/02 03:35:25 brad Exp 
+ *	OpenBSD: pcidevs,v 1.993 2006/01/02 03:40:47 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -746,6 +746,7 @@
 #define	PCI_PRODUCT_ATI_MACH64_CT	0x4354		/* Mach64 CT */
 #define	PCI_PRODUCT_ATI_MACH64_CX	0x4358		/* Mach64 CX */
 #define	PCI_PRODUCT_ATI_IXP_AUDIO_300	0x4361		/* IXP300 AC97 */
+#define	PCI_PRODUCT_ATI_IXP_SMB_300	0x4363		/* IXP300 SMBus */
 #define	PCI_PRODUCT_ATI_IXP_IDE_300	0x4369		/* IXP300 IDE */
 #define	PCI_PRODUCT_ATI_IXP_AUDIO_400	0x4370		/* IXP400 AC97 */
 #define	PCI_PRODUCT_ATI_IXP_PCI_400	0x4371		/* IXP400 PCI */
