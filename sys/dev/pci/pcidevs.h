@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.991 2006/01/01 19:02:42 brad Exp 
+ *	OpenBSD: pcidevs,v 1.992 2006/01/02 03:35:25 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -91,6 +91,7 @@
 #define	PCI_VENDOR_SONY	0x104d		/* Sony */
 #define	PCI_VENDOR_OAKTECH	0x104e		/* Oak Technology */
 #define	PCI_VENDOR_WINBOND	0x1050		/* Winbond */
+#define	PCI_VENDOR_SMSC	0x1055		/* SMSC */
 #define	PCI_VENDOR_MOT	0x1057		/* Motorola */
 #define	PCI_VENDOR_PROMISE	0x105a		/* Promise */
 #define	PCI_VENDOR_NUMBER9	0x105d		/* Number 9 */
@@ -2829,6 +2830,13 @@
 #define	PCI_PRODUCT_SMI_SM811	0x0811		/* LynxE+ */
 #define	PCI_PRODUCT_SMI_SM820	0x0820		/* Lynx3D */
 #define	PCI_PRODUCT_SMI_SM910	0x0910		/* 910 */
+
+/* SMSC products */
+#define	PCI_PRODUCT_SMSC_VICTORY66_IDE_1	0x9130		/* Victory66 IDE */
+#define	PCI_PRODUCT_SMSC_VICTORY66_ISA	0x9460		/* Victory66 ISA */
+#define	PCI_PRODUCT_SMSC_VICTORY66_IDE_2	0x9461		/* Victory66 IDE */
+#define	PCI_PRODUCT_SMSC_VICTORY66_USB	0x9462		/* Victory66 USB */
+#define	PCI_PRODUCT_SMSC_VICTORY66_PM	0x9463		/* Victory66 Power */
 
 /* SNC products */
 #define	PCI_PRODUCT_SNI_PIRAHNA	0x0002		/* Pirahna 2-port */

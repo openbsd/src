@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.991 2006/01/01 19:02:42 brad Exp 
+ *	OpenBSD: pcidevs,v 1.992 2006/01/02 03:35:25 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8623,6 +8623,26 @@ static const struct pci_known_product pci_known_products[] = {
 	    "910",
 	},
 	{
+	    PCI_VENDOR_SMSC, PCI_PRODUCT_SMSC_VICTORY66_IDE_1,
+	    "Victory66 IDE",
+	},
+	{
+	    PCI_VENDOR_SMSC, PCI_PRODUCT_SMSC_VICTORY66_ISA,
+	    "Victory66 ISA",
+	},
+	{
+	    PCI_VENDOR_SMSC, PCI_PRODUCT_SMSC_VICTORY66_IDE_2,
+	    "Victory66 IDE",
+	},
+	{
+	    PCI_VENDOR_SMSC, PCI_PRODUCT_SMSC_VICTORY66_USB,
+	    "Victory66 USB",
+	},
+	{
+	    PCI_VENDOR_SMSC, PCI_PRODUCT_SMSC_VICTORY66_PM,
+	    "Victory66 Power",
+	},
+	{
 	    PCI_VENDOR_SNI, PCI_PRODUCT_SNI_PIRAHNA,
 	    "Pirahna 2-port",
 	},
@@ -10521,6 +10541,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_WINBOND,
 	    "Winbond",
+	},
+	{
+	    PCI_VENDOR_SMSC,
+	    "SMSC",
 	},
 	{
 	    PCI_VENDOR_MOT,
