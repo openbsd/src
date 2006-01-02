@@ -1,5 +1,5 @@
-/*	$OpenBSD: uaudio.c,v 1.30 2006/01/02 03:45:15 fgsch Exp $ */
-/*	$NetBSD: uaudio.c,v 1.82 2004/10/21 12:41:07 kent Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.31 2006/01/02 03:52:29 fgsch Exp $ */
+/*	$NetBSD: uaudio.c,v 1.83 2004/10/22 15:25:56 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -126,6 +126,7 @@ struct chan {
 	void	(*intr)(void *);	/* DMA completion intr handler */
 	void	*arg;		/* arg for intr() */
 	usbd_pipe_handle pipe;
+	usbd_pipe_handle sync_pipe;
 
 	u_int	sample_size;
 	u_int	sample_rate;
@@ -210,7 +211,7 @@ struct io_terminal {
 	int inputs_size;
 	struct terminal_list **inputs; /* list of source input terminals */
 	struct terminal_list *output; /* list of destination output terminals */
-	int direct;		/* direcly connected to an output terminal */
+	int direct;		/* directly connected to an output terminal */
 };
 
 #define UAC_OUTPUT	0
@@ -950,7 +951,7 @@ uaudio_determine_class(const struct io_terminal *iot, struct mixerctl *mix)
 			return 0;
 	}
 	/*
-	 * If the ulitimate destination of the unit is just one output
+	 * If the ultimate destination of the unit is just one output
 	 * terminal and the unit is connected to the output terminal
 	 * directly, the class is UAC_OUTPUT.
 	 */
@@ -2538,9 +2539,18 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 	(void)uaudio_set_speed(sc, endpt, ch->sample_rate);
 #endif
 
+	ch->pipe = 0;
+	ch->sync_pipe = 0;
 	DPRINTF(("uaudio_chan_open: create pipe to 0x%02x\n", endpt));
 	err = usbd_open_pipe(as->ifaceh, endpt, 0, &ch->pipe);
-	return (err);
+	if (err)
+		return err;
+	if (as->edesc1 != NULL) {
+		endpt = as->edesc1->bEndpointAddress;
+		DPRINTF(("uaudio_chan_open: create sync-pipe to 0x%02x\n", endpt));
+		err = usbd_open_pipe(as->ifaceh, endpt, 0, &ch->sync_pipe);
+	}
+	return err;
 }
 
 void
@@ -2554,8 +2564,14 @@ uaudio_chan_close(struct uaudio_softc *sc, struct chan *ch)
 			 sc->sc_nullalt));
 		usbd_set_interface(as->ifaceh, sc->sc_nullalt);
 	}
-	usbd_abort_pipe(ch->pipe);
-	usbd_close_pipe(ch->pipe);
+	if (ch->pipe) {
+		usbd_abort_pipe(ch->pipe);
+		usbd_close_pipe(ch->pipe);
+	}
+	if (ch->sync_pipe) {
+		usbd_abort_pipe(ch->sync_pipe);
+		usbd_close_pipe(ch->sync_pipe);
+	}
 }
 
 usbd_status
