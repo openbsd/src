@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.991 2006/01/01 19:02:42 brad Exp $
+$OpenBSD: pcidevs,v 1.992 2006/01/02 03:35:25 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -86,6 +86,7 @@ vendor	TI		0x104c	Texas Instruments
 vendor	SONY		0x104d	Sony
 vendor	OAKTECH		0x104e	Oak Technology
 vendor	WINBOND		0x1050	Winbond
+vendor	SMSC		0x1055	SMSC
 vendor	MOT		0x1057	Motorola
 vendor	PROMISE		0x105a	Promise
 vendor	NUMBER9		0x105d	Number 9
@@ -2824,6 +2825,13 @@ product SMI SM810		0x0810	LynxE
 product SMI SM811		0x0811	LynxE+
 product SMI SM820		0x0820	Lynx3D
 product SMI SM910		0x0910	910
+
+/* SMSC products */
+product SMSC VICTORY66_IDE_1	0x9130	Victory66 IDE
+product SMSC VICTORY66_ISA	0x9460	Victory66 ISA
+product SMSC VICTORY66_IDE_2	0x9461	Victory66 IDE
+product SMSC VICTORY66_USB	0x9462	Victory66 USB
+product SMSC VICTORY66_PM	0x9463	Victory66 Power
 
 /* SNC products */
 product SNI PIRAHNA		0x0002	Pirahna 2-port
