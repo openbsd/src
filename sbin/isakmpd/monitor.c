@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.62 2005/12/20 22:03:53 moritz Exp $	 */
+/* $OpenBSD: monitor.c,v 1.63 2006/01/02 10:42:51 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -184,8 +184,6 @@ monitor_ui_init(void)
 	if (ui_socket < 0)
 		log_fatal("monitor_ui_init: parent could not create FIFO "
 		    "\"%s\"", ui_fifo);
-
-	return;
 }
 
 int
@@ -324,8 +322,10 @@ monitor_setsockopt(int s, int level, int optname, const void *optval,
 
 	cmd = MONITOR_SETSOCKOPT;
 	must_write(&cmd, sizeof cmd);
-	if (mm_send_fd(m_state.s, s))
-		goto errout;
+	if (mm_send_fd(m_state.s, s)) {
+		log_print("monitor_setsockopt: read/write error");
+		return -1;
+	}
 
 	must_write(&level, sizeof level);
 	must_write(&optname, sizeof optname);
@@ -337,10 +337,6 @@ monitor_setsockopt(int s, int level, int optname, const void *optval,
 	if (err != 0)
 		errno = err;
 	return ret;
-
-errout:
-	log_print("monitor_setsockopt: read/write error");
-	return -1;
 }
 
 int
@@ -350,8 +346,10 @@ monitor_bind(int s, const struct sockaddr *name, socklen_t namelen)
 
 	cmd = MONITOR_BIND;
 	must_write(&cmd, sizeof cmd);
-	if (mm_send_fd(m_state.s, s))
-		goto errout;
+	if (mm_send_fd(m_state.s, s)) {
+		log_print("monitor_bind: read/write error");
+		return -1;
+	}
 
 	must_write(&namelen, sizeof namelen);
 	must_write(name, namelen);
@@ -361,10 +359,6 @@ monitor_bind(int s, const struct sockaddr *name, socklen_t namelen)
 	if (err != 0)
 		errno = err;
 	return ret;
-
-errout:
-	log_print("monitor_bind: read/write error");
-	return -1;
 }
 
 int
@@ -522,17 +516,14 @@ m_priv_ui_init(void)
 	must_write(&err, sizeof err);
 
 	if (ui_socket >= 0 && mm_send_fd(m_state.s, ui_socket)) {
+		log_error("m_priv_ui_init: read/write operation failed");
 		close(ui_socket);
-		goto errout;
+		return;
 	}
 
 	/* In case of stdin, we do not close the socket. */
 	if (ui_socket > 0)
 		close(ui_socket);
-	return;
-
-errout:
-	log_error("m_priv_ui_init: read/write operation failed");
 }
 
 /* Privileged: called by monitor_loop.  */
@@ -548,15 +539,11 @@ m_priv_pfkey_open(void)
 	must_write(&err, sizeof err);
 
 	if (fd > 0 && mm_send_fd(m_state.s, fd)) {
+		log_error("m_priv_pfkey_open: read/write operation failed");
 		close(fd);
-		goto errout;
+		return;
 	}
 	close(fd);
-
-	return;
-
-errout:
-	log_error("m_priv_pfkey_open: read/write operation failed");
 }
 
 /* Privileged: called by monitor_loop.  */
@@ -593,14 +580,11 @@ m_priv_getfd(void)
 	must_write(&err, sizeof err);
 
 	if (v > 0 && mm_send_fd(m_state.s, v)) {
+		log_error("m_priv_getfd: read/write operation failed");
 		close(v);
-		goto errout;
+		return;
 	}
 	close(v);
-	return;
-
-errout:
-	log_error("m_priv_getfd: read/write operation failed");
 }
 
 /* Privileged: called by monitor_loop.  */
@@ -927,6 +911,4 @@ m_priv_req_readdir()
 
 	len = 0;
 	must_write(&len, sizeof len);
-
-	return;
 }
