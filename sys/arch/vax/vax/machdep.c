@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.74 2005/11/06 22:21:33 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.75 2006/01/02 18:15:55 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -663,9 +663,6 @@ process_set_pc(p, addr)
 	struct	trapframe *tf;
 	void	*ptr;
 
-	if ((p->p_flag & P_INMEM) == 0)
-		return (EIO);
-
 	ptr = (char *) p->p_addr->u_pcb.framep;
 	tf = ptr;
 
@@ -680,9 +677,6 @@ process_sstep(p, sstep)
 {
 	void	       *ptr;
 	struct trapframe *tf;
-
-	if ((p->p_flag & P_INMEM) == 0)
-		return (EIO);
 
 	ptr = p->p_addr->u_pcb.framep;
 	tf = ptr;
