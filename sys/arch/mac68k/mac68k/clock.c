@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.18 2004/11/30 01:44:22 martin Exp $	*/
+/*	$OpenBSD: clock.c,v 1.19 2006/01/02 18:10:07 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1999/11/05 19:14:56 scottr Exp $	*/
 
 /*
@@ -114,10 +114,6 @@ int	rtclock_intr(void *);
 void
 startrtclock()
 {
-/*
- * BARF MF startrt clock is called twice in init_main, configure,
- * the reason why is doced in configure
- */
 	/* be certain clock interrupts are off */
 	via_reg(VIA1, vIER) = V1IF_T1;
 
@@ -134,7 +130,7 @@ startrtclock()
 }
 
 void
-enablertclock()
+cpu_initclocks()
 {
 	/* clear then enable clock interrupt. */
 	via_reg(VIA1, vIFR) |= V1IF_T1;
@@ -142,22 +138,9 @@ enablertclock()
 }
 
 void
-cpu_initclocks()
-{
-	enablertclock();
-}
-
-void
 setstatclockrate(rateinhz)
 	int rateinhz;
 {
-}
-
-void
-disablertclock()
-{
-	/* disable clock interrupt */
-	via_reg(VIA1, vIER) = V1IF_T1;
 }
 
 /*
