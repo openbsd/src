@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.47 2005/11/21 18:16:38 millert Exp $	*/
+/*	$OpenBSD: audio.c,v 1.48 2006/01/02 05:21:37 brad Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -145,12 +145,7 @@ void	audio_free_ring(struct audio_softc *, struct audio_ringbuffer *);
 
 int	audioprint(void *, const char *);
 
-#define __BROKEN_INDIRECT_CONFIG /* XXX */
-#ifdef __BROKEN_INDIRECT_CONFIG
 int	audioprobe(struct device *, void *, void *);
-#else
-int	audioprobe(struct device *, struct cfdata *, void *);
-#endif
 void	audioattach(struct device *, struct device *, void *);
 int	audiodetach(struct device *, int);
 int	audioactivate(struct device *, enum devact);
@@ -216,11 +211,7 @@ struct filterops audioread_filtops =
 int
 audioprobe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
-#else
-	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct audio_attach_args *sa = aux;

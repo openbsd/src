@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.15 2005/03/15 21:10:37 miod Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.16 2006/01/02 05:21:32 brad Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -66,11 +66,7 @@ struct vgafb_pci_softc {
 int vgafb_pci_probe(struct pci_attach_args *pa, int id, u_int32_t *ioaddr,
     u_int32_t *iosize, u_int32_t *memaddr, u_int32_t *memsize,
     u_int32_t *cacheable, u_int32_t *mmioaddr, u_int32_t *mmiosize);
-#ifdef __BROKEN_INDIRECT_CONFIG
 int	vgafb_pci_match(struct device *, void *, void *);
-#else
-int	vgafb_pci_match(struct device *, struct cfdata *, void *);
-#endif
 void	vgafb_pci_attach(struct device *, struct device *, void *);
 
 paddr_t	vgafbpcimmap(void *, off_t, int);
@@ -230,11 +226,7 @@ vgafb_pci_probe(struct pci_attach_args *pa, int id, u_int32_t *ioaddr,
 int
 vgafb_pci_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
-#else
-	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;

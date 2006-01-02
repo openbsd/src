@@ -1,4 +1,4 @@
-/* $OpenBSD: pcppi.c,v 1.5 2002/03/14 03:16:05 millert Exp $ */
+/* $OpenBSD: pcppi.c,v 1.6 2006/01/02 05:21:40 brad Exp $ */
 /* $NetBSD: pcppi.c,v 1.1 1998/04/15 20:26:18 drochner Exp $ */
 
 /*
@@ -65,12 +65,7 @@ struct pcppi_softc {
 	int sc_timeout;
 };
 
-#define __BROKEN_INDIRECT_CONFIG /* XXX */
-#ifdef __BROKEN_INDIRECT_CONFIG
 int	pcppi_match(struct device *, void *, void *);
-#else
-int	pcppi_match(struct device *, struct cfdata *, void *);
-#endif
 void	pcppi_attach(struct device *, struct device *, void *);
 
 struct cfattach pcppi_ca = {
@@ -88,11 +83,7 @@ static void pcppi_bell_stop(void *);
 int
 pcppi_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
-#else
-	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;

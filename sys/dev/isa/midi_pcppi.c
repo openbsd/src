@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi_pcppi.c,v 1.4 2005/11/21 18:16:40 millert Exp $	*/
+/*	$OpenBSD: midi_pcppi.c,v 1.5 2006/01/02 05:21:40 brad Exp $	*/
 /*	$NetBSD: midi_pcppi.c,v 1.4 1998/11/25 22:17:06 augustss Exp $	*/
 
 /*
@@ -63,12 +63,7 @@ struct midi_pcppi_softc {
 	midisyn sc_midisyn;
 };
 
-#define __BROKEN_INDIRECT_CONFIG /* XXX */
-#ifdef __BROKEN_INDIRECT_CONFIG
 int	midi_pcppi_match(struct device *, void *, void *);
-#else
-int	midi_pcppi_match(struct device *, struct cfdata *, void *);
-#endif
 void	midi_pcppi_attach(struct device *, struct device *, void *);
 
 void	midi_pcppi_on(midisyn *, u_int32_t, u_int32_t, u_int32_t);
@@ -99,11 +94,7 @@ int midi_pcppi_attached = 0;	/* Not very nice */
 int
 midi_pcppi_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
-#else
-	struct cfdata *match;
-#endif
 	void *aux;
 {
 	return (!midi_pcppi_attached);

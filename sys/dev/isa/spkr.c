@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.7 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: spkr.c,v 1.8 2006/01/02 05:21:40 brad Exp $	*/
 /*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
 
 /*
@@ -60,12 +60,7 @@
 
 cdev_decl(spkr);
 
-#define __BROKEN_INDIRECT_CONFIG /* XXX */
-#ifdef __BROKEN_INDIRECT_CONFIG
 int spkrprobe(struct device *, void *, void *);
-#else
-int spkrprobe(struct device *, struct cfdata *, void *);
-#endif
 void spkrattach(struct device *, struct device *, void *);
 
 struct spkr_softc {
@@ -409,11 +404,7 @@ static int spkr_attached = 0;
 int
 spkrprobe (parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
-#else
-	struct cfdata *match;
-#endif
 	void *aux;
 {
 	return (!spkr_attached);

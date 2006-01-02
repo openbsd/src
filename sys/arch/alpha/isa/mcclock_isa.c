@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcclock_isa.c,v 1.7 2002/03/14 01:26:27 millert Exp $	*/
+/*	$OpenBSD: mcclock_isa.c,v 1.8 2006/01/02 05:21:24 brad Exp $	*/
 /*	$NetBSD: mcclock_isa.c,v 1.5 1996/12/05 01:39:29 cgd Exp $	*/
 
 /*
@@ -47,11 +47,7 @@ struct mcclock_isa_softc {
 	bus_space_handle_t	sc_ioh;
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
 int	mcclock_isa_match(struct device *, void *, void *);
-#else
-int	mcclock_isa_match(struct device *, struct cfdata *, void *);
-#endif
 void	mcclock_isa_attach(struct device *, struct device *, void *);
 
 struct cfattach mcclock_isa_ca = {
@@ -69,11 +65,7 @@ const struct mcclock_busfns mcclock_isa_busfns = {
 int
 mcclock_isa_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
-#else
-	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;

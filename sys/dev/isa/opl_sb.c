@@ -1,4 +1,4 @@
-/*	$OpenBSD: opl_sb.c,v 1.4 2005/11/21 18:16:40 millert Exp $	*/
+/*	$OpenBSD: opl_sb.c,v 1.5 2006/01/02 05:21:40 brad Exp $	*/
 /*	$NetBSD: opl_sb.c,v 1.4 1998/12/08 14:26:57 augustss Exp $	*/
 
 /*
@@ -59,12 +59,7 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/sbdspvar.h>
 
-#define __BROKEN_INDIRECT_CONFIG /* XXX */
-#ifdef __BROKEN_INDIRECT_CONFIG
 int	opl_sb_match(struct device *, void *, void *);
-#else
-int	opl_sb_match(struct device *, struct cfdata *, void *);
-#endif
 void	opl_sb_attach(struct device *, struct device *, void *);
 
 struct cfattach opl_sb_ca = {
@@ -74,11 +69,7 @@ struct cfattach opl_sb_ca = {
 int
 opl_sb_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
-#else
-	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb_isa.c,v 1.7 2003/04/27 11:22:53 ho Exp $	*/
+/*	$OpenBSD: sb_isa.c,v 1.8 2006/01/02 05:21:40 brad Exp $	*/
 /*	$NetBSD: sb_isa.c,v 1.15 1997/11/30 15:32:25 drochner Exp $	*/
 
 /*
@@ -60,12 +60,7 @@
 
 static	int sbfind(struct device *, struct sbdsp_softc *, struct isa_attach_args *);
 
-#define __BROKEN_INDIRECT_CONFIG /* XXX */
-#ifdef __BROKEN_INDIRECT_CONFIG
 int	sb_isa_match(struct device *, void *, void *);
-#else
-int	sb_isa_match(struct device *, struct cfdata *, void *);
-#endif
 void	sb_isa_attach(struct device *, struct device *, void *);
 
 struct cfattach sb_isa_ca = {
@@ -82,21 +77,13 @@ struct cfattach sb_isa_ca = {
 int
 sb_isa_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
-#else
-	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct sbdsp_softc probesc, *sc = &probesc;
 
 	bzero(sc, sizeof *sc);
-#ifdef __BROKEN_INDIRECT_CONFIG
 	sc->sc_dev.dv_cfdata = ((struct device *)match)->dv_cfdata;
-#else
-	sc->sc_dev.dv_cfdata = match;
-#endif
 	strlcpy(sc->sc_dev.dv_xname, "sb", sizeof sc->sc_dev.dv_xname);
 	return sbfind(parent, sc, aux);
 }

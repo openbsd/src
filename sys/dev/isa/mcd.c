@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.34 2004/05/01 23:23:13 millert Exp $ */
+/*	$OpenBSD: mcd.c,v 1.35 2006/01/02 05:21:40 brad Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -186,12 +186,7 @@ int mcd_getqchan(struct mcd_softc *, union mcd_qchninfo *, int);
 int mcd_setlock(struct mcd_softc *, int);
 
 int mcd_find(bus_space_tag_t, bus_space_handle_t, struct mcd_softc *);
-#define __BROKEN_INDIRECT_CONFIG
-#ifdef __BROKEN_INDIRECT_CONFIG
 int mcdprobe(struct device *, void *, void *);
-#else
-int mcdprobe(struct device *, struct cfdata *, void *);
-#endif
 void mcdattach(struct device *, struct device *, void *);
 
 struct cfattach mcd_ca = {
@@ -895,11 +890,7 @@ mcd_find(iot, ioh, sc)
 int
 mcdprobe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
-#else
-	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;

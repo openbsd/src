@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.32 2004/06/13 21:49:16 niklas Exp $	*/
+/*	$OpenBSD: clock.c,v 1.33 2006/01/02 05:21:30 brad Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -109,12 +109,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #if (NPCPPI > 0)
 #include <dev/isa/pcppivar.h>
 
-#define __BROKEN_INDIRECT_CONFIG /* XXX */
-#ifdef __BROKEN_INDIRECT_CONFIG
 int sysbeepmatch(struct device *, void *, void *);
-#else
-int sysbeepmatch(struct device *, struct cfdata *, void *);
-#endif
 void sysbeepattach(struct device *, struct device *, void *);
 
 struct cfattach sysbeep_ca = {
@@ -387,11 +382,7 @@ i8254_delay(n)
 int
 sysbeepmatch(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
-#else
-	struct cfdata *match;
-#endif
 	void *aux;
 {
 	return (!ppi_attached);
