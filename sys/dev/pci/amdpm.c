@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.5 2004/09/17 10:18:01 grange Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.6 2006/01/02 04:01:43 brad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -104,16 +104,16 @@ struct cfdriver amdpm_cd = {
 #define	AMDPM_RNDCNT_INCR(ev)	/* nothing */
 #endif
 
+const struct pci_matchid amdpm_ids[] = {
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_766_PMC },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_PMC },
+};
+
 int
 amdpm_match(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *pa = aux;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC768_PMC ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_766_PMC))
-		return (1);
-	return (0);
+	return (pci_matchbyid(aux, amdpm_ids,
+	    sizeof(amdpm_ids) / sizeof(amdpm_ids[0])));
 }
 
 void
