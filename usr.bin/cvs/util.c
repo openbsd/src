@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.66 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.67 2006/01/02 08:23:39 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -309,7 +309,7 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 {
 	size_t l;
 	u_int i;
-	int argc, err;
+	int argc, error;
 	char linebuf[256], qbuf[128], *lp, *cp, *arg;
 
 	l = strlcpy(linebuf, line, sizeof(linebuf));
@@ -320,7 +320,7 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 	argc = 0;
 
 	/* build the argument vector */
-	err = 0;
+	error = 0;
 	for (lp = linebuf; lp != NULL;) {
 		if (*lp == '"') {
 			/* double-quoted string */
@@ -332,13 +332,13 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 					lp++;
 				if (*lp == '\0') {
 					cvs_log(LP_ERR, "no terminating quote");
-					err++;
+					error++;
 					break;
 				}
 
 				qbuf[i++] = *lp++;
 				if (i == sizeof(qbuf)) {
-					err++;
+					error++;
 					break;
 				}
 			}
@@ -355,7 +355,7 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 		}
 
 		if (argc == argvlen) {
-			err++;
+			error++;
 			break;
 		}
 
@@ -363,7 +363,7 @@ cvs_getargv(const char *line, char **argv, int argvlen)
 		argc++;
 	}
 
-	if (err != 0) {
+	if (error != 0) {
 		/* ditch the argument vector */
 		for (i = 0; i < (u_int)argc; i++)
 			xfree(argv[i]);
