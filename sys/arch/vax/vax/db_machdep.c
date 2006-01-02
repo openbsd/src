@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.14 2005/11/24 04:55:49 brad Exp $	*/
+/*	$OpenBSD: db_machdep.c,v 1.15 2006/01/02 21:44:52 miod Exp $	*/
 /*	$NetBSD: db_machdep.c,v 1.17 1999/06/20 00:58:23 ragge Exp $	*/
 
 /* 
@@ -59,6 +59,7 @@
 #include <ddb/db_extern.h>
 #include <ddb/db_access.h>
 #include <ddb/db_interface.h>
+#include <ddb/db_var.h>
 #include <ddb/db_variables.h>
 
 extern	label_t	*db_recover;
@@ -507,7 +508,8 @@ kdbrint(tkn)
 {
 
 	if (ddbescape && ((tkn & 0x7f) == 'D')) {
-		mtpr(0xf, PR_SIRR);
+		if (db_console)
+			mtpr(0xf, PR_SIRR);
 		ddbescape = 0;
 		return 1;
 	}
