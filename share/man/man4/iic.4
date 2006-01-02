@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.26 2006/01/01 23:33:47 deraadt Exp $
+.\"	$OpenBSD: iic.4,v 1.27 2006/01/02 01:59:16 deraadt Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -49,10 +49,10 @@ All
 .Tn I2C
 slave devices are uniquely identified by the address on the bus.
 The master accesses a particular slave device using its address.
-Device addresses should be specified in the kernel configuration file
-with the
-.Cd addr
-locator.
+Devices are found on the bus using a sophisticated scanning routine
+which attempts to identify commonly available devices.
+On other machines (such as sparc64 and macppc) where the machine ROM
+supplies a list of i2c devices, that list is used instead.
 .Pp
 System Management Bus (SMBus) protocol is also supported by emulating
 it with the
