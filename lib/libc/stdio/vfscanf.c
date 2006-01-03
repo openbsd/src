@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfscanf.c,v 1.16 2005/12/19 19:39:25 millert Exp $ */
+/*	$OpenBSD: vfscanf.c,v 1.17 2006/01/03 00:57:45 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -61,14 +61,14 @@
  * SIGNOK, NDIGITS, DPTOK, and EXPOK are for floating point;
  * SIGNOK, NDIGITS, PFXOK, and NZDIGITS are for integral.
  */
-#define	SIGNOK		0x080	/* +/- is (still) legal */
-#define	NDIGITS		0x100	/* no digits detected */
+#define	SIGNOK		0x0200	/* +/- is (still) legal */
+#define	NDIGITS		0x0400	/* no digits detected */
 
-#define	DPTOK		0x200	/* (float) decimal point is still legal */
-#define	EXPOK		0x400	/* (float) exponent (e+3, etc) still legal */
+#define	DPTOK		0x0800	/* (float) decimal point is still legal */
+#define	EXPOK		0x1000	/* (float) exponent (e+3, etc) still legal */
 
-#define	PFXOK		0x200	/* 0x prefix is (still) legal */
-#define	NZDIGITS	0x400	/* no zero digits detected */
+#define	PFXOK		0x0800	/* 0x prefix is (still) legal */
+#define	NZDIGITS	0x1000	/* no zero digits detected */
 
 /*
  * Conversion types.
