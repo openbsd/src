@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.10 2006/01/03 22:39:03 grange Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.11 2006/01/03 23:24:06 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -199,8 +199,8 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 {
 	struct piixpm_softc *sc = cookie;
 	u_int8_t *b;
-	u_int8_t ctl, st, sctl;
-	int retries, error = 0;
+	u_int8_t ctl, st;
+	int retries;
 
 	DPRINTF(("%s: exec op %d, addr 0x%x, cmdlen %d, len %d, "
 	    "flags 0x%x, status 0x%b\n", sc->sc_dev.dv_xname, op, addr,
@@ -219,11 +219,6 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	sc->sc_i2c_xfer.len = len;
 	sc->sc_i2c_xfer.flags = flags;
 	sc->sc_i2c_xfer.error = 0;
-
-	/* Make sure SMBALERT# assertion disabled */
-	sctl = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_SC);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_SC,
-	    sctl & ~PIIX_SMB_SC_ALERTEN);
 
 	/* Set slave address and transfer direction */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_TXSLVA,
@@ -274,20 +269,16 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		if (st & PIIX_SMB_HS_BUSY) {
 			printf("%s: timeout, status 0x%b\n",
 			    sc->sc_dev.dv_xname, st, PIIX_SMB_HS_BITS);
-			error = 1;
-		} else {
-			piixpm_intr(sc);
+			return (1);
 		}
+		piixpm_intr(sc);
 	} else {
 		/* Wait for interrupt */
 		if (tsleep(sc, PRIBIO, "iicexec", PIIXPM_TIMEOUT * hz))
-			error = 1;
+			return (1);
 	}	
 
-	/* Restore SMBALERT# assertion */
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_SC, sctl);
-
-	if (error || sc->sc_i2c_xfer.error)
+	if (sc->sc_i2c_xfer.error)
 		return (1);
 
 	return (0);
