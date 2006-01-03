@@ -1,4 +1,4 @@
-/* $OpenBSD: tcpdrop.c,v 1.4 2004/05/22 23:55:22 deraadt Exp $ */
+/* $OpenBSD: tcpdrop.c,v 1.5 2006/01/03 01:46:27 stevesk Exp $ */
 
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
@@ -74,16 +74,16 @@ main(int argc, char **argv)
 			memcpy(&tir.faddr, aif->ai_addr, aif->ai_addrlen);
 			memcpy(&tir.laddr, ail->ai_addr, ail->ai_addrlen);
 
-			if (getnameinfo(aif->ai_addr, aif->ai_addrlen,
+			if ((gaierr = getnameinfo(aif->ai_addr, aif->ai_addrlen,
 			    fhbuf, sizeof(fhbuf),
 			    fsbuf, sizeof(fsbuf),
-			    NI_NUMERICHOST | NI_NUMERICSERV) == -1)
-				err(1, "getnameinfo");
-			if (getnameinfo(ail->ai_addr, ail->ai_addrlen,
+			    NI_NUMERICHOST | NI_NUMERICSERV)) != 0)
+				errx(1, "getnameinfo: %s", gai_strerror(gaierr));
+			if ((gaierr = getnameinfo(ail->ai_addr, ail->ai_addrlen,
 			    lhbuf, sizeof(lhbuf),
 			    lsbuf, sizeof(lsbuf),
-			    NI_NUMERICHOST | NI_NUMERICSERV) == -1)
-				err(1, "getnameinfo");
+			    NI_NUMERICHOST | NI_NUMERICSERV)) != 0)
+				errx(1, "getnameinfo: %s", gai_strerror(gaierr));
 
 			if (sysctl(mib, sizeof (mib) / sizeof (int), NULL,
 			    NULL, &tir, sizeof(tir)) == -1) {
