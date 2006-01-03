@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.47 2005/12/31 20:54:50 miod Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.48 2006/01/03 07:55:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -198,9 +198,9 @@ amd1032cloneprobe(u_int8_t addr)
 			if (iicprobe(reg) != val)
 				return (NULL);
 		}
-		/* 0xfe may be maxim, or some other vendor */
+		/* 0xfe may be Maxim, or some other vendor */
 		if (iicprobe(0xfe) == 0x4d)
-			return ("maxim1617");
+			return ("max1617");
 		/*
 		 * "xeontemp" is the name we choose for clone chips
 		 * which have all sorts of buggy bus interactions, such
@@ -394,7 +394,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		    (iicprobe(0x03) & 0x2a) == 0 && iicprobe(0x04) <= 0x09)
 			name = "lm86";
 	} else if (iicprobe(0xfe) == 0x4d && iicprobe(0xff) == 0x08) {
-		name = "maxim6690";	/* somewhat similar to lm90 */
+		name = "max6690";	/* somewhat similar to lm90 */
 	} else if (iicprobe(0xfe) == 0x41 && (addr == 0x4c || addr == 0x4d) &&
 	    (iicprobe(0x03) & 0x2a) == 0 && iicprobe(0x04) <= 0x09) {
 		name = "adm1032";
