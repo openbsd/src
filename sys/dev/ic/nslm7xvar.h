@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7xvar.h,v 1.7 2005/12/30 19:47:39 kettenis Exp $	*/
+/*	$OpenBSD: nslm7xvar.h,v 1.8 2006/01/03 19:30:09 kettenis Exp $	*/
 /*	$NetBSD: nslm7xvar.h,v 1.10 2002/11/15 14:55:42 ad Exp $ */
 
 /*-
@@ -134,7 +134,6 @@ struct lm_softc {
 	u_int numsensors;
 	void (*refresh_sensor_data) (struct lm_softc *);
 
-	int (*lm_banksel)(struct lm_softc *, int);
 	u_int8_t (*lm_readreg)(struct lm_softc *, int);
 	void (*lm_writereg)(struct lm_softc *, int, int);
 };

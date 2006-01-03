@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7x.c,v 1.12 2005/12/30 19:47:39 kettenis Exp $	*/
+/*	$OpenBSD: nslm7x.c,v 1.13 2006/01/03 19:30:09 kettenis Exp $	*/
 /*	$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $ */
 
 /*-
@@ -65,7 +65,6 @@ int  lm_match(struct lm_softc *);
 int  wb_match(struct lm_softc *);
 int  def_match(struct lm_softc *);
 void lm_common_match(struct lm_softc *);
-int  lm_generic_banksel(struct lm_softc *, int);
 
 void generic_stemp(struct lm_softc *, struct sensor *);
 void generic_svolt(struct lm_softc *, struct sensor *);
@@ -104,13 +103,6 @@ struct lm_chip lm_chips[] = {
 	{ def_match } /* Must be last */
 };
 
-int
-lm_generic_banksel(struct lm_softc *lmsc, int bank)
-{
-	(*lmsc->lm_writereg)(lmsc, WB_BANKSEL, bank);
-	return (0);
-}
-
 /*
  * bus independent probe
  */
@@ -147,11 +139,7 @@ lm_probe(bus_space_tag_t iot, bus_space_handle_t ioh)
 void
 lm_attach(struct lm_softc *lmsc)
 {
-	u_int i;
-
-	/* Install default bank selection routine, if none given. */
-	if (lmsc->lm_banksel == NULL)
-		lmsc->lm_banksel = lm_generic_banksel;
+	u_int i, config;
 
 	for (i = 0; i < sizeof(lm_chips) / sizeof(lm_chips[0]); i++)
 		if (lm_chips[i].chip_match(lmsc))
@@ -164,7 +152,8 @@ lm_attach(struct lm_softc *lmsc)
 	}
 
 	/* Start the monitoring loop */
-	(*lmsc->lm_writereg)(lmsc, LMD_CONFIG, 0x01);
+	config = (*lmsc->lm_readreg)(lmsc, LMD_CONFIG);
+	(*lmsc->lm_writereg)(lmsc, LMD_CONFIG, config | 0x01);
 
 	/* Initialize sensors */
 	for (i = 0; i < lmsc->numsensors; ++i) {
@@ -242,18 +231,21 @@ lm_common_match(struct lm_softc *sc)
 int
 wb_match(struct lm_softc *sc)
 {
-	int i, j;
+	int i, j, banksel;
 
+	banksel = (*sc->lm_readreg)(sc, WB_BANKSEL);
 	(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_HBAC);
 	j = (*sc->lm_readreg)(sc, WB_VENDID) << 8;
 	(*sc->lm_writereg)(sc, WB_BANKSEL, 0);
 	j |= (*sc->lm_readreg)(sc, WB_VENDID);
+	(*sc->lm_writereg)(sc, WB_BANKSEL, banksel);
 	DPRINTF(("winbond vend id 0x%x\n", j));
 	if (j != WB_VENDID_WINBOND && j != WB_VENDID_ASUS)
 		return 0;
 	/* read device ID */
-	(*sc->lm_banksel)(sc, 0);
+	(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_B0);
 	j = (*sc->lm_readreg)(sc, WB_BANK0_CHIPID);
+	(*sc->lm_writereg)(sc, WB_BANKSEL, banksel);
 	DPRINTF(("winbond chip id 0x%x\n", j));
 	switch(j) {
 	case WB_CHIPID_83781:
@@ -376,244 +368,6 @@ setup_fan(struct lm_softc *sc, int start, int n)
 	}
 }
 
-#if 0
-int
-lm_gtredata(sme, tred)
-	 struct sysmon_envsys *sme;
-	 struct envsys_tre_data *tred;
-{
-	 static const struct timeval onepointfive = { 1, 500000 };
-	 struct timeval t, mtv;
-	 struct lm_softc *sc = sme->sme_cookie;
-	 int i;
-
-	 /* read new values at most once every 1.5 seconds */
-	 timeradd(&sc->lastread, &onepointfive, &t);
-	 getmicrouptime(&mtv);
-	 i = timercmp(&mtv, &t, >);
-	 if (i) {
-		  sc->lastread = mtv;
-		  sc->refresh_sensor_data(sc);
-	 }
-
-	 *tred = sc->sensors[tred->sensor];
-
-	 return (0);
-}
-
-int
-generic_streinfo_fan(sc, info, n, binfo)
-	struct lm_softc *sc;
-	struct envsys_basic_info *info;
-	int n;
-	struct envsys_basic_info *binfo;
-{
-	u_int8_t sdata;
-	int divisor;
-
-	/* FAN1 and FAN2 can have divisors set, but not FAN3 */
-	if ((sc->sensors[binfo->sensor].type == SENSOR_FANRPM)
-	    && (n < 2)) {
-		if (binfo->rpms == 0) {
-			binfo->validflags = 0;
-			return (0);
-		}
-
-		/* write back the nominal FAN speed  */
-		info->rpms = binfo->rpms;
-
-		/* 153 is the nominal FAN speed value */
-		divisor = 1350000 / (binfo->rpms * 153);
-
-		/* ...but we need lg(divisor) */
-		if (divisor <= 1)
-		    divisor = 0;
-		else if (divisor <= 2)
-		    divisor = 1;
-		else if (divisor <= 4)
-		    divisor = 2;
-		else
-		    divisor = 3;
-
-		/*
-		 * FAN1 div is in bits <5:4>, FAN2 div is
-		 * in <7:6>
-		 */
-		sdata = (*sc->lm_readreg)(sc, LMD_VIDFAN);
-		if ( n == 0 ) {  /* FAN1 */
-		    divisor <<= 4;
-		    sdata = (sdata & 0xCF) | divisor;
-		} else { /* FAN2 */
-		    divisor <<= 6;
-		    sdata = (sdata & 0x3F) | divisor;
-		}
-
-		(*sc->lm_writereg)(sc, LMD_VIDFAN, sdata);
-	}
-	return (0);
-
-}
-
-int
-lm_streinfo(sme, binfo)
-	 struct sysmon_envsys *sme;
-	 struct envsys_basic_info *binfo;
-{
-	 struct lm_softc *sc = sme->sme_cookie;
-
-	 if (sc->sensors[binfo->sensor].type == SENSOR_VOLTS_DC)
-		  sc->sensors[binfo->sensor].rfact = binfo->rfact;
-	 else {
-		if (sc->sensors[binfo->sensor].type == SENSOR_FANRPM) {
-			generic_streinfo_fan(sc, &sc->sensors[binfo->sensor],
-			    binfo->sensor - 8, binfo);
-		}
-		memcpy(sc->sensors[binfo->sensor].desc, binfo->desc,
-		    sizeof(sc->sensors[binfo->sensor].desc));
-		sc->sensors[binfo->sensor].desc[
-		    sizeof(sc->sensors[binfo->sensor].desc) - 1] = '\0';
-
-		binfo->validflags = ENVSYS_FVALID;
-	 }
-	 return (0);
-}
-
-int
-wb781_streinfo(sme, binfo)
-	 struct sysmon_envsys *sme;
-	 struct envsys_basic_info *binfo;
-{
-	 struct lm_softc *sc = sme->sme_cookie;
-	 int divisor;
-	 u_int8_t sdata;
-	 int i;
-
-	 if (sc->sensors[binfo->sensor].type == SENSOR_VOLTS_DC)
-		  sc->sensors[binfo->sensor].rfact = binfo->rfact;
-	 else {
-		if (sc->sensors[binfo->sensor].type == SENSOR_FANRPM) {
-			if (binfo->rpms == 0) {
-				binfo->validflags = 0;
-				return (0);
-			}
-
-			/* write back the nominal FAN speed  */
-			sc->sensors[binfo->sensor].rpms = binfo->rpms;
-
-			/* 153 is the nominal FAN speed value */
-			divisor = 1350000 / (binfo->rpms * 153);
-
-			/* ...but we need lg(divisor) */
-			for (i = 0; i < 7; i++) {
-				if (divisor <= (1 << i))
-				 	break;
-			}
-			divisor = i;
-
-			if (binfo->sensor == 10 || binfo->sensor == 11) {
-				/*
-				 * FAN1 div is in bits <5:4>, FAN2 div
-				 * is in <7:6>
-				 */
-				sdata = (*sc->lm_readreg)(sc, LMD_VIDFAN);
-				if ( binfo->sensor == 10 ) {  /* FAN1 */
-					 sdata = (sdata & 0xCF) |
-					     ((divisor & 0x3) << 4);
-				} else { /* FAN2 */
-					 sdata = (sdata & 0x3F) |
-					     ((divisor & 0x3) << 6);
-				}
-				(*sc->lm_writereg)(sc, LMD_VIDFAN, sdata);
-			} else {
-				/* FAN3 is in WB_PIN <7:6> */
-				sdata = (*sc->lm_readreg)(sc, WB_PIN);
-				sdata = (sdata & 0x3F) |
-				     ((divisor & 0x3) << 6);
-				(*sc->lm_writereg)(sc, WB_PIN, sdata);
-			}
-		}
-		memcpy(sc->sensors[binfo->sensor].desc, binfo->desc,
-		    sizeof(sc->sensors[binfo->sensor].desc));
-		sc->sensors[binfo->sensor].desc[
-		    sizeof(sc->sensors[binfo->sensor].desc) - 1] = '\0';
-
-		binfo->validflags = ENVSYS_FVALID;
-	 }
-	 return (0);
-}
-
-int
-wb782_streinfo(sme, binfo)
-	 struct sysmon_envsys *sme;
-	 struct envsys_basic_info *binfo;
-{
-	 struct lm_softc *sc = sme->sme_cookie;
-	 int divisor;
-	 u_int8_t sdata;
-	 int i;
-
-	 if (sc->sensors[binfo->sensor].type == SENSOR_VOLTS_DC)
-		  sc->sensors[binfo->sensor].rfact = binfo->rfact;
-	 else {
-	 	if (sc->sensors[binfo->sensor].type == SENSOR_FANRPM) {
-			if (binfo->rpms == 0) {
-				binfo->validflags = 0;
-				return (0);
-			}
-
-			/* write back the nominal FAN speed  */
-			sc->sensors[binfo->sensor].rpms = binfo->rpms;
-
-			/* 153 is the nominal FAN speed value */
-			divisor = 1350000 / (binfo->rpms * 153);
-
-			/* ...but we need lg(divisor) */
-			for (i = 0; i < 7; i++) {
-				if (divisor <= (1 << i))
-				 	break;
-			}
-			divisor = i;
-
-			if (binfo->sensor == 12 || binfo->sensor == 13) {
-				/*
-				 * FAN1 div is in bits <5:4>, FAN2 div
-				 * is in <7:6>
-				 */
-				sdata = (*sc->lm_readreg)(sc, LMD_VIDFAN);
-				if ( binfo->sensor == 12 ) {  /* FAN1 */
-					 sdata = (sdata & 0xCF) |
-					     ((divisor & 0x3) << 4);
-				} else { /* FAN2 */
-					 sdata = (sdata & 0x3F) |
-					     ((divisor & 0x3) << 6);
-				}
-				(*sc->lm_writereg)(sc, LMD_VIDFAN, sdata);
-			} else {
-				/* FAN3 is in WB_PIN <7:6> */
-				sdata = (*sc->lm_readreg)(sc, WB_PIN);
-				sdata = (sdata & 0x3F) |
-				     ((divisor & 0x3) << 6);
-				(*sc->lm_writereg)(sc, WB_PIN, sdata);
-			}
-			/* Bit 2 of divisor is in WB_BANK0_FANBAT */
-			(*sc->lm_banksel)(sc, 0);
-			sdata = (*sc->lm_readreg)(sc, WB_BANK0_FANBAT);
-			sdata &= ~(0x20 << (binfo->sensor - 12));
-			sdata |= (divisor & 0x4) << (binfo->sensor - 9);
-			(*sc->lm_writereg)(sc, WB_BANK0_FANBAT, sdata);
-		}
-
-		memcpy(sc->sensors[binfo->sensor].desc, binfo->desc,
-		    sizeof(sc->sensors[binfo->sensor].desc));
-		sc->sensors[binfo->sensor].desc[
-		    sizeof(sc->sensors[binfo->sensor].desc) - 1] = '\0';
-
-		binfo->validflags = ENVSYS_FVALID;
-	}
-	return (0);
-}
-#endif
-
 void
 generic_stemp(struct lm_softc *sc, struct sensor *sensor)
 {
@@ -663,6 +417,8 @@ generic_fanrpm(struct lm_softc *sc, struct sensor *sensors)
 		DPRINTF((", divisor %d\n", 2 << divisor));
 
 		if (sdata == 0xff) {
+			/* XXX Changing the fan divisor is too dangerous */
+#if 0
 			/* Fan can be too slow, try to adjust the divisor */
 			if (i < 2 && divisor < 3) {
 				divisor++;
@@ -670,6 +426,7 @@ generic_fanrpm(struct lm_softc *sc, struct sensor *sensors)
 				vidfan |= (divisor & 0x3) << (i == 0 ? 4 : 6);
 				(*sc->lm_writereg)(sc, LMD_VIDFAN, vidfan);
 			}
+#endif
 			sensors[i].value = 0;
 		} else if (sdata == 0x00) {
 			sensors[i].flags |= SENSOR_FINVALID;
@@ -704,9 +461,10 @@ wb_svolt(struct lm_softc *sc)
 			sdata = (*sc->lm_readreg)(sc, LMD_SENSORBASE + i);
 		} else {
 			/* from bank5 */
-			(*sc->lm_banksel)(sc, 5);
+			(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_B5);
 			sdata = (*sc->lm_readreg)(sc, (i == 7) ?
 			    WB_BANK5_5VSB : WB_BANK5_VBAT);
+			(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_B0);
 		}
 		DPRINTF(("sdata[volt%d] 0x%x\n", i, sdata));
 		/* voltage returned as (mV >> 4), we convert to uV */
@@ -742,25 +500,21 @@ wb_stemp(struct lm_softc *sc, struct sensor *sensors, int n)
 	DPRINTF(("sdata[temp0] 0x%x\n", sdata));
 	sensors[0].value = sdata * 1000000 + 273150000;
 	/* from bank1 */
-	if ((*sc->lm_banksel)(sc, 1)) {
-		sensors[1].flags |= SENSOR_FINVALID;
-	} else {
-		sdata = (*sc->lm_readreg)(sc, WB_BANK1_T2H) << 1;
-		sdata |=  ((*sc->lm_readreg)(sc, WB_BANK1_T2L) & 0x80) >> 7;
-		DPRINTF(("sdata[temp1] 0x%x\n", sdata));
-		sensors[1].value = (sdata * 1000000) / 2 + 273150000;
-	}
+	(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_B1);
+	sdata = (*sc->lm_readreg)(sc, WB_BANK1_T2H) << 1;
+	sdata |=  ((*sc->lm_readreg)(sc, WB_BANK1_T2L) & 0x80) >> 7;
+	(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_B0);
+	DPRINTF(("sdata[temp1] 0x%x\n", sdata));
+	sensors[1].value = (sdata * 1000000) / 2 + 273150000;
 	if (n < 3)
 		return;
 	/* from bank2 */
-	if ((*sc->lm_banksel)(sc, 2)) {
-		sensors[2].flags |= SENSOR_FINVALID;
-	} else {
-		sdata = (*sc->lm_readreg)(sc, WB_BANK2_T3H) << 1;
-		sdata |=  ((*sc->lm_readreg)(sc, WB_BANK2_T3L) & 0x80) >> 7;
-		DPRINTF(("sdata[temp2] 0x%x\n", sdata));
-		sensors[2].value = (sdata * 1000000) / 2 + 273150000;
-	}
+	(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_B2);
+	sdata = (*sc->lm_readreg)(sc, WB_BANK2_T3H) << 1;
+	sdata |=  ((*sc->lm_readreg)(sc, WB_BANK2_T3L) & 0x80) >> 7;
+	(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_B0);
+	DPRINTF(("sdata[temp2] 0x%x\n", sdata));
+	sensors[2].value = (sdata * 1000000) / 2 + 273150000;
 }
 
 void
@@ -768,7 +522,6 @@ wb781_fanrpm(struct lm_softc *sc, struct sensor *sensors)
 {
 	int i, divisor, sdata;
 
-	(*sc->lm_banksel)(sc, 0);
 	for (i = 0; i < 3; i++) {
 		sdata = (*sc->lm_readreg)(sc, LMD_SENSORBASE + i + 8);
 		DPRINTF(("sdata[fan%d] 0x%x\n", i, sdata));
@@ -797,7 +550,6 @@ wb_fanrpm(struct lm_softc *sc, struct sensor *sensors, int n)
 {
 	int i, divisor, sdata;
 
-	(*sc->lm_banksel)(sc, 0);
 	for (i = 0; i < n; i++) {
 		sdata = (*sc->lm_readreg)(sc, LMD_SENSORBASE + i + 8);
 		DPRINTF(("sdata[fan%d] 0x%x\n", i, sdata));
@@ -826,32 +578,43 @@ wb_fanrpm(struct lm_softc *sc, struct sensor *sensors, int n)
 void
 wb781_refresh_sensor_data(struct lm_softc *sc)
 {
+	int banksel;
+
 	/* Refresh our stored data for every sensor */
-	/* we need to reselect bank0 to access common registers */
-	(*sc->lm_banksel)(sc, 0);
+	banksel = (*sc->lm_readreg)(sc, WB_BANKSEL);
+	(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_B0);
 	generic_svolt(sc, &sc->sensors[0]);
-	(*sc->lm_banksel)(sc, 0);
 	wb_stemp(sc, &sc->sensors[7], 3);
-	(*sc->lm_banksel)(sc, 0);
 	wb781_fanrpm(sc, &sc->sensors[10]);
+	(*sc->lm_writereg)(sc, WB_BANKSEL, banksel);
 }
 
 void
 wb782_refresh_sensor_data(struct lm_softc *sc)
 {
+	int banksel;
+
 	/* Refresh our stored data for every sensor */
+	banksel = (*sc->lm_readreg)(sc, WB_BANKSEL);
+	(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_B0);
 	wb_svolt(sc);
 	wb_stemp(sc, &sc->sensors[9], 3);
 	wb_fanrpm(sc, &sc->sensors[12], 3);
+	(*sc->lm_writereg)(sc, WB_BANKSEL, banksel);
 }
 
 void
 wb697_refresh_sensor_data(struct lm_softc *sc)
 {
+	int banksel;
+
 	/* Refresh our stored data for every sensor */
+	banksel = (*sc->lm_readreg)(sc, WB_BANKSEL);
+	(*sc->lm_writereg)(sc, WB_BANKSEL, 0);
 	wb_svolt(sc);
 	wb_stemp(sc, &sc->sensors[9], 2);
 	wb_fanrpm(sc, &sc->sensors[11], 2);
+	(*sc->lm_writereg)(sc, WB_BANKSEL, banksel);
 }
 
 void
