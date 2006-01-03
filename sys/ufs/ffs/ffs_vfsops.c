@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.78 2005/12/28 20:48:17 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.79 2006/01/03 12:20:54 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -606,6 +606,11 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 }
 
 /*
+ * Possible locations for the super-block.
+ */
+const int sbtry[] = SBLOCKSEARCH;
+
+/*
  * Common code for mount and mountroot
  */
 int
@@ -617,6 +622,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	dev_t dev;
 	struct partinfo dpart;
 	caddr_t space;
+	ufs2_daddr_t sbloc;
 	int error, i, blks, size, ronly;
 	int32_t *lp;
 	size_t strsize;
@@ -652,18 +658,50 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 
 	bp = NULL;
 	ump = NULL;
-	error = bread(devvp, (daddr_t)(SBOFF / size), SBSIZE, cred, &bp);
-	if (error)
-		goto out;
-	fs = (struct fs *)bp->b_data;
-	if (fs->fs_magic != FS_UFS1_MAGIC || (u_int)fs->fs_bsize > MAXBSIZE ||
-	    fs->fs_bsize < sizeof(struct fs) ||
-	    (u_int)fs->fs_sbsize > SBSIZE) {
-		if (fs->fs_magic == FS_UFS2_MAGIC)
-			printf("no UFS2 support\n");
-		error = EFTYPE;		/* Inappropriate format */
+
+	/*
+	 * Try reading the super-block in each of its possible locations.
+	 */
+	for (i = 0; sbtry[i] != -1; i++) {
+		if (bp != NULL) {
+			bp->b_flags |= B_NOCACHE;
+			brelse(bp);
+			bp = NULL;
+		}
+
+		error = bread(devvp, sbtry[i] / size, SBSIZE, cred, &bp);
+		if (error)
+			goto out;
+
+		fs = (struct fs *) bp->b_data;
+		sbloc = sbtry[i];
+
+		if (fs->fs_magic == FS_UFS2_MAGIC) {
+			printf("ffs_mountfs(): Sorry, no UFS2 support (yet)\n");
+			error = EFTYPE;
+			goto out;
+		}
+
+		/*
+		 * Do not look for an FFS1 file system at SBLOCK_UFS2. Doing so
+		 * will find the wrong super-block for file systems with 64k
+		 * block size.
+		 */
+		if (fs->fs_magic == FS_UFS1_MAGIC && sbloc == SBLOCK_UFS2)
+			continue;
+
+		if ((fs->fs_magic == FS_UFS1_MAGIC) &&
+		    ((u_int)fs->fs_bsize <= MAXBSIZE) &&
+		    ((u_int)fs->fs_bsize >= sizeof(struct fs)) &&
+		    ((u_int)fs->fs_sbsize <= SBSIZE))
+			break; /* Validate super-block */
+	}
+
+	if (sbtry[i] == -1) {
+		error = EINVAL;
 		goto out;
 	}
+
 	fs->fs_fmod = 0;
 	fs->fs_flags &= ~FS_UNCLEAN;
 	if (fs->fs_clean == 0) {
