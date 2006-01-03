@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.52 2005/08/08 19:48:37 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.53 2006/01/03 20:57:36 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -918,7 +918,7 @@ kdatafault:
 	UTRAP 0x031			! 031 = data MMU miss -- no MMU
 	VTRAP T_DATA_ERROR, winfault	! 032 = data fetch fault
 	VTRAP T_DATA_PROT, winfault	! 033 = data fetch fault
-	TRAP T_ALIGN			! 034 = address alignment error -- we could fix it inline...
+	VTRAP T_ALIGN, checkalign	! 034 = address alignment error -- we could fix it inline...
 !	sir; nop; TA8	! DEBUG -- trap all kernel alignment errors
 	TRAP T_LDDF_ALIGN		! 035 = LDDF address alignment error -- we could fix it inline...
 	TRAP T_STDF_ALIGN		! 036 = STDF address alignment error -- we could fix it inline...
@@ -2607,6 +2607,73 @@ fp_exception:
 	wrpr	%g0, %g4, %tnpc
 	 done
 	NOTREACHED
+
+/*
+ * We're here because we took an alignment fault in NUCLEUS context.
+ * This could be a kernel bug or it could be due to saving or restoring
+ * a user window to/from an invalid stack pointer.
+ * 
+ * If the latter is the case, we could try to emulate unaligned accesses, 
+ * but we really don't know where to store the registers since we can't 
+ * determine if there's a stack bias.  Or we could store all the regs 
+ * into the PCB and punt, until the user program uses up all the CPU's
+ * register windows and we run out of places to store them.  So for
+ * simplicity we'll just blow them away and enter the trap code which
+ * will generate a bus error.  Debugging the problem will be a bit
+ * complicated since lots of register windows will be lost, but what
+ * can we do?
+ * 
+ * XXX The trap code generates SIGKILL for now.
+ */
+checkalign:
+	rdpr	%tl, %g2
+	subcc	%g2, 1, %g1
+	bneg,pn	%icc, slowtrap		! Huh?
+	 sethi	%hi(CPCB), %g6		! Get current pcb
+
+	wrpr	%g1, 0, %tl
+	rdpr	%tt, %g7
+	rdpr	%tstate, %g4
+	andn	%g7, 0x07f, %g5		! Window spill traps are all 0b 0000 10xx xxxx
+	cmp	%g5, 0x080		! Window fill traps are all 0b 0000 11xx xxxx
+	bne,a,pn %icc, slowtrap
+	 nop
+
+	/*
+         * %g1 -- current tl
+	 * %g2 -- original tl
+	 * %g4 -- tstate
+         * %g7 -- tt
+	 */
+
+	and	%g4, CWP, %g5
+	wrpr	%g5, %cwp		! Go back to the original register window
+
+	rdpr	%otherwin, %g6
+	rdpr	%cansave, %g5
+	add	%g5, %g6, %g5
+	wrpr	%g0, 0, %otherwin	! Just blow away all user windows
+	wrpr	%g5, 0, %cansave
+	rdpr	%canrestore, %g5
+	wrpr	%g5, 0, %cleanwin
+
+	wrpr	%g0, T_ALIGN, %tt	! This was an alignment fault 
+	/*
+	 * Now we need to determine if this was a userland store/load or not.
+	 * Userland stores occur in anything other than the kernel spill/fill
+	 * handlers (trap type 0x9x/0xdx).
+	 */
+	and	%g7, 0xff0, %g5
+	cmp	%g5, 0x90
+	bz,pn	%icc, slowtrap
+	 nop
+	cmp	%g5, 0xd0
+	bz,pn	%icc, slowtrap
+	 nop
+	and	%g7, 0xfc0, %g5
+	wrpr	%g5, 0, %tt
+	ba,a,pt	%icc, slowtrap
+	 nop
 
 /*
  * slowtrap() builds a trap frame and calls trap().
