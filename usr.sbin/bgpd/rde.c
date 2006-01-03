@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.185 2005/12/30 11:22:23 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.186 2006/01/03 13:09:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -216,9 +216,11 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 			i++;
 		}
 
-		if (poll(pfd, i, INFTIM) == -1)
+		if (poll(pfd, i, INFTIM) == -1) {
 			if (errno != EINTR)
 				fatal("poll error");
+			continue;
+		}
 
 		if ((pfd[PFD_PIPE_MAIN].revents & POLLOUT) &&
 		    ibuf_main->w.queued)
