@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.55 2005/11/28 00:14:28 jsg Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.56 2006/01/03 18:22:31 miod Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -547,7 +547,7 @@ statclock(struct clockframe *frame)
 	pscnt = psdiv;
 
 #ifdef __HAVE_CPUINFO
-#undef psdiv
+#undef pscnt
 #undef cp_time
 #endif
 
