@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.28 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.29 2006/01/03 12:47:14 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -140,10 +140,8 @@ cvs_release_dir(CVSFILE *cf, void *arg)
 
 	/* XXX kept for compat reason of `cvs update' output */
 	/* save current working directory for further use */
-	if ((wdir = getcwd(cwd, sizeof(cwd))) == NULL) {
-		cvs_log(LP_ERRNO, "cannot get current dir");
-		return (CVS_EX_FILE);
-	}
+	if ((wdir = getcwd(cwd, sizeof(cwd))) == NULL)
+		fatal("getcwd failed");
 
 	cvs_file_getpath(cf, dpath, sizeof(dpath));
 
@@ -175,10 +173,8 @@ cvs_release_dir(CVSFILE *cf, void *arg)
 
 	/* XXX we should try to avoid a new connection ... */
 	cvs_log(LP_TRACE, "cvs_release_dir() popen(%s,r)", updcmd);
-	if ((fp = popen(updcmd, "r")) == NULL) {
-		cvs_log(LP_ERR, "cannot run command `%s'", updcmd);
-		return (CVS_EX_DATA);
-	}
+	if ((fp = popen(updcmd, "r")) == NULL)
+		fatal("cannot run command `%s'", updcmd);
 
 	while (fgets(buf, (int)sizeof(buf), fp) != NULL) {
 		if (strchr("ACMPRU", buf[0]))
