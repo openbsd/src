@@ -1,4 +1,4 @@
-.\"   $OpenBSD: smu.4,v 1.6 2006/01/02 11:34:27 jmc Exp $
+.\"   $OpenBSD: smu.4,v 1.7 2006/01/03 21:41:10 kettenis Exp $
 .\"
 .\" Copyright (c) 2005 Mark Kettenis
 .\"
@@ -32,7 +32,7 @@ and some
 machines.
 .Pp
 The System Management Unit controls the fans in these systems.
-It also contains the real time clock.
+It also contains the real time clock and an I2C controller.
 .Sh SEE ALSO
 .Xr iic 4 ,
 .Xr intro 4
@@ -46,4 +46,4 @@ The
 .Nm
 driver was written by Mark Kettenis.
 .Sh BUGS
-Currently only the real time clock functionality is supported.
+Fan control is not implemented yet.
