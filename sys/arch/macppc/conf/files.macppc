@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.44 2006/01/01 20:52:23 deraadt Exp $
+#	$OpenBSD: files.macppc,v 1.45 2006/01/03 17:23:19 xsa Exp $
 
 #
 # macppc-specific configuration info
@@ -288,3 +288,8 @@ file	dev/pci/if_hme_pci.c				hme_pci
 device	tpms: hid, wsmousedev
 attach	tpms at uhidbus
 file	arch/macppc/dev/tpms.c				tpms
+
+# Apple Sudden Motion Sensor
+device	asms
+attach	asms at i2c
+file	arch/macppc/dev/asms.c			asms
