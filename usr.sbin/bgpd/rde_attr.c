@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.53 2006/01/03 22:19:59 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.54 2006/01/03 22:49:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -74,6 +74,7 @@ attr_optadd(struct rde_aspath *asp, u_int8_t flags, u_int8_t type,
 	a = calloc(1, sizeof(struct attr));
 	if (a == NULL)
 		fatal("attr_optadd");
+	rdemem.attr_cnt++;
 
 	a->flags = flags;
 	a->type = type;
@@ -83,6 +84,7 @@ attr_optadd(struct rde_aspath *asp, u_int8_t flags, u_int8_t type,
 		if (a->data == NULL)
 			fatal("attr_optadd");
 
+		rdemem.attr_data += len;
 		memcpy(a->data, data, len);
 	} else
 		a->data = NULL;
@@ -91,6 +93,8 @@ attr_optadd(struct rde_aspath *asp, u_int8_t flags, u_int8_t type,
 	TAILQ_FOREACH_REVERSE(p, &asp->others, attr_list, entry) {
 		if (type == p->type) {
 			/* attribute allowed only once */
+			rdemem.attr_data -= len;
+			rdemem.attr_cnt--;
 			free(a->data);
 			free(a);
 			return (-1);
@@ -135,6 +139,8 @@ attr_optfree(struct rde_aspath *asp)
 
 	while ((a = TAILQ_FIRST(&asp->others)) != NULL) {
 		TAILQ_REMOVE(&asp->others, a, entry);
+		rdemem.attr_data -= a->len;
+		rdemem.attr_cnt--;
 		free(a->data);
 		free(a);
 	}
@@ -226,6 +232,9 @@ aspath_get(void *data, u_int16_t len)
 		if (aspath == NULL)
 			fatal("aspath_get");
 
+		rdemem.aspath_cnt++;
+		rdemem.aspath_size += ASPATH_HEADER_SIZE + len;
+
 		aspath->refcnt = 0;
 		aspath->len = len;
 		aspath->ascnt = aspath_count(data, len);
@@ -237,6 +246,7 @@ aspath_get(void *data, u_int16_t len)
 		LIST_INSERT_HEAD(head, aspath, entry);
 	}
 	aspath->refcnt++;
+	rdemem.aspath_refs++;
 
 	return (aspath);
 }
@@ -247,13 +257,17 @@ aspath_put(struct aspath *aspath)
 	if (aspath == NULL)
 		return;
 
-	if (--aspath->refcnt > 0)
+	rdemem.aspath_refs--;
+	if (--aspath->refcnt > 0) {
 		/* somebody still holds a reference */
 		return;
+	}
 
 	/* unlink */
 	LIST_REMOVE(aspath, entry);
 
+	rdemem.aspath_cnt--;
+	rdemem.aspath_size -= ASPATH_HEADER_SIZE + aspath->len;
 	free(aspath);
 }
 
@@ -395,6 +409,7 @@ aspath_prepend(struct aspath *asp, u_int16_t as, int quantum)
 	if (quantum == 0) {
 		/* no change needed but increase refcnt as we return a copy */
 		asp->refcnt++;
+		rdemem.aspath_refs++;
 		return (asp);
 	} else if (type == AS_SET || size + quantum > 255) {
 		/* need to attach a new AS_SEQUENCE */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.71 2005/12/30 14:07:40 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.72 2006/01/03 22:49:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -272,8 +272,10 @@ path_copy(struct rde_aspath *asp)
 
 	nasp = path_get();
 	nasp->aspath = asp->aspath;
-	if (nasp->aspath != NULL)
+	if (nasp->aspath != NULL) {
 		nasp->aspath->refcnt++;
+		rdemem.aspath_refs++;
+	}
 	nasp->nexthop = asp->nexthop;
 	nasp->med = asp->med;
 	nasp->lpref = asp->lpref;
@@ -299,6 +301,8 @@ path_get(void)
 	asp = calloc(1, sizeof(*asp));
 	if (asp == NULL)
 		fatal("path_alloc");
+	rdemem.path_cnt++;
+
 	LIST_INIT(&asp->prefix_h);
 	TAILQ_INIT(&asp->others);
 	asp->origin = ORIGIN_INCOMPLETE;
@@ -320,6 +324,7 @@ path_put(struct rde_aspath *asp)
 	rtlabel_unref(asp->rtlabelid);
 	aspath_put(asp->aspath);
 	attr_optfree(asp);
+	rdemem.path_cnt--;
 	free(asp);
 }
 
@@ -663,6 +668,7 @@ prefix_alloc(void)
 	p = calloc(1, sizeof(*p));
 	if (p == NULL)
 		fatal("prefix_alloc");
+	rdemem.prefix_cnt++;
 	return p;
 }
 
@@ -672,6 +678,7 @@ prefix_free(struct prefix *pref)
 {
 	ENSURE(pref->aspath == NULL &&
 	    pref->prefix == NULL);
+	rdemem.prefix_cnt--;
 	free(pref);
 }
 
@@ -833,6 +840,7 @@ nexthop_unlink(struct rde_aspath *asp)
 		LIST_REMOVE(nh, nexthop_l);
 		rde_send_nexthop(&nh->exit_nexthop, 0);
 
+		rdemem.nexthop_cnt--;
 		free(nh);
 	}
 }
@@ -847,6 +855,7 @@ nexthop_get(struct bgpd_addr *nexthop)
 		nh = calloc(1, sizeof(*nh));
 		if (nh == NULL)
 			fatal("nexthop_alloc");
+		rdemem.nexthop_cnt++;
 
 		LIST_INIT(&nh->path_h);
 		nh->state = NEXTHOP_LOOKUP;
