@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.25 2006/01/03 22:05:13 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.26 2006/01/03 22:51:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -123,6 +123,7 @@ static const struct token t_show_rib[] = {
 	{ ASTYPE,	"transit-as",	AS_TRANSIT,	t_show_as},
 	{ ASTYPE,	"empty-as",	AS_EMPTY,	NULL},
 	{ KEYWORD,	"summary",	SHOW_SUMMARY,	NULL},
+	{ KEYWORD,	"memory",	SHOW_RIB_MEM,	NULL},
 	{ FAMILY,	"",		NONE,		NULL},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };

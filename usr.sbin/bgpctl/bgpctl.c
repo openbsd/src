@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.95 2006/01/03 22:20:59 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.96 2006/01/03 22:51:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "bgpd.h"
 #include "session.h"
@@ -69,6 +70,8 @@ void		 show_rib_summary_head(void);
 void		 print_prefix(struct bgpd_addr *, u_int8_t, u_int8_t);
 const char *	 print_origin(u_int8_t, int);
 int		 show_rib_summary_msg(struct imsg *);
+char		*fmt_mem(int64_t);
+int		 show_rib_memory_msg(struct imsg *);
 void		 send_filterset(struct imsgbuf *, struct filter_set_head *);
 static const char	*get_errstr(u_int8_t, u_int8_t);
 int		 show_result(struct imsg *);
@@ -201,6 +204,9 @@ main(int argc, char *argv[])
 			    &res->af, sizeof(res->af));
 		show_rib_summary_head();
 		break;
+	case SHOW_RIB_MEM:
+		imsg_compose(ibuf, IMSG_CTL_SHOW_RIB_MEM, 0, 0, -1, NULL, 0);
+		break;
 	case RELOAD:
 		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, -1, NULL, 0);
 		printf("reload request sent.\n");
@@ -301,6 +307,9 @@ main(int argc, char *argv[])
 				break;
 			case SHOW_RIB:
 				done = show_rib_summary_msg(&imsg);
+				break;
+			case SHOW_RIB_MEM:
+				done = show_rib_memory_msg(&imsg);
 				break;
 			case NETWORK_SHOW:
 				done = show_fib_msg(&imsg);
@@ -948,7 +957,6 @@ print_origin(u_int8_t origin, int sum)
 	}
 }
 
-
 int
 show_rib_summary_msg(struct imsg *imsg)
 {
@@ -982,6 +990,63 @@ show_rib_summary_msg(struct imsg *imsg)
 	}
 
 	return (0);
+}
+
+char *
+fmt_mem(int64_t num)
+{
+	static char	buf[16];
+
+	if (fmt_scaled(num, buf) == -1)
+		snprintf(buf, sizeof(buf), "%lldB", num);
+
+	return (buf);
+}
+
+int
+show_rib_memory_msg(struct imsg *imsg)
+{
+	struct rde_memstats	stats;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_RIB_MEM:
+		memcpy(&stats, imsg->data, sizeof(stats));
+		printf("RDE memory statistics\n");
+		printf("%10lld IPv4 network entries using %s of memory\n",
+		    stats.pt4_cnt, fmt_mem(stats.pt4_cnt *
+		    sizeof(struct pt_entry4)));
+		if (stats.pt6_cnt != 0)
+			printf("%10lld IPv6 network entries using "
+			    "%s of memory\n", stats.pt6_cnt,
+			    fmt_mem(stats.pt6_cnt * sizeof(struct pt_entry6)));
+		printf("%10lld prefix entries using %s of memory\n",
+		    stats.prefix_cnt, fmt_mem(stats.prefix_cnt *
+		    sizeof(struct prefix)));
+		printf("%10lld BGP path attribute entries using %s of memory\n",
+		    stats.path_cnt, fmt_mem(stats.path_cnt *
+		    sizeof(struct rde_aspath)));
+		printf("%10lld BGP AS-PATH attribute entries using "
+		    "%s of memory,\n\t   and holding %lld references\n",
+		    stats.aspath_cnt, fmt_mem(stats.aspath_size),
+		    stats.aspath_refs);
+		printf("%10lld BGP attributes entries using %s of memory\n",
+		    stats.attr_cnt, fmt_mem(stats.attr_cnt *
+		    sizeof(struct attr)));
+		printf("%10lld BGP attributes using %s of memory\n",
+		    stats.attr_cnt, fmt_mem(stats.attr_data));
+		printf("RIB using %s of memory\n", fmt_mem(
+		    stats.pt4_cnt * sizeof(struct pt_entry4) +
+		    stats.pt6_cnt * sizeof(struct pt_entry6) +
+		    stats.prefix_cnt * sizeof(struct prefix) +
+		    stats.path_cnt * sizeof(struct rde_aspath) +
+		    stats.aspath_size + stats.attr_cnt * sizeof(struct attr) +
+		    stats.attr_data));
+		break;
+	default:
+		break;
+	}
+
+	return (1);
 }
 
 void
