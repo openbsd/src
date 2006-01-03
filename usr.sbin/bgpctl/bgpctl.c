@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.93 2005/11/17 11:14:51 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.94 2006/01/03 22:05:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -132,7 +132,7 @@ main(int argc, char *argv[])
 		err(1, "connect: %s", sockname);
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
-		fatal(NULL);
+		err(1, NULL);
 	imsg_init(ibuf, fd);
 	done = 0;
 
@@ -335,7 +335,7 @@ fmt_peer(const struct peer_config *peer, int nodescr)
 
 	if (peer->descr[0] && !nodescr) {
 		if ((p = strdup(peer->descr)) == NULL)
-			fatal(NULL);
+			err(1, NULL);
 		return (p);
 	}
 
@@ -343,10 +343,10 @@ fmt_peer(const struct peer_config *peer, int nodescr)
 	if ((peer->remote_addr.af == AF_INET && peer->remote_masklen != 32) ||
 	    (peer->remote_addr.af == AF_INET6 && peer->remote_masklen != 128)) {
 		if (asprintf(&p, "%s/%u", ip, peer->remote_masklen) == -1)
-			fatal(NULL);
+			err(1, NULL);
 	} else {
 		if ((p = strdup(ip)) == NULL)
-			fatal(NULL);
+			err(1, NULL);
 	}
 
 	return (p);

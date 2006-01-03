@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.24 2005/12/30 23:13:44 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.25 2006/01/03 22:05:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -548,7 +548,7 @@ parse_prefix(const char *word, struct bgpd_addr *addr, u_int8_t *prefixlen)
 			errx(1, "invalid netmask: %s", errstr);
 
 		if ((ps = malloc(strlen(word) - strlen(p) + 1)) == NULL)
-			fatal("host: malloc");
+			err(1, "host: malloc");
 		strlcpy(ps, word, strlen(word) - strlen(p) + 1);
 
 		if (parse_addr(ps, addr) == 0)
