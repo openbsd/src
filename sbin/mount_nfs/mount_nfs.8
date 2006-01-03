@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_nfs.8,v 1.35 2005/06/29 20:48:05 jaredy Exp $
+.\"	$OpenBSD: mount_nfs.8,v 1.36 2006/01/03 19:01:18 jmc Exp $
 .\"	$NetBSD: mount_nfs.8,v 1.3 1996/02/18 11:59:10 fvdl Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
@@ -193,9 +193,7 @@ round trip timeout intervals have been reached (see
 .Fl x ) .
 .It Fl T
 Use TCP instead of UDP.
-This is recommended for servers that are not on the same LAN cable as
-the client.
-(NB: This is NOT supported by most non-BSD servers.)
+Note that TCP may not be supported by some very old NFS servers.
 .It Fl t Ar timeout
 Set the initial retransmit timeout to the specified value.
 May be useful for fine tuning UDP mounts over internetworks
@@ -267,9 +265,3 @@ a reserved port is always used.
 Due to the way that Sun RPC is implemented on top of UDP (unreliable datagram),
 tuning such mounts is really a black art that can only be expected
 to have limited success.
-For clients mounting servers that are not on the same
-LAN cable or that tend to be overloaded,
-TCP is strongly recommended,
-but unfortunately this is restricted to mostly
-.Bx 4.4
-servers.
