@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.94 2006/01/03 22:05:13 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.95 2006/01/03 22:20:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -72,6 +72,9 @@ int		 show_rib_summary_msg(struct imsg *);
 void		 send_filterset(struct imsgbuf *, struct filter_set_head *);
 static const char	*get_errstr(u_int8_t, u_int8_t);
 int		 show_result(struct imsg *);
+void		 log_warnx(const char *, ...);
+void		 log_warn(const char *, ...);
+void		 fatal(const char *);
 
 struct imsgbuf	*ibuf;
 
@@ -1048,4 +1051,31 @@ show_result(struct imsg *imsg)
 	}
 
 	return (1);
+}
+
+/* following functions are necessary for imsg framework */
+void
+log_warnx(const char *emsg, ...)
+{
+	va_list	 ap;
+
+	va_start(ap, emsg);
+	vwarnx(emsg, ap);
+	va_end(ap);
+}
+
+void
+log_warn(const char *emsg, ...)
+{
+	va_list	 ap;
+
+	va_start(ap, emsg);
+	vwarn(emsg, ap);
+	va_end(ap);
+}
+
+void
+fatal(const char *emsg)
+{
+	err(1, emsg);
 }

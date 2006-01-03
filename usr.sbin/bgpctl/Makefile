@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.3 2004/02/26 16:19:58 claudio Exp $
+#	$OpenBSD: Makefile,v 1.4 2006/01/03 22:20:59 claudio Exp $
 
 .PATH:		${.CURDIR}/../bgpd
 
 PROG=	bgpctl
-SRCS=	bgpctl.c parser.c buffer.c imsg.c log.c rde_attr.c
+SRCS=	bgpctl.c parser.c buffer.c imsg.c util.c
 CFLAGS+= -Wall
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
 CLFAGS+= -Wmissing-declarations -Wredundant-decls
