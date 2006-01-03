@@ -1,4 +1,5 @@
-/*	$OpenBSD: softdep.h,v 1.10 2005/09/26 21:11:09 pedro Exp $	*/
+/*	$OpenBSD: softdep.h,v 1.11 2006/01/03 23:34:39 pedro Exp $	*/
+
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -88,7 +89,7 @@
  * space count. The NEWBLOCK flag marks pagedep structures that have
  * just been allocated, so must be claimed by the inode before all
  * dependencies are complete. The ONWORKLIST flag shows whether the
- * structure is currently linked onto a worklist
+ * structure is currently linked onto a worklist.
  * 
  */
 #define	ATTACHED	0x0001
@@ -103,6 +104,7 @@
 #define	IOSTARTED	0x0200	/* inodedep & pagedep only */
 #define	SPACECOUNTED	0x0400	/* inodedep only */
 #define	NEWBLOCK	0x0800	/* pagedep only */
+#define	UFS1FMT		0x2000	/* indirdep only */
 #define	ONWORKLIST	0x8000
 
 #define	ALLCOMPLETE	(ATTACHED | COMPLETE | DEPCOMPLETE)
@@ -246,7 +248,10 @@ struct inodedep {
 	struct	fs *id_fs;		/* associated filesystem */
 	ino_t	id_ino;			/* dependent inode */
 	nlink_t	id_nlinkdelta;		/* saved effective link count */
-	struct	ufs1_dinode *id_savedino;	/* saved dinode contents */
+	union { /* Saved UFS1/UFS2 dinode contents */
+		struct ufs1_dinode *idu_savedino1;
+		struct ufs2_dinode *idu_savedino2;
+	} id_un;
 	LIST_ENTRY(inodedep) id_deps;	/* bmsafemap's list of inodedep's */
 	struct	buf *id_buf;		/* related bmsafemap (if pending) */
 	off_t	id_savedsize;		/* file size saved during rollback */
@@ -256,6 +261,9 @@ struct inodedep {
 	struct	allocdirectlst id_inoupdt; /* updates before inode written */
 	struct	allocdirectlst id_newinoupdt; /* updates when inode written */
 };
+
+#define	id_savedino1	id_un.idu_savedino1
+#define	id_savedino2	id_un.idu_savedino2
 
 /*
  * A "newblk" structure is attached to a bmsafemap structure when a block
