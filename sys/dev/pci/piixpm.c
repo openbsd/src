@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.9 2006/01/01 20:52:27 deraadt Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.10 2006/01/03 22:39:03 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -123,10 +123,10 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_HOSTC);
 	DPRINTF((": conf 0x%x", conf));
 
-	if ((conf & PIIX_SMB_HOSTC_SMI) == PIIX_SMB_HOSTC_SMI) {
+	if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_SMI) {
 		printf(": SMI");
 		sc->sc_poll = 1;
-	} else if ((conf & PIIX_SMB_HOSTC_IRQ) == PIIX_SMB_HOSTC_IRQ) {
+	} else if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_IRQ) {
 		/* Install interrupt handler */
 		if (pci_intr_map(pa, &ih)) {
 			printf(": can't map interrupt\n");
@@ -199,8 +199,8 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 {
 	struct piixpm_softc *sc = cookie;
 	u_int8_t *b;
-	u_int8_t ctl, st;
-	int retries;
+	u_int8_t ctl, st, sctl;
+	int retries, error = 0;
 
 	DPRINTF(("%s: exec op %d, addr 0x%x, cmdlen %d, len %d, "
 	    "flags 0x%x, status 0x%b\n", sc->sc_dev.dv_xname, op, addr,
@@ -219,6 +219,11 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	sc->sc_i2c_xfer.len = len;
 	sc->sc_i2c_xfer.flags = flags;
 	sc->sc_i2c_xfer.error = 0;
+
+	/* Make sure SMBALERT# assertion disabled */
+	sctl = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_SC);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_SC,
+	    sctl & ~PIIX_SMB_SC_ALERTEN);
 
 	/* Set slave address and transfer direction */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_TXSLVA,
@@ -269,16 +274,20 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		if (st & PIIX_SMB_HS_BUSY) {
 			printf("%s: timeout, status 0x%b\n",
 			    sc->sc_dev.dv_xname, st, PIIX_SMB_HS_BITS);
-			return (1);
+			error = 1;
+		} else {
+			piixpm_intr(sc);
 		}
-		piixpm_intr(sc);
 	} else {
 		/* Wait for interrupt */
 		if (tsleep(sc, PRIBIO, "iicexec", PIIXPM_TIMEOUT * hz))
-			return (1);
+			error = 1;
 	}	
 
-	if (sc->sc_i2c_xfer.error)
+	/* Restore SMBALERT# assertion */
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_SC, sctl);
+
+	if (error || sc->sc_i2c_xfer.error)
 		return (1);
 
 	return (0);

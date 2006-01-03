@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixreg.h,v 1.2 2005/12/28 20:10:44 grange Exp $	*/
+/*	$OpenBSD: piixreg.h,v 1.3 2006/01/03 22:39:03 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -33,6 +33,7 @@
 #define PIIX_SMB_HOSTC_HSTEN	(1 << 16)	/* enable host controller */
 #define PIIX_SMB_HOSTC_SMI	(0 << 17)	/* SMI */
 #define PIIX_SMB_HOSTC_IRQ	(4 << 17)	/* IRQ */
+#define PIIX_SMB_HOSTC_INTMASK	(7 << 17)
 
 /* SMBus I/O registers */
 #define PIIX_SMB_HS	0x00		/* host status */
@@ -58,6 +59,8 @@
 #define PIIX_SMB_HD0	0x05		/* host data 0 */
 #define PIIX_SMB_HD1	0x06		/* host data 1 */
 #define PIIX_SMB_HBDB	0x07		/* host block data byte */
+#define PIIX_SMB_SC	0x08		/* slave control */
+#define PIIX_SMB_SC_ALERTEN	(1 << 3)	/* enable SMBALERT# */
 
 #define PIIX_SMB_SIZE	0x10		/* SMBus I/O space size */
 
