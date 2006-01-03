@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.127 2005/12/24 14:11:13 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.128 2006/01/03 13:13:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -112,7 +112,7 @@ main(int argc, char *argv[])
 	pid_t			 io_pid = 0, rde_pid = 0, pid;
 	char			*conffile;
 	int			 debug = 0;
-	int			 ch, timeout;
+	int			 ch, timeout, nfds;
 	int			 pipe_m2s[2];
 	int			 pipe_m2r[2];
 	int			 pipe_s2r[2];
@@ -268,12 +268,38 @@ main(int argc, char *argv[])
 		if (timeout > MAX_TIMEOUT)
 			timeout = MAX_TIMEOUT;
 
-		if (poll(pfd, POLL_MAX, timeout * 1000) == -1)
+		if ((nfds = poll(pfd, POLL_MAX, timeout * 1000)) == -1)
 			if (errno != EINTR) {
 				log_warn("poll error");
 				quit = 1;
 			}
 
+		if (reconfig) {
+			reconfig = 0;
+			log_info("rereading config");
+			reconfigure(conffile, &conf, &mrt_l, &peer_l, rules_l);
+		}
+
+		if (sigchld) {
+			sigchld = 0;
+			if (check_child(io_pid, "session engine")) {
+				quit = 1;
+				io_pid = 0;
+			}
+			if (check_child(rde_pid, "route decision engine")) {
+				quit = 1;
+				rde_pid = 0;
+			}
+		}
+
+		if (mrtdump == 1) {
+			mrtdump = 0;
+			mrt_handler(&mrt_l);
+		}
+
+		if (nfds == -1 || nfds == 0)
+			continue;
+	
 		if (pfd[PFD_PIPE_SESSION].revents & POLLOUT)
 			if (msgbuf_write(&ibuf_se->w) < 0) {
 				log_warn("pipe write error (to SE)");
@@ -299,29 +325,6 @@ main(int argc, char *argv[])
 		if (pfd[PFD_SOCK_ROUTE].revents & POLLIN) {
 			if (kr_dispatch_msg() == -1)
 				quit = 1;
-		}
-
-		if (reconfig) {
-			reconfig = 0;
-			log_info("rereading config");
-			reconfigure(conffile, &conf, &mrt_l, &peer_l, rules_l);
-		}
-
-		if (sigchld) {
-			sigchld = 0;
-			if (check_child(io_pid, "session engine")) {
-				quit = 1;
-				io_pid = 0;
-			}
-			if (check_child(rde_pid, "route decision engine")) {
-				quit = 1;
-				rde_pid = 0;
-			}
-		}
-
-		if (mrtdump == 1) {
-			mrtdump = 0;
-			mrt_handler(&mrt_l);
 		}
 	}
 
