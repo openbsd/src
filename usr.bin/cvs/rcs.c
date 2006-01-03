@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.123 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.124 2006/01/03 11:06:55 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -261,10 +261,10 @@ static int	rcs_write(RCSFILE *);
 static int	rcs_parse_init(RCSFILE *);
 static int	rcs_parse_admin(RCSFILE *);
 static int	rcs_parse_delta(RCSFILE *);
-static int      rcs_parse_deltas(RCSFILE *, RCSNUM *);
+static int	rcs_parse_deltas(RCSFILE *, RCSNUM *);
 static int	rcs_parse_deltatext(RCSFILE *);
-static int      rcs_parse_deltatexts(RCSFILE *, RCSNUM *);
-static int      rcs_parse_desc(RCSFILE *, RCSNUM *);
+static int	rcs_parse_deltatexts(RCSFILE *, RCSNUM *);
+static int	rcs_parse_desc(RCSFILE *, RCSNUM *);
 
 static int	rcs_parse_access(RCSFILE *);
 static int	rcs_parse_symbols(RCSFILE *);
