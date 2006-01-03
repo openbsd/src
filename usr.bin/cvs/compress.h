@@ -1,4 +1,4 @@
-/*	$OpenBSD: zlib.h,v 1.2 2005/07/25 11:32:20 xsa Exp $	*/
+/*	$OpenBSD: compress.h,v 1.1 2006/01/03 17:04:53 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -24,12 +24,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CVSZLIB_H
-#define CVSZLIB_H
-
-#include <sys/param.h>
-
-#include <zlib.h>
+#ifndef COMPRESS_H
+#define COMPRESS_H
 
 #include "buf.h"
 
@@ -41,4 +37,4 @@ void	 cvs_zlib_free(CVSZCTX *);
 int	 cvs_zlib_deflate(CVSZCTX *, BUF *, u_char *, size_t);
 int	 cvs_zlib_inflate(CVSZCTX *, BUF *, u_char *, size_t);
 
-#endif	/* CVSZLIB_H */
+#endif	/* COMPRESS_H */

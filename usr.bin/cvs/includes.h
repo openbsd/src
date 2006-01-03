@@ -1,4 +1,4 @@
-/*	$OpenBSD: includes.h,v 1.2 2006/01/02 17:06:10 xsa Exp $	*/
+/*	$OpenBSD: includes.h,v 1.3 2006/01/03 17:04:53 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -55,5 +55,6 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
+#include <zlib.h>
 
 #endif	/* INCLUDES_H */
