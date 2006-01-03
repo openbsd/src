@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdrop.8,v 1.5 2004/05/24 13:57:31 jmc Exp $
+.\"	$OpenBSD: tcpdrop.8,v 1.6 2006/01/03 14:52:17 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
 .\"
@@ -44,7 +44,7 @@ If a connection to
 is causing congestion on a network link, one can drop the TCP session
 in charge:
 .Bd -literal -offset indent
-# fstat | egrep 'httpd.*internet.*\*(Lt--'
+$ fstat | grep 'httpd.*internet.*\*(Lt--'
 www      httpd      21307    3* internet stream tcp \e
 	0xd1007ca8 192.168.5.41:80 \*(Lt-- 192.168.5.1:26747
 .Ed
