@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.52 2005/12/30 16:40:15 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.53 2006/01/03 22:19:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -142,7 +142,6 @@ attr_optfree(struct rde_aspath *asp)
 
 /* aspath specific functions */
 
-u_int16_t	 aspath_extract(const void *, int);
 struct aspath	*aspath_lookup(const void *, u_int16_t);
 
 struct aspath_table {
@@ -351,24 +350,6 @@ aspath_compare(struct aspath *a1, struct aspath *a2)
 	return (0);
 }
 
-/*
- * Extract the asnum out of the as segment at the specified position.
- * Direct access is not possible because of non-aligned reads.
- * ATTENTION: no bounds check are done.
- */
-u_int16_t
-aspath_extract(const void *seg, int pos)
-{
-	const u_char	*ptr = seg;
-	u_int16_t	 as = 0;
-
-	ptr += 2 + 2 * pos;
-	as = *ptr++;
-	as <<= 8;
-	as |= *ptr;
-	return (as);
-}
-
 struct aspath *
 aspath_lookup(const void *data, u_int16_t len)
 {
@@ -455,133 +436,6 @@ aspath_prepend(struct aspath *asp, u_int16_t as, int quantum)
 	free(p);
 
 	return (asp);
-}
-
-int
-aspath_snprint(char *buf, size_t size, void *data, u_int16_t len)
-{
-#define UPDATE()				\
-	do {					\
-		if (r == -1)			\
-			return (-1);		\
-		total_size += r;		\
-		if ((unsigned int)r < size) {	\
-			size -= r;		\
-			buf += r;		\
-		} else {			\
-			buf += size;		\
-			size = 0;		\
-		}				\
-	} while (0)
-	u_int8_t	*seg;
-	int		 r, total_size;
-	u_int16_t	 seg_size;
-	u_int8_t	 i, seg_type, seg_len;
-
-	total_size = 0;
-	seg = data;
-	for (; len > 0; len -= seg_size, seg += seg_size) {
-		seg_type = seg[0];
-		seg_len = seg[1];
-		seg_size = 2 + 2 * seg_len;
-
-		if (seg_type == AS_SET) {
-			if (total_size != 0)
-				r = snprintf(buf, size, " { ");
-			else
-				r = snprintf(buf, size, "{ ");
-			UPDATE();
-		} else if (total_size != 0) {
-			r = snprintf(buf, size, " ");
-			UPDATE();
-		}
-
-		for (i = 0; i < seg_len; i++) {
-			r = snprintf(buf, size, "%hu", aspath_extract(seg, i));
-			UPDATE();
-			if (i + 1 < seg_len) {
-				r = snprintf(buf, size, " ");
-				UPDATE();
-			}
-		}
-		if (seg_type == AS_SET) {
-			r = snprintf(buf, size, " }");
-			UPDATE();
-		}
-	}
-	/* ensure that we have a valid C-string especially for emtpy as path */
-	if (size > 0)
-		*buf = '\0';
-
-	return (total_size);
-#undef UPDATE
-}
-
-int
-aspath_asprint(char **ret, void *data, u_int16_t len)
-{
-	size_t	slen;
-	int	plen;
-
-	slen = aspath_strlen(data, len) + 1;
-	*ret = malloc(slen);
-	if (*ret == NULL)
-		return (-1);
-
-	plen = aspath_snprint(*ret, slen, data, len);
-	if (plen == -1) {
-		free(*ret);
-		*ret = NULL;
-		return (-1);
-	}
-
-	return (0);
-}
-
-size_t
-aspath_strlen(void *data, u_int16_t len)
-{
-	u_int8_t	*seg;
-	int		 total_size;
-	u_int16_t	 as, seg_size;
-	u_int8_t	 i, seg_type, seg_len;
-
-	total_size = 0;
-	seg = data;
-	for (; len > 0; len -= seg_size, seg += seg_size) {
-		seg_type = seg[0];
-		seg_len = seg[1];
-		seg_size = 2 + 2 * seg_len;
-
-		if (seg_type == AS_SET)
-			if (total_size != 0)
-				total_size += 3;
-			else
-				total_size += 2;
-		else if (total_size != 0)
-			total_size += 1;
-
-		for (i = 0; i < seg_len; i++) {
-			as = aspath_extract(seg, i);
-			if (as >= 10000)
-				total_size += 5;
-			else if (as >= 1000)
-				total_size += 4;
-			else if (as >= 100)
-				total_size += 3;
-			else if (as >= 10)
-				total_size += 2;
-			else
-				total_size += 1;
-
-			if (i + 1 < seg_len)
-				total_size += 1;
-		}
-
-		if (seg_type == AS_SET)
-			total_size += 2;
-	}
-	return (total_size);
 }
 
 /* we need to be able to search more than one as */

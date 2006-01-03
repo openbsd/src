@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.181 2005/11/02 15:34:43 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.182 2006/01/03 22:19:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -672,8 +672,6 @@ void		 log_debug(const char *, ...);
 void		 fatal(const char *);
 void		 fatalx(const char *);
 void		 fatal_ensure(const char *, int, const char *);
-const char	*log_addr(const struct bgpd_addr *);
-const char	*log_in6addr(const struct in6_addr *);
 
 /* parse.y */
 int	 cmdline_symset(char *);
@@ -743,5 +741,12 @@ void		 pftable_ref(u_int16_t);
 void		 filterset_free(struct filter_set_head *);
 int		 filterset_cmp(struct filter_set *, struct filter_set *);
 
+/* util.c */
+const char	*log_addr(const struct bgpd_addr *);
+const char	*log_in6addr(const struct in6_addr *);
+const char *	 log_sockaddr(struct sockaddr *);
+int		 aspath_snprint(char *, size_t, void *, u_int16_t);
+int		 aspath_asprint(char **, void *, u_int16_t);
+size_t		 aspath_strlen(void *, u_int16_t);
 
 #endif /* __BGPD_H__ */
