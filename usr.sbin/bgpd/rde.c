@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.186 2006/01/03 13:09:18 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.187 2006/01/03 15:48:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -958,13 +958,6 @@ rde_update_dispatch(struct imsg *imsg)
 #define CHECK_FLAGS(s, t, m)	\
 	(((s) & ~(ATTR_EXTLEN | (m))) == (t))
 
-#define WFLAG(s, t)			\
-	do {				\
-		if ((s) & (t))		\
-			goto bad_list;	\
-		(s) |= (t);		\
-	} while (0)
-
 int
 rde_attr_parse(u_char *p, u_int16_t len, struct rde_peer *peer,
     struct rde_aspath *a, struct mpattr *mpa)
@@ -1024,7 +1017,9 @@ bad_flags:
 			    op, attr_len);
 			return (-1);
 		}
-		WFLAG(a->flags, F_ATTR_ORIGIN);
+		if (a->flags & F_ATTR_ORIGIN)
+			goto bad_list;
+		a->flags |= F_ATTR_ORIGIN;
 		break;
 	case ATTR_ASPATH:
 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
@@ -1034,7 +1029,9 @@ bad_flags:
 			    NULL, 0);
 			return (-1);
 		}
-		WFLAG(a->flags, F_ATTR_ASPATH);
+		if (a->flags & F_ATTR_ASPATH)
+			goto bad_list;
+		a->flags |= F_ATTR_ASPATH;
 		a->aspath = aspath_get(p, attr_len);
 		plen += attr_len;
 		break;
@@ -1043,7 +1040,9 @@ bad_flags:
 			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
 			goto bad_flags;
-		WFLAG(a->flags, F_ATTR_NEXTHOP);
+		if (a->flags & F_ATTR_NEXTHOP)
+			goto bad_list;
+		a->flags |= F_ATTR_NEXTHOP;
 
 		bzero(&nexthop, sizeof(nexthop));
 		nexthop.af = AF_INET;
@@ -1065,7 +1064,10 @@ bad_flags:
 			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
 			goto bad_flags;
-		WFLAG(a->flags, F_ATTR_MED);
+		if (a->flags & F_ATTR_MED)
+			goto bad_list;
+		a->flags |= F_ATTR_MED;
+
 		UPD_READ(&tmp32, p, plen, 4);
 		a->med = ntohl(tmp32);
 		break;
@@ -1079,7 +1081,10 @@ bad_flags:
 			plen += 4;
 			break;
 		}
-		WFLAG(a->flags, F_ATTR_LOCALPREF);
+		if (a->flags & F_ATTR_LOCALPREF)
+			goto bad_list;
+		a->flags |= F_ATTR_LOCALPREF;
+
 		UPD_READ(&tmp32, p, plen, 4);
 		a->lpref = ntohl(tmp32);
 		break;
@@ -1119,8 +1124,10 @@ bad_flags:
 			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
 			goto bad_flags;
-		/* the actually validity is checked in rde_update_dispatch() */
-		WFLAG(a->flags, F_ATTR_MP_REACH);
+		/* the validity is checked in rde_update_dispatch() */
+		if (a->flags & F_ATTR_MP_REACH)
+			goto bad_list;
+		a->flags |= F_ATTR_MP_REACH;
 
 		mpa->reach = p;
 		mpa->reach_len = attr_len;
@@ -1131,8 +1138,10 @@ bad_flags:
 			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
 			goto bad_flags;
-		/* the actually validity is checked in rde_update_dispatch() */
-		WFLAG(a->flags, F_ATTR_MP_UNREACH);
+		/* the validity is checked in rde_update_dispatch() */
+		if (a->flags & F_ATTR_MP_UNREACH)
+			goto bad_list;
+		a->flags |= F_ATTR_MP_UNREACH;
 
 		mpa->unreach = p;
 		mpa->unreach_len = attr_len;
@@ -1159,7 +1168,7 @@ bad_list:
 	return (plen);
 }
 #undef UPD_READ
-#undef WFLAG
+#undef CHECK_FLAGS
 
 u_int8_t
 rde_attr_missing(struct rde_aspath *a, int ebgp, u_int16_t nlrilen)
