@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.16 2006/01/04 20:18:37 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.17 2006/01/04 20:20:16 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -380,7 +380,8 @@ mace_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 			printf("bus_space_map: can't free region\n");
 		}
 	}
-	return 0;
+
+	return (error);
 }
 
 void

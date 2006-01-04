@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.7 2005/01/31 21:35:50 grange Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.8 2006/01/04 20:20:18 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB (www.opsycon.se)
@@ -524,7 +524,8 @@ mace_pcib_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 			printf("bus_space_map: can't free region\n");
 		}
 	}
-	return 0;
+
+	return (error);
 }
 
 void
