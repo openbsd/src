@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.25 2005/12/16 03:16:47 marco Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.26 2006/01/04 23:51:16 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -319,7 +319,7 @@ bmc_io_wait_cold(struct ipmi_softc *sc, int offset, u_int8_t mask,
     u_int8_t value, const char *lbl)
 {
 	volatile u_int8_t	v;
-	int			count = 1000;
+	int			count = 100000;
 
 	while (count--) {
 		v = bmc_read(sc, offset);
@@ -1740,7 +1740,7 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	/* setup ticker */
 	sc->sc_retries = 0;
 	sc->sc_wakeup = 0;
-	sc->sc_max_retries = 1000; /* XXX 50ms the right value? */
+	sc->sc_max_retries = 100000; /* XXX 5s the right value? */
 	timeout_set(&sc->sc_timeout, _bmc_io_wait, sc);
 }
 
