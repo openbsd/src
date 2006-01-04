@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.26 2006/01/04 20:49:32 miod Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.27 2006/01/04 22:22:09 brad Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -2034,6 +2034,7 @@ again:
 			printf("%s: DMA error; resetting\n",
 				sc->sc_dev.dv_xname);
 			ncr53c9x_init(sc, 1);
+			return (1);
 		}
 		/* If DMA active here, then go back to work... */
 		if (NCRDMA_ISACTIVE(sc))
