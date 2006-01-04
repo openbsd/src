@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.26 2006/01/01 19:32:30 marc Exp $ */
+/*	$OpenBSD: rthread.c,v 1.27 2006/01/04 08:48:01 marc Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -161,12 +161,18 @@ pthread_exit(void *retval)
 int
 pthread_join(pthread_t thread, void **retval)
 {
+	int e;
 
-	_sem_wait(&thread->donesem, 0, 0);
-	if (retval)
-		*retval = thread->retval;
+	if (thread->flags & THREAD_DETACHED)
+		e = EINVAL;
+	else {
+		_sem_wait(&thread->donesem, 0, 0);
+		if (retval)
+			*retval = thread->retval;
+		e = 0;
+	}
 
-	return (0);
+	return (e);
 }
 
 int
@@ -209,6 +215,8 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 		thread->attr.guard_size = sysconf(_SC_PAGESIZE);
 		thread->attr.stack_size -= thread->attr.guard_size;
 	}
+	if (thread->attr.detach_state == PTHREAD_CREATE_DETACHED)
+		thread->flags |= THREAD_DETACHED;
 
 	_spinlock(&_thread_lock);
 

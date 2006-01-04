@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_attr.c,v 1.5 2006/01/01 19:32:30 marc Exp $ */
+/*	$OpenBSD: rthread_attr.c,v 1.6 2006/01/04 08:48:02 marc Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -59,6 +59,7 @@ pthread_attr_init(pthread_attr_t *attrp)
 	attr->stack_size = RTHREAD_STACK_SIZE_DEF;
 	attr->guard_size = sysconf(_SC_PAGESIZE);
 	attr->stack_size -= attr->guard_size;
+	attr->detach_state = PTHREAD_CREATE_JOINABLE;
 	*attrp = attr;
 
 	return (0);
@@ -104,10 +105,14 @@ pthread_attr_getdetachstate(const pthread_attr_t *attrp, int *detachstate)
 int
 pthread_attr_setdetachstate(pthread_attr_t *attrp, int detachstate)
 {
-	/* XXX detachstate should be validated here */
-	(*attrp)->detach_state = detachstate;
+	int retval;
 
-	return (0);
+	retval = (detachstate == PTHREAD_CREATE_DETACHED ||
+		  detachstate == PTHREAD_CREATE_JOINABLE) ? 0 : EINVAL;
+	if (retval == 0)
+		(*attrp)->detach_state = detachstate;
+
+	return (retval);
 }
 
 int
