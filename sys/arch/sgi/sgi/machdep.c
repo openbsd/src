@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.26 2005/12/19 21:37:49 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.27 2006/01/04 20:17:12 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -306,13 +306,15 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 	uvmexp.pagesize = PAGE_SIZE;
 	uvm_setpagesize();
 
-	for(i = 0; i < MAXMEMSEGS && mem_layout[i].mem_first_page != 0; i++) {
+	for (i = 0; i < MAXMEMSEGS && mem_layout[i].mem_first_page != 0; i++) {
 		u_int32_t fp, lp;
-		u_int32_t firstkernpage = atop(KSEG0_TO_PHYS(start));
-		u_int32_t lastkernpage = atop(KSEG0_TO_PHYS(ekern));
+		u_int32_t firstkernpage =
+		    atop(trunc_page(KSEG0_TO_PHYS(start)));
+		u_int32_t lastkernpage =
+		    atop(round_page(KSEG0_TO_PHYS(ekern)));
 
 		fp = mem_layout[i].mem_first_page;
-		lp = mem_layout[i].mem_last_page - 1;
+		lp = mem_layout[i].mem_last_page;
 
 		/* Account for kernel and kernel symbol table */
 		if (fp >= firstkernpage && lp < lastkernpage)
@@ -324,13 +326,13 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 		}
 
 		if (fp >= firstkernpage)
-			fp = lastkernpage + 1;
+			fp = lastkernpage;
 		else if (lp < lastkernpage)
-			lp = firstkernpage - 1;
+			lp = firstkernpage;
 		else { /* Need to split! */
-			u_int32_t xp = firstkernpage - 1;
+			u_int32_t xp = firstkernpage;
 			uvm_page_physload(fp, xp, fp, xp, VM_FREELIST_DEFAULT);
-			fp = lastkernpage + 1;
+			fp = lastkernpage;
 		}
 		if (lp >= fp)
 			uvm_page_physload(fp, lp, fp, lp, VM_FREELIST_DEFAULT);
