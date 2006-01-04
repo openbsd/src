@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.54 2006/01/03 22:49:17 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.55 2006/01/04 12:45:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -84,6 +84,7 @@ attr_optadd(struct rde_aspath *asp, u_int8_t flags, u_int8_t type,
 		if (a->data == NULL)
 			fatal("attr_optadd");
 
+		rdemem.attr_dcnt++;
 		rdemem.attr_data += len;
 		memcpy(a->data, data, len);
 	} else
@@ -93,6 +94,8 @@ attr_optadd(struct rde_aspath *asp, u_int8_t flags, u_int8_t type,
 	TAILQ_FOREACH_REVERSE(p, &asp->others, attr_list, entry) {
 		if (type == p->type) {
 			/* attribute allowed only once */
+			if (len != 0)
+				rdemem.attr_dcnt--;
 			rdemem.attr_data -= len;
 			rdemem.attr_cnt--;
 			free(a->data);
@@ -139,6 +142,8 @@ attr_optfree(struct rde_aspath *asp)
 
 	while ((a = TAILQ_FIRST(&asp->others)) != NULL) {
 		TAILQ_REMOVE(&asp->others, a, entry);
+		if (a->len != 0)
+			rdemem.attr_dcnt--;
 		rdemem.attr_data -= a->len;
 		rdemem.attr_cnt--;
 		free(a->data);

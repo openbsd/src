@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.183 2006/01/03 22:49:17 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.184 2006/01/04 12:45:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -641,6 +641,7 @@ struct rde_memstats {
 	int64_t		aspath_refs;
 	int64_t		attr_cnt;
 	int64_t		attr_data;
+	int64_t		attr_dcnt;
 };
 
 /* Address Family Numbers as per rfc1700 */
