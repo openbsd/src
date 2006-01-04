@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.75 2006/01/02 18:15:55 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.76 2006/01/04 15:41:29 martin Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -320,14 +320,33 @@ cpu_dumpconf()
 }
 
 int
-cpu_sysctl(a, b, c, d, e, f, g)
-	int	*a;
-	u_int	b;
-	void	*c, *e;
-	size_t	*d, f;
-	struct	proc *g;
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
 {
-	return (EOPNOTSUPP);
+	dev_t consdev;
+
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case CPU_CONSDEV:
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
+		else
+			consdev = NODEV;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+		    sizeof consdev));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
 }
 
 void
