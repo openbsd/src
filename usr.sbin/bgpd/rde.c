@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.188 2006/01/03 22:49:17 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.189 2006/01/04 12:53:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1614,6 +1614,10 @@ rde_send_pftable(u_int16_t id, struct bgpd_addr *addr,
 	if (id == 0)
 		return;
 
+	/* do not run while cleaning up */
+	if (rde_quit)
+		return;
+
 	bzero(&pfm, sizeof(pfm));
 	strlcpy(pfm.pftable, pftable_id2name(id), sizeof(pfm.pftable));
 	memcpy(&pfm.addr, addr, sizeof(pfm.addr));
@@ -1628,6 +1632,10 @@ rde_send_pftable(u_int16_t id, struct bgpd_addr *addr,
 void
 rde_send_pftable_commit(void)
 {
+	/* do not run while cleaning up */
+	if (rde_quit)
+		return;
+
 	if (imsg_compose(ibuf_main, IMSG_PFTABLE_COMMIT, 0, 0, -1, NULL, 0) ==
 	    -1)
 		fatal("imsg_compose error");
@@ -1845,6 +1853,10 @@ rde_local_as(void)
 int
 rde_noevaluate(void)
 {
+	/* do not run while cleaning up */
+	if (rde_quit)
+		return (1);
+
 	return (conf->flags & BGPD_FLAG_NO_EVALUATE);
 }
 
@@ -2226,28 +2238,12 @@ rde_shutdown(void)
 	 * rde_shutdown depends on this.
 	 */
 
-	/* First mark all peer as down */
-	for (i = 0; i <= peertable.peer_hashmask; i++)
-		LIST_FOREACH(p, &peertable.peer_hashtbl[i], peer_l) {
-			p->remote_bgpid = 0;
-			p->state = PEER_DOWN;
-			up_down(p);
-		}
 	/*
-	 * Now walk through the aspath list and remove everything.
-	 * path_remove will also remove the prefixes and the pt_entries.
+	 * All peers go down
 	 */
 	for (i = 0; i <= peertable.peer_hashmask; i++)
-		while ((p = LIST_FIRST(&peertable.peer_hashtbl[i])) != NULL) {
-			for (asp = LIST_FIRST(&p->path_h);
-			    asp != NULL; asp = nasp) {
-				nasp = LIST_NEXT(asp, peer_l);
-				path_remove(asp);
-			}
-			LIST_INIT(&p->path_h);
-			/* finally remove peer */
-			peer_remove(p);
-		}
+		while ((p = LIST_FIRST(&peertable.peer_hashtbl[i])) != NULL)
+			peer_down(p->conf.id);
 
 	/* free announced network prefixes */
 	peerself.remote_bgpid = 0;
