@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.72 2006/01/03 22:49:17 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.73 2006/01/04 16:13:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -86,25 +86,33 @@ path_update(struct rde_peer *peer, struct rde_aspath *nasp,
 	rde_send_pftable_commit();
 
 	if ((p = prefix_get(peer, prefix, prefixlen)) != NULL) {
-		if (path_compare(nasp, p->aspath) != 0) {
-			/* non equal path attributes create new path */
-			path_link(nasp, peer);
-			prefix_move(nasp, p);
-		} else {
+		if (path_compare(nasp, p->aspath) == 0) {
 			/* already registered */
 			path_put(nasp);
 			/* update last change */
 			p->lastchange = time(NULL);
+			return;
 		}
-	} else if ((asp = path_lookup(nasp, peer)) == NULL) {
-		/* path not available */
-		path_link(nasp, peer);
-		prefix_add(nasp, prefix, prefixlen);
-	} else {
-		/* path found, just add prefix */
-		prefix_add(asp, prefix, prefixlen);
-		path_put(nasp);
 	}
+
+	/*
+	 * Either the prefix does not exist or the path changed.
+	 * In both cases lookup the new aspath to make sure it is not
+	 * already in the RIB.
+	 */
+	if ((asp = path_lookup(nasp, peer)) == NULL) {
+		/* path not available, link new */
+		path_link(nasp, peer);
+		asp = nasp;
+	} else
+		/* path found, new aspath no longer needed */
+		path_put(nasp);
+
+	/* if the prefix was found move it else add it to the aspath */
+	if (p != NULL)
+		prefix_move(asp, p);
+	else
+		prefix_add(asp, prefix, prefixlen);
 }
 
 int
@@ -183,8 +191,7 @@ path_lookup(struct rde_aspath *aspath, struct rde_peer *peer)
 	head = PATH_HASH(aspath->aspath);
 
 	LIST_FOREACH(asp, head, path_l) {
-		if (path_compare(aspath, asp) == 0 &&
-		    peer == asp->peer)
+		if (peer == asp->peer && path_compare(aspath, asp) == 0)
 			return (asp);
 	}
 	return (NULL);
