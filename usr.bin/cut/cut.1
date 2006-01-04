@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cut.1,v 1.8 2003/06/03 02:56:07 millert Exp $
+.\"	$OpenBSD: cut.1,v 1.9 2006/01/04 15:50:58 jmc Exp $
 .\"	$NetBSD: cut.1,v 1.6 1995/10/02 20:19:26 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -112,6 +112,18 @@ Unless specified, lines with no delimiters are passed through unmodified.
 The
 .Nm
 utility exits 0 on success or 1 if an error occurred.
+.Sh EXAMPLES
+Extract login names and shells from the system
+.Xr passwd 5
+file as
+.Dq name:shell
+pairs:
+.Pp
+.Dl "$ cut -d : -f 1,7 /etc/passwd"
+.Pp
+Show the names and login times of logged in users:
+.Pp
+.Dl "$ who | cut -c 1-16,26-38"
 .Sh SEE ALSO
 .Xr paste 1
 .Sh STANDARDS
