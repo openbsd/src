@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.53 2005/12/23 08:10:12 jsg Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.54 2006/01/04 06:04:41 canacar Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -540,9 +540,6 @@ USB_DETACH(ural)
 	ural_free_rx_list(sc);
 	ural_free_tx_list(sc);
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.55 2005/11/23 21:29:05 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.56 2006/01/04 06:04:41 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -328,9 +328,6 @@ iwi_detach(struct device* self, int flags)
 
 	iwi_stop(ifp, 1);
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
 

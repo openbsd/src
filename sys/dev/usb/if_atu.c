@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.64 2005/08/01 05:36:47 brad Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.65 2006/01/04 06:04:41 canacar Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1494,9 +1494,6 @@ USB_DETACH(atu)
 
 	if (sc->sc_state != ATU_S_UNCONFIG) {
 		atu_stop(ifp, 1);
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
 		ieee80211_ifdetach(ifp);
 		if_detach(ifp);
 

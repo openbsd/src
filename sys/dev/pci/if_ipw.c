@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.52 2005/11/23 21:29:05 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.53 2006/01/04 06:04:41 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -301,9 +301,6 @@ ipw_detach(struct device* self, int flags)
 
 	ipw_stop(ifp, 1);
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
 

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.44 2005/12/10 15:43:11 krw Exp $  */
+/*      $OpenBSD: ath.c,v 1.45 2006/01/04 06:04:41 canacar Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -451,9 +451,6 @@ ath_detach(struct ath_softc *sc, int flags)
 
 	s = splnet();
 	ath_stop(ifp);
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
 	ath_desc_free(sc);
 	ath_hal_detach(sc->sc_ah);
 

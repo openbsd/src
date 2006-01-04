@@ -1,4 +1,4 @@
-/*	$OpenBSD: awi.c,v 1.19 2005/05/23 23:26:55 tedu Exp $	*/
+/*	$OpenBSD: awi.c,v 1.20 2006/01/04 06:04:41 canacar Exp $	*/
 /*	$NetBSD: awi.c,v 1.26 2000/07/21 04:48:55 onoe Exp $	*/
 
 /*-
@@ -389,9 +389,6 @@ awi_detach(sc)
 	}
 	if (sc->sc_wep_ctx != NULL)
 		free(sc->sc_wep_ctx, M_DEVBUF);
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
 #ifdef IFM_IEEE80211
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 #endif

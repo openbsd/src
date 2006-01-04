@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.146 2005/10/09 19:44:22 reyk Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.147 2006/01/04 06:04:41 canacar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -260,9 +260,6 @@ bridge_clone_destroy(struct ifnet *ifp)
 	LIST_REMOVE(sc, sc_list);
 	splx(s);
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif  
 	if_detach(ifp);
 
 	free(sc, M_DEVBUF);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_faith.c,v 1.19 2005/07/31 03:53:38 pascoe Exp $	*/
+/*	$OpenBSD: if_faith.c,v 1.20 2006/01/04 06:04:42 canacar Exp $	*/
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -121,9 +121,6 @@ int
 faith_clone_destroy(ifp)
 	struct ifnet *ifp;
 {
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif  
 	if_detach(ifp);
 
 	free(ifp, M_DEVBUF);

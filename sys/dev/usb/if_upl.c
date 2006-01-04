@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.20 2005/08/01 05:36:48 brad Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.21 2006/01/04 06:04:41 canacar Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -370,9 +370,6 @@ USB_DETACH(upl)
 
 #if NRND > 0
 	rnd_detach_source(&sc->sc_rnd_source);
-#endif
-#if NBPFILTER > 0
-	bpfdetach(ifp);
 #endif
 
 	if_detach(ifp);

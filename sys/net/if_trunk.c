@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.18 2005/12/21 18:44:21 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.19 2006/01/04 06:04:42 canacar Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -198,9 +198,6 @@ trunk_clone_destroy(struct ifnet *ifp)
 	}
 
 	ifmedia_delete_instance(&tr->tr_media, IFM_INST_ANY);
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 

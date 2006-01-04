@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.42 2004/06/21 23:50:36 tholo Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.43 2006/01/04 06:04:42 canacar Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -283,9 +283,6 @@ ppp_clone_destroy(ifp)
     LIST_REMOVE(sc, sc_list);
     splx(s);
 
-#if NBPFILTER > 0
-    bpfdetach(ifp);
-#endif
     if_detach(ifp);
 
     free(sc, M_DEVBUF);

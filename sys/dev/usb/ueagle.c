@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.7 2005/08/04 06:59:36 canacar Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.8 2006/01/04 06:04:41 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2003-2005
@@ -248,9 +248,6 @@ USB_DETACH(ueagle)
 		    USBDEVNAME(sc->sc_dev)));
 	}
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
 	if_detach(ifp);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
