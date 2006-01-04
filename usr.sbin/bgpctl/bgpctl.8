@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.30 2005/09/21 07:34:47 jmc Exp $
+.\" $OpenBSD: bgpctl.8,v 1.31 2006/01/04 12:37:33 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -160,6 +160,8 @@ Show all entries that are internal routes with no AS's in the AS path.
 This is the same as the
 .Ic show summary
 command.
+.It Cm memory
+Show RIB memory statistics.
 .It Ar family
 Limit the output to the given address family.
 .El
