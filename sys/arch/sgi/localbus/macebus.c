@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.15 2005/12/20 06:59:27 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.16 2006/01/04 20:18:37 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -395,7 +395,8 @@ mace_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	len = size+off;
 
 	paddr = KSEG1_TO_PHYS(bsh);
-	if (paddr >= 0x1f380000 && (paddr+size) <= 0x1f3a0000)
+	if (paddr >= (MACEBUS_BASE + MACE_ISAX_OFFS) &&
+	    (paddr+size) <= (MACEBUS_BASE + MACE_ISAX_OFFS + MACE_ISAX_SIZE))
 		return;
 
 	if (pmap_extract(pmap_kernel(), bsh, (void *)&paddr) == 0) {
