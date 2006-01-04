@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.18 2005/12/10 11:45:43 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.19 2006/01/04 20:26:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -125,7 +125,8 @@ struct pmap	kernel_pmap_store;
 
 psize_t	mem_size;	/* memory size in bytes */
 vaddr_t	virtual_start;  /* VA of first avail page (after kernel bss)*/
-vaddr_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
+vaddr_t	virtual_end =	/* VA of last avail page (end of kernel AS) */
+	VM_MIN_KERNEL_ADDRESS + 65536 /* minimal Sysmapsize */ * PAGE_SIZE;
 
 struct segtab	*free_segtab;		/* free list kept locally */
 u_int		tlbpid_gen = 1;		/* TLB PID generation count */
@@ -227,12 +228,10 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 			*vendp = virtual_end;
 		va = PHYS_TO_KSEG0(pa);
 		bzero((void *)va, size);
+		return(va);
 	}
 
-	if (va == 0)
-		panic("pmap_steal_memory: no memory to steal");
-
-	return(va);
+	panic("pmap_steal_memory: no memory to steal");
 }
 
 /*
@@ -305,9 +304,8 @@ extern struct user *proc0paddr;
 		 */
 		pmap->pm_tlbpid = 1;
 		pmap->pm_tlbgen = tlbpid_gen;
-		proc0paddr->u_pcb.pcb_segtab = (void *)pmap->pm_segtab;
-	}
-	else {
+		proc0paddr->u_pcb.pcb_segtab = pmap->pm_segtab;
+	} else {
 		pmap->pm_tlbpid = 0;
 		pmap->pm_tlbgen = 0;
 	}
@@ -1390,11 +1388,6 @@ bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
 	epa = bpa + size;
 	off = bpa - spa;
 	len = size+off;
-
-#ifdef DEBUG
-	if (phys_map == NULL)
-		panic("bus_mem_add_mapping when phys map not ready!");
-#endif
 
 	vaddr = uvm_km_valloc_wait(kernel_map, len);
 	*bshp = vaddr + off;
