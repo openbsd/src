@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.23 2005/10/01 13:39:23 martin Exp $	*/
+/*	$OpenBSD: esp.c,v 1.24 2006/01/04 20:30:58 miod Exp $	*/
 /*	$NetBSD: esp.c,v 1.17 1998/09/05 15:15:35 pk Exp $	*/
 
 /*
@@ -275,9 +275,6 @@ espattach(parent, self, aux)
 
 	sc->sc_id = 7;
 
-	/* gimme MHz */
-	sc->sc_freq /= 1000000;
-
 	/*
 	 * It is necessary to try to load the 2nd config register here,
 	 * to find out what rev the esp chip is, else the esp_reset
@@ -297,7 +294,7 @@ espattach(parent, self, aux)
 	 * Since the chip's clock is given in MHz, we have the following
 	 * formula: 4 * period = (1000 / freq) * 4
 	 */
-	sc->sc_minsync = 1000 / sc->sc_freq;
+	sc->sc_minsync = (1000 * 1000000) / sc->sc_freq;
 
 	/* We need this to fit into the TCR... */
 	sc->sc_maxxfer = 64 * 1024;
@@ -306,6 +303,9 @@ espattach(parent, self, aux)
 		sc->sc_minsync = 0;	/* No synchronous xfers w/o DMA */
 		sc->sc_maxxfer = 8 * 1024;
 	}
+
+	/* gimme MHz */
+	sc->sc_freq /= 1000000;
 
 	/*
 	 * Configure interrupts.
