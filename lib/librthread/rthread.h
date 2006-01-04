@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.15 2006/01/01 19:32:30 marc Exp $ */
+/*	$OpenBSD: rthread.h,v 1.16 2006/01/04 19:48:52 otto Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -107,6 +107,7 @@ struct pthread {
 	struct semaphore donesem;
 	pid_t tid;
 	unsigned int flags;
+	_spinlock_lock_t flags_lock;
 	void *retval;
 	void *(*fn)(void *);
 	void *arg;
@@ -130,6 +131,7 @@ extern int _threads_ready;
 extern LIST_HEAD(listhead, pthread) _thread_list;
 extern struct pthread _initial_thread;
 extern _spinlock_lock_t _thread_lock;
+extern int _rthread_kq;
 
 void	_spinlock(_spinlock_lock_t *);
 void	_spinunlock(_spinlock_lock_t *);
@@ -144,6 +146,9 @@ void	_rthread_free_stack(struct stack *);
 void	_rthread_tls_destructors(pthread_t);
 void	_rthread_debug(int, const char *, ...)
 		__attribute__((__format__ (printf, 2, 3)));
+void	_rthread_add_to_reaper(pid_t, struct stack *);
+void 	_rthread_reaper(void);
+
 
 void	_thread_dump_info(void);
 

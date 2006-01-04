@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.27 2006/01/04 08:48:01 marc Exp $ */
+/*	$OpenBSD: rthread.c,v 1.28 2006/01/04 19:48:52 otto Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -21,6 +21,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/event.h>
 #include <sys/mman.h>
 #include <sys/wait.h>
 
@@ -103,12 +104,41 @@ _rthread_init(void)
 	thread->tid = getthrid();
 	thread->donesem.lock = _SPINLOCK_UNLOCKED;
 	thread->flags |= THREAD_CANCEL_ENABLE|THREAD_CANCEL_DEFERRED;
+	thread->flags_lock = _SPINLOCK_UNLOCKED;
 	strlcpy(thread->name, "Main process", sizeof(thread->name));
 	LIST_INSERT_HEAD(&_thread_list, thread, threads);
+	_rthread_kq = kqueue();
+	if (_rthread_kq == -1)
+		return (errno);
 	_threads_ready = 1;
 	__isthreaded = 1;
 
 	return (0);
+}
+
+static void
+_rthread_free(pthread_t thread)
+{
+	/* catch wrongdoers for the moment */
+	memset(thread, 0xd0, sizeof(*thread));
+	if (thread != &_initial_thread)
+		free(thread);
+}
+
+static void
+_rthread_setflag(pthread_t thread, int flag)
+{
+	_spinlock(&thread->flags_lock);
+	thread->flags |= flag;
+	_spinunlock(&thread->flags_lock);
+}
+
+static void
+_rthread_clearflag(pthread_t thread, int flag)
+{
+	_spinlock(&thread->flags_lock);
+	thread->flags &= ~flag;
+	_spinunlock(&thread->flags_lock);
 }
 
 /*
@@ -134,12 +164,12 @@ void
 pthread_exit(void *retval)
 {
 	struct rthread_cleanup_fn *clfn;
+	pid_t tid;
+	struct stack *stack;
 	pthread_t thread = pthread_self();
 
 	thread->retval = retval;
-	thread->flags |= THREAD_DONE;
 	
-	_sem_post(&thread->donesem);
 	for (clfn = thread->cleanup_fns; clfn; ) {
 		struct rthread_cleanup_fn *oclfn = clfn;
 		clfn = clfn->next;
@@ -150,10 +180,20 @@ pthread_exit(void *retval)
 	_spinlock(&_thread_lock);
 	LIST_REMOVE(thread, threads);
 	_spinunlock(&_thread_lock);
-#if 0
+
+	_sem_post(&thread->donesem);
+
+	stack = thread->stack;
+	tid = thread->tid;
 	if (thread->flags & THREAD_DETACHED)
-		free(thread);
-#endif
+		_rthread_free(thread);
+	else
+		_rthread_setflag(thread, THREAD_DONE);
+
+	if (tid != _initial_thread.tid)
+		_rthread_add_to_reaper(tid, stack);
+
+	_rthread_reaper();
 	threxit(0);
 	for(;;);
 }
@@ -171,22 +211,34 @@ pthread_join(pthread_t thread, void **retval)
 			*retval = thread->retval;
 		e = 0;
 	}
+	/* We should be the last having a ref to this thread, but
+	 * someone stupid or evil might haved detached it;
+	 * in that case the thread will cleanup itself */
+	if ((thread->flags & THREAD_DETACHED) == 0)
+		_rthread_free(thread);
 
+	_rthread_reaper();
 	return (e);
 }
 
 int
 pthread_detach(pthread_t thread)
 {
-	_spinlock(&_thread_lock);
-#if 0
-	if (thread->flags & THREAD_DONE)
-		free(thread);
-	else
-#endif
+	int rc = 0;
+
+	_spinlock(&thread->flags_lock);
+	if (thread->flags & THREAD_DETACHED) {
+		rc = EINVAL;
+		_spinunlock(&thread->flags_lock);
+	} else if (thread->flags & THREAD_DONE) {
+		_spinunlock(&thread->flags_lock);
+		_rthread_free(thread);
+	} else {
 		thread->flags |= THREAD_DETACHED;
-	_spinunlock(&_thread_lock);
-	return (0);
+		_spinunlock(&thread->flags_lock);
+	}
+	_rthread_reaper();
+	return (rc);
 }
 
 int
@@ -206,6 +258,7 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 		return (errno);
 	memset(thread, 0, sizeof(*thread));
 	thread->donesem.lock = _SPINLOCK_UNLOCKED;
+	thread->flags_lock = _SPINLOCK_UNLOCKED;
 	thread->fn = start_routine;
 	thread->arg = arg;
 	if (attr)
@@ -254,7 +307,7 @@ fail2:
 	LIST_REMOVE(thread, threads);
 fail1:
 	_spinunlock(&_thread_lock);
-	free(thread);
+	_rthread_free(thread);
 
 	return (rc);
 }
@@ -275,7 +328,7 @@ int
 pthread_cancel(pthread_t thread)
 {
 
-	thread->flags |= THREAD_CANCELLED;
+	_rthread_setflag(thread, THREAD_CANCELLED);
 	return (0);
 }
 
@@ -297,10 +350,10 @@ pthread_setcancelstate(int state, int *oldstatep)
 	oldstate = self->flags & THREAD_CANCEL_ENABLE ?
 	    PTHREAD_CANCEL_ENABLE : PTHREAD_CANCEL_DISABLE;
 	if (state == PTHREAD_CANCEL_ENABLE) {
-		self->flags |= THREAD_CANCEL_ENABLE;
+		_rthread_setflag(self, THREAD_CANCEL_ENABLE);
 		pthread_testcancel();
 	} else if (state == PTHREAD_CANCEL_DISABLE) {
-		self->flags &= ~THREAD_CANCEL_ENABLE;
+		_rthread_clearflag(self, THREAD_CANCEL_ENABLE);
 	} else {
 		return (EINVAL);
 	}
@@ -319,10 +372,10 @@ pthread_setcanceltype(int type, int *oldtypep)
 	oldtype = self->flags & THREAD_CANCEL_DEFERRED ?
 	    PTHREAD_CANCEL_DEFERRED : PTHREAD_CANCEL_ASYNCHRONOUS;
 	if (type == PTHREAD_CANCEL_DEFERRED) {
-		self->flags |= THREAD_CANCEL_DEFERRED;
+		_rthread_setflag(self, THREAD_CANCEL_DEFERRED);
 		pthread_testcancel();
 	} else if (type == PTHREAD_CANCEL_ASYNCHRONOUS) {
-		self->flags &= ~THREAD_CANCEL_DEFERRED;
+		_rthread_clearflag(self, THREAD_CANCEL_DEFERRED);
 	} else {
 		return (EINVAL);
 	}
