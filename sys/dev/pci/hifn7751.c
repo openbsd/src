@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.150 2005/11/29 00:03:08 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.151 2006/01/04 00:02:29 brad Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1561,9 +1561,10 @@ hifn_crypto(struct hifn_softc *sc, struct hifn_command *cmd,
 	}
 
 	/*
-	 * We don't worry about missing an interrupt (which a "command wait"
-	 * interrupt salvages us from), unless there is more than one command
-	 * in the queue.
+	 * Always enable the command wait interrupt.  We are obviously
+	 * missing an interrupt or two somewhere. Enabling the command wait
+	 * interrupt will guarantee we get called periodically until all
+	 * of the queues are drained and thus work around this.
 	 */
 	sc->sc_dmaier |= HIFN_DMAIER_C_WAIT;
 	WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
@@ -2562,9 +2563,10 @@ hifn_compress_enter(struct hifn_softc *sc, struct hifn_command *cmd)
 	}
 
 	/*
-	 * We don't worry about missing an interrupt (which a "command wait"
-	 * interrupt salvages us from), unless there is more than one command
-	 * in the queue.
+	 * Always enable the command wait interrupt.  We are obviously
+	 * missing an interrupt or two somewhere. Enabling the command wait
+	 * interrupt will guarantee we get called periodically until all
+	 * of the queues are drained and thus work around this.
 	 */
 	sc->sc_dmaier |= HIFN_DMAIER_C_WAIT;
 	WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
