@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.20 2005/10/20 21:44:42 jmc Exp 
+#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.21 2006/01/04 20:39:03 miod Exp 
 #	OpenBSD: MAKEDEV.common,v 1.23 2005/12/27 19:02:42 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -40,14 +40,17 @@
 #	st*	SCSI tape drives
 # Terminal ports:
 #	tty00	Standard serial port
-#	ttye*	ITE bitmapped consoles
 # Pseudo terminals:
 #	ptm	pty master device
 #	pty*	Set of 62 master pseudo terminals
 #	tty*	Set of 62 slave pseudo terminals
 # Console ports:
-#	adb	Apple Desktop bus event interface
-#	grf*	Raw interface to the mac68k graphics devices
+#	wscons	Minimal wscons devices
+#	ttyC-F*	wscons display devices
+#	wskbd*	wscons keyboards
+#	wsmux	wscons keyboard/mouse mux devices
+# Pointing devices:
+#	wsmouse*	wscons mice
 # Special purpose devices:
 #	asc*	ASC Audio device
 #	bpf*	Berkeley Packet Filter
@@ -222,21 +225,6 @@ ttye*)
 	esac
 	;;
 
-grf*)
-	case $U in
-	0|1|2|3)
-		M grf$U c 10 $U
-		;;
-	*)
-		echo bad unit for grf in: $i
-		;;
-	esac
-	;;
-
-adb)
-	M adb c 23 0
-	;;
-
 asc*)
 	M asc$U c 36 $U
 	;;
@@ -296,8 +284,38 @@ asc*)
 	M asc$U 36 0
 	;;
 
-adb)
-	M adb c 23 0
+wsmouse*)
+	M wsmouse$U c 40 $U 600
+	;;
+
+wsmux|wsmouse|wskbd)
+	M wsmouse c 41 0 600
+	M wskbd c 41 1 600
+	;;
+
+wskbd*)
+	M wskbd$U c 39 $U 600
+	;;
+
+tty[C-F]*)
+	U=${i##tty[C-F]}
+	case $i in
+	ttyC*) n=C m=0;;
+	ttyD*) n=D m=256;;
+	ttyE*) n=E m=512;;
+	ttyF*) n=F m=768;;
+	esac
+	case $U in
+	[0-9a-f]) M tty$n$U c 38 $((16#$U+$m)) 600;;
+	cfg) M tty${n}cfg c 38 $((255+$m)) 600;;
+	*) echo bad unit $U for $i; exit 1;;
+	esac
+	;;
+
+wscons)
+	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
+	R wskbd3 wsmux ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
+	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
 pty*)
@@ -358,16 +376,16 @@ local)
 	;;
 
 ramdisk)
-	R pty0 tty00 tty01 asc0 adb rd0 rd1 st0 st1 sd0 sd1 sd2 sd3
-	R bpf0 std
+	R pty0 tty00 tty01 asc0 rd0 rd1 st0 st1 sd0 sd1 sd2 sd3 bpf0
+	R std
 	;;
 
 all)
-	R ttye0 ccd0 ccd1 ccd2 ccd3 cd0 cd1 rd0 tun0 tun1 tun2 tun3
-	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0
-	R ss0 ss1 ch0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 ptm
-	R local grf0 grf1 grf2 grf3 adb asc0 uk0 random lkm tty00
-	R tty01 pf systrace std st0 st1 fd
+	R ccd0 ccd1 ccd2 ccd3 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0
+	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0
+	R ss1 ch0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 ptm local
+	R wscons asc0 uk0 random lkm tty00 tty01 pf systrace std st0
+	R st1 fd
 	;;
 
 sd*|ccd*)
