@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbsys.h,v 1.4 2005/10/21 22:07:45 kettenis Exp $	*/
+/*	$OpenBSD: adbsys.h,v 1.5 2006/01/04 21:03:49 miod Exp $	*/
 /*	$NetBSD: adbsys.h,v 1.4 2000/12/19 02:59:24 tsubai Exp $	*/
 
 /*-
@@ -38,22 +38,6 @@
 #define _ADBSYS_MACHINE_
 
 #include <sys/time.h>	/* timeval stuff */
-#include <sys/ioctl.h>	/* ioctls */
-
-
-/* Handy visual constants */
-#define ADB_MAX_HANDLERS	256
-#define ADB_MAX_DEVS	16
-
-
-/* Different ADB system types */
-enum adb_system_e {
-	MacIIADB,
-	MacIIsiADB,
-	MacPBADB
-};
-extern enum adb_system_e adb_system_type;
-
 
 /* an ADB event */
 typedef struct adb_event_s {
@@ -141,37 +125,6 @@ typedef struct adb_dev_s{
 	/* Interesting miscellaneous handler ID */
 #define ADB_POWERKEY	34	/* Sophisticated Circuits PowerKey */
 				/* (intelligent power tap) */
-
-	/* Get device info from ADB system */
-typedef struct adb_devinfo_s{
-	adb_dev_t	dev[ADB_MAX_DEVS];
-		/* [addr].addr == -1 if none */
-} adb_devinfo_t;
-#define ADBIOCDEVSINFO		_IOR('A', 128, adb_devinfo_t)
-
-
-	/* Event auto-repeat */
-typedef struct adb_rptinfo_s{
-	int delay_ticks;	/* ticks before repeat */
-	int interval_ticks;	/* ticks between repeats */
-} adb_rptinfo_t;
-#define ADBIOCGETREPEAT		_IOR('A', 130, adb_rptinfo_t)
-#define ADBIOCSETREPEAT		_IOW('A', 131, adb_rptinfo_t)
-
-
-	/* Reset and reinitialize */
-#define ADBIOCRESET		_IO('A', 132)
-
-
-typedef struct adb_listencmd_s{
-	int address;		/* device address */
-	int reg;		/* register to which to send bytes */
-	int bytecnt;		/* number of bytes */
-	u_char bytes[8];	/* bytes */
-} adb_listencmd_t;
-#define ADBIOCLISTENCMD		_IOW('A', 133, adb_listencmd_t)
-
-void	adb_init(void);
 
 #ifdef _KERNEL
 int	adb_poweroff(void);
