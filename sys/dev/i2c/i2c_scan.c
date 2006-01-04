@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.48 2006/01/03 07:55:47 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.49 2006/01/04 18:14:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -27,7 +27,8 @@
 #define _I2C_PRIVATE
 #include <dev/i2c/i2cvar.h>
 
-#define I2C_DEBUG
+#undef I2C_DEBUG
+#define I2C_VERBOSE
 
 void	iic_probe(struct device *, struct i2cbus_attach_args *, u_int8_t);
 
@@ -70,6 +71,7 @@ u_int8_t	iicprobe(u_int8_t);
 u_int16_t	iicprobew(u_int8_t);
 int		lm75probe(void);
 char		*amd1032cloneprobe(u_int8_t);
+void		iic_dump(struct device *, u_int8_t, char *);
 
 void
 iicprobeinit(struct i2cbus_attach_args *iba, u_int8_t addr)
@@ -223,6 +225,30 @@ iic_ignore_addr(u_int8_t addr)
 			return;
 		}
 }
+
+#if defined(I2C_DEBUG) || defined(I2C_VERBOSE)
+void
+iic_dump(struct device *dv, u_int8_t addr, char *name)
+{
+	u_int8_t val = iicprobe(0);
+	int i, cnt = 0;
+
+	for (i = 1; i <= 0xff; i++) {
+		if (val == iicprobe(i))
+			cnt++;
+	}
+	if (cnt <= 254) {
+		printf("%s: addr 0x%x", dv->dv_xname, addr);
+		for (i = 0; i <= 0xff; i++) {
+			if (iicprobe(i) != 0xff)
+				printf(" %02x=%02x", i, iicprobe(i));
+		}
+		if (name)
+			printf(": %s", name);
+		printf("\n");
+	}
+}
+#endif /* defined(I2C_DEBUG) || defined(I2C_VERBOSE) */
 
 void
 iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
@@ -473,6 +499,10 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			skip_fc = 1;
 	}
 
+#ifdef I2C_DEBUG
+	iic_dump(self, addr, name);
+#endif /* I2C_DEBUG */
+
 	if (name) {
 		ia.ia_tag = iba->iba_tag;
 		ia.ia_addr = addr;
@@ -482,26 +512,8 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			return;
 	}
 
-#ifdef I2C_DEBUG
-	{
-		u_int8_t val = iicprobe(0);
-		int cnt = 0;
-
-		for (i = 1; i <= 0xff; i++) {
-			if (val == iicprobe(i))
-				cnt++;
-		}
-		if (cnt <= 254) {
-			printf("%s: addr 0x%x", self->dv_xname, addr);
-			for (i = 0; i <= 0xff; i++) {
-				if (iicprobe(i) != 0xff)
-					printf(" %02x=%02x", i, iicprobe(i));
-			}
-			if (name)
-				printf(": %s", name);
-			printf("\n");
-		}
-	}
+#ifdef I2C_VERBOSE
+	iic_dump(self, addr, name);
 #endif /* I2C_DEBUG */
 
 }
