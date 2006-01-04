@@ -1,4 +1,4 @@
-.\"	$OpenBSD: paste.1,v 1.7 2003/06/03 02:56:14 millert Exp $
+.\"	$OpenBSD: paste.1,v 1.8 2006/01/04 16:15:05 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -111,6 +111,32 @@ for each instance of
 The
 .Nm paste
 utility exits 0 on success or >0 if an error occurred.
+.Sh EXAMPLES
+List the files in the current directory in three columns:
+.Pp
+.Dl "$ ls | paste - - -"
+.Pp
+Combine pairs of lines from
+.Ar file
+into single lines:
+.Pp
+.Dl "$ paste -s -d '\et\en' file"
+.Pp
+Number the lines in
+.Ar file ,
+similar to
+.Ql cat -n :
+.Pp
+.Dl "$ sed = file | paste -s -d '\et\en' - -"
+.Pp
+Create a colon-separated list of directories named
+.Pa bin ,
+suitable
+for use in the
+.Ev PATH
+environment variable:
+.Pp
+.Dl "$ find / -name bin -type d | paste -s -d : -"
 .Sh SEE ALSO
 .Xr cut 1
 .Sh STANDARDS
