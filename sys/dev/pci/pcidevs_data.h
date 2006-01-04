@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.995 2006/01/04 05:18:07 brad Exp 
+ *	OpenBSD: pcidevs,v 1.996 2006/01/04 06:00:13 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8487,7 +8487,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "760 PCI",
 	},
 	{
-	    PCI_VENDOR_SSI, PCI_PRODUCT_SSI_761,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_761,
 	    "761 PCI",
 	},
 	{
