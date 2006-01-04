@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.17 2006/01/04 20:20:16 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.18 2006/01/04 20:23:07 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -352,6 +352,8 @@ mace_write_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t v)
 #endif
 }
 
+extern int extent_malloc_flags;
+
 int
 mace_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
     int cacheable, bus_space_handle_t *bshp)
@@ -369,13 +371,13 @@ mace_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 	}
 
 	if ((error = extent_alloc_region(t->bus_extent, bpa, size,
-	    EX_NOWAIT | EX_MALLOCOK))) {
+	    EX_NOWAIT | extent_malloc_flags))) {
 		return error;
 	}
 
-	if ((error  = bus_mem_add_mapping(bpa, size, cacheable, bshp))) {
-		if (extent_free(t->bus_extent, bpa, size, EX_NOWAIT |
-		    ((phys_map != NULL) ? EX_MALLOCOK : 0))) {
+	if ((error = bus_mem_add_mapping(bpa, size, cacheable, bshp))) {
+		if (extent_free(t->bus_extent, bpa, size,
+		    EX_NOWAIT | extent_malloc_flags)) {
 			printf("bus_space_map: pa %p, size %p\n", bpa, size);
 			printf("bus_space_map: can't free region\n");
 		}
@@ -405,14 +407,10 @@ mace_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 		return;
 	}
 
-	if (phys_map != NULL &&
-	    ((sva >= VM_MIN_KERNEL_ADDRESS) && (sva < VM_MAX_KERNEL_ADDRESS))) {
-		/* do not free memory which was stolen from the vm system */
-		uvm_km_free(kernel_map, sva, len);
-	}
+	uvm_km_free(kernel_map, sva, len);
 
-	if (extent_free(t->bus_extent, paddr, size, EX_NOWAIT |
-	    ((phys_map != NULL) ? EX_MALLOCOK : 0))) {
+	if (extent_free(t->bus_extent, paddr, size,
+	    EX_NOWAIT | extent_malloc_flags)) {
 		printf("bus_space_map: pa %p, size %p\n", paddr, size);
 		printf("bus_space_map: can't free region\n");
 	}
