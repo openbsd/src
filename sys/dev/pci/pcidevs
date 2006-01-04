@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.994 2006/01/04 01:09:51 brad Exp $
+$OpenBSD: pcidevs,v 1.995 2006/01/04 05:18:07 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2737,9 +2737,11 @@ product SIGMA DVDMAGICPRO	0x8300	DVDmagic-PRO
 product SIS 86C201		0x0001	86C201 AGP
 product SIS 86C202		0x0002	86C202 VGA
 product SIS 648FX		0x0003	648FX AGP
+product SIS PPB_1		0x0004	PCI-PCI
 product SIS 86C205_1		0x0005	86C205
 product SIS 85C503		0x0008	85C503 System
 product SIS 5595		0x0009	5595 System
+product SIS PPB_2		0x000a	PCI-PCI
 product SIS 85C503_ISA		0x0018	85C503 ISA
 product SIS 180			0x0180	180 SATA
 product SIS 181			0x0181	181 SATA
@@ -2763,10 +2765,12 @@ product SIS 640			0x0640	640 PCI
 product SIS 645			0x0645	645 PCI
 product SIS 646			0x0646	646 PCI
 product SIS 648			0x0648	648 PCI
+product SIS 649			0x0649	649 PCI
 product SIS 650			0x0650	650 PCI
 product SIS 651			0x0651	651 PCI
 product SIS 652			0x0652	652 PCI
 product SIS 655			0x0655	655 PCI
+product SIS 656			0x0656	656 PCI
 product SIS 658			0x0658	658 PCI
 product SIS 661			0x0661	661 PCI
 product SIS 730			0x0730	730 PCI
@@ -2781,13 +2785,15 @@ product SIS 750			0x0750	750 PCI
 product SIS 751			0x0751	751 PCI
 product SIS 752			0x0752	752 PCI
 product SIS 755			0x0755	755 PCI
+product SIS 756			0x0756	756 PCI
 product SIS 760			0x0760	760 PCI
+product SSI 761			0x0761	761 PCI
 product SIS 900			0x0900	900 10/100BaseTX
-product SIS 961			0x0961	961 PCI
-product SIS 962			0x0962	962 PCI
-product SIS 963			0x0963	963 PCI
-product SIS 964			0x0964	964 PCI
-product SIS 965			0x0965	965 PCI
+product SIS 961			0x0961	961 ISA
+product SIS 962			0x0962	962 ISA
+product SIS 963			0x0963	963 ISA
+product SIS 964			0x0964	964 ISA
+product SIS 965			0x0965	965 ISA
 product SIS 5511		0x5511	5511
 product SIS 5512		0x5512	5512
 product SIS 5513		0x5513	5513 EIDE
