@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.196 2005/12/31 06:20:22 grange Exp $
+#	$OpenBSD: files.pci,v 1.197 2006/01/04 00:40:08 dlg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -588,3 +588,8 @@ file	dev/pci/viapm.c			viapm
 device	amdiic: i2cbus
 attach	amdiic at pci
 file	dev/pci/amdiic.c		amdiic
+
+# NVIDIA nForce2/3/4 SMBus controller
+device	nviic: i2cbus
+attach	nviic at pci
+file	dev/pci/nviic.c			nviic
