@@ -1,4 +1,4 @@
-#	$OpenBSD: files.m68k,v 1.14 2005/08/01 11:54:23 miod Exp $
+#	$OpenBSD: files.m68k,v 1.15 2006/01/04 22:32:43 miod Exp $
 #	$NetBSD: files.m68k,v 1.18 1997/06/06 23:15:28 veego Exp $
 #
 file	arch/m68k/m68k/bcopy.s
@@ -15,7 +15,6 @@ file	arch/m68k/m68k/m68k_machdep.c
 file	arch/m68k/m68k/mappedcopy.c		mappedcopy
 file	arch/m68k/m68k/oc_cksum.s		inet
 file	arch/m68k/m68k/process_machdep.c
-file	arch/m68k/m68k/random.s
 file	arch/m68k/m68k/regdump.c
 file	arch/m68k/m68k/sig_machdep.c
 
