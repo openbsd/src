@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.994 2006/01/04 01:09:51 brad Exp 
+ *	OpenBSD: pcidevs,v 1.995 2006/01/04 05:18:07 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8287,6 +8287,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "648FX AGP",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_PPB_1,
+	    "PCI-PCI",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C205_1,
 	    "86C205",
 	},
@@ -8297,6 +8301,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5595,
 	    "5595 System",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_PPB_2,
+	    "PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C503_ISA,
@@ -8391,6 +8399,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "648 PCI",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_649,
+	    "649 PCI",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_650,
 	    "650 PCI",
 	},
@@ -8405,6 +8417,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_655,
 	    "655 PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_656,
+	    "656 PCI",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_658,
@@ -8463,8 +8479,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "755 PCI",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_756,
+	    "756 PCI",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_760,
 	    "760 PCI",
+	},
+	{
+	    PCI_VENDOR_SSI, PCI_PRODUCT_SSI_761,
+	    "761 PCI",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_900,
@@ -8472,23 +8496,23 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_961,
-	    "961 PCI",
+	    "961 ISA",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_962,
-	    "962 PCI",
+	    "962 ISA",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_963,
-	    "963 PCI",
+	    "963 ISA",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_964,
-	    "964 PCI",
+	    "964 ISA",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_965,
-	    "965 PCI",
+	    "965 ISA",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5511,
