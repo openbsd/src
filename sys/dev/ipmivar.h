@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.8 2005/12/16 03:16:47 marco Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.9 2006/01/04 23:07:02 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -178,15 +178,16 @@ typedef struct {
 	u_int64_t	smipmi_base_address;	/* Base address of BMC (BAR
 						 * format) */
 	u_int8_t	smipmi_base_flags;	/* Flags field:
-						 * spacing/lsb/irq bit 7:6 :
-						 * register spacing 00 = byte
-						 * alignment 01 = dword
-						 * alignment 02 = word
-						 * alignment bit 4 : Lower bit
-						 * of base address bit 3 : IRQ
-						 * valid bit 1 : Interrupt
-						 * polarity bit 0 : Interrupt
-						 * trigger mode */
+						 * bit 7:6 : register spacing
+						 *   00 = byte
+						 *   01 = dword
+						 *   02 = word
+						 * bit 4 : Lower bit BAR
+						 * bit 3 : IRQ valid
+						 * bit 2 : N/A
+						 * bit 1 : Interrupt polarity
+						 * bit 0 : Interrupt trigger
+						 */
 	u_int8_t	smipmi_irq;		/* IRQ if applicable */
 } __packed smbios_ipmi_t;
 
