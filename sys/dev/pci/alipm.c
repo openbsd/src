@@ -1,4 +1,4 @@
-/*	$OpenBSD: alipm.c,v 1.5 2006/01/02 01:58:53 deraadt Exp $	*/
+/*	$OpenBSD: alipm.c,v 1.6 2006/01/04 18:32:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -142,8 +142,8 @@ alipm_attach(struct device *parent, struct device *self, void *aux)
 	struct alipm_softc *sc = (struct alipm_softc *) self;
 	struct pci_attach_args *pa = aux;
 	struct i2cbus_attach_args iba;
-	pcireg_t iobase;
-	pcireg_t reg;
+	pcireg_t iobase, reg;
+	bus_size_t iosize = ALIPM_SMB_SIZE;
 
 	/* Old chips don't have the PCI 2.2 Capabilities List. */
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
@@ -152,7 +152,7 @@ alipm_attach(struct device *parent, struct device *self, void *aux)
 		iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_BASE);
 		sc->sc_iot = pa->pa_iot;
 		if (bus_space_map(sc->sc_iot, iobase >> 16,
-		    ALIPM_SMB_SIZE, 0, &sc->sc_ioh)) {
+		    iosize, 0, &sc->sc_ioh)) {
 			printf(": can't map I/O space\n");
 			return;
 		}
@@ -160,18 +160,18 @@ alipm_attach(struct device *parent, struct device *self, void *aux)
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_CONF);
 		if ((reg & ALIPM_CONF_SMBEN) == 0) {
 			printf(": SMBus disabled\n");
-			return;
+			goto fail;
 		}
 
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_SMB_HOSTC);
 		if ((reg & ALIPM_SMB_HOSTC_HSTEN) == 0) {
 			printf(": SMBus host disabled\n");
-			return;
+			goto fail;
 		}
 	} else {
 		/* Map I/O space */
 		if (pci_mapreg_map(pa, ALIPM_SMB_BASE, PCI_MAPREG_TYPE_IO, 0,
-		    &sc->sc_iot, &sc->sc_ioh, NULL, NULL, ALIPM_SMB_SIZE)) {
+		    &sc->sc_iot, &sc->sc_ioh, NULL, &iosize, ALIPM_SMB_SIZE)) {
 			printf(": can't map I/O space\n");
 			return;
 		}
@@ -179,7 +179,7 @@ alipm_attach(struct device *parent, struct device *self, void *aux)
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_SMB_HOSTX);
 		if ((reg & ALIPM_SMB_HOSTC_HSTEN) == 0) {
 			printf(": SMBus host disabled\n");
-			return;
+			goto fail;
 		}
 	}
 
@@ -224,6 +224,11 @@ alipm_attach(struct device *parent, struct device *self, void *aux)
 	iba.iba_bus_scan_arg = pa;
 #endif
 	config_found(&sc->sc_dev, &iba, iicbus_print);
+
+	return;
+
+fail:
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
 }
 
 int
