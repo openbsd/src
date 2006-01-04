@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.86 2006/01/02 17:38:17 joris Exp $	*/
+/*	$OpenBSD: proto.c,v 1.87 2006/01/04 14:58:12 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -703,19 +703,15 @@ cvs_getln(struct cvsroot *root, char *lbuf, size_t len)
  *
  * Send a response of type <rid> to the client, with optional arguments
  * contained in <arg>, which should not be terminated by a newline.
- * Returns 0 on success, or -1 on failure.
  */
-int
+void
 cvs_sendresp(u_int rid, const char *arg)
 {
 	int ret;
 	struct cvs_resp *resp;
 
-	resp = cvs_resp_getbyid(rid);
-	if (resp == NULL) {
-		cvs_log(LP_ERR, "unsupported response type %u", rid);
-		return (-1);
-	}
+	if ((resp = cvs_resp_getbyid(rid)) == NULL);
+		fatal("unsupported response type %u", rid);
 
 	ret = fputs(resp->resp_str, stdout);
 	if (ret == EOF) {
@@ -727,7 +723,6 @@ cvs_sendresp(u_int rid, const char *arg)
 		}
 		putc('\n', stdout);
 	}
-	return (0);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.11 2006/01/02 09:42:20 xsa Exp $	*/
+/*	$OpenBSD: proto.h,v 1.12 2006/01/04 14:58:12 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -181,7 +181,7 @@ char*            cvs_resp_getvalid(void);
 
 void	cvs_sendreq(struct cvsroot *, u_int, const char *);
 void	cvs_getresp(struct cvsroot *);
-int	cvs_sendresp(u_int, const char *);
+void	cvs_sendresp(u_int, const char *);
 void	cvs_getln(struct cvsroot *, char *, size_t);
 void	cvs_senddir(struct cvsroot *, CVSFILE *);
 void	cvs_sendarg(struct cvsroot *, const char *, int);

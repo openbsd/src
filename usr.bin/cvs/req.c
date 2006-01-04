@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.40 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: req.c,v 1.41 2006/01/04 14:58:12 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -182,11 +182,7 @@ cvs_req_handle(char *line)
 static int
 cvs_req_noop(int reqid, char *line)
 {
-	int ret;
-
-	ret = cvs_sendresp(CVS_RESP_OK, NULL);
-	if (ret < 0)
-		return (-1);
+	cvs_sendresp(CVS_RESP_OK, NULL);
 	return (0);
 }
 
@@ -216,9 +212,8 @@ cvs_req_validreq(int reqid, char *line)
 	if (vreq == NULL)
 		return (-1);
 
-	if ((cvs_sendresp(CVS_RESP_VALIDREQ, vreq) < 0) ||
-	    (cvs_sendresp(CVS_RESP_OK, NULL) < 0))
-		return (-1);
+	cvs_sendresp(CVS_RESP_VALIDREQ, vreq);
+	cvs_sendresp(CVS_RESP_OK, NULL);
 
 	return (0);
 }
@@ -425,11 +420,7 @@ cvs_req_filestate(int reqid, char *line)
 static int
 cvs_req_expandmod(int reqid, char *line)
 {
-	int ret;
-
-	ret = cvs_sendresp(CVS_RESP_OK, NULL);
-	if (ret < 0)
-		return (-1);
+	cvs_sendresp(CVS_RESP_OK, NULL);
 	return (0);
 }
 
@@ -580,7 +571,6 @@ cvs_req_gzipstream(int reqid, char *line)
 static int
 cvs_req_command(int reqid, char *line)
 {
-	int ret = 0;
 	struct cvs_cmd *cmdp;
 
 	cmdp = cvs_findcmdbyreq(reqid);
@@ -600,10 +590,8 @@ cvs_req_command(int reqid, char *line)
 	if (cmdp->cmd_op != CVS_OP_VERSION)
 		cvs_chdir(cvs_server_tmpdir, 1);
 
-	ret = cvs_startcmd(cmdp, cvs_req_nargs, cvs_req_args);
+	if (cvs_startcmd(cmdp, cvs_req_nargs, cvs_req_args) == 0)
+		cvs_sendresp(CVS_RESP_OK, NULL);
 
-	if (ret == 0)
-		ret = cvs_sendresp(CVS_RESP_OK, NULL);
-
-	return (ret);
+	return (0);
 }
