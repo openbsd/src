@@ -1,5 +1,5 @@
-/*	$OpenBSD: adbsysasm.s,v 1.2 1996/05/26 18:35:16 briggs Exp $	*/
-/*	$NetBSD: adbsysasm.s,v 1.2 1995/09/03 20:59:56 briggs Exp $	*/
+/*	$OpenBSD: adbsysasm.s,v 1.3 2006/01/04 20:39:04 miod Exp $	*/
+/*	$NetBSD: adbsysasm.s,v 1.11 2001/11/20 03:19:42 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,44 +31,62 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "akbd.h"
+#include "ams.h"
+#include <machine/asm.h>
+
 /* 
  * ADB subsystem routines in assembly
  */
 
-/* This routine is called when a device has sent us some data. */
+#if NAKBD > 0
+/* This routine is called when a keyboard has sent us some data. */
 /* (provided it has been set up with SetADBInfo) */
-	.global	_adb_asmcomplete
-	.global	_adb_complete
-_adb_asmcomplete:
-	moveml	#0xc0c0, sp@-	| save scratch regs
-	movl	d0, sp@-	/* ADB command byte */
-	movl	a2, sp@-	/* data area pointer */
+GLOBAL(adb_kbd_asmcomplete)
+	moveml	#0x80e0,sp@-	| save scratch regs
+	movl	d0,sp@-		/* ADB command byte */
+	movl	a2,sp@-		/* data area pointer */
 	/*	a1 is the pointer to this routine itself. */
-	movl	a0, sp@-	/* device data buffer */
-	jbsr	_adb_complete
-	addl	#12, sp		/* pop params */
-	moveml	sp@+, #0x0303	| restore scratch regs
+	movl	a0,sp@-		/* device data buffer */
+	jbsr	_C_LABEL(kbd_adbcomplete)
+	addl	#12,sp		/* pop params */
+	moveml	sp@+,#0x0701	| restore scratch regs
 	rts
+#endif
 
-_adb_jadbprochello:
+#if NAMS > 0
+/* This routine is called when a mouse has sent us some data. */
+/* (provided it has been set up with SetADBInfo) */
+GLOBAL(adb_ms_asmcomplete)
+	moveml	#0x80e0,sp@-	| save scratch regs
+	movl	d0,sp@-		/* ADB command byte */
+	movl	a2,sp@-		/* data area pointer */
+	/*	a1 is the pointer to this routine itself. */
+	movl	a0,sp@-		/* device data buffer */
+	jbsr	_C_LABEL(ms_adbcomplete)
+	addl	#12,sp		/* pop params */
+	moveml	sp@+,#0x0701	| restore scratch regs
+	rts
+#endif
+
+#ifdef MRG_ADB
+
+#if defined(ADB_DEBUG) && 0
+GLOBAL(adb_jadbprochello)
 	.asciz	"adb: hello from adbproc\n"
 	.even
-
-
-	.global	_adb_jadbproc
-_adb_jadbproc:
-#if defined(MRG_DEBUG) && 0
-	moveml	#0xc0c0, sp@-	| save scratch regs
-	movl	_adb_jadbprochello, sp@-
-	jbsr	_printf
-	addl	#4, sp		/* pop params */
-	moveml	sp@+, #0x0303	| restore scratch regs
 #endif
-		/* Don't do anything; adb_init fixes dev info for us. */
+
+
+GLOBAL(adb_jadbproc)
+#if defined(ADB_DEBUG) && 0
+	moveml	#0xc0c0,sp@-	| save scratch regs
+	movl	_C_LABEL(adb_jadbprochello),sp@-
+	jbsr	_C_LABEL(printf)
+	addl	#4,sp		/* pop params */
+	moveml	sp@+,#0x0303	| restore scratch regs
+#endif
+		/* Don't do anything; adbattach fixes dev info for us. */
 	rts
 
-	/* ADBOp's completion routine used by extdms_init() in adbsys.c. */
-	.global	_extdms_complete
-_extdms_complete:
-	movl	#-1,a2@		| set done flag
-	rts
+#endif	/* MRG_ADB */

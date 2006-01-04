@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.31 2005/09/27 09:45:48 martin Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.32 2006/01/04 20:39:04 miod Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -72,7 +72,6 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
-#include <machine/grfioctl.h>
 #include <machine/viareg.h>
 
 #include <uvm/uvm_extern.h>
@@ -88,7 +87,6 @@ extern long		videorowbytes;
 extern long		videobitdepth;
 extern u_long		videosize;
 
-static int	grfiv_mode(struct grf_softc *gp, int cmd, void *arg);
 static int	grfiv_match(struct device *, void *, void *);
 static void	grfiv_attach(struct device *, struct device *, void *);
 
@@ -364,25 +362,5 @@ grfiv_attach(parent, self, aux)
 	gm->fboff = sc->sc_fbofs;
 
 	/* Perform common video attachment. */
-	grf_establish(sc, NULL, grfiv_mode);
-}
-
-static int
-grfiv_mode(sc, cmd, arg)
-	struct grf_softc *sc;
-	int cmd;
-	void *arg;
-{
-	switch (cmd) {
-	case GM_GRFON:
-	case GM_GRFOFF:
-		return 0;
-	case GM_CURRMODE:
-		break;
-	case GM_NEWMODE:
-		break;
-	case GM_LISTMODES:
-		break;
-	}
-	return EINVAL;
+	grf_establish(sc);
 }

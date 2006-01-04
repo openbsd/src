@@ -1,8 +1,8 @@
-/*	$OpenBSD: pm_direct.h,v 1.5 2006/01/04 20:39:05 miod Exp $	*/
-/*	$NetBSD: pm_direct.h,v 1.1 1997/04/08 03:11:38 scottr Exp $	*/
+/*	$OpenBSD: amsvar.h,v 1.1 2006/01/04 20:39:04 miod Exp $	*/
+/*	$NetBSD: amsvar.h,v 1.4 1999/06/17 06:59:05 tsubai Exp $	*/
 
 /*
- * Copyright (C) 1997 Takashi Hamada
+ * Copyright (C) 1998	Colin Wood
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *  This product includes software developed by Takashi Hamada.
+ *	This product includes software developed by Colin Wood.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -30,19 +30,38 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* From: pm_direct.h 1.0 01/02/97 Takashi Hamada */
+
+#ifndef _MAC68K_AMSVAR_H_
+#define _MAC68K_AMSVAR_H_
 
 /*
- * Public declarations that other routines may need.
+ * State info, per mouse instance.
  */
+struct ams_softc {
+	struct	device	sc_dev;
 
-/* data structure of the command of the Power Manager */
-typedef	struct	{
-	short	command;		/* command of the Power Manager 	*/
-	short	num_data;		/* number of data 					*/
-	char	*s_buf;			/* pointer to buffer for sending 	*/
-	char	*r_buf;			/* pointer to buffer for receiving	*/
-	char	data[32];		/* data buffer (is it too much?)	*/
-}	PMData;
+	/* ADB info */
+	int		origaddr;	/* ADB device type (ADBADDR_MS) */
+	int		adbaddr;	/* current ADB address */
+	int		handler_id;	/* type of mouse */
 
-int		pmgrop(PMData *);
+	/* Extended Mouse Protocol info, faked for non-EMP mice */
+	u_int8_t	sc_class;	/* mouse class (mouse, trackball) */
+	u_int8_t	sc_buttons;	/* number of buttons */
+	u_int32_t	sc_res;		/* mouse resolution (dpi) */
+	char		sc_devid[5];	/* device indentifier */
+
+	int		sc_mb;		/* current button state */
+	struct device	*sc_wsmousedev;
+};
+
+/* EMP device classes */
+#define MSCLASS_TABLET		0
+#define MSCLASS_MOUSE		1
+#define MSCLASS_TRACKBALL	2
+#define MSCLASS_TRACKPAD	3
+
+void ms_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command);
+void ms_handoff(adb_event_t *event, struct ams_softc *);
+
+#endif /* _MAC68K_AMSVAR_H_ */

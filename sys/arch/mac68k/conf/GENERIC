@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.41 2005/08/03 02:10:44 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.42 2006/01/04 20:39:04 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -21,38 +21,42 @@ option		M68020		# Must have 68851 PMMU
 option		FPSP
 option		FPU_EMULATE
 option		COMPAT_SUNOS	# SunOS m68k binary compatibility
-option		DISABLE_ADB_WITH_SERIAL_CONSOLE
 #option		MRG_ADB		# Use ROM-based ADB driver
+option		WSDISPLAY_COMPAT_RAWKBD
 
 config		bsd	swap generic
 
-mainbus0 at root
+mainbus0	at root
 
 # on-board I/O
-obio0 at mainbus?
+obio0		at mainbus?
 
-adb0	at obio?
-asc0	at obio?		# ASC/EASC audio
-esp0	at obio?		# SCSI NCR 53C9x
-esp1	at obio?		# SCSI NCR 53C9x
-intvid0	at obio?		# Internal video hardware
-mc*	at obio?		# MACE ethernet on Centris/Quadra 660av
-sn*	at obio?		# Internal ethernet
-zsc0	at obio?		# Zilog serial chip
-zstty*	at zsc?
+adb0		at obio?
+akbd*		at adb?		# ADB keyboard
+ams*		at adb?		# ADB mouse
 
+asc0		at obio?	# ASC/EASC audio
+esp0		at obio?	# SCSI NCR 53C9x
+esp1		at obio?	# SCSI NCR 53C9x
+intvid0		at obio?	# Internal video hardware
+mc*		at obio?	# MACE ethernet on Centris/Quadra 660av
+sn*		at obio?	# Internal ethernet
+zsc0		at obio?	# Zilog serial chip
+zstty*		at zsc?
+
+# nubus boards
 nubus0		at mainbus?
 
 ae*		at nubus?	# Most Apple Ethernet Cards
 macvid*		at nubus?	# NuBus video cards
 sn*		at nubus?	# SONIC-based ethernet cards
 
-# Attach grf semantics to all video hardware as it is found
-grf*		at intvid?
-grf*		at macvid?
-
-# Attach ite semantics to the appropriate grf device
-ite0		at grf?
+# workstation console
+macfb*		at intvid?
+macfb*		at macvid?
+wskbd*		at akbd? mux 1
+wsmouse*	at ams? mux 0
+wsdisplay*	at macfb?
 
 # Enable only one of ncrscsi or sbc
 ncrscsi0	at obio?		# SCSI NCR 5380
@@ -62,11 +66,13 @@ scsibus*	at esp?
 scsibus*	at ncrscsi?
 scsibus*	at sbc?
 
-sd*	at scsibus?		# SCSI disk drives
-st*	at scsibus?		# SCSI tape drives
-cd*	at scsibus?		# SCSI CD-ROM drives
-ch*	at scsibus?		# SCSI autochangers
-ss*	at scsibus?		# SCSI scanners
-safte*	at scsibus?		# SCSI accessed fault-tolerant enclosures
-ses*	at scsibus?		# SCSI enclosure services
-uk*	at scsibus?		# SCSI unknown
+sd*		at scsibus?	# SCSI disk drives
+st*		at scsibus?	# SCSI tape drives
+cd*		at scsibus?	# SCSI CD-ROM drives
+ch*		at scsibus?	# SCSI autochangers
+ss*		at scsibus?	# SCSI scanners
+safte*		at scsibus?	# SCSI accessed fault-tolerant enclosures
+ses*		at scsibus?	# SCSI enclosure services
+uk*		at scsibus?	# SCSI unknown
+
+pseudo-device	wsmux	2

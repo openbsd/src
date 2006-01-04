@@ -1,4 +1,4 @@
-/*	$OpenBSD: pram.c,v 1.7 2003/05/11 19:41:10 deraadt Exp $	*/
+/*	$OpenBSD: pram.c,v 1.8 2006/01/04 20:39:05 miod Exp $	*/
 /*	$NetBSD: pram.c,v 1.11 1996/10/21 05:42:29 scottr Exp $	*/
 
 /*-
@@ -44,10 +44,11 @@
 
 #include <machine/viareg.h>
 
-#include <arch/mac68k/mac68k/pram.h>
-#include <arch/mac68k/mac68k/macrom.h>
-#ifndef MRG_ADB
-#include <arch/mac68k/dev/adbvar.h>
+#include <mac68k/mac68k/pram.h>
+#ifdef MRG_ADB
+#include <mac68k/mac68k/macrom.h>
+#else
+#include <mac68k/dev/adbvar.h>
 #endif
 
 #if DEBUG
@@ -178,6 +179,7 @@ getPramTime(void)
                 return time;
 
         case ADB_HW_IISI:       /* access PRAM via pseudo-adb functions */
+	case ADB_HW_CUDA:
                 if (0 != adb_read_date_time(&time))
                         return 0;
                 else
@@ -208,6 +210,7 @@ setPramTime(unsigned long time)
                 return;
 
         case ADB_HW_IISI:       /* access PRAM via pseudo-adb functions */
+	case ADB_HW_CUDA:
                 adb_set_date_time(time);
                 return;
 

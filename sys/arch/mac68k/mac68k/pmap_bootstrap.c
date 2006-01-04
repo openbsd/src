@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.34 2005/10/23 19:00:26 martin Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.35 2006/01/04 20:39:05 miod Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.50 1999/04/07 06:14:33 scottr Exp $	*/
 
 /* 
@@ -56,7 +56,11 @@
 #include <mac68k/mac68k/clockreg.h>
 #include <mac68k/mac68k/macrom.h>
 
+#include "zsc.h"
+
+#if NZSC > 0
 extern int	zsinited;
+#endif
 
 /*
  * These are used to map the RAM:
@@ -201,7 +205,9 @@ void
 bootstrap_mac68k(tc)
 	int	tc;
 {
+#if NZSC > 0
 	extern void	zs_init(void);
+#endif
 	extern caddr_t	esym;
 	paddr_t		nextpa;
 	caddr_t		oldROMBase;
@@ -261,8 +267,10 @@ bootstrap_mac68k(tc)
 	 * of this function (where we start using the MMU, so the new
 	 * address is correct).
 	 */
+#if NZSC > 0
 	if (zsinited != 0)
 		zs_init();
+#endif
 
 	videoaddr = newvideoaddr;
 }

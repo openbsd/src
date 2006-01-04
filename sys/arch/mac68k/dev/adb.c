@@ -1,7 +1,7 @@
-/*	$OpenBSD: adb.c,v 1.14 2005/11/21 18:16:37 millert Exp $	*/
-/*	$NetBSD: adb.c,v 1.13 1996/12/16 16:17:02 scottr Exp $	*/
+/*	$OpenBSD: adb.c,v 1.15 2006/01/04 20:39:04 miod Exp $	*/
+/*	$NetBSD: adb.c,v 1.47 2005/06/16 22:43:36 jmc Exp $	*/
 
-/*-
+/*
  * Copyright (C) 1994	Bradley A. Grantham
  * All rights reserved.
  *
@@ -11,7 +11,7 @@
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
-e*    notice, this list of conditions and the following disclaimer in the
+ *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
@@ -34,531 +34,265 @@ e*    notice, this list of conditions and the following disclaimer in the
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
-#include <sys/ioctl.h>
-#include <sys/selinfo.h>
 #include <sys/poll.h>
+#include <sys/selinfo.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
-#include <sys/time.h>
-#include <sys/timeout.h>
 
 #include <machine/autoconf.h>
-#include <machine/keyboard.h>
+#include <machine/cpu.h>
 
-#include <arch/mac68k/mac68k/macrom.h>
-#include <arch/mac68k/dev/adbvar.h>
-#include <arch/mac68k/dev/itevar.h>
+#include <mac68k/dev/adbvar.h>
 
 /*
  * Function declarations.
  */
-static int	adbmatch(struct device *, void *, void *);
-static void	adbattach(struct device *, struct device *, void *);
+int	adbmatch(struct device *, void *, void *);
+void	adbattach(struct device *, struct device *, void *);
+int	adbprint(void *, const char *);
+void	adb_attach_deferred(void *);
+
+extern void	adb_jadbproc(void);
 
 /*
  * Global variables.
  */
-int     adb_polling = 0;	/* Are we polling?  (Debugger mode) */
+int	adb_polling = 0;	/* Are we polling?  (Debugger mode) */
+#ifdef ADB_DEBUG
+int	adb_debug = 0;		/* Output debugging messages */
+#endif /* ADB_DEBUG */
+
+extern struct	mac68k_machine_S mac68k_machine;
+extern int	adbHardware;
+extern char	*adbHardwareDescr[];
 
 /*
- * Local variables.
+ * Driver definition.
  */
-
-/* External keyboard translation matrix */
-extern unsigned char keyboard[128][3];
-
-/* Event queue definitions */
-#if !defined(ADB_MAX_EVENTS)
-#define ADB_MAX_EVENTS 200	/* Maximum events to be kept in queue */
-				/* maybe should be higher for slower macs? */
-#endif				/* !defined(ADB_MAX_EVENTS) */
-static adb_event_t adb_evq[ADB_MAX_EVENTS];	/* ADB event queue */
-static int adb_evq_tail = 0;	/* event queue tail */
-static int adb_evq_len = 0;	/* event queue length */
-
-/* ADB device state information */
-static int adb_isopen = 0;	/* Are we queuing events for adb_read? */
-static struct selinfo adb_selinfo;	/* select() info */
-static struct proc *adb_ioproc = NULL;	/* process to wakeup */
-
-/* Key repeat parameters */
-static int adb_rptdelay = 20;	/* ticks before auto-repeat */
-static int adb_rptinterval = 6;	/* ticks between auto-repeat */
-static int adb_repeating = -1;	/* key that is auto-repeating */
-static adb_event_t adb_rptevent;/* event to auto-repeat */
-
-/* Driver definition.  -- This should probably be a bus...  */
 struct cfattach adb_ca = {
 	sizeof(struct device), adbmatch, adbattach
 };
-
 struct cfdriver adb_cd = {
 	NULL, "adb", DV_DULL
 };
 
-struct timeout repeat_timeout;
-
-static int
-adbmatch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf;
-	void *aux;
+int
+adbmatch(struct device *parent, void *vcf, void *aux)
 {
-	return 1;
+	static int adb_matched = 0;
+
+	/* Allow only one instance. */
+	if (adb_matched)
+		return (0);
+
+	adb_matched = 1;
+	return (1);
 }
 
-static void
-adbattach(parent, dev, aux)
-	struct device *parent, *dev;
-	void   *aux;
+void
+adbattach(struct device *parent, struct device *self, void *aux)
 {
-	printf(" (ADB event device)\n");
+	printf("\n");
+	startuphook_establish(adb_attach_deferred, self);
 }
 
-void 
-adb_enqevent(event)
-    adb_event_t *event;
+void
+adb_attach_deferred(void *v)
 {
-	int     s;
+	struct device *self = v;
+	ADBDataBlock adbdata;
+	struct adb_attach_args aa_args;
+	int totaladbs;
+	int adbindex, adbaddr;
 
-	if (adb_evq_tail < 0 || adb_evq_tail >= ADB_MAX_EVENTS)
-		panic("adb: event queue tail is out of bounds");
+	printf("%s", self->dv_xname);
+	adb_polling = 1;
 
-	if (adb_evq_len < 0 || adb_evq_len > ADB_MAX_EVENTS)
-		panic("adb: event queue len is out of bounds");
-
-	s = splhigh();
-
-	if (adb_evq_len == ADB_MAX_EVENTS) {
-		splx(s);
-		return;		/* Oh, well... */
+#ifdef MRG_ADB
+	if (!mrg_romready()) {
+		printf(": no ROM ADB driver in this kernel for this machine\n");
+		return;
 	}
-	adb_evq[(adb_evq_len + adb_evq_tail) % ADB_MAX_EVENTS] =
-	    *event;
-	adb_evq_len++;
 
-	selwakeup(&adb_selinfo);
-	if (adb_ioproc)
-		psignal(adb_ioproc, SIGIO);
+#ifdef ADB_DEBUG
+	if (adb_debug)
+		printf("adb: call mrg_initadbintr\n");
+#endif
 
-	splx(s);
-}
+	mrg_initadbintr();	/* Mac ROM Glue okay to do ROM intr */
+#ifdef ADB_DEBUG
+	if (adb_debug)
+		printf("adb: returned from mrg_initadbintr\n");
+#endif
 
-void 
-adb_handoff(event)
-    adb_event_t *event;
-{
-	if (adb_isopen && !adb_polling) {
-		adb_enqevent(event);
-	} else {
-		if (event->def_addr == 2)
-			ite_intr(event);
+	/* ADBReInit pre/post-processing */
+	JADBProc = adb_jadbproc;
+
+	/* Initialize ADB */
+#ifdef ADB_DEBUG
+	if (adb_debug)
+		printf("adb: calling ADBAlternateInit.\n");
+#endif
+
+	printf(": mrg");
+	ADBAlternateInit();
+#else
+	ADBReInit();
+	printf(": %s", adbHardwareDescr[adbHardware]);
+
+#ifdef ADB_DEBUG
+	if (adb_debug)
+		printf("adb: done with ADBReInit\n");
+#endif
+
+#endif /* MRG_ADB */
+
+	totaladbs = CountADBs();
+
+	printf(", %d target%s\n", totaladbs, (totaladbs == 1) ? "" : "s");
+
+	/* for each ADB device */
+	for (adbindex = 1; adbindex <= totaladbs; adbindex++) {
+		/* Get the ADB information */
+		adbaddr = GetIndADB(&adbdata, adbindex);
+
+		aa_args.origaddr = (int)(adbdata.origADBAddr);
+		aa_args.adbaddr = adbaddr;
+		aa_args.handler_id = (int)(adbdata.devType);
+
+		(void)config_found(self, &aa_args, adbprint);
 	}
+	adb_polling = 0;
 }
 
 
-void 
-adb_autorepeat(keyp)
-    void *keyp;
+int
+adbprint(void *args, const char *name)
 {
-	int     key = (int) keyp;
+	struct adb_attach_args *aa_args = (struct adb_attach_args *)args;
+	int rv = UNCONF;
 
-	adb_rptevent.bytes[0] |= 0x80;
-	microtime(&adb_rptevent.timestamp);
-	adb_handoff(&adb_rptevent);	/* do key up */
+	if (name) {	/* no configured device matched */
+		rv = UNSUPP; /* most ADB device types are unsupported */
 
-	adb_rptevent.bytes[0] &= 0x7f;
-	microtime(&adb_rptevent.timestamp);
-	adb_handoff(&adb_rptevent);	/* do key down */
-
-	if (adb_repeating == key) {
-		timeout_set(&repeat_timeout, adb_autorepeat, keyp);
-		timeout_add(&repeat_timeout, adb_rptinterval);
-	}
-}
-
-
-void 
-adb_dokeyupdown(event)
-    adb_event_t *event;
-{
-	int     adb_key;
-
-	if (event->def_addr == 2) {
-		adb_key = event->u.k.key & 0x7f;
-		if (!(event->u.k.key & 0x80) &&
-		    keyboard[event->u.k.key & 0x7f][0] != 0) {
-			/* ignore shift & control */
-			if (adb_repeating != -1) {
-				timeout_del(&repeat_timeout);
+		/* print out what kind of ADB device we have found */
+		printf("%s addr %d: ", name, aa_args->adbaddr);
+		switch(aa_args->origaddr) {
+#ifdef DIAGNOSTIC
+		case ADBADDR_SECURE:
+			printf("security dongle (%d)",
+			    aa_args->handler_id);
+			break;
+#endif
+		case ADBADDR_MAP:
+			printf("mapped device (%d)",
+			    aa_args->handler_id);
+			rv = UNCONF;
+			break;
+		case ADBADDR_REL:
+			printf("relative positioning device (%d)",
+			    aa_args->handler_id);
+			rv = UNCONF;
+			break;
+#ifdef DIAGNOSTIC
+		case ADBADDR_ABS:
+			switch (aa_args->handler_id) {
+			case ADB_ARTPAD:
+				printf("WACOM ArtPad II");
+				break;
+			default:
+				printf("absolute positioning device (%d)",
+				    aa_args->handler_id);
+				break;
 			}
-			adb_rptevent = *event;
-			adb_repeating = adb_key;
-			timeout_set(&repeat_timeout, adb_autorepeat,
-			    (caddr_t)adb_key);
-			timeout_add(&repeat_timeout, adb_rptdelay);
-		} else {
-			if (adb_repeating != -1) {
-				adb_repeating = -1;
-				timeout_del(&repeat_timeout);
+			break;
+		case ADBADDR_DATATX:
+			printf("data transfer device (modem?) (%d)",
+			    aa_args->handler_id);
+			break;
+		case ADBADDR_MISC:
+			switch (aa_args->handler_id) {
+			case ADB_POWERKEY:
+				printf("Sophisticated Circuits PowerKey");
+				break;
+			default:
+				printf("misc. device (remote control?) (%d)",
+				    aa_args->handler_id);
+				break;
 			}
-			adb_rptevent = *event;
-		}
-	}
-	adb_handoff(event);
-}
-
-static int adb_ms_buttons = 0;
-
-void 
-adb_keymaybemouse(event)
-    adb_event_t *event;
-{
-	static int optionkey_down = 0;
-	adb_event_t new_event;
-
-	if (event->u.k.key == ADBK_KEYDOWN(ADBK_OPTION)) {
-		optionkey_down = 1;
-	} else if (event->u.k.key == ADBK_KEYUP(ADBK_OPTION)) {
-		/* key up */
-		optionkey_down = 0;
-		if (adb_ms_buttons & 0xfe) {
-			adb_ms_buttons &= 1;
-			new_event.def_addr = ADBADDR_MS;
-			new_event.u.m.buttons = adb_ms_buttons;
-			new_event.u.m.dx = new_event.u.m.dy = 0;
-			microtime(&new_event.timestamp);
-			adb_dokeyupdown(&new_event);
-		}
-	} else if (optionkey_down) {
-		if (event->u.k.key == ADBK_KEYDOWN(ADBK_LEFT)) {
-			adb_ms_buttons |= 2;	/* middle down */
-			new_event.def_addr = ADBADDR_MS;
-			new_event.u.m.buttons = adb_ms_buttons;
-			new_event.u.m.dx = new_event.u.m.dy = 0;
-			microtime(&new_event.timestamp);
-			adb_dokeyupdown(&new_event);
-		} else if (event->u.k.key == ADBK_KEYUP(ADBK_LEFT)) {
-			adb_ms_buttons &= ~2;	/* middle up */
-			new_event.def_addr = ADBADDR_MS;
-			new_event.u.m.buttons = adb_ms_buttons;
-			new_event.u.m.dx = new_event.u.m.dy = 0;
-			microtime(&new_event.timestamp);
-			adb_dokeyupdown(&new_event);
-		} else if (event->u.k.key == ADBK_KEYDOWN(ADBK_RIGHT)) {
-			adb_ms_buttons |= 4;	/* right down */
-			new_event.def_addr = ADBADDR_MS;
-			new_event.u.m.buttons = adb_ms_buttons;
-			new_event.u.m.dx = new_event.u.m.dy = 0;
-			microtime(&new_event.timestamp);
-			adb_dokeyupdown(&new_event);
-		} else if (event->u.k.key == ADBK_KEYUP(ADBK_RIGHT)) {
-			adb_ms_buttons &= ~4;	/* right up */
-			new_event.def_addr = ADBADDR_MS;
-			new_event.u.m.buttons = adb_ms_buttons;
-			new_event.u.m.dx = new_event.u.m.dy = 0;
-			microtime(&new_event.timestamp);
-			adb_dokeyupdown(&new_event);
-		} else if (ADBK_MODIFIER(event->u.k.key)) {
-		/* ctrl, shift, cmd */
-			adb_dokeyupdown(event);
-		} else if (!(event->u.k.key & 0x80)) {
-		/* key down */
-			new_event = *event;
-
-			/* send option-down */
-			new_event.u.k.key = ADBK_KEYDOWN(ADBK_OPTION);
-			new_event.bytes[0] = new_event.u.k.key;
-			microtime(&new_event.timestamp);
-			adb_dokeyupdown(&new_event);
-
-			/* send key-down */
-			new_event.u.k.key = event->bytes[0];
-			new_event.bytes[0] = new_event.u.k.key;
-			microtime(&new_event.timestamp);
-			adb_dokeyupdown(&new_event);
-
-			/* send key-up */
-			new_event.u.k.key =
-				ADBK_KEYUP(ADBK_KEYVAL(event->bytes[0]));
-			microtime(&new_event.timestamp);
-			new_event.bytes[0] = new_event.u.k.key;
-			adb_dokeyupdown(&new_event);
-
-			/* send option-up */
-			new_event.u.k.key = ADBK_KEYUP(ADBK_OPTION);
-			new_event.bytes[0] = new_event.u.k.key;
-			microtime(&new_event.timestamp);
-			adb_dokeyupdown(&new_event);
-		} else {
-			/* option-keyup -- do nothing. */
-		}
-	} else {
-		adb_dokeyupdown(event);
-	}
-}
-
-
-void 
-adb_processevent(event)
-    adb_event_t *event;
-{
-	adb_event_t new_event;
-	int i, button_bit, max_byte, mask, buttons;
-
-	new_event = *event;
-	buttons = 0;
-
-	switch (event->def_addr) {
-	case ADBADDR_KBD:
-		new_event.u.k.key = event->bytes[0];
-		new_event.bytes[1] = 0xff;
-		adb_keymaybemouse(&new_event);
-		if (event->bytes[1] != 0xff) {
-			new_event.u.k.key = event->bytes[1];
-			new_event.bytes[0] = event->bytes[1];
-			new_event.bytes[1] = 0xff;
-			adb_keymaybemouse(&new_event);
-		}
-		break;
-	case ADBADDR_MS:
-		/*
-		 * This should handle both plain ol' Apple mice and mice
-		 * that claim to support the Extended Apple Mouse Protocol.
-		 */
-		max_byte = event->byte_count;
-		button_bit = 1;
-		switch (event->hand_id) {
-		case ADBMS_USPEED:
-			/* MicroSpeed mouse */
-			if (max_byte == 4)
-				buttons = (~event->bytes[2]) & 0xff;
-			else
-				buttons = (event->bytes[0] & 0x80) ? 0 : 1;
 			break;
 		default:
-			/* Classic Mouse Protocol (up to 2 buttons) */
-			for (i = 0; i < 2; i++, button_bit <<= 1)
-				/* 0 when button down */
-				if (!(event->bytes[i] & 0x80))
-					buttons |= button_bit;
-				else
-					buttons &= ~button_bit;
-			/* Extended Protocol (up to 6 more buttons) */
-			for (mask = 0x80; i < max_byte;
-			     i += (mask == 0x80), button_bit <<= 1) {
-				/* 0 when button down */
-				if (!(event->bytes[i] & mask))
-					buttons |= button_bit;
-				else
-					buttons &= ~button_bit;
-				mask = ((mask >> 4) & 0xf)
-					| ((mask & 0xf) << 4);
-			}
+			printf("unknown type device, (handler %d)",
+			    aa_args->handler_id);
 			break;
+#endif /* DIAGNOSTIC */
 		}
-		new_event.u.m.buttons = adb_ms_buttons | buttons;
-		new_event.u.m.dx = ((signed int) (event->bytes[1] & 0x3f)) -
-					((event->bytes[1] & 0x40) ? 64 : 0);
-		new_event.u.m.dy = ((signed int) (event->bytes[0] & 0x3f)) -
-					((event->bytes[0] & 0x40) ? 64 : 0);
-		adb_dokeyupdown(&new_event);
-		break;
-	default:		/* God only knows. */
-		adb_dokeyupdown(event);
-	}
+	} else		/* a device matched and was configured */
+		printf(" addr %d: ", aa_args->adbaddr);
+
+	return (rv);
 }
 
 
-int 
-adbopen(dev, flag, mode, p)
-    dev_t dev;
-    int flag, mode;
-    struct proc *p;
+/*
+ * adb_op_sync
+ *
+ * This routine does exactly what the adb_op routine does, except that after
+ * the adb_op is called, it waits until the return value is present before
+ * returning.
+ *
+ * NOTE: The user specified compRout is ignored, since this routine specifies
+ * it's own to adb_op, which is why you really called this in the first place
+ * anyway.
+ */
+int
+adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
 {
-	register int unit;
-	int error = 0;
-	int s;
+	int tmout;
+	int result;
+	volatile int flag = 0;
 
-	unit = minor(dev);
-	if (unit != 0)
-		return (ENXIO);
+	result = ADBOp(buffer, (void *)adb_op_comprout, (Ptr)&flag, 
+	    command);	/* send command */
+	if (result == 0) {		/* send ok? */
+		/*
+		 * Total time to wait is calculated as follows:
+		 *  - Tlt (stop to start time): 260 usec
+		 *  - start bit: 100 usec
+		 *  - up to 8 data bytes: 64 * 100 usec = 6400 usec
+		 *  - stop bit (with SRQ): 140 usec
+		 * Total: 6900 usec
+		 *
+		 * This is the total time allowed by the specification.  Any
+		 * device that doesn't conform to this will fail to operate
+		 * properly on some Apple systems.  In spite of this we
+		 * double the time to wait; some Cuda-based apparently
+		 * queues some commands and allows the main CPU to continue
+		 * processing (radical concept, eh?).  To be safe, allow
+		 * time for two complete ADB transactions to occur.
+		 */
+		for (tmout = 13800; !flag && tmout >= 10; tmout -= 10)
+			delay(10);
+		if (!flag && tmout > 0)
+			delay(tmout);
 
-	s = splhigh();
-	if (adb_isopen) {
-		splx(s);
-		return (EBUSY);
+		if (!flag)
+			result = -2;
 	}
-	splx(s);
-	adb_evq_tail = 0;
-	adb_evq_len = 0;
-	adb_isopen = 1;
-	adb_ioproc = p;
 
-	return (error);
+	return result;
 }
 
 
-int 
-adbclose(dev, flag, mode, p)
-    dev_t dev;
-    int flag, mode;
-    struct proc *p;
+/*
+ * adb_op_comprout
+ *
+ * This function is used by the adb_op_sync routine so it knows when the
+ * function is done.
+ */
+void 
+adb_op_comprout(void)
 {
-	adb_isopen = 0;
-	adb_ioproc = NULL;
-	return (0);
-}
-
-
-int 
-adbread(dev, uio, flag)
-    dev_t dev;
-    struct uio *uio;
-    int flag;
-{
-	int s, error;
-	int willfit;
-	int total;
-	int firstmove;
-	int moremove;
-
-	if (uio->uio_resid < sizeof(adb_event_t))
-		return (EMSGSIZE);	/* close enough. */
-
-	s = splhigh();
-	if (adb_evq_len == 0) {
-		splx(s);
-		return (0);
-	}
-	willfit = howmany(uio->uio_resid, sizeof(adb_event_t));
-	total = (adb_evq_len < willfit) ? adb_evq_len : willfit;
-
-	firstmove = (adb_evq_tail + total > ADB_MAX_EVENTS)
-	    ? (ADB_MAX_EVENTS - adb_evq_tail) : total;
-
-	error = uiomove((caddr_t) & adb_evq[adb_evq_tail],
-	    firstmove * sizeof(adb_event_t), uio);
-	if (error) {
-		splx(s);
-		return (error);
-	}
-	moremove = total - firstmove;
-
-	if (moremove > 0) {
-		error = uiomove((caddr_t) & adb_evq[0],
-		    moremove * sizeof(adb_event_t), uio);
-		if (error) {
-			splx(s);
-			return (error);
-		}
-	}
-	adb_evq_tail = (adb_evq_tail + total) % ADB_MAX_EVENTS;
-	adb_evq_len -= total;
-	splx(s);
-	return (0);
-}
-
-
-int 
-adbwrite(dev, uio, flag)
-    dev_t dev;
-    struct uio *uio;
-    int flag;
-{
-	return 0;
-}
-
-
-int 
-adbioctl(dev, cmd, data, flag, p)
-    dev_t dev;
-    int cmd;
-    caddr_t data;
-    int flag;
-    struct proc *p;
-{
-	switch (cmd) {
-	case ADBIOC_DEVSINFO: {
-		adb_devinfo_t *di;
-		ADBDataBlock adbdata;
-		int totaldevs;
-		int adbaddr;
-		int i;
-
-		di = (void *) data;
-
-		/* Initialize to no devices */
-		for (i = 0; i < 16; i++)
-			di->dev[i].addr = -1;
-
-		totaldevs = CountADBs();
-		for (i = 1; i <= totaldevs; i++) {
-			adbaddr = GetIndADB(&adbdata, i);
-			di->dev[adbaddr].addr = adbaddr;
-			di->dev[adbaddr].default_addr = adbdata.origADBAddr;
-			di->dev[adbaddr].handler_id = adbdata.devType;
-			}
-
-		/* Must call ADB Manager to get devices now */
-		break;
-	}
-
-	case ADBIOC_GETREPEAT:{
-		adb_rptinfo_t *ri;
-
-		ri = (void *) data;
-		ri->delay_ticks = adb_rptdelay;
-		ri->interval_ticks = adb_rptinterval;
-		break;
-	}
-
-	case ADBIOC_SETREPEAT:{
-		adb_rptinfo_t *ri;
-
-		ri = (void *) data;
-		adb_rptdelay = ri->delay_ticks;
-		adb_rptinterval = ri->interval_ticks;
-		break;
-	}
-
-	case ADBIOC_RESET:
-		adb_init();
-		break;
-
-	case ADBIOC_LISTENCMD:{
-		adb_listencmd_t *lc;
-
-		lc = (void *) data;
-	}
-
-	default:
-		return (EINVAL);
-	}
-	return (0);
-}
-
-
-int 
-adbpoll(dev, events, p)
-    dev_t dev;
-    int events;
-    struct proc *p;
-{
-	int revents = 0;
-
-	if (events & (POLLIN | POLLRDNORM)) {
-		/* succeed if there is something to read */
-		if (adb_evq_len > 0)
-			revents |= events & (POLLIN | POLLRDNORM);
-		else
-			selrecord(p, &adb_selinfo);
-	}
-	if (events & (POLLOUT | POLLWRNORM)) {
-		/* always fails => never blocks */
-		revents |= events & (POLLOUT | POLLWRNORM);
-	}
-
-	return (revents);
+	asm("movw	#1,a2@			| update flag value");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.c,v 1.29 2005/05/22 19:40:51 art Exp $	*/
+/*	$OpenBSD: macrom.c,v 1.30 2006/01/04 20:39:05 miod Exp $	*/
 /*	$NetBSD: macrom.c,v 1.47 2000/11/15 07:15:36 scottr Exp $	*/
 
 /*-
@@ -58,8 +58,7 @@
 #include <machine/frame.h>
 #include <machine/viareg.h>
 
-#include <arch/mac68k/mac68k/macrom.h>
-#include <arch/mac68k/dev/adbvar.h>
+#include <mac68k/dev/adbvar.h>
 
 	/* trap modifiers (put it macrom.h) */
 #define TRAP_TOOLBOX(a)	((a) & 0x800)
@@ -106,7 +105,7 @@ u_int32_t mrg_AVInitEgretJT[] = {
 
 caddr_t	mrg_romadbintr = (caddr_t)0;	/* ROM ADB interrupt */
 caddr_t	mrg_rompmintr = 0;		/* ROM PM (?) interrupt */
-char	*mrg_romident = NULL;		/* ident string for ROMs */
+const char *mrg_romident = NULL;	/* ident string for ROMs */
 caddr_t	mrg_ADBAlternateInit = 0;
 caddr_t	mrg_InitEgret = 0;
 caddr_t	mrg_ADBIntrPtr = (caddr_t)0x0;	/* ADB interrupt taken from MacOS vector table*/
@@ -686,8 +685,10 @@ mrg_aline_super(struct frame *frame)
 		"ToolBox", trapnum);
 #endif
 
-	/* Only OS Traps come to us; _alinetrap takes care of ToolBox
-	  traps, which are a horrible Frankenstein-esque abomination. */
+	/*
+	 * Only OS Traps come to us; _alinetrap takes care of ToolBox
+	 * traps, which are a horrible Frankenstein-esque abomination.
+	 */
 
 	trapaddr = mrg_OStraps[trapnum];
 #if defined(MRG_DEBUG)

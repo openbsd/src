@@ -1,8 +1,8 @@
-/*	$OpenBSD: pm_direct.h,v 1.5 2006/01/04 20:39:05 miod Exp $	*/
-/*	$NetBSD: pm_direct.h,v 1.1 1997/04/08 03:11:38 scottr Exp $	*/
+/*	$OpenBSD: akbdvar.h,v 1.1 2006/01/04 20:39:04 miod Exp $	*/
+/*	$NetBSD: akbdvar.h,v 1.4 1999/02/17 14:56:56 tsubai Exp $	*/
 
 /*
- * Copyright (C) 1997 Takashi Hamada
+ * Copyright (C) 1998	Colin Wood
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *  This product includes software developed by Takashi Hamada.
+ *	This product includes software developed by Colin Wood.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -30,19 +30,42 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* From: pm_direct.h 1.0 01/02/97 Takashi Hamada */
+
+#ifndef _MAC68K_KBDVAR_H_
+#define _MAC68K_KBDVAR_H_
+
+#include <machine/adbsys.h>
 
 /*
- * Public declarations that other routines may need.
+ * State info, per keyboard instance.
  */
+struct akbd_softc {
+	struct	device	sc_dev;
 
-/* data structure of the command of the Power Manager */
-typedef	struct	{
-	short	command;		/* command of the Power Manager 	*/
-	short	num_data;		/* number of data 					*/
-	char	*s_buf;			/* pointer to buffer for sending 	*/
-	char	*r_buf;			/* pointer to buffer for receiving	*/
-	char	data[32];		/* data buffer (is it too much?)	*/
-}	PMData;
+	/* ADB info */
+	int		origaddr;	/* ADB device type (ADBADDR_KBD) */
+	int		adbaddr;	/* current ADB address */
+	int		handler_id;	/* type of keyboard */
 
-int		pmgrop(PMData *);
+	u_int8_t	sc_leds;	/* current LED state */
+	struct device	*sc_wskbddev;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+#define MAXKEYS 20
+#define REP_DELAY1 400
+#define REP_DELAYN 100
+	int sc_rawkbd;
+	int sc_nrep;
+	char sc_rep[MAXKEYS];
+	struct timeout sc_rawrepeat_ch;
+#endif /* defined(WSDISPLAY_COMPAT_RAWKBD) */
+};
+
+/* LED register bits, inverse of actual register value */
+#define LED_NUMLOCK	0x1
+#define LED_CAPSLOCK	0x2
+#define LED_SCROLL_LOCK	0x4
+
+void kbd_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command);
+int akbd_cnattach(void);
+
+#endif /* _MAC68K_KBDVAR_H_ */

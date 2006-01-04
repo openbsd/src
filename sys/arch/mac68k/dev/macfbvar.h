@@ -1,8 +1,8 @@
-/*	$OpenBSD: itevar.h,v 1.4 2002/06/11 05:13:37 miod Exp $	*/
-/*	$NetBSD: itevar.h,v 1.1 1996/05/05 06:16:49 briggs Exp $	*/
-
+/*	$OpenBSD: macfbvar.h,v 1.1 2006/01/04 20:39:05 miod Exp $	*/
+/* $NetBSD: macfbvar.h,v 1.3 2005/01/15 16:00:59 chs Exp $ */
 /*
- * Copyright (c) 1995 Allen Briggs.  All rights reserved.
+ * Copyright (c) 1998 Matt DeBergalis
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,9 +14,9 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Allen Briggs.
+ *      This product includes software developed by Matt DeBergalis
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,27 +30,33 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/adbsys.h>
+#include <dev/rcons/raster.h>
+#include <dev/wscons/wscons_raster.h>
 
-int	ite_intr(adb_event_t *event);
-int	iteon(dev_t dev, int flags);
-int	iteoff(dev_t dev, int flags);
-void	itereset(void);
+#include <machine/bus.h>
 
-#ifndef CN_DEAD
-#include <dev/cons.h>
-#endif
+struct macfb_devconfig {
+	vaddr_t	dc_vaddr;	/* memory space virtual base address */
+	paddr_t	dc_paddr;	/* memory space physical base address */
+	psize_t	dc_size;	/* size of slot memory */
 
-void	itestop(struct tty * tp, int flag);
-void	itestart(register struct tty * tp);
-int	iteopen(dev_t dev, int mode, int devtype, struct proc * p);
-int	iteclose(dev_t dev, int flag, int mode, struct proc * p);
-int	iteread(dev_t dev, struct uio * uio, int flag);
-int	itewrite(dev_t dev, struct uio * uio, int flag);
-int	iteioctl(dev_t, int, caddr_t, int, struct proc *);
-struct tty	*itetty(dev_t dev);
+	int	dc_offset;	/* offset from dc_vaddr to base of flat fb */
 
-int	itecnprobe(struct consdev * cp);
-int	itecninit(struct consdev * cp);
-int	itecngetc(dev_t dev);
-void	itecnputc(dev_t dev, int c);
+	int	dc_wid;		/* width of frame buffer */
+	int	dc_ht;		/* height of frame buffer */
+	int	dc_depth;	/* depth of frame buffer */
+	int	dc_rowbytes;	/* bytes in fb scan line */
+
+	struct raster dc_raster; /* raster description */
+	struct rcons dc_rcons;	/* raster blitter control info */
+};
+
+struct macfb_softc {
+	struct device sc_dev;
+				
+	int nscreens;
+	struct macfb_devconfig *sc_dc;
+};
+
+int	macfb_cnattach(paddr_t);
+void	macfb_clear(struct macfb_devconfig *);

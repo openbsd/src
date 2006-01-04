@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.48 2006/01/01 13:16:01 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.49 2006/01/04 20:39:05 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -345,16 +345,10 @@ Lloaddone:
 	jeq	Lnocache0		| yes, cache already on
 	movl	#CACHE_ON,d0
 	movc	d0,cacr			| clear cache(s)
-#ifdef __notyet__
-	tstl	_C_LABEL(ectype)
-	jeq	Lnocache0
-					| Enable external cache here
-#endif
 
 Lnocache0:
 /* Final setup for call to main(). */
 	jbsr	_C_LABEL(mac68k_init)
-	movw	#PSL_LOWIPL,sr		| lower SPL ; enable interrupts
 
 /*
  * Create a fake exception frame so that cpu_fork() can copy it.
@@ -1885,11 +1879,6 @@ GLOBAL(mmutype)
 
 GLOBAL(cputype)
 	.long	CPU_68020	| default to 68020 CPU
-
-#ifdef __notyet__
-GLOBAL(ectype)
-	.long	EC_NONE		| external cache type, default to none
-#endif
 
 GLOBAL(fputype)
 	.long	FPU_68882	| default to 68882 FPU

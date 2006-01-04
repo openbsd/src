@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.20 2005/10/20 21:44:42 jmc Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.21 2006/01/04 20:39:03 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -37,15 +37,18 @@ _DEV(ch, 17)
 _DEV(st, 14, 5)
 _TITLE(term)
 _DEV(mac_tty0)
-_DEV(ttye)
 dnl _TITLE(call)
 _TITLE(pty)
 _DEV(ptm, 52)
 _DEV(pty, 5)
 _DEV(tty, 4)
 _TITLE(cons)
-_DEV(adb, 23)
-_DEV(grf_mac, 10)
+_DEV(wscons)
+_DEV(wsdisp, 38)
+_DEV(wskbd, 39)
+_DEV(wsmux, 41)
+_TITLE(point)
+_DEV(wsmouse, 40)
 _TITLE(spec)
 _DEV(asc, 36)
 _DEV(bpf, 22)
@@ -86,21 +89,6 @@ ttye*)
 	esac
 	;;
 
-grf*)
-	case $U in
-	0|1|2|3)
-		M grf$U c 10 $U
-		;;
-	*)
-		echo bad unit for grf in: $i
-		;;
-	esac
-	;;
-
-adb)
-	M adb c 23 0
-	;;
-
 asc*)
 	M asc$U c 36 $U
 	;;
@@ -121,12 +109,9 @@ target(all, xy, 0, 1, 2, 3)dnl
 target(all, rd, 0)dnl
 target(all, cd, 0, 1)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
-twrget(all, ttye, ttye, 0)dnl
 target(ramd, sd, 0, 1, 2, 3)dnl
 target(ramd, st, 0, 1)dnl
 target(ramd, rd, 0, 1)dnl
-target(ramd, adb)dnl
 target(ramd, asc, 0)dnl
-target(ramd, grf, 0, 1)dnl
 twrget(ramd, mac_tty0, tty0, 0, 1)dnl
 target(ramd, pty, 0)dnl

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.123 2006/01/01 13:16:01 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.124 2006/01/04 20:39:05 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -114,19 +114,17 @@
 #include <machine/pmap.h>
 #include <net/netisr.h>
 
-void netintr(void);
-
 #include <uvm/uvm_extern.h>
 
 #include <sys/sysctl.h>
 
 #include <dev/cons.h>
-#include <mac68k/mac68k/macrom.h>
 #include <mac68k/dev/adbvar.h>
 
 #include <machine/psc.h>
 #include <machine/viareg.h>
-#include "ether.h"
+
+#include "wsdisplay.h"
 
 /* The following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
@@ -152,8 +150,11 @@ u_long	nblog[NBMAXRANGES];	/* Start logical addr of this range */
 long	nblen[NBMAXRANGES];	/* Length of this range If the length is */
 				/* negative, all phys addrs are the same. */
 
-extern u_long videoaddr;	/* Addr used in kernel for video. */
-extern u_long videorowbytes;	/* Used in kernel for video. */
+/* From Booter via locore */
+long	videoaddr;		/* Addr used in kernel for video. */
+long	videorowbytes;		/* Used in kernel for video. */
+long	videobitdepth;		/* Number of bihs per pixel */
+u_long	videosize;		/* height = 31:16, width 15:0 */
 
 /*
  * Values for IIvx-like internal video
@@ -296,21 +297,61 @@ consinit(void)
 	/*
 	 * Generic console: sys/dev/cons.c
 	 *	Initializes either ite or ser as console.
-	 *	Can be called from locore.s and init_main.c.
+	 *	Can be called from locore.s and init_main.c.  (Ugh.)
 	 */
 	static int init;	/* = 0 */
 
 	if (!init) {
 		cninit();
-#ifdef  DDB
+#ifdef DDB
 		/*
 		 * Initialize kernel debugger, if compiled in.
 		 */
 		ddb_init();
 #endif
 		init = 1;
-	} else
+	} else {
+#if NWSDISPLAY > 0
+		/*
+		 * XXX  This is an evil hack on top of an evil hack!
+		 *
+		 * With the graybar stuff, we've got a catch-22:  we need
+		 * to do at least some console setup really early on, even
+		 * before we're running with the mappings we need.  On
+		 * the other hand, we're not nearly ready to do anything
+		 * with wscons or the ADB driver at that point.
+		 *
+		 * To get around this, wscninit() ignores the first call
+		 * it gets (from cninit(), if not on a serial console).
+		 * Once we're here, we call wscninit() again, which sets
+		 * up the console devices and does the appropriate wscons
+		 * initialization.
+		 */
+		if (mac68k_machine.serial_console == 0) {
+			cons_decl(ws);
+			wscninit(NULL);
+		}
+#endif
+
 		mac68k_calibrate_delay();
+
+#if NZSC > 0 && defined(KGDB)
+		zs_kgdb_init();
+#endif
+
+		if (boothowto & RB_KDB) {
+#ifdef KGDB
+			/* XXX - Ask on console for kgdb_dev? */
+			/* Note: this will just return if kgdb_dev==NODEV */
+			kgdb_connect(1);
+#else	/* KGDB */
+#ifdef DDB
+			/* Enter DDB.  We don't have a monitor PROM. */
+			Debugger();
+#endif /* DDB */
+#endif	/* KGDB */
+		}
+	}
 }
 
 #define CURRENTBOOTERVER	111
@@ -455,6 +496,8 @@ cpu_startup(void)
 		printf("kernel does not support -c; continuing..\n");
 #endif
 	}
+
+	/* Safe for extent allocation to use malloc now. */
 	iomem_malloc_safe = 1;
 }
 
@@ -1078,7 +1121,7 @@ getenvvars(flag, buf)
 	u_long  flag;
 	char   *buf;
 {
-	extern u_long bootdev, videobitdepth, videosize;
+	extern u_long bootdev;
 #if defined(DDB) || NKSYMS > 0
 	extern u_long end, esym;
 #endif
@@ -1152,9 +1195,7 @@ getenvvars(flag, buf)
 	 */
 #if defined(DDB) || NKSYMS > 0
 	esym = getenv("END_SYM");
-#ifndef SYMTAB_SPACE
 	if (esym == 0)
-#endif
 		esym = (long) &end;
 #endif
 
@@ -2570,9 +2611,10 @@ check_video(id, limit, maxm)
 {
 	u_long addr, phys;
 
-	if (!get_physical(videoaddr, &phys))
-		printf("get_mapping(): %s.  False start.\n", id);
-	else {
+	if (!get_physical(videoaddr, &phys)) {
+		if (mac68k_machine.do_graybars)
+			printf("get_mapping(): %s.  False start.\n", id);
+	} else {
 		mac68k_vidlog = videoaddr;
 		mac68k_vidphys = phys;
 		mac68k_vidlen = 32768;
@@ -2582,21 +2624,24 @@ check_video(id, limit, maxm)
 			    != mac68k_vidlen)
 				break;
 			if (mac68k_vidlen + 32768 > limit) {
-				printf("mapping: %s.  Does it never end?\n",
-				    id);
-				printf("               Forcing VRAM size ");
-				printf("to a conservative %ldK.\n", maxm/1024);
+				if (mac68k_machine.do_graybars) {
+					printf("mapping: %s.  Does it never end?\n",
+					    id);
+					printf("    Forcing VRAM size ");
+					printf("to a conservative %ldK.\n",
+					    maxm/1024);
+				}
 				mac68k_vidlen = maxm;
 				break;
 			}
 			mac68k_vidlen += 32768;
 			addr += 32768;
 		}
-#ifdef DIAGNOSTIC
-		printf("  %s internal video at addr 0x%x (phys 0x%x), ",
-		    id, mac68k_vidlog, mac68k_vidphys);
-		printf("len 0x%x.\n", mac68k_vidlen);
-#endif
+		if (mac68k_machine.do_graybars) {
+			printf("  %s internal video at addr 0x%x (phys 0x%x), ",
+			    id, mac68k_vidlog, mac68k_vidphys);
+			printf("len 0x%x.\n", mac68k_vidlen);
+		}
 	}
 }
 
@@ -2631,12 +2676,14 @@ get_mapping(void)
 			high[numranges - 1] = phys + NBPG;
 		}
 	}
-#ifdef DIAGNOSTIC
-	printf("System RAM: %ld bytes in %ld pages.\n", addr, addr / NBPG);
-	for (i = 0; i < numranges; i++) {
-		printf("     Low = 0x%lx, high = 0x%lx\n", low[i], high[i]);
+	if (mac68k_machine.do_graybars) {
+		printf("System RAM: %ld bytes in %ld pages.\n",
+		    addr, addr / NBPG);
+		for (i = 0; i < numranges; i++) {
+			printf("     Low = 0x%lx, high = 0x%lx\n",
+			    low[i], high[i]);
+		}
 	}
-#endif
 
 	/*
 	 * Find on-board video, if we have an idea of where to look
@@ -2675,10 +2722,9 @@ get_mapping(void)
 		 * We've already figured out where internal video is.
 		 * Tell the user what we know.
 		 */
-#ifdef DIAGNOSTIC
-		printf("On-board video at addr 0x%lx (phys 0x%x), len 0x%x.\n",
-		    videoaddr, mac68k_vidphys, mac68k_vidlen);
-#endif
+		if (mac68k_machine.do_graybars)
+			printf("On-board video at addr 0x%lx (phys 0x%x), len 0x%x.\n",
+			    videoaddr, mac68k_vidphys, mac68k_vidlen);
 	} else {
 		/*
 	 	* We should now look through all of NuBus space to find where
@@ -2704,9 +2750,8 @@ get_mapping(void)
 			}
 			len = nbnumranges == 0 ? 0 : nblen[nbnumranges - 1];
 
-#if 0
-			printf ("0x%lx --> 0x%lx\n", addr, phys);
-#endif
+			if (mac68k_machine.do_graybars)
+				printf ("0x%lx --> 0x%lx\n", addr, phys);
 			if (nbnumranges > 0
 			    && addr == nblog[nbnumranges - 1] + len
 			    && phys == nbphys[nbnumranges - 1]) {
@@ -2725,8 +2770,9 @@ get_mapping(void)
 						same = 0;
 					}
 					if (nbnumranges == NBMAXRANGES) {
-						printf("get_mapping(): "
-						    "Too many NuBus ranges.\n");
+						if (mac68k_machine.do_graybars)
+							printf("get_mapping(): "
+							    "Too many NuBus ranges.\n");
 						break;
 					}
 					nbnumranges++;
@@ -2740,13 +2786,13 @@ get_mapping(void)
 			nblen[nbnumranges - 1] = -nblen[nbnumranges - 1];
 			same = 0;
 		}
-#if 0
-		printf("Non-system RAM (nubus, etc.):\n");
-		for (i = 0; i < nbnumranges; i++) {
-			printf("     Log = 0x%lx, Phys = 0x%lx, Len = 0x%lx (%lu)\n",
-			    nblog[i], nbphys[i], nblen[i], nblen[i]);
+		if (mac68k_machine.do_graybars) {
+			printf("Non-system RAM (nubus, etc.):\n");
+			for (i = 0; i < nbnumranges; i++) {
+				printf("     Log = 0x%lx, Phys = 0x%lx, Len = 0x%lx (%lu)\n",
+				    nblog[i], nbphys[i], nblen[i], nblen[i]);
+			}
 		}
-#endif
 
 		/*
 		 * We must now find the logical address of internal video in the
@@ -2773,9 +2819,8 @@ get_mapping(void)
 				    21888, 21888);
 			} else if (0x60000000 <= videoaddr &&
 			    videoaddr < 0x70000000) {
-#ifdef DIAGNOSTIC
-				printf("Checking for Internal Video ");
-#endif
+				if (mac68k_machine.do_graybars)
+					printf("Checking for Internal Video ");
 				/*
 				 * Kludge for IIvx internal video (60b0 0000).
 				 * PB 520 (6000 0000)
@@ -2797,19 +2842,18 @@ get_mapping(void)
 				check_video("AV video (0x50100100)",
 				    1 * 1024 * 1024, 1 * 1024 * 1024);
 			} else {
-#ifdef DIAGNOSTIC
-				printf( "  no internal video at address 0 -- "
-					"videoaddr is 0x%lx.\n", videoaddr);
-#endif
+				if (mac68k_machine.do_graybars)
+					printf( "  no internal video at address 0 -- "
+						"videoaddr is 0x%lx.\n", videoaddr);
 			}
 		} else {
-#ifdef DIAGNOSTIC
-			printf("  Video address = 0x%lx\n", videoaddr);
-			printf("  Int video starts at 0x%x\n",
-			    mac68k_vidlog);
-			printf("  Length = 0x%x (%d) bytes\n",
-			    mac68k_vidlen, mac68k_vidlen);
-#endif
+			if (mac68k_machine.do_graybars) {
+				printf("  Video address = 0x%lx\n", videoaddr);
+				printf("  Int video starts at 0x%x\n",
+				    mac68k_vidlog);
+				printf("  Length = 0x%x (%d) bytes\n",
+				    mac68k_vidlen, mac68k_vidlen);
+			}
 		}
 	}
 

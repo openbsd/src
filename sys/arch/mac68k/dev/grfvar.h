@@ -1,5 +1,6 @@
-/*	$OpenBSD: grfvar.h,v 1.16 2005/08/06 19:51:43 martin Exp $	*/
+/*	$OpenBSD: grfvar.h,v 1.17 2006/01/04 20:39:05 miod Exp $	*/
 /*	$NetBSD: grfvar.h,v 1.11 1996/08/04 06:03:58 scottr Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.5 1995/07/02 05:26:45 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,6 +40,21 @@
  *	@(#)grfvar.h	7.3 (Berkeley) 5/7/91
  */
 
+struct grfmode {
+	u_int8_t	mode_id;	/* Identifier for mode              */
+	caddr_t		fbbase;		/* Base of page of frame buffer     */
+	u_int32_t	fbsize;		/* Size of frame buffer             */
+	u_int16_t	fboff;		/* Offset of frame buffer from base */
+	u_int16_t	rowbytes;	/* Screen rowbytes                  */
+	u_int16_t	width;		/* Screen width                     */
+	u_int16_t	height;		/* Screen height                    */
+	u_int16_t	hres;		/* Horizontal resolution (dpi)      */
+	u_int16_t	vres;		/* Vertical resolution (dpi)        */
+	u_int16_t	ptype;		/* 0 = indexed, 0x10 = direct       */
+	u_int16_t	psize;		/* Screen depth                     */
+	char		pad[32];	/* Space for expansion              */
+};
+
 #define CARD_NAME_LEN	64
 
 /*
@@ -64,37 +80,13 @@ struct grfbus_softc {
 };
 
 /*
- * State info, per grf instance.
- */
-struct grf_softc {
-	struct	device sc_dev;		/* device glue */
-
-	bus_space_tag_t		sc_tag;
-	bus_space_handle_t	sc_regh;
-
-	int	sc_flags;		/* driver flags */
-	u_long	sc_phys;		/* PA of framebuffer */
-
-	struct	grfmode *sc_grfmode;	/* forwarded ... */
-	nubus_slot	*sc_slot;
-					/* mode-change on/off/mode function */
-	int	(*sc_mode)(struct grf_softc *, int, void *);
-};
-
-/*
  * Attach grf and ite semantics to Mac video hardware.
  */
 struct grfbus_attach_args {
 	char		*ga_name;	/* name of semantics to attach */
-	bus_space_tag_t	ga_tag;
-	bus_space_handle_t ga_handle;
 	struct grfmode	*ga_grfmode;
-	nubus_slot	*ga_slot;
 	bus_addr_t	ga_phys;
-	int		(*ga_mode)(struct grf_softc *, int, void *);
 };
-
-typedef	caddr_t (*grf_phys_t)(struct grf_softc *gp, vaddr_t addr);
 
 /* flags */
 #define	GF_ALIVE	0x01
@@ -112,7 +104,7 @@ typedef	caddr_t (*grf_phys_t)(struct grf_softc *gp, vaddr_t addr);
 #define GM_NEWMODE	5
 
 /* minor device interpretation */
-#define GRFUNIT(d)	((d) & 0x7)
+#define GRFUNIT(d)	(minor(d))
 
 /*
  * Nubus image data structure.  This is the equivalent of a PixMap in
@@ -144,17 +136,5 @@ struct image_data {
 #define VID_PAGE_CNT		3
 #define VID_DEV_TYPE		4
 
-int	grfopen(dev_t dev, int flag, int mode, struct proc *p);
-int	grfclose(dev_t dev, int flag, int mode, struct proc *p);
-int	grfioctl(dev_t, int, caddr_t, int, struct proc *p);
-int	grfpoll(dev_t dev, int rw, struct proc *p);
-paddr_t	grfmmap(dev_t dev, off_t off, int prot);
-int	grfon(dev_t dev);
-int	grfoff(dev_t dev);
-int	grfaddr(struct grf_softc *gp, register int off);
-int	grfmap(dev_t dev, caddr_t *addrp, struct proc *p);
-int	grfunmap(dev_t dev, caddr_t addr, struct proc *p);
-
-void	grf_establish(struct grfbus_softc *, nubus_slot *,
-	    int (*)(struct grf_softc *, int, void *));
+void	grf_establish(struct grfbus_softc *);
 int	grfbusprint(void *, const char *);

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.18 2005/05/01 07:54:42 david Exp $
+#	$OpenBSD: RAMDISK,v 1.19 2006/01/04 20:39:04 miod Exp $
 #
 # RAMDISK - bsd.rd configuration file (non-SBC version)
 
@@ -33,38 +33,41 @@ option		M68030
 option		M68020		# Must have 68851 PMMU
 option		FPSP
 option		FPU_EMULATE
-option		DISABLE_ADB_WITH_SERIAL_CONSOLE
 #option		MRG_ADB		# Use ROM-based ADB driver
 
 config		bsd		root on rd0a
 maxusers	32
 
-mainbus0 at root
+mainbus0	at root
 
 # on-board I/O
-obio0 at mainbus?
+obio0		at mainbus?
 
-adb0	at obio?
-esp0	at obio?		# SCSI NCR 53C9x
-esp1	at obio?		# SCSI NCR 53C9x
-intvid0	at obio?		# Internal video hardware
-mc*	at obio?		# MACE ethernet on Centris/Quadra 660av
-sn*	at obio?		# Internal ethernet
-zsc0	at obio?		# Zilog serial chip
-zstty*	at zsc?
+adb0		at obio?
+akbd*		at adb?		# ADB keyboard
+#ams*		at adb?		# ADB mouse
 
+esp0		at obio?		# SCSI NCR 53C9x
+esp1		at obio?		# SCSI NCR 53C9x
+intvid0		at obio?		# Internal video hardware
+mc*		at obio?		# MACE ethernet on Centris/Quadra 660av
+sn*		at obio?		# Internal ethernet
+zsc0		at obio?		# Zilog serial chip
+zstty*		at zsc?
+
+# nubus boards
 nubus0		at mainbus?
 
 ae*		at nubus?	# Most Apple Ethernet Cards
 macvid*		at nubus?	# NuBus video cards
 sn*		at nubus?	# SONIC-based ethernet cards
 
-# Attach grf semantics to all video hardware as it is found
-grf*		at intvid?
-grf*		at macvid?
-
-# Attach ite semantics to the appropriate grf device
-ite0		at grf?
+# workstation console
+macfb*		at intvid?
+macfb*		at macvid?
+wskbd*		at akbd?
+#wsmouse*	at ams?
+wsdisplay*	at macfb?
 
 # Enable only one of ncrscsi or sbc
 ncrscsi0	at obio?		# SCSI NCR 5380
@@ -74,8 +77,8 @@ scsibus*	at esp?
 scsibus*	at ncrscsi?
 scsibus*	at sbc?
 
-sd*	at scsibus?		# SCSI disk drives
-st*	at scsibus?		# SCSI tape drives
-cd*	at scsibus?		# SCSI CD-ROM drives
+sd*		at scsibus?		# SCSI disk drives
+st*		at scsibus?		# SCSI tape drives
+cd*		at scsibus?		# SCSI CD-ROM drives
 
 pseudo-device	rd 1

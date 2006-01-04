@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.35 2004/02/10 01:31:21 millert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.36 2006/01/04 20:39:05 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.41 1997/02/11 07:35:49 scottr Exp $	*/
 
 /*
@@ -76,8 +76,6 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-#include "ite.h"
-cdev_decl(ite);
 #define mmread	mmrw
 #define mmwrite	mmrw
 cdev_decl(mm);
@@ -85,15 +83,10 @@ cdev_decl(mm);
 #include "ss.h"
 #include "uk.h"
 cdev_decl(fd);
-#include "grf.h"
-cdev_decl(grf);
-#define NADB 1 /* #include "adb.h" */
-cdev_decl(adb);
 #include "zsc.h"
 cdev_decl(zsc);
 #include "zstty.h"
 cdev_decl(zs);
-#include "ch.h"
 #include "bpfilter.h"
 #include "tun.h"
 #include "asc.h"
@@ -103,6 +96,10 @@ cdev_decl(asc);
 #include <xfs/nxfs.h>
 cdev_decl(xfs_dev);
 #endif
+#include "wsdisplay.h"
+#include "wskbd.h"
+#include "wsmouse.h"
+#include "wsmux.h"
 
 #include "pf.h"
 
@@ -120,8 +117,8 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 7 */
 	cdev_notdef(),			/* 8 */
 	cdev_notdef(),			/* 9 */
-	cdev_fb_init(NGRF,grf),		/* 10: frame buffer */
-	cdev_tty_init(NITE,ite),	/* 11: console terminal emulator */
+	cdev_notdef(),			/* 10 was GRF */
+	cdev_notdef(),			/* 11 was ITE */
 	cdev_tty_init(NZSTTY,zs),	/* 12: 2 mac serial ports -- BG*/
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
 	cdev_tape_init(NST,st),		/* 14: SCSI tape */
@@ -133,7 +130,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCCD,ccd),	/* 20: concatenated disk driver */
 	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 22: Berkeley packet filter */
-	cdev_mouse_init(NADB,adb),	/* 23: ADB event interface */
+	cdev_notdef(),			/* 23 was ADB */
 	cdev_bpftun_init(NTUN,tun),	/* 24: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 25: loadable module driver */
 	cdev_lkm_dummy(),		/* 26 */
@@ -148,10 +145,10 @@ struct cdevsw	cdevsw[] =
 	cdev_pf_init(NPF,pf),		/* 35: packet filter */
 	cdev_audio_init(NASC,asc),      /* 36: ASC audio device */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 37: Kernel symbols device */
-	cdev_notdef(),			/* 38 */
-	cdev_notdef(),			/* 39 */
-	cdev_notdef(),			/* 40 */
-	cdev_notdef(),			/* 41 */
+	cdev_wsdisplay_init(NWSDISPLAY, wsdisplay), /* 38: displays */
+	cdev_mouse_init(NWSKBD, wskbd),	/* 39: keyboards */
+	cdev_mouse_init(NWSMOUSE, wsmouse), /* 40: mice */
+	cdev_mouse_init(NWSMUX, wsmux),	/* 41: ws multiplexor */
 	cdev_notdef(),			/* 42 */
 	cdev_notdef(),			/* 43 */
 	cdev_notdef(),			/* 44 */
@@ -238,14 +235,13 @@ int chrtoblktbl[] = {
 };
 int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
 
-#define itecnpollc	nullcnpollc
-cons_decl(ite);
+cons_decl(ws);
 #define zscnpollc	nullcnpollc
 cons_decl(zs);
 
 struct	consdev constab[] = {
-#if NITE > 0
-	cons_init(ite),
+#if NWSDISPLAY > 0
+	cons_init(ws),
 #endif
 #if NZSTTY > 0
 	cons_init(zs),

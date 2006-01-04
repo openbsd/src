@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.23 2006/01/01 13:16:01 miod Exp $	*/
+/*	$OpenBSD: via.c,v 1.24 2006/01/04 20:39:05 miod Exp $	*/
 /*	$NetBSD: via.c,v 1.62 1997/09/10 04:38:48 scottr Exp $	*/
 
 /*-
@@ -473,22 +473,21 @@ via1_register_irq(int irq, int (*irq_func)(void *), void *client_data,
 	ih = &via1intrs[irq];
 
 	/*
-	 * VIA1_T1 is special, since we need to temporary replace
-	 * the callback during bootstrap, to compute the delay
-	 * values.
-	 * To avoid a loop in evcount lists, only invoke
-	 * evcount_attach() if name is non-NULL, and have the two
-	 * replacements calls in clock.c pass a NULL pointer.
+	 * VIA1 interrupts are special, since we start with temporary handlers,
+	 * and later switch to better routines whenever possible.
+	 * To avoid a loop in evcount lists, only invoke evcount_attach() if
+	 * name is non-NULL, and have the replacements calls in adb_direct.c,
+	 * clock.c and pm_direct.c pass a NULL pointer.
 	 */
 #ifdef DIAGNOSTIC
-	if (ih->ih_fn != NULL && irq != VIA1_T1)
-		panic("via1_register_irq: attempt to share irq %d", irq);
+	if (ih->ih_fn != NULL && name != NULL)
+		panic("via1_register_irq: improper invocation");
 #endif
 
 	ih->ih_fn = irq_func;
 	ih->ih_arg = client_data;
 	ih->ih_ipl = irq;
-	if (name != NULL || irq != VIA1_T1)
+	if (name != NULL)
 		evcount_attach(&ih->ih_count, name, (void *)&ih->ih_ipl,
 		    &evcount_intr);
 }

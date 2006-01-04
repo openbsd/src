@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mac68k,v 1.34 2005/12/21 18:52:27 miod Exp $
+#	$OpenBSD: files.mac68k,v 1.35 2006/01/04 20:39:04 miod Exp $
 #	$NetBSD: files.mac68k,v 1.61 1997/03/01 20:22:16 scottr Exp $
 
 # mac68k-specific configuration info
@@ -19,19 +19,34 @@ device	nubus {}
 attach	nubus at mainbus
 file	arch/mac68k/dev/nubus.c		nubus
 
-device	adb
+device	adb {}
 attach	adb at obio
 file	arch/mac68k/dev/adb.c		adb
-file	arch/mac68k/dev/adbsys.c
-file	arch/mac68k/dev/adbsysasm.s
-file	arch/mac68k/dev/adb_direct.c
+file	arch/mac68k/dev/adbsysasm.s	adb
+file	arch/mac68k/dev/adb_direct.c	adb
 file	arch/mac68k/dev/pm_direct.c
+
+#
+# "workstation console" routines
+#
+include	"dev/wscons/files.wscons"
+
+#
+# adb devices
+#
+device	akbd: wskbddev
+attach	akbd at adb
+file	arch/mac68k/dev/akbd.c		akbd needs-flag
+
+device	ams: wsmousedev
+attach	ams at adb
+file	arch/mac68k/dev/ams.c		ams needs-flag
 
 device	asc
 attach	asc at obio
 file	arch/mac68k/dev/asc.c		asc needs-flag
 
-define grfbus {}
+define	grfbus {}
 file	arch/mac68k/dev/grf_subr.c	grfbus
 
 device	intvid: grfbus
@@ -42,18 +57,14 @@ device	macvid: grfbus
 attach	macvid at nubus
 file	arch/mac68k/dev/grf_mv.c	macvid
 
-device	grf {}
-attach	grf at grfbus
-file	arch/mac68k/dev/grf.c		grf needs-flag
+device	macfb: wsemuldisplaydev, wsrasteremulops
+attach	macfb at grfbus
+file	arch/mac68k/dev/macfb.c		macfb needs-flag
 
 device	ae: ifnet, ether
 attach	ae at nubus with ae_nubus
 file	arch/mac68k/dev/if_ae_nubus.c	ae_nubus
 file	arch/mac68k/dev/if_ae.c		ae
-
-device	ite
-attach	ite at grf
-file	arch/mac68k/dev/ite.c		ite needs-flag
 
 device	sn: ifnet, ether
 attach	sn at obio with sn_obio
@@ -87,12 +98,10 @@ device	zsc {[channel = -1]}
 attach	zsc at obio
 file	arch/mac68k/dev/zs.c		zsc needs-flag
 file	arch/mac68k/dev/z8530sc.c	zsc
-#file	dev/ic/z8530sc.c		zsc
 
 device	zstty: tty
 attach	zstty at zsc
 file	arch/mac68k/dev/z8530tty.c	zstty needs-flag
-#file	dev/ic/z8530tty.c		zstty needs-flag
 
 file	arch/m68k/m68k/db_memrw.c	ddb
 include "arch/m68k/fpe/files.fpe"
@@ -117,6 +126,7 @@ file	arch/mac68k/mac68k/sys_machdep.c
 file	arch/mac68k/mac68k/trap.c
 file	arch/mac68k/mac68k/via.c
 file	arch/mac68k/mac68k/vm_machdep.c
+file	arch/mac68k/mac68k/wscons_machdep.c
 
 file	dev/cninit.c
 

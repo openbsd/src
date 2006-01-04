@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.22 2005/12/27 18:31:09 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.23 2006/01/04 20:39:05 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.38 1996/12/18 05:46:09 scottr Exp $	*/
 
 /*
@@ -82,6 +82,7 @@ int getstr(char *, int);
 void findbootdev(void);
 int target_to_unit(u_long, u_long, u_long);
 
+void	diskconf(void);
 void	setroot(void);
 
 #ifdef RAMDISK_HOOKS
@@ -93,15 +94,21 @@ cpu_configure()
 {
 	mrg_init();		/* Init Mac ROM Glue */
 	startrtclock();		/* start before adb_init() */
-	adb_init();		/* ADB device subsystem & driver */
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("No mainbus found!");
+	spl0();
 
 	findbootdev();
+	md_diskconf = diskconf;
+	cold = 0;
+}
+
+void
+diskconf()
+{
 	setroot();
 	dumpconf();
-	cold = 0;
 }
 
 struct nam2blk {

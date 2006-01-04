@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.26 2005/09/12 10:07:29 martin Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.27 2006/01/04 20:39:05 miod Exp $	*/
 /*	$NetBSD: grf_nubus.c,v 1.62 2001/01/22 20:27:02 briggs Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
-#include <machine/grfioctl.h>
 #include <machine/viareg.h>
 
 #include <mac68k/dev/nubus.h>
@@ -68,7 +67,6 @@ static int	grfmv_intr_gvimage(void *vsc);
 static int	grfmv_intr_radius_gsc(void *vsc);
 static int	grfmv_intr_radius_gx(void *vsc);
 
-static int	grfmv_mode(struct grf_softc *gp, int cmd, void *arg);
 static int	grfmv_match(struct device *, void *, void *);
 static void	grfmv_attach(struct device *, struct device *, void *);
 
@@ -375,27 +373,7 @@ bad:
 	}
 
 	/* Perform common video attachment. */
-	grf_establish(sc, &sc->sc_slot, grfmv_mode);
-}
-
-static int
-grfmv_mode(gp, cmd, arg)
-	struct grf_softc *gp;
-	int cmd;
-	void *arg;
-{
-	switch (cmd) {
-	case GM_GRFON:
-	case GM_GRFOFF:
-		return 0;
-	case GM_CURRMODE:
-		break;
-	case GM_NEWMODE:
-		break;
-	case GM_LISTMODES:
-		break;
-	}
-	return EINVAL;
+	grf_establish(sc);
 }
 
 /* Interrupt handlers... */

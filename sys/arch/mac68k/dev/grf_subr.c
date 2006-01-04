@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_subr.c,v 1.7 2005/08/06 19:51:43 martin Exp $	*/
+/*	$OpenBSD: grf_subr.c,v 1.8 2006/01/04 20:39:05 miod Exp $	*/
 /*	$NetBSD: grf_subr.c,v 1.6 1997/02/20 00:23:28 scottr Exp $	*/
 
 /*-
@@ -42,16 +42,13 @@
 #include <sys/systm.h>
 
 #include <machine/bus.h>
-#include <machine/grfioctl.h>
 
 #include <mac68k/dev/nubus.h>
 #include <mac68k/dev/grfvar.h>
 
 void
-grf_establish(sc, sp, g_mode)
+grf_establish(sc)
 	struct grfbus_softc *sc;
-	nubus_slot *sp;
-	int (*g_mode)(struct grf_softc *, int, void *);
 {
 	struct grfmode *gm = &sc->curr_mode;
 	struct grfbus_attach_args ga;
@@ -66,9 +63,7 @@ grf_establish(sc, sp, g_mode)
 	/* Attach grf semantics to the hardware. */
 	ga.ga_name = "grf";
 	ga.ga_grfmode = gm;
-	ga.ga_slot = sp;
 	ga.ga_phys = sc->sc_basepa;
-	ga.ga_mode = g_mode;
 	(void)config_found(&sc->sc_dev, &ga, grfbusprint);
 }
 

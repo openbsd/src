@@ -1,7 +1,7 @@
-/*	$OpenBSD: adbvar.h,v 1.8 2003/09/23 16:51:11 millert Exp $	*/
-/*	$NetBSD: adbvar.h,v 1.5 1997/01/13 07:01:24 scottr Exp $	*/
+/*	$OpenBSD: adbvar.h,v 1.9 2006/01/04 20:39:04 miod Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.22 2005/01/15 16:00:59 chs Exp $	*/
 
-/*-
+/*
  * Copyright (C) 1994	Bradley A. Grantham
  * All rights reserved.
  *
@@ -31,60 +31,60 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <mac68k/mac68k/macrom.h>
 #include <machine/adbsys.h>
 
-#define ADB_MAXTRACE	(NBPG / sizeof(int) - 1)
-extern int adb_traceq[ADB_MAXTRACE];
-extern int adb_traceq_tail;
-extern int adb_traceq_len;
+/*
+ * Arguments used to attach a device to the Apple Desktop Bus
+ */
+struct adb_attach_args {
+	int	origaddr;
+	int	adbaddr;
+	int	handler_id;
+};
 
-typedef struct adb_trace_xlate_s {
-	int     params;
-	char   *string;
-}       adb_trace_xlate_t;
+extern int	adb_polling;
 
-extern adb_trace_xlate_t adb_trace_xlations[];
+#ifdef DEBUG
+#ifndef ADB_DEBUG
+#define ADB_DEBUG
+#endif
+#endif
+
+#ifdef ADB_DEBUG
+extern int	adb_debug;
+#endif
 
 /* adb.c */
-void    adb_asmcomplete(void);
-void	adb_enqevent(adb_event_t *event);
-void	adb_handoff(adb_event_t *event);
-void	adb_autorepeat(void *keyp);
-void	adb_dokeyupdown(adb_event_t *event);
-void	adb_keymaybemouse(adb_event_t *event);
-void	adb_processevent(adb_event_t *event);
-int	adbopen(dev_t dev, int flag, int mode, struct proc *p);
-int	adbclose(dev_t dev, int flag, int mode, struct proc *p);
-int	adbread(dev_t dev, struct uio *uio, int flag);
-int	adbwrite(dev_t dev, struct uio *uio, int flag);
-int	adbioctl(dev_t , int , caddr_t , int , struct proc *);
-int	adbpoll(dev_t dev, int rw, struct proc *p);
+int	adb_op_sync(Ptr, Ptr, Ptr, short);
+void	adb_op_comprout(void);
 
-/* adbsysadm.s */
-void	extdms_complete(void);
-
-/* adbsys.c */
-void	adb_complete(caddr_t buffer, caddr_t data_area, int adb_command);
-void	extdms_init(int);
-
-#ifndef MRG_ADB
+/* adbsysasm.s */
+void	adb_kbd_asmcomplete(void);
+void	adb_ms_asmcomplete(void);
 
 /* types of adb hardware that we (will eventually) support */
-#define ADB_HW_UNKNOWN		0x01	/* don't know */
-#define ADB_HW_II		0x02	/* Mac II series */
-#define ADB_HW_IISI		0x03	/* Mac IIsi series */
-#define ADB_HW_PB		0x04	/* PowerBook series */
-#define ADB_HW_CUDA		0x05	/* Machines with a Cuda chip */
+#define ADB_HW_UNKNOWN		0x0	/* don't know */
+#define ADB_HW_II		0x1	/* Mac II series */
+#define ADB_HW_IISI		0x2	/* Mac IIsi series */
+#define ADB_HW_PB		0x3	/* PowerBook series */
+#define ADB_HW_CUDA		0x4	/* Machines with a Cuda chip */
+#define	MAX_ADB_HW		4	/* Number of ADB hardware types */
 
+#define	ADB_CMDADDR(cmd)	((u_int8_t)(cmd & 0xf0) >> 4)
+#define	ADBFLUSH(dev)		((((u_int8_t)dev & 0x0f) << 4) | 0x01)
+#define	ADBLISTEN(dev, reg)	((((u_int8_t)dev & 0x0f) << 4) | 0x08 | reg)
+#define	ADBTALK(dev, reg)	((((u_int8_t)dev & 0x0f) << 4) | 0x0c | reg)
+
+#ifndef MRG_ADB
 /* adb_direct.c */
 int	adb_poweroff(void);
 int	CountADBs(void);
 void	ADBReInit(void);
-int	GetIndADB(ADBDataBlock * info, int index);
-int	GetADBInfo(ADBDataBlock * info, int adbAddr);
-int	SetADBInfo(ADBSetInfoBlock * info, int adbAddr);
-int	ADBOp(Ptr buffer, Ptr compRout, Ptr data, short commandNum);
-int	adb_read_date_time(unsigned long *t);
-int	adb_set_date_time(unsigned long t);
-
-#endif
+int	GetIndADB(ADBDataBlock *, int);
+int	GetADBInfo(ADBDataBlock *, int);
+int	SetADBInfo(ADBSetInfoBlock *, int);
+int	ADBOp(Ptr, Ptr, Ptr, short);
+int	adb_read_date_time(unsigned long *);
+int	adb_set_date_time(unsigned long);
+#endif /* !MRG_ADB */
