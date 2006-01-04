@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.996 2006/01/04 06:00:13 brad Exp 
+ *	OpenBSD: pcidevs,v 1.997 2006/01/04 10:56:05 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3096,6 +3096,7 @@
 #define	PCI_PRODUCT_VIATECH_K8M800_0	0x0204		/* K8M800 Host */
 #define	PCI_PRODUCT_VIATECH_K8T890_0	0x0238		/* K8T890 Host */
 #define	PCI_PRODUCT_VIATECH_PM800_AGP	0x0259		/* PM800 AGP */
+#define	PCI_PRODUCT_VIATECH_KT880_AGP	0x0269		/* KT880 AGP */
 #define	PCI_PRODUCT_VIATECH_K8HTB_0	0x0282		/* K8HTB Host */
 #define	PCI_PRODUCT_VIATECH_VT8363	0x0305		/* VT8363 Host */
 #define	PCI_PRODUCT_VIATECH_VT8371_HB	0x0391		/* VT8371 Host */
