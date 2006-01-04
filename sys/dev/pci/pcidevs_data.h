@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.993 2006/01/02 03:40:47 brad Exp 
+ *	OpenBSD: pcidevs,v 1.994 2006/01/04 01:09:51 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1163,8 +1163,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "8111 SMBus",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8111_ACPI,
-	    "8111 ACPI",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8111_PMC,
+	    "8111 Power",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8111_ACA,

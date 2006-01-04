@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.993 2006/01/02 03:40:47 brad Exp 
+ *	OpenBSD: pcidevs,v 1.994 2006/01/04 01:09:51 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -629,7 +629,7 @@
 #define	PCI_PRODUCT_AMD_PBC8111_LPC	0x7468		/* AMD8111 LPC */
 #define	PCI_PRODUCT_AMD_8111_IDE	0x7469		/* 8111 IDE */
 #define	PCI_PRODUCT_AMD_8111_SMB	0x746a		/* 8111 SMBus */
-#define	PCI_PRODUCT_AMD_8111_ACPI	0x746b		/* 8111 ACPI */
+#define	PCI_PRODUCT_AMD_8111_PMC	0x746b		/* 8111 Power */
 #define	PCI_PRODUCT_AMD_8111_ACA	0x746d		/* 8111 AC97 */
 
 /* AMI */
