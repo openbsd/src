@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.30 2005/12/15 08:45:33 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.31 2006/01/04 21:58:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -115,6 +115,7 @@ struct esm_softc {
 	TAILQ_HEAD(, esm_sensor) sc_sensors;
 	struct esm_sensor	*sc_nextsensor;
 	int			sc_retries;
+	int			sc_step;
 	struct timeout		sc_timeout;
 
 	int			sc_wdog_period;
@@ -150,9 +151,9 @@ int		esm_thresholds(struct esm_softc *, struct esm_devmap *,
 
 int		esm_bmc_ready(struct esm_softc *, int, u_int8_t, u_int8_t, int);
 int		esm_cmd(struct esm_softc *, void *, size_t, void *, size_t,
-		    int);
+		    int, int);
 int		esm_smb_cmd(struct esm_softc *, struct esm_smb_req *,
-		    struct esm_smb_resp *, int);
+		    struct esm_smb_resp *, int, int);
 
 int64_t		esm_val2temp(u_int16_t);
 int64_t		esm_val2volts(u_int16_t);
@@ -264,7 +265,7 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_nextsensor = TAILQ_FIRST(&sc->sc_sensors);
 		sc->sc_retries = 0;
 		timeout_set(&sc->sc_timeout, esm_refresh, sc);
-		timeout_add(&sc->sc_timeout, hz * 10);
+		timeout_add(&sc->sc_timeout, hz);
 	}
 }
 
@@ -299,7 +300,7 @@ esm_watchdog(void *arg, int period)
 	prop.action = (period == 0) ? ESM_WDOG_DISABLE : ESM_WDOG_RESET;
 	prop.time = period;
 
-	if (esm_cmd(sc, &prop, sizeof(prop), NULL, 0, 1) != 0) {
+	if (esm_cmd(sc, &prop, sizeof(prop), NULL, 0, 1, 0) != 0) {
 		splx(s);
 		return (0);
 	}
@@ -309,7 +310,7 @@ esm_watchdog(void *arg, int period)
 	state.state = (period == 0) ? 0 : 1;
 
 	/* we have the hw, this can't (shouldn't) fail */
-	esm_cmd(sc, &state, sizeof(state), NULL, 0, 1);
+	esm_cmd(sc, &state, sizeof(state), NULL, 0, 1, 0);
 
 	splx(s);
 
@@ -325,7 +326,7 @@ esm_refresh(void *arg)
 	struct esm_smb_req	req;
 	struct esm_smb_resp	resp;
 	struct esm_smb_resp_val	*val = &resp.resp_val;
-	int			nsensors, i;
+	int			nsensors, i, step;
 
 	memset(&req, 0, sizeof(req));
 	req.h_cmd = ESM2_CMD_SMB_XMIT_RECV;
@@ -347,7 +348,8 @@ esm_refresh(void *arg)
 		break;
 	}
 
-	if (esm_smb_cmd(sc, &req, &resp, 0) != 0) {
+	if ((step = esm_smb_cmd(sc, &req, &resp, 0, sc->sc_step)) != 0) {
+		sc->sc_step = step;
 		if (++sc->sc_retries < 10)
 			goto tick;
 
@@ -416,6 +418,7 @@ esm_refresh(void *arg)
 
 	sc->sc_nextsensor = TAILQ_NEXT(es, es_entry);
 	sc->sc_retries = 0;
+	sc->sc_step = 0;
 
 	if (sc->sc_nextsensor == NULL) {
 		sc->sc_nextsensor = TAILQ_FIRST(&sc->sc_sensors);
@@ -423,7 +426,7 @@ esm_refresh(void *arg)
 		return;
 	}
 tick:
-	timeout_add(&sc->sc_timeout, hz / 100);
+	timeout_add(&sc->sc_timeout, hz / 20);
 }
 
 int
@@ -443,7 +446,7 @@ esm_get_devmap(struct esm_softc *sc, int dev, struct esm_devmap *devmap)
 	req.index = dev;
 	req.ndev = 1;
 
-	if (esm_cmd(sc, &req, sizeof(req), &resp, sizeof(resp), 1) != 0)
+	if (esm_cmd(sc, &req, sizeof(req), &resp, sizeof(resp), 1, 0) != 0)
 		return (1);
 
 	if (resp.status != 0)
@@ -792,7 +795,7 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 
 	for (i = 0; i < mapsize; i++) {
 		req.req_val.v_sensor = i;
-		if (esm_smb_cmd(sc, &req, &resp, 1) != 0)
+		if (esm_smb_cmd(sc, &req, &resp, 1, 0) != 0)
 			continue;
 
 		DPRINTFN(1, "%s: dev: 0x%02x sensor: %d (%s) "
@@ -910,7 +913,7 @@ esm_thresholds(struct esm_softc *sc, struct esm_devmap *devmap,
 	req.req_thr.t_cmd = ESM2_SMB_SENSOR_THRESHOLDS;
 	req.req_thr.t_sensor = es->es_id;
 
-	if (esm_smb_cmd(sc, &req, &resp, 1) != 0)
+	if (esm_smb_cmd(sc, &req, &resp, 1, 0) != 0)
 		return (1);
 
 	DPRINTFN(2, "%s: dev: %d sensor: %d lo fail: %d hi fail: %d "
@@ -943,55 +946,69 @@ esm_bmc_ready(struct esm_softc *sc, int port, u_int8_t mask, u_int8_t val,
 
 int
 esm_cmd(struct esm_softc *sc, void *cmd, size_t cmdlen, void *resp,
-    size_t resplen, int wait)
+    size_t resplen, int wait, int step)
 {
 	u_int8_t		*tx = (u_int8_t *)cmd;
 	u_int8_t		*rx = (u_int8_t *)resp;
 	int			i;
 
-	/* Wait for card ready */
-	if (esm_bmc_ready(sc, ESM2_CTRL_REG, ESM2_TC_READY, 0, wait) != 0)
-		return (1); /* busy */
+	switch (step) {
+	case 0:
+	case 1:
+		/* Wait for card ready */
+		if (esm_bmc_ready(sc, ESM2_CTRL_REG, ESM2_TC_READY,
+		    0, wait) != 0)
+			return (1); /* busy */
 
-	/* Write command data to port */
-	ECTRLWR(sc, ESM2_TC_CLR_WPTR);
-	for (i = 0; i < cmdlen; i++) {
-		DPRINTFN(2, "write: %.2x\n", *tx);
-		EDATAWR(sc, *tx);
-		tx++;
+		/* Write command data to port */
+		ECTRLWR(sc, ESM2_TC_CLR_WPTR);
+		for (i = 0; i < cmdlen; i++) {
+			DPRINTFN(2, "write: %.2x\n", *tx);
+			EDATAWR(sc, *tx);
+			tx++;
+		}
+
+		/* Ring doorbell... */
+		ECTRLWR(sc, ESM2_TC_H2ECDB);
+		/* FALLTHROUGH */
+	case 2:
+		/* ...and wait */
+		if (esm_bmc_ready(sc, ESM2_CTRL_REG, ESM2_TC_EC2HDB,
+		    ESM2_TC_EC2HDB, wait) != 0)
+			return (2);
+
+		/* Set host busy semaphore and clear doorbell */
+		ECTRLWR(sc, ESM2_TC_HOSTBUSY);
+		ECTRLWR(sc, ESM2_TC_EC2HDB);
+	
+		/* Read response data from port */
+		ECTRLWR(sc, ESM2_TC_CLR_RPTR);
+		for (i = 0; i < resplen; i++) {
+			*rx = EDATARD(sc);
+			DPRINTFN(2, "read = %.2x\n", *rx);
+			rx++;
+		}
+
+		/* release semaphore */
+		ECTRLWR(sc, ESM2_TC_HOSTBUSY);
+		break;
 	}
-
-	/* Ring doorbell and wait */
-	ECTRLWR(sc, ESM2_TC_H2ECDB);
-	esm_bmc_ready(sc, ESM2_CTRL_REG, ESM2_TC_EC2HDB, ESM2_TC_EC2HDB, 1);
-
-	/* Set host busy semaphore and clear doorbell */
-	ECTRLWR(sc, ESM2_TC_HOSTBUSY);
-	ECTRLWR(sc, ESM2_TC_EC2HDB);
-
-	/* Read response data from port */
-	ECTRLWR(sc, ESM2_TC_CLR_RPTR);
-	for (i = 0; i < resplen; i++) {
-		*rx = EDATARD(sc);
-		DPRINTFN(2, "read = %.2x\n", *rx);
-		rx++;
-	}
-
-	/* release semaphore */
-	ECTRLWR(sc, ESM2_TC_HOSTBUSY);
 
 	return (0);
 }
 
 int
 esm_smb_cmd(struct esm_softc *sc, struct esm_smb_req *req,
-    struct esm_smb_resp *resp, int wait)
+    struct esm_smb_resp *resp, int wait, int step)
 {
+	int			err;
+
 	memset(resp, 0, sizeof(struct esm_smb_resp));
 
-	if (esm_cmd(sc, req, sizeof(req->hdr) + req->h_txlen, resp,
-	    sizeof(resp->hdr) + req->h_rxlen, wait) != 0)
-		return (1);
+	err = esm_cmd(sc, req, sizeof(req->hdr) + req->h_txlen, resp,
+	    sizeof(resp->hdr) + req->h_rxlen, wait, step);
+	if (err)
+		return (err);
 
 	if (resp->h_status != 0 || resp->h_i2csts != 0) {
 		DPRINTFN(3, "%s: dev: 0x%02x error status: 0x%02x "
