@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.28 2006/01/04 20:23:11 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.29 2006/01/04 20:25:34 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -569,24 +569,17 @@ allocsys(caddr_t v)
 		if (nbuf < 16)
 			nbuf = 16;
 	}
-	/* Restrict to at most 70% filled kvm */
+	/* Restrict to at most 35% filled kvm */
 	if (nbuf * MAXBSIZE >
-	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) * 7 / 10)
+	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) * 7 / 20)
 		nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
-		    MAXBSIZE * 7 / 10;
+		    MAXBSIZE * 7 / 20;
 
 	/* More buffer pages than fits into the buffers is senseless.  */
 	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
 		bufpages = nbuf * MAXBSIZE / PAGE_SIZE;
 
 	valloc(buf, struct buf, nbuf);
-
-	/*
-	 * Clear allocated memory.
-	 */
-	if (start != 0) {
-		bzero(start, v - start);
-	}
 
 	return(v);
 }
@@ -673,16 +666,10 @@ cpu_startup()
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
 			NULL, UVM_UNKNOWN_OFFSET, 0,
 			UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-			UVM_ADV_NORMAL, 0)) != KERN_SUCCESS) {
+			UVM_ADV_NORMAL, 0)))
 		panic("cpu_startup: cannot allocate VM for buffers");
-	}
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
-	if (base >= MAXBSIZE / PAGE_SIZE) {
-		/* don't want to alloc more physical mem than needed */
-		base = MAXBSIZE / PAGE_SIZE;
-		residual = 0;
-	}
 
 	for (i = 0; i < nbuf; i++) {
 		vsize_t curbufsize;
