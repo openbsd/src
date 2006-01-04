@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.19 2006/01/04 06:04:42 canacar Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.20 2006/01/04 17:51:39 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -925,14 +925,14 @@ trunk_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 		goto bad;
 	trifp = &tr->tr_ac.ac_if;
 
+	error = (*tr->tr_input)(tr, tp, eh, m);
+	if (error != 0)
+		goto bad;
+
 #if NBPFILTER > 0
 	if (trifp->if_bpf)
 		bpf_mtap_hdr(trifp->if_bpf, (char *)eh, ETHER_HDR_LEN, m);
 #endif
-
-	error = (*tr->tr_input)(tr, tp, eh, m);
-	if (error != 0)
-		goto bad;
 
 	trifp->if_ipackets++;
 
