@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.23 2004/02/01 12:26:45 grange Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.24 2006/01/05 20:09:18 matthieu Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.28 1996/05/03 19:42:29 christos Exp $	*/
 
 /*-
@@ -394,6 +394,13 @@ i386_set_ioperm(p, args, retval)
 	if ((error = suser(p, 0)) != 0)
 		return error;
 
+#ifdef APERTURE
+	if (!allowaperture && securelevel > 0)
+		return EPERM;
+#else
+	if (securelevel > 0)
+		return EPERM;
+#endif
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
