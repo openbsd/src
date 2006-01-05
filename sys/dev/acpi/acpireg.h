@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.6 2005/12/16 18:11:55 jordan Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.7 2006/01/05 21:22:21 grange Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@opebsd.org>
@@ -430,6 +430,16 @@ struct acpi_facs {
 #define		ACPI_PM1_BM_RLD			0x0002
 #define		ACPI_PM1_GBL_RLS		0x0004
 #define		ACPI_PM1_SLP_EN			0x2000
+
+/*
+ * Sleeping States
+ */
+#define ACPI_STATE_S0		0
+#define ACPI_STATE_S1		1
+#define ACPI_STATE_S2		2
+#define ACPI_STATE_S3		3
+#define ACPI_STATE_S4		4
+#define ACPI_STATE_S5		5
 
 /*
  * ACPI Device IDs
