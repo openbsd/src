@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.44 2006/01/05 20:17:12 brad Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.45 2006/01/05 21:34:35 brad Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -228,7 +228,7 @@ fxp_pci_attach(parent, self, aux)
 	    (PCI_PRODUCT(pa->pa_id) > 0x1030 && 
 	    PCI_PRODUCT(pa->pa_id) < 0x1039) || 
 	    (PCI_PRODUCT(pa->pa_id) == 0x1229 &&
-	    (sc->sc_revision >= 8 && sc->sc_revision <= 13))))
+	    (sc->sc_revision >= 8 && sc->sc_revision <= 16))))
 		sc->sc_flags |= FXPF_DISABLE_STANDBY;
 
 	/*
