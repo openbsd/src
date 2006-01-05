@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.189 2006/01/04 12:53:31 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.190 2006/01/05 16:00:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -112,6 +112,7 @@ rde_sighdlr(int sig)
 
 u_int32_t	peerhashsize = 64;
 u_int32_t	pathhashsize = 1024;
+u_int32_t	attrhashsize = 512;
 u_int32_t	nexthophashsize = 64;
 
 pid_t
@@ -191,6 +192,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	pt_init();
 	path_init(pathhashsize);
 	aspath_init(pathhashsize);
+	attr_init(pathhashsize);
 	nexthop_init(nexthophashsize);
 	peer_init(peerhashsize);
 	rules_l = rules;
@@ -2270,6 +2272,7 @@ rde_shutdown(void)
 	nexthop_shutdown();
 	path_shutdown();
 	aspath_shutdown();
+	attr_shutdown();
 	pt_shutdown();
 	peer_shutdown();
 	free(mrt);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.79 2006/01/03 22:49:17 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.80 2006/01/05 16:00:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -110,8 +110,10 @@ enum attrtypes {
 #define ATTR_WELL_KNOWN		ATTR_TRANSITIVE
 
 struct attr {
-	TAILQ_ENTRY(attr)		 entry;
+	LIST_ENTRY(attr)		 entry;
 	u_char				*data;
+	int				 refcnt;
+	u_int32_t			 hash;
 	u_int16_t			 len;
 	u_int8_t			 flags;
 	u_int8_t			 type;
@@ -124,7 +126,7 @@ struct mpattr {
 	u_int16_t	 unreach_len;
 };
 
-TAILQ_HEAD(attr_list, attr);
+LIST_HEAD(attr_list, attr);
 
 struct path_table {
 	struct aspath_head	*path_hashtbl;
@@ -156,7 +158,7 @@ LIST_HEAD(prefix_head, prefix);
 struct rde_aspath {
 	LIST_ENTRY(rde_aspath)		 path_l, peer_l, nexthop_l;
 	struct prefix_head		 prefix_h;
-	struct attr_list		 others;
+	struct attr			**others;
 	struct rde_peer			*peer;
 	struct aspath			*aspath;
 	struct nexthop			*nexthop;	/* may be NULL */
@@ -169,6 +171,7 @@ struct rde_aspath {
 	u_int16_t			 prefix_cnt; /* # of prefixes */
 	u_int16_t			 active_cnt; /* # of active prefixes */
 	u_int8_t			 origin;
+	u_int8_t			 others_len;
 };
 
 enum nexthop_state {
@@ -254,11 +257,14 @@ int		 rde_decisionflags(void);
 /* rde_attr.c */
 int		 attr_write(void *, u_int16_t, u_int8_t, u_int8_t, void *,
 		     u_int16_t);
-void		 attr_optcopy(struct rde_aspath *, struct rde_aspath *);
+void		 attr_init(u_int32_t);
+void		 attr_shutdown(void);
 int		 attr_optadd(struct rde_aspath *, u_int8_t, u_int8_t,
 		     void *, u_int16_t);
 struct attr	*attr_optget(const struct rde_aspath *, u_int8_t);
-void		 attr_optfree(struct rde_aspath *);
+void		 attr_copy(struct rde_aspath *, struct rde_aspath *);
+int		 attr_compare(struct rde_aspath *, struct rde_aspath *);
+void		 attr_freeall(struct rde_aspath *);
 
 int		 aspath_verify(void *, u_int16_t);
 #define		 AS_ERR_LEN	-1

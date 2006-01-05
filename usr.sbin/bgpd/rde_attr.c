@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.55 2006/01/04 12:45:53 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.56 2006/01/05 16:00:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -28,8 +28,6 @@
 
 #include "bgpd.h"
 #include "rde.h"
-
-/* attribute specific functions */
 
 int
 attr_write(void *p, u_int16_t p_len, u_int8_t flags, u_int8_t type,
@@ -64,24 +62,209 @@ attr_write(void *p, u_int16_t p_len, u_int8_t flags, u_int8_t type,
 	return (tot_len);
 }
 
+/* optional attribute specific functions */
+int		 attr_diff(struct attr *, struct attr *);
+struct attr	*attr_alloc(u_int8_t, u_int8_t, const void *, u_int16_t);
+struct attr	*attr_lookup(u_int8_t, u_int8_t, const void *, u_int16_t);
+void		 attr_put(struct attr *);
+
+struct attr_table {
+	struct attr_list	*hashtbl;
+	u_int32_t		 hashmask;
+} attrtable;
+
+#define ATTR_HASH(x)				\
+	&attrtable.hashtbl[(x) & attrtable.hashmask]
+
+void
+attr_init(u_int32_t hashsize)
+{
+	u_int32_t	hs, i;
+
+	for (hs = 1; hs < hashsize; hs <<= 1)
+		;
+	attrtable.hashtbl = calloc(hs, sizeof(struct attr_list));
+	if (attrtable.hashtbl == NULL)
+		fatal("attr_init");
+
+	for (i = 0; i < hs; i++)
+		LIST_INIT(&attrtable.hashtbl[i]);
+
+	attrtable.hashmask = hs - 1;
+}
+
+void
+attr_shutdown(void)
+{
+	u_int32_t	i;
+
+	for (i = 0; i <= attrtable.hashmask; i++)
+		if (!LIST_EMPTY(&attrtable.hashtbl[i]))
+			log_warnx("attr_shutdown: free non-free table");
+
+	free(attrtable.hashtbl);
+}
+
 int
 attr_optadd(struct rde_aspath *asp, u_int8_t flags, u_int8_t type,
     void *data, u_int16_t len)
 {
-	struct attr	*a, *p;
+	u_int8_t	 l;
+	struct attr	*a, *t;
 
 	/* known optional attributes were validated previously */
+	if ((a = attr_lookup(flags, type, data, len)) == 0)
+		a = attr_alloc(flags, type, data, len);
+
+	/* attribute allowed only once */
+	for (l = 0; l < asp->others_len; l++) {
+		if (asp->others[l] == NULL)
+			break;
+		if (type == asp->others[l]->type)
+			return (-1);
+	}
+
+	/* add attribute to the table but first bump refcnt */
+	a->refcnt++;
+	rdemem.attr_refs++;
+
+	for (l = 0; l < asp->others_len; l++) {
+		if (asp->others[l] == NULL) {
+			asp->others[l] = a;
+			return (0);
+		}
+		/* list is sorted */
+		if (a->type < asp->others[l]->type) {
+			t = asp->others[l];
+			asp->others[l] = a;
+			a = t;
+		}
+	}
+
+	/* no empty slot found, need to realloc */
+	asp->others_len++;
+	if ((asp->others = realloc(asp->others,
+	    asp->others_len * sizeof(struct attr *))) == NULL)
+		fatal("attr_optadd");
+
+	/* l stores the size of others before resize */
+	asp->others[l] = a;
+	return (0);
+}
+
+struct attr *
+attr_optget(const struct rde_aspath *asp, u_int8_t type)
+{
+	u_int8_t	 l;
+
+	for (l = 0; l < asp->others_len; l++) {
+		if (asp->others[l] == NULL)
+			break;
+		if (type == asp->others[l]->type)
+			return (asp->others[l]);
+		if (type < asp->others[l]->type)
+			break;
+	}
+	return (NULL);
+}
+
+void
+attr_copy(struct rde_aspath *t, struct rde_aspath *s)
+{
+	u_int8_t	l;
+
+	if (t->others != NULL)
+		attr_freeall(t);
+
+	if ((t->others = calloc(s->others_len, sizeof(struct attr *))) == 0)
+		fatal("attr_copy");
+	t->others_len = s->others_len;
+
+	for (l = 0; l < t->others_len; l++) {
+		if (s->others[l] == NULL)
+			break;
+		s->others[l]->refcnt++;
+		rdemem.attr_refs++;
+		t->others[l] = s->others[l];
+	}
+}
+
+int
+attr_diff(struct attr *oa, struct attr *ob)
+{
+	int	r;
+
+	if (oa->type > ob->type)
+		return (1);
+	if (oa->type < ob->type)
+		return (-1);
+	if (oa->len > ob->len)
+		return (1);
+	if (oa->len < ob->len)
+		return (-1);
+	r = memcmp(oa->data, ob->data, oa->len);
+	if (r > 0)
+		return (1);
+	if (r < 0)
+		return (-1);
+
+	fatalx("attr_diff: equal attributes encountered");
+	return (0);
+}
+
+int
+attr_compare(struct rde_aspath *a, struct rde_aspath *b)
+{
+	u_int8_t	l, min;
+
+	min = a->others_len < b->others_len ? a->others_len : b->others_len;
+	for (l = 0; l < min; l++)
+		if (a->others[l] != b->others[l])
+			return (attr_diff(a->others[l], b->others[l]));
+
+	if (a->others_len < b->others_len) {
+		for (; l < b->others_len; l++)
+			if (b->others[l] != NULL)
+				return (-1);
+	} else if (a->others_len < b->others_len) {
+		for (; l < a->others_len; l++)
+			if (a->others[l] != NULL)
+				return (1);
+	}
+
+	return (0);
+}
+
+void
+attr_freeall(struct rde_aspath *asp)
+{
+	u_int8_t	l;
+
+	for (l = 0; l < asp->others_len; l++)
+		attr_put(asp->others[l]);
+
+	free(asp->others);
+	asp->others = NULL;
+	asp->others_len = 0;
+}
+
+struct attr *
+attr_alloc(u_int8_t flags, u_int8_t type, const void *data, u_int16_t len)
+{
+	struct attr	*a;
+
 	a = calloc(1, sizeof(struct attr));
 	if (a == NULL)
 		fatal("attr_optadd");
 	rdemem.attr_cnt++;
 
 	a->flags = flags;
+	a->hash = hash32_buf(&flags, sizeof(flags), HASHINIT);
 	a->type = type;
+	a->hash = hash32_buf(&type, sizeof(type), a->hash);
 	a->len = len;
 	if (len != 0) {
-		a->data = malloc(len);
-		if (a->data == NULL)
+		if ((a->data = malloc(len)) == NULL)
 			fatal("attr_optadd");
 
 		rdemem.attr_dcnt++;
@@ -90,65 +273,55 @@ attr_optadd(struct rde_aspath *asp, u_int8_t flags, u_int8_t type,
 	} else
 		a->data = NULL;
 
-	/* keep a sorted list */
-	TAILQ_FOREACH_REVERSE(p, &asp->others, attr_list, entry) {
-		if (type == p->type) {
-			/* attribute allowed only once */
-			if (len != 0)
-				rdemem.attr_dcnt--;
-			rdemem.attr_data -= len;
-			rdemem.attr_cnt--;
-			free(a->data);
-			free(a);
-			return (-1);
-		}
-		if (type > p->type) {
-			TAILQ_INSERT_AFTER(&asp->others, p, a, entry);
-			return (0);
-		}
-	}
-	TAILQ_INSERT_HEAD(&asp->others, a, entry);
-	return (0);
+	a->hash = hash32_buf(&len, sizeof(len), a->hash);
+	a->hash = hash32_buf(a->data, a->len, a->hash);
+	LIST_INSERT_HEAD(ATTR_HASH(a->hash), a, entry);
+
+	return (a);
 }
 
 struct attr *
-attr_optget(const struct rde_aspath *asp, u_int8_t type)
+attr_lookup(u_int8_t flags, u_int8_t type, const void *data, u_int16_t len)
 {
-	struct attr	*a;
+	struct attr_list	*head;
+	struct attr		*a;
+	u_int32_t		 hash;
 
-	TAILQ_FOREACH(a, &asp->others, entry) {
-		if (type == a->type)
+	hash = hash32_buf(&flags, sizeof(flags), HASHINIT);
+	hash = hash32_buf(&type, sizeof(type), hash);
+	hash = hash32_buf(&len, sizeof(len), hash);
+	hash = hash32_buf(data, len, hash);
+	head = ATTR_HASH(hash);
+
+	LIST_FOREACH(a, head, entry) {
+		if (hash == a->hash && type == a->type &&
+		    flags == a->flags && len == a->len &&
+		    memcmp(data, a->data, len) == 0)
 			return (a);
-		if (type < a->type)
-			/* list is sorted */
-			break;
 	}
 	return (NULL);
 }
 
 void
-attr_optcopy(struct rde_aspath *t, struct rde_aspath *s)
+attr_put(struct attr *a)
 {
-	struct attr	*os;
+	if (a == NULL)
+		return;
 
-	TAILQ_FOREACH(os, &s->others, entry)
-		attr_optadd(t, os->flags, os->type, os->data, os->len);
-}
+	rdemem.attr_refs--;
+	if (--a->refcnt > 0)
+		/* somebody still holds a reference */
+		return;
 
-void
-attr_optfree(struct rde_aspath *asp)
-{
-	struct attr	*a;
+	/* unlink */
+	LIST_REMOVE(a, entry);
 
-	while ((a = TAILQ_FIRST(&asp->others)) != NULL) {
-		TAILQ_REMOVE(&asp->others, a, entry);
-		if (a->len != 0)
-			rdemem.attr_dcnt--;
-		rdemem.attr_data -= a->len;
-		rdemem.attr_cnt--;
-		free(a->data);
-		free(a);
-	}
+	if (a->len != 0)
+		rdemem.attr_dcnt--;
+	rdemem.attr_data -= a->len;
+	rdemem.attr_cnt--;
+	free(a->data);
+	free(a);
 }
 
 /* aspath specific functions */
@@ -219,7 +392,7 @@ aspath_shutdown(void)
 
 	for (i = 0; i <= astable.hashmask; i++)
 		if (!LIST_EMPTY(&astable.hashtbl[i]))
-			log_warnx("path_free: free non-free table");
+			log_warnx("aspath_shutdown: free non-free table");
 
 	free(astable.hashtbl);
 }

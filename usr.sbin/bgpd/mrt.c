@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.48 2005/11/29 21:11:07 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.49 2006/01/05 16:00:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -219,8 +219,8 @@ mrt_dump_state(struct mrt *mrt, u_int16_t old_state, u_int16_t new_state,
 static u_int16_t
 mrt_attr_length(struct rde_aspath *a, int oldform)
 {
-	struct attr	*oa;
 	u_int16_t	 alen, plen;
+	u_int8_t	 l;
 
 	alen = 4 /* origin */ + 7 /* lpref */;
 	if (oldform)
@@ -230,8 +230,12 @@ mrt_attr_length(struct rde_aspath *a, int oldform)
 	if (a->med != 0)
 		alen += 7;
 
-	TAILQ_FOREACH(oa, &a->others, entry)
-		alen += 2 + oa->len + (oa->len > 255 ? 2 : 1);
+	for (l = 0; l < a->others_len; l++)
+		if (a->others[l] != NULL)
+			alen += 2 + a->others[l]->len +
+			    (a->others[l]->len > 255 ? 2 : 1);
+		else
+			break;
 
 	return alen;
 }
@@ -245,6 +249,7 @@ mrt_attr_dump(void *p, u_int16_t len, struct rde_aspath *a,
 	u_int32_t	 tmp32;
 	int		 r;
 	u_int16_t	 aslen, wlen = 0;
+	u_int8_t	 l;
 
 	/* origin */
 	if ((r = attr_write(buf + wlen, len, ATTR_WELL_KNOWN, ATTR_ORIGIN,
@@ -284,7 +289,9 @@ mrt_attr_dump(void *p, u_int16_t len, struct rde_aspath *a,
 	wlen += r; len -= r;
 
 	/* dump all other path attributes without modification */
-	TAILQ_FOREACH(oa, &a->others, entry) {
+	for (l = 0; l < a->others_len; l++) {
+		if ((oa = a->others[l]) == NULL)
+			break;
 		if ((r = attr_write(buf + wlen, len, oa->flags, oa->type,
 		    oa->data, oa->len)) == -1)
 			return (-1);

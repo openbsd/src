@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.46 2005/12/30 14:07:40 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.47 2006/01/05 16:00:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -625,6 +625,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	in_addr_t	 nexthop;
 	int		 r, ismp = 0;
 	u_int16_t	 len = sizeof(up_attr_buf), wlen = 0;
+	u_int8_t	 l;
 
 	/* origin */
 	if ((r = attr_write(up_attr_buf + wlen, len, ATTR_WELL_KNOWN,
@@ -688,7 +689,9 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	 *  3. transitive known attrs: announce unmodified
 	 *  4. transitive unknown attrs: set partial bit and re-announce
 	 */
-	TAILQ_FOREACH(oa, &a->others, entry) {
+	for (l = 0; l < a->others_len; l++) {
+		if ((oa = a->others[l]) == NULL)
+			break;
 		switch (oa->type) {
 		case ATTR_ATOMIC_AGGREGATE:
 			if ((r = attr_write(up_attr_buf + wlen, len,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.184 2006/01/04 12:45:53 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.185 2006/01/05 16:00:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -640,6 +640,7 @@ struct rde_memstats {
 	int64_t		aspath_size;
 	int64_t		aspath_refs;
 	int64_t		attr_cnt;
+	int64_t		attr_refs;
 	int64_t		attr_data;
 	int64_t		attr_dcnt;
 };

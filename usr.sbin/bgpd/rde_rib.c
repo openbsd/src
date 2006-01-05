@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.73 2006/01/04 16:13:07 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.74 2006/01/05 16:00:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -118,7 +118,6 @@ path_update(struct rde_peer *peer, struct rde_aspath *nasp,
 int
 path_compare(struct rde_aspath *a, struct rde_aspath *b)
 {
-	struct attr	*oa, *ob;
 	int		 r;
 
 	if (a->origin > b->origin)
@@ -158,28 +157,7 @@ path_compare(struct rde_aspath *a, struct rde_aspath *b)
 	if (r < 0)
 		return (-1);
 
-	for (oa = TAILQ_FIRST(&a->others), ob = TAILQ_FIRST(&b->others);
-	    oa != NULL && ob != NULL;
-	    oa = TAILQ_NEXT(oa, entry), ob = TAILQ_NEXT(ob, entry)) {
-		if (oa->type > ob->type)
-			return (1);
-		if (oa->type < ob->type)
-			return (-1);
-		if (oa->len > ob->len)
-			return (1);
-		if (oa->len < ob->len)
-			return (-1);
-		r = memcmp(oa->data, ob->data, oa->len);
-		if (r > 0)
-			return (1);
-		if (r < 0)
-			return (-1);
-	}
-	if (oa != NULL)
-		return (1);
-	if (ob != NULL)
-		return (-1);
-	return (0);
+	return (attr_compare(a, b));
 }
 
 struct rde_aspath *
@@ -292,9 +270,7 @@ path_copy(struct rde_aspath *asp)
 	rtlabel_ref(nasp->rtlabelid);
 
 	nasp->flags = asp->flags & ~F_ATTR_LINKED;
-
-	TAILQ_INIT(&nasp->others);
-	attr_optcopy(nasp, asp);
+	attr_copy(nasp, asp);
 
 	return (nasp);
 }
@@ -311,7 +287,6 @@ path_get(void)
 	rdemem.path_cnt++;
 
 	LIST_INIT(&asp->prefix_h);
-	TAILQ_INIT(&asp->others);
 	asp->origin = ORIGIN_INCOMPLETE;
 	asp->lpref = DEFAULT_LPREF;
 	/* med = 0 */
@@ -330,7 +305,7 @@ path_put(struct rde_aspath *asp)
 
 	rtlabel_unref(asp->rtlabelid);
 	aspath_put(asp->aspath);
-	attr_optfree(asp);
+	attr_freeall(asp);
 	rdemem.path_cnt--;
 	free(asp);
 }
