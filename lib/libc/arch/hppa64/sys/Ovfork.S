@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.2 2005/08/07 16:40:14 espie Exp $	*/
+/*	$OpenBSD: Ovfork.S,v 1.3 2006/01/05 22:19:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999,2002 Michael Shalayeff
@@ -28,7 +28,7 @@
 
 #include "SYS.h"
 
-SYSENTRY(vfork,0)
+SYSENTRY(vfork)
 	.import errno, data
 	copy	rp, t4
 	ldil	L%SYSCALLGATE, r1
