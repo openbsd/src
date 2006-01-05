@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.15 2006/01/05 21:49:09 grange Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.16 2006/01/05 22:58:42 grange Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -58,6 +58,7 @@ void	acpi_load_table(paddr_t, size_t, acpi_qhead_t *);
 void	acpi_load_dsdt(paddr_t, struct acpi_q **);
 
 void	acpi_softintr(void *);
+void	acpi_init_states(struct acpi_softc *);
 
 void	acpi_filtdetach(struct knote *);
 int	acpi_filtread(struct knote *, long);
@@ -440,6 +441,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	acpi_parse_aml(sc, p_dsdt->aml, p_dsdt->hdr_length -
 	    sizeof(p_dsdt->hdr));
 
+	/* Find available sleeping states */
+	acpi_init_states(sc);
+
 	/*
 	 * Set up a pointer to the firmware control structure
 	 */
@@ -790,6 +794,24 @@ acpi_softintr(void *arg)
 		dnprintf(1,"sleep button pressed\n");
 		KNOTE(sc->sc_note, ACPI_EVENT_COMPOSE(ACPI_EV_SLPBTN,
 						      acpi_evindex));
+	}
+}
+
+void
+acpi_init_states(struct acpi_softc *sc)
+{
+	struct aml_value res, env;
+	char name[8];
+	int i;
+
+	for (i = ACPI_STATE_S0; i <= ACPI_STATE_S5; i++) {
+		snprintf(name, sizeof(name), "_S%d_", i);
+		sc->sc_sleeptype[i].slp_typa = -1;
+		sc->sc_sleeptype[i].slp_typb = -1;
+		if (aml_eval_name(sc, aml_root.child, name, &res, &env))
+			continue;
+		sc->sc_sleeptype[i].slp_typa = aml_intval(&res.v_package[0]);
+		sc->sc_sleeptype[i].slp_typb = aml_intval(&res.v_package[1]);
 	}
 }
 
