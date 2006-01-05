@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.22 2005/12/15 20:19:48 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.23 2006/01/05 15:53:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -431,7 +431,6 @@ interface	: INTERFACE STRING	{
 			iface->area = area;
 			LIST_INSERT_HEAD(&area->iface_list,
 			    iface, entry);
-			iface->passive = 0;
 		} interface_block {
 			iface = NULL;
 		}

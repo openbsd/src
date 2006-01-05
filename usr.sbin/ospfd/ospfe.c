@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.36 2005/12/29 13:53:36 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.37 2006/01/05 15:53:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/queue.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <net/if_types.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
@@ -172,12 +173,10 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	/* start interfaces */
 	LIST_FOREACH(area, &oeconf->area_list, entry) {
 		LIST_FOREACH(iface, &area->iface_list, entry) {
-			if (!iface->passive) {
-				if_init(xconf, iface);
-				if (if_fsm(iface, IF_EVT_UP)) {
-					log_debug("error starting interface %s",
-					    iface->name);
-				}
+			if_init(xconf, iface);
+			if (if_fsm(iface, IF_EVT_UP)) {
+				log_debug("error starting interface %s",
+				    iface->name);
 			}
 		}
 	}
@@ -198,11 +197,9 @@ ospfe_shutdown(void)
 	/* stop all interfaces and remove all areas */
 	while ((area = LIST_FIRST(&oeconf->area_list)) != NULL) {
 		LIST_FOREACH(iface, &area->iface_list, entry) {
-			if (!iface->passive) {
-				if (if_fsm(iface, IF_EVT_DOWN)) {
-					log_debug("error stopping interface %s",
-					    iface->name);
-				}
+			if (if_fsm(iface, IF_EVT_DOWN)) {
+				log_debug("error stopping interface %s",
+				    iface->name);
 			}
 		}
 		LIST_REMOVE(area, entry);
@@ -246,7 +243,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 	struct area	*area = NULL;
 	struct iface	*iface = NULL;
 	struct kif	*kif;
-	int		 n;
+	int		 n, link_ok;
 
 	switch (event) {
 	case EV_READ:
@@ -276,6 +273,11 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 			    sizeof(struct kif))
 				fatalx("IFINFO imsg with wrong len");
 			kif = imsg.data;
+			link_ok = (kif->flags & IFF_UP) &&
+			    (kif->link_state == LINK_STATE_UP ||
+			    (kif->link_state == LINK_STATE_UNKNOWN &&
+			    kif->media_type != IFT_CARP));
+
 
 			LIST_FOREACH(area, &oeconf->area_list, entry) {
 				LIST_FOREACH(iface, &area->iface_list, entry) {
@@ -284,9 +286,8 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 						iface->flags = kif->flags;
 						iface->linkstate =
 						    kif->link_state;
-						if ((kif->flags & IFF_UP) &&
-						    (kif->link_state !=
-						     LINK_STATE_DOWN)) {
+
+						if (link_ok) {
 							if_fsm(iface,
 							    IF_EVT_UP);
 						} else {
@@ -708,6 +709,13 @@ orig_rtr_lsa(struct area *area)
 					break;
 				}
 			}
+
+			if ((iface->flags & IFF_UP) == 0 ||
+			    iface->linkstate == LINK_STATE_DOWN ||
+			    (iface->linkstate != LINK_STATE_UP &&
+			    iface->media_type == IFT_CARP))
+				continue;
+			
 			log_debug("orig_rtr_lsa: stub net, "
 			    "interface %s", iface->name);
 
@@ -732,8 +740,8 @@ orig_rtr_lsa(struct area *area)
 				if (buf_add(buf, &rtr_link, sizeof(rtr_link)))
 					fatalx("orig_rtr_lsa: buf_add failed");
 
-				log_debug("orig_rtr_lsa: virtual link, interface %s",
-				     iface->name);
+				log_debug("orig_rtr_lsa: virtual link, "
+				    "interface %s", iface->name);
 			}
 			continue;
 		case IF_TYPE_POINTOMULTIPOINT:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.39 2005/11/04 10:46:23 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.40 2006/01/05 15:53:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -324,6 +324,7 @@ struct iface {
 	u_int16_t		 metric;
 	enum iface_type		 type;
 	enum auth_type		 auth_type;
+	u_int8_t		 media_type;
 	u_int8_t		 auth_keyid;
 	u_int8_t		 linkstate;
 	u_int8_t		 priority;

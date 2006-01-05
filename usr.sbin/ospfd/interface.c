@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.40 2005/12/15 20:29:06 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.41 2006/01/05 15:53:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -24,6 +24,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/if.h>
+#include <net/if_types.h>
 #include <ctype.h>
 #include <err.h>
 #include <stdio.h>
@@ -161,7 +162,6 @@ if_new(struct kif *kif)
 		err(1, "if_new: calloc");
 
 	iface->state = IF_STA_DOWN;
-	iface->passive = 1;
 
 	LIST_INIT(&iface->nbr_list);
 	TAILQ_INIT(&iface->ls_ack_list);
@@ -204,6 +204,7 @@ if_new(struct kif *kif)
 	iface->ifindex = kif->ifindex;
 	iface->flags = kif->flags;
 	iface->linkstate = kif->link_state;
+	iface->media_type = kif->media_type;
 
 	/* get address */
 	if (ioctl(s, SIOCGIFADDR, (caddr_t)ifr) < 0)
@@ -323,9 +324,24 @@ if_act_start(struct iface *iface)
 	struct in_addr		 addr;
 
 	if (!((iface->flags & IFF_UP) &&
-	    (iface->linkstate != LINK_STATE_DOWN))) {
+	    (iface->linkstate == LINK_STATE_UP ||
+	    (iface->linkstate == LINK_STATE_UNKNOWN &&
+	    iface->media_type != IFT_CARP)))) {
 		log_debug("if_act_start: interface %s link down",
 		    iface->name);
+		return (0);
+	}
+
+	if (iface->media_type == IFT_CARP && iface->passive == 0) {
+		/* force passive mode on carp interfaces */
+		log_warnx("if_act_start: forcing interface %s to passive",
+		    iface->name);
+		iface->passive = 1;
+	}
+
+	if (iface->passive) {
+		/* for an update of stub network entries */
+		orig_rtr_lsa(iface->area);
 		return (0);
 	}
 
@@ -541,6 +557,12 @@ if_act_reset(struct iface *iface)
 {
 	struct nbr		*nbr = NULL;
 	struct in_addr		 addr;
+
+	if (iface->passive) {
+		/* for an update of stub network entries */
+		orig_rtr_lsa(iface->area);
+		return (0);
+	}
 
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
