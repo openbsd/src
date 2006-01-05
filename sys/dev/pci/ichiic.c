@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichiic.c,v 1.7 2006/01/02 08:11:25 brad Exp $	*/
+/*	$OpenBSD: ichiic.c,v 1.8 2006/01/05 08:16:22 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -116,16 +116,21 @@ ichiic_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 
+	/* Read configuration */
+	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_SMB_HOSTC);
+	DPRINTF((": conf 0x%x", conf));
+
+	if ((conf & ICH_SMB_HOSTC_HSTEN) == 0) {
+		printf(": SMBus disabled\n");
+		return;
+	}
+
 	/* Map I/O space */
 	if (pci_mapreg_map(pa, ICH_SMB_BASE, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, &iosize, 0)) {
 		printf(": can't map I/O space\n");
 		return;
 	}
-
-	/* Read configuration */
-	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_SMB_HOSTC);
-	DPRINTF((": conf 0x%x", conf));
 
 	if (conf & ICH_SMB_HOSTC_SMIEN) {
 		printf(": SMI");
@@ -148,10 +153,6 @@ ichiic_attach(struct device *parent, struct device *self, void *aux)
 		}
 		printf(": %s", intrstr);
 	}
-
-	/* Enable controller */
-	pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_SMB_HOSTC,
-	    conf | ICH_SMB_HOSTC_HSTEN);
 
 	printf("\n");
 
@@ -204,10 +205,15 @@ ichiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	u_int8_t ctl, st;
 	int retries;
 
-	DPRINTF(("%s: exec op %d, addr 0x%x, cmdlen %d, len %d, "
-	    "flags 0x%x, status 0x%b\n", sc->sc_dev.dv_xname, op, addr,
-	    cmdlen, len, flags, bus_space_read_1(sc->sc_iot, sc->sc_ioh,
-	    ICH_SMB_HS), ICH_SMB_HS_BITS));
+	DPRINTF(("%s: exec: op %d, addr 0x%x, cmdlen %d, len %d, flags 0x%x\n",
+	    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags));
+
+	/* Check if there's a transfer already running */
+	st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ICH_SMB_HS);
+	DPRINTF(("%s: exec: st 0x%b\n", sc->sc_dev.dv_xname, st,
+	    ICH_SMB_HS_BITS));
+	if (st & ICH_SMB_HS_BUSY)
+		return (1);
 
 	if (cold || sc->sc_poll)
 		flags |= I2C_F_POLL;
@@ -268,22 +274,35 @@ ichiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 				break;
 			DELAY(ICHIIC_DELAY);
 		}
-		if (st & ICH_SMB_HS_BUSY) {
-			printf("%s: timeout, status 0x%b\n",
-			    sc->sc_dev.dv_xname, st, ICH_SMB_HS_BITS);
-			return (1);
-		}
+		if (st & ICH_SMB_HS_BUSY)
+			goto timeout;
 		ichiic_intr(sc);
 	} else {
 		/* Wait for interrupt */
 		if (tsleep(sc, PRIBIO, "iicexec", ICHIIC_TIMEOUT * hz))
-			return (1);
-	}	
+			goto timeout;
+	}
 
 	if (sc->sc_i2c_xfer.error)
 		return (1);
 
 	return (0);
+
+timeout:
+	/*
+	 * Transfer timeout. Kill the transaction and clear status bits.
+	 */
+	printf("%s: timeout, status 0x%b\n", sc->sc_dev.dv_xname, st,
+	    ICH_SMB_HS_BITS);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ICH_SMB_HC,
+	    ICH_SMB_HC_KILL);
+	DELAY(ICHIIC_DELAY);
+	st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ICH_SMB_HS);
+	if ((st & ICH_SMB_HS_FAILED) == 0)
+		printf("%s: transaction abort failed, status 0x%b\n",
+		    sc->sc_dev.dv_xname, st, ICH_SMB_HS_BITS);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ICH_SMB_HS, st);
+	return (1);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.11 2006/01/03 23:24:06 grange Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.12 2006/01/05 08:16:22 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -110,6 +110,15 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 
+	/* Read configuration */
+	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_HOSTC);
+	DPRINTF((": conf 0x%x", conf));
+
+	if ((conf & PIIX_SMB_HOSTC_HSTEN) == 0) {
+		printf(": SMBus disabled\n");
+		return;
+	}
+
 	/* Map I/O space */
 	sc->sc_iot = pa->pa_iot;
 	base = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_BASE);
@@ -118,10 +127,6 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map I/O space\n");
 		return;
 	}
-
-	/* Read configuration */
-	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_HOSTC);
-	DPRINTF((": conf 0x%x", conf));
 
 	if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_SMI) {
 		printf(": SMI");
@@ -146,10 +151,6 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		sc->sc_poll = 1;
 	}
-
-	/* Enable controller */
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PIIX_SMB_HOSTC,
-	    conf | PIIX_SMB_HOSTC_HSTEN);
 
 	printf("\n");
 
@@ -202,10 +203,15 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	u_int8_t ctl, st;
 	int retries;
 
-	DPRINTF(("%s: exec op %d, addr 0x%x, cmdlen %d, len %d, "
-	    "flags 0x%x, status 0x%b\n", sc->sc_dev.dv_xname, op, addr,
-	    cmdlen, len, flags, bus_space_read_1(sc->sc_iot, sc->sc_ioh,
-	    PIIX_SMB_HS), PIIX_SMB_HS_BITS));
+	DPRINTF(("%s: exec: op %d, addr 0x%x, cmdlen %d, len %d, flags 0x%x\n",
+	    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags));
+
+	/* Check if there's a transfer already running */
+	st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_HS);
+	DPRINTF(("%s: exec: st 0x%b\n", sc->sc_dev.dv_xname, st,
+	    PIIX_SMB_HS_BITS));
+	if (st & PIIX_SMB_HS_BUSY)
+		return (1);
 
 	if (cold || sc->sc_poll)
 		flags |= I2C_F_POLL;
@@ -266,22 +272,35 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 				break;
 			DELAY(PIIXPM_DELAY);
 		}
-		if (st & PIIX_SMB_HS_BUSY) {
-			printf("%s: timeout, status 0x%b\n",
-			    sc->sc_dev.dv_xname, st, PIIX_SMB_HS_BITS);
-			return (1);
-		}
+		if (st & PIIX_SMB_HS_BUSY)
+			goto timeout;
 		piixpm_intr(sc);
 	} else {
 		/* Wait for interrupt */
 		if (tsleep(sc, PRIBIO, "iicexec", PIIXPM_TIMEOUT * hz))
-			return (1);
-	}	
+			goto timeout;
+	}
 
 	if (sc->sc_i2c_xfer.error)
 		return (1);
 
 	return (0);
+
+timeout:
+	/*
+	 * Transfer timeout. Kill the transaction and clear status bits.
+	 */
+	printf("%s: timeout, status 0x%b\n", sc->sc_dev.dv_xname, st,
+	    PIIX_SMB_HS_BITS);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_HC,
+	    PIIX_SMB_HC_KILL);
+	DELAY(PIIXPM_DELAY);
+	st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_HS);
+	if ((st & PIIX_SMB_HS_FAILED) == 0)
+		printf("%s: transaction abort failed, status 0x%b\n",
+		    sc->sc_dev.dv_xname, st, PIIX_SMB_HS_BITS);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_HS, st);
+	return (1);
 }
 
 int
