@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscsio.c,v 1.7 2006/01/01 20:52:26 deraadt Exp $	*/
+/*	$OpenBSD: gscsio.c,v 1.8 2006/01/05 10:43:15 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -250,7 +250,7 @@ gscsio_acb_init(struct gscsio_acb *acb, i2c_tag_t tag)
 	tag->ic_read_byte = gscsio_acb_read_byte;
 	tag->ic_write_byte = gscsio_acb_write_byte;
 
-	bzero(&iba, sizeof iba);
+	bzero(&iba, sizeof(iba));
 	iba.iba_name = "iic";
 	iba.iba_tag = tag;
 	config_found(&sc->sc_dev, &iba, iicbus_print);

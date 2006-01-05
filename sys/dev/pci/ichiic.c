@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichiic.c,v 1.9 2006/01/05 08:28:30 grange Exp $	*/
+/*	$OpenBSD: ichiic.c,v 1.10 2006/01/05 10:43:15 grange Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -163,7 +163,7 @@ ichiic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c_tag.ic_release_bus = ichiic_i2c_release_bus;
 	sc->sc_i2c_tag.ic_exec = ichiic_i2c_exec;
 
-	bzero(&iba, sizeof iba);
+	bzero(&iba, sizeof(iba));
 	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c_tag;
 	config_found(self, &iba, iicbus_print);

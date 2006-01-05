@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.8 2006/01/05 08:57:27 grange Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.9 2006/01/05 10:43:15 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -249,7 +249,7 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c_tag.ic_release_bus = amdpm_i2c_release_bus;
 	sc->sc_i2c_tag.ic_exec = amdpm_i2c_exec;
 
-	bzero(&iba, sizeof iba);
+	bzero(&iba, sizeof(iba));
 	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c_tag;
 	config_found(self, &iba, iicbus_print);
