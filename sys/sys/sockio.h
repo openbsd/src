@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.35 2005/06/12 00:41:33 henning Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.36 2006/01/05 14:57:24 norby Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -151,6 +151,9 @@
 
 #define	SIOCSIFTIMESLOT	 _IOW('i', 133, struct ifreq)	/* set ifnet timeslot */
 #define	SIOCGIFTIMESLOT	_IOWR('i', 134, struct ifreq)	/* get ifnet timeslot */
+
+#define SIOCSETVLANPRIO	 _IOW('i', 143, struct ifreq)	/* set VLAN priority */
+#define SIOCGETVLANPRIO	_IOWR('i', 144, struct ifreq)	/* get VLAN priority */
 
 #define	SIOCSVH		_IOWR('i', 245, struct ifreq)	/* set carp param */
 #define	SIOCGVH		_IOWR('i', 246, struct ifreq)	/* get carp param */

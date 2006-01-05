@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.61 2006/01/04 06:04:42 canacar Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.62 2006/01/05 14:57:24 norby Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -216,7 +216,8 @@ vlan_start(struct ifnet *ifp)
 			m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&evh);
 			evh.evl_proto = evh.evl_encap_proto;
 			evh.evl_encap_proto = htons(ETHERTYPE_VLAN);
-			evh.evl_tag = htons(ifv->ifv_tag);
+			evh.evl_tag = htons(ifv->ifv_tag +
+			    (ifv->ifv_prio << EVL_PRIO_BITS));
 
 			m_adj(m, ETHER_HDR_LEN);
 			M_PREPEND(m, sizeof(evh), M_DONTWAIT);
@@ -580,7 +581,39 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		error = copyout(&vlr, ifr->ifr_data, sizeof vlr);
 		break;
-		
+	case SIOCSETVLANPRIO:
+		if ((error = suser(p, 0)) != 0)
+			break;
+		if ((error = copyin(ifr->ifr_data, &vlr, sizeof vlr)))
+			break;
+		if (vlr.vlr_parent[0] == '\0')
+			break;
+
+		pr = ifunit(vlr.vlr_parent);
+		if (pr == NULL) {
+			error = ENOENT;
+			break;
+		}
+		/*
+		 * Don't let the caller set up a VLAN priority
+		 * outside the range 0-7
+		 */
+		if (vlr.vlr_tag > EVL_PRIO_MAX) {
+			error = EINVAL;
+			break;
+		}
+
+		ifv->ifv_prio = vlr.vlr_tag;
+		break;
+	case SIOCGETVLANPRIO:
+		bzero(&vlr, sizeof vlr);
+		if (ifv->ifv_p) {
+			strlcpy(vlr.vlr_parent, ifv->ifv_p->if_xname,
+                            sizeof(vlr.vlr_parent));
+			vlr.vlr_tag = ifv->ifv_prio;
+		}
+		error = copyout(&vlr, ifr->ifr_data, sizeof vlr);
+		break;
 	case SIOCSIFFLAGS:
 		/*
 		 * For promiscuous mode, we enable promiscuous mode on
