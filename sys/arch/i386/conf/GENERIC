@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.456 2006/01/04 00:40:08 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.457 2006/01/05 08:54:27 grange Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -82,7 +82,6 @@ gscpcib* at pci?		# NS Geode SC1100 PCI-ISA bridge
 gpio*	at gscpcib?
 
 # power management and other environmental stuff
-#amdpm*	at pci?			# AMD768MPX
 elansc*	at pci?			# AMD Elan SC520 System Controller
 gpio*	at elansc?
 geodesc* at pci?		# Geode SC1100/SCx200 IAOC
@@ -99,7 +98,7 @@ gpio*	at nsclpcsio?
 gscsio*	at isa?	port 0x2e		# NS Geode SC1100 Super I/O
 gscsio*	at isa?	port 0x15c
 iic*	at gscsio?			# ACCESS.bus 1 & 2
-piixpm* at pci?			# Intel PIIX PM
+piixpm* at pci?				# Intel PIIX PM
 iic*	at piixpm?
 alipm*	at pci?
 iic*	at alipm?
@@ -111,6 +110,8 @@ amdiic*	at pci?				# AMD-8111 SMBus controller
 iic*	at amdiic?
 #nviic*	at pci?				# NVIDIA nForce2/3/4 SMBus controller
 #iic*	at nviic?
+#amdpm*	at pci?				# AMD-76x PM and SMBus controller
+#iic*	at amdpm?
 
 it0	at isa? port 0x290		# IT8705F, IT8712F and SiS970 hardware
 it1	at isa? port 0xc00		# monitors

@@ -1,5 +1,4 @@
-/*	$OpenBSD: amdpmreg.h,v 1.3 2004/10/01 04:08:46 jsg Exp $	*/
-/*	$NetBSD$	*/
+/*	$OpenBSD: amdpmreg.h,v 1.4 2006/01/05 08:54:27 grange Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,3 +61,34 @@
 #define	AMDPM_RNGDATA	0xf0		/* 32 bit random data register */
 #define	AMDPM_RNGSTAT	0xf4		/* RNG status register */
 #define	AMDPM_RNGDONE	0x00000001	/* Random number generation complete */
+
+#define AMDPM_SMBSTAT	0xe0		/* SMBus status */
+#define AMDPM_SMBSTAT_ABRT	(1 << 0)	/* transfer abort */
+#define AMDPM_SMBSTAT_COL	(1 << 1)	/* collision */
+#define AMDPM_SMBSTAT_PRERR	(1 << 2)	/* protocol error */
+#define AMDPM_SMBSTAT_HBSY	(1 << 3)	/* host controller busy */
+#define AMDPM_SMBSTAT_CYC	(1 << 4)	/* cycle complete */
+#define AMDPM_SMBSTAT_TO	(1 << 5)	/* timeout */
+#define AMDPM_SMBSTAT_SNP	(1 << 8)	/* snoop address match */
+#define AMDPM_SMBSTAT_SLV	(1 << 9)	/* slave address match */
+#define AMDPM_SMBSTAT_SMBA	(1 << 10)	/* SMBALERT# asserted */
+#define AMDPM_SMBSTAT_BSY	(1 << 11)	/* bus busy */
+#define AMDPM_SMBSTAT_BITS	"\020\001ABRT\002COL\003PRERR\004HBSY\005CYC\006TO\011SNP\012SLV\013SMBA\014BSY"
+#define AMDPM_SMBCTL	0xe2		/* SMBus control */
+#define AMDPM_SMBCTL_CMD_QUICK	0		/* QUICK command */
+#define AMDPM_SMBCTL_CMD_BYTE	1		/* BYTE command */
+#define AMDPM_SMBCTL_CMD_BDATA	2		/* BYTE DATA command */
+#define AMDPM_SMBCTL_CMD_WDATA	3		/* WORD DATA command */
+#define AMDPM_SMBCTL_CMD_PCALL	4		/* PROCESS CALL command */
+#define AMDPM_SMBCTL_CMD_BLOCK	5		/* BLOCK command */
+#define AMDPM_SMBCTL_START	(1 << 3)	/* start transfer */
+#define AMDPM_SMBCTL_CYCEN	(1 << 4)	/* intr on cycle complete */
+#define AMDPM_SMBCTL_ABORT	(1 << 5)	/* abort transfer */
+#define AMDPM_SMBCTL_SNPEN	(1 << 8)	/* intr on snoop addr match */
+#define AMDPM_SMBCTL_SLVEN	(1 << 9)	/* intr on slave addr match */
+#define AMDPM_SMBCTL_SMBAEN	(1 << 10)	/* intr on SMBALERT# */
+#define AMDPM_SMBADDR	0xe4		/* SMBus address */
+#define AMDPM_SMBADDR_READ	(1 << 0)	/* read direction */
+#define AMDPM_SMBADDR_ADDR(x)	(((x) & 0x7f) << 1) /* 7-bit address */
+#define AMDPM_SMBDATA	0xe6		/* SMBus data */
+#define AMDPM_SMBCMD	0xe8		/* SMBus command */

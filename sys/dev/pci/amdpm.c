@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.6 2006/01/02 04:01:43 brad Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.7 2006/01/05 08:54:27 grange Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,19 +38,34 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/lock.h>
+#include <sys/proc.h>
 #include <sys/timeout.h>
 #ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>
 #endif
 
+#include <machine/bus.h>
+
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/rndvar.h>
 #include <dev/pci/amdpmreg.h>
+
+#include <dev/rndvar.h>
+#include <dev/i2c/i2cvar.h>
+
+#ifdef AMDPM_DEBUG
+#define DPRINTF(x) printf x
+#else
+#define DPRINTF(x)
+#endif
+
+#define AMDPM_SMBUS_DELAY	100
+#define AMDPM_SMBUS_TIMEOUT	1
 
 #ifdef __HAVE_TIMECOUNTER
 u_int amdpm_get_timecount(struct timecounter *tc);
@@ -77,6 +92,7 @@ struct amdpm_softc {
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;		/* PMxx space */
+	int sc_poll;
 
 	struct timeout sc_rnd_ch;
 #ifdef AMDPM_RND_COUNTERS
@@ -84,11 +100,28 @@ struct amdpm_softc {
 	struct evcnt sc_rnd_miss;
 	struct evcnt sc_rnd_data[256];
 #endif
+
+	struct i2c_controller sc_i2c_tag;
+	struct lock sc_i2c_lock;
+	struct {
+		i2c_op_t op;
+		void *buf;
+		size_t len;
+		int flags;
+		volatile int error;
+	} sc_i2c_xfer;
 };
 
 int	amdpm_match(struct device *, void *, void *);
 void	amdpm_attach(struct device *, struct device *, void *);
 void	amdpm_rnd_callout(void *);
+
+int	amdpm_i2c_acquire_bus(void *, int);
+void	amdpm_i2c_release_bus(void *, int);
+int	amdpm_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
+	    void *, size_t, int);
+
+int	amdpm_intr(void *);
 
 struct cfattach amdpm_ca = {
 	sizeof(struct amdpm_softc), amdpm_match, amdpm_attach
@@ -106,7 +139,7 @@ struct cfdriver amdpm_cd = {
 
 const struct pci_matchid amdpm_ids[] = {
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_766_PMC },
-	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_PMC },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_PMC }
 };
 
 int
@@ -121,6 +154,7 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct amdpm_softc *sc = (struct amdpm_softc *) self;
 	struct pci_attach_args *pa = aux;
+	struct i2cbus_attach_args iba;
 	struct timeval tv1, tv2;
 	pcireg_t cfg_reg, reg;
 	int i;
@@ -128,6 +162,7 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_iot = pa->pa_iot;
+	sc->sc_poll = 1; /* XXX */
 
 	cfg_reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
 	if ((cfg_reg & AMDPM_PMIOEN) == 0) {
@@ -191,6 +226,18 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 		amdpm_rnd_callout(sc);
 	}
 
+	/* Attach I2C bus */
+	lockinit(&sc->sc_i2c_lock, PRIBIO | PCATCH, "iiclk", 0, 0);
+	sc->sc_i2c_tag.ic_cookie = sc;
+	sc->sc_i2c_tag.ic_acquire_bus = amdpm_i2c_acquire_bus;
+	sc->sc_i2c_tag.ic_release_bus = amdpm_i2c_release_bus;
+	sc->sc_i2c_tag.ic_exec = amdpm_i2c_exec;
+
+	bzero(&iba, sizeof iba);
+	iba.iba_name = "iic";
+	iba.iba_tag = &sc->sc_i2c_tag;
+	config_found(self, &iba, iicbus_print);
+
 	printf("\n");
 }
 
@@ -239,3 +286,188 @@ amdpm_get_timecount(struct timecounter *tc)
 	return (u2);
 }
 #endif
+
+int
+amdpm_i2c_acquire_bus(void *cookie, int flags)
+{
+	struct amdpm_softc *sc = cookie;
+
+	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
+		return (0);
+
+	return (lockmgr(&sc->sc_i2c_lock, LK_EXCLUSIVE, NULL));
+}
+
+void
+amdpm_i2c_release_bus(void *cookie, int flags)
+{
+	struct amdpm_softc *sc = cookie;
+
+	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
+		return;
+
+	lockmgr(&sc->sc_i2c_lock, LK_RELEASE, NULL);
+}
+
+int
+amdpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
+    const void *cmdbuf, size_t cmdlen, void *buf, size_t len, int flags)
+{
+	struct amdpm_softc *sc = cookie;
+	u_int8_t *b;
+	u_int16_t st, ctl, data;
+	int retries;
+
+	DPRINTF(("%s: exec: op %d, addr 0x%x, cmdlen %d, len %d, flags 0x%x\n",
+	    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags));
+
+	/* Check if there's a transfer already running */
+	st = bus_space_read_2(sc->sc_iot, sc->sc_ioh, AMDPM_SMBSTAT);
+	DPRINTF(("%s: exec: st 0x%b\n", sc->sc_dev.dv_xname, st,
+	    AMDPM_SMBSTAT_BITS));
+	if (st & AMDPM_SMBSTAT_BSY)
+		return (1);
+
+	if (cold || sc->sc_poll)
+		flags |= I2C_F_POLL;
+
+	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2)
+		return (1);
+
+	/* Setup transfer */
+	sc->sc_i2c_xfer.op = op;
+	sc->sc_i2c_xfer.buf = buf;
+	sc->sc_i2c_xfer.len = len;
+	sc->sc_i2c_xfer.flags = flags;
+	sc->sc_i2c_xfer.error = 0;
+
+	/* Set slave address and transfer direction */
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMDPM_SMBADDR,
+	    AMDPM_SMBADDR_ADDR(addr) |
+	    (I2C_OP_READ_P(op) ? AMDPM_SMBADDR_READ : 0));
+
+	b = (void *)cmdbuf;
+	if (cmdlen > 0)
+		/* Set command byte */
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMDPM_SMBCMD, b[0]);
+
+	if (I2C_OP_WRITE_P(op)) {
+		/* Write data */
+		data = 0;
+		b = buf;
+		if (len > 0)
+			data = b[0];
+		if (len > 1)
+			data |= ((u_int16_t)b[1] << 8);
+		if (len > 0)
+			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			    AMDPM_SMBDATA, data);
+	}
+
+	/* Set SMBus command */
+	if (len == 0)
+		ctl = AMDPM_SMBCTL_CMD_BYTE;
+	else if (len == 1)
+		ctl = AMDPM_SMBCTL_CMD_BDATA;
+	else if (len == 2)
+		ctl = AMDPM_SMBCTL_CMD_WDATA;
+
+	if ((flags & I2C_F_POLL) == 0)
+		ctl |= AMDPM_SMBCTL_CYCEN;
+
+	/* Start transaction */
+	ctl |= AMDPM_SMBCTL_START;
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMDPM_SMBCTL, ctl);
+
+	if (flags & I2C_F_POLL) {
+		/* Poll for completion */
+		DELAY(AMDPM_SMBUS_DELAY);
+		for (retries = 1000; retries > 0; retries--) {
+			st = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+			    AMDPM_SMBSTAT);
+			if ((st & AMDPM_SMBSTAT_HBSY) == 0)
+				break;
+			DELAY(AMDPM_SMBUS_DELAY);
+		}
+		if (st & AMDPM_SMBSTAT_HBSY)
+			goto timeout;
+		amdpm_intr(sc);
+	} else {
+		/* Wait for interrupt */
+		if (tsleep(sc, PRIBIO, "iicexec", AMDPM_SMBUS_TIMEOUT * hz))
+			goto timeout;
+	}
+
+	if (sc->sc_i2c_xfer.error)
+		return (1);
+
+	return (0);
+
+timeout:
+	/*
+	 * Transfer timeout. Kill the transaction and clear status bits.
+	 */
+	printf("%s: timeout, status 0x%b\n", sc->sc_dev.dv_xname, st,
+	    AMDPM_SMBSTAT_BITS);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMDPM_SMBCTL,
+	    AMDPM_SMBCTL_ABORT);
+	DELAY(AMDPM_SMBUS_DELAY);
+	st = bus_space_read_2(sc->sc_iot, sc->sc_ioh, AMDPM_SMBSTAT);
+	if ((st & AMDPM_SMBSTAT_ABRT) == 0)
+		printf("%s: transaction abort failed, status 0x%b\n",
+		    sc->sc_dev.dv_xname, st, AMDPM_SMBSTAT_BITS);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMDPM_SMBSTAT, st);
+	return (1);
+}
+
+int
+amdpm_intr(void *arg)
+{
+	struct amdpm_softc *sc = arg;
+	u_int16_t st, data;
+	u_int8_t *b;
+	size_t len;
+
+	/* Read status */
+	st = bus_space_read_2(sc->sc_iot, sc->sc_ioh, AMDPM_SMBSTAT);
+	if ((st & AMDPM_SMBSTAT_HBSY) != 0 || (st & (AMDPM_SMBSTAT_ABRT |
+	    AMDPM_SMBSTAT_COL | AMDPM_SMBSTAT_PRERR | AMDPM_SMBSTAT_CYC |
+	    AMDPM_SMBSTAT_TO | AMDPM_SMBSTAT_SNP | AMDPM_SMBSTAT_SLV |
+	    AMDPM_SMBSTAT_SMBA)) == 0)
+		/* Interrupt was not for us */
+		return (0);
+
+	DPRINTF(("%s: intr: st 0x%b\n", sc->sc_dev.dv_xname, st,
+	    AMDPM_SMBSTAT_BITS));
+
+	/* Clear status bits */
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMDPM_SMBSTAT, st);
+
+	/* Check for errors */
+	if (st & (AMDPM_SMBSTAT_COL | AMDPM_SMBSTAT_PRERR |
+	    AMDPM_SMBSTAT_TO)) {
+		sc->sc_i2c_xfer.error = 1;
+		goto done;
+	}
+
+	if (st & AMDPM_SMBSTAT_CYC) {
+		if (I2C_OP_WRITE_P(sc->sc_i2c_xfer.op))
+			goto done;
+
+		/* Read data */
+		b = sc->sc_i2c_xfer.buf;
+		len = sc->sc_i2c_xfer.len;
+		if (len > 0) {
+			data = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+			    AMDPM_SMBDATA);
+			b[0] = data & 0xff;
+		}
+		if (len > 1)
+			b[1] = (data >> 8) & 0xff;
+	}
+
+done:
+	if ((sc->sc_i2c_xfer.flags & I2C_F_POLL) == 0)
+		wakeup(sc);
+	return (1);
+}
