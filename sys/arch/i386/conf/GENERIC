@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.459 2006/01/05 22:26:54 grange Exp $
+#	$OpenBSD: GENERIC,v 1.460 2006/01/05 22:30:45 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -108,8 +108,8 @@ viapm*	at pci?				# VIA VT8237 power management
 iic*	at viapm?
 amdiic*	at pci?				# AMD-8111 SMBus controller
 iic*	at amdiic?
-#nviic*	at pci?				# NVIDIA nForce2/3/4 SMBus controller
-#iic*	at nviic?
+nviic*	at pci?				# NVIDIA nForce2/3/4 SMBus controller
+iic*	at nviic?
 amdpm*	at pci?				# AMD-76x PM and SMBus controller
 iic*	at amdpm?
 
