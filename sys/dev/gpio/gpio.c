@@ -1,6 +1,7 @@
-/*	$OpenBSD: gpio.c,v 1.4 2004/11/23 21:18:37 grange Exp $	*/
+/*	$OpenBSD: gpio.c,v 1.5 2006/01/05 11:52:24 grange Exp $	*/
+
 /*
- * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
+ * Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -84,7 +85,7 @@ gpio_attach(struct device *parent, struct device *self, void *aux)
 	 * Attach all devices that can be connected to the GPIO pins
 	 * described in the kernel configuration file.
 	 */
-	config_search(gpio_search, self, NULL);
+	config_search(gpio_search, self, sc);
 }
 
 int
@@ -110,7 +111,8 @@ gpio_search(struct device *parent, void *arg, void *aux)
 	struct cfdata *cf = arg;
 	struct gpio_attach_args ga;
 
-	ga.ga_pin = cf->cf_loc[0];
+	ga.ga_gpio = aux;
+	ga.ga_offset = cf->cf_loc[0];
 	ga.ga_mask = cf->cf_loc[1];
 
 	if (cf->cf_attach->ca_match(parent, cf, &ga) > 0)
@@ -128,7 +130,7 @@ gpio_print(void *aux, const char *pnp)
 	printf(" pins");
 	for (i = 0; i < 32; i++)
 		if (ga->ga_mask & (1 << i))
-			printf(" %d", ga->ga_pin + i);
+			printf(" %d", ga->ga_offset + i);
 
 	return (UNCONF);
 }
@@ -142,6 +144,79 @@ gpiobus_print(void *aux, const char *pnp)
 		printf("%s at %s", gba->gba_name, pnp);
 
 	return (UNCONF);
+}
+
+int
+gpio_pin_map(void *gpio, int offset, u_int32_t mask, struct gpio_pinmap *map)
+{
+	struct gpio_softc *sc = gpio;
+	int npins, pin, i;
+
+	npins = gpio_npins(mask);
+	if (npins > sc->sc_npins)
+		return (1);
+
+	for (npins = 0, i = 0; i < 32; i++)
+		if (mask & (1 << i)) {
+			pin = offset + i;
+			if (pin < 0 || pin >= sc->sc_npins)
+				return (1);
+			if (sc->sc_pins[pin].pin_mapped)
+				return (1);
+			sc->sc_pins[pin].pin_mapped = 1;
+			map->pm_map[npins++] = pin;
+		}
+	map->pm_size = npins;
+
+	return (0);
+}
+
+void
+gpio_pin_unmap(void *gpio, struct gpio_pinmap *map)
+{
+	struct gpio_softc *sc = gpio;
+	int pin, i;
+
+	for (i = 0; i < map->pm_size; i++) {
+		pin = map->pm_map[i];
+		sc->sc_pins[pin].pin_mapped = 0;
+	}
+}
+
+int
+gpio_pin_read(void *gpio, struct gpio_pinmap *map, int pin)
+{
+	struct gpio_softc *sc = gpio;
+
+	return (gpiobus_pin_read(sc->sc_gc, map->pm_map[pin]));
+}
+
+void
+gpio_pin_write(void *gpio, struct gpio_pinmap *map, int pin, int value)
+{
+	struct gpio_softc *sc = gpio;
+
+	return (gpiobus_pin_write(sc->sc_gc, map->pm_map[pin], value));
+}
+
+void
+gpio_pin_ctl(void *gpio, struct gpio_pinmap *map, int pin, int flags)
+{
+	struct gpio_softc *sc = gpio;
+
+	return (gpiobus_pin_ctl(sc->sc_gc, map->pm_map[pin], flags));
+}
+
+int
+gpio_npins(u_int32_t mask)
+{
+	int npins, i;
+
+	for (npins = 0, i = 0; i < 32; i++)
+		if (mask & (1 << i))
+			npins++;
+
+	return (npins);
 }
 
 int
@@ -206,6 +281,8 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		pin = op->gp_pin;
 		if (pin < 0 || pin >= sc->sc_npins)
 			return (EINVAL);
+		if (sc->sc_pins[pin].pin_mapped)
+			return (EBUSY);
 
 		value = op->gp_value;
 		if (value != GPIO_PIN_LOW && value != GPIO_PIN_HIGH)
@@ -223,6 +300,8 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		pin = op->gp_pin;
 		if (pin < 0 || pin >= sc->sc_npins)
 			return (EINVAL);
+		if (sc->sc_pins[pin].pin_mapped)
+			return (EBUSY);
 
 		value = (sc->sc_pins[pin].pin_state == GPIO_PIN_LOW ?
 		    GPIO_PIN_HIGH : GPIO_PIN_LOW);
@@ -238,6 +317,8 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		pin = ctl->gp_pin;
 		if (pin < 0 || pin >= sc->sc_npins)
 			return (EINVAL);
+		if (sc->sc_pins[pin].pin_mapped)
+			return (EBUSY);
 
 		flags = ctl->gp_flags;
 		/* check that the controller supports all requested flags */

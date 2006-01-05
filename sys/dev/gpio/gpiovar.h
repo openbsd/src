@@ -1,6 +1,7 @@
-/*	$OpenBSD: gpiovar.h,v 1.1 2004/06/03 18:08:00 grange Exp $	*/
+/*	$OpenBSD: gpiovar.h,v 1.2 2006/01/05 11:52:24 grange Exp $	*/
+
 /*
- * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
+ * Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -33,6 +34,7 @@ typedef struct gpio_pin {
 	int	pin_caps;		/* capabilities */
 	int	pin_flags;		/* current configuration */
 	int	pin_state;		/* current state */
+	int	pin_mapped;		/* is mapped */
 } gpio_pin_t;
 
 /* Attach GPIO framework to the controller */
@@ -53,11 +55,25 @@ int gpiobus_print(void *, const char *);
 #define gpiobus_pin_ctl(gc, pin, flags) \
     ((gc)->gp_pin_ctl((gc)->gp_cookie, (pin), (flags)))
 
-
 /* Attach devices connected to the GPIO pins */
 struct gpio_attach_args {
-	int		ga_pin;
-	u_int32_t	ga_mask;
+	void *			ga_gpio;
+	int			ga_offset;
+	u_int32_t		ga_mask;
 };
+
+/* GPIO pin map */
+struct gpio_pinmap {
+	int *	pm_map;			/* pin map */
+	int	pm_size;		/* map size */
+};
+
+int	gpio_pin_map(void *, int, u_int32_t, struct gpio_pinmap *);
+void	gpio_pin_unmap(void *, struct gpio_pinmap *);
+int	gpio_pin_read(void *, struct gpio_pinmap *, int);
+void	gpio_pin_write(void *, struct gpio_pinmap *, int, int);
+void	gpio_pin_ctl(void *, struct gpio_pinmap *, int, int);
+
+int	gpio_npins(u_int32_t);
 
 #endif	/* !_DEV_GPIO_GPIOVAR_H_ */
