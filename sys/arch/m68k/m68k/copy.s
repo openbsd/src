@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.s,v 1.16 2004/12/30 21:27:19 miod Exp $	*/
+/*	$OpenBSD: copy.s,v 1.17 2006/01/05 21:19:14 martin Exp $	*/
 /*	$NetBSD: copy.s,v 1.30 1998/03/04 06:39:14 thorpej Exp $	*/
 
 /*-
@@ -41,7 +41,6 @@
  * copyin/copyout, etc.
  */
 
-#include <sys/errno.h>
 #include <machine/asm.h>
 
 #include "assym.h"
