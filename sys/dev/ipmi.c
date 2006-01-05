@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.28 2006/01/05 17:09:15 marco Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.29 2006/01/05 17:38:00 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1419,7 +1419,7 @@ read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 	if (ipmi_recvcmd(sc, sizeof(data), &rxlen, data))
 		return (-1);
 
-	dbg_printf(1, "values=%.2x %.2x %.2x %.2x %s\n",
+	dbg_printf(10, "values=%.2x %.2x %.2x %.2x %s\n",
 	    data[0],data[1],data[2],data[3], psensor->i_sensor.desc);
 	psensor->i_sensor.flags &= ~SENSOR_FINVALID;
 	if (data[1] & IPMI_INVALID_SENSOR) {
@@ -1497,7 +1497,7 @@ add_child_sensors(struct ipmi_softc *sc, u_int8_t *psdr, int count,
 
 	typ = ipmi_sensor_type(sensor_type, ext_type, entity);
 	if (typ == -1) {
-		dbg_printf(1, "Unknown sensor type:%.2x et:%.2x sn:%.2x "
+		dbg_printf(5, "Unknown sensor type:%.2x et:%.2x sn:%.2x "
 		    "name:%s\n", sensor_type, ext_type, sensor_num, name);
 		return 0;
 	}
@@ -1528,14 +1528,14 @@ add_child_sensors(struct ipmi_softc *sc, u_int8_t *psdr, int count,
 			strlcpy(psensor->i_sensor.desc, name,
 			    sizeof(psensor->i_sensor.desc));
 
-		dbg_printf(1, "add sensor:%.4x %.2x:%d ent:%.2x:%.2x %s\n",
+		dbg_printf(5, "add sensor:%.4x %.2x:%d ent:%.2x:%.2x %s\n",
 		    s1->sdrhdr.record_id, s1->sensor_type,
 		    typ, s1->entity_id, s1->entity_instance,
 		    psensor->i_sensor.desc);
 		if (read_sensor(sc, psensor) == 0) {
 			SLIST_INSERT_HEAD(&ipmi_sensor_list, psensor, list);
 			SENSOR_ADD(&psensor->i_sensor);
-			dbg_printf(1, "	 reading: %lld [%s]\n",
+			dbg_printf(5, "	 reading: %lld [%s]\n",
 			    psensor->i_sensor.value,
 			    psensor->i_sensor.desc);
 		}
