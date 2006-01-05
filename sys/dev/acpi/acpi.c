@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.14 2006/01/05 21:22:21 grange Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.15 2006/01/05 21:49:09 grange Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -39,43 +39,49 @@ int acpi_debug = 60;
 #endif
 
 #define ACPIEN_RETRIES 15
-int	acpimatch(struct device *, void *, void *);
-void	acpiattach(struct device *, struct device *, void *);
+
+int	acpi_match(struct device *, void *, void *);
+void	acpi_attach(struct device *, struct device *, void *);
 int	acpi_submatch(struct device *, void *, void *);
 int	acpi_print(void *, const char *);
+
+void	acpi_map_pmregs(struct acpi_softc *);
+void	acpi_unmap_pmregs(struct acpi_softc *);
+int	acpi_read_pmreg(struct acpi_softc *, int);
+void	acpi_write_pmreg(struct acpi_softc *, int, int);
+
+void	acpi_gpe(struct aml_node *, void *);
+void	acpi_foundhid(struct aml_node *, void *);
+
 int	acpi_loadtables(struct acpi_softc *, struct acpi_rsdp *);
 void	acpi_load_table(paddr_t, size_t, acpi_qhead_t *);
 void	acpi_load_dsdt(paddr_t, struct acpi_q **);
+
 void	acpi_softintr(void *);
+
 void	acpi_filtdetach(struct knote *);
 int	acpi_filtread(struct knote *, long);
-void	acpi_foundhid(struct aml_node *, void *);
-void    acpi_map_pmregs(struct acpi_softc *);
-void    acpi_unmap_pmregs(struct acpi_softc *);
-int     acpi_read_pmreg(struct acpi_softc *, int);
-void    acpi_write_pmreg(struct acpi_softc *, int, int);
 
 #define	ACPI_LOCK(sc)
 #define	ACPI_UNLOCK(sc)
 
 /* XXX move this into dsdt softc at some point */
-extern struct	aml_node aml_root;
+extern struct aml_node aml_root;
 
 struct filterops acpiread_filtops = {
 	1, NULL, acpi_filtdetach, acpi_filtread
 };
 
 struct cfattach acpi_ca = {
-	sizeof(struct acpi_softc), acpimatch, acpiattach
+	sizeof(struct acpi_softc), acpi_match, acpi_attach
 };
 
 struct cfdriver acpi_cd = {
 	NULL, "acpi", DV_DULL
 };
 
-int acpi_s5;
-int acpi_evindex;
 struct acpi_softc *acpi_softc;
+int acpi_s5, acpi_evindex, icount;
 
 /* Map Power Management registers */
 void
@@ -86,7 +92,7 @@ acpi_map_pmregs(struct acpi_softc *sc)
 	const char *name;
 	int reg;
 
-	for (reg=0; reg<ACPIREG_MAXREG; reg++) {
+	for (reg = 0; reg < ACPIREG_MAXREG; reg++) {
 		size = 0;
 		switch (reg) {
 		case ACPIREG_SMICMD:
@@ -94,7 +100,6 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			size = 1;
 			addr = sc->sc_fadt->smi_cmd;
 			break;
-			
 		case ACPIREG_PM1A_STS:
 		case ACPIREG_PM1A_EN:
 			name = "pm1a_sts";
@@ -110,7 +115,6 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			size = sc->sc_fadt->pm1_cnt_len;
 			addr = sc->sc_fadt->pm1a_cnt_blk;
 			break;
-
 		case ACPIREG_PM1B_STS:
 		case ACPIREG_PM1B_EN:
 			name = "pm1b_sts";
@@ -126,13 +130,11 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			size = sc->sc_fadt->pm1_cnt_len;
 			addr = sc->sc_fadt->pm1b_cnt_blk;
 			break;
-
 		case ACPIREG_PM2_CNT:
 			name = "pm2_cnt";
 			size = sc->sc_fadt->pm2_cnt_len;
 			addr = sc->sc_fadt->pm2_cnt_blk;
 			break;
-
 #if 0
 		case ACPIREG_PM_TMR:
 			/* Allocated in acpitimer */
@@ -141,7 +143,6 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			addr = sc->sc_fadt->pm_tmr_blk;
 			break;
 #endif
-
 		case ACPIREG_GPE0_STS:
 		case ACPIREG_GPE0_EN:
 			name = "gpe0_sts";
@@ -152,7 +153,6 @@ acpi_map_pmregs(struct acpi_softc *sc)
 				name = "gpe0_en";
 			}
 			break;
-
 		case ACPIREG_GPE1_STS:
 		case ACPIREG_GPE1_EN:
 			name = "gpe1_sts";
@@ -165,18 +165,18 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			break;
 		}
 		if (size && addr) {
-			dnprintf(50, "mapping: %.4x %.4x %s\n", 
+			dnprintf(50, "mapping: %.4x %.4x %s\n",
 				 addr, size, name);
 
 			/* Size and address exist; map register space */
-			bus_space_map(sc->sc_iot, addr, size, 0, 
+			bus_space_map(sc->sc_iot, addr, size, 0,
 				      &sc->sc_pmregs[reg].ioh);
-			
+
 			sc->sc_pmregs[reg].name = name;
 			sc->sc_pmregs[reg].size = size;
 			sc->sc_pmregs[reg].addr = addr;
 		}
-	}		
+	}
 }
 
 void
@@ -184,7 +184,7 @@ acpi_unmap_pmregs(struct acpi_softc *sc)
 {
 	int idx;
 
-	for (idx=0; idx<ACPIREG_MAXREG; idx++) {
+	for (idx = 0; idx < ACPIREG_MAXREG; idx++) {
 		if (sc->sc_pmregs[idx].size) {
 			bus_space_unmap(sc->sc_iot, sc->sc_pmregs[idx].ioh,
 					sc->sc_pmregs[idx].size);
@@ -202,16 +202,16 @@ acpi_read_pmreg(struct acpi_softc *sc, int reg)
 
 	/* Special cases: 1A/1B blocks can be OR'ed together */
 	if (reg == ACPIREG_PM1_EN) {
-		return acpi_read_pmreg(sc, ACPIREG_PM1A_EN) |
-			acpi_read_pmreg(sc, ACPIREG_PM1B_EN);
+		return (acpi_read_pmreg(sc, ACPIREG_PM1A_EN) |
+			acpi_read_pmreg(sc, ACPIREG_PM1B_EN));
 	}
 	else if (reg == ACPIREG_PM1_STS) {
-		return acpi_read_pmreg(sc, ACPIREG_PM1A_STS) |
-			acpi_read_pmreg(sc, ACPIREG_PM1B_STS);
+		return (acpi_read_pmreg(sc, ACPIREG_PM1A_STS) |
+			acpi_read_pmreg(sc, ACPIREG_PM1B_STS));
 	}
 	else if (reg == ACPIREG_PM1_CNT) {
-		return acpi_read_pmreg(sc, ACPIREG_PM1A_CNT) |
-			acpi_read_pmreg(sc, ACPIREG_PM1B_CNT);
+		return (acpi_read_pmreg(sc, ACPIREG_PM1A_CNT) |
+			acpi_read_pmreg(sc, ACPIREG_PM1B_CNT));
 	}
 
 	if (reg >= ACPIREG_MAXREG || sc->sc_pmregs[reg].size == 0)
@@ -222,23 +222,23 @@ acpi_read_pmreg(struct acpi_softc *sc, int reg)
 	size = sc->sc_pmregs[reg].size;
 	if (size > 4)
 		size = 4;
-	
+
 	switch (size) {
 	case 1:
-		regval=bus_space_read_1(sc->sc_iot, ioh, 0);
+		regval = bus_space_read_1(sc->sc_iot, ioh, 0);
 		break;
 	case 2:
-		regval=bus_space_read_2(sc->sc_iot, ioh, 0);
+		regval = bus_space_read_2(sc->sc_iot, ioh, 0);
 		break;
 	case 4:
-		regval=bus_space_read_4(sc->sc_iot, ioh, 0);
+		regval = bus_space_read_4(sc->sc_iot, ioh, 0);
 		break;
 	}
 
-	dnprintf(30, "acpi_readpm: %s = %.4x %x\n", 
+	dnprintf(30, "acpi_readpm: %s = %.4x %x\n",
 	       sc->sc_pmregs[reg].name,
 	       sc->sc_pmregs[reg].addr, regval);
-	return regval;
+	return (regval);
 }
 
 /* Write to power management register */
@@ -261,7 +261,7 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int regval)
 		acpi_write_pmreg(sc, ACPIREG_PM1A_CNT, regval);
 		acpi_write_pmreg(sc, ACPIREG_PM1B_CNT, regval);
 	}
-  
+
 	/* All special case return here */
 	if (reg >= ACPIREG_MAXREG)
 		return;
@@ -282,13 +282,11 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int regval)
 		break;
 	}
 
-	dnprintf(30, "acpi_writepm: %s = %.4x %x\n", 
-		 sc->sc_pmregs[reg].name, 
+	dnprintf(30, "acpi_writepm: %s = %.4x %x\n",
+		 sc->sc_pmregs[reg].name,
 		 sc->sc_pmregs[reg].addr,
 		 regval);
 }
-
-void acpi_gpe(struct aml_node *, void *);
 
 void
 acpi_gpe(struct aml_node *node, void *arg)
@@ -298,9 +296,8 @@ acpi_gpe(struct aml_node *node, void *arg)
 	uint32_t flag;
 
 	flag = acpi_read_pmreg(sc, ACPIREG_GPE0_EN);
-	for (child=node->child; child; child=child->sibling) {
+	for (child = node->child; child; child = child->sibling) {
 		printf("gpe: %s\n", child->name);
-		
 	}
 	flag = -1;
 	flag &= ~(1L << 0x1C);
@@ -312,12 +309,12 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
 	struct device		*self = (struct device *)arg;
 	const char		*dev;
-	struct aml_value         res;
+	struct aml_value	res;
 
 	dnprintf(10, "found hid device: %s ", node->parent->name);
 	aml_eval_object(sc, node->child, &res, NULL);
 
-	switch(res.type) {
+	switch (res.type) {
 	case AML_OBJTYPE_STRING:
 		dev = res.v_string;
 		break;
@@ -352,7 +349,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 }
 
 int
-acpimatch(struct device *parent, void *match, void *aux)
+acpi_match(struct device *parent, void *match, void *aux)
 {
 	struct acpi_attach_args *aaa = aux;
 	struct cfdata *cf = match;
@@ -368,7 +365,7 @@ acpimatch(struct device *parent, void *match, void *aux)
 }
 
 void
-acpiattach(struct device *parent, struct device *self, void *aux)
+acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpi_attach_args *aaa = aux;
 	struct acpi_softc *sc = (struct acpi_softc *)self;
@@ -410,7 +407,8 @@ acpiattach(struct device *parent, struct device *self, void *aux)
 	 * Find the FADT
 	 */
 	SIMPLEQ_FOREACH(entry, &sc->sc_tables, q_next) {
-		if (memcmp(entry->q_table, FADT_SIG, sizeof(FADT_SIG) - 1) == 0) {
+		if (memcmp(entry->q_table, FADT_SIG,
+		    sizeof(FADT_SIG) - 1) == 0) {
 			sc->sc_fadt = entry->q_table;
 			break;
 		}
@@ -439,7 +437,8 @@ acpiattach(struct device *parent, struct device *self, void *aux)
 	SIMPLEQ_INSERT_HEAD(&sc->sc_tables, entry, q_next);
 
 	p_dsdt = entry->q_table;
-	acpi_parse_aml(sc, p_dsdt->aml, p_dsdt->hdr_length - sizeof(p_dsdt->hdr));
+	acpi_parse_aml(sc, p_dsdt->aml, p_dsdt->hdr_length -
+	    sizeof(p_dsdt->hdr));
 
 	/*
 	 * Set up a pointer to the firmware control structure
@@ -470,7 +469,7 @@ acpiattach(struct device *parent, struct device *self, void *aux)
 	acpi_write_pmreg(sc, ACPIREG_SMICMD, sc->sc_fadt->acpi_enable);
 	idx = 0;
 	do {
-		if (idx++ > ACPIEN_RETRIES) 
+		if (idx++ > ACPIEN_RETRIES)
 			goto fail;
 	} while (!(acpi_read_pmreg(sc, ACPIREG_PM1_CNT) & ACPI_PM1_SCI_EN));
 #endif
@@ -482,7 +481,7 @@ acpiattach(struct device *parent, struct device *self, void *aux)
 #endif
 	acpi_attach_machdep(sc);
 
-	for (idx=0; idx<ACPIREG_MAXREG; idx++) {
+	for (idx = 0; idx < ACPIREG_MAXREG; idx++) {
 		if (sc->sc_pmregs[idx].name) {
 			printf("%8s = %.8x\n",
 			       sc->sc_pmregs[idx].name,
@@ -498,10 +497,10 @@ acpiattach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_interrupt) {
 		int16_t flag;
 
-		dnprintf(1,"slpbtn:%c  pwrbtn:%c\n", 
+		dnprintf(1,"slpbtn:%c  pwrbtn:%c\n",
 			 sc->sc_fadt->flags & FADT_SLP_BUTTON ? 'n' : 'y',
 			 sc->sc_fadt->flags & FADT_PWR_BUTTON ? 'n' : 'y');
-	    
+
 		/* Enable Sleep/Power buttons if they exist */
 		flag = acpi_read_pmreg(sc, ACPIREG_PM1_EN);
 		if (!(sc->sc_fadt->flags & FADT_PWR_BUTTON)) {
@@ -556,12 +555,12 @@ acpiattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	acpi_softc = sc;
-	
+
 	/* attach devices found in dsdt */
 	aml_find_node(aml_root.child, "_HID", acpi_foundhid, sc);
-	
+
 	return;
-	
+
  fail:
 	printf(" failed attach\n");
 }
@@ -633,7 +632,8 @@ acpi_loadtables(struct acpi_softc *sc, struct acpi_rsdp *rsdp)
 			sizeof(xsdt->table_offsets[0]);
 
 		for (i = 0; i < ntables; i++) {
-			acpi_map(xsdt->table_offsets[i], sizeof(*hdr), &handle);
+			acpi_map(xsdt->table_offsets[i], sizeof(*hdr),
+			    &handle);
 			hdr = (struct acpi_table_header *)handle.va;
 			acpi_load_table(xsdt->table_offsets[i], hdr->length,
 					&sc->sc_tables);
@@ -660,7 +660,8 @@ acpi_loadtables(struct acpi_softc *sc, struct acpi_rsdp *rsdp)
 			sizeof(rsdt->table_offsets[0]);
 
 		for (i = 0; i < ntables; i++) {
-			acpi_map(rsdt->table_offsets[i], sizeof(*hdr), &handle);
+			acpi_map(rsdt->table_offsets[i], sizeof(*hdr),
+			    &handle);
 			hdr = (struct acpi_table_header *)handle.va;
 			acpi_load_table(rsdt->table_offsets[i], hdr->length,
 					&sc->sc_tables);
@@ -719,26 +720,25 @@ acpi_load_dsdt(paddr_t pa, struct acpi_q **dsdt)
 	}
 }
 
-int icount;
-
 int
 acpi_interrupt(void *arg)
 {
 	struct acpi_softc *sc = (struct acpi_softc *)arg;
-	u_int32_t processed, sts,en;
+	u_int32_t processed, sts, en;
 
 	processed = 0;
 
 	sts = acpi_read_pmreg(sc, ACPIREG_GPE0_STS);
 	en  = acpi_read_pmreg(sc, ACPIREG_GPE0_EN);
 	if (sts & en) {
-		dnprintf(10, "GPE interrupt: %.8x %.8x %.8x\n", sts, en, sts & en);
+		dnprintf(10, "GPE interrupt: %.8x %.8x %.8x\n",
+		    sts, en, sts & en);
 		acpi_write_pmreg(sc, ACPIREG_GPE0_EN, en & ~sts);
 		acpi_write_pmreg(sc, ACPIREG_GPE0_STS,en);
 		acpi_write_pmreg(sc, ACPIREG_GPE0_EN, en);
 		processed = 1;
-		for(en=0; en<icount; en++) {
-		  icount = (icount << 1) | 1;
+		for (en = 0; en < icount; en++) {
+			icount = (icount << 1) | 1;
 		}
 		icount++;
 	}
@@ -750,7 +750,7 @@ acpi_interrupt(void *arg)
 		acpi_write_pmreg(sc, ACPIREG_PM1_EN, en & ~sts);
 		acpi_write_pmreg(sc, ACPIREG_PM1_STS,en);
 		acpi_write_pmreg(sc, ACPIREG_PM1_EN, en);
-		if (sts & ACPI_PM1_PWRBTN_STS) 
+		if (sts & ACPI_PM1_PWRBTN_STS)
 			sc->sc_powerbtn = 1;
 		if (sts & ACPI_PM1_SLPBTN_STS)
 			sc->sc_sleepbtn = 1;
@@ -765,14 +765,14 @@ acpi_interrupt(void *arg)
 #endif
 	}
 
-	return processed;
+	return (processed);
 }
 
 void
 acpi_softintr(void *arg)
 {
 	struct acpi_softc *sc = arg;
-	
+
 	if (sc->sc_powerbtn) {
 		sc->sc_powerbtn = 0;
 		acpi_evindex++;
@@ -792,7 +792,6 @@ acpi_softintr(void *arg)
 						      acpi_evindex));
 	}
 }
-
 
 void
 acpi_enter_sleep_state(struct acpi_softc *sc, int state)
@@ -882,7 +881,8 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = ENOENT;
 			SIMPLEQ_FOREACH(entry, &sc->sc_tables, q_next) {
 				if (table->offset-- == 0) {
-					hdr = (struct acpi_table_header *)entry->q_table;
+					hdr = (struct acpi_table_header *)
+					    entry->q_table;
 					if (table->table == NULL) {
 						table->size = hdr->length;
 						error = 0;
@@ -890,7 +890,7 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 						error = ENOSPC;
 					else
 						error = copyout(hdr,
-								table->table, hdr->length);
+						    table->table, hdr->length);
 					break;
 				}
 			}
@@ -922,7 +922,7 @@ acpi_filtread(struct knote *kn, long hint)
 	if (hint & !kn->kn_data)
 		kn->kn_data = hint;
 
-	return(1);
+	return (1);
 }
 
 int
