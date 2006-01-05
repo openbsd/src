@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.97 2006/01/04 12:46:52 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.98 2006/01/05 16:01:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1032,6 +1032,7 @@ show_rib_memory_msg(struct imsg *imsg)
 		printf("%10lld BGP attributes entries using %s of memory\n",
 		    stats.attr_cnt, fmt_mem(stats.attr_cnt *
 		    sizeof(struct attr)));
+		printf("\t   and holding %lld references\n", stats.attr_refs);
 		printf("%10lld BGP attributes using %s of memory\n",
 		    stats.attr_dcnt, fmt_mem(stats.attr_data));
 		printf("RIB using %s of memory\n", fmt_mem(
