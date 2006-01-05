@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_attr.c,v 1.7 2006/01/05 04:06:48 marc Exp $ */
+/*	$OpenBSD: rthread_attr.c,v 1.8 2006/01/05 08:15:16 otto Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -25,6 +25,7 @@
 
 #include <machine/spinlock.h>
 
+#include <inttypes.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
@@ -135,7 +136,10 @@ pthread_attr_getstack(const pthread_attr_t *attrp, void **stackaddr,
 int
 pthread_attr_setstack(pthread_attr_t *attrp, void *stackaddr, size_t stacksize)
 {
-	(*attrp)->stack_addr = stackaddr;
+	int n;
+
+	if ((n = pthread_attr_setstackaddr(attrp, stackaddr)))
+		return (n);
 	(*attrp)->stack_size = stacksize;
 	(*attrp)->stack_size -= (*attrp)->guard_size;
 
@@ -173,6 +177,12 @@ pthread_attr_getstackaddr(const pthread_attr_t *attrp, void **stackaddr)
 int
 pthread_attr_setstackaddr(pthread_attr_t *attrp, void *stackaddr)
 {
+	size_t pgsz = sysconf(_SC_PAGESIZE);
+
+	if (pgsz == (size_t)-1)
+		return EINVAL;
+	if ((uintptr_t)stackaddr & (pgsz - 1))
+		return EINVAL;
 	(*attrp)->stack_addr = stackaddr;
 
 	return (0);

@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_stack.c,v 1.1 2006/01/01 19:32:30 marc Exp $ */
+/* $OpenBSD: rthread_stack.c,v 1.2 2006/01/05 08:15:16 otto Exp $ */
 /* $snafu: rthread_stack.c,v 1.12 2005/01/11 02:45:28 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -66,8 +66,6 @@ _rthread_alloc_stack(pthread_t thread)
 		/* wrap up the info in a struct stack and return it */
 		stack = malloc(sizeof(*stack));
 		if (!stack) {
-			mprotect(guard, thread->attr.guard_size,
-				 PROT_EXEC | PROT_READ | PROT_WRITE);
 			munmap(base, size);
 			return (NULL);
 		}
@@ -84,8 +82,6 @@ _rthread_alloc_stack(pthread_t thread)
 void
 _rthread_free_stack(struct stack *stack)
 {
-	mprotect(stack->guard, stack->guardsize,
-		 PROT_EXEC | PROT_READ | PROT_WRITE);
 	munmap(stack->base, stack->len);
 	free(stack);
 }
