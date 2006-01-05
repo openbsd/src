@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.29 2006/01/05 04:06:48 marc Exp $ */
+/*	$OpenBSD: rthread.c,v 1.30 2006/01/05 04:24:30 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -445,26 +445,4 @@ _thread_dump_info(void)
 		printf("thread %d flags %d name %s\n",
 		    thread->tid, thread->flags, thread->name);
 	_spinunlock(&_thread_lock);
-}
-
-/*
- * the malloc lock
- */
-static _spinlock_lock_t malloc_lock = _SPINLOCK_UNLOCKED;
-
-void
-_thread_malloc_lock(void)
-{
-	_spinlock(&malloc_lock);
-}
-
-void
-_thread_malloc_unlock(void)
-{
-	_spinunlock(&malloc_lock);
-}
-
-void
-_thread_malloc_init(void)
-{
 }

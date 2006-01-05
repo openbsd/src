@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_libc.c,v 1.1 2006/01/05 04:06:48 marc Exp $ */
+/* $OpenBSD: rthread_libc.c,v 1.2 2006/01/05 04:24:30 tedu Exp $ */
 /* $snafu: libc_tag.c,v 1.4 2004/11/30 07:00:06 marc Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
@@ -124,4 +124,26 @@ _thread_tag_storage(void **tag, void *storage, size_t sz, void *err)
 		}
 	}
 	return ret;
+}
+
+/*
+ * the malloc lock
+ */
+static _spinlock_lock_t malloc_lock = _SPINLOCK_UNLOCKED;
+
+void
+_thread_malloc_lock(void)
+{
+	_spinlock(&malloc_lock);
+}
+
+void
+_thread_malloc_unlock(void)
+{
+	_spinunlock(&malloc_lock);
+}
+
+void
+_thread_malloc_init(void)
+{
 }
