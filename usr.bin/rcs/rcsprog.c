@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.59 2006/01/02 08:13:28 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.60 2006/01/05 10:28:24 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -26,8 +26,6 @@
 
 #include "includes.h"
 
-#include "log.h"
-#include "rcs.h"
 #include "rcsprog.h"
 
 #define RCS_CMD_MAXARG	128

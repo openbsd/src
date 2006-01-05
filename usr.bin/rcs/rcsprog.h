@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.32 2005/12/23 00:59:56 joris Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.33 2006/01/05 10:28:24 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -27,6 +27,8 @@
 #ifndef RCSPROG_H
 #define RCSPROG_H
 
+#include "log.h"
+#include "rcs.h"
 #include "xmalloc.h"
 
 #define RCS_TMPDIR_DEFAULT	"/tmp"

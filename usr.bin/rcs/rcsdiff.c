@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.29 2006/01/02 08:13:28 xsa Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.30 2006/01/05 10:28:24 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -26,10 +26,8 @@
 
 #include "includes.h"
 
-#include "log.h"
-#include "rcs.h"
-#include "diff.h"
 #include "rcsprog.h"
+#include "diff.h"
 
 static int rcsdiff_file(RCSFILE *, RCSNUM *, const char *);
 static int rcsdiff_rev(RCSFILE *, RCSNUM *, RCSNUM *, const char *);

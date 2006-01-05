@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.18 2006/01/02 08:13:28 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.19 2006/01/05 10:28:24 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -26,10 +26,8 @@
 
 #include "includes.h"
 
-#include "log.h"
-#include "rcs.h"
-#include "diff.h"
 #include "rcsprog.h"
+#include "diff.h"
 
 static int	rlog_file(const char *, const char *, RCSFILE *);
 static void	rlog_rev_print(RCSFILE *);
