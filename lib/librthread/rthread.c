@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.30 2006/01/05 04:24:30 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.31 2006/01/05 22:17:17 otto Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -204,19 +204,21 @@ pthread_join(pthread_t thread, void **retval)
 {
 	int e;
 
-	if (thread->flags & THREAD_DETACHED)
+	if (thread->tid == getthrid())
+		e = EDEADLK;
+	else if (thread->flags & THREAD_DETACHED)
 		e = EINVAL;
 	else {
 		_sem_wait(&thread->donesem, 0, 0);
 		if (retval)
 			*retval = thread->retval;
 		e = 0;
+		/* We should be the last having a ref to this thread, but
+		 * someone stupid or evil might haved detached it;
+		 * in that case the thread will cleanup itself */
+		if ((thread->flags & THREAD_DETACHED) == 0)
+			_rthread_free(thread);
 	}
-	/* We should be the last having a ref to this thread, but
-	 * someone stupid or evil might haved detached it;
-	 * in that case the thread will cleanup itself */
-	if ((thread->flags & THREAD_DETACHED) == 0)
-		_rthread_free(thread);
 
 	_rthread_reaper();
 	return (e);
