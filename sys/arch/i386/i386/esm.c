@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.31 2006/01/04 21:58:21 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.32 2006/01/05 07:39:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/timeout.h>
+#include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/sensors.h>
 
@@ -115,10 +116,11 @@ struct esm_softc {
 	TAILQ_HEAD(, esm_sensor) sc_sensors;
 	struct esm_sensor	*sc_nextsensor;
 	int			sc_retries;
-	int			sc_step;
+	volatile int		sc_step;
 	struct timeout		sc_timeout;
 
 	int			sc_wdog_period;
+	volatile int		sc_wdog_tickle;
 };
 
 struct cfattach esm_ca = {
@@ -280,12 +282,19 @@ esm_watchdog(void *arg, int period)
 	if (sc->sc_wdog_period == period) {
 		if (period != 0) {
 			s = splsoftclock();
-			/* tickle the watchdog */
-			EWRITE(sc, ESM2_CTRL_REG, ESM2_TC_HBDB);
+			if (sc->sc_step != 0) {
+				/* defer tickling to the sensor refresh */
+				sc->sc_wdog_tickle = 1;
+			} else {
+				/* tickle the watchdog */
+				EWRITE(sc, ESM2_CTRL_REG, ESM2_TC_HBDB);
+			}
 			splx(s);
 		}
 		return (period);
 	}
+
+	/* we're changing the watchdog period */
 
 	memset(&prop, 0, sizeof(prop));
 	memset(&state, 0, sizeof(state));
@@ -300,9 +309,21 @@ esm_watchdog(void *arg, int period)
 	prop.action = (period == 0) ? ESM_WDOG_DISABLE : ESM_WDOG_RESET;
 	prop.time = period;
 
+	/*
+	 * if we're doing a refresh, we need to wait till the hardware is
+	 * available again. since period changes only happen via sysctl we
+	 * should have a process context we can sleep in.
+	 */
+	while (sc->sc_step != 0) {
+		if (tsleep(sc, PUSER | PCATCH, "esm", 0) == EINTR) {
+			splx(s);
+			return (sc->sc_wdog_period);
+		}
+	}
+
 	if (esm_cmd(sc, &prop, sizeof(prop), NULL, 0, 1, 0) != 0) {
 		splx(s);
-		return (0);
+		return (sc->sc_wdog_period);
 	}
 
 	state.cmd = ESM2_CMD_HWDC;
@@ -419,6 +440,16 @@ esm_refresh(void *arg)
 	sc->sc_nextsensor = TAILQ_NEXT(es, es_entry);
 	sc->sc_retries = 0;
 	sc->sc_step = 0;
+
+	if (sc->sc_wdog_tickle) {
+		/*
+		 * the controller was busy in a refresh when the watchdog
+		 * needed a tickle, so do it now.
+		 */
+		EWRITE(sc, ESM2_CTRL_REG, ESM2_TC_HBDB);
+		sc->sc_wdog_tickle = 0;
+	}
+	wakeup(sc);
 
 	if (sc->sc_nextsensor == NULL) {
 		sc->sc_nextsensor = TAILQ_FIRST(&sc->sc_sensors);
