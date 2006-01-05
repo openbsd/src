@@ -2168,7 +2168,10 @@
 ./usr/share/man/cat8/mac68k
 ./usr/share/man/cat8/mac68k/MAKEDEV.0
 ./usr/share/man/cat8/mac68k/boot_mac68k.0
+./usr/share/man/cat8/mac68k/kbd.0
 ./usr/share/man/cat8/mac68k/pdisk.0
+./usr/share/man/cat8/mac68k/wsconscfg.0
+./usr/share/man/cat8/mac68k/wsconsctl.0
 ./usr/share/man/cat8/macppc
 ./usr/share/man/cat8/macppc/MAKEDEV.0
 ./usr/share/man/cat8/macppc/apm.0
