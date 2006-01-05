@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_attr.c,v 1.6 2006/01/04 08:48:02 marc Exp $ */
+/*	$OpenBSD: rthread_attr.c,v 1.7 2006/01/05 04:06:48 marc Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -33,8 +33,15 @@
 #include <errno.h>
 
 #include <pthread.h>
+#include <pthread_np.h>
 
 #include "rthread.h"
+
+/*
+ * temp: these need to be added to pthread.h
+ */
+int	pthread_attr_getguardsize(const pthread_attr_t *, size_t *);
+int	pthread_attr_setguardsize(pthread_attr_t *, size_t);
 
 /*
  * Note: stack_size + guard_size == total stack used

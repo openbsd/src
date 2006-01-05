@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.28 2006/01/04 19:48:52 otto Exp $ */
+/*	$OpenBSD: rthread.c,v 1.29 2006/01/05 04:06:48 marc Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -37,6 +37,7 @@
 
 #include <pthread.h>
 
+#include "thread_private.h"	/* in libc/include */
 #include "rthread.h"
 
 static int concurrency_level;	/* not used */
@@ -452,18 +453,18 @@ _thread_dump_info(void)
 static _spinlock_lock_t malloc_lock = _SPINLOCK_UNLOCKED;
 
 void
-_thread_malloc_lock()
+_thread_malloc_lock(void)
 {
 	_spinlock(&malloc_lock);
 }
 
 void
-_thread_malloc_unlock()
+_thread_malloc_unlock(void)
 {
 	_spinunlock(&malloc_lock);
 }
 
 void
-_thread_malloc_init()
+_thread_malloc_init(void)
 {
 }

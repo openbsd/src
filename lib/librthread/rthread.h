@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.16 2006/01/04 19:48:52 otto Exp $ */
+/*	$OpenBSD: rthread.h,v 1.17 2006/01/05 04:06:48 marc Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -26,6 +26,7 @@
  */
 
 #include <sys/queue.h>
+#include <semaphore.h>
 
 #define RTHREAD_STACK_SIZE_DEF (64 * 1024)
 
@@ -37,15 +38,15 @@ struct stack {
 	size_t len;
 };
 
-typedef struct semaphore {
+struct sem {
 	_spinlock_lock_t lock;
 	volatile int waitcount;
 	volatile int value;
 	int pad;
-} *sem_t;
+};
 
 struct pthread_mutex {
-	struct semaphore sem;
+	struct sem sem;
 	int type;
 	pthread_t owner;
 	int count;
@@ -56,7 +57,7 @@ struct pthread_mutex_attr {
 };
 
 struct pthread_cond {
-	struct semaphore sem;
+	struct sem sem;
 };
 
 struct pthread_cond_attr {
@@ -64,7 +65,7 @@ struct pthread_cond_attr {
 };
 
 struct pthread_rwlock {
-	struct semaphore sem;
+	struct sem sem;
 	_spinlock_lock_t lock;
 	int readers;
 	int writer;
@@ -104,7 +105,7 @@ struct rthread_cleanup_fn {
 };
 
 struct pthread {
-	struct semaphore donesem;
+	struct sem donesem;
 	pid_t tid;
 	unsigned int flags;
 	_spinlock_lock_t flags_lock;
@@ -146,6 +147,7 @@ void	_rthread_free_stack(struct stack *);
 void	_rthread_tls_destructors(pthread_t);
 void	_rthread_debug(int, const char *, ...)
 		__attribute__((__format__ (printf, 2, 3)));
+void	_rthread_debug_init(void);
 void	_rthread_add_to_reaper(pid_t, struct stack *);
 void 	_rthread_reaper(void);
 
