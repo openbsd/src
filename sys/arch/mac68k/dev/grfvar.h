@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfvar.h,v 1.17 2006/01/04 20:39:05 miod Exp $	*/
+/*	$OpenBSD: grfvar.h,v 1.18 2006/01/05 20:30:18 miod Exp $	*/
 /*	$NetBSD: grfvar.h,v 1.11 1996/08/04 06:03:58 scottr Exp $	*/
 /*	$NetBSD: grfioctl.h,v 1.5 1995/07/02 05:26:45 briggs Exp $	*/
 
@@ -52,7 +52,6 @@ struct grfmode {
 	u_int16_t	vres;		/* Vertical resolution (dpi)        */
 	u_int16_t	ptype;		/* 0 = indexed, 0x10 = direct       */
 	u_int16_t	psize;		/* Screen depth                     */
-	char		pad[32];	/* Space for expansion              */
 };
 
 #define CARD_NAME_LEN	64
@@ -87,24 +86,6 @@ struct grfbus_attach_args {
 	struct grfmode	*ga_grfmode;
 	bus_addr_t	ga_phys;
 };
-
-/* flags */
-#define	GF_ALIVE	0x01
-#define GF_OPEN		0x02
-#define GF_EXCLUDE	0x04
-#define GF_WANTED	0x08
-#define GF_BSDOPEN	0x10
-#define GF_HPUXOPEN	0x20
-
-/* requests to mode routine */
-#define GM_GRFON	1
-#define GM_GRFOFF	2
-#define GM_CURRMODE	3
-#define GM_LISTMODES	4
-#define GM_NEWMODE	5
-
-/* minor device interpretation */
-#define GRFUNIT(d)	(minor(d))
 
 /*
  * Nubus image data structure.  This is the equivalent of a PixMap in
