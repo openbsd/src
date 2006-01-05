@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.30 2006/01/05 19:04:39 marco Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.31 2006/01/05 21:28:29 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -155,7 +155,7 @@ int	ipmi_match(struct device *, void *, void *);
 void	ipmi_attach(struct device *, struct device *, void *);
 
 long	ipow(long, int);
-long	ipmi_convert(u_int8_t, sdrtype1 *, long);
+long	ipmi_convert(u_int8_t, struct sdrtype1 *, long);
 void	ipmi_sensor_name(char *, int, u_int8_t, u_int8_t *);
 
 /* BMC Helper Functions */
@@ -787,35 +787,35 @@ kcs_probe(struct ipmi_softc *sc)
 #define BMC_LUN			0
 #define SMS_LUN			2
 
-typedef struct {
+struct ipmi_request {
 	u_int8_t	rsSa;
 	u_int8_t	rsLun;
 	u_int8_t	netFn;
 	u_int8_t	cmd;
 	u_int8_t	data_len;
 	u_int8_t	*data;
-} ipmi_request_;
+};
 
-typedef struct {
+struct ipmi_response {
 	u_int8_t	cCode;
 	u_int8_t	data_len;
 	u_int8_t	*data;
-} ipmi_response_t;
+};
 
-typedef struct {
+struct ipmi_bmc_request {
 	u_int8_t	bmc_nfLn;
 	u_int8_t	bmc_cmd;
 	u_int8_t	bmc_data_len;
 	u_int8_t	bmc_data[1];
-} ipmi_bmc_request_t;
+};
 
-typedef struct {
+struct ipmi_bmc_response {
 	u_int8_t	bmc_nfLn;
 	u_int8_t	bmc_cmd;
 	u_int8_t	bmc_cCode;
 	u_int8_t	bmc_data_len;
 	u_int8_t	bmc_data[1];
-} ipmi_bmc_response_t;
+};
 
 struct cfattach ipmi_ca = {
 	sizeof(struct ipmi_softc), ipmi_match, ipmi_attach
@@ -877,14 +877,15 @@ smbios_unmap(struct smbios_mem_map *handle)
 int
 scan_smbios(u_int8_t mtype, void (*smcb) (void *base, void *arg), void *arg)
 {
-	smbiosanchor_t		*romhdr;
-	smhdr_t			*smhdr;
+	struct smbiosanchor	*romhdr;
+	struct smhdr		*smhdr;
 	u_int8_t		*offset;
 	int			nmatch, num;
 	struct smbios_mem_map	smm;
 
 	/* Scan for SMBIOS Table Signature */
-	romhdr = (smbiosanchor_t *) scan_sig(0xF0000, 0xFFFFF, 16, 4, "_SM_");
+	romhdr = (struct smbiosanchor *)scan_sig(0xF0000, 0xFFFFF, 16, 4,
+	    "_SM_");
 	if (romhdr == NULL)
 		return (-1);
 
@@ -900,7 +901,7 @@ scan_smbios(u_int8_t mtype, void (*smcb) (void *base, void *arg), void *arg)
 		return (-1);
 
 	for (num = 0; num < romhdr->smr_count; num++) {
-		smhdr = (smhdr_t *) offset;
+		smhdr = (struct smhdr *)offset;
 		if (smhdr->smh_type == SMBIOS_TYPE_END ||
 		    smhdr->smh_length == 0)
 			break;
@@ -938,7 +939,7 @@ void
 smbios_ipmi_probe(void *ptr, void *arg)
 {
 	struct ipmi_attach_args *ia = arg;
-	smbios_ipmi_t		*pipmi = (smbios_ipmi_t *)ptr;
+	struct smbios_ipmi	*pipmi = (struct smbios_ipmi *)ptr;
 
 	dbg_printf(1, "%02x %02x %02x %02x %08llx %02x %02x\n",
 	    pipmi->smipmi_if_type,
@@ -1165,7 +1166,7 @@ get_sdr(struct ipmi_softc *sc, u_int16_t recid, u_int16_t *nxtrec)
 	u_int16_t	resid;
 	int		len, sdrlen, offset;
 	u_int8_t	*psdr;
-	sdrhdr_t	shdr;
+	struct sdrhdr	shdr;
 
 	/* Reserve SDR */
 	if (ipmi_sendcmd(sc, BMC_SA, 0, STORAGE_NETFN, STORAGE_RESERVE_SDR,
@@ -1178,8 +1179,7 @@ get_sdr(struct ipmi_softc *sc, u_int16_t recid, u_int16_t *nxtrec)
 		return (-1);
 	}
 	/* Get SDR Header */
-	if (get_sdr_partial(sc, recid, resid, 0, sizeof(sdrhdr_t), &shdr,
-	    nxtrec)) {
+	if (get_sdr_partial(sc, recid, resid, 0, sizeof shdr, &shdr, nxtrec)) {
 		printf("get header fails\n");
 		return (-1);
 	}
@@ -1302,7 +1302,7 @@ signextend(unsigned long val, int bits)
 
 /* Convert IPMI reading from sensor factors */
 long
-ipmi_convert(u_int8_t v, sdrtype1 *s1, long adj)
+ipmi_convert(u_int8_t v, struct sdrtype1 *s1, long adj)
 {
 	short	M, B;
 	char	K1, K2;
@@ -1340,8 +1340,8 @@ int
 ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
     u_int8_t *reading)
 {
-	u_int8_t		data[32];
-	sdrtype1	*s1 = (sdrtype1 *)psensor->i_sdr;
+	u_int8_t	data[32];
+	struct sdrtype1	*s1 = (struct sdrtype1 *)psensor->i_sdr;
 	int		rxlen, etype;
 
 	psensor->i_sensor.status = SENSOR_S_OK;
@@ -1423,7 +1423,7 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 int
 read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 {
-	sdrtype1	*s1 = (sdrtype1 *) psensor->i_sdr;
+	struct sdrtype1	*s1 = (struct sdrtype1 *) psensor->i_sdr;
 	u_int8_t	data[8];
 	int		rxlen;
 
@@ -1478,8 +1478,8 @@ int
 add_sdr_sensor(struct ipmi_softc *sc, u_int8_t *psdr)
 {
 	int			rc;
-	sdrtype1		*s1 = (sdrtype1 *) psdr;
-	sdrtype2		*s2 = (sdrtype2 *) psdr;
+	struct sdrtype1		*s1 = (struct sdrtype1 *)psdr;
+	struct sdrtype2		*s2 = (struct sdrtype2 *)psdr;
 	char			name[64];
 
 	switch (s1->sdrhdr.record_type) {
@@ -1508,9 +1508,9 @@ add_child_sensors(struct ipmi_softc *sc, u_int8_t *psdr, int count,
     int sensor_num, int sensor_type, int ext_type, int sensor_base,
     int entity, const char *name)
 {
-	int typ, idx;
-	struct ipmi_sensor *psensor;
-	sdrtype1 *s1 = (sdrtype1 *) psdr;
+	int			typ, idx;
+	struct ipmi_sensor	*psensor;
+	struct sdrtype1		*s1 = (struct sdrtype1 *)psdr;
 
 	typ = ipmi_sensor_type(sensor_type, ext_type, entity);
 	if (typ == -1) {
@@ -1660,10 +1660,10 @@ ipmi_probe(void *aux)
 	struct ipmi_attach_args *ia = aux;
 
 	if (scan_smbios(SMBIOS_TYPE_IPMI, smbios_ipmi_probe, ia) == 0) {
-		dmd_ipmi_t *pipmi;
+		struct dmd_ipmi *pipmi;
 
 		/* XXX hack to find Dell PowerEdge 8450 */
-		pipmi = (dmd_ipmi_t *)scan_sig(0xC0000L, 0xFFFFFL, 16, 4,
+		pipmi = (struct dmd_ipmi *)scan_sig(0xC0000L, 0xFFFFFL, 16, 4,
 		    "IPMI");
 		if (pipmi == NULL) {
 			/* no IPMI found */

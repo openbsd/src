@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.9 2006/01/04 23:07:02 marco Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.10 2006/01/05 21:28:29 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -145,7 +145,7 @@ int	smic_recvmsg(struct ipmi_softc *, int, int *, u_int8_t *);
 #define SMBIOS_TYPE_IPMI		0x26
 #define SMBIOS_TYPE_END			0x7F
 
-typedef struct {
+struct smbiosanchor {
 	u_int8_t	smr_smtag[4];		/* Signature '_SM_' */
 	u_int8_t	smr_ep_cksum;		/* Chcksum Entry Point struct */
 	u_int8_t	smr_length;		/* Length of Anchor structure */
@@ -161,15 +161,15 @@ typedef struct {
 	u_int32_t	smr_table_address;	/* Phys addr of SMBIOS Table */
 	u_int16_t	smr_count;		/* # of entries in SMBIOS Tbl */
 	u_int8_t	smr_bcdrev;		/* BCD SMBIOS Revision */
-} __packed smbiosanchor_t;
+} __packed;
 
-typedef struct {
+struct smhdr {
 	u_int8_t	smh_type;		/* SMBIOS Header Type */
 	u_int8_t	smh_length;		/* SMBIOS Header Length */
 	u_int16_t	smh_handle;		/* SMBIOS Header Handle */
-} smhdr_t;
+} __packed;
 
-typedef struct {
+struct smbios_ipmi {
 	u_int8_t	smipmi_if_type;		/* IPMI Interface Type */
 	u_int8_t	smipmi_if_rev;		/* BCD IPMI Revision */
 	u_int8_t	smipmi_i2c_address;	/* I2C address of BMC */
@@ -189,15 +189,15 @@ typedef struct {
 						 * bit 0 : Interrupt trigger
 						 */
 	u_int8_t	smipmi_irq;		/* IRQ if applicable */
-} __packed smbios_ipmi_t;
+} __packed;
 
-typedef struct {
+struct dmd_ipmi {
 	u_int8_t	dmd_sig[4];		/* Signature 'IPMI' */
 	u_int8_t	dmd_i2c_address;	/* Address of BMC */
 	u_int8_t	dmd_nvram_address;	/* Address of NVRAM */
 	u_int8_t	dmd_if_type;		/* IPMI Interface Type */
 	u_int8_t	dmd_if_rev;		/* IPMI Interface Revision */
-} __packed dmd_ipmi_t;
+} __packed;
 
 
 #define APP_NETFN			0x06
@@ -279,16 +279,16 @@ typedef struct {
 #define SE_SET_SENSOR_TYPE		0x2E
 #define SE_GET_SENSOR_TYPE		0x2F
 
-typedef struct {
+struct sdrhdr {
 	u_int16_t	record_id;		/* SDR Record ID */
 	u_int8_t	sdr_version;		/* SDR Version */
 	u_int8_t	record_type;		/* SDR Record Type */
 	u_int8_t	record_length;		/* SDR Record Length */
-} __packed sdrhdr_t;
+} __packed;
 
 /* SDR: Record Type 1 */
-typedef struct {
-	sdrhdr_t	sdrhdr;
+struct sdrtype1 {
+	struct sdrhdr	sdrhdr;
 
 	u_int8_t	owner_id;
 	u_int8_t	owner_lun;
@@ -331,11 +331,11 @@ typedef struct {
 	u_int8_t	oem;
 	u_int8_t	typelen;
 	u_int8_t	name[1];
-} __packed sdrtype1;
+} __packed;
 
 /* SDR: Record Type 2 */
-typedef struct {
-	sdrhdr_t	sdrhdr;
+struct sdrtype2 {
+	struct sdrhdr	sdrhdr;
 
 	u_int8_t	owner_id;
 	u_int8_t	owner_lun;
@@ -361,7 +361,7 @@ typedef struct {
 	u_int8_t	oem;
 	u_int8_t	typelen;
 	u_int8_t	name[1];
-} __packed sdrtype2;
+} __packed;
 
 int ipmi_probe(void *);
 
