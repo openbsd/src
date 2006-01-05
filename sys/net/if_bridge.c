@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.147 2006/01/04 06:04:41 canacar Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.148 2006/01/05 03:28:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -771,6 +771,7 @@ bridge_bifconf(struct bridge_softc *sc, struct ifbifconf *bifc)
 	}
 
 	LIST_FOREACH(p, &sc->sc_iflist, next) {
+		bzero(&breq, sizeof breq);
 		if (bifc->ifbic_len < sizeof(breq))
 			break;
 		strlcpy(breq.ifbr_name, sc->sc_if.if_xname, IFNAMSIZ);
@@ -788,6 +789,7 @@ bridge_bifconf(struct bridge_softc *sc, struct ifbifconf *bifc)
 		bifc->ifbic_len -= sizeof(breq);
 	}
 	LIST_FOREACH(p, &sc->sc_spanlist, next) {
+		bzero(&breq, sizeof breq);
 		if (bifc->ifbic_len < sizeof(breq))
 			break;
 		strlcpy(breq.ifbr_name, sc->sc_if.if_xname, IFNAMSIZ);
@@ -845,6 +847,7 @@ bridge_brlconf(struct bridge_softc *sc, struct ifbrlconf *bc)
 	}
 
 	SIMPLEQ_FOREACH(n, &ifl->bif_brlin, brl_next) {
+		bzero(&req, sizeof req);
 		if (bc->ifbrl_len < sizeof(req))
 			goto done;
 		strlcpy(req.ifbr_name, sc->sc_if.if_xname, IFNAMSIZ);
@@ -867,6 +870,7 @@ bridge_brlconf(struct bridge_softc *sc, struct ifbrlconf *bc)
 	}
 
 	SIMPLEQ_FOREACH(n, &ifl->bif_brlout, brl_next) {
+		bzero(&req, sizeof req);
 		if (bc->ifbrl_len < sizeof(req))
 			goto done;
 		strlcpy(req.ifbr_name, sc->sc_if.if_xname, IFNAMSIZ);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.141 2005/12/22 23:55:18 canacar Exp $	*/
+/*	$OpenBSD: if.c,v 1.142 2006/01/05 03:28:34 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -822,6 +822,7 @@ if_clone_list(struct if_clonereq *ifcr)
 
 	for (ifc = LIST_FIRST(&if_cloners); ifc != NULL && count != 0;
 	     ifc = LIST_NEXT(ifc, ifc_list), count--, dst += IFNAMSIZ) {
+		bzero(outbuf, sizeof outbuf);
 		strlcpy(outbuf, ifc->ifc_name, IFNAMSIZ);
 		error = copyout(outbuf, dst, IFNAMSIZ);
 		if (error)
@@ -1707,6 +1708,7 @@ if_getgroup(caddr_t data, struct ifnet *ifp)
 	TAILQ_FOREACH(ifgl, &ifp->if_groups, ifgl_next) {
 		if (len < sizeof(ifgrq))
 			return (EINVAL);
+		bzero(&ifgrq, sizeof ifgrq);
 		strlcpy(ifgrq.ifgrq_group, ifgl->ifgl_group->ifg_group,
 		    sizeof(ifgrq.ifgrq_group));
 		if ((error = copyout((caddr_t)&ifgrq, (caddr_t)ifgp,
@@ -1748,6 +1750,7 @@ if_getgroupmembers(caddr_t data)
 	TAILQ_FOREACH(ifgm, &ifg->ifg_members, ifgm_next) {
 		if (len < sizeof(ifgrq))
 			return (EINVAL);
+		bzero(&ifgrq, sizeof ifgrq);
 		strlcpy(ifgrq.ifgrq_member, ifgm->ifgm_ifp->if_xname,
 		    sizeof(ifgrq.ifgrq_member));
 		if ((error = copyout((caddr_t)&ifgrq, (caddr_t)ifgp,
