@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.161 2005/12/10 14:41:07 krw Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.162 2006/01/05 02:23:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -355,6 +355,7 @@ pf_find_or_create_ruleset(const char *path)
 	if (ruleset != NULL)
 		return (ruleset);
 	p = (char *)malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+	bzero(p, MAXPATHLEN);
 	strlcpy(p, path, MAXPATHLEN);
 	while (parent == NULL && (q = strrchr(p, '/')) != NULL) {
 		*q = 0;
@@ -473,6 +474,7 @@ pf_anchor_setup(struct pf_rule *r, const struct pf_ruleset *s,
 	if (!name[0])
 		return (0);
 	path = (char *)malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+	bzero(path, MAXPATHLEN);
 	if (name[0] == '/')
 		strlcpy(path, name + 1, MAXPATHLEN);
 	else {
@@ -530,6 +532,7 @@ pf_anchor_copyout(const struct pf_ruleset *rs, const struct pf_rule *r,
 		int	 i;
 
 		a = (char *)malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+		bzero(a, MAXPATHLEN);
 		if (rs->anchor == NULL)
 			a[0] = 0;
 		else
