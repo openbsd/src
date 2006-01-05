@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.71 2005/12/31 19:18:05 krw Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.72 2006/01/05 05:05:06 jsg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ const char *mclpool_warnmsg =
  * Initialize the mbuf allcator.
  */
 void
-mbinit()
+mbinit(void)
 {
 	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbpl", NULL);
 	pool_init(&mclpool, MCLBYTES, 0, 0, 0, "mclpl", NULL);
@@ -144,8 +144,8 @@ nmbclust_update(void)
 void
 m_reclaim(void *arg, int flags)
 {
-	register struct domain *dp;
-	register struct protosw *pr;
+	struct domain *dp;
+	struct protosw *pr;
 	int s = splimp();
 
 	for (dp = domains; dp; dp = dp->dom_next)
@@ -162,30 +162,27 @@ m_reclaim(void *arg, int flags)
  * for critical paths.
  */
 struct mbuf *
-m_get(nowait, type)
-	int nowait, type;
+m_get(int nowait, int type)
 {
-	register struct mbuf *m;
+	struct mbuf *m;
 
 	MGET(m, nowait, type);
 	return (m);
 }
 
 struct mbuf *
-m_gethdr(nowait, type)
-	int nowait, type;
+m_gethdr(int nowait, int type)
 {
-	register struct mbuf *m;
+	struct mbuf *m;
 
 	MGETHDR(m, nowait, type);
 	return (m);
 }
 
 struct mbuf *
-m_getclr(nowait, type)
-	int nowait, type;
+m_getclr(int nowait, int type)
 {
-	register struct mbuf *m;
+	struct mbuf *m;
 
 	MGET(m, nowait, type);
 	if (m == NULL)
@@ -195,20 +192,18 @@ m_getclr(nowait, type)
 }
 
 struct mbuf *
-m_free(m)
-	struct mbuf *m;
+m_free(struct mbuf *m)
 {
-	register struct mbuf *n;
+	struct mbuf *n;
 
 	MFREE(m, n);
 	return (n);
 }
 
 void
-m_freem(m)
-	register struct mbuf *m;
+m_freem(struct mbuf *m)
 {
-	register struct mbuf *n;
+	struct mbuf *n;
 
 	if (m == NULL)
 		return;
@@ -227,9 +222,7 @@ m_freem(m)
  * copy junk along.
  */
 struct mbuf *
-m_prepend(m, len, how)
-	register struct mbuf *m;
-	int len, how;
+m_prepend(struct mbuf *m, int len, int how)
 {
 	struct mbuf *mn;
 
@@ -256,10 +249,7 @@ m_prepend(m, len, how)
 int MCFail;
 
 struct mbuf *
-m_copym(m, off0, len, wait)
-	struct mbuf *m;
-	int off0, wait;
-	int len;
+m_copym(struct mbuf *m, int off0, int len, int wait)
 {
 	return m_copym0(m, off0, len, wait, 0);	/* shallow copy on M_EXT */
 }
@@ -269,20 +259,13 @@ m_copym(m, off0, len, wait)
  * of merely bumping the reference count.
  */
 struct mbuf *
-m_copym2(m, off0, len, wait)
-	struct mbuf *m;
-	int off0, wait;
-	int len;
+m_copym2(struct mbuf *m, int off0, int len, int wait)
 {
 	return m_copym0(m, off0, len, wait, 1);	/* deep copy */
 }
 
 struct mbuf *
-m_copym0(m, off0, len, wait, deep)
-	struct mbuf *m;
-	int off0, wait;
-	int len;
-	int deep;	/* deep copy */
+m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 {
 	struct mbuf *n, **np;
 	int off = off0;
@@ -370,13 +353,9 @@ nospace:
  * continuing for "len" bytes, into the indicated buffer.
  */
 void
-m_copydata(m, off, len, cp)
-	register struct mbuf *m;
-	register int off;
-	register int len;
-	caddr_t cp;
+m_copydata(struct mbuf *m, int off, int len, caddr_t cp)
 {
-	register unsigned count;
+	unsigned count;
 
 	if (off < 0)
 		panic("m_copydata: off %d < 0", off);
@@ -409,14 +388,10 @@ m_copydata(m, off, len, cp)
  * including the setting of m_len.
  */
 void
-m_copyback(m0, off, len, cp)
-	struct	mbuf *m0;
-	register int off;
-	register int len;
-	const void *cp;
+m_copyback(struct mbuf *m0, int off, int len, const void *cp)
 {
-	register int mlen;
-	register struct mbuf *m = m0, *n;
+	int mlen;
+	struct mbuf *m = m0, *n;
 	int totlen = 0;
 
 	if (m0 == NULL)
@@ -462,8 +437,7 @@ out:	if (((m = m0)->m_flags & M_PKTHDR) && (m->m_pkthdr.len < totlen))
  * Any m_pkthdr is not updated.
  */
 void
-m_cat(m, n)
-	register struct mbuf *m, *n;
+m_cat(struct mbuf *m, struct mbuf *n)
 {
 	while (m->m_next)
 		m = m->m_next;
@@ -483,13 +457,11 @@ m_cat(m, n)
 }
 
 void
-m_adj(mp, req_len)
-	struct mbuf *mp;
-	int req_len;
+m_adj(struct mbuf *mp, int req_len)
 {
-	register int len = req_len;
-	register struct mbuf *m;
-	register int count;
+	int len = req_len;
+	struct mbuf *m;
+	int count;
 
 	if ((m = mp) == NULL)
 		return;
@@ -567,12 +539,10 @@ m_adj(mp, req_len)
 int MPFail;
 
 struct mbuf *
-m_pullup(n, len)
-	register struct mbuf *n;
-	int len;
+m_pullup(struct mbuf *n, int len)
 {
-	register struct mbuf *m;
-	register int count;
+	struct mbuf *m;
+	int count;
 	int space;
 
 	/*
@@ -632,10 +602,8 @@ bad:
  *
  * KEBE SAYS:  Remember that dtom() calls with data in clusters does not work!
  */
-struct mbuf *
-m_pullup2(n, len)
-	struct mbuf *n;
-	int len;
+struct mbuf *   
+m_pullup2(struct mbuf *n, int len)       
 {
 	struct mbuf *m;
 	int count;
@@ -698,10 +666,7 @@ bad:
  * Return a pointer to mbuf/offset of location in mbuf chain.
  */
 struct mbuf *
-m_getptr(m, loc, off)
-	struct mbuf *m;
-	int loc;
-	int *off;
+m_getptr(struct mbuf *m, int loc, int *off)
 {
 	while (loc >= 0) {
 		/* Normal end of search */
@@ -739,11 +704,9 @@ m_getptr(m, loc, off)
  * XXX It is assumed that siz is less than the size of an mbuf at the moment.
  */
 struct mbuf *
-m_inject(m0, len0, siz, wait)
-	register struct mbuf *m0;
-	int len0, siz, wait;
+m_inject(struct mbuf *m0, int len0, int siz, int wait)
 {
-	register struct mbuf *m, *n, *n2 = NULL, *n3;
+	struct mbuf *m, *n, *n2 = NULL, *n3;
 	unsigned len = len0, remain;
 
 	if ((siz >= MHLEN) || (len0 <= 0))
@@ -797,11 +760,9 @@ m_inject(m0, len0, siz, wait)
  * attempts to restore the chain to its original state.
  */
 struct mbuf *
-m_split(m0, len0, wait)
-	register struct mbuf *m0;
-	int len0, wait;
+m_split(struct mbuf *m0, int len0, int wait)
 {
-	register struct mbuf *m, *n;
+	struct mbuf *m, *n;
 	unsigned len = len0, remain, olen;
 
 	for (m = m0; m && len > m->m_len; m = m->m_next)
@@ -860,16 +821,13 @@ extpacket:
  * Routine to copy from device local memory into mbufs.
  */
 struct mbuf *
-m_devget(buf, totlen, off0, ifp, copy)
-	char *buf;
-	int totlen, off0;
-	struct ifnet *ifp;
-	void (*copy)(const void *, void *, size_t);
+m_devget(char *buf, int totlen, int off0, struct ifnet *ifp,
+    void (*copy)(const void *, void *, size_t))
 {
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct mbuf *top = NULL, **mp = &top;
-	register int off = off0, len;
-	register char *cp;
+	int off = off0, len;
+	char *cp;
 	char *epkt;
 
 	cp = buf;
@@ -932,8 +890,7 @@ m_devget(buf, totlen, off0, ifp, copy)
 }
 
 void
-m_zero(m)
-	struct mbuf *m;
+m_zero(struct mbuf *m)
 {
 	while (m) {
 #ifdef DIAGNOSTIC
@@ -957,13 +914,8 @@ m_zero(m)
  * beginning, continuing for "len" bytes.
  */
 int
-m_apply(m, off, len, f, fstate)
-	struct mbuf *m;
-	int off;
-	int len;
-	/* fstate, data, len */
-	int (*f)(caddr_t, caddr_t, unsigned int);
-	caddr_t fstate;
+m_apply(struct mbuf *m, int off, int len,
+    int (*f)(caddr_t, caddr_t, unsigned int), caddr_t fstate)
 {
 	int rval;
 	unsigned int count;

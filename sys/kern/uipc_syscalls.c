@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.61 2005/07/06 20:41:44 krw Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.62 2006/01/05 05:05:07 jsg Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -60,12 +60,9 @@
 extern	struct fileops socketops;
 
 int
-sys_socket(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_socket(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_socket_args /* {
+	struct sys_socket_args /* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
@@ -99,12 +96,9 @@ out:
 
 /* ARGSUSED */
 int
-sys_bind(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_bind(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_bind_args /* {
+	struct sys_bind_args /* {
 		syscallarg(int) s;
 		syscallarg(const struct sockaddr *) name;
 		syscallarg(socklen_t) namelen;
@@ -127,12 +121,9 @@ sys_bind(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_listen(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_listen(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_listen_args /* {
+	struct sys_listen_args /* {
 		syscallarg(int) s;
 		syscallarg(int) backlog;
 	} */ *uap = v;
@@ -147,10 +138,7 @@ sys_listen(p, v, retval)
 }
 
 int
-sys_accept(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_accept(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_accept_args /* {
 		syscallarg(int) s;
@@ -262,10 +250,7 @@ bad:
 
 /* ARGSUSED */
 int
-sys_connect(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_connect(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_connect_args /* {
 		syscallarg(int) s;
@@ -319,18 +304,15 @@ bad:
 }
 
 int
-sys_socketpair(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_socketpair(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_socketpair_args /* {
+	struct sys_socketpair_args /* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
 		syscallarg(int *) rsv;
 	} */ *uap = v;
-	register struct filedesc *fdp = p->p_fd;
+	struct filedesc *fdp = p->p_fd;
 	struct file *fp1, *fp2;
 	struct socket *so1, *so2;
 	int fd, error, sv[2];
@@ -394,12 +376,9 @@ free1:
 }
 
 int
-sys_sendto(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sendto(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_sendto_args /* {
+	struct sys_sendto_args /* {
 		syscallarg(int) s;
 		syscallarg(const void *) buf;
 		syscallarg(size_t) len;
@@ -424,12 +403,9 @@ sys_sendto(p, v, retval)
 }
 
 int
-sys_sendmsg(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sendmsg(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_sendmsg_args /* {
+	struct sys_sendmsg_args /* {
 		syscallarg(int) s;
 		syscallarg(const struct msghdr *) msg;
 		syscallarg(int) flags;
@@ -464,12 +440,7 @@ done:
 }
 
 int
-sendit(p, s, mp, flags, retsize)
-	struct proc *p;
-	int s;
-	struct msghdr *mp;
-	int flags;
-	register_t *retsize;
+sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 {
 	struct file *fp;
 	struct uio auio;
@@ -522,7 +493,7 @@ sendit(p, s, mp, flags, retsize)
 			goto bad;
 #ifdef COMPAT_OLDSOCK
 		if (mp->msg_flags == MSG_COMPAT) {
-			register struct cmsghdr *cm;
+			struct cmsghdr *cm;
 
 			M_PREPEND(control, sizeof(*cm), M_WAIT);
 			cm = mtod(control, struct cmsghdr *);
@@ -568,12 +539,9 @@ bad:
 }
 
 int
-sys_recvfrom(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_recvfrom(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_recvfrom_args /* {
+	struct sys_recvfrom_args /* {
 		syscallarg(int) s;
 		syscallarg(void *) buf;
 		syscallarg(size_t) len;
@@ -604,12 +572,9 @@ sys_recvfrom(p, v, retval)
 }
 
 int
-sys_recvmsg(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_recvmsg(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_recvmsg_args /* {
+	struct sys_recvmsg_args /* {
 		syscallarg(int) s;
 		syscallarg(struct msghdr *) msg;
 		syscallarg(int) flags;
@@ -652,17 +617,13 @@ done:
 }
 
 int
-recvit(p, s, mp, namelenp, retsize)
-	struct proc *p;
-	int s;
-	struct msghdr *mp;
-	caddr_t namelenp;
-	register_t *retsize;
+recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
+    register_t *retsize)
 {
 	struct file *fp;
 	struct uio auio;
-	register struct iovec *iov;
-	register int i;
+	struct iovec *iov;
+	int i;
 	size_t len;
 	int error;
 	struct mbuf *from = NULL, *control = NULL;
@@ -806,10 +767,7 @@ out:
 
 /* ARGSUSED */
 int
-sys_shutdown(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_shutdown(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_shutdown_args /* {
 		syscallarg(int) s;
@@ -827,10 +785,7 @@ sys_shutdown(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_setsockopt(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_setsockopt(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_setsockopt_args /* {
 		syscallarg(int) s;
@@ -881,10 +836,7 @@ bad:
 
 /* ARGSUSED */
 int
-sys_getsockopt(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_getsockopt(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_getsockopt_args /* {
 		syscallarg(int) s;
@@ -927,7 +879,7 @@ out:
 int
 sys_pipe(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_pipe_args /* {
+	struct sys_pipe_args /* {
 		syscallarg(int *) fdp;
 	} */ *uap = v;
 	int error, fds[2];
@@ -954,10 +906,7 @@ sys_pipe(struct proc *p, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_getsockname(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_getsockname(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_getsockname_args /* {
 		syscallarg(int) fdes;
@@ -998,10 +947,7 @@ bad:
  */
 /* ARGSUSED */
 int
-sys_getpeername(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_getpeername(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_getpeername_args /* {
 		syscallarg(int) fdes;
@@ -1009,7 +955,7 @@ sys_getpeername(p, v, retval)
 		syscallarg(socklen_t *) alen;
 	} */ *uap = v;
 	struct file *fp;
-	register struct socket *so;
+	struct socket *so;
 	struct mbuf *m = NULL;
 	socklen_t len;
 	int error;
@@ -1045,10 +991,7 @@ bad:
  */
 /* ARGSUSED */
 int
-sys_getpeereid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_getpeereid(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_getpeereid_args /* {
 		syscallarg(int) fdes;

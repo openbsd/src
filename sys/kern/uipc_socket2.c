@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.40 2005/07/18 02:43:27 fgsch Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.41 2006/01/05 05:05:07 jsg Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -88,8 +88,7 @@ u_long	sb_max = SB_MAX;		/* patchable */
  */
 
 void
-soisconnecting(so)
-	register struct socket *so;
+soisconnecting(struct socket *so)
 {
 
 	so->so_state &= ~(SS_ISCONNECTED|SS_ISDISCONNECTING);
@@ -97,10 +96,9 @@ soisconnecting(so)
 }
 
 void
-soisconnected(so)
-	register struct socket *so;
+soisconnected(struct socket *so)
 {
-	register struct socket *head = so->so_head;
+	struct socket *head = so->so_head;
 
 	so->so_state &= ~(SS_ISCONNECTING|SS_ISDISCONNECTING|SS_ISCONFIRMING);
 	so->so_state |= SS_ISCONNECTED;
@@ -116,8 +114,7 @@ soisconnected(so)
 }
 
 void
-soisdisconnecting(so)
-	register struct socket *so;
+soisdisconnecting(struct socket *so)
 {
 
 	so->so_state &= ~SS_ISCONNECTING;
@@ -128,8 +125,7 @@ soisdisconnecting(so)
 }
 
 void
-soisdisconnected(so)
-	register struct socket *so;
+soisdisconnected(struct socket *so)
 {
 
 	so->so_state &= ~(SS_ISCONNECTING|SS_ISCONNECTED|SS_ISDISCONNECTING);
@@ -261,8 +257,7 @@ soqremque(struct socket *so, int q)
  */
 
 void
-socantsendmore(so)
-	struct socket *so;
+socantsendmore(struct socket *so)
 {
 
 	so->so_state |= SS_CANTSENDMORE;
@@ -270,8 +265,7 @@ socantsendmore(so)
 }
 
 void
-socantrcvmore(so)
-	struct socket *so;
+socantrcvmore(struct socket *so)
 {
 
 	so->so_state |= SS_CANTRCVMORE;
@@ -282,8 +276,7 @@ socantrcvmore(so)
  * Wait for data to arrive at/drain from a socket buffer.
  */
 int
-sbwait(sb)
-	struct sockbuf *sb;
+sbwait(struct sockbuf *sb)
 {
 
 	sb->sb_flags |= SB_WAIT;
@@ -297,8 +290,7 @@ sbwait(sb)
  * return any error returned from sleep (EINTR).
  */
 int
-sb_lock(sb)
-	register struct sockbuf *sb;
+sb_lock(struct sockbuf *sb)
 {
 	int error;
 
@@ -320,9 +312,7 @@ sb_lock(sb)
  * if the socket has the SS_ASYNC flag set.
  */
 void
-sowakeup(so, sb)
-	register struct socket *so;
-	register struct sockbuf *sb;
+sowakeup(struct socket *so, struct sockbuf *sb)
 {
 	selwakeup(&sb->sb_sel);
 	sb->sb_flags &= ~SB_SEL;
@@ -368,9 +358,7 @@ sowakeup(so, sb)
  */
 
 int
-soreserve(so, sndcc, rcvcc)
-	register struct socket *so;
-	u_long sndcc, rcvcc;
+soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 {
 
 	if (sbreserve(&so->so_snd, sndcc) == 0)
@@ -396,9 +384,7 @@ bad:
  * if buffering efficiency is near the normal case.
  */
 int
-sbreserve(sb, cc)
-	struct sockbuf *sb;
-	u_long cc;
+sbreserve(struct sockbuf *sb, u_long cc)
 {
 
 	if (cc == 0 || cc > sb_max)
@@ -427,8 +413,7 @@ sbcheckreserve(u_long cnt, u_long defcnt)
  * Free mbufs held by a socket, and reserved mbuf space.
  */
 void
-sbrelease(sb)
-	struct sockbuf *sb;
+sbrelease(struct sockbuf *sb)
 {
 
 	sbflush(sb);
@@ -522,11 +507,9 @@ do {									\
  * discarded and mbufs are compacted where possible.
  */
 void
-sbappend(sb, m)
-	struct sockbuf *sb;
-	struct mbuf *m;
+sbappend(struct sockbuf *sb, struct mbuf *m)
 {
-	register struct mbuf *n;
+	struct mbuf *n;
 
 	if (m == NULL)
 		return;
@@ -916,12 +899,9 @@ sbdroprecord(struct sockbuf *sb)
  * with the specified type for presentation on a socket buffer.
  */
 struct mbuf *
-sbcreatecontrol(p, size, type, level)
-	caddr_t p;
-	register int size;
-	int type, level;
+sbcreatecontrol(caddr_t p, int size, int type, int level)
 {
-	register struct cmsghdr *cp;
+	struct cmsghdr *cp;
 	struct mbuf *m;
 
 	if (CMSG_SPACE(size) > MCLBYTES) {
