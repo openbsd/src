@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.136 2006/01/04 14:51:59 jmc Exp $
+.\"	$OpenBSD: pci.4,v 1.137 2006/01/05 10:04:38 grange Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -385,9 +385,9 @@ Gemtek PCI FM radio device driver.
 .It Xr alipm 4
 Acer Labs M7101 Power Management controller.
 .It Xr amdiic 4
-AMD-8111 SMBus controller
+AMD-8111 SMBus controller.
 .It Xr amdpm 4
-AMD768 Power Management controller.
+AMD-76x Power Management controller.
 .It Xr bktr 4
 Brooktree Bt848
 .Tn PCI
@@ -400,7 +400,7 @@ bridges.
 .It Xr ehci 4
 USB EHCI host controller.
 .It Xr ichiic 4
-Intel ICH SMBus controllers.
+Intel ICH SMBus controller.
 .It Xr ichwdt 4
 Intel 6300ESB ICH watchdog timer.
 .It Xr nviic 4
@@ -412,7 +412,7 @@ USB OHCI host controller.
 .Tn PCMCIA
 controllers, including the Cirrus Logic GD6729.
 .It Xr piixpm 4
-Intel PIIX and compatible SMBus controllers.
+Intel PIIX and compatible Power Management controller.
 .It Xr ppb 4
 Generic
 .Tn PCI Ns \- Ns Tn PCI
@@ -611,6 +611,7 @@ driver.
 .Xr usb 4 ,
 .Xr vga 4 ,
 .Xr vge 4 ,
+.Xr viapm 4 ,
 .Xr vr 4 ,
 .Xr wb 4 ,
 .Xr wdt 4 ,
