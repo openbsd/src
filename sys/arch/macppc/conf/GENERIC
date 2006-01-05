@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.121 2006/01/03 17:23:19 xsa Exp $g
+#	$OpenBSD: GENERIC,v 1.122 2006/01/05 20:03:03 deraadt Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -266,7 +266,7 @@ gpio*		at pcagpio?
 maxds*		at iic?
 fcu*		at iic?
 adt*		at iic?
-#asms*		at iic?
+asms*		at iic?
 
 # CardBus bus support
 cardbus*	at cardslot?
