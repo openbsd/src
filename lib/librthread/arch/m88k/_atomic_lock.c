@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.1 2005/12/23 20:08:27 miod Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.2 2006/01/05 22:33:24 marc Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -29,7 +29,7 @@
  * Atomic lock for m88k
  */
 
-#include "spinlock.h"
+#include <spinlock.h>
 
 int
 _atomic_lock(volatile _spinlock_lock_t *lock)

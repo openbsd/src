@@ -1,4 +1,4 @@
-/* $OpenBSD: _atomic_lock.c,v 1.4 2005/12/19 21:30:10 marco Exp $ */
+/* $OpenBSD: _atomic_lock.c,v 1.5 2006/01/05 22:33:23 marc Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <machine/spinlock.h>
+#include <spinlock.h>
 
 int
 _atomic_lock(volatile _spinlock_lock_t *lock)
