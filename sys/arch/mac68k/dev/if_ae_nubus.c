@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae_nubus.c,v 1.14 2005/04/26 21:09:35 martin Exp $	*/
+/*	$OpenBSD: if_ae_nubus.c,v 1.15 2006/01/05 20:27:14 miod Exp $	*/
 /*	$NetBSD: if_ae_nubus.c,v 1.17 1997/05/01 18:17:16 briggs Exp $	*/
 
 /*
@@ -97,8 +97,6 @@ ae_nubus_match(parent, vcf, aux)
 	    0, &bsh))
 		return (0);
 
-	rv = 0;
-
 	if (na->category == NUBUS_CATEGORY_NETWORK &&
 	    na->type == NUBUS_TYPE_ETHERNET) {
 		switch (ae_nb_card_vendor(na->na_tag, bsh, na)) {
@@ -112,16 +110,17 @@ ae_nubus_match(parent, vcf, aux)
 			break;
 		case AE_VENDOR_DAYNA:
 		case AE_VENDOR_FOCUS:
-			rv = UNSUPP;
-			break;
+			/* not supported yet */
+			/* FALLTHROUGH */
 		default:
+			rv = 0;
 			break;
 		}
 	}
 
 	bus_space_unmap(na->na_tag, bsh, NBMEMSIZE);
 
-	return rv;
+	return (rv);
 }
 
 /*
@@ -196,37 +195,6 @@ ae_nubus_attach(parent, self, aux)
 		success = 1;
 		break;
 
-	case AE_VENDOR_DAYNA:
-		/* Map register offsets */
-		for (i = 0; i < 16; i++) /* normal order, longword aligned */
-			sc->sc_reg_map[i] = i << 2;
-
-		if (bus_space_subregion(bst, bsh,
-		    DP_REG_OFFSET, AE_REG_SIZE, &sc->sc_regh)) {
-			printf(": failed to map register space\n");
-			break;
-		}
-		sc->mem_size = 8192;
-		if (bus_space_subregion(bst, bsh,
-		    DP_DATA_OFFSET, sc->mem_size, &sc->sc_bufh)) {
-			printf(": failed to map register space\n");
-			break;
-		}
-#ifdef AE_OLD_GET_ENADDR
-		/* Get station address from on-board ROM */
-		for (i = 0; i < ETHER_ADDR_LEN; ++i)
-			sc->sc_arpcom.ac_enaddr[i] =
-			    bus_space_read_1(bst, bsh, (DP_ROM_OFFSET + i * 2));
-#else
-		if (ae_nb_get_enaddr(bst, bsh, na, sc->sc_arpcom.ac_enaddr)) {
-			printf(": can't find MAC address\n");
-			break;
-		}
-#endif
-
-		printf(": unsupported Dayna hardware\n");
-		break;
-
 	case AE_VENDOR_FARALLON:
 		/* Map register offsets */
 		for (i = 0; i < 16; i++) /* reverse order, longword aligned */
@@ -255,10 +223,6 @@ ae_nubus_attach(parent, self, aux)
 #endif
 
 		success = 1;
-		break;
-
-	case AE_VENDOR_FOCUS:
-		printf(": unsupported Focus hardware\n");
 		break;
 
 	case AE_VENDOR_INTERLAN:
@@ -326,6 +290,7 @@ ae_nubus_attach(parent, self, aux)
 		break;
 
 	default:
+		/* shouldn't happen */
 		break;
 	}
 
