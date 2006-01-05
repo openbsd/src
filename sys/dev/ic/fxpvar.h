@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.23 2005/05/27 06:37:21 brad Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.24 2006/01/05 21:22:24 brad Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -69,6 +69,17 @@
 #define FXP_BUNDLE_MAX 16
 #endif
 
+/* 
+ * Bit-mask describing minimum size frame that will be bundled.
+ * This is only effetive if the Intel microcode is loaded.
+ * This is not present in all microcode revisions. Disabled by default,
+ * to reduce recieving immediately interrupts from all frames with size less
+ * than 128 bytes.
+ */
+#ifndef FXP_MIN_SIZE_MASK
+#define FXP_MIN_SIZE_MASK 0xFFFF
+#endif
+
 /*
  * NOTE: Elements are ordered for optimal cacheline behavior, and NOT
  *	 for functional grouping.
@@ -130,6 +141,8 @@ struct fxp_softc {
 	u_int32_t sc_revision;		/* chip revision */ 
 	u_int16_t sc_int_delay;		/* interrupt delay value for ucode */
 	u_int16_t sc_bundle_max;	/* max # frames per interrupt (ucode) */
+	u_int16_t sc_min_size_mask;	/* bit-mask describing the minimum
+					 * size of frame that will be bundled */
 };
 
 /* Macros to ease CSR access. */

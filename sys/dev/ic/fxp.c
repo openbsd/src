@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.74 2006/01/05 20:42:15 brad Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.75 2006/01/05 21:22:24 brad Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -180,6 +180,7 @@ static int tx_threshold = 64;
  */
 int fxp_int_delay = FXP_INT_DELAY;
 int fxp_bundle_max = FXP_BUNDLE_MAX;
+int fxp_min_size_mask = FXP_MIN_SIZE_MASK;
 
 /*
  * TxCB list index mask. This is used to do list wrap-around.
@@ -435,6 +436,7 @@ fxp_attach_common(sc, intrstr)
 	if (sc->sc_revision >= FXP_REV_82558_A4) {
 		sc->sc_int_delay = fxp_int_delay;
 		sc->sc_bundle_max = fxp_bundle_max;
+		sc->sc_min_size_mask = fxp_min_size_mask;
 	}
 	/*
 	 * Read MAC address.
@@ -1828,31 +1830,44 @@ struct ucode {
 	u_int16_t	revision;
 	u_int16_t	int_delay_offset;
 	u_int16_t	bundle_max_offset;
+	u_int16_t	min_size_mask_offset;
 	const char	*uname;
 } const ucode_table[] = {
-	{ FXP_REV_82558_A4, D101_CPUSAVER_DWORD, 0, "fxp-d101a" }, 
+	{ FXP_REV_82558_A4, D101_CPUSAVER_DWORD,
+	  0, 0,
+	  "fxp-d101a" }, 
 
-	{ FXP_REV_82558_B0, D101_CPUSAVER_DWORD, 0, "fxp-d101b0" },
+	{ FXP_REV_82558_B0, D101_CPUSAVER_DWORD,
+	  0, 0,
+	  "fxp-d101b0" },
 
 	{ FXP_REV_82559_A0, D101M_CPUSAVER_DWORD, 
-	    D101M_CPUSAVER_BUNDLE_MAX_DWORD, "fxp-d101ma" },
+	  D101M_CPUSAVER_BUNDLE_MAX_DWORD, D101M_CPUSAVER_MIN_SIZE_DWORD,
+	  "fxp-d101ma" },
 
 	{ FXP_REV_82559S_A, D101S_CPUSAVER_DWORD,
-	    D101S_CPUSAVER_BUNDLE_MAX_DWORD, "fxp-d101s" },
+	  D101S_CPUSAVER_BUNDLE_MAX_DWORD, D101S_CPUSAVER_MIN_SIZE_DWORD,
+	  "fxp-d101s" },
 
 	{ FXP_REV_82550, D102_B_CPUSAVER_DWORD,
-	    D102_B_CPUSAVER_BUNDLE_MAX_DWORD, "fxp-d102" },
+	  D102_B_CPUSAVER_BUNDLE_MAX_DWORD, D102_B_CPUSAVER_MIN_SIZE_DWORD,
+	  "fxp-d102" },
 
 	{ FXP_REV_82550_C, D102_C_CPUSAVER_DWORD,
-	    D102_C_CPUSAVER_BUNDLE_MAX_DWORD, "fxp-d102c" },
+	  D102_C_CPUSAVER_BUNDLE_MAX_DWORD, D102_C_CPUSAVER_MIN_SIZE_DWORD,
+	  "fxp-d102c" },
 
 	{ FXP_REV_82551_F, D102_E_CPUSAVER_DWORD,
-	    D102_E_CPUSAVER_BUNDLE_MAX_DWORD, "fxp-d102e" },
+	  D102_E_CPUSAVER_BUNDLE_MAX_DWORD, D102_E_CPUSAVER_MIN_SIZE_DWORD,
+	  "fxp-d102e" },
 
 	{ FXP_REV_82551_10, D102_E_CPUSAVER_DWORD,
-	    D102_E_CPUSAVER_BUNDLE_MAX_DWORD, "fxp-d102e" },
+	  D102_E_CPUSAVER_BUNDLE_MAX_DWORD, D102_E_CPUSAVER_MIN_SIZE_DWORD,
+	  "fxp-d102e" },
 	
-	{ 0, 0, 0, NULL }
+	{ 0, 0,
+	  0, 0,
+	  NULL }
 };
 
 void
@@ -1895,6 +1910,10 @@ fxp_load_ucode(struct fxp_softc *sc)
 		*((u_int16_t *)&cbp->ucode[uc->bundle_max_offset]) =
 			htole16(sc->sc_bundle_max);
 
+	if (uc->min_size_mask_offset)
+		*((u_int16_t *)&cbp->ucode[uc->min_size_mask_offset]) =
+			htole16(sc->sc_min_size_mask);
+	
 	FXP_UCODE_SYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	/*
