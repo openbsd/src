@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.14 2004/05/25 20:44:50 mickey Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.15 2006/01/05 22:13:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -33,8 +33,8 @@
 #include <machine/vmparam.h>
 #undef _LOCORE
 
-#define SYSENTRY(x,n)				!\
-ENTRY(__CONCAT(_thread_sys_,x),n)		!\
+#define SYSENTRY(x)				!\
+LEAF_ENTRY(__CONCAT(_thread_sys_,x))		!\
 	.weak x ! .set x, __CONCAT(_thread_sys_,x)
 #define	SYSEXIT(x)				!\
 EXIT(__CONCAT(_thread_sys_,x))
@@ -49,14 +49,14 @@ EXIT(__CONCAT(_thread_sys_,x))
 	ldw	HPPA_FRAME_ERP(sr0,sp), rp
 
 #define	PSEUDO(x,y)				!\
-SYSENTRY(x,0)					!\
+SYSENTRY(x)					!\
 	SYSCALL(y)				!\
 	bv	r0(rp)				!\
 	nop					!\
 SYSEXIT(x)
 
 #define	PSEUDO_NOERROR(x,y)			!\
-SYSENTRY(x,0)					!\
+SYSENTRY(x)					!\
 	stw	rp, HPPA_FRAME_ERP(sr0,sp)	!\
 	ldil	L%SYSCALLGATE, r1		!\
 	ble	4(sr7, r1)			!\

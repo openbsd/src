@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork.S,v 1.4 2005/08/07 16:40:14 espie Exp $	*/
+/*	$OpenBSD: rfork.S,v 1.5 2006/01/05 22:13:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -28,7 +28,7 @@
 
 #include "SYS.h"
 
-SYSENTRY(rfork,0)
+SYSENTRY(rfork)
 	SYSCALL(rfork)
 	addi	-1, ret1, ret1
 	bv	r0(rp)
