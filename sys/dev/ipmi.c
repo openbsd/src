@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.27 2006/01/05 15:16:26 marco Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.28 2006/01/05 17:09:15 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -650,7 +650,7 @@ int
 kcs_write_cmd(struct ipmi_softc *sc, u_int8_t cmd)
 {
 	/* ASSERT: IBF and OBF are clear */
-	dbg_printf(99, "kcswritecmd: %.2x\n", cmd);
+	dbg_printf(50, "kcswritecmd: %.2x\n", cmd);
 	bmc_write(sc, _KCS_COMMAND_REGISTER, cmd);
 
 	return (kcs_wait(sc, KCS_IBF, 0, "write_cmd"));
@@ -660,7 +660,7 @@ int
 kcs_write_data(struct ipmi_softc *sc, u_int8_t data)
 {
 	/* ASSERT: IBF and OBF are clear */
-	dbg_printf(99, "kcswritedata: %.2x\n", data);
+	dbg_printf(50, "kcswritedata: %.2x\n", data);
 	bmc_write(sc, _KCS_DATAOUT_REGISTER, data);
 
 	return (kcs_wait(sc, KCS_IBF, 0, "write_data"));
@@ -679,7 +679,7 @@ kcs_read_data(struct ipmi_softc *sc, u_int8_t * data)
 	*data = bmc_read(sc, _KCS_DATAIN_REGISTER);
 	bmc_write(sc, _KCS_DATAOUT_REGISTER, KCS_READ_NEXT);
 
-	dbg_printf(99, "kcsreaddata: %.2x\n", *data);
+	dbg_printf(50, "kcsreaddata: %.2x\n", *data);
 
 	return (sts);
 }
@@ -888,7 +888,7 @@ scan_smbios(u_int8_t mtype, void (*smcb) (void *base, void *arg), void *arg)
 	if (romhdr == NULL)
 		return (-1);
 
-	dbg_printf(99, "SMBIOS Version %d.%d at 0x%lx, %d entries\n",
+	dbg_printf(1, "SMBIOS Version %d.%d at 0x%lx, %d entries\n",
 	    romhdr->smr_smbios_majver, romhdr->smr_smbios_minver,
 	    romhdr->smr_table_address, romhdr->smr_count);
 
@@ -1041,7 +1041,7 @@ ipmi_sendcmd(struct ipmi_softc *sc, int rssa, int rslun, int netfn, int cmd,
 	u_int8_t	*buf;
 	int		rc;
 
-	dbg_printf(10, "ipmi_sendcmd: rssa=%.2x nfln=%.2x cmd=%.2x len=%.2x\n",
+	dbg_printf(50, "ipmi_sendcmd: rssa=%.2x nfln=%.2x cmd=%.2x len=%.2x\n",
 	    rssa, NETFN_LUN(netfn, rslun), cmd, txlen);
 	dbg_dump(10, " send", txlen, data);
 	if (rssa != BMC_SA) {
@@ -1101,7 +1101,7 @@ ipmi_recvcmd(struct ipmi_softc *sc, int maxlen, int *rxlen, void *data)
 	if ((rc = buf[IPMI_MSG_CCODE]) != 0)
 		dbg_printf(1, "ipmi_recvmsg: nfln=%.2x cmd=%.2x err=%.2x\n",
 		    buf[IPMI_MSG_NFLN], buf[IPMI_MSG_CMD], buf[IPMI_MSG_CCODE]);
-	dbg_printf(10, "ipmi_recvcmd: nfln=%.2x cmd=%.2x err=%.2x len=%.2x\n",
+	dbg_printf(50, "ipmi_recvcmd: nfln=%.2x cmd=%.2x err=%.2x len=%.2x\n",
 	    buf[IPMI_MSG_NFLN], buf[IPMI_MSG_CMD], buf[IPMI_MSG_CCODE],
 	    *rxlen);
 	dbg_dump(10, " recv", *rxlen, data);
@@ -1358,7 +1358,7 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 		    SE_NETFN, SE_GET_SENSOR_THRESHOLD, 1, data);
 		ipmi_recvcmd(sc, sizeof(data), &rxlen, data);
 
-		dbg_printf(10, "recvdata: %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
+		dbg_printf(25, "recvdata: %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
 		    data[0], data[1], data[2], data[3], data[4], data[5],
 		    data[6]);
 
