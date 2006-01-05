@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.29 2006/01/05 17:38:00 marco Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.30 2006/01/05 19:04:39 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -940,6 +940,15 @@ smbios_ipmi_probe(void *ptr, void *arg)
 	struct ipmi_attach_args *ia = arg;
 	smbios_ipmi_t		*pipmi = (smbios_ipmi_t *)ptr;
 
+	dbg_printf(1, "%02x %02x %02x %02x %08llx %02x %02x\n",
+	    pipmi->smipmi_if_type,
+	    pipmi->smipmi_if_rev,
+	    pipmi->smipmi_i2c_address,
+	    pipmi->smipmi_nvram_address,
+	    pipmi->smipmi_base_address,
+	    pipmi->smipmi_base_flags,
+	    pipmi->smipmi_irq);
+
 	ia->iaa_if_type = pipmi->smipmi_if_type;
 	ia->iaa_if_rev = pipmi->smipmi_if_rev;
 	ia->iaa_if_irq = (pipmi->smipmi_base_flags & SMIPMI_FLAG_IRQEN) ?
@@ -975,6 +984,14 @@ smbios_ipmi_probe(void *ptr, void *arg)
 	}
 	if (pipmi->smipmi_base_flags & SMIPMI_FLAG_ODDOFFSET)
 		ia->iaa_if_iobase++;
+
+	if (pipmi->smipmi_base_flags == 0x7f) {
+		/* IBM 325 eServer workaround */
+		ia->iaa_if_iospacing = 1;
+		ia->iaa_if_iobase = pipmi->smipmi_base_address;
+		ia->iaa_if_iotype = 'i';
+		return;
+	}
 }
 
 /*
