@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.51 2006/01/05 05:36:05 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.52 2006/01/05 05:40:35 jsg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -1736,14 +1736,13 @@ rtw_intr_ioerror(struct rtw_softc *sc, u_int16_t isr)
 	if ((isr & RTW_INTR_TXFOVW) != 0) {
 		RTW_DPRINTF(RTW_DEBUG_BUGS,
 		    ("%s: tx fifo underflow\n", sc->sc_dev.dv_xname));
-		xmtr = 1;
-		cr |= RTW_CR_TE;
+		rcvr = xmtr = 1;
+		cr |= RTW_CR_TE | RTW_CR_RE;
 	}
 
 	if ((isr & (RTW_INTR_RDU|RTW_INTR_RXFOVW)) != 0) {
-		cr = RTW_CR_RE;
+		cr |= RTW_CR_RE;
 		rcvr = 1;
-		return;
 	}
 
 	RTW_DPRINTF(RTW_DEBUG_BUGS, ("%s: restarting xmit/recv, isr %hx"

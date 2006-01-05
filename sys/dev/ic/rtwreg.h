@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwreg.h,v 1.12 2006/01/05 05:36:06 jsg Exp $	*/
+/*	$OpenBSD: rtwreg.h,v 1.13 2006/01/05 05:40:35 jsg Exp $	*/
 /*	$NetBSD: rtwreg.h,v 1.12 2005/01/16 11:50:43 dyoung Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -188,7 +188,7 @@
 #define	RTW_IMR		0x3c	/* Interrupt Mask Register, 16b */
 #define	RTW_ISR		0x3e	/* Interrupt status register, 16b */
 
-#define RTW_INTR_TXFOVW	BIT(15)		/* Tx FIFO Overflow */
+#define RTW_INTR_TXFOVW	BIT(15)		/* Tx FIFO underrflow */
 #define RTW_INTR_TIMEOUT	BIT(14)	/* Time Out: 1 indicates
 					 * RTW_TSFTR[0:31] = RTW_TINT
 					 */
