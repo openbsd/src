@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.155 2005/11/28 10:14:34 markus Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.156 2006/01/05 15:00:10 norby Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -184,6 +184,7 @@ void	setmediainst(const char *, int);
 void	settimeslot(const char *, int);
 void	timeslot_status(void);
 void	setvlantag(const char *, int);
+void	setvlanprio(const char *, int);
 void	setvlandev(const char *, int);
 void	unsetvlandev(const char *, int);
 void	vlan_status(void);
@@ -295,6 +296,7 @@ const struct	cmd {
 	{ "snap",	IPX_ETHERTYPE_SNAP,	0,	setipxframetype },
 	{ "EtherII",	IPX_ETHERTYPE_II,	0,	setipxframetype },
 	{ "vlan",	NEXTARG,	0,		setvlantag },
+	{ "vlanprio",	NEXTARG,	0,		setvlanprio },
 	{ "vlandev",	NEXTARG,	0,		setvlandev },
 	{ "-vlandev",	1,		0,		unsetvlandev },
 	{ "advbase",	NEXTARG,	0,		setcarp_advbase },
@@ -2723,6 +2725,7 @@ void
 vlan_status(void)
 {
 	struct vlanreq vreq;
+	struct vlanreq preq;
 
 	bzero((char *)&vreq, sizeof(struct vlanreq));
 	ifr.ifr_data = (caddr_t)&vreq;
@@ -2730,9 +2733,15 @@ vlan_status(void)
 	if (ioctl(s, SIOCGETVLAN, (caddr_t)&ifr) == -1)
 		return;
 
+	bzero(&preq, sizeof(struct vlanreq));
+	ifr.ifr_data = (caddr_t)&preq;
+
+	if (ioctl(s, SIOCGETVLANPRIO, (caddr_t)&ifr) == -1)
+		return;
+
 	if (vreq.vlr_tag || (vreq.vlr_parent[0] != '\0'))
-		printf("\tvlan: %d parent interface: %s\n",
-		    vreq.vlr_tag, vreq.vlr_parent[0] == '\0' ?
+		printf("\tvlan: %d priority: %d parent interface: %s\n",
+		    vreq.vlr_tag, preq.vlr_tag, vreq.vlr_parent[0] == '\0' ?
 		    "<none>" : vreq.vlr_parent);
 }
 
@@ -2759,6 +2768,30 @@ setvlantag(const char *val, int d)
 
 	if (ioctl(s, SIOCSETVLAN, (caddr_t)&ifr) == -1)
 		err(1, "SIOCSETVLAN");
+}
+
+/* ARGSUSED */
+void
+setvlanprio(const char *val, int d)
+{
+	u_int16_t prio;
+	struct vlanreq vreq;
+	const char *errmsg = NULL;
+
+	prio = strtonum(val, 0, 7, &errmsg);
+	if (errmsg)
+		errx(1, "vlan priority %s: %s", val, errmsg);
+
+	bzero(&vreq, sizeof(struct vlanreq));
+	ifr.ifr_data = (caddr_t)&vreq;
+
+	if (ioctl(s, SIOCGETVLANPRIO, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGETVLANPRIO");
+
+	vreq.vlr_tag = prio;
+
+	if (ioctl(s, SIOCSETVLANPRIO, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSETVLANPRIO");
 }
 
 /* ARGSUSED */
