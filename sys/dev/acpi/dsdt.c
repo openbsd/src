@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.13 2005/12/30 05:59:40 tedu Exp $ */
+/* $OpenBSD: dsdt.c,v 1.14 2006/01/05 22:30:27 grange Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -936,7 +936,7 @@ aml_eval_name(struct acpi_softc *sc, struct aml_node *root, const char *name,
 		printf("found eval object : %s, %.4x\n", root->name, root->opcode);
 		return aml_eval_object(sc, root, result, env);
 	}
-	return (0);
+	return (1);
 }
 
 int
