@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork_thread.S,v 1.2 2005/12/25 00:46:08 tedu Exp $	*/
+/*	$OpenBSD: rfork_thread.S,v 1.3 2006/01/05 16:09:39 otto Exp $	*/
 
 /*
  * Copyright (c) 2005 Tim Wiess <tim@nop.cx>
@@ -41,7 +41,7 @@ ENTRY(rfork_thread)
 	/* child */
 	mtlr	%r5		/* fp */
 	mr	%r3, %r6	/* arg */
-	mr	%r1, %r7	/* new sp */
+	subi	%r1, %r7, 16	/* fixup sp to get headroom */
 	blrl
 	
 	/* child returned, call _exit */
