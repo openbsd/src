@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.74 2006/01/05 16:00:07 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.75 2006/01/05 17:33:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -24,7 +24,6 @@
 #include <string.h>
 
 #include "bgpd.h"
-#include "ensure.h"
 #include "rde.h"
 
 /*
@@ -207,8 +206,8 @@ void
 path_destroy(struct rde_aspath *asp)
 {
 	/* path_destroy can only unlink and free empty rde_aspath */
-	ENSURE(path_empty(asp));
-	ENSURE(asp->prefix_cnt == 0 && asp->active_cnt == 0);
+	if (asp->prefix_cnt == 0 && asp->active_cnt == 0)
+		log_warnx("path_destroy: prefix count out of sync");
 
 	nexthop_unlink(asp);
 	LIST_REMOVE(asp, path_l);
@@ -414,7 +413,8 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	struct prefix		*np;
 	struct rde_aspath	*oasp;
 
-	ENSURE(asp->peer == p->aspath->peer);
+	if (asp->peer != p->aspath->peer)
+		fatalx("prefix_move: cross peer move");
 
 	/* create new prefix node */
 	np = prefix_alloc();
@@ -522,9 +522,9 @@ prefix_bypeer(struct pt_entry *pte, struct rde_peer *peer)
 
 	LIST_FOREACH(p, &pte->prefix_h, prefix_l) {
 		if (p->aspath->peer == peer)
-			return p;
+			return (p);
 	}
-	return NULL;
+	return (NULL);
 }
 
 void
@@ -601,10 +601,6 @@ prefix_network_clean(struct rde_peer *peer, time_t reloadtime)
 static void
 prefix_link(struct prefix *pref, struct pt_entry *pte, struct rde_aspath *asp)
 {
-	ENSURE(pref->aspath == NULL &&
-	    pref->prefix == NULL);
-	ENSURE(prefix_bypeer(pte, asp->peer) == NULL);
-
 	LIST_INSERT_HEAD(&asp->prefix_h, pref, path_l);
 	asp->prefix_cnt++;
 	asp->peer->prefix_cnt++;
@@ -658,8 +654,6 @@ prefix_alloc(void)
 static void
 prefix_free(struct prefix *pref)
 {
-	ENSURE(pref->aspath == NULL &&
-	    pref->prefix == NULL);
 	rdemem.prefix_cnt--;
 	free(pref);
 }

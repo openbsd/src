@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.47 2006/01/03 22:19:59 claudio Exp $ */
+/*	$OpenBSD: log.c,v 1.48 2006/01/05 17:33:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -226,17 +226,6 @@ fatalx(const char *emsg)
 {
 	errno = 0;
 	fatal(emsg);
-}
-
-void
-fatal_ensure(const char *file, int line, const char *cond)
-{
-	logit(LOG_CRIT, "ENSURE (%s) failed in file %s on line %d",
-	    cond, file, line);
-
-	/* XXX check which process we are and notify others! */
-	sleep(10);
-	_exit(1);
 }
 
 void

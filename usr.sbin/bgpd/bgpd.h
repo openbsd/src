@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.185 2006/01/05 16:00:07 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.186 2006/01/05 17:33:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -687,7 +687,6 @@ void		 log_info(const char *, ...);
 void		 log_debug(const char *, ...);
 void		 fatal(const char *);
 void		 fatalx(const char *);
-void		 fatal_ensure(const char *, int, const char *);
 
 /* parse.y */
 int	 cmdline_symset(char *);
