@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket1.c,v 1.2 2003/07/31 21:48:06 deraadt Exp $	*/
+/*	$OpenBSD: socket1.c,v 1.3 2006/01/05 03:47:19 tedu Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -89,11 +89,12 @@ sock_connect(void *arg)
 	sleep(1);
 
 	CHECKr(pthread_mutex_lock(&mutex));
+	memset(buf, 0, sizeof(buf));
 	CHECKe(read(fd, buf, 1024));
 
+	ASSERT(++counter == atoi(buf));
 	write(fd, "6", 1);
 
-	ASSERT(++counter == atoi(buf));
 	CHECKe(close(fd));
 	success++;
 	CHECKr(pthread_mutex_unlock(&mutex));
@@ -155,6 +156,7 @@ sock_accept(void *arg)
 
 	/* Setup a write thread */
 	CHECKr(pthread_create(&thread, &attr, sock_write, &fd));
+	memset(buf, 0, sizeof(buf));
 	CHECKe(read(fd, buf, 1024));
 
 	ASSERT(++counter == atoi(buf));
