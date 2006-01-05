@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.50 2005/11/20 09:49:05 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.51 2006/01/05 05:36:05 jsg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -79,6 +79,8 @@
 
 int rtw_rfprog_fallback = 0;
 int rtw_host_rfio = 0;
+int rtw_xmtr_restart = 0;
+int rtw_do_chip_reset = 0;
 int rtw_dwelltime = 200;	/* milliseconds per channel */
 int rtw_macbangbits_timeout = 100;
 
@@ -90,9 +92,13 @@ int rtw_rxbufs_limit = RTW_RXQLEN;
 void	 rtw_start(struct ifnet *);
 void	 rtw_txdesc_blk_init_all(struct rtw_txdesc_blk *);
 void	 rtw_txsoft_blk_init_all(struct rtw_txsoft_blk *);
+void	 rtw_txdesc_blk_init(struct rtw_txdesc_blk *);
 void	 rtw_txdescs_sync(struct rtw_txdesc_blk *, u_int, u_int, int);
+u_int	 rtw_txring_next(struct rtw_regs *, struct rtw_txdesc_blk *);
+void	 rtw_txring_fixup(struct rtw_softc *);
 void	 rtw_rxbufs_release(bus_dma_tag_t, struct rtw_rxsoft *);
 void	 rtw_rxdesc_init(struct rtw_rxdesc_blk *, struct rtw_rxsoft *, int, int);
+void	 rtw_rxring_fixup(struct rtw_softc *);
 void	 rtw_io_enable(struct rtw_regs *, u_int8_t, int);
 void	 rtw_intr_rx(struct rtw_softc *, u_int16_t);
 void	 rtw_intr_beacon(struct rtw_softc *, u_int16_t);
@@ -157,20 +163,21 @@ int	 rtw_chip_reset1(struct rtw_regs *, const char *);
 int	 rtw_chip_reset(struct rtw_regs *, const char *);
 int	 rtw_recall_eeprom(struct rtw_regs *, const char *);
 int	 rtw_reset(struct rtw_softc *);
+void	 rtw_reset_oactive(struct rtw_softc *);
 int	 rtw_txdesc_dmamaps_create(bus_dma_tag_t, struct rtw_txsoft *, u_int);
 int	 rtw_rxdesc_dmamaps_create(bus_dma_tag_t, struct rtw_rxsoft *, u_int);
 void	 rtw_rxdesc_dmamaps_destroy(bus_dma_tag_t, struct rtw_rxsoft *, u_int);
 void	 rtw_txdesc_dmamaps_destroy(bus_dma_tag_t, struct rtw_txsoft *, u_int);
 void	 rtw_init_channels(enum rtw_locale, struct ieee80211_channel (*)[],
 	    const char*);
-void	 rtw_identify_country(struct rtw_regs *, enum rtw_locale *, const char *);
+void	 rtw_identify_country(struct rtw_regs *, enum rtw_locale *);
 int	 rtw_identify_sta(struct rtw_regs *, u_int8_t (*)[], const char *);
 void	 rtw_rxdescs_sync(struct rtw_rxdesc_blk *, int, int, int);
 int	 rtw_rxsoft_alloc(bus_dma_tag_t, struct rtw_rxsoft *);
 void	 rtw_collect_txpkt(struct rtw_softc *, struct rtw_txdesc_blk *,
 	    struct rtw_txsoft *, int);
 void	 rtw_collect_txring(struct rtw_softc *, struct rtw_txsoft_blk *,
-	    struct rtw_txdesc_blk *);
+	    struct rtw_txdesc_blk *, int);
 void	 rtw_suspend_ticks(struct rtw_softc *);
 void	 rtw_resume_ticks(struct rtw_softc *);
 void	 rtw_enable_interrupts(struct rtw_softc *);
@@ -184,12 +191,14 @@ void	 rtw_rxdesc_init_all(struct rtw_rxdesc_blk *, struct rtw_rxsoft *,
 	    int);
 int	 rtw_txring_choose(struct rtw_softc *, struct rtw_txsoft_blk **,
 	    struct rtw_txdesc_blk **, int);
+u_int	 rtw_txring_next(struct rtw_regs *, struct rtw_txdesc_blk *);
 struct mbuf *rtw_80211_dequeue(struct rtw_softc *, struct ifqueue *, int,
 	    struct rtw_txsoft_blk **, struct rtw_txdesc_blk **,
 	    struct ieee80211_node **, short *);
 uint64_t rtw_tsf_extend(struct rtw_regs *, u_int32_t);
 void	 rtw_ibss_merge(struct rtw_softc *, struct ieee80211_node *,
 	    u_int32_t);
+void	 rtw_idle(struct rtw_regs *);
 void	 rtw_led_attach(struct rtw_led_state *, void *);
 void	 rtw_led_init(struct rtw_regs *);
 void	 rtw_led_slowblink(void *);
@@ -796,8 +805,7 @@ rtw_init_channels(enum rtw_locale locale,
 }
 
 void
-rtw_identify_country(struct rtw_regs *regs, enum rtw_locale *locale,
-    const char *dvname)
+rtw_identify_country(struct rtw_regs *regs, enum rtw_locale *locale)
 {
 	u_int8_t cfg0 = RTW_READ8(regs, RTW_CONFIG0);
 
@@ -862,11 +870,32 @@ void
 rtw_txdesc_blk_init_all(struct rtw_txdesc_blk *tdb)
 {
 	int pri;
-	u_int ndesc[RTW_NTXPRI] =
-	    {RTW_NTXDESCLO, RTW_NTXDESCMD, RTW_NTXDESCHI, RTW_NTXDESCBCN};
+	/* nfree: the number of free descriptors in each ring.
+	 * The beacon ring is a special case: I do not let the
+	 * driver use all of the descriptors on the beacon ring.
+	 * The reasons are two-fold:
+	 *
+	 * (1) A BEACON descriptor's OWN bit is (apparently) not
+	 * updated, so the driver cannot easily know if the descriptor
+	 * belongs to it, or if it is racing the NIC.  If the NIC
+	 * does not OWN every descriptor, then the driver can safely
+	 * update the descriptors when RTW_TBDA points at tdb_next.
+	 *
+	 * (2) I hope that the NIC will process more than one BEACON
+	 * descriptor in a single beacon interval, since that will
+	 * enable multiple-BSS support.  Since the NIC does not
+	 * clear the OWN bit, there is no natural place for it to
+	 * stop processing BEACON desciptors.  Maybe it will *not*
+	 * stop processing them!  I do not want to chance the NIC
+	 * looping around and around a saturated beacon ring, so
+	 * I will leave one descriptor unOWNed at all times.
+	 */
+	u_int nfree[RTW_NTXPRI] =
+	    {RTW_NTXDESCLO, RTW_NTXDESCMD, RTW_NTXDESCHI,
+	     RTW_NTXDESCBCN - 1};
 
 	for (pri = 0; pri < RTW_NTXPRI; pri++) {
-		tdb[pri].tdb_nfree = ndesc[pri];
+		tdb[pri].tdb_nfree = nfree[pri];
 		tdb[pri].tdb_next = 0;
 	}
 }
@@ -884,6 +913,7 @@ rtw_txsoft_blk_init(struct rtw_txsoft_blk *tsb)
 		ts->ts_mbuf = NULL;
 		SIMPLEQ_INSERT_TAIL(&tsb->tsb_freeq, ts, ts_q);
 	}
+	tsb->tsb_tx_timer = 0;
 	return 0;
 }
 
@@ -1066,7 +1096,6 @@ rtw_rxdesc_init_all(struct rtw_rxdesc_blk *rdb, struct rtw_rxsoft *ctl,
 		rs = &ctl[i];
 		rtw_rxdesc_init(rdb, rs, i, kick);
 	}
-	rdb->rdb_next = 0;
 }
 
 void
@@ -1354,6 +1383,7 @@ rtw_txsofts_release(bus_dma_tag_t dmat, struct ieee80211com *ic,
 		SIMPLEQ_REMOVE_HEAD(&tsb->tsb_dirtyq, ts_q);
 		SIMPLEQ_INSERT_TAIL(&tsb->tsb_freeq, ts, ts_q);
 	}
+	tsb->tsb_tx_timer = 0;
 }
 
 void
@@ -1390,10 +1420,30 @@ rtw_collect_txpkt(struct rtw_softc *sc, struct rtw_txdesc_blk *tdb,
 	    condstring, rts_retry, data_retry));
 }
 
+void
+rtw_reset_oactive(struct rtw_softc *sc)
+{
+	short oflags;
+	int pri;
+	struct rtw_txsoft_blk *tsb;
+	struct rtw_txdesc_blk *tdb;
+	oflags = sc->sc_if.if_flags;
+	for (pri = 0; pri < RTW_NTXPRI; pri++) {
+		tsb = &sc->sc_txsoft_blk[pri];
+		tdb = &sc->sc_txdesc_blk[pri];
+		if (!SIMPLEQ_EMPTY(&tsb->tsb_freeq) && tdb->tdb_nfree > 0)
+			sc->sc_if.if_flags &= ~IFF_OACTIVE;
+	}
+	if (oflags != sc->sc_if.if_flags) {
+		DPRINTF(sc, RTW_DEBUG_OACTIVE,
+		    ("%s: reset OACTIVE\n", __func__));
+	}
+}
+
 /* Collect transmitted packets. */
 void
 rtw_collect_txring(struct rtw_softc *sc, struct rtw_txsoft_blk *tsb,
-    struct rtw_txdesc_blk *tdb)
+    struct rtw_txdesc_blk *tdb, int force)
 {
 	int ndesc;
 	struct rtw_txsoft *ts;
@@ -1408,22 +1458,28 @@ rtw_collect_txring(struct rtw_softc *sc, struct rtw_txsoft_blk *tsb,
 		rtw_txdescs_sync(tdb, ts->ts_first, ndesc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		if ((tdb->tdb_desc[ts->ts_last].td_stat &
+		if (force) {
+			int i;
+			for (i = ts->ts_first; ; i = RTW_NEXT_IDX(tdb, i)) {
+				tdb->tdb_desc[i].td_stat &=
+				    ~htole32(RTW_TXSTAT_OWN);
+				if (i == ts->ts_last)
+					break;
+			}
+			rtw_txdescs_sync(tdb, ts->ts_first, ndesc,
+			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		} else if ((tdb->tdb_desc[ts->ts_last].td_stat &
 		    htole32(RTW_TXSTAT_OWN)) != 0)
 			break;
-
-		if (&sc->sc_txdesc_blk[RTW_TXPRIBCN] == tdb) {
-			RTW_DPRINTF(RTW_DEBUG_BEACON,
-			    ("%s: collected beacon\n", __func__));
-		}
 
 		rtw_collect_txpkt(sc, tdb, ts, ndesc);
 		SIMPLEQ_REMOVE_HEAD(&tsb->tsb_dirtyq, ts_q);
 		SIMPLEQ_INSERT_TAIL(&tsb->tsb_freeq, ts, ts_q);
-		sc->sc_if.if_flags &= ~IFF_OACTIVE;
 	}
+	/* no more pending transmissions, cancel watchdog */
 	if (ts == NULL)
 		tsb->tsb_tx_timer = 0;
+	rtw_reset_oactive(sc);
 }
 
 void
@@ -1437,21 +1493,63 @@ rtw_intr_tx(struct rtw_softc *sc, u_int16_t isr)
 		tsb = &sc->sc_txsoft_blk[pri];
 		tdb = &sc->sc_txdesc_blk[pri];
 
-		rtw_collect_txring(sc, tsb, tdb);
+		rtw_collect_txring(sc, tsb, tdb, 0);
 
-		if ((isr & RTW_INTR_TX) != 0)
-			rtw_start(&sc->sc_if);
 	}
 
-	/* TBD */
-	return;
+	if ((isr & RTW_INTR_TX) != 0)
+		rtw_start(&sc->sc_if);
 }
 
 void
 rtw_intr_beacon(struct rtw_softc *sc, u_int16_t isr)
 {
-	/* TBD */
-	return;
+	u_int next;
+	uint32_t tsfth, tsftl;
+	struct ieee80211com *ic;
+	struct rtw_txdesc_blk *tdb = &sc->sc_txdesc_blk[RTW_TXPRIBCN];
+	struct rtw_txsoft_blk *tsb = &sc->sc_txsoft_blk[RTW_TXPRIBCN];
+	struct mbuf *m;
+
+	tsfth = RTW_READ(&sc->sc_regs, RTW_TSFTRH);
+	tsftl = RTW_READ(&sc->sc_regs, RTW_TSFTRL);
+
+	if ((isr & (RTW_INTR_TBDOK|RTW_INTR_TBDER)) != 0) {
+		next = rtw_txring_next(&sc->sc_regs, tdb);
+		RTW_DPRINTF(RTW_DEBUG_BEACON,
+		    ("%s: beacon ring %sprocessed, isr = %#04hx"
+		     ", next %u expected %u, %llu\n", __func__,
+		     (next == tdb->tdb_next) ? "" : "un", isr, next,
+		     tdb->tdb_next, (uint64_t)tsfth << 32 | tsftl));
+		if ((RTW_READ8(&sc->sc_regs, RTW_TPPOLL) & RTW_TPPOLL_BQ) == 0){
+			rtw_collect_txring(sc, tsb, tdb, 1);
+			tdb->tdb_next = 0;
+		}
+	}
+	/* Start beacon transmission. */
+
+	if ((isr & RTW_INTR_BCNINT) != 0 &&
+	    sc->sc_ic.ic_state == IEEE80211_S_RUN &&
+	    SIMPLEQ_EMPTY(&tsb->tsb_dirtyq)) {
+		RTW_DPRINTF(RTW_DEBUG_BEACON,
+		    ("%s: beacon prep. time, isr = %#04hx"
+		     ", %16llu\n", __func__, isr,
+		     (uint64_t)tsfth << 32 | tsftl));
+		ic = &sc->sc_ic;
+		if ((m = ieee80211_beacon_alloc(ic, ic->ic_bss)) != NULL) {
+			RTW_DPRINTF(RTW_DEBUG_BEACON,
+			    ("%s: m %p len %u\n", __func__, m, m->m_len));
+		}
+
+		if (m == NULL) {
+			printf("%s: could not allocate beacon\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+		m->m_pkthdr.rcvif = (void *)ieee80211_ref_node(ic->ic_bss);
+		IF_ENQUEUE(&sc->sc_beaconq, m);
+		rtw_start(&sc->sc_if);
+	}
 }
 
 void
@@ -1497,30 +1595,34 @@ rtw_dump_rings(struct rtw_softc *sc)
 void
 rtw_hwring_setup(struct rtw_softc *sc)
 {
+	int pri;
 	struct rtw_regs *regs = &sc->sc_regs;
+	struct rtw_txdesc_blk *tdb;
+
+	sc->sc_txdesc_blk[RTW_TXPRILO].tdb_basereg = RTW_TLPDA;
+	sc->sc_txdesc_blk[RTW_TXPRILO].tdb_base = RTW_RING_BASE(sc, hd_txlo);
+	sc->sc_txdesc_blk[RTW_TXPRIMD].tdb_basereg = RTW_TNPDA;
+	sc->sc_txdesc_blk[RTW_TXPRIMD].tdb_base = RTW_RING_BASE(sc, hd_txmd);
+	sc->sc_txdesc_blk[RTW_TXPRIHI].tdb_basereg = RTW_THPDA;
+	sc->sc_txdesc_blk[RTW_TXPRIHI].tdb_base = RTW_RING_BASE(sc, hd_txhi);
+	sc->sc_txdesc_blk[RTW_TXPRIBCN].tdb_basereg = RTW_TBDA;
+	sc->sc_txdesc_blk[RTW_TXPRIBCN].tdb_base = RTW_RING_BASE(sc, hd_bcn);
+
+	for (pri = 0; pri < RTW_NTXPRI; pri++) {
+		tdb = &sc->sc_txdesc_blk[pri];
+		RTW_WRITE(regs, tdb->tdb_basereg, tdb->tdb_base);
+		RTW_DPRINTF(RTW_DEBUG_XMIT_DESC,
+		    ("%s: reg[tdb->tdb_basereg] <- %lx\n", __func__,
+		     (u_int *)tdb->tdb_base));
+	}
+
 	RTW_WRITE(regs, RTW_RDSAR, RTW_RING_BASE(sc, hd_rx));
-	RTW_WRITE(regs, RTW_TLPDA, RTW_RING_BASE(sc, hd_txlo));
-	RTW_WRITE(regs, RTW_TNPDA, RTW_RING_BASE(sc, hd_txmd));
-	RTW_WRITE(regs, RTW_THPDA, RTW_RING_BASE(sc, hd_txhi));
-	RTW_WRITE(regs, RTW_TBDA, RTW_RING_BASE(sc, hd_bcn));
-	RTW_SYNC(regs, RTW_TLPDA, RTW_RDSAR);
-#if 0
-	RTW_DPRINTF(RTW_DEBUG_XMIT_DESC,
-	    ("%s: reg[TLPDA] <- %\n", __func__,
-	     (u_int *)RTW_RING_BASE(sc, hd_txlo)));
-	RTW_DPRINTF(RTW_DEBUG_XMIT_DESC,
-	    ("%s: reg[TNPDA] <- %\n", __func__,
-	     (u_int *)RTW_RING_BASE(sc, hd_txmd)));
-	RTW_DPRINTF(RTW_DEBUG_XMIT_DESC,
-	    ("%s: reg[THPDA] <- %\n", __func__,
-	     (u_int *)RTW_RING_BASE(sc, hd_txhi)));
-	RTW_DPRINTF(RTW_DEBUG_XMIT_DESC,
-	    ("%s: reg[TBDA] <- %\n", __func__,
-	     (u_int *)RTW_RING_BASE(sc, hd_bcn)));
+
 	RTW_DPRINTF(RTW_DEBUG_RECV_DESC,
-	    ("%s: reg[RDSAR] <- %\n", __func__,
+	    ("%s: reg[RDSAR] <- %lx\n", __func__,
 	     (u_int *)RTW_RING_BASE(sc, hd_rx)));
-#endif
+
+	RTW_SYNC(regs, RTW_TLPDA, RTW_RDSAR);
 }
 
 int
@@ -1547,6 +1649,7 @@ rtw_swring_setup(struct rtw_softc *sc)
 	rtw_rxdescs_sync(rdb, 0, rdb->rdb_ndesc,
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	rtw_rxdesc_init_all(rdb, sc->sc_rxsoft, 1);
+	rdb->rdb_next = 0;
 
 	tdb = &sc->sc_txdesc_blk[0];
 	for (pri = 0; pri < RTW_NTXPRI; pri++) {
@@ -1557,75 +1660,118 @@ rtw_swring_setup(struct rtw_softc *sc)
 }
 
 void
-rtw_txdesc_blk_reset(struct rtw_txdesc_blk *tdb)
+rtw_txdesc_blk_init(struct rtw_txdesc_blk *tdb)
 {
 	int i;
 
 	bzero(tdb->tdb_desc, sizeof(tdb->tdb_desc[0]) * tdb->tdb_ndesc);
 	for (i = 0; i < tdb->tdb_ndesc; i++)
 		tdb->tdb_desc[i].td_next = htole32(RTW_NEXT_DESC(tdb, i));
-	tdb->tdb_nfree = tdb->tdb_ndesc;
-	tdb->tdb_next = 0;
+}
+
+u_int
+rtw_txring_next(struct rtw_regs *regs, struct rtw_txdesc_blk *tdb)
+{
+	return (letoh32(RTW_READ(regs, tdb->tdb_basereg)) - tdb->tdb_base) /
+	    sizeof(struct rtw_txdesc);
+}
+
+void
+rtw_txring_fixup(struct rtw_softc *sc)
+{
+	int pri;
+	u_int next;
+	struct rtw_txdesc_blk *tdb;
+	struct rtw_regs *regs = &sc->sc_regs;
+
+	for (pri = 0; pri < RTW_NTXPRI; pri++) {
+		tdb = &sc->sc_txdesc_blk[pri];
+		next = rtw_txring_next(regs, tdb);
+		if (tdb->tdb_next == next)
+			continue;
+		RTW_DPRINTF(RTW_DEBUG_BUGS,
+		    ("%s: tx-ring %d expected next %u, read %u\n", __func__,
+		    pri, tdb->tdb_next, next));
+		tdb->tdb_next = next;
+	}
+}
+
+void
+rtw_rxring_fixup(struct rtw_softc *sc)
+{
+	u_int next;
+	uint32_t rdsar;
+	struct rtw_rxdesc_blk *rdb;
+
+	rdsar = letoh32(RTW_READ(&sc->sc_regs, RTW_RDSAR));
+	next = (rdsar - RTW_RING_BASE(sc, hd_rx)) / sizeof(struct rtw_rxdesc);
+
+	rdb = &sc->sc_rxdesc_blk;
+	if (rdb->rdb_next != next) {
+		RTW_DPRINTF(RTW_DEBUG_BUGS,
+		    ("%s: rx-ring expected next %u, read %u\n", __func__,
+		    rdb->rdb_next, next));
+		rdb->rdb_next = next;
+	}
 }
 
 void
 rtw_txdescs_reset(struct rtw_softc *sc)
 {
 	int pri;
-	struct rtw_txdesc_blk *tdb;
 
 	for (pri = 0; pri < RTW_NTXPRI; pri++) {
-		tdb = &sc->sc_txdesc_blk[pri];
-		rtw_txsofts_release(sc->sc_dmat, &sc->sc_ic,
-		    &sc->sc_txsoft_blk[pri]);
-		rtw_txdesc_blk_reset(tdb);
-		rtw_txdescs_sync(tdb, 0, tdb->tdb_ndesc,
-		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+		rtw_collect_txring(sc, &sc->sc_txsoft_blk[pri],
+		    &sc->sc_txdesc_blk[pri], 1);
 	}
-}
-
-void
-rtw_rxdescs_reset(struct rtw_softc *sc)
-{
-	rtw_rxdesc_init_all(&sc->sc_rxdesc_blk, &sc->sc_rxsoft[0], 1);
 }
 
 void
 rtw_intr_ioerror(struct rtw_softc *sc, u_int16_t isr)
 {
+	uint8_t cr = 0;
+	int xmtr = 0, rcvr = 0;
 	struct rtw_regs *regs = &sc->sc_regs;
 
-#ifdef RTW_DEBUG
-	if ((isr & RTW_INTR_TXFOVW) != 0)
-		printf("%s: tx fifo overflow\n", sc->sc_dev.dv_xname);
-#endif
+	if ((isr & RTW_INTR_TXFOVW) != 0) {
+		RTW_DPRINTF(RTW_DEBUG_BUGS,
+		    ("%s: tx fifo underflow\n", sc->sc_dev.dv_xname));
+		xmtr = 1;
+		cr |= RTW_CR_TE;
+	}
 
-	if ((isr & (RTW_INTR_RDU|RTW_INTR_RXFOVW)) == 0)
+	if ((isr & (RTW_INTR_RDU|RTW_INTR_RXFOVW)) != 0) {
+		cr = RTW_CR_RE;
+		rcvr = 1;
 		return;
+	}
 
-	RTW_DPRINTF(RTW_DEBUG_BUGS, ("%s: restarting xmit/recv, isr %"
+	RTW_DPRINTF(RTW_DEBUG_BUGS, ("%s: restarting xmit/recv, isr %hx"
 	    "\n", sc->sc_dev.dv_xname, isr));
 
 #ifdef RTW_DEBUG
 	rtw_dump_rings(sc);
 #endif /* RTW_DEBUG */
 
-	rtw_io_enable(regs, RTW_CR_RE | RTW_CR_TE, 0);
+	rtw_io_enable(regs, cr, 0);
 
-	/* Collect rx'd packets.  Refresh rx buffers. */ 
-	rtw_intr_rx(sc, 0);
-	/* Collect tx'd packets. */ 
-	rtw_intr_tx(sc, 0);
+	/* Collect rx'd packets.  Refresh rx buffers. */
+	if (rcvr)
+		rtw_intr_rx(sc, 0);
+	/* Collect tx'd packets.  XXX let's hope this stops the transmit
+	 * timeouts.
+	 */
+	if (xmtr)
+		rtw_txdescs_reset(sc);
 
 	RTW_WRITE16(regs, RTW_IMR, 0);
 	RTW_SYNC(regs, RTW_IMR, RTW_IMR);
 
-	rtw_chip_reset1(regs, sc->sc_dev.dv_xname);
+	if (rtw_do_chip_reset) {
+		rtw_chip_reset1(regs, sc->sc_dev.dv_xname);
+	}
 
-	rtw_rxdescs_reset(sc);
-	rtw_txdescs_reset(sc);
-
-	rtw_hwring_setup(sc);
+	rtw_rxdesc_init_all(&sc->sc_rxdesc_blk, &sc->sc_rxsoft[0], 1);
 
 #ifdef RTW_DEBUG
 	rtw_dump_rings(sc);
@@ -1633,8 +1779,11 @@ rtw_intr_ioerror(struct rtw_softc *sc, u_int16_t isr)
 
 	RTW_WRITE16(regs, RTW_IMR, sc->sc_inten);
 	RTW_SYNC(regs, RTW_IMR, RTW_IMR);
-	rtw_io_enable(regs, RTW_CR_RE | RTW_CR_TE, 1);
-	sc->sc_if.if_flags &= ~IFF_OACTIVE;
+	if (rcvr)
+		rtw_rxring_fixup(sc);
+	rtw_io_enable(regs, cr, 1);
+	if (xmtr)
+		rtw_txring_fixup(sc);
 }
 
 void
@@ -2568,6 +2717,8 @@ rtw_txring_choose(struct rtw_softc *sc, struct rtw_txsoft_blk **tsbp,
 	tdb = &sc->sc_txdesc_blk[pri];
 
 	if (SIMPLEQ_EMPTY(&tsb->tsb_freeq) || tdb->tdb_nfree == 0) {
+		if (tsb->tsb_tx_timer == 0)
+			tsb->tsb_tx_timer = 5;
 		*tsbp = NULL;
 		*tdbp = NULL;
 		return -1;
@@ -2587,7 +2738,10 @@ rtw_80211_dequeue(struct rtw_softc *sc, struct ifqueue *ifq, int pri,
 	if (IF_IS_EMPTY(ifq))
 		return NULL;
 	if (rtw_txring_choose(sc, tsbp, tdbp, pri) == -1) {
+		DPRINTF(sc, RTW_DEBUG_XMIT_RSRC, ("%s: no ring %d descriptor\n",
+		    __func__, pri));
 		*if_flagsp |= IFF_OACTIVE;
+		sc->sc_if.if_timer = 1;
 		return NULL;
 	}
 	IF_DEQUEUE(ifq, m);
@@ -2642,13 +2796,26 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 		return 0;
 	}
 
-	if (rtw_txring_choose(sc, tsbp, tdbp, RTW_TXPRIMD) == -1) {
-		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: no descriptor\n", __func__));
-		*if_flagsp |= IFF_OACTIVE;
+	if (sc->sc_ic.ic_state != IEEE80211_S_RUN) {
+		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: not running\n", __func__));
 		return 0;
 	}
 
 	*mp = NULL;
+
+	IFQ_POLL(&ifp->if_snd, m0);
+	if (m0 == NULL) {
+		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: no frame ready\n",
+		    __func__));
+		return 0;
+	}
+
+	if (rtw_txring_choose(sc, tsbp, tdbp, RTW_TXPRIMD) == -1) {
+		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: no descriptor\n", __func__));
+		*if_flagsp |= IFF_OACTIVE;
+		sc->sc_if.if_timer = 1;
+		return 0;
+	}
 
 	IFQ_DEQUEUE(&ifp->if_snd, m0);
 	if (m0 == NULL) {
@@ -2746,7 +2913,7 @@ rtw_dmamap_load_txbuf(bus_dma_tag_t dmat, bus_dmamap_t dmam, struct mbuf *chain,
 		m_freem(m0);
 		return NULL;
 	} else if (dmam->dm_nsegs > ndescfree) {
-		*ifflagsp |= IFF_OACTIVE;
+		printf("%s: too many tx segments\n", dvname);
 		bus_dmamap_unload(dmat, dmam);
 		m_freem(m0);
 		return NULL;
@@ -2760,11 +2927,11 @@ rtw_print_txdesc(struct rtw_softc *sc, const char *action,
     struct rtw_txsoft *ts, struct rtw_txdesc_blk *tdb, int desc)
 {
 	struct rtw_txdesc *td = &tdb->tdb_desc[desc];
-	DPRINTF(sc, RTW_DEBUG_XMIT_DESC, ("%s: %p %s txdesc[%d] ctl0 %#08x "
-	    "ctl1 %#08x buf %#08x len %#08x\n",
+	DPRINTF(sc, RTW_DEBUG_XMIT_DESC, ("%s: %p %s txdesc[%d] next %#08x "
+	    "buf %#08x ctl0 %#08x ctl1 %#08x len %#08x\n",
 	    sc->sc_dev.dv_xname, ts, action, desc,
-	    letoh32(td->td_ctl0),
-	    letoh32(td->td_ctl1), letoh32(td->td_buf),
+	    letoh32(td->td_buf), letoh32(td->td_next),
+	    letoh32(td->td_ctl0), letoh32(td->td_ctl1),
 	    letoh32(td->td_len)));
 }
 #endif /* RTW_DEBUG */
@@ -2976,12 +3143,10 @@ rtw_start(struct ifnet *ifp)
 		SIMPLEQ_REMOVE_HEAD(&tsb->tsb_freeq, ts_q);
 		SIMPLEQ_INSERT_TAIL(&tsb->tsb_dirtyq, ts, ts_q);
 
-		if (tsb != &sc->sc_txsoft_blk[RTW_TXPRIBCN]) {
+		if (tsb != &sc->sc_txsoft_blk[RTW_TXPRIBCN])
 			sc->sc_led_state.ls_event |= RTW_LED_S_TX;
-			tsb->tsb_tx_timer = 5;
-			ifp->if_timer = 1;
-		}
-
+		tsb->tsb_tx_timer = 5;
+		ifp->if_timer = 1;
 		tppoll = RTW_READ8(&sc->sc_regs, RTW_TPPOLL);
 		tppoll &= ~RTW_TPPOLL_SALL;
 		tppoll |= tsb->tsb_poll & RTW_TPPOLL_ALL;
@@ -3000,9 +3165,26 @@ post_dequeue_err:
 }
 
 void
+rtw_idle(struct rtw_regs *regs)
+{
+	int active;
+
+	/* request stop DMA; wait for packets to stop transmitting. */
+
+	RTW_WRITE8(regs, RTW_TPPOLL, RTW_TPPOLL_SALL);
+	RTW_WBR(regs, RTW_TPPOLL, RTW_TPPOLL);
+
+	for (active = 0; active < 300 &&
+	     (RTW_READ8(regs, RTW_TPPOLL) & RTW_TPPOLL_ACTIVE) != 0; active++)
+		DELAY(10);
+	RTW_DPRINTF(RTW_DEBUG_BUGS,
+	    ("%s: transmit DMA idle in %dus\n", __func__, active * 10));
+}
+
+void
 rtw_watchdog(struct ifnet *ifp)
 {
-	int pri;
+	int pri, tx_timeouts = 0;
 	struct rtw_softc *sc;
 	struct rtw_txsoft_blk *tsb;
 
@@ -3018,30 +3200,32 @@ rtw_watchdog(struct ifnet *ifp)
 
 		if (tsb->tsb_tx_timer == 0)
 			continue;
-
-		if (--tsb->tsb_tx_timer == 0) {
+		else if (--tsb->tsb_tx_timer == 0) {
 			if (SIMPLEQ_EMPTY(&tsb->tsb_dirtyq))
 				continue;
-			printf("%s: transmit timeout, priority %d\n",
-			    ifp->if_xname, pri);
+			RTW_DPRINTF(RTW_DEBUG_BUGS,
+			    ("%s: transmit timeout, priority %d\n",
+			    ifp->if_xname, pri));
 			ifp->if_oerrors++;
-			/* Stop Tx DMA, disable transmitter, clear
-			 * Tx rings, and restart.
-			 *
-			 * TBD Stop/restart just the broken ring?
-			 */
-			RTW_WRITE8(&sc->sc_regs, RTW_TPPOLL, RTW_TPPOLL_SALL);
-			RTW_SYNC(&sc->sc_regs, RTW_TPPOLL, RTW_TPPOLL);
-			rtw_io_enable(&sc->sc_regs, RTW_CR_TE, 0);
-			rtw_txdescs_reset(sc);
-			rtw_io_enable(&sc->sc_regs, RTW_CR_TE, 1);
-			sc->sc_if.if_flags &= ~IFF_OACTIVE;
-			rtw_start(ifp);
+			tx_timeouts++;
 		} else
 			ifp->if_timer = 1;
 	}
+
+	if (tx_timeouts > 0) {
+		/* Stop Tx DMA, disable xmtr, flush Tx rings, enable xmtr,
+		 * reset s/w tx-ring pointers, and start transmission.
+		 *
+		 * TBD Stop/restart just the broken rings?
+		 */
+		rtw_idle(&sc->sc_regs);
+		rtw_io_enable(&sc->sc_regs, RTW_CR_TE, 0);
+		rtw_txdescs_reset(sc);
+		rtw_io_enable(&sc->sc_regs, RTW_CR_TE, 1);
+		rtw_txring_fixup(sc);
+		rtw_start(ifp);
+	}
 	ieee80211_watchdog(ifp);
-	return;
 }
 
 void
@@ -3062,7 +3246,7 @@ rtw_next_scan(void *arg)
 void
 rtw_join_bss(struct rtw_softc *sc, u_int8_t *bssid, u_int16_t intval0)
 {
-	uint16_t bcnitv, intval;
+	uint16_t bcnitv, bintritv, intval;
 	int i;
 	struct rtw_regs *regs = &sc->sc_regs;
 
@@ -3078,10 +3262,13 @@ rtw_join_bss(struct rtw_softc *sc, u_int8_t *bssid, u_int16_t intval0)
 	bcnitv = RTW_READ16(regs, RTW_BCNITV) & ~RTW_BCNITV_BCNITV_MASK;
 	bcnitv |= LSHIFT(intval, RTW_BCNITV_BCNITV_MASK);
 	RTW_WRITE16(regs, RTW_BCNITV, bcnitv);
+	/* interrupt host 1ms before the TBTT */
+	bintritv = RTW_READ16(regs, RTW_BINTRITV) & ~RTW_BINTRITV_BINTRITV;
+	bintritv |= LSHIFT(1000, RTW_BINTRITV_BINTRITV);
+	RTW_WRITE16(regs, RTW_BINTRITV, bintritv);
 	/* magic from Linux */
 	RTW_WRITE16(regs, RTW_ATIMWND, LSHIFT(1, RTW_ATIMWND_ATIMWND));
 	RTW_WRITE16(regs, RTW_ATIMTRITV, LSHIFT(2, RTW_ATIMTRITV_ATIMTRITV));
-
 	rtw_set_access(regs, RTW_ACCESS_NONE);
 
 	/* TBD WEP */
@@ -3096,7 +3283,6 @@ rtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct rtw_softc *sc = ifp->if_softc;
-	struct mbuf *m;
 	enum ieee80211_state ostate;
 	int error;
 
@@ -3134,12 +3320,6 @@ rtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		case IEEE80211_M_HOSTAP:
 		case IEEE80211_M_IBSS:
 			rtw_set_nettype(sc, IEEE80211_M_MONITOR);
-			m = ieee80211_beacon_alloc(ic, ic->ic_bss);
-			if (m == NULL) {
-				printf("%s: could not allocate beacon\n",
-				    sc->sc_dev.dv_xname);
-			} else
-				IF_ENQUEUE(&sc->sc_beaconq, m);
 			/*FALLTHROUGH*/
 		case IEEE80211_M_AHDEMO:
 		case IEEE80211_M_STA:
@@ -3158,12 +3338,6 @@ rtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	if (nstate != IEEE80211_S_SCAN)
 		timeout_del(&sc->sc_scan_to);
-
-	/* Start beacon transmission. */
-	if (nstate == IEEE80211_S_RUN &&
-	    (ic->ic_opmode == IEEE80211_M_HOSTAP ||
-	     ic->ic_opmode == IEEE80211_M_IBSS))
-		rtw_start(&sc->sc_if);
 
 	return (*sc->sc_mtbl.mt_newstate)(ic, nstate, arg);
 }
@@ -3405,7 +3579,8 @@ rtw_txdesc_blk_setup(struct rtw_txdesc_blk *tdb, struct rtw_txdesc *desc,
 
 	bzero(tdb->tdb_desc, sizeof(tdb->tdb_desc[0]) * tdb->tdb_ndesc);
 
-	rtw_txdesc_blk_reset(tdb);
+	rtw_txdesc_blk_init(tdb);
+	tdb->tdb_next = 0;
 }
 
 void
@@ -3729,8 +3904,7 @@ rtw_attach(struct rtw_softc *sc)
 	    ("%s: PHY delay %d\n", sc->sc_dev.dv_xname, sc->sc_phydelay));
 
 	if (sc->sc_locale == RTW_LOCALE_UNKNOWN)
-		rtw_identify_country(&sc->sc_regs, &sc->sc_locale,
-		    sc->sc_dev.dv_xname);
+		rtw_identify_country(&sc->sc_regs, &sc->sc_locale);
 
 	rtw_init_channels(sc->sc_locale, &sc->sc_ic.ic_channels,
 	    sc->sc_dev.dv_xname);

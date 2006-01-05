@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.20 2005/11/04 14:04:33 jsg Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.21 2006/01/05 05:36:06 jsg Exp $	*/
 /*	$NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $	*/
 
 /*-
@@ -40,30 +40,33 @@
 #include <sys/timeout.h>
 
 #ifdef RTW_DEBUG
-#define	RTW_DEBUG_TUNE		0x000001
-#define	RTW_DEBUG_PKTFILT	0x000002
-#define	RTW_DEBUG_XMIT		0x000004
-#define	RTW_DEBUG_XMIT_DESC	0x000008
-#define	RTW_DEBUG_NODE		0x000010
-#define	RTW_DEBUG_PWR		0x000020
-#define	RTW_DEBUG_ATTACH	0x000040
-#define	RTW_DEBUG_REGDUMP	0x000080
-#define	RTW_DEBUG_ACCESS	0x000100
-#define	RTW_DEBUG_RESET		0x000200
-#define	RTW_DEBUG_INIT		0x000400
-#define	RTW_DEBUG_IOSTATE	0x000800
-#define	RTW_DEBUG_RECV		0x001000
-#define	RTW_DEBUG_RECV_DESC	0x002000
-#define	RTW_DEBUG_IO_KICK	0x004000
-#define	RTW_DEBUG_INTR		0x008000
-#define	RTW_DEBUG_PHY		0x010000
-#define	RTW_DEBUG_PHYIO		0x020000
-#define	RTW_DEBUG_PHYBITIO	0x040000
-#define	RTW_DEBUG_TIMEOUT	0x080000
-#define	RTW_DEBUG_BUGS		0x100000
-#define	RTW_DEBUG_BEACON	0x200000
-#define	RTW_DEBUG_LED		0x400000
-#define	RTW_DEBUG_MAX		0x7fffff
+#define	RTW_DEBUG_TUNE		0x0000001
+#define	RTW_DEBUG_PKTFILT	0x0000002
+#define	RTW_DEBUG_XMIT		0x0000004
+#define	RTW_DEBUG_XMIT_DESC	0x0000008
+#define	RTW_DEBUG_NODE		0x0000010
+#define	RTW_DEBUG_PWR		0x0000020
+#define	RTW_DEBUG_ATTACH	0x0000040
+#define	RTW_DEBUG_REGDUMP	0x0000080
+#define	RTW_DEBUG_ACCESS	0x0000100
+#define	RTW_DEBUG_RESET		0x0000200
+#define	RTW_DEBUG_INIT		0x0000400
+#define	RTW_DEBUG_IOSTATE	0x0000800
+#define	RTW_DEBUG_RECV		0x0001000
+#define	RTW_DEBUG_RECV_DESC	0x0002000
+#define	RTW_DEBUG_IO_KICK	0x0004000
+#define	RTW_DEBUG_INTR		0x0008000
+#define	RTW_DEBUG_PHY		0x0010000
+#define	RTW_DEBUG_PHYIO		0x0020000
+#define	RTW_DEBUG_PHYBITIO	0x0040000
+#define	RTW_DEBUG_TIMEOUT	0x0080000
+#define	RTW_DEBUG_BUGS		0x0100000
+#define	RTW_DEBUG_BEACON	0x0200000
+#define	RTW_DEBUG_LED		0x0400000
+#define	RTW_DEBUG_KEY		0x0800000
+#define	RTW_DEBUG_XMIT_RSRC	0x1000000
+#define	RTW_DEBUG_OACTIVE	0x2000000
+#define	RTW_DEBUG_MAX		0x3ffffff
 
 extern int rtw_debug;
 #define RTW_DPRINTF(__flags, __x)	\
@@ -180,7 +183,7 @@ struct rtw_txsoft {
 #define RTW_TXQLENLO	64	/* low-priority queue length */
 #define RTW_TXQLENMD	64	/* medium-priority */
 #define RTW_TXQLENHI	64	/* high-priority */
-#define RTW_TXQLENBCN	1	/* beacon */
+#define RTW_TXQLENBCN	8	/* beacon */
 
 #define RTW_NTXDESCLO	RTW_TXQLENLO
 #define RTW_NTXDESCMD	RTW_TXQLENMD
@@ -208,6 +211,9 @@ struct rtw_txdesc_blk {
 	bus_dmamap_t		tdb_dmamap;
 	bus_addr_t		tdb_physbase;
 	bus_addr_t		tdb_ofs;
+	bus_size_t		tdb_basereg;
+	uint32_t		tdb_base;
+
 	struct rtw_txdesc	*tdb_desc;
 };
 
