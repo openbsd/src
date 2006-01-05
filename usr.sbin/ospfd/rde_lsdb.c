@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.23 2005/11/04 11:36:31 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.24 2006/01/05 15:10:57 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -68,12 +68,14 @@ struct vertex *
 vertex_get(struct lsa *lsa, struct rde_nbr *nbr)
 {
 	struct vertex	*v;
+	struct timespec	 tp;
 
 	if ((v = calloc(1, sizeof(struct vertex))) == NULL)
 		fatal(NULL);
 	v->nbr = nbr;
 	v->lsa = lsa;
-	v->changed = v->stamp = time(NULL);
+	clock_gettime(CLOCK_MONOTONIC, &tp);
+	v->changed = v->stamp = tp.tv_sec;
 	v->cost = LS_INFINITY;
 	v->ls_id = ntohl(lsa->hdr.ls_id);
 	v->adv_rtr = ntohl(lsa->hdr.adv_rtr);
@@ -387,11 +389,14 @@ lsa_del(struct rde_nbr *nbr, struct lsa_hdr *lsa)
 void
 lsa_age(struct vertex *v)
 {
+	struct timespec	tp;
 	time_t		now;
 	int		d;
 	u_int16_t	age;
 
-	now = time(NULL);
+	clock_gettime(CLOCK_MONOTONIC, &tp);
+	now = tp.tv_sec;
+
 	d = now - v->stamp;
 	/* set stamp so that at least new calls work */
 	v->stamp = now;
@@ -553,6 +558,7 @@ void
 lsa_refresh(struct vertex *v)
 {
 	struct timeval	 tv;
+	struct timespec	 tp;
 	u_int32_t	 seqnum;
 	u_int16_t	 len;
 
@@ -569,7 +575,9 @@ lsa_refresh(struct vertex *v)
 	v->lsa->hdr.ls_chksum = 0;
 	v->lsa->hdr.ls_chksum = htons(iso_cksum(v->lsa, len, LS_CKSUM_OFFSET));
 
-	v->changed = v->stamp = time(NULL);
+	clock_gettime(CLOCK_MONOTONIC, &tp);
+	v->changed = v->stamp = tp.tv_sec;
+
 	timerclear(&tv);
 	tv.tv_sec = LS_REFRESH_TIME;
 	evtimer_add(&v->ev, &tv);
@@ -579,6 +587,7 @@ void
 lsa_merge(struct rde_nbr *nbr, struct lsa *lsa, struct vertex *v)
 {
 	struct timeval	tv;
+	struct timespec	tp;
 	time_t		now;
 	u_int16_t	len;
 
@@ -608,7 +617,8 @@ lsa_merge(struct rde_nbr *nbr, struct lsa *lsa, struct vertex *v)
 	start_spf_timer();
 
 	/* set correct timeout for reflooding the LSA */
-	now = time(NULL);
+	clock_gettime(CLOCK_MONOTONIC, &tp);
+	now = tp.tv_sec;
 	timerclear(&tv);
 	if (v->changed + MIN_LS_INTERVAL >= now)
 		tv.tv_sec = MIN_LS_INTERVAL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.22 2005/12/29 13:53:36 claudio Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.23 2006/01/05 15:10:57 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -518,6 +518,7 @@ lsa_cache_add(void *data, u_int16_t len)
 {
 	struct lsa_cache_head	*head;
 	struct lsa_ref		*ref, *old;
+	struct timespec		 tp;
 
 	if ((ref = calloc(1, sizeof(*ref))) == NULL)
 		fatal("lsa_cache_add");
@@ -532,7 +533,9 @@ lsa_cache_add(void *data, u_int16_t len)
 	if ((ref->data = malloc(len)) == NULL)
 		fatal("lsa_cache_add");
 	memcpy(ref->data, data, len);
-	ref->stamp = time(NULL);
+
+	clock_gettime(CLOCK_MONOTONIC, &tp);
+	ref->stamp = tp.tv_sec;
 	ref->len = len;
 	ref->refcnt = 1;
 

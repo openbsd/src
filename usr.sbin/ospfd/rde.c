@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.35 2005/12/29 13:58:49 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.36 2006/01/05 15:10:57 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -219,6 +219,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	struct ls_req_hdr	 req_hdr;
 	struct lsa_hdr		 lsa_hdr, *db_hdr;
 	struct rde_nbr		 rn, *nbr;
+	struct timespec		 tp;
 	struct lsa		*lsa;
 	struct area		*area;
 	struct vertex		*v;
@@ -243,7 +244,8 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 		fatalx("unknown event");
 	}
 
-	now = time(NULL);
+	clock_gettime(CLOCK_MONOTONIC, &tp);
+	now = tp.tv_sec;
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
