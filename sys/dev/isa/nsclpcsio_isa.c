@@ -1,4 +1,4 @@
-/* $OpenBSD: nsclpcsio_isa.c,v 1.5 2004/11/17 16:53:05 mickey Exp $ */
+/* $OpenBSD: nsclpcsio_isa.c,v 1.6 2006/01/05 15:32:46 grange Exp $ */
 /* $NetBSD: nsclpcsio_isa.c,v 1.5 2002/10/22 16:18:26 drochner Exp $ */
 
 /*
@@ -520,11 +520,9 @@ nsclpcsio_gpio_init(struct nsclpcsio_softc *sc)
 		    GPIO_PIN_PUSHPULL | GPIO_PIN_TRISTATE |
 		    GPIO_PIN_PULLUP;
 
-		/* safe defaults */
-		sc->sc_gpio_pins[i].pin_flags = GPIO_PIN_TRISTATE;
-		sc->sc_gpio_pins[i].pin_state = GPIO_PIN_LOW;
-		nsclpcsio_gpio_pin_ctl(sc, i, sc->sc_gpio_pins[i].pin_flags);
-		nsclpcsio_gpio_pin_write(sc, i, sc->sc_gpio_pins[i].pin_state);
+		/* Read initial state */
+		sc->sc_gpio_pins[i].pin_state = nsclpcsio_gpio_pin_read(sc,
+		    i) ? GPIO_PIN_HIGH : GPIO_PIN_LOW;
 	}
 
 	/* Create controller tag */
