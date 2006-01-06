@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.33 2006/01/05 10:28:24 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.34 2006/01/06 15:30:49 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -102,7 +102,7 @@ void	rcs_set_rev(const char *, RCSNUM **);
 void	rcs_usage(void);
 void	(*usage)(void);
 
-/* rlog */
+/* rlog.c */
 int	rlog_main(int, char **);
 void	rlog_usage(void);
 

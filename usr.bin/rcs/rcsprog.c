@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.60 2006/01/05 10:28:24 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.61 2006/01/06 15:30:49 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -138,7 +138,7 @@ rcs_init(char *envstr, char **argv, int argvlen)
 
 	error = argc = 0;
 	for (lp = linebuf; lp != NULL;) {
-		cp = strsep(&lp, " \t\b\f\n\r\t\v");;
+		cp = strsep(&lp, " \t\b\f\n\r\t\v");
 		if (cp == NULL)
 			break;
 		else if (*cp == '\0')
