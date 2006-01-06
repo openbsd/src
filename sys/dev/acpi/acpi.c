@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.17 2006/01/06 08:37:32 grange Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.18 2006/01/06 08:58:20 grange Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -380,12 +380,13 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = aaa->aaa_iot;
 	sc->sc_memt = aaa->aaa_memt;
 
-	printf(": ");
-	if (acpi_map(aaa->aaa_pbase, sizeof(struct acpi_rsdp), &handle))
-		goto fail;
+	if (acpi_map(aaa->aaa_pbase, sizeof(struct acpi_rsdp), &handle)) {
+		printf(": can't map memory\n");
+		return;
+	}
 
 	rsdp = (struct acpi_rsdp *)handle.va;
-	printf("revision %d ", (int)rsdp->rsdp_revision);
+	printf(": rev %d", (int)rsdp->rsdp_revision);
 
 	SIMPLEQ_INIT(&sc->sc_tables);
 
@@ -398,6 +399,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	memset(sc->sc_note, 0, sizeof(struct klist));
 
 	if (acpi_loadtables(sc, rsdp)) {
+		printf(": can't load tables\n");
 		acpi_unmap(&handle);
 		return;
 	}
@@ -414,15 +416,19 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		}
 	}
-	if (sc->sc_fadt == NULL)
-		goto fail;
+	if (sc->sc_fadt == NULL) {
+		printf(": no FADT\n");
+		return;
+	}
 
 	/*
 	 * Check if we are able to enable ACPI control
 	 */
 	if (!sc->sc_fadt->smi_cmd ||
-	    (!sc->sc_fadt->acpi_enable && !sc->sc_fadt->acpi_disable))
-		goto fail;
+	    (!sc->sc_fadt->acpi_enable && !sc->sc_fadt->acpi_disable)) {
+		printf(": ACPI control unavailable\n");
+		return;
+	}
 
 	/*
 	 * Load the DSDT from the FADT pointer -- use the
@@ -434,7 +440,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		acpi_load_dsdt(sc->sc_fadt->x_dsdt, &entry);
 
 	if (entry == NULL)
-		printf("!DSDT ");
+		printf(" !DSDT");
 	SIMPLEQ_INSERT_HEAD(&sc->sc_tables, entry, q_next);
 
 	p_dsdt = entry->q_table;
@@ -453,7 +459,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		facspa = sc->sc_fadt->x_firmware_ctl;
 
 	if (acpi_map(facspa, sizeof(struct acpi_facs), &handle))
-		printf("!FACS ");
+		printf(" !FACS");
 	else
 		sc->sc_facs = (struct acpi_facs *)handle.va;
 
@@ -473,8 +479,10 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	acpi_write_pmreg(sc, ACPIREG_SMICMD, sc->sc_fadt->acpi_enable);
 	idx = 0;
 	do {
-		if (idx++ > ACPIEN_RETRIES)
-			goto fail;
+		if (idx++ > ACPIEN_RETRIES) {
+			printf(": can't enable ACPI\n");
+			return;
+		}
 	} while (!(acpi_read_pmreg(sc, ACPIREG_PM1_CNT) & ACPI_PM1_SCI_EN));
 #endif
 
@@ -523,6 +531,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	}
 
+	printf("\n");
+
 	/*
 	 * ACPI is enabled now -- attach timer
 	 */
@@ -562,11 +572,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* attach devices found in dsdt */
 	aml_find_node(aml_root.child, "_HID", acpi_foundhid, sc);
-
-	return;
-
- fail:
-	printf(" failed attach\n");
 }
 
 int
