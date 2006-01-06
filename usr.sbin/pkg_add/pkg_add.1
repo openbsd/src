@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.55 2005/11/05 10:27:33 sturm Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.56 2006/01/06 13:00:07 jmc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -235,32 +235,33 @@ marker.
 .It Fl q
 Replace package quickly; do not bother checking MD5s before removing files.
 .It Fl r
-Allow replacing existing packages.
-The code will try to take every precaution to make sure the update can
+Replace existing packages.
+.Nm
+will try to take every precaution to make sure the replacement can
 proceed before removing the old package and adding the new one, and it
 should also handle shared libraries correctly.
 Among other things,
 .Nm
-will refuse to update packages as soon as it needs to run scripts that
+will refuse to replace packages as soon as it needs to run scripts that
 might fail
 .Po
 use
 .Fl F Ar update
-to force the update
+to force the replacement
 .Pc ;
 .Nm
-will also refuse to update packages when the dependencies don't quite
+will also refuse to replace packages when the dependencies don't quite
 match
 .Po
 use
 .Fl F Ar updatedepends
-to force the update
+to force the replacement
 .Pc .
 .It Fl u
 Update the given
 .Ar pkgname(s) ,
 and anything it depends upon.
-With this option, if no
+If no
 .Ar pkgname
 is given,
 .Nm
