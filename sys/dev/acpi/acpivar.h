@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.10 2006/01/05 22:58:42 grange Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.11 2006/01/06 10:57:15 grange Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -150,11 +150,6 @@ struct acpi_table {
 #define	ACPI_EVENT_COMPOSE(t,i)	(((i) & 0x7fff) << 16 | ((t) & ACPI_EVENT_MASK))
 #define	ACPI_EVENT_TYPE(e)	((e) & ACPI_EVENT_MASK)
 #define	ACPI_EVENT_INDEX(e)	((e) >> 16)
-
-/*
- * Sleep states
- */
-#define	ACPI_STATE_S5		5
 
 #if defined(_KERNEL)
 int	 acpi_map(paddr_t, size_t, struct acpi_mem_map *);
