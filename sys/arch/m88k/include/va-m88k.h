@@ -1,4 +1,4 @@
-/*	$OpenBSD: va-m88k.h,v 1.7 2005/12/20 14:42:05 millert Exp $	*/
+/*	$OpenBSD: va-m88k.h,v 1.8 2006/01/06 18:53:05 millert Exp $	*/
 
 /* Define __gnuc_va_list.  */
 
@@ -11,7 +11,7 @@ typedef struct __va_list_tag {
 	unsigned int  __va_arg;		/* argument number */
 	unsigned int *__va_stk;		/* start of args passed on stack */
 	unsigned int *__va_reg;		/* start of args passed in regs */
-} __va_list[1], __gnuc_va_list[1];
+} __gnuc_va_list[1];
 
 #endif /* not __GNUC_VA_LIST */
 

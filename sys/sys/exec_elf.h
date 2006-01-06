@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.40 2004/10/10 15:02:18 kettenis Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.41 2006/01/06 18:53:05 millert Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -33,34 +33,34 @@
 #ifndef _SYS_EXEC_ELF_H_
 #define _SYS_EXEC_ELF_H_
 
-#include <machine/types.h>
+#include <machine/_types.h>
 #include <machine/exec.h>
 
-typedef u_int8_t	Elf_Byte;
+typedef __uint8_t	Elf_Byte;
 
-typedef u_int32_t	Elf32_Addr;	/* Unsigned program address */
-typedef u_int32_t	Elf32_Off;	/* Unsigned file offset */
-typedef int32_t		Elf32_Sword;	/* Signed large integer */
-typedef u_int32_t	Elf32_Word;	/* Unsigned large integer */
-typedef u_int16_t	Elf32_Half;	/* Unsigned medium integer */
+typedef __uint32_t	Elf32_Addr;	/* Unsigned program address */
+typedef __uint32_t	Elf32_Off;	/* Unsigned file offset */
+typedef __int32_t	Elf32_Sword;	/* Signed large integer */
+typedef __uint32_t	Elf32_Word;	/* Unsigned large integer */
+typedef __uint16_t	Elf32_Half;	/* Unsigned medium integer */
 
-typedef u_int64_t	Elf64_Addr;
-typedef u_int64_t	Elf64_Off;
-typedef int32_t		Elf64_Shalf;
+typedef __uint64_t	Elf64_Addr;
+typedef __uint64_t	Elf64_Off;
+typedef __int32_t	Elf64_Shalf;
 
 #ifdef __alpha__
-typedef int64_t		Elf64_Sword;
-typedef u_int64_t	Elf64_Word;
+typedef __int64_t	Elf64_Sword;
+typedef __uint64_t	Elf64_Word;
 #else
-typedef int32_t		Elf64_Sword;
-typedef u_int32_t	Elf64_Word;
+typedef __int32_t	Elf64_Sword;
+typedef __uint32_t	Elf64_Word;
 #endif
 
-typedef int64_t		Elf64_Sxword;
-typedef u_int64_t	Elf64_Xword;
+typedef __int64_t	Elf64_Sxword;
+typedef __uint64_t	Elf64_Xword;
 
-typedef u_int32_t	Elf64_Half;
-typedef u_int16_t	Elf64_Quarter;
+typedef __uint32_t	Elf64_Half;
+typedef __uint16_t	Elf64_Quarter;
 
 /*
  * e_ident[] identification indexes 
@@ -367,7 +367,7 @@ typedef struct {
 
 #define	ELF64_R_SYM(info)	((info) >> 32)
 #define	ELF64_R_TYPE(info)	((info) & 0xFFFFFFFF)
-#define ELF64_R_INFO(s,t) 	(((s) << 32) + (u_int32_t)(t))
+#define ELF64_R_INFO(s,t) 	(((s) << 32) + (__uint32_t)(t))
 
 /* Program Header */
 typedef struct {
@@ -492,7 +492,7 @@ typedef struct {
 	Elf32_Word	au_v;				/* 32-bit value */
 } Aux32Info;
 
-#define ELF64_NO_ADDR	((u_int64_t) ~0)/* Indicates addr. not yet filled in */
+#define ELF64_NO_ADDR	((__uint64_t) ~0)/* Indicates addr. not yet filled in */
 #define ELF64_AUX_ENTRIES	8	/* Size of aux array passed to loader */
 
 typedef struct {

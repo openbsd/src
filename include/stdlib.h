@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.35 2005/12/13 00:35:22 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.36 2006/01/06 18:53:04 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -34,24 +34,22 @@
 
 #ifndef _STDLIB_H_
 #define _STDLIB_H_
-#include <machine/ansi.h>
 
 #include <sys/cdefs.h>
-#if __BSD_VISIBLE	/* for quad_t, etc. */
+#include <machine/_types.h>
+#if __BSD_VISIBLE	/* for quad_t, etc. (XXX - use protected types) */
 #include <sys/types.h>
 #endif
 
-#ifdef	_BSD_SIZE_T_
-typedef	_BSD_SIZE_T_	size_t;
-#undef	_BSD_SIZE_T_
+#ifndef	_SIZE_T_DEFINED_
+#define	_SIZE_T_DEFINED_
+typedef	__size_t	size_t;
 #endif
 
-#ifdef	_BSD_WCHAR_T_
 /* in C++, wchar_t is a built-in type */
-#ifndef __cplusplus
-typedef	_BSD_WCHAR_T_	wchar_t;
-#endif
-#undef	_BSD_WCHAR_T_
+#if !defined(_WCHAR_T_DEFINED_) && !defined(__cplusplus)
+#define _WCHAR_T_DEFINED_
+typedef	__wchar_t	wchar_t;
 #endif
 
 typedef struct {

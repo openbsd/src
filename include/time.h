@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.17 2005/12/13 00:35:22 millert Exp $	*/
+/*	$OpenBSD: time.h,v 1.18 2006/01/06 18:53:04 millert Exp $	*/
 /*	$NetBSD: time.h,v 1.9 1994/10/26 00:56:35 cgd Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #define	_TIME_H_
 
 #include <sys/cdefs.h>
-#include <machine/ansi.h>
+#include <machine/_types.h>
 
 #ifndef	NULL
 #ifdef 	__GNUG__
@@ -52,19 +52,19 @@
 #endif
 #endif
 
-#ifdef	_BSD_CLOCK_T_
-typedef	_BSD_CLOCK_T_	clock_t;
-#undef	_BSD_CLOCK_T_
+#ifndef	_CLOCK_T_DEFINED_
+#define	_CLOCK_T_DEFINED_
+typedef	__clock_t	clock_t;
 #endif
 
-#ifdef	_BSD_TIME_T_
-typedef	_BSD_TIME_T_	time_t;
-#undef	_BSD_TIME_T_
+#ifndef	_TIME_T_DEFINED_
+#define	_TIME_T_DEFINED_
+typedef	__time_t	time_t;
 #endif
 
-#ifdef	_BSD_SIZE_T_
-typedef	_BSD_SIZE_T_	size_t;
-#undef	_BSD_SIZE_T_
+#ifndef	_SIZE_T_DEFINED_
+#define	_SIZE_T_DEFINED_
+typedef	__size_t	size_t;
 #endif
 
 #if __POSIX_VISIBLE > 0 && __POSIX_VISIBLE < 200112 || __BSD_VISIBLE

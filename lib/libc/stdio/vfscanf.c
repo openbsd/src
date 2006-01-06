@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfscanf.c,v 1.17 2006/01/03 00:57:45 millert Exp $ */
+/*	$OpenBSD: vfscanf.c,v 1.18 2006/01/06 18:53:04 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -92,7 +92,7 @@ static u_char *__sccl(char *, u_char *);
  * vfscanf
  */
 int
-VFSCANF(FILE *fp, const char *fmt0, _BSD_VA_LIST_ ap)
+VFSCANF(FILE *fp, const char *fmt0, __va_list ap)
 {
 	u_char *fmt = (u_char *)fmt0;
 	int c;		/* character from format, or conversion */

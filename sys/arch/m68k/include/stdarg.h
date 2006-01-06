@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.8 2005/12/14 23:51:32 deraadt Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.9 2006/01/06 18:53:05 millert Exp $	*/
 /*	$NetBSD: stdarg.h,v 1.14 1995/12/25 23:15:33 mycroft Exp $	*/
 
 /*-
@@ -36,9 +36,9 @@
 #define	_M68K_STDARG_H_
 
 #include <sys/cdefs.h>
-#include <machine/ansi.h>
+#include <machine/_types.h>
 
-typedef _BSD_VA_LIST_	va_list;
+typedef __va_list	va_list;
 
 #define	__va_size(type) \
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))

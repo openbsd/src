@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_stack.c,v 1.7 2000/03/22 02:06:05 d Exp $	*/
+/*	$OpenBSD: uthread_stack.c,v 1.8 2006/01/06 18:53:04 millert Exp $	*/
 /*
  * Copyright 1999, David Leonard. All rights reserved.
  * <insert BSD-style license&disclaimer>
@@ -70,19 +70,19 @@ _thread_stack_alloc(base, size)
 
 	/*
 	 * Compute the location of the red zone.
-	 * Use _BSD_PTRDIFF_T_ to convert the storage base pointer
+	 * Use __ptrdiff_t to convert the storage base pointer
 	 * into an integer so that page alignment can be done with
 	 * integer arithmetic.
 	 */
 #if defined(MACHINE_STACK_GROWS_UP)
 	/* Red zone is the last page of the storage: */
-	stack->redzone = (void *)(((_BSD_PTRDIFF_T_)stack->storage +
+	stack->redzone = (void *)(((__ptrdiff_t)stack->storage +
 	    size + nbpg - 1) & ~(nbpg - 1));
 	stack->base = (caddr_t)stack->storage;
 	stack->size = size;
 #else
 	/* Red zone is the first page of the storage: */
-	stack->redzone = (void *)(((_BSD_PTRDIFF_T_)stack->storage + 
+	stack->redzone = (void *)(((__ptrdiff_t)stack->storage + 
 	    nbpg - 1) & ~(nbpg - 1));
 	stack->base = (caddr_t)stack->redzone + nbpg;
 	stack->size = size;

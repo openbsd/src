@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.54 2005/10/30 03:37:34 brad Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.55 2006/01/06 18:53:04 millert Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -1236,12 +1236,12 @@ int     _thread_sys_snprintf(char *, size_t, const char *, ...);
 int     _thread_sys_sprintf(char *, const char *, ...);
 int     _thread_sys_sscanf(const char *, const char *, ...);
 int     _thread_sys_ungetc(int, FILE *);
-int     _thread_sys_vfprintf(FILE *, const char *, _BSD_VA_LIST_);
-int     _thread_sys_vprintf(const char *, _BSD_VA_LIST_);
-int     _thread_sys_vscanf(const char *, _BSD_VA_LIST_);
-int     _thread_sys_vsnprintf(char *, size_t, const char *, _BSD_VA_LIST_);
-int     _thread_sys_vsprintf(char *, const char *, _BSD_VA_LIST_);
-int     _thread_sys_vsscanf(const char *, const char *, _BSD_VA_LIST_);
+int     _thread_sys_vfprintf(FILE *, const char *, __va_list);
+int     _thread_sys_vprintf(const char *, __va_list);
+int     _thread_sys_vscanf(const char *, __va_list);
+int     _thread_sys_vsnprintf(char *, size_t, const char *, __va_list);
+int     _thread_sys_vsprintf(char *, const char *, __va_list);
+int     _thread_sys_vsscanf(const char *, const char *, __va_list);
 long    _thread_sys_ftell(FILE *);
 size_t  _thread_sys_fread(void *, size_t, size_t, FILE *);
 size_t  _thread_sys_fwrite(const void *, size_t, size_t, FILE *);

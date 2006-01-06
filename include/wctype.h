@@ -1,4 +1,4 @@
-/*	$OpenBSD: wctype.h,v 1.4 2005/07/01 08:59:27 espie Exp $	*/
+/*	$OpenBSD: wctype.h,v 1.5 2006/01/06 18:53:04 millert Exp $	*/
 /*	$NetBSD: wctype.h,v 1.5 2003/03/02 22:18:11 tshiozak Exp $	*/
 
 /*-
@@ -33,21 +33,21 @@
 #define	_WCTYPE_H_
 
 #include <sys/cdefs.h>
-#include <machine/ansi.h>
+#include <machine/_types.h>
 
-#ifdef	_BSD_WINT_T_
-typedef	_BSD_WINT_T_    wint_t;
-#undef	_BSD_WINT_T_
+#ifndef	_WINT_T_DEFINED_
+#define	_WINT_T_DEFINED_
+typedef	__wint_t    wint_t;
 #endif
 
-#ifdef	_BSD_WCTRANS_T_
-typedef	_BSD_WCTRANS_T_	wctrans_t;
-#undef	_BSD_WCTRANS_T_
+#ifndef	_WCTRANS_T_DEFINED_
+#define	_WCTRANS_T_DEFINED_
+typedef	__wctrans_t	wctrans_t;
 #endif
 
-#ifdef	_BSD_WCTYPE_T_
-typedef	_BSD_WCTYPE_T_	wctype_t;
-#undef	_BSD_WCTYPE_T_
+#ifndef	_WCTYPE_T_DEFINED_
+#define	_WCTYPE_T_DEFINED_
+typedef	__wctype_t	wctype_t;
 #endif
 
 #ifndef WEOF

@@ -267,8 +267,8 @@ int	 suspendwin(void);
 int	 touchline(WINDOW *, int, int, int);
 int	 touchoverlap(WINDOW *, WINDOW *);
 int	 touchwin(WINDOW *);
-int 	 vwprintw(WINDOW *, const char *, _BSD_VA_LIST_);
-int      vwscanw(WINDOW *, const char *, _BSD_VA_LIST_);
+int 	 vwprintw(WINDOW *, const char *, __va_list);
+int      vwscanw(WINDOW *, const char *, __va_list);
 int	 waddch(WINDOW *, int);
 int	 waddnstr(WINDOW *, const char *, int);
 int	 wclear(WINDOW *);
@@ -287,7 +287,7 @@ int	 wrefresh(WINDOW *);
 int	 wscanw(WINDOW *, const char *, ...);
 int	 wstandend(WINDOW *);
 int	 wstandout(WINDOW *);
-int	 vwprintw(WINDOW *, const char *, _BSD_VA_LIST_);
+int	 vwprintw(WINDOW *, const char *, __va_list);
 
 /* Private functions that are needed for user programs prototypes. */
 void	 __cputchar(int);

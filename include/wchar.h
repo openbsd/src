@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.7 2005/12/19 17:05:20 millert Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.8 2006/01/06 18:53:04 millert Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
 #define _WCHAR_H_
 
 #include <sys/cdefs.h>
-#include <machine/ansi.h>
+#include <sys/_types.h>
 
 #ifndef	NULL
 #ifdef	__GNUG__
@@ -79,26 +79,24 @@
 
 #include <stdio.h> /* for FILE* */
 
-#ifdef	_BSD_WCHAR_T_
-# ifndef __cplusplus
-typedef	_BSD_WCHAR_T_	wchar_t;
-# endif
-#undef	_BSD_WCHAR_T_
+#if !defined(_WCHAR_T_DEFINED_) && !defined(__cplusplus)
+#define _WCHAR_T_DEFINED_
+typedef	__wchar_t	wchar_t;
 #endif
 
-#ifdef	_BSD_MBSTATE_T_
-typedef	_BSD_MBSTATE_T_	mbstate_t;
-#undef	_BSD_MBSTATE_T_
+#ifndef	_MBSTATE_T_DEFINED_
+#define	_MBSTATE_T_DEFINED_
+typedef	__mbstate_t	mbstate_t;
 #endif
 
-#ifdef	_BSD_WINT_T_
-typedef	_BSD_WINT_T_	wint_t;
-#undef	_BSD_WINT_T_
+#ifndef	_WINT_T_DEFINED_
+#define	_WINT_T_DEFINED_
+typedef	__wint_t	wint_t;
 #endif
 
-#ifdef	_BSD_SIZE_T_
-typedef	_BSD_SIZE_T_	size_t;
-#undef	_BSD_SIZE_T_
+#ifndef	_SIZE_T_DEFINED_
+#define	_SIZE_T_DEFINED_
+typedef	__size_t	size_t;
 #endif
 
 #ifndef WEOF

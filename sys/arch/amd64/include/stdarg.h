@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.3 2005/12/14 21:46:30 millert Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.4 2006/01/06 18:53:05 millert Exp $	*/
 /*	$NetBSD: stdarg.h,v 1.2 2003/04/28 23:16:17 bjh21 Exp $	*/
 
 /*-
@@ -36,17 +36,28 @@
 #define	_AMD64_STDARG_H_
 
 #include <sys/cdefs.h>
-#include <machine/ansi.h>
+#include <machine/_types.h>		/* for __va_list */
 
-typedef _BSD_VA_LIST_	va_list;
+/*
+ * NOTE: this file is only used by lint and non-GNU compilers
+ */
 
-#define	va_start(ap, last)	__builtin_stdarg_start((ap), (last))
-#define	va_arg			__builtin_va_arg
-#define	va_end(ap)		__builtin_va_end(ap)
-#define	__va_copy(dest, src)	__builtin_va_copy((dest), (src))
+typedef __va_list	va_list;
+
+#define	__va_size(type) \
+	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
+
+#define	va_start(ap, last) \
+	((ap) = (va_list)&(last) + __va_size(last))
+
+#define	va_arg(ap, type) \
+	(*(type *)((ap) += __va_size(type), (ap) - __va_size(type)))
 
 #if __ISO_C_VISIBLE >= 1999
-#define	va_copy(dest, src)	__va_copy((dest), (src))
+#define va_copy(dest, src) \
+	((dest) = (src))
 #endif
+
+#define	va_end(ap)	
 
 #endif /* !_AMD64_STDARG_H_ */

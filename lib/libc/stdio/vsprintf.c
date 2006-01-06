@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsprintf.c,v 1.12 2005/10/10 12:00:52 espie Exp $ */
+/*	$OpenBSD: vsprintf.c,v 1.13 2006/01/06 18:53:04 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@ __warn_references(vsprintf,
 #endif
 
 int
-vsprintf(char *str, const char *fmt, _BSD_VA_LIST_ ap)
+vsprintf(char *str, const char *fmt, __va_list ap)
 {
 	int ret;
 	FILE f;

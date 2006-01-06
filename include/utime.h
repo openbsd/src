@@ -1,4 +1,4 @@
-/*	$OpenBSD: utime.h,v 1.5 2003/06/02 19:34:12 millert Exp $	*/
+/*	$OpenBSD: utime.h,v 1.6 2006/01/06 18:53:04 millert Exp $	*/
 /*	$NetBSD: utime.h,v 1.3 1994/10/26 00:56:39 cgd Exp $	*/
 
 /*-
@@ -35,19 +35,18 @@
 #ifndef	_UTIME_H_
 #define	_UTIME_H_
 
-#include <machine/ansi.h>
+#include <sys/cdefs.h>
+#include <machine/_types.h>
 
-#ifdef	_BSD_TIME_T_
-typedef	_BSD_TIME_T_	time_t;
-#undef	_BSD_TIME_T_
+#ifndef	_TIME_T_DEFINED_
+#define	_TIME_T_DEFINED_
+typedef	__time_t	time_t;
 #endif
 
 struct utimbuf {
 	time_t actime;		/* Access time */
 	time_t modtime;		/* Modification time */
 };
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 int utime(const char *, const struct utimbuf *);

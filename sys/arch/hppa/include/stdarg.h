@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.6 2005/12/14 23:51:32 deraadt Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.7 2006/01/06 18:53:05 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,8 +35,9 @@
 #define	_MACHINE_STDARG_H_
 
 #include <sys/cdefs.h>
+#include <machine/_types.h>
 
-typedef double *va_list;
+typedef __va_list va_list;
 
 #ifdef __GNUC__
 #define	va_start(ap,lastarg)	((ap) = (va_list)__builtin_saveregs())

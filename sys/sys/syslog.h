@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog.h,v 1.11 2003/08/24 01:27:07 avsm Exp $	*/
+/*	$OpenBSD: syslog.h,v 1.12 2006/01/06 18:53:06 millert Exp $	*/
 /*	$NetBSD: syslog.h,v 1.14 1996/04/03 20:46:44 christos Exp $	*/
 
 /*
@@ -187,10 +187,10 @@ struct syslog_data {
  * places (<machine/varargs.h> and <machine/stdarg.h>), so if we include one
  * of them here we may collide with the utility's includes.  It's unreasonable
  * for utilities to have to include one of them to include syslog.h, so we get
- * _BSD_VA_LIST_ from <machine/ansi.h> and use it.
+ * __va_list from <machine/_types.h> and use it.
  */
-#include <machine/ansi.h>
 #include <sys/cdefs.h>
+#include <machine/_types.h>
 
 __BEGIN_DECLS
 void	closelog(void);
@@ -198,14 +198,13 @@ void	openlog(const char *, int, int);
 int	setlogmask(int);
 void	syslog(int, const char *, ...)
     __attribute__((__format__(__syslog__,2,3)));
-void	vsyslog(int, const char *, _BSD_VA_LIST_);
+void	vsyslog(int, const char *, __va_list);
 void	closelog_r(struct syslog_data *);
 void	openlog_r(const char *, int, int, struct syslog_data *);
 int	setlogmask_r(int, struct syslog_data *);
 void	syslog_r(int, struct syslog_data *, const char *, ...)
      __attribute__((__format__(__syslog__,3,4)));
-void	vsyslog_r(int, struct syslog_data *, const char *, 
-     _BSD_VA_LIST_);
+void	vsyslog_r(int, struct syslog_data *, const char *, __va_list);
 __END_DECLS
 
 #else /* !_KERNEL */

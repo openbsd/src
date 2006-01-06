@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.7 2005/12/14 21:46:31 millert Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.8 2006/01/06 18:53:05 millert Exp $	*/
 /*	$NetBSD: stdarg.h,v 1.11 1999/05/03 16:30:34 christos Exp $	*/
 
 /*-
@@ -36,9 +36,9 @@
 #define	_VAX_STDARG_H_
 
 #include <sys/cdefs.h>
-#include <machine/ansi.h>
+#include <machine/_types.h>
 
-typedef _BSD_VA_LIST_	va_list;
+typedef __va_list	va_list;
 
 #ifdef __lint__
 #define __builtin_next_arg(t)		((t) ? 0 : 0)

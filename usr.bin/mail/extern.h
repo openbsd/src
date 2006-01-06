@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.23 2004/09/15 22:21:40 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.24 2006/01/06 18:53:06 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$OpenBSD: extern.h,v 1.23 2004/09/15 22:21:40 deraadt Exp $
+ *	$OpenBSD: extern.h,v 1.24 2006/01/06 18:53:06 millert Exp $
  */
 
 struct name;
@@ -238,7 +238,7 @@ int	 spool_unlock(void);
 void	 spreserve(void);
 void	 sreset(void);
 pid_t	 start_command(char *cmd, sigset_t *nset, int infd, int outfd, ...);
-pid_t	 start_commandv(char *, sigset_t *, int, int, _BSD_VA_LIST_);
+pid_t	 start_commandv(char *, sigset_t *, int, int, __va_list);
 int	 statusput(struct message *, FILE *, char *);
 void	 stop(int);
 int	 stouch(void *);

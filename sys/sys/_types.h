@@ -1,8 +1,7 @@
-/*	$OpenBSD: stdarg.h,v 1.9 2006/01/06 18:53:04 millert Exp $	*/
-/*	$NetBSD: stdarg.h,v 1.4 1996/10/09 21:13:05 cgd Exp $	*/
+/*	$OpenBSD: _types.h,v 1.1 2006/01/06 18:53:05 millert Exp $	*/
 
 /*-
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,37 +28,42 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stdarg.h	8.1 (Berkeley) 6/10/93
+ *	@(#)types.h	8.3 (Berkeley) 1/5/94
  */
 
-#ifndef _ALPHA_STDARG_H_
-#define	_ALPHA_STDARG_H_
+#ifndef _SYS__TYPES_H_
+#define	_SYS__TYPES_H_
 
-#include <sys/cdefs.h>
 #include <machine/_types.h>
 
-typedef __va_list	va_list;
+typedef	unsigned long	__cpuid_t;	/* CPU id */
+typedef	__int32_t	__dev_t;	/* device number */
+typedef	__uint32_t	__fixpt_t;	/* fixed point number */
+typedef	__uint32_t	__gid_t;	/* group id */
+typedef	__uint32_t	__id_t;		/* may contain pid, uid or gid */
+typedef __uint32_t	__in_addr_t;	/* base type for internet address */
+typedef __uint16_t	__in_port_t;	/* IP port type */
+typedef	__uint32_t	__ino_t;	/* inode number */
+typedef	long		__key_t;	/* IPC key (for Sys V IPC) */
+typedef	__uint32_t	__mode_t;	/* permissions */
+typedef	__uint32_t	__nlink_t;	/* link count */
+typedef	__int32_t	__pid_t;	/* process id */
+typedef __uint64_t	__rlim_t;	/* resource limit */
+typedef __uint8_t	__sa_family_t;	/* sockaddr address family type */
+typedef	__int32_t	__segsz_t;	/* segment size */
+typedef __uint32_t	__socklen_t;	/* length type for network syscalls */
+typedef	__int32_t	__swblk_t;	/* swap offset */
+typedef	__uint32_t	__uid_t;	/* user id */
+typedef	__uint32_t	__useconds_t;	/* microseconds */
+typedef	__int32_t	__suseconds_t;	/* microseconds (signed) */
 
-#define	__va_size(type) \
-	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
+/*
+ * mbstate_t is an opaque object to keep conversion state, during multibyte
+ * stream conversions. The content must not be referenced by user programs.
+ */
+typedef union {
+	char __mbstate8[128];
+	__int64_t __mbstateL;			/* for alignment */
+} __mbstate_t;
 
-#define	va_start(ap, last) \
-	(__builtin_next_arg(last), (ap) = *(va_list *)__builtin_saveregs(), (ap).pad = 0)
-
-#define	__REAL_TYPE_CLASS	8
-#define	__va_arg_offset(ap, type)					\
-	((__builtin_classify_type(*(type *)0) == __REAL_TYPE_CLASS &&	\
-	    (ap).offset <= (6 * 8) ? -(6 * 8) : 0) - __va_size(type))
-
-#define	va_arg(ap, type)						\
-	(*(type *)((ap).offset += __va_size(type),			\
-		   (ap).base + (ap).offset + __va_arg_offset(ap, type)))
-
-#if __ISO_C_VISIBLE >= 1999
-#define va_copy(dest, src) \
-	((dest) = (src))
-#endif
-
-#define	va_end(ap)	
-
-#endif /* !_ALPHA_STDARG_H_ */
+#endif /* !_SYS__TYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsnprintf.c,v 1.11 2005/10/10 12:00:52 espie Exp $ */
+/*	$OpenBSD: vsnprintf.c,v 1.12 2006/01/06 18:53:04 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 #include "local.h"
 
 int
-vsnprintf(char *str, size_t n, const char *fmt, _BSD_VA_LIST_ ap)
+vsnprintf(char *str, size_t n, const char *fmt, __va_list ap)
 {
 	int ret;
 	char dummy;

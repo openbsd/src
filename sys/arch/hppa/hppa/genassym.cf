@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.27 2005/04/21 04:39:35 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.28 2006/01/06 18:53:05 millert Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -42,7 +42,6 @@ include <sys/user.h>
 
 include <uvm/uvm.h>
 
-include	<machine/types.h>
 include <machine/cpu.h>
 include <machine/psl.h>
 include <machine/reg.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.4 2005/12/14 23:51:33 deraadt Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.5 2006/01/06 18:53:05 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,9 +35,9 @@
 #define	_MIPS_STDARG_H_
 
 #include <sys/cdefs.h>
-#include <machine/ansi.h>
+#include <machine/_types.h>
 
-typedef _BSD_VA_LIST_	va_list;
+typedef __va_list	va_list;
 
 #ifndef __GNUC_VA_LIST
 #define __GNUC_VA_LIST

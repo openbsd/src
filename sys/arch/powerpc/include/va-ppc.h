@@ -1,4 +1,4 @@
-/*	$OpenBSD: va-ppc.h,v 1.11 2005/12/14 21:46:31 millert Exp $	*/
+/*	$OpenBSD: va-ppc.h,v 1.12 2006/01/06 18:53:05 millert Exp $	*/
 /* GNU C varargs support for the PowerPC with either the V.4 or Windows NT calling sequences */
 
 #include <sys/cdefs.h>
@@ -29,7 +29,7 @@ typedef struct __va_list_tag {
   char *overflow_arg_area;	/* location on stack that holds the next
 				   overflow argument */
   char *reg_save_area;		/* where r3:r10 and f1:f8, if saved are stored */
-} __va_list[1], __gnuc_va_list[1];
+} __gnuc_va_list[1];
 
 #else /* _SYS_VA_LIST */
 

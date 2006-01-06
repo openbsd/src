@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.35 2005/12/19 19:43:01 millert Exp $ */
+/*	$OpenBSD: vfprintf.c,v 1.36 2006/01/06 18:53:04 millert Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -150,7 +150,7 @@ static int exponent(char *, int, int);
 #define CHARINT		0x800		/* 8 bit integer */
 
 int
-vfprintf(FILE *fp, const char *fmt0, _BSD_VA_LIST_ ap)
+vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 {
 	char *fmt;	/* format string */
 	int ch;	/* character from fmt */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.11 2005/12/15 13:44:52 millert Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.12 2006/01/06 18:53:05 millert Exp $	*/
 /*	$NetBSD: stdarg.h,v 1.10 1996/12/27 20:55:28 pk Exp $ */
 
 /*
@@ -45,13 +45,13 @@
 #define	_SPARC_STDARG_H_
 
 #include <sys/cdefs.h>
-#include <machine/ansi.h>
+#include <machine/_types.h>
 
 #ifdef __lint__
 #define	__builtin_classify_type(t)	(0)
 #endif
 
-typedef _BSD_VA_LIST_	va_list;
+typedef __va_list	va_list;
 
 #define	__va_size(type) \
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))

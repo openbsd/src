@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.16 2005/12/14 18:28:40 millert Exp $	*/
+/*	$OpenBSD: endian.h,v 1.17 2006/01/06 18:53:05 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -52,25 +52,25 @@
 #ifdef __GNUC__
 
 #define __swap16gen(x) __statement({					\
-	u_int16_t __swap16gen_x = (x);					\
+	__uint16_t __swap16gen_x = (x);					\
 									\
-	(u_int16_t)((__swap16gen_x & 0xff) << 8 |			\
+	(__uint16_t)((__swap16gen_x & 0xff) << 8 |			\
 	    (__swap16gen_x & 0xff00) >> 8);				\
 })
 
 #define __swap32gen(x) __statement({					\
-	u_int32_t __swap32gen_x = (x);					\
+	__uint32_t __swap32gen_x = (x);					\
 									\
-	(u_int32_t)((__swap32gen_x & 0xff) << 24 |			\
+	(__uint32_t)((__swap32gen_x & 0xff) << 24 |			\
 	    (__swap32gen_x & 0xff00) << 8 |				\
 	    (__swap32gen_x & 0xff0000) >> 8 |				\
 	    (__swap32gen_x & 0xff000000) >> 24);			\
 })
 
 #define __swap64gen(x) __statement({					\
-	u_int64_t __swap64gen_x = (x);					\
+	__uint64_t __swap64gen_x = (x);					\
 									\
-	(u_int64_t)((__swap64gen_x & 0xff) << 56 |			\
+	(__uint64_t)((__swap64gen_x & 0xff) << 56 |			\
 	    (__swap64gen_x & 0xff00ULL) << 40 |				\
 	    (__swap64gen_x & 0xff0000ULL) << 24 |			\
 	    (__swap64gen_x & 0xff000000ULL) << 8 |			\
@@ -84,22 +84,22 @@
 
 /* Note that these macros evaluate their arguments several times.  */
 #define __swap16gen(x)							\
-    (u_int16_t)(((u_int16_t)(x) & 0xff) << 8 | ((u_int16_t)(x) & 0xff00) >> 8)
+    (__uint16_t)(((__uint16_t)(x) & 0xff) << 8 | ((__uint16_t)(x) & 0xff00) >> 8)
 
 #define __swap32gen(x)							\
-    (u_int32_t)(((u_int32_t)(x) & 0xff) << 24 |				\
-    ((u_int32_t)(x) & 0xff00) << 8 | ((u_int32_t)(x) & 0xff0000) >> 8 |	\
-    ((u_int32_t)(x) & 0xff000000) >> 24)
+    (__uint32_t)(((__uint32_t)(x) & 0xff) << 24 |			\
+    ((__uint32_t)(x) & 0xff00) << 8 | ((__uint32_t)(x) & 0xff0000) >> 8 |\
+    ((__uint32_t)(x) & 0xff000000) >> 24)
 
 #define __swap64gen(x)							\
-	(u_int64_t)((((u_int64_t)(x) & 0xff) << 56) |			\
-	    ((u_int64_t)(x) & 0xff00ULL) << 40 |			\
-	    ((u_int64_t)(x) & 0xff0000ULL) << 24 |			\
-	    ((u_int64_t)(x) & 0xff000000ULL) << 8 |			\
-	    ((u_int64_t)(x) & 0xff00000000ULL) >> 8 |			\
-	    ((u_int64_t)(x) & 0xff0000000000ULL) >> 24 |		\
-	    ((u_int64_t)(x) & 0xff000000000000ULL) >> 40 |		\
-	    ((u_int64_t)(x) & 0xff00000000000000ULL) >> 56)
+	(__uint64_t)((((__uint64_t)(x) & 0xff) << 56) |			\
+	    ((__uint64_t)(x) & 0xff00ULL) << 40 |			\
+	    ((__uint64_t)(x) & 0xff0000ULL) << 24 |			\
+	    ((__uint64_t)(x) & 0xff000000ULL) << 8 |			\
+	    ((__uint64_t)(x) & 0xff00000000ULL) >> 8 |			\
+	    ((__uint64_t)(x) & 0xff0000000000ULL) >> 24 |		\
+	    ((__uint64_t)(x) & 0xff000000000000ULL) >> 40 |		\
+	    ((__uint64_t)(x) & 0xff00000000000000ULL) >> 56)
 
 #endif /* __GNUC__ */
 
@@ -113,21 +113,21 @@
 #if __GNUC__
 
 #define __swap16(x) __statement({					\
-	u_int16_t __swap16_x = (x);					\
+	__uint16_t __swap16_x = (x);					\
 									\
 	__builtin_constant_p(x) ? __swap16gen(__swap16_x) :		\
 	    __swap16md(__swap16_x);					\
 })
 
 #define __swap32(x) __statement({					\
-	u_int32_t __swap32_x = (x);					\
+	__uint32_t __swap32_x = (x);					\
 									\
 	__builtin_constant_p(x) ? __swap32gen(__swap32_x) :		\
 	    __swap32md(__swap32_x);					\
 })
 
 #define __swap64(x) __statement({					\
-	u_int64_t __swap64_x = (x);					\
+	__uint64_t __swap64_x = (x);					\
 									\
 	__builtin_constant_p(x) ? __swap64gen(__swap64_x) :		\
 	    __swap64md(__swap64_x);					\
@@ -142,8 +142,8 @@
 #endif /* MD_SWAP */
 
 #define __swap16_multi(v, n) do {						\
-	size_t __swap16_multi_n = (n);					\
-	u_int16_t *__swap16_multi_v = (v);				\
+	__size_t __swap16_multi_n = (n);				\
+	__uint16_t *__swap16_multi_v = (v);				\
 									\
 	while (__swap16_multi_n) {					\
 		*__swap16_multi_v = swap16(*__swap16_multi_v);		\
@@ -159,19 +159,19 @@
 #define swap16_multi __swap16_multi
 
 __BEGIN_DECLS
-u_int64_t	htobe64(u_int64_t);
-u_int32_t	htobe32(u_int32_t);
-u_int16_t	htobe16(u_int16_t);
-u_int64_t	betoh64(u_int64_t);
-u_int32_t	betoh32(u_int32_t);
-u_int16_t	betoh16(u_int16_t);
+__uint64_t	htobe64(__uint64_t);
+__uint32_t	htobe32(__uint32_t);
+__uint16_t	htobe16(__uint16_t);
+__uint64_t	betoh64(__uint64_t);
+__uint32_t	betoh32(__uint32_t);
+__uint16_t	betoh16(__uint16_t);
 
-u_int64_t	htole64(u_int64_t);
-u_int32_t	htole32(u_int32_t);
-u_int16_t	htole16(u_int16_t);
-u_int64_t	letoh64(u_int64_t);
-u_int32_t	letoh32(u_int32_t);
-u_int16_t	letoh16(u_int16_t);
+__uint64_t	htole64(__uint64_t);
+__uint32_t	htole32(__uint32_t);
+__uint16_t	htole16(__uint16_t);
+__uint64_t	letoh64(__uint64_t);
+__uint32_t	letoh32(__uint32_t);
+__uint16_t	letoh16(__uint16_t);
 __END_DECLS
 #endif /* __BSD_VISIBLE */
 

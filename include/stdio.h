@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.33 2005/12/13 00:35:22 millert Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.34 2006/01/06 18:53:04 millert Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -39,21 +39,20 @@
 #define	_STDIO_H_
 
 #include <sys/cdefs.h>
+#include <sys/_types.h>
 
 #if __BSD_VISIBLE || __POSIX_VISIBLE || __XPG_VISIBLE
-#include <sys/types.h>
+#include <sys/types.h>	/* XXX should be removed */
 #endif
 
-#include <machine/ansi.h>
-
-#ifdef	_BSD_SIZE_T_
-typedef	_BSD_SIZE_T_	size_t;
-#undef	_BSD_SIZE_T_
+#ifndef	_SIZE_T_DEFINED_
+#define	_SIZE_T_DEFINED_
+typedef	__size_t	size_t;
 #endif
 
-#ifdef	_BSD_OFF_T_
-typedef	_BSD_OFF_T_	off_t;
-#undef	_BSD_OFF_T_
+#ifndef	_OFF_T_DEFINED_
+#define	_OFF_T_DEFINED_
+typedef	__off_t	off_t;
 #endif
 
 #ifndef NULL
@@ -258,26 +257,26 @@ int	 sscanf(const char *, const char *, ...);
 FILE	*tmpfile(void);
 char	*tmpnam(char *);
 int	 ungetc(int, FILE *);
-int	 vfprintf(FILE *, const char *, _BSD_VA_LIST_);
-int	 vprintf(const char *, _BSD_VA_LIST_);
-int	 vsprintf(char *, const char *, _BSD_VA_LIST_);
+int	 vfprintf(FILE *, const char *, __va_list);
+int	 vprintf(const char *, __va_list);
+int	 vsprintf(char *, const char *, __va_list);
 
 #if __ISO_C_VISIBLE >= 1999 || __BSD_VISIBLE
 int	 snprintf(char *, size_t, const char *, ...)
 		__attribute__((__format__ (printf, 3, 4)))
 		__attribute__((__nonnull__ (3)))
 		__attribute__((__bounded__ (__string__,1,2)));
-int	 vfscanf(FILE *, const char *, _BSD_VA_LIST_)
+int	 vfscanf(FILE *, const char *, __va_list)
 		__attribute__((__format__ (scanf, 2, 0)))
 		__attribute__((__nonnull__ (2)));
-int	 vscanf(const char *, _BSD_VA_LIST_)
+int	 vscanf(const char *, __va_list)
 		__attribute__((__format__ (scanf, 1, 0)))
 		__attribute__((__nonnull__ (1)));
-int	 vsnprintf(char *, size_t, const char *, _BSD_VA_LIST_)
+int	 vsnprintf(char *, size_t, const char *, __va_list)
 		__attribute__((__format__ (printf, 3, 0)))
 		__attribute__((__nonnull__ (3)))
 		__attribute__((__bounded__(__string__,1,2)));
-int	 vsscanf(const char *, const char *, _BSD_VA_LIST_)
+int	 vsscanf(const char *, const char *, __va_list)
 		__attribute__((__format__ (scanf, 2, 0)))
 		__attribute__((__nonnull__ (2)));
 #endif /* __ISO_C_VISIBLE >= 1999 || __BSD_VISIBLE */
@@ -346,7 +345,7 @@ int	 getw(FILE *);
 int	 putw(int, FILE *);
 void	 setbuffer(FILE *, char *, int);
 int	 setlinebuf(FILE *);
-int	 vasprintf(char **, const char *, _BSD_VA_LIST_)
+int	 vasprintf(char **, const char *, __va_list)
 		__attribute__((__format__ (printf, 2, 0)))
 		__attribute__((__nonnull__ (2)));
 __END_DECLS

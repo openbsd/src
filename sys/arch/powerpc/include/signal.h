@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.5 2005/12/14 21:46:31 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.6 2006/01/06 18:53:05 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.1 1996/09/30 16:34:34 ws Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 typedef int sig_atomic_t;
 
 #if __BSD_VISIBLE
-#include <machine/types.h>
+#include <machine/_types.h>
 
 /*
  * We have to save all registers on every trap, because
@@ -51,16 +51,16 @@ typedef int sig_atomic_t;
  *
  */
 struct trapframe {
-	u_int32_t fixreg[32];
-	u_int32_t lr;
-	u_int32_t cr;
-	u_int32_t xer;
-	u_int32_t ctr;
+	__register_t fixreg[32];
+	__register_t lr;
+	__register_t cr;
+	__register_t xer;
+	__register_t ctr;
 	int srr0;
 	int srr1;
 	int dar;			/* dar & dsisr are only filled on a DSI trap */
 	int dsisr;
-	u_int32_t exc;
+	__register_t exc;
 };
 
 struct sigcontext {

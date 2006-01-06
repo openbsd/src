@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd_auth.h,v 1.8 2002/08/30 08:50:01 espie Exp $	*/
+/*	$OpenBSD: bsd_auth.h,v 1.9 2006/01/06 18:53:04 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,6 +36,8 @@
 
 #ifndef _BSD_AUTH_H_
 #define _BSD_AUTH_H_
+
+#include <machine/_types.h>		/* for __va_list */
 
 typedef struct auth_session_t auth_session_t;
 
@@ -84,7 +86,7 @@ int	 auth_call(auth_session_t *, char *, ...)
 int	 auth_setdata(auth_session_t *, void *, size_t);
 int	 auth_setoption(auth_session_t *, char *, char *);
 int	 auth_setpwd(auth_session_t *, struct passwd *pwd);
-void	 auth_set_va_list(auth_session_t *, _BSD_VA_LIST_);
+void	 auth_set_va_list(auth_session_t *, __va_list);
 
 struct passwd *auth_getpwd(auth_session_t *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.6 2005/08/02 21:02:49 drahn Exp $	*/
+/*	$OpenBSD: frame.h,v 1.7 2006/01/06 18:53:05 millert Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,8 +32,6 @@
  */
 #ifndef	_POWERPC_FRAME_H_
 #define	_POWERPC_FRAME_H_
-
-#include <machine/types.h>
 
 /*
  * This is to ensure alignment of the stackpointer
