@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.32 2006/01/06 06:13:27 tedu Exp $ */
+/*	$OpenBSD: rthread.c,v 1.33 2006/01/06 07:29:36 marc Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -109,6 +109,8 @@ _rthread_init(void)
 	_rthread_kq = kqueue();
 	if (_rthread_kq == -1)
 		return (errno);
+	_rthread_debug_init();
+	_rthread_debug(1, "rthread init\n");
 	_threads_ready = 1;
 	__isthreaded = 1;
 
