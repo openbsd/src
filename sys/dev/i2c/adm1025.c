@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1025.c,v 1.19 2005/12/31 04:31:27 deraadt Exp $	*/
+/*	$OpenBSD: adm1025.c,v 1.20 2006/01/06 03:44:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -85,16 +85,8 @@ admtm_match(struct device *parent, void *match, void *aux)
 
 	if (strcmp(ia->ia_name, "adm1025") == 0 ||
 	    strcmp(ia->ia_name, "47m192") == 0 ||
-	    strcmp(ia->ia_name, "ne1619") == 0) {
-		/*
-		 * should also ensure that
-		 * config & 0x80 == 0x00
-		 * status1 & 0xc0 == 0x00
-		 * status2 & 0xbc == 0x00
-		 * before accepting this to be for real
-		 */
+	    strcmp(ia->ia_name, "ne1619") == 0)
 		return (1);
-	}
 	return (0);
 }
 
