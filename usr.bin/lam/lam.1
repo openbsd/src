@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lam.1,v 1.5 2003/06/03 02:56:09 millert Exp $
+.\"	$OpenBSD: lam.1,v 1.6 2006/01/06 09:52:59 jmc Exp $
 .\"	$NetBSD: lam.1,v 1.4 2002/02/08 01:36:25 ross Exp $
 .\"
 .\" Copyright (c) 1993
@@ -99,22 +99,24 @@ The newline normally appended to each output line is omitted.
 To print files simultaneously for easy viewing use
 .Xr pr 1 .
 .Sh EXAMPLES
-The command
+Join four files together along each line:
+.Pp
 .Dl $ lam file1 file2 file3 file4
 .Pp
-joins 4 files together along each line.
-To merge the lines from four different files use
+Merge the lines from four different files:
 .Bd -literal -offset indent
-$ lam file1 \-S "\\
+$ lam file1 \-S "\e
 " file2 file3 file4
 .Ed
 .Pp
-Every 2 lines of a file may be joined on one line with
+Join every two lines of a file:
+.Pp
 .Dl $ lam \- \- \*(Lt file
 .Pp
-and a form letter with substitutions keyed by
+A form letter with substitutions keyed by
 .Sq \&@
-can be done with
+can be done with:
+.Pp
 .Dl $ lam \-t @ letter changes
 .Sh SEE ALSO
 .Xr join 1 ,
