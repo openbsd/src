@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.38 2005/10/27 19:27:10 otto Exp $
+.\"	$OpenBSD: queue.3,v 1.39 2006/01/06 08:48:06 jmc Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -714,7 +714,7 @@ macro should be used to check whether a list is empty.
 SIMPLEQ_HEAD(listhead, entry) head = SIMPLEQ_HEAD_INITIALIZER(head);
 struct entry {
 	...
-	SIMPLEQ_ENTRY(entry) entries;	/* List. */
+	SIMPLEQ_ENTRY(entry) entries;	/* Simple queue. */
 	...
 } *n1, *n2, *np;
 
