@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.114 2006/01/05 15:00:10 norby Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.115 2006/01/06 08:41:30 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -741,14 +741,6 @@ Note that
 and
 .Cm vlandev
 must both be set at the same time.
-.It Cm vlanprio Ar vlan-priority
-If the interface is a
-.Xr vlan 4
-pseudo-interface, set the vlan priority value
-to
-.Ar vlan-priority .
-This value is a 3-bit number which is used to create an 802.1Q
-vlan header for packets sent from the vlan interface.
 .It Cm vlandev Ar iface
 If the interface is a
 .Xr vlan 4
@@ -789,6 +781,14 @@ pseudo-device, disassociate the physical interface
 from it.
 This breaks the link between the vlan interface and its parent,
 clears its vlan tag, flags, and link address, and shuts the interface down.
+.It Cm vlanprio Ar vlan-priority
+If the interface is a
+.Xr vlan 4
+pseudo-interface, set the vlan priority value
+to
+.Ar vlan-priority .
+This value is a 3-bit number which is used to create an 802.1Q
+vlan header for packets sent from the vlan interface.
 .It Cm vltime Ar n
 (inet6 only)
 Set valid lifetime for the address.
