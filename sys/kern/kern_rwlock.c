@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.4 2006/01/06 06:50:31 tedu Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.5 2006/01/06 07:05:12 tedu Exp $	*/
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -229,7 +229,7 @@ retry:
 
 		rw_enter_diag(rwl, flags);
 
-		if ((error = tsleep(rwl, op->wait_prio, "rwlock", 0)) != 0)
+		if ((error = tsleep(rwl, prio, "rwlock", 0)) != 0)
 			return (error);
 		if (flags & RW_SLEEPFAIL)
 			return (EAGAIN);
