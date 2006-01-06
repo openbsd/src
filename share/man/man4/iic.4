@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.37 2006/01/05 10:04:38 grange Exp $
+.\"	$OpenBSD: iic.4,v 1.38 2006/01/06 23:21:52 deraadt Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -21,20 +21,17 @@
 .Nm iic
 .Nd Inter IC (I2C) bus
 .Sh SYNOPSIS
-.Cd "# macppc"
-.Cd "iic* at ki2c?"
-.Cd "iic* at pi2c?"
-.Cd "iic* at smu?"
-.Pp
-.Cd "# all architectures"
-.Cd "iic* at alipm?"
-.Cd "iic* at amdiic?"
-.Cd "iic* at amdpm?"
-.Cd "iic* at gscsio?"
-.Cd "iic* at ichiic?"
-.Cd "iic* at nviic?"
-.Cd "iic* at piixpm?"
-.Cd "iic* at viapm?"
+.Cd "iic* at ki2c?                  # macppc"
+.Cd "iic* at pi2c?                  # macppc"
+.Cd "iic* at smu?                   # macppc"
+.Cd "iic* at alipm?                 # alpha i386 sparc64 "
+.Cd "iic* at amdiic?                # amd64 i386"
+.Cd "iic* at amdpm?                 # i386"
+.Cd "iic* at gscsio?                # i386"
+.Cd "iic* at ichiic?                # amd64 i386"
+.Cd "iic* at nviic?                 # amd64 i386"
+.Cd "iic* at piixpm?                # i386"
+.Cd "iic* at viapm?                 # amd64 i386"
 .Sh DESCRIPTION
 .Tn I2C
 is a two-wire bus developed by Philips used for connecting
