@@ -1,3 +1,5 @@
+/*	$OpenBSD: stdint.h,v 1.2 2006/01/06 19:04:41 millert Exp $	*/
+
 /*
  * Copyright (c) 1997, 2005 Todd C. Miller <Todd.Miller@courtesan.com>
  *
