@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sched.c,v 1.6 2006/01/02 20:48:04 otto Exp $ */
+/*	$OpenBSD: rthread_sched.c,v 1.7 2006/01/06 09:49:16 otto Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -138,7 +138,7 @@ pthread_suspend_np(pthread_t thread)
 	 * XXX Avoid a bug in current signal handling by refusing to
 	 * suspend the main thread.
 	 */
-	if (pthread_main_np() == 0)
+	if (thread->tid != _initial_thread.tid)
 		if (kill(thread->tid, SIGSTOP) == -1)
 			errn = errno;
 	return (errn);
