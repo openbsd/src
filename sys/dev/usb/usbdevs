@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.178 2005/12/24 12:45:54 robert Exp $
+$OpenBSD: usbdevs,v 1.179 2006/01/06 03:33:14 brad Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1896,6 +1896,8 @@ product OPTION GT3GQUAD		0x6300	GlobeTrotter 3G QUAD
 /* Wacom products */
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
 product WACOM GRAPHIRE		0x0010	Graphire
+product WACOM GRAPHIRE3_4X5	0x0013	Graphire3 4x5
+product WACOM GRAPHIRE4_4X5	0x0015	Graphire4 Classic A6
 product WACOM INTUOSA5		0x0021	Intuos A5
 
 /* Xirlink products */
