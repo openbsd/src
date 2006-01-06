@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.52 2006/01/06 16:34:47 reyk Exp $	*/
+/*	$OpenBSD: update.c,v 1.53 2006/01/06 16:41:15 reyk Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -253,21 +253,23 @@ cvs_update_local(CVSFILE *cf, void *arg)
 				return (CVS_EX_FILE);
 			return (CVS_EX_OK);
 		}
+	} else {
+		/* There's no need to update a newly added file */
+		cvs_printf("A %s\n", fpath);
+		return (CVS_EX_OK);
 	}
 
 	/* set keyword expansion */
 	/* XXX look at cf->cf_opts as well for this */
 	if (rcs_kwexp_set(rf, kflag) < 0) {
-		if (rf != NULL)
-			rcs_close(rf);
+		rcs_close(rf);
 		return (CVS_EX_DATA);
 	}
 
 	/* fill in the correct revision */
 	if (rev != NULL) {
 		if ((frev = rcsnum_parse(rev)) == NULL) {
-			if (rf != NULL)
-				rcs_close(rf);
+			rcs_close(rf);
 			return (CVS_EX_DATA);
 		}
 	} else {
@@ -277,7 +279,7 @@ cvs_update_local(CVSFILE *cf, void *arg)
 	/*
 	 * Compare the headrevision with the revision we currently have.
 	 */
-	if (rf != NULL && cf->cf_lrev != NULL)
+	if (cf->cf_lrev != NULL)
 		revdiff = rcsnum_cmp(cf->cf_lrev, frev, 0);
 
 	switch (cf->cf_cvstat) {
@@ -308,9 +310,6 @@ cvs_update_local(CVSFILE *cf, void *arg)
 			cvs_printf("M %s\n", fpath);
 		}
 		break;
-	case CVS_FST_ADDED:
-		cvs_printf("A %s\n", fpath);
-		break;
 	case CVS_FST_REMOVED:
 		cvs_printf("R %s\n", fpath);
 		break;
@@ -337,8 +336,7 @@ cvs_update_local(CVSFILE *cf, void *arg)
 
 	if ((frev != NULL) && (frev != rf->rf_head))
 		rcsnum_free(frev);
-	if (rf != NULL)
-		rcs_close(rf);
+	rcs_close(rf);
 
 	return (CVS_EX_OK);
 }
