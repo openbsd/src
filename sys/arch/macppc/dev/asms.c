@@ -1,4 +1,4 @@
-/*	$OpenBSD: asms.c,v 1.1 2006/01/03 17:23:19 xsa Exp $	*/
+/*	$OpenBSD: asms.c,v 1.2 2006/01/06 08:18:17 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -166,7 +166,7 @@ asms_attach(struct device *parent, struct device *self, void *aux)
 		printf(": cannot write command register\n");
 		return;
 	}
-	delay(1000);
+	delay(10000);
 
 	cmd = ASMS_REG_RDATA1;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
