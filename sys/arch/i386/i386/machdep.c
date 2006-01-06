@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.337 2006/01/06 10:42:34 grange Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.338 2006/01/06 10:53:16 grange Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -134,7 +134,6 @@
 
 #include "acpi.h"
 #if NACPI > 0
-#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #endif
 
