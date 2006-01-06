@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.72 2005/12/07 19:04:53 deraadt Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.73 2006/01/06 18:28:33 jmc Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -1177,7 +1177,7 @@ dupfdopen(struct filedesc *fdp, int indx, int dfd, int mode, int error)
 
 	/*
 	 * Assume that the filename was user-specified; applications do
-	 * not tend to opens of /dev/fd/# when they can just call dup()
+	 * not tend to open /dev/fd/# when they can just call dup()
 	 */
 	if ((curproc->p_flag & (P_SUGIDEXEC | P_SUGID))) {
 		if (curproc->p_descfd == 255)
