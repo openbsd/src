@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.11 2005/08/01 05:36:48 brad Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.12 2006/01/06 03:36:32 brad Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -112,6 +112,7 @@ USB_ATTACH(uhidev)
 	int size, nrepid, repid, repsz;
 	int repsizes[256];
 	void *desc;
+	const void *descptr;
 	usbd_status err;
 	char *devinfop;
 
@@ -161,17 +162,36 @@ USB_ATTACH(uhidev)
 	sc->sc_ep_addr = ed->bEndpointAddress;
 
 	/* XXX need to extend this */
-	if (uaa->vendor == USB_VENDOR_WACOM &&
-	    uaa->product == USB_PRODUCT_WACOM_GRAPHIRE /* &&
-	    uaa->revision == 0x???? */) { /* XXX should use revision */
+	descptr = NULL;
+	if (uaa->vendor == USB_VENDOR_WACOM) {
+		static uByte reportbuf[] = {2, 2, 2};
+
 		/* The report descriptor for the Wacom Graphire is broken. */
-		size = sizeof uhid_graphire_report_descr;
+		switch (uaa->product) {
+		case USB_PRODUCT_WACOM_GRAPHIRE:
+			size = sizeof uhid_graphire_report_descr;
+			descptr = uhid_graphire_report_descr;
+			break;
+		case USB_PRODUCT_WACOM_GRAPHIRE3_4X5:
+		case USB_PRODUCT_WACOM_GRAPHIRE4_4X5:
+			usbd_set_report(uaa->iface, UHID_FEATURE_REPORT, 2,
+			    &reportbuf, sizeof reportbuf);
+			size = sizeof uhid_graphire3_4x5_report_descr;
+			descptr = uhid_graphire3_4x5_report_descr;
+			break;
+		default:
+			/* Keep descriptor */
+			break;
+		}
+	}
+
+	if (descptr) {
 		desc = malloc(size, M_USBDEV, M_NOWAIT);
 		if (desc == NULL)
 			err = USBD_NOMEM;
 		else {
 			err = USBD_NORMAL_COMPLETION;
-			memcpy(desc, uhid_graphire_report_descr, size);
+			memcpy(desc, descptr, size);
 		}
 	} else {
 		desc = NULL;

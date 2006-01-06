@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugraphire_rdesc.h,v 1.2 2001/10/31 04:24:44 nate Exp $ */
+/*	$OpenBSD: ugraphire_rdesc.h,v 1.3 2006/01/06 03:36:32 brad Exp $ */
 /*	$NetBSD: ugraphire_rdesc.h,v 1.1 2000/12/29 01:47:49 augustss Exp $	*/
 /*
  * Copyright (c) 2000 Nick Hibma <n_hibma@freebsd.org>
@@ -90,3 +90,88 @@ static uByte uhid_graphire_report_descr[] = {
     0xb1, 0x02,                    /*    FEATURE (Data,Var,Abs)		*/
     0xc0,                          /*  END_COLLECTION			*/
 };
+
+static uByte uhid_graphire3_4x5_report_descr[] = {
+    0x05, 0x01,                    /* USAGE_PAGE (Generic Desktop) */
+    0x09, 0x02,                    /* USAGE (Mouse) */
+    0xa1, 0x01,                    /* COLLECTION (Application) */
+    0x85, 0x01,                    /*   REPORT_ID (1) */
+    0x09, 0x01,                    /*   USAGE (Pointer) */
+    0xa1, 0x00,                    /*   COLLECTION (Physical) */
+    0x05, 0x09,                    /*     USAGE_PAGE (Button) */
+    0x19, 0x01,                    /*     USAGE_MINIMUM (Button 1) */
+    0x29, 0x03,                    /*     USAGE_MAXIMUM (Button 3) */
+    0x15, 0x00,                    /*     LOGICAL_MINIMUM (0) */
+    0x25, 0x01,                    /*     LOGICAL_MAXIMUM (1) */
+    0x95, 0x03,                    /*     REPORT_COUNT (3) */
+    0x75, 0x01,                    /*     REPORT_SIZE (1) */
+    0x81, 0x02,                    /*     INPUT (Data,Var,Abs) */
+    0x95, 0x01,                    /*     REPORT_COUNT (1) */
+    0x75, 0x05,                    /*     REPORT_SIZE (5) */
+    0x81, 0x01,                    /*     INPUT (Cnst,Ary,Abs) */
+    0x05, 0x01,                    /*     USAGE_PAGE (Generic Desktop) */
+    0x09, 0x30,                    /*     USAGE (X) */
+    0x09, 0x31,                    /*     USAGE (Y) */
+    0x09, 0x38,                    /*     USAGE (Wheel) */
+    0x15, 0x81,                    /*     LOGICAL_MINIMUM (-127) */
+    0x25, 0x7f,                    /*     LOGICAL_MAXIMUM (127) */
+    0x75, 0x08,                    /*     REPORT_SIZE (8) */
+    0x95, 0x03,                    /*     REPORT_COUNT (3) */
+    0x81, 0x06,                    /*     INPUT (Data,Var,Rel) */
+    0xc0,                          /*   END_COLLECTION */
+    0xc0,                          /* END_COLLECTION */
+    0x05, 0x0d,                    /* USAGE_PAGE (Digitizers) */
+    0x09, 0x01,                    /* USAGE (Pointer) */
+    0xa1, 0x01,                    /* COLLECTION (Application) */
+    0x85, 0x02,                    /*   REPORT_ID (2) */
+    0x05, 0x0d,                    /*   USAGE_PAGE (Digitizers) */
+    0x09, 0x01,                    /*   USAGE (Digitizer) */
+    0xa1, 0x00,                    /*   COLLECTION (Physical) */
+    0x09, 0x33,                    /*     USAGE (Touch) */
+    0x09, 0x44,                    /*     USAGE (Barrel Switch) */
+    0x09, 0x44,                    /*     USAGE (Barrel Switch) */
+    0x15, 0x00,                    /*     LOGICAL_MINIMUM (0) */
+    0x25, 0x01,                    /*     LOGICAL_MAXIMUM (1) */
+    0x75, 0x01,                    /*     REPORT_SIZE (1) */
+    0x95, 0x03,                    /*     REPORT_COUNT (3) */
+    0x81, 0x02,                    /*     INPUT (Data,Var,Abs) */
+    0x75, 0x01,                    /*     REPORT_SIZE (1) */
+    0x95, 0x02,                    /*     REPORT_COUNT (2) */
+    0x81, 0x01,                    /*     INPUT (Cnst,Ary,Abs) */
+    0x09, 0x3c,                    /*     USAGE (Invert) */
+    0x09, 0x38,                    /*     USAGE (Transducer Index) */
+    0x09, 0x32,                    /*     USAGE (In Range) */
+    0x75, 0x01,                    /*     REPORT_SIZE (1) */
+    0x95, 0x03,                    /*     REPORT_COUNT (3) */
+    0x81, 0x02,                    /*     INPUT (Data,Var,Abs) */
+    0x05, 0x01,                    /*     USAGE_PAGE (Generic Desktop) */
+    0x09, 0x30,                    /*     USAGE (X) */
+    0x15, 0x00,                    /*     LOGICAL_MINIMUM (0) */
+    0x26, 0xde, 0x27,              /*     LOGICAL_MAXIMUM (10206) */
+    0x75, 0x10,                    /*     REPORT_SIZE (16) */
+    0x95, 0x01,                    /*     REPORT_COUNT (1) */
+    0x81, 0x02,                    /*     INPUT (Data,Var,Abs) */
+    0x09, 0x31,                    /*     USAGE (Y) */
+    0x26, 0xfe, 0x1c,              /*     LOGICAL_MAXIMUM (7422) */
+    0x75, 0x10,                    /*     REPORT_SIZE (16) */
+    0x95, 0x01,                    /*     REPORT_COUNT (1) */
+    0x81, 0x02,                    /*     INPUT (Data,Var,Abs) */
+    0x05, 0x0d,                    /*     USAGE_PAGE (Digitizers) */
+    0x09, 0x30,                    /*     USAGE (Tip Pressure) */
+    0x26, 0xff, 0x01,              /*     LOGICAL_MAXIMUM (511) */
+    0x75, 0x10,                    /*     REPORT_SIZE (16) */
+    0x95, 0x01,                    /*     REPORT_COUNT (1) */
+    0x81, 0x02,                    /*     INPUT (Data,Var,Abs) */
+    0xc0,                          /*   END_COLLECTION */
+    0x05, 0x0d,                    /*   USAGE_PAGE (Digitizers) */
+    0x09, 0x00,                    /*   USAGE (Undefined) */
+    0x85, 0x02,                    /*   REPORT_ID (2) */
+    0x95, 0x01,                    /*   REPORT_COUNT (1) */
+    0xb1, 0x02,                    /*   FEATURE (Data,Var,Abs) */
+    0x09, 0x00,                    /*   USAGE (Undefined) */
+    0x85, 0x03,                    /*   REPORT_ID (3) */
+    0x95, 0x01,                    /*   REPORT_COUNT (1) */
+    0xb1, 0x02,                    /*   FEATURE (Data,Var,Abs) */
+    0xc0                           /* END_COLLECTION */
+};
+
