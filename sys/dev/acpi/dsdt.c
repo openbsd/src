@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.14 2006/01/05 22:30:27 grange Exp $ */
+/* $OpenBSD: dsdt.c,v 1.15 2006/01/06 08:37:32 grange Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -159,7 +159,7 @@ aml_setbuffer(struct aml_value *val, int size, u_int8_t *ptr)
 void
 aml_setfield(struct aml_value *val, int bitpos, int bitlen, struct aml_node *ref, struct aml_node *node)
 {
-	printf("setfield: pos=%.8x len=%.8x ref=%s name=%s\n", bitpos, bitlen, ref->name, node->name);
+	dnprintf(50, "setfield: pos=%.8x len=%.8x ref=%s name=%s\n", bitpos, bitlen, ref->name, node->name);
 	val->type = AML_OBJTYPE_FIELDUNIT;
 	val->length = (bitlen + 7) / 8;
 	val->v_field.bitpos = bitpos;
@@ -190,7 +190,7 @@ aml_setprocessor(struct aml_value *val, u_int8_t id, u_int32_t addr, u_int8_t le
 void
 aml_setopregion(struct aml_value *val, int addrtype, int size, u_int64_t addr)
 {
-	printf("setopregion: %.2x %.4x %.8x\n", addrtype, size, addr);
+	dnprintf(50, "setopregion: %.2x %.4x %.8x\n", addrtype, size, addr);
 	val->type = AML_OBJTYPE_OPREGION;
 	val->v_opregion.address_space_id = addrtype;
 	val->v_opregion.register_bit_width = 0;
@@ -233,7 +233,7 @@ aml_parsefieldlist(struct acpi_softc *sc, struct aml_node *node)
 	struct aml_node *pf;
 
 	start = 0;
-	printf("-- parsefield\n");
+	dnprintf(50, "-- parsefield\n");
 	while (sc->amlpc.pos < node->end) {
 		switch (aml_parseint(sc, 1)) {
 		case 0x00: /* reserved */
@@ -243,7 +243,7 @@ aml_parsefieldlist(struct acpi_softc *sc, struct aml_node *node)
 		case 0x01: /* access field */
 			type = aml_parseint(sc, 1);
 			attr = aml_parseint(sc, 1);
-			printf("  type=%.2x  attr=%.2x\n", type, attr);
+			dnprintf(50, "  type=%.2x  attr=%.2x\n", type, attr);
 			break;
 		default: /* named field */
 			--sc->amlpc.pos;
@@ -747,7 +747,7 @@ aml_setnodevalue(struct acpi_softc *sc, struct aml_node *node, const struct aml_
 		printf("aml_setnodevalue: null\n");
 		return;
 	}
-	printf("--- setnodevalue:\n");
+	dnprintf(50, "--- setnodevalue:\n");
 	aml_shownode(node);
 	aml_showvalue((struct aml_value *)val);
 	switch (node->opcode) {
@@ -805,7 +805,7 @@ aml_setnodevalue(struct acpi_softc *sc, struct aml_node *node, const struct aml_
 		break;
 	}
 	if (dest) {
-		printf("aml_setnodeval: %.4x\n", node->opcode);
+		dnprintf(50, "aml_setnodeval: %.4x\n", node->opcode);
 		aml_copyvalue(dest, val);
 	}
 }
@@ -933,7 +933,7 @@ aml_eval_name(struct acpi_softc *sc, struct aml_node *root, const char *name,
 	root = aml_find_name(sc, root, name);
 
 	if (root != NULL) {
-		printf("found eval object : %s, %.4x\n", root->name, root->opcode);
+		dnprintf(50, "found eval object : %s, %.4x\n", root->name, root->opcode);
 		return aml_eval_object(sc, root, result, env);
 	}
 	return (1);
@@ -953,7 +953,7 @@ aml_eval_object(struct acpi_softc *sc, struct aml_node *node, struct aml_value *
 	if (node == NULL) 
 		return (-1);
 
-	printf("--- Evaluating object:\n"); 
+	dnprintf(50, "--- Evaluating object:\n"); 
 	aml_shownode(node);
 
 	switch (node->opcode) {
@@ -971,7 +971,7 @@ aml_eval_object(struct acpi_softc *sc, struct aml_node *node, struct aml_value *
 
 	case AMLOP_BUFFER:
 		i1 = aml_evalint(sc, childOf(node, 0), env);
-		printf("@@@@@@@@@@@@@@ buffer: %.4x %.4x\n", i1, node->value.length);
+		dnprintf(50, "@@@@@@@@@@@@@@ buffer: %.4x %.4x\n", i1, node->value.length);
 		break;
 
 	case AMLOP_STORE:
@@ -1070,7 +1070,7 @@ aml_eval_object(struct acpi_softc *sc, struct aml_node *node, struct aml_value *
 	case AMLOP_PACKAGE:
 	case AMLOP_VARPACKAGE:
 		i1 = aml_evalint(sc, childOf(node, 0), env);
-		printf("package = %d\n", i1);
+		dnprintf(50, "package = %d\n", i1);
 		result->type = AML_OBJTYPE_PACKAGE;
 		result->length = i1;
 
@@ -1247,7 +1247,7 @@ aml_eval_object(struct acpi_softc *sc, struct aml_node *node, struct aml_value *
 		break;
 
 	case AMLOP_METHOD:
-		printf("eval-method : %s  argcount:%d\n", 
+		dnprintf(50, "eval-method : %s  argcount:%d\n", 
 		       node->name, AML_METHOD_ARGCOUNT(node->flag));
 
 		lhs.type = AML_OBJTYPE_METHOD;
@@ -1259,7 +1259,7 @@ aml_eval_object(struct acpi_softc *sc, struct aml_node *node, struct aml_value *
 		lhs.v_method.locals = malloc(8 * sizeof(struct aml_value), M_DEVBUF, M_WAITOK);
 
 		for (i1=0; i1<lhs.length; i1++) {
-			printf(" evalmeth: %s:%d\n", node->name, i1);
+			dnprintf(50, " evalmeth: %s:%d\n", node->name, i1);
 			aml_eval_object(sc, childOf(node, i1), &lhs.v_method.args[i1], env);
 			aml_showvalue(&lhs.v_method.args[i1]);
 		}
@@ -1442,23 +1442,23 @@ aml_showvalue(struct aml_value *value)
 
 	switch (value->type) {
 	case AML_OBJTYPE_INTEGER:
-		printf("integer: %x\n", value->v_integer);
+		dnprintf(50, "integer: %x\n", value->v_integer);
 		break;
 	case AML_OBJTYPE_STRING:
-		printf("string: %s\n", value->v_string);
+		dnprintf(50, "string: %s\n", value->v_string);
 		break;
 	case AML_OBJTYPE_BUFFER:
-		printf("buffer: %d {\n", value->length);
+		dnprintf(50, "buffer: %d {\n", value->length);
 		for (idx=0; idx<value->length; idx++) {
-			printf("%s0x%.2x", (idx ? "," : ""), value->v_buffer[idx]);
+			dnprintf(50, "%s0x%.2x", (idx ? "," : ""), value->v_buffer[idx]);
 		}
-		printf("}\n");
+		dnprintf(50, "}\n");
 		break;
 	case AML_OBJTYPE_PACKAGE:
-		printf("package: %d {\n", value->length);
+		dnprintf(50, "package: %d {\n", value->length);
 		for (idx=0; idx<value->length; idx++)
 			aml_showvalue(&value->v_package[idx]);
-		printf("}\n");
+		dnprintf(50, "}\n");
 		break;
 	default:
 		printf("unknown: %d\n", value->type);
@@ -1469,13 +1469,13 @@ aml_showvalue(struct aml_value *value)
 void
 aml_shownode(struct aml_node *node)
 {
-	printf(" opcode:%.4x  mnem:%s %s %.2x ",
+	dnprintf(50, " opcode:%.4x  mnem:%s %s %.2x ",
 	       node->opcode, node->mnem ? node->mnem : "", 
 	       node->name ? node->name : "",
 	       node->flag);
 	switch(node->opcode) {
 	case AMLOP_METHOD:
-		printf("argcount:%d serialized:%d synclevel:%d",
+		dnprintf(50, "argcount:%d serialized:%d synclevel:%d",
 		       AML_METHOD_ARGCOUNT(node->flag),
 		       AML_METHOD_SERIALIZED(node->flag),
 		       AML_METHOD_SYNCLEVEL(node->flag));
@@ -1483,26 +1483,26 @@ aml_shownode(struct aml_node *node)
 	case AMLOP_FIELD:
 	case AMLOP_BANKFIELD:
 	case AMLOP_INDEXFIELD:
-		printf("access:%d lock:%d update:%d\n",
+		dnprintf(50, "access:%d lock:%d update:%d\n",
 		       AML_FIELD_ACCESS(node->flag),
 		       AML_FIELD_LOCK(node->flag),
 		       AML_FIELD_UPDATE(node->flag));
 		break;
 		
 	case AMLOP_BYTEPREFIX:
-		printf("byte: %.2x", node->value.v_integer);
+		dnprintf(50, "byte: %.2x", node->value.v_integer);
 		break;
 	case AMLOP_WORDPREFIX:
-		printf("word: %.4x", node->value.v_integer);
+		dnprintf(50, "word: %.4x", node->value.v_integer);
 		break;
 	case AMLOP_DWORDPREFIX:
-		printf("dword: %.8x", node->value.v_integer);
+		dnprintf(50, "dword: %.8x", node->value.v_integer);
 		break;
 	case AMLOP_STRINGPREFIX:
-		printf("string: %s", node->value.v_string);
+		dnprintf(50, "string: %s", node->value.v_string);
 		break;
 	}
-	printf("\n");
+	dnprintf(50, "\n");
 }
 
 struct aml_node *
@@ -1522,7 +1522,7 @@ aml_parse_object(struct acpi_softc *sc, struct aml_node *parent)
 		if (pr != NULL && pr->opcode == AMLOP_METHOD) {
 			/* Parse method arguments as siblings */
 			for (idx=0; idx<AML_METHOD_ARGCOUNT(pr->flag); idx++) {
-				//printf(" parsing method %s:%d\n", pr->name, idx);
+				dnprintf(50, " parsing method %s:%d\n", pr->name, idx);
 				aml_parse_object(sc, node);
 			}
 		}
@@ -1548,9 +1548,9 @@ aml_walktree(struct aml_node *node, int depth)
 	int idx;
 
 	while(node) {
-		printf(" %d ", depth);
+		dnprintf(50, " %d ", depth);
 		for(idx=0; idx<depth; idx++) {
-			printf("..");
+			dnprintf(50, "..");
 		}
 		aml_shownode(node);
 		aml_walktree(node->child, depth+1);
@@ -1614,7 +1614,7 @@ ex5(struct aml_node *node, void *arg)
 	memset(&res, 0, sizeof(res));
 	memset(&env, 0, sizeof(env));
 	
-	printf("Value is: %s\n", node->name);
+	dnprintf(50, "Value is: %s\n", node->name);
 	aml_eval_object(sc, node->child, &res, &env);
 	aml_showvalue(&res);
 }
@@ -1633,7 +1633,7 @@ acpi_parse_aml(struct acpi_softc *sc, u_int8_t *start, u_int32_t length)
 	while (sc->amlpc.pos < sc->amlpc.end) {
 		aml_parse_object(sc, &aml_root);
 	}
-	printf(" : parsed %d AML bytes\n", length);
+	dnprintf(50, " : parsed %d AML bytes\n", length);
 
 	return (0);
 }

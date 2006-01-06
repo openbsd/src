@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.16 2006/01/05 22:58:42 grange Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.17 2006/01/06 08:37:32 grange Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -298,7 +298,7 @@ acpi_gpe(struct aml_node *node, void *arg)
 
 	flag = acpi_read_pmreg(sc, ACPIREG_GPE0_EN);
 	for (child = node->child; child; child = child->sibling) {
-		printf("gpe: %s\n", child->name);
+		dnprintf(30, "gpe: %s\n", child->name);
 	}
 	flag = -1;
 	flag &= ~(1L << 0x1C);
@@ -487,7 +487,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	for (idx = 0; idx < ACPIREG_MAXREG; idx++) {
 		if (sc->sc_pmregs[idx].name) {
-			printf("%8s = %.8x\n",
+			dnprintf(30, "%8s = %.8x\n",
 			       sc->sc_pmregs[idx].name,
 			       acpi_read_pmreg(sc, idx));
 		}
