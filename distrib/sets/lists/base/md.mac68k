@@ -1535,6 +1535,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k
+./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/ansi.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/asm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/asm_single.ph
@@ -1569,6 +1570,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/varargs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/vmparam.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k
+./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/adbsys.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/ansi.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/asm.ph
@@ -1961,12 +1963,14 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/stdarg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/stddef.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/stdint.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/stdio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/stdlib.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/string.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/strings.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys
+./usr/libdata/perl5/site_perl/m68k-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/ataio.ph
@@ -2063,6 +2067,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/stat.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/stdarg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/sys/stdint.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/syscall.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/syscallargs.ph

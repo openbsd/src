@@ -153,6 +153,7 @@
 ./usr/include/g++/streambuf
 ./usr/include/ieeefp.h
 ./usr/include/sparc64
+./usr/include/sparc64/_types.h
 ./usr/include/sparc64/ansi.h
 ./usr/include/sparc64/asm.h
 ./usr/include/sparc64/autoconf.h

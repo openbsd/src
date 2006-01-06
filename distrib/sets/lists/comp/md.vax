@@ -109,6 +109,7 @@
 ./usr/include/g++/type_traits.h
 ./usr/include/g++/vector.h
 ./usr/include/vax
+./usr/include/vax/_types.h
 ./usr/include/vax/ansi.h
 ./usr/include/vax/aout_machdep.h
 ./usr/include/vax/asm.h

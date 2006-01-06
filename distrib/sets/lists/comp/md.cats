@@ -3,6 +3,7 @@
 ./usr/bin/objcopy
 ./usr/bin/readelf
 ./usr/include/arm
+./usr/include/arm/_types.h
 ./usr/include/arm/ansi.h
 ./usr/include/arm/apmvar.h
 ./usr/include/arm/armreg.h
@@ -58,6 +59,7 @@
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
 ./usr/include/cats
+./usr/include/cats/_types.h
 ./usr/include/cats/ansi.h
 ./usr/include/cats/asm.h
 ./usr/include/cats/atomic.h

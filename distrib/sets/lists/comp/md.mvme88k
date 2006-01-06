@@ -110,6 +110,7 @@
 ./usr/include/g++/vector.h
 ./usr/include/ieeefp.h
 ./usr/include/m88k
+./usr/include/m88k/_types.h
 ./usr/include/m88k/ansi.h
 ./usr/include/m88k/asm.h
 ./usr/include/m88k/asm_macro.h
@@ -151,6 +152,7 @@
 ./usr/include/m88k/varargs.h
 ./usr/include/m88k/vmparam.h
 ./usr/include/mvme88k
+./usr/include/mvme88k/_types.h
 ./usr/include/mvme88k/ansi.h
 ./usr/include/mvme88k/asm.h
 ./usr/include/mvme88k/asm_macro.h

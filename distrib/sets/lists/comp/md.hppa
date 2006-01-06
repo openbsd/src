@@ -152,6 +152,7 @@
 ./usr/include/g++/ostream
 ./usr/include/g++/streambuf
 ./usr/include/hppa
+./usr/include/hppa/_types.h
 ./usr/include/hppa/ansi.h
 ./usr/include/hppa/asm.h
 ./usr/include/hppa/autoconf.h

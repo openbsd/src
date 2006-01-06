@@ -2,6 +2,7 @@
 ./usr/bin/objcopy
 ./usr/bin/readelf
 ./usr/include/amd64
+./usr/include/amd64/_types.h
 ./usr/include/amd64/ansi.h
 ./usr/include/amd64/apicvar.h
 ./usr/include/amd64/apmvar.h

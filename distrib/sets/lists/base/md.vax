@@ -1317,12 +1317,14 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/stdarg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/stddef.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/stdint.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/stdio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/stdlib.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/string.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/strings.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys
+./usr/libdata/perl5/site_perl/vax-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/ataio.ph
@@ -1419,6 +1421,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/stat.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/stdarg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sys/stdint.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/syscall.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/syscallargs.ph
@@ -1524,6 +1527,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/uvm/uvm_vnode.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/varargs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax
+./usr/libdata/perl5/site_perl/vax-openbsd/vax/_types.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/ansi.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/aout_machdep.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/asm.ph

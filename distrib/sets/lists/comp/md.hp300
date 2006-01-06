@@ -109,6 +109,7 @@
 ./usr/include/g++/type_traits.h
 ./usr/include/g++/vector.h
 ./usr/include/hp300
+./usr/include/hp300/_types.h
 ./usr/include/hp300/ansi.h
 ./usr/include/hp300/asm.h
 ./usr/include/hp300/autoconf.h
@@ -149,6 +150,7 @@
 ./usr/include/hp300/vmparam.h
 ./usr/include/ieeefp.h
 ./usr/include/m68k
+./usr/include/m68k/_types.h
 ./usr/include/m68k/ansi.h
 ./usr/include/m68k/asm.h
 ./usr/include/m68k/asm_single.h

@@ -1379,6 +1379,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/skipjack.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/soundcard.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc
+./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/_types.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/ansi.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/apmvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/asm.ph
@@ -1440,12 +1441,14 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/stdarg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/stddef.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/stdint.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/stdio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/stdlib.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/string.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/strings.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys
+./usr/libdata/perl5/site_perl/sparc-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/ataio.ph
@@ -1542,6 +1545,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/stat.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/stdarg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sys/stdint.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/syscall.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/syscallargs.ph

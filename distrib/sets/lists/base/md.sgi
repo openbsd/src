@@ -1600,6 +1600,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/memory.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/menu.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64
+./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/_types.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/ansi.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/arcbios.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/archtype.ph
@@ -1971,6 +1972,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/semaphore.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/setjmp.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi
+./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/_types.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/ansi.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/asm.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/autoconf.ph
@@ -2027,12 +2029,14 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/stdarg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/stddef.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/stdint.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/stdio.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/stdlib.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/string.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/strings.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys
+./usr/libdata/perl5/site_perl/mips64-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/ataio.ph
@@ -2129,6 +2133,7 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/stat.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/stdarg.ph
+./usr/libdata/perl5/site_perl/mips64-openbsd/sys/stdint.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/syscall.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sys/syscallargs.ph

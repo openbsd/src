@@ -3,6 +3,7 @@
 ./usr/bin/objcopy
 ./usr/bin/readelf
 ./usr/include/arm
+./usr/include/arm/_types.h
 ./usr/include/arm/ansi.h
 ./usr/include/arm/apmvar.h
 ./usr/include/arm/armreg.h
@@ -208,6 +209,7 @@
 ./usr/include/ieeefp.h
 ./usr/include/unwind.h
 ./usr/include/zaurus
+./usr/include/zaurus/_types.h
 ./usr/include/zaurus/ansi.h
 ./usr/include/zaurus/apmvar.h
 ./usr/include/zaurus/asm.h

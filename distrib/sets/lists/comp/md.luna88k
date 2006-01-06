@@ -110,6 +110,7 @@
 ./usr/include/g++/vector.h
 ./usr/include/ieeefp.h
 ./usr/include/luna88k
+./usr/include/luna88k/_types.h
 ./usr/include/luna88k/ansi.h
 ./usr/include/luna88k/asm.h
 ./usr/include/luna88k/asm_macro.h
@@ -157,6 +158,7 @@
 ./usr/include/luna88k/varargs.h
 ./usr/include/luna88k/vmparam.h
 ./usr/include/m88k
+./usr/include/m88k/_types.h
 ./usr/include/m88k/ansi.h
 ./usr/include/m88k/asm.h
 ./usr/include/m88k/asm_macro.h

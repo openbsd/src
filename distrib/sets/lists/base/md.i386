@@ -1542,6 +1542,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/grp.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/histedit.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386
+./usr/libdata/perl5/site_perl/i386-openbsd/i386/_types.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/ansi.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/apicvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/apmvar.ph
@@ -2020,12 +2021,14 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/stdarg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/stddef.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/stdint.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/stdio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/stdlib.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/string.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/strings.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys
+./usr/libdata/perl5/site_perl/i386-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/ataio.ph
@@ -2122,6 +2125,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/stat.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/stdarg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/sys/stdint.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/syscall.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/syscallargs.ph

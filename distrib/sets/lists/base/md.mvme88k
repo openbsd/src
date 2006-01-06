@@ -1465,6 +1465,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k
+./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/_types.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/ansi.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/asm.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/asm_macro.ph
@@ -1523,6 +1524,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/specfs/specdev.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k
+./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/_types.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/ansi.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/asm.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mvme88k/asm_macro.ph
@@ -1911,12 +1913,14 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/stdarg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/stddef.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/stdint.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/stdio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/stdlib.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/string.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/strings.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/ataio.ph
@@ -2013,6 +2017,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/stat.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/stdarg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/stdint.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/syscall.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/syscallargs.ph

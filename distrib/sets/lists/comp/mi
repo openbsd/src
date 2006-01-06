@@ -1296,12 +1296,14 @@
 ./usr/include/stdarg.h
 ./usr/include/stdbool.h
 ./usr/include/stddef.h
+./usr/include/stdint.h
 ./usr/include/stdio.h
 ./usr/include/stdlib.h
 ./usr/include/string.h
 ./usr/include/strings.h
 ./usr/include/struct.h
 ./usr/include/sys
+./usr/include/sys/_types.h
 ./usr/include/sys/acct.h
 ./usr/include/sys/agpio.h
 ./usr/include/sys/ataio.h
@@ -1398,6 +1400,7 @@
 ./usr/include/sys/sockio.h
 ./usr/include/sys/stat.h
 ./usr/include/sys/stdarg.h
+./usr/include/sys/stdint.h
 ./usr/include/sys/swap.h
 ./usr/include/sys/syscall.h
 ./usr/include/sys/syscallargs.h

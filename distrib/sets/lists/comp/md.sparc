@@ -116,6 +116,7 @@
 ./usr/include/g++/vector.h
 ./usr/include/ieeefp.h
 ./usr/include/sparc
+./usr/include/sparc/_types.h
 ./usr/include/sparc/ansi.h
 ./usr/include/sparc/apmvar.h
 ./usr/include/sparc/asm.h

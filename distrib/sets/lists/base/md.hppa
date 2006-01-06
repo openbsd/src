@@ -1532,6 +1532,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/grp.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/histedit.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa
+./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/_types.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/ansi.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/asm.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/autoconf.ph
@@ -1987,12 +1988,14 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/stdarg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/stddef.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/stdint.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/stdio.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/stdlib.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/string.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/strings.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys
+./usr/libdata/perl5/site_perl/hppa-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/ataio.ph
@@ -2089,6 +2092,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/stat.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/stdarg.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/sys/stdint.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/syscall.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/syscallargs.ph

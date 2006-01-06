@@ -153,6 +153,7 @@
 ./usr/include/g++/ostream
 ./usr/include/g++/streambuf
 ./usr/include/i386
+./usr/include/i386/_types.h
 ./usr/include/i386/ansi.h
 ./usr/include/i386/apicvar.h
 ./usr/include/i386/apmvar.h

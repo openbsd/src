@@ -110,6 +110,7 @@
 ./usr/include/g++/vector.h
 ./usr/include/ieeefp.h
 ./usr/include/m68k
+./usr/include/m68k/_types.h
 ./usr/include/m68k/ansi.h
 ./usr/include/m68k/asm.h
 ./usr/include/m68k/asm_single.h
@@ -144,6 +145,7 @@
 ./usr/include/m68k/varargs.h
 ./usr/include/m68k/vmparam.h
 ./usr/include/mvme68k
+./usr/include/mvme68k/_types.h
 ./usr/include/mvme68k/ansi.h
 ./usr/include/mvme68k/asm.h
 ./usr/include/mvme68k/autoconf.h

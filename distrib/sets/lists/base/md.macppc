@@ -1596,6 +1596,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/machine
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc
+./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/adbsys.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/ansi.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/apmvar.ph
@@ -1906,6 +1907,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/pcap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/poll.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc
+./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ansi.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/asm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/bat.ph
@@ -2035,12 +2037,14 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/stdarg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/stddef.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/stdint.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/stdio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/stdlib.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/string.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/strings.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/ataio.ph
@@ -2137,6 +2141,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/stat.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/stdarg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/stdint.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/syscall.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/syscallargs.ph

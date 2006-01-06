@@ -625,6 +625,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/altq/altq_var.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/altq/if_altq.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64
+./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/_types.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/ansi.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/apicvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/apmvar.ph
@@ -2011,12 +2012,14 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/stdarg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/stddef.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/stdint.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/stdio.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/stdlib.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/string.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/strings.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys
+./usr/libdata/perl5/site_perl/amd64-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/ataio.ph
@@ -2113,6 +2116,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/stat.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/stdarg.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/sys/stdint.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/syscall.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sys/syscallargs.ph

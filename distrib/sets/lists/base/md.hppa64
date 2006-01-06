@@ -1,4 +1,3 @@
-
 ./etc/firmware/3c990
 ./etc/firmware/3c990-license
 ./etc/firmware/atu-at76c503-i3863-ext
@@ -1582,6 +1581,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa/types.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa/varargs.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa/vmparam.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa64/_types.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/ieeefp.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/ifaddrs.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/inttypes.ph
@@ -1988,12 +1988,14 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/stdarg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/stddef.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/stdint.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/stdio.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/stdlib.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/string.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/strings.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys
+./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/_types.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/acct.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/ataio.ph
@@ -2090,6 +2092,7 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/sockio.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/stat.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/stdarg.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/stdint.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/syscall.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/sys/syscallargs.ph

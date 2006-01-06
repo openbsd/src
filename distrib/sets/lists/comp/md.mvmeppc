@@ -115,6 +115,7 @@
 ./usr/include/g++/vector.h
 ./usr/include/ieeefp.h
 ./usr/include/powerpc
+./usr/include/powerpc/_types.h
 ./usr/include/powerpc/ansi.h
 ./usr/include/powerpc/asm.h
 ./usr/include/powerpc/autoconf.h
