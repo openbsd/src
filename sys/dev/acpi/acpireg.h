@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.7 2006/01/05 21:22:21 grange Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.8 2006/01/06 16:22:46 grange Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@opebsd.org>
@@ -429,6 +429,8 @@ struct acpi_facs {
 #define		ACPI_PM1_SCI_EN			0x0001
 #define		ACPI_PM1_BM_RLD			0x0002
 #define		ACPI_PM1_GBL_RLS		0x0004
+#define		ACPI_PM1_SLP_TYPX(x)		((x) << 10)
+#define		ACPI_PM1_SLP_TYPX_MASK		0x1c00
 #define		ACPI_PM1_SLP_EN			0x2000
 
 /*
