@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.31 2006/01/05 22:17:17 otto Exp $ */
+/*	$OpenBSD: rthread.c,v 1.32 2006/01/06 06:13:27 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -99,8 +99,6 @@ _rthread_init(void)
 {
 	pthread_t thread = &_initial_thread;
 	extern int __isthreaded;
-
-	printf("rthread init\n");
 
 	thread->tid = getthrid();
 	thread->donesem.lock = _SPINLOCK_UNLOCKED;
