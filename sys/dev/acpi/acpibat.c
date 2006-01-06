@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.7 2005/12/30 05:59:40 tedu Exp $ */
+/* $OpenBSD: acpibat.c,v 1.8 2006/01/06 09:06:21 grange Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -75,8 +75,6 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpibat_softc *sc = (struct acpibat_softc *) self;
 	struct acpi_attach_args *aa = aux;
-
-	printf("\n");
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node->child;
