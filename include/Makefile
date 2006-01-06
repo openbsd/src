@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.137 2005/12/28 16:33:56 millert Exp $
+#	$OpenBSD: Makefile,v 1.138 2006/01/06 18:54:25 millert Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -31,7 +31,7 @@ FILES+= ieeefp.h
 .endif
 
 MFILES=	float.h frame.h 
-LFILES=	fcntl.h syslog.h termios.h stdarg.h varargs.h
+LFILES=	fcntl.h syslog.h termios.h stdarg.h stdint.h varargs.h
 
 DIRS=	arpa protocols rpc rpcsvc
 LDIRS=	crypto ddb dev isofs miscfs net netatalk netinet altq \
