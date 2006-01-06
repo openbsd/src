@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lmenv.4,v 1.5 2006/01/01 20:52:27 deraadt Exp $
+.\"	$OpenBSD: lmenv.4,v 1.6 2006/01/06 03:42:38 deraadt Exp $
 .\"
 .\" Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -25,8 +25,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the National Semiconductor LM85
-temperature sensor.
+driver provides support for the National Semiconductor LM87,
+National Semiconductor LM81, Analog Devices ADM2940, and
+Dallas Semiconductor 1780 temperature sensors.
 The sensor possesses a collection of sensor values which are
 made available through the
 .Xr sysctl 8
