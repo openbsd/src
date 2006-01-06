@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.9 2006/01/05 10:43:15 grange Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.10 2006/01/06 00:18:35 brad Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -111,11 +111,6 @@ struct amdpm_softc {
 	int sc_poll;
 
 	struct timeout sc_rnd_ch;
-#ifdef AMDPM_RND_COUNTERS
-	struct evcnt sc_rnd_hits;
-	struct evcnt sc_rnd_miss;
-	struct evcnt sc_rnd_data[256];
-#endif
 
 	struct i2c_controller sc_i2c_tag;
 	struct lock sc_i2c_lock;
@@ -146,12 +141,6 @@ struct cfattach amdpm_ca = {
 struct cfdriver amdpm_cd = {
 	NULL, "amdpm", DV_DULL
 };
-
-#ifdef AMDPM_RND_COUNTERS
-#define	AMDPM_RNDCNT_INCR(ev)	(ev)->ev_count++
-#else
-#define	AMDPM_RNDCNT_INCR(ev)	/* nothing */
-#endif
 
 const struct pci_matchid amdpm_ids[] = {
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_766_PMC },
@@ -227,17 +216,6 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 			tv1.tv_usec += 1000000 * tv1.tv_sec;
 		printf(": rng active, %dKb/sec", 8 * 1000000 / tv1.tv_usec);
 
-#ifdef AMDPM_RND_COUNTERS
-			evcnt_attach_dynamic(&sc->sc_rnd_hits, EVCNT_TYPE_MISC,
-			    NULL, sc->sc_dev.dv_xname, "rnd hits");
-			evcnt_attach_dynamic(&sc->sc_rnd_miss, EVCNT_TYPE_MISC,
-			    NULL, sc->sc_dev.dv_xname, "rnd miss");
-			for (i = 0; i < 256; i++) {
-				evcnt_attach_dynamic(&sc->sc_rnd_data[i],
-				    EVCNT_TYPE_MISC, NULL, sc->sc_dev.dv_xname,
-				    "rnd data");
-			}
-#endif
 		timeout_set(&sc->sc_rnd_ch, amdpm_rnd_callout, sc);
 		amdpm_rnd_callout(sc);
 	}
@@ -262,21 +240,12 @@ amdpm_rnd_callout(void *v)
 {
 	struct amdpm_softc *sc = v;
 	u_int32_t reg;
-#ifdef AMDPM_RND_COUNTERS
-	int i;
-#endif
 
 	if ((bus_space_read_4(sc->sc_iot, sc->sc_ioh, AMDPM_RNGSTAT) &
 	    AMDPM_RNGDONE) != 0) {
 		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, AMDPM_RNGDATA);
 		add_true_randomness(reg);
-#ifdef AMDPM_RND_COUNTERS
-		AMDPM_RNDCNT_INCR(&sc->sc_rnd_hits);
-		for (i = 0; i < sizeof(reg); i++, reg >>= NBBY)
-			AMDPM_RNDCNT_INCR(&sc->sc_rnd_data[reg & 0xff]);
-#endif
-	} else
-		AMDPM_RNDCNT_INCR(&sc->sc_rnd_miss);
+	}
 	timeout_add(&sc->sc_rnd_ch, 1);
 }
 
