@@ -27,6 +27,10 @@
 #if defined (__BSD_NET2__) || defined (____386BSD____) || defined (__FreeBSD__) || defined(__NetBSD__)
 #include <machine/ansi.h>
 #endif
+/* On FreeBSD 5 and OpenBSD 3.9, machine/ansi.h does not exist anymore... */
+#if (defined (__FreeBSD__) && (__FreeBSD__ >= 5)) || defined(__OpenBSD__)
+#include <sys/_types.h>
+#endif
 
 /* In 4.3bsd-net2, machine/ansi.h defines these symbols, which are
    defined if the corresponding type is *not* defined.
@@ -162,7 +166,11 @@ typedef __PTRDIFF_TYPE__ ptrdiff_t;
 #define ___int_size_t_h
 #define _GCC_SIZE_T
 #define _SIZET_
+#if (defined (__FreeBSD__) && (__FreeBSD__ >= 5)) || defined(__OpenBSD__)
+/* __size_t is a typedef on FreeBSD 5 and OpenBSD 3.9!, must not trash it. */
+#else
 #define __size_t
+#endif
 #ifndef __SIZE_TYPE__
 #define __SIZE_TYPE__ long unsigned int
 #endif
