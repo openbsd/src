@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.18 2006/01/06 08:58:20 grange Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.19 2006/01/06 08:59:58 grange Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -421,6 +421,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+#ifdef ACPI_ENABLE
 	/*
 	 * Check if we are able to enable ACPI control
 	 */
@@ -429,6 +430,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		printf(": ACPI control unavailable\n");
 		return;
 	}
+#endif
 
 	/*
 	 * Load the DSDT from the FADT pointer -- use the
