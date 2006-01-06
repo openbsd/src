@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.163 2006/01/06 00:37:27 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.164 2006/01/06 00:41:21 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1255,6 +1255,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCGETQSTATS:
 		case DIOCGETRULESETS:
 		case DIOCGETRULESET:
+		case DIOCNATLOOK:
 		case DIOCRGETTABLES:
 		case DIOCRGETTSTATS:
 		case DIOCRGETADDRS:
