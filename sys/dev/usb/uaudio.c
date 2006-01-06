@@ -1,5 +1,5 @@
-/*	$OpenBSD: uaudio.c,v 1.32 2006/01/02 04:05:50 fgsch Exp $ */
-/*	$NetBSD: uaudio.c,v 1.86 2004/10/22 16:01:49 kent Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.33 2006/01/06 11:13:40 fgsch Exp $ */
+/*	$NetBSD: uaudio.c,v 1.87 2004/10/22 17:00:22 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -850,18 +850,41 @@ uaudio_get_terminal_name(int terminal_type)
 	static char buf[100];
 
 	switch (terminal_type) {
+	/* USB terminal types */
+	case UAT_UNDEFINED:	return "UAT_UNDEFINED";
 	case UAT_STREAM:	return "UAT_STREAM";
+	case UAT_VENDOR:	return "UAT_VENDOR";
+	/* input terminal types */
+	case UATI_UNDEFINED:	return "UATI_UNDEFINED";
 	case UATI_MICROPHONE:	return "UATI_MICROPHONE";
 	case UATI_DESKMICROPHONE:	return "UATI_DESKMICROPHONE";
 	case UATI_PERSONALMICROPHONE:	return "UATI_PERSONALMICROPHONE";
 	case UATI_OMNIMICROPHONE:	return "UATI_OMNIMICROPHONE";
 	case UATI_MICROPHONEARRAY:	return "UATI_MICROPHONEARRAY";
 	case UATI_PROCMICROPHONEARR:	return "UATI_PROCMICROPHONEARR";
+	/* output terminal types */
+	case UATO_UNDEFINED:	return "UATO_UNDEFINED";
 	case UATO_SPEAKER:	return "UATO_SPEAKER";
+	case UATO_HEADPHONES:	return "UATO_HEADPHONES";
+	case UATO_DISPLAYAUDIO:	return "UATO_DISPLAYAUDIO";
 	case UATO_DESKTOPSPEAKER:	return "UATO_DESKTOPSPEAKER";
 	case UATO_ROOMSPEAKER:	return "UATO_ROOMSPEAKER";
 	case UATO_COMMSPEAKER:	return "UATO_COMMSPEAKER";
-	case UATO_HEADPHONES:	return "UATO_HEADPHONES";
+	case UATO_SUBWOOFER:	return "UATO_SUBWOOFER";
+	/* bidir terminal types */
+	case UATB_UNDEFINED:	return "UATB_UNDEFINED";
+	case UATB_HANDSET:	return "UATB_HANDSET";
+	case UATB_HEADSET:	return "UATB_HEADSET";
+	case UATB_SPEAKERPHONE:	return "UATB_SPEAKERPHONE";
+	case UATB_SPEAKERPHONEESUP:	return "UATB_SPEAKERPHONEESUP";
+	case UATB_SPEAKERPHONEECANC:	return "UATB_SPEAKERPHONEECANC";
+	/* telephony terminal types */
+	case UATT_UNDEFINED:	return "UATT_UNDEFINED";
+	case UATT_PHONELINE:	return "UATT_PHONELINE";
+	case UATT_TELEPHONE:	return "UATT_TELEPHONE";
+	case UATT_DOWNLINEPHONE:	return "UATT_DOWNLINEPHONE";
+	/* external terminal types */
+	case UATE_UNDEFINED:	return "UATE_UNDEFINED";
 	case UATE_ANALOGCONN:	return "UATE_ANALOGCONN";
 	case UATE_LINECONN:	return "UATE_LINECONN";
 	case UATE_LEGACYCONN:	return "UATE_LEGACYCONN";
@@ -869,48 +892,27 @@ uaudio_get_terminal_name(int terminal_type)
 	case UATE_SPDIF:	return "UATE_SPDIF";
 	case UATE_1394DA:	return "UATE_1394DA";
 	case UATE_1394DV:	return "UATE_1394DV";
-	case UATF_CDPLAYER:	return "UATF_CDPLAYER";
-	case UATF_SYNTHESIZER:	return "UATF_SYNTHESIZER";
-	case UATF_VIDEODISCAUDIO:	return "UATF_VIDEODISCAUDIO";
-	case UATF_DVDAUDIO:	return "UATF_DVDAUDIO";
-	case UATF_TVTUNERAUDIO:	return "UATF_TVTUNERAUDIO";
-	case UAT_UNDEFINED:	return "UAT_UNDEFINED";
-	case UAT_VENDOR:	return "UAT_VENDOR";
-	case UATI_UNDEFINED:	return "UATI_UNDEFINED";
-/* output terminal types */
-	case UATO_UNDEFINED:	return "UATO_UNDEFINED";
-	case UATO_DISPLAYAUDIO:	return "UATO_DISPLAYAUDIO";
-	case UATO_SUBWOOFER:	return "UATO_SUBWOOFER";
-/* bidir terminal types */
-	case UATB_UNDEFINED:	return "UATB_UNDEFINED";
-	case UATB_HANDSET:	return "UATB_HANDSET";
-	case UATB_HEADSET:	return "UATB_HEADSET";
-	case UATB_SPEAKERPHONE:	return "UATB_SPEAKERPHONE";
-	case UATB_SPEAKERPHONEESUP:	return "UATB_SPEAKERPHONEESUP";
-	case UATB_SPEAKERPHONEECANC:	return "UATB_SPEAKERPHONEECANC";
-/* telephony terminal types */
-	case UATT_UNDEFINED:	return "UATT_UNDEFINED";
-	case UATT_PHONELINE:	return "UATT_PHONELINE";
-	case UATT_TELEPHONE:	return "UATT_TELEPHONE";
-	case UATT_DOWNLINEPHONE:	return "UATT_DOWNLINEPHONE";
-/* external terminal types */
-	case UATE_UNDEFINED:	return "UATE_UNDEFINED";
-/* embedded function terminal types */
+	/* embedded function terminal types */
 	case UATF_UNDEFINED:	return "UATF_UNDEFINED";
 	case UATF_CALIBNOISE:	return "UATF_CALIBNOISE";
 	case UATF_EQUNOISE:	return "UATF_EQUNOISE";
+	case UATF_CDPLAYER:	return "UATF_CDPLAYER";
 	case UATF_DAT:	return "UATF_DAT";
 	case UATF_DCC:	return "UATF_DCC";
 	case UATF_MINIDISK:	return "UATF_MINIDISK";
 	case UATF_ANALOGTAPE:	return "UATF_ANALOGTAPE";
 	case UATF_PHONOGRAPH:	return "UATF_PHONOGRAPH";
 	case UATF_VCRAUDIO:	return "UATF_VCRAUDIO";
+	case UATF_VIDEODISCAUDIO:	return "UATF_VIDEODISCAUDIO";
+	case UATF_DVDAUDIO:	return "UATF_DVDAUDIO";
+	case UATF_TVTUNERAUDIO:	return "UATF_TVTUNERAUDIO";
 	case UATF_SATELLITE:	return "UATF_SATELLITE";
 	case UATF_CABLETUNER:	return "UATF_CABLETUNER";
 	case UATF_DSS:	return "UATF_DSS";
 	case UATF_RADIORECV:	return "UATF_RADIORECV";
 	case UATF_RADIOXMIT:	return "UATF_RADIOXMIT";
 	case UATF_MULTITRACK:	return "UATF_MULTITRACK";
+	case UATF_SYNTHESIZER:	return "UATF_SYNTHESIZER";
 	default:
 		snprintf(buf, sizeof(buf), "unknown type (0x%.4x)", terminal_type);
 		return buf;
@@ -999,6 +1001,16 @@ uaudio_feature_name(const struct io_terminal *iot, struct mixerctl *mix)
 	case UATO_HEADPHONES:
 		return AudioNheadphone;
 
+	case UATO_SUBWOOFER:
+		return AudioNlfe;
+
+	/* telephony terminal types */
+	case UATT_UNDEFINED:
+	case UATT_PHONELINE:
+	case UATT_TELEPHONE:
+	case UATT_DOWNLINEPHONE:
+		return "phone";
+
 	case UATE_ANALOGCONN:
 	case UATE_LINECONN:
 	case UATE_LEGACYCONN:
@@ -1027,7 +1039,6 @@ uaudio_feature_name(const struct io_terminal *iot, struct mixerctl *mix)
 /* output terminal types */
 	case UATO_UNDEFINED:
 	case UATO_DISPLAYAUDIO:
-	case UATO_SUBWOOFER:
 /* bidir terminal types */
 	case UATB_UNDEFINED:
 	case UATB_HANDSET:
@@ -1035,11 +1046,6 @@ uaudio_feature_name(const struct io_terminal *iot, struct mixerctl *mix)
 	case UATB_SPEAKERPHONE:
 	case UATB_SPEAKERPHONEESUP:
 	case UATB_SPEAKERPHONEECANC:
-/* telephony terminal types */
-	case UATT_UNDEFINED:
-	case UATT_PHONELINE:
-	case UATT_TELEPHONE:
-	case UATT_DOWNLINEPHONE:
 /* external terminal types */
 	case UATE_UNDEFINED:
 /* embedded function terminal types */
