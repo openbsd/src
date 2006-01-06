@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.3 2005/12/14 21:46:31 millert Exp $	*/
+/*	$OpenBSD: limits.h,v 1.4 2006/01/06 22:48:47 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -68,7 +68,9 @@
 #define	GID_MAX		UINT_MAX	/* max value for a gid_t */
 
 #if __POSIX_VISIBLE || __XPG_VISIBLE
+#ifndef	SIZE_MAX
 #define SIZE_MAX	ULONG_MAX	/* max value for a size_t */
+#endif
 #define	SSIZE_MAX	LONG_MAX	/* max value for a ssize_t */
 #endif
 
