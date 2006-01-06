@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.4 2004/07/21 12:10:20 art Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.5 2006/01/06 06:50:31 tedu Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -77,15 +77,15 @@ struct rwlock {
 
 #define RWLOCK_INITIALIZER	{ 0 }
 
-#define RWLOCK_WAIT		0x01
-#define RWLOCK_WRWANT		0x02
-#define RWLOCK_WRLOCK		0x04
-#define RWLOCK_MASK		0x07
+#define RWLOCK_WAIT		0x01UL
+#define RWLOCK_WRWANT		0x02UL
+#define RWLOCK_WRLOCK		0x04UL
+#define RWLOCK_MASK		0x07UL
 
 #define RWLOCK_OWNER(rwl)	((struct proc *)((rwl)->rwl_owner & ~RWLOCK_MASK))
 
-#define RWLOCK_READER_SHIFT	3
-#define RWLOCK_READ_INCR	(1 << RWLOCK_READER_SHIFT)
+#define RWLOCK_READER_SHIFT	3UL
+#define RWLOCK_READ_INCR	(1UL << RWLOCK_READER_SHIFT)
 
 void rw_init(struct rwlock *);
 
@@ -93,13 +93,18 @@ void rw_enter_read(struct rwlock *);
 void rw_enter_write(struct rwlock *);
 void rw_exit_read(struct rwlock *);
 void rw_exit_write(struct rwlock *);
+int rw_test_and_set(volatile unsigned long *, unsigned long, unsigned long);
 
-/*
- * Internal API.
- */
-#define RW_WRITE	0x00
-#define RW_READ		0x01
-void rw_enter_wait(struct rwlock *, struct proc *, int);
+int rw_enter(struct rwlock *, int);
+#define RW_WRITE	0x00UL		/* exclusive lock */	
+#define RW_READ		0x01UL		/* shared lock */
+#define RW_UPGRADE	0x02UL		/* read -> write upgrade */
+#define RW_DOWNGRADE	0x03UL		/* write -> read downgrade */
+#define RW_OPMASK	0x07UL
+#define RW_INTR		0x10UL		/* interruptible sleep */
+#define RW_SLEEPFAIL	0x20UL		/* fail if we slept for the lock */
+
+int rw_enter_wait(struct rwlock *, struct proc *, int);
 void rw_exit_waiters(struct rwlock *, unsigned long);
 
 #endif

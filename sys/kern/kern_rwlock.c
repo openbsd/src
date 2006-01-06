@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.3 2004/07/21 12:10:20 art Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.4 2006/01/06 06:50:31 tedu Exp $	*/
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -28,9 +28,63 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/rwlock.h>
+#include <sys/limits.h>
 
 /* XXX - temporary measure until proc0 is properly aligned */
-#define RW_PROC(p) (((unsigned long)p) & ~RWLOCK_MASK)
+#define RW_PROC(p) (((long)p) & ~RWLOCK_MASK)
+
+/*
+ * Magic wand for lock operations. Every operation checks if certain
+ * flags are set and if they aren't, it increments the lock with some
+ * value (that might need some computing in a few cases). If the operation
+ * fails, we need to set certain flags while waiting for the lock.
+ *
+ * RW_WRITE	The lock must be completly empty. We increment it with
+ *		RWLOCK_WRLOCK and the proc pointer of the holder.
+ *		Sets RWLOCK_WAIT|RWLOCK_WRWANT while waiting.
+ * RW_READ	RWLOCK_WRLOCK|RWLOCK_WRWANT may not be set. We increment
+ *		with RWLOCK_READ_INCR. RWLOCK_WAIT while waiting.
+ * RW_UPGRADE	There must be exactly one holder of the read lock.
+ *		We increment with what's needed for RW_WRITE - RW_READ.
+ *		RWLOCK_WAIT|RWLOCK_WRWANT while waiting.
+ * RW_DOWNGRADE	Always doable. Increment with -RW_WRITE + RW_READ.
+ */
+static const struct rwlock_op {
+	unsigned long inc;
+	unsigned long check;
+	unsigned long wait_set;
+	long proc_mult;
+	int wait_prio;
+} rw_ops[] = {
+	{	/* RW_WRITE */
+		RWLOCK_WRLOCK,
+		ULONG_MAX,
+		RWLOCK_WAIT | RWLOCK_WRWANT,
+		1,
+		PLOCK - 4
+	},
+	{	/* RW_READ */
+		RWLOCK_READ_INCR,
+		RWLOCK_WRLOCK,
+		RWLOCK_WAIT,
+		0,
+		PLOCK
+	},
+	{	/* RW_UPGRADE */
+		RWLOCK_WRLOCK-RWLOCK_READ_INCR,
+		~(RWLOCK_READ_INCR | RWLOCK_WAIT | RWLOCK_WRWANT),
+		RWLOCK_WAIT|RWLOCK_WRLOCK,
+		1,
+		PLOCK - 4
+	},
+	{	/* RW_DOWNGRADE */
+		-RWLOCK_WRLOCK + RWLOCK_READ_INCR,
+		0,
+		0,
+		-1,
+		0
+	}
+};
 
 #ifndef __HAVE_MD_RWLOCK
 /*
@@ -39,13 +93,10 @@
 void
 rw_enter_read(struct rwlock *rwl)
 {
-	while (__predict_false(rwl->rwl_owner & RWLOCK_WRLOCK)) {
-		/*
-		 * Not the simple case, go to slow path.
-		 */
-		rw_enter_wait(rwl, curproc, RW_READ);
-	}
-	rwl->rwl_owner += RWLOCK_READ_INCR;
+	if (__predict_false(rwl->rwl_owner & RWLOCK_WRLOCK)) 
+		rw_enter(rwl, RW_READ);
+	else
+		rwl->rwl_owner += RWLOCK_READ_INCR;
 }
 
 void
@@ -53,13 +104,10 @@ rw_enter_write(struct rwlock *rwl)
 {
 	struct proc *p = curproc;
 
-	while (__predict_false(rwl->rwl_owner != 0)) {
-		/*
-		 * Not the simple case, go to slow path.
-		 */
-		rw_enter_wait(rwl, p, RW_WRITE);
-	}
-	rwl->rwl_owner = RW_PROC(p) | RWLOCK_WRLOCK;
+	if (__predict_false(rwl->rwl_owner != 0))
+		rw_enter(rwl, RW_WRITE);
+	else
+		rwl->rwl_owner = RW_PROC(p) | RWLOCK_WRLOCK;
 }
 
 void
@@ -91,6 +139,61 @@ rw_exit_write(struct rwlock *rwl)
 	if (__predict_false(owner & RWLOCK_WAIT))
 		rw_exit_waiters(rwl, owner);
 }
+
+int
+rw_test_and_set(volatile unsigned long *p, unsigned long o, unsigned long n)
+{
+	if (*p != o)
+		return (1);
+	*p = n;
+
+	return (0);
+}
+#endif
+
+#ifdef DIAGNOSTIC
+/*
+ * Put the diagnostic functions here to keep the main code free
+ * from ifdef clutter.
+ */
+static void
+rw_enter_diag(struct rwlock *rwl, int flags)
+{
+	switch (flags & RW_OPMASK) {
+	case RW_WRITE:
+	case RW_READ:
+		if (RW_PROC(curproc) == RW_PROC(rwl->rwl_owner))
+			panic("rw_enter: locking against myself");
+		break;
+	case RW_UPGRADE:
+		/*
+		 * Since we're holding the read lock, it can't possibly
+		 * be write locked.
+		 */
+		if (rwl->rwl_owner & RWLOCK_WRLOCK)
+			panic("rw_enter: upgraded lock write locked");
+		break;
+	case RW_DOWNGRADE:
+		/*
+		 * If we're downgrading, we much hold the write lock.
+		 */
+		if (RW_PROC(curproc) != RW_PROC(rwl->rwl_owner))
+			panic("rw_enter: not holder");
+	default:
+		panic("rw_enter: unknown op 0x%x", flags);
+	}
+}
+
+static void
+rw_exit_diag(struct rwlock *rwl, int owner)
+{
+	if ((owner & RWLOCK_WAIT) == 0)
+		panic("rw_exit: no waiter");
+}
+
+#else
+#define rw_enter_diag(r, f)
+#define rw_exit_diag(r, o)
 #endif
 
 void
@@ -99,122 +202,49 @@ rw_init(struct rwlock *rwl)
 	rwl->rwl_owner = 0;
 }
 
-void
-rw_enter_wait(struct rwlock *rwl, struct proc *p, int how)
+/*
+ * You are supposed to understand this.
+ */
+int
+rw_enter(struct rwlock *rwl, int flags)
 {
-	unsigned long need_wait, set_wait;
-	int wait_prio;
+	const struct rwlock_op *op;
+	unsigned long inc, o;
+	int error, prio;
 
-#ifdef DIAGNOSTIC
-	if (p == NULL)
-		panic("rw_enter_wait: NULL proc");
-#endif
+	op = &rw_ops[flags & RW_OPMASK];
 
-	/*
-	 * XXX - this function needs a lot of help to become MP safe.
-	 */
+	inc = op->inc;
+	if (op->proc_mult == -1)
+		inc -= RW_PROC(curproc);
+	else if (op->proc_mult == 1)
+		inc += RW_PROC(curproc);
+	prio = op->wait_prio;
+	if (flags & RW_INTR)
+		prio |= PCATCH;
+retry:
+	while (__predict_false(((o = rwl->rwl_owner) & op->check) != 0)) {
+		if (rw_test_and_set(&rwl->rwl_owner, o, o | op->wait_set))
+			continue;
 
-	switch (how) {
-	case RW_READ:
-		/*
-		 * Let writers through before obtaining read lock.
-		 */
-		need_wait = RWLOCK_WRLOCK | RWLOCK_WRWANT;
-		set_wait = RWLOCK_WAIT;
-		wait_prio = PLOCK;
-		break;
-	case RW_WRITE:
-		need_wait = ~0UL;
-		set_wait = RWLOCK_WAIT | RWLOCK_WRWANT;
-		wait_prio = PLOCK - 4;
-		if (RW_PROC(RWLOCK_OWNER(rwl)) == RW_PROC(p)) {
-			panic("rw_enter: locking against myself");
-		}
-		break;
+		rw_enter_diag(rwl, flags);
+
+		if ((error = tsleep(rwl, op->wait_prio, "rwlock", 0)) != 0)
+			return (error);
+		if (flags & RW_SLEEPFAIL)
+			return (EAGAIN);
 	}
 
-	while (rwl->rwl_owner & need_wait) {
-		rwl->rwl_owner |= set_wait;
-		tsleep(rwl, wait_prio, "rwlock", 0);
-	}
+	if (__predict_false(rw_test_and_set(&rwl->rwl_owner, o, o + inc)))
+		goto retry;
+
+	return (0);
 }
 
 void
 rw_exit_waiters(struct rwlock *rwl, unsigned long owner)
 {
-#ifdef DIAGNOSTIC
-	if ((owner & RWLOCK_WAIT) == 0)
-		panic("rw_exit_waiters: no waiter");
-#endif
+	rw_exit_diag(rwl, owner);
 	/* We wake up all waiters because we can't know how many they are. */
 	wakeup(rwl);	
 }
-
-#ifdef RWLOCK_TEST
-#include <sys/kthread.h>
-
-void rwlock_test(void);
-
-void rwlock_testp1(void *);
-void rwlock_testp2(void *);
-void rwlock_testp3(void *);
-
-struct rwlock rw_test = RWLOCK_INITIALIZER;
-
-void
-rwlock_test(void)
-{
-	kthread_create(rwlock_testp1, NULL, NULL, "rw1");
-	kthread_create(rwlock_testp2, NULL, NULL, "rw2");
-	kthread_create(rwlock_testp3, NULL, NULL, "rw3");
-}
-
-void
-rwlock_testp1(void *a)
-{
-	int local;
-
-	printf("rwlock test1 start\n");
-	rw_enter_read(&rw_test);
-	printf("rwlock test1 obtained\n");
-	tsleep(&local, PWAIT, "rw1", 4);
-	rw_exit_read(&rw_test);
-	printf("rwlock test1 released\n");
-	tsleep(&local, PWAIT, "rw1/2", 3);
-	rw_enter_read(&rw_test);
-	printf("rwlock test1 obtained\n");
-	rw_exit_read(&rw_test);
-	printf("rwlock test1 released\n");
-	kthread_exit(0);
-}
-
-void
-rwlock_testp2(void *a)
-{
-	int local;
-
-	printf("rwlock test2 start\n");
-	rw_enter_read(&rw_test);
-	printf("rwlock test2 obtained\n");
-	tsleep(&local, PWAIT, "rw2", 4);
-	rw_exit_read(&rw_test);
-	printf("rwlock test2 released\n");
-	kthread_exit(0);
-}
-
-void
-rwlock_testp3(void *a)
-{
-	int local;
-
-	printf("rwlock test3 start\n");
-	tsleep(&local, PWAIT, "rw3", 2);
-	printf("rwlock test3 exited waiting\n");
-	rw_enter_write(&rw_test);
-	printf("rwlock test3 obtained\n");
-	tsleep(&local, PWAIT, "rw3/2", 4);
-	rw_exit_write(&rw_test);
-	printf("rwlock test3 released\n");
-	kthread_exit(0);
-}
-#endif
