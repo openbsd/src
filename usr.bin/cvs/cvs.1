@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.90 2005/09/07 16:24:22 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.91 2006/01/06 17:07:39 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -242,14 +242,39 @@ It is often used with the
 command to freeze the values before releasing software.
 .El
 .Sh COMMANDS
-The following commands are supported by
-.Nm :
-.Bl -tag -width Ds
-.It Xo Ic add
-.Op Fl k Ar mode
-.Op Fl m Ar msg
-.Ar file ...
-.Xc
+.Nm
+supports the following commands:
+add,
+admin,
+annotate,
+checkout,
+commit,
+diff,
+edit,
+editors,
+export,
+history,
+import,
+init,
+kserver,
+log,
+login,
+logout,
+rdiff,
+release,
+remove,
+rlog,
+rtag,
+server,
+status,
+tag,
+unedit,
+update,
+version,
+watch,
+watchers.
+The commands are fully explained in this section.
+.Ss add
 Before a file is known to
 .Nm ,
 it must be added to the repository using this command.
@@ -265,6 +290,9 @@ to add them with the
 command alone; the
 .Ic commit
 command is not necessary.
+.Bd -literal -offset indent
+Usage: cvs add [-k mode] [-m msg] file ...
+.Ed
 .Pp
 The
 .Ic add
@@ -281,24 +309,15 @@ By default, no log message is required.
 Aliases:
 .Ic ad ,
 .Ic new .
-.It Xo Ic admin
-.Op Fl Iq
-.Op Fl b Ar branch
-.Op Fl k Ar mode
-.Op Fl m Ar rev : Ns Ar msg
-.Oo Fl N Ar tag Ns
-.Op : Ns Ar rev Oc
-.Oo Fl n Ar tag Ns
-.Op : Ns Ar rev Oc
-.Op Fl o Ar rev
-.Oo Fl s Ar state Ns
-.Op : Ns Ar rev Oc
-.Oo Fl t Ar file \*(Ba
-.Ar str Oc
-.Xc
+.Ss admin
 The
 .Ic admin
 command is used to directly modify the RCS files.
+.Bd -literal -offset indent
+Usage: cvs admin [-Iq] [-b branch] [-k mode] [-m rev:msg]
+                 [-N tag[:rev]] [-n tag[:rev]] [-o rev]
+                 [-s state[:rev]] [-t file | str]
+.Ed
 .Pp
 The
 .Ic admin
@@ -406,16 +425,14 @@ If no argument is used, the descriptive text is taken from standard input.
 Aliases:
 .Ic adm ,
 .Ic rcs .
-.It Xo Ic annotate
-.Op Fl flR
-.Oo Fl D Ar date \*(Ba
-.Fl r Ar rev Oc
-.Op Ar file ...
-.Xc
+.Ss annotate
 For each line of any files specified, show information about its
 last revision.
 The information given is the last revision when a modification occurred,
 the author's name, and the date of the revision.
+.Bd -literal -offset indent
+Usage: cvs annotate [flR] [-D date | -r rev] [file ...]
+.Ed
 .Pp
 The
 .Ic annotate
@@ -449,20 +466,15 @@ Show annotations as of revision
 Aliases:
 .Ic ann ,
 .Ic blame .
-.It Xo Ic checkout
-.Op Fl AcflNnPpRs
-.Op Fl d Ar dir
-.Op Fl j Ar rev
-.Op Fl k Ar mode
-.Fl D Ar date \*(Ba
-.Fl r Ar rev
-.Ar module ...
-.Xc
-.Pp
+.Ss checkout
 The
 .Ic checkout
 command is used to create a local copy of one or more modules present on the
 target CVS repository.
+.Bd -literal -offset indent
+Usage: cvs checkout [-AcflNnPpRs] [-d dir] [-j rev] [-k mode]
+                    -D date | -r rev module ...
+.Ed
 .Pp
 The
 .Ic checkout
@@ -532,18 +544,14 @@ but include module status.
 Aliases:
 .Ic co ,
 .Ic get .
-.It Xo Ic commit
-.Op Fl flnR
-.Oo Fl F Ar logfile \*(Ba
-.Fl m Ar msg Oc
-.Op Fl r Ar rev
-.Op Ar file ...
-.Xc
-.Pp
+.Ss commit
 The
 .Ic commit
 command is used to send local changes back to the server and update the
 repository's information to reflect the changes.
+.Bd -literal -offset indent
+Usage: cvs commit [-flnR] [-F logfile | -m msg] [-r rev] [file ...]
+.Ed
 .Pp
 The
 .Ic commit
@@ -574,23 +582,18 @@ Commit to a particular symbolic or numerical revision.
 Aliases:
 .Ic ci ,
 .Ic com .
-.It Xo Ic diff
-.Op Fl cilNnpRu
-.Oo Oo Fl D
-.Ar date1 \*(Ba
-.Fl r Ar rev1 Oc
-.Oo Fl D Ar date2 \*(Ba
-.Fl r Ar rev2 Oc Oc
-.Op Fl k Ar mode
-.Op Ar file ...
-.Xc
-.Pp
+.Ss diff
 The
 .Ic diff
 command is very similar to the
 .Xr diff 1
 program, except that the differential comparisons that it generates are
 between local or remote revisions of files stored in the CVS repository.
+.Bd -literal -offset indent
+Usage: cvs diff [-cilNnpRu]
+                [[-D date1 | -r rev1] [-D date2 | -r rev2]]
+                [-k mode] [file ...]
+.Ed
 .Pp
 The
 .Ic diff
@@ -658,11 +661,7 @@ for more information.
 Aliases:
 .Ic di ,
 .Ic dif .
-.It Xo Ic edit Op Fl lR
-.Op Fl a Ar action
-.Op Ar file ...
-.Xc
-.Pp
+.Ss edit
 The
 .Ic edit
 command is used to make a file that is being watched
@@ -674,6 +673,9 @@ command is issued.
 Editing rights on the file can be given up using the
 .Ic unedit
 command, which terminates the temporary notifications.
+.Bd -literal -offset indent
+Usage: cvs edit [-lR] [-a action] [file ...]
+.Ed
 .Pp
 The
 .Ic edit
@@ -711,11 +713,7 @@ only and disable recursive behaviour.
 Enable recursive behaviour.
 This is the default.
 .El
-.It Xo Ic editors
-.Op Fl lR
-.Op Ar file ...
-.Xc
-.Pp
+.Ss editors
 The
 .Ic editors
 command lists the users with edition rights on a file.
@@ -725,6 +723,9 @@ command).
 The e-mail address of the user editing the file, the timestamp
 when the edition first started, the host from where the edition
 has been requested and the path to the edited file are listed.
+.Bd -literal -offset indent
+Usage: cvs editors [-lR] [file ...]
+.Ed
 .Pp
 The
 .Ic editors
@@ -737,15 +738,7 @@ only and disable recursive behaviour.
 Enable recursive behaviour.
 This is the default.
 .El
-.It Xo Ic export
-.Op Fl flNnR
-.Op Fl d Ar dir
-.Op Fl k Ar mode
-.Fl D Ar date \*(Ba
-.Fl r Ar rev
-.Ar module ...
-.Xc
-.Pp
+.Ss export
 The
 .Ic export
 command extracts a copy of
@@ -759,6 +752,10 @@ options as the release.
 .Pp
 The checked out module's files will be placed in a directory
 bearing the same name as the checked out module, by default.
+.Bd -literal -offset indent
+Usage: cvs export [-flNnR] [-d dir] [-k mode]
+                  -D date | -r rev module ...
+.Ed
 .Pp
 The
 .Ic export
@@ -813,22 +810,7 @@ Export from a particular symbolic or numerical revision.
 Aliases:
 .Ic ex ,
 .Ic exp .
-.It Xo Ic history
-.Op Fl aceloTw
-.Op Fl b Ar str
-.Op Fl D Ar date
-.Op Fl f Ar file
-.Op Fl m Ar module
-.Op Fl n Ar module
-.Op Fl p Ar path
-.Op Fl r Ar rev
-.Op Fl t Ar tag
-.Op Fl u Ar user
-.Op Fl x Ar ACEFGMORTUW
-.Op Fl z Ar tz
-.Op Ar file ...
-.Xc
-.Pp
+.Ss history
 The
 .Ic history
 command is used to display the history of actions done in the
@@ -845,6 +827,12 @@ Only the
 and
 .Ic update
 commands are logged into this file.
+.Bd -literal -offset indent
+Usage: cvs history [-aceloTw] [-b str] [-D date] [-f file]
+                   [-m module] [-n module] [-p path] [-r rev]
+                   [-t tag] [-u user] [-x ACEFGMORTUW] [-z tz]
+                   [file ...]
+.Ed
 .Pp
 The
 .Ic history
@@ -999,18 +987,7 @@ commands, the additional columns are as follows:
 Aliases:
 .Ic hi ,
 .Ic his .
-.It Xo Ic import
-.Op Fl d
-.Op Fl b Ar branch
-.Op Fl I Ar ign
-.Op Fl k Ar mode
-.Op Fl m Ar msg
-.Op Fl W Ar spec
-.Ar module
-.Ar vendortag
-.Ar releasetag
-.Xc
-.Pp
+.Ss import
 Import sources into CVS using vendor branches.
 .Pp
 At least three arguments are required:
@@ -1021,6 +998,10 @@ is a tag for the entire branch;
 .Ar releasetag
 is used to identify the files you created with
 .Ic cvs import .
+.Bd -literal -offset indent
+Usage: cvs import [-d] [-b branch] [-I ign] [-k mode] [-m msg]
+                  [-W spec] module vendortag releasetag
+.Ed
 .Pp
 The
 .Ic import
@@ -1049,19 +1030,11 @@ Wrappers specification line.
 Aliases:
 .Ic im ,
 .Ic imp .
-.It Ic init
+.Ss init
 Create a CVS repository if it doesn't exist.
-.It Ic kserver
+.Ss kserver
 Start a Kerberos authentication server.
-.It Xo Ic log
-.Op Fl bhlNRt
-.Op Fl d Ar dates
-.Op Fl r Ar revs
-.Op Fl s Ar state
-.Op Fl w Ar users
-.Op Ar file ...
-.Xc
-.Pp
+.Ss log
 The
 .Ic log
 command displays information on a
@@ -1072,6 +1045,10 @@ By default, the
 .Ic log
 command displays all the available information; the options are only
 used to restrict the displayed information.
+.Bd -literal -offset indent
+Usage: cvs log [-bhlNRt] [-d dates] [-r revs] [-s state]
+               [-w users] [file ...]
+.Ed
 .Pp
 The
 .Ic log
@@ -1172,26 +1149,13 @@ character.
 .Pp
 Aliases:
 .Ic lo .
-.It Ic login
+.Ss login
 Prompt for a password for an authenticating server.
-.It Ic logout
+.Ss logout
 Remove an entry in
 .Pa .cvspass
 for a remote repository.
-.It Xo Ic rdiff
-.Op Fl flR
-.Oo Fl c \*(Ba
-.Fl u Oc
-.Oo Fl s \*(Ba
-.Fl t Oc
-.Op Fl V Ar ver
-.Fl D Ar date \*(Ba
-.Fl r Ar rev
-.Oo Fl D Ar date2 \*(Ba
-.Fl r Ar rev2 Oc
-.Ar module ...
-.Xc
-.Pp
+.Ss rdiff
 The
 .Ic rdiff
 command lists differences between two revisions in a
@@ -1199,6 +1163,11 @@ command lists differences between two revisions in a
 compatible format.
 This command does not need a local checkout of the repository
 to work.
+.Bd -literal -offset indent
+Usage: cvs rdiff [-flR] [-c | -u] [-s | -t] [-V ver]
+                 -D date | -r rev [-D date2 | -r rev2]
+                 module ...
+.Ed
 .Pp
 The
 .Ic rdiff
@@ -1254,10 +1223,7 @@ for keyword substitution.
 Aliases:
 .Ic pa ,
 .Ic patch .
-.It Xo Ic release
-.Op Fl d
-.Ar dir ...
-.Xc
+.Ss release
 The
 .Ic release
 command indicates to
@@ -1270,6 +1236,9 @@ in this case the handling of history information will no longer be
 correct (see the
 .Ic history
 command).
+.Bd -literal -offset indent
+Usage: cvs release [-d] dir ...
+.Ed
 .Pp
 The
 .Ic release
@@ -1318,10 +1287,7 @@ locally up to date.
 Aliases:
 .Ic re ,
 .Ic rel .
-.It Xo Ic remove
-.Op Fl flR
-.Op Ar file ...
-.Xc
+.Ss remove
 The
 .Ic remove
 command is used to inform
@@ -1347,6 +1313,9 @@ option.
 (Note that the
 .Ic export
 command always removes empty directories.)
+.Bd -literal -offset indent
+Usage: cvs remove [-flR] [file ...]
+.Ed
 .Pp
 The
 .Ic remove
@@ -1367,21 +1336,19 @@ This is the default.
 Aliases:
 .Ic rm ,
 .Ic delete .
-.It Ic rlog
+.Ss rlog
 Print out history information for a module.
-.It Xo Ic rtag
-.Op Fl abdFflnR
-.Oo Fl D Ar date \*(Ba
-.Fl r Ar rev Oc
-.Ar symbolic_tag
-.Ar modules ...
-.Xc
+.Ss rtag
 The
 .Ic rtag
 command adds a symbolic tag to one or more modules.
 It is often used to create a new branch using the
 .Fl b
 option.
+.Bd -literal -offset indent
+Usage: cvs rtag [-abdFflnR] [-D date | -r rev]
+                symbolic_tag module ...
+.Ed
 .Pp
 The
 .Ic rtag
@@ -1424,15 +1391,15 @@ Tag at revision
 Aliases:
 .Ic rt ,
 .Ic rfreeze .
-.It Ic server
+.Ss server
 Server mode.
-.It Xo Ic status
-.Op Fl lRv
-.Op Ar file ...
-.Xc
+.Ss status
 The
 .Ic status
 command is used to display the state of checked out files.
+.Bd -literal -offset indent
+Usage: cvs status [-lRv] [file ...]
+.Ed
 .Pp
 The
 .Ic status
@@ -1483,17 +1450,14 @@ The file is up to date.
 Aliases:
 .Ic st ,
 .Ic stat .
-.It Xo Ic tag
-.Op Fl bcdFflR
-.Oo Fl D Ar date \*(Ba
-.Fl r Ar rev Oc
-.Op Ar symbolic_tag
-.Op Ar file ...
-.Xc
-.Pp
+.Ss tag
 The
 .Ic tag
 command adds a symbolic tag to a checked out version of one or more files.
+.Bd -literal -offset indent
+Usage: cvs tag [-bcdFflR] [-D date | -r rev] [symbolic_tag]
+               [file ...]
+.Ed
 .Pp
 The
 .Ic tag
@@ -1530,10 +1494,7 @@ Tag at revision
 Aliases:
 .Ic ta ,
 .Ic freeze .
-.It Xo Ic unedit Op Fl lR
-.Op Ar file ...
-.Xc
-.Pp
+.Ss unedit
 The
 .Ic unedit
 command is used to give up an edition on a file and thus cancel
@@ -1544,6 +1505,9 @@ command has been issued,
 .Nm
 will ask if you want to go back to the previous version, and lose the
 modifications done on the file, or stay in edition mode on it.
+.Bd -literal -offset indent
+Usage: cvs unedit [-lR] [file ...]
+.Ed
 .Pp
 The
 .Ic unedit
@@ -1556,21 +1520,15 @@ only and disable recursive behaviour.
 Enable recursive behaviour.
 This is the default.
 .El
-.It Xo Ic update
-.Op Fl AdflPpR
-.Oo Fl D Ar date \*(Ba
-.Fl r Ar rev Oc
-.Op Fl I Ar ign
-.Op Fl j Ar rev
-.Op Fl k Ar mode
-.Op Fl W Ar spec
-.Op Ar file ...
-.Xc
-.Pp
+.Ss update
 The
 .Ic update
 command is used to merge any of the changes that have occurred on the remote
 repository into the local one where the command was run.
+.Bd -literal -offset indent
+Usage: cvs update [-AdflPpR] [-D date | -r rev] [-I ign]
+                  [-j rev] [-k mode] [-W spec] [file ...]
+.Ed
 .Pp
 The
 .Ic update
@@ -1672,7 +1630,7 @@ The file is up to date.
 Aliases:
 .Ic up ,
 .Ic upd .
-.It Ic version
+.Ss version
 Causes
 .Nm
 to print its version information.
@@ -1688,13 +1646,7 @@ will also connect to the server and ask it to print its version information.
 Aliases:
 .Ic ve ,
 .Ic ver .
-.It Xo Ic watch
-.Ar on | off | add | remove
-.Op Fl lR
-.Op Fl a Ar action
-.Op Ar file ...
-.Xc
-.Pp
+.Ss watch
 The
 .Ic watch
 command switches a file from normal mode to
@@ -1727,6 +1679,10 @@ command is issued while the temporary notifications are
 made available with the
 .Ic edit
 command.
+.Bd -literal -offset indent
+Usage: cvs watch on | off | add | remove [-lR] [-a action]
+                 [file ...]
+.Ed
 .Pp
 The
 .Ic watch
@@ -1763,11 +1719,7 @@ only and disable recursive behaviour.
 Enable recursive behaviour.
 This is the default.
 .El
-.It Xo Ic watchers
-.Op Fl lR
-.Op Ar file ...
-.Xc
-.Pp
+.Ss watchers
 The
 .Ic watchers
 command lists the users who asked for notifications as well as the
@@ -1795,6 +1747,9 @@ command, until the
 or
 .Ic unedit
 command is issued on a file.
+.Bd -literal -offset indent
+Usage: cvs watchers [-lR] [file ...]
+.Ed
 .Pp
 The
 .Ic watchers
@@ -1806,7 +1761,6 @@ only and disable recursive behaviour.
 .It Fl R
 Enable recursive behaviour.
 This is the default.
-.El
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
