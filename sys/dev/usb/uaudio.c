@@ -1,5 +1,5 @@
-/*	$OpenBSD: uaudio.c,v 1.33 2006/01/06 11:13:40 fgsch Exp $ */
-/*	$NetBSD: uaudio.c,v 1.87 2004/10/22 17:00:22 kent Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.34 2006/01/06 11:34:08 fgsch Exp $ */
+/*	$NetBSD: uaudio.c,v 1.90 2004/10/29 17:12:53 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2528,15 +2528,17 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 	if (err)
 		return (err);
 
-	/* Some devices do not support this request, so ignore errors. */
-#ifdef UAUDIO_DEBUG
-	err = uaudio_set_speed(sc, endpt, ch->sample_rate);
-	if (err)
-		DPRINTF(("uaudio_chan_open: set_speed failed err=%s\n",
-			 usbd_errstr(err)));
-#else
-	(void)uaudio_set_speed(sc, endpt, ch->sample_rate);
-#endif
+	/*
+	 * If just one sampling rate is supported,
+	 * no need to call uaudio_set_speed().
+	 * Roland SD-90 freezes by a SAMPLING_FREQ_CONTROL request.
+	 */
+	if (as->asf1desc->bSamFreqType != 1) {
+		err = uaudio_set_speed(sc, endpt, ch->sample_rate);
+		if (err)
+			DPRINTF(("uaudio_chan_open: set_speed failed err=%s\n",
+				 usbd_errstr(err)));
+	}
 
 	ch->pipe = 0;
 	ch->sync_pipe = 0;
