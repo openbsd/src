@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.162 2006/01/05 02:23:39 deraadt Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.163 2006/01/06 00:37:27 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1971,6 +1971,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		bzero(pf_status.counters, sizeof(pf_status.counters));
 		bzero(pf_status.fcounters, sizeof(pf_status.fcounters));
 		bzero(pf_status.scounters, sizeof(pf_status.scounters));
+		pf_status.since = time_second;
 		if (*pf_status.ifname)
 			pfi_clr_istats(pf_status.ifname);
 		break;
