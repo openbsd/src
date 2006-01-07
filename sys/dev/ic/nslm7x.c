@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7x.c,v 1.13 2006/01/03 19:30:09 kettenis Exp $	*/
+/*	$OpenBSD: nslm7x.c,v 1.14 2006/01/07 12:42:45 kettenis Exp $	*/
 /*	$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $ */
 
 /*-
@@ -82,16 +82,6 @@ void wb782_refresh_sensor_data(struct lm_softc *);
 void wb697_refresh_sensor_data(struct lm_softc *);
 
 void lm_refresh(void *);
-
-#if 0
-int lm_gtredata(struct sysmon_envsys *, struct envsys_tre_data *);
-
-int generic_streinfo_fan(struct lm_softc *, struct envsys_basic_info *,
-	int, struct envsys_basic_info *);
-int lm_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
-int wb781_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
-int wb782_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
-#endif
 
 struct lm_chip {
 	int (*chip_match)(struct lm_softc *);
