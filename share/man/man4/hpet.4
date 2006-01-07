@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.2 2006/01/07 10:48:24 grange Exp $
+.\"	$OpenBSD: hpet.4,v 1.1 2006/01/07 10:48:24 grange Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -15,45 +15,24 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd January 7, 2006
-.Dt ACPI 4
+.Dt HPET 4
 .Os
 .Sh NAME
-.Nm acpi
-.Nd Advanced Configuration and Power Interface
+.Nm hpet
+.Nd High Precision Event Timer
 .Sh SYNOPSIS
-.Cd "acpi0 at mainbus?"
-.Pp
-.Cd "option ACPIVERBOSE"
-.Cd "option ACPI_ENABLE"
+.Cd "hpet* at acpi?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides basic support for the ACPI including loading ACPI tables from
-the firmware, parsing and interpreting AML code, events handling,
-suspending and powering off, attaching device drivers.
-.Pp
-If configuration option
-.Dq Dv ACPIVERBOSE
-is set the information about all found ACPI devices will be displayed on boot.
-.Pp
-If configuration option
-.Dq Dv ACPI_ENABLE
-is set the
-.Nm
-driver will take over the ACPI control.
-WARNING: this may cause an overheating on some machines since the
-.Nm
-doesn't provide any thermal and cooling control.
-.Sh SUPPORTED DEVICES
-.Bl -tag -width 12n -offset ind -compact
-.It Xr acpitimer 4
-ACPI power management timer
-.It Xr hpet 4
-High Precision Event Timer
-.El
+driver provides support for the high precision event timer to be used
+as a timecounter for the
+.Xr tc_init 9
+framework.
 .Sh SEE ALSO
-.Xr acpitimer 4 ,
-.Xr intro 4
+.Xr acpi 4 ,
+.Xr intro 4 ,
+.Xr tc_init 9
 .Sh HISTORY
 The
 .Nm
