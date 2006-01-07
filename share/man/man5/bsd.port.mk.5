@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.170 2005/12/29 09:55:18 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.171 2006/01/07 11:37:58 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1112,23 +1112,6 @@ retrieved.
 File recorded in the package and displayed during installation.
 Defaults to ${PKGDIR}/MESSAGE if this file exists.
 Leave empty if no message is needed.
-.It Ev MODGNU_SHARED_LIBS
-Available if
-.Ev CONFIGURE_STYLE
-is gnu (or better).
-Set to a list of the form
-.Sq libname
-.Sq extra-options .
-This sets the variable
-.Ev lib<libname>_la_LDFLAGS
-to the correct invocation for libtool version numbering, based on
-.Ev SHARED_LIBS.
-For instance, with
-SHARED_LIBS=foo 3.5,
-MODGNU_SHARED_LIBS=foo '-no-undefined',
-then
-libfoo_la_LDFLAGS will be set to
-libfoo_la_LDFLAGS=-version-info 3:5:0 -no-undefined.
 .It Ev MTREE_FILE
 .Xr mtree 8
 specification to check when creating a PLIST with the
@@ -1496,9 +1479,12 @@ changes that may require bumping the major version of every shared library in
 the system, or simply because the third party programmers do not understand
 the rules for shared library versions, thus breaking the update mechanism.
 .Pp
-See also
-.Ev MODGNU_SHARED_LIBS
-for libtool-based ports.
+Porters of software using libtool should also set
+.Ev USE_LIBTOOL
+and make sure 
+.Ev MAKE_FLAGS
+get propagated to the libtool invocations.
+This should be enough, in most cases.
 .It Ev SHARED_ONLY
 Set to
 .Sq Yes
