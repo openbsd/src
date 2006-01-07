@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.2 2006/01/07 10:48:24 grange Exp $
+.\"	$OpenBSD: acpi.4,v 1.3 2006/01/07 15:14:19 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -29,23 +29,24 @@
 The
 .Nm
 driver provides basic support for the ACPI including loading ACPI tables from
-the firmware, parsing and interpreting AML code, events handling,
-suspending and powering off, attaching device drivers.
+the firmware, parsing and interpreting AML code, event handling,
+suspending and powering off, and attaching device drivers.
 .Pp
-If configuration option
+If the configuration option
 .Dq Dv ACPIVERBOSE
-is set the information about all found ACPI devices will be displayed on boot.
+is set, information about all detected ACPI devices will be displayed
+on boot.
 .Pp
-If configuration option
+If the configuration option
 .Dq Dv ACPI_ENABLE
-is set the
+is set, the
 .Nm
 driver will take over the ACPI control.
-WARNING: this may cause an overheating on some machines since the
+WARNING: this may cause an overheating on some machines since
 .Nm
-doesn't provide any thermal and cooling control.
+doesn't provide any thermal or cooling control.
 .Sh SUPPORTED DEVICES
-.Bl -tag -width 12n -offset ind -compact
+.Bl -tag -width 12n -offset indent -compact
 .It Xr acpitimer 4
 ACPI power management timer
 .It Xr hpet 4
