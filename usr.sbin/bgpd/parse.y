@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.177 2005/11/29 16:01:00 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.178 2006/01/07 14:50:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1435,6 +1435,7 @@ filter_set_opt	: LOCALPREF number		{
 				case COMMUNITY_NO_EXPORT:
 				case COMMUNITY_NO_ADVERTISE:
 				case COMMUNITY_NO_EXPSUBCONFED:
+				case COMMUNITY_NO_PEER:
 					/* valid */
 					break;
 				default:
