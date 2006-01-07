@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.332 2006/01/04 01:37:33 dlg Exp $
+#	$OpenBSD: Makefile,v 1.333 2006/01/07 10:25:42 grange Exp $
 
-MAN=	aac.4 ac97.4 acphy.4 adc.4 addcom.4 admcts.4 admlc.4 admtemp.4 \
+MAN=	aac.4 ac97.4 acphy.4 acpi.4 acpitimer.4 \
+	adc.4 addcom.4 admcts.4 admlc.4 admtemp.4 \
 	admtm.4 admtmp.4 admtt.4 adt.4 adv.4 aha.4 ahb.4 ahc.4 ahd.4 aic.4 \
 	alipm.4 amdiic.4 amdpm.4 ami.4 amphy.4 an.4 aps.4 aria.4 art.4 \
 	asbtm.4 ast.4 atalk.4 atapiscsi.4 ath.4 atu.4 atw.4 audio.4 aue.4 \
