@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ciss.4,v 1.3 2005/08/20 22:51:33 brad Exp $
+.\"	$OpenBSD: ciss.4,v 1.4 2006/01/07 21:55:02 brad Exp $
 .\"
 .\" Michael Shalayeff, 2005. Public Domain.
 .\"
@@ -20,7 +20,7 @@ family of RAID controllers, including:
 .Bl -tag -width Ds -offset indent -compact
 .It Compaq 532, 5300, 5312, 5i
 .It Compaq 641, 642, 6400, 6400EM, 6422
-.It Hewlett-Packard V100, P800, P600, E400
+.It Hewlett-Packard V100, P800, P600, E400, 6i
 .El
 .Pp
 These controllers support RAID 0, RAID 1, RAID 5, JBOD,
@@ -29,21 +29,11 @@ and superpositions of those configurations.
 Although the controllers are actual RAID controllers,
 the driver makes them look just like SCSI controllers.
 All RAID configuration is done through the controllers' BIOSes.
-.Pp
-The management interface is provided through the
-.Xr bio 4
-device or one of the daughter
-.Xr sd 4
-devices as implemented in the
-.Xr bioctl 8
-utility.
 .Sh SEE ALSO
-.Xr bio 4 ,
 .Xr intro 4 ,
 .Xr pci 4 ,
 .Xr scsi 4 ,
-.Xr sd 4 ,
-.Xr bioctl 8
+.Xr sd 4
 .Sh HISTORY
 The
 .Nm
