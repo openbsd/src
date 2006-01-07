@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.40 2005/09/23 14:36:46 jmc Exp $
+.\" $OpenBSD: authpf.8,v 1.41 2006/01/07 16:42:16 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -225,8 +225,11 @@ it becomes unresponsive, or if arp or address spoofing is used to
 hijack the session.
 Note that TCP keepalives are not sufficient for
 this, since they are not secure.
-Also note that
+Also note that the various SSH tunnelling mechanisms,
+such as
 .Ar AllowTcpForwarding
+and
+.Ar PermitTunnel ,
 should be disabled for
 .Nm
 users to prevent them from circumventing restrictions imposed by the
