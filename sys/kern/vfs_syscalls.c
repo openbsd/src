@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.130 2005/11/30 10:35:08 pedro Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.131 2006/01/07 07:39:55 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -835,7 +835,7 @@ sys_open(struct proc *p, void *v, register_t *retval)
 	flags = FFLAGS(SCARG(uap, flags));
 	cmode = ((SCARG(uap, mode) &~ fdp->fd_cmask) & ALLPERMS) &~ S_ISTXT;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
-	p->p_dupfd = -indx - 1;			/* XXX check for fdopen */
+	p->p_dupfd = -1;			/* XXX check for fdopen */
 	if ((flags & O_TRUNC) && (flags & (O_EXLOCK | O_SHLOCK))) {
 		localtrunc = 1;
 		flags &= ~O_TRUNC;	/* Must do truncate ourselves */
