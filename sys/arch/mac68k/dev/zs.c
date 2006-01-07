@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.20 2004/12/26 22:34:53 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.21 2006/01/07 20:46:57 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.19 1998/01/12 19:22:18 thorpej Exp $	*/
 
 /*
@@ -981,8 +981,7 @@ zscnprobe(struct consdev * cp)
 		 * console, but are doing echo
 		 */
 		zs_conschan = (struct zschan *) -1; /* dummy flag for zs_init() */
-		zs_consunit = 1;
-		zs_hwflags[0][zs_consunit] = ZS_HWFLAG_CONSOLE;
+		zs_consunit = 1;		/* printer port */
 	}
 
 	if ((i = mac68k_machine.modem_d_speed) > 0) {
@@ -1012,7 +1011,6 @@ zscnprobe(struct consdev * cp)
 
 	if (mac68k_machine.serial_boot_echo)
 		zscnsetup();
-	return;
 }
 
 void
@@ -1026,7 +1024,6 @@ zscninit(struct consdev * cp)
 	 * number. :-)
 	 */
 	zscnsetup();
-	printf("\nOpenBSD/mac68k console\n");
 }
 
 
