@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.50 2005/09/23 02:33:34 tedu Exp $
+.\"	$OpenBSD: printf.3,v 1.51 2006/01/07 16:49:59 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -604,9 +604,8 @@ The
 .Fn sprintf ,
 .Fn vprintf ,
 .Fn vfprintf ,
-.Fn vsprintf ,
 and
-.Fn vasprintf
+.Fn vsprintf
 functions
 return the number of characters printed
 (not including the trailing
@@ -627,15 +626,20 @@ again, not including the final
 .Pc .
 If an output or encoding error occurs, a value of \-1 is returned instead.
 .Pp
+The
 .Fn asprintf
 and
 .Fn vasprintf
-return a pointer to a buffer sufficiently large to hold the string in the
-.Fa ret
-argument.
-This pointer should be passed to
+functions return the number of characters that were output
+to the newly allocated string
+(excluding the final
+.Ql \e0 ) .
+A pointer to the newly allocated string is returned in
+.Fa ret ;
+it should be passed to
 .Xr free 3
-to release the allocated storage when it is no longer needed.
+to release the allocated storage
+when it is no longer needed.
 If sufficient space cannot be allocated, these functions
 will return \-1.
 The value of
