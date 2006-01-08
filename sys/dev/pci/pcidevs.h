@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.998 2006/01/05 20:17:12 brad Exp 
+ *	OpenBSD: pcidevs,v 1.999 2006/01/08 13:16:58 damien Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2651,6 +2651,9 @@
 /* Ralink Technology Corporation */
 #define	PCI_PRODUCT_RALINK_RT2460A	0x0101		/* RT2460A */
 #define	PCI_PRODUCT_RALINK_RT2560	0x0201		/* RT2560 */
+#define	PCI_PRODUCT_RALINK_RT2561S	0x0301		/* RT2561S */
+#define	PCI_PRODUCT_RALINK_RT2561	0x0302		/* RT2561 */
+#define	PCI_PRODUCT_RALINK_RT2661	0x0401		/* RT2661 */
 
 /* Realtek (Creative Labs?) products */
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 */

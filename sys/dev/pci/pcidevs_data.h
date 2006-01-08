@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.998 2006/01/05 20:17:12 brad Exp 
+ *	OpenBSD: pcidevs,v 1.999 2006/01/08 13:16:58 damien Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8017,6 +8017,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2560,
 	    "RT2560",
+	},
+	{
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561S,
+	    "RT2561S",
+	},
+	{
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561,
+	    "RT2561",
+	},
+	{
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2661,
+	    "RT2661",
 	},
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8029,
