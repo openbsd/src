@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.6 2005/12/14 21:46:31 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.7 2006/01/08 14:20:17 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 typedef int sig_atomic_t;
 
-#if __BSD_VISIBLE
+#if __BSD_VISIBLE || __XPG_VISIBLE >= 420
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
@@ -67,7 +67,7 @@ struct	sigcontext {
 	long	sc_fpc_eir;	/* floating point exception instruction reg */
 	long	xxx[8];		/* XXX reserved */
 };
-#endif	/* __BSD_VISIBLE */
+#endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
 
 #else /* __LANGUAGE_ASSEMBLY */
 #define SC_ONSTACK	(0 * REGSZ)

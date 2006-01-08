@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.4 2005/12/14 21:46:30 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.5 2006/01/08 14:20:17 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.2 2003/04/28 23:16:17 bjh21 Exp $	*/
 
 /*
@@ -41,7 +41,9 @@ typedef int sig_atomic_t;
 
 #if __BSD_VISIBLE
 #include <machine/trap.h>
+#endif
 
+#if __BSD_VISIBLE || __XPG_VISIBLE >= 420
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
@@ -82,6 +84,5 @@ struct sigcontext {
 	int	sc_onstack;
 	int	sc_mask;
 };
-
-#endif	/* __BSD_VISIBLE */
+#endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
 #endif	/* !_AMD64_SIGNAL_H_ */

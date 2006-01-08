@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.18 2005/12/13 00:35:23 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.19 2006/01/08 14:20:16 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.21 1996/02/09 18:25:32 christos Exp $	*/
 
 /*
@@ -144,6 +144,39 @@ struct	sigaction {
 typedef	void (*sig_t)(int);	/* type of signal function */
 
 /*
+ * 4.3 compatibility:
+ * Signal vector "template" used in sigvec call.
+ */
+struct	sigvec {
+	void	(*sv_handler)(int);	/* signal handler */
+	int	sv_mask;		/* signal mask to apply */
+	int	sv_flags;		/* see signal options below */
+};
+#define SV_ONSTACK	SA_ONSTACK
+#define SV_INTERRUPT	SA_RESTART	/* same bit, opposite sense */
+#define SV_RESETHAND	SA_RESETHAND
+#define sv_onstack	sv_flags	/* isn't compatibility wonderful! */
+
+/*
+ * Macro for converting signal number to a mask suitable for
+ * sigblock().
+ */
+#define sigmask(m)	(1 << ((m)-1))
+
+#define	BADSIG		SIG_ERR
+
+#endif	/* __BSD_VISIBLE */
+
+#if __BSD_VISIBLE || __XPG_VISIBLE >= 420
+/*
+ * Structure used in sigstack call.
+ */
+struct	sigstack {
+	void	*ss_sp;			/* signal stack pointer */
+	int	ss_onstack;		/* current status */
+};
+
+/*
  * Structure used in sigaltstack call.
  */
 typedef struct sigaltstack {
@@ -164,39 +197,8 @@ struct osigaltstack {
 };
 #endif
 
-/*
- * 4.3 compatibility:
- * Signal vector "template" used in sigvec call.
- */
-struct	sigvec {
-	void	(*sv_handler)(int);	/* signal handler */
-	int	sv_mask;		/* signal mask to apply */
-	int	sv_flags;		/* see signal options below */
-};
-#define SV_ONSTACK	SA_ONSTACK
-#define SV_INTERRUPT	SA_RESTART	/* same bit, opposite sense */
-#define SV_RESETHAND	SA_RESETHAND
-#define sv_onstack	sv_flags	/* isn't compatibility wonderful! */
-
-/*
- * Structure used in sigstack call.
- */
-struct	sigstack {
-	void	*ss_sp;			/* signal stack pointer */
-	int	ss_onstack;		/* current status */
-};
-
 typedef struct sigcontext ucontext_t;
-
-/*
- * Macro for converting signal number to a mask suitable for
- * sigblock().
- */
-#define sigmask(m)	(1 << ((m)-1))
-
-#define	BADSIG		SIG_ERR
-
-#endif	/* __BSD_VISIBLE */
+#endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
 
 /*
  * For historical reasons; programs expect signal's return value to be
