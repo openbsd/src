@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.3 2006/01/08 21:05:39 miod Exp $	*/
+/*	$OpenBSD: util.h,v 1.4 2006/01/08 21:10:04 miod Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -46,7 +46,7 @@ enum nresult { NUM_ERR, NUM_OK, NUM_OVER, NUM_UNDER };
 	(((long)(min)) - (cur) <= (add))
 #define	NPFITS(max, cur, add)						\
 	(((unsigned long)(max)) - (cur) >= (add))
-#define	NADD_SLONG(sp, v1, v2)						\
+#define	NADD_SLONG(v1, v2)						\
 	((v1) < 0 ?							\
 	    ((v2) < 0 &&						\
 	    NNFITS(LONG_MIN, (v1), (v2))) ? NUM_UNDER : NUM_OK :	\
@@ -54,5 +54,3 @@ enum nresult { NUM_ERR, NUM_OK, NUM_OVER, NUM_UNDER };
 	    (v2) > 0 &&							\
 	    NPFITS(LONG_MAX, (v1), (v2)) ? NUM_OK : NUM_OVER :		\
 	 NUM_OK)
-#define	NADD_USLONG(sp, v1, v2)						\
-	(NPFITS(ULONG_MAX, (v1), (v2)) ? NUM_OK : NUM_OVER)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex.c,v 1.13 2006/01/08 21:05:40 miod Exp $	*/
+/*	$OpenBSD: ex.c,v 1.14 2006/01/08 21:10:05 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -2022,8 +2022,7 @@ search:		mp->lno = sp->lno;
 				/* Get a signed long, add it to the total. */
 				if ((nret = nget_slong(&val,
 				    ecp->cp, &endp, 10)) != NUM_OK ||
-				    (nret = NADD_SLONG(sp,
-				    total, val)) != NUM_OK) {
+				    (nret = NADD_SLONG(total, val)) != NUM_OK) {
 					ex_badaddr(sp, NULL, A_NOTSET, nret);
 					*errp = 1;
 					return (0);
