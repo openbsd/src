@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.9 2006/01/08 21:05:39 miod Exp $	*/
+/*	$OpenBSD: cut.c,v 1.10 2006/01/08 21:09:13 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -73,7 +73,7 @@ cut(sp, namep, fm, tm, flags)
 	int flags;
 {
 	CB *cbp;
-	CHAR_T name;
+	CHAR_T name = '1';	/* default numeric buffer */
 	recno_t lno;
 	int append, copy_one, copy_def;
 
@@ -115,7 +115,7 @@ cut(sp, namep, fm, tm, flags)
 namecb:		CBNAME(sp, cbp, name);
 	} else if (LF_ISSET(CUT_NUMREQ) || (LF_ISSET(CUT_NUMOPT) &&
 	    (LF_ISSET(CUT_LINEMODE) || fm->lno != tm->lno))) {
-		name = '1';
+		/* Copy into numeric buffer 1. */
 		cb_rotate(sp);
 		goto namecb;
 	} else
@@ -168,7 +168,6 @@ copyloop:
 	sp->gp->dcbp = cbp;	/* Repoint the default buffer on each pass. */
 
 	if (copy_one) {		/* Copy into numeric buffer 1. */
-		name = '1';
 		CBNAME(sp, cbp, name);
 		copy_one = 0;
 		goto copyloop;
