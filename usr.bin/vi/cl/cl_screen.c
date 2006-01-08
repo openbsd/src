@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_screen.c,v 1.16 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: cl_screen.c,v 1.17 2006/01/08 21:05:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -64,8 +64,8 @@ cl_screen(sp, flags)
 	}
 	
 	/* See if we're already in the right mode. */
-	if (LF_ISSET(SC_EX) && F_ISSET(sp, SC_SCR_EX) ||
-	    LF_ISSET(SC_VI) && F_ISSET(sp, SC_SCR_VI))
+	if ((LF_ISSET(SC_EX) && F_ISSET(sp, SC_SCR_EX)) ||
+	    (LF_ISSET(SC_VI) && F_ISSET(sp, SC_SCR_VI)))
 		return (0);
 
 	/*

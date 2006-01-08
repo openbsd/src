@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.2 2001/01/29 01:58:32 niklas Exp $	*/
+/*	$OpenBSD: util.h,v 1.3 2006/01/08 21:05:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -17,15 +17,15 @@
 #define	FL_CLR(l, f)	((l) &= ~(f))
 #define	FL_ISSET(l, f)	((l) & (f))
 
-#define	LF_INIT(f)	FL_INIT(flags, f)	/* Local variable flags. */
-#define	LF_SET(f)	FL_SET(flags, f)
-#define	LF_CLR(f)	FL_CLR(flags, f)
-#define	LF_ISSET(f)	FL_ISSET(flags, f)
+#define	LF_INIT(f)	FL_INIT(flags, (f))	/* Local variable flags. */
+#define	LF_SET(f)	FL_SET(flags, (f))
+#define	LF_CLR(f)	FL_CLR(flags, (f))
+#define	LF_ISSET(f)	FL_ISSET(flags, (f))
 
-#define	F_INIT(p, f)	FL_INIT((p)->flags, f)	/* Structure element flags. */
-#define	F_SET(p, f)	FL_SET((p)->flags, f)
-#define	F_CLR(p, f)	FL_CLR((p)->flags, f)
-#define	F_ISSET(p, f)	FL_ISSET((p)->flags, f)
+#define	F_INIT(p, f)	FL_INIT((p)->flags, (f))	/* Structure element flags. */
+#define	F_SET(p, f)	FL_SET((p)->flags, (f))
+#define	F_CLR(p, f)	FL_CLR((p)->flags, (f))
+#define	F_ISSET(p, f)	FL_ISSET((p)->flags, (f))
 
 /* Offset to next column of stop size, e.g. tab offsets. */
 #define	COL_OFF(c, stop)	((stop) - ((c) % (stop)))

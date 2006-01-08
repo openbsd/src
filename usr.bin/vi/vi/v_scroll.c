@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_scroll.c,v 1.5 2002/02/16 21:27:58 millert Exp $	*/
+/*	$OpenBSD: v_scroll.c,v 1.6 2006/01/08 21:05:40 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -201,8 +201,8 @@ goto_adjust(vp)
 	 * stay at the start of the range.  Ignore others.
 	 */
 	if (vp->m_stop.lno < vp->m_start.lno ||
-	    vp->m_stop.lno == vp->m_start.lno &&
-	    vp->m_stop.cno < vp->m_start.cno) {
+	    (vp->m_stop.lno == vp->m_start.lno &&
+	    vp->m_stop.cno < vp->m_start.cno)) {
 		if (ISCMD(vp->rkp, 'y') && vp->m_stop.lno == vp->m_start.lno)
 			vp->m_final = vp->m_start;
 	} else

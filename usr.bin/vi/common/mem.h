@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.h,v 1.4 2001/01/29 01:58:30 niklas Exp $	*/
+/*	$OpenBSD: mem.h,v 1.5 2006/01/08 21:05:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,26 +16,28 @@
  */
 #define	BINC_GOTO(sp, lp, llen, nlen) {					\
 	void *L__bincp;							\
-	if ((nlen) > llen) {						\
-		if ((L__bincp = binc(sp, lp, &(llen), nlen)) == NULL)	\
+	if ((nlen) > (llen)) {						\
+		if ((L__bincp = binc((sp), (lp), &(llen), (nlen)))	\
+		    == NULL)						\
 			goto alloc_err;					\
 		/*							\
 		 * !!!							\
 		 * Possible pointer conversion.				\
 		 */							\
-		lp = L__bincp;						\
+		(lp) = L__bincp;					\
 	}								\
 }
 #define	BINC_RET(sp, lp, llen, nlen) {					\
 	void *L__bincp;							\
-	if ((nlen) > llen) {						\
-		if ((L__bincp = binc(sp, lp, &(llen), nlen)) == NULL)	\
+	if ((nlen) > (llen)) {						\
+		if ((L__bincp = binc((sp), (lp), &(llen), (nlen)))	\
+		    == NULL)						\
 			return (1);					\
 		/*							\
 		 * !!!							\
 		 * Possible pointer conversion.				\
 		 */							\
-		lp = L__bincp;						\
+		(lp) = L__bincp;					\
 	}								\
 }
 
@@ -47,26 +49,26 @@
 #define	GET_SPACE_GOTO(sp, bp, blen, nlen) {				\
 	GS *L__gp = (sp) == NULL ? NULL : (sp)->gp;			\
 	if (L__gp == NULL || F_ISSET(L__gp, G_TMP_INUSE)) {		\
-		bp = NULL;						\
-		blen = 0;						\
-		BINC_GOTO(sp, bp, blen, nlen); 				\
+		(bp) = NULL;						\
+		(blen) = 0;						\
+		BINC_GOTO((sp), (bp), (blen), (nlen)); 			\
 	} else {							\
-		BINC_GOTO(sp, L__gp->tmp_bp, L__gp->tmp_blen, nlen);	\
-		bp = L__gp->tmp_bp;					\
-		blen = L__gp->tmp_blen;					\
+		BINC_GOTO((sp), L__gp->tmp_bp, L__gp->tmp_blen, (nlen));\
+		(bp) = L__gp->tmp_bp;					\
+		(blen) = L__gp->tmp_blen;				\
 		F_SET(L__gp, G_TMP_INUSE);				\
 	}								\
 }
 #define	GET_SPACE_RET(sp, bp, blen, nlen) {				\
 	GS *L__gp = (sp) == NULL ? NULL : (sp)->gp;			\
 	if (L__gp == NULL || F_ISSET(L__gp, G_TMP_INUSE)) {		\
-		bp = NULL;						\
-		blen = 0;						\
-		BINC_RET(sp, bp, blen, nlen);				\
+		(bp) = NULL;						\
+		(blen) = 0;						\
+		BINC_RET((sp), (bp), (blen), (nlen));			\
 	} else {							\
-		BINC_RET(sp, L__gp->tmp_bp, L__gp->tmp_blen, nlen);	\
-		bp = L__gp->tmp_bp;					\
-		blen = L__gp->tmp_blen;					\
+		BINC_RET((sp), L__gp->tmp_bp, L__gp->tmp_blen, (nlen));	\
+		(bp) = L__gp->tmp_bp;					\
+		(blen) = L__gp->tmp_blen;				\
 		F_SET(L__gp, G_TMP_INUSE);				\
 	}								\
 }
@@ -77,31 +79,31 @@
  */
 #define	ADD_SPACE_GOTO(sp, bp, blen, nlen) {				\
 	GS *L__gp = (sp) == NULL ? NULL : (sp)->gp;			\
-	if (L__gp == NULL || bp == L__gp->tmp_bp) {			\
+	if (L__gp == NULL || (bp) == L__gp->tmp_bp) {			\
 		F_CLR(L__gp, G_TMP_INUSE);				\
-		BINC_GOTO(sp, L__gp->tmp_bp, L__gp->tmp_blen, nlen);	\
-		bp = L__gp->tmp_bp;					\
-		blen = L__gp->tmp_blen;					\
+		BINC_GOTO((sp), L__gp->tmp_bp, L__gp->tmp_blen, (nlen));\
+		(bp) = L__gp->tmp_bp;					\
+		(blen) = L__gp->tmp_blen;				\
 		F_SET(L__gp, G_TMP_INUSE);				\
 	} else								\
-		BINC_GOTO(sp, bp, blen, nlen);				\
+		BINC_GOTO((sp), (bp), (blen), (nlen));			\
 }
 #define	ADD_SPACE_RET(sp, bp, blen, nlen) {				\
 	GS *L__gp = (sp) == NULL ? NULL : (sp)->gp;			\
-	if (L__gp == NULL || bp == L__gp->tmp_bp) {			\
+	if (L__gp == NULL || (bp) == L__gp->tmp_bp) {			\
 		F_CLR(L__gp, G_TMP_INUSE);				\
-		BINC_RET(sp, L__gp->tmp_bp, L__gp->tmp_blen, nlen);	\
-		bp = L__gp->tmp_bp;					\
-		blen = L__gp->tmp_blen;					\
+		BINC_RET((sp), L__gp->tmp_bp, L__gp->tmp_blen, (nlen));	\
+		(bp) = L__gp->tmp_bp;					\
+		(blen) = L__gp->tmp_blen;				\
 		F_SET(L__gp, G_TMP_INUSE);				\
 	} else								\
-		BINC_RET(sp, bp, blen, nlen);				\
+		BINC_RET((sp), (bp), (blen), (nlen));			\
 }
 
 /* Free a GET_SPACE returned buffer. */
 #define	FREE_SPACE(sp, bp, blen) {					\
 	GS *L__gp = (sp) == NULL ? NULL : (sp)->gp;			\
-	if (L__gp != NULL && bp == L__gp->tmp_bp)			\
+	if (L__gp != NULL && (bp) == L__gp->tmp_bp)			\
 		F_CLR(L__gp, G_TMP_INUSE);				\
 	else								\
 		free(bp);						\
@@ -118,37 +120,37 @@
  * in instead of explaining it all the time.
  */
 #define	CALLOC(sp, p, cast, nmemb, size) {				\
-	if ((p = (cast)calloc(nmemb, size)) == NULL)			\
-		msgq(sp, M_SYSERR, NULL);				\
+	if (((p) = (cast)calloc((nmemb), (size))) == NULL)		\
+		msgq((sp), M_SYSERR, NULL);				\
 }
 #define	CALLOC_GOTO(sp, p, cast, nmemb, size) {				\
-	if ((p = (cast)calloc(nmemb, size)) == NULL)			\
+	if (((p) = (cast)calloc((nmemb), (size))) == NULL)		\
 		goto alloc_err;						\
 }
 #define	CALLOC_NOMSG(sp, p, cast, nmemb, size) {			\
-	p = (cast)calloc(nmemb, size);					\
+	(p) = (cast)calloc((nmemb), (size));				\
 }
 #define	CALLOC_RET(sp, p, cast, nmemb, size) {				\
-	if ((p = (cast)calloc(nmemb, size)) == NULL) {			\
-		msgq(sp, M_SYSERR, NULL);				\
+	if (((p) = (cast)calloc((nmemb), (size))) == NULL) {		\
+		msgq((sp), M_SYSERR, NULL);				\
 		return (1);						\
 	}								\
 }
 
 #define	MALLOC(sp, p, cast, size) {					\
-	if ((p = (cast)malloc(size)) == NULL)				\
-		msgq(sp, M_SYSERR, NULL);				\
+	if (((p) = (cast)malloc(size)) == NULL)				\
+		msgq((sp), M_SYSERR, NULL);				\
 }
 #define	MALLOC_GOTO(sp, p, cast, size) {				\
-	if ((p = (cast)malloc(size)) == NULL)				\
+	if (((p) = (cast)malloc(size)) == NULL)				\
 		goto alloc_err;						\
 }
 #define	MALLOC_NOMSG(sp, p, cast, size) {				\
-	p = (cast)malloc(size);						\
+	(p) = (cast)malloc(size);					\
 }
 #define	MALLOC_RET(sp, p, cast, size) {					\
-	if ((p = (cast)malloc(size)) == NULL) {				\
-		msgq(sp, M_SYSERR, NULL);				\
+	if (((p) = (cast)malloc(size)) == NULL) {			\
+		msgq((sp), M_SYSERR, NULL);				\
 		return (1);						\
 	}								\
 }
@@ -157,14 +159,14 @@
  * Don't depend on realloc(NULL, size) working.
  */
 #define	REALLOC(sp, p, cast, size) {					\
-	if ((p = (cast)(p == NULL ?					\
-	    malloc(size) : realloc(p, size))) == NULL)			\
-		msgq(sp, M_SYSERR, NULL);				\
+	if (((p) = (cast)((p) == NULL ?					\
+	    malloc(size) : realloc((p), (size)))) == NULL)		\
+		msgq((sp), M_SYSERR, NULL);				\
 }
 
 /*
  * Versions of memmove(3) and memset(3) that use the size of the
  * initial pointer to figure out how much memory to manipulate.
  */
-#define	MEMMOVE(p, t, len)	memmove(p, t, (len) * sizeof(*(p)))
-#define	MEMSET(p, value, len)	memset(p, value, (len) * sizeof(*(p)))
+#define	MEMMOVE(p, t, len)	memmove((p), (t), (len) * sizeof(*(p)))
+#define	MEMSET(p, value, len)	memset((p), (value), (len) * sizeof(*(p)))

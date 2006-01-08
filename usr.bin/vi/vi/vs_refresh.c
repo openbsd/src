@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_refresh.c,v 1.10 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: vs_refresh.c,v 1.11 2006/01/08 21:05:40 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -247,7 +247,7 @@ vs_paint(sp, flags)
 	 * screen but the column offset is not, we'll end up in the adjust
 	 * code, when we should probably have compressed the screen.
 	 */
-	if (IS_SMALL(sp))
+	if (IS_SMALL(sp)) {
 		if (LNO < HMAP->lno) {
 			lcnt = vs_sm_nlines(sp, HMAP, LNO, sp->t_maxrows);
 			if (lcnt <= HALFSCREEN(sp))
@@ -284,6 +284,7 @@ small_fill:			(void)gp->scr_move(sp, LASTLINE(sp), 0);
 				goto adjust;
 			}
 		}
+	}
 
 	/*
 	 * 6b: Line down, or current screen.
@@ -395,7 +396,7 @@ top:		if (vs_sm_fill(sp, LNO, P_TOP))
 adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 	    (LNO == HMAP->lno || LNO == TMAP->lno)) {
 		cnt = vs_screens(sp, LNO, &CNO);
-		if (LNO == HMAP->lno && cnt < HMAP->soff)
+		if (LNO == HMAP->lno && cnt < HMAP->soff) {
 			if ((HMAP->soff - cnt) > HALFTEXT(sp)) {
 				HMAP->soff = cnt;
 				vs_sm_fill(sp, OOBLNO, P_TOP);
@@ -404,7 +405,8 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 				while (cnt < HMAP->soff)
 					if (vs_sm_1down(sp))
 						return (1);
-		if (LNO == TMAP->lno && cnt > TMAP->soff)
+		}
+		if (LNO == TMAP->lno && cnt > TMAP->soff) {
 			if ((cnt - TMAP->soff) > HALFTEXT(sp)) {
 				TMAP->soff = cnt;
 				vs_sm_fill(sp, OOBLNO, P_BOTTOM);
@@ -413,6 +415,7 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 				while (cnt > TMAP->soff)
 					if (vs_sm_1up(sp))
 						return (1);
+		}
 	}
 
 	/*
@@ -613,8 +616,8 @@ slow:	for (smp = HMAP; smp->lno != LNO; ++smp);
 		}
 
 		/* Adjust the window towards the end of the line. */
-		if (off == 0 && off + SCREEN_COLS(sp) < cnt ||
-		    off != 0 && off + sp->cols < cnt) {
+		if ((off == 0 && off + SCREEN_COLS(sp) < cnt) ||
+		    (off != 0 && off + sp->cols < cnt)) {
 			do {
 				off += O_VAL(sp, O_SIDESCROLL);
 			} while (off + sp->cols < cnt);

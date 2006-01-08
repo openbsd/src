@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_usage.c,v 1.4 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: ex_usage.c,v 1.5 2006/01/08 21:05:40 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -79,7 +79,7 @@ ex_usage(sp, cmdp)
 		for (cp = cmds; cp->name != NULL &&
 		    memcmp(ap->bp, cp->name, ap->len); ++cp);
 		if (cp->name == NULL ||
-		    newscreen && !F_ISSET(cp, E_NEWSCREEN)) {
+		    (newscreen && !F_ISSET(cp, E_NEWSCREEN))) {
 			if (newscreen)
 				ap->bp[0] = toupper(ap->bp[0]);
 			(void)ex_printf(sp, "The %.*s command is unknown\n",

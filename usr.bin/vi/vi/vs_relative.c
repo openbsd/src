@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_relative.c,v 1.3 2002/02/16 21:27:58 millert Exp $	*/
+/*	$OpenBSD: vs_relative.c,v 1.4 2006/01/08 21:05:40 miod Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -155,12 +155,13 @@ done:		if (diffp != NULL)		/* XXX */
 	 */
 #define	TAB_RESET {							\
 	curoff += chlen;						\
-	if (!leftright && curoff >= sp->cols)				\
+	if (!leftright && curoff >= sp->cols) {				\
 		if (ch == '\t') {					\
 			curoff = 0;					\
 			scno -= scno % sp->cols;			\
 		} else							\
 			curoff -= sp->cols;				\
+	}								\
 }
 	if (cnop == NULL)
 		while (len--) {

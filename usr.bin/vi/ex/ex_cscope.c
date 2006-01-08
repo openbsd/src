@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cscope.c,v 1.11 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: ex_cscope.c,v 1.12 2006/01/08 21:05:40 miod Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -824,7 +824,7 @@ csc_help(sp, cmd)
 {
 	CC const *ccp;
 
-	if (cmd != NULL && *cmd != '\0')
+	if (cmd != NULL && *cmd != '\0') {
 		if ((ccp = lookup_ccmd(cmd)) == NULL) {
 			ex_printf(sp,
 			    "%s doesn't match any cscope command\n", cmd);
@@ -835,6 +835,7 @@ csc_help(sp, cmd)
 			ex_printf(sp, "  Usage: %s\n", ccp->usage_msg);
 			return (0);
 		}
+	}
 
 	ex_printf(sp, "cscope commands:\n");
 	for (ccp = cscope_cmds; ccp->name != NULL; ++ccp)

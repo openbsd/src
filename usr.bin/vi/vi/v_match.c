@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_match.c,v 1.4 2002/02/16 21:27:58 millert Exp $	*/
+/*	$OpenBSD: v_match.c,v 1.5 2006/01/08 21:05:40 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -137,8 +137,8 @@ nomatch:		msgq(sp, M_BERR, "184|No match character on this line");
 	 * starting cursor position when deleting to a match.
 	 */
 	if (vp->m_start.lno < vp->m_stop.lno ||
-	    vp->m_start.lno == vp->m_stop.lno &&
-	    vp->m_start.cno < vp->m_stop.cno)
+	    (vp->m_start.lno == vp->m_stop.lno &&
+	    vp->m_start.cno < vp->m_stop.cno))
 		vp->m_final = ISMOTION(vp) ? vp->m_start : vp->m_stop;
 	else
 		vp->m_final = vp->m_stop;

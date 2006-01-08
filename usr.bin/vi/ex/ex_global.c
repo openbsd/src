@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_global.c,v 1.7 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: ex_global.c,v 1.8 2006/01/08 21:05:40 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -125,11 +125,12 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 			*t = '\0';
 			break;
 		}
-		if (p[0] == '\\')
+		if (p[0] == '\\') {
 			if (p[1] == delim)
 				++p;
 			else if (p[1] == '\\')
 				*t++ = *p++;
+		}
 		*t++ = *p++;
 	}
 

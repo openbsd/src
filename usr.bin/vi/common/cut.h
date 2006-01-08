@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.h,v 1.5 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: cut.h,v 1.6 2006/01/08 21:05:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -68,7 +68,7 @@ struct _text {				/* Text: a linked list of lines. */
 	CHAR_T L__name;							\
 	L__name = isupper(nch) ? tolower(nch) : (nch);			\
 	LIST_FOREACH((cbp), &(sp)->gp->cutq, q)				\
-		if (cbp->name == L__name)				\
+		if ((cbp)->name == L__name)				\
 			break;						\
 }
 

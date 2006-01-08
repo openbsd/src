@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex.h,v 1.5 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: ex.h,v 1.6 2006/01/08 21:05:40 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -48,8 +48,8 @@ extern EXCMDLIST const cmds[];		/* Table of ex commands. */
  * enforce that here, just in case someone depends on it.
  */
 #define	IS_ESCAPE(sp, cmdp, ch)						\
-	(F_ISSET(cmdp, E_VLITONLY) ?					\
-	    (ch) == CH_LITERAL : KEY_VAL(sp, ch) == K_VLNEXT)
+	(F_ISSET((cmdp), E_VLITONLY) ?					\
+	    (ch) == CH_LITERAL : KEY_VAL((sp), (ch)) == K_VLNEXT)
 
 /*
  * File state must be checked for each command -- any ex command may be entered
@@ -58,7 +58,7 @@ extern EXCMDLIST const cmds[];		/* Table of ex commands. */
  */
 #define	NEEDFILE(sp, cmdp) {						\
 	if ((sp)->ep == NULL) {						\
-		ex_emsg(sp, (cmdp)->cmd->name, EXM_NOFILEYET);		\
+		ex_emsg((sp), (cmdp)->cmd->name, EXM_NOFILEYET);	\
 		return (1);						\
 	}								\
 }
@@ -104,10 +104,10 @@ struct _excmd {
 
 	/* Clear the structure before each ex command. */
 #define	CLEAR_EX_CMD(cmdp) {						\
-	u_int32_t L__f = F_ISSET(cmdp, E_PRESERVE);			\
+	u_int32_t L__f = F_ISSET((cmdp), E_PRESERVE);			\
 	memset(&((cmdp)->buffer), 0, ((char *)&(cmdp)->flags -		\
 	    (char *)&((cmdp)->buffer)) + sizeof((cmdp)->flags));	\
-	F_SET(cmdp, L__f);						\
+	F_SET((cmdp), L__f);						\
 }
 
 	CHAR_T	  buffer;		/* Command: named buffer. */

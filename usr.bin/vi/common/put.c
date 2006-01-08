@@ -1,4 +1,4 @@
-/*	$OpenBSD: put.c,v 1.7 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: put.c,v 1.8 2006/01/08 21:05:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -48,7 +48,7 @@ put(sp, cbp, namep, cp, rp, append)
 	int rval;
 	char *bp, *p, *t;
 
-	if (cbp == NULL)
+	if (cbp == NULL) {
 		if (namep == NULL) {
 			cbp = sp->gp->dcbp;
 			if (cbp == NULL) {
@@ -65,6 +65,7 @@ put(sp, cbp, namep, cp, rp, append)
 				return (1);
 			}
 		}
+	}
 	tp = CIRCLEQ_FIRST(&cbp->textq);
 
 	/*

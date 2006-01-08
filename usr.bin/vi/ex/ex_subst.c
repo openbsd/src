@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_subst.c,v 1.13 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: ex_subst.c,v 1.14 2006/01/08 21:05:40 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -122,11 +122,12 @@ subagain:	return (ex_subagain(sp, cmdp));
 			*t = '\0';
 			break;
 		}
-		if (p[0] == '\\')
+		if (p[0] == '\\') {
 			if (p[1] == delim)
 				++p;
 			else if (p[1] == '\\')
 				*t++ = *p++;
+		}
 		*t++ = *p++;
 	}
 
@@ -308,12 +309,12 @@ ex_subtilde(sp, cmdp)
  * confident.
  */
 #define	NEEDNEWLINE(sp) {						\
-	if (sp->newl_len == sp->newl_cnt) {				\
-		sp->newl_len += 25;					\
-		REALLOC(sp, sp->newl, size_t *,				\
-		    sp->newl_len * sizeof(size_t));			\
-		if (sp->newl == NULL) {					\
-			sp->newl_len = 0;				\
+	if ((sp)->newl_len == (sp)->newl_cnt) {				\
+		(sp)->newl_len += 25;					\
+		REALLOC((sp), (sp)->newl, size_t *,			\
+		    (sp)->newl_len * sizeof(size_t));			\
+		if ((sp)->newl == NULL) {				\
+			(sp)->newl_len = 0;				\
 			return (1);					\
 		}							\
 	}								\
@@ -322,25 +323,25 @@ ex_subtilde(sp, cmdp)
 #define	BUILD(sp, l, len) {						\
 	if (lbclen + (len) > lblen) {					\
 		lblen += MAX(lbclen + (len), 256);			\
-		REALLOC(sp, lb, char *, lblen);				\
+		REALLOC((sp), lb, char *, lblen);			\
 		if (lb == NULL) {					\
 			lbclen = 0;					\
 			return (1);					\
 		}							\
 	}								\
-	memcpy(lb + lbclen, l, len);					\
-	lbclen += len;							\
+	memcpy(lb + lbclen, (l), (len));				\
+	lbclen += (len);						\
 }
 
 #define	NEEDSP(sp, len, pnt) {						\
 	if (lbclen + (len) > lblen) {					\
 		lblen += MAX(lbclen + (len), 256);			\
-		REALLOC(sp, lb, char *, lblen);				\
+		REALLOC((sp), lb, char *, lblen);			\
 		if (lb == NULL) {					\
 			lbclen = 0;					\
 			return (1);					\
 		}							\
-		pnt = lb + lbclen;					\
+		(pnt) = lb + lbclen;					\
 	}								\
 }
 
@@ -476,7 +477,7 @@ s(sp, cmdp, s, re, flags)
 			goto usage;
 		}
 
-	if (*s != '\0' || !rflag && LF_ISSET(SUB_MUSTSETR)) {
+	if (*s != '\0' || (!rflag && LF_ISSET(SUB_MUSTSETR))) {
 usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 		return (1);
 	}
@@ -1367,7 +1368,7 @@ re_sub(sp, ip, lbp, lbclenp, lblenp, match)
 #define	OUTCH(ch, nltrans) {						\
 	CHAR_T __ch = (ch);						\
 	u_int __value = KEY_VAL(sp, __ch);				\
-	if (nltrans && (__value == K_CR || __value == K_NL)) {		\
+	if ((nltrans) && (__value == K_CR || __value == K_NL)) {	\
 		NEEDNEWLINE(sp);					\
 		sp->newl[sp->newl_cnt++] = lbclen;			\
 	} else if (conv != C_NOTSET) {					\

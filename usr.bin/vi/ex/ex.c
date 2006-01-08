@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex.c,v 1.12 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: ex.c,v 1.13 2006/01/08 21:05:40 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -1250,7 +1250,7 @@ addr_verify:
 				ex_badaddr(sp, ecp->cmd, A_ZERO, NUM_OK);
 				goto err;
 			}
-		} else if (!db_exist(sp, ecp->addr2.lno))
+		} else if (!db_exist(sp, ecp->addr2.lno)) {
 			if (FL_ISSET(ecp->iflags, E_C_COUNT)) {
 				if (db_last(sp, &lno))
 					goto err;
@@ -1259,6 +1259,7 @@ addr_verify:
 				ex_badaddr(sp, NULL, A_EOF, NUM_OK);
 				goto err;
 			}
+		}
 		/* FALLTHROUGH */
 	case 1:
 		if (ecp->addr1.lno == 0) {
@@ -1894,7 +1895,7 @@ ex_line(sp, ecp, mp, isaddrp, errp)
 		 * difference.  C'est la vie.
 		 */
 		if (ecp->clen < 2 ||
-		    ecp->cp[1] != '/' && ecp->cp[1] != '?') {
+		    (ecp->cp[1] != '/' && ecp->cp[1] != '?')) {
 			msgq(sp, M_ERR, "096|\\ not followed by / or ?");
 			*errp = 1;
 			return (0);
@@ -2000,9 +2001,9 @@ search:		mp->lno = sp->lno;
 		for (;;) {
 			for (; ecp->clen > 0 && isblank(ecp->cp[0]);
 			    ++ecp->cp, --ecp->clen);
-			if (ecp->clen == 0 || !isdigit(ecp->cp[0]) &&
+			if (ecp->clen == 0 || (!isdigit(ecp->cp[0]) &&
 			    ecp->cp[0] != '+' && ecp->cp[0] != '-' &&
-			    ecp->cp[0] != '^')
+			    ecp->cp[0] != '^'))
 				break;
 			if (!isdigit(ecp->cp[0]) &&
 			    !isdigit(ecp->cp[1])) {
@@ -2119,7 +2120,7 @@ ex_load(sp)
 
 			/* If it's a global/v command, fix up the last line. */
 			if (FL_ISSET(ecp->agv_flags,
-			    AGV_GLOBAL | AGV_V) && ecp->range_lno != OOBLNO)
+			    AGV_GLOBAL | AGV_V) && ecp->range_lno != OOBLNO) {
 				if (db_exist(sp, ecp->range_lno))
 					sp->lno = ecp->range_lno;
 				else {
@@ -2128,6 +2129,7 @@ ex_load(sp)
 					if (sp->lno == 0)
 						sp->lno = 1;
 				}
+			}
 			free(ecp->o_cp);
 		}
 

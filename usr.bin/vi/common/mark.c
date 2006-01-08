@@ -1,4 +1,4 @@
-/*	$OpenBSD: mark.c,v 1.6 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: mark.c,v 1.7 2006/01/08 21:05:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -237,12 +237,13 @@ mark_insdel(sp, op, lno)
 		abort();
 	case LINE_DELETE:
 		LIST_FOREACH(lmp, &sp->ep->marks, q)
-			if (lmp->lno >= lno)
+			if (lmp->lno >= lno) {
 				if (lmp->lno == lno) {
 					F_SET(lmp, MARK_DELETED);
 					(void)log_mark(sp, lmp);
 				} else
 					--lmp->lno;
+			}
 		break;
 	case LINE_INSERT:
 		/*

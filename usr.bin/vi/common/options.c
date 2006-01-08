@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.11 2003/04/07 21:13:54 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.12 2006/01/08 21:05:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -302,8 +302,8 @@ opts_init(sp, oargs)
 
 	/* Set numeric and string default values. */
 #define	OI(indx, str) {							\
-	if (str != b1)		/* GCC puts strings in text-space. */	\
-		(void)strlcpy(b1, str, sizeof b1);			\
+	if ((str) != b1)	/* GCC puts strings in text-space. */	\
+		(void)strlcpy(b1, (str), sizeof(b1));			\
 	a.len = strlen(b1);						\
 	if (opts_set(sp, argv, NULL)) {					\
 		 optindx = indx;					\
@@ -554,7 +554,7 @@ opts_set(sp, argv, usage)
 			 * Do nothing if the value is unchanged, the underlying
 			 * functions can be expensive.
 			 */
-			if (!F_ISSET(op, OPT_ALWAYS))
+			if (!F_ISSET(op, OPT_ALWAYS)) {
 				if (turnoff) {
 					if (!O_ISSET(sp, offset))
 						break;
@@ -562,6 +562,7 @@ opts_set(sp, argv, usage)
 					if (O_ISSET(sp, offset))
 						break;
 				}
+			}
 
 			if (F_ISSET(op, OPT_EARLYSET)) {
 			    /* Set the value. */
@@ -572,8 +573,8 @@ opts_set(sp, argv, usage)
 			}
 
 			/* Report to subsystems. */
-			if (op->func != NULL &&
-			    op->func(sp, spo, NULL, &turnoff) ||
+			if ((op->func != NULL &&
+			    op->func(sp, spo, NULL, &turnoff)) ||
 			    ex_optchange(sp, offset, NULL, &turnoff) ||
 			    v_optchange(sp, offset, NULL, &turnoff) ||
 			    sp->gp->scr_optchange(sp, offset, NULL, &turnoff)) {
@@ -667,8 +668,8 @@ badnum:				p = msg_print(sp, name, &nf);
 			}
 
 			/* Report to subsystems. */
-			if (op->func != NULL &&
-			    op->func(sp, spo, sep, &value) ||
+			if ((op->func != NULL &&
+			    op->func(sp, spo, sep, &value)) ||
 			    ex_optchange(sp, offset, sep, &value) ||
 			    v_optchange(sp, offset, sep, &value) ||
 			    sp->gp->scr_optchange(sp, offset, sep, &value)) {
@@ -714,8 +715,8 @@ badnum:				p = msg_print(sp, name, &nf);
 			}
 
 			/* Report to subsystems. */
-			if (op->func != NULL &&
-			    op->func(sp, spo, sep, NULL) ||
+			if ((op->func != NULL &&
+			    op->func(sp, spo, sep, NULL)) ||
 			    ex_optchange(sp, offset, sep, NULL) ||
 			    v_optchange(sp, offset, sep, NULL) ||
 			    sp->gp->scr_optchange(sp, offset, sep, NULL)) {
@@ -868,8 +869,8 @@ opts_dump(sp, type)
 				break;
 			case OPT_STR:
 				if (O_STR(sp, cnt) == O_D_STR(sp, cnt) ||
-				    O_D_STR(sp, cnt) != NULL &&
-				    !strcmp(O_STR(sp, cnt), O_D_STR(sp, cnt)))
+				    (O_D_STR(sp, cnt) != NULL &&
+				    !strcmp(O_STR(sp, cnt), O_D_STR(sp, cnt))))
 					continue;
 				break;
 			}

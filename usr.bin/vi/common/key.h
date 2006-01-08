@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.h,v 1.3 2001/01/29 01:58:29 niklas Exp $	*/
+/*	$OpenBSD: key.h,v 1.4 2006/01/08 21:05:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -134,7 +134,7 @@ extern KEYLIST keylist[];
 #define	KEYS_WAITING(sp)	((sp)->gp->i_cnt != 0)
 #define	MAPPED_KEYS_WAITING(sp)						\
 	(KEYS_WAITING(sp) &&						\
-	    F_ISSET(&sp->gp->i_event[sp->gp->i_next].e_ch, CH_MAPPED))
+	    F_ISSET(&(sp)->gp->i_event[(sp)->gp->i_next].e_ch, CH_MAPPED))
 
 /*
  * Ex/vi commands are generally separated by whitespace characters.  We
@@ -176,7 +176,7 @@ extern KEYLIST keylist[];
 #define	INTERRUPT_CHECK	100
 #define	INTERRUPTED(sp)							\
 	(F_ISSET((sp)->gp, G_INTERRUPTED) ||				\
-	(!v_event_get(sp, NULL, 0, EC_INTERRUPT) &&			\
+	(!v_event_get((sp), NULL, 0, EC_INTERRUPT) &&			\
 	F_ISSET((sp)->gp, G_INTERRUPTED)))
 #define	CLR_INTERRUPT(sp)						\
 	F_CLR((sp)->gp, G_INTERRUPTED)

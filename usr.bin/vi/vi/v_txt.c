@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_txt.c,v 1.16 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: v_txt.c,v 1.17 2006/01/08 21:05:40 miod Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -1563,7 +1563,7 @@ txt_abbrev(sp, tp, pushcp, isinfoline, didsubp, turnoffp)
 	 *
 	 * This makes the layering look like a Nachos Supreme.
 	 */
-search:	if (isinfoline)
+search:	if (isinfoline) {
 		if (off == tp->ai || off == tp->offset)
 			if (ex_is_abbrev(p, len)) {
 				*turnoffp = 1;
@@ -1573,6 +1573,7 @@ search:	if (isinfoline)
 		else
 			if (*turnoffp)
 				return (0);
+	}
 
 	/* Check for any abbreviations. */
 	if ((qp = seq_find(sp, NULL, NULL, p, len, SEQ_ABBREV, NULL)) == NULL)
@@ -1732,7 +1733,7 @@ txt_ai_resolve(sp, tp, changedp)
 	 * If there are no spaces, or no tabs after spaces and less than
 	 * ts spaces, it's already minimal.
 	 */
-	if (!spaces || !tab_after_sp && spaces < ts)
+	if (!spaces || (!tab_after_sp && spaces < ts))
 		return;
 
 	/* Count up spaces/tabs needed to get to the target. */
@@ -1911,7 +1912,7 @@ txt_dent(sp, tp, isindent)
 {
 	CHAR_T ch;
 	u_long sw, ts;
-	size_t cno, current, spaces, target, tabs, off;
+	size_t cno, current, spaces, target, tabs;
 	int ai_reset;
 
 	ts = O_VAL(sp, O_TABSTOP);
@@ -2707,7 +2708,7 @@ txt_resolve(sp, tiqh, flags)
 	else
 		changed = 0;
 	if (db_set(sp, tp->lno, tp->lb, tp->len) ||
-	    changed && vs_change(sp, tp->lno, LINE_RESET))
+	    (changed && vs_change(sp, tp->lno, LINE_RESET)))
 		return (1);
 
 	for (lno = tp->lno; (tp = CIRCLEQ_NEXT(tp, q)) != (void *)&sp->tiq; ++lno) {
@@ -2716,7 +2717,7 @@ txt_resolve(sp, tiqh, flags)
 		else
 			changed = 0;
 		if (db_append(sp, 0, lno, tp->lb, tp->len) ||
-		    changed && vs_change(sp, tp->lno, LINE_RESET))
+		    (changed && vs_change(sp, tp->lno, LINE_RESET)))
 			return (1);
 	}
 
@@ -2791,7 +2792,7 @@ txt_showmatch(sp, tp)
 	}
 
 	/* If the match is on the screen, move to it. */
-	if (cs.cs_lno < m.lno || cs.cs_lno == m.lno && cs.cs_cno < m.cno)
+	if (cs.cs_lno < m.lno || (cs.cs_lno == m.lno && cs.cs_cno < m.cno))
 		return (0);
 	sp->lno = cs.cs_lno;
 	sp->cno = cs.cs_cno;

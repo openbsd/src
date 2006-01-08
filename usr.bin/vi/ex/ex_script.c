@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_script.c,v 1.12 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: ex_script.c,v 1.13 2006/01/08 21:05:40 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -379,7 +379,7 @@ sscr_input(sp)
 	GS *gp;
 	struct timeval tv;
 	fd_set *rdfd;
-	int maxfd, nfd;
+	int maxfd;
 
 	gp = sp->gp;
 
@@ -434,7 +434,6 @@ static int
 sscr_insert(sp)
 	SCR *sp;
 {
-	struct timeval tv;
 	CHAR_T *endp, *p, *t;
 	SCRIPT *sc;
 	struct pollfd pfd[1];

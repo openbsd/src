@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.8 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: cut.c,v 1.9 2006/01/08 21:05:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -102,8 +102,8 @@ cut(sp, namep, fm, tm, flags)
 	append = copy_one = copy_def = 0;
 	if (namep != NULL) {
 		name = *namep;
-		if (LF_ISSET(CUT_NUMREQ) || LF_ISSET(CUT_NUMOPT) &&
-		    (LF_ISSET(CUT_LINEMODE) || fm->lno != tm->lno)) {
+		if (LF_ISSET(CUT_NUMREQ) || (LF_ISSET(CUT_NUMOPT) &&
+		    (LF_ISSET(CUT_LINEMODE) || fm->lno != tm->lno))) {
 			copy_one = 1;
 			cb_rotate(sp);
 		}
@@ -113,8 +113,8 @@ cut(sp, namep, fm, tm, flags)
 			name = tolower(name);
 		}
 namecb:		CBNAME(sp, cbp, name);
-	} else if (LF_ISSET(CUT_NUMREQ) || LF_ISSET(CUT_NUMOPT) &&
-	    (LF_ISSET(CUT_LINEMODE) || fm->lno != tm->lno)) {
+	} else if (LF_ISSET(CUT_NUMREQ) || (LF_ISSET(CUT_NUMOPT) &&
+	    (LF_ISSET(CUT_LINEMODE) || fm->lno != tm->lno))) {
 		name = '1';
 		cb_rotate(sp);
 		goto namecb;

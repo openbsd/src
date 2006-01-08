@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_search.c,v 1.8 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: v_search.c,v 1.9 2006/01/08 21:05:40 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -468,8 +468,8 @@ v_correct(sp, vp, isdelta)
 	 * because of the wrapscan option.
 	 */
 	if (vp->m_start.lno > vp->m_stop.lno ||
-	    vp->m_start.lno == vp->m_stop.lno &&
-	    vp->m_start.cno > vp->m_stop.cno) {
+	    (vp->m_start.lno == vp->m_stop.lno &&
+	    vp->m_start.cno > vp->m_stop.cno)) {
 		m = vp->m_start;
 		vp->m_start = vp->m_stop;
 		vp->m_stop = m;

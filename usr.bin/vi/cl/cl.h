@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.h,v 1.6 2001/01/29 01:58:26 niklas Exp $	*/
+/*	$OpenBSD: cl.h,v 1.7 2006/01/08 21:05:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -54,7 +54,7 @@ typedef struct _cl_private {
 } CL_PRIVATE;
 
 #define	CLP(sp)		((CL_PRIVATE *)((sp)->gp->cl_private))
-#define	GCLP(gp)	((CL_PRIVATE *)gp->cl_private)
+#define	GCLP(gp)	((CL_PRIVATE *)(gp)->cl_private)
 
 /* Return possibilities from the keyboard read routine. */
 typedef enum { INP_OK=0, INP_EOF, INP_ERR, INP_INTR, INP_TIMEOUT } input_t;

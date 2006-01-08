@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.14 2003/04/25 23:44:08 deraadt Exp $	*/
+/*	$OpenBSD: msg.c,v 1.15 2006/01/08 21:05:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -332,7 +332,7 @@ nofmt:	mp += len;
 		(void)fprintf(stderr, "%.*s", (int)mlen, bp);
 
 	/* Cleanup. */
-ret:	FREE_SPACE(sp, bp, blen);
+	FREE_SPACE(sp, bp, blen);
 alloc_err:
 	reenter = 0;
 }
@@ -684,8 +684,8 @@ msg_open(sp, file)
 	char *p, *t, buf[MAXPATHLEN];
 
 	if ((p = strrchr(file, '/')) != NULL && p[1] == '\0' &&
-	    ((t = getenv("LC_MESSAGES")) != NULL && t[0] != '\0' ||
-	    (t = getenv("LANG")) != NULL && t[0] != '\0')) {
+	    (((t = getenv("LC_MESSAGES")) != NULL && t[0] != '\0') ||
+	    ((t = getenv("LANG")) != NULL && t[0] != '\0'))) {
 		(void)snprintf(buf, sizeof(buf), "%s%s", file, t);
 		p = buf;
 	} else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.6 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: line.c,v 1.7 2006/01/08 21:05:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -62,7 +62,7 @@ db_eget(sp, lno, pp, lenp, isemptyp)
 		return (1);
 
 	/* If the file isn't empty, fail loudly. */
-	if (lno != 0 && lno != 1 || l1 != 0) {
+	if ((lno != 0 && lno != 1) || l1 != 0) {
 		db_err(sp, lno);
 		return (1);
 	}

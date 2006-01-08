@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_shell.c,v 1.9 2002/06/12 06:07:17 mpech Exp $	*/
+/*	$OpenBSD: ex_shell.c,v 1.10 2006/01/08 21:05:40 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -226,136 +226,136 @@ typedef struct _sigs {
 
 SIGS const sigs[] = {
 #ifdef SIGABRT
-	SIGABRT,	"Abort trap",
+	{ SIGABRT,	"Abort trap" },
 #endif
 #ifdef SIGALRM
-	SIGALRM,	"Alarm clock",
+	{ SIGALRM,	"Alarm clock" },
 #endif
 #ifdef SIGBUS
-	SIGBUS,		"Bus error",
+	{ SIGBUS,	"Bus error" },
 #endif
 #ifdef SIGCLD
-	SIGCLD,		"Child exited or stopped",
+	{ SIGCLD,	"Child exited or stopped" },
 #endif
 #ifdef SIGCHLD
-	SIGCHLD,	"Child exited",
+	{ SIGCHLD,	"Child exited" },
 #endif
 #ifdef SIGCONT
-	SIGCONT,	"Continued",
+	{ SIGCONT,	"Continued" },
 #endif
 #ifdef SIGDANGER
-	SIGDANGER,	"System crash imminent",
+	{ SIGDANGER,	"System crash imminent" },
 #endif
 #ifdef SIGEMT
-	SIGEMT,		"EMT trap",
+	{ SIGEMT,	"EMT trap" },
 #endif
 #ifdef SIGFPE
-	SIGFPE,		"Floating point exception",
+	{ SIGFPE,	"Floating point exception" },
 #endif
 #ifdef SIGGRANT
-	SIGGRANT,	"HFT monitor mode granted",
+	{ SIGGRANT,	"HFT monitor mode granted" },
 #endif
 #ifdef SIGHUP
-	SIGHUP,		"Hangup",
+	{ SIGHUP,	"Hangup" },
 #endif
 #ifdef SIGILL
-	SIGILL,		"Illegal instruction",
+	{ SIGILL,	"Illegal instruction" },
 #endif
 #ifdef SIGINFO
-	SIGINFO,	"Information request",
+	{ SIGINFO,	"Information request" },
 #endif
 #ifdef SIGINT
-	SIGINT,		"Interrupt",
+	{ SIGINT,	"Interrupt" },
 #endif
 #ifdef SIGIO
-	SIGIO,		"I/O possible",
+	{ SIGIO,	"I/O possible" },
 #endif
 #ifdef SIGIOT
-	SIGIOT,		"IOT trap",
+	{ SIGIOT,	"IOT trap" },
 #endif
 #ifdef SIGKILL
-	SIGKILL,	"Killed",
+	{ SIGKILL,	"Killed" },
 #endif
 #ifdef SIGLOST
-	SIGLOST,	"Record lock",
+	{ SIGLOST,	"Record lock" },
 #endif
 #ifdef SIGMIGRATE
-	SIGMIGRATE,	"Migrate process to another CPU",
+	{ SIGMIGRATE,	"Migrate process to another CPU" },
 #endif
 #ifdef SIGMSG
-	SIGMSG,		"HFT input data pending",
+	{ SIGMSG,	"HFT input data pending" },
 #endif
 #ifdef SIGPIPE
-	SIGPIPE,	"Broken pipe",
+	{ SIGPIPE,	"Broken pipe" },
 #endif
 #ifdef SIGPOLL
-	SIGPOLL,	"I/O possible",
+	{ SIGPOLL,	"I/O possible" },
 #endif
 #ifdef SIGPRE
-	SIGPRE,		"Programming error",
+	{ SIGPRE,	"Programming error" },
 #endif
 #ifdef SIGPROF
-	SIGPROF,	"Profiling timer expired",
+	{ SIGPROF,	"Profiling timer expired" },
 #endif
 #ifdef SIGPWR
-	SIGPWR,		"Power failure imminent",
+	{ SIGPWR,	"Power failure imminent" },
 #endif
 #ifdef SIGRETRACT
-	SIGRETRACT,	"HFT monitor mode retracted",
+	{ SIGRETRACT,	"HFT monitor mode retracted" },
 #endif
 #ifdef SIGQUIT
-	SIGQUIT,	"Quit",
+	{ SIGQUIT,	"Quit" },
 #endif
 #ifdef SIGSAK
-	SIGSAK,		"Secure Attention Key",
+	{ SIGSAK,	"Secure Attention Key" },
 #endif
 #ifdef SIGSEGV
-	SIGSEGV,	"Segmentation fault",
+	{ SIGSEGV,	"Segmentation fault" },
 #endif
 #ifdef SIGSOUND
-	SIGSOUND,	"HFT sound sequence completed",
+	{ SIGSOUND,	"HFT sound sequence completed" },
 #endif
 #ifdef SIGSTOP
-	SIGSTOP,	"Suspended (signal)",
+	{ SIGSTOP,	"Suspended (signal)" },
 #endif
 #ifdef SIGSYS
-	SIGSYS,		"Bad system call",
+	{ SIGSYS,	"Bad system call" },
 #endif
 #ifdef SIGTERM
-	SIGTERM,	"Terminated",
+	{ SIGTERM,	"Terminated" },
 #endif
 #ifdef SIGTRAP
-	SIGTRAP,	"Trace/BPT trap",
+	{ SIGTRAP,	"Trace/BPT trap" },
 #endif
 #ifdef SIGTSTP
-	SIGTSTP,	"Suspended",
+	{ SIGTSTP,	"Suspended" },
 #endif
 #ifdef SIGTTIN
-	SIGTTIN,	"Stopped (tty input)",
+	{ SIGTTIN,	"Stopped (tty input)" },
 #endif
 #ifdef SIGTTOU
-	SIGTTOU,	"Stopped (tty output)",
+	{ SIGTTOU,	"Stopped (tty output)" },
 #endif
 #ifdef SIGURG
-	SIGURG,		"Urgent I/O condition",
+	{ SIGURG,	"Urgent I/O condition" },
 #endif
 #ifdef SIGUSR1
-	SIGUSR1,	"User defined signal 1",
+	{ SIGUSR1,	"User defined signal 1" },
 #endif
 #ifdef SIGUSR2
-	SIGUSR2,	"User defined signal 2",
+	{ SIGUSR2,	"User defined signal 2" },
 #endif
 #ifdef SIGVTALRM
-	SIGVTALRM,	"Virtual timer expired",
+	{ SIGVTALRM,	"Virtual timer expired" },
 #endif
 #ifdef SIGWINCH
-	SIGWINCH,	"Window size changes",
+	{ SIGWINCH,	"Window size changes" },
 #endif
 #ifdef SIGXCPU
-	SIGXCPU,	"Cputime limit exceeded",
+	{ SIGXCPU,	"Cputime limit exceeded" },
 #endif
 #ifdef SIGXFSZ
-	SIGXFSZ,	"Filesize limit exceeded",
+	{ SIGXFSZ,	"Filesize limit exceeded" },
 #endif
 };
 

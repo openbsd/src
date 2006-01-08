@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_tag.c,v 1.11 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: ex_tag.c,v 1.12 2006/01/08 21:05:40 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -169,7 +169,7 @@ ex_tag_push(sp, cmdp)
 	lno = sp->lno;
 	cno = sp->cno;
 	istmp = frp == NULL ||
-	    F_ISSET(frp, FR_TMPFILE) && !F_ISSET(cmdp, E_NEWSCREEN);
+	    (F_ISSET(frp, FR_TMPFILE) && !F_ISSET(cmdp, E_NEWSCREEN));
 
 	/* Try to switch to the tag. */
 	force = FL_ISSET(cmdp->iflags, E_C_FORCE);
@@ -939,7 +939,7 @@ ctag_search(sp, search, slen, tag)
 		m.lno = 1;
 		m.cno = 0;
 		if (f_search(sp, &m, &m,
-		    search, slen, NULL, SEARCH_FILE | SEARCH_TAG))
+		    search, slen, NULL, SEARCH_FILE | SEARCH_TAG)) {
 			if ((p = strrchr(search, '(')) != NULL) {
 				slen = p - search;
 				if (f_search(sp, &m, &m, search, slen,
@@ -949,6 +949,7 @@ ctag_search(sp, search, slen, tag)
 notfound:			tag_msg(sp, TAG_SEARCH, tag);
 				return (1);
 			}
+		}
 		/*
 		 * !!!
 		 * Historically, tags set the search direction if it wasn't
@@ -1244,7 +1245,7 @@ ctag_file(sp, tfp, name, dirp, dlenp)
 #define	GREATER		1
 #define	LESS		(-1)
 
-#define	SKIP_PAST_NEWLINE(p, back)	while (p < back && *p++ != '\n');
+#define	SKIP_PAST_NEWLINE(p, back)	while ((p) < (back) && *(p)++ != '\n');
 
 static char *
 binary_search(string, front, back)

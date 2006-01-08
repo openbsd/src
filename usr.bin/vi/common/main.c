@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 2006/01/08 21:05:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -41,7 +41,9 @@ static const char sccsid[] = "@(#)main.c	10.48 (Berkeley) 10/11/96";
 #include "../vi/vi.h"
 #include "pathnames.h"
 
+#ifdef DEBUG
 static void	 attach(GS *);
+#endif
 static void	 v_estr(char *, int, char *);
 static int	 v_obsolete(char *, char *[]);
 
@@ -403,8 +405,8 @@ editor(gp, argc, argv)
 			if (v_event_get(sp, &ev, 0, 0))
 				goto err;
 			if (ev.e_event == E_INTERRUPT ||
-			    ev.e_event == E_CHARACTER &&
-			    (ev.e_value == K_CR || ev.e_value == K_NL))
+			    (ev.e_event == E_CHARACTER &&
+			    (ev.e_value == K_CR || ev.e_value == K_NL)))
 				break;
 			(void)gp->scr_bell(sp);
 		}
@@ -562,7 +564,7 @@ v_obsolete(name, argv)
 				argv[0][1] = 'c';
 				(void)strlcpy(argv[0] + 2, p + 1, len);
 			}
-		} else if (argv[0][0] == '-')
+		} else if (argv[0][0] == '-') {
 			if (argv[0][1] == '\0') {
 				argv[0] = strdup("-s");
 				if (argv[0] == NULL) {
@@ -574,6 +576,7 @@ nomem:					v_estr(name, errno, NULL);
 				    argv[0][1] == 't' || argv[0][1] == 'w') &&
 				    argv[0][2] == '\0')
 					++argv;
+		}
 	return (0);
 }
 
