@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.79 2005/11/19 08:23:41 jsg Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.80 2006/01/08 00:00:51 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -407,7 +407,7 @@ The following such adapters are supported or expected to work:
 .It Eumitcom WL11000P
 .It Global Sun Technology GL24110P (untested)
 .It Global Sun Technology GL24110P02
-.It LinkSys WDT11 (a rebadged GL24110P02)
+.It Linksys WDT11 (a rebadged GL24110P02)
 .It Longshine 8031
 .It Netgear MA301
 .It Siemens/Efficient Networks SpeedStream 1023

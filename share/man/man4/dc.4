@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.4,v 1.39 2005/09/30 20:34:24 jaredy Exp $
+.\"	$OpenBSD: dc.4,v 1.40 2006/01/08 00:00:51 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -119,7 +119,7 @@ Digital DE500-BA 10/100 (21143, non-MII)
 .It
 Built-in DE500-BA on DEC Alpha workstations (21143, non-MII)
 .It
-Built-in Ethernet on LinkSys EtherFast 10/100 Instant GigaDrive (DM9102, MII)
+Built-in Ethernet on Linksys EtherFast 10/100 Instant GigaDrive (DM9102, MII)
 .It
 Kingston KNE100TX (21143, MII)
 .It
@@ -135,7 +135,7 @@ CNet Pro120A (98715A or 98713A) and CNet Pro120B (98715)
 .It
 Compex RL100-TX (98713 or 98713A)
 .It
-LinkSys LNE100TX (PNIC 82c168, 82c169)
+Linksys LNE100TX (PNIC 82c168, 82c169)
 .It
 NetGear FA310-TX Rev. D1, D2 or D3 (PNIC 82c169)
 .It
@@ -143,7 +143,7 @@ Matrox FastNIC 10/100 (PNIC 82c168, 82c169)
 .It
 Kingston KNE110TX (PNIC 82c169)
 .It
-LinkSys LNE100TX v2.0 (PNIC II 82c115)
+Linksys LNE100TX v2.0 (PNIC II 82c115)
 .It
 Jaton XpressNet (Davicom DM9102)
 .It
@@ -151,7 +151,7 @@ Alfa Inc GFC2204 (ASIX AX88140A)
 .It
 CNet Pro110B (ASIX AX88140A)
 .It
-LinkSys LNE100TX v4.x (ADMtek AN983 Centaur-P)
+Linksys LNE100TX v4.x (ADMtek AN983 Centaur-P)
 .It
 Xircom CardBus, including RealPort models (Xircom X3201)
 .It
@@ -180,7 +180,7 @@ chip is horribly broken and is not supported by the
 .Nm
 driver at this time: the chip will operate in any speed or duplex
 mode, however these must be set manually.
-The original 82c168 appears on very early revisions of the LinkSys LNE100TX
+The original 82c168 appears on very early revisions of the Linksys LNE100TX
 and Matrox FastNIC.
 .It 10baseT
 Set 10Mbps operation.
@@ -346,7 +346,7 @@ The 98715A does not exhibit this problem.
 All other modes on the 98713A seem to work correctly.
 .Pp
 The original 82c168 PNIC chip has built-in NWAY support which is
-used on certain early LinkSys LNE100TX and Matrox FastNIC cards,
+used on certain early Linksys LNE100TX and Matrox FastNIC cards,
 however it is horribly broken and difficult to use reliably.
 Consequently, autonegotiation is not currently supported for this
 chipset: the driver defaults the NIC to 10baseT half duplex, and it's
