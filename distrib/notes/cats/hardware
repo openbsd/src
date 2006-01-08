@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.27 2005/11/19 08:23:41 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.28 2006/01/08 00:32:56 jolan Exp $
 OpenBSD/MACHINE runs on the Chalice/Simtec StrongARM 110 Evaluation Board.
 
 Supported devices {:-include-:}:
@@ -96,7 +96,7 @@ Supported devices {:-include-:}:
 		    Elsa Microlink USB2Ethernet
 		    I/O Data USB ETTX
 		    Kingston KNU101TX
-		    LinkSys USB100TX, USB100H1 and USB10TA
+		    Linksys USB100TX, USB100H1 and USB10TA
 		    Melco Inc. LUA-TX
 		    Siemens SpeedStream USB
 		    SmartBridges smartNIC 2
@@ -114,7 +114,7 @@ Supported devices {:-include-:}:
 		    Hawking UF200
 		    Intellinet USB 2.0 to Ethernet (rev A)
 		    JVC MP-PRX1
-		    LinkSys USB200M
+		    Linksys USB200M
 		    Netgear FA120
 		    Sitecom LN-029
 		    SMC 2209USB/ETH
@@ -130,7 +130,7 @@ Supported devices {:-include-:}:
 		Digital DC21x4x-based PCI Ethernet adapters, including:
 		    Older SMC PCI EtherPower 10, 10/100 (models
 		      8432, 9332, and 9334)
-		    Older LinkSys 10, 10/100 (newer models are
+		    Older Linksys 10, 10/100 (newer models are
 		      supported by other drivers)
 		    Znyx ZX3xx
 		    Cogent EM100FX and EM440TX
@@ -160,7 +160,7 @@ Supported devices {:-include-:}:
 		    Jaton USB XpressNet
 		    Kawasaki USB101
 		    Kingston Ethernet
-		    LinkSys USB10T
+		    Linksys USB10T
 		    Mobility Ethernet
 		    Netgear EA101
 		    Peracom USB
