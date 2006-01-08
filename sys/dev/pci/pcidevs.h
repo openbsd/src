@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.999 2006/01/08 13:16:58 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1000 2006/01/08 19:41:08 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -853,7 +853,8 @@
 #define	PCI_PRODUCT_ATI_RADEON_RV280_SE_S	0x5964		/* Radeon 9200 SE Sec */
 #define	PCI_PRODUCT_ATI_RADEON_RS482	0x5974		/* Radeon XPRESS 200 */
 #define	PCI_PRODUCT_ATI_RADEON_RS482_B	0x5975		/* Radeon XPRESS 200M */
-#define	PCI_PRODUCT_ATI_RADEON_RS480_PCIE	0x5a3f		/* RS480 PCIE */
+#define	PCI_PRODUCT_ATI_RADEON_RS480_PCIE_2	0x5a36		/* RS480 PCIE */
+#define	PCI_PRODUCT_ATI_RADEON_RS480_PCIE_1	0x5a3f		/* RS480 PCIE */
 #define	PCI_PRODUCT_ATI_RADEON_RS400	0x5a41		/* Radeon XPRESS 200 */
 #define	PCI_PRODUCT_ATI_RADEON_RS400_B	0x5a42		/* Radeon XPRESS 200M */
 #define	PCI_PRODUCT_ATI_RADEON_RC410	0x5a61		/* Radeon XPRESS 200 */
@@ -1154,7 +1155,7 @@
 #define	PCI_PRODUCT_CREATIVELABS_AUDIGY	0x0004		/* SoundBlaster Audigy */
 #define	PCI_PRODUCT_CREATIVELABS_SBLIVE2	0x0006		/* SoundBlaster Live (Dell) */
 #define	PCI_PRODUCT_CREATIVELABS_AUDIGYLS	0x0007		/* SoundBlaster Audigy LS */
-#define	PCI_PRODUCT_CREATIVELABS_AUDIGY2	0x0008		/* SoundBlaster Audigy */
+#define	PCI_PRODUCT_CREATIVELABS_AUDIGY2	0x0008		/* SoundBlaster Audigy 2 */
 #define	PCI_PRODUCT_CREATIVELABS_FIWIRE	0x4001		/* Firewire */
 #define	PCI_PRODUCT_CREATIVELABS_SBJOY	0x7002		/* PCI Gameport Joystick */
 #define	PCI_PRODUCT_CREATIVELABS_AUDIGIN	0x7003		/* SoundBlaster Audigy Digital */

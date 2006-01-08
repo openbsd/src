@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.999 2006/01/08 13:16:58 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1000 2006/01/08 19:41:08 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1987,7 +1987,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon XPRESS 200M",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS480_PCIE,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS480_PCIE_2,
+	    "RS480 PCIE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS480_PCIE_1,
 	    "RS480 PCIE",
 	},
 	{
@@ -2948,7 +2952,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_AUDIGY2,
-	    "SoundBlaster Audigy",
+	    "SoundBlaster Audigy 2",
 	},
 	{
 	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_FIWIRE,
