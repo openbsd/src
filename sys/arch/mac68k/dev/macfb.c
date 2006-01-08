@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfb.c,v 1.3 2006/01/08 16:59:35 miod Exp $	*/
+/*	$OpenBSD: macfb.c,v 1.4 2006/01/08 17:19:46 miod Exp $	*/
 /* $NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -139,6 +139,16 @@ macfb_init(struct macfb_devconfig *dc)
 	ri->ri_height = dc->dc_ht;
 	ri->ri_hw = dc;
 
+	/* swap B and R */
+	if (ri->ri_depth == 16) {
+		ri->ri_rnum = 5;
+		ri->ri_rpos = 11;
+		ri->ri_gnum = 6;
+		ri->ri_gpos = 5;
+		ri->ri_bnum = 5;
+		ri->ri_bpos = 0;
+	}
+
 	/*
 	 * Ask for an unholy big display, rasops will trim this to more
 	 * reasonable values.
@@ -146,15 +156,17 @@ macfb_init(struct macfb_devconfig *dc)
 	if (rasops_init(ri, 160, 160) != 0)
 		return (-1);
 
-	/*
-	 * Until we know how to setup the colormap, constrain ourselves to
-	 * mono mode. Note that we need to use our own alloc_attr routine
-	 * to compensate for inverted black and white colors.
-	 */
-	ri->ri_ops.alloc_attr = macfb_alloc_attr;
-	ri->ri_caps &= ~(WSSCREEN_WSCOLORS | WSSCREEN_HILIT);
-	if (ri->ri_depth == 8)
-		ri->ri_devcmap[15] = 0xffffffff;
+	if (ri->ri_depth <= 8) {
+		/*
+		 * Until we know how to setup the colormap, constrain ourselves
+		 * to mono mode. Note that we need to use our own alloc_attr
+		 * routine to compensate for inverted black and white colors.
+		 */
+		ri->ri_ops.alloc_attr = macfb_alloc_attr;
+		ri->ri_caps &= ~(WSSCREEN_WSCOLORS | WSSCREEN_HILIT);
+		if (ri->ri_depth == 8)
+			ri->ri_devcmap[15] = 0xffffffff;
+	}
 
 	strlcpy(dc->wsd.name, "std", sizeof(dc->wsd.name));
 	dc->wsd.ncols = ri->ri_cols;
