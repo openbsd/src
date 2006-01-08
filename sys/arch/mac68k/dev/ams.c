@@ -1,4 +1,4 @@
-/*	$OpenBSD: ams.c,v 1.1 2006/01/04 20:39:04 miod Exp $	*/
+/*	$OpenBSD: ams.c,v 1.2 2006/01/08 17:25:05 miod Exp $	*/
 /*	$NetBSD: ams.c,v 1.11 2000/12/19 03:13:40 tsubai Exp $	*/
 
 /*
@@ -112,13 +112,12 @@ amsattach(struct device *parent, struct device *self, void   *aux)
 	ems_init(sc);
 
 	/* print out the type of mouse we have */
+	printf(": ");
 	switch (sc->handler_id) {
-	case ADBMS_100DPI:
-		printf("%d-button, %d dpi mouse\n", sc->sc_buttons,
-		    (int)(sc->sc_res));
-		break;
 	case ADBMS_200DPI:
 		sc->sc_res = 200;
+		/* FALLTHROUGH */
+	case ADBMS_100DPI:
 		printf("%d-button, %d dpi mouse\n", sc->sc_buttons,
 		    (int)(sc->sc_res));
 		break;

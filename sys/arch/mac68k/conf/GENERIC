@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.42 2006/01/04 20:39:04 miod Exp $
+#	$OpenBSD: GENERIC,v 1.43 2006/01/08 17:25:02 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -21,6 +21,7 @@ option		M68020		# Must have 68851 PMMU
 option		FPSP
 option		FPU_EMULATE
 option		COMPAT_SUNOS	# SunOS m68k binary compatibility
+option		ADBVERBOSE
 #option		MRG_ADB		# Use ROM-based ADB driver
 option		WSDISPLAY_COMPAT_RAWKBD
 

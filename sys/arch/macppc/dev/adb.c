@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.16 2005/12/21 18:50:52 miod Exp $	*/
+/*	$OpenBSD: adb.c,v 1.17 2006/01/08 17:25:05 miod Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 
 /*-
@@ -145,7 +145,7 @@ adbattach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	printf(", %d targets\n", totaladbs);
+	printf(", %d target%s\n", totaladbs, (totaladbs == 1) ? "" : "s");
 
 	/* for each ADB device */
 	for (adbindex = 1; adbindex <= totaladbs; adbindex++) {
@@ -194,9 +194,8 @@ adbprint(void *args, const char *name)
 		rv = UNSUPP; /* most ADB device types are unsupported */
 
 		/* print out what kind of ADB device we have found */
-		printf("%s addr %d: ", name, aa_args->adbaddr);
 		switch(aa_args->origaddr) {
-#ifdef DIAGNOSTIC
+#ifdef ADBVERBOSE
 		case ADBADDR_SECURE:
 			printf("security dongle (%d)", aa_args->handler_id);
 			break;
@@ -210,7 +209,7 @@ adbprint(void *args, const char *name)
 			    aa_args->handler_id);
 			rv = UNCONF;
 			break;
-#ifdef DIAGNOSTIC
+#ifdef ADBVERBOSE
 		case ADBADDR_ABS:
 			switch (aa_args->handler_id) {
 			case ADB_ARTPAD:
@@ -238,13 +237,15 @@ adbprint(void *args, const char *name)
 			}
 			break;
 		default:
-			printf("unknown type device, (handler %d)",
-			    aa_args->handler_id);
+			printf("unknown type %d device, (handler %d)",
+			    aa_args->origaddr, aa_args->handler_id);
 			break;
-#endif /* DIAGNOSTIC */
+#endif /* ADBVERBOSE */
 		}
-	} else		/* a device matched and was configured */
-		printf(" addr %d: ", aa_args->adbaddr);
+		printf(" at %s", name);
+	}
 
-	return rv;
+	printf(" addr %d", aa_args->adbaddr);
+
+	return (rv);
 }

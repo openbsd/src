@@ -1,4 +1,4 @@
-/*	$OpenBSD: abtn.c,v 1.9 2003/10/16 03:54:48 deraadt Exp $	*/
+/*	$OpenBSD: abtn.c,v 1.10 2006/01/08 17:25:05 miod Exp $	*/
 /*	$NetBSD: abtn.c,v 1.1 1999/07/12 17:48:26 tsubai Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@ abtn_attach(struct device *parent, struct device *self, void *aux)
 	struct adb_attach_args *aa = aux;
 	ADBSetInfoBlock adbinfo;
 
-	printf("brightness/volume/eject buttons\n");
+	printf(": brightness/volume/eject buttons\n");
 
 	sc->origaddr = aa->origaddr;
 	sc->adbaddr = aa->adbaddr;

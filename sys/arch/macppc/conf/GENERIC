@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.122 2006/01/05 20:03:03 deraadt Exp $g
+#	$OpenBSD: GENERIC,v 1.123 2006/01/08 17:25:05 miod Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -20,6 +20,7 @@ option		SYS_TYPE=APPL
 option		PCIVERBOSE
 option		USBVERBOSE
 #option		MACOBIOVERBOSE
+option		ADBVERBOSE
 option		ALTIVEC
 option		APERTURE	# in-kernel aperture driver for XFree86
 option		WSDISPLAY_COMPAT_RAWKBD
