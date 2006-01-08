@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops15.c,v 1.4 2002/07/27 22:17:49 miod Exp $	*/
+/*	$OpenBSD: rasops15.c,v 1.5 2006/01/08 17:18:05 miod Exp $	*/
 /*	$NetBSD: rasops15.c,v 1.7 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -205,10 +205,10 @@ rasops15_makestamp(ri, attr)
 		stamp[i + 1] = (i & 4 ? fg : bg);
 		stamp[i + 1] |= ((i & 2 ? fg : bg) << 16);
 #else
-		stamp[i] = (i & 2 ? fg : bg);
-		stamp[i] |= ((i & 4 ? fg : bg) << 16);
-		stamp[i + 1] = (i & 8 ? fg : bg);
-		stamp[i + 1] |= ((i & 16 ? fg : bg) << 16);
+		stamp[i + 1] = (i & 2 ? fg : bg);
+		stamp[i + 1] |= ((i & 4 ? fg : bg) << 16);
+		stamp[i] = (i & 8 ? fg : bg);
+		stamp[i] |= ((i & 16 ? fg : bg) << 16);
 #endif
 	}
 }
