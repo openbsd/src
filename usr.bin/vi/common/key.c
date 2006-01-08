@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.8 2006/01/08 21:05:39 miod Exp $	*/
+/*	$OpenBSD: key.c,v 1.9 2006/01/08 21:08:27 miod Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -105,7 +105,7 @@ int
 v_key_init(sp)
 	SCR *sp;
 {
-	CHAR_T ch;
+	u_int ch;
 	GS *gp;
 	KEYLIST *kp;
 	int cnt;
