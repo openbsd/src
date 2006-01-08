@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.32 2006/01/04 20:39:04 miod Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.33 2006/01/08 20:35:21 miod Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -210,7 +210,7 @@ grfiv_attach(parent, self, aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *) aux;
 	struct grfbus_softc *sc;
-	struct grfmode *gm;
+	struct grfmode gm;
 	u_long base, length;
 	u_int32_t vbase1, vbase2;
 
@@ -348,19 +348,14 @@ grfiv_attach(parent, self, aux)
 	    mac68k_vidphys < (sc->sc_basepa + length))
 		videoaddr = sc->sc_handle.base + sc->sc_fbofs; /* XXX big ol' hack */
 
-	gm = &(sc->curr_mode);
-	gm->mode_id = 0;
-	gm->psize = videobitdepth;
-	gm->ptype = 0;
-	gm->width = videosize & 0xffff;
-	gm->height = (videosize >> 16) & 0xffff;
-	gm->rowbytes = videorowbytes;
-	gm->hres = 80;				/* XXX Hack */
-	gm->vres = 80;				/* XXX Hack */
-	gm->fbsize = gm->height * gm->rowbytes;
-	gm->fbbase = (caddr_t)sc->sc_handle.base; /* XXX yet another hack */
-	gm->fboff = sc->sc_fbofs;
+	gm.psize = videobitdepth;
+	gm.width = videosize & 0xffff;
+	gm.height = (videosize >> 16) & 0xffff;
+	gm.rowbytes = videorowbytes;
+	gm.fbsize = gm.height * gm.rowbytes;
+	gm.fbbase = (caddr_t)sc->sc_handle.base; /* XXX yet another hack */
+	gm.fboff = sc->sc_fbofs;
 
 	/* Perform common video attachment. */
-	grf_establish(sc);
+	grf_establish(sc, &gm);
 }

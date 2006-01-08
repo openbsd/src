@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfvar.h,v 1.18 2006/01/05 20:30:18 miod Exp $	*/
+/*	$OpenBSD: grfvar.h,v 1.19 2006/01/08 20:35:21 miod Exp $	*/
 /*	$NetBSD: grfvar.h,v 1.11 1996/08/04 06:03:58 scottr Exp $	*/
 /*	$NetBSD: grfioctl.h,v 1.5 1995/07/02 05:26:45 briggs Exp $	*/
 
@@ -41,16 +41,12 @@
  */
 
 struct grfmode {
-	u_int8_t	mode_id;	/* Identifier for mode              */
 	caddr_t		fbbase;		/* Base of page of frame buffer     */
 	u_int32_t	fbsize;		/* Size of frame buffer             */
 	u_int16_t	fboff;		/* Offset of frame buffer from base */
 	u_int16_t	rowbytes;	/* Screen rowbytes                  */
 	u_int16_t	width;		/* Screen width                     */
 	u_int16_t	height;		/* Screen height                    */
-	u_int16_t	hres;		/* Horizontal resolution (dpi)      */
-	u_int16_t	vres;		/* Vertical resolution (dpi)        */
-	u_int16_t	ptype;		/* 0 = indexed, 0x10 = direct       */
 	u_int16_t	psize;		/* Screen depth                     */
 };
 
@@ -70,12 +66,10 @@ struct grfbus_softc {
 	bus_space_handle_t	sc_handle;
 	bus_space_handle_t	sc_regh;
 
-	struct	grfmode curr_mode;	/* hardware desc(for ioctl)	*/
 	u_int32_t	card_id;	/* DrHW value for nubus cards	*/
 	bus_size_t	cli_offset;	/* Offset of byte to clear intr */
 					/* for cards where that's suff.  */
 	u_int32_t	cli_value;	/* Value to write at cli_offset */
-	nubus_dir	board_dir;	/* Nubus dir for curr board	*/
 };
 
 /*
@@ -83,7 +77,7 @@ struct grfbus_softc {
  */
 struct grfbus_attach_args {
 	char		*ga_name;	/* name of semantics to attach */
-	struct grfmode	*ga_grfmode;
+	struct grfmode	ga_grfmode;
 	bus_addr_t	ga_phys;
 };
 
@@ -117,5 +111,5 @@ struct image_data {
 #define VID_PAGE_CNT		3
 #define VID_DEV_TYPE		4
 
-void	grf_establish(struct grfbus_softc *);
+void	grf_establish(struct grfbus_softc *, struct grfmode *);
 int	grfbusprint(void *, const char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.27 2006/01/04 20:39:05 miod Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.28 2006/01/08 20:35:21 miod Exp $	*/
 /*	$NetBSD: grf_nubus.c,v 1.62 2001/01/22 20:27:02 briggs Exp $	*/
 
 /*
@@ -137,10 +137,10 @@ grfmv_attach(parent, self, aux)
 	struct grfbus_softc *sc = (struct grfbus_softc *)self;
 	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
 	struct image_data image_store, image;
-	struct grfmode *gm;
+	struct grfmode gm;
 	char cardname[CARD_NAME_LEN];
 	nubus_dirent dirent;
-	nubus_dir dir, mode_dir;
+	nubus_dir dir, mode_dir, board_dir;
 	int mode;
 
 	bcopy(na->fmt, &sc->sc_slot, sizeof(nubus_slot));
@@ -165,10 +165,10 @@ bad:
 		return;
 	}
 
-	nubus_get_dir_from_rsrc(&sc->sc_slot, &dirent, &sc->board_dir);
+	nubus_get_dir_from_rsrc(&sc->sc_slot, &dirent, &board_dir);
 
 	if (nubus_find_rsrc(sc->sc_tag, sc->sc_regh,
-	    &sc->sc_slot, &sc->board_dir, NUBUS_RSRC_TYPE, &dirent) <= 0)
+	    &sc->sc_slot, &board_dir, NUBUS_RSRC_TYPE, &dirent) <= 0)
 		if ((na->rsrcid != 128) ||
 		    (nubus_find_rsrc(sc->sc_tag, sc->sc_regh,
 		    &sc->sc_slot, &dir, 129, &dirent) <= 0))
@@ -176,7 +176,7 @@ bad:
 
 	mode = NUBUS_RSRC_FIRSTMODE;
 	if (nubus_find_rsrc(sc->sc_tag, sc->sc_regh,
-	    &sc->sc_slot, &sc->board_dir, mode, &dirent) <= 0) {
+	    &sc->sc_slot, &board_dir, mode, &dirent) <= 0) {
 		printf(": probe failed to get board rsrc.\n");
 		goto bad;
 	}
@@ -199,18 +199,13 @@ bad:
 
 	load_image_data((caddr_t)&image_store, &image);
 
-	gm = &sc->curr_mode;
-	gm->mode_id = mode;
-	gm->ptype = image.pixelType;
-	gm->psize = image.pixelSize;
-	gm->width = image.right - image.left;
-	gm->height = image.bottom - image.top;
-	gm->rowbytes = image.rowbytes;
-	gm->hres = image.hRes;
-	gm->vres = image.vRes;
-	gm->fbsize = gm->height * gm->rowbytes;
-	gm->fbbase = (caddr_t)(sc->sc_handle.base);	/* XXX evil hack */
-	gm->fboff = image.offset;
+	gm.psize = image.pixelSize;
+	gm.width = image.right - image.left;
+	gm.height = image.bottom - image.top;
+	gm.rowbytes = image.rowbytes;
+	gm.fbsize = gm.height * gm.rowbytes;
+	gm.fbbase = (caddr_t)(sc->sc_handle.base);	/* XXX evil hack */
+	gm.fboff = image.offset;
 
 	strncpy(cardname, nubus_get_card_name(sc->sc_tag, sc->sc_regh,
 	    &sc->sc_slot), CARD_NAME_LEN);
@@ -373,7 +368,7 @@ bad:
 	}
 
 	/* Perform common video attachment. */
-	grf_establish(sc);
+	grf_establish(sc, &gm);
 }
 
 /* Interrupt handlers... */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfb.c,v 1.4 2006/01/08 17:19:46 miod Exp $	*/
+/*	$OpenBSD: macfb.c,v 1.5 2006/01/08 20:35:21 miod Exp $	*/
 /* $NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -220,7 +220,7 @@ void
 macfb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct grfbus_attach_args *ga = aux;
-	struct grfmode *gm = ga->ga_grfmode;
+	struct grfmode *gm = &ga->ga_grfmode;
 	struct macfb_softc *sc;
 	struct wsemuldisplaydev_attach_args waa;
 	struct wsscreen_descr *scrlist[1];
@@ -234,7 +234,7 @@ macfb_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	printf("\n");
 
-	isconsole = macfb_is_console(ga->ga_phys + ga->ga_grfmode->fboff);
+	isconsole = macfb_is_console(ga->ga_phys + gm->fboff);
 
 	if (isconsole) {
 		sc->sc_dc = &macfb_console_dc;
