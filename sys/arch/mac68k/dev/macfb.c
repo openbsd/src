@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfb.c,v 1.1 2006/01/04 20:39:05 miod Exp $	*/
+/*	$OpenBSD: macfb.c,v 1.2 2006/01/08 16:36:54 miod Exp $	*/
 /* $NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -41,18 +41,17 @@
 
 #include <mac68k/dev/nubus.h>
 #include <mac68k/dev/grfvar.h>
-#include <mac68k/dev/macfbvar.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/wscons/wsconsio.h>
-
-#include <dev/rcons/raster.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
 
-int macfb_match(struct device *, void *, void *);
-void macfb_attach(struct device *, struct device *, void *);
+#include <mac68k/dev/macfbvar.h>
+
+int	macfb_match(struct device *, void *, void *);
+void	macfb_attach(struct device *, struct device *, void *);
 
 struct cfattach macfb_ca = {
 	sizeof(struct macfb_softc), macfb_match, macfb_attach
@@ -60,34 +59,6 @@ struct cfattach macfb_ca = {
 
 struct cfdriver macfb_cd = {
 	NULL, "macfb", DV_DULL
-};
-
-const struct wsdisplay_emulops macfb_emulops = {
-	rcons_cursor,
-	rcons_mapchar,
-	rcons_putchar,
-	rcons_copycols,
-	rcons_erasecols,
-	rcons_copyrows,
-	rcons_eraserows,
-	rcons_alloc_attr
-};
-
-struct wsscreen_descr macfb_stdscreen = {
-	"std",
-	0, 0, /* will be filled in -- XXX shouldn't, it's global */
-	&macfb_emulops,
-	0, 0,
-	WSSCREEN_REVERSE
-};
-
-const struct wsscreen_descr *_macfb_scrlist[] = {
-	&macfb_stdscreen,
-};
-
-const struct wsscreen_list macfb_screenlist = {
-	sizeof(_macfb_scrlist) / sizeof(struct wsscreen_descr *),
-	_macfb_scrlist
 };
 
 int	macfb_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -110,10 +81,11 @@ const struct wsdisplay_accessops macfb_accessops = {
 	NULL	/* burner */
 };
 
-void macfb_init(struct macfb_devconfig *);
+int	macfb_alloc_attr(void *, int, int, int, long *);
+int	macfb_init(struct macfb_devconfig *);
+int	macfb_is_console(paddr_t);
 
 paddr_t macfb_consaddr;
-static int macfb_is_console(paddr_t);
 
 static struct macfb_devconfig macfb_console_dc;
 
@@ -126,7 +98,7 @@ extern u_int32_t	mac68k_vidlog;
 extern u_int32_t	mac68k_vidphys;
 extern u_int32_t	mac68k_vidlen;
 
-static int
+int
 macfb_is_console(paddr_t addr)
 {
 	if (addr != macfb_consaddr &&
@@ -146,43 +118,85 @@ macfb_is_console(paddr_t addr)
 	    && (addr == macfb_consaddr));
 }
 
-void
-macfb_clear(struct macfb_devconfig *dc)
-{
-	int i, rows;
-
-	/* clear the display */
-	rows = dc->dc_ht;
-	for (i = 0; rows-- > 0; i += dc->dc_rowbytes)
-		memset((u_char *)dc->dc_vaddr + dc->dc_offset + i,
-		    0, dc->dc_rowbytes);
-}
-
-void
+int
 macfb_init(struct macfb_devconfig *dc)
 {
-	struct raster *rap;
-	struct rcons *rcp;
+	struct rasops_info *ri = &dc->dc_ri;
+	extern int rasops_alloc_cattr(void *, int, int, int, long *);
 
-	macfb_clear(dc);
+	/*
+	 * Clear display. We can't pass RI_CLEAR in ri_flg and have rasops
+	 * do it for us until we know how to setup the colormap first.
+	 */
+	memset((char *)dc->dc_vaddr + dc->dc_offset,
+	    dc->dc_depth <= 8 ? 0xff : 0, dc->dc_rowbytes * dc->dc_ht);
 
-	rap = &dc->dc_raster;
-	rap->width = dc->dc_wid;
-	rap->height = dc->dc_ht;
-	rap->depth = dc->dc_depth;
-	rap->linelongs = dc->dc_rowbytes / sizeof(u_int32_t);
-	rap->pixels = (u_int32_t *)(dc->dc_vaddr + dc->dc_offset);
+	bzero(ri, sizeof(*ri));
+	ri->ri_depth = dc->dc_depth;
+	ri->ri_stride = dc->dc_rowbytes;
+	ri->ri_flg = RI_CENTER;
+	ri->ri_bits = (void *)(dc->dc_vaddr + dc->dc_offset);
+	ri->ri_width = dc->dc_wid;
+	ri->ri_height = dc->dc_ht;
+	ri->ri_hw = dc;
 
-	/* initialize the raster console blitter */
-	rcp = &dc->dc_rcons;
-	rcp->rc_sp = rap;
-	rcp->rc_crow = rcp->rc_ccol = -1;
-	rcp->rc_crowp = &rcp->rc_crow;
-	rcp->rc_ccolp = &rcp->rc_ccol;
-	rcons_init(rcp, 128, 192);
+	/*
+	 * Ask for an unholy big display, rasops will trim this to more
+	 * reasonable values.
+	 */
+	if (rasops_init(ri, 160, 160) != 0)
+		return (-1);
 
-	macfb_stdscreen.nrows = dc->dc_rcons.rc_maxrow;
-	macfb_stdscreen.ncols = dc->dc_rcons.rc_maxcol;
+	/*
+	 * Until we know how to setup the colormap, constrain ourselves to
+	 * mono mode. Note that we need to use our own alloc_attr routine
+	 * to compensate for inverted black and white colors.
+	 */
+	ri->ri_ops.alloc_attr = macfb_alloc_attr;
+	ri->ri_caps &= ~(WSSCREEN_WSCOLORS | WSSCREEN_HILIT);
+	if (ri->ri_depth == 8)
+		ri->ri_devcmap[15] = 0xffffffff;
+
+	strlcpy(dc->wsd.name, "std", sizeof(dc->wsd.name));
+	dc->wsd.ncols = ri->ri_cols;
+	dc->wsd.nrows = ri->ri_rows;
+	dc->wsd.textops = &ri->ri_ops;
+	dc->wsd.fontwidth = ri->ri_font->fontwidth;
+	dc->wsd.fontheight = ri->ri_font->fontheight;
+	dc->wsd.capabilities = ri->ri_caps;
+
+	return (0);
+}
+
+int
+macfb_alloc_attr(void *cookie, int fg, int bg, int flg, long *attr)
+{
+	struct rasops_info *ri = cookie;
+	int swap;
+
+	if ((flg & (WSATTR_BLINK | WSATTR_HILIT | WSATTR_WSCOLORS)) != 0)
+		return (EINVAL);
+
+	/*
+	 * Default values are white on black. However, on indexed displays,
+	 * 0 is white and all bits set is black.
+	 */
+	if (ri->ri_depth <= 8) {
+		fg = 0;
+		bg = 15;
+	} else {
+		bg = WSCOL_BLACK;
+		fg = WSCOL_WHITE;
+	}
+
+	if ((flg & WSATTR_REVERSE) != 0) {
+		swap = fg;
+		fg = bg;
+		bg = swap;
+	}
+
+	*attr = (bg << 16) | (fg << 24) | ((flg & WSATTR_UNDERLINE) ? 7 : 6);
+	return (0);
 }
 
 int
@@ -198,6 +212,8 @@ macfb_attach(struct device *parent, struct device *self, void *aux)
 	struct grfmode *gm = ga->ga_grfmode;
 	struct macfb_softc *sc;
 	struct wsemuldisplaydev_attach_args waa;
+	struct wsscreen_descr *scrlist[1];
+	struct wsscreen_list screenlist;
 	int isconsole;
 
 	sc = (struct macfb_softc *)self;
@@ -211,9 +227,10 @@ macfb_attach(struct device *parent, struct device *self, void *aux)
 
 	if (isconsole) {
 		sc->sc_dc = &macfb_console_dc;
-		sc->nscreens = 1;
+		sc->sc_dc->nscreens = 1;
 	} else {
-		sc->sc_dc = malloc(sizeof(struct macfb_devconfig), M_DEVBUF, M_WAITOK);
+		sc->sc_dc = malloc(sizeof(struct macfb_devconfig),
+		    M_DEVBUF, M_WAITOK);
 		sc->sc_dc->dc_vaddr = (vaddr_t)gm->fbbase;
 		sc->sc_dc->dc_paddr = ga->ga_phys;
 		sc->sc_dc->dc_size = gm->fbsize;
@@ -224,14 +241,18 @@ macfb_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_dc->dc_rowbytes = gm->rowbytes;
 
 		sc->sc_dc->dc_offset = gm->fboff;
+		sc->sc_dc->nscreens = 0;
 
-		macfb_init(sc->sc_dc);
-
-		sc->nscreens = 0;
+		if (macfb_init(sc->sc_dc) != 0)
+			return;
 	}
 
+	scrlist[0] = &sc->sc_dc->wsd;
+	screenlist.nscreens = 1;
+	screenlist.screens = (const struct wsscreen_descr **)scrlist;
+
 	waa.console = isconsole;
-	waa.scrdata = &macfb_screenlist;
+	waa.scrdata = &screenlist;
 	waa.accessops = &macfb_accessops;
 	waa.accesscookie = sc;
 
@@ -253,14 +274,14 @@ macfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;
-		wdf->height = dc->dc_raster.height;
-		wdf->width = dc->dc_raster.width;
-		wdf->depth = dc->dc_raster.depth;
+		wdf->height = dc->dc_ri.ri_height;
+		wdf->width = dc->dc_ri.ri_width;
+		wdf->depth = dc->dc_ri.ri_depth;
 		wdf->cmsize = 0;	/* until we can change it... */
 		break;
 
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = dc->dc_rowbytes;
+		*(u_int *)data = dc->dc_ri.ri_stride;
 		break;
 
 	case WSDISPLAYIO_GVIDEO:
@@ -294,17 +315,22 @@ macfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
     int *curxp, int *curyp, long *defattrp)
 {
 	struct macfb_softc *sc = v;
-	long defattr;
+	struct rasops_info *ri = &sc->sc_dc->dc_ri;
 
-	if (sc->nscreens > 0)
+	if (sc->sc_dc->nscreens > 0)
 		return (ENOMEM);
 
-	*cookiep = &sc->sc_dc->dc_rcons; /* one and only for now */
-	*curxp = 0;
-	*curyp = 0;
-	rcons_alloc_attr(&sc->sc_dc->dc_rcons, 0, 0, 0, &defattr);
-	*defattrp = defattr;
-	sc->nscreens++;
+	*cookiep = ri;
+	*curxp = *curyp = 0;
+#ifdef notyet
+	if ((ri->ri_caps & WSSCREEN_WSCOLORS) && ri->ri_depth <= 8)
+		ri->ri_ops.alloc_attr(ri, WSCOL_WHITE, WSCOL_BLACK,
+		    WSATTR_WSCOLORS, defattrp);
+	else
+#endif
+		ri->ri_ops.alloc_attr(ri, 0, 0, 0, defattrp);
+	sc->sc_dc->nscreens++;
+
 	return (0);
 }
 
@@ -313,19 +339,14 @@ macfb_free_screen(void *v, void *cookie)
 {
 	struct macfb_softc *sc = v;
 
-#ifdef DIAGNOSTIC
-	if (sc->sc_dc == &macfb_console_dc)
-		panic("cfb_free_screen: console");
-#endif
-
-	sc->nscreens--;
+	sc->sc_dc->nscreens--;
 }
 
 int
 macfb_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
-	return 0;
+	return (0);
 }
 
 int
@@ -333,6 +354,7 @@ macfb_cnattach(paddr_t addr)
 {
 	struct macfb_devconfig *dc = &macfb_console_dc;
 	long defattr;
+	struct rasops_info *ri;
 
 	dc->dc_vaddr = trunc_page(videoaddr);
 	dc->dc_paddr = trunc_page(mac68k_vidphys);
@@ -347,12 +369,19 @@ macfb_cnattach(paddr_t addr)
 	dc->dc_offset = m68k_page_offset(mac68k_vidphys);
 
 	/* set up the display */
-	macfb_init(&macfb_console_dc);
+	if (macfb_init(dc) != 0)
+		return (-1);
 
-	rcons_alloc_attr(&dc->dc_rcons, 0, 0, 0, &defattr);
+	ri = &dc->dc_ri;
+#ifdef notyet
+	if ((ri->ri_caps & WSSCREEN_WSCOLORS) && ri->ri_depth <= 8)
+		ri->ri_ops.alloc_attr(ri, WSCOL_WHITE, WSCOL_BLACK,
+		    WSATTR_WSCOLORS, &defattr);
+	else
+#endif
+		ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 
-	wsdisplay_cnattach(&macfb_stdscreen, &dc->dc_rcons,
-			0, 0, defattr);
+	wsdisplay_cnattach(&dc->wsd, ri, 0, 0, defattr);
 
 	macfb_consaddr = addr;
 	return (0);

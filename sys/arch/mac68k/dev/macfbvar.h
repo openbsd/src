@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfbvar.h,v 1.1 2006/01/04 20:39:05 miod Exp $	*/
+/*	$OpenBSD: macfbvar.h,v 1.2 2006/01/08 16:36:54 miod Exp $	*/
 /* $NetBSD: macfbvar.h,v 1.3 2005/01/15 16:00:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -47,16 +47,18 @@ struct macfb_devconfig {
 	int	dc_depth;	/* depth of frame buffer */
 	int	dc_rowbytes;	/* bytes in fb scan line */
 
-	struct raster dc_raster; /* raster description */
-	struct rcons dc_rcons;	/* raster blitter control info */
+	/* rasops information */
+	struct rasops_info dc_ri;
+
+	/* wsdisplay information */
+	struct wsscreen_descr wsd;
+	int	nscreens;
 };
 
 struct macfb_softc {
 	struct device sc_dev;
 				
-	int nscreens;
 	struct macfb_devconfig *sc_dc;
 };
 
 int	macfb_cnattach(paddr_t);
-void	macfb_clear(struct macfb_devconfig *);

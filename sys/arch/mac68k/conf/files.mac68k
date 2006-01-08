@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mac68k,v 1.35 2006/01/04 20:39:04 miod Exp $
+#	$OpenBSD: files.mac68k,v 1.36 2006/01/08 16:36:52 miod Exp $
 #	$NetBSD: files.mac68k,v 1.61 1997/03/01 20:22:16 scottr Exp $
 
 # mac68k-specific configuration info
@@ -29,7 +29,9 @@ file	arch/mac68k/dev/pm_direct.c
 #
 # "workstation console" routines
 #
+include "dev/rasops/files.rasops"
 include	"dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"
 
 #
 # adb devices
@@ -57,7 +59,7 @@ device	macvid: grfbus
 attach	macvid at nubus
 file	arch/mac68k/dev/grf_mv.c	macvid
 
-device	macfb: wsemuldisplaydev, wsrasteremulops
+device	macfb: wsemuldisplaydev, rasops1, rasops2, rasops4, rasops8, rasops16, rasops32
 attach	macfb at grfbus
 file	arch/mac68k/dev/macfb.c		macfb needs-flag
 
