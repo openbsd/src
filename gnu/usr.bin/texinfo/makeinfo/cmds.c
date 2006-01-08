@@ -1,5 +1,5 @@
 /* cmds.c -- Texinfo commands.
-   $Id: cmds.c,v 1.1.1.2 2002/06/10 13:21:15 espie Exp $
+   $Id: cmds.c,v 1.2 2006/01/08 18:08:18 kettenis Exp $
 
    Copyright (C) 1998, 99, 2000, 01, 02 Free Software Foundation, Inc.
 
@@ -1253,13 +1253,17 @@ static void
 handle_include (verbatim_include)
   int verbatim_include;
 {
-  char *filename;
+  char *arg, *filename;
 
   if (macro_expansion_output_stream && !executing_string)
     me_append_before_this_command ();
 
   close_paragraph ();
-  get_rest_of_line (0, &filename);
+  get_rest_of_line (0, &arg);
+  /* We really only want to expand @value, but it's easier to just do
+     everything.  TeX will only work with @value.  */
+  filename = text_expansion (arg);
+  free (arg);
 
   if (macro_expansion_output_stream && !executing_string)
     remember_itext (input_text, input_text_offset);
