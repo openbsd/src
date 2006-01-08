@@ -1,4 +1,4 @@
-.\"	$OpenBSD: date.1,v 1.44 2005/11/30 11:18:27 jmc Exp $
+.\"	$OpenBSD: date.1,v 1.45 2006/01/08 00:19:55 jmc Exp $
 .\"	$NetBSD: date.1,v 1.12 1996/03/12 04:32:37 phil Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -176,12 +176,9 @@ record of date resets and time changes
 record of the user setting the time
 .El
 .Sh EXAMPLES
-The following command:
-.Pp
-.Dl $ date \&"+DATE: %Y-%m-%d%nTIME: %H:%M:%S\&"
-.Pp
-displays:
+Display the date using the specified format string:
 .Bd -literal -offset indent
+$ date "+DATE: %Y-%m-%d%nTIME: %H:%M:%S"
 DATE: 1987-11-21
 TIME: 13:36:16
 .Ed
