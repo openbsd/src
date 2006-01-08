@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.12 2005/09/15 20:23:10 miod Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.13 2006/01/08 16:34:55 miod Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -726,7 +726,7 @@ rasops_init_devcmap(ri)
 	case 1:
 		ri->ri_devcmap[0] = 0;
 		for (i = 1; i < 16; i++)
-			ri->ri_devcmap[i] = -1;
+			ri->ri_devcmap[i] = 0xffffffff;
 		return;
 
 	case 2:
@@ -735,7 +735,14 @@ rasops_init_devcmap(ri)
 
 		ri->ri_devcmap[0] = 0;
 		ri->ri_devcmap[8] = 0x55555555;
-		ri->ri_devcmap[15] = -1;
+		ri->ri_devcmap[15] = 0xffffffff;
+		return;
+
+	case 4:
+		for (i = 0; i < 16; i++) {
+			c = i | (i << 4);
+			ri->ri_devcmap[i] = c | (c<<8) | (c<<16) | (c<<24);
+		}
 		return;
 
 	case 8:
