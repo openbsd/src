@@ -626,7 +626,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/altq/if_altq.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/_types.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/ansi.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/apicvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/apmvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/asm.ph
@@ -693,7 +692,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/sysarch.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/trap.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/tss.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/types.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/userret.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/vmparam.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/ar.ph

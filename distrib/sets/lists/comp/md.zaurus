@@ -4,7 +4,6 @@
 ./usr/bin/readelf
 ./usr/include/arm
 ./usr/include/arm/_types.h
-./usr/include/arm/ansi.h
 ./usr/include/arm/apmvar.h
 ./usr/include/arm/armreg.h
 ./usr/include/arm/asm.h
@@ -53,7 +52,6 @@
 ./usr/include/arm/swi.h
 ./usr/include/arm/sysarch.h
 ./usr/include/arm/trap.h
-./usr/include/arm/types.h
 ./usr/include/arm/undefined.h
 ./usr/include/arm/vmparam.h
 ./usr/include/bfd.h
@@ -210,7 +208,6 @@
 ./usr/include/unwind.h
 ./usr/include/zaurus
 ./usr/include/zaurus/_types.h
-./usr/include/zaurus/ansi.h
 ./usr/include/zaurus/apmvar.h
 ./usr/include/zaurus/asm.h
 ./usr/include/zaurus/atomic.h
@@ -254,7 +251,6 @@
 ./usr/include/zaurus/stdarg.h
 ./usr/include/zaurus/sysarch.h
 ./usr/include/zaurus/trap.h
-./usr/include/zaurus/types.h
 ./usr/include/zaurus/vmparam.h
 ./usr/include/zaurus/zaurus_reg.h
 ./usr/include/zaurus/zaurus_var.h

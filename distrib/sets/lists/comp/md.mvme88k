@@ -111,7 +111,6 @@
 ./usr/include/ieeefp.h
 ./usr/include/m88k
 ./usr/include/m88k/_types.h
-./usr/include/m88k/ansi.h
 ./usr/include/m88k/asm.h
 ./usr/include/m88k/asm_macro.h
 ./usr/include/m88k/cdefs.h
@@ -147,13 +146,11 @@
 ./usr/include/m88k/spinlock.h
 ./usr/include/m88k/stdarg.h
 ./usr/include/m88k/trap.h
-./usr/include/m88k/types.h
 ./usr/include/m88k/va-m88k.h
 ./usr/include/m88k/varargs.h
 ./usr/include/m88k/vmparam.h
 ./usr/include/mvme88k
 ./usr/include/mvme88k/_types.h
-./usr/include/mvme88k/ansi.h
 ./usr/include/mvme88k/asm.h
 ./usr/include/mvme88k/asm_macro.h
 ./usr/include/mvme88k/autoconf.h
@@ -204,7 +201,6 @@
 ./usr/include/mvme88k/spinlock.h
 ./usr/include/mvme88k/stdarg.h
 ./usr/include/mvme88k/trap.h
-./usr/include/mvme88k/types.h
 ./usr/include/mvme88k/va-m88k.h
 ./usr/include/mvme88k/varargs.h
 ./usr/include/mvme88k/vid.h

@@ -1068,6 +1068,8 @@
 ./usr/share/man/cat4/aac.0
 ./usr/share/man/cat4/ac97.0
 ./usr/share/man/cat4/acphy.0
+./usr/share/man/cat4/acpi.0
+./usr/share/man/cat4/acpitimer.0
 ./usr/share/man/cat4/adc.0
 ./usr/share/man/cat4/addcom.0
 ./usr/share/man/cat4/admcts.0
@@ -1242,6 +1244,7 @@
 ./usr/share/man/cat4/hp300/sgc.0
 ./usr/share/man/cat4/hp300/spc.0
 ./usr/share/man/cat4/hp300/topcat.0
+./usr/share/man/cat4/hpet.0
 ./usr/share/man/cat4/hppa
 ./usr/share/man/cat4/hppa/asp.0
 ./usr/share/man/cat4/hppa/cpu.0

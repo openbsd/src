@@ -1535,7 +1535,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/_types.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/ansi.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/asm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/asm_single.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/cdefs.ph
@@ -1565,7 +1564,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/stdarg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/sysctl.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/trap.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/varargs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/vmparam.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/machine
@@ -1587,7 +1585,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/_types.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/ansi.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/asm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/autoconf.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/bugio.ph
@@ -1624,7 +1621,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/spinlock.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/stdarg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/trap.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/varargs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/vmparam.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/ncurses.ph

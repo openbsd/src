@@ -117,7 +117,6 @@
 ./usr/include/ieeefp.h
 ./usr/include/sparc
 ./usr/include/sparc/_types.h
-./usr/include/sparc/ansi.h
 ./usr/include/sparc/apmvar.h
 ./usr/include/sparc/asm.h
 ./usr/include/sparc/autoconf.h
@@ -168,7 +167,6 @@
 ./usr/include/sparc/sun_disklabel.h
 ./usr/include/sparc/svr4_machdep.h
 ./usr/include/sparc/trap.h
-./usr/include/sparc/types.h
 ./usr/include/sparc/varargs.h
 ./usr/include/sparc/vmparam.h
 ./usr/include/sparc/z8530var.h

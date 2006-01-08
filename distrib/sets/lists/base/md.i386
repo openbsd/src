@@ -1543,7 +1543,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/histedit.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/_types.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/i386/ansi.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/apicvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/apmvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/asm.ph
@@ -1609,7 +1608,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/sysarch.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/trap.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/tss.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/i386/types.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/varargs.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/vm86.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/vmparam.ph

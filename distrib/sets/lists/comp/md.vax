@@ -110,7 +110,6 @@
 ./usr/include/g++/vector.h
 ./usr/include/vax
 ./usr/include/vax/_types.h
-./usr/include/vax/ansi.h
 ./usr/include/vax/aout_machdep.h
 ./usr/include/vax/asm.h
 ./usr/include/vax/bus.h
@@ -160,7 +159,6 @@
 ./usr/include/vax/spinlock.h
 ./usr/include/vax/stdarg.h
 ./usr/include/vax/trap.h
-./usr/include/vax/types.h
 ./usr/include/vax/uvax.h
 ./usr/include/vax/varargs.h
 ./usr/include/vax/vmparam.h

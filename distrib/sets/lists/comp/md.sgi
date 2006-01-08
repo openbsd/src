@@ -152,7 +152,6 @@
 ./usr/include/ieeefp.h
 ./usr/include/mips64
 ./usr/include/mips64/_types.h
-./usr/include/mips64/ansi.h
 ./usr/include/mips64/arcbios.h
 ./usr/include/mips64/archtype.h
 ./usr/include/mips64/asm.h
@@ -190,12 +189,10 @@
 ./usr/include/mips64/spinlock.h
 ./usr/include/mips64/stdarg.h
 ./usr/include/mips64/trap.h
-./usr/include/mips64/types.h
 ./usr/include/mips64/varargs.h
 ./usr/include/mips64/vmparam.h
 ./usr/include/sgi
 ./usr/include/sgi/_types.h
-./usr/include/sgi/ansi.h
 ./usr/include/sgi/asm.h
 ./usr/include/sgi/autoconf.h
 ./usr/include/sgi/bus.h
@@ -235,7 +232,6 @@
 ./usr/include/sgi/spinlock.h
 ./usr/include/sgi/stdarg.h
 ./usr/include/sgi/trap.h
-./usr/include/sgi/types.h
 ./usr/include/sgi/varargs.h
 ./usr/include/sgi/vmparam.h
 ./usr/include/unwind.h

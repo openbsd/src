@@ -111,7 +111,6 @@
 ./usr/include/ieeefp.h
 ./usr/include/m68k
 ./usr/include/m68k/_types.h
-./usr/include/m68k/ansi.h
 ./usr/include/m68k/asm.h
 ./usr/include/m68k/asm_single.h
 ./usr/include/m68k/cdefs.h
@@ -141,13 +140,11 @@
 ./usr/include/m68k/stdarg.h
 ./usr/include/m68k/sysctl.h
 ./usr/include/m68k/trap.h
-./usr/include/m68k/types.h
 ./usr/include/m68k/varargs.h
 ./usr/include/m68k/vmparam.h
 ./usr/include/mac68k
 ./usr/include/mac68k/_types.h
 ./usr/include/mac68k/adbsys.h
-./usr/include/mac68k/ansi.h
 ./usr/include/mac68k/asm.h
 ./usr/include/mac68k/autoconf.h
 ./usr/include/mac68k/bus.h
@@ -184,7 +181,6 @@
 ./usr/include/mac68k/spinlock.h
 ./usr/include/mac68k/stdarg.h
 ./usr/include/mac68k/trap.h
-./usr/include/mac68k/types.h
 ./usr/include/mac68k/varargs.h
 ./usr/include/mac68k/viareg.h
 ./usr/include/mac68k/vmparam.h

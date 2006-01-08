@@ -1827,7 +1827,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/adbsys.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ansi.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/asm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/autoconf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/bat.ph
@@ -1844,7 +1843,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/frame.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ieee.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ieeefp.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/internal_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/internal_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/intr.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ipkdb.ph
@@ -1869,7 +1867,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/spinlock.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/stdarg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/trap.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/va-ppc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/varargs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/vmparam.ph

@@ -155,7 +155,6 @@
 ./usr/include/macppc
 ./usr/include/macppc/_types.h
 ./usr/include/macppc/adbsys.h
-./usr/include/macppc/ansi.h
 ./usr/include/macppc/apmvar.h
 ./usr/include/macppc/asm.h
 ./usr/include/macppc/autoconf.h
@@ -199,7 +198,6 @@
 ./usr/include/macppc/spinlock.h
 ./usr/include/macppc/stdarg.h
 ./usr/include/macppc/trap.h
-./usr/include/macppc/types.h
 ./usr/include/macppc/va-ppc.h
 ./usr/include/macppc/varargs.h
 ./usr/include/macppc/vmparam.h
@@ -207,7 +205,6 @@
 ./usr/include/macppc/z8530var.h
 ./usr/include/powerpc
 ./usr/include/powerpc/_types.h
-./usr/include/powerpc/ansi.h
 ./usr/include/powerpc/asm.h
 ./usr/include/powerpc/bat.h
 ./usr/include/powerpc/cdefs.h
@@ -242,7 +239,6 @@
 ./usr/include/powerpc/spinlock.h
 ./usr/include/powerpc/stdarg.h
 ./usr/include/powerpc/trap.h
-./usr/include/powerpc/types.h
 ./usr/include/powerpc/va-ppc.h
 ./usr/include/powerpc/varargs.h
 ./usr/include/powerpc/wsconsio.h

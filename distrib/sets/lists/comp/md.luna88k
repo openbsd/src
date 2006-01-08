@@ -111,7 +111,6 @@
 ./usr/include/ieeefp.h
 ./usr/include/luna88k
 ./usr/include/luna88k/_types.h
-./usr/include/luna88k/ansi.h
 ./usr/include/luna88k/asm.h
 ./usr/include/luna88k/asm_macro.h
 ./usr/include/luna88k/autoconf.h
@@ -153,13 +152,11 @@
 ./usr/include/luna88k/spinlock.h
 ./usr/include/luna88k/stdarg.h
 ./usr/include/luna88k/trap.h
-./usr/include/luna88k/types.h
 ./usr/include/luna88k/va-m88k.h
 ./usr/include/luna88k/varargs.h
 ./usr/include/luna88k/vmparam.h
 ./usr/include/m88k
 ./usr/include/m88k/_types.h
-./usr/include/m88k/ansi.h
 ./usr/include/m88k/asm.h
 ./usr/include/m88k/asm_macro.h
 ./usr/include/m88k/cdefs.h
@@ -195,7 +192,6 @@
 ./usr/include/m88k/spinlock.h
 ./usr/include/m88k/stdarg.h
 ./usr/include/m88k/trap.h
-./usr/include/m88k/types.h
 ./usr/include/m88k/va-m88k.h
 ./usr/include/m88k/varargs.h
 ./usr/include/m88k/vmparam.h

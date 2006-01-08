@@ -3,7 +3,6 @@
 ./usr/bin/readelf
 ./usr/include/amd64
 ./usr/include/amd64/_types.h
-./usr/include/amd64/ansi.h
 ./usr/include/amd64/apicvar.h
 ./usr/include/amd64/apmvar.h
 ./usr/include/amd64/asm.h
@@ -70,7 +69,6 @@
 ./usr/include/amd64/sysarch.h
 ./usr/include/amd64/trap.h
 ./usr/include/amd64/tss.h
-./usr/include/amd64/types.h
 ./usr/include/amd64/userret.h
 ./usr/include/amd64/vmparam.h
 ./usr/include/bfd.h

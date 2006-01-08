@@ -4,7 +4,6 @@
 ./usr/include/alpha
 ./usr/include/alpha/_types.h
 ./usr/include/alpha/alpha_cpu.h
-./usr/include/alpha/ansi.h
 ./usr/include/alpha/aout_machdep.h
 ./usr/include/alpha/asm.h
 ./usr/include/alpha/atomic.h
@@ -54,7 +53,6 @@
 ./usr/include/alpha/stdarg.h
 ./usr/include/alpha/sysarch.h
 ./usr/include/alpha/tc_machdep.h
-./usr/include/alpha/types.h
 ./usr/include/alpha/varargs.h
 ./usr/include/alpha/vmparam.h
 ./usr/include/alpha/wsconsio.h

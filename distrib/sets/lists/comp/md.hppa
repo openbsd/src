@@ -153,7 +153,6 @@
 ./usr/include/g++/streambuf
 ./usr/include/hppa
 ./usr/include/hppa/_types.h
-./usr/include/hppa/ansi.h
 ./usr/include/hppa/asm.h
 ./usr/include/hppa/autoconf.h
 ./usr/include/hppa/bus.h
@@ -199,7 +198,6 @@
 ./usr/include/hppa/spinlock.h
 ./usr/include/hppa/stdarg.h
 ./usr/include/hppa/trap.h
-./usr/include/hppa/types.h
 ./usr/include/hppa/varargs.h
 ./usr/include/hppa/vmparam.h
 ./usr/include/ieeefp.h

@@ -111,7 +111,6 @@
 ./usr/include/ieeefp.h
 ./usr/include/m68k
 ./usr/include/m68k/_types.h
-./usr/include/m68k/ansi.h
 ./usr/include/m68k/asm.h
 ./usr/include/m68k/asm_single.h
 ./usr/include/m68k/cdefs.h
@@ -141,12 +140,10 @@
 ./usr/include/m68k/stdarg.h
 ./usr/include/m68k/sysctl.h
 ./usr/include/m68k/trap.h
-./usr/include/m68k/types.h
 ./usr/include/m68k/varargs.h
 ./usr/include/m68k/vmparam.h
 ./usr/include/mvme68k
 ./usr/include/mvme68k/_types.h
-./usr/include/mvme68k/ansi.h
 ./usr/include/mvme68k/asm.h
 ./usr/include/mvme68k/autoconf.h
 ./usr/include/mvme68k/bugio.h
@@ -183,7 +180,6 @@
 ./usr/include/mvme68k/spinlock.h
 ./usr/include/mvme68k/stdarg.h
 ./usr/include/mvme68k/trap.h
-./usr/include/mvme68k/types.h
 ./usr/include/mvme68k/varargs.h
 ./usr/include/mvme68k/vmparam.h
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.8/2.95.3/SYSCALLS.c.X

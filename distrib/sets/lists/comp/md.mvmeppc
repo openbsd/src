@@ -116,7 +116,6 @@
 ./usr/include/ieeefp.h
 ./usr/include/powerpc
 ./usr/include/powerpc/_types.h
-./usr/include/powerpc/ansi.h
 ./usr/include/powerpc/asm.h
 ./usr/include/powerpc/autoconf.h
 ./usr/include/powerpc/bat.h
@@ -157,7 +156,6 @@
 ./usr/include/powerpc/spinlock.h
 ./usr/include/powerpc/stdarg.h
 ./usr/include/powerpc/trap.h
-./usr/include/powerpc/types.h
 ./usr/include/powerpc/va-ppc.h
 ./usr/include/powerpc/varargs.h
 ./usr/include/powerpc/vmparam.h

@@ -1528,7 +1528,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/varargs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/_types.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/vax/ansi.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/aout_machdep.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/asm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/bus.ph
@@ -1578,7 +1577,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/spinlock.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/stdarg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/trap.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/vax/types.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/uvax.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/varargs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/vmparam.ph

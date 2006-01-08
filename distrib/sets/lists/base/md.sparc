@@ -1380,7 +1380,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/soundcard.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/_types.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/ansi.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/apmvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/asm.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/autoconf.ph
@@ -1431,7 +1430,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/sun_disklabel.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/svr4_machdep.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/trap.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/types.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/varargs.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/vmparam.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/z8530var.ph

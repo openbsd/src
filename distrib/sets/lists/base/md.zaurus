@@ -616,7 +616,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/ar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/_types.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/arm/ansi.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/apmvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/armreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/asm.ph
@@ -665,7 +664,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/swi.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/sysarch.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/trap.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/arm/types.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/undefined.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arm/vmparam.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/arpa
@@ -2218,7 +2216,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/xfs/xfs_vopdefs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/_types.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/ansi.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/apmvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/asm.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/atomic.ph
@@ -2262,7 +2259,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/stdarg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/sysarch.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/trap.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/types.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/vmparam.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/zaurus_reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zaurus/zaurus_var.ph

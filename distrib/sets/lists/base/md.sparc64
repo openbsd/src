@@ -1422,7 +1422,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/soundcard.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/_types.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/ansi.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/asm.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/autoconf.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/boot_flag.ph
@@ -1474,7 +1473,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/spinlock.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/stdarg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/trap.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/types.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/varargs.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/vmparam.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/z8530var.ph

@@ -1601,7 +1601,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/menu.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/_types.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/ansi.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/arcbios.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/archtype.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/asm.ph
@@ -1639,7 +1638,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/spinlock.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/stdarg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/trap.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/types.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/varargs.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/mips64/vmparam.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/miscfs
@@ -1973,7 +1971,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/setjmp.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/_types.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/ansi.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/asm.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/autoconf.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/bus.ph
@@ -2013,7 +2010,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/spinlock.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/stdarg.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/trap.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/types.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/varargs.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/vmparam.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgtty.ph

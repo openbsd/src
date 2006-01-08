@@ -110,7 +110,6 @@
 ./usr/include/g++/vector.h
 ./usr/include/hp300
 ./usr/include/hp300/_types.h
-./usr/include/hp300/ansi.h
 ./usr/include/hp300/asm.h
 ./usr/include/hp300/autoconf.h
 ./usr/include/hp300/bus.h
@@ -145,13 +144,11 @@
 ./usr/include/hp300/spinlock.h
 ./usr/include/hp300/stdarg.h
 ./usr/include/hp300/trap.h
-./usr/include/hp300/types.h
 ./usr/include/hp300/varargs.h
 ./usr/include/hp300/vmparam.h
 ./usr/include/ieeefp.h
 ./usr/include/m68k
 ./usr/include/m68k/_types.h
-./usr/include/m68k/ansi.h
 ./usr/include/m68k/asm.h
 ./usr/include/m68k/asm_single.h
 ./usr/include/m68k/cdefs.h
@@ -181,7 +178,6 @@
 ./usr/include/m68k/stdarg.h
 ./usr/include/m68k/sysctl.h
 ./usr/include/m68k/trap.h
-./usr/include/m68k/types.h
 ./usr/include/m68k/varargs.h
 ./usr/include/m68k/vmparam.h
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.8/2.95.3/SYSCALLS.c.X

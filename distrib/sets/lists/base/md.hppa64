@@ -1532,7 +1532,6 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/grp.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/histedit.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa
-./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa/ansi.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa/asm.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa/autoconf.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa/bus.ph
@@ -1578,7 +1577,6 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa/spinlock.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa/stdarg.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa/trap.ph
-./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa/types.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa/varargs.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa/vmparam.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/hppa64/_types.ph

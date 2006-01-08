@@ -154,7 +154,6 @@
 ./usr/include/ieeefp.h
 ./usr/include/sparc64
 ./usr/include/sparc64/_types.h
-./usr/include/sparc64/ansi.h
 ./usr/include/sparc64/asm.h
 ./usr/include/sparc64/autoconf.h
 ./usr/include/sparc64/boot_flag.h
@@ -206,7 +205,6 @@
 ./usr/include/sparc64/spinlock.h
 ./usr/include/sparc64/stdarg.h
 ./usr/include/sparc64/trap.h
-./usr/include/sparc64/types.h
 ./usr/include/sparc64/varargs.h
 ./usr/include/sparc64/vmparam.h
 ./usr/include/sparc64/z8530var.h

@@ -1598,7 +1598,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/adbsys.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/ansi.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/apmvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/asm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/autoconf.ph
@@ -1642,7 +1641,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/spinlock.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/stdarg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/trap.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/va-ppc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/varargs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/vmparam.ph
@@ -1908,7 +1906,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/poll.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/_types.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ansi.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/asm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/bat.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/cdefs.ph
@@ -1943,7 +1940,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/spinlock.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/stdarg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/trap.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/va-ppc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/varargs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/wsconsio.ph

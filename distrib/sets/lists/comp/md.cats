@@ -4,7 +4,6 @@
 ./usr/bin/readelf
 ./usr/include/arm
 ./usr/include/arm/_types.h
-./usr/include/arm/ansi.h
 ./usr/include/arm/apmvar.h
 ./usr/include/arm/armreg.h
 ./usr/include/arm/asm.h
@@ -53,14 +52,12 @@
 ./usr/include/arm/swi.h
 ./usr/include/arm/sysarch.h
 ./usr/include/arm/trap.h
-./usr/include/arm/types.h
 ./usr/include/arm/undefined.h
 ./usr/include/arm/vmparam.h
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
 ./usr/include/cats
 ./usr/include/cats/_types.h
-./usr/include/cats/ansi.h
 ./usr/include/cats/asm.h
 ./usr/include/cats/atomic.h
 ./usr/include/cats/bootconfig.h
@@ -103,7 +100,6 @@
 ./usr/include/cats/stdarg.h
 ./usr/include/cats/sysarch.h
 ./usr/include/cats/trap.h
-./usr/include/cats/types.h
 ./usr/include/cats/vmparam.h
 ./usr/include/dis-asm.h
 ./usr/include/g++/arm-unknown-openbsd3.8

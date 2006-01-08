@@ -614,7 +614,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/_types.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/alpha_cpu.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ansi.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/aout_machdep.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/asm.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/atomic.ph
@@ -664,7 +663,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/stdarg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/sysarch.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/tc_machdep.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/types.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/varargs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/vmparam.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/wsconsio.ph

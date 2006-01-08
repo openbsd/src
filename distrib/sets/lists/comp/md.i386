@@ -154,7 +154,6 @@
 ./usr/include/g++/streambuf
 ./usr/include/i386
 ./usr/include/i386/_types.h
-./usr/include/i386/ansi.h
 ./usr/include/i386/apicvar.h
 ./usr/include/i386/apmvar.h
 ./usr/include/i386/asm.h
@@ -220,7 +219,6 @@
 ./usr/include/i386/sysarch.h
 ./usr/include/i386/trap.h
 ./usr/include/i386/tss.h
-./usr/include/i386/types.h
 ./usr/include/i386/varargs.h
 ./usr/include/i386/vm86.h
 ./usr/include/i386/vmparam.h
