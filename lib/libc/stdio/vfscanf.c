@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfscanf.c,v 1.18 2006/01/06 18:53:04 millert Exp $ */
+/*	$OpenBSD: vfscanf.c,v 1.19 2006/01/08 02:13:28 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -58,17 +58,18 @@
 
 /*
  * The following are used in numeric conversions only:
- * SIGNOK, NDIGITS, DPTOK, and EXPOK are for floating point;
- * SIGNOK, NDIGITS, PFXOK, and NZDIGITS are for integral.
+ * SIGNOK, HAVESIGN, NDIGITS, DPTOK, and EXPOK are for floating point;
+ * SIGNOK, HAVESIGN, NDIGITS, PFXOK, and NZDIGITS are for integral.
  */
 #define	SIGNOK		0x0200	/* +/- is (still) legal */
-#define	NDIGITS		0x0400	/* no digits detected */
+#define	HAVESIGN	0x0400	/* sign detected */
+#define	NDIGITS		0x0800	/* no digits detected */
 
-#define	DPTOK		0x0800	/* (float) decimal point is still legal */
-#define	EXPOK		0x1000	/* (float) exponent (e+3, etc) still legal */
+#define	DPTOK		0x1000	/* (float) decimal point is still legal */
+#define	EXPOK		0x2000	/* (float) exponent (e+3, etc) still legal */
 
-#define	PFXOK		0x0800	/* 0x prefix is (still) legal */
-#define	NZDIGITS	0x1000	/* no zero digits detected */
+#define	PFXOK		0x1000	/* 0x prefix is (still) legal */
+#define	NZDIGITS	0x2000	/* no zero digits detected */
 
 /*
  * Conversion types.
@@ -500,13 +501,18 @@ literal:
 				case '+': case '-':
 					if (flags & SIGNOK) {
 						flags &= ~SIGNOK;
+						flags |= HAVESIGN;
 						goto ok;
 					}
 					break;
 
-				/* x ok iff flag still set & 2nd char */
+				/*
+				 * x ok iff flag still set and 2nd char (or
+				 * 3rd char if we have a sign).
+				 */
 				case 'x': case 'X':
-					if (flags & PFXOK && p == buf + 1) {
+					if (flags & PFXOK && p ==
+					    buf + 1 + !!(flags & HAVESIGN)) {
 						base = 16;	/* if %i */
 						flags &= ~PFXOK;
 						goto ok;
