@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.1 2006/01/04 20:39:04 miod Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.2 2006/01/08 16:35:25 miod Exp $	*/
 /*	$NetBSD: akbd.c,v 1.17 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -244,6 +244,10 @@ akbdattach(struct device *parent, struct device *self, void *aux)
 #ifdef ADB_DEBUG
 	if (adb_debug)
 		printf("akbd: returned %d from SetADBInfo\n", error);
+#endif
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	timeout_set(&sc->sc_rawrepeat_ch, akbd_rawrepeat, sc);
 #endif
 
 #if NWSKBD > 0
