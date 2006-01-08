@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfb.c,v 1.2 2006/01/08 16:36:54 miod Exp $	*/
+/*	$OpenBSD: macfb.c,v 1.3 2006/01/08 16:59:35 miod Exp $	*/
 /* $NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -101,8 +101,7 @@ extern u_int32_t	mac68k_vidlen;
 int
 macfb_is_console(paddr_t addr)
 {
-	if (addr != macfb_consaddr &&
-	    (addr >= 0xf9000000 && addr <= 0xfeffffff)) {
+	if (addr != macfb_consaddr && (addr >= NBBASE && addr < NBTOP)) {
 		/*
 		 * This is in the NuBus standard slot space range, so we
 		 * may well have to look at 0xFssxxxxx, too.  Mask off the
