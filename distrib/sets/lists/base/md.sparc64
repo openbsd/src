@@ -1446,7 +1446,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/ieee.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/ieeefp.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/instr.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/int_types.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/internal_types.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/intr.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/ioctl_fd.ph
