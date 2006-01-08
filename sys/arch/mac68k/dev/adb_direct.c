@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.16 2006/01/04 20:39:04 miod Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.17 2006/01/08 17:45:29 miod Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.51 2005/06/16 22:43:36 jmc Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
@@ -60,8 +60,6 @@
  *    adb_cuda_tickle routine can be removed.
  */
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-
 #include <sys/param.h>
 #include <sys/cdefs.h>
 #include <sys/pool.h>
@@ -74,17 +72,6 @@
 #include <machine/cpu.h>
 #include <mac68k/dev/adbvar.h>
 #define printf_intr printf
-#else /* !__NetBSD__, i.e. Mac OS */
-#include "via.h"				/* for macos based testing */
-/* #define ADB_DEBUG */				/* more verbose for testing */
-
-/* Types of ADB hardware that we support */
-#define ADB_HW_UNKNOWN		0x0	/* don't know */
-#define ADB_HW_II		0x1	/* Mac II series */
-#define ADB_HW_IISI		0x2	/* Mac IIsi series */
-#define ADB_HW_PB		0x3	/* PowerBook series */
-#define ADB_HW_CUDA		0x4	/* Machines with a Cuda chip */
-#endif /* __NetBSD__ */
 
 /* some misc. leftovers */
 #define vPB		0x0000
@@ -289,7 +276,6 @@ int	send_adb_cuda(u_char *, u_char *, void *, void *, int);
 void	adb_intr_cuda_test(void);
 void	adb_cuda_tickle(void);
 void	adb_pass_up(struct adbCommand *);
-void	adb_op_comprout(void);
 void	adb_reinit(void);
 int	count_adbs(void);
 int	get_ind_adb_info(ADBDataBlock *, int);
@@ -300,7 +286,6 @@ int	adb_op(Ptr, Ptr, Ptr, short);
 void	adb_read_II(u_char *);
 void	adb_hw_setup(void);
 void	adb_hw_setup_IIsi(u_char *);
-void	adb_comp_exec(void);
 int	adb_cmd_result(u_char *);
 int	adb_cmd_extra(u_char *);
 int	adb_guess_next_device(void);
@@ -1668,12 +1653,6 @@ adb_soft_intr(void)
 	u_char *comprout = 0;
 	u_char *compdata = 0;
 
-#if 0
-	s = splhigh();
-	printf_intr("sr: %x\n", (s & 0x0700));
-	splx(s);
-#endif
-
 /*delay(2*ADB_DELAY);*/
 
 	while (adbInCount) {
@@ -1709,9 +1688,9 @@ adb_soft_intr(void)
 
 		/* call default completion routine if it's valid */
 		if (comprout) {
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#ifdef MRG_ADB
 			__asm __volatile (
-			"	movml #0xffff,sp@- \n" /* save all regs */
+			"	movml #0xffff,sp@- \n"	/* save all regs */
 			"	movl %0,a2	\n" 	/* compdata */
 			"	movl %1,a1	\n" 	/* comprout */
 			"	movl %2,a0 	\n"	/* buffer */
@@ -1722,17 +1701,9 @@ adb_soft_intr(void)
 			    : "g"(compdata), "g"(comprout),
 				"g"(buffer), "g"(cmd)
 			    : "d0", "a0", "a1", "a2");
-#else					/* for macos based testing */
-			asm
-			{
-				movem.l a0/a1/a2/d0, -(a7)
-				move.l compdata, a2
-				move.l comprout, a1
-				move.l buffer, a0
-				move.w cmd, d0
-				jsr(a1)
-				movem.l(a7)+, d0/a2/a1/a0
-			}
+#else
+			(void)((int (*)(u_char *, u_char *, int))comprout)
+			    (buffer, compdata, cmd);
 #endif
 		}
 
@@ -2251,44 +2222,6 @@ adb_reinit(void)
 		splx(s);
 
 	return;
-}
-
-
-/*
- * adb_comp_exec
- * This is a general routine that calls the completion routine if there is one.
- * NOTE: This routine is now only used by pm_direct.c
- *       All the code in this file (adb_direct.c) uses 
- *       the adb_pass_up routine now.
- */
-void
-adb_comp_exec(void)
-{
-	if ((long)0 != adbCompRout) /* don't call if empty return location */
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-		__asm __volatile(
-		"	movml #0xffff,sp@- \n" /* save all registers */
-		"	movl %0,a2 \n"		/* adbCompData */
-		"	movl %1,a1 \n"		/* adbCompRout */
-		"	movl %2,a0 \n"		/* adbBuffer */
-		"	movl %3,d0 \n"		/* adbWaitingCmd */
-		"	jbsr a1@ \n"		/* go call the routine */
-		"	movml sp@+,#0xffff"	/* restore all registers */
-		    :
-		    : "g"(adbCompData), "g"(adbCompRout),
-			"g"(adbBuffer), "g"(adbWaitingCmd)
-		    : "d0", "a0", "a1", "a2");
-#else /* for Mac OS-based testing */
-		asm {
-			movem.l a0/a1/a2/d0, -(a7)
-			move.l adbCompData, a2
-			move.l adbCompRout, a1
-			move.l adbBuffer, a0
-			move.w adbWaitingCmd, d0
-			jsr(a1)
-			movem.l(a7) +, d0/a2/a1/a0
-		}
-#endif
 }
 
 

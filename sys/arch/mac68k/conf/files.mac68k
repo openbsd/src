@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mac68k,v 1.36 2006/01/08 16:36:52 miod Exp $
+#	$OpenBSD: files.mac68k,v 1.37 2006/01/08 17:45:26 miod Exp $
 #	$NetBSD: files.mac68k,v 1.61 1997/03/01 20:22:16 scottr Exp $
 
 # mac68k-specific configuration info
@@ -22,7 +22,7 @@ file	arch/mac68k/dev/nubus.c		nubus
 device	adb {}
 attach	adb at obio
 file	arch/mac68k/dev/adb.c		adb
-file	arch/mac68k/dev/adbsysasm.s	adb
+file	arch/mac68k/dev/adbsysasm.s	adb & mrg_adb
 file	arch/mac68k/dev/adb_direct.c	adb
 file	arch/mac68k/dev/pm_direct.c
 

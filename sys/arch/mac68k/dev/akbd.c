@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.3 2006/01/08 17:25:05 miod Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.4 2006/01/08 17:45:29 miod Exp $	*/
 /*	$NetBSD: akbd.c,v 1.17 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -133,7 +133,11 @@ akbdattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_leds = (u_int8_t)0x00;	/* initially off */
 
+#ifdef MRG_ADB
 	adbinfo.siServiceRtPtr = (Ptr)adb_kbd_asmcomplete;
+#else
+	adbinfo.siServiceRtPtr = (Ptr)kbd_adbcomplete;
+#endif
 	adbinfo.siDataAreaAddr = (caddr_t)sc;
 
 	printf(": ");

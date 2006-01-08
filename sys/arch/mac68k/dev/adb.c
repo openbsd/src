@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.16 2006/01/08 17:25:05 miod Exp $	*/
+/*	$OpenBSD: adb.c,v 1.17 2006/01/08 17:45:29 miod Exp $	*/
 /*	$NetBSD: adb.c,v 1.47 2005/06/16 22:43:36 jmc Exp $	*/
 
 /*
@@ -292,8 +292,16 @@ adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
  * This function is used by the adb_op_sync routine so it knows when the
  * function is done.
  */
+#ifdef MRG_ADB
 void 
 adb_op_comprout(void)
 {
 	asm("movw	#1,a2@			| update flag value");
 }
+#else
+void 
+adb_op_comprout(caddr_t buffer, caddr_t data_area, int adb_command)
+{
+	*(u_short *)data_area = 0x01;		/* update flag value */
+}
+#endif

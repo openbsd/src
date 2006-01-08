@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbsysasm.s,v 1.3 2006/01/04 20:39:04 miod Exp $	*/
+/*	$OpenBSD: adbsysasm.s,v 1.4 2006/01/08 17:45:29 miod Exp $	*/
 /*	$NetBSD: adbsysasm.s,v 1.11 2001/11/20 03:19:42 chs Exp $	*/
 
 /*-
@@ -69,8 +69,6 @@ GLOBAL(adb_ms_asmcomplete)
 	rts
 #endif
 
-#ifdef MRG_ADB
-
 #if defined(ADB_DEBUG) && 0
 GLOBAL(adb_jadbprochello)
 	.asciz	"adb: hello from adbproc\n"
@@ -88,5 +86,3 @@ GLOBAL(adb_jadbproc)
 #endif
 		/* Don't do anything; adbattach fixes dev info for us. */
 	rts
-
-#endif	/* MRG_ADB */

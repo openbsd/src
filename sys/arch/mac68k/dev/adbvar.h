@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbvar.h,v 1.9 2006/01/04 20:39:04 miod Exp $	*/
+/*	$OpenBSD: adbvar.h,v 1.10 2006/01/08 17:45:29 miod Exp $	*/
 /*	$NetBSD: adbvar.h,v 1.22 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -57,7 +57,11 @@ extern int	adb_debug;
 
 /* adb.c */
 int	adb_op_sync(Ptr, Ptr, Ptr, short);
+#ifdef MRG_ADB
 void	adb_op_comprout(void);
+#else
+void	adb_op_comprout(caddr_t, caddr_t, int);
+#endif
 
 /* adbsysasm.s */
 void	adb_kbd_asmcomplete(void);
