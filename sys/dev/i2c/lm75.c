@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm75.c,v 1.8 2006/01/09 19:27:34 deraadt Exp $	*/
+/*	$OpenBSD: lm75.c,v 1.9 2006/01/09 23:30:38 deraadt Exp $	*/
 /*	$NetBSD: lm75.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -116,8 +116,6 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_model = LM_MODEL_LM77;
 
 	printf(": %s\n", ia->ia_name);
-
-	iic_release_bus(sc->sc_tag, 0);
 
 	/* Set the configuration to defaults */
 	iic_acquire_bus(sc->sc_tag, 0);
