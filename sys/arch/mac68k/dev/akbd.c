@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.4 2006/01/08 17:45:29 miod Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.5 2006/01/09 19:13:40 miod Exp $	*/
 /*	$NetBSD: akbd.c,v 1.17 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -376,8 +376,7 @@ akbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSKBDIO_BELL:
 	case WSKBDIO_COMPLEXBELL:
 #define d ((struct wskbd_bell_data *)data)
-		mac68k_ring_bell(d->pitch, d->period * hz / 1000, 100);
-		/* comes in as msec, goes out as ticks; volume ignored */
+		mac68k_ring_bell(d->pitch, d->period * hz / 1000, d->volume);
 #undef d
 		return (0);
 
@@ -485,12 +484,14 @@ akbd_is_console(void)
 	return ((mac68k_machine.serial_console & 0x03) == 0);
 }
 
+void akbd_cnbell(void *, u_int, u_int, u_int);
 void akbd_cngetc(void *, u_int *, int *);
 void akbd_cnpollc(void *, int);
 
 struct wskbd_consops akbd_consops = {
 	akbd_cngetc,
 	akbd_cnpollc,
+	akbd_cnbell
 };
 
 int
@@ -542,4 +543,10 @@ akbd_cngetc(void *v, u_int *type, int *data)
 void
 akbd_cnpollc(void *v, int on)
 {
+}
+
+void
+akbd_cnbell(void *v, u_int pitch, u_int period, u_int volume)
+{
+	mac68k_ring_bell(pitch, period * hz / 1000, volume);
 }
