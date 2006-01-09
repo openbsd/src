@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.33 2005/12/28 20:48:18 pedro Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.34 2006/01/09 12:43:17 pedro Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -72,10 +72,12 @@ ufs_inactive(void *v)
 	struct proc *p = ap->a_p;
 	mode_t mode;
 	int error = 0;
+#ifdef DIAGNOSTIC
 	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("ffs_inactive: pushing active", vp);
+#endif
 
 	/*
 	 * Ignore inodes related to stale file handles.
@@ -135,10 +137,13 @@ int
 ufs_reclaim(struct vnode *vp, struct proc *p)
 {
 	struct inode *ip;
+#ifdef DIAGNOSTIC
 	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("ufs_reclaim: pushing active", vp);
+#endif
+
 	/*
 	 * Remove the inode from its hash chain.
 	 */

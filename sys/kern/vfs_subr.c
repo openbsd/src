@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.121 2005/11/30 10:35:07 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.122 2006/01/09 12:43:16 pedro Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -415,10 +415,13 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 			*vpp = 0;
 			return (ENFILE);
 		}
+
+#ifdef DIAGNOSTIC
 		if (vp->v_usecount) {
 			vprint("free vnode", vp);
 			panic("free vnode isn't");
 		}
+#endif
 
 		TAILQ_REMOVE(listhd, vp, v_freelist);
 		vp->v_bioflag &= ~VBIOONFREELIST;
@@ -804,8 +807,11 @@ vrele(struct vnode *vp)
 		panic("vrele: v_writecount != 0");
 	}
 #endif
+
 	if (vn_lock(vp, LK_EXCLUSIVE|LK_INTERLOCK, p)) {
+#ifdef DIAGNOSTIC
 		vprint("vrele: cannot lock", vp);
+#endif
 		return;
 	}
 
@@ -1269,6 +1275,7 @@ loop:
 	return (count);
 }
 
+#ifdef DIAGNOSTIC
 /*
  * Print out a description of a vnode.
  */
@@ -1313,6 +1320,7 @@ vprint(char *label, struct vnode *vp)
 		VOP_PRINT(vp);
 	}
 }
+#endif /* DIAGNOSTIC */
 
 #ifdef DEBUG
 /*
@@ -2016,7 +2024,9 @@ loop:
 	vwaitforio(vp, 0, "vflushbuf", 0);
 	if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
 		splx(s);
+#ifdef DIAGNOSTIC
 		vprint("vflushbuf: dirty", vp);
+#endif
 		goto loop;
 	}
 	splx(s);

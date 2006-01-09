@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.43 2005/12/14 22:03:01 pedro Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.44 2006/01/09 12:43:17 pedro Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -1327,10 +1327,12 @@ ext2fs_reclaim(v)
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	struct inode *ip;
+#ifdef DIAGNOSTIC
 	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0) 
 		vprint("ext2fs_reclaim: pushing active", vp);
+#endif
 
 	/*
 	 * Remove the inode from its hash chain.

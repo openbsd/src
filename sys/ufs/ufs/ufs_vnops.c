@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.71 2005/12/28 20:48:18 pedro Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.72 2006/01/09 12:43:17 pedro Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1706,9 +1706,11 @@ ufs_strategy(void *v)
 int
 ufs_print(void *v)
 {
+#ifdef DIAGNOSTIC
 	struct vop_print_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
+
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 
@@ -1725,6 +1727,9 @@ ufs_print(void *v)
 #endif /* FIFO */
 	lockmgr_printinfo(&ip->i_lock);
 	printf("\n");
+
+#endif /* DIAGNOSTIC */
+
 	return (0);
 }
 

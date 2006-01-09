@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.30 2005/11/19 15:48:04 pedro Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.31 2006/01/09 12:43:16 pedro Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -169,8 +169,12 @@ nfs_inactive(v)
 	struct proc *p = curproc;	/* XXX */
 
 	np = VTONFS(ap->a_vp);
+
+#ifdef DIAGNOSTIC
 	if (prtactive && ap->a_vp->v_usecount != 0)
 		vprint("nfs_inactive: pushing active", ap->a_vp);
+#endif
+
 	if (ap->a_vp->v_type != VDIR) {
 		sp = np->n_sillyrename;
 		np->n_sillyrename = (struct sillyrename *)0;
@@ -206,8 +210,10 @@ nfs_reclaim(v)
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsdmap *dp, *dp2;
 
+#ifdef DIAGNOSTIC
 	if (prtactive && vp->v_usecount != 0)
 		vprint("nfs_reclaim: pushing active", vp);
+#endif
 
 	if (np->n_hash.le_prev != NULL)
 		LIST_REMOVE(np, n_hash);

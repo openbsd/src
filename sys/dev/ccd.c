@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.63 2005/09/13 17:26:16 mickey Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.64 2006/01/09 12:43:16 pedro Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -1287,8 +1287,10 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			 * cause Bad Things.  Maybe we need to force
 			 * the close to happen?
 			 */
+#ifdef DIAGNOSTIC
 			CCD_DCALL(CCDB_VNODE, vprint("CCDIOCCLR: vnode info",
 			    cs->sc_cinfo[i].ci_vp));
+#endif
 
 			(void)vn_close(cs->sc_cinfo[i].ci_vp, FREAD|FWRITE,
 			    p->p_ucred, p);
@@ -1461,7 +1463,9 @@ ccdlookup(char *path, struct proc *p, struct vnode **vpp)
 		return (ENOTBLK);
 	}
 
+#ifdef DIAGNOSTIC
 	CCD_DCALL(CCDB_VNODE, vprint("ccdlookup: vnode info", vp));
+#endif
 
 	VOP_UNLOCK(vp, 0, p);
 	*vpp = vp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.15 2005/11/19 02:18:01 pedro Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.16 2006/01/09 12:43:16 pedro Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -243,9 +243,11 @@ cd9660_inactive(v)
 	struct proc *p = ap->a_p;
 	register struct iso_node *ip = VTOI(vp);
 	int error = 0;
-	
+
+#ifdef DIAGNOSTIC
 	if (prtactive && vp->v_usecount != 0)
 		vprint("cd9660_inactive: pushing active", vp);
+#endif
 	
 	ip->i_flag = 0;
 	VOP_UNLOCK(vp, 0, p);
@@ -271,9 +273,12 @@ cd9660_reclaim(v)
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct iso_node *ip = VTOI(vp);
-	
+
+#ifdef DIAGNOSTIC
 	if (prtactive && vp->v_usecount != 0)
 		vprint("cd9660_reclaim: pushing active", vp);
+#endif
+
 	/*
 	 * Remove the inode from its hash chain.
 	 */

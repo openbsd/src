@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.27 2004/06/24 19:35:25 tholo Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.28 2006/01/09 12:43:16 pedro Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -593,15 +593,18 @@ msdosfs_reclaim(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
+#ifdef DIAGNOSTIC
 	extern int prtactive;
+
+	if (prtactive && vp->v_usecount != 0)
+		vprint("msdosfs_reclaim(): pushing active", vp);
+#endif
 	
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_reclaim(): dep %08x, file %s, refcnt %d\n",
 	    dep, dep->de_Name, dep->de_refcnt);
 #endif
 
-	if (prtactive && vp->v_usecount != 0)
-		vprint("msdosfs_reclaim(): pushing active", vp);
 	/*
 	 * Remove the denode from its hash chain.
 	 */
@@ -634,14 +637,16 @@ msdosfs_inactive(v)
 	struct denode *dep = VTODE(vp);
 	struct proc *p = ap->a_p;
 	int error;
+#ifdef DIAGNOSTIC
 	extern int prtactive;
+
+	if (prtactive && vp->v_usecount != 0)
+		vprint("msdosfs_inactive(): pushing active", vp);
+#endif
 	
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_inactive(): dep %08x, de_Name[0] %x\n", dep, dep->de_Name[0]);
 #endif
-
-	if (prtactive && vp->v_usecount != 0)
-		vprint("msdosfs_inactive(): pushing active", vp);
 
 	error = 0;
 

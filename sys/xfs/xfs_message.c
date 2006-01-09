@@ -442,12 +442,13 @@ gc_vnode (struct vnode *vp,
 	    return;
 	}
 #endif /* __FreeBSD__ */
-	
-	/*  DIAGNOSTIC */
+
+#ifdef DIAGNOSTIC
 	if (vp->v_usecount < 0 || vp->v_writecount != 0) {
 		    vprint("vrele: bad ref count", vp);
 		    panic("vrele: ref cnt");
 	}
+#endif /* DIAGNOSTIC */
 	
 	NNPFSDEB(XDEBMSG, ("xfs_message_gc: success\n"));
 	

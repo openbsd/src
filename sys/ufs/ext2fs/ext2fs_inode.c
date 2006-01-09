@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.31 2005/12/15 13:44:28 krw Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.32 2006/01/09 12:43:17 pedro Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -117,10 +117,13 @@ ext2fs_inactive(v)
 	struct proc *p = ap->a_p;
 	struct timespec ts;
 	int error = 0;
+#ifdef DIAGNOSTIC
 	extern int prtactive;
-	
+
 	if (prtactive && vp->v_usecount != 0)
 		vprint("ext2fs_inactive: pushing active", vp);
+#endif
+
 	/* Get rid of inodes related to stale file handles. */
 	if (ip->i_e2fs_mode == 0 || ip->i_e2fs_dtime != 0)
 		goto out;
