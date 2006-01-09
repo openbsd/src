@@ -310,8 +310,6 @@
 ./usr/include/dev/ic/pdqreg.h
 ./usr/include/dev/ic/pdqvar.h
 ./usr/include/dev/ic/pt2254a.h
-./usr/include/dev/ic/ralreg.h
-./usr/include/dev/ic/ralvar.h
 ./usr/include/dev/ic/ramdac.h
 ./usr/include/dev/ic/revar.h
 ./usr/include/dev/ic/rf3000reg.h

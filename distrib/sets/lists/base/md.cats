@@ -27,13 +27,12 @@
 ./etc/firmware/kue-license
 ./etc/firmware/ral-license
 ./etc/firmware/ral-rt2561
-./etc/firmware/ral-rt2561S
+./etc/firmware/ral-rt2561s
 ./etc/firmware/ral-rt2661
 ./etc/firmware/uyap
 ./etc/firmware/uyap-license
 ./etc/firmware/yds
 ./etc/firmware/yds-license
-./sbin/ancontrol
 ./sbin/fdisk
 ./sbin/iopctl
 ./sbin/kbd
@@ -995,8 +994,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/pdqreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/pdqvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/pt2254a.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ralreg.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ralvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ramdac.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/revar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/rf3000reg.ph
