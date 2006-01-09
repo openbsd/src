@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.72 2005/09/01 17:59:13 otto Exp $	*/
+/*	$OpenBSD: ping.c,v 1.73 2006/01/09 22:42:35 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: ping.c,v 1.72 2005/09/01 17:59:13 otto Exp $";
+static const char rcsid[] = "$OpenBSD: ping.c,v 1.73 2006/01/09 22:42:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -188,19 +188,16 @@ main(int argc, char *argv[])
 	struct hostent *hp;
 	struct sockaddr_in *to;
 	struct in_addr saddr;
-	int i;
-	int ch, hold = 1, packlen, preload;
-	int maxsize, fdmasks;
-	socklen_t maxsizelen;
-	u_char *datap, *packet;
+	int i, ch, hold = 1, packlen, preload, maxsize, df = 0, tos = 0;
+	u_char *datap, *packet, ttl = MAXTTL, loop = 1;
 	char *target, hnamebuf[MAXHOSTNAMELEN];
-	u_char ttl = MAXTTL, loop = 1;
-	int df = 0, tos = 0;
 #ifdef IP_OPTIONS
 	char rspace[3 + 4 * NROUTES + 1];	/* record route space */
 #endif
-	fd_set *fdmaskp;
+	socklen_t maxsizelen;
 	const char *errstr;
+	fd_set *fdmaskp;
+	size_t fdmasks;
 
 	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(1, "socket");
@@ -215,7 +212,7 @@ main(int argc, char *argv[])
 	    "DI:LRS:c:dfi:jl:np:qrs:T:t:vw:")) != -1)
 		switch(ch) {
 		case 'c':
-			npackets = strtonum(optarg, 1, INT_MAX, &errstr);
+			npackets = (unsigned long)strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr)
 				errx(1,
 				    "number of packets to transmit is %s: %s",
@@ -270,7 +267,7 @@ main(int argc, char *argv[])
 		case 'l':
 			if (getuid())
 				errx(1, "%s", strerror(EPERM));
-			preload = strtonum(optarg, 1, INT_MAX, &errstr);
+			preload = (int)strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr)
 				errx(1, "preload value is %s: %s",
 				    errstr, optarg);
@@ -292,20 +289,20 @@ main(int argc, char *argv[])
 			options |= F_SO_DONTROUTE;
 			break;
 		case 's':		/* size of packet to send */
-			datalen = strtonum(optarg, 0, MAXPAYLOAD, &errstr);
+			datalen = (unsigned int)strtonum(optarg, 0, MAXPAYLOAD, &errstr);
 			if (errstr)
 				errx(1, "packet size is %s: %s",
 				    errstr, optarg);
 			break;
 		case 'T':
 			options |= F_HDRINCL;
-			tos = strtonum(optarg, 0, 0xff, &errstr);
+			tos = (int)strtonum(optarg, 0, 0xff, &errstr);
 			if (errstr)
 				errx(1, "tos value is %s: %s", errstr, optarg);
 			break;
 		case 't':
 			options |= F_TTL;
-			ttl = strtonum(optarg, 1, 255, &errstr);
+			ttl = (u_char)strtonum(optarg, 1, 255, &errstr);
 			if (errstr)
 				errx(1, "ttl value is %s: %s", errstr, optarg);
 			break;
@@ -313,7 +310,7 @@ main(int argc, char *argv[])
 			options |= F_VERBOSE;
 			break;
 		case 'w':
-			maxwait = strtonum(optarg, 1, INT_MAX, &errstr);
+			maxwait = (unsigned int)strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr)
 				errx(1, "maxwait value is %s: %s",
 				    errstr, optarg);
@@ -346,7 +343,7 @@ main(int argc, char *argv[])
 		if (!hp)
 			errx(1, "unknown host: %s", target);
 		to->sin_family = hp->h_addrtype;
-		memcpy(&to->sin_addr, hp->h_addr, hp->h_length);
+		memcpy(&to->sin_addr, hp->h_addr, (size_t)hp->h_length);
 		(void)strlcpy(hnamebuf, hp->h_name, sizeof(hnamebuf));
 		hostname = hnamebuf;
 	}
@@ -373,20 +370,20 @@ main(int argc, char *argv[])
 			whence.sin_len = sizeof(whence);
 			whence.sin_family = AF_INET;
 			memcpy(&whence.sin_addr.s_addr, &saddr, sizeof(saddr));
-			if (bind(s, (struct sockaddr*)&whence,
+			if (bind(s, (struct sockaddr *)&whence,
 			    sizeof(whence)) < 0)
 				err(1, "bind");
 		}
 	}
 
 	if (options & F_SO_DEBUG)
-		(void)setsockopt(s, SOL_SOCKET, SO_DEBUG, (char *)&hold,
+		(void)setsockopt(s, SOL_SOCKET, SO_DEBUG, &hold,
 		    sizeof(hold));
 	if (options & F_SO_DONTROUTE)
-		(void)setsockopt(s, SOL_SOCKET, SO_DONTROUTE, (char *)&hold,
+		(void)setsockopt(s, SOL_SOCKET, SO_DONTROUTE, &hold,
 		    sizeof(hold));
 	if (options & F_SO_JUMBO)
-		(void)setsockopt(s, SOL_SOCKET, SO_JUMBO, (char *)&hold,
+		(void)setsockopt(s, SOL_SOCKET, SO_JUMBO, &hold,
 		    sizeof(hold));
 
 	if (options & F_TTL) {
