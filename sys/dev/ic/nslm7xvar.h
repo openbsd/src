@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7xvar.h,v 1.8 2006/01/03 19:30:09 kettenis Exp $	*/
+/*	$OpenBSD: nslm7xvar.h,v 1.9 2006/01/09 20:40:19 kettenis Exp $	*/
 /*	$NetBSD: nslm7xvar.h,v 1.10 2002/11/15 14:55:42 ad Exp $ */
 
 /*-
@@ -48,6 +48,9 @@
 /* data registers */
 
 #define LMD_SENSORBASE	0x20	/* Sensors occupy 0x20 -- 0x2a */
+#define LMD_FAN1	0x28
+#define LMD_FAN2	0x29
+#define LMD_FAN3	0x2a
 
 #define LMD_CONFIG	0x40	/* Configuration */ 
 #define LMD_ISR1	0x41	/* Interrupt Status 1 */
@@ -62,22 +65,22 @@
 
 /* misc constants */
 
-#define LM_NUM_SENSORS	11
 #define LM_ID_LM78	0x00
 #define LM_ID_LM78J	0x40
 #define LM_ID_LM79	0xC0
 #define LM_ID_LM81	0x80
-#define LM_ID_MASK	0xFE
+#define LM_ID_MASK	0xfe
 
 /*
- * additional registers for the Winbond chips:
- * WB83781D: mostly lm7x compatible; extra temp sensors in bank1 & 2
- * WB83782D & WB83627HF: voltage sensors needs different handling, more FAN
- *                       dividers; mode voltage sensors, more temp sensors.
+ * Additional registers for the Winbond chips:
+ * W83781D: mostly LM78 compatible; extra temp sensors in bank 1 & 2.
+ * W83782D & W83627HF: voltage sensors needs different handling, more FAN
+ *                     dividers; extra voltage sensors in bank 4.
+ * W83791D: extra fans; all sensors accessable through bank 0.
  */
-#define WB_T23ADDR	0x4A	/* temp sens 2/3 I2C addr */
-#define WB_PIN		0x4B	/* pin & fan3 divider */
-#define WB_BANKSEL	0x4E	/* banck select register */
+#define WB_T23ADDR	0x4a	/* temp sens 2/3 I2C addr */
+#define WB_PIN		0x4b	/* pin & fan3 divider */
+#define WB_BANKSEL	0x4e	/* banck select register */
 #define WB_BANKSEL_B0	0x00	/* select bank 0 */
 #define WB_BANKSEL_B1	0x01	/* select bank 1 */
 #define WB_BANKSEL_B2	0x02	/* select bank 2 */
@@ -86,41 +89,61 @@
 #define WB_BANKSEL_B5	0x05	/* select bank 5 */
 #define WB_BANKSEL_HBAC	0x80	/* hight byte access */
 
-#define WB_VENDID	0x4F	/* vendor ID register */
-#define WB_VENDID_WINBOND 0x5CA3
-#define WB_VENDID_ASUS    0x12C3
-/* Bank0 regs */
+#define WB_VENDID	0x4f	/* vendor ID register */
+#define WB_VENDID_WINBOND 0x5ca3
+#define WB_VENDID_ASUS    0x12c3
+
+/* Bank 0 regs */
 #define WB_BANK0_CHIPID	0x58
-#define WB_CHIPID_83781		0x10
-#define WB_CHIPID_83781_2	0x11
-#define AS_CHIPID_99127		0x31 /* Asus W83781D clone */
-#define WB_CHIPID_83782		0x30
-#define WB_CHIPID_83627		0x21
-#define WB_CHIPID_83627THF	0x90
-#define WB_CHIPID_83697		0x60
-#define WB_CHIPID_83791		0x71
-#define WB_CHIPID_83791_2	0x72
-#define WB_BANK0_FANBAT	0x5D
-/* Bank1 regs */
+#define WB_CHIPID_W83781D	0x10
+#define WB_CHIPID_W83781D_2	0x11
+#define WB_CHIPID_W83627HF	0x21
+#define WB_CHIPID_AS99127F	0x31 /* Asus W83781D clone */
+#define WB_CHIPID_W83782D	0x30
+#define WB_CHIPID_W83783S	0x40
+#define WB_CHIPID_W83697HF	0x60
+#define WB_CHIPID_W83791D	0x71
+#define WB_CHIPID_W83791D_2	0x72
+#define WB_CHIPID_W83792D	0x7a
+#define WB_CHIPID_W83637HF	0x80
+#define WB_CHIPID_W83627THF	0x90
+#define WB_BANK0_FAN45	0x5c	/* fan4/5 divider; W83791D only */
+#define WB_BANK0_FANBAT	0x5d
+#define WB_BANK0_FAN4	0xba	/* W83791D only */
+#define WB_BANK0_FAN5	0xbb	/* W83791D only */
+
+/* Bank 1 regs */
 #define WB_BANK1_T2H	0x50
 #define WB_BANK1_T2L	0x51
 
-/* Bank2 regs */
+/* Bank 2 regs */
 #define WB_BANK2_T3H	0x50
 #define WB_BANK2_T3L	0x51
 
-/* Bank4 regs 83782/83627 only */
+/* Bank 4 regs W83782D/W83627HF and later models only */
 #define WB_BANK4_T1OFF	0x54
 #define WB_BANK4_T2OFF	0x55
 #define WB_BANK4_T3OFF	0x56
 
-/* Bank5 regs 83782/83627 only */
+/* Bank 5 regs W83782D/W83627HF and later models only */
 #define WB_BANK5_5VSB	0x50
 #define WB_BANK5_VBAT	0x51
 
-#define WB83781_NUM_SENSORS	13
-#define WB83697_NUM_SENSORS	13
-#define WB_NUM_SENSORS	15
+/* Reference voltage */
+#define WB_VREF		3600
+
+#define WB_MAX_SENSORS  18
+
+struct lm_softc;
+
+struct lm_sensor {
+	char *desc;
+	enum sensor_type type;
+	u_int8_t bank;
+	u_int8_t reg;
+	void (*refresh)(struct lm_softc *, int);
+	u_int rfact;
+};
 
 struct lm_softc {
 	struct	device sc_dev;
@@ -130,7 +153,8 @@ struct lm_softc {
 	bus_space_handle_t lm_ioh;
 
 	int	sc_flags;
-	struct sensor sensors[WB_NUM_SENSORS];
+	struct sensor sensors[WB_MAX_SENSORS];
+	struct lm_sensor *lm_sensors;
 	u_int numsensors;
 	void (*refresh_sensor_data) (struct lm_softc *);
 

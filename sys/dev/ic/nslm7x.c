@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7x.c,v 1.14 2006/01/07 12:42:45 kettenis Exp $	*/
+/*	$OpenBSD: nslm7x.c,v 1.15 2006/01/09 20:40:19 kettenis Exp $	*/
 /*	$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $ */
 
 /*-
@@ -57,31 +57,24 @@ struct cfdriver lm_cd = {
 	NULL, "lm", DV_DULL
 };
 
-void setup_fan(struct lm_softc *, int, int);
-void setup_temp(struct lm_softc *, int, int);
-void wb_setup_volt(struct lm_softc *);
-
 int  lm_match(struct lm_softc *);
 int  wb_match(struct lm_softc *);
 int  def_match(struct lm_softc *);
-void lm_common_match(struct lm_softc *);
 
-void generic_stemp(struct lm_softc *, struct sensor *);
-void generic_svolt(struct lm_softc *, struct sensor *);
-void generic_fanrpm(struct lm_softc *, struct sensor *);
+void lm_setup_sensors(struct lm_softc *, struct lm_sensor *);
+void lm_refresh(void *);
 
 void lm_refresh_sensor_data(struct lm_softc *);
+void lm_refresh_volts(struct lm_softc *, int);
+void lm_refresh_nvolts(struct lm_softc *, int);
+void lm_refresh_temp(struct lm_softc *, int);
+void lm_refresh_fanrpm(struct lm_softc *, int);
 
-void wb_svolt(struct lm_softc *);
-void wb_stemp(struct lm_softc *, struct sensor *, int);
-void wb781_fanrpm(struct lm_softc *, struct sensor *);
-void wb_fanrpm(struct lm_softc *, struct sensor *, int);
-
-void wb781_refresh_sensor_data(struct lm_softc *);
-void wb782_refresh_sensor_data(struct lm_softc *);
-void wb697_refresh_sensor_data(struct lm_softc *);
-
-void lm_refresh(void *);
+void wb_refresh_sensor_data(struct lm_softc *);
+void wb_refresh_n12volts(struct lm_softc *, int);
+void wb_refresh_n5volts(struct lm_softc *, int);
+void wb_refresh_temp(struct lm_softc *, int);
+void wb_refresh_fanrpm(struct lm_softc *, int);
 
 struct lm_chip {
 	int (*chip_match)(struct lm_softc *);
@@ -93,9 +86,218 @@ struct lm_chip lm_chips[] = {
 	{ def_match } /* Must be last */
 };
 
-/*
- * bus independent probe
- */
+struct lm_sensor lm78_sensors[] = {
+	/* Voltage */
+	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
+	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volts, 10000 },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000 },
+	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volts, 16800 },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volts, 40000 },
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, lm_refresh_nvolts, 40000 },
+	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, lm_refresh_nvolts, 16667 },
+
+	/* Temperature */
+	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
+
+	/* Fans */
+	{ "Fan1", SENSOR_FANRPM, 0, 0x28, lm_refresh_fanrpm },
+	{ "Fan2", SENSOR_FANRPM, 0, 0x29, lm_refresh_fanrpm },
+	{ "Fan3", SENSOR_FANRPM, 0, 0x2a, lm_refresh_fanrpm },
+
+	{ NULL }
+};
+
+struct lm_sensor w83627hf_sensors[] = {
+	/* Voltage */
+	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
+	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volts, 10000 },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000 },
+	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volts, 16800 },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volts, 38000 },
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_n12volts, 10000 },
+	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, wb_refresh_n5volts, 10000 },
+	{ "5VSB", SENSOR_VOLTS_DC, 5, 0x50, lm_refresh_volts, 15151 },
+	{ "VBAT", SENSOR_VOLTS_DC, 5, 0x51, lm_refresh_volts, 10000 },
+
+	/* Temperature */
+	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
+	{ "Temp2", SENSOR_TEMP, 1, 0x50, wb_refresh_temp },
+	{ "Temp3", SENSOR_TEMP, 2, 0x50, wb_refresh_temp },
+
+	/* Fans */
+	{ "Fan1", SENSOR_FANRPM, 0, 0x28, wb_refresh_fanrpm },
+	{ "Fan2", SENSOR_FANRPM, 0, 0x29, wb_refresh_fanrpm },
+	{ "Fan3", SENSOR_FANRPM, 0, 0x2a, wb_refresh_fanrpm },
+
+	{ NULL }
+};
+
+struct lm_sensor w83637hf_sensors[] = {
+	/* Voltage */
+	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volts, 38000 },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000 },
+	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volts, 16667 },
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x24, wb_refresh_n12volts, 10000 },
+	{ "5VSB", SENSOR_VOLTS_DC, 5, 0x50, lm_refresh_volts, 16667 },
+	{ "VBAT", SENSOR_VOLTS_DC, 5, 0x51, lm_refresh_volts, 10000 },
+
+	/* Temperature */
+	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
+	{ "Temp2", SENSOR_TEMP, 1, 0x50, wb_refresh_temp },
+	{ "Temp3", SENSOR_TEMP, 2, 0x50, wb_refresh_temp },
+
+	/* Fans */
+	{ "Fan1", SENSOR_FANRPM, 0, 0x28, wb_refresh_fanrpm },
+	{ "Fan2", SENSOR_FANRPM, 0, 0x29, wb_refresh_fanrpm },
+	{ "Fan3", SENSOR_FANRPM, 0, 0x2a, wb_refresh_fanrpm },
+
+	{ NULL }
+};
+
+struct lm_sensor w83697hf_sensors[] = {
+	/* Voltage */
+	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000 },
+	{ "+5V",SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volts, 16800 },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volts, 38000 },
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_n12volts, 10000 },
+	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, wb_refresh_n5volts, 10000 },
+	{ "5VSB", SENSOR_VOLTS_DC, 5, 0x50, lm_refresh_volts, 15151 },
+	{ "VBAT", SENSOR_VOLTS_DC, 5, 0x51, lm_refresh_volts, 10000 },
+
+	/* Temperature */
+	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
+	{ "Temp2", SENSOR_TEMP, 1, 0x50, wb_refresh_temp },
+
+	/* Fans */
+	{ "Fan1", SENSOR_FANRPM, 0, 0x28, wb_refresh_fanrpm },
+	{ "Fan2", SENSOR_FANRPM, 0, 0x29, wb_refresh_fanrpm },
+
+	{ NULL }
+};
+
+struct lm_sensor w83781d_sensors[] = {
+	/* Voltage */
+	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
+	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volts, 10000 },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000 },
+	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volts, 15050 },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volts, 38000},
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, lm_refresh_nvolts, 34768 },
+	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, lm_refresh_nvolts, 15050 },
+
+	/* Temperature */
+	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
+	{ "Temp2", SENSOR_TEMP, 1, 0x50, wb_refresh_temp },
+	{ "Temp3", SENSOR_TEMP, 2, 0x50, wb_refresh_temp },
+
+	/* Fans */
+	{ "Fan1", SENSOR_FANRPM, 0, 0x28, lm_refresh_fanrpm },
+	{ "Fan2", SENSOR_FANRPM, 0, 0x29, lm_refresh_fanrpm },
+	{ "Fan3", SENSOR_FANRPM, 0, 0x2a, lm_refresh_fanrpm },
+
+	{ NULL }
+};
+
+struct lm_sensor w83782d_sensors[] = {
+	/* Voltage */
+	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
+	{ "VINR0", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volts, 10000 },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000 },
+	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volts, 16800 },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volts, 38000},
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_n12volts, 10000 },
+	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, wb_refresh_n5volts, 10000 },
+	{ "5VSB", SENSOR_VOLTS_DC, 5, 0x50, lm_refresh_volts, 15151 },
+	{ "VBAT", SENSOR_VOLTS_DC, 5, 0x51, lm_refresh_volts, 10000 },
+
+	/* Temperature */
+	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
+	{ "Temp2", SENSOR_TEMP, 1, 0x50, wb_refresh_temp },
+	{ "Temp3", SENSOR_TEMP, 2, 0x50, wb_refresh_temp },
+
+	/* Fans */
+	{ "Fan1", SENSOR_FANRPM, 0, 0x28, wb_refresh_fanrpm },
+	{ "Fan2", SENSOR_FANRPM, 0, 0x29, wb_refresh_fanrpm },
+	{ "Fan3", SENSOR_FANRPM, 0, 0x2a, wb_refresh_fanrpm },
+
+	{ NULL }
+};
+
+struct lm_sensor w83783s_sensors[] = {
+	/* Voltage */
+	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000 },
+	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volts, 16800 },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volts, 38000 },
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_n12volts, 10000 },
+	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, wb_refresh_n5volts, 10000 },
+
+	/* Temperature */
+	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
+	{ "Temp2", SENSOR_TEMP, 1, 0x50, wb_refresh_temp },
+
+	/* Fans */
+	{ "Fan1", SENSOR_FANRPM, 0, 0x28, wb_refresh_fanrpm },
+	{ "Fan2", SENSOR_FANRPM, 0, 0x29, wb_refresh_fanrpm },
+	{ "Fan3", SENSOR_FANRPM, 0, 0x2a, wb_refresh_fanrpm },
+
+	{ NULL }
+};
+
+struct lm_sensor w83791d_sensors[] = {
+	/* Voltage */
+	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
+	{ "VINR0", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volts, 10000 },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000 },
+	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volts, 16800 },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volts, 38000},
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_n12volts, 10000 },
+	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, wb_refresh_n5volts, 10000 },
+	{ "5VSB", SENSOR_VOLTS_DC, 0, 0xb0, lm_refresh_volts, 15151 },
+	{ "VBAT", SENSOR_VOLTS_DC, 0, 0xb1, lm_refresh_volts, 10000 },
+	{ "VINR1", SENSOR_VOLTS_DC, 0, 0xb2, lm_refresh_volts, 10000 },
+
+	/* Temperature */
+	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
+	{ "Temp2", SENSOR_TEMP, 0, 0xc0, wb_refresh_temp },
+	{ "Temp3", SENSOR_TEMP, 0, 0xc8, wb_refresh_temp },
+
+	/* Fans */
+	{ "Fan1", SENSOR_FANRPM, 0, 0x28, wb_refresh_fanrpm },
+	{ "Fan2", SENSOR_FANRPM, 0, 0x29, wb_refresh_fanrpm },
+	{ "Fan3", SENSOR_FANRPM, 0, 0x2a, wb_refresh_fanrpm },
+	{ "Fan4", SENSOR_FANRPM, 0, 0xba, wb_refresh_fanrpm },
+	{ "Fan5", SENSOR_FANRPM, 0, 0xbb, wb_refresh_fanrpm },
+
+	{ NULL }
+};
+
+struct lm_sensor as99127f_sensors[] = {
+	/* Voltage */
+	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
+	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volts, 10000 },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000  },
+	{ "+5V", SENSOR_VOLTS_DC, 0, 0x23, lm_refresh_volts, 16800 },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volts, 38000 },
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_n12volts, 10000 },
+	{ "-5V", SENSOR_VOLTS_DC, 0, 0x26, wb_refresh_n5volts, 10000 },
+
+	/* Temperature */
+	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
+	{ "Temp2", SENSOR_TEMP, 1, 0x50, wb_refresh_temp },
+	{ "Temp3", SENSOR_TEMP, 2, 0x50, wb_refresh_temp },
+
+	/* Fans */
+	{ "Fan1", SENSOR_FANRPM, 0, 0x28, lm_refresh_fanrpm },
+	{ "Fan2", SENSOR_FANRPM, 0, 0x29, lm_refresh_fanrpm },
+	{ "Fan3", SENSOR_FANRPM, 0, 0x2a, lm_refresh_fanrpm },
+
+	{ NULL }
+};
+
+/* XXX Not so bus-independent probe. */
 int
 lm_probe(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
@@ -123,44 +325,38 @@ lm_probe(bus_space_tag_t iot, bus_space_handle_t ioh)
 	return (rv);
 }
 
-/*
- * pre:  lmsc contains valid busspace tag and handle
- */
 void
-lm_attach(struct lm_softc *lmsc)
+lm_attach(struct lm_softc *sc)
 {
 	u_int i, config;
 
 	for (i = 0; i < sizeof(lm_chips) / sizeof(lm_chips[0]); i++)
-		if (lm_chips[i].chip_match(lmsc))
+		if (lm_chips[i].chip_match(sc))
 			break;
 
-	if (sensor_task_register(lmsc, lm_refresh, 5)) {
+	if (sensor_task_register(sc, lm_refresh, 5)) {
 		printf("%s: unable to register update task\n",
-		    lmsc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	/* Start the monitoring loop */
-	config = (*lmsc->lm_readreg)(lmsc, LMD_CONFIG);
-	(*lmsc->lm_writereg)(lmsc, LMD_CONFIG, config | 0x01);
+	config = sc->lm_readreg(sc, LMD_CONFIG);
+	sc->lm_writereg(sc, LMD_CONFIG, config | 0x01);
 
-	/* Initialize sensors */
-	for (i = 0; i < lmsc->numsensors; ++i) {
-		strlcpy(lmsc->sensors[i].device, lmsc->sc_dev.dv_xname,
-		    sizeof(lmsc->sensors[i].device));
-		SENSOR_ADD(&lmsc->sensors[i]);
-	}
+	/* Add sensors */
+	for (i = 0; i < sc->numsensors; ++i)
+		SENSOR_ADD(&sc->sensors[i]);
 }
 
 int
 lm_match(struct lm_softc *sc)
 {
-	int i;
+	int chipid;
 
-	/* See if we have an LM78 or LM79 */
-	i = (*sc->lm_readreg)(sc, LMD_CHIPID) & LM_ID_MASK;
-	switch(i) {
+	/* See if we have an LM78 or LM79. */
+	chipid = sc->lm_readreg(sc, LMD_CHIPID) & LM_ID_MASK;
+	switch(chipid) {
 	case LM_ID_LM78:
 		printf(": LM78\n");
 		break;
@@ -176,441 +372,307 @@ lm_match(struct lm_softc *sc)
 	default:
 		return 0;
 	}
-	lm_common_match(sc);
+
+	lm_setup_sensors(sc, lm78_sensors);
+	sc->refresh_sensor_data = lm_refresh_sensor_data;
 	return 1;
 }
 
 int
 def_match(struct lm_softc *sc)
 {
-	int i;
+	int chipid;
 
-	i = (*sc->lm_readreg)(sc, LMD_CHIPID) & LM_ID_MASK;
-	printf(": unknown chip (ID %d)\n", i);
-	lm_common_match(sc);
-	return 1;
-}
+	chipid = sc->lm_readreg(sc, LMD_CHIPID) & LM_ID_MASK;
+	printf(": unknown chip (ID %d)\n", chipid);
 
-void
-lm_common_match(struct lm_softc *sc)
-{
-	int i;
-	sc->numsensors = LM_NUM_SENSORS;
+	lm_setup_sensors(sc, lm78_sensors);
 	sc->refresh_sensor_data = lm_refresh_sensor_data;
-
-	for (i = 0; i < 7; ++i) {
-		sc->sensors[i].type = SENSOR_VOLTS_DC;
-		snprintf(sc->sensors[i].desc, sizeof(sc->sensors[i].desc),
-		    "IN%d", i);
-	}
-
-	/* default correction factors for resistors on higher voltage inputs */
-	sc->sensors[0].rfact = sc->sensors[1].rfact =
-	    sc->sensors[2].rfact = 10000;
-	sc->sensors[3].rfact = (int)(( 90.9 / 60.4) * 10000);
-	sc->sensors[4].rfact = (int)(( 38.0 / 10.0) * 10000);
-	sc->sensors[5].rfact = (int)((210.0 / 60.4) * 10000);
-	sc->sensors[6].rfact = (int)(( 90.9 / 60.4) * 10000);
-
-	sc->sensors[7].type = SENSOR_TEMP;
-	strlcpy(sc->sensors[7].desc, "Temp", sizeof(sc->sensors[7].desc));
-
-	setup_fan(sc, 8, 3);
+	return 1;
 }
 
 int
 wb_match(struct lm_softc *sc)
 {
-	int i, j, banksel;
+	int banksel, vendid, chipid;
 
-	banksel = (*sc->lm_readreg)(sc, WB_BANKSEL);
-	(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_HBAC);
-	j = (*sc->lm_readreg)(sc, WB_VENDID) << 8;
-	(*sc->lm_writereg)(sc, WB_BANKSEL, 0);
-	j |= (*sc->lm_readreg)(sc, WB_VENDID);
-	(*sc->lm_writereg)(sc, WB_BANKSEL, banksel);
+	/* Read vendor ID */
+	banksel = sc->lm_readreg(sc, WB_BANKSEL);
+	sc->lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_HBAC);
+	vendid = sc->lm_readreg(sc, WB_VENDID) << 8;
+	sc->lm_writereg(sc, WB_BANKSEL, 0);
+	vendid |= sc->lm_readreg(sc, WB_VENDID);
+	sc->lm_writereg(sc, WB_BANKSEL, banksel);
 	DPRINTF(("winbond vend id 0x%x\n", j));
-	if (j != WB_VENDID_WINBOND && j != WB_VENDID_ASUS)
+	if (vendid != WB_VENDID_WINBOND && vendid != WB_VENDID_ASUS)
 		return 0;
-	/* read device ID */
-	(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_B0);
-	j = (*sc->lm_readreg)(sc, WB_BANK0_CHIPID);
-	(*sc->lm_writereg)(sc, WB_BANKSEL, banksel);
-	DPRINTF(("winbond chip id 0x%x\n", j));
-	switch(j) {
-	case WB_CHIPID_83781:
-	case WB_CHIPID_83781_2:
-	case AS_CHIPID_99127:
-		if (j == AS_CHIPID_99127)
-			printf(": AS99127F\n");
-		else
-			printf(": W83781D\n");
 
-		for (i = 0; i < 7; ++i) {
-			sc->sensors[i].type = SENSOR_VOLTS_DC;
-			snprintf(sc->sensors[i].desc,
-			    sizeof(sc->sensors[i].desc), "IN%d", i);
-		}
-
-		/* default correction factors for higher voltage inputs */
-		sc->sensors[0].rfact = sc->sensors[1].rfact =
-		    sc->sensors[2].rfact = 10000;
-		sc->sensors[3].rfact = (int)(( 90.9 / 60.4) * 10000);
-		sc->sensors[4].rfact = (int)(( 38.0 / 10.0) * 10000);
-		sc->sensors[5].rfact = (int)((210.0 / 60.4) * 10000);
-		sc->sensors[6].rfact = (int)(( 90.9 / 60.4) * 10000);
-
-		setup_temp(sc, 7, 3);
-		setup_fan(sc, 10, 3);
-
-		sc->numsensors = WB83781_NUM_SENSORS;
-		sc->refresh_sensor_data = wb781_refresh_sensor_data;
-		return 1;
-	case WB_CHIPID_83697:
-		printf(": W83697HF\n");
-		wb_setup_volt(sc);
-		setup_temp(sc, 9, 2);
-		setup_fan(sc, 11, 2);
-		sc->numsensors = WB83697_NUM_SENSORS;
-		sc->refresh_sensor_data = wb697_refresh_sensor_data;
-		return 1;
-	case WB_CHIPID_83782:
-		printf(": W83782D\n");
-		break;
-	case WB_CHIPID_83627:
+	/* Read chip ID */
+	sc->lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B0);
+	chipid = sc->lm_readreg(sc, WB_BANK0_CHIPID);
+	sc->lm_writereg(sc, WB_BANKSEL, banksel);
+	DPRINTF(("winbond chip id 0x%x\n", chipid));
+	switch(chipid) {
+	case WB_CHIPID_W83627HF:
 		printf(": W83627HF\n");
+		lm_setup_sensors(sc, w83627hf_sensors);
 		break;
-	case WB_CHIPID_83627THF:
+	case WB_CHIPID_W83627THF:
 		printf(": W83627THF\n");
+		lm_setup_sensors(sc, w83627hf_sensors);
 		break;
-	case WB_CHIPID_83791:
-	case WB_CHIPID_83791_2:
+	case WB_CHIPID_W83637HF:
+		printf(": W83627HF\n");
+		lm_setup_sensors(sc, w83637hf_sensors);
+		break;
+	case WB_CHIPID_W83697HF:
+		printf(": W83697HF\n");
+		lm_setup_sensors(sc, w83697hf_sensors);
+		break;
+	case WB_CHIPID_W83781D:
+	case WB_CHIPID_W83781D_2:
+		printf(": W83781D\n");
+		lm_setup_sensors(sc, w83781d_sensors);
+		break;
+	case WB_CHIPID_W83782D:
+		printf(": W83782D\n");
+		lm_setup_sensors(sc, w83782d_sensors);
+		break;
+	case WB_CHIPID_W83783S:
+		printf(": W83783S\n");
+		lm_setup_sensors(sc, w83783s_sensors);
+		break;
+	case WB_CHIPID_W83791D:
+	case WB_CHIPID_W83791D_2:
 		printf(": W83791D\n");
+		lm_setup_sensors(sc, w83791d_sensors);
+		break;
+	case WB_CHIPID_AS99127F:
+		if (vendid == WB_VENDID_ASUS) {
+			printf(": AS99127F\n");
+			lm_setup_sensors(sc, w83781d_sensors);
+		} else {
+			printf(": AS99127F rev 2\n");
+			lm_setup_sensors(sc, as99127f_sensors);
+		}
 		break;
 	default:
-		printf(": unknown winbond chip ID 0x%x\n", j);
-		/* handle as a standart lm7x */
-		lm_common_match(sc);
+		printf(": unknown Winbond chip (ID 0x%x)\n", chipid);
+		/* Handle as a standard LM78. */
+		lm_setup_sensors(sc, lm78_sensors);
+		sc->refresh_sensor_data = lm_refresh_sensor_data;
 		return 1;
 	}
-	/* common code for the W83782D and W83627HF */
-	wb_setup_volt(sc);
-	setup_temp(sc, 9, 3);
-	setup_fan(sc, 12, 3);
-	sc->numsensors = WB_NUM_SENSORS;
-	sc->refresh_sensor_data = wb782_refresh_sensor_data;
+
+	sc->refresh_sensor_data = wb_refresh_sensor_data;
 	return 1;
 }
 
 void
-wb_setup_volt(struct lm_softc *sc)
-{
-	sc->sensors[0].type = SENSOR_VOLTS_DC;
-	snprintf(sc->sensors[0].desc, sizeof(sc->sensors[0].desc), "VCORE_A");
-	sc->sensors[0].rfact = 10000;
-	sc->sensors[1].type = SENSOR_VOLTS_DC;
-	snprintf(sc->sensors[1].desc, sizeof(sc->sensors[1].desc), "VCORE_B");
-	sc->sensors[1].rfact = 10000;
-	sc->sensors[2].type = SENSOR_VOLTS_DC;
-	snprintf(sc->sensors[2].desc, sizeof(sc->sensors[2].desc), "+3.3V");
-	sc->sensors[2].rfact = 10000;
-	sc->sensors[3].type = SENSOR_VOLTS_DC;
-	snprintf(sc->sensors[3].desc, sizeof(sc->sensors[3].desc), "+5V");
-	sc->sensors[3].rfact = 16778;
-	sc->sensors[4].type = SENSOR_VOLTS_DC;
-	snprintf(sc->sensors[4].desc, sizeof(sc->sensors[4].desc), "+12V");
-	sc->sensors[4].rfact = 38000;
-	sc->sensors[5].type = SENSOR_VOLTS_DC;
-	snprintf(sc->sensors[5].desc, sizeof(sc->sensors[5].desc), "-12V");
-	sc->sensors[5].rfact = 10000;
-	sc->sensors[6].type = SENSOR_VOLTS_DC;
-	snprintf(sc->sensors[6].desc, sizeof(sc->sensors[6].desc), "-5V");
-	sc->sensors[6].rfact = 10000;
-	sc->sensors[7].type = SENSOR_VOLTS_DC;
-	snprintf(sc->sensors[7].desc, sizeof(sc->sensors[7].desc), "+5VSB");
-	sc->sensors[7].rfact = 15151;
-	sc->sensors[8].type = SENSOR_VOLTS_DC;
-	snprintf(sc->sensors[8].desc, sizeof(sc->sensors[8].desc), "VBAT");
-	sc->sensors[8].rfact = 10000;
-}
-
-void
-setup_temp(struct lm_softc *sc, int start, int n)
+lm_setup_sensors(struct lm_softc *sc, struct lm_sensor *sensors)
 {
 	int i;
 
-	for (i = 0; i < n; i++) {
-		sc->sensors[start + i].type = SENSOR_TEMP;
-		snprintf(sc->sensors[start + i].desc,
-		    sizeof(sc->sensors[start + i].desc), "Temp%d", i + 1);
+	for (i = 0; sensors[i].desc; i++) {
+		strlcpy(sc->sensors[i].device, sc->sc_dev.dv_xname,
+		    sizeof(sc->sensors[i].device));
+		sc->sensors[i].type = sensors[i].type;
+		strlcpy(sc->sensors[i].desc, sensors[i].desc,
+		     sizeof(sc->sensors[i].desc));
+		sc->sensors[i].rfact = sensors[i].rfact;
+		sc->numsensors++;
 	}
-}
-
-void
-setup_fan(struct lm_softc *sc, int start, int n)
-{
-	int i;
-
-	for (i = 0; i < n; ++i) {
-		sc->sensors[start + i].type = SENSOR_FANRPM;
-		snprintf(sc->sensors[start + i].desc,
-		    sizeof(sc->sensors[start + i].desc), "Fan%d", i + 1);
-	}
-}
-
-void
-generic_stemp(struct lm_softc *sc, struct sensor *sensor)
-{
-	int sdata = (*sc->lm_readreg)(sc, LMD_SENSORBASE + 7);
-
-	DPRINTF(("sdata[temp] 0x%x\n", sdata));
-	/* temp is given in deg. C, we convert to uK */
-	sensor->value = sdata * 1000000 + 273150000;
-}
-
-void
-generic_svolt(struct lm_softc *sc, struct sensor *sensors)
-{
-	int i, sdata;
-
-	for (i = 0; i < 7; i++) {
-		sdata = (*sc->lm_readreg)(sc, LMD_SENSORBASE + i);
-		DPRINTF(("sdata[volt%d] 0x%x\n", i, sdata));
-		/* voltage returned as (mV >> 4), we convert to uVDC */
-		sensors[i].value = (sdata << 4);
-		/* rfact is (factor * 10^4) */
-		sensors[i].value *= sensors[i].rfact;
-		/* division by 10 gets us back to uVDC */
-		sensors[i].value /= 10;
-
-		/* these two are negative voltages */
-		if ( (i == 5) || (i == 6) )
-			sensors[i].value *= -1;
-	}
-}
-
-void
-generic_fanrpm(struct lm_softc *sc, struct sensor *sensors)
-{
-	int i, sdata, divisor, vidfan;
-
-	for (i = 0; i < 3; i++) {
-		sdata = (*sc->lm_readreg)(sc, LMD_SENSORBASE + 8 + i);
-		vidfan = (*sc->lm_readreg)(sc, LMD_VIDFAN);
-		DPRINTF(("sdata[fan%d] 0x%x", i, sdata));
-		if (i == 2)
-			divisor = 1;	/* Fixed divisor for FAN3 */
-		else if (i == 1)	/* Bits 7 & 6 of VID/FAN  */
-			divisor = (vidfan >> 6) & 0x3;
-		else
-			divisor = (vidfan >> 4) & 0x3;
-		DPRINTF((", divisor %d\n", 2 << divisor));
-
-		if (sdata == 0xff) {
-			/* XXX Changing the fan divisor is too dangerous */
-#if 0
-			/* Fan can be too slow, try to adjust the divisor */
-			if (i < 2 && divisor < 3) {
-				divisor++;
-				vidfan &= ~(0x3 << (i == 0 ? 4 : 6));
-				vidfan |= (divisor & 0x3) << (i == 0 ? 4 : 6);
-				(*sc->lm_writereg)(sc, LMD_VIDFAN, vidfan);
-			}
-#endif
-			sensors[i].value = 0;
-		} else if (sdata == 0x00) {
-			sensors[i].flags |= SENSOR_FINVALID;
-			sensors[i].value = 0;
-		} else {
-			sensors[i].flags &= ~SENSOR_FINVALID;
-			sensors[i].value = 1350000 / (sdata << divisor);
-		}
-	}
-}
-
-/*
- * pre:  last read occurred >= 1.5 seconds ago
- * post: sensors[] current data are the latest from the chip
- */
-void
-lm_refresh_sensor_data(struct lm_softc *sc)
-{
-	/* Refresh our stored data for every sensor */
-	generic_stemp(sc, &sc->sensors[7]);
-	generic_svolt(sc, &sc->sensors[0]);
-	generic_fanrpm(sc, &sc->sensors[8]);
-}
-
-void
-wb_svolt(struct lm_softc *sc)
-{
-	int i, sdata;
-
-	for (i = 0; i < 9; ++i) {
-		if (i < 7) {
-			sdata = (*sc->lm_readreg)(sc, LMD_SENSORBASE + i);
-		} else {
-			/* from bank5 */
-			(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_B5);
-			sdata = (*sc->lm_readreg)(sc, (i == 7) ?
-			    WB_BANK5_5VSB : WB_BANK5_VBAT);
-			(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_B0);
-		}
-		DPRINTF(("sdata[volt%d] 0x%x\n", i, sdata));
-		/* voltage returned as (mV >> 4), we convert to uV */
-		sdata =  sdata << 4;
-		/* special case for negative voltages */
-		if (i == 5) {
-			/*
-			 * -12Vdc, assume Winbond recommended values for
-			 * resistors
-			 */
-			sdata = ((sdata * 1000) - (3600 * 806)) / 194;
-		} else if (i == 6) {
-			/*
-			 * -5Vdc, assume Winbond recommended values for
-			 * resistors
-			 */
-			sdata = ((sdata * 1000) - (3600 * 682)) / 318;
-		}
-		/* rfact is (factor * 10^4) */
-		sc->sensors[i].value = sdata * (int64_t)sc->sensors[i].rfact;
-		/* division by 10 gets us back to uVDC */
-		sc->sensors[i].value /= 10;
-	}
-}
-
-void
-wb_stemp(struct lm_softc *sc, struct sensor *sensors, int n)
-{
-	int sdata;
-
-	/* temperatures. Given in dC, we convert to uK */
-	sdata = (*sc->lm_readreg)(sc, LMD_SENSORBASE + 7);
-	DPRINTF(("sdata[temp0] 0x%x\n", sdata));
-	sensors[0].value = sdata * 1000000 + 273150000;
-	/* from bank1 */
-	(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_B1);
-	sdata = (*sc->lm_readreg)(sc, WB_BANK1_T2H) << 1;
-	sdata |=  ((*sc->lm_readreg)(sc, WB_BANK1_T2L) & 0x80) >> 7;
-	(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_B0);
-	DPRINTF(("sdata[temp1] 0x%x\n", sdata));
-	sensors[1].value = (sdata * 1000000) / 2 + 273150000;
-	if (n < 3)
-		return;
-	/* from bank2 */
-	(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_B2);
-	sdata = (*sc->lm_readreg)(sc, WB_BANK2_T3H) << 1;
-	sdata |=  ((*sc->lm_readreg)(sc, WB_BANK2_T3L) & 0x80) >> 7;
-	(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_B0);
-	DPRINTF(("sdata[temp2] 0x%x\n", sdata));
-	sensors[2].value = (sdata * 1000000) / 2 + 273150000;
-}
-
-void
-wb781_fanrpm(struct lm_softc *sc, struct sensor *sensors)
-{
-	int i, divisor, sdata;
-
-	for (i = 0; i < 3; i++) {
-		sdata = (*sc->lm_readreg)(sc, LMD_SENSORBASE + i + 8);
-		DPRINTF(("sdata[fan%d] 0x%x\n", i, sdata));
-		if (i == 0)
-			divisor = ((*sc->lm_readreg)(sc,
-			    LMD_VIDFAN) >> 4) & 0x3;
-		else if (i == 1)
-			divisor = ((*sc->lm_readreg)(sc,
-			    LMD_VIDFAN) >> 6) & 0x3;
-		else
-			divisor = ((*sc->lm_readreg)(sc, WB_PIN) >> 6) & 0x3;
-
-		DPRINTF(("sdata[%d] 0x%x div 0x%x\n", i, sdata, divisor));
-		if (sdata == 0xff) {
-			sensors[i].flags |= SENSOR_FINVALID;
-		} else if (sdata == 0x00) {
-			sensors[i].value = 0;
-		} else {
-			sensors[i].value = 1350000 / (sdata << divisor);
-		}
-	}
-}
-
-void
-wb_fanrpm(struct lm_softc *sc, struct sensor *sensors, int n)
-{
-	int i, divisor, sdata;
-
-	for (i = 0; i < n; i++) {
-		sdata = (*sc->lm_readreg)(sc, LMD_SENSORBASE + i + 8);
-		DPRINTF(("sdata[fan%d] 0x%x\n", i, sdata));
-		if (i == 0)
-			divisor = ((*sc->lm_readreg)(sc,
-			    LMD_VIDFAN) >> 4) & 0x3;
-		else if (i == 1)
-			divisor = ((*sc->lm_readreg)(sc,
-			    LMD_VIDFAN) >> 6) & 0x3;
-		else
-			divisor = ((*sc->lm_readreg)(sc, WB_PIN) >> 6) & 0x3;
-		divisor |= ((*sc->lm_readreg)(sc,
-		    WB_BANK0_FANBAT) >> (i + 3)) & 0x4;
-
-		DPRINTF(("sdata[%d] 0x%x div 0x%x\n", i, sdata, divisor));
-		if (sdata == 0xff) {
-			sensors[i].flags |= SENSOR_FINVALID;
-		} else if (sdata == 0x00) {
-			sensors[i].value = 0;
-		} else {
-			sensors[i].value = 1350000 / (sdata << divisor);
-		}
-	}
-}
-
-void
-wb781_refresh_sensor_data(struct lm_softc *sc)
-{
-	int banksel;
-
-	/* Refresh our stored data for every sensor */
-	banksel = (*sc->lm_readreg)(sc, WB_BANKSEL);
-	(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_B0);
-	generic_svolt(sc, &sc->sensors[0]);
-	wb_stemp(sc, &sc->sensors[7], 3);
-	wb781_fanrpm(sc, &sc->sensors[10]);
-	(*sc->lm_writereg)(sc, WB_BANKSEL, banksel);
-}
-
-void
-wb782_refresh_sensor_data(struct lm_softc *sc)
-{
-	int banksel;
-
-	/* Refresh our stored data for every sensor */
-	banksel = (*sc->lm_readreg)(sc, WB_BANKSEL);
-	(*sc->lm_writereg)(sc, WB_BANKSEL, WB_BANKSEL_B0);
-	wb_svolt(sc);
-	wb_stemp(sc, &sc->sensors[9], 3);
-	wb_fanrpm(sc, &sc->sensors[12], 3);
-	(*sc->lm_writereg)(sc, WB_BANKSEL, banksel);
-}
-
-void
-wb697_refresh_sensor_data(struct lm_softc *sc)
-{
-	int banksel;
-
-	/* Refresh our stored data for every sensor */
-	banksel = (*sc->lm_readreg)(sc, WB_BANKSEL);
-	(*sc->lm_writereg)(sc, WB_BANKSEL, 0);
-	wb_svolt(sc);
-	wb_stemp(sc, &sc->sensors[9], 2);
-	wb_fanrpm(sc, &sc->sensors[11], 2);
-	(*sc->lm_writereg)(sc, WB_BANKSEL, banksel);
+	sc->lm_sensors = sensors;
 }
 
 void
 lm_refresh(void *arg)
 {
-	struct lm_softc *sc = (struct lm_softc *)arg;
+	struct lm_softc *sc = arg;
 
 	sc->refresh_sensor_data(sc);
+}
+
+void
+lm_refresh_sensor_data(struct lm_softc *sc)
+{
+	int i;
+
+	for (i = 0; i < sc->numsensors; i++)
+		sc->lm_sensors[i].refresh(sc, i);
+}
+
+void
+lm_refresh_volts(struct lm_softc *sc, int n)
+{
+	struct sensor *sensor = &sc->sensors[n];
+	int data;
+
+	data = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
+	sensor->value = (data << 4);
+	sensor->value *= sensor->rfact;
+	sensor->value /= 10;
+}
+
+void
+lm_refresh_nvolts(struct lm_softc *sc, int n)
+{
+	struct sensor *sensor = &sc->sensors[n];
+	int data;
+
+	data = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
+	sensor->value = (data << 4);
+	sensor->value *= sensor->rfact;
+	sensor->value /= 10;
+	sensor->value *= -1;
+}
+
+void
+lm_refresh_temp(struct lm_softc *sc, int n)
+{
+	struct sensor *sensor = &sc->sensors[n];
+	int sdata;
+
+	sdata = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
+	if (sdata & 0x80)
+		sdata -= 0x100;
+	sensor->value = sdata * 1000000 + 273150000;
+}
+
+void
+lm_refresh_fanrpm(struct lm_softc *sc, int n)
+{
+	struct sensor *sensor = &sc->sensors[n];
+	int data, divisor = 1;
+
+	/*
+	 * We might get more accurate fan readings by adjusting the
+	 * divisor, but that might interfere with APM or other SMM
+	 * BIOS code reading the fan speeds.
+	 */
+
+	/* FAN3 has a fixed fan divisor. */
+	if (sc->lm_sensors[n].reg == LMD_FAN1 ||
+	    sc->lm_sensors[n].reg == LMD_FAN2) {
+		data = sc->lm_readreg(sc, LMD_VIDFAN);
+		if (sc->lm_sensors[n].reg == LMD_FAN1)
+			divisor = (data >> 4) & 0x03;
+		else
+			divisor = (data >> 6) & 0x03;
+	}
+
+	data = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
+	if (data == 0xff || data == 0x00) {
+		sensor->flags |= SENSOR_FINVALID;
+		sensor->value = 0;
+	} else {
+		sensor->flags &= ~SENSOR_FINVALID;
+		sensor->value = 1350000 / (data << divisor);
+	}
+}
+
+void
+wb_refresh_sensor_data(struct lm_softc *sc)
+{
+	int banksel, bank, i;
+
+	/*
+	 * Properly save and restore bank selection register.
+	 */
+
+	banksel = bank = sc->lm_readreg(sc, WB_BANKSEL);
+	for (i = 0; i < sc->numsensors; i++) {
+		if (bank != sc->lm_sensors[i].bank) {
+			bank = sc->lm_sensors[i].bank;
+			sc->lm_writereg(sc, WB_BANKSEL, bank);
+		}
+		sc->lm_sensors[i].refresh(sc, i);
+	}
+	sc->lm_writereg(sc, WB_BANKSEL, banksel);
+}
+
+void
+wb_refresh_n12volts(struct lm_softc *sc, int n)
+{
+	struct sensor *sensor = &sc->sensors[n];
+	int data;
+
+	data = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
+	sensor->value = (((data << 4) * 1000) - (WB_VREF * 806)) / 194;
+	sensor->value *= sensor->rfact;
+	sensor->value /= 10;
+}
+
+void
+wb_refresh_n5volts(struct lm_softc *sc, int n)
+{
+	struct sensor *sensor = &sc->sensors[n];
+	int data;
+
+	data = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
+	sensor->value = (((data << 4) * 1000) - (WB_VREF * 682)) / 318;
+	sensor->value *= sensor->rfact;
+	sensor->value /= 10;
+}
+
+void
+wb_refresh_temp(struct lm_softc *sc, int n)
+{
+	struct sensor *sensor = &sc->sensors[n];
+	int sdata;
+
+	sdata = sc->lm_readreg(sc, sc->lm_sensors[n].reg) << 1;
+	sdata += sc->lm_readreg(sc, sc->lm_sensors[n].reg + 1) >> 7;
+	if (sdata & 0x100)
+		sdata -= 0x200;
+	sensor->value = sdata * 500000 + 273150000;
+}
+
+void
+wb_refresh_fanrpm(struct lm_softc *sc, int n)
+{
+	struct sensor *sensor = &sc->sensors[n];
+	int fan, data, divisor = 0;
+
+	/* 
+	 * This is madness; the fan divisor bits are scattered all
+	 * over the place.
+	 */
+
+	if (sc->lm_sensors[n].reg == LMD_FAN1 ||
+	    sc->lm_sensors[n].reg == LMD_FAN2 ||
+	    sc->lm_sensors[n].reg == LMD_FAN3) {
+		data = sc->lm_readreg(sc, WB_BANK0_FANBAT);
+		fan = (sc->lm_sensors[n].reg - LMD_FAN1);
+		if ((data >> 5) & (1 << fan))
+			divisor |= 0x04;
+	}
+
+	if (sc->lm_sensors[n].reg == LMD_FAN1 ||
+	    sc->lm_sensors[n].reg == LMD_FAN2) {
+		data = sc->lm_readreg(sc, LMD_VIDFAN);
+		if (sc->lm_sensors[n].reg == LMD_FAN1)
+			divisor |= (data >> 4) & 0x03;
+		else
+			divisor |= (data >> 6) & 0x03;
+	} else if (sc->lm_sensors[n].reg == LMD_FAN3) {
+		data = sc->lm_readreg(sc, WB_PIN);
+		divisor |= (data >> 6) & 0x03;
+	} else if (sc->lm_sensors[n].reg == WB_BANK0_FAN4 ||
+		   sc->lm_sensors[n].reg == WB_BANK0_FAN5) {
+		data = sc->lm_readreg(sc, WB_BANK0_FAN45);
+		if (sc->lm_sensors[n].reg == WB_BANK0_FAN4)
+			divisor |= (data >> 0) & 0x07;
+		else
+			divisor |= (data >> 4) & 0x07;
+	}
+
+	data = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
+	if (data == 0xff || data == 0x00) {
+		sensor->flags |= SENSOR_FINVALID;
+		sensor->value = 0;
+	} else {
+		sensor->flags &= ~SENSOR_FINVALID;
+		sensor->value = 1350000 / (data << divisor);
+	}
 }
