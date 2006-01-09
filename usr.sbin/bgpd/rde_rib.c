@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.75 2006/01/05 17:33:40 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.76 2006/01/09 16:00:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -206,7 +206,7 @@ void
 path_destroy(struct rde_aspath *asp)
 {
 	/* path_destroy can only unlink and free empty rde_aspath */
-	if (asp->prefix_cnt == 0 && asp->active_cnt == 0)
+	if (asp->prefix_cnt != 0 || asp->active_cnt != 0)
 		log_warnx("path_destroy: prefix count out of sync");
 
 	nexthop_unlink(asp);
