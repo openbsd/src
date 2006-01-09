@@ -319,6 +319,10 @@
 ./usr/include/dev/ic/rlncmd.h
 ./usr/include/dev/ic/rlnreg.h
 ./usr/include/dev/ic/rlnvar.h
+./usr/include/dev/ic/rt2560reg.h
+./usr/include/dev/ic/rt2560var.h
+./usr/include/dev/ic/rt2661reg.h
+./usr/include/dev/ic/rt2661var.h
 ./usr/include/dev/ic/rtl80x9reg.h
 ./usr/include/dev/ic/rtl80x9var.h
 ./usr/include/dev/ic/rtl81x9reg.h
