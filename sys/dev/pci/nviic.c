@@ -1,4 +1,4 @@
-/*	$OpenBSD: nviic.c,v 1.1 2006/01/04 00:40:08 dlg Exp $ */
+/*	$OpenBSD: nviic.c,v 1.2 2006/01/09 00:43:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -186,7 +186,7 @@ nviic_i2c_release_bus(void *arg, int flags)
 	if (cold || (flags & I2C_F_POLL))
 		return;
 
-	lockmgr(&nc->nc_lock, LK_EXCLUSIVE, NULL);
+	lockmgr(&nc->nc_lock, LK_RELEASE, NULL);
 }
 
 int
