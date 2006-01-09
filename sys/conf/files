@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.358 2006/01/02 19:49:23 miod Exp $
+#	$OpenBSD: files,v 1.359 2006/01/09 20:03:28 damien Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -354,9 +354,10 @@ file	dev/ic/atw.c			atw
 device	rtw: ether, ifnet, ifmedia, smc93cx6, wlan
 file	dev/ic/rtw.c			rtw
 
-# Ralink RT2500 802.11
-device	ral: ether, ifnet, ifmedia, wlan
-file	dev/ic/ral.c			ral
+# Ralink RT2500/RT2600 802.11
+device	ral: ether, ifnet, ifmedia, firmload, wlan
+file	dev/ic/rt2560.c			ral
+file	dev/ic/rt2661.c			ral
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have

@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_ral_cardbus.c,v 1.5 2005/05/16 01:36:25 brad Exp $  */
+/*	$OpenBSD: if_ral_cardbus.c,v 1.6 2006/01/09 20:03:31 damien Exp $  */
 
 /*-
- * Copyright (c) 2005
+ * Copyright (c) 2005, 2006
  *	Damien Bergamini <damien.bergamini@free.fr>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -18,7 +18,7 @@
  */
 
 /*
- * CardBus front-end for the Ralink RT2500 driver.
+ * CardBus front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 
 #include "bpfilter.h"
@@ -47,7 +47,8 @@
 #include <net80211/ieee80211_rssadapt.h>
 #include <net80211/ieee80211_radiotap.h>
 
-#include <dev/ic/ralvar.h>
+#include <dev/ic/rt2560var.h>
+#include <dev/ic/rt2661var.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -55,10 +56,31 @@
 
 #include <dev/cardbus/cardbusvar.h>
 
+static struct ral_opns {
+	int	(*attach)(void *, int);
+	int	(*detach)(void *);
+	int	(*intr)(void *);
+
+}  ral_rt2560_opns = {
+	rt2560_attach,
+	rt2560_detach,
+	rt2560_intr
+
+}, ral_rt2661_opns = {
+	rt2661_attach,
+	rt2661_detach,
+	rt2661_intr
+};
+
 struct ral_cardbus_softc {
-	struct ral_softc	sc_sc;
+	union {
+		struct rt2560_softc	sc_rt2560;
+		struct rt2661_softc	sc_rt2661;
+	} u;
+#define sc_sc	u.sc_rt2560
 
 	/* cardbus specific goo */
+	struct ral_opns		*sc_opns;
 	cardbus_devfunc_t	sc_ct;
 	cardbustag_t		sc_tag;
 	void			*sc_ih;
@@ -76,13 +98,16 @@ struct cfattach ral_cardbus_ca = {
 	ral_cardbus_attach, ral_cardbus_detach
 };
 
-const struct cardbus_matchid ral_cardbus_devices[] = {
-	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2560 },
+static const struct cardbus_matchid ral_cardbus_devices[] = {
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2560  },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561  },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561S },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2661  }
 };
 
-int	ral_cardbus_enable(struct ral_softc *);
-void	ral_cardbus_disable(struct ral_softc *);
-void	ral_cardbus_power(struct ral_softc *, int);
+int	ral_cardbus_enable(struct rt2560_softc *);
+void	ral_cardbus_disable(struct rt2560_softc *);
+void	ral_cardbus_power(struct rt2560_softc *, int);
 void	ral_cardbus_setup(struct ral_cardbus_softc *);
 
 int
@@ -90,18 +115,22 @@ ral_cardbus_match(struct device *parent, void *match, void *aux)
 {
 	return (cardbus_matchbyid((struct cardbus_attach_args *)aux,
 	    ral_cardbus_devices,
-	    sizeof(ral_cardbus_devices)/sizeof(ral_cardbus_devices[0])));
+	    sizeof (ral_cardbus_devices) / sizeof (ral_cardbus_devices[0])));
 }
 
 void
 ral_cardbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)self;
-	struct ral_softc *sc = &csc->sc_sc;
+	struct rt2560_softc *sc = &csc->sc_sc;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
 	bus_addr_t base;
 	int error;
+
+	csc->sc_opns =
+	    (CARDBUS_PRODUCT(ca->ca_id) == PCI_PRODUCT_RALINK_RT2560) ?
+	    &ral_rt2560_opns : &ral_rt2661_opns;
 
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
@@ -134,7 +163,7 @@ ral_cardbus_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": irq %d", csc->sc_intrline);
 
-	ral_attach(sc);
+	(*csc->sc_opns->attach)(sc, CARDBUS_PRODUCT(ca->ca_id));
 
 	Cardbus_function_disable(ct);
 }
@@ -143,13 +172,13 @@ int
 ral_cardbus_detach(struct device *self, int flags)
 {
 	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)self;
-	struct ral_softc *sc = &csc->sc_sc;
+	struct rt2560_softc *sc = &csc->sc_sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	int error;
 
-	error = ral_detach(sc);
+	error = (*csc->sc_opns->detach)(sc);
 	if (error != 0)
 		return error;
 
@@ -167,7 +196,7 @@ ral_cardbus_detach(struct device *self, int flags)
 }
 
 int
-ral_cardbus_enable(struct ral_softc *sc)
+ral_cardbus_enable(struct rt2560_softc *sc)
 {
 	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
@@ -182,7 +211,7 @@ ral_cardbus_enable(struct ral_softc *sc)
 
 	/* map and establish the interrupt handler */
 	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
-	    ral_intr, sc);
+	    csc->sc_opns->intr, sc);
 	if (csc->sc_ih == NULL) {
 		printf("%s: could not establish interrupt at %d\n",
 		    sc->sc_dev.dv_xname, csc->sc_intrline);
@@ -194,7 +223,7 @@ ral_cardbus_enable(struct ral_softc *sc)
 }
 
 void
-ral_cardbus_disable(struct ral_softc *sc)
+ral_cardbus_disable(struct rt2560_softc *sc)
 {
 	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
@@ -210,7 +239,7 @@ ral_cardbus_disable(struct ral_softc *sc)
 }
 
 void
-ral_cardbus_power(struct ral_softc *sc, int why)
+ral_cardbus_power(struct rt2560_softc *sc, int why)
 {
 	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)sc;
 
