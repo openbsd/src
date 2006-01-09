@@ -1,4 +1,4 @@
-/*	$OpenBSD: firmload.c,v 1.5 2005/08/01 08:15:02 deraadt Exp $	*/
+/*	$OpenBSD: firmload.c,v 1.6 2006/01/09 18:26:08 pedro Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -55,7 +55,7 @@ loadfirmware(const char *name, u_char **bufp, size_t *buflen)
 	error = VOP_GETATTR(nid.ni_vp, &va, p->p_ucred, p);
 	if (error)
 		goto fail;
-	if (va.va_size == 0) {
+	if (nid.ni_vp->v_type != VREG || va.va_size == 0) {
 		error = EINVAL;
 		goto fail;
 	}
