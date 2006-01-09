@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.27 2006/01/04 22:22:09 brad Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.28 2006/01/09 23:09:41 brad Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -615,6 +615,8 @@ ncr53c9x_select(sc, ecb)
 			sc->sc_cmdlen = clen;
 			sc->sc_cmdp = (caddr_t)&ecb->cmd.cmd;
 
+			NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0,
+			    &dmasize);
 			/* Program the SCSI counter */
 			NCR_SET_COUNT(sc, dmasize);
 
@@ -623,7 +625,6 @@ ncr53c9x_select(sc, ecb)
 
 			/* And get the targets attention */
 			NCRCMD(sc, NCRCMD_SELNATN | NCRCMD_DMA);
-			NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0, &dmasize);
 			NCRDMA_GO(sc);
 		} else {
 			ncr53c9x_wrfifo(sc, (u_char *)&ecb->cmd.cmd, ecb->clen);
@@ -671,6 +672,7 @@ ncr53c9x_select(sc, ecb)
 		sc->sc_cmdlen = clen;
 		sc->sc_cmdp = cmd;
 
+		NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0, &dmasize);
 		/* Program the SCSI counter */
 		NCR_SET_COUNT(sc, dmasize);
 
@@ -685,7 +687,6 @@ ncr53c9x_select(sc, ecb)
 			NCRCMD(sc, NCRCMD_SELATN3 | NCRCMD_DMA);
 		} else
 			NCRCMD(sc, NCRCMD_SELATN | NCRCMD_DMA);
-		NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0, &dmasize);
 		NCRDMA_GO(sc);
 		return;
 	}
