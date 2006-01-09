@@ -1,4 +1,4 @@
-.\"   $OpenBSD: onyx.4,v 1.1 2005/11/19 00:49:26 kettenis Exp $
+.\"   $OpenBSD: onyx.4,v 1.2 2006/01/09 19:08:06 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Mark Kettenis
 .\"
@@ -28,6 +28,15 @@ The
 .Nm
 driver provides support for audio hardware using the PCM3052 chip
 found in some macppc machines.
+.Sh HARDWARE
+Machines supported by the
+.Nm
+driver include:
+.Pp
+.Bl -dash -offset indent -compact
+.It
+PowerMac11,2
+.El
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr intro 4

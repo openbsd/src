@@ -1,4 +1,4 @@
-.\"	$OpenBSD: snapper.4,v 1.6 2005/10/31 02:53:51 joris Exp $
+.\"	$OpenBSD: snapper.4,v 1.7 2006/01/09 19:08:06 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Dale Rahn.
 .\" All rights reserved.
@@ -38,6 +38,27 @@ The
 .Nm
 driver provides support for audio hardware using the TAS3004 chip
 found in some macppc machines.
+.Sh HARDWARE
+Machines supported by the
+.Nm
+driver include:
+.Pp
+.Bl -dash -offset indent -compact
+.It
+PowerBook3,4
+.It
+PowerBook4,3
+.It
+PowerBook5,3
+.It
+PowerBook6,5
+.It
+PowerBook6,8
+.It
+PowerMac3,6
+.It
+PowerMac4,4
+.El
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr intro 4
