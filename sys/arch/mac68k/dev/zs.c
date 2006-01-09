@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.21 2006/01/07 20:46:57 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.22 2006/01/09 20:56:59 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.19 1998/01/12 19:22:18 thorpej Exp $	*/
 
 /*
@@ -1047,10 +1047,6 @@ zs_getc(zc)
 	ZS_DELAY();
 	splx(s);
 
-	/*
-	 * This is used by the kd driver to read scan codes,
-	 * so don't translate '\r' ==> '\n' here...
-	 */
 	return (c);
 }
 
