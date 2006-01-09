@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.42 2006/01/09 00:20:31 krw Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.43 2006/01/09 04:05:43 krw Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -178,6 +178,7 @@ void		usage(void);
 char 		*strstatus(int);
 int		cdid(void);
 void		addmsf(u_int *, u_int *, u_int *, u_char, u_char, u_char);
+void		toc2msf(u_int, u_char *, u_char *, u_char *);
 
 void
 help(void)
@@ -627,12 +628,8 @@ Play_Relative_Addresses:
 		else if (tr1 > n)
 			tr1 = n;
 
-		if (msf) {
-			tm = toc_buffer[tr1].addr.msf.minute;
-			ts = toc_buffer[tr1].addr.msf.second;
-			tf = toc_buffer[tr1].addr.msf.frame;
-		} else
-			lba2msf(toc_buffer[tr1].addr.lba, &tm, &ts, &tf);
+		toc2msf(tr1+1, &tm, &ts, &tf);
+
 		if ((m1 > tm)
 		    || ((m1 == tm)
 		    && ((s1 > ts)
@@ -652,17 +649,10 @@ Play_Relative_Addresses:
 				addmsf(&m2, &s2, &f2, m1, s1, f1);
 			} else {
 				tr2 = n;
-				if (msf) {
-					m2 = toc_buffer[n].addr.msf.minute;
-					s2 = toc_buffer[n].addr.msf.second;
-					f2 = toc_buffer[n].addr.msf.frame;
-				} else {
-					lba2msf(toc_buffer[n].addr.lba, &tm,
-					    &ts, &tf);
-					m2 = tm;
-					s2 = ts;
-					f2 = tf;
-				}
+				toc2msf(tr2+1, &tm, &ts, &tf);
+				m2 = tm;
+				s2 = ts;
+				f2 = tf;
 			}
 		} else if (tr2 > n) {
 			tr2 = n;
@@ -670,22 +660,12 @@ Play_Relative_Addresses:
 		} else {
 			if (m2 || s2 || f2)
 				tr2--;
-			if (msf) {
-				tm = toc_buffer[tr2].addr.msf.minute;
-				ts = toc_buffer[tr2].addr.msf.second;
-				tf = toc_buffer[tr2].addr.msf.frame;
-			} else
-				lba2msf(toc_buffer[tr2].addr.lba, &tm, &ts,
-				    &tf);
+			toc2msf(tr2+1, &tm, &ts, &tf);
 			addmsf(&m2, &s2, &f2, tm, ts, tf);
 		}
 
-		if (msf) {
-			tm = toc_buffer[n].addr.msf.minute;
-			ts = toc_buffer[n].addr.msf.second;
-			tf = toc_buffer[n].addr.msf.frame;
-		} else
-			lba2msf(toc_buffer[n].addr.lba, &tm, &ts, &tf);
+		toc2msf(n+1, &tm, &ts, &tf);
+
 		if ((tr2 < n)
 		    && ((m2 > tm)
 		    || ((m2 == tm)
@@ -708,17 +688,12 @@ Try_Absolute_Timed_Addresses:
 			goto Clean_up;
 
 		if (m2 == 0) {
-			if (msf) {
-				m2 = toc_buffer[n].addr.msf.minute;
-				s2 = toc_buffer[n].addr.msf.second;
-				f2 = toc_buffer[n].addr.msf.frame;
-			} else {
-				lba2msf(toc_buffer[n].addr.lba, &tm, &ts, &tf);
-				m2 = tm;
-				s2 = ts;
-				f2 = tf;
-			}
+			toc2msf(n+1, &tm, &ts, &tf);
+			m2 = tm;
+			s2 = ts;
+			f2 = tf;
 		}
+
 		return play_msf(m1, s1, f1, m2, s2, f2);
 	}
 
@@ -1374,4 +1349,19 @@ addmsf(u_int *m, u_int *s, u_int *f, u_char m_inc, u_char s_inc, u_char f_inc)
 	}
 
 	*m += m_inc;
+}
+
+void
+toc2msf(u_int track, u_char *m, u_char *s, u_char *f)
+{
+	struct cd_toc_entry *ctep;
+
+	ctep = &toc_buffer[track - 1];
+
+	if (msf) {
+		*m = ctep->addr.msf.minute;
+		*s = ctep->addr.msf.second;
+		*f = ctep->addr.msf.frame;
+	} else
+		lba2msf(ctep->addr.lba, m, s, f);
 }
