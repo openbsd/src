@@ -1,4 +1,4 @@
-/*	$OpenBSD: clockreg.h,v 1.6 1997/10/19 23:40:46 briggs Exp $	*/
+/*	$OpenBSD: clockreg.h,v 1.7 2006/01/09 22:59:35 miod Exp $	*/
 /*	$NetBSD: clockreg.h,v 1.5 1996/04/01 05:16:52 scottr Exp $	*/
 
 /*-
@@ -39,9 +39,6 @@
  *  MacII clock characteristics used.
  */
 
-
-#define CLK_SPEED	0.0000012766	/* time to complete a clock (3 MHz) */
-
 /*
  * Calculate clocks needed to hit HZ ticks/sec.
  *
@@ -59,9 +56,3 @@
 
 #define CLK_INTH	((CLK_INTERVAL >> 8) & 0xff)	/* high byte */
 #define CLK_INTL	(CLK_INTERVAL & 0xff)		/* low byte */
-
-#if !defined(PRF_INTERVAL)
-#define PRF_INTERVAL CLK_INTERVAL
-#endif
-
-#define SECYR 31536000

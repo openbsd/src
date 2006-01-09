@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.19 2006/01/02 18:10:07 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.20 2006/01/09 22:59:35 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1999/11/05 19:14:56 scottr Exp $	*/
 
 /*
@@ -74,6 +74,10 @@
  *	@(#)clock.c   7.6 (Berkeley) 5/7/91
  */
 
+/*
+ * Mac II machine-dependent clock routines.
+ */
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/limits.h>
@@ -84,13 +88,11 @@
 #include <machine/psl.h>
 #include <machine/cpu.h>
 
-#if defined(GPROF) && defined(PROFTIMER)
-#include <sys/gprof.h>
-#endif
-
 #include <mac68k/mac68k/pram.h>
 #include <mac68k/mac68k/clockreg.h>
 #include <machine/viareg.h>
+
+#include <dev/clock_subr.h>
 
 #ifdef DEBUG
 int	clock_debug = 0;
@@ -99,12 +101,12 @@ int	clock_debug = 0;
 int	rtclock_intr(void *);
 
 #define	DIFF19041970	2082844800
-#define	DIFF19701990	630720000
-#define	DIFF19702010	1261440000
 
 /*
- * Mac II machine-dependent clock routines.
+ * The Macintosh timers decrement once every 1.2766 microseconds.
+ * MGFH2, p. 180
  */
+#define	CLK_RATE	12766
 
 /*
  * Start the real-time clock; i.e. set timer latches and boot timer.
@@ -132,6 +134,15 @@ startrtclock()
 void
 cpu_initclocks()
 {
+	tickfix = 1000000 - (hz * tick);
+	if (tickfix != 0) {
+		int ftp;
+
+		ftp = min(ffs(tickfix), ffs(hz));
+		tickfix >>= (ftp - 1);
+		tickfixinterval = hz >> (ftp - 1);
+	}
+
 	/* clear then enable clock interrupt. */
 	via_reg(VIA1, vIFR) |= V1IF_T1;
 	via_reg(VIA1, vIER) = 0x80 | V1IF_T1;
@@ -162,110 +173,8 @@ clkread()
 		high = high2;
 
 	/* return count left in timer / 1.27 */
-	/* return((CLK_INTERVAL - (high << 8) - low) / CLK_SPEED); */
-	return ((CLK_INTERVAL - (high << 8) - low) * 10000 / 12700);
+	return ((CLK_INTERVAL - (high << 8) - low) * 10000 / CLK_RATE);
 }
-
-
-#ifdef PROFTIMER
-/*
- * Here, we have implemented code that causes VIA2's timer to count
- * the profiling clock.  Following the HP300's lead, this reduces
- * the impact on other tasks, since locore turns off the profiling clock
- * on context switches.  If need be, the profiling clock's resolution can
- * be cranked higher than the real-time clock's resolution, to prevent
- * aliasing and allow higher accuracy.
- */
-int     profint = PRF_INTERVAL;	/* Clock ticks between interrupts */
-int     profinthigh;
-int     profintlow;
-int     profscale = 0;		/* Scale factor from sys clock to prof clock */
-char    profon = 0;		/* Is profiling clock on? */
-
-/* profon values - do not change, locore.s assumes these values */
-#define	PRF_NONE	0x00
-#define	PRF_USER	0x01
-#define	PRF_KERNEL	0x80
-
-void
-initprofclock()
-{
-	/* profile interval must be even divisor of system clock interval */
-	if (profint > CLK_INTERVAL)
-		profint = CLK_INTERVAL;
-	else
-		if (CLK_INTERVAL % profint != 0)
-			/* try to intelligently fix clock interval */
-			profint = CLK_INTERVAL / (CLK_INTERVAL / profint);
-
-	profscale = CLK_INTERVAL / profint;
-
-	profinthigh = profint >> 8;
-	profintlow = profint & 0xff;
-}
-
-void
-startprofclock()
-{
-	via_reg(VIA2, vT1L) = (profint - 1) & 0xff;
-	via_reg(VIA2, vT1LH) = (profint - 1) >> 8;
-	via_reg(VIA2, vACR) |= ACR_T1LATCH;
-	via_reg(VIA2, vT1C) = (profint - 1) & 0xff;
-	via_reg(VIA2, vT1CH) = (profint - 1) >> 8;
-}
-
-void
-stopprofclock()
-{
-	via_reg(VIA2, vT1L) = 0;
-	via_reg(VIA2, vT1LH) = 0;
-	via_reg(VIA2, vT1C) = 0;
-	via_reg(VIA2, vT1CH) = 0;
-}
-
-#ifdef GPROF
-/*
- * BARF: we should check this:
- *
- * profclock() is expanded in line in lev6intr() unless profiling kernel.
- * Assumes it is called with clock interrupts blocked.
- */
-void
-profclock(pclk)
-	clockframe *pclk;
-{
-	/*
-	 * Came from user mode.
-	 * If this process is being profiled record the tick.
-	 */
-	if (USERMODE(pclk->ps)) {
-		if (p->p_stats.p_prof.pr_scale)
-			addupc_task(&curproc, pclk->pc, 1);
-	}
-	/*
-	 * Came from kernel (supervisor) mode.
-	 * If we are profiling the kernel, record the tick.
-	 */
-	else
-		if (profiling < 2) {
-			int s = pclk->pc - s_lowpc;
-
-			if (s < s_textsize)
-				kcount[s / (HISTFRACTION * sizeof(*kcount))]++;
-		}
-	/*
-	 * Kernel profiling was on but has been disabled.
-	 * Mark as no longer profiling kernel and if all profiling done,
-	 * disable the clock.
-	 */
-	if (profiling && (profon & PRF_KERNEL)) {
-		profon &= ~PRF_KERNEL;
-		if (profon == PRF_NONE)
-			stopprofclock();
-	}
-}
-#endif
-#endif
 
 static u_long	ugmt_2_pramt(u_long);
 static u_long	pramt_2_ugmt(u_long);
@@ -281,7 +190,7 @@ ugmt_2_pramt(t)
 	/* don't know how to open a file properly. */
 	/* assume compiled timezone is correct. */
 
-	return (t = t + DIFF19041970 - 60 * tz.tz_minuteswest);
+	return (t + DIFF19041970 - 60 * tz.tz_minuteswest);
 }
 
 /*
@@ -292,7 +201,7 @@ static u_long
 pramt_2_ugmt(t)
 	u_long t;
 {
-	return (t = t - DIFF19041970 + 60 * tz.tz_minuteswest);
+	return (t - DIFF19041970 + 60 * tz.tz_minuteswest);
 }
 
 /*
@@ -323,22 +232,30 @@ inittodr(base)
 {
 	u_long timbuf;
 
-	timbuf = pramt_2_ugmt(pram_readtime());
-	if ((timbuf - (macos_boottime + 60 * tz.tz_minuteswest)) > 10 * 60) {
-#ifdef DIAGNOSTIC
-		printf(
-		    "PRAM time does not appear to have been read correctly.\n");
-		printf("PRAM: 0x%lx, macos_boottime: 0x%lx.\n",
-		    timbuf, macos_boottime + 60 * tz.tz_minuteswest);
-#endif
+	timbuf = pram_readtime();
+	if (timbuf == 0) {
+		/* We don't know how to access PRAM on this hardware. */
 		timbuf = macos_boottime;
 		mac68k_trust_pram = 0;
-	}
+	} else {
+		timbuf = pramt_2_ugmt(pram_readtime());
+		if ((timbuf - (macos_boottime + 60 * tz.tz_minuteswest)) >
+		    10 * 60) {
 #ifdef DIAGNOSTIC
-	else
-		printf("PRAM: 0x%lx, macos_boottime: 0x%lx.\n",
-		    timbuf, macos_boottime);
+			printf("PRAM time does not appear"
+			    " to have been read correctly.\n");
+			printf("PRAM: 0x%lx, macos_boottime: 0x%lx.\n",
+			    timbuf, macos_boottime + 60 * tz.tz_minuteswest);
 #endif
+			timbuf = macos_boottime;
+			mac68k_trust_pram = 0;
+		}
+#ifdef DEBUG
+		else
+			printf("PRAM: 0x%lx, macos_boottime: 0x%lx.\n",
+			    timbuf, macos_boottime);
+#endif
+	}
 
 	/*
 	 * GMT bias is passed in from Booter
@@ -350,22 +267,12 @@ inittodr(base)
 	if (base < 5 * SECYR) {
 		printf("WARNING: file system time earlier than 1975\n");
 		printf(" -- CHECK AND RESET THE DATE!\n");
-		base = 21 * SECYR;	/* 1991 is our sane date */
-	}
-	/*
-	 * Check sanity against the year 2010.  Let's hope OpenBSD/mac68k
-	 * doesn't run that long!
-	 */
-	if (base > 40 * SECYR) {
-		printf("WARNING: file system time later than 2010\n");
-		printf(" -- CHECK AND RESET THE DATE!\n");
-		base = 21 * SECYR;	/* 1991 is our sane date */
+		base = 36 * SECYR;	/* Last update here in 2006... */
 	}
 	if (timbuf < base) {
 		printf(
 		    "WARNING: Battery clock has earlier time than UNIX fs.\n");
-		if (((u_long) base) < (40 * SECYR))
-			timbuf = base;
+		timbuf = base;
 	}
 	time.tv_sec = timbuf;
 	time.tv_usec = 0;
@@ -385,19 +292,7 @@ resettodr()
 		 * (gmtbias is in minutes, multiply by 60).
 		 */
 		pram_settime(ugmt_2_pramt(time.tv_sec + macos_gmtbias * 60));
-#ifdef DEBUG
-	else if (clock_debug)
-		printf("OpenBSD/mac68k does not trust itself to try and write "
-		    "to the PRAM on this system.\n");
-#endif
 }
-
-
-/*
- * The Macintosh timers decrement once every 1.2766 microseconds.
- * MGFH2, p. 180
- */
-#define	CLK_RATE	12766
 
 #define	DELAY_CALIBRATE	(0xffffff << 7)	/* Large value for calibration */
 
@@ -412,7 +307,7 @@ delay_timer1_irq(dummy)
 	void *dummy;
 {
 	delay_flag = 0;
-	return 1;
+	return (1);
 }
 
 /*

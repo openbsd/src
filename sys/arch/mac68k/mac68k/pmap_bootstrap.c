@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.35 2006/01/04 20:39:05 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.36 2006/01/09 22:59:36 miod Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.50 1999/04/07 06:14:33 scottr Exp $	*/
 
 /* 
@@ -53,7 +53,6 @@
 
 #include <ufs/mfs/mfs_extern.h>
 
-#include <mac68k/mac68k/clockreg.h>
 #include <mac68k/mac68k/macrom.h>
 
 #include "zsc.h"
