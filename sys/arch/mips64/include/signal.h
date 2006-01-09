@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.7 2006/01/08 14:20:17 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.8 2006/01/09 18:18:37 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,10 +58,10 @@ typedef int sig_atomic_t;
 struct	sigcontext {
 	long	sc_onstack;	/* sigstack state to restore */
 	long	 sc_mask;	/* signal mask to restore */
-	register_t sc_pc;	/* pc at time of signal */
-	register_t sc_regs[32];	/* processor regs 0 to 31 */
-	register_t mullo;	/* mullo and mulhi registers... */
-	register_t mulhi;	/* mullo and mulhi registers... */
+	__register_t sc_pc;	/* pc at time of signal */
+	__register_t sc_regs[32]; /* processor regs 0 to 31 */
+	__register_t mullo;	/* mullo and mulhi registers... */
+	__register_t mulhi;	/* mullo and mulhi registers... */
 	f_register_t sc_fpregs[33]; /* fp regs 0 to 31 and csr */
 	long	sc_fpused;	/* fp has been used */
 	long	sc_fpc_eir;	/* floating point exception instruction reg */
