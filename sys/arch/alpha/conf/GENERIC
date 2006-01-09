@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.159 2005/12/27 23:18:59 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.160 2006/01/09 06:06:42 robert Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -395,5 +395,5 @@ hifn*	at pci?				# Hi/fn 7751 crypto card
 #pseudo-device	raid		4	# RAIDframe disk driver
 pseudo-device	crypto		1
 pseudo-device	sequencer	1
-#pseudo-device	hotplug		1	# devices hot plugging
+pseudo-device	hotplug		1	# devices hot plugging
 pseudo-device	wsmux		2	# mouse & keyboard multiplexor
