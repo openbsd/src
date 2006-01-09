@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.4 2005/12/06 20:18:57 pedro Exp $
+#	$OpenBSD: RAMDISK,v 1.5 2006/01/09 21:29:38 jsg Exp $
 #
 # Diskless kernel config
 #
@@ -153,7 +153,7 @@ fxp*	at pci?			# EtherExpress 10/100B ethernet
 ne*	at pci?			# NE2000-compatible Ethernet
 ne*	at pcmcia?
 #an*	at pci?			# Cisco/Aironet 802.11DS
-an*	at pcmcia?
+#an*	at pcmcia?
 #wi*	at pci?			# WaveLAN IEEE 802.11DS
 wi*	at pcmcia?
 

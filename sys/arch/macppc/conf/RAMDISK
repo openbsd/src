@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.59 2005/12/21 18:50:51 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.60 2006/01/09 21:29:38 jsg Exp $
 #
 # PPC GENERIC config file
 #
@@ -75,7 +75,7 @@ ti*		at pci?		# Alteon Tigon 1Gb ethernet
 re*		at pci?		# Realtek 8169/8169S/8110S
 rl*		at pci?		# Realtek 81[23]9 ethernet
 stge*		at pci?		# Sundance TC9021 GigE
-an*		at pci?		# Cisco/Aironet 802.11DS
+#an*		at pci?		# Cisco/Aironet 802.11DS
 wi*		at pci?		# WaveLAN IEEE 802.11DS
 vr*		at pci?		# VIA Rhine ethernet
 

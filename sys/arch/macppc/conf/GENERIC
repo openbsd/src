@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.123 2006/01/08 17:25:05 miod Exp $g
+#	$OpenBSD: GENERIC,v 1.124 2006/01/09 21:29:38 jsg Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -79,7 +79,7 @@ bge*		at pci?		# Broadcom BCM570x (aka Tigon3)
 ti*		at pci?		# Alteon Tigon 1Gb ethernet
 re*		at pci?		# Realtek 8169/8169S/8110S
 stge*		at pci?		# Sundance TC9021 GigE
-an*		at pci?		# Cisco/Aironet
+#an*		at pci?		# Cisco/Aironet
 atw*		at pci?		# ADMtek ADM8211 (802.11)
 wi*		at pci?		# WaveLAN IEEE 802.11DS
 ral*		at pci?		# Ralink RT2500
@@ -275,7 +275,7 @@ pcmcia*		at cardslot?
 cbb*		at pci?
 cardslot*	at cbb?
 ep*		at pcmcia?	# PCMCIA based 3C5xx ethernet
-an*		at pcmcia?	# Cisco/Aironet
+#an*		at pcmcia?	# Cisco/Aironet
 wi*		at pcmcia?	# WaveLAN IEEE 802.11DS
 dc*		at cardbus?	# 21143, "tulip" clone ethernet
 #fxp*		at cardbus?	# Intel PRO/100 ethernet

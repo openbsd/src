@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.80 2005/12/12 20:39:35 miod Exp $
+#	$OpenBSD: GENERIC,v 1.81 2006/01/09 21:29:38 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -248,7 +248,7 @@ ne*	at pcmcia?
 #atw*	at pci?			# ADMtek ADM8211 (802.11)
 #atw*	at cardbus?
 #an*	at pci?			# Cisco/Aironet 802.11DS
-an*	at pcmcia?
+#an*	at pcmcia?
 #wi*	at pci?			# WaveLAN IEEE 802.11DS
 wi*	at pcmcia?
 
