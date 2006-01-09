@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.36 2005/05/15 11:29:15 miod Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.37 2006/01/09 21:52:12 miod Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -256,7 +256,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_HPCFB	16	/* Handheld/PalmSize PC */
 #define		WSDISPLAY_TYPE_VIDC	17	/* Acorn/ARM VIDC */
 #define		WSDISPLAY_TYPE_SPX	18	/* DEC SPX (VS3100/VS4000) */
-#define		WSDISPLAY_TYPE_GPX	19	/* DEC GPX (uVAX/VS2K/VS3100 */
+#define		WSDISPLAY_TYPE_GPX	19	/* DEC GPX (uVAX/VS2K/VS3100) */
 #define		WSDISPLAY_TYPE_LCG	20	/* DEC LCG (VS4000) */
 #define		WSDISPLAY_TYPE_VAX_MONO	21	/* DEC VS2K/VS3100 mono */
 #define		WSDISPLAY_TYPE_SB_P9100	22	/* Tadpole SPARCbook P9100 */
@@ -286,6 +286,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_HYPERION	46	/* HP Hyperion */
 #define		WSDISPLAY_TYPE_TOPCAT	47	/* HP Topcat */
 #define		WSDISPLAY_TYPE_PXALCD	48	/* PXALCD (Zaurus) */
+#define		WSDISPLAY_TYPE_MAC68K	49	/* Generic mac68k framebuffer */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {

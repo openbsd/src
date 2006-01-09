@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfb.c,v 1.6 2006/01/09 20:51:48 miod Exp $	*/
+/*	$OpenBSD: macfb.c,v 1.7 2006/01/09 21:52:12 miod Exp $	*/
 /* $NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -262,7 +262,7 @@ macfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(int *)data = 0;	/* XXX */
+		*(int *)data = WSDISPLAY_TYPE_MAC68K;
 		break;
 
 	case WSDISPLAYIO_GINFO:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.30 2005/05/31 15:33:57 brad Exp $ */
+/*	$OpenBSD: util.c,v 1.31 2006/01/09 21:52:09 miod Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -104,9 +104,9 @@ static const struct nameint dpytype_tab[] = {
 	{ WSDISPLAY_TYPE_SFBP,		"dec-sfb+" },
 	{ WSDISPLAY_TYPE_PCIMISC,	"generic-pci" },
 	{ WSDISPLAY_TYPE_NEXTMONO,	"next-mono" },
-	{ WSDISPLAY_TYPE_PX,		"dex-px" },
-	{ WSDISPLAY_TYPE_PXG,		"dex-pxg" },
-	{ WSDISPLAY_TYPE_TX,		"dex-tx" },
+	{ WSDISPLAY_TYPE_PX,		"dec-px" },
+	{ WSDISPLAY_TYPE_PXG,		"dec-pxg" },
+	{ WSDISPLAY_TYPE_TX,		"dec-tx" },
 	{ WSDISPLAY_TYPE_HPCFB,		"generic-hpc" },
 	{ WSDISPLAY_TYPE_VIDC,		"arm-vidc" },
 	{ WSDISPLAY_TYPE_SPX,		"dec-spx" },
@@ -139,7 +139,8 @@ static const struct nameint dpytype_tab[] = {
 	{ WSDISPLAY_TYPE_RBOX,		"renaissance" },
 	{ WSDISPLAY_TYPE_HYPERION,	"hyperion" },
 	{ WSDISPLAY_TYPE_TOPCAT,	"topcat" },
-	{ WSDISPLAY_TYPE_PXALCD,	"pxalcd" }
+	{ WSDISPLAY_TYPE_PXALCD,	"pxalcd" },
+	{ WSDISPLAY_TYPE_MAC68K,	"mac68k" }
 };
 
 static const struct nameint kbdenc_tab[] = {
