@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.102 2006/01/05 22:30:45 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.103 2006/01/09 19:32:43 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -84,6 +84,8 @@ amdiic* at pci?			# AMD-8111 SMBus controller
 iic*	at amdiic?
 nviic*	at pci?			# NVIDIA nForce2/3/4 SMBus controller
 iic*	at nviic?
+amdpm*	at pci?			# AMD-7xx/8111 and NForce SMBus controller
+iic*	at amdpm?
 
 adc*	at iic?			# Analog Devices AD7416/AD7417/7418
 admtemp* at iic?		# Analog Devices ADM1021
