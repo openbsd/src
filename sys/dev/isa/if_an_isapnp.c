@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_isapnp.c,v 1.6 2005/09/13 14:15:33 mickey Exp $	*/
+/*	$OpenBSD: if_an_isapnp.c,v 1.7 2006/01/09 21:19:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -47,8 +47,8 @@
 
 #include <dev/isa/isavar.h>
 
-#include <dev/ic/anvar.h>
 #include <dev/ic/anreg.h>
+#include <dev/ic/anvar.h>
 
 int an_isapnp_match(struct device *, void *, void *);
 void an_isapnp_attach(struct device *, struct device *, void *);
@@ -73,8 +73,8 @@ an_isapnp_attach(parent, self, aux)
 	struct an_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 
-	sc->an_btag = ia->ia_iot;
-	sc->an_bhandle = ia->ipa_io[0].h;
+	sc->sc_iot = ia->ia_iot;
+	sc->sc_ioh = ia->ipa_io[0].h;
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, an_intr, sc, sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pcmcia.c,v 1.16 2005/09/13 14:15:33 mickey Exp $	*/
+/*	$OpenBSD: if_an_pcmcia.c,v 1.17 2006/01/09 21:19:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -49,8 +49,8 @@
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-#include <dev/ic/anvar.h>
 #include <dev/ic/anreg.h>
+#include <dev/ic/anvar.h>
 
 int  an_pcmcia_match(struct device *, void *, void *);
 void an_pcmcia_attach(struct device *, struct device *, void *);
@@ -63,6 +63,9 @@ struct an_pcmcia_softc {
 	struct pcmcia_io_handle sc_pcioh;
 	int sc_io_window;
 	struct pcmcia_function *sc_pf;
+
+	int sc_state;
+#define	AN_PCMCIA_ATTACHED	3
 };
 
 struct cfattach an_pcmcia_ca = {   
@@ -103,6 +106,7 @@ an_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	const char *intrstr;
+	int error;
 
 	psc->sc_pf = pa->pf;
 	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
@@ -127,16 +131,26 @@ an_pcmcia_attach(parent, self, aux)
 		return;
 	}
 
-	sc->an_btag = psc->sc_pcioh.iot;
-	sc->an_bhandle = psc->sc_pcioh.ioh;
+	sc->sc_iot = psc->sc_pcioh.iot;
+	sc->sc_ioh = psc->sc_pcioh.ioh;
+	sc->sc_enabled = 1;
 
 	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, an_intr, sc,
 	    sc->sc_dev.dv_xname);
 	intrstr = pcmcia_intr_string(psc->sc_pf, sc->sc_ih);
 	if (*intrstr)
 		printf(", %s", intrstr);
+	printf("\n");
 
-	an_attach(sc);
+	error = an_attach(sc);
+	if (error) {
+		printf("%s: failed to attach controller\n",
+		    self->dv_xname);
+		return;
+	}
+
+	sc->sc_enabled = 0;
+	psc->sc_state = AN_PCMCIA_ATTACHED;
 }
 
 int
@@ -145,25 +159,17 @@ an_pcmcia_detach(dev, flags)
 	int flags;
 {
 	struct an_pcmcia_softc *psc = (struct an_pcmcia_softc *)dev;
-	struct an_softc *sc = (struct an_softc *)dev;
-	struct ieee80211com	*ic = &sc->sc_ic;
-	struct ifnet		*ifp = &ic->ic_if;
+	int error;
 
-	if (sc->an_gone) {
-		printf ("%s: already detached\n", sc->sc_dev.dv_xname);
-		return 0;
-	}
+	if (psc->sc_state != AN_PCMCIA_ATTACHED)
+		return (0);
 
-	if (ifp->if_flags & IFF_RUNNING)
-		an_stop(sc);
+	error = an_detach(&psc->sc_an);
+	if (error)
+		return (error);
 
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
-
-	ether_ifdetach(ifp);
-	if_detach(ifp);
-
-	sc->an_gone = 1;
 
 	return 0;
 }
@@ -185,13 +191,13 @@ an_pcmcia_activate(dev, act)
 		pcmcia_function_enable(psc->sc_pf);
 		sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET,
 		    an_intr, sc, sc->sc_dev.dv_xname);
-		an_init(sc);
+		an_init(ifp);
 		break;
 
 	case DVACT_DEACTIVATE:
 		ifp->if_timer = 0;
 		if (ifp->if_flags & IFF_RUNNING)
-			an_stop(sc);
+			an_stop(ifp, 1);
 		pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
 		pcmcia_function_disable(psc->sc_pf);
 		break;

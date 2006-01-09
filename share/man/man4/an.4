@@ -1,4 +1,4 @@
-.\"	$OpenBSD: an.4,v 1.29 2005/09/30 20:34:24 jaredy Exp $
+.\"	$OpenBSD: an.4,v 1.30 2006/01/09 21:19:48 jsg Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -97,6 +97,12 @@ mode.
 This is the standardized method of operating without an access point.
 Stations associate with a service set.
 However, actual connections between stations are peer-to-peer.
+.It monitor mode
+In this mode the driver is able to receive packets without
+associating with an access point.
+This disables the internal receive filter and enables the card to
+capture packets from networks which it wouldn't normally have access to,
+or to scan for access points.
 .El
 .Pp
 .Nm
@@ -109,41 +115,138 @@ Unfortunately, due to serious weaknesses in WEP protocol
 it is strongly recommended that it not be used as the
 sole mechanism to secure wireless communication.
 WEP is not enabled by default.
-.Pp
+.Sh CONFIGURATION
 The
 .Nm
-driver can be configured using
-.Xr ancontrol 8
+driver can be configured at runtime with
+.Xr ifconfig 8
 or on boot with
-.Xr hostname.if 5 .
-.Sh EXAMPLES
-Note that when setting options via
-.Xr ancontrol 8
-in a
 .Xr hostname.if 5
-file (e.g.\&
-.Pa /etc/hostname.an0 ) ,
-the
-.Xr ancontrol 8
-commands should be specified first.
+using the following parameters:
+.Bl -tag -width Ds
+.It Cm bssid Ar bssid
+Set the desired BSSID.
+.It Fl bssid
+Unset the desired BSSID.
+The interface will automatically select a BSSID in this mode, which is
+the default.
+.It Cm chan Ar n
+Set the channel (radio frequency) to be used by the driver based on
+the given channel ID
+.Ar n .
+.It Fl chan
+Unset the desired channel to be used by the driver.
+The driver will automatically select a channel in this mode, which is
+the default.
+.It Cm media Ar media
+The
+.Nm
+driver supports the following
+.Ar media
+types:
 .Pp
+.Bl -tag -width autoselect -compact
+.It Cm autoselect
+Enable autoselection of the media type and options.
+.It Cm DS1
+Set 802.11b DS 1Mbps operation.
+.It Cm DS2
+Set 802.11b DS 2Mbps operation.
+.It Cm DS5
+Set 802.11b DS 5.5Mbps operation.
+.It Cm DS11
+Set 802.11b DS 11Mbps operation.
+.El
+.It Cm mediaopt Ar opts
+The
+.Nm
+driver supports the following media options:
+.Pp
+.Bl -tag -width monitor -compact
+.It Cm hostap
+Select Host AP operation.
+.It Cm ibss
+Select IBSS operation.
+.It Cm monitor
+Select monitor mode.
+.El
+.It Fl mediaopt Ar opts
+Disable the specified media options on the driver and return it to the
+default mode of operation (BSS).
+.It Cm nwid Ar id
+Set the network ID.
+The
+.Ar id
+can either be any text string up to 32 characters in length,
+or a series of hexadecimal digits up to 64 digits.
+An empty
+.Ar id
+string allows the interface to connect to any available access points.
+By default the
+.Nm
+driver uses an empty string.
+Note that network ID is synonymous with Extended Service Set ID (ESSID).
+.It Cm nwkey Ar key
+Enable WEP encryption using the specified
+.Ar key .
+The
+.Ar key
+can either be a string, a series of hexadecimal digits (preceded by
+.Sq 0x ) ,
+or a set of keys of the form
+.Dq n:k1,k2,k3,k4 ,
+where
+.Sq n
+specifies which of the keys will be used for transmitted packets,
+and the four keys,
+.Dq k1
+through
+.Dq k4 ,
+are configured as WEP keys.
+If a set of keys is specified, a comma
+.Pq Sq \&,
+within the key must be escaped with a backslash.
+Note that if multiple keys are used, their order must be the same within
+the network.
+.Nm
+is capable of using both 40-bit (5 characters or 10 hexadecimal digits)
+or 104-bit (13 characters or 26 hexadecimal digits) keys.
+.It Fl nwkey
+Disable WEP encryption.
+This is the default mode of operation.
+.It Cm nwkey persist
+Enable WEP encryption with the persistent key stored in the network card.
+.El
+.Sh EXAMPLES
 The following
 .Xr hostname.if 5
-example will set the channel to 11 and enable WEP before configuring
-the interface as an IBSS peer:
+example configures an0 to join whatever network is available on boot,
+using WEP key
+.Dq 0x1deadbeef1 ,
+channel 11, obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-!/sbin/ancontrol \e$if -c 11 -W 1 -k 0x1deadbeef1 -n my_net -o 0
-inet 192.168.1.1 255.255.255.0 NONE
+dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
 .Ed
 .Pp
-Enable WEP:
+Configure an0 for WEP, using hex key
+.Dq 0x1deadbeef1 :
+.Bd -literal -offset indent
+# ifconfig an0 nwkey 0x1deadbeef1
+.Ed
 .Pp
-.Dl # ancontrol an0 -W 1
+Return an0 to its default settings:
+.Bd -literal -offset indent
+# ifconfig an0 -bssid -chan media autoselect \e
+	nwid "" -nwkey
+.Ed
+.Pp
+Join an existing BSS network,
+.Dq my_net :
+.Bd -literal -offset indent
+# ifconfig an0 192.168.1.1 netmask 0xffffff00 nwid my_net
+.Ed
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "an%d: init failed"
-The Aironet card failed to come ready after an initialization command was
-issued.
 .It "an%d: failed to allocate %d bytes on NIC"
 The driver was unable to allocate memory for transmit frames in the
 NIC's on-board RAM.
@@ -160,7 +263,6 @@ command.
 .Xr pci 4 ,
 .Xr pcmcia 4 ,
 .Xr hostname.if 5 ,
-.Xr ancontrol 8 ,
 .Xr ifconfig 8
 .Sh HISTORY
 The
@@ -170,6 +272,10 @@ device driver first appeared in
 .Ox
 support was added in
 .Ox 2.7 .
+A version of the driver based on the one in
+.Nx
+was added in
+.Ox 3.9 .
 .Sh AUTHORS
 .An -nosplit
 The
@@ -180,7 +286,13 @@ and ported to
 .Ox
 by
 .An Michael Shalayeff Aq mickey@openbsd.org .
+Later the
+.Nx
+version of the driver by
+.An Atsushi Onoe
+was subsequently ported to
+.Ox
+by
+.An Jonathan Gray Aq jsg@openbsd.org .
 .Sh CAVEATS
-.Nm
-is not configurable with
-.Xr ifconfig 8 .
+Scanning for access points is not currently supported.

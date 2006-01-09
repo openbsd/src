@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pci.c,v 1.13 2005/09/13 14:15:33 mickey Exp $	*/
+/*	$OpenBSD: if_an_pci.c,v 1.14 2006/01/09 21:19:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -77,8 +77,8 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/ic/anvar.h>
 #include <dev/ic/anreg.h>
+#include <dev/ic/anvar.h>
 
 #define AN_PCI_PLX_LOIO		0x14	/* PLX chip iobase */
 #define AN_PCI_LOIO		0x18	/* Aironet iobase */
@@ -127,8 +127,8 @@ an_pci_attach(parent, self, aux)
 		printf(": can't map I/O space\n");
 		return;
 	}
-	sc->an_btag = iot;
-	sc->an_bhandle = ioh;
+	sc->sc_iot = iot;
+	sc->sc_ioh = ioh;
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
@@ -147,6 +147,8 @@ an_pci_attach(parent, self, aux)
 		return;
 	}
 	printf(": %s", intrstr);
+
+	sc->sc_enabled = 1;
 
 	an_attach(sc);
 }
