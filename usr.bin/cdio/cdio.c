@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.43 2006/01/09 04:05:43 krw Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.44 2006/01/09 05:48:35 krw Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -178,6 +178,7 @@ void		usage(void);
 char 		*strstatus(int);
 int		cdid(void);
 void		addmsf(u_int *, u_int *, u_int *, u_char, u_char, u_char);
+int		cmpmsf(u_char, u_char, u_char, u_char, u_char, u_char);
 void		toc2msf(u_int, u_char *, u_char *, u_char *);
 
 void
@@ -630,11 +631,7 @@ Play_Relative_Addresses:
 
 		toc2msf(tr1+1, &tm, &ts, &tf);
 
-		if ((m1 > tm)
-		    || ((m1 == tm)
-		    && ((s1 > ts)
-		    || ((s1 == ts)
-		    && (f1 > tf))))) {
+		if (cmpmsf(m1, s1, f1, tm, ts, tf) == 1) {
 			printf("Track %d is not that long.\n", tr1);
 			return (0);
 		}
@@ -666,12 +663,7 @@ Play_Relative_Addresses:
 
 		toc2msf(n+1, &tm, &ts, &tf);
 
-		if ((tr2 < n)
-		    && ((m2 > tm)
-		    || ((m2 == tm)
-		    && ((s2 > ts)
-		    || ((s2 == ts)
-		    && (f2 > tf)))))) {
+		if (tr2 < n && cmpmsf(m2, s2, f2, tm, ts, tf) == 1) {
 			printf("The playing time of the disc is not that long.\n");
 			return (0);
 		}
@@ -1349,6 +1341,27 @@ addmsf(u_int *m, u_int *s, u_int *f, u_char m_inc, u_char s_inc, u_char f_inc)
 	}
 
 	*m += m_inc;
+}
+
+int
+cmpmsf(u_char m1, u_char s1, u_char f1, u_char m2, u_char s2, u_char f2)
+{
+	if (m1 > m2)
+		return (1);
+	else if (m1 < m2)
+		return (-1);
+
+	if (s1 > s2)
+		return (1);
+	else if (s1 < s2)
+		return (-1);
+
+	if  (f1 > f2)
+		return (1);
+	else if (f1 < f2)
+		return (-1);
+
+	return (0);
 }
 
 void
