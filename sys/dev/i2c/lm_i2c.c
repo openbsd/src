@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm_i2c.c,v 1.5 2005/12/30 09:45:20 kettenis Exp $	*/
+/*	$OpenBSD: lm_i2c.c,v 1.6 2006/01/09 22:41:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -78,7 +78,6 @@ lm_i2c_attach(struct device *parent, struct device *self, void *aux)
 	/* Bus-independent attachment. */
 	sc->sc_lmsc.lm_writereg = lm_i2c_writereg;
 	sc->sc_lmsc.lm_readreg = lm_i2c_readreg;
-
 	lm_attach(&sc->sc_lmsc);
 
 	iic_acquire_bus(sc->sc_tag, 0);
@@ -89,9 +88,7 @@ lm_i2c_attach(struct device *parent, struct device *self, void *aux)
 
 	iic_release_bus(sc->sc_tag, 0);
 
-	printf("%s: satellites at addr 0x%x and addr 0x%x\n",
-	    sc->sc_lmsc.sc_dev.dv_xname,
-	    0x48 + (data & 0x7), 0x48 + ((data >> 4) & 0x7));
+	/* Make the bus scan ignore the satellites. */
 	iic_ignore_addr(0x48 + (data & 0x7));
 	iic_ignore_addr(0x48 + ((data >> 4) & 0x7));
 }
