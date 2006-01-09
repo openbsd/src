@@ -1,4 +1,4 @@
-/* $OpenBSD: clock.c,v 1.5 2005/10/13 19:48:31 miod Exp $ */
+/* $OpenBSD: clock.c,v 1.6 2006/01/09 21:01:45 miod Exp $ */
 /* $NetBSD: clock.c,v 1.2 2000/01/11 10:29:35 nisimura Exp $ */
 
 /*
@@ -104,14 +104,6 @@ cpu_initclocks()
 #endif
 
 	tick = 1000000 / hz;	/* number of microseconds between interrupts */
-	tickfix = 1000000 - (hz * tick);
-	if (tickfix) {
-		int ftp;
-
-		ftp = min(ffs(tickfix), ffs(hz));
-		tickfix >>= (ftp - 1);
-		tickfixinterval = hz >> (ftp - 1);
-        }
 }
 
 /*
