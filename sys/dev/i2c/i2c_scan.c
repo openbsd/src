@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.52 2006/01/06 01:48:45 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.53 2006/01/09 18:50:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -69,7 +69,7 @@ void		iicprobeinit(struct i2cbus_attach_args *, u_int8_t);
 u_int8_t	iicprobenc(u_int8_t);
 u_int8_t	iicprobe(u_int8_t);
 u_int16_t	iicprobew(u_int8_t);
-int		lm75probe(void);
+char		*lm75probe(void);
 char		*amd1032cloneprobe(u_int8_t);
 void		iic_dump(struct device *, u_int8_t, char *);
 
@@ -103,7 +103,7 @@ iicprobenc(u_int8_t cmd)
 u_int16_t
 iicprobew(u_int8_t cmd)
 {
-	u_int16_t data2;
+	u_int8_t data[2];
 
 	/*
 	 * If we think we are talking to an evil Maxim 1617 or clone,
@@ -113,10 +113,10 @@ iicprobew(u_int8_t cmd)
 		return (0xffff);
 	probe_ic->ic_acquire_bus(probe_ic->ic_cookie, 0);
 	if (iic_exec(probe_ic, I2C_OP_READ_WITH_STOP,
-	    probe_addr, &cmd, 1, &data2, 2, 0) != 0)
-		data2 = 0xffff;
+	    probe_addr, &cmd, 1, &data, 2, 0) != 0)
+		data[0] = data[1] = 0xff;
 	probe_ic->ic_release_bus(probe_ic->ic_cookie, 0);
-	return (data2);
+	return ((data[0] << 8) | data[1]);
 }
 
 u_int8_t
@@ -128,52 +128,108 @@ iicprobe(u_int8_t cmd)
 	return (probe_val[cmd]);
 }
 
+#define LM75TEMP	0x00
+#define LM75CONF	0x01
+#define LM75Thyst	0x02
+#define LM75Tos		0x03
+#define LM77Tlow	0x04
+#define LM77Thigh	0x05
+#define LM75TMASK	0xff80	/* 9 bits in temperature registers */
+#define LM77TMASK	0xfff8	/* 13 bits in temperature registers */
+
 /*
- * 0x06 and 0x07 return whatever value was read before, and the
- * chip loops every 8 registers.
+ * The LM75/LM77 family are very hard to detect.  Thus, we check for
+ * all other possible chips first.  These chips do not have an ID
+ * register.  They do have a few quirks though:
+ *    register 0x06 and 0x07 return whatever value was read before
+ *    the LM75 lacks registers 0x04 and 0x05, so those act as above
+ *    the chip registers loop every 8 registers
+ * The downside is that we must read almost every register to guess
+ * if this is an LM75 or LM77.
  */
-int
+char *
 lm75probe(void)
 {
-	u_int16_t mains[6];
-	u_int8_t main;
-	int i;
+	u_int16_t temp, thyst, tos, tlow, thigh, mask = LM75TMASK;
+	u_int8_t conf;
+	int ret = 75, i;
 
-	main = iicprobenc(0x01);
-	mains[0] = iicprobew(0x02);
-	mains[1] = iicprobew(0x03);
+	temp = iicprobew(LM75TEMP) & mask;
+	conf = iicprobenc(LM75CONF);
+	thyst = iicprobew(LM75Thyst) & mask;
+	tos = iicprobew(LM75Tos) & mask;
 
-	if (main == 0xff && mains[0] == 0xffff && mains[1] == 0xffff)
-		return (0);
-	mains[2] = iicprobew(0x04);	/* read Low Limit */
-	if (iicprobew(0x07) != mains[2] || iicprobew(0x07) != mains[2])
-		return (0);
+	/* totally bogus data */
+	if (conf == 0xff && temp == 0xffff && thyst == 0xffff)
+		return (NULL);
 
-	mains[3] = iicprobew(0x05);	/* read High limit */
-	mains[4] = iicprobew(0x06);
-	mains[5] = iicprobew(0x07);
-	if (mains[4] != mains[3] || mains[5] != mains[3])
-		return (0);
+	/* All values the same?  Very unlikely */
+	if (temp == thyst && thyst == tos)
+		return (NULL);
 
-#if 0
-	printf("lm75probe: %02x %04x %04x %04x %04x %04x %04x\n", main,
-	    mains[0], mains[1], mains[2], mains[3], mains[4], mains[5]);
+#if notsure
+	/* more register aliasing effects that indicate not a lm75 */
+	if ((temp >> 8) == conf)
+		return (NULL);
 #endif
 
-	/* a real lm75/77 repeats it's registers.... */
+	/*
+	 * LM77/LM75 registers 6, 7
+	 * echo whatever was read just before them from reg 0, 1, or 2
+	 */
+	for (i = 6; i <= 7; i++) {
+		if ((iicprobew(LM75TEMP) & mask) != (iicprobew(i) & mask) ||
+		    (iicprobew(LM75Thyst) & mask) != (iicprobew(i) & mask) ||
+		    (iicprobew(LM75Tos) & mask) != (iicprobew(i) & mask))
+			return (NULL);
+	}
+
+	/*
+	 * LM75 has no registers 4 or 5, and they will act as echos too
+	 * If we find that 4 and 5 are not echos, then we may have a LM77
+	 */
+	for (i = 4; i <= 5; i++) {
+		if ((iicprobew(LM75TEMP) & mask) == (iicprobew(i) & mask) &&
+		    (iicprobew(LM75Thyst) & mask) == (iicprobew(i) & mask) &&
+		    (iicprobew(LM75Tos) & mask) == (iicprobew(i) & mask))
+			continue;
+		ret = 77;
+		mask = LM77TMASK;
+
+		/* mask size changed, must re-read for the next checks */
+		thyst = iicprobew(LM75Thyst) & mask;
+		tos = iicprobew(LM75Tos) & mask;
+		tlow = iicprobew(LM77Tlow) & mask;
+		thigh = iicprobew(LM77Thigh) & mask;
+		break;
+	}
+
+	/* a real LM75/LM77 repeats it's registers.... */
 	for (i = 0x08; i <= 0xf8; i += 8) {
-		if (main != iicprobenc(0x01 + i) ||
-		    mains[0] != iicprobew(0x02 + i) ||
-		    mains[1] != iicprobew(0x03 + i) ||
-		    mains[2] != iicprobew(0x04 + i) ||
-		    mains[3] != iicprobew(0x05 + i) ||
-		    mains[4] != iicprobew(0x06 + i) ||
-		    mains[5] != iicprobew(0x07 + i))
-			return (0);
+		if (conf != iicprobenc(LM75CONF + i) ||
+		    thyst != (iicprobew(LM75Thyst + i) & mask) ||
+		    tos != (iicprobew(LM75Tos + i) & mask))
+			return (NULL);
+		tos = iicprobew(LM75Tos) & mask;
+		if (tos != (iicprobew(0x06 + i) & mask) ||
+		    tos != (iicprobew(0x07 + i) & mask))
+			return (NULL);
+		if (ret == 75) {
+			tos = iicprobew(LM75Tos) & mask;
+			if (tos != (iicprobew(LM77Tlow + i) & mask) ||
+			    tos != (iicprobew(LM77Thigh + i) & mask))
+				return (NULL);
+		} else {
+			if (tlow != (iicprobew(LM77Tlow + i) & mask) ||
+			    thigh != (iicprobew(LM77Thigh + i) & mask))
+				return (NULL);
+		}
 	}
 
 	/* We hope */
-	return (1);
+	if (ret == 75)
+		return ("lm75");
+	return ("lm77");
 }
 
 char *
@@ -495,9 +551,10 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	} else if (iicprobe(0x16) == 0x41 && ((iicprobe(0x17) & 0xf0) == 0x40) &&
 	    (addr == 0x2c || addr == 0x2d || addr == 0x2e)) {
 		name = "adm1026";
-	} else if ((addr & 0xfc) == 0x48 && lm75probe()) {
-		name = "lm75";
-	} else if (name == NULL) {
+	} else if (name == NULL && (addr & 0xfc) == 0x48) {
+		name = lm75probe();
+	}
+	if (name == NULL) {
 		name = amd1032cloneprobe(addr);
 		if (name)
 			skip_fc = 1;
