@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpmreg.h,v 1.5 2006/01/05 08:57:27 grange Exp $	*/
+/*	$OpenBSD: amdpmreg.h,v 1.6 2006/01/09 19:32:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -68,6 +68,8 @@
 
 #define	AMDPM_PMPTR	0x58		/* PMxx System Management IO space
 					   Pointer */
+#define NFPM_PMPTR	0x14		/* nForce System Management IO space
+					   POinter */
 #define	AMDPM_PMBASE(x)	((x) & 0xff00)	/* PMxx base address */
 #define	AMDPM_PMSIZE	256		/* PMxx space size */
 

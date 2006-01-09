@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.10 2006/01/06 00:18:35 brad Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.11 2006/01/09 19:32:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -143,8 +143,11 @@ struct cfdriver amdpm_cd = {
 };
 
 const struct pci_matchid amdpm_ids[] = {
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_PMC },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_766_PMC },
-	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_PMC }
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_PMC },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8111_PMC },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_SMB }
 };
 
 int
@@ -160,9 +163,8 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	struct amdpm_softc *sc = (struct amdpm_softc *) self;
 	struct pci_attach_args *pa = aux;
 	struct i2cbus_attach_args iba;
-	struct timeval tv1, tv2;
 	pcireg_t cfg_reg, reg;
-	int i;
+	int i, base;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
@@ -174,7 +176,13 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 		printf(": PMxx space isn't enabled\n");
 		return;
 	}
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_PMPTR);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NVIDIA) 
+		base = NFPM_PMPTR;
+	else  
+		/* PCI_VENDOR_AMD */
+		base = AMDPM_PMPTR;
+		
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, base);
 	if (bus_space_map(sc->sc_iot, AMDPM_PMBASE(reg), AMDPM_PMSIZE,
 	    0, &sc->sc_ioh)) {
 		printf(": failed to map PMxx space\n");
@@ -195,30 +203,34 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 		tc_init(&amdpm_timecounter);
 	}
 #endif
-
-	if (cfg_reg & AMDPM_RNGEN) {
-		/* Check to see if we can read data from the RNG. */
-		(void) bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-		    AMDPM_RNGDATA);
-		/* benchmark the RNG */
-		microtime(&tv1);
-		for (i = 2 * 1024; i--; ) {
-			while(!(bus_space_read_1(sc->sc_iot, sc->sc_ioh,
-			    AMDPM_RNGSTAT) & AMDPM_RNGDONE))
-				;
-			(void) bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			    AMDPM_RNGDATA);
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC768_PMC ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_8111_PMC) {
+		if ((cfg_reg & AMDPM_RNGEN) ==0) {
+			pci_conf_write(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG, 
+			    cfg_reg | AMDPM_RNGEN);
+			cfg_reg = pci_conf_read(pa->pa_pc, pa->pa_tag, 
+			    AMDPM_CONFREG);
 		}
-		microtime(&tv2);
-
-		timersub(&tv2, &tv1, &tv1);
-		if (tv1.tv_sec)
-			tv1.tv_usec += 1000000 * tv1.tv_sec;
-		printf(": rng active, %dKb/sec", 8 * 1000000 / tv1.tv_usec);
-
-		timeout_set(&sc->sc_rnd_ch, amdpm_rnd_callout, sc);
-		amdpm_rnd_callout(sc);
+		if (cfg_reg & AMDPM_RNGEN) {
+			/* Check to see if we can read data from the RNG. */
+			(void) bus_space_read_4(sc->sc_iot, sc->sc_ioh, 
+			    AMDPM_RNGDATA);
+		        for (i = 1000; i--; ) {
+				if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, 
+				    AMDPM_RNGSTAT) & AMDPM_RNGDONE) 
+					break;
+				DELAY(10);
+			}
+			if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, 
+			    AMDPM_RNGSTAT) & AMDPM_RNGDONE) {
+				printf(": rng active");
+				timeout_set(&sc->sc_rnd_ch, amdpm_rnd_callout, 
+				    sc);
+				amdpm_rnd_callout(sc);
+			}
+		}
 	}
+	printf("\n");
 
 	/* Attach I2C bus */
 	lockinit(&sc->sc_i2c_lock, PRIBIO | PCATCH, "iiclk", 0, 0);
@@ -231,8 +243,6 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c_tag;
 	config_found(self, &iba, iicbus_print);
-
-	printf("\n");
 }
 
 void
