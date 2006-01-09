@@ -1,4 +1,4 @@
-/*	$OpenBSD: maci2c.c,v 1.6 2006/01/01 21:30:09 deraadt Exp $	*/
+/*	$OpenBSD: maci2c.c,v 1.7 2006/01/09 01:48:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -48,8 +48,11 @@ maciic_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 			ia.ia_name = name;
 		if (ia.ia_name == NULL && 
 		    OF_getprop(node, "name", &name,
-		    sizeof name) && name[0])
+		    sizeof name) && name[0]) {
+			if (strcmp(name, "cereal") == 0)
+				continue;
 			ia.ia_name = name;
+		}
 		if (ia.ia_name)
 			config_found(self, &ia, iic_print);
 	}
