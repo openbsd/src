@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm75.c,v 1.7 2006/01/09 18:51:04 deraadt Exp $	*/
+/*	$OpenBSD: lm75.c,v 1.8 2006/01/09 19:27:34 deraadt Exp $	*/
 /*	$NetBSD: lm75.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -107,7 +107,6 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lmtemp_softc *sc = (struct lmtemp_softc *)self;
 	struct i2c_attach_args *ia = aux;
-	u_int8_t ptr[1], reg[LM75_TEMP_LEN];
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
