@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.28 2006/01/09 23:09:41 brad Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.29 2006/01/09 23:11:49 miod Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -442,6 +442,20 @@ ncr53c9x_init(sc, doreset)
 	if (doreset) {
 		sc->sc_state = NCR_SBR;
 		NCRCMD(sc, NCRCMD_RSTSCSI);
+		/*
+		 * XXX gross...
+		 * On some systems, commands issued too close to a reset
+		 * do not work correctly. We'll force a short delay on
+		 * known-to-be-sensitive chips.
+		 */
+		switch (sc->sc_rev) {
+		case NCR_VARIANT_NCR53C94:
+			DELAY(600000);	/* 600ms */
+			break;
+		case NCR_VARIANT_NCR53C96:
+			DELAY(100000);	/* 100ms */
+			break;
+		}
 	} else {
 		sc->sc_state = NCR_IDLE;
 		ncr53c9x_sched(sc);
