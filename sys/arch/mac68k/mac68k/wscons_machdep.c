@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.2 2006/01/08 16:36:54 miod Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.3 2006/01/09 20:51:49 miod Exp $	*/
 /*	$NetBSD: maccons.c,v 1.5 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -34,6 +34,7 @@
 #include <sys/timeout.h>
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 
 #include <dev/cons.h>
@@ -42,6 +43,7 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 
+#include <mac68k/dev/nubus.h>
 #include <mac68k/dev/macfbvar.h>
 #include <mac68k/dev/akbdvar.h>
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.43 2006/01/08 17:25:02 miod Exp $
+#	$OpenBSD: GENERIC,v 1.44 2006/01/09 20:51:45 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -39,7 +39,7 @@ ams*		at adb?		# ADB mouse
 asc0		at obio?	# ASC/EASC audio
 esp0		at obio?	# SCSI NCR 53C9x
 esp1		at obio?	# SCSI NCR 53C9x
-intvid0		at obio?	# Internal video hardware
+macfb*		at obio?	# Internal video hardware
 mc*		at obio?	# MACE ethernet on Centris/Quadra 660av
 sn*		at obio?	# Internal ethernet
 zsc0		at obio?	# Zilog serial chip
@@ -49,15 +49,13 @@ zstty*		at zsc?
 nubus0		at mainbus?
 
 ae*		at nubus?	# Most Apple Ethernet Cards
-macvid*		at nubus?	# NuBus video cards
+macfb*		at nubus?	# NuBus video cards
 sn*		at nubus?	# SONIC-based ethernet cards
 
 # workstation console
-macfb*		at intvid?
-macfb*		at macvid?
+wsdisplay*	at macfb?
 wskbd*		at akbd? mux 1
 wsmouse*	at ams? mux 0
-wsdisplay*	at macfb?
 
 # Enable only one of ncrscsi or sbc
 ncrscsi0	at obio?		# SCSI NCR 5380

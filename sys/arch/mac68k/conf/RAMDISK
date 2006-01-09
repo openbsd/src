@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.19 2006/01/04 20:39:04 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.20 2006/01/09 20:51:45 miod Exp $
 #
 # RAMDISK - bsd.rd configuration file (non-SBC version)
 
@@ -47,27 +47,25 @@ adb0		at obio?
 akbd*		at adb?		# ADB keyboard
 #ams*		at adb?		# ADB mouse
 
-esp0		at obio?		# SCSI NCR 53C9x
-esp1		at obio?		# SCSI NCR 53C9x
-intvid0		at obio?		# Internal video hardware
-mc*		at obio?		# MACE ethernet on Centris/Quadra 660av
-sn*		at obio?		# Internal ethernet
-zsc0		at obio?		# Zilog serial chip
+esp0		at obio?	# SCSI NCR 53C9x
+esp1		at obio?	# SCSI NCR 53C9x
+macfb*		at obio?	# Internal video hardware
+mc*		at obio?	# MACE ethernet on Centris/Quadra 660av
+sn*		at obio?	# Internal ethernet
+zsc0		at obio?	# Zilog serial chip
 zstty*		at zsc?
 
 # nubus boards
 nubus0		at mainbus?
 
 ae*		at nubus?	# Most Apple Ethernet Cards
-macvid*		at nubus?	# NuBus video cards
+macfb*		at nubus?	# NuBus video cards
 sn*		at nubus?	# SONIC-based ethernet cards
 
 # workstation console
-macfb*		at intvid?
-macfb*		at macvid?
+wsdisplay*	at macfb?
 wskbd*		at akbd?
 #wsmouse*	at ams?
-wsdisplay*	at macfb?
 
 # Enable only one of ncrscsi or sbc
 ncrscsi0	at obio?		# SCSI NCR 5380

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfb.c,v 1.5 2006/01/08 20:35:21 miod Exp $	*/
+/*	$OpenBSD: macfb.c,v 1.6 2006/01/09 20:51:48 miod Exp $	*/
 /* $NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -40,7 +40,6 @@
 #include <machine/bus.h>
 
 #include <mac68k/dev/nubus.h>
-#include <mac68k/dev/grfvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -49,13 +48,6 @@
 #include <dev/rasops/rasops.h>
 
 #include <mac68k/dev/macfbvar.h>
-
-int	macfb_match(struct device *, void *, void *);
-void	macfb_attach(struct device *, struct device *, void *);
-
-struct cfattach macfb_ca = {
-	sizeof(struct macfb_softc), macfb_match, macfb_attach
-};
 
 struct cfdriver macfb_cd = {
 	NULL, "macfb", DV_DULL
@@ -94,7 +86,6 @@ extern long		videoaddr;
 extern long		videorowbytes;
 extern long		videobitdepth;
 extern u_long		videosize;
-extern u_int32_t	mac68k_vidlog;
 extern u_int32_t	mac68k_vidphys;
 extern u_int32_t	mac68k_vidlen;
 
@@ -210,31 +201,23 @@ macfb_alloc_attr(void *cookie, int fg, int bg, int flg, long *attr)
 	return (0);
 }
 
-int
-macfb_match(struct device *parent, void *match, void *aux)
-{
-	return (1);
-}
-
 void
-macfb_attach(struct device *parent, struct device *self, void *aux)
+macfb_attach_common(struct macfb_softc *sc, struct grfmode *gm)
 {
-	struct grfbus_attach_args *ga = aux;
-	struct grfmode *gm = &ga->ga_grfmode;
-	struct macfb_softc *sc;
 	struct wsemuldisplaydev_attach_args waa;
 	struct wsscreen_descr *scrlist[1];
 	struct wsscreen_list screenlist;
 	int isconsole;
 
-	sc = (struct macfb_softc *)self;
+	/* Print hardware characteristics. */
+	printf("%s: %dx%d ", sc->sc_dev.dv_xname, gm->width, gm->height);
+	if (gm->psize == 1)
+		printf("monochrome");
+	else
+		printf("%d color", 1 << gm->psize);
+	printf(" display\n");
 
-#ifdef DIAGNOSTIC	/* temporary */
-	printf(" offset %p", gm->fboff);
-#endif
-	printf("\n");
-
-	isconsole = macfb_is_console(ga->ga_phys + gm->fboff);
+	isconsole = macfb_is_console(sc->sc_basepa + gm->fboff);
 
 	if (isconsole) {
 		sc->sc_dc = &macfb_console_dc;
@@ -243,7 +226,7 @@ macfb_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_dc = malloc(sizeof(struct macfb_devconfig),
 		    M_DEVBUF, M_WAITOK);
 		sc->sc_dc->dc_vaddr = (vaddr_t)gm->fbbase;
-		sc->sc_dc->dc_paddr = ga->ga_phys;
+		sc->sc_dc->dc_paddr = sc->sc_basepa;
 		sc->sc_dc->dc_size = gm->fbsize;
 
 		sc->sc_dc->dc_wid = gm->width;
@@ -267,9 +250,8 @@ macfb_attach(struct device *parent, struct device *self, void *aux)
 	waa.accessops = &macfb_accessops;
 	waa.accesscookie = sc;
 
-	config_found(self, &waa, wsemuldisplaydevprint);
+	config_found((struct device *)sc, &waa, wsemuldisplaydevprint);
 }
-
 
 int
 macfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)

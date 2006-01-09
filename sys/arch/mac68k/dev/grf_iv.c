@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.33 2006/01/08 20:35:21 miod Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.34 2006/01/09 20:51:48 miod Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  * Graphics display driver for the Macintosh internal video for machines
  * that don't map it into a fake nubus card.
@@ -62,11 +63,6 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/ioctl.h>
-#include <sys/file.h>
-#include <sys/malloc.h>
-#include <sys/mman.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
 
 #include <machine/autoconf.h>
@@ -78,7 +74,10 @@
 
 #include <mac68k/dev/nubus.h>
 #include <mac68k/dev/obiovar.h>
-#include <mac68k/dev/grfvar.h>
+
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
+#include <mac68k/dev/macfbvar.h>
 
 extern u_int32_t	mac68k_vidphys;
 extern u_int32_t	mac68k_vidlen;
@@ -87,15 +86,11 @@ extern long		videorowbytes;
 extern long		videobitdepth;
 extern u_long		videosize;
 
-static int	grfiv_match(struct device *, void *, void *);
-static void	grfiv_attach(struct device *, struct device *, void *);
+int	macfb_obio_match(struct device *, void *, void *);
+void	macfb_obio_attach(struct device *, struct device *, void *);
 
-struct cfdriver intvid_cd = {
-	NULL, "intvid", DV_DULL
-};
-
-struct cfattach intvid_ca = {
-	sizeof(struct grfbus_softc), grfiv_match, grfiv_attach
+struct cfattach macfb_obio_ca = {
+	sizeof(struct macfb_softc), macfb_obio_match, macfb_obio_attach
 };
 
 #define DAFB_BASE		0xf9000000
@@ -105,11 +100,8 @@ struct cfattach intvid_ca = {
 #define VALKYRIE_BASE		0xf9000000
 #define VALKYRIE_CONTROL_BASE	0x50f2a000
 
-static int
-grfiv_match(parent, vcf, aux)
-	struct device *parent;
-	void *vcf;
-	void *aux;
+int
+macfb_obio_match(struct device *parent, void *vcf, void *aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	bus_space_handle_t bsh;
@@ -124,7 +116,7 @@ grfiv_match(parent, vcf, aux)
 			base = VALKYRIE_CONTROL_BASE;
 
 			if (bus_space_map(oa->oa_tag, base, 0x40, 0, &bsh))
-				return 0;
+				return (0);
 
 			/* Disable interrupts */
 			bus_space_write_1(oa->oa_tag, bsh, 0x18, 0x1);
@@ -150,21 +142,21 @@ grfiv_match(parent, vcf, aux)
 		base = DAFB_CONTROL_BASE;
 
 		if (bus_space_map(oa->oa_tag, base, 0x20, 0, &bsh))
-			return 0;
+			return (0);
 
 		if (mac68k_bus_space_probe(oa->oa_tag, bsh, 0x1c, 4) == 0) {
 			bus_space_unmap(oa->oa_tag, bsh, 0x20);
-			return 0;
+			return (0);
 		}
 
 		bus_space_unmap(oa->oa_tag, bsh, 0x20);
 
 		if (bus_space_map(oa->oa_tag, base + 0x100, 0x20, 0, &bsh))
-			return 0;
+			return (0);
 
 		if (mac68k_bus_space_probe(oa->oa_tag, bsh, 0x04, 4) == 0) {
 			bus_space_unmap(oa->oa_tag, bsh, 0x20);
-			return 0;
+			return (0);
 		}
 
 		/* Disable interrupts */
@@ -181,7 +173,7 @@ grfiv_match(parent, vcf, aux)
 		base = CIVIC_CONTROL_BASE;
 
 		if (bus_space_map(oa->oa_tag, base, 0x1000, 0, &bsh))
-			return 0;
+			return (0);
 
 		/* Disable interrupts */
 		bus_space_write_1(oa->oa_tag, bsh, 0x120, 0);
@@ -200,21 +192,17 @@ grfiv_match(parent, vcf, aux)
 		break;
 	}
 
-	return found;
+	return (found);
 }
 
-static void
-grfiv_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+void
+macfb_obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *) aux;
-	struct grfbus_softc *sc;
-	struct grfmode gm;
+	struct macfb_softc *sc = (struct macfb_softc *)self;
 	u_long base, length;
 	u_int32_t vbase1, vbase2;
-
-	sc = (struct grfbus_softc *)self;
+	struct grfmode gm;
 
 	sc->card_id = 0;
 
@@ -275,7 +263,7 @@ grfiv_attach(parent, self, aux)
 #ifdef DEBUG
 		printf(" @ %lx", sc->sc_basepa + sc->sc_fbofs);
 #endif
-		printf(": DAFB: monitor sense %x\n",
+		printf(": DAFB, monitor sense %x\n",
 		    (bus_space_read_4(sc->sc_tag, sc->sc_regh, 0x1c) & 0x7));
 
 		bus_space_unmap(sc->sc_tag, sc->sc_regh, 0x20);
@@ -302,30 +290,28 @@ grfiv_attach(parent, self, aux)
 		length = mac68k_vidlen + sc->sc_fbofs;
 
 #ifdef DEBUG
-		printf(" @ %lx", sc->sc_basepa + sc->sc_fbofs);
-#endif
-		printf(": RBV");
-#ifdef DEBUG
+		printf(" @ %lx: RBV", sc->sc_basepa + sc->sc_fbofs);
 		switch (via2_reg(rMonitor) & RBVMonitorMask) {
 		case RBVMonIDBWP:
-			printf(": 15\" monochrome portrait");
+			printf(", 15\" monochrome portrait");
 			break;
 		case RBVMonIDRGB12:
-			printf(": 12\" color");
+			printf(", 12\" color");
 			break;
 		case RBVMonIDRGB15:
-			printf(": 15\" color");
+			printf(", 15\" color");
 			break;
 		case RBVMonIDStd:
-			printf(": Macintosh II");
+			printf(", Macintosh II");
 			break;
 		default:
-			printf(": unrecognized");
+			printf(", unrecognized");
 			break;
 		}
-		printf(" display");
+		printf(" display\n");
+#else
+		printf(": RBV\n");
 #endif
-		printf("\n");
 
 		break;
 	default:
@@ -333,8 +319,10 @@ grfiv_attach(parent, self, aux)
 		sc->sc_fbofs = m68k_page_offset(mac68k_vidphys);
 		length = mac68k_vidlen + sc->sc_fbofs;
 
-		printf(" @ %lx: On-board video\n",
-		    sc->sc_basepa + sc->sc_fbofs);
+#ifdef DEBUG
+		printf(" @ %lx:", sc->sc_basepa + sc->sc_fbofs);
+#endif
+		printf(": On-board video\n");
 		break;
 	}
 
@@ -357,5 +345,5 @@ grfiv_attach(parent, self, aux)
 	gm.fboff = sc->sc_fbofs;
 
 	/* Perform common video attachment. */
-	grf_establish(sc, &gm);
+	macfb_attach_common(sc, &gm);
 }

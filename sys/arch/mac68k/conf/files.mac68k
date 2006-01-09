@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mac68k,v 1.37 2006/01/08 17:45:26 miod Exp $
+#	$OpenBSD: files.mac68k,v 1.38 2006/01/09 20:51:45 miod Exp $
 #	$NetBSD: files.mac68k,v 1.61 1997/03/01 20:22:16 scottr Exp $
 
 # mac68k-specific configuration info
@@ -48,20 +48,12 @@ device	asc
 attach	asc at obio
 file	arch/mac68k/dev/asc.c		asc needs-flag
 
-define	grfbus {}
-file	arch/mac68k/dev/grf_subr.c	grfbus
-
-device	intvid: grfbus
-attach	intvid at obio
-file	arch/mac68k/dev/grf_iv.c	intvid
-
-device	macvid: grfbus
-attach	macvid at nubus
-file	arch/mac68k/dev/grf_mv.c	macvid
-
 device	macfb: wsemuldisplaydev, rasops1, rasops2, rasops4, rasops8, rasops16, rasops32
-attach	macfb at grfbus
+attach	macfb at obio with macfb_obio
+attach	macfb at nubus with macfb_nubus
 file	arch/mac68k/dev/macfb.c		macfb needs-flag
+file	arch/mac68k/dev/grf_iv.c	macfb_obio
+file	arch/mac68k/dev/grf_mv.c	macfb_nubus
 
 device	ae: ifnet, ether
 attach	ae at nubus with ae_nubus
