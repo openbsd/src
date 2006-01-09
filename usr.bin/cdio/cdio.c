@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.41 2005/12/31 19:51:15 krw Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.42 2006/01/09 00:20:31 krw Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -177,6 +177,7 @@ void 		help(void);
 void		usage(void);
 char 		*strstatus(int);
 int		cdid(void);
+void		addmsf(u_int *, u_int *, u_int *, u_char, u_char, u_char);
 
 void
 help(void)
@@ -643,36 +644,12 @@ Play_Relative_Addresses:
 
 		tr1--;
 
-		f1 += tf;
-		if (f1 >= 75) {
-			s1 += f1 / 75;
-			f1 %= 75;
-		}
-
-		s1 += ts;
-		if (s1 >= 60) {
-			m1 += s1 / 60;
-			s1 %= 60;
-		}
-
-		m1 += tm;
+		addmsf(&m1, &s1, &f1, tm, ts, tf);
 
 		if (tr2 <= 0) {
 			if (m2 || s2 || f2) {
 				tr2 = tr1;
-				f2 += f1;
-				if (f2 >= 75) {
-					s2 += f2 / 75;
-					f2 %= 75;
-				}
-
-				s2 += s1;
-				if (s2 > 60) {
-					m2 += s2 / 60;
-					s2 %= 60;
-				}
-
-				m2 += m1;
+				addmsf(&m2, &s2, &f2, m1, s1, f1);
 			} else {
 				tr2 = n;
 				if (msf) {
@@ -700,19 +677,7 @@ Play_Relative_Addresses:
 			} else
 				lba2msf(toc_buffer[tr2].addr.lba, &tm, &ts,
 				    &tf);
-			f2 += tf;
-			if (f2 >= 75) {
-				s2 += f2 / 75;
-				f2 %= 75;
-			}
-
-			s2 += ts;
-			if (s2 > 60) {
-				m2 += s2 / 60;
-				s2 %= 60;
-			}
-
-			m2 += tm;
+			addmsf(&m2, &s2, &f2, tm, ts, tf);
 		}
 
 		if (msf) {
@@ -1391,4 +1356,22 @@ switch_el(void)
 			el = NULL;
 		}
 	}
+}
+
+void
+addmsf(u_int *m, u_int *s, u_int *f, u_char m_inc, u_char s_inc, u_char f_inc)
+{
+	*f += f_inc;
+	if (*f > 75) {
+		*s += *f / 75;
+		*f %= 75;
+	}
+
+	*s += s_inc;
+	if (*s > 60) {
+		*m += *s / 60;
+		*s %= 60;
+	}
+
+	*m += m_inc;
 }
