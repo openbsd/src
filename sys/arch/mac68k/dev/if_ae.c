@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae.c,v 1.27 2005/09/12 10:07:29 martin Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.28 2006/01/09 20:51:48 miod Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.62 1997/04/24 16:52:05 scottr Exp $	*/
 
 /*
@@ -55,10 +55,6 @@
 static inline void ae_rint(struct ae_softc *);
 static inline void ae_xmit(struct ae_softc *);
 static inline int ae_ring_copy( struct ae_softc *, int, caddr_t, int);
-
-#define	ETHER_MIN_LEN	64
-#define ETHER_MAX_LEN	1518
-#define	ETHER_ADDR_LEN	6
 
 #define NIC_GET(sc, reg)	(bus_space_read_1((sc)->sc_regt,	\
 				    (sc)->sc_regh,			\
