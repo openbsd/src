@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm75.c,v 1.6 2005/12/29 14:51:08 deraadt Exp $	*/
+/*	$OpenBSD: lm75.c,v 1.7 2006/01/09 18:51:04 deraadt Exp $	*/
 /*	$NetBSD: lm75.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -96,6 +96,7 @@ lmtemp_match(struct device *parent, void *match, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	if (strcmp(ia->ia_name, "lm75") == 0 ||
+	    strcmp(ia->ia_name, "lm77") == 0 ||
 	    strcmp(ia->ia_name, "ds1775") == 0)
 		return (1);
 	return (0);
@@ -112,19 +113,10 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_address = ia->ia_addr;
 
 	sc->sc_model = LM_MODEL_LM75;
+	if (strcmp(ia->ia_name, "lm77") == 0)
+		sc->sc_model = LM_MODEL_LM77;
 
-	/* Try to detect LM77 by poking Thigh register */
-	ptr[0] = LM77_REG_THIGH;
-	iic_acquire_bus(sc->sc_tag, 0);
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_address, ptr, 1, reg, LM75_TEMP_LEN, 0) == 0) {
-		/* Power up default is 64 degC */
-		if (lm77_wordtotemp((reg[0] << 8) | reg[1]) == 64 * 2)
-			sc->sc_model = LM_MODEL_LM77;
-	}
-
-	printf(": %s (%s)\n", ia->ia_name,
-	    sc->sc_model == LM_MODEL_LM75 ? "LM75" : "LM77");
+	printf(": %s\n", ia->ia_name);
 
 	iic_release_bus(sc->sc_tag, 0);
 
