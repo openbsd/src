@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.56 2006/01/05 16:00:07 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.57 2006/01/10 16:03:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -113,7 +113,7 @@ attr_optadd(struct rde_aspath *asp, u_int8_t flags, u_int8_t type,
 	struct attr	*a, *t;
 
 	/* known optional attributes were validated previously */
-	if ((a = attr_lookup(flags, type, data, len)) == 0)
+	if ((a = attr_lookup(flags, type, data, len)) == NULL)
 		a = attr_alloc(flags, type, data, len);
 
 	/* attribute allowed only once */
@@ -194,6 +194,10 @@ attr_diff(struct attr *oa, struct attr *ob)
 {
 	int	r;
 
+	if (oa->flags > ob->flags)
+		return (1);
+	if (oa->flags < ob->flags)
+		return (-1);
 	if (oa->type > ob->type)
 		return (1);
 	if (oa->type < ob->type)
