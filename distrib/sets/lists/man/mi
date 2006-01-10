@@ -1356,11 +1356,14 @@
 ./usr/share/man/cat4/mac68k
 ./usr/share/man/cat4/mac68k/adb.0
 ./usr/share/man/cat4/mac68k/ae.0
+./usr/share/man/cat4/mac68k/akbd.0
+./usr/share/man/cat4/mac68k/ams.0
 ./usr/share/man/cat4/mac68k/asc.0
 ./usr/share/man/cat4/mac68k/autoconf.0
 ./usr/share/man/cat4/mac68k/esp.0
 ./usr/share/man/cat4/mac68k/intro.0
 ./usr/share/man/cat4/mac68k/kmem.0
+./usr/share/man/cat4/mac68k/macfb.0
 ./usr/share/man/cat4/mac68k/mainbus.0
 ./usr/share/man/cat4/mac68k/mc.0
 ./usr/share/man/cat4/mac68k/mem.0
