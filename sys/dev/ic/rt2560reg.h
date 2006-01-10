@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560reg.h,v 1.1 2006/01/09 20:03:34 damien Exp $  */
+/*	$OpenBSD: rt2560reg.h,v 1.2 2006/01/10 17:40:29 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -217,7 +217,8 @@ struct rt2560_tx_desc {
 	uint8_t		plcp_service;
 #define RT2560_PLCP_LENGEXT	0x80
 
-	uint16_t	plcp_length;
+	uint8_t		plcp_length_lo;
+	uint8_t		plcp_length_hi;
 	uint32_t	iv;
 	uint32_t	eiv;
 	uint8_t		key[IEEE80211_KEYBUF_SIZE];

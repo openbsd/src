@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.1 2006/01/09 20:03:34 damien Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.2 2006/01/10 17:40:29 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1619,46 +1619,37 @@ rt2560_setup_tx_desc(struct rt2560_softc *sc, struct rt2560_tx_desc *desc,
 	desc->flags |= htole32(len << 16);
 	desc->flags |= encrypt ? htole32(RT2560_TX_CIPHER_BUSY) :
 	    htole32(RT2560_TX_BUSY | RT2560_TX_VALID);
-	if (RAL_RATE_IS_OFDM(rate))
-		desc->flags |= htole32(RT2560_TX_OFDM);
 
 	desc->physaddr = htole32(physaddr);
 	desc->wme = htole16(
-	    RT2560_AIFSN(3) |
-	    RT2560_LOGCWMIN(4) |
-	    RT2560_LOGCWMAX(6));
+	    RT2560_AIFSN(2) |
+	    RT2560_LOGCWMIN(3) |
+	    RT2560_LOGCWMAX(8));
 
-	/*
-	 * Fill PLCP fields.
-	 */
+	/* setup PLCP fields */
+	desc->plcp_signal  = rt2560_plcp_signal(rate);
 	desc->plcp_service = 4;
 
-	len += 4; /* account for FCS */
+	len += IEEE80211_CRC_LEN;
 	if (RAL_RATE_IS_OFDM(rate)) {
-		/*
-		 * PLCP length field (LENGTH).
-		 * From IEEE Std 802.11a-1999, pp. 14.
-		 */
+		desc->flags |= htole32(RT2560_TX_OFDM);
+
 		plcp_length = len & 0xfff;
-		desc->plcp_length = htole16((plcp_length >> 6) << 8 |
-		    (plcp_length & 0x3f));
+		desc->plcp_length_hi = plcp_length >> 6;
+		desc->plcp_length_lo = plcp_length & 0x3f;
 	} else {
-		/*
-		 * Long PLCP LENGTH field.
-		 * From IEEE Std 802.11b-1999, pp. 16.
-		 */
 		plcp_length = (16 * len + rate - 1) / rate;
 		if (rate == 22) {
 			remainder = (16 * len) % 22;
 			if (remainder != 0 && remainder < 7)
 				desc->plcp_service |= RT2560_PLCP_LENGEXT;
 		}
-		desc->plcp_length = htole16(plcp_length);
-	}
+		desc->plcp_length_hi = plcp_length >> 8;
+		desc->plcp_length_lo = plcp_length & 0xff;
 
-	desc->plcp_signal = rt2560_plcp_signal(rate);
-	if (rate != 2 && (ic->ic_flags & IEEE80211_F_SHPREAMBLE))
-		desc->plcp_signal |= 0x08;
+		if (rate != 2 && (ic->ic_flags & IEEE80211_F_SHPREAMBLE))
+			desc->plcp_signal |= 0x08;
+	}
 }
 
 int
