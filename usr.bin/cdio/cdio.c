@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.44 2006/01/09 05:48:35 krw Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.45 2006/01/10 19:59:11 krw Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -624,49 +624,58 @@ play(char *arg)
 		goto Try_Absolute_Timed_Addresses;
 
 Play_Relative_Addresses:
-		if (tr1 <= 0)
-			tr1 = 1;
-		else if (tr1 > n)
-			tr1 = n;
+		if (tr1 < 1 || tr1 > n) {
+			printf("Track %d not found\n", tr1);
+			return (0);
+		} else if (tr2 < 0 || tr2 > n) {
+			printf("Track %d not found\n", tr2);
+			return (0);
+		}
 
+		/* Change (m1,s1,f1) from tr1 to disc relative. */
+		toc2msf(tr1, &tm, &ts, &tf);
+		addmsf(&m1, &s1, &f1, tm, ts, tf);
+
+		/* Compare (m1,s1,f1) to start time of next track. */
 		toc2msf(tr1+1, &tm, &ts, &tf);
-
 		if (cmpmsf(m1, s1, f1, tm, ts, tf) == 1) {
 			printf("Track %d is not that long.\n", tr1);
 			return (0);
 		}
 
-		tr1--;
-
-		addmsf(&m1, &s1, &f1, tm, ts, tf);
-
-		if (tr2 <= 0) {
-			if (m2 || s2 || f2) {
-				tr2 = tr1;
-				addmsf(&m2, &s2, &f2, m1, s1, f1);
-			} else {
-				tr2 = n;
-				toc2msf(tr2+1, &tm, &ts, &tf);
-				m2 = tm;
-				s2 = ts;
-				f2 = tf;
-			}
-		} else if (tr2 > n) {
-			tr2 = n;
-			m2 = s2 = f2 = 0;
-		} else {
-			if (m2 || s2 || f2)
-				tr2--;
-			toc2msf(tr2+1, &tm, &ts, &tf);
+		if (!(tr2 || m2 || s2 || f2)) {
+			/* No end time specified. Play to end of disc. */
+			toc2msf(n+1, &tm, &ts, &tf);
+			m2 = tm;
+			s2 = ts;
+			f2 = tf;
+		} else if (tr2 != 0) {
+			/*
+			 * End time specified relative to tr2. Change
+			 * (m2,s2,f2) from tr2 to disc relative.
+			 */
+			toc2msf(tr2, &tm, &ts, &tf);
 			addmsf(&m2, &s2, &f2, tm, ts, tf);
+			/* Compare (m2,s2,f2) to start time of next track. */
+			toc2msf(tr2+1, &tm, &ts, &tf);
+			if (cmpmsf(m2, s2, f2, tm, ts, tf) == 1) {
+				printf("Track %d is not that long.\n", tr2);
+				return (0);
+			}
+		} else {
+			/*
+			 * Duration rather than end time specified. Change
+			 * (m2,s2,f2) from (m1,s1,f1) to disc relative.
+			 */
+			addmsf(&m2, &s2, &f2, m1, s1, f1);
+			/* Compare (m2,s2,f2) to end of disc. */
+			toc2msf(tr2+1, &tm, &ts, &tf);
+			if (cmpmsf(m2, s2, f2, tm, ts, tf) == 1) {
+				printf("Disc is not that long.\n");
+				return (0);
+			}
 		}
 
-		toc2msf(n+1, &tm, &ts, &tf);
-
-		if (tr2 < n && cmpmsf(m2, s2, f2, tm, ts, tf) == 1) {
-			printf("The playing time of the disc is not that long.\n");
-			return (0);
-		}
 		return (play_msf(m1, s1, f1, m2, s2, f2));
 
 Try_Absolute_Timed_Addresses:
