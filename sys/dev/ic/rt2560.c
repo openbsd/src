@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.4 2006/01/10 17:47:15 damien Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.5 2006/01/10 21:20:46 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -114,7 +114,7 @@ int		rt2560_tx_bcn(struct rt2560_softc *, struct mbuf *,
 		    struct ieee80211_node *);
 int		rt2560_tx_mgt(struct rt2560_softc *, struct mbuf *,
 		    struct ieee80211_node *);
-struct mbuf	*rt2560_get_rts(struct rt2560_softc *,
+struct		mbuf *rt2560_get_rts(struct rt2560_softc *,
 		    struct ieee80211_frame *, uint16_t);
 int		rt2560_tx_data(struct rt2560_softc *, struct mbuf *,
 		    struct ieee80211_node *);

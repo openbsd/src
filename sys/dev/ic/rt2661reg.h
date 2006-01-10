@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661reg.h,v 1.1 2006/01/09 20:03:34 damien Exp $	*/
+/*	$OpenBSD: rt2661reg.h,v 1.2 2006/01/10 21:20:46 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -161,7 +161,7 @@
 /* possible flags for register TXRX_CSR4 */
 #define RT2661_SHORT_PREAMBLE	(1 << 19)
 
-/* possible values for register TXRX_CSR9 */
+/* possible flags for register TXRX_CSR9 */
 #define RT2661_TSF_TICKING	(1 << 16)
 #define RT2661_TSF_MODE(x)	(((x) & 0x3) << 17)
 /* TBTT stands for Target Beacon Transmission Time */
@@ -171,6 +171,14 @@
 /* possible flags for register PHY_CSR0 */
 #define RT2661_PA_PE_2GHZ	(1 << 16)
 #define RT2661_PA_PE_5GHZ	(1 << 17)
+
+/* possible flags for register PHY_CSR3 */
+#define RT2661_BBP_READ	(1 << 15)
+#define RT2661_BBP_BUSY	(1 << 16)
+
+/* possible flags for register PHY_CSR4 */
+#define RT2661_RF_21BIT	(21 << 24)
+#define RT2661_RF_BUSY	(1 << 31)
 
 /* possible values for register STA_CSR4 */
 #define RT2661_TX_STAT_VALID	(1 << 0)
@@ -213,10 +221,10 @@ struct rt2661_tx_desc {
 #define RT2661_TX_BURST		(1 << 28)
 
 	uint16_t	wme;
+#define RT2661_QID(v)		(v)
 #define RT2661_AIFSN(v)		((v) << 4)
 #define RT2661_LOGCWMIN(v)	((v) << 8)
 #define RT2661_LOGCWMAX(v)	((v) << 12)
-#define RT2661_QID(v)		(v)
 
 	uint16_t	xflags;
 #define RT2661_TX_HWSEQ		(1 << 12)
@@ -232,7 +240,9 @@ struct rt2661_tx_desc {
 	uint32_t	eiv;
 
 	uint8_t		offset;
-	uint8_t		id;
+	uint8_t		qid;
+#define RT2661_QID_MGT	13
+
 	uint8_t		txpower;
 #define RT2661_DEFAULT_TXPOWER	0
 
@@ -270,11 +280,6 @@ struct rt2661_rx_desc {
 #define RAL_RF3	1
 #define RAL_RF4	3
 
-#define RT2661_BBP_READ	(1 << 15)
-#define RT2661_BBP_BUSY	(1 << 16)
-#define RT2661_RF_21BIT	(21 << 24)
-#define RT2661_RF_BUSY	(1 << 31)
-
 /* dual-band RF */
 #define RT2661_RF_5225	1
 #define RT2661_RF_5325	2
@@ -283,8 +288,6 @@ struct rt2661_rx_desc {
 #define RT2661_RF_2529	4
 
 #define RT2661_RX_DESC_BACK	4
-
-#define RT2661_TXQ_MGT	13
 
 #define RT2661_SMART_MODE	(1 << 0)
 
@@ -298,6 +301,7 @@ struct rt2661_rx_desc {
 #define RT2661_EEPROM_MAC45		0x04
 #define RT2661_EEPROM_ANTENNA		0x10
 #define RT2661_EEPROM_CONFIG2		0x11
+#define RT2661_EEPROM_BBP_BASE		0x13
 #define RT2661_EEPROM_TXPOWER		0x23
 #define RT2661_EEPROM_FREQ_OFFSET	0x2f
 #define RT2661_EEPROM_RSSI_2GHZ_OFFSET	0x4d
