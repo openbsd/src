@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.2 2006/01/10 21:20:46 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.3 2006/01/10 21:33:52 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1643,7 +1643,7 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 	struct mbuf *mnew;
 	uint16_t dur;
 	uint32_t flags = 0;
-	int error, rate = 48;
+	int rate, error;
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
@@ -1674,6 +1674,70 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 
 		/* packet header may have moved, reset our local pointer */
 		wh = mtod(m0, struct ieee80211_frame *);
+	}
+
+	/*
+	 * IEEE Std 802.11-1999, pp 82: "A STA shall use an RTS/CTS exchange
+	 * for directed frames only when the length of the MPDU is greater
+	 * than the length threshold indicated by [...]" ic_rtsthreshold.
+	 */
+	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    m0->m_pkthdr.len > ic->ic_rtsthreshold) {
+		struct mbuf *m;
+		uint16_t dur;
+		int rtsrate, ackrate;
+
+		rtsrate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 2;
+		ackrate = rt2661_ack_rate(ic, rate);
+
+		dur = rt2661_txtime(m0->m_pkthdr.len + 4, rate, ic->ic_flags) +
+		      rt2661_txtime(RAL_CTS_SIZE, rtsrate, ic->ic_flags) +
+		      rt2661_txtime(RAL_ACK_SIZE, ackrate, ic->ic_flags) +
+		      3 * RAL_SIFS;
+
+		m = rt2661_get_rts(sc, wh, dur);
+
+		desc = &txq->desc[txq->cur];
+		data = &txq->data[txq->cur];
+
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
+		    BUS_DMA_NOWAIT);
+		if (error != 0) {
+			printf("%s: could not map mbuf (error %d)\n",
+			    sc->sc_dev.dv_xname, error);
+			m_freem(m);
+			m_freem(m0);
+			return error;
+		}
+
+		/* avoid multiple free() of the same node for each fragment */
+		ieee80211_ref_node(ni);
+
+		data->m = m;
+		data->ni = ni;
+
+		/* RTS frames are not taken into account for rssadapt */
+		data->id.id_node = NULL;
+
+		rt2661_setup_tx_desc(sc, desc, RT2661_TX_NEED_ACK |
+		    RT2661_TX_MORE_FRAG, 0, m0->m_pkthdr.len, rtsrate,
+		    data->map->dm_segs, data->map->dm_nsegs, ac);
+
+		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+		    data->map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(sc->sc_dmat, txq->map,
+		    txq->cur * RT2661_TX_DESC_SIZE, RT2661_TX_DESC_SIZE,
+		    BUS_DMASYNC_PREWRITE);
+
+		txq->queued++;
+		txq->cur = (txq->cur + 1) % RT2661_TX_RING_COUNT;
+
+		/*
+		 * IEEE Std 802.11-1999: when an RTS/CTS exchange is used, the
+		 * asynchronous data frame shall be transmitted after the CTS
+		 * frame and a SIFS period.
+		 */
+		flags |= RT2661_TX_LONG_RETRY | RT2661_TX_IFS;
 	}
 
 	data = &txq->data[txq->cur];
