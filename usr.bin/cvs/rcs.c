@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.124 2006/01/03 11:06:55 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.125 2006/01/10 15:00:47 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -277,8 +277,8 @@ static int	rcs_pushtok(RCSFILE *, const char *, int);
 static int	rcs_growbuf(RCSFILE *);
 static int	rcs_strprint(const u_char *, size_t, FILE *);
 
-static int	rcs_expand_keywords(char *, struct rcs_delta *, char *, char *,
-		    size_t, int);
+static char*	rcs_expand_keywords(char *, struct rcs_delta *, char *,
+                    size_t, int);
 
 /*
  * rcs_open()
@@ -1204,11 +1204,9 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 	size_t len;
 	void *bp;
 	RCSNUM *crev, *rev;
-	BUF *rbuf, *dbuf = NULL;
+	BUF *rbuf;
 	struct rcs_delta *rdp = NULL;
-	struct cvs_lines *lines;
-	struct cvs_line *lp;
-	char out[1024];				/* XXX */
+	char *expanded;				/* XXX */
 
 	if (rfp->rf_head == NULL)
 		return (NULL);
@@ -1268,7 +1266,9 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 				break;
 		} while (rcsnum_cmp(crev, rev, 0) != 0);
 	}
-
+	if (cvs_buf_getc(rbuf, cvs_buf_len(rbuf)-1) != '\n'
+	    && rbuf != NULL)
+		cvs_buf_putc(rbuf, '\n');
 	/*
 	 * Do keyword expansion if required.
 	 */
@@ -1278,28 +1278,19 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 		expmode = RCS_KWEXP_DEFAULT;
 
 	if ((rbuf != NULL) && !(expmode & RCS_KWEXP_NONE)) {
-		dbuf = cvs_buf_alloc(len, BUF_AUTOEXT);
 		if ((rdp = rcs_findrev(rfp, rev)) == NULL)
 			return (rbuf);
-
 		cvs_buf_putc(rbuf, '\0');
-
+		len = cvs_buf_len(rbuf);
 		bp = cvs_buf_release(rbuf);
-		if ((lines = cvs_splitlines((char *)bp)) != NULL) {
-			res = 0;
-			TAILQ_FOREACH(lp, &lines->l_lines, l_list) {
-				if (res++ == 0)
-					continue;
-				rcs_expand_keywords(rfp->rf_path, rdp,
-				    lp->l_line, out, sizeof(out), expmode);
-				cvs_buf_fappend(dbuf, "%s\n", out);
-			}
-			cvs_freelines(lines);
-		}
-		xfree(bp);
+		expanded = rcs_expand_keywords(rfp->rf_path, rdp,
+		    bp, len, expmode);
+		rbuf = cvs_buf_alloc(len, BUF_AUTOEXT);
+		cvs_buf_set(rbuf, expanded, strlen(expanded), 0); 
+		xfree(expanded);
 	}
 
-	return (dbuf);
+	return (rbuf);
 }
 
 /*
@@ -2580,16 +2571,18 @@ rcs_strprint(const u_char *str, size_t slen, FILE *stream)
 /*
  * rcs_expand_keywords()
  *
- * Expand any RCS keywords in <line> into <out>
+ * Return expansion any RCS keywords in <data>
+ *
+ * On error, return NULL.
  */
-static int
-rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *line, char *out,
+static char *
+rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
     size_t len, int mode)
 {
-	int kwtype;
-	u_int i, j, found;
-	char *c, *kwstr, *start;
-	char expbuf[128], buf[128];
+	int kwtype, sizdiff;
+	u_int i, j, found, start_offset, c_offset;
+	char *c, *kwstr, *start, *end, *tbuf;
+	char expbuf[256], buf[256];
 
 	kwtype = 0;
 	kwstr = NULL;
@@ -2600,12 +2593,11 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *line, char *out,
 	 * $Keyword$
 	 * $Keyword: value$
 	 */
-	memset(out, '\0', len);
-	for (c = line; *c != '\0' && i < len; *c++) {
-		out[i++] = *c;
+	for (c = data; *c != '\0' && i < len; *c++) {
 		if (*c == '$') {
 			/* remember start of this possible keyword */
 			start = c;
+			start_offset = start - data;
 
 			/* first following character has to be alphanumeric */
 			*c++;
@@ -2655,6 +2647,8 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *line, char *out,
 					continue;
 				}
 			}
+			c_offset = c - data;
+			end = c + 1;
 
 			/* start constructing the expansion */
 			expbuf[0] = '\0';
@@ -2725,14 +2719,29 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *line, char *out,
 			/* end the expansion */
 			if (mode & RCS_KWEXP_NAME)
 				strlcat(expbuf, "$", sizeof(expbuf));
-
-			out[--i] = '\0';
-			strlcat(out, expbuf, len);
+			
+			sizdiff = strlen(expbuf) - (end - start);
+			tbuf = xmalloc(strlen(end) + 1);
+			strlcpy(tbuf, end, strlen(end) + 1);
+			/* only realloc if we have to */
+			if (sizdiff > 0) {
+				len += sizdiff;
+				data = xrealloc(data, len);
+				/*
+				 * ensure string pointers are not invalidated
+				 * after realloc()
+				 */
+				start = data + start_offset;
+				c = data + c_offset;
+			}
+			strlcpy(start, expbuf, len);
+			strlcat(data, tbuf, len);
+			xfree(tbuf);
 			i += strlen(expbuf);
 		}
 	}
 
-	return (0);
+	return (data);
 }
 
 /*
