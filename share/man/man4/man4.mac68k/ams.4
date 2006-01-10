@@ -1,5 +1,6 @@
+.\" $OpenBSD: ams.4,v 1.1 2006/01/10 07:37:31 miod Exp $
 .\"
-.\" Copyright (c) 1997 Colin Wood
+.\" Copyright (c) 2001 Peter Philipp
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -10,11 +11,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"      This product includes software developed by Colin Wood
-.\"      for the NetBSD Project.
-.\" 4. The name of the author may not be used to endorse or promote products
+.\" 3. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -28,52 +25,44 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: adb.4,v 1.10 2006/01/10 07:37:31 miod Exp $
-.\"	$NetBSD: adb.4,v 1.1 1997/07/18 02:13:42 ender Exp $
-.\"
 .Dd January 10, 2006
-.Dt ADB 4 mac68k
+.Dt AMS 4 mac68k
 .Os
 .Sh NAME
-.Nm adb
-.Nd Apple Desktop Bus driver
+.Nm ams
+.Nd Apple Mouse Support
 .Sh SYNOPSIS
-.Cd "adb0 at obio?"
-.Cd "akbd* at adb?"
 .Cd "ams* at adb?"
+.Cd "wsmouse at ams? mux 0"
 .Sh DESCRIPTION
-The Apple Desktop Bus
-.Pq Tn ADB
-is the single-master, multiple-slave, low-speed serial bus
-interface used by Macintosh computers to connect input devices
-such as keyboards, mice, trackballs, and graphics tablets
-to the machine.
-.Sh SEE ALSO
-.Xr akbd 4 ,
-.Xr ams 4 ,
-.Xr intro 4
-.Sh HISTORY
 The
 .Nm
-interface first appeared in
-.Nx 0.9 .
-.Sh AUTHORS
-Bradley A. Grantham wrote the original
-.Nm
-driver, including the
-.Tn MRG
-support.
-The hardware direct interface was written by
-John P. Wittkowski.
-The PowerManager interface was written by Takashi Hamada.
-.Sh BUGS
-.Bl -bullet
+driver supports a series of
+.Xr adb 4
+mice, trackballs, trackpads and tablets.
+.Pp
+.Bl -bullet -compact
 .It
-Not every class of
-.Tn ADB
-hardware is supported yet.
+Extended Mouse Protocol
 .It
-The talk command is currently unimplemented.
+Mouse Systems A^3 Mouse
 .It
-The listen command is not implemented yet.
+MicroSpeed Mouse Deluxe
+.It
+Contour mouse
+.It
+Kensington Turbo Mouse
+.It
+Logitech non-EMP Mouseman
+.It
+TrackMan trackball
 .El
+.Sh SEE ALSO
+.Xr adb 4 ,
+.Xr intro 4 ,
+.Xr wsmouse 4
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.Sy Colin Wood .
