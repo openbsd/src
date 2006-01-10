@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.4 2005/05/21 22:58:28 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.5 2006/01/10 19:22:45 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -19,7 +19,6 @@
 
 	.level	2.0w
 
-#include <sys/errno.h>
 #include <sys/reboot.h>
 #include <machine/param.h>
 #include <machine/asm.h>
