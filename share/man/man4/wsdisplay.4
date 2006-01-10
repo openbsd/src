@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsdisplay.4,v 1.37 2005/11/01 08:46:01 jmc Exp $
+.\" $OpenBSD: wsdisplay.4,v 1.38 2006/01/10 07:38:06 miod Exp $
 .\" $NetBSD: wsdisplay.4,v 1.5 2000/05/13 15:22:19 mycroft Exp $
 .\"
 .\" Copyright (c) 2005, Miodrag Vallat.
@@ -27,51 +27,14 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 4, 2005
+.Dd January 10, 2006
 .Dt WSDISPLAY 4
 .Os
 .Sh NAME
 .Nm wsdisplay
 .Nd generic display device support in wscons
 .Sh SYNOPSIS
-.\".Cd wsdisplay* at ega?
-.\"(EGA display on ISA)
-.Cd "wsdisplay* at vga?"
-(VGA textmode display on ISA or PCI)
-.Cd "wsdisplay* at pcdisplay?"
-(generic PC (ISA) display)
-.Cd "wsdisplay* at vgafb?"
-(VGA graphics display on PCI, as found on macppc and sparc64 platforms)
-.Cd "wsdisplay* at tga?"
-(DEC TGA display, alpha only)
-.\" .Cd wsdisplay* at nextdisplay?
-.\" (NeXT display)
-.Cd "wsdisplay* at sti?"
-(HP CRX and Visualize series framebuffers)
-.Cd "wsdisplay* at agten?"
-.Cd "wsdisplay* at bwtwo?"
-.Cd "wsdisplay* at cgtwo?"
-.Cd "wsdisplay* at cgthree?"
-.Cd "wsdisplay* at cgfour?"
-.Cd "wsdisplay* at cgsix?"
-.Cd "wsdisplay* at cgeight?"
-.Cd "wsdisplay* at cgtwelve?"
-.Cd "wsdisplay* at cgfourteen?"
-.Cd "wsdisplay* at mgx?"
-.Cd "wsdisplay* at pninek?"
-.Cd "wsdisplay* at pnozz?"
-.Cd "wsdisplay* at rfx?"
-.Cd "wsdisplay* at tcx?"
-.Cd "wsdisplay* at tvtwo?"
-.Cd "wsdisplay* at vigra?"
-.Cd "wsdisplay* at zx?"
-(sparc and/or sparc64 framebuffers)
-.Cd "wsdisplay* at creator?"
-(sparc64 framebuffers)
-.Cd "wsdisplay0 at smg?"
-(VAXstation small monochrome display)
-.Cd "wsdisplay* at lcd?"
-(Zaurus LCD display)
+.Cd "wsdisplay* at ..."
 .Cd "option WSDISPLAY_DEFAULTSCREENS=N"
 .Sh DESCRIPTION
 The
@@ -567,17 +530,23 @@ control device (per screen)
 .Xr cgtwelve 4 ,
 .Xr cgtwo 4 ,
 .Xr creator 4 ,
+.Xr dvbox 4 ,
+.Xr gbox 4 ,
+.Xr hyper 4 ,
 .Xr intro 4 ,
 .Xr lcd 4 ,
+.Xr macfb 4 ,
 .Xr mgx 4 ,
 .Xr pcdisplay 4 ,
 .Xr pninek 4 ,
 .Xr pnozz 4 ,
+.Xr rbox 4 ,
 .Xr rfx 4 ,
 .Xr smg 4 ,
 .Xr sti 4 ,
 .Xr tcx 4 ,
 .Xr tga 4 ,
+.Xr topcat 4 ,
 .Xr tty 4 ,
 .Xr tvtwo 4 ,
 .Xr vga 4 ,
