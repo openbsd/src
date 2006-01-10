@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfbvar.h,v 1.3 2006/01/09 20:51:48 miod Exp $	*/
+/*	$OpenBSD: macfbvar.h,v 1.4 2006/01/10 21:19:14 miod Exp $	*/
 /* $NetBSD: macfbvar.h,v 1.3 2005/01/15 16:00:59 chs Exp $ */
 /*	$NetBSD: grfvar.h,v 1.11 1996/08/04 06:03:58 scottr Exp $	*/
 /*	$NetBSD: grfioctl.h,v 1.5 1995/07/02 05:26:45 briggs Exp $	*/
@@ -99,16 +99,6 @@ struct image_data {
 #define VID_PAGE_CNT		3
 #define VID_DEV_TYPE		4
 
-struct grfmode {
-	caddr_t		fbbase;		/* Base of page of frame buffer     */
-	u_int32_t	fbsize;		/* Size of frame buffer             */
-	u_int16_t	fboff;		/* Offset of frame buffer from base */
-	u_int16_t	rowbytes;	/* Screen rowbytes                  */
-	u_int16_t	width;		/* Screen width                     */
-	u_int16_t	height;		/* Screen height                    */
-	u_int16_t	psize;		/* Screen depth                     */
-};
-
 struct macfb_devconfig {
 	vaddr_t		dc_vaddr;	/* memory space virtual base address */
 	paddr_t		dc_paddr;	/* memory space physical base address */
@@ -149,5 +139,5 @@ struct macfb_softc {
 	struct macfb_devconfig	*sc_dc;
 };
 
-void	macfb_attach_common(struct macfb_softc *, struct grfmode *);
-int	macfb_cnattach(paddr_t);
+void	macfb_attach_common(struct macfb_softc *, struct macfb_devconfig *);
+int	macfb_cnattach(void);

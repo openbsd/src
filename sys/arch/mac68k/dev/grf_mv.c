@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.29 2006/01/09 20:51:48 miod Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.30 2006/01/10 21:19:14 miod Exp $	*/
 /*	$NetBSD: grf_nubus.c,v 1.62 2001/01/22 20:27:02 briggs Exp $	*/
 
 /*
@@ -45,9 +45,6 @@
 
 #include <mac68k/dev/nubus.h>
 
-/*
-#include <dev/wscons/wsconsio.h>
-*/
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 #include <mac68k/dev/macfbvar.h>
@@ -136,7 +133,7 @@ macfb_nubus_attach(struct device *parent, struct device *self, void *aux)
 	nubus_dirent dirent;
 	nubus_dir dir, mode_dir, board_dir;
 	int mode;
-	struct grfmode gm;
+	struct macfb_devconfig *dc;
 
 	bcopy(na->fmt, &sc->sc_slot, sizeof(nubus_slot));
 
@@ -195,13 +192,19 @@ macfb_nubus_attach(struct device *parent, struct device *self, void *aux)
 
 	load_image_data((caddr_t)&image_store, &image);
 
-	gm.psize = image.pixelSize;
-	gm.width = image.right - image.left;
-	gm.height = image.bottom - image.top;
-	gm.rowbytes = image.rowbytes;
-	gm.fbsize = gm.height * gm.rowbytes;
-	gm.fbbase = (caddr_t)(sc->sc_handle.base);	/* XXX evil hack */
-	gm.fboff = image.offset;
+	dc = malloc(sizeof(*dc), M_DEVBUF, M_WAITOK);
+	bzero(dc, sizeof(*dc));
+	
+	dc->dc_vaddr = (vaddr_t)sc->sc_handle.base; /* XXX evil hack */
+	dc->dc_paddr = sc->sc_basepa;
+	dc->dc_offset = image.offset;
+	dc->dc_wid = image.right - image.left;
+	dc->dc_ht = image.bottom - image.top;
+	dc->dc_depth = image.pixelSize;
+	dc->dc_rowbytes = image.rowbytes;
+	dc->dc_size = dc->dc_ht * dc->dc_rowbytes;
+
+	/* Perform common video attachment. */
 
 	strlcpy(cardname, nubus_get_card_name(sc->sc_tag, sc->sc_regh,
 	    &sc->sc_slot), sizeof cardname);
@@ -365,7 +368,7 @@ macfb_nubus_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Perform common video attachment. */
-	macfb_attach_common(sc, &gm);
+	macfb_attach_common(sc, dc);
 	return;
 
 bad:

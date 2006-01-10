@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.3 2006/01/09 20:51:49 miod Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.4 2006/01/10 21:19:15 miod Exp $	*/
 /*	$NetBSD: maccons.c,v 1.5 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -54,9 +54,6 @@ cons_decl(ws);
 
 int	maccons_initted = (-1);
 
-/* From Booter via locore */
-extern u_int32_t	mac68k_vidphys;
-
 void
 wscnprobe(struct consdev *cp)
 {
@@ -88,7 +85,7 @@ wscninit(struct consdev *cp)
 	 * note:  maccons_initted is initialized to (-1).
 	 */
 	if (++maccons_initted > 0) {
-		macfb_cnattach(mac68k_vidphys);
+		macfb_cnattach();
 		akbd_cnattach();
 	}
 }

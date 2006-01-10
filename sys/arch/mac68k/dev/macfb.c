@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfb.c,v 1.7 2006/01/09 21:52:12 miod Exp $	*/
+/*	$OpenBSD: macfb.c,v 1.8 2006/01/10 21:19:14 miod Exp $	*/
 /* $NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -202,7 +202,7 @@ macfb_alloc_attr(void *cookie, int fg, int bg, int flg, long *attr)
 }
 
 void
-macfb_attach_common(struct macfb_softc *sc, struct grfmode *gm)
+macfb_attach_common(struct macfb_softc *sc, struct macfb_devconfig *dc)
 {
 	struct wsemuldisplaydev_attach_args waa;
 	struct wsscreen_descr *scrlist[1];
@@ -210,38 +210,26 @@ macfb_attach_common(struct macfb_softc *sc, struct grfmode *gm)
 	int isconsole;
 
 	/* Print hardware characteristics. */
-	printf("%s: %dx%d ", sc->sc_dev.dv_xname, gm->width, gm->height);
-	if (gm->psize == 1)
+	printf("%s: %dx%d ", sc->sc_dev.dv_xname, dc->dc_wid, dc->dc_ht);
+	if (dc->dc_depth == 1)
 		printf("monochrome");
 	else
-		printf("%d color", 1 << gm->psize);
+		printf("%d color", 1 << dc->dc_depth);
 	printf(" display\n");
 
-	isconsole = macfb_is_console(sc->sc_basepa + gm->fboff);
+	isconsole = macfb_is_console(sc->sc_basepa + dc->dc_offset);
 
 	if (isconsole) {
-		sc->sc_dc = &macfb_console_dc;
-		sc->sc_dc->nscreens = 1;
+		free(dc, M_DEVBUF);
+		dc = sc->sc_dc = &macfb_console_dc;
+		dc->nscreens = 1;
 	} else {
-		sc->sc_dc = malloc(sizeof(struct macfb_devconfig),
-		    M_DEVBUF, M_WAITOK);
-		sc->sc_dc->dc_vaddr = (vaddr_t)gm->fbbase;
-		sc->sc_dc->dc_paddr = sc->sc_basepa;
-		sc->sc_dc->dc_size = gm->fbsize;
-
-		sc->sc_dc->dc_wid = gm->width;
-		sc->sc_dc->dc_ht = gm->height;
-		sc->sc_dc->dc_depth = gm->psize;
-		sc->sc_dc->dc_rowbytes = gm->rowbytes;
-
-		sc->sc_dc->dc_offset = gm->fboff;
-		sc->sc_dc->nscreens = 0;
-
-		if (macfb_init(sc->sc_dc) != 0)
+		sc->sc_dc = dc;
+		if (macfb_init(dc) != 0)
 			return;
 	}
 
-	scrlist[0] = &sc->sc_dc->wsd;
+	scrlist[0] = &dc->wsd;
 	screenlist.nscreens = 1;
 	screenlist.screens = (const struct wsscreen_descr **)scrlist;
 
@@ -343,7 +331,7 @@ macfb_show_screen(void *v, void *cookie, int waitok,
 }
 
 int
-macfb_cnattach(paddr_t addr)
+macfb_cnattach()
 {
 	struct macfb_devconfig *dc = &macfb_console_dc;
 	long defattr;
@@ -351,15 +339,13 @@ macfb_cnattach(paddr_t addr)
 
 	dc->dc_vaddr = trunc_page(videoaddr);
 	dc->dc_paddr = trunc_page(mac68k_vidphys);
-
+	dc->dc_offset = m68k_page_offset(mac68k_vidphys);
 	dc->dc_wid = videosize & 0xffff;
 	dc->dc_ht = (videosize >> 16) & 0xffff;
 	dc->dc_depth = videobitdepth;
 	dc->dc_rowbytes = videorowbytes;
-
 	dc->dc_size = (mac68k_vidlen > 0) ?
 	    mac68k_vidlen : dc->dc_ht * dc->dc_rowbytes;
-	dc->dc_offset = m68k_page_offset(mac68k_vidphys);
 
 	/* set up the display */
 	if (macfb_init(dc) != 0)
@@ -376,6 +362,6 @@ macfb_cnattach(paddr_t addr)
 
 	wsdisplay_cnattach(&dc->wsd, ri, 0, 0, defattr);
 
-	macfb_consaddr = addr;
+	macfb_consaddr = mac68k_vidphys;
 	return (0);
 }

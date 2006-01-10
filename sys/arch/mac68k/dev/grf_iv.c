@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.34 2006/01/09 20:51:48 miod Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.35 2006/01/10 21:19:14 miod Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -64,6 +64,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -202,7 +203,7 @@ macfb_obio_attach(struct device *parent, struct device *self, void *aux)
 	struct macfb_softc *sc = (struct macfb_softc *)self;
 	u_long base, length;
 	u_int32_t vbase1, vbase2;
-	struct grfmode gm;
+	struct macfb_devconfig *dc;
 
 	sc->card_id = 0;
 
@@ -336,14 +337,19 @@ macfb_obio_attach(struct device *parent, struct device *self, void *aux)
 	    mac68k_vidphys < (sc->sc_basepa + length))
 		videoaddr = sc->sc_handle.base + sc->sc_fbofs; /* XXX big ol' hack */
 
-	gm.psize = videobitdepth;
-	gm.width = videosize & 0xffff;
-	gm.height = (videosize >> 16) & 0xffff;
-	gm.rowbytes = videorowbytes;
-	gm.fbsize = gm.height * gm.rowbytes;
-	gm.fbbase = (caddr_t)sc->sc_handle.base; /* XXX yet another hack */
-	gm.fboff = sc->sc_fbofs;
+	dc = malloc(sizeof(*dc), M_DEVBUF, M_WAITOK);
+	bzero(dc, sizeof(*dc));
+	
+	dc->dc_vaddr = (vaddr_t)sc->sc_handle.base; /* XXX yet another hack */
+	dc->dc_paddr = sc->sc_basepa;
+	dc->dc_offset = sc->sc_fbofs;
+	dc->dc_wid = videosize & 0xffff;
+	dc->dc_ht = (videosize >> 16) & 0xffff;
+	dc->dc_depth = videobitdepth;
+	dc->dc_rowbytes = videorowbytes;
+	dc->dc_size = dc->dc_ht * dc->dc_rowbytes;
+	dc->nscreens = 0;
 
 	/* Perform common video attachment. */
-	macfb_attach_common(sc, &gm);
+	macfb_attach_common(sc, dc);
 }
