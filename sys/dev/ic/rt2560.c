@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.3 2006/01/10 17:45:06 damien Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.4 2006/01/10 17:47:15 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1025,7 +1025,7 @@ rt2560_eeprom_read(struct rt2560_softc *sc, uint8_t addr)
 	RT2560_EEPROM_CTL(sc, 0);
 	RT2560_EEPROM_CTL(sc, RT2560_C);
 
-	return letoh16(val);
+	return val;
 }
 
 /*

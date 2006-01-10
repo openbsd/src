@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.53 2006/01/04 06:04:41 canacar Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.54 2006/01/10 17:50:28 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -772,7 +772,7 @@ ipw_read_prom_word(struct ipw_softc *sc, u_int8_t addr)
 	IPW_EEPROM_CTL(sc, 0);
 	IPW_EEPROM_CTL(sc, IPW_EEPROM_C);
 
-	return letoh16(val);
+	return val;
 }
 
 void
