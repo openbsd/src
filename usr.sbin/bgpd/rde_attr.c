@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.57 2006/01/10 16:03:11 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.58 2006/01/10 16:11:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -28,6 +28,8 @@
 
 #include "bgpd.h"
 #include "rde.h"
+
+void	attr_free(struct rde_aspath *, struct attr *);
 
 int
 attr_write(void *p, u_int16_t p_len, u_int8_t flags, u_int8_t type,
@@ -237,6 +239,24 @@ attr_compare(struct rde_aspath *a, struct rde_aspath *b)
 	}
 
 	return (0);
+}
+
+void
+attr_free(struct rde_aspath *asp, struct attr *attr)
+{
+	u_int8_t	l;
+
+	for (l = 0; l < asp->others_len; l++)
+		if (asp->others[l] == attr) {
+			attr_put(asp->others[l]);
+			asp->others[l] = NULL;
+			--asp->others_len;
+			for (; l < asp->others_len; l++)
+				asp->others[l] = asp->others[l + 1];
+			return;
+		}
+
+	/* no realloc() others because the slot will be reused soon */
 }
 
 void
@@ -702,34 +722,50 @@ community_match(void *data, u_int16_t len, int as, int type)
 }
 
 int
-community_set(struct attr *attr, int as, int type)
+community_set(struct rde_aspath *asp, int as, int type)
 {
-	u_int8_t *p = attr->data;
-	unsigned int i, ncommunities = attr->len;
+	struct attr	*attr;
+	u_int8_t	*p = NULL;
+	unsigned int	 i, ncommunities = 0;
+	u_int8_t	 f = ATTR_OPTIONAL|ATTR_TRANSITIVE;
+	u_int8_t	 t = ATTR_COMMUNITIES;
 
-	ncommunities >>= 2; /* divide by four */
+	attr = attr_optget(asp, ATTR_COMMUNITIES);
 
+	if (attr != NULL) {
+		p = attr->data;
+		ncommunities = attr->len >> 2; /* divide by four */
+	}
+
+	/* first check if the community is not already set */
 	for (i = 0; i < ncommunities; i++) {
-		if (as >> 8 == p[0] && (as & 0xff) == p[1])
-			break;
+		if (as >> 8 == p[0] && (as & 0xff) == p[1] &&
+		    type >> 8 == p[2] && (type & 0xff) == p[3])
+			/* already present, nothing todo */
+			return (1);
 		p += 4;
 	}
 
-	if (i >= ncommunities) {
-		if (attr->len > 0xffff - 4) /* overflow */
-			return (0);
-		i = attr->len + 4;
-		if ((p = realloc(attr->data, i)) == NULL)
-			return (0);
+	if (ncommunities++ >= 0x3fff)
+		/* overflow */
+		return (0);
 
-		attr->data = p;
-		attr->len = i;
-		p = attr->data + attr->len - 4;
-	}
+	if ((p = malloc(ncommunities << 2)) == NULL)
+		fatal("community_set");
+
 	p[0] = as >> 8;
 	p[1] = as & 0xff;
 	p[2] = type >> 8;
 	p[3] = type & 0xff;
+
+	if (attr != NULL) {
+		memcpy(p + 4, attr->data, attr->len);
+		f = attr->flags;
+		t = attr->type;
+		attr_free(asp, attr);
+	}
+
+	attr_optadd(asp, f, t, p, ncommunities << 2);
 
 	return (1);
 }

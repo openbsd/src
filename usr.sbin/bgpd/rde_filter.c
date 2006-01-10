@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.39 2005/12/08 17:17:36 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.40 2006/01/10 16:11:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -65,7 +65,6 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 {
 	struct filter_set	*set;
 	struct aspath		*new;
-	struct attr		*a;
 	u_int16_t		 as;
 	u_int8_t		 prepend;
 
@@ -154,14 +153,7 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 			    af);
 			break;
 		case ACTION_SET_COMMUNITY:
-			if ((a = attr_optget(asp, ATTR_COMMUNITIES)) == NULL) {
-				attr_optadd(asp, ATTR_OPTIONAL|ATTR_TRANSITIVE,
-				    ATTR_COMMUNITIES, NULL, 0);
-				if ((a = attr_optget(asp,
-				    ATTR_COMMUNITIES)) == NULL)
-					fatalx("internal community bug");
-			}
-			community_set(a, set->action.community.as,
+			community_set(asp, set->action.community.as,
 			    set->action.community.type);
 			break;
 		case ACTION_PFTABLE:
