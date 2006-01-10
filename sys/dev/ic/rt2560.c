@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.2 2006/01/10 17:40:29 damien Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.3 2006/01/10 17:45:06 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1663,7 +1663,7 @@ rt2560_tx_bcn(struct rt2560_softc *sc, struct mbuf *m0,
 	desc = &sc->bcnq.desc[sc->bcnq.cur];
 	data = &sc->bcnq.data[sc->bcnq.cur];
 
-	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
+	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 2;
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 	    BUS_DMA_NOWAIT);
@@ -1705,7 +1705,7 @@ rt2560_tx_mgt(struct rt2560_softc *sc, struct mbuf *m0,
 	desc = &sc->prioq.desc[sc->prioq.cur];
 	data = &sc->prioq.data[sc->prioq.cur];
 
-	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
+	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 2;
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 	    BUS_DMA_NOWAIT);
@@ -1865,7 +1865,7 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
 		uint16_t dur;
 		int rtsrate, ackrate;
 
-		rtsrate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
+		rtsrate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 2;
 		ackrate = rt2560_ack_rate(ic, rate);
 
 		dur = rt2560_txtime(m0->m_pkthdr.len + 4, rate, ic->ic_flags) +
