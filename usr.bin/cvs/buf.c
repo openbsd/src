@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.28 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: buf.c,v 1.29 2006/01/10 14:57:53 niallo Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -233,6 +233,18 @@ cvs_buf_putc(BUF *b, int c)
 	b->cb_len++;
 
 	return (0);
+}
+
+/*
+ * cvs_buf_getc()
+ *
+ * Return u_char at buffer position <pos>.
+ *
+ */
+u_char
+cvs_buf_getc(BUF *b, u_int pos)
+{
+	return (b->cb_cur[pos]);
 }
 
 /*
