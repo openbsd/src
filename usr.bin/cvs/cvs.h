@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.97 2006/01/02 09:42:20 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.98 2006/01/10 08:24:57 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -31,10 +31,7 @@
 #include "file.h"
 #include "xmalloc.h"
 
-#define CVS_VERSION_MAJOR	0
-#define CVS_VERSION_MINOR	3
-#define CVS_VERSION		"OpenCVS 0.3"
-
+#define CVS_VERSION	"OpenCVS 0.3"
 
 #define CVS_HIST_CACHE	128
 #define CVS_HIST_NBFLD	6
