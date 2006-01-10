@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.460 2006/01/05 22:30:45 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.461 2006/01/10 07:32:21 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -110,7 +110,7 @@ amdiic*	at pci?				# AMD-8111 SMBus controller
 iic*	at amdiic?
 nviic*	at pci?				# NVIDIA nForce2/3/4 SMBus controller
 iic*	at nviic?
-amdpm*	at pci?				# AMD-76x PM and SMBus controller
+amdpm*	at pci?				# AMD-7xx/8111 and NForce SMBus controller
 iic*	at amdpm?
 
 it0	at isa? port 0x290		# IT8705F, IT8712F and SiS970 hardware
