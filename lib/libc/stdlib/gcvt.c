@@ -1,4 +1,4 @@
-/*	$OpenBSD: gcvt.c,v 1.7 2006/01/10 02:08:28 millert Exp $	*/
+/*	$OpenBSD: gcvt.c,v 1.8 2006/01/10 02:23:02 millert Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -20,6 +20,7 @@
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  */
 
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,7 +32,9 @@ gcvt(double value, int ndigit, char *buf)
 {
 	char *digits, *dst, *src;
 	int i, decpt, sign;
+	struct lconv *lconv;
 
+	lconv = localeconv();
 	if (ndigit == 0) {
 		buf[0] = '\0';
 		return (buf);
@@ -57,7 +60,7 @@ gcvt(double value, int ndigit, char *buf)
 			sign = 0;
 		src = digits;
 		*dst++ = *src++;
-		*dst++ = '.';		/* XXX - locale-specific */
+		*dst++ = *lconv->decimal_point;
 		while (*src != '\0')
 			*dst++ = *src++;
 		*dst++ = 'e';
@@ -90,7 +93,7 @@ gcvt(double value, int ndigit, char *buf)
 		if (*src != '\0') {
 			if (src == digits)
 				*dst++ = '0';	/* zero before decimal point */
-			*dst++ = '.';		/* XXX - locale-specific */
+			*dst++ = *lconv->decimal_point;
 			for (i = decpt; digits[i] != '\0'; i++) {
 				*dst++ = digits[i];
 			}
