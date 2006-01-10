@@ -1,14 +1,13 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.11 2005/08/03 00:16:01 millert Exp $
+#	$OpenBSD: Makefile,v 1.12 2006/01/10 07:36:32 miod Exp $
 
-RELOC=0x6F0000 
 SIZE?=	size
 
 S=	${.CURDIR}/../../../..
 DEFS= 
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
 	-I${.CURDIR}/../../include -I${S} -I${S}/lib/libsa
-CFLAGS=	-O2 ${INCPATH} ${DEFS} ${COPTS}
+CFLAGS+=-O2 ${INCPATH} ${DEFS} ${COPTS}
 CLEANFILES+=stboot bootst bootst.bug
 
 .include "${S}/arch/mvme68k/stand/wrtvid/Makefile.inc"
@@ -29,7 +28,7 @@ ALL=	${BOOTS}
 all: ${ALL}
 
 bootst.bug:	${OBJS} ${BUGCRT} ${LIBS}
-	${LD} -s -N -T ${RELOC} ${BUGCRT} ${OBJS} ${LIBS} \
+	${LD} -s -N -T ${STAGE2_RELOC} ${BUGCRT} ${OBJS} ${LIBS} \
 	    `cc -print-libgcc-file-name` -o $@
 	@${SIZE} bootst.bug
 
