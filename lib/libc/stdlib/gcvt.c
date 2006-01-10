@@ -1,7 +1,7 @@
-/*	$OpenBSD: gcvt.c,v 1.8 2006/01/10 02:23:02 millert Exp $	*/
+/*	$OpenBSD: gcvt.c,v 1.9 2006/01/10 16:18:37 millert Exp $	*/
 
 /*
- * Copyright (c) 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2002, 2003, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -42,8 +42,12 @@ gcvt(double value, int ndigit, char *buf)
 
 	digits = __dtoa(value, 2, ndigit, &decpt, &sign, NULL);
 	if (decpt == 9999) {
-		/* Infinity or NaN, assume buffer is at least ndigit long. */
-		snprintf(buf, ndigit + 1, "%s%s", sign ? "-" : "", digits);
+		/*
+		 * Infinity or NaN, convert to inf or nan with sign.
+		 * We assume the buffer is at least ndigit long.
+		 */
+		snprintf(buf, ndigit + 1, "%s%s", sign ? "-" : "",
+		    *digits == 'I' ? "inf" : "nan");
 		return (buf);
 	}
 

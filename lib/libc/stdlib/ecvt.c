@@ -1,7 +1,7 @@
-/*	$OpenBSD: ecvt.c,v 1.4 2005/08/08 08:05:36 espie Exp $	*/
+/*	$OpenBSD: ecvt.c,v 1.5 2006/01/10 16:18:37 millert Exp $	*/
 
 /*
- * Copyright (c) 2002 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2002, 2006 Todd C. Miller <Todd.Miller@courtesan.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -62,11 +62,11 @@ __cvt(double value, int ndigit, int *decpt, int *sign, int fmode, int pad)
 	} else {
 		p = __dtoa(value, fmode + 2, ndigit, decpt, sign, &rve);
 		if (*decpt == 9999) {
-			/* Nan or Infinity */
+			/* Infinity or Nan, convert to inf or nan like printf */
 			*decpt = 0;
-			return(p);
+			return(*p == 'I' ? "inf" : "nan");
 		}
-		/* make a local copy and adjust rve to be in terms of s */
+		/* Make a local copy and adjust rve to be in terms of s */
 		if (pad && fmode)
 			siz += *decpt;
 		if ((s = (char *)malloc(siz)) == NULL)
@@ -75,8 +75,8 @@ __cvt(double value, int ndigit, int *decpt, int *sign, int fmode, int pad)
 		rve = s + (rve - p);
 	}
 
-	/* Add trailing zeros (unless we got NaN or Inf) */
-	if (pad && *decpt != 9999) {
+	/* Add trailing zeros */
+	if (pad) {
 		siz -= rve - s;
 		while (--siz)
 			*rve++ = '0';
