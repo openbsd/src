@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.28 2006/01/06 18:53:05 millert Exp $
+#	$OpenBSD: genassym.cf,v 1.29 2006/01/10 01:17:28 martin Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -164,3 +164,6 @@ export	SYSCALLGATE
 export	SYS_exit
 export	SYS_execve
 export	SYS_sigreturn
+
+# errno
+export	EFAULT
