@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.3 2005/10/26 18:35:45 martin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.4 2006/01/10 19:21:14 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -314,7 +314,8 @@ TODO hpmc/toc/pfr
 	bzero(buf, nbuf * sizeof(struct buf));
 
 	/* space has been reserved in pmap_bootstrap() */
-	msgbufp = (struct msgbuf *)(ptoa(physmem) - round_page(MSGBUFSIZE));
+	msgbufp = (struct msgbuf *)((vaddr_t)ptoa(physmem) -
+	    round_page(MSGBUFSIZE));
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 	msgbufmapped = 1;
 
