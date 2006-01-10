@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.103 2006/01/09 19:32:43 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.104 2006/01/10 07:33:59 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -61,9 +61,6 @@ ppb*	at pci?			# PCI-PCI bridges
 pci*	at ppb?
 pci*	at pchb?
 pcib*	at pci?			# PCI-ISA bridge
-
-# power management and other environmental stuff
-#amdpm*	at pci?			# AMD768MPX
 
 # National Semiconductor LM7[89] and compatible hardware monitors
 lm0	at isa? port 0x290
