@@ -1,4 +1,4 @@
-/* $OpenBSD: siotty.c,v 1.2 2004/09/19 21:34:42 mickey Exp $ */
+/* $OpenBSD: siotty.c,v 1.3 2006/01/10 18:56:11 miod Exp $ */
 /* $NetBSD: siotty.c,v 1.9 2002/03/17 19:40:43 atatat Exp $ */
 
 /*-
@@ -93,7 +93,7 @@ const struct cfattach siotty_ca = {
 	sizeof(struct siotty_softc), siotty_match, siotty_attach
 };
 
-const struct cfdriver siotty_cd = {
+struct cfdriver siotty_cd = {
         NULL, "siotty", DV_TTY
 };
 

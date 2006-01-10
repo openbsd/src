@@ -130,7 +130,7 @@ const struct cfattach ws_ca = {
 	sizeof(struct ws_softc), wsmatch, wsattach
 };
 
-const struct cfdriver ws_cd = {
+struct cfdriver ws_cd = {
         NULL, "ws", DV_TTY
 };
 
