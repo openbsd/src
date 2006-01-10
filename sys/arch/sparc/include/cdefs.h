@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.9 2005/11/24 20:46:48 deraadt Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.10 2006/01/10 00:04:04 millert Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -7,8 +7,6 @@
 
 #ifndef	_MACHINE_CDEFS_H_
 #define	_MACHINE_CDEFS_H_
-
-#define _C_LABEL(x)	_STRING(_ ## x)
 
 #if defined(lint)
 #define __indr_reference(sym,alias)	__lint_equal__(sym,alias)
