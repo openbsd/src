@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.3 2005/12/13 09:52:20 dlg Exp $ */
+/*	$OpenBSD: if.c,v 1.4 2006/01/10 23:29:41 dlg Exp $ */
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
  *
@@ -47,6 +47,7 @@ struct ifstat {
 } *ifstats;
 
 static	int nifs = 0;
+extern	int naptime;
 
 WINDOW *
 openifstat(void)
@@ -77,9 +78,11 @@ initifstat(void)
 #define UPDATE(x, y) do { \
 		ifs->ifs_now.x = ifm.y; \
 		ifs->ifs_cur.x = ifs->ifs_now.x - ifs->ifs_old.x; \
-		sum.x += ifs->ifs_cur.x; \
-		if (state == TIME) \
+		if (state == TIME) {\
 			ifs->ifs_old.x = ifs->ifs_now.x; \
+			ifs->ifs_cur.x /= naptime; \
+		} \
+		sum.x += ifs->ifs_cur.x; \
 	} while(0)
 
 
