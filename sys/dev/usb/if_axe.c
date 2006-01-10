@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.43 2005/12/21 12:33:07 jsg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.44 2006/01/10 10:15:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -969,13 +969,16 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			memcpy(&hdr, buf, sizeof(hdr));
 			total_len -= sizeof(hdr);
 
-			if ((hdr.len ^ hdr.ilen) != 0xffff ||
-			    (hdr.len > total_len)) {
+			if ((hdr.len ^ hdr.ilen) != 0xffff) {
+				ifp->if_ierrors++;
+				goto done;
+			}
+			pktlen = letoh16(hdr.len);
+			if (pktlen > total_len) {
 				ifp->if_ierrors++;
 				goto done;
 			}
 
-			pktlen = hdr.len;
 			buf += sizeof(hdr);
 			total_len -= pktlen + (pktlen % 2);
 		} else {
@@ -1143,7 +1146,7 @@ axe_encap(struct axe_softc *sc, struct mbuf *m, int idx)
 	if (sc->axe_flags & AX178 || sc->axe_flags & AX772) {
 		boundary = (sc->axe_udev->speed == USB_SPEED_HIGH) ? 512 : 64;
 
-		hdr.len = m->m_pkthdr.len;
+		hdr.len = htole16(m->m_pkthdr.len);
 		hdr.ilen = ~hdr.len;
 
 		memcpy(c->axe_buf, &hdr, sizeof(hdr));
