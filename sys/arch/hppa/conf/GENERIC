@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.81 2006/01/09 21:29:38 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.82 2006/01/11 21:57:53 martin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -304,4 +304,5 @@ safte*	at scsibus?
 ses*	at scsibus?
 uk*	at scsibus?
 
+pseudo-device	hotplug	1	# devices hot plugging
 pseudo-device	wsmux	2	# mouse and keyboard multiplexor

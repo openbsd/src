@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.138 2005/12/27 23:19:01 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.139 2006/01/11 21:57:53 martin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -371,7 +371,7 @@ fdc*	at sbus?
 #fdc*	at ebus?
 fd*	at fdc?
 
-#pseudo-device	hotplug	1		# devices hot plugging
+pseudo-device	hotplug	1		# devices hot plugging
 
 # mouse & keyboard multiplexor pseudo-devices
 #pseudo-device	wsmux	2
