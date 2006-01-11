@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.68 2006/01/11 04:15:20 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.69 2006/01/11 04:19:42 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1312,19 +1312,16 @@ again:
 #endif
 
 		if (sc->xl_type == XL_TYPE_905B) {
-			if (rxstat & XL_RXSTAT_IPCKERR)
-				sumflags |= M_IPV4_CSUM_IN_BAD;
-			else if (rxstat & XL_RXSTAT_IPCKOK)
+			if (!(rxstat & XL_RXSTAT_IPCKERR) &&
+			    (rxstat & XL_RXSTAT_IPCKOK))
 				sumflags |= M_IPV4_CSUM_IN_OK;
 
-			if (rxstat & XL_RXSTAT_TCPCKERR)
-				sumflags |= M_TCP_CSUM_IN_BAD;
-			else if (rxstat & XL_RXSTAT_TCPCKOK)
+			if (!(rxstat & XL_RXSTAT_TCPCKERR) &&
+			    (rxstat & XL_RXSTAT_TCPCKOK))
 				sumflags |= M_TCP_CSUM_IN_OK;
 
-			if (rxstat & XL_RXSTAT_UDPCKERR)
-				sumflags |= M_UDP_CSUM_IN_BAD;
-			else if (rxstat & XL_RXSTAT_UDPCKOK)
+			if (!(rxstat & XL_RXSTAT_UDPCKERR) &&
+			    (rxstat & XL_RXSTAT_UDPCKOK))
 				sumflags |= M_UDP_CSUM_IN_OK;
 
 			m->m_pkthdr.csum_flags = sumflags;
