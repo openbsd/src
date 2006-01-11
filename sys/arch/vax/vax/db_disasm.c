@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.13 2003/11/07 10:16:45 jmc Exp $ */
+/*	$OpenBSD: db_disasm.c,v 1.14 2006/01/11 22:49:52 miod Exp $ */
 /*	$NetBSD: db_disasm.c,v 1.10 1998/04/13 12:10:27 ragge Exp $ */
 /*
  * Copyright (c) 2002, Miodrag Vallat.
@@ -50,11 +50,11 @@
 #include <vax/vax/db_disasm.h>
 
 #ifdef VMS_MODE
-#define DEFERRED   '@'
-#define LITERAL	   '#'
+#define DEFERRED   "@"
+#define LITERAL	   "#"
 #else
-#define DEFERRED   '*'
-#define LITERAL	   '$'
+#define DEFERRED   "*"
+#define LITERAL	   "$"
 #endif
 /*
  * disassembling vax instructions works as follows:
@@ -101,8 +101,7 @@ struct {		/* Due to order and contents of db_regs[], we can't */
 #endif
 
 typedef struct {
-	char		dasm[256];	/* disassebled instruction as text */
-	char	       *curp;	/* pointer into result */
+	char		dasm[256];	/* disassembled instruction as text */
 	char	       *ppc;	/* pseudo PC */
 	u_int		opc;	/* op-code */
 	char	       *argp;	/* pointer into argument-list */
@@ -118,7 +117,6 @@ int get_opcode(inst_buffer * ib);
 int get_operands(inst_buffer * ib);
 int get_operand(inst_buffer * ib, int size);
 
-void add_char(inst_buffer * ib, int c);
 void add_str(inst_buffer * ib, char *s);
 void add_int(inst_buffer * ib, int i);
 void add_xint(inst_buffer * ib, int i);
@@ -149,7 +147,6 @@ db_disasm(loc, altfmt)
 
 	bzero(&ib, sizeof(ib));
 	ib.ppc = (void *) loc;
-	ib.curp = ib.dasm;
 
 	if (!altfmt) {		/* ignore potential entry masks in altfmt */
 		diff = INT_MAX;
@@ -189,7 +186,7 @@ get_opcode(ib)
 			add_str(ib, vax_inst2[INDEX_OPCODE(ib->opc)].mnemonic);
 		else
 			add_str(ib, vax_inst[ib->opc].mnemonic);
-		add_char(ib, '\t');
+		add_str(ib, "\t");
 	}
 	return (ib->opc);
 }
@@ -281,16 +278,13 @@ get_operands(ib)
 		if (!*ib->argp || !*++ib->argp)
 			break;
 		if (*ib->argp++ == ',') {
-			add_char(ib, ',');
-			add_char(ib, ' ');
+			add_str(ib, ", ");
 		} else {
 			err_print("error in opcodes.c\n");
-			add_char(ib, '\0');
 			return (-1);
 		}
 	}
 
-	add_char(ib, '\0');
 	return (0);
 }
 
@@ -311,7 +305,7 @@ get_operand(ib, size)
 	case 1:		/* literal */
 	case 2:		/* literal */
 	case 3:		/* literal */
-		add_char(ib, LITERAL);
+		add_str(ib, LITERAL);
 		add_int(ib, lit);
 		tmp = lit;
 		break;
@@ -327,23 +321,22 @@ get_operand(ib, size)
 		break;
 
 	case 6:		/* register deferred */
-		add_char(ib, '(');
+		add_str(ib, "(");
 		add_str(ib, my_db_regs[reg].name);
-		add_char(ib, ')');
+		add_str(ib, ")");
 		break;
 
 	case 7:		/* autodecrement */
-		add_char(ib, '-');
-		add_char(ib, '(');
+		add_str(ib, "-(");
 		add_str(ib, my_db_regs[reg].name);
-		add_char(ib, ')');
+		add_str(ib, ")");
 		if (reg == 0x0F) {	/* pc is not allowed in this mode */
 			err_print("autodecrement not allowed for PC.\n");
 		}
 		break;
 
 	case 9:		/* autoincrement deferred */
-		add_char(ib, DEFERRED);
+		add_str(ib, DEFERRED);
 		if (reg == 0x0F) {	/* pc: immediate deferred */
 			/*
 			 * addresses are always longwords!
@@ -370,18 +363,17 @@ get_operand(ib, size)
 				tmp = -1;
 			}
 			if (mode == 8)
-				add_char(ib, LITERAL);
+				add_str(ib, LITERAL);
 			add_int(ib, tmp);
 			break;
 		}
-		add_char(ib, '(');
+		add_str(ib, "(");
 		add_str(ib, my_db_regs[reg].name);
-		add_char(ib, ')');
-		add_char(ib, '+');
+		add_str(ib, ")+");
 		break;
 
 	case 11:	/* byte displacement deferred/ relative deferred  */
-		add_char(ib, DEFERRED);
+		add_str(ib, DEFERRED);
 	case 10:	/* byte displacement / relative mode */
 		tmp = (signed char) get_byte(ib);
 		if (reg == 0x0F) {
@@ -390,13 +382,13 @@ get_operand(ib, size)
 		}
 		/* add_str (ib, "b^"); */
 		add_int(ib, tmp);
-		add_char(ib, '(');
+		add_str(ib, "(");
 		add_str(ib, my_db_regs[reg].name);
-		add_char(ib, ')');
+		add_str(ib, ")");
 		break;
 
 	case 13:		/* word displacement deferred */
-		add_char(ib, DEFERRED);
+		add_str(ib, DEFERRED);
 	case 12:		/* word displacement */
 		tmp = (signed short) get_word(ib);
 		if (reg == 0x0F) {
@@ -405,13 +397,13 @@ get_operand(ib, size)
 		}
 		/* add_str (ib, "w^"); */
 		add_int(ib, tmp);
-		add_char(ib, '(');
+		add_str(ib, "(");
 		add_str(ib, my_db_regs[reg].name);
-		add_char(ib, ')');
+		add_str(ib, ")");
 		break;
 
-	case 15:		/* long displacement referred */
-		add_char(ib, DEFERRED);
+	case 15:		/* long displacement deferred */
+		add_str(ib, DEFERRED);
 	case 14:		/* long displacement */
 		tmp = get_long(ib);
 		if (reg == 0x0F) {
@@ -420,9 +412,9 @@ get_operand(ib, size)
 		}
 		/* add_str (ib, "l^"); */
 		add_int(ib, tmp);
-		add_char(ib, '(');
+		add_str(ib, "(");
 		add_str(ib, my_db_regs[reg].name);
-		add_char(ib, ')');
+		add_str(ib, ")");
 		break;
 
 	default:
@@ -467,14 +459,6 @@ get_long(ib)
 }
 
 void
-add_char(ib, c)
-	inst_buffer    *ib;
-	int		c;
-{
-	*ib->curp++ = c;
-}
-
-void
 add_str(ib, s)
 	inst_buffer    *ib;
 	char	       *s;
@@ -483,8 +467,7 @@ add_str(ib, s)
 	if (s == NULL)
 		s = "-reserved-";
 
-	while ((*ib->curp++ = *s++));
-	*--ib->curp = '\0';
+	strlcat(ib->dasm, s, sizeof(ib->dasm));
 }
 
 void
@@ -530,9 +513,9 @@ add_sym(ib, loc)
 	db_symbol_values(sym, &symname, 0);
 
 	if (symname && !diff) {
-		/* add_char(ib, '<'); */
+		/* add_str(ib, "<"); */
 		add_str(ib, symname);
-		/* add_char(ib, '>'); */
+		/* add_str(ib, ">"); */
 	}
 	else
 		add_xint(ib, loc);
@@ -556,13 +539,13 @@ add_off(ib, loc)
 	db_symbol_values(sym, &symname, 0);
 
 	if (symname) {
-		/* add_char(ib, '<'); */
+		/* add_str(ib, "<"); */
 		add_str(ib, symname);
 		if (diff) {
-			add_char(ib, '+');
+			add_str(ib, "+");
 			add_xint(ib, diff);
 		}
-		/* add_char(ib, '>'); */
+		/* add_str(ib, ">"); */
 	}
 	else
 		add_xint(ib, loc);
