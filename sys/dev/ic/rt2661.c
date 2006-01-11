@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.4 2006/01/11 21:02:17 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.5 2006/01/11 21:39:10 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -125,9 +125,9 @@ uint8_t		rt2661_bbp_read(struct rt2661_softc *, uint8_t);
 void		rt2661_rf_write(struct rt2661_softc *, uint8_t, uint32_t);
 int		rt2661_tx_cmd(struct rt2661_softc *, uint8_t, uint16_t);
 void		rt2661_select_antenna(struct rt2661_softc *);
+void		rt2661_enable_mrr(struct rt2661_softc *);
 void		rt2661_set_txpreamble(struct rt2661_softc *);
-void		rt2661_set_basicrates(struct rt2661_softc *,
-		    const struct ieee80211_rateset *);
+void		rt2661_set_basicrates(struct rt2661_softc *);
 void		rt2661_select_band(struct rt2661_softc *,
 		    struct ieee80211_channel *);
 void		rt2661_set_chan(struct rt2661_softc *,
@@ -936,8 +936,9 @@ rt2661_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 			rt2661_update_slot(sc);
+			rt2661_enable_mrr(sc);
 			rt2661_set_txpreamble(sc);
-			rt2661_set_basicrates(sc, &ni->ni_rates);
+			rt2661_set_basicrates(sc);
 			rt2661_set_bssid(sc, ic->ic_bss->ni_bssid);
 		}
 
@@ -2115,6 +2116,25 @@ rt2661_select_antenna(struct rt2661_softc *sc)
 	RAL_WRITE(sc, RT2661_TXRX_CSR0, tmp);
 }
 
+/*
+ * Enable multi-rate retries for frames sent at OFDM rates.
+ * In 802.11b/g mode, allow fallback to CCK rates.
+ */
+void
+rt2661_enable_mrr(struct rt2661_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	uint32_t tmp;
+
+	tmp = RAL_READ(sc, RT2661_TXRX_CSR4);
+
+	tmp |= RT2661_MRR_ENABLED;
+	if (!IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan))
+		tmp |= RT2661_MRR_CCK_FALLBACK;
+
+	RAL_WRITE(sc, RT2661_TXRX_CSR4, tmp);
+}
+
 void
 rt2661_set_txpreamble(struct rt2661_softc *sc)
 {
@@ -2130,33 +2150,21 @@ rt2661_set_txpreamble(struct rt2661_softc *sc)
 }
 
 void
-rt2661_set_basicrates(struct rt2661_softc *sc,
-    const struct ieee80211_rateset *rs)
+rt2661_set_basicrates(struct rt2661_softc *sc)
 {
-#define RV(r)	((r) & IEEE80211_RATE_VAL)
-	uint32_t mask = 0;
-	uint8_t rate;
-	int i, j;
+	struct ieee80211com *ic = &sc->sc_ic;
 
-	for (i = 0; i < rs->rs_nrates; i++) {
-		rate = rs->rs_rates[i];
-
-		if (!(rate & IEEE80211_RATE_BASIC))
-			continue;
-
-		/*
-		 * Find h/w rate index.  We know it exists because the rate
-		 * set has already been negotiated.
-		 */
-		for (j = 0; rt2661_rateset_11g.rs_rates[j] != RV(rate); j++);
-
-		mask |= 1 << j;
+	/* update basic rate set */
+	if (ic->ic_curmode == IEEE80211_MODE_11B) {
+		/* 11b basic rates: 1, 2Mbps */
+		RAL_WRITE(sc, RT2661_TXRX_CSR5, 0x3);
+	} else if (IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan)) {
+		/* 11a basic rates: 6, 12, 24Mbps */
+		RAL_WRITE(sc, RT2661_TXRX_CSR5, 0x150);
+	} else {
+		/* 11g basic rates: 1, 2, 5.5, 11, 6, 12, 24Mbps */
+		RAL_WRITE(sc, RT2661_TXRX_CSR5, 0x15f);
 	}
-
-	RAL_WRITE(sc, RT2661_TXRX_CSR5, mask);
-
-	DPRINTF(("Setting basic rate mask to 0x%x\n", mask));
-#undef RV
 }
 
 /*
