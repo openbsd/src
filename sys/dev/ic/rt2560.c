@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.5 2006/01/10 21:20:46 damien Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.6 2006/01/11 21:02:17 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1878,7 +1878,7 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
 		desc = &sc->txq.desc[sc->txq.cur_encrypt];
 		data = &sc->txq.data[sc->txq.cur_encrypt];
 
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {
 			printf("%s: could not map mbuf (error %d)\n",

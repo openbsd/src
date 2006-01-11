@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.3 2006/01/10 21:33:52 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.4 2006/01/11 21:02:17 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1700,7 +1700,7 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 		desc = &txq->desc[txq->cur];
 		data = &txq->data[txq->cur];
 
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {
 			printf("%s: could not map mbuf (error %d)\n",
@@ -1720,7 +1720,7 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 		data->id.id_node = NULL;
 
 		rt2661_setup_tx_desc(sc, desc, RT2661_TX_NEED_ACK |
-		    RT2661_TX_MORE_FRAG, 0, m0->m_pkthdr.len, rtsrate,
+		    RT2661_TX_MORE_FRAG, 0, m->m_pkthdr.len, rtsrate,
 		    data->map->dm_segs, data->map->dm_nsegs, ac);
 
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
