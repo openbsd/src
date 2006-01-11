@@ -1,4 +1,4 @@
-/*	$OpenBSD: nametoaddr.c,v 1.12 2005/10/07 19:32:39 mpf Exp $	*/
+/*	$OpenBSD: nametoaddr.c,v 1.13 2006/01/11 07:31:46 jaredy Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -321,6 +321,8 @@ pcap_ether_aton(const char *s)
 	register u_int d;
 
 	e = ep = (u_char *)malloc(6);
+	if (e == NULL)
+		bpf_error("malloc");
 
 	while (*s) {
 		if (*s == ':')

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.17 2005/11/18 11:05:39 djm Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.18 2006/01/11 07:31:46 jaredy Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -107,7 +107,7 @@ pcap_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 					(void)lseek(p->fd, 0L, SEEK_SET);
 					goto again;
 				}
-				/* fall through */
+				/* FALLTHROUGH */
 #endif
 			}
 			snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "read: %s",
@@ -208,6 +208,7 @@ pcap_open_live(const char *device, int snaplen, int promisc, int to_ms,
 	pcap_t *p;
 	struct bpf_dltlist bdl;
 
+	bzero(&bdl, sizeof(bdl));
 	p = (pcap_t *)malloc(sizeof(*p));
 	if (p == NULL) {
 		snprintf(ebuf, PCAP_ERRBUF_SIZE, "malloc: %s",
@@ -276,7 +277,6 @@ pcap_open_live(const char *device, int snaplen, int promisc, int to_ms,
 	 * this interface supports.  If this fails with EINVAL, it's
 	 * not fatal; we just don't get to use the feature later.
 	 */
-	bzero(&bdl, sizeof(bdl));
 	if (ioctl(fd, BIOCGDLTLIST, (caddr_t)&bdl) == 0) {
 		bdl.bfl_list = (u_int *) malloc(sizeof(u_int) *
 		    bdl.bfl_len + 1);
@@ -289,7 +289,6 @@ pcap_open_live(const char *device, int snaplen, int promisc, int to_ms,
 		if (ioctl(fd, BIOCGDLTLIST, (caddr_t)&bdl) < 0) {
 			(void)snprintf(ebuf, PCAP_ERRBUF_SIZE,
 			    "BIOCGDLTLIST: %s", pcap_strerror(errno));
-			free(bdl.bfl_list);
 			goto bad;
 		}
 		p->dlt_count = bdl.bfl_len;
@@ -332,7 +331,9 @@ pcap_open_live(const char *device, int snaplen, int promisc, int to_ms,
 
 	return (p);
  bad:
-	(void)close(fd);
+	if (fd >= 0)
+		(void)close(fd);
+	free(bdl.bfl_list);
 	free(p);
 	return (NULL);
 }

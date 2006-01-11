@@ -127,11 +127,11 @@ add_or_find_if(pcap_if_t **curdev_ret, pcap_if_t **alldevs, const char *name,
 		 * No, we didn't find it.
 		 * Allocate a new entry.
 		 */
-		curdev = malloc(sizeof(pcap_if_t));
+		curdev = calloc(1, sizeof(pcap_if_t));
 		if (curdev == NULL) {
 			(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
-			    "malloc: %s", pcap_strerror(errno));
-			return (-1);
+			    "calloc: %s", pcap_strerror(errno));
+			goto fail;
 		}
 
 		/*
@@ -140,6 +140,11 @@ add_or_find_if(pcap_if_t **curdev_ret, pcap_if_t **alldevs, const char *name,
 		curdev->next = NULL;
 		len = strlen(name) + 1;
 		curdev->name = malloc(len);
+		if (curdev->name == NULL) {
+			(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
+			    "malloc: %s", pcap_strerror(errno));
+			goto fail;
+		}
 		strlcpy(curdev->name, name, len);
 		if (description != NULL) {
 			/*
@@ -147,12 +152,12 @@ add_or_find_if(pcap_if_t **curdev_ret, pcap_if_t **alldevs, const char *name,
 			 */
 			len = strlen(description) + 1;
 			curdev->description = malloc(len);
+			if (curdev->description == NULL) {
+				(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
+				    "malloc: %s", pcap_strerror(errno));
+				goto fail;
+			}
 			strlcpy(curdev->description, description, len);
-		} else {
-			/*
-			 * We don't.
-			 */
-			curdev->description = NULL;
 		}
 		curdev->addresses = NULL;	/* list starts out as empty */
 		curdev->flags = 0;
@@ -261,6 +266,14 @@ add_or_find_if(pcap_if_t **curdev_ret, pcap_if_t **alldevs, const char *name,
 
 	*curdev_ret = curdev;
 	return (0);
+
+fail:
+	if (curdev != NULL) {
+		free(curdev->name);
+		free(curdev->description);
+		free(curdev);
+	}
+	return (-1);
 }
 
 static int
@@ -294,11 +307,11 @@ add_addr_to_iflist(pcap_if_t **alldevs, const char *name, u_int flags,
 	 *
 	 * Allocate the new entry and fill it in.
 	 */
-	curaddr = malloc(sizeof(pcap_addr_t));
+	curaddr = calloc(1, sizeof(pcap_addr_t));
 	if (curaddr == NULL) {
 		(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
-		    "malloc: %s", pcap_strerror(errno));
-		return (-1);
+		    "calloc: %s", pcap_strerror(errno));
+		goto fail;
 	}
 
 	curaddr->next = NULL;
@@ -307,44 +320,36 @@ add_addr_to_iflist(pcap_if_t **alldevs, const char *name, u_int flags,
 		if (curaddr->addr == NULL) {
 			(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
 			    "malloc: %s", pcap_strerror(errno));
-			free(curaddr);
-			return (-1);
+			goto fail;
 		}
-	} else
-		curaddr->addr = NULL;
+	}
 
 	if (netmask != NULL) {
 		curaddr->netmask = dup_sockaddr(netmask, netmask_size);
 		if (curaddr->netmask == NULL) {
 			(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
 			    "malloc: %s", pcap_strerror(errno));
-			free(curaddr);
-			return (-1);
+			goto fail;
 		}
-	} else
-		curaddr->netmask = NULL;
+	}
 
 	if (broadaddr != NULL) {
 		curaddr->broadaddr = dup_sockaddr(broadaddr, broadaddr_size);
 		if (curaddr->broadaddr == NULL) {
 			(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
 			    "malloc: %s", pcap_strerror(errno));
-			free(curaddr);
-			return (-1);
+			goto fail;
 		}
-	} else
-		curaddr->broadaddr = NULL;
+	}
 
 	if (dstaddr != NULL) {
 		curaddr->dstaddr = dup_sockaddr(dstaddr, dstaddr_size);
 		if (curaddr->dstaddr == NULL) {
 			(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
 			    "malloc: %s", pcap_strerror(errno));
-			free(curaddr);
-			return (-1);
+			goto fail;
 		}
-	} else
-		curaddr->dstaddr = NULL;
+	}
 
 	/*
 	 * Find the end of the list of addresses.
@@ -374,6 +379,16 @@ add_addr_to_iflist(pcap_if_t **alldevs, const char *name, u_int flags,
 	}
 
 	return (0);
+
+fail:
+	if (curaddr != NULL) {
+		free(curaddr->addr);
+		free(curaddr->netmask);
+		free(curaddr->broadaddr);
+		free(curaddr->dstaddr);
+		free(curaddr);
+	}
+	return (-1);
 }
 
 /*
