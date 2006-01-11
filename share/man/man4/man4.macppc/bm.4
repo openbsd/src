@@ -1,4 +1,4 @@
-.\" $OpenBSD: bm.4,v 1.5 2003/06/06 10:29:42 jmc Exp $
+.\" $OpenBSD: bm.4,v 1.6 2006/01/11 08:20:18 xsa Exp $
 .\"
 .\" Copyright (c) 2001 Peter Philipp
 .\" All rights reserved.
@@ -37,6 +37,17 @@
 The
 .Nm
 device driver supports Apple BMAC and compatible Ethernet devices.
+.Sh HARDWARE
+Machines supported by the
+.Nm
+driver include:
+.Pp
+.Bl -dash -offset indent -compact
+.It
+PowerBook1,1
+.It
+PowerMac1,1
+.El
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
