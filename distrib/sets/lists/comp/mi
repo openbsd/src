@@ -141,7 +141,6 @@
 ./usr/include/dev/i2c
 ./usr/include/dev/i2c/i2c_io.h
 ./usr/include/dev/i2c/i2cvar.h
-./usr/include/dev/i2c/lm75reg.h
 ./usr/include/dev/i2c/wm8750reg.h
 ./usr/include/dev/i2o
 ./usr/include/dev/i2o/i2o.h
