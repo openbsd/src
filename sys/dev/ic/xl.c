@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.66 2005/11/07 03:20:00 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.67 2006/01/11 03:57:50 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1914,6 +1914,7 @@ xl_encap_90xB(sc, c, m_head)
 	d->xl_status = htole32(0);
 	d->xl_next = 0;
 
+reload:
 	if (bus_dmamap_load_mbuf(sc->sc_dmat, map,
 	    m_head, BUS_DMA_NOWAIT) != 0)
 		return (ENOBUFS);
@@ -1924,6 +1925,40 @@ xl_encap_90xB(sc, c, m_head)
 		f = &d->xl_frag[frag];
 		f->xl_addr = htole32(map->dm_segs[frag].ds_addr);
 		f->xl_len = htole32(map->dm_segs[frag].ds_len);
+	}
+
+	/*
+	 * Handle special case: we used up all 63 fragments,
+	 * but we have more mbufs left in the chain. Copy the
+	 * data into an mbuf cluster. Note that we don't
+	 * bother clearing the values in the other fragment
+	 * pointers/counters; it wouldn't gain us anything,
+	 * and would waste cycles.
+	 */
+	if (frag != map->dm_nsegs) {
+		struct mbuf		*m_new = NULL;
+
+		printf("%s: allocating a cluster\n", sc->sc_dev.dv_xname);
+
+		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
+		if (m_new == NULL) {
+			m_freem(m_head);
+			return (1);
+		}
+		if (m_head->m_pkthdr.len > MHLEN) {
+			MCLGET(m_new, M_DONTWAIT);
+			if (!(m_new->m_flags & M_EXT)) {
+				m_freem(m_new);
+				m_freem(m_head);
+				return (1);
+			}
+		}
+		m_copydata(m_head, 0, m_head->m_pkthdr.len,
+		    mtod(m_new, caddr_t));
+		m_new->m_pkthdr.len = m_new->m_len = m_head->m_pkthdr.len;
+		m_freem(m_head);
+		m_head = m_new;
+		goto reload;
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
