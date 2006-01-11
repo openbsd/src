@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.32 2005/12/27 18:31:10 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.33 2006/01/11 07:22:01 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -47,6 +47,9 @@
 #include <machine/disklabel.h>
 #include <machine/vmparam.h>
 
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+
 #include <dev/cons.h>
 
 /*
@@ -61,6 +64,7 @@ char	buginchr(void);
 void	dumpconf(void);
 int	findblkmajor(struct device *);
 struct device *getdisk(char *, int, int, dev_t *);
+int	get_target(int *, int *, int *);
 
 int cold = 1;   /* 1 if still booting */
 
@@ -104,7 +108,7 @@ struct nam2blk {
 	int maj;
 } nam2blk[] = {
 	{ "sd",	4 },
-	{ "st",	5 },
+	{ "cd", 6 },
 	{ "rd",	7 },
 };
 
@@ -369,4 +373,82 @@ gotswap:
 	 */
 	if (temp == dumpdev)
 		dumpdev = swdevt[0].sw_dev;
+}
+
+void
+device_register(struct device *dev, void *aux)
+{
+	if (bootpart == -1) /* ignore flag from controller driver? */
+		return;
+
+	/*
+	 * scsi: sd,cd
+	 */
+	if (strncmp("cd", dev->dv_xname, 2) == 0 ||
+	    strncmp("sd", dev->dv_xname, 2) == 0) {
+		struct scsibus_attach_args *sa = aux;
+		int target, bus, lun;
+
+		if (get_target(&target, &bus, &lun) != 0)
+			return;
+    
+		/* make sure we are on the expected scsibus */
+		if (bootbus != bus)
+			return;
+
+		if (sa->sa_sc_link->target == target &&
+		    sa->sa_sc_link->lun == lun) {
+			bootdv = dev;
+			return;
+		}
+	}
+
+	/*
+	 * ethernet: ie,le
+	 */
+	else if (strncmp("ie", dev->dv_xname, 2) == 0 ||
+	    strncmp("le", dev->dv_xname, 2) == 0) {
+		struct confargs *ca = aux;
+
+		if (ca->ca_paddr == bootaddr) {
+			bootdv = dev;
+			return;
+		}
+	}
+}
+
+/*
+ * Returns the ID of the SCSI disk based on Motorola's CLUN/DLUN stuff
+ * bootdev == CLUN << 8 | DLUN.
+ * This handles SBC SCSI and MVME32[78].
+ */
+int
+get_target(int *target, int *bus, int *lun)
+{
+	extern int bootdev;
+
+	switch (bootdev >> 8) {
+	/* built-in controller */
+	case 0x00:
+	/* MVME327 */
+	case 0x02:
+	case 0x03:
+		*bus = 0;
+		*target = (bootdev & 0x70) >> 4;
+		*lun = (bootdev & 0x07);
+		return (0);
+	/* MVME328 */
+	case 0x06:
+	case 0x07:
+	case 0x16:
+	case 0x17:
+	case 0x18:
+	case 0x19:
+		*bus = (bootdev & 0x40) >> 6;
+		*target = (bootdev & 0x38) >> 3;
+		*lun = (bootdev & 0x07);
+		return (0);
+	default:
+		return (ENODEV);
+	}
 }

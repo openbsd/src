@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.11 2005/04/27 14:07:38 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.12 2006/01/11 07:22:00 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -288,10 +288,6 @@ leattach(parent, self, aux)
 	}
 	if (ca->ca_ipl < 0)
 		ca->ca_ipl = IPL_NET;
-
-	/* Are we the boot device? */
-	if (ca->ca_paddr == bootaddr)
-		bootdv = self;
 
 	/* 
 	 * get the first available etherbuf.  MVME376 uses its own dual-ported 

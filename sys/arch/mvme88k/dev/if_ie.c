@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.35 2005/12/11 21:44:04 miod Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.36 2006/01/11 07:22:00 miod Exp $ */
 
 /*-
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -411,10 +411,6 @@ ieattach(parent, self, aux)
 	sc->sc_msize = etherlen;
 	sc->sc_reg = (void *)ca->ca_paddr;
 	ieo = (struct ieob *volatile) sc->sc_reg;
-
-        /* Are we the boot device? */
-        if (ca->ca_paddr == bootaddr)
-                bootdv = self;
 
 	/* get the first available etherbuf */
 	sc->sc_maddr = etherbuf;	/* maddr = vaddr */

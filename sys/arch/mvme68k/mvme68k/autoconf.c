@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.32 2005/12/27 18:31:09 miod Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.33 2006/01/11 07:22:00 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -85,6 +85,9 @@
 #include <machine/disklabel.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
 
 void	setroot(void);
 int	mainbus_print(void *, const char *);
@@ -526,4 +529,53 @@ gotswap:
 	 */
 	if (temp == dumpdev)
 		dumpdev = swdevt[0].sw_dev;
+}
+
+void
+device_register(struct device *dev, void *aux)
+{
+	if (bootpart == -1) /* ignore flag from controller driver? */
+		return;
+
+	/*
+	 * scsi: sd,cd
+	 */
+	if (strncmp("sd", dev->dv_xname, 2) == 0 ||
+	    strncmp("cd", dev->dv_xname, 2) == 0) {
+		struct scsibus_attach_args *sa = aux;
+		int target, lun;
+#ifdef MVME147
+		/*
+		 * The 147 can only boot from the built-in scsi controller,
+		 * and stores the scsi id as the controller number.
+		 */
+		if (cputyp == CPU_147) {
+			target = bootctrllun;
+			lun = 0;
+		} else
+#endif
+		{
+			target = bootdevlun >> 4;
+			lun = bootdevlun & 0x0f;
+		}
+    		
+		if (sa->sa_sc_link->target == target &&
+		    sa->sa_sc_link->lun == lun) {
+			bootdv = dev;
+			return;
+		}
+	}
+
+	/*
+	 * ethernet: ie,le
+	 */
+	else if (strncmp("ie", dev->dv_xname, 2) == 0 ||
+	    strncmp("le", dev->dv_xname, 2) == 0) {
+		struct confargs *ca = aux;
+
+		if (ca->ca_paddr == bootaddr) {
+			bootdv = dev;
+			return;
+		}
+	}
 }

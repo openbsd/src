@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.31 2005/03/30 07:52:32 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.32 2006/01/11 07:22:00 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -34,11 +34,6 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
-
-#include <machine/autoconf.h>
-
 #define b_cylin b_resid
 
 #ifdef DEBUG
@@ -60,41 +55,6 @@ dk_establish(dk, dev)
 	struct disk *dk;
 	struct device *dev;
 {
-	struct scsibus_softc *sbsc;
-	int target, lun;
-
-	if (bootpart == -1) /* ignore flag from controller driver? */
-		return;
-
-	/*
-	 * scsi: sd,cd
-	 */
-
-	if (strncmp("sd", dev->dv_xname, 2) == 0 ||
-	    strncmp("cd", dev->dv_xname, 2) == 0) {
-
-		sbsc = (struct scsibus_softc *)dev->dv_parent;
-#ifdef MVME147
-		/*
-		 * The 147 can only boot from the built-in scsi controller,
-		 * and stores the scsi id as the controller number.
-		 */
-		if (cputyp == CPU_147) {
-			target = bootctrllun;
-			lun = 0;
-		} else
-#endif
-		{
-			target = bootdevlun >> 4;
-			lun = bootdevlun & 0x0f;
-		}
-    		
-		if (sbsc->sc_link[target][lun] != NULL &&
-		    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
-			bootdv = dev;
-			return;
-		}
-	}
 }
 
 
