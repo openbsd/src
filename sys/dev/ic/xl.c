@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.67 2006/01/11 03:57:50 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.68 2006/01/11 04:15:20 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1937,8 +1937,6 @@ reload:
 	 */
 	if (frag != map->dm_nsegs) {
 		struct mbuf		*m_new = NULL;
-
-		printf("%s: allocating a cluster\n", sc->sc_dev.dv_xname);
 
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
