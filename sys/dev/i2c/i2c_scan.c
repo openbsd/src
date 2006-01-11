@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.53 2006/01/09 18:50:23 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.54 2006/01/11 20:18:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -491,39 +491,50 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	    addr == 0x4c || addr == 0x4d || addr == 0x4e)) {
 		name = "adm1021";	/* lots of addresses... bleah */
 		skip_fc = 1;
-	} else if ((iicprobe(0x4f) == 0x5c && (iicprobe(0x4e) & 0x80)) ||
-	    (iicprobe(0x4f) == 0xa3 && !(iicprobe(0x4e) & 0x80))) {
+	} else if (addr == iicprobe(0x48) &&
+	    ((iicprobe(0x4f) == 0x5c && (iicprobe(0x4e) & 0x80)) ||
+	    (iicprobe(0x4f) == 0xa3 && !(iicprobe(0x4e) & 0x80)))) {
 		/*
 		 * We could toggle 0x4e bit 0x80, then re-read 0x4f to
 		 * see if the value changes to 0xa3 (indicating Winbond).
 		 * But we are trying to avoid writes.
 		 */
-		switch (iicprobe(0x58)) {
-		case 0x10:
-		case 0x11:			/* rev 2? */
-			name = "w83781d";
-			break;
-		case 0x21:
-			name = "w83627hf";
-			break;
-		case 0x30:
-			name = "w83782d";
-			break;
-		case 0x31:
-			name = "as99127f";	/* rev 2 */
-			break;
-		case 0x40:
-			name = "w83783s";
-			break;
-		case 0x71:
-		case 0x72:			/* rev 2? */
-			name = "w83791d";
-			break;
-		case 0x7a:
-			name = "w83792d";
-			break;
+		if ((iicprobe(0x4e) & 0x07) == 0) {
+			switch (iicprobe(0x58)) {
+			case 0x10:
+			case 0x11:			/* rev 2? */
+				name = "w83781d";
+				break;
+			case 0x21:
+				name = "w83627hf";
+				break;
+			case 0x30:
+				name = "w83782d";
+				break;
+			case 0x31:
+				name = "as99127f";	/* rev 2 */
+				break;
+			case 0x40:
+				name = "w83783s";
+				break;
+			case 0x71:
+			case 0x72:			/* rev 2? */
+				name = "w83791d";
+				break;
+			case 0x7a:
+				name = "w83792d";
+				break;
+			}
+		} else {
+			/*
+			 * The BIOS left the chip in a non-zero
+			 * register bank.  Assume it's a W83781D and
+			 * let lm(4) sort out the real model.
+			 */
+			 name = "w83781d";
 		}
-	} else if (iicprobe(0x4f) == 0x12 && (iicprobe(0x4e) & 0x80)) {
+	} else if (addr == iicprobe(0x48) &&
+	    iicprobe(0x4f) == 0x12 && (iicprobe(0x4e) & 0x80)) {
 		/*
 		 * We could toggle 0x4e bit 0x80, then re-read 0x4f to
 		 * see if the value changes to 0xc3 (indicating ASUS).
