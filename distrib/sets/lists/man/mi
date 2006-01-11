@@ -2089,6 +2089,7 @@
 ./usr/share/man/cat8/hppa/boot.0
 ./usr/share/man/cat8/hppa/boot.conf.0
 ./usr/share/man/cat8/hppa/boot_hppa.0
+./usr/share/man/cat8/hppa/hotplugd.0
 ./usr/share/man/cat8/hppa/kbd.0
 ./usr/share/man/cat8/hppa/mkboot.0
 ./usr/share/man/cat8/hppa/wsconscfg.0
