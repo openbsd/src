@@ -13,7 +13,7 @@
  *
  * ISBN 3-924521-59-X
  *
- * $OpenBSD: calendar.geschichte,v 1.3 2005/09/12 21:07:28 sturm Exp $
+ * $OpenBSD: calendar.geschichte,v 1.4 2006/01/11 19:07:03 mickey Exp $
  */
 
 #ifndef _de_DE_ISO_8859_1_geschichte_
@@ -159,7 +159,7 @@ LANG=de_DE.ISO_8859-1
 07/20	Konkordat zwischen Deutschland und dem Vatikan, 1933
 06/30	Röhm-Putsch, Ausschaltung der SA-Führung, 1934
 09/15	Nürnberger Gesetze, 1935
-01/08	Eröffnung der olympischen Spiele in Berlin, 1936
+08/01	Eröffnung der XI. Olympischen Spiele in Berlin, 1936
 01/20	Wannseekonferenz, 1942
 04/30	Selbstmord Hitlers, 1945
 07/29	Mussolini geboren, 1883
