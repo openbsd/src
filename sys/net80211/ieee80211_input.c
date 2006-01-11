@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.13 2006/01/02 08:05:36 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.14 2006/01/11 00:18:17 millert Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -734,6 +734,7 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 	}
 }
 
+#if 0
 /* TBD send appropriate responses on error? */
 static void
 ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
@@ -904,6 +905,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		break;
 	}
 }
+#endif
 
 void
 ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
@@ -1211,17 +1213,25 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		IEEE80211_DPRINTF(("%s: auth %d seq %d from %s\n",
 		    __func__, algo, seq, ether_sprintf(wh->i_addr2)));
 
-		if (algo == IEEE80211_AUTH_ALG_SHARED)
-			ieee80211_auth_shared(ic, wh, frm + 6, efrm, ni, rssi,
-			    rstamp, seq, status);
-		else if (algo == IEEE80211_AUTH_ALG_OPEN)
+		if (algo == IEEE80211_AUTH_ALG_OPEN)
 			ieee80211_auth_open(ic, wh, ni, rssi, rstamp, seq,
 			    status);
+#if 0
+		else if (algo == IEEE80211_AUTH_ALG_SHARED)
+			ieee80211_auth_shared(ic, wh, frm + 6, efrm, ni, rssi,
+			    rstamp, seq, status);
+#endif
 		else {
 			IEEE80211_DPRINTF(("%s: unsupported authentication "
 			    "algorithm %d from %s\n",
 			    __func__, algo, ether_sprintf(wh->i_addr2)));
 			ic->ic_stats.is_rx_auth_unsupported++;
+			if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+				/* XXX hack to workaround calling convention */
+				IEEE80211_SEND_MGMT(ic, ni,
+					IEEE80211_FC0_SUBTYPE_AUTH,
+					(seq+1) | (IEEE80211_STATUS_ALG<<16));
+			}
 			return;
 		}
 		break;

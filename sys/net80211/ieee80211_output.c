@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.13 2005/09/08 13:24:53 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.14 2006/01/11 00:18:17 millert Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -586,7 +586,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	u_int8_t *frm;
 	enum ieee80211_phymode mode;
 	u_int16_t capinfo;
-	int has_challenge, is_shared_key, ret, timer;
+	int has_challenge, is_shared_key, ret, timer, status;
 
 	if (ni == NULL)
 		panic("null node");
@@ -703,6 +703,8 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		if (m == NULL)
 			senderr(ENOMEM, is_tx_nombuf);
 
+		status = arg >> 16;
+		arg &= 0xffff;
 		has_challenge = ((arg == IEEE80211_AUTH_SHARED_CHALLENGE ||
 		    arg == IEEE80211_AUTH_SHARED_RESPONSE) &&
 		    ni->ni_challenge != NULL);
@@ -710,7 +712,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		is_shared_key = has_challenge || (ni->ni_challenge != NULL &&
 		    arg == IEEE80211_AUTH_SHARED_PASS);
 
-		if (has_challenge) {
+		if (has_challenge && status == IEEE80211_STATUS_SUCCESS) {
 			MH_ALIGN(m, 2 * 3 + 2 + IEEE80211_CHALLENGE_LEN);
 			m->m_pkthdr.len = m->m_len =
 			    2 * 3 + 2 + IEEE80211_CHALLENGE_LEN;
@@ -723,9 +725,9 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		    (is_shared_key) ? htole16(IEEE80211_AUTH_ALG_SHARED) :
 		    htole16(IEEE80211_AUTH_ALG_OPEN);
 		((u_int16_t *)frm)[1] = htole16(arg);	/* sequence number */
-		((u_int16_t *)frm)[2] = 0;		/* status */
+		((u_int16_t *)frm)[2] = htole16(status);/* status */
 
-		if (has_challenge) {
+		if (has_challenge && status == IEEE80211_STATUS_SUCCESS) {
 			((u_int16_t *)frm)[3] =
 			    htole16((IEEE80211_CHALLENGE_LEN << 8) |
 			    IEEE80211_ELEMID_CHALLENGE);
