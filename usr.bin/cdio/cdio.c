@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.45 2006/01/10 19:59:11 krw Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.46 2006/01/11 01:29:07 krw Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -240,13 +240,13 @@ main(int argc, char **argv)
 		case 'f':
 			cdname = optarg;
 			break;
-	    	case 'd':
+		case 'd':
 			cddb_host = optarg;
 			break;
 		default:
 			usage();
 		}
-	
+
 	argc -= optind;
 	argv += optind;
 
@@ -522,8 +522,7 @@ play(char *arg)
 
 	if (! arg || ! *arg) {
 		/* Play the whole disc */
-		
-		return (play_track(h.starting_track, 1, 
+		return (play_track(h.starting_track, 1,
 		    h.ending_track, 1));
 	}
 
@@ -1046,7 +1045,7 @@ prtrack(struct cd_toc_entry *e, int lastflag, char *name)
 			lba2msf(block, &m, &s, &f);
 			/* Print track start */
 			printf("%2d:%02d.%02d  ", m, s, f);
-	    	}
+		}
 	}
 	if (lastflag) {
 		if (!name)
@@ -1224,7 +1223,7 @@ parse(char *buf, int *cmd)
 
 	for (buf = p; *p && ! isspace(*p); p++)
 		continue;
-  
+
 	len = p - buf;
 	if (! len)
 		return (0);
@@ -1244,7 +1243,7 @@ parse(char *buf, int *cmd)
 		if (! strcasecmp(buf, c->name)) {
   			*cmd = c->command;
   			break;
-  		}
+		}
 
 		/* Try short hand forms then... */
 		if (len >= c->min && ! strncasecmp(buf, c->name, len)) {
@@ -1253,7 +1252,7 @@ parse(char *buf, int *cmd)
 				return (0);
 			}
 			*cmd = c->command;
-  		}
+		}
 	}
 
 	if (*cmd == -1) {
