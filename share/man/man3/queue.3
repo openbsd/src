@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.39 2006/01/06 08:48:06 jmc Exp $
+.\"	$OpenBSD: queue.3,v 1.40 2006/01/11 09:07:54 jmc Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -865,7 +865,7 @@ TAILQ_INSERT_BEFORE(n1, n2, entries);
 					/* Forward traversal. */
 TAILQ_FOREACH(np, &head, entries)
 	np-> ...
-					/* Manual forward traversal */
+					/* Manual forward traversal. */
 for (np = n2; np != NULL; np = TAILQ_NEXT(np, entries))
 	np-> ...
 					/* Delete. */
