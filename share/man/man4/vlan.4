@@ -1,4 +1,4 @@
-.\" $OpenBSD: vlan.4,v 1.24 2004/11/27 22:46:28 henning Exp $
+.\" $OpenBSD: vlan.4,v 1.25 2006/01/11 22:59:47 jmc Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,10 +57,8 @@ command or by setting up a
 configuration file for
 .Xr netstart 8 .
 .Pp
-This driver currently supports the following modes of operation:
-.Bl -tag -width abc
-.It 802.1Q encapsulation over Ethernet (Ethernet protocol 0x8100)
-.Pp
+This driver currently only supports
+802.1Q encapsulation over Ethernet (Ethernet protocol 0x8100).
 The 802.1Q header specifies the virtual LAN number, and thus allows an
 Ethernet switch (or other 802.1Q compliant network devices) to be aware of
 which LAN the frame is part of, and in the case of a switch, which
@@ -71,14 +69,21 @@ Frames with 802.1Q encapsulation received by the parent interface with the
 correct vlan tag will be diverted to the associated
 .Nm
 pseudo-interface.
-.El
 .Pp
 Frame headers which normally contain the destination host, source host, and
 protocol, are altered with additional information.
 After the source host,
-a 32-bit 802.1Q header is included, with 16 bits for the ether type (0x8100), 3
-bits for the priority field (not used in this implementation), 1 bit for
-the canonical field (always 0), and 12 bits for the vlan identifier.
+a 32-bit 802.1Q header is included,
+comprising as follows:
+16 bits for the ether type (0x8100);
+3 bits for the priority field;
+1 bit for the canonical field (always 0);
+and 12 bits for the vlan identifier.
+The priority field may be altered via
+.Xr ifconfig 8 ;
+see the
+.Cm vlanprio
+option for more information.
 Following the vlan header is the actual ether type for the frame and length
 information.
 .Pp
@@ -86,12 +91,16 @@ information.
 interfaces support the following unique
 .Xr ioctl 2 Ns s :
 .Bl -tag -width aaa
-.It SIOCSETVLAN:
-Set the vlan tag and parent for a given vlan interface.
 .It SIOCGETVLAN:
 Get the vlan tag and parent for a given vlan interface.
-.Pp
+.It SIOCGETVLANPRIO:
+Get the vlan priority for a given vlan interface.
+.It SIOCSETVLAN:
+Set the vlan tag and parent for a given vlan interface.
+.It SIOCSETVLANPRIO:
+Set the vlan priority for a given vlan interface.
 .El
+.Pp
 .Nm
 interfaces use the following interface capabilities:
 .Bl -tag -width aaa
@@ -150,7 +159,7 @@ and
 The
 .Nm
 interface is to be configured with
-.Xr ifconfig 8 ,
+.Xr ifconfig 8 ;
 see its manual page for more information.
 .Sh AUTHORS
 Originally wollman@freebsd.org.
