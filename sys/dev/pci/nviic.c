@@ -1,4 +1,4 @@
-/*	$OpenBSD: nviic.c,v 1.2 2006/01/09 00:43:23 dlg Exp $ */
+/*	$OpenBSD: nviic.c,v 1.3 2006/01/11 08:19:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -251,7 +251,7 @@ nviic_i2c_exec(void *arg, i2c_op_t op, i2c_addr_t addr,
 			break;
 	}
 	if (i == 0) {
-		printf("%s: timeout\n", DEVNAME(sc));
+		DPRINTF("%s: timeout\n", DEVNAME(sc));
 		return (1);
 	}
 
