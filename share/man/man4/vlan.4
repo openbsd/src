@@ -1,4 +1,4 @@
-.\" $OpenBSD: vlan.4,v 1.25 2006/01/11 22:59:47 jmc Exp $
+.\" $OpenBSD: vlan.4,v 1.26 2006/01/11 23:08:51 jmc Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,6 +56,9 @@ command or by setting up a
 .Xr hostname.if 5
 configuration file for
 .Xr netstart 8 .
+The interface itself can be configured with
+.Xr ifconfig 8 ;
+see its manual page for more information.
 .Pp
 This driver currently only supports
 802.1Q encapsulation over Ethernet (Ethernet protocol 0x8100).
@@ -90,24 +93,24 @@ information.
 .Nm
 interfaces support the following unique
 .Xr ioctl 2 Ns s :
-.Bl -tag -width aaa
-.It SIOCGETVLAN:
+.Bl -tag -width "SIOCSETVLANPRIO" -offset 3n
+.It SIOCGETVLAN
 Get the vlan tag and parent for a given vlan interface.
-.It SIOCGETVLANPRIO:
+.It SIOCGETVLANPRIO
 Get the vlan priority for a given vlan interface.
-.It SIOCSETVLAN:
+.It SIOCSETVLAN
 Set the vlan tag and parent for a given vlan interface.
-.It SIOCSETVLANPRIO:
+.It SIOCSETVLANPRIO
 Set the vlan priority for a given vlan interface.
 .El
 .Pp
 .Nm
 interfaces use the following interface capabilities:
-.Bl -tag -width aaa
-.It IFCAP_VLAN_MTU:
+.Bl -tag -width "IFCAP_VLAN_HWTAGGING" -offset 3n
+.It IFCAP_VLAN_MTU
 The parent interface can handle full sized frames, plus the size
 of the vlan tag.
-.It IFCAP_VLAN_HWTAGGING:
+.It IFCAP_VLAN_HWTAGGING
 The parent interface will participate in the tagging and untagging of frames.
 .El
 .Sh DIAGNOSTICS
@@ -155,12 +158,6 @@ and
 .%T IEEE 802.1Q standard
 .%O http://standards.ieee.org/getieee802/802.1.html
 .Re
-.Pp
-The
-.Nm
-interface is to be configured with
-.Xr ifconfig 8 ;
-see its manual page for more information.
 .Sh AUTHORS
 Originally wollman@freebsd.org.
 .Sh BUGS
