@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.24 2005/12/02 04:23:17 krw Exp $ */
+/*	$OpenBSD: safte.c,v 1.25 2006/01/11 08:21:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -402,7 +402,6 @@ safte_read_encstat(void *arg)
 	    sizeof(cmd), sc->sc_encbuf, sc->sc_encbuflen, 2, 30000, NULL,
 	    flags) != 0) {
 		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
-		printf("%s: unable to read enclosure status\n", DEVNAME(sc));
 		return;
 	}
 
