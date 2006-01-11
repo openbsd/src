@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.53 2005/12/30 16:40:08 grange Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.54 2006/01/11 23:53:32 deraadt Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -147,7 +147,7 @@ CXXFLAGS+=	${CXXDIAGFLAGS}
 CFLAGS+=	${COPTS}
 CXXFLAGS+=	${CXXOPTS}
 
-.if (${MACHINE} != "zaurus")
+.if (${MACHINE} != "zaurus") && (${MACHINE} != "hp300")
 DEBUG?=	-g
 .endif
 
