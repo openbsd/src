@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1002 2006/01/12 01:26:56 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1003 2006/01/12 17:50:42 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1955,6 +1955,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "RS480 Host",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RX480_HB,
+	    "RX480 Host",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS480,
 	    "Radeon XPRESS 200",
 	},
@@ -1987,12 +1991,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon XPRESS 200M",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RX480_PCIE,
+	    "RX480 PCIE",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS480_PCIE_2,
 	    "RS480 PCIE",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS480_PCIE_3,
 	    "RS480 PCIE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAFEON_RX480_PCIE_2,
+	    "RX480 PCIE",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS480_PCIE_1,

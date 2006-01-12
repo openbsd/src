@@ -5249,6 +5249,7 @@
 ./usr/share/man/cat9/crypto_unregister.0
 ./usr/share/man/cat9/ctxsw.0
 ./usr/share/man/cat9/db_printf.0
+./usr/share/man/cat9/delay.0
 ./usr/share/man/cat9/disk.0
 ./usr/share/man/cat9/disk_attach.0
 ./usr/share/man/cat9/disk_busy.0
