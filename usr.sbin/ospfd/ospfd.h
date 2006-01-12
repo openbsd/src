@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.40 2006/01/05 15:53:36 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.41 2006/01/12 15:10:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -53,6 +53,7 @@
 #define	F_STATIC		0x0020
 #define	F_DYNAMIC		0x0040
 #define	F_LONGER		0x0080
+#define	F_REDISTRIBUTED		0x0100
 
 #define REDISTRIBUTE_STATIC	0x01
 #define REDISTRIBUTE_CONNECTED	0x02
@@ -518,8 +519,6 @@ void		 kr_dispatch_msg(int, short, void *);
 void		 kr_show_route(struct imsg *);
 void		 kr_ifinfo(char *, pid_t);
 struct kif	*kif_findname(char *);
-void		 kif_update(struct kif *);
-int		 kif_validate(int);
 
 u_int8_t	mask2prefixlen(in_addr_t);
 in_addr_t	prefixlen2mask(u_int8_t);
@@ -527,6 +526,7 @@ in_addr_t	prefixlen2mask(u_int8_t);
 /* ospfd.c */
 void	main_imsg_compose_ospfe(int, pid_t, void *, u_int16_t);
 void	main_imsg_compose_rde(int, pid_t, void *, u_int16_t);
+int	ospf_redistribute(struct kroute *kr);
 
 /* printconf.c */
 void	print_config(struct ospfd_conf *);

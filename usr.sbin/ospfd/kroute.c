@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.23 2006/01/12 15:00:48 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.24 2006/01/12 15:10:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -75,6 +75,7 @@ struct kif_node		*kif_find(int);
 int			 kif_insert(struct kif_node *);
 int			 kif_remove(struct kif_node *);
 void			 kif_clear(void);
+int			 kif_validate(int);
 
 struct kroute_node	*kroute_match(in_addr_t);
 
@@ -331,8 +332,28 @@ kr_redistribute(int type, struct kroute *kr)
 {
 	u_int32_t	a;
 
+
+	if (type == IMSG_NETWORK_DEL) {
+		/* was the route redistributed? */
+		if (kr->flags & F_REDISTRIBUTED) {
+			/* remove redistributed flag */
+			kr->flags &= ~F_REDISTRIBUTED;
+			main_imsg_compose_rde(type, 0, kr,
+			    sizeof(struct kroute));
+		}
+		return;
+	}
+
+	/* Only non-ospfd routes are considered for redistribution. */
+	if (kr->flags & F_OSPFD_INSERTED)
+		return;
+
 	/* Dynamic routes are not redistributable. */
 	if (kr->flags & F_DYNAMIC)
+		return;
+
+	/* interface is not up and running so don't announce */
+	if (kr->flags & F_DOWN)
 		return;
 
 	/*
@@ -349,6 +370,12 @@ kr_redistribute(int type, struct kroute *kr)
 	if (kr->nexthop.s_addr == htonl(INADDR_LOOPBACK))
 		return;
 
+	/* Should we redistrubute this route? */
+	if (!ospf_redistribute(kr))
+		return;
+
+	/* Does not matter if we resend the kr, the RDE will cope. */
+	kr->flags |= F_REDISTRIBUTED;
 	main_imsg_compose_rde(type, 0, kr, sizeof(struct kroute));
 }
 
@@ -395,8 +422,18 @@ kroute_insert(struct kroute_node *kr)
 		return (-1);
 	}
 
-	if (kr->r.flags & F_KERNEL)
-		kr_redistribute(IMSG_NETWORK_ADD, &kr->r);
+	if (kr->r.flags & F_OSPFD_INSERTED) {
+		/* don't validate or redistribute ospf route */
+		kr->r.flags &= ~F_DOWN;
+		return (0);
+	}
+
+	if (kif_validate(kr->r.ifindex))
+		kr->r.flags &= ~F_DOWN;
+	else
+		kr->r.flags |= F_DOWN;
+
+	kr_redistribute(IMSG_NETWORK_ADD, &kr->r);
 
 	return (0);
 }
@@ -410,8 +447,7 @@ kroute_remove(struct kroute_node *kr)
 		return (-1);
 	}
 
-	if (kr->r.flags & F_KERNEL)
-		kr_redistribute(IMSG_NETWORK_DEL, &kr->r);
+	kr_redistribute(IMSG_NETWORK_DEL, &kr->r);
 
 	free(kr);
 	return (0);
@@ -480,20 +516,6 @@ kif_clear(void)
 
 	while ((kif = RB_MIN(kif_tree, &kit)) != NULL)
 		kif_remove(kif);
-}
-
-void
-kif_update(struct kif *k)
-{
-	struct kif_node		*kif;
-
-	if ((kif = kif_find(k->ifindex)) == NULL) {
-		log_warnx("interface with index %u not found",
-		    k->ifindex);
-		return;
-	}
-
-	memcpy(&kif->k, k, sizeof(struct kif));
 }
 
 int
@@ -606,6 +628,8 @@ void
 if_change(u_short ifindex, int flags, struct if_data *ifd)
 {
 	struct kif_node		*kif;
+	struct kroute_node	*kr;
+	int			 type;
 	u_int8_t		 reachable;
 
 	if ((kif = kif_find(ifindex)) == NULL) {
@@ -626,8 +650,21 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 		return;		/* nothing changed wrt nexthop validity */
 
 	kif->k.nh_reachable = reachable;
+	type = reachable ? IMSG_NETWORK_ADD : IMSG_NETWORK_DEL;
+
+	/* notify ospfe about interface link state */
 	main_imsg_compose_ospfe(IMSG_IFINFO, 0, &kif->k, sizeof(kif->k));
-	main_imsg_compose_rde(IMSG_IFINFO, 0, &kif->k, sizeof(kif->k));
+
+	/* update redistribute list */
+	RB_FOREACH(kr, kroute_tree, &krt)
+		if (kr->r.ifindex == ifindex) {
+			if (reachable)
+				kr->r.flags &= ~F_DOWN;
+			else
+				kr->r.flags |= F_DOWN;
+
+			kr_redistribute(type, &kr->r);
+		}
 }
 
 void
@@ -777,8 +814,7 @@ fetchtable(void)
 			return (-1);
 		}
 
-		if (!(rtm->rtm_flags & RTF_PROTO1))
-			kr->r.flags = F_KERNEL;
+		kr->r.flags = F_KERNEL;
 
 		switch (sa->sa_family) {
 		case AF_INET:
@@ -1002,6 +1038,12 @@ dispatch_rtmsg(void)
 				if (kr->r.flags & F_KERNEL) {
 					kr->r.nexthop.s_addr = nexthop.s_addr;
 					kr->r.flags = flags;
+
+					if (kif_validate(kr->r.ifindex))
+						kr->r.flags &= ~F_DOWN;
+					else
+						kr->r.flags |= F_DOWN;
+
 					/* just readd, the RDE will care */
 					kr_redistribute(IMSG_NETWORK_ADD,
 					    &kr->r);

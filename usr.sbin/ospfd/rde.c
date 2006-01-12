@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.36 2006/01/05 15:10:57 norby Exp $ */
+/*	$OpenBSD: rde.c,v 1.37 2006/01/12 15:10:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -56,11 +56,8 @@ int		 rde_req_list_exists(struct rde_nbr *, struct lsa_hdr *);
 void		 rde_req_list_del(struct rde_nbr *, struct lsa_hdr *);
 void		 rde_req_list_free(struct rde_nbr *);
 
-int		 rde_redistribute(struct kroute *);
-void		 rde_update_redistribute(int);
 struct lsa	*rde_asext_get(struct kroute *);
 struct lsa	*rde_asext_put(struct kroute *);
-void		 rde_asext_free(void);
 
 struct lsa	*orig_asext_lsa(struct kroute *, u_int16_t);
 struct lsa	*orig_sum_lsa(struct rt_node *, u_int8_t);
@@ -184,7 +181,6 @@ rde_shutdown(void)
 		area_del(a);
 	}
 	rde_nbr_free();
-	rde_asext_free();
 
 	msgbuf_clear(&ibuf_ospfe->w);
 	free(ibuf_ospfe);
@@ -566,7 +562,6 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	struct lsa		*lsa;
 	struct vertex		*v;
 	struct kroute		 kr;
-	struct kif		 kif;
 	int			 n;
 
 	switch (event) {
@@ -619,18 +614,6 @@ rde_dispatch_parent(int fd, short event, void *bula)
 
 				lsa_merge(nbrself, lsa, v);
 			}
-			break;
-		case IMSG_IFINFO:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(kif)) {
-				log_warnx("rde_dispatch: wrong imsg len");
-				break;
-			}
-			memcpy(&kif, imsg.data, sizeof(kif));
-
-			log_debug("IMSG_IFINFO: ifindex %i reachable %d",
-			    kif.ifindex, kif.nh_reachable);
-			kif_update(&kif);
-			rde_update_redistribute(kif.ifindex);
 			break;
 		default:
 			log_debug("rde_dispatch_parent: unexpected imsg %d",
@@ -921,144 +904,49 @@ rde_req_list_free(struct rde_nbr *nbr)
 /*
  * as-external LSA handling
  */
-LIST_HEAD(, rde_asext) rde_asext_list;
-
-int
-rde_redistribute(struct kroute *kr)
+struct lsa *
+rde_asext_get(struct kroute *kr)
 {
 	struct area	*area;
 	struct iface	*iface;
-	int		 rv = 0;
-
-	if (!(kr->flags & F_KERNEL))
-		return (0);
-
-	if ((rdeconf->options & OSPF_OPTION_E) == 0)
-		return (0);
-
-	if ((rdeconf->redistribute_flags & REDISTRIBUTE_DEFAULT) &&
-	    (kr->prefix.s_addr == INADDR_ANY && kr->prefixlen == 0))
-		return (1);
-
-	/* only allow 0.0.0.0/0 if REDISTRIBUTE_DEFAULT */
-	if (kr->prefix.s_addr == INADDR_ANY && kr->prefixlen == 0)
-		return (0);
-
-	if ((rdeconf->redistribute_flags & REDISTRIBUTE_STATIC) &&
-	    (kr->flags & F_STATIC))
-		rv = 1;
-	if ((rdeconf->redistribute_flags & REDISTRIBUTE_CONNECTED) &&
-	    (kr->flags & F_CONNECTED))
-		rv = 1;
-
-	/* route does not match redistribute_flags */
-	if (rv == 0)
-		return (0);
-
-	/* interface is not up and running so don't announce */
-	if (kif_validate(kr->ifindex) == 0)
-		return (0);
 
 	LIST_FOREACH(area, &rdeconf->area_list, entry)
 		LIST_FOREACH(iface, &area->iface_list, entry) {
 			if ((iface->addr.s_addr & iface->mask.s_addr) ==
 			    kr->prefix.s_addr && iface->mask.s_addr ==
-			    prefixlen2mask(kr->prefixlen))
-				rv = 0;	/* already announced as net LSA */
+			    prefixlen2mask(kr->prefixlen)) {
+				/* already announced as (stub) net LSA */
+				log_debug("rde_asext_get: %s/%d is net LSA",
+				    inet_ntoa(kr->prefix), kr->prefixlen);
+				return (NULL);
+			}
 		}
 
-	return (rv);
-}
-
-void
-rde_update_redistribute(int ifindex)
-{
-	struct rde_asext	*ae;
-	struct lsa		*lsa;
-	struct vertex		*v;
-	int			 wasused;
-
-	LIST_FOREACH(ae, &rde_asext_list, entry)
-		if (ae->kr.ifindex == ifindex) {
-			wasused = ae->used;
-			ae->used = rde_redistribute(&ae->kr);
-			if (ae->used)
-				lsa = orig_asext_lsa(&ae->kr, DEFAULT_AGE);
-			else if (wasused)
-				lsa = orig_asext_lsa(&ae->kr, MAX_AGE);
-			else
-				continue;
-
-			v = lsa_find(NULL, lsa->hdr.type,
-			    lsa->hdr.ls_id, lsa->hdr.adv_rtr);
-
-			lsa_merge(nbrself, lsa, v);
-		}
-}
-
-struct lsa *
-rde_asext_get(struct kroute *kr)
-{
-	struct rde_asext	*ae;
-	int			 wasused;
-
-	LIST_FOREACH(ae, &rde_asext_list, entry)
-		if (kr->prefix.s_addr == ae->kr.prefix.s_addr &&
-		    kr->prefixlen == ae->kr.prefixlen)
-			break;
-
-	if (ae == NULL) {
-		if ((ae = calloc(1, sizeof(*ae))) == NULL)
-			fatal("rde_asext_get");
-		LIST_INSERT_HEAD(&rde_asext_list, ae, entry);
-	}
-
-	memcpy(&ae->kr, kr, sizeof(ae->kr));
-
-	wasused = ae->used;
-	ae->used = rde_redistribute(kr);
-
-	if (ae->used)
-		/* update of seqnum is done by lsa_merge */
-		return (orig_asext_lsa(kr, DEFAULT_AGE));
-	else if (wasused)
-		/* lsa_merge will take care of removing the lsa from the db */
-		return (orig_asext_lsa(kr, MAX_AGE));
-	else
-		/* not in lsdb, superseded by a net lsa */
-		return (NULL);
+	/* update of seqnum is done by lsa_merge */
+	return (orig_asext_lsa(kr, DEFAULT_AGE));
 }
 
 struct lsa *
 rde_asext_put(struct kroute *kr)
 {
-	struct rde_asext	*ae;
-	int			 used;
+	struct area	*area;
+	struct iface	*iface;
 
-	LIST_FOREACH(ae, &rde_asext_list, entry)
-		if (kr->prefix.s_addr == ae->kr.prefix.s_addr &&
-		    kr->prefixlen == ae->kr.prefixlen) {
-			LIST_REMOVE(ae, entry);
-			used = ae->used;
-			free(ae);
-			if (used)
-				return (orig_asext_lsa(kr, MAX_AGE));
-			break;
+	LIST_FOREACH(area, &rdeconf->area_list, entry)
+		LIST_FOREACH(iface, &area->iface_list, entry) {
+			if ((iface->addr.s_addr & iface->mask.s_addr) ==
+			    kr->prefix.s_addr && iface->mask.s_addr ==
+			    prefixlen2mask(kr->prefixlen)) {
+				/* already announced as (stub) net LSA */
+				log_debug("rde_asext_put: %s/%d is net LSA",
+				    inet_ntoa(kr->prefix), kr->prefixlen);
+				return (NULL);
+			}
 		}
-	return (NULL);
+
+	/* remove by reflooding with MAX_AGE */
+	return (orig_asext_lsa(kr, MAX_AGE));
 }
-
-void
-rde_asext_free(void)
-{
-	struct rde_asext	*ae;
-
-	while ((ae = LIST_FIRST(&rde_asext_list)) != NULL) {
-		LIST_REMOVE(ae, entry);
-		free(ae);
-	}
-}
-
 
 /*
  * summary LSA stuff

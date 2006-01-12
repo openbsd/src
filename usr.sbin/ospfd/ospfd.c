@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.25 2005/12/29 13:58:49 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.26 2006/01/12 15:10:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -34,6 +34,7 @@
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <unistd.h>
 #include <util.h>
@@ -54,6 +55,7 @@ void	main_dispatch_ospfe(int, short, void *);
 void	main_dispatch_rde(int, short, void *);
 
 int	check_file_secrecy(int, const char *);
+void	ospf_redistribute_default(int);
 
 int	pipe_parent2ospfe[2];
 int	pipe_parent2rde[2];
@@ -239,6 +241,9 @@ main(int argc, char *argv[])
 
 	if (kr_init(!(conf->flags & OSPFD_FLAG_NO_FIB_UPDATE)) == -1)
 		fatalx("kr_init failed");
+
+	/* redistribute default */
+	ospf_redistribute_default(IMSG_NETWORK_ADD);
 
 	event_dispatch();
 
@@ -466,3 +471,35 @@ imsg_event_add(struct imsgbuf *ibuf)
 	event_set(&ibuf->ev, ibuf->fd, ibuf->events, ibuf->handler, ibuf);
 	event_add(&ibuf->ev, NULL);
 }
+
+int
+ospf_redistribute(struct kroute *kr)
+{
+	/* stub area router? */
+	if ((conf->options & OSPF_OPTION_E) == 0)
+		return (0);
+
+	/* only allow 0.0.0.0/0 via REDISTRIBUTE_DEFAULT */
+	if (kr->prefix.s_addr == INADDR_ANY && kr->prefixlen == 0)
+		return (0);
+
+	if ((conf->redistribute_flags & REDISTRIBUTE_STATIC) &&
+	    (kr->flags & F_STATIC))
+		return (1);
+	if ((conf->redistribute_flags & REDISTRIBUTE_CONNECTED) &&
+	    (kr->flags & F_CONNECTED))
+		return (1);
+
+	return (0);
+}
+
+void
+ospf_redistribute_default(int type)
+{
+	struct kroute	kr;
+
+	bzero(&kr, sizeof(kr));
+	if (conf->redistribute_flags & REDISTRIBUTE_DEFAULT)
+		main_imsg_compose_rde(type, 0, &kr, sizeof(struct kroute));
+}
+
