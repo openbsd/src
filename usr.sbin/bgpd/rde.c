@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.190 2006/01/05 16:00:07 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.191 2006/01/12 14:05:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -827,14 +827,9 @@ rde_update_dispatch(struct imsg *imsg)
 			return (-1);
 		}
 
-		/*
-		 * We need to copy attrs before calling the filter because
-		 * the filter may change the attributes.
-		 */
-		fasp = path_copy(asp);
 		/* input filter */
-		if (rde_filter(rules_l, peer, fasp, &prefix, prefixlen, peer,
-		    DIR_IN) == ACTION_DENY) {
+		if (rde_filter(&fasp, rules_l, peer, asp, &prefix, prefixlen,
+		    peer, DIR_IN) == ACTION_DENY) {
 			path_put(fasp);
 			continue;
 		}
@@ -850,9 +845,16 @@ rde_update_dispatch(struct imsg *imsg)
 			return (-1);
 		}
 
-		rde_update_log("update", peer, &asp->nexthop->exit_nexthop,
+		if (fasp == NULL)
+			fasp = asp;
+
+		rde_update_log("update", peer, &fasp->nexthop->exit_nexthop,
 		    &prefix, prefixlen);
 		path_update(peer, fasp, &prefix, prefixlen);
+
+		/* free modified aspath */
+		if (fasp != asp)
+			path_put(fasp);
 	}
 
 	/* add MP_REACH_NLRI if available */
@@ -912,10 +914,10 @@ rde_update_dispatch(struct imsg *imsg)
 				mpp += pos;
 				mplen -= pos;
 
-				fasp = path_copy(asp);
 				/* input filter */
-				if (rde_filter(rules_l, peer, fasp, &prefix,
-				    prefixlen, peer, DIR_IN) == ACTION_DENY) {
+				if (rde_filter(&fasp, rules_l, peer, asp,
+				    &prefix, prefixlen, peer, DIR_IN) ==
+				    ACTION_DENY) {
 					path_put(fasp);
 					continue;
 				}
@@ -932,10 +934,17 @@ rde_update_dispatch(struct imsg *imsg)
 					return (-1);
 				}
 
+				if (fasp == NULL)
+					fasp = asp;
+
 				rde_update_log("update", peer,
 				    &asp->nexthop->exit_nexthop,
 				    &prefix, prefixlen);
 				path_update(peer, fasp, &prefix, prefixlen);
+
+				/* free modified aspath */
+				if (fasp != asp)
+					path_put(fasp);
 			}
 			break;
 		default:
@@ -1686,14 +1695,12 @@ rde_softreconfig_out(struct pt_entry *pt, void *ptr)
 		if (up_test_update(peer, p) != 1)
 			continue;
 
-		/* copy attributes for output filter */
-		oasp = path_copy(p->aspath);
-		nasp = path_copy(p->aspath);
-
-		oa = rde_filter(rules_l, peer, oasp, &addr, pt->prefixlen,
-		    p->aspath->peer, DIR_OUT);
-		na = rde_filter(newrules, peer, nasp, &addr, pt->prefixlen,
-		    p->aspath->peer, DIR_OUT);
+		oa = rde_filter(&oasp, rules_l, peer, p->aspath, &addr,
+		    pt->prefixlen, p->aspath->peer, DIR_OUT);
+		na = rde_filter(&nasp, newrules, peer, p->aspath, &addr,
+		    pt->prefixlen, p->aspath->peer, DIR_OUT);
+		oasp = oasp != NULL ? oasp : p->aspath;
+		nasp = nasp != NULL ? nasp : p->aspath;
 
 		if (oa == ACTION_DENY && na == ACTION_DENY)
 			/* nothing todo */
@@ -1716,8 +1723,10 @@ rde_softreconfig_out(struct pt_entry *pt, void *ptr)
 		}
 
 done:
-		path_put(oasp);
-		path_put(nasp);
+		if (oasp != p->aspath)
+			path_put(oasp);
+		if (nasp != p->aspath)
+			path_put(nasp);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.40 2006/01/10 16:11:12 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.41 2006/01/12 14:05:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -30,12 +30,15 @@ int	rde_filter_match(struct filter_rule *, struct rde_aspath *,
 int	filterset_equal(struct filter_set_head *, struct filter_set_head *);
 
 enum filter_actions
-rde_filter(struct filter_head *rules, struct rde_peer *peer,
-    struct rde_aspath *asp, struct bgpd_addr *prefix, u_int8_t prefixlen,
-    struct rde_peer *from, enum directions dir)
+rde_filter(struct rde_aspath **new, struct filter_head *rules,
+    struct rde_peer *peer, struct rde_aspath *asp, struct bgpd_addr *prefix,
+    u_int8_t prefixlen, struct rde_peer *from, enum directions dir)
 {
 	struct filter_rule	*f;
 	enum filter_actions	 action = ACTION_ALLOW; /* default allow */
+
+	if (new != NULL)
+		*new = NULL;
 
 	TAILQ_FOREACH(f, rules, entry) {
 		if (dir != f->dir)
@@ -47,9 +50,13 @@ rde_filter(struct filter_head *rules, struct rde_peer *peer,
 		    f->peer.peerid != peer->conf.id)
 			continue;
 		if (rde_filter_match(f, asp, prefix, prefixlen)) {
-			if (asp != NULL)
-				rde_apply_set(asp, &f->set, prefix->af,
+			if (asp != NULL && new != NULL) {
+				/* asp may get modified so create a copy */
+				if (*new == NULL)
+					*new = path_copy(asp);
+				rde_apply_set(*new, &f->set, prefix->af,
 				    from, dir);
+			}
 			if (f->action != ACTION_NONE)
 				action = f->action;
 			if (f->quick)

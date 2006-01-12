@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.47 2006/01/05 16:00:07 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.48 2006/01/12 14:05:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -400,7 +400,7 @@ void
 up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
     struct prefix *new, struct prefix *old)
 {
-	struct rde_aspath		*fasp;
+	struct rde_aspath		*asp;
 	struct bgpd_addr		 addr;
 
 	if (peer->state != PEER_UP)
@@ -411,16 +411,11 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 		if (up_test_update(peer, old) != 1)
 			return;
 
-		/* copy attributes for output filter */
-		fasp = path_copy(old->aspath);
-
 		pt_getaddr(old->prefix, &addr);
-		if (rde_filter(rules, peer, fasp, &addr, old->prefix->prefixlen,
-		    old->aspath->peer, DIR_OUT) == ACTION_DENY) {
-			path_put(fasp);
+		if (rde_filter(NULL, rules, peer, old->aspath, &addr,
+		    old->prefix->prefixlen, old->aspath->peer, DIR_OUT) ==
+		    ACTION_DENY)
 			return;
-		}
-		path_put(fasp);
 
 		/* withdraw prefix */
 		up_generate(peer, NULL, &addr, old->prefix->prefixlen);
@@ -435,22 +430,22 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 			return;
 		}
 
-		/* copy attributes for output filter */
-		fasp = path_copy(new->aspath);
-
 		pt_getaddr(new->prefix, &addr);
-		if (rde_filter(rules, peer, fasp, &addr, new->prefix->prefixlen,
-		    new->aspath->peer, DIR_OUT) == ACTION_DENY) {
-			path_put(fasp);
+		if (rde_filter(&asp, rules, peer, new->aspath, &addr,
+		    new->prefix->prefixlen, new->aspath->peer, DIR_OUT) ==
+		    ACTION_DENY) {
+			path_put(asp);
 			up_generate_updates(rules, peer, NULL, old);
 			return;
 		}
 
 		/* generate update */
-		up_generate(peer, fasp, &addr, new->prefix->prefixlen);
-
-		/* no longer needed */
-		path_put(fasp);
+		if (asp != NULL) {
+			up_generate(peer, asp, &addr, new->prefix->prefixlen);
+			path_put(asp);
+		} else
+			up_generate(peer, new->aspath, &addr,
+			    new->prefix->prefixlen);
 	}
 }
 
@@ -459,7 +454,7 @@ void
 up_generate_default(struct filter_head *rules, struct rde_peer *peer,
     sa_family_t af)
 {
-	struct rde_aspath	*asp;
+	struct rde_aspath	*asp, *fasp;
 	struct bgpd_addr	 addr;
 
 	if (peer->capa_received.mp_v4 == SAFI_NONE &&
@@ -486,16 +481,21 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 	bzero(&addr, sizeof(addr));
 	addr.af = af;
 
-	if (rde_filter(rules, peer, asp, &addr, 0, NULL, DIR_OUT) ==
+	if (rde_filter(&fasp, rules, peer, asp, &addr, 0, NULL, DIR_OUT) ==
 	    ACTION_DENY) {
+		path_put(fasp);
 		path_put(asp);
 		return;
 	}
 
 	/* generate update */
-	up_generate(peer, asp, &addr, 0);
+	if (fasp != NULL)
+		up_generate(peer, fasp, &addr, 0);
+	else
+		up_generate(peer, asp, &addr, 0);
 
 	/* no longer needed */
+	path_put(fasp);
 	path_put(asp);
 }
 

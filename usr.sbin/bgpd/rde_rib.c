@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.76 2006/01/09 16:00:48 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.77 2006/01/12 14:05:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -86,8 +86,6 @@ path_update(struct rde_peer *peer, struct rde_aspath *nasp,
 
 	if ((p = prefix_get(peer, prefix, prefixlen)) != NULL) {
 		if (path_compare(nasp, p->aspath) == 0) {
-			/* already registered */
-			path_put(nasp);
 			/* update last change */
 			p->lastchange = time(NULL);
 			return;
@@ -100,12 +98,10 @@ path_update(struct rde_peer *peer, struct rde_aspath *nasp,
 	 * already in the RIB.
 	 */
 	if ((asp = path_lookup(nasp, peer)) == NULL) {
-		/* path not available, link new */
-		path_link(nasp, peer);
-		asp = nasp;
-	} else
-		/* path found, new aspath no longer needed */
-		path_put(nasp);
+		/* path not available, create and link new one */
+		asp = path_copy(nasp);
+		path_link(asp, peer);
+	}
 
 	/* if the prefix was found move it else add it to the aspath */
 	if (p != NULL)
@@ -299,6 +295,9 @@ path_get(void)
 void
 path_put(struct rde_aspath *asp)
 {
+	if (asp == NULL)
+		return;
+
 	if (asp->flags & F_ATTR_LINKED)
 		fatalx("path_put: linked object");
 
