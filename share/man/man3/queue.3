@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.40 2006/01/11 09:07:54 jmc Exp $
+.\"	$OpenBSD: queue.3,v 1.41 2006/01/12 12:05:11 jmc Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -487,6 +487,29 @@ as one would have with a doubly-linked list.
 The
 .Fn SLIST_EMPTY
 macro should be used to check whether a simple list is empty.
+.Sh SINGLY-LINKED LIST EXAMPLE
+.Bd -literal
+SLIST_HEAD(listhead, entry) head;
+struct entry {
+	...
+	SLIST_ENTRY(entry) entries;	/* Simple list. */
+	...
+} *n1, *n2, *np;
+
+SLIST_INIT(&head);			/* Initialize simple list. */
+
+n1 = malloc(sizeof(struct entry));	/* Insert at the head. */
+SLIST_INSERT_HEAD(&head, n1, entries);
+
+n2 = malloc(sizeof(struct entry));	/* Insert after. */
+SLIST_INSERT_AFTER(n1, n2, entries);
+
+SLIST_FOREACH(np, &head, entries)	/* Forward traversal. */
+	np-> ...
+
+while (!SLIST_EMPTY(&head))		/* Delete. */
+	SLIST_REMOVE_HEAD(&head, entries);
+.Ed
 .Sh LISTS
 A list is headed by a structure defined by the
 .Fn LIST_HEAD
