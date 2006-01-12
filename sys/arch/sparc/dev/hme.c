@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.50 2005/11/09 06:14:50 brad Exp $	*/
+/*	$OpenBSD: hme.c,v 1.51 2006/01/12 15:06:12 brad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -102,7 +102,7 @@ int	hme_tint(struct hme_softc *);
 int	hme_mint(struct hme_softc *, u_int32_t);
 int	hme_eint(struct hme_softc *, u_int32_t);
 
-/* TCP/UDP checksum offloading support */
+/* TCP/UDP checksum offload support */
 void	hme_rxcksum(struct mbuf *, u_int32_t);
 
 void	hme_reset_rx(struct hme_softc *);
@@ -749,7 +749,7 @@ hme_rxcksum(struct mbuf *m, u_int32_t flags)
 	struct ip *ip;
 	struct udphdr *uh;
 	int32_t hlen, len, pktlen;
-	u_int16_t cksum, flag_bad, flag_ok, *opts;
+	u_int16_t cksum, *opts;
 	u_int32_t temp32;
 	union pseudoh {
 		struct hdr {
@@ -787,8 +787,6 @@ hme_rxcksum(struct mbuf *m, u_int32_t flags)
 	case IPPROTO_TCP:
 		if (pktlen < (hlen + sizeof(struct tcphdr)))
 			return;
-		flag_ok = M_TCP_CSUM_IN_OK;
-		flag_bad = M_TCP_CSUM_IN_BAD;
 		break;
 	case IPPROTO_UDP:
 		if (pktlen < (hlen + sizeof(struct udphdr)))
@@ -796,14 +794,12 @@ hme_rxcksum(struct mbuf *m, u_int32_t flags)
 		uh = (struct udphdr *)((caddr_t)ip + hlen);
 		if (uh->uh_sum == 0)
 			return; /* no checksum */
-		flag_ok = M_UDP_CSUM_IN_OK;
-		flag_bad = M_UDP_CSUM_IN_BAD;
 		break;
 	default:
 		return;
 	}
 
-	cksum = ~(flags & HME_RXD_CSUM);
+	cksum = htons(~(flags & HME_RXD_CSUM));
 	/* cksum fixup for IP options */
 	len = hlen - sizeof(struct ip);
 	if (len > 0) {
@@ -826,10 +822,10 @@ hme_rxcksum(struct mbuf *m, u_int32_t flags)
 	temp32 = (temp32 >> 16) + (temp32 & 65535);
 	temp32 += (temp32 >> 16);
 	cksum = ~temp32;
-	if (cksum != 0)
-		m->m_pkthdr.csum_flags |= flag_bad;
-	else
-		m->m_pkthdr.csum_flags |= flag_ok;
+	if (cksum == 0) {
+		m->m_pkthdr.csum_flags |=
+			M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
+	}
 }
 
 int
