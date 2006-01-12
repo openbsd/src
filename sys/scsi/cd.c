@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.101 2005/12/25 20:01:11 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.102 2006/01/12 01:06:27 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1168,9 +1168,8 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	int spoofonly;
 {
 	struct cd_toc *toc;
-	u_int32_t lba, nlba;
 	char *errstring;
-	int tocidx, n, data_track = 0;
+	int tocidx, n, audioonly = 1;
 
 	bzero(lp, sizeof(struct disklabel));
 	bzero(clp, sizeof(struct cpu_disklabel));
@@ -1212,53 +1211,22 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 	lp->d_npartitions = RAW_PART + 1;
 
-	/*
-	 * Read the TOC and loop through the individual tracks laying them
-	 * out in our disklabel.
-	 *
-	 * XXX should we move all data tracks up front before any other tracks?
-	 */
 	if (cd_load_toc(cd, toc, CD_LBA_FORMAT)) {
-		n = 0; /* No valid TOC found. */
+		audioonly = 0; /* No valid TOC found == not an audio CD. */
 		goto done;
 	}
 
-	/* +2 to account for leading out track. */
-	n = toc->header.ending_track - toc->header.starting_track + 2;
-
-	/* Create the partition table.  */
-	/* Probably should sanity-check the drive's values */
-	lba = betoh32(toc->entries[0].addr.lba);
-	if (cd->sc_link->quirks & ADEV_LITTLETOC)
-		lba = swap32(lba);
-
-	for (tocidx = 1; tocidx < n && data_track < MAXPARTITIONS; tocidx++) {
-		nlba = betoh32(toc->entries[tocidx].addr.lba);
-		if (cd->sc_link->quirks & ADEV_LITTLETOC)
-			nlba = swap32(nlba);
-
-		if (toc->entries[tocidx - 1].control & 4) { 
-			lp->d_partitions[data_track].p_fstype = FS_UNUSED;
-			lp->d_partitions[data_track].p_offset = lba;
-			lp->d_partitions[data_track].p_size = nlba - lba;
-			data_track++;
-			if (data_track == RAW_PART)
-				data_track++;
+	n = toc->header.ending_track - toc->header.starting_track + 1;
+	for (tocidx = 0; tocidx < n; tocidx++)
+		if (toc->entries[tocidx].control & 4) {
+			audioonly = 0; /* Found a non-audio track. */
+			goto done;
 		}
-
-		lba = nlba;
-	}
-
-	lp->d_npartitions = max((RAW_PART + 1), data_track);
 
 done:
 	free(toc, M_TEMP);
 
-	/*
-	 * If there was no valid TOC found or the TOC says we have a data track
-	 * then look for a real disklabel.
-	 */
-	if (n == 0 || data_track > 0) {
+	if (!audioonly) {
 		errstring = readdisklabel(CDLABELDEV(dev), cdstrategy, lp, clp,
 		    spoofonly);
 		/*if (errstring)
