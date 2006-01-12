@@ -1,0 +1,32 @@
+.\"	$OpenBSD: delay.9,v 1.1 2006/01/12 00:17:17 dlg Exp $
+.\"
+.\" Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd January 10, 2006
+.Dt DELAY 9
+.Os
+.Sh NAME
+.Nm delay
+.Nd busy wait for an interval
+.Sh SYNOPSIS
+.In sys/param.h
+.Ft void
+.Fn delay "int delay"
+.Sh DESCRIPTION
+.Fn delay
+is called in the kernel to busy wait for a period of time.
+The
+.Fa delay
+argument specifies the period of time to wait for, in microseconds.
