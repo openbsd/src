@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.87 2005/12/25 21:39:06 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.88 2006/01/12 22:39:20 weingart Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -465,6 +465,8 @@ void			pmap_release(pmap_t);
 
 void			pmap_zero_phys(paddr_t);
 
+void	setcslimit(struct pmap *, struct trapframe *, struct pcb *, vaddr_t);
+
 /*
  * p m a p   i n l i n e   h e l p e r   f u n c t i o n s
  */
@@ -710,13 +712,14 @@ pmap_exec_account(struct pmap *pm, vaddr_t va,
 		struct trapframe *tf = curproc->p_md.md_regs;
 		struct pcb *pcb = &curproc->p_addr->u_pcb;
 
-		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 		pm->pm_hiexec = I386_MAX_EXE_ADDR;
+		setcslimit(pm, tf, pcb, I386_MAX_EXE_ADDR);
 	}
 }
 
 /*
  * Fixup the code segment to cover all potential executable mappings.
+ * Called by kernel SEGV trap handler.
  * returns 0 if no changes to the code segment were made.
  */
 int
@@ -733,22 +736,60 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
 		 * We need to make it point to the last page, not past it.
 		 */
 		if (ent->protection & VM_PROT_EXECUTE)
-			va = trunc_page(ent->end) - PAGE_SIZE;
+			va = trunc_page(ent->end - 1);
 	}
 	vm_map_unlock(map);
 
-	if (va == pm->pm_hiexec)
+	if (va <= pm->pm_hiexec) {
 		return (0);
+	}
 
 	pm->pm_hiexec = va;
 
-	if (pm->pm_hiexec > (vaddr_t)I386_MAX_EXE_ADDR) {
-		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE1_SEL, SEL_UPL);
-	} else {
-		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	}
-	
+	/*
+	 * We have a new 'highest executable' va, so we need to update
+	 * the value for the code segment limit, which is stored in the
+	 * PCB.
+	 */
+	setcslimit(pm, tf, pcb, va);
+
 	return (1);
+}
+
+void
+setcslimit(struct pmap *pm, struct trapframe *tf, struct pcb *pcb,
+    vaddr_t limit)
+{
+	/*
+	 * Called when we have a new 'highest executable' va, so we need
+	 * to update the value for the code segment limit, which is stored
+	 * in the PCB.
+	 *
+	 * There are no caching issues to be concerned with: the
+	 * processor reads the whole descriptor from the GDT when the
+	 * appropriate selector is loaded into a segment register, and
+	 * this only happens on the return to userland.
+	 *
+	 * This also works in the MP case, since whichever CPU gets to
+	 * run the process will pick up the right descriptor value from
+	 * the PCB.
+	 */
+	limit = min(limit, VM_MAXUSER_ADDRESS - 1);
+
+	setsegment(&pm->pm_codeseg, 0, atop(limit),
+	    SDT_MEMERA, SEL_UPL, 1, 1);
+
+	/* And update the GDT and LDT since we may be called by the
+	 * trap handler (cpu_switch won't get a chance).
+	 */
+#ifdef MULTIPROCESSOR
+	curcpu()->ci_gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd =
+	    pm->pm_codeseg;
+#else
+	gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd = pm->pm_codeseg;
+#endif
+
+	pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 }
 
 /*
@@ -1946,6 +1987,9 @@ pmap_pinit(pmap)
 	pmap->pm_hiexec = 0;
 	pmap->pm_flags = 0;
 
+	setsegment(&pmap->pm_codeseg, 0, atop(I386_MAX_EXE_ADDR) - 1,
+	    SDT_MEMERA, SEL_UPL, 1, 1);
+
 	/* allocate PDP */
 	pmap->pm_pdir = (pd_entry_t *) uvm_km_alloc(kernel_map, NBPG);
 	if (pmap->pm_pdir == NULL)
@@ -2171,11 +2215,32 @@ pmap_activate(p)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
+#ifdef MULTIPROCESSOR
+	struct cpu_info *self = curcpu();
+#endif
 
 	pcb->pcb_pmap = pmap;
+	/* Get the LDT that this process will actually use */
+#ifdef MULTIPROCESSOR
+	pcb->pcb_ldt = pmap->pm_ldt == NULL ? self->ci_ldt : pmap->pm_ldt;
+#else
+	pcb->pcb_ldt = pmap->pm_ldt == NULL ? ldt : pmap->pm_ldt;
+#endif
 	pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
 	pcb->pcb_cr3 = pmap->pm_pdirpa;
 	if (p == curproc) {
+		/*
+		 * Set the correct descriptor value (i.e. with the
+		 * correct code segment X limit) in the GDT and the LDT.
+		 */
+#ifdef MULTIPROCESSOR
+		self->ci_gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd =
+		    pmap->pm_codeseg;
+#else
+		gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd =
+		    pmap->pm_codeseg;
+#endif
+
 		lcr3(pcb->pcb_cr3);
 		lldt(pcb->pcb_ldt_sel);
 

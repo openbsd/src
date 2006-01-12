@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_machdep.c,v 1.21 2004/07/02 16:29:55 niklas Exp $	*/
+/*	$OpenBSD: svr4_machdep.c,v 1.22 2006/01/12 22:39:21 weingart Exp $	*/
 /*	$NetBSD: svr4_machdep.c,v 1.24 1996/05/03 19:42:26 christos Exp $	 */
 
 /*
@@ -322,7 +322,6 @@ svr4_sendsig(catcher, sig, mask, code, type, val)
 	union sigval val;
 {
 	register struct proc *p = curproc;
-	struct pmap *pmap = vm_map_pmap(&p->p_vmspace->vm_map);
 	register struct trapframe *tf;
 	struct svr4_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
@@ -380,8 +379,7 @@ svr4_sendsig(catcher, sig, mask, code, type, val)
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = p->p_sigcode;
-	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ? 
-	    GSEL(GUCODE1_SEL, SEL_UPL) : GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);

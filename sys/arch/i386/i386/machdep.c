@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.338 2006/01/06 10:53:16 grange Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.339 2006/01/12 22:39:20 weingart Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -488,6 +488,7 @@ i386_proc0_tss_ldt_init()
 	pcb->pcb_iomap_pad = 0xff;
 
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
+	pcb->pcb_ldt = ldt;
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
@@ -512,6 +513,7 @@ i386_init_pcb_tss_ldt(struct cpu_info *ci)
 	pcb->pcb_iomap_pad = 0xff;
 
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
+	pcb->pcb_ldt = ci->ci_ldt;
 	pcb->pcb_cr0 = rcr0();
 	ci->ci_idle_tss_sel = tss_alloc(pcb);
 }
@@ -2084,7 +2086,6 @@ sendsig(catcher, sig, mask, code, type, val)
 	extern char sigcode, sigcode_xmm;
 #endif
 	struct proc *p = curproc;
-	struct pmap *pmap = vm_map_pmap(&p->p_vmspace->vm_map);
 	struct trapframe *tf = p->p_md.md_regs;
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
@@ -2180,8 +2181,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = p->p_sigcode;
-	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ?
-	    GSEL(GUCODE1_SEL, SEL_UPL) : GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 #ifdef I686_CPU
 	if (i386_use_fxsave)
 		tf->tf_eip += &sigcode_xmm - &sigcode;
@@ -2591,6 +2591,30 @@ setregs(p, pack, stack, retval)
 	pmap_ldt_cleanup(p);
 #endif
 
+	/*
+	 * Reset the code segment limit to I386_MAX_EXE_ADDR in the pmap;
+	 * this gets copied into the GDT and LDT for {G,L}UCODE_SEL by
+	 * pmap_activate().
+	 */
+	setsegment(&pmap->pm_codeseg, 0, atop(I386_MAX_EXE_ADDR) - 1,
+	    SDT_MEMERA, SEL_UPL, 1, 1);
+
+	/*
+	 * And update the GDT and LDT since we return to the user process
+	 * by leaving the syscall (we don't do another pmap_activate()).
+	 */
+#ifdef MULTIPROCESSOR
+	curcpu()->ci_gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd =
+	    pmap->pm_codeseg;
+#else
+	gdt[GUCODE_SEL].sd = pcb->pcb_ldt[LUCODE_SEL].sd = pmap->pm_codeseg;
+#endif
+
+	/*
+	 * And reset the hiexec marker in the pmap.
+	 */
+	pmap->pm_hiexec = 0;
+
 	p->p_md.md_flags &= ~MDP_USEDFPU;
 	if (i386_use_fxsave) {
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __OpenBSD_NPXCW__;
@@ -2605,8 +2629,7 @@ setregs(p, pack, stack, retval)
 	tf->tf_ebp = 0;
 	tf->tf_ebx = (int)PS_STRINGS;
 	tf->tf_eip = pack->ep_entry;
-	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ?
-	    LSEL(LUCODE1_SEL, SEL_UPL) : LSEL(LUCODE_SEL, SEL_UPL);
+	tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
 	tf->tf_eflags = PSL_USERSET;
 	tf->tf_esp = stack;
 	tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
@@ -2739,6 +2762,32 @@ cpu_init_idt()
 	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
 	lidt(&region);
 }
+
+void
+cpu_default_ldt(struct cpu_info *ci)
+{
+	ci->ci_ldt = ldt;
+	ci->ci_ldt_len = sizeof(ldt);
+}
+
+void
+cpu_alloc_ldt(struct cpu_info *ci)
+{
+	union descriptor *cpu_ldt;
+	size_t len = sizeof(ldt);
+
+	cpu_ldt = (union descriptor *)uvm_km_alloc(kernel_map, len);
+	bcopy(ldt, cpu_ldt, len);
+	ci->ci_ldt = cpu_ldt;
+	ci->ci_ldt_len = len;
+}
+
+void
+cpu_init_ldt(struct cpu_info *ci)
+{
+	setsegment(&ci->ci_gdt[GLDT_SEL].sd, ci->ci_ldt, ci->ci_ldt_len - 1,
+	    SDT_SYSLDT, SEL_KPL, 0, 0);
+}
 #endif	/* MULTIPROCESSOR */
 
 void
@@ -2775,8 +2824,6 @@ init386(paddr_t first_avail)
 	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
 	setsegment(&gdt[GLDT_SEL].sd, ldt, sizeof(ldt) - 1, SDT_SYSLDT,
 	    SEL_KPL, 0, 0);
-	setsegment(&gdt[GUCODE1_SEL].sd, 0, atop(VM_MAXUSER_ADDRESS) - 1,
-	    SDT_MEMERA, SEL_UPL, 1, 1);
 	setsegment(&gdt[GUCODE_SEL].sd, 0, atop(I386_MAX_EXE_ADDR) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
 	setsegment(&gdt[GUDATA_SEL].sd, 0, atop(VM_MAXUSER_ADDRESS) - 1,
@@ -2787,7 +2834,6 @@ init386(paddr_t first_avail)
 	/* make ldt gates and memory segments */
 	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1, SDT_SYS386CGT,
 	    SEL_UPL, GCODE_SEL);
-	ldt[LUCODE1_SEL] = gdt[GUCODE1_SEL];
 	ldt[LUCODE_SEL] = gdt[GUCODE_SEL];
 	ldt[LUDATA_SEL] = gdt[GUDATA_SEL];
 	ldt[LBSDICALLS_SEL] = ldt[LSYS5CALLS_SEL];

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.22 2005/11/23 16:51:28 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.23 2006/01/12 22:39:20 weingart Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -110,6 +110,7 @@ member	pcb_cr3
 member	pcb_ebp
 member	pcb_esp
 member	pcb_cr0
+member	pcb_ldt
 member	pcb_ldt_sel
 member	pcb_onfault
 member	pcb_fpcpu
