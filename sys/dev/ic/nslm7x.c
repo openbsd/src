@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7x.c,v 1.17 2006/01/12 22:31:11 kettenis Exp $	*/
+/*	$OpenBSD: nslm7x.c,v 1.18 2006/01/12 22:45:46 kettenis Exp $	*/
 /*	$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $ */
 
 /*-
@@ -326,34 +326,6 @@ struct lm_sensor as99127f_sensors[] = {
 
 	{ NULL }
 };
-
-/* XXX Not so bus-independent probe. */
-int
-lm_probe(bus_space_tag_t iot, bus_space_handle_t ioh)
-{
-	u_int8_t cr;
-	int rv;
-
-	/* Check for some power-on defaults */
-	bus_space_write_1(iot, ioh, LMC_ADDR, LMD_CONFIG);
-
-	/* Perform LM78 reset */
-	bus_space_write_1(iot, ioh, LMC_DATA, 0x80);
-
-	/* XXX - Why do I have to reselect the register? */
-	bus_space_write_1(iot, ioh, LMC_ADDR, LMD_CONFIG);
-	cr = bus_space_read_1(iot, ioh, LMC_DATA);
-
-	/* XXX - spec says *only* 0x08! */
-	if ((cr == 0x08) || (cr == 0x01) || (cr == 0x03))
-		rv = 1;
-	else
-		rv = 0;
-
-	DPRINTF(("lm: rv = %d, cr = %x\n", rv, cr));
-
-	return (rv);
-}
 
 void
 lm_attach(struct lm_softc *sc)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7xvar.h,v 1.10 2006/01/12 22:31:11 kettenis Exp $	*/
+/*	$OpenBSD: nslm7xvar.h,v 1.11 2006/01/12 22:45:46 kettenis Exp $	*/
 /*	$NetBSD: nslm7xvar.h,v 1.10 2002/11/15 14:55:42 ad Exp $ */
 
 /*-
@@ -163,6 +163,5 @@ struct lm_softc {
 };
 
 void lm_attach(struct lm_softc *);
-int  lm_probe(bus_space_tag_t, bus_space_handle_t);
 
 #endif /* _DEV_ISA_NSLM7XVAR_H_ */
