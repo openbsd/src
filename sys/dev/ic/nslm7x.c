@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7x.c,v 1.15 2006/01/09 20:40:19 kettenis Exp $	*/
+/*	$OpenBSD: nslm7x.c,v 1.16 2006/01/12 20:03:14 kettenis Exp $	*/
 /*	$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $ */
 
 /*-
@@ -422,7 +422,7 @@ wb_match(struct lm_softc *sc)
 		lm_setup_sensors(sc, w83627hf_sensors);
 		break;
 	case WB_CHIPID_W83637HF:
-		printf(": W83627HF\n");
+		printf(": W83637HF\n");
 		lm_setup_sensors(sc, w83637hf_sensors);
 		break;
 	case WB_CHIPID_W83697HF:
