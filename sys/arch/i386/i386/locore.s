@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.95 2005/11/25 07:07:49 tom Exp $	*/
+/*	$OpenBSD: locore.s,v 1.96 2006/01/12 15:59:03 mickey Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -587,7 +587,7 @@ try586:	/* Use the `cpuid' instruction. */
 1:	cmpl	$NKPTP_MAX,%ecx			# larger than max?
 	jle	2f
 	movl	$NKPTP_MAX,%ecx
-2:
+2:	movl	%ecx,RELOC(_C_LABEL(nkpde))	# and store it back
 
 	/* Clear memory for bootstrap tables. */
 	shll	$PGSHIFT,%ecx
