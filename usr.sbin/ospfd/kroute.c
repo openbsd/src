@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.22 2006/01/05 15:53:36 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.23 2006/01/12 15:00:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -172,8 +172,8 @@ kr_change(struct kroute *kroute)
 	}
 
 	/* nexthop within 127/8 -> ignore silently */
-	if ((kroute->nexthop.s_addr & htonl(0xff000000)) ==
-	    inet_addr("127.0.0.0"))
+	if ((kroute->nexthop.s_addr & htonl(IN_CLASSA_NET)) ==
+	    htonl(INADDR_LOOPBACK & IN_CLASSA_NET))
 		return (0);
 
 	if (send_rtmsg(kr_state.fd, action, kroute) == -1)
@@ -210,8 +210,8 @@ kr_delete(struct kroute *kroute)
 		return (0);
 
 	/* nexthop within 127/8 -> ignore silently */
-	if ((kroute->nexthop.s_addr & htonl(0xff000000)) ==
-	    inet_addr("127.0.0.0"))
+	if ((kroute->nexthop.s_addr & htonl(IN_CLASSA_NET)) ==
+	    htonl(INADDR_LOOPBACK & IN_CLASSA_NET))
 		return (0);
 
 	if (send_rtmsg(kr_state.fd, RTM_DELETE, kroute) == -1)
@@ -539,7 +539,7 @@ protect_lo(void)
 		log_warn("protect_lo");
 		return (-1);
 	}
-	kr->r.prefix.s_addr = inet_addr("127.0.0.1");
+	kr->r.prefix.s_addr = htonl(INADDR_LOOPBACK);
 	kr->r.prefixlen = 8;
 	kr->r.flags = F_KERNEL|F_CONNECTED;
 
