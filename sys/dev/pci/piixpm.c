@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.14 2006/01/05 10:43:15 grange Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.15 2006/01/12 00:21:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -134,8 +134,8 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	} else if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_IRQ) {
 		/* Install interrupt handler */
 		if (pci_intr_map(pa, &ih)) {
-			printf(": can't map interrupt\n");
-			goto fail;
+			printf(": can't map interrupt");
+			goto ok;
 		}
 		intrstr = pci_intr_string(pa->pa_pc, ih);
 		sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
@@ -149,6 +149,7 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 		}
 		printf(": %s", intrstr);
 	} else {
+ok:
 		sc->sc_poll = 1;
 	}
 
