@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.276 2005/11/30 16:04:33 tom Exp $
+#	$OpenBSD: rc,v 1.277 2006/01/12 21:54:15 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -239,8 +239,6 @@ if [ X"${pf}" != X"NO" ]; then
 fi
 
 sysctl_conf
-
-mixerctl_conf
 
 # set hostname, turn on network
 echo 'starting network'
@@ -694,6 +692,8 @@ fi
 echo '.'
 
 wsconsctl_conf
+
+mixerctl_conf
 
 # KerberosV master KDC
 if [ X"${krb5_master_kdc}" = X"YES" ]; then
