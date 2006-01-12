@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.65 2005/12/29 10:09:51 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.66 2006/01/12 17:15:59 jmc Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -1257,11 +1257,15 @@ also ignores and unsets
 .It Pa .depend
 list of dependencies
 .It Pa BSDmakefile
-list of dependencies
-.It Pa Makefile
-list of dependencies
+default makefile
 .It Pa makefile
-list of dependencies
+default makefile if
+.Pa BSDmakefile
+does not exist
+.It Pa Makefile
+default makefile if
+.Pa makefile
+does not exist
 .It Pa sys.mk
 system makefile
 .It Pa /usr/share/mk
