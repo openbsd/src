@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm_isa.c,v 1.3 2003/06/29 21:17:07 grange Exp $	*/
+/*	$OpenBSD: lm_isa.c,v 1.4 2006/01/12 22:34:51 kettenis Exp $	*/
 /*	$NetBSD: lm_isa.c,v 1.9 2002/11/15 14:55:44 ad Exp $ */
 
 /*-
@@ -71,16 +71,7 @@ lm_isa_match(struct device *parent, void *match, void *aux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	struct isa_attach_args *ia = aux;
-	int iobase;
-	int rv;
-
-#ifdef __NetBSD__
-	if (ISA_DIRECT_CONFIG(ia))
-		return (0);
-
-	if (ia->ipa_io[0].ir_addr == ISACF_PORT_DEFAULT)
-		return (0);
-#endif
+	int iobase, banksel, vendid, addr;
 
 	iot = ia->ia_iot;
 	iobase = ia->ipa_io[0].base;
@@ -90,44 +81,63 @@ lm_isa_match(struct device *parent, void *match, void *aux)
 		return (0);
 	}
 
-	/* Bus independent probe */
-	rv = lm_probe(iot, ioh);
+	/* Probe for Winbond chips. */
+	bus_space_write_1(iot, ioh, LMC_ADDR, WB_BANKSEL);
+	banksel = bus_space_read_1(iot, ioh, LMC_DATA);
+	bus_space_write_1(iot, ioh, LMC_ADDR, WB_VENDID);
+	vendid = bus_space_read_1(iot, ioh, LMC_DATA);
+	if (((banksel & 0x80) && vendid == (WB_VENDID_WINBOND >> 8)) ||
+	    (!(banksel & 0x80) && vendid == (WB_VENDID_WINBOND & 0xff)))
+		goto found;
+
+	/*
+	 * Probe for LM78/79/81.
+	 *
+	 * XXX Assumes the address has not been changed from the
+	 * power up default.
+	 */ 
+	bus_space_write_1(iot, ioh, LMC_ADDR, LMD_SBUSADDR);
+	addr = bus_space_read_1(iot, ioh, LMC_DATA);
+	if ((addr & 0xfc) == 0x2c)
+		goto found;
 
 	bus_space_unmap(iot, ioh, 8);
 
-	if (rv) {
-		ia->ipa_nio = 1;
-		ia->ipa_io[0].length = 8;
+	return (0);
 
-		ia->ipa_nmem = 0;
-		ia->ipa_nirq = 0;
-		ia->ipa_ndrq = 0;
-	}
+ found:
+	bus_space_unmap(iot, ioh, 8);
 
-	return (rv);
+	ia->ipa_nio = 1;
+	ia->ipa_io[0].length = 8;
+
+	ia->ipa_nmem = 0;
+	ia->ipa_nirq = 0;
+	ia->ipa_ndrq = 0;
+
+	return (1);
 }
 
 void
 lm_isa_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct lm_softc *lmsc = (void *)self;
+	struct lm_softc *sc = (struct lm_softc *)self;
 	int iobase;
 	bus_space_tag_t iot;
 	struct isa_attach_args *ia = aux;
 
         iobase = ia->ipa_io[0].base;
-	iot = lmsc->lm_iot = ia->ia_iot;
+	iot = sc->lm_iot = ia->ia_iot;
 
-	if (bus_space_map(iot, iobase, 8, 0, &lmsc->lm_ioh)) {
+	if (bus_space_map(iot, iobase, 8, 0, &sc->lm_ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
 
 	/* Bus-independant attachment */
-	lmsc->lm_writereg = lm_isa_writereg;
-	lmsc->lm_readreg = lm_isa_readreg;
-
-	lm_attach(lmsc);
+	sc->lm_writereg = lm_isa_writereg;
+	sc->lm_readreg = lm_isa_readreg;
+	lm_attach(sc);
 }
 
 u_int8_t
