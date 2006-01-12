@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1001 2006/01/08 19:55:11 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1002 2006/01/12 01:26:56 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -7031,6 +7031,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce Go 6800 Ultra",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADROFX1400,
+	    "Quadro FX 1400",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_ISA,
 	    "nForce3 ISA",
 	},
@@ -7473,6 +7477,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCEFXGO5200_2,
 	    "GeForce FX Go 5200",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADROFX500,
+	    "Quadro FX 500/600",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCEFXGO5300,
@@ -9771,8 +9779,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT6420 SATA",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4X400,
+	    "P4X400 Host",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8235_ISA,
 	    "VT8235 ISA",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_P4N333,
+	    "P4N333 Host",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB,
@@ -9789,6 +9805,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8378,
 	    "VT8378 PCI",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PT890,
+	    "PT890 Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T800M,
+	    "K8T800M Host",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237_ISA,
@@ -9833,6 +9857,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_4,
 	    "K8HTB Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_IOAPIC,
+	    "K8T890 IOAPIC",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII,
@@ -9924,15 +9952,19 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_C,
-	    "K8T390 PCI-PCI",
+	    "K8T890 PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_D,
-	    "K8T390 PCI-PCI",
+	    "K8T890 PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_E,
-	    "K8T390 PCI-PCI",
+	    "K8T890 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_F,
+	    "K8T890 PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_VITESSE, PCI_PRODUCT_VITESSE_VSC_7174,
