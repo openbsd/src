@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7x.c,v 1.16 2006/01/12 20:03:14 kettenis Exp $	*/
+/*	$OpenBSD: nslm7x.c,v 1.17 2006/01/12 22:31:11 kettenis Exp $	*/
 /*	$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $ */
 
 /*-
@@ -75,6 +75,7 @@ void wb_refresh_n12volts(struct lm_softc *, int);
 void wb_refresh_n5volts(struct lm_softc *, int);
 void wb_refresh_temp(struct lm_softc *, int);
 void wb_refresh_fanrpm(struct lm_softc *, int);
+void wb_w83792d_refresh_fanrpm(struct lm_softc *, int);
 
 struct lm_chip {
 	int (*chip_match)(struct lm_softc *);
@@ -274,6 +275,35 @@ struct lm_sensor w83791d_sensors[] = {
 	{ NULL }
 };
 
+struct lm_sensor w83792d_sensors[] = {
+	/* Voltage */
+	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
+	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volts, 10000 },
+	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volts, 10000 },
+	{ "-5V", SENSOR_VOLTS_DC, 0, 0x23, wb_refresh_n5volts, 10000 },
+	{ "+12V", SENSOR_VOLTS_DC, 0, 0x24, lm_refresh_volts, 38000},
+	{ "-12V", SENSOR_VOLTS_DC, 0, 0x25, wb_refresh_n12volts, 10000 },
+	{ "+5V", SENSOR_VOLTS_DC, 0, 0x26, lm_refresh_volts, 16800 },
+	{ "5VSB", SENSOR_VOLTS_DC, 0, 0xb0, lm_refresh_volts, 15151 },
+	{ "VBAT", SENSOR_VOLTS_DC, 0, 0xb1, lm_refresh_volts, 10000 },
+
+	/* Temperature */
+	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
+	{ "Temp2", SENSOR_TEMP, 0, 0xc0, wb_refresh_temp },
+	{ "Temp3", SENSOR_TEMP, 0, 0xc8, wb_refresh_temp },
+
+	/* Fans */
+	{ "Fan1", SENSOR_FANRPM, 0, 0x28, wb_w83792d_refresh_fanrpm },
+	{ "Fan2", SENSOR_FANRPM, 0, 0x29, wb_w83792d_refresh_fanrpm },
+	{ "Fan3", SENSOR_FANRPM, 0, 0x2a, wb_w83792d_refresh_fanrpm },
+	{ "Fan4", SENSOR_FANRPM, 0, 0xb8, wb_w83792d_refresh_fanrpm },
+	{ "Fan5", SENSOR_FANRPM, 0, 0xb9, wb_w83792d_refresh_fanrpm },
+	{ "Fan6", SENSOR_FANRPM, 0, 0xba, wb_w83792d_refresh_fanrpm },
+	{ "Fan7", SENSOR_FANRPM, 0, 0xbe, wb_w83792d_refresh_fanrpm },
+
+	{ NULL }
+};
+
 struct lm_sensor as99127f_sensors[] = {
 	/* Voltage */
 	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volts, 10000 },
@@ -394,7 +424,7 @@ def_match(struct lm_softc *sc)
 int
 wb_match(struct lm_softc *sc)
 {
-	int banksel, vendid, chipid;
+	int banksel, vendid, chipid, devid;
 
 	/* Read vendor ID */
 	banksel = sc->lm_readreg(sc, WB_BANKSEL);
@@ -407,8 +437,9 @@ wb_match(struct lm_softc *sc)
 	if (vendid != WB_VENDID_WINBOND && vendid != WB_VENDID_ASUS)
 		return 0;
 
-	/* Read chip ID */
+	/* Read device/chip ID */
 	sc->lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B0);
+	devid = sc->lm_readreg(sc, LMD_CHIPID);
 	chipid = sc->lm_readreg(sc, WB_BANK0_CHIPID);
 	sc->lm_writereg(sc, WB_BANKSEL, banksel);
 	DPRINTF(("winbond chip id 0x%x\n", chipid));
@@ -446,6 +477,13 @@ wb_match(struct lm_softc *sc)
 	case WB_CHIPID_W83791D_2:
 		printf(": W83791D\n");
 		lm_setup_sensors(sc, w83791d_sensors);
+		break;
+	case WB_CHIPID_W83792D:
+		if (devid >= 0x10 && devid <= 0x29)
+			printf(": W83782D rev %c\n", 'A' + devid - 0x10);
+		else
+			printf(": W83782D rev 0x%x\n", devid);
+		lm_setup_sensors(sc, w83792d_sensors);
 		break;
 	case WB_CHIPID_AS99127F:
 		if (vendid == WB_VENDID_ASUS) {
@@ -672,6 +710,51 @@ wb_refresh_fanrpm(struct lm_softc *sc, int n)
 		sensor->flags |= SENSOR_FINVALID;
 		sensor->value = 0;
 	} else {
+		sensor->flags &= ~SENSOR_FINVALID;
+		sensor->value = 1350000 / (data << divisor);
+	}
+}
+
+void
+wb_w83792d_refresh_fanrpm(struct lm_softc *sc, int n)
+{
+	struct sensor *sensor = &sc->sensors[n];
+	int reg, shift, data, divisor = 1;
+
+	switch (sc->lm_sensors[n].reg) {
+	case 0x28:
+		reg = 0x47; shift = 0;
+		break;
+	case 0x29:
+		reg = 0x47; shift = 4;
+		break;
+	case 0x2a:
+		reg = 0x5b; shift = 0;
+		break;
+	case 0xb8:
+		reg = 0x5b; shift = 4;
+		break;
+	case 0xb9:
+		reg = 0x5c; shift = 0;
+		break;
+	case 0xba:
+		reg = 0x5c; shift = 4;
+		break;
+	case 0xbe:
+		reg = 0x9e; shift = 0;
+		break;
+	default:
+		reg = 0;
+		break;
+	}
+
+	data = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
+	if (data == 0xff || data == 0x00) {
+		sensor->flags |= SENSOR_FINVALID;
+		sensor->value = 0;
+	} else {
+		if (reg != 0)
+			divisor = (sc->lm_readreg(sc, reg) >> shift) & 0x7;
 		sensor->flags &= ~SENSOR_FINVALID;
 		sensor->value = 1350000 / (data << divisor);
 	}

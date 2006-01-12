@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7xvar.h,v 1.9 2006/01/09 20:40:19 kettenis Exp $	*/
+/*	$OpenBSD: nslm7xvar.h,v 1.10 2006/01/12 22:31:11 kettenis Exp $	*/
 /*	$NetBSD: nslm7xvar.h,v 1.10 2002/11/15 14:55:42 ad Exp $ */
 
 /*-
@@ -132,7 +132,7 @@
 /* Reference voltage */
 #define WB_VREF		3600
 
-#define WB_MAX_SENSORS  18
+#define WB_MAX_SENSORS  19
 
 struct lm_softc;
 
