@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.41 2006/01/12 12:05:11 jmc Exp $
+.\"	$OpenBSD: queue.3,v 1.42 2006/01/12 17:01:15 jmc Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -620,7 +620,6 @@ macro should be used to check whether a list is empty.
 .Sh LIST EXAMPLE
 .Bd -literal
 LIST_HEAD(listhead, entry) head;
-struct listhead *headp;		/* List head. */
 struct entry {
 	...
 	LIST_ENTRY(entry) entries;	/* List. */
@@ -865,7 +864,6 @@ macro should be used to check whether a tail queue is empty.
 .Sh TAIL QUEUE EXAMPLE
 .Bd -literal
 TAILQ_HEAD(tailhead, entry) head;
-struct tailhead *headp;		/* Tail queue head. */
 struct entry {
 	...
 	TAILQ_ENTRY(entry) entries;	/* Tail queue. */
@@ -1002,7 +1000,6 @@ macro should be used to check whether a circular queue is empty.
 .Sh CIRCULAR QUEUE EXAMPLE
 .Bd -literal
 CIRCLEQ_HEAD(circleq, entry) head;
-struct circleq *headp;			/* Circular queue head. */
 struct entry {
 	...
 	CIRCLEQ_ENTRY(entry) entries;	/* Circular queue. */
