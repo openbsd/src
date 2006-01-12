@@ -1,4 +1,4 @@
-/*	$OpenBSD: viapm.c,v 1.4 2006/01/01 20:52:27 deraadt Exp $	*/
+/*	$OpenBSD: viapm.c,v 1.5 2006/01/12 22:25:46 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis <kettenis@openbsd.org>
@@ -252,6 +252,13 @@ viapm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	    cmdlen, len, flags, bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 	    VIAPM_SMB_HS), VIAPM_SMB_HS_BITS));
 
+	/* Check if there's a transfer already running */
+	st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAPM_SMB_HS);
+	DPRINTF(("%s: exec: st 0x%b\n", sc->sc_dev.dv_xname, st,
+	    VIAPM_SMB_HS_BITS));
+	if (st & VIAPM_SMB_HS_BUSY)
+		return (1);
+
 	if (cold || sc->sc_poll)
 		flags |= I2C_F_POLL;
 
@@ -312,22 +319,35 @@ viapm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 				break;
 			DELAY(VIAPM_DELAY);
 		}
-		if (st & VIAPM_SMB_HS_BUSY) {
-			printf("%s: timeout, status 0x%b\n",
-			    sc->sc_dev.dv_xname, st, VIAPM_SMB_HS_BITS);
-			return (1);
-		}
+		if (st & VIAPM_SMB_HS_BUSY)
+			goto timeout;
 		viapm_intr(sc);
 	} else {
 		/* Wait for interrupt */
 		if (tsleep(sc, PRIBIO, "iicexec", VIAPM_TIMEOUT * hz))
-			return (1);
+			goto timeout;
 	}	
 
 	if (sc->sc_i2c_xfer.error)
 		return (1);
 
 	return (0);
+
+timeout:
+	/*
+	 * Transfer timeout. Kill the transaction and clear status bits.
+	 */
+	printf("%s: timeout, status 0x%b\n", sc->sc_dev.dv_xname, st,
+	    VIAPM_SMB_HS_BITS);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, VIAPM_SMB_HC,
+	    VIAPM_SMB_HC_KILL);
+	DELAY(VIAPM_DELAY);
+	st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAPM_SMB_HS);
+	if ((st & VIAPM_SMB_HS_FAILED) == 0)
+		printf("%s: transaction abort failed, status 0x%b\n",
+		    sc->sc_dev.dv_xname, st, VIAPM_SMB_HS_BITS);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, VIAPM_SMB_HS, st);
+	return (1);
 }
 
 int
