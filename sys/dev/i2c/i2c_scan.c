@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.54 2006/01/11 20:18:58 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.55 2006/01/12 00:12:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -562,8 +562,12 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	} else if (iicprobe(0x16) == 0x41 && ((iicprobe(0x17) & 0xf0) == 0x40) &&
 	    (addr == 0x2c || addr == 0x2d || addr == 0x2e)) {
 		name = "adm1026";
-	} else if (name == NULL && (addr & 0xfc) == 0x48) {
+	} else if (name == NULL && (addr & 0x7c) == 0x48) {
 		name = lm75probe();
+	} else if (name == NULL && (addr & 0x7c) == 0x48 &&
+	    (iicprobe(0xac) & 0x7e) == 0x4a &&
+	    (iicprobew(0xaa) & 0x0007) == 0x0000) {
+		name = "ds1624";
 	}
 	if (name == NULL) {
 		name = amd1032cloneprobe(addr);
