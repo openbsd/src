@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds1631.c,v 1.2 2005/12/27 17:18:18 deraadt Exp $	*/
+/*	$OpenBSD: ds1631.c,v 1.3 2006/01/13 00:13:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -55,7 +55,9 @@ maxds_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 
-	if (strcmp(ia->ia_name, "ds1631") == 0)
+	if (strcmp(ia->ia_name, "ds1631") == 0 ||
+	    strcmp(ia->ia_name, "ds1624") == 0 ||
+	    strcmp(ia->ia_name, "ds1721") == 0)
 		return (1);
 	return (0);
 }
