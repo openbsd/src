@@ -2,8 +2,8 @@
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
-.\" the American National Standards Committee X3, on Information
-.\" Processing Systems.
+.\" Chris Torek and the American National Standards Committee X3,
+.\" on Information Processing Systems.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,29 +29,39 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: qabs.3,v 1.7 2006/01/13 17:58:09 millert Exp $
+.\"	$OpenBSD: lldiv.3,v 1.1 2006/01/13 17:58:09 millert Exp $
 .\"
-.Dd June 29, 1991
-.Dt QABS 3
+.Dd January 3, 2006
+.Dt LLDIV 3
 .Os
 .Sh NAME
-.Nm qabs
-.Nd return the absolute value of a quad integer
+.Nm lldiv
+.Nd return quotient and remainder from division
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
-.Ft quad_t
-.Fn qabs "quad_t j"
+.Ft lldiv_t
+.Fn lldiv "long long num" "long long denom"
 .Sh DESCRIPTION
 The
-.Fn qabs
-function returns the absolute value of the quad integer
-.Fa j .
+.Fn lldiv
+function computes the value
+.Fa num Ns / Ns Fa denom
+and returns the quotient and remainder in a structure named
+.Li lldiv_t
+that contains two
+.Li long long integer
+members named
+.Fa quot
+and
+.Fa rem .
 .Sh SEE ALSO
-.Xr abs 3 ,
-.Xr imaxabs 3 ,
-.Xr cabs 3 ,
-.Xr floor 3 ,
-.Xr labs 3 ,
-.Xr math 3
-.Sh BUGS
-The absolute value of the most negative integer remains negative.
+.Xr div 3 ,
+.Xr imaxdiv 3 ,
+.Xr ldiv 3 ,
+.Xr math 3 ,
+.Xr qdiv 3
+.Sh STANDARDS
+The
+.Fn lldiv
+function conforms to
+.St -ansiC-99 .

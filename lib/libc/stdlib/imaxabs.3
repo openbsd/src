@@ -29,29 +29,38 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: qabs.3,v 1.7 2006/01/13 17:58:09 millert Exp $
+.\"	$OpenBSD: imaxabs.3,v 1.1 2006/01/13 17:58:09 millert Exp $
 .\"
-.Dd June 29, 1991
-.Dt QABS 3
+.Dd January 6, 2005
+.Dt IMAXABS 3
 .Os
 .Sh NAME
-.Nm qabs
-.Nd return the absolute value of a quad integer
+.Nm imaxabs
+.Nd integer absolute value function
 .Sh SYNOPSIS
-.Fd #include <stdlib.h>
-.Ft quad_t
-.Fn qabs "quad_t j"
+.Fd #include <inttypes.h>
+.Ft int
+.Fn imaxabs "int j"
 .Sh DESCRIPTION
 The
-.Fn qabs
-function returns the absolute value of the quad integer
+.Fn imaxabs
+function computes the absolute value of the intmax_t variable
 .Fa j .
+.Sh RETURN VALUES
+The
+.Fn imaxabs
+function returns the absolute value.
 .Sh SEE ALSO
 .Xr abs 3 ,
-.Xr imaxabs 3 ,
 .Xr cabs 3 ,
 .Xr floor 3 ,
+.Xr hypot 3 ,
 .Xr labs 3 ,
 .Xr math 3
+.Sh STANDARDS
+The
+.Fn abs
+function conforms to
+.St -ansiC-99 .
 .Sh BUGS
 The absolute value of the most negative integer remains negative.

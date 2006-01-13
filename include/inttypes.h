@@ -1,4 +1,4 @@
-/*	$OpenBSD: inttypes.h,v 1.6 2006/01/06 18:54:25 millert Exp $	*/
+/*	$OpenBSD: inttypes.h,v 1.7 2006/01/13 17:58:09 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 2005 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -286,6 +286,16 @@
 
 #endif /* __cplusplus || __STDC_FORMAT_MACROS */
 
-/* XXX - need to add imax/umax functions */
+typedef struct {
+	intmax_t quot;		/* quotient */
+	intmax_t rem;		/* remainder */
+} imaxdiv_t;
+
+__BEGIN_DECLS
+intmax_t	imaxabs(intmax_t);
+imaxdiv_t	imaxdiv(intmax_t, intmax_t);
+intmax_t	strtoimax(const char *, char **, int);
+uintmax_t	strtoumax(const char *, char **, int);
+__END_DECLS
 
 #endif /* _INTTYPES_H_ */

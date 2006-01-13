@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.36 2006/01/06 18:53:04 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.37 2006/01/13 17:58:09 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -61,6 +61,13 @@ typedef struct {
 	long quot;		/* quotient */
 	long rem;		/* remainder */
 } ldiv_t;
+
+#if __ISO_C_VISIBLE >= 1999
+typedef struct {
+	long long quot;		/* quotient */
+	long long rem;		/* remainder */
+} lldiv_t;
+#endif
 
 #if __BSD_VISIBLE
 typedef struct {
@@ -182,7 +189,7 @@ void	*valloc(size_t);		/* obsoleted by malloc() */
 /*
  * ISO C99
  */
-#if __BSD_VISIBLE || __ISO_C_VISIBLE >= 1999
+#if __ISO_C_VISIBLE >= 1999
 long long
 	 atoll(const char *);
 long long
