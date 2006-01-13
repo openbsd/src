@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.54 2006/01/04 06:04:41 canacar Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.55 2006/01/13 17:35:33 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -891,7 +891,8 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
 
 	if (len < RAL_RX_DESC_SIZE + IEEE80211_MIN_LEN) {
-		printf("%s: xfer too short %d\n", USBDEVNAME(sc->sc_dev), len);
+		DPRINTF(("%s: xfer too short %d\n", USBDEVNAME(sc->sc_dev),
+		    len));
 		ifp->if_ierrors++;
 		goto skip;
 	}
@@ -1079,42 +1080,32 @@ ural_setup_tx_desc(struct ural_softc *sc, struct ural_tx_desc *desc,
 	desc->flags |= htole32(RAL_TX_NEWSEQ);
 	desc->flags |= htole32(len << 16);
 
-	if (RAL_RATE_IS_OFDM(rate))
-		desc->flags |= htole32(RAL_TX_OFDM);
+	desc->wme = htole16(RAL_AIFSN(2) | RAL_LOGCWMIN(3) | RAL_LOGCWMAX(5));
 
-	desc->wme = htole16(RAL_AIFSN(3) | RAL_LOGCWMIN(4) | RAL_LOGCWMAX(6));
-
-	/*
-	 * Fill PLCP fields.
-	 */
+	/* setup PLCP fields */
+	desc->plcp_signal  = ural_plcp_signal(rate);
 	desc->plcp_service = 4;
 
 	len += IEEE80211_CRC_LEN;
 	if (RAL_RATE_IS_OFDM(rate)) {
-		/*
-		 * PLCP length field (LENGTH).
-		 * From IEEE Std 802.11a-1999, pp. 14.
-		 */
+		desc->flags |= htole32(RAL_TX_OFDM);
+
 		plcp_length = len & 0xfff;
-		desc->plcp_length = htole16((plcp_length >> 6) << 8 |
-		    (plcp_length & 0x3f));
+		desc->plcp_length_hi = plcp_length >> 6;
+		desc->plcp_length_lo = plcp_length & 0x3f;
 	} else {
-		/*
-		 * Long PLCP LENGTH field.
-		 * From IEEE Std 802.11b-1999, pp. 16.
-		 */
 		plcp_length = (16 * len + rate - 1) / rate;
 		if (rate == 22) {
 			remainder = (16 * len) % 22;
 			if (remainder != 0 && remainder < 7)
 				desc->plcp_service |= RAL_PLCP_LENGEXT;
 		}
-		desc->plcp_length = htole16(plcp_length);
-	}
+		desc->plcp_length_hi = plcp_length >> 8;
+		desc->plcp_length_lo = plcp_length & 0xff;
 
-	desc->plcp_signal = ural_plcp_signal(rate);
-	if (rate != 2 && (ic->ic_flags & IEEE80211_F_SHPREAMBLE))
-		desc->plcp_signal |= 0x08;
+		if (rate != 2 && (ic->ic_flags & IEEE80211_F_SHPREAMBLE))
+			desc->plcp_signal |= 0x08;
+	}
 
 	desc->iv = 0;
 	desc->eiv = 0;
@@ -2199,6 +2190,9 @@ ural_stop(struct ifnet *ifp, int disable)
 	ural_free_tx_list(sc);
 }
 
+#define URAL_AMRR_MIN_SUCCESS_THRESHOLD	 1
+#define URAL_AMRR_MAX_SUCCESS_THRESHOLD	10
+
 Static void
 ural_amrr_start(struct ural_softc *sc, struct ieee80211_node *ni)
 {
@@ -2210,8 +2204,8 @@ ural_amrr_start(struct ural_softc *sc, struct ieee80211_node *ni)
 
 	amrr->success = 0;
 	amrr->recovery = 0;
-	amrr->success_threshold = 0;
 	amrr->txcnt = amrr->retrycnt = 0;
+	amrr->success_threshold = URAL_AMRR_MIN_SUCCESS_THRESHOLD;
 
 	/* set rate to some reasonable initial value */
 	for (i = ni->ni_rates.rs_nrates - 1;
@@ -2262,7 +2256,7 @@ ural_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
 	amrr->retrycnt =
 	    sc->sta[7] +	/* TX one-retry ok count */
 	    sc->sta[8] +	/* TX more-retry ok count */
-	    sc->sta[8];		/* TX retry-fail count */
+	    sc->sta[9];		/* TX retry-fail count */
 
 	amrr->txcnt =
 	    amrr->retrycnt +
@@ -2285,10 +2279,6 @@ ural_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
  * not provide per-frame stats, we can't do per-node rate adaptation and
  * thus automatic rate adaptation is only enabled in STA operating mode.
  */
-
-#define URAL_AMRR_MIN_SUCCESS_THRESHOLD	 1
-#define URAL_AMRR_MAX_SUCCESS_THRESHOLD	10
-
 #define is_success(amrr)	\
 	((amrr)->retrycnt < (amrr)->txcnt / 10)
 #define is_failure(amrr)	\

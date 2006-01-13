@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ralreg.h,v 1.5 2005/04/01 13:13:43 damien Exp $  */
+/*	$OpenBSD: if_ralreg.h,v 1.6 2006/01/13 17:35:33 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -167,7 +167,8 @@ struct ural_tx_desc {
 	uint8_t		plcp_service;
 #define RAL_PLCP_LENGEXT	0x80
 
-	uint16_t	plcp_length;
+	uint8_t		plcp_length_lo;
+	uint8_t		plcp_length_hi;
 	uint32_t	iv;
 	uint32_t	eiv;
 } __packed;
