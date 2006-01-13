@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.56 2006/01/13 17:48:25 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.57 2006/01/13 21:00:54 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -150,6 +150,9 @@ Static void		ural_set_chan(struct ural_softc *,
 			    struct ieee80211_channel *);
 Static void		ural_disable_rf_tune(struct ural_softc *);
 Static void		ural_enable_tsf_sync(struct ural_softc *);
+Static void		ural_update_slot(struct ural_softc *);
+Static void		ural_set_txpreamble(struct ural_softc *);
+Static void		ural_set_basicrates(struct ural_softc *);
 Static void		ural_set_bssid(struct ural_softc *, uint8_t *);
 Static void		ural_set_macaddr(struct ural_softc *, uint8_t *);
 Static void		ural_update_promisc(struct ural_softc *);
@@ -433,9 +436,14 @@ USB_ATTACH(ural)
 	ic->ic_state = IEEE80211_S_INIT;
 
 	/* set device capabilities */
-	ic->ic_caps = IEEE80211_C_MONITOR | IEEE80211_C_IBSS |
-	    IEEE80211_C_HOSTAP | IEEE80211_C_SHPREAMBLE | IEEE80211_C_PMGT |
-	    IEEE80211_C_TXPMGT | IEEE80211_C_WEP;
+	ic->ic_caps =
+	    IEEE80211_C_IBSS |		/* IBSS mode supported */
+	    IEEE80211_C_MONITOR |	/* monitor mode supported */
+	    IEEE80211_C_HOSTAP |	/* HostAp mode supported */
+	    IEEE80211_C_TXPMGT |	/* tx power management */
+	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
+	    IEEE80211_C_SHSLOT |	/* short slot time supported */
+	    IEEE80211_C_WEP;		/* s/w WEP */
 
 	if (sc->rf_rev == RAL_RF_5222) {
 		/* set supported .11a rates */
@@ -716,6 +724,7 @@ ural_task(void *arg)
 	struct ural_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 	enum ieee80211_state ostate;
+	struct ieee80211_node *ni;
 	struct mbuf *m;
 
 	ostate = ic->ic_state;
@@ -747,31 +756,25 @@ ural_task(void *arg)
 	case IEEE80211_S_RUN:
 		ural_set_chan(sc, ic->ic_bss->ni_chan);
 
-		/* update basic rate set */
-		if (ic->ic_curmode == IEEE80211_MODE_11B) {
-			/* 11b basic rates: 1, 2Mbps */
-			ural_write(sc, RAL_TXRX_CSR11, 0x3);
-		} else if (IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan)) {
-			/* 11a basic rates: 6, 12, 24Mbps */
-			ural_write(sc, RAL_TXRX_CSR11, 0x150);
-		} else {
-			/* 11g basic rates: 1, 2, 5.5, 11, 6, 12, 24Mbps */
-			ural_write(sc, RAL_TXRX_CSR11, 0x15f);
-		}
+		ni = ic->ic_bss;
 
-		if (ic->ic_opmode != IEEE80211_M_MONITOR)
-			ural_set_bssid(sc, ic->ic_bss->ni_bssid);
+		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
+			ural_update_slot(sc);
+			ural_set_txpreamble(sc);
+			ural_set_basicrates(sc);
+			ural_set_bssid(sc, ni->ni_bssid);
+		}
 
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP ||
 		    ic->ic_opmode == IEEE80211_M_IBSS) {
-			m = ieee80211_beacon_alloc(ic, ic->ic_bss);
+			m = ieee80211_beacon_alloc(ic, ni);
 			if (m == NULL) {
 				printf("%s: could not allocate beacon\n",
 				    USBDEVNAME(sc->sc_dev));
 				return;
 			}
 
-			if (ural_tx_bcn(sc, m, ic->ic_bss) != 0) {
+			if (ural_tx_bcn(sc, m, ni) != 0) {
 				m_freem(m);
 				printf("%s: could not transmit beacon\n",
 				    USBDEVNAME(sc->sc_dev));
@@ -820,7 +823,10 @@ ural_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 #define RAL_ACK_SIZE	14	/* 10 + 4(FCS) */
 #define RAL_CTS_SIZE	14	/* 10 + 4(FCS) */
-#define RAL_SIFS	10
+
+#define RAL_SIFS		10	/* us */
+
+#define RAL_RXTX_TURNAROUND	5	/* us */
 
 Static void
 ural_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
@@ -1814,6 +1820,63 @@ ural_enable_tsf_sync(struct ural_softc *sc)
 	ural_write(sc, RAL_TXRX_CSR19, tmp);
 
 	DPRINTF(("enabling TSF synchronization\n"));
+}
+
+Static void
+ural_update_slot(struct ural_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	uint16_t slottime, sifs, eifs;
+
+	slottime = (ic->ic_flags & IEEE80211_F_SHSLOT) ? 9 : 20;
+
+	/*
+	 * These settings may sound a bit inconsistent but this is what the
+	 * reference driver does.
+	 */
+	if (ic->ic_curmode == IEEE80211_MODE_11B) {
+		sifs = 16 - RAL_RXTX_TURNAROUND;
+		eifs = 364;
+	} else {
+		sifs = 10 - RAL_RXTX_TURNAROUND;
+		eifs = 64;
+	}
+
+	ural_write(sc, RAL_MAC_CSR10, slottime);
+	ural_write(sc, RAL_MAC_CSR11, sifs);
+	ural_write(sc, RAL_MAC_CSR12, eifs);
+}
+
+Static void
+ural_set_txpreamble(struct ural_softc *sc)
+{
+	uint16_t tmp;
+
+	tmp = ural_read(sc, RAL_TXRX_CSR10);
+
+	tmp &= ~RAL_SHORT_PREAMBLE;
+	if (sc->sc_ic.ic_flags & IEEE80211_F_SHPREAMBLE)
+		tmp |= RAL_SHORT_PREAMBLE;
+
+	ural_write(sc, RAL_TXRX_CSR10, tmp);
+}
+
+Static void
+ural_set_basicrates(struct ural_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	/* update basic rate set */
+	if (ic->ic_curmode == IEEE80211_MODE_11B) {
+		/* 11b basic rates: 1, 2Mbps */
+		ural_write(sc, RAL_TXRX_CSR11, 0x3);
+	} else if (IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan)) {
+		/* 11a basic rates: 6, 12, 24Mbps */
+		ural_write(sc, RAL_TXRX_CSR11, 0x150);
+	} else {
+		/* 11g basic rates: 1, 2, 5.5, 11, 6, 12, 24Mbps */
+		ural_write(sc, RAL_TXRX_CSR11, 0x15f);
+	}
 }
 
 Static void
