@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getopt.1,v 1.8 2003/02/17 13:39:37 jmc Exp $	-*- nroff -*-
+.\"	$OpenBSD: getopt.1,v 1.9 2006/01/13 22:13:53 jmc Exp $	-*- nroff -*-
 .\"
 .\" This material, written by Henry Spencer, was released by him
 .\" into the public domain and is thus not subject to any copyright.
@@ -10,7 +10,7 @@
 .Nm getopt
 .Nd parse command options
 .Sh SYNOPSIS
-.Nm set \-\- \`getopt optstring $*\`
+.Nm set -- `getopt optstring $*`
 .Sh DESCRIPTION
 .Nm
 is used to break up options in command lines for easy parsing by
@@ -22,17 +22,18 @@ if a letter is followed by a colon, the option
 is expected to have an argument which may or may not be
 separated from it by whitespace.
 The special option
-.Dq \-\-
+.Sq --
 is used to delimit the end of the options.
 .Nm
 will place
-.Dq \-\-
+.Sq --
 in the arguments at the end of the options,
 or recognize it if used explicitly.
 The shell arguments
-(\fB$1 $2\fR ...) are reset so that each option is
+.Pf ( Va $1 , $2 , ... )
+are reset so that each option is
 preceded by a
-.Dq \-
+.Sq -
 and in its own shell argument;
 each option argument is also in its own shell argument.
 .Sh EXAMPLES
@@ -44,9 +45,8 @@ and
 and the option
 .Fl o ,
 which requires an argument.
-.Pp
 .Bd -literal -offset indent
-set \-\- \`getopt abo: $*\`
+set -- `getopt abo: $*`
 if test $? != 0
 then
 	echo 'Usage: ...'
@@ -56,23 +56,22 @@ for i
 do
 	case "$i"
 	in
-		\-a|\-b)
+		-a|-b)
 			flag=$i; shift;;
-		\-o)
+		-o)
 			oarg=$2; shift; shift;;
-		\-\-)
+		--)
 			shift; break;;
 	esac
 done
 .Ed
 .Pp
 This code will accept any of the following as equivalent:
-.Pp
 .Bd -literal -offset indent
-cmd \-aoarg file file
-cmd \-a \-o arg file file
-cmd \-oarg -a file file
-cmd \-a \-oarg \-\- file file
+cmd -aoarg file file
+cmd -a -o arg file file
+cmd -oarg -a file file
+cmd -a -oarg -- file file
 .Ed
 .Sh DIAGNOSTICS
 .Nm
