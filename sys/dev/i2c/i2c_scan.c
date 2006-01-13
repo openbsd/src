@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.56 2006/01/13 01:44:59 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.57 2006/01/13 02:21:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -575,7 +575,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "ds1624";
 		else if ((iicprobe(0xac) & 0x7e) == 0x0c)
 			name = "ds1631";	/* terrible probe */
-		else if ((iicprobe(0xac) & 0x7e) == 0x0e)
+		else if ((iicprobe(0xac) & 0x2e) == 0x2e)
 			name = "ds1721";	/* terrible probe */
 	}
 	if (name == NULL) {
