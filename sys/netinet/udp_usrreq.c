@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.105 2005/10/17 08:43:34 henning Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.106 2006/01/13 10:11:23 mpf Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -899,13 +899,22 @@ udp_ctlinput(cmd, sa, v)
 		return NULL;
 	if (ip) {
 		uhp = (struct udphdr *)((caddr_t)ip + (ip->ip_hl << 2));
+
+#ifdef IPSEC
+		/* PMTU discovery for udpencap */
+		if (cmd == PRC_MSGSIZE && ip_mtudisc && udpencap_enable &&
+		    udpencap_port && uhp->uh_sport == htons(udpencap_port)) {
+			udpencap_ctlinput(cmd, sa, v);
+			return (NULL);
+		}
+#endif
 		inp = in_pcbhashlookup(&udbtable,
 		    ip->ip_dst, uhp->uh_dport, ip->ip_src, uhp->uh_sport);
 		if (inp && inp->inp_socket != NULL)
 			notify(inp, errno);
 	} else
 		in_pcbnotifyall(&udbtable, sa, errno, notify);
-	return NULL;
+	return (NULL);
 }
 
 int

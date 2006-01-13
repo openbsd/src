@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.76 2005/07/31 03:52:19 pascoe Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.77 2006/01/13 10:11:23 mpf Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -855,6 +855,60 @@ ipsec_common_ctlinput(int cmd, struct sockaddr *sa, void *v, int proto)
 		splx(s);
 		return (NULL);
 	}
+	return (NULL);
+}
+
+void *
+udpencap_ctlinput(int cmd, struct sockaddr *sa, void *v)
+{
+	struct ip *ip = v;
+	struct tdb *tdbp;
+	struct icmp *icp;
+	u_int32_t mtu;
+	ssize_t adjust;
+	struct sockaddr_in dst, src;
+	union sockaddr_union *su_dst, *su_src;
+	int s;
+
+	icp = (struct icmp *)((caddr_t) ip - offsetof(struct icmp, icmp_ip));
+	mtu = ntohs(icp->icmp_nextmtu);
+
+	/*
+	 * Ignore the packet, if we do not receive a MTU
+	 * or the MTU is too small to be acceptable.
+	 */
+	if (mtu < 296)
+		return (NULL);
+
+	bzero(&dst, sizeof(dst));
+	dst.sin_family = AF_INET;
+	dst.sin_len = sizeof(struct sockaddr_in);
+	dst.sin_addr.s_addr = ip->ip_dst.s_addr;
+	su_dst = (union sockaddr_union *)&dst;
+	bzero(&src, sizeof(src));
+	src.sin_family = AF_INET;
+	src.sin_len = sizeof(struct sockaddr_in);
+	src.sin_addr.s_addr = ip->ip_src.s_addr;
+	su_src = (union sockaddr_union *)&src;
+
+	s = spltdb();
+	tdbp = gettdbbysrcdst(0, su_src, su_dst, IPPROTO_ESP);
+
+	for (; tdbp != NULL; tdbp = tdbp->tdb_snext) {
+		if (tdbp->tdb_sproto == IPPROTO_ESP &&
+		    ((tdbp->tdb_flags & (TDBF_INVALID|TDBF_UDPENCAP))
+		    == TDBF_UDPENCAP) &&
+		    !bcmp(&tdbp->tdb_dst, &dst, SA_LEN(&su_dst->sa)) &&
+		    !bcmp(&tdbp->tdb_src, &src, SA_LEN(&su_src->sa))) {
+			if ((adjust = ipsec_hdrsz(tdbp)) != -1) {
+				/* Store adjusted MTU in tdb */
+				tdbp->tdb_mtu = mtu - adjust;
+				tdbp->tdb_mtutimeout = time_second +
+				    ip_mtudisc_timeout;
+			}
+		}
+	}
+	splx(s);
 	return (NULL);
 }
 
