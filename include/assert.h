@@ -1,4 +1,4 @@
-/*	$OpenBSD: assert.h,v 1.10 2003/07/15 17:31:18 deraadt Exp $	*/
+/*	$OpenBSD: assert.h,v 1.11 2006/01/13 17:54:30 millert Exp $	*/
 /*	$NetBSD: assert.h,v 1.6 1994/10/26 00:55:44 cgd Exp $	*/
 
 /*-
@@ -42,18 +42,22 @@
  * multiple times, with and without NDEBUG defined.
  */
 
+#include <sys/cdefs.h>
+
 #undef assert
 #undef _assert
 
 #ifdef NDEBUG
-#define	assert(e)	((void)0)
-#define	_assert(e)	((void)0)
+# define	assert(e)	((void)0)
+# define	_assert(e)	((void)0)
 #else
-#define	_assert(e)	assert(e)
-#define	assert(e)	((e) ? (void)0 : __assert(__FILE__, __LINE__, #e))
+# define	_assert(e)	assert(e)
+# if __ISO_C_VISIBLE >= 1999
+#  define	assert(e)	((e) ? (void)0 : __assert2(__FILE__, __LINE__, __func__, #e))
+# else
+#  define	assert(e)	((e) ? (void)0 : __assert(__FILE__, __LINE__, #e))
+# endif
 #endif
-
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 void __assert(const char *, int, const char *);
