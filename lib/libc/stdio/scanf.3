@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scanf.3,v 1.14 2005/07/26 03:30:25 jaredy Exp $
+.\"	$OpenBSD: scanf.3,v 1.15 2006/01/13 17:56:18 millert Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 31, 1995
+.Dd December 27, 2005
 .Dt SCANF 3
 .Os
 .Sh NAME
@@ -101,9 +101,9 @@ functions, respectively.
 Each successive
 .Em pointer
 argument must correspond properly with each successive conversion specifier
-(but see
-.Dq suppression
-below).
+(but see the
+.Cm *
+conversion below).
 All conversions are introduced by the
 .Cm %
 (percent sign) character.
@@ -122,11 +122,20 @@ Following the
 character, introducing a conversion, there may be a number of
 .Em flag
 characters, as follows:
-.Bl -tag -width indent
+.Bl -tag -width "ll (ell ell)"
 .It Cm *
 Suppresses assignment.
 The conversion that follows occurs as usual, but no pointer is used;
 the result of the conversion is simply discarded.
+.It Cm hh
+Indicates that the conversion will be one of
+.Cm dioux
+or
+.Cm n
+and the next pointer is a pointer to a
+.Li char
+(rather than
+.Li int ) .
 .It Cm h
 Indicates that the conversion will be one of
 .Cm dioux
@@ -136,7 +145,7 @@ and the next pointer is a pointer to a
 .Li short int
 (rather than
 .Li int ) .
-.It Cm l
+.It Cm l No (ell)
 Indicates either that the conversion will be one of
 .Cm dioux
 or
@@ -151,13 +160,13 @@ and the next pointer is a pointer to
 .Li double
 (rather than
 .Li float ) .
-.It Cm q
+.It Cm \&ll No (ell ell)
 Indicates that the conversion will be one of
 .Cm dioux
 or
 .Cm n
 and the next pointer is a pointer to a
-.Li quad_t
+.Li long long int
 (rather than
 .Li int ) .
 .It Cm L
@@ -165,6 +174,43 @@ Indicates that the conversion will be
 .Cm efg
 and the next pointer is a pointer to
 .Li long double .
+.It Cm j
+Indicates that the conversion will be one of
+.Cm dioux
+or
+.Cm n
+and the next pointer is a pointer to an
+.Li intmax_t
+(rather than
+.Li int ) .
+.It Cm t
+Indicates that the conversion will be one of
+.Cm dioux
+or
+.Cm n
+and the next pointer is a pointer to a
+.Li ptrdiff_t
+(rather than
+.Li int ) .
+.It Cm z
+Indicates that the conversion will be one of
+.Cm dioux
+or
+.Cm n
+and the next pointer is a pointer to a
+.Li size_t
+(rather than
+.Li int ) .
+.It Cm q
+(deprecated)
+Indicates that the conversion will be one of
+.Cm dioux
+or
+.Cm n
+and the next pointer is a pointer to a
+.Li "long long int"
+(rather than
+.Vt int ) .
 .El
 .Pp
 In addition to these flags, there may be an optional maximum field width,
@@ -292,7 +338,9 @@ character
 and a close bracket
 .Cm \&]
 character.
-The set excludes those characters
+The set
+.Em excludes
+those characters
 if the first character after the open bracket is a circumflex
 .Cm ^ .
 To include a close bracket in the set,

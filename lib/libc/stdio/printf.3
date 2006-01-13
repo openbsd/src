@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.51 2006/01/07 16:49:59 jmc Exp $
+.\"	$OpenBSD: printf.3,v 1.52 2006/01/13 17:56:18 millert Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd December 27, 2005
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -256,6 +256,7 @@ produced by a signed conversion
 .Cm e ,
 .Cm E ,
 .Cm f ,
+.Cm F ,
 .Cm g ,
 .Cm G ,
 or
@@ -292,8 +293,9 @@ and
 conversions, the number of digits to appear after the decimal-point for
 .Cm e ,
 .Cm E ,
+.Cm f ,
 and
-.Cm f
+.Cm F
 conversions, the maximum number of significant digits for
 .Cm g
 and
@@ -303,137 +305,74 @@ string for
 .Cm s
 conversions.
 .It
-The optional character
-.Cm j ,
-specifying that a following
-.Cm d ,
-.Cm i ,
-.Cm o ,
-.Cm u ,
-.Cm x ,
+An optional length modifier, that specifies the size of the argument.
+The following length modifiers are valid for the
+.Cm d , i , n ,
+.Cm o , u , x ,
 or
 .Cm X
-conversion corresponds to an
-.Li intmax_t
-or
-.Li uintmax_t
-argument.
-The optional character
-.Cm h ,
-specifying that a following
-.Cm d ,
-.Cm i ,
-.Cm o ,
-.Cm u ,
-.Cm x ,
+conversion:
+.Bl -column "(deprecated)" "signed char" "unsigned long long" "long long *"
+.It Sy Modifier Ta "d, i" Ta "o, u, x, X" Ta n
+.It hh Ta "signed char" Ta "unsigned char" Ta "signed char *"
+.It h Ta short Ta "unsigned short" Ta "short *"
+.It "l (ell)" Ta long Ta "unsigned long" Ta "long *"
+.It "ll (ell ell)" Ta "long long" Ta "unsigned long long" Ta "long long *"
+.It j Ta intmax_t Ta uintmax_t Ta "intmax_t *"
+.It t Ta ptrdiff_t Ta (see note) Ta "ptrdiff_t *"
+.It z Ta "(see note)" Ta size_t Ta "(see note)"
+.It "q (deprecated)" Ta quad_t Ta u_quad_t Ta "quad_t *"
+.El
+.Pp
+Note:
+the
+.Cm t
+modifier, when applied to an
+.Cm o , u , x ,
 or
 .Cm X
-conversion corresponds to a
-.Li short int
+conversion, indicates that the argument is of an unsigned type
+equivalent in size to a
+.Vt ptrdiff_t .
+The
+.Cm z
+modifier, when applied to a
+.Cm d
 or
-.Li unsigned short int
-argument, or that a following
+.Cm i
+conversion, indicates that the argument is of a signed type equivalent in
+size to a
+.Vt size_t .
+Similarly, when applied to an
 .Cm n
-conversion corresponds to a pointer to a
-.Li short int
-argument.
-.It
-The optional character
-.Cm l
-(ell) specifying that a following
-.Cm d ,
-.Cm i ,
-.Cm o ,
-.Cm u ,
-.Cm x ,
-or
-.Cm X
-conversion corresponds to a
-.Li long int
-or
-.Li unsigned long int
-argument, or that a following
-.Cm n
-conversion corresponds to a pointer to a
-.Li long int
-argument.
-.It
-The optional character sequence
-.Cm \&ll ,
-specifying that a following
-.Cm d ,
-.Cm i ,
-.Cm o ,
-.Cm u ,
-.Cm x ,
-or
-.Cm X
-conversion corresponds to a
-.Li quad int
-or
-.Li unsigned quad int
-argument, or that a following
-.Cm n
-conversion corresponds to a pointer to a
-.Li quad int
-argument.
-The use of
-.Cm q
-has been deprecated as conversion character.
-.It
-The optional character
-.Cm t ,
-specifying that a following
-.Cm d ,
-.Cm i ,
-.Cm o ,
-.Cm u ,
-.Cm x ,
-or
-.Cm X
-conversion corresponds to a
-.Em ptrdiff_t
-or
-the corresponding unsigned integer type
-argument, or that a following
-.Cm n
-conversion corresponds to a pointer to a
-.Em ptrdiff_t
-argument.
-.It
-The optional character
-.Cm z ,
-specifying that a following
-.Cm d ,
-.Cm i ,
-.Cm o ,
-.Cm u ,
-.Cm x ,
-or
-.Cm X
-conversion corresponds to a
-.Em size_t
-or
-the corresponding signed integer type
-argument, or that a following
-.Cm n
-conversion corresponds to a pointer to a
-signed integer type corresponding to
-.Em size_t
-argument.
-.It
-The character
-.Cm L
-specifying that a following
+conversion, it indicates that the argument is a pointer to a signed type
+equivalent in size to a
+.Vt size_t .
+.Pp
+The following length modifier is valid for the
 .Cm e ,
 .Cm E ,
 .Cm f ,
+.Cm F ,
 .Cm g ,
 or
 .Cm G
-conversion corresponds to a
-.Li long double
-argument.
+conversion:
+.Bl -column "Modifier" "e, E, f, F, g, G"
+.It Sy Modifier Ta "e, E, f, F, g, G"
+.It "l (ell)" Ta double (ignored: same behavior as without it)
+.It L Ta "long double"
+.El
+.Pp
+The following length modifier is valid for the
+.Cm c
+or
+.Cm s
+conversion:
+.Bl -column "Modifier" "wint_t" "wchar_t *"
+.It Sy Modifier Ta c Ta s
+.It "l (ell)" Ta wint_t Ta "wchar_t *"
+.El
 .It
 A character that specifies the type of conversion to be applied.
 .El

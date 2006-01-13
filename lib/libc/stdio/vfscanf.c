@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfscanf.c,v 1.19 2006/01/08 02:13:28 millert Exp $ */
+/*	$OpenBSD: vfscanf.c,v 1.20 2006/01/13 17:56:18 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,6 +31,8 @@
  * SUCH DAMAGE.
  */
 
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -46,30 +48,33 @@
 /*
  * Flags used during conversion.
  */
-#define	LONG		0x0001	/* l: long or double */
-#define	LONGDBL		0x0002	/* L: long double; unimplemented */
-#define	SHORT		0x0004	/* h: short */
-#define QUAD		0x0008	/* q: quad */
-#define	SUPPRESS	0x0010	/* suppress assignment */
-#define	POINTER		0x0020	/* weird %p pointer (`fake hex') */
-#define	NOSKIP		0x0040	/* do not skip blanks */
-#define	SHORTSHORT	0x0080	/* hh: 8 bit integer */
-#define	SIZEINT		0x0100	/* z: (signed) size_t */
+#define	LONG		0x00001	/* l: long or double */
+#define	LONGDBL		0x00002	/* L: long double; unimplemented */
+#define	SHORT		0x00004	/* h: short */
+#define	SHORTSHORT	0x00008	/* hh: 8 bit integer */
+#define LLONG		0x00010	/* ll: long long (+ deprecated q: quad) */
+#define	POINTER		0x00020	/* p: void * (as hex) */
+#define	SIZEINT		0x00040	/* z: (signed) size_t */
+#define	MAXINT		0x00080	/* j: intmax_t */
+#define	PTRINT		0x00100	/* t: ptrdiff_t */
+#define	NOSKIP		0x00200	/* [ or c: do not skip blanks */
+#define	SUPPRESS	0x00400	/* *: suppress assignment */
+#define	UNSIGNED	0x00800	/* %[oupxX] conversions */
 
 /*
  * The following are used in numeric conversions only:
  * SIGNOK, HAVESIGN, NDIGITS, DPTOK, and EXPOK are for floating point;
  * SIGNOK, HAVESIGN, NDIGITS, PFXOK, and NZDIGITS are for integral.
  */
-#define	SIGNOK		0x0200	/* +/- is (still) legal */
-#define	HAVESIGN	0x0400	/* sign detected */
-#define	NDIGITS		0x0800	/* no digits detected */
+#define	SIGNOK		0x01000	/* +/- is (still) legal */
+#define	HAVESIGN	0x02000	/* sign detected */
+#define	NDIGITS		0x04000	/* no digits detected */
 
-#define	DPTOK		0x1000	/* (float) decimal point is still legal */
-#define	EXPOK		0x2000	/* (float) exponent (e+3, etc) still legal */
+#define	DPTOK		0x08000	/* (float) decimal point is still legal */
+#define	EXPOK		0x10000	/* (float) exponent (e+3, etc) still legal */
 
-#define	PFXOK		0x1000	/* 0x prefix is (still) legal */
-#define	NZDIGITS	0x2000	/* no zero digits detected */
+#define	PFXOK		0x08000	/* 0x prefix is (still) legal */
+#define	NZDIGITS	0x10000	/* no zero digits detected */
 
 /*
  * Conversion types.
@@ -77,7 +82,7 @@
 #define	CT_CHAR		0	/* %c conversion */
 #define	CT_CCL		1	/* %[...] conversion */
 #define	CT_STRING	2	/* %s conversion */
-#define	CT_INT		3	/* integer, i.e., strtoq or strtouq */
+#define	CT_INT		3	/* integer, i.e., strtoimax or strtoumax */
 #define	CT_FLOAT	4	/* floating, i.e., strtod */
 
 #define u_char unsigned char
@@ -104,8 +109,7 @@ VFSCANF(FILE *fp, const char *fmt0, __va_list ap)
 	char *p0;	/* saves original value of p when necessary */
 	int nassigned;		/* number of fields assigned */
 	int nread;		/* number of characters consumed from fp */
-	int base;		/* base argument to strtoq/strtouq */
-	u_quad_t (*ccfn)();	/* conversion function (strtoq/strtouq) */
+	int base;		/* base argument to strtoimax/strtouimax */
 	char ccltab[256];	/* character class table for %[...] */
 	char buf[BUF];		/* buffer for numeric conversions */
 
@@ -118,7 +122,6 @@ VFSCANF(FILE *fp, const char *fmt0, __va_list ap)
 	nassigned = 0;
 	nread = 0;
 	base = 0;		/* XXX just to keep gcc happy */
-	ccfn = NULL;		/* XXX just to keep gcc happy */
 	for (;;) {
 		c = *fmt++;
 		if (c == 0)
@@ -152,6 +155,9 @@ literal:
 		case '*':
 			flags |= SUPPRESS;
 			goto again;
+		case 'j':
+			flags |= MAXINT;
+			goto again;
 		case 'L':
 			flags |= LONGDBL;
 			goto again;
@@ -166,13 +172,16 @@ literal:
 		case 'l':
 			if (*fmt == 'l') {
 				fmt++;
-				flags |= QUAD;
+				flags |= LLONG;
 			} else {
 				flags |= LONG;
 			}
 			goto again;
 		case 'q':
-			flags |= QUAD;
+			flags |= LLONG;		/* deprecated */
+			goto again;
+		case 't':
+			flags |= PTRINT;
 			goto again;
 		case 'z':
 			flags |= SIZEINT;
@@ -195,13 +204,11 @@ literal:
 			/* FALLTHROUGH */
 		case 'd':
 			c = CT_INT;
-			ccfn = (u_quad_t (*)())strtoq;
 			base = 10;
 			break;
 
 		case 'i':
 			c = CT_INT;
-			ccfn = (u_quad_t (*)())strtoq;
 			base = 0;
 			break;
 
@@ -210,13 +217,13 @@ literal:
 			/* FALLTHROUGH */
 		case 'o':
 			c = CT_INT;
-			ccfn = strtouq;
+			flags |= UNSIGNED;
 			base = 8;
 			break;
 
 		case 'u':
 			c = CT_INT;
-			ccfn = strtouq;
+			flags |= UNSIGNED;
 			base = 10;
 			break;
 
@@ -224,7 +231,7 @@ literal:
 		case 'x':
 			flags |= PFXOK;	/* enable 0x prefixing */
 			c = CT_INT;
-			ccfn = strtouq;
+			flags |= UNSIGNED;
 			base = 16;
 			break;
 
@@ -256,12 +263,12 @@ literal:
 		case 'p':	/* pointer format is like hex */
 			flags |= POINTER | PFXOK;
 			c = CT_INT;
-			ccfn = strtouq;
+			flags |= UNSIGNED;
 			base = 16;
 			break;
 
 		case 'n':
-			if (flags & SUPPRESS)	/* ??? */
+			if (flags & SUPPRESS)
 				continue;
 			if (flags & SHORTSHORT)
 				*va_arg(ap, __signed char *) = nread;
@@ -269,10 +276,14 @@ literal:
 				*va_arg(ap, short *) = nread;
 			else if (flags & LONG)
 				*va_arg(ap, long *) = nread;
-			else if (flags & QUAD)
-				*va_arg(ap, quad_t *) = nread;
 			else if (flags & SIZEINT)
 				*va_arg(ap, ssize_t *) = nread;
+			else if (flags & PTRINT)
+				*va_arg(ap, ptrdiff_t *) = nread;
+			else if (flags & LLONG)
+				*va_arg(ap, long long *) = nread;
+			else if (flags & MAXINT)
+				*va_arg(ap, intmax_t *) = nread;
 			else
 				*va_arg(ap, int *) = nread;
 			continue;
@@ -287,7 +298,6 @@ literal:
 			if (isupper(c))
 				flags |= LONG;
 			c = CT_INT;
-			ccfn = (u_quad_t (*)())strtoq;
 			base = 10;
 			break;
 		}
@@ -429,7 +439,7 @@ literal:
 			continue;
 
 		case CT_INT:
-			/* scan an integer as if by strtoq/strtouq */
+			/* scan an integer as if by strtoimax/strtoumax */
 #ifdef hardway
 			if (width == 0 || width > sizeof(buf) - 1)
 				width = sizeof(buf) - 1;
@@ -511,7 +521,7 @@ literal:
 				 * 3rd char if we have a sign).
 				 */
 				case 'x': case 'X':
-					if (flags & PFXOK && p ==
+					if ((flags & PFXOK) && p ==
 					    buf + 1 + !!(flags & HAVESIGN)) {
 						base = 16;	/* if %i */
 						flags &= ~PFXOK;
@@ -552,17 +562,24 @@ literal:
 				(void) ungetc(c, fp);
 			}
 			if ((flags & SUPPRESS) == 0) {
-				u_quad_t res;
+				uintmax_t res;
 
 				*p = '\0';
-				res = (*ccfn)(buf, (char **)NULL, base);
+				if (flags & UNSIGNED)
+					res = strtoumax(buf, NULL, base);
+				else
+					res = strtoimax(buf, NULL, base);
 				if (flags & POINTER)
 					*va_arg(ap, void **) =
-					    (void *)(long)res;
+					    (void *)(uintptr_t)res;
+				else if (flags & MAXINT)
+					*va_arg(ap, intmax_t *) = res;
+				else if (flags & LLONG)
+					*va_arg(ap, long long *) = res;
 				else if (flags & SIZEINT)
 					*va_arg(ap, ssize_t *) = res;
-				else if (flags & QUAD)
-					*va_arg(ap, quad_t *) = res;
+				else if (flags & PTRINT)
+					*va_arg(ap, ptrdiff_t *) = res;
 				else if (flags & LONG)
 					*va_arg(ap, long *) = res;
 				else if (flags & SHORT)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.36 2006/01/06 18:53:04 millert Exp $ */
+/*	$OpenBSD: vfprintf.c,v 1.37 2006/01/13 17:56:18 millert Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -40,12 +40,13 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "local.h"
 #include "fvwrite.h"
@@ -136,18 +137,19 @@ static int exponent(char *, int, int);
 /*
  * Flags used during conversion.
  */
-#define	ALT		0x001		/* alternate form */
-#define	HEXPREFIX	0x002		/* add 0x or 0X prefix */
-#define	LADJUST		0x004		/* left adjustment */
-#define	LONGDBL		0x008		/* long double; unimplemented */
-#define	LONGINT		0x010		/* long integer */
-#define	QUADINT		0x020		/* quad integer */
-#define	SHORTINT	0x040		/* short integer */
-#define	ZEROPAD		0x080		/* zero (as opposed to blank) pad */
-#define FPT		0x100		/* Floating point number */
-#define PTRINT		0x200		/* (unsigned) ptrdiff_t */
-#define SIZEINT		0x400		/* (signed) size_t */
-#define CHARINT		0x800		/* 8 bit integer */
+#define	ALT		0x0001		/* alternate form */
+#define	HEXPREFIX	0x0002		/* add 0x or 0X prefix */
+#define	LADJUST		0x0004		/* left adjustment */
+#define	LONGDBL		0x0008		/* long double; unimplemented */
+#define	LONGINT		0x0010		/* long integer */
+#define	LLONGINT	0x0020		/* long long integer */
+#define	SHORTINT	0x0040		/* short integer */
+#define	ZEROPAD		0x0080		/* zero (as opposed to blank) pad */
+#define FPT		0x0100		/* Floating point number */
+#define PTRINT		0x0200		/* (unsigned) ptrdiff_t */
+#define SIZEINT		0x0400		/* (signed) size_t */
+#define CHARINT		0x0800		/* 8 bit integer */
+#define MAXINT		0x1000		/* largest integer size (intmax_t) */
 
 int
 vfprintf(FILE *fp, const char *fmt0, __va_list ap)
@@ -174,12 +176,7 @@ vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 	char expstr[7];		/* buffer for exponent string */
 #endif
 
-#ifdef __GNUC__			/* gcc has builtin quad type (long long) SOS */
-#define	quad_t	  long long
-#define	u_quad_t  unsigned long long
-#endif
-
-	u_quad_t _uquad;	/* integer arguments %[diouxX] */
+	uintmax_t _umax;	/* integer arguments %[diouxX] */
 	enum { OCT, DEC, HEX } base;/* base for [diouxX] conversion */
 	int dprec;		/* a copy of prec if [diouxX], 0 otherwise */
 	int realsz;		/* field size expanded by dprec */
@@ -242,21 +239,23 @@ vfprintf(FILE *fp, const char *fmt0, __va_list ap)
 	 * argument extraction methods.
 	 */
 #define	SARG() \
-	(flags&QUADINT ? GETARG(quad_t) : \
+	((intmax_t)(flags&MAXINT ? GETARG(intmax_t) : \
+	    flags&LLONGINT ? GETARG(long long) : \
 	    flags&LONGINT ? GETARG(long) : \
 	    flags&PTRINT ? GETARG(ptrdiff_t) : \
 	    flags&SIZEINT ? GETARG(ssize_t) : \
-	    flags&SHORTINT ? (long)(short)GETARG(int) : \
-	    flags&CHARINT ? (long)(__signed char)GETARG(int) : \
-	    (long)GETARG(int))
+	    flags&SHORTINT ? (short)GETARG(int) : \
+	    flags&CHARINT ? (__signed char)GETARG(int) : \
+	    GETARG(int)))
 #define	UARG() \
-	(flags&QUADINT ? GETARG(u_quad_t) : \
-	    flags&LONGINT ? GETARG(u_long) : \
-	    flags&PTRINT ? GETARG(ptrdiff_t) : /* XXX */ \
+	((uintmax_t)(flags&MAXINT ? GETARG(uintmax_t) : \
+	    flags&LLONGINT ? GETARG(unsigned long long) : \
+	    flags&LONGINT ? GETARG(unsigned long) : \
+	    flags&PTRINT ? (uintptr_t)GETARG(ptrdiff_t) : /* XXX */ \
 	    flags&SIZEINT ? GETARG(size_t) : \
-	    flags&SHORTINT ? (u_long)(u_short)GETARG(int) : \
-	    flags&CHARINT ? (u_long)(u_char)GETARG(int) : \
-	    (u_long)GETARG(u_int))
+	    flags&SHORTINT ? (unsigned short)GETARG(int) : \
+	    flags&CHARINT ? (unsigned char)GETARG(int) : \
+	    GETARG(unsigned int)))
 
 	 /*
 	  * Get * arguments, including the form *nn$.  Preserve the nextarg
@@ -429,18 +428,18 @@ reswitch:	switch (ch) {
 			flags |= SHORTINT;
 			goto rflag;
 		case 'j':
-			flags |= QUADINT;
+			flags |= MAXINT;
 			goto rflag;
 		case 'l':
 			if (*fmt == 'l') {
 				fmt++;
-				flags |= QUADINT;
+				flags |= LLONGINT;
 			} else {
 				flags |= LONGINT;
 			}
 			goto rflag;
 		case 'q':
-			flags |= QUADINT;
+			flags |= LLONGINT;
 			goto rflag;
 		case 't':
 			flags |= PTRINT;
@@ -458,9 +457,9 @@ reswitch:	switch (ch) {
 			/*FALLTHROUGH*/
 		case 'd':
 		case 'i':
-			_uquad = SARG();
-			if ((quad_t)_uquad < 0) {
-				_uquad = -_uquad;
+			_umax = SARG();
+			if ((intmax_t)_umax < 0) {
+				_umax = -_umax;
 				sign = '-';
 			}
 			base = DEC;
@@ -532,16 +531,20 @@ reswitch:	switch (ch) {
 			break;
 #endif /* FLOATING_POINT */
 		case 'n':
-			if (flags & QUADINT)
-				*GETARG(quad_t *) = ret;
+			if (flags & LLONGINT)
+				*GETARG(long long *) = ret;
 			else if (flags & LONGINT)
 				*GETARG(long *) = ret;
 			else if (flags & SHORTINT)
 				*GETARG(short *) = ret;
+			else if (flags & CHARINT)
+				*GETARG(__signed char *) = ret;
 			else if (flags & PTRINT)
 				*GETARG(ptrdiff_t *) = ret;
 			else if (flags & SIZEINT)
 				*GETARG(ssize_t *) = ret;
+			else if (flags & MAXINT)
+				*GETARG(intmax_t *) = ret;
 			else
 				*GETARG(int *) = ret;
 			continue;	/* no output */
@@ -549,7 +552,7 @@ reswitch:	switch (ch) {
 			flags |= LONGINT;
 			/*FALLTHROUGH*/
 		case 'o':
-			_uquad = UARG();
+			_umax = UARG();
 			base = OCT;
 			goto nosign;
 		case 'p':
@@ -561,7 +564,7 @@ reswitch:	switch (ch) {
 			 *	-- ANSI X3J11
 			 */
 			/* NOSTRICT */
-			_uquad = (u_long)GETARG(void *);
+			_umax = (u_long)GETARG(void *);
 			base = HEX;
 			xdigs = "0123456789abcdef";
 			flags |= HEXPREFIX;
@@ -592,7 +595,7 @@ reswitch:	switch (ch) {
 			flags |= LONGINT;
 			/*FALLTHROUGH*/
 		case 'u':
-			_uquad = UARG();
+			_umax = UARG();
 			base = DEC;
 			goto nosign;
 		case 'X':
@@ -600,10 +603,10 @@ reswitch:	switch (ch) {
 			goto hex;
 		case 'x':
 			xdigs = "0123456789abcdef";
-hex:			_uquad = UARG();
+hex:			_umax = UARG();
 			base = HEX;
 			/* leading 0x/X only if non-zero */
-			if (flags & ALT && _uquad != 0)
+			if (flags & ALT && _umax != 0)
 				flags |= HEXPREFIX;
 
 			/* unsigned conversions */
@@ -622,7 +625,7 @@ number:			if ((dprec = prec) >= 0)
 			 *	-- ANSI X3J11
 			 */
 			cp = buf + BUF;
-			if (_uquad != 0 || prec != 0) {
+			if (_umax != 0 || prec != 0) {
 				/*
 				 * Unsigned mod is hard, and unsigned mod
 				 * by a constant is easier than that by
@@ -631,9 +634,9 @@ number:			if ((dprec = prec) >= 0)
 				switch (base) {
 				case OCT:
 					do {
-						*--cp = to_char(_uquad & 7);
-						_uquad >>= 3;
-					} while (_uquad);
+						*--cp = to_char(_umax & 7);
+						_umax >>= 3;
+					} while (_umax);
 					/* handle octal leading 0 */
 					if (flags & ALT && *cp != '0')
 						*--cp = '0';
@@ -641,18 +644,18 @@ number:			if ((dprec = prec) >= 0)
 
 				case DEC:
 					/* many numbers are 1 digit */
-					while (_uquad >= 10) {
-						*--cp = to_char(_uquad % 10);
-						_uquad /= 10;
+					while (_umax >= 10) {
+						*--cp = to_char(_umax % 10);
+						_umax /= 10;
 					}
-					*--cp = to_char(_uquad);
+					*--cp = to_char(_umax);
 					break;
 
 				case HEX:
 					do {
-						*--cp = xdigs[_uquad & 15];
-						_uquad >>= 4;
-					} while (_uquad);
+						*--cp = xdigs[_umax & 15];
+						_umax >>= 4;
+					} while (_umax);
 					break;
 
 				default:
@@ -795,9 +798,9 @@ error:
 #define T_LONG		7
 #define T_U_LONG	8
 #define TP_LONG		9
-#define T_QUAD		10
-#define T_U_QUAD	11
-#define TP_QUAD		12
+#define T_LLONG		10
+#define T_U_LLONG	11
+#define TP_LLONG	12
 #define T_DOUBLE	13
 #define T_LONG_DOUBLE	14
 #define TP_CHAR		15
@@ -807,6 +810,9 @@ error:
 #define T_SIZEINT	19
 #define T_SSIZEINT	20
 #define TP_SSIZEINT	21
+#define T_MAXINT	22
+#define T_MAXUINT	23
+#define TP_MAXINT	24
 
 /*
  * Find all arguments when a positional parameter is encountered.  Returns a
@@ -843,14 +849,20 @@ __find_arguments(const char *fmt0, va_list ap, va_list **argtable,
 	typetable[nextarg++] = type)
 
 #define	ADDSARG() \
-	((flags&QUADINT) ? ADDTYPE(T_QUAD) : \
+        ((flags&MAXINT) ? ADDTYPE(T_MAXINT) : \
+	    ((flags&PTRINT) ? ADDTYPE(T_PTRINT) : \
+	    ((flags&SIZEINT) ? ADDTYPE(T_SSIZEINT) : \
+	    ((flags&LLONGINT) ? ADDTYPE(T_LLONG) : \
 	    ((flags&LONGINT) ? ADDTYPE(T_LONG) : \
-		((flags&SHORTINT) ? ADDTYPE(T_SHORT) : ADDTYPE(T_INT))))
+	    ((flags&SHORTINT) ? ADDTYPE(T_SHORT) : ADDTYPE(T_INT)))))))
 
 #define	ADDUARG() \
-	((flags&QUADINT) ? ADDTYPE(T_U_QUAD) : \
+        ((flags&MAXINT) ? ADDTYPE(T_MAXUINT) : \
+	    ((flags&PTRINT) ? ADDTYPE(T_PTRINT) : \
+	    ((flags&SIZEINT) ? ADDTYPE(T_SIZEINT) : \
+	    ((flags&LLONGINT) ? ADDTYPE(T_U_LLONG) : \
 	    ((flags&LONGINT) ? ADDTYPE(T_U_LONG) : \
-		((flags&SHORTINT) ? ADDTYPE(T_U_SHORT) : ADDTYPE(T_U_INT))))
+	    ((flags&SHORTINT) ? ADDTYPE(T_U_SHORT) : ADDTYPE(T_U_INT)))))))
 
 	/*
 	 * Add * arguments to the type array.
@@ -947,13 +959,13 @@ reswitch:	switch (ch) {
 		case 'l':
 			if (*fmt == 'l') {
 				fmt++;
-				flags |= QUADINT;
+				flags |= LLONGINT;
 			} else {
 				flags |= LONGINT;
 			}
 			goto rflag;
 		case 'q':
-			flags |= QUADINT;
+			flags |= LLONGINT;
 			goto rflag;
 		case 't':
 			flags |= PTRINT;
@@ -969,14 +981,7 @@ reswitch:	switch (ch) {
 			/*FALLTHROUGH*/
 		case 'd':
 		case 'i':
-			if (flags & QUADINT)
-				ADDTYPE(T_QUAD);
-			else if (flags & PTRINT)
-				ADDTYPE(T_PTRINT);
-			else if (flags & SIZEINT)
-				ADDTYPE(T_SSIZEINT);
-			else
-				ADDSARG();
+			ADDSARG();
 			break;
 #ifdef FLOATING_POINT
 		case 'e':
@@ -991,8 +996,8 @@ reswitch:	switch (ch) {
 			break;
 #endif /* FLOATING_POINT */
 		case 'n':
-			if (flags & QUADINT)
-				ADDTYPE(TP_QUAD);
+			if (flags & LLONGINT)
+				ADDTYPE(TP_LLONG);
 			else if (flags & LONGINT)
 				ADDTYPE(TP_LONG);
 			else if (flags & SHORTINT)
@@ -1001,6 +1006,8 @@ reswitch:	switch (ch) {
 				ADDTYPE(TP_PTRINT);
 			else if (flags & SIZEINT)
 				ADDTYPE(TP_SSIZEINT);
+			else if (flags & MAXINT)
+				ADDTYPE(TP_MAXINT);
 			else
 				ADDTYPE(TP_INT);
 			continue;	/* no output */
@@ -1008,10 +1015,7 @@ reswitch:	switch (ch) {
 			flags |= LONGINT;
 			/*FALLTHROUGH*/
 		case 'o':
-			if (flags & QUADINT)
-				ADDTYPE(T_U_QUAD);
-			else
-				ADDUARG();
+			ADDUARG();
 			break;
 		case 'p':
 			ADDTYPE(TP_VOID);
@@ -1023,21 +1027,9 @@ reswitch:	switch (ch) {
 			flags |= LONGINT;
 			/*FALLTHROUGH*/
 		case 'u':
-			if (flags & QUADINT)
-				ADDTYPE(T_U_QUAD);
-			else
-				ADDUARG();
-			break;
 		case 'X':
 		case 'x':
-			if (flags & QUADINT)
-				ADDTYPE(T_U_QUAD);
-			else if (flags & PTRINT)
-				ADDTYPE(T_PTRINT);
-			else if (flags & SIZEINT)
-				ADDTYPE(T_SIZEINT);
-			else
-				ADDUARG();
+			ADDUARG();
 			break;
 		default:	/* "%?" prints ?, unless ? is NUL */
 			if (ch == '\0')
@@ -1092,14 +1084,14 @@ done:
 		case TP_LONG:
 			(void) va_arg(ap, long *);
 			break;
-		case T_QUAD:
-			(void) va_arg(ap, quad_t);
+		case T_LLONG:
+			(void) va_arg(ap, long long);
 			break;
-		case T_U_QUAD:
-			(void) va_arg(ap, u_quad_t);
+		case T_U_LLONG:
+			(void) va_arg(ap, unsigned long long);
 			break;
-		case TP_QUAD:
-			(void) va_arg(ap, quad_t *);
+		case TP_LLONG:
+			(void) va_arg(ap, long long *);
 			break;
 		case T_DOUBLE:
 			(void) va_arg(ap, double);
@@ -1127,6 +1119,9 @@ done:
 			break;
 		case TP_SSIZEINT:
 			(void) va_arg(ap, ssize_t *);
+			break;
+		case TP_MAXINT:
+			(void) va_arg(ap, intmax_t *);
 			break;
 		}
 	}
