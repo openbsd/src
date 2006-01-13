@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.7 2006/01/13 17:48:22 damien Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.8 2006/01/13 21:06:09 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -130,6 +130,7 @@ void		rt2560_disable_rf_tune(struct rt2560_softc *);
 void		rt2560_enable_tsf_sync(struct rt2560_softc *);
 void		rt2560_update_plcp(struct rt2560_softc *);
 void		rt2560_update_slot(struct rt2560_softc *);
+void		rt2560_set_basicrates(struct rt2560_softc *);
 void		rt2560_update_led(struct rt2560_softc *, int, int);
 void		rt2560_set_bssid(struct rt2560_softc *, uint8_t *);
 void		rt2560_set_macaddr(struct rt2560_softc *, uint8_t *);
@@ -396,9 +397,14 @@ rt2560_attach(void *xsc, int id)
 	ic->ic_state = IEEE80211_S_INIT;
 
 	/* set device capabilities */
-	ic->ic_caps = IEEE80211_C_MONITOR | IEEE80211_C_IBSS |
-	    IEEE80211_C_HOSTAP | IEEE80211_C_SHPREAMBLE | IEEE80211_C_PMGT |
-	    IEEE80211_C_TXPMGT | IEEE80211_C_WEP;
+	ic->ic_caps =
+	    IEEE80211_C_IBSS |		/* IBSS mode supported */
+	    IEEE80211_C_MONITOR |	/* monitor mode supported */
+	    IEEE80211_C_HOSTAP |	/* HostAp mode supported */
+	    IEEE80211_C_TXPMGT |	/* tx power management */
+	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
+	    IEEE80211_C_SHSLOT |	/* short slot time supported */
+	    IEEE80211_C_WEP;		/* s/w WEP */
 
 	if (sc->rf_rev == RT2560_RF_5222) {
 		/* set supported .11a rates */
@@ -888,6 +894,7 @@ rt2560_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct rt2560_softc *sc = ic->ic_if.if_softc;
 	enum ieee80211_state ostate;
+	struct ieee80211_node *ni;
 	struct mbuf *m;
 	int error = 0;
 
@@ -923,26 +930,17 @@ rt2560_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_RUN:
 		rt2560_set_chan(sc, ic->ic_bss->ni_chan);
 
-		/* update basic rate set */
-		if (ic->ic_curmode == IEEE80211_MODE_11B) {
-			/* 11b basic rates: 1, 2Mbps */
-			RAL_WRITE(sc, RT2560_ARSP_PLCP_1, 0x3);
-		} else if (IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan)) {
-			/* 11a basic rates: 6, 12, 24Mbps */
-			RAL_WRITE(sc, RT2560_ARSP_PLCP_1, 0x150);
-		} else {
-			/* 11g basic rates: 1, 2, 5.5, 11, 6, 12, 24Mbps */
-			RAL_WRITE(sc, RT2560_ARSP_PLCP_1, 0x15f);
-		}
+		ni = ic->ic_bss;
 
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-			rt2560_set_bssid(sc, ic->ic_bss->ni_bssid);
 			rt2560_update_slot(sc);
+			rt2560_set_basicrates(sc);
+			rt2560_set_bssid(sc, ni->ni_bssid);
 		}
 
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP ||
 		    ic->ic_opmode == IEEE80211_M_IBSS) {
-			m = ieee80211_beacon_alloc(ic, ic->ic_bss);
+			m = ieee80211_beacon_alloc(ic, ni);
 			if (m == NULL) {
 				printf("%s: could not allocate beacon\n",
 				    sc->sc_dev.dv_xname);
@@ -950,7 +948,7 @@ rt2560_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 				break;
 			}
 
-			error = rt2560_tx_bcn(sc, m, ic->ic_bss);
+			error = rt2560_tx_bcn(sc, m, ni);
 			if (error != 0)
 				break;
 		}
@@ -2443,7 +2441,7 @@ rt2560_update_slot(struct rt2560_softc *sc)
 	uint16_t sifs, pifs, difs, eifs;
 	uint32_t tmp;
 
-	slottime = (ic->ic_curmode == IEEE80211_MODE_11A) ? 9 : 20;
+	slottime = (ic->ic_flags & IEEE80211_F_SHSLOT) ? 9 : 20;
 
 	/* define the MAC slot boundaries */
 	sifs = RAL_SIFS - RT2560_RXTX_TURNAROUND;
@@ -2462,6 +2460,24 @@ rt2560_update_slot(struct rt2560_softc *sc)
 	RAL_WRITE(sc, RT2560_CSR19, tmp);
 
 	DPRINTF(("setting slottime to %uus\n", slottime));
+}
+
+void
+rt2560_set_basicrates(struct rt2560_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	/* update basic rate set */
+	if (ic->ic_curmode == IEEE80211_MODE_11B) {
+		/* 11b basic rates: 1, 2Mbps */
+		RAL_WRITE(sc, RT2560_ARSP_PLCP_1, 0x3);
+	} else if (IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan)) {
+		/* 11a basic rates: 6, 12, 24Mbps */
+		RAL_WRITE(sc, RT2560_ARSP_PLCP_1, 0x150);
+	} else {
+		/* 11g basic rates: 1, 2, 5.5, 11, 6, 12, 24Mbps */
+		RAL_WRITE(sc, RT2560_ARSP_PLCP_1, 0x15f);
+	}
 }
 
 void
