@@ -1,4 +1,4 @@
-/*	$OpenBSD: pram.c,v 1.9 2006/01/13 19:36:47 miod Exp $	*/
+/*	$OpenBSD: pram.c,v 1.10 2006/01/13 21:02:38 miod Exp $	*/
 /*	$NetBSD: pram.c,v 1.11 1996/10/21 05:42:29 scottr Exp $	*/
 
 /*-
@@ -34,27 +34,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/* #include "stand.h"  */
 #include <sys/types.h>
 #include <sys/param.h>
 
-#include <machine/viareg.h>
-
 #include <mac68k/mac68k/pram.h>
 #include <mac68k/dev/adbvar.h>
-
-unsigned long
-pram_readtime(void)
-{
-	return (getPramTime());
-}
-
-void
-pram_settime(unsigned long time)
-{
-	return setPramTime(time);
-}
 
 extern int adbHardware;         /* from adb.c */
 
@@ -62,32 +46,29 @@ extern int adbHardware;         /* from adb.c */
  * getPramTime
  * This function can be called regrardless of the machine
  * type. It calls the correct hardware-specific code.
- * (It's sort of redundant with the above, but it was
- * added later.)
  */
 unsigned long
-getPramTime(void)
+pram_readtime()
 {
         unsigned long time;
 
         switch (adbHardware) {
         case ADB_HW_II:         /* access PRAM via VIA interface */
-                time=(long)getPramTimeII();
-                return time;
+                return (getPramTimeII());
 
         case ADB_HW_IISI:       /* access PRAM via pseudo-adb functions */
 	case ADB_HW_CUDA:
-                if (0 != adb_read_date_time(&time))
-                        return 0;
+                if (adb_read_date_time(&time) != 0)
+                        return (0);
                 else
-                        return time;
+                        return (time);
 
         case ADB_HW_PB:         /* don't know how to access this yet */
-                return 0;
+                return (0);
 
         case ADB_HW_UNKNOWN:
         default:
-                return 0;
+                return (0);
         }
 }
 
@@ -95,26 +76,25 @@ getPramTime(void)
  * setPramTime
  * This function can be called regrardless of the machine
  * type. It calls the correct hardware-specific code.
- * (It's sort of redundant with the above, but it was
- * added later.)
  */
 void
-setPramTime(unsigned long time)
+pram_settime(unsigned long time)
 {
         switch (adbHardware) {
         case ADB_HW_II:         /* access PRAM via ADB interface */
                 setPramTimeII(time);
-                return;
+                break;
 
         case ADB_HW_IISI:       /* access PRAM via pseudo-adb functions */
 	case ADB_HW_CUDA:
                 adb_set_date_time(time);
-                return;
+                break;
 
         case ADB_HW_PB:         /* don't know how to access this yet */
-                return;
+                break;
 
         case ADB_HW_UNKNOWN:
-                return;
+	default:
+                break;
         }
 }
