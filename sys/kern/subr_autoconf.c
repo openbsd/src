@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.41 2005/12/09 09:09:52 jsg Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.42 2006/01/13 19:22:54 miod Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -716,24 +716,32 @@ config_pending_decr(void)
 int
 config_detach_children(struct device *parent, int flags)
 {
-	struct device *dev, *next_dev;
-	int  rv = 0;
+	struct device *dev, *next_dev, *prev_dev;
+	int rv = 0;
 
-	/* The config_detach routine may sleep, meaning devices
-	   may be added to the queue. However, all devices will
-	   be added to the tail of the queue, the queue won't
-	   be re-organized, and the subtree of parent here should be locked
-	   for purposes of adding/removing children.
-	*/
-	for (dev  = TAILQ_FIRST(&alldevs);
-	     dev != NULL; dev = next_dev) {
-		next_dev = TAILQ_NEXT(dev, dv_list);
-		if (dev->dv_parent == parent &&
-		    (rv = config_detach(dev, flags)))
-			return (rv);
+	/*
+	 * The config_detach routine may sleep, meaning devices
+	 * may be added to the queue. However, all devices will
+	 * be added to the tail of the queue, the queue won't
+	 * be re-organized, and the subtree of parent here should be locked
+	 * for purposes of adding/removing children.
+	 *
+	 * Note that we can not afford trying to walk the device list
+	 * once - our ``next'' device might be a child of the device
+	 * we are about to detach, so it would disappear.
+	 * Just play it safe and restart from the parent.
+	 */
+	for (prev_dev = NULL, dev = TAILQ_FIRST(&alldevs);
+	    dev != NULL; dev = next_dev) {
+		if (dev->dv_parent == parent) {
+			if ((rv = config_detach(dev, flags)) != 0)
+				return (rv);
+			next_dev = prev_dev ? prev_dev : TAILQ_FIRST(&alldevs);
+		} else
+			next_dev = TAILQ_NEXT(prev_dev = dev, dv_list);
 	}
 
-	return  (rv);
+	return (0);
 }
 
 int
