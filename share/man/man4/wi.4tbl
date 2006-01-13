@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.80 2006/01/08 00:00:51 jmc Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.81 2006/01/13 05:02:19 jsg Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -134,12 +134,6 @@ or on boot with
 .Xr hostname.if 5
 using the following parameters:
 .Bl -tag -width Ds
-.It Cm bssid Ar bssid
-Set the desired BSSID.
-.It Fl bssid
-Unset the desired BSSID.
-The interface will automatically select a BSSID in this mode, which is
-the default.
 .It Cm chan Ar n
 Set the channel (radio frequency) to be used by the driver based on
 the given channel ID
@@ -453,8 +447,8 @@ Configure wi0 for WEP, using hex key
 .Pp
 Return wi0 to its default settings:
 .Bd -literal -offset indent
-# ifconfig wi0 -bssid -chan media autoselect \e
-	nwid "" -nwkey -powersave -txpower
+# ifconfig wi0 -chan media autoselect nwid "" \e
+	-nwkey -powersave -txpower
 .Ed
 .Pp
 Join an existing BSS network,
