@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds1631.c,v 1.3 2006/01/13 00:13:01 deraadt Exp $	*/
+/*	$OpenBSD: ds1631.c,v 1.4 2006/01/13 21:41:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -24,7 +24,12 @@
 #include <dev/i2c/i2cvar.h>
 
 /* Maxim ds 1631 registers */
+#define DS1631_START		0x51
+#define DS1624_START		0xee
 #define DS1631_TEMP		0xaa
+#define DS1631_CONTROL		0xac
+#define  DS1631_CONTROL_DONE	0x80
+#define  DS1631_CONTROL_1SHOT	0x01
 
 /* Sensors */
 #define MAXDS_TEMP		0
@@ -67,10 +72,44 @@ maxds_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct maxds_softc *sc = (struct maxds_softc *)self;
 	struct i2c_attach_args *ia = aux;
+	u_int8_t cmd, data;
 	int i;
+
+	printf(": %s", ia->ia_name);
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
+
+	iic_acquire_bus(sc->sc_tag, 0);
+
+	cmd = DS1631_CONTROL;
+	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0) {
+		if (data & DS1631_CONTROL_1SHOT) {
+			/*
+			 * 1-Shot mode would require us to write every refresh
+			 * which is stupid.  Put us into continuous mode.
+			 */
+			data &= ~DS1631_CONTROL_1SHOT;
+
+			(void) iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+			    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0);
+			//delay(10 * 1000);
+			printf(", continuous");
+			goto dostart;
+		}
+		if (data & DS1631_CONTROL_DONE) {
+dostart:
+			cmd = DS1631_START;
+			if (strcmp(ia->ia_name, "ds1624") == 0)
+				cmd = DS1624_START;
+			(void) iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+			    sc->sc_addr, &cmd, sizeof cmd, NULL, 0, 0);
+			printf(", starting");
+		}
+	}
+
+	iic_release_bus(sc->sc_tag, 0);
 
 	/* Initialize sensor data. */
 	for (i = 0; i < MAXDS_NUM_SENSORS; i++)
@@ -104,7 +143,7 @@ maxds_refresh(void *arg)
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0) == 0)
 		sc->sc_sensor[MAXDS_TEMP].value = 273150000 +
-		    1000000 * data[1] + 1000000 * data[0] / 256;
+		    ((int)((u_int16_t)data[0] << 8 | data[1])) / 8 * 31250;
 
 	iic_release_bus(sc->sc_tag, 0);
 }
