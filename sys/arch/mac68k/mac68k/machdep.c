@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.126 2006/01/13 21:01:31 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.127 2006/01/13 21:04:36 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -957,9 +957,6 @@ nmihand(frame)
 		return;
 	nmihanddeep = 1;
 
-#ifdef DIAGNOSTIC
-	printf("Panic switch: PC is 0x%x.\n", frame.f_pc);
-#endif
 #ifdef DDB
 	if (db_console)
 		Debugger();
@@ -1241,6 +1238,7 @@ struct cpu_model_info cpu_models[] = {
 	{ MACH_MACQ650,		"Quadra 650",		MACH_CLASSQ },
 	{ MACH_MACC650,		"Centris 650",		MACH_CLASSQ },
 	{ MACH_MACQ605,		"Quadra 605",		MACH_CLASSQ },
+	{ MACH_MACQ605_33,	"Quadra 605/33",	MACH_CLASSQ },
 	{ MACH_MACC610,		"Centris 610",		MACH_CLASSQ },
 	{ MACH_MACQ610,		"Quadra 610",		MACH_CLASSQ },
 	{ MACH_MACQ630,		"Quadra 630",		MACH_CLASSQ2 },
@@ -1259,6 +1257,8 @@ struct cpu_model_info cpu_models[] = {
 	{ MACH_MACPB170,	"PowerBook 170",	MACH_CLASSPB },
 	{ MACH_MACPB180,	"PowerBook 180",	MACH_CLASSPB },
 	{ MACH_MACPB180C,	"PowerBook 180c",	MACH_CLASSPB },
+	{ MACH_MACPB190,	"PowerBook 190",	MACH_CLASSPB },
+	{ MACH_MACPB190CS,	"PowerBook 190cs",	MACH_CLASSPB },
 	{ MACH_MACPB500,	"PowerBook 500",	MACH_CLASSPB },
 
 /* The Duos */
@@ -1280,6 +1280,7 @@ struct cpu_model_info cpu_models[] = {
 	{ MACH_MACLCII,		"LC II",		MACH_CLASSLC },
 	{ MACH_MACLCIII,	"LC III",		MACH_CLASSLC },
 	{ MACH_MACLC475,	"LC 475",		MACH_CLASSQ },
+	{ MACH_MACLC475_33,	"LC 475/33",		MACH_CLASSQ },
 	{ MACH_MACLC520,	"LC 520",		MACH_CLASSLC },
 	{ MACH_MACLC575,	"LC 575",		MACH_CLASSQ2 },
 	{ MACH_MACCCLASSIC,	"Color Classic",	MACH_CLASSLC },
@@ -1291,44 +1292,57 @@ struct cpu_model_info cpu_models[] = {
 	{ 0,			"Unknown",		MACH_CLASSII }
 };				/* End of cpu_models[] initialization. */
 
-struct {
+struct intvid_info_t {
 	int	machineid;
-	caddr_t	fbbase;
+	u_long	fbbase;
+	u_long	fbmask;
 	u_long	fblen;
 } intvid_info[] = {
-	{ MACH_MACCLASSICII,	(caddr_t)0xfee09a80,	21888 },
-	{ MACH_MACPB140,	(caddr_t)0xfee00000,	32 * 1024 },
-	{ MACH_MACPB145,	(caddr_t)0xfee00000,	32 * 1024 },
-	{ MACH_MACPB170,	(caddr_t)0xfee00000,	32 * 1024 },
-	{ MACH_MACPB150,	(caddr_t)0x60000000,	128 * 1024 },
-	{ MACH_MACPB160,	(caddr_t)0x60000000,	128 * 1024 },
-	{ MACH_MACPB165,	(caddr_t)0x60000000,	128 * 1024 },
-	{ MACH_MACPB180,	(caddr_t)0x60000000,	128 * 1024 },
-	{ MACH_MACIICI,		(caddr_t)0x0,		320 * 1024 },
-	{ MACH_MACIISI,		(caddr_t)0x0,		320 * 1024 },
-	{ MACH_MACCCLASSIC,	(caddr_t)0x50f40000,	512 * 1024 },
-	{ MACH_MACPB165C,	(caddr_t)0xfc040000,	512 * 1024 },
-	{ MACH_MACPB180C,	(caddr_t)0xfc040000,	512 * 1024 },
-	{ MACH_MACPB500,	(caddr_t)0x60000000,	512 * 1024 },
-	{ MACH_MACLC520,	(caddr_t)0x60000000,	1 * 1024 * 1024 },
-	{ MACH_MACLC475,	(caddr_t)0xf9000000,	1 * 1024 * 1024 },
-	{ MACH_MACLC475_33,	(caddr_t)0xf9000000,	1 * 1024 * 1024 },
-	{ MACH_MACLC575,	(caddr_t)0xf9000000,	1 * 1024 * 1024 },
-	{ MACH_MACC610,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
-	{ MACH_MACC650,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
-	{ MACH_MACP580,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
-	{ MACH_MACQ605,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
-	{ MACH_MACQ605_33,	(caddr_t)0xf9000000,	1 * 1024 * 1024 },
-	{ MACH_MACQ610,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
-	{ MACH_MACQ630,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
-	{ MACH_MACQ650,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
-	{ MACH_MACC660AV,	(caddr_t)0x50100000,	1 * 1024 * 1024 },
-	{ MACH_MACQ700,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
-	{ MACH_MACQ800,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
-	{ MACH_MACQ900,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
-	{ MACH_MACQ950,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
-	{ MACH_MACQ840AV,	(caddr_t)0x50100000,	2 * 1024 * 1024 },
-	{ 0,			(caddr_t)0x0,		0 },
+	{ MACH_MACCLASSICII,	0x009f9a80,	0x0,		21888 },
+	{ MACH_MACPB140,	0xfee08000,	0x0,		32 * 1024 },
+	{ MACH_MACPB145,	0xfee08000,	0x0,		32 * 1024 },
+	{ MACH_MACPB170,	0xfee08000,	0x0,		32 * 1024 },
+	{ MACH_MACPB150,	0x60000000,	0x0,		128 * 1024 },
+	{ MACH_MACPB160,	0x60000000,	0x0ffe0000,	128 * 1024 },
+	{ MACH_MACPB165,	0x60000000,	0x0ffe0000,	128 * 1024 },
+	{ MACH_MACPB180,	0x60000000,	0x0ffe0000,	128 * 1024 },
+	{ MACH_MACPB210,	0x60000000,	0x0,		128 * 1024 },
+	{ MACH_MACPB230,	0x60000000,	0x0,		128 * 1024 },
+	{ MACH_MACPB250,	0x60000000,	0x0,		128 * 1024 },
+	{ MACH_MACPB270,	0x60000000,	0x0,		128 * 1024 },
+	{ MACH_MACPB280,	0x60000000,	0x0,		128 * 1024 },
+	{ MACH_MACPB280C,	0x60000000,	0x0,		128 * 1024 },
+	{ MACH_MACIICI,		0x0,		0x0,		320 * 1024 },
+	{ MACH_MACIISI,		0x0,		0x0,		320 * 1024 },
+	{ MACH_MACCCLASSIC,	0x50f40000,	0x0,		512 * 1024 },
+/*??*/	{ MACH_MACLCII,		0x50f40000,	0x0,		512 * 1024 },
+	{ MACH_MACPB165C,	0xfc040000,	0x0,		512 * 1024 },
+	{ MACH_MACPB180C,	0xfc040000,	0x0,		512 * 1024 },
+	{ MACH_MACPB190,	0x60000000,	0x0,		512 * 1024 },
+	{ MACH_MACPB190CS,	0x60000000,	0x0,		512 * 1024 },
+	{ MACH_MACPB500,	0x60000000,	0x0,		512 * 1024 },
+	{ MACH_MACLCIII,	0x60b00000,	0x0,		768 * 1024 },
+	{ MACH_MACLC520,	0x60000000,	0x0,		1024 * 1024 },
+	{ MACH_MACP550,		0x60000000,	0x0,		1024 * 1024 },
+	{ MACH_MACTV,		0x60000000,	0x0,		1024 * 1024 },
+	{ MACH_MACLC475,	0xf9000000,	0x0,		1024 * 1024 },
+	{ MACH_MACLC475_33,	0xf9000000,	0x0,		1024 * 1024 },
+	{ MACH_MACLC575,	0xf9000000,	0x0,		1024 * 1024 },
+	{ MACH_MACC610,		0xf9000000,	0x0,		1024 * 1024 },
+	{ MACH_MACC650,		0xf9000000,	0x0,		1024 * 1024 },
+	{ MACH_MACP580,		0xf9000000,	0x0,		1024 * 1024 },
+	{ MACH_MACQ605,		0xf9000000,	0x0,		1024 * 1024 },
+	{ MACH_MACQ605_33,	0xf9000000,	0x0,		1024 * 1024 },
+	{ MACH_MACQ610,		0xf9000000,	0x0,		1024 * 1024 },
+	{ MACH_MACQ630,		0xf9000000,	0x0,		1024 * 1024 },
+	{ MACH_MACQ650,		0xf9000000,	0x0,		1024 * 1024 },
+	{ MACH_MACC660AV,	0x50100000,	0x0,		1024 * 1024 },
+	{ MACH_MACQ700,		0xf9000000,	0x0,		1024 * 1024 },
+	{ MACH_MACQ800,		0xf9000000,	0x0,		1024 * 1024 },
+	{ MACH_MACQ900,		0xf9000000,	0x0,		1024 * 1024 },
+	{ MACH_MACQ950,		0xf9000000,	0x0,		1024 * 1024 },
+	{ MACH_MACQ840AV,	0x50100000,	0x0,		2048 * 1024 },
+	{ 0,			0x0,		0x0,		0 },
 };				/* End of intvid_info[] initialization. */
 
 /*
@@ -1668,7 +1682,11 @@ mac68k_set_io_offsets(base)
 	switch (current_mac_model->class) {
 	case MACH_CLASSQ:
 		Via1Base = (volatile u_char *)base;
+
+		/* The following two may be overriden. */
 		sccA = (volatile u_char *)base + 0xc000;
+		SCSIBase = base + 0xf000;
+
 		switch (current_mac_model->machineid) {
 		case MACH_MACQ900:
 		case MACH_MACQ950:
@@ -1679,8 +1697,8 @@ mac68k_set_io_offsets(base)
 			 */
 			sccA = (volatile u_char *)base + 0xc020;
 			mac68k_machine.scsi96_2 = 1;
+			break;
 		case MACH_MACQ700:
-			SCSIBase = base + 0xf000;
 			break;
 		default:
 			SCSIBase = base + 0x10000;
@@ -1739,6 +1757,7 @@ mac68k_set_io_offsets(base)
 		    current_mac_model->class);
 		break;
 	}
+
 	Via2Base = Via1Base + 0x2000 * VIA2;
 }
 
@@ -1807,6 +1826,8 @@ get_physical(u_int addr, u_long * phys)
 			if ((ph & MMU40_RES) == 0)
 				return 0;
 		}
+		if ((ph & MMU40_TTR) != 0)
+			ph = addr;
 
 		mask = (macos_tc & 0x4000) ? 0x00001fff : 0x00000fff;
 		ph &= (~mask);
@@ -1866,8 +1887,7 @@ check_video(id, limit, maxm)
 		mac68k_vidlen = 32768;
 		addr = videoaddr + 32768;
 		while (get_physical(addr, &phys)) {
-			if ((phys - mac68k_vidphys)
-			    != mac68k_vidlen)
+			if ((phys - mac68k_vidphys) != mac68k_vidlen)
 				break;
 			if (mac68k_vidlen + 32768 > limit) {
 				if (mac68k_machine.do_graybars) {
@@ -1884,9 +1904,8 @@ check_video(id, limit, maxm)
 			addr += 32768;
 		}
 		if (mac68k_machine.do_graybars) {
-			printf("  %s internal video at addr 0x%x (phys 0x%x), ",
-			    id, mac68k_vidlog, mac68k_vidphys);
-			printf("len 0x%x.\n", mac68k_vidlen);
+			printf("  %s internal video at paddr 0x%x, len 0x%x.\n",
+			    id, mac68k_vidphys, mac68k_vidlen);
 		}
 	}
 }
@@ -1899,8 +1918,9 @@ check_video(id, limit, maxm)
 u_int
 get_mapping(void)
 {
-	int i, same;
-	u_long addr, lastpage, phys, len;
+	struct intvid_info_t *iip;
+	u_long addr, lastpage, phys, len, limit;
+	int i, last, same;
 
 	numranges = 0;
 	for (i = 0; i < 8; i++) {
@@ -1912,19 +1932,63 @@ get_mapping(void)
 
 	get_physical(0, &load_addr);
 
+	last = 0;
 	for (addr = 0; addr <= lastpage && get_physical(addr, &phys);
-	    addr += NBPG) {
-		if (numranges > 0 && phys == high[numranges - 1]) {
-			high[numranges - 1] += NBPG;
+	    addr += PAGE_SIZE) {
+		if (numranges > 0 && phys != high[last]) {
+			/*
+			 * Attempt to find if this page is already
+			 * accounted for in an existing physical segment.
+			 */
+			for (i = 0; i < numranges; i++) {
+				if (low[i] <= phys && phys <= high[i]) {
+					last = i;
+					break;
+				}
+			}
+			if (i >= numranges)
+				last = numranges - 1;
+
+			if (low[last] <= phys && phys < high[last])
+				continue;	/* Skip pages we've seen. */
+		}
+
+		if (numranges > 0 && phys == high[last]) {
+			/* Common case: extend existing segment on high end */
+			high[last] += PAGE_SIZE;
 		} else {
+			/* This is a new physical segment. */
+			for (last = 0; last < numranges; last++)
+				if (phys < low[last])
+					break;
+
+			/* Create space for segment, if necessary */
+			if (last < numranges && phys < low[last]) {
+				for (i = numranges; i > last; i--) {
+					low[i] = low[i - 1];
+					high[i] = high[i - 1];
+				}
+			}
+
 			numranges++;
-			low[numranges - 1] = phys;
-			high[numranges - 1] = phys + NBPG;
+			low[last] = phys;
+			high[last] = phys + PAGE_SIZE;
+		}
+
+		/* Coalesce adjoining segments as appropriate */
+		if (last < (numranges - 1) && high[last] == low[last + 1] &&
+		    low[last + 1] != load_addr) {
+			high[last] = high[last + 1];
+			for (i = last + 1; i < numranges; i++) {
+				low[i] = low[i + 1];
+				high[i] = high[i + 1];
+			}
+			--numranges;
 		}
 	}
 	if (mac68k_machine.do_graybars) {
 		printf("System RAM: %ld bytes in %ld pages.\n",
-		    addr, addr / NBPG);
+		    addr, addr / PAGE_SIZE);
 		for (i = 0; i < numranges; i++) {
 			printf("     Low = 0x%lx, high = 0x%lx\n",
 			    low[i], high[i]);
@@ -1932,29 +1996,38 @@ get_mapping(void)
 	}
 
 	/*
+	 * If we can't figure out the PA of the frame buffer by groveling
+	 * the page tables, assume that we already have the correct
+	 * address.  This is the case on several of the PowerBook 1xx
+	 * series, in particular.
+	 */
+	if (!get_physical(videoaddr, &phys))
+		phys = videoaddr;
+
+	/*
 	 * Find on-board video, if we have an idea of where to look
 	 * on this system.
 	 */
-	for (i = 0; intvid_info[i].machineid; i++)
-		if (mac68k_machine.machineid == intvid_info[i].machineid)
+	for (iip = intvid_info; iip->machineid != 0; iip++)
+		if (mac68k_machine.machineid == iip->machineid)
 			break;
 
-	if (mac68k_machine.machineid == intvid_info[i].machineid &&
-	    get_physical(videoaddr, &phys) &&
-	    phys >= (u_long)intvid_info[i].fbbase &&
-	    phys < (u_long)(intvid_info[i].fbbase + intvid_info[i].fblen)) {
-		mac68k_vidphys = phys;
-		mac68k_vidlen = 32768;
-		if (mac68k_vidlen > intvid_info[i].fblen) {
-			mac68k_vidlen = intvid_info[i].fblen;
+	if (mac68k_machine.machineid == iip->machineid &&
+	    (phys & ~iip->fbmask) >= iip->fbbase &&
+	    (phys & ~iip->fbmask) < (iip->fbbase + iip->fblen)) {
+		mac68k_vidphys = phys & ~iip->fbmask;
+		mac68k_vidlen = 32768 - (phys & 0x7fff);
+
+		limit = iip->fbbase + iip->fblen - mac68k_vidphys;
+		if (mac68k_vidlen > limit) {
+			mac68k_vidlen = limit;
 		} else {
-			addr = videoaddr + 32768;
+			addr = videoaddr + mac68k_vidlen;
 			while (get_physical(addr, &phys)) {
 				if ((phys - mac68k_vidphys) != mac68k_vidlen)
 					break;
-				if (mac68k_vidlen + 32768 >
-				    intvid_info[i].fblen) {
-					mac68k_vidlen = intvid_info[i].fblen;
+				if (mac68k_vidlen + 32768 > limit) {
+					mac68k_vidlen = limit;
 					break;
 				}
 				mac68k_vidlen += 32768;
@@ -1990,14 +2063,16 @@ get_mapping(void)
 		}
 
 		same = 0;
-		for (addr = 0xF9000000; addr < 0xFF000000; addr += 32768) {
+		for (addr = NBBASE; addr < NBTOP; addr += 32768) {
 			if (!get_physical(addr, &phys)) {
 				continue;
 			}
 			len = nbnumranges == 0 ? 0 : nblen[nbnumranges - 1];
 
+#if DEBUG
 			if (mac68k_machine.do_graybars)
 				printf ("0x%lx --> 0x%lx\n", addr, phys);
+#endif
 			if (nbnumranges > 0
 			    && addr == nblog[nbnumranges - 1] + len
 			    && phys == nbphys[nbnumranges - 1]) {
@@ -2057,14 +2132,7 @@ get_mapping(void)
 			}
 		}
 		if (i == nbnumranges) {
-			if (0xfee00000 <= videoaddr && videoaddr < 0xfee10000) {
-				/*
-				 * Kludge for Classic II video.
-				 */
-				check_video("Classic II video (0xfee09a80)",
-				    21888, 21888);
-			} else if (0x60000000 <= videoaddr &&
-			    videoaddr < 0x70000000) {
+			if (0x60000000 <= videoaddr && videoaddr < 0x70000000) {
 				if (mac68k_machine.do_graybars)
 					printf("Checking for Internal Video ");
 				/*
@@ -2103,7 +2171,7 @@ get_mapping(void)
 		}
 	}
 
-	return low[0];		/* Return physical address of logical 0 */
+	return load_addr;	/* Return physical address of logical 0 */
 }
 
 /*
