@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.5 2006/01/11 21:39:10 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.6 2006/01/13 21:09:49 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -415,7 +415,9 @@ rt2661_attach(void *xsc, int id)
 	    IEEE80211_C_MONITOR |	/* monitor mode supported */
 	    IEEE80211_C_HOSTAP |	/* HostAp mode supported */
 	    IEEE80211_C_TXPMGT |	/* tx power management */
-	    IEEE80211_C_SHPREAMBLE;	/* short preamble supported */
+	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
+	    IEEE80211_C_SHSLOT |	/* short slot time supported */
+	    IEEE80211_C_WEP;		/* s/w WEP */
 
 	if (sc->rf_rev == RT2661_RF_5225 || sc->rf_rev == RT2661_RF_5325) {
 		/* set supported .11a rates */
@@ -939,7 +941,7 @@ rt2661_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			rt2661_enable_mrr(sc);
 			rt2661_set_txpreamble(sc);
 			rt2661_set_basicrates(sc);
-			rt2661_set_bssid(sc, ic->ic_bss->ni_bssid);
+			rt2661_set_bssid(sc, ni->ni_bssid);
 		}
 
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP ||
@@ -2128,9 +2130,10 @@ rt2661_enable_mrr(struct rt2661_softc *sc)
 
 	tmp = RAL_READ(sc, RT2661_TXRX_CSR4);
 
-	tmp |= RT2661_MRR_ENABLED;
+	tmp &= ~RT2661_MRR_CCK_FALLBACK;
 	if (!IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan))
 		tmp |= RT2661_MRR_CCK_FALLBACK;
+	tmp |= RT2661_MRR_ENABLED;
 
 	RAL_WRITE(sc, RT2661_TXRX_CSR4, tmp);
 }
@@ -2452,7 +2455,7 @@ rt2661_bbp_init(struct rt2661_softc *sc)
 		val = rt2661_bbp_read(sc, 0);
 		if (val != 0 && val != 0xff)
 			break;
-		DELAY(1);
+		DELAY(100);
 	}
 	if (ntries == 100) {
 		printf("%s: timeout waiting for BBP\n", sc->sc_dev.dv_xname);
@@ -2496,6 +2499,8 @@ rt2661_init(struct ifnet *ifp)
 		}
 		sc->sc_flags |= RT2661_ENABLED;
 	}
+
+	rt2661_stop(ifp, 0);
 
 	switch (sc->sc_id) {
 	case PCI_PRODUCT_RALINK_RT2561:
