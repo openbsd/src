@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfscanf.c,v 1.20 2006/01/13 17:56:18 millert Exp $ */
+/*	$OpenBSD: vfscanf.c,v 1.21 2006/01/13 21:33:28 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,12 +31,12 @@
  * SUCH DAMAGE.
  */
 
+#include <ctype.h>
+#include <inttypes.h>
+#include <stdarg.h>
 #include <stddef.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
-#include <stdarg.h>
 #include "local.h"
 
 #ifdef FLOATING_POINT
