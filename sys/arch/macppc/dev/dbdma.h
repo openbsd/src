@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbdma.h,v 1.3 2002/09/06 13:35:00 drahn Exp $	*/
+/*	$OpenBSD: dbdma.h,v 1.4 2006/01/13 19:25:44 miod Exp $	*/
 /*	$NetBSD: dbdma.h,v 1.2 1998/08/21 16:13:28 tsubai Exp $	*/
 
 /*
@@ -221,10 +221,12 @@ typedef volatile struct dbdma_regmap dbdma_regmap_t;
 /* DBDMA routines */
 typedef
 struct dbdma_desc {
+	bus_dma_tag_t d_dmat;
 	bus_dmamap_t d_map;
 	dbdma_command_t *d_addr;
 #define	d_paddr	d_segs->ds_addr
 	bus_dma_segment_t d_segs[1];
+	int d_nsegs;
 	size_t d_size;
 } *dbdma_t;
 

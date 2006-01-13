@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.23 2004/10/17 08:58:56 grange Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.24 2006/01/13 19:25:45 miod Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.15 2001/07/25 20:26:33 bouyer Exp $	*/
 
 /*-
@@ -73,6 +73,11 @@ struct wdc_obio_softc {
 	dbdma_regmap_t *sc_dmareg;
 	dbdma_command_t	*sc_dmacmd;
 	dbdma_t sc_dbdma;
+
+	void *sc_ih;
+	int sc_use_dma;
+	bus_size_t sc_cmdsize;
+	size_t sc_dmasize;
 };
 
 u_int8_t wdc_obio_read_reg(struct channel_softc *, enum wdc_regs);
@@ -89,9 +94,11 @@ struct channel_softc_vtbl wdc_obio_vtbl = {
 
 int	wdc_obio_probe(struct device *, void *, void *);
 void	wdc_obio_attach(struct device *, struct device *, void *);
+int	wdc_obio_detach(struct device *, int);
 
 struct cfattach wdc_obio_ca = {
-	sizeof(struct wdc_obio_softc), wdc_obio_probe, wdc_obio_attach
+	sizeof(struct wdc_obio_softc), wdc_obio_probe, wdc_obio_attach,
+	    wdc_obio_detach, wdcactivate
 };
 
 int	wdc_obio_dma_init(void *, int, int, void *, size_t, int);
@@ -128,12 +135,12 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 	struct wdc_obio_softc *sc = (void *)self;
 	struct confargs *ca = aux;
 	struct channel_softc *chp = &sc->wdc_channel;
-	int intr, error, use_dma = 0;
+	int intr, error;
 	bus_addr_t cmdbase;
-	bus_size_t cmdsize;
 
+	sc->sc_use_dma = 0;
 	if (ca->ca_nreg >= 16 || ca->ca_nintr == -1)
-		use_dma = 1;	/* Enable dma */
+		sc->sc_use_dma = 1;	/* Enable dma */
 
 	sc->sc_dmat = ca->ca_dmat;
 	if ((error = bus_dmamap_create(sc->sc_dmat,
@@ -154,7 +161,7 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (use_dma)
+	if (sc->sc_use_dma)
 		printf(": DMA");
 
 	printf("\n");
@@ -163,10 +170,10 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 	chp->_vtbl = &wdc_obio_vtbl;
 
 	cmdbase = ca->ca_reg[0];
-	cmdsize = ca->ca_reg[1];
+	sc->sc_cmdsize = ca->ca_reg[1];
 
-	if (bus_space_map(chp->cmd_iot, cmdbase, cmdsize, 0, &chp->cmd_ioh) ||
-	    bus_space_subregion(chp->cmd_iot, chp->cmd_ioh,
+	if (bus_space_map(chp->cmd_iot, cmdbase, sc->sc_cmdsize, 0,
+	    &chp->cmd_ioh) || bus_space_subregion(chp->cmd_iot, chp->cmd_ioh,
 	    /* WDC_AUXREG_OFFSET<<4 */ 0x160, 1, &chp->ctl_ioh)) {
 		printf("%s: couldn't map registers\n",
 			sc->sc_wdcdev.sc_dev.dv_xname);
@@ -175,16 +182,16 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 	chp->data32iot = chp->cmd_iot;
 	chp->data32ioh = chp->cmd_ioh;
 
-	mac_intr_establish(parent, intr, IST_LEVEL, IPL_BIO, wdcintr, chp,
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	sc->sc_ih = mac_intr_establish(parent, intr, IST_LEVEL, IPL_BIO,
+	    wdcintr, chp, sc->sc_wdcdev.sc_dev.dv_xname);
 
 	sc->sc_wdcdev.set_modes = wdc_obio_adjust_timing;
-	if (use_dma) {
+	if (sc->sc_use_dma) {
 		sc->sc_dbdma = dbdma_alloc(sc->sc_dmat, WDC_DMALIST_MAX + 1);
 		sc->sc_dmacmd = sc->sc_dbdma->d_addr;
 
 		sc->sc_dmareg = mapiodev(ca->ca_baseaddr + ca->ca_reg[2],
-		    ca->ca_reg[3]);
+		    sc->sc_dmasize = ca->ca_reg[3]);
 
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
 		sc->sc_wdcdev.DMA_cap = 2;
@@ -224,6 +231,30 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 	wdcattach(chp);
 	sc->sc_wdcdev.set_modes(chp);
 	wdc_print_current_modes(chp);
+}
+
+int
+wdc_obio_detach(struct device *self, int flags)
+{
+	struct wdc_obio_softc *sc = (struct wdc_obio_softc *)self;
+	struct channel_softc *chp = &sc->wdc_channel;
+	int error;
+
+	if ((error = wdcdetach(chp, flags)) != 0)
+		return (error);
+
+	free(chp->ch_queue, M_DEVBUF);
+
+	if (sc->sc_use_dma) {
+		unmapiodev((void *)sc->sc_dmareg, sc->sc_dmasize);
+		dbdma_free(sc->sc_dbdma);
+	}
+	mac_intr_disestablish(NULL, sc->sc_ih);
+
+	bus_space_unmap(chp->cmd_iot, chp->cmd_ioh, sc->sc_cmdsize);
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap);
+
+	return (0);
 }
 
 /* Multiword DMA transfer timings */

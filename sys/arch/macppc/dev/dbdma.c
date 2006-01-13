@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbdma.c,v 1.7 2003/10/16 03:31:25 drahn Exp $	*/
+/*	$OpenBSD: dbdma.c,v 1.8 2006/01/13 19:25:44 miod Exp $	*/
 /*	$NetBSD: dbdma.c,v 1.2 1998/08/21 16:13:28 tsubai Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ dbdma_t
 dbdma_alloc(bus_dma_tag_t dmat, int size)
 {
 	dbdma_t dt;
-	int error, nsegs = 0;
+	int error;
 
 	dt = malloc(sizeof *dt, M_DEVBUF, M_NOWAIT);
 	if (!dt)
@@ -125,28 +125,34 @@ dbdma_alloc(bus_dma_tag_t dmat, int size)
 	bzero(dt, sizeof *dt);
 
 	dt->d_size = size *= sizeof(dbdma_command_t);
+	dt->d_dmat = dmat;
 	if ((error = bus_dmamem_alloc(dmat, size, NBPG, 0, dt->d_segs,
-	    1, &nsegs, BUS_DMA_NOWAIT)) != 0) {
+	    1, &dt->d_nsegs, BUS_DMA_NOWAIT)) != 0) {
 		printf("dbdma: unable to allocate dma, error = %d\n", error);
-	} else if ((error = bus_dmamem_map(dmat, dt->d_segs, nsegs, size,
+	} else if ((error = bus_dmamem_map(dmat, dt->d_segs, dt->d_nsegs, size,
 	    (caddr_t *)&dt->d_addr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		printf("dbdma: unable to map dma, error = %d\n", error);
 	} else if ((error = bus_dmamap_create(dmat, dt->d_size, 1,
 	    dt->d_size, 0, BUS_DMA_NOWAIT, &dt->d_map)) != 0) {
 		printf("dbdma: unable to create dma map, error = %d\n", error);
 	} else if ((error = bus_dmamap_load_raw(dmat, dt->d_map,
-	    dt->d_segs, nsegs, size, BUS_DMA_NOWAIT)) != 0) {
+	    dt->d_segs, dt->d_nsegs, size, BUS_DMA_NOWAIT)) != 0) {
 		printf("dbdma: unable to load dma map, error = %d\n", error);
 	} else
 		return dt;
 
-	if (dt->d_map)
-		bus_dmamap_destroy(dmat, dt->d_map);
-	if (dt->d_addr)
-		bus_dmamem_unmap(dmat, (caddr_t)dt->d_addr, size);
-	if (nsegs)
-		bus_dmamem_free(dmat, dt->d_segs, nsegs);
-	free(dt, M_DEVBUF);
-
+	dbdma_free(dt);
 	return (NULL);
+}
+
+void
+dbdma_free(dbdma_t dt)
+{
+	if (dt->d_map)
+		bus_dmamap_destroy(dt->d_dmat, dt->d_map);
+	if (dt->d_addr)
+		bus_dmamem_unmap(dt->d_dmat, (caddr_t)dt->d_addr, dt->d_size);
+	if (dt->d_nsegs)
+		bus_dmamem_free(dt->d_dmat, dt->d_segs, dt->d_nsegs);
+	free(dt, M_DEVBUF);
 }
