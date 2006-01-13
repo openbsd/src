@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.25 2006/01/13 19:36:47 miod Exp $	*/
+/*	$OpenBSD: via.c,v 1.26 2006/01/13 21:02:04 miod Exp $	*/
 /*	$NetBSD: via.c,v 1.62 1997/09/10 04:38:48 scottr Exp $	*/
 
 /*-
@@ -156,6 +156,9 @@ via_init()
 		intr_establish(via2_intr, NULL, mac68k_machine.via2_ipl,
 		    "via2");
 	} else if (current_mac_model->class == MACH_CLASSIIfx) { /* OSS */
+		volatile u_char *ossintr;
+		ossintr = (volatile u_char *)IOBase + 0x1a006;
+		*ossintr = 0;
 		intr_establish(oss_intr, NULL, mac68k_machine.via2_ipl,
 		    "via2");
 	} else {	/* RBV */
@@ -455,8 +458,15 @@ via_powerdown()
 	if (VIA2 == VIA2OFF) {
 		via2_reg(vDirB) |= 0x04;  /* Set write for bit 2 */
 		via2_reg(vBufB) &= ~0x04; /* Shut down */
-	} else if (VIA2 == RBVOFF)
+	} else if (VIA2 == RBVOFF) {
 		via2_reg(rBufB) &= ~0x04;
+	} else if (VIA2 == OSSOFF) {
+		/*
+		 * Thanks to Brad Boyer <flar@cegt201.bradley.edu> for the
+		 * Linux/mac68k code that I derived this from.
+		 */
+		via2_reg(OSS_oRCR) |= OSS_POWEROFF;
+	}
 }
 
 void

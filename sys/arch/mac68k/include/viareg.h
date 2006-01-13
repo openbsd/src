@@ -1,4 +1,4 @@
-/*	$OpenBSD: viareg.h,v 1.17 2006/01/01 13:16:01 miod Exp $	*/
+/*	$OpenBSD: viareg.h,v 1.18 2006/01/13 21:02:01 miod Exp $	*/
 /*	$NetBSD: viareg.h,v 1.6 1997/02/28 07:41:41 scottr Exp $	*/
 
 /*-
@@ -143,8 +143,9 @@
 extern volatile unsigned char *Via1Base;
 extern volatile unsigned char *Via2Base;	/* init in VIA_Initialize */
 #define VIA1_addr	Via1Base	/* at PA 0x50f00000 */
-#define VIA2OFF		1		/* VIA2 addr = VIA1_addr * 0x2000 */
-#define RBVOFF		0x13		/* RBV addr = VIA1_addr * 0x13000 */
+
+#define VIA2OFF		1		/* VIA2 addr = VIA1_addr + 0x2000 */
+#define RBVOFF		0x13		/* RBV addr = VIA1_addr + 0x26000 */
 #define OSSOFF		0xd		/* OSS addr = VIA1_addr + 0x1A000 */
 
 #define VIA1		0
