@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.125 2006/01/13 19:36:46 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.126 2006/01/13 21:01:31 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -941,76 +941,6 @@ straytrap(pc, evec)
 }
 
 int	*nofault;
-
-int badaddr(caddr_t);
-
-int
-badaddr(addr)
-	caddr_t addr;
-{
-	int i;
-	label_t faultbuf;
-
-	nofault = (int *)&faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *)0;
-		return (1);
-	}
-	i = *(volatile short *)addr;
-	nofault = (int *)0;
-	return (0);
-}
-
-int
-badbaddr(addr)
-	caddr_t addr;
-{
-	int i;
-	label_t faultbuf;
-
-	nofault = (int *)&faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *)0;
-		return (1);
-	}
-	i = *(volatile u_int8_t *)addr;
-	nofault = (int *)0;
-	return (0);
-}
-
-int
-badwaddr(addr)
-	caddr_t addr;
-{
-	int i;
-	label_t faultbuf;
-
-	nofault = (int *)&faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *)0;
-		return (1);
-	}
-	i = *(volatile u_int16_t *)addr;
-	nofault = (int *)0;
-	return (0);
-}
-
-int
-badladdr(addr)
-	caddr_t addr;
-{
-	int i;
-	label_t faultbuf;
-
-	nofault = (int *)&faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *)0;
-		return (1);
-	}
-	i = *(volatile u_int32_t *)addr;
-	nofault = (int *)0;
-	return (0);
-}
 
 /*
  * Level 7 interrupts can be caused by the keyboard or parity errors.
