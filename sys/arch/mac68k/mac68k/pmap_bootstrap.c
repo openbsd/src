@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.36 2006/01/09 22:59:36 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.37 2006/01/13 19:36:46 miod Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.50 1999/04/07 06:14:33 scottr Exp $	*/
 
 /* 
@@ -53,8 +53,6 @@
 
 #include <ufs/mfs/mfs_extern.h>
 
-#include <mac68k/mac68k/macrom.h>
-
 #include "zsc.h"
 
 #if NZSC > 0
@@ -76,8 +74,6 @@ extern u_int32_t	videorowbytes;
 extern u_int32_t	videosize;
 static u_int32_t	newvideoaddr;
 
-extern caddr_t	ROMBase;
-
 void	bootstrap_mac68k(int);
 
 /*
@@ -98,26 +94,23 @@ extern caddr_t kernel_start;
 
 /*
  * Present a totally tricky view of the world here...
- * - count rom and video mappings in the internal IO space (which will
+ * - count video mappings in the internal IO space (which will
  *   require some contortion later on)
  * - no external IO space
  */
-#define	MACHINE_IIOMAPSIZE	(IIOMAPSIZE + ROMMAPSIZE + VIDMAPSIZE)
+#define	MACHINE_IIOMAPSIZE	(IIOMAPSIZE + VIDMAPSIZE)
 #define	MACHINE_INTIOBASE	IOBase
 #define	MACHINE_EIOMAPSIZE	0
 	 
 	/*	vidpa		internal video space for some machines
 	 *			PT pages		VIDMAPSIZE pages
 	 *
-	 *	rompa 		ROM space
-	 *			PT pages		ROMMAPSIZE pages
-	 *
 	 * XXX note that VIDMAPSIZE, hence vidlen, is needed very early
 	 *     in pmap_bootstrap(), so slightly abuse the purpose of
 	 *     PMAP_MD_LOCALS here...
 	 */
 #define	PMAP_MD_LOCALS \
-	paddr_t vidpa, rompa; \
+	paddr_t vidpa; \
 	paddr_t avail_next; \
 	int avail_remaining; \
 	int avail_range; \
@@ -129,7 +122,6 @@ extern caddr_t kernel_start;
 #define PMAP_MD_RELOC1() \
 do { \
 	vidpa = eiopa - VIDMAPSIZE * sizeof(pt_entry_t); \
-	rompa = vidpa - ROMMAPSIZE * sizeof(pt_entry_t); \
 } while (0)
 
 	/*
@@ -142,13 +134,6 @@ do { \
 	 */
 #define	PMAP_MD_MAPIOSPACE() \
 do { \
-	pte = PA2VA(rompa, u_int *); \
-	epte = pte + ROMMAPSIZE; \
-	protopte = ((u_int)ROMBase) | PG_RO | PG_V; \
-	while (pte < epte) { \
-		*pte++ = protopte; \
-		protopte += NBPG; \
-	} \
 	if (vidlen != 0) { \
 		pte = PA2VA(vidpa, u_int *); \
 		epte = pte + VIDMAPSIZE; \
@@ -164,9 +149,8 @@ do { \
 #define	PMAP_MD_RELOC2() \
 do { \
 	IOBase = iiobase; \
-	ROMBase = (char *)(iiobase + ptoa(IIOMAPSIZE)); \
 	if (vidlen != 0) { \
-		newvideoaddr = iiobase + ptoa(IIOMAPSIZE + ROMMAPSIZE) \
+		newvideoaddr = iiobase + ptoa(IIOMAPSIZE) \
 				+ m68k_page_offset(mac68k_vidphys); \
 	} \
 } while (0)
@@ -209,12 +193,10 @@ bootstrap_mac68k(tc)
 #endif
 	extern caddr_t	esym;
 	paddr_t		nextpa;
-	caddr_t		oldROMBase;
 
 	if (mac68k_machine.do_graybars)
 		printf("Bootstrapping OpenBSD/mac68k.\n");
 
-	oldROMBase = ROMBase;
 	mac68k_vidphys = videoaddr;
 
 	if (((tc & 0x80000000) && (mmutype == MMU_68030)) ||
@@ -245,11 +227,6 @@ bootstrap_mac68k(tc)
 
 	if (!vidlen)
 		panic("Don't know how to relocate video!");
-
-	if (mac68k_machine.do_graybars)
-		printf("Moving ROMBase from %p to %p.\n", oldROMBase, ROMBase);
-
-	mrg_fixupROMBase(oldROMBase, ROMBase);
 
 	if (mac68k_machine.do_graybars)
 		printf("Video address 0x%lx -> 0x%lx.\n",

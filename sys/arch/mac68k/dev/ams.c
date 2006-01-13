@@ -1,4 +1,4 @@
-/*	$OpenBSD: ams.c,v 1.3 2006/01/08 17:45:29 miod Exp $	*/
+/*	$OpenBSD: ams.c,v 1.4 2006/01/13 19:36:44 miod Exp $	*/
 /*	$NetBSD: ams.c,v 1.11 2000/12/19 03:13:40 tsubai Exp $	*/
 
 /*
@@ -106,11 +106,7 @@ amsattach(struct device *parent, struct device *self, void   *aux)
 	sc->sc_devid[0] = 0;
 	sc->sc_devid[4] = 0;
 
-#ifdef MRG_ADB
-	adbinfo.siServiceRtPtr = (Ptr)adb_ms_asmcomplete;
-#else
 	adbinfo.siServiceRtPtr = (Ptr)ms_adbcomplete;
-#endif
 	adbinfo.siDataAreaAddr = (caddr_t)sc;
 
 	ems_init(sc);

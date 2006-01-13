@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.44 2006/01/09 20:51:45 miod Exp $
+#	$OpenBSD: GENERIC,v 1.45 2006/01/13 19:36:41 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -22,7 +22,6 @@ option		FPSP
 option		FPU_EMULATE
 option		COMPAT_SUNOS	# SunOS m68k binary compatibility
 option		ADBVERBOSE
-#option		MRG_ADB		# Use ROM-based ADB driver
 option		WSDISPLAY_COMPAT_RAWKBD
 
 config		bsd	swap generic

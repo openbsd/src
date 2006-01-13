@@ -1,4 +1,4 @@
-/*	$OpenBSD: vectors.s,v 1.8 2006/01/01 13:16:01 miod Exp $	*/
+/*	$OpenBSD: vectors.s,v 1.9 2006/01/13 19:36:47 miod Exp $	*/
 |	$NetBSD: vectors.s,v 1.10 1998/08/12 06:58:42 scottr Exp $
 
 | Copyright (c) 1988 University of Utah
@@ -53,12 +53,8 @@ GLOBAL(vectab)
 	VECTOR(chkinst)		/* 6: CHK instruction */
 	VECTOR(trapvinst)	/* 7: TRAPV instruction */
 	VECTOR(privinst)	/* 8: privilege violation */
-#if defined(MRG_TRACE)
-	VECTOR(mrg_tracetrap)	/* 9: trace */
-#else /* MRG_TRACE */
 	VECTOR(trace)		/* 9: trace */
-#endif /* MRG_TRACE */
-	VECTOR(alinetrap)	/* 10: line 1010 emulator ; see macromasm.s */
+	VECTOR(illinst)		/* 10: line 1010 emulator */
 	VECTOR(fpfline)		/* 11: line 1111 emulator */
 	VECTOR(badtrap)		/* 12: unassigned, reserved */
 	VECTOR(coperr)		/* 13: coprocessor protocol violation */

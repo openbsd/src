@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.12 2005/05/01 09:55:49 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.13 2006/01/13 19:36:44 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.9 1998/08/12 06:58:42 scottr Exp $	*/
 
 /*
@@ -134,8 +134,7 @@ extern volatile u_int8_t ssir;
 #define	SIR_NET		0x01
 #define	SIR_CLOCK	0x02
 #define	SIR_SERIAL	0x04
-#define SIR_DTMGR	0x08
-#define SIR_ADB		0x10
+#define SIR_ADB		0x08
 
 #define	siron(mask)	\
 	__asm __volatile ( "orb %0,_ssir" : : "i" (mask))
@@ -145,7 +144,6 @@ extern volatile u_int8_t ssir;
 #define	setsoftnet()	siron(SIR_NET)
 #define	setsoftclock()	siron(SIR_CLOCK)
 #define	setsoftserial()	siron(SIR_SERIAL)
-#define	setsoftdtmgr()	siron(SIR_DTMGR)
 #define	setsoftadb()	siron(SIR_ADB)
 
 /* intr.c */

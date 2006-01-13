@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.17 2006/01/08 17:45:29 miod Exp $	*/
+/*	$OpenBSD: adb.c,v 1.18 2006/01/13 19:36:43 miod Exp $	*/
 /*	$NetBSD: adb.c,v 1.47 2005/06/16 22:43:36 jmc Exp $	*/
 
 /*
@@ -109,35 +109,6 @@ adb_attach_deferred(void *v)
 	printf("%s", self->dv_xname);
 	adb_polling = 1;
 
-#ifdef MRG_ADB
-	if (!mrg_romready()) {
-		printf(": no ROM ADB driver in this kernel for this machine\n");
-		return;
-	}
-
-#ifdef ADB_DEBUG
-	if (adb_debug)
-		printf("adb: call mrg_initadbintr\n");
-#endif
-
-	mrg_initadbintr();	/* Mac ROM Glue okay to do ROM intr */
-#ifdef ADB_DEBUG
-	if (adb_debug)
-		printf("adb: returned from mrg_initadbintr\n");
-#endif
-
-	/* ADBReInit pre/post-processing */
-	JADBProc = adb_jadbproc;
-
-	/* Initialize ADB */
-#ifdef ADB_DEBUG
-	if (adb_debug)
-		printf("adb: calling ADBAlternateInit.\n");
-#endif
-
-	printf(": mrg");
-	ADBAlternateInit();
-#else
 	ADBReInit();
 	printf(": %s", adbHardwareDescr[adbHardware]);
 
@@ -145,8 +116,6 @@ adb_attach_deferred(void *v)
 	if (adb_debug)
 		printf("adb: done with ADBReInit\n");
 #endif
-
-#endif /* MRG_ADB */
 
 	totaladbs = CountADBs();
 
@@ -292,16 +261,8 @@ adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
  * This function is used by the adb_op_sync routine so it knows when the
  * function is done.
  */
-#ifdef MRG_ADB
-void 
-adb_op_comprout(void)
-{
-	asm("movw	#1,a2@			| update flag value");
-}
-#else
 void 
 adb_op_comprout(caddr_t buffer, caddr_t data_area, int adb_command)
 {
 	*(u_short *)data_area = 0x01;		/* update flag value */
 }
-#endif

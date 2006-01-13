@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.49 2006/01/04 20:39:05 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.50 2006/01/13 19:36:45 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -84,16 +84,6 @@
  */
 	.text
 GLOBAL(kernel_text)
-
-/*
- * Mac OS global variable space; storage for global variables used by
- * Mac ROM traps and glue routines (see macrom.c, macrom.h macromasm.s)
- *
- * Some routine running before ADBReInit chooses to write to 0x1fb8.
- * With the trap table from 0x0 to 0x3ff, this additional space of
- * 0x2a00 should be sufficient.
- */
-	.space 0x2a00
 
 /*
  * Initialization
@@ -787,12 +777,7 @@ Lbrkpt2:
 	movl	d2,sp@-			| push trap type
 	jbsr	_C_LABEL(kdb_trap)	| handle the trap
 	addql	#8,sp			| pop args
-#if 0	/* not needed on mac68k */
-	cmpl	#0,d0			| did ddb handle it?
-	jne	Lbrkpt3			| yes, done
 #endif
-#endif
-	/* Sun 3 drops into PROM here. */
 Lbrkpt3:
 	| The stack pointer may have been modified, or
 	| data below it modified (by kgdb push call),
@@ -892,7 +877,6 @@ ENTRY_NOPROFILE(rtclock_intr)
 	movl	sp,sp@-			| push pointer to ps, pc
 	jbsr	_C_LABEL(hardclock)	| call generic clock int routine
 	lea	sp@(12),sp		| pop params
-	jbsr	_C_LABEL(mrg_VBLQueue)	| give programs in the VBLqueue a chance
 	movw	d2,sr			| restore SPL
 	movl	sp@+,d2			| restore d2
 	movl	#1,d0			| clock taken care of

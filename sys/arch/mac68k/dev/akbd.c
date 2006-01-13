@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.5 2006/01/09 19:13:40 miod Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.6 2006/01/13 19:36:43 miod Exp $	*/
 /*	$NetBSD: akbd.c,v 1.17 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -133,11 +133,7 @@ akbdattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_leds = (u_int8_t)0x00;	/* initially off */
 
-#ifdef MRG_ADB
-	adbinfo.siServiceRtPtr = (Ptr)adb_kbd_asmcomplete;
-#else
 	adbinfo.siServiceRtPtr = (Ptr)kbd_adbcomplete;
-#endif
 	adbinfo.siDataAreaAddr = (caddr_t)sc;
 
 	printf(": ");
@@ -510,6 +506,8 @@ akbd_cngetc(void *v, u_int *type, int *data)
 	int intbits, key, press, val;
 	int s;
 	extern int adb_polledkey;
+	extern int adb_intr(void *);
+	extern void pm_intr(void *);
 
 	s = splhigh();
 
@@ -520,11 +518,11 @@ akbd_cngetc(void *v, u_int *type, int *data)
 		intbits = via_reg(VIA1, vIFR);
 
 		if (intbits & V1IF_ADBRDY) {
-			mrg_adbintr();
+			adb_intr(NULL);
 			via_reg(VIA1, vIFR) = V1IF_ADBRDY;
 		}
 		if (intbits & 0x10) {
-			mrg_pmintr();
+			pm_intr(NULL);
 			via_reg(VIA1, vIFR) = 0x10;
 		}
 	}

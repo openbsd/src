@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.24 2006/01/04 20:39:05 miod Exp $	*/
+/*	$OpenBSD: via.c,v 1.25 2006/01/13 19:36:47 miod Exp $	*/
 /*	$NetBSD: via.c,v 1.62 1997/09/10 04:38:48 scottr Exp $	*/
 
 /*-
@@ -50,8 +50,8 @@
 #include <machine/intr.h>
 #include <machine/viareg.h>
 
-int	mrg_adbintr(void *);
-int	mrg_pmintr(void *);
+int	adb_intr(void *);
+int	pm_intr(void *);
 int	rtclock_intr(void *);
 void	profclock(void *);
 
@@ -99,8 +99,8 @@ via_init()
 	intr_establish(via1_intr, NULL, mac68k_machine.via1_ipl, "via1");
 
 	/* register default VIA1 interrupts */
-	via1_register_irq(2, mrg_adbintr, NULL, "adb");
-	via1_register_irq(4, mrg_pmintr, NULL, "pm");
+	via1_register_irq(2, adb_intr, NULL, "adb");
+	via1_register_irq(4, pm_intr, NULL, "pm");
 	via1_register_irq(VIA1_T1, rtclock_intr, NULL, "clock");
 
 	for (i = 0; i < 7; i++)

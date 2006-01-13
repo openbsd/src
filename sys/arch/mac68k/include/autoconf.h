@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.10 2006/01/02 18:10:05 miod Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.11 2006/01/13 19:36:44 miod Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.5 1996/12/17 06:47:40 scottr Exp $	*/
 
 /*
@@ -62,8 +62,6 @@ void	resettodr(void);
 void	mac68k_calibrate_delay(void);
 void	startrtclock(void);
 
-/* macrom.c */
-void	mrg_init(void);
 #endif	/* _KERNEL */
 
 #endif	/* _MAC68K_AUTOCONF_H_ */

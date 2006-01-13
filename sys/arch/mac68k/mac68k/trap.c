@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.46 2006/01/04 20:39:05 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.47 2006/01/13 19:36:47 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -522,12 +522,6 @@ copyfault:
 			siroff(SIR_CLOCK);
 			uvmexp.softs++;
 			softclock();
-		}
-		if (ssir & SIR_DTMGR) {
-			void mrg_execute_deferred(void);
-			siroff(SIR_DTMGR);
-			uvmexp.softs++;
-			mrg_execute_deferred();
 		}
 		if (ssir & SIR_ADB) {
 			void adb_soft_intr(void);

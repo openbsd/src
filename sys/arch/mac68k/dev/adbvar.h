@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbvar.h,v 1.10 2006/01/08 17:45:29 miod Exp $	*/
+/*	$OpenBSD: adbvar.h,v 1.11 2006/01/13 19:36:43 miod Exp $	*/
 /*	$NetBSD: adbvar.h,v 1.22 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -31,7 +31,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <mac68k/mac68k/macrom.h>
 #include <machine/adbsys.h>
 
 /*
@@ -55,19 +54,13 @@ extern int	adb_polling;
 extern int	adb_debug;
 #endif
 
+typedef caddr_t Ptr;
+
 /* adb.c */
 int	adb_op_sync(Ptr, Ptr, Ptr, short);
-#ifdef MRG_ADB
-void	adb_op_comprout(void);
-#else
 void	adb_op_comprout(caddr_t, caddr_t, int);
-#endif
 
-/* adbsysasm.s */
-void	adb_kbd_asmcomplete(void);
-void	adb_ms_asmcomplete(void);
-
-/* types of adb hardware that we (will eventually) support */
+/* types of adb hardware that we support */
 #define ADB_HW_UNKNOWN		0x0	/* don't know */
 #define ADB_HW_II		0x1	/* Mac II series */
 #define ADB_HW_IISI		0x2	/* Mac IIsi series */
@@ -80,7 +73,19 @@ void	adb_ms_asmcomplete(void);
 #define	ADBLISTEN(dev, reg)	((((u_int8_t)dev & 0x0f) << 4) | 0x08 | reg)
 #define	ADBTALK(dev, reg)	((((u_int8_t)dev & 0x0f) << 4) | 0x0c | reg)
 
-#ifndef MRG_ADB
+/* ADB Manager */
+typedef struct {
+	Ptr siServiceRtPtr;
+	Ptr siDataAreaAddr;
+} ADBSetInfoBlock;
+
+typedef struct {
+	unsigned char	devType;
+	unsigned char	origADBAddr;
+	Ptr		dbServiceRtPtr;
+	Ptr		dbDataAreaAddr;
+} ADBDataBlock;
+
 /* adb_direct.c */
 int	adb_poweroff(void);
 int	CountADBs(void);
@@ -91,4 +96,3 @@ int	SetADBInfo(ADBSetInfoBlock *, int);
 int	ADBOp(Ptr, Ptr, Ptr, short);
 int	adb_read_date_time(unsigned long *);
 int	adb_set_date_time(unsigned long);
-#endif /* !MRG_ADB */

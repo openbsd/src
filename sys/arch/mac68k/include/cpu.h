@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.35 2006/01/01 13:16:01 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.36 2006/01/13 19:36:44 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -252,12 +252,9 @@ struct mac68k_machine_S {
 
 	/* What kind of model is this */
 struct cpu_model_info {
-	int	machineid;	/* MacOS Gestalt value. */
-	char	*model_major;	/* Make this distinction to save a few */
-	char	*model_minor;	/*      bytes--might be useful, too. */
-	int	class;		/* Rough class of machine. */
-	  /* forwarded romvec_s is defined in mac68k/macrom.h */
-	struct romvec_s *rom_vectors; /* Pointer to our known rom vectors */
+	int		machineid;	/* MacOS Gestalt value. */
+	const char	*model;		/* Model description */
+	int		class;		/* Rough class of machine. */
 };
 extern struct cpu_model_info *current_mac_model;
 
@@ -267,11 +264,6 @@ extern unsigned long		NuBusBase;	/* Base address of NuBus */
 extern  struct mac68k_machine_S	mac68k_machine;
 extern	unsigned long		load_addr;
 #endif /* _KERNEL */
-
-/* physical memory sections */
-#define	ROMBASE		(0x40800000)
-#define	ROMLEN		(0x00200000)		/* 2MB will work for all 68k */
-#define	ROMMAPSIZE	btoc(ROMLEN)		/* 32k of page tables.  */
 
 #define IIOMAPSIZE	btoc(0x00100000)	/* 1MB should be enough */
 

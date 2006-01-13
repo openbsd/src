@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.9 2006/01/04 20:39:05 miod Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.10 2006/01/13 19:36:44 miod Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.25 2005/10/28 21:54:52 christos Exp $	*/
 
 /*
@@ -50,10 +50,8 @@
 #include <mac68k/dev/pm_direct.h>
 
 /* hardware dependent values */
-extern u_short ADBDelay;
-extern u_int32_t HwCfgFlags3;
-extern struct mac68k_machine_S mac68k_machine;
-
+u_int32_t HwCfgFlags3;
+u_short ADBDelay = 0xcea;
 
 /* define the types of the Power Manager */
 #define PM_HW_UNKNOWN		0x00	/* don't know */
@@ -176,13 +174,10 @@ int	pm_send_pm2(u_char);
 int	pm_pmgrop_pm2(PMData *);
 int	pm_intr_pm2(void *);
 
-/* this function is MRG-Based (for testing) */
-int	pm_pmgrop_mrg(PMData *);
-
 /* these functions are called from adb_direct.c */
 void	pm_setup_adb(void);
 void	pm_check_adb_devices(int);
-void	pm_intr(void *);
+int	pm_intr(void *);
 int	pm_adb_op(u_char *, void *, void *, int);
 void	pm_hw_setup(void);
 
@@ -878,26 +873,6 @@ pm_intr_pm2(void *arg)
 
 
 /*
- * MRG-based PMgrOp routine
- */
-int
-pm_pmgrop_mrg(PMData *pmdata)
-{
-	u_int32_t rval=0;
-
-	__asm __volatile(
-	"	movl	%1,a0	\n"
-	"	.word	0xa085	\n"
-	"	movl	d0,%0"
-		: "=g" (rval)
-		: "g" (pmdata)
-		: "a0","d0");
-
-	return rval;
-}
-
-
-/*
  * My PMgrOp routine
  */
 int
@@ -911,7 +886,6 @@ pmgrop(PMData *pmdata)
 			return (pm_pmgrop_pm2(pmdata));
 			break;
 		default:
-			/* return (pmgrop_mrg(pmdata)); */
 			return 1;
 	}
 }
@@ -920,19 +894,21 @@ pmgrop(PMData *pmdata)
 /*
  * My PM interrupt routine
  */
-void
+int
 pm_intr(void *arg)
 {
 	switch (pmHardware) {
-		case PM_HW_PB1XX:
-			pm_intr_pm1(arg);
-			break;
-		case PM_HW_PB5XX:
-			pm_intr_pm2(arg);
-			break;
-		default:
-			break;
+	case PM_HW_PB1XX:
+		return (pm_intr_pm1(arg));
+
+	case PM_HW_PB5XX:
+		return (pm_intr_pm2(arg));
+
+	default:
+		break;
 	}
+
+	return (-1);
 }
 
 

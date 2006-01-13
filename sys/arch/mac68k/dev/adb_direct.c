@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.17 2006/01/08 17:45:29 miod Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.18 2006/01/13 19:36:43 miod Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.51 2005/06/16 22:43:36 jmc Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
@@ -255,7 +255,6 @@ extern struct mac68k_machine_S mac68k_machine;
 void	pm_setup_adb(void);
 void	pm_hw_setup(void);
 void	pm_check_adb_devices(int);
-void	pm_intr(void *);
 int	pm_adb_op(u_char *, void *, void *, int);
 void	pm_init_adb_device(void);
 
@@ -1688,23 +1687,8 @@ adb_soft_intr(void)
 
 		/* call default completion routine if it's valid */
 		if (comprout) {
-#ifdef MRG_ADB
-			__asm __volatile (
-			"	movml #0xffff,sp@- \n"	/* save all regs */
-			"	movl %0,a2	\n" 	/* compdata */
-			"	movl %1,a1	\n" 	/* comprout */
-			"	movl %2,a0 	\n"	/* buffer */
-			"	movl %3,d0 	\n"	/* cmd */
-			"	jbsr a1@ 	\n"	/* go call routine */
-			"	movml sp@+,#0xffff"	/* restore all regs */
-			    :
-			    : "g"(compdata), "g"(comprout),
-				"g"(buffer), "g"(cmd)
-			    : "d0", "a0", "a1", "a2");
-#else
 			(void)((int (*)(u_char *, u_char *, int))comprout)
 			    (buffer, compdata, cmd);
-#endif
 		}
 
 		s = splhigh();
@@ -2194,10 +2178,8 @@ adb_reinit(void)
 	}
 #endif
 
-#ifndef MRG_ADB
 	/* enable the programmer's switch, if we have one */
 	adb_prog_switch_enable();
-#endif
 
 #ifdef ADB_DEBUG
 	if (adb_debug) {
@@ -2512,21 +2494,6 @@ set_adb_info(ADBSetInfoBlock *info, int adbAddr)
 
 }
 
-#ifndef MRG_ADB
-int
-mrg_adbintr(void)
-{
-	adb_intr(NULL);
-	return 1;	/* mimic mrg_adbintr in macrom.h just in case */
-}
-
-int
-mrg_pmintr(void)
-{
-	pm_intr(NULL);
-	return 1;	/* mimic mrg_pmintr in macrom.h just in case */
-}
-
 /* caller should really use machine-independant version: getPramTime */
 /* this version does pseudo-adb access only */
 int 
@@ -2789,5 +2756,3 @@ ADBOp(Ptr buffer, Ptr compRout, Ptr data, short commandNum)
 {
 	return (adb_op(buffer, compRout, data, commandNum));
 }
-
-#endif

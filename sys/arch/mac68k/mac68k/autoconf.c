@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.23 2006/01/04 20:39:05 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.24 2006/01/13 19:36:45 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.38 1996/12/18 05:46:09 scottr Exp $	*/
 
 /*
@@ -92,7 +92,6 @@ static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };
 void
 cpu_configure()
 {
-	mrg_init();		/* Init Mac ROM Glue */
 	startrtclock();		/* start before adb_init() */
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
