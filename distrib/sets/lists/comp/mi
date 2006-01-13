@@ -3588,6 +3588,8 @@
 ./usr/share/man/cat3/if_nametoindex.0
 ./usr/share/man/cat3/ilogb.0
 ./usr/share/man/cat3/ilogbf.0
+./usr/share/man/cat3/imaxabs.0
+./usr/share/man/cat3/imaxdiv.0
 ./usr/share/man/cat3/immedok.0
 ./usr/share/man/cat3/inch.0
 ./usr/share/man/cat3/inchnstr.0
@@ -4001,6 +4003,7 @@
 ./usr/share/man/cat3/link_fieldtype.0
 ./usr/share/man/cat3/link_ntoa.0
 ./usr/share/man/cat3/llabs.0
+./usr/share/man/cat3/lldiv.0
 ./usr/share/man/cat3/llrint.0
 ./usr/share/man/cat3/llrintf.0
 ./usr/share/man/cat3/llround.0
@@ -4721,6 +4724,7 @@
 ./usr/share/man/cat3/strstr.0
 ./usr/share/man/cat3/strtod.0
 ./usr/share/man/cat3/strtofflags.0
+./usr/share/man/cat3/strtoimax.0
 ./usr/share/man/cat3/strtok.0
 ./usr/share/man/cat3/strtok_r.0
 ./usr/share/man/cat3/strtol.0
@@ -4729,6 +4733,7 @@
 ./usr/share/man/cat3/strtoq.0
 ./usr/share/man/cat3/strtoul.0
 ./usr/share/man/cat3/strtoull.0
+./usr/share/man/cat3/strtoumax.0
 ./usr/share/man/cat3/strtouq.0
 ./usr/share/man/cat3/strunvis.0
 ./usr/share/man/cat3/strvis.0
