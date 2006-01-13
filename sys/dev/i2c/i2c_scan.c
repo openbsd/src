@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.55 2006/01/12 00:12:37 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.56 2006/01/13 01:44:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -564,10 +564,19 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		name = "adm1026";
 	} else if (name == NULL && (addr & 0x7c) == 0x48) {
 		name = lm75probe();
-	} else if (name == NULL && (addr & 0x7c) == 0x48 &&
-	    (iicprobe(0xac) & 0x7e) == 0x4a &&
-	    (iicprobew(0xaa) & 0x0007) == 0x0000) {
-		name = "ds1624";
+	}
+	if (name == NULL && (addr & 0x7c) == 0x48 &&
+ 	    (iicprobew(0xaa) & 0x0007) == 0x0000 &&
+ 	    (iicprobew(0xa1) & 0x0007) == 0x0000 &&
+ 	    (iicprobew(0xa2) & 0x0007) == 0x0000 &&
+	    (iicprobe(0xac) & 0x10) == 0x00) {
+		if ((iicprobe(0xac) & 0x7e) == 0x0a &&
+		    iicprobe(0xab) == 0x00 && iicprobe(0xa8) == 0x00)
+			name = "ds1624";
+		else if ((iicprobe(0xac) & 0x7e) == 0x0c)
+			name = "ds1631";	/* terrible probe */
+		else if ((iicprobe(0xac) & 0x7e) == 0x0e)
+			name = "ds1721";	/* terrible probe */
 	}
 	if (name == NULL) {
 		name = amd1032cloneprobe(addr);
