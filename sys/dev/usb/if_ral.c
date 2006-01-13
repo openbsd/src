@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.57 2006/01/13 21:00:54 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.58 2006/01/13 21:29:53 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1127,7 +1127,7 @@ ural_tx_bcn(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	uint8_t *buf;
 	int xferlen, rate;
 
-	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
+	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 2;
 
 	xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (xfer == NULL)
@@ -1184,7 +1184,7 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	data = &sc->tx_data[0];
 	desc = (struct ural_tx_desc *)data->buf;
 
-	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
+	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 2;
 
 	data->m = m0;
 	data->ni = ni;
