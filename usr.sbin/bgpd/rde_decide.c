@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.44 2006/01/04 12:50:31 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.45 2006/01/13 13:04:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -230,7 +230,13 @@ prefix_evaluate(struct prefix *p, struct pt_entry *pte)
 				}
 		}
 	}
+
 	xp = LIST_FIRST(&pte->prefix_h);
+	if (xp == NULL || (xp->aspath->nexthop != NULL &&
+	    xp->aspath->nexthop->state != NEXTHOP_REACH))
+		/* xp is ineligible */
+		xp = NULL;
+
 	if (pte->active != xp) {
 		/* need to generate an update */
 		if (pte->active != NULL)
@@ -246,12 +252,8 @@ prefix_evaluate(struct prefix *p, struct pt_entry *pte)
 		rde_generate_updates(xp, pte->active);
 		rde_send_kroute(xp, pte->active);
 
-		if (xp == NULL || (xp->aspath->nexthop != NULL &&
-		    xp->aspath->nexthop->state != NEXTHOP_REACH))
-			pte->active = NULL;
-		else {
-			pte->active = xp;
-			pte->active->aspath->active_cnt++;
-		}
+		pte->active = xp;
+		if (xp != NULL)
+			xp->aspath->active_cnt++;
 	}
 }

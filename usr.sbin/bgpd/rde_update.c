@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.48 2006/01/12 14:05:13 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.49 2006/01/13 13:04:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -406,8 +406,7 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 	if (peer->state != PEER_UP)
 		return;
 
-	if (new == NULL || (new->aspath->nexthop != NULL &&
-	    new->aspath->nexthop->state != NEXTHOP_REACH)) {
+	if (new == NULL) {
 		if (up_test_update(peer, old) != 1)
 			return;
 

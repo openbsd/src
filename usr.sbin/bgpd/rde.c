@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.191 2006/01/12 14:05:13 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.192 2006/01/13 13:04:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1550,19 +1550,14 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 	enum imsg_type		 type;
 
 	/*
-	 * If old is != NULL we know it was active and should be removed.
-	 * On the other hand new may be UNREACH and then we should not
-	 * generate an update.
+	 * Make sure that self announce prefixes are not commited to the
+	 * FIB. If both prefixes are unreachable no update is needed.
 	 */
 	if ((old == NULL || old->aspath->flags & F_PREFIX_ANNOUNCED) &&
-	    (new == NULL || new->aspath->nexthop == NULL ||
-	    new->aspath->nexthop->state != NEXTHOP_REACH ||
-	    new->aspath->flags & F_PREFIX_ANNOUNCED))
+	    (new == NULL || new->aspath->flags & F_PREFIX_ANNOUNCED))
 		return;
 
-	if (new == NULL || new->aspath->nexthop == NULL ||
-	    new->aspath->nexthop->state != NEXTHOP_REACH ||
-	    new->aspath->flags & F_PREFIX_ANNOUNCED) {
+	if (new == NULL || new->aspath->flags & F_PREFIX_ANNOUNCED) {
 		type = IMSG_KROUTE_DELETE;
 		p = old;
 	} else {
@@ -1747,11 +1742,10 @@ rde_generate_updates(struct prefix *new, struct prefix *old)
 
 	/*
 	 * If old is != NULL we know it was active and should be removed.
-	 * On the other hand new may be UNREACH and then we should not
+	 * If new is != NULL we know it is reachable and then we should 
 	 * generate an update.
 	 */
-	if (old == NULL && (new == NULL || (new->aspath->nexthop != NULL &&
-	    new->aspath->nexthop->state != NEXTHOP_REACH)))
+	if (old == NULL && new == NULL)
 		return;
 
 	LIST_FOREACH(peer, &peerlist, peer_l) {
