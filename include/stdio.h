@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.34 2006/01/06 18:53:04 millert Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.35 2006/01/13 18:10:09 miod Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -293,7 +293,6 @@ __END_DECLS
 
 __BEGIN_DECLS
 char	*ctermid(char *);
-char	*ctermid_r(char *);
 char	*cuserid(char *);
 FILE	*fdopen(int, const char *);
 int	 fileno(FILE *);
