@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.47 2004/07/15 21:44:16 tom Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.48 2006/01/13 17:53:09 millert Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -439,7 +439,7 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 		fprintf(stderr, "%s is %d blocks x %d bytes\n",
 		    boot, ndb, fs->fs_bsize);
 		fprintf(stderr, "fs block shift %u; part offset %u; "
-		    "inode block %u, offset %u\n",
+		    "inode block %u, offset %ld\n",
 		    fs->fs_fsbtodb, pl->p_offset,
 		    ino_to_fsba(fs, statbuf.st_ino),
 		    ((((char *)ap) - buf) + INODEOFF));
