@@ -114,7 +114,13 @@ Boston, MA 02111-1307, USA.  */
 /* Some code gets optimized incorrectly by move_movables() in loop.c */
 #define	BROKEN_MOVE_MOVABLES_P
 
-/* some stuff that must agree with ansi.h */
+/* This must agree with <machine/_types.h> */
+#undef SIZE_TYPE
+#define SIZE_TYPE "long unsigned int"
+
+#undef PTRDIFF_TYPE
+#define PTRDIFF_TYPE "long int"
+
 #undef WCHAR_TYPE
 #define WCHAR_TYPE	"int"
 

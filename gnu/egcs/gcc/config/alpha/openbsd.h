@@ -56,7 +56,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Layout of source language data types.  */
 
-/* This must agree with <machine/ansi.h> */
+/* This must agree with <machine/_types.h> */
 #undef SIZE_TYPE
 #define SIZE_TYPE "long unsigned int"
 
