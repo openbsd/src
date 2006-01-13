@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.72 2004/02/21 09:34:56 grange Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.73 2006/01/13 19:23:55 miod Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -150,6 +150,7 @@ struct atapiscsi_xfer;
 
 int	atapiscsi_match(struct device *, void *, void *);
 void	atapiscsi_attach(struct device *, struct device *, void *);
+int	atapiscsi_detach(struct device *, int);
 int     atapi_to_scsi_sense(struct scsi_xfer *, u_int8_t);
 
 enum atapi_state { as_none, as_data, as_completed };
@@ -189,7 +190,8 @@ static struct scsi_device atapiscsi_dev =
    be "attached to current" wdc driver */
 
 struct cfattach atapiscsi_ca = {
-	sizeof(struct atapiscsi_softc), atapiscsi_match, atapiscsi_attach
+	sizeof(struct atapiscsi_softc), atapiscsi_match, atapiscsi_attach,
+	    atapiscsi_detach
 };
 
 struct cfdriver atapiscsi_cd = {
@@ -311,6 +313,13 @@ atapiscsi_attach(parent, self, aux)
 #endif
 }
 
+int
+atapiscsi_detach(dev, flags)
+	struct device *dev;
+	int flags;
+{
+	return (config_detach_children(dev, flags));
+}
 
 int
 wdc_atapi_send_cmd(sc_xfer)
