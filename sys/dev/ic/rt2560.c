@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.6 2006/01/11 21:02:17 damien Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.7 2006/01/13 17:48:22 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -287,7 +287,6 @@ static const struct {
 	uint32_t	r2;
 	uint32_t	r4;
 } rt2560_rf5222[] = {
-	/* channels in the 2.4GHz band */
 	{   1, 0x08808, 0x0044d, 0x00282 },
 	{   2, 0x08808, 0x0044e, 0x00282 },
 	{   3, 0x08808, 0x0044f, 0x00282 },
@@ -303,7 +302,6 @@ static const struct {
 	{  13, 0x08808, 0x00469, 0x00282 },
 	{  14, 0x08808, 0x0046b, 0x00286 },
 
-	/* channels in the 5.2GHz band */
 	{  36, 0x08804, 0x06225, 0x00287 },
 	{  40, 0x08804, 0x06226, 0x00287 },
 	{  44, 0x08804, 0x06227, 0x00287 },
@@ -2252,7 +2250,6 @@ rt2560_rf_write(struct rt2560_softc *sc, uint8_t reg, uint32_t val)
 void
 rt2560_set_chan(struct rt2560_softc *sc, struct ieee80211_channel *c)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint8_t power, tmp;
 	u_int i, chan;
@@ -2327,16 +2324,12 @@ rt2560_set_chan(struct rt2560_softc *sc, struct ieee80211_channel *c)
 
 	/* dual-band RF */
 	case RT2560_RF_5222:
-		for (i = 0; i < N(rt2560_rf5222); i++)
-			if (rt2560_rf5222[i].chan == chan)
-				break;
+		for (i = 0; rt2560_rf5222[i].chan != chan; i++);
 
-		if (i < N(rt2560_rf5222)) {
-			rt2560_rf_write(sc, RT2560_RF1, rt2560_rf5222[i].r1);
-			rt2560_rf_write(sc, RT2560_RF2, rt2560_rf5222[i].r2);
-			rt2560_rf_write(sc, RT2560_RF3, power << 7 | 0x00040);
-			rt2560_rf_write(sc, RT2560_RF4, rt2560_rf5222[i].r4);
-		}
+		rt2560_rf_write(sc, RT2560_RF1, rt2560_rf5222[i].r1);
+		rt2560_rf_write(sc, RT2560_RF2, rt2560_rf5222[i].r2);
+		rt2560_rf_write(sc, RT2560_RF3, power << 7 | 0x00040);
+		rt2560_rf_write(sc, RT2560_RF4, rt2560_rf5222[i].r4);
 		break;
 	}
 
@@ -2357,7 +2350,6 @@ rt2560_set_chan(struct rt2560_softc *sc, struct ieee80211_channel *c)
 		/* clear CRC errors */
 		RAL_READ(sc, RT2560_CNT0);
 	}
-#undef N
 }
 
 /*

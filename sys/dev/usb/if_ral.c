@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_ral.c,v 1.55 2006/01/13 17:35:33 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.56 2006/01/13 17:48:25 damien Exp $  */
 
 /*-
- * Copyright (c) 2005
+ * Copyright (c) 2005, 2006
  *	Damien Bergamini <damien.bergamini@free.fr>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -300,7 +300,6 @@ static const struct {
 	uint32_t	r2;
 	uint32_t	r4;
 } ural_rf5222[] = {
-	/* channels in the 2.4GHz band */
 	{   1, 0x08808, 0x0044d, 0x00282 },
 	{   2, 0x08808, 0x0044e, 0x00282 },
 	{   3, 0x08808, 0x0044f, 0x00282 },
@@ -316,7 +315,6 @@ static const struct {
 	{  13, 0x08808, 0x00469, 0x00282 },
 	{  14, 0x08808, 0x0046b, 0x00286 },
 
-	/* channels in the 5.2GHz band */
 	{  36, 0x08804, 0x06225, 0x00287 },
 	{  40, 0x08804, 0x06226, 0x00287 },
 	{  44, 0x08804, 0x06227, 0x00287 },
@@ -1672,7 +1670,6 @@ ural_rf_write(struct ural_softc *sc, uint8_t reg, uint32_t val)
 Static void
 ural_set_chan(struct ural_softc *sc, struct ieee80211_channel *c)
 {
-#define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint8_t power, tmp;
 	u_int i, chan;
@@ -1740,16 +1737,12 @@ ural_set_chan(struct ural_softc *sc, struct ieee80211_channel *c)
 
 	/* dual-band RF */
 	case RAL_RF_5222:
-		for (i = 0; i < N(ural_rf5222); i++)
-			if (ural_rf5222[i].chan == chan)
-				break;
+		for (i = 0; ural_rf5222[i].chan != chan; i++);
 
-		if (i < N(ural_rf5222)) {
-			ural_rf_write(sc, RAL_RF1, ural_rf5222[i].r1);
-			ural_rf_write(sc, RAL_RF2, ural_rf5222[i].r2);
-			ural_rf_write(sc, RAL_RF3, power << 7 | 0x00040);
-			ural_rf_write(sc, RAL_RF4, ural_rf5222[i].r4);
-		}
+		ural_rf_write(sc, RAL_RF1, ural_rf5222[i].r1);
+		ural_rf_write(sc, RAL_RF2, ural_rf5222[i].r2);
+		ural_rf_write(sc, RAL_RF3, power << 7 | 0x00040);
+		ural_rf_write(sc, RAL_RF4, ural_rf5222[i].r4);
 		break;
 	}
 
@@ -1770,7 +1763,6 @@ ural_set_chan(struct ural_softc *sc, struct ieee80211_channel *c)
 		DELAY(1000); /* RF needs a 1ms delay here */
 		ural_disable_rf_tune(sc);
 	}
-#undef N
 }
 
 /*
