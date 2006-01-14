@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.100 2005/12/10 18:41:50 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.101 2006/01/14 00:37:11 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2435,9 +2435,6 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
 		bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map, 0,
 		    sc->rxdma.dma_size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-		/* Advance the E1000's Receive Queue #0	 "Tail Pointer". */
-		E1000_WRITE_REG(&sc->hw, RDT, i);
-
 		/* Advance our pointers to the next descriptor */
 		if (++i == sc->num_rx_desc)
 			i = 0;
@@ -2460,6 +2457,10 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
 		current_desc = &sc->rx_desc_base[i];
 	}
 	sc->next_rx_desc_to_check = i;
+
+	/* Advance the E1000's Receive Queue #0  "Tail Pointer". */
+	if (--i < 0) i = sc->num_rx_desc - 1;
+	E1000_WRITE_REG(&sc->hw, RDT, i);
 }
 
 /*********************************************************************
