@@ -1,40 +1,19 @@
-/*	$OpenBSD: nslm7x.c,v 1.18 2006/01/12 22:45:46 kettenis Exp $	*/
-/*	$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $ */
+/*	$OpenBSD: lm78.c,v 1.1 2006/01/14 15:14:33 kettenis Exp $	*/
 
-/*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
- * All rights reserved.
+/*
+ * Copyright (c) 2005, 2006 Mark Kettenis
  *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Bill Squier.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/param.h>
@@ -45,7 +24,7 @@
 #include <sys/sensors.h>
 #include <machine/bus.h>
 
-#include <dev/ic/nslm7xvar.h>
+#include <dev/ic/lm78var.h>
 
 #if defined(LMDEBUG)
 #define DPRINTF(x)		do { printf x; } while (0)
@@ -343,8 +322,8 @@ lm_attach(struct lm_softc *sc)
 	}
 
 	/* Start the monitoring loop */
-	config = sc->lm_readreg(sc, LMD_CONFIG);
-	sc->lm_writereg(sc, LMD_CONFIG, config | 0x01);
+	config = sc->lm_readreg(sc, LM_CONFIG);
+	sc->lm_writereg(sc, LM_CONFIG, config | 0x01);
 
 	/* Add sensors */
 	for (i = 0; i < sc->numsensors; ++i)
@@ -357,18 +336,18 @@ lm_match(struct lm_softc *sc)
 	int chipid;
 
 	/* See if we have an LM78 or LM79. */
-	chipid = sc->lm_readreg(sc, LMD_CHIPID) & LM_ID_MASK;
+	chipid = sc->lm_readreg(sc, LM_CHIPID) & LM_CHIPID_MASK;
 	switch(chipid) {
-	case LM_ID_LM78:
+	case LM_CHIPID_LM78:
 		printf(": LM78\n");
 		break;
-	case LM_ID_LM78J:
+	case LM_CHIPID_LM78J:
 		printf(": LM78J\n");
 		break;
-	case LM_ID_LM79:
+	case LM_CHIPID_LM79:
 		printf(": LM79\n");
 		break;
-	case LM_ID_LM81:
+	case LM_CHIPID_LM81:
 		printf(": LM81\n");
 		break;
 	default:
@@ -385,7 +364,7 @@ def_match(struct lm_softc *sc)
 {
 	int chipid;
 
-	chipid = sc->lm_readreg(sc, LMD_CHIPID) & LM_ID_MASK;
+	chipid = sc->lm_readreg(sc, LM_CHIPID) & LM_CHIPID_MASK;
 	printf(": unknown chip (ID %d)\n", chipid);
 
 	lm_setup_sensors(sc, lm78_sensors);
@@ -411,7 +390,7 @@ wb_match(struct lm_softc *sc)
 
 	/* Read device/chip ID */
 	sc->lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B0);
-	devid = sc->lm_readreg(sc, LMD_CHIPID);
+	devid = sc->lm_readreg(sc, LM_CHIPID);
 	chipid = sc->lm_readreg(sc, WB_BANK0_CHIPID);
 	sc->lm_writereg(sc, WB_BANKSEL, banksel);
 	DPRINTF(("winbond chip id 0x%x\n", chipid));
@@ -562,10 +541,10 @@ lm_refresh_fanrpm(struct lm_softc *sc, int n)
 	 */
 
 	/* FAN3 has a fixed fan divisor. */
-	if (sc->lm_sensors[n].reg == LMD_FAN1 ||
-	    sc->lm_sensors[n].reg == LMD_FAN2) {
-		data = sc->lm_readreg(sc, LMD_VIDFAN);
-		if (sc->lm_sensors[n].reg == LMD_FAN1)
+	if (sc->lm_sensors[n].reg == LM_FAN1 ||
+	    sc->lm_sensors[n].reg == LM_FAN2) {
+		data = sc->lm_readreg(sc, LM_VIDFAN);
+		if (sc->lm_sensors[n].reg == LM_FAN1)
 			divisor = (data >> 4) & 0x03;
 		else
 			divisor = (data >> 6) & 0x03;
@@ -649,23 +628,23 @@ wb_refresh_fanrpm(struct lm_softc *sc, int n)
 	 * over the place.
 	 */
 
-	if (sc->lm_sensors[n].reg == LMD_FAN1 ||
-	    sc->lm_sensors[n].reg == LMD_FAN2 ||
-	    sc->lm_sensors[n].reg == LMD_FAN3) {
-		data = sc->lm_readreg(sc, WB_BANK0_FANBAT);
-		fan = (sc->lm_sensors[n].reg - LMD_FAN1);
+	if (sc->lm_sensors[n].reg == LM_FAN1 ||
+	    sc->lm_sensors[n].reg == LM_FAN2 ||
+	    sc->lm_sensors[n].reg == LM_FAN3) {
+		data = sc->lm_readreg(sc, WB_BANK0_VBAT);
+		fan = (sc->lm_sensors[n].reg - LM_FAN1);
 		if ((data >> 5) & (1 << fan))
 			divisor |= 0x04;
 	}
 
-	if (sc->lm_sensors[n].reg == LMD_FAN1 ||
-	    sc->lm_sensors[n].reg == LMD_FAN2) {
-		data = sc->lm_readreg(sc, LMD_VIDFAN);
-		if (sc->lm_sensors[n].reg == LMD_FAN1)
+	if (sc->lm_sensors[n].reg == LM_FAN1 ||
+	    sc->lm_sensors[n].reg == LM_FAN2) {
+		data = sc->lm_readreg(sc, LM_VIDFAN);
+		if (sc->lm_sensors[n].reg == LM_FAN1)
 			divisor |= (data >> 4) & 0x03;
 		else
 			divisor |= (data >> 6) & 0x03;
-	} else if (sc->lm_sensors[n].reg == LMD_FAN3) {
+	} else if (sc->lm_sensors[n].reg == LM_FAN3) {
 		data = sc->lm_readreg(sc, WB_PIN);
 		divisor |= (data >> 6) & 0x03;
 	} else if (sc->lm_sensors[n].reg == WB_BANK0_FAN4 ||

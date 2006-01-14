@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.27 2006/01/13 23:56:46 grange Exp $
+# $OpenBSD: files.i2c,v 1.28 2006/01/14 15:14:33 kettenis Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -84,7 +84,7 @@ device	adt
 attach	adt at i2c
 file	dev/i2c/adt7460.c			adt
 
-# National Semiconductor LM7[89] and compatible hardware monitors
+# National Semiconductor LM78/79/81 and compatible hardware monitors
 attach lm at i2c with lm_i2c
 file	dev/i2c/lm_i2c.c			lm_i2c
 

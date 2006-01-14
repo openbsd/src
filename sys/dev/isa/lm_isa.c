@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm_isa.c,v 1.4 2006/01/12 22:34:51 kettenis Exp $	*/
+/*	$OpenBSD: lm_isa.c,v 1.5 2006/01/14 15:14:33 kettenis Exp $	*/
 /*	$NetBSD: lm_isa.c,v 1.9 2002/11/15 14:55:44 ad Exp $ */
 
 /*-
@@ -46,7 +46,11 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-#include <dev/ic/nslm7xvar.h>
+#include <dev/ic/lm78var.h>
+
+/* ISA registers */
+#define LMC_ADDR	0x05
+#define LMC_DATA	0x06
 
 #if defined(LMDEBUG)
 #define DPRINTF(x)		do { printf x; } while (0)
@@ -91,12 +95,14 @@ lm_isa_match(struct device *parent, void *match, void *aux)
 		goto found;
 
 	/*
-	 * Probe for LM78/79/81.
+	 * Probe for National Semiconductor LM78/79/81.
 	 *
-	 * XXX Assumes the address has not been changed from the
-	 * power up default.
-	 */ 
-	bus_space_write_1(iot, ioh, LMC_ADDR, LMD_SBUSADDR);
+	 * XXX This assumes the address has not been changed from the
+	 * power up default.  This is probably a reasonable
+	 * assumption, and if it isn't true, we should be able to
+	 * access the chip using the serial bus.
+	 */
+	bus_space_write_1(iot, ioh, LMC_ADDR, LM_SBUSADDR);
 	addr = bus_space_read_1(iot, ioh, LMC_DATA);
 	if ((addr & 0xfc) == 0x2c)
 		goto found;

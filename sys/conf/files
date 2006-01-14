@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.360 2006/01/09 21:19:48 jsg Exp $
+#	$OpenBSD: files,v 1.361 2006/01/14 15:14:32 kettenis Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -331,9 +331,9 @@ file	dev/ic/iha.c			iha
 device	trm: scsi
 file	dev/ic/trm.c			trm
 
-# National Semiconductor LM7[89] and compatible hardware monitors
+# National Semiconductor LM78/79/81 and compatible hardware monitors
 device	lm
-file	dev/ic/nslm7x.c			lm
+file	dev/ic/lm78.c			lm
 
 # Atheros AR5k (802.11/a/b/g) Hardware Abstraction Layer
 define	ar5xxx

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.91 2005/08/05 03:52:32 jsg Exp $
+#	$OpenBSD: files.isa,v 1.92 2006/01/14 15:14:33 kettenis Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -374,7 +374,7 @@ file	dev/isa/midi_pcppi.c		midi_pcppi
 attach	lpt at isa with lpt_isa
 file	dev/isa/lpt_isa.c		lpt_isa needs-flag
 
-# National Semiconductor LM7[89] and compatible hardware monitors
+# National Semiconductor LM78/79/81 and compatible hardware monitors
 attach	lm at isa with lm_isa
 file	dev/isa/lm_isa.c		lm_isa
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm_i2c.c,v 1.6 2006/01/09 22:41:39 kettenis Exp $	*/
+/*	$OpenBSD: lm_i2c.c,v 1.7 2006/01/14 15:14:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -24,7 +24,7 @@
 #include <machine/bus.h>
 
 #include <dev/i2c/i2cvar.h>
-#include <dev/ic/nslm7xvar.h>
+#include <dev/ic/lm78var.h>
 
 struct lm_i2c_softc {
 	struct lm_softc sc_lmsc;
