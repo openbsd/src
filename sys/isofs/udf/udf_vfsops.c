@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.4 2006/01/14 19:04:17 miod Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.5 2006/01/14 21:32:40 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -226,7 +226,7 @@ udf_checktag(struct desc_tag *tag, uint16_t id)
 
 	itag = (uint8_t *)tag;
 
-	if (tag->id != id)
+	if (letoh16(tag->id) != id)
 		return (EINVAL);
 
 	for (i = 0; i < 15; i++)
