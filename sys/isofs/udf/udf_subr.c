@@ -1,7 +1,8 @@
-/*	$OpenBSD: udf_subr.c,v 1.1 2006/01/14 19:04:17 miod Exp $	*/
+/*	$OpenBSD: udf_subr.c,v 1.2 2006/01/14 23:59:32 pedro Exp $	*/
 
 /*
  * Copyright (c) 2006, Miodrag Vallat
+ * Copyright (c) 2006, Pedro Martelletto
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,6 +28,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/mutex.h>
 #include <sys/stat.h>
@@ -34,6 +36,7 @@
 #include <sys/vnode.h>
 #include <sys/dirent.h>
 #include <sys/unistd.h>
+#include <sys/disklabel.h>
 
 #include <isofs/udf/ecma167-udf.h>
 #include <isofs/udf/udf.h>
@@ -76,4 +79,102 @@ udf_rawnametounicode(u_int len, char *cs0string, unicode_t *transname)
 	}
 
 	return (transname - origname);
+}
+
+/*
+ * Do a lazy probe on the underlying media to check if it's a UDF volume, in
+ * which case we fake a disk label for it.
+ */
+int
+udf_disklabelspoof(dev_t dev, void (*strat)(struct buf *),
+    struct disklabel *lp)
+{
+	char vid[32];
+	int i, bsize = 2048, error = EINVAL;
+	uint32_t sector = 256, mvds_start, mvds_end;
+	struct buf *bp;
+	struct anchor_vdp avdp;
+	struct pri_vol_desc *pvd;
+
+	/*
+	 * Get a buffer to work with.
+	 */
+	bp = geteblk(bsize);
+	bp->b_dev = dev;
+
+	/*
+	 * Look for an Anchor Volume Descriptor at sector 256.
+	 */
+	bp->b_blkno = sector * btodb(bsize);
+	bp->b_bcount = bsize;
+	bp->b_flags = B_BUSY | B_READ;
+	bp->b_resid = bp->b_blkno / lp->d_secpercyl;
+
+	(*strat)(bp);
+	if (biowait(bp))
+		goto out;
+
+	if (udf_checktag((struct desc_tag *)bp->b_data, TAGID_ANCHOR))
+		goto out;
+
+	bcopy(bp->b_data, &avdp, sizeof(avdp));
+	mvds_start = letoh32(avdp.main_vds_ex.loc);
+	mvds_end = mvds_start + (letoh32(avdp.main_vds_ex.len) - 1) / bsize;
+
+	/*
+	 * Then try to find a reference to a Primary Volume Descriptor.
+	 */
+	for (sector = mvds_start; sector < mvds_end; sector++) {
+		bp->b_blkno = sector * btodb(bsize);
+		bp->b_bcount = bsize;
+		bp->b_flags = B_BUSY | B_READ;
+		bp->b_resid = bp->b_blkno / lp->d_secpercyl;
+
+		(*strat)(bp);
+		if (biowait(bp))
+			goto out;
+
+		pvd = (struct pri_vol_desc *)bp->b_data;
+		if (!udf_checktag(&pvd->tag, TAGID_PRI_VOL))
+			break;
+	}
+
+	/*
+	 * If we couldn't find a reference, bail out.
+	 */
+	if (sector == mvds_end)
+		goto out;
+
+	/*
+	 * Okay, it's an UDF volume. Spoof a disk label for it.
+	 */
+	if (udf_transname(pvd->vol_id, vid, sizeof(pvd->vol_id), NULL))
+		strlcpy(lp->d_typename, vid, sizeof(lp->d_typename));
+
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		lp->d_partitions[i].p_size = 0;
+		lp->d_partitions[i].p_offset = 0;
+	}
+
+	/*
+	 * Fake two partitions, 'a' and 'c'.
+	 */
+	lp->d_partitions[0].p_size = lp->d_secperunit;
+	lp->d_partitions[0].p_fstype = FS_UDF;
+	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
+	lp->d_partitions[RAW_PART].p_fstype = FS_UDF;
+	lp->d_npartitions = RAW_PART + 1;
+
+	lp->d_bbsize = 8192;	/* Fake. */
+	lp->d_sbsize = 64*1024;	/* Fake. */
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
+
+	error = 0;
+out:
+	bp->b_flags |= B_INVAL;
+	brelse(bp);
+
+	return (error);
 }
