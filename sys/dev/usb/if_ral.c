@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.59 2006/01/14 08:50:38 jsg Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.60 2006/01/14 12:40:39 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -121,6 +121,9 @@ Static void		ural_txeof(usbd_xfer_handle, usbd_private_handle,
 			    usbd_status);
 Static void		ural_rxeof(usbd_xfer_handle, usbd_private_handle,
 			    usbd_status);
+#if NBPFILTER > 0
+Static uint8_t		ural_rxrate(struct ural_rx_desc *);
+#endif
 Static int		ural_ack_rate(struct ieee80211com *, int);
 Static uint16_t		ural_txtime(int, int, uint32_t);
 Static uint8_t		ural_plcp_signal(int);
@@ -938,7 +941,7 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	/* finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = m->m_len = (letoh32(desc->flags) >> 16) & 0xfff;
-	m->m_flags |= M_HASFCS; /* hardware appends FCS */
+	m->m_flags |= M_HASFCS; /* h/w leaves FCS */
 
 	s = splnet();
 
@@ -948,6 +951,7 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		struct ural_rx_radiotap_header *tap = &sc->sc_rxtap;
 
 		tap->wr_flags = 0;
+		tap->wr_rate = ural_rxrate(desc);
 		tap->wr_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
 		tap->wr_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 		tap->wr_antenna = sc->rx_ant;
@@ -987,6 +991,40 @@ skip:	/* setup a new transfer */
 	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, ural_rxeof);
 	usbd_transfer(xfer);
 }
+
+/*
+ * This function is only used by the Rx radiotap code. It returns the rate at
+ * which a given frame was received.
+ */
+#if NBPFILTER > 0
+Static uint8_t
+ural_rxrate(struct ural_rx_desc *desc)
+{
+	if (letoh32(desc->flags) & RAL_RX_OFDM) {
+		/* reverse function of rt2560_plcp_signal */
+		switch (desc->rate) {
+		case 0xb:	return 12;
+		case 0xf:	return 18;
+		case 0xa:	return 24;
+		case 0xe:	return 36;
+		case 0x9:	return 48;
+		case 0xd:	return 72;
+		case 0x8:	return 96;
+		case 0xc:	return 108;
+		}
+	} else {
+		if (desc->rate == 10)
+			return 2;
+		if (desc->rate == 20)
+			return 4;
+		if (desc->rate == 55)
+			return 11;
+		if (desc->rate == 110)
+			return 22;
+	}
+	return 2;	/* should not get there */
+}
+#endif
 
 /*
  * Return the expected ack rate for a frame transmitted at rate `rate'.

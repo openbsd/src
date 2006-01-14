@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ralreg.h,v 1.7 2006/01/13 21:00:55 damien Exp $  */
+/*	$OpenBSD: if_ralreg.h,v 1.8 2006/01/14 12:40:39 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -180,6 +180,7 @@ struct ural_tx_desc {
 struct ural_rx_desc {
 	uint32_t	flags;
 #define RAL_RX_CRC_ERROR	(1 << 5)
+#define RAL_RX_OFDM		(1 << 6)
 #define RAL_RX_PHY_ERROR	(1 << 7)
 
 	uint8_t		rate;
