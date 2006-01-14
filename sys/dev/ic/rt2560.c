@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.8 2006/01/13 21:06:09 damien Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.9 2006/01/14 08:50:38 jsg Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1344,7 +1344,7 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 
 			M_DUP_PKTHDR(&mb, m);
 			mb.m_data = (caddr_t)tap;
-			mb.m_len = sc->sc_txtap_len;
+			mb.m_len = sc->sc_rxtap_len;
 			mb.m_next = m;
 			mb.m_pkthdr.len += mb.m_len;
 			bpf_mtap(sc->sc_drvbpf, &mb);

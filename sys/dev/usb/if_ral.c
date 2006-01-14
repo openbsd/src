@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.58 2006/01/13 21:29:53 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.59 2006/01/14 08:50:38 jsg Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -955,7 +955,7 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 		M_DUP_PKTHDR(&mb, m);
 		mb.m_data = (caddr_t)tap;
-		mb.m_len = sc->sc_txtap_len;
+		mb.m_len = sc->sc_rxtap_len;
 		mb.m_next = m;
 		mb.m_pkthdr.len += mb.m_len;
 		bpf_mtap(sc->sc_drvbpf, &mb);

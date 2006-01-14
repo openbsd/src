@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.6 2006/01/13 21:09:49 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.7 2006/01/14 08:50:38 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1240,7 +1240,7 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 
 			M_DUP_PKTHDR(&mb, m);
 			mb.m_data = (caddr_t)tap;
-			mb.m_len = sc->sc_txtap_len;
+			mb.m_len = sc->sc_rxtap_len;
 			mb.m_next = m;
 			mb.m_pkthdr.len += mb.m_len;
 			bpf_mtap(sc->sc_drvbpf, &mb);
