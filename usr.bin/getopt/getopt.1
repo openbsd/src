@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getopt.1,v 1.9 2006/01/13 22:13:53 jmc Exp $	-*- nroff -*-
+.\"	$OpenBSD: getopt.1,v 1.10 2006/01/14 09:29:51 jmc Exp $	-*- nroff -*-
 .\"
 .\" This material, written by Henry Spencer, was released by him
 .\" into the public domain and is thus not subject to any copyright.
@@ -10,7 +10,7 @@
 .Nm getopt
 .Nd parse command options
 .Sh SYNOPSIS
-.Nm set -- `getopt optstring $*`
+.Nm args=`getopt optstring $*`; errcode=$?; set -- $args
 .Sh DESCRIPTION
 .Nm
 is used to break up options in command lines for easy parsing by
@@ -46,12 +46,13 @@ and the option
 .Fl o ,
 which requires an argument.
 .Bd -literal -offset indent
-set -- `getopt abo: $*`
-if test $? != 0
+args=`getopt abo: $*`
+if [ $? -ne 0 ]
 then
 	echo 'Usage: ...'
 	exit 2
 fi
+set -- $args
 for i
 do
 	case "$i"
