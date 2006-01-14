@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.57 2006/01/13 02:21:46 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.58 2006/01/14 22:23:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -518,8 +518,10 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 				name = "w83783s";
 				break;
 			case 0x71:
-			case 0x72:			/* rev 2? */
 				name = "w83791d";
+				break;
+			case 0x72:
+				name = "w83791sd";
 				break;
 			case 0x7a:
 				name = "w83792d";
@@ -533,6 +535,15 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			 */
 			 name = "w83781d";
 		}
+	} else if (addr == iicprobe (0x4a) && iicprobe(0x4e) == 0x50 &&
+	    iicprobe(0x4c) == 0xa3 && iicprobe(0x4d) == 0x5c) {
+		name = "w83l784r";
+	} else if (addr == 0x2d && iicprobe(0x4e) == 0x60 &&
+	    iicprobe(0x4c) == 0xa3 && iicprobe(0x4d) == 0x5c) {
+		name = "w83l785r";
+	} else if (addr == 0x2e && iicprobe(0x4e) == 0x50 &&
+	    iicprobe(0x4c) == 0xa3 && iicprobe(0x4d) == 0x5c) {
+		name = "w83l785s-l";
 	} else if (addr == iicprobe(0x48) &&
 	    iicprobe(0x4f) == 0x12 && (iicprobe(0x4e) & 0x80)) {
 		/*
