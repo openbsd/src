@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.9 2005/11/19 02:18:01 pedro Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.10 2006/01/14 19:04:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -52,7 +52,6 @@
 #include <miscfs/specfs/specdev.h>
 
 #include <isofs/udf/ecma167-udf.h>
-#include <isofs/udf/osta.h>
 #include <isofs/udf/udf.h>
 #include <isofs/udf/udf_extern.h>
 
@@ -470,10 +469,9 @@ udf_read(void *v)
 }
 
 /*
- * Call the OSTA routines to translate the name from a CS0 dstring to a
- * 16-bit Unicode String.  Hooks need to be placed in here to translate from
- * Unicode to the encoding that the kernel/user expects.  Return the length
- * of the translated string.
+ * Translate the name from a CS0 dstring to a 16-bit Unicode String.
+ * Hooks need to be placed in here to translate from Unicode to the encoding
+ * that the kernel/user expects.  Return the length of the translated string.
  */
 int
 udf_transname(char *cs0string, char *destname, int len, struct udf_mnt *udfmp)
@@ -482,15 +480,19 @@ udf_transname(char *cs0string, char *destname, int len, struct udf_mnt *udfmp)
 	int i, unilen = 0, destlen;
 
 	if (len > MAXNAMLEN) {
+#ifdef DIAGNOSTIC
 		printf("udf_transname(): name too long\n");
+#endif
 		return (0);
 	}
 
 	/* allocate a buffer big enough to hold an 8->16 bit expansion */
 	transname = pool_get(&udf_trans_pool, PR_WAITOK);
 
-	if ((unilen = udf_UncompressUnicode(len, cs0string, transname)) == -1) {
-		printf("udf: Unicode translation failed\n");
+	if ((unilen = udf_rawnametounicode(len, cs0string, transname)) == -1) {
+#ifdef DIAGNOSTIC
+		printf("udf_transname(): Unicode translation failed\n");
+#endif
 		pool_put(&udf_trans_pool, transname);
 		return (0);
 	}
@@ -498,11 +500,13 @@ udf_transname(char *cs0string, char *destname, int len, struct udf_mnt *udfmp)
 	/* Pack it back to 8-bit Unicode. */
 	for (i = 0; i < unilen ; i++)
 		if (transname[i] & 0xff00)
-			destname[i] = '.';	/* Fudge the 16bit chars */
+			destname[i] = '?';	/* Fudge the 16bit chars */
 		else
 			destname[i] = transname[i] & 0xff;
 
 	pool_put(&udf_trans_pool, transname);
+
+	/* Don't forget to terminate the string. */
 	destname[unilen] = 0;
 	destlen = unilen;
 

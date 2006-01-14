@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf.h,v 1.1 2005/03/29 17:24:52 pedro Exp $	*/
+/*	$OpenBSD: udf.h,v 1.2 2006/01/14 19:04:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -134,3 +134,5 @@ int udf_hashlookup(struct udf_mnt *, ino_t, int, struct vnode **);
 int udf_hashins(struct udf_node *);
 int udf_hashrem(struct udf_node *);
 int udf_checktag(struct desc_tag *, uint16_t);
+
+typedef	uint16_t unicode_t;

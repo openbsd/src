@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.361 2006/01/14 15:14:32 kettenis Exp $
+#	$OpenBSD: files,v 1.362 2006/01/14 19:04:14 miod Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -567,7 +567,7 @@ file isofs/cd9660/cd9660_rrip.c		cd9660
 file isofs/cd9660/cd9660_util.c		cd9660
 file isofs/cd9660/cd9660_vfsops.c	cd9660
 file isofs/cd9660/cd9660_vnops.c	cd9660
-file isofs/udf/osta.c			udf
+file isofs/udf/udf_subr.c		udf
 file isofs/udf/udf_vfsops.c		udf
 file isofs/udf/udf_vnops.c		udf
 file kern/exec_aout.c
