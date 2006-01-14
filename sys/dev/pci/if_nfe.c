@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.4 2005/12/17 11:12:54 jsg Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.5 2006/01/14 04:33:35 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -351,7 +351,8 @@ nfe_intr(void *arg)
 	/* disable interrupts */
 	NFE_WRITE(sc, NFE_IRQ_MASK, 0);
 	
-	r = NFE_READ(sc, NFE_IRQ_STATUS) & 0x1ff;
+	r = NFE_READ(sc, NFE_IRQ_STATUS);
+	NFE_WRITE(sc, NFE_IRQ_STATUS, r);
 
 	if (r == 0) {
 		NFE_WRITE(sc, NFE_IRQ_MASK, NFE_IRQ_WANTED | NFE_IRQ_TIMER);
