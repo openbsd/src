@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpioiic.4,v 1.1 2006/01/14 11:50:21 grange Exp $
+.\"	$OpenBSD: gpioiic.4,v 1.2 2006/01/14 12:28:44 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -26,7 +26,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver allows to bit-bang an I2C bus as a master using two GPIO pins.
+driver allows bit-banging an I2C bus as a master using two GPIO pins.
 The first pin is used as a serial data (SDA) signal and the second as
 a serial clock (SCL).
 Both GPIO pins must be able to drive an output and the SDA pin must be
@@ -39,7 +39,7 @@ and the
 locators.
 Each bit in the
 .Ar mask
-locator defines one pin, the pin number is calculated as an addition of
+locator defines one pin; the pin number is calculated as an addition of
 the bit position and the
 .Ar offset
 locator.
@@ -51,7 +51,7 @@ defines pin numbers 17 and 19.
 .Sh SEE ALSO
 .Xr gpio 4 ,
 .Xr iic 4 ,
-.Xr intro 4 ,
+.Xr intro 4
 .Sh HISTORY
 The
 .Nm
