@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.9 2006/01/14 08:50:38 jsg Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.10 2006/01/14 12:43:27 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -104,6 +104,9 @@ void		rt2560_decryption_intr(struct rt2560_softc *);
 void		rt2560_rx_intr(struct rt2560_softc *);
 void		rt2560_beacon_expire(struct rt2560_softc *);
 void		rt2560_wakeup_expire(struct rt2560_softc *);
+#if NBPFILTER > 0
+uint8_t		rt2560_rxrate(struct rt2560_rx_desc *);
+#endif
 int		rt2560_ack_rate(struct ieee80211com *, int);
 uint16_t	rt2560_txtime(int, int, uint32_t);
 uint8_t		rt2560_plcp_signal(int);
@@ -1330,12 +1333,13 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 			uint32_t tsf_lo, tsf_hi;
 
 			/* get timestamp (low and high 32 bits) */
-			tsf_lo = RAL_READ(sc, RT2560_CSR16);
 			tsf_hi = RAL_READ(sc, RT2560_CSR17);
+			tsf_lo = RAL_READ(sc, RT2560_CSR16);
 
 			tap->wr_tsf =
 			    htole64(((uint64_t)tsf_hi << 32) | tsf_lo);
 			tap->wr_flags = 0;
+			tap->wr_rate = rt2560_rxrate(desc);
 			tap->wr_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
 			tap->wr_chan_flags =
 			    htole16(ic->ic_ibss_chan->ic_flags);
@@ -1344,7 +1348,7 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 
 			M_DUP_PKTHDR(&mb, m);
 			mb.m_data = (caddr_t)tap;
-			mb.m_len = sc->sc_rxtap_len;
+			mb.m_len = sc->sc_txtap_len;
 			mb.m_next = m;
 			mb.m_pkthdr.len += mb.m_len;
 			bpf_mtap(sc->sc_drvbpf, &mb);
@@ -1518,6 +1522,40 @@ rt2560_intr(void *arg)
 #define RAL_SIFS		10	/* us */
 
 #define RT2560_RXTX_TURNAROUND	10	/* us */
+
+/*
+ * This function is only used by the Rx radiotap code. It returns the rate at
+ * which a given frame was received.
+ */
+#if NBPFILTER > 0
+uint8_t
+rt2560_rxrate(struct rt2560_rx_desc *desc)
+{
+	if (letoh32(desc->flags) & RT2560_RX_OFDM) {
+		/* reverse function of rt2560_plcp_signal */
+		switch (desc->rate) {
+		case 0xb:	return 12;
+		case 0xf:	return 18;
+		case 0xa:	return 24;
+		case 0xe:	return 36;
+		case 0x9:	return 48;
+		case 0xd:	return 72;
+		case 0x8:	return 96;
+		case 0xc:	return 108;
+		}
+	} else {
+		if (desc->rate == 10)
+			return 2;
+		if (desc->rate == 20)
+			return 4;
+		if (desc->rate == 55)
+			return 11;
+		if (desc->rate == 110)
+			return 22;
+	}
+	return 2;	/* should not get there */
+}
+#endif
 
 /*
  * Return the expected ack rate for a frame transmitted at rate `rate'.

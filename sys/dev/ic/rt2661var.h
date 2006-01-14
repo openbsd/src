@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661var.h,v 1.2 2006/01/10 21:20:46 damien Exp $	*/
+/*	$OpenBSD: rt2661var.h,v 1.3 2006/01/14 12:43:27 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -21,6 +21,7 @@ struct rt2661_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
 	uint64_t	wr_tsf;
 	uint8_t		wr_flags;
+	uint8_t		wr_rate;
 	uint16_t	wr_chan_freq;
 	uint16_t	wr_chan_flags;
 	uint8_t		wr_antsignal;
@@ -29,6 +30,7 @@ struct rt2661_rx_radiotap_header {
 #define RT2661_RX_RADIOTAP_PRESENT					\
 	((1 << IEEE80211_RADIOTAP_TSFT) |				\
 	 (1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_RATE) |				\
 	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
 	 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL))
 

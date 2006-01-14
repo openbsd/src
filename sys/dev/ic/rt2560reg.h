@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560reg.h,v 1.2 2006/01/10 17:40:29 damien Exp $  */
+/*	$OpenBSD: rt2560reg.h,v 1.3 2006/01/14 12:43:27 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -230,6 +230,7 @@ struct rt2560_rx_desc {
 	uint32_t	flags;
 #define RT2560_RX_BUSY		(1 << 0)
 #define RT2560_RX_CRC_ERROR	(1 << 5)
+#define RT2560_RX_OFDM		(1 << 6)
 #define RT2560_RX_PHY_ERROR	(1 << 7)
 #define RT2560_RX_CIPHER_BUSY	(1 << 8)
 #define RT2560_RX_ICV_ERROR	(1 << 9)

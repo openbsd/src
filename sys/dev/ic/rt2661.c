@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.7 2006/01/14 08:50:38 jsg Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.8 2006/01/14 12:43:27 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -105,6 +105,9 @@ void		rt2661_mcu_beacon_expire(struct rt2661_softc *);
 void		rt2661_mcu_wakeup(struct rt2661_softc *);
 void		rt2661_mcu_cmd_intr(struct rt2661_softc *);
 int		rt2661_intr(void *);
+#if NBPFILTER > 0
+uint8_t		rt2661_rxrate(struct rt2661_rx_desc *);
+#endif
 int		rt2661_ack_rate(struct ieee80211com *, int);
 uint16_t	rt2661_txtime(int, int, uint32_t);
 uint8_t		rt2661_plcp_signal(int);
@@ -1227,12 +1230,13 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 			uint32_t tsf_lo, tsf_hi;
 
 			/* get timestamp (low and high 32 bits) */
-			tsf_lo = RAL_READ(sc, RT2661_TXRX_CSR12);
 			tsf_hi = RAL_READ(sc, RT2661_TXRX_CSR13);
+			tsf_lo = RAL_READ(sc, RT2661_TXRX_CSR12);
 
 			tap->wr_tsf =
 			    htole64(((uint64_t)tsf_hi << 32) | tsf_lo);
 			tap->wr_flags = 0;
+			tap->wr_rate = rt2661_rxrate(desc);
 			tap->wr_chan_freq = htole16(ic->ic_ibss_chan->ic_freq);
 			tap->wr_chan_flags =
 			    htole16(ic->ic_ibss_chan->ic_flags);
@@ -1240,7 +1244,7 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 
 			M_DUP_PKTHDR(&mb, m);
 			mb.m_data = (caddr_t)tap;
-			mb.m_len = sc->sc_rxtap_len;
+			mb.m_len = sc->sc_txtap_len;
 			mb.m_next = m;
 			mb.m_pkthdr.len += mb.m_len;
 			bpf_mtap(sc->sc_drvbpf, &mb);
@@ -1367,6 +1371,40 @@ rt2661_intr(void *arg)
 #define RAL_CTS_SIZE	14	/* 10 + 4(FCS) */
 
 #define RAL_SIFS	10	/* us */
+
+/*
+ * This function is only used by the Rx radiotap code. It returns the rate at
+ * which a given frame was received.
+ */
+#if NBPFILTER > 0
+uint8_t
+rt2661_rxrate(struct rt2661_rx_desc *desc)
+{
+	if (letoh32(desc->flags) & RT2661_RX_OFDM) {
+		/* reverse function of rt2661_plcp_signal */
+		switch (desc->rate & 0xf) {
+		case 0xb:	return 12;
+		case 0xf:	return 18;
+		case 0xa:	return 24;
+		case 0xe:	return 36;
+		case 0x9:	return 48;
+		case 0xd:	return 72;
+		case 0x8:	return 96;
+		case 0xc:	return 108;
+		}
+	} else {
+		if (desc->rate == 10)
+			return 2;
+		if (desc->rate == 20)
+			return 4;
+		if (desc->rate == 55)
+			return 11;
+		if (desc->rate == 110)
+			return 22;
+	}
+	return 2;	/* should not get there */
+}
+#endif
 
 /*
  * Return the expected ack rate for a frame transmitted at rate `rate'.
