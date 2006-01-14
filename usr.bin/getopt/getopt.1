@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getopt.1,v 1.10 2006/01/14 09:29:51 jmc Exp $	-*- nroff -*-
+.\"	$OpenBSD: getopt.1,v 1.11 2006/01/14 09:37:24 jmc Exp $	-*- nroff -*-
 .\"
 .\" This material, written by Henry Spencer, was released by him
 .\" into the public domain and is thus not subject to any copyright.
@@ -36,6 +36,15 @@ preceded by a
 .Sq -
 and in its own shell argument;
 each option argument is also in its own shell argument.
+.Pp
+Note that the construction
+.Cm set -- `getopt optstring $*`
+is not recommended,
+as the exit value from
+.Dq set
+will prevent the exit value from
+.Nm
+from being determined.
 .Sh EXAMPLES
 The following code fragment shows how one might process the arguments
 for a command that can take the options
