@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1003 2006/01/12 17:50:42 deraadt Exp $
+$OpenBSD: pcidevs,v 1.1004 2006/01/14 06:44:40 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2814,6 +2814,7 @@ product SIS 962			0x0962	962 ISA
 product SIS 963			0x0963	963 ISA
 product SIS 964			0x0964	964 ISA
 product SIS 965			0x0965	965 ISA
+product SIS 966			0x0966	966 ISA
 product SIS 5511		0x5511	5511
 product SIS 5512		0x5512	5512
 product SIS 5513		0x5513	5513 EIDE
