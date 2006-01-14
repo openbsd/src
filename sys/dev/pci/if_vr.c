@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.54 2005/12/10 18:34:11 krw Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.55 2006/01/14 09:50:20 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -490,8 +490,8 @@ vr_setmulti(struct vr_softc *sc)
 
 	rxfilt = CSR_READ_1(sc, VR_RXCFG);
 
-allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
+allmulti:
 		rxfilt |= VR_RXCFG_RX_MULTI;
 		CSR_WRITE_1(sc, VR_RXCFG, rxfilt);
 		CSR_WRITE_4(sc, VR_MAR0, 0xFFFFFFFF);
@@ -1286,15 +1286,16 @@ vr_encap(struct vr_softc *sc, struct vr_chain *c, struct mbuf *m_head)
 
 	m_freem(m_head);
 
+	c->vr_mbuf = m_new;
+
 	f = c->vr_ptr;
 	f->vr_data = htole32(c->vr_map->dm_segs[0].ds_addr);
 	f->vr_ctl = htole32(c->vr_map->dm_mapsize);
 	f->vr_ctl |= htole32(VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG);
 	f->vr_status = htole32(0);
 
-	c->vr_mbuf = m_new;
-	c->vr_ptr->vr_ctl |= htole32(VR_TXCTL_LASTFRAG|VR_TXCTL_FINT);
-	c->vr_ptr->vr_next = htole32(c->vr_nextdesc->vr_paddr);
+	f->vr_ctl |= htole32(VR_TXCTL_LASTFRAG|VR_TXCTL_FINT);
+	f->vr_next = htole32(c->vr_nextdesc->vr_paddr);
 
 	return (0);
 }
