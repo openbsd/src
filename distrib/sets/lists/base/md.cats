@@ -823,6 +823,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/hil/hilreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/hil/hilvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/i2c
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/i2c/i2c_bitbang.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/i2c/i2c_io.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/i2c/i2cvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/i2c/wm8750reg.ph

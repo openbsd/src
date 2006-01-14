@@ -139,6 +139,7 @@
 ./usr/include/dev/hil/hilreg.h
 ./usr/include/dev/hil/hilvar.h
 ./usr/include/dev/i2c
+./usr/include/dev/i2c/i2c_bitbang.h
 ./usr/include/dev/i2c/i2c_io.h
 ./usr/include/dev/i2c/i2cvar.h
 ./usr/include/dev/i2c/wm8750reg.h
