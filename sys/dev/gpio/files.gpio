@@ -1,7 +1,11 @@
-# $OpenBSD: files.gpio,v 1.3 2006/01/05 11:52:24 grange Exp $
+# $OpenBSD: files.gpio,v 1.4 2006/01/14 00:14:21 grange Exp $
 
 define	gpio {offset, mask}
 
 device	gpio: gpio
 attach	gpio at gpiobus
 file	dev/gpio/gpio.c				gpio	needs-flag
+
+device	gpioiic: i2cbus, i2c_bitbang
+attach	gpioiic at gpio
+file	dev/gpio/gpioiic.c			gpioiic
