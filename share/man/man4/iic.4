@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.39 2006/01/13 21:55:08 grange Exp $
+.\"	$OpenBSD: iic.4,v 1.40 2006/01/14 11:54:01 grange Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -32,6 +32,7 @@
 .Cd "iic* at nviic?                 # amd64 i386"
 .Cd "iic* at piixpm?                # i386"
 .Cd "iic* at viapm?                 # amd64 i386"
+.Cd "iic* at gpioiic?               # i386
 .Sh DESCRIPTION
 .Tn I2C
 is a two-wire bus developed by Philips used for connecting
@@ -76,6 +77,8 @@ Acer Labs M7101 SMBus host controller
 AMD-8111 SMBus host controller
 .It Xr amdpm 4
 AMD-76x SMBus host controller
+.It Xr gpioiic 4
+I2C bus bit-banging through GPIO pins
 .It Xr gscsio 4
 National Semiconductor Geode SC1100 Super I/O ACCESS.bus
 .It Xr ichiic 4
