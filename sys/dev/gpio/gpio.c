@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpio.c,v 1.5 2006/01/05 11:52:24 grange Exp $	*/
+/*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
  * Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -205,6 +205,14 @@ gpio_pin_ctl(void *gpio, struct gpio_pinmap *map, int pin, int flags)
 	struct gpio_softc *sc = gpio;
 
 	return (gpiobus_pin_ctl(sc->sc_gc, map->pm_map[pin], flags));
+}
+
+int
+gpio_pin_caps(void *gpio, struct gpio_pinmap *map, int pin)
+{
+	struct gpio_softc *sc = gpio;
+
+	return (sc->sc_pins[map->pm_map[pin]].pin_caps);
 }
 
 int

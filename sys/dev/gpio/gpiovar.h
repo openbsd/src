@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpiovar.h,v 1.2 2006/01/05 11:52:24 grange Exp $	*/
+/*	$OpenBSD: gpiovar.h,v 1.3 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
  * Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -73,6 +73,7 @@ void	gpio_pin_unmap(void *, struct gpio_pinmap *);
 int	gpio_pin_read(void *, struct gpio_pinmap *, int);
 void	gpio_pin_write(void *, struct gpio_pinmap *, int, int);
 void	gpio_pin_ctl(void *, struct gpio_pinmap *, int, int);
+int	gpio_pin_caps(void *, struct gpio_pinmap *, int);
 
 int	gpio_npins(u_int32_t);
 
