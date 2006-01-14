@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.45 2006/01/13 13:04:33 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.46 2006/01/14 22:39:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -113,6 +113,12 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 	if (p1 == NULL)
 		return (-1);
 	if (p2 == NULL)
+		return (1);
+
+	/* only prefix in the Local-RIB are eligible */
+	if (!(p1->flags & F_LOCAL))
+		return (-1);
+	if (!(p2->flags & F_LOCAL))
 		return (1);
 
 	asp1 = p1->aspath;
@@ -232,8 +238,9 @@ prefix_evaluate(struct prefix *p, struct pt_entry *pte)
 	}
 
 	xp = LIST_FIRST(&pte->prefix_h);
-	if (xp == NULL || (xp->aspath->nexthop != NULL &&
-	    xp->aspath->nexthop->state != NEXTHOP_REACH))
+	if (xp == NULL || !(xp->flags & F_LOCAL) ||
+	    (xp->aspath->nexthop != NULL && xp->aspath->nexthop->state !=
+	    NEXTHOP_REACH))
 		/* xp is ineligible */
 		xp = NULL;
 

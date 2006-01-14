@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.192 2006/01/13 13:04:33 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.193 2006/01/14 22:39:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -722,7 +722,8 @@ rde_update_dispatch(struct imsg *imsg)
 		}
 
 		rde_update_log("withdraw", peer, NULL, &prefix, prefixlen);
-		prefix_remove(peer, &prefix, prefixlen);
+		prefix_remove(peer, &prefix, prefixlen, F_LOCAL);
+		prefix_remove(peer, &prefix, prefixlen, F_ORIGINAL);
 	}
 
 	if (attrpath_len == 0) /* 0 = no NLRI information in this message */
@@ -774,7 +775,10 @@ rde_update_dispatch(struct imsg *imsg)
 
 				rde_update_log("withdraw", peer, NULL,
 				    &prefix, prefixlen);
-				prefix_remove(peer, &prefix, prefixlen);
+				prefix_remove(peer, &prefix, prefixlen,
+				    F_LOCAL);
+				prefix_remove(peer, &prefix, prefixlen,
+				    F_ORIGINAL);
 			}
 			break;
 		default:
@@ -1473,7 +1477,9 @@ rde_dump_upcall(struct pt_entry *pt, void *ptr)
 	memcpy(&pid, ptr, sizeof(pid));
 
 	LIST_FOREACH(p, &pt->prefix_h, prefix_l)
-	    rde_dump_rib_as(p, pid);
+		/* for now dump only stuff from the local-RIB */
+		if (p->flags & F_LOCAL)
+			rde_dump_rib_as(p, pid);
 }
 
 void
@@ -1490,7 +1496,9 @@ rde_dump_as(struct filter_as *a, pid_t pid)
 				continue;
 			/* match found */
 			LIST_FOREACH(p, &asp->prefix_h, path_l)
-				rde_dump_rib_as(p, pid);
+				/* for now dump only stuff from the local-RIB */
+				if (p->flags & F_LOCAL)
+					rde_dump_rib_as(p, pid);
 		}
 	}
 }
@@ -1512,7 +1520,9 @@ rde_dump_prefix_upcall(struct pt_entry *pt, void *ptr)
 		return;
 	if (!prefix_compare(&ctl->pref->prefix, &addr, ctl->pref->prefixlen))
 		LIST_FOREACH(p, &pt->prefix_h, prefix_l)
-			rde_dump_rib_as(p, ctl->pid);
+			/* for now dump only stuff from the local-RIB */
+			if (p->flags & F_LOCAL)
+				rde_dump_rib_as(p, ctl->pid);
 }
 
 void
@@ -2173,10 +2183,15 @@ network_add(struct network_config *nc, int flagstatic)
 void
 network_delete(struct network_config *nc, int flagstatic)
 {
+	struct rde_peer	*p;
+
 	if (flagstatic)
-		prefix_remove(&peerself, &nc->prefix, nc->prefixlen);
+		p = &peerself;
 	else
-		prefix_remove(&peerdynamic, &nc->prefix, nc->prefixlen);
+		p = &peerdynamic;
+
+	prefix_remove(p, &nc->prefix, nc->prefixlen, F_LOCAL);
+	prefix_remove(p, &nc->prefix, nc->prefixlen, F_ORIGINAL);
 }
 
 void

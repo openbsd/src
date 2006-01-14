@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.77 2006/01/12 14:05:13 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.78 2006/01/14 22:39:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -84,7 +84,7 @@ path_update(struct rde_peer *peer, struct rde_aspath *nasp,
 	rde_send_pftable(nasp->pftableid, prefix, prefixlen, 0);
 	rde_send_pftable_commit();
 
-	if ((p = prefix_get(peer, prefix, prefixlen)) != NULL) {
+	if ((p = prefix_get(peer, prefix, prefixlen, F_LOCAL)) != NULL) {
 		if (path_compare(nasp, p->aspath) == 0) {
 			/* update last change */
 			p->lastchange = time(NULL);
@@ -107,7 +107,7 @@ path_update(struct rde_peer *peer, struct rde_aspath *nasp,
 	if (p != NULL)
 		prefix_move(asp, p);
 	else
-		prefix_add(asp, prefix, prefixlen);
+		prefix_add(asp, prefix, prefixlen, F_LOCAL);
 }
 
 int
@@ -313,7 +313,7 @@ path_put(struct rde_aspath *asp)
 static struct prefix	*prefix_alloc(void);
 static void		 prefix_free(struct prefix *);
 static void		 prefix_link(struct prefix *, struct pt_entry *,
-			     struct rde_aspath *);
+			     struct rde_aspath *, u_int32_t);
 static void		 prefix_unlink(struct prefix *);
 
 int
@@ -360,47 +360,44 @@ prefix_compare(const struct bgpd_addr *a, const struct bgpd_addr *b,
  * search for specified prefix of a peer. Returns NULL if not found.
  */
 struct prefix *
-prefix_get(struct rde_peer *peer, struct bgpd_addr *prefix, int prefixlen)
+prefix_get(struct rde_peer *peer, struct bgpd_addr *prefix, int prefixlen,
+    u_int32_t flags)
 {
 	struct pt_entry	*pte;
 
 	pte = pt_get(prefix, prefixlen);
 	if (pte == NULL)
 		return (NULL);
-	return (prefix_bypeer(pte, peer));
+	return (prefix_bypeer(pte, peer, flags));
 }
 
 /*
  * Adds or updates a prefix.
  */
 struct pt_entry *
-prefix_add(struct rde_aspath *asp, struct bgpd_addr *prefix, int prefixlen)
+prefix_add(struct rde_aspath *asp, struct bgpd_addr *prefix, int prefixlen,
+    u_int32_t flags)
 
 {
 	struct prefix	*p;
 	struct pt_entry	*pte;
-	int		 needlink = 0;
 
 	pte = pt_get(prefix, prefixlen);
 	if (pte == NULL)
 		pte = pt_add(prefix, prefixlen);
 
-	p = prefix_bypeer(pte, asp->peer);
+	p = prefix_bypeer(pte, asp->peer, flags);
 	if (p == NULL) {
-		needlink = 1;
 		p = prefix_alloc();
-	}
-
-	if (needlink == 1)
-		prefix_link(p, pte, asp);
-	else {
+		prefix_link(p, pte, asp, flags);
+	} else {
 		if (p->aspath != asp)
 			/* prefix belongs to a different aspath so move */
-			return prefix_move(asp, p);
+			return (prefix_move(asp, p));
 		p->lastchange = time(NULL);
 	}
 
-	return pte;
+	return (pte);
 }
 
 /*
@@ -421,6 +418,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	/* peer and prefix pointers are still equal */
 	np->prefix = p->prefix;
 	np->lastchange = time(NULL);
+	np->flags = p->flags;
 
 	/* add to new as path */
 	LIST_INSERT_HEAD(&asp->prefix_h, np, path_l);
@@ -464,7 +462,8 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
  * pt_entry -- become empty remove them too.
  */
 void
-prefix_remove(struct rde_peer *peer, struct bgpd_addr *prefix, int prefixlen)
+prefix_remove(struct rde_peer *peer, struct bgpd_addr *prefix, int prefixlen,
+    u_int32_t flags)
 {
 	struct prefix		*p;
 	struct pt_entry		*pte;
@@ -474,14 +473,17 @@ prefix_remove(struct rde_peer *peer, struct bgpd_addr *prefix, int prefixlen)
 	if (pte == NULL)	/* Got a dummy withdrawn request */
 		return;
 
-	p = prefix_bypeer(pte, peer);
+	p = prefix_bypeer(pte, peer, flags);
 	if (p == NULL)		/* Got a dummy withdrawn request. */
 		return;
 
 	asp = p->aspath;
 
-	rde_send_pftable(asp->pftableid, prefix, prefixlen, 1);
-	rde_send_pftable_commit();
+	if (p->flags & F_LOCAL) {
+		/* only prefixes in the local RIB were pushed into pf */
+		rde_send_pftable(asp->pftableid, prefix, prefixlen, 1);
+		rde_send_pftable_commit();
+	}
 
 	prefix_unlink(p);
 	prefix_free(p);
@@ -515,12 +517,12 @@ prefix_write(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen)
  * belonging to the peer peer. Returns NULL if no match found.
  */
 struct prefix *
-prefix_bypeer(struct pt_entry *pte, struct rde_peer *peer)
+prefix_bypeer(struct pt_entry *pte, struct rde_peer *peer, u_int32_t flags)
 {
 	struct prefix	*p;
 
 	LIST_FOREACH(p, &pte->prefix_h, prefix_l) {
-		if (p->aspath->peer == peer)
+		if (p->aspath->peer == peer && p->flags & flags)
 			return (p);
 	}
 	return (NULL);
@@ -536,6 +538,13 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state)
 		return;
 
 	LIST_FOREACH(p, &asp->prefix_h, path_l) {
+		/*
+		 * skip non local-RIB nodes, only local-RIB prefixes are
+		 * eligible. Both F_LOCAL and F_ORIGINAL may be set.
+		 */
+		if (!(p->flags & F_LOCAL))
+			continue;
+
 		/* redo the route decision */
 		LIST_REMOVE(p, prefix_l);
 		/*
@@ -598,7 +607,8 @@ prefix_network_clean(struct rde_peer *peer, time_t reloadtime)
  * Link a prefix into the different parent objects.
  */
 static void
-prefix_link(struct prefix *pref, struct pt_entry *pte, struct rde_aspath *asp)
+prefix_link(struct prefix *pref, struct pt_entry *pte, struct rde_aspath *asp,
+    u_int32_t flags)
 {
 	LIST_INSERT_HEAD(&asp->prefix_h, pref, path_l);
 	asp->prefix_cnt++;
@@ -607,6 +617,7 @@ prefix_link(struct prefix *pref, struct pt_entry *pte, struct rde_aspath *asp)
 	pref->aspath = asp;
 	pref->prefix = pte;
 	pref->lastchange = time(NULL);
+	pref->flags = flags;
 
 	/* make route decision */
 	prefix_evaluate(pref, pte);
