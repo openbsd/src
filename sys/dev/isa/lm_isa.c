@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm_isa.c,v 1.5 2006/01/14 15:14:33 kettenis Exp $	*/
+/*	$OpenBSD: lm_isa.c,v 1.6 2006/01/14 20:05:06 kettenis Exp $	*/
 /*	$NetBSD: lm_isa.c,v 1.9 2002/11/15 14:55:44 ad Exp $ */
 
 /*-
@@ -57,6 +57,13 @@
 #else
 #define DPRINTF(x)
 #endif
+
+struct lm_isa_softc {
+	struct lm_softc sc_lmsc;
+
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+};
 
 int  lm_isa_match(struct device *, void *, void *);
 void lm_isa_attach(struct device *, struct device *, void *);
@@ -127,35 +134,38 @@ lm_isa_match(struct device *parent, void *match, void *aux)
 void
 lm_isa_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct lm_softc *sc = (struct lm_softc *)self;
-	int iobase;
-	bus_space_tag_t iot;
+	struct lm_isa_softc *sc = (struct lm_isa_softc *)self;
 	struct isa_attach_args *ia = aux;
+	int iobase;
 
+	sc->sc_iot = ia->ia_iot;
         iobase = ia->ipa_io[0].base;
-	iot = sc->lm_iot = ia->ia_iot;
 
-	if (bus_space_map(iot, iobase, 8, 0, &sc->lm_ioh)) {
+	if (bus_space_map(sc->sc_iot, iobase, 8, 0, &sc->sc_ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
 
 	/* Bus-independant attachment */
-	sc->lm_writereg = lm_isa_writereg;
-	sc->lm_readreg = lm_isa_readreg;
-	lm_attach(sc);
+	sc->sc_lmsc.lm_writereg = lm_isa_writereg;
+	sc->sc_lmsc.lm_readreg = lm_isa_readreg;
+	lm_attach(&sc->sc_lmsc);
 }
 
 u_int8_t
-lm_isa_readreg(struct lm_softc *sc, int reg)
+lm_isa_readreg(struct lm_softc *lmsc, int reg)
 {
-	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_ADDR, reg);
-	return (bus_space_read_1(sc->lm_iot, sc->lm_ioh, LMC_DATA));
+	struct lm_isa_softc *sc = (struct lm_isa_softc *)lmsc;
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LMC_ADDR, reg);
+	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh, LMC_DATA));
 }
 
 void
-lm_isa_writereg(struct lm_softc *sc, int reg, int val)
+lm_isa_writereg(struct lm_softc *lmsc, int reg, int val)
 {
-	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_ADDR, reg);
-	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_DATA, val);
+	struct lm_isa_softc *sc = (struct lm_isa_softc *)lmsc;
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LMC_ADDR, reg);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LMC_DATA, val);
 }
