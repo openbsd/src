@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdint.h,v 1.2 2006/01/06 19:04:41 millert Exp $	*/
+/*	$OpenBSD: stdint.h,v 1.3 2006/01/14 13:19:51 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 2005 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -104,10 +104,10 @@ typedef	__uintmax_t		uintmax_t;
  */
 
 /* 7.18.2.1 Limits of exact-width integer types */
-#define	INT8_MIN		(0x7f - 1)
-#define	INT16_MIN		(0x7fff - 1)
-#define	INT32_MIN		(0x7fffffff - 1)
-#define	INT64_MIN		(0x7fffffffffffffffLL - 1)
+#define	INT8_MIN		(-0x7f - 1)
+#define	INT16_MIN		(-0x7fff - 1)
+#define	INT32_MIN		(-0x7fffffff - 1)
+#define	INT64_MIN		(-0x7fffffffffffffffLL - 1)
 
 #define	INT8_MAX		0x7f
 #define	INT16_MAX		0x7fff
