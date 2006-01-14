@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.13 2005/12/19 15:18:01 pedro Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.14 2006/01/14 21:10:20 miod Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -46,7 +46,7 @@ static const char copyright[] =
 Copyright (c) 1980, 1989, 1993 The Regents of the University of California.\n\
 All rights reserved.\n";
 
-static const char rcsid[] = "$OpenBSD: growfs.c,v 1.13 2005/12/19 15:18:01 pedro Exp $";
+static const char rcsid[] = "$OpenBSD: growfs.c,v 1.14 2006/01/14 21:10:20 miod Exp $";
 #endif /* not lint */
 
 /* ********************************************************** INCLUDES ***** */
@@ -74,6 +74,8 @@ static const char rcsid[] = "$OpenBSD: growfs.c,v 1.13 2005/12/19 15:18:01 pedro
 #ifdef FS_DEBUG
 int	_dbg_lvl_ = (DL_INFO);	/* DL_TRC */
 #endif /* FS_DEBUG */
+
+int	quiet = 0;		/* quiet flag */
 
 static union {
 	struct	fs fs;
@@ -124,7 +126,7 @@ struct gfs_bpp {
 };
 
 /* ******************************************************** PROTOTYPES ***** */
-static void	growfs(int, int, unsigned int);
+static void	growfs(char *, int, int, unsigned int);
 static void	rdfs(daddr_t, size_t, void *, int);
 static void	wtfs(daddr_t, size_t, void *, int, unsigned int);
 static daddr_t	alloc(void);
@@ -158,7 +160,7 @@ static void	updrefs(int, ino_t, struct gfs_bpp *, int, int, unsigned int);
  * copies.
  */
 static void
-growfs(int fsi, int fso, unsigned int Nflag)
+growfs(char *fsys, int fsi, int fso, unsigned int Nflag)
 {
 	DBG_FUNC("growfs")
 	int	i;
@@ -209,8 +211,8 @@ growfs(int fsi, int fso, unsigned int Nflag)
 	/*
 	 * Dump out summary information about filesystem.
 	 */
-	printf("growfs:\t%d sectors in %d %s of %d tracks, %d sectors\n",
-	    sblock.fs_size * NSPF(&sblock), sblock.fs_ncyl,
+	printf("%s:\t%d sectors in %d %s of %d tracks, %d sectors\n",
+	    fsys, sblock.fs_size * NSPF(&sblock), sblock.fs_ncyl,
 	    "cylinders", sblock.fs_ntrak, sblock.fs_nsect);
 #define B2MBFACTOR (1 / (1024.0 * 1024.0))
 	printf("\t%.1fMB in %d cyl groups (%d c/g, %.2fMB/g, %d i/g)\n",
@@ -224,7 +226,8 @@ growfs(int fsi, int fso, unsigned int Nflag)
 	 * Now build the cylinders group blocks and
 	 * then print out indices of cylinder groups.
 	 */
-	printf("superblock backups (for fsck -b #) at:\n");
+	if (!quiet)
+		printf("superblock backups (for fsck -b #) at:\n");
 	i = 0;
 	width = charsperline();
 
@@ -233,6 +236,8 @@ growfs(int fsi, int fso, unsigned int Nflag)
 	 */
 	for (cylno = osblock.fs_ncg; cylno < sblock.fs_ncg; cylno++) {
 		initcg(cylno, utime, fso, Nflag);
+		if (quiet)
+			continue;
 		j = snprintf(tmpbuf, sizeof tmpbuf, " %d%s",
 		    (int)fsbtodb(&sblock, cgsblock(&sblock, cylno)),
 		    cylno < (sblock.fs_ncg - 1) ? "," : "");
@@ -246,7 +251,8 @@ growfs(int fsi, int fso, unsigned int Nflag)
 		printf("%s", tmpbuf);
 		fflush(stdout);
 	}
-	printf("\n");
+	if (!quiet)
+		printf("\n");
 
 	/*
 	 * Do all needed changes in the first cylinder group.
@@ -1868,10 +1874,13 @@ main(int argc, char **argv)
 
 	DBG_ENTER;
 
-	while ((ch = getopt(argc, argv, "Ns:y")) != -1) {
+	while ((ch = getopt(argc, argv, "Nqs:y")) != -1) {
 		switch (ch) {
 		case 'N':
 			Nflag = 1;
+			break;
+		case 'q':
+			quiet = 1;
 			break;
 		case 's':
 			size = (size_t)atol(optarg);
@@ -2002,7 +2011,8 @@ main(int argc, char **argv)
 		}
 	}
 
-	printf("new file system size is: %d frags\n", sblock.fs_size);
+	if (!quiet)
+		printf("new file system size is: %d frags\n", sblock.fs_size);
 
 	/*
 	 * Try to access our new last block in the filesystem. Even if we
@@ -2051,9 +2061,10 @@ main(int argc, char **argv)
 		sblock.fs_ncyl -= sblock.fs_ncyl % sblock.fs_cpg;
 #endif
 		sblock.fs_ncyl -= sblock.fs_ncyl % sblock.fs_cpg;
-		printf("Warning: %d sector(s) cannot be allocated.\n",
-		    (sblock.fs_size-(sblock.fs_ncg)*sblock.fs_fpg) *
-		    NSPF(&sblock));
+		if (!quiet)
+			printf("Warning: %d sector(s) cannot be allocated.\n",
+			    (sblock.fs_size-(sblock.fs_ncg)*sblock.fs_fpg) *
+			    NSPF(&sblock));
 		sblock.fs_size = sblock.fs_ncyl * sblock.fs_spc / NSPF(&sblock);
 	}
 
@@ -2073,7 +2084,7 @@ main(int argc, char **argv)
 	/*
 	 * Ok, everything prepared, so now let's do the tricks.
 	 */
-	growfs(fsi, fso, Nflag);
+	growfs(rdev, fsi, fso, Nflag);
 
 	/*
 	 * Update the disk label.
@@ -2167,7 +2178,7 @@ usage(void)
 
 	DBG_ENTER;
 
-	fprintf(stderr, "usage: growfs [-Ny] [-s size] special\n");
+	fprintf(stderr, "usage: growfs [-Nqy] [-s size] special\n");
 
 	DBG_LEAVE;
 	exit(1);
