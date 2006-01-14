@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioiic.c,v 1.1 2006/01/14 00:14:21 grange Exp $	*/
+/*	$OpenBSD: gpioiic.c,v 1.2 2006/01/14 12:54:50 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -46,6 +46,9 @@ struct gpioiic_softc {
 
 	struct i2c_controller	sc_i2c_tag;
 	struct lock		sc_i2c_lock;
+
+	int			sc_sda;
+	int			sc_scl;
 };
 
 int		gpioiic_match(struct device *, void *, void *);
@@ -97,12 +100,15 @@ gpioiic_attach(struct device *parent, struct device *self, void *aux)
 	struct gpioiic_softc *sc = (struct gpioiic_softc *)self;
 	struct gpio_attach_args *ga = aux;
 	struct i2cbus_attach_args iba;
+	int caps;
 
+	/* Check that we have enough pins */
 	if (gpio_npins(ga->ga_mask) != GPIOIIC_NPINS) {
 		printf(": invalid pin mask\n");
 		return;
 	}
 
+	/* Map pins */
 	sc->sc_gpio = ga->ga_gpio;
 	sc->sc_map.pm_map = sc->__map;
 	if (gpio_pin_map(sc->sc_gpio, ga->ga_offset, ga->ga_mask,
@@ -111,10 +117,44 @@ gpioiic_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	gpio_pin_ctl(sc->sc_gpio, &sc->sc_map, GPIOIIC_PIN_SDA,
-	    GPIO_PIN_OUTPUT | GPIO_PIN_OPENDRAIN | GPIO_PIN_PULLUP);
-	gpio_pin_ctl(sc->sc_gpio, &sc->sc_map, GPIOIIC_PIN_SCL,
-	    GPIO_PIN_OUTPUT | GPIO_PIN_OPENDRAIN | GPIO_PIN_PULLUP);
+	/* Configure SDA pin */
+	caps = gpio_pin_caps(sc->sc_gpio, &sc->sc_map, GPIOIIC_PIN_SDA);
+	if (!(caps & GPIO_PIN_OUTPUT)) {
+		printf(": SDA pin is unable to drive output\n");
+		goto fail;
+	}
+	printf(": SDA[%d]", sc->sc_map.pm_map[GPIOIIC_PIN_SDA]);
+	sc->sc_sda = GPIO_PIN_OUTPUT;
+	if (caps & GPIO_PIN_OPENDRAIN) {
+		printf(" open-drain");
+		sc->sc_sda |= GPIO_PIN_OPENDRAIN;
+		if (caps & GPIO_PIN_PULLUP) {
+			printf(" pull-up");
+			sc->sc_sda |= GPIO_PIN_PULLUP;
+		}
+	}
+	gpio_pin_ctl(sc->sc_gpio, &sc->sc_map, GPIOIIC_PIN_SDA, sc->sc_sda);
+
+	/* Configure SCL pin */
+	caps = gpio_pin_caps(sc->sc_gpio, &sc->sc_map, GPIOIIC_PIN_SCL);
+	if (!(caps & GPIO_PIN_OUTPUT)) {
+		printf(": SCL pin is unable to drive output\n");
+		goto fail;
+	}
+	printf(", SCL[%d]", sc->sc_map.pm_map[GPIOIIC_PIN_SCL]);
+	sc->sc_scl = GPIO_PIN_OUTPUT;
+	if (caps & GPIO_PIN_OPENDRAIN) {
+		printf(" open-drain");
+		sc->sc_scl |= GPIO_PIN_OPENDRAIN;
+		if (caps & GPIO_PIN_PULLUP) {
+			printf(" pull-up");
+			sc->sc_scl |= GPIO_PIN_PULLUP;
+		}
+	} else if (caps & GPIO_PIN_PUSHPULL) {
+		printf(" push-pull");
+		sc->sc_scl |= GPIO_PIN_PUSHPULL;
+	}
+	gpio_pin_ctl(sc->sc_gpio, &sc->sc_map, GPIOIIC_PIN_SCL, sc->sc_scl);
 
 	printf("\n");
 
@@ -133,6 +173,11 @@ gpioiic_attach(struct device *parent, struct device *self, void *aux)
 	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c_tag;
 	config_found(self, &iba, iicbus_print);
+
+	return;
+
+fail:
+	gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
 }
 
 int
@@ -201,6 +246,15 @@ gpioiic_bb_set_bits(void *cookie, u_int32_t bits)
 void
 gpioiic_bb_set_dir(void *cookie, u_int32_t bits)
 {
+	struct gpioiic_softc *sc = cookie;
+
+	if (!(sc->sc_sda & GPIO_PIN_OPENDRAIN)) {
+		sc->sc_sda &= ~(GPIO_PIN_INPUT | GPIO_PIN_OUTPUT);
+		sc->sc_sda |= (bits & GPIOIIC_SDA ? GPIO_PIN_OUTPUT :
+		    GPIO_PIN_INPUT);
+		gpio_pin_ctl(sc->sc_gpio, &sc->sc_map, GPIOIIC_PIN_SDA,
+		    sc->sc_sda);
+	}
 }
 
 u_int32_t
