@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.29 2006/01/10 14:57:53 niallo Exp $	*/
+/*	$OpenBSD: buf.c,v 1.30 2006/01/15 19:25:32 niallo Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -62,8 +62,11 @@ cvs_buf_alloc(size_t len, u_int flags)
 	BUF *b;
 
 	b = (BUF *)xmalloc(sizeof(*b));
-	b->cb_buf = xmalloc(len);
-	memset(b->cb_buf, 0, len);
+	/* Postpone creation of zero-sized buffers */
+	if (len > 0) {
+		b->cb_buf = xmalloc(len);
+		memset(b->cb_buf, 0, len);
+	}
 
 	b->cb_flags = flags;
 	b->cb_size = len;
@@ -424,7 +427,11 @@ cvs_buf_grow(BUF *b, size_t len)
 	size_t diff;
 
 	diff = b->cb_cur - b->cb_buf;
-	tmp = xrealloc(b->cb_buf, b->cb_size + len);
+	/* Buffer not allocated yet */
+	if (b->cb_size == 0)
+		tmp = xmalloc(len);
+	else
+		tmp = xrealloc(b->cb_buf, b->cb_size + len);
 	b->cb_buf = (u_char *)tmp;
 	b->cb_size += len;
 
