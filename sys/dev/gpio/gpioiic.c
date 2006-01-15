@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioiic.c,v 1.2 2006/01/14 12:54:50 grange Exp $	*/
+/*	$OpenBSD: gpioiic.c,v 1.3 2006/01/15 22:18:48 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -88,10 +88,7 @@ gpioiic_match(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 
-	if (strcmp(cf->cf_driver->cd_name, "gpioiic") == 0)
-		return (1);
-
-	return (0);
+	return (strcmp(cf->cf_driver->cd_name, "gpioiic") == 0);
 }
 
 void
