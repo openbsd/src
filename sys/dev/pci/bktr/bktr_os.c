@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.22 2005/12/05 15:16:26 robert Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.23 2006/01/15 20:38:41 jakemsr Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -1266,15 +1266,7 @@ bktr_set_info(void *v, struct radio_info *ri)
 	if (ri->mute) {
 		/* mute the audio stream by switching the mux */
 		set_audio(sc, AUDIO_MUTE);
-
-		/* disable drivers on the GPIO port that controls the MUXes */
-		OUTL(sc, BKTR_GPIO_OUT_EN, INL(sc, BKTR_GPIO_OUT_EN) &
-		~sc->card.gpio_mux_bits);
 	} else {
-		/* enable drivers on the GPIO port that controls the MUXes */
-		OUTL(sc, BKTR_GPIO_OUT_EN, INL(sc, BKTR_GPIO_OUT_EN) |
-		sc->card.gpio_mux_bits);
-
 		/* unmute the audio stream */
 		set_audio(sc, AUDIO_UNMUTE);
 		init_audio_devices(sc);
