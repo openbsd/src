@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_subr.c,v 1.2 2006/01/14 23:59:32 pedro Exp $	*/
+/*	$OpenBSD: udf_subr.c,v 1.3 2006/01/15 00:02:22 pedro Exp $	*/
 
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -146,7 +146,7 @@ udf_disklabelspoof(dev_t dev, void (*strat)(struct buf *),
 		goto out;
 
 	/*
-	 * Okay, it's an UDF volume. Spoof a disk label for it.
+	 * Okay, it's a UDF volume. Spoof a disk label for it.
 	 */
 	if (udf_transname(pvd->vol_id, vid, sizeof(pvd->vol_id), NULL))
 		strlcpy(lp->d_typename, vid, sizeof(lp->d_typename));
