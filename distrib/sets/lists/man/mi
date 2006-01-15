@@ -1743,6 +1743,7 @@
 ./usr/share/man/cat4/vr.0
 ./usr/share/man/cat4/watchdog.0
 ./usr/share/man/cat4/wb.0
+./usr/share/man/cat4/wbenv.0
 ./usr/share/man/cat4/wd.0
 ./usr/share/man/cat4/wdc.0
 ./usr/share/man/cat4/we.0
