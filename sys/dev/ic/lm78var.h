@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78var.h,v 1.2 2006/01/14 20:05:06 kettenis Exp $	*/
+/*	$OpenBSD: lm78var.h,v 1.3 2006/01/15 22:03:17 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -128,7 +128,7 @@ struct lm_sensor {
 };
 
 struct lm_softc {
-	struct	device sc_dev;
+	struct device sc_dev;
 
 	struct sensor sensors[WB_MAX_SENSORS];
 	struct lm_sensor *lm_sensors;
@@ -137,6 +137,9 @@ struct lm_softc {
 
 	u_int8_t (*lm_readreg)(struct lm_softc *, int);
 	void (*lm_writereg)(struct lm_softc *, int, int);
+
+	u_int8_t sbusaddr;
+	u_int8_t chipid;
 };
 
 void lm_attach(struct lm_softc *);

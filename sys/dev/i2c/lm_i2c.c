@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm_i2c.c,v 1.7 2006/01/14 15:14:33 kettenis Exp $	*/
+/*	$OpenBSD: lm_i2c.c,v 1.8 2006/01/15 22:03:17 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -79,6 +79,9 @@ lm_i2c_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_lmsc.lm_writereg = lm_i2c_writereg;
 	sc->sc_lmsc.lm_readreg = lm_i2c_readreg;
 	lm_attach(&sc->sc_lmsc);
+
+	/* Remember we attached to iic(4). */
+	sc->sc_lmsc.sbusaddr = ia->ia_addr;
 
 	iic_acquire_bus(sc->sc_tag, 0);
 

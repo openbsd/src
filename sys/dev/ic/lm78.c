@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.1 2006/01/14 15:14:33 kettenis Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.2 2006/01/15 22:03:17 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -375,7 +375,7 @@ def_match(struct lm_softc *sc)
 int
 wb_match(struct lm_softc *sc)
 {
-	int banksel, vendid, chipid, devid;
+	int banksel, vendid, devid;
 
 	/* Read vendor ID */
 	banksel = sc->lm_readreg(sc, WB_BANKSEL);
@@ -391,10 +391,10 @@ wb_match(struct lm_softc *sc)
 	/* Read device/chip ID */
 	sc->lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B0);
 	devid = sc->lm_readreg(sc, LM_CHIPID);
-	chipid = sc->lm_readreg(sc, WB_BANK0_CHIPID);
+	sc->chipid = sc->lm_readreg(sc, WB_BANK0_CHIPID);
 	sc->lm_writereg(sc, WB_BANKSEL, banksel);
-	DPRINTF(("winbond chip id 0x%x\n", chipid));
-	switch(chipid) {
+	DPRINTF(("winbond chip id 0x%x\n", sc->chipid));
+	switch(sc->chipid) {
 	case WB_CHIPID_W83627HF:
 		printf(": W83627HF\n");
 		lm_setup_sensors(sc, w83627hf_sensors);
@@ -446,7 +446,7 @@ wb_match(struct lm_softc *sc)
 		}
 		break;
 	default:
-		printf(": unknown Winbond chip (ID 0x%x)\n", chipid);
+		printf(": unknown Winbond chip (ID 0x%x)\n", sc->chipid);
 		/* Handle as a standard LM78. */
 		lm_setup_sensors(sc, lm78_sensors);
 		sc->refresh_sensor_data = lm_refresh_sensor_data;
