@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.16 2006/01/15 10:04:39 grange Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.17 2006/01/15 10:28:17 grange Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -198,8 +198,13 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	DPRINTF(("%s: exec: op %d, addr 0x%x, cmdlen %d, len %d, flags 0x%x\n",
 	    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags));
 
-	/* Check if there's a transfer already running */
-	st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_HS);
+	/* Wait for bus to be idle */
+	for (retries = 100; retries > 0; retries--) {
+		st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PIIX_SMB_HS);
+		if (!(st & PIIX_SMB_HS_BUSY))
+			break;
+		DELAY(PIIXPM_DELAY);
+	}
 	DPRINTF(("%s: exec: st 0x%b\n", sc->sc_dev.dv_xname, st,
 	    PIIX_SMB_HS_BITS));
 	if (st & PIIX_SMB_HS_BUSY)

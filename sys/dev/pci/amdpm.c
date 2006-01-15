@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.11 2006/01/09 19:32:14 deraadt Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.12 2006/01/15 10:28:17 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -316,8 +316,13 @@ amdpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	DPRINTF(("%s: exec: op %d, addr 0x%x, cmdlen %d, len %d, flags 0x%x\n",
 	    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags));
 
-	/* Check if there's a transfer already running */
-	st = bus_space_read_2(sc->sc_iot, sc->sc_ioh, AMDPM_SMBSTAT);
+	/* Wait for bus to be idle */
+	for (retries = 100; retries > 0; retries--) {
+		st = bus_space_read_2(sc->sc_iot, sc->sc_ioh, AMDPM_SMBSTAT);
+		if (!(st & AMDPM_SMBSTAT_BSY))
+			break;
+		DELAY(AMDPM_SMBUS_DELAY);
+	}			
 	DPRINTF(("%s: exec: st 0x%b\n", sc->sc_dev.dv_xname, st,
 	    AMDPM_SMBSTAT_BITS));
 	if (st & AMDPM_SMBSTAT_BSY)
