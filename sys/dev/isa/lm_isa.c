@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm_isa.c,v 1.6 2006/01/14 20:05:06 kettenis Exp $	*/
+/*	$OpenBSD: lm_isa.c,v 1.7 2006/01/15 21:40:14 kettenis Exp $	*/
 /*	$NetBSD: lm_isa.c,v 1.9 2002/11/15 14:55:44 ad Exp $ */
 
 /*-
@@ -51,6 +51,8 @@
 /* ISA registers */
 #define LMC_ADDR	0x05
 #define LMC_DATA	0x06
+
+extern struct cfdriver lm_cd;
 
 #if defined(LMDEBUG)
 #define DPRINTF(x)		do { printf x; } while (0)
@@ -136,7 +138,9 @@ lm_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lm_isa_softc *sc = (struct lm_isa_softc *)self;
 	struct isa_attach_args *ia = aux;
-	int iobase;
+	struct lm_softc *lmsc;
+	int iobase, i, j;
+	u_int8_t sbusaddr;
 
 	sc->sc_iot = ia->ia_iot;
         iobase = ia->ipa_io[0].base;
@@ -150,6 +154,31 @@ lm_isa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_lmsc.lm_writereg = lm_isa_writereg;
 	sc->sc_lmsc.lm_readreg = lm_isa_readreg;
 	lm_attach(&sc->sc_lmsc);
+
+	/*
+	 * Most devices supported by this driver can attach to iic(4)
+	 * as well.  However, we prefer to attach them to isa(4) since
+	 * that causes less overhead and is more reliable.  We look
+	 * through all previously attached devices, and if we find an
+	 * identical chip at the same serial bus address, we stop
+	 * updating its sensors and mark them as invalid.
+	 */
+
+	sbusaddr = lm_isa_readreg(&sc->sc_lmsc, LM_SBUSADDR);
+	if (sbusaddr == 0)
+		return;
+
+	for (i = 0; i < lm_cd.cd_ndevs; i++) {
+		lmsc = lm_cd.cd_devs[i];
+		if (lmsc == &sc->sc_lmsc)
+			continue;
+		if (lmsc && lmsc->sbusaddr == sbusaddr &&
+		    lmsc->chipid == sc->sc_lmsc.chipid) {
+			sensor_task_unregister(lmsc);
+			for (j = 0; j < lmsc->numsensors; j++)
+				lmsc->sensors[j].flags = SENSOR_FINVALID;
+		}
+	}
 }
 
 u_int8_t
