@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.462 2006/01/13 21:59:13 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.463 2006/01/15 14:24:16 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -98,9 +98,9 @@ gpio*	at nsclpcsio?
 gscsio*	at isa?	port 0x2e		# NS Geode SC1100 Super I/O
 gscsio*	at isa?	port 0x15c
 iic*	at gscsio?			# ACCESS.bus 1 & 2
-piixpm* at pci?				# Intel PIIX PM
+piixpm* at pci?				# Intel PIIX power management
 iic*	at piixpm?
-alipm*	at pci?
+alipm*	at pci?				# Acer Labs M7101 power management
 iic*	at alipm?
 ichiic*	at pci?				# Intel ICH SMBus controller
 iic*	at ichiic?
