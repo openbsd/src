@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdiic.c,v 1.3 2006/01/05 10:43:15 grange Exp $	*/
+/*	$OpenBSD: amdiic.c,v 1.4 2006/01/15 10:06:06 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -154,28 +154,23 @@ amdiic_attach(struct device *parent, struct device *self, void *aux)
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, AMD8111_SMB_MISC);
 	DPRINTF((": conf 0x%x", conf));
 
+	sc->sc_poll = 1;
 	if (conf & AMD8111_SMB_MISC_SCIEN) {
+		/* No PCI IRQ */
 		printf(": SCI");
-		sc->sc_poll = 1;
 	} else if (conf & AMD8111_SMB_MISC_INTEN) {
 		/* Install interrupt handler */
-		if (pci_intr_map(pa, &ih)) {
-			printf(": can't map interrupt\n");
-			goto fail;
+		if (pci_intr_map(pa, &ih) == 0) {
+			intrstr = pci_intr_string(pa->pa_pc, ih);
+			sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
+			    amdiic_intr, sc, sc->sc_dev.dv_xname);
+			if (sc->sc_ih != NULL) {
+				printf(": %s", intrstr);
+				sc->sc_poll = 0;
+			}
 		}
-		intrstr = pci_intr_string(pa->pa_pc, ih);
-		sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
-		    amdiic_intr, sc, sc->sc_dev.dv_xname);
-		if (sc->sc_ih == NULL) {
-			printf(": can't establish interrupt");
-			if (intrstr != NULL)
-				printf(" at %s", intrstr);
-			printf("\n");
-			goto fail;
-		}
-		printf(": %s", intrstr);
-	} else {
-		sc->sc_poll = 1;
+		if (sc->sc_poll)
+			printf(": polling");
 	}
 
 	printf("\n");
@@ -193,9 +188,6 @@ amdiic_attach(struct device *parent, struct device *self, void *aux)
 	config_found(self, &iba, iicbus_print);
 
 	return;
-
-fail:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
 }
 
 int
