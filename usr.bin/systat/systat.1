@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.37 2005/09/06 23:28:23 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.38 2006/01/15 17:36:48 niallo Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -330,7 +330,7 @@ Below the SWAPPING display and slightly to the left of the Interrupts
 display is a list of virtual memory statistics.
 The abbreviations are:
 .Pp
-.Bl -tag -compact -width XXXXXX -offset indent
+.Bl -tag -compact -width "kmapentXX" -offset indent
 .It forks
 process forks
 .It fkppw
@@ -365,6 +365,10 @@ wired pages
 pages daemon freed since boot
 .It pdscn
 pages daemon scanned since boot
+.It pzidle
+number of zeroed pages
+.It kmapent
+number of kernel map entries
 .El
 .Pp
 The
