@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.20 2006/01/09 22:59:35 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.21 2006/01/15 00:10:24 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1999/11/05 19:14:56 scottr Exp $	*/
 
 /*
@@ -89,7 +89,6 @@
 #include <machine/cpu.h>
 
 #include <mac68k/mac68k/pram.h>
-#include <mac68k/mac68k/clockreg.h>
 #include <machine/viareg.h>
 
 #include <dev/clock_subr.h>
@@ -99,6 +98,9 @@ int	clock_debug = 0;
 #endif
 
 int	rtclock_intr(void *);
+
+u_int		clk_interval;
+u_int8_t	clk_inth, clk_intl;
 
 #define	DIFF19041970	2082844800
 
@@ -116,19 +118,51 @@ int	rtclock_intr(void *);
 void
 startrtclock()
 {
+#ifndef HZ
+	/*
+	 * By default, if HZ is not specified, use 60 Hz, unless we are
+	 * using A/UX style interrupts. We then need to readjust values
+	 * based on a 100Hz value in param.c.
+	 */
+	if (mac68k_machine.aux_interrupts == 0) {
+#define	HZ_60 60
+		hz = HZ_60;
+		tick = 1000000 / HZ_60;
+		tickadj = 240000 / (60 * HZ_60);/* can adjust 240ms in 60s */
+	}
+#endif
+
+	/*
+	 * Calculate clocks needed to hit hz ticks/sec.
+	 *
+	 * The VIA clock speed is 1.2766us, so the timer value needed is:
+	 *
+	 *                    1       1,000,000us     1
+	 *  CLK_INTERVAL = -------- * ----------- * ------
+	 e                 1.2766us       1s          hz
+	 *
+	 * While it may be tempting to simplify the following further,
+	 * we can run into integer overflow problems.
+	 * Also note:  do *not* define HZ to be less than 12; overflow
+	 * will occur, yielding invalid results.
+	 */
+	clk_interval = ((100000000UL / hz) * 100) / 12766;
+	clk_inth = ((clk_interval >> 8) & 0xff);
+	clk_intl = (clk_interval & 0xff);
+
 	/* be certain clock interrupts are off */
 	via_reg(VIA1, vIER) = V1IF_T1;
 
 	/* set timer latch */
 	via_reg(VIA1, vACR) |= ACR_T1LATCH;
 
-	/* set VIA timer 1 latch to 60 Hz (100 Hz) */
-	via_reg(VIA1, vT1L) = CLK_INTL;
-	via_reg(VIA1, vT1LH) = CLK_INTH;
+	/* set VIA timer 1 latch to ``hz'' Hz */
+	via_reg(VIA1, vT1L) = clk_intl;
+	via_reg(VIA1, vT1LH) = clk_inth;
 
-	/* set VIA timer 1 counter started for 60(100) Hz */
-	via_reg(VIA1, vT1C) = CLK_INTL;
-	via_reg(VIA1, vT1CH) = CLK_INTH;
+	/* set VIA timer 1 counter started for ``hz'' Hz */
+	via_reg(VIA1, vT1C) = clk_intl;
+	via_reg(VIA1, vT1CH) = clk_inth;
 }
 
 void
@@ -173,7 +207,7 @@ clkread()
 		high = high2;
 
 	/* return count left in timer / 1.27 */
-	return ((CLK_INTERVAL - (high << 8) - low) * 10000 / CLK_RATE);
+	return ((clk_interval - (high << 8) - low) * 10000 / CLK_RATE);
 }
 
 static u_long	ugmt_2_pramt(u_long);

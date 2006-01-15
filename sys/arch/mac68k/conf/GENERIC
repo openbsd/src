@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.45 2006/01/13 19:36:41 miod Exp $
+#	$OpenBSD: GENERIC,v 1.46 2006/01/15 00:10:22 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -14,7 +14,6 @@ include		"../../../conf/GENERIC"
 maxusers	32			# estimated number of users
 
 # Mac-specific options
-option		HZ=60		# Macs like 60Hz
 option		M68040
 option		M68030
 option		M68020		# Must have 68851 PMMU
