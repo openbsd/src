@@ -858,6 +858,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/lemacreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/lemacvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/lm700x.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/lm78var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/lptreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/lptvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/lsi64854reg.ph
@@ -886,7 +887,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/nec765reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/ns16450reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/ns16550reg.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/nslm7xvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/oosiopreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/oosiopvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/opl3sa3reg.ph
@@ -1555,7 +1555,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/isofs/cd9660/iso_rrip.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/isofs/udf
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/isofs/udf/ecma167-udf.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/isofs/udf/osta.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/isofs/udf/udf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/isofs/udf/udf_extern.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/kerberosV

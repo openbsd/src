@@ -1208,6 +1208,7 @@
 ./usr/share/man/cat4/gentbi.0
 ./usr/share/man/cat4/gif.0
 ./usr/share/man/cat4/gpio.0
+./usr/share/man/cat4/gpioiic.0
 ./usr/share/man/cat4/gpr.0
 ./usr/share/man/cat4/gre.0
 ./usr/share/man/cat4/gscsio.0

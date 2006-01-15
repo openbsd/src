@@ -267,6 +267,7 @@
 ./usr/include/dev/ic/lemacreg.h
 ./usr/include/dev/ic/lemacvar.h
 ./usr/include/dev/ic/lm700x.h
+./usr/include/dev/ic/lm78var.h
 ./usr/include/dev/ic/lptreg.h
 ./usr/include/dev/ic/lptvar.h
 ./usr/include/dev/ic/lsi64854reg.h
@@ -295,7 +296,6 @@
 ./usr/include/dev/ic/nec765reg.h
 ./usr/include/dev/ic/ns16450reg.h
 ./usr/include/dev/ic/ns16550reg.h
-./usr/include/dev/ic/nslm7xvar.h
 ./usr/include/dev/ic/oosiopreg.h
 ./usr/include/dev/ic/oosiopvar.h
 ./usr/include/dev/ic/opl3sa3reg.h
@@ -890,7 +890,6 @@
 ./usr/include/isofs/cd9660/iso_rrip.h
 ./usr/include/isofs/udf
 ./usr/include/isofs/udf/ecma167-udf.h
-./usr/include/isofs/udf/osta.h
 ./usr/include/isofs/udf/udf.h
 ./usr/include/isofs/udf/udf_extern.h
 ./usr/include/kerberosV
