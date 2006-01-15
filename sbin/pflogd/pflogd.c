@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.34 2005/07/04 22:35:48 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.35 2006/01/15 16:38:04 canacar Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -73,7 +73,7 @@ int   flush_buffer(FILE *);
 int   init_pcap(void);
 void  logmsg(int, const char *, ...);
 void  purge_buffer(void);
-int   reset_dump(void);
+int   reset_dump(int);
 int   scan_dump(FILE *, off_t);
 int   set_snaplen(int);
 void  set_suspended(int);
@@ -81,6 +81,8 @@ void  sig_alrm(int);
 void  sig_close(int);
 void  sig_hup(int);
 void  usage(void);
+
+static int try_reset_dump(int);
 
 /* buffer must always be greater than snaplen */
 static int    bufpkt = 0;	/* number of packets in buffer */
@@ -228,7 +230,25 @@ set_snaplen(int snap)
 }
 
 int
-reset_dump(void)
+reset_dump(int nomove)
+{
+	int ret;
+
+	for (;;) {
+		ret = try_reset_dump(nomove);
+		if (ret <= 0)
+			break;
+	}
+
+	return (ret);
+}
+
+/*
+ * tries to (re)open log file, nomove flag is used with -x switch
+ * returns 0: success, 1: retry (log moved), -1: error
+ */
+int
+try_reset_dump(int nomove)
 {
 	struct pcap_file_header hdr;
 	struct stat st;
@@ -250,26 +270,26 @@ reset_dump(void)
 	 */
 	fd = priv_open_log();
 	if (fd < 0)
-		return (1);
+		return (-1);
 
 	fp = fdopen(fd, "a+");
 
 	if (fp == NULL) {
 		logmsg(LOG_ERR, "Error: %s: %s", filename, strerror(errno));
 		close(fd);
-		return (1);
+		return (-1);
 	}
 	if (fstat(fileno(fp), &st) == -1) {
 		logmsg(LOG_ERR, "Error: %s: %s", filename, strerror(errno));
 		fclose(fp);
-		return (1);
+		return (-1);
 	}
 
 	/* set FILE unbuffered, we do our own buffering */
 	if (setvbuf(fp, NULL, _IONBF, 0)) {
 		logmsg(LOG_ERR, "Failed to set output buffers");
 		fclose(fp);
-		return (1);
+		return (-1);
 	}
 
 #define TCPDUMP_MAGIC 0xa1b2c3d4
@@ -291,11 +311,15 @@ reset_dump(void)
 
 		if (fwrite((char *)&hdr, sizeof(hdr), 1, fp) != 1) {
 			fclose(fp);
-			return (1);
+			return (-1);
 		}
 	} else if (scan_dump(fp, st.st_size)) {
-		/* XXX move file and continue? */
 		fclose(fp);
+		if (nomove || priv_move_log()) {
+			logmsg(LOG_ERR,
+			    "Invalid/incompatible log file, move it away");
+			return (-1);
+		}
 		return (1);
 	}
 
@@ -334,7 +358,6 @@ scan_dump(FILE *fp, off_t size)
 	    hdr.version_minor != PCAP_VERSION_MINOR ||
 	    hdr.linktype != hpcap->linktype ||
 	    hdr.snaplen > PFLOGD_MAXSNAPLEN) {
-		logmsg(LOG_ERR, "Invalid/incompatible log file, move it away");
 		return (1);
 	}
 
@@ -594,7 +617,7 @@ main(int argc, char **argv)
 		bufpkt = 0;
 	}
 
-	if (reset_dump()) {
+	if (reset_dump(Xflag) < 0) {
 		if (Xflag)
 			return (1);
 
@@ -612,7 +635,7 @@ main(int argc, char **argv)
 		if (gotsig_close)
 			break;
 		if (gotsig_hup) {
-			if (reset_dump()) {
+			if (reset_dump(0)) {
 				logmsg(LOG_ERR,
 				    "Logging suspended: open error");
 				set_suspended(1);
@@ -623,6 +646,8 @@ main(int argc, char **argv)
 		if (gotsig_alrm) {
 			if (dpcap)
 				flush_buffer(dpcap);
+			else 
+				gotsig_hup = 1;
 			gotsig_alrm = 0;
 			alarm(delay);
 		}
