@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.32 2005/07/31 03:52:19 pascoe Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.33 2006/01/15 19:49:25 miod Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
 
 /*-
@@ -233,9 +233,9 @@ struct ie_softc {
 				/* card dependent attn function */
 	void (*run_586)(struct ie_softc *);
 				/* card depenent "go on-line" function */
-	void (*memcopy)(const void *, void *, u_int);
+	void (*memcopy)(const void *, void *, size_t);
 	                        /* card dependent memory copy function */
-        void (*memzero)(void *, u_int);
+        void (*memzero)(void *, size_t);
 	                        /* card dependent memory zero function */
 
 
@@ -327,8 +327,8 @@ static void chan_attn_timeout(void *);
 static void run_tdr(struct ie_softc *, struct ie_tdr_cmd *);
 static void iestop(struct ie_softc *);
 
-void wzero(void *, u_int);
-void wcopy(const void *, void *, u_int);
+void wzero(void *, size_t);
+void wcopy(const void *, void *, size_t);
 
 #ifdef IEDEBUG
 void print_rbd(volatile struct ie_recv_buf_desc *);
@@ -2071,7 +2071,7 @@ print_rbd(rbd)
 void
 wzero(vb, l)
 	void *vb;
-	u_int l;
+	size_t l;
 {
 	u_char *b = vb;
 	u_char *be = b + l;
@@ -2100,7 +2100,7 @@ void
 wcopy(vb1, vb2, l)
 	const void *vb1;
 	void *vb2;
-	u_int l;
+	size_t l;
 {
 	const u_char *b1e, *b1 = vb1;
 	u_char *b2 = vb2;
