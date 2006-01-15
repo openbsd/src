@@ -1,4 +1,4 @@
-/*	$OpenBSD: inttypes.h,v 1.7 2006/01/13 17:58:09 millert Exp $	*/
+/*	$OpenBSD: inttypes.h,v 1.8 2006/01/15 00:46:07 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 2005 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -55,11 +55,7 @@
 #define	PRIdFAST64		"lld"
 
 #define	PRIdMAX			"jd"
-#ifdef __LP64__
 #define	PRIdPTR			"ld"
-#else
-#define	PRIdPTR			"d"
-#endif
 
 #define	PRIi8			"i"
 #define	PRIi16			"i"
@@ -77,11 +73,7 @@
 #define	PRIiFAST64		"lli"
 
 #define	PRIiMAX			"ji"
-#ifdef __LP64__
 #define	PRIiPTR			"li"
-#else
-#define	PRIiPTR			"i"
-#endif
 
 /* fprintf macros for unsigned integers */
 #define	PRIo8			"o"
@@ -100,11 +92,7 @@
 #define	PRIoFAST64		"llo"
 
 #define	PRIoMAX			"jo"
-#ifdef __LP64__
 #define	PRIoPTR			"lo"
-#else
-#define	PRIoPTR			"o"
-#endif
 
 #define	PRIu8			"u"
 #define	PRIu16			"u"
@@ -122,11 +110,7 @@
 #define	PRIuFAST64		"llu"
 
 #define	PRIuMAX			"ju"
-#ifdef __LP64__
 #define	PRIuPTR			"lu"
-#else
-#define	PRIuPTR			"u"
-#endif
 
 #define	PRIx8			"x"
 #define	PRIx16			"x"
@@ -144,11 +128,7 @@
 #define	PRIxFAST64		"llx"
 
 #define	PRIxMAX			"jx"
-#ifdef __LP64__
 #define	PRIxPTR			"lx"
-#else
-#define	PRIxPTR			"x"
-#endif
 
 #define	PRIX8			"X"
 #define	PRIX16			"X"
@@ -166,11 +146,7 @@
 #define	PRIXFAST64		"llX"
 
 #define	PRIXMAX			"jX"
-#ifdef __LP64__
 #define	PRIXPTR			"lX"
-#else
-#define	PRIXPTR			"X"
-#endif
 
 /* fscanf macros for signed integers */
 #define	SCNd8			"hhd"
@@ -189,11 +165,7 @@
 #define	SCNdFAST64		"lld"
 
 #define	SCNdMAX			"jd"
-#ifdef __LP64__
 #define	SCNdPTR			"ld"
-#else
-#define	SCNdPTR			"d"
-#endif
 
 #define	SCNi8			"hhi"
 #define	SCNi16			"hi"
@@ -211,11 +183,7 @@
 #define	SCNiFAST64		"lli"
 
 #define	SCNiMAX			"ji"
-#ifdef __LP64__
 #define	SCNiPTR			"li"
-#else
-#define	SCNiPTR			"i"
-#endif
 
 /* fscanf macros for unsigned integers */
 #define	SCNo8			"hho"
@@ -234,11 +202,7 @@
 #define	SCNoFAST64		"llo"
 
 #define	SCNoMAX			"jo"
-#ifdef __LP64__
 #define	SCNoPTR			"lo"
-#else
-#define	SCNoPTR			"o"
-#endif
 
 #define	SCNu8			"hhu"
 #define	SCNu16			"hu"
@@ -256,11 +220,7 @@
 #define	SCNuFAST64		"llu"
 
 #define	SCNuMAX			"ju"
-#ifdef __LP64__
 #define	SCNuPTR			"lu"
-#else
-#define	SCNuPTR			"u"
-#endif
 
 #define	SCNx8			"hhx"
 #define	SCNx16			"hx"
@@ -278,11 +238,7 @@
 #define	SCNxFAST64		"llx"
 
 #define	SCNxMAX			"jx"
-#ifdef __LP64__
 #define	SCNxPTR			"lx"
-#else
-#define	SCNxPTR			"x"
-#endif
 
 #endif /* __cplusplus || __STDC_FORMAT_MACROS */
 
