@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.30 2005/09/25 19:02:38 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.31 2006/01/15 19:11:59 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.30 2005/09/25 19:02:38 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.31 2006/01/15 19:11:59 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -59,7 +59,7 @@ static struct bmachine	bmachine;
 static void sighandler(int);
 
 static __inline int	readch(void);
-static __inline int	unreadch(void);
+static __inline void	unreadch(void);
 static __inline char	*readline(void);
 static __inline void	src_free(void);
 
@@ -262,7 +262,7 @@ init_bmachine(bool extended_registers)
 	bmachine.obase = bmachine.ibase = 10;
 	BN_init(&zero);
 	bn_check(BN_zero(&zero));
-	signal(SIGINT, sighandler);
+	(void)signal(SIGINT, sighandler);
 }
 
 /* Reset the things needed before processing a (new) file */
@@ -281,12 +281,12 @@ readch(void)
 	return src->vtable->readchar(src);
 }
 
-static __inline int
+static __inline void
 unreadch(void)
 {
 	struct source *src = &bmachine.readstack[bmachine.readsp];
 
-	return src->vtable->unreadchar(src);
+	src->vtable->unreadchar(src);
 }
 
 static __inline char *
@@ -312,8 +312,8 @@ pn(const char *str, const struct number *n)
 	char *p = BN_bn2dec(n->number);
 	if (p == NULL)
 		err(1, "BN_bn2dec failed");
-	fputs(str, stderr);
-	fprintf(stderr, " %s (%u)\n" , p, n->scale);
+	(void)fputs(str, stderr);
+	(void)fprintf(stderr, " %s (%u)\n" , p, n->scale);
 	OPENSSL_free(p);
 }
 
@@ -323,8 +323,8 @@ pbn(const char *str, const BIGNUM *n)
 	char *p = BN_bn2dec(n);
 	if (p == NULL)
 		err(1, "BN_bn2dec failed");
-	fputs(str, stderr);
-	fprintf(stderr, " %s\n", p);
+	(void)fputs(str, stderr);
+	(void)fprintf(stderr, " %s\n", p);
 	OPENSSL_free(p);
 }
 
@@ -355,7 +355,7 @@ scale_number(BIGNUM *n, int s)
 		if (s > 0)
 			bn_check(BN_mul_word(n, factors[abs_scale]));
 		else
-			BN_div_word(n, factors[abs_scale]);
+			(void)BN_div_word(n, factors[abs_scale]);
 	} else {
 		BIGNUM *a, *p;
 		BN_CTX *ctx;
@@ -388,11 +388,11 @@ split_number(const struct number *n, BIGNUM *i, BIGNUM *f)
 	bn_checkp(BN_copy(i, n->number));
 
 	if (n->scale == 0 && f != NULL)
-		BN_zero(f);
+		bn_check(BN_zero(f));
 	else if (n->scale < sizeof(factors)/sizeof(factors[0])) {
 		rem = BN_div_word(i, factors[n->scale]);
 		if (f != NULL)
-			BN_set_word(f, rem);
+			bn_check(BN_set_word(f, rem));
 	} else {
 		BIGNUM *a, *p;
 		BN_CTX *ctx;
@@ -494,7 +494,7 @@ print_tos(void)
 	struct value *value = tos();
 	if (value != NULL) {
 		print_value(stdout, value, "", bmachine.obase);
-		putchar('\n');
+		(void)putchar('\n');
 	}
 	else
 		warnx("stack empty");
@@ -512,11 +512,11 @@ pop_print(void)
 		case BCODE_NUMBER:
 			normalize(value->u.num, 0);
 			print_ascii(stdout, value->u.num);
-			fflush(stdout);
+			(void)fflush(stdout);
 			break;
 		case BCODE_STRING:
-			fputs(value->u.string, stdout);
-			fflush(stdout);
+			(void)fputs(value->u.string, stdout);
+			(void)fflush(stdout);
 			break;
 		}
 		stack_free_value(value);
@@ -530,7 +530,7 @@ pop_printn(void)
 
 	if (value != NULL) {
 		print_value(stdout, value, "", bmachine.obase);
-		fflush(stdout);
+		(void)fflush(stdout);
 		stack_free_value(value);
 	}
 }
@@ -695,7 +695,7 @@ count_digits(const struct number *n)
 
 	i = 0;
 	while (!BN_is_zero(int_part->number)) {
-		BN_div_word(int_part->number, 10);
+		(void)BN_div_word(int_part->number, 10);
 		i++;
 	}
 	free_number(int_part);
@@ -937,7 +937,7 @@ comment(void)
 static void
 bexec(char *line)
 {
-	system(line);
+	(void)system(line);
 	free(line);
 }
 
@@ -1228,7 +1228,7 @@ bexp(void)
 
 			one = BN_new();
 			bn_checkp(one);
-			BN_one(one);
+			bn_check(BN_one(one));
 			ctx = BN_CTX_new();
 			bn_checkp(ctx);
 			scale_number(one, r->scale + scale);
@@ -1607,9 +1607,9 @@ skip_until_mark(void)
 		case '<':
 		case '>':
 		case '=':
-			readreg();
+			(void)readreg();
 			if (readch() == 'e')
-				readreg();
+				(void)readreg();
 			else
 				unreadch();
 			break;
@@ -1621,9 +1621,9 @@ skip_until_mark(void)
 				case '<':
 				case '>':
 				case '=':
-					readreg();
+					(void)readreg();
 					if (readch() == 'e')
-						readreg();
+						(void)readreg();
 					else
 						unreadch();
 					break;
@@ -1727,10 +1727,10 @@ eval(void)
 				bmachine.interrupted = false;
 		}
 #ifdef DEBUGGING
-		fprintf(stderr, "# %c\n", ch);
+		(void)fprintf(stderr, "# %c\n", ch);
 		stack_print(stderr, &bmachine.stack, "* ",
 		    bmachine.obase);
-		fprintf(stderr, "%d =>\n", bmachine.readsp);
+		(void)fprintf(stderr, "%d =>\n", bmachine.readsp);
 #endif
 
 		if (0 <= ch && ch < UCHAR_MAX)
@@ -1741,7 +1741,7 @@ eval(void)
 #ifdef DEBUGGING
 		stack_print(stderr, &bmachine.stack, "* ",
 		    bmachine.obase);
-		fprintf(stderr, "%d ==\n", bmachine.readsp);
+		(void)fprintf(stderr, "%d ==\n", bmachine.readsp);
 #endif
 	}
 }

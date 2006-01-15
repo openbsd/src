@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.h,v 1.3 2003/12/01 09:13:24 otto Exp $	*/
+/*	$OpenBSD: bcode.h,v 1.4 2006/01/15 19:11:59 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -66,7 +66,7 @@ struct source;
 
 struct vtable {
 	int	(*readchar)(struct source *);
-	int	(*unreadchar)(struct source *);
+	void	(*unreadchar)(struct source *);
 	char	*(*readline)(struct source *);
 	void	(*free)(struct source *);
 };

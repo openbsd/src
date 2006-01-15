@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.6 2004/10/18 07:49:00 otto Exp $	*/
+/*	$OpenBSD: dc.c,v 1.7 2006/01/15 19:11:59 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: dc.c,v 1.6 2004/10/18 07:49:00 otto Exp $";
+static const char rcsid[] = "$OpenBSD: dc.c,v 1.7 2006/01/15 19:11:59 otto Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -34,7 +34,7 @@ extern char		*__progname;
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-x] [-e expr] [file]\n", __progname);
+	(void)fprintf(stderr, "usage: %s [-x] [-e expr] [file]\n", __progname);
 	exit(1);
 }
 
@@ -71,8 +71,8 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	init_bmachine(extended_regs);
-	setlinebuf(stdout);
-	setlinebuf(stderr);
+	(void)setlinebuf(stdout);
+	(void)setlinebuf(stderr);
 
 	if (argc > 1)
 		usage();
@@ -91,7 +91,7 @@ main(int argc, char *argv[])
 		src_setstream(&src, file);
 		reset_bmachine(&src);
 		eval();
-		fclose(file);
+		(void)fclose(file);
 		/*
 		 * BSD and Solaris dc(1) continue with stdin after processing
 		 * the file given as the argument. We follow GNU dc(1).
