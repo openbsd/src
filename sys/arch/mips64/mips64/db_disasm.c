@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.4 2005/01/31 21:35:50 grange Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.5 2006/01/15 14:36:09 miod Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: db_disasm.c,v 1.4 2005/01/31 21:35:50 grange Exp $
+ *      $Id: db_disasm.c,v 1.5 2006/01/15 14:36:09 miod Exp $
  */
 
 #include <sys/param.h>
@@ -389,6 +389,13 @@ md_printins(int ins, int mdbdot)
 		db_printf("%s\t%s,0x%x", op_name[i.IType.op],
 			reg_name[i.IType.rt],
 			i.IType.imm);
+		break;
+
+	case OP_CACHE:
+		db_printf("%s\t0x%x,%d(%s)", op_name[i.IType.op],
+			i.IType.rt,
+			(short)i.IType.imm,
+			reg_name[i.IType.rs]);
 		break;
 
 	case OP_ADDI:
