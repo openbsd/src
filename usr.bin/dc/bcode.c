@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.31 2006/01/15 19:11:59 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.32 2006/01/15 19:14:40 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.31 2006/01/15 19:11:59 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.32 2006/01/15 19:14:40 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -763,35 +763,35 @@ to_ascii(void)
 static int
 readreg(void)
 {
-	int index, ch1, ch2;
+	int idx, ch1, ch2;
 
-	index = readch();
-	if (index == 0xff && bmachine.extended_regs) {
+	idx = readch();
+	if (idx == 0xff && bmachine.extended_regs) {
 		ch1 = readch();
 		ch2 = readch();
 		if (ch1 == EOF || ch2 == EOF) {
 			warnx("unexpected eof");
-			index = -1;
+			idx = -1;
 		} else
-			index = (ch1 << 8) + ch2 + UCHAR_MAX + 1;
+			idx = (ch1 << 8) + ch2 + UCHAR_MAX + 1;
 	}
-	if (index < 0 || index >= bmachine.reg_array_size) {
-		warnx("internal error: reg num = %d", index);
-		index = -1;
+	if (idx < 0 || idx >= bmachine.reg_array_size) {
+		warnx("internal error: reg num = %d", idx);
+		idx = -1;
 	}
-	return index;
+	return idx;
 }
 
 static void
 load(void)
 {
-	int		index;
+	int		idx;
 	struct value	*v, copy;
 	struct number	*n;
 
-	index = readreg();
-	if (index >= 0) {
-		v = stack_tos(&bmachine.reg[index]);
+	idx = readreg();
+	if (idx >= 0) {
+		v = stack_tos(&bmachine.reg[idx]);
 		if (v == NULL) {
 			n = new_number();
 			bn_check(BN_zero(n->number));
@@ -804,29 +804,29 @@ load(void)
 static void
 store(void)
 {
-	int		index;
+	int		idx;
 	struct value	*val;
 
-	index = readreg();
-	if (index >= 0) {
+	idx = readreg();
+	if (idx >= 0) {
 		val = pop();
 		if (val == NULL) {
 			return;
 		}
-		stack_set_tos(&bmachine.reg[index], val);
+		stack_set_tos(&bmachine.reg[idx], val);
 	}
 }
 
 static void
 load_stack(void)
 {
-	int		index;
+	int		idx;
 	struct stack	*stack;
 	struct value	*value, copy;
 
-	index = readreg();
-	if (index >= 0) {
-		stack = &bmachine.reg[index];
+	idx = readreg();
+	if (idx >= 0) {
+		stack = &bmachine.reg[idx];
 		value = NULL;
 		if (stack_size(stack) > 0) {
 			value = stack_pop(stack);
@@ -835,22 +835,22 @@ load_stack(void)
 			push(stack_dup_value(value, &copy));
 		else
 			warnx("stack register '%c' (0%o) is empty",
-			    index, index);
+			    idx, idx);
 	}
 }
 
 static void
 store_stack(void)
 {
-	int		index;
+	int		idx;
 	struct value	*value;
 
-	index = readreg();
-	if (index >= 0) {
+	idx = readreg();
+	if (idx >= 0) {
 		value = pop();
 		if (value == NULL)
 			return;
-		stack_push(&bmachine.reg[index], value);
+		stack_push(&bmachine.reg[idx], value);
 	}
 }
 
@@ -859,7 +859,7 @@ load_array(void)
 {
 	int			reg;
 	struct number		*inumber, *n;
-	u_long			index;
+	u_long			idx;
 	struct stack		*stack;
 	struct value		*v, copy;
 
@@ -868,14 +868,14 @@ load_array(void)
 		inumber = pop_number();
 		if (inumber == NULL)
 			return;
-		index = get_ulong(inumber);
+		idx = get_ulong(inumber);
 		if (BN_cmp(inumber->number, &zero) < 0)
-			warnx("negative index");
-		else if (index == BN_MASK2 || index > MAX_ARRAY_INDEX)
-			warnx("index too big");
+			warnx("negative idx");
+		else if (idx == BN_MASK2 || idx > MAX_ARRAY_INDEX)
+			warnx("idx too big");
 		else {
 			stack = &bmachine.reg[reg];
-			v = frame_retrieve(stack, index);
+			v = frame_retrieve(stack, idx);
 			if (v == NULL) {
 				n = new_number();
 				bn_check(BN_zero(n->number));
@@ -893,7 +893,7 @@ store_array(void)
 {
 	int			reg;
 	struct number		*inumber;
-	u_long			index;
+	u_long			idx;
 	struct value		*value;
 	struct stack		*stack;
 
@@ -907,16 +907,16 @@ store_array(void)
 			free_number(inumber);
 			return;
 		}
-		index = get_ulong(inumber);
+		idx = get_ulong(inumber);
 		if (BN_cmp(inumber->number, &zero) < 0) {
-			warnx("negative index");
+			warnx("negative idx");
 			stack_free_value(value);
-		} else if (index == BN_MASK2 || index > MAX_ARRAY_INDEX) {
-			warnx("index too big");
+		} else if (idx == BN_MASK2 || idx > MAX_ARRAY_INDEX) {
+			warnx("idx too big");
 			stack_free_value(value);
 		} else {
 			stack = &bmachine.reg[reg];
-			frame_assign(stack, index, value);
+			frame_assign(stack, idx, value);
 		}
 		free_number(inumber);
 	}
@@ -1476,15 +1476,15 @@ compare_numbers(enum bcode_compare type, struct number *a, struct number *b)
 static void
 compare(enum bcode_compare type)
 {
-	int		index, elseindex;
+	int		idx, elseidx;
 	struct number	*a, *b;
 	bool		ok;
 	struct value	*v;
 
-	elseindex = NO_ELSE;
-	index = readreg();
+	elseidx = NO_ELSE;
+	idx = readreg();
 	if (readch() == 'e')
-		elseindex = readreg();
+		elseidx = readreg();
 	else
 		unreadch();
 
@@ -1499,18 +1499,17 @@ compare(enum bcode_compare type)
 
 	ok = compare_numbers(type, a, b);
 
-	if (!ok && elseindex != NO_ELSE)
-		index = elseindex;
+	if (!ok && elseidx != NO_ELSE)
+		idx = elseidx;
 
-	if (index >= 0 && (ok || (!ok && elseindex != NO_ELSE))) {
-		v = stack_tos(&bmachine.reg[index]);
+	if (idx >= 0 && (ok || (!ok && elseidx != NO_ELSE))) {
+		v = stack_tos(&bmachine.reg[idx]);
 		if (v == NULL)
-			warnx("register '%c' (0%o) is empty", index, index);
+			warnx("register '%c' (0%o) is empty", idx, idx);
 		else {
 			switch(v->type) {
 			case BCODE_NONE:
-				warnx("register '%c' (0%o) is empty",
-				    index, index);
+				warnx("register '%c' (0%o) is empty", idx, idx);
 				break;
 			case BCODE_NUMBER:
 				warn("eval called with non-string argument");
