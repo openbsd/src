@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.15 2006/01/12 00:21:59 deraadt Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.16 2006/01/15 10:04:39 grange Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 /*
- * Intel PIIX and compatible SMBus controller driver.
+ * Intel PIIX and compatible Power Management controller driver.
  */
 
 #include <sys/param.h>
@@ -128,29 +128,23 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_poll = 1;
 	if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_SMI) {
+		/* No PCI IRQ */
 		printf(": SMI");
-		sc->sc_poll = 1;
 	} else if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_IRQ) {
 		/* Install interrupt handler */
-		if (pci_intr_map(pa, &ih)) {
-			printf(": can't map interrupt");
-			goto ok;
+		if (pci_intr_map(pa, &ih) == 0) {
+			intrstr = pci_intr_string(pa->pa_pc, ih);
+			sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
+			    piixpm_intr, sc, sc->sc_dev.dv_xname);
+			if (sc->sc_ih != NULL) {
+				printf(": %s", intrstr);
+				sc->sc_poll = 0;
+			}
 		}
-		intrstr = pci_intr_string(pa->pa_pc, ih);
-		sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
-		    piixpm_intr, sc, sc->sc_dev.dv_xname);
-		if (sc->sc_ih == NULL) {
-			printf(": can't establish interrupt");
-			if (intrstr != NULL)
-				printf(" at %s", intrstr);
-			printf("\n");
-			goto fail;
-		}
-		printf(": %s", intrstr);
-	} else {
-ok:
-		sc->sc_poll = 1;
+		if (sc->sc_poll)
+			printf(": polling");
 	}
 
 	printf("\n");
@@ -168,9 +162,6 @@ ok:
 	config_found(self, &iba, iicbus_print);
 
 	return;
-
-fail:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, PIIX_SMB_SIZE);
 }
 
 int
