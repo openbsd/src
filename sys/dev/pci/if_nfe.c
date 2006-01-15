@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.5 2006/01/14 04:33:35 jsg Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.6 2006/01/15 10:55:06 damien Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -768,8 +768,7 @@ nfe_alloc_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &ring->seg, nsegs,
-	    NFE_TX_RING_COUNT * sizeof(struct nfe_desc), (caddr_t *)desc,
-	    BUS_DMA_NOWAIT);
+	    NFE_TX_RING_COUNT * descsize, (caddr_t *)desc, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not map desc DMA memory\n",
 		    sc->sc_dev.dv_xname);
