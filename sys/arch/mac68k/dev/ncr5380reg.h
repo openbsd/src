@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380reg.h,v 1.5 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: ncr5380reg.h,v 1.6 2006/01/16 21:45:58 miod Exp $	*/
 /*	$NetBSD: ncr5380reg.h,v 1.9 1996/05/05 06:16:58 briggs Exp $	*/
 
 /*
@@ -160,6 +160,8 @@
 struct	ncr_softc {
 	struct	device		sc_dev;
 	struct	scsi_link	sc_link;
+
+	struct via2hand		sc_ih_irq, sc_ih_drq;
 
 	/*
 	 * Some (pre-SCSI2) devices don't support select with ATN.

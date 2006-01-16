@@ -1,4 +1,4 @@
-/*	$OpenBSD: mac68k5380.c,v 1.21 2005/07/23 23:36:26 martin Exp $	*/
+/*	$OpenBSD: mac68k5380.c,v 1.22 2006/01/16 21:45:57 miod Exp $	*/
 /*	$NetBSD: mac68k5380.c,v 1.29 1997/02/28 15:50:50 scottr Exp $	*/
 
 /*
@@ -47,11 +47,10 @@
 /*
  * Include the driver definitions
  */
-#include "ncr5380reg.h"
 
-#include <machine/stdarg.h>
 #include <machine/viareg.h>
 
+#include "ncr5380reg.h"
 #include "ncr5380var.h"
 
 /*
@@ -154,7 +153,6 @@ scsi_mach_init(sc)
 	struct ncr_softc	*sc;
 {
 	static int initted = 0;
-	static struct via2hand ih_irq, ih_drq;
 
 	if (initted++)
 		panic("scsi_mach_init called again.");
@@ -174,14 +172,14 @@ scsi_mach_init(sc)
 		scsi_flag   = Via1Base + VIA2 * 0x2000 + rIFR;
 	}
 
-	ih_irq.vh_fn = ncr5380_irq_intr;
-	ih_irq.vh_arg = sc;
-	ih_irq.vh_ipl = VIA2_SCSIIRQ;
-	via2_register_irq(&ih_irq, sc->sc_dev.dv_xname);
-	ih_drq.vh_fn = ncr5380_drq_intr;
-	ih_drq.vh_arg = sc;
-	ih_drq.vh_ipl = VIA2_SCSIDRQ;
-	via2_register_irq(&ih_drq, sc->sc_dev.dv_xname);
+	sc->sc_ih_irq.vh_fn = ncr5380_irq_intr;
+	sc->sc_ih_irq.vh_arg = sc;
+	sc->sc_ih_irq.vh_ipl = VIA2_SCSIIRQ;
+	via2_register_irq(&sc->sc_ih_irq, sc->sc_dev.dv_xname);
+	sc->sc_ih_drq.vh_fn = ncr5380_drq_intr;
+	sc->sc_ih_drq.vh_arg = sc;
+	sc->sc_ih_drq.vh_ipl = VIA2_SCSIDRQ;
+	via2_register_irq(&sc->sc_ih_drq, sc->sc_dev.dv_xname);
 }
 
 static int
