@@ -1,4 +1,4 @@
-/*	$OpenBSD: rawfs.c,v 1.3 2002/03/14 01:26:38 millert Exp $	*/
+/*	$OpenBSD: rawfs.c,v 1.4 2006/01/16 18:03:54 deraadt Exp $	*/
 /*	$NetBSD: rawfs.c,v 1.1 1995/10/17 22:58:27 gwr Exp $	*/
 
 /*
@@ -96,8 +96,8 @@ int	rawfs_close(f)
 int	rawfs_read(f, start, size, resid)
 	struct open_file *f;
 	void *start;
-	u_int size;
-	u_int *resid;
+	size_t size;
+	size_t *resid;
 {
 	struct file *fs = (struct file *)f->f_fsdata;
 	char *addr = start;
@@ -162,7 +162,8 @@ rawfs_get_block(f)
 	struct open_file *f;
 {
 	struct file *fs;
-	int error, len;
+	int error;
+	size_t len;
 
 	fs = (struct file *)f->f_fsdata;
 	fs->fs_ptr = fs->fs_buf;
