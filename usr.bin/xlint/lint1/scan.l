@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.26 2005/12/17 21:08:27 cloder Exp $	*/
+/*	$OpenBSD: scan.l,v 1.27 2006/01/16 22:16:14 espie Exp $	*/
 /*	$NetBSD: scan.l,v 1.8 1995/10/23 13:38:51 jpo Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scan.l,v 1.26 2005/12/17 21:08:27 cloder Exp $";
+static char rcsid[] = "$OpenBSD: scan.l,v 1.27 2006/01/16 22:16:14 espie Exp $";
 #endif
 
 #include <stdlib.h>
@@ -71,6 +71,7 @@ static	int	name(void);
 static	int	keyw(sym_t *);
 static	int	icon(int);
 static	int	fcon(void);
+static  int	fhexcon(void);
 static	int	operator(int, op_t);
 static	int	ccon(void);
 static	int	wccon(void);
@@ -89,6 +90,7 @@ NZD	[1-9]
 OD	[0-7]
 HD	[0-9A-Fa-f]
 EX	([eE][+-]?[0-9]+)
+HEX	([pP][+-]?[0-9]+)
 
 %%
 
@@ -99,6 +101,9 @@ EX	([eE][+-]?[0-9]+)
 {D}+\.{D}*{EX}?[fFlL]?		|
 {D}+{EX}[fFlL]?			|
 \.{D}+{EX}?[fFlL]?		return (fcon());
+0[xX]{HD}+\.{HD}*{HEX}[fFlL]?	|
+0[xX]{HD}+{HEX}[fFlL]?		|
+0[xX]\.{HD}+{HEX}[fFlL]?	return (fhexcon());
 "="				return (operator(T_ASSIGN, ASSIGN));
 "*="				return (operator(T_OPASS, MULASS));
 "/="				return (operator(T_OPASS, DIVASS));
@@ -618,7 +623,7 @@ xsign(quad_t q, tspec_t t, int len)
 }
 
 /*
- * Convert a string representing a floating point value into its interal
+ * Convert a string representing a floating point value into its integral
  * representation. Type and value are returned in yylval. fcon()
  * (and yylex()) returns T_CON.
  * XXX Currently it is not possible to convert constants of type
@@ -667,6 +672,58 @@ fcon(void)
 			warning(248);
 			f = f > 0 ? FLT_MAX : -FLT_MAX;
 		}
+	}
+
+	(yylval.y_val = xcalloc(1, sizeof (val_t)))->v_tspec = typ;
+	if (typ == FLOAT) {
+		yylval.y_val->v_ldbl = f;
+	} else {
+		yylval.y_val->v_ldbl = d;
+	}
+
+	return (T_CON);
+}
+
+/*
+ * Convert an hexadecimal representation of a floating point value 
+ * into its integral representation. 
+ * Type and value are returned in yylval. fhexcon()
+ * (and yylex()) returns T_CON.
+ * XXX Currently no actual values are parsed.
+ */
+static int
+fhexcon(void)
+{
+	const	char *cp;
+	int	len;
+	tspec_t typ;
+	char	c;
+	double	d;
+	float	f;
+
+	cp = yytext;
+	len = yyleng;
+
+	if ((c = cp[len - 1]) == 'f' || c == 'F') {
+		typ = FLOAT;
+		len--;
+	} else if (c == 'l' || c == 'L') {
+		typ = LDOUBLE;
+		len--;
+	} else {
+		typ = DOUBLE;
+	}
+
+	if (tflag) {
+		/* hex float constant are only legal in C99 */
+		warning(315);
+	}
+
+	/* arbitrary value, until strtod can cope */
+	d = 1.0;
+
+	if (typ == FLOAT) {
+		f = (float)d;
 	}
 
 	(yylval.y_val = xcalloc(1, sizeof (val_t)))->v_tspec = typ;
