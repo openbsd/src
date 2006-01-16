@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tireg.h,v 1.20 2005/10/09 20:07:32 brad Exp $	*/
+/*	$OpenBSD: if_tireg.h,v 1.21 2006/01/16 01:47:39 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1117,6 +1117,7 @@ struct ti_softc {
 #define ti_tx_considx		ti_rdata->ti_tx_considx_r
 	struct ti_tx_desc	*ti_tx_ring_nic;/* pointer to shared mem */
 	bus_dmamap_t		ti_ring_map;
+	u_int16_t		ti_tx_saved_prodidx;
 	u_int16_t		ti_tx_saved_considx;
 	u_int16_t		ti_rx_saved_considx;
 	u_int16_t		ti_ev_saved_considx;
