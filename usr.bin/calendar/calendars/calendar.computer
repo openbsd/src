@@ -1,7 +1,7 @@
 /*
  * Computer
  *
- * $OpenBSD: calendar.computer,v 1.8 2003/12/09 02:39:58 mickey Exp $
+ * $OpenBSD: calendar.computer,v 1.9 2006/01/16 16:28:59 mickey Exp $
  */
 
 #ifndef _calendar_computer_
@@ -16,6 +16,7 @@
 01/08	Justice Dept. drops IBM suit, 1982
 01/10	First CDC 1604 delivered to Navy, 1960
 01/16	Set uid bit patent issued, to Dennis Ritchie, 1979
+01/16	The 1st IETF meeting at Linkabit, San Diego, CA; 21 Attendees; 1986
 01/17	Justice Dept. begins IBM anti-trust suit, 1969 (drops it, 01/08/82)
 01/22	Apple airs "1984" commercial during Superbowl XVIII, 1984
 01/24	DG Nova introduced, 1969
