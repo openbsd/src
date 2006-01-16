@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pglist.c,v 1.14 2002/10/07 18:35:52 mickey Exp $	*/
+/*	$OpenBSD: uvm_pglist.c,v 1.15 2006/01/16 13:11:06 mickey Exp $	*/
 /*	$NetBSD: uvm_pglist.c,v 1.13 2001/02/18 21:19:08 chs Exp $	*/
 
 /*-
@@ -98,6 +98,7 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 #ifdef DEBUG
 	vm_page_t tp;
 #endif
+	UVMHIST_FUNC("uvm_pglistalloc"); UVMHIST_CALLED(pghist);
 
 	KASSERT((alignment & (alignment - 1)) == 0);
 	KASSERT((boundary & (boundary - 1)) == 0);
@@ -255,6 +256,7 @@ uvm_pglistfree(list)
 {
 	vm_page_t m;
 	int s;
+	UVMHIST_FUNC("uvm_pglistfree"); UVMHIST_CALLED(pghist);
 
 	/*
 	 * Block all memory allocation and lock the free list.
@@ -264,6 +266,16 @@ uvm_pglistfree(list)
 	while ((m = TAILQ_FIRST(list)) != NULL) {
 		KASSERT((m->pqflags & (PQ_ACTIVE|PQ_INACTIVE)) == 0);
 		TAILQ_REMOVE(list, m, pageq);
+#ifdef DEBUG
+		if (m->uobject == (void *)0xdeadbeef &&
+		    m->uanon == (void *)0xdeadbeef) {
+			panic("uvm_pagefree: freeing free page %p", m);
+		}
+
+		m->uobject = (void *)0xdeadbeef;
+		m->offset = 0xdeadbeef;
+		m->uanon = (void *)0xdeadbeef;
+#endif
 		m->pqflags = PQ_FREE;
 		TAILQ_INSERT_TAIL(&uvm.page_free[
 		    uvm_page_lookup_freelist(m)].pgfl_queues[PGFL_UNKNOWN],

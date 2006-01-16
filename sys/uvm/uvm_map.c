@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.76 2006/01/02 15:05:45 tom Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.77 2006/01/16 13:11:05 mickey Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -100,6 +100,12 @@ static struct timeval uvm_kmapent_warn_rate = { 10, 0 };
 struct uvm_cnt uvm_map_call, map_backmerge, map_forwmerge;
 struct uvm_cnt uvm_mlk_call, uvm_mlk_hint;
 const char vmmapbsy[] = "vmmapbsy";
+
+/*
+ * Da history books
+ */
+UVMHIST_DECL(maphist);
+UVMHIST_DECL(pdhist);
 
 /*
  * pool for vmspace structures.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.24 2004/02/23 06:19:32 drahn Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.25 2006/01/16 13:11:05 mickey Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -444,8 +444,8 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 		paddr = pmap_phys_address(mdpgno);
 		mapprot = ufi->entry->protection;
 		UVMHIST_LOG(maphist,
-		    "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%lx, at=%d",
-		    ufi->orig_map->pmap, curr_va, paddr, mapprot);
+		    "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%llx, at=%d",
+		    ufi->orig_map->pmap, curr_va, (long long)paddr, mapprot);
 		if (pmap_enter(ufi->orig_map->pmap, curr_va, paddr,
 		    mapprot, PMAP_CANFAIL | mapprot) != 0) {
 			/*

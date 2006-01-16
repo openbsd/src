@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.50 2004/12/26 21:22:14 miod Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.51 2006/01/16 13:11:05 mickey Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -126,6 +126,11 @@ static vaddr_t      virtual_space_end;
 static struct pglist uvm_bootbucket;
 
 /*
+ * History
+ */
+UVMHIST_DECL(pghist);
+
+/*
  * local prototypes
  */
 
@@ -151,6 +156,7 @@ uvm_pageinsert(pg)
 {
 	struct pglist *buck;
 	int s;
+	UVMHIST_FUNC("uvm_pageinsert"); UVMHIST_CALLED(pghist);
 
 	KASSERT((pg->flags & PG_TABLED) == 0);
 	buck = &uvm.page_hash[uvm_pagehash(pg->uobject,pg->offset)];
@@ -178,6 +184,7 @@ uvm_pageremove(pg)
 {
 	struct pglist *buck;
 	int s;
+	UVMHIST_FUNC("uvm_pageremove"); UVMHIST_CALLED(pghist);
 
 	KASSERT(pg->flags & PG_TABLED);
 	buck = &uvm.page_hash[uvm_pagehash(pg->uobject,pg->offset)];
@@ -216,6 +223,13 @@ uvm_page_init(kvm_startp, kvm_endp)
 	vm_page_t pagearray;
 	int lcv, i;  
 	paddr_t paddr;
+#if defined(UVMHIST)   
+	static struct uvm_history_ent pghistbuf[100];
+#endif
+
+	UVMHIST_FUNC("uvm_page_init");
+	UVMHIST_INIT_STATIC(pghist, pghistbuf);
+	UVMHIST_CALLED(pghist);
 
 	/*
 	 * init the page queues and page queue locks
@@ -489,6 +503,7 @@ uvm_page_physget_freelist(paddrp, freelist)
 	int freelist;
 {
 	int lcv, x;
+	UVMHIST_FUNC("uvm_page_physget_freelist"); UVMHIST_CALLED(pghist);
 
 	/* pass 1: try allocating from a matching end */
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST) || \
@@ -582,6 +597,7 @@ uvm_page_physget(paddrp)
 	paddr_t *paddrp;
 {
 	int i;
+	UVMHIST_FUNC("uvm_page_physget"); UVMHIST_CALLED(pghist);
 
 	/* try in the order of freelist preference */
 	for (i = 0; i < VM_NFREELIST; i++)
@@ -896,6 +912,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	struct pglist *freeq;
 	struct pgfreelist *pgfl;
 	boolean_t use_reserve;
+	UVMHIST_FUNC("uvm_pagealloc_strat"); UVMHIST_CALLED(pghist);
 
 	KASSERT(obj == NULL || anon == NULL);
 	KASSERT(off == trunc_page(off));
@@ -951,6 +968,9 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 		try2 = PGFL_ZEROS;
 	}
 
+	UVMHIST_LOG(pghist, "obj=%p off=%llx anon=%x flags=%x",
+	    obj, off, flags, anon);
+	UVMHIST_LOG(pghist, "strat=%d free_list=%d", strat, free_list, 0, 0);
  again:
 	switch (strat) {
 	case UVM_PGA_STRAT_NORMAL:
@@ -1047,10 +1067,13 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 			pmap_zero_page(pg);
 	}
 
+	UVMHIST_LOG(pghist, "allocated pg %p/%llx", pg,
+	    (long long)VM_PAGE_TO_PHYS(pg), 0, 0);
 	return(pg);
 
  fail:
 	uvm_unlock_fpageq(s);
+	UVMHIST_LOG(pghist, "failed!", 0, 0, 0, 0);
 	return (NULL);
 }
 
@@ -1066,6 +1089,9 @@ uvm_pagerealloc(pg, newobj, newoff)
 	struct uvm_object *newobj;
 	voff_t newoff;
 {
+
+	UVMHIST_FUNC("uvm_pagerealloc"); UVMHIST_CALLED(pghist);
+
 	/*
 	 * remove it from the old object
 	 */
@@ -1103,6 +1129,7 @@ uvm_pagefree(pg)
 {
 	int s;
 	int saved_loan_count = pg->loan_count;
+	UVMHIST_FUNC("uvm_pagefree"); UVMHIST_CALLED(pghist);
 
 #ifdef DEBUG
 	if (pg->uobject == (void *)0xdeadbeef &&
@@ -1110,6 +1137,9 @@ uvm_pagefree(pg)
 		panic("uvm_pagefree: freeing free page %p", pg);
 	}
 #endif
+
+	UVMHIST_LOG(pghist, "freeing pg %p/%llx", pg,
+	    (long long)VM_PAGE_TO_PHYS(pg), 0, 0);
 
 	/*
 	 * if the page was an object page (and thus "TABLED"), remove it
@@ -1309,6 +1339,7 @@ uvm_pageidlezero()
 	struct vm_page *pg;
 	struct pgfreelist *pgfl;
 	int free_list, s;
+	UVMHIST_FUNC("uvm_pageidlezero"); UVMHIST_CALLED(pghist);
 
 	do {
 		s = uvm_lock_fpageq();
