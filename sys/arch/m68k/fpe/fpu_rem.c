@@ -1,5 +1,5 @@
-/*	$OpenBSD: fpu_rem.c,v 1.3 2002/03/14 01:26:34 millert Exp $	*/
-/*	$NetBSD: fpu_rem.c,v 1.3 1996/04/30 12:02:54 briggs Exp $	*/
+/*	$OpenBSD: fpu_rem.c,v 1.4 2006/01/16 22:08:26 miod Exp $	*/
+/*	$NetBSD: fpu_rem.c,v 1.5 2003/07/15 02:43:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -83,9 +83,9 @@
  *                R := 0. Return signQ, last 7 bits of Q, and R.
  */                
 
-static struct fpn * __fpu_modrem(struct fpemu *fe, int modrem);
+struct fpn *__fpu_modrem(struct fpemu *fe, int modrem);
 
-static struct fpn *
+struct fpn *
 __fpu_modrem(fe, modrem)
      struct fpemu *fe;
      int modrem;
@@ -126,14 +126,12 @@ __fpu_modrem(fe, modrem)
 	 */
 	while (y->fp_exp != r->fp_exp || y->fp_mant[0] != r->fp_mant[0] ||
 	       y->fp_mant[1] != r->fp_mant[1] ||
-	       y->fp_mant[2] != r->fp_mant[2] ||
-	       y->fp_mant[3] != r->fp_mant[3]) {
+	       y->fp_mant[2] != r->fp_mant[2]) {
 
 	    /* Step 3.2 */
 	    if (y->fp_exp < r->fp_exp || y->fp_mant[0] < r->fp_mant[0] ||
 		y->fp_mant[1] < r->fp_mant[1] ||
-		y->fp_mant[2] < r->fp_mant[2] ||
-		y->fp_mant[3] < r->fp_mant[3]) {
+		y->fp_mant[2] < r->fp_mant[2]) {
 		CPYFPN(&fe->fe_f1, r);
 		CPYFPN(&fe->fe_f2, y);
 		fe->fe_f2.fp_sign = 1;
@@ -166,13 +164,13 @@ __fpu_modrem(fe, modrem)
     if (r->fp_exp + 1 < y->fp_exp ||
 	(r->fp_exp + 1 == y->fp_exp &&
 	 (r->fp_mant[0] < y->fp_mant[0] || r->fp_mant[1] < y->fp_mant[1] ||
-	  r->fp_mant[2] < y->fp_mant[3] || r->fp_mant[4] < y->fp_mant[4])))
+	  r->fp_mant[2] < y->fp_mant[2])))
 	/* if r < y/2 */
 	goto Step6;
     /* Step 5.2 */
     if (r->fp_exp + 1 != y->fp_exp ||
 	r->fp_mant[0] != y->fp_mant[0] || r->fp_mant[1] != y->fp_mant[1] ||
-	r->fp_mant[2] != y->fp_mant[2] || r->fp_mant[3] != y->fp_mant[3]) {
+	r->fp_mant[2] != y->fp_mant[2]) {
 	/* if (!(r < y/2) && !(r == y/2)) */
 	Last_Subtract = 1;
 	q++;

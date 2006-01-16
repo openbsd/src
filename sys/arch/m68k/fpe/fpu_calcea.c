@@ -1,5 +1,5 @@
-/*	$OpenBSD: fpu_calcea.c,v 1.9 2003/01/09 22:27:09 miod Exp $	*/
-/*	$NetBSD: fpu_calcea.c,v 1.7 1996/10/16 06:27:05 scottr Exp $	*/
+/*	$OpenBSD: fpu_calcea.c,v 1.10 2006/01/16 22:08:26 miod Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.16 2004/02/13 11:36:14 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -35,21 +35,20 @@
 #include <sys/param.h>
 #include <sys/signal.h>
 #include <sys/systm.h>
-#include <machine/cpu.h>
 #include <machine/frame.h>
 
 #include "fpu_emulate.h"
 
 /*
- * Prototypes of static functions
+ * Prototypes of local functions
  */
-static int decode_ea6(struct frame *frame, struct instruction *insn,
+int decode_ea6(struct frame *frame, struct instruction *insn,
 			   struct insn_ea *ea, int modreg);
-static int fetch_immed(struct frame *frame, struct instruction *insn,
+int fetch_immed(struct frame *frame, struct instruction *insn,
 			    int *dst);
-static int fetch_disp(struct frame *frame, struct instruction *insn,
+int fetch_disp(struct frame *frame, struct instruction *insn,
 			   int size, int *res);
-static int calc_ea(struct insn_ea *ea, char *ptr, char **eaddr);
+int calc_ea(struct insn_ea *ea, char *ptr, char **eaddr);
 
 /*
  * Helper routines for dealing with "effective address" values.
@@ -79,104 +78,136 @@ fpu_decode_ea(frame, insn, ea, modreg)
     /* Set the most common value here. */
     ea->ea_regnum = 8 + (modreg & 7);
 
-    switch (modreg & 070) {
-    case 0:			/* Dn */
-	ea->ea_regnum &= 7;
-    case 010:			/* An */
+    if ((modreg & 060) == 0) {
+	/* register direct */
+	ea->ea_regnum = modreg & 0xf;
 	ea->ea_flags = EA_DIRECT;
-	if (fpu_debug_level & DL_DECODEEA) {
-	    printf("  decode_ea: register direct reg=%d\n", ea->ea_regnum);
+#ifdef DEBUG_FPE
+	printf("decode_ea: register direct reg=%d\n", ea->ea_regnum);
+#endif
+    } else if ((modreg & 077) == 074) {
+	/* immediate */
+	ea->ea_flags = EA_IMMED;
+	sig = fetch_immed(frame, insn, &ea->ea_immed[0]);
+#ifdef DEBUG_FPE
+	printf("decode_ea: immediate size=%d\n", insn->is_datasize);
+#endif
+    }
+    /*
+     * rest of the address modes need to be separately
+     * handled for the LC040 and the others.
+     */
+#if 0 /* XXX */
+    else if (frame->f_format == 4 && frame->f_fmt4.f_fa) {
+	/* LC040 */
+	ea->ea_flags = EA_FRAME_EA;
+	ea->ea_fea = frame->f_fmt4.f_fa;
+#ifdef DEBUG_FPE
+	printf("decode_ea: 68LC040 - in-frame EA (%p) size %d\n",
+		(void *)ea->ea_fea, insn->is_datasize);
+#endif
+	if ((modreg & 070) == 030) {
+	    /* postincrement mode */
+	    ea->ea_flags |= EA_POSTINCR;
+	} else if ((modreg & 070) == 040) {
+	    /* predecrement mode */
+	    ea->ea_flags |= EA_PREDECR;
+#ifdef M68060
+#if defined(M68020) || defined(M68030) || defined(M68040)
+	    if (cputype == CPU_68060)
+#endif
+		if (insn->is_datasize == 12)
+			ea->ea_fea -= 8;
+#endif
 	}
-	break;
+    }
+#endif /* XXX */
+    else {
+	/* 020/030 */
+	switch (modreg & 070) {
 
-    case 020:			/* (An) */
-	ea->ea_flags = 0;
-	if (fpu_debug_level & DL_DECODEEA) {
-	    printf("  decode_ea: register indirect reg=%d\n", ea->ea_regnum);
-	}
-	break;
-
-    case 030:			/* (An)+ */
-	ea->ea_flags = EA_POSTINCR;
-	if (fpu_debug_level & DL_DECODEEA) {
-	    printf("  decode_ea: reg indirect postincrement reg=%d\n",
-		   ea->ea_regnum);
-	}
-	break;
-
-    case 040:			/* -(An) */
-	ea->ea_flags = EA_PREDECR;
-	if (fpu_debug_level & DL_DECODEEA) {
-	    printf("  decode_ea: reg indirect predecrement reg=%d\n",
-		   ea->ea_regnum);
-	}
-	break;
-
-    case 050:			/* (d16,An) */
-	ea->ea_flags = EA_OFFSET;
-	sig = fetch_disp(frame, insn, 1, &ea->ea_offset);
-	if (fpu_debug_level & DL_DECODEEA) {
-	    printf("  decode_ea: reg indirect with displacement reg=%d\n",
-		   ea->ea_regnum);
-	}
-	break;
-
-    case 060:			/* (d8,An,Xn) */
-	ea->ea_flags = EA_INDEXED;
-	sig = decode_ea6(frame, insn, ea, modreg);
-	break;
-
-    case 070:			/* misc. */
-	ea->ea_regnum = (modreg & 7);
-	switch (modreg & 7) {
-
-	case 0:			/* (xxxx).W */
-	    ea->ea_flags = EA_ABS;
-	    sig = fetch_disp(frame, insn, 1, &ea->ea_absaddr);
-	    if (fpu_debug_level & DL_DECODEEA) {
-		printf("  decode_ea: absolute address (word)\n");
-	    }
+	case 020:			/* (An) */
+	    ea->ea_flags = 0;
+#ifdef DEBUG_FPE
+	    printf("decode_ea: register indirect reg=%d\n", ea->ea_regnum);
+#endif
 	    break;
 
-	case 1:			/* (xxxxxxxx).L */
-	    ea->ea_flags = EA_ABS;
-	    sig = fetch_disp(frame, insn, 2, &ea->ea_absaddr);
-	    if (fpu_debug_level & DL_DECODEEA) {
-		printf("  decode_ea: absolute address (long)\n");
-	    }
+	case 030:			/* (An)+ */
+	    ea->ea_flags = EA_POSTINCR;
+#ifdef DEBUG_FPE
+	    printf("decode_ea: reg indirect postincrement reg=%d\n",
+		   ea->ea_regnum);
+#endif
 	    break;
 
-	case 2:			/* (d16,PC) */
-	    ea->ea_flags = EA_PC_REL | EA_OFFSET;
-	    sig = fetch_disp(frame, insn, 1, &ea->ea_absaddr);
-	    if (fpu_debug_level & DL_DECODEEA) {
-		printf("  decode_ea: pc relative word displacement\n");
-	    }
+	case 040:			/* -(An) */
+	    ea->ea_flags = EA_PREDECR;
+#ifdef DEBUG_FPE
+	    printf("decode_ea: reg indirect predecrement reg=%d\n",
+		   ea->ea_regnum);
+#endif
 	    break;
 
-	case 3:			/* (d8,PC,Xn) */
-	    ea->ea_flags = EA_PC_REL | EA_INDEXED;
+	case 050:			/* (d16,An) */
+	    ea->ea_flags = EA_OFFSET;
+	    sig = fetch_disp(frame, insn, 1, &ea->ea_offset);
+#ifdef DEBUG_FPE
+	    printf("decode_ea: reg indirect with displacement reg=%d\n",
+		   ea->ea_regnum);
+#endif
+	    break;
+
+	case 060:			/* (d8,An,Xn) */
+	    ea->ea_flags = EA_INDEXED;
 	    sig = decode_ea6(frame, insn, ea, modreg);
 	    break;
 
-	case 4:			/* #data */
-	    ea->ea_flags = EA_IMMED;
-	    sig = fetch_immed(frame, insn, &ea->ea_immed[0]);
-	    if (fpu_debug_level & DL_DECODEEA) {
-		printf("  decode_ea: immediate size=%d\n", insn->is_datasize);
-	    }
+	case 070:			/* misc. */
+	    ea->ea_regnum = (modreg & 7);
+	    switch (modreg & 7) {
+
+	    case 0:			/* (xxxx).W */
+		ea->ea_flags = EA_ABS;
+		sig = fetch_disp(frame, insn, 1, &ea->ea_absaddr);
+#ifdef DEBUG_FPE
+		printf("decode_ea: absolute address (word)\n");
+#endif
+		break;
+
+	    case 1:			/* (xxxxxxxx).L */
+		ea->ea_flags = EA_ABS;
+		sig = fetch_disp(frame, insn, 2, &ea->ea_absaddr);
+#ifdef DEBUG_FPE
+		printf("decode_ea: absolute address (long)\n");
+#endif
+		break;
+
+	    case 2:			/* (d16,PC) */
+		ea->ea_flags = EA_PC_REL | EA_OFFSET;
+		sig = fetch_disp(frame, insn, 1, &ea->ea_absaddr);
+#ifdef DEBUG_FPE
+		printf("decode_ea: pc relative word displacement\n");
+#endif
+		break;
+
+	    case 3:			/* (d8,PC,Xn) */
+		ea->ea_flags = EA_PC_REL | EA_INDEXED;
+		sig = decode_ea6(frame, insn, ea, modreg);
+		break;
+
+	    case 4:			/* #data */
+		/* it should have been taken care of earlier */
+	    default:
+#ifdef DEBUG_FPE
+		printf("decode_ea: invalid addr mode (7,%d)\n", modreg & 7);
+#endif
+		return SIGILL;
+	    } /* switch for mode 7 */
 	    break;
-
-	default:
-	    if (fpu_debug_level & DL_DECODEEA) {
-		printf("  decode_ea: invalid addr mode (7,%d)\n", modreg & 7);
-	    }
-	    return SIGILL;
-	} /* switch for mode 7 */
-	break;
-    } /* switch mode */
-
-    ea->ea_tdisp = 0;
+	} /* switch mode */
+    }
+    ea->ea_moffs = 0;
 
     return sig;
 }
@@ -184,20 +215,21 @@ fpu_decode_ea(frame, insn, ea, modreg)
 /*
  * Decode Mode=6 address modes
  */
-static int
+int
 decode_ea6(frame, insn, ea, modreg)
      struct frame *frame;
      struct instruction *insn;
      struct insn_ea *ea;
      int modreg;
 {
-    int extword, idx;
+    int idx;
     int basedisp, outerdisp;
     int bd_size, od_size;
     int sig;
+    u_int16_t extword;
 
-    if (copyin((void *)(frame->f_pc + insn->is_advance), &extword,
-	sizeof(int)) != 0) {
+    if (copyin((void *)(insn->is_pc + insn->is_advance), &extword,
+	sizeof(extword)) != 0) {
 	return SIGSEGV;
     }
     insn->is_advance += 2;
@@ -213,10 +245,10 @@ decode_ea6(frame, insn, ea, modreg)
 	}
     }
     /* scale register index */
-    idx <<= ((extword >>9) & 3);
+    idx <<= ((extword >> 9) & 3);
 
     if ((extword & 0x100) == 0) {
-	/* brief extention word - sign-extend the displacement */
+	/* brief extension word - sign-extend the displacement */
 	basedisp = (extword & 0xff);
 	if (basedisp & 0x80) {
 	    basedisp |= 0xffffff00;
@@ -224,12 +256,12 @@ decode_ea6(frame, insn, ea, modreg)
 
 	ea->ea_basedisp = idx + basedisp;
 	ea->ea_outerdisp = 0;
-	if (fpu_debug_level & DL_DECODEEA) {
-	    printf("  decode_ea6: brief ext word idxreg=%d, basedisp=%08x\n",
-		   ea->ea_idxreg, ea->ea_basedisp);
-	}
+#if DEBUG_FPE
+	printf("decode_ea6: brief ext word idxreg=%d, basedisp=%08x\n",
+	       ea->ea_idxreg, ea->ea_basedisp);
+#endif
     } else {
-	/* full extention word */
+	/* full extension word */
 	if (extword & 0x80) {
 	    ea->ea_flags |= EA_BASE_SUPPRSS;
 	}
@@ -262,21 +294,21 @@ decode_ea6(frame, insn, ea, modreg)
 	    break;
 	default:
 #ifdef DEBUG
-	    printf("  decode_ea6: invalid indirect mode: ext word %04x\n",
+	    printf("decode_ea6: invalid indirect mode: ext word %02x\n",
 		   extword);
 #endif
 	    return SIGILL;
 	    break;
 	}
-	if (fpu_debug_level & DL_DECODEEA) {
-	    printf("  decode_ea6: full ext idxreg=%d, basedisp=%x, outerdisp=%x\n",
-		   ea->ea_idxreg, ea->ea_basedisp, ea->ea_outerdisp);
-	}
+#if DEBUG_FPE
+	printf("decode_ea6: full ext idxreg=%d, basedisp=%x, outerdisp=%x\n",
+	       ea->ea_idxreg, ea->ea_basedisp, ea->ea_outerdisp);
+#endif
     }
-    if (fpu_debug_level & DL_DECODEEA) {
-	printf("  decode_ea6: regnum=%d, flags=%x\n",
-	       ea->ea_regnum, ea->ea_flags);
-    }
+#if DEBUG_FPE
+    printf("decode_ea6: regnum=%d, flags=%x\n",
+	   ea->ea_regnum, ea->ea_flags);
+#endif
     return 0;
 }
 
@@ -296,32 +328,58 @@ fpu_load_ea(frame, insn, ea, dst)
     int len, step;
     int sig;
 
-#ifdef	DIAGNOSTIC
+#ifdef DIAGNOSTIC
     if (ea->ea_regnum & ~0xF) {
-	panic("  load_ea: bad regnum");
+	panic("load_ea: bad regnum");
     }
 #endif
 
-    if (fpu_debug_level & DL_LOADEA) {
-	printf("  load_ea: frame at %p\n", frame);
-    }
-    /* The dst is always int or larger. */
+#ifdef DEBUG_FPE
+    printf("load_ea: frame at %p\n", frame);
+#endif
+    /* dst is always int or larger. */
     len = insn->is_datasize;
     if (len < 4) {
 	dst += (4 - len);
     }
     step = (len == 1 && ea->ea_regnum == 15 /* sp */) ? 2 : len;
 
-    if (ea->ea_flags & EA_DIRECT) {
+#if 0
+    if (ea->ea_flags & EA_FRAME_EA) {
+	/* Using LC040 frame EA */
+#ifdef DEBUG_FPE
+	if (ea->ea_flags & (EA_PREDECR|EA_POSTINCR)) {
+	    printf("load_ea: frame ea %08x w/r%d\n",
+		   ea->ea_fea, ea->ea_regnum);
+	} else {
+	    printf("load_ea: frame ea %08x\n", ea->ea_fea);
+	}
+#endif
+	src = (char *)ea->ea_fea;
+	if (copyin(src + ea->ea_moffs, dst, len) != 0)
+	    return (SIGSEGV);
+	if (ea->ea_flags & EA_PREDECR) {
+	    frame->f_regs[ea->ea_regnum] = ea->ea_fea;
+	    ea->ea_fea -= step;
+	    ea->ea_moffs = 0;
+	} else if (ea->ea_flags & EA_POSTINCR) {
+	    ea->ea_fea += step;
+	    frame->f_regs[ea->ea_regnum] = ea->ea_fea;
+	    ea->ea_moffs = 0;
+	} else {
+	    ea->ea_moffs += step;
+	}
+	/* That's it, folks */
+    } else if (ea->ea_flags & EA_DIRECT) {
 	if (len > 4) {
 #ifdef DEBUG
-	    printf("  load_ea: operand doesn't fit cpu reg\n");
+	    printf("load_ea: operand doesn't fit CPU reg\n");
 #endif
 	    return SIGILL;
 	}
-	if (ea->ea_tdisp > 0) {
+	if (ea->ea_moffs > 0) {
 #ifdef DEBUG
-	    printf("  load_ea: more than one move from cpu reg\n");
+	    printf("load_ea: more than one move from CPU reg\n");
 #endif
 	    return SIGILL;
 	}
@@ -329,89 +387,93 @@ fpu_load_ea(frame, insn, ea, dst)
 	/* The source is an int. */
 	if (len < 4) {
 	    src += (4 - len);
-	    if (fpu_debug_level & DL_LOADEA) {
-		printf("  load_ea: short/byte opr - addr adjusted\n");
-	    }
+#ifdef DEBUG_FPE
+	    printf("load_ea: short/byte opr - addr adjusted\n");
+#endif
 	}
-	if (fpu_debug_level & DL_LOADEA) {
-	    printf("  load_ea: src %p\n", src);
-	}
-	bcopy(src, dst, len);
-    } else if (ea->ea_flags & EA_IMMED) {
-	if (fpu_debug_level & DL_LOADEA) {
-	    printf("  load_ea: immed %08x%08x%08x size %d\n",
-		   ea->ea_immed[0], ea->ea_immed[1], ea->ea_immed[2], len);
-	}
+#ifdef DEBUG_FPE
+	printf("load_ea: src %p\n", src);
+#endif
+	memcpy(dst, src, len);
+    } else
+#endif
+    if (ea->ea_flags & EA_IMMED) {
+#ifdef DEBUG_FPE
+	printf("load_ea: immed %08x%08x%08x size %d\n",
+	       ea->ea_immed[0], ea->ea_immed[1], ea->ea_immed[2], len);
+#endif
 	src = (char *)&ea->ea_immed[0];
 	if (len < 4) {
 	    src += (4 - len);
-	    if (fpu_debug_level & DL_LOADEA) {
-		printf("  load_ea: short/byte immed opr - addr adjusted\n");
-	    }
+#ifdef DEBUG_FPE
+	    printf("load_ea: short/byte immed opr - addr adjusted\n");
+#endif
 	}
-	bcopy(src, dst, len);
+	memcpy(dst, src, len);
     } else if (ea->ea_flags & EA_ABS) {
-	if (fpu_debug_level & DL_LOADEA) {
-	    printf("  load_ea: abs addr %08x\n", ea->ea_absaddr);
-	}
+#ifdef DEBUG_FPE
+	printf("load_ea: abs addr %08x\n", ea->ea_absaddr);
+#endif
 	src = (char *)ea->ea_absaddr;
-	copyin(src, dst, len);
+	if (copyin(src, dst, len) != 0)
+	    return (SIGSEGV);
     } else /* register indirect */ { 
 	if (ea->ea_flags & EA_PC_REL) {
-	    if (fpu_debug_level & DL_LOADEA) {
-		printf("  load_ea: using PC\n");
-	    }
+#ifdef DEBUG_FPE
+	    printf("load_ea: using PC\n");
+#endif
 	    reg = NULL;
 	    /* Grab the register contents. 4 is offset to the first
-	       extention word from the opcode */
-	    src = (char *)frame->f_pc + 4;
-	    if (fpu_debug_level & DL_LOADEA) {
-		printf("  load_ea: pc relative pc+4 = %p\n", src);
-	    }
+	       extension word from the opcode */
+	    src = (char *)insn->is_pc + 4;
+#ifdef DEBUG_FPE
+	    printf("load_ea: pc relative pc+4 = %p\n", src);
+#endif
 	} else /* not PC relative */ {
-	    if (fpu_debug_level & DL_LOADEA) {
-		printf("  load_ea: using register %c%d\n",
-		       (ea->ea_regnum >= 8) ? 'a' : 'd', ea->ea_regnum & 7);
-	    }
+#ifdef DEBUG_FPE
+	    printf("load_ea: using register %c%d\n",
+		   (ea->ea_regnum >= 8) ? 'a' : 'd', ea->ea_regnum & 7);
+#endif
 	    /* point to the register */
 	    reg = &frame->f_regs[ea->ea_regnum];
 
 	    if (ea->ea_flags & EA_PREDECR) {
-		if (fpu_debug_level & DL_LOADEA) {
-		    printf("  load_ea: predecr mode - reg decremented\n");
-		}
+#ifdef DEBUG_FPE
+		printf("load_ea: predecr mode - reg decremented\n");
+#endif
 		*reg -= step;
-		ea->ea_tdisp = 0;
+		ea->ea_moffs = 0;
 	    }
 
 	    /* Grab the register contents. */
 	    src = (char *)*reg;
-	    if (fpu_debug_level & DL_LOADEA) {
-		printf("  load_ea: reg indirect reg = %p\n", src);
-	    }
+#ifdef DEBUG_FPE
+	    printf("load_ea: reg indirect reg = %p\n", src);
+#endif
 	}
 
 	sig = calc_ea(ea, src, &src);
 	if (sig)
 	    return sig;
 
-	copyin(src + ea->ea_tdisp, dst, len);
+	if (copyin(src + ea->ea_moffs, dst, len) != 0)
+	    return (SIGSEGV);
 
 	/* do post-increment */
 	if (ea->ea_flags & EA_POSTINCR) {
 	    if (ea->ea_flags & EA_PC_REL) {
 #ifdef DEBUG
-		printf("  load_ea: tried to postincrement PC\n");
+		printf("load_ea: tried to postincrement PC\n");
 #endif
 		return SIGILL;
 	    }
 	    *reg += step;
-	    ea->ea_tdisp = 0;
-	    if (fpu_debug_level & DL_LOADEA) {
-		printf("  load_ea: postinc mode - reg incremented\n");
-	    }
+	    ea->ea_moffs = 0;
+#ifdef DEBUG_FPE
+	    printf("load_ea: postinc mode - reg incremented\n");
+#endif
 	} else {
-	    ea->ea_tdisp += len;
+	    ea->ea_moffs += len;
 	}
     }
 
@@ -435,46 +497,67 @@ fpu_store_ea(frame, insn, ea, src)
     int sig;
 
 #ifdef	DIAGNOSTIC
-    if (ea->ea_regnum & ~0xF) {
-	panic("  store_ea: bad regnum");
+    if (ea->ea_regnum & ~0xf) {
+	panic("store_ea: bad regnum");
     }
 #endif
 
     if (ea->ea_flags & (EA_IMMED|EA_PC_REL)) {
 	/* not alterable address mode */
 #ifdef DEBUG
-	printf("  store_ea: not alterable address mode\n");
+	printf("store_ea: not alterable address mode\n");
 #endif
 	return SIGILL;
     }
 
-    if (fpu_debug_level & DL_STOREEA) {
-	printf("  store_ea: frame at %p\n", frame);
-    }
-    /* The src is always int or larger. */
+    /* src is always int or larger. */
     len = insn->is_datasize;
     if (len < 4) {
 	src += (4 - len);
     }
     step = (len == 1 && ea->ea_regnum == 15 /* sp */) ? 2 : len;
 
-    if (ea->ea_flags & EA_ABS) {
-	if (fpu_debug_level & DL_STOREEA) {
-	    printf("  store_ea: abs addr %08x\n", ea->ea_absaddr);
+    if (ea->ea_flags & EA_FRAME_EA) {
+	/* Using LC040 frame EA */
+#ifdef DEBUG_FPE
+	if (ea->ea_flags & (EA_PREDECR|EA_POSTINCR)) {
+	    printf("store_ea: frame ea %08x w/r%d\n",
+		   ea->ea_fea, ea->ea_regnum);
+	} else {
+	    printf("store_ea: frame ea %08x\n", ea->ea_fea);
 	}
+#endif
+	dst = (char *)ea->ea_fea;
+	copyout(src, dst + ea->ea_moffs, len);
+	if (ea->ea_flags & EA_PREDECR) {
+	    frame->f_regs[ea->ea_regnum] = ea->ea_fea;
+	    ea->ea_fea -= step;
+	    ea->ea_moffs = 0;
+	} else if (ea->ea_flags & EA_POSTINCR) {
+	    ea->ea_fea += step;
+	    frame->f_regs[ea->ea_regnum] = ea->ea_fea;
+	    ea->ea_moffs = 0;
+	} else {
+	    ea->ea_moffs += step;
+	}
+	/* That's it, folks */
+    } else if (ea->ea_flags & EA_ABS) {
+#ifdef DEBUG_FPE
+	printf("store_ea: abs addr %08x\n", ea->ea_absaddr);
+#endif
 	dst = (char *)ea->ea_absaddr;
-	copyout(src, dst + ea->ea_tdisp, len);
-	ea->ea_tdisp += len;
+	copyout(src, dst + ea->ea_moffs, len);
+	ea->ea_moffs += len;
     } else if (ea->ea_flags & EA_DIRECT) {
 	if (len > 4) {
 #ifdef DEBUG
-	    printf("  store_ea: operand doesn't fit cpu reg\n");
+	    printf("store_ea: operand doesn't fit CPU reg\n");
 #endif
 	    return SIGILL;
 	}
-	if (ea->ea_tdisp > 0) {
+	if (ea->ea_moffs > 0) {
 #ifdef DEBUG
-	    printf("  store_ea: more than one move to cpu reg\n");
+	    printf("store_ea: more than one move to CPU reg\n");
 #endif
 	    return SIGILL;
 	}
@@ -482,29 +565,29 @@ fpu_store_ea(frame, insn, ea, src)
 	/* The destination is an int. */
 	if (len < 4) {
 	    dst += (4 - len);
-	    if (fpu_debug_level & DL_STOREEA) {
-		printf("  store_ea: short/byte opr - dst addr adjusted\n");
-	    }
+#ifdef DEBUG_FPE
+	    printf("store_ea: short/byte opr - dst addr adjusted\n");
+#endif
 	}
-	if (fpu_debug_level & DL_STOREEA) {
-	    printf("  store_ea: dst %p\n", dst);
-	}
-	bcopy(src, dst, len);
+#ifdef DEBUG_FPE
+	printf("store_ea: dst %p\n", dst);
+#endif
+	memcpy(dst, src, len);
     } else /* One of MANY indirect forms... */ {
-	if (fpu_debug_level & DL_STOREEA) {
-	    printf("  store_ea: using register %c%d\n",
-		   (ea->ea_regnum >= 8) ? 'a' : 'd', ea->ea_regnum & 7);
-	}
+#ifdef DEBUG_FPE
+	printf("store_ea: using register %c%d\n",
+	       (ea->ea_regnum >= 8) ? 'a' : 'd', ea->ea_regnum & 7);
+#endif
 	/* point to the register */
 	reg = &(frame->f_regs[ea->ea_regnum]);
 
 	/* do pre-decrement */
 	if (ea->ea_flags & EA_PREDECR) {
-	    if (fpu_debug_level & DL_STOREEA) {
-		printf("  store_ea: predecr mode - reg decremented\n");
-	    }
+#ifdef DEBUG_FPE
+	    printf("store_ea: predecr mode - reg decremented\n");
+#endif
 	    *reg -= step;
-	    ea->ea_tdisp = 0;
+	    ea->ea_moffs = 0;
 	}
 
 	/* calculate the effective address */
@@ -512,20 +595,20 @@ fpu_store_ea(frame, insn, ea, src)
 	if (sig)
 	    return sig;
 
-	if (fpu_debug_level & DL_STOREEA) {
-	    printf("  store_ea: dst addr=%p+%d\n", dst, ea->ea_tdisp);
-	}
-	copyout(src, dst + ea->ea_tdisp, len);
+#ifdef DEBUG_FPE
+	printf("store_ea: dst addr=%p+%d\n", dst, ea->ea_moffs);
+#endif
+	copyout(src, dst + ea->ea_moffs, len);
 
 	/* do post-increment */
 	if (ea->ea_flags & EA_POSTINCR) {
 	    *reg += step;
-	    ea->ea_tdisp = 0;
-	    if (fpu_debug_level & DL_STOREEA) {
-		printf("  store_ea: postinc mode - reg incremented\n");
-	    }
+	    ea->ea_moffs = 0;
+#ifdef DEBUG_FPE
+	    printf("store_ea: postinc mode - reg incremented\n");
+#endif
 	} else {
-	    ea->ea_tdisp += len;
+	    ea->ea_moffs += len;
 	}
     }
 
@@ -535,115 +618,100 @@ fpu_store_ea(frame, insn, ea, src)
 /*
  * fetch_immed: fetch immediate operand
  */
-static int
+int
 fetch_immed(frame, insn, dst)
      struct frame *frame;
      struct instruction *insn;
      int *dst;
 {
-    int data, ext_bytes;
+	int data, ext_bytes;
+	u_int16_t tmp;
 
-    ext_bytes = insn->is_datasize;
+	ext_bytes = insn->is_datasize;
+	if (ext_bytes < 0)
+		return (0);
 
-    if (0 < ext_bytes) {
-	if (copyin((void *)(frame->f_pc + insn->is_advance), &data,
-	  sizeof(int)) != 0) {
-	    return SIGSEGV;
+	if (ext_bytes <= 2) {
+		if (copyin((void *)(insn->is_pc + insn->is_advance), &tmp,
+		    sizeof(tmp)) != 0) {
+			return SIGSEGV;
+		}
+		if (ext_bytes == 1) {
+			/* sign-extend byte to long */
+			data = (char)tmp;
+		} else {
+			/* sign-extend word to long */
+			data = (int)tmp;
+		}
+		insn->is_advance += 2;
+		dst[0] = data;
+		return (0);
 	}
-	if (ext_bytes == 1) {
-	    /* sign-extend byte to long */
-	    data &= 0xff;
-	    if (data & 0x80) {
-		data |= 0xffffff00;
-	    }
-	} else if (ext_bytes == 2) {
-	    /* sign-extend word to long */
-	    data &= 0xffff;
-	    if (data & 0x8000) {
-		data |= 0xffff0000;
-	    }
-	}
-	insn->is_advance += 2;
-	dst[0] = data;
-    }
-    if (2 < ext_bytes) {
-	if (copyin((void *)(frame->f_pc + insn->is_advance), &data,
-	  sizeof(int)) != 0) {
-	    return SIGSEGV;
-	}
-	insn->is_advance += 2;
-	dst[0] <<= 16;
-	dst[0] |= data;
-    }
-    if (4 < ext_bytes) {
-	if (copyin((void *)(frame->f_pc + insn->is_advance), &data,
-	  sizeof(int)) != 0) {
-	    return SIGSEGV;
-	}
-	dst[1] = data << 16;
-	if (copyin((void *)(frame->f_pc + insn->is_advance + 2), &data,
-	  sizeof(int)) != 0) {
-	    return SIGSEGV;
-	}
-	insn->is_advance += 4;
-	dst[1] |= data;
-    }
-    if (8 < ext_bytes) {
-	if (copyin((void *)(frame->f_pc + insn->is_advance), &data,
-	  sizeof(int)) != 0) {
-	    return SIGSEGV;
-	}
-	dst[2] = data << 16;
-	if (copyin((void *)(frame->f_pc + insn->is_advance + 2), &data,
-	  sizeof(int)) != 0) {
-	    return SIGSEGV;
-	}
-	insn->is_advance += 4;
-	dst[2] |= data;
-    }
 
-    return 0;
+	/* if (ext_bytes > 2) { */
+		if (copyin((void *)(insn->is_pc + insn->is_advance), &dst[0],
+		    sizeof(dst[0])) != 0) {
+			return SIGSEGV;
+		}
+		insn->is_advance += 4;
+	/* } */
+
+	if (ext_bytes > 4) {
+		if (copyin((void *)(insn->is_pc + insn->is_advance), &dst[1],
+		    sizeof(dst[1])) != 0) {
+			return SIGSEGV;
+		}
+		insn->is_advance += 4;
+	}
+
+	if (ext_bytes > 8) {
+		if (copyin((void *)(insn->is_pc + insn->is_advance), &dst[2],
+		     sizeof(dst[2])) != 0) {
+			return SIGSEGV;
+		}
+		insn->is_advance += 4;
+	}
+
+	return 0;
 }
 
 /*
- * fetch_disp: fetch displacement in full extention words
+ * fetch_disp: fetch displacement in full extension words
  */
-static int
+int
 fetch_disp(frame, insn, size, res)
      struct frame *frame;
      struct instruction *insn;
      int size, *res;
 {
-    int disp, word;
+	int disp;
+	u_int16_t word;
 
-    if (size == 1) {
-	if (copyin((void *)(frame->f_pc + insn->is_advance), &word,
-	  sizeof(int)) != 0) {
-	    return SIGSEGV;
+	switch (size) {
+	case 1:
+		if (copyin((void *)(insn->is_pc + insn->is_advance), &word,
+		    sizeof(word)) != 0) {
+			return SIGSEGV;
+		}
+		/* sign-extend */
+		disp = (int)word;
+		insn->is_advance += 2;
+		break;
+	case 2:
+		if (copyin((void *)(insn->is_pc + insn->is_advance), &disp,
+		    sizeof(disp)) != 0) {
+			return SIGSEGV;
+		}
+		insn->is_advance += 4;
+		break;
+	default:
+		disp = 0;
+		break;
 	}
-	disp = word & 0xffff;
-	if (disp & 0x8000) {
-	    /* sign-extend */
-	    disp |= 0xffff0000;
-	}
-	insn->is_advance += 2;
-    } else if (size == 2) {
-	if (copyin((void *)(frame->f_pc + insn->is_advance), &word,
-	  sizeof(int)) != 0) {
-	    return SIGSEGV;
-	}
-	disp = word << 16;
-	if (copyin((void *)(frame->f_pc + insn->is_advance + 2), &word,
-	  sizeof(int)) != 0) {
-	    return SIGSEGV;
-	}
-	disp |= (word & 0xffff);
-	insn->is_advance += 4;
-    } else {
-	disp = 0;
-    }
-    *res = disp;
-    return 0;
+
+	*res = disp;
+
+	return 0;
 }
 
 /*
@@ -652,28 +720,28 @@ fetch_disp(frame, insn, size, res)
  * not take care of predecrement/postincrement of register content.
  * Returns a signal value (0 == no error).
  */
-static int
+int
 calc_ea(ea, ptr, eaddr)
      struct insn_ea *ea;
      char *ptr;		/* base address (usually a register content) */
      char **eaddr;	/* pointer to result pointer */
 {
-    int data, word;
+    int word;
 
-    if (fpu_debug_level & DL_EA) {
-	printf("  calc_ea: reg indirect (reg) = %p\n", ptr);
-    }
+#if DEBUG_FPE
+    printf("calc_ea: reg indirect (reg) = %p\n", ptr);
+#endif
 
     if (ea->ea_flags & EA_OFFSET) {
 	/* apply the signed offset */
-	if (fpu_debug_level & DL_EA) {
-	    printf("  calc_ea: offset %d\n", ea->ea_offset);
-	}
+#if DEBUG_FPE
+	printf("calc_ea: offset %d\n", ea->ea_offset);
+#endif
 	ptr += ea->ea_offset;
     } else if (ea->ea_flags & EA_INDEXED) {
-	if (fpu_debug_level & DL_EA) {
-	    printf("  calc_ea: indexed mode\n");
-	}
+#if DEBUG_FPE
+	printf("calc_ea: indexed mode\n");
+#endif
 
 	if (ea->ea_flags & EA_BASE_SUPPRSS) {
 	    /* base register is suppressed */
@@ -683,23 +751,18 @@ calc_ea(ea, ptr, eaddr)
 	}
 
 	if (ea->ea_flags & EA_MEM_INDIR) {
-	    if (fpu_debug_level & DL_EA) {
-		printf("  calc_ea: mem indir mode: basedisp=%08x, outerdisp=%08x\n",
-		       ea->ea_basedisp, ea->ea_outerdisp);
-		printf("  calc_ea: addr fetched from %p\n", ptr);
-	    }
+#if DEBUG_FPE
+	    printf("calc_ea: mem indir mode: basedisp=%08x, outerdisp=%08x\n",
+		   ea->ea_basedisp, ea->ea_outerdisp);
+	    printf("calc_ea: addr fetched from %p\n", ptr);
+#endif
 	    /* memory indirect modes */
-	    if (copyin(ptr, &word, sizeof(int)) != 0) {
+	    if (copyin(ptr, &word, sizeof(word)) != 0) {
 		return SIGSEGV;
 	    }
-	    word <<= 16;
-	    if (copyin(ptr + 2, &data, sizeof(int)) != 0) {
-		return SIGSEGV;
-	    }
-	    word |= data;
-	    if (fpu_debug_level & DL_STOREEA) {
-		printf(" calc_ea: fetched ptr 0x%08x\n", word);
-	    }
+#if DEBUG_FPE
+	    printf("calc_ea: fetched ptr 0x%08x\n", word);
+#endif
 	    ptr = (char *)word + ea->ea_outerdisp;
 	}
     }

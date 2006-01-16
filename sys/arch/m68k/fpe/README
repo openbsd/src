@@ -1,4 +1,4 @@
-* $OpenBSD: README,v 1.2 1996/05/29 21:05:13 niklas Exp $
+# $OpenBSD: README,v 1.3 2006/01/16 22:08:26 miod Exp $
 * $NetBSD: README,v 1.4 1995/11/05 04:23:00 briggs Exp $
 * NetBSD/m68k FPE (floating point emulation) README file
 * Created Oct/??/95 by kenn@remus.rutgers.edu (Ken Nakata)
@@ -16,8 +16,8 @@ debugging purpose, add "options DEBUG_WITH_FPU" as well.
 
 NOTE:  If you add "options DEBUG_WITH_FPU", FPE will accept cpID=6 as
 emulated FPU.  You will need a modified gas that generates cpID=6 for
-floating point instructions, instead of normal cpID=1.  Mount unionfs
-or copy the gas source directory and apply the following patch:
+floating point instructions, instead of normal cpID=1.  Apply the
+following patch to the gas source:
 
 *** /usr/src/gnu/usr.bin/gas/config/tc-m68k.c   Mon Nov 21 16:30:41 1994
 --- gas/config/tc-m68k.c    Fri Sep 29 07:59:06 1995
@@ -146,23 +146,10 @@ either operand if you want to.  At any rate, you have to follow
 the following rules:
 
 	1) A dyadic instruction takes two operands fe->fe_f1 and fe->fe_f2.
-	2) A monadic instruction takes one operands fe->fe_f2 (NOT fe_f1).
+	2) A monadic instruction takes one operand fe->fe_f2 (NOT fe_f1).
 	3) Must return a pointer to struct fpn where the result is stored,
 	and assign the pointer to the variable "res".
 	4) If exceptions are detected, set corresponding bits in fe->fe_fpsr.
 	The rest is taken care of in fpu_emul_arith().
-	5) Condition code need not be calculated.  It's taken care of in
+	5) Condition code does not need to be calculated.  It's taken care of in
 	fpu_emul_arith().
-
-Actually, after above was written, stubs for the missing functions were
-added to the source, so you do not have to change fpu_emul_arith() at
-all.  Function names and prototypes are in fpu_arith_proto.h, and all
-except fpu_sincos() follow the rules above.  fpu_sincos() is declared
-as
-
-	struct fpn *fpu_sincos(struct fpemu *fe, int cosreg);
-
-where cosreg is the FP register number to which cosine of the argument
-is calculated and assigned.  Sine of the argument is stored into the
-destination register in the same manner as the other arithmetic
-functions.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: fpu_emulate.h,v 1.4 2002/03/14 01:26:34 millert Exp $	*/
-/*	$NetBSD: fpu_emulate.h,v 1.4 1996/04/30 11:52:14 briggs Exp $	*/
+/*	$OpenBSD: fpu_emulate.h,v 1.5 2006/01/16 22:08:26 miod Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.11 2005/08/13 05:38:45 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -45,12 +45,12 @@
  * or `unpacked' form consisting of:
  *	- sign
  *	- unbiased exponent
- *	- mantissa (`1.' + 112-bit fraction + guard + round)
+ *	- mantissa (`1.' + 80-bit fraction + guard + round)
  *	- sticky bit
- * Any implied `1' bit is inserted, giving a 113-bit mantissa that is
+ * Any implied `1' bit is inserted, giving a 81-bit mantissa that is
  * always nonzero.  Additional low-order `guard' and `round' bits are
- * scrunched in, making the entire mantissa 115 bits long.  This is divided
- * into four 32-bit words, with `spare' bits left over in the upper part
+ * scrunched in, making the entire mantissa 83 bits long.  This is divided
+ * into three 32-bit words, with `spare' bits left over in the upper part
  * of the top word (the high bits of fp_mant[0]).  An internal `exploded'
  * number is thus kept within the half-open interval [1.0,2.0) (but see
  * the `number classes' below).  This holds even for denormalized numbers:
@@ -77,10 +77,10 @@ struct fpn {
 	int	fp_sign;		/* 0 => positive, 1 => negative */
 	int	fp_exp;			/* exponent (unbiased) */
 	int	fp_sticky;		/* nonzero bits lost at right end */
-	u_int	fp_mant[4];		/* 115-bit mantissa */
+	u_int	fp_mant[3];		/* 83-bit mantissa */
 };
 
-#define	FP_NMANT	115		/* total bits in mantissa (incl g,r) */
+#define	FP_NMANT	83		/* total bits in mantissa (incl g,r) */
 #define	FP_NG		2		/* number of low-order guard bits */
 #define	FP_LG		((FP_NMANT - 1) & 31)	/* log2(1.0) for fp_mant[0] */
 #define	FP_QUIETBIT	(1 << (FP_LG - 1))	/* Quiet bit in NaNs (0.5) */
@@ -96,7 +96,6 @@ if ((dst) != (src)) {							\
     (dst)->fp_mant[0] = (src)->fp_mant[0];				\
     (dst)->fp_mant[1] = (src)->fp_mant[1];				\
     (dst)->fp_mant[2] = (src)->fp_mant[2];				\
-    (dst)->fp_mant[3] = (src)->fp_mant[3];				\
 }
 
 /*
@@ -133,7 +132,7 @@ if ((dst) != (src)) {							\
 		SWAP(x, y); \
 }
 #define	SWAP(x, y) {				\
-	register struct fpn *swap;		\
+	struct fpn *swap;			\
 	swap = (x), (x) = (y), (y) = swap;	\
 }
 
@@ -159,7 +158,7 @@ struct fpemu {
  */
 struct insn_ea {
     int	ea_regnum;
-    int	ea_ext[3];		/* extention words if any */
+    int	ea_ext[3];		/* extension words if any */
     int	ea_flags;		/* flags == 0 means mode 2: An@ */
 #define	EA_DIRECT	0x001	/* mode [01]: Dn or An */
 #define EA_PREDECR	0x002	/* mode 4: An@- */
@@ -171,7 +170,9 @@ struct insn_ea {
 #define	EA_IMMED	0x080	/* mode (7,4): #immed */
 #define EA_MEM_INDIR	0x100	/* mode 6 or (7,3): APC@(Xn:*:*,*)@(*) etc */
 #define EA_BASE_SUPPRSS	0x200	/* mode 6 or (7,3): base register suppressed */
-    int	ea_tdisp;		/* temp. displ. used to xfer many words */
+#define EA_FRAME_EA	0x400	/* MC68LC040 only: precalculated EA from
+				   format 4 stack frame */
+    int	ea_moffs;		/* offset used for fmoveMulti */
 };
 
 #define ea_offset	ea_ext[0]	/* mode 5: offset word */
@@ -180,13 +181,16 @@ struct insn_ea {
 #define ea_basedisp	ea_ext[0]	/* mode 6: base displacement */
 #define ea_outerdisp	ea_ext[1]	/* mode 6: outer displacement */
 #define	ea_idxreg	ea_ext[2]	/* mode 6: index register number */
+#define ea_fea		ea_ext[0]	/* MC68LC040 only: frame EA */
 
 struct instruction {
-    int		is_advance;	/* length of instruction */
-    int		is_datasize;	/* byte, word, long, float, double, ... */
-    int		is_opcode;	/* opcode word */
-    int		is_word1;	/* second word */
-    struct	insn_ea	is_ea0;	/* decoded effective address mode */
+    u_int		is_pc;		/* insn's address */
+    u_int		is_nextpc;	/* next PC */
+    int			is_advance;	/* length of instruction */
+    int			is_datasize;	/* size of memory operand */
+    int			is_opcode;	/* opcode word */
+    int			is_word1;	/* second word */
+    struct insn_ea	is_ea;	/* decoded effective address mode */
 };
 
 /*
@@ -263,11 +267,11 @@ struct	fpn *fpu_newnan(struct fpemu *fe);
  * Note that the result is probably not a well-formed number (it will lack
  * the normal 1-bit mant[0]&FP_1).
  */
-int	fpu_shr(struct fpn * fp, int shr);
+int	fpu_shr(struct fpn *fp, int shr);
 /*
  * Round a number according to the round mode in FPCR
  */
-int	round(register struct fpemu *fe, register struct fpn *fp);
+int	fpu_round(struct fpemu *fe, struct fpn *fp);
 
 /* type conversion */
 void	fpu_explode(struct fpemu *fe, struct fpn *fp, int t, u_int *src);
@@ -306,35 +310,10 @@ int fpu_store_ea(struct frame *frame, struct instruction *insn,
 		  struct insn_ea *ea, char *src);
 
 /* fpu_subr.c */
-void fpu_norm(register struct fpn *fp);
+void fpu_norm(struct fpn *fp);
 
-/* declarations for debugging */
-
-extern int fpu_debug_level;
-
-/* debug classes */
-#define DL_DUMPINSN 0x0001
-#define DL_DECODEEA 0x0002
-#define DL_LOADEA   0x0004
-#define DL_STOREEA  0x0008
-#define DL_OPERANDS 0x0010
-#define DL_RESULT   0x0020
-#define DL_TESTCC   0x0040
-#define DL_BRANCH   0x0080
-#define DL_FSTORE   0x0100
-#define DL_FSCALE   0x0200
-#define DL_ARITH    0x0400
-#define DL_INSN     0x0800
-#define DL_FMOVEM   0x1000
-/* not defined yet
-#define DL_2000     0x2000
-#define DL_4000     0x4000
-*/
-#define DL_VERBOSE  0x8000
-/* composit debug classes */
-#define DL_EA       (DL_DECODEEA|DL_LOADEA|DL_STOREEA)
-#define DL_VALUES   (DL_OPERANDS|DL_RESULT)
-#define DL_COND     (DL_TESTCC|DL_BRANCH)
-#define DL_ALL      0xffff
+#if !defined(FPE_DEBUG)
+#  define FPE_DEBUG 0
+#endif
 
 #endif /* _FPU_EMULATE_H_ */

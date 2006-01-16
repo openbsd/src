@@ -1,5 +1,5 @@
-/*	$OpenBSD: fpu_mul.c,v 1.3 2003/06/02 23:27:48 millert Exp $ */
-/*	$NetBSD: fpu_mul.c,v 1.1 1995/11/03 04:47:16 briggs Exp $ */
+/*	$OpenBSD: fpu_mul.c,v 1.4 2006/01/16 22:08:26 miod Exp $	*/
+/*	$NetBSD: fpu_mul.c,v 1.4 2003/08/07 16:28:11 agc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,7 +75,7 @@
  *
  * Since we do not have efficient multiword arithmetic, we code the
  * accumulator as four separate words, just like any other mantissa.
- * We use local `register' variables in the hope that this is faster
+ * We use local variables in the hope that this may be faster
  * than memory.  We keep x->fp_mant in locals for the same reason.
  *
  * In the algorithm above, the bits in y are inspected one at a time.
@@ -98,11 +98,11 @@
  */
 struct fpn *
 fpu_mul(fe)
-	register struct fpemu *fe;
+	struct fpemu *fe;
 {
-	register struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2;
-	register u_int a3, a2, a1, a0, x3, x2, x1, x0, bit, m;
-	register int sticky;
+	struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2;
+	u_int a2, a1, a0, x2, x1, x0, bit, m;
+	int sticky;
 	FPU_DECL_CARRY
 
 	/*
@@ -142,24 +142,22 @@ fpu_mul(fe)
 	 * mantissa byte from y.  The variable `bit' denotes the bit
 	 * within m.  We also define some macros to deal with everything.
 	 */
-	x3 = x->fp_mant[3];
 	x2 = x->fp_mant[2];
 	x1 = x->fp_mant[1];
 	x0 = x->fp_mant[0];
-	sticky = a3 = a2 = a1 = a0 = 0;
+	sticky = a2 = a1 = a0 = 0;
 
 #define	ADD	/* A += X */ \
-	FPU_ADDS(a3, a3, x3); \
-	FPU_ADDCS(a2, a2, x2); \
+	FPU_ADDS(a2, a2, x2); \
 	FPU_ADDCS(a1, a1, x1); \
 	FPU_ADDC(a0, a0, x0)
 
 #define	SHR1	/* A >>= 1, with sticky */ \
-	sticky |= a3 & 1, a3 = (a3 >> 1) | (a2 << 31), \
+	sticky |= a2 & 1, \
 	a2 = (a2 >> 1) | (a1 << 31), a1 = (a1 >> 1) | (a0 << 31), a0 >>= 1
 
 #define	SHR32	/* A >>= 32, with sticky */ \
-	sticky |= a3, a3 = a2, a2 = a1, a1 = a0, a0 = 0
+	sticky |= a2, a2 = a1, a1 = a0, a0 = 0
 
 #define	STEP	/* each 1-bit step of the multiplication */ \
 	SHR1; if (bit & m) { ADD; }; bit <<= 1
@@ -172,18 +170,10 @@ fpu_mul(fe)
 	 * The last word of y has its highest 1-bit in position FP_NMANT-1,
 	 * so we stop the loop when we move past that bit.
 	 */
-	if ((m = y->fp_mant[3]) == 0) {
+	if ((m = y->fp_mant[2]) == 0) {
 		/* SHR32; */			/* unneeded since A==0 */
 	} else {
 		bit = 1 << FP_NG;
-		do {
-			STEP;
-		} while (bit != 0);
-	}
-	if ((m = y->fp_mant[2]) == 0) {
-		SHR32;
-	} else {
-		bit = 1;
 		do {
 			STEP;
 		} while (bit != 0);
@@ -215,7 +205,6 @@ fpu_mul(fe)
 	x->fp_sign ^= y->fp_sign;
 	x->fp_exp = m;
 	x->fp_sticky = sticky;
-	x->fp_mant[3] = a3;
 	x->fp_mant[2] = a2;
 	x->fp_mant[1] = a1;
 	x->fp_mant[0] = a0;

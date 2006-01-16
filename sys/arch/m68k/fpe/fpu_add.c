@@ -1,5 +1,5 @@
-/*	$OpenBSD: fpu_add.c,v 1.3 2003/06/02 23:27:48 millert Exp $	*/
-/*	$NetBSD: fpu_add.c,v 1.2 1996/04/30 11:52:09 briggs Exp $ */
+/*	$OpenBSD: fpu_add.c,v 1.4 2006/01/16 22:08:26 miod Exp $	*/
+/*	$NetBSD: fpu_add.c,v 1.5 2003/08/07 16:28:10 agc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,11 +57,11 @@
 
 struct fpn *
 fpu_add(fe)
-	register struct fpemu *fe;
+	struct fpemu *fe;
 {
-	register struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2, *r;
-	register u_int r0, r1, r2, r3;
-	register int rd;
+	struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2, *r;
+	u_int r0, r1, r2;
+	int rd;
 
 	/*
 	 * Put the `heavier' operand on the right (see fpu_emu.h).
@@ -136,8 +136,7 @@ fpu_add(fe)
 		 * (but remember to adjust the exponent).
 		 */
 		/* r->fp_mant = x->fp_mant + y->fp_mant */
-		FPU_ADDS(r->fp_mant[3], x->fp_mant[3], y->fp_mant[3]);
-		FPU_ADDCS(r->fp_mant[2], x->fp_mant[2], y->fp_mant[2]);
+		FPU_ADDS(r->fp_mant[2], x->fp_mant[2], y->fp_mant[2]);
 		FPU_ADDCS(r->fp_mant[1], x->fp_mant[1], y->fp_mant[1]);
 		FPU_ADDC(r0, x->fp_mant[0], y->fp_mant[0]);
 		if ((r->fp_mant[0] = r0) >= FP_2) {
@@ -169,13 +168,12 @@ fpu_add(fe)
 		 */
 		/* r->fp_mant = x->fp_mant - y->fp_mant */
 		FPU_SET_CARRY(y->fp_sticky);
-		FPU_SUBCS(r3, x->fp_mant[3], y->fp_mant[3]);
 		FPU_SUBCS(r2, x->fp_mant[2], y->fp_mant[2]);
 		FPU_SUBCS(r1, x->fp_mant[1], y->fp_mant[1]);
 		FPU_SUBC(r0, x->fp_mant[0], y->fp_mant[0]);
 		if (r0 < FP_2) {
 			/* cases i and ii */
-			if ((r0 | r1 | r2 | r3) == 0) {
+			if ((r0 | r1 | r2) == 0) {
 				/* case ii */
 				r->fp_class = FPC_ZERO;
 				r->fp_sign = (rd == FPCR_MINF);
@@ -193,12 +191,10 @@ fpu_add(fe)
 				panic("fpu_add");
 #endif
 			r->fp_sign = y->fp_sign;
-			FPU_SUBS(r3, 0, r3);
-			FPU_SUBCS(r2, 0, r2);
+			FPU_SUBS(r2, 0, r2);
 			FPU_SUBCS(r1, 0, r1);
 			FPU_SUBC(r0, 0, r0);
 		}
-		r->fp_mant[3] = r3;
 		r->fp_mant[2] = r2;
 		r->fp_mant[1] = r1;
 		r->fp_mant[0] = r0;

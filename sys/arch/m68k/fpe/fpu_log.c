@@ -1,5 +1,5 @@
-/*	$OpenBSD: fpu_log.c,v 1.4 2002/03/14 01:26:34 millert Exp $	*/
-/*	$NetBSD: fpu_log.c,v 1.5 1996/10/13 03:19:18 christos Exp $	*/
+/*	$OpenBSD: fpu_log.c,v 1.5 2006/01/16 22:08:26 miod Exp $	*/
+/*	$NetBSD: fpu_log.c,v 1.8 2003/07/15 02:43:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -185,13 +185,13 @@ static struct sfpn {
     { 0x3FFE - 0x3fff, 0xB07197A2U, 0x3C46C654U },
 };
 
-static struct fpn *__fpu_logn(struct fpemu *fe);
+struct fpn *__fpu_logn(struct fpemu *fe);
 
 /*
  * natural log - algorithm taken from Motorola FPSP,
  * except this doesn't bother to check for invalid input.
  */
-static struct fpn *
+struct fpn *
 __fpu_logn(fe)
      struct fpemu *fe;
 {
@@ -205,8 +205,9 @@ __fpu_logn(fe)
     if ((-1 == X.fp_exp && (0xf07d0000U >> (31 - FP_LG)) <= X.fp_mant[0]) ||
 	(0 == X.fp_exp && X.fp_mant[0] <= (0x88410000U >> (31 - FP_LG)))) {
 	/* log near 1 */
-	if (fpu_debug_level & DL_ARITH)
-	    printf("__fpu_logn: log near 1\n");
+#if FPE_DEBUG
+	printf("__fpu_logn: log near 1\n");
+#endif
 
 	fpu_const(&fe->fe_f1, 0x32);
 	/* X+1 */
@@ -287,9 +288,10 @@ __fpu_logn(fe)
 	/* U+U*V*(B1+W*(B3+W*B5)+V*(B2+W*B4)) */
 	d = fpu_add(fe);
     } else /* the usual case */ {
-	if (fpu_debug_level & DL_ARITH)
-	    printf("__fpu_logn: the usual case. X=(%d,%08x,%08x...)\n",
-		   X.fp_exp, X.fp_mant[0], X.fp_mant[1]);
+#if FPE_DEBUG
+	printf("__fpu_logn: the usual case. X=(%d,%08x,%08x...)\n",
+	       X.fp_exp, X.fp_mant[0], X.fp_mant[1]);
+#endif
 
 	k = X.fp_exp;
 	/* X <- Y */
@@ -301,22 +303,23 @@ __fpu_logn(fe)
 	F.fp_exp = X.fp_exp;
 	F.fp_mant[0] = X.fp_mant[0] & (0xfe000000U >> (31 - FP_LG));
 	F.fp_mant[0] |= (0x01000000U >> (31 - FP_LG));
-	F.fp_mant[1] = F.fp_mant[2] = F.fp_mant[3] = 0;
+	F.fp_mant[1] = F.fp_mant[2] = 0;
 	F.fp_sticky = 0;
 
-	if (fpu_debug_level & DL_ARITH) {
-	    printf("__fpu_logn: X=Y*2^k=(%d,%08x,%08x...)*2^%d\n",
-		   fe->fe_f2.fp_exp, fe->fe_f2.fp_mant[0],
-		   fe->fe_f2.fp_mant[1], k);
-	    printf("__fpu_logn: F=(%d,%08x,%08x...)\n",
-		   F.fp_exp, F.fp_mant[0], F.fp_mant[1]);
-	}
+#if FPE_DEBUG
+	printf("__fpu_logn: X=Y*2^k=(%d,%08x,%08x...)*2^%d\n",
+	       fe->fe_f2.fp_exp, fe->fe_f2.fp_mant[0],
+	       fe->fe_f2.fp_mant[1], k);
+	printf("__fpu_logn: F=(%d,%08x,%08x...)\n",
+	       F.fp_exp, F.fp_mant[0], F.fp_mant[1]);
+#endif
 
 	/* index to the table */
 	i = (F.fp_mant[0] >> (FP_LG - 7)) & 0x7e;
 
-	if (fpu_debug_level & DL_ARITH)
-	    printf("__fpu_logn: index to logtbl i=%d(%x)\n", i, i);
+#if FPE_DEBUG
+	printf("__fpu_logn: index to logtbl i=%d(%x)\n", i, i);
+#endif
 
 	CPYFPN(&fe->fe_f1, &F);
 	/* -F */
@@ -327,16 +330,17 @@ __fpu_logn(fe)
 
 	/* fe_f2 = 1/F */
 	fe->fe_f2.fp_class = FPC_NUM;
-	fe->fe_f2.fp_sign = fe->fe_f2.fp_sticky = fe->fe_f2.fp_mant[3] = 0;
+	fe->fe_f2.fp_sign = fe->fe_f2.fp_sticky = fe->fe_f2.fp_mant[2] = 0;
 	fe->fe_f2.fp_exp = logtbl[i].sp_exp;
 	fe->fe_f2.fp_mant[0] = (logtbl[i].sp_m0 >> (31 - FP_LG));
 	fe->fe_f2.fp_mant[1] = (logtbl[i].sp_m0 << (FP_LG + 1)) |
 	    (logtbl[i].sp_m1 >> (31 - FP_LG));
 	fe->fe_f2.fp_mant[2] = (u_int)(logtbl[i].sp_m1 << (FP_LG + 1));
 
-	if (fpu_debug_level & DL_ARITH)
-	    printf("__fpu_logn: 1/F=(%d,%08x,%08x...)\n", fe->fe_f2.fp_exp,
-		   fe->fe_f2.fp_mant[0], fe->fe_f2.fp_mant[1]);
+#if FPE_DEBUG
+	printf("__fpu_logn: 1/F=(%d,%08x,%08x...)\n", fe->fe_f2.fp_exp,
+	       fe->fe_f2.fp_mant[0], fe->fe_f2.fp_mant[1]);
+#endif
 
 	/* U = (Y-F) * (1/F) */
 	d = fpu_mul(fe);
@@ -346,12 +350,12 @@ __fpu_logn(fe)
 	/* fe_f1 == (fpn)k */
 	fpu_explode(fe, &fe->fe_f1, FTYPE_LNG, &k);
 	(void)fpu_const(&fe->fe_f2, 0x30 /* ln(2) */);
-	if (fpu_debug_level & DL_ARITH) {
-	    printf("__fpu_logn: fp(k)=(%d,%08x,%08x...)\n", fe->fe_f1.fp_exp,
-		   fe->fe_f1.fp_mant[0], fe->fe_f1.fp_mant[1]);
-	    printf("__fpu_logn: ln(2)=(%d,%08x,%08x...)\n", fe->fe_f2.fp_exp,
-		   fe->fe_f2.fp_mant[0], fe->fe_f2.fp_mant[1]);
-	}
+#if FPE_DEBUG
+	printf("__fpu_logn: fp(k)=(%d,%08x,%08x...)\n", fe->fe_f1.fp_exp,
+	       fe->fe_f1.fp_mant[0], fe->fe_f1.fp_mant[1]);
+	printf("__fpu_logn: ln(2)=(%d,%08x,%08x...)\n", fe->fe_f2.fp_exp,
+	       fe->fe_f2.fp_mant[0], fe->fe_f2.fp_mant[1]);
+#endif
 	/* K * LOGOF2 */
 	d = fpu_mul(fe);
 	CPYFPN(&KLOG2, d);
@@ -429,16 +433,17 @@ __fpu_logn(fe)
 	i++;
 	/* fe_f2 = logtbl[i+1] (== LOG(F)) */
 	fe->fe_f2.fp_class = FPC_NUM;
-	fe->fe_f2.fp_sign = fe->fe_f2.fp_sticky = fe->fe_f2.fp_mant[3] = 0;
+	fe->fe_f2.fp_sign = fe->fe_f2.fp_sticky = fe->fe_f2.fp_mant[2] = 0;
 	fe->fe_f2.fp_exp = logtbl[i].sp_exp;
 	fe->fe_f2.fp_mant[0] = (logtbl[i].sp_m0 >> (31 - FP_LG));
 	fe->fe_f2.fp_mant[1] = (logtbl[i].sp_m0 << (FP_LG + 1)) |
 	    (logtbl[i].sp_m1 >> (31 - FP_LG));
 	fe->fe_f2.fp_mant[2] = (logtbl[i].sp_m1 << (FP_LG + 1));
 
-	if (fpu_debug_level & DL_ARITH)
-	    printf("__fpu_logn: ln(F)=(%d,%08x,%08x,...)\n", fe->fe_f2.fp_exp,
-		   fe->fe_f2.fp_mant[0], fe->fe_f2.fp_mant[1]);
+#if FPE_DEBUG
+	printf("__fpu_logn: ln(F)=(%d,%08x,%08x,...)\n", fe->fe_f2.fp_exp,
+	       fe->fe_f2.fp_mant[0], fe->fe_f2.fp_mant[1]);
+#endif
 
 	/* LOG(F)+U*V*(A2+V*(A4+V*A6)) */
 	d = fpu_add(fe);
@@ -447,10 +452,11 @@ __fpu_logn(fe)
 	/* LOG(F)+U+V*(A1+V*(A3+V*A5))+U*V*(A2+V*(A4+V*A6)) */
 	d = fpu_add(fe);
 
-	if (fpu_debug_level & DL_ARITH)
-	    printf("__fpu_logn: ln(Y)=(%c,%d,%08x,%08x,%08x,%08x)\n",
-		   d->fp_sign ? '-' : '+', d->fp_exp,
-		   d->fp_mant[0], d->fp_mant[1], d->fp_mant[2], d->fp_mant[3]);
+#if FPE_DEBUG
+	printf("__fpu_logn: ln(Y)=(%c,%d,%08x,%08x,%08x)\n",
+	       d->fp_sign ? '-' : '+', d->fp_exp,
+	       d->fp_mant[0], d->fp_mant[1], d->fp_mant[2]);
+#endif
 
 	CPYFPN(&fe->fe_f1, d);
 	CPYFPN(&fe->fe_f2, &KLOG2);
@@ -515,7 +521,7 @@ fpu_log2(fe)
 	} else if (fp->fp_class == FPC_NUM) {
 	    /* the real work here */
 	    if (fp->fp_mant[0] == FP_1 && fp->fp_mant[1] == 0 &&
-		fp->fp_mant[2] == 0 && fp->fp_mant[3] == 0) {
+		fp->fp_mant[2] == 0) {
 		/* fp == 2.0 ^ exp <--> log2(fp) == exp */
 		fpu_explode(fe, &fe->fe_f3, FTYPE_LNG, &fp->fp_exp);
 		fp = &fe->fe_f3;

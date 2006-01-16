@@ -1,20 +1,18 @@
-# $OpenBSD: files.fpe,v 1.2 1996/05/29 21:05:13 niklas Exp $
+# $OpenBSD: files.fpe,v 1.3 2006/01/16 22:08:26 miod Exp $
 # $NetBSD: files.fpe,v 1.2 1995/11/03 04:51:51 briggs Exp $
 
-# Config(.new) file for m68k floating point emulator.
+# files for m68k floating point emulator.
 # Included by ports that need it.
 
 file	arch/m68k/fpe/fpu_add.c			fpu_emulate
 file	arch/m68k/fpe/fpu_calcea.c		fpu_emulate
 file	arch/m68k/fpe/fpu_div.c			fpu_emulate
 file	arch/m68k/fpe/fpu_emulate.c		fpu_emulate
-file	arch/m68k/fpe/fpu_exp.c			fpu_emulate
 file	arch/m68k/fpe/fpu_explode.c		fpu_emulate
 file	arch/m68k/fpe/fpu_fmovecr.c		fpu_emulate
 file	arch/m68k/fpe/fpu_fscale.c		fpu_emulate
 file	arch/m68k/fpe/fpu_fstore.c		fpu_emulate
 file	arch/m68k/fpe/fpu_getexp.c		fpu_emulate
-file	arch/m68k/fpe/fpu_hyperb.c		fpu_emulate
 file	arch/m68k/fpe/fpu_implode.c		fpu_emulate
 file	arch/m68k/fpe/fpu_int.c			fpu_emulate
 file	arch/m68k/fpe/fpu_log.c			fpu_emulate
@@ -22,4 +20,3 @@ file	arch/m68k/fpe/fpu_mul.c			fpu_emulate
 file	arch/m68k/fpe/fpu_rem.c			fpu_emulate
 file	arch/m68k/fpe/fpu_sqrt.c		fpu_emulate
 file	arch/m68k/fpe/fpu_subr.c		fpu_emulate
-file	arch/m68k/fpe/fpu_trig.c		fpu_emulate

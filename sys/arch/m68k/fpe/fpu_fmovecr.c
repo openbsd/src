@@ -1,5 +1,5 @@
-/*	$OpenBSD: fpu_fmovecr.c,v 1.5 1999/01/11 05:11:33 millert Exp $	*/
-/*	$NetBSD: fpu_fmovecr.c,v 1.6 1996/10/13 03:19:13 christos Exp $	*/
+/*	$OpenBSD: fpu_fmovecr.c,v 1.6 2006/01/16 22:08:26 miod Exp $	*/
+/*	$NetBSD: fpu_fmovecr.c,v 1.10 2003/07/15 02:43:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -38,30 +38,35 @@
 
 #include "fpu_emulate.h"
 
+/* XXX: quick consistency check */
+#if (FP_1 != 0x40000)
+Error you have to change this table when changing the mantissa size
+#endif
+
 static struct fpn constrom[] = {
-    /* fp_class, fp_sign, fp_exp, fp_sticky, fp_mant[0] ... [3] */
-    { FPC_NUM, 0, 1, 0, { 0x6487e, 0xd5110b46, 0x11a80000, 0x0 } },
-    { FPC_NUM, 0, -2, 0, { 0x4d104, 0xd427de7f, 0xbcc00000, 0x0 } },
-    { FPC_NUM, 0, 1, 0, { 0x56fc2, 0xa2c515da, 0x54d00000, 0x0 } },
-    { FPC_NUM, 0, 0, 0, { 0x5c551, 0xd94ae0bf, 0x85e00000, 0x0 } },
-    { FPC_NUM, 0, -2, 0, { 0x6f2de, 0xc549b943, 0x8ca80000, 0x0 } },
-    { FPC_ZERO, 0, 0, 0, { 0x0, 0x0, 0x0, 0x0 } },
-    { FPC_NUM, 0, -1, 0, { 0x58b90, 0xbfbe8e7b, 0xcd600000, 0x0 } },
-    { FPC_NUM, 0, 1, 0, { 0x49aec, 0x6eed5545, 0x60b80000, 0x0 } },
-    { FPC_NUM, 0, 0, 0, { 0x40000, 0x0, 0x0, 0x0 } },
-    { FPC_NUM, 0, 3, 0, { 0x50000, 0x0, 0x0, 0x0 } },
-    { FPC_NUM, 0, 6, 0, { 0x64000, 0x0, 0x0, 0x0 } },
-    { FPC_NUM, 0, 13, 0, { 0x4e200, 0x0, 0x0, 0x0 } },
-    { FPC_NUM, 0, 26, 0, { 0x5f5e1, 0x0, 0x0, 0x0 } },
-    { FPC_NUM, 0, 53, 0, { 0x470de, 0x4df82000, 0x0, 0x0 } },
-    { FPC_NUM, 0, 106, 0, { 0x4ee2d, 0x6d415b85, 0xacf00000, 0x0 } },
-    { FPC_NUM, 0, 212, 0, { 0x613c0, 0xfa4ffe7d, 0x36a80000, 0x0 } },
-    { FPC_NUM, 0, 425, 0, { 0x49dd2, 0x3e4c074c, 0x67000000, 0x0 } },
-    { FPC_NUM, 0, 850, 0, { 0x553f7, 0x5fdcefce, 0xf4700000, 0x0 } },
-    { FPC_NUM, 0, 1700, 0, { 0x718cd, 0x5753074, 0x8e380000, 0x0 } },
-    { FPC_NUM, 0, 3401, 0, { 0x64bb3, 0xac340ba8, 0x60b80000, 0x0 } },
-    { FPC_NUM, 0, 6803, 0, { 0x4f459, 0xdaee29ea, 0xef280000, 0x0 } },
-    { FPC_NUM, 0, 13606, 0, { 0x62302, 0x90145104, 0xbcd80000, 0x0 } },
+    /* fp_class, fp_sign, fp_exp, fp_sticky, fp_mant[0] ... [2] */
+    { FPC_NUM, 0, 1, 0, { 0x6487e, 0xd5110b46, 0x11a80000 } },
+    { FPC_NUM, 0, -2, 0, { 0x4d104, 0xd427de7f, 0xbcc00000 } },
+    { FPC_NUM, 0, 1, 0, { 0x56fc2, 0xa2c515da, 0x54d00000 } },
+    { FPC_NUM, 0, 0, 0, { 0x5c551, 0xd94ae0bf, 0x85e00000 } },
+    { FPC_NUM, 0, -2, 0, { 0x6f2de, 0xc549b943, 0x8ca80000 } },
+    { FPC_ZERO, 0, 0, 0, { 0x0, 0x0, 0x0 } },
+    { FPC_NUM, 0, -1, 0, { 0x58b90, 0xbfbe8e7b, 0xcd600000 } },
+    { FPC_NUM, 0, 1, 0, { 0x49aec, 0x6eed5545, 0x60b80000 } },
+    { FPC_NUM, 0, 0, 0, { 0x40000, 0x0, 0x0 } },
+    { FPC_NUM, 0, 3, 0, { 0x50000, 0x0, 0x0 } },
+    { FPC_NUM, 0, 6, 0, { 0x64000, 0x0, 0x0 } },
+    { FPC_NUM, 0, 13, 0, { 0x4e200, 0x0, 0x0 } },
+    { FPC_NUM, 0, 26, 0, { 0x5f5e1, 0x0, 0x0 } },
+    { FPC_NUM, 0, 53, 0, { 0x470de, 0x4df82000, 0x0 } },
+    { FPC_NUM, 0, 106, 0, { 0x4ee2d, 0x6d415b85, 0xacf00000 } },
+    { FPC_NUM, 0, 212, 0, { 0x613c0, 0xfa4ffe7d, 0x36a80000 } },
+    { FPC_NUM, 0, 425, 0, { 0x49dd2, 0x3e4c074c, 0x67000000 } },
+    { FPC_NUM, 0, 850, 0, { 0x553f7, 0x5fdcefce, 0xf4700000 } },
+    { FPC_NUM, 0, 1700, 0, { 0x718cd, 0x5753074, 0x8e380000 } },
+    { FPC_NUM, 0, 3401, 0, { 0x64bb3, 0xac340ba8, 0x60b80000 } },
+    { FPC_NUM, 0, 6803, 0, { 0x4f459, 0xdaee29ea, 0xef280000 } },
+    { FPC_NUM, 0, 13606, 0, { 0x62302, 0x90145104, 0xbcd80000 } },
 };
 
 struct fpn *
@@ -107,10 +112,10 @@ fpu_emul_fmovecr(fe, insn)
     (void)fpu_const(&fe->fe_f3, offset);
     (void)fpu_upd_fpsr(fe, &fe->fe_f3);
     fpu_implode(fe, &fe->fe_f3, FTYPE_EXT, &fpreg[dstreg * 3]);
-    if (fpu_debug_level & DL_RESULT) {
-	printf("  fpu_emul_fmovecr: result %08x,%08x,%08x to FP%d\n",
-	       fpreg[dstreg * 3], fpreg[dstreg * 3 + 1], fpreg[dstreg * 3 + 2],
-	       dstreg);
-    }
+#if DEBUG_FPE
+    printf("  fpu_emul_fmovecr: result %08x,%08x,%08x to FP%d\n",
+	   fpreg[dstreg * 3], fpreg[dstreg * 3 + 1], fpreg[dstreg * 3 + 2],
+	   dstreg);
+#endif
     return 0;
 }

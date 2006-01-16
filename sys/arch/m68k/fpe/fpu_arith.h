@@ -1,5 +1,5 @@
-/*	$OpenBSD: fpu_arith.h,v 1.3 2003/06/02 23:27:48 millert Exp $ */
-/*	$NetBSD: fpu_arith.h,v 1.1 1995/11/03 04:46:59 briggs Exp $ */
+/*	$OpenBSD: fpu_arith.h,v 1.4 2006/01/16 22:08:26 miod Exp $	*/
+/*	$NetBSD: fpu_arith.h,v 1.3 2003/08/07 16:28:10 agc Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,46 +55,7 @@
  * for example.
  */
 
-#ifdef sparc
-
-/* set up for extended-precision arithemtic */
-#define	FPU_DECL_CARRY
-
-/*
- * We have three kinds of add:
- *	add with carry:					  r = x + y + c
- *	add (ignoring current carry) and set carry:	c'r = x + y + 0
- *	add with carry and set carry:			c'r = x + y + c
- * The macros use `C' for `use carry' and `S' for `set carry'.
- * Note that the state of the carry is undefined after ADDC and SUBC,
- * so if all you have for these is `add with carry and set carry',
- * that is OK.
- *
- * The same goes for subtract, except that we compute x - y - c.
- *
- * Finally, we have a way to get the carry into a `regular' variable,
- * or set it from a value.  SET_CARRY turns 0 into no-carry, nonzero
- * into carry; GET_CARRY sets its argument to 0 or 1.
- */
-#define	FPU_ADDC(r, x, y) \
-	asm volatile("addx %1,%2,%0" : "=r"(r) : "r"(x), "r"(y))
-#define	FPU_ADDS(r, x, y) \
-	asm volatile("addcc %1,%2,%0" : "=r"(r) : "r"(x), "r"(y))
-#define	FPU_ADDCS(r, x, y) \
-	asm volatile("addxcc %1,%2,%0" : "=r"(r) : "r"(x), "r"(y))
-#define	FPU_SUBC(r, x, y) \
-	asm volatile("subx %1,%2,%0" : "=r"(r) : "r"(x), "r"(y))
-#define	FPU_SUBS(r, x, y) \
-	asm volatile("subcc %1,%2,%0" : "=r"(r) : "r"(x), "r"(y))
-#define	FPU_SUBCS(r, x, y) \
-	asm volatile("subxcc %1,%2,%0" : "=r"(r) : "r"(x), "r"(y))
-
-#define	FPU_GET_CARRY(r) asm volatile("addx %%g0,%%g0,%0" : "=r"(r))
-#define	FPU_SET_CARRY(v) asm volatile("addcc %0,-1,%%g0" : : "r"(v))
-
-#define	FPU_SHL1_BY_ADD	/* shift left 1 faster by ADDC than (a<<1)|(b>>31) */
-
-#else /* non sparc */
+#ifndef FPE_USE_ASM
 
 /* set up for extended-precision arithemtic */
 #define	FPU_DECL_CARRY quad_t fpu_carry, fpu_tmp;
@@ -147,4 +108,64 @@
 #define	FPU_GET_CARRY(r) (r) = (!!fpu_carry)
 #define	FPU_SET_CARRY(v) fpu_carry = ((v) != 0)
 
-#endif
+#else
+
+/* set up for extended-precision arithemtic */
+#define	FPU_DECL_CARRY int fpu_tmp;
+
+/*
+ * We have three kinds of add:
+ *	add with carry:					  r = x + y + c
+ *	add (ignoring current carry) and set carry:	c'r = x + y + 0
+ *	add with carry and set carry:			c'r = x + y + c
+ * The macros use `C' for `use carry' and `S' for `set carry'.
+ * Note that the state of the carry is undefined after ADDC and SUBC,
+ * so if all you have for these is `add with carry and set carry',
+ * that is OK.
+ *
+ * The same goes for subtract, except that we compute x - y - c.
+ *
+ * Finally, we have a way to get the carry into a `regular' variable,
+ * or set it from a value.  SET_CARRY turns 0 into no-carry, nonzero
+ * into carry; GET_CARRY sets its argument to 0 or 1.
+ */
+#define	FPU_ADDC(r, x, y)						\
+	{								\
+		asm volatile("movel %1,%0" : "=d"(fpu_tmp) : "g"(x));	\
+		asm volatile("addxl %1,%0" : "=d"(fpu_tmp) : "d"(y));	\
+		asm volatile("movel %1,%0" : "=g"(r) : "r"(fpu_tmp));	\
+	}
+#define	FPU_ADDS(r, x, y)						\
+	{								\
+		asm volatile("movel %1,%0" : "=d"(fpu_tmp) : "g"(x));	\
+		asm volatile("addl %1,%0" : "=d"(fpu_tmp) : "g"(y));	\
+		asm volatile("movel %1,%0" : "=g"(r) : "r"(fpu_tmp));	\
+	}
+#define	FPU_ADDCS(r, x, y) FPU_ADDC(r, x, y)
+
+#define	FPU_SUBC(r, x, y)						\
+	{								\
+		asm volatile("movel %1,%0" : "=d"(fpu_tmp) : "g"(x));	\
+		asm volatile("subxl %1,%0" : "=d"(fpu_tmp) : "d"(y));	\
+		asm volatile("movel %1,%0" : "=g"(r) : "r"(fpu_tmp));	\
+	}
+#define	FPU_SUBS(r, x, y)						\
+	{								\
+		asm volatile("movel %1,%0" : "=d"(fpu_tmp) : "g"(x));	\
+		asm volatile("subl %1,%0" : "=d"(fpu_tmp) : "g"(y));	\
+		asm volatile("movel %1,%0" : "=g"(r) : "r"(fpu_tmp));	\
+	}
+#define	FPU_SUBCS(r, x, y) FPU_SUBC(r, x, y)
+
+#define	FPU_GET_CARRY(r)				\
+	{						\
+		asm volatile("moveq #0,%0" : "=d"(r));	\
+		asm volatile("addxl %0,%0" : "+d"(r));	\
+	}
+#define	FPU_SET_CARRY(v)						\
+	{								\
+		asm volatile("moveq #0,%0" : "=d"(fpu_tmp));		\
+		asm volatile("subl %1,%0" : "=d"(fpu_tmp) : "g"(v));	\
+	}
+
+#endif /* FPE_USE_ASM */
