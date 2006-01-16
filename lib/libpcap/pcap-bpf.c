@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.18 2006/01/11 07:31:46 jaredy Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.19 2006/01/16 22:45:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -278,8 +278,7 @@ pcap_open_live(const char *device, int snaplen, int promisc, int to_ms,
 	 * not fatal; we just don't get to use the feature later.
 	 */
 	if (ioctl(fd, BIOCGDLTLIST, (caddr_t)&bdl) == 0) {
-		bdl.bfl_list = (u_int *) malloc(sizeof(u_int) *
-		    bdl.bfl_len + 1);
+		bdl.bfl_list = (u_int *) calloc(bdl.bfl_len + 1, sizeof(u_int));
 		if (bdl.bfl_list == NULL) {
 			(void)snprintf(ebuf, PCAP_ERRBUF_SIZE, "malloc: %s",
 			    pcap_strerror(errno));
