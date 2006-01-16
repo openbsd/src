@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack.c,v 1.8 2006/01/15 19:11:59 otto Exp $	*/
+/*	$OpenBSD: stack.c,v 1.9 2006/01/16 08:09:25 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: stack.c,v 1.8 2006/01/15 19:11:59 otto Exp $";
+static const char rcsid[] = "$OpenBSD: stack.c,v 1.9 2006/01/16 08:09:25 otto Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -96,7 +96,7 @@ stack_dup_value(const struct value *a, struct value *copy)
 	return copy;
 }
 
-int
+size_t
 stack_size(const struct stack *stack)
 {
 	return stack->sp + 1;
@@ -133,7 +133,7 @@ stack_swap(struct stack *stack)
 static void
 stack_grow(struct stack *stack)
 {
-	int new_size, i;
+	size_t new_size, i;
 
 	if (++stack->sp == stack->size) {
 		new_size = stack->size * 2 + 1;
@@ -254,7 +254,7 @@ stack_clear(struct stack *stack)
 void
 stack_print(FILE *f, const struct stack *stack, const char *prefix, u_int base)
 {
-	int i;
+	ssize_t i;
 
 	for (i = stack->sp; i >= 0; i--) {
 		print_value(f, &stack->stack[i], prefix, base);
@@ -277,7 +277,7 @@ array_new(void)
 static __inline void
 array_free(struct array *a)
 {
-	u_int i;
+	size_t i;
 
 	if (a == NULL)
 		return;
@@ -291,7 +291,7 @@ static struct array *
 array_dup(const struct array *a)
 {
 	struct array	*n;
-	u_int		i;
+	size_t		i;
 
 	if (a == NULL)
 		return NULL;

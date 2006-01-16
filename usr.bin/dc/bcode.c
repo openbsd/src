@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.32 2006/01/15 19:14:40 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.33 2006/01/16 08:09:25 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.32 2006/01/15 19:14:40 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.33 2006/01/16 08:09:25 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -644,7 +644,7 @@ set_ibase(void)
 static void
 stackdepth(void)
 {
-	u_int i;
+	size_t i;
 	struct number *n;
 
 	i = stack_size(&bmachine.stack);
@@ -749,7 +749,7 @@ to_ascii(void)
 			normalize(n, 0);
 			if (BN_num_bits(n->number) > 8)
 				bn_check(BN_mask_bits(n->number, 8));
-			str[0] = BN_get_word(n->number);
+			str[0] = (char)BN_get_word(n->number);
 			break;
 		case BCODE_STRING:
 			str[0] = value->u.string[0];

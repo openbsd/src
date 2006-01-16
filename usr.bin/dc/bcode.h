@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.h,v 1.4 2006/01/15 19:11:59 otto Exp $	*/
+/*	$OpenBSD: bcode.h,v 1.5 2006/01/16 08:09:25 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -58,8 +58,8 @@ struct array {
 
 struct stack {
 	struct value	*stack;
-	int		sp;
-	int		size;
+	ssize_t		sp;
+	size_t		size;
 };
 
 struct source;

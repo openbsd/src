@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.2 2003/11/04 08:10:06 otto Exp $	*/
+/*	$OpenBSD: extern.h,v 1.3 2006/01/16 08:09:25 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -44,7 +44,7 @@ void		stack_init(struct stack *);
 void		stack_free_value(struct value *);
 struct value	*stack_dup_value(const struct value *, struct value *);
 void		stack_swap(struct stack *);
-int		stack_size(const struct stack *);
+size_t		stack_size(const struct stack *);
 void		stack_dup(struct stack *);
 void		stack_pushnumber(struct stack *, struct number *);
 void		stack_pushstring(struct stack *stack, char *);
