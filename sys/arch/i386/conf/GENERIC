@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.463 2006/01/15 14:24:16 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.464 2006/01/16 20:26:46 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -134,6 +134,7 @@ lmtemp*	at iic?				# NS LM75/LM77 temperature sensor
 maxds*	at iic?				# Maxim DS1631/1624/1721
 maxtmp*	at iic?				# Maxim MAX6642/MAX6690
 asbtm*	at iic?				# Asus ASB100
+wbenv*	at iic?				# Winbond W83L784R/W83L785R/W83L785TS-L
 
 # ISA PCMCIA controllers
 #option PCMCIAVERBOSE
