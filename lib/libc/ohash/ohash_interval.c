@@ -1,4 +1,4 @@
-/* $OpenBSD: ohash_interval.c,v 1.2 2004/06/22 20:00:17 espie Exp $ */
+/* $OpenBSD: ohash_interval.c,v 1.3 2006/01/16 15:52:25 espie Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -19,10 +19,10 @@
 
 #include "ohash_int.h"
 
-u_int32_t
+uint32_t
 ohash_interval(const char *s, const char **e)
 {
-	u_int32_t k;
+	uint32_t k;
 
 	if (!*e)
 		*e = s + strlen(s);

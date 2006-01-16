@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ohash_init.3,v 1.12 2005/07/29 08:51:13 jmc Exp $
+.\"	$OpenBSD: ohash_init.3,v 1.13 2006/01/16 15:52:25 espie Exp $
 .\" Copyright (c) 1999 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -29,7 +29,7 @@
 .Nm ohash_entries
 .Nd light-weight open hashing
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
+.Fd #include <stdint.h>
 .Fd #include <stddef.h>
 .Fd #include <ohash.h>
 .Ft void
@@ -37,9 +37,9 @@
 .Ft void
 .Fn ohash_delete "struct ohash *h"
 .Ft "unsigned int"
-.Fn ohash_lookup_interval "struct ohash *h" "const char *start" "const char *end" "u_int32_t hv"
+.Fn ohash_lookup_interval "struct ohash *h" "const char *start" "const char *end" "uint32_t hv"
 .Ft "unsigned int"
-.Fn ohash_lookup_memory "struct ohash *h" "const char *k" "size_t s" "u_int32_t hv"
+.Fn ohash_lookup_memory "struct ohash *h" "const char *k" "size_t s" "uint32_t hv"
 .Ft void *
 .Fn ohash_find "struct ohash *h" "unsigned int i"
 .Ft void *

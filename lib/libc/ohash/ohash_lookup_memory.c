@@ -1,4 +1,4 @@
-/* $OpenBSD: ohash_lookup_memory.c,v 1.2 2004/06/22 20:00:17 espie Exp $ */
+/* $OpenBSD: ohash_lookup_memory.c,v 1.3 2006/01/16 15:52:25 espie Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -20,7 +20,7 @@
 #include "ohash_int.h"
 
 unsigned int
-ohash_lookup_memory(struct ohash *h, const char *k, size_t size, u_int32_t hv)
+ohash_lookup_memory(struct ohash *h, const char *k, size_t size, uint32_t hv)
 {
 	unsigned int	i, incr;
 	unsigned int	empty;
