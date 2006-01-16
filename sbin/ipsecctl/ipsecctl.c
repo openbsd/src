@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.39 2005/12/06 16:55:28 markus Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.40 2006/01/16 23:57:20 reyk Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -177,6 +177,11 @@ ipsecctl_commit(int action, struct ipsecctl *ipsec)
 			if (rp->auth->dstid)
 				free(rp->auth->dstid);
 			free(rp->auth);
+		}
+		if (rp->ikeauth) {
+			if (rp->ikeauth->string)
+				free(rp->ikeauth->string);
+			free(rp->ikeauth);
 		}
 		if (rp->xfs)
 			free(rp->xfs);

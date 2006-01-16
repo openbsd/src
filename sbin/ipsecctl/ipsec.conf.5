@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.28 2005/12/06 14:27:57 markus Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.29 2006/01/16 23:57:20 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -391,14 +391,17 @@ as the identity of the local peer.
 Similar to
 .Ar srcid ,
 this optional parameter defines a FQDN to be used by the remote peer.
-.El
-.Pp
-Note that
-.Xr isakmpd 8
-will use RSA authentication.
+.It Ar psk Aq Ar string
+Use a pre-shared key
+.Ar string
+for authentication.
+If not specified, RSA authentication will be used.
 By default, the system startup script
 .Xr rc 8
-generates a key-pair when starting, if one does not already exist.
+generates a key-pair for
+.Xr isakmpd 8
+when starting, if one does not already exist.
+.El
 .Pp
 See also
 .Sx ISAKMP EXAMPLES

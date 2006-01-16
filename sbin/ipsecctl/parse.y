@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.47 2005/12/12 09:41:51 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.48 2006/01/16 23:57:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -133,13 +133,13 @@ struct ipsec_rule	*reverse_sa(struct ipsec_rule *, u_int32_t,
 			     struct ipsec_key *, struct ipsec_key *);
 struct ipsec_rule	*create_flow(u_int8_t, struct ipsec_addr_wrap *, struct
 			     ipsec_addr_wrap *, struct ipsec_addr_wrap *,
-			     u_int8_t, char *, char *, u_int16_t);
+			     u_int8_t, char *, char *);
 struct ipsec_rule	*reverse_rule(struct ipsec_rule *);
 struct ipsec_rule	*create_ike(struct ipsec_addr_wrap *, struct
 			     ipsec_addr_wrap *, struct ipsec_addr_wrap *,
 			     struct ipsec_transforms *, struct
 			     ipsec_transforms *, u_int8_t, u_int8_t, char *,
-			     char *);
+			     char *, struct ike_auth *);
 
 struct ipsec_transforms *ipsec_transforms;
 
@@ -162,7 +162,7 @@ typedef struct {
 			char *dstid;
 		} ids;
 		char		*id;
-		u_int16_t	 authtype;
+		struct ike_auth	 ikeauth;
 		struct {
 			u_int32_t	spiout;
 			u_int32_t	spiin;
@@ -201,7 +201,6 @@ typedef struct {
 %type	<v.host>		host
 %type	<v.ids>			ids
 %type	<v.id>			id
-%type	<v.authtype>		authtype
 %type	<v.spis>		spispec
 %type	<v.authkeys>		authkeyspec
 %type	<v.enckeys>		enckeyspec
@@ -210,6 +209,7 @@ typedef struct {
 %type	<v.mmxfs>		mmxfs
 %type	<v.qmxfs>		qmxfs
 %type	<v.ikemode>		ikemode
+%type	<v.ikeauth>		ikeauth
 %%
 
 grammar		: /* empty */
@@ -291,11 +291,11 @@ sarule		: protocol tmode hosts spispec transforms authkeyspec
 		}
 		;
 
-flowrule	: FLOW protocol dir hosts peer ids authtype	{
+flowrule	: FLOW protocol dir hosts peer ids {
 			struct ipsec_rule	*r;
 
 			r = create_flow($3, $4.src, $4.dst, $5, $2, $6.srcid,
-			    $6.dstid, $7);
+			    $6.dstid);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
@@ -314,11 +314,11 @@ flowrule	: FLOW protocol dir hosts peer ids authtype	{
 		}
 		;
 
-ikerule		: IKE ikemode protocol hosts peer mmxfs qmxfs ids {
+ikerule		: IKE ikemode protocol hosts peer mmxfs qmxfs ids ikeauth {
 			struct ipsec_rule	*r;
 
 			r = create_ike($4.src, $4.dst, $5, $6, $7, $3, $2,
-			    $8.srcid, $8.dstid);
+			    $8.srcid, $8.dstid, &$9);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
@@ -421,11 +421,6 @@ ids		: /* empty */			{
 		;
 
 id		: STRING			{ $$ = $1; }
-		;
-
-authtype	: /* empty */			{ $$ = 0; }
-		| RSA				{ $$ = AUTH_RSA; }
-		| PSK				{ $$ = AUTH_PSK; }
 		;
 
 spispec		: SPI STRING			{
@@ -574,10 +569,21 @@ keyspec		: STRING			{
 			free($2);
 		}
 		;
+
 ikemode		: /* empty */			{ $$ = IKE_ACTIVE; }
 		| PASSIVE			{ $$ = IKE_PASSIVE; }
 		| ACTIVE			{ $$ = IKE_ACTIVE; }
 		;
+
+ikeauth		: /* empty */			{ $$.type = IKE_AUTH_RSA; }
+		| RSA				{ $$.type = IKE_AUTH_RSA; }
+		| PSK STRING			{
+			$$.type = IKE_AUTH_PSK;
+			if (($$.string = strdup($2)) == NULL)
+				err(1, "ikeauth: strdup");
+		}
+		;
+
 %%
 
 struct keywords {
@@ -1447,7 +1453,7 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
 struct ipsec_rule *
 create_flow(u_int8_t dir, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
     *dst, struct ipsec_addr_wrap *peer, u_int8_t proto, char *srcid, char
-    *dstid, u_int16_t authtype)
+    *dstid)
 {
 	struct ipsec_rule *r;
 
@@ -1495,9 +1501,6 @@ create_flow(u_int8_t dir, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
 	r->auth->srcid = srcid;
 	r->auth->dstid = dstid;
 	r->auth->idtype = ID_FQDN;	/* XXX For now only FQDN. */
-#ifdef notyet
-	r->auth->type = authtype;
-#endif
 
 	return r;
 
@@ -1556,7 +1559,7 @@ struct ipsec_rule *
 create_ike(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst, struct
     ipsec_addr_wrap * peer, struct ipsec_transforms *mmxfs, struct
     ipsec_transforms *qmxfs, u_int8_t proto, u_int8_t mode, char *srcid, char
-    *dstid)
+    *dstid, struct ike_auth *authtype)
 {
 	struct ipsec_rule *r;
 
@@ -1597,6 +1600,11 @@ create_ike(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst, struct
 	r->auth->srcid = srcid;
 	r->auth->dstid = dstid;
 	r->auth->idtype = ID_FQDN;	/* XXX For now only FQDN. */
+	r->ikeauth = calloc(1, sizeof(struct ike_auth));
+	if (r->ikeauth == NULL)
+		err(1, "create_ike: calloc");
+	r->ikeauth->type = authtype->type;
+	r->ikeauth->string = authtype->string;
 
 	return (r);
 
@@ -1608,6 +1616,8 @@ errout:
 		free(dstid);
 	free(src);
 	free(dst);
+	if (authtype->string)
+		free(authtype->string);
 
 	return (NULL);
 }

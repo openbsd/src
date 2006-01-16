@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.25 2005/12/06 14:27:57 markus Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.26 2006/01/16 23:57:20 reyk Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -47,9 +47,6 @@ enum {
 	MODE_UNKNOWN, IPSEC_TRANSPORT, IPSEC_TUNNEL
 };
 enum {
-	AUTH_UNKNOWN, AUTH_PSK, AUTH_RSA
-};
-enum {
 	ID_UNKNOWN, ID_PREFIX, ID_FQDN, ID_UFQDN
 };
 enum {
@@ -69,7 +66,10 @@ enum {
 	COMPXF_UNKNOWN, COMPXF_DEFLATE, COMPXF_LZS
 };
 enum {
-	IKE_ACTIVE, IKE_PASSIVE
+	IKE_ACTIVE, IKE_PASSIVE, 
+};
+enum {
+	IKE_AUTH_RSA, IKE_AUTH_PSK
 };
 
 struct ipsec_addr {
@@ -107,6 +107,11 @@ struct ipsec_key {
 	u_int8_t	*data;
 };
 
+struct ike_auth {
+	u_int8_t	 type;
+	char		*string;
+};
+
 struct ipsec_xf {
 	char		*name;
 	u_int16_t	 id;
@@ -131,6 +136,7 @@ struct ipsec_rule {
 	struct ipsec_addr_wrap *dst;
 	struct ipsec_addr_wrap *peer;
 	struct ipsec_auth *auth;
+	struct ike_auth *ikeauth;
 	struct ipsec_transforms *xfs;
 	struct ipsec_transforms *mmxfs;
 	struct ipsec_transforms *qmxfs;
