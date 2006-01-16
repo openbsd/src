@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.18 2006/01/13 19:36:43 miod Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.19 2006/01/16 21:48:20 miod Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.51 2005/06/16 22:43:36 jmc Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
@@ -1968,6 +1968,7 @@ adb_reinit(void)
 	int device;
 	int nonewtimes;		/* times thru loop w/o any new devices */
 
+	via1_register_irq(2, adb_intr, NULL, "adb");
 	adb_setup_hw_type();	/* setup hardware type */
 
 	/* Make sure we are not interrupted while building the table. */
