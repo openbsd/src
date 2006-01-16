@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee.h,v 1.2 2003/06/02 23:27:48 millert Exp $ */
+/*	$OpenBSD: ieee.h,v 1.3 2006/01/16 22:05:59 miod Exp $ */
 /*	$NetBSD: ieee.h,v 1.2 1994/11/20 20:53:10 deraadt Exp $ */
 
 /*
@@ -82,7 +82,7 @@
 #define	DBL_FRACBITS	52
 
 #define	EXT_EXPBITS	15
-#define	EXT_FRACBITS	112
+#define	EXT_FRACBITS	64
 
 struct ieee_single {
 	u_int	sng_sign:1;
@@ -100,9 +100,9 @@ struct ieee_double {
 struct ieee_ext {
 	u_int	ext_sign:1;
 	u_int	ext_exp:15;
-	u_int	ext_frach:16;
-	u_int	ext_frachm;
-	u_int	ext_fraclm;
+	u_int	ext_zero:16;
+	u_int	ext_int:1;
+	u_int	ext_frach:31;
 	u_int	ext_fracl;
 };
 
@@ -122,7 +122,7 @@ struct ieee_ext {
 #if 0
 #define	SNG_QUIETNAN	(1 << 22)
 #define	DBL_QUIETNAN	(1 << 19)
-#define	EXT_QUIETNAN	(1 << 15)
+#define	EXT_QUIETNAN	(1 << 30)
 #endif
 
 /*
