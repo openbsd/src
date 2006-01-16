@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.30 2006/01/15 19:25:32 niallo Exp $	*/
+/*	$OpenBSD: buf.c,v 1.31 2006/01/16 21:02:36 niallo Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -66,7 +66,8 @@ cvs_buf_alloc(size_t len, u_int flags)
 	if (len > 0) {
 		b->cb_buf = xmalloc(len);
 		memset(b->cb_buf, 0, len);
-	}
+	} else
+		b->cb_buf = NULL;
 
 	b->cb_flags = flags;
 	b->cb_size = len;
@@ -125,7 +126,8 @@ cvs_buf_load(const char *path, u_int flags)
 void
 cvs_buf_free(BUF *b)
 {
-	xfree(b->cb_buf);
+	if (b->cb_buf != NULL)
+		xfree(b->cb_buf);
 	xfree(b);
 }
 
