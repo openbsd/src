@@ -1,4 +1,4 @@
-/*	$OpenBSD: getservent.c,v 1.10 2005/08/06 20:30:03 espie Exp $ */
+/*	$OpenBSD: getservent.c,v 1.11 2006/01/17 15:41:52 millert Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,6 +32,7 @@
 #include <sys/socket.h>
 
 #include <errno.h>
+#include <limits.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <string.h>
