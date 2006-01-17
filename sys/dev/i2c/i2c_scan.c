@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.59 2006/01/15 12:15:17 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.60 2006/01/17 21:21:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -544,7 +544,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	} else if (addr == 0x2e && iicprobe(0x4e) == 0x50 &&
 	    iicprobe(0x4c) == 0xa3 && iicprobe(0x4d) == 0x5c) {
 		name = "w83l785ts-l";
-	} else if (addr == iicprobe(0x48) &&
+	} else if (addr >= 0x28 && addr <= 0x2f &&
 	    iicprobe(0x4f) == 0x12 && (iicprobe(0x4e) & 0x80)) {
 		/*
 		 * We could toggle 0x4e bit 0x80, then re-read 0x4f to
