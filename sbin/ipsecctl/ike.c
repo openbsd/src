@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.14 2006/01/16 23:57:20 reyk Exp $	*/
+/*	$OpenBSD: ike.c,v 1.15 2006/01/17 00:05:42 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -370,7 +370,7 @@ ike_ipsec_establish(int action, struct ipsec_rule *r)
 {
 	struct stat	 sb;
 	FILE		*fdp;
-	int	 	 fd, ret = 0;
+	int		 fd, ret = 0;
 
 	if ((fd = open(ISAKMPD_FIFO, O_WRONLY)) == -1)
 		err(1, "ike_ipsec_establish: open(%s)", ISAKMPD_FIFO);
