@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetent.c,v 1.11 2005/08/06 20:30:03 espie Exp $ */
+/*	$OpenBSD: getnetent.c,v 1.12 2006/01/17 15:37:58 millert Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
