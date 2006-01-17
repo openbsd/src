@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioiic.c,v 1.3 2006/01/15 22:18:48 grange Exp $	*/
+/*	$OpenBSD: gpioiic.c,v 1.4 2006/01/17 22:57:47 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -53,6 +53,7 @@ struct gpioiic_softc {
 
 int		gpioiic_match(struct device *, void *, void *);
 void		gpioiic_attach(struct device *, struct device *, void *);
+int		gpioiic_detach(struct device *, int);
 
 int		gpioiic_i2c_acquire_bus(void *, int);
 void		gpioiic_i2c_release_bus(void *, int);
@@ -69,7 +70,8 @@ u_int32_t	gpioiic_bb_read_bits(void *);
 struct cfattach gpioiic_ca = {
 	sizeof(struct gpioiic_softc),
 	gpioiic_match,
-	gpioiic_attach
+	gpioiic_attach,
+	gpioiic_detach
 };
 
 struct cfdriver gpioiic_cd = {
@@ -175,6 +177,12 @@ gpioiic_attach(struct device *parent, struct device *self, void *aux)
 
 fail:
 	gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
+}
+
+int
+gpioiic_detach(struct device *self, int flags)
+{
+	return (0);
 }
 
 int
