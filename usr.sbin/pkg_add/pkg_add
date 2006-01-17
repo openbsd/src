@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.211 2005/11/03 11:50:32 espie Exp $
+# $OpenBSD: pkg_add,v 1.212 2006/01/17 20:46:52 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -41,6 +41,15 @@ my $bad = 0;
 our %forced = ();
 our $not;
 
+sub uses_old_libs
+{
+	my $plist = shift;
+	require OpenBSD::RequiredBy;
+
+	my $d = OpenBSD::Requiring->new($plist->pkgname());
+	return  grep {/^\.libs\-/} $d->list();
+}
+
 sub has_new_sig
 {
 	my ($plist, $state) = @_;
@@ -67,7 +76,7 @@ sub can_install($$$)
 
 	if ((keys %conflicts) == 1 && (keys %conflicts)[0] eq $pkgname) {
 		if (!$state->{forced}->{installed} &&
-		    !has_new_sig($plist, $state)) {
+		    !has_new_sig($plist, $state) && !uses_old_libs($plist)) {
 			print "Already installed: $pkgname\n";
 			return 1;
 		}
@@ -85,7 +94,8 @@ sub can_install($$$)
 
 	if (!$state->{replace}) {
 		if (@conflicts == 1 && is_installed($plist->pkgname()) &&
-		    !has_new_sig($plist, $state)) {
+		    !has_new_sig($plist, $state) && 
+		    !uses_old_libs($plist)) {
 			print "Not reinstalling $pkgname\n" if $state->{verbose};
 			OpenBSD::SharedLibs::add_package_libs($plist->pkgname());
 			$state->{installed}->{$pkgname} = 1;
@@ -105,7 +115,7 @@ sub can_install($$$)
 	require OpenBSD::Update;
 
 	if (is_installed($plist->pkgname()) && !$state->{forced}->{installed}) {
-		if (!has_new_sig($plist, $state)) {
+		if (!has_new_sig($plist, $state) && !uses_old_libs($plist)) {
 			    print "Not reinstalling $pkgname\n" if $state->{verbose};
 			    OpenBSD::SharedLibs::add_package_libs($plist->pkgname());
 			    $state->{installed}->{$pkgname} = 1;
@@ -527,7 +537,7 @@ sub install_package
 
 	if (is_installed($plist->pkgname()) && !$state->{forced}->{installed}) {
 		if ($state->{replace}) {
-			if (!has_new_sig($plist, $state)) {
+			if (!has_new_sig($plist, $state) && !uses_old_libs($plist)) {
 				OpenBSD::SharedLibs::add_package_libs($plist->pkgname());
 				$state->{installed}->{$handle->{pkgname}} = 1;
 				$handle->close();
@@ -703,8 +713,10 @@ sub find_updates
 		}
 
 		if (defined $found && @l2 == 1 && $found eq  $l2[0]) {
-			print "No need to update $pkgname\n";
-			next;
+			if (!uses_old_libs($plist)) {
+				print "No need to update $pkgname\n";
+				next;
+			}
 		}
 		print "Candidates for updating $pkgname -> ", join(' ', @l2), "\n";
 		# if all packages have the same version, but distinct p,
@@ -714,7 +726,7 @@ sub find_updates
 		}
 			
 		if (@l2 == 1) {
-			if (defined $found && $found eq  $l2[0]) {
+			if (defined $found && $found eq  $l2[0] && !uses_old_libs($plist)) {
 				print "No need to update $pkgname\n";
 			} else {
 				push(@$new, $l2[0]);
