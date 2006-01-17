@@ -1,4 +1,4 @@
-/* $OpenBSD: cddb.c,v 1.9 2005/11/12 15:26:23 deraadt Exp $ */
+/* $OpenBSD: cddb.c,v 1.10 2006/01/17 00:56:04 aaron Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -326,7 +326,7 @@ cddb(const char *host_port, int n, struct cd_toc_entry *e, char *arg)
 		}
 	} else if (strcmp(line, "200") != 0 || !further_query(cout, type))
 		goto end;
-	result = malloc(sizeof(char *) * n+1);
+	result = malloc(sizeof(char *) * (n + 1));
 	if (!result)
 		goto end;
 	for (i = 0; i <= n; i++)
