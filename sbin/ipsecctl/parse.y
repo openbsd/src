@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.48 2006/01/16 23:57:20 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.49 2006/01/17 05:39:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -259,7 +259,8 @@ tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
 				r->nr = ipsec->rule_nr++;
 
 				if (ipsecctl_add_rule(ipsec, r))
-					errx(1, "tcpmd5rule: ipsecctl_add_rule");
+					errx(1, "tcpmd5rule: "
+					    "ipsecctl_add_rule");
 			}
 		}
 		;
@@ -470,7 +471,8 @@ transform	: AUTHXF STRING			{
 			if (ipsec_transforms->authxf)
 				yyerror("auth already set");
 			else {
-				ipsec_transforms->authxf = parse_xf($2, authxfs);
+				ipsec_transforms->authxf = parse_xf($2,
+				    authxfs);
 				if (!ipsec_transforms->authxf)
 					yyerror("%s not a valid transform", $2);
 			}
@@ -488,7 +490,8 @@ transform	: AUTHXF STRING			{
 			if (ipsec_transforms->compxf)
 				yyerror("comp already set");
 			else {
-				ipsec_transforms->compxf = parse_xf($2, compxfs);
+				ipsec_transforms->compxf = parse_xf($2,
+				    compxfs);
 				if (!ipsec_transforms->compxf)
 					yyerror("%s not a valid transform", $2);
 			}
@@ -1354,7 +1357,7 @@ validate_sa(u_int32_t spi, u_int8_t protocol, struct ipsec_transforms *xfs,
 		}
 		if (xfs->authxf || xfs->encxf || xfs->compxf) {
 			yyerror("no encryption, authenticaion or compression"
-			   " with ipip");
+			    " with ipip");
 			return (0);
 		}
 	}
@@ -1381,13 +1384,13 @@ validate_sa(u_int32_t spi, u_int8_t protocol, struct ipsec_transforms *xfs,
 		}
 		if (enckey) {
 			if (enckey->len < xfs->encxf->keymin) {
-				yyerror("encryption key too short, minimum %d bits",
-				    xfs->encxf->keymin * 8);
+				yyerror("encryption key too short, "
+				    "minimum %d bits", xfs->encxf->keymin * 8);
 				return (0);
 			}
 			if (xfs->encxf->keymax < enckey->len) {
-				yyerror("encryption key too long, maximum %d bits",
-				    xfs->encxf->keymax * 8);
+				yyerror("encryption key too long, "
+				    "maximum %d bits", xfs->encxf->keymax * 8);
 				return (0);
 			}
 		}

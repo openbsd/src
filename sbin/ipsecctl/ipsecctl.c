@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.40 2006/01/16 23:57:20 reyk Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.41 2006/01/17 05:39:23 reyk Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -374,7 +374,8 @@ ipsecctl_get_rules(struct ipsecctl *ipsec)
 		rule->type |= RULE_FLOW;
 
 		if (pfkey_parse(msg, rule))
-			errx(1, "ipsecctl_get_rules: failed to parse PF_KEY message");
+			errx(1, "ipsecctl_get_rules: "
+			    "failed to parse PF_KEY message");
 
 		ipsecctl_add_rule(ipsec, rule);
 	}
