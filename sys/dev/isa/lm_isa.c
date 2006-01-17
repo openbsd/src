@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm_isa.c,v 1.7 2006/01/15 21:40:14 kettenis Exp $	*/
+/*	$OpenBSD: lm_isa.c,v 1.8 2006/01/17 20:26:37 kettenis Exp $	*/
 /*	$NetBSD: lm_isa.c,v 1.9 2002/11/15 14:55:44 ad Exp $ */
 
 /*-
@@ -84,7 +84,7 @@ lm_isa_match(struct device *parent, void *match, void *aux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	struct isa_attach_args *ia = aux;
-	int iobase, banksel, vendid, addr;
+	int iobase, banksel, vendid, chipid, addr;
 
 	iot = ia->ia_iot;
 	iobase = ia->ipa_io[0].base;
@@ -113,8 +113,18 @@ lm_isa_match(struct device *parent, void *match, void *aux)
 	 */
 	bus_space_write_1(iot, ioh, LMC_ADDR, LM_SBUSADDR);
 	addr = bus_space_read_1(iot, ioh, LMC_DATA);
-	if ((addr & 0xfc) == 0x2c)
-		goto found;
+	if ((addr & 0xfc) == 0x2c) {
+		bus_space_write_1(iot, ioh, LMC_ADDR, LM_CHIPID);
+		chipid = bus_space_read_1(iot, ioh, LMC_DATA);
+
+		switch (chipid & LM_CHIPID_MASK) {
+		case LM_CHIPID_LM78:
+		case LM_CHIPID_LM78J:
+		case LM_CHIPID_LM79:
+		case LM_CHIPID_LM81:
+			goto found;
+		}
+	}
 
 	bus_space_unmap(iot, ioh, 8);
 
