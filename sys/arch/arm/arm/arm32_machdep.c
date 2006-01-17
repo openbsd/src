@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.18 2005/12/27 18:51:03 drahn Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.19 2006/01/17 20:30:10 miod Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ halt()
 /* Sync the discs and unmount the filesystems */
 
 void
-bootsync(void)
+bootsync(int howto)
 {
 	static int bootsyncdone = 0;
 
@@ -237,6 +237,17 @@ bootsync(void)
 	}
 
 	vfs_shutdown();
+
+	/*
+	 * If we've been adjusting the clock, the todr
+	 * will be out of synch; adjust it now unless
+	 * the system has been sitting in ddb.
+	 */
+	if ((howto & RB_TIMEBAD) == 0) {
+		resettodr();
+	} else {
+		printf("WARNING: not updating battery clock\n");
+	}
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.22 2005/12/17 07:31:27 miod Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.23 2006/01/17 20:30:12 miod Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -313,7 +313,7 @@ boot(int howto)
 	 * been unmounted.
 	 */
 	if (!(howto & RB_NOSYNC))
-		bootsync();
+		bootsync(howto);
 
 	/* Say NO to interrupts */
 	splhigh();
