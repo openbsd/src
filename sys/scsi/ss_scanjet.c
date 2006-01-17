@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.27 2005/12/15 13:49:03 krw Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.28 2006/01/17 20:22:38 miod Exp $	*/
 /*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
@@ -66,9 +66,7 @@ int scanjet_set_window(struct ss_softc *, int);
 int scanjet_compute_sizes(struct ss_softc *, int);
 /* Maybe move to libkern? */
 #define atoi local_atoi
-#define strchr local_strchr
 __inline static int atoi(const char *);
-__inline static char *strchr(/* const */ char *, char);
 
 
 /*
@@ -453,8 +451,8 @@ scanjet_set_window(ss, flags)
 	return (scanjet_ctl_write(ss, escape_codes, len, flags));
 }
 
-/* atoi() and strchr() are from /sys/arch/amiga/dev/ite.c
-   and are only used in scanjet_compute_sizes */
+/* atoi() is from /sys/arch/amiga/dev/ite.c
+   and is only used in scanjet_compute_sizes */
 
 __inline static int
 atoi(cp)
@@ -466,19 +464,6 @@ atoi(cp)
 		n = n * 10 + *cp - '0';
 
 	return (n);
-}
-
-__inline static char *
-strchr(cp, ch)
-	/*
-	 * The const was removed to make -Wcast-qual happy.  I
-	 * don't particularily like this solution but what to do?
-	 */
-	/* const */ char *cp;
-	char ch;
-{
-	while (*cp && *cp != ch) cp++;
-	return (*cp ? (char *)cp : 0);
 }
 
 int
