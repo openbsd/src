@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.36 2006/01/11 07:22:00 miod Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.37 2006/01/17 02:03:53 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -176,9 +176,9 @@ struct ie_softc {
 				/* card dependent attn function */
 	void (*run_596)(struct ie_softc *);
 				/* card depenent "go on-line" function */
-	void (*memcopy)(const void *, void *, u_int);
+	void (*memcopy)(const void *, void *, size_t);
 	                        /* card dependent memory copy function */
-	void (*memzero)(void *, u_int);
+	void (*memzero)(void *, size_t);
 	                        /* card dependent memory zero function */
 	int want_mcsetup;       /* mcsetup flag */
 	int promisc;            /* are we in promisc mode? */
