@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_simple.c,v 1.12 2005/08/08 08:05:35 espie Exp $ */
+/*	$OpenBSD: clnt_simple.c,v 1.13 2006/01/17 15:43:34 millert Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -35,13 +35,14 @@
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <rpc/rpc.h>
-#include <sys/socket.h>
-#include <netdb.h>
 #include <unistd.h>
+#include <rpc/rpc.h>
 
 static struct callrpc_private {
 	CLIENT	*client;
