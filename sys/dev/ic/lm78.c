@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.2 2006/01/15 22:03:17 kettenis Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.3 2006/01/17 22:01:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -315,6 +315,10 @@ lm_attach(struct lm_softc *sc)
 		if (lm_chips[i].chip_match(sc))
 			break;
 
+	/* No point in doing anything if we don't have any sensors. */
+	if (sc->numsensors == 0)
+		return;
+
 	if (sensor_task_register(sc, lm_refresh, 5)) {
 		printf("%s: unable to register update task\n",
 		    sc->sc_dev.dv_xname);
@@ -425,9 +429,11 @@ wb_match(struct lm_softc *sc)
 		lm_setup_sensors(sc, w83783s_sensors);
 		break;
 	case WB_CHIPID_W83791D:
-	case WB_CHIPID_W83791D_2:
 		printf(": W83791D\n");
 		lm_setup_sensors(sc, w83791d_sensors);
+		break;
+	case WB_CHIPID_W83791SD:
+		printf(": W83791SD\n");
 		break;
 	case WB_CHIPID_W83792D:
 		if (devid >= 0x10 && devid <= 0x29)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78var.h,v 1.3 2006/01/15 22:03:17 kettenis Exp $	*/
+/*	$OpenBSD: lm78var.h,v 1.4 2006/01/17 22:01:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -106,7 +106,7 @@
 #define WB_CHIPID_W83783S	0x40
 #define WB_CHIPID_W83697HF	0x60
 #define WB_CHIPID_W83791D	0x71
-#define WB_CHIPID_W83791D_2	0x72
+#define WB_CHIPID_W83791SD	0x72
 #define WB_CHIPID_W83792D	0x7a
 #define WB_CHIPID_W83637HF	0x80
 #define WB_CHIPID_W83627THF	0x90
