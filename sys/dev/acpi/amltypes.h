@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.8 2005/12/28 03:04:56 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.9 2006/01/17 23:42:14 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -222,35 +222,47 @@ struct aml_node;
 /* AML Object Value */
 struct aml_value
 {
-	int    type;
-	int    length;
+	int	type;
+  	int	length;
+	int	dynamic;
 	union {
 		int64_t           vinteger;
-		const char       *vstring;
+		char		 *vstring;
 		u_int8_t         *vbuffer;
-		struct aml_value *vpackage;
-		struct acpi_gas   vopregion;
+		struct aml_value **vpackage;
+		struct {
+			u_int8_t	iospace;
+			u_int64_t	iobase;
+			u_int32_t	iolen;
+		} vopregion;
 		struct {
 			struct aml_value *args;
 			struct aml_value *locals;
 			struct aml_value *result;
 		} vmethod;
 		struct {
-			int              bitpos;
-			int              bitlen;
+			u_int16_t	 flags;
+			u_int16_t        bitpos;
+			u_int16_t        bitlen;
+			u_int16_t	 ftype;
 			struct aml_node *ref;
 		} vfield;
 		struct {
-			u_int8_t      proc_id;
-			u_int32_t     proc_addr;
-			u_int8_t      proc_len;
+			u_int8_t      	proc_id;
+			u_int32_t     	proc_addr;
+			u_int8_t      	proc_len;
 		} vprocessor;
 		struct {
-			u_int8_t      pwr_level;
-			u_int16_t     pwr_order;
+			int		index;
+			struct aml_node *refobj;
+		} vindex;
+		struct {
+			u_int8_t      	pwr_level;
+			u_int16_t     	pwr_order;
 		} vpowerrsrc;
 	} _;
 };
+
 #define v_integer   _.vinteger
 #define v_string    _.vstring
 #define v_buffer    _.vbuffer
@@ -263,8 +275,12 @@ struct aml_value
 #define v_thrmzone  _.vthrmzone
 
 #define aml_intval(v)   ((v)->v_integer)
+#define aml_strlen(v)   ((v)->length)
 #define aml_strval(v)   ((v)->v_string)
+#define aml_buflen(v)   ((v)->length)
 #define aml_bufval(v)   ((v)->v_buffer)
+#define aml_pkglen(v)   ((v)->length)
+#define aml_pkgval(v,i) (&(v)->v_package[(i)])
 
 struct aml_node
 {
@@ -272,14 +288,14 @@ struct aml_node
 	struct aml_node *child;
 	struct aml_node *sibling;
 
-	u_int16_t   opcode;
-	u_int8_t   *start;
-	u_int8_t   *end;
-	u_int8_t    flag;
-	const char *name;
-	const char *mnem;
+	u_int16_t   	 opcode;
+	u_int8_t   	 *start;
+	u_int8_t   	 *end;
+	u_int8_t    	 flag;
+	const char 	 *name;
+	const char 	 *mnem;
 
-	struct aml_value value;
+	struct aml_value *value;
 };
 
 #endif /* __DEV_ACPI_AMLTYPES_H__ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.11 2006/01/06 10:57:15 grange Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.12 2006/01/17 23:42:14 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -20,6 +20,7 @@
 
 #include <sys/timeout.h>
 
+/* #define ACPI_DEBUG */
 #ifdef ACPI_DEBUG
 extern int acpi_debug;
 #define dprintf(x...)	  do { if (acpi_debug) printf(x); } while(0)
@@ -123,8 +124,6 @@ struct acpi_softc {
 
 	int			 sc_powerbtn;
 	int			 sc_sleepbtn;
-
-	struct acpi_parsestate   amlpc;
 
 	struct {
 		int slp_typa;

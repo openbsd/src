@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.19 2006/01/06 08:59:58 grange Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.20 2006/01/17 23:42:14 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -817,8 +817,10 @@ acpi_init_states(struct acpi_softc *sc)
 		sc->sc_sleeptype[i].slp_typb = -1;
 		if (aml_eval_name(sc, aml_root.child, name, &res, &env))
 			continue;
-		sc->sc_sleeptype[i].slp_typa = aml_intval(&res.v_package[0]);
-		sc->sc_sleeptype[i].slp_typb = aml_intval(&res.v_package[1]);
+		if (res.type == AML_OBJTYPE_PACKAGE) {
+			sc->sc_sleeptype[i].slp_typa = aml_intval(res.v_package[0]);
+			sc->sc_sleeptype[i].slp_typb = aml_intval(res.v_package[1]);
+		}
 	}
 }
 

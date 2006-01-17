@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.8 2006/01/06 09:06:21 grange Exp $ */
+/* $OpenBSD: acpibat.c,v 1.9 2006/01/17 23:42:14 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -103,19 +103,19 @@ acpibat_getbif(struct acpibat_softc *sc)
 		return (1);
 	}
 
-	sc->sc_bif.bif_power_unit = aml_intval(&res.v_package[0]);
-	sc->sc_bif.bif_capacity = aml_intval(&res.v_package[1]);
-	sc->sc_bif.bif_last_capacity = aml_intval(&res.v_package[2]);
-	sc->sc_bif.bif_technology = aml_intval(&res.v_package[3]);
-	sc->sc_bif.bif_voltage = aml_intval(&res.v_package[4]);
-	sc->sc_bif.bif_warning = aml_intval(&res.v_package[5]);
-	sc->sc_bif.bif_low = aml_intval(&res.v_package[6]);
-	sc->sc_bif.bif_cap_granu1 = aml_intval(&res.v_package[7]);
-	sc->sc_bif.bif_cap_granu2 = aml_intval(&res.v_package[8]);
-	sc->sc_bif.bif_model = aml_strval(&res.v_package[9]);
-	sc->sc_bif.bif_serial = aml_strval(&res.v_package[10]);
-	sc->sc_bif.bif_type = aml_strval(&res.v_package[11]);
-	sc->sc_bif.bif_oem = aml_strval(&res.v_package[12]);
+	sc->sc_bif.bif_power_unit = aml_intval(res.v_package[0]);
+	sc->sc_bif.bif_capacity = aml_intval(res.v_package[1]);
+	sc->sc_bif.bif_last_capacity = aml_intval(res.v_package[2]);
+	sc->sc_bif.bif_technology = aml_intval(res.v_package[3]);
+	sc->sc_bif.bif_voltage = aml_intval(res.v_package[4]);
+	sc->sc_bif.bif_warning = aml_intval(res.v_package[5]);
+	sc->sc_bif.bif_low = aml_intval(res.v_package[6]);
+	sc->sc_bif.bif_cap_granu1 = aml_intval(res.v_package[7]);
+	sc->sc_bif.bif_cap_granu2 = aml_intval(res.v_package[8]);
+	sc->sc_bif.bif_model = aml_strval(res.v_package[9]);
+	sc->sc_bif.bif_serial = aml_strval(res.v_package[10]);
+	sc->sc_bif.bif_type = aml_strval(res.v_package[11]);
+	sc->sc_bif.bif_oem = aml_strval(res.v_package[12]);
 
 	dnprintf(20, "power_unit: %u capacity: %u last_cap: %u tech: %u "
 	    "volt: %u warn: %u low: %u gran1: %u gran2: %d model: %s "
@@ -157,10 +157,10 @@ acpibat_getbst(struct acpibat_softc *sc)
 		return (1);
 	}
 
-	sc->sc_bst.bst_state = aml_intval(&res.v_package[0]);
-	sc->sc_bst.bst_rate = aml_intval(&res.v_package[1]);
-	sc->sc_bst.bst_capacity = aml_intval(&res.v_package[2]);
-	sc->sc_bst.bst_voltage = aml_intval(&res.v_package[3]);
+	sc->sc_bst.bst_state = aml_intval(res.v_package[0]);
+	sc->sc_bst.bst_rate = aml_intval(res.v_package[1]);
+	sc->sc_bst.bst_capacity = aml_intval(res.v_package[2]);
+	sc->sc_bst.bst_voltage = aml_intval(res.v_package[3]);
 
 	dnprintf(20, "state: %u rate: %u cap: %u volt: %u ",
 	    sc->sc_bst.bst_state,
