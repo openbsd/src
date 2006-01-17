@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.32 2005/07/14 02:09:46 uwe Exp $
+#	$OpenBSD: files.vax,v 1.33 2006/01/17 20:26:16 miod Exp $
 #	$NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -141,7 +141,7 @@ major	{rd = 23}
 # Machine-independent SCSI driver.
 #
 
-include	"../../../scsi/files.scsi"
+include	"scsi/files.scsi"
 major	{sd = 20}
 major	{st = 21}
 major	{cd = 22}

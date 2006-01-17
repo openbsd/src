@@ -1,4 +1,4 @@
-/*	$OpenBSD: smg.c,v 1.8 2003/01/09 22:27:11 miod Exp $	*/
+/*	$OpenBSD: smg.c,v 1.9 2006/01/17 20:26:16 miod Exp $	*/
 /*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -47,9 +47,9 @@
 
 #include <dev/cons.h>
 
-#include "../qbus/dzreg.h"
-#include "../qbus/dzvar.h"
-#include "../dec/dzkbdvar.h"
+#include <vax/qbus/dzreg.h>
+#include <vax/qbus/dzvar.h>
+#include <vax/dec/dzkbdvar.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>

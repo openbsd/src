@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.13 2006/01/01 11:59:40 miod Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.14 2006/01/17 20:26:16 miod Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -53,12 +53,12 @@
 #include <machine/scb.h>
 #include <machine/nexus.h>
 
-#include <machine/../vax/gencons.h>
+#include <vax/vax/gencons.h>
 
-#include "../qbus/dzreg.h"
-#include "../qbus/dzvar.h"
+#include <vax/qbus/dzreg.h>
+#include <vax/qbus/dzvar.h>
 
-#include "../dec/dzkbdvar.h"
+#include <vax/dec/dzkbdvar.h>
 
 #include "dzkbd.h"
 #include "dzms.h"

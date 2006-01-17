@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzms.c,v 1.3 2003/06/02 23:27:57 millert Exp $	*/
+/*	$OpenBSD: dzms.c,v 1.4 2006/01/17 20:26:16 miod Exp $	*/
 /*	$NetBSD: dzms.c,v 1.1 2000/12/02 17:03:55 ragge Exp $	*/
 
 /*
@@ -53,11 +53,11 @@
 
 #include <machine/bus.h>
 
-#include "../qbus/dzreg.h"
-#include "../qbus/dzvar.h"
+#include <vax/qbus/dzreg.h>
+#include <vax/qbus/dzvar.h>
 
-#include "../dec/dzkbdvar.h"
-#include "../dec/lk201.h"
+#include <vax/dec/dzkbdvar.h>
+#include <vax/dec/lk201.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>

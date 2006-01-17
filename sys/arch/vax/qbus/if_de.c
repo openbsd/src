@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.5 2005/12/10 11:45:43 miod Exp $ */
+/*	$OpenBSD: if_de.c,v 1.6 2006/01/17 20:26:16 miod Exp $ */
 /*	$NetBSD: if_de.c,v 1.11 2001/11/13 07:11:24 lukem Exp $	*/
 
 /*
@@ -46,10 +46,6 @@
  *	timeout routine (get statistics)
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.11 2001/11/13 07:11:24 lukem Exp $");
-
-#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -82,8 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.11 2001/11/13 07:11:24 lukem Exp $");
 #include <dev/qbus/ubavar.h>
 #include <dev/qbus/if_dereg.h>
 #include <dev/qbus/if_uba.h>
-
-#include "ioconf.h"
 
 /*
  * Be careful with transmit/receive buffers, each entry steals 4 map

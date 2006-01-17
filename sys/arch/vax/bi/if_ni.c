@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ni.c,v 1.6 2005/01/15 05:24:10 brad Exp $ */
+/*	$OpenBSD: if_ni.c,v 1.7 2006/01/17 20:26:14 miod Exp $ */
 /*	$NetBSD: if_ni.c,v 1.15 2002/05/22 16:03:14 wiz Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -36,10 +36,6 @@
  *	Collect statistics.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.15 2002/05/22 16:03:14 wiz Exp $");
-
-#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -70,9 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.15 2002/05/22 16:03:14 wiz Exp $");
 
 #include <dev/bi/bireg.h>
 #include <dev/bi/bivar.h>
-
-#include "ioconf.h"
-#include "locators.h"
 
 /*
  * Tunable buffer parameters. Good idea to have them as power of 8; then

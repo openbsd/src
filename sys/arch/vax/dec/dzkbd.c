@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzkbd.c,v 1.4 2003/06/02 23:27:57 millert Exp $	*/
+/*	$OpenBSD: dzkbd.c,v 1.5 2006/01/17 20:26:16 miod Exp $	*/
 /*	$NetBSD: dzkbd.c,v 1.1 2000/12/02 17:03:55 ragge Exp $	*/
 
 /*
@@ -56,16 +56,16 @@
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
-#include "../dec/wskbdmap_lk201.h"
+#include <vax/dec/wskbdmap_lk201.h>
 
 #include <machine/bus.h> 
 
-#include "../qbus/dzreg.h"
-#include "../qbus/dzvar.h"
+#include <vax/qbus/dzreg.h>
+#include <vax/qbus/dzvar.h>
 
-#include "../dec/dzkbdvar.h"
-#include "../dec/lk201reg.h"
-#include "../dec/lk201var.h"
+#include <vax/dec/dzkbdvar.h>
+#include <vax/dec/lk201reg.h>
+#include <vax/dec/lk201var.h>
 
 struct dzkbd_internal {
 	struct dz_linestate *dzi_ls;

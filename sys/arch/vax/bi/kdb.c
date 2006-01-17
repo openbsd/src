@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdb.c,v 1.8 2002/08/09 20:26:44 jsyn Exp $ */
+/*	$OpenBSD: kdb.c,v 1.9 2006/01/17 20:26:14 miod Exp $ */
 /*	$NetBSD: kdb.c,v 1.26 2001/11/13 12:51:34 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -40,9 +40,6 @@
  *   Nices hardware error handling.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.26 2001/11/13 12:51:34 lukem Exp $");
-
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
@@ -68,8 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.26 2001/11/13 12:51:34 lukem Exp $");
 #include <dev/mscp/mscp.h>
 #include <dev/mscp/mscpreg.h>
 #include <dev/mscp/mscpvar.h>
-
-#include "locators.h"
 
 #define KDB_WL(adr, val) bus_space_write_4(sc->sc_iot, sc->sc_ioh, adr, val)
 #define KDB_RL(adr) bus_space_read_4(sc->sc_iot, sc->sc_ioh, adr)

@@ -1,10 +1,10 @@
-/*	$OpenBSD: wskbdmap_lk201.c,v 1.1 2001/05/16 22:15:17 hugh Exp $	*/
+/*	$OpenBSD: wskbdmap_lk201.c,v 1.2 2006/01/17 20:26:16 miod Exp $	*/
 /* $NetBSD: wskbdmap_lk201.c,v 1.4 2000/12/02 16:57:41 ragge Exp $ */
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
-#include "../dec/wskbdmap_lk201.h"
+#include <vax/dec/wskbdmap_lk201.h>
 
 #define KC(n) KS_KEYCODE((n) - MIN_LK201_KEY)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qv.c,v 1.11 2004/02/19 18:46:18 miod Exp $	*/
+/*	$OpenBSD: qv.c,v 1.12 2006/01/17 20:26:16 miod Exp $	*/
 /*	$NetBSD: qv.c,v 1.2 1996/09/02 06:44:28 mycroft Exp $	*/
 
 /*-
@@ -127,25 +127,25 @@
 #include "qv.h"
 #if NQV > 0
 
-#include "../include/pte.h"
+#include <machine/pte.h>
 
-#include "sys/param.h"
-#include "sys/conf.h"
-#include "sys/user.h"
-#include "qvioctl.h"
-#include "sys/tty.h"
-#include "sys/map.h"
-#include "sys/buf.h"
-#include "sys/vm.h"
-#include "sys/file.h"
-#include "sys/uio.h"
-#include "sys/kernel.h"
-#include "sys/syslog.h"
-#include "sys/poll.h"
-#include "../include/cpu.h"
-#include "../include/mtpr.h"
-#include "ubareg.h"
-#include "ubavar.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/user.h>
+#include <vax/uba/qvioctl.h>
+#include <sys/tty.h>
+#include <sys/map.h>
+#include <sys/buf.h>
+#include <sys/vm.h>
+#include <sys/file.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
+#include <sys/poll.h>
+#include <machine/cpu.h>
+#include <machine/mtpr.h>
+#include <vax/uba/ubareg.h>
+#include <vax/uba/ubavar.h>
 
 #define CONS_HACK
 

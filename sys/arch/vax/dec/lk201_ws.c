@@ -1,4 +1,4 @@
-/*	$OpenBSD: lk201_ws.c,v 1.1 2001/05/16 22:15:17 hugh Exp $	*/
+/*	$OpenBSD: lk201_ws.c,v 1.2 2006/01/17 20:26:16 miod Exp $	*/
 /* $NetBSD: lk201_ws.c,v 1.2 1998/10/22 17:55:20 drochner Exp $ */
 
 /*
@@ -38,9 +38,9 @@
 
 #include <dev/wscons/wsconsio.h>
 
-#include "../dec/lk201reg.h"
-#include "../dec/lk201var.h"
-#include "../dec/wskbdmap_lk201.h" /* for {MIN,MAX}_LK201_KEY */
+#include <vax/dec/lk201reg.h>
+#include <vax/dec/lk201var.h>
+#include <vax/dec/wskbdmap_lk201.h> /* for {MIN,MAX}_LK201_KEY */
 
 #define send(lks, c) ((*((lks)->attmt.sendchar))((lks)->attmt.cookie, c))
 
