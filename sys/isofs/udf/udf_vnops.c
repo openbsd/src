@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.10 2006/01/14 19:04:17 miod Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.11 2006/01/18 19:27:48 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -1322,7 +1322,7 @@ udf_bmap_internal(struct udf_node *node, off_t offset, daddr_t *sector,
 		} while(offset >= icblen);
 
 		lsector = (offset  >> udfmp->bshift) +
-		    ((struct short_ad *)(icb))->pos;
+		    letoh32(((struct short_ad *)(icb))->pos);
 
 		*max_size = GETICBLEN(short_ad, icb);
 
