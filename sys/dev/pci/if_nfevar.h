@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfevar.h,v 1.3 2005/12/17 11:12:54 jsg Exp $	*/
+/*	$OpenBSD: if_nfevar.h,v 1.4 2006/01/18 20:44:51 damien Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -15,19 +15,20 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define NFE_IFQ_MAXLEN 64
+#define NFE_IFQ_MAXLEN	64
 
 struct nfe_tx_data {
-	bus_dmamap_t			map;
-	struct mbuf			*m;
+	bus_dmamap_t	map;
+	bus_dmamap_t	active;
+	struct mbuf	*m;
 };
 
 struct nfe_tx_ring {
 	bus_dmamap_t		map;
 	bus_dma_segment_t	seg;
 	bus_addr_t		physaddr;
-	struct nfe_desc		*desc_v1;
-	struct nfe_desc_v3	*desc_v3;
+	struct nfe_desc32	*desc32;
+	struct nfe_desc64	*desc64;
 	struct nfe_tx_data	data[NFE_TX_RING_COUNT];
 	int			queued;
 	int			cur;
@@ -37,15 +38,14 @@ struct nfe_tx_ring {
 struct nfe_rx_data {
 	bus_dmamap_t	map;
 	struct mbuf	*m;
-	int		drop;
 };
 
 struct nfe_rx_ring {
 	bus_dmamap_t		map;
 	bus_dma_segment_t	seg;
 	bus_addr_t		physaddr;
-	struct nfe_desc		*desc_v1;
-	struct nfe_desc_v3	*desc_v3;
+	struct nfe_desc32	*desc32;
+	struct nfe_desc64	*desc64;
 	struct nfe_rx_data	data[NFE_RX_RING_COUNT];
 	int			cur;
 	int			next;
@@ -54,18 +54,19 @@ struct nfe_rx_ring {
 struct nfe_softc {
 	struct device		sc_dev;
 	struct arpcom		sc_arpcom;
-        bus_space_handle_t	sc_ioh;
-        bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_memh;
+	bus_space_tag_t		sc_memt;
 	void			*sc_ih;
 	bus_dma_tag_t		sc_dmat;
 	struct mii_data		sc_mii;
 	struct timeout		sc_timeout;
 
 	u_int			sc_flags;
-#define NFE_JUMBO_SUP		0x01
-#define NFE_40BIT_ADDR		0x02
+#define NFE_JUMBO_SUP	0x01
+#define NFE_40BIT_ADDR	0x02
+#define NFE_HW_CSUM	0x04
 
-	u_char			phyaddr;
+	uint8_t			phyaddr;
 
 	struct nfe_tx_ring	txq;
 	struct nfe_rx_ring	rxq;

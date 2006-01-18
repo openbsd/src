@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfereg.h,v 1.2 2005/12/17 09:03:14 jsg Exp $	*/
+/*	$OpenBSD: if_nfereg.h,v 1.3 2006/01/18 20:44:51 damien Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -17,11 +17,11 @@
 
 #define NFE_PCI_BA		0x10
 
-#define NFE_MAX_SCATTER		1
-
 #define NFE_PHYADD_SHIFT	5
 #define NFE_RX_RING_COUNT	128
 #define NFE_TX_RING_COUNT	64
+
+#define NFE_MAX_SCATTER		NFE_TX_RING_COUNT
 
 #define NFE_IRQ_STATUS		0x000
 #define NFE_IRQ_MASK		0x004
@@ -73,6 +73,7 @@
 #define NFE_R4_MAGIC		0x08
 #define NFE_WOL_MAGIC		0x7770
 #define NFE_RX_START		0x01
+#define NFE_TX_START		0x01
 
 #define NFE_IRQ_RXERR		0x0001
 #define NFE_IRQ_RX		0x0002
@@ -82,9 +83,11 @@
 #define NFE_IRQ_TIMER		0x0020
 #define NFE_IRQ_LINK		0x0040
 #define NFE_IRQ_TXERR2		0x0080
-#define NFE_IRQ_WANTED		0x00df
+#define NFE_IRQ_WANTED		0x00ff
 #define NFE_IRQ_TX1		0x0100
 
+#define NFE_RXTX_KICKTX		0x0001
+#define NFE_RXTX_BIT1		0x0002
 #define NFE_RXTX_BIT2		0x0004
 #define NFE_RXTX_RESET		0x0010
 #define NFE_RXTX_RXCHECK	0x0400
@@ -107,26 +110,36 @@
 #define NFE_RDM_SEED_FORCE2	0x2d00
 #define NFE_RDM_SEED_FORCE3	0x7400
 
-
-#define NFE_READ(sc, reg) \
-	bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg))
-
-#define NFE_WRITE(sc, reg, val) \
-	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
-
 /* Rx/Tx descriptor */
-struct nfe_desc {
+struct nfe_desc32 {
 	uint32_t	physaddr;
 	uint16_t	length;
 	uint16_t	flags;
+#define NFE_RX_VALID_V1		(1 <<  0)
+#define NFE_RX_VALID_V2		(1 << 13)
+#define NFE_RX_ERROR		(1 << 14)
+#define NFE_RX_READY		(1 << 15)
+#define NFE_RX_CSUMOK		0x1c00
+#define NFE_RX_FIXME_V1		0x6004
+#define NFE_RX_FIXME_V2		0x4300
 } __packed;
 
-#define NFE_RX_READY	0x8000
-
 /* V2 Rx/Tx descriptor */
-struct nfe_desc_v3 {
+struct nfe_desc64 {
 	uint32_t	physaddr[2];
 	uint32_t	reserved;
 	uint16_t	length;
 	uint16_t	flags;
+#define NFE_TX_LASTFRAG_V1	(1 <<  0)
+#define NFE_TX_TCP_CSUM		(1 << 10)
+#define NFE_TX_IP_CSUM		(1 << 11)
+#define NFE_TX_LASTFRAG_V2	(1 << 13)
+#define NFE_TX_ERROR		(1 << 14)
+#define NFE_TX_VALID		(1 << 15)
 } __packed;
+
+#define NFE_READ(sc, reg) \
+	bus_space_read_4((sc)->sc_memt, (sc)->sc_memh, (reg))
+
+#define NFE_WRITE(sc, reg, val) \
+	bus_space_write_4((sc)->sc_memt, (sc)->sc_memh, (reg), (val))
