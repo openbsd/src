@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mprotect.2,v 1.11 2006/01/18 02:25:46 deraadt Exp $
+.\"	$OpenBSD: mprotect.2,v 1.12 2006/01/18 11:15:33 jmc Exp $
 .\"	$NetBSD: mprotect.2,v 1.6 1995/10/12 15:41:08 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -58,7 +58,8 @@ The protections (region accessibility) are specified in the
 argument by
 .Tn OR Ns 'ing
 the following values:
-.Bl -tag -width MAP_FIXEDX
+.Pp
+.Bl -tag -width "PROT_WRITEXX" -offset indent -compact
 .It Dv PROT_EXEC
 Pages may be executed.
 .It Dv PROT_READ
