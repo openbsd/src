@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.21 2005/11/28 19:59:25 deraadt Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.22 2006/01/18 05:09:23 marco Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -153,7 +153,8 @@ mainbus_attach(parent, self, aux)
 		mba.mba_aaa.aaa_iot = I386_BUS_SPACE_IO;
 		mba.mba_aaa.aaa_memt = I386_BUS_SPACE_MEM;
 
-		config_found(self, &mba.mba_aaa, mainbus_print);
+		if (acpi_probe(self, aux, &mba.mba_aaa))
+			config_found(self, &mba.mba_aaa, mainbus_print);
 	}
 #endif
 #if NBIOS > 0
