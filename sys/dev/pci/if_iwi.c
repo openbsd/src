@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_iwi.c,v 1.56 2006/01/04 06:04:41 canacar Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.57 2006/01/18 20:25:22 damien Exp $	*/
 
 /*-
- * Copyright (c) 2004, 2005
+ * Copyright (c) 2004-2006
  *      Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -665,6 +665,10 @@ int
 iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct iwi_softc *sc = ic->ic_softc;
+	enum ieee80211_state ostate;
+	u_int32_t tmp;
+
+	ostate = ic->ic_state;
 
 	switch (nstate) {
 	case IEEE80211_S_SCAN:
@@ -681,10 +685,22 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			ieee80211_new_state(ic, IEEE80211_S_AUTH, -1);
 		} else if (ic->ic_opmode == IEEE80211_M_MONITOR)
 			iwi_set_chan(sc, ic->ic_ibss_chan);
+
+		/* assoc led on */
+		tmp = MEM_READ_4(sc, IWI_MEM_EVENT_CTL) & IWI_LED_MASK;
+		MEM_WRITE_4(sc, IWI_MEM_EVENT_CTL, tmp | IWI_LED_ASSOC);
+		break;
+
+	case IEEE80211_S_INIT:
+		if (ostate != IEEE80211_S_RUN)
+			break;
+
+		/* assoc led off */
+		tmp = MEM_READ_4(sc, IWI_MEM_EVENT_CTL) & IWI_LED_MASK;
+		MEM_WRITE_4(sc, IWI_MEM_EVENT_CTL, tmp & ~IWI_LED_ASSOC);
 		break;
 
 	case IEEE80211_S_ASSOC:
-	case IEEE80211_S_INIT:
 		break;
 	}
 
@@ -1493,9 +1509,9 @@ iwi_load_ucode(struct iwi_softc *sc, const char *name)
 	DELAY(5000);
 	MEM_WRITE_4(sc, 0x3000e0, 0);
 	DELAY(1000);
-	MEM_WRITE_4(sc, 0x300004, 1);
+	MEM_WRITE_4(sc, IWI_MEM_EVENT_CTL, 1);
 	DELAY(1000);
-	MEM_WRITE_4(sc, 0x300004, 0);
+	MEM_WRITE_4(sc, IWI_MEM_EVENT_CTL, 0);
 	DELAY(1000);
 	MEM_WRITE_1(sc, 0x200000, 0x00);
 	MEM_WRITE_1(sc, 0x200000, 0x40);
@@ -2082,11 +2098,14 @@ iwi_stop(struct ifnet *ifp, int disable)
 	struct iwi_tx_buf *buf;
 	int i;
 
-	iwi_stop_master(sc);
-	CSR_WRITE_4(sc, IWI_CSR_RST, IWI_RST_SW_RESET);
+	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
+	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	iwi_stop_master(sc);
+	CSR_WRITE_4(sc, IWI_CSR_RST, IWI_RST_SW_RESET);
 
 	/*
 	 * Release Tx buffers
@@ -2105,8 +2124,6 @@ iwi_stop(struct ifnet *ifp, int disable)
 			}
 		}
 	}
-
-	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 }
 
 struct cfdriver iwi_cd = {

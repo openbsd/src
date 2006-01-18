@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_iwireg.h,v 1.17 2005/10/06 20:33:39 damien Exp $	*/
+/*	$OpenBSD: if_iwireg.h,v 1.18 2006/01/18 20:25:22 damien Exp $	*/
 
 /*-
- * Copyright (c) 2004, 2005
+ * Copyright (c) 2004-2006
  *      Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -379,9 +379,14 @@ struct iwi_wep_key {
 	u_int8_t	key[IEEE80211_KEYBUF_SIZE];
 } __packed;
 
-/* EEPROM = Electrically Erasable Programmable Read-Only Memory */
-
 #define IWI_MEM_EEPROM_CTL	0x00300040
+#define IWI_MEM_EVENT_CTL	0x00300004
+
+/* possible flags for register IWI_MEM_EVENT */
+#define IWI_LED_ASSOC	(1 << 5)
+#define IWI_LED_MASK	0xd9fffffb
+
+/* EEPROM = Electrically Erasable Programmable Read-Only Memory */
 
 #define IWI_EEPROM_MAC	0x21
 
