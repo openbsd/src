@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.98 2005/11/13 03:27:42 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.99 2006/01/18 19:54:49 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -290,7 +290,7 @@ scsi_probe_bus(bus, target, lun)
 		if (lun < 0 || lun >= scsi->adapter_link->luns)
 			return EINVAL;
 		maxlun = lun;
-		if (lun == 0 || scsi->sc_link[target][0] == NULL)
+		if (target == -1 || scsi->sc_link[target][0] == NULL)
 			minlun = 0;
 		else
 			minlun = lun;
