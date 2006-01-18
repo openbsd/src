@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioiic.c,v 1.4 2006/01/17 22:57:47 grange Exp $	*/
+/*	$OpenBSD: gpioiic.c,v 1.5 2006/01/18 21:47:08 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -120,6 +120,10 @@ gpioiic_attach(struct device *parent, struct device *self, void *aux)
 	caps = gpio_pin_caps(sc->sc_gpio, &sc->sc_map, GPIOIIC_PIN_SDA);
 	if (!(caps & GPIO_PIN_OUTPUT)) {
 		printf(": SDA pin is unable to drive output\n");
+		goto fail;
+	}
+	if (!(caps & GPIO_PIN_INPUT)) {
+		printf(": SDA pin is unable to read input\n");
 		goto fail;
 	}
 	printf(": SDA[%d]", sc->sc_map.pm_map[GPIOIIC_PIN_SDA]);
