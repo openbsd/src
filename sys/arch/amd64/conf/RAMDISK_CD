@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.45 2005/11/15 01:12:48 brad Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.46 2006/01/18 00:19:07 brad Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -230,7 +230,7 @@ sis*	at pci?			# SiS 900/7016 ethernet
 skc*	at pci?			# SysKonnect GEnesis 984x
 sk*	at skc?			#  each port of above
 em*	at pci?			# Intel Pro/1000 ethernet
-#ixgb*	at pci?			# Intel Pro/10Gb ethernet
+ixgb*	at pci?			# Intel Pro/10Gb ethernet
 #txp*	at pci?			# 3com 3CR990
 #nge*	at pci?			# NS DP83820/DP83821 GigE
 #sf*	at pci?			# Adaptec AIC-6915 ethernet
