@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.20 2006/01/17 23:42:14 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.21 2006/01/18 22:25:44 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -83,6 +83,68 @@ struct cfdriver acpi_cd = {
 
 struct acpi_softc *acpi_softc;
 int acpi_s5, acpi_evindex, icount;
+
+void
+acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address, 
+	   int access_size, int len, void *buffer)
+{
+	void *pb;
+	bus_space_handle_t ioh;
+	struct acpi_mem_map mh;
+
+	switch (iospace) {
+	case GAS_SYSTEM_MEMORY:
+		/* copy to/from system memory */
+		acpi_map(address, len, &mh);
+		if (iodir == ACPI_IOREAD) {
+			memcpy(buffer, mh.va, len);
+		}
+		else {
+			memcpy(mh.va, buffer, len);
+		}
+		acpi_unmap(&mh);
+		break;
+
+	case GAS_SYSTEM_IOSPACE:
+		/* read/write from I/O registers */
+		pb = buffer;
+		bus_space_map(sc->sc_iot, address, len, 0, &ioh); 
+		while (pb < buffer+len) {
+			if (iodir == ACPI_IOREAD) {
+				switch (access_size) {
+				case 1:
+					*(uint8_t *)pb = bus_space_read_1(sc->sc_iot, ioh, 0);
+					break;
+				case 2:
+					*(uint16_t *)pb = bus_space_read_2(sc->sc_iot, ioh, 0);
+					break;
+				case 4:
+					*(uint32_t *)pb = bus_space_read_4(sc->sc_iot, ioh, 0);
+					break;
+				}
+			}
+			else {
+				switch (access_size) {
+				case 1:
+					bus_space_write_1(sc->sc_iot, ioh, 0, *(uint8_t *)pb);
+					break;
+				case 2:
+					bus_space_write_2(sc->sc_iot, ioh, 0, *(uint16_t *)pb);
+					break;
+				case 4:
+					bus_space_write_4(sc->sc_iot, ioh, 0, *(uint32_t *)pb);
+					break;
+				}
+			}
+			pb += access_size;
+		}
+		bus_space_unmap(sc->sc_iot, ioh, len);
+		break;
+
+	case GAS_PCI_CFG_SPACE:
+		break;
+	}
+}
 
 /* Map Power Management registers */
 void

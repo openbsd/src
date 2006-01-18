@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.9 2006/01/17 23:42:14 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.10 2006/01/18 22:25:44 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -141,6 +141,8 @@
 #define AMLOP_BREAK            0xA5
 #define AMLOP_BREAKPOINT       0xCC
 #define AMLOP_ONES             0xFF
+
+#define AMLOP_FIELDUNIT        0xFE00
 
 /*
  * Comparison types for Match()
