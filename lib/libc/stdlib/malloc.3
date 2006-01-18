@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.41 2005/07/26 04:20:23 jaredy Exp $
+.\"	$OpenBSD: malloc.3,v 1.42 2006/01/18 06:36:05 jakemsr Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -96,7 +96,7 @@ The
 function causes the space pointed to by
 .Fa ptr
 to be deallocated, that is, at least made available for further allocation,
-but if possible, it will passed back to the kernel with
+but if possible, it will be passed back to the kernel with
 .Xr sbrk 2 .
 If
 .Fa ptr
