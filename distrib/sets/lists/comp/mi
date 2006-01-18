@@ -5252,6 +5252,7 @@
 ./usr/share/man/cat9/crypto_newsession.0
 ./usr/share/man/cat9/crypto_register.0
 ./usr/share/man/cat9/crypto_unregister.0
+./usr/share/man/cat9/ctlname.0
 ./usr/share/man/cat9/ctxsw.0
 ./usr/share/man/cat9/db_printf.0
 ./usr/share/man/cat9/delay.0
@@ -5554,6 +5555,16 @@
 ./usr/share/man/cat9/strncpy.0
 ./usr/share/man/cat9/style.0
 ./usr/share/man/cat9/syscall.0
+./usr/share/man/cat9/sysctl_int.0
+./usr/share/man/cat9/sysctl_int_arr.0
+./usr/share/man/cat9/sysctl_quad.0
+./usr/share/man/cat9/sysctl_rdint.0
+./usr/share/man/cat9/sysctl_rdquad.0
+./usr/share/man/cat9/sysctl_rdstring.0
+./usr/share/man/cat9/sysctl_rdstruct.0
+./usr/share/man/cat9/sysctl_string.0
+./usr/share/man/cat9/sysctl_struct.0
+./usr/share/man/cat9/sysctl_tstring.0
 ./usr/share/man/cat9/systrace.0
 ./usr/share/man/cat9/systrace_exit.0
 ./usr/share/man/cat9/systrace_fork.0
