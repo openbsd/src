@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1004 2006/01/14 06:44:40 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1005 2006/01/18 00:24:24 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -11313,6 +11313,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ZOLTRIX,
 	    "Zoltrix",
+	},
+	{
+	    PCI_VENDOR_AGILENT,
+	    "Agilent",
 	},
 	{
 	    PCI_VENDOR_NDC,
