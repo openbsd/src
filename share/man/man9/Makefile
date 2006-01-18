@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.110 2006/01/12 00:17:17 dlg Exp $
+#	$OpenBSD: Makefile,v 1.111 2006/01/18 14:51:42 mickey Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -21,7 +21,7 @@ MAN=	altq.9 audio.9 autoconf.9 boot.9 buffercache.9 bus_dma.9 bus_space.9 \
 	pool.9 powerhook_establish.9 ppsratecheck.9 printf.9 psignal.9 \
 	radio.9 random.9 rasops.9 ratecheck.9 resettodr.9 rssadapt.9 \
 	shutdownhook_establish.9 sleep.9 spl.9 startuphook_establish.9 \
-	style.9 syscall.9 systrace.9 \
+	style.9 syscall.9 systrace.9 sysctl_int.9 \
 	tc_init.9 time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 vfs.9 vfs_cache.9 \
 	vaccess.9 vclean.9 vcount.9 vdevgone.9 vfinddev.9 vflush.9 \
 	vflushbuf.9 vget.9 vgone.9 vhold.9 vinvalbuf.9 vnode.9 vnsubr.9 \
@@ -251,6 +251,11 @@ MLINKS+=spl.9 spl0.9 spl.9 splassert.9 spl.9 splbio.9 spl.9 splclock.9 \
 MLINKS+=startuphook_establish.9 startuphook_disestablish.9
 MLINKS+=systrace.9 systrace_redirect.9 \
 	systrace.9 systrace_fork.9 systrace.9 systrace_exit.9
+MLINKS+=sysctl_int.9 sysctl_int_arr.9 sysctl_int.9 sysctl_quad.9 \
+	sysctl_int.9 sysctl_string.9 sysctl_int.9 sysctl_tstring.9 \
+	sysctl_int.9 sysctl_rdint.9 sysctl_int.9 sysctl_rdquad.9 \
+	sysctl_int.9 sysctl_rdstring.9 sysctl_int.9 sysctl_rdstruct.9 \
+	sysctl_int.9 sysctl_struct.9 sysctl_int.9 ctlname.9
 MLINKS+=time.9 boottime.9 time.9 mono_time.9 time.9 runtime.9
 MLINKS+=timeout.9 timeout_add.9 timeout.9 timeout_set.9 \
 	timeout.9 timeout_pending.9 timeout.9 timeout_del.9 \
