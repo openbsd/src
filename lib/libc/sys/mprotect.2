@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mprotect.2,v 1.12 2006/01/18 11:15:33 jmc Exp $
+.\"	$OpenBSD: mprotect.2,v 1.13 2006/01/18 18:35:57 tom Exp $
 .\"	$NetBSD: mprotect.2,v 1.6 1995/10/12 15:41:08 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -44,9 +44,20 @@
 .Sh DESCRIPTION
 The
 .Fn mprotect
-system call
-changes the specified pages to have protection
-.Fa prot .
+system call sets the access protections for the pages that contain
+the address range
+.Fa addr
+through
+.Fa addr
+\&+
+.Fa len
+\- 1
+(inclusive).
+If
+.Fa len
+is 0, then action will be taken on the page that contains
+.Fa addr .
+.Pp
 Not all implementations will guarantee protection on a page basis;
 the granularity of protection changes may be as large as an entire region.
 Nor will all implementations guarantee to give exactly the requested
@@ -85,3 +96,12 @@ The
 .Fn mprotect
 function first appeared in
 .Bx 4.4 .
+.Sh CAVEATS
+The
+.Ox
+implementation of
+.Fn mprotect
+does not require
+.Fa addr
+to be page-aligned,
+although other implementations may.
