@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1004 2006/01/14 06:44:40 brad Exp $
+$OpenBSD: pcidevs,v 1.1005 2006/01/18 00:24:24 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -244,6 +244,7 @@ vendor	SYBA		0x1592	Syba
 vendor	BLUESTEEL	0x15ab	Bluesteel
 vendor	VMWARE		0x15ad	VMware
 vendor	ZOLTRIX		0x15b0	Zoltrix
+vendor	AGILENT		0x15bc	Agilent
 vendor	NDC		0x15e8	National Datacomm
 vendor	PDC		0x15e9	Pacific Data
 vendor	EUMITCOM	0x1638	Eumitcom
