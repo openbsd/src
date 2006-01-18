@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mprotect.2,v 1.10 2004/04/15 19:52:18 jmc Exp $
+.\"	$OpenBSD: mprotect.2,v 1.11 2006/01/18 02:25:46 deraadt Exp $
 .\"	$NetBSD: mprotect.2,v 1.6 1995/10/12 15:41:08 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -49,6 +49,9 @@ changes the specified pages to have protection
 .Fa prot .
 Not all implementations will guarantee protection on a page basis;
 the granularity of protection changes may be as large as an entire region.
+Nor will all implementations guarantee to give exactly the requested
+permissions; more permissions may be granted than requested by
+.Fa prot .
 .Pp
 The protections (region accessibility) are specified in the
 .Fa prot
