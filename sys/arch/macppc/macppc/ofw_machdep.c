@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.28 2006/01/01 11:59:39 miod Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.29 2006/01/18 23:21:17 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -52,11 +52,11 @@
 
 #include <macppc/macppc/ofw_machdep.h>
 
-#include <ukbd.h>
-#include <akbd.h>
-#include <zstty.h>
+#include "ukbd.h"
+#include "akbd.h"
+#include "zstty.h"
 #include <dev/usb/ukbdvar.h>
-#include <macppc/dev/akbdvar.h>
+#include <dev/adb/akbdvar.h>
 
 /* XXX, called from asm */
 int save_ofw_mapping(void);

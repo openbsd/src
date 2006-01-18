@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.10 2006/01/13 19:36:44 miod Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.11 2006/01/18 23:21:17 miod Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.25 2005/10/28 21:54:52 christos Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <machine/cpu.h>
 #include <machine/viareg.h>
 
+#include <dev/adb/adb.h>
 #include <mac68k/dev/adbvar.h>
 #include <mac68k/dev/pm_direct.h>
 

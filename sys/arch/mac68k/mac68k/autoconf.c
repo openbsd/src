@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.24 2006/01/13 19:36:45 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.25 2006/01/18 23:21:17 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.38 1996/12/18 05:46:09 scottr Exp $	*/
 
 /*
@@ -62,7 +62,6 @@
 #include <dev/cons.h>
 
 #include <machine/autoconf.h>
-#include <machine/adbsys.h>
 #include <machine/viareg.h>
 
 #include <scsi/scsi_all.h>
@@ -92,7 +91,7 @@ static struct device fakerdrootdev = { DV_DISK, {}, NULL, 0, "rd0", NULL };
 void
 cpu_configure()
 {
-	startrtclock();		/* start before adb_init() */
+	startrtclock();
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("No mainbus found!");

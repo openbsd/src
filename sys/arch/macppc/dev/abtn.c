@@ -1,4 +1,4 @@
-/*	$OpenBSD: abtn.c,v 1.10 2006/01/08 17:25:05 miod Exp $	*/
+/*	$OpenBSD: abtn.c,v 1.11 2006/01/18 23:21:17 miod Exp $	*/
 /*	$NetBSD: abtn.c,v 1.1 1999/07/12 17:48:26 tsubai Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #include <dev/ofw/openfirm.h>
 #include <macppc/macppc/ofw_machdep.h>
 
-#include <macppc/dev/adbvar.h>
+#include <dev/adb/adb.h>
 
 #define ABTN_HANDLER_ID 31
 
@@ -88,7 +88,7 @@ abtn_attach(struct device *parent, struct device *self, void *aux)
 	adbinfo.siServiceRtPtr = (Ptr)abtn_adbcomplete;
 	adbinfo.siDataAreaAddr = (caddr_t)sc;
 
-	SetADBInfo(&adbinfo, sc->adbaddr);
+	set_adb_info(&adbinfo, sc->adbaddr);
 }
 
 void

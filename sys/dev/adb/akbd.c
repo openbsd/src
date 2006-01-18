@@ -1,5 +1,5 @@
-/*	$OpenBSD: akbd.c,v 1.20 2006/01/08 17:25:05 miod Exp $	*/
-/*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.1 2006/01/18 23:21:17 miod Exp $	*/
+/*	$NetBSD: akbd.c,v 1.17 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -48,25 +48,26 @@
 #include <dev/wscons/wsksymvar.h>
 
 #include <machine/autoconf.h>
-#define KEYBOARD_ARRAY
+#include <machine/cpu.h>
 
-#include <macppc/dev/keyboard.h>
-#include <macppc/dev/adbvar.h>
-#include <macppc/dev/akbdmap.h>
-#include <macppc/dev/akbdvar.h>
-#include <macppc/dev/amsvar.h>
+#include <dev/adb/adb.h>
+#include <dev/adb/akbdmap.h>
+#include <dev/adb/akbdvar.h>
+
+#define KEYBOARD_ARRAY
+#include <dev/adb/keyboard.h>
 
 /*
  * Function declarations.
  */
-static int	akbdmatch(struct device *, void *, void *);
-static void	akbdattach(struct device *, struct device *, void *);
-void		kbd_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command);
-static void	kbd_processevent(adb_event_t *event, struct akbd_softc *);
+int	akbdmatch(struct device *, void *, void *);
+void	akbdattach(struct device *, struct device *, void *);
+void	kbd_adbcomplete(caddr_t, caddr_t, int);
+void	kbd_processevent(adb_event_t *, struct akbd_softc *);
 #ifdef notyet
-static u_char	getleds(int);
-static int	setleds(struct akbd_softc *, u_char);
-static void	blinkleds(struct akbd_softc *);
+u_char	getleds(int);
+int	setleds(struct akbd_softc *, u_char);
+void	blinkleds(struct akbd_softc *);
 #endif
 
 /* Driver definition. */
@@ -77,11 +78,10 @@ struct cfdriver akbd_cd = {
 	NULL, "akbd", DV_DULL
 };
 
-
 int akbd_enable(void *, int);
 void akbd_set_leds(void *, int);
 int akbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int akbd_intr(adb_event_t *event);
+int akbd_intr(adb_event_t *, struct akbd_softc *);
 void akbd_rawrepeat(void *v);
 
 
@@ -89,14 +89,6 @@ struct wskbd_accessops akbd_accessops = {
 	akbd_enable,
 	akbd_set_leds,
 	akbd_ioctl,
-};
-
-void akbd_cngetc(void *, u_int *, int *);
-void akbd_cnpollc(void *, int);
-
-struct wskbd_consops akbd_consops = {
-	akbd_cngetc,
-	akbd_cnpollc,
 };
 
 struct wskbd_mapdata akbd_keymapdata = {
@@ -108,12 +100,10 @@ struct wskbd_mapdata akbd_keymapdata = {
 #endif
 };
 
-static int akbd_is_console;
-
-static int
-akbdmatch(struct device *parent, void *cf, void *aux)
+int
+akbdmatch(struct device *parent, void *vcf, void *aux)
 {
-	struct adb_attach_args *aa_args = aux;
+	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
 
 	if (aa_args->origaddr == ADBADDR_KBD)
 		return 1;
@@ -121,16 +111,18 @@ akbdmatch(struct device *parent, void *cf, void *aux)
 		return 0;
 }
 
-static void
+void
 akbdattach(struct device *parent, struct device *self, void *aux)
 {
 	ADBSetInfoBlock adbinfo;
 	struct akbd_softc *sc = (struct akbd_softc *)self;
-	struct adb_attach_args *aa_args = aux;
+	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
 	int error, kbd_done;
 	short cmd;
 	u_char buffer[9];
 	struct wskbddev_attach_args a;
+	static int akbd_console_initted;
+	int wskbd_eligible = 1;
 
 	sc->origaddr = aa_args->origaddr;
 	sc->adbaddr = aa_args->adbaddr;
@@ -159,10 +151,12 @@ akbdattach(struct device *parent, struct device *self, void *aux)
 			printf("Mouseman (non-EMP) pseudo keyboard\n");
 			adbinfo.siServiceRtPtr = (Ptr)0;
 			adbinfo.siDataAreaAddr = (Ptr)0;
+			wskbd_eligible = 0;
 		} else if (kbd_done && buffer[1] == 0x9a && buffer[2] == 0x21) {
 			printf("Trackman (non-EMP) pseudo keyboard\n");
 			adbinfo.siServiceRtPtr = (Ptr)0;
 			adbinfo.siDataAreaAddr = (Ptr)0;
+			wskbd_eligible = 0;
 		} else {
 			printf("extended keyboard\n");
 #ifdef notyet
@@ -190,6 +184,7 @@ akbdattach(struct device *parent, struct device *self, void *aux)
 		break;
 	case ADB_ADJKPD:
 		printf("adjustable keypad\n");
+		wskbd_eligible = 0;
 		break;
 	case ADB_ADJKBD:
 		printf("adjustable keyboard\n");
@@ -232,20 +227,23 @@ akbdattach(struct device *parent, struct device *self, void *aux)
 		break;
 	default:
 		printf("mapped device (%d)\n", sc->handler_id);
+		wskbd_eligible = 0;
 		break;
 	}
-	error = SetADBInfo(&adbinfo, sc->adbaddr);
+	error = set_adb_info(&adbinfo, sc->adbaddr);
 #ifdef ADB_DEBUG
 	if (adb_debug)
-		printf("akbd: returned %d from SetADBInfo\n", error);
+		printf("akbd: returned %d from set_adb_info\n", error);
 #endif
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	timeout_set(&sc->sc_rawrepeat_ch, akbd_rawrepeat, sc);
 #endif
 
-
-	a.console = akbd_is_console;
+	if (akbd_is_console() && wskbd_eligible)
+		a.console = (++akbd_console_initted == 1);
+	else
+		a.console = 0;
 	a.keymap = &akbd_keymapdata;
 	a.accessops = &akbd_accessops;
 	a.accesscookie = sc;
@@ -300,7 +298,7 @@ kbd_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command)
  * repeat handler, optionally passing the event through the mouse
  * button emulation handler first.
  */
-static void
+void
 kbd_processevent(adb_event_t *event, struct akbd_softc *ksc)
 {
         adb_event_t new_event;
@@ -308,12 +306,14 @@ kbd_processevent(adb_event_t *event, struct akbd_softc *ksc)
         new_event = *event;
 	new_event.u.k.key = event->bytes[0];
 	new_event.bytes[1] = 0xff;
-	akbd_intr(&new_event);
+	if (ksc->sc_wskbddev != NULL) /* wskbd is attached? */
+		akbd_intr(&new_event, ksc);
 	if (event->bytes[1] != 0xff) {
 		new_event.u.k.key = event->bytes[1];
 		new_event.bytes[0] = event->bytes[1];
 		new_event.bytes[1] = 0xff;
-		akbd_intr(&new_event);
+		if (ksc->sc_wskbddev != NULL) /* wskbd is attached? */
+			akbd_intr(&new_event, ksc);
 	}
 
 }
@@ -322,7 +322,7 @@ kbd_processevent(adb_event_t *event, struct akbd_softc *ksc)
 /*
  * Get the actual hardware LED state and convert it to softc format.
  */
-static u_char
+u_char
 getleds(int addr)
 {
 	short cmd;
@@ -331,7 +331,6 @@ getleds(int addr)
 	leds = 0x00;	/* all off */
 	buffer[0] = 0;
 
-	/* talk R2 */
 	cmd = ADBTALK(addr, 2);
 	if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) == 0 &&
 	    buffer[0] > 0)
@@ -346,7 +345,7 @@ getleds(int addr)
  * Automatically translates from ioctl/softc format to the
  * actual keyboard register format
  */
-static int
+int
 setleds(struct akbd_softc *ksc, u_char leds)
 {
 	int addr;
@@ -370,6 +369,7 @@ setleds(struct akbd_softc *ksc, u_char leds)
 	cmd = ADBLISTEN(addr, 2);
 	adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
 
+	/* talk R2 */
 	cmd = ADBTALK(addr, 2);
 	if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) || buffer[0] == 0)
 		return (EIO);
@@ -385,7 +385,7 @@ setleds(struct akbd_softc *ksc, u_char leds)
 /*
  * Toggle all of the LED's on and off, just for show.
  */
-static void
+void
 blinkleds(struct akbd_softc *ksc)
 {
 	int addr, i;
@@ -445,10 +445,18 @@ akbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (0);
 #endif
 
-	}
-	/* kbdioctl(...); */
+#ifdef mac68k	/* XXX not worth creating akbd_machdep_ioctl() */
+	case WSKBDIO_BELL:
+	case WSKBDIO_COMPLEXBELL:
+#define d ((struct wskbd_bell_data *)data)
+		mac68k_ring_bell(d->pitch, d->period * hz / 1000, d->volume);
+#undef d
+		return (0);
+#endif
 
-	return -1;
+	default:
+		return (-1);
+	}
 }
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
@@ -465,17 +473,13 @@ akbd_rawrepeat(void *v)
 }
 #endif
 
-
-static int polledkey;
-
+int adb_polledkey;
 int
-akbd_intr(adb_event_t *event)
+akbd_intr(adb_event_t *event, struct akbd_softc *sc)
 {
 	int key, press, val;
 	int type;
 	static int shift;
-
-	struct akbd_softc *sc = akbd_cd.cd_devs[0];
 
 	key = event->u.k.key;
 
@@ -504,20 +508,8 @@ akbd_intr(adb_event_t *event)
 
 	type = press ? WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP;
 
-	switch (val) {
-#if 0
-	/* not supported... */
-	case ADBK_KEYVAL(245):
-		pm_eject_pcmcia(0);
-		break;
-	case ADBK_KEYVAL(244):
-		pm_eject_pcmcia(1);
-		break;
-#endif
-	}
-
 	if (adb_polling) {
-		polledkey = key;
+		adb_polledkey = key;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	} else if (sc->sc_rawkbd) {
 		char cbuf[MAXKEYS *2];
@@ -556,45 +548,4 @@ akbd_intr(adb_event_t *event)
 	}
 
 	return 0;
-}
-
-int
-akbd_cnattach()
-{
-
-	akbd_is_console = 1;
-	wskbd_cnattach(&akbd_consops, NULL, &akbd_keymapdata);
-	return 0;
-}
-
-void
-akbd_cngetc(void *v, u_int *type, int *data)
-{
-	int key, press, val;
-	int s;
-
-	s = splhigh();
-
-	polledkey = -1;
-	adb_polling = 1;
-
-	while (polledkey == -1) {
-		adb_intr(NULL); /* adb does not use the argument */
-		DELAY(10000);				/* XXX */
-	}
-
-	adb_polling = 0;
-	splx(s);
-
-	key = polledkey;
-	press = ADBK_PRESS(key);
-	val = ADBK_KEYVAL(key);
-
-	*data = val;
-	*type = press ? WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP;
-}
-
-void
-akbd_cnpollc(void *v, int on)
-{
 }

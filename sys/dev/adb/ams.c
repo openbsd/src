@@ -1,4 +1,4 @@
-/*	$OpenBSD: ams.c,v 1.13 2006/01/08 17:25:06 miod Exp $	*/
+/*	$OpenBSD: ams.c,v 1.1 2006/01/18 23:21:17 miod Exp $	*/
 /*	$NetBSD: ams.c,v 1.11 2000/12/19 03:13:40 tsubai Exp $	*/
 
 /*
@@ -45,16 +45,14 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
-#include <macppc/dev/adbvar.h>
-#include <macppc/dev/amsvar.h>
+#include <dev/adb/adb.h>
+#include <dev/adb/amsvar.h>
 
 /*
  * Function declarations.
  */
-static int	amsmatch(struct device *, void *, void *);
-static void	amsattach(struct device *, struct device *, void *);
-static void	ems_init(struct ams_softc *);
-static void	ms_processevent(adb_event_t *event, struct ams_softc *);
+int	amsmatch(struct device *, void *, void *);
+void	amsattach(struct device *, struct device *, void *);
 
 /* Driver definition. */
 struct cfattach ams_ca = {
@@ -65,10 +63,9 @@ struct cfdriver ams_cd = {
 	NULL, "ams", DV_DULL
 };
 
-
-int ams_enable(void *);
-int ams_ioctl(void *, u_long, caddr_t, int, struct proc *);
-void ams_disable(void *);
+int	ams_enable(void *);
+int	ams_ioctl(void *, u_long, caddr_t, int, struct proc *);
+void	ams_disable(void *);
 
 const struct wsmouse_accessops ams_accessops = {
 	ams_enable,
@@ -76,7 +73,12 @@ const struct wsmouse_accessops ams_accessops = {
 	ams_disable,
 };
 
-static int
+void	ems_init(struct ams_softc *);
+void	ms_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command);
+void	ms_handoff(adb_event_t *event, struct ams_softc *);
+void	ms_processevent(adb_event_t *event, struct ams_softc *);
+
+int
 amsmatch(struct device *parent, void *cf, void *aux)
 {
 	struct adb_attach_args *aa_args = aux;
@@ -87,7 +89,7 @@ amsmatch(struct device *parent, void *cf, void *aux)
 		return 0;
 }
 
-static void
+void
 amsattach(struct device *parent, struct device *self, void   *aux)
 {
 	ADBSetInfoBlock adbinfo;
@@ -177,10 +179,10 @@ amsattach(struct device *parent, struct device *self, void   *aux)
 			sc->handler_id);
 		break;
 	}
-	error = SetADBInfo(&adbinfo, sc->adbaddr);
+	error = set_adb_info(&adbinfo, sc->adbaddr);
 #ifdef ADB_DEBUG
 	if (adb_debug)
-		printf("ams: returned %d from SetADBInfo\n", error);
+		printf("ams: returned %d from set_adb_info\n", error);
 #endif
 
 	a.accessops = &ams_accessops;
@@ -446,7 +448,7 @@ ms_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command)
  * Given a mouse ADB event, record the button settings, calculate the
  * x- and y-axis motion, and handoff the event to the appropriate subsystem.
  */
-static void
+void
 ms_processevent(adb_event_t *event, struct ams_softc *sc)
 {
 	adb_event_t new_event;
@@ -485,18 +487,17 @@ ms_processevent(adb_event_t *event, struct ams_softc *sc)
 				buttons |= button_bit;
 			else
 				buttons &= ~button_bit;
-		if (sc->sc_class == MSCLASS_MOUSE) 
-			/* Extended Protocol (up to 6 more buttons) */
-			for (mask = 0x80; i < max_byte;
-			     i += (mask == 0x80), button_bit <<= 1) {
-				/* 0 when button down */
-				if (!(event->bytes[i] & mask))
-					buttons |= button_bit;
-				else
-					buttons &= ~button_bit;
-				mask = ((mask >> 4) & 0xf)
-					| ((mask & 0xf) << 4);
-			}
+		/* Extended Protocol (up to 6 more buttons) */
+		for (mask = 0x80; i < max_byte;
+		     i += (mask == 0x80), button_bit <<= 1) {
+			/* 0 when button down */
+			if (!(event->bytes[i] & mask))
+				buttons |= button_bit;
+			else
+				buttons &= ~button_bit;
+			mask = ((mask >> 4) & 0xf)
+				| ((mask & 0xf) << 4);
+		}
 		break;
 	}
 	new_event.u.m.buttons = sc->sc_mb | buttons;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbvar.h,v 1.11 2006/01/13 19:36:43 miod Exp $	*/
+/*	$OpenBSD: adbvar.h,v 1.12 2006/01/18 23:21:16 miod Exp $	*/
 /*	$NetBSD: adbvar.h,v 1.22 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -31,34 +31,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/adbsys.h>
-
-/*
- * Arguments used to attach a device to the Apple Desktop Bus
- */
-struct adb_attach_args {
-	int	origaddr;
-	int	adbaddr;
-	int	handler_id;
-};
-
-extern int	adb_polling;
-
-#ifdef DEBUG
-#ifndef ADB_DEBUG
-#define ADB_DEBUG
-#endif
-#endif
-
-#ifdef ADB_DEBUG
-extern int	adb_debug;
-#endif
-
-typedef caddr_t Ptr;
-
-/* adb.c */
-int	adb_op_sync(Ptr, Ptr, Ptr, short);
-void	adb_op_comprout(caddr_t, caddr_t, int);
+extern int adbHardware;
 
 /* types of adb hardware that we support */
 #define ADB_HW_UNKNOWN		0x0	/* don't know */
@@ -68,31 +41,6 @@ void	adb_op_comprout(caddr_t, caddr_t, int);
 #define ADB_HW_CUDA		0x4	/* Machines with a Cuda chip */
 #define	MAX_ADB_HW		4	/* Number of ADB hardware types */
 
-#define	ADB_CMDADDR(cmd)	((u_int8_t)(cmd & 0xf0) >> 4)
-#define	ADBFLUSH(dev)		((((u_int8_t)dev & 0x0f) << 4) | 0x01)
-#define	ADBLISTEN(dev, reg)	((((u_int8_t)dev & 0x0f) << 4) | 0x08 | reg)
-#define	ADBTALK(dev, reg)	((((u_int8_t)dev & 0x0f) << 4) | 0x0c | reg)
-
-/* ADB Manager */
-typedef struct {
-	Ptr siServiceRtPtr;
-	Ptr siDataAreaAddr;
-} ADBSetInfoBlock;
-
-typedef struct {
-	unsigned char	devType;
-	unsigned char	origADBAddr;
-	Ptr		dbServiceRtPtr;
-	Ptr		dbDataAreaAddr;
-} ADBDataBlock;
-
-/* adb_direct.c */
 int	adb_poweroff(void);
-int	CountADBs(void);
-void	ADBReInit(void);
-int	GetIndADB(ADBDataBlock *, int);
-int	GetADBInfo(ADBDataBlock *, int);
-int	SetADBInfo(ADBSetInfoBlock *, int);
-int	ADBOp(Ptr, Ptr, Ptr, short);
 int	adb_read_date_time(unsigned long *);
 int	adb_set_date_time(unsigned long);

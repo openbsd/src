@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.4 2006/01/10 21:19:15 miod Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.5 2006/01/18 23:21:17 miod Exp $	*/
 /*	$NetBSD: maccons.c,v 1.5 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 
 #include <mac68k/dev/nubus.h>
 #include <mac68k/dev/macfbvar.h>
-#include <mac68k/dev/akbdvar.h>
+#include <dev/adb/akbdvar.h>
 
 #include "wsdisplay.h"
 #include "wskbd.h"

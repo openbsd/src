@@ -1,5 +1,5 @@
-/*	$OpenBSD: akbdvar.h,v 1.1 2006/01/04 20:39:04 miod Exp $	*/
-/*	$NetBSD: akbdvar.h,v 1.4 1999/02/17 14:56:56 tsubai Exp $	*/
+/*	$OpenBSD: amsvar.h,v 1.1 2006/01/18 23:21:17 miod Exp $	*/
+/*	$NetBSD: amsvar.h,v 1.4 1999/06/17 06:59:05 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,41 +31,34 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MAC68K_KBDVAR_H_
-#define _MAC68K_KBDVAR_H_
-
-#include <machine/adbsys.h>
+#ifndef _ADB_AMSVAR_H_
+#define _ADB_AMSVAR_H_
 
 /*
- * State info, per keyboard instance.
+ * State info, per mouse instance.
  */
-struct akbd_softc {
+struct ams_softc {
 	struct	device	sc_dev;
 
 	/* ADB info */
-	int		origaddr;	/* ADB device type (ADBADDR_KBD) */
+	int		origaddr;	/* ADB device type (ADBADDR_MS) */
 	int		adbaddr;	/* current ADB address */
-	int		handler_id;	/* type of keyboard */
+	int		handler_id;	/* type of mouse */
 
-	u_int8_t	sc_leds;	/* current LED state */
-	struct device	*sc_wskbddev;
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-#define MAXKEYS 20
-#define REP_DELAY1 400
-#define REP_DELAYN 100
-	int sc_rawkbd;
-	int sc_nrep;
-	char sc_rep[MAXKEYS];
-	struct timeout sc_rawrepeat_ch;
-#endif /* defined(WSDISPLAY_COMPAT_RAWKBD) */
+	/* Extended Mouse Protocol info, faked for non-EMP mice */
+	u_int8_t	sc_class;	/* mouse class (mouse, trackball) */
+	u_int8_t	sc_buttons;	/* number of buttons */
+	u_int32_t	sc_res;		/* mouse resolution (dpi) */
+	char		sc_devid[5];	/* device identifier */
+
+	int		sc_mb;		/* current button state */
+	struct device	*sc_wsmousedev;
 };
 
-/* LED register bits, inverse of actual register value */
-#define LED_NUMLOCK	0x1
-#define LED_CAPSLOCK	0x2
-#define LED_SCROLL_LOCK	0x4
+/* EMP device classes */
+#define MSCLASS_TABLET		0
+#define MSCLASS_MOUSE		1
+#define MSCLASS_TRACKBALL	2
+#define MSCLASS_TRACKPAD	3
 
-void kbd_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command);
-int akbd_cnattach(void);
-
-#endif /* _MAC68K_KBDVAR_H_ */
+#endif /* _ADB_AMSVAR_H_ */

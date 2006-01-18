@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbvar.h,v 1.7 2005/12/22 22:55:25 miod Exp $	*/
+/*	$OpenBSD: adbvar.h,v 1.8 2006/01/18 23:21:17 miod Exp $	*/
 /*	$NetBSD: adbvar.h,v 1.3 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*-
@@ -31,67 +31,19 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/adbsys.h>
-
-/*
- * Arguments used to attach a device to the Apple Desktop Bus
- */
-struct adb_attach_args {
-	int	origaddr;
-	int	adbaddr;
-	int	handler_id;
-};
-
-#ifdef DEBUG
-#ifndef ADB_DEBUG
-#define ADB_DEBUG
-#endif
-#endif
-
-extern int	adb_polling;	/* Are we polling?  (Debugger mode) */
-#ifdef ADB_DEBUG
-extern int	adb_debug;
-#endif
-
-typedef caddr_t Ptr;
-
-/* ADB Manager */
-typedef struct {
-	Ptr siServiceRtPtr;
-	Ptr siDataAreaAddr;
-} ADBSetInfoBlock;
-typedef struct {
-	unsigned char	devType;
-	unsigned char	origADBAddr;
-	Ptr		dbServiceRtPtr;
-	Ptr		dbDataAreaAddr;
-} ADBDataBlock;
-
 struct adb_softc {
 	struct device sc_dev;
 	char *sc_regbase;
 };
 
-/* adb_direct.c */
 extern int adbHardware;
 
-/* types of adb hardware that we (will eventually) support */
+/* types of adb hardware that we support */
 #define ADB_HW_UNKNOWN		0x01	/* don't know */
 #define ADB_HW_PMU		0x04	/* PowerBook series */
 #define ADB_HW_CUDA		0x05	/* Machines with a Cuda chip */
 
-#define ADB_CMDADDR(cmd)	((u_int8_t)((cmd) & 0xf0) >> 4)
-#define ADBFLUSH(dev)		((((u_int8_t)(dev) & 0x0f) << 4) | 0x01)
-#define ADBLISTEN(dev, reg)	((((u_int8_t)(dev) & 0x0f) << 4) | 0x08 | (reg))
-#define ADBTALK(dev, reg)	((((u_int8_t)(dev) & 0x0f) << 4) | 0x0c | (reg))
-
 int	adb_poweroff(void);
-int	CountADBs(void);
-void	ADBReInit(void);
-int	GetIndADB(ADBDataBlock * info, int index);
-int	SetADBInfo(ADBSetInfoBlock * info, int adbAddr);
+void	adb_restart(void);
 int	adb_read_date_time(time_t *t);
 int	adb_set_date_time(time_t t);
-int	adb_intr(void *arg);
-void	adb_cuda_autopoll(void);
-int	adb_op_sync(Ptr, Ptr, Ptr, short);

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.45 2006/01/03 17:23:19 xsa Exp $
+#	$OpenBSD: files.macppc,v 1.46 2006/01/18 23:21:17 miod Exp $
 
 #
 # macppc-specific configuration info
@@ -156,20 +156,14 @@ file	arch/macppc/dev/z8530tty.c			zstty needs-flag
 device	adb {}
 attach	adb at macobio
 file	arch/macppc/dev/adb.c				adb needs-flag
-file	arch/macppc/dev/adb_direct.c			adb
 file	arch/macppc/dev/pm_direct.c			adb
+
+include	"dev/adb/files.adb"
+file	arch/macppc/dev/akbd_machdep.c			akbd
 
 device	apm
 attach	apm at adb
 file	arch/macppc/dev/apm.c				apm needs-count
-
-device	akbd: wskbddev
-attach	akbd at adb
-file	arch/macppc/dev/akbd.c				akbd needs-flag
-
-device	ams: wsmousedev
-attach	ams at adb
-file	arch/macppc/dev/ams.c				ams
 
 device	abtn
 attach	abtn at adb

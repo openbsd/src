@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mac68k,v 1.39 2006/01/13 19:36:41 miod Exp $
+#	$OpenBSD: files.mac68k,v 1.40 2006/01/18 23:21:14 miod Exp $
 #	$NetBSD: files.mac68k,v 1.61 1997/03/01 20:22:16 scottr Exp $
 
 # mac68k-specific configuration info
@@ -22,8 +22,7 @@ file	arch/mac68k/dev/nubus.c		nubus
 device	adb {}
 attach	adb at obio
 file	arch/mac68k/dev/adb.c		adb
-file	arch/mac68k/dev/adb_direct.c	adb
-file	arch/mac68k/dev/pm_direct.c
+file	arch/mac68k/dev/pm_direct.c	adb
 
 #
 # "workstation console" routines
@@ -35,13 +34,8 @@ include "dev/wsfont/files.wsfont"
 #
 # adb devices
 #
-device	akbd: wskbddev
-attach	akbd at adb
-file	arch/mac68k/dev/akbd.c		akbd needs-flag
-
-device	ams: wsmousedev
-attach	ams at adb
-file	arch/mac68k/dev/ams.c		ams needs-flag
+include	"dev/adb/files.adb"
+file	arch/mac68k/dev/akbd_machdep.c	akbd
 
 device	asc
 attach	asc at obio

@@ -1,5 +1,5 @@
-/*	$OpenBSD: akbdvar.h,v 1.3 2002/03/27 21:48:12 drahn Exp $	*/
-/*	$NetBSD: akbdvar.h,v 1.4 1999/02/17 14:56:56 tsubai Exp $	*/
+/*	$OpenBSD: akbd_machdep.c,v 1.1 2006/01/18 23:21:17 miod Exp $	*/
+/*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,41 +31,77 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MACPPC_KBDVAR_H_
-#define _MACPPC_KBDVAR_H_
+#include <sys/param.h>
+#include <sys/timeout.h>
+#include <sys/kernel.h>
+#include <sys/device.h>
+#include <sys/fcntl.h>
+#include <sys/poll.h>
+#include <sys/selinfo.h>
+#include <sys/proc.h>
+#include <sys/signalvar.h>
+#include <sys/systm.h>
 
-#include <machine/adbsys.h>
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wskbdvar.h>
 
-/*
- * State info, per keyboard instance.
- */
-struct akbd_softc {
-	struct	device	sc_dev;
+#include <dev/adb/adb.h>
+#include <dev/adb/akbdvar.h>
+#include <dev/adb/keyboard.h>
 
-	/* ADB info */
-	int		origaddr;	/* ADB device type (ADBADDR_KBD) */
-	int		adbaddr;	/* current ADB address */
-	int		handler_id;	/* type of keyboard */
+void	akbd_cngetc(void *, u_int *, int *);
+void	akbd_cnpollc(void *, int);
 
-	u_int8_t	sc_leds;	/* current LED state */
-	struct device	*sc_wskbddev;
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-#define MAXKEYS 20
-#define REP_DELAY1 400
-#define REP_DELAYN 100
-	int sc_rawkbd;
-	int sc_nrep;
-	char sc_rep[MAXKEYS];
-	struct timeout sc_rawrepeat_ch;
-#endif /* defined(WSDISPLAY_COMPAT_RAWKBD) */
+struct wskbd_consops akbd_consops = {
+	akbd_cngetc,
+	akbd_cnpollc,
 };
 
-/* LED register bits, inverse of actual register value */
-#define LED_NUMLOCK	0x1
-#define LED_CAPSLOCK	0x2
-#define LED_SCROLL_LOCK	0x4
+static int _akbd_is_console;
 
-void kbd_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command);
-int akbd_cnattach(void);
+int
+akbd_is_console()
+{
+	return (_akbd_is_console);
+}
 
-#endif /* _MACPPC_KBDVAR_H_ */
+int
+akbd_cnattach()
+{
+	_akbd_is_console = 1;
+	wskbd_cnattach(&akbd_consops, NULL, &akbd_keymapdata);
+	return 0;
+}
+
+void
+akbd_cngetc(void *v, u_int *type, int *data)
+{
+	int key, press, val;
+	int s;
+	extern int adb_intr(void *);
+
+	s = splhigh();
+
+	adb_polledkey = -1;
+	adb_polling = 1;
+
+	while (adb_polledkey == -1) {
+		adb_intr(NULL); /* adb does not use the argument */
+		DELAY(10000);				/* XXX */
+	}
+
+	adb_polling = 0;
+	splx(s);
+
+	key = adb_polledkey;
+	press = ADBK_PRESS(key);
+	val = ADBK_KEYVAL(key);
+
+	*data = val;
+	*type = press ? WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP;
+}
+
+void
+akbd_cnpollc(void *v, int on)
+{
+}

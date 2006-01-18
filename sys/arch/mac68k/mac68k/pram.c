@@ -1,4 +1,4 @@
-/*	$OpenBSD: pram.c,v 1.10 2006/01/13 21:02:38 miod Exp $	*/
+/*	$OpenBSD: pram.c,v 1.11 2006/01/18 23:21:17 miod Exp $	*/
 /*	$NetBSD: pram.c,v 1.11 1996/10/21 05:42:29 scottr Exp $	*/
 
 /*-
@@ -39,8 +39,6 @@
 
 #include <mac68k/mac68k/pram.h>
 #include <mac68k/dev/adbvar.h>
-
-extern int adbHardware;         /* from adb.c */
 
 /*
  * getPramTime

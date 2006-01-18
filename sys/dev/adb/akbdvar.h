@@ -1,5 +1,5 @@
-/*	$OpenBSD: amsvar.h,v 1.2 2002/03/14 01:26:36 millert Exp $	*/
-/*	$NetBSD: amsvar.h,v 1.4 1999/06/17 06:59:05 tsubai Exp $	*/
+/*	$OpenBSD: akbdvar.h,v 1.1 2006/01/18 23:21:17 miod Exp $	*/
+/*	$NetBSD: akbdvar.h,v 1.4 1999/02/17 14:56:56 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,37 +31,42 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MACPPC_AMSVAR_H_
-#define _MACPPC_AMSVAR_H_
+#ifndef _ADB_AKBDVAR_H_
+#define _ADB_AKBDVAR_H_
 
 /*
- * State info, per mouse instance.
+ * State info, per keyboard instance.
  */
-struct ams_softc {
+struct akbd_softc {
 	struct	device	sc_dev;
 
 	/* ADB info */
-	int		origaddr;	/* ADB device type (ADBADDR_MS) */
+	int		origaddr;	/* ADB device type (ADBADDR_KBD) */
 	int		adbaddr;	/* current ADB address */
-	int		handler_id;	/* type of mouse */
+	int		handler_id;	/* type of keyboard */
 
-	/* Extended Mouse Protocol info, faked for non-EMP mice */
-	u_int8_t	sc_class;	/* mouse class (mouse, trackball) */
-	u_int8_t	sc_buttons;	/* number of buttons */
-	u_int32_t	sc_res;		/* mouse resolution (dpi) */
-	char		sc_devid[5];	/* device indentifier */
-
-	int		sc_mb;		/* current button state */
-	struct device	*sc_wsmousedev;
+	u_int8_t	sc_leds;	/* current LED state */
+	struct device	*sc_wskbddev;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+#define MAXKEYS 20
+#define REP_DELAY1 400
+#define REP_DELAYN 100
+	int sc_rawkbd;
+	int sc_nrep;
+	char sc_rep[MAXKEYS];
+	struct timeout sc_rawrepeat_ch;
+#endif /* defined(WSDISPLAY_COMPAT_RAWKBD) */
 };
 
-/* EMP device classes */
-#define MSCLASS_TABLET		0
-#define MSCLASS_MOUSE		1
-#define MSCLASS_TRACKBALL	2
-#define MSCLASS_TRACKPAD	3
+/* LED register bits, inverse of actual register value */
+#define LED_NUMLOCK	0x1
+#define LED_CAPSLOCK	0x2
+#define LED_SCROLL_LOCK	0x4
 
-void ms_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command);
-void ms_handoff(adb_event_t *event, struct ams_softc *);
+int	akbd_cnattach(void);
+int	akbd_is_console(void);
 
-#endif /* _MACPPC_AMSVAR_H_ */
+extern struct wskbd_mapdata akbd_keymapdata;
+extern int adb_polledkey;
+
+#endif /* _ADB_AKBDVAR_H_ */

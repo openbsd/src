@@ -1,5 +1,5 @@
-/*	$OpenBSD: adbsys.h,v 1.9 2006/01/04 20:39:05 miod Exp $	*/
-/*	$NetBSD: adbsys.h,v 1.13 2000/02/14 07:01:48 scottr Exp $	*/
+/*	$OpenBSD: adb.h,v 1.1 2006/01/18 23:21:17 miod Exp $	*/
+/*	$NetBSD: adbsys.h,v 1.4 2000/12/19 02:59:24 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994	Allen K. Briggs, Chris P. Caputo,
@@ -34,8 +34,26 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ADBSYS_MACHINE_
-#define _ADBSYS_MACHINE_
+#ifndef _ADB_H_
+#define _ADB_H_
+
+#ifdef _KERNEL
+
+#include <sys/time.h>	/* timeval stuff */
+
+/*
+ * Arguments used to attach a device to the Apple Desktop Bus
+ */
+struct adb_attach_args {
+	int	origaddr;
+	int	adbaddr;
+	int	handler_id;
+};
+
+#define	ADB_CMDADDR(cmd)	((u_int8_t)(cmd & 0xf0) >> 4)
+#define	ADBFLUSH(dev)		((((u_int8_t)dev & 0x0f) << 4) | 0x01)
+#define	ADBLISTEN(dev, reg)	((((u_int8_t)dev & 0x0f) << 4) | 0x08 | reg)
+#define	ADBTALK(dev, reg)	((((u_int8_t)dev & 0x0f) << 4) | 0x0c | reg)
 
 /* an ADB event */
 typedef struct adb_event_s {
@@ -73,6 +91,8 @@ typedef struct adb_event_s {
 #define ADBADDR_TABLET	ADBADDR_ABS
 #define ADBADDR_MODEM	ADBADDR_DATATX
 
+#define ADBADDR_APM	0xac0ff		/* A faux-addr for the APM driver to
+					   latch onto */
 
 	/* Interesting keyboard handler IDs */
 #define ADB_STDKBD	1
@@ -113,4 +133,31 @@ typedef struct adb_event_s {
 #define ADB_POWERKEY	34	/* Sophisticated Circuits PowerKey */
 				/* (intelligent power tap) */
 
-#endif /* _ADBSYS_MACHINE_ */
+extern int	adb_polling;
+#ifdef ADB_DEBUG
+extern int	adb_debug;
+#endif
+
+/* ADB Manager */
+
+typedef caddr_t Ptr;
+
+typedef struct {
+	Ptr siServiceRtPtr;
+	Ptr siDataAreaAddr;
+} ADBSetInfoBlock;
+
+typedef struct {
+	unsigned char	devType;
+	unsigned char	origADBAddr;
+	Ptr		dbServiceRtPtr;
+	Ptr		dbDataAreaAddr;
+} ADBDataBlock;
+
+int	adbprint(void *, const char *);
+int	adb_op_sync(Ptr, Ptr, Ptr, short);
+int	set_adb_info(ADBSetInfoBlock *, int);
+
+#endif	/* _KERNEL */
+
+#endif /* _ADB_H_ */
