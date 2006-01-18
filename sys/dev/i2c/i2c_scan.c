@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.60 2006/01/17 21:21:56 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.61 2006/01/18 21:53:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -541,7 +541,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	} else if (addr == 0x2d && iicprobe(0x4e) == 0x60 &&
 	    iicprobe(0x4c) == 0xa3 && iicprobe(0x4d) == 0x5c) {
 		name = "w83l785r";
-	} else if (addr == 0x2e && iicprobe(0x4e) == 0x50 &&
+	} else if (addr == 0x2e && iicprobe(0x4e) == 0x70 &&
 	    iicprobe(0x4c) == 0xa3 && iicprobe(0x4d) == 0x5c) {
 		name = "w83l785ts-l";
 	} else if (addr >= 0x28 && addr <= 0x2f &&
