@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.31 2006/01/05 21:28:29 marco Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.32 2006/01/18 04:46:04 marco Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -887,7 +887,7 @@ scan_smbios(u_int8_t mtype, void (*smcb) (void *base, void *arg), void *arg)
 	romhdr = (struct smbiosanchor *)scan_sig(0xF0000, 0xFFFFF, 16, 4,
 	    "_SM_");
 	if (romhdr == NULL)
-		return (-1);
+		return (0);
 
 	dbg_printf(1, "SMBIOS Version %d.%d at 0x%lx, %d entries\n",
 	    romhdr->smr_smbios_majver, romhdr->smr_smbios_minver,
@@ -898,7 +898,7 @@ scan_smbios(u_int8_t mtype, void (*smcb) (void *base, void *arg), void *arg)
 	offset = smbios_map(romhdr->smr_table_address,
 	    romhdr->smr_count * romhdr->smr_maxsize, &smm);
 	if (offset == NULL)
-		return (-1);
+		return (0);
 
 	for (num = 0; num < romhdr->smr_count; num++) {
 		smhdr = (struct smhdr *)offset;
