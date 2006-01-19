@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.4 2006/01/19 17:08:40 grange Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.5 2006/01/19 22:20:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -55,6 +55,8 @@ void wb_refresh_n5volts(struct lm_softc *, int);
 void wb_refresh_temp(struct lm_softc *, int);
 void wb_refresh_fanrpm(struct lm_softc *, int);
 void wb_w83792d_refresh_fanrpm(struct lm_softc *, int);
+
+void as_refresh_temp(struct lm_softc *, int);
 
 struct lm_chip {
 	int (*chip_match)(struct lm_softc *);
@@ -295,8 +297,8 @@ struct lm_sensor as99127f_sensors[] = {
 
 	/* Temperature */
 	{ "Temp1", SENSOR_TEMP, 0, 0x27, lm_refresh_temp },
-	{ "Temp2", SENSOR_TEMP, 1, 0x50, wb_refresh_temp },
-	{ "Temp3", SENSOR_TEMP, 2, 0x50, wb_refresh_temp },
+	{ "Temp2", SENSOR_TEMP, 1, 0x50, as_refresh_temp },
+	{ "Temp3", SENSOR_TEMP, 2, 0x50, as_refresh_temp },
 
 	/* Fans */
 	{ "Fan1", SENSOR_FANRPM, 0, 0x28, lm_refresh_fanrpm },
@@ -528,10 +530,20 @@ lm_refresh_temp(struct lm_softc *sc, int n)
 	struct sensor *sensor = &sc->sensors[n];
 	int sdata;
 
+	/*
+	 * The data sheet suggests that the range of the temperature
+	 * sensor is between -55 degC and +125 degC.
+	 */
 	sdata = sc->lm_readreg(sc, sc->lm_sensors[n].reg);
-	if (sdata & 0x80)
-		sdata -= 0x100;
-	sensor->value = sdata * 1000000 + 273150000;
+	if (sdata > 0x7d && sdata < 0xc9) {
+		sensor->flags |= SENSOR_FINVALID;
+		sensor->value = 0;
+	} else {
+		if (sdata & 0x80)
+			sdata -= 0x100;
+		sensor->flags &= ~SENSOR_FINVALID;
+		sensor->value = sdata * 1000000 + 273150000;
+	}
 }
 
 void
@@ -616,11 +628,23 @@ wb_refresh_temp(struct lm_softc *sc, int n)
 	struct sensor *sensor = &sc->sensors[n];
 	int sdata;
 
+	/*
+	 * The data sheet suggests that the range of the temperature
+	 * sensor is between -55 degC and +125 degC.  However, -48
+	 * degC seems to be a very common bogus value, and is already
+	 * unreasonably low.
+	 */
 	sdata = sc->lm_readreg(sc, sc->lm_sensors[n].reg) << 1;
 	sdata += sc->lm_readreg(sc, sc->lm_sensors[n].reg + 1) >> 7;
-	if (sdata & 0x100)
-		sdata -= 0x200;
-	sensor->value = sdata * 500000 + 273150000;
+	if ((sdata > 0x0fa && sdata < 0x192) || sdata == 0x1a0) {
+		sensor->flags |= SENSOR_FINVALID;
+		sensor->value = 0;
+	} else {
+		if (sdata & 0x100)
+			sdata -= 0x200;
+		sensor->flags &= ~SENSOR_FINVALID;
+		sensor->value = sdata * 500000 + 273150000;
+	}
 }
 
 void
@@ -714,5 +738,28 @@ wb_w83792d_refresh_fanrpm(struct lm_softc *sc, int n)
 			divisor = (sc->lm_readreg(sc, reg) >> shift) & 0x7;
 		sensor->flags &= ~SENSOR_FINVALID;
 		sensor->value = 1350000 / (data << divisor);
+	}
+}
+
+void
+as_refresh_temp(struct lm_softc *sc, int n)
+{
+	struct sensor *sensor = &sc->sensors[n];
+	int sdata;
+
+	/*
+	 * It seems a shorted temperature diode produces an all-ones
+	 * bit pattern.
+	 */
+	sdata = sc->lm_readreg(sc, sc->lm_sensors[n].reg) << 1;
+	sdata += sc->lm_readreg(sc, sc->lm_sensors[n].reg + 1) >> 7;
+	if (sdata == 0x1ff) {
+		sensor->flags |= SENSOR_FINVALID;
+		sensor->value = 0;
+	} else {
+		if (sdata & 0x100)
+			sdata -= 0x200;
+		sensor->flags &= ~SENSOR_FINVALID;
+		sensor->value = sdata * 500000 + 273150000;
 	}
 }
