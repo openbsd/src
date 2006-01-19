@@ -1087,6 +1087,7 @@
 ./usr/share/man/cat4/ahc.0
 ./usr/share/man/cat4/ahd.0
 ./usr/share/man/cat4/aic.0
+./usr/share/man/cat4/akbd.0
 ./usr/share/man/cat4/alipm.0
 ./usr/share/man/cat4/alpha
 ./usr/share/man/cat4/alpha/apecs.0
@@ -1113,6 +1114,7 @@
 ./usr/share/man/cat4/amdpm.0
 ./usr/share/man/cat4/ami.0
 ./usr/share/man/cat4/amphy.0
+./usr/share/man/cat4/ams.0
 ./usr/share/man/cat4/an.0
 ./usr/share/man/cat4/aps.0
 ./usr/share/man/cat4/arandom.0
@@ -1357,8 +1359,6 @@
 ./usr/share/man/cat4/mac68k
 ./usr/share/man/cat4/mac68k/adb.0
 ./usr/share/man/cat4/mac68k/ae.0
-./usr/share/man/cat4/mac68k/akbd.0
-./usr/share/man/cat4/mac68k/ams.0
 ./usr/share/man/cat4/mac68k/asc.0
 ./usr/share/man/cat4/mac68k/autoconf.0
 ./usr/share/man/cat4/mac68k/esp.0
@@ -1378,8 +1378,6 @@
 ./usr/share/man/cat4/macppc
 ./usr/share/man/cat4/macppc/abtn.0
 ./usr/share/man/cat4/macppc/adb.0
-./usr/share/man/cat4/macppc/akbd.0
-./usr/share/man/cat4/macppc/ams.0
 ./usr/share/man/cat4/macppc/aoa.0
 ./usr/share/man/cat4/macppc/apm.0
 ./usr/share/man/cat4/macppc/asms.0

@@ -690,6 +690,12 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/acpi/acpivar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/acpi/amltypes.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/acpi/dsdt.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/adb
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/adb/adb.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/adb/akbdmap.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/adb/akbdvar.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/adb/amsvar.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/adb/keyboard.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ata
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ata/atareg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/ata/atavar.ph

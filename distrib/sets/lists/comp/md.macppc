@@ -154,7 +154,6 @@
 ./usr/include/ieeefp.h
 ./usr/include/macppc
 ./usr/include/macppc/_types.h
-./usr/include/macppc/adbsys.h
 ./usr/include/macppc/apmvar.h
 ./usr/include/macppc/asm.h
 ./usr/include/macppc/autoconf.h

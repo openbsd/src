@@ -728,6 +728,12 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/acpi/acpivar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/acpi/amltypes.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/acpi/dsdt.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/adb
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/adb/adb.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/adb/akbdmap.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/adb/akbdvar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/adb/amsvar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/adb/keyboard.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ata
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ata/atareg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ata/atavar.ph

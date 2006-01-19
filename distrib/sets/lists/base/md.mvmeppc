@@ -684,6 +684,12 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/acpi/acpivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/acpi/amltypes.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/acpi/dsdt.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/adb
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/adb/adb.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/adb/akbdmap.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/adb/akbdvar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/adb/amsvar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/adb/keyboard.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ata
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ata/atareg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ata/atavar.ph
@@ -1827,7 +1833,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/poll.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/_types.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/adbsys.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/asm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/autoconf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/bat.ph

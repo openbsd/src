@@ -144,7 +144,6 @@
 ./usr/include/m68k/vmparam.h
 ./usr/include/mac68k
 ./usr/include/mac68k/_types.h
-./usr/include/mac68k/adbsys.h
 ./usr/include/mac68k/asm.h
 ./usr/include/mac68k/autoconf.h
 ./usr/include/mac68k/bus.h
