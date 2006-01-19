@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecma167-udf.h,v 1.2 2005/04/14 12:35:29 pedro Exp $	*/
+/*	$OpenBSD: ecma167-udf.h,v 1.3 2006/01/19 01:05:32 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -372,4 +372,4 @@ union dscrptr {
 #define	GETICB(ad_type, fentry, offset)	\
 	(struct ad_type *)&fentry->data[offset]
 
-#define	GETICBLEN(ad_type, icb)	((struct ad_type *)(icb))->len
+#define	GETICBLEN(ad_type, icb)	letoh32(((struct ad_type *)(icb))->len)
