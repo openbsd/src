@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.37 2005/08/08 01:47:06 mickey Exp $
+.\"	$OpenBSD: audio.4,v 1.38 2006/01/19 05:07:02 jakemsr Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ There is no information regarding when in the sample stream
 they were dropped.
 .Pp
 .It Dv AUDIO_WSEEK Fa "u_long *"
-This command fetches the count of samples that are queued ahead of the
+This command fetches the count of bytes that are queued ahead of the
 first sample in the most recent sample block written into its
 .Vt u_long *
 argument.
@@ -496,7 +496,7 @@ fields are only used for
 .Dv AUDIO_GETINFO .
 .Va seek
 represents the count of
-samples pending;
+bytes pending;
 .Va samples
 represents the total number of bytes recorded or played, less those
 that were dropped due to inadequate consumption/production rates.
