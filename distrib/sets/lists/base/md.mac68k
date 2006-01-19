@@ -1,4 +1,6 @@
+./sbin/kbd
 ./sbin/pdisk
+./sbin/wsconsctl
 ./usr/lib/apache/modules/libproxy.so
 ./usr/lib/apache/modules/mod_auth_anon.so
 ./usr/lib/apache/modules/mod_auth_db.so
@@ -1587,12 +1589,10 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/exec.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/float.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/frame.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/grfioctl.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/ieee.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/ieeefp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/internal_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/intr.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/iteioctl.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/kcore.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/keyboard.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/limits.ph
@@ -2205,3 +2205,4 @@
 ./usr/libexec/ld.so
 ./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/m68k-openbsd
+./usr/sbin/wsconscfg

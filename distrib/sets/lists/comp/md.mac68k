@@ -155,12 +155,10 @@
 ./usr/include/mac68k/exec.h
 ./usr/include/mac68k/float.h
 ./usr/include/mac68k/frame.h
-./usr/include/mac68k/grfioctl.h
 ./usr/include/mac68k/ieee.h
 ./usr/include/mac68k/ieeefp.h
 ./usr/include/mac68k/internal_types.h
 ./usr/include/mac68k/intr.h
-./usr/include/mac68k/iteioctl.h
 ./usr/include/mac68k/kcore.h
 ./usr/include/mac68k/keyboard.h
 ./usr/include/mac68k/limits.h
