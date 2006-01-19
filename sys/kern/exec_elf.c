@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.52 2006/01/07 04:18:47 aaron Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.53 2006/01/19 17:54:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -36,6 +36,7 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
@@ -393,7 +394,7 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 	}
 
 	phsize = eh.e_phnum * sizeof(Elf_Phdr);
-	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
+	ph = malloc(phsize, M_TEMP, M_WAITOK);
 
 	if ((error = ELFNAME(read_from)(p, nd.ni_vp, eh.e_phoff, (caddr_t)ph,
 	    phsize)) != 0)
@@ -514,7 +515,7 @@ bad1:
 	VOP_CLOSE(nd.ni_vp, FREAD, p->p_ucred, p);
 bad:
 	if (ph != NULL)
-		free((char *)ph, M_TEMP);
+		free(ph, M_TEMP);
 
 	*last = addr;
 	vput(nd.ni_vp);
@@ -537,7 +538,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	Elf_Phdr *ph, *pp;
 	Elf_Addr phdr = 0;
 	int error, i;
-	char interp[MAXPATHLEN];
+	char *interp = NULL;
 	u_long pos = 0, phsize;
 	u_int8_t os = OOS_NULL;
 
@@ -564,7 +565,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	 * from the file
 	 */
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
-	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
+	ph = malloc(phsize, M_TEMP, M_WAITOK);
 
 	if ((error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff, (caddr_t)ph,
 	    phsize)) != 0)
@@ -573,16 +574,16 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	epp->ep_tsize = ELFDEFNNAME(NO_ADDR);
 	epp->ep_dsize = ELFDEFNNAME(NO_ADDR);
 
-	interp[0] = '\0';
-
 	for (i = 0; i < eh->e_phnum; i++) {
 		pp = &ph[i];
 		if (pp->p_type == PT_INTERP) {
-			if (pp->p_filesz >= sizeof(interp))
+			if (pp->p_filesz >= MAXPATHLEN)
 				goto bad;
+			interp = pool_get(&namei_pool, PR_WAITOK);
 			if ((error = ELFNAME(read_from)(p, epp->ep_vp,
-			    pp->p_offset, (caddr_t)interp, pp->p_filesz)) != 0)
+			    pp->p_offset, interp, pp->p_filesz)) != 0) {
 				goto bad;
+			}
 			break;
 		}
 	}
@@ -600,7 +601,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	 *
 	 * Probe functions would normally see if the interpreter (if any)
 	 * exists. Emulation packages may possibly replace the interpreter in
-	 * interp[] with a changed path (/emul/xxx/<path>), and also
+	 * *interp with a changed path (/emul/xxx/<path>), and also
 	 * set the ep_emul field in the exec package structure.
 	 */
 	error = ENOEXEC;
@@ -716,21 +717,17 @@ native:
 	if (epp->ep_tsize == ELFDEFNNAME(NO_ADDR))
 		epp->ep_tsize = 0;
 
+	epp->ep_interp = interp;
+	epp->ep_entry = eh->e_entry;
+
 	/*
 	 * Check if we found a dynamically linked binary and arrange to load
 	 * it's interpreter when the exec file is released.
 	 */
-	if (interp[0]) {
-		char *ip;
+	if (interp) {
 		struct elf_args *ap;
 
-		ip = (char *)malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
-		ap = (struct elf_args *)
-		    malloc(sizeof(struct elf_args), M_TEMP, M_WAITOK);
-
-		bcopy(interp, ip, MAXPATHLEN);
-		epp->ep_interp = ip;
-		epp->ep_interp_pos = pos;
+		ap = malloc(sizeof(struct elf_args), M_TEMP, M_WAITOK);
 
 		ap->arg_phaddr = phdr;
 		ap->arg_phentsize = eh->e_phentsize;
@@ -739,10 +736,7 @@ native:
 		ap->arg_os = os;
 
 		epp->ep_emul_arg = ap;
-		epp->ep_entry = eh->e_entry; /* keep check_exec() happy */
-	} else {
-		epp->ep_interp = NULL;
-		epp->ep_entry = eh->e_entry;
+		epp->ep_interp_pos = pos;
 	}
 
 #if defined(COMPAT_SVR4) && defined(i386)
@@ -754,12 +748,14 @@ native:
 		    epp->ep_vp, 0, VM_PROT_READ);
 #endif
 
-	free((char *)ph, M_TEMP);
+	free(ph, M_TEMP);
 	vn_marktext(epp->ep_vp);
 	return (exec_setup_stack(p, epp));
 
 bad:
-	free((char *)ph, M_TEMP);
+	if (interp)
+		pool_put(&namei_pool, interp);
+	free(ph, M_TEMP);
 	kill_vmcmds(&epp->ep_vmcmds);
 	return (ENOEXEC);
 }
@@ -781,12 +777,12 @@ ELFNAME2(exec,fixup)(struct proc *p, struct exec_package *epp)
 		return (0);
 	}
 
-	interp = (char *)epp->ep_interp;
-	ap = (struct elf_args *)epp->ep_emul_arg;
+	interp = epp->ep_interp;
+	ap = epp->ep_emul_arg;
 
 	if ((error = ELFNAME(load_file)(p, interp, epp, ap, &pos)) != 0) {
-		free((char *)ap, M_TEMP);
-		free((char *)interp, M_TEMP);
+		free(ap, M_TEMP);
+		pool_put(&namei_pool, interp);
 		kill_vmcmds(&epp->ep_vmcmds);
 		return (error);
 	}
@@ -836,8 +832,8 @@ ELFNAME2(exec,fixup)(struct proc *p, struct exec_package *epp)
 
 		error = copyout(ai, epp->ep_emul_argp, sizeof ai);
 	}
-	free((char *)ap, M_TEMP);
-	free((char *)interp, M_TEMP);
+	free(ap, M_TEMP);
+	pool_put(&namei_pool, interp);
 	return (error);
 }
 
@@ -863,7 +859,7 @@ ELFNAME(os_pt_note)(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh,
 	int error;
 
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
-	hph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
+	hph = malloc(phsize, M_TEMP, M_WAITOK);
 	if ((error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff,
 	    (caddr_t)hph, phsize)) != 0)
 		goto out1;
@@ -874,7 +870,7 @@ ELFNAME(os_pt_note)(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh,
 		    ph->p_filesz < sizeof(Elf_Note) + name_size)
 			continue;
 
-		np = (Elf_Note *)malloc(ph->p_filesz, M_TEMP, M_WAITOK);
+		np = malloc(ph->p_filesz, M_TEMP, M_WAITOK);
 		if ((error = ELFNAME(read_from)(p, epp->ep_vp, ph->p_offset,
 		    (caddr_t)np, ph->p_filesz)) != 0)
 			goto out2;

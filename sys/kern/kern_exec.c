@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.98 2005/12/07 19:04:53 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.99 2006/01/19 17:54:47 mickey Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -675,7 +675,7 @@ bad:
 		(void) fdrelease(p, pack.ep_fd);
 	}
 	if (pack.ep_interp != NULL)
-		FREE(pack.ep_interp, M_TEMP);
+		pool_put(&namei_pool, pack.ep_interp);
 	if (pack.ep_emul_arg != NULL)
 		FREE(pack.ep_emul_arg, M_TEMP);
 	/* close and put the exec'd file */
@@ -704,7 +704,7 @@ exec_abort:
 	uvm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
 		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
 	if (pack.ep_interp != NULL)
-		FREE(pack.ep_interp, M_TEMP);
+		pool_put(&namei_pool, pack.ep_interp);
 	if (pack.ep_emul_arg != NULL)
 		FREE(pack.ep_emul_arg, M_TEMP);
 	pool_put(&namei_pool, nid.ni_cnd.cn_pnbuf);

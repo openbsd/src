@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_exec.c,v 1.14 2002/03/14 01:26:51 millert Exp $	 */
+/*	$OpenBSD: svr4_exec.c,v 1.15 2006/01/19 17:54:56 mickey Exp $	 */
 /*	$NetBSD: svr4_exec.c,v 1.16 1995/10/14 20:24:20 christos Exp $	 */
 
 /*
@@ -126,7 +126,7 @@ svr4_elf_probe(p, epp, itp, pos, os)
 	int error;
 	size_t len;
 
-	if (itp[0]) {
+	if (itp) {
 		if ((error = emul_find(p, NULL, svr4_emul_path, itp, &bp, 0)))
 			return (error);
 		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.24 2005/12/30 19:46:55 miod Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.25 2006/01/19 17:54:52 mickey Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*-
@@ -485,7 +485,7 @@ linux_elf_probe(p, epp, itp, pos, os)
 	brand = elf32_check_brand(eh);
 	if (brand && strcmp(brand, "Linux"))
 		return (EINVAL);
-	if (itp[0]) {
+	if (itp) {
 		if ((error = emul_find(p, NULL, linux_emul_path, itp, &bp, 0)))
 			return (error);
 		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))

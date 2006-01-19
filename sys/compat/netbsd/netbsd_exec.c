@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_exec.c,v 1.11 2004/04/15 00:22:42 tedu Exp $	 */
+/*	$OpenBSD: netbsd_exec.c,v 1.12 2006/01/19 17:54:54 mickey Exp $	 */
 /*	$NetBSD: svr4_exec.c,v 1.16 1995/10/14 20:24:20 christos Exp $	 */
 
 /*
@@ -94,7 +94,7 @@ netbsd_elf64_probe(p, epp, itp, pos, os)
 	if (elf64_os_pt_note(p, epp, eh, "NetBSD\0", 7, 4))
 		return (EINVAL);
 
-	if (itp[0]) {
+	if (itp) {
 		if ((error = emul_find(p, NULL, netbsd_emul_path, itp, &bp, 0)))
 			return (error);
 		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
