@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.21 2006/01/18 22:25:44 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.22 2006/01/19 00:08:46 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -29,6 +29,7 @@
 #include <machine/conf.h>
 #include <machine/bus.h>
 
+#include <dev/pci/pcivar.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/amltypes.h>
@@ -91,6 +92,9 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 	void *pb;
 	bus_space_handle_t ioh;
 	struct acpi_mem_map mh;
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	int reg, idx, ival, sval;
 
 	switch (iospace) {
 	case GAS_SYSTEM_MEMORY:
@@ -142,6 +146,62 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 		break;
 
 	case GAS_PCI_CFG_SPACE:
+		/* format of address: 
+		 *    bits 00..15 = register
+		 *    bits 16..31 = function
+		 *    bits 32..47 = device
+		 *    bits 48..63 = bus
+		 */
+		pc = NULL;
+		pb = buffer;
+		tag = pci_make_tag(pc, 
+				   ACPI_PCI_BUS(address),
+				   ACPI_PCI_DEV(address),
+				   ACPI_PCI_FN(address));
+
+		/* XXX: This is ugly.. read-modify-write does a byte at a time */
+		reg = ACPI_PCI_REG(address);
+		for (idx=reg; idx<reg+len; idx++) {
+			ival = pci_conf_read(pc, tag, idx & ~0x3);
+			if (iodir == ACPI_IOREAD) {
+				switch (idx & 0x3) {
+				case 0:
+					*(u_int8_t *)pb = ival;
+					break;
+				case 1:
+					*(u_int8_t *)pb = (ival >> 8);
+					break;
+				case 2:
+					*(u_int8_t *)pb = (ival >> 16);
+					break;
+				case 3:
+					*(u_int8_t *)pb = (ival >> 24);
+					break;
+				}
+			}
+			else {
+				sval = *(uint8_t *)pb;
+				switch (idx & 0x3) {
+				case 0:
+					ival &= ~0xFF;
+					ival |= sval;
+					break;
+				case 1:
+					ival &= ~0xFF00;
+					ival |= (sval << 8L);
+					break;
+				case 2:
+					ival &= ~0xFF0000;
+					ival |= (sval << 16L);
+					break;
+				case 3:
+					ival &= ~0xFF000000L;
+					ival |= (sval << 24L);
+					break;
+				}
+			}
+			pb++;
+		}
 		break;
 	}
 }

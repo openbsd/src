@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.8 2006/01/06 16:22:46 grange Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.9 2006/01/19 00:08:46 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@opebsd.org>
@@ -397,6 +397,15 @@ struct acpi_facs {
 } __packed;
 
 #define ACPI_FREQUENCY	3579545		/* Per ACPI spec */
+
+/*
+ * PCI Configuration space
+ */
+#define ACPI_PCI_BUS(addr) (u_int16_t)((addr) >> 48)
+#define ACPI_PCI_DEV(addr) (u_int16_t)((addr) >> 32)
+#define ACPI_PCI_FN(addr)  (u_int16_t)((addr) >> 16)
+#define ACPI_PCI_REG(addr) (u_int16_t)(addr)
+#define ACPI_PCI_ADDR(b,d,f,r) ((u_int64_t)(b)<<48LL | (u_int64_t)(d)<<32LL | (f)<<16LL | (r))
 
 /*
  * PM1 Status Registers Fixed Hardware Feature Status Bits
