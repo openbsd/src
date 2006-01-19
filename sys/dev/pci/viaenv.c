@@ -1,4 +1,4 @@
-/*	$OpenBSD: viaenv.c,v 1.6 2004/10/05 19:03:58 grange Exp $	*/
+/*	$OpenBSD: viaenv.c,v 1.7 2006/01/19 17:08:40 grange Exp $	*/
 /*	$NetBSD: viaenv.c,v 1.9 2002/10/02 16:51:59 thorpej Exp $	*/
 
 /*
@@ -287,7 +287,7 @@ viaenv_attach(struct device * parent, struct device * self, void *aux)
 	for (i = 0; i < VIANUMSENSORS; ++i) {
 		strlcpy(sc->sc_data[i].device, sc->sc_dev.dv_xname,
 		    sizeof(sc->sc_data[i].device));
-		SENSOR_ADD(&sc->sc_data[i]);
+		sensor_add(&sc->sc_data[i]);
 	}
 
 	for (i = 0; i <= 2; i++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.25 2006/01/11 08:21:21 dlg Exp $ */
+/*	$OpenBSD: safte.c,v 1.26 2006/01/19 17:08:40 grange Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -185,7 +185,7 @@ safte_attach(struct device *parent, struct device *self, void *aux)
 		free(sc->sc_sensors, M_DEVBUF);
 	} else {
 		for (i = 0; i < sc->sc_nsensors; i++)
-			SENSOR_ADD(&sc->sc_sensors[i].se_sensor);
+			sensor_add(&sc->sc_sensors[i].se_sensor);
 	}
 
 #if NBIO > 0

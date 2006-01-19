@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.32 2006/01/18 04:46:04 marco Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.33 2006/01/19 17:08:39 grange Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -1551,7 +1551,7 @@ add_child_sensors(struct ipmi_softc *sc, u_int8_t *psdr, int count,
 		    psensor->i_sensor.desc);
 		if (read_sensor(sc, psensor) == 0) {
 			SLIST_INSERT_HEAD(&ipmi_sensor_list, psensor, list);
-			SENSOR_ADD(&psensor->i_sensor);
+			sensor_add(&psensor->i_sensor);
 			dbg_printf(5, "	 reading: %lld [%s]\n",
 			    psensor->i_sensor.value,
 			    psensor->i_sensor.desc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: w83l784r.c,v 1.1 2006/01/15 12:20:14 kettenis Exp $	*/
+/*	$OpenBSD: w83l784r.c,v 1.2 2006/01/19 17:08:39 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -216,7 +216,7 @@ wbenv_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Add sensors */
 	for (i = 0; i < sc->sc_numsensors; ++i)
-		SENSOR_ADD(&sc->sc_sensors[i]);
+		sensor_add(&sc->sc_sensors[i]);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.136 2005/11/28 00:14:29 jsg Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.137 2006/01/19 17:08:40 grange Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1754,14 +1754,12 @@ sysctl_sensors(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (ENOTDIR);
 
 	num = name[0];
-	if (num < 0 || num >= _sensors_count)
-		return (ENXIO);
-
 	SLIST_FOREACH(s, &_sensors_list, list)
 		if (s->num == num)
-			break;
+			return (sysctl_rdstruct(oldp, oldlenp, newp, s,
+			    sizeof(struct sensor)));
 
-	return (sysctl_rdstruct(oldp, oldlenp, newp, s, sizeof(struct sensor)));
+	return (ENOENT);
 }
 
 int

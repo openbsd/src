@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.32 2006/01/05 07:39:30 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.33 2006/01/19 17:08:39 grange Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -919,7 +919,7 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 		for (j = 0; j < nsensors; j++) {
 			s[j].type = esm_typemap[es->es_type];
 			strlcpy(s[j].device, DEVNAME(sc), sizeof(s[j].device));
-			SENSOR_ADD(&s[j]);
+			sensor_add(&s[j]);
 		}
 
 		es->es_sensor = s;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asb100.c,v 1.3 2006/01/01 22:27:46 djm Exp $	*/
+/*	$OpenBSD: asb100.c,v 1.4 2006/01/19 17:08:39 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Damien Miller
@@ -292,7 +292,7 @@ asbtm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < ASB100_NUM_SENSORS; i++)
-		SENSOR_ADD(&sc->sc_sensor[i]);
+		sensor_add(&sc->sc_sensor[i]);
 
 	printf("\n");
 }

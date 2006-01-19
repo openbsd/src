@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm75.c,v 1.10 2006/01/10 23:02:32 deraadt Exp $	*/
+/*	$OpenBSD: lm75.c,v 1.11 2006/01/19 17:08:39 grange Exp $	*/
 /*	$NetBSD: lm75.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 /*
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -180,7 +180,7 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensor.desc, "TEMP", sizeof(sc->sc_sensor.desc));
 
 	/* Hook into the hw.sensors sysctl */
-	SENSOR_ADD(&sc->sc_sensor);
+	sensor_add(&sc->sc_sensor);
 
 	sensor_task_register(sc, lmtemp_refresh_sensor_data, LM_POLLTIME);
 }

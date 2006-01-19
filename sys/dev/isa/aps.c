@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.5 2005/08/28 03:52:37 djm Exp $	*/
+/*	$OpenBSD: aps.c,v 1.6 2006/01/19 17:08:40 grange Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -200,7 +200,7 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < sc->numsensors; i++) {
 		strlcpy(sc->sensors[i].device, sc->sc_dev.dv_xname,
 		    sizeof(sc->sensors[i].device));
-		SENSOR_ADD(&sc->sensors[i]);
+		sensor_add(&sc->sensors[i]);
 	}
 
 	powerhook_establish(aps_power, (void *)sc);

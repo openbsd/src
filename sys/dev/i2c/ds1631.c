@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds1631.c,v 1.4 2006/01/13 21:41:40 deraadt Exp $	*/
+/*	$OpenBSD: ds1631.c,v 1.5 2006/01/19 17:08:39 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -126,7 +126,7 @@ dostart:
 	}
 
 	for (i = 0; i < MAXDS_NUM_SENSORS; i++)
-		SENSOR_ADD(&sc->sc_sensor[i]);
+		sensor_add(&sc->sc_sensor[i]);
 
 	printf("\n");
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: nsclpcsio_isa.c,v 1.6 2006/01/05 15:32:46 grange Exp $ */
+/* $OpenBSD: nsclpcsio_isa.c,v 1.7 2006/01/19 17:08:40 grange Exp $ */
 /* $NetBSD: nsclpcsio_isa.c,v 1.5 2002/10/22 16:18:26 drochner Exp $ */
 
 /*
@@ -331,7 +331,7 @@ nsclpcsio_isa_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 		strlcpy(sc->sensors[i].device, sc->sc_dev.dv_xname,
 		    sizeof(sc->sensors[i].device));
-		SENSOR_ADD(&sc->sensors[i]);
+		sensor_add(&sc->sensors[i]);
 	}
 	if (sc->sc_ld_en[SIO_LDN_TMS] || sc->sc_ld_en[SIO_LDN_VLM]) {
 		timeout_set(&nsclpcsio_timeout, nsclpcsio_refresh, sc);

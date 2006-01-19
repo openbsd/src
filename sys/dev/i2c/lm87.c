@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm87.c,v 1.14 2005/12/31 04:31:27 deraadt Exp $	*/
+/*	$OpenBSD: lm87.c,v 1.15 2006/01/19 17:08:39 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -233,7 +233,7 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < LMENV_NUM_SENSORS; i++)
-		SENSOR_ADD(&sc->sc_sensor[i]);
+		sensor_add(&sc->sc_sensor[i]);
 
 	printf("\n");
 }

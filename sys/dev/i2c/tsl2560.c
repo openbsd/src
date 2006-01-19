@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsl2560.c,v 1.2 2005/12/27 17:18:18 deraadt Exp $	*/
+/*	$OpenBSD: tsl2560.c,v 1.3 2006/01/19 17:08:39 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -125,7 +125,7 @@ tsl_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	SENSOR_ADD(&sc->sc_sensor);
+	sensor_add(&sc->sc_sensor);
 
 	printf("\n");
 }

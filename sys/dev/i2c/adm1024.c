@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1024.c,v 1.9 2005/12/31 04:31:27 deraadt Exp $	*/
+/*	$OpenBSD: adm1024.c,v 1.10 2006/01/19 17:08:39 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -181,7 +181,7 @@ admlc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < ADMLC_NUM_SENSORS; i++)
-		SENSOR_ADD(&sc->sc_sensor[i]);
+		sensor_add(&sc->sc_sensor[i]);
 
 	printf("\n");
 }

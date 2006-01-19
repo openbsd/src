@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_sensors.c,v 1.5 2005/11/21 13:47:52 dlg Exp $ */
+/*	$OpenBSD: kern_sensors.c,v 1.6 2006/01/19 17:08:40 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -45,6 +45,39 @@ void	sensor_task_thread(void *);
 void	sensor_task_schedule(struct sensor_task *);
 
 TAILQ_HEAD(, sensor_task) tasklist = TAILQ_HEAD_INITIALIZER(tasklist);
+
+void
+sensor_add(struct sensor *sens)
+{
+	struct sensor *v, *nv;
+	int s;
+
+	s = splhigh();
+	if (_sensors_count == 0) {
+		sens->num = 0;
+		SLIST_INSERT_HEAD(&_sensors_list, sens, list);
+	} else {
+		for (v = SLIST_FIRST(&_sensors_list);
+		    (nv = SLIST_NEXT(v, list)) != NULL; v = nv)
+			if (nv->num - v->num > 1)
+				break;
+		sens->num = v->num + 1;
+		SLIST_INSERT_AFTER(v, sens, list);
+	}
+	_sensors_count++;
+	splx(s);
+}
+
+void
+sensor_del(struct sensor *sens)
+{
+	int s;
+
+	s = splhigh();
+	_sensors_count--;
+	SLIST_REMOVE(&_sensors_list, sens, sensor, list);
+	splx(s);
+}
 
 int
 sensor_task_register(void *arg, void (*func)(void *), int period)

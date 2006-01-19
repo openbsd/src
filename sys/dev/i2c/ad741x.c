@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad741x.c,v 1.6 2005/12/31 04:31:27 deraadt Exp $	*/
+/*	$OpenBSD: ad741x.c,v 1.7 2006/01/19 17:08:39 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -152,12 +152,12 @@ adc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	SENSOR_ADD(&sc->sc_sensor[0]);
+	sensor_add(&sc->sc_sensor[0]);
 	if (sc->sc_chip == 7417 || sc->sc_chip == 7418)
-		SENSOR_ADD(&sc->sc_sensor[1]);
+		sensor_add(&sc->sc_sensor[1]);
 	if (sc->sc_chip == 7417)
 		for (i = 2; i < nsens; i++)
-			SENSOR_ADD(&sc->sc_sensor[i]);
+			sensor_add(&sc->sc_sensor[i]);
 
 	printf("\n");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.3 2006/01/17 22:01:48 kettenis Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.4 2006/01/19 17:08:40 grange Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -331,7 +331,7 @@ lm_attach(struct lm_softc *sc)
 
 	/* Add sensors */
 	for (i = 0; i < sc->numsensors; ++i)
-		SENSOR_ADD(&sc->sensors[i]);
+		sensor_add(&sc->sensors[i]);
 }
 
 int

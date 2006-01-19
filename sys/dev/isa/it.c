@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.16 2005/12/28 15:27:44 grange Exp $	*/
+/*	$OpenBSD: it.c,v 1.17 2006/01/19 17:08:40 grange Exp $	*/
 
 /*
  * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
@@ -148,7 +148,7 @@ it_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < sc->numsensors; ++i) {
 		strlcpy(sc->sensors[i].device, sc->sc_dev.dv_xname,
 		    sizeof(sc->sensors[i].device));
-		SENSOR_ADD(&sc->sensors[i]);
+		sensor_add(&sc->sensors[i]);
 	}
 }
 

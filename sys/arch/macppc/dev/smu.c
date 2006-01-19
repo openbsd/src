@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.10 2006/01/01 20:52:25 deraadt Exp $	*/
+/*	$OpenBSD: smu.c,v 1.11 2006/01/19 17:08:39 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -291,7 +291,7 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 		/* Start running fans at their "unmanaged" speed. */
 		smu_fan_set_rpm(sc, fan, fan->unmanaged_rpm);
 
-		SENSOR_ADD(&fan->sensor);
+		sensor_add(&fan->sensor);
 	}
 
 	/* Sensors */
@@ -321,7 +321,7 @@ smu_attach(struct device *parent, struct device *self, void *aux)
 			strlcpy(loc, "Unknown", sizeof loc);
 		strlcpy(sensor->sensor.desc, loc, sizeof sensor->sensor.desc);
 
-		SENSOR_ADD(&sensor->sensor);
+		sensor_add(&sensor->sensor);
 	}
 
 	/* CPU temperature diode calibration */

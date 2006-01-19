@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.20 2006/01/03 07:55:47 kettenis Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.21 2006/01/19 17:08:39 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -153,7 +153,7 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < (sc->sc_noexternal ? 1 : ADMTEMP_NUM_SENSORS); i++)
-		SENSOR_ADD(&sc->sc_sensor[i]);
+		sensor_add(&sc->sc_sensor[i]);
 
 	printf("\n");
 }
