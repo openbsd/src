@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.26 2005/09/24 00:32:03 dtucker Exp $ */
+/*	$OpenBSD: server.c,v 1.27 2006/01/19 06:40:16 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -44,11 +44,11 @@ setup_listeners(struct servent *se, struct ntpd_conf *conf, u_int *cnt)
 		for (ifap = ifa; ifap != NULL; ifap = ifap->ifa_next) {
 			sa = ifap->ifa_addr;
 
-			if (SA_LEN(sa) == 0)
-				continue;
 			if (sa == NULL ||
 			    (sa->sa_family != AF_INET &&
 			    sa->sa_family != AF_INET6))
+				continue;
+			if (SA_LEN(sa) == 0)
 				continue;
 
 			if ((la = calloc(1, sizeof(struct listen_addr))) ==
