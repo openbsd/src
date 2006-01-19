@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.27 2006/01/19 06:40:16 dtucker Exp $ */
+/*	$OpenBSD: server.c,v 1.28 2006/01/19 11:20:23 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -34,6 +34,8 @@ setup_listeners(struct servent *se, struct ntpd_conf *conf, u_int *cnt)
 	struct listen_addr	*la;
 	struct ifaddrs		*ifa, *ifap;
 	struct sockaddr		*sa;
+	u_int8_t		*a6;
+	size_t			 sa6len = sizeof(struct in6_addr);
 	u_int			 new_cnt = 0;
 	int			 tos = IPTOS_LOWDELAY;
 
@@ -50,6 +52,18 @@ setup_listeners(struct servent *se, struct ntpd_conf *conf, u_int *cnt)
 				continue;
 			if (SA_LEN(sa) == 0)
 				continue;
+
+			if (sa->sa_family == AF_INET &&
+			    ((struct sockaddr_in *)sa)->sin_addr.s_addr ==
+			    INADDR_ANY)
+				continue;
+
+			if (sa->sa_family == AF_INET6) {
+				a6 = ((struct sockaddr_in6 *)sa)->
+				    sin6_addr.s6_addr;
+				if (memcmp(a6, &in6addr_any, sa6len) == 0)
+					continue;
+			}
 
 			if ((la = calloc(1, sizeof(struct listen_addr))) ==
 			    NULL)
