@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.15 2005/12/02 04:33:27 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.16 2006/01/19 19:17:10 sturm Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -238,7 +238,7 @@ main(int argc, char *argv[])
 		action = GETSTATUS;
 		verbose = doac = dopct = dobstate = dostatus = domin = TRUE;
 		doperf = TRUE;
-		/* fallthrough */
+		/* FALLTHROUGH */
 	case GETSTATUS:
 		if (fd == -1) {
 			/* open the device directly and get status */
@@ -247,7 +247,7 @@ main(int argc, char *argv[])
 			    &reply.batterystate) == 0)
 				goto printval;
 		}
-		/* fallthrough */
+		/* FALLTHROUGH */
 	case SUSPEND:
 	case STANDBY:
 	case SETPERF_LOW:
@@ -323,8 +323,8 @@ main(int argc, char *argv[])
 			printf("A/C adapter state: %s\n",
 			    ac_state(reply.batterystate.ac_state));
 		if (doperf)
-			printf("Performance state: %s\n",
-			    perf_state(reply.perfstate));
+			printf("Performance state: %s (%d MHz)\n",
+			    perf_state(reply.perfstate), reply.cpuspeed);
 		if (dostatus)
 			printf("Power management enabled\n");
 		break;

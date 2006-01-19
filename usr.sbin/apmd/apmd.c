@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.40 2005/12/02 04:35:49 deraadt Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.41 2006/01/19 19:17:10 sturm Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -306,6 +306,9 @@ handle_client(int sock_fd, int ctl_fd)
 	socklen_t fromlen;
 	struct apm_command cmd;
 	struct apm_reply reply;
+	int cpuspeed_mib[] = {CTL_HW, HW_CPUSPEED};
+	int cpuspeed;
+	size_t cpuspeed_sz = sizeof(cpuspeed);
 
 	fromlen = sizeof(from);
 	cli_fd = accept(sock_fd, (struct sockaddr *)&from, &fromlen);
@@ -335,13 +338,13 @@ handle_client(int sock_fd, int ctl_fd)
 		reply.newstate = STANDING_BY;
 		break;
 	case SETPERF_LOW:
-		doperf = PERF_MANUAL;
+		doperf = PERF_LOW;
 		reply.newstate = NORMAL;
 		syslog(LOG_NOTICE, "setting hw.setperf to %d", PERFMIN);
 		setperf(PERFMIN);
 		break;
 	case SETPERF_HIGH:
-		doperf = PERF_MANUAL;
+		doperf = PERF_HIGH;
 		reply.newstate = NORMAL;
 		syslog(LOG_NOTICE, "setting hw.setperf to %d", PERFMAX);
 		setperf(PERFMAX);
@@ -361,6 +364,10 @@ handle_client(int sock_fd, int ctl_fd)
 		break;
 	}
 
+	if (sysctl(cpuspeed_mib, 2, &cpuspeed, &cpuspeed_sz, NULL, 0) < 0)
+		syslog(LOG_INFO, "cannot read hw.cpuspeed");
+
+	reply.cpuspeed = cpuspeed;
 	reply.perfstate = doperf;
 	reply.vno = APMD_VNO;
 	if (send(cli_fd, &reply, sizeof(reply), 0) != sizeof(reply))
@@ -453,13 +460,13 @@ main(int argc, char *argv[])
 		case 'L':
 			if (doperf != PERF_NONE)
 				usage();
-			doperf = PERF_MANUAL;
+			doperf = PERF_LOW;
 			setperf(PERFMIN);
 			break;
 		case 'H':
 			if (doperf != PERF_NONE)
 				usage();
-			doperf = PERF_MANUAL;
+			doperf = PERF_HIGH;
 			setperf(PERFMAX);
 			break;
 		case 'm':

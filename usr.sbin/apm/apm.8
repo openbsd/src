@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.8,v 1.25 2005/12/02 09:22:52 jmc Exp $
+.\"	$OpenBSD: apm.8,v 1.26 2006/01/19 19:17:10 sturm Exp $
 .\"
 .\" Copyright (c) 1996 John T. Kohl
 .\" All rights reserved.
@@ -76,13 +76,13 @@ to
 .It Fl H
 Set
 .Xr apmd 8
-to manual performance adjustment mode and
+to high performance mode and
 .Va hw.setperf
 to 100.
 .It Fl L
 Set
 .Xr apmd 8
-to manual performance adjustment mode and
+to low performance mode and
 .Va hw.setperf
 to 0.
 .It Fl l
@@ -91,8 +91,8 @@ Display the estimated battery lifetime (in percent).
 Display the estimated battery lifetime (in minutes).
 .It Fl P
 Display the performance adjustment mode.
-0 means uninitialized, 1 means manual, 2 means automatic mode, and 3
-means cool running mode.
+0 means uninitialized, 1 means low performance mode, 2 means high performance
+mode, 3 means automatic mode, and 4 means cool running mode.
 .It Fl S
 Put the system into stand-by (light sleep) mode.
 .It Fl s
