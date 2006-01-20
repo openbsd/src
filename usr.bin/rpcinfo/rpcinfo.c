@@ -1,9 +1,9 @@
-/*	$OpenBSD: rpcinfo.c,v 1.10 2005/09/22 20:52:55 deraadt Exp $	*/
+/*	$OpenBSD: rpcinfo.c,v 1.11 2006/01/20 00:01:20 millert Exp $	*/
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpcinfo.c 1.22 87/08/12 SMI";*/
 /*static char sccsid[] = "from: @(#)rpcinfo.c	2.2 88/08/11 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rpcinfo.c,v 1.10 2005/09/22 20:52:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rpcinfo.c,v 1.11 2006/01/20 00:01:20 millert Exp $";
 #endif
 
 /*
@@ -56,6 +56,7 @@ static char rcsid[] = "$OpenBSD: rpcinfo.c,v 1.10 2005/09/22 20:52:55 deraadt Ex
 #include <unistd.h>
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #include <arpa/inet.h>
 
 #define MAXHOSTLEN 256

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.10 2005/08/03 16:29:36 sturm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.11 2006/01/20 00:01:20 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -36,6 +36,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <event.h>
+#include <limits.h>
 
 #include "ifstated.h"
 
