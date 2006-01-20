@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.22 2005/11/30 22:17:46 brad Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.23 2006/01/20 09:50:31 jakemsr Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -466,7 +466,8 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 	/* XXX it's unknown whether APS is made from Audigy as well */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_AUDIGY) {
 		sc->sc_type = EMUXKI_AUDIGY;
-                if (PCI_REVISION(pa->pa_class) == 0x04) {
+                if (PCI_REVISION(pa->pa_class) == 0x04 ||
+		    PCI_REVISION(pa->pa_class) == 0x08) {
 			sc->sc_type |= EMUXKI_AUDIGY2;
 			strlcpy(sc->sc_audv.name, "Audigy2", sizeof sc->sc_audv.name);
 		} else {
@@ -1663,7 +1664,7 @@ emuxki_voice_set_bufparms(struct emuxki_voice *voice, void *ptr,
 		if (voice->use & EMU_VOICE_USE_PLAY) {
 			voice->blksize = blksize / sample_size;
 			chan = voice->dataloc.chan;
-			start = mem->ptbidx << 12;
+			start = (mem->ptbidx << 12) / sample_size;
 			end = start + bufsize / sample_size;
 			emuxki_channel_set_bufparms(chan[0],
 						     start, end);
