@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.78 2006/01/14 22:39:49 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.79 2006/01/20 16:06:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -105,7 +105,7 @@ path_update(struct rde_peer *peer, struct rde_aspath *nasp,
 
 	/* if the prefix was found move it else add it to the aspath */
 	if (p != NULL)
-		prefix_move(asp, p);
+		prefix_move(asp, p, F_LOCAL);
 	else
 		prefix_add(asp, prefix, prefixlen, F_LOCAL);
 }
@@ -393,7 +393,7 @@ prefix_add(struct rde_aspath *asp, struct bgpd_addr *prefix, int prefixlen,
 	} else {
 		if (p->aspath != asp)
 			/* prefix belongs to a different aspath so move */
-			return (prefix_move(asp, p));
+			return (prefix_move(asp, p, flags));
 		p->lastchange = time(NULL);
 	}
 
@@ -404,7 +404,7 @@ prefix_add(struct rde_aspath *asp, struct bgpd_addr *prefix, int prefixlen,
  * Move the prefix to the specified as path, removes the old asp if needed.
  */
 struct pt_entry *
-prefix_move(struct rde_aspath *asp, struct prefix *p)
+prefix_move(struct rde_aspath *asp, struct prefix *p, u_int32_t flags)
 {
 	struct prefix		*np;
 	struct rde_aspath	*oasp;
@@ -418,7 +418,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	/* peer and prefix pointers are still equal */
 	np->prefix = p->prefix;
 	np->lastchange = time(NULL);
-	np->flags = p->flags;
+	np->flags = flags;
 
 	/* add to new as path */
 	LIST_INSERT_HEAD(&asp->prefix_h, np, path_l);
@@ -427,6 +427,33 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	 * no need to update the peer prefix count because we are only moving
 	 * the prefix without changing the peer.
 	 */
+
+	/*
+	 * fiddle around with the flags. If the p->flags is not equal
+	 * to flags the old prefix p may not be removed but instead p->flags
+	 * needs to be adjusted.
+	 */
+	if (p->flags != flags) {
+		if ((p->flags & flags) == 0)
+			fatalx("prefix_move: "
+			    "prefix is not part of desired RIB");
+
+		p->flags &= ~flags;
+		p->aspath->prefix_cnt--;
+		/* as before peer count needs no update because of move */
+		
+		/* redo the route decision for p */
+		LIST_REMOVE(p, prefix_l);
+		/* If the prefix is the active one remove it first. */
+		if (p == p->prefix->active)
+			prefix_evaluate(NULL, p->prefix);
+		prefix_evaluate(p, p->prefix);
+
+		/* and now for np */
+		prefix_evaluate(np, np->prefix);
+
+		return (np->prefix);
+	}
 
 	/*
 	 * First kick the old prefix node out of the prefix list,
@@ -454,7 +481,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	if (path_empty(oasp))
 		path_destroy(oasp);
 
-	return np->prefix;
+	return (np->prefix);
 }
 
 /*

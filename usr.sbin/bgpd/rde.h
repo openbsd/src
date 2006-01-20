@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.83 2006/01/14 22:39:49 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.84 2006/01/20 16:06:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -310,7 +310,7 @@ struct prefix	*prefix_get(struct rde_peer *, struct bgpd_addr *, int,
 		    u_int32_t);
 struct pt_entry	*prefix_add(struct rde_aspath *, struct bgpd_addr *, int,
 		    u_int32_t);
-struct pt_entry	*prefix_move(struct rde_aspath *, struct prefix *);
+struct pt_entry	*prefix_move(struct rde_aspath *, struct prefix *, u_int32_t);
 void		 prefix_remove(struct rde_peer *, struct bgpd_addr *, int,
 		    u_int32_t);
 int		 prefix_write(u_char *, int, struct bgpd_addr *, u_int8_t);
