@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.18 2005/11/15 14:33:29 robert Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.19 2006/01/20 18:14:17 millert Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -193,6 +193,7 @@ typedef unsigned int uintptr_t;
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
+#include <sys/stdint.h>		/* uintptr_t */
 
 #ifdef __NetBSD__
 #include <uvm/uvm_extern.h>
@@ -200,14 +201,9 @@ typedef unsigned int uintptr_t;
 
 #ifdef __OpenBSD__
 #include <dev/rndvar.h>
+typedef int intrmask_t;
 #endif
 
-#ifdef __OpenBSD__
-typedef unsigned long uintptr_t;
-typedef int intrmask_t;
-#else
-#include <sys/inttypes.h>		/* uintptr_t */
-#endif
 #include <dev/ic/bt8xx.h>
 #include <dev/pci/bktr/bktr_reg.h>
 #include <dev/pci/bktr/bktr_tuner.h>
