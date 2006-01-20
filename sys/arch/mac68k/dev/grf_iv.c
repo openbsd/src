@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.35 2006/01/10 21:19:14 miod Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.36 2006/01/20 00:09:36 miod Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -106,8 +106,11 @@ macfb_obio_match(struct device *parent, void *vcf, void *aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	bus_space_handle_t bsh;
-	int found;
+	static int found;
 	u_int base;
+
+	if (found != 0)
+		return (0);
 
 	found = 1;
 
