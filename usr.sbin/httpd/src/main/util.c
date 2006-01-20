@@ -1692,6 +1692,8 @@ API_EXPORT(char *) ap_escape_html(pool *p, const char *s)
 	    j += 3;
 	else if (s[i] == '&')
 	    j += 4;
+	else if (s[i] == '"')
+	    j += 5; 
 
     if (j == 0)
 	return ap_pstrndup(p, s, i);
@@ -1709,6 +1711,10 @@ API_EXPORT(char *) ap_escape_html(pool *p, const char *s)
 	else if (s[i] == '&') {
 	    memcpy(&x[j], "&amp;", 5);
 	    j += 4;
+	}
+	else if (s[i] == '"') {
+	    memcpy(&x[j], "&quot;", 6);
+	    j += 5;
 	}
 	else
 	    x[j] = s[i];
