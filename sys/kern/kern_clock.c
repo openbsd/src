@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.57 2006/01/13 22:02:37 tedu Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.58 2006/01/20 07:53:48 tedu Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -220,7 +220,6 @@ hardclock(struct clockframe *frame)
 	struct proc *p;
 #ifndef __HAVE_TIMECOUNTER
 	int delta;
-	extern int tick_skew;
 	extern int tickdelta;
 	extern long timedelta;
 #endif
@@ -273,7 +272,7 @@ hardclock(struct clockframe *frame)
 	 * ``tickdelta'' may also be added in.
 	 */
 
-	delta = tick + tick_skew;
+	delta = tick;
 
 	if (tickfix) {
 		tickfixcnt += tickfix;

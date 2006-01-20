@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.53 2006/01/13 22:02:37 tedu Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.54 2006/01/20 07:53:48 tedu Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -351,7 +351,6 @@ sys_settimeofday(struct proc *p, void *v, register_t *retval)
 #ifdef __HAVE_TIMECOUNTER
 struct timeval adjtimedelta;		/* unapplied time correction */
 #else
-int	tick_skew;		/* constant adjustment applied to tick */
 int	tickdelta;			/* current clock skew, us. per tick */
 long	timedelta;			/* unapplied time correction, us. */
 long	bigadj = 1000000;		/* use 10x skew above bigadj us. */
@@ -382,11 +381,9 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 
 	return (0);
 #else
-	static int increase_skew;
 	struct timeval atv;
-	long secdelta, ndelta, ntickdelta, odelta;
+	long ndelta, ntickdelta, odelta;
 	int s, error;
-	int largeadj = 0;
 
 	if ((error = suser(p, 0)))
 		return (error);
@@ -401,21 +398,12 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 	 * hardclock(), tickdelta will become zero, lest the correction
 	 * overshoot and start taking us away from the desired final time.
 	 */
-	secdelta = atv.tv_sec;
-
-	/* if this is going to take more than 4 hours, speed it up */
-	if (secdelta / 1000000L > 4 * 3600L) {
-		largeadj = 1;
+	if (atv.tv_sec > LONG_MAX / 1000000L)
 		ndelta = LONG_MAX;
-	} else if (secdelta / 1000000L < -4 * 3600L) {
-		largeadj = 1;
+	else if (atv.tv_sec < LONG_MIN / 1000000L)
 		ndelta = LONG_MIN;
-	} else if (secdelta > LONG_MAX / 1000000L) {
-		ndelta = LONG_MAX;
-	} else if (secdelta < LONG_MIN / 1000000L) {
-		ndelta = LONG_MIN;
-	} else {
-		ndelta = secdelta * 1000000L;
+	else {
+		ndelta = atv.tv_sec * 1000000L;
 		odelta = ndelta;
 		ndelta += atv.tv_usec;
 		if (atv.tv_usec > 0 && ndelta <= odelta)
@@ -424,51 +412,25 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 			ndelta = LONG_MIN;
 	}
 
-	if (largeadj)
-		ntickdelta = 100 * tickadj;
-	else if (ndelta > bigadj || ndelta < -bigadj)
+	if (ndelta > bigadj || ndelta < -bigadj)
 		ntickdelta = 10 * tickadj;
 	else
 		ntickdelta = tickadj;
-	if (ntickdelta > tick / 4)
-		ntickdelta = tick / 4;
 	if (ndelta % ntickdelta)
 		ndelta = ndelta / ntickdelta * ntickdelta;
 
 	/*
 	 * To make hardclock()'s job easier, make the per-tick delta negative
 	 * if we want time to run slower; then hardclock can simply compute
-	 * tick + tickdelta, and subtract tickdelta from timedelta.  If
-	 * we notice we are sliding away from where we want to be,
-	 * take notice so next time we can increase the adjustment.
+	 * tick + tickdelta, and subtract tickdelta from timedelta.
 	 */
-	if (ndelta < 0) {
+	if (ndelta < 0)
 		ntickdelta = -ntickdelta;
-		if (ndelta < timedelta)
-			increase_skew--;
-		else
-			increase_skew++;
-	} else {
-		if (ndelta > timedelta)
-			increase_skew++;
-		else
-			increase_skew--;
-	}
 	s = splclock();
 	odelta = timedelta;
 	timedelta = ndelta;
 	tickdelta = ntickdelta;
 	splx(s);
-
-	if (increase_skew <= -5) {
-		if (--tick_skew < -tick / 4)
-			tick_skew = -tick / 4;
-		increase_skew = 0;
-	} else if (increase_skew >= 5) {
-		if (++tick_skew > tick / 4)
-			tick_skew = tick / 4;
-		increase_skew = 0;
-	}
 
 	if (SCARG(uap, olddelta)) {
 		atv.tv_sec = odelta / 1000000;
