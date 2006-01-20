@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioiic.c,v 1.5 2006/01/18 21:47:08 grange Exp $	*/
+/*	$OpenBSD: gpioiic.c,v 1.6 2006/01/20 21:39:09 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -131,10 +131,13 @@ gpioiic_attach(struct device *parent, struct device *self, void *aux)
 	if (caps & GPIO_PIN_OPENDRAIN) {
 		printf(" open-drain");
 		sc->sc_sda |= GPIO_PIN_OPENDRAIN;
-		if (caps & GPIO_PIN_PULLUP) {
-			printf(" pull-up");
-			sc->sc_sda |= GPIO_PIN_PULLUP;
-		}
+	} else if ((caps & GPIO_PIN_PUSHPULL) && (caps & GPIO_PIN_TRISTATE)) {
+		printf(" push-pull tri-state");
+		sc->sc_sda |= GPIO_PIN_PUSHPULL;
+	}
+	if (caps & GPIO_PIN_PULLUP) {
+		printf(" pull-up");
+		sc->sc_sda |= GPIO_PIN_PULLUP;
 	}
 	gpio_pin_ctl(sc->sc_gpio, &sc->sc_map, GPIOIIC_PIN_SDA, sc->sc_sda);
 
@@ -256,11 +259,14 @@ void
 gpioiic_bb_set_dir(void *cookie, u_int32_t bits)
 {
 	struct gpioiic_softc *sc = cookie;
+	int sda = sc->sc_sda;
 
-	if (!(sc->sc_sda & GPIO_PIN_OPENDRAIN)) {
-		sc->sc_sda &= ~(GPIO_PIN_INPUT | GPIO_PIN_OUTPUT);
-		sc->sc_sda |= (bits & GPIOIIC_SDA ? GPIO_PIN_OUTPUT :
-		    GPIO_PIN_INPUT);
+	sda &= ~(GPIO_PIN_INPUT | GPIO_PIN_OUTPUT | GPIO_PIN_TRISTATE);
+	sda |= (bits & GPIOIIC_SDA ? GPIO_PIN_OUTPUT : GPIO_PIN_INPUT);
+	if ((sda & GPIO_PIN_PUSHPULL) && !(bits & GPIOIIC_SDA))
+		sda |= GPIO_PIN_TRISTATE;
+	if (sc->sc_sda != sda) {
+		sc->sc_sda = sda;
 		gpio_pin_ctl(sc->sc_gpio, &sc->sc_map, GPIOIIC_PIN_SDA,
 		    sc->sc_sda);
 	}
