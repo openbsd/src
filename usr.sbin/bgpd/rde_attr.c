@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.58 2006/01/10 16:11:12 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.59 2006/01/20 15:14:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -232,7 +232,7 @@ attr_compare(struct rde_aspath *a, struct rde_aspath *b)
 		for (; l < b->others_len; l++)
 			if (b->others[l] != NULL)
 				return (-1);
-	} else if (a->others_len < b->others_len) {
+	} else if (a->others_len > b->others_len) {
 		for (; l < a->others_len; l++)
 			if (a->others[l] != NULL)
 				return (1);
