@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.160 2006/01/09 06:06:42 robert Exp $
+#	$OpenBSD: GENERIC,v 1.161 2006/01/20 00:55:00 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -346,6 +346,7 @@ scsibus* at atapiscsi?
 
 # Audio devices
 eap*	at pci?				# Ensoniq AudioPCI S5016
+emu*	at pci?				# SB Live!
 
 puc*	at pci?				# PCI "universal" comm device
 com*	at puc?
@@ -362,10 +363,11 @@ opl*	at eso?
 
 # MIDI support
 midi*	at opl?				# OPL FM synth
-#midi*	at eap?
+midi*	at eap?
 
 #Audio Support
 audio*	at eap?
+audio*	at emu?
 audio*	at eso?
 audio*	at sv?
 audio*	at cmpci?
