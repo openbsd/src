@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd_machdep.c,v 1.1 2006/01/18 23:21:17 miod Exp $	*/
+/*	$OpenBSD: akbd_machdep.c,v 1.2 2006/01/20 00:10:09 miod Exp $	*/
 /*	$NetBSD: akbd.c,v 1.17 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -51,18 +51,6 @@
 #include <dev/adb/adb.h>
 #include <dev/adb/akbdvar.h>
 #include <dev/adb/keyboard.h>
-
-#if 0
-	case WSKBDIO_BELL:
-	case WSKBDIO_COMPLEXBELL:
-#define d ((struct wskbd_bell_data *)data)
-		mac68k_ring_bell(d->pitch, d->period * hz / 1000, d->volume);
-#undef d
-		return (0);
-
-	default:
-		return (-1);
-#endif
 
 void	akbd_cnbell(void *, u_int, u_int, u_int);
 void	akbd_cngetc(void *, u_int *, int *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.19 2006/01/18 23:21:16 miod Exp $	*/
+/*	$OpenBSD: adb.c,v 1.20 2006/01/20 00:10:09 miod Exp $	*/
 /*	$NetBSD: adb.c,v 1.47 2005/06/16 22:43:36 jmc Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.51 2005/06/16 22:43:36 jmc Exp $	*/
 
@@ -248,20 +248,13 @@ int	adbBusState = ADB_BUS_UNKNOWN;
 int	adbWaiting = 0;		/* waiting for return data from the device */
 int	adbWriteDelay = 0;	/* working on (or waiting to do) a write */
 int	adbOutQueueHasData = 0;	/* something in the queue waiting to go out */
-int	adbNextEnd = 0;		/* the next incoming bute is the last (II) */
 int	adbSoftPower = 0;	/* machine supports soft power */
 
 int	adbWaitingCmd = 0;	/* ADB command we are waiting for */
 u_char	*adbBuffer = (long)0;	/* pointer to user data area */
 void	*adbCompRout = (long)0;	/* pointer to the completion routine */
 void	*adbCompData = (long)0;	/* pointer to the completion routine data */
-long	adbFakeInts = 0;	/* keeps track of fake ADB interrupts for
-				 * timeouts (II) */
 int	adbStarting = 1;	/* doing adb_reinit so do polling differently */
-int	adbSendTalk = 0;	/* the intr routine is sending the talk, not
-				 * the user (II) */
-int	adbPolling = 0;		/* we are polling for service request */
-int	adbPollCmd = 0;		/* the last poll command we sent */
 
 u_char	adbInputBuffer[ADB_MAX_MSG_LENGTH];	/* data input buffer */
 u_char	adbOutputBuffer[ADB_MAX_MSG_LENGTH];	/* data output buffer */
@@ -269,8 +262,6 @@ struct	adbCmdHoldEntry adbOutQueue;		/* our 1 entry output queue */
 
 int	adbSentChars = 0;	/* how many characters we have sent */
 int	adbLastDevice = 0;	/* last ADB dev we heard from (II ONLY) */
-int	adbLastDevIndex = 0;	/* last ADB dev loc in dev table (II ONLY) */
-int	adbLastCommand = 0;	/* the last ADB command we sent (II) */
 
 struct	ADBDevEntry ADBDevTable[16];	/* our ADB device table */
 int	ADBNumDevices;		/* num. of ADB devices found with adb_reinit */
@@ -325,7 +316,6 @@ void	adb_read_II(u_char *);
 void	adb_hw_setup(void);
 void	adb_hw_setup_IIsi(u_char *);
 int	adb_cmd_result(u_char *);
-int	adb_cmd_extra(u_char *);
 int	adb_guess_next_device(void);
 int	adb_prog_switch_enable(void);
 int	adb_prog_switch_disable(void);
@@ -2284,46 +2274,6 @@ adb_cmd_result(u_char *in)
 		return 1;
 	}
 }
-
-
-/*
- * adb_cmd_extra
- *
- * This routine lets the caller know whether the specified adb command string
- * may have extra data appended to the end of it, such as a LISTEN command.
- *
- * returns: 0 if extra data is allowed
- *          1 if extra data is NOT allowed
- */
-int
-adb_cmd_extra(u_char *in)
-{
-	switch (adbHardware) {
-	case ADB_HW_II:
-		if ((in[1] & 0x0c) == 0x08)	/* was it a listen command? */
-			return 0;
-		return 1;
-
-	case ADB_HW_IISI:
-	case ADB_HW_CUDA:
-		/*
-		 * TO DO: support needs to be added to recognize RTC and PRAM
-		 * commands
-		 */
-		if ((in[2] & 0x0c) == 0x08)	/* was it a listen command? */
-			return 0;
-		/* add others later */
-		return 1;
-
-	case ADB_HW_PB:
-		return 1;
-
-	case ADB_HW_UNKNOWN:
-	default:
-		return 1;
-	}
-}
-
 
 void 
 adb_setup_hw_type(void)
