@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.49 2006/01/17 05:39:23 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.50 2006/01/20 16:11:22 naddy Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -578,8 +578,14 @@ ikemode		: /* empty */			{ $$ = IKE_ACTIVE; }
 		| ACTIVE			{ $$ = IKE_ACTIVE; }
 		;
 
-ikeauth		: /* empty */			{ $$.type = IKE_AUTH_RSA; }
-		| RSA				{ $$.type = IKE_AUTH_RSA; }
+ikeauth		: /* empty */			{
+			$$.type = IKE_AUTH_RSA;
+			$$.string = NULL;
+		}
+		| RSA				{
+			$$.type = IKE_AUTH_RSA;
+			$$.string = NULL;
+		}
 		| PSK STRING			{
 			$$.type = IKE_AUTH_PSK;
 			if (($$.string = strdup($2)) == NULL)
