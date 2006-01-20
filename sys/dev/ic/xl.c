@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.69 2006/01/11 04:19:42 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.70 2006/01/20 05:49:32 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -152,8 +152,6 @@
 int xl_newbuf(struct xl_softc *, struct xl_chain_onefrag *);
 void xl_stats_update(void *);
 int xl_encap(struct xl_softc *, struct xl_chain *,
-    struct mbuf * );
-int xl_encap_90xB(struct xl_softc *, struct xl_chain *,
     struct mbuf * );
 void xl_rxeof(struct xl_softc *);
 int xl_rx_resync(struct xl_softc *);
@@ -1493,12 +1491,16 @@ xl_txeoc(sc)
 			CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_TX_RESET);
 			xl_wait(sc);
 			if (sc->xl_type == XL_TYPE_905B) {
-				int i;
-				struct xl_chain *c;
-				i = sc->xl_cdata.xl_tx_cons;
-				c = &sc->xl_cdata.xl_tx_chain[i];
-				CSR_WRITE_4(sc, XL_DOWNLIST_PTR, c->xl_phys);
-				CSR_WRITE_1(sc, XL_DOWN_POLL, 64);
+				if (sc->xl_cdata.xl_tx_cnt) {
+					int i;
+					struct xl_chain *c;
+
+					i = sc->xl_cdata.xl_tx_cons;
+					c = &sc->xl_cdata.xl_tx_chain[i];
+					CSR_WRITE_4(sc, XL_DOWNLIST_PTR,
+					    c->xl_phys);
+					CSR_WRITE_1(sc, XL_DOWN_POLL, 64);
+				}
 			} else {
 				if (sc->xl_cdata.xl_tx_head != NULL)
 					CSR_WRITE_4(sc, XL_DOWNLIST_PTR,
@@ -1667,15 +1669,20 @@ xl_encap(sc, c, m_head)
 	struct xl_chain		*c;
 	struct mbuf		*m_head;
 {
-	int			frag, total_len;
+	int			error, frag, total_len;
+	u_int32_t		status;
 	bus_dmamap_t		map;
 
 	map = sc->sc_tx_sparemap;
 
 reload:
-	if (bus_dmamap_load_mbuf(sc->sc_dmat, map,
-	    m_head, BUS_DMA_NOWAIT) != 0)
-		return (ENOBUFS);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, map,
+	    m_head, BUS_DMA_NOWAIT);
+
+	if (error && error != EFBIG) {
+		m_freem(m_head);
+		return (1);
+	}
 
 	/*
  	 * Start packing the mbufs in this chain into
@@ -1683,8 +1690,6 @@ reload:
  	 * of fragments or hit the end of the mbuf chain.
 	 */
 	for (frag = 0, total_len = 0; frag < map->dm_nsegs; frag++) {
-		if ((XL_TX_LIST_CNT - (sc->xl_cdata.xl_tx_cnt + frag)) < 3)
-			return (ENOBUFS);
 		if (frag == XL_MAXFRAGS)
 			break;
 		total_len += map->dm_segs[frag].ds_len;
@@ -1702,7 +1707,7 @@ reload:
 	 * pointers/counters; it wouldn't gain us anything,
 	 * and would waste cycles.
 	 */
-	if (frag != map->dm_nsegs) {
+	if (error) {
 		struct mbuf		*m_new = NULL;
 
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
@@ -1741,6 +1746,22 @@ reload:
 	c->xl_ptr->xl_frag[frag - 1].xl_len |= htole32(XL_LAST_FRAG);
 	c->xl_ptr->xl_status = htole32(total_len);
 	c->xl_ptr->xl_next = 0;
+
+	if (sc->xl_type == XL_TYPE_905B) {
+		status = XL_TXSTAT_RND_DEFEAT;
+
+#ifndef XL905B_TXCSUM_BROKEN
+		if (m_head->m_pkthdr.csum_flags) {
+			if (m_head->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
+				status |= XL_TXSTAT_IPCKSUM;
+			if (m_head->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
+				status |= XL_TXSTAT_TCPCKSUM;
+			if (m_head->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
+				status |= XL_TXSTAT_UDPCKSUM;
+		}
+#endif
+		c->xl_ptr->xl_status = htole32(status);
+	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
 	    offsetof(struct xl_list_data, xl_tx_list[0]),
@@ -1890,105 +1911,6 @@ xl_start(ifp)
 	return;
 }
 
-int
-xl_encap_90xB(sc, c, m_head)
-	struct xl_softc *sc;
-	struct xl_chain *c;
-	struct mbuf *m_head;
-{
-	struct xl_frag *f = NULL;
-	struct xl_list *d;
-	int frag;
-	bus_dmamap_t map;
-
-	/*
-	 * Start packing the mbufs in this chain into
-	 * the fragment pointers. Stop when we run out
-	 * of fragments or hit the end of the mbuf chain.
-	 */
-	map = sc->sc_tx_sparemap;
-	d = c->xl_ptr;
-	d->xl_status = htole32(0);
-	d->xl_next = 0;
-
-reload:
-	if (bus_dmamap_load_mbuf(sc->sc_dmat, map,
-	    m_head, BUS_DMA_NOWAIT) != 0)
-		return (ENOBUFS);
-
-	for (frag = 0; frag < map->dm_nsegs; frag++) {
-		if (frag == XL_MAXFRAGS)
-			break;
-		f = &d->xl_frag[frag];
-		f->xl_addr = htole32(map->dm_segs[frag].ds_addr);
-		f->xl_len = htole32(map->dm_segs[frag].ds_len);
-	}
-
-	/*
-	 * Handle special case: we used up all 63 fragments,
-	 * but we have more mbufs left in the chain. Copy the
-	 * data into an mbuf cluster. Note that we don't
-	 * bother clearing the values in the other fragment
-	 * pointers/counters; it wouldn't gain us anything,
-	 * and would waste cycles.
-	 */
-	if (frag != map->dm_nsegs) {
-		struct mbuf		*m_new = NULL;
-
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
-			m_freem(m_head);
-			return (1);
-		}
-		if (m_head->m_pkthdr.len > MHLEN) {
-			MCLGET(m_new, M_DONTWAIT);
-			if (!(m_new->m_flags & M_EXT)) {
-				m_freem(m_new);
-				m_freem(m_head);
-				return (1);
-			}
-		}
-		m_copydata(m_head, 0, m_head->m_pkthdr.len,
-		    mtod(m_new, caddr_t));
-		m_new->m_pkthdr.len = m_new->m_len = m_head->m_pkthdr.len;
-		m_freem(m_head);
-		m_head = m_new;
-		goto reload;
-	}
-
-	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
-
-	/* sync the old map, and unload it (if necessary) */
-	if (c->map->dm_nsegs != 0) {
-		bus_dmamap_sync(sc->sc_dmat, c->map, 0, c->map->dm_mapsize,
-		    BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(sc->sc_dmat, c->map);
-	}
-
-	c->xl_mbuf = m_head;
-	sc->sc_tx_sparemap = c->map;
-	c->map = map;
-	c->xl_ptr->xl_frag[frag - 1].xl_len |= htole32(XL_LAST_FRAG);
-	c->xl_ptr->xl_status = htole32(XL_TXSTAT_RND_DEFEAT);
-
-#ifndef XL905B_TXCSUM_BROKEN
-	if (m_head->m_pkthdr.csum & M_IPV4_CSUM_OUT)
-		c->xl_ptr->xl_status |= htole32(XL_TXSTAT_IPCKSUM);
-	if (m_head->m_pkthdr.csum & M_TCPV4_CSUM_OUT)
-		c->xl_ptr->xl_status |= htole32(XL_TXSTAT_TCPCKSUM);
-	if (m_head->m_pkthdr.csum & M_UDPV4_CSUM_OUT)
-		c->xl_ptr->xl_status |= htole32(XL_TXSTAT_UDPCKSUM);
-#endif
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
-	    offsetof(struct xl_list_data, xl_tx_list[0]),
-	    sizeof(struct xl_list) * XL_TX_LIST_CNT,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-	return(0);
-}
-
 void
 xl_start_90xB(ifp)
 	struct ifnet *ifp;
@@ -2022,7 +1944,7 @@ xl_start_90xB(ifp)
 		cur_tx = &sc->xl_cdata.xl_tx_chain[idx];
 
 		/* Pack the data into the descriptor. */
-		error = xl_encap_90xB(sc, cur_tx, m_head);
+		error = xl_encap(sc, cur_tx, m_head);
 		if (error) {
 			cur_tx = prev_tx;
 			continue;
