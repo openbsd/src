@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.186 2006/01/05 17:33:39 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.187 2006/01/20 16:40:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -461,8 +461,9 @@ struct ctl_show_rib {
 	time_t			lastchange;
 	u_int32_t		local_pref;
 	u_int32_t		med;
-	u_int16_t		prefix_cnt;
-	u_int16_t		active_cnt;
+	u_int32_t		prefix_cnt;
+	u_int32_t		active_cnt;
+	u_int32_t		adjrib_cnt;
 	u_int16_t		aspath_len;
 	u_int16_t		flags;
 	u_int8_t		prefixlen;

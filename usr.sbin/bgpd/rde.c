@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.194 2006/01/20 14:56:12 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.195 2006/01/20 16:40:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1434,6 +1434,7 @@ rde_dump_rib_as(struct prefix *p, pid_t pid)
 	rib.med = p->aspath->med;
 	rib.prefix_cnt = p->aspath->prefix_cnt;
 	rib.active_cnt = p->aspath->active_cnt;
+	rib.adjrib_cnt = p->aspath->adjrib_cnt;
 	if (p->aspath->nexthop != NULL)
 		memcpy(&rib.nexthop, &p->aspath->nexthop->true_nexthop,
 		    sizeof(rib.nexthop));

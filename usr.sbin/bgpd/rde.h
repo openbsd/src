@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.84 2006/01/20 16:06:12 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.85 2006/01/20 16:40:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -61,7 +61,8 @@ struct rde_peer {
 	struct uplist_prefix		 withdraws6;
 	struct capabilities		 capa_announced;
 	struct capabilities		 capa_received;
-	u_int32_t			 prefix_cnt;
+	u_int32_t			 prefix_cnt; /* # of prefixes */
+	u_int32_t			 adjrib_cnt; /* # of p. in Adj-RIB-In */
 	u_int32_t			 remote_bgpid;
 	u_int32_t			 up_pcnt;
 	u_int32_t			 up_acnt;
@@ -168,11 +169,12 @@ struct rde_aspath {
 	u_int32_t			 med;		/* multi exit disc */
 	u_int32_t			 lpref;		/* local pref */
 	u_int32_t			 weight;	/* low prio lpref */
+	u_int32_t			 prefix_cnt; /* # of prefixes */
+	u_int32_t			 active_cnt; /* # of active prefixes */
+	u_int32_t			 adjrib_cnt; /* # of p. in Adj-RIB-In */
 	u_int16_t			 rtlabelid;	/* route label id */
 	u_int16_t			 pftableid;	/* pf table id */
 	u_int16_t			 flags;		/* internally used */
-	u_int16_t			 prefix_cnt; /* # of prefixes */
-	u_int16_t			 active_cnt; /* # of active prefixes */
 	u_int8_t			 origin;
 	u_int8_t			 others_len;
 };

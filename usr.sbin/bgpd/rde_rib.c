@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.79 2006/01/20 16:06:12 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.80 2006/01/20 16:40:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -33,6 +33,15 @@
  * Therefor one thing needs to be absolutely avoided, long table walks.
  * This is achieved by heavily linking the different parts together.
  */
+
+/* used to bump correct prefix counters */
+#define PREFIX_COUNT(x, f, op)				\
+	do {						\
+		if (f & F_LOCAL)			\
+			(x)->prefix_cnt += (op);	\
+		if (f & F_ORIGINAL)			\
+			(x)->adjrib_cnt += (op);	\
+	} while (0)
 
 /* path specific functions */
 
@@ -202,7 +211,8 @@ void
 path_destroy(struct rde_aspath *asp)
 {
 	/* path_destroy can only unlink and free empty rde_aspath */
-	if (asp->prefix_cnt != 0 || asp->active_cnt != 0)
+	if (asp->prefix_cnt != 0 || asp->active_cnt != 0 ||
+	    asp->adjrib_cnt != 0)
 		log_warnx("path_destroy: prefix count out of sync");
 
 	nexthop_unlink(asp);
@@ -422,7 +432,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p, u_int32_t flags)
 
 	/* add to new as path */
 	LIST_INSERT_HEAD(&asp->prefix_h, np, path_l);
-	asp->prefix_cnt++;
+	PREFIX_COUNT(asp, flags, 1);
 	/*
 	 * no need to update the peer prefix count because we are only moving
 	 * the prefix without changing the peer.
@@ -439,7 +449,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p, u_int32_t flags)
 			    "prefix is not part of desired RIB");
 
 		p->flags &= ~flags;
-		p->aspath->prefix_cnt--;
+		PREFIX_COUNT(p->aspath, flags, -1);
 		/* as before peer count needs no update because of move */
 		
 		/* redo the route decision for p */
@@ -469,7 +479,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p, u_int32_t flags)
 	/* remove old prefix node */
 	oasp = p->aspath;
 	LIST_REMOVE(p, path_l);
-	oasp->prefix_cnt--;
+	PREFIX_COUNT(oasp, flags, -1);
 	/* as before peer count needs no update because of move */
 
 	/* destroy all references to other objects and free the old prefix */
@@ -638,8 +648,8 @@ prefix_link(struct prefix *pref, struct pt_entry *pte, struct rde_aspath *asp,
     u_int32_t flags)
 {
 	LIST_INSERT_HEAD(&asp->prefix_h, pref, path_l);
-	asp->prefix_cnt++;
-	asp->peer->prefix_cnt++;
+	PREFIX_COUNT(asp, flags, 1);
+	PREFIX_COUNT(asp->peer, flags, 1);
 
 	pref->aspath = asp;
 	pref->prefix = pte;
@@ -661,8 +671,8 @@ prefix_unlink(struct prefix *pref)
 	prefix_evaluate(NULL, pref->prefix);
 
 	LIST_REMOVE(pref, path_l);
-	pref->aspath->prefix_cnt--;
-	pref->aspath->peer->prefix_cnt--;
+	PREFIX_COUNT(pref->aspath, pref->flags, -1);
+	PREFIX_COUNT(pref->aspath->peer, pref->flags, -1);
 
 	/* destroy all references to other objects */
 	pref->aspath = NULL;
