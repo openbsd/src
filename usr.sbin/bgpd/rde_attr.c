@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.59 2006/01/20 15:14:40 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.60 2006/01/20 15:34:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -178,9 +178,14 @@ attr_copy(struct rde_aspath *t, struct rde_aspath *s)
 	if (t->others != NULL)
 		attr_freeall(t);
 
+	t->others_len = s->others_len;
+	if (t->others_len == 0) {
+		t->others = NULL;
+		return;
+	}
+
 	if ((t->others = calloc(s->others_len, sizeof(struct attr *))) == 0)
 		fatal("attr_copy");
-	t->others_len = s->others_len;
 
 	for (l = 0; l < t->others_len; l++) {
 		if (s->others[l] == NULL)
