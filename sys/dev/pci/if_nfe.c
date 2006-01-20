@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.7 2006/01/18 20:44:51 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.8 2006/01/20 22:02:03 brad Exp $	*/
 /*
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2005, 2006 Jonathan Gray <jsg@openbsd.org>
@@ -156,22 +156,10 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	struct ifnet *ifp;
 	bus_size_t memsize;
-	pcireg_t command;
 
 	/*
 	 * Map control/status registers.
 	 */
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
-
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": mem space not enabled\n");
-		return;
-	}
-
 	if (pci_mapreg_map(pa, NFE_PCI_BA, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_memt, &sc->sc_memh, NULL, &memsize, 0) != 0) {
 		printf(": can't map mem space\n");
