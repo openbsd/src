@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.30 2006/01/20 00:20:38 miod Exp $	*/
+/*	$OpenBSD: xd.c,v 1.31 2006/01/20 23:27:25 miod Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -285,7 +285,7 @@ xddummystrat(bp)
 {
 	if (bp->b_bcount != XDFM_BPS)
 		panic("xddummystrat");
-	bcopy(xd_labeldata, bp->b_un.b_addr, XDFM_BPS);
+	bcopy(xd_labeldata, bp->b_data, XDFM_BPS);
 	bp->b_flags |= B_DONE;
 	bp->b_flags &= ~B_BUSY;
 }
@@ -1729,7 +1729,7 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
 			    iorq->buf->b_resid =
 			       iorq->sectcnt * XDFM_BPS;
 			    dvma_mapout((vaddr_t)iorq->dbufbase,
-				    (vaddr_t)iorq->buf->b_un.b_addr,
+				    (vaddr_t)iorq->buf->b_data,
 				    iorq->buf->b_bcount);
 			    disk_unbusy(&xdcsc->reqs[lcv].xd->sc_dk,
 				(xdcsc->reqs[lcv].buf->b_bcount -
@@ -1936,7 +1936,7 @@ xdc_remove_iorq(xdcsc)
 				bp->b_resid = 0;	/* done */
 			}
 			dvma_mapout((vaddr_t) iorq->dbufbase,
-				    (vaddr_t) bp->b_un.b_addr,
+				    (vaddr_t) bp->b_data,
 				    bp->b_bcount);
 			disk_unbusy(&iorq->xd->sc_dk,
 			    (bp->b_bcount - bp->b_resid),

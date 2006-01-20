@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_segment.c,v 1.14 2005/12/28 20:48:18 pedro Exp $	*/
+/*	$OpenBSD: lfs_segment.c,v 1.15 2006/01/20 23:27:26 miod Exp $	*/
 /*	$NetBSD: lfs_segment.c,v 1.4 1996/02/09 22:28:54 christos Exp $	*/
 
 /*
@@ -654,7 +654,7 @@ lfs_updatemeta(sp)
 				printf("lfs: negative bytes (segment %d)\n",
 				    datosn(fs, daddr));
 				printf("lfs: bp = 0x%x, addr = 0x%x\n",
-						bp, bp->b_un.b_addr);
+						bp, bp->b_data);
 				panic ("Negative Bytes");
 			}
 #endif

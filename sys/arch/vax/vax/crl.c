@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.7 2003/06/02 23:27:58 millert Exp $	*/
+/*	$OpenBSD: crl.c,v 1.8 2006/01/20 23:27:26 miod Exp $	*/
 /*	$NetBSD: crl.c,v 1.6 2000/01/24 02:40:33 matt Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -140,7 +140,7 @@ crlrw(dev, uio, flag)
 			break;
 		}
 		if (uio->uio_rw == UIO_WRITE) {
-			error = uiomove(bp->b_un.b_addr, i, uio);
+			error = uiomove(bp->b_data, i, uio);
 			if (error)
 				break;
 		}
@@ -155,7 +155,7 @@ crlrw(dev, uio, flag)
 			break;
 		}
 		if (uio->uio_rw == UIO_READ) {
-			error = uiomove(bp->b_un.b_addr, i, uio);
+			error = uiomove(bp->b_data, i, uio);
 			if (error)
 				break;
 		}
@@ -172,7 +172,7 @@ crlstart()
 
 	bp = crltab.crl_buf;
 	crltab.crl_errcnt = 0;
-	crltab.crl_xaddr = (ushort *) bp->b_un.b_addr;
+	crltab.crl_xaddr = (ushort *) bp->b_data;
 	bp->b_resid = 0;
 
 	if ((mfpr(PR_STXCS) & STXCS_RDY) == 0)

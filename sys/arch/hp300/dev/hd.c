@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.37 2005/11/18 00:16:48 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.38 2006/01/20 23:27:25 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -726,7 +726,7 @@ hdustart(rs)
 	struct buf *bp;
 
 	bp = rs->sc_tab.b_actf;
-	rs->sc_addr = bp->b_un.b_addr;
+	rs->sc_addr = bp->b_data;
 	rs->sc_resid = bp->b_bcount;
 	if (hpibreq(rs->sc_dev.dv_parent, &rs->sc_hq))
 		hdstart(rs);
@@ -829,7 +829,7 @@ again:
 	bp->b_error = EIO;
 	bp = hdfinish(rs, bp);
 	if (bp) {
-		rs->sc_addr = bp->b_un.b_addr;
+		rs->sc_addr = bp->b_data;
 		rs->sc_resid = bp->b_bcount;
 		if (hpibreq(rs->sc_dev.dv_parent, &rs->sc_hq))
 			goto again;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: advnops.c,v 1.31 2005/11/19 02:18:00 pedro Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.32 2006/01/20 23:27:24 miod Exp $	*/
 /*	$NetBSD: advnops.c,v 1.32 1996/10/13 02:52:09 christos Exp $	*/
 
 /*
@@ -325,7 +325,7 @@ adosfs_read(v)
 		printf(" %u+%u-%u+%u", lbn, on, lbn, n);
 #endif
 		n = min(n, size - bp->b_resid);	/* XXX check types */
-		error = uiomove(bp->b_un.b_addr + on + amp->bsize -
+		error = uiomove(bp->b_data + on + amp->bsize -
 		    amp->dbsize, n, uio);
 		brelse(bp);
 		off = (u_int32_t)uio->uio_offset;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.25 2005/12/22 02:51:25 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.26 2006/01/20 23:27:26 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	if (biowait(bp)) {
 		msg = "I/O error";
 	} else {
-		dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
+		dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			msg = "no disk label";
 		} else if (dlp->d_npartitions > MAXPARTITIONS ||
@@ -260,7 +260,7 @@ writedisklabel(dev, strat, lp, osdep)
 
 	bp = geteblk((int)lp->d_secsize);
 
-	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
+	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
 	bcopy(lp, dlp, sizeof(struct disklabel));
 
 	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
@@ -308,9 +308,9 @@ disk_reallymapin(bp, map, reg, flag)
 	int pfnum, npf, o, i;
 	caddr_t addr;
 
-	o = (int)bp->b_un.b_addr & VAX_PGOFSET;
+	o = (int)bp->b_data & VAX_PGOFSET;
 	npf = vax_btoc(bp->b_bcount + o) + 1;
-	addr = bp->b_un.b_addr;
+	addr = bp->b_data;
 	p = bp->b_proc;
 
 	/*

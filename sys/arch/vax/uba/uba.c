@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba.c,v 1.21 2004/12/25 23:02:25 miod Exp $	   */
+/*	$OpenBSD: uba.c,v 1.22 2006/01/20 23:27:26 miod Exp $	   */
 /*	$NetBSD: uba.c,v 1.43 2000/01/24 02:40:36 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
@@ -580,7 +580,7 @@ ubasetup(uh, bp, flags)
 	if (uh->uh_nbdp == 0)
 		flags &= ~UBA_NEEDBDP;
 
-	o = (int)bp->b_un.b_addr & VAX_PGOFSET;
+	o = (int)bp->b_data & VAX_PGOFSET;
 	npf = vax_btoc(bp->b_bcount + o) + 1;
 	if (npf > UBA_MAXNMR)
 		panic("uba xfer too big");
@@ -644,7 +644,7 @@ uballoc(uh, addr, bcnt, flags)
 {
 	struct buf ubabuf;
 
-	ubabuf.b_un.b_addr = addr;
+	ubabuf.b_data = addr;
 	ubabuf.b_flags = B_BUSY;
 	ubabuf.b_bcount = bcnt;
 	/* that's all the fields ubasetup() needs */
