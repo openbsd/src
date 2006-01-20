@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.22 2006/01/19 00:08:46 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.23 2006/01/20 20:20:28 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -199,6 +199,7 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 					ival |= (sval << 24L);
 					break;
 				}
+				pci_conf_write(pc, tag, idx & ~0x3, ival);
 			}
 			pb++;
 		}
@@ -435,7 +436,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	struct aml_value	res;
 
 	dnprintf(10, "found hid device: %s ", node->parent->name);
-	aml_eval_object(sc, node->child, &res, NULL);
+	aml_eval_object(sc, node, &res, NULL);
 
 	switch (res.type) {
 	case AML_OBJTYPE_STRING:

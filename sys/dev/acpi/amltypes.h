@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.10 2006/01/18 22:25:44 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.11 2006/01/20 20:20:28 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -176,7 +176,8 @@ enum aml_objecttype {
 	AML_OBJTYPE_DDBHANDLE,
 	AML_OBJTYPE_DEBUGOBJ,
 
-	AML_OBJTYPE_NAMEREF = 0x100
+	AML_OBJTYPE_NAMEREF = 0x100,
+	AML_OBJTYPE_OBJREF
 };
 
 /* AML Opcode Arguments */
@@ -204,6 +205,7 @@ enum aml_objecttype {
 #define AML_METHOD_SERIALIZED(v)   (((v) >> 3) & 0x1)
 #define AML_METHOD_SYNCLEVEL(v)    (((v) >> 4) & 0xF)
 
+#define AML_FIELD_SETATTR(f,t,a)   (((f) & 0xF0) | ((t) & 0xF) | ((a)<<8))
 #define AML_FIELD_ACCESS(v)        (((v) >> 0) & 0xF)
 # define AML_FIELD_ANYACC            0x0
 # define AML_FIELD_BYTEACC           0x1
@@ -218,6 +220,7 @@ enum aml_objecttype {
 # define AML_FIELD_PRESERVE          0x0
 # define AML_FIELD_WRITEASONES       0x1
 # define AML_FIELD_WRITEASZEROES     0x2
+#define AML_FIELD_ATTR(v)          ((v) >> 8)
 
 struct aml_node;
 
@@ -227,11 +230,16 @@ struct aml_value
 	int	type;
   	int	length;
 	int	dynamic;
+	int     refcnt;
 	union {
 		int64_t           vinteger;
 		char		 *vstring;
 		u_int8_t         *vbuffer;
 		struct aml_value **vpackage;
+		struct {
+			const char      *name;
+			struct aml_node *ref;
+		} vnameref;
 		struct {
 			u_int8_t	iospace;
 			u_int64_t	iobase;
@@ -243,10 +251,11 @@ struct aml_value
 			struct aml_value *result;
 		} vmethod;
 		struct {
+			u_int8_t         acc_size;
 			u_int16_t	 flags;
-			u_int16_t        bitpos;
-			u_int16_t        bitlen;
 			u_int16_t	 ftype;
+			u_int32_t        bitpos;
+			u_int32_t        bitlen;
 			struct aml_node *ref;
 		} vfield;
 		struct {
@@ -255,9 +264,9 @@ struct aml_value
 			u_int8_t      	proc_len;
 		} vprocessor;
 		struct {
-			int		index;
-			struct aml_node *refobj;
-		} vindex;
+			int		 index;
+			struct aml_node *ref;
+		} vobjref;
 		struct {
 			u_int8_t      	pwr_level;
 			u_int16_t     	pwr_order;
@@ -265,6 +274,8 @@ struct aml_value
 	} _;
 };
 
+#define v_objref    _.vobjref
+#define v_nameref   _.vnameref
 #define v_integer   _.vinteger
 #define v_string    _.vstring
 #define v_buffer    _.vbuffer
@@ -298,6 +309,17 @@ struct aml_node
 	const char 	 *mnem;
 
 	struct aml_value *value;
+
+	int               depth;
 };
+
+#define AML_FALSE (0)
+#define AML_TRUE  (1)
+
+#define aml_bitmask(n)     (1L << ((n) & 0x7))
+#define aml_bitpos(n)      ((n)&0x7)
+#define aml_bytepos(n)     ((n)>>3)
+#define aml_bytelen(n)     (((n)+7)>>3)
+#define aml_bytealigned(x) !((x)&0x7)
 
 #endif /* __DEV_ACPI_AMLTYPES_H__ */
