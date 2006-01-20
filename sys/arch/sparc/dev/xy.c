@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.25 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: xy.c,v 1.26 2006/01/20 00:20:38 miod Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/sun_disklabel.h>
+#include <dev/sun/disklabel.h>
 #include <machine/conf.h>
 
 #include <sparc/dev/xyreg.h>

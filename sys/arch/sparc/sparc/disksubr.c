@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.33 2005/12/22 02:51:25 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.34 2006/01/20 00:20:38 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -36,17 +36,13 @@
 #include <sys/disk.h>
 #include <sys/dkbad.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
-
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
-#include <machine/sun_disklabel.h>
+#include <dev/sun/disklabel.h>
 #if defined(SUN4)
 #include <machine/oldmon.h>
 #endif
 
-#include <sparc/dev/sbusvar.h>
 #include "cd.h"
 
 #if MAXPARTITIONS != 16
@@ -622,52 +618,6 @@ disklabel_bsd_to_sun(lp, cp)
 		cksum ^= *sp1++;
 	sl->sl_cksum = cksum;
 
-	return (0);
-}
-
-/* move this to compat/sunos */
-int
-sun_dkioctl(dk, cmd, data, partition)
-	struct disk *dk;
-	u_long cmd;
-	caddr_t data;
-	int partition;
-{
-	register struct partition *p;
-
-	switch (cmd) {
-	case DKIOCGGEOM:
-#define geom	((struct sun_dkgeom *)data)
-		bzero(data, sizeof(*geom));
-		geom->sdkc_ncylinders = dk->dk_label->d_ncylinders;
-		geom->sdkc_acylinders = dk->dk_label->d_acylinders;
-		geom->sdkc_ntracks = dk->dk_label->d_ntracks;
-		geom->sdkc_nsectors = dk->dk_label->d_nsectors;
-		geom->sdkc_interleave = dk->dk_label->d_interleave;
-		geom->sdkc_sparespercyl = dk->dk_label->d_sparespercyl;
-		geom->sdkc_rpm = dk->dk_label->d_rpm;
-		geom->sdkc_pcylinders =
-			dk->dk_label->d_ncylinders + dk->dk_label->d_acylinders;
-#undef geom
-		break;
-	case DKIOCINFO:
-		/* Homey don't do DKIOCINFO */
-		bzero(data, sizeof(struct sun_dkctlr));
-		break;
-	case DKIOCGPART:
-		if (dk->dk_label->d_secpercyl == 0)
-			return (ERANGE);	/* XXX */
-		p = &dk->dk_label->d_partitions[partition];
-		if (p->p_offset % dk->dk_label->d_secpercyl != 0)
-			return (ERANGE);	/* XXX */
-#define part	((struct sun_dkpart *)data)
-		part->sdkp_cyloffset = p->p_offset / dk->dk_label->d_secpercyl;
-		part->sdkp_nsectors = p->p_size;
-#undef part
-		break;
-	default:
-		return (-1);
-	}
 	return (0);
 }
 

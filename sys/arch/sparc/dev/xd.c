@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.29 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: xd.c,v 1.30 2006/01/20 00:20:38 miod Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/sun_disklabel.h>
+#include <dev/sun/disklabel.h>
 #include <machine/conf.h>
 
 #include <sparc/dev/xdreg.h>

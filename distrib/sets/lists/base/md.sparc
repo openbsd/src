@@ -1434,7 +1434,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/signal.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/spinlock.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/stdarg.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/sun_disklabel.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/svr4_machdep.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/trap.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sparc/varargs.ph

@@ -164,7 +164,6 @@
 ./usr/include/sparc/signal.h
 ./usr/include/sparc/spinlock.h
 ./usr/include/sparc/stdarg.h
-./usr/include/sparc/sun_disklabel.h
 ./usr/include/sparc/svr4_machdep.h
 ./usr/include/sparc/trap.h
 ./usr/include/sparc/varargs.h
