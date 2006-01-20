@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.10 2006/01/05 10:28:24 xsa Exp $	*/
+/*	$OpenBSD: ident.c,v 1.11 2006/01/20 14:35:02 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -28,8 +28,8 @@
 
 #include "rcsprog.h"
 
-#define KEYDELIM	'$'	/* keywords delimitor */
-#define VALDELIM	':'	/* values delimitor */
+#define KEYDELIM	'$'	/* keywords delimiter */
+#define VALDELIM	':'	/* values delimiter */
 
 static int found = 0;
 
