@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.46 2006/01/11 01:29:07 krw Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.47 2006/01/20 00:58:32 krw Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -117,9 +117,8 @@ struct cmdtab {
 { CMD_INFO,     "info",         1, "" },
 { CMD_NEXT,	"next",		1, "" },
 { CMD_PAUSE,    "pause",        2, "" },
-{ CMD_PLAY,     "play",         1, "min1:sec1[.fram1] [min2:sec2[.fram2]]" },
 { CMD_PLAY,     "play",         1, "track1[.index1] [track2[.index2]]" },
-{ CMD_PLAY,     "play",         1, "tr1 m1:s1[.f1] [[tr2] [m2:s2[.f2]]]" },
+{ CMD_PLAY,     "play",         1, "[tr1] m1:s1[.f1] [tr2] [m2:s2[.f2]]" },
 { CMD_PLAY,     "play",         1, "[#block [len]]" },
 { CMD_PREV,	"previous",	2, "" },
 { CMD_QUIT,     "quit",         1, "" },
@@ -471,7 +470,7 @@ run(int cmd, char *arg)
 		if (!strncasecmp(arg, "mute", strlen(arg)))
 			return ioctl(fd, CDIOCSETMUTE);
 
-		if (2 != sscanf(arg, "%d %d", &l, &r)) {
+		if (2 != sscanf(arg, "%d%d", &l, &r)) {
 			printf("%s: Invalid command arguments\n", __progname);
 			return (0);
 		}
@@ -507,12 +506,21 @@ int
 play(char *arg)
 {
 	struct ioc_toc_header h;
-	int rc, n, start, end = 0, istart = 1, iend = 1;
+	unsigned char tm, ts, tf;
+	unsigned int tr1, tr2, m1, m2, s1, s2, f1, f2, i1, i2;
+	unsigned int blk, len, n;
+	char c;
+	int rc;
 
 	rc = ioctl(fd, CDIOREADTOCHEADER, &h);
 
 	if (rc < 0)
 		return (rc);
+
+	if (h.starting_track > h.ending_track) {
+		printf("TOC starting_track > TOC ending_track\n");
+		return (0);
+	}
 
 	n = h.ending_track - h.starting_track + 1;
 	rc = read_toc_entrys((n + 1) * sizeof (struct cd_toc_entry));
@@ -520,19 +528,28 @@ play(char *arg)
 	if (rc < 0)
 		return (rc);
 
+	/*
+	 * Truncate trailing white space. Then by adding %c to the end of the
+	 * sscanf() formats we catch any errant trailing characters.
+	 */
+	rc = strlen(arg) - 1;
+	while (rc >= 0 && isspace(arg[rc])) {
+		arg[rc] = '\0';
+		rc--;
+	}
+
 	if (! arg || ! *arg) {
 		/* Play the whole disc */
-		return (play_track(h.starting_track, 1,
-		    h.ending_track, 1));
+		return (play_track(h.starting_track, 1, h.ending_track, 1));
 	}
 
 	if (strchr(arg, '#')) {
 		/* Play block #blk [ len ] */
-		int blk, len = 0;
-
-		if (2 != sscanf(arg, "#%d%d", &blk, &len) &&
-		    1 != sscanf(arg, "#%d", &blk))
-			goto Clean_up;
+		if (2 != sscanf(arg, "#%u%u%c", &blk, &len, &c) &&
+		    1 != sscanf(arg, "#%u%c", &blk, &c)) {
+			printf("%s: Invalid command arguments\n", __progname);
+			return (0);
+		}
 
 		if (len == 0) {
 			if (msf)
@@ -545,176 +562,288 @@ play(char *arg)
 		return play_blocks(blk, len);
 	}
 
-	if (strchr(arg, ':')) {
+	if (strchr(arg, ':') == NULL) {
 		/*
-		 * Play MSF m1:s1 [ .f1 ] [ m2:s2 [ .f2 ] ]
-		 *
-		 * Will now also undestand timed addresses relative
-		 * to the beginning of a track in the form...
-		 *
-		 *      tr1 m1:s1[.f1] [[tr2] [m2:s2[.f2]]]
+		 * Play track tr1[.i1] [tr2[.i2]]
 		 */
-		int tr1, tr2;
-		unsigned int m1, m2, s1, s2, f1, f2;
-		unsigned char tm, ts, tf;
+		if (4 == sscanf(arg, "%u.%u%u.%u%c", &tr1, &i1, &tr2, &i2, &c))
+			goto play_track;
 
-		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (8 == sscanf(arg, "%d %u:%u.%u %d %u:%u.%u",
-		    &tr1, &m1, &s1, &f1, &tr2, &m2, &s2, &f2))
-			goto Play_Relative_Addresses;
+		i2 = 1;
+		if (3 == sscanf(arg, "%u.%u%u%c", &tr1, &i1, &tr2, &c))
+			goto play_track;
 
-		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (7 == sscanf(arg, "%d %u:%u %d %u:%u.%u",
-		    &tr1, &m1, &s1, &tr2, &m2, &s2, &f2))
-			goto Play_Relative_Addresses;
+		i1 = 1;
+		if (3 == sscanf(arg, "%u%u.%u%c", &tr1, &tr2, &i2, &c))
+			goto play_track;
 
-		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (7 == sscanf(arg, "%d %u:%u.%u %d %u:%u",
-		    &tr1, &m1, &s1, &f1, &tr2, &m2, &s2))
-			goto Play_Relative_Addresses;
+		tr2 = 0;
+		i2 = 1;
+		if (2 == sscanf(arg, "%u.%u%c", &tr1, &i1, &c))
+			goto play_track;
 
-		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (7 == sscanf(arg, "%d %u:%u.%u %u:%u.%u",
-		    &tr1, &m1, &s1, &f1, &m2, &s2, &f2))
-			goto Play_Relative_Addresses;
+		i1 = i2 = 1;
+		if (2 == sscanf(arg, "%u%u%c", &tr1, &tr2, &c))
+			goto play_track;
 
-		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (6 == sscanf(arg, "%d %u:%u.%u %u:%u",
-		    &tr1, &m1, &s1, &f1, &m2, &s2))
-			goto Play_Relative_Addresses;
+		i1 = i2 = 1;
+		tr2 = 0;
+		if (1 == sscanf(arg, "%u%c", &tr1, &c))
+			goto play_track;
 
-		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (6 == sscanf(arg, "%d %u:%u %u:%u.%u",
-		    &tr1, &m1, &s1, &m2, &s2, &f2))
-			goto Play_Relative_Addresses;
+		printf("%s: Invalid command arguments\n", __progname);
+		return (0);
 
-		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (6 == sscanf(arg, "%d %u:%u.%u %d %u",
-		    &tr1, &m1, &s1, &f1, &tr2, &m2))
-			goto Play_Relative_Addresses;
-
-		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (5 == sscanf(arg, "%d %u:%u %u:%u", &tr1, &m1, &s1, &m2, &s2))
-			goto Play_Relative_Addresses;
-
-		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (5 == sscanf(arg, "%d %u:%u %d %u",
-		    &tr1, &m1, &s1, &tr2, &m2))
-			goto Play_Relative_Addresses;
-
-		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (5 == sscanf(arg, "%d %u:%u.%u %d",
-		    &tr1, &m1, &s1, &f1, &tr2))
-			goto Play_Relative_Addresses;
-
-		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (4 == sscanf(arg, "%d %u:%u %u", &tr1, &m1, &s1, &tr2))
-			goto Play_Relative_Addresses;
-
-		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (4 == sscanf(arg, "%d %u:%u.%u", &tr1, &m1, &s1, &f1))
-			goto Play_Relative_Addresses;
-
-		tr2 = m2 = s2 = f2 = f1 = 0;
-		if (3 == sscanf(arg, "%d %u:%u", &tr1, &m1, &s1))
-			goto Play_Relative_Addresses;
-
-		tr2 = m2 = s2 = f2 = f1 = 0;
-		goto Try_Absolute_Timed_Addresses;
-
-Play_Relative_Addresses:
-		if (tr1 < 1 || tr1 > n) {
-			printf("Track %d not found\n", tr1);
+play_track:
+		if (tr1 > n || tr2 > n) {
+			printf("Track number must be between 0 and %u\n", n);
 			return (0);
-		} else if (tr2 < 0 || tr2 > n) {
-			printf("Track %d not found\n", tr2);
+		} else if (tr2 == 0)
+			tr2 = h.ending_track;
+
+		if (tr1 > tr2) {
+			printf("starting_track > ending_track\n");
 			return (0);
 		}
 
-		/* Change (m1,s1,f1) from tr1 to disc relative. */
+		return (play_track(tr1, i1, tr2, i2));
+	}
+
+	/*
+	 * Play MSF [tr1] m1:s1[.f1] [tr2] [m2:s2[.f2]]
+	 *
+	 * Start Time		End Time
+	 * ----------		--------
+	 * tr1 m1:s1.f1		tr2 m2:s2.f2
+	 * tr1 m1:s1   		tr2 m2:s2.f2
+	 * tr1 m1:s1.f1		tr2 m2:s2
+	 * tr1 m1:s1   		tr2 m2:s2
+	 *     m1:s1.f1		tr2 m2:s2.f2
+	 *     m1:s1   		tr2 m2:s2.f2
+	 *     m1:s1.f1		tr2 m2:s2
+	 *     m1:s1   		tr2 m2:s2
+	 * tr1 m1:s1.f1		    m2:s2.f2
+	 * tr1 m1:s1   		    m2:s2.f2
+	 * tr1 m1:s1.f1		    m2:s2
+	 * tr1 m1:s1  		    m2:s2
+	 *     m1:s1.f1		    m2:s2.f2
+	 *     m1:s1       	    m2:s2.f2
+	 *     m1:s1.f1  	    m2:s2
+	 *     m1:s1     	    m2:s2
+	 * tr1 m1:s1.f1		tr2
+	 * tr1 m1:s1    	tr2
+	 *     m1:s1.f1  	tr2
+	 *     m1:s1      	tr2
+	 * tr1 m1:s1.f1		<end of disc>
+	 * tr1 m1:s1    	<end of disc>
+	 *     m1:s1.f1  	<end of disc>
+	 *     m1:s1      	<end of disc>
+	 */
+
+	/* tr1 m1:s1.f1		tr2 m2:s2.f2 */
+	if (8 == sscanf(arg, "%u%u:%u.%u%u%u:%u.%u%c",
+	    &tr1, &m1, &s1, &f1, &tr2, &m2, &s2, &f2, &c))
+		goto play_msf;
+
+	/* tr1 m1:s1   		tr2 m2:s2.f2 */
+	f1 = 0;
+	if (7 == sscanf(arg, "%u%u:%u%u%u:%u.%u%c",
+	    &tr1, &m1, &s1, &tr2, &m2, &s2, &f2, &c))
+		goto play_msf;
+
+	/* tr1 m1:s1.f1		tr2 m2:s2 */
+	f2 =0;
+	if (7 == sscanf(arg, "%u%u:%u.%u%u%u:%u%c",
+	    &tr1, &m1, &s1, &f1, &tr2, &m2, &s2, &c))
+		goto play_msf;
+
+	/*     m1:s1.f1		tr2 m2:s2.f2 */
+	tr1 = 0;
+	if (7 == sscanf(arg, "%u:%u.%u%u%u:%u.%u%c",
+	    &m1, &s1, &f1, &tr2, &m2, &s2, &f2, &c))
+		goto play_msf;
+
+	/* tr1 m1:s1.f1		    m2:s2.f2 */
+	tr2 = 0;
+	if (7 == sscanf(arg, "%u%u:%u.%u%u:%u.%u%c",
+	    &tr1, &m1, &s1, &f1, &m2, &s2, &f2, &c))
+		goto play_msf;
+
+	/*     m1:s1   		tr2 m2:s2.f2 */
+	tr1 = f1 = 0;
+	if (6 == sscanf(arg, "%u:%u%u%u:%u.%u%c",
+	    &m1, &s1, &tr2, &m2, &s2, &f2, &c))
+		goto play_msf;
+
+	/*     m1:s1.f1		tr2 m2:s2 */
+	tr1 = f2 = 0;
+	if (6 == sscanf(arg, "%u:%u.%u%u%u:%u%c",
+	    &m1, &s1, &f1, &tr2, &m2, &s2, &c))
+		goto play_msf;
+
+	/*     m1:s1.f1		    m2:s2.f2 */
+	tr1 = tr2 = 0;
+	if (6 == sscanf(arg, "%u:%u.%u%u:%u.%u%c",
+	    &m1, &s1, &f1, &m2, &s2, &f2, &c))
+		goto play_msf;
+
+	/* tr1 m1:s1.f1		    m2:s2 */
+	tr2 = f2 = 0;
+	if (6 == sscanf(arg, "%u%u:%u.%u%u:%u%c",
+	    &tr1, &m1, &s1, &f1, &m2, &s2, &c))
+		goto play_msf;
+
+	/* tr1 m1:s1   		    m2:s2.f2 */
+	tr2 = f1 = 0;
+	if (6 == sscanf(arg, "%u%u:%u%u:%u.%u%c",
+	    &tr1, &m1, &s1, &m2, &s2, &f2, &c))
+		goto play_msf;
+
+	/* tr1 m1:s1   		tr2 m2:s2 */
+	f1 = f2 = 0;
+	if (6 == sscanf(arg, "%u%u:%u%u%u:%u%c",
+	    &tr1, &m1, &s1, &tr2, &m2, &s2, &c))
+		goto play_msf;
+
+	/*     m1:s1   		tr2 m2:s2 */
+	tr1 = f1 = f2 = 0;
+	if (5 == sscanf(arg, "%u:%u%u%u:%u%c", &m1, &s1, &tr2, &m2, &s2, &c))
+		goto play_msf;
+
+	/* tr1 m1:s1  		    m2:s2 */
+	f1 = tr2 = f2 = 0;
+	if (5 == sscanf(arg, "%u%u:%u%u:%u%c", &tr1, &m1, &s1, &m2, &s2, &c))
+		goto play_msf;
+
+	/*     m1:s1       	    m2:s2.f2 */
+	tr1 = f1 = tr2 = 0;
+	if (5 == sscanf(arg, "%u:%u%u:%u.%u%c", &m1, &s1, &m2, &s2, &f2, &c))
+		goto play_msf;
+
+	/*     m1:s1.f1  	    m2:s2 */
+	tr1 = tr2 = f2 = 0;
+	if (5 == sscanf(arg, "%u:%u.%u%u:%u%c", &m1, &s1, &f1, &m2, &s2, &c))
+		goto play_msf;
+
+	/* tr1 m1:s1.f1		tr2 */
+	m2 = s2 = f2 = 0;
+	if (5 == sscanf(arg, "%u%u:%u.%u%u%c", &tr1, &m1, &s1, &f1, &tr2, &c))
+		goto play_msf;
+
+	/*     m1:s1     	    m2:s2 */
+	tr1 = f1 = tr2 = f2 = 0;
+	if (4 == sscanf(arg, "%u:%u%u:%u%c", &m1, &s1, &m2, &s2, &c))
+		goto play_msf;
+
+	/* tr1 m1:s1.f1		<end of disc> */
+	tr2 = m2 = s2 = f2 = 0;
+	if (4 == sscanf(arg, "%u%u:%u.%u%c", &tr1, &m1, &s1, &f1, &c))
+		goto play_msf;
+
+	/* tr1 m1:s1    	tr2 */
+	f1 = m2 = s2 = f2 = 0;
+	if (4 == sscanf(arg, "%u%u:%u%u%c", &tr1, &m1, &s1, &tr2, &c))
+		goto play_msf;
+
+	/*     m1:s1.f1  	tr2 */
+	tr1 = m2 = s2 = f2 = 0;
+	if (4 == sscanf(arg, "%u%u:%u%u%c", &m1, &s1, &f1, &tr2, &c))
+		goto play_msf;
+
+	/*     m1:s1.f1  	<end of disc> */
+	tr1 = tr2 = m2 = s2 = f2 = 0;
+	if (3 == sscanf(arg, "%u:%u.%u%c", &m1, &s1, &f1, &c))
+		goto play_msf;
+
+	/* tr1 m1:s1    	<end of disc> */
+	f1 = tr2 = m2 = s2 = f2 = 0;
+	if (3 == sscanf(arg, "%u%u:%u%c", &tr1, &m1, &s1, &c))
+		goto play_msf;
+
+	/*     m1:s1      	tr2 */
+	tr1 = f1 = m2 = s2 = f2 = 0;
+	if (3 == sscanf(arg, "%u:%u%u%c", &m1, &s1, &tr2, &c))
+		goto play_msf;
+
+	/*     m1:s1      	<end of disc> */
+	tr1 = f1 = tr2 = m2 = s2 = f2 = 0;
+	if (2 == sscanf(arg, "%u:%u%c", &m1, &s1, &c))
+		goto play_msf;
+
+	printf("%s: Invalid command arguments\n", __progname);
+	return (0);
+
+play_msf:
+	if (tr1 > n || tr2 > n) {
+		printf("Track number must be between 0 and %u\n", n);
+		return (0);
+	} else if (m1 > 99 || m2 > 99) {
+		printf("Minutes must be between 0 and 99\n");
+		return (0);
+	} else if (s1 > 59 || s2 > 59) {
+		printf("Seconds must be between 0 and 59\n");
+		return (0);
+	} if (f1 > 74 || f2 > 74) {
+		printf("Frames number must be between 0 and 74\n");
+		return (0);
+	}
+
+	if (tr1 > 0) {
+		/*
+		 * Start time is relative to tr1, Add start time of tr1
+		 * to (m1,s1,f1) to yield absolute start time.
+		 */
 		toc2msf(tr1, &tm, &ts, &tf);
 		addmsf(&m1, &s1, &f1, tm, ts, tf);
 
 		/* Compare (m1,s1,f1) to start time of next track. */
 		toc2msf(tr1+1, &tm, &ts, &tf);
 		if (cmpmsf(m1, s1, f1, tm, ts, tf) == 1) {
-			printf("Track %d is not that long.\n", tr1);
+			printf("Track %u is not that long.\n", tr1);
 			return (0);
 		}
-
-		if (!(tr2 || m2 || s2 || f2)) {
-			/* No end time specified. Play to end of disc. */
-			toc2msf(n+1, &tm, &ts, &tf);
-			m2 = tm;
-			s2 = ts;
-			f2 = tf;
-		} else if (tr2 != 0) {
-			/*
-			 * End time specified relative to tr2. Change
-			 * (m2,s2,f2) from tr2 to disc relative.
-			 */
-			toc2msf(tr2, &tm, &ts, &tf);
-			addmsf(&m2, &s2, &f2, tm, ts, tf);
-			/* Compare (m2,s2,f2) to start time of next track. */
-			toc2msf(tr2+1, &tm, &ts, &tf);
-			if (cmpmsf(m2, s2, f2, tm, ts, tf) == 1) {
-				printf("Track %d is not that long.\n", tr2);
-				return (0);
-			}
-		} else {
-			/*
-			 * Duration rather than end time specified. Change
-			 * (m2,s2,f2) from (m1,s1,f1) to disc relative.
-			 */
-			addmsf(&m2, &s2, &f2, m1, s1, f1);
-			/* Compare (m2,s2,f2) to end of disc. */
-			toc2msf(tr2+1, &tm, &ts, &tf);
-			if (cmpmsf(m2, s2, f2, tm, ts, tf) == 1) {
-				printf("Disc is not that long.\n");
-				return (0);
-			}
-		}
-
-		return (play_msf(m1, s1, f1, m2, s2, f2));
-
-Try_Absolute_Timed_Addresses:
-		if (6 != sscanf(arg, "%u:%u.%u%u:%u.%u",
-		    &m1, &s1, &f1, &m2, &s2, &f2) &&
-		    5 != sscanf(arg, "%u:%u.%u%u:%u", &m1, &s1, &f1, &m2, &s2) &&
-		    5 != sscanf(arg, "%u:%u%u:%u.%u", &m1, &s1, &m2, &s2, &f2) &&
-		    3 != sscanf(arg, "%u:%u.%u", &m1, &s1, &f1) &&
-		    4 != sscanf(arg, "%u:%u%u:%u", &m1, &s1, &m2, &s2) &&
-		    2 != sscanf(arg, "%u:%u", &m1, &s1))
-			goto Clean_up;
-
-		if (m2 == 0) {
-			toc2msf(n+1, &tm, &ts, &tf);
-			m2 = tm;
-			s2 = ts;
-			f2 = tf;
-		}
-
-		return play_msf(m1, s1, f1, m2, s2, f2);
 	}
 
-	/*
-	 * Play track trk1 [ .idx1 ] [ trk2 [ .idx2 ] ]
-	 */
-	if (4 != sscanf(arg, "%d.%d%d.%d", &start, &istart, &end, &iend) &&
-	    3 != sscanf(arg, "%d.%d%d", &start, &istart, &end) &&
-	    3 != sscanf(arg, "%d%d.%d", &start, &end, &iend) &&
-	    2 != sscanf(arg, "%d.%d", &start, &istart) &&
-	    2 != sscanf(arg, "%d%d", &start, &end) &&
-	    1 != sscanf(arg, "%d", &start))
-		goto Clean_up;
+	toc2msf(n+1, &tm, &ts, &tf);
+	if (cmpmsf(m1, s1, f1, tm, ts, tf) == 1) {
+		printf("Start time is after end of disc.\n");
+		return (0);
+	}
 
-	if (end == 0)
-		end = h.ending_track;
-	return (play_track(start, istart, end, iend));
+	if (tr2 > 0) {
+		/*
+		 * End time is relative to tr2, Add start time of tr2
+		 * to (m2,s2,f2) to yield absolute end time.
+		 */
+		toc2msf(tr2, &tm, &ts, &tf);
+		addmsf(&m2, &s2, &f2, tm, ts, tf);
 
-Clean_up:
-	printf("%s: Invalid command arguments\n", __progname);
-	return (0);
+		/* Compare (m2,s2,f2) to start time of next track. */
+		toc2msf(tr2+1, &tm, &ts, &tf);
+		if (cmpmsf(m2, s2, f2, tm, ts, tf) == 1) {
+			printf("Track %u is not that long.\n", tr2);
+			return (0);
+		}
+	}
+
+	toc2msf(n+1, &tm, &ts, &tf);
+
+	if (!(tr2 || m2 || s2 || f2)) {
+		/* Play to end of disc. */
+		m2 = tm;
+		s2 = ts;
+		f2 = tf;
+	} else if (cmpmsf(m2, s2, f2, tm, ts, tf) == 1) {
+		printf("End time is after end of disc.\n");
+		return (0);
+	}
+
+	if (cmpmsf(m1, s1, f1, m2, s2, f2) == 1) {
+		printf("Start time is after end time.\n");
+		return (0);
+	}
+
+	return play_msf(m1, s1, f1, m2, s2, f2);
 }
 
 /* ARGSUSED */
