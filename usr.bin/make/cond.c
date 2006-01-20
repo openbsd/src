@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: cond.c,v 1.30 2004/04/07 13:11:35 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.31 2006/01/20 23:10:19 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <ctype.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include "config.h"
@@ -850,7 +851,7 @@ Cond_Eval(const char *line)
 {
     /* find end of keyword */
     const char	*end;
-    u_int32_t 	k;
+    uint32_t 	k;
     size_t 	len;
     struct If	*ifp;
     bool	value = false;

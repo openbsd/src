@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: generate.c,v 1.5 2002/06/11 21:12:11 espie Exp $ */
+/*	$OpenBSD: generate.c,v 1.6 2006/01/20 23:10:19 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -28,6 +28,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #include "stats.h"
@@ -91,10 +92,10 @@ char **table[] = {
 int
 main(int argc, char *argv[])
 {
-	u_int32_t i;
-	u_int32_t v;
-	u_int32_t h;
-	u_int32_t slots;
+	uint32_t i;
+	uint32_t v;
+	uint32_t h;
+	uint32_t slots;
 	const char *e;
 	char **occupied;
 	char **t;

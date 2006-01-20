@@ -1,4 +1,4 @@
-/* $OpenBSD: trace.c,v 1.12 2005/01/21 19:11:02 espie Exp $ */
+/* $OpenBSD: trace.c,v 1.13 2006/01/20 23:10:19 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -24,11 +24,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
-#include <err.h>
 #include <stdlib.h>
+#include <err.h>
 #include "mdef.h"
 #include "stdd.h"
 #include "extern.h"
@@ -142,7 +142,7 @@ print_header(struct input_file *inp)
 		fprintf(traceout, "id %lu: ", expansion_id);
 }
 
-ssize_t 
+size_t 
 trace(const char *argv[], int argc, struct input_file *inp)
 {
 	if (!traceout)
@@ -179,7 +179,7 @@ trace(const char *argv[], int argc, struct input_file *inp)
 		return buffer_mark();
 	else {
 		fprintf(traceout, "\n");
-		return -1;
+		return SIZE_MAX;
 	}
 }
 

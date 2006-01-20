@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.68 2005/09/06 15:33:21 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.69 2006/01/20 23:10:19 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -39,7 +39,6 @@
  * by: oz
  */
 
-#include <sys/types.h>
 #include <assert.h>
 #include <signal.h>
 #include <errno.h>
@@ -48,6 +47,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <ohash.h>
 #include <err.h>

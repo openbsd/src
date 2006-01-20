@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: tokenizer.l,v 1.2 2004/05/12 21:28:35 espie Exp $ */
+/* $OpenBSD: tokenizer.l,v 1.3 2006/01/20 23:10:19 espie Exp $ */
 /*
  * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
  *
@@ -18,7 +18,7 @@
 #include "parser.h"
 #include <stdlib.h>
 #include <errno.h>
-#include <sys/types.h>
+#include <stdint.h>
 #include <limits.h>
 
 extern int32_t yylval;
@@ -54,7 +54,7 @@ number()
 	errno = 0;
 	l = strtol(yytext, NULL, 0);
 	if (((l == LONG_MAX || l == LONG_MIN) && errno == ERANGE) ||
-	    l > 0x7fffffff || l < (-0x7fffffff - 1)) {
+	    l > INT32_MAX || l < INT32_MIN) {
 		fprintf(stderr, "m4: numeric overflow in expr: %s\n", yytext);
 	}
 	return l;

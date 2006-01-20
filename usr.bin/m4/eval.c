@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.58 2005/09/06 15:33:21 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.59 2006/01/20 23:10:19 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ unsigned long	expansion_id;
 void
 eval(const char *argv[], int argc, int td, int is_traced)
 {
-	ssize_t mark = -1;
+	size_t mark = SIZE_MAX;
 
 	expansion_id++;
 	if (td & RECDEF) 
@@ -109,7 +109,7 @@ eval(const char *argv[], int argc, int td, int is_traced)
 		expand_macro(argv, argc);
 	else
 		expand_builtin(argv, argc, td);
-    	if (mark != -1)
+    	if (mark != SIZE_MAX)
 		finish_trace(mark);
 }
 

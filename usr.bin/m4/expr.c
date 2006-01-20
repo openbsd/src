@@ -1,4 +1,4 @@
-/* $OpenBSD: expr.c,v 1.16 2004/05/12 21:17:03 espie Exp $ */
+/* $OpenBSD: expr.c,v 1.17 2006/01/20 23:10:19 espie Exp $ */
 /*
  * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
  *
@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <sys/types.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stddef.h>
 #include "mdef.h"

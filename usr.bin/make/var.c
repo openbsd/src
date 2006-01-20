@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.59 2004/04/07 13:11:36 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.60 2006/01/20 23:10:19 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -62,10 +62,10 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -171,18 +171,18 @@ typedef struct Var_ {
 static struct ohash_info var_info = {
 	offsetof(Var, name),
     NULL, hash_alloc, hash_free, element_alloc };
-static int quick_lookup(const char *, const char **, u_int32_t *);
+static int quick_lookup(const char *, const char **, uint32_t *);
 #define VarValue(v)	Buf_Retrieve(&((v)->val))
-static Var *varfind(const char *, const char *, SymTable *, int, int, u_int32_t);
+static Var *varfind(const char *, const char *, SymTable *, int, int, uint32_t);
 static Var *VarFindi(const char *, const char *, SymTable *, int);
-static Var *VarAdd(const char *, const char *, u_int32_t, const char *, GSymT *);
+static Var *VarAdd(const char *, const char *, uint32_t, const char *, GSymT *);
 static void VarDelete(void *);
 static void VarPrintVar(Var *);
 static const char *context_name(GSymT *);
 static Var *new_var(const char *, const char *, const char *);
-static Var *getvar(GSymT *, const char *, const char *, u_int32_t);
+static Var *getvar(GSymT *, const char *, const char *, uint32_t);
 static Var *create_var(const char *, const char *);
-static Var *var_from_env(const char *, const char *, u_int32_t);
+static Var *var_from_env(const char *, const char *, uint32_t);
 static void var_init_string(Var *, const char *);
 
 static const char *find_0(const char *);
@@ -214,7 +214,7 @@ SymTable_Destroy(SymTable *ctxt)
 #endif
 
 static int
-quick_lookup(const char *name, const char **enamePtr, u_int32_t *pk)
+quick_lookup(const char *name, const char **enamePtr, uint32_t *pk)
 {
     size_t len;
 
@@ -423,7 +423,7 @@ new_var(const char *name, const char *ename, const char *val)
 }
 
 static Var *
-var_from_env(const char *name, const char *ename, u_int32_t k)
+var_from_env(const char *name, const char *ename, uint32_t k)
 {
     char	*env;
     Var 	*v;
@@ -451,7 +451,7 @@ var_from_env(const char *name, const char *ename, u_int32_t k)
 }
 
 static Var *
-getvar(GSymT *ctxt, const char *name, const char *ename, u_int32_t k)
+getvar(GSymT *ctxt, const char *name, const char *ename, uint32_t k)
 {
     return ohash_find(ctxt, ohash_lookup_interval(ctxt, name, ename, k));
 }
@@ -477,7 +477,7 @@ VarFindi(const char	*name,	/* name to find */
 				 * FIND_ENV set means to look in the
 				 * environment */
 {
-    u_int32_t		k;
+    uint32_t		k;
     int 		idx;
 
 #ifdef STATS_VAR_LOOKUP
@@ -490,7 +490,7 @@ VarFindi(const char	*name,	/* name to find */
 
 static Var *
 varfind(const char *name, const char *ename, SymTable *ctxt, int flags, 
-    int idx, u_int32_t k)
+    int idx, uint32_t k)
 {
     Var 		*v;
 
@@ -566,7 +566,7 @@ varfind(const char *name, const char *ename, SymTable *ctxt, int flags,
  *-----------------------------------------------------------------------
  */
 static Var *
-VarAdd(const char *name, const char *ename, u_int32_t k, const char *val, 
+VarAdd(const char *name, const char *ename, uint32_t k, const char *val, 
     GSymT *ctxt)
 {
     Var   *v;
@@ -603,7 +603,7 @@ void
 Var_Delete(const char *name)
 {
     Var 	*v;
-    u_int32_t 	k;
+    uint32_t 	k;
     unsigned int slot;
     const char 	*ename = NULL;
     int		idx;
@@ -632,7 +632,7 @@ void
 Var_Seti(const char *name, const char *ename, const char *val, GSymT *ctxt)
 {
     Var   *v;
-    u_int32_t	k;
+    uint32_t	k;
     int		idx;
 
     idx = quick_lookup(name, &ename, &k);
@@ -670,7 +670,7 @@ void
 Var_Appendi(const char *name, const char *ename, const char *val, GSymT *ctxt)
 {
     Var   *v;
-    u_int32_t	k;
+    uint32_t	k;
     int		idx;
 
     assert(ctxt == VAR_GLOBAL || ctxt == VAR_CMD);
@@ -823,7 +823,7 @@ Var_Parse(const char *str, 	/* The string to parse */
     struct Name	name;
     const char	*start;
     char	*val;		/* Variable value  */
-    u_int32_t	k;
+    uint32_t	k;
     int 	idx;
 
     *freePtr = false;

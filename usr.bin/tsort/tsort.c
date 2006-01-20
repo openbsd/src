@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.19 2004/08/05 10:59:42 espie Exp $ */
+/* $OpenBSD: tsort.c,v 1.20 2006/01/20 23:10:19 espie Exp $ */
 /* ex:ts=8 sw=4:
  *
  * Copyright (c) 1999-2004 Marc Espie <espie@openbsd.org>
@@ -16,18 +16,18 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <limits.h>
 #include <stddef.h>
-#include <ohash.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sysexits.h>
 #include <unistd.h>
+#include <ohash.h>
 
 /* The complexity of topological sorting is O(e), where e is the
  * size of input.  While reading input, vertices have to be identified,
