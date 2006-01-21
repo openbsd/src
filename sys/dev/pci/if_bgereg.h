@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.37 2005/12/28 20:27:38 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.38 2006/01/21 16:35:39 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2170,23 +2170,10 @@ struct bge_gib {
  */
 #define BGE_VPD_FLAG		0x8000
  
-/* VPD structures */
-struct vpd_res {
-	u_int8_t		vr_id;
-	u_int8_t		vr_len;
-	u_int8_t		vr_pad;
-};
- 
-struct vpd_key {
-	char			vk_key[2];
-	u_int8_t		vk_len;
-};
- 
 #define VPD_RES_ID	0x82	/* ID string */
 #define VPD_RES_READ	0x90	/* start of read only area */
 #define VPD_RES_WRITE	0x81	/* start of read/write area */
 #define VPD_RES_END	0x78	/* end tag */
-
 
 /*
  * Register access macros. The Tigon always uses memory mapped register
@@ -2357,8 +2344,6 @@ struct bge_softc {
 	int			bge_txcnt;
 	int			bge_link;
 	struct timeout		bge_timeout;
-	char			*bge_vpd_prodname;
-	char			*bge_vpd_readonly;
 	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
 	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];
 };
