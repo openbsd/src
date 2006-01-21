@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.29 2004/11/23 19:08:55 miod Exp $	*/
+/*	$OpenBSD: device.h,v 1.30 2006/01/21 12:20:53 miod Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -140,7 +140,6 @@ struct cfattach {
 	void	(*ca_attach)(struct device *, struct device *, void *);
 	int	(*ca_detach)(struct device *, int);
 	int	(*ca_activate)(struct device *, enum devact);
-	void    (*ca_zeroref)(struct device *);
 };
 
 /* Flags given to config_detach(), and the ca_detach function. */

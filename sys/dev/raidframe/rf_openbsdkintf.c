@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.31 2005/12/08 05:53:45 tedu Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.32 2006/01/21 12:20:51 miod Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -238,11 +238,10 @@ int  rf_probe(struct device *, void *, void *);
 void rf_attach(struct device *, struct device *, void *);
 int  rf_detach(struct device *, int);
 int  rf_activate(struct device *, enum devact);
-void rf_zeroref(struct device *);
 
 struct cfattach raid_ca = {
 	sizeof(struct raid_softc), rf_probe, rf_attach,
-	rf_detach, rf_activate, rf_zeroref
+	rf_detach, rf_activate
 };
 
 /*
@@ -343,11 +342,6 @@ int
 rf_activate(struct device *self, enum devact act)
 {
 	return 0;
-}
-
-void
-rf_zeroref(struct device *self)
-{
 }
 
 void

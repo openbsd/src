@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.42 2006/01/13 19:22:54 miod Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.43 2006/01/21 12:20:53 miod Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -829,8 +829,7 @@ device_ref(struct device *dv)
 /*
  * Decrement the ref count on the device structure.
  *
- * free's the structure when the ref count hits zero and calls the zeroref
- * function.
+ * free's the structure when the ref count hits zero.
  *
  * Context: process or interrupt
  */
@@ -839,9 +838,6 @@ device_unref(struct device *dv)
 {
 	dv->dv_ref--;
 	if (dv->dv_ref == 0) {
-		if (dv->dv_cfdata->cf_attach->ca_zeroref)
-			(*dv->dv_cfdata->cf_attach->ca_zeroref)(dv);
-		
 		free(dv, M_DEVBUF);
 	}
 }
