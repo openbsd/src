@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.100 2005/11/17 23:58:41 miod Exp $	*/
+/*	$OpenBSD: sd.c,v 1.101 2006/01/21 12:18:49 miod Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -93,7 +93,6 @@ int	sdmatch(struct device *, void *, void *);
 void	sdattach(struct device *, struct device *, void *);
 int	sdactivate(struct device *, enum devact);
 int	sddetach(struct device *, int);
-void	sdzeroref(struct device *);
 
 void	sdminphys(struct buf *);
 void	sdgetdisklabel(dev_t, struct sd_softc *, struct disklabel *,
@@ -110,7 +109,7 @@ void	viscpy(u_char *, u_char *, int);
 
 struct cfattach sd_ca = {
 	sizeof(struct sd_softc), sdmatch, sdattach,
-	sddetach, sdactivate, sdzeroref
+	sddetach, sdactivate
 };
 
 struct cfdriver sd_cd = {
@@ -315,22 +314,15 @@ sddetach(self, flags)
 	if (sc->sc_sdhook != NULL)
 		shutdownhook_disestablish(sc->sc_sdhook);
 
+	/* Detach disk. */
+	disk_detach(&sc->sc_dk);
+
 #if NRND > 0
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 #endif
 
 	return (0);
-}
-
-void
-sdzeroref(self)
-	struct device *self;
-{
-	struct sd_softc *sd = (struct sd_softc *)self;
-
-	/* Detach disk. */
-	disk_detach(&sd->sc_dk);
 }
 
 /*

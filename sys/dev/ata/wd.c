@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.45 2005/11/09 19:05:48 uwe Exp $ */
+/*	$OpenBSD: wd.c,v 1.46 2006/01/21 12:18:47 miod Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -182,12 +182,11 @@ int	wdprobe(struct device *, void *, void *);
 void	wdattach(struct device *, struct device *, void *);
 int	wddetach(struct device *, int);
 int	wdactivate(struct device *, enum devact);
-void    wdzeroref(struct device *);
 int	wdprint(void *, char *);
 
 struct cfattach wd_ca = {
 	sizeof(struct wd_softc), wdprobe, wdattach,
-	wddetach, wdactivate, wdzeroref
+	wddetach, wdactivate
 };
 
 #ifdef __OpenBSD__
@@ -445,21 +444,15 @@ wddetach(struct device *self, int flags)
 	if (sc->sc_sdhook != NULL)
 		shutdownhook_disestablish(sc->sc_sdhook);
 
+	/* Detach disk. */
+	disk_detach(&sc->sc_dk);
+
 #if NRND > 0
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 #endif
 
 	return (0);
-}
-
-void
-wdzeroref(struct device *self)
-{
-	struct wd_softc *sc = (struct wd_softc *)self;
-
-	/* Detach disk. */
-	disk_detach(&sc->sc_dk);
 }
 
 /*

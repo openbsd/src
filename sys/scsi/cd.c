@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.103 2006/01/17 20:22:22 miod Exp $	*/
+/*	$OpenBSD: cd.c,v 1.104 2006/01/21 12:18:49 miod Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -100,7 +100,6 @@ int	cdmatch(struct device *, void *, void *);
 void	cdattach(struct device *, struct device *, void *);
 int	cdactivate(struct device *, enum devact);
 int	cddetach(struct device *, int);
-void    cdzeroref(struct device *);
 
 void	cdstart(void *);
 void	cdminphys(struct buf *);
@@ -136,7 +135,7 @@ int    dvd_read_struct(struct cd_softc *, union dvd_struct *);
 
 struct cfattach cd_ca = {
 	sizeof(struct cd_softc), cdmatch, cdattach,
-	cddetach, cdactivate, cdzeroref
+	cddetach, cdactivate
 };
 
 struct cfdriver cd_cd = {
@@ -277,19 +276,12 @@ cddetach(self, flags)
 	for (cmaj = 0; cmaj < nchrdev; cmaj++)
 		if (cdevsw[cmaj].d_open == cdopen)
 			vdevgone(cmaj, mn, mn + MAXPARTITIONS - 1, VCHR);
-	return (0);
-}
-
-void
-cdzeroref(self)
-	struct device *self;
-{
-	struct cd_softc *cd = (struct cd_softc *)self;
 
 	/* Detach disk. */
-	disk_detach(&cd->sc_dk);
-}
+	disk_detach(&sc->sc_dk);
 
+	return (0);
+}
 
 /*
  * Open the device. Make sure the partition info is as up-to-date as can be.
