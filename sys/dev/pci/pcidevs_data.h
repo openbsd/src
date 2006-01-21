@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1006 2006/01/21 00:50:37 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1007 2006/01/21 23:55:48 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -509,6 +509,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1489,
 	    "M1489 PCI",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1511,
+	    "M1511 PCI",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1513,
+	    "M1513 ISA",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1521,
@@ -7211,6 +7219,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce 6600",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE6600_2,
+	    "GeForce 6600",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE6600GO,
 	    "GeForce 6600 Go",
 	},
@@ -9659,6 +9671,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PM800 Errors",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_1,
+	    "KT880 Host",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_1,
 	    "K8HTB Host",
 	},
@@ -9681,6 +9697,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PM800,
 	    "PM800 Host",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_2,
+	    "KT880 Host",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_2,
@@ -9871,6 +9891,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PM800 DRAM",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_3,
+	    "KT880 Host",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_3,
 	    "K8HTB Host",
 	},
@@ -9893,6 +9917,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PM800_PMC,
 	    "PM800 PMC",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_4,
+	    "KT880 Host",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_4,
@@ -9921,6 +9949,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_PM800_PCI,
 	    "PM800 PCI",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_7,
+	    "KT880 Host",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_7,
