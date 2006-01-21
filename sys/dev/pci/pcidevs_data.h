@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1005 2006/01/18 00:24:24 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1006 2006/01/21 00:50:37 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3179,6 +3179,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PERC 3/Si",
 	},
 	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_RAC_3_ADDIN,
+	    "RAC 3 Add-in",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_RAC_3_EMBD,
+	    "RAC 3 Embedded/Optional",
+	},
+	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2,
 	    "PERC 3/Di",
 	},
@@ -3187,12 +3195,28 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PERC 3/Di",
 	},
 	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_RAC_3_OPT,
+	    "RAC 3 Optional",
+	},
+	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_4DI,
 	    "PERC 4/Di i960",
 	},
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_4DI_2,
 	    "PERC 4/Di Verde",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_RAC_4,
+	    "RAC 4",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_RAC_4_VUART,
+	    "RAC 4 Virtual UART",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_RAC_4_SMIC,
+	    "RAC 4 SMIC",
 	},
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_4EDI,
