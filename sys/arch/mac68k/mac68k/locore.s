@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.50 2006/01/13 19:36:45 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.51 2006/01/21 12:27:58 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -986,12 +986,7 @@ Ldorte:
 
 	.data
 GLOBAL(curpcb)
-GLOBAL(masterpaddr)		| XXX compatibility (debuggers)
 	.long	0
-
-ASLOCAL(mdpflag)
-	.byte	0		| copy of proc md_flags low byte
-	.align	2
 
 ASBSS(nullpcb,SIZEOF_PCB)
 
@@ -1110,7 +1105,6 @@ Lswnofpsave:
 #endif
 	movb	#SONPROC,a0@(P_STAT)
 	clrl	a0@(P_BACK)		| clear back link
-	movb	a0@(P_MD_FLAGS+3),mdpflag | low byte of p_md.md_flags
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_C_LABEL(curpcb)
 
