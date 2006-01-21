@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.21 2005/06/18 01:52:22 brad Exp $
+.\"	$OpenBSD: event.3,v 1.22 2006/01/21 19:15:09 brad Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -31,9 +31,11 @@
 .Nm event_dispatch ,
 .Nm event_loop ,
 .Nm event_loopexit ,
+.Nm event_set ,
+.Nm event_base_dispatch ,
 .Nm event_base_loop ,
 .Nm event_base_loopexit ,
-.Nm event_set ,
+.Nm event_base_set ,
 .Nm event_add ,
 .Nm event_del ,
 .Nm event_once ,
@@ -81,12 +83,16 @@
 .Fn "event_loop" "int flags"
 .Ft int
 .Fn "event_loopexit" "struct timeval *tv"
-.Ft int
-.Fn "event_base_loop" "struct event_base *" "int flags"
-.Ft int
-.Fn "event_base_loopexit" "struct event_base *" "struct timeval *tv"
 .Ft void
 .Fn "event_set" "struct event *ev" "int fd" "short event" "void (*fn)(int, short, void *)" "void *arg"
+.Ft int
+.Fn "event_base_dispatch" "struct event_base *base"
+.Ft int
+.Fn "event_base_loop" "struct event_base *base" "int flags"
+.Ft int
+.Fn "event_base_loopexit" "struct event_base *base" "struct timeval *tv"
+.Ft int
+.Fn "event_base_set" "struct event_base *base" "struct event *"
 .Ft int
 .Fn "event_add" "struct event *ev" "struct timeval *tv"
 .Ft int
