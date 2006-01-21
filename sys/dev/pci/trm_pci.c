@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm_pci.c,v 1.2 2005/08/09 04:10:13 mickey Exp $
+/*	$OpenBSD: trm_pci.c,v 1.3 2006/01/21 23:20:44 miod Exp $
  * ------------------------------------------------------------
  *       O.S     : OpenBSD
  *    FILE NAME  : trm_pci.c                          
@@ -63,7 +63,6 @@ struct  cfattach trm_pci_ca = {
 	trm_pci_attach,
 	NULL,			/* Detach */
 	NULL,			/* Activate */
-	NULL			/* ZeroRef */
 };
 
 
