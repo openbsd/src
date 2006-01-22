@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.4 2005/03/30 07:52:31 deraadt Exp $ */
+/* $OpenBSD: disksubr.c,v 1.5 2006/01/22 00:11:33 miod Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -129,14 +129,20 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	struct buf *bp;
 	struct disklabel *dlp;
 	struct sun_disklabel *slp;
-	int error;
+	int error, i;
 
-	/* minimal requirements for archtypal disk label */
+	/* minimal requirements for archetypal disk label */
+	if (lp->d_secsize < DEV_BSIZE)
+		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
-	lp->d_npartitions = 1;
-	if (lp->d_partitions[0].p_size == 0)
-		lp->d_partitions[0].p_size = 0x1fffffff;
+	lp->d_npartitions = RAW_PART + 1;
+	for (i = 0; i < RAW_PART; i++) {
+		lp->d_partitions[i].p_size = 0;
+		lp->d_partitions[i].p_offset = 0;
+	}
+	if (lp->d_partitions[i].p_size == 0)
+		lp->d_partitions[i].p_size = lp->d_secperunit;
 	lp->d_partitions[0].p_offset = 0;
 
         /* don't read the on-disk label if we are in spoofed-only mode */
@@ -151,7 +157,7 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	bp->b_blkno = LABELSECTOR;
 	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags |= B_READ;
+	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
@@ -160,6 +166,7 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 		/* Save the whole block in case it has info we need. */
 		bcopy(bp->b_data, clp->cd_block, sizeof(clp->cd_block));
 	}
+	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
 	if (error)
 		return ("disk label read error");
@@ -255,7 +262,7 @@ writedisklabel(dev, strat, lp, clp)
 	struct disklabel *dlp;
 	int error;
 
-	/* implant NetBSD disklabel at LABELOFFSET. */
+	/* implant OpenBSD disklabel at LABELOFFSET. */
 	dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);
 	*dlp = *lp; 	/* struct assignment */
 
@@ -292,41 +299,44 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 	struct cpu_disklabel *osdep;
 	int wlabel;
 {
-	struct partition *p;
-	int sz, maxsz;
+#define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
+	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
+	int sz = howmany(bp->b_bcount, DEV_BSIZE);
 
-	p = lp->d_partitions + DISKPART(bp->b_dev);
-	maxsz = p->p_size;
-	sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+	/* avoid division by zero */
+	if (lp->d_secpercyl == 0) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
 
 	/* overwriting disk label ? */
-	/* XXX should also protect bootstrap in first 8K */
-	/* XXX PR#2598: labelsect is always sector zero. */
-	if (((bp->b_blkno + p->p_offset) <= LABELSECTOR) &&
-	    ((bp->b_flags & B_READ) == 0) && (wlabel == 0))
-	{
+	/* XXX this assumes everything <=LABELSECTOR is label! */
+	/*     But since LABELSECTOR is 0, that's ok for now. */
+	if (bp->b_blkno + blockpersec(p->p_offset, lp) <= LABELSECTOR &&
+	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
 		goto bad;
 	}
 
 	/* beyond partition? */
-	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
-		/* if exactly at end of disk, return an EOF */
-		if (bp->b_blkno == maxsz) {
+	if (bp->b_blkno + sz > blockpersec(p->p_size, lp)) {
+		sz = blockpersec(p->p_size, lp) - bp->b_blkno;
+		if (sz == 0) {
+			/* if exactly at end of disk, return an EOF */
 			bp->b_resid = bp->b_bcount;
 			return (0);
 		}
-		/* or truncate if part of it fits */
-		sz = maxsz - bp->b_blkno;
-		if (sz <= 0) {
+		if (sz < 0) {
 			bp->b_error = EINVAL;
 			goto bad;
 		}
+		/* or truncate if part of it fits */
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylinder = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
+	bp->b_cylinder = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
+	    lp->d_secpercyl;
 	return (1);
 
 bad:
