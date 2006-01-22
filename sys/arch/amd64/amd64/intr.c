@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.11 2005/09/25 20:48:18 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.12 2006/01/22 04:52:23 brad Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -266,6 +266,14 @@ intr_allocate_slot(struct pic *pic, int legacy_irq, int pin, int level,
 	 */
 	if (legacy_irq != -1) {
 		ci = &cpu_info_primary;
+		/* must check for duplicate pic + pin first */
+		for (slot = 0 ; slot < MAX_INTR_SOURCES ; slot++) {
+			isp = ci->ci_isources[slot];
+			if (isp != NULL && isp->is_pic == pic &&
+			    isp->is_pin == pin ) {
+				goto duplicate;
+			}
+		}
 		slot = legacy_irq;
 		isp = ci->ci_isources[slot];
 		if (isp == NULL) {
@@ -292,7 +300,7 @@ intr_allocate_slot(struct pic *pic, int legacy_irq, int pin, int level,
 				goto other;
 			}
 		}
-
+duplicate:
 		if (pic == &i8259_pic)
 			idtvec = ICU_OFFSET + legacy_irq;
 		else {
