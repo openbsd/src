@@ -65,6 +65,12 @@ krb5_passwd(int argc, char **argv)
 	char pwbuf[BUFSIZ];
 	krb5_creds cred;
 	int result_code;
+	uid_t uid;
+
+	uid = getuid();
+	if (setresuid(uid, uid, uid)) {
+		errx(1, "can't drop privileges\n");
+	}
 
 	krb5_get_init_creds_opt_init (&opt);
 
@@ -78,10 +84,13 @@ krb5_passwd(int argc, char **argv)
 
 	if (argv[0]) {
 		ret = krb5_parse_name(context, argv[0], &principal);
-	if (ret)
-		krb5_err(context, 1, ret, "krb5_parse_name");
-	} else
-		principal = NULL;
+		if (ret)
+			krb5_err(context, 1, ret, "krb5_parse_name");
+	} else {
+		ret = krb5_get_default_principal (context, &principal);
+		if (ret)
+			krb5_err (context, 1, ret, "krb5_get_default_principal");
+        }
 
 	ret = krb5_get_init_creds_password (context, &cred,
 	    principal, NULL, krb5_prompter_posix, NULL, 0,

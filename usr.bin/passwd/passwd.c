@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.22 2005/12/18 12:29:26 biorn Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.23 2006/01/22 06:04:28 biorn Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)passwd.c	5.5 (Berkeley) 7/6/91";*/
-static const char rcsid[] = "$OpenBSD: passwd.c,v 1.22 2005/12/18 12:29:26 biorn Exp $";
+static const char rcsid[] = "$OpenBSD: passwd.c,v 1.23 2006/01/22 06:04:28 biorn Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -46,6 +46,10 @@ static const char rcsid[] = "$OpenBSD: passwd.c,v 1.22 2005/12/18 12:29:26 biorn
 #include <unistd.h>
 #include <err.h>
 #include <rpcsvc/ypclnt.h>
+
+#if defined(KRB5)
+#include <sys/stat.h>
+#endif
 
 /*
  * Note on configuration:
@@ -76,11 +80,16 @@ main(int argc, char **argv)
 #ifdef	YP
 	int status = 0;
 #endif
+#if defined(KRB5)
+	char *ccfile;
+	struct stat sb;
 
-#if defined(KERBEROS5)
-	extern char realm[];
+	if (!(ccfile = getenv("KRB5CCNAME")))
+		if (asprintf(&ccfile, "/tmp/krb5cc_%u", (unsigned)getuid()) ==
+		    -1)
+			errx(1, "out of memory");
 
-	if (krb_get_lrealm(realm,1) == KSUCCESS)
+	if ((stat(ccfile, &sb) == 0) && (sb.st_uid == getuid()))
 		use_kerberos = 1;
 #endif
 #ifdef	YP
@@ -101,7 +110,7 @@ main(int argc, char **argv)
 			use_yp = 0;
 			break;
 		case 'K':
-#ifdef KRB5
+#if defined(KRB5)
 			/* Skip programname and '-K' option */
 			argc -= 2;
 			argv += 2;
@@ -147,6 +156,10 @@ main(int argc, char **argv)
 		usage(1);
 	}
 
+#if defined(KRB5)
+	if (use_kerberos)
+		exit(krb5_passwd(argc, argv));
+#endif
 #ifdef	YP
 	if (force_yp || ((status = local_passwd(username, 0)) && use_yp))
 		exit(yp_passwd(username));
