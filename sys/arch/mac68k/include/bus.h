@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.10 2006/01/17 00:08:35 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.11 2006/01/22 18:37:58 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.9 1998/01/13 18:32:15 scottr Exp $	*/
 
 /*-
@@ -492,5 +492,7 @@ __MAC68K_copy_region_N(4)
 	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
+
+#define	bus_space_vaddr(t, h)			(void *)((h).base)
 
 #endif /* _MAC68K_BUS_H_ */

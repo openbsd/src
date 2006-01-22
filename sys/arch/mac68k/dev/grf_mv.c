@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.30 2006/01/10 21:19:14 miod Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.31 2006/01/22 18:37:56 miod Exp $	*/
 /*	$NetBSD: grf_nubus.c,v 1.62 2001/01/22 20:27:02 briggs Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ macfb_nubus_attach(struct device *parent, struct device *self, void *aux)
 	dc = malloc(sizeof(*dc), M_DEVBUF, M_WAITOK);
 	bzero(dc, sizeof(*dc));
 	
-	dc->dc_vaddr = (vaddr_t)sc->sc_handle.base; /* XXX evil hack */
+	dc->dc_vaddr = (vaddr_t)bus_space_vaddr(sc->sc_tag, sc->sc_handle);
 	dc->dc_paddr = sc->sc_basepa;
 	dc->dc_offset = image.offset;
 	dc->dc_wid = image.right - image.left;
@@ -494,7 +494,7 @@ grfmv_intr_cb264(void *vsc)
 	struct macfb_softc *sc = (struct macfb_softc *)vsc;
 	volatile char *slotbase;
 
-	slotbase = (volatile char *)(sc->sc_handle.base); /* XXX evil hack */
+	slotbase = (volatile char *)bus_space_vaddr(sc->sc_tag, sc->sc_handle);
 	asm volatile("	movl	%0,a0
 			movl	a0@(0xff6028),d0
 			andl	#0x2,d0
@@ -547,7 +547,7 @@ grfmv_intr_cb364(void *vsc)
 	struct macfb_softc *sc = (struct macfb_softc *)vsc;
 	volatile char *slotbase;
 
-	slotbase = (volatile char *)(sc->sc_handle.base); /* XXX evil hack */
+	slotbase = (volatile char *)bus_space_vaddr(sc->sc_tag, sc->sc_handle);
 	asm volatile("	movl	%0,a0
 			movl	a0@(0xfe6028),d0
 			andl	#0x2,d0

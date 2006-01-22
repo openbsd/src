@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.36 2006/01/20 00:09:36 miod Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.37 2006/01/22 18:37:56 miod Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -338,12 +338,14 @@ macfb_obio_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->sc_basepa <= mac68k_vidphys &&
 	    mac68k_vidphys < (sc->sc_basepa + length))
-		videoaddr = sc->sc_handle.base + sc->sc_fbofs; /* XXX big ol' hack */
+		videoaddr =
+		    (vaddr_t)bus_space_vaddr(sc->sc_tag, sc->sc_handle) +
+		    sc->sc_fbofs;
 
 	dc = malloc(sizeof(*dc), M_DEVBUF, M_WAITOK);
 	bzero(dc, sizeof(*dc));
 	
-	dc->dc_vaddr = (vaddr_t)sc->sc_handle.base; /* XXX yet another hack */
+	dc->dc_vaddr = (vaddr_t)bus_space_vaddr(sc->sc_tag, sc->sc_handle);
 	dc->dc_paddr = sc->sc_basepa;
 	dc->dc_offset = sc->sc_fbofs;
 	dc->dc_wid = videosize & 0xffff;
