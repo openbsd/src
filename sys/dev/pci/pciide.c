@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.219 2006/01/01 18:40:08 kettenis Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.220 2006/01/22 17:31:27 kettenis Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2681,10 +2681,18 @@ apollo_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
-	pcib_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, pa->pa_device, 0);
 
+	/* Determine the DMA capabilities by looking at the ISA bridge. */
+	pcib_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, pa->pa_device, 0);
 	pcib_id = pci_conf_read(sc->sc_pc, pcib_tag, PCI_ID_REG);
 	pcib_class = pci_conf_read(sc->sc_pc, pcib_tag, PCI_CLASS_REG);
+
+	/* XXX On the VT8237, the ISA bridge is on a different device. */
+	if (PCI_CLASS(pcib_class) != PCI_CLASS_BRIDGE && pa->pa_device == 15) {
+		pcib_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, 17, 0);
+		pcib_id = pci_conf_read(sc->sc_pc, pcib_tag, PCI_ID_REG);
+		pcib_class = pci_conf_read(sc->sc_pc, pcib_tag, PCI_CLASS_REG);
+	}
 
 	switch (PCI_PRODUCT(pcib_id)) {
 	case PCI_PRODUCT_VIATECH_VT82C586_ISA:
