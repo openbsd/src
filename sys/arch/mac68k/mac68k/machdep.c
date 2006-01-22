@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.128 2006/01/22 13:53:16 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.129 2006/01/22 15:24:29 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -623,21 +623,22 @@ boot(howto)
 		waittime = 0;
 		vfs_shutdown();
 
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now unless
-		 * the system was sitting in ddb.
-		 */
-		if ((howto & RB_TIMEBAD) == 0) {
-#ifdef notyet
-			resettodr();
-#else
-#ifdef DIAGNOSTIC
-			printf("OpenBSD/mac68k does not trust itself to update the clock on shutdown.\n");
-#endif
-#endif
+		if (mac68k_machine.aux_interrupts != 0) {
+			/*
+			 * If we've been adjusting the clock, the todr
+			 * will be out of synch; adjust it now unless
+			 * the system was sitting in ddb.
+			 */
+			if ((howto & RB_TIMEBAD) == 0) {
+				resettodr();
+			} else {
+				printf("WARNING: not updating battery clock\n");
+			}
 		} else {
-			printf("WARNING: not updating battery clock\n");
+#ifdef DIAGNOSTIC
+			printf("OpenBSD/mac68k does not trust itself to update"
+			    " the clock on shutdown on this machine.\n");
+#endif
 		}
 	}
 
