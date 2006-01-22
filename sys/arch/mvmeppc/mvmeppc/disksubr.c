@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.9 2005/12/22 03:02:48 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.10 2006/01/22 00:40:01 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -40,8 +40,6 @@
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 #include <sys/disk.h>
-
-#define	b_cylin	b_resid
 
 #define BOOT_MAGIC 0xAA55
 #define BOOT_MAGIC_OFF (DOSPARTOFF+NDOSPART*sizeof(struct dos_partition))
@@ -127,7 +125,7 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 			bp->b_blkno = part_blkno;
 			bp->b_bcount = lp->d_secsize;
 			bp->b_flags = B_BUSY | B_READ;
-			bp->b_cylin = part_blkno / lp->d_secpercyl;
+			bp->b_cylinder = part_blkno / lp->d_secpercyl;
 			(*strat)(bp);
 		     
 			/* if successful, wander through dos partition table */
@@ -251,7 +249,7 @@ donot:
 
 	/* next, dig out disk label */
 	bp->b_blkno = dospartoff + LABELSECTOR;
-	bp->b_cylin = cyl;
+	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -304,7 +302,7 @@ donot:
 			else
 				bp->b_blkno /= DEV_BSIZE / lp->d_secsize;
 			bp->b_bcount = lp->d_secsize;
-			bp->b_cylin = lp->d_ncylinders - 1;
+			bp->b_cylinder = lp->d_ncylinders - 1;
 			(*strat)(bp);
 
 			/* if successful, validate, otherwise try another */
@@ -417,7 +415,7 @@ writedisklabel(dev, strat, lp, osdep)
 		bp->b_blkno = DOSBBSECTOR;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = DOSBBSECTOR / lp->d_secpercyl;
+		bp->b_cylinder = DOSBBSECTOR / lp->d_secpercyl;
 		(*strat)(bp);
 
 		if ((error = biowait(bp)) != 0)
@@ -451,7 +449,7 @@ writedisklabel(dev, strat, lp, osdep)
 
 	/* next, dig out disk label */
 	bp->b_blkno = dospartoff + LABELSECTOR;
-	bp->b_cylin = cyl;
+	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -536,7 +534,7 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
+	bp->b_cylinder = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
 	    lp->d_secpercyl;
 	return (1);
 

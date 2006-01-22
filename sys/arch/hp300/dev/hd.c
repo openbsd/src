@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.38 2006/01/20 23:27:25 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.39 2006/01/22 00:40:01 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -71,8 +71,6 @@
 #define	HDUNIT(x)	DISKUNIT(x)
 #define HDPART(x)	DISKPART(x)
 #define HDLABELDEV(d)	MAKEDISKDEV(major(d), HDUNIT(d), RAW_PART)
-
-#define	b_cylin		b_resid
 
 #ifndef	HDRETRY
 #define	HDRETRY		5
@@ -690,7 +688,7 @@ hdstrategy(bp)
 			goto bad;
 		}
 	}
-	bp->b_cylin = bn + offset;
+	bp->b_cylinder = bn + offset;
 	s = splbio();
 	disksort(dp, bp);
 	if (dp->b_active == 0) {
@@ -780,7 +778,7 @@ again:
 	rs->sc_ioc.c_volume = C_SVOL(0);
 	rs->sc_ioc.c_saddr = C_SADDR;
 	rs->sc_ioc.c_hiaddr = 0;
-	rs->sc_ioc.c_addr = HDBTOS(bp->b_cylin);
+	rs->sc_ioc.c_addr = HDBTOS(bp->b_cylinder);
 	rs->sc_ioc.c_nop2 = C_NOP;
 	rs->sc_ioc.c_slen = C_SLEN;
 	rs->sc_ioc.c_len = rs->sc_resid;

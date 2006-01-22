@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.57 2005/12/29 20:02:03 pedro Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.58 2006/01/22 00:40:02 miod Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -92,8 +92,6 @@ int vnddebug = 0x00;
 #define	VDB_INIT	0x02
 #define	VDB_IO		0x04
 #endif
-
-#define	b_cylin	b_resid
 
 /*
  * vndunit is a bit weird.  have to reconstitute the dev_t for
@@ -614,7 +612,7 @@ vndstrategy(bp)
 		/*
 		 * Just sort by block number
 		 */
-		nbp->vb_buf.b_cylin = nbp->vb_buf.b_blkno;
+		nbp->vb_buf.b_cylinder = nbp->vb_buf.b_blkno;
 		s = splbio();
 		disksort(&vnd->sc_tab, &nbp->vb_buf);
 		if (vnd->sc_tab.b_active < vnd->sc_maxactive) {

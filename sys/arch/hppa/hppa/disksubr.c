@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.20 2005/12/22 03:02:48 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.21 2006/01/22 00:40:01 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -65,8 +65,6 @@
 #elif (defined(hppa) || defined(hppa64)) && !defined(DISKLABEL_HPPA)
 #define DISKLABEL_HPPA
 #endif
-
-#define	b_cylin	b_resid
 
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_AMIGA) || defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
 void	swapdisklabel(struct disklabel *d);
@@ -168,7 +166,7 @@ readbsdlabel(bp, strat, cyl, sec, off, endian, lp, spoofonly)
 		return (NULL);
 
 	bp->b_blkno = sec;
-	bp->b_cylin = cyl;
+	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -390,7 +388,7 @@ readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 			bp->b_blkno = part_blkno;
 			bp->b_bcount = lp->d_secsize;
 			bp->b_flags = B_BUSY | B_READ;
-			bp->b_cylin = part_blkno / lp->d_secpercyl;
+			bp->b_cylinder = part_blkno / lp->d_secpercyl;
 			(*strat)(bp);
 
 			/* if successful, wander through dos partition table */
@@ -542,7 +540,7 @@ donot:
 			else
 				bp->b_blkno /= DEV_BSIZE / lp->d_secsize;
 			bp->b_bcount = lp->d_secsize;
-			bp->b_cylin = lp->d_ncylinders - 1;
+			bp->b_cylinder = lp->d_ncylinders - 1;
 			(*strat)(bp);
 
 			/* if successful, validate, otherwise try another */
@@ -607,7 +605,7 @@ readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 	bp->b_blkno = btodb(LIF_VOLSTART);
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = btodb(LIF_VOLSTART) / lp->d_secpercyl;
+	bp->b_cylinder = btodb(LIF_VOLSTART) / lp->d_secpercyl;
 	(*strat)(bp);
 
 	if (biowait(bp)) {
@@ -632,7 +630,7 @@ readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 		dbp->b_blkno = lifstodb(osdep->u._hppa.lifvol.vol_addr);
 		dbp->b_bcount = lp->d_secsize;
 		dbp->b_flags = B_BUSY | B_READ;
-		dbp->b_cylin = dbp->b_blkno / lp->d_secpercyl;
+		dbp->b_cylinder = dbp->b_blkno / lp->d_secpercyl;
 		(*strat)(dbp);
 
 		if (biowait(dbp)) {
@@ -672,7 +670,7 @@ readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 			dbp->b_blkno = lifstodb(p->dir_addr);
 			dbp->b_bcount = lp->d_secsize;
 			dbp->b_flags = B_BUSY | B_READ;
-			dbp->b_cylin = dbp->b_blkno / lp->d_secpercyl;
+			dbp->b_cylinder = dbp->b_blkno / lp->d_secpercyl;
 			(*strat)(dbp);
 
 			if (biowait(dbp)) {
@@ -900,7 +898,7 @@ writedisklabel(dev, strat, lp, osdep)
 		labeloffset = LABELOFFSET;
 		endian = BYTE_ORDER;
 		bp->b_blkno = partoff + LABELSECTOR;
-		bp->b_cylin = cyl;
+		bp->b_cylinder = cyl;
 		bp->b_bcount = lp->d_secsize;
 	}
 
@@ -979,7 +977,7 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
+	bp->b_cylinder = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
 	    lp->d_secpercyl;
 	return (1);
 

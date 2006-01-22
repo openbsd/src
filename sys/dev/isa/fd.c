@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.51 2005/09/19 01:28:04 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.52 2006/01/22 00:40:02 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -78,8 +78,6 @@
 
 /* XXX misuse a flag to identify format operation */
 #define B_FORMAT B_XXX
-
-#define b_cylin b_resid
 
 /* fd_type struct now in ioctl_fd.h */
 
@@ -381,11 +379,11 @@ fdstrategy(bp)
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
- 	bp->b_cylin = bp->b_blkno / (fd_bsize / DEV_BSIZE) / fd->sc_type->seccyl;
+ 	bp->b_cylinder = bp->b_blkno / (fd_bsize / DEV_BSIZE) / fd->sc_type->seccyl;
 
 #ifdef FD_DEBUG
 	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d sz %d\n",
-	    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin, sz);
+	    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylinder, sz);
 #endif
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
@@ -676,7 +674,7 @@ loop:
 		/* fall through */
 	case DOSEEK:
 	doseek:
-		if (fd->sc_cylin == bp->b_cylin)
+		if (fd->sc_cylin == bp->b_cylinder)
 			goto doio;
 
 		out_fdc(iot, ioh, NE7CMD_SPECIFY);/* specify command */
@@ -685,7 +683,7 @@ loop:
 
 		out_fdc(iot, ioh, NE7CMD_SEEK);	/* seek function */
 		out_fdc(iot, ioh, fd->sc_drive);	/* drive number */
-		out_fdc(iot, ioh, bp->b_cylin * fd->sc_type->step);
+		out_fdc(iot, ioh, bp->b_cylinder * fd->sc_type->step);
 
 		fd->sc_cylin = -1;
 		fdc->sc_state = SEEKWAIT;
@@ -776,14 +774,14 @@ loop:
 		/* Make sure seek really happened. */
 		out_fdc(iot, ioh, NE7CMD_SENSEI);
 		if (fdcresult(fdc) != 2 || (st0 & 0xf8) != 0x20 ||
-		    cyl != bp->b_cylin * fd->sc_type->step) {
+		    cyl != bp->b_cylinder * fd->sc_type->step) {
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 2, "seek failed");
 #endif
 			fdretry(fd);
 			goto loop;
 		}
-		fd->sc_cylin = bp->b_cylin;
+		fd->sc_cylin = bp->b_cylinder;
 		goto doio;
 
 	case IOTIMEDOUT:
@@ -823,7 +821,7 @@ loop:
 		fd->sc_skip += fd->sc_nbytes;
 		fd->sc_bcount -= fd->sc_nbytes;
 		if (!finfo && fd->sc_bcount > 0) {
-			bp->b_cylin = fd->sc_blkno / fd->sc_type->seccyl;
+			bp->b_cylinder = fd->sc_blkno / fd->sc_type->seccyl;
 			goto doseek;
 		}
 		fdfinish(fd, bp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.27 2005/03/30 07:52:32 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.28 2006/01/22 00:40:01 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -84,8 +84,6 @@
 #include <sys/syslog.h>
 
 #include <mac68k/mac68k/dpme.h>	/* MF the structure of a mac partition entry */
-
-#define	b_cylin	b_resid
 
 #define NUM_PARTS_PROBED 32
 
@@ -396,7 +394,7 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = size;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = LABELSECTOR / lp->d_secpercyl;
+	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp))
 		msg = "disk label I/O error";
@@ -518,7 +516,7 @@ writedisklabel(dev, strat, lp, osdep)
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = LABELSECTOR / lp->d_secpercyl;
+	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
 		goto done;
@@ -600,7 +598,7 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
+	bp->b_cylinder = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
 	    lp->d_secpercyl;
 	return (1);
 

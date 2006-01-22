@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.42 2005/08/14 10:58:33 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.43 2006/01/22 00:40:02 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -116,8 +116,6 @@
 
 /* XXX misuse a flag to identify format operation */
 #define B_FORMAT B_XXX
-
-#define b_cylin b_resid
 
 #ifdef FD_DEBUG
 int	fdc_debug = 0;
@@ -744,13 +742,13 @@ fdstrategy(bp)
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
- 	bp->b_cylin = (bp->b_blkno * DEV_BSIZE) /
+ 	bp->b_cylinder = (bp->b_blkno * DEV_BSIZE) /
 	    (FD_BSIZE(fd) * fd->sc_type->seccyl);
 
 #ifdef FD_DEBUG
 	if (fdc_debug > 1)
 	    printf("fdstrategy: b_blkno %d b_bcount %ld blkno %d cylin %ld\n",
-		    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin);
+		    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylinder);
 #endif
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
@@ -1356,12 +1354,12 @@ loop:
 	doseek:
 		if ((fdc->sc_flags & FDC_EIS) &&
 		    (bp->b_flags & B_FORMAT) == 0) {
-			fd->sc_cylin = bp->b_cylin;
+			fd->sc_cylin = bp->b_cylinder;
 			/* We use implied seek */
 			goto doio;
 		}
 
-		if (fd->sc_cylin == bp->b_cylin)
+		if (fd->sc_cylin == bp->b_cylinder)
 			goto doio;
 
 		fd->sc_cylin = -1;
@@ -1383,7 +1381,7 @@ loop:
 		/* seek function */
 		FDC_WRFIFO(fdc, NE7CMD_SEEK);
 		FDC_WRFIFO(fdc, fd->sc_drive); /* drive number */
-		FDC_WRFIFO(fdc, bp->b_cylin * fd->sc_type->step);
+		FDC_WRFIFO(fdc, bp->b_cylinder * fd->sc_type->step);
 
 		return (1);
 
@@ -1474,7 +1472,7 @@ loop:
 
 		/* Make sure seek really happened. */
 		if (fdc->sc_nstat != 2 || (st0 & 0xf8) != 0x20 ||
-		    cyl != bp->b_cylin * fd->sc_type->step) {
+		    cyl != bp->b_cylinder * fd->sc_type->step) {
 #ifdef FD_DEBUG
 			if (fdc_debug)
 				fdcstatus(fdc, "seek failed");
@@ -1482,7 +1480,7 @@ loop:
 			fdcretry(fdc);
 			goto loop;
 		}
-		fd->sc_cylin = bp->b_cylin;
+		fd->sc_cylin = bp->b_cylinder;
 		goto doio;
 
 	case IOTIMEDOUT:
@@ -1590,7 +1588,7 @@ loop:
 		fd->sc_skip += fd->sc_nbytes;
 		fd->sc_bcount -= fd->sc_nbytes;
 		if (finfo == NULL && fd->sc_bcount > 0) {
-			bp->b_cylin = fd->sc_blkno / fd->sc_type->seccyl;
+			bp->b_cylinder = fd->sc_blkno / fd->sc_type->seccyl;
 			goto doseek;
 		}
 		fdfinish(fd, bp);

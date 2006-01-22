@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.30 2006/01/11 07:22:01 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.31 2006/01/22 00:40:01 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -33,8 +33,6 @@
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-
-#define b_cylin b_resid
 
 #ifdef DEBUG
 int disksubr_debug;
@@ -102,7 +100,7 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = 0; /* contained in block 0 */
+	bp->b_cylinder = 0; /* contained in block 0 */
 	(*strat)(bp);
 
 	error = biowait(bp);
@@ -235,7 +233,7 @@ writedisklabel(dev, strat, lp, clp)
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = 0; /* contained in block 0 */
+	bp->b_cylinder = 0; /* contained in block 0 */
 	(*strat)(bp);
 
 	if ((error = biowait(bp)) != 0) {
@@ -271,7 +269,7 @@ writedisklabel(dev, strat, lp, clp)
 		bp->b_blkno = 0; /* contained in block 0 */
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_WRITE;
-		bp->b_cylin = 0; /* contained in block 0 */
+		bp->b_cylinder = 0; /* contained in block 0 */
 		(*strat)(bp);
 
 		error = biowait(bp);
@@ -330,7 +328,7 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
+	bp->b_cylinder = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
 	    lp->d_secpercyl;
 	return(1);
 

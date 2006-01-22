@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.35 2006/01/20 23:27:25 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.36 2006/01/22 00:40:02 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -52,8 +52,6 @@
 static	char *disklabel_sun_to_bsd(char *, struct disklabel *);
 static	int disklabel_bsd_to_sun(struct disklabel *, char *);
 static __inline u_long sun_extended_sum(struct sun_disklabel *);
-
-#define b_cylin		b_resid
 
 extern struct device *bootdv;
 
@@ -171,7 +169,7 @@ readdisklabel(dev, strat, lp, clp, spoofonly)
 	/* next, dig out disk label */
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -302,7 +300,7 @@ writedisklabel(dev, strat, lp, clp)
 	/* Write out the updated label. */
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
-	bp->b_cylin = 0;
+	bp->b_cylinder = 0;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_WRITE;
 	(*strat)(bp);

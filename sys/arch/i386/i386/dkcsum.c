@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkcsum.c,v 1.19 2005/08/01 16:46:55 krw Exp $	*/
+/*	$OpenBSD: dkcsum.c,v 1.20 2006/01/22 00:40:01 miod Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -43,8 +43,6 @@
 #include <machine/biosvar.h>
 
 #include <lib/libz/zlib.h>
-
-#define	b_cylin	b_resid
 
 dev_t dev_rawpart(struct device *);	/* XXX */
 
@@ -109,7 +107,7 @@ dkcsumattach(void)
 		bp->b_blkno = 0;
 		bp->b_bcount = bios_cksumlen * DEV_BSIZE;
 		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = 0;
+		bp->b_cylinder = 0;
 		(*bdsw->d_strategy)(bp);
 		if ((error = biowait(bp))) {
 			/* XXX What to do here? */
