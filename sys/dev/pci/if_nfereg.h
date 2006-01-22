@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfereg.h,v 1.3 2006/01/18 20:44:51 damien Exp $	*/
+/*	$OpenBSD: if_nfereg.h,v 1.4 2006/01/22 21:35:08 damien Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -17,7 +17,6 @@
 
 #define NFE_PCI_BA		0x10
 
-#define NFE_PHYADD_SHIFT	5
 #define NFE_RX_RING_COUNT	128
 #define NFE_TX_RING_COUNT	64
 
@@ -53,7 +52,7 @@
 #define NFE_SETUP_R3		0x13C
 #define NFE_SETUP_R7		0x140
 #define NFE_RXTX_CTL		0x144
-#define NFE_MEDIA_STATUS	0x180
+#define NFE_PHY_STATUS		0x180
 #define NFE_SETUP_R4		0x184
 #define NFE_STATUS		0x188
 #define NFE_PHY_SPEED		0x18c
@@ -65,8 +64,10 @@
 #define NFE_PWR_CAP		0x268
 #define NFE_PWR_STATE		0x26c
 
+#define NFE_PHY_ERROR		0x00001
 #define NFE_PHY_WRITE		0x00400
 #define NFE_PHY_BUSY		0x08000
+#define NFE_PHYADD_SHIFT	5
 
 #define NFE_R1_MAGIC		0x16070f
 #define NFE_R2_MAGIC		0x16
@@ -134,8 +135,9 @@ struct nfe_desc64 {
 #define NFE_TX_TCP_CSUM		(1 << 10)
 #define NFE_TX_IP_CSUM		(1 << 11)
 #define NFE_TX_LASTFRAG_V2	(1 << 13)
-#define NFE_TX_ERROR		(1 << 14)
 #define NFE_TX_VALID		(1 << 15)
+#define NFE_TX_ERROR_V1		0x7808
+#define NFE_TX_ERROR_V2		0x5c04
 } __packed;
 
 #define NFE_READ(sc, reg) \
