@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfb.c,v 1.8 2006/01/10 21:19:14 miod Exp $	*/
+/*	$OpenBSD: macfb.c,v 1.9 2006/01/22 19:40:54 miod Exp $	*/
 /* $NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -73,9 +73,13 @@ const struct wsdisplay_accessops macfb_accessops = {
 	NULL	/* burner */
 };
 
-int	macfb_alloc_attr(void *, int, int, int, long *);
+int	macfb_alloc_cattr(void *, int, int, int, long *);
+int	macfb_alloc_mattr(void *, int, int, int, long *);
+int	macfb_color_setup(struct macfb_devconfig *);
+int	macfb_getcmap(struct macfb_devconfig *, struct wsdisplay_cmap *);
 int	macfb_init(struct macfb_devconfig *);
 int	macfb_is_console(paddr_t);
+int	macfb_putcmap(struct macfb_devconfig *, struct wsdisplay_cmap *);
 
 paddr_t macfb_consaddr;
 
@@ -88,6 +92,8 @@ extern long		videobitdepth;
 extern u_long		videosize;
 extern u_int32_t	mac68k_vidphys;
 extern u_int32_t	mac68k_vidlen;
+
+extern int rasops_alloc_cattr(void *, int, int, int, long *);
 
 int
 macfb_is_console(paddr_t addr)
@@ -112,14 +118,7 @@ int
 macfb_init(struct macfb_devconfig *dc)
 {
 	struct rasops_info *ri = &dc->dc_ri;
-	extern int rasops_alloc_cattr(void *, int, int, int, long *);
-
-	/*
-	 * Clear display. We can't pass RI_CLEAR in ri_flg and have rasops
-	 * do it for us until we know how to setup the colormap first.
-	 */
-	memset((char *)dc->dc_vaddr + dc->dc_offset,
-	    dc->dc_depth <= 8 ? 0xff : 0, dc->dc_rowbytes * dc->dc_ht);
+	int bgcolor;
 
 	bzero(ri, sizeof(*ri));
 	ri->ri_depth = dc->dc_depth;
@@ -147,17 +146,14 @@ macfb_init(struct macfb_devconfig *dc)
 	if (rasops_init(ri, 160, 160) != 0)
 		return (-1);
 
-	if (ri->ri_depth <= 8) {
-		/*
-		 * Until we know how to setup the colormap, constrain ourselves
-		 * to mono mode. Note that we need to use our own alloc_attr
-		 * routine to compensate for inverted black and white colors.
-		 */
-		ri->ri_ops.alloc_attr = macfb_alloc_attr;
-		ri->ri_caps &= ~(WSSCREEN_WSCOLORS | WSSCREEN_HILIT);
-		if (ri->ri_depth == 8)
-			ri->ri_devcmap[15] = 0xffffffff;
-	}
+	bgcolor = macfb_color_setup(dc);
+
+	/*
+	 * Clear display. We can't pass RI_CLEAR in ri_flg and have rasops
+	 * do it for us until we know how to setup the colormap first.
+	 */
+	memset((char *)dc->dc_vaddr + dc->dc_offset, bgcolor,
+	     dc->dc_rowbytes * dc->dc_ht);
 
 	strlcpy(dc->wsd.name, "std", sizeof(dc->wsd.name));
 	dc->wsd.ncols = ri->ri_cols;
@@ -171,11 +167,57 @@ macfb_init(struct macfb_devconfig *dc)
 }
 
 int
-macfb_alloc_attr(void *cookie, int fg, int bg, int flg, long *attr)
+macfb_color_setup(struct macfb_devconfig *dc)
 {
-	struct rasops_info *ri = cookie;
-	int swap;
+	extern int rasops_alloc_cattr(void *, int, int, int, long *);
+	struct rasops_info *ri = &dc->dc_ri;
 
+	/* nothing to do for non-indexed modes... */
+	if (ri->ri_depth > 8)
+		return (0);	/* fill in black */
+
+	if (dc->dc_setcolor == NULL ||
+	    ri->ri_depth < 4 /* XXX unfair with 2bpp */) {
+		/*
+		 * Until we know how to setup the colormap, constrain ourselves
+		 * to mono mode. Note that we need to use our own alloc_attr
+		 * routine to compensate for inverted black and white colors.
+		 */
+		ri->ri_ops.alloc_attr = macfb_alloc_mattr;
+		if (ri->ri_depth == 8)
+			ri->ri_devcmap[15] = 0xffffffff;
+		return (0xff);	/* fill in black inherited from MacOS */
+	}
+
+	/* start from the rasops colormap */
+	bcopy(rasops_cmap, dc->dc_cmap, 256 * 3);
+
+	switch (ri->ri_depth) {
+	case 4:
+		/*
+		 * Tweak colormap
+		 *
+		 * Due to the way rasops cursor work, we need to provide 
+		 * inverted copies of the 8 basic colors as the other 8
+		 * in 4bpp mode.
+		 */
+		bcopy(dc->dc_cmap + (256 - 8) * 3, dc->dc_cmap + 8 * 3, 8 * 3);
+		ri->ri_caps |= WSSCREEN_WSCOLORS;
+		ri->ri_ops.alloc_attr = macfb_alloc_cattr;
+		break;
+	default:
+	case 8:
+		break;
+	}
+
+	(*dc->dc_setcolor)(dc, 0, 1 << ri->ri_depth);
+
+	return (WSCOL_BLACK);	/* fill in our own black */
+}
+
+int
+macfb_alloc_mattr(void *cookie, int fg, int bg, int flg, long *attr)
+{
 	if ((flg & (WSATTR_BLINK | WSATTR_HILIT | WSATTR_WSCOLORS)) != 0)
 		return (EINVAL);
 
@@ -183,22 +225,25 @@ macfb_alloc_attr(void *cookie, int fg, int bg, int flg, long *attr)
 	 * Default values are white on black. However, on indexed displays,
 	 * 0 is white and all bits set is black.
 	 */
-	if (ri->ri_depth <= 8) {
+	if ((flg & WSATTR_REVERSE) != 0) {
+		fg = 15;
+		bg = 0;
+	} else {
 		fg = 0;
 		bg = 15;
-	} else {
-		bg = WSCOL_BLACK;
-		fg = WSCOL_WHITE;
-	}
-
-	if ((flg & WSATTR_REVERSE) != 0) {
-		swap = fg;
-		fg = bg;
-		bg = swap;
 	}
 
 	*attr = (bg << 16) | (fg << 24) | ((flg & WSATTR_UNDERLINE) ? 7 : 6);
 	return (0);
+}
+
+int
+macfb_alloc_cattr(void *cookie, int fg, int bg, int flg, long *attr)
+{
+	if ((flg & (WSATTR_BLINK | WSATTR_HILIT)) != 0)
+		return (EINVAL);
+
+	return (rasops_alloc_cattr(cookie, fg, bg, flg, attr));
 }
 
 void
@@ -223,6 +268,9 @@ macfb_attach_common(struct macfb_softc *sc, struct macfb_devconfig *dc)
 		free(dc, M_DEVBUF);
 		dc = sc->sc_dc = &macfb_console_dc;
 		dc->nscreens = 1;
+		macfb_color_setup(dc);
+		/* XXX at this point we should reset the emulation to have
+		 * it pick better attributes for kernel messages. Oh well. */
 	} else {
 		sc->sc_dc = dc;
 		if (macfb_init(dc) != 0)
@@ -252,19 +300,30 @@ macfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSDISPLAYIO_GTYPE:
 		*(int *)data = WSDISPLAY_TYPE_MAC68K;
 		break;
-
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;
 		wdf->height = dc->dc_ri.ri_height;
 		wdf->width = dc->dc_ri.ri_width;
 		wdf->depth = dc->dc_ri.ri_depth;
-		wdf->cmsize = 0;	/* until we can change it... */
+		if (dc->dc_ri.ri_depth > 8)
+			wdf->cmsize = 0;
+		else
+			wdf->cmsize = (dc->dc_ri.ri_caps & WSSCREEN_WSCOLORS) ?
+			    1 << dc->dc_ri.ri_depth : 0;
 		break;
-
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = dc->dc_ri.ri_stride;
 		break;
-
+	case WSDISPLAYIO_GETCMAP:
+		if (dc->dc_ri.ri_depth > 8 ||
+		    (dc->dc_ri.ri_caps & WSSCREEN_WSCOLORS) == 0)
+			return (0);
+		return (macfb_getcmap(dc, (struct wsdisplay_cmap *)data));
+	case WSDISPLAYIO_PUTCMAP:
+		if (dc->dc_ri.ri_depth > 8 ||
+		    (dc->dc_ri.ri_caps & WSSCREEN_WSCOLORS) == 0)
+			return (0);
+		return (macfb_putcmap(dc, (struct wsdisplay_cmap *)data));
 	case WSDISPLAYIO_GVIDEO:
 	case WSDISPLAYIO_SVIDEO:
 		break;
@@ -303,12 +362,10 @@ macfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 
 	*cookiep = ri;
 	*curxp = *curyp = 0;
-#ifdef notyet
 	if ((ri->ri_caps & WSSCREEN_WSCOLORS) && ri->ri_depth <= 8)
 		ri->ri_ops.alloc_attr(ri, WSCOL_WHITE, WSCOL_BLACK,
 		    WSATTR_WSCOLORS, defattrp);
 	else
-#endif
 		ri->ri_ops.alloc_attr(ri, 0, 0, 0, defattrp);
 	sc->sc_dc->nscreens++;
 
@@ -327,6 +384,72 @@ int
 macfb_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
+	return (0);
+}
+
+int
+macfb_getcmap(struct macfb_devconfig *dc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index, count = cm->count;
+	u_int colcount = 1 << dc->dc_ri.ri_depth;
+	int i, error;
+	u_int8_t ramp[256], *c, *r;
+
+	if (index >= colcount || count > colcount - index)
+		return (EINVAL);
+
+	/* extract reds */
+	c = dc->dc_cmap + 0 + index * 3;
+	for (i = count, r = ramp; i != 0; i--)
+		*r++ = *c, c += 3;
+	if ((error = copyout(ramp, cm->red, count)) != 0)
+		return (error);
+
+	/* extract greens */
+	c = dc->dc_cmap + 1 + index * 3;
+	for (i = count, r = ramp; i != 0; i--)
+		*r++ = *c, c += 3;
+	if ((error = copyout(ramp, cm->green, count)) != 0)
+		return (error);
+
+	/* extract blues */
+	c = dc->dc_cmap + 2 + index * 3;
+	for (i = count, r = ramp; i != 0; i--)
+		*r++ = *c, c += 3;
+	if ((error = copyout(ramp, cm->blue, count)) != 0)
+		return (error);
+
+	return (0);
+}
+
+int
+macfb_putcmap(struct macfb_devconfig *dc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index, count = cm->count;
+	u_int colcount = 1 << dc->dc_ri.ri_depth;
+	int i, error;
+	u_int8_t r[256], g[256], b[256], *nr, *ng, *nb, *c;
+
+	if (index >= colcount || count > colcount - index)
+		return (EINVAL);
+
+	if ((error = copyin(cm->red, r, count)) != 0)
+		return (error);
+	if ((error = copyin(cm->green, g, count)) != 0)
+		return (error);
+	if ((error = copyin(cm->blue, b, count)) != 0)
+		return (error);
+
+	nr = r, ng = g, nb = b;
+	c = dc->dc_cmap + index * 3;
+	for (i = count; i != 0; i--) {
+		*c++ = *nr++;
+		*c++ = *ng++;
+		*c++ = *nb++;
+	}
+
+	(*dc->dc_setcolor)(dc, index, index + count);
+
 	return (0);
 }
 
@@ -352,12 +475,10 @@ macfb_cnattach()
 		return (-1);
 
 	ri = &dc->dc_ri;
-#ifdef notyet
 	if ((ri->ri_caps & WSSCREEN_WSCOLORS) && ri->ri_depth <= 8)
 		ri->ri_ops.alloc_attr(ri, WSCOL_WHITE, WSCOL_BLACK,
 		    WSATTR_WSCOLORS, &defattr);
 	else
-#endif
 		ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 
 	wsdisplay_cnattach(&dc->wsd, ri, 0, 0, defattr);

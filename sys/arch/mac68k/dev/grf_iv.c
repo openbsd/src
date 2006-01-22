@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.37 2006/01/22 18:37:56 miod Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.38 2006/01/22 19:40:54 miod Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -96,10 +96,13 @@ struct cfattach macfb_obio_ca = {
 
 #define DAFB_BASE		0xf9000000
 #define DAFB_CONTROL_BASE	0xf9800000
+#define	DAFB_CMAP_BASE		0xf9800200
 #define CIVIC_BASE		0x50100000
 #define CIVIC_CONTROL_BASE	0x50036000
 #define VALKYRIE_BASE		0xf9000000
 #define VALKYRIE_CONTROL_BASE	0x50f2a000
+
+void	dafb_setcolor(void *, u_int, u_int);
 
 int
 macfb_obio_match(struct device *parent, void *vcf, void *aux)
@@ -204,11 +207,14 @@ macfb_obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *) aux;
 	struct macfb_softc *sc = (struct macfb_softc *)self;
-	u_long base, length;
+	u_long length;
 	u_int32_t vbase1, vbase2;
 	struct macfb_devconfig *dc;
 
 	sc->card_id = 0;
+
+	dc = malloc(sizeof(*dc), M_DEVBUF, M_WAITOK);
+	bzero(dc, sizeof(*dc));
 
         switch (current_mac_model->class) {
 	case MACH_CLASSQ2:
@@ -231,10 +237,11 @@ macfb_obio_attach(struct device *parent, struct device *self, void *aux)
 		/* See note in grfiv_match() */
 		/*FALLTHROUGH*/
         case MACH_CLASSQ:
-		base = DAFB_CONTROL_BASE;
 		sc->sc_tag = oa->oa_tag;
-		if (bus_space_map(sc->sc_tag, base, 0x20, 0, &sc->sc_regh)) {
+		if (bus_space_map(sc->sc_tag, DAFB_CONTROL_BASE, PAGE_SIZE, 0,
+		    &sc->sc_regh)) {
 			printf(": failed to map DAFB register space\n");
+			free(dc, M_DEVBUF);
 			return;
 		}
 
@@ -270,7 +277,11 @@ macfb_obio_attach(struct device *parent, struct device *self, void *aux)
 		printf(": DAFB, monitor sense %x\n",
 		    (bus_space_read_4(sc->sc_tag, sc->sc_regh, 0x1c) & 0x7));
 
-		bus_space_unmap(sc->sc_tag, sc->sc_regh, 0x20);
+		dc->dc_cmapregs =
+		    (vaddr_t)bus_space_vaddr(sc->sc_tag, sc->sc_regh) +
+		    (DAFB_CMAP_BASE - DAFB_CONTROL_BASE);
+		dc->dc_setcolor = dafb_setcolor;
+
 		break;
 	case MACH_CLASSAV:
 		sc->sc_basepa = CIVIC_BASE;
@@ -333,6 +344,7 @@ macfb_obio_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_tag, sc->sc_basepa, length, 0,
 	    &sc->sc_handle)) {
 		printf("%s: failed to map video RAM\n", sc->sc_dev.dv_xname);
+		free(dc, M_DEVBUF);
 		return;
 	}
 
@@ -342,9 +354,6 @@ macfb_obio_attach(struct device *parent, struct device *self, void *aux)
 		    (vaddr_t)bus_space_vaddr(sc->sc_tag, sc->sc_handle) +
 		    sc->sc_fbofs;
 
-	dc = malloc(sizeof(*dc), M_DEVBUF, M_WAITOK);
-	bzero(dc, sizeof(*dc));
-	
 	dc->dc_vaddr = (vaddr_t)bus_space_vaddr(sc->sc_tag, sc->sc_handle);
 	dc->dc_paddr = sc->sc_basepa;
 	dc->dc_offset = sc->sc_fbofs;
@@ -357,4 +366,30 @@ macfb_obio_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Perform common video attachment. */
 	macfb_attach_common(sc, dc);
+}
+
+/*
+ * Basic indexed modes palette handling.
+ */
+
+void
+dafb_setcolor(void *v, u_int start, u_int end)
+{
+	struct macfb_devconfig *dc = v;
+	u_int i;
+	u_int8_t *c;
+
+	c = dc->dc_cmap;
+
+	/*
+	 * DAFB can not start a colormap update at a color index different
+	 * than zero, so we need to reprogram all slots below the requested
+	 * range.
+	 */
+	*(volatile u_int32_t *)(dc->dc_cmapregs) = 0;
+	for (i = 0; i < end; i++) {
+		*(volatile u_int8_t *)(dc->dc_cmapregs + 0x13) = *c++;
+		*(volatile u_int8_t *)(dc->dc_cmapregs + 0x13) = *c++;
+		*(volatile u_int8_t *)(dc->dc_cmapregs + 0x13) = *c++;
+	}
 }

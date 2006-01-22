@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfbvar.h,v 1.4 2006/01/10 21:19:14 miod Exp $	*/
+/*	$OpenBSD: macfbvar.h,v 1.5 2006/01/22 19:40:54 miod Exp $	*/
 /* $NetBSD: macfbvar.h,v 1.3 2005/01/15 16:00:59 chs Exp $ */
 /*	$NetBSD: grfvar.h,v 1.11 1996/08/04 06:03:58 scottr Exp $	*/
 /*	$NetBSD: grfioctl.h,v 1.5 1995/07/02 05:26:45 briggs Exp $	*/
@@ -103,6 +103,7 @@ struct macfb_devconfig {
 	vaddr_t		dc_vaddr;	/* memory space virtual base address */
 	paddr_t		dc_paddr;	/* memory space physical base address */
 	psize_t		dc_size;	/* size of slot memory */
+	vaddr_t		dc_cmapregs;	/* va of cmap registers if known */
 
 	int		dc_offset;	/* offset to base of flat fb */
 
@@ -113,6 +114,10 @@ struct macfb_devconfig {
 
 	/* rasops information */
 	struct rasops_info dc_ri;
+
+	/* shadow colormap */
+	u_int8_t	dc_cmap[256 * 3];
+	void		(*dc_setcolor)(void *, u_int, u_int);
 
 	/* wsdisplay information */
 	struct wsscreen_descr wsd;
