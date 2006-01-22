@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbvar.h,v 1.12 2006/01/18 23:21:16 miod Exp $	*/
+/*	$OpenBSD: adbvar.h,v 1.13 2006/01/22 15:25:30 miod Exp $	*/
 /*	$NetBSD: adbvar.h,v 1.22 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -33,13 +33,13 @@
 
 extern int adbHardware;
 
-/* types of adb hardware that we support */
-#define ADB_HW_UNKNOWN		0x0	/* don't know */
-#define ADB_HW_II		0x1	/* Mac II series */
-#define ADB_HW_IISI		0x2	/* Mac IIsi series */
-#define ADB_HW_PB		0x3	/* PowerBook series */
-#define ADB_HW_CUDA		0x4	/* Machines with a Cuda chip */
-#define	MAX_ADB_HW		4	/* Number of ADB hardware types */
+/* types of adb hardware that we (will eventually) support */
+#define ADB_HW_UNKNOWN		0	/* don't know */
+#define ADB_HW_II		1	/* Mac II series */
+#define ADB_HW_IISI		2	/* Mac IIsi series */
+#define ADB_HW_PB		3	/* PowerBook series */
+#define ADB_HW_CUDA		4	/* Machines with a Cuda chip */
+#define	ADB_HW_IOP		5	/* Machines with an IOP */
 
 int	adb_poweroff(void);
 int	adb_read_date_time(unsigned long *);

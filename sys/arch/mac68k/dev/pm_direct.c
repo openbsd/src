@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.11 2006/01/18 23:21:17 miod Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.12 2006/01/22 15:25:30 miod Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.25 2005/10/28 21:54:52 christos Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <machine/cpu.h>
 #include <machine/viareg.h>
@@ -180,7 +181,7 @@ void	pm_setup_adb(void);
 void	pm_check_adb_devices(int);
 int	pm_intr(void *);
 int	pm_adb_op(u_char *, void *, void *, int);
-void	pm_hw_setup(void);
+void	pm_hw_setup(struct device *);
 
 /* these functions also use the variables of adb_direct.c */
 void	pm_adb_get_TALK_result(PMData *);
@@ -891,42 +892,33 @@ pmgrop(PMData *pmdata)
 	}
 }
 
-
-/*
- * My PM interrupt routine
- */
 int
 pm_intr(void *arg)
 {
 	switch (pmHardware) {
 	case PM_HW_PB1XX:
 		return (pm_intr_pm1(arg));
-
 	case PM_HW_PB5XX:
 		return (pm_intr_pm2(arg));
-
 	default:
-		break;
+		return (-1);
 	}
-
-	return (-1);
 }
 
-
 void
-pm_hw_setup(void)
+pm_hw_setup(struct device *self)
 {
 	switch (pmHardware) {
-		case PM_HW_PB1XX:
-			via1_register_irq(4, pm_intr_pm1, NULL, NULL);
-			PM_VIA_CLR_INTR();
-			break;
-		case PM_HW_PB5XX:
-			via1_register_irq(4, pm_intr_pm2, NULL, NULL);
-			PM_VIA_CLR_INTR();
-			break;
-		default:
-			break;
+	case PM_HW_PB1XX:
+		via1_register_irq(4, pm_intr_pm1, self, self->dv_xname);
+		PM_VIA_CLR_INTR();
+		break;
+	case PM_HW_PB5XX:
+		via1_register_irq(4, pm_intr_pm2, self, self->dv_xname);
+		PM_VIA_CLR_INTR();
+		break;
+	default:
+		break;
 	}
 }
 

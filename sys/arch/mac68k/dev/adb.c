@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.20 2006/01/20 00:10:09 miod Exp $	*/
+/*	$OpenBSD: adb.c,v 1.21 2006/01/22 15:25:30 miod Exp $	*/
 /*	$NetBSD: adb.c,v 1.47 2005/06/16 22:43:36 jmc Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.51 2005/06/16 22:43:36 jmc Exp $	*/
 
@@ -231,12 +231,13 @@ struct adbCommand {
 /*
  * Text representations of each hardware class
  */
-const char	*adbHardwareDescr[MAX_ADB_HW + 1] = {
+const char *adbHardwareDescr[] = {
 	"unknown",
 	"II series",
 	"IIsi series",
 	"PowerBook",
 	"Cuda",
+	"IOP"
 };
 
 /*
@@ -282,7 +283,7 @@ int	adb_cuda_serial = 0;		/* the current packet */
 struct timeout adb_cuda_timeout;
 
 void	pm_setup_adb(void);
-void	pm_hw_setup(void);
+void	pm_hw_setup(struct device *);
 void	pm_check_adb_devices(int);
 int	pm_adb_op(u_char *, void *, void *, int);
 void	pm_init_adb_device(void);
@@ -305,7 +306,7 @@ void	adb_intr_cuda_test(void);
 void	adb_cuda_tickle(void);
 void	adb_pass_up(struct adbCommand *);
 void	adb_op_comprout(caddr_t, caddr_t, int);
-void	adb_reinit(void);
+void	adb_reinit(struct device *);
 int	count_adbs(void);
 int	get_ind_adb_info(ADBDataBlock *, int);
 int	get_adb_info(ADBDataBlock *, int);
@@ -313,7 +314,7 @@ int	set_adb_info(ADBSetInfoBlock *, int);
 void	adb_setup_hw_type(void);
 int	adb_op(Ptr, Ptr, Ptr, short);
 void	adb_read_II(u_char *);
-void	adb_hw_setup(void);
+void	adb_hw_setup(struct device *);
 void	adb_hw_setup_IIsi(u_char *);
 int	adb_cmd_result(u_char *);
 int	adb_guess_next_device(void);
@@ -1192,7 +1193,8 @@ adb_guess_next_device(void)
 	return adbLastDevice;
 }
 
-
+#include "akbd.h"
+#if NAKBD > 0
 /*
  * Called when when an adb interrupt happens.
  * This routine simply transfers control over to the appropriate
@@ -1204,26 +1206,15 @@ adb_intr(void *arg)
 	switch (adbHardware) {
 	case ADB_HW_II:
 		return adb_intr_II(arg);
-		break;
-
 	case ADB_HW_IISI:
 		return adb_intr_IIsi(arg);
-		break;
-
-	case ADB_HW_PB:		/* Should not come through here. */
-		break;
-
 	case ADB_HW_CUDA:
 		return adb_intr_cuda(arg);
-		break;
-
-	case ADB_HW_UNKNOWN:
-		break;
+	default:
+		return (-1);
 	}
-
-	return (-1);
 }
-
+#endif
 
 /*
  * called when when an adb interrupt happens
@@ -1572,6 +1563,7 @@ adb_pass_up(struct adbCommand *in)
 		start = 0;
 	} else {
 		switch (adbHardware) {
+		case ADB_HW_IOP:
 		case ADB_HW_II:
 			cmd = in->data[1];
 			if (in->data[0] < 2)
@@ -1794,6 +1786,7 @@ adb_op(Ptr buffer, Ptr compRout, Ptr data, short command)
 			return -1;
 		break;
 
+	case ADB_HW_IOP:
 	case ADB_HW_UNKNOWN:
 	default:
 		return -1;
@@ -1807,14 +1800,14 @@ adb_op(Ptr buffer, Ptr compRout, Ptr data, short command)
  * config (mainly VIA settings) for the various models.
  */
 void
-adb_hw_setup(void)
+adb_hw_setup(struct device *self)
 {
 	volatile int i;
 	u_char send_string[ADB_MAX_MSG_LENGTH];
 
 	switch (adbHardware) {
 	case ADB_HW_II:
-		via1_register_irq(2, adb_intr_II, NULL, NULL);
+		via1_register_irq(2, adb_intr_II, self, self->dv_xname);
 
 		via_reg(VIA1, vDirB) |= 0x30;	/* register B bits 4 and 5:
 						 * outputs */
@@ -1833,7 +1826,7 @@ adb_hw_setup(void)
 		break;
 
 	case ADB_HW_IISI:
-		via1_register_irq(2, adb_intr_IIsi, NULL, NULL);
+		via1_register_irq(2, adb_intr_IIsi, self, self->dv_xname);
 		via_reg(VIA1, vDirB) |= 0x30;	/* register B bits 4 and 5:
 						 * outputs */
 		via_reg(VIA1, vDirB) &= 0xf7;	/* register B bit 3: input */
@@ -1868,11 +1861,11 @@ adb_hw_setup(void)
 		 * XXX - really PM_VIA_CLR_INTR - should we put it in
 		 * pm_direct.h?
 		 */
-		pm_hw_setup();
+		pm_hw_setup(self);
 		break;
 
 	case ADB_HW_CUDA:
-		via1_register_irq(2, adb_intr_cuda, NULL, NULL);
+		via1_register_irq(2, adb_intr_cuda, self, self->dv_xname);
 		via_reg(VIA1, vDirB) |= 0x30;	/* register B bits 4 and 5:
 						 * outputs */
 		via_reg(VIA1, vDirB) &= 0xf7;	/* register B bit 3: input */
@@ -1903,11 +1896,11 @@ adb_hw_setup(void)
 		ADB_VIA_INTR_ENABLE();	/* ints ok now */
 		break;
 
+	case ADB_HW_IOP:
 	case ADB_HW_UNKNOWN:
 	default:
 		via_reg(VIA1, vIER) = 0x04;	/* turn interrupts off - TO
 						 * DO: turn PB ints off? */
-		return;
 		break;
 	}
 }
@@ -1974,9 +1967,7 @@ adb_hw_setup_IIsi(u_char *buffer)
 	buffer[0] = --i;	/* [0] is length of message */
 	ADB_VIA_INTR_ENABLE();	/* enable ADB interrupt on IIs. */
 	splx(s);		/* restore interrupts */
-
-	return;
-}				/* adb_hw_setup_IIsi */
+}
 
 
 
@@ -1985,7 +1976,7 @@ adb_hw_setup_IIsi(u_char *buffer)
  *
  */
 void
-adb_reinit(void)
+adb_reinit(struct device *self)
 {
 	u_char send_string[ADB_MAX_MSG_LENGTH];
 	ADBDataBlock data;	/* temp. holder for getting device info */
@@ -1997,12 +1988,9 @@ adb_reinit(void)
 	int device;
 	int nonewtimes;		/* times thru loop w/o any new devices */
 
-	via1_register_irq(2, adb_intr, NULL, "adb");
-	adb_setup_hw_type();	/* setup hardware type */
-
 	/* Make sure we are not interrupted while building the table. */
 	/* ints must be on for PB & IOP (at least, for now) */
-	if (adbHardware != ADB_HW_PB)
+	if (adbHardware != ADB_HW_PB && adbHardware != ADB_HW_IOP)
 		s = splhigh();
 	else
 		s = 0;		/* XXX shut the compiler up*/
@@ -2021,7 +2009,7 @@ adb_reinit(void)
 		ADBDevTable[i].origAddr = ADBDevTable[i].currentAddr = 0;
 	}
 
-	adb_hw_setup();		/* init the VIA bits and hard reset ADB */
+	adb_hw_setup(self);	/* init the VIA bits and hard reset ADB */
 
 	delay(1000);
 
@@ -2230,10 +2218,8 @@ adb_reinit(void)
 	}
 
 	/* ints must be on for PB & IOP (at least, for now) */
-	if (adbHardware != ADB_HW_PB)
+	if (adbHardware != ADB_HW_PB && adbHardware != ADB_HW_IOP)
 		splx(s);
-
-	return;
 }
 
 
@@ -2250,6 +2236,7 @@ int
 adb_cmd_result(u_char *in)
 {
 	switch (adbHardware) {
+	case ADB_HW_IOP:
 	case ADB_HW_II:
 		/* was it an ADB talk command? */
 		if ((in[1] & 0x0c) == 0x0c)
@@ -2278,14 +2265,10 @@ adb_cmd_result(u_char *in)
 void 
 adb_setup_hw_type(void)
 {
-	long response;
-
-	response = mac68k_machine.machineid;
-
 	/*
 	 * Determine what type of ADB hardware we are running on.
 	 */
-	switch (response) {
+	switch (mac68k_machine.machineid) {
 	case MACH_MACC610:		/* Centris 610 */
 	case MACH_MACC650:		/* Centris 650 */
 	case MACH_MACII:		/* II */
@@ -2298,10 +2281,6 @@ adb_setup_hw_type(void)
 	case MACH_MACQ800:		/* Quadra 800 */
 	case MACH_MACSE30:		/* SE/30 */
 		adbHardware = ADB_HW_II;
-#ifdef ADB_DEBUG
-		if (adb_debug)
-			printf_intr("adb: using II series hardware support\n");
-#endif
 		break;
 
 	case MACH_MACCLASSICII:		/* Classic II */
@@ -2313,29 +2292,19 @@ adb_setup_hw_type(void)
 	case MACH_MACP460:		/* Performa 460/465/467 */
 	case MACH_MACP600:		/* Performa 600 */
 		adbHardware = ADB_HW_IISI;
-#ifdef ADB_DEBUG
-		if (adb_debug)
-			printf_intr("adb: using IIsi series hardware support\n");
-#endif
 		break;
 
 	case MACH_MACPB140:		/* PowerBook 140 */
 	case MACH_MACPB145:		/* PowerBook 145 */
+	case MACH_MACPB150:		/* PowerBook 150 */
 	case MACH_MACPB160:		/* PowerBook 160 */
 	case MACH_MACPB165:		/* PowerBook 165 */
 	case MACH_MACPB165C:		/* PowerBook 165c */
 	case MACH_MACPB170:		/* PowerBook 170 */
 	case MACH_MACPB180:		/* PowerBook 180 */
 	case MACH_MACPB180C:		/* PowerBook 180c */
-		adbHardware = ADB_HW_PB;
-		pm_setup_adb();
-#ifdef ADB_DEBUG
-		if (adb_debug)
-			printf_intr("adb: using PowerBook 100-series hardware support\n");
-#endif
-		break;
-
-	case MACH_MACPB150:		/* PowerBook 150 */
+	case MACH_MACPB190:		/* PowerBook 190 */
+	case MACH_MACPB190CS:		/* PowerBook 190cs */
 	case MACH_MACPB210:		/* PowerBook Duo 210 */
 	case MACH_MACPB230:		/* PowerBook Duo 230 */
 	case MACH_MACPB250:		/* PowerBook Duo 250 */
@@ -2343,14 +2312,8 @@ adb_setup_hw_type(void)
 	case MACH_MACPB280:		/* PowerBook Duo 280 */
 	case MACH_MACPB280C:		/* PowerBook Duo 280c */
 	case MACH_MACPB500:		/* PowerBook 500 series */
-	case MACH_MACPB190:		/* PowerBook 190 */
-	case MACH_MACPB190CS:		/* PowerBook 190cs */
 		adbHardware = ADB_HW_PB;
 		pm_setup_adb();
-#ifdef ADB_DEBUG
-		if (adb_debug)
-			printf_intr("adb: using PowerBook Duo-series and PowerBook 500-series hardware support\n");
-#endif
 		break;
 
 	case MACH_MACC660AV:		/* Centris 660AV */
@@ -2368,27 +2331,23 @@ adb_setup_hw_type(void)
 	case MACH_MACQ630:		/* LC 630, Performa 630, Quadra 630 */
 	case MACH_MACQ840AV:		/* Quadra 840AV */
 		adbHardware = ADB_HW_CUDA;
-#ifdef ADB_DEBUG
-		if (adb_debug)
-			printf_intr("adb: using Cuda series hardware support\n");
-#endif
+		break;
+
+	case MACH_MACQ900:		/* Quadra 900 */
+	case MACH_MACQ950:		/* Quadra 950 */
+	case MACH_MACIIFX:		/* Mac IIfx */
+		adbHardware = ADB_HW_IOP;
 		break;
 
 	default:
 		adbHardware = ADB_HW_UNKNOWN;
-#ifdef ADB_DEBUG
-		if (adb_debug) {
-			printf_intr("adb: hardware type unknown for this machine\n");
-			printf_intr("adb: ADB support is disabled\n");
-		}
-#endif
 		break;
 	}
 
 	/*
 	 * Determine whether this machine has ADB based soft power.
 	 */
-	switch (response) {
+	switch (mac68k_machine.machineid) {
 	case MACH_MACCCLASSIC:		/* Color Classic */
 	case MACH_MACCCLASSICII:	/* Color Classic II */
 	case MACH_MACIISI:		/* IIsi */
@@ -2555,6 +2514,7 @@ adb_read_date_time(unsigned long *time)
 	volatile int flag = 0;
 
 	switch (adbHardware) {
+	case ADB_HW_IOP:
 	case ADB_HW_II:
 		return -1;
 
@@ -2607,6 +2567,7 @@ adb_set_date_time(unsigned long time)
 	volatile int flag = 0;
 
 	switch (adbHardware) {
+	case ADB_HW_IOP:
 	case ADB_HW_II:
 		return -1;
 
@@ -2697,6 +2658,7 @@ adb_poweroff(void)
 
 		return 0;
 
+	case ADB_HW_IOP:		/* IOP models don't do ADB soft power */
 	case ADB_HW_II:			/* II models don't do ADB soft power */
 	case ADB_HW_UNKNOWN:
 	default:
@@ -2731,6 +2693,7 @@ adb_prog_switch_enable(void)
 		return -1;
 
 	case ADB_HW_II:		/* II models don't do prog. switch */
+	case ADB_HW_IOP:	/* IOP models don't do prog. switch */
 	case ADB_HW_CUDA:	/* cuda doesn't do prog. switch TO DO: verify this */
 	case ADB_HW_UNKNOWN:
 	default:
@@ -2738,6 +2701,7 @@ adb_prog_switch_enable(void)
 	}
 }
 
+#if 0
 int 
 adb_prog_switch_disable(void)
 {
@@ -2765,12 +2729,14 @@ adb_prog_switch_disable(void)
 		return -1;
 
 	case ADB_HW_II:		/* II models don't do prog. switch */
+	case ADB_HW_IOP:	/* IOP models don't do prog. switch */
 	case ADB_HW_CUDA:	/* cuda doesn't do prog. switch */
 	case ADB_HW_UNKNOWN:
 	default:
 		return -1;
 	}
 }
+#endif
 
 /*
  * Function declarations.
@@ -2802,7 +2768,8 @@ adbmatch(struct device *parent, void *vcf, void *aux)
 void
 adbattach(struct device *parent, struct device *self, void *aux)
 {
-	printf("\n");
+	adb_setup_hw_type();	/* setup hardware type */
+	printf(": %s\n", adbHardwareDescr[adbHardware]);
 	startuphook_establish(adb_attach_deferred, self);
 }
 
@@ -2815,12 +2782,9 @@ adb_attach_deferred(void *v)
 	int totaladbs;
 	int adbindex, adbaddr;
 
-	printf("%s", self->dv_xname);
-
+	printf("%s: ", self->dv_xname);
 	adb_polling = 1;
-	adb_reinit();
-
-	printf(": %s", adbHardwareDescr[adbHardware]);
+	adb_reinit(self);
 
 #ifdef ADB_DEBUG
 	if (adb_debug)
@@ -2829,7 +2793,7 @@ adb_attach_deferred(void *v)
 
 	totaladbs = count_adbs();
 
-	printf(", %d target%s\n", totaladbs, (totaladbs == 1) ? "" : "s");
+	printf("%d target%s\n", totaladbs, (totaladbs == 1) ? "" : "s");
 
 	/* for each ADB device */
 	for (adbindex = 1; adbindex <= totaladbs; adbindex++) {
