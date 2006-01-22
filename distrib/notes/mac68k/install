@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.30 2005/05/26 20:36:40 martin Exp $
+dnl	$OpenBSD: install,v 1.31 2006/01/22 13:53:14 miod Exp $
 OpenBSDInstallShortPrelude
 
 OpenBSDInstallPart2
@@ -54,10 +54,5 @@ to a long-standing bug, the preferences will not be saved unless you
 quit.  Note that by setting the BSD/Mac68k Booter to boot automatically
 after starting, and by placing an alias to the booter in the "Startup Items"
 folder, one can make the Mac68k autoload OpenBSD upon startup.
-
-Before attempting to boot a kernel on machines based on the Apple's IOP
-technology (i.e. Quadra 900, 950), make sure that the serial switch option
-in the Control Panel is set to "off". This allows OpenBSD to use the
-serial lines on these machines.
 
 OpenBSDCongratulations
