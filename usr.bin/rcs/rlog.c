@@ -1,6 +1,7 @@
-/*	$OpenBSD: rlog.c,v 1.19 2006/01/05 10:28:24 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.20 2006/01/23 17:02:59 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
+ * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,17 +30,17 @@
 #include "rcsprog.h"
 #include "diff.h"
 
-static int	rlog_file(const char *, const char *, RCSFILE *);
-static void	rlog_rev_print(RCSFILE *);
+static int	  rlog_file(const char *, const char *, RCSFILE *);
+static void	  rlog_rev_print(struct rcs_delta *);
+static char	**rlog_strsplit(char *, const char *);
 
 #define REVSEP		"----------------------------"
 #define REVEND \
  "============================================================================="
 
-static int hflag;
-static int Lflag;
-static int tflag;
-static int Nflag;
+static int hflag, Lflag, tflag, Nflag, wflag;
+static char *slist = NULL;
+static char *wlist = NULL;
 
 int
 rlog_main(int argc, char **argv)
@@ -50,7 +51,7 @@ rlog_main(int argc, char **argv)
 	RCSFILE *file;
 
 	hflag = Rflag = 0;
-	while ((ch = rcs_getopt(argc, argv, "hLNqRTtVx:")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "hLNqRs:TtVw::x:")) != -1) {
 		switch (ch) {
 		case 'h':
 			hflag = 1;
@@ -67,6 +68,9 @@ rlog_main(int argc, char **argv)
 		case 'R':
 			Rflag = 1;
 			break;
+		case 's':
+			slist = rcs_optarg;
+			break;
 		case 'T':
 			/*
 			 * kept for compatibility
@@ -78,6 +82,10 @@ rlog_main(int argc, char **argv)
 		case 'V':
 			printf("%s\n", rcs_version);
 			exit(0);
+		case 'w':
+			wflag = 1;
+			wlist = rcs_optarg;
+			break;
 		case 'x':
 			rcs_suffixes = rcs_optarg;
 			break;
@@ -130,7 +138,8 @@ void
 rlog_usage(void)
 {
 	fprintf(stderr,
-	    "usage: rlog [-hLNqRTtV] [-xsuffixes] file ...\n");
+	    "usage: rlog [-hLNqRTtV] [-sstates] [-w[logins]] "
+	    "[-xsuffixes] file ...\n");
 }
 
 static int
@@ -139,6 +148,7 @@ rlog_file(const char *fname, const char *fpath, RCSFILE *file)
 	char numb[64];
 	struct rcs_sym *sym;
 	struct rcs_access *acp;
+	struct rcs_delta *rdp;
 	struct rcs_lock *lkp;
 
 	printf("\nRCS file: %s", fpath);
@@ -172,37 +182,109 @@ rlog_file(const char *fname, const char *fpath, RCSFILE *file)
 	printf("keyword substitution: %s\n",
 	    file->rf_expand == NULL ? "kv" : file->rf_expand);
 
-	printf("total revisions: %u\n", file->rf_ndelta);
+	printf("total revisions: %u", file->rf_ndelta);
+
+	if ((hflag == 0) && (tflag == 0))
+		printf(";\tselected revisions:"); /* XXX */
+
+	printf("\n");
+
 
 	if ((hflag == 0) || (tflag == 1))
 		printf("description:\n%s", file->rf_desc);
 
-	if ((hflag == 0) && (tflag == 0))
-		rlog_rev_print(file);
+	if ((hflag == 0) && (tflag == 0)) {
+		TAILQ_FOREACH(rdp, &(file->rf_delta), rd_list)
+			rlog_rev_print(rdp);
+	}
 
 	printf("%s\n", REVEND);
 	return (0);
 }
 
 static void
-rlog_rev_print(RCSFILE *file)
+rlog_rev_print(struct rcs_delta *rdp)
 {
-	char numb[64];
-	struct rcs_delta *rdp;
+	int i, found;
+	char *author, numb[64];
+	char **sargv, **wargv;
 
-	TAILQ_FOREACH(rdp, &(file->rf_delta), rd_list) {
-		printf("%s\n", REVSEP);
+	i = found = 0;
+	author = NULL;
 
-		rcsnum_tostr(rdp->rd_num, numb, sizeof(numb));
-
-		printf("revision %s\n", numb);
-		printf("date: %d/%02d/%02d %02d:%02d:%02d;"
-		    "  author: %s;  state: %s;\n",
-		    rdp->rd_date.tm_year + 1900,
-		    rdp->rd_date.tm_mon + 1,
-		    rdp->rd_date.tm_mday, rdp->rd_date.tm_hour,
-		    rdp->rd_date.tm_min, rdp->rd_date.tm_sec,
-		    rdp->rd_author, rdp->rd_state);
-		printf("%s", rdp->rd_log);
+	/* -sstates */
+	if (slist != NULL) {
+		sargv = rlog_strsplit(slist, ",");
+		for (i = 0; sargv[i] != NULL; i++) {
+			if (strcmp(rdp->rd_state, sargv[i]) == 0) {
+				found++;
+				break;
+			}
+			found = 0;
+		}
 	}
+	/* -w[logins] */
+	if (wflag == 1) {
+		if (wlist != NULL) {
+			wargv = rlog_strsplit(wlist, ",");
+			for (i = 0; wargv[i] != NULL; i++) {
+				if (strcmp(rdp->rd_author, wargv[i]) == 0) {
+					found++;
+					break;
+				}
+				found = 0;
+			}
+		} else {
+			if ((author = getlogin()) == NULL)
+				fatal("getlogin failed");
+
+			if (strcmp(rdp->rd_author, author) == 0)
+				found++;
+		}
+	}
+
+	/* XXX dirty... */
+	if ((((slist != NULL) && (wflag == 1)) && (found < 2)) ||
+	    (((slist != NULL) || (wflag == 1)) && (found == 0)))
+		return;
+
+	printf("%s\n", REVSEP);
+
+	rcsnum_tostr(rdp->rd_num, numb, sizeof(numb));
+
+	printf("revision %s\n", numb);
+	printf("date: %d/%02d/%02d %02d:%02d:%02d;"
+	    "  author: %s;  state: %s;\n",
+	    rdp->rd_date.tm_year + 1900,
+	    rdp->rd_date.tm_mon + 1,
+	    rdp->rd_date.tm_mday, rdp->rd_date.tm_hour,
+	    rdp->rd_date.tm_min, rdp->rd_date.tm_sec,
+	    rdp->rd_author, rdp->rd_state);
+	printf("%s", rdp->rd_log);
+}
+
+/*
+ * rlog_strsplit()
+ *
+ * Split a string <str> of <sep>-separated values and allocate
+ * an argument vector for the values found.
+ */
+static char **
+rlog_strsplit(char *str, const char *sep)
+{
+	char **argv, **nargv;
+	char *cp, *p;
+	int i = 0;
+
+	cp = xstrdup(str);
+	argv = (char **)xmalloc((i+1) * sizeof(char *));
+
+	while ((p = strsep(&cp, sep)) != NULL) {
+		argv[i++] = p;
+		nargv = (char **)xrealloc((void *)argv, (i+1) * sizeof(char *));
+		argv = nargv;
+	}
+	argv[i] = NULL;
+
+	return (argv);
 }
