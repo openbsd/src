@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.61 2006/01/18 21:53:22 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.62 2006/01/23 23:07:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -570,6 +570,25 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		if ((iicprobe(0x58) & 0x7f) == 0x31 &&
 		    (iicprobe(0x4e) & 0xf) == 0x00)
 			name = "asb100";
+	} else if ((addr == 0x2c || addr == 0x2d) && iicprobe(0x00) == 0x80 &&
+	    (iicprobe(0x01) == 0x00 || iicprobe(0x01) == 0x80) &&
+	    iicprobe(0x02) == 0x00 && (iicprobe(0x03) & 0x83) == 0x00 &&
+	    (iicprobe(0x0f) & 0x07) == 0x00 &&
+	    (iicprobe(0x11) & 0x80) == 0x00 &&
+	    (iicprobe(0x12) & 0x80) == 0x00) {
+		/*
+		 * The GL518SM is really crappy.  It has both byte and
+		 * word registers, and reading a word register with a
+		 * byte read command will make the device crap out and
+		 * hang the bus.  This has nasty consequences on some
+		 * machines, like preventing warm reboots.  The word
+		 * registers are 0x07 through 0x0c, so make sure the
+		 * checks above don't access those registers.  We
+		 * don't want to do this check right up front though
+		 * since this chip is somewhat hard to detect (which
+		 * is why we check for every single fixed bit it has).
+		 */
+		name = "gl518sm";
 	} else if (iicprobe(0x16) == 0x41 && ((iicprobe(0x17) & 0xf0) == 0x40) &&
 	    (addr == 0x2c || addr == 0x2d || addr == 0x2e)) {
 		name = "adm1026";
