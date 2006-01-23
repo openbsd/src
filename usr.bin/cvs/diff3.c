@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.12 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.13 2006/01/23 16:49:48 xsa Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.12 2006/01/02 08:11:56 xsa Exp $";
+    "$OpenBSD: diff3.c,v 1.13 2006/01/23 16:49:48 xsa Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -282,8 +282,11 @@ diff3_internal(int argc, char **argv, const char *fmark, const char *rmark)
 	if (argc < 5)
 		return (-1);
 
-	snprintf(f1mark, sizeof(f1mark), "<<<<<<< %s", fmark);
-	snprintf(f3mark, sizeof(f3mark), ">>>>>>> %s", rmark);
+	strlcpy(f1mark, "<<<<<<< ", sizeof(f1mark));
+	strlcat(f1mark, fmark, sizeof(f1mark));
+
+	strlcpy(f3mark, ">>>>>>> ", sizeof(f3mark));
+	strlcat(f3mark, rmark, sizeof(f3mark));
 
 	increase();
 	m = readin(argv[0], &d13);
