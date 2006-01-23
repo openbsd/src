@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.91 2006/01/02 17:06:10 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.92 2006/01/23 14:13:24 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -210,8 +210,8 @@ main(int argc, char **argv)
 	ret = cvs_startcmd(cmdp, cmd_argc, cmd_argv);
 	switch (ret) {
 	case CVS_EX_USAGE:
-		fprintf(stderr, "Usage: %s %s %s\n", __progname, cvs_command,
-		    cmdp->cmd_synopsis);
+		fprintf(stderr, "Usage: %s %s %s\n", __progname,
+		    cmdp->cmd_name, cmdp->cmd_synopsis);
 		break;
 	case CVS_EX_DATA:
 		cvs_log(LP_ABORT, "internal data error");
