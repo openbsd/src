@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lm.4,v 1.11 2005/12/28 16:54:26 kettenis Exp $
+.\"	$OpenBSD: lm.4,v 1.12 2006/01/23 22:00:10 kettenis Exp $
 .\"	$NetBSD: lm.4,v 1.11 2001/09/22 01:22:49 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 .Os
 .Sh NAME
 .Nm lm
-.Nd National Semiconductor LM78, LM79 and compatible hardware monitors
+.Nd National Semiconductor LM78/79/81 and compatible hardware monitors
 .Sh SYNOPSIS
 .Cd "lm0 at isa? port 0x290"
 .Cd "lm1 at isa? port 0x280"
@@ -52,12 +52,12 @@ The
 .Nm
 driver provides support for the
 .Tn National Semiconductor
-LM series hardware monitors and register compatible chips to be used with
+LM 78/79/81 hardware monitors and register compatible chips to be used with
 the
 .Xr sysctl 8
 interface.
 .Pp
-Most supported devices possess 11 sensors:
+The original LM78 hardware monitor supports 11 sensors:
 .Bl -column "Sensor" "Units" "Typical" -offset indent
 .It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical Use"
 .It Li "IN0" Ta "uV DC" Ta "Core voltage"
@@ -73,8 +73,7 @@ Most supported devices possess 11 sensors:
 .It Li "Fan2" Ta "RPM" Ta "Fan"
 .El
 .Pp
-For some devices (most Winbond devices), sensors' names and numbers will be
-different.
+For other devices, sensors' names and numbers will be different.
 .Sh HARDWARE
 Chips supported by the
 .Nm
@@ -86,7 +85,13 @@ National Semiconductor LM78 and LM78-J
 .It
 National Semiconductor LM79
 .It
-Winbond W83627HF, W83627THF, W83697HF, W83781D, and W83782D
+National Semiconductor LM81
+.It
+Winbond W83627HF, W83627THF, W83637HF and W83697HF
+.It
+Winbond W83781D, W83782D and W83783S
+.It
+Winbond W83791D, W83791SD and W83792D
 .It
 ASUS AS99127F
 .El
@@ -96,9 +101,14 @@ Some devices can attach to both
 and
 .Xr isa 4 ;
 others can only attach to either one or the other.
-Devices that can attach to both will only attach to
-.Xr isa 4
-to prevent double attachment.
+If the
+.Nm
+driver detects a device attaching to both
+.Xr iic 4
+and
+.Xr isa 4 ,
+it will detach the device from
+.Xr iic 4 .
 .Sh SEE ALSO
 .Xr iic 4 ,
 .Xr isa 4 ,
@@ -122,7 +132,18 @@ and ported to
 .Ox 3.4
 by
 .An Alexander Yurchenko Aq grange@openbsd.org .
+The driver was largely rewritten for
+.Ox 3.9
+by
+.An Mark Kettenis Aq kettenis@openbsd.org .
+.Sh CAVEATS
+Some vendors connect these chips to nonstandard thermal diodes and
+resistors.
+This will result in bogus sensor values.
 .Sh BUGS
 Interrupt support is unimplemented.
 .Pp
 There are currently no known pnpbios IDs assigned to LM chips.
+.Pp
+This driver attaches to the Winbond W83791SD chip even though that
+chip does not have any sensors.
