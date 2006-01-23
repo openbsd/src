@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.22 2005/07/28 16:59:42 mpf Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.23 2006/01/23 22:19:40 mpf Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -157,13 +157,13 @@ startup_handler(int fd, short event, void *arg)
 {
 	int rt_fd;
 
+	if ((rt_fd = socket(PF_ROUTE, SOCK_RAW, 0)) < 0)
+		err(1, "no routing socket");
+
 	if (load_config() != 0) {
 		logit(IFSD_LOG_NORMAL, "unable to load config");
 		exit(1);
 	}
-
-	if ((rt_fd = socket(PF_ROUTE, SOCK_RAW, 0)) < 0)
-		err(1, "no routing socket");
 
 	event_set(&rt_msg_ev, rt_fd, EV_READ|EV_PERSIST,
 	    rt_msg_handler, &rt_msg_ev);
