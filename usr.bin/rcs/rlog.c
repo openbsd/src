@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.20 2006/01/23 17:02:59 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.21 2006/01/23 17:08:45 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -41,6 +41,14 @@ static char	**rlog_strsplit(char *, const char *);
 static int hflag, Lflag, tflag, Nflag, wflag;
 static char *slist = NULL;
 static char *wlist = NULL;
+
+void
+rlog_usage(void)
+{
+	fprintf(stderr,
+	    "usage: rlog [-hLNqRTtV] [-sstates] [-w[logins]] "
+	    "[-xsuffixes] file ...\n");
+}
 
 int
 rlog_main(int argc, char **argv)
@@ -90,7 +98,8 @@ rlog_main(int argc, char **argv)
 			rcs_suffixes = rcs_optarg;
 			break;
 		default:
-			break;
+			(usage());
+			exit(1);
 		}
 	}
 
@@ -132,14 +141,6 @@ rlog_main(int argc, char **argv)
 	}
 
 	return (0);
-}
-
-void
-rlog_usage(void)
-{
-	fprintf(stderr,
-	    "usage: rlog [-hLNqRTtV] [-sstates] [-w[logins]] "
-	    "[-xsuffixes] file ...\n");
 }
 
 static int
