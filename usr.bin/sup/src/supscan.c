@@ -1,4 +1,4 @@
-/*	$OpenBSD: supscan.c,v 1.13 2002/02/19 19:39:39 millert Exp $	*/
+/*	$OpenBSD: supscan.c,v 1.14 2006/01/23 17:29:22 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -117,7 +117,7 @@
 #include <setjmp.h>
 #include <stdarg.h>
 #include <sys/time.h>
-#include <sys/types.h>
+#include <sys/param.h>
 #include "supcdefs.h"
 #include "supextern.h"
 

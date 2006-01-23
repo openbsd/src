@@ -1,4 +1,4 @@
-/* $OpenBSD: cddb.c,v 1.10 2006/01/17 00:56:04 aaron Exp $ */
+/* $OpenBSD: cddb.c,v 1.11 2006/01/23 17:29:22 millert Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -24,7 +24,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/cdio.h>
