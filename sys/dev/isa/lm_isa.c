@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm_isa.c,v 1.8 2006/01/17 20:26:37 kettenis Exp $	*/
+/*	$OpenBSD: lm_isa.c,v 1.9 2006/01/23 18:45:33 kettenis Exp $	*/
 /*	$NetBSD: lm_isa.c,v 1.9 2002/11/15 14:55:44 ad Exp $ */
 
 /*-
@@ -47,6 +47,7 @@
 #include <dev/isa/isavar.h>
 
 #include <dev/ic/lm78var.h>
+#include <dev/isa/itvar.h>
 
 /* ISA registers */
 #define LMC_ADDR	0x05
@@ -103,6 +104,12 @@ lm_isa_match(struct device *parent, void *match, void *aux)
 	    (!(banksel & 0x80) && vendid == (WB_VENDID_WINBOND & 0xff)))
 		goto found;
 
+	/* Probe for ITE chips (and don't attach if we find one). */
+	bus_space_write_1(iot, ioh, LMC_ADDR, ITD_CHIPID);
+	vendid = bus_space_read_1(iot, ioh, LMC_DATA);
+	if (vendid == IT_ID_IT87) 
+		goto notfound;
+
 	/*
 	 * Probe for National Semiconductor LM78/79/81.
 	 *
@@ -126,6 +133,7 @@ lm_isa_match(struct device *parent, void *match, void *aux)
 		}
 	}
 
+ notfound:
 	bus_space_unmap(iot, ioh, 8);
 
 	return (0);
