@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.25 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: history.c,v 1.26 2006/01/23 14:02:42 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -56,8 +56,9 @@ struct cvs_cmd cvs_cmd_history = {
 	CVS_OP_HISTORY, CVS_REQ_HISTORY, "history",
 	{ "hi", "his" },
 	"Show repository access history",
-	"[-aceloTw] [-b str] [-D date] [-f file] [-m module] [-n module] "
-	"[-p path] [-r rev] [-t tag] [-u user] [-x ACEFGMORTUW] [-z tz]",
+	"[-aceloTw] [-b str] [-D date] [-f file] [-m module]\n"
+	"                   [-n module] [-p path] [-r rev] [-t tag]\n"
+	"                   [-u user] [-x ACEFGMORTUW] [-z tz] [file ...]",
 	"ab:cD:ef:lm:n:op:r:Tt:u:wx:z:",
 	NULL,
 	0,
