@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.24 2006/01/12 15:10:02 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.25 2006/01/23 22:29:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1008,7 +1008,6 @@ dispatch_rtmsg(void)
 				break;
 			default:
 				continue;
-				/* not reached */
 			}
 		}
 
