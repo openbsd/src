@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.148 2006/01/05 03:28:34 deraadt Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.149 2006/01/23 22:46:57 markus Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -158,10 +158,13 @@ void	bridge_fragment(struct bridge_softc *, struct ifnet *,
     struct ether_header *, struct mbuf *);
 #ifdef INET
 void	bridge_send_icmp_err(struct bridge_softc *, struct ifnet *,
-    struct ether_header *, struct mbuf *, int, struct llc *, int, int);
+    struct ether_header *, struct mbuf *, int, struct llc *, int, int, int);
 #endif
 #ifdef IPSEC
-int bridge_ipsec(int, int, int, struct mbuf *);
+int bridge_ipsec(struct bridge_softc *, struct ifnet *,
+    struct ether_header *, int, struct llc *,
+    int, int, int, struct mbuf *);
+#define ICMP_DEFLEN MHLEN
 #endif
 int     bridge_clone_create(struct if_clone *, int);
 int	bridge_clone_destroy(struct ifnet *ifp);
@@ -2122,7 +2125,9 @@ bridge_flushrule(struct bridge_iflist *bif)
 
 #ifdef IPSEC
 int
-bridge_ipsec(int dir, int af, int hlen, struct mbuf *m)
+bridge_ipsec(struct bridge_softc *sc, struct ifnet *ifp,
+    struct ether_header *eh, int hassnap, struct llc *llc,
+    int dir, int af, int hlen, struct mbuf *m)
 {
 	union sockaddr_union dst;
 	struct timeval tv;
@@ -2292,7 +2297,17 @@ bridge_ipsec(int dir, int af, int hlen, struct mbuf *m)
 			if (m == NULL)
 				return (1);
 #endif /* NPF */
-			error = ipsp_process_packet(m, tdb, af, 0);
+
+			ip = mtod(m, struct ip *);
+			if ((af == AF_INET) &&
+			    ip_mtudisc && (ip->ip_off & htons(IP_DF)) &&
+			    tdb->tdb_mtu && ntohs(ip->ip_len) > tdb->tdb_mtu &&
+			    tdb->tdb_mtutimeout > time_second)
+				bridge_send_icmp_err(sc, ifp, eh, m,
+				    hassnap, llc, tdb->tdb_mtu,
+				    ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG);
+			else
+				error = ipsp_process_packet(m, tdb, af, 0);
 			return (1);
 		} else
 			return (0);
@@ -2401,7 +2416,8 @@ bridge_filter(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 
 #ifdef IPSEC
 		if ((sc->sc_if.if_flags & IFF_LINK2) == IFF_LINK2 &&
-		    bridge_ipsec(dir, AF_INET, hlen, m))
+		    bridge_ipsec(sc, ifp, eh, hassnap, &llc,
+		    dir, AF_INET, hlen, m))
 			return (NULL);
 #endif /* IPSEC */
 
@@ -2449,7 +2465,8 @@ bridge_filter(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 		hlen = sizeof(struct ip6_hdr);
 
 		if ((sc->sc_if.if_flags & IFF_LINK2) == IFF_LINK2 &&
-		    bridge_ipsec(dir, AF_INET6, hlen, m))
+		    bridge_ipsec(sc, ifp, eh, hassnap, &llc,
+		    dir, AF_INET6, hlen, m))
 			return (NULL);
 #endif /* IPSEC */
 
@@ -2551,7 +2568,7 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 	/* Respect IP_DF, return a ICMP_UNREACH_NEEDFRAG. */
 	if (ip->ip_off & htons(IP_DF)) {
 		bridge_send_icmp_err(sc, ifp, eh, m, hassnap, &llc,
-		    ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG);
+		    ifp->if_mtu, ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG);
 		return;
 	}
 
@@ -2630,7 +2647,7 @@ bridge_ifenqueue(struct bridge_softc *sc, struct ifnet *ifp, struct mbuf *m)
 void
 bridge_send_icmp_err(struct bridge_softc *sc, struct ifnet *ifp,
     struct ether_header *eh, struct mbuf *n, int hassnap, struct llc *llc,
-    int type, int code)
+    int mtu, int type, int code)
 {
 	struct ip *ip;
 	struct icmp *icp;
@@ -2644,7 +2661,7 @@ bridge_send_icmp_err(struct bridge_softc *sc, struct ifnet *ifp,
 		m_freem(n);
 		return;
 	}
-	m = icmp_do_error(n, type, code, 0, ifp->if_mtu);
+	m = icmp_do_error(n, type, code, 0, mtu);
 	if (m == NULL) {
 		m_freem(n2);
 		return;
