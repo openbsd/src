@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfb.c,v 1.9 2006/01/22 19:40:54 miod Exp $	*/
+/*	$OpenBSD: macfb.c,v 1.10 2006/01/23 19:05:23 miod Exp $	*/
 /* $NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -184,6 +184,7 @@ macfb_color_setup(struct macfb_devconfig *dc)
 		 * routine to compensate for inverted black and white colors.
 		 */
 		ri->ri_ops.alloc_attr = macfb_alloc_mattr;
+		ri->ri_caps &= ~(WSSCREEN_WSCOLORS | WSSCREEN_HILIT);
 		if (ri->ri_depth == 8)
 			ri->ri_devcmap[15] = 0xffffffff;
 		return (0xff);	/* fill in black inherited from MacOS */
