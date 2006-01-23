@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.38 2006/01/22 19:40:54 miod Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.39 2006/01/23 19:06:04 miod Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -238,7 +238,7 @@ macfb_obio_attach(struct device *parent, struct device *self, void *aux)
 		/*FALLTHROUGH*/
         case MACH_CLASSQ:
 		sc->sc_tag = oa->oa_tag;
-		if (bus_space_map(sc->sc_tag, DAFB_CONTROL_BASE, PAGE_SIZE, 0,
+		if (bus_space_map(sc->sc_tag, DAFB_CONTROL_BASE, 0x20, 0,
 		    &sc->sc_regh)) {
 			printf(": failed to map DAFB register space\n");
 			free(dc, M_DEVBUF);
@@ -277,10 +277,14 @@ macfb_obio_attach(struct device *parent, struct device *self, void *aux)
 		printf(": DAFB, monitor sense %x\n",
 		    (bus_space_read_4(sc->sc_tag, sc->sc_regh, 0x1c) & 0x7));
 
-		dc->dc_cmapregs =
-		    (vaddr_t)bus_space_vaddr(sc->sc_tag, sc->sc_regh) +
-		    (DAFB_CMAP_BASE - DAFB_CONTROL_BASE);
-		dc->dc_setcolor = dafb_setcolor;
+		bus_space_unmap(sc->sc_tag, sc->sc_regh, 0x20);
+
+		if (bus_space_map(sc->sc_tag, DAFB_CMAP_BASE, 0x20, 0,
+		    &sc->sc_regh) == 0) {
+			dc->dc_cmapregs = (vaddr_t)bus_space_vaddr(sc->sc_tag,
+			    sc->sc_regh);
+			dc->dc_setcolor = dafb_setcolor;
+		}
 
 		break;
 	case MACH_CLASSAV:
