@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.362 2006/01/14 19:04:14 miod Exp $
+#	$OpenBSD: files,v 1.363 2006/01/23 14:42:54 martin Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -256,7 +256,7 @@ device	dc: ether, ifnet, ifmedia, mii
 file	dev/ic/dc.c			dc
 
 # SMC 91Cxx Ethernet Controller
-device	sm: ether, ifnet, ifmedia
+device	sm: ether, ifnet, ifmedia, mii, mii_bitbang
 file	dev/ic/smc91cxx.c		sm
 
 # SMC 83C170 EPIC/100 Fast Ethernet Controller

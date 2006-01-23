@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.24 2005/11/21 18:16:42 millert Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.25 2006/01/23 14:42:55 martin Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -68,6 +68,11 @@
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+
+#include <net/if_media.h>
+
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 
 #include <dev/ic/smc91cxxreg.h>
 #include <dev/ic/smc91cxxvar.h>

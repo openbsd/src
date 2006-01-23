@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.464 2006/01/16 20:26:46 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.465 2006/01/23 14:42:54 martin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -417,6 +417,7 @@ lc0	at isa? port 0x200			# DEC EtherWorks
 lc1	at isa? port 0x280			# DEC EtherWorks
 le0	at isa? port 0x360 irq 15 drq 6		# IsoLan, NE2100, and DEPCA
 ex0	at isa? port 0x320 irq 5		# Intel EtherExpress PRO/10
+sm0	at isa? port 0x300 irq 10		# SMC 91cxx-based ethernet
 #tr0	at isa? port 0xa20 iomem 0xd8000	# IBM TROPIC based Token-Ring
 #tr1	at isa? port 0xa24 iomem 0xd0000	# IBM TROPIC based Token-Ring
 #tr*	at isa?				# 3COM TROPIC based Token-Ring

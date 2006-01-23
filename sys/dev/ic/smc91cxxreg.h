@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxxreg.h,v 1.2 2001/06/27 05:44:52 nate Exp $	*/
+/*	$OpenBSD: smc91cxxreg.h,v 1.3 2006/01/23 14:42:55 martin Exp $	*/
 /*	$NetBSD: smc91cxxreg.h,v 1.2 1997/09/02 00:10:58 thorpej Exp $	*/
 
 /*
@@ -109,6 +109,7 @@
 #define	TCR_FDUPLX	0x0800	/* receive packets sent out */
 #define	TCR_STP_SQET	0x1000	/* stop transmitting if Signal quality error */
 #define	TCR_EPH_LOOP	0x2000	/* Enable internal digital loopback */
+#define	TCR_SWFDUP	0x8000	/* FEAST: Switched full-duplex (only w/ MII) */
 
 
 /*
@@ -179,6 +180,7 @@
  */
 #define	MEM_CFG_REG_W	0x0a
 
+#define MCR_MEM_MULT(x) (((x)>>9)&7)	/* Memory size multiplier */
 #define	MCR_TXRSV_MASK	0x001f	/* Count of pages reserved for transmit */
 
 
@@ -204,6 +206,7 @@
 #define	CR_SET_SQLCH	0x0200	/* Squelch level */
 #define	CR_FULL_STEP	0x0400	/* AUI signalling mode */
 #define	CR_NOW_WAIT_ST	0x1000	/* Disable bus wait states */
+#define CR_MII_SELECT	0x8000	/* FEAST: MII port selected */
 
 
 /*
@@ -367,9 +370,17 @@
 /*
  * These registers do not exist on SMC9192, or at least
  * are not documented in the SMC91C92 data sheet.
+ *
  * The REVISION_REG_W register does however seem to work.
+ *
+ * On the FEAST, the low nibble controls the MII interface.
  */
 #define	MGMT_REG_W	0x08
+
+#define MR_MDOE		0x08
+#define MR_MCLK		0x04
+#define MR_MDI		0x02
+#define MR_MDO		0x01
 
 #define	REVISION_REG_W	0x0a	/* (hi: chip id low: rev #) */
 #define	RR_REV(x)	((x) & 0x0f)
@@ -385,6 +396,7 @@
 #define	CHIP_9194	4
 #define	CHIP_9195	5
 #define	CHIP_91100	7
+#define	CHIP_91100FD	8
 
 
 /*

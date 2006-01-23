@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_isa.c,v 1.6 2005/11/21 18:16:40 millert Exp $	*/
+/*	$OpenBSD: if_sm_isa.c,v 1.7 2006/01/23 14:42:55 martin Exp $	*/
 /*	$NetBSD: if_sm_isa.c,v 1.4 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -75,6 +75,11 @@
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+
+#include <net/if_media.h>
+
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 
 #include <dev/ic/smc91cxxreg.h>
 #include <dev/ic/smc91cxxvar.h>
