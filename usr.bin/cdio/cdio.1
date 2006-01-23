@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.30 2005/01/22 10:21:26 robert Exp $
+.\" $OpenBSD: cdio.1,v 1.31 2006/01/23 00:41:10 krw Exp $
 .\"
 .\" Copyright (c) 1995 Serge V. Vakulenko
 .\" All rights reserved.
@@ -135,24 +135,35 @@ Play from track
 to track
 .Ar last_track .
 The first track has number 1 and may be omitted in all cases.
-.It Ic play Ar start_m:start_s.start_f Op Ar end_m:end_s.end_f
+.It Xo Ic play
+.Op Ar tr1
+.Ar m1 : Ns Ar s1 Ns Op .f1
+.Op Ar tr2
+.Oo Ar m2 : Ns Ar s2 Ns
+.Op .f2 Oc
+.Xc
 Play from the absolute address
 (MSF) defined by
-.Ar start_m
+.Ar m1
 in minutes,
-.Ar start_s
-in seconds, and
-.Ar start_f
-(frame number) to the absolute address defined by
-.Ar end_m
+.Ar s1
+in seconds,
+frame number
+.Ar f1 ,
+to the absolute address defined by
+.Ar m2
 in minutes,
-.Ar end_s
-in seconds, and
-.Ar end_f
-(frame number).
-Minutes are in the range 0-99.
-Seconds are in the range 0-59.
-Frame numbers are in the range 0-74.
+.Ar s2
+in seconds,
+frame number
+.Ar f2 .
+If a track number is specified
+.Pq tr Ns Ar X ,
+then the minutes, seconds, and frame numbers
+are relative to the start of that track.
+Minutes are in the range 0\(en99.
+Seconds are in the range 0\(en59.
+Frame numbers are in the range 0\(en74.
 .It Ic play Op Ar #start_block Op Ar length
 Play starting from the logical block
 .Ar start_block
