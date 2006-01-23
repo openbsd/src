@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.17 2006/01/19 17:08:40 grange Exp $	*/
+/*	$OpenBSD: it.c,v 1.18 2006/01/23 18:43:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
@@ -202,9 +202,6 @@ it_setup_volt(struct it_softc *sc, int start, int n)
 	sc->sensors[start + 8].rfact = 10000;
 	snprintf(sc->sensors[start + 8].desc, sizeof(sc->sensors[8].desc),
 	    "VBAT");
-
-	/* Enable voltage monitoring */
-	it_writereg(sc, ITD_VOLTENABLE, 0xff);
 }
 
 void
@@ -218,11 +215,6 @@ it_setup_temp(struct it_softc *sc, int start, int n)
 		    sizeof(sc->sensors[start + i].desc),
 		    "Temp%d", i + 1);
 	}
-
-	/* Enable temperature monitoring
-	 * bits 7 and 8 are reserved, so we don't change them */
-	i = it_readreg(sc, ITD_TEMPENABLE) & 0xc0;
-	it_writereg(sc, ITD_TEMPENABLE, i | 0x38);
 }
 
 void
@@ -236,11 +228,6 @@ it_setup_fan(struct it_softc *sc, int start, int n)
 		    sizeof(sc->sensors[start + i].desc),
 		    "Fan%d", i + 1);
 	}
-
-	/* Enable fan rpm monitoring
-	 * bits 4 to 6 are the only interesting bits */
-	i = it_readreg(sc, ITD_FANENABLE) & 0x8f;
-	it_writereg(sc, ITD_FANENABLE, i | 0x70);
 }
 
 void
