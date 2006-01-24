@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.99 2006/01/24 10:01:14 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.100 2006/01/24 15:28:03 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -47,6 +47,7 @@ int		 main(int, char *[]);
 char		*fmt_peer(const struct peer_config *, int);
 void		 show_summary_head(void);
 int		 show_summary_msg(struct imsg *, int);
+int		 show_summary_terse_msg(struct imsg *, int);
 int		 show_neighbor_msg(struct imsg *, enum neighbor_views);
 void		 print_neighbor_capa_mp_safi(u_int8_t);
 void		 print_neighbor_msgstats(struct peer *);
@@ -150,6 +151,9 @@ main(int argc, char *argv[])
 	case SHOW_SUMMARY:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1, NULL, 0);
 		show_summary_head();
+		break;
+	case SHOW_SUMMARY_TERSE:
+		imsg_compose(ibuf, IMSG_CTL_SHOW_TERSE, 0, 0, -1, NULL, 0);
 		break;
 	case SHOW_FIB:
 		if (!res->addr.af) {
@@ -297,6 +301,9 @@ main(int argc, char *argv[])
 			case SHOW_SUMMARY:
 				done = show_summary_msg(&imsg, nodescr);
 				break;
+			case SHOW_SUMMARY_TERSE:
+				done = show_summary_terse_msg(&imsg, nodescr);
+				break;
 			case SHOW_FIB:
 				done = show_fib_msg(&imsg);
 				break;
@@ -405,6 +412,29 @@ show_summary_msg(struct imsg *imsg, int nodescr)
 		} else
 			printf("%s", statenames[p->state]);
 		printf("\n");
+		free(s);
+		break;
+	case IMSG_CTL_END:
+		return (1);
+	default:
+		break;
+	}
+
+	return (0);
+}
+
+int
+show_summary_terse_msg(struct imsg *imsg, int nodescr)
+{
+	struct peer		*p;
+	char			*s;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_NEIGHBOR:
+		p = imsg->data;
+		s = fmt_peer(&p->conf, nodescr);
+		printf("%s %u %s\n", s, p->conf.remote_as,
+		    statenames[p->state]);
 		free(s);
 		break;
 	case IMSG_CTL_END:

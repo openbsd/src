@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.26 2006/01/03 22:51:14 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.27 2006/01/24 15:28:03 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -59,6 +59,7 @@ struct token {
 
 static const struct token t_main[];
 static const struct token t_show[];
+static const struct token t_show_summary[];
 static const struct token t_show_fib[];
 static const struct token t_show_rib[];
 static const struct token t_show_neighbor[];
@@ -100,8 +101,14 @@ static const struct token t_show[] = {
 	{ KEYWORD,	"nexthop",	SHOW_NEXTHOP,	NULL},
 	{ KEYWORD,	"rib",		SHOW_RIB,	t_show_rib},
 	{ KEYWORD,	"ip",		NONE,		t_show_ip},
-	{ KEYWORD,	"summary",	SHOW_SUMMARY,	NULL},
+	{ KEYWORD,	"summary",	SHOW_SUMMARY,	t_show_summary},
 	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_show_summary[] = {
+	{ NOTOKEN,	"",		NONE,			NULL},
+	{ KEYWORD,	"terse",	SHOW_SUMMARY_TERSE,	NULL},
+	{ ENDTOKEN,	"",		NONE,			NULL}
 };
 
 static const struct token t_show_fib[] = {

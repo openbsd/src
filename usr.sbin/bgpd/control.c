@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.48 2006/01/24 10:04:36 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.49 2006/01/24 15:28:03 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -232,6 +232,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 			case IMSG_CTL_SHOW_RIB_PREFIX:
 			case IMSG_CTL_SHOW_RIB_MEM:
 			case IMSG_CTL_SHOW_NETWORK:
+			case IMSG_CTL_SHOW_TERSE:
 				break;
 			default:
 				/* clear imsg type to prevent processing */
@@ -263,6 +264,12 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 					    imsg.hdr.pid,
 					    p, sizeof(struct peer));
 			imsg_compose_rde(IMSG_CTL_END, imsg.hdr.pid, NULL, 0);
+			break;
+		case IMSG_CTL_SHOW_TERSE:
+			for (p = peers; p != NULL; p = p->next)
+				imsg_compose(&c->ibuf, IMSG_CTL_SHOW_NEIGHBOR,
+				    0, 0, -1, p, sizeof(struct peer));
+			imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_CTL_RELOAD:
 		case IMSG_CTL_FIB_COUPLE:
