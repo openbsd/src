@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.80 2006/01/20 16:40:17 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.81 2006/01/24 10:05:24 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -451,7 +451,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p, u_int32_t flags)
 		p->flags &= ~flags;
 		PREFIX_COUNT(p->aspath, flags, -1);
 		/* as before peer count needs no update because of move */
-		
+
 		/* redo the route decision for p */
 		LIST_REMOVE(p, prefix_l);
 		/* If the prefix is the active one remove it first. */

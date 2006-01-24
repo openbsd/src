@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.130 2006/01/24 10:03:44 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.131 2006/01/24 10:05:24 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -303,7 +303,7 @@ main(int argc, char *argv[])
 
 		if (nfds == -1 || nfds == 0)
 			continue;
-	
+
 		if (pfd[PFD_PIPE_SESSION].revents & POLLOUT)
 			if (msgbuf_write(&ibuf_se->w) < 0) {
 				log_warn("pipe write error (to SE)");
