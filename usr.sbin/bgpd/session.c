@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.242 2006/01/24 10:03:44 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.243 2006/01/24 10:08:16 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1966,8 +1966,9 @@ parse_notification(struct peer *peer)
 			datalen -= sizeof(capa_len);
 			if (datalen < capa_len) {
 				log_peer_warnx(&peer->conf,
-				    "parse_notification: capa_len %u exceeds"
-				    "remaining msg length", capa_len);
+				    "parse_notification: capa_len %u exceeds "
+				    "remaining msg length %u", capa_len,
+				    datalen);
 				return (-1);
 			}
 			p += capa_len;
