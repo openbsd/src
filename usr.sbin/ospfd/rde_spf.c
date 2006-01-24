@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.38 2005/12/02 12:21:31 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.39 2006/01/24 18:31:32 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -81,11 +81,9 @@ spf_calc(struct area *area)
 	struct vertex		*v, *w;
 	struct lsa_rtr_link	*rtr_link = NULL;
 	struct lsa_net_link	*net_link;
-	struct rt_node		*r;
-	u_int32_t		 cost2, d;
+	u_int32_t		 d;
 	int			 i;
 	struct in_addr		 addr, adv_rtr, a;
-	enum dst_type		 type;
 
 	log_debug("spf_calc: calculation started, area ID %s",
 	    inet_ntoa(area->id));
@@ -292,64 +290,7 @@ spf_calc(struct area *area)
 
 	/* calculate as-external routes */
 	RB_FOREACH(v, lsa_tree, &rdeconf->lsa_tree) {
-		lsa_age(v);
-		if (ntohs(v->lsa->hdr.age) == MAX_AGE)
-			continue;
-
-		switch (v->type) {
-		case LSA_TYPE_EXTERNAL:
-			/* ignore self-originated stuff */
-			if (v->nbr->self)
-				continue;
-
-			if ((r = rt_lookup(DT_RTR, htonl(v->adv_rtr))) == NULL)
-				continue;
-
-			if (v->lsa->data.asext.fw_addr != 0 &&
-			    (r = rt_lookup(DT_NET,
-			    v->lsa->data.asext.fw_addr)) == NULL)
-				continue;
-
-#if 0
-			if (r->p_type != PT_INTRA_AREA &&
-			    r->p_type != PT_INTER_AREA)
-				continue;
-#endif
-
-			/* XXX RFC1583Compatibility */
-			if (r->connected) {
-				if (v->lsa->data.asext.fw_addr != 0)
-					v->nexthop.s_addr =
-					    v->lsa->data.asext.fw_addr;
-				else
-					v->nexthop.s_addr = htonl(v->adv_rtr);
-			} else
-				v->nexthop = r->nexthop;
-
-			if (ntohl(v->lsa->data.asext.metric) &
-			    LSA_ASEXT_E_FLAG) {
-				v->cost = r->cost;
-				cost2 = ntohl(v->lsa->data.asext.metric) &
-				     LSA_METRIC_MASK;
-				type = PT_TYPE2_EXT;
-			} else {
-				v->cost = r->cost +
-				    (ntohl(v->lsa->data.asext.metric) &
-				     LSA_METRIC_MASK);
-				cost2 = 0;
-				type = PT_TYPE1_EXT;
-			}
-
-			a.s_addr = 0;
-			adv_rtr.s_addr = htonl(v->adv_rtr);
-			addr.s_addr = htonl(v->ls_id) & v->lsa->data.asext.mask;
-			rt_update(addr, mask2prefixlen(v->lsa->data.asext.mask),
-			    v->nexthop, v->cost, cost2, a, adv_rtr, type,
-			    DT_NET, 0, 0);
-			break;
-		default:
-			fatalx("spf_calc: invalid LSA type");
-		}
+		asext_calc(v);
 	}
 
 	/* spf_dump(area); */
@@ -358,6 +299,75 @@ spf_calc(struct area *area)
 
 	area->num_spf_calc++;
 	start_spf_timer();
+}
+
+void
+asext_calc(struct vertex *v)
+{
+	struct rt_node		*r;
+	u_int32_t		 cost2;
+	struct in_addr		 addr, adv_rtr, a;
+	enum dst_type		 type;
+
+	lsa_age(v);
+	if (ntohs(v->lsa->hdr.age) == MAX_AGE ||
+	    (ntohl(v->lsa->data.asext.metric) & LSA_METRIC_MASK) >=
+	    LS_INFINITY)
+		return;
+
+	switch (v->type) {
+	case LSA_TYPE_EXTERNAL:
+		/* ignore self-originated stuff */
+		if (v->nbr->self)
+			return;
+
+		if ((r = rt_lookup(DT_RTR, htonl(v->adv_rtr))) == NULL)
+			return;
+
+		/* XXX RFC1583Compatibility */
+		if (v->lsa->data.asext.fw_addr != 0 &&
+		    (r = rt_lookup(DT_NET,
+				   v->lsa->data.asext.fw_addr)) == NULL)
+			return;
+
+		if (v->lsa->data.asext.fw_addr != 0 &&
+		    r->p_type != PT_INTRA_AREA &&
+		    r->p_type != PT_INTER_AREA)
+			return;
+
+		if (r->connected) {
+			if (v->lsa->data.asext.fw_addr != 0)
+				v->nexthop.s_addr =
+				    v->lsa->data.asext.fw_addr;
+			else
+				v->nexthop.s_addr = htonl(v->adv_rtr);
+		} else
+			v->nexthop = r->nexthop;
+
+		if (ntohl(v->lsa->data.asext.metric) &
+		    LSA_ASEXT_E_FLAG) {
+			v->cost = r->cost;
+			cost2 = ntohl(v->lsa->data.asext.metric) &
+			    LSA_METRIC_MASK;
+			type = PT_TYPE2_EXT;
+		} else {
+			v->cost = r->cost +
+			    (ntohl(v->lsa->data.asext.metric) &
+			     LSA_METRIC_MASK);
+			cost2 = 0;
+			type = PT_TYPE1_EXT;
+		}
+
+		a.s_addr = 0;
+		adv_rtr.s_addr = htonl(v->adv_rtr);
+		addr.s_addr = htonl(v->ls_id) & v->lsa->data.asext.mask;
+		rt_update(addr, mask2prefixlen(v->lsa->data.asext.mask),
+		    v->nexthop, v->cost, cost2, a, adv_rtr, type,
+		    DT_NET, 0, 0);
+		break;
+	default:
+		fatalx("spf_calc_asext: invalid LSA type");
+	}
 }
 
 void
