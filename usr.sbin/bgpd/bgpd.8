@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.13 2004/07/13 23:01:02 jmc Exp $
+.\" $OpenBSD: bgpd.8,v 1.14 2006/01/24 10:21:14 henning Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -94,6 +94,13 @@ instead of the default
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
+.It Fl r Ar path
+Open a second, restricted control socket that
+.Xr bgpctl 8
+can use.
+Only
+.Em show
+requests are allowed on this socket.
 .It Fl v
 Produce more verbose output.
 .El
