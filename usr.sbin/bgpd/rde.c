@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.196 2006/01/24 13:34:33 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.197 2006/01/24 14:14:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -453,10 +453,11 @@ void
 rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 {
 	struct imsg		 imsg;
+	struct rde_peer		*peer;
 	struct filter_rule	*r;
 	struct filter_set	*s;
 	struct mrt		*xmrt;
-	int			 n;
+	int			 n, reconf_in = 0, reconf_out = 0;
 
 	if ((n = imsg_read(ibuf)) == -1)
 		fatal("rde_dispatch_imsg_parent: imsg_read error");
@@ -529,8 +530,25 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			parent_set = NULL;
 			prefix_network_clean(&peerself, reloadtime);
 
-			if (!rde_filter_equal(rules_l, newrules, DIR_OUT))
+			/* check if filter changed */
+			LIST_FOREACH(peer, &peerlist, peer_l) {
+				peer->reconf_out = 0;
+				peer->reconf_in = 0;
+				if (!rde_filter_equal(rules_l, newrules, peer,
+				    DIR_OUT)) {
+					peer->reconf_out = 1;
+					reconf_out = 1;
+				}
+				if (!rde_filter_equal(rules_l, newrules, peer,
+				    DIR_IN)) {
+					peer->reconf_in = 1;
+					reconf_in = 1;
+				}
+			}
+			/* then sync peers */
+			if (reconf_out)
 				pt_dump(rde_softreconfig_out, NULL, AF_UNSPEC);
+
 			while ((r = TAILQ_FIRST(rules_l)) != NULL) {
 				TAILQ_REMOVE(rules_l, r, entry);
 				filterset_free(&r->set);
@@ -1706,6 +1724,8 @@ rde_softreconfig_out(struct pt_entry *pt, void *ptr)
 
 	pt_getaddr(pt, &addr);
 	LIST_FOREACH(peer, &peerlist, peer_l) {
+		if (peer->reconf_out == 0)
+			continue;
 		if (up_test_update(peer, p) != 1)
 			continue;
 

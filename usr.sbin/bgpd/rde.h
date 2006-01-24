@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.86 2006/01/24 13:34:33 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.87 2006/01/24 14:14:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -69,6 +69,8 @@ struct rde_peer {
 	u_int32_t			 up_nlricnt;
 	u_int32_t			 up_wcnt;
 	enum peer_state			 state;
+	u_int8_t			 reconf_in;	/* in filter changed */
+	u_int8_t			 reconf_out;	/* out filter changed */
 };
 
 #define AS_SET			1
@@ -371,7 +373,7 @@ void		 rde_apply_set(struct rde_aspath *, struct filter_set_head *,
 		     sa_family_t, struct rde_peer *, enum directions);
 int		 rde_filter_community(struct rde_aspath *, int, int);
 int		 rde_filter_equal(struct filter_head *, struct filter_head *,
-		     enum directions);
+		     struct rde_peer *, enum directions);
 
 /* util.c */
 u_int16_t	 aspath_extract(const void *, int);

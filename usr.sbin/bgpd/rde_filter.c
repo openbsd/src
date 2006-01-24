@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.41 2006/01/12 14:05:13 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.42 2006/01/24 14:14:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -284,7 +284,7 @@ rde_filter_community(struct rde_aspath *asp, int as, int type)
 
 int
 rde_filter_equal(struct filter_head *a, struct filter_head *b,
-    enum directions dir)
+    struct rde_peer *peer, enum directions dir)
 {
 	struct filter_rule	*fa, *fb;
 
@@ -298,6 +298,29 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 			continue;
 		}
 		if (fb != NULL && dir != fb->dir) {
+			fb = TAILQ_NEXT(fb, entry);
+			continue;
+		}
+
+		/* skip all rules with wrong peer */
+		if (fa != NULL && fa->peer.groupid != 0 &&
+		    fa->peer.groupid != peer->conf.groupid) {
+			fa = TAILQ_NEXT(fa, entry);
+			continue;
+		}
+		if (fa != NULL && fa->peer.peerid != 0 &&
+		    fa->peer.peerid != peer->conf.id) {
+			fa = TAILQ_NEXT(fa, entry);
+			continue;
+		}
+
+		if (fb != NULL && fb->peer.groupid != 0 &&
+		    fb->peer.groupid != peer->conf.groupid) {
+			fb = TAILQ_NEXT(fb, entry);
+			continue;
+		}
+		if (fb != NULL && fb->peer.peerid != 0 &&
+		    fb->peer.peerid != peer->conf.id) {
 			fb = TAILQ_NEXT(fb, entry);
 			continue;
 		}
