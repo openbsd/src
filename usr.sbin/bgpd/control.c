@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.47 2006/01/24 10:03:44 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.48 2006/01/24 10:04:36 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -29,11 +29,6 @@
 #include "session.h"
 
 #define	CONTROL_BACKLOG	5
-
-struct {
-	int	fd;
-	int	restricted_fd;
-} control_state;
 
 struct ctl_conn	*control_connbyfd(int);
 struct ctl_conn	*control_connbypid(pid_t);
