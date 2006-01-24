@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.46 2006/01/14 22:39:49 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.47 2006/01/24 12:52:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -251,10 +251,8 @@ prefix_evaluate(struct prefix *p, struct pt_entry *pte)
 
 		/*
 		 * Send update with remove for pte->active and add for xp
-		 * but remember that xp may be ineligible or NULL.
-		 * Do not send an update if the only available path
-		 * has an unreachable nexthop. This decision has to be made
-		 * by the called functions.
+		 * but remember that xp may be NULL aka ineligible.
+		 * Additional decision may be made by the called functions.
 		 */
 		rde_generate_updates(xp, pte->active);
 		rde_send_kroute(xp, pte->active);
