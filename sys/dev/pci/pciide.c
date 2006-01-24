@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.220 2006/01/22 17:31:27 kettenis Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.221 2006/01/24 12:25:51 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -755,6 +755,18 @@ const struct pciide_product_desc pciide_nvidia_products[] = {
 	  0,
 	  nforce_chip_map
 	},
+	{ PCI_PRODUCT_NVIDIA_MCP04_IDE,
+	  0,
+	  nforce_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP51_IDE,
+	  0,
+	  nforce_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP55_IDE,
+	  0,
+	  nforce_chip_map
+	},
 	{ PCI_PRODUCT_NVIDIA_NFORCE2_400_SATA,
 	  0,
 	  sata_chip_map
@@ -788,6 +800,14 @@ const struct pciide_product_desc pciide_nvidia_products[] = {
 	  sata_chip_map
 	},
 	{ PCI_PRODUCT_NVIDIA_MCP51_SATA2,
+	  0,
+	  sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP55_SATA,
+	  0,
+	  sata_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP55_SATA2,
 	  0,
 	  sata_chip_map
 	}
@@ -7360,6 +7380,9 @@ nforce_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	case PCI_PRODUCT_NVIDIA_NFORCE3_IDE:
 	case PCI_PRODUCT_NVIDIA_NFORCE3_250_IDE:
 	case PCI_PRODUCT_NVIDIA_NFORCE4_ATA133:
+	case PCI_PRODUCT_NVIDIA_MCP04_IDE:
+	case PCI_PRODUCT_NVIDIA_MCP51_IDE:
+	case PCI_PRODUCT_NVIDIA_MCP55_IDE:
 		sc->sc_wdcdev.UDMA_cap = 6;
 		break;
 	default:
