@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.21 2006/01/23 17:08:45 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.22 2006/01/24 10:29:45 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -253,8 +253,10 @@ rlog_rev_print(struct rcs_delta *rdp)
 
 	rcsnum_tostr(rdp->rd_num, numb, sizeof(numb));
 
-	printf("revision %s\n", numb);
-	printf("date: %d/%02d/%02d %02d:%02d:%02d;"
+	printf("revision %s", numb);
+	if (rdp->rd_locker != NULL)
+		printf("\tlocked by: %s;", rdp->rd_locker);
+	printf("\ndate: %d/%02d/%02d %02d:%02d:%02d;"
 	    "  author: %s;  state: %s;\n",
 	    rdp->rd_date.tm_year + 1900,
 	    rdp->rd_date.tm_mon + 1,
