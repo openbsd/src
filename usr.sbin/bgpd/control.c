@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.46 2006/01/03 22:49:17 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.47 2006/01/24 10:03:44 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,6 +32,7 @@
 
 struct {
 	int	fd;
+	int	restricted_fd;
 } control_state;
 
 struct ctl_conn	*control_connbyfd(int);
@@ -40,11 +41,11 @@ int		 control_close(int);
 void		 control_result(struct ctl_conn *, u_int);
 
 int
-control_init(void)
+control_init(int restricted, char *path)
 {
 	struct sockaddr_un	 sun;
 	int			 fd;
-	mode_t			 old_umask;
+	mode_t			 old_umask, mode;
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
 		log_warn("control_init: socket");
@@ -53,18 +54,25 @@ control_init(void)
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, SOCKET_NAME, sizeof(sun.sun_path));
+	strlcpy(sun.sun_path, path, sizeof(sun.sun_path));
 
-	if (unlink(SOCKET_NAME) == -1)
+	if (unlink(path) == -1)
 		if (errno != ENOENT) {
-			log_warn("unlink %s", SOCKET_NAME);
+			log_warn("unlink %s", path);
 			close(fd);
 			return (-1);
 		}
 
-	old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
+	if (restricted) {
+		old_umask = umask(S_IXUSR|S_IXGRP|S_IXOTH);
+		mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
+	} else {
+		old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
+		mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP;
+	}
+
 	if (bind(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
-		log_warn("control_init: bind: %s", SOCKET_NAME);
+		log_warn("control_init: bind: %s", path);
 		close(fd);
 		umask(old_umask);
 		return (-1);
@@ -72,44 +80,44 @@ control_init(void)
 
 	umask(old_umask);
 
-	if (chmod(SOCKET_NAME, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP) == -1) {
-		log_warn("control_init chmod");
+	if (chmod(path, mode) == -1) {
+		log_warn("control_init: chmod: %s", path);
 		close(fd);
-		(void)unlink(SOCKET_NAME);
+		unlink(path);
 		return (-1);
 	}
 
 	session_socket_blockmode(fd, BM_NONBLOCK);
-	control_state.fd = fd;
 
 	return (fd);
 }
 
 int
-control_listen(void)
+control_listen(int fd)
 {
-	if (listen(control_state.fd, CONTROL_BACKLOG) == -1) {
+	if (fd != -1 && listen(fd, CONTROL_BACKLOG) == -1) {
 		log_warn("control_listen: listen");
 		return (-1);
 	}
 
-	return (control_state.fd);
+	return (0);
 }
 
 void
-control_shutdown(void)
+control_shutdown(int fd)
 {
-	close(control_state.fd);
+	close(fd);
 }
 
 void
-control_cleanup(void)
+control_cleanup(const char *path)
 {
-	unlink(SOCKET_NAME);
+	if (path)
+		unlink(path);
 }
 
 int
-control_accept(int listenfd)
+control_accept(int listenfd, int restricted)
 {
 	int			 connfd;
 	socklen_t		 len;
@@ -132,6 +140,7 @@ control_accept(int listenfd)
 	}
 
 	imsg_init(&ctl_conn->ibuf, connfd);
+	ctl_conn->restricted = restricted;
 
 	TAILQ_INSERT_TAIL(&ctl_conns, ctl_conn, entry);
 
@@ -218,7 +227,29 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 		if (n == 0)
 			break;
 
+		if (c->restricted) {
+			switch (imsg.hdr.type) {
+			case IMSG_CTL_SHOW_NEIGHBOR:
+			case IMSG_CTL_SHOW_NEXTHOP:
+			case IMSG_CTL_SHOW_INTERFACE:
+			case IMSG_CTL_SHOW_RIB:
+			case IMSG_CTL_SHOW_RIB_AS:
+			case IMSG_CTL_SHOW_RIB_PREFIX:
+			case IMSG_CTL_SHOW_RIB_MEM:
+			case IMSG_CTL_SHOW_NETWORK:
+				break;
+			default:
+				/* clear imsg type to prevent processing */
+				imsg.hdr.type = IMSG_NONE;
+				control_result(c, CTL_RES_DENIED);
+				break;
+			}
+		}
+
 		switch (imsg.hdr.type) {
+		case IMSG_NONE:
+			/* message was filtered out, nothing to do */
+			break;
 		case IMSG_CTL_SHOW_NEIGHBOR:
 			c->ibuf.pid = imsg.hdr.pid;
 			if (imsg.hdr.len == IMSG_HEADER_SIZE +

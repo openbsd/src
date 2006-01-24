@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.80 2006/01/03 22:19:59 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.81 2006/01/24 10:03:44 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -128,6 +128,7 @@ struct bgpd_sysdep {
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	entry;
 	struct imsgbuf		ibuf;
+	int			restricted;
 };
 
 TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns;
@@ -214,10 +215,11 @@ pid_t	 rde_main(struct bgpd_config *, struct peer *, struct network_head *,
 	    struct filter_head *, struct mrt_head *, int[2], int[2], int[2]);
 
 /* control.c */
-int	control_listen(void);
-void	control_shutdown(void);
+int	control_init(int, char *);
+int	control_listen(int);
+void	control_shutdown(int);
 int	control_dispatch_msg(struct pollfd *, u_int *);
-int	control_accept(int);
+int	control_accept(int, int);
 
 /* pfkey.c */
 int	pfkey_establish(struct peer *);

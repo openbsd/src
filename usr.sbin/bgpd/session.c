@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.241 2006/01/03 22:49:17 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.242 2006/01/24 10:03:44 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -46,7 +46,8 @@
 #define PFD_PIPE_MAIN		0
 #define PFD_PIPE_ROUTE		1
 #define	PFD_SOCK_CTL		2
-#define PFD_LISTENERS_START	3
+#define	PFD_SOCK_RCTL		3
+#define PFD_LISTENERS_START	4
 
 void	session_sighdlr(int);
 int	setup_listeners(u_int *);
@@ -91,7 +92,7 @@ struct bgpd_sysdep	 sysdep;
 struct peer		*npeers;
 volatile sig_atomic_t	 session_quit = 0;
 int			 pending_reconf = 0;
-int			 csock = -1;
+int			 csock = -1, rcsock = -1;
 u_int			 peer_cnt;
 struct imsgbuf		*ibuf_rde;
 struct imsgbuf		*ibuf_main;
@@ -193,7 +194,10 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	}
 
 	/* control socket is outside chroot */
-	if ((csock = control_init()) == -1)
+	if ((csock = control_init(0, SOCKET_NAME)) == -1)
+		fatalx("control socket setup failed");
+	if (conf->rcsock != NULL &&
+	    (rcsock = control_init(1, conf->rcsock)) == -1)
 		fatalx("control socket setup failed");
 
 	if ((pw = getpwnam(BGPD_USER)) == NULL)
@@ -233,7 +237,8 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	imsg_init(ibuf_rde, pipe_s2r[0]);
 	imsg_init(ibuf_main, pipe_m2s[1]);
 	TAILQ_INIT(&ctl_conns);
-	csock = control_listen();
+	control_listen(csock);
+	control_listen(rcsock);
 	LIST_INIT(&mrthead);
 	peer_cnt = 0;
 	ctl_cnt = 0;
@@ -351,6 +356,8 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 			pfd[PFD_PIPE_ROUTE].events |= POLLOUT;
 		pfd[PFD_SOCK_CTL].fd = csock;
 		pfd[PFD_SOCK_CTL].events = POLLIN;
+		pfd[PFD_SOCK_RCTL].fd = rcsock;
+		pfd[PFD_SOCK_RCTL].events = POLLIN;
 
 		nextaction = time(NULL) + 240;	/* loop every 240s at least */
 		i = PFD_LISTENERS_START;
@@ -463,7 +470,12 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 
 		if (nfds > 0 && pfd[PFD_SOCK_CTL].revents & POLLIN) {
 			nfds--;
-			ctl_cnt += control_accept(csock);
+			ctl_cnt += control_accept(csock, 0);
+		}
+
+		if (nfds > 0 && pfd[PFD_SOCK_RCTL].revents & POLLIN) {
+			nfds--;
+			ctl_cnt += control_accept(rcsock, 1);
 		}
 
 		for (j = PFD_LISTENERS_START; nfds > 0 && j < idx_listeners;
@@ -516,7 +528,8 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	msgbuf_clear(&ibuf_main->w);
 	free(ibuf_main);
 
-	control_shutdown();
+	control_shutdown(csock);
+	control_shutdown(rcsock);
 	log_info("session engine exiting");
 	_exit(0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.46 2005/07/14 09:24:38 dlg Exp $ */
+/*	$OpenBSD: config.c,v 1.47 2006/01/24 10:03:44 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -47,6 +47,7 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 
 	/* preserve cmd line opts */
 	conf->opts = xconf->opts;
+	conf->rcsock = xconf->rcsock;
 
 	if (!conf->as) {
 		log_warnx("configuration error: AS not given");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.129 2006/01/03 16:49:23 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.130 2006/01/24 10:03:44 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -86,7 +86,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr, "usage: %s [-dnv] ", __progname);
-	fprintf(stderr, "[-D macro=value] [-f file]\n");
+	fprintf(stderr, "[-D macro=value] [-f file] [-r path]\n");
 	exit(1);
 }
 
@@ -131,7 +131,7 @@ main(int argc, char *argv[])
 	TAILQ_INIT(rules_l);
 	peer_l = NULL;
 
-	while ((ch = getopt(argc, argv, "dD:f:nv")) != -1) {
+	while ((ch = getopt(argc, argv, "dD:f:nr:v")) != -1) {
 		switch (ch) {
 		case 'd':
 			debug = 1;
@@ -151,6 +151,9 @@ main(int argc, char *argv[])
 			if (conf.opts & BGPD_OPT_VERBOSE)
 				conf.opts |= BGPD_OPT_VERBOSE2;
 			conf.opts |= BGPD_OPT_VERBOSE;
+			break;
+		case 'r':
+			conf.rcsock = optarg;
 			break;
 		default:
 			usage();
@@ -352,7 +355,8 @@ main(int argc, char *argv[])
 	}
 
 	free(rules_l);
-	control_cleanup();
+	control_cleanup(SOCKET_NAME);
+	control_cleanup(conf.rcsock);
 	kr_shutdown();
 	pftable_clear_all();
 	free(conf.listen_addrs);
