@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.131 2006/01/24 10:05:24 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.132 2006/01/24 14:26:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -278,6 +278,33 @@ main(int argc, char *argv[])
 				quit = 1;
 			}
 
+		if (nfds > 0 && pfd[PFD_PIPE_SESSION].revents & POLLOUT)
+			if (msgbuf_write(&ibuf_se->w) < 0) {
+				log_warn("pipe write error (to SE)");
+				quit = 1;
+			}
+
+		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLOUT)
+			if (msgbuf_write(&ibuf_rde->w) < 0) {
+				log_warn("pipe write error (to RDE)");
+				quit = 1;
+			}
+
+		if (nfds > 0 && pfd[PFD_PIPE_SESSION].revents & POLLIN) {
+			if (dispatch_imsg(ibuf_se, PFD_PIPE_SESSION) == -1)
+				quit = 1;
+		}
+
+		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
+			if (dispatch_imsg(ibuf_rde, PFD_PIPE_ROUTE) == -1)
+				quit = 1;
+		}
+
+		if (nfds > 0 && pfd[PFD_SOCK_ROUTE].revents & POLLIN) {
+			if (kr_dispatch_msg() == -1)
+				quit = 1;
+		}
+
 		if (reconfig) {
 			reconfig = 0;
 			log_info("rereading config");
@@ -296,39 +323,9 @@ main(int argc, char *argv[])
 			}
 		}
 
-		if (mrtdump == 1) {
+		if (mrtdump) {
 			mrtdump = 0;
 			mrt_handler(&mrt_l);
-		}
-
-		if (nfds == -1 || nfds == 0)
-			continue;
-
-		if (pfd[PFD_PIPE_SESSION].revents & POLLOUT)
-			if (msgbuf_write(&ibuf_se->w) < 0) {
-				log_warn("pipe write error (to SE)");
-				quit = 1;
-			}
-
-		if (pfd[PFD_PIPE_ROUTE].revents & POLLOUT)
-			if (msgbuf_write(&ibuf_rde->w) < 0) {
-				log_warn("pipe write error (to RDE)");
-				quit = 1;
-			}
-
-		if (pfd[PFD_PIPE_SESSION].revents & POLLIN) {
-			if (dispatch_imsg(ibuf_se, PFD_PIPE_SESSION) == -1)
-				quit = 1;
-		}
-
-		if (pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
-			if (dispatch_imsg(ibuf_rde, PFD_PIPE_ROUTE) == -1)
-				quit = 1;
-		}
-
-		if (pfd[PFD_SOCK_ROUTE].revents & POLLIN) {
-			if (kr_dispatch_msg() == -1)
-				quit = 1;
 		}
 	}
 
