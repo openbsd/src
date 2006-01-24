@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.15 2006/01/24 15:06:29 claudio Exp $
+.\" $OpenBSD: bgpd.8,v 1.16 2006/01/24 17:55:09 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -28,6 +28,7 @@
 .Fl D Ar macro Ns = Ns Ar value Oc
 .Xc
 .Op Fl f Ar file
+.Op Fl r Ar path
 .Ek
 .Sh DESCRIPTION
 .Nm
@@ -95,7 +96,7 @@ instead of the default
 Configtest mode.
 Only check the configuration file for validity.
 .It Fl r Ar path
-Open a second, restricted control socket that
+Open a second, restricted, control socket that
 .Xr bgpctl 8
 can use.
 Only
