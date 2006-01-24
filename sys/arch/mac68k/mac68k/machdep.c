@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.129 2006/01/22 15:24:29 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.130 2006/01/24 06:50:13 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -94,7 +94,6 @@
 #include <sys/mount.h>
 #include <sys/extent.h>
 #include <sys/syscallargs.h>
-#include <sys/extent.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -112,7 +111,6 @@
 #include <machine/kcore.h>
 #include <machine/bus.h>
 #include <machine/pmap.h>
-#include <net/netisr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1084,7 +1082,6 @@ getenvvars(flag, buf)
 	 * More misc stuff from booter.
 	 */
 	mac68k_machine.machineid = getenv("MACHINEID");
-	mac68k_machine.mach_processor = getenv("PROCESSOR");
 	mac68k_machine.mach_memsize = getenv("MEMSIZE");
 	mac68k_machine.do_graybars = getenv("GRAYBARS");
 	mac68k_machine.serial_boot_echo = getenv("SERIALECHO");
@@ -1560,7 +1557,6 @@ setmachdep()
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
-		mac68k_machine.zs_chip = 0;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
 		break;
@@ -1569,7 +1565,6 @@ setmachdep()
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
-		mac68k_machine.zs_chip = 0;
 		/* Disable everything but PM; we need it. */
 		via_reg(VIA1, vIER) = 0x6f;	/* disable VIA1 int */
 		/* Are we disabling something important? */
@@ -1587,7 +1582,6 @@ setmachdep()
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
-		mac68k_machine.zs_chip = 0;
 		/* Disable everything but PM; we need it. */
 		via_reg(VIA1, vIER) = 0x6f;	/* disable VIA1 int */
 		/* Are we disabling something important? */
@@ -1600,7 +1594,6 @@ setmachdep()
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.sonic = 1;
 		mac68k_machine.scsi96 = 1;
-		mac68k_machine.zs_chip = 0;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
 
@@ -1618,7 +1611,6 @@ setmachdep()
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi96 = 1;
-		mac68k_machine.zs_chip = 0;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
 		break;
@@ -1627,7 +1619,6 @@ setmachdep()
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
-		mac68k_machine.zs_chip = 0;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;
@@ -1636,7 +1627,6 @@ setmachdep()
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
-		mac68k_machine.zs_chip = 0;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;
@@ -1645,7 +1635,6 @@ setmachdep()
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
-		mac68k_machine.zs_chip = 0;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;
@@ -1654,7 +1643,6 @@ setmachdep()
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
-		mac68k_machine.zs_chip = 0;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;
@@ -1663,7 +1651,6 @@ setmachdep()
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
-		mac68k_machine.zs_chip = 0;
 		via_reg(VIA1, vIER) = 0x7f;  /* disable VIA1 int */
 		break;
 	default:

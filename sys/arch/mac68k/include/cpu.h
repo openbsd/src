@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.36 2006/01/13 19:36:44 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.37 2006/01/24 06:50:11 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -217,7 +217,6 @@ struct mac68k_machine_S {
 	 * Misc. info from booter.
 	 */
 	int			machineid;
-	int			mach_processor;
 	int			mach_memsize;
 	int			booter_version;
 	/*
@@ -227,8 +226,6 @@ struct mac68k_machine_S {
 	int			serial_boot_echo;
 	int			serial_console;
 
-	int			zs_chip;	/* what type of chip we've got */
-	int			sccClkConst;	/* Compatibility information */
 	int			modem_flags;
 	int			modem_cts_clk;
 	int			modem_dcd_clk;
