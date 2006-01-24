@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.98 2006/01/05 16:01:09 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.99 2006/01/24 10:01:14 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -285,6 +285,13 @@ main(int argc, char *argv[])
 				errx(1, "imsg_get error");
 			if (n == 0)
 				break;
+
+			if (imsg.hdr.type == IMSG_CTL_RESULT) {
+				done = show_result(&imsg);
+				imsg_free(&imsg);
+				continue;
+			}
+
 			switch (res->action) {
 			case SHOW:
 			case SHOW_SUMMARY:
@@ -318,8 +325,6 @@ main(int argc, char *argv[])
 			case NEIGHBOR_UP:
 			case NEIGHBOR_DOWN:
 			case NEIGHBOR_CLEAR:
-				done = show_result(&imsg);
-				break;
 			case NONE:
 			case RELOAD:
 			case FIB:
