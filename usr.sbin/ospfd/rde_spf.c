@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.40 2006/01/24 20:06:03 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.41 2006/01/24 20:27:04 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -365,7 +365,7 @@ asext_calc(struct vertex *v)
 		    DT_NET, 0, 0);
 		break;
 	default:
-		fatalx("spf_calc_asext: invalid LSA type");
+		fatalx("asext_calc: invalid LSA type");
 	}
 }
 
