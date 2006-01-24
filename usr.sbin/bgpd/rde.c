@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.197 2006/01/24 14:14:04 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.198 2006/01/24 14:48:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -64,6 +64,7 @@ void		 rde_dump_as(struct filter_as *, pid_t);
 void		 rde_dump_prefix_upcall(struct pt_entry *, void *);
 void		 rde_dump_prefix(struct ctl_show_rib_prefix *, pid_t);
 void		 rde_softreconfig_out(struct pt_entry *, void *);
+void		 rde_softreconfig_in(struct pt_entry *, void *);
 void		 rde_up_dump_upcall(struct pt_entry *, void *);
 void		 rde_update_queue_runner(void);
 void		 rde_update6_queue_runner(void);
@@ -545,6 +546,9 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 					reconf_in = 1;
 				}
 			}
+			/* sync local-RIB first */
+			if (reconf_in)
+				pt_dump(rde_softreconfig_in, NULL, AF_UNSPEC);
 			/* then sync peers */
 			if (reconf_out)
 				pt_dump(rde_softreconfig_out, NULL, AF_UNSPEC);
@@ -1706,10 +1710,8 @@ rde_send_nexthop(struct bgpd_addr *next, int valid)
 }
 
 /*
- * update specific functions
+ * soft reconfig specific functions
  */
-u_char	queue_buf[4096];
-
 void
 rde_softreconfig_out(struct pt_entry *pt, void *ptr)
 {
@@ -1763,6 +1765,69 @@ done:
 			path_put(nasp);
 	}
 }
+
+void
+rde_softreconfig_in(struct pt_entry *pt, void *ptr)
+{
+	struct prefix		*p, *np;
+	struct rde_peer		*peer;
+	struct rde_aspath	*asp, *oasp, *nasp;
+	enum filter_actions	 oa, na;
+	struct bgpd_addr	 addr;
+
+	pt_getaddr(pt, &addr);
+	for(p = LIST_FIRST(&pt->prefix_h); p != NULL; p = np) {
+		np = LIST_NEXT(p, prefix_l);
+		if (!(p->flags & F_ORIGINAL))
+			continue;
+
+		/* store aspath as prefix may change till we're done */
+		asp = p->aspath;
+		peer = asp->peer;
+
+		if (peer->reconf_in == 0)
+			continue;
+
+		/* check if prefix changed */
+		oa = rde_filter(&oasp, rules_l, peer, asp, &addr,
+		    pt->prefixlen, peer, DIR_IN);
+		na = rde_filter(&nasp, newrules, peer, asp, &addr,
+		    pt->prefixlen, peer, DIR_IN);
+		oasp = oasp != NULL ? oasp : asp;
+		nasp = nasp != NULL ? nasp : asp;
+
+		if (oa == ACTION_DENY && na == ACTION_DENY)
+			/* nothing todo */
+			goto done;
+		if (oa == ACTION_DENY && na == ACTION_ALLOW) {
+			/* update Local-RIB */
+			path_update(peer, nasp, &addr, pt->prefixlen, F_LOCAL);
+			goto done;
+		}
+		if (oa == ACTION_ALLOW && na == ACTION_DENY) {
+			/* remove from Local-RIB */
+			prefix_remove(peer, &addr, pt->prefixlen, F_LOCAL);
+			goto done;
+		}
+		if (oa == ACTION_ALLOW && na == ACTION_ALLOW) {
+			if (path_compare(nasp, oasp) == 0)
+				goto done;
+			/* send update */
+			path_update(peer, nasp, &addr, pt->prefixlen, F_LOCAL);
+		}
+
+done:
+		if (oasp != asp)
+			path_put(oasp);
+		if (nasp != asp)
+			path_put(nasp);
+	}
+}
+
+/*
+ * update specific functions
+ */
+u_char	queue_buf[4096];
 
 void
 rde_up_dump_upcall(struct pt_entry *pt, void *ptr)
