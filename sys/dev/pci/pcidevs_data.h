@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1007 2006/01/21 23:55:48 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1008 2006/01/24 12:14:21 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6907,6 +6907,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Vanta",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_IDE,
+	    "MCP04 IDE",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_SATA,
 	    "MCP04 SATA",
 	},
@@ -7431,6 +7435,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Quadro DCC",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE6100,
+	    "GeForce 6100",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4TI4600,
 	    "GeForce4 Ti 4600",
 	},
@@ -7455,6 +7463,18 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Quadro4 700 XGL",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_ISA,
+	    "MCP51 ISA",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_SMB,
+	    "MCP51 SMBus",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_IDE,
+	    "MCP51 IDE",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_SATA,
 	    "MCP51 SATA",
 	},
@@ -7464,15 +7484,107 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_LAN1,
-	    "MPC51 LAN",
+	    "MCP51 LAN",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_LAN2,
-	    "MPC51 LAN",
+	    "MCP51 LAN",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_HDA,
+	    "MCP51 HD Audio",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_OHCI,
+	    "MCP51 USB",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_EHCI,
+	    "MCP51 USB",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_PPB,
+	    "MCP51 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_HB,
+	    "MCP51 Host",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_MEM,
+	    "MCP51 Memory",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MEM_2,
+	    "C51 Memory",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MEM_3,
+	    "C51 Memory",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4TI4200GO,
 	    "GeForce4 Ti 4200 Go",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_1,
+	    "C51 Host",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_2,
+	    "C51 Host",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_3,
+	    "C51 Host",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_4,
+	    "C51 Host",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_5,
+	    "C51 Host",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_6,
+	    "C51 Host",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_7,
+	    "C51 Host",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_8,
+	    "C51 Host",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MEM_5,
+	    "C51 Memory",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MEM_4,
+	    "C51 Memory",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MEM_0,
+	    "C51 Memory",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_PCIE_0,
+	    "C51 PCIE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_PCIE_1,
+	    "C51 PCIE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_PCIE_2,
+	    "C51 PCIE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MEM_1,
+	    "C51 Memory",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCEFX5800_U,
@@ -7563,12 +7675,32 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce FX Go 5700",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SMB,
+	    "MCP55 SMBus",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_IDE,
+	    "MCP55 IDE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_HDA,
+	    "HD Audio",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_LAN1,
-	    "MPC55 LAN",
+	    "MCP55 LAN",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_LAN2,
-	    "MPC55 LAN",
+	    "MCP55 LAN",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SATA,
+	    "MCP55 SATA",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SATA2,
+	    "MCP55 SATA",
 	},
 	{
 	    PCI_VENDOR_OAKTECH, PCI_PRODUCT_OAKTECH_OTI1007,
