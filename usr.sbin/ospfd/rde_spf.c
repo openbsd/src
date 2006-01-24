@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.39 2006/01/24 18:31:32 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.40 2006/01/24 20:06:03 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -326,8 +326,7 @@ asext_calc(struct vertex *v)
 
 		/* XXX RFC1583Compatibility */
 		if (v->lsa->data.asext.fw_addr != 0 &&
-		    (r = rt_lookup(DT_NET,
-				   v->lsa->data.asext.fw_addr)) == NULL)
+		    (r = rt_lookup(DT_NET, v->lsa->data.asext.fw_addr)) == NULL)
 			return;
 
 		if (v->lsa->data.asext.fw_addr != 0 &&
