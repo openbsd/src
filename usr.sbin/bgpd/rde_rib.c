@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.81 2006/01/24 10:05:24 henning Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.82 2006/01/24 13:00:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -520,6 +520,22 @@ prefix_remove(struct rde_peer *peer, struct bgpd_addr *prefix, int prefixlen,
 		/* only prefixes in the local RIB were pushed into pf */
 		rde_send_pftable(asp->pftableid, prefix, prefixlen, 1);
 		rde_send_pftable_commit();
+	}
+
+	/* if prefix belongs to more than one RIB just remove one instance */
+	if (p->flags != flags) {
+		p->flags &= ~flags;
+
+		PREFIX_COUNT(p->aspath, flags, -1);
+		PREFIX_COUNT(peer, flags, -1);
+
+		/* redo the route decision for p */
+		LIST_REMOVE(p, prefix_l);
+		/* If the prefix is the active one remove it first. */
+		if (p == p->prefix->active)
+			prefix_evaluate(NULL, p->prefix);
+		prefix_evaluate(p, p->prefix);
+		return;
 	}
 
 	prefix_unlink(p);
