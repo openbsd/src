@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.195 2006/01/20 16:40:17 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.196 2006/01/24 13:34:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -831,6 +831,9 @@ rde_update_dispatch(struct imsg *imsg)
 			return (-1);
 		}
 
+		/* add original path to the Adj-RIB-In */
+		path_update(peer, asp, &prefix, prefixlen, F_ORIGINAL);
+
 		/* input filter */
 		if (rde_filter(&fasp, rules_l, peer, asp, &prefix, prefixlen,
 		    peer, DIR_IN) == ACTION_DENY) {
@@ -854,7 +857,7 @@ rde_update_dispatch(struct imsg *imsg)
 
 		rde_update_log("update", peer, &fasp->nexthop->exit_nexthop,
 		    &prefix, prefixlen);
-		path_update(peer, fasp, &prefix, prefixlen);
+		path_update(peer, fasp, &prefix, prefixlen, F_LOCAL);
 
 		/* free modified aspath */
 		if (fasp != asp)
@@ -918,6 +921,10 @@ rde_update_dispatch(struct imsg *imsg)
 				mpp += pos;
 				mplen -= pos;
 
+				/* add original path to the Adj-RIB-In */
+				path_update(peer, asp, &prefix, prefixlen,
+				    F_ORIGINAL);
+
 				/* input filter */
 				if (rde_filter(&fasp, rules_l, peer, asp,
 				    &prefix, prefixlen, peer, DIR_IN) ==
@@ -944,7 +951,8 @@ rde_update_dispatch(struct imsg *imsg)
 				rde_update_log("update", peer,
 				    &asp->nexthop->exit_nexthop,
 				    &prefix, prefixlen);
-				path_update(peer, fasp, &prefix, prefixlen);
+				path_update(peer, fasp, &prefix, prefixlen,
+				    F_LOCAL);
 
 				/* free modified aspath */
 				if (fasp != asp)
@@ -2160,7 +2168,8 @@ network_init(struct network_head *net_l)
 void
 network_add(struct network_config *nc, int flagstatic)
 {
-	struct rde_aspath	 *asp;
+	struct rde_aspath	*asp;
+	struct rde_peer		*p;
 
 	asp = path_get();
 	asp->aspath = aspath_get(NULL, 0);
@@ -2169,15 +2178,14 @@ network_add(struct network_config *nc, int flagstatic)
 	    F_ATTR_LOCALPREF | F_PREFIX_ANNOUNCED;
 	/* the nexthop is unset unless a default set overrides it */
 
-	if (flagstatic) {
-		rde_apply_set(asp, &nc->attrset, nc->prefix.af, &peerself,
-		    DIR_IN);
-		path_update(&peerself, asp, &nc->prefix, nc->prefixlen);
-	} else {
-		rde_apply_set(asp, &nc->attrset, nc->prefix.af, &peerdynamic,
-		    DIR_IN);
-		path_update(&peerdynamic, asp, &nc->prefix, nc->prefixlen);
-	}
+	if (flagstatic)
+		p = &peerself;
+	else
+		p = &peerdynamic;
+
+	rde_apply_set(asp, &nc->attrset, nc->prefix.af, p, DIR_IN);
+	path_update(p, asp, &nc->prefix, nc->prefixlen, F_ORIGINAL);
+	path_update(p, asp, &nc->prefix, nc->prefixlen, F_LOCAL);
 
 	path_put(asp);
 	filterset_free(&nc->attrset);

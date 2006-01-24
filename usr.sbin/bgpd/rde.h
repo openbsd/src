@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.85 2006/01/20 16:40:17 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.86 2006/01/24 13:34:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -294,7 +294,7 @@ int		 community_set(struct rde_aspath *, int, int);
 void		 path_init(u_int32_t);
 void		 path_shutdown(void);
 void		 path_update(struct rde_peer *, struct rde_aspath *,
-		     struct bgpd_addr *, int);
+		     struct bgpd_addr *, int, u_int32_t);
 int		 path_compare(struct rde_aspath *, struct rde_aspath *);
 struct rde_aspath *path_lookup(struct rde_aspath *, struct rde_peer *);
 void		 path_remove(struct rde_aspath *);

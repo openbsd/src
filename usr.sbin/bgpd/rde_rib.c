@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.82 2006/01/24 13:00:35 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.83 2006/01/24 13:34:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -85,21 +85,60 @@ path_shutdown(void)
 
 void
 path_update(struct rde_peer *peer, struct rde_aspath *nasp,
-    struct bgpd_addr *prefix, int prefixlen)
+    struct bgpd_addr *prefix, int prefixlen, u_int32_t flags)
 {
 	struct rde_aspath	*asp;
-	struct prefix		*p;
+	struct prefix		*p, *oldp = NULL;
 
-	rde_send_pftable(nasp->pftableid, prefix, prefixlen, 0);
-	rde_send_pftable_commit();
-
-	if ((p = prefix_get(peer, prefix, prefixlen, F_LOCAL)) != NULL) {
-		if (path_compare(nasp, p->aspath) == 0) {
-			/* update last change */
-			p->lastchange = time(NULL);
-			return;
-		}
+	
+	if (flags & F_LOCAL) {
+		rde_send_pftable(nasp->pftableid, prefix, prefixlen, 0);
+		rde_send_pftable_commit();
 	}
+
+	/*
+	 * First try to find a prefix in the specified RIB or in the
+	 * Adj-RIB-In. This works because Local-RIB has precedence over the
+	 * Adj-RIB-In. In the end this saves use some additional lookups.
+	 */
+	if ((p = prefix_get(peer, prefix, prefixlen, flags | F_ORIGINAL)) !=
+	    NULL) {
+		do {
+			if (path_compare(nasp, p->aspath) == 0) {
+				if ((p->flags & flags) == 0) {
+					if (oldp != NULL) {
+						asp = oldp->aspath;
+						prefix_destroy(oldp);
+						if (path_empty(asp))
+							path_destroy(asp);
+					}
+					p->flags |= flags;
+					PREFIX_COUNT(p->aspath, flags, 1);
+					PREFIX_COUNT(peer, flags, 1);
+
+					/* re-evaluate prefix */
+					LIST_REMOVE(p, prefix_l);
+					prefix_evaluate(p, p->prefix);
+				}
+				/* update last change */
+				p->lastchange = time(NULL);
+				return;
+			}
+			/*
+			 * If the prefix is not already part of the Adj-RIB-In
+			 * do a lookup in there. But keep the original prefix
+			 * around so that it can be removed later.
+			 */
+			if (p->flags & F_ORIGINAL)
+				break;
+			oldp = p;
+			p = prefix_get(peer, prefix, prefixlen, F_ORIGINAL);
+		} while (p != NULL);
+	}
+
+	/* Do not try to move a prefix that is in the wrong RIB. */
+	if (p != NULL && (p->flags & flags) == 0)
+		p = oldp;
 
 	/*
 	 * Either the prefix does not exist or the path changed.
@@ -107,16 +146,16 @@ path_update(struct rde_peer *peer, struct rde_aspath *nasp,
 	 * already in the RIB.
 	 */
 	if ((asp = path_lookup(nasp, peer)) == NULL) {
-		/* path not available, create and link new one */
+		/* Path not available, create and link a new one. */
 		asp = path_copy(nasp);
 		path_link(asp, peer);
 	}
 
-	/* if the prefix was found move it else add it to the aspath */
+	/* If the prefix was found move it else add it to the aspath. */
 	if (p != NULL)
-		prefix_move(asp, p, F_LOCAL);
+		prefix_move(asp, p, flags);
 	else
-		prefix_add(asp, prefix, prefixlen, F_LOCAL);
+		prefix_add(asp, prefix, prefixlen, flags);
 }
 
 int
@@ -614,7 +653,7 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state)
 	}
 }
 
-/* kill a prefix. Only called by path_remove. */
+/* kill a prefix. Only called by path_remove and path_update. */
 void
 prefix_destroy(struct prefix *p)
 {
