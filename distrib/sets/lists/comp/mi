@@ -228,7 +228,6 @@
 ./usr/include/dev/ic/dp857xreg.h
 ./usr/include/dev/ic/dptreg.h
 ./usr/include/dev/ic/dptvar.h
-./usr/include/dev/ic/ds.h
 ./usr/include/dev/ic/elink3reg.h
 ./usr/include/dev/ic/elink3var.h
 ./usr/include/dev/ic/espreg.h
@@ -3207,6 +3206,7 @@
 ./usr/share/man/cat3/evbuffer_add.0
 ./usr/share/man/cat3/evbuffer_add_buffer.0
 ./usr/share/man/cat3/evbuffer_add_printf.0
+./usr/share/man/cat3/evbuffer_add_vprintf.0
 ./usr/share/man/cat3/evbuffer_drain.0
 ./usr/share/man/cat3/evbuffer_find.0
 ./usr/share/man/cat3/evbuffer_free.0
@@ -3216,8 +3216,10 @@
 ./usr/share/man/cat3/evbuffer_write.0
 ./usr/share/man/cat3/event.0
 ./usr/share/man/cat3/event_add.0
+./usr/share/man/cat3/event_base_dispatch.0
 ./usr/share/man/cat3/event_base_loop.0
 ./usr/share/man/cat3/event_base_loopexit.0
+./usr/share/man/cat3/event_base_set.0
 ./usr/share/man/cat3/event_del.0
 ./usr/share/man/cat3/event_dispatch.0
 ./usr/share/man/cat3/event_init.0
@@ -3227,6 +3229,7 @@
 ./usr/share/man/cat3/event_once.0
 ./usr/share/man/cat3/event_pending.0
 ./usr/share/man/cat3/event_priority_init.0
+./usr/share/man/cat3/event_priority_set.0
 ./usr/share/man/cat3/event_set.0
 ./usr/share/man/cat3/evtimer_add.0
 ./usr/share/man/cat3/evtimer_del.0
@@ -3587,7 +3590,6 @@
 ./usr/share/man/cat3/idlok.0
 ./usr/share/man/cat3/ieee.0
 ./usr/share/man/cat3/ieeef.0
-./usr/share/man/cat3/ievent_priority_set.0
 ./usr/share/man/cat3/if_freenameindex.0
 ./usr/share/man/cat3/if_indextoname.0
 ./usr/share/man/cat3/if_nameindex.0

@@ -74,7 +74,7 @@
 ./usr/lib/libcurses.so.10.0
 ./usr/lib/libdes.so.9.0
 ./usr/lib/libedit.so.3.0
-./usr/lib/libevent.so.1.0
+./usr/lib/libevent.so.1.1
 ./usr/lib/libform.so.3.0
 ./usr/lib/libg2c.so.8.1
 ./usr/lib/libgssapi.so.4.0
@@ -912,7 +912,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/dp857xreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/dptreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/dptvar.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ds.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/elink3reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/elink3var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/espreg.ph
