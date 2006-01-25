@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.76 2006/01/02 17:06:10 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.77 2006/01/25 11:13:18 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -535,7 +535,6 @@ cvs_diff_remote(struct cvs_file *cfp, void *arg)
 static int
 cvs_diff_local(CVSFILE *cf, void *arg)
 {
-	int len;
 	char *repo, buf[64];
 	char fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	char path_tmp1[MAXPATHLEN], path_tmp2[MAXPATHLEN];
@@ -571,13 +570,7 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 		return (0);
 
 	/* at this point, the file is modified */
-	len = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
-	    root->cr_dir, repo, diff_file, RCS_FILE_EXT);
-	if (len == -1 || len >= (int)sizeof(rcspath)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", rcspath);
-		return (CVS_EX_DATA);
-	}
+	cvs_rcs_getpath(cf, rcspath, sizeof(rcspath));
 
 	rf = rcs_open(rcspath, RCS_READ);
 	if (rf == NULL) {
