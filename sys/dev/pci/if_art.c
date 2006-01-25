@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_art.c,v 1.11 2005/12/20 15:27:48 claudio Exp $ */
+/*	$OpenBSD: if_art.c,v 1.12 2006/01/25 14:45:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -48,7 +48,7 @@ void	art_ifm_status(struct ifnet *, struct ifmediareq *);
 int	art_ifm_options(struct ifnet *, struct channel_softc *, u_int);
 void	art_onesec(void *);
 void	art_linkstate(void *);
-u_int	art_mask_tsmap(u_int, u_int32_t);
+u_int32_t art_mask_tsmap(u_int, u_int32_t);
 
 struct cfattach art_ca = {
 	sizeof(struct art_softc), art_match, art_softc_attach
@@ -354,7 +354,7 @@ art_onesec(void *arg)
 		break;
 	case 0:
 		link_state = LINK_STATE_DOWN;
-		/* set green led and red let as well */
+		/* set green led and red led as well */
 		ebus_set_led(ac->art_channel, 1,
 		    MUSYCC_LED_GREEN | MUSYCC_LED_RED);
 		break;
@@ -399,7 +399,7 @@ art_linkstate(void *arg)
 		ebus_set_led(ac->art_channel, 1, MUSYCC_LED_RED);
 }
 
-u_int
+u_int32_t
 art_mask_tsmap(u_int mode, u_int32_t tsmap)
 {
 	switch (mode) {
