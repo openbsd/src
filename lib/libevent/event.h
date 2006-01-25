@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.13 2006/01/23 20:18:20 brad Exp $	*/
+/*	$OpenBSD: event.h,v 1.14 2006/01/25 05:25:34 brad Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -268,7 +268,7 @@ int evbuffer_add_vprintf(struct evbuffer *, const char *fmt, va_list ap);
 void evbuffer_drain(struct evbuffer *, size_t);
 int evbuffer_write(struct evbuffer *, int);
 int evbuffer_read(struct evbuffer *, int, int);
-u_char *evbuffer_find(struct evbuffer *, u_char *, size_t);
+u_char *evbuffer_find(struct evbuffer *, const u_char *, size_t);
 void evbuffer_setcb(struct evbuffer *, void (*)(struct evbuffer *, size_t, size_t, void *), void *);
 
 #ifdef __cplusplus

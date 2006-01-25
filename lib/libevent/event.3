@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.23 2006/01/23 20:18:20 brad Exp $
+.\"	$OpenBSD: event.3,v 1.24 2006/01/25 05:25:34 brad Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -163,7 +163,7 @@
 .Ft int
 .Fn "evbuffer_read" "struct evbuffer *buf" "int fd" "int size"
 .Ft "u_char *"
-.Fn "evbuffer_find" "struct evbuffer *buf" "u_char *data" "size_t size"
+.Fn "evbuffer_find" "struct evbuffer *buf" "const u_char *data" "size_t size"
 .Ft "char *"
 .Fn "evbuffer_readline" "struct evbuffer *buf"
 .Ft int
