@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.28 2004/04/16 22:50:23 deraadt Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.29 2006/01/25 17:42:08 markus Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: ar_subs.c,v 1.28 2004/04/16 22:50:23 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ar_subs.c,v 1.29 2006/01/25 17:42:08 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -397,10 +397,20 @@ wr_archive(ARCHD *arcn, int is_app)
 		return;
 
 	/*
+	 * if this is not append, and there are no files, we do not write a 
+	 * trailer
+	 */
+	wr_one = is_app;
+
+	/*
 	 * start up the file traversal code and format specific write
 	 */
-	if ((ftree_start() < 0) || ((*frmt->st_wr)() < 0))
-		return;
+	if (ftree_start() < 0) {
+		if (is_app)
+			goto trailer;
+		if (((*frmt->st_wr)() < 0))
+			return;
+	}
 	wrf = frmt->wr;
 
 	/*
@@ -409,12 +419,6 @@ wr_archive(ARCHD *arcn, int is_app)
 	 */
 	if (iflag && (name_start() < 0))
 		return;
-
-	/*
-	 * if this is not append, and there are no files, we do not write a 
-	 * trailer
-	 */
-	wr_one = is_app;
 
 	now = time(NULL);
 
@@ -543,6 +547,7 @@ wr_archive(ARCHD *arcn, int is_app)
 			break;
 	}
 
+trailer:
 	/*
 	 * tell format to write trailer; pad to block boundary; reset directory
 	 * mode/access times, and check if all patterns supplied by the user
