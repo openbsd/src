@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt8370.c,v 1.5 2005/12/19 15:53:15 claudio Exp $ */
+/*	$OpenBSD: bt8370.c,v 1.6 2006/01/25 11:57:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -56,9 +56,11 @@ void	bt8370_intr_enable(struct art_softc *ac, int);
 
 #ifndef ACCOOM_DEBUG
 #define bt8370_print_status(x)
+#define bt8370_print_counters(x)
 #define bt8370_dump_registers(x)
 #else
 void	bt8370_print_status(struct art_softc *);
+void	bt8370_print_counters(struct art_softc *);
 void	bt8370_dump_registers(struct art_softc *);
 #endif
 
@@ -529,6 +531,7 @@ bt8370_set_sbi_clock_mode(struct art_softc *ac, enum art_sbi_type mode,
 			musycc_set_port(ac->art_channel->cc_group,
 			    MUSYCC_PORT_MODE_E1);
 		}
+		break;
 	}
 	ebus_write(&ac->art_ebus, Bt8370_CLAD_CR, CLAD_CR_LFGAIN);
 }
@@ -949,6 +952,26 @@ bt8370_print_status(struct art_softc *ac)
 		printf("\tNo active Loopbacks\n");
 }
 
+void
+bt8370_print_counters(struct art_softc *ac)
+{
+	u_int16_t	counters[5];
+	u_int16_t	hi, lo;
+	int		i;
+
+	for (i = 0; i < 5; i++) {
+		lo = ebus_read(&ac->art_ebus, Bt8370_FERR_LSB + i);
+		hi = ebus_read(&ac->art_ebus, Bt8370_FERR_LSB + i + 1);
+
+		counters[i] = lo | (hi << 8);
+	}
+
+	printf("%s: %hu framing bit errors, %hu CRC errors, ",
+	    ac->art_dev.dv_xname, counters[0], counters[1]);
+	printf("%hu line code violations\n", counters[2]);
+	printf("%s: %hu Far End Errors %hu PRBS bit errors\n",
+	    ac->art_dev.dv_xname, counters[3], counters[4]);
+}
 void
 bt8370_dump_registers(struct art_softc *ac)
 {
