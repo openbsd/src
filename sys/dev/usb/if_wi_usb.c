@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.26 2005/12/03 21:11:48 brad Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.27 2006/01/25 20:58:12 grange Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -375,10 +375,7 @@ USB_ATTACH(wi_usb)
 
 	sc->wi_usb_attached = 1;
 
-	if (cold)
-		kthread_create_deferred(wi_usb_start_thread, sc);
-	else
-		wi_usb_start_thread(sc);
+	kthread_create_deferred(wi_usb_start_thread, sc);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->wi_usb_udev,
 			   USBDEV(sc->wi_usb_dev));
