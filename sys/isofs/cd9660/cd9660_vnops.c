@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.33 2005/11/19 02:18:01 pedro Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.34 2006/01/25 21:15:55 mickey Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -350,18 +350,23 @@ cd9660_read(v)
 		} else {
 #define MAX_RA 32
 			if (ci->ci_lastr + 1 == lbn) {
-				daddr_t rablks[MAX_RA];
-				int rasizes[MAX_RA];
+				struct ra {
+					daddr_t blks[MAX_RA];
+					int sizes[MAX_RA];
+				} *ra;
 				int i;
 
+				MALLOC(ra, struct ra *, sizeof *ra,
+				    M_TEMP, M_WAITOK);
 				for (i = 0; i < MAX_RA &&
 				    lblktosize(imp, (rablock + i)) < ip->i_size;
 				    i++) {
-					rablks[i] = rablock + i;
-					rasizes[i] = blksize(imp, ip, rablock + i);
+					ra->blks[i] = rablock + i;
+					ra->sizes[i] = blksize(imp, ip, rablock + i);
 				}
-				error = breadn(vp, lbn, size, rablks,
-				    rasizes, i, NOCRED, &bp);
+				error = breadn(vp, lbn, size, ra->blks,
+				    ra->sizes, i, NOCRED, &bp);
+				FREE(ra, M_TEMP);
 			} else
 				error = bread(vp, lbn, size, NOCRED, &bp);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_lookup.c,v 1.11 2003/06/02 23:28:05 millert Exp $	*/
+/*	$OpenBSD: cd9660_lookup.c,v 1.12 2006/01/25 21:15:55 mickey Exp $	*/
 /*	$NetBSD: cd9660_lookup.c,v 1.18 1997/05/08 16:19:59 mycroft Exp $	*/
 
 /*-
@@ -46,6 +46,7 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
 
 #include <isofs/cd9660/iso.h>
 #include <isofs/cd9660/cd9660_extern.h>
@@ -118,7 +119,7 @@ cd9660_lookup(v)
 	ino_t ino = 0;
 	int reclen;
 	u_short namelen;
-	char altname[NAME_MAX];
+	char *altname;
 	int res;
 	int assoc, len;
 	char *name;
@@ -288,10 +289,14 @@ searchloop:
 			else
 				ino = dbtob(bp->b_blkno) + entryoffsetinblock;
 			dp->i_ino = ino;
+			MALLOC(altname, char *, NAME_MAX, M_TEMP, M_WAITOK);
 			cd9660_rrip_getname(ep,altname,&namelen,&dp->i_ino,imp);
 			if (namelen == cnp->cn_namelen
-			    && !bcmp(name,altname,namelen))
+			    && !bcmp(name,altname,namelen)) {
+				FREE(altname, M_TEMP);
 				goto found;
+			}
+			FREE(altname, M_TEMP);
 			ino = 0;
 			break;
 		}
