@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.85 2006/01/20 00:01:20 millert Exp $ */
+/* $OpenBSD: netcat.c,v 1.86 2006/01/25 23:21:37 djm Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -70,6 +70,7 @@ int	jflag;					/* use jumbo frames if we can */
 int	kflag;					/* More than one connect */
 int	lflag;					/* Bind to local port */
 int	nflag;					/* Don't do name look up */
+char   *Pflag;					/* Proxy username */
 char   *pflag;					/* Localport flag */
 int	rflag;					/* Random ports flag */
 char   *sflag;					/* Source Address */
@@ -92,8 +93,8 @@ void	help(void);
 int	local_listen(char *, char *, struct addrinfo);
 void	readwrite(int);
 int	remote_connect(const char *, const char *, struct addrinfo);
-int	socks_connect(const char *, const char *, struct addrinfo, const char *, const char *,
-	struct addrinfo, int);
+int	socks_connect(const char *, const char *, struct addrinfo,
+	    const char *, const char *, struct addrinfo, int, const char *);
 int	udptest(int);
 int	unix_connect(char *);
 int	unix_listen(char *);
@@ -123,7 +124,7 @@ main(int argc, char *argv[])
 	sv = NULL;
 
 	while ((ch = getopt(argc, argv,
-	    "46Ddhi:jklnp:rSs:tT:Uuvw:X:x:z")) != -1) {
+	    "46Ddhi:jklnP:p:rSs:tT:Uuvw:X:x:z")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -166,6 +167,9 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			nflag = 1;
+			break;
+		case 'P':
+			Pflag = optarg;
 			break;
 		case 'p':
 			pflag = optarg;
@@ -354,7 +358,8 @@ main(int argc, char *argv[])
 
 			if (xflag)
 				s = socks_connect(host, portlist[i], hints,
-				    proxyhost, proxyport, proxyhints, socksv);
+				    proxyhost, proxyport, proxyhints, socksv,
+				    Pflag);
 			else
 				s = remote_connect(host, portlist[i], hints);
 
@@ -818,6 +823,7 @@ help(void)
 	\t-k		Keep inbound sockets open for multiple connects\n\
 	\t-l		Listen mode, for inbound connects\n\
 	\t-n		Suppress name/port resolutions\n\
+	\t-P proxyuser\tUsername for proxy authentication\n\
 	\t-p port\t	Specify local port for remote connects\n\
 	\t-r		Randomize remote ports\n\
 	\t-S		Enable the TCP MD5 signature option\n\
