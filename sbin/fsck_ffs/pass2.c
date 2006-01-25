@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.22 2005/06/16 14:51:37 millert Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.23 2006/01/25 06:25:46 tedu Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass2.c,v 1.22 2005/06/16 14:51:37 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pass2.c,v 1.23 2006/01/25 06:25:46 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -470,7 +470,7 @@ again:
 			}
 			if (idesc->id_entryno > 2)
 				inp->i_parent = idesc->id_number;
-			/* fall through */
+			/* FALLTHROUGH */
 
 		case FSTATE:
 			if (newinofmt && dirp->d_type != typemap[dirp->d_ino]) {

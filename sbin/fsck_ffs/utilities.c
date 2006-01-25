@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.20 2003/08/25 23:28:15 tedu Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.21 2006/01/25 06:25:46 tedu Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: utilities.c,v 1.20 2003/08/25 23:28:15 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: utilities.c,v 1.21 2006/01/25 06:25:46 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -175,7 +175,7 @@ getdatablk(daddr_t blkno, long size)
 	if (bp == &bufhead)
 		errexit("deadlocked buffer pool\n");
 	getblk(bp, blkno, size);
-	/* fall through */
+	/* FALLTHROUGH */
 foundit:
 	totalreads++;
 	bp->b_prev->b_next = bp->b_next;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass4.c,v 1.12 2005/04/16 18:15:41 millert Exp $	*/
+/*	$OpenBSD: pass4.c,v 1.13 2006/01/25 06:25:46 tedu Exp $	*/
 /*	$NetBSD: pass4.c,v 1.11 1996/09/27 22:45:17 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: pass4.c,v 1.12 2005/04/16 18:15:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pass4.c,v 1.13 2006/01/25 06:25:46 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,7 @@ pass4(void)
 				clri(&idesc, "ZERO LENGTH", 1);
 				break;
 			}
-			/* fall through */
+			/* FALLTHROUGH */
 		case FCLEAR:
 			clri(&idesc, "BAD/DUP", 1);
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.20 2005/06/16 14:51:37 millert Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.21 2006/01/25 06:25:46 tedu Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass5.c,v 1.20 2005/06/16 14:51:37 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pass5.c,v 1.21 2006/01/25 06:25:46 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -235,7 +235,7 @@ pass5(void)
 			case DCLEAR:
 			case DFOUND:
 				newcg->cg_cs.cs_ndir++;
-				/* fall through */
+				/* FALLTHROUGH */
 
 			case FSTATE:
 			case FCLEAR:
