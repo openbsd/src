@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.67 2006/01/02 08:23:39 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.68 2006/01/25 11:19:51 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -179,8 +179,6 @@ cvs_strtomode(const char *str, mode_t *mode)
 void
 cvs_modetostr(mode_t mode, char *buf, size_t len)
 {
-	int l;
-	size_t l1;
 	char tmp[16], *bp;
 	mode_t um, gm, om;
 
@@ -192,44 +190,39 @@ cvs_modetostr(mode_t mode, char *buf, size_t len)
 	*bp = '\0';
 
 	if (um) {
-		l = snprintf(tmp, sizeof(tmp), "u=%s", cvs_modestr[um]);
-		if (l == -1 || l >= (int)sizeof(tmp))
+		if (strlcpy(tmp, "u=", sizeof(tmp)) >= sizeof(tmp) ||
+		    strlcat(tmp, cvs_modestr[um], sizeof(tmp)) >= sizeof(tmp))
 			fatal("cvs_modetostr: overflow for user mode");
 
-		l1 = strlcat(buf, tmp, len);
-		if (l1 >= len)
+		if (strlcat(buf, tmp, len) >= len)
 			fatal("cvs_modetostr: string truncation");
 	}
 
 	if (gm) {
 		if (um) {
-			l1 = strlcat(buf, ",", len);
-			if (l1 >= len)
+			if (strlcat(buf, ",", len) >= len)
 				fatal("cvs_modetostr: string truncation");
 		}
 
-		l = snprintf(tmp, sizeof(tmp), "g=%s", cvs_modestr[gm]);
-		if (l == -1 || l >= (int)sizeof(tmp))
+		if (strlcpy(tmp, "g=", sizeof(tmp)) >= sizeof(tmp) ||
+		    strlcat(tmp, cvs_modestr[gm], sizeof(tmp)) >= sizeof(tmp))
 			fatal("cvs_modetostr: overflow for group mode");
 
-		l1 = strlcat(buf, tmp, len);
-		if (l1 >= len)
+		if (strlcat(buf, tmp, len) >= len)
 			fatal("cvs_modetostr: string truncation");
 	}
 
 	if (om) {
 		if (um || gm) {
-			l1 = strlcat(buf, ",", len);
-			if (l1 >= len)
+			if (strlcat(buf, ",", len) >= len)
 				fatal("cvs_modetostr: string truncation");
 		}
 
-		l = snprintf(tmp, sizeof(tmp), "o=%s", cvs_modestr[gm]);
-		if (l == -1 || l >= (int)sizeof(tmp))
+		if (strlcpy(tmp, "o=", sizeof(tmp)) >= sizeof(tmp) ||
+		    strlcat(tmp, cvs_modestr[gm], sizeof(tmp)) >= sizeof(tmp))
 			fatal("cvs_modetostr: overflow for others mode");
 
-		l1 = strlcat(buf, tmp, len);
-		if (l1 >= len)
+		if (strlcat(buf, tmp, len) >= len)
 			fatal("cvs_modetostr: string truncation");
 	}
 }
@@ -636,8 +629,7 @@ done:
 int
 cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
 {
-	size_t l;
-	int len, ret;
+	int ret;
 	char *d, *s;
 	struct stat sb;
 	char rpath[MAXPATHLEN], entry[MAXPATHLEN];
@@ -677,12 +669,10 @@ cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
 		 * Create administrative files if requested.
 		 */
 		if (create_adm == 1) {
-			l = strlcat(rpath, d, sizeof(rpath));
-			if (l >= sizeof(rpath))
+			if (strlcat(rpath, d, sizeof(rpath)) >= sizeof(rpath))
 				fatal("cvs_create_dir: path truncation");
 
-			l = strlcat(rpath, "/", sizeof(rpath));
-			if (l >= sizeof(rpath))
+			if (strlcat(rpath, "/", sizeof(rpath)) >= sizeof(rpath))
 				fatal("cvs_create_dir: path truncation");
 
 			if (cvs_mkadmin(d, root, rpath, NULL, NULL, 0) < 0) {
@@ -697,8 +687,11 @@ cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
 		 */
 		entf = cvs_ent_open(".", O_RDWR);
 		if (entf != NULL && strcmp(d, ".")) {
-			len = snprintf(entry, sizeof(entry), "D/%s////", d);
-			if (len == -1 || len >= (int)sizeof(entry))
+			if (strlcpy(entry, "D/", sizeof(entry)) >=
+			    sizeof(entry) ||
+			    strlcat(entry, d, sizeof(entry)) >= sizeof(entry) ||
+			    strlcat(entry, "////", sizeof(entry)) >=
+			    sizeof(entry))
 				fatal("cvs_create_dir: overflow in entry buf");
 
 			if ((ent = cvs_ent_parse(entry)) == NULL) {
@@ -776,16 +769,18 @@ cvs_path_cat(const char *base, const char *end, char *dst, size_t dlen)
 char *
 cvs_rcs_getpath(CVSFILE *file, char *buf, size_t len)
 {
-	int l;
 	char *repo;
 	struct cvsroot *root;
 
 	root = CVS_DIR_ROOT(file);
 	repo = CVS_DIR_REPO(file);
 
-	l = snprintf(buf, len, "%s/%s/%s%s",
-	    root->cr_dir, repo, file->cf_name, RCS_FILE_EXT);
-	if (l == -1 || l >= (int)len)
+	if (strlcpy(buf, root->cr_dir, len) >= len ||
+	    strlcat(buf, "/", len) >= len ||
+	    strlcat(buf, repo, len) >= len ||
+	    strlcat(buf, "/", len) >= len ||
+	    strlcat(buf, file->cf_name, len) >= len ||
+	    strlcat(buf, RCS_FILE_EXT, len) >= len)
 		fatal("cvs_rcs_getpath: path truncation");
 
 	return (buf);

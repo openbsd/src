@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.37 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.38 2006/01/25 11:19:51 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -215,7 +215,7 @@ cvs_add_local(CVSFILE *cf, void *arg)
 static int
 cvs_add_directory(CVSFILE *cf)
 {
-	int l, nb;
+	int nb;
 	char *date, *repo, *tag;
 	char entry[CVS_ENT_MAXLINELEN], fpath[MAXPATHLEN], rcsdir[MAXPATHLEN];
 	char msg[1024];
@@ -244,13 +244,10 @@ cvs_add_directory(CVSFILE *cf)
 
 	/* XXX check for <dir>/CVS */
 
-	l = snprintf(rcsdir, sizeof(rcsdir), "%s/%s",
-	    root->cr_dir, repo);
-	if (l == -1 || l >= (int)sizeof(rcsdir)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", rcsdir);
-		return (CVS_EX_DATA);
-	}
+	if (strlcpy(rcsdir, root->cr_dir, sizeof(rcsdir)) >= sizeof(rcsdir) ||
+	    strlcat(rcsdir, "/", sizeof(rcsdir)) >= sizeof(rcsdir) ||
+	    strlcat(rcsdir, repo, sizeof(rcsdir)) >= sizeof(rcsdir))
+		fatal("cvs_add_directory: path truncation");
 
 	if ((stat(rcsdir, &st) == 0) && !(S_ISDIR(st.st_mode))) {
 		cvs_log(LP_ERRNO,
@@ -286,12 +283,10 @@ cvs_add_directory(CVSFILE *cf)
 			return (CVS_EX_FILE);
 
 	/* XXX Build the Entries line. */
-	l = snprintf(entry, sizeof(entry), "D/%s////", fpath);
-	if (l == -1 || l >= (int)sizeof(entry)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", entry);
-		return (CVS_EX_DATA);
-	}
+	if (strlcpy(entry, "D/", sizeof(entry)) >= sizeof(entry) ||
+	    strlcat(entry, fpath, sizeof(entry)) >= sizeof(entry) ||
+	    strlcat(entry, "////", sizeof(entry)) >= sizeof(entry))
+		fatal("cvs_add_directory: path truncation");
 
 	if ((ent = cvs_ent_parse(entry)) == NULL) {
 		cvs_log(LP_ERR, "failed to parse entry");
@@ -311,7 +306,6 @@ cvs_add_directory(CVSFILE *cf)
 static int
 cvs_add_build_entry(CVSFILE *cf)
 {
-	int l;
 	char entry[CVS_ENT_MAXLINELEN], path[MAXPATHLEN];
 	FILE *fp;
 	CVSENTRIES *entf;
@@ -323,13 +317,11 @@ cvs_add_build_entry(CVSFILE *cf)
 		return (0);
 
 	/* Build the path to the <file>,t file. */
-	l = snprintf(path, sizeof(path), "%s/%s%s",
-	    CVS_PATH_CVSDIR, cf->cf_name, CVS_DESCR_FILE_EXT);
-	if (l == -1 || l >= (int)sizeof(path)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", path);
-		return (CVS_EX_DATA);
-	}
+	if (strlcpy(path, CVS_PATH_CVSDIR, sizeof(path)) >= sizeof(path) ||
+	    strlcat(path, "/", sizeof(path)) >= sizeof(path) ||
+	    strlcat(path, cf->cf_name, sizeof(path)) >= sizeof(path) ||
+	    strlcat(path, CVS_DESCR_FILE_EXT, sizeof(path)) >= sizeof(path))
+		fatal("cvs_add_build_entry: path truncation");
 
 	fp = fopen(path, "w+");
 	if (fp == NULL) {
@@ -347,13 +339,15 @@ cvs_add_build_entry(CVSFILE *cf)
 	(void)fclose(fp);
 
 	/* XXX Build the Entries line. */
-	l = snprintf(entry, sizeof(entry), "/%s/0/Initial %s/%s/",
-	    cf->cf_name, cf->cf_name, kbuf);
-	if (l == -1 || l >= (int)sizeof(entry)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", entry);
+	if (strlcpy(entry, "/", sizeof(entry)) >= sizeof(entry) ||
+	    strlcat(entry, cf->cf_name, sizeof(entry)) >= sizeof(entry) ||
+	    strlcat(entry, "/0/Initial ", sizeof(entry)) >= sizeof(entry) ||
+	    strlcat(entry, cf->cf_name, sizeof(entry)) >= sizeof(entry) ||
+	    strlcat(entry, "/", sizeof(entry)) >= sizeof(entry) ||
+	    strlcat(entry, kbuf, sizeof(entry)) >= sizeof(entry) ||
+	    strlcat(entry, "/", sizeof(entry)) >= sizeof(entry)) {
 		(void)cvs_unlink(path);
-		return (CVS_EX_DATA);
+		fatal("cvs_add_build_entry: path truncation");
 	}
 
 	if ((ent = cvs_ent_parse(entry)) == NULL) {
