@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpool.c,v 1.17 2006/01/24 16:10:15 aaron Exp $	*/
+/*	$OpenBSD: mpool.c,v 1.18 2006/01/25 14:40:03 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -159,6 +159,7 @@ mpool_delete(MPOOL *mp, void *page)
 	CIRCLEQ_REMOVE(&mp->lqh, bp, q);
 
 	free(bp);
+	mp->curcache--;
 	return (RET_SUCCESS);
 }	
 	
@@ -209,14 +210,13 @@ mpool_get(MPOOL *mp, pgno_t pgno,
 		return (NULL);
 
 	/* Read in the contents. */
-#ifdef STATISTICS
-	++mp->pageread;
-#endif
 	off = mp->pagesize * pgno;
 	if ((nr = pread(mp->fd, bp->page, mp->pagesize, off)) != mp->pagesize) {
 		switch (nr) {
 		case -1:
 			/* errno is set for us by pread(). */
+			free(bp);
+			mp->curcache--;
 			return (NULL);
 		case 0:
 			/*
@@ -227,10 +227,15 @@ mpool_get(MPOOL *mp, pgno_t pgno,
 			break;
 		default:
 			/* A partial read is definitely bad. */
+			free(bp);
+			mp->curcache--;
 			errno = EINVAL;
 			return (NULL);
 		}
 	}
+#ifdef STATISTICS
+	++mp->pageread;
+#endif
 
 	/* Set the page number, pin the page. */
 	bp->pgno = pgno;
@@ -290,7 +295,8 @@ mpool_close(MPOOL *mp)
 	BKT *bp;
 
 	/* Free up any space allocated to the lru pages. */
-	while ((bp = CIRCLEQ_FIRST(&mp->lqh)) != CIRCLEQ_END(&mp->lqh)) {
+	while (!CIRCLEQ_EMPTY(&mp->lqh)) {
+		bp = CIRCLEQ_FIRST(&mp->lqh);
 		CIRCLEQ_REMOVE(&mp->lqh, bp, q);
 		free(bp);
 	}
