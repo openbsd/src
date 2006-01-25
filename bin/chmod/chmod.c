@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.21 2006/01/25 05:59:42 tedu Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.22 2006/01/25 06:13:27 tedu Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1989, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: chmod.c,v 1.21 2006/01/25 05:59:42 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: chmod.c,v 1.22 2006/01/25 06:13:27 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,8 +91,8 @@ main(int argc, char *argv[])
 	ischmod = __progname[2] == 'm';
 	ischflags = __progname[2] == 'f';
 
-	uid = -1;
-	gid = -1;
+	uid = (uid_t)-1;
+	gid = (gid_t)-1;
 	Hflag = Lflag = Rflag = fflag = hflag = 0;
 	while ((ch = getopt(argc, argv, "HLPRXfghorstuwx")) != -1)
 		switch (ch) {
@@ -141,7 +141,8 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
-done:	argv += optind;
+done:
+	argv += optind;
 	argc -= optind;
 
 	if (argc < 2)
@@ -206,12 +207,12 @@ done:	argv += optind;
 #ifdef SUPPORT_DOT
 		/* UID and GID are separated by a dot and UID exists. */
 		else if ((cp = strchr(*argv, '.')) != NULL &&
-		    (uid = a_uid(*argv, 1)) == -1) {
+		    (uid = a_uid(*argv, 1)) == (uid_t)-1) {
 			*cp++ = '\0';
 			gid = a_gid(cp);
 		}
 #endif
-		if (uid == -1)
+		if (uid == (uid_t)-1)
 			uid = a_uid(*argv, 0);
 	} else
 		gid = a_gid(*argv);
@@ -294,22 +295,22 @@ a_uid(const char *s, int silent)
 	uid_t uid;
 
 	if (*s == '\0')			/* Argument was "[:.]gid". */
-		return -1;
+		return ((uid_t)-1);
 
 	/* User name was given. */
 	if ((pw = getpwnam(s)) != NULL)
-		return pw->pw_uid;
+		return (pw->pw_uid);
 
 	/* UID was given. */
 	uid = strtonum(s, 0, UID_MAX, &errstr);
 	if (errstr) {
 		if (silent)
-			return -1;
+			return ((uid_t)-1);
 		else
 			errx(1, "user is %s: %s", errstr, s);
 	}
 
-	return uid;
+	return (uid);
 }
 
 /*
@@ -324,18 +325,18 @@ a_gid(const char *s)
 	gid_t gid;
 
 	if (*s == '\0')			/* Argument was "uid[:.]". */
-		return -1;
+		return ((gid_t)-1);
 
 	/* Group name was given. */
 	if ((gr = getgrnam(s)) != NULL)
-		return gr->gr_gid;
+		return (gr->gr_gid);
 
 	/* GID was given. */
 	gid = strtonum(s, 0, GID_MAX, &errstr);
 	if (errstr)
 		errx(1, "group is %s: %s", errstr, s);
 
-	return gid;
+	return (gid);
 }
 
 void
