@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.3 2005/11/26 14:31:26 krw Exp $ */
+/* $OpenBSD: auixp.c,v 1.4 2006/01/25 23:53:35 brad Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -1019,7 +1019,7 @@ auixp_halt_input(void *hdl)
 
 	co = (struct auixp_codec *) hdl;
 	sc = co->sc;
-	dma = sc->sc_output_dma;
+	dma = sc->sc_input_dma;
 	auixp_disable_dma(sc, dma);
 
 	dma->running = 0;
