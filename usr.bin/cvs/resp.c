@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.68 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: resp.c,v 1.69 2006/01/25 08:15:05 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -320,7 +320,7 @@ cvs_resp_error(struct cvsroot *root, int type, char *line)
 static int
 cvs_resp_statdir(struct cvsroot *root, int type, char *line)
 {
-	int fd, len;
+	int fd;
 	char rpath[MAXPATHLEN], statpath[MAXPATHLEN];
 
 	/* remote directory line */
@@ -333,14 +333,12 @@ cvs_resp_statdir(struct cvsroot *root, int type, char *line)
 	 */
 	if (cvs_resp_createdir(line) < 0)
 		return (-1);
-
-	len = snprintf(statpath, sizeof(statpath), "%s/%s", line,
-	    CVS_PATH_STATICENTRIES);
-	if (len == -1 || len >= (int)sizeof(statpath)) {
-		cvs_log(LP_ERR,
-		    "path overflow for Entries.static specification");
+	if (strlcpy(statpath, line, sizeof(statpath)) >= sizeof(statpath) ||
+	    strlcat(statpath, "/", sizeof(statpath)) >= sizeof(statpath) ||
+	    strlcat(statpath, CVS_PATH_STATICENTRIES,
+	    sizeof(statpath)) >= sizeof(statpath))
+		cvs_log(LP_ERR, "Entries.static path truncation");
 		return (-1);
-	}
 
 	if (cvs_noexec == 0) {
 		if ((type == CVS_RESP_CLRSTATDIR) &&
@@ -552,7 +550,6 @@ cvs_resp_cksum(struct cvsroot *root, int type, char *line)
 static int
 cvs_resp_copyfile(struct cvsroot *root, int type, char *line)
 {
-	int len;
 	char path[MAXPATHLEN], newpath[MAXPATHLEN];
 	char newname[MAXNAMLEN], *file;
 
@@ -563,16 +560,16 @@ cvs_resp_copyfile(struct cvsroot *root, int type, char *line)
 	if ((file = basename(path)) == NULL)
 		fatal("no base file name in Copy-file path");
 
-	len = snprintf(path, sizeof(path), "%s%s", line, file);
-	if (len == -1 || len >= (int)sizeof(path))
+	if (strlcpy(path, line, sizeof(path)) >= sizeof(path) ||
+	    strlcat(path, file, sizeof(path)) >= sizeof(path))
 		fatal("source path overflow in Copy-file response");
 
-	len = snprintf(newpath, sizeof(newpath), "%s%s", line, newname);
-	if (len == -1 || len >= (int)sizeof(path))
+	if (strlcpy(newpath, line, sizeof(newpath)) >= sizeof(newpath) ||
+	    strlcat(newpath, newname, sizeof(newpath)) >= sizeof(newpath))
 		fatal("destination path overflow in Copy-file response");
 
 	if (rename(path, newpath) == -1) {
-		fatal("failed to rename %s to %s: %s",
+		fatal("cvs_resp_copyfile: rename: `%s'->`%s': %s",
 		    path, newpath, strerror(errno));
 	}
 
@@ -611,6 +608,8 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 	struct cvs_ent *ent;
 	struct timeval tv[2];
 
+	ret = 0;
+
 	STRIP_SLASH(line);
 
 	/* read the remote path of the file */
@@ -622,11 +621,10 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 	if ((ent = cvs_ent_parse(path)) == NULL)
 		return (-1);
 
-	ret = snprintf(path, sizeof(path), "%s/%s", line, ent->ce_name);
-	if (ret == -1 || ret >= (int)sizeof(path))
+	if (strlcpy(path, line, sizeof(path)) >= sizeof(path) ||
+	    strlcat(path, "/", sizeof(path)) >= sizeof(path) ||
+	    strlcat(path, ent->ce_name, sizeof(path)) >= sizeof(path))
 		fatal("Entries path overflow in response");
-
-	ret = 0;
 
 	/*
 	 * Please be sure the directory does exist.
@@ -698,15 +696,16 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 static int
 cvs_resp_removed(struct cvsroot *root, int type, char *line)
 {
-	int l;
 	char buf[MAXPATHLEN], base[MAXPATHLEN];
 	char fpath[MAXPATHLEN], *file;
 
 	cvs_getln(root, buf, sizeof(buf));
 
 	cvs_splitpath(buf, base, sizeof(base), &file);
-	l = snprintf(fpath, sizeof(fpath), "%s/%s", line, file);
-	if (l == -1 || l >= (int)sizeof(fpath))
+
+	if (strlcpy(fpath, line, sizeof(fpath)) >= sizeof(fpath) ||
+	    strlcat(fpath, "/", sizeof(fpath)) >= sizeof(fpath) ||
+	    strlcat(fpath, file, sizeof(fpath)) >= sizeof(fpath))
 		fatal("cvs_resp_removed: overflow in path");
 
 	if (resp_check_dir(root, line) < 0)
@@ -755,7 +754,6 @@ cvs_resp_modxpand(struct cvsroot *root, int type, char *line)
 static int
 cvs_resp_rcsdiff(struct cvsroot *root, int type, char *line)
 {
-	int len;
 	char file[MAXPATHLEN];
 	char buf[CVS_ENT_MAXLINELEN], cksum_buf[CVS_CKSUM_LEN];
 	char *fname, *orig, *patch;
@@ -770,9 +768,10 @@ cvs_resp_rcsdiff(struct cvsroot *root, int type, char *line)
 	fname = strrchr(buf, '/');
 	if (fname == NULL)
 		fname = buf;
-	len = snprintf(file, sizeof(file), "%s%s", line, fname);
-	if (len == -1 || len >= (int)sizeof(file))
-		fatal("path overflow in Rcs-diff response");
+
+	if (strlcpy(file, line, sizeof(file)) >= sizeof(file) ||
+	    strlcat(file, fname, sizeof(file)) >= sizeof(file))
+		fatal("cvs_resp_rcsdiff: path truncation");
 
 	/* get updated entry fields */
 	cvs_getln(root, buf, sizeof(buf));
@@ -846,29 +845,29 @@ cvs_resp_template(struct cvsroot *root, int type, char *line)
 static int
 resp_check_dir(struct cvsroot *root, const char *dir)
 {
-	int l;
-	size_t len;
 	char cvspath[MAXPATHLEN], repo[MAXPATHLEN];
 	struct stat st;
 
 	/*
 	 * Make sure the CVS directory exists.
 	 */
-	l = snprintf(cvspath, sizeof(cvspath), "%s/%s", dir, CVS_PATH_CVSDIR);
-	if (l == -1 || l >= (int)sizeof(cvspath))
+	if (strlcpy(cvspath, dir, sizeof(cvspath)) >= sizeof(cvspath) ||
+	    strlcat(cvspath, "/", sizeof(cvspath)) >= sizeof(cvspath) ||
+	    strlcat(cvspath, CVS_PATH_CVSDIR,
+	    sizeof(cvspath)) >= sizeof(cvspath))
 		fatal("resp_check_dir: path overflow");
 
 	if (stat(cvspath, &st) == -1) {
 		if (errno != ENOENT)
 			return (-1);
 		if  (cvs_repo_base != NULL) {
-			l = snprintf(repo, sizeof(repo), "%s/%s", cvs_repo_base,
-			    dir);
-			if (l == -1 || l >= (int)sizeof(repo))
+			if (strlcpy(repo, cvs_repo_base,
+			    sizeof(repo)) >= sizeof(repo) ||
+			    strlcat(repo, "/", sizeof(repo)) >= sizeof(repo) ||
+			    strlcat(repo, dir, sizeof(repo)) >= sizeof(repo))
 				fatal("resp_check_dir: path overflow");
 		} else {
-			len = strlcpy(repo, dir, sizeof(repo));
-			if (len >= sizeof(repo))
+			if (strlcpy(repo, dir, sizeof(repo)) >= sizeof(repo))
 				fatal("resp_check_dir: path truncation");
 		}
 
@@ -883,8 +882,8 @@ resp_check_dir(struct cvsroot *root, const char *dir)
 		if (cvs_resp_lastent == NULL)
 			return (-1);
 
-		len = strlcpy(cvs_resp_lastdir, dir, sizeof(cvs_resp_lastdir));
-		if (len >= sizeof(cvs_resp_lastdir))
+		if (strlcpy(cvs_resp_lastdir, dir,
+		    sizeof(cvs_resp_lastdir)) >= sizeof(cvs_resp_lastdir))
 			fatal("resp_check_dir: path truncation");
 	} else {
 		/* make sure the old one is still open */

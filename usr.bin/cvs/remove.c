@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.40 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.41 2006/01/25 08:15:05 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -128,7 +128,7 @@ cvs_remove_remote(CVSFILE *cf, void *arg)
 static int
 cvs_remove_local(CVSFILE *cf, void *arg)
 {
-	int existing, l, removed;
+	int existing, removed;
 	char buf[MAXPATHLEN], fpath[MAXPATHLEN];
 	CVSENTRIES *entf;
 	struct cvs_ent *ent;
@@ -163,13 +163,12 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 		if (cvs_ent_remove(entf, cf->cf_name, 0) == -1)
 			return (CVS_EX_FILE);
 
-		l = snprintf(buf, sizeof(buf), "%s/%s%s",
-		    CVS_PATH_CVSDIR, cf->cf_name, CVS_DESCR_FILE_EXT);
-		if (l == -1 || l >= (int)sizeof(buf)) {
-			errno = ENAMETOOLONG;
-			cvs_log(LP_ERRNO, "%s", buf);
-			return (CVS_EX_DATA);
-		}
+		if (strlcpy(buf, CVS_PATH_CVSDIR, sizeof(buf)) >= sizeof(buf) ||
+		    strlcat(buf, "/", sizeof(buf)) >= sizeof(buf) ||
+		    strlcat(buf, cf->cf_name, sizeof(buf)) >= sizeof(buf) ||
+		    strlcat(buf, CVS_DESCR_FILE_EXT,
+		    sizeof(buf)) >= sizeof(buf))
+			fatal("cvs_remove_local: path truncation");
 
 		if (cvs_unlink(buf) == -1)
 			return (CVS_EX_FILE);

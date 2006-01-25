@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.35 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.36 2006/01/25 08:15:05 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -224,7 +224,6 @@ static int
 cvs_import_local(CVSFILE *cf, void *arg)
 {
 	size_t len;
-	int l;
 	time_t stamp;
 	char *fcont;
 	char fpath[MAXPATHLEN], rpath[MAXPATHLEN], repo[MAXPATHLEN];
@@ -280,13 +279,11 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	} else
 		stamp = -1;
 
-	l = snprintf(rpath, sizeof(rpath), "%s/%s%s",
-	    repo, fpath, RCS_FILE_EXT);
-	if (l == -1 || l >= (int)sizeof(rpath)) {
-		errno = ENAMETOOLONG;
-		cvs_log(LP_ERRNO, "%s", rpath);
-		return (CVS_EX_DATA);
-	}
+	if (strlcpy(rpath, repo, sizeof(rpath)) >= sizeof(rpath) ||
+	    strlcat(rpath, "/", sizeof(rpath)) >= sizeof(rpath) ||
+	    strlcat(rpath, fpath, sizeof(rpath)) >= sizeof(rpath) ||
+	    strlcat(rpath, RCS_FILE_EXT, sizeof(rpath)) >= sizeof(rpath))
+		fatal("cvs_import_local: path truncation");
 
 	cvs_printf("N %s\n", fpath);
 

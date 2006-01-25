@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.51 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.52 2006/01/25 08:15:05 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -154,7 +154,6 @@ cvs_status_remote(CVSFILE *cfp, void *arg)
 static int
 cvs_status_local(CVSFILE *cf, void *arg)
 {
-	int len;
 	size_t n;
 	char buf[MAXNAMLEN], fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	char numbuf[64], timebuf[32];
@@ -191,13 +190,13 @@ cvs_status_local(CVSFILE *cf, void *arg)
 	    buf, cvs_statstr[cf->cf_cvstat]);
 
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
-		len = snprintf(buf, sizeof(buf), "No entry for %s",
-		    cf->cf_name);
+		strlcpy(buf, "No entry for ", sizeof(buf));
+		strlcat(buf, cf->cf_name, sizeof(buf));
 	} else if (cf->cf_cvstat == CVS_FST_ADDED) {
-		len = snprintf(buf, sizeof(buf), "New file!");
+		strlcpy(buf, "New file!", sizeof(buf));
 	} else {
 		rcsnum_tostr(cf->cf_lrev, numbuf, sizeof(numbuf));
-		len = snprintf(buf, sizeof(buf), "%s", numbuf);
+		strlcpy(buf, numbuf, sizeof(buf));
 
 		/* Display etime in local mode only. */
 		if (cvs_cmdop != CVS_OP_SERVER) {
@@ -212,27 +211,16 @@ cvs_status_local(CVSFILE *cf, void *arg)
 		}
 	}
 
-	if (len == -1 || len >= (int)sizeof(buf)) {
-		if (rf != NULL)
-			rcs_close(rf);
-		return (CVS_EX_DATA);
-	}
-
 	cvs_printf("   Working revision:\t%s\n", buf);
 
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN ||
 	    cf->cf_cvstat == CVS_FST_ADDED) {
-		len = snprintf(buf, sizeof(buf), "No revision control file");
+		strlcpy(buf, "No revision control file", sizeof(buf));
 	} else {
-		len = snprintf(buf, sizeof(buf), "%s\t%s",
-		    rcsnum_tostr(rf->rf_head, numbuf, sizeof(numbuf)),
-		    rcspath);
-	}
-
-	if (len == -1 || len >= (int)sizeof(buf)) {
-		if (rf != NULL)
-			rcs_close(rf);
-		return (CVS_EX_DATA);
+		strlcpy(buf, rcsnum_tostr(rf->rf_head, numbuf, sizeof(numbuf)),
+		    sizeof(buf));
+		strlcat(buf, "\t", sizeof(buf));
+		strlcat(buf, rcspath, sizeof(buf));
 	}
 
 	cvs_printf("   Repository revision:\t%s\n", buf);
