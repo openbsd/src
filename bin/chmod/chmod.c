@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.20 2005/11/29 20:32:22 otto Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.21 2006/01/25 05:59:42 tedu Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: chmod.c,v 1.20 2005/11/29 20:32:22 otto Exp $";
+static char rcsid[] = "$OpenBSD: chmod.c,v 1.21 2006/01/25 05:59:42 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,21 +50,21 @@ static char rcsid[] = "$OpenBSD: chmod.c,v 1.20 2005/11/29 20:32:22 otto Exp $";
 #include <err.h>
 #include <errno.h>
 #include <fts.h>
-#include <pwd.h>
 #include <grp.h>
+#include <limits.h>
+#include <locale.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
-#include <locale.h>
 
 int ischflags, ischown, ischgrp, ischmod;
 extern char *__progname;
 
 gid_t a_gid(const char *);
 uid_t a_uid(const char *, int);
-void usage(void);
+__dead void usage(void);
 
 int
 main(int argc, char *argv[])
@@ -198,11 +198,13 @@ done:	argv += optind;
 			oct = 0;
 		}
 	} else if (ischown) {
+		/* Both UID and GID are given. */
 		if ((cp = strchr(*argv, ':')) != NULL) {
 			*cp++ = '\0';
 			gid = a_gid(cp);
 		}
 #ifdef SUPPORT_DOT
+		/* UID and GID are separated by a dot and UID exists. */
 		else if ((cp = strchr(*argv, '.')) != NULL &&
 		    (uid = a_uid(*argv, 1)) == -1) {
 			*cp++ = '\0';
@@ -279,54 +281,61 @@ done:	argv += optind;
 	exit(rval);
 }
 
+/*
+ * Given a UID or user name in a string, return the UID.  If an empty string
+ * was given, returns -1.  If silent is 0, exits on invalid user names/UIDs;
+ * otherwise, returns -1.
+ */
 uid_t
 a_uid(const char *s, int silent)
 {
 	struct passwd *pw;
-	char *ep;
-	u_long ul;
+	const char *errstr;
+	uid_t uid;
 
-	if (*s == '\0')			/* Argument was "gid[:.]". */
+	if (*s == '\0')			/* Argument was "[:.]gid". */
 		return -1;
 
-	if ((pw = getpwnam(s)) != NULL) {
+	/* User name was given. */
+	if ((pw = getpwnam(s)) != NULL)
 		return pw->pw_uid;
-	} else {
-		if ((ul = strtoul(s, &ep, 10)) == ULONG_MAX) {
-			if (silent)
-				return -1;
-			err(1, "%s", s);
-		}
-		if (*ep != '\0') {
-			if (silent)
-				return -1;
-			errx(1, "%s: invalid user name", s);
-		}
-		/* XXX long -> int */
-		return (uid_t)ul;
+
+	/* UID was given. */
+	uid = strtonum(s, 0, UID_MAX, &errstr);
+	if (errstr) {
+		if (silent)
+			return -1;
+		else
+			errx(1, "user is %s: %s", errstr, s);
 	}
+
+	return uid;
 }
 
+/*
+ * Given a GID or group name in a string, return the GID.  If an empty string
+ * was given, returns -1.  Exits on invalid user names/UIDs.
+ */
 gid_t
 a_gid(const char *s)
 {
 	struct group *gr;
-	char *ep;
-	u_long ul;
+	const char *errstr;
+	gid_t gid;
 
-	if (*s == '\0')			/* Argument was "gid[:.]". */
+	if (*s == '\0')			/* Argument was "uid[:.]". */
 		return -1;
 
-	if ((gr = getgrnam(s)) != NULL) {
+	/* Group name was given. */
+	if ((gr = getgrnam(s)) != NULL)
 		return gr->gr_gid;
-	} else {
-		if ((ul = strtoul(s, &ep, 10)) == ULONG_MAX)
-			err(1, "%s", s);
-		if (*ep != '\0')
-			errx(1, "%s: invalid group name", s);
-		/* XXX long -> int */
-		return (gid_t)ul;
-	}
+
+	/* GID was given. */
+	gid = strtonum(s, 0, GID_MAX, &errstr);
+	if (errstr)
+		errx(1, "group is %s: %s", errstr, s);
+
+	return gid;
 }
 
 void
@@ -335,7 +344,7 @@ usage(void)
 	if (ischmod || ischflags)
 		fprintf(stderr,
 		    "usage: %s [-R [-H | -L | -P]] %s file ...\n",
-		    __progname, (ischmod? "mode" : "flags"));
+		    __progname, ischmod ? "mode" : "flags");
 	else
 		fprintf(stderr,
 		    "usage: %s [-fh] [-R [-H | -L | -P]] %s file ...\n",
