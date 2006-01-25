@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.19 2003/04/04 20:25:07 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.20 2006/01/25 22:41:54 moritz Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -46,7 +46,7 @@
 #if 0
 static char rcsid[] = "Id: options.c,v 1.42 1998/03/26 04:46:06 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.19 2003/04/04 20:25:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.20 2006/01/25 22:41:54 moritz Exp $";
 #endif
 #endif
 
@@ -1587,8 +1587,8 @@ setdomain(argv)
     gethostname(hostname, MAXNAMELEN);
     if (**argv != 0) {
 	if (**argv != '.')
-	    strncat(hostname, ".", MAXNAMELEN - strlen(hostname));
-	strncat(hostname, *argv, MAXNAMELEN - strlen(hostname));
+	    strlcat(hostname, ".", MAXNAMELEN);
+	strlcat(hostname, *argv, MAXNAMELEN);
     }
     hostname[MAXNAMELEN-1] = 0;
     return (1);
