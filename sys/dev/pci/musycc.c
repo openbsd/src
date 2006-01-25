@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc.c,v 1.11 2006/01/25 11:02:53 claudio Exp $ */
+/*	$OpenBSD: musycc.c,v 1.12 2006/01/25 13:17:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -673,7 +673,7 @@ musycc_state_engine(struct musycc_group *mg, int chan, enum musycc_event ev)
 
 	state = mg->mg_channels[chan]->cc_state;
 
-	ACCOOM_PRINTF(1, ("%s: musycc_state_engine state %d event %d\n",
+	ACCOOM_PRINTF(2, ("%s: musycc_state_engine state %d event %d\n",
 	    mg->mg_channels[chan]->cc_ifp->if_xname, state, ev));
 
 	switch (ev) {
@@ -1161,6 +1161,8 @@ musycc_rxeom(struct musycc_group *mg, int channel, int forcekick)
 	ifp = mg->mg_channels[channel]->cc_ifp;
 
 	start_rx = cur_rx = mg->mg_dma_d[channel].rx_prod;
+	if (cur_rx == NULL)
+		return; /* dma ring got cleared */
 	do {
 		bus_dmamap_sync(mg->mg_dmat, mg->mg_listmap,
 		    ((caddr_t)cur_rx - mg->mg_listkva),
