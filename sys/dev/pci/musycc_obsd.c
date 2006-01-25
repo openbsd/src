@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc_obsd.c,v 1.8 2005/08/27 13:32:01 claudio Exp $ */
+/*	$OpenBSD: musycc_obsd.c,v 1.9 2006/01/25 11:02:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -135,6 +135,28 @@ musycc_softc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf(": %s\n", intrstr);
+
+	/* soft reset device */
+	bus_space_write_4(sc->mc_st, sc->mc_sh, MUSYCC_SERREQ(0),
+	    MUSYCC_SREQ_SET(1));
+	bus_space_barrier(sc->mc_st, sc->mc_sh, MUSYCC_SERREQ(0),
+	    sizeof(u_int32_t), BUS_SPACE_BARRIER_WRITE);
+
+	/*
+	 * preload global configuration: set EBUS to sane defaults
+	 * so that the ROM access will work.
+	 * intel mode, elapse = 3, blapse = 3, alapse = 3, disable INTB
+	 */
+	sc->mc_global_conf = MUSYCC_CONF_MPUSEL | MUSYCC_CONF_ECKEN |
+	    MUSYCC_CONF_ELAPSE_SET(3) | MUSYCC_CONF_ALAPSE_SET(3) |
+	    MUSYCC_CONF_BLAPSE_SET(3) | MUSYCC_CONF_INTB;
+
+	/* Dual Address Cycle Base Pointer */
+	bus_space_write_4(sc->mc_st, sc->mc_sh, MUSYCC_DACB_PTR, 0);
+	/* Global Configuration Descriptor */
+	bus_space_write_4(sc->mc_st, sc->mc_sh, MUSYCC_GLOBALCONF,
+	    sc->mc_global_conf);
+
 	return;
 }
 

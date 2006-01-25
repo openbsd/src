@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc.c,v 1.10 2005/12/19 15:49:10 claudio Exp $ */
+/*	$OpenBSD: musycc.c,v 1.11 2006/01/25 11:02:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -93,12 +93,6 @@ musycc_attach_common(struct musycc_softc *sc, u_int32_t portmap, u_int32_t mode)
 {
 	struct musycc_group	*mg;
 	int			 i, j;
-
-	/* soft reset device */
-	bus_space_write_4(sc->mc_st, sc->mc_sh, MUSYCC_SERREQ(0),
-	    MUSYCC_SREQ_SET(1));
-	bus_space_barrier(sc->mc_st, sc->mc_sh, MUSYCC_SERREQ(0),
-	    sizeof(u_int32_t), BUS_SPACE_BARRIER_WRITE);
 
 	if (musycc_alloc_groupdesc(sc) == -1) {
 		printf(": couldn't alloc group descriptors\n");
