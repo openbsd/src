@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.23 2006/01/23 22:19:40 mpf Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.24 2006/01/25 00:31:05 mpf Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -516,9 +516,7 @@ state_change(void)
 		conf->nextstate = NULL;
 		conf->curstate->entered = time(NULL);
 		external_evtimer_setup(conf->curstate, IFSD_EVTIMER_ADD);
-		fetch_state();
 		do_action(conf->curstate->init);
-		fetch_state();
 	}
 }
 
