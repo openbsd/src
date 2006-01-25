@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.18 2005/04/17 12:27:23 jmc Exp $	*/
+/*	$OpenBSD: du.c,v 1.19 2006/01/25 06:20:03 tedu Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1989, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: du.c,v 1.18 2005/04/17 12:27:23 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: du.c,v 1.19 2006/01/25 06:20:03 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,26 +74,25 @@ main(int argc, char *argv[])
 	long blocksize;
 	quad_t totalblocks;
 	int ftsoptions, listdirs, listfiles;
-	int Hflag, Lflag, Pflag, aflag, cflag, hflag, kflag, sflag;
+	int Hflag, Lflag, aflag, cflag, hflag, kflag, sflag;
 	int ch, notused, rval;
 	char **save;
 
 	save = argv;
-	Hflag = Lflag = Pflag = aflag = cflag = hflag = kflag = sflag = 0;
+	Hflag = Lflag = aflag = cflag = hflag = kflag = sflag = 0;
 	totalblocks = 0;
 	ftsoptions = FTS_PHYSICAL;
 	while ((ch = getopt(argc, argv, "HLPachksxr")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
-			Lflag = Pflag = 0;
+			Lflag = 0;
 			break;
 		case 'L':
 			Lflag = 1;
-			Hflag = Pflag = 0;
+			Hflag = 0;
 			break;
 		case 'P':
-			Pflag = 1;
 			Hflag = Lflag = 0;
 			break;
 		case 'a':
