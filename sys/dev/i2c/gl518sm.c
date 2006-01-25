@@ -1,4 +1,4 @@
-/*	$OpenBSD: gl518sm.c,v 1.1 2006/01/24 21:35:06 kettenis Exp $	*/
+/*	$OpenBSD: gl518sm.c,v 1.2 2006/01/25 17:13:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -127,7 +127,7 @@ glenv_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	if (data & GL518SM_CONFIG_NOFAN2)
-		sc->sc_fan2_div = -1;
+		sc->sc_fan2_div = 0;
 
 	/* Start monitoring and clear interrupt status. */
 	data = (data | GL518SM_CONFIG_START | GL518SM_CONFIG_CLEARST);
@@ -210,12 +210,17 @@ glenv_refresh(void *arg)
 	} else {
 		sc->sc_sensor[GLENV_FAN1].flags &= ~SENSOR_FINVALID;
 		tmp = data2[0] * sc->sc_fan1_div * 2;
-		sc->sc_sensor[GLENV_TEMP].value = 960000 / tmp;
-		if (sc->sc_fan2_div != -1) {
-			sc->sc_sensor[GLENV_FAN2].flags &= ~SENSOR_FINVALID;
-			tmp = data2[0] * sc->sc_fan2_div * 2;
-			sc->sc_sensor[GLENV_TEMP].value = 960000 / tmp;
-		}
+		if (tmp == 0)
+			sc->sc_sensor[GLENV_FAN1].flags |= SENSOR_FINVALID;
+		else
+			sc->sc_sensor[GLENV_FAN1].value = 960000 / tmp;
+
+		sc->sc_sensor[GLENV_FAN2].flags &= ~SENSOR_FINVALID;
+		tmp = data2[1] * sc->sc_fan2_div * 2;
+		if (tmp == 0)
+			sc->sc_sensor[GLENV_FAN2].flags |= SENSOR_FINVALID;
+		else
+			sc->sc_sensor[GLENV_FAN2].value = 960000 / tmp;
 	}
 
 	iic_release_bus(sc->sc_tag, 0);
