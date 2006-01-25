@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.38 2006/01/21 16:35:39 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.39 2006/01/25 21:01:24 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2344,6 +2344,9 @@ struct bge_softc {
 	int			bge_txcnt;
 	int			bge_link;
 	struct timeout		bge_timeout;
+	u_long			bge_rx_discards;
+	u_long			bge_tx_discards;
+	u_long			bge_tx_collisions;
 	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
 	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.120 2005/12/28 22:02:44 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.121 2006/01/25 21:01:24 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2504,6 +2504,7 @@ bge_stats_update_regs(struct bge_softc *sc)
 	struct ifnet *ifp;
 	struct bge_mac_stats_regs stats;
 	u_int32_t *s;
+	u_long cnt;
 	int i;
 
 	ifp = &sc->arpcom.ac_if;
@@ -2514,12 +2515,13 @@ bge_stats_update_regs(struct bge_softc *sc)
 		s++;
 	}
 
-	ifp->if_collisions +=
-	   (stats.dot3StatsSingleCollisionFrames +
-	   stats.dot3StatsMultipleCollisionFrames +
-	   stats.dot3StatsExcessiveCollisions +
-	   stats.dot3StatsLateCollisions) -
-	   ifp->if_collisions;
+	cnt = stats.dot3StatsSingleCollisionFrames +
+	    stats.dot3StatsMultipleCollisionFrames +
+	    stats.dot3StatsExcessiveCollisions +
+	    stats.dot3StatsLateCollisions;
+	ifp->if_collisions += cnt >= sc->bge_tx_collisions ?
+	    cnt - sc->bge_tx_collisions : cnt;
+	sc->bge_tx_collisions = cnt;
 }
 
 void
@@ -2527,31 +2529,34 @@ bge_stats_update(struct bge_softc *sc)
 {
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	bus_size_t stats = BGE_MEMWIN_START + BGE_STATS_BLOCK;
+	u_long cnt;
 
 #define READ_STAT(sc, stats, stat) \
 	  CSR_READ_4(sc, stats + offsetof(struct bge_stats, stat))
 
-	ifp->if_collisions +=
-	  (READ_STAT(sc, stats,
-	       txstats.dot3StatsSingleCollisionFrames.bge_addr_lo) +
-	   READ_STAT(sc, stats,
-	       txstats.dot3StatsMultipleCollisionFrames.bge_addr_lo) +
-	   READ_STAT(sc, stats,
-	       txstats.dot3StatsExcessiveCollisions.bge_addr_lo) +
-	   READ_STAT(sc, stats,
-	       txstats.dot3StatsLateCollisions.bge_addr_lo)) -
-	  ifp->if_collisions;
+	cnt = READ_STAT(sc, stats,
+	    txstats.dot3StatsSingleCollisionFrames.bge_addr_lo);
+	cnt += READ_STAT(sc, stats,
+	    txstats.dot3StatsMultipleCollisionFrames.bge_addr_lo);
+	cnt += READ_STAT(sc, stats,
+	    txstats.dot3StatsExcessiveCollisions.bge_addr_lo);
+	cnt += READ_STAT(sc, stats,
+		txstats.dot3StatsLateCollisions.bge_addr_lo);
+	ifp->if_collisions += cnt >= sc->bge_tx_collisions ?
+	    cnt - sc->bge_tx_collisions : cnt;
+	sc->bge_tx_collisions = cnt;
+
+	cnt = READ_STAT(sc, stats, ifInDiscards.bge_addr_lo);
+	ifp->if_ierrors += cnt >= sc->bge_rx_discards ?
+	    cnt - sc->bge_rx_discards : cnt;
+	sc->bge_rx_discards = cnt;
+
+	cnt = READ_STAT(sc, stats, txstats.ifOutDiscards.bge_addr_lo);
+	ifp->if_oerrors += cnt >= sc->bge_tx_discards ?
+	    cnt - sc->bge_tx_discards : cnt;
+	sc->bge_tx_discards = cnt;
 
 #undef READ_STAT
-
-#ifdef notdef
-	ifp->if_collisions +=
-	   (sc->bge_rdata->bge_info.bge_stats.dot3StatsSingleCollisionFrames +
-	   sc->bge_rdata->bge_info.bge_stats.dot3StatsMultipleCollisionFrames +
-	   sc->bge_rdata->bge_info.bge_stats.dot3StatsExcessiveCollisions +
-	   sc->bge_rdata->bge_info.bge_stats.dot3StatsLateCollisions) -
-	   ifp->if_collisions;
-#endif
 }
 
 /*
