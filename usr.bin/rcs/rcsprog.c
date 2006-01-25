@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.61 2006/01/06 15:30:49 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.62 2006/01/25 08:01:00 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -221,8 +221,7 @@ rcs_getopt(int argc, char **argv, const char *optstr)
 int
 rcs_statfile(char *fname, char *out, size_t len)
 {
-	size_t len1;
-	int l, found, strdir;
+	int found, strdir;
 	char defaultsuffix[] = RCS_DEFAULT_SUFFIX;
 	char filev[MAXPATHLEN], fpath[MAXPATHLEN];
 	char *ext, *slash;
@@ -258,19 +257,22 @@ rcs_statfile(char *fname, char *out, size_t len)
 		if ((slash = strchr(ext, '/')) != NULL)
 			*slash = '\0';
 
-		l = snprintf(filev, sizeof(filev), "%s%s", fname, ext);
-		if (l == -1 || l >= (int)sizeof(filev))
+		if (strlcpy(filev, fname, sizeof(filev)) >= sizeof(filev) ||
+		    strlcat(filev, ext, sizeof(filev)) >= sizeof(filev))
 			fatal("rcs_statfile: path truncation");
 
 		if ((strdir == 0) &&
 		    (stat(RCSDIR, &st) != -1) && (st.st_mode & S_IFDIR)) {
-			l = snprintf(fpath, sizeof(fpath), "%s/%s",
-			    RCSDIR, filev);
-			if (l == -1 || l >= (int)sizeof(fpath))
+			if (strlcpy(fpath, RCSDIR,
+			    sizeof(fpath)) >= sizeof(fpath) ||
+			    strlcat(fpath, "/",
+			    sizeof(fpath)) >= sizeof(fpath) ||
+			    strlcat(fpath, filev,
+			    sizeof(fpath)) >= sizeof(fpath))
 				fatal("rcs_statfile: path truncation");
 		} else {
-			len1 = strlcpy(fpath, filev, sizeof(fpath));
-			if (len1 >= sizeof(fpath))
+			if (strlcpy(fpath, filev,
+			    sizeof(fpath)) >= sizeof(fpath))
 				fatal("rcs_statfile: path truncation");
 		}
 
@@ -293,8 +295,7 @@ rcs_statfile(char *fname, char *out, size_t len)
 		return (-1);
 	}
 
-	len1 = strlcpy(out, fpath, len);
-	if (len1 >= len)
+	if (strlcpy(out, fpath, len) >= len)
 		fatal("rcs_statfile: path truncation");
 
 	return (0);
