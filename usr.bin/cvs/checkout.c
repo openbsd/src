@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.44 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.45 2006/01/25 12:16:13 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -227,8 +227,13 @@ cvs_checkout_pre_exec(struct cvsroot *root)
 		cwdfd = dirfd(dirp);
 
 		for (i = 0; i < co_nmod; i++) {
-			snprintf(repo, sizeof(repo), "%s/%s", root->cr_dir,
-			    co_mods[i]);
+			if (strlcpy(repo, root->cr_dir, sizeof(repo)) >=
+			    sizeof(repo) ||
+			    strlcat(repo, "/", sizeof(repo)) >= sizeof(repo) ||
+			    strlcat(repo, co_mods[i], sizeof(repo)) >=
+			    sizeof(repo))
+				fatal("cvs_checkout_pre_exec: path truncation");
+
 			currepo = co_mods[i];
 			ret = cvs_file_get(repo, CF_RECURSE | CF_REPO |
 			    CF_IGNORE, cvs_checkout_local, NULL, NULL);
@@ -303,10 +308,9 @@ cvs_checkout_local(CVSFILE *cf, void *arg)
 	}
 
 	root = CVS_DIR_ROOT(cf);
-	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
-	snprintf(rcspath, sizeof(rcspath), "%s/%s%s", root->cr_dir,
-	    fpath, RCS_FILE_EXT);
+	cvs_file_getpath(cf, fpath, sizeof(fpath));
+	cvs_rcs_getpath(cf, rcspath, sizeof(rcspath));
 
 	if (cf->cf_type == DT_DIR) {
 		inattic = 0;
