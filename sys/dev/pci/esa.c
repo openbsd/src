@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.10 2005/11/21 18:16:41 millert Exp $	*/
+/*	$OpenBSD: esa.c,v 1.11 2006/01/25 23:54:21 brad Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -278,7 +278,7 @@ esa_set_params(void *hdl, int setmode, int usemode, struct audio_params *play,
 		if (p->sample_rate < ESA_MINRATE ||
 		    p->sample_rate > ESA_MAXRATE ||
 		    (p->precision != 8 && p->precision != 16) ||
-		    (p->channels < 1 && p->channels > 2))
+		    (p->channels < 1 || p->channels > 2))
 			return (EINVAL);
 
 		p->factor = 1;
