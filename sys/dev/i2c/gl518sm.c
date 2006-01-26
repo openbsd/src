@@ -1,4 +1,4 @@
-/*	$OpenBSD: gl518sm.c,v 1.2 2006/01/25 17:13:51 kettenis Exp $	*/
+/*	$OpenBSD: gl518sm.c,v 1.3 2006/01/26 22:25:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -107,7 +107,7 @@ glenv_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	
-	printf("GL518SM rev 0x%2x", data);
+	printf(": GL518SM rev 0x%02x", data);
 
 	cmd = GL518SM_MISC;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
