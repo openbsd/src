@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.26 2005/12/27 18:31:05 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.27 2006/01/26 02:43:28 aaron Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -589,7 +589,7 @@ atoi(s)
 	}
 
 	while (*s != '\0') {
-		if (*s < '0' && *s > '9')
+		if (*s < '0' || *s > '9')
 			break;
 
 		n = (10 * n) + (*s - '0');
