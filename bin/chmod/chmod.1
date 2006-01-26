@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.1,v 1.29 2005/10/15 08:50:44 jmc Exp $
+.\"	$OpenBSD: chmod.1,v 1.30 2006/01/26 22:20:32 jmc Exp $
 .\"	$NetBSD: chmod.1,v 1.8 1995/03/21 09:02:07 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -373,14 +373,8 @@ Set the group bits equal to the user bits, but clear the group write bit:
 The
 .Nm
 utility is expected to be
-.St -p1003.2
-compatible with the exception of the
-.Ar perm
-symbols
-.Sq t
-and
-.Sq X
-which are not included in that standard.
+.St -p1003.1-2004
+compatible.
 .Sh HISTORY
 A
 .Nm
