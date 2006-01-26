@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.1 2005/03/30 18:44:49 ho Exp $	*/
+/*	$OpenBSD: carp.c,v 1.2 2006/01/26 09:53:46 moritz Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -96,7 +96,7 @@ carp_get_state(char *ifname)
 		break;
 	}
 
-	log_msg(4, "carp_get_state: %s vhid %u state %s(%d)", ifname,
+	log_msg(4, "carp_get_state: %s vhid %d state %s(%d)", ifname,
 	    carp.carpr_vhid, state, carp.carpr_state);
 
 	if (carp.carpr_vhid > 0)

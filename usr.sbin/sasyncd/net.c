@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.10 2006/01/20 00:03:15 millert Exp $	*/
+/*	$OpenBSD: net.c,v 1.11 2006/01/26 09:53:46 moritz Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -589,7 +589,7 @@ net_send_messages(fd_set *fds)
 		}
 		m = qm->msg;
 
-		log_msg(5, "net_send_messages: msg %p len %d ref %d "
+		log_msg(5, "net_send_messages: msg %p len %u ref %d "
 		    "to peer %s", m, m->len, m->refcnt, p->name);
 
 		/* write message */
