@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.125 2006/01/10 15:00:47 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.126 2006/01/26 09:05:31 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -478,7 +478,9 @@ rcs_write(RCSFILE *rfp)
 	fprintf(fp, "symbols");
 	TAILQ_FOREACH(symp, &(rfp->rf_symbols), rs_list) {
 		rcsnum_tostr(symp->rs_num, numbuf, sizeof(numbuf));
-		snprintf(buf, sizeof(buf), "%s:%s", symp->rs_name, numbuf);
+		strlcpy(buf, symp->rs_name, sizeof(buf));
+		strlcat(buf, ":", sizeof(buf));
+		strlcat(buf, numbuf, sizeof(buf));
 		fprintf(fp, "\n\t%s", buf);
 	}
 	fprintf(fp, ";\n");

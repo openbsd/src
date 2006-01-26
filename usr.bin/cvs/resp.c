@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.69 2006/01/25 08:15:05 xsa Exp $	*/
+/*	$OpenBSD: resp.c,v 1.70 2006/01/26 09:05:31 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -391,7 +391,6 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 static int
 cvs_resp_createdir(char *line)
 {
-	int l;
 	CVSFILE *base, *cf;
 	CVSENTRIES *entf;
 	struct stat st;
@@ -447,8 +446,10 @@ cvs_resp_createdir(char *line)
 	 */
 	if (entf != NULL) {
 		if ((ent = cvs_ent_get(entf, cf->cf_name)) == NULL) {
-			l = snprintf(buf, sizeof(buf), "D/%s////", cf->cf_name);
-			if (l == -1 || l >= (int)sizeof(buf)) {
+			if (strlcpy(buf, "D/", sizeof(buf)) >= sizeof(buf) ||
+			    strlcat(buf, cf->cf_name, sizeof(buf)) >=
+			    sizeof(buf) ||
+			    strlcat(buf, "////", sizeof(buf)) >= sizeof(buf)) {
 				cvs_file_free(cf);
 				cvs_file_free(base);
 				return (-1);

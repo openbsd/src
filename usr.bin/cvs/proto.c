@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.87 2006/01/04 14:58:12 xsa Exp $	*/
+/*	$OpenBSD: proto.c,v 1.88 2006/01/26 09:05:31 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -582,7 +582,7 @@ cvs_recvfile(struct cvsroot *root, mode_t *mode)
 void
 cvs_sendreq(struct cvsroot *root, u_int rid, const char *arg)
 {
-	int ret, l;
+	int ret;
 	struct cvs_req *req;
 
 	if (root->cr_srvin == NULL)
@@ -605,10 +605,13 @@ cvs_sendreq(struct cvsroot *root, u_int rid, const char *arg)
 		return;
 	}
 
-	l = snprintf(cvs_proto_buf, sizeof(cvs_proto_buf), "%s%s%s\n",
-	    req->req_str, (arg == NULL) ? "" : " ", (arg == NULL) ? "" : arg);
-	if (l == -1 || l >= (int)sizeof(cvs_proto_buf))
-		fatal("overflow in cvs_sendreq");
+	if (strlcpy(cvs_proto_buf, req->req_str, sizeof(cvs_proto_buf)) >=
+	    sizeof(cvs_proto_buf) ||
+	    strlcat(cvs_proto_buf, (arg == NULL) ? "" : " ",
+	    sizeof(cvs_proto_buf)) >= sizeof(cvs_proto_buf) ||
+	    strlcat(cvs_proto_buf, (arg == NULL) ? "" : arg,
+	    sizeof(cvs_proto_buf)) >= sizeof(cvs_proto_buf))
+		fatal("cvs_sendreq: overflow when creating proto buffer");
 
 	if (cvs_server_inlog != NULL)
 		fputs(cvs_proto_buf, cvs_server_inlog);
@@ -878,7 +881,6 @@ cvs_sendarg(struct cvsroot *root, const char *arg, int append)
 void
 cvs_sendentry(struct cvsroot *root, const CVSFILE *file)
 {
-	int l;
 	char ebuf[CVS_ENT_MAXLINELEN], numbuf[64];
 
 	if (file->cf_type != DT_REG)
@@ -888,10 +890,14 @@ cvs_sendentry(struct cvsroot *root, const CVSFILE *file)
 	if (file->cf_cvstat == CVS_FST_UNKNOWN)
 		return;
 
-	l = snprintf(ebuf, sizeof(ebuf), "/%s/%s%s///", file->cf_name,
-	    (file->cf_cvstat == CVS_FST_REMOVED) ? "-" : "",
-	    rcsnum_tostr(file->cf_lrev, numbuf, sizeof(numbuf)));
-	if (l == -1 || l >= (int)sizeof(ebuf))
+	if (strlcpy(ebuf, "/", sizeof(ebuf)) >= sizeof(ebuf) ||
+	    strlcat(ebuf, file->cf_name, sizeof(ebuf)) >= sizeof(ebuf) ||
+	    strlcat(ebuf, "/", sizeof(ebuf)) >= sizeof(ebuf) ||
+	    strlcat(ebuf, (file->cf_cvstat == CVS_FST_REMOVED) ? "-" : "",
+	    sizeof(ebuf)) >= sizeof(ebuf) ||
+	    strlcat(ebuf, rcsnum_tostr(file->cf_lrev, numbuf, sizeof(numbuf)),
+	    sizeof(ebuf)) >= sizeof(ebuf) ||
+	    strlcat(ebuf, "///", sizeof(ebuf)) >= sizeof(ebuf))
 		fatal("cvs_sendentry: overflow when creating entry buffer");
 
 	cvs_sendreq(root, CVS_REQ_ENTRY, ebuf);
