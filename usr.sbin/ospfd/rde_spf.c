@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.41 2006/01/24 20:27:04 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.42 2006/01/26 15:05:08 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -83,7 +83,7 @@ spf_calc(struct area *area)
 	struct lsa_net_link	*net_link;
 	u_int32_t		 d;
 	int			 i;
-	struct in_addr		 addr, adv_rtr, a;
+	struct in_addr		 a;
 
 	log_debug("spf_calc: calculation started, area ID %s",
 	    inet_ntoa(area->id));
@@ -196,96 +196,7 @@ spf_calc(struct area *area)
 
 	/* calculate route table */
 	RB_FOREACH(v, lsa_tree, tree) {
-		lsa_age(v);
-		if (ntohs(v->lsa->hdr.age) == MAX_AGE)
-			continue;
-
-		switch (v->type) {
-		case LSA_TYPE_ROUTER:
-			/* stub networks */
-			if (v->cost >= LS_INFINITY || v->nexthop.s_addr == 0)
-				continue;
-
-			for (i = 0; i < lsa_num_links(v); i++) {
-				rtr_link = get_rtr_link(v, i);
-				if (rtr_link->type != LINK_TYPE_STUB_NET)
-					continue;
-
-				addr.s_addr = rtr_link->id;
-				adv_rtr.s_addr = htonl(v->adv_rtr);
-
-				rt_update(addr, mask2prefixlen(rtr_link->data),
-				    v->nexthop, v->cost +
-				    ntohs(rtr_link->metric), 0, area->id,
-				    adv_rtr, PT_INTRA_AREA, DT_NET,
-				    v->lsa->data.rtr.flags,
-				    v->prev == spf_root);
-			}
-
-			/* router, only add border and as-external routers */
-			if ((v->lsa->data.rtr.flags & (OSPF_RTR_B |
-			    OSPF_RTR_E)) == 0)
-				continue;
-
-			addr.s_addr = htonl(v->ls_id);
-			adv_rtr.s_addr = htonl(v->adv_rtr);
-
-			rt_update(addr, 32, v->nexthop, v->cost, 0, area->id,
-			    adv_rtr, PT_INTRA_AREA, DT_RTR,
-			    v->lsa->data.rtr.flags, 0);
-			break;
-		case LSA_TYPE_NETWORK:
-			if (v->cost >= LS_INFINITY || v->nexthop.s_addr == 0)
-				continue;
-
-			addr.s_addr = htonl(v->ls_id) & v->lsa->data.net.mask;
-			adv_rtr.s_addr = htonl(v->adv_rtr);
-			rt_update(addr, mask2prefixlen(v->lsa->data.net.mask),
-			    v->nexthop, v->cost, 0, area->id, adv_rtr,
-			    PT_INTRA_AREA, DT_NET, 0, v->prev == spf_root);
-			break;
-		case LSA_TYPE_SUM_NETWORK:
-		case LSA_TYPE_SUM_ROUTER:
-			/* if ABR only look at area 0.0.0.0 LSA */
-
-			/* ignore self-originated stuff */
-			if (v->nbr->self)
-				continue;
-
-			/* TODO type 3 area address range check */
-
-			if ((w = lsa_find(area, LSA_TYPE_ROUTER,
-			    htonl(v->adv_rtr),
-			    htonl(v->adv_rtr))) == NULL)
-				continue;
-
-			v->nexthop = w->nexthop;
-			v->cost = w->cost +
-			    (ntohl(v->lsa->data.sum.metric) & LSA_METRIC_MASK);
-
-			if (v->cost >= LS_INFINITY || v->nexthop.s_addr == 0)
-				continue;
-
-			adv_rtr.s_addr = htonl(v->adv_rtr);
-			if (v->type == LSA_TYPE_SUM_NETWORK) {
-				addr.s_addr = htonl(v->ls_id) &
-				    v->lsa->data.sum.mask;
-				rt_update(addr,
-				    mask2prefixlen(v->lsa->data.sum.mask),
-				    v->nexthop, v->cost, 0, area->id, adv_rtr,
-				    PT_INTER_AREA, DT_NET, 0, 0);
-			} else {
-				addr.s_addr = htonl(v->ls_id);
-				rt_update(addr, 32, v->nexthop, v->cost, 0,
-				    area->id, adv_rtr, PT_INTER_AREA, DT_RTR,
-				    v->lsa->data.rtr.flags, 0);
-			}
-
-			break;
-		default:
-			/* as-external LSA are stored in a different tree */
-			fatalx("spf_calc: invalid LSA type");
-		}
+		rt_calc(v, area);
 	}
 
 	/* calculate as-external routes */
@@ -299,6 +210,100 @@ spf_calc(struct area *area)
 
 	area->num_spf_calc++;
 	start_spf_timer();
+}
+
+void
+rt_calc(struct vertex *v, struct area *area)
+{
+	struct vertex		*w;
+	struct lsa_rtr_link	*rtr_link = NULL;
+	int			 i;
+	struct in_addr		 addr, adv_rtr;
+
+	lsa_age(v);
+	if (ntohs(v->lsa->hdr.age) == MAX_AGE)
+		return;
+
+	switch (v->type) {
+	case LSA_TYPE_ROUTER:
+		/* stub networks */
+		if (v->cost >= LS_INFINITY || v->nexthop.s_addr == 0)
+			return;
+
+		for (i = 0; i < lsa_num_links(v); i++) {
+			rtr_link = get_rtr_link(v, i);
+			if (rtr_link->type != LINK_TYPE_STUB_NET)
+				continue;
+
+			addr.s_addr = rtr_link->id;
+			adv_rtr.s_addr = htonl(v->adv_rtr);
+
+			rt_update(addr, mask2prefixlen(rtr_link->data),
+			    v->nexthop, v->cost + ntohs(rtr_link->metric), 0,
+			    area->id, adv_rtr, PT_INTRA_AREA, DT_NET,
+			    v->lsa->data.rtr.flags, v->prev == spf_root);
+		}
+
+		/* router, only add border and as-external routers */
+		if ((v->lsa->data.rtr.flags & (OSPF_RTR_B | OSPF_RTR_E)) == 0)
+			return;
+
+		addr.s_addr = htonl(v->ls_id);
+		adv_rtr.s_addr = htonl(v->adv_rtr);
+
+		rt_update(addr, 32, v->nexthop, v->cost, 0, area->id,
+		    adv_rtr, PT_INTRA_AREA, DT_RTR, v->lsa->data.rtr.flags, 0);
+		break;
+	case LSA_TYPE_NETWORK:
+		if (v->cost >= LS_INFINITY || v->nexthop.s_addr == 0)
+			return;
+
+		addr.s_addr = htonl(v->ls_id) & v->lsa->data.net.mask;
+		adv_rtr.s_addr = htonl(v->adv_rtr);
+		rt_update(addr, mask2prefixlen(v->lsa->data.net.mask),
+		    v->nexthop, v->cost, 0, area->id, adv_rtr, PT_INTRA_AREA,
+		    DT_NET, 0, v->prev == spf_root);
+		break;
+	case LSA_TYPE_SUM_NETWORK:
+	case LSA_TYPE_SUM_ROUTER:
+		/* if ABR only look at area 0.0.0.0 LSA */
+
+		/* ignore self-originated stuff */
+		if (v->nbr->self)
+			return;
+
+		/* TODO type 3 area address range check */
+
+		if ((w = lsa_find(area, LSA_TYPE_ROUTER,
+		    htonl(v->adv_rtr),
+		    htonl(v->adv_rtr))) == NULL)
+			return;
+
+		v->nexthop = w->nexthop;
+		v->cost = w->cost +
+		    (ntohl(v->lsa->data.sum.metric) & LSA_METRIC_MASK);
+
+		if (v->cost >= LS_INFINITY || v->nexthop.s_addr == 0)
+			return;
+
+		adv_rtr.s_addr = htonl(v->adv_rtr);
+		if (v->type == LSA_TYPE_SUM_NETWORK) {
+			addr.s_addr = htonl(v->ls_id) & v->lsa->data.sum.mask;
+			rt_update(addr, mask2prefixlen(v->lsa->data.sum.mask),
+			    v->nexthop, v->cost, 0, area->id, adv_rtr,
+			    PT_INTER_AREA, DT_NET, 0, 0);
+		} else {
+			addr.s_addr = htonl(v->ls_id);
+			rt_update(addr, 32, v->nexthop, v->cost, 0, area->id,
+			    adv_rtr, PT_INTER_AREA, DT_RTR,
+			    v->lsa->data.rtr.flags, 0);
+		}
+
+		break;
+	default:
+		/* as-external LSA are stored in a different tree */
+		fatalx("rt_calc: invalid LSA type");
+	}
 }
 
 void
