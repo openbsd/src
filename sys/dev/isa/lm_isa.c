@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm_isa.c,v 1.9 2006/01/23 18:45:33 kettenis Exp $	*/
+/*	$OpenBSD: lm_isa.c,v 1.10 2006/01/26 22:07:14 kettenis Exp $	*/
 /*	$NetBSD: lm_isa.c,v 1.9 2002/11/15 14:55:44 ad Exp $ */
 
 /*-
@@ -157,7 +157,7 @@ lm_isa_attach(struct device *parent, struct device *self, void *aux)
 	struct lm_isa_softc *sc = (struct lm_isa_softc *)self;
 	struct isa_attach_args *ia = aux;
 	struct lm_softc *lmsc;
-	int iobase, i, j;
+	int iobase, i;
 	u_int8_t sbusaddr;
 
 	sc->sc_iot = ia->ia_iot;
@@ -191,11 +191,8 @@ lm_isa_attach(struct device *parent, struct device *self, void *aux)
 		if (lmsc == &sc->sc_lmsc)
 			continue;
 		if (lmsc && lmsc->sbusaddr == sbusaddr &&
-		    lmsc->chipid == sc->sc_lmsc.chipid) {
-			sensor_task_unregister(lmsc);
-			for (j = 0; j < lmsc->numsensors; j++)
-				lmsc->sensors[j].flags = SENSOR_FINVALID;
-		}
+		    lmsc->chipid == sc->sc_lmsc.chipid)
+			config_detach(&lmsc->sc_dev, 0);
 	}
 }
 

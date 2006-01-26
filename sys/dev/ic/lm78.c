@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.5 2006/01/19 22:20:35 kettenis Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.6 2006/01/26 22:07:14 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -334,6 +334,20 @@ lm_attach(struct lm_softc *sc)
 	/* Add sensors */
 	for (i = 0; i < sc->numsensors; ++i)
 		sensor_add(&sc->sensors[i]);
+}
+
+int
+lm_detach(struct lm_softc *sc)
+{
+	int i;
+
+	/* Remove sensors */
+	for (i = 0; i < sc->numsensors; i++)
+		sensor_del(&sc->sensors[i]);
+
+	sensor_task_unregister(sc);
+
+	return 0;
 }
 
 int

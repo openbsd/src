@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78var.h,v 1.4 2006/01/17 22:01:48 kettenis Exp $	*/
+/*	$OpenBSD: lm78var.h,v 1.5 2006/01/26 22:07:14 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -143,3 +143,4 @@ struct lm_softc {
 };
 
 void lm_attach(struct lm_softc *);
+int lm_detach(struct lm_softc *);
