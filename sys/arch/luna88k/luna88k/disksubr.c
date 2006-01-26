@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.5 2006/01/22 00:11:33 miod Exp $ */
+/* $OpenBSD: disksubr.c,v 1.6 2006/01/26 07:11:08 miod Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -52,11 +52,6 @@
 #include <sys/disk.h>
 #include <sys/dkbad.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
-
-#include <machine/autoconf.h>
-
 #include <dev/sun/disklabel.h>
 
 /*
@@ -104,7 +99,6 @@
 
 char *disklabel_om_to_bsd(char *, struct disklabel *);
 int disklabel_bsd_to_om(struct disklabel *, char *);
-void get_autoboot_device(void);
 
 /*
  * Attempt to read a disk label from a device
@@ -344,85 +338,11 @@ bad:
 	return (-1);
 }
 
-/*
- * Get 'auto-boot' information from NVRAM
- */
-struct autoboot_t
-{
-	char	cont[16];
-	int	targ;
-	int	part;
-} autoboot;
-
-char *nvram_by_symbol(char *);			/* in machdep.c */
-
-void
-get_autoboot_device(void)
-{
-	char *value, c;
-	int i, len, part;
-
-	/* Assume default controler is internal spc (spc0) */
-	strlcpy(autoboot.cont, "spc0", sizeof(autoboot.cont));
-
-	/* Get boot controler and SCSI target from NVRAM */
-	value = nvram_by_symbol("boot_unit");
-	if (value != NULL) {
-		len = strlen(value);
-		if (len == 1) {
-			c = value[0];
-		} else if (len == 2) {
-			if (value[0] == '1') {
-				/* External spc (spc1) */
-				strlcpy(autoboot.cont, "spc1", sizeof(autoboot.cont));
-				c = value[1];
-			}
-		}
-
-		if ((c >= '0') && (c <= '6'))
-			autoboot.targ = 6 - (c - '0');
-	}
-
-	/* Get partition number from NVRAM */
-	value = nvram_by_symbol("boot_partition");
-	if (value != NULL) {
-		len = strlen(value);
-		part = 0;
-		for (i = 0; i < len; i++)
-			part = part * 10 + (value[i] - '0');
-		autoboot.part = part;
-	}
-}
-
 void
 dk_establish(dk, dev)
         struct disk *dk;
         struct device *dev;
 {
-        struct scsibus_softc *sbsc;
-	struct device *spcsc;
-        int target, lun;
-
-        /*
-         * scsi: sd,cd  XXX: Can LUNA88K boot from CD-ROM?
-         */
-
-        if (strncmp("sd", dev->dv_xname, 2) == 0 ||
-            strncmp("cd", dev->dv_xname, 2) == 0) {
-
-                sbsc = (struct scsibus_softc *)dev->dv_parent;
-		spcsc = dev->dv_parent->dv_parent;
-                target = autoboot.targ;
-                lun = 0;
-
-                if (strncmp(autoboot.cont, spcsc->dv_xname, 4) == 0 &&
-		    sbsc->sc_link[target][lun] != NULL &&
-                    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
-                        bootdv = dev;
-			bootpart = autoboot.part;
-                        return;
-                }
-        }
 }
 
 /************************************************************************
