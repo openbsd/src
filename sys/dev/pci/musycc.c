@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc.c,v 1.12 2006/01/25 13:17:45 claudio Exp $ */
+/*	$OpenBSD: musycc.c,v 1.13 2006/01/26 16:31:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -130,7 +130,7 @@ musycc_attach_common(struct musycc_softc *sc, u_int32_t portmap, u_int32_t mode)
 		mg = &sc->mc_groups[i];
 		mg->mg_hdlc = sc;
 		mg->mg_gnum = i;
-		mg->mg_port = i >> (sc->mc_global_conf & 0x3);
+		mg->mg_port = i >> (portmap & MUSYCC_CONF_PORTMAP);
 		mg->mg_dmat = sc->mc_dmat;
 
 		if (musycc_alloc_group(mg) == -1) {
@@ -1325,7 +1325,8 @@ musycc_intr(void *arg)
 
 		n = MUSYCC_NEXTINT_GET(intstatus);
 		for (i = 0; i < (intstatus & MUSYCC_INTCNT_MASK); i++) {
-			id = mc->mc_intrd->md_intrq[(n + i) % MUSYCC_INTLEN];
+			id = letoh32(mc->mc_intrd->md_intrq[(n + i) %
+			    MUSYCC_INTLEN]);
 			chan = MUSYCC_INTD_CHAN(id);
 			mg = &mc->mc_groups[MUSYCC_INTD_GRP(id)];
 
@@ -1457,7 +1458,7 @@ musycc_kick(struct musycc_group *mg)
 	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
 	ACCOOM_PRINTF(4, ("musycc_kick: group %d sreq[%d] req %08x\n",
-	    mg->mg_gnum, mg->mg_sreqpend, mg->mg_sreq[mg->mg_sreqpend]));
+	    mg->mg_gnum, mg->mg_sreqpend, mg->mg_sreq[mg->mg_sreqpend].sreq));
 
 	bus_space_write_4(mg->mg_hdlc->mc_st, mg->mg_hdlc->mc_sh,
 	    MUSYCC_SERREQ(mg->mg_gnum), mg->mg_sreq[mg->mg_sreqpend].sreq);
