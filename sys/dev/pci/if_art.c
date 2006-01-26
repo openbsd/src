@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_art.c,v 1.12 2006/01/25 14:45:28 claudio Exp $ */
+/*	$OpenBSD: if_art.c,v 1.13 2006/01/26 16:51:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -37,7 +37,7 @@
 #include <dev/pci/if_art.h>
 
 #define ART_E1_MASK 0xffffffff
-#define ART_T1_MASK 0x00ffffff
+#define ART_T1_MASK 0x01fffffe
 
 int	art_match(struct device *, void *, void *);
 void	art_softc_attach(struct device *, struct device *, void *);
@@ -208,11 +208,25 @@ art_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			rv = EINVAL;
 			break;
 		}
+		if (ac->art_type == ART_SBI_SINGLE &&
+		    (IFM_SUBTYPE(ac->art_media) == IFM_TDM_T1 ||
+		    IFM_SUBTYPE(ac->art_media) == IFM_TDM_T1_AMI))
+			/*
+			 * need to adjust timeslot mask for T1 on single port
+			 * cards. There timeslot 0-23 are usable not 1-24
+			 */
+			tsmap >>= 1;
+
 		cc->cc_tslots = tsmap;
 		rv = musycc_init_channel(cc, ac->art_slot);
 		break;
 	case SIOCGIFTIMESLOT:
-		rv = copyout(&cc->cc_tslots, ifr->ifr_data, sizeof(tsmap));
+		tsmap = cc->cc_tslots;
+		if (ac->art_type == ART_SBI_SINGLE &&
+		    (IFM_SUBTYPE(ac->art_media) == IFM_TDM_T1 ||
+		    IFM_SUBTYPE(ac->art_media) == IFM_TDM_T1_AMI))
+			tsmap <<= 1;
+		rv = copyout(&tsmap, ifr->ifr_data, sizeof(tsmap));
 		break;
 	case SIOCSIFFLAGS:
 		/*
@@ -261,20 +275,39 @@ art_ifm_change(struct ifnet *ifp)
 		return (rv);
 
 	/* SUBTYPE (framing mode T1/E1) + MODE (clocking master/slave) */
-	if (IFM_SUBTYPE(ifm->ifm_media) !=
-	    IFM_SUBTYPE(ac->art_media) ||
+	if (IFM_SUBTYPE(ifm->ifm_media) != IFM_SUBTYPE(ac->art_media) ||
 	    IFM_MODE(ifm->ifm_media) != IFM_MODE(ac->art_media)) {
 		ACCOOM_PRINTF(0, ("%s: art_ifm_change type %d mode %x\n",
 		    ifp->if_xname, IFM_SUBTYPE(ifm->ifm_media),
 		    IFM_MODE(ifm->ifm_media)));
+
 		bt8370_set_frame_mode(ac, ac->art_type,
 		    IFM_SUBTYPE(ifm->ifm_media), IFM_MODE(ifm->ifm_media));
-	}
 
-	if (IFM_SUBTYPE(ifm->ifm_media) != IFM_SUBTYPE(ac->art_media)) {
-		/* adjust timeslot map on media change */
-		cc->cc_tslots = art_mask_tsmap(IFM_SUBTYPE(ifm->ifm_media),
-		    cc->cc_tslots);
+		if (IFM_SUBTYPE(ifm->ifm_media) != IFM_SUBTYPE(ac->art_media)) {
+			/* adjust timeslot map on media change */
+			cc->cc_tslots = art_mask_tsmap(
+			    IFM_SUBTYPE(ifm->ifm_media), cc->cc_tslots);
+
+			if (ac->art_type == ART_SBI_SINGLE &&
+			    (IFM_SUBTYPE(ifm->ifm_media) == IFM_TDM_T1 ||
+			     IFM_SUBTYPE(ifm->ifm_media) == IFM_TDM_T1_AMI) &&
+			    (IFM_SUBTYPE(ac->art_media) != IFM_TDM_T1 &&
+			     IFM_SUBTYPE(ac->art_media) != IFM_TDM_T1_AMI))
+				/*
+				 * need to adjust timeslot mask for T1 on
+				 * single port cards. There timeslot 0-23 are
+				 * usable not 1-24
+				 */
+				cc->cc_tslots >>= 1;
+			else if (ac->art_type == ART_SBI_SINGLE &&
+			    (IFM_SUBTYPE(ifm->ifm_media) != IFM_TDM_T1 &&
+			     IFM_SUBTYPE(ifm->ifm_media) != IFM_TDM_T1_AMI) &&
+			    (IFM_SUBTYPE(ac->art_media) == IFM_TDM_T1 ||
+			     IFM_SUBTYPE(ac->art_media) == IFM_TDM_T1_AMI))
+				/* undo the last adjustment */
+				cc->cc_tslots <<= 1;
+		}
 
 		/* re-init the card */
 		if ((rv = musycc_init_channel(cc, ac->art_slot)))
