@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.465 2006/01/23 14:42:54 martin Exp $
+#	$OpenBSD: GENERIC,v 1.466 2006/01/26 22:26:26 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -135,6 +135,7 @@ maxds*	at iic?				# Maxim DS1631/1624/1721
 maxtmp*	at iic?				# Maxim MAX6642/MAX6690
 asbtm*	at iic?				# Asus ASB100
 wbenv*	at iic?				# Winbond W83L784R/W83L785R/W83L785TS-L
+glenv*	at iic?				# Genesys Logic GL518SM
 
 # ISA PCMCIA controllers
 #option PCMCIAVERBOSE
