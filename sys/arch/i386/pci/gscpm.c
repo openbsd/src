@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscpm.c,v 1.3 2004/10/05 19:02:33 grange Exp $	*/
+/*	$OpenBSD: gscpm.c,v 1.4 2006/01/26 20:34:26 mickey Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -135,18 +135,8 @@ u_int
 gscpm_get_timecount(struct timecounter *tc)
 {
 	struct gscpm_softc *sc = tc->tc_priv;
-	u_int u1, u2, u3;
 
-	u2 = bus_space_read_4(sc->sc_iot, sc->sc_acpi_ioh, GSCPM_PM_TMR);
-	u3 = bus_space_read_4(sc->sc_iot, sc->sc_acpi_ioh, GSCPM_PM_TMR);
-	do {
-		u1 = u2;
-		u2 = u3;
-		u3 = bus_space_read_4(sc->sc_iot, sc->sc_acpi_ioh,
-		    GSCPM_PM_TMR);
-	} while (u1 > u2 || u2 > u3);
-
-	return (u2);
+	return (bus_space_read_4(sc->sc_iot, sc->sc_acpi_ioh, GSCPM_PM_TMR));
 }
 #endif	/* __HAVE_TIMECOUNTER */
 
