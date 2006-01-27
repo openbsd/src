@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.45 2006/01/25 12:16:13 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.46 2006/01/27 10:53:23 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -193,10 +193,8 @@ cvs_checkout_pre_exec(struct cvsroot *root)
 	int i, ret;
 	char *sp, repo[MAXPATHLEN];
 
-	if ((dirp = opendir(".")) == NULL) {
-		cvs_log(LP_ERRNO, "failed to save cwd");
-		return (CVS_EX_DATA);
-	}
+	if ((dirp = opendir(".")) == NULL)
+		fatal("cvs_checkout_pre_exec: opendir failed");
 
 	cwdfd = dirfd(dirp);
 
@@ -204,18 +202,14 @@ cvs_checkout_pre_exec(struct cvsroot *root)
 		if ((sp = strchr(co_mods[i], '/')) != NULL)
 			*sp = '\0';
 
-		if ((mkdir(co_mods[i], 0755) == -1) && (errno != EEXIST)) {
-			cvs_log(LP_ERRNO, "can't create base directory '%s'",
-			    co_mods[i]);
-			return (CVS_EX_DATA);
-		}
+		if ((mkdir(co_mods[i], 0755) == -1) && (errno != EEXIST))
+			fatal("cvs_checkout_pre_exec: mkdir `%s': %s",
+			    co_mods[i], strerror(errno));
 
 		if (cvs_mkadmin(co_mods[i], root->cr_str, co_mods[i],
-		    NULL, NULL, 0) < 0) {
-			cvs_log(LP_ERR, "can't create base directory '%s'",
+		    NULL, NULL, 0) < 0)
+			fatal("cvs_checkout_pre_exec: cvs_mkadmin `%s' failed",
 			    co_mods[i]);
-			return (CVS_EX_DATA);
-		}
 
 		if (sp != NULL)
 			*sp = '/';
@@ -223,7 +217,8 @@ cvs_checkout_pre_exec(struct cvsroot *root)
 
 	if (root->cr_method == CVS_METHOD_LOCAL) {
 		if ((dirp = opendir(".")) == NULL)
-			return (CVS_EX_DATA);
+			fatal("cvs_checkout_pre_exec: opendir failed");
+
 		cwdfd = dirfd(dirp);
 
 		for (i = 0; i < co_nmod; i++) {
@@ -342,20 +337,17 @@ cvs_checkout_local(CVSFILE *cf, void *arg)
 	if (inattic == 1)
 		return (CVS_EX_OK);
 
-	if ((rf = rcs_open(rcspath, RCS_READ)) == NULL) {
-		cvs_log(LP_ERR, "cvs_checkout_local: rcs_open failed");
-		return (CVS_EX_DATA);
-	}
+	if ((rf = rcs_open(rcspath, RCS_READ)) == NULL)
+		fatal("cvs_checkout_local: rcs_open `%s': %s", rcspath,
+		    strerror(rcs_errno));
 
 	if (cvs_checkout_rev(rf, rf->rf_head, cf, fpath,
 	    (cvs_cmdop != CVS_OP_SERVER) ? 1 : 0,
-	    CHECKOUT_REV_CREATED) < 0) {
-		rcs_close(rf);
-		return (CVS_EX_DATA);
-	}
+	    CHECKOUT_REV_CREATED) < 0)
+		fatal("cvs_checkout_local: cvs_checkout_rev failed");
 
 	rcs_close(rf);
 
 	cvs_printf("U %s\n", fpath);
-	return (CVS_EX_OK);
+	return (0);
 }
