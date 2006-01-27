@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.36 2006/01/25 08:15:05 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.37 2006/01/27 10:39:49 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -106,10 +106,8 @@ cvs_import_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 		return (CVS_EX_USAGE);
 
 	if ((imp_brnum == NULL) &&
-	    ((imp_brnum = rcsnum_parse(CVS_IMPORT_DEFBRANCH)) == NULL)) {
-		cvs_log(LP_ERR, "failed to parse default import branch");
-		return (CVS_EX_DATA);
-	}
+	    ((imp_brnum = rcsnum_parse(CVS_IMPORT_DEFBRANCH)) == NULL))
+		fatal("cvs_import_init: rcsnum_parse failed");
 
 	module = argv[0];
 	vendor = argv[1];
@@ -126,19 +124,16 @@ cvs_import_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 static int
 cvs_import_pre_exec(struct cvsroot *root)
 {
-	size_t len;
 	char numbuf[64], repodir[MAXPATHLEN];
 
 	if (root->cr_method == CVS_METHOD_LOCAL) {
-		len = cvs_path_cat(root->cr_dir, module, repodir,
-		    sizeof(repodir));
-		if (len >= sizeof(repodir))
-			return (CVS_EX_DATA);
+		if (cvs_path_cat(root->cr_dir, module, repodir,
+		    sizeof(repodir)) >= sizeof(repodir))
+			fatal("cvs_import_pre_exec: cvs_path_cat overflow");
 
-		if (mkdir(repodir, 0700) == -1) {
-			cvs_log(LP_ERRNO, "failed to create %s", repodir);
-			return (CVS_EX_DATA);
-		}
+		if (mkdir(repodir, 0700) == -1)
+			fatal("cvs_import_pre_exec: mkdir `%s': %s",
+			    repodir, strerror(errno));
 	} else {
 		rcsnum_tostr(imp_brnum, numbuf, sizeof(numbuf));
 
@@ -178,16 +173,16 @@ cvs_import_post_exec(struct cvsroot *root)
 static int
 cvs_import_remote(CVSFILE *cf, void *arg)
 {
-	size_t len, sz;
+	size_t sz;
 	struct cvsroot *root;
 	char fpath[MAXPATHLEN], repodir[MAXPATHLEN];
 	char repo[MAXPATHLEN], date[32];
 
 	root = CVS_DIR_ROOT(cf);
 
-	len = cvs_path_cat(root->cr_dir, module, repo, sizeof(repo));
-	if (len >= sizeof(repo))
-		return (CVS_EX_DATA);
+	if (cvs_path_cat(root->cr_dir, module, repo, sizeof(repo)) >=
+	    sizeof(repo))
+		fatal("cvs_import_remove: cvs_path_cat overflow");
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
@@ -195,10 +190,9 @@ cvs_import_remote(CVSFILE *cf, void *arg)
 		if (!strcmp(cf->cf_name, "."))
 			strlcpy(repodir, repo, sizeof(repodir));
 		else {
-			len = cvs_path_cat(repo, fpath, repodir,
-			    sizeof(repodir));
-			if (len >= sizeof(repodir))
-				return (CVS_EX_DATA);
+			if(cvs_path_cat(repo, fpath, repodir,
+			    sizeof(repodir)) >= sizeof(repodir))
+				fatal("cvs_import_remove: cvs_path_cat overflow");
 		}
 
 		cvs_sendreq(root, CVS_REQ_DIRECTORY, fpath);
@@ -223,7 +217,6 @@ cvs_import_remote(CVSFILE *cf, void *arg)
 static int
 cvs_import_local(CVSFILE *cf, void *arg)
 {
-	size_t len;
 	time_t stamp;
 	char *fcont;
 	char fpath[MAXPATHLEN], rpath[MAXPATHLEN], repo[MAXPATHLEN];
@@ -237,9 +230,9 @@ cvs_import_local(CVSFILE *cf, void *arg)
 
 	root = CVS_DIR_ROOT(cf);
 
-	len = cvs_path_cat(root->cr_dir, module, repo, sizeof(repo));
-	if (len >= sizeof(repo))
-		return (CVS_EX_DATA);
+	if (cvs_path_cat(root->cr_dir, module, repo, sizeof(repo)) >=
+	    sizeof(repo))
+		fatal("cvs_import_local: cvs_path_cat overflow");
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
@@ -247,9 +240,9 @@ cvs_import_local(CVSFILE *cf, void *arg)
 		if (!strcmp(cf->cf_name, "."))
 			strlcpy(rpath, repo, sizeof(rpath));
 		else {
-			len = cvs_path_cat(repo, fpath, rpath, sizeof(rpath));
-			if (len >= sizeof(rpath))
-				return (CVS_EX_DATA);
+			if (cvs_path_cat(repo, fpath, rpath,
+			    sizeof(rpath)) >= sizeof(rpath))
+				fatal("cvs_import_local: cvs_path_cat overflow");
 
 			cvs_printf("Importing %s\n", rpath);
 			if (mkdir(rpath, 0700) == -1) {
@@ -266,10 +259,10 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	 * timestamps for the initial revisions.
 	 */
 	if (dflag == 1) {
-		if (stat(fpath, &fst) == -1) {
-			cvs_log(LP_ERRNO, "failed to stat `%s'", fpath);
-			return (CVS_EX_DATA);
-		}
+		if (stat(fpath, &fst) == -1)
+			fatal("cvs_import_local: stat failed on `%s': %s",
+			    fpath, strerror(errno));
+
 		stamp = (time_t)fst.st_mtime;
 
 		ts[0].tv_sec = stamp;
@@ -287,12 +280,9 @@ cvs_import_local(CVSFILE *cf, void *arg)
 
 	cvs_printf("N %s\n", fpath);
 
-	rf = rcs_open(rpath, RCS_RDWR|RCS_CREATE);
-	if (rf == NULL) {
-		cvs_log(LP_ERR, "failed to create RCS file: %s",
+	if ((rf = rcs_open(rpath, RCS_RDWR|RCS_CREATE)) == NULL);
+		fatal("cvs_import_local: rcs_open: `%s': %s", rpath,
 		    strerror(rcs_errno));
-		return (CVS_EX_DATA);
-	}
 
 	comment = rcs_comment_lookup(cf->cf_name);
 	if ((comment != NULL) && (rcs_comment_set(rf, comment) < 0)) {
@@ -303,56 +293,45 @@ cvs_import_local(CVSFILE *cf, void *arg)
 
 	rev = rcsnum_brtorev(imp_brnum);
 	if (rcs_rev_add(rf, rev, cvs_msg, stamp, NULL) < 0) {
-		cvs_log(LP_ERR, "failed to add revision: %s",
-		    rcs_errstr(rcs_errno));
-		rcs_close(rf);
 		(void)unlink(rpath);
-		return (CVS_EX_DATA);
+		fatal("cvs_import_local: rcs_rev_add failed: %s",
+		    rcs_errstr(rcs_errno));
 	}
 
 	if (rcs_sym_add(rf, release, rev) < 0) {
-		cvs_log(LP_ERR, "failed to set RCS symbol: %s",
-		    strerror(rcs_errno));
-		rcs_close(rf);
 		(void)unlink(rpath);
-		return (CVS_EX_DATA);
+		fatal("cvs_import_local: rcs_sym_add failed: %s",
+		    strerror(rcs_errno));
 	}
 
 	rcsnum_cpy(imp_brnum, rev, 2);
 	if (rcs_rev_add(rf, rev, cvs_msg, stamp, NULL) < 0) {
-		cvs_log(LP_ERR, "failed to add revision: %s",
-		    rcs_errstr(rcs_errno));
-		rcs_close(rf);
 		(void)unlink(rpath);
-		return (CVS_EX_DATA);
+		fatal("cvs_import_local: rcs_rev_add failed: %s",
+		    rcs_errstr(rcs_errno));
 	}
 
 	if (rcs_head_set(rf, rev) < 0) {
-		cvs_log(LP_ERR, "failed to set RCS head: %s",
-		    rcs_errstr(rcs_errno));
-		rcs_close(rf);
 		(void)unlink(rpath);
-		return (CVS_EX_DATA);
+		fatal("cvs_import_local: rcs_head_set failed: %s",
+		    rcs_errstr(rcs_errno));
 	}
 
 	if (rcs_branch_set(rf, imp_brnum) < 0) {
-		cvs_log(LP_ERR, "failed to set RCS default branch: %s",
+		(void)unlink(rpath);
+		fatal("cvs_import_local: rcs_branch_set failed: %s",
 		    strerror(rcs_errno));
-		return (CVS_EX_DATA);
 	}
 
 	if (rcs_sym_add(rf, vendor, imp_brnum) < 0) {
-		cvs_log(LP_ERR, "failed to set RCS symbol: %s",
-		    strerror(rcs_errno));
-		rcs_close(rf);
 		(void)unlink(rpath);
-		return (CVS_EX_DATA);
+		fatal("cvs_import_local: rcs_sym_add failed: %s",
+		    strerror(rcs_errno));
 	}
 
 	if ((bp = cvs_buf_load(fpath, BUF_AUTOEXT)) == NULL) {
-		rcs_close(rf);
 		(void)unlink(rpath);
-		return (CVS_EX_DATA);
+		fatal("cvs_import_local: cvs_buf_load failed");
 	}
 
 	cvs_buf_putc(bp, '\0');
@@ -360,9 +339,8 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	fcont = cvs_buf_release(bp);
 
 	if (rcs_deltatext_set(rf, rev, fcont) < 0) {
-		rcs_close(rf);
 		(void)unlink(rpath);
-		return (CVS_EX_DATA);
+		fatal("cvs_import_local: rcs_deltatext_set failed");
 	}
 
 	/* add the vendor tag and release tag as symbols */
@@ -371,7 +349,7 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	if ((dflag ==1) && (utimes(rpath, ts) == -1))
 		cvs_log(LP_ERRNO, "failed to timestamp RCS file");
 
-	return (CVS_EX_OK);
+	return (0);
 }
 
 static int
