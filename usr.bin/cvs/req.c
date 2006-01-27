@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.41 2006/01/04 14:58:12 xsa Exp $	*/
+/*	$OpenBSD: req.c,v 1.42 2006/01/27 12:56:28 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -309,12 +309,8 @@ cvs_req_directory(int reqid, char *line)
 		 * Now, create the admin files in the top-level
 		 * directory for the temp repo.
 		 */
-		if (cvs_mkadmin(cvs_server_tmpdir, cvs_rootstr, repo,
-		    NULL, NULL, 0) < 0) {
-			cvs_log(LP_ERR, "failed to create admin files");
-			xfree(repo);
-			return (-1);
-		}
+		cvs_mkadmin(cvs_server_tmpdir, cvs_rootstr, repo, NULL,
+		    NULL, 0);
 	}
 
 	/*

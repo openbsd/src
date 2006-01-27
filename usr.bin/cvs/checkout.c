@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.47 2006/01/27 12:45:21 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.48 2006/01/27 12:56:28 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -206,10 +206,8 @@ cvs_checkout_pre_exec(struct cvsroot *root)
 			fatal("cvs_checkout_pre_exec: mkdir `%s': %s",
 			    co_mods[i], strerror(errno));
 
-		if (cvs_mkadmin(co_mods[i], root->cr_str, co_mods[i],
-		    NULL, NULL, 0) < 0)
-			fatal("cvs_checkout_pre_exec: cvs_mkadmin `%s' failed",
-			    co_mods[i]);
+		cvs_mkadmin(co_mods[i], root->cr_str, co_mods[i], NULL,
+		    NULL, 0);
 
 		if (sp != NULL)
 			*sp = '/';

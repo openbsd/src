@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.39 2006/01/27 12:45:21 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.40 2006/01/27 12:56:28 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -271,8 +271,7 @@ cvs_add_directory(CVSFILE *cf)
 
 	/* create CVS/ admin files */
 	if (cvs_noexec == 0)
-		if (cvs_mkadmin(fpath, root->cr_str, repo, tag, date, nb) == -1)
-			return (CVS_EX_FILE);
+		cvs_mkadmin(fpath, root->cr_str, repo, tag, date, nb);
 
 	/* XXX Build the Entries line. */
 	if (strlcpy(entry, "D/", sizeof(entry)) >= sizeof(entry) ||

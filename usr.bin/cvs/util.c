@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.68 2006/01/25 11:19:51 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.69 2006/01/27 12:56:28 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -675,10 +675,7 @@ cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
 			if (strlcat(rpath, "/", sizeof(rpath)) >= sizeof(rpath))
 				fatal("cvs_create_dir: path truncation");
 
-			if (cvs_mkadmin(d, root, rpath, NULL, NULL, 0) < 0) {
-				cvs_log(LP_ERR, "failed to create adm files");
-				goto done;
-			}
+			cvs_mkadmin(d, root, rpath, NULL, NULL, 0);
 		}
 
 		/*
