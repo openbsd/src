@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.36 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.37 2006/01/27 08:50:51 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -266,12 +266,9 @@ cvs_tag_local(CVSFILE *cf, void *arg)
 
 	cvs_rcs_getpath(cf, rcspath, sizeof(rcspath));
 
-	rf = rcs_open(rcspath, RCS_READ|RCS_WRITE);
-	if (rf == NULL) {
-		cvs_log(LP_ERR, "failed to open %s: %s", rcspath,
+	if ((rf = rcs_open(rcspath, RCS_READ|RCS_WRITE)) == NULL)
+		fatal("cvs_tag_local: rcs_open: %s: %s", rcspath,
 		    rcs_errstr(rcs_errno));
-		return (CVS_EX_DATA);
-	}
 
 	if (tag_delete == 1) {
 		/* XXX */
@@ -282,10 +279,9 @@ cvs_tag_local(CVSFILE *cf, void *arg)
 	}
 
 	if (cvs_noexec == 0) {
-		if (rcs_sym_add(rf, tag_name, tag_rev) < 0) {
-			cvs_log(LP_ERR, "failed to tag %s: %s", rcspath,
+		if (rcs_sym_add(rf, tag_name, tag_rev) < 0)
+			fatal("cvs_tag_local: rcs_sym_add: %s: %s", rcspath,
 			    rcs_errstr(rcs_errno));
-		}
 	}
 
 	if (verbosity > 0)
