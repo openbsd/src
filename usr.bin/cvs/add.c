@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.38 2006/01/25 11:19:51 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.39 2006/01/27 12:45:21 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -141,9 +141,7 @@ cvs_add_local(CVSFILE *cf, void *arg)
 	    (strcmp(cf->cf_name, "..") == 0) ||
 	    (strcmp(cf->cf_name, CVS_PATH_CVSDIR) == 0)) {
 		if (verbosity > 1)
-			cvs_log(LP_ERR,
-			    "cannot add special file `%s'.", cf->cf_name);
-		return (CVS_EX_FILE);
+			fatal("cannot add special file `%s'.", cf->cf_name);
 	}
 
 	if (cf->cf_type == DT_DIR)
@@ -230,14 +228,11 @@ cvs_add_directory(CVSFILE *cf)
 	repo = CVS_DIR_REPO(cf);
 
 	if (strlcpy(fpath, cf->cf_name, sizeof(fpath)) >= sizeof(fpath))
-		return (CVS_EX_DATA);
+		fatal("cvs_add_directory: path truncation");
 
-	if (strchr(fpath, '/') != NULL) {
-		cvs_log(LP_ERR,
-		    "directory %s not added; must be a direct sub-directory",
+	if (strchr(fpath, '/') != NULL)
+		fatal("directory %s not added; must be a direct sub-directory",
 		    fpath);
-		return (CVS_EX_FILE);
-	}
 
 	/* Let's see if we have any per-directory tags first */
 	cvs_parse_tagfile(&tag, &date, &nb);
@@ -249,11 +244,9 @@ cvs_add_directory(CVSFILE *cf)
 	    strlcat(rcsdir, repo, sizeof(rcsdir)) >= sizeof(rcsdir))
 		fatal("cvs_add_directory: path truncation");
 
-	if ((stat(rcsdir, &st) == 0) && !(S_ISDIR(st.st_mode))) {
-		cvs_log(LP_ERRNO,
-		    "%s is not a directory; %s not added", rcsdir, fpath);
-		return (CVS_EX_FILE);
-	}
+	if ((stat(rcsdir, &st) == 0) && !(S_ISDIR(st.st_mode)))
+		fatal("%s is not a directory; %s not added: %s", rcsdir, fpath,
+		    strerror(errno));
 
 	snprintf(msg, sizeof(msg),
 	    "Directory %s added to the repository", rcsdir);
@@ -271,10 +264,9 @@ cvs_add_directory(CVSFILE *cf)
 	strlcat(msg, "\n", sizeof(msg));
 
 	if (cvs_noexec == 0) {
-		if (mkdir(rcsdir, 0777) == -1) {
-			cvs_log(LP_ERRNO, "failed to create %s", rcsdir);
-			return (CVS_EX_FILE);
-		}
+		if (mkdir(rcsdir, 0777) == -1)
+			fatal("cvs_add_directory: mkdir `%s': %s",
+			    rcsdir, strerror(errno));
 	}
 
 	/* create CVS/ admin files */
@@ -288,15 +280,11 @@ cvs_add_directory(CVSFILE *cf)
 	    strlcat(entry, "////", sizeof(entry)) >= sizeof(entry))
 		fatal("cvs_add_directory: path truncation");
 
-	if ((ent = cvs_ent_parse(entry)) == NULL) {
-		cvs_log(LP_ERR, "failed to parse entry");
-		return (CVS_EX_DATA);
-	}
+	if ((ent = cvs_ent_parse(entry)) == NULL)
+		fatal("cvs_add_directory: cvs_ent_parse failed");
 
-	if (cvs_ent_add(entf, ent) < 0) {
-		cvs_log(LP_ERR, "failed to add entry");
-		return (CVS_EX_DATA);
-	}
+	if (cvs_ent_add(entf, ent) < 0)
+		fatal("cvs_add_directory: cvs_ent_parse failed");
 
 	cvs_printf("%s", msg);
 
@@ -323,18 +311,14 @@ cvs_add_build_entry(CVSFILE *cf)
 	    strlcat(path, CVS_DESCR_FILE_EXT, sizeof(path)) >= sizeof(path))
 		fatal("cvs_add_build_entry: path truncation");
 
-	fp = fopen(path, "w+");
-	if (fp == NULL) {
-		cvs_log(LP_ERRNO, "failed to open `%s'", path);
-		return (CVS_EX_FILE);
-	}
+	if ((fp = fopen(path, "w+")) == NULL)
+		fatal("cvs_add_build_entry: fopen `%s': %s", path,
+		    strerror(errno));
 
 	if (cvs_msg != NULL) {
-		if (fputs(cvs_msg, fp) == EOF) {
-			cvs_log(LP_ERRNO, "cannot write to `%s'", path);
-			(void)fclose(fp);
-			return (CVS_EX_FILE);
-		}
+		if (fputs(cvs_msg, fp) == EOF)
+			fatal("cvs_add_build_entry: fputs `%s': %s", path,
+			    strerror(errno));
 	}
 	(void)fclose(fp);
 
@@ -351,15 +335,13 @@ cvs_add_build_entry(CVSFILE *cf)
 	}
 
 	if ((ent = cvs_ent_parse(entry)) == NULL) {
-		cvs_log(LP_ERR, "failed to parse entry");
 		(void)cvs_unlink(path);
-		return (CVS_EX_DATA);
+		fatal("cvs_add_build_entry: cvs_ent_parse failed");
 	}
 
 	if (cvs_ent_add(entf, ent) < 0) {
-		cvs_log(LP_ERR, "failed to add entry");
 		(void)cvs_unlink(path);
-		return (CVS_EX_DATA);
+		fatal("cvs_add_build_entry: cvs_ent_add failed");
 	}
 
 	return (0);

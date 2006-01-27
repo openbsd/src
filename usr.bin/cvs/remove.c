@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.41 2006/01/25 08:15:05 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.42 2006/01/27 12:45:21 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -110,7 +110,7 @@ cvs_remove_remote(CVSFILE *cf, void *arg)
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
 	if (cvs_remove_file(fpath) < 0)
-		return (CVS_EX_FILE);
+		fatal("cvs_remove_remote: cvs_remove_file `%s' failed", fpath);
 
 	cvs_sendentry(root, cf);
 
@@ -146,7 +146,8 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 		cvs_file_getpath(cf, fpath, sizeof(fpath));
 
 		if (cvs_remove_file(fpath) < 0)
-			return (CVS_EX_FILE);
+			fatal("cvs_remove_local: cvs_remove_file `%s' failed",
+			     fpath);
 	}
 
 	if (nuked == 0) {
@@ -161,7 +162,7 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 		return (0);
 	} else if (cf->cf_cvstat == CVS_FST_ADDED) {
 		if (cvs_ent_remove(entf, cf->cf_name, 0) == -1)
-			return (CVS_EX_FILE);
+			fatal("cvs_remove_local: cvs_ent_remove failed");
 
 		if (strlcpy(buf, CVS_PATH_CVSDIR, sizeof(buf)) >= sizeof(buf) ||
 		    strlcat(buf, "/", sizeof(buf)) >= sizeof(buf) ||
@@ -171,7 +172,7 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 			fatal("cvs_remove_local: path truncation");
 
 		if (cvs_unlink(buf) == -1)
-			return (CVS_EX_FILE);
+			fatal("cvs_remove_local: cvs_unlink `%s' failed", buf);
 
 		if (verbosity > 1)
 			cvs_log(LP_NOTICE, "removed `%s'", cf->cf_name);
@@ -184,7 +185,7 @@ cvs_remove_local(CVSFILE *cf, void *arg)
 		return (0);
 	} else {
 		if ((ent = cvs_ent_get(entf, cf->cf_name)) == NULL)
-			return (CVS_EX_DATA);
+			fatal("cvs_remove_local: cvs_ent_get failed");
 
 		/* Prefix revision with `-' */
 		ent->ce_status = CVS_ENT_REMOVED;

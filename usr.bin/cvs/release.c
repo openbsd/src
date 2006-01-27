@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.29 2006/01/03 12:47:14 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.30 2006/01/27 12:45:21 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -215,7 +215,7 @@ cvs_release_dir(CVSFILE *cf, void *arg)
 
 	if (dflag == 1) {
 		if (cvs_rmdir(dpath) != 0)
-			return (CVS_EX_FILE);
+			fatal("cvs_release_dir: cvs_rmdir failed");
 	}
 
 	return (0);

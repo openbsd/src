@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.46 2006/01/27 10:53:23 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.47 2006/01/27 12:45:21 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -319,11 +319,9 @@ cvs_checkout_local(CVSFILE *cf, void *arg)
 			 * create the repository directory for us.
 			 */
 			if (cvs_create_dir(fpath, 1, root->cr_dir, NULL) < 0)
-				return (CVS_EX_FILE);
-			if (fchdir(cwdfd) < 0) {
-				cvs_log(LP_ERRNO, "fchdir failed");
-				return (CVS_EX_FILE);
-			}
+				fatal("cvs_checkout_local: cvs_create_dir failed");
+			if (fchdir(cwdfd) < 0)
+				fatal("cvs_checkout_local: fchdir failed");
 		} else {
 			/*
 			 * TODO: send responses to client so it'll
