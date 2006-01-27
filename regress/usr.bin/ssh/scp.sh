@@ -1,4 +1,4 @@
-#	$OpenBSD: scp.sh,v 1.4 2005/06/30 11:02:37 markus Exp $
+#	$OpenBSD: scp.sh,v 1.5 2006/01/27 06:49:21 djm Exp $
 #	Placed in the Public Domain.
 
 tid="scp"
@@ -21,6 +21,11 @@ scpclean() {
 	mkdir ${DIR} ${DIR2}
 }
 
+verbose "$tid: simple copy local file to local file"
+scpclean
+$SCP $scpopts ${DATA} ${COPY} || fail "copy failed"
+cmp ${DATA} ${COPY} || fail "corrupted copy"
+
 verbose "$tid: simple copy local file to remote file"
 scpclean
 $SCP $scpopts ${DATA} somehost:${COPY} || fail "copy failed"
@@ -37,6 +42,12 @@ cp ${DATA} ${COPY}
 $SCP $scpopts ${COPY} somehost:${DIR} || fail "copy failed"
 cmp ${COPY} ${DIR}/copy || fail "corrupted copy"
 
+verbose "$tid: simple copy local file to local dir"
+scpclean
+cp ${DATA} ${COPY}
+$SCP $scpopts ${COPY} ${DIR} || fail "copy failed"
+cmp ${COPY} ${DIR}/copy || fail "corrupted copy"
+
 verbose "$tid: simple copy remote file to local dir"
 scpclean
 cp ${DATA} ${COPY}
@@ -48,6 +59,13 @@ scpclean
 rm -rf ${DIR2}
 cp ${DATA} ${DIR}/copy
 $SCP $scpopts -r ${DIR} somehost:${DIR2} || fail "copy failed"
+diff -rN ${DIR} ${DIR2} || fail "corrupted copy"
+
+verbose "$tid: recursive local dir to local dir"
+scpclean
+rm -rf ${DIR2}
+cp ${DATA} ${DIR}/copy
+$SCP $scpopts -r ${DIR} ${DIR2} || fail "copy failed"
 diff -rN ${DIR} ${DIR2} || fail "corrupted copy"
 
 verbose "$tid: recursive remote dir to local dir"
