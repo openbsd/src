@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.37 2006/01/27 08:50:51 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.38 2006/01/27 15:42:35 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -131,12 +131,9 @@ cvs_tag_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 		*arg += 1;
 	}
 
-	if (!rcs_sym_check(tag_name)) {
-		cvs_log(LP_ABORT,
-		    "tag `%s' must not contain the characters `%s'",
+	if (!rcs_sym_check(tag_name))
+		fatal("tag `%s' must not contain the characters `%s'",
 		    tag_name, RCS_SYM_INVALCHAR);
-		return (CVS_EX_BADTAG);
-	}
 
 	if ((tag_branch == 1) && (tag_delete == 1)) {
 		cvs_log(LP_WARN, "ignoring -b with -d options");

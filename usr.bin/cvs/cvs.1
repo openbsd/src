@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.92 2006/01/06 17:09:01 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.93 2006/01/27 15:42:35 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -2047,9 +2047,7 @@ The remote system returned something that was not possible during
 a protocol exchange.
 .It Dv CVS_EX_FILE Pq 4
 An error occurred while doing an operation on a file.
-.It Dv CVS_EX_BADTAG Pq 5
-An error occurred while doing a tagging/untagging operation.
-.It Dv CVS_EX_BADROOT Pq 6
+.It Dv CVS_EX_BADROOT Pq 5
 The
 .Ev CVSROOT
 was not given or does not match the expected format.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.98 2006/01/10 08:24:57 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.99 2006/01/27 15:42:35 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -46,8 +46,7 @@
 #define CVS_EX_DATA	2
 #define CVS_EX_PROTO	3
 #define CVS_EX_FILE	4
-#define CVS_EX_BADTAG	5
-#define CVS_EX_BADROOT	6
+#define CVS_EX_BADROOT	5
 
 /* operations */
 #define CVS_OP_UNKNOWN		0
