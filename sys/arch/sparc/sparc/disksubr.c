@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.36 2006/01/22 00:40:02 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.37 2006/01/27 23:03:12 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -35,6 +35,9 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/dkbad.h>
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
