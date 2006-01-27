@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc.c,v 1.13 2006/01/26 16:31:23 claudio Exp $ */
+/*	$OpenBSD: musycc.c,v 1.14 2006/01/27 13:57:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -1723,10 +1723,10 @@ const char	*musycc_errors[] = {
 	"OOF", "FCS", "ALIGN", "ABT", "LNG", "SHT", "SUERR", "PERR"
 };
 const char	*mu_proto[] = {
-	"trans", "ss7", "hdlc16", "hdlc32"
+	"trans", "ss7", "hdlc16", "hdlc32", "rsvd4", "rsvd5", "rsvd6", "rsvd7"
 };
 const char	*mu_mode[] = {
-	"t1", "e1", "2*e1", "4*e1", "n64"
+	"t1", "e1", "2*e1", "4*e1", "n64", "rsvd5", "rsvd6", "rsvd7"
 };
 
 char	musycc_intrbuf[48];
@@ -1747,6 +1747,7 @@ void
 musycc_dump_group(int level, struct musycc_group *mg)
 {
 	struct musycc_grpdesc	*md = mg->mg_group;
+	u_int32_t		 d;
 	int			 i;
 
 	if (level > accoom_debug)
@@ -1755,32 +1756,36 @@ musycc_dump_group(int level, struct musycc_group *mg)
 	printf("%s: dumping group %d\n",
 	    mg->mg_hdlc->mc_dev.dv_xname, mg->mg_gnum);
 	printf("===========================================================\n");
-	printf("global conf: %08x\n", md->global_conf);
+	printf("global conf: %08x\n", letoh32(md->global_conf));
+	d = letoh32(md->group_conf);
 	printf("group conf: [%08x] %s %s %s int %s%s inhib BSD %s%s poll %d\n",
-	    md->group_conf,
-	    md->group_conf & MUSYCC_GRCFG_TXENBL ? "TX" : "",
-	    md->group_conf & MUSYCC_GRCFG_RXENBL ? "RX" : "",
-	    md->group_conf & MUSYCC_GRCFG_SUBDSBL ? "" : "SUB",
-	    md->group_conf & MUSYCC_GRCFG_MSKOOF ? "" : "O",
-	    md->group_conf & MUSYCC_GRCFG_MSKCOFA ? "" : "C",
-	    md->group_conf & MUSYCC_GRCFG_INHTBSD ? "TX" : "",
-	    md->group_conf & MUSYCC_GRCFG_INHRBSD ? "RX" : "",
-	    (md->group_conf & MUSYCC_GRCFG_POLL64) == MUSYCC_GRCFG_POLL64 ? 64 :
-	    md->group_conf & MUSYCC_GRCFG_POLL32 ? 32 :
-	    md->group_conf & MUSYCC_GRCFG_POLL16 ? 16 : 1);
-	printf("port conf: [%08x] %s %s %s %s %s %s %s\n", md->port_conf,
-	    mu_mode[md->port_conf & MUSYCC_PORT_MODEMASK],
-	    md->port_conf & MUSYCC_PORT_TDAT_EDGE ? "TXE" : "!TXE",
-	    md->port_conf & MUSYCC_PORT_TSYNC_EDGE ? "TXS" : "!TXS",
-	    md->port_conf & MUSYCC_PORT_RDAT_EDGE ? "RXE" : "!RXE",
-	    md->port_conf & MUSYCC_PORT_RSYNC_EDGE ? "RXS" : "!RXS",
-	    md->port_conf & MUSYCC_PORT_ROOF_EDGE ? "ROOF" : "!ROOF",
-	    md->port_conf & MUSYCC_PORT_TRITX ? "!tri-state" : "tri-state");
+	    d,
+	    d & MUSYCC_GRCFG_TXENBL ? "TX" : "",
+	    d & MUSYCC_GRCFG_RXENBL ? "RX" : "",
+	    d & MUSYCC_GRCFG_SUBDSBL ? "" : "SUB",
+	    d & MUSYCC_GRCFG_MSKOOF ? "" : "O",
+	    d & MUSYCC_GRCFG_MSKCOFA ? "" : "C",
+	    d & MUSYCC_GRCFG_INHTBSD ? "TX" : "",
+	    d & MUSYCC_GRCFG_INHRBSD ? "RX" : "",
+	    (d & MUSYCC_GRCFG_POLL64) == MUSYCC_GRCFG_POLL64 ? 64 :
+	    d & MUSYCC_GRCFG_POLL32 ? 32 :
+	    d & MUSYCC_GRCFG_POLL16 ? 16 : 1);
+	d = letoh32(md->port_conf);
+	printf("port conf: [%08x] %s %s %s %s %s %s %s\n", d,
+	    mu_mode[d & MUSYCC_PORT_MODEMASK],
+	    d & MUSYCC_PORT_TDAT_EDGE ? "TXE" : "!TXE",
+	    d & MUSYCC_PORT_TSYNC_EDGE ? "TXS" : "!TXS",
+	    d & MUSYCC_PORT_RDAT_EDGE ? "RXE" : "!RXE",
+	    d & MUSYCC_PORT_RSYNC_EDGE ? "RXS" : "!RXS",
+	    d & MUSYCC_PORT_ROOF_EDGE ? "ROOF" : "!ROOF",
+	    d & MUSYCC_PORT_TRITX ? "!tri-state" : "tri-state");
 	printf("message len 1: %d 2: %d\n",
-	    md->msglen_conf & MUSYCC_MAXFRM_MASK,
-	    (md->msglen_conf >> MUSYCC_MAXFRM2_SHIFT) & MUSYCC_MAXFRM_MASK);
-	printf("interrupt queue %x len %d\n", md->int_queuep, md->int_queuelen);
-	printf("memory protection %x\n", md->memprot);
+	    letoh32(md->msglen_conf) & MUSYCC_MAXFRM_MASK,
+	    (letoh32(md->msglen_conf) >> MUSYCC_MAXFRM2_SHIFT) &
+	    MUSYCC_MAXFRM_MASK);
+	printf("interrupt queue %x len %d\n", letoh32(md->int_queuep),
+	    letoh32(md->int_queuelen));
+	printf("memory protection %x\n", letoh32(md->memprot));
 	printf("===========================================================\n");
 	printf("Timeslot Map:TX\t\tRX\n");
 	for (i = 0; i < 128; i++) {
@@ -1798,31 +1803,35 @@ musycc_dump_group(int level, struct musycc_group *mg)
 			    md->rx_tsmap[i] & MUSYCC_TSLOT_SUB ? "S" : " ",
 			    md->rx_tsmap[i] & MUSYCC_TSLOT_56K ? "*" : " ",
 			    MUSYCC_TSLOT_CHAN(md->rx_tsmap[i]));
+		else
+			printf("\n");
 	}
 	printf("===========================================================\n");
 	printf("Channel config:\nTX\t\t\tRX\n");
 	for (i = 0; i < 32; i++)
 		if (md->tx_cconf[i] != 0) {
+			d = letoh32(md->tx_cconf[i]);
 			printf("%s%s%s%s%s%s%s %s [%x]\t",
-			    md->tx_cconf[i] & MUSYCC_CHAN_MSKBUFF ? "B" : " ",
-			    md->tx_cconf[i] & MUSYCC_CHAN_MSKEOM ? "E" : " ",
-			    md->tx_cconf[i] & MUSYCC_CHAN_MSKMSG ? "M" : " ",
-			    md->tx_cconf[i] & MUSYCC_CHAN_MSKIDLE ? "I" : " ",
-			    md->tx_cconf[i] & MUSYCC_CHAN_FCS ? "F" : "",
-			    md->tx_cconf[i] & MUSYCC_CHAN_MAXLEN1 ? "1" : "",
-			    md->tx_cconf[i] & MUSYCC_CHAN_MAXLEN2 ? "2" : "",
-			    mu_proto[MUSYCC_CHAN_PROTO_GET(md->tx_cconf[i])],
-			    md->tx_cconf[i]);
+			    d & MUSYCC_CHAN_MSKBUFF ? "B" : " ",
+			    d & MUSYCC_CHAN_MSKEOM ? "E" : " ",
+			    d & MUSYCC_CHAN_MSKMSG ? "M" : " ",
+			    d & MUSYCC_CHAN_MSKIDLE ? "I" : " ",
+			    d & MUSYCC_CHAN_FCS ? "F" : "",
+			    d & MUSYCC_CHAN_MAXLEN1 ? "1" : "",
+			    d & MUSYCC_CHAN_MAXLEN2 ? "2" : "",
+			    mu_proto[MUSYCC_CHAN_PROTO_GET(d)],
+			    d);
+			d = letoh32(md->rx_cconf[i]);
 			printf("%s%s%s%s%s%s%s %s [%x]\n",
-			    md->rx_cconf[i] & MUSYCC_CHAN_MSKBUFF ? "B" : " ",
-			    md->rx_cconf[i] & MUSYCC_CHAN_MSKEOM ? "E" : " ",
-			    md->rx_cconf[i] & MUSYCC_CHAN_MSKMSG ? "M" : " ",
-			    md->rx_cconf[i] & MUSYCC_CHAN_MSKIDLE ? "I" : " ",
-			    md->rx_cconf[i] & MUSYCC_CHAN_FCS ? "F" : "",
-			    md->rx_cconf[i] & MUSYCC_CHAN_MAXLEN1 ? "1" : "",
-			    md->rx_cconf[i] & MUSYCC_CHAN_MAXLEN2 ? "2" : "",
-			    mu_proto[MUSYCC_CHAN_PROTO_GET(md->rx_cconf[i])],
-			    md->rx_cconf[i]);
+			    d & MUSYCC_CHAN_MSKBUFF ? "B" : " ",
+			    d & MUSYCC_CHAN_MSKEOM ? "E" : " ",
+			    d & MUSYCC_CHAN_MSKMSG ? "M" : " ",
+			    d & MUSYCC_CHAN_MSKIDLE ? "I" : " ",
+			    d & MUSYCC_CHAN_FCS ? "F" : "",
+			    d & MUSYCC_CHAN_MAXLEN1 ? "1" : "",
+			    d & MUSYCC_CHAN_MAXLEN2 ? "2" : "",
+			    mu_proto[MUSYCC_CHAN_PROTO_GET(d)],
+			    d);
 		}
 	printf("===========================================================\n");
 	musycc_dump_dma(level, mg, 0);
@@ -1835,13 +1844,16 @@ musycc_dump_desc(int level, struct musycc_group *mg)
 	bus_space_read_4(mg->mg_hdlc->mc_st, mg->mg_hdlc->mc_sh, \
 	    MUSYCC_GROUPBASE(mg->mg_gnum) + (x))
 	u_int32_t	w;
+	u_int8_t	c1, c2;
 	int		i;
 
 	if (level > accoom_debug)
 		return;
 
-	printf("%s: dumping descriptor %d\n",
-	    mg->mg_hdlc->mc_dev.dv_xname, mg->mg_gnum);
+	printf("%s: dumping descriptor %d at %p kva %08x + %x dma %08x\n",
+	    mg->mg_hdlc->mc_dev.dv_xname, mg->mg_gnum, mg->mg_group,
+	    mg->mg_hdlc->mc_cfgmap->dm_segs[0].ds_addr,
+	    MUSYCC_GROUPBASE(mg->mg_gnum), READ4(0));
 	printf("===========================================================\n");
 	printf("global conf: %08x\n", READ4(MUSYCC_GLOBALCONF));
 	w = READ4(0x060c);
@@ -1872,7 +1884,30 @@ musycc_dump_desc(int level, struct musycc_group *mg)
 	printf("interrupt queue %x len %d\n", READ4(0x0604), READ4(0x0608));
 	printf("memory protection %x\n", READ4(0x0610));
 	printf("===========================================================\n");
-
+	printf("Timeslot Map:TX\t\tRX\n");
+	for (i = 0; i < 128; i++) {
+		c1 = bus_space_read_1(mg->mg_hdlc->mc_st, mg->mg_hdlc->mc_sh,
+		    MUSYCC_GROUPBASE(mg->mg_gnum) + 0x0200 + i);
+		c2 = bus_space_read_1(mg->mg_hdlc->mc_st, mg->mg_hdlc->mc_sh,
+		    MUSYCC_GROUPBASE(mg->mg_gnum) + 0x0400 + i);
+		if (c1 & MUSYCC_TSLOT_ENABLED)
+			printf("%d: %s%s%s[%02d]\t\t", i,
+			    c1 & MUSYCC_TSLOT_ENABLED ? "C" : " ",
+			    c1 & MUSYCC_TSLOT_SUB ? "S" : " ",
+			    c1 & MUSYCC_TSLOT_56K ? "*" : " ",
+			    MUSYCC_TSLOT_CHAN(c1));
+		else if (c2 & MUSYCC_TSLOT_ENABLED)
+			printf("%d: \t\t", i);
+		if (c2 & MUSYCC_TSLOT_ENABLED)
+			printf("%s%s%s[%02d]\n",
+			    c2 & MUSYCC_TSLOT_ENABLED ? "C" : " ",
+			    c2 & MUSYCC_TSLOT_SUB ? "S" : " ",
+			    c2 & MUSYCC_TSLOT_56K ? "*" : " ",
+			    MUSYCC_TSLOT_CHAN(c2));
+		else
+			printf("\n");
+	}
+	printf("===========================================================\n");
 	printf("Channel config:\nTX\t\t\t\tRX\n");
 	for (i = 0; i < 32; i++) {
 		w = READ4(0x0380 + i * 4);
