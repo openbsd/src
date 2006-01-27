@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.53 2006/01/06 16:41:15 reyk Exp $	*/
+/*	$OpenBSD: update.c,v 1.54 2006/01/27 15:26:38 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -250,7 +250,7 @@ cvs_update_local(CVSFILE *cf, void *arg)
 			    fpath);
 			if (cvs_checkout_rev(NULL, NULL, cf, fpath,
 			    islocal, CHECKOUT_REV_REMOVED) < 0)
-				return (CVS_EX_FILE);
+				fatal("cvs_update_local: cvs_checkout_rev failed");
 			return (CVS_EX_OK);
 		}
 	} else {
@@ -261,20 +261,15 @@ cvs_update_local(CVSFILE *cf, void *arg)
 
 	/* set keyword expansion */
 	/* XXX look at cf->cf_opts as well for this */
-	if (rcs_kwexp_set(rf, kflag) < 0) {
-		rcs_close(rf);
-		return (CVS_EX_DATA);
-	}
+	if (rcs_kwexp_set(rf, kflag) < 0)
+		fatal("cvs_update_local: rcs_kwexp_set failed");
 
 	/* fill in the correct revision */
 	if (rev != NULL) {
-		if ((frev = rcsnum_parse(rev)) == NULL) {
-			rcs_close(rf);
-			return (CVS_EX_DATA);
-		}
-	} else {
+		if ((frev = rcsnum_parse(rev)) == NULL)
+			fatal("cvs_update_local: rcsnum_parse failed");
+	} else
 		frev = rf->rf_head;
-	}
 
 	/*
 	 * Compare the headrevision with the revision we currently have.

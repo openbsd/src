@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.30 2006/01/27 12:45:21 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.31 2006/01/27 15:26:38 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -169,7 +169,7 @@ cvs_release_dir(CVSFILE *cf, void *arg)
 	l = snprintf(updcmd, sizeof(updcmd), "%s %s %s update",
 	    __progname, UPDCMD_FLAGS, root->cr_str);
 	if (l == -1 || l >= (int)sizeof(updcmd))
-		return (CVS_EX_DATA);
+		fatal("cvs_release_dir: `cvs update' command string overflow");
 
 	/* XXX we should try to avoid a new connection ... */
 	cvs_log(LP_TRACE, "cvs_release_dir() popen(%s,r)", updcmd);

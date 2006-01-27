@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.52 2006/01/25 08:15:05 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.53 2006/01/27 15:26:38 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -172,9 +172,9 @@ cvs_status_local(CVSFILE *cf, void *arg)
 	rf = NULL;
 	if (cf->cf_cvstat != CVS_FST_UNKNOWN &&
 	    cf->cf_cvstat != CVS_FST_ADDED) {
-		rf = rcs_open(rcspath, RCS_READ);
-		if (rf == NULL)
-			return (CVS_EX_DATA);
+		if ((rf = rcs_open(rcspath, RCS_READ)) == NULL)
+			fatal("cvs_status_local: rcs_open `%s': %s", rcspath,
+			    strerror(rcs_errno));
 	}
 
 	buf[0] = '\0';

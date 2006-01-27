@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.77 2006/01/25 11:13:18 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.78 2006/01/27 15:26:38 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -572,10 +572,9 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 	/* at this point, the file is modified */
 	cvs_rcs_getpath(cf, rcspath, sizeof(rcspath));
 
-	rf = rcs_open(rcspath, RCS_READ);
-	if (rf == NULL) {
-		return (CVS_EX_DATA);
-	}
+	if ((rf = rcs_open(rcspath, RCS_READ)) == NULL)
+		fatal("cvs_diff_local: rcs_open `%s': %s", rcspath,
+		    strerror(rcs_errno));
 
 	cvs_printf("Index: %s\n%s\nRCS file: %s\n", diff_file,
 	    RCS_DIFF_DIV, rcspath);
@@ -583,10 +582,8 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 	if (dap->rev1 == NULL)
 		r1 = cf->cf_lrev;
 	else {
-		if ((r1 = rcsnum_parse(dap->rev1)) == NULL) {
-			rcs_close(rf);
-			return (CVS_EX_DATA);
-		}
+		if ((r1 = rcsnum_parse(dap->rev1)) == NULL)
+			fatal("cvs_diff_local: rcsnum_parse failed");
 	}
 
 	cvs_printf("retrieving revision %s\n",
