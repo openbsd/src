@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.89 2005/11/07 03:20:00 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.90 2006/01/28 01:48:21 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1962,23 +1962,17 @@ dc_newbuf(sc, i, m)
 
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
-			printf("%s: no memory for rx list "
-			    "-- packet dropped!\n", sc->sc_dev.dv_xname);
+		if (m_new == NULL)
 			return (ENOBUFS);
-		}
 
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
-			printf("%s: no memory for rx list "
-			    "-- packet dropped!\n", sc->sc_dev.dv_xname);
 			m_freem(m_new);
 			return (ENOBUFS);
 		}
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, sc->sc_rx_sparemap,
 		    m_new, BUS_DMA_NOWAIT) != 0) {
-			printf("%s: rx load failed\n", sc->sc_dev.dv_xname);
 			m_freem(m_new);
 			return (ENOBUFS);
 		}
@@ -1986,6 +1980,11 @@ dc_newbuf(sc, i, m)
 		sc->dc_cdata.dc_rx_chain[i].sd_map = sc->sc_rx_sparemap;
 		sc->sc_rx_sparemap = map;
 	} else {
+		/*
+		 * We're re-using a previously allocated mbuf;
+		 * be sure to re-init pointers and lengths to
+		 * default values.
+		 */
 		m_new = m;
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 		m_new->m_data = m_new->m_ext.ext_buf;
