@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sensors.c,v 1.6 2006/01/19 17:08:40 grange Exp $	*/
+/*	$OpenBSD: kern_sensors.c,v 1.7 2006/01/28 09:53:37 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -27,8 +27,8 @@
 
 #include <sys/sensors.h>
 
-int _sensors_count = 0;
-struct sensors_head _sensors_list = SLIST_HEAD_INITIALIZER(&_sensors_list);
+int			sensors_count = 0;
+struct sensors_head	sensors_list = SLIST_HEAD_INITIALIZER(&sensors_list);
 
 struct sensor_task {
 	void				*arg;
@@ -53,18 +53,18 @@ sensor_add(struct sensor *sens)
 	int s;
 
 	s = splhigh();
-	if (_sensors_count == 0) {
+	if (sensors_count == 0) {
 		sens->num = 0;
-		SLIST_INSERT_HEAD(&_sensors_list, sens, list);
+		SLIST_INSERT_HEAD(&sensors_list, sens, list);
 	} else {
-		for (v = SLIST_FIRST(&_sensors_list);
+		for (v = SLIST_FIRST(&sensors_list);
 		    (nv = SLIST_NEXT(v, list)) != NULL; v = nv)
 			if (nv->num - v->num > 1)
 				break;
 		sens->num = v->num + 1;
 		SLIST_INSERT_AFTER(v, sens, list);
 	}
-	_sensors_count++;
+	sensors_count++;
 	splx(s);
 }
 
@@ -74,9 +74,22 @@ sensor_del(struct sensor *sens)
 	int s;
 
 	s = splhigh();
-	_sensors_count--;
-	SLIST_REMOVE(&_sensors_list, sens, sensor, list);
+	sensors_count--;
+	SLIST_REMOVE(&sensors_list, sens, sensor, list);
 	splx(s);
+}
+
+struct sensor *
+sensor_get(int num)
+{
+	struct sensor *s;
+
+	SLIST_FOREACH(s, &sensors_list, list) {
+		if (s->num == num)
+			return (s);
+	}
+
+	return (NULL);
 }
 
 int

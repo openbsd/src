@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.h,v 1.13 2006/01/19 17:08:40 grange Exp $	*/
+/*	$OpenBSD: sensors.h,v 1.14 2006/01/28 09:53:37 dlg Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -84,14 +84,13 @@ struct sensor {
 SLIST_HEAD(sensors_head, sensor);
 
 #ifdef _KERNEL
-extern int _sensors_count;
-extern struct sensors_head _sensors_list;
 
-void	sensor_add(struct sensor *);
-void	sensor_del(struct sensor *);
+void		sensor_add(struct sensor *);
+void		sensor_del(struct sensor *);
+struct sensor	*sensor_get(int);
 
-int	sensor_task_register(void *, void (*)(void *), int);
-void	sensor_task_unregister(void *);
+int		sensor_task_register(void *, void (*)(void *), int);
+void		sensor_task_unregister(void *);
 
 #endif	/* _KERNEL */
 
