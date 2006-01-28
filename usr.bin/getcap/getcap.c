@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcap.c,v 1.1 2005/02/19 22:15:41 millert Exp $	*/
+/*	$OpenBSD: getcap.c,v 1.2 2006/01/28 22:35:54 millert Exp $	*/
 
 /*
  * Copyright (c) 2005 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: getcap.c,v 1.1 2005/02/19 22:15:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: getcap.c,v 1.2 2006/01/28 22:35:54 millert Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -149,8 +149,6 @@ lookup_cap(char *buf, char *cap, enum captype type, int useprefix)
 			return;
 		else if (n == -2)
 			err(1, NULL);	/* ENOMEM */
-		if (cgetstr(buf, cap, &cp) < 0)
-			return;
 		printf("%.*s%s%s\n", prefixlen, buf,
 		    useprefix ? ": " : "", cp);
 		break;
