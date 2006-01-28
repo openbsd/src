@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.15 2005/11/07 03:20:00 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.16 2006/01/28 02:15:19 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1066,10 +1066,7 @@ re_rxeof(sc)
 	struct ifnet		*ifp;
 	int			i, total_len;
 	struct rl_desc		*cur_rx;
-#ifdef RE_VLAN
-	struct m_tag		*mtag;
-#endif
-	u_int32_t		rxstat, rxvlan;
+	u_int32_t		rxstat;
 
 	ifp = &sc->sc_arpcom.ac_if;
 	i = sc->rl_ldata.rl_rx_prodidx;
@@ -1087,7 +1084,6 @@ re_rxeof(sc)
 		m = sc->rl_ldata.rl_rx_mbuf[i];
 		total_len = RL_RXBYTES(cur_rx);
 		rxstat = letoh32(cur_rx->rl_cmdstat);
-		rxvlan = letoh32(cur_rx->rl_vlanctl);
 
 		/* Invalidate the RX mbuf and unload its map */
 
@@ -1205,20 +1201,6 @@ re_rxeof(sc)
 		    !(rxstat & RL_RDESC_STAT_UDPSUMBAD)))
 			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
 
-#ifdef RE_VLAN
-		if (rxvlan & RL_RDESC_VLANCTL_TAG) {
-			mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
-			    M_NOWAIT);
-			if (mtag == NULL) {
-				ifp->if_ierrors++;
-				m_freem(m);
-				continue;
-			}
-			*(u_int *)(mtag + 1) = 
-			    be16toh(rxvlan & RL_RDESC_VLANCTL_DATA);
-			m_tag_prepend(m, mtag);
-		}
-#endif
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
@@ -1585,13 +1567,12 @@ re_init(struct ifnet *ifp)
 	re_stop(sc);
 
 	/*
-	 * Enable C+ RX and TX mode, as well as VLAN stripping and
-	 * RX checksum offload. We must configure the C+ register
-	 * before all others.
+	 * Enable C+ RX and TX mode, as well as RX checksum offload.
+	 * We must configure the C+ register before all others.
 	 */
 	CSR_WRITE_2(sc, RL_CPLUS_CMD, RL_CPLUSCMD_RXENB|
 	    RL_CPLUSCMD_TXENB|RL_CPLUSCMD_PCI_MRW|
-	    RL_CPLUSCMD_VLANSTRIP|RL_CPLUSCMD_RXCSUM_ENB);
+	    RL_CPLUSCMD_RXCSUM_ENB);
 
 	/*
 	 * Init our MAC address.  Even though the chipset
