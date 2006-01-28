@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.23 2006/01/03 11:06:55 xsa Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.24 2006/01/28 14:09:34 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -237,10 +237,8 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 		}
 
 		val = (nump->rn_id[nump->rn_len] * 10) + (*sp - 0x30);
-		if (val > RCSNUM_MAXNUM) {
-			cvs_log(LP_ERR, "RCSNUM overflow");
-			goto rcsnum_aton_failed;
-		}
+		if (val > RCSNUM_MAXNUM)
+			fatal("RCSNUM overflow!");
 
 		nump->rn_id[nump->rn_len] = val;
 	}
