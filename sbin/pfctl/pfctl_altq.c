@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.86 2005/02/28 14:04:51 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.87 2006/01/28 18:54:28 henning Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -91,21 +91,6 @@ pfaltq_store(struct pf_altq *a)
 		err(1, "malloc");
 	memcpy(altq, a, sizeof(struct pf_altq));
 	TAILQ_INSERT_TAIL(&altqs, altq, entries);
-}
-
-void
-pfaltq_free(struct pf_altq *a)
-{
-	struct pf_altq	*altq;
-
-	TAILQ_FOREACH(altq, &altqs, entries) {
-		if (strncmp(a->ifname, altq->ifname, IFNAMSIZ) == 0 &&
-		    strncmp(a->qname, altq->qname, PF_QNAME_SIZE) == 0) {
-			TAILQ_REMOVE(&altqs, altq, entries);
-			free(altq);
-			return;
-		}
-	}
 }
 
 struct pf_altq *
