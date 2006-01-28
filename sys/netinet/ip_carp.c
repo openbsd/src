@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.118 2005/11/29 09:57:44 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.119 2006/01/28 23:47:20 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -257,11 +257,12 @@ carp_hmac_prepare(struct carp_softc *sc)
 	do {
 		found = 0;
 		last = cur;
-		cur.s_addr = 0xffffff;
+		cur.s_addr = 0xffffffff;
 		TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
 			in.s_addr = ifatoia(ifa)->ia_addr.sin_addr.s_addr;
-			if (ifa->ifa_addr->sa_family == AF_INET && 
-		    	    in.s_addr > last.s_addr && in.s_addr < cur.s_addr) {
+			if (ifa->ifa_addr->sa_family == AF_INET &&
+			    ntohl(in.s_addr) > ntohl(last.s_addr) &&
+			    ntohl(in.s_addr) < ntohl(cur.s_addr)) {
 				cur.s_addr = in.s_addr;
 				found++;
 			}
