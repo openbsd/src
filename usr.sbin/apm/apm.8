@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.8,v 1.26 2006/01/19 19:17:10 sturm Exp $
+.\"	$OpenBSD: apm.8,v 1.27 2006/01/28 17:08:13 sturm Exp $
 .\"
 .\" Copyright (c) 1996 John T. Kohl
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Op Fl f Ar sockname
 .Br
 .Nm apm
-.Op Fl AabCHLlmPSsvz
+.Op Fl AabCHLlmPSvz
 .Op Fl f Ar sockname
 .Sh DESCRIPTION
 .Nm
@@ -95,8 +95,6 @@ Display the performance adjustment mode.
 mode, 3 means automatic mode, and 4 means cool running mode.
 .It Fl S
 Put the system into stand-by (light sleep) mode.
-.It Fl s
-Display if power management is enabled.
 .It Fl v
 Request more verbose description of the displayed states.
 .It Fl z

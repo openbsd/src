@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.16 2006/01/19 19:17:10 sturm Exp $	*/
+/*	$OpenBSD: apm.c,v 1.17 2006/01/28 17:08:13 sturm Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -58,7 +58,7 @@ int send_command(int fd, struct apm_command *cmd, struct apm_reply *reply);
 void
 usage(void)
 {
-	fprintf(stderr,"usage: %s [-AabCHLlmPSsvz] [-f sockname]\n",
+	fprintf(stderr,"usage: %s [-AabCHLlmPSvz] [-f sockname]\n",
 	    __progname);
 	exit(1);
 }
@@ -137,7 +137,6 @@ int
 main(int argc, char *argv[])
 {
 	const char *sockname = _PATH_APM_SOCKET;
-	int dostatus = FALSE;
 	int doac = FALSE;
 	int dopct = FALSE;
 	int dobstate = FALSE;
@@ -149,7 +148,7 @@ main(int argc, char *argv[])
 	struct apm_command command;
 	struct apm_reply reply;
 
-	while ((ch = getopt(argc, argv, "ACHLlmbvaPsSzf:")) != -1) {
+	while ((ch = getopt(argc, argv, "ACHLlmbvaPSzf:")) != -1) {
 		switch (ch) {
 		case 'v':
 			verbose = TRUE;
@@ -186,12 +185,6 @@ main(int argc, char *argv[])
 			if (action != NONE)
 				usage();
 			action = SETPERF_LOW;
-			break;
-		case 's':
-			if (action != NONE && action != GETSTATUS)
-				usage();
-			dostatus = TRUE;
-			action = GETSTATUS;
 			break;
 		case 'b':
 			if (action != NONE && action != GETSTATUS)
@@ -236,8 +229,7 @@ main(int argc, char *argv[])
 	switch (action) {
 	case NONE:
 		action = GETSTATUS;
-		verbose = doac = dopct = dobstate = dostatus = domin = TRUE;
-		doperf = TRUE;
+		verbose = doac = dopct = dobstate = domin = doperf = TRUE;
 		/* FALLTHROUGH */
 	case GETSTATUS:
 		if (fd == -1) {
@@ -284,19 +276,28 @@ main(int argc, char *argv[])
 			if (doac)
 				printf("%d\n",
 				    reply.batterystate.ac_state);
-			if (dostatus)
-				printf("1\n");
 			if (doperf)
 				printf("%d\n", reply.perfstate);
 			break;
 		}
-		if (dobstate)
-			printf("Battery state: %s\n",
+
+		if (dobstate) {
+			printf("Battery state: %s",
 			    battstate(reply.batterystate.battery_state));
-		if (dopct)
-			printf("Battery remaining: %d percent\n",
+			if (!dopct && !domin)
+				printf("\n");
+		}
+
+		if (dopct && !dobstate)
+			printf("Battery remaining: %d percent",
 			    reply.batterystate.battery_life);
-		if (domin) {
+		else if (dopct)
+			printf(", %d %% remaining",
+			    reply.batterystate.battery_life);
+		if (dopct && !domin)
+			printf("\n");
+
+		if (domin && !dobstate && !dopct) {
 #ifdef __powerpc__
 			if (reply.batterystate.battery_state ==
 			    APM_BATT_CHARGING)
@@ -318,15 +319,35 @@ main(int argc, char *argv[])
 					printf("%d minutes\n",
 					    reply.batterystate.minutes_left);
 			}
+		} else if (domin) {
+#ifdef __powerpc__
+			if (reply.batterystate.battery_state ==
+			    APM_BATT_CHARGING)
+				printf(", %d minutes recharge time estimate\n",
+				    reply.batterystate.minutes_left);
+			else if (reply.batterystate.minutes_left == 0 &&
+			    reply.batterystate.battery_life > 10)
+				printf(", unknown life estimate\n");
+			else
+#endif
+			{
+				if (reply.batterystate.minutes_left ==
+				    (u_int)-1)
+					printf(", unknown");
+				else
+					printf(", %d minutes",
+					    reply.batterystate.minutes_left);
+				printf(" life estimate\n");
+			}
 		}
+
 		if (doac)
 			printf("A/C adapter state: %s\n",
 			    ac_state(reply.batterystate.ac_state));
+
 		if (doperf)
 			printf("Performance state: %s (%d MHz)\n",
 			    perf_state(reply.perfstate), reply.cpuspeed);
-		if (dostatus)
-			printf("Power management enabled\n");
 		break;
 	default:
 		break;

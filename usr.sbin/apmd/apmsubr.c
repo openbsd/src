@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmsubr.c,v 1.6 2006/01/19 19:17:10 sturm Exp $	*/
+/*	$OpenBSD: apmsubr.c,v 1.7 2006/01/28 17:08:14 sturm Exp $	*/
 
 /*
  *  Copyright (c) 1995,1996 John T. Kohl
@@ -48,7 +48,7 @@ battstate(int state)
 	case APM_BATTERY_ABSENT:
 		return "absent";
 	case APM_BATT_UNKNOWN:
-		return "unknown (absent?)";
+		return "unknown";
 	default:
 		return "invalid battery state";
 	}
