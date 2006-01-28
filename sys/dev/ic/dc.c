@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.90 2006/01/28 01:48:21 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.91 2006/01/28 10:08:38 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2703,16 +2703,12 @@ dc_coal(sc, m_head)
 
 	m = *m_head;
 	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-	if (m_new == NULL) {
-		printf("%s: no memory for tx list", sc->sc_dev.dv_xname);
+	if (m_new == NULL)
 		return (ENOBUFS);
-	}
 	if (m->m_pkthdr.len > MHLEN) {
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
 			m_freem(m_new);
-			printf("%s: no memory for tx list",
-			    sc->sc_dev.dv_xname);
 			return (ENOBUFS);
 		}
 	}
