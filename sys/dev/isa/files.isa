@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.92 2006/01/14 15:14:33 kettenis Exp $
+#	$OpenBSD: files.isa,v 1.93 2006/01/28 11:25:17 kettenis Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -376,7 +376,7 @@ file	dev/isa/lpt_isa.c		lpt_isa needs-flag
 
 # National Semiconductor LM78/79/81 and compatible hardware monitors
 attach	lm at isa with lm_isa
-file	dev/isa/lm_isa.c		lm_isa
+file	dev/isa/lm78_isa.c		lm_isa
 
 # NSC PC87366 Super IO / monitor chip
 device	nsclpcsio: gpiobus
