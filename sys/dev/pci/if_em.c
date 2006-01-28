@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.101 2006/01/14 00:37:11 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.102 2006/01/28 20:56:15 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -156,7 +156,7 @@ u_int32_t em_fill_descriptors(u_int64_t address, u_int32_t length,
 			      PDESC_ARRAY desc_array);
 
 /*********************************************************************
- *  OpenBSD Device Interface Entry Points		     
+ *  OpenBSD Device Interface Entry Points
  *********************************************************************/
 
 struct cfattach em_ca = {
@@ -173,7 +173,7 @@ struct cfdriver em_cd = {
  *  em_probe determines if the driver should be loaded on
  *  adapter based on PCI vendor/device id of the adapter.
  *
- *  return 0 on success, positive on failure
+ *  return 0 on no match, positive on match
  *********************************************************************/
 
 int
@@ -189,10 +189,9 @@ em_probe(struct device *parent, void *match, void *aux)
  *  Device initialization routine
  *
  *  The attach entry point is called when the driver is being loaded.
- *  This routine identifies the type of hardware, allocates all resources 
- *  and initializes the hardware.     
- *  
- *  return 0 on success, positive on failure
+ *  This routine identifies the type of hardware, allocates all resources
+ *  and initializes the hardware.
+ *
  *********************************************************************/
 
 void 
@@ -236,7 +235,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	/*
 	 * Set the max frame size assuming standard Ethernet
-	 * sized frames
+	 * sized frames.
 	 */
 	switch (sc->hw.mac_type) {
 		case em_82571:
@@ -262,7 +261,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	sc->hw.report_tx_early = 1;
 
 	if (em_allocate_pci_resources(sc)) {
-		printf("%s: Allocation of PCI resources failed\n", 
+		printf("%s: Allocation of PCI resources failed\n",
 		       sc->sc_dv.dv_xname);
 		goto err_pci;
 	}
@@ -288,7 +287,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Allocate Receive Descriptor ring */
 	if (em_dma_malloc(sc, rsize, &sc->rxdma, BUS_DMA_NOWAIT)) {
-		printf("%s: Unable to allocate rx_desc memory\n", 
+		printf("%s: Unable to allocate rx_desc memory\n",
 		       sc->sc_dv.dv_xname);
 		goto err_rx_desc;
 	}
@@ -564,7 +563,7 @@ em_watchdog(struct ifnet *ifp)
  *
  *  This routine is used in two ways. It is used by the stack as
  *  init entry point in network interface structure. It is also used
- *  by the driver as a hw/sw initialization routine to get to a 
+ *  by the driver as a hw/sw initialization routine to get to a
  *  consistent state.
  *
  **********************************************************************/
@@ -1687,8 +1686,8 @@ em_dma_free(struct em_softc *sc, struct em_dma_alloc *dma)
 
 /*********************************************************************
  *
- *  Allocate memory for tx_buffer structures. The tx_buffer stores all 
- *  the information needed to transmit a packet on the wire. 
+ *  Allocate memory for tx_buffer structures. The tx_buffer stores all
+ *  the information needed to transmit a packet on the wire.
  *
  **********************************************************************/
 int
@@ -2272,13 +2271,12 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
 	bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map, 0,
 	    sc->rxdma.dma_size, BUS_DMASYNC_POSTREAD);
 
-	if (!((current_desc->status) & E1000_RXD_STAT_DD)) {
+	if (!((current_desc->status) & E1000_RXD_STAT_DD))
 		return;
-	}
 
 	while ((current_desc->status & E1000_RXD_STAT_DD) &&
-		    (count != 0) &&
-		    (ifp->if_flags & IFF_RUNNING)) {
+	    (count != 0) &&
+	    (ifp->if_flags & IFF_RUNNING)) {
 		struct mbuf *m = NULL;
 
 		mp = sc->rx_buffer_area[i].m_head;
@@ -2313,7 +2311,6 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
 				pkt_len += sc->fmp->m_pkthdr.len; 
 
 			last_byte = *(mtod(mp, caddr_t) + desc_len - 1);
-
 			if (TBI_ACCEPT(&sc->hw, current_desc->status,
 				       current_desc->errors,
 				       pkt_len, last_byte)) {
@@ -2321,15 +2318,13 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
 						    &sc->stats, 
 						    pkt_len, 
 						    sc->hw.mac_addr);
-				if (len > 0) len--;
-			}
-			else {
+				if (len > 0)
+					len--;
+			} else
 				accept_frame = 0;
-			}
 		}
 
 		if (accept_frame) {
-
 			if (em_get_buf(i, sc, NULL) == ENOBUFS) {
 				sc->dropped_pkts++;
 				em_get_buf(i, sc, mp);
@@ -2430,12 +2425,12 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
 			sc->lmp = NULL;
 		}
 
-		/* Zero out the receive descriptors status  */
+		/* Zero out the receive descriptors status. */
 		current_desc->status = 0;
 		bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map, 0,
 		    sc->rxdma.dma_size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-		/* Advance our pointers to the next descriptor */
+		/* Advance our pointers to the next descriptor. */
 		if (++i == sc->num_rx_desc)
 			i = 0;
 		if (m != NULL) {
@@ -2459,7 +2454,8 @@ em_process_receive_interrupts(struct em_softc *sc, int count)
 	sc->next_rx_desc_to_check = i;
 
 	/* Advance the E1000's Receive Queue #0  "Tail Pointer". */
-	if (--i < 0) i = sc->num_rx_desc - 1;
+	if (--i < 0)
+		i = sc->num_rx_desc - 1;
 	E1000_WRITE_REG(&sc->hw, RDT, i);
 }
 
