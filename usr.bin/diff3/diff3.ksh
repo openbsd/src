@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: diff3.ksh,v 1.2 2003/07/31 11:16:58 millert Exp $
+# $OpenBSD: diff3.ksh,v 1.3 2006/01/28 07:27:38 tedu Exp $
 #
 # Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 #
@@ -59,7 +59,7 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 trap "/bin/rm -f $TMP1 $TMP2" 0 1 2 13 15
-diff $dflags $1 $3 > $TMP1
-diff $dflags $2 $3 > $TMP2
-$diff3prog $d3flags $TMP1 $TMP2 $1 $2 $3
+diff $dflags -- $1 $3 > $TMP1
+diff $dflags -- $2 $3 > $TMP2
+$diff3prog $d3flags -- $TMP1 $TMP2 $1 $2 $3
 exit $?
