@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpleaps.c,v 1.7 2004/05/05 20:29:54 jakob Exp $	*/
+/*	$OpenBSD: ntpleaps.c,v 1.8 2006/01/28 07:25:23 tedu Exp $	*/
 
 /*
  * Copyright (c) 2002 Thorsten Glaser. All rights reserved.
@@ -31,7 +31,7 @@
 
 /* Leap second support for NTP clients (generic) */
 
-static const char RCSId[] = "$OpenBSD: ntpleaps.c,v 1.7 2004/05/05 20:29:54 jakob Exp $";
+static const char RCSId[] = "$OpenBSD: ntpleaps.c,v 1.8 2006/01/28 07:25:23 tedu Exp $";
 
 
 /*
@@ -50,30 +50,31 @@ static const char RCSId[] = "$OpenBSD: ntpleaps.c,v 1.7 2004/05/05 20:29:54 jako
 
 #include "ntpleaps.h"
 
-u_int64_t *leapsecs = NULL;
-unsigned int leapsecs_num = 0;
-static int flaginit = -1;
-static int flagwarn = 0;
+static u_int64_t *leapsecs;
+static unsigned int leapsecs_num;
 
 
 int
 ntpleaps_init(void)
 {
-	if (!flaginit)
+	static int doneinit;
+	static int donewarn;
+	
+	if (doneinit)
 		return (0);
 
-	if (!ntpleaps_read()) {
-		flaginit = 0;
+	if (ntpleaps_read() == 0) {
+		doneinit = 1;
 		return (0);
 	}
 
 	/* This does not really hurt, but users will complain about
 	 * off-by-22-seconds (at time of coding) errors if we don't warn.
 	 */
-	if (!flagwarn) {
+	if (!donewarn) {
 		fputs("Warning: error reading tzfile. You will NOT be\n"
 		    "able to get legal time or posix compliance!\n", stderr);
-		flagwarn = 1;	/* put it only once */
+		donewarn = 1;	/* put it only once */
 	}
 
 	return (-1);
@@ -86,20 +87,20 @@ ntpleaps_sub(u_int64_t *t)
 	u_int64_t u;
 	int r = 1;
 
-	if ((flaginit ? ntpleaps_init() : 0) == -1)
+	if (ntpleaps_init() == -1)
 		return (-1);
 
 	u = *t;
 
 	while (i < leapsecs_num) {
-		if (u < leapsecs[i])
+		if (u < leapsecs[i]) {
+			r--;
 			break;
+		}
 		if (u == leapsecs[i++])
-			goto do_sub;
+			break;
 	}
-	--r;
 
-do_sub:
 	*t = u - i;
 	return (r);
 }
@@ -178,8 +179,11 @@ ntpleaps_read(void)
 		 * the lacking error checking by validating the first entry
 		 * against the known value
 		 */
-		if (!m1 && s != 0x4000000004B2580AULL)
+		if (!m1 && s != 0x4000000004B2580AULL) {
+			free(l);
+			close(fd);
 			return (-1);
+		}
 		l[m1] = s;
 	}
 
