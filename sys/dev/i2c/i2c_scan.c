@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.63 2006/01/28 11:26:51 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.64 2006/01/28 15:55:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -320,28 +320,31 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	iicprobeinit(iba, addr);
 	skip_fc = 0;
 
+	/*
+	 * Many I2C/SMBus devices use register 0x3e as a vendor ID
+	 * register.
+	 */
 	switch (iicprobe(0x3e)) {
-	case 0x41:
+	case 0x41:		/* Analog Devices */
 		/*
-		 * Analog Devices adt/adm product code at 0x3e == 0x41.
 		 * Newer chips have a valid 0x3d product number, while
 		 * older ones sometimes encoded the product into the
-		 * upper half of the "step register" at 0x3f
+		 * upper half of the "step register" at 0x3f.
 		 */
-		if (iicprobe(0x3d) == 0x76 &&
-		    (addr == 0x2c || addr == 0x2d || addr == 0x2e))
-			name = "adt7476";
-		else if ((addr == 0x2c || addr == 0x2e || addr == 0x2f) &&
+		if ((addr == 0x2c || addr == 0x2e || addr == 0x2f) &&
 		    iicprobe(0x3d) == 0x70)
 			name = "adt7470";
+		else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
+		    iicprobe(0x3d) == 0x76)
+			name = "adt7476";
 		else if (iicprobe(0x3d) == 0x27 &&
 		    (iicprobe(0x3f) == 0x60 || iicprobe(0x3f) == 0x6a))
 			name = "adm1027";	/* complete check */
 		else if (iicprobe(0x3d) == 0x27 &&
 		    (iicprobe(0x3f) == 0x62 || iicprobe(0x3f) == 0x6a))
 			name = "adt7460";	/* complete check */
-		else if (iicprobe(0x3d) == 0x68 && addr == 0x2e &&
-		    (iicprobe(0x3f) & 0xf0) == 0x70)
+		else if (addr == 0x2e &&
+		    iicprobe(0x3d) == 0x68 && (iicprobe(0x3f) & 0xf0) == 0x70)
 			name = "adt7467";
 		else if (iicprobe(0x3d) == 0x33)
 			name = "adm1033";
@@ -373,35 +376,36 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "adm1024";	/* complete check */
 		else if ((iicprobe(0xff) & 0xf0) == 0x30)
 			name = "adm1023";
-		else if ((iicprobe(0x3f) & 0xf0) == 0xd0 && addr == 0x2e &&
+		else if (addr == 0x2e &&
+		    (iicprobe(0x3f) & 0xf0) == 0xd0 &&
 		    (iicprobe(0x40) & 0x80) == 0x00)
 			name = "adm1028";	/* adm1022 clone? */
-		else if ((iicprobe(0x3f) & 0xf0) == 0xc0 &&
-		    (addr == 0x2c || addr == 0x2e || addr == 0x2f) &&
+		else if ((addr == 0x2c || addr == 0x2e || addr == 0x2f) &&
+		    (iicprobe(0x3f) & 0xf0) == 0xc0 &&
 		    (iicprobe(0x40) & 0x80) == 0x00)
 			name = "adm1022";
 		break;
-	case 0xa1:
-		/* Philips vendor code 0xa1 at 0x3e */
+	case 0xa1:		/* Philips */
 		if ((iicprobe(0x3f) & 0xf0) == 0x20 &&
 		    (iicprobe(0x40) & 0x80) == 0x00 &&
 		    (iicprobe(0x41) & 0xc0) == 0x00 &&
 		    (iicprobe(0x42) & 0xbc) == 0x00)
 			name = "ne1619";	/* adm1025 compat */
 		break;
-	case 0x23:	/* 2nd ADM id? */
+	case 0x23:		/* Analog Devices? */
 		if (iicprobe(0x48) == addr &&
 		    (iicprobe(0x40) & 0x80) == 0x00 &&
 		    (addr & 0x7c) == 0x2c)
 			name = "adm9240";	/* lm87 clone */
 		break;
-	case 0x55:
-		if (iicprobe(0x3f) == 0x20 && (iicprobe(0x47) & 0x70) == 0x00 &&
-		    (iicprobe(0x49) & 0xfe) == 0x80 &&
-		    (addr & 0x7c) == 0x2c)
+	case 0x55:		/* SMSC */
+		if ((addr & 0x7c) == 0x2c &&		/* addr 0b01011xx */
+		    iicprobe(0x3f) == 0x20 &&
+		    (iicprobe(0x47) & 0x70) == 0x00 &&
+		    (iicprobe(0x49) & 0xfe) == 0x80)
 			name = "47m192";	/* adm1025 compat */
 		break;
-	case 0x01:
+	case 0x01:		/* National Semiconductor */
 		/*
 		 * Some newer National products use a vendor code at
 		 * 0x3e of 0x01, and then 0x3f contains a product code
@@ -423,42 +427,41 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "lm93";
 		else if (iicprobe(0x3f) == 0x17)
 			name = "lm86";
-		else if (iicprobe(0x3f) == 0x68 &&
-		    (addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
-		    iicprobe(0xf8) != 0x01)
+		else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
+		    iicprobe(0x3f) == 0x68 && iicprobe(0xf8) != 0x01)
 			name = "lm96000";	/* adt7460 compat? */
-		else if ((iicprobe(0x3f) == 0x60 || iicprobe(0x3f) == 0x62) &&
-		    (addr == 0x2c || addr == 0x2d || addr == 0x2e))
+		else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
+		    (iicprobe(0x3f) == 0x60 || iicprobe(0x3f) == 0x62))
 			name = "lm85";		/* lm85C/B == adt7460 compat */
-		else if (iicprobe(0x3f) == 0x03 && iicprobe(0x48) == addr &&
-		    ((iicprobe(0x40) & 0x80) == 0x00) && ((addr & 0x7c) == 0x2c))
+		else if ((addr & 0x7c) == 0x2c &&	/* addr 0b01011xx */
+		    iicprobe(0x48) == addr &&
+		    iicprobe(0x3f) == 0x03 && (iicprobe(0x40) & 0x80) == 0x00)
 			name = "lm81";
 		break;
-	case 0x49:	/* TI */
-		if ((iicprobe(0x3f) & 0xf0) == 0xc0 &&
-		    (addr == 0x2c || addr == 0x2e || addr == 0x2f) &&
+	case 0x49:		/* Texas Instruments */
+		if ((addr == 0x2c || addr == 0x2e || addr == 0x2f) &&
+		    (iicprobe(0x3f) & 0xf0) == 0xc0 &&
 		    (iicprobe(0x40) & 0x80) == 0x00)
 			name = "thmc50";	/* adm1022 clone */
 		break;
-	case 0x5c:	/* SMSC */
-		if ((iicprobe(0x3f) & 0xf0) == 0x60 &&
-		    (addr == 0x2c || addr == 0x2d || addr == 0x2e))
+	case 0x5c:		/* SMSC */
+		if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
+		    (iicprobe(0x3f) & 0xf0) == 0x60)
 			name = "emc6d10x";	/* adt7460 compat */
 		break;
-	case 0x02:
+	case 0x02:		/* National Semiconductor? */
 		if ((iicprobe(0x3f) & 0xfc) == 0x04)
 			name = "lm87";		/* complete check */
 		break;
-	case 0xda:
+	case 0xda:		/* Dallas Semiconductor */
 		if (iicprobe(0x3f) == 0x01 && iicprobe(0x48) == addr &&
 		    (iicprobe(0x40) & 0x80) == 0x00)
 			name = "ds1780";	/* lm87 clones */
 		break;
 	}
 	switch (iicprobe(0x4e)) {
-	case 0x41:
+	case 0x41:		/* Analog Devices */
 		if ((addr == 0x48 || addr == 0x4a || addr == 0x4b) &&
-		    /* addr 0b1001{000, 010, 011} */
 		    (iicprobe(0x4d) == 0x03 || iicprobe(0x4d) == 0x08 ||
 		    iicprobe(0x4d) == 0x07))
 			name = "adt7516";	/* adt7517, adt7519 */
@@ -470,10 +473,10 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		if (iicprobe(0xff) == 0x21 && (iicprobe(0x03) & 0x2a) == 0 &&
 		    iicprobe(0x04) <= 0x09 && iicprobe(0xff))
 			name = "lm90";		/* complete check */
-		else if (iicprobe(0xff) == 0x31 && addr == 0x4c &&
+		else if (addr == 0x4c && iicprobe(0xff) == 0x31 &&
 		    (iicprobe(0x03) & 0x2a) == 0 && iicprobe(0x04) <= 0x09)
 			name = "lm99";
-		else if (iicprobe(0xff) == 0x34 && addr == 0x4d &&
+		else if (addr == 0x4d && iicprobe(0xff) == 0x34 &&
 		    (iicprobe(0x03) & 0x2a) == 0 && iicprobe(0x04) <= 0x09)
 			name = "lm99-1";
 		else if (iicprobe(0xff) == 0x11 &&
@@ -481,14 +484,15 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "lm86";
 	} else if (iicprobe(0xfe) == 0x4d && iicprobe(0xff) == 0x08) {
 		name = "max6690";	/* somewhat similar to lm90 */
-	} else if (iicprobe(0xfe) == 0x41 && (addr == 0x4c || addr == 0x4d) &&
-	    (iicprobe(0x03) & 0x2a) == 0 && iicprobe(0x04) <= 0x09) {
+	} else if ((addr == 0x4c || addr == 0x4d) &&
+	    iicprobe(0xfe) == 0x41 && (iicprobe(0x03) & 0x2a) == 0 &&
+	    iicprobe(0x04) <= 0x09) {
 		name = "adm1032";
 		skip_fc = 1;
-	} else if (iicprobe(0xfe) == 0x41 && iicprobe(0x3c) == 0x00 &&
-	    (addr == 0x18 || addr == 0x19 || addr == 0x1a ||
+	} else if ((addr == 0x18 || addr == 0x19 || addr == 0x1a ||
 	    addr == 0x29 || addr == 0x2a || addr == 0x2b ||
-	    addr == 0x4c || addr == 0x4d || addr == 0x4e)) {
+	    addr == 0x4c || addr == 0x4d || addr == 0x4e) &&
+	    iicprobe(0xfe) == 0x41 && iicprobe(0x3c) == 0x00) {
 		name = "adm1021";	/* lots of addresses... bleah */
 		skip_fc = 1;
 	} else if (addr == iicprobe(0x48) &&
@@ -570,7 +574,8 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		if ((iicprobe(0x58) & 0x7f) == 0x31 &&
 		    (iicprobe(0x4e) & 0xf) == 0x00)
 			name = "asb100";
-	} else if ((addr == 0x2c || addr == 0x2d) && iicprobe(0x00) == 0x80 &&
+	} else if ((addr == 0x2c || addr == 0x2d) &&
+	    iicprobe(0x00) == 0x80 &&
 	    (iicprobe(0x01) == 0x00 || iicprobe(0x01) == 0x80) &&
 	    iicprobe(0x02) == 0x00 && (iicprobe(0x03) & 0x83) == 0x00 &&
 	    (iicprobe(0x0f) & 0x07) == 0x00 &&
@@ -589,10 +594,11 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		 * is why we check for every single fixed bit it has).
 		 */
 		name = "gl518sm";
-	} else if (iicprobe(0x16) == 0x41 && ((iicprobe(0x17) & 0xf0) == 0x40) &&
-	    (addr == 0x2c || addr == 0x2d || addr == 0x2e)) {
+	} else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
+	      iicprobe(0x16) == 0x41 && ((iicprobe(0x17) & 0xf0) == 0x40)) {
 		name = "adm1026";
-	} else if (name == NULL && (addr & 0x7c) == 0x48) {
+	} else if (name == NULL &&
+		   (addr & 0x7c) == 0x48) {		/* addr 0b1001xxx */
 		name = lm75probe();
 	}
 #if 0
@@ -600,7 +606,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	 * XXX This probe needs to be improved; the driver does some
 	 * dangerous writes.
 	 */
-	if (name == NULL && (addr & 0x7c) == 0x48 &&
+	if (name == NULL && (addr & 0x7c) == 0x48 &&	/* addr 0b1001xxx */
  	    (iicprobew(0xaa) & 0x0007) == 0x0000 &&
  	    (iicprobew(0xa1) & 0x0007) == 0x0000 &&
  	    (iicprobew(0xa2) & 0x0007) == 0x0000 &&
@@ -636,7 +642,6 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 #if defined(I2C_VERBOSE) && !defined(I2C_DEBUG)
 	iic_dump(self, addr, name);
 #endif /* defined(I2C_VERBOSE) && !defined(I2C_DEBUG) */
-
 }
 
 void
