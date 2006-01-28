@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.62 2006/01/23 23:07:01 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.63 2006/01/28 11:26:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -595,6 +595,11 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	} else if (name == NULL && (addr & 0x7c) == 0x48) {
 		name = lm75probe();
 	}
+#if 0
+	/*
+	 * XXX This probe needs to be improved; the driver does some
+	 * dangerous writes.
+	 */
 	if (name == NULL && (addr & 0x7c) == 0x48 &&
  	    (iicprobew(0xaa) & 0x0007) == 0x0000 &&
  	    (iicprobew(0xa1) & 0x0007) == 0x0000 &&
@@ -608,6 +613,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		else if ((iicprobe(0xac) & 0x2e) == 0x2e)
 			name = "ds1721";	/* terrible probe */
 	}
+#endif
 	if (name == NULL) {
 		name = amd1032cloneprobe(addr);
 		if (name)
