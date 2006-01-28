@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.6 2006/01/26 22:07:14 kettenis Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.7 2006/01/28 13:48:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -644,13 +644,14 @@ wb_refresh_temp(struct lm_softc *sc, int n)
 
 	/*
 	 * The data sheet suggests that the range of the temperature
-	 * sensor is between -55 degC and +125 degC.  However, -48
-	 * degC seems to be a very common bogus value, and is already
-	 * unreasonably low.
+	 * sensor is between -55 degC and +125 degC.  However, values
+	 * around -48 degC seem to be a very common bogus values.
+	 * Since such values are unreasonably low, we use -45 degC for
+	 * the lower limit instead.
 	 */
 	sdata = sc->lm_readreg(sc, sc->lm_sensors[n].reg) << 1;
 	sdata += sc->lm_readreg(sc, sc->lm_sensors[n].reg + 1) >> 7;
-	if ((sdata > 0x0fa && sdata < 0x192) || sdata == 0x1a0) {
+	if (sdata > 0x0fa && sdata < 0x1a6) {
 		sensor->flags |= SENSOR_FINVALID;
 		sensor->value = 0;
 	} else {
