@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.106 2005/12/21 12:26:24 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.107 2006/01/29 00:48:19 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1735,19 +1735,21 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 {
 	struct ami_ccb *ccb;
 	struct ami_iocmd *cmd;
-	struct ami_mem *am;
-	char *idata;
+	struct ami_mem *am = NULL;
+	char *idata = NULL;
 	int error = 0;
 
 	ccb = ami_get_ccb(sc);
 	if (ccb == NULL)
 		return (ENOMEM);
 
-	if ((am = ami_allocmem(sc, size)) == NULL) {
-		ami_put_ccb(ccb);
-		return (ENOMEM);
+	if (size) {
+		if ((am = ami_allocmem(sc, size)) == NULL) {
+			ami_put_ccb(ccb);
+			return (ENOMEM);
+		}
+		idata = AMIMEM_KVA(am);
 	}
-	idata = AMIMEM_KVA(am);
 
 	ccb->ccb_data = NULL;
 	ccb->ccb_wakeup = 1;
@@ -1761,6 +1763,10 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 	 */
 	switch (opcode) {
 	case AMI_SPEAKER:
+		if (!idata) {
+			ami_put_ccb(ccb);
+			return (ENOMEM);
+		}
 		*idata = par1;
 		break;
 	default:
@@ -1770,7 +1776,7 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 		break;
 	};
 
-	cmd->acc_io.aio_data = htole32(AMIMEM_DVA(am));
+	cmd->acc_io.aio_data = am ? htole32(AMIMEM_DVA(am)) : 0;
 
 	if (ami_cmd(ccb, BUS_DMA_WAITOK, 0) == 0) {
 		while (ccb->ccb_wakeup)
@@ -1780,12 +1786,13 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 
 		/* XXX how do commands fail? */
 		
-		if (buffer)
+		if (buffer && size)
 			memcpy(buffer, idata, size);
 	} else
 		error = EINVAL;
 
-	ami_freemem(sc, am);
+	if (am)
+		ami_freemem(sc, am);
 
 	return (error);
 }
