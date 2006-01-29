@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_1000a.c,v 1.2 2004/06/28 02:28:42 aaron Exp $ */
+/* $OpenBSD: pci_1000a.c,v 1.3 2006/01/29 10:47:35 martin Exp $ */
 /* $NetBSD: pci_1000a.c,v 1.14 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*
@@ -292,7 +292,8 @@ dec_1000a_iointr(framep, vec)
 			    "dec_1000a irq");
 			if (ALPHA_SHARED_INTR_DISABLE(dec_1000a_pci_intr, irq))
 				dec_1000a_disable_intr(irq);
-		}
+		} else
+			alpha_shared_intr_reset_strays(dec_1000a_pci_intr, irq);
 		return;
 	}
 #if NSIO > 0 || NPCEB > 0

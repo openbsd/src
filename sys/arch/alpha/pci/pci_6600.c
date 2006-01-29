@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_6600.c,v 1.12 2004/06/28 17:25:05 deraadt Exp $ */
+/* $OpenBSD: pci_6600.c,v 1.13 2006/01/29 10:47:35 martin Exp $ */
 /* $NetBSD: pci_6600.c,v 1.5 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -295,7 +295,8 @@ dec_6600_iointr(framep, vec)
 			    irqtype);
 			if (ALPHA_SHARED_INTR_DISABLE(dec_6600_pci_intr, irq))
 				dec_6600_intr_disable(irq);
-		}
+		} else
+			alpha_shared_intr_reset_strays(dec_6600_pci_intr, irq);
 		return;
 	}
 #if NSIO

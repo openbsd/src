@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_550.c,v 1.13 2005/07/24 14:21:29 miod Exp $ */
+/* $OpenBSD: pci_550.c,v 1.14 2006/01/29 10:47:35 martin Exp $ */
 /* $NetBSD: pci_550.c,v 1.18 2000/06/29 08:58:48 mrg Exp $ */
 
 /*-
@@ -414,7 +414,8 @@ dec_550_iointr(framep, vec)
 			    "dec 550 irq");
 			if (ALPHA_SHARED_INTR_DISABLE(dec_550_pci_intr, irq))
 				dec_550_intr_disable(irq);
-		}
+		} else
+			alpha_shared_intr_reset_strays(dec_550_pci_intr, irq);
 		return;
 	}
 #if NSIO

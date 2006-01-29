@@ -1,4 +1,4 @@
-/* $OpenBSD: shared_intr.c,v 1.13 2004/12/25 23:02:23 miod Exp $ */
+/* $OpenBSD: shared_intr.c,v 1.14 2006/01/29 10:47:35 martin Exp $ */
 /* $NetBSD: shared_intr.c,v 1.13 2000/03/19 01:46:18 thorpej Exp $ */
 
 /*
@@ -241,6 +241,19 @@ alpha_shared_intr_set_maxstrays(intr, num, newmaxstrays)
 	intr[num].intr_maxstrays = newmaxstrays;
 	intr[num].intr_nstrays = 0;
 	splx(s);
+}
+
+void
+alpha_shared_intr_reset_strays(intr, num)
+	struct alpha_shared_intr *intr;
+	unsigned int num;
+{
+
+	/*
+	 * Don't bother blocking interrupts; this doesn't have to be
+	 * precise, but it does need to be fast.
+	 */
+	intr[num].intr_nstrays = 0;
 }
 
 void

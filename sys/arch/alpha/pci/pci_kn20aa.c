@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.20 2004/06/28 02:28:43 aaron Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.21 2006/01/29 10:47:35 martin Exp $	*/
 /*	$NetBSD: pci_kn20aa.c,v 1.21 1996/11/17 02:05:27 cgd Exp $	*/
 
 /*
@@ -257,7 +257,8 @@ kn20aa_iointr(framep, vec)
 			if (kn20aa_pci_intr[irq].intr_nstrays ==
 			    kn20aa_pci_intr[irq].intr_maxstrays)
 				kn20aa_disable_intr(irq);
-		}
+		} else
+			alpha_shared_intr_reset_strays(kn20aa_pci_intr, irq);
 		return;
 	}
 #if NSIO
