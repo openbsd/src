@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.64 2006/01/28 15:55:35 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.65 2006/01/29 12:48:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -32,14 +32,19 @@
 
 void	iic_probe(struct device *, struct i2cbus_attach_args *, u_int8_t);
 
-/* addresses at which to probe for sensors */
+/*
+ * Addresses at which to probe for sensors.  Skip address 0x4f, since
+ * probing it seems to crash at least one Sony VAIO laptop.  Only a
+ * few chips can actually sit at that address, and vendors seem to
+ * place those at other addresses, so this isn't a big loss.
+ */
 struct {
 	u_int8_t start, end;
 } probe_addrs[] = {
 	{ 0x18, 0x18 },
 	{ 0x1a, 0x1a },
 	{ 0x20, 0x2f },
-	{ 0x48, 0x4f }
+	{ 0x48, 0x4e }
 };
 
 #define MAX_IGNORE 8
