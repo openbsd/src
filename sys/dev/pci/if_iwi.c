@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.57 2006/01/18 20:25:22 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.58 2006/01/29 15:44:16 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -459,8 +459,9 @@ iwi_dma_alloc(struct iwi_softc *sc)
 	 * Allocate Tx buffers DMA maps
 	 */
 	for (i = 0; i < IWI_TX_RING_SIZE; i++) {
-		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
-		    0, BUS_DMA_NOWAIT, &sc->tx_buf[i].map);
+		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
+		    IWI_MAX_NSEG - 2, MCLBYTES, 0, BUS_DMA_NOWAIT,
+		    &sc->tx_buf[i].map);
 		if (error != 0) {
 			printf("%s: could not create tx buf DMA map",
 			    sc->sc_dev.dv_xname);
@@ -1883,6 +1884,7 @@ iwi_scan(struct iwi_softc *sc)
 	}
 	*(p - count) = IWI_CHAN_5GHZ | count;
 
+	p = (count > 0) ? p + 1 : scan.channels;
 	count = 0;
 	for (i = 0; i <= IEEE80211_CHAN_MAX; i++) {
 		if (IEEE80211_IS_CHAN_2GHZ(&ic->ic_channels[i]) &&

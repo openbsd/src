@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwireg.h,v 1.18 2006/01/18 20:25:22 damien Exp $	*/
+/*	$OpenBSD: if_iwireg.h,v 1.19 2006/01/29 15:44:16 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -234,6 +234,7 @@ struct iwi_tx_desc {
 
 	u_int32_t	nseg;
 #define IWI_MAX_NSEG	6
+
 	u_int32_t	seg_addr[IWI_MAX_NSEG];
 	u_int16_t	seg_len[IWI_MAX_NSEG];
 } __packed;
@@ -331,13 +332,13 @@ struct iwi_scan {
 #define IWI_CHAN_5GHZ	(0 << 6)
 #define IWI_CHAN_2GHZ	(1 << 6)
 
-	u_int8_t	type[26];
+	u_int8_t	type[27];
 #define IWI_SCAN_TYPE_PASSIVE	0x11
 #define IWI_SCAN_TYPE_DIRECTED	0x22
 #define IWI_SCAN_TYPE_BROADCAST	0x33
 #define IWI_SCAN_TYPE_BDIRECTED	0x44
 
-	u_int8_t	reserved1[2];
+	u_int8_t	reserved1;
 	u_int16_t	reserved2;
 	u_int16_t	passive;	/* dwell time */
 	u_int16_t	directed;	/* dwell time */
