@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.27 2006/01/25 20:58:12 grange Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.28 2006/01/29 03:22:52 brad Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -1114,7 +1114,7 @@ wi_usb_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 		    usbd_errstr(status));
 		if (status == USBD_STALLED) {
 			sc->wi_usb_refcnt++;
-			usbd_clear_endpoint_stall(
+			usbd_clear_endpoint_stall_async(
 			    sc->wi_usb_ep[WI_USB_ENDPT_TX]);
 			if (--sc->wi_usb_refcnt < 0)
 				usb_detach_wakeup(USBDEV(sc->wi_usb_dev));
@@ -1160,7 +1160,7 @@ wi_usb_txeof_frm(usbd_xfer_handle xfer, usbd_private_handle priv,
 		    usbd_errstr(status));
 		if (status == USBD_STALLED) {
 			sc->wi_usb_refcnt++;
-			usbd_clear_endpoint_stall(
+			usbd_clear_endpoint_stall_async(
 			    sc->wi_usb_ep[WI_USB_ENDPT_TX]);
 			if (--sc->wi_usb_refcnt < 0)
 				usb_detach_wakeup(USBDEV(sc->wi_usb_dev));
@@ -1407,7 +1407,7 @@ wi_usb_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status
 #endif
 		if (status == USBD_STALLED) {
 			sc->wi_usb_refcnt++;
-			usbd_clear_endpoint_stall(
+			usbd_clear_endpoint_stall_async(
 			    sc->wi_usb_ep[WI_USB_ENDPT_RX]);
 			if (--sc->wi_usb_refcnt < 0)
 				usb_detach_wakeup(USBDEV(sc->wi_usb_dev));
@@ -1510,7 +1510,7 @@ wi_usb_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 		if (status == USBD_STALLED) {
 			sc->wi_usb_refcnt++;
-			usbd_clear_endpoint_stall(
+			usbd_clear_endpoint_stall_async(
 			    sc->wi_usb_ep[WI_USB_ENDPT_RX]);
 			if (--sc->wi_usb_refcnt < 0)
 				usb_detach_wakeup(USBDEV(sc->wi_usb_dev));

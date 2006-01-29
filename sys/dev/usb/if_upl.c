@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.21 2006/01/04 06:04:41 canacar Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.22 2006/01/29 03:22:52 brad Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -541,7 +541,7 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			sc->sc_rx_errs = 0;
 		}
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->sc_ep[UPL_ENDPT_RX]);
+			usbd_clear_endpoint_stall_async(sc->sc_ep[UPL_ENDPT_RX]);
 		goto done;
 	}
 
@@ -635,7 +635,7 @@ upl_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		printf("%s: usb error on tx: %s\n", USBDEVNAME(sc->sc_dev),
 		    usbd_errstr(status));
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->sc_ep[UPL_ENDPT_TX]);
+			usbd_clear_endpoint_stall_async(sc->sc_ep[UPL_ENDPT_TX]);
 		splx(s);
 		return;
 	}
@@ -851,7 +851,7 @@ upl_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			sc->sc_intr_errs = 0;
 		}
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->sc_ep[UPL_ENDPT_RX]);
+			usbd_clear_endpoint_stall_async(sc->sc_ep[UPL_ENDPT_RX]);
 		return;
 	}
 

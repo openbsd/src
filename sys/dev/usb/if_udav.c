@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.13 2005/08/01 05:36:48 brad Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.14 2006/01/29 03:22:52 brad Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -1081,7 +1081,7 @@ udav_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		       usbd_errstr(status));
 		if (status == USBD_STALLED) {
 			sc->sc_refcnt++;
-			usbd_clear_endpoint_stall(sc->sc_pipe_tx);
+			usbd_clear_endpoint_stall_async(sc->sc_pipe_tx);
 			if (--sc->sc_refcnt < 0)
 				usb_detach_wakeup(USBDEV(sc->sc_dev));
 		}
@@ -1128,7 +1128,7 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		}
 		if (status == USBD_STALLED) {
 			sc->sc_refcnt++;
-			usbd_clear_endpoint_stall(sc->sc_pipe_rx);
+			usbd_clear_endpoint_stall_async(sc->sc_pipe_rx);
 			if (--sc->sc_refcnt < 0)
 				usb_detach_wakeup(USBDEV(sc->sc_dev));
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.66 2006/01/29 01:13:47 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.67 2006/01/29 03:22:52 brad Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1698,7 +1698,7 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			    USBDEVNAME(sc->atu_dev), usbd_errstr(status)));
 		}
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(
+			usbd_clear_endpoint_stall_async(
 			    sc->atu_ep[ATU_ENDPT_RX]);
 		goto done;
 	}
@@ -1801,7 +1801,7 @@ atu_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		DPRINTF(("%s: usb error on tx: %s\n", USBDEVNAME(sc->atu_dev),
 		    usbd_errstr(status)));
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->atu_ep[ATU_ENDPT_TX]);
+			usbd_clear_endpoint_stall_async(sc->atu_ep[ATU_ENDPT_TX]);
 		return;
 	}
 

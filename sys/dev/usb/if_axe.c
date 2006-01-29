@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.44 2006/01/10 10:15:22 dlg Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.45 2006/01/29 03:22:52 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -948,7 +948,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			    USBDEVNAME(sc->axe_dev), usbd_errstr(status));
 		}
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->axe_ep[AXE_ENDPT_RX]);
+			usbd_clear_endpoint_stall_async(sc->axe_ep[AXE_ENDPT_RX]);
 		goto done;
 	}
 
@@ -1057,7 +1057,7 @@ axe_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		printf("axe%d: usb error on tx: %s\n", sc->axe_unit,
 		    usbd_errstr(status));
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->axe_ep[AXE_ENDPT_TX]);
+			usbd_clear_endpoint_stall_async(sc->axe_ep[AXE_ENDPT_TX]);
 		splx(s);
 		return;
 	}

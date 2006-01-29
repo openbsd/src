@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.42 2005/08/01 05:36:47 brad Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.43 2006/01/29 03:22:52 brad Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1063,7 +1063,7 @@ aue_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			sc->aue_intr_errs = 0;
 		}
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->aue_ep[AUE_ENDPT_RX]);
+			usbd_clear_endpoint_stall_async(sc->aue_ep[AUE_ENDPT_RX]);
 		return;
 	}
 
@@ -1108,7 +1108,7 @@ aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			sc->aue_rx_errs = 0;
 		}
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->aue_ep[AUE_ENDPT_RX]);
+			usbd_clear_endpoint_stall_async(sc->aue_ep[AUE_ENDPT_RX]);
 		goto done;
 	}
 
@@ -1209,7 +1209,7 @@ aue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		printf("%s: usb error on tx: %s\n", USBDEVNAME(sc->aue_dev),
 		    usbd_errstr(status));
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->aue_ep[AUE_ENDPT_TX]);
+			usbd_clear_endpoint_stall_async(sc->aue_ep[AUE_ENDPT_TX]);
 		splx(s);
 		return;
 	}

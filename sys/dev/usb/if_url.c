@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.27 2005/09/23 10:24:51 grunk Exp $ */
+/*	$OpenBSD: if_url.c,v 1.28 2006/01/29 03:22:52 brad Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -996,7 +996,7 @@ url_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		       usbd_errstr(status));
 		if (status == USBD_STALLED) {
 			sc->sc_refcnt++;
-			usbd_clear_endpoint_stall(sc->sc_pipe_tx);
+			usbd_clear_endpoint_stall_async(sc->sc_pipe_tx);
 			if (--sc->sc_refcnt < 0)
 				usb_detach_wakeup(USBDEV(sc->sc_dev));
 		}
@@ -1043,7 +1043,7 @@ url_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		}
 		if (status == USBD_STALLED) {
 			sc->sc_refcnt++;
-			usbd_clear_endpoint_stall(sc->sc_pipe_rx);
+			usbd_clear_endpoint_stall_async(sc->sc_pipe_rx);
 			if (--sc->sc_refcnt < 0)
 				usb_detach_wakeup(USBDEV(sc->sc_dev));
 		}

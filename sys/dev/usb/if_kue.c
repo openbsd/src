@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.38 2005/08/01 05:36:48 brad Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.39 2006/01/29 03:22:52 brad Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -769,7 +769,7 @@ kue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			sc->kue_rx_errs = 0;
 		}
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->kue_ep[KUE_ENDPT_RX]);
+			usbd_clear_endpoint_stall_async(sc->kue_ep[KUE_ENDPT_RX]);
 		goto done;
 	}
 
@@ -870,7 +870,7 @@ kue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		printf("%s: usb error on tx: %s\n", USBDEVNAME(sc->kue_dev),
 		    usbd_errstr(status));
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->kue_ep[KUE_ENDPT_TX]);
+			usbd_clear_endpoint_stall_async(sc->kue_ep[KUE_ENDPT_TX]);
 		splx(s);
 		return;
 	}

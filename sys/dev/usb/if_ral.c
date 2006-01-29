@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.61 2006/01/22 21:41:03 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.62 2006/01/29 03:22:52 brad Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -848,7 +848,7 @@ ural_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		    USBDEVNAME(sc->sc_dev), usbd_errstr(status));
 
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->sc_tx_pipeh);
+			usbd_clear_endpoint_stall_async(sc->sc_tx_pipeh);
 
 		ifp->if_oerrors++;
 		return;
@@ -891,7 +891,7 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			return;
 
 		if (status == USBD_STALLED)
-			usbd_clear_endpoint_stall(sc->sc_rx_pipeh);
+			usbd_clear_endpoint_stall_async(sc->sc_rx_pipeh);
 		goto skip;
 	}
 
