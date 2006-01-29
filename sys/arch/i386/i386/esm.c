@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.33 2006/01/19 17:08:39 grange Exp $ */
+/*	$OpenBSD: esm.c,v 1.34 2006/01/29 00:13:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -601,8 +601,9 @@ struct esm_sensor_map esm_sensors_backplane[] = {
 	{ ESM_S_SCSICONN,	ESM_A_SCSI_B,	"Backplane SCSI B Connected" },
 	{ ESM_S_VOLTS,		ESM_A_SCSI_B,	"Backplane SCSI B External" },
 	{ ESM_S_VOLTS,		ESM_A_SCSI_B,	"Backplane SCSI B Internal" },
-	{ ESM_S_DRIVES,		1,		"Drive" },
-	{ ESM_S_DRIVES,		5,		"Drive" },
+	{ ESM_S_DRIVES,		0,		"Drive" },
+	{ ESM_S_DRIVES,		4,		"Drive" },
+	{ ESM_S_DRIVE,		0,		"Drive 0" },
 	{ ESM_S_DRIVE,		0,		"Drive 1" },
 	{ ESM_S_DRIVE,		0,		"Drive 2" },
 	{ ESM_S_DRIVE,		0,		"Drive 3" },
@@ -610,7 +611,6 @@ struct esm_sensor_map esm_sensors_backplane[] = {
 	{ ESM_S_DRIVE,		0,		"Drive 5" },
 	{ ESM_S_DRIVE,		0,		"Drive 6" },
 	{ ESM_S_DRIVE,		0,		"Drive 7" },
-	{ ESM_S_DRIVE,		0,		"Drive 8" },
 	{ ESM_S_UNKNOWN,	0,		"Backplane Control 2" },
 	{ ESM_S_VOLTS,		0,		"Backplane +3.3V" },
 };
