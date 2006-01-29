@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.93 2006/01/26 09:05:31 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.94 2006/01/29 11:17:09 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -140,26 +140,18 @@ main(int argc, char **argv)
 	 * the environment variable TMPDIR, or via
 	 * the global option -T <dir>
 	 */
-	if (stat(cvs_tmpdir, &st) == -1) {
-		cvs_log(LP_ERR, "failed to stat `%s'", cvs_tmpdir);
-		exit(CVS_EX_FILE);
-	} else if (!S_ISDIR(st.st_mode)) {
-		cvs_log(LP_ERR, "`%s' is not valid temporary directory",
-		    cvs_tmpdir);
-		exit(CVS_EX_FILE);
-	}
+	if (stat(cvs_tmpdir, &st) == -1)
+		fatal("stat failed on `%s': %s", cvs_tmpdir, strerror(errno));
+	else if (!S_ISDIR(st.st_mode))
+		fatal("`%s' is not valid temporary directory", cvs_tmpdir);
 
 	if (cvs_readrc == 1) {
 		cvs_read_rcfile();
 
 		if (cvs_defargs != NULL) {
-			targv = cvs_makeargv(cvs_defargs, &i);
-			if (targv == NULL) {
-				cvs_log(LP_ERR,
-				    "failed to load default arguments to %s",
+			if ((targv = cvs_makeargv(cvs_defargs, &i)) == NULL)
+				fatal("failed to load default arguments to %s",
 				    __progname);
-				exit(CVS_EX_DATA);
-			}
 
 			cvs_getopt(i, targv);
 			cvs_freeargv(targv, i);
@@ -170,10 +162,8 @@ main(int argc, char **argv)
 	/* setup signal handlers */
 	signal(SIGPIPE, SIG_IGN);
 
-	if (cvs_file_init() < 0) {
-		cvs_log(LP_ERR, "failed to initialize file support");
-		exit(CVS_EX_FILE);
-	}
+	if (cvs_file_init() < 0)
+		fatal("failed to initialize file support");
 
 	ret = -1;
 
@@ -197,11 +187,9 @@ main(int argc, char **argv)
 		/* transform into a new argument vector */
 		ret = cvs_getargv(cmdp->cmd_defargs, cmd_argv + 1,
 		    CVS_CMD_MAXARG - 1);
-		if (ret < 0) {
-			cvs_log(LP_ERRNO, "failed to generate argument vector "
-			    "from default arguments");
-			exit(CVS_EX_DATA);
-		}
+		if (ret < 0)
+			fatal("main: cvs_getargv failed");
+
 		cmd_argc += ret;
 	}
 	for (ret = 1; ret < argc; ret++)
