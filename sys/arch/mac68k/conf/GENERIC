@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.46 2006/01/15 00:10:22 miod Exp $
+#	$OpenBSD: GENERIC,v 1.47 2006/01/29 15:58:20 martin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -49,6 +49,10 @@ nubus0		at mainbus?
 ae*		at nubus?	# Most Apple Ethernet Cards
 macfb*		at nubus?	# NuBus video cards
 sn*		at nubus?	# SONIC-based ethernet cards
+#sm*		at nubus?	# SMC 91cxx-based ethernet cards
+
+#nsphy*		at mii? phy?
+#ukphy*		at mii? phy?
 
 # workstation console
 wsdisplay*	at macfb?
