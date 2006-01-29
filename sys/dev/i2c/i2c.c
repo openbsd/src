@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c.c,v 1.11 2006/01/01 20:52:25 deraadt Exp $	*/
+/*	$OpenBSD: i2c.c,v 1.12 2006/01/29 17:29:30 marco Exp $	*/
 /*	$NetBSD: i2c.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -47,6 +47,8 @@
 
 #define IICCF_ADDR	0
 #define IICCF_SIZE	1
+
+#include "ipmi.h"
 
 struct iic_softc {
 	struct device sc_dev;
@@ -114,6 +116,13 @@ iic_match(struct device *parent, void *arg, void *aux)
 {
 	struct cfdata *cf = arg;
 	struct i2cbus_attach_args *iba = aux;
+
+#if NIPMI > 0
+	extern int ipmi_enabled;
+
+	if (ipmi_enabled)
+		return (0);
+#endif
 
 	/* Just make sure we're looking for i2c. */
 	return (strcmp(iba->iba_name, cf->cf_driver->cd_name) == 0);
