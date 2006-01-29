@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.52 2006/01/27 15:26:38 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.53 2006/01/29 11:09:45 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -223,7 +223,7 @@ cvs_getlog_local(CVSFILE *cf, void *arg)
 		return (0);
 	}
 
-	if ((rf = rcs_open(rcspath, RCS_READ)) == NULL)
+	if ((rf = rcs_open(rcspath, RCS_READ|RCS_PARSE_FULLY)) == NULL)
 		fatal("cvs_getlog_local: rcs_open `%s': %s", rcspath,
 		    strerror(rcs_errno));
 
