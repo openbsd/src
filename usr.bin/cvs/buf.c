@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.31 2006/01/16 21:02:36 niallo Exp $	*/
+/*	$OpenBSD: buf.c,v 1.32 2006/01/29 17:50:08 niallo Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -375,9 +375,13 @@ int
 cvs_buf_write(BUF *b, const char *path, mode_t mode)
 {
 	int fd;
-
-	if ((fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, mode)) == -1)
-		fatal("open: `%s': %s", path, strerror(errno));
+ open:
+	if ((fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, mode)) == -1) {
+		if ((errno == EACCES) && (unlink(path) != -1))
+			goto open;
+		else
+			fatal("open: `%s': %s", path, strerror(errno));
+	}
 
 	if (cvs_buf_write_fd(b, fd) == -1) {
 		(void)unlink(path);
