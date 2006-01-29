@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.65 2006/01/04 06:04:41 canacar Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.66 2006/01/29 01:13:47 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1250,7 +1250,7 @@ USB_ATTACH(atu)
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->atu_dev), devinfop);
+	printf("%s: %s", USBDEVNAME(sc->atu_dev), devinfop);
 	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, ATU_CONFIG_NO, 1);
@@ -1416,7 +1416,7 @@ atu_complete_attach(struct atu_softc *sc)
 #endif /* ATU_DEBUG */
 
 	/* Show the world our MAC address */
-	printf(": address %s\n", ether_sprintf(ic->ic_myaddr));
+	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	sc->atu_cdata.atu_tx_inuse = 0;
 
