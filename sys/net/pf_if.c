@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.44 2005/09/28 01:46:32 pascoe Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.45 2006/01/30 12:39:13 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -66,6 +66,7 @@ struct pfr_addr		 *pfi_buffer;
 int			  pfi_buffer_cnt;
 int			  pfi_buffer_max;
 
+void		 pfi_kif_update(struct pfi_kif *);
 void		 pfi_dynaddr_update(struct pfi_dynaddr *dyn);
 void		 pfi_table_update(struct pfr_ktable *, struct pfi_kif *,
 		    int, int);
@@ -197,7 +198,6 @@ void
 pfi_attach_ifnet(struct ifnet *ifp)
 {
 	struct pfi_kif		*kif;
-	struct pfi_dynaddr	*dyn;
 	int			 s;
 
 	pfi_initialize();
@@ -214,8 +214,7 @@ pfi_attach_ifnet(struct ifnet *ifp)
 		panic("pfi_attach_ifnet: cannot allocate '%s' address hook",
 		    ifp->if_xname);
 
-	TAILQ_FOREACH(dyn, &kif->pfik_dynaddrs, entry)
-		pfi_dynaddr_update(dyn);
+	pfi_kif_update(kif);
 
 	splx(s);
 }
@@ -225,7 +224,6 @@ pfi_detach_ifnet(struct ifnet *ifp)
 {
 	int			 s;
 	struct pfi_kif		*kif;
-	struct pfi_dynaddr	*dyn;
 
 	if ((kif = (struct pfi_kif *)ifp->if_pf_kif) == NULL)
 		return;
@@ -233,8 +231,7 @@ pfi_detach_ifnet(struct ifnet *ifp)
 	s = splsoftnet();
 	pfi_update++;
 	hook_disestablish(ifp->if_addrhooks, kif->pfik_ah_cookie);
-	TAILQ_FOREACH(dyn, &kif->pfik_dynaddrs, entry)
-		pfi_dynaddr_update(dyn);
+	pfi_kif_update(kif);
 
 	kif->pfik_ifp = NULL;
 	ifp->if_pf_kif = NULL;
@@ -282,7 +279,6 @@ void
 pfi_group_change(const char *group)
 {
 	struct pfi_kif		*kif;
-	struct pfi_dynaddr	*dyn;
 	int			 s;
 
 	s = splsoftnet();
@@ -290,8 +286,7 @@ pfi_group_change(const char *group)
 	if ((kif = pfi_kif_get(group)) == NULL)
 		panic("pfi_kif_get failed");
 
-	TAILQ_FOREACH(dyn, &kif->pfik_dynaddrs, entry)
-		pfi_dynaddr_update(dyn);
+	pfi_kif_update(kif);
 
 	splx(s);
 }
@@ -387,7 +382,7 @@ pfi_dynaddr_setup(struct pf_addr_wrap *aw, sa_family_t af)
 
 	TAILQ_INSERT_TAIL(&dyn->pfid_kif->pfik_dynaddrs, dyn, entry);
 	aw->p.dyn = dyn;
-	pfi_dynaddr_update(aw->p.dyn);
+	pfi_kif_update(dyn->pfid_kif);
 	splx(s);
 	return (0);
 
@@ -404,12 +399,27 @@ _bad:
 }
 
 void
+pfi_kif_update(struct pfi_kif *kif)
+{
+	struct ifg_list		*ifgl;
+	struct pfi_dynaddr	*p;
+
+	/* update all dynaddr */
+	TAILQ_FOREACH(p, &kif->pfik_dynaddrs, entry)
+		pfi_dynaddr_update(p);
+
+	/* again for all groups kif is member of */
+	if (kif->pfik_ifp != NULL)
+		TAILQ_FOREACH(ifgl, &kif->pfik_ifp->if_groups, ifgl_next)
+			pfi_kif_update((struct pfi_kif *)
+			    ifgl->ifgl_group->ifg_pf_kif);
+}
+
+void
 pfi_dynaddr_update(struct pfi_dynaddr *dyn)
 {
 	struct pfi_kif		*kif;
 	struct pfr_ktable	*kt;
-	struct ifg_list		*ifgl;
-	struct pfi_dynaddr	*p;
 
 	if (dyn == NULL || dyn->pfid_kif == NULL || dyn->pfid_kt == NULL)
 		panic("pfi_dynaddr_update");
@@ -423,12 +433,6 @@ pfi_dynaddr_update(struct pfi_dynaddr *dyn)
 		kt->pfrkt_larg = pfi_update;
 	}
 	pfr_dynaddr_update(kt, dyn);
-
-	if (kif->pfik_ifp != NULL)
-		TAILQ_FOREACH(ifgl, &kif->pfik_ifp->if_groups, ifgl_next)
-			TAILQ_FOREACH(p, &((struct pfi_kif *)
-			    ifgl->ifgl_group->ifg_pf_kif)->pfik_dynaddrs, entry)
-				pfi_dynaddr_update(p);
 }
 
 void
@@ -589,12 +593,10 @@ pfi_kifaddr_update(void *v)
 {
 	int			 s;
 	struct pfi_kif		*kif = (struct pfi_kif *)v;
-	struct pfi_dynaddr	*dyn;
 
 	s = splsoftnet();
 	pfi_update++;
-	TAILQ_FOREACH(dyn, &kif->pfik_dynaddrs, entry)
-		pfi_dynaddr_update(dyn);
+	pfi_kif_update(kif);
 	splx(s);
 }
 
