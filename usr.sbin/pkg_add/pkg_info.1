@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.20 2005/11/01 17:02:29 bernd Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.21 2006/01/30 17:27:29 miod Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -95,7 +95,7 @@ The given
 is actually a package specification, as described in
 .Xr packages-specs 7 .
 For example,
-.Ic pkg_info -e 'name>=1.3'
+.Ic pkg_info -e 'name->=1.3'
 will match versions 1.3 and later of the
 .Pa name
 package.
