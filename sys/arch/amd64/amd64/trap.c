@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.8 2005/12/13 00:18:19 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.9 2006/01/30 20:34:45 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -344,16 +344,6 @@ copyfault:
 		if (curcpu()->ci_want_resched)
 			preempt(NULL);
 		goto out;
-
-	case T_DNA|T_USER: {
-		printf("pid %d killed due to lack of floating point\n",
-		    p->p_pid);
-		sv.sival_ptr = (void *)frame.tf_rip;
-		KERNEL_PROC_LOCK(p);
-		trapsignal(p, SIGKILL, type &~ T_USER, FPE_FLTINV, sv);
-		KERNEL_PROC_UNLOCK(p);
-		goto out;
-	}
 
 	case T_BOUND|T_USER:
 		sv.sival_ptr = (void *)frame.tf_rip;
