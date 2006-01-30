@@ -1,4 +1,4 @@
-.\"	$OpenBSD: delay.9,v 1.1 2006/01/12 00:17:17 dlg Exp $
+.\"	$OpenBSD: delay.9,v 1.2 2006/01/30 23:42:47 jsg Exp $
 .\"
 .\" Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
 .\"
@@ -30,3 +30,6 @@ is called in the kernel to busy wait for a period of time.
 The
 .Fa delay
 argument specifies the period of time to wait for, in microseconds.
+.Sh SEE ALSO
+.Xr sleep 9 ,
+.Xr timeout 9
