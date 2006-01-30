@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.16 2006/01/28 02:15:19 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.17 2006/01/30 00:32:45 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1491,7 +1491,7 @@ re_start(ifp)
 {
 	struct rl_softc	*sc;
 	struct mbuf		*m_head = NULL;
-	int			idx;
+	int			idx, queued = 0;
 
 	sc = ifp->if_softc;
 
@@ -1514,7 +1514,11 @@ re_start(ifp)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m_head);
 #endif
+		queued++;
 	}
+
+	if (queued == 0)
+		return;
 
 	/* Flush the TX descriptors */
 
