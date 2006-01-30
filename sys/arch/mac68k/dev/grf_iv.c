@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.39 2006/01/23 19:06:04 miod Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.40 2006/01/30 20:47:15 miod Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -110,7 +110,6 @@ macfb_obio_match(struct device *parent, void *vcf, void *aux)
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	bus_space_handle_t bsh;
 	static int found;
-	u_int base;
 
 	if (found != 0)
 		return (0);
@@ -119,18 +118,9 @@ macfb_obio_match(struct device *parent, void *vcf, void *aux)
 
         switch (current_mac_model->class) {
 	case MACH_CLASSQ2:
-		if (current_mac_model->machineid != MACH_MACLC575) {
-			base = VALKYRIE_CONTROL_BASE;
-
-			if (bus_space_map(oa->oa_tag, base, 0x40, 0, &bsh))
-				return (0);
-
-			/* Disable interrupts */
-			bus_space_write_1(oa->oa_tag, bsh, 0x18, 0x1);
-
-			bus_space_unmap(oa->oa_tag, bsh, 0x40);
+		if (current_mac_model->machineid != MACH_MACLC575)
 			break;
-		}
+
 		/*
 		 * Note:  the only system in this class that does not have
 		 * the Valkyrie chip -- at least, that we know of -- is
@@ -146,46 +136,17 @@ macfb_obio_match(struct device *parent, void *vcf, void *aux)
 		 * Assume DAFB for all of these, unless we can't
 		 * access the memory.
 		 */
-		base = DAFB_CONTROL_BASE;
-
-		if (bus_space_map(oa->oa_tag, base, 0x20, 0, &bsh))
+		if (bus_space_map(oa->oa_tag, DAFB_CONTROL_BASE, 0x120, 0,
+		    &bsh) != 0)
 			return (0);
 
-		if (mac68k_bus_space_probe(oa->oa_tag, bsh, 0x1c, 4) == 0) {
-			bus_space_unmap(oa->oa_tag, bsh, 0x20);
-			return (0);
-		}
+		if (mac68k_bus_space_probe(oa->oa_tag, bsh, 0x1c, 4) == 0 ||
+		    mac68k_bus_space_probe(oa->oa_tag, bsh, 0x104, 4) == 0)
+			found = 0;
 
-		bus_space_unmap(oa->oa_tag, bsh, 0x20);
-
-		if (bus_space_map(oa->oa_tag, base + 0x100, 0x20, 0, &bsh))
-			return (0);
-
-		if (mac68k_bus_space_probe(oa->oa_tag, bsh, 0x04, 4) == 0) {
-			bus_space_unmap(oa->oa_tag, bsh, 0x20);
-			return (0);
-		}
-
-		/* Disable interrupts */
-		bus_space_write_4(oa->oa_tag, bsh, 0x04, 0);
-
-		/* Clear any interrupts */
-		bus_space_write_4(oa->oa_tag, bsh, 0x0C, 0);
-		bus_space_write_4(oa->oa_tag, bsh, 0x10, 0);
-		bus_space_write_4(oa->oa_tag, bsh, 0x14, 0);
-
-		bus_space_unmap(oa->oa_tag, bsh, 0x20);
+		bus_space_unmap(oa->oa_tag, bsh, 0x120);
 		break;
 	case MACH_CLASSAV:
-		base = CIVIC_CONTROL_BASE;
-
-		if (bus_space_map(oa->oa_tag, base, 0x1000, 0, &bsh))
-			return (0);
-
-		/* Disable interrupts */
-		bus_space_write_1(oa->oa_tag, bsh, 0x120, 0);
-
-		bus_space_unmap(oa->oa_tag, bsh, 0x1000);
 		break;
 	case MACH_CLASSIIci:
 	case MACH_CLASSIIsi:
@@ -212,6 +173,7 @@ macfb_obio_attach(struct device *parent, struct device *self, void *aux)
 	struct macfb_devconfig *dc;
 
 	sc->card_id = 0;
+	sc->sc_tag = oa->oa_tag;
 
 	dc = malloc(sizeof(*dc), M_DEVBUF, M_WAITOK);
 	bzero(dc, sizeof(*dc));
@@ -231,16 +193,34 @@ macfb_obio_attach(struct device *parent, struct device *self, void *aux)
 #ifdef DEBUG
 			printf(" @ %lx", sc->sc_basepa + sc->sc_fbofs);
 #endif
+
+			if (bus_space_map(sc->sc_tag, VALKYRIE_CONTROL_BASE,
+			    0x40, 0, &sc->sc_regh) != 0) {
+				printf(": can't map Valkyrie registers\n");
+				free(dc, M_DEVBUF);
+				return;
+			}
+			/* Disable interrupts */
+			bus_space_write_1(sc->sc_tag, sc->sc_regh, 0x18, 0x1);
+			bus_space_unmap(sc->sc_tag, sc->sc_regh, 0x40);
+
 			printf(": Valkyrie\n");
 			break;
 		}
-		/* See note in grfiv_match() */
+		/*
+		 * Note:  the only system in this class that does not have
+		 * the Valkyrie chip -- at least, that we know of -- is
+		 * the Performa/LC 57x series.  This system has a version
+		 * of the DAFB controller, instead.
+		 *
+		 * If this assumption proves false, we'll have to be more
+		 * intelligent here.
+		 */
 		/*FALLTHROUGH*/
         case MACH_CLASSQ:
-		sc->sc_tag = oa->oa_tag;
-		if (bus_space_map(sc->sc_tag, DAFB_CONTROL_BASE, 0x20, 0,
+		if (bus_space_map(sc->sc_tag, DAFB_CONTROL_BASE, 0x120, 0,
 		    &sc->sc_regh)) {
-			printf(": failed to map DAFB register space\n");
+			printf(": can't map DAFB registers\n");
 			free(dc, M_DEVBUF);
 			return;
 		}
@@ -274,10 +254,19 @@ macfb_obio_attach(struct device *parent, struct device *self, void *aux)
 #ifdef DEBUG
 		printf(" @ %lx", sc->sc_basepa + sc->sc_fbofs);
 #endif
+
+		/* Disable interrupts */
+		bus_space_write_4(sc->sc_tag, sc->sc_regh, 0x104, 0);
+
+		/* Clear any pending interrupts */
+		bus_space_write_4(sc->sc_tag, sc->sc_regh, 0x10C, 0);
+		bus_space_write_4(sc->sc_tag, sc->sc_regh, 0x110, 0);
+		bus_space_write_4(sc->sc_tag, sc->sc_regh, 0x114, 0);
+
 		printf(": DAFB, monitor sense %x\n",
 		    (bus_space_read_4(sc->sc_tag, sc->sc_regh, 0x1c) & 0x7));
 
-		bus_space_unmap(sc->sc_tag, sc->sc_regh, 0x20);
+		bus_space_unmap(sc->sc_tag, sc->sc_regh, 0x120);
 
 		if (bus_space_map(sc->sc_tag, DAFB_CMAP_BASE, 0x20, 0,
 		    &sc->sc_regh) == 0) {
@@ -300,6 +289,18 @@ macfb_obio_attach(struct device *parent, struct device *self, void *aux)
 #ifdef DEBUG
 		printf(" @ %lx", sc->sc_basepa + sc->sc_fbofs);
 #endif
+
+		if (bus_space_map(sc->sc_tag, CIVIC_CONTROL_BASE, PAGE_SIZE,
+		    0, &sc->sc_regh) != 0) {
+			printf(": can't map Civic registers\n");
+			free(dc, M_DEVBUF);
+			return;
+		}
+
+		/* Disable interrupts */
+		bus_space_write_1(sc->sc_tag, sc->sc_regh, 0x120, 0);
+		bus_space_unmap(sc->sc_tag, sc->sc_regh, PAGE_SIZE);
+
 		printf(": Civic\n");
 		break;
 	case MACH_CLASSIIci:
