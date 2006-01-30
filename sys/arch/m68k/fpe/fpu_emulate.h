@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_emulate.h,v 1.5 2006/01/16 22:08:26 miod Exp $	*/
+/*	$OpenBSD: fpu_emulate.h,v 1.6 2006/01/30 21:23:22 miod Exp $	*/
 /*	$NetBSD: fpu_emulate.h,v 1.11 2005/08/13 05:38:45 he Exp $	*/
 
 /*
@@ -281,16 +281,16 @@ void	fpu_implode(struct fpemu *fe, struct fpn *fp, int t, u_int *dst);
  * non-static emulation functions
  */
 /* type 0 */
-int fpu_emul_fmovecr(struct fpemu *fe, struct instruction *insn);
-int fpu_emul_fstore(struct fpemu *fe, struct instruction *insn);
-int fpu_emul_fscale(struct fpemu *fe, struct instruction *insn);
+int fpu_emul_fmovecr(struct fpemu *fe, struct instruction *insn, int *typ);
+int fpu_emul_fstore(struct fpemu *fe, struct instruction *insn, int *typ);
+int fpu_emul_fscale(struct fpemu *fe, struct instruction *insn, int *typ);
 
 /*
  * include function declarations of those which are called by fpu_emul_arith()
  */
 #include "fpu_arith_proto.h"
 
-int fpu_emulate(struct frame *frame, struct fpframe *fpf);
+int fpu_emulate(struct frame *frame, struct fpframe *fpf, int *typ);
 
 /*
  * "helper" functions
@@ -299,13 +299,13 @@ int fpu_emulate(struct frame *frame, struct fpframe *fpf);
 struct fpn *fpu_const(struct fpn *fp, u_int offset);
 /* update exceptions and FPSR */
 int fpu_upd_excp(struct fpemu *fe);
-u_int fpu_upd_fpsr(struct fpemu *fe, struct fpn *fp);
+u_int fpu_upd_fpsr(struct fpemu *fe, struct fpn *fp) ;
 
 /* address mode decoder, and load/store */
 int fpu_decode_ea(struct frame *frame, struct instruction *insn,
-		   struct insn_ea *ea, int modreg);
+		   struct insn_ea *ea, int modreg, int *typ);
 int fpu_load_ea(struct frame *frame, struct instruction *insn,
-		 struct insn_ea *ea, char *dst);
+		 struct insn_ea *ea, char *dst, int *typ);
 int fpu_store_ea(struct frame *frame, struct instruction *insn,
 		  struct insn_ea *ea, char *src);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_fstore.c,v 1.4 2006/01/16 22:08:26 miod Exp $	*/
+/*	$OpenBSD: fpu_fstore.c,v 1.5 2006/01/30 21:23:23 miod Exp $	*/
 /*	$NetBSD: fpu_fstore.c,v 1.8 2003/07/15 02:43:10 lukem Exp $	*/
 
 /*
@@ -40,9 +40,7 @@
  *	(word1 & 0xe000) == 0x6000
  */
 int
-fpu_emul_fstore(fe, insn)
-     struct fpemu *fe;
-     struct instruction *insn;
+fpu_emul_fstore(struct fpemu *fe, struct instruction *insn, int *typ)
 {
     struct frame *frame = fe->fe_frame;
     u_int *fpregs = fe->fe_fpframe->fpf_regs;
@@ -79,7 +77,8 @@ fpu_emul_fstore(fe, insn)
 #if DEBUG_FPE
 	printf("  fpu_emul_fstore: invalid format %d\n", format);
 #endif
-	sig = SIGFPE;
+	*typ = ILL_ILLOPN;
+	sig = SIGILL;
     }
 #if DEBUG_FPE
     printf("  fpu_emul_fstore: format %d, size %d\n",
@@ -89,7 +88,7 @@ fpu_emul_fstore(fe, insn)
     fe->fe_fpsr &= ~FPSR_EXCP;
 
     /* Get effective address. (modreg=opcode&077) */
-    sig = fpu_decode_ea(frame, insn, &insn->is_ea, insn->is_opcode);
+    sig = fpu_decode_ea(frame, insn, &insn->is_ea, insn->is_opcode, typ);
     if (sig) {
 #if DEBUG_FPE
 	printf("  fpu_emul_fstore: failed in decode_ea sig=%d\n", sig);

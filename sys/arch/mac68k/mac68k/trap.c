@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.48 2006/01/16 21:46:25 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.49 2006/01/30 21:23:24 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -412,11 +412,11 @@ copyfault:
 	case T_FPEMULI|T_USER:
 	case T_FPEMULD|T_USER:
 #ifdef FPU_EMULATE
-		i = fpu_emulate(&frame, &p->p_addr->u_pcb.pcb_fpregs);
+		i = fpu_emulate(&frame, &p->p_addr->u_pcb.pcb_fpregs,
+		    &typ);
 		/* XXX -- deal with tracing? (frame.f_sr & PSL_T) */
 		if (i == 0)
 			goto out;
-		typ = i == SIGSEGV ? SEGV_MAPERR : ILL_COPROC;
 #else
 		uprintf("pid %d killed: no floating point support.\n",
 			p->p_pid);

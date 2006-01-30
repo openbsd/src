@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_calcea.c,v 1.10 2006/01/16 22:08:26 miod Exp $	*/
+/*	$OpenBSD: fpu_calcea.c,v 1.11 2006/01/30 21:23:22 miod Exp $	*/
 /*	$NetBSD: fpu_calcea.c,v 1.16 2004/02/13 11:36:14 wiz Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  * Prototypes of local functions
  */
 int decode_ea6(struct frame *frame, struct instruction *insn,
-			   struct insn_ea *ea, int modreg);
+			   struct insn_ea *ea, int modreg, int *typ);
 int fetch_immed(struct frame *frame, struct instruction *insn,
 			    int *dst);
 int fetch_disp(struct frame *frame, struct instruction *insn,
@@ -59,11 +59,8 @@ int calc_ea(struct insn_ea *ea, char *ptr, char **eaddr);
  * Returns zero on success, else signal number.
  */
 int
-fpu_decode_ea(frame, insn, ea, modreg)
-     struct frame *frame;
-     struct instruction *insn;
-     struct insn_ea *ea;
-     int modreg;
+fpu_decode_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
+    int modreg, int *typ)
 {
     int sig;
 
@@ -160,7 +157,7 @@ fpu_decode_ea(frame, insn, ea, modreg)
 
 	case 060:			/* (d8,An,Xn) */
 	    ea->ea_flags = EA_INDEXED;
-	    sig = decode_ea6(frame, insn, ea, modreg);
+	    sig = decode_ea6(frame, insn, ea, modreg, typ);
 	    break;
 
 	case 070:			/* misc. */
@@ -193,7 +190,7 @@ fpu_decode_ea(frame, insn, ea, modreg)
 
 	    case 3:			/* (d8,PC,Xn) */
 		ea->ea_flags = EA_PC_REL | EA_INDEXED;
-		sig = decode_ea6(frame, insn, ea, modreg);
+		sig = decode_ea6(frame, insn, ea, modreg, typ);
 		break;
 
 	    case 4:			/* #data */
@@ -202,6 +199,7 @@ fpu_decode_ea(frame, insn, ea, modreg)
 #ifdef DEBUG_FPE
 		printf("decode_ea: invalid addr mode (7,%d)\n", modreg & 7);
 #endif
+		*typ = ILL_ILLADR;
 		return SIGILL;
 	    } /* switch for mode 7 */
 	    break;
@@ -216,11 +214,8 @@ fpu_decode_ea(frame, insn, ea, modreg)
  * Decode Mode=6 address modes
  */
 int
-decode_ea6(frame, insn, ea, modreg)
-     struct frame *frame;
-     struct instruction *insn;
-     struct insn_ea *ea;
-     int modreg;
+decode_ea6(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
+    int modreg, int *typ)
 {
     int idx;
     int basedisp, outerdisp;
@@ -297,6 +292,7 @@ decode_ea6(frame, insn, ea, modreg)
 	    printf("decode_ea6: invalid indirect mode: ext word %02x\n",
 		   extword);
 #endif
+	    *typ = ILL_ILLADR;
 	    return SIGILL;
 	    break;
 	}
@@ -317,11 +313,8 @@ decode_ea6(frame, insn, ea, modreg)
  * Returns zero on success, else signal number.
  */
 int
-fpu_load_ea(frame, insn, ea, dst)
-     struct frame *frame;
-     struct instruction *insn;
-     struct insn_ea *ea;
-     char *dst;
+fpu_load_ea(struct frame *frame, struct instruction *insn, struct insn_ea *ea,
+    char *dst, int *typ)
 {
     int *reg;
     char *src;
@@ -396,7 +389,7 @@ fpu_load_ea(frame, insn, ea, dst)
 #endif
 	memcpy(dst, src, len);
     } else
-#endif
+#endif	/* 0 */
     if (ea->ea_flags & EA_IMMED) {
 #ifdef DEBUG_FPE
 	printf("load_ea: immed %08x%08x%08x size %d\n",
@@ -465,6 +458,7 @@ fpu_load_ea(frame, insn, ea, dst)
 #ifdef DEBUG
 		printf("load_ea: tried to postincrement PC\n");
 #endif
+		*typ = ILL_ILLADR;
 		return SIGILL;
 	    }
 	    *reg += step;

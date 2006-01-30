@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_fmovecr.c,v 1.6 2006/01/16 22:08:26 miod Exp $	*/
+/*	$OpenBSD: fpu_fmovecr.c,v 1.7 2006/01/30 21:23:23 miod Exp $	*/
 /*	$NetBSD: fpu_fmovecr.c,v 1.10 2003/07/15 02:43:09 lukem Exp $	*/
 
 /*
@@ -98,9 +98,7 @@ fpu_const(fp, offset)
 }
 
 int
-fpu_emul_fmovecr(fe, insn)
-     struct fpemu *fe;
-     struct instruction *insn;
+fpu_emul_fmovecr(struct fpemu *fe, struct instruction *insn, int *typ)
 {
     int dstreg, offset;
     u_int *fpreg;
