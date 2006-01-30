@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfb.c,v 1.11 2006/01/30 12:15:06 martin Exp $	*/
+/*	$OpenBSD: macfb.c,v 1.12 2006/01/30 20:41:51 miod Exp $	*/
 /* $NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -129,14 +129,25 @@ macfb_init(struct macfb_devconfig *dc)
 	ri->ri_height = dc->dc_ht;
 	ri->ri_hw = dc;
 
-	/* swap B and R */
-	if (ri->ri_depth == 16) {
+	/* swap B and R if necessary */
+	switch (ri->ri_depth) {
+	case 16:
 		ri->ri_rnum = 5;
 		ri->ri_rpos = 11;
 		ri->ri_gnum = 6;
 		ri->ri_gpos = 5;
 		ri->ri_bnum = 5;
 		ri->ri_bpos = 0;
+		break;
+	case 24:
+	case 32:
+		ri->ri_rnum = 8;
+		ri->ri_rpos = 16;
+		ri->ri_gnum = 8;
+		ri->ri_gpos = 8;
+		ri->ri_bnum = 8;
+		ri->ri_bpos = 0;
+		break;
 	}
 
 	/*
