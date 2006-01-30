@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.27 2006/01/27 15:26:38 xsa Exp $	*/
+/*	$OpenBSD: admin.c,v 1.28 2006/01/30 17:58:47 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -360,7 +360,7 @@ cvs_admin_local(CVSFILE *cf, void *arg)
 
 	if ((rf = rcs_open(rcspath, RCS_RDWR)) == NULL)
 		fatal("cvs_admin_local: rcs_open `%s': %s", rcspath,
-		    strerror(rcs_errno));
+		    rcs_errstr(rcs_errno));
 
 	if (!RCS_KWEXP_INVAL(kflag))
 		ret = rcs_kwexp_set(rf, kflag);

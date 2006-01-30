@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.48 2006/01/27 12:56:28 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.49 2006/01/30 17:58:47 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -335,7 +335,7 @@ cvs_checkout_local(CVSFILE *cf, void *arg)
 
 	if ((rf = rcs_open(rcspath, RCS_READ)) == NULL)
 		fatal("cvs_checkout_local: rcs_open `%s': %s", rcspath,
-		    strerror(rcs_errno));
+		    rcs_errstr(rcs_errno));
 
 	if (cvs_checkout_rev(rf, rf->rf_head, cf, fpath,
 	    (cvs_cmdop != CVS_OP_SERVER) ? 1 : 0,

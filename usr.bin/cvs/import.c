@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.37 2006/01/27 10:39:49 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.38 2006/01/30 17:58:47 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -282,7 +282,7 @@ cvs_import_local(CVSFILE *cf, void *arg)
 
 	if ((rf = rcs_open(rpath, RCS_RDWR|RCS_CREATE)) == NULL);
 		fatal("cvs_import_local: rcs_open: `%s': %s", rpath,
-		    strerror(rcs_errno));
+		    rcs_errstr(rcs_errno));
 
 	comment = rcs_comment_lookup(cf->cf_name);
 	if ((comment != NULL) && (rcs_comment_set(rf, comment) < 0)) {
@@ -301,7 +301,7 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	if (rcs_sym_add(rf, release, rev) < 0) {
 		(void)unlink(rpath);
 		fatal("cvs_import_local: rcs_sym_add failed: %s",
-		    strerror(rcs_errno));
+		    rcs_errstr(rcs_errno));
 	}
 
 	rcsnum_cpy(imp_brnum, rev, 2);
@@ -320,13 +320,13 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	if (rcs_branch_set(rf, imp_brnum) < 0) {
 		(void)unlink(rpath);
 		fatal("cvs_import_local: rcs_branch_set failed: %s",
-		    strerror(rcs_errno));
+		    rcs_errstr(rcs_errno));
 	}
 
 	if (rcs_sym_add(rf, vendor, imp_brnum) < 0) {
 		(void)unlink(rpath);
 		fatal("cvs_import_local: rcs_sym_add failed: %s",
-		    strerror(rcs_errno));
+		    rcs_errstr(rcs_errno));
 	}
 
 	if ((bp = cvs_buf_load(fpath, BUF_AUTOEXT)) == NULL) {

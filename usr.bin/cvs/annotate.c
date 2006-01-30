@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.28 2006/01/27 15:26:38 xsa Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.29 2006/01/30 17:58:47 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -172,7 +172,7 @@ cvs_annotate_local(CVSFILE *cf, void *arg)
 
 	if ((rf = rcs_open(rcspath, RCS_READ)) == NULL)
 		fatal("cvs_annotate_local: rcs_open `%s': %s", rcspath,
-		    strerror(rcs_errno));
+		    rcs_errstr(rcs_errno));
 
 	cvs_printf("Annotations for %s", cf->cf_name);
 	cvs_printf("\n***************\n");

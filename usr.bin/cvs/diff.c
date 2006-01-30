@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.78 2006/01/27 15:26:38 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.79 2006/01/30 17:58:47 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -574,7 +574,7 @@ cvs_diff_local(CVSFILE *cf, void *arg)
 
 	if ((rf = rcs_open(rcspath, RCS_READ)) == NULL)
 		fatal("cvs_diff_local: rcs_open `%s': %s", rcspath,
-		    strerror(rcs_errno));
+		    rcs_errstr(rcs_errno));
 
 	cvs_printf("Index: %s\n%s\nRCS file: %s\n", diff_file,
 	    RCS_DIFF_DIV, rcspath);
