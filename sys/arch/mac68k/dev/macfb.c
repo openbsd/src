@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfb.c,v 1.10 2006/01/23 19:05:23 miod Exp $	*/
+/*	$OpenBSD: macfb.c,v 1.11 2006/01/30 12:15:06 martin Exp $	*/
 /* $NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -256,11 +256,11 @@ macfb_attach_common(struct macfb_softc *sc, struct macfb_devconfig *dc)
 	int isconsole;
 
 	/* Print hardware characteristics. */
-	printf("%s: %dx%d ", sc->sc_dev.dv_xname, dc->dc_wid, dc->dc_ht);
+	printf("%s: %dx%d, ", sc->sc_dev.dv_xname, dc->dc_wid, dc->dc_ht);
 	if (dc->dc_depth == 1)
 		printf("monochrome");
 	else
-		printf("%d color", 1 << dc->dc_depth);
+		printf("%dbit color", dc->dc_depth);
 	printf(" display\n");
 
 	isconsole = macfb_is_console(sc->sc_basepa + dc->dc_offset);
