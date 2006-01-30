@@ -1,4 +1,4 @@
-/*	$OpenBSD: nviic.c,v 1.4 2006/01/11 14:41:08 jsg Exp $ */
+/*	$OpenBSD: nviic.c,v 1.5 2006/01/30 00:18:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -247,8 +247,8 @@ nviic_i2c_exec(void *arg, i2c_op_t op, i2c_addr_t addr,
 	/* start transaction */
 	nviic_write(nc, NVI_SMB_PRTCL, protocol);
 
-	for (i = 10000; i > 0; i--) {
-		delay(500);
+	for (i = 1000; i > 0; i--) {
+		delay(100);
 		if (nviic_read(nc, NVI_SMB_PRTCL) == 0)
 			break;
 	}
