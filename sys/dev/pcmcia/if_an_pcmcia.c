@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pcmcia.c,v 1.17 2006/01/09 21:19:47 jsg Exp $	*/
+/*	$OpenBSD: if_an_pcmcia.c,v 1.18 2006/01/30 11:41:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -42,6 +42,7 @@
 #include <netinet/if_ether.h>
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_radiotap.h>
 
 #include <machine/bus.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: anvar.h,v 1.19 2006/01/09 21:19:47 jsg Exp $	*/
+/*	$OpenBSD: anvar.h,v 1.20 2006/01/30 11:41:00 jsg Exp $	*/
 /*	$NetBSD: anvar.h,v 1.10 2005/02/27 00:27:00 perry Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -74,6 +74,33 @@ struct an_wepkey {
 
 #define	AN_GAPLEN_MAX	8
 
+#define AN_RX_RADIOTAP_PRESENT	((1 << IEEE80211_RADIOTAP_FLAGS) | \
+				 (1 << IEEE80211_RADIOTAP_RATE) | \
+				 (1 << IEEE80211_RADIOTAP_CHANNEL) | \
+				 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL))
+
+struct an_rx_radiotap_header {
+	struct ieee80211_radiotap_header	ar_ihdr;
+	u_int8_t				ar_flags;
+	u_int8_t				ar_rate;
+	u_int16_t				ar_chan_freq;
+	u_int16_t				ar_chan_flags;
+	int8_t					ar_antsignal;
+} __packed;
+
+#define AN_TX_RADIOTAP_PRESENT	((1 << IEEE80211_RADIOTAP_FLAGS) | \
+				 (1 << IEEE80211_RADIOTAP_RATE) | \
+				 (1 << IEEE80211_RADIOTAP_CHANNEL))
+
+struct an_tx_radiotap_header {
+	struct ieee80211_radiotap_header	at_ihdr;
+	u_int8_t				at_flags;
+	u_int8_t				at_rate;
+	u_int16_t				at_chan_freq;
+	u_int16_t				at_chan_flags;
+} __packed;
+
+
 struct an_softc	{
 	struct device		sc_dev;
 	struct ieee80211com	sc_ic;
@@ -117,7 +144,20 @@ struct an_softc	{
 		struct an_rid_leapkey	sc_leapkey;
 		struct an_rid_encap	sc_encap;
 	}			sc_buf;
+
+	caddr_t			sc_drvbpf;
+	union {
+		struct an_rx_radiotap_header	tap;
+		u_int8_t			pad[64];
+	} sc_rxtapu;
+	union {
+		struct an_tx_radiotap_header	tap;
+		u_int8_t			pad[64];
+	} sc_txtapu;
 };
+
+#define sc_rxtap	sc_rxtapu.tap
+#define sc_txtap	sc_txtapu.tap
 
 int	an_attach(struct an_softc *);
 int	an_detach(struct an_softc *);

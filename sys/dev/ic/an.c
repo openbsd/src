@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.45 2006/01/09 21:19:47 jsg Exp $	*/
+/*	$OpenBSD: an.c,v 1.46 2006/01/30 11:41:00 jsg Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -110,6 +110,7 @@
 #include <netinet/if_ether.h>
 #endif
 
+#include <net80211/ieee80211_radiotap.h>
 #include <net80211/ieee80211_var.h>
 
 #if NBPFILTER > 0
@@ -317,6 +318,19 @@ an_attach(struct an_softc *sc)
 
 	ieee80211_media_init(ifp, an_media_change, an_media_status);
 
+#if NBPFILTER > 0
+	bzero(&sc->sc_rxtapu, sizeof(sc->sc_rxtapu));
+	sc->sc_rxtap.ar_ihdr.it_len = sizeof(sc->sc_rxtapu);
+	sc->sc_rxtap.ar_ihdr.it_present = AN_RX_RADIOTAP_PRESENT;
+
+	bzero(&sc->sc_txtapu, sizeof(sc->sc_txtapu));
+	sc->sc_txtap.at_ihdr.it_len = sizeof(sc->sc_txtapu);
+	sc->sc_txtap.at_ihdr.it_present = AN_TX_RADIOTAP_PRESENT;
+
+	bpfattach(&sc->sc_drvbpf, ifp, DLT_IEEE802_11_RADIO,
+	    sizeof(struct ieee80211_frame) + 64);
+#endif
+
 	shutdownhook_establish(an_shutdown, sc);
 
 	sc->sc_attached = 1;
@@ -421,6 +435,26 @@ an_rxeof(struct an_softc *sc)
 	memcpy(m->m_data, &frmhdr.an_whdr, sizeof(struct ieee80211_frame));
 	m->m_pkthdr.rcvif = ifp;
 	CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_RX);
+
+#if NBPFILTER > 0
+	if (sc->sc_drvbpf) {
+		struct mbuf mb;
+		struct an_rx_radiotap_header *tap = &sc->sc_rxtap;
+
+		tap->ar_rate = frmhdr.an_rx_rate;
+		tap->ar_antsignal = frmhdr.an_rx_signal_strength;
+		tap->ar_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
+		tap->ar_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
+
+
+		M_DUP_PKTHDR(&mb, m);
+		mb.m_data = (caddr_t)tap;
+		mb.m_len = sizeof(sc->sc_rxtapu);
+		mb.m_next = m;
+		mb.m_pkthdr.len += mb.m_len;
+		bpf_mtap(sc->sc_drvbpf, &mb);
+	}
+#endif /* NPBFILTER > 0 */
 
 	wh = mtod(m, struct ieee80211_frame *);
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
@@ -1153,6 +1187,27 @@ an_start(struct ifnet *ifp)
 			m_freem(m);
 			continue;
 		}
+
+#if NBPFILTER > 0
+		if (sc->sc_drvbpf) {
+			struct mbuf mb;
+			struct an_tx_radiotap_header *tap = &sc->sc_txtap;
+
+			tap->at_rate = 
+			    ic->ic_bss->ni_rates.rs_rates[ic->ic_bss->ni_txrate];
+			tap->at_chan_freq =
+			    htole16(ic->ic_bss->ni_chan->ic_freq);
+			tap->at_chan_flags =
+			    htole16(ic->ic_bss->ni_chan->ic_flags);
+
+			M_DUP_PKTHDR(&mb, m);
+			mb.m_data = (caddr_t)tap;
+			mb.m_len = sizeof(sc->sc_txtapu);
+			mb.m_next = m;
+			mb.m_pkthdr.len += mb.m_len;
+			bpf_mtap(sc->sc_drvbpf, m);
+		}
+#endif
 
 		fid = sc->sc_txd[cur].d_fid;
 		if (an_write_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr)) != 0) {

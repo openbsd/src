@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pci.c,v 1.14 2006/01/09 21:19:48 jsg Exp $	*/
+/*	$OpenBSD: if_an_pci.c,v 1.15 2006/01/30 11:41:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -68,6 +68,7 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
+#include <net80211/ieee80211_radiotap.h>
 #include <net80211/ieee80211_var.h>
 
 #include <machine/bus.h>
