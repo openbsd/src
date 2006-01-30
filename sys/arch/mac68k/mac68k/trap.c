@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.49 2006/01/30 21:23:24 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.50 2006/01/30 21:26:17 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -365,24 +365,14 @@ copyfault:
 	 * User coprocessor violation
 	 */
 	case T_COPERR|T_USER:
-		typ = FPE_FLTINV;
+		typ = ILL_COPROC;
 		ucode = 0;
-		i = SIGFPE;	/* XXX What is a proper response here? */
+		i = SIGILL;
 		break;
 	/* 
 	 * 6888x exceptions 
 	 */
 	case T_FPERR|T_USER:
-		/*
-		 * We pass along the 68881 status register which locore
-		 * stashed in code for us.  Note that there is a
-		 * possibility that the bit pattern of this register
-		 * will conflict with one of the FPE_* codes defined
-		 * in signal.h.  Fortunately for us, the only such
-		 * codes we use are all in the range 1-7 and the low
-		 * 3 bits of the status register are defined as 0 so
-		 * there is no clash.
-		 */
 		typ = FPE_FLTRES;
 		ucode = code;
 		i = SIGFPE;

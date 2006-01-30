@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.38 2005/12/30 21:14:16 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.39 2006/01/30 21:26:19 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -578,7 +578,7 @@ badtrap:
 		 * Since All UltraSPARC CPUs have an FPU how can this happen?
 		 */
 		if (!foundfpu) {
-			trapsignal(p, SIGFPE, 0, FPE_FLTINV, sv);
+			trapsignal(p, SIGILL, 0, ILL_COPROC, sv);
 			break;
 		}
 

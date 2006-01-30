@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.33 2005/12/23 19:49:00 miod Exp $     */
+/*	$OpenBSD: trap.c,v 1.34 2006/01/30 21:26:19 miod Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -298,13 +298,13 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		break;
 
 	case T_XFCFLT|T_USER:
-		typ = ILL_ILLOPC;		/* XXX hmm */
+		typ = EMT_TAGOVF;
 		sig = SIGEMT;
 		break;
 
 	case T_ARITHFLT|T_USER:
 		sv.sival_int = frame->code;
-		typ = 0;				/* XXX */
+		typ = FPE_FLTINV;
 		sig = SIGFPE;
 		break;
 

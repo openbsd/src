@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.5 2005/12/25 00:22:47 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.6 2006/01/30 21:26:19 miod Exp $	*/
 /*	OpenBSD: trap.c,v 1.42 2004/12/06 20:12:25 miod Exp 	*/
 
 /*
@@ -527,7 +527,7 @@ badtrap:
 
 	case T_CPDISABLED:
 		uprintf("coprocessor instruction\n");	/* XXX */
-		trapsignal(p, SIGILL, 0, FPE_FLTINV, sv);
+		trapsignal(p, SIGILL, 0, ILL_COPROC, sv);
 		break;
 
 	case T_BREAKPOINT:

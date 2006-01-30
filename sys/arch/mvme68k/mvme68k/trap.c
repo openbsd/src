@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.61 2005/12/17 07:31:26 miod Exp $ */
+/*	$OpenBSD: trap.c,v 1.62 2006/01/30 21:26:19 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -344,15 +344,6 @@ copyfault:
 		break;
 
 	case T_FPERR|T_USER:	/* 68881 exceptions */
-		/*
-		 * We pass along the 68881 status register which locore stashed
-		 * in code for us.  Note that there is a possibility that the
-		 * bit pattern of this register will conflict with one of the
-		 * FPE_* codes defined in signal.h.  Fortunately for us, the
-		 * only such codes we use are all in the range 1-7 and the low
-		 * 3 bits of the status register are defined as 0 so there is
-		 * no clash.
-		 */
 		typ = FPE_FLTRES;
 		ucode = code;
 		i = SIGFPE;
