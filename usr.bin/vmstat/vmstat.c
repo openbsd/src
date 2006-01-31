@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.97 2005/09/28 00:54:05 pedro Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.98 2006/01/31 18:24:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.97 2005/09/28 00:54:05 pedro Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.98 2006/01/31 18:24:56 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,10 @@ struct nlist namelist[] = {
 	{ "_nselcoll" },
 #define X_POOLHEAD	7		/* sysctl */
 	{ "_pool_head" },
-#define X_END		8
+};
+
+struct nlist namelist2[] = {
+	{ "_uvm_km_pages_free" },
 	{ "" },
 };
 
@@ -123,6 +126,7 @@ void	dopool(void);
 void	dosum(void);
 void	dovmstat(u_int, int);
 void	kread(int, void *, size_t);
+int	kreado(struct nlist *, void *, size_t);
 void	usage(void);
 void	dotimes(void);
 void	doforkst(void);
@@ -1025,7 +1029,7 @@ dopool_sysctl(void)
 	struct pool pool;
 	size_t size;
 	int mib[4];
-	int npools, i;
+	int npools, i, kmfp;
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_POOL;
@@ -1065,6 +1069,8 @@ dopool_sysctl(void)
 
 	inuse /= 1024;
 	total /= 1024;
+	if (!kreado(namelist2, &kmfp, sizeof(kmfp)))
+		total += kmfp * (getpagesize() / 1024);
 	printf("\nIn use %ldK, total allocated %ldK; utilization %.1f%%\n",
 	    inuse, total, (double)(100 * inuse) / total);
 }
@@ -1076,6 +1082,7 @@ dopool_kvm(void)
 	long total = 0, inuse = 0;
 	TAILQ_HEAD(,pool) pool_head;
 	struct pool pool, *pp = &pool;
+	int kmfp;
 
 	kread(X_POOLHEAD, &pool_head, sizeof(pool_head));
 	addr = (long)TAILQ_FIRST(&pool_head);
@@ -1108,6 +1115,8 @@ dopool_kvm(void)
 
 	inuse /= 1024;
 	total /= 1024;
+	if (!kreado(namelist2, &kmfp, sizeof(kmfp)))
+		total += kmfp * (getpagesize() / 1024);
 	printf("\nIn use %ldK, total allocated %ldK; utilization %.1f%%\n",
 	    inuse, total, (double)(100 * inuse) / total);
 }
@@ -1132,6 +1141,27 @@ kread(int nlx, void *addr, size_t size)
 			++sym;
 		errx(1, "%s: %s", sym, kvm_geterr(kd));
 	}
+}
+
+/*
+ * kread reads something from the kernel, given its nlist index.
+ */
+int
+kreado(struct nlist *nl, void *addr, size_t size)
+{
+	char *sym;
+	int c;
+
+	if ((c = kvm_nlist(kd, nl)) != 0)
+		return (c);
+
+	if (nl->n_type == 0 || nl->n_value == 0)
+		return (-1);
+
+	if (kvm_read(kd, nl->n_value, addr, size) != size)
+		return (-1);
+
+	return (0);
 }
 
 void
