@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.142 2005/12/14 00:44:39 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.143 2006/01/31 15:22:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -678,6 +678,10 @@ kr_redistribute6(int type, struct kroute6 *kr6)
 	struct redist_node	*rn;
 
 	if (!(kr6->flags & F_KERNEL))
+		return (0);
+
+	/* Dynamic routes are not redistributable. */
+	if (kr6->flags & F_DYNAMIC)
 		return (0);
 
 	/*
