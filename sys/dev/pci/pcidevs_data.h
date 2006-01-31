@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1012 2006/01/31 21:39:05 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1013 2006/01/31 22:45:55 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8127,8 +8127,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PDC40719",
 	},
 	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20571,
+	    "PDC20571",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20579,
+	    "PDC20579",
+	},
+	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC40718,
 	    "PDC40718",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20575,
+	    "PDC20575",
 	},
 	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20267,
