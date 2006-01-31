@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt8370.c,v 1.6 2006/01/25 11:57:31 claudio Exp $ */
+/*	$OpenBSD: bt8370.c,v 1.7 2006/01/31 16:51:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -793,7 +793,7 @@ bt8370_intr(struct art_softc *ac)
 int
 bt8370_link_status(struct art_softc *ac)
 {
-	u_int8_t rstat, alm1, alm2, alm3;
+	u_int8_t rstat, alm1, alm2, alm3, alm1mask;
 	int status = 1;
 
 	/*
@@ -802,14 +802,21 @@ bt8370_link_status(struct art_softc *ac)
 	 * -1 no link detected
 	 */
 
+	alm1mask = ALM1_RYEL | ALM1_RAIS | ALM1_RALOS | ALM1_RLOF;
+	/*
+	 * XXX don't check RYEL in T1 mode it toggles more or less
+	 * regular.
+	 */
+	if (IFM_SUBTYPE(ac->art_media) == IFM_TDM_T1)
+		alm1mask &= ~ALM1_RYEL;
+
 	rstat = ebus_read(&ac->art_ebus, Bt8370_RSTAT);
 	alm1 = ebus_read(&ac->art_ebus, Bt8370_ALM1);
 	alm2 = ebus_read(&ac->art_ebus, Bt8370_ALM2);
 	alm3 = ebus_read(&ac->art_ebus, Bt8370_ALM3);
 
 	if ((rstat & (RSTAT_EXZ | RSTAT_BPV)) ||
-	    (alm1 & (ALM1_RYEL | ALM1_RAIS | ALM1_RALOS | ALM1_RLOF)) ||
-	    (alm3 & (ALM3_SEF)))
+	    (alm1 & alm1mask) || (alm3 & (ALM3_SEF)))
 		status = 0;
 
 	if ((alm1 & (ALM1_RLOS)) ||
