@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1010 2006/01/29 20:33:36 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1011 2006/01/31 19:35:56 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1853,6 +1853,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_QZ,
 	    "Radeon VE QZ",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_ES1000,
+	    "ES1000",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R200_Ql,
@@ -7907,6 +7911,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GCNB-LE Host",
 	},
 	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_1000_PCI,
+	    "HT-1000 PCI",
+	},
+	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CIOB_X2,
 	    "CIOB-X2 PCIX",
 	},
@@ -7915,8 +7923,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PCIE-PCIX",
 	},
 	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_1000_PCIX,
+	    "HT-1000 PCIX",
+	},
+	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CIOB_E,
 	    "CIOB-E",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_1000_PCIE_1,
+	    "HT-1000 PCIE",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_1000_PCIE_2,
+	    "HT-1000 PCIE",
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_OSB4,
@@ -7929,6 +7949,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB6,
 	    "CSB6",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_1000,
+	    "HT-1000",
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_OSB4_IDE,
@@ -7959,6 +7983,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CSB6 USB",
 	},
 	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_1000_USB,
+	    "HT-1000 USB",
+	},
+	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB5_LPC_1,
 	    "CSB5 LPC",
 	},
@@ -7969,6 +7997,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB5_LPC_2,
 	    "CSB5 LPC",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_1000_LPC,
+	    "HT-1000 LPC",
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_K2_SATA,
