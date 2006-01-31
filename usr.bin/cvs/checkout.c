@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.49 2006/01/30 17:58:47 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.50 2006/01/31 13:55:20 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -156,31 +156,20 @@ cvs_checkout_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 	co_mods = argv;
 	co_nmod = argc;
 
-	if ((statmod == 0) && (argc == 0)) {
-		cvs_log(LP_ABORT,
-		    "must specify at least one module or directory");
-		return (-1);
-	}
+	if ((statmod == 0) && (argc == 0))
+		fatal("must specify at least one module or directory");
 
-	if (statmod && (argc > 0)) {
-		cvs_log(LP_ABORT,  "-c and -s must not get any arguments");
-		return (-1);
-	}
+	if (statmod && (argc > 0))
+		fatal("-c and -s must not get any arguments");
 
 	/* `export' command exceptions */
 	if (cvs_cmdop == CVS_OP_EXPORT) {
-		if (!tag && !date) {
-			cvs_log(LP_ABORT, "must specify a tag or date");
-			return (-1);
-		}
+		if (!tag && !date)
+			fatal("must specify a tag or date");
 
 		/* we don't want numerical revisions here */
-		if (tag && (rcs = rcsnum_parse(tag)) != NULL) {
-			cvs_log(LP_ABORT, "tag `%s' must be a symbolic tag",
-			    tag);
-			rcsnum_free(rcs);
-			return (-1);
-		}
+		if (tag && (rcs = rcsnum_parse(tag)) != NULL)
+			fatal("tag `%s' must be a symbolic tag", tag);
 	}
 
 	*arg = optind;
