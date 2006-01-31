@@ -1,4 +1,4 @@
-/*	$OpenBSD: apme.c,v 1.10 2005/12/18 17:54:12 reyk Exp $	*/
+/*	$OpenBSD: apme.c,v 1.11 2006/01/31 10:55:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -155,11 +155,12 @@ hostapd_apme_input(int fd, short sig, void *arg)
 	 */
 
 	bp = (u_int8_t *)&buf;
-	bph = (struct bpf_hdr *)bp;
 	ep = bp + len;
 
 	while (bp < ep) {
 		register u_int caplen, hdrlen;
+
+		bph = (struct bpf_hdr *)bp;
 		caplen = bph->bh_caplen;
 		hdrlen = bph->bh_hdrlen;
 
