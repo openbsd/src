@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.18 2005/08/04 13:01:43 jsg Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.19 2006/01/31 18:13:39 moritz Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -83,7 +83,7 @@ main(int argc, char *argv[])
 	struct limits_t	*limit;
 	size_t		 len;
 	time_t		 next_report, last_report = 0, next_check;
-	int		 mib[3], i, sleeptime, watch_cnt, ch;
+	int		 mib[3], i, sleeptime, sensor_cnt, watch_cnt, ch;
 
 	while ((ch = getopt(argc, argv, "d")) != -1) {
 		switch (ch) {
@@ -99,22 +99,26 @@ main(int argc, char *argv[])
 	mib[1] = HW_SENSORS;
 	len = sizeof(sensor);
 
+	sensor_cnt = 0;
 	for (i = 0; i < 256; i++) {
 		mib[2] = i;
 		if (sysctl(mib, 3, &sensor, &len, NULL, 0) == -1) {
-			if (errno == ENXIO)
+			if (errno == ENOENT)
 				break;
 			else
 				err(1, "sysctl");
 		}
+		if (sensor.flags & SENSOR_FINVALID)
+			continue;
 		if ((limit = calloc(1, sizeof(struct limits_t))) == NULL)
 			err(1, "calloc");
 		limit->num = i;
 		limit->type = sensor.type;
 		TAILQ_INSERT_TAIL(&limits, limit, entries);
+		sensor_cnt++;
 	}
 
-	if (i == 0)
+	if (sensor_cnt == 0)
 		errx(1, "no sensors found");
 
 	openlog("sensorsd", LOG_PID | LOG_NDELAY, LOG_DAEMON);
@@ -134,7 +138,8 @@ main(int argc, char *argv[])
 	signal(SIGHUP, reparse_cfg);
 	signal(SIGCHLD, SIG_IGN);
 
-	syslog(LOG_INFO, "startup, %d watches for %d sensors", watch_cnt, i);
+	syslog(LOG_INFO, "startup, %d watches for %d sensors",
+	    watch_cnt, sensor_cnt);
 
 	next_check = next_report = time(NULL);
 
