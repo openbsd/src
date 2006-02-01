@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.24 2006/01/25 00:31:05 mpf Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.25 2006/02/01 22:19:33 mpf Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -64,7 +64,8 @@ void	external_handler(int, short, void *);
 void	external_async_exec(struct ifsd_external *);
 void	check_external_status(struct ifsd_state *);
 void	external_evtimer_setup(struct ifsd_state *, int);
-int	scan_ifstate(int, int, struct ifsd_state *);
+void	scan_ifstate(int, int, int);
+int	scan_ifstate_single(int, int, struct ifsd_state *);
 void	fetch_state(void);
 void	usage(void);
 void	adjust_expressions(struct ifsd_expression_list *, int);
@@ -227,13 +228,7 @@ rt_msg_handler(int fd, short event, void *arg)
 		return;
 
 	memcpy(&ifm, rtm, sizeof(ifm));
-
-	if (scan_ifstate(ifm.ifm_index, ifm.ifm_data.ifi_link_state,
-	    &conf->always))
-		eval_state(&conf->always);
-	if ((conf->curstate != NULL) && scan_ifstate(ifm.ifm_index,
-	    ifm.ifm_data.ifi_link_state, conf->curstate))
-		eval_state(conf->curstate);
+	scan_ifstate(ifm.ifm_index, ifm.ifm_data.ifi_link_state, 1);
 }
 
 void
@@ -392,7 +387,7 @@ external_evtimer_setup(struct ifsd_state *state, int action)
 }
 
 int
-scan_ifstate(int ifindex, int s, struct ifsd_state *state)
+scan_ifstate_single(int ifindex, int s, struct ifsd_state *state)
 {
 	struct ifsd_ifstate *ifstate;
 	struct ifsd_expression_list expressions;
@@ -427,6 +422,24 @@ scan_ifstate(int ifindex, int s, struct ifsd_state *state)
 	if (changed)
 		adjust_expressions(&expressions, conf->maxdepth);
 	return (changed);
+}
+
+void
+scan_ifstate(int ifindex, int s, int do_eval)
+{
+	struct ifsd_state *state;
+	int cur_eval = 0;
+
+	if (scan_ifstate_single(ifindex, s, &conf->always) && do_eval)
+		eval_state(&conf->always);
+	TAILQ_FOREACH(state, &conf->states, entries) {
+		if (scan_ifstate_single(ifindex, s, state) &&
+		    (do_eval && state == conf->curstate))
+			cur_eval = 1;
+	}
+	/* execute actions _after_ all expressions have been adjusted */
+	if (cur_eval)
+		eval_state(conf->curstate);
 }
 
 /*
@@ -580,10 +593,7 @@ fetch_state(void)
 			continue;
 
 		scan_ifstate(if_nametoindex(ifa->ifa_name),
-		    ifrdat.ifi_link_state, &conf->always);
-		if (conf->curstate != NULL)
-			scan_ifstate(if_nametoindex(ifa->ifa_name),
-			    ifrdat.ifi_link_state, conf->curstate);
+		    ifrdat.ifi_link_state, 0);
 	}
 	freeifaddrs(ifap);
 	close(sock);
