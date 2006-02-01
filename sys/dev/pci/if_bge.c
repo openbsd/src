@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.122 2006/02/01 01:31:43 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.123 2006/02/01 01:53:32 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2036,7 +2036,8 @@ bge_reset(struct bge_softc *sc)
 			pci_conf_write(pa->pa_pc, pa->pa_tag, 0xc4, v | (1<<15));
 		}
 		/* Set PCI-E max payload size and clear error status. */
-		pci_conf_write(pa->pa_pc, pa->pa_tag, 0xd8, 0xf5000);
+		pci_conf_write(pa->pa_pc, pa->pa_tag,
+		    BGE_PCI_CONF_DEV_CTRL, 0xf5000);
 	}
 
 	/* Reset some of the PCI state that got zapped by reset */
