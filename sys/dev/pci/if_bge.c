@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.121 2006/01/25 21:01:24 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.122 2006/02/01 01:31:43 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1176,11 +1176,20 @@ bge_chipinit(struct bge_softc *sc)
 		    (0x2 << BGE_PCIDMARWCTL_WR_WAT_SHIFT);
 	} else if (sc->bge_pcix) {
 		/* PCI-X bus */
-		/*
-		 * The 5704 uses a different encoding of read/write
-		 * watermarks.
-		 */
-		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
+		if (BGE_IS_5714_FAMILY(sc)) {
+			dma_rw_ctl = BGE_PCI_READ_CMD|BGE_PCI_WRITE_CMD;
+			dma_rw_ctl &= ~BGE_PCIDMARWCTL_ONEDMA_ATONCE; /* XXX */
+			/* XXX magic values, Broadcom-supplied Linux driver */
+			if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780)
+				dma_rw_ctl |= (1 << 20) | (1 << 18) |
+				    BGE_PCIDMARWCTL_ONEDMA_ATONCE;
+			else
+				dma_rw_ctl |= (1<<20) | (1<<18) | (1 << 15);
+		} else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
+			/*
+			 * The 5704 uses a different encoding of read/write
+			 * watermarks.
+			 */
 			dma_rw_ctl = BGE_PCI_READ_CMD|BGE_PCI_WRITE_CMD |
 			    (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
 			    (0x3 << BGE_PCIDMARWCTL_WR_WAT_SHIFT);
