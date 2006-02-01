@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.63 2006/01/02 01:58:55 deraadt Exp $
+#	$OpenBSD: files.sparc64,v 1.64 2006/02/01 11:03:33 dlg Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -191,6 +191,10 @@ attach	fdc at ebus with fdc_ebus
 device	fd: disk
 attach	fd at fdc
 file	arch/sparc64/dev/fd.c			fdc | fd	needs-flag
+
+# PCF8584 I2C Controller
+attach	pcfiic at ebus with pcfiic_ebus
+file	arch/sparc64/dev/pcfiic_ebus.c		pcfiic_ebus
 
 file	arch/sparc64/dev/consinit.c
 
