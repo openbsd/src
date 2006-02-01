@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8584.c,v 1.1 2006/02/01 11:03:34 dlg Exp $ */
+/*	$OpenBSD: pcf8584.c,v 1.2 2006/02/01 11:09:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -116,8 +116,7 @@ pcfiic_attach(struct pcfiic_softc *sc, i2c_addr_t addr,
 	pcfiic_write(sc, PCF_S1, PCF_CTRL_PIN | PCF_CTRL_ESO | PCF_CTRL_ENI |
 	    PCF_CTRL_ACK);
 
-	printf(": PCF8584 I2C address 0x%02x%s\n", addr,
-	    sc->sc_poll ? ", polled" : "");
+	printf("\n");
 
 	lockinit(&sc->sc_lock, PRIBIO | PCATCH, "iiclk", 0, 0);
 	sc->sc_i2c.ic_cookie = sc;
