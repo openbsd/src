@@ -1,4 +1,4 @@
-/*	$OpenBSD: geodesc.c,v 1.4 2005/11/19 01:59:36 aaron Exp $	*/
+/*	$OpenBSD: geodesc.c,v 1.5 2006/02/01 13:08:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
@@ -25,6 +25,9 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#ifdef __HAVE_TIMECOUNTER
+#include <sys/timetc.h>
+#endif
 
 #include <machine/bus.h>
 
@@ -50,6 +53,19 @@ struct cfattach geodesc_ca = {
 struct cfdriver geodesc_cd = {
 	NULL, "geodesc", DV_DULL
 };
+
+#ifdef __HAVE_TIMECOUNTER
+u_int   geodesc_get_timecount(struct timecounter *tc);
+
+struct timecounter geodesc_timecounter = {
+	geodesc_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	0xffffffff,		/* counter_mask */
+	27000000,		/* frequency */
+	"GEOTSC",		/* name */
+	2000			/* quality */
+};
+#endif	/* __HAVE_TIMECOUNTER */
 
 int
 geodesc_match(struct device *parent, void *match, void *aux)
@@ -102,6 +118,12 @@ geodesc_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, GCB_WDCNFG, cnfg);
 
 	wdog_register(sc, geodesc_wdogctl_cb);
+#ifdef __HAVE_TIMECOUNTER
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GCB_TSCNFG, TSC_ENABLE);
+	/* Hook into the kern_tc */
+	geodesc_timecounter.tc_priv = sc;
+	tc_init(&geodesc_timecounter);  
+#endif /* __HAVE_TIMECOUNTER */
 }
 
 int
@@ -114,3 +136,13 @@ geodesc_wdogctl_cb(void *self, int period)
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, GCB_WDTO, period * 64);
 	return (period);
 }
+
+#ifdef __HAVE_TIMECOUNTER
+u_int
+geodesc_get_timecount(struct timecounter *tc)
+{
+	struct geodesc_softc *sc = tc->tc_priv;
+
+	return (bus_space_read_4(sc->sc_iot, sc->sc_ioh, GCB_TSC));
+}
+#endif /* __HAVE_TIMECOUNTER */

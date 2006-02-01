@@ -1,4 +1,4 @@
-/*      $OpenBSD: geodescreg.h,v 1.2 2003/08/07 16:59:37 mickey Exp $     */
+/*      $OpenBSD: geodescreg.h,v 1.3 2006/02/01 13:08:12 mickey Exp $     */
 
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
@@ -28,6 +28,8 @@
 #define	GCB_WDTO	0x0000	/* WATCHDOG Timeout */
 #define	GCB_WDCNFG	0x0002	/* WATCHDOG Configuration */
 #define	GCB_WDSTS	0x0004	/* WATCHDOG Status */
+#define	GCB_TSC		0x0008	/* Cyclecounter at 27MHz */
+#define	GCB_TSCNFG	0x000c	/* config for the above */
 #define	GCB_IID		0x003c	/* IA On a Chip ID */
 #define	GCB_REV		0x003d	/* Revision */
 #define	GCB_CBA		0x003e	/* Configuration Base Address */
@@ -42,3 +44,8 @@
 #define	WDPRES_DIV_8192	0x000d
 #define	WDCNFG_MASK	0x00ff
 #define	WDOVF_CLEAR	0x0001
+
+/* cyclecounter */
+
+#define	TSC_ENABLE	0x0200
+
