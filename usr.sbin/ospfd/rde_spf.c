@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.42 2006/01/26 15:05:08 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.43 2006/02/01 18:38:51 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -83,7 +83,7 @@ spf_calc(struct area *area)
 	struct lsa_net_link	*net_link;
 	u_int32_t		 d;
 	int			 i;
-	struct in_addr		 a;
+	struct in_addr		 addr;
 
 	log_debug("spf_calc: calculation started, area ID %s",
 	    inet_ntoa(area->id));
@@ -148,12 +148,12 @@ spf_calc(struct area *area)
 			}
 
 			if (!linked(w, v)) {
-				a.s_addr = htonl(w->ls_id);
+				addr.s_addr = htonl(w->ls_id);
 				log_debug("spf_calc: w id %s type %d has ",
-				    inet_ntoa(a), w->type);
-				a.s_addr = htonl(v->ls_id);
+				    inet_ntoa(addr), w->type);
+				addr.s_addr = htonl(v->ls_id);
 				log_debug("    no link to v id %s type %d",
-				    inet_ntoa(a), v->type);
+				    inet_ntoa(addr), v->type);
 				continue;
 			}
 
