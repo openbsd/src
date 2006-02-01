@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.56 2005/08/05 21:01:53 fgsch Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.57 2006/02/01 09:19:07 otto Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.56 2005/08/05 21:01:53 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.57 2006/02/01 09:19:07 otto Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -309,9 +309,13 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 
 again:
 		if (connect(s, res->ai_addr, res->ai_addrlen) < 0) {
+			int save_errno;
+
 			if (errno == EINTR)
 				goto again;
+			save_errno = errno;
 			close(s);
+			errno = save_errno;
 			s = -1;
 			cause = "connect";
 			continue;
