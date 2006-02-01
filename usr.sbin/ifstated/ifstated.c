@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.25 2006/02/01 22:19:33 mpf Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.26 2006/02/01 23:13:09 mpf Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -61,7 +61,7 @@ int	load_config(void);
 void	sigchld_handler(int, short, void *);
 void	rt_msg_handler(int, short, void *);
 void	external_handler(int, short, void *);
-void	external_async_exec(struct ifsd_external *);
+void	external_exec(struct ifsd_external *, int);
 void	check_external_status(struct ifsd_state *);
 void	external_evtimer_setup(struct ifsd_state *, int);
 void	scan_ifstate(int, int, int);
@@ -69,8 +69,9 @@ int	scan_ifstate_single(int, int, struct ifsd_state *);
 void	fetch_state(void);
 void	usage(void);
 void	adjust_expressions(struct ifsd_expression_list *, int);
+void	adjust_external_expressions(struct ifsd_state *);
 void	eval_state(struct ifsd_state *);
-void	state_change(void);
+int	state_change(void);
 void	do_action(struct ifsd_action *);
 void	remove_action(struct ifsd_action *, struct ifsd_state *);
 void	remove_expression(struct ifsd_expression *, struct ifsd_state *);
@@ -194,6 +195,8 @@ load_config(void)
 	conf = newconf;
 	conf->always.entered = time(NULL);
 	fetch_state();
+	external_evtimer_setup(&conf->always, IFSD_EVTIMER_ADD);
+	adjust_external_expressions(&conf->always);
 	eval_state(&conf->always);
 	if (conf->curstate != NULL) {
 		logit(IFSD_LOG_NORMAL,
@@ -201,9 +204,9 @@ load_config(void)
 		conf->curstate->entered = time(NULL);
 		conf->nextstate = conf->curstate;
 		conf->curstate = NULL;
-		eval_state(conf->nextstate);
+		while (state_change())
+			do_action(conf->curstate->always);
 	}
-	external_evtimer_setup(&conf->always, IFSD_EVTIMER_ADD);
 	return (0);
 }
 
@@ -252,11 +255,11 @@ external_handler(int fd, short event, void *arg)
 	evtimer_add(&external->ev, &tv);
 
 	/* execute */
-	external_async_exec(external);
+	external_exec(external, 1);
 }
 
 void
-external_async_exec(struct ifsd_external *external)
+external_exec(struct ifsd_external *external, int async)
 {
 	char *argp[] = {"sh", "-c", NULL, NULL};
 	pid_t pid;
@@ -283,16 +286,44 @@ external_async_exec(struct ifsd_external *external)
 	} else {
 		external->pid = pid;
 	}
+	if (!async) {
+		waitpid(external->pid, &s, 0);
+		external->pid = 0;
+		if (WIFEXITED(s))
+			external->prevstatus = WEXITSTATUS(s);
+	}
+}
+
+void
+adjust_external_expressions(struct ifsd_state *state)
+{
+	struct ifsd_external *external;
+	struct ifsd_expression_list expressions;
+
+	TAILQ_INIT(&expressions);
+	TAILQ_FOREACH(external, &state->external_tests, entries) {
+		struct ifsd_expression *expression;
+
+		if (external->prevstatus == -1)
+			continue;
+
+		TAILQ_FOREACH(expression, &external->expressions, entries) {
+			TAILQ_INSERT_TAIL(&expressions,
+			    expression, eval);
+			if (external->prevstatus == 0)
+				expression->truth = 1;
+			else
+				expression->truth = 0;
+		}
+		adjust_expressions(&expressions, conf->maxdepth);
+	}
 }
 
 void
 check_external_status(struct ifsd_state *state)
 {
 	struct ifsd_external *external, *end = NULL;
-	struct ifsd_expression_list expressions;
 	int status, s, changed = 0;
-
-	TAILQ_INIT(&expressions);
 
 	/* Do this manually; change ordering so the oldest is first */
 	external = TAILQ_FIRST(&state->external_tests);
@@ -320,29 +351,18 @@ check_external_status(struct ifsd_state *state)
 
 		if (external->prevstatus != status &&
 		    (external->prevstatus != -1 || !opt_inhibit)) {
-			struct ifsd_expression *expression;
-
 			changed = 1;
-			TAILQ_FOREACH(expression,
-			    &external->expressions, entries) {
-				TAILQ_INSERT_TAIL(&expressions,
-				    expression, eval);
-				if (status == 0)
-					expression->truth = 1;
-				else
-					expression->truth = 0;
-			}
+			external->prevstatus = status;
 		}
 		external->lastexec = time(NULL);
 		TAILQ_REMOVE(&state->external_tests, external, entries);
 		TAILQ_INSERT_TAIL(&state->external_tests, external, entries);
-		external->prevstatus = status;
 loop:
 		external = newexternal;
 	}
 
 	if (changed) {
-		adjust_expressions(&expressions, conf->maxdepth);
+		adjust_external_expressions(state);
 		eval_state(state);
 	}
 }
@@ -361,7 +381,7 @@ external_evtimer_setup(struct ifsd_state *state, int action)
 				struct timeval tv;
 
 				/* run it once right away */
-				external_async_exec(external);
+				external_exec(external, 0);
 
 				/* schedule it for later */
 				tv.tv_usec = 0;
@@ -507,14 +527,15 @@ eval_state(struct ifsd_state *state)
 	if (external == NULL || external->lastexec >= state->entered ||
 	    external->lastexec == 0) {
 		do_action(state->always);
-		state_change();
+		while (state_change())
+			do_action(conf->curstate->always);
 	}
 }
 
 /*
  *If a previous action included a state change, process it.
  */
-void
+int
 state_change(void)
 {
 	if (conf->nextstate != NULL && conf->curstate != conf->nextstate) {
@@ -529,8 +550,11 @@ state_change(void)
 		conf->nextstate = NULL;
 		conf->curstate->entered = time(NULL);
 		external_evtimer_setup(conf->curstate, IFSD_EVTIMER_ADD);
+		adjust_external_expressions(conf->curstate);
 		do_action(conf->curstate->init);
+		return (1);
 	}
+	return (0);
 }
 
 /*
