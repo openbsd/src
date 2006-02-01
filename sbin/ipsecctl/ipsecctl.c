@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.41 2006/01/17 05:39:23 reyk Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.42 2006/02/01 12:38:47 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -33,7 +33,7 @@
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "ipsecctl.h"
@@ -268,6 +268,7 @@ ipsecctl_print_flow(struct ipsec_rule *r, int opts)
 	printf("\n");
 }
 
+/* ARGSUSED1 */
 void
 ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 {
@@ -579,6 +580,7 @@ main(int argc, char *argv[])
 	exit(error);
 }
 
+/* ARGSUSED1 */
 static int
 unmask(struct ipsec_addr *ipa, sa_family_t af)
 {
