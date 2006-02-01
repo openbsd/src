@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.123 2006/02/01 01:53:32 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.124 2006/02/01 02:02:49 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1588,8 +1588,17 @@ bge_blockinit(struct bge_softc *sc)
 	    BGE_WDMAMODE_ENABLE|BGE_WDMAMODE_ALL_ATTNS);
 
 	/* Turn on read DMA state machine */
-	CSR_WRITE_4(sc, BGE_RDMA_MODE,
-	    BGE_RDMAMODE_ENABLE|BGE_RDMAMODE_ALL_ATTNS);
+	{
+		uint32_t dma_read_modebits;
+
+		dma_read_modebits =
+		  BGE_RDMAMODE_ENABLE | BGE_RDMAMODE_ALL_ATTNS;
+
+		if (sc->bge_pcie && 0)
+			dma_read_modebits |= BGE_RDMA_MODE_FIFO_LONG_BURST;
+
+		CSR_WRITE_4(sc, BGE_RDMA_MODE, dma_read_modebits);
+	}
 
 	/* Turn on RX data completion state machine */
 	CSR_WRITE_4(sc, BGE_RDC_MODE, BGE_RDCMODE_ENABLE);
