@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.28 2006/01/30 17:58:47 xsa Exp $	*/
+/*	$OpenBSD: admin.c,v 1.29 2006/02/01 08:33:18 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -348,19 +348,23 @@ cvs_admin_local(CVSFILE *cf, void *arg)
 		return (0);
 	}
 
-	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
-		if (verbosity > 1)
-			cvs_log(LP_WARN, "nothing known about %s", cf->cf_name);
+	if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+		return (0);
+	else if (cf->cf_cvstat == CVS_FST_ADDED) {
+		cvs_log(LP_WARN, "cannot admin newly added file `%s'",
+		    cf->cf_name);
 		return (0);
 	}
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
-
 	cvs_rcs_getpath(cf, rcspath, sizeof(rcspath));
 
 	if ((rf = rcs_open(rcspath, RCS_RDWR)) == NULL)
 		fatal("cvs_admin_local: rcs_open `%s': %s", rcspath,
 		    rcs_errstr(rcs_errno));
+
+	if (!(runflags & FLAG_QUIET))
+		cvs_printf("RCS file: %s\n", rcspath);
 
 	if (!RCS_KWEXP_INVAL(kflag))
 		ret = rcs_kwexp_set(rf, kflag);
@@ -368,6 +372,9 @@ cvs_admin_local(CVSFILE *cf, void *arg)
 		ret = rcs_lock_setmode(rf, lkmode);
 
 	rcs_close(rf);
+
+	if (!(runflags & FLAG_QUIET))
+		cvs_printf("done\n");
 
 	return (0);
 }
