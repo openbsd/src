@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.41 2006/01/12 15:10:02 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.42 2006/02/01 18:31:47 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -498,7 +498,6 @@ struct buf	*imsg_create(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
 int	 imsg_add(struct buf *, void *, u_int16_t);
 int	 imsg_close(struct imsgbuf *, struct buf *);
 void	 imsg_free(struct imsg *);
-int	 imsg_get_fd(struct imsgbuf *);
 void	 imsg_event_add(struct imsgbuf *); /* needs to be provided externally */
 
 /* in_cksum.c */
