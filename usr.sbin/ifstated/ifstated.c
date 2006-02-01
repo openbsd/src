@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.26 2006/02/01 23:13:09 mpf Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.27 2006/02/01 23:23:37 mpf Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -310,10 +310,7 @@ adjust_external_expressions(struct ifsd_state *state)
 		TAILQ_FOREACH(expression, &external->expressions, entries) {
 			TAILQ_INSERT_TAIL(&expressions,
 			    expression, eval);
-			if (external->prevstatus == 0)
-				expression->truth = 1;
-			else
-				expression->truth = 0;
+			expression->truth = !external->prevstatus;
 		}
 		adjust_expressions(&expressions, conf->maxdepth);
 	}
@@ -422,10 +419,7 @@ scan_ifstate_single(int ifindex, int s, struct ifsd_state *state)
 				struct ifsd_expression *expression;
 				int truth;
 
-				if (ifstate->ifstate == s)
-					truth = 1;
-				else
-					truth = 0;
+				truth = (ifstate->ifstate == s);
 
 				TAILQ_FOREACH(expression,
 				    &ifstate->expressions, entries) {
@@ -481,24 +475,15 @@ adjust_expressions(struct ifsd_expression_list *expressions, int depth)
 
 			switch (expression->type) {
 			case IFSD_OPER_AND:
-				if (expression->left->truth &&
-				    expression->right->truth)
-					expression->truth = 1;
-				else
-					expression->truth = 0;
+				expression->truth = expression->left->truth &&
+				    expression->right->truth;
 				break;
 			case IFSD_OPER_OR:
-				if (expression->left->truth ||
-				    expression->right->truth)
-					expression->truth = 1;
-				else
-					expression->truth = 0;
+				expression->truth = expression->left->truth ||
+				    expression->right->truth;
 				break;
 			case IFSD_OPER_NOT:
-				if (expression->right->truth)
-					expression->truth = 0;
-				else
-					expression->truth = 1;
+				expression->truth = !expression->right->truth;
 				break;
 			default:
 				break;
