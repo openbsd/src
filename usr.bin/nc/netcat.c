@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.86 2006/01/25 23:21:37 djm Exp $ */
+/* $OpenBSD: netcat.c,v 1.87 2006/02/01 21:33:14 otto Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -490,13 +490,6 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 		/* Bind to a local port or source address if specified. */
 		if (sflag || pflag) {
 			struct addrinfo ahints, *ares;
-
-			if (!(sflag && pflag)) {
-				if (!sflag)
-					sflag = NULL;
-				else
-					pflag = NULL;
-			}
 
 			memset(&ahints, 0, sizeof(struct addrinfo));
 			ahints.ai_family = res0->ai_family;
