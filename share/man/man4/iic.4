@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.42 2006/01/28 15:27:22 jmc Exp $
+.\"	$OpenBSD: iic.4,v 1.43 2006/02/01 14:04:40 dlg Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -30,6 +30,7 @@
 .Cd "iic* at gscsio?                # i386"
 .Cd "iic* at ichiic?                # amd64 i386"
 .Cd "iic* at nviic?                 # amd64 i386"
+.Cd "iic* at pcfiic?                # sparc64"
 .Cd "iic* at piixpm?                # i386"
 .Cd "iic* at viapm?                 # amd64 i386"
 .Cd "iic* at gpioiic?               # i386"
@@ -87,6 +88,8 @@ Intel ICH SMBus host controller
 Apple Kauai I2C controller
 .It Xr nviic 4
 NVIDIA nForce2/3/4 SMBus host controller
+.It Xr pcfiic 4
+Phillips PCF8584 I2C controller
 .It Xr pi2c 4
 Apple via-pmu I2C controller
 .It Xr piixpm 4
