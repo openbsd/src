@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.126 2006/01/26 09:05:31 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.127 2006/02/01 13:52:51 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -316,6 +316,7 @@ rcs_open(const char *path, int flags, ...)
 #if 0
 			cvs_log(LP_ERR, "RCS file `%s' does not exist", path);
 #endif
+			rcs_errno = RCS_ERR_NOENT;
 			return (NULL);
 		}
 	} else if ((ret == 0) && (flags & RCS_CREATE)) {
