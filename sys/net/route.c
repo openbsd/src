@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.62 2005/11/29 02:59:42 jolan Exp $	*/
+/*	$OpenBSD: route.c,v 1.63 2006/02/01 13:47:22 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1084,6 +1084,7 @@ rt_timer_add(struct rtentry *rt, void (*func)(struct rtentry *,
 	long current_time;
 
 	current_time = time_uptime;
+	rt->rt_rmx.rmx_expire = time_second + queue->rtq_timeout;
 
 	/*
 	 * If there's already a timer with this action, destroy it before
