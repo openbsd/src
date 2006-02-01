@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.38 2006/01/27 15:42:35 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.39 2006/02/01 14:30:34 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -228,7 +228,7 @@ cvs_tag_remote(CVSFILE *cfp, void *arg)
 static int
 cvs_tag_local(CVSFILE *cf, void *arg)
 {
-	char fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
+	char fpath[MAXPATHLEN], numbuf[64], rcspath[MAXPATHLEN];
 	RCSFILE *rf;
 	RCSNUM *tag_rev;
 
@@ -268,17 +268,25 @@ cvs_tag_local(CVSFILE *cf, void *arg)
 		    rcs_errstr(rcs_errno));
 
 	if (tag_delete == 1) {
-		/* XXX */
+		if (cvs_noexec == 0) {
+			if (rcs_sym_remove(rf, tag_name) < 0)
+				fatal("failed to remove tag %s from %s",
+				    tag_name, rcspath);
+		}
+
 		if (verbosity > 0)
 			cvs_printf("D %s\n", fpath);
 
+		rcs_close(rf);
 		return (0);
 	}
 
 	if (cvs_noexec == 0) {
-		if (rcs_sym_add(rf, tag_name, tag_rev) < 0)
-			fatal("cvs_tag_local: rcs_sym_add: %s: %s", rcspath,
-			    rcs_errstr(rcs_errno));
+		if (rcs_sym_add(rf, tag_name, tag_rev) < 0) {
+			rcsnum_tostr(tag_rev, numbuf, sizeof(numbuf));
+			fatal("failed to set tag %s to revision %s in %s",
+			    tag_name, numbuf, rcspath);
+		}
 	}
 
 	if (verbosity > 0)
