@@ -1,4 +1,4 @@
-/*	$OpenBSD: quit.c,v 1.17 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: quit.c,v 1.18 2006/02/01 19:01:35 otto Exp $	*/
 /*	$NetBSD: quit.c,v 1.6 1996/12/28 07:11:07 tls Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: quit.c,v 1.17 2003/06/03 02:56:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: quit.c,v 1.18 2006/02/01 19:01:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -332,7 +332,7 @@ cream:
 	demail();
 	(void)Fclose(fbuf);
 	spool_unlock();
-	return(0);;
+	return(0);
 
 newmail:
 	puts("Thou hast new mail.");

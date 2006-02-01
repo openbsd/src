@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.3 2005/12/10 19:19:40 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.4 2006/02/01 19:07:13 otto Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -454,7 +454,7 @@ ixgb_watchdog(struct ifnet * ifp)
 	ixgb_stop(sc);
 	ixgb_init(sc);
 
-	sc->watchdog_events++;;
+	sc->watchdog_events++;
 }
 
 /*********************************************************************

@@ -2195,7 +2195,7 @@ update_timeout(struct rx_peer *peer)
     if (rtt_timeout < 1000)	/* 1000 = 1ms */
         rtt_timeout = 1000;	/* Minimum timeout */
     peer->timeout.usec = rtt_timeout % 1000000;
-    peer->timeout.sec  = rtt_timeout / 1000000;;
+    peer->timeout.sec  = rtt_timeout / 1000000;
 }
 
 /* On a dubious timeout double MDEV but within reason.

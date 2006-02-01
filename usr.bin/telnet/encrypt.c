@@ -1,4 +1,4 @@
-/*     $OpenBSD: encrypt.c,v 1.1 2005/05/24 03:43:56 deraadt Exp $     */
+/*     $OpenBSD: encrypt.c,v 1.2 2006/02/01 19:04:37 otto Exp $     */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -977,7 +977,7 @@ void encrypt_gen_printsub(unsigned char *data, int cnt,
     data += 2;
     buf[buflen-1] = '\0';
     buf[buflen-2] = '*';
-    buflen -= 2;;
+    buflen -= 2;
     for (; cnt > 0; cnt--, data++) {
 	snprintf(tbuf, sizeof(tbuf), " %d", *data);
 	for (cp = tbuf; *cp && buflen > 0; --buflen)

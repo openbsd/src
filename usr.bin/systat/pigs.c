@@ -1,4 +1,4 @@
-/*	$OpenBSD: pigs.c,v 1.16 2004/01/08 19:28:56 millert Exp $	*/
+/*	$OpenBSD: pigs.c,v 1.17 2006/02/01 19:05:25 otto Exp $	*/
 /*	$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-static char rcsid[] = "$OpenBSD: pigs.c,v 1.16 2004/01/08 19:28:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: pigs.c,v 1.17 2006/02/01 19:05:25 otto Exp $";
 #endif /* not lint */
 
 /*
@@ -170,7 +170,7 @@ fetchpigs(void)
 	double t;
 	int i;
 	size_t size;
-	float *pctp;;
+	float *pctp;
 
 	kpp = kvm_getproc2(kd, KERN_PROC_KTHREAD, 0, sizeof(*kpp), &nproc);
 	if (kpp == NULL) {

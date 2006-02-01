@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.16 2003/07/07 14:39:26 mpech Exp $	*/
+/*	$OpenBSD: server.c,v 1.17 2006/02/01 19:06:24 otto Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -36,7 +36,7 @@ static char RCSid[] __attribute__((__unused__)) =
 "$From: server.c,v 1.10 1999/08/04 15:57:33 christos Exp $";
 #else
 static char RCSid[] __attribute__((__unused__)) =
-"$OpenBSD: server.c,v 1.16 2003/07/07 14:39:26 mpech Exp $";
+"$OpenBSD: server.c,v 1.17 2006/02/01 19:06:24 otto Exp $";
 #endif
 
 static char sccsid[] __attribute__((__unused__)) =
@@ -376,7 +376,7 @@ removefile(struct stat *statb, int silent)
 		}
 		ptarget = optarget;
 		*ptarget++ = '/';
-		cp = dp->d_name;;
+		cp = dp->d_name;
 		while ((*ptarget++ = *cp++) != '\0')
 			continue;
 		ptarget--;
@@ -458,7 +458,7 @@ doclean(char *cp)
 		}
 		ptarget = optarget;
 		*ptarget++ = '/';
-		cp = dp->d_name;;
+		cp = dp->d_name;
 		while ((*ptarget++ = *cp++) != '\0')
 			continue;
 		ptarget--;
