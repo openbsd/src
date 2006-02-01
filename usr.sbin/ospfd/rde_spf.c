@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.43 2006/02/01 18:38:51 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.44 2006/02/01 19:56:15 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -312,7 +312,7 @@ asext_calc(struct vertex *v)
 	struct rt_node		*r;
 	u_int32_t		 cost2;
 	struct in_addr		 addr, adv_rtr, a;
-	enum dst_type		 type;
+	enum path_type		 type;
 
 	lsa_age(v);
 	if (ntohs(v->lsa->hdr.age) == MAX_AGE ||
