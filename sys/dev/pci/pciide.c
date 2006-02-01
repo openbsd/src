@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.221 2006/01/24 12:25:51 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.222 2006/02/01 09:32:42 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -506,6 +506,10 @@ const struct pciide_product_desc pciide_via_products[] =  {
 	},
 	{ PCI_PRODUCT_VIATECH_VT82C571, /* VIA VT82C571 IDE */
 	  0,
+	  apollo_chip_map
+	},
+	{ PCI_PRODUCT_VIATECH_VT6410, /* VIA VT6410 IDE */
+	  IDE_PCI_CLASS_OVERRIDE,
 	  apollo_chip_map
 	},
 	{ PCI_PRODUCT_VIATECH_VT6420_SATA, /* VIA VT6420 SATA */
@@ -2692,72 +2696,89 @@ void
 apollo_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
-	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
+	pcireg_t interface;
 	int channel;
 	u_int32_t ideconf;
 	bus_size_t cmdsize, ctlsize;
 	pcitag_t pcib_tag;
 	pcireg_t pcib_id, pcib_class;
 
+	/*
+	 * Fake interface since VT6410 is claimed to be a ``RAID'' device.
+	 */
+	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_IDE) {
+		interface = PCI_INTERFACE(pa->pa_class);
+	} else {
+		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
+		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
+	}
+
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	/* Determine the DMA capabilities by looking at the ISA bridge. */
-	pcib_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, pa->pa_device, 0);
-	pcib_id = pci_conf_read(sc->sc_pc, pcib_tag, PCI_ID_REG);
-	pcib_class = pci_conf_read(sc->sc_pc, pcib_tag, PCI_CLASS_REG);
-
-	/* XXX On the VT8237, the ISA bridge is on a different device. */
-	if (PCI_CLASS(pcib_class) != PCI_CLASS_BRIDGE && pa->pa_device == 15) {
-		pcib_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, 17, 0);
-		pcib_id = pci_conf_read(sc->sc_pc, pcib_tag, PCI_ID_REG);
-		pcib_class = pci_conf_read(sc->sc_pc, pcib_tag, PCI_CLASS_REG);
-	}
-
-	switch (PCI_PRODUCT(pcib_id)) {
-	case PCI_PRODUCT_VIATECH_VT82C586_ISA:
-		if (PCI_REVISION(pcib_class) >= 0x02) {
-			printf(": ATA33");
-			sc->sc_wdcdev.UDMA_cap = 2;
-		} else {
-			printf(": DMA");
-			sc->sc_wdcdev.UDMA_cap = 0;
-		}
-		break;
-	case PCI_PRODUCT_VIATECH_VT82C596A:
-		if (PCI_REVISION(pcib_class) >= 0x12) {
-			printf(": ATA66");
-			sc->sc_wdcdev.UDMA_cap = 4;
-		} else {
-			printf(": ATA33");
-			sc->sc_wdcdev.UDMA_cap = 2;
-		}
-		break;
-
-	case PCI_PRODUCT_VIATECH_VT82C686A_ISA:
-		if (PCI_REVISION(pcib_class) >= 0x40) {
-			printf(": ATA100");
-			sc->sc_wdcdev.UDMA_cap = 5;
-		} else {
-			printf(": ATA66");
-			sc->sc_wdcdev.UDMA_cap = 4;
-		}
-		break;
-	case PCI_PRODUCT_VIATECH_VT8231_ISA:
-	case PCI_PRODUCT_VIATECH_VT8233_ISA:
-		printf(": ATA100");
-		sc->sc_wdcdev.UDMA_cap = 5;
-		break;
-	case PCI_PRODUCT_VIATECH_VT8233A_ISA:
-	case PCI_PRODUCT_VIATECH_VT8235_ISA:
-	case PCI_PRODUCT_VIATECH_VT8237_ISA:
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VT6410) { 
 		printf(": ATA133");
 		sc->sc_wdcdev.UDMA_cap = 6;
-		break;
-	default:
-		printf(": DMA");
-		sc->sc_wdcdev.UDMA_cap = 0;
-		break;
+	} else {
+		/* Determine the DMA capabilities by looking at the ISA bridge. */
+		pcib_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, pa->pa_device, 0);
+		pcib_id = pci_conf_read(sc->sc_pc, pcib_tag, PCI_ID_REG);
+		pcib_class = pci_conf_read(sc->sc_pc, pcib_tag, PCI_CLASS_REG);
+
+		/* XXX On the VT8237, the ISA bridge is on a different device. */
+		if (PCI_CLASS(pcib_class) != PCI_CLASS_BRIDGE && pa->pa_device == 15 &&
+		    PCI_PRODUCT(pcib_id) == PCI_PRODUCT_VIATECH_VT82C571) {
+			pcib_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, 17, 0);
+			pcib_id = pci_conf_read(sc->sc_pc, pcib_tag, PCI_ID_REG);
+			pcib_class = pci_conf_read(sc->sc_pc, pcib_tag, PCI_CLASS_REG);
+		}
+
+		switch (PCI_PRODUCT(pcib_id)) {
+		case PCI_PRODUCT_VIATECH_VT82C586_ISA:
+			if (PCI_REVISION(pcib_class) >= 0x02) {
+				printf(": ATA33");
+				sc->sc_wdcdev.UDMA_cap = 2;
+			} else {
+				printf(": DMA");
+				sc->sc_wdcdev.UDMA_cap = 0;
+			}
+			break;
+		case PCI_PRODUCT_VIATECH_VT82C596A:
+			if (PCI_REVISION(pcib_class) >= 0x12) {
+				printf(": ATA66");
+				sc->sc_wdcdev.UDMA_cap = 4;
+			} else {
+				printf(": ATA33");
+				sc->sc_wdcdev.UDMA_cap = 2;
+			}
+			break;
+
+		case PCI_PRODUCT_VIATECH_VT82C686A_ISA:
+			if (PCI_REVISION(pcib_class) >= 0x40) {
+				printf(": ATA100");
+				sc->sc_wdcdev.UDMA_cap = 5;
+			} else {
+				printf(": ATA66");
+				sc->sc_wdcdev.UDMA_cap = 4;
+			}
+			break;
+		case PCI_PRODUCT_VIATECH_VT8231_ISA:
+		case PCI_PRODUCT_VIATECH_VT8233_ISA:
+			printf(": ATA100");
+			sc->sc_wdcdev.UDMA_cap = 5;
+			break;
+		case PCI_PRODUCT_VIATECH_VT8233A_ISA:
+		case PCI_PRODUCT_VIATECH_VT8235_ISA:
+		case PCI_PRODUCT_VIATECH_VT8237_ISA:
+		case PCI_PRODUCT_VIATECH_VT6410:
+			printf(": ATA133");
+			sc->sc_wdcdev.UDMA_cap = 6;
+			break;
+		default:
+			printf(": DMA");
+			sc->sc_wdcdev.UDMA_cap = 0;
+			break;
+		}
 	}
 
 	pciide_mapreg_dma(sc, pa);
