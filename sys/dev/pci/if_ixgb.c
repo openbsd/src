@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.4 2006/02/01 19:07:13 otto Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.5 2006/02/01 20:11:30 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -139,7 +139,7 @@ struct cfdriver ixgb_cd = {
  *  ixgb_probe determines if the driver should be loaded on
  *  adapter based on PCI vendor/device id of the adapter.
  *
- *  return 0 on success, positive on failure
+ *  return 0 on no match, positive on match
  *********************************************************************/
 
 int
@@ -158,7 +158,6 @@ ixgb_probe(struct device *parent, void *match, void *aux)
  *  This routine identifies the type of hardware, allocates all resources
  *  and initializes the hardware.
  *
- *  return 0 on success, positive on failure
  *********************************************************************/
 
 void
