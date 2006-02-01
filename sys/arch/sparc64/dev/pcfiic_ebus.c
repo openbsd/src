@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcfiic_ebus.c,v 1.1 2006/02/01 11:03:33 dlg Exp $ */
+/*	$OpenBSD: pcfiic_ebus.c,v 1.2 2006/02/01 11:08:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -110,9 +110,9 @@ pcfiic_ebus_attach(struct device *parent, struct device *self, void *aux)
 	if (esc->esc_ih == NULL)
 		sc->sc_poll = 1;
 
-#ifdef notyet
 	pcfiic_attach(sc, (i2c_addr_t)(addr >> 1), NULL, NULL);
-#endif
+#ifdef notyet
 	pcfiic_attach(sc, (i2c_addr_t)(addr >> 1), ofwi2c_scan, &ea->ea_node);
+#endif
 	/* the rest of the attach line is printed by pcfiic_attach() */
 }
