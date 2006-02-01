@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.44 2006/02/01 19:56:15 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.45 2006/02/01 20:24:08 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -77,7 +77,6 @@ spf_dump(struct area *area)
 void
 spf_calc(struct area *area)
 {
-	struct lsa_tree		*tree = &area->lsa_tree;
 	struct vertex		*v, *w;
 	struct lsa_rtr_link	*rtr_link = NULL;
 	struct lsa_net_link	*net_link;
@@ -193,16 +192,6 @@ spf_calc(struct area *area)
 		w = NULL;
 
 	} while (v != NULL);
-
-	/* calculate route table */
-	RB_FOREACH(v, lsa_tree, tree) {
-		rt_calc(v, area);
-	}
-
-	/* calculate as-external routes */
-	RB_FOREACH(v, lsa_tree, &rdeconf->lsa_tree) {
-		asext_calc(v);
-	}
 
 	/* spf_dump(area); */
 	log_debug("spf_calc: calculation ended, area ID %s",
@@ -537,6 +526,7 @@ cand_list_empty(void)
 void
 spf_timer(int fd, short event, void *arg)
 {
+	struct vertex		*v;
 	struct ospfd_conf	*conf = arg;
 	struct area		*area;
 	struct rt_node		*r;
@@ -551,8 +541,20 @@ spf_timer(int fd, short event, void *arg)
 	case SPF_DELAY:
 		rt_invalidate();
 
-		LIST_FOREACH(area, &conf->area_list, entry)
+		LIST_FOREACH(area, &conf->area_list, entry) {
+			/* calculate SPF tree */
 			spf_calc(area);
+
+			/* calculate route table */
+			RB_FOREACH(v, lsa_tree, &area->lsa_tree) {
+				rt_calc(v, area);
+			}
+		}
+
+		/* calculate as-external routes */
+		RB_FOREACH(v, lsa_tree, &rdeconf->lsa_tree) {
+			asext_calc(v);
+		}
 
 		RB_FOREACH(r, rt_tree, &rt) {
 			LIST_FOREACH(area, &conf->area_list, entry)
