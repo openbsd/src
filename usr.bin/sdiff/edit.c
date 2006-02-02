@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.9 2005/12/28 05:57:46 deraadt Exp $ */
+/*	$OpenBSD: edit.c,v 1.10 2006/02/02 19:30:23 claudio Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -153,7 +153,7 @@ eparse(const char *cmd, const char *left, const char *right)
 			goto LEFT;
 
 		/* Neither column is blank, so print both. */
-		if (asprintf(&text, "%s%s\n", left, right) == -1)
+		if (asprintf(&text, "%s\n%s\n", left, right) == -1)
 			err(2, "could not allocate memory");
 		break;
 
