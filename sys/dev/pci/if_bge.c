@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.126 2006/02/02 20:35:55 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.127 2006/02/02 21:31:10 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3166,7 +3166,7 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			 * instead of reinitializing the entire NIC. Doing
 			 * a full re-init means reloading the firmware and
 			 * waiting for it to start up, which may take a
-			 * second or two.
+			 * second or two.  Similarly for ALLMULTI.
 			 */
 			if (ifp->if_flags & IFF_RUNNING &&
 			    ifp->if_flags & IFF_PROMISC &&
@@ -3178,6 +3178,9 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			    sc->bge_if_flags & IFF_PROMISC) {
 				BGE_CLRBIT(sc, BGE_RX_MODE,
 				    BGE_RXMODE_RX_PROMISC);
+			} else if (ifp->if_flags & IFF_RUNNING &&
+			    (ifp->if_flags ^ sc->bge_if_flags) & IFF_ALLMULTI) {
+				bge_setmulti(sc);
 			} else {
 				ifp->if_flags &= ~IFF_RUNNING;
 				bge_init(sc);
