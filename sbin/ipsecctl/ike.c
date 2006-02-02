@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.15 2006/01/17 00:05:42 deraadt Exp $	*/
+/*	$OpenBSD: ike.c,v 1.16 2006/02/02 14:42:23 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -184,9 +184,6 @@ static int
 ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
     FILE *fd, struct ike_auth *auth)
 {
-	if (!(mmxfs->authxf || mmxfs->encxf))
-		return (0);
-
 	fprintf(fd, SET "[peer-%s]:Configuration=mm-%s force\n", peer->name,
 	    peer->name);
 	fprintf(fd, SET "[mm-%s]:EXCHANGE_TYPE=ID_PROT force\n", peer->name);
@@ -233,9 +230,8 @@ ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
 		fprintf(fd, "SHA");
 
 	if (auth->type == IKE_AUTH_RSA)
-		fprintf(fd, "-RSA_SIG\n");
-	else
-		fprintf(fd, "\n");
+		fprintf(fd, "-RSA_SIG");
+	fprintf(fd, " force\n");
 
 	return (0);
 }
