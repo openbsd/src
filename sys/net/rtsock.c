@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.51 2005/11/29 02:59:42 jolan Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.52 2006/02/02 13:59:45 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -250,6 +250,7 @@ route_output(struct mbuf *m, ...)
 			    &saved_nrt->rt_rmx);
 			saved_nrt->rt_refcnt--;
 			saved_nrt->rt_genmask = genmask;
+			rtm->rtm_index = saved_nrt->rt_ifp->if_index;
 		}
 		break;
 	case RTM_DELETE:
@@ -397,6 +398,7 @@ report:
 
 			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
 			    &rt->rt_rmx);
+			rtm->rtm_index = rt->rt_ifp->if_index;
 			if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
 				rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, &info);
 			if (genmask)
