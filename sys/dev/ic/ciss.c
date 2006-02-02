@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.12 2005/12/13 15:55:58 brad Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.13 2006/02/02 22:13:04 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -317,7 +317,7 @@ ciss_attach(struct ciss_softc *sc)
 	sc->maxunits = inq->numld;
 	sc->nbus = inq->nscsi_bus;
 	sc->ndrives = inq->buswidth;
-	printf(": %d LD%s HW rev %d FW %4.4s/%4.4s\n",
+	printf(": %d LD%s, HW rev %d, FW %4.4s/%4.4s\n",
 	    inq->numld, inq->numld == 1? "" : "s",
 	    inq->hw_rev, inq->fw_running, inq->fw_stored);
 
@@ -703,7 +703,9 @@ ciss_ldmap(struct ciss_softc *sc)
 
 	if (rv)
 		return rv;
-printf("lmap %x:%x ", lmap->map[0].tgt, lmap->map[0].tgt2);
+
+	CISS_DPRINTF(CISS_D_MISC, ("lmap %x:%x\n"
+	    lmap->map[0].tgt, lmap->map[0].tgt2));
 
 	return 0;
 }
