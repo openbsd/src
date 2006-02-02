@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.45 2006/02/01 20:24:08 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.46 2006/02/02 15:10:57 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -514,12 +514,6 @@ cand_list_clr(void)
 	while ((c = TAILQ_FIRST(&cand_list)) != NULL) {
 		TAILQ_REMOVE(&cand_list, c, cand);
 	}
-}
-
-int
-cand_list_empty(void)
-{
-	return (TAILQ_EMPTY(&cand_list));
 }
 
 /* timers */
