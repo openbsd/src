@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.18 2005/12/22 18:47:25 deraadt Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.19 2006/02/02 04:02:59 drahn Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -169,8 +169,6 @@ lcd_match(struct device *parent, void *cf, void *aux)
 	return 1;
 }
 
-struct pxa2x0_lcd_softc *lcd_softc;
-
 void
 lcd_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -193,7 +191,6 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 	/* Start with approximately 40% of full brightness. */
 	lcd_set_brightness(3);
 
-	lcd_softc = sc;
 	(void)powerhook_establish(lcd_power, sc);
 }
 
@@ -392,10 +389,8 @@ lcd_blank(int blank)
 	if (blank) {
 		lcd_set_brightness(0);
 		lcdisblank = 1;
-		pxa2x0_lcd_suspend(lcd_softc);
 	} else {
 		lcdisblank = 0;
-		pxa2x0_lcd_resume(lcd_softc);
 		lcd_set_brightness(lcd_get_brightness());
 	}
 }
