@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.125 2006/02/02 07:15:37 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.126 2006/02/02 20:35:55 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2178,6 +2178,11 @@ bge_rxeof(struct bge_softc *sc)
 	bus_size_t tlen;
 	int tosync;
 
+	/* Nothing to do */
+	if (sc->bge_rx_saved_considx ==
+	    sc->bge_rdata->bge_status_block.bge_idx[0].bge_rx_prod_idx)
+		return;
+
 	ifp = &sc->arpcom.ac_if;
 
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
@@ -2321,6 +2326,11 @@ bge_txeof(struct bge_softc *sc)
 	bus_size_t tlen;
 	int tosync;
 	struct mbuf *m;
+
+	/* Nothing to do */
+	if (sc->bge_tx_saved_considx ==
+	    sc->bge_rdata->bge_status_block.bge_idx[0].bge_tx_cons_idx)
+		return;
 
 	ifp = &sc->arpcom.ac_if;
 
