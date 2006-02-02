@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.124 2006/02/01 02:02:49 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.125 2006/02/02 07:15:37 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1171,9 +1171,27 @@ bge_chipinit(struct bge_softc *sc)
 	/* Set up the PCI DMA control register. */
 	if (sc->bge_pcie) {
 		/* PCI Express bus */
-		dma_rw_ctl = BGE_PCI_READ_CMD | BGE_PCI_WRITE_CMD |
-		    (0xf << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
-		    (0x2 << BGE_PCIDMARWCTL_WR_WAT_SHIFT);
+		u_int32_t device_ctl;
+
+		/* alternative from Linux driver */
+#define DMA_CTRL_WRITE_PCIE_H20MARK_128		0x00180000
+#define DMA_CTRL_WRITE_PCIE_H20MARK_256		0x00380000
+
+		dma_rw_ctl = 0x76000000; /* XXX XXX XXX */;
+		device_ctl = pci_conf_read(pa->pa_pc, pa->pa_tag,
+					   BGE_PCI_CONF_DEV_CTRL);
+
+		if ((device_ctl & 0x00e0) && 0) {
+			/*
+			 * This clause is exactly what the Broadcom-supplied
+			 * Linux does; but given overall register programming
+			 * by bge(4), this larger DMA-write watermark
+			 * value causes BCM5721 chips to totally wedge.
+			 */
+			dma_rw_ctl |= BGE_PCIDMA_RWCTL_PCIE_WRITE_WATRMARK_256;
+		} else {
+			dma_rw_ctl |= BGE_PCIDMA_RWCTL_PCIE_WRITE_WATRMARK_128;
+		}
 	} else if (sc->bge_pcix) {
 		/* PCI-X bus */
 		if (BGE_IS_5714_FAMILY(sc)) {
