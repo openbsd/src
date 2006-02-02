@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.42 2006/01/24 14:14:04 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.43 2006/02/02 14:06:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -26,7 +26,7 @@
 #include "rde.h"
 
 int	rde_filter_match(struct filter_rule *, struct rde_aspath *,
-	    struct bgpd_addr *, u_int8_t);
+	    struct bgpd_addr *, u_int8_t, struct rde_peer *);
 int	filterset_equal(struct filter_set_head *, struct filter_set_head *);
 
 enum filter_actions
@@ -49,13 +49,13 @@ rde_filter(struct rde_aspath **new, struct filter_head *rules,
 		if (f->peer.peerid != 0 &&
 		    f->peer.peerid != peer->conf.id)
 			continue;
-		if (rde_filter_match(f, asp, prefix, prefixlen)) {
+		if (rde_filter_match(f, asp, prefix, prefixlen, peer)) {
 			if (asp != NULL && new != NULL) {
 				/* asp may get modified so create a copy */
 				if (*new == NULL)
 					*new = path_copy(asp);
 				rde_apply_set(*new, &f->set, prefix->af,
-				    from, dir);
+				    from, peer);
 			}
 			if (f->action != ACTION_NONE)
 				action = f->action;
@@ -68,11 +68,12 @@ rde_filter(struct rde_aspath **new, struct filter_head *rules,
 
 void
 rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
-    sa_family_t af, struct rde_peer *from, enum directions dir)
+    sa_family_t af, struct rde_peer *from, struct rde_peer *peer)
 {
 	struct filter_set	*set;
 	struct aspath		*new;
-	u_int16_t		 as;
+	int			 as, type;
+	u_int16_t		 prep_as;
 	u_int8_t		 prepend;
 
 	if (asp == NULL)
@@ -146,9 +147,9 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 		case ACTION_SET_PREPEND_PEER:
 			if (from == NULL)
 				break;
-			as = from->conf.remote_as;
+			prep_as = from->conf.remote_as;
 			prepend = set->action.prepend;
-			new = aspath_prepend(asp->aspath, as, prepend);
+			new = aspath_prepend(asp->aspath, prep_as, prepend);
 			aspath_put(asp->aspath);
 			asp->aspath = new;
 			break;
@@ -160,8 +161,31 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 			    af);
 			break;
 		case ACTION_SET_COMMUNITY:
-			community_set(asp, set->action.community.as,
-			    set->action.community.type);
+			switch (set->action.community.as) {
+			case COMMUNITY_ERROR:
+			case COMMUNITY_ANY:
+				fatalx("rde_apply_set bad community string");
+			case COMMUNITY_NEIGHBOR_AS:
+				as = peer->conf.remote_as;
+				break;
+			default:
+				as = set->action.community.as;
+				break;
+			}
+
+			switch (set->action.community.type) {
+			case COMMUNITY_ERROR:
+			case COMMUNITY_ANY:
+				fatalx("rde_apply_set bad community string");
+			case COMMUNITY_NEIGHBOR_AS:
+				type = peer->conf.remote_as;
+				break;
+			default:
+				type = set->action.community.as;
+				break;
+			}
+
+			community_set(asp, as, type);
 			break;
 		case ACTION_PFTABLE:
 			/* convert pftable name to an id */
@@ -189,18 +213,41 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 
 int
 rde_filter_match(struct filter_rule *f, struct rde_aspath *asp,
-    struct bgpd_addr *prefix, u_int8_t plen)
+    struct bgpd_addr *prefix, u_int8_t plen, struct rde_peer *peer)
 {
+	int	as, type;
 
 	if (asp != NULL && f->match.as.type != AS_NONE)
 		if (aspath_match(asp->aspath, f->match.as.type,
 		    f->match.as.as) == 0)
 			return (0);
 
-	if (asp != NULL && f->match.community.as != 0)
-		if (rde_filter_community(asp, f->match.community.as,
-		    f->match.community.type) == 0)
+	if (asp != NULL && f->match.community.as != 0) {
+		switch (f->match.community.as) {
+		case COMMUNITY_ERROR:
+			fatalx("rde_apply_set bad community string");
+		case COMMUNITY_NEIGHBOR_AS:
+			as = peer->conf.remote_as;
+			break;
+		default:
+			as = f->match.community.as;
+			break;
+		}
+
+		switch (f->match.community.type) {
+		case COMMUNITY_ERROR:
+			fatalx("rde_apply_set bad community string");
+		case COMMUNITY_NEIGHBOR_AS:
+			type = peer->conf.remote_as;
+			break;
+		default:
+			type = f->match.community.as;
+			break;
+		}
+
+		if (rde_filter_community(asp, as, type) == 0)
 			return (0);
+	}
 
 	if (f->match.prefix.addr.af != 0 &&
 	    f->match.prefix.addr.af == prefix->af) {

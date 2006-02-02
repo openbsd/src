@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.178 2006/01/07 14:50:28 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.179 2006/02/02 14:06:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1429,6 +1429,12 @@ filter_set_opt	: LOCALPREF number		{
 				YYERROR;
 			}
 			free($2);
+			/* Don't allow setting of any match */
+			if ($$->action.community.as == COMMUNITY_ANY ||
+			    $$->action.community.type == COMMUNITY_ANY) {
+				yyerror("'*' is not allowed in set community");
+				YYERROR;
+			}
 			/* Don't allow setting of unknown well-known types */
 			if ($$->action.community.as == COMMUNITY_WELLKNOWN) {
 				switch ($$->action.community.type) {
@@ -2013,6 +2019,8 @@ getcommunity(char *s)
 
 	if (strcmp(s, "*") == 0)
 		return (COMMUNITY_ANY);
+	if (strcmp(s, "neighbor-as") == 0)
+		return (COMMUNITY_NEIGHBOR_AS);
 	if (atoul(s, &ulval) == -1) {
 		yyerror("\"%s\" is not a number", s);
 		return (COMMUNITY_ERROR);

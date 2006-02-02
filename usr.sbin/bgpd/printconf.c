@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.50 2005/11/01 10:58:29 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.51 2006/02/02 14:06:05 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -417,13 +417,18 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 	}
 
 	if (r->match.community.as != 0) {
+		printf("community ");
 		if (r->match.community.as == COMMUNITY_ANY)
 			printf("*:");
+		else if (r->match.community.as == COMMUNITY_NEIGHBOR_AS)
+			printf("neighbor-as:");
 		else
 			printf("%d:", r->match.community.as);
 
 		if (r->match.community.type == COMMUNITY_ANY)
 			printf("* ");
+		else if (r->match.community.type == COMMUNITY_NEIGHBOR_AS)
+			printf("neighbor-as ");
 		else
 			printf("%d ", r->match.community.type);
 	}
