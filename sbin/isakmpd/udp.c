@@ -1,4 +1,4 @@
-/* $OpenBSD: udp.c,v 1.92 2005/10/27 08:19:59 hshoexer Exp $	 */
+/* $OpenBSD: udp.c,v 1.93 2006/02/02 14:33:53 hshoexer Exp $	 */
 /* $EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	 */
 
 /*
@@ -385,7 +385,7 @@ udp_report(struct transport *t)
 	in_port_t	 sport, dport;
 
 	if (sockaddr2text(u->src, &src, 0))
-		goto ret;
+		return;
 	sport = sockaddr_port(u->src);
 
 	if (!u->dst || sockaddr2text(u->dst, &dst, 0))
@@ -395,7 +395,6 @@ udp_report(struct transport *t)
 	LOG_DBG((LOG_REPORT, 0, "udp_report: fd %d src %s:%u dst %s:%u", u->s,
 	    src, ntohs(sport), dst ? dst : "<none>", ntohs(dport)));
 
-ret:
 	if (dst)
 		free(dst);
 	if (src)
