@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.28 2005/12/16 21:39:42 miod Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.29 2006/02/03 10:21:18 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -505,57 +505,72 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 	(((x) & OFW_PCI_PHYS_HI_FUNCTIONMASK) >> OFW_PCI_PHYS_HI_FUNCTIONSHIFT)
 
 /* 
- * Find PCI IRQ from OF
+ * Find PCI IRQ from OF.
  */
 int
 find_node_intr(int parent, u_int32_t *addr, u_int32_t *intr)
 {
-	int iparent, len, mlen, n_mlen;
+	int iparent, len, mlen, alen, ilen;
 	int match, i, step;
 	u_int32_t map[144], *mp, *mp1;
 	u_int32_t imask[8], maskedaddr[8];
+	u_int32_t address_cells, interrupt_cells, mask_cells;
 
 	len = OF_getprop(parent, "interrupt-map", map, sizeof(map));
 	mlen = OF_getprop(parent, "interrupt-map-mask", imask, sizeof(imask));
+	alen = OF_getprop(parent, "#address-cells",
+	    &address_cells, sizeof(address_cells));
+	ilen = OF_getprop(parent, "#interrupt-cells",
+	    &interrupt_cells, sizeof(interrupt_cells));
 
-	if ((len == -1) || (mlen == -1))
+	if (len == -1 || mlen == -1 || alen == -1 || ilen == -1)
 		goto nomap;
 
-	n_mlen = mlen/sizeof(u_int32_t);
-	for (i = 0; i < n_mlen; i++)
+	mask_cells = address_cells + interrupt_cells;
+	if (mask_cells != (mlen / sizeof(u_int32_t)))
+		goto nomap;
+	for (i = 0; i < mask_cells; i++)
 		maskedaddr[i] = addr[i] & imask[i];
 
-	mp = map;
-	/* calculate step size of interrupt-map
-	 * -- assumes that iparent will be same for all nodes
+	/* interrupt-map is formatted as follows
+	 * int * #address-cells, int * #interrupt-cells, int, int, int
+	 * eg
+	 * address-cells = 3
+	 * interrupt-cells = 1
+	 * 00001000 00000000 00000000 00000000 ff911258 00000034 00000001 
+	 * 00001800 00000000 00000000 00000000 ff911258 00000035 00000001 
+	 * 00002000 00000000 00000000 00000000 ff911258 00000036 00000001 
+	 * | address cells          | | intr | |parent| | irq  | |edge/level|
+	 *                            | cells|          | interrupt cells   |
+	 *                                              | of parent         |
+	 * or at least something close to that.
 	 */
-	iparent = mp[n_mlen];
-	step = 0;
-	for (i = (n_mlen)+1; i < len; i++)
-		if (mp[i] == iparent) {
-			step = i - (n_mlen);
-			break;
-		}
-	if (step == 0) {
-		/* unable to determine step size */
-		printf("find_node_intr unable to find step size\n");
-		return -1;
-	}
 
+	mp = map;
 	while (len > mlen) {
-		match = bcmp(maskedaddr, mp, mlen);
-		mp1 = mp + n_mlen;
+		mp1 = mp + mask_cells;
 
+		iparent = *mp1;
+		alen = OF_getprop(iparent, "#address-cells",
+		    &address_cells, sizeof(address_cells));
+		if (alen == -1)
+			address_cells = 0;
+		ilen = OF_getprop(iparent, "#interrupt-cells",
+		    &interrupt_cells, sizeof(interrupt_cells));
+		if (ilen == -1)
+			goto nomap;
+
+		step = mask_cells + 1 + address_cells + interrupt_cells;
+
+		match = bcmp(maskedaddr, mp, mlen);
 		if (match == 0) {
-			/* multiple irqs? */
-			if (step == 9) {
-				/* pci-pci bridge */
-				iparent = *mp1;
-				/* recurse with new 'addr' */
-				return find_node_intr(iparent, &mp1[1], intr);
-			} else
+			if (OF_getprop(iparent, "interrupt-controller",
+				       NULL, 0) == 0) {
 				*intr = mp1[1];
-			return 1;
+				return 1;
+			}
+			/* Recurse with new 'addr'. */
+			return find_node_intr(iparent, &mp1[1], intr);
 		}
 		len -= step * sizeof(u_int32_t);
 		mp += step;
