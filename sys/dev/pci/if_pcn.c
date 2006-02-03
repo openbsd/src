@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.4 2005/12/16 03:19:07 brad Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.5 2006/02/03 06:38:11 brad Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -1867,7 +1867,7 @@ pcn_set_filter(struct pcn_softc *sc)
 	 * of the bits select the bit within the word.
 	 */
 
-	if (ifp->if_flags & IFF_PROMISC)
+	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC)
 		goto allmulti;
 
 	sc->sc_initblock.init_ladrf[0] =
