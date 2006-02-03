@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_machdep.c,v 1.4 2006/01/13 22:58:59 deraadt Exp $	*/
+/*	$OpenBSD: agp_machdep.c,v 1.5 2006/02/03 19:24:42 millert Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -47,8 +47,6 @@ const struct agp_product agp_products[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_IGD, agp_i810_attach },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852GM_AGP, agp_i810_attach },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82865_IGD, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_IV, agp_i810_attach },
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_IGD, agp_i810_attach },
 	{ PCI_VENDOR_INTEL, -1, agp_intel_attach },
 	{ PCI_VENDOR_SIS, -1, agp_sis_attach },
 	{ PCI_VENDOR_VIATECH, -1, agp_via_attach },

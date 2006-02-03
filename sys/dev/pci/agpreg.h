@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpreg.h,v 1.4 2006/01/13 22:59:02 deraadt Exp $	*/
+/*	$OpenBSD: agpreg.h,v 1.5 2006/02/03 19:24:42 millert Exp $	*/
 /*	$NetBSD: agpreg.h,v 1.1 2001/09/10 10:01:02 fvdl Exp $	*/
 
 /*-
@@ -185,22 +185,5 @@
 #define AGP_I855_GCC1_GMS_STOLEN_8M	0x30
 #define AGP_I855_GCC1_GMS_STOLEN_16M	0x40
 #define AGP_I855_GCC1_GMS_STOLEN_32M	0x50
-
-/*
- * 915G registers
- */
-#define AGP_I915_GMADR			0x18
-#define AGP_I915_MMADR			0x10
-#define AGP_I915_GTTADR			0x1C
-#define AGP_I915_GCC1_GMS_STOLEN_48M	0x60
-#define AGP_I915_GCC1_GMS_STOLEN_64M	0x70
-#define AGP_I915_DEVEN			0x54
-#define AGP_I915_DEVEN_D2F0		0x08
-#define AGP_I915_DEVEN_D2F0_ENABLED	0x08
-#define AGP_I915_DEVEN_D2F0_DISABLED	0x00
-#define AGP_I915_MSAC			0x62
-#define AGP_I915_MSAC_GMASIZE		0x02
-#define AGP_I915_MSAC_GMASIZE_128	0x02
-#define AGP_I915_MSAC_GMASIZE_256	0x00
 
 #endif /* !_PCI_AGPREG_H_ */
