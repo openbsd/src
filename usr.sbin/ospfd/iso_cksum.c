@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso_cksum.c,v 1.4 2005/10/19 15:44:25 stevesk Exp $ */
+/*	$OpenBSD: iso_cksum.c,v 1.5 2006/02/03 12:51:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -20,17 +20,18 @@
 
 #include "ospfd.h"
 
+/* implementation of Fletcher Checksum -- see RFC 1008 for more info */
+
 /* pos needs to be 0 for verify and 2 <= pos < len for calculation */
 u_int16_t
 iso_cksum(void *buf, u_int16_t len, u_int16_t pos)
 {
 	u_int8_t	*p = buf;
-	int		 c0 = 0, c1 = 0;	/* counters */
-	int		 r0, r1;		/* results */
+	int		 c0 = 0, c1 = 0, x;	/* counters */
 	u_int16_t	 sop;
 
-	sop = len - pos - 1;	/* pos is an offset (pos 2 is at len 3) */
-	p += 2;
+	sop = len - pos - 1;	/* pos is an offset (pos 2 is 3rd element) */
+	p += 2;			/* jump over age field */
 	len -= 2;
 	while (len--) {
 		c0 += *p++;
@@ -41,17 +42,16 @@ iso_cksum(void *buf, u_int16_t len, u_int16_t pos)
 			c1 %= 255;
 		}
 	}
-	r0 = c0 = c0 % 255;
-	r1 = c1 % 255;
 
 	if (pos) {
-		r0 = ((sop * r0 - r1)) % 255;
-		if (r0 <= 0)
-			r0 += 255;
-		r1 = 510 - r0 - c0;
-		if (r1 > 255)
-			r1 -= 255;
+		x = ((sop * c0 - c1)) % 255;
+		if (x <= 0)
+			x += 255;
+		c1 = 510 - c0 - x;
+		if (c1 > 255)
+			c1 -= 255;
+		c0 = x;
 	}
 
-	return (r0 << 8 | r1);
+	return (c0 << 8 | c1);
 }
