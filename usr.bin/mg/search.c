@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.27 2005/12/13 06:01:27 kjell Exp $	*/
+/*	$OpenBSD: search.c,v 1.28 2006/02/03 13:57:03 otto Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -285,6 +285,8 @@ isearch(int dir)
 			clp = curwp->w_dotp;
 			cbo = curwp->w_doto;
 			firstc = 1;
+			if (pptr == -1)
+				pptr = 0;
 			if (dir == SRCH_BACK) {
 				/* when isearching backwards, cbo is the start of the pattern */
 				cbo += pptr;
