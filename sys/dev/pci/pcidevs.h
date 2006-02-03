@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1013 2006/01/31 22:45:55 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1014 2006/02/02 23:57:18 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -138,6 +138,7 @@
 #define	PCI_VENDOR_TEKRAM	0x10e1		/* Tekram (1st ID) */
 #define	PCI_VENDOR_NEWBRIDGE	0x10e3		/* Newbridge */
 #define	PCI_VENDOR_AMCIRCUITS	0x10e8		/* Applied Micro Circuits */
+#define	PCI_VENDOR_TVIA	0x10ea		/* Tvia */
 #define	PCI_VENDOR_REALTEK	0x10ec		/* Realtek */
 #define	PCI_VENDOR_NKK	0x10f5		/* NKK */
 #define	PCI_VENDOR_IODATA	0x10fc		/* IO Data Device */
@@ -162,6 +163,7 @@
 #define	PCI_VENDOR_DIGI	0x114f		/* Digi */
 #define	PCI_VENDOR_MUTECH	0x1159		/* Mutech */
 #define	PCI_VENDOR_XIRCOM	0x115d		/* Xircom */
+#define	PCI_VENDOR_RENDITION	0x1163		/* Rendition */
 #define	PCI_VENDOR_RCC	0x1166		/* ServerWorks */
 #define	PCI_VENDOR_TOSHIBA2	0x1179		/* Toshiba */
 #define	PCI_VENDOR_RICOH	0x1180		/* Ricoh */
@@ -273,6 +275,7 @@
 #define	PCI_VENDOR_LANERGY	0x1812		/* Lanergy */
 #define	PCI_VENDOR_RALINK	0x1814		/* Ralink */
 #define	PCI_VENDOR_XGI	0x18ca		/* XGI Technology */
+#define	PCI_VENDOR_SANGOMA	0x1923		/* Sangoma */
 #define	PCI_VENDOR_JMICRON	0x197b		/* JMicron */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram */
@@ -1056,6 +1059,8 @@
 #define	PCI_PRODUCT_CIRRUS_CS4281	0x6005		/* CS4281 CrystalClear */
 
 /* CMD Technology products -- info gleaned from www.cmd.com */
+/* Fake product id for SiI3112 found on Adaptec 1210SA */
+#define	PCI_PRODUCT_CMDTECH_AAR_1210SA	0x0240		/* AAR-1210SA */
 #define	PCI_PRODUCT_CMDTECH_640	0x0640		/* PCI0640 */
 #define	PCI_PRODUCT_CMDTECH_642	0x0642		/* PCI0642 */
 #define	PCI_PRODUCT_CMDTECH_643	0x0643		/* PCI0643 */
@@ -1071,9 +1076,9 @@
 #define	PCI_PRODUCT_CMDTECH_680	0x0680		/* PCI0680 */
 #define	PCI_PRODUCT_CMDTECH_3112	0x3112		/* SiI3112 SATA */
 #define	PCI_PRODUCT_CMDTECH_3114	0x3114		/* SiI3114 SATA */
+#define	PCI_PRODUCT_CMDTECH_3124	0x3124		/* SiI3124 SATA */
+#define	PCI_PRODUCT_CMDTECH_3132	0x3132		/* SiI3132 SATA */
 #define	PCI_PRODUCT_CMDTECH_3512	0x3512		/* SiI3512 SATA */
-/* Fake product id for SiI3112 found on Adaptec 1210SA */
-#define	PCI_PRODUCT_CMDTECH_AAR_1210SA	0x0240		/* AAR-1210SA */
 
 /* CNet produts */
 #define	PCI_PRODUCT_CNET_GIGACARD	0x434e		/* GigaCard */
@@ -2635,6 +2640,10 @@
 #define	PCI_PRODUCT_RCC_FRODO8_SATA	0x0242		/* Frodo8 SATA */
 #define	PCI_PRODUCT_RCC_HT_1000_SATA	0x024a		/* HT-1000 SATA */
 
+/* Rendition products */
+#define	PCI_PRODUCT_RENDITION_V1000	0x0001		/* Verite 1000 */
+#define	PCI_PRODUCT_RENDITION_V2x00	0x2000		/* Verite V2x00 */
+
 /* Philips products */
 #define	PCI_PRODUCT_PHILIPS_SAA7130	0x7130		/* SAA7130 TV */
 #define	PCI_PRODUCT_PHILIPS_SAA7133	0x7133		/* SAA7133 TV */
@@ -3135,6 +3144,17 @@
 #define	PCI_PRODUCT_TSENG_ET4000_W32P_D	0x3207		/* ET4000w32p rev D */
 #define	PCI_PRODUCT_TSENG_ET6000	0x3208		/* ET6000/ET6100 */
 #define	PCI_PRODUCT_TSENG_ET6300	0x4702		/* ET6300 */
+
+/* Tvia products */
+#define	PCI_PRODUCT_TVIA_IGA1680	0x1680		/* IGA-1680 */
+#define	PCI_PRODUCT_TVIA_IGA1682	0x1682		/* IGA-1682 */
+#define	PCI_PRODUCT_TVIA_IGA1683	0x1683		/* IGA-1683 */
+#define	PCI_PRODUCT_TVIA_CP2000	0x2000		/* CyberPro 2000 */
+#define	PCI_PRODUCT_TVIA_CP2000A	0x2010		/* CyberPro 2010 */
+#define	PCI_PRODUCT_TVIA_CP5000	0x5000		/* CyberPro 5000 */
+#define	PCI_PRODUCT_TVIA_CP5050	0x5050		/* CyberPro 5050 */
+#define	PCI_PRODUCT_TVIA_CP5202	0x5202		/* CyberPro 5202 */
+#define	PCI_PRODUCT_TVIA_CP5252	0x5252		/* CyberPro 5252 */
 
 /* UMC products */
 #define	PCI_PRODUCT_UMC_UM82C881	0x0001		/* UM82C881 486 */

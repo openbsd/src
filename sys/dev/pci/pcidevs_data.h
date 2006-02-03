@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1013 2006/01/31 22:45:55 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1014 2006/02/02 23:57:18 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2635,6 +2635,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CS4281 CrystalClear",
 	},
 	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_AAR_1210SA,
+	    "AAR-1210SA",
+	},
+	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_640,
 	    "PCI0640",
 	},
@@ -2687,12 +2691,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SiI3114 SATA",
 	},
 	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3512,
-	    "SiI3512 SATA",
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3124,
+	    "SiI3124 SATA",
 	},
 	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_AAR_1210SA,
-	    "AAR-1210SA",
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3132,
+	    "SiI3132 SATA",
+	},
+	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3512,
+	    "SiI3512 SATA",
 	},
 	{
 	    PCI_VENDOR_CNET, PCI_PRODUCT_CNET_GIGACARD,
@@ -8019,6 +8027,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HT-1000 SATA",
 	},
 	{
+	    PCI_VENDOR_RENDITION, PCI_PRODUCT_RENDITION_V1000,
+	    "Verite 1000",
+	},
+	{
+	    PCI_VENDOR_RENDITION, PCI_PRODUCT_RENDITION_V2x00,
+	    "Verite V2x00",
+	},
+	{
 	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7130,
 	    "SAA7130 TV",
 	},
@@ -9639,6 +9655,42 @@ static const struct pci_known_product pci_known_products[] = {
 	    "ET6300",
 	},
 	{
+	    PCI_VENDOR_TVIA, PCI_PRODUCT_TVIA_IGA1680,
+	    "IGA-1680",
+	},
+	{
+	    PCI_VENDOR_TVIA, PCI_PRODUCT_TVIA_IGA1682,
+	    "IGA-1682",
+	},
+	{
+	    PCI_VENDOR_TVIA, PCI_PRODUCT_TVIA_IGA1683,
+	    "IGA-1683",
+	},
+	{
+	    PCI_VENDOR_TVIA, PCI_PRODUCT_TVIA_CP2000,
+	    "CyberPro 2000",
+	},
+	{
+	    PCI_VENDOR_TVIA, PCI_PRODUCT_TVIA_CP2000A,
+	    "CyberPro 2010",
+	},
+	{
+	    PCI_VENDOR_TVIA, PCI_PRODUCT_TVIA_CP5000,
+	    "CyberPro 5000",
+	},
+	{
+	    PCI_VENDOR_TVIA, PCI_PRODUCT_TVIA_CP5050,
+	    "CyberPro 5050",
+	},
+	{
+	    PCI_VENDOR_TVIA, PCI_PRODUCT_TVIA_CP5202,
+	    "CyberPro 5202",
+	},
+	{
+	    PCI_VENDOR_TVIA, PCI_PRODUCT_TVIA_CP5252,
+	    "CyberPro 5252",
+	},
+	{
 	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM82C881,
 	    "UM82C881 486",
 	},
@@ -11115,6 +11167,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Applied Micro Circuits",
 	},
 	{
+	    PCI_VENDOR_TVIA,
+	    "Tvia",
+	},
+	{
 	    PCI_VENDOR_REALTEK,
 	    "Realtek",
 	},
@@ -11209,6 +11265,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_XIRCOM,
 	    "Xircom",
+	},
+	{
+	    PCI_VENDOR_RENDITION,
+	    "Rendition",
 	},
 	{
 	    PCI_VENDOR_RCC,
@@ -11653,6 +11713,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_XGI,
 	    "XGI Technology",
+	},
+	{
+	    PCI_VENDOR_SANGOMA,
+	    "Sangoma",
 	},
 	{
 	    PCI_VENDOR_JMICRON,
