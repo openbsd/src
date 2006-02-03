@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.16 2006/02/02 14:42:23 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.17 2006/02/03 13:39:29 naddy Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -65,7 +65,7 @@ ike_section_peer(struct ipsec_addr_wrap *peer, FILE *fd, struct ike_auth *auth)
 	fprintf(fd, SET "[peer-%s]:Phase=1 force\n", peer->name);
 	fprintf(fd, SET "[peer-%s]:Address=%s force\n", peer->name, peer->name);
 	if (auth->type == IKE_AUTH_PSK)
-		fprintf(fd, SET "[peer-%s]:Authentication=%s\n",
+		fprintf(fd, SET "[peer-%s]:Authentication=%s force\n",
 		    peer->name, auth->string);
 }
 
