@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.223 2006/02/03 08:54:51 brad Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.224 2006/02/03 11:50:34 brad Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -319,11 +319,23 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  0,
 	  piix_chip_map
 	},
+	{ PCI_PRODUCT_INTEL_82371FB_ISA, /* Intel 82371FB IDE (PIIX) */
+	  0,
+	  piix_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82372FB_IDE, /* Intel 82372FB IDE (PIIX4) */
+	  0,
+	  piix_chip_map
+	},
 	{ PCI_PRODUCT_INTEL_82371SB_IDE, /* Intel 82371SB IDE (PIIX3) */
 	  0,
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82371AB_IDE, /* Intel 82371AB IDE (PIIX4) */
+	  0,
+	  piix_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82371MX, /* Intel 82371MX IDE */
 	  0,
 	  piix_chip_map
 	},
@@ -1971,6 +1983,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		sc->sc_wdcdev.irqack = pciide_irqack;
 		switch (sc->sc_pp->ide_product) {
 		case PCI_PRODUCT_INTEL_82371AB_IDE:
+		case PCI_PRODUCT_INTEL_82372FB_IDE:
 		case PCI_PRODUCT_INTEL_82440MX_IDE:
 		case PCI_PRODUCT_INTEL_82451NX:
 		case PCI_PRODUCT_INTEL_82801AA_IDE:
@@ -2002,6 +2015,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.DMA_cap = 2;
 	switch (sc->sc_pp->ide_product) {
 	case PCI_PRODUCT_INTEL_82801AA_IDE:
+	case PCI_PRODUCT_INTEL_82372FB_IDE:
 		sc->sc_wdcdev.UDMA_cap = 4;
 		break;
 	case PCI_PRODUCT_INTEL_82801BAM_IDE:
@@ -2038,7 +2052,8 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_SATA_1) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_SATA;
 		sc->sc_wdcdev.set_modes = sata_setup_channel;
-	} else if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82371FB_IDE) {
+	} else if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82371FB_IDE ||
+		   sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82371FB_ISA) {
 		sc->sc_wdcdev.set_modes = piix_setup_channel;
 	} else {
 		sc->sc_wdcdev.set_modes = piix3_4_setup_channel;
@@ -2060,7 +2075,8 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	WDCDEBUG_PRINT(("piix_setup_chip: old idetim=0x%x",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_IDETIM)),
 	    DEBUG_PROBE);
-	if (sc->sc_pp->ide_product != PCI_PRODUCT_INTEL_82371FB_IDE) {
+	if (sc->sc_pp->ide_product != PCI_PRODUCT_INTEL_82371FB_IDE &&
+	    sc->sc_pp->ide_product != PCI_PRODUCT_INTEL_82371FB_ISA) {
 		WDCDEBUG_PRINT((", sidetim=0x%x",
 		    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_SIDETIM)),
 		    DEBUG_PROBE);
@@ -2082,7 +2098,8 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FBM_SATA ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82372FB_IDE) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
 			    DEBUG_PROBE);
@@ -2155,7 +2172,8 @@ next:
 	WDCDEBUG_PRINT(("piix_setup_chip: idetim=0x%x",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_IDETIM)),
 	    DEBUG_PROBE);
-	if (sc->sc_pp->ide_product != PCI_PRODUCT_INTEL_82371FB_IDE) {
+	if (sc->sc_pp->ide_product != PCI_PRODUCT_INTEL_82371FB_IDE &&
+	    sc->sc_pp->ide_product != PCI_PRODUCT_INTEL_82371FB_ISA) {
 		WDCDEBUG_PRINT((", sidetim=0x%x",
 		    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_SIDETIM)),
 		    DEBUG_PROBE);
@@ -2177,7 +2195,8 @@ next:
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FBM_SATA ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82372FB_IDE) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
 			    DEBUG_PROBE);
@@ -2346,7 +2365,8 @@ piix3_4_setup_channel(struct channel_softc *chp)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801FBM_SATA ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801GB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82372FB_IDE) {
 			ideconf |= PIIX_CONFIG_PINGPONG;
 		}
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BAM_IDE ||
@@ -2378,7 +2398,8 @@ piix3_4_setup_channel(struct channel_softc *chp)
 				}
 			}
 		}
-		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE) {
+		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82372FB_IDE) {
 			/* setup Ultra/66 */
 			if (drvp->UDMA_mode > 2 &&
 			    (ideconf & PIIX_CONFIG_CR(channel, drive)) == 0)
