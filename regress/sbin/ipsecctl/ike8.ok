@@ -1,6 +1,9 @@
 C set [Phase 1]:192.168.3.1=peer-192.168.3.1 force
 C set [peer-192.168.3.1]:Phase=1 force
 C set [peer-192.168.3.1]:Address=192.168.3.1 force
+C set [peer-192.168.3.1]:Configuration=mm-192.168.3.1 force
+C set [mm-192.168.3.1]:EXCHANGE_TYPE=ID_PROT force
+C add [mm-192.168.3.1]:Transforms=AES-SHA-RSA_SIG force
 C set [IPsec-1.1.1.1-0.0.0.0/0]:Phase=2 force
 C set [IPsec-1.1.1.1-0.0.0.0/0]:ISAKMP-peer=peer-192.168.3.1 force
 C set [IPsec-1.1.1.1-0.0.0.0/0]:Configuration=qm-1.1.1.1-0.0.0.0/0 force

@@ -1,6 +1,9 @@
 C set [Phase 1]:131.188.33.29=peer-131.188.33.29 force
 C set [peer-131.188.33.29]:Phase=1 force
 C set [peer-131.188.33.29]:Address=131.188.33.29 force
+C set [peer-131.188.33.29]:Configuration=mm-131.188.33.29 force
+C set [mm-131.188.33.29]:EXCHANGE_TYPE=ID_PROT force
+C add [mm-131.188.33.29]:Transforms=AES-SHA-RSA_SIG force
 C set [IPsec-10.1.1.0/24-10.1.2.0/24]:Phase=2 force
 C set [IPsec-10.1.1.0/24-10.1.2.0/24]:ISAKMP-peer=peer-131.188.33.29 force
 C set [IPsec-10.1.1.0/24-10.1.2.0/24]:Configuration=qm-10.1.1.0/24-10.1.2.0/24 force
@@ -20,6 +23,9 @@ c IPsec-10.1.1.0/24-10.1.2.0/24
 C set [Phase 1]:131.188.33.29=peer-131.188.33.29 force
 C set [peer-131.188.33.29]:Phase=1 force
 C set [peer-131.188.33.29]:Address=131.188.33.29 force
+C set [peer-131.188.33.29]:Configuration=mm-131.188.33.29 force
+C set [mm-131.188.33.29]:EXCHANGE_TYPE=ID_PROT force
+C add [mm-131.188.33.29]:Transforms=AES-SHA-RSA_SIG force
 C set [IPsec-131.188.33.51-131.188.33.29]:Phase=2 force
 C set [IPsec-131.188.33.51-131.188.33.29]:ISAKMP-peer=peer-131.188.33.29 force
 C set [IPsec-131.188.33.51-131.188.33.29]:Configuration=qm-131.188.33.51-131.188.33.29 force
