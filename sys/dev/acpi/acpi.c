@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.23 2006/01/20 20:20:28 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.24 2006/02/03 23:55:47 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -85,64 +85,78 @@ struct cfdriver acpi_cd = {
 struct acpi_softc *acpi_softc;
 int acpi_s5, acpi_evindex, icount;
 
-void
+#ifdef __i386__
+#define acpi_bus_space_map     _bus_space_map
+#define acpi_bus_space_unmap   _bus_space_unmap
+#elif defined(__amd64__)
+#define acpi_bus_space_map     _x86_memio_map
+#define acpi_bus_space_unmap   _x86_memiu_unmap
+#else
+#error ACPI supported on i386/amd64 only
+#endif
+
+int
 acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address, 
 	   int access_size, int len, void *buffer)
 {
-	void *pb;
+	u_int8_t *pb;
 	bus_space_handle_t ioh;
 	struct acpi_mem_map mh;
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
+	bus_addr_t ioaddr;
 	int reg, idx, ival, sval;
 
+	dnprintf(10, "gasio: %x %llx %x %x %p\n", iospace, address, access_size, len, buffer);
+
+	pb = (u_int8_t *)buffer;
 	switch (iospace) {
 	case GAS_SYSTEM_MEMORY:
 		/* copy to/from system memory */
 		acpi_map(address, len, &mh);
-		if (iodir == ACPI_IOREAD) {
+		if (iodir == ACPI_IOREAD) 
 			memcpy(buffer, mh.va, len);
-		}
-		else {
+		else
 			memcpy(mh.va, buffer, len);
-		}
 		acpi_unmap(&mh);
 		break;
 
 	case GAS_SYSTEM_IOSPACE:
 		/* read/write from I/O registers */
-		pb = buffer;
-		bus_space_map(sc->sc_iot, address, len, 0, &ioh); 
-		while (pb < buffer+len) {
+		ioaddr = address;
+		if (acpi_bus_space_map(sc->sc_iot, ioaddr, len, 0, &ioh) != 0) {
+			printf("Unable to map iospace!\n");
+			return (-1);
+		}
+		for (reg=0; reg < len; reg += access_size) {
 			if (iodir == ACPI_IOREAD) {
 				switch (access_size) {
 				case 1:
-					*(uint8_t *)pb = bus_space_read_1(sc->sc_iot, ioh, 0);
+					*(uint8_t *)(pb+reg) = bus_space_read_1(sc->sc_iot, ioh, reg);
 					break;
 				case 2:
-					*(uint16_t *)pb = bus_space_read_2(sc->sc_iot, ioh, 0);
+					*(uint16_t *)(pb+reg) = bus_space_read_2(sc->sc_iot, ioh, reg);
 					break;
 				case 4:
-					*(uint32_t *)pb = bus_space_read_4(sc->sc_iot, ioh, 0);
+					*(uint32_t *)(pb+reg) = bus_space_read_4(sc->sc_iot, ioh, reg);
 					break;
 				}
 			}
 			else {
 				switch (access_size) {
 				case 1:
-					bus_space_write_1(sc->sc_iot, ioh, 0, *(uint8_t *)pb);
+					bus_space_write_1(sc->sc_iot, ioh, reg, *(uint8_t *)(pb+reg));
 					break;
 				case 2:
-					bus_space_write_2(sc->sc_iot, ioh, 0, *(uint16_t *)pb);
+					bus_space_write_2(sc->sc_iot, ioh, reg, *(uint16_t *)(pb+reg));
 					break;
 				case 4:
-					bus_space_write_4(sc->sc_iot, ioh, 0, *(uint32_t *)pb);
+					bus_space_write_4(sc->sc_iot, ioh, reg, *(uint32_t *)(pb+reg));
 					break;
 				}
 			}
-			pb += access_size;
 		}
-		bus_space_unmap(sc->sc_iot, ioh, len);
+		acpi_bus_space_unmap(sc->sc_iot, ioh, len, &ioaddr);
 		break;
 
 	case GAS_PCI_CFG_SPACE:
@@ -153,7 +167,6 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 		 *    bits 48..63 = bus
 		 */
 		pc = NULL;
-		pb = buffer;
 		tag = pci_make_tag(pc, 
 				   ACPI_PCI_BUS(address),
 				   ACPI_PCI_DEV(address),
@@ -166,21 +179,21 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 			if (iodir == ACPI_IOREAD) {
 				switch (idx & 0x3) {
 				case 0:
-					*(u_int8_t *)pb = ival;
+					*pb = ival;
 					break;
 				case 1:
-					*(u_int8_t *)pb = (ival >> 8);
+					*pb = (ival >> 8);
 					break;
 				case 2:
-					*(u_int8_t *)pb = (ival >> 16);
+					*pb = (ival >> 16);
 					break;
 				case 3:
-					*(u_int8_t *)pb = (ival >> 24);
+					*pb = (ival >> 24);
 					break;
 				}
 			}
 			else {
-				sval = *(uint8_t *)pb;
+				sval = *pb;
 				switch (idx & 0x3) {
 				case 0:
 					ival &= ~0xFF;
@@ -205,6 +218,7 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 		}
 		break;
 	}
+	return (0);
 }
 
 /* Map Power Management registers */
@@ -436,7 +450,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	struct aml_value	res;
 
 	dnprintf(10, "found hid device: %s ", node->parent->name);
-	aml_eval_object(sc, node, &res, NULL);
+	aml_eval_object(sc, node, &res, 0, NULL);
 
 	switch (res.type) {
 	case AML_OBJTYPE_STRING:
@@ -617,14 +631,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->sc_timeout, acpi_softintr, sc);
 #endif
 	acpi_attach_machdep(sc);
-
-	for (idx = 0; idx < ACPIREG_MAXREG; idx++) {
-		if (sc->sc_pmregs[idx].name) {
-			dnprintf(30, "%8s = %.8x\n",
-			       sc->sc_pmregs[idx].name,
-			       acpi_read_pmreg(sc, idx));
-		}
-	}
 
 	/*
 	 * If we have an interrupt handler, we can get notification

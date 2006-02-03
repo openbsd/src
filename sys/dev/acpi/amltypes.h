@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.11 2006/01/20 20:20:28 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.12 2006/02/03 23:55:47 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -205,6 +205,7 @@ enum aml_objecttype {
 #define AML_METHOD_SERIALIZED(v)   (((v) >> 3) & 0x1)
 #define AML_METHOD_SYNCLEVEL(v)    (((v) >> 4) & 0xF)
 
+#define AML_FIELD_ACCESSMASK       0x0F
 #define AML_FIELD_SETATTR(f,t,a)   (((f) & 0xF0) | ((t) & 0xF) | ((a)<<8))
 #define AML_FIELD_ACCESS(v)        (((v) >> 0) & 0xF)
 # define AML_FIELD_ANYACC            0x0
@@ -229,34 +230,35 @@ struct aml_value
 {
 	int	type;
   	int	length;
-	int	dynamic;
 	int     refcnt;
+	const char *name;
 	union {
 		int64_t           vinteger;
 		char		 *vstring;
 		u_int8_t         *vbuffer;
 		struct aml_value **vpackage;
 		struct {
-			const char      *name;
-			struct aml_node *ref;
-		} vnameref;
-		struct {
 			u_int8_t	iospace;
 			u_int64_t	iobase;
 			u_int32_t	iolen;
+#if 0
+			u_int8_t       *buf;
+#endif
 		} vopregion;
 		struct {
-			struct aml_value *args;
-			struct aml_value *locals;
-			struct aml_value *result;
+			int		  flags;
+			u_int8_t	 *start;
+			u_int8_t	 *end;
 		} vmethod;
 		struct {
-			u_int8_t         acc_size;
+			u_int16_t	 type;
 			u_int16_t	 flags;
-			u_int16_t	 ftype;
-			u_int32_t        bitpos;
-			u_int32_t        bitlen;
-			struct aml_node *ref;
+			u_int32_t	 bitpos;
+			u_int32_t	 bitlen;
+			struct aml_value *ref1;
+			struct aml_value *ref2;
+			int		  ref3;
+		  	const char       *ftyp;
 		} vfield;
 		struct {
 			u_int8_t      	proc_id;
@@ -264,8 +266,8 @@ struct aml_value
 			u_int8_t      	proc_len;
 		} vprocessor;
 		struct {
-			int		 index;
-			struct aml_node *ref;
+			int		  index;
+			struct aml_value *ref;
 		} vobjref;
 		struct {
 			u_int8_t      	pwr_level;
@@ -275,7 +277,6 @@ struct aml_value
 };
 
 #define v_objref    _.vobjref
-#define v_nameref   _.vnameref
 #define v_integer   _.vinteger
 #define v_string    _.vstring
 #define v_buffer    _.vbuffer
