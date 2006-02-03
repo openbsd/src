@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.44 2006/02/03 16:40:57 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.45 2006/02/03 19:33:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -52,9 +52,12 @@ rde_filter(struct rde_aspath **new, struct filter_head *rules,
 		if (rde_filter_match(f, asp, prefix, prefixlen, peer)) {
 			if (asp != NULL && new != NULL) {
 				/* asp may get modified so create a copy */
-				if (*new == NULL)
+				if (*new == NULL) {
 					*new = path_copy(asp);
-				rde_apply_set(*new, &f->set, prefix->af,
+					/* ... and use the copy from now on */
+					asp = *new;
+				}
+				rde_apply_set(asp, &f->set, prefix->af,
 				    from, peer);
 			}
 			if (f->action != ACTION_NONE)
