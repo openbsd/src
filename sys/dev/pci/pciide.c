@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.222 2006/02/01 09:32:42 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.223 2006/02/03 08:54:51 brad Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -331,6 +331,10 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  0,
 	  piix_chip_map
 	},
+	{ PCI_PRODUCT_INTEL_82451NX, /* Intel 82451NX (PIIX4) IDE */
+	  0,
+	  piix_chip_map
+	},
 	{ PCI_PRODUCT_INTEL_82801AA_IDE, /* Intel 82801AA IDE (ICH) */
 	  0,
 	  piix_chip_map
@@ -356,6 +360,10 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801DB_IDE, /* Intel 82801DB IDE (ICH4) */
+	  0,
+	  piix_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801DBL_IDE, /* Intel 82801DBL IDE (ICH4-L) */
 	  0,
 	  piix_chip_map
 	},
@@ -1964,6 +1972,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		switch (sc->sc_pp->ide_product) {
 		case PCI_PRODUCT_INTEL_82371AB_IDE:
 		case PCI_PRODUCT_INTEL_82440MX_IDE:
+		case PCI_PRODUCT_INTEL_82451NX:
 		case PCI_PRODUCT_INTEL_82801AA_IDE:
 		case PCI_PRODUCT_INTEL_82801AB_IDE:
 		case PCI_PRODUCT_INTEL_82801BAM_IDE:
@@ -1971,6 +1980,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		case PCI_PRODUCT_INTEL_82801CAM_IDE:
 		case PCI_PRODUCT_INTEL_82801CA_IDE:
 		case PCI_PRODUCT_INTEL_82801DB_IDE:
+		case PCI_PRODUCT_INTEL_82801DBL_IDE:
 		case PCI_PRODUCT_INTEL_82801DBM_IDE:
 		case PCI_PRODUCT_INTEL_82801EB_IDE:
 		case PCI_PRODUCT_INTEL_82801EB_SATA:
@@ -1999,6 +2009,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82801CAM_IDE:
 	case PCI_PRODUCT_INTEL_82801CA_IDE:
 	case PCI_PRODUCT_INTEL_82801DB_IDE:
+	case PCI_PRODUCT_INTEL_82801DBL_IDE:
 	case PCI_PRODUCT_INTEL_82801DBM_IDE:
 	case PCI_PRODUCT_INTEL_82801EB_IDE:
 	case PCI_PRODUCT_INTEL_82801EB_SATA:
@@ -2065,6 +2076,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CAM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CA_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBL_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
@@ -2159,6 +2171,7 @@ next:
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CAM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CA_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBL_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
@@ -2327,6 +2340,7 @@ piix3_4_setup_channel(struct channel_softc *chp)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CAM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CA_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBL_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
@@ -2340,6 +2354,7 @@ piix3_4_setup_channel(struct channel_softc *chp)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CAM_IDE||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CA_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBL_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_6300ESB_IDE ||
