@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.11 2006/02/04 10:32:56 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.12 2006/02/04 16:51:15 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -803,7 +803,6 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 		return ENOBUFS;
 	}
 
-	/* h/w checksum (XXX only if HW_CSUM?) */
 	if (m0->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 		flags |= NFE_TX_IP_CSUM;
 	if (m0->m_pkthdr.csum_flags & (M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT))
@@ -836,7 +835,7 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 
 		/* csum flags belong to the first fragment only */
 		if (map->dm_nsegs > 1)
-			flags &= ~(M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT);
+			flags &= ~(NFE_TX_IP_CSUM | NFE_TX_TCP_CSUM);
 
 		sc->txq.queued++;
 		sc->txq.cur = (sc->txq.cur + 1) % NFE_TX_RING_COUNT;
