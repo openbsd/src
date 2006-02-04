@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.58 2006/01/29 15:44:16 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.59 2006/02/04 11:36:32 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -965,15 +965,8 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf,
 		}
 		break;
 
-	case IWI_NOTIF_TYPE_CALIBRATION:
-	case IWI_NOTIF_TYPE_BEACON:
-	case IWI_NOTIF_TYPE_NOISE:
-		DPRINTFN(5, ("Notification (%u)\n", notif->type));
-		break;
-
 	default:
-		printf("%s: unknown notification type %u\n",
-		    sc->sc_dev.dv_xname, notif->type);
+		DPRINTFN(5, ("Notification (%u)\n", notif->type));
 	}
 }
 
