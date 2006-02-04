@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfereg.h,v 1.4 2006/01/22 21:35:08 damien Exp $	*/
+/*	$OpenBSD: if_nfereg.h,v 1.5 2006/02/04 09:46:48 damien Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -29,7 +29,7 @@
 #define NFE_MISC1		0x080
 #define NFE_TX_CTL		0x084
 #define NFE_TX_STATUS		0x088
-#define NFE_MULTI_FLAGS		0x08c
+#define NFE_RXFILTER		0x08c
 #define NFE_OFFLD_CFG		0x090
 #define NFE_RX_CTL		0x094
 #define NFE_RX_STATUS		0x098
@@ -38,10 +38,10 @@
 #define NFE_SETUP_R2		0x0a4
 #define NFE_MACADDR_HI		0x0a8
 #define NFE_MACADDR_LO		0x0ac
-#define NFE_MULT_ADDR1		0x0b0
-#define NFE_MULT_ADDR2		0x0b4
-#define NFE_MULT_MASK1		0x0b8
-#define NFE_MULT_MASK2		0x0bc
+#define NFE_MULTIADDR_HI	0x0b0
+#define NFE_MULTIADDR_LO	0x0b4
+#define NFE_MULTIMASK_HI	0x0b8
+#define NFE_MULTIMASK_LO	0x0bc
 #define NFE_PHY_INT		0x0c0
 #define NFE_TX_RING_ADDR	0x100
 #define NFE_RX_RING_ADDR	0x104
@@ -95,9 +95,9 @@
 #define NFE_RXTX_V2MAGIC	0x2100
 #define NFE_RXTX_V3MAGIC	0x2200
 
-#define NFE_MC_ALWAYS		0x7F0008
-#define NFE_MC_PROMISC		0x000080
-#define NFE_MC_MYADDR		0x000020
+#define NFE_RXFILTER_MAGIC	0x007f0008
+#define NFE_U2M			(1 << 5)
+#define NFE_PROMISC		(1 << 7)
 
 #define NFE_MEDIA_SET		0x10000
 #define	NFE_MEDIA_1000T		0x00032

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.9 2006/01/22 21:35:08 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.10 2006/02/04 09:46:48 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -96,7 +96,6 @@ void	nfe_mediastatus(struct ifnet *, struct ifmediareq *);
 void	nfe_setmulti(struct nfe_softc *);
 void	nfe_get_macaddr(struct nfe_softc *, uint8_t *);
 void	nfe_set_macaddr(struct nfe_softc *, const uint8_t *);
-void	nfe_update_promisc(struct nfe_softc *);
 void	nfe_tick(void *);
 
 struct cfattach nfe_ca = {
@@ -133,7 +132,7 @@ const struct pci_matchid nfe_devices[] = {
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_LAN1 },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP51_LAN2 },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_LAN1 },
-	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_LAN2 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_LAN2 }
 };
 
 int
@@ -175,6 +174,7 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
+		printf("\n");
 		return;
 	}
 	printf(": %s", intrstr);
@@ -230,10 +230,15 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = nfe_start;
 	ifp->if_watchdog = nfe_watchdog;
 	ifp->if_init = nfe_init;
-	ifp->if_baudrate = 1000000000;
+	ifp->if_baudrate = IF_Gbps(1);
 	IFQ_SET_MAXLEN(&ifp->if_snd, NFE_IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+
+	if (sc->sc_flags & NFE_HW_CSUM) {
+		ifp->if_capabilities = IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
+		    IFCAP_CSUM_UDPv4;
+	}
 
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = nfe_miibus_readreg;
@@ -437,14 +442,22 @@ nfe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING)
-				nfe_update_promisc(sc);
+			/*
+			 * If only the PROMISC or ALLMULTI flag changes, then
+			 * don't do a full re-init of the chip, just update
+			 * the Rx filter.
+			 */
+			if ((ifp->if_flags & IFF_RUNNING) &&
+			    ((ifp->if_flags ^ sc->sc_if_flags) &
+			     (IFF_ALLMULTI | IFF_PROMISC)) != 0)
+				nfe_setmulti(sc);
 			else
 				nfe_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				nfe_stop(ifp, 1);
 		}
+		sc->sc_if_flags = ifp->if_flags;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -615,9 +628,9 @@ nfe_rxeof(struct nfe_softc *sc)
 			if (flags & NFE_RX_IP_CSUMOK)
 				m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
 			if (flags & NFE_RX_UDP_CSUMOK)
-				m->m_pkthdr.csum_flags |= M_UDPV4_CSUM_OUT;
+				m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
 			if (flags & NFE_RX_TCP_CSUMOK)
-				m->m_pkthdr.csum_flags |= M_TCPV4_CSUM_OUT;
+				m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK;
 		}
 #else
 		if ((sc->sc_flags & NFE_HW_CSUM) && (flags & NFE_RX_CSUMOK))
@@ -780,7 +793,7 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 	}
 
 	if (sc->txq.queued + map->dm_nsegs >= NFE_TX_RING_COUNT - 1) {
-		bus_dmamap_unload(sc->sc_dmat, data->active);
+		bus_dmamap_unload(sc->sc_dmat, map);
 		return ENOBUFS;
 	}
 
@@ -1362,15 +1375,54 @@ nfe_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 void
 nfe_setmulti(struct nfe_softc *sc)
 {
-	NFE_WRITE(sc, NFE_MULT_ADDR1, 0x01);
-	NFE_WRITE(sc, NFE_MULT_ADDR2, 0);
-	NFE_WRITE(sc, NFE_MULT_MASK1, 0);
-	NFE_WRITE(sc, NFE_MULT_MASK2, 0);
-#ifdef notyet
-	NFE_WRITE(sc, NFE_MULTI_FLAGS, NFE_MC_ALWAYS | NFE_MC_MYADDR);
-#else
-	NFE_WRITE(sc, NFE_MULTI_FLAGS, NFE_MC_ALWAYS | NFE_MC_PROMISC);
-#endif
+	struct arpcom *ac = &sc->sc_arpcom;
+	struct ifnet *ifp = &ac->ac_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	uint8_t addr[ETHER_ADDR_LEN], mask[ETHER_ADDR_LEN];
+	uint32_t filter = NFE_RXFILTER_MAGIC;
+	int i;
+
+	if ((ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
+		bzero(addr, ETHER_ADDR_LEN);
+		bzero(mask, ETHER_ADDR_LEN);
+		goto done;
+	}
+
+	bcopy(etherbroadcastaddr, addr, ETHER_ADDR_LEN);
+	bcopy(etherbroadcastaddr, mask, ETHER_ADDR_LEN);
+
+	ETHER_FIRST_MULTI(step, ac, enm);
+	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			bzero(addr, ETHER_ADDR_LEN);
+			bzero(mask, ETHER_ADDR_LEN);
+			goto done;
+		}
+		for (i = 0; i < ETHER_ADDR_LEN; i++) {
+			addr[i] &=  enm->enm_addrlo[i];
+			mask[i] &= ~enm->enm_addrlo[i];
+		}
+		ETHER_NEXT_MULTI(step, enm);
+	}
+	for (i = 0; i < ETHER_ADDR_LEN; i++)
+		mask[i] |= addr[i];
+
+done:
+	addr[0] |= 0x01;	/* make sure multicast bit is set */
+
+	NFE_WRITE(sc, NFE_MULTIADDR_HI,
+	    addr[3] << 24 | addr[2] << 16 | addr[1] << 8 | addr[0]);
+	NFE_WRITE(sc, NFE_MULTIADDR_LO,
+	    addr[5] <<  8 | addr[4]);
+	NFE_WRITE(sc, NFE_MULTIMASK_HI,
+	    mask[3] << 24 | mask[2] << 16 | mask[1] << 8 | mask[0]);
+	NFE_WRITE(sc, NFE_MULTIMASK_LO,
+	    mask[5] <<  8 | mask[4]);
+
+	filter |= (ifp->if_flags & IFF_PROMISC) ? NFE_PROMISC : NFE_U2M;
+	NFE_WRITE(sc, NFE_RXFILTER, filter);
 }
 
 void
@@ -1396,11 +1448,6 @@ nfe_set_macaddr(struct nfe_softc *sc, const uint8_t *addr)
 	    addr[5] <<  8 | addr[4]);
 	NFE_WRITE(sc, NFE_MACADDR_HI,
 	    addr[3] << 24 | addr[2] << 16 | addr[1] << 8 | addr[0]);
-}
-
-void
-nfe_update_promisc(struct nfe_softc *sc)
-{
 }
 
 void
