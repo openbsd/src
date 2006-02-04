@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.h,v 1.19 2005/12/03 04:00:08 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.h,v 1.20 2006/02/04 19:05:00 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.h,v 1.2 2003/04/16 23:02:14 thorpej Exp $	*/
 
 /*
@@ -201,7 +201,6 @@ struct req_entry {
 struct mpt_softc {
 	struct device	mpt_dev;		/* base device glue */
 
-	int		verbose;
 	int		is_fc;
 	int		bus;
 

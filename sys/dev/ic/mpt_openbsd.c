@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.31 2005/12/03 04:00:08 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.32 2006/02/04 19:05:00 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -147,9 +147,7 @@ mpt_ppr(struct mpt_softc *mpt, struct scsi_link *sc_link, int speed, int flags)
 	int error;
 	struct scsi_inquiry_data inqbuf;
 
-	if (mpt->verbose > 1) {
-		mpt_prt(mpt, "Entering PPR");
-	}
+	DNPRINTF(30, "Entering PPR\n");
 
 	if (mpt->is_fc) {
 		/*
@@ -244,13 +242,13 @@ mpt_ppr(struct mpt_softc *mpt, struct scsi_link *sc_link, int speed, int flags)
 	}
 
 	mpt->mpt_dev_page1[sc_link->target] = page1;
-	if (mpt->verbose > 1) {
-		mpt_prt(mpt,
-		    "SPI Target %d Page 1: RequestedParameters %x Config %x",
-		    sc_link->target,
-		    mpt->mpt_dev_page1[sc_link->target].RequestedParameters,
-		    mpt->mpt_dev_page1[sc_link->target].Configuration);
-	}
+
+	DNPRINTF(30,
+	    "%s: SPI Target %d Page 1: RequestedParameters %x Config %x\n",
+	    DEVNAME(mpt),
+	    sc_link->target,
+	    mpt->mpt_dev_page1[sc_link->target].RequestedParameters,
+	    mpt->mpt_dev_page1[sc_link->target].Configuration);
 
 	/*
 	 * use INQUIRY for PPR two reasons:
@@ -270,30 +268,25 @@ mpt_ppr(struct mpt_softc *mpt, struct scsi_link *sc_link, int speed, int flags)
 		return 0;
 	}
 
-	if (mpt->verbose > 1) {
-		mpt_prt(mpt,
-		    "SPI Tgt %d Page 0: NParms %x Information %x",
-		    sc_link->target,
-		    page0.NegotiatedParameters, page0.Information);
-	}
+	DNPRINTF(30,
+	    "%s: SPI Tgt %d Page 0: NParms %x Information %x\n",
+	    DEVNAME(mpt),
+	    sc_link->target,
+	    page0.NegotiatedParameters, page0.Information);
 
 	if (!(page0.NegotiatedParameters & 0x07) && (speed == U320)) {
 		/*
 		 * if lowest 3 aren't set the PPR probably failed,
 		 * retry with other parameters
 		 */
-		if (mpt->verbose > 1) {
-			mpt_prt(mpt, "U320 PPR failed");
-		}
+		DNPRINTF(30, "%s: U320 PPR failed\n", DEVNAME(mpt));
 		return 0;
 	}
 
 	if ((((page0.NegotiatedParameters >> 8) & 0xff) > 0x09) &&
 	    (speed == U160)) {
 		/* if transfer period > 0x09 then U160 PPR failed, retry */
-		if (mpt->verbose > 1) {
-			mpt_prt(mpt, "U160 PPR failed");
-		}
+		DNPRINTF(30, "%s: U160 PPR failed\n", DEVNAME(mpt));
 		return 0;
 	}
 
@@ -437,11 +430,7 @@ mpt_attach(struct mpt_softc *mpt)
 	}
 	lptr->openings = MPT_MAX_REQUESTS(mpt) / lptr->adapter_buswidth;
 
-#ifdef MPT_DEBUG
-	mpt->verbose = 2;
-#endif
-
-	mpt_prt(mpt, "IM support: %x", mpt->im_support);
+	DNPRINTF(10, "%s: IM support: %x\n", DEVNAME(mpt), mpt->im_support);
 
 	(void) config_found(&mpt->mpt_dev, lptr, scsiprint);
 
@@ -642,15 +631,16 @@ mpt_intr(void *arg)
 
 	while (reply != MPT_REPLY_EMPTY) {
 		nrepl++;
-		if (mpt->verbose > 1) {
-			if ((reply & MPT_CONTEXT_REPLY) != 0) {
+#ifdef MPT_DEBUG
+		if (mpt_debug > 50) {
+			if ((reply & MPT_CONTEXT_REPLY) != 0)
 				/* Address reply; IOC has something to say */
 				mpt_print_reply(MPT_REPLY_PTOV(mpt, reply));
-			} else {
+			else
 				/* Context reply; all went well */
 				mpt_prt(mpt, "context %u reply OK", reply);
-			}
 		}
+#endif /* MPT_DEBUG */
 		mpt_done(mpt, reply);
 		reply = mpt_pop_reply_queue(mpt);
 	}
@@ -717,9 +707,12 @@ mpt_timeout(void *arg)
 	    mpt_read(mpt, MPT_OFFSET_INTR_STATUS),
 	    mpt_read(mpt, MPT_OFFSET_INTR_MASK),
 	    mpt_read(mpt, MPT_OFFSET_DOORBELL));
+#ifdef MPT_DEBUG
 	mpt_prt(mpt, "request state: %s", mpt_req_state(req->debug));
-	if (mpt->verbose > 1)
-		mpt_print_scsi_io_request((MSG_SCSI_IO_REQUEST *)req->req_vbuf);
+	mpt_print_scsi_io_request((MSG_SCSI_IO_REQUEST *)req->req_vbuf);
+#else
+	mpt_prt(mpt, "request state: %i", req->debug);
+#endif /* MPT_DEBUG */
 
 	for(index = 0; index < MPT_MAX_REQUESTS(mpt); index++)
 		if (req == &mpt->request_pool[index]) {
@@ -752,7 +745,8 @@ mpt_done(struct mpt_softc *mpt, uint32_t reply)
 
 		/* XXX BUS_DMASYNC_POSTREAD XXX */
 		mpt_reply = MPT_REPLY_PTOV(mpt, reply);
-		if (mpt->verbose > 1) {
+#ifdef MPT_DEBUG
+		if (mpt_debug > 50) {
 			uint32_t *pReply = (uint32_t *) mpt_reply;
 
 			mpt_prt(mpt, "Address Reply (index %u):",
@@ -764,6 +758,7 @@ mpt_done(struct mpt_softc *mpt, uint32_t reply)
 			mpt_prt(mpt, "%08x %08x %08x %08x",
 			    pReply[8], pReply[9], pReply[10], pReply[11]);
 		}
+#endif /* MPT_DEBUG */
 		index = mpt_reply->MsgContext;
 	}
 
@@ -799,8 +794,7 @@ mpt_done(struct mpt_softc *mpt, uint32_t reply)
 
 	/* Short cut for task management replies; nothing more for us to do. */
 	if (mpt_req->Function == MPI_FUNCTION_SCSI_TASK_MGMT) {
-		if (mpt->verbose > 1)
-			mpt_prt(mpt, "mpt_done: TASK MGMT");
+		DNPRINTF(50, "%s: mpt_done: TASK MGMT\n", DEVNAME(mpt));
 		goto done;
 	}
 
@@ -812,9 +806,8 @@ mpt_done(struct mpt_softc *mpt, uint32_t reply)
 	 * crash if it isn't.
 	 */
 	if (mpt_req->Function != MPI_FUNCTION_SCSI_IO_REQUEST) {
-		if (mpt->verbose > 1)
-			mpt_prt(mpt, "mpt_done: unknown Function 0x%x (0x%x)",
-			    mpt_req->Function, index);
+		DNPRINTF(10, "%s: mpt_done: unknown Function 0x%x (0x%x)\n",
+		    DEVNAME(mpt), mpt_req->Function, index);
 		goto done;
 	}
 
@@ -826,13 +819,19 @@ mpt_done(struct mpt_softc *mpt, uint32_t reply)
 		mpt_prt(mpt,
 		    "mpt_done: no scsi_xfer, index = 0x%x, seq = 0x%08x",
 		    req->index, req->sequence);
+#ifdef MPT_DEBUG
 		mpt_prt(mpt, "request state: %s", mpt_req_state(req->debug));
 		mpt_prt(mpt, "mpt_request:");
 		mpt_print_scsi_io_request((MSG_SCSI_IO_REQUEST *)req->req_vbuf);
+#else
+		mpt_prt(mpt, "request state: %i", req->debug);
+#endif /* MPT_DEBUG */
 
 		if (mpt_reply != NULL) {
+#ifdef MPT_DEBUG
 			mpt_prt(mpt, "mpt_reply:");
 			mpt_print_reply(mpt_reply);
+#endif /* MPT_DEBUG */
 		} else {
 			mpt_prt(mpt, "context reply: 0x%08x", reply);
 		}
@@ -1210,8 +1209,10 @@ mpt_run_xfer(struct mpt_softc *mpt, struct scsi_xfer *xs)
 		    MPI_SGE_FLAGS_SIMPLE_ELEMENT | MPI_SGE_FLAGS_END_OF_LIST));
 	}
 
-	if (mpt->verbose > 1)
+#ifdef MPT_DEBUG
+	if (mpt_debug > 50)
 		mpt_print_scsi_io_request(mpt_req);
+#endif /* MPT_DEBUG */
 
 	s = splbio();
 
@@ -1260,8 +1261,10 @@ mpt_ctlop(struct mpt_softc *mpt, void *vmsg, uint32_t reply)
 	    {
 		MSG_PORT_ENABLE_REPLY *msg = vmsg;
 		int index = msg->MsgContext & ~0x80000000;
-		if (mpt->verbose > 1)
-			mpt_prt(mpt, "enable port reply index %d", index);
+
+		DNPRINTF(10, "%s: enable port reply index %d\n",
+		    DEVNAME(mpt), index);
+
 		if (index >= 0 && index < MPT_MAX_REQUESTS(mpt)) {
 			struct req_entry *req = &mpt->request_pool[index];
 			req->debug = REQ_DONE;

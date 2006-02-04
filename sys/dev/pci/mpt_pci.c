@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_pci.c,v 1.11 2005/12/01 22:10:06 dlg Exp $	*/
+/*	$OpenBSD: mpt_pci.c,v 1.12 2006/02/04 19:05:00 marco Exp $	*/
 /*	$NetBSD: mpt_pci.c,v 1.2 2003/07/14 15:47:26 lukem Exp $	*/
 
 /*
@@ -280,9 +280,9 @@ mpt_pci_link_peer(struct mpt_softc *mpt)
 		pci_decompose_tag(peer_psc->sc_pc, peer_psc->sc_tag,
 		    &peer_b, &peer_d, &peer_f);
 		if (peer_b == b && peer_d == d) {
-			if (mpt->verbose)
-				mpt_prt(mpt, "linking with peer: %s",
-				    peer_psc->sc_mpt.mpt_dev.dv_xname);
+			DNPRINTF(10, "%s: linking with peer: %s",
+			    DEVNAME(mpt),
+			    peer_psc->sc_mpt.mpt_dev.dv_xname);
 			mpt->mpt2 = (struct mpt_softc *)peer_psc;
 			peer_psc->sc_mpt.mpt2 = mpt;
 			return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.h,v 1.7 2005/12/03 04:00:08 marco Exp $	*/
+/*	$OpenBSD: mpt.h,v 1.8 2006/02/04 19:05:00 marco Exp $	*/
 /*	$NetBSD: mpt.h,v 1.2 2003/07/08 10:06:31 itojun Exp $	*/
 
 /*
@@ -40,6 +40,18 @@
 
 #ifndef _DEV_IC_MPT_H_
 #define	_DEV_IC_MPT_H_
+
+#define DEVNAME(s)  ((s)->mpt_dev.dv_xname)
+
+/* #define MPT_DEBUG */
+#ifdef MPT_DEBUG
+extern int mpt_debug;
+#define DPRINTF(x...)     do { if (mpt_debug) printf(x); } while(0)
+#define DNPRINTF(n,x...)  do { if (mpt_debug > (n)) printf(x); } while(0)
+#else
+#define DPRINTF(x...) do { } while (0)
+#define DNPRINTF(n,x...) do { } while (0)
+#endif
 
 #include <dev/ic/mpt_openbsd.h>
 
@@ -187,14 +199,19 @@ int mpt_alloc_fw_mem(struct mpt_softc *, int);
 void mpt_free_fw_mem(struct mpt_softc *);
 
 /* mpt_debug.c functions */
-void mpt_print_reply(void *);
-void mpt_print_db(u_int32_t);
+#ifdef MPT_DEBUG
 void mpt_print_config_reply(void *);
-char *mpt_ioc_diag(u_int32_t);
-char *mpt_req_state(enum mpt_req_state);
 void mpt_print_scsi_io_request(MSG_SCSI_IO_REQUEST *);
 void mpt_print_config_request(void *);
 void mpt_print_request(void *);
+void mpt_print_db(u_int32_t);
+void mpt_print_reply(void *);
+char *mpt_ioc_diag(u_int32_t);
+char *mpt_req_state(enum mpt_req_state);
+#else
+#define mpt_print_db(x)
+#endif /* MPT_DEBUG */
+
 #endif /* _KERNEL */
 
 #endif /* _DEV_IC_MPT_H_ */
