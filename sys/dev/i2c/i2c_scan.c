@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.65 2006/01/29 12:48:27 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.66 2006/02/04 18:19:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -75,7 +75,7 @@ u_int8_t	iicprobenc(u_int8_t);
 u_int8_t	iicprobe(u_int8_t);
 u_int16_t	iicprobew(u_int8_t);
 char		*lm75probe(void);
-char		*amd1032cloneprobe(u_int8_t);
+char		*adm1032cloneprobe(u_int8_t);
 void		iic_dump(struct device *, u_int8_t, char *);
 
 void
@@ -238,7 +238,7 @@ lm75probe(void)
 }
 
 char *
-amd1032cloneprobe(u_int8_t addr)
+adm1032cloneprobe(u_int8_t addr)
 {
 	if (addr == 0x18 || addr == 0x1a || addr == 0x29 ||
 	    addr == 0x2b || addr == 0x4c || addr == 0x4e) {
@@ -626,7 +626,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	}
 #endif
 	if (name == NULL) {
-		name = amd1032cloneprobe(addr);
+		name = adm1032cloneprobe(addr);
 		if (name)
 			skip_fc = 1;
 	}
