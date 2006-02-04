@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.10 2006/02/04 09:46:48 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.11 2006/02/04 10:32:56 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -386,6 +386,12 @@ nfe_intr(void *arg)
 		/* re-enable interrupts */
 		NFE_WRITE(sc, NFE_IRQ_MASK, NFE_IRQ_WANTED);
 		return 0;
+	}
+
+	if (r & NFE_IRQ_LINK) {
+		NFE_READ(sc, NFE_PHY_STATUS);
+		NFE_WRITE(sc, NFE_PHY_STATUS, 0xf);
+		DPRINTF(("link state changed\n"));
 	}
 
 	if (ifp->if_flags & IFF_RUNNING) {
