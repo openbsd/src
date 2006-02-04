@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.124 2006/01/09 21:29:38 jsg Exp $g
+#	$OpenBSD: GENERIC,v 1.125 2006/02/04 11:53:52 damien Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -82,7 +82,7 @@ stge*		at pci?		# Sundance TC9021 GigE
 #an*		at pci?		# Cisco/Aironet
 atw*		at pci?		# ADMtek ADM8211 (802.11)
 wi*		at pci?		# WaveLAN IEEE 802.11DS
-ral*		at pci?		# Ralink RT2500
+ral*		at pci?		# Ralink RT2500/RT2501/RT2600
 #rtw*		at pci?		# Realtek 8180
 vr*		at pci?		# VIA Rhine ethernet
 iop*		at pci?		# I2O processor

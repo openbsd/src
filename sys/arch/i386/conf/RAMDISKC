@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.62 2005/07/30 22:17:10 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.63 2006/02/04 11:53:50 damien Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -296,8 +296,8 @@ wi*	at pcmcia?			# WaveLAN IEEE 802.11DS
 #an*	at pcmcia?			# Aironet IEEE 802.11DS
 #cnw*	at pcmcia?			# Xircom Netwave
 #ray*	at pcmcia?			# Raylink Aviator2.4/Pro 802.11FH
-ral*	at pci?				# Ralink RT2500
-ral*	at cardbus?			# Ralink RT2500
+ral*	at pci?				# Ralink RT2500/RT2501/RT2600
+ral*	at cardbus?			# Ralink RT2500/RT2501/RT2600
 rtw*	at pci?				# Realtek 8180
 rtw*	at cardbus?			# Realtek 8180
 

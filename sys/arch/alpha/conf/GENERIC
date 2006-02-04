@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.161 2006/01/20 00:55:00 brad Exp $
+#	$OpenBSD: GENERIC,v 1.162 2006/02/04 11:53:45 damien Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -215,7 +215,7 @@ sis*	at pci?				# SiS 900/7016 ethernet
 epic*	at pci?				# SMC EPIC/100 ethernet
 skc*	at pci?				# SysKonnect GEnesis 984x
 sk*	at skc?				#  each port of above
-ral*	at pci?				# Ralink RT2500
+ral*	at pci?				# Ralink RT2500/RT2501/RT2600
 ath*	at pci?				# Atheros AR5k (802.11)
 
 #UNTESTED:  the following section of drivers is untested on alpha.
