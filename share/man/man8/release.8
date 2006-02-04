@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.44 2006/01/09 09:56:24 jmc Exp $
+.\"	$OpenBSD: release.8,v 1.45 2006/02/04 09:28:59 jmc Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -241,9 +241,13 @@ and
 .Va RELEASEDIR
 must not refer to any directory with
 .Pa /mnt
-in its path as
+in its path, as
 .Pa /mnt
 is used in the release generation process.
+Additionally the first
+.Xr svnd 4
+device, svnd0,
+is also used and must not be configured.
 .El
 .Pp
 The floppy and
