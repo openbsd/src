@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.16 2004/06/24 03:59:23 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.17 2006/02/04 09:46:23 mbalmer Exp $
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
@@ -55,10 +55,12 @@ LDADD+= -lwrap
 
 # To build with LDAP map support define WANT_LDAP in /etc/mk.conf (unsupported)
 .if defined(WANT_LDAP)
+.if !defined(LIB) || (${LIB} != "milter")
 ENVDEF+= -DLDAPMAP
 LDADD+=-lldap -llber
 CFLAGS+=-I/usr/local/include
 LDFLAGS+=-L/usr/local/lib
+.endif
 .endif
 
 CFLAGS+=${ENVDEF} -I${.CURDIR}/../sendmail -I${.CURDIR}/../include
