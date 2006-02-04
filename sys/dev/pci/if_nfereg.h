@@ -1,5 +1,6 @@
-/*	$OpenBSD: if_nfereg.h,v 1.5 2006/02/04 09:46:48 damien Exp $	*/
-/*
+/*	$OpenBSD: if_nfereg.h,v 1.6 2006/02/04 21:48:34 damien Exp $	*/
+
+/*-
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -33,7 +34,7 @@
 #define NFE_OFFLD_CFG		0x090
 #define NFE_RX_CTL		0x094
 #define NFE_RX_STATUS		0x098
-#define NFE_RDM_SEED		0x09c
+#define NFE_RNDSEED		0x09c
 #define NFE_SETUP_R1		0x0a0
 #define NFE_SETUP_R2		0x0a4
 #define NFE_MACADDR_HI		0x0a8
@@ -42,7 +43,7 @@
 #define NFE_MULTIADDR_LO	0x0b4
 #define NFE_MULTIMASK_HI	0x0b8
 #define NFE_MULTIMASK_LO	0x0bc
-#define NFE_PHY_INT		0x0c0
+#define NFE_PHY_IFACE		0x0c0
 #define NFE_TX_RING_ADDR	0x100
 #define NFE_RX_RING_ADDR	0x104
 #define NFE_RING_SIZE		0x108
@@ -104,12 +105,17 @@
 #define NFE_MEDIA_100TX		0x00064
 #define NFE_MEDIA_10T		0x003e8
 
-#define NFE_PHY_100TX		0x01
-#define NFE_PHY_1000T		0x02
+#define NFE_PHY_100TX		(1 << 0)
+#define NFE_PHY_1000T		(1 << 1)
+#define NFE_PHY_HDX		(1 << 8)
 
-#define NFE_RDM_SEED_FORCE1	0x7f00
-#define NFE_RDM_SEED_FORCE2	0x2d00
-#define NFE_RDM_SEED_FORCE3	0x7400
+#define NFE_MISC1_MAGIC		0x003b0f3c
+#define NFE_MISC1_HDX		(1 << 1)
+
+#define NFE_SEED_MASK		0x0003ff00
+#define NFE_SEED_10T		0x00007f00
+#define NFE_SEED_100TX		0x00002d00
+#define NFE_SEED_1000T		0x00007400
 
 /* Rx/Tx descriptor */
 struct nfe_desc32 {

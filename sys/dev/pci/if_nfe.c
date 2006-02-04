@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.12 2006/02/04 16:51:15 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.13 2006/02/04 21:48:34 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -91,8 +91,8 @@ void	nfe_free_rx_ring(struct nfe_softc *, struct nfe_rx_ring *);
 int	nfe_alloc_tx_ring(struct nfe_softc *, struct nfe_tx_ring *);
 void	nfe_reset_tx_ring(struct nfe_softc *, struct nfe_tx_ring *);
 void	nfe_free_tx_ring(struct nfe_softc *, struct nfe_tx_ring *);
-int	nfe_mediachange(struct ifnet *);
-void	nfe_mediastatus(struct ifnet *, struct ifmediareq *);
+int	nfe_ifmedia_upd(struct ifnet *);
+void	nfe_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 void	nfe_setmulti(struct nfe_softc *);
 void	nfe_get_macaddr(struct nfe_softc *, uint8_t *);
 void	nfe_set_macaddr(struct nfe_softc *, const uint8_t *);
@@ -159,9 +159,6 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/*
-	 * Allocate interrupt.
-	 */
 	if (pci_intr_map(pa, &ih) != 0) {
 		printf(": couldn't map interrupt\n");
 		return;
@@ -245,8 +242,8 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_writereg = nfe_miibus_writereg;
 	sc->sc_mii.mii_statchg = nfe_miibus_statchg;
 
-	ifmedia_init(&sc->sc_mii.mii_media, 0, nfe_mediachange,
-	    nfe_mediastatus);
+	ifmedia_init(&sc->sc_mii.mii_media, 0, nfe_ifmedia_upd,
+	    nfe_ifmedia_sts);
 	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
@@ -259,6 +256,8 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
+
+	timeout_set(&sc->sc_tick_ch, nfe_tick, sc);
 
 	sc->sc_powerhook = powerhook_establish(nfe_power, sc);
 }
@@ -284,20 +283,41 @@ nfe_miibus_statchg(struct device *dev)
 {
 	struct nfe_softc *sc = (struct nfe_softc *)dev;
 	struct mii_data *mii = &sc->sc_mii;
-	uint32_t reg;
+	uint32_t phy, seed, misc = NFE_MISC1_MAGIC, link = NFE_MEDIA_SET;
 
-	reg = NFE_READ(sc, NFE_PHY_INT);
+	phy = NFE_READ(sc, NFE_PHY_IFACE);
+	phy &= ~(NFE_PHY_HDX | NFE_PHY_100TX | NFE_PHY_1000T);
+
+	seed = NFE_READ(sc, NFE_RNDSEED);
+	seed &= ~NFE_SEED_MASK;
+
+	if ((mii->mii_media_active & IFM_GMASK) == IFM_HDX) {
+		phy  |= NFE_PHY_HDX;	/* half-duplex */
+		misc |= NFE_MISC1_HDX;
+	}
 
 	switch (IFM_SUBTYPE(mii->mii_media_active)) {
-	case IFM_1000_T:
-		reg |= NFE_PHY_1000T;
+	case IFM_1000_T:	/* full-duplex only */
+		link |= NFE_MEDIA_1000T;
+		seed |= NFE_SEED_1000T;
+		phy  |= NFE_PHY_1000T;
 		break;
 	case IFM_100_TX:
-		reg |= NFE_PHY_100TX;
+		link |= NFE_MEDIA_100TX;
+		seed |= NFE_SEED_100TX;
+		phy  |= NFE_PHY_100TX;
+		break;
+	case IFM_10_T:
+		link |= NFE_MEDIA_10T;
+		seed |= NFE_SEED_10T;
 		break;
 	}
 
-	NFE_WRITE(sc, NFE_PHY_INT, reg);
+	NFE_WRITE(sc, NFE_RNDSEED, seed);	/* XXX: gigabit NICs only? */
+
+	NFE_WRITE(sc, NFE_PHY_IFACE, phy);
+	NFE_WRITE(sc, NFE_MISC1, misc);
+	NFE_WRITE(sc, NFE_LINKSPEED, link);
 }
 
 int
@@ -963,22 +983,24 @@ nfe_init(struct ifnet *ifp)
 	DELAY(10);
 	NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_BIT1 | rxtxctl);
 
+	/* configure media */
+	mii_mediachg(&sc->sc_mii);
+
+	/* set Rx filter */
+	nfe_setmulti(sc);
+
 	/* enable Rx */
 	NFE_WRITE(sc, NFE_RX_CTL, NFE_RX_START);
 
 	/* enable Tx */
 	NFE_WRITE(sc, NFE_TX_CTL, NFE_TX_START);
 
-	nfe_setmulti(sc);
-
 	NFE_WRITE(sc, NFE_PHY_STATUS, 0xf);
 
 	/* enable interrupts */
 	NFE_WRITE(sc, NFE_IRQ_MASK, NFE_IRQ_WANTED);
 
-	mii_mediachg(&sc->sc_mii);
-
-	timeout_set(&sc->sc_timeout, nfe_tick, sc);
+	timeout_add(&sc->sc_tick_ch, hz);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -991,10 +1013,12 @@ nfe_stop(struct ifnet *ifp, int disable)
 {
 	struct nfe_softc *sc = ifp->if_softc;
 
-	timeout_del(&sc->sc_timeout);
+	timeout_del(&sc->sc_tick_ch);
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	mii_down(&sc->sc_mii);
 
 	/* abort Tx */
 	NFE_WRITE(sc, NFE_TX_CTL, 0);
@@ -1333,48 +1357,28 @@ nfe_free_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 }
 
 int
-nfe_mediachange(struct ifnet *ifp)
+nfe_ifmedia_upd(struct ifnet *ifp)
 {
 	struct nfe_softc *sc = ifp->if_softc;
-	struct mii_data	*mii = &sc->sc_mii;
-	uint32_t val;
+	struct mii_data *mii = &sc->sc_mii;
+	struct mii_softc *miisc;
 
-	DPRINTF(("nfe_mediachange\n"));
-#if 0
-	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
-		/* XXX? */
-	else
-#endif
-		val = 0;
-
-	val |= NFE_MEDIA_SET;
-
-	switch (IFM_SUBTYPE(mii->mii_media_active)) {
-	case IFM_1000_T:
-		val |= NFE_MEDIA_1000T;
-		break;
-	case IFM_100_TX:
-		val |= NFE_MEDIA_100TX;
-		break;
-	case IFM_10_T:
-		val |= NFE_MEDIA_10T;
-		break;
+	if (mii->mii_instance != 0) {
+		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
+			mii_phy_reset(miisc);
 	}
-
-	DPRINTF(("nfe_miibus_statchg: val=0x%x\n", val));
-	NFE_WRITE(sc, NFE_LINKSPEED, val);
-
-	return 0;
+	return mii_mediachg(mii);
 }
 
 void
-nfe_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
+nfe_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct nfe_softc *sc = ifp->if_softc;
+	struct mii_data *mii = &sc->sc_mii;
 
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
+	mii_pollstat(mii);
+	ifmr->ifm_status = mii->mii_media_status;
+	ifmr->ifm_active = mii->mii_media_active;
 }
 
 void
@@ -1465,5 +1469,5 @@ nfe_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	timeout_add(&sc->sc_timeout, hz);
+	timeout_add(&sc->sc_tick_ch, hz);
 }
