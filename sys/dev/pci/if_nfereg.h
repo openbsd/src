@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfereg.h,v 1.6 2006/02/04 21:48:34 damien Exp $	*/
+/*	$OpenBSD: if_nfereg.h,v 1.7 2006/02/04 22:11:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
@@ -122,13 +122,10 @@ struct nfe_desc32 {
 	uint32_t	physaddr;
 	uint16_t	length;
 	uint16_t	flags;
-#define NFE_RX_VALID_V1		(1 <<  0)
-#define NFE_RX_VALID_V2		(1 << 13)
-#define NFE_RX_ERROR		(1 << 14)
-#define NFE_RX_READY		(1 << 15)
-#define NFE_RX_CSUMOK		0x1c00
 #define NFE_RX_FIXME_V1		0x6004
-#define NFE_RX_FIXME_V2		0x4300
+#define NFE_RX_VALID_V1		(1 << 0)
+#define NFE_TX_ERROR_V1		0x7808
+#define NFE_TX_LASTFRAG_V1	(1 << 0)
 } __packed;
 
 /* V2 Rx/Tx descriptor */
@@ -137,14 +134,19 @@ struct nfe_desc64 {
 	uint32_t	reserved;
 	uint16_t	length;
 	uint16_t	flags;
-#define NFE_TX_LASTFRAG_V1	(1 <<  0)
+#define NFE_RX_FIXME_V2		0x4300
+#define NFE_RX_VALID_V2		(1 << 13)
+#define NFE_TX_ERROR_V2		0x5c04
+#define NFE_TX_LASTFRAG_V2	(1 << 13)
+} __packed;
+
+/* flags common to V1/V2 descriptors */
+#define NFE_RX_CSUMOK		0x1c00
+#define NFE_RX_ERROR		(1 << 14)
+#define NFE_RX_READY		(1 << 15)
 #define NFE_TX_TCP_CSUM		(1 << 10)
 #define NFE_TX_IP_CSUM		(1 << 11)
-#define NFE_TX_LASTFRAG_V2	(1 << 13)
 #define NFE_TX_VALID		(1 << 15)
-#define NFE_TX_ERROR_V1		0x7808
-#define NFE_TX_ERROR_V2		0x5c04
-} __packed;
 
 #define NFE_READ(sc, reg) \
 	bus_space_read_4((sc)->sc_memt, (sc)->sc_memh, (reg))
