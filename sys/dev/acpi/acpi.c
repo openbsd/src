@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.24 2006/02/03 23:55:47 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.25 2006/02/04 00:18:27 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -512,7 +512,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_q *entry;
 	struct acpi_dsdt *p_dsdt;
 	paddr_t facspa;
-	int idx;
 
 	sc->sc_iot = aaa->aaa_iot;
 	sc->sc_memt = aaa->aaa_memt;
@@ -615,6 +614,8 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	 * that actually does work
 	 */
 #ifdef ACPI_ENABLE
+	int idx;
+
 	acpi_write_pmreg(sc, ACPIREG_SMICMD, sc->sc_fadt->acpi_enable);
 	idx = 0;
 	do {
