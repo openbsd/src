@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.61 2005/10/19 10:42:06 henning Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.62 2006/02/04 13:16:44 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -730,6 +730,13 @@ include
 .Ic NO_EXPORT_SUBCONFED ,
 and
 .Ic NO_PEER .
+Both
+.Ar as-number
+and
+.Ar local
+may be set to
+.Ic neighbor-as 
+which is on the fly expanded to the current neighbor remote AS number.
 .Pp
 .It Xo
 .Pq Ic from Ns \&| Ns Ic to
