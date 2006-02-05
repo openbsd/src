@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.39 2006/01/30 21:26:19 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.40 2006/02/05 19:53:34 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -477,7 +477,8 @@ trap(tf, type, pc, tstate)
 			tf->tf_tstate |= (PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
 			return;
 		}
-		goto dopanic;
+		if (type != T_SPILL_N_NORM && type != T_FILL_N_NORM)
+			goto dopanic;
 	}
 	if ((p = curproc) == NULL)
 		p = &proc0;
@@ -626,6 +627,19 @@ badtrap:
 			trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
 		break;
 	}
+
+	case T_SPILL_N_NORM:
+	case T_FILL_N_NORM:
+		/*
+		 * We got an alignment trap in the spill/fill handler.
+		 *
+		 * XXX We really should generate a bus error here, but
+		 * we could be on the interrupt stack, and dumping
+		 * core from the interrupt stack is not a good idea.
+		 * It causes random crashes.
+		 */
+		sigexit(p, SIGKILL);
+		break;
 
 	case T_ALIGN:
 	case T_LDDF_ALIGN:
