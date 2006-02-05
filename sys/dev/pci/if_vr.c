@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.55 2006/01/14 09:50:20 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.56 2006/02/05 18:23:37 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1209,6 +1209,7 @@ vr_intr(void *arg)
 
 		if ((status & VR_ISR_BUSERR) || (status & VR_ISR_TX_UNDERRUN)) {
 			vr_reset(sc);
+			ifp->if_flags &= ~IFF_RUNNING;
 			vr_init(sc);
 			break;
 		}
@@ -1373,6 +1374,11 @@ vr_init(void *xsc)
 
 	s = splnet();
 
+	if (ifp->if_flags & IFF_RUNNING) {
+		splx(s);
+		return;
+	}
+
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
 	 */
@@ -1481,8 +1487,10 @@ vr_ifmedia_upd(struct ifnet *ifp)
 {
 	struct vr_softc		*sc = ifp->if_softc;
 
-	if (ifp->if_flags & IFF_UP)
+	if (ifp->if_flags & IFF_UP) {
+		ifp->if_flags &= ~IFF_RUNNING;
 		vr_init(sc);
+	}
 
 	return(0);
 }
@@ -1533,12 +1541,17 @@ vr_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			vr_init(sc);
+			if ((ifp->if_flags & IFF_RUNNING) &&
+			    ((ifp->if_flags ^ sc->sc_if_flags) &
+			     (IFF_ALLMULTI | IFF_PROMISC)) != 0)
+				vr_setmulti(sc);
+			else
+				vr_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				vr_stop(sc);
 		}
-		error = 0;
+		sc->sc_if_flags = ifp->if_flags;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.16 2005/12/07 22:48:39 brad Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.17 2006/02/05 18:23:37 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -471,6 +471,7 @@ struct vr_softc {
 	struct timeout		sc_to;
 	bus_dmamap_t		sc_listmap;	/* descriptor list map */
 	bus_dma_segment_t	sc_listseg;
+	int			sc_if_flags;
 };
 
 #define VR_F_RESTART		0x01		/* Restart unit on next tick */
