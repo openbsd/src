@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.c,v 1.22 2006/02/04 19:05:00 marco Exp $	*/
+/*	$OpenBSD: mpt.c,v 1.23 2006/02/05 20:38:16 krw Exp $	*/
 /*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
@@ -62,7 +62,9 @@ int mpt_wait_state(struct mpt_softc *, enum DB_STATE_BITS);
 int mpt_get_iocfacts(struct mpt_softc *, MSG_IOC_FACTS_REPLY *);
 int mpt_get_portfacts(struct mpt_softc *, MSG_PORT_FACTS_REPLY *);
 int mpt_send_ioc_init(struct mpt_softc *, u_int32_t);
+#ifdef MPT_DEBUG
 void mpt_print_header(struct mpt_softc *, char *, CONFIG_PAGE_HEADER *);
+#endif /* MPT_DEBUG */
 int mpt_read_config_info_mfg(struct mpt_softc *);
 int mpt_read_config_info_iou(struct mpt_softc *);
 int mpt_read_config_info_ioc(struct mpt_softc *);
@@ -833,6 +835,7 @@ mpt_write_cfg_page(struct mpt_softc *mpt, int PageAddress, CONFIG_PAGE_HEADER *h
 	return (0);
 }
 
+#ifdef MPT_DEBUG
 void
 mpt_print_header(struct mpt_softc *mpt, char *s, CONFIG_PAGE_HEADER *phdr)
 {
@@ -845,6 +848,7 @@ mpt_print_header(struct mpt_softc *mpt, char *s, CONFIG_PAGE_HEADER *phdr)
 	    phdr->PageLength,
 	    phdr->PageVersion);
 }
+#endif /* MPT_DEBUG */
 
 /*
  * Read manufacturing configuration information
@@ -869,9 +873,10 @@ mpt_read_config_info_mfg(struct mpt_softc *mpt)
 			mpt_prt(mpt, "Could not retrieve Manufacturing Page "
 			    "%i Header.", i);
 			return (-1);
-		} else
-			mpt_print_header(mpt, "Manufacturing Header Page",
-			    phdr[i]);
+		}
+#ifdef MPT_DEBUG
+		mpt_print_header(mpt, "Manufacturing Header Page", phdr[i]);
+#endif /* MPT_DEBUG */
 
 		/* retrieve MFG config pages using retrieved headers */
 		rv = mpt_read_cfg_page(mpt, i, phdr[i]);
@@ -958,8 +963,10 @@ mpt_read_config_info_iou(struct mpt_softc *mpt)
 			mpt_prt(mpt, "Could not retrieve IO Unit Page %i "
 			    "header.", i);
 			return (-1);
-		} else
-			mpt_print_header(mpt, "IO Unit Header Page", phdr[i]);
+		}
+#ifdef MPT_DEBUG
+		mpt_print_header(mpt, "IO Unit Header Page", phdr[i]);
+#endif /* MPT_DEBUG */
 
 		/* retrieve IO Unit config pages using retrieved headers */
 		rv = mpt_read_cfg_page(mpt, i, phdr[i]);
@@ -1018,8 +1025,10 @@ mpt_read_config_info_ioc(struct mpt_softc *mpt)
 			mpt_prt(mpt, "Could not retrieve IOC Page %i header.",
 			   i);
 			return (-1);
-		} else
-			mpt_print_header(mpt, "IOC Header Page", phdr[i]);
+		}
+#ifdef MPT_DEBUG
+		mpt_print_header(mpt, "IOC Header Page", phdr[i]);
+#endif /* MPT_DEBUG */
 
 		/* retrieve IOC config pages using retrieved headers */
 		rv = mpt_read_cfg_page(mpt, i, phdr[i]);
@@ -1108,9 +1117,11 @@ mpt_read_config_info_raid(struct mpt_softc *mpt)
 	if (rv) {
 		mpt_prt(mpt, "Could not retrieve RAID Volume Page 0 Header");
 		return (-1);
-	} else
-		mpt_print_header(mpt, "RAID Volume Header Page",
-		    &mpt->mpt_raidvol_page0.Header);
+	}
+#ifdef MPT_DEBUG
+	mpt_print_header(mpt, "RAID Volume Header Page",
+	    &mpt->mpt_raidvol_page0.Header);
+#endif /* MPT_DEBUG */
 
 	/* retrieve raid volume page using retrieved headers */
 	rv = mpt_read_cfg_page(mpt, 0, &mpt->mpt_raidvol_page0.Header);
@@ -1125,9 +1136,11 @@ mpt_read_config_info_raid(struct mpt_softc *mpt)
 	if (rv) {
 		mpt_prt(mpt, "Could not retrieve RAID Phys Disk Page 0 Header");
 		return (-1);
-	} else
-		mpt_print_header(mpt, "RAID Volume Physical Disk Page",
-		    &mpt->mpt_raidphys_page0.Header);
+	}
+#ifdef MPT_DEBUG
+	mpt_print_header(mpt, "RAID Volume Physical Disk Page",
+	    &mpt->mpt_raidphys_page0.Header);
+#endif /* MPT_DEBUG */
 
 	/* retrieve raid physical disk page using retrieved headers */
 	rv = mpt_read_cfg_page(mpt, 0, &mpt->mpt_raidphys_page0.Header);
