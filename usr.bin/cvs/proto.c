@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.88 2006/01/26 09:05:31 xsa Exp $	*/
+/*	$OpenBSD: proto.c,v 1.89 2006/02/05 18:21:44 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -610,6 +610,8 @@ cvs_sendreq(struct cvsroot *root, u_int rid, const char *arg)
 	    strlcat(cvs_proto_buf, (arg == NULL) ? "" : " ",
 	    sizeof(cvs_proto_buf)) >= sizeof(cvs_proto_buf) ||
 	    strlcat(cvs_proto_buf, (arg == NULL) ? "" : arg,
+	    sizeof(cvs_proto_buf)) >= sizeof(cvs_proto_buf) ||
+	    strlcat(cvs_proto_buf, "\n",
 	    sizeof(cvs_proto_buf)) >= sizeof(cvs_proto_buf))
 		fatal("cvs_sendreq: overflow when creating proto buffer");
 
