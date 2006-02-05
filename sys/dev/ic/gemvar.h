@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.11 2005/10/17 03:03:24 brad Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.12 2006/02/05 00:25:06 brad Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -140,6 +140,8 @@ struct gem_softc {
 #endif
 	int		sc_burst;	/* DVMA burst size in effect */
 	int		sc_phys[2];	/* MII instance -> PHY map */
+
+	int		sc_if_flags;
 
 	int		sc_mif_config;	/* Selected MII reg setting */
 	u_int		sc_tcvr;
