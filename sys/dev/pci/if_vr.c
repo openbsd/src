@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.56 2006/02/05 18:23:37 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.57 2006/02/05 23:23:18 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1527,23 +1527,33 @@ vr_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
+		vr_init(sc);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			vr_init(sc);
 			arp_ifinit(&sc->arpcom, ifa);
 			break;
 #endif	/* INET */
 		default:
-			vr_init(sc);
 			break;
 		}
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if ((ifp->if_flags & IFF_RUNNING) &&
-			    ((ifp->if_flags ^ sc->sc_if_flags) &
-			     (IFF_ALLMULTI | IFF_PROMISC)) != 0)
+			if (ifp->if_flags & IFF_RUNNING &&
+			    ifp->if_flags & IFF_PROMISC &&
+			    !(sc->sc_if_flags & IFF_PROMISC)) {
+				VR_SETBIT(sc, VR_RXCFG,
+				    VR_RXCFG_RX_PROMISC);
+				vr_setmulti(sc);
+			} else if (ifp->if_flags & IFF_RUNNING &&
+			    !(ifp->if_flags & IFF_PROMISC) &&
+			    sc->sc_if_flags & IFF_PROMISC) {
+				VR_CLRBIT(sc, VR_RXCFG,
+				    VR_RXCFG_RX_PROMISC);
+				vr_setmulti(sc);
+			} else if (ifp->if_flags & IFF_RUNNING &&
+			    (ifp->if_flags ^ sc->sc_if_flags) & IFF_ALLMULTI)
 				vr_setmulti(sc);
 			else
 				vr_init(sc);
