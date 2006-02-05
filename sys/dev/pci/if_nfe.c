@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.18 2006/02/05 23:32:06 brad Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.19 2006/02/05 23:37:21 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -447,15 +447,14 @@ nfe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
+		nfe_init(ifp);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			nfe_init(ifp);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
 		default:
-			nfe_init(ifp);
 			break;
 		}
 		break;
