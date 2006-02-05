@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.15 2006/02/05 09:38:29 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.16 2006/02/05 10:01:23 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -402,6 +402,8 @@ nfe_intr(void *arg)
 	r = NFE_READ(sc, NFE_IRQ_STATUS);
 	NFE_WRITE(sc, NFE_IRQ_STATUS, r);
 
+	DPRINTFN(5, ("nfe_intr: interrupt register %x\n", r));
+
 	if (r == 0) {
 		/* re-enable interrupts */
 		NFE_WRITE(sc, NFE_IRQ_MASK, NFE_IRQ_WANTED);
@@ -421,8 +423,6 @@ nfe_intr(void *arg)
 		/* check Tx ring */
 		nfe_txeof(sc);
 	}
-
-	DPRINTF(("nfe_intr: interrupt register %x", r));
 
 	/* re-enable interrupts */
 	NFE_WRITE(sc, NFE_IRQ_MASK, NFE_IRQ_WANTED);
