@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichiic.c,v 1.12 2006/01/15 10:28:16 grange Exp $	*/
+/*	$OpenBSD: ichiic.c,v 1.13 2006/02/05 21:59:01 grange Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -202,6 +202,16 @@ ichiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	DPRINTF(("%s: exec: op %d, addr 0x%x, cmdlen %d, len %d, flags 0x%x\n",
 	    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags));
 
+	/* Acquire bus semaphore */
+	for (retries = 100; retries > 0; retries--) {
+		st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ICH_SMB_HS);
+		if (!(st & ICH_SMB_HS_INUSE))
+			break;
+		DELAY(ICHIIC_DELAY);
+	}
+	if (st & ICH_SMB_HS_INUSE)
+		return (1);
+
 	/* Wait for bus to be idle */
 	for (retries = 100; retries > 0; retries--) {
 		st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ICH_SMB_HS);
@@ -212,13 +222,13 @@ ichiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	DPRINTF(("%s: exec: st 0x%b\n", sc->sc_dev.dv_xname, st,
 	    ICH_SMB_HS_BITS));
 	if (st & ICH_SMB_HS_BUSY)
-		return (1);
+		goto fail;
 
 	if (cold || sc->sc_poll)
 		flags |= I2C_F_POLL;
 
 	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2)
-		return (1);
+		goto fail;
 
 	/* Setup transfer */
 	sc->sc_i2c_xfer.op = op;
@@ -301,6 +311,12 @@ timeout:
 		printf("%s: transaction abort failed, status 0x%b\n",
 		    sc->sc_dev.dv_xname, st, ICH_SMB_HS_BITS);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ICH_SMB_HS, st);
+	return (1);
+
+fail:
+	/* Release bus semaphore */
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ICH_SMB_HS,
+	    ICH_SMB_HS_INUSE);
 	return (1);
 }
 
