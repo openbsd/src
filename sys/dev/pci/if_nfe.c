@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.16 2006/02/05 10:01:23 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.17 2006/02/05 10:09:39 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -106,10 +106,8 @@ struct cfdriver nfe_cd = {
 	NULL, "nfe", DV_IFNET
 };
 
-#define NFE_DEBUG
-
 #ifdef NFE_DEBUG
-int nfedebug = 1;
+int nfedebug = 0;
 #define DPRINTF(x)	do { if (nfedebug) printf x; } while (0)
 #define DPRINTFN(n,x)	do { if (nfedebug >= (n)) printf x; } while (0)
 #else
