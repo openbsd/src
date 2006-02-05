@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.62 2006/02/04 13:16:44 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.63 2006/02/05 11:06:01 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -735,8 +735,8 @@ Both
 and
 .Ar local
 may be set to
-.Ic neighbor-as 
-which is on the fly expanded to the current neighbor remote AS number.
+.Ic neighbor-as ,
+which is expanded to the current neighbor remote AS number.
 .Pp
 .It Xo
 .Pq Ic from Ns \&| Ns Ic to
