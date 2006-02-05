@@ -1,0 +1,76 @@
+.\"	$OpenBSD: nfe.4,v 1.1 2006/02/05 22:00:10 jsg Exp $
+.\"
+.\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd February 6, 2006
+.Dt NFE 4
+.Os
+.Sh NAME
+.Nm nfe
+.Nd NVIDIA nForce MCP Ethernet driver
+.Sh SYNOPSIS
+.Cd "nfe* at pci?"
+.Cd "rlphy* at mii?"
+.Cd "eephy* at mii?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports PCI Ethernet adapters based on NVIDIA's
+nForce Media and Communications Processors (MCP).
+.Pp
+The
+.Nm
+driver supports the following
+.Ar media
+types:
+.Pp
+.Bl -tag -width autoselect -compact
+.It Cm autoselect
+Enable autoselection of the media type and options.
+.It Cm 10baseT
+Set 10Mbps operation.
+.It Cm 100baseTX
+Set 100Mbps (Fast Ethernet) operation.
+.It Cm 1000baseT
+Set 1000Mbps (Gigabit Ethernet) operation (recent models only).
+.El
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr eephy 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr rlphy 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+device driver first appeared in
+.Ox 3.9 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Jonathan Gray
+.Aq jsg@openbsd.org
+and
+.An Damien Bergamini
+.Aq damien@openbsd.org .
+.Sh CAVEATS
+NVIDIA refuse to release any documentation on their products
+so the driver likely doesn't work as well as it otherwise could.

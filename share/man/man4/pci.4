@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.137 2006/01/05 10:04:38 grange Exp $
+.\"	$OpenBSD: pci.4,v 1.138 2006/02/05 22:00:10 jsg Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -262,6 +262,8 @@ Myson Technologies
 3-in-1 Fast Ethernet interfaces.
 .It Xr ne 4
 NE2000-compatible Ethernet interfaces.
+.It Xr nfe 4
+NVIDIA nForce MCP Ethernet.
 .It Xr nge 4
 National Semiconductor DP83820 and DP83821 based Gigabit Ethernet.
 .It Xr pcn 4
@@ -571,6 +573,7 @@ driver.
 .Xr mpt 4 ,
 .Xr ne 4 ,
 .Xr neo 4 ,
+.Xr nfe 4 ,
 .Xr nge 4 ,
 .Xr noct 4 ,
 .Xr nofn 4 ,
