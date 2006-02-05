@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.467 2006/02/04 11:53:50 damien Exp $
+#	$OpenBSD: GENERIC,v 1.468 2006/02/05 09:20:58 damien Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -470,7 +470,7 @@ lge*	at pci?				# Level1 LXT1001 GigE
 hme*	at pci?				# Sun Happy Meal
 bce*	at pci?				# Broadcom BCM4401
 vge*	at pci?				# VIA VT612x
-#nfe*	at pci?				# NVIDIA nForce Ethernet
+nfe*	at pci?				# NVIDIA nForce Ethernet
 musycc*	at pci?				# Conexant HDLC controller
 art*	at musycc?			# Accoom Artery E1/T1 cards
 
