@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.13 2006/02/04 21:48:34 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.14 2006/02/05 09:14:28 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -703,8 +703,7 @@ nfe_txeof(struct nfe_softc *sc)
 	struct nfe_tx_data *data;
 	uint16_t flags;
 
-/* XXX: should limit # iterations to NFE_TX_RING_COUNT */
-	for (;;) {
+	while (txq->next != txq->cur) {
 		data = &sc->txq.data[sc->txq.next];
 
 		if (sc->sc_flags & NFE_40BIT_ADDR) {
@@ -719,7 +718,7 @@ nfe_txeof(struct nfe_softc *sc)
 			flags = letoh16(desc32->flags);
 		}
 
-		if (!(flags & NFE_TX_VALID))
+		if (flags & NFE_TX_VALID)
 			break;
 
 		if ((sc->sc_flags & (NFE_JUMBO_SUP | NFE_40BIT_ADDR)) == 0) {
