@@ -1,4 +1,4 @@
-/* $OpenBSD: radioctl.c,v 1.12 2005/12/05 16:30:24 robert Exp $ */
+/* $OpenBSD: radioctl.c,v 1.13 2006/02/05 23:52:58 jakemsr Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
 /*
@@ -296,6 +296,7 @@ change_value(const struct opt_t o)
 		update_value(o.sign, &ri.volume, o.value);
 		break;
 	case OPTION_FREQUENCY:
+		ri.tuner_mode = RADIO_TUNER_MODE_RADIO;
 		update_value(o.sign, &ri.freq, o.value);
 		break;
 	case OPTION_REFERENCE:
@@ -322,6 +323,7 @@ change_value(const struct opt_t o)
 		ri.mute = o.value;
 		break;
 	case OPTION_CHANNEL:
+		ri.tuner_mode = RADIO_TUNER_MODE_TV;
 		update_value(o.sign, &ri.chan, o.value);
 		break;
 	case OPTION_CHNLSET:
@@ -600,8 +602,13 @@ print_vars(int silent, int show_choices)
 		printf("%s\n", ri.info & RADIO_INFO_STEREO ? onchar : offchar);
 	}
 
-	if (!silent)
+	if (!silent) {
+		printf("mode: %s\n",
+		    ri.tuner_mode == RADIO_TUNER_MODE_TV ? "TV" : "radio");
+
 		puts("card capabilities:");
+	}
+
 	if (ri.caps & RADIO_CAPS_SET_MONO)
 		puts("\tmanageable mono/stereo");
 	if (ri.caps & RADIO_CAPS_HW_SEARCH)

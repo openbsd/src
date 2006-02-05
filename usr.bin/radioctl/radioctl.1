@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radioctl.1,v 1.10 2005/12/06 12:58:50 jmc Exp $
+.\"	$OpenBSD: radioctl.1,v 1.11 2006/02/05 23:52:58 jakemsr Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -104,11 +104,18 @@ or
 Read-write controls:
 .Bl -tag -width Ds
 .It Ar channel
+Specifies the TV channel.
 Integer value from 0 to 150.
+Using the
+.Ar channel
+control puts the tuner in
+.Dq TV
+mode.
 .It Ar chnlset
-Specifies the TV channel set currently being used
-.Pf ( Dq weurope
-being the default):
+Specifies the TV channel set.
+The tuner uses the current channel set to derive a frequency from the
+.Ar channel .
+The following is a list of valid channel sets:
 .Pp
 .Bl -tag -width "australiaXX" -offset indent -compact
 .It nabcst
@@ -131,7 +138,13 @@ Australia
 France
 .El
 .It Ar frequency
+Specifies the FM frequency in MHz.
 Float value from 87.5 to 108.0.
+Using the
+.Ar frequency
+control puts the tuner in
+.Dq radio
+mode.
 .It Ar volume
 Integer value from 0 to 255.
 .It Ar mute
@@ -155,8 +168,8 @@ Can be 5 mkV, 10 mkV, 30 mkV and 150 mkV.
 Not all cards allow the station locking sensitivity to be changed.
 .El
 .Pp
-All the remaining controls (signal, stereo and card capabilities) are read-only
-and can be viewed using option
+All the remaining controls (mode, signal, stereo and card capabilities)
+are read-only and can be viewed using option
 .Fl a .
 .Sh ENVIRONMENT
 The following environment variable affects the execution of
@@ -183,6 +196,7 @@ mute=off
 reference=50kHz
 signal=on
 stereo=on
+mode: radio
 card capabilities:
         manageable mono/stereo
 .Ed

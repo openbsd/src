@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_tuner.c,v 1.3 2003/02/11 19:20:28 mickey Exp $	*/
+/*	$OpenBSD: bktr_tuner.c,v 1.4 2006/02/05 23:52:58 jakemsr Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.9 2000/10/19 07:33:28 roger Exp $ */
 
 /*
@@ -801,6 +801,8 @@ tv_freq( bktr_ptr_t bktr, int frequency, int type )
 		else
 		    band_select = HIGH_BAND;
 
+		bktr->tuner.tuner_mode = BT848_TUNER_MODE_TV;
+
 #if defined( TEST_TUNER_AFC )
 		if ( bktr->tuner.afc )
 			frequency -= 4;
@@ -862,6 +864,8 @@ tv_freq( bktr_ptr_t bktr, int frequency, int type )
 
 	if ( type == FM_RADIO_FREQUENCY ) {
 		band_select = FM_RADIO_BAND;
+
+		bktr->tuner.tuner_mode = BT848_TUNER_MODE_RADIO;
 
 		/*
 		 * N = { fRF(pc) + fIF(pc) }/step_size

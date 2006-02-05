@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.23 2006/01/15 20:38:41 jakemsr Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.24 2006/02/05 23:52:58 jakemsr Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -1272,39 +1272,42 @@ bktr_set_info(void *v, struct radio_info *ri)
 		init_audio_devices(sc);
 	}
 
-	if (ri->chan) {
-		if (ri->chan < MIN_TV_CHAN)
-			ri->chan = MIN_TV_CHAN;
-		if (ri->chan > MAX_TV_CHAN)
-			ri->chan = MAX_TV_CHAN;
-	} else {
-		if (ri->freq < MIN_FM_FREQ)
-			ri->freq = MIN_FM_FREQ;
-		if (ri->freq > MAX_FM_FREQ)
-			ri->freq = MAX_FM_FREQ;
-	}
+	set_audio(sc, AUDIO_INTERN);	/* use internal audio */
+	temp_mute(sc, TRUE);
 
-	freq = ri->freq / 10;
-	chan = ri->chan;
+	if (ri->tuner_mode == RADIO_TUNER_MODE_TV) {
+		if (ri->chan) {
+			if (ri->chan < MIN_TV_CHAN)
+				ri->chan = MIN_TV_CHAN;
+			if (ri->chan > MAX_TV_CHAN)
+				ri->chan = MAX_TV_CHAN;
+
+			chan = ri->chan;
+			ri->chan = tv_channel(sc, chan);
+			tv->tuner_mode = BT848_TUNER_MODE_TV;
+		} else {
+			ri->chan = tv->channel;
+		}
+	} else {
+		if (ri->freq) {
+			if (ri->freq < MIN_FM_FREQ)
+				ri->freq = MIN_FM_FREQ;
+			if (ri->freq > MAX_FM_FREQ)
+				ri->freq = MAX_FM_FREQ;
+
+			freq = ri->freq / 10;
+			ri->freq = tv_freq(sc, freq, FM_RADIO_FREQUENCY) * 10;
+			tv->tuner_mode = BT848_TUNER_MODE_RADIO;
+		} else {
+			ri->freq = tv->frequency;
+		}
+	}
 
 	if (ri->chnlset >= CHNLSET_MIN && ri->chnlset <= CHNLSET_MAX)
 		tv->chnlset = ri->chnlset;
 	else
 		tv->chnlset = DEFAULT_CHNLSET;
 	
-	set_audio(sc, AUDIO_INTERN);	/* use internal audio */
-	temp_mute(sc, TRUE);
-	
-	/* 
-	 * We only need to set the frequency if we are using
-	 * FM Radio. If the channel is > 0 then call tv_channel(),
-	 * which will set the correct TV frequency.
-	 */
-	if (!ri->chan)
-		ri->freq = tv_freq(sc, freq, FM_RADIO_FREQUENCY) * 10;
-	else
-		ri->chan = tv_channel(sc, chan);
-
 	temp_mute(sc, FALSE);
 
 	return (0);
@@ -1322,11 +1325,21 @@ bktr_get_info(void *v, struct radio_info *ri)
 #define	STATUSBIT_STEREO	0x10
 	ri->mute = (int)sc->audio_mute_state ? 1 : 0;
 	ri->caps = RADIO_CAPS_DETECT_STEREO | RADIO_CAPS_HW_AFC;
-	ri->freq = tv->frequency * 10;
 	ri->info = (status & STATUSBIT_STEREO) ? RADIO_INFO_STEREO : 0;
 
 	/* not yet supported */
 	ri->volume = ri->rfreq = ri->lock = 0;
+
+	switch (tv->tuner_mode) {
+	case BT848_TUNER_MODE_TV:
+		ri->tuner_mode = RADIO_TUNER_MODE_TV;
+		ri->freq = tv->frequency * 1000 / 16;
+		break;
+	case BT848_TUNER_MODE_RADIO:
+		ri->tuner_mode = RADIO_TUNER_MODE_RADIO;
+		ri->freq = tv->frequency * 10;
+		break;
+	}
 
 	/*
 	 * The field ri->stereo is used to forcible switch to

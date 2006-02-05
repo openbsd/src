@@ -1,5 +1,5 @@
 .\"	$RuOBSD: radio.4,v 1.4 2001/10/26 05:38:43 form Exp $
-.\"	$OpenBSD: radio.4,v 1.23 2005/12/07 10:57:21 jmc Exp $
+.\"	$OpenBSD: radio.4,v 1.24 2006/02/05 23:52:57 jakemsr Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -86,6 +86,9 @@ struct radio_info {
 	u_int32_t	info;
 #define RADIO_INFO_STEREO		(1<<0)
 #define RADIO_INFO_SIGNAL		(1<<1)
+	u_int32_t	tuner_mode;
+#define RADIO_TUNER_MODE_RADIO		(1<<0)
+#define RADIO_TUNER_MODE_TV		(1<<1)
 	u_int32_t	chan;
 	u_int32_t	chnlset;
 };
@@ -116,6 +119,18 @@ an automatic search for cards that support this feature.
 The
 .Va freq
 field is the frequency in kHz the card is tuned to.
+.Pp
+The
+.Va tuner_mode
+field is current tuning mode of the tuner.
+Valid modes are:
+.Pp
+.Bl -tag -width indent -compact
+.It Dv RADIO_TUNER_MODE_RADIO
+The tuner operates in Fm radio mode.
+.It Dv RADIO_TUNER_MODE_TV
+The tuner operates in TV mode.
+.El
 .Pp
 The
 .Va caps
@@ -162,8 +177,11 @@ holds the TV channel the card is tuned to.
 .Pp
 The
 .Va chnlset
-specifies the TV channel set currently being used
-(Western Europe being the default):
+specifies the TV channel set currently being used.
+The tuner uses the current channel set to derive the tuning frequency
+from the channel number.
+Western Europe is the default channel set.
+The following is a list of valid channel sets:
 .Bl -tag -width indent -compact
 .Pp
 .It 1
@@ -190,8 +208,8 @@ France
 Either
 .Va freq
 or
-.Va chan Ns / Ns Va chnlset
-have to be used to tune into FM radio stations or TV channels,
+.Va chan
+can be used to tune to FM radio stations or TV channels,
 respectively.
 Some devices may not support both functionalities.
 .Sh CHIPSETS
