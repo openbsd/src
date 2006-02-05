@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.52 2006/01/05 05:40:35 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.53 2006/02/05 23:47:47 jsg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -1692,7 +1692,7 @@ rtw_txring_fixup(struct rtw_softc *sc)
 		RTW_DPRINTF(RTW_DEBUG_BUGS,
 		    ("%s: tx-ring %d expected next %u, read %u\n", __func__,
 		    pri, tdb->tdb_next, next));
-		tdb->tdb_next = next;
+		tdb->tdb_next = MIN(next, tdb->tdb_ndesc - 1);
 	}
 }
 
@@ -1711,7 +1711,7 @@ rtw_rxring_fixup(struct rtw_softc *sc)
 		RTW_DPRINTF(RTW_DEBUG_BUGS,
 		    ("%s: rx-ring expected next %u, read %u\n", __func__,
 		    rdb->rdb_next, next));
-		rdb->rdb_next = next;
+		rdb->rdb_next = MIN(next, rdb->rdb_ndesc - 1);
 	}
 }
 
