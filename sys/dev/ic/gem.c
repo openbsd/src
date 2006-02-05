@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.52 2005/11/15 19:20:25 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.53 2006/02/05 00:24:26 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1381,29 +1381,19 @@ gem_ioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
-			/*
-			 * If interface is marked down and it is running, then
-			 * stop it.
-			 */
-			gem_stop(ifp, 1);
-			ifp->if_flags &= ~IFF_RUNNING;
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-		    	   (ifp->if_flags & IFF_RUNNING) == 0) {
-			/*
-			 * If interface is marked up and it is stopped, then
-			 * start it.
-			 */
-			gem_init(ifp);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
-			/*
-			 * Reset the interface to pick up changes in any other
-			 * flags that affect hardware registers.
-			 */
-			/*gem_stop(sc);*/
-			gem_init(ifp);
+		if (ifp->if_flags & IFF_UP) {
+			if ((ifp->if_flags & IFF_RUNNING) &&
+			    ((ifp->if_flags ^ sc->sc_if_flags) &
+			     (IFF_ALLMULTI | IFF_PROMISC)) != 0)
+				gem_setladrf(sc);
+			else
+				gem_init(ifp);
+		} else {
+			if (ifp->if_flags & IFF_RUNNING)
+				gem_stop(ifp, 1);
 		}
+		sc->sc_if_flags = ifp->if_flags;
+
 #ifdef GEM_DEBUG
 		sc->sc_debug = (ifp->if_flags & IFF_DEBUG) != 0 ? 1 : 0;
 #endif
@@ -1421,7 +1411,7 @@ gem_ioctl(ifp, cmd, data)
 			 * accordingly.
 			 */
 			if (ifp->if_flags & IFF_RUNNING)
-				gem_init(ifp);
+				gem_setladrf(sc);
 			error = 0;
 		}
 		break;
