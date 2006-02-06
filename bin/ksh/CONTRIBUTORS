@@ -1,4 +1,4 @@
-$OpenBSD: CONTRIBUTORS,v 1.9 1999/07/14 13:37:23 millert Exp $
+$OpenBSD: CONTRIBUTORS,v 1.10 2006/02/06 16:47:07 jmc Exp $
 
 This is a partial history of this shell gleened from old change logs and
 readmes (most of which are still in the misc directory) and the source
@@ -72,7 +72,7 @@ Other contributors:
     * (guy@netapp.com), Oct '94: patch to use gmacs flag.
     * Andrew Moore (alm@netcom.com): reported many bugs, fixes.
     * William Bader (wbader@CSEE.Lehigh.Edu): fix to compile on SCO Unix
-      (strut winsize).
+      (struct winsize).
     * Mike Long (mike.long@analog.com): makefile fix - use $manext, not 1.
     * Art Mills (aem@hpbs9162.bio.hp.com): bug fix for vi file completion in
       command mode.
