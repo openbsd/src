@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.25 2006/02/04 00:18:27 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.26 2006/02/06 23:12:09 brad Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -90,7 +90,7 @@ int acpi_s5, acpi_evindex, icount;
 #define acpi_bus_space_unmap   _bus_space_unmap
 #elif defined(__amd64__)
 #define acpi_bus_space_map     _x86_memio_map
-#define acpi_bus_space_unmap   _x86_memiu_unmap
+#define acpi_bus_space_unmap   _x86_memio_unmap
 #else
 #error ACPI supported on i386/amd64 only
 #endif
