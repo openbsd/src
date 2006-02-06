@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.6 2005/12/14 21:29:48 drahn Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.7 2006/02/06 17:03:17 jmc Exp $	*/
 /*
  * Atomic lock for powerpc
  */
@@ -23,7 +23,7 @@ _atomic_lock(volatile _spinlock_lock_t *lock)
 	/*
 	 * Dale <drahn@openbsd.org> says:
 	 *   Side note. to prevent two processes from accessing
-	 *   the same address with the lwarx in one instrution
+	 *   the same address with the lwarx in one instruction
 	 *   and the stwcx in another process, the current powerpc
 	 *   kernel uses a stwcx instruction without the corresponding
 	 *   lwarx which causes any reservation of a process
