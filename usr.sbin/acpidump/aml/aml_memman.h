@@ -1,4 +1,4 @@
-/*	$OpenBSD: aml_memman.h,v 1.1 2005/06/02 20:09:39 tholo Exp $	*/
+/*	$OpenBSD: aml_memman.h,v 1.2 2006/02/06 21:46:40 jmc Exp $	*/
 /*-
  * Copyright (c) 1999, 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: aml_memman.h,v 1.1 2005/06/02 20:09:39 tholo Exp $
+ *	$Id: aml_memman.h,v 1.2 2006/02/06 21:46:40 jmc Exp $
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_memman.h,v 1.1 2000/08/24 09:33:08 takawata Exp $
  */
 
@@ -61,7 +61,7 @@ struct	memman_node {
 LIST_HEAD(memman_node_list, memman_node);
 
 /* memory type id */
-extern unsigned int	memid_unkown;
+extern unsigned int	memid_unknown;
 
 /* memory block manager */
 struct	memman_blockman {

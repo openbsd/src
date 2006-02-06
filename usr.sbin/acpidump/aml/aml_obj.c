@@ -1,4 +1,4 @@
-/*	$OpenBSD: aml_obj.c,v 1.3 2005/06/07 16:27:03 deraadt Exp $	*/
+/*	$OpenBSD: aml_obj.c,v 1.4 2006/02/06 21:46:40 jmc Exp $	*/
 /*-
  * Copyright (c) 1999 Takanori Watanabe
  * Copyright (c) 1999, 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: aml_obj.c,v 1.3 2005/06/07 16:27:03 deraadt Exp $
+ *	$Id: aml_obj.c,v 1.4 2006/02/06 21:46:40 jmc Exp $
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_obj.c,v 1.3 2000/11/09 06:24:45 iwasaki Exp $
  */
 
@@ -215,7 +215,7 @@ aml_free_object(union aml_object **obj)
 		return;
 	}
 	aml_free_objectcontent(*obj);
-	memman_free(aml_memman, memid_unkown, *obj);
+	memman_free(aml_memman, memid_unknown, *obj);
 	*obj = NULL;
 }
 

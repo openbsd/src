@@ -1,4 +1,4 @@
-/*	$OpenBSD: aml_memman.c,v 1.1 2005/06/02 20:09:39 tholo Exp $	*/
+/*	$OpenBSD: aml_memman.c,v 1.2 2006/02/06 21:46:40 jmc Exp $	*/
 /*-
  * Copyright (c) 1999, 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: aml_memman.c,v 1.1 2005/06/02 20:09:39 tholo Exp $
+ *	$Id: aml_memman.c,v 1.2 2006/02/06 21:46:40 jmc Exp $
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_memman.c,v 1.2 2000/11/09 06:24:45 iwasaki Exp $
  */
 
@@ -47,7 +47,7 @@
 MALLOC_DEFINE(M_MEMMAN, "memman", "Generic and Simple Memory Management");
 #endif /* !_KERNEL */
 
-unsigned int	memid_unkown = 255;
+unsigned int	memid_unknown = 255;
 
 static int		 manage_block(struct memman *memman, unsigned int id,
 				      void *block, unsigned static_mem,
@@ -292,7 +292,7 @@ memman_guess_memid(struct memman *memman, void *chunk)
 			}
 		}
 	}
-	return (memid_unkown);	/* gave up */
+	return (memid_unknown);	/* gave up */
 }
 
 void
@@ -306,7 +306,7 @@ memman_free(struct memman *memman, unsigned int memid, void *chunk)
 	struct	memman_node *memnode;
 
 	id = memid;
-	if (memid == memid_unkown) {
+	if (memid == memid_unknown) {
 		id = memman_guess_memid(memman, chunk);
 	}
 	if (memman->max_memid <= id) {
