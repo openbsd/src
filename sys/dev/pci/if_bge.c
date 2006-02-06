@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.127 2006/02/02 21:31:10 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.128 2006/02/06 04:59:30 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1101,8 +1101,8 @@ bge_setmulti(struct bge_softc *sc)
 		CSR_WRITE_4(sc, BGE_MAR0 + (i * 4), 0);
 
 	/* Now program new ones. */
-allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
+allmulti:
 		for (i = 0; i < 4; i++)
 			CSR_WRITE_4(sc, BGE_MAR0 + (i * 4), 0xFFFFFFFF);
 		return;
@@ -3138,15 +3138,14 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
+		bge_init(sc);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			bge_init(sc);
 			arp_ifinit(&sc->arpcom, ifa);
 			break;
 #endif /* INET */
 		default:
-			bge_init(sc);
 			break;
 		}
 		break;
@@ -3173,25 +3172,23 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			    !(sc->bge_if_flags & IFF_PROMISC)) {
 				BGE_SETBIT(sc, BGE_RX_MODE,
 				    BGE_RXMODE_RX_PROMISC);
+				bge_setmulti(sc);
 			} else if (ifp->if_flags & IFF_RUNNING &&
 			    !(ifp->if_flags & IFF_PROMISC) &&
 			    sc->bge_if_flags & IFF_PROMISC) {
 				BGE_CLRBIT(sc, BGE_RX_MODE,
 				    BGE_RXMODE_RX_PROMISC);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    (ifp->if_flags ^ sc->bge_if_flags) & IFF_ALLMULTI) {
 				bge_setmulti(sc);
-			} else {
-				ifp->if_flags &= ~IFF_RUNNING;
+			} else if (ifp->if_flags & IFF_RUNNING &&
+			    (ifp->if_flags ^ sc->bge_if_flags) & IFF_ALLMULTI)
+				bge_setmulti(sc);
+			else
 				bge_init(sc);
-			}
 		} else {
-			if (ifp->if_flags & IFF_RUNNING) {
+			if (ifp->if_flags & IFF_RUNNING)
 				bge_stop(sc);
-			}
 		}
 		sc->bge_if_flags = ifp->if_flags;
-		error = 0;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
