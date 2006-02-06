@@ -1,7 +1,8 @@
-/*	$OpenBSD: tag.c,v 1.39 2006/02/01 14:30:34 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.40 2006/02/06 08:33:03 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
+ * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,25 +32,27 @@
 #include "log.h"
 #include "proto.h"
 
+#define TAG_BRANCH	(1<<0)
+#define TAG_DELETE	(1<<1)
+#define TAG_FORCE_HEAD	(1<<2)
+#define TAG_FORCE_RM	(1<<3)
+#define UPTODATE	(1<<4)
 
 static int	cvs_tag_init(struct cvs_cmd *, int, char **, int *);
 static int	cvs_tag_local(CVSFILE *, void *);
 static int	cvs_tag_remote(CVSFILE *, void *);
 static int	cvs_tag_pre_exec(struct cvsroot *);
 
+static int runflags = 0;
 static char *tag_name = NULL;
 static char *tag_date = NULL;
 static char *tag_oldname = NULL;
-static int tag_branch = 0;
-static int tag_delete = 0;
-static int tag_forcehead = 0;
-static int tag_forcemove = 0;
 
 struct cvs_cmd cvs_cmd_tag = {
 	CVS_OP_TAG, CVS_REQ_TAG, "tag",
 	{ "ta", "freeze" },
 	"Add a symbolic tag to checked out version of files",
-	"[-bcdFflR] [-D date | -r rev] tagname ...",
+	"[-bcdFflR] [-D date | -r rev] tag [file ...]",
 	"bcD:dFflRr:",
 	NULL,
 	CF_SORT | CF_IGNORE | CF_RECURSE,
@@ -67,7 +70,7 @@ struct cvs_cmd cvs_cmd_rtag = {
 	CVS_OP_RTAG, CVS_REQ_TAG, "rtag",
 	{ "rt", "rfreeze" },
 	"Add a symbolic tag to a module",
-	"[-abdFflnR] [-D date | -r rev] symbolic_tag modules ...",
+	"[-abdFflnR] [-D date | -r rev] tag modules ...",
 	"abD:fFflnRr:",
 	NULL,
 	CF_SORT | CF_IGNORE | CF_RECURSE,
@@ -90,16 +93,19 @@ cvs_tag_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
 		case 'b':
-			tag_branch = 1;
+			runflags |= TAG_BRANCH;
+			break;
+		case 'c':
+			runflags |= UPTODATE;
 			break;
 		case 'd':
-			tag_delete = 1;
+			runflags |= TAG_DELETE;
 			break;
 		case 'F':
-			tag_forcemove = 1;
+			runflags |= TAG_FORCE_RM;
 			break;
 		case 'f':
-			tag_forcehead = 1;
+			runflags |= TAG_FORCE_HEAD;
 			break;
 		case 'D':
 			tag_date = optarg;
@@ -122,9 +128,9 @@ cvs_tag_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0) {
+	if (argc == 0)
 		return (CVS_EX_USAGE);
-	} else {
+	else {
 		tag_name = argv[0];
 		argc--;
 		argv++;
@@ -135,15 +141,15 @@ cvs_tag_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 		fatal("tag `%s' must not contain the characters `%s'",
 		    tag_name, RCS_SYM_INVALCHAR);
 
-	if ((tag_branch == 1) && (tag_delete == 1)) {
+	if ((runflags & TAG_BRANCH) && (runflags & TAG_DELETE)) {
 		cvs_log(LP_WARN, "ignoring -b with -d options");
-		tag_branch = 0;
+		runflags &= ~TAG_BRANCH;	
 	}
 
-	if ((tag_delete == 1) && (tag_oldname != NULL))
+	if ((runflags & TAG_DELETE) && (tag_oldname != NULL))
 		tag_oldname = NULL;
 
-	if ((tag_delete == 1) && (tag_date != NULL))
+	if ((runflags & TAG_DELETE) && (tag_date != NULL))
 		tag_date = NULL;
 
 	if ((tag_oldname != NULL) && (tag_date != NULL)) {
@@ -158,16 +164,19 @@ static int
 cvs_tag_pre_exec(struct cvsroot *root)
 {
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (tag_branch == 1)
+		if (runflags & TAG_BRANCH)
 			cvs_sendarg(root, "-b", 0);
 
-		if (tag_delete == 1)
+		if (runflags & UPTODATE)
+			cvs_sendarg(root, "-c", 0);
+
+		if (runflags & TAG_DELETE)
 			cvs_sendarg(root, "-d", 0);
 
-		if (tag_forcemove == 1)
+		if (runflags & TAG_FORCE_RM)
 			cvs_sendarg(root, "-F", 0);
 
-		if (tag_forcehead == 1)
+		if (runflags & TAG_FORCE_HEAD)
 			cvs_sendarg(root, "-f", 0);
 
 		if (tag_oldname != NULL) {
@@ -182,7 +191,6 @@ cvs_tag_pre_exec(struct cvsroot *root)
 
 		cvs_sendarg(root, tag_name, 0);
 	}
-
 	return (0);
 }
 
@@ -237,7 +245,8 @@ cvs_tag_local(CVSFILE *cf, void *arg)
 	if (cf->cf_type == DT_DIR) {
 		if (verbosity > 1)
 			cvs_log(LP_NOTICE, "%s %s",
-			    tag_delete ? "Untagging" : "Tagging", fpath);
+			    (runflags & TAG_DELETE) ? "Untagging" : "Tagging",
+			    fpath);
 		return (CVS_EX_OK);
 	}
 
@@ -267,7 +276,7 @@ cvs_tag_local(CVSFILE *cf, void *arg)
 		fatal("cvs_tag_local: rcs_open: %s: %s", rcspath,
 		    rcs_errstr(rcs_errno));
 
-	if (tag_delete == 1) {
+	if (runflags & TAG_DELETE) {
 		if (cvs_noexec == 0) {
 			if (rcs_sym_remove(rf, tag_name) < 0)
 				fatal("failed to remove tag %s from %s",
