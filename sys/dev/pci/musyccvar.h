@@ -1,4 +1,4 @@
-/*	$OpenBSD: musyccvar.h,v 1.8 2005/10/26 09:26:56 claudio Exp $ */
+/*	$OpenBSD: musyccvar.h,v 1.9 2006/02/06 17:29:11 jmc Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -49,7 +49,7 @@ struct dma_desc {
 	bus_dmamap_t		 map;
 };
 
-#define MUSYCC_INTLEN		512	/* 512 pending interrups is enough */
+#define MUSYCC_INTLEN		512	/* 512 pending interrupts is enough */
 struct musycc_intdesc {
 	u_int32_t		 md_intrq[MUSYCC_INTLEN];
 };

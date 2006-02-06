@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.71 2005/12/28 03:00:07 krw Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.72 2006/02/06 17:29:10 jmc Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.71 2005/12/28 03:00:07 krw Exp $
+ * $Id: aic7xxx.c,v 1.72 2006/02/06 17:29:10 jmc Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -4654,7 +4654,7 @@ ahc_chip_init(struct ahc_softc *ahc)
 
 	/*
 	 * Setup the allowed SCSI Sequences based on operational mode.
-	 * If we are a target, we'll enalbe select in operations once
+	 * If we are a target, we'll enable select in operations once
 	 * we've had a lun enabled.
 	 */
 	scsiseq_template = ENSELO|ENAUTOATNO|ENAUTOATNP;

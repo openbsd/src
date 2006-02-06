@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.reg,v 1.4 2004/12/11 00:08:43 krw Exp $	*/
+/*	$OpenBSD: aic79xx.reg,v 1.5 2006/02/06 17:29:11 jmc Exp $	*/
 /*
  * Aic79xx register and scratch ram definitions.
  *
@@ -40,7 +40,7 @@
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.reg,v 1.18 2004/08/04 17:55:34 gibbs Exp $
  */
-VERSION = "$Id: aic79xx.reg,v 1.4 2004/12/11 00:08:43 krw Exp $"
+VERSION = "$Id: aic79xx.reg,v 1.5 2006/02/06 17:29:11 jmc Exp $"
 
 /*
  * This file is processed by the aic7xxx_asm utility for use in assembling
@@ -3252,7 +3252,7 @@ register SEQINTCTL {
  * Single byte window into the Sequencer Instruction Ram area starting
  * at the address specified by OVLYADDR.  To write a full instruction word,
  * simply write four bytes in succession.  OVLYADDR will increment after the
- * most significant instrution byte (the byte with the parity bit) is written.
+ * most significant instruction byte (the byte with the parity bit) is written.
  */
 register SEQRAM {
 	address			0x0DA

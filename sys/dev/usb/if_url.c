@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.28 2006/01/29 03:22:52 brad Exp $ */
+/*	$OpenBSD: if_url.c,v 1.29 2006/02/06 17:29:11 jmc Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -289,7 +289,7 @@ USB_ATTACH(url)
 #if defined(__OpenBSD__)
 	bcopy(eaddr, (char *)&sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
 #endif
-	/* initialize interface infomation */
+	/* initialize interface information */
 	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
 	strlcpy(ifp->if_xname, devname, IFNAMSIZ);
