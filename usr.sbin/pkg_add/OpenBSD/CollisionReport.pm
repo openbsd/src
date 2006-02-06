@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.7 2004/12/17 11:26:22 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.8 2006/02/06 21:55:58 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -30,6 +30,7 @@ sub collision_report($$)
 	my $bypkg = {};
 	my $clueless_bat = 0;
 	
+	print "Collision: the following files already exist\n";
 	for my $name (keys %todo) {
 		my $p = OpenBSD::Vstat::vexists $name;
 		if (ref $p) {
@@ -59,7 +60,6 @@ sub collision_report($$)
 		}
 		}
 	}
-	print "Collision: the following files already exist\n";
 	for my $pkg (sort keys %$bypkg) {
 	    for my $item (sort @{$bypkg->{$pkg}}) {
 	    	print "\t$item ($pkg)\n";
