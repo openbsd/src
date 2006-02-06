@@ -311,6 +311,7 @@
 ./usr/include/dev/ic/p9000.h
 ./usr/include/dev/ic/pcdisplay.h
 ./usr/include/dev/ic/pcdisplayvar.h
+./usr/include/dev/ic/pcf8584var.h
 ./usr/include/dev/ic/pckbcvar.h
 ./usr/include/dev/ic/pdqreg.h
 ./usr/include/dev/ic/pdqvar.h

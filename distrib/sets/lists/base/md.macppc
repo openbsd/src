@@ -902,6 +902,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/p9000.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/pcdisplay.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/pcdisplayvar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/pcf8584var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/pckbcvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/pdqreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/pdqvar.ph

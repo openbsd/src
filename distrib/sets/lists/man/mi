@@ -1440,6 +1440,7 @@
 ./usr/share/man/cat4/neo.0
 ./usr/share/man/cat4/netintro.0
 ./usr/share/man/cat4/networking.0
+./usr/share/man/cat4/nfe.0
 ./usr/share/man/cat4/nge.0
 ./usr/share/man/cat4/noct.0
 ./usr/share/man/cat4/nofn.0
@@ -1457,6 +1458,7 @@
 ./usr/share/man/cat4/pcagpio.0
 ./usr/share/man/cat4/pccom.0
 ./usr/share/man/cat4/pcdisplay.0
+./usr/share/man/cat4/pcfiic.0
 ./usr/share/man/cat4/pchb.0
 ./usr/share/man/cat4/pci.0
 ./usr/share/man/cat4/pcib.0
