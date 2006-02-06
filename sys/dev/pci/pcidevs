@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1015 2006/02/03 09:57:19 brad Exp $
+$OpenBSD: pcidevs,v 1.1016 2006/02/06 23:18:31 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2832,13 +2832,14 @@ product SIS 85C503_ISA		0x0018	85C503 ISA
 product SIS 180			0x0180	180 SATA
 product SIS 181			0x0181	181 SATA
 product SIS 182			0x0182	182 SATA
+product SIS 190			0x0190	190
 product SIS 5597_VGA		0x0200	5597/5598 VGA
 product SIS 6215		0x0204	6215
 product SIS 86C205_2		0x0205	86C205
 product SIS 300			0x0300	300/305/630 VGA
 product SIS 85C501		0x0406	85C501
 product SIS 85C496		0x0496	85C496
-product SIS 85C596		0x0596	SiS596
+product SIS 85C596		0x0596	85C596
 product SIS 530			0x0530	530 PCI
 product SIS 540			0x0540	540 PCI
 product SIS 550			0x0550	550 PCI
