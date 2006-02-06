@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.98 2005/11/28 16:51:29 mickey Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.99 2006/02/06 17:37:28 jmc Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -847,7 +847,7 @@ scsi_scsi_cmd(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
 
 	s = splbio();
 	/*
-	 * we have finished with the xfer stuct, free it and
+	 * we have finished with the xfer struct, free it and
 	 * check if anyone else needs to be started up.
 	 */
 	scsi_free_xs(xs);

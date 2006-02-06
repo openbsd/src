@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.37 2005/02/10 03:40:16 itojun Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.38 2006/02/06 17:37:28 jmc Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ nd6_ns_input(m, off, icmp6len)
 	}
 	if (!ifa) {
 		/*
-		 * We've got an NS packet, and we don't have that adddress
+		 * We've got an NS packet, and we don't have that address
 		 * assigned for us.  We MUST silently ignore it.
 		 * See RFC2461 7.2.3.
 		 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.11 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.12 2006/02/06 17:37:28 jmc Exp $	*/
 /*	$NetBSD: bootp.c,v 1.10 1996/10/13 02:28:59 christos Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ static	ssize_t bootprecv(struct iodesc *, void *, size_t, time_t);
 static	void vend_cmu(u_char *);
 static	void vend_rfc1048(u_char *, u_int);
 
-/* Fetch required bootp infomation */
+/* Fetch required bootp information */
 void
 bootp(int sock)
 {
