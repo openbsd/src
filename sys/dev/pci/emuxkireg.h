@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxkireg.h,v 1.4 2005/11/30 22:17:47 brad Exp $	*/
+/*	$OpenBSD: emuxkireg.h,v 1.5 2006/02/06 22:12:39 jmc Exp $	*/
 /*	$NetBSD: emuxkireg.h,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -679,7 +679,7 @@
 #define	 EMU_DSP_IN_LVDLM1	4
 #define	 EMU_DSP_IN_LVDCOS	5
 #define	 EMU_DSP_IN_LVDLM2	6
-#define	EMU_DSP_IN_UNKOWN	7
+#define	EMU_DSP_IN_UNKNOWN	7
 
 #define	EMU_DSP_OUTL_BASE	0x020
 #define	EMU_DSP_OUTL(num)	(EMU_DSP_IOL(EMU_DSP_OUTL_BASE, num))
