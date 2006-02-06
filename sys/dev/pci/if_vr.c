@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.57 2006/02/05 23:23:18 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.58 2006/02/06 23:57:04 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1314,6 +1314,9 @@ vr_start(struct ifnet *ifp)
 	struct vr_softc		*sc;
 	struct mbuf		*m_head;
 	struct vr_chain		*cur_tx;
+
+	if (ifp->if_flags & IFF_OACTIVE)
+		return;
 
 	sc = ifp->if_softc;
 
