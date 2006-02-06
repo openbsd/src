@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1015 2006/02/03 09:57:19 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1017 2006/02/06 23:26:37 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2267,6 +2267,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "BCM5706",
 	},
 	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5708,
+	    "BCM5708",
+	},
+	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702FE,
 	    "BCM5702FE",
 	},
@@ -2369,6 +2373,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5706S,
 	    "BCM5706S",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5708S,
+	    "BCM5708S",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702_ALT,
@@ -8643,6 +8651,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "182 SATA",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_190,
+	    "190",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_VGA,
 	    "5597/5598 VGA",
 	},
@@ -8668,7 +8680,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C596,
-	    "SiS596",
+	    "85C596",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_530,
