@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.1 2005/04/01 10:40:47 mickey Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.2 2006/02/06 17:19:31 jmc Exp $	*/
 
 /* TODO parse 64bit insns or rewrite */
 
@@ -234,7 +234,7 @@ struct ute {
  *  program , "s" and "l" must (alas!) be constants.  (Suggestion: if
  *  "s" == 2 and "l" == 8, use _b28 for "n".)  The name "BITFLR" should
  *  be pre-defined if the compiler assigns bitfields from left-to-right.
- *  The resultant macro expansion defines a stucture in which the bit field
+ *  The resultant macro expansion defines a structure in which the bit field
  *  starting at position "s" with length "l" may be referenced by accessing
  *  member "n".  [Note: The leftmost bits in a 36-bit word may be accessed
  *  by specifying -4 <= s < 0 on the DEC-20.]

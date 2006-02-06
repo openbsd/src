@@ -1,4 +1,4 @@
-/*	$OpenBSD: vxreg.h,v 1.8 2004/05/26 21:15:31 miod Exp $ */
+/*	$OpenBSD: vxreg.h,v 1.9 2006/02/06 17:19:31 jmc Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. All rights reserved.
@@ -93,8 +93,8 @@ struct vxreg {
 #define IOCTL_TCLINE          0x5444   /* copy line discipline */
 #define IOCTL_TCEXEC          0x5445   /* exec code in local mem */
 #define IOCTL_TCGETVR         0x5446   /* get version and revison of firmware */
-#define IOCTL_TCGETDF         0x5447   /* get default termio stuct */
-#define IOCTL_TCSETDF         0x5448   /* set default termio stuct */
+#define IOCTL_TCGETDF         0x5447   /* get default termio struct */
+#define IOCTL_TCSETDF         0x5448   /* set default termio struct */
 #define IOCTL_TCGETSYM        0x5449   /* get firmware symbol table */
 #define IOCTL_TCWHAT          0x544A   /* get all SCSI IDs of FW files */
 #define IOCTL_TIOGETP         0x7408   /* get devs curr termio struct by sgttyb */

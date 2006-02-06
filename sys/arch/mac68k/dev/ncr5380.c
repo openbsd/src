@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.25 2005/09/12 10:07:29 martin Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.26 2006/02/06 17:19:31 jmc Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -856,7 +856,7 @@ int	code;
 
 	/*
 	 * Here we prepare to send an 'IDENTIFY' message.
-	 * Allow disconnect only when interrups are allowed.
+	 * Allow disconnect only when interrupts are allowed.
 	 */
 	tmp[0] = MSG_IDENTIFY(reqp->targ_lun,
 			(reqp->dr_flag & DRIVER_NOINT) ? 0 : 1);
