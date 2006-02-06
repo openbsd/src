@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.1 2006/01/18 23:21:17 miod Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.2 2006/02/06 21:25:40 miod Exp $	*/
 /*	$NetBSD: akbd.c,v 1.17 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -227,7 +227,9 @@ akbdattach(struct device *parent, struct device *self, void *aux)
 		break;
 	default:
 		printf("mapped device (%d)\n", sc->handler_id);
+#if 0
 		wskbd_eligible = 0;
+#endif
 		break;
 	}
 	error = set_adb_info(&adbinfo, sc->adbaddr);
