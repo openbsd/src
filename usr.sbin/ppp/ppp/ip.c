@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ip.c,v 1.37 2004/05/30 22:23:53 tedu Exp $
+ * $OpenBSD: ip.c,v 1.38 2006/02/06 17:51:30 jmc Exp $
  */
 
 #include <sys/param.h>
@@ -467,7 +467,7 @@ FilterCheck(const unsigned char *packet, u_int32_t family,
                        ncpaddr_ntoa(&srcaddr), sport, dstip, dport);
           }
           return 1;
-        }		/* Explict match.  Deny this packet */
+        }		/* Explicit match.  Deny this packet */
       }
     } else {
       n++;

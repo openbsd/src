@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.42 2005/05/26 21:56:41 henning Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.43 2006/02/06 17:51:30 jmc Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.42 2005/05/26 21:56:41 henning Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.43 2006/02/06 17:51:30 jmc Exp $";
 #endif
 
 #include <stdio.h>
@@ -118,7 +118,7 @@ struct	ifc {			/* Configuration of an interface */
 	int	ifc_joined;			/* joined to ff02::9 */
 };
 
-struct	ifac {			/* Adddress associated to an interface */ 
+struct	ifac {			/* Address associated to an interface */ 
 	struct	ifc *ifa_conf;		/* back pointer */
 	struct	ifac *ifa_next;
 	struct	in6_addr ifa_addr;	/* address */
