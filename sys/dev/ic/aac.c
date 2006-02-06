@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.27 2005/12/13 01:01:40 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.28 2006/02/06 22:11:32 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -2942,62 +2942,62 @@ aac_print_aif(struct aac_softc *sc, struct aac_aif_command *aif)
 			break;
 		case AifJobCtrZero:
 			/* Container clear operation */
-			printf("\t(ConatainerZero) container %d\n", 
+			printf("\t(ContainerZero) container %d\n", 
 			       aif->data.PR[0].jd.client.container.src);
 			break;
 		case AifJobCtrCopy:
 			/* Container copy operation */
-			printf("\t(ConatainerCopy) container %d to %d\n", 
+			printf("\t(ContainerCopy) container %d to %d\n", 
 			       aif->data.PR[0].jd.client.container.src,
 			       aif->data.PR[0].jd.client.container.dst);
 			break;
 		case AifJobCtrCreateMirror:
 			/* Container Create Mirror operation */
-			printf("\t(ConatainerCreateMirror) container %d\n",
+			printf("\t(ContainerCreateMirror) container %d\n",
 			       aif->data.PR[0].jd.client.container.src);
 			/* XXX two containers? */
 			break;
 		case AifJobCtrMergeMirror:
 			/* Container Merge Mirror operation */
-			printf("\t(ConatainerMergeMirror) container %d\n",
+			printf("\t(ContainerMergeMirror) container %d\n",
 			       aif->data.PR[0].jd.client.container.src);
 			/* XXX two containers? */
 			break;
 		case AifJobCtrScrubMirror:
 			/* Container Scrub Mirror operation */
-			printf("\t(ConatainerScrubMirror) container %d\n",
+			printf("\t(ContainerScrubMirror) container %d\n",
 			       aif->data.PR[0].jd.client.container.src);
 			break;
 		case AifJobCtrRebuildRaid5:
 			/* Container Rebuild Raid5 operation */
-			printf("\t(ConatainerRebuildRaid5) container %d\n",
+			printf("\t(ContainerRebuildRaid5) container %d\n",
 			       aif->data.PR[0].jd.client.container.src);
 			break;
 		case AifJobCtrScrubRaid5:
 			/* Container Scrub Raid5 operation */
-			printf("\t(ConatainerScrubRaid5) container %d\n", 
+			printf("\t(ContainerScrubRaid5) container %d\n", 
 			       aif->data.PR[0].jd.client.container.src);
 			break;
 		case AifJobCtrMorph:
 			/* Container morph operation */
-			printf("\t(ConatainerMorph) container %d\n",
+			printf("\t(ContainerMorph) container %d\n",
 			       aif->data.PR[0].jd.client.container.src);
 			/* XXX two containers? */
 			break;
 		case AifJobCtrPartCopy:
 			/* Container Partition copy operation */
-			printf("\t(ConatainerPartCopy) container %d to %d\n",
+			printf("\t(ContainerPartCopy) container %d to %d\n",
 			       aif->data.PR[0].jd.client.container.src,
 			       aif->data.PR[0].jd.client.container.dst);
 			break;
 		case AifJobCtrRebuildMirror:
 			/* Container Rebuild Mirror operation */
-			printf("\t(ConatainerRebuildMirror) container %d\n",
+			printf("\t(ContainerRebuildMirror) container %d\n",
 			       aif->data.PR[0].jd.client.container.src);
 			break;
 		case AifJobCtrCrazyCache:
 			/* crazy cache */
-			printf("\t(ConatainerCrazyCache) container %d\n", 
+			printf("\t(ContainerCrazyCache) container %d\n", 
 			       aif->data.PR[0].jd.client.container.src);
 			/* XXX two containers? */
 			break;
