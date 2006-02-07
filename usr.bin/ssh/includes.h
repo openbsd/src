@@ -1,4 +1,4 @@
-/*	$OpenBSD: includes.h,v 1.22 2006/01/01 08:59:27 stevesk Exp $	*/
+/*	$OpenBSD: includes.h,v 1.23 2006/02/07 01:08:04 stevesk Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,6 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "\100(#)" msg }
 #include <netdb.h>
 
 #include <stddef.h>
-#include <netgroup.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
