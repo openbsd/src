@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.7 2005/02/07 08:47:18 otto Exp $	*/
+/*	$OpenBSD: file.c,v 1.8 2006/02/07 22:05:54 otto Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -228,4 +228,5 @@ grep_close(file_t *f)
 		/* can't happen */
 		errx(2, "invalid file type");
 	}
+	free(f);
 }
