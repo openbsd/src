@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.212 2006/01/17 20:46:52 espie Exp $
+# $OpenBSD: pkg_add,v 1.213 2006/02/07 10:34:56 bernd Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -734,7 +734,8 @@ sub find_updates
 		} elsif (@l2 == 0) {
 			push(@cantupdate, $pkgname);
 		} else {
-			push(@$new, choose1($pkgname, $state->{interactive}, sort @l2));
+			my $result = choose1($pkgname, $state->{interactive}, sort @l2);
+			push(@$new, $result) if defined $result;
 		}
 	}
 	return @cantupdate;
@@ -755,7 +756,8 @@ sub find_truenames
 		    if (@l > 1) {
 			@l = OpenBSD::PackageName::keep_most_recent(@l);
 		    }
-		    push(@$new, choose1($pkgname, $state->{interactive}, sort @l));
+		    my $result = choose1($pkgname, $state->{interactive}, sort @l);
+		    push(@$new, $result) if defined $result;
 		} else {
 		    push(@$new, $pkgname);
 		}
