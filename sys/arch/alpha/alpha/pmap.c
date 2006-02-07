@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.44 2005/11/03 06:40:28 brad Exp $ */
+/* $OpenBSD: pmap.c,v 1.45 2006/02/07 07:59:22 martin Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -2531,22 +2531,6 @@ pmap_is_modified(struct vm_page *pg)
 	}
 #endif
 	return (rv);
-}
-
-/*
- * pmap_phys_address:		[ INTERFACE ]
- *
- *	Return the physical address corresponding to the specified
- *	cookie.  Used by the device pager to decode a device driver's
- *	mmap entry point return value.
- *
- *	Note: no locking is necessary in this function.
- */
-paddr_t
-pmap_phys_address(int ppn)
-{
-
-	return (ptoa(ppn));
 }
 
 /*
