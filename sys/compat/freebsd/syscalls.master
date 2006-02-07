@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.28 2005/06/17 20:39:14 millert Exp $
+	$OpenBSD: syscalls.master,v 1.29 2006/02/07 01:34:21 brad Exp $
 ;	$NetBSD: syscalls.master,v 1.3 1995/10/10 18:28:40 mycroft Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -593,3 +593,79 @@
 363	NOARGS		{ int sys_kevent(int kq, const struct kevent *changelist, \
 			    int nchanges, struct kevent *eventlist, int nevents, \
 			    const struct timespec *timeout); }
+364	UNIMPL		__cap_get_proc
+365	UNIMPL		__cap_set_proc
+366	UNIMPL		__cap_get_fd
+367	UNIMPL		__cap_get_file
+368	UNIMPL		__cap_set_fd
+369	UNIMPL		__cap_set_file
+370	UNIMPL		lkmressym
+371	UNIMPL		extattr_set_fd
+372	UNIMPL		extattr_get_fd
+373	UNIMPL		extattr_delete_fd
+374	UNIMPL		__setugid
+375	UNIMPL		nfsclnt
+376	UNIMPL		eaccess
+377	UNIMPL		afs_syscall
+378	UNIMPL		nmount
+379	UNIMPL		kse_exit
+380	UNIMPL		kse_wakeup
+381	UNIMPL		kse_create
+382	UNIMPL		kse_thr_interrupt
+383	UNIMPL		kse_release
+384	UNIMPL		__mac_get_proc
+385	UNIMPL		__mac_set_proc
+386	UNIMPL		__mac_get_fd
+387	UNIMPL		__mac_get_file
+388	UNIMPL		__mac_set_fd
+389	UNIMPL		__mac_set_file
+390	UNIMPL		kenv
+391	UNIMPL		lchflags
+392	UNIMPL		uuidgen
+393	UNIMPL		sendfile
+394	UNIMPL		mac_syscall
+395	UNIMPL		getfsstat
+396	UNIMPL		statfs
+397	UNIMPL		fsstatfs
+398	UNIMPL		fhstatfs
+399	UNIMPL		nosys
+400	UNIMPL		ksem_close
+401	UNIMPL		ksem_post
+402	UNIMPL		ksem_wait
+403	UNIMPL		ksem_trywait
+404	UNIMPL		ksem_init
+405	UNIMPL		ksem_open
+406	UNIMPL		ksem_unlink
+407	UNIMPL		ksem_getvalue
+408	UNIMPL		ksem_destroy
+409	UNIMPL		__mac_get_pid
+410	UNIMPL		__mac_get_link
+411	UNIMPL		__mac_set_link
+412	UNIMPL		extattr_set_link
+413	UNIMPL		extattr_get_link
+414	UNIMPL		extattr_delete_link
+415	UNIMPL		__mac_execve
+416	UNIMPL		sigaction
+417	UNIMPL		sigreturn
+418	UNIMPL		__xstat
+419	UNIMPL		__xfstat
+420	UNIMPL		__xlstat
+421	UNIMPL		getcontext
+422	UNIMPL		setcontext
+423	UNIMPL		swapcontext
+424	UNIMPL		swapoff
+425	UNIMPL		__acl_get_link
+426	UNIMPL		__acl_set_link
+427	UNIMPL		__acl_delete_link
+428	UNIMPL		__acl_aclcheck_link
+429	UNIMPL		sigwait
+430	UNIMPL		thr_create
+431	UNIMPL		thr_exit
+432	UNIMPL		thr_self
+433	UNIMPL		thr_kill
+434	UNIMPL		_umtx_lock
+435	UNIMPL		_umtx_unlock
+436	UNIMPL		jail_attach
+437	UNIMPL		extattr_list_fd
+438	UNIMPL		extattr_list_file
+439	UNIMPL		extattr_list_link
