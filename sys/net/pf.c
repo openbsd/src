@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.509 2006/01/31 03:40:31 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.510 2006/02/07 18:41:14 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1497,6 +1497,7 @@ pf_change_icmp(struct pf_addr *ia, u_int16_t *ip, struct pf_addr *oa,
 
 /*
  * Need to modulate the sequence numbers in the TCP SACK option
+ * (credits to Krzysztof Pfaff for report and patch)
  */
 int
 pf_modulate_sack(struct mbuf *m, int off, struct pf_pdesc *pd,
