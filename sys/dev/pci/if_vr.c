@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.58 2006/02/06 23:57:04 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.59 2006/02/07 18:15:20 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -139,6 +139,16 @@ void vr_setmulti(struct vr_softc *);
 void vr_reset(struct vr_softc *);
 int vr_list_rx_init(struct vr_softc *);
 int vr_list_tx_init(struct vr_softc *);
+
+const struct pci_matchid vr_devices[] = {
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINE },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII_2 },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105 },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105M },
+	{ PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_RHINEII },
+	{ PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_RHINEII }
+};
 
 #define VR_SETBIT(sc, reg, x)				\
 	CSR_WRITE_1(sc, reg,				\
@@ -583,16 +593,6 @@ vr_reset(struct vr_softc *sc)
 	/* Wait a little while for the chip to get its brains in order. */
 	DELAY(1000);
 }
-
-const struct pci_matchid vr_devices[] = {
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINE },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII_2 },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105 },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105M },
-	{ PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_RHINEII },
-	{ PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_RHINEII },
-};
 
 /*
  * Probe for a VIA Rhine chip.
