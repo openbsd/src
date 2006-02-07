@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.179 2006/01/06 03:33:14 brad Exp $
+$OpenBSD: usbdevs,v 1.180 2006/02/07 23:35:10 brad Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1478,6 +1478,7 @@ product PALM ZIRE		0x0070	Palm Zire
 /* Panasonic products */
 product PANASONIC LS120		0x0901	LS-120
 product PANASONIC SDCAAE	0x1b00	MultiMediaCard
+product PANASONIC TYTP50P6S	0x3900	TY-TP50P6-S 50in Touch Panel
 
 /* Pen Driver */
 product PEN USBREADER		0x0240	6 in 1
