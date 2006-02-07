@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.19 2006/02/05 23:37:21 brad Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.20 2006/02/07 08:55:37 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -230,10 +230,12 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
+#ifdef NFE_CSUM
 	if (sc->sc_flags & NFE_HW_CSUM) {
 		ifp->if_capabilities = IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
 		    IFCAP_CSUM_UDPv4;
 	}
+#endif
 
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = nfe_miibus_readreg;
@@ -656,7 +658,7 @@ nfe_rxeof(struct nfe_softc *sc)
 			if (flags & NFE_RX_TCP_CSUMOK)
 				m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK;
 		}
-#else
+#elif defined(NFE_CSUM)
 		if ((sc->sc_flags & NFE_HW_CSUM) && (flags & NFE_RX_CSUMOK))
 			m->m_pkthdr.csum_flags = M_IPV4_CSUM_IN_OK;
 #endif
@@ -820,10 +822,12 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 		return ENOBUFS;
 	}
 
+#ifdef NFE_CSUM
 	if (m0->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 		flags |= NFE_TX_IP_CSUM;
 	if (m0->m_pkthdr.csum_flags & (M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT))
 		flags |= NFE_TX_TCP_CSUM;
+#endif
 
 	for (i = 0; i < map->dm_nsegs; i++) {
 		data = &sc->txq.data[sc->txq.cur];
@@ -876,8 +880,10 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 		nfe_txdesc32_sync(sc, desc32, BUS_DMASYNC_PREWRITE);
 	}
 
+#ifdef NFE_CSUM
 	if (sc->sc_flags & NFE_HW_CSUM)
 		txctl |= NFE_RXTX_RXCHECK;
+#endif
 
 	data->m = m0;
 	data->active = map;
@@ -951,8 +957,10 @@ nfe_init(struct ifnet *ifp)
 		rxtxctl |= NFE_RXTX_V3MAGIC;
 	else if (sc->sc_flags & NFE_JUMBO_SUP)
 		rxtxctl |= NFE_RXTX_V2MAGIC;
+#ifdef NFE_CSUM
 	if (sc->sc_flags & NFE_HW_CSUM)
 		rxtxctl |= NFE_RXTX_RXCHECK;
+#endif
 
 	NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_RESET | rxtxctl);
 	DELAY(10);
