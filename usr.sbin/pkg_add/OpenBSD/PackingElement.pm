@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.79 2005/10/19 10:41:19 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.80 2006/02/07 11:16:57 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -811,10 +811,14 @@ sub add
 	$class->SUPER::add($plist, @args);
 }
 
-package OpenBSD::PackingElement::NewUser;
+package OpenBSD::PackingElement::NewAuth;
 our @ISA=qw(OpenBSD::PackingElement::Action);
+
+package OpenBSD::PackingElement::NewUser;
+our @ISA=qw(OpenBSD::PackingElement::NewAuth);
 __PACKAGE__->setKeyword("newuser");
 
+sub type() { "user" }
 sub category() { "users" }
 sub keyword() { "newuser" }
 
@@ -869,10 +873,11 @@ sub stringize($)
 }
 
 package OpenBSD::PackingElement::NewGroup;
-our @ISA=qw(OpenBSD::PackingElement::Action);
+our @ISA=qw(OpenBSD::PackingElement::NewAuth);
 
 __PACKAGE__->setKeyword("newgroup");
 
+sub type() { "group" }
 sub category() { "groups" }
 sub keyword() { "newgroup" }
 
@@ -1205,6 +1210,9 @@ sub destate
 package OpenBSD::PackingElement::SpecialFile;
 our @ISA=qw(OpenBSD::PackingElement::Unique);
 
+sub exec_on_add { 0 }
+sub exec_on_delete { 0 }
+
 sub add_md5
 {
 	my ($self, $md5) = @_;
@@ -1235,6 +1243,9 @@ sub category() { OpenBSD::PackageInfo::MODULE }
 package OpenBSD::PackingElement::ScriptFile;
 our @ISA=qw(OpenBSD::PackingElement::SpecialFile);
 use OpenBSD::Error;
+
+sub exec_on_add { 1 }
+sub exec_on_delete { 1 }
 
 sub run
 {
@@ -1269,11 +1280,13 @@ sub category() { OpenBSD::PackageInfo::DESC }
 
 package OpenBSD::PackingElement::FINSTALL;
 our @ISA=qw(OpenBSD::PackingElement::ScriptFile);
+sub exec_on_delete { 0 }
 sub category() { OpenBSD::PackageInfo::INSTALL }
 sub beautify() { "Install" }
 
 package OpenBSD::PackingElement::FDEINSTALL;
 our @ISA=qw(OpenBSD::PackingElement::ScriptFile);
+sub exec_on_add { 0 }
 sub category() { OpenBSD::PackageInfo::DEINSTALL }
 sub beautify() { "Deinstall" }
 
