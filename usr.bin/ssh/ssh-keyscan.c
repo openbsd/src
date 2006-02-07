@@ -7,14 +7,15 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.57 2005/10/30 04:01:03 djm Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.58 2006/02/07 01:18:09 stevesk Exp $");
 
 #include <sys/queue.h>
+
 #include <errno.h>
+#include <setjmp.h>
 
 #include <openssl/bn.h>
 
-#include <setjmp.h>
 #include "xmalloc.h"
 #include "ssh.h"
 #include "ssh1.h"
