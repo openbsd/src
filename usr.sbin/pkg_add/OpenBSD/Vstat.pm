@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.13 2005/11/29 09:31:07 bernd Exp $
+# $OpenBSD: Vstat.pm,v 1.14 2006/02/07 10:56:55 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -62,6 +62,8 @@ sub init_devices()
 					$i->{nodev} = 1;
 				} elsif ($o eq 'nosuid') {
 					$i->{nosuid} = 1;
+				} elsif ($o eq 'noexec') {
+					$i->{noexec} = 1;
 				}
 			}
 		} else {
