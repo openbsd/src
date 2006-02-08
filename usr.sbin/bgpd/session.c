@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.243 2006/01/24 10:08:16 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.244 2006/02/08 12:36:29 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -873,7 +873,7 @@ change_state(struct peer *peer, enum session_state state,
 			    peer->IdleHoldTime < MAX_IDLE_HOLD/2)
 				peer->IdleHoldTime *= 2;
 		}
-		if (event != EVNT_RCVD_OPEN) {	/* capa negotiation */
+		if (peer->state == STATE_NONE || peer->state == STATE_ESTABLISHED) {
 			/* initialize capability negotiation structures */
 			memcpy(&peer->capa.ann, &peer->conf.capabilities,
 			    sizeof(peer->capa.ann));
