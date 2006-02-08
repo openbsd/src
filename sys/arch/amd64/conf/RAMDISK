@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.28 2005/08/03 22:42:46 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.29 2006/02/08 23:57:37 pvalchev Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -215,7 +215,7 @@ em*	at pci?			# Intel Pro/1000 ethernet
 bge*	at pci?			# Broadcom BCM570x (aka Tigon3)
 #lge*	at pci?			# Level1 LXT1001 GigE
 #mtd*	at pci?			# Myson MTD803
-vge*	at pci?				# VIA VT612x
+vge*	at pci?			# VIA VT612x
 
 # Wireless network cards
 #wi*	at pci?			# WaveLAN IEEE 802.11DS
