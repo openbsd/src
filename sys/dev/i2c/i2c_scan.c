@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.66 2006/02/04 18:19:20 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.67 2006/02/08 19:02:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -159,14 +159,18 @@ lm75probe(void)
 	u_int8_t conf;
 	int ret = 75, i;
 
-	temp = iicprobew(LM75TEMP) & mask;
+	temp = iicprobew(LM75TEMP);
 	conf = iicprobenc(LM75CONF);
-	thyst = iicprobew(LM75Thyst) & mask;
-	tos = iicprobew(LM75Tos) & mask;
+	thyst = iicprobew(LM75Thyst);
+	tos = iicprobew(LM75Tos);
 
 	/* totally bogus data */
 	if (conf == 0xff && temp == 0xffff && thyst == 0xffff)
 		return (NULL);
+
+	temp &= mask;
+	thyst &= mask;
+	tos &= mask;
 
 	/* All values the same?  Very unlikely */
 	if (temp == thyst && thyst == tos)
