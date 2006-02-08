@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.89 2006/02/05 18:21:44 joris Exp $	*/
+/*	$OpenBSD: proto.c,v 1.90 2006/02/08 19:24:19 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -715,7 +715,7 @@ cvs_sendresp(u_int rid, const char *arg)
 	int ret;
 	struct cvs_resp *resp;
 
-	if ((resp = cvs_resp_getbyid(rid)) == NULL);
+	if ((resp = cvs_resp_getbyid(rid)) == NULL)
 		fatal("unsupported response type %u", rid);
 
 	ret = fputs(resp->resp_str, stdout);
