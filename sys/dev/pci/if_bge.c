@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.128 2006/02/06 04:59:30 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.129 2006/02/08 22:09:20 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3152,7 +3152,9 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN ||
 		    ((BGE_IS_JUMBO_CAPABLE(sc)) &&
-		    ifr->ifr_mtu > ETHERMTU_JUMBO) || ifr->ifr_mtu > ETHERMTU)
+		    ifr->ifr_mtu > ETHERMTU_JUMBO) ||
+		    ((!BGE_IS_JUMBO_CAPABLE(sc)) &&
+		    ifr->ifr_mtu > ETHERMTU))
 			error = EINVAL;
 		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
