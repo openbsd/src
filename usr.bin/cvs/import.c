@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.38 2006/01/30 17:58:47 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.39 2006/02/08 18:42:41 joris Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -280,7 +280,7 @@ cvs_import_local(CVSFILE *cf, void *arg)
 
 	cvs_printf("N %s\n", fpath);
 
-	if ((rf = rcs_open(rpath, RCS_RDWR|RCS_CREATE)) == NULL);
+	if ((rf = rcs_open(rpath, RCS_RDWR|RCS_CREATE)) == NULL)
 		fatal("cvs_import_local: rcs_open: `%s': %s", rpath,
 		    rcs_errstr(rcs_errno));
 
