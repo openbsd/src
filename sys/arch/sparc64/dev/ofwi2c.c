@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofwi2c.c,v 1.1 2006/01/02 01:58:55 deraadt Exp $	*/
+/*	$OpenBSD: ofwi2c.c,v 1.2 2006/02/08 23:15:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Theo de Raadt
@@ -49,8 +49,8 @@ ofwiic_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 
 		if (strcmp(name, "i2c-smbus") == 0) {
 			for (node = OF_child(node); node; node = OF_peer(node)) {
+				memset(&ia, 0, sizeof ia);
 				ia.ia_tag = iba->iba_tag;
-				ia.ia_name = NULL;
 				memset(name, 0, sizeof name);
 				if (OF_getprop(node, "compatible", &name,
 				    sizeof name) && name[0]) {

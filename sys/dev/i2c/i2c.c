@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c.c,v 1.12 2006/01/29 17:29:30 marco Exp $	*/
+/*	$OpenBSD: i2c.c,v 1.13 2006/02/08 23:15:58 dlg Exp $	*/
 /*	$NetBSD: i2c.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -100,6 +100,7 @@ iic_search(struct device *parent, void *arg, void *aux)
 	struct i2c_attach_args ia;
 
 	if (cf->cf_loc[IICCF_ADDR] != -1) {
+		memset(&ia, 0, sizeof(ia));
 		ia.ia_tag = sc->sc_tag;
 		ia.ia_addr = cf->cf_loc[IICCF_ADDR];
 		ia.ia_size = cf->cf_loc[IICCF_SIZE];
