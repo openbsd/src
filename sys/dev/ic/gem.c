@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.53 2006/02/05 00:24:26 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.54 2006/02/08 22:11:02 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -697,6 +697,11 @@ gem_init(struct ifnet *ifp)
 
 	s = splnet();
 
+	if (ifp->if_flags & IFF_RUNNING) {
+		splx(s);
+		return (0);
+	}
+
 	DPRINTF(sc, ("%s: gem_init: calling stop\n", sc->sc_dev.dv_xname));
 	/*
 	 * Initialization sequence. The numbered steps below correspond
@@ -1092,8 +1097,10 @@ gem_intr(v)
 			printf("%s: MAC tx fault, status %x\n",
 			    sc->sc_dev.dv_xname, txstat);
 #endif
-		if (txstat & (GEM_MAC_TX_UNDERRUN | GEM_MAC_TX_PKT_TOO_LONG))
+		if (txstat & (GEM_MAC_TX_UNDERRUN | GEM_MAC_TX_PKT_TOO_LONG)) {
+			ifp->if_flags &= ~IFF_RUNNING;
 			gem_init(ifp);
+		}
 	}
 	if (status & GEM_INTR_RX_MAC) {
 		int rxstat = bus_space_read_4(t, seb, GEM_MAC_RX_STATUS);
@@ -1108,6 +1115,7 @@ gem_intr(v)
 		 */
 		if (rxstat & GEM_MAC_RX_OVERFLOW) {
 			ifp->if_ierrors++;
+			ifp->if_flags &= ~IFF_RUNNING;
 			gem_init(ifp);
 		}
 #ifdef GEM_DEBUG
@@ -1136,6 +1144,7 @@ gem_watchdog(ifp)
 	++ifp->if_oerrors;
 
 	/* Try to get more packets going. */
+	ifp->if_flags &= ~IFF_RUNNING;
 	gem_init(ifp);
 }
 
