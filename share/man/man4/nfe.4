@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfe.4,v 1.1 2006/02/05 22:00:10 jsg Exp $
+.\"	$OpenBSD: nfe.4,v 1.2 2006/02/08 09:09:18 jsg Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -22,8 +22,10 @@
 .Nd NVIDIA nForce MCP Ethernet driver
 .Sh SYNOPSIS
 .Cd "nfe* at pci?"
-.Cd "rlphy* at mii?"
+.Cd "ciphy* at mii?"
 .Cd "eephy* at mii?"
+.Cd "rlphy* at mii?"
+.Cd "ukphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -48,12 +50,14 @@ Set 1000Mbps (Gigabit Ethernet) operation (recent models only).
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr ciphy 4 ,
 .Xr eephy 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
 .Xr rlphy 4 ,
+.Xr ukphy 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
