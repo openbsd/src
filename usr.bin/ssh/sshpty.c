@@ -12,8 +12,9 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshpty.c,v 1.13 2006/02/07 01:42:00 stevesk Exp $");
+RCSID("$OpenBSD: sshpty.c,v 1.14 2006/02/08 12:15:27 stevesk Exp $");
 
+#include <paths.h>
 #include <termios.h>
 #include <util.h>
 
