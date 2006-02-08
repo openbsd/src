@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.27 2006/02/01 23:23:37 mpf Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.28 2006/02/08 13:50:26 camield Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 	}
 
 	if (!opt_debug) {
-		daemon(0, 0);
+		daemon(1, 0);
 		setproctitle(NULL);
 	}
 
@@ -163,7 +163,7 @@ startup_handler(int fd, short event, void *arg)
 		err(1, "no routing socket");
 
 	if (load_config() != 0) {
-		logit(IFSD_LOG_NORMAL, "unable to load config");
+		logit(IFSD_LOG_QUIET, "unable to load config");
 		exit(1);
 	}
 
@@ -182,7 +182,7 @@ sighup_handler(int fd, short event, void *arg)
 {
 	logit(IFSD_LOG_NORMAL, "reloading config");
 	if (load_config() != 0)
-		logit(IFSD_LOG_NORMAL, "unable to reload config");
+		logit(IFSD_LOG_QUIET, "unable to reload config");
 }
 
 int
@@ -713,7 +713,7 @@ logit(int level, const char *fmt, ...)
 	va_list	 ap;
 	char	*nfmt;
 
-	if (conf == NULL || level > conf->loglevel)
+	if (conf != NULL && level > conf->loglevel)
 		return;
 
 	va_start(ap, fmt);
