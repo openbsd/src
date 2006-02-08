@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.49 2006/01/05 16:00:07 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.50 2006/02/08 14:49:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -513,13 +513,17 @@ mrt_dump_upcall(struct pt_entry *pt, void *ptr)
 	 * dumps the table so we do the same. If only the active route should
 	 * be dumped p should be set to p = pt->active.
 	 */
-	LIST_FOREACH(p, &pt->prefix_h, prefix_l)
+	LIST_FOREACH(p, &pt->prefix_h, prefix_l) {
+		/* for now dump only stuff from the local-RIB */
+		if (!(p->flags & F_LOCAL))
+			continue;
 		if (mrtbuf->type == MRT_TABLE_DUMP)
 			mrt_dump_entry(mrtbuf, p, sequencenum++,
 			    p->aspath->peer);
 		else
 			mrt_dump_entry_mp(mrtbuf, p, sequencenum++,
 			    p->aspath->peer);
+	}
 }
 
 static int
