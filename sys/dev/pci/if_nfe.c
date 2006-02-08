@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.20 2006/02/07 08:55:37 jsg Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.21 2006/02/08 09:28:46 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -671,7 +671,7 @@ nfe_rxeof(struct nfe_softc *sc)
 		ether_input_mbuf(ifp, m);
 
 skip:		if (sc->sc_flags & NFE_40BIT_ADDR) {
-#if defined(__amd64__)
+#if defined(__LP64__)
 			desc64->physaddr[0] =
 			    htole32(data->map->dm_segs->ds_addr >> 32);
 #endif
@@ -834,7 +834,7 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 
 		if (sc->sc_flags & NFE_40BIT_ADDR) {
 			desc64 = &sc->txq.desc64[sc->txq.cur];
-#if defined(__amd64__)
+#if defined(__LP64__)
 			desc64->physaddr[0] =
 			    htole32(map->dm_segs[i].ds_addr >> 32);
 #endif
@@ -1136,7 +1136,7 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 
 		if (sc->sc_flags & NFE_40BIT_ADDR) {
 			desc64 = &sc->rxq.desc64[i];
-#if defined(__amd64__)
+#if defined(__LP64__)
 			desc64->physaddr[0] =
 			    htole32(data->map->dm_segs->ds_addr >> 32);
 #endif
