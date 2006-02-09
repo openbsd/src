@@ -1,4 +1,4 @@
-/*	$OpenBSD: alipm.c,v 1.6 2006/01/04 18:32:15 kettenis Exp $	*/
+/*	$OpenBSD: alipm.c,v 1.7 2006/02/09 12:16:25 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -220,7 +220,7 @@ alipm_attach(struct device *parent, struct device *self, void *aux)
 	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_smb_tag;
 #ifdef __sparc64__
-	iba.iba_bus_scan = ofwiic_scan;
+	iba.iba_bus_scan = ofwiic_pci_scan;
 	iba.iba_bus_scan_arg = pa;
 #endif
 	config_found(&sc->sc_dev, &iba, iicbus_print);

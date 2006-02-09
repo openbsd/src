@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofwi2c.c,v 1.2 2006/02/08 23:15:58 dlg Exp $	*/
+/*	$OpenBSD: ofwi2c.c,v 1.3 2006/02/09 12:16:25 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Theo de Raadt
@@ -30,11 +30,31 @@
 #include <arch/sparc64/dev/ofwi2cvar.h>
 
 void
-ofwiic_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
+ofwiic_pci_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	pcitag_t tag = pa->pa_tag;
 	int iba_node = PCITAG_NODE(tag);
+	char name[32];
+	int node;
+
+	for (node = OF_child(iba_node); node; node = OF_peer(node)) {
+		memset(name, 0, sizeof(name));
+
+		if (OF_getprop(node, "compatible", name, sizeof(name)) == -1)
+			continue;
+		if (name[0] == '\0')
+			continue;
+
+		if (strcmp(name, "i2c-smbus") == 0)
+			ofwiic_scan(self, iba, &node);
+	}
+}
+
+void
+ofwiic_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
+{
+	int iba_node = *(int *)aux;
 	extern int iic_print(void *, const char *);
 	struct i2c_attach_args ia;
 	char name[32];
@@ -42,31 +62,26 @@ ofwiic_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 	int node;
 
 	for (node = OF_child(iba_node); node; node = OF_peer(node)) {
-		memset(name, 0, sizeof name);
-		if (OF_getprop(node, "compatible", &name,
-		    sizeof name) && name[0])
-			ia.ia_name = name;
+		memset(name, 0, sizeof(name));
+		memset(reg, 0, sizeof(reg));
 
-		if (strcmp(name, "i2c-smbus") == 0) {
-			for (node = OF_child(node); node; node = OF_peer(node)) {
-				memset(&ia, 0, sizeof ia);
-				ia.ia_tag = iba->iba_tag;
-				memset(name, 0, sizeof name);
-				if (OF_getprop(node, "compatible", &name,
-				    sizeof name) && name[0]) {
-					ia.ia_name = name;
-					if (strncmp(ia.ia_name, "i2c-",
-					    strlen("i2c-")) == 0)
-						ia.ia_name += strlen("i2c-");
-				}
-				if (OF_getprop(node, "reg", &reg,
-				    sizeof reg) != sizeof reg)
-					continue;
-				ia.ia_addr = (reg[1] >> 1);
-				if (ia.ia_name)
-					config_found(self, &ia, iic_print);
-			}
-			return;
-		}
+		if (OF_getprop(node, "compatible", name, sizeof(name)) == -1)
+			continue;
+		if (name[0] == '\0')
+			continue;
+
+		if (OF_getprop(node, "reg", reg, sizeof(reg)) == -1)
+			continue;
+
+		memset(&ia, 0, sizeof(ia));
+		ia.ia_tag = iba->iba_tag;
+		ia.ia_addr = reg[1] >> 1;
+		ia.ia_name = name;
+		ia.ia_cookie = &node;
+
+		if (strncmp(ia.ia_name, "i2c-", strlen("i2c-")) == 0)
+			ia.ia_name += strlen("i2c-");
+
+		config_found(self, &ia, iic_print);
 	}
 }

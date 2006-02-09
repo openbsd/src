@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofwi2cvar.h,v 1.1 2006/01/02 01:58:55 deraadt Exp $	*/
+/*	$OpenBSD: ofwi2cvar.h,v 1.2 2006/02/09 12:16:25 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Theo de Raadt
@@ -18,4 +18,5 @@
 
 #include <dev/i2c/i2cvar.h>
 
-void	ofwiic_scan(struct device *sc, struct i2cbus_attach_args *iba, void *aux);
+void	ofwiic_pci_scan(struct device *, struct i2cbus_attach_args *, void *);
+void	ofwiic_scan(struct device *, struct i2cbus_attach_args *, void *);
