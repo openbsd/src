@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.48 2005/11/03 13:28:07 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.49 2006/02/09 09:38:41 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -88,6 +88,30 @@ sub close
 	$object->deref();
 }
 
+sub finish_and_close
+{
+	my ($self, $object) = @_;
+	$self->close($object);
+}
+
+sub close_now
+{
+	my ($self, $object) = @_;
+	$self->close($object, 0);
+}
+
+sub close_after_error
+{
+	my ($self, $object) = @_;
+	$self->close($object, 1);
+}
+
+sub close_with_client_error
+{
+	my ($self, $object) = @_;
+	$self->close($object, 1);
+}
+
 sub make_room
 {
 	my $self = shift;
@@ -101,7 +125,7 @@ sub make_room
 		}
 		while (@$already >= $self->maxcount()) {
 			my $o = shift @$already;
-			$self->close($o, 0);
+			$self->close_now($o);
 		}
 	}
 	return $already;
@@ -403,6 +427,7 @@ sub open_pipe
 
 	my ($self, $object) = @_;
 	$object->{errors} = OpenBSD::Temp::file();
+	$object->{cache_dir} = $ENV{'PKG_CACHE'};
 	my $pid = open(my $fh, "-|");
 	if (!defined $pid) {
 		die "Cannot fork: $!";
@@ -426,13 +451,13 @@ sub open_pipe
 			    "-" 
 			or die "can't run gzip";
 		} else {
-			if (defined $ENV{'PKG_CACHE'}) {
+			if (defined $object->{cache_dir}) {
 				my $pid3 = open(my $in, "-|");
 				if (!defined $pid3) {
 					die "Cannot fork: $!";
 				}
 				if ($pid3) {
-					pkg_copy($in, $ENV{'PKG_CACHE'}, 
+					pkg_copy($in, $object->{cache_dir}, 
 					    $object->{name});
 					exit(0);
 				} else {
@@ -461,6 +486,15 @@ sub _list
 	return $l;
 }
 
+sub finish_and_close
+{
+	my ($self, $object) = @_;
+	if (defined $object->{cache_dir}) {
+		while (defined $object->intNext()) {
+		}
+	}
+	$self->SUPER::finish_and_close($object);
+}
 
 package OpenBSD::PackageRepository::SCP;
 our @ISA=qw(OpenBSD::PackageRepository::Distant);
@@ -696,7 +730,7 @@ sub grabPlist
 	if (defined $pkg) {
 		my $plist = $self->plist($code);
 		$pkg->wipe_info();
-		$pkg->close(0);
+		$pkg->close_now();
 		return $plist;
 	} else {
 		return undef;
@@ -739,7 +773,7 @@ sub openPackage
 		}
 	}
 	# hopeless
-	$self->close(1);
+	$self->close_with_client_error();
 	$self->wipe_info();
 	return undef;
 }
@@ -773,7 +807,7 @@ sub plist
 		    $code);
 	}
 	# hopeless
-	$self->close(1);
+	$self->close_with_client_error();
 
 	return undef;
 }
@@ -782,6 +816,30 @@ sub close
 {
 	my ($self, $hint) = @_;
 	$self->{repository}->close($self, $hint);
+}
+
+sub finish_and_close
+{
+	my $self = shift;
+	$self->{repository}->finish_and_close($self);
+}
+
+sub close_now
+{
+	my $self = shift;
+	$self->{repository}->close_now($self);
+}
+
+sub close_after_error
+{
+	my $self = shift;
+	$self->{repository}->close_after_error($self);
+}
+
+sub close_with_client_error
+{
+	my $self = shift;
+	$self->{repository}->close_with_client_error($self);
 }
 
 sub deref
