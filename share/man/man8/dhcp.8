@@ -1,4 +1,4 @@
-.\"     $OpenBSD: dhcp.8,v 1.20 2005/08/30 19:33:26 david Exp $
+.\"     $OpenBSD: dhcp.8,v 1.21 2006/02/09 12:08:58 jaredy Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Aaron Campbell
@@ -106,9 +106,8 @@ This will cause
 to start the
 .Xr dhcpd 8
 daemon at boot-time and listen for DHCP requests on the local network.
-To start it manually, execute the following commands:
+To start it manually, execute the following command:
 .Pp
-.Dl # touch /var/db/dhcpd.leases
 .Dl # /usr/sbin/dhcpd [netif1 netif2 ...]
 .It
 Ensure the kernel has been compiled with BPF (Berkeley Packet Filter) support
