@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmfile.c,v 1.9 2004/10/03 19:23:02 otto Exp $	*/
+/*	$OpenBSD: mmfile.c,v 1.10 2006/02/09 09:54:47 otto Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -95,16 +95,4 @@ mmfgetln(mmf_t *mmf, size_t *l)
 	*l = mmf->ptr - p;
 	++mmf->ptr;
 	return p;
-}
-
-long
-mmtell(mmf_t *mmf)
-{
-	return mmf->ptr - mmf->base;
-}
-
-void
-mmrewind(mmf_t *mmf)
-{
-	mmf->ptr = mmf->base;
 }

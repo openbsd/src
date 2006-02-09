@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.33 2005/04/03 19:18:33 jaredy Exp $	*/
+/*	$OpenBSD: grep.c,v 1.34 2006/02/09 09:54:46 otto Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -67,7 +67,6 @@ int	 Lflag;		/* -L: only show names of files with no matches */
 int	 Pflag;		/* -P: if -R, no symlinks are followed */
 int	 Rflag;		/* -R: recursively search directory trees */
 int	 Sflag;		/* -S: if -R, follow all symlinks */
-int	 Vflag;		/* -V: display version information */
 #ifndef NOZ
 int	 Zflag;		/* -Z: decompress input before processing */
 #endif
@@ -97,7 +96,6 @@ enum {
 /* Housekeeping */
 int	 first;		/* flag whether or not this is our first match */
 int	 tail;		/* lines left to print */
-int	 lead;		/* number of lines in leading context queue */
 
 struct patfile {
 	const char		*pf_file;

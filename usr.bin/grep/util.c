@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.30 2005/04/03 19:12:40 otto Exp $	*/
+/*	$OpenBSD: util.c,v 1.31 2006/02/09 09:54:47 otto Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -221,10 +221,7 @@ print:
 	return c;
 }
 
-/*
- * Returns: -1 on failure, 0 on success
- */
-int
+void
 fgrepcomp(fastgrep_t *fg, const char *pattern)
 {
 	int i;
@@ -261,8 +258,6 @@ fgrepcomp(fastgrep_t *fg, const char *pattern)
 		if (iflag)
 			fg->qsBc[tolower(fg->pattern[i])] = fg->patternLen - i;
 	}
-
-	return (0);
 }
 
 /*

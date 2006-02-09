@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.h,v 1.12 2004/10/03 19:23:02 otto Exp $	*/
+/*	$OpenBSD: grep.h,v 1.13 2006/02/09 09:54:47 otto Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -69,7 +69,7 @@ extern int	 Aflag, Bflag, Eflag, Fflag, Gflag, Hflag, Lflag, Pflag,
 		 vflag, wflag, xflag;
 extern int	 binbehave;
 
-extern int	 first, lead, matchall, patterns, tail;
+extern int	 first, matchall, patterns, tail;
 extern char    **pattern;
 extern fastgrep_t *fg_pattern;
 extern regex_t	*r_pattern;
@@ -85,14 +85,13 @@ void		*grep_malloc(size_t size);
 void		*grep_realloc(void *ptr, size_t size);
 void		 printline(str_t *line, int sep);
 int		 fastcomp(fastgrep_t *, const char *);
-int		 fgrepcomp(fastgrep_t *, const char *);
+void		 fgrepcomp(fastgrep_t *, const char *);
 
 /* queue.c */
 void		 initqueue(void);
 void		 enqueue(str_t *x);
 void		 printqueue(void);
 void		 clearqueue(void);
-int		 countqueue(void);
 
 /* mmfile.c */
 typedef struct mmfile {
@@ -104,8 +103,6 @@ typedef struct mmfile {
 mmf_t		*mmopen(char *fn, char *mode);
 void		 mmclose(mmf_t *mmf);
 char		*mmfgetln(mmf_t *mmf, size_t *l);
-long		 mmtell(mmf_t *mmf);
-void		 mmrewind(mmf_t *mmf);
 
 /* file.c */
 struct file;
@@ -114,7 +111,6 @@ typedef struct file file_t;
 file_t		*grep_fdopen(int fd, char *mode);
 file_t		*grep_open(char *path, char *mode);
 int		 grep_bin_file(file_t *f);
-long		 grep_tell(file_t *f);
 char		*grep_fgetln(file_t *f, size_t *l);
 void		 grep_close(file_t *f);
 

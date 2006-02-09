@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.8 2006/02/07 22:05:54 otto Exp $	*/
+/*	$OpenBSD: file.c,v 1.9 2006/02/09 09:54:46 otto Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -166,24 +166,6 @@ grep_bin_file(file_t *f)
 #ifndef NOZ
 	case FILE_GZIP:
 		return gzbin_file(f->gzf);
-#endif
-	default:
-		/* can't happen */
-		errx(2, "invalid file type");
-	}
-}
-
-long
-grep_tell(file_t *f)
-{
-	switch (f->type) {
-	case FILE_STDIO:
-		return ftell(f->f);
-	case FILE_MMAP:
-		return mmtell(f->mmf);
-#ifndef NOZ
-	case FILE_GZIP:
-		return gztell(f->gzf);
 #endif
 	default:
 		/* can't happen */
