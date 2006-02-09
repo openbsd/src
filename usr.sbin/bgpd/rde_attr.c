@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.61 2006/02/09 20:50:09 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.62 2006/02/09 20:54:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -723,7 +723,7 @@ community_match(void *data, u_int16_t len, int as, int type)
 		etype <<= 8;
 		etype |= *p++;
 		if ((as == COMMUNITY_ANY || (u_int16_t)as == eas) &&
-		    (type == COMMUNITY_ANY || type == etype))
+		    (type == COMMUNITY_ANY || (u_int16_t)type == etype))
 			return (1);
 	}
 	return (0);
