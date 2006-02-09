@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.99 2006/01/27 15:42:35 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.100 2006/02/09 13:08:01 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -126,13 +126,21 @@
 /* client-side paths */
 #define CVS_PATH_RC		".cvsrc"
 #define CVS_PATH_CVSDIR		"CVS"
+#define CVS_PATH_BASEDIR	CVS_PATH_CVSDIR "/Base"
+#define CVS_PATH_BASEREV	CVS_PATH_CVSDIR "/Baserev"
+#define CVS_PATH_BASEREVTMP	CVS_PATH_CVSDIR "/Baserev.tmp"
+#define CVS_PATH_CHECKINPROG	CVS_PATH_CVSDIR "/Checkin.prog"
 #define CVS_PATH_ENTRIES	CVS_PATH_CVSDIR "/Entries"
 #define CVS_PATH_STATICENTRIES	CVS_PATH_CVSDIR "/Entries.Static"
 #define CVS_PATH_LOGENTRIES	CVS_PATH_CVSDIR "/Entries.Log"
 #define CVS_PATH_BACKUPENTRIES	CVS_PATH_CVSDIR "/Entries.Backup"
+#define CVS_PATH_NOTIFY		CVS_PATH_CVSDIR "/Notify"
+#define CVS_PATH_NOTIFYTMP	CVS_PATH_CVSDIR "/Notify.tmp"
 #define CVS_PATH_ROOTSPEC	CVS_PATH_CVSDIR "/Root"
 #define CVS_PATH_REPOSITORY	CVS_PATH_CVSDIR "/Repository"
 #define CVS_PATH_TAG		CVS_PATH_CVSDIR "/Tag"
+#define CVS_PATH_TEMPLATE	CVS_PATH_CVSDIR "/Template"
+#define CVS_PATH_UPDATEPROG	CVS_PATH_CVSDIR "/Update.prog"
 
 
 /* flags for cmd_flags */
