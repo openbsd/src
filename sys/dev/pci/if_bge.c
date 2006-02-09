@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.130 2006/02/09 01:17:24 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.131 2006/02/09 03:31:44 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -631,17 +631,15 @@ bge_miibus_statchg(struct device *dev)
 	struct mii_data *mii = &sc->bge_mii;
 
 	BGE_CLRBIT(sc, BGE_MAC_MODE, BGE_MACMODE_PORTMODE);
-	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) {
+	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T)
 		BGE_SETBIT(sc, BGE_MAC_MODE, BGE_PORTMODE_GMII);
-	} else {
+	else
 		BGE_SETBIT(sc, BGE_MAC_MODE, BGE_PORTMODE_MII);
-	}
 
-	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX) {
+	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
 		BGE_CLRBIT(sc, BGE_MAC_MODE, BGE_MACMODE_HALF_DUPLEX);
-	} else {
+	else
 		BGE_SETBIT(sc, BGE_MAC_MODE, BGE_MACMODE_HALF_DUPLEX);
-	}
 }
 
 /*
