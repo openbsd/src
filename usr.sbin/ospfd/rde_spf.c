@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.46 2006/02/02 15:10:57 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.47 2006/02/09 20:47:20 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -536,12 +536,16 @@ spf_timer(int fd, short event, void *arg)
 		rt_invalidate();
 
 		LIST_FOREACH(area, &conf->area_list, entry) {
-			/* calculate SPF tree */
-			spf_calc(area);
+			if (area->dirty) {
+				/* calculate SPF tree */
+				spf_calc(area);
 
-			/* calculate route table */
-			RB_FOREACH(v, lsa_tree, &area->lsa_tree) {
-				rt_calc(v, area);
+				/* calculate route table */
+				RB_FOREACH(v, lsa_tree, &area->lsa_tree) {
+					rt_calc(v, area);
+				}
+
+				area->dirty = 0;
 			}
 		}
 

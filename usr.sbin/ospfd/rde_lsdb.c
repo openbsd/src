@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.24 2006/01/05 15:10:57 norby Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.25 2006/02/09 20:47:20 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -344,14 +344,17 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 	old = RB_INSERT(lsa_tree, tree, new);
 
 	if (old != NULL) {
-		if (!lsa_equal(new->lsa, old->lsa))
+		if (!lsa_equal(new->lsa, old->lsa)) {
+			nbr->area->dirty = 1;
 			start_spf_timer();
+		}
 		RB_REMOVE(lsa_tree, tree, old);
 		vertex_free(old);
 		RB_INSERT(lsa_tree, tree, new);
-	} else
+	} else {
+		nbr->area->dirty = 1;
 		start_spf_timer();
-
+	}
 
 	/* timeout handling either MAX_AGE or LS_REFRESH_TIME */
 	timerclear(&tv);
@@ -615,6 +618,7 @@ lsa_merge(struct rde_nbr *nbr, struct lsa *lsa, struct vertex *v)
 	free(v->lsa);
 	v->lsa = lsa;
 	start_spf_timer();
+	nbr->area->dirty = 1;
 
 	/* set correct timeout for reflooding the LSA */
 	clock_gettime(CLOCK_MONOTONIC, &tp);

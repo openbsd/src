@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.42 2006/02/01 18:31:47 norby Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.43 2006/02/09 20:47:20 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -181,6 +181,7 @@ struct area {
 	u_int8_t		 priority;
 	u_int8_t		 transit;
 	u_int8_t		 stub;
+	u_int8_t		 dirty;
 };
 
 /* interface states */
