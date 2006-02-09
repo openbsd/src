@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.129 2006/02/08 22:09:20 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.130 2006/02/09 01:17:24 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -561,14 +561,15 @@ bge_miibus_readreg(struct device *dev, int phy, int reg)
 	CSR_WRITE_4(sc, BGE_MI_COMM, BGE_MICMD_READ|BGE_MICOMM_BUSY|
 	    BGE_MIPHY(phy)|BGE_MIREG(reg));
 
-	for (i = 0; i < BGE_TIMEOUT; i++) {
+	for (i = 0; i < 200; i++) {
+		delay(1);
 		val = CSR_READ_4(sc, BGE_MI_COMM);
 		if (!(val & BGE_MICOMM_BUSY))
 			break;
 		delay(10);
 	}
 
-	if (i == BGE_TIMEOUT) {
+	if (i == 200) {
 		printf("%s: PHY read timed out\n", sc->bge_dev.dv_xname);
 		val = 0;
 		goto done;
@@ -606,7 +607,8 @@ bge_miibus_writereg(struct device *dev, int phy, int reg, int val)
 	CSR_WRITE_4(sc, BGE_MI_COMM, BGE_MICMD_WRITE|BGE_MICOMM_BUSY|
 	    BGE_MIPHY(phy)|BGE_MIREG(reg)|val);
 
-	for (i = 0; i < BGE_TIMEOUT; i++) {
+	for (i = 0; i < 200; i++) {
+		delay(1);
 		if (!(CSR_READ_4(sc, BGE_MI_COMM) & BGE_MICOMM_BUSY))
 			break;
 		delay(10);
@@ -617,7 +619,7 @@ bge_miibus_writereg(struct device *dev, int phy, int reg, int val)
 		DELAY(40);
 	}
 
-	if (i == BGE_TIMEOUT) {
+	if (i == 200) {
 		printf("%s: PHY read timed out\n", sc->bge_dev.dv_xname);
 	}
 }
@@ -1340,13 +1342,13 @@ bge_blockinit(struct bge_softc *sc)
 	    BGE_BMANMODE_ENABLE|BGE_BMANMODE_LOMBUF_ATTN);
 
 	/* Poll for buffer manager start indication */
-	for (i = 0; i < BGE_TIMEOUT; i++) {
+	for (i = 0; i < 2000; i++) {
 		if (CSR_READ_4(sc, BGE_BMAN_MODE) & BGE_BMANMODE_ENABLE)
 			break;
 		DELAY(10);
 	}
 
-	if (i == BGE_TIMEOUT) {
+	if (i == 2000) {
 		printf("%s: buffer manager failed to start\n",
 		    sc->bge_dev.dv_xname);
 		return (ENXIO);
@@ -1357,13 +1359,13 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_FTQ_RESET, 0);
 
 	/* Wait until queue initialization is complete */
-	for (i = 0; i < BGE_TIMEOUT; i++) {
+	for (i = 0; i < 2000; i++) {
 		if (CSR_READ_4(sc, BGE_FTQ_RESET) == 0)
 			break;
 		DELAY(10);
 	}
 
-	if (i == BGE_TIMEOUT) {
+	if (i == 2000) {
 		printf("%s: flow-through queue init failed\n",
 		    sc->bge_dev.dv_xname);
 		return (ENXIO);
@@ -1522,13 +1524,13 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_HCC_MODE, 0x00000000);
 
 	/* Poll to make sure it's shut down. */
-	for (i = 0; i < BGE_TIMEOUT; i++) {
+	for (i = 0; i < 2000; i++) {
 		if (!(CSR_READ_4(sc, BGE_HCC_MODE) & BGE_HCCMODE_ENABLE))
 			break;
 		DELAY(10);
 	}
 
-	if (i == BGE_TIMEOUT) {
+	if (i == 2000) {
 		printf("%s: host coalescing engine failed to idle\n",
 		    sc->bge_dev.dv_xname);
 		return (ENXIO);
@@ -2103,7 +2105,7 @@ bge_reset(struct bge_softc *sc)
 		DELAY(10);
 	}
 
-	if (i == BGE_TIMEOUT) {
+	if (i >= BGE_TIMEOUT) {
 		printf("%s: firmware handshake timed out\n",
 		    sc->bge_dev.dv_xname);
 		return;
