@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.26 2005/12/15 20:29:06 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.27 2006/02/09 15:23:08 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -493,6 +493,8 @@ nbr_act_eval(struct nbr *nbr)
 	/* initial db negotiation */
 	start_db_tx_timer(nbr);
 
+	nbr_start_adj_timer(nbr);
+
 	return (0);
 }
 
@@ -500,7 +502,6 @@ int
 nbr_act_snapshot(struct nbr *nbr)
 {
 	stop_db_tx_timer(nbr);
-	nbr_start_adj_timer(nbr);
 
 	ospfe_imsg_compose_rde(IMSG_DB_SNAPSHOT, nbr->peerid, 0, NULL, 0);
 
@@ -558,6 +559,8 @@ nbr_act_restart_dd(struct nbr *nbr)
 
 	/* initial db negotiation */
 	start_db_tx_timer(nbr);
+
+	nbr_start_adj_timer(nbr);
 
 	return (0);
 }
