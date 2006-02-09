@@ -1,4 +1,4 @@
-/*	$OpenBSD: evbuffer.c,v 1.6 2005/07/02 07:15:13 grunk Exp $	*/
+/*	$OpenBSD: evbuffer.c,v 1.7 2006/02/09 06:18:18 brad Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Niels Provos <provos@citi.umich.edu>
@@ -76,7 +76,7 @@ bufferevent_read_pressure_cb(struct evbuffer *buf, size_t old, size_t now,
     void *arg) {
 	struct bufferevent *bufev = arg;
 	/*
-	 * If we are below the watermak then reschedule reading if it's
+	 * If we are below the watermark then reschedule reading if it's
 	 * still enabled.
 	 */
 	if (bufev->wm_read.high == 0 || now < bufev->wm_read.high) {
