@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.179 2006/02/02 14:06:05 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.180 2006/02/09 21:05:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -158,7 +158,7 @@ typedef struct {
 %token	QUICK
 %token	FROM TO ANY
 %token	CONNECTED STATIC
-%token	PREFIX PREFIXLEN SOURCEAS TRANSITAS COMMUNITY
+%token	PREFIX PREFIXLEN SOURCEAS TRANSITAS COMMUNITY DELETE
 %token	SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE NOMODIFY
 %token	PREPEND_SELF PREPEND_PEER PFTABLE WEIGHT RTLABEL
 %token	ERROR
@@ -170,7 +170,7 @@ typedef struct {
 %type	<v.string>		string
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
-%type	<v.u8>			action quick direction
+%type	<v.u8>			action quick direction delete
 %type	<v.filter_peers>	filter_peer filter_peer_l filter_peer_h
 %type	<v.filter_match>	filter_match filter_elm filter_match_h
 %type	<v.filter_as>		filter_as filter_as_l filter_as_h
@@ -1236,6 +1236,10 @@ filter_set_l	: filter_set_l comma filter_set_opt	{
 		}
 		;
 
+delete		: /* empty */	{ $$ = 0; }
+		| DELETE	{ $$ = 1; }
+		;
+
 filter_set_opt	: LOCALPREF number		{
 			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
@@ -1419,20 +1423,26 @@ filter_set_opt	: LOCALPREF number		{
 			}
 			free($2);
 		}
-		| COMMUNITY STRING		{
+		| COMMUNITY delete STRING	{
 			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
-			$$->type = ACTION_SET_COMMUNITY;
-			if (parsecommunity($2, &$$->action.community.as,
+			if ($2)
+				$$->type = ACTION_DEL_COMMUNITY;
+			else
+				$$->type = ACTION_SET_COMMUNITY;
+
+			if (parsecommunity($3, &$$->action.community.as,
 			    &$$->action.community.type) == -1) {
-				free($2);
+				free($3);
+				free($$);
 				YYERROR;
 			}
-			free($2);
+			free($3);
 			/* Don't allow setting of any match */
-			if ($$->action.community.as == COMMUNITY_ANY ||
-			    $$->action.community.type == COMMUNITY_ANY) {
+			if (!$2 && ($$->action.community.as == COMMUNITY_ANY ||
+			    $$->action.community.type == COMMUNITY_ANY)) {
 				yyerror("'*' is not allowed in set community");
+				free($$);
 				YYERROR;
 			}
 			/* Don't allow setting of unknown well-known types */
@@ -1447,6 +1457,7 @@ filter_set_opt	: LOCALPREF number		{
 				default:
 					/* unknown */
 					yyerror("Invalid well-known community");
+					free($$);
 					YYERROR;
 					break;
 				}
@@ -1516,6 +1527,7 @@ lookup(char *s)
 		{ "community",		COMMUNITY},
 		{ "compare",		COMPARE},
 		{ "connected",		CONNECTED},
+		{ "delete",		DELETE},
 		{ "deny",		DENY},
 		{ "depend",		DEPEND},
 		{ "descr",		DESCR},

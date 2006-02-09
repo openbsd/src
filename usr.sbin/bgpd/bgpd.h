@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.190 2006/02/02 14:06:05 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.191 2006/02/09 21:05:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -589,6 +589,7 @@ enum action_types {
 	ACTION_SET_NEXTHOP_BLACKHOLE,
 	ACTION_SET_NEXTHOP_NOMODIFY,
 	ACTION_SET_COMMUNITY,
+	ACTION_DEL_COMMUNITY,
 	ACTION_PFTABLE,
 	ACTION_PFTABLE_ID,
 	ACTION_RTLABEL,
@@ -609,6 +610,7 @@ static const char * const filterset_names[] = {
 	"nexthop",
 	"nexthop",
 	"community",
+	"community delete",
 	"pftable",
 	"pftable",
 	"rtlabel",

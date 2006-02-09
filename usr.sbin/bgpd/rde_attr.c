@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.62 2006/02/09 20:54:56 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.63 2006/02/09 21:05:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -739,7 +739,6 @@ community_set(struct rde_aspath *asp, int as, int type)
 	u_int8_t	 t = ATTR_COMMUNITIES;
 
 	attr = attr_optget(asp, ATTR_COMMUNITIES);
-
 	if (attr != NULL) {
 		p = attr->data;
 		ncommunities = attr->len >> 2; /* divide by four */
@@ -776,5 +775,66 @@ community_set(struct rde_aspath *asp, int as, int type)
 	attr_optadd(asp, f, t, p, ncommunities << 2);
 
 	return (1);
+}
+
+void
+community_delete(struct rde_aspath *asp, int as, int type)
+{
+	struct attr	*attr;
+	u_int8_t	*p, *n;
+	u_int16_t	 l, len = 0;
+	u_int16_t	 eas, etype;
+	u_int8_t	 f, t;
+
+	attr = attr_optget(asp, ATTR_COMMUNITIES);
+	if (attr == NULL)
+		/* no attr nothing to do */
+		return;
+	
+	p = attr->data;
+	for (l = 0; l < attr->len; l += 4) {
+		eas = *p++;
+		eas <<= 8;
+		eas |= *p++;
+		etype = *p++;
+		etype <<= 8;
+		etype |= *p++;
+
+		if (as != COMMUNITY_ANY && (u_int16_t)as != eas &&
+		    type != COMMUNITY_ANY && (u_int16_t)type != etype)
+			len += 4;
+	}
+
+	if (len == 0) {
+		attr_free(asp, attr);
+		return;
+	}
+
+	if ((n = malloc(len)) == NULL)
+		fatal("community_delete");
+
+	p = attr->data;
+	for (l = 0; l < len && p < attr->data + attr->len; ) {
+		eas = *p++;
+		eas <<= 8;
+		eas |= *p++;
+		etype = *p++;
+		etype <<= 8;
+		etype |= *p++;
+
+		if (as != COMMUNITY_ANY && (u_int16_t)as != eas &&
+		    type != COMMUNITY_ANY && (u_int16_t)type != etype) {
+			n[l++] = eas >> 8;
+			n[l++] = eas & 0xff;
+			n[l++] = etype >> 8;
+			n[l++] = etype & 0xff;
+		}
+	}
+
+	f = attr->flags;
+	t = attr->type;
+
+	attr_free(asp, attr);
+	attr_optadd(asp, f, t, n, len);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.45 2006/02/03 19:33:14 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.46 2006/02/09 21:05:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -189,6 +189,33 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 			}
 
 			community_set(asp, as, type);
+			break;
+		case ACTION_DEL_COMMUNITY:
+			switch (set->action.community.as) {
+			case COMMUNITY_ERROR:
+				fatalx("rde_apply_set bad community string");
+			case COMMUNITY_NEIGHBOR_AS:
+				as = peer->conf.remote_as;
+				break;
+			case COMMUNITY_ANY:
+			default:
+				as = set->action.community.as;
+				break;
+			}
+
+			switch (set->action.community.type) {
+			case COMMUNITY_ERROR:
+				fatalx("rde_apply_set bad community string");
+			case COMMUNITY_NEIGHBOR_AS:
+				type = peer->conf.remote_as;
+				break;
+			case COMMUNITY_ANY:
+			default:
+				type = set->action.community.type;
+				break;
+			}
+
+			community_delete(asp, as, type);
 			break;
 		case ACTION_PFTABLE:
 			/* convert pftable name to an id */
@@ -488,6 +515,7 @@ filterset_equal(struct filter_set_head *ah, struct filter_set_head *bh)
 			if (a->type == b->type)
 				continue;
 			break;
+		case ACTION_DEL_COMMUNITY:
 		case ACTION_SET_COMMUNITY:
 			if (a->type == b->type &&
 			    memcmp(&a->action.community, &b->action.community,
