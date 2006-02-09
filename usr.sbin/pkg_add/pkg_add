@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.213 2006/02/07 10:34:56 bernd Exp $
+# $OpenBSD: pkg_add,v 1.214 2006/02/09 09:40:31 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -204,7 +204,7 @@ sub pre_add($$)
 	if (can_install($plist, $state, $handle)) {
 		return $handle;
 	} else {
-		$handle->close();
+		$handle->close_with_client_error();
 		$handle->wipe_info();
 		delete $handle->{plist};
 		$handle->{finished} = 1;
@@ -219,7 +219,6 @@ sub pre_add($$)
 sub do_script
 {
 	my ($plist, $name, $state, $args) = @_;
-	$state->{dir} = $plist->{dir};
 	return unless $plist->has($name);
 	$plist->get($name)->run($state, $args);
 }
@@ -259,6 +258,7 @@ sub really_add($$)
 	my $pkgname = $plist->pkgname();
 	$state->{archive} = $handle;
 	$plist->{dir} = $dir;
+	$state->{dir} = $plist->{dir};
 	$state->set_pkgname($pkgname);
 
 	# XXX in `combined' updates, some dependencies may remove extra 
@@ -417,7 +417,7 @@ sub really_add($$)
 		}
 	}
 
-	$handle->close();
+	$handle->finish_and_close();
 	OpenBSD::ProgressMeter::next();
 
 	if (!($interrupted || $errors)) {
@@ -518,7 +518,7 @@ sub install_package
 	}
 
 	if (defined $state->{installed}->{$handle->{pkgname}}) {
-		$handle->close();
+		$handle->close_now();
 		return ();
 	}
 
@@ -540,11 +540,11 @@ sub install_package
 			if (!has_new_sig($plist, $state) && !uses_old_libs($plist)) {
 				OpenBSD::SharedLibs::add_package_libs($plist->pkgname());
 				$state->{installed}->{$handle->{pkgname}} = 1;
-				$handle->close();
+				$handle->close_now();
 				return ();
 			}
 		} else {
-			$handle->close();
+			$handle->close_now();
 			return ();
 		}
 	}
@@ -567,7 +567,7 @@ sub install_package
 	for my $dep (keys %{$handle->{solved_dependencies}}) {
 		next if is_installed($dep);
 		print "Can't install $pkg: can't resolve $dep\n";
-		$handle->close();
+		$handle->close_now();
 		$bad++;
 		return ();
 	}
@@ -598,7 +598,7 @@ sub install_package
 		}
 	}
 	if (!$okay) {
-		$handle->close();
+		$handle->close_now();
 		if (!$forced{libdepends}) {
 			$bad++;
 			return ();
@@ -687,7 +687,7 @@ sub find_updates
 		    if (!$handle) {
 			    next;
 		    }
-		    $handle->close(0);
+		    $handle->close_now();
 		    my $p2 = $handle->plist(\&OpenBSD::PackingList::UpdateInfoOnly);
 		    if (!$p2) {
 		    	next;

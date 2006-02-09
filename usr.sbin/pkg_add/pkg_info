@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.37 2005/11/01 17:02:29 bernd Exp $
+# $OpenBSD: pkg_info,v 1.38 2006/02/09 09:40:31 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -90,7 +90,7 @@ sub find_pkg
 	$pkg = OpenBSD::PackageLocator->find($pkgname);
 	if (defined $pkg) {
 		&$code($pkgname, $pkg);
-		$pkg->close();
+		$pkg->close_now();
 		$pkg->wipe_info();
 	}
 }
