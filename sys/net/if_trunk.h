@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.6 2005/12/18 17:59:59 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.7 2006/02/09 13:33:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -40,7 +40,7 @@ enum trunk_proto {
 	TRUNK_PROTO_NONE	= 0,		/* no trunk protocol defined */
 	TRUNK_PROTO_ROUNDROBIN	= 1,		/* simple round robin */
 	TRUNK_PROTO_FAILOVER	= 2,		/* active failover */
-	TRUNK_PROTO_MAX		= 3,
+	TRUNK_PROTO_MAX		= 3
 };
 
 struct trunk_protos {
