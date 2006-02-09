@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.76 2005/06/14 04:00:39 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.77 2006/02/09 00:05:55 reyk Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -177,6 +177,7 @@ struct ifnet {				/* and the entries */
 	TAILQ_HEAD(, ifg_list) if_groups; /* linked list of groups per if */
 	struct hook_desc_head *if_addrhooks; /* address change callbacks */
 	struct hook_desc_head *if_linkstatehooks; /* link change callbacks */
+	struct hook_desc_head *if_detachhooks; /* detach callbacks */
 	char	if_xname[IFNAMSIZ];	/* external name (name + unit) */
 	int	if_pcount;		/* number of promiscuous listeners */
 	caddr_t	if_bpf;			/* packet filter structure */

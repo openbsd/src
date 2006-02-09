@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.142 2006/01/05 03:28:34 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.143 2006/02/09 00:05:55 reyk Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -405,6 +405,11 @@ if_attachhead(struct ifnet *ifp)
 	if (ifp->if_linkstatehooks == NULL)
 		panic("if_attachhead: malloc");
 	TAILQ_INIT(ifp->if_linkstatehooks);
+	ifp->if_detachhooks = malloc(sizeof(*ifp->if_detachhooks),
+	    M_TEMP, M_NOWAIT);
+	if (ifp->if_detachhooks == NULL)
+		panic("if_attachhead: malloc");
+	TAILQ_INIT(ifp->if_detachhooks);
 	TAILQ_INSERT_HEAD(&ifnet, ifp, if_list);
 	if_attachsetup(ifp);
 }
@@ -431,6 +436,11 @@ if_attach(struct ifnet *ifp)
 	if (ifp->if_linkstatehooks == NULL)
 		panic("if_attach: malloc");
 	TAILQ_INIT(ifp->if_linkstatehooks);
+	ifp->if_detachhooks = malloc(sizeof(*ifp->if_detachhooks),
+	    M_TEMP, M_NOWAIT);
+	if (ifp->if_detachhooks == NULL)
+		panic("if_attach: malloc");
+	TAILQ_INIT(ifp->if_detachhooks);
 
 #if NCARP > 0
 	if (ifp->if_type != IFT_CARP)
@@ -499,6 +509,9 @@ if_detach(struct ifnet *ifp)
 	ifp->if_ioctl = if_detached_ioctl;
 	ifp->if_init = if_detached_init;
 	ifp->if_watchdog = if_detached_watchdog;
+
+	/* Call detach hooks, ie. to remove vlan interfaces */
+	dohooks(ifp->if_detachhooks, HOOK_REMOVE | HOOK_FREE);
 
 #if NTRUNK > 0
 	if (ifp->if_type == IFT_IEEE8023ADLAG)
@@ -626,6 +639,7 @@ do { \
 
 	free(ifp->if_addrhooks, M_TEMP);
 	free(ifp->if_linkstatehooks, M_TEMP);
+	free(ifp->if_detachhooks, M_TEMP);
 
 	for (dp = domains; dp; dp = dp->dom_next) {
 		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])

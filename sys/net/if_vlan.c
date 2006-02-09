@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.62 2006/01/05 14:57:24 norby Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.63 2006/02/09 00:05:55 reyk Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -97,6 +97,7 @@ int	vlan_ether_delmulti(struct ifvlan *, struct ifreq *);
 void	vlan_ether_purgemulti(struct ifvlan *);
 int	vlan_clone_create(struct if_clone *, int);
 int	vlan_clone_destroy(struct ifnet *);
+void	vlan_ifdetach(void *);
 
 struct if_clone vlan_cloner =
     IF_CLONE_INITIALIZER("vlan", vlan_clone_create, vlan_clone_destroy);
@@ -156,6 +157,20 @@ vlan_clone_destroy(struct ifnet *ifp)
 
 	free(ifv, M_DEVBUF);
 	return (0);
+}
+
+void
+vlan_ifdetach(void *ptr)
+{
+	struct ifvlan *ifv = (struct ifvlan *)ptr;
+	/*
+	 * Destroy the vlan interface because the parent has been
+	 * detached. Set the dh_cookie to NULL because we're running
+	 * inside of dohooks which is told to disestablish the hook
+	 * for us (otherwise we would kill the TAILQ element...).
+	 */
+	ifv->dh_cookie = NULL;
+	vlan_clone_destroy(&ifv->ifv_if);
 }
 
 void
@@ -389,6 +404,11 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	/* Register callback for physical link state changes */
 	ifv->lh_cookie = hook_establish(p->if_linkstatehooks, 1,
 	    vlan_vlandev_state, ifv);
+
+	/* Register callback if parent wants to unregister */
+	ifv->dh_cookie = hook_establish(p->if_detachhooks, 1,
+	    vlan_ifdetach, ifv);
+
 	vlan_vlandev_state(ifv);
 	splx(s);
 
@@ -407,15 +427,18 @@ vlan_unconfig(struct ifnet *ifp)
 
 	ifv = ifp->if_softc;
 	p = ifv->ifv_p;
-	ifr = (struct ifreq *)&ifp->if_data;
-	ifr_p = (struct ifreq *)&ifv->ifv_p->if_data;
-
 	if (p == NULL)
 		return 0;
+
+	ifr = (struct ifreq *)&ifp->if_data;
+	ifr_p = (struct ifreq *)&ifv->ifv_p->if_data;
 
 	s = splnet();
 	LIST_REMOVE(ifv, ifv_list);
 	hook_disestablish(p->if_linkstatehooks, ifv->lh_cookie);
+	/* The cookie is NULL if disestablished externally */
+	if (ifv->dh_cookie != NULL)
+		hook_disestablish(p->if_detachhooks, ifv->dh_cookie);
 	splx(s);
 
 	/*
