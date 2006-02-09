@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.45 2006/01/02 09:42:20 xsa Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.46 2006/02/09 08:08:56 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -54,6 +54,25 @@
 #define RCS_LOCK_STRICT		1
 
 
+/*
+ * Keyword expansion table
+ */
+#define RCS_KW_AUTHOR		0x1000
+#define RCS_KW_DATE		0x2000
+#define RCS_KW_LOG		0x4000
+#define RCS_KW_NAME		0x8000
+#define RCS_KW_RCSFILE		0x0100
+#define RCS_KW_REVISION		0x0200
+#define RCS_KW_SOURCE		0x0400
+#define RCS_KW_STATE		0x0800
+#define RCS_KW_FULLPATH		0x0010
+
+#define RCS_KW_ID \
+	(RCS_KW_RCSFILE | RCS_KW_REVISION | RCS_KW_DATE \
+	| RCS_KW_AUTHOR | RCS_KW_STATE)
+
+#define RCS_KW_HEADER	(RCS_KW_ID | RCS_KW_FULLPATH)
+
 /* RCS keyword expansion modes (kflags) */
 #define RCS_KWEXP_NONE	0x00
 #define RCS_KWEXP_NAME	0x01	/* include keyword name */
@@ -70,6 +89,12 @@
 	((k & RCS_KWEXP_OLD) && (RCS_KWEXP_OLD & ~RCS_KWEXP_OLD)))
 
 
+struct rcs_kw {
+	char	kw_str[16];
+	int	kw_type;
+};
+
+#define RCS_NKWORDS	(sizeof(rcs_expkw)/sizeof(rcs_expkw[0]))
 
 #define RCSNUM_MAXNUM	USHRT_MAX
 #define RCSNUM_MAXLEN	64

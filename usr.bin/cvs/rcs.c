@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.127 2006/02/01 13:52:51 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.128 2006/02/09 08:08:56 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -164,6 +164,19 @@ static const struct rcs_comment {
 	{ "yr",   " * "    },	/* yacc-ratfor	 */
 };
 
+struct rcs_kw rcs_expkw[] =  {
+	{ "Author",	RCS_KW_AUTHOR   },
+	{ "Date",	RCS_KW_DATE     },
+	{ "Header",	RCS_KW_HEADER   },
+	{ "Id",		RCS_KW_ID       },
+	{ "Log",	RCS_KW_LOG      },
+	{ "Name",	RCS_KW_NAME     },
+	{ "RCSfile",	RCS_KW_RCSFILE  },
+	{ "Revision",	RCS_KW_REVISION },
+	{ "Source",	RCS_KW_SOURCE   },
+	{ "State",	RCS_KW_STATE    },
+};
+
 #define NB_COMTYPES	(sizeof(rcs_comments)/sizeof(rcs_comments[0]))
 
 #ifdef notyet
@@ -205,42 +218,6 @@ static struct rcs_key {
 
 #define RCS_NKEYS	(sizeof(rcs_keys)/sizeof(rcs_keys[0]))
 
-/*
- * Keyword expansion table
- */
-#define RCS_KW_AUTHOR		0x1000
-#define RCS_KW_DATE		0x2000
-#define RCS_KW_LOG		0x4000
-#define RCS_KW_NAME		0x8000
-#define RCS_KW_RCSFILE		0x0100
-#define RCS_KW_REVISION		0x0200
-#define RCS_KW_SOURCE		0x0400
-#define RCS_KW_STATE		0x0800
-#define RCS_KW_FULLPATH		0x0010
-
-#define RCS_KW_ID \
-	(RCS_KW_RCSFILE | RCS_KW_REVISION | RCS_KW_DATE \
-	| RCS_KW_AUTHOR | RCS_KW_STATE)
-
-#define RCS_KW_HEADER	(RCS_KW_ID | RCS_KW_FULLPATH)
-
-static struct rcs_kw {
-	char	kw_str[16];
-	int	kw_type;
-} rcs_expkw[] = {
-	{ "Author",	RCS_KW_AUTHOR   },
-	{ "Date",	RCS_KW_DATE     },
-	{ "Header",	RCS_KW_HEADER   },
-	{ "Id",		RCS_KW_ID       },
-	{ "Log",	RCS_KW_LOG      },
-	{ "Name",	RCS_KW_NAME     },
-	{ "RCSfile",	RCS_KW_RCSFILE  },
-	{ "Revision",	RCS_KW_REVISION },
-	{ "Source",	RCS_KW_SOURCE   },
-	{ "State",	RCS_KW_STATE    },
-};
-
-#define RCS_NKWORDS	(sizeof(rcs_expkw)/sizeof(rcs_expkw[0]))
 
 static const char *rcs_errstrs[] = {
 	"No error",
