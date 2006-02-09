@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.27 2006/02/08 23:05:44 brad Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.28 2006/02/09 11:14:56 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -332,9 +332,17 @@
 #define SK_YUKON_LITE_REV_A1	0x3
 #define SK_YUKON_LITE_REV_A3	0x7
 
+#define SK_YUKON_XL_REV_A0	0x0
+#define SK_YUKON_XL_REV_A1	0x1
+#define SK_YUKON_XL_REV_A2	0x2
+#define SK_YUKON_XL_REV_A3	0x3
+
 #define SK_YUKON_EC_REV_A1	0x0
 #define SK_YUKON_EC_REV_A2	0x1
 #define SK_YUKON_EC_REV_A3	0x2
+
+#define SK_YUKON_EC_U_REV_A0	0x1
+#define SK_YUKON_EC_U_REV_A1	0x2
 
 #define SK_IMCTL_STOP	0x02
 #define SK_IMCTL_START	0x04
