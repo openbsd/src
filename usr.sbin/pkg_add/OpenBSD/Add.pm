@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.46 2005/12/05 13:39:28 espie Exp $
+# $OpenBSD: Add.pm,v 1.47 2006/02/09 09:42:10 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -63,75 +63,9 @@ sub validate_plist($$)
 	my $problems = 0;
 	my $pkgname = $plist->pkgname();
 	my $totsize = 0;
-
-	my $extra = $plist->{extrainfo};
-	if ($state->{cdrom_only} && ((!defined $extra) || $extra->{cdrom} ne 'yes')) {
-	    Warn "Package $pkgname is not for cdrom.\n";
-	    $problems++;
-	}
-	if ($state->{ftp_only} && ((!defined $extra) || $extra->{ftp} ne 'yes')) {
-	    Warn "Package $pkgname is not for ftp.\n";
-	    $problems++;
-	}
-
-	# check for collisions with existing stuff
 	my $colliding = [];
-	for my $item (@{$plist->{items}}) {
-		next unless $item->IsFile();
-		my $fname = $destdir.$item->fullname();
-		if (OpenBSD::Vstat::vexists($fname)) {
-			push(@$colliding, $item);
-			$problems++;
-			next;
-		}
-		$totsize += $item->{size} if defined $item->{size};
-		my $s = OpenBSD::Vstat::add($fname, $item->{size}, \$pkgname);
-		next unless defined $s;
-		if ($s->{ro}) {
-			if ($state->{very_verbose} or ++($s->{problems}) < 4) {
-				Warn "Error: ", $s->{dev}, 
-				    " is read-only ($fname)\n";
-			} elsif ($s->{problems} == 4) {
-				Warn "Error: ... more files can't be written to ",
-					$s->{dev}, "\n";
-			}
-			$problems++;
-		}
-		if ($state->{forced}->{kitchensink} && $state->{not}) {
-			next;
-		}
-		if ($s->avail() < 0) {
-			if ($state->{very_verbose} or ++($s->{problems}) < 4) {
-				Warn "Error: ", $s->{dev}, 
-				    " is not large enough ($fname)\n";
-			} elsif ($s->{problems} == 4) {
-				Warn "Error: ... more files do not fit on ",
-					$s->{dev}, "\n";
-			}
-			$problems++;
-		}
-	}
-	my $dest = installed_info($pkgname);
-	my $dir = $plist->{dir};
-	for my $i (info_names()) {
-		if (-e "$dir/$i") {
-			my $size = (stat _)[7];
-			my $fname = "$dest/$i";
-			my $s = OpenBSD::Vstat::add($fname, $size, \$pkgname);
-			next unless defined $s;
-			if ($s->{ro}) {
-				Warn "Error: ", $s->{dev}, " is read-only ($fname)\n";
-				$problems++;
-			}
-			if ($state->{forced}->{kitchensink} && $state->{not}) {
-				next;
-			}
-			if ($s->avail() < 0) {
-				Warn "Error: ", $s->{dev}, " is not large enough ($fname)\n";
-				$problems++;
-			}
-		}
-	}
+
+	$plist->visit('validate', $state, \$problems, $colliding, \$totsize, $plist->pkgname());
 	if (@$colliding > 0) {
 		require OpenBSD::CollisionReport;
 
@@ -187,6 +121,10 @@ use OpenBSD::Error;
 
 my ($uidcache, $gidcache);
 
+sub validate
+{
+}
+
 sub install
 {
 }
@@ -221,6 +159,26 @@ sub set_modes
 	}
 }
 
+package OpenBSD::PackingElement::ExtraInfo;
+use OpenBSD::Error;
+
+sub validate
+{
+	my ($self, $state, $problems, $colliding, $totsize, $pkgname) = @_;
+
+	if ($state->{cdrom_only} && $self->{cdrom} ne 'yes') {
+	    Warn "Package $pkgname is not for cdrom.\n";
+	    $$problems++;
+	}
+	if ($state->{ftp_only} && $self->{ftp} ne 'yes') {
+	    Warn "Package $pkgname is not for ftp.\n";
+	    $$problems++;
+	}
+}
+
+package OpenBSD::PackingElement::NewAuth;
+use OpenBSD::Error;
+
 sub add_entry
 {
 	shift;	# get rid of self
@@ -237,54 +195,59 @@ sub add_entry
 	}
 }
 
-package OpenBSD::PackingElement::NewUser;
-use OpenBSD::Error;
+sub validate
+{
+	my ($self, $state, $problems, $colliding, $totsize, $pkgname) = @_;
+	my $ok = $self->check();
+	if (defined $ok) {
+		if ($ok == 0) {
+			Warn $self->type(), " ",  $self->{name}, 
+			    " does not match\n";
+			$$problems++;
+		}
+	}
+	$self->{okay} = $ok;
+}
 
 sub install
 {
 	my ($self, $state) = @_;
-	my $user = $self->{name};
-	print "adding user $user\n" if $state->{verbose};
+	my $auth = $self->{name};
+	print "adding ", $self->type(), " $auth\n" if $state->{verbose};
 	return if $state->{not};
-	my $ok = $self->check();
-	if (defined $ok) {
-		if ($ok == 0) {
-			Fatal "user $user does not match\n";
-		}
-	} else {
-		my $l=[];
-		push(@$l, "-v") if $state->{very_verbose};
-		$self->add_entry($l, 
-		    '-u', $self->{uid},
-		    '-g', $self->{group},
-		    '-L', $self->{class},
-		    '-c', $self->{comment},
-		    '-d', $self->{home},
-		    '-s', $self->{shell});
-		VSystem($state->{very_verbose}, '/usr/sbin/useradd', @$l, $user);
-	}
+	return if defined $self->{okay};
+	my $l=[];
+	push(@$l, "-v") if $state->{very_verbose};
+	$self->build_args($l);
+	VSystem($state->{very_verbose}, $self->command(),, @$l, $auth);
+}
+
+package OpenBSD::PackingElement::NewUser;
+
+sub command 	{ '/usr/sbin/useradd' }
+
+sub build_args
+{
+	my ($self, $l) = @_;
+
+	$self->add_entry($l, 
+	    '-u', $self->{uid},
+	    '-g', $self->{group},
+	    '-L', $self->{class},
+	    '-c', $self->{comment},
+	    '-d', $self->{home},
+	    '-s', $self->{shell});
 }
 
 package OpenBSD::PackingElement::NewGroup;
-use OpenBSD::Error;
 
-sub install
+sub command { '/usr/sbin/groupadd' }
+
+sub build_args
 {
-	my ($self, $state) = @_;
-	my $group = $self->{name};
-	print "adding group $group\n" if $state->{verbose};
-	return if $state->{not};
-	my $ok = $self->check();
-	if (defined $ok) {
-		if ($ok == 0) {
-			Fatal "group $group does not match\n";
-		}
-	} else {
-		my $l=[];
-		push(@$l, "-v") if $state->{very_verbose};
-		$self->add_entry($l, '-g', $self->{gid});
-		VSystem($state->{very_verbose}, '/usr/sbin/groupadd', @$l, $group);
-	}
+	my ($self, $l) = @_;
+
+	$self->add_entry($l, '-g', $self->{gid});
 }
 
 package OpenBSD::PackingElement::Sysctl;
@@ -316,6 +279,44 @@ package OpenBSD::PackingElement::FileBase;
 use OpenBSD::Error;
 use File::Basename;
 use File::Path;
+
+sub validate
+{
+	my ($self, $state, $problems, $colliding, $totsize, $pkgname) = @_;
+	my $fname = $state->{destdir}.$self->fullname();
+	# check for collisions with existing stuff
+	if (OpenBSD::Vstat::vexists($fname)) {
+		push(@$colliding, $self);
+		$$problems++;
+		return;
+	}
+	$$totsize += $self->{size} if defined $self->{size};
+	my $s = OpenBSD::Vstat::add($fname, $self->{size}, \$pkgname);
+	return unless defined $s;
+	if ($s->{ro}) {
+		if ($state->{very_verbose} or ++($s->{problems}) < 4) {
+			Warn "Error: ", $s->{dev}, 
+			    " is read-only ($fname)\n";
+		} elsif ($s->{problems} == 4) {
+			Warn "Error: ... more files can't be written to ",
+				$s->{dev}, "\n";
+		}
+		$$problems++;
+	}
+	if ($state->{forced}->{kitchensink} && $state->{not}) {
+		return;
+	}
+	if ($s->avail() < 0) {
+		if ($state->{very_verbose} or ++($s->{problems}) < 4) {
+			Warn "Error: ", $s->{dev}, 
+			    " is not large enough ($fname)\n";
+		} elsif ($s->{problems} == 4) {
+			Warn "Error: ... more files do not fit on ",
+				$s->{dev}, "\n";
+		}
+		$$problems++;
+	}
+}
 
 sub install
 {
@@ -409,6 +410,14 @@ package OpenBSD::PackingElement::Sample;
 use OpenBSD::Error;
 use File::Copy;
 
+sub validate
+{
+	my $self = shift;
+	if (!defined $self->{copyfrom}) {
+		Fatal "\@sample element does not reference a valid file\n";
+	}
+}
+
 sub install
 {
 	my ($self, $state) = @_;
@@ -416,9 +425,6 @@ sub install
 	my $destdir = $state->{destdir};
 	my $filename = $destdir.$self->fullname();
 	my $orig = $self->{copyfrom};
-	if (!defined $orig) {
-		Fatal "\@sample element does not reference a valid file\n";
-	}
 	my $origname = $destdir.$orig->fullname();
 	if (-e $filename) {
 		if ($state->{verbose}) {
@@ -542,6 +548,46 @@ sub install
 	$self->SUPER::install($state);
 	return if $state->{do_faked};
 	$self->mark_ldconfig_directory($state->{destdir});
+}
+
+package OpenBSD::PackingElement::SpecialFile;
+use OpenBSD::PackageInfo;
+use OpenBSD::Error;
+
+sub validate
+{
+	my ($self, $state, $problems, $colliding, $totsize, $pkgname) = @_;
+
+	my $fname = installed_info($pkgname).$self->{name};
+	my $cname = $state->{dir}.'/'.$self->{name};
+	my $size = $self->{size};
+	if (!defined $size) {
+		$size = (stat $cname)[7];
+	}
+	if ($self->exec_on_add()) {
+		my $s2 = OpenBSD::Vstat::filestat($cname);
+		if (defined $s2 && $s2->{noexec}) {
+			Warn "Error: ", $s2->{dev}, " is noexec ($cname)\n";
+			$$problems++;
+		}
+	}
+	my $s = OpenBSD::Vstat::add($fname, $self->{size}, \$pkgname);
+	return unless defined $s;
+	if ($s->{ro}) {
+		Warn "Error: ", $s->{dev}, " is read-only ($fname)\n";
+		$$problems++;
+	}
+	if ($s->{noexec} && $self->exec_on_delete()) {
+		Warn "Error: ", $s->{dev}, " is noexec ($fname)\n";
+		$$problems++;
+	}
+	if ($state->{forced}->{kitchensink} && $state->{not}) {
+		return;
+	}
+	if ($s->avail() < 0) {
+		Warn "Error: ", $s->{dev}, " is not large enough ($fname)\n";
+		$$problems++;
+	}
 }
 
 1;
