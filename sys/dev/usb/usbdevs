@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.180 2006/02/07 23:35:10 brad Exp $
+$OpenBSD: usbdevs,v 1.181 2006/02/10 21:42:39 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -381,7 +381,7 @@ vendor CONCEPTRONIC	0x0d8e	Conceptronic
 vendor MSI		0x0db0	Micro Star International
 vendor ELCON		0x0db7	ELCON Systemtechnik
 vendor HAWKING		0x0e66	Hawking
-vendor GMATE		0x0373	G.Mate
+vendor GMATE		0x0e73	G.Mate
 vendor OTI		0x0ea0	Ours Technology
 vendor PILOTECH		0x0eaf  Pilotech
 vendor AIRPRIME		0x0f3d	Airprime
