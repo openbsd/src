@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ProgressMeter.pm,v 1.7 2005/10/23 10:03:23 espie Exp $
+# $OpenBSD: ProgressMeter.pm,v 1.8 2006/02/10 09:52:28 bernd Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -93,6 +93,9 @@ sub message
 	return unless $isatty;
 	my $message = shift;
 	my $d;
+	if ($playfield > length($message)) {
+		$message .= ' 'x($playfield - length($message));
+	}
 	if ($playfield) {
 		$d = "$header|".substr($message, 0, $playfield);
 	} else {
