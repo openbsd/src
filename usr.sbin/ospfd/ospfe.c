@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.37 2006/01/05 15:53:36 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.38 2006/02/10 18:30:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -225,14 +225,14 @@ ospfe_shutdown(void)
 int
 ospfe_imsg_compose_parent(int type, pid_t pid, void *data, u_int16_t datalen)
 {
-	return (imsg_compose(ibuf_main, type, 0, pid, -1, data, datalen));
+	return (imsg_compose(ibuf_main, type, 0, pid, data, datalen));
 }
 
 int
 ospfe_imsg_compose_rde(int type, u_int32_t peerid, pid_t pid,
     void *data, u_int16_t datalen)
 {
-	return (imsg_compose(ibuf_rde, type, peerid, pid, -1, data, datalen));
+	return (imsg_compose(ibuf_rde, type, peerid, pid, data, datalen));
 }
 
 void
@@ -828,8 +828,8 @@ orig_rtr_lsa(struct area *area)
 	    &chksum, sizeof(chksum));
 
 	if (self)
-		imsg_compose(ibuf_rde, IMSG_LS_UPD,
-		    self->peerid, 0, -1, buf->buf, buf->wpos);
+		imsg_compose(ibuf_rde, IMSG_LS_UPD, self->peerid, 0,
+		    buf->buf, buf->wpos);
 	else
 		log_warnx("orig_rtr_lsa: empty area %s",
 		    inet_ntoa(area->id));
@@ -891,7 +891,7 @@ orig_net_lsa(struct iface *iface)
 	memcpy(buf_seek(buf, LS_CKSUM_OFFSET, sizeof(chksum)),
 	    &chksum, sizeof(chksum));
 
-	imsg_compose(ibuf_rde, IMSG_LS_UPD, iface->self->peerid, 0, -1,
+	imsg_compose(ibuf_rde, IMSG_LS_UPD, iface->self->peerid, 0,
 	    buf->buf, buf->wpos);
 
 	buf_free(buf);
@@ -915,7 +915,7 @@ ospfe_iface_ctl(struct ctl_conn *c, unsigned int idx)
 			if (idx == 0 || idx == iface->ifindex) {
 				ictl = if_to_ctl(iface);
 				imsg_compose(&c->ibuf, IMSG_CTL_SHOW_INTERFACE,
-				    0, 0, -1, ictl, sizeof(struct ctl_iface));
+				    0, 0, ictl, sizeof(struct ctl_iface));
 			}
 }
 
@@ -933,10 +933,10 @@ ospfe_nbr_ctl(struct ctl_conn *c)
 				if (iface->self != nbr) {
 					nctl = nbr_to_ctl(nbr);
 					imsg_compose(&c->ibuf,
-					    IMSG_CTL_SHOW_NBR, 0, 0, -1, nctl,
+					    IMSG_CTL_SHOW_NBR, 0, 0, nctl,
 					    sizeof(struct ctl_nbr));
 				}
 			}
 
-	imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, -1, NULL, 0);
+	imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, NULL, 0);
 }

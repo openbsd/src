@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.7 2005/08/11 16:28:07 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.8 2006/02/10 18:30:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -44,7 +44,6 @@ buf_open(size_t len)
 		return (NULL);
 	}
 	buf->size = buf->max = len;
-	buf->fd = -1;
 
 	return (buf);
 }
@@ -129,32 +128,6 @@ buf_close(struct msgbuf *msgbuf, struct buf *buf)
 	return (1);
 }
 
-int
-buf_write(int sock, struct buf *buf)
-{
-	ssize_t	n;
-
-	if ((n = write(sock, buf->buf + buf->rpos,
-	    buf->size - buf->rpos)) == -1) {
-		if (errno == EAGAIN || errno == ENOBUFS ||
-		    errno == EINTR)	/* try later */
-			return (0);
-		else
-			return (-1);
-	}
-
-	if (n == 0) {			/* connection closed */
-		errno = 0;
-		return (-2);
-	}
-
-	if (buf->rpos + n < buf->size) {	/* not all data written yet */
-		buf->rpos += n;
-		return (0);
-	} else
-		return (1);
-}
-
 void
 buf_free(struct buf *buf)
 {
@@ -187,8 +160,6 @@ msgbuf_write(struct msgbuf *msgbuf)
 	int		 i = 0;
 	ssize_t		 n;
 	struct msghdr	 msg;
-	struct cmsghdr	*cmsg;
-	char		 cmsgbuf[CMSG_SPACE(sizeof(int))];
 
 	bzero(&iov, sizeof(iov));
 	bzero(&msg, sizeof(msg));
@@ -198,22 +169,10 @@ msgbuf_write(struct msgbuf *msgbuf)
 		iov[i].iov_base = buf->buf + buf->rpos;
 		iov[i].iov_len = buf->size - buf->rpos;
 		i++;
-		if (buf->fd != -1)
-			break;
 	}
 
 	msg.msg_iov = iov;
 	msg.msg_iovlen = i;
-
-	if (buf != NULL && buf->fd != -1) {
-		msg.msg_control = (caddr_t)cmsgbuf;
-		msg.msg_controllen = CMSG_LEN(sizeof(int));
-		cmsg = CMSG_FIRSTHDR(&msg);
-		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
-		cmsg->cmsg_level = SOL_SOCKET;
-		cmsg->cmsg_type = SCM_RIGHTS;
-		*(int *)CMSG_DATA(cmsg) = buf->fd;
-	}
 
 	if ((n = sendmsg(msgbuf->fd, &msg, 0)) == -1) {
 		if (errno == EAGAIN || errno == ENOBUFS ||
@@ -243,39 +202,6 @@ msgbuf_write(struct msgbuf *msgbuf)
 	return (0);
 }
 
-int
-msgbuf_writebound(struct msgbuf *msgbuf)
-{
-	struct buf	*buf;
-	int		 n;
-
-	if (!msgbuf_unbounded(msgbuf))
-		return (1);
-
-	buf = TAILQ_FIRST(&msgbuf->bufs);
-	if ((n = buf_write(msgbuf->fd, buf)) < 0)
-		return (n);
-
-	if (n == 1) {	/* everything written out */
-		buf_dequeue(msgbuf, buf);
-		return (1);
-	} else
-		return (0);
-}
-
-int
-msgbuf_unbounded(struct msgbuf *msgbuf)
-{
-	struct buf	*buf;
-
-	/* return 1 if last buffer was not completely written. */
-	buf = TAILQ_FIRST(&msgbuf->bufs);
-	if (buf != NULL && buf->rpos != 0)
-		return (1);
-	else
-		return (0);
-}
-
 void
 buf_enqueue(struct msgbuf *msgbuf, struct buf *buf)
 {
@@ -287,10 +213,6 @@ void
 buf_dequeue(struct msgbuf *msgbuf, struct buf *buf)
 {
 	TAILQ_REMOVE(&msgbuf->bufs, buf, entry);
-
-	if (buf->fd != -1)
-		close(buf->fd);
-
 	msgbuf->queued--;
 	buf_free(buf);
 }

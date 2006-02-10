@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.23 2006/01/05 15:10:57 norby Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.24 2006/02/10 18:30:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -267,7 +267,7 @@ recv_ls_update(struct nbr *nbr, char *buf, u_int16_t len)
 				    "neighbor ID %s", inet_ntoa(nbr->id));
 				return;
 			}
-			imsg_compose(ibuf_rde, IMSG_LS_UPD, nbr->peerid, 0, -1,
+			imsg_compose(ibuf_rde, IMSG_LS_UPD, nbr->peerid, 0,
 			    buf, ntohs(lsa.len));
 			buf += ntohs(lsa.len);
 			len -= ntohs(lsa.len);

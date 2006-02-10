@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.43 2006/02/09 20:47:20 norby Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.44 2006/02/10 18:30:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -67,7 +67,6 @@ struct buf {
 	size_t			 max;
 	size_t			 wpos;
 	size_t			 rpos;
-	int			 fd;
 };
 
 struct msgbuf {
@@ -150,11 +149,6 @@ struct imsg_hdr {
 struct imsg {
 	struct imsg_hdr	 hdr;
 	void		*data;
-};
-
-struct imsg_fd {
-	TAILQ_ENTRY(imsg_fd)	entry;
-	int			fd;
 };
 
 /* area */
@@ -476,13 +470,10 @@ int		 buf_add(struct buf *, void *, size_t);
 void		*buf_reserve(struct buf *, size_t);
 void		*buf_seek(struct buf *, size_t, size_t);
 int		 buf_close(struct msgbuf *, struct buf *);
-int		 buf_write(int, struct buf *);
 void		 buf_free(struct buf *);
 void		 msgbuf_init(struct msgbuf *);
 void		 msgbuf_clear(struct msgbuf *);
 int		 msgbuf_write(struct msgbuf *);
-int		 msgbuf_writebound(struct msgbuf *);
-int		 msgbuf_unbounded(struct msgbuf *msgbuf);
 
 /* parse.y */
 struct ospfd_conf	*parse_config(char *, int);
@@ -490,9 +481,9 @@ int			 cmdline_symset(char *);
 
 /* imsg.c */
 void	 imsg_init(struct imsgbuf *, int, void (*)(int, short, void *));
-int	 imsg_read(struct imsgbuf *);
-int	 imsg_get(struct imsgbuf *, struct imsg *);
-int	 imsg_compose(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t, int,
+ssize_t	 imsg_read(struct imsgbuf *);
+ssize_t	 imsg_get(struct imsgbuf *, struct imsg *);
+int	 imsg_compose(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
 	    void *, u_int16_t);
 struct buf	*imsg_create(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
 		    u_int16_t);

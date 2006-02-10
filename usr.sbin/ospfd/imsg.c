@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.5 2006/02/01 18:31:47 norby Exp $ */
+/*	$OpenBSD: imsg.c,v 1.6 2006/02/10 18:30:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -39,26 +39,13 @@ imsg_init(struct imsgbuf *ibuf, int fd, void (*handler)(int, short, void *))
 	TAILQ_INIT(&ibuf->fds);
 }
 
-int
+ssize_t
 imsg_read(struct imsgbuf *ibuf)
 {
-	struct msghdr		 msg;
-	struct cmsghdr		*cmsg;
-	char			 cmsgbuf[CMSG_SPACE(sizeof(int) * 16)];
-	struct iovec		 iov;
 	ssize_t			 n;
-	int			 fd;
-	struct imsg_fd		*ifd;
 
-	bzero(&msg, sizeof(msg));
-	iov.iov_base = ibuf->r.buf + ibuf->r.wpos;
-	iov.iov_len = sizeof(ibuf->r.buf) - ibuf->r.wpos;
-	msg.msg_iov = &iov;
-	msg.msg_iovlen = 1;
-	msg.msg_control = cmsgbuf;
-	msg.msg_controllen = sizeof(cmsgbuf);
-
-	if ((n = recvmsg(ibuf->fd, &msg, 0)) == -1) {
+	if ((n = recv(ibuf->fd, ibuf->r.buf + ibuf->r.wpos,
+	    sizeof(ibuf->r.buf) - ibuf->r.wpos, 0)) == -1) {
 		if (errno != EINTR && errno != EAGAIN) {
 			log_warn("imsg_read: pipe read error");
 			return (-1);
@@ -68,24 +55,10 @@ imsg_read(struct imsgbuf *ibuf)
 
 	ibuf->r.wpos += n;
 
-	for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL;
-	    cmsg = CMSG_NXTHDR(&msg, cmsg)) {
-		if (cmsg->cmsg_level == SOL_SOCKET &&
-		    cmsg->cmsg_type == SCM_RIGHTS) {
-			fd = (*(int *)CMSG_DATA(cmsg));
-			if ((ifd = calloc(1, sizeof(struct imsg_fd))) == NULL)
-				fatal("imsg_read calloc");
-			ifd->fd = fd;
-			TAILQ_INSERT_TAIL(&ibuf->fds, ifd, entry);
-		} else
-			log_warn("imsg_read: got unexpected ctl data level %d "
-			    "type %d", cmsg->cmsg_level, cmsg->cmsg_type);
-	}
-
 	return (n);
 }
 
-int
+ssize_t
 imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 {
 	size_t			 av, left, datalen;
@@ -124,7 +97,7 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 
 int
 imsg_compose(struct imsgbuf *ibuf, enum imsg_type type, u_int32_t peerid,
-    pid_t pid, int fd, void *data, u_int16_t datalen)
+    pid_t pid, void *data, u_int16_t datalen)
 {
 	struct buf	*wbuf;
 	int		 n;
@@ -135,14 +108,13 @@ imsg_compose(struct imsgbuf *ibuf, enum imsg_type type, u_int32_t peerid,
 	if (imsg_add(wbuf, data, datalen) == -1)
 		return (-1);
 
-	wbuf->fd = fd;
-
 	if ((n = imsg_close(ibuf, wbuf)) < 0)
 		return (-1);
 
 	return (n);
 }
 
+/* ARGSUSED */
 struct buf *
 imsg_create(struct imsgbuf *ibuf, enum imsg_type type, u_int32_t peerid,
     pid_t pid, u_int16_t datalen)
@@ -157,7 +129,7 @@ imsg_create(struct imsgbuf *ibuf, enum imsg_type type, u_int32_t peerid,
 		return (NULL);
 	}
 
-	hdr.len = datalen + IMSG_HEADER_SIZE;
+	hdr.len = (u_int16_t)(datalen + IMSG_HEADER_SIZE);
 	hdr.type = type;
 	hdr.peerid = peerid;
 	hdr.pid = pid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.26 2006/01/12 15:10:02 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.27 2006/02/10 18:30:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -425,15 +425,13 @@ main_dispatch_rde(int fd, short event, void *bula)
 void
 main_imsg_compose_ospfe(int type, pid_t pid, void *data, u_int16_t datalen)
 {
-
-	imsg_compose(ibuf_ospfe, type, 0, pid, -1, data, datalen);
+	imsg_compose(ibuf_ospfe, type, 0, pid, data, datalen);
 }
 
 void
 main_imsg_compose_rde(int type, pid_t pid, void *data, u_int16_t datalen)
 {
-
-	imsg_compose(ibuf_rde, type, 0, pid, -1, data, datalen);
+	imsg_compose(ibuf_rde, type, 0, pid, data, datalen);
 }
 
 int

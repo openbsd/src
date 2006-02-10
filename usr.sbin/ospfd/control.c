@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.12 2005/10/18 15:42:15 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.13 2006/02/10 18:30:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -241,7 +241,7 @@ control_dispatch_imsg(int fd, short event, void *bula)
 				memcpy(&ifidx, imsg.data, sizeof(ifidx));
 				ospfe_iface_ctl(c, ifidx);
 				imsg_compose(&c->ibuf, IMSG_CTL_END, 0,
-				    0, -1, NULL, 0);
+				    0, NULL, 0);
 			}
 			break;
 		case IMSG_CTL_SHOW_DATABASE:
@@ -281,7 +281,7 @@ control_imsg_relay(struct imsg *imsg)
 		return (0);
 	}
 
-	return (imsg_compose(&c->ibuf, imsg->hdr.type, 0, imsg->hdr.pid, -1,
+	return (imsg_compose(&c->ibuf, imsg->hdr.type, 0, imsg->hdr.pid,
 	    imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE));
 }
 

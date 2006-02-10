@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.38 2006/02/10 13:00:49 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.39 2006/02/10 18:30:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -196,14 +196,14 @@ rde_shutdown(void)
 int
 rde_imsg_compose_parent(int type, pid_t pid, void *data, u_int16_t datalen)
 {
-	return (imsg_compose(ibuf_main, type, 0, pid, -1, data, datalen));
+	return (imsg_compose(ibuf_main, type, 0, pid, data, datalen));
 }
 
 int
 rde_imsg_compose_ospfe(int type, u_int32_t peerid, pid_t pid, void *data,
     u_int16_t datalen)
 {
-	return (imsg_compose(ibuf_ospfe, type, peerid, pid, -1, data, datalen));
+	return (imsg_compose(ibuf_ospfe, type, peerid, pid, data, datalen));
 }
 
 void
@@ -291,7 +291,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			lsa_snap(nbr->area, imsg.hdr.peerid);
 
 			imsg_compose(ibuf_ospfe, IMSG_DB_END, imsg.hdr.peerid,
-			    0, -1, NULL, 0);
+			    0, NULL, 0);
 			break;
 		case IMSG_DD:
 			nbr = rde_nbr_find(imsg.hdr.peerid);
@@ -319,8 +319,8 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 					 */
 					rde_req_list_add(nbr, &lsa_hdr);
 					imsg_compose(ibuf_ospfe, IMSG_DD,
-					    imsg.hdr.peerid, 0, -1,
-					    &lsa_hdr, sizeof(lsa_hdr));
+					    imsg.hdr.peerid, 0, &lsa_hdr,
+					    sizeof(lsa_hdr));
 				}
 			}
 			if (l != 0)
@@ -329,7 +329,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				    "packet", imsg.hdr.peerid);
 
 			imsg_compose(ibuf_ospfe, IMSG_DD_END, imsg.hdr.peerid,
-			    0, -1, NULL, 0);
+			    0, NULL, 0);
 			break;
 		case IMSG_LS_REQ:
 			nbr = rde_nbr_find(imsg.hdr.peerid);
@@ -347,12 +347,12 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				    ntohl(req_hdr.type), req_hdr.ls_id,
 				    req_hdr.adv_rtr)) == NULL) {
 					imsg_compose(ibuf_ospfe, IMSG_LS_BADREQ,
-					    imsg.hdr.peerid, 0, -1, NULL, 0);
+					    imsg.hdr.peerid, 0, NULL, 0);
 					continue;
 				}
 				imsg_compose(ibuf_ospfe, IMSG_LS_UPD,
-				    imsg.hdr.peerid, 0, -1,
-				    v->lsa, ntohs(v->lsa->hdr.len));
+				    imsg.hdr.peerid, 0, v->lsa,
+				    ntohs(v->lsa->hdr.len));
 			}
 			if (l != 0)
 				log_warnx("rde_dispatch_imsg: peerid %lu, "
@@ -403,14 +403,14 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				rde_req_list_del(nbr, &lsa->hdr);
 				/* flood and perhaps ack LSA */
 				imsg_compose(ibuf_ospfe, IMSG_LS_FLOOD,
-				    imsg.hdr.peerid, 0, -1,
-				    lsa, ntohs(lsa->hdr.len));
+				    imsg.hdr.peerid, 0, lsa,
+				    ntohs(lsa->hdr.len));
 
 				/* reflood self originated LSA */
 				if (self && v)
 					imsg_compose(ibuf_ospfe, IMSG_LS_FLOOD,
-					    v->nbr->peerid, 0, -1,
-					    v->lsa, ntohs(v->lsa->hdr.len));
+					    v->nbr->peerid, 0, v->lsa,
+					    ntohs(v->lsa->hdr.len));
 				/* lsa not added so free it */
 				if (self)
 					free(lsa);
@@ -428,7 +428,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				 */
 				if (rde_req_list_exists(nbr, &lsa->hdr)) {
 					imsg_compose(ibuf_ospfe, IMSG_LS_BADREQ,
-					    imsg.hdr.peerid, 0, -1, NULL, 0);
+					    imsg.hdr.peerid, 0, NULL, 0);
 					break;
 				}
 
@@ -443,12 +443,12 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 
 				/* directly send current LSA, no ack */
 				imsg_compose(ibuf_ospfe, IMSG_LS_UPD,
-				    imsg.hdr.peerid, 0, -1,
-				    v->lsa, ntohs(v->lsa->hdr.len));
+				    imsg.hdr.peerid, 0, v->lsa,
+				    ntohs(v->lsa->hdr.len));
 			} else {
 				/* LSA equal send direct ack */
 				imsg_compose(ibuf_ospfe, IMSG_LS_ACK,
-				    imsg.hdr.peerid, 0, -1, &lsa->hdr,
+				    imsg.hdr.peerid, 0, &lsa->hdr,
 				    sizeof(lsa->hdr));
 				free(lsa);
 			}
@@ -502,7 +502,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			if (imsg.hdr.len == IMSG_HEADER_SIZE) {
 				LIST_FOREACH(area, &rdeconf->area_list, entry) {
 					imsg_compose(ibuf_ospfe, IMSG_CTL_AREA,
-					    0, imsg.hdr.pid, -1, area,
+					    0, imsg.hdr.pid, area,
 					    sizeof(*area));
 					lsa_dump(&area->lsa_tree, imsg.hdr.type,
 					    imsg.hdr.pid);
@@ -513,7 +513,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				memcpy(&aid, imsg.data, sizeof(aid));
 				if ((area = area_find(rdeconf, aid)) != NULL) {
 					imsg_compose(ibuf_ospfe, IMSG_CTL_AREA,
-					    0, imsg.hdr.pid, -1, area,
+					    0, imsg.hdr.pid, area,
 					    sizeof(*area));
 					lsa_dump(&area->lsa_tree, imsg.hdr.type,
 					    imsg.hdr.pid);
@@ -524,13 +524,12 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				}
 			}
 			imsg_compose(ibuf_ospfe, IMSG_CTL_END, 0, imsg.hdr.pid,
-			    -1, NULL, 0);
+			    NULL, 0);
 			break;
 		case IMSG_CTL_SHOW_RIB:
 			LIST_FOREACH(area, &rdeconf->area_list, entry) {
 				imsg_compose(ibuf_ospfe, IMSG_CTL_AREA,
-				    0, imsg.hdr.pid, -1, area,
-				    sizeof(*area));
+				    0, imsg.hdr.pid, area, sizeof(*area));
 
 				rt_dump(area->id, imsg.hdr.pid, RIB_RTR);
 				rt_dump(area->id, imsg.hdr.pid, RIB_NET);
@@ -539,14 +538,14 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			rt_dump(aid, imsg.hdr.pid, RIB_EXT);
 
 			imsg_compose(ibuf_ospfe, IMSG_CTL_END, 0, imsg.hdr.pid,
-			    -1, NULL, 0);
+			    NULL, 0);
 			break;
 		case IMSG_CTL_SHOW_SUM:
 			rde_send_summary(imsg.hdr.pid);
 			LIST_FOREACH(area, &rdeconf->area_list, entry)
 				rde_send_summary_area(area, imsg.hdr.pid);
 			imsg_compose(ibuf_ospfe, IMSG_CTL_END, 0, imsg.hdr.pid,
-			    -1, NULL, 0);
+			    NULL, 0);
 			break;
 		default:
 			log_debug("rde_dispatch_msg: unexpected imsg %d",
@@ -645,7 +644,7 @@ rde_send_change_kroute(struct rt_node *r)
 	kr.nexthop.s_addr = r->nexthop.s_addr;
 	kr.prefixlen = r->prefixlen;
 
-	imsg_compose(ibuf_main, IMSG_KROUTE_CHANGE, 0, 0, -1, &kr, sizeof(kr));
+	imsg_compose(ibuf_main, IMSG_KROUTE_CHANGE, 0, 0, &kr, sizeof(kr));
 }
 
 void
@@ -658,7 +657,7 @@ rde_send_delete_kroute(struct rt_node *r)
 	kr.nexthop.s_addr = r->nexthop.s_addr;
 	kr.prefixlen = r->prefixlen;
 
-	imsg_compose(ibuf_main, IMSG_KROUTE_DELETE, 0, 0, -1, &kr, sizeof(kr));
+	imsg_compose(ibuf_main, IMSG_KROUTE_DELETE, 0, 0, &kr, sizeof(kr));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.11 2005/12/15 20:39:33 claudio Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.12 2006/02/10 18:30:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -107,8 +107,7 @@ recv_ls_req(struct nbr *nbr, char *buf, u_int16_t len)
 	case NBR_STA_XCHNG:
 	case NBR_STA_LOAD:
 	case NBR_STA_FULL:
-		imsg_compose(ibuf_rde, IMSG_LS_REQ, nbr->peerid, 0, -1,
-		    buf, len);
+		imsg_compose(ibuf_rde, IMSG_LS_REQ, nbr->peerid, 0, buf, len);
 		break;
 	default:
 		fatalx("recv_ls_req: unknown neighbor state");
