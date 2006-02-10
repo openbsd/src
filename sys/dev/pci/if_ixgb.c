@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.6 2006/02/01 20:13:49 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.7 2006/02/10 08:56:14 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -447,8 +447,6 @@ ixgb_watchdog(struct ifnet * ifp)
 		return;
 	}
 	printf("%s: watchdog timeout -- resetting\n", sc->sc_dv.dv_xname);
-
-	ifp->if_flags &= ~IFF_RUNNING;
 
 	ixgb_stop(sc);
 	ixgb_init(sc);
