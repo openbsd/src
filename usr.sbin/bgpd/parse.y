@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.180 2006/02/09 21:05:09 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.181 2006/02/10 14:34:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -150,7 +150,7 @@ typedef struct {
 %token	RDE EVALUATE IGNORE COMPARE
 %token	GROUP NEIGHBOR NETWORK
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX ANNOUNCE
-%token	ENFORCE NEIGHBORAS CAPABILITIES REFLECTOR DEPEND DOWN
+%token	ENFORCE NEIGHBORAS CAPABILITIES REFLECTOR DEPEND DOWN SOFTRECONFIG
 %token	DUMP IN OUT
 %token	LOG ROUTECOLL TRANSPARENT
 %token	TCP MD5SIG PASSWORD KEY
@@ -894,6 +894,12 @@ peeropts	: REMOTEAS asnumber	{
 			}
 			free($3);
 		}
+		| SOFTRECONFIG inout yesno {
+			if ($2)
+				curpeer->conf.softreconfig_in = $3;
+			else
+				curpeer->conf.softreconfig_out = $3;
+		}
 		;
 
 family		: IPV4	{ $$ = AFI_IPv4; }
@@ -1579,6 +1585,7 @@ lookup(char *s)
 		{ "router-id",		ROUTERID},
 		{ "rtlabel",		RTLABEL},
 		{ "set",		SET},
+		{ "softreconfig",	SOFTRECONFIG},
 		{ "source-as",		SOURCEAS},
 		{ "spi",		SPI},
 		{ "static",		STATIC},
@@ -2107,6 +2114,8 @@ alloc_peer(void)
 	p->conf.capabilities.mp_v4 = SAFI_UNICAST;
 	p->conf.capabilities.mp_v6 = SAFI_NONE;
 	p->conf.capabilities.refresh = 1;
+	p->conf.softreconfig_in = 1;
+	p->conf.softreconfig_out = 1;
 
 	return (p);
 }

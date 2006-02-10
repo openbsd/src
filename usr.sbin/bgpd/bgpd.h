@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.191 2006/02/09 21:05:09 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.192 2006/02/10 14:34:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -234,6 +234,8 @@ struct peer_config {
 	u_int8_t		 down;
 	u_int8_t		 announce_capa;
 	u_int8_t		 reflector_client;
+	u_int8_t		 softreconfig_in;
+	u_int8_t		 softreconfig_out;
 };
 
 struct network_config {

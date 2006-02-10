@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.199 2006/02/02 14:06:05 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.200 2006/02/10 14:34:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -535,12 +535,14 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			LIST_FOREACH(peer, &peerlist, peer_l) {
 				peer->reconf_out = 0;
 				peer->reconf_in = 0;
-				if (!rde_filter_equal(rules_l, newrules, peer,
+				if (peer->conf.softreconfig_out &&
+				    !rde_filter_equal(rules_l, newrules, peer,
 				    DIR_OUT)) {
 					peer->reconf_out = 1;
 					reconf_out = 1;
 				}
-				if (!rde_filter_equal(rules_l, newrules, peer,
+				if (peer->conf.softreconfig_in &&
+				    !rde_filter_equal(rules_l, newrules, peer,
 				    DIR_IN)) {
 					peer->reconf_in = 1;
 					reconf_in = 1;
@@ -854,7 +856,8 @@ rde_update_dispatch(struct imsg *imsg)
 		}
 
 		/* add original path to the Adj-RIB-In */
-		path_update(peer, asp, &prefix, prefixlen, F_ORIGINAL);
+		if (peer->conf.softreconfig_in)
+			path_update(peer, asp, &prefix, prefixlen, F_ORIGINAL);
 
 		/* input filter */
 		if (rde_filter(&fasp, rules_l, peer, asp, &prefix, prefixlen,
@@ -944,8 +947,9 @@ rde_update_dispatch(struct imsg *imsg)
 				mplen -= pos;
 
 				/* add original path to the Adj-RIB-In */
-				path_update(peer, asp, &prefix, prefixlen,
-				    F_ORIGINAL);
+				if (peer->conf.softreconfig_in)
+					path_update(peer, asp, &prefix,
+					    prefixlen, F_ORIGINAL);
 
 				/* input filter */
 				if (rde_filter(&fasp, rules_l, peer, asp,
