@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.100 2006/02/09 13:08:01 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.101 2006/02/10 10:15:48 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -117,7 +117,7 @@
 #define CVS_PATH_HISTORY	CVS_PATH_ROOT "/history"
 #define CVS_PATH_LOGINFO	CVS_PATH_ROOT "/loginfo"
 #define CVS_PATH_MODULES	CVS_PATH_ROOT "/modules"
-#define CVS_PATH_NOTIFY		CVS_PATH_ROOT "/notify"
+#define CVS_PATH_NOTIFY_R	CVS_PATH_ROOT "/notify"
 #define CVS_PATH_RCSINFO	CVS_PATH_ROOT "/rcsinfo"
 #define CVS_PATH_TAGINFO	CVS_PATH_ROOT "/taginfo"
 #define CVS_PATH_VERIFYMSG	CVS_PATH_ROOT "/verifymsg"

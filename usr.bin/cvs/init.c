@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.21 2006/01/08 18:02:06 xsa Exp $	*/
+/*	$OpenBSD: init.c,v 1.22 2006/02/10 10:15:48 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -50,7 +50,7 @@ struct cvsroot_file {
 	{ CVS_PATH_HISTORY,     CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
 	{ CVS_PATH_LOGINFO,     CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
 	{ CVS_PATH_MODULES,     CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
-	{ CVS_PATH_NOTIFY,      CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
+	{ CVS_PATH_NOTIFY_R,    CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
 	{ CVS_PATH_RCSINFO,     CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
 	{ CVS_PATH_TAGINFO,     CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
 	{ CVS_PATH_VERIFYMSG,   CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
