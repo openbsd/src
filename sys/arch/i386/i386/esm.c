@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.35 2006/02/10 02:55:23 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.36 2006/02/10 04:20:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -156,6 +156,7 @@ int		esm_smb_cmd(struct esm_softc *, struct esm_smb_req *,
 
 int64_t		esm_val2temp(u_int16_t);
 int64_t		esm_val2volts(u_int16_t);
+int64_t		esm_val2amps(u_int16_t);
 
 
 /* Determine if this is a Dell server */
@@ -375,6 +376,9 @@ esm_refresh(void *arg)
 			es->es_sensor->value = esm_val2volts(val->v_reading) *
 			    es->es_arg;
 			break;
+		case ESM_S_AMPS:
+			es->es_sensor->value = esm_val2amps(val->v_reading);
+			break;
 		case ESM_S_DRIVES:
 			for (i = 0; i < nsensors; i++) {
 				es->es_sensor[i].value =
@@ -396,6 +400,7 @@ esm_refresh(void *arg)
 		case ESM_S_TEMP:
 		case ESM_S_FANRPM:
 		case ESM_S_VOLTS:
+		case ESM_S_AMPS:
 			if (val->v_reading >= es->es_thresholds.th_hi_crit ||
 			    val->v_reading <= es->es_thresholds.th_lo_crit) {
 				es->es_sensor->status = SENSOR_S_CRIT;
@@ -895,6 +900,7 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 			/* FALLTHROUGH */
 		case ESM_S_TEMP:
 		case ESM_S_FANRPM:
+		case ESM_S_AMPS:
 			if (esm_thresholds(sc, devmap, es) != 0) {
 				free(es, M_DEVBUF);
 				continue;
@@ -1073,4 +1079,10 @@ int64_t
 esm_val2volts(u_int16_t value)
 {
 	return ((int64_t)value * 1000);
+}
+
+int64_t
+esm_val2amps(u_int16_t value)
+{
+	return ((int64_t)value * 100000);
 }
