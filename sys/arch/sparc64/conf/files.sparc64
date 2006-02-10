@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.64 2006/02/01 11:03:33 dlg Exp $
+#	$OpenBSD: files.sparc64,v 1.65 2006/02/10 05:28:56 djm Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -262,3 +262,13 @@ file	arch/sparc64/dev/ofwi2c.c		i2cbus
 # Machine-independent USB drivers
 #
 include	"dev/usb/files.usb"
+
+#
+# Machine-dependent I2C drivers
+#
+
+# PCF8591 ADC I2C Sensor (needs ofw, so sparc64 only for now)
+device	pcfadc
+attach	pcfadc at i2c
+file	arch/sparc64/dev/pcf8591_ofw.c		pcfadc
+
