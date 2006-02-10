@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.22 2005/10/27 22:37:30 stevesk Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.23 2006/02/10 18:31:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -123,7 +123,7 @@ main(int argc, char *argv[])
 		/* not reached */
 	case SHOW:
 	case SHOW_SUM:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_SUM, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_SHOW_SUM, 0, 0, NULL, 0);
 		break;
 	case SHOW_IFACE:
 		if (*res->ifname) {
@@ -131,65 +131,65 @@ main(int argc, char *argv[])
 			if (ifidx == 0)
 				errx(1, "no such interface %s", res->ifname);
 		}
-		imsg_compose(ibuf, IMSG_CTL_SHOW_INTERFACE, 0, 0, -1,
+		imsg_compose(ibuf, IMSG_CTL_SHOW_INTERFACE, 0, 0,
 		    &ifidx, sizeof(ifidx));
 		break;
 	case SHOW_NBR:
 		printf("%-15s %-3s %-17s %-9s %-15s %s\n", "ID", "Pri",
 		    "State", "DeadTime", "Address", "Interface");
 	case SHOW_NBR_DTAIL:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_NBR, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_SHOW_NBR, 0, 0, NULL, 0);
 		break;
 	case SHOW_DB:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_DATABASE, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_SHOW_DATABASE, 0, 0, NULL, 0);
 		break;
 	case SHOW_DBBYAREA:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_DATABASE, 0, 0, -1,
+		imsg_compose(ibuf, IMSG_CTL_SHOW_DATABASE, 0, 0,
 		    &res->addr, sizeof(res->addr));
 		break;
 	case SHOW_DBEXT:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_EXT, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_EXT, 0, 0, NULL, 0);
 		break;
 	case SHOW_DBNET:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_NET, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_NET, 0, 0, NULL, 0);
 		break;
 	case SHOW_DBRTR:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_RTR, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_RTR, 0, 0, NULL, 0);
 		break;
 	case SHOW_DBSELF:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_SELF, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_SELF, 0, 0, NULL, 0);
 		break;
 	case SHOW_DBSUM:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_SUM, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_SUM, 0, 0, NULL, 0);
 		break;
 	case SHOW_DBASBR:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_ASBR, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_ASBR, 0, 0, NULL, 0);
 		break;
 	case SHOW_RIB:
 		printf("%-20s %-17s %-12s %-9s %-7s\n", "Destination",
 		    "Nexthop", "Path Type", "Type", "Cost");
 	case SHOW_RIB_DTAIL:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_RIB, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_SHOW_RIB, 0, 0, NULL, 0);
 		break;
 	case SHOW_FIB:
 		if (!res->addr.s_addr)
-			imsg_compose(ibuf, IMSG_CTL_KROUTE, 0, 0, -1,
+			imsg_compose(ibuf, IMSG_CTL_KROUTE, 0, 0,
 			    &res->flags, sizeof(res->flags));
 		else
-			imsg_compose(ibuf, IMSG_CTL_KROUTE_ADDR, 0, 0, -1,
+			imsg_compose(ibuf, IMSG_CTL_KROUTE_ADDR, 0, 0,
 			    &res->addr, sizeof(res->addr));
 		show_fib_head();
 		break;
 	case SHOW_FIB_IFACE:
 		if (*res->ifname)
-			imsg_compose(ibuf, IMSG_CTL_IFINFO, 0, 0, -1,
+			imsg_compose(ibuf, IMSG_CTL_IFINFO, 0, 0,
 			    res->ifname, sizeof(res->ifname));
 		else
-			imsg_compose(ibuf, IMSG_CTL_IFINFO, 0, 0, -1, NULL, 0);
+			imsg_compose(ibuf, IMSG_CTL_IFINFO, 0, 0, NULL, 0);
 		show_interface_head();
 		break;
 	case RELOAD:
-		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, NULL, 0);
 		printf("reload request sent.\n");
 		done = 1;
 		break;
