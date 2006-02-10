@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.22 2006/02/08 13:28:32 jsg Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.23 2006/02/10 03:54:54 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -772,7 +772,6 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 	struct nfe_tx_data *data;
 	struct mbuf *mnew;
 	bus_dmamap_t map;
-	uint32_t txctl = NFE_RXTX_KICKTX;
 	uint16_t flags = NFE_TX_VALID;
 	int error, i;
 
@@ -866,35 +865,25 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 
 	/* the whole mbuf chain has been DMA mapped, fix last descriptor */
 	if (sc->sc_flags & NFE_40BIT_ADDR) {
-		txctl |= NFE_RXTX_V3MAGIC;
 		flags |= NFE_TX_LASTFRAG_V2;
 
 		desc64->flags = htole16(flags);
 		nfe_txdesc64_sync(sc, desc64, BUS_DMASYNC_PREWRITE);
 	} else {
-		if (sc->sc_flags & NFE_JUMBO_SUP) {
-			txctl |= NFE_RXTX_V2MAGIC;
+		if (sc->sc_flags & NFE_JUMBO_SUP)
 			flags |= NFE_TX_LASTFRAG_V2;
-		} else
+		else
 			flags |= NFE_TX_LASTFRAG_V1;
 
 		desc32->flags = htole16(flags);
 		nfe_txdesc32_sync(sc, desc32, BUS_DMASYNC_PREWRITE);
 	}
 
-#ifdef NFE_CSUM
-	if (sc->sc_flags & NFE_HW_CSUM)
-		txctl |= NFE_RXTX_RXCHECK;
-#endif
-
 	data->m = m0;
 	data->active = map;
 
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
-
-	/* kick Tx */
-	NFE_WRITE(sc, NFE_RXTX_CTL, txctl);
 
 	return 0;
 }
@@ -904,6 +893,8 @@ nfe_start(struct ifnet *ifp)
 {
 	struct nfe_softc *sc = ifp->if_softc;
 	struct mbuf *m0;
+	uint32_t txctl = NFE_RXTX_KICKTX;
+	int pkts = 0;
 
 	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m0);
@@ -917,15 +908,33 @@ nfe_start(struct ifnet *ifp)
 
 		/* packet put in h/w queue, remove from s/w queue */
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		pkts++;
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)
 			bpf_mtap(ifp->if_bpf, m0);
 #endif
-
-		/* start watchdog timer */
-		ifp->if_timer = 5;
 	}
+	if (pkts == 0)
+		return;
+
+	if (sc->sc_flags & NFE_40BIT_ADDR)
+		txctl |= NFE_RXTX_V3MAGIC;
+	else if (sc->sc_flags & NFE_JUMBO_SUP)
+		txctl |= NFE_RXTX_V2MAGIC;
+
+#ifdef NFE_CSUM
+	if (sc->sc_flags & NFE_HW_CSUM)
+		txctl |= NFE_RXTX_RXCHECK;
+#endif
+
+	/* kick Tx */
+	NFE_WRITE(sc, NFE_RXTX_CTL, txctl);
+
+	/*
+	 * Set a timeout in case the chip goes out to lunch.
+	 */
+	ifp->if_timer = 5;
 }
 
 void
