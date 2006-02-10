@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.103 2006/02/10 08:58:06 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.104 2006/02/10 09:12:25 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1979,7 +1979,7 @@ em_clean_transmit_interrupts(struct em_softc *sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 		if (num_avail == sc->num_tx_desc)
 			ifp->if_timer = 0;
-		else if (num_avail == sc->num_tx_desc_avail)
+		else if (num_avail != sc->num_tx_desc_avail)
 			ifp->if_timer = EM_TX_TIMEOUT;
 	}
 	sc->num_tx_desc_avail = num_avail;

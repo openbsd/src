@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.7 2006/02/10 08:56:14 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.8 2006/02/10 09:12:26 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -1394,7 +1394,7 @@ ixgb_clean_transmit_interrupts(struct ixgb_softc *sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 		if (num_avail == sc->num_tx_desc)
 			ifp->if_timer = 0;
-		else if (num_avail == sc->num_tx_desc_avail)
+		else if (num_avail != sc->num_tx_desc_avail)
 			ifp->if_timer = IXGB_TX_TIMEOUT;
 	}
 	sc->num_tx_desc_avail = num_avail;
