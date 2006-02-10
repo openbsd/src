@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.94 2006/02/10 14:33:09 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.95 2006/02/10 14:58:46 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004-2006 Xavier Santolaria <xsa@openbsd.org>
@@ -1977,6 +1977,11 @@ File listing the revisions for each file contained in the
 directory under the following format:
 .Pp
 .Dl name/revision/
+.It Pa CVS/Baserev.tmp
+Temporary file used to write
+.Pa CVS/Baserev
+content then atomically renamed to
+.Pa Baserev .
 .It Pa CVS/Checkin.prog
 File containing the path to the command specified with the
 .Fl i
