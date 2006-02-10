@@ -1,7 +1,7 @@
-.\"	$OpenBSD: cvs.1,v 1.93 2006/01/27 15:42:35 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.94 2006/02/10 14:33:09 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
-.\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
+.\" Copyright (c) 2004-2006 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -1983,6 +1983,11 @@ File containing the path to the command specified with the
 option in the
 .Pa CVSROOT/modules
 file.
+.It Pa CVS/Entries.Backup
+Temporary file used to write
+.Pa CVS/Entries
+content then atomically renamed to
+.Pa Entries .
 .It Pa CVS/Entries.Static
 Tells
 .Nm
@@ -1994,6 +1999,11 @@ option.
 .It Pa CVS/Notify
 File containing the notifications that could not be sent to the
 CVS server but will be sent at the next successful connection.
+.It Pa CVS/Notify.tmp
+Temporary file used to write
+.Pa CVS/Notify
+content then atomically renamed to
+.Pa Notify .
 .It Pa CVS/Tag
 File containing the symbolic revision that was used at checkout.
 The first character of the line is a single letter indicating the
@@ -2009,6 +2019,16 @@ The
 file should not be removed manually:
 instead, use
 .Dq update -A .
+.It Pa CVS/Template
+File containing the template specified by the
+.Pa CVSROOT/rcsinfo
+file.
+It is only used in client-server mode.
+Locally,
+.Nm
+uses the
+.Pa rcsinfo
+file directly.
 .It Pa CVS/Update.prog
 File containing the path to the command specified with the
 .Fl u
