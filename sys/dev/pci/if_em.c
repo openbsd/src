@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.102 2006/01/28 20:56:15 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.103 2006/02/10 08:58:06 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -547,8 +547,6 @@ em_watchdog(struct ifnet *ifp)
 		ifp->if_timer = EM_TX_TIMEOUT;
 		return;
 	}
-
-	em_check_for_link(&sc->hw);
 
 	printf("%s: watchdog timeout -- resetting\n", sc->sc_dv.dv_xname);
 
