@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.34 2006/01/29 00:13:27 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.35 2006/02/10 02:55:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -52,7 +52,7 @@ enum esm_sensor_type {
 	ESM_S_INTRUSION,
 	ESM_S_TEMP,
 	ESM_S_FANRPM,
-	ESM_S_VOLTS,
+	ESM_S_VOLTS, /* arg says if the 4400 volts should be x10 */
 	ESM_S_AMPS,
 	ESM_S_PWRSUP,
 	ESM_S_PCISLOT,
@@ -82,12 +82,7 @@ enum sensor_type esm_typemap[] = {
 struct esm_sensor_map {
 	enum sensor_type	type;
 	long			arg;
-#define ESM_A_PWRSUP_1		0x10
-#define ESM_A_PWRSUP_2		0x20
-#define ESM_A_PWRSUP_3		0x40
-#define ESM_A_PWRSUP_4		0x80
-#define ESM_A_SCSI_A		0x01
-#define ESM_A_SCSI_B		0x02
+#define ESM_A_VOLTx10		0x01
 	const char		*name;
 };
 
@@ -96,6 +91,7 @@ struct esm_sensor {
 	u_int8_t		es_id;
 
 	enum esm_sensor_type	es_type;
+	long			es_arg;
 
 	struct {
 		u_int16_t		th_lo_crit;
@@ -151,6 +147,7 @@ void		esm_make_sensors(struct esm_softc *, struct esm_devmap *,
 int		esm_thresholds(struct esm_softc *, struct esm_devmap *,
 		    struct esm_sensor *);
 
+u_int16_t	esm_sysid(void);
 int		esm_bmc_ready(struct esm_softc *, int, u_int8_t, u_int8_t, int);
 int		esm_cmd(struct esm_softc *, void *, size_t, void *, size_t,
 		    int, int);
@@ -166,20 +163,13 @@ int
 esm_probe(void *aux)
 {
 	const char *pdellstr;
-	struct dell_sysid *pdellid;
-	uint16_t sysid;
 
 	pdellstr = (const char *)ISA_HOLE_VADDR(DELL_SYSSTR_ADDR);
 	DPRINTF("Dell String: %s\n", pdellstr);
 	if (strncmp(pdellstr, "Dell System", 11))
 		return (0);
 
-	pdellid = (struct dell_sysid *)ISA_HOLE_VADDR(DELL_SYSID_ADDR);
-	if ((sysid = pdellid->sys_id) == DELL_SYSID_EXT)
-		sysid = pdellid->ext_id;
-	DPRINTF("SysId: %x\n", sysid);
-
-	switch (sysid) {
+	switch (esm_sysid()) {
 	case DELL_SYSID_2300:
 	case DELL_SYSID_4300:
 	case DELL_SYSID_4350:
@@ -382,7 +372,8 @@ esm_refresh(void *arg)
 			es->es_sensor->value = esm_val2temp(val->v_reading);
 			break;
 		case ESM_S_VOLTS:
-			es->es_sensor->value = esm_val2volts(val->v_reading);
+			es->es_sensor->value = esm_val2volts(val->v_reading) *
+			    es->es_arg;
 			break;
 		case ESM_S_DRIVES:
 			for (i = 0; i < nsensors; i++) {
@@ -546,8 +537,8 @@ struct esm_sensor_map esm_sensors_esm2[] = {
 	{ ESM_S_VOLTS,		0,		"CPU 3 cache" },
 	{ ESM_S_VOLTS,		0,		"CPU 4 cache" },
 	{ ESM_S_UNKNOWN,	0,		"Power Ctrl" },
-	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_1,	"Power Supply 1" },
-	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_2,	"Power Supply 2" },
+	{ ESM_S_PWRSUP,		0,		"Power Supply 1" },
+	{ ESM_S_PWRSUP,		0,		"Power Supply 2" },
 
 	{ ESM_S_VOLTS,		0,		"Mainboard +1.5V" }, /* 30 */
 	{ ESM_S_VOLTS,		0,		"Motherboard +2.8V" },
@@ -570,7 +561,7 @@ struct esm_sensor_map esm_sensors_esm2[] = {
 	{ ESM_S_VOLTS,		0,		"Gigabit NIC +2.5V" },
 	{ ESM_S_VOLTS,		0,		"Memory +3.3V" },
 	{ ESM_S_VOLTS,		0,		"Video +2.5V" },
-	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_3,	"Power Supply 3" },
+	{ ESM_S_PWRSUP,		0,		"Power Supply 3" },
 	{ ESM_S_FANRPM,		0,		"Fan 4" },
 
 	{ ESM_S_FANRPM,		0,		"Power Supply Fan" }, /* 50 */
@@ -595,12 +586,12 @@ struct esm_sensor_map esm_sensors_backplane[] = {
 	{ ESM_S_FANRPM,		0,		"Backplane Fan 1" },
 	{ ESM_S_FANRPM,		0,		"Backplane Fan 2" },
 	{ ESM_S_FANRPM,		0,		"Backplane Fan 3" },
-	{ ESM_S_SCSICONN,	ESM_A_SCSI_A,	"Backplane SCSI A Connected" },
-	{ ESM_S_VOLTS,		ESM_A_SCSI_A,	"Backplane SCSI A External" },
-	{ ESM_S_VOLTS,		ESM_A_SCSI_A,	"Backplane SCSI A Internal" },
-	{ ESM_S_SCSICONN,	ESM_A_SCSI_B,	"Backplane SCSI B Connected" },
-	{ ESM_S_VOLTS,		ESM_A_SCSI_B,	"Backplane SCSI B External" },
-	{ ESM_S_VOLTS,		ESM_A_SCSI_B,	"Backplane SCSI B Internal" },
+	{ ESM_S_SCSICONN,	0,		"Backplane SCSI A Connected" },
+	{ ESM_S_VOLTS,		0,		"Backplane SCSI A External" },
+	{ ESM_S_VOLTS,		0,		"Backplane SCSI A Internal" },
+	{ ESM_S_SCSICONN,	0,		"Backplane SCSI B Connected" },
+	{ ESM_S_VOLTS,		0,		"Backplane SCSI B External" },
+	{ ESM_S_VOLTS,		0,		"Backplane SCSI B Internal" },
 	{ ESM_S_DRIVES,		0,		"Drive" },
 	{ ESM_S_DRIVES,		4,		"Drive" },
 	{ ESM_S_DRIVE,		0,		"Drive 0" },
@@ -617,49 +608,49 @@ struct esm_sensor_map esm_sensors_backplane[] = {
 
 struct esm_sensor_map esm_sensors_powerunit[] = {
 	{ ESM_S_UNKNOWN,	0,		"Power Unit" },
-	{ ESM_S_VOLTS,		ESM_A_PWRSUP_1,	"Power Supply 1 +5V" },
-	{ ESM_S_VOLTS,		ESM_A_PWRSUP_1,	"Power Supply 1 +12V" },
-	{ ESM_S_VOLTS,		ESM_A_PWRSUP_1,	"Power Supply 1 +3.3V" },
-	{ ESM_S_VOLTS,		ESM_A_PWRSUP_1,	"Power Supply 1 -5V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 1 +5V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 1 +12V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 1 +3.3V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 1 -5V" },
 
-	{ ESM_S_VOLTS,		ESM_A_PWRSUP_1,	"Power Supply 1 -12V" },
-	{ ESM_S_VOLTS,		ESM_A_PWRSUP_2,	"Power Supply 2 +5V" },
-	{ ESM_S_VOLTS,		ESM_A_PWRSUP_2,	"Power Supply 2 +12V" },
-	{ ESM_S_VOLTS,		ESM_A_PWRSUP_2,	"Power Supply 2 +3.3V" },
-	{ ESM_S_VOLTS,		ESM_A_PWRSUP_2,	"Power Supply 2 -5V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 1 -12V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 2 +5V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 2 +12V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 2 +3.3V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 2 -5V" },
 
-	{ ESM_S_VOLTS,		ESM_A_PWRSUP_2,	"Power Supply 2 -12V" },
-	{ ESM_S_VOLTS,		ESM_A_PWRSUP_3,	"Power Supply 3 +5V" },
-	{ ESM_S_VOLTS,		ESM_A_PWRSUP_3,	"Power Supply 3 +12V" },
-	{ ESM_S_VOLTS,		ESM_A_PWRSUP_3,	"Power Supply 3 +3.3V" },
-	{ ESM_S_VOLTS,		ESM_A_PWRSUP_3,	"Power Supply 3 -5V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 2 -12V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 3 +5V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 3 +12V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 3 +3.3V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 3 -5V" },
 
-	{ ESM_S_VOLTS,		ESM_A_PWRSUP_3,	"Power Supply 3 -12V" },
-	{ ESM_S_VOLTS,		0,		"System Power Supply +5V" },
-	{ ESM_S_VOLTS,		0,		"System Power Supply +3.3V" },
-	{ ESM_S_VOLTS,		0,		"System Power Supply +12V" },
-	{ ESM_S_VOLTS,		0,		"System Power Supply -5V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 3 -12V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"System Power Supply +5V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"System Power Supply +3.3V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"System Power Supply +12V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"System Power Supply -5V" },
 
-	{ ESM_S_VOLTS,		0,		"System Power Supply -12V" },
-	{ ESM_S_VOLTS,		0,		"System Power Supply +5V aux" },
-	{ ESM_S_AMPS,		ESM_A_PWRSUP_1,	"Power Supply 1 +5V" },
-	{ ESM_S_AMPS,		ESM_A_PWRSUP_1,	"Power Supply 1 +12V" },
-	{ ESM_S_AMPS,		ESM_A_PWRSUP_1,	"Power Supply 1 +3.3V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"System Power Supply -12V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"System Power Supply +5V aux" },
+	{ ESM_S_AMPS,		0,		"Power Supply 1 +5V" },
+	{ ESM_S_AMPS,		0,		"Power Supply 1 +12V" },
+	{ ESM_S_AMPS,		0,		"Power Supply 1 +3.3V" },
 
-	{ ESM_S_AMPS,		ESM_A_PWRSUP_2,	"Power Supply 2 +5V" },
-	{ ESM_S_AMPS,		ESM_A_PWRSUP_2,	"Power Supply 2 +12V" },
-	{ ESM_S_AMPS,		ESM_A_PWRSUP_2,	"Power Supply 2 +3.3V" },
-	{ ESM_S_AMPS,		ESM_A_PWRSUP_3,	"Power Supply 3 +5V" },
-	{ ESM_S_AMPS,		ESM_A_PWRSUP_3,	"Power Supply 3 +12V" },
+	{ ESM_S_AMPS,		0,		"Power Supply 2 +5V" },
+	{ ESM_S_AMPS,		0,		"Power Supply 2 +12V" },
+	{ ESM_S_AMPS,		0,		"Power Supply 2 +3.3V" },
+	{ ESM_S_AMPS,		0,		"Power Supply 3 +5V" },
+	{ ESM_S_AMPS,		0,		"Power Supply 3 +12V" },
 
-	{ ESM_S_AMPS,		ESM_A_PWRSUP_3,	"Power Supply 3 +3.3V" },
-	{ ESM_S_FANRPM,		ESM_A_PWRSUP_1,	"Power Supply 1 Fan" },
-	{ ESM_S_FANRPM,		ESM_A_PWRSUP_2,	"Power Supply 2 Fan" },
-	{ ESM_S_FANRPM,		ESM_A_PWRSUP_3,	"Power Supply 3 Fan" },
-	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_1,	"Power Supply 1" },
+	{ ESM_S_AMPS,		0,		"Power Supply 3 +3.3V" },
+	{ ESM_S_FANRPM,		0,		"Power Supply 1 Fan" },
+	{ ESM_S_FANRPM,		0,		"Power Supply 2 Fan" },
+	{ ESM_S_FANRPM,		0,		"Power Supply 3 Fan" },
+	{ ESM_S_PWRSUP,		0,		"Power Supply 1" },
 
-	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_2,	"Power Supply 2" },
-	{ ESM_S_PWRSUP,		ESM_A_PWRSUP_3,	"Power Supply 3" },
+	{ ESM_S_PWRSUP,		0,		"Power Supply 2" },
+	{ ESM_S_PWRSUP,		0,		"Power Supply 3" },
 	{ ESM_S_UNKNOWN,	0,		"PSPB Fan Control" },
 	{ ESM_S_FANRPM,		0,		"Fan 1" },
 	{ ESM_S_FANRPM,		0,		"Fan 2" },
@@ -815,6 +806,7 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 	const char		*psulabels[] = {
 				    "AC", "SW", "OK", "ON", "FFAN", "OTMP"
 				};
+	u_int16_t		sysid = esm_sysid();
 
 	memset(&req, 0, sizeof(req));
 	req.h_cmd = ESM2_CMD_SMB_XMIT_RECV;
@@ -894,9 +886,15 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 			}
 			break;
 
+		case ESM_S_VOLTS:
+			if ((sysid == DELL_SYSID_4400) &&
+			    (sensor_map[i].arg == ESM_A_VOLTx10))
+				es->es_arg = 10;
+			else
+				es->es_arg = 1;
+			/* FALLTHROUGH */
 		case ESM_S_TEMP:
 		case ESM_S_FANRPM:
-		case ESM_S_VOLTS:
 			if (esm_thresholds(sc, devmap, es) != 0) {
 				free(es, M_DEVBUF);
 				continue;
@@ -959,6 +957,19 @@ esm_thresholds(struct esm_softc *sc, struct esm_devmap *devmap,
 	es->es_thresholds.th_hi_crit = thr->t_hi_fail;
 
 	return (0);
+}
+
+u_int16_t
+esm_sysid(void)
+{
+	struct dell_sysid *pdellid;
+	uint16_t sysid;
+
+	pdellid = (struct dell_sysid *)ISA_HOLE_VADDR(DELL_SYSID_ADDR);
+	if ((sysid = pdellid->sys_id) == DELL_SYSID_EXT)
+		sysid = pdellid->ext_id;
+
+	return (sysid);
 }
 
 int
