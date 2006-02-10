@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.36 2006/02/10 04:20:04 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.37 2006/02/10 04:26:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -632,8 +632,8 @@ struct esm_sensor_map esm_sensors_powerunit[] = {
 
 	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 3 -12V" },
 	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"System Power Supply +5V" },
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"System Power Supply +3.3V" },
 	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"System Power Supply +12V" },
+	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"System Power Supply +3.3V" },
 	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"System Power Supply -5V" },
 
 	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"System Power Supply -12V" },
