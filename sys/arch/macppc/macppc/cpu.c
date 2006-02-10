@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.35 2005/12/09 22:54:15 kettenis Exp $ */
+/*	$OpenBSD: cpu.c,v 1.36 2006/02/10 21:31:04 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -296,6 +296,10 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		ppc_altivec = 1;
 		snprintf(cpu_model, sizeof(cpu_model), "7455");
 		break;
+	case PPC_CPU_MPC7457:
+		ppc_altivec = 1;
+		snprintf(cpu_model, sizeof(cpu_model), "7457");
+		break;
 	default:
 		snprintf(cpu_model, sizeof(cpu_model), "Version %x", cpu);
 		break;
@@ -369,6 +373,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	case PPC_CPU_MPC7447A:
 	case PPC_CPU_MPC7450:
 	case PPC_CPU_MPC7455:
+	case PPC_CPU_MPC7457:
 		/* select NAP mode */
 		hid0 &= ~(HID0_DOZE | HID0_SLEEP);
 		hid0 |= HID0_NAP | HID0_DPM;
@@ -392,7 +397,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	if (cpu == PPC_CPU_MPC750 || cpu == PPC_CPU_MPC7400 ||
 	    cpu == PPC_CPU_IBM750FX || cpu == PPC_CPU_MPC7410 ||
 	    cpu == PPC_CPU_MPC7447A || cpu == PPC_CPU_MPC7450 ||
-	    cpu == PPC_CPU_MPC7455) {
+	    cpu == PPC_CPU_MPC7455 || cpu == PPC_CPU_MPC7457) {
 		config_l2cr(cpu);
 	}
 	printf("\n");
@@ -482,7 +487,8 @@ config_l2cr(int cpu)
 			if (l3cr & L3CR_L3E)
 				printf(", %cMB L3 cache",
 				    l3cr & L3CR_L3SIZ ? '2' : '1');
-		} else if (cpu == PPC_CPU_IBM750FX || cpu == PPC_CPU_MPC7447A)
+		} else if (cpu == PPC_CPU_IBM750FX ||
+			   cpu == PPC_CPU_MPC7447A || cpu == PPC_CPU_MPC7457)
 			printf(": 512KB L2 cache");
 		else {
 			switch (l2cr & L2CR_L2SIZ) {
