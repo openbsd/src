@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.37 2006/01/12 15:10:02 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.38 2006/02/10 13:00:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -273,8 +273,12 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				fatalx("rde_dispatch_imsg: "
 				    "neighbor does not exist");
 
-			nbr->state = state;
 
+			if (state != nbr->state && (nbr->state & NBR_STA_FULL ||
+			    state & NBR_STA_FULL))
+				area_track(nbr->area, state);
+
+			nbr->state = state;
 			if (nbr->state & NBR_STA_FULL)
 				rde_req_list_free(nbr);
 			break;

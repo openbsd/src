@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.47 2006/02/09 20:47:20 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.48 2006/02/10 13:00:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -202,7 +202,7 @@ spf_calc(struct area *area)
 }
 
 void
-rt_calc(struct vertex *v, struct area *area)
+rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 {
 	struct vertex		*w;
 	struct lsa_rtr_link	*rtr_link = NULL;
@@ -256,6 +256,8 @@ rt_calc(struct vertex *v, struct area *area)
 	case LSA_TYPE_SUM_NETWORK:
 	case LSA_TYPE_SUM_ROUTER:
 		/* if ABR only look at area 0.0.0.0 LSA */
+		if (area_border_router(conf) && area->id.s_addr != INADDR_ANY)
+			return;
 
 		/* ignore self-originated stuff */
 		if (v->nbr->self)
@@ -542,7 +544,7 @@ spf_timer(int fd, short event, void *arg)
 
 				/* calculate route table */
 				RB_FOREACH(v, lsa_tree, &area->lsa_tree) {
-					rt_calc(v, area);
+					rt_calc(v, area, conf);
 				}
 
 				area->dirty = 0;
@@ -550,7 +552,7 @@ spf_timer(int fd, short event, void *arg)
 		}
 
 		/* calculate as-external routes */
-		RB_FOREACH(v, lsa_tree, &rdeconf->lsa_tree) {
+		RB_FOREACH(v, lsa_tree, &conf->lsa_tree) {
 			asext_calc(v);
 		}
 
