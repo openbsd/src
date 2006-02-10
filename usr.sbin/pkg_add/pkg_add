@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.214 2006/02/09 09:40:31 espie Exp $
+# $OpenBSD: pkg_add,v 1.215 2006/02/10 10:08:16 bernd Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -663,6 +663,7 @@ sub find_updates
 	my @cantupdate = ();
 	my $hash = available_stems($state);
 
+	OpenBSD::ProgressMeter::set_header("Looking for updates");
 	for my $pkgname (@list) {
 		next if $pkgname =~ m/^\.libs-/;
 		my $stem = OpenBSD::PackageName::splitstem($pkgname);
@@ -673,6 +674,7 @@ sub find_updates
 		}
 		my @l2 = ();
 		if (@l == 1 && $state->{forced}->{pkgpath}) {
+			OpenBSD::ProgressMeter::clear();
 			print "Directly updating $pkgname -> ", $l[0], "\n";
 			push(@$new, $l[0]);
 			next;
@@ -714,10 +716,13 @@ sub find_updates
 
 		if (defined $found && @l2 == 1 && $found eq  $l2[0]) {
 			if (!uses_old_libs($plist)) {
-				print "No need to update $pkgname\n";
+				my $msg = "No need to update $pkgname";
+				OpenBSD::ProgressMeter::message($msg);
+				print "$msg\n" if $state->{beverbose};
 				next;
 			}
 		}
+		OpenBSD::ProgressMeter::clear();
 		print "Candidates for updating $pkgname -> ", join(' ', @l2), "\n";
 		# if all packages have the same version, but distinct p,
 		# grab the most recent.
@@ -727,7 +732,9 @@ sub find_updates
 			
 		if (@l2 == 1) {
 			if (defined $found && $found eq  $l2[0] && !uses_old_libs($plist)) {
-				print "No need to update $pkgname\n";
+				my $msg = "No need to update $pkgname";
+				OpenBSD::ProgressMeter::message($msg);
+				print "$msg\n" if $state->{beverbose};
 			} else {
 				push(@$new, $l2[0]);
 			}
@@ -738,6 +745,7 @@ sub find_updates
 			push(@$new, $result) if defined $result;
 		}
 	}
+	OpenBSD::ProgressMeter::next();
 	return @cantupdate;
 }
 
@@ -890,7 +898,14 @@ if ($opt_u) {
 				exit(1);
 	    	}
 	}
-	print "Running the equivalent of pkg_add -r ", join(' ', @todo), "\n";
+	if ($bad) {
+		print "There are some ambiguities. Please run in interactive ".
+		    "mode again.\n";
+	}
+	if (@todo > 0 && !$bad) {
+		print "Running the equivalent of pkg_add -r ",
+		    join(' ', @todo), "\n";
+	}
 } else {
 	find_truenames(\@ARGV, \@todo, $state);
 	if (defined $state->{forced}->{kitchensink}) {
