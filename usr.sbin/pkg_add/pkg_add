@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.215 2006/02/10 10:08:16 bernd Exp $
+# $OpenBSD: pkg_add,v 1.216 2006/02/10 11:42:51 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -371,6 +371,7 @@ sub really_add($$)
 		# Here there should be code to handle old libs
 
 		OpenBSD::ProgressMeter::set_header("$pkgname (installing)");
+		$state->{dir} = $plist->{dir};
 		$state->set_pkgname($pkgname);
 	}
 
