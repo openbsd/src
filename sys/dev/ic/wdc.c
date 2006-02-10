@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.88 2005/11/09 19:05:48 uwe Exp $     */
+/*      $OpenBSD: wdc.c,v 1.89 2006/02/10 21:45:41 kettenis Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -140,6 +140,7 @@ int wdc_ata_present(struct channel_softc *, int);
 struct channel_softc_vtbl wdc_default_vtbl = {
 	wdc_default_read_reg,
 	wdc_default_write_reg,
+	wdc_default_lba48_write_reg,
 	wdc_default_read_raw_multi_2,
 	wdc_default_write_raw_multi_2,
 	wdc_default_read_raw_multi_4,
@@ -334,6 +335,16 @@ wdc_default_write_reg(chp, reg, val)
 		    reg & _WDC_REGMASK, val);
 }
 
+void
+wdc_default_lba48_write_reg(chp, reg, val)
+	struct channel_softc *chp;
+	enum wdc_regs reg;
+	u_int16_t val;
+{
+	/* All registers are two byte deep FIFOs. */
+	CHP_WRITE_REG(chp, reg, val >> 8);
+	CHP_WRITE_REG(chp, reg, val);
+}
 
 void
 wdc_default_read_raw_multi_2(chp, data, nbytes)
@@ -1956,15 +1967,14 @@ wdccommandext(chp, drive, command, blkno, count)
 	/* Select drive and LBA mode. */
 	CHP_WRITE_REG(chp, wdr_sdh, (drive << 4) | WDSD_LBA);
 
-	/* Load parameters. All registers are two byte deep FIFOs. */
-	CHP_WRITE_REG(chp, wdr_lba_hi, blkno >> 40);
-	CHP_WRITE_REG(chp, wdr_lba_hi, blkno >> 16);
-	CHP_WRITE_REG(chp, wdr_lba_mi, blkno >> 32);
-	CHP_WRITE_REG(chp, wdr_lba_mi, blkno >> 8);
-	CHP_WRITE_REG(chp, wdr_lba_lo, blkno >> 24);
-	CHP_WRITE_REG(chp, wdr_lba_lo, blkno);
-	CHP_WRITE_REG(chp, wdr_seccnt, count >> 8);
-	CHP_WRITE_REG(chp, wdr_seccnt, count);
+	/* Load parameters. */
+	CHP_LBA48_WRITE_REG(chp, wdr_lba_hi,
+	    ((blkno >> 32) & 0xff00) | ((blkno >> 16) & 0xff));
+	CHP_LBA48_WRITE_REG(chp, wdr_lba_mi,
+	    ((blkno >> 24) & 0xff00) | ((blkno >> 8) & 0xff));
+	CHP_LBA48_WRITE_REG(chp, wdr_lba_lo,
+	    ((blkno >> 16) & 0xff00) | (blkno & 0xff));
+	CHP_LBA48_WRITE_REG(chp, wdr_seccnt, count);
 
 	/* Send command. */
 	CHP_WRITE_REG(chp, wdr_command, command);

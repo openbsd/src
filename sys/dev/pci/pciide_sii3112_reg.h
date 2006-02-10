@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_sii3112_reg.h,v 1.4 2005/11/14 13:00:29 mickey Exp $	*/
+/*	$OpenBSD: pciide_sii3112_reg.h,v 1.5 2006/02/10 21:45:41 kettenis Exp $	*/
 /*	$NetBSD: pciide_sii3112_reg.h,v 1.1 2003/03/20 04:22:50 thorpej Exp $	*/
 
 /*
@@ -396,6 +396,7 @@ void     sii3114_write_reg(struct channel_softc *, enum wdc_regs, u_int8_t);
 struct channel_softc_vtbl wdc_sii3114_vtbl = {
 	sii3114_read_reg,
 	sii3114_write_reg,
+	wdc_default_lba48_write_reg,
 	wdc_default_read_raw_multi_2,
 	wdc_default_write_raw_multi_2,
 	wdc_default_read_raw_multi_4,

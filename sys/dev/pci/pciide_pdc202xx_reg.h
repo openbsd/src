@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_pdc202xx_reg.h,v 1.12 2005/06/15 04:45:49 fgsch Exp $	*/
+/*	$OpenBSD: pciide_pdc202xx_reg.h,v 1.13 2006/02/10 21:45:41 kettenis Exp $	*/
 /*	$NetBSD: pciide_pdc202xx_reg.h,v 1.5 2001/07/05 08:38:27 toshii Exp $ */
 
 /*
@@ -154,6 +154,7 @@ void     pdc203xx_write_reg(struct channel_softc *, enum wdc_regs, u_int8_t);
 struct channel_softc_vtbl wdc_pdc203xx_vtbl = {
 	pdc203xx_read_reg,
 	pdc203xx_write_reg,
+	wdc_default_lba48_write_reg,
 	wdc_default_read_raw_multi_2,
 	wdc_default_write_raw_multi_2,
 	wdc_default_read_raw_multi_4,

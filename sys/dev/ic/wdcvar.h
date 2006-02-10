@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.37 2004/10/17 17:50:48 grange Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.38 2006/02/10 21:45:41 kettenis Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -121,6 +121,8 @@ struct channel_softc_vtbl {
 	u_int8_t (*read_reg)(struct channel_softc *, enum wdc_regs reg);
 	void (*write_reg)(struct channel_softc *, enum wdc_regs reg,
 	    u_int8_t var);
+	void (*lba48_write_reg)(struct channel_softc *, enum wdc_regs reg,
+	    u_int16_t var);
 
 	void (*read_raw_multi_2)(struct channel_softc *,
 	    void *data, unsigned int nbytes);
@@ -136,6 +138,9 @@ struct channel_softc_vtbl {
 
 #define CHP_READ_REG(chp, a)  ((chp)->_vtbl->read_reg)(chp, a)
 #define CHP_WRITE_REG(chp, a, b)  ((chp)->_vtbl->write_reg)(chp, a, b)
+#define CHP_LBA48_WRITE_REG(chp, a, b)	\
+	((chp)->_vtbl->lba48_write_reg)(chp, a, b)
+
 #define CHP_READ_RAW_MULTI_2(chp, a, b)  \
 	((chp)->_vtbl->read_raw_multi_2)(chp, a, b)
 #define CHP_WRITE_RAW_MULTI_2(chp, a, b)  \
@@ -316,6 +321,8 @@ u_int8_t wdc_default_read_reg(struct channel_softc *,
 		enum wdc_regs);
 void     wdc_default_write_reg(struct channel_softc *,
 		enum wdc_regs, u_int8_t);
+void     wdc_default_lba48_write_reg(struct channel_softc *,
+		enum wdc_regs, u_int16_t);
 void     wdc_default_read_raw_multi_2(struct channel_softc *,
 		void *, unsigned int);
 void     wdc_default_write_raw_multi_2(struct channel_softc *,

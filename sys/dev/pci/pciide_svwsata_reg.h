@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_svwsata_reg.h,v 1.3 2005/10/21 10:52:32 grange Exp $	*/
+/*	$OpenBSD: pciide_svwsata_reg.h,v 1.4 2006/02/10 21:45:41 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -39,10 +39,12 @@ struct pciide_svwsata {
 
 u_int8_t svwsata_read_reg(struct channel_softc *, enum wdc_regs);
 void     svwsata_write_reg(struct channel_softc *, enum wdc_regs, u_int8_t);
+void     svwsata_lba48_write_reg(struct channel_softc *, enum wdc_regs, u_int16_t);
 
 struct channel_softc_vtbl wdc_svwsata_vtbl = {
 	svwsata_read_reg,
 	svwsata_write_reg,
+	svwsata_lba48_write_reg,
 	wdc_default_read_raw_multi_2,
 	wdc_default_write_raw_multi_2,
 	wdc_default_read_raw_multi_4,
