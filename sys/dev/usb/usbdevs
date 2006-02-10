@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.181 2006/02/10 21:42:39 jsg Exp $
+$OpenBSD: usbdevs,v 1.182 2006/02/10 23:27:04 djm Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -421,6 +421,7 @@ vendor GOODWAY		0x1631	Good Way Technology
 vendor ENTREGA		0x1645	Entrega
 vendor ACTIONTEC	0x1668	Actiontec Electronics
 vendor GIGASET		0x1690	Gigaset
+vendor CMOTECH		0x16d8	CMOTECH CDMA Technologies
 vendor LINKSYS3		0x1915	Linksys
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
@@ -753,6 +754,9 @@ product COMPAQ PJB100		0x504a	Personal Jukebox PJB100
 
 /* Conceptronic products */
 product BILLIONTON SNAPPORT	0x90ff	SnapPort Ethernet
+
+/* CMOTECH CDMA Technologies products */
+product CMOTECH CM5100P		0x5523	CM-5100P EVDO
 
 /* Conceptronic products */
 product CONCEPTRONIC C11U	0x7100	C11U
