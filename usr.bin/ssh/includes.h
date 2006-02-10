@@ -1,4 +1,4 @@
-/*	$OpenBSD: includes.h,v 1.31 2006/02/09 00:32:07 stevesk Exp $	*/
+/*	$OpenBSD: includes.h,v 1.32 2006/02/10 00:27:13 stevesk Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -22,7 +22,6 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "\100(#)" msg }
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/param.h>
-#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/time.h>
