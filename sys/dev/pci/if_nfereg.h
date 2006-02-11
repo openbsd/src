@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfereg.h,v 1.7 2006/02/04 22:11:41 damien Exp $	*/
+/*	$OpenBSD: if_nfereg.h,v 1.8 2006/02/11 09:15:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
@@ -99,6 +99,9 @@
 #define NFE_RXFILTER_MAGIC	0x007f0008
 #define NFE_U2M			(1 << 5)
 #define NFE_PROMISC		(1 << 7)
+
+#define NFE_PWR_VALID		(1 << 8)
+#define NFE_PWR_WAKEUP		(1 << 15)
 
 #define NFE_MEDIA_SET		0x10000
 #define	NFE_MEDIA_1000T		0x00032

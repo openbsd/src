@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.23 2006/02/10 03:54:54 brad Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.24 2006/02/11 09:15:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -954,7 +954,7 @@ int
 nfe_init(struct ifnet *ifp)
 {
 	struct nfe_softc *sc = ifp->if_softc;
-	uint32_t rxtxctl;
+	uint32_t tmp, rxtxctl;
 
 	if (ifp->if_flags & IFF_RUNNING)
 		return 0;
@@ -989,6 +989,13 @@ nfe_init(struct ifnet *ifp)
 	NFE_WRITE(sc, NFE_RING_SIZE,
 	    (NFE_RX_RING_COUNT - 1) << 16 |
 	    (NFE_TX_RING_COUNT - 1));
+
+	/* force MAC to wakeup */
+	tmp = NFE_READ(sc, NFE_PWR_STATE);
+	NFE_WRITE(sc, NFE_PWR_STATE, tmp | NFE_PWR_WAKEUP);
+	DELAY(10);
+	tmp = NFE_READ(sc, NFE_PWR_STATE);
+	NFE_WRITE(sc, NFE_PWR_STATE, tmp | NFE_PWR_VALID);
 
 	NFE_WRITE(sc, NFE_SETUP_R1, NFE_R1_MAGIC);
 	NFE_WRITE(sc, NFE_SETUP_R2, NFE_R2_MAGIC);
