@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.26 2006/02/07 23:35:11 brad Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.27 2006/02/11 09:32:48 brad Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -87,15 +87,6 @@ int	uplcomdebug = 0;
 #define RSAQ_STATUS_CTS		0x80
 #define RSAQ_STATUS_DSR		0x02
 #define RSAQ_STATUS_DCD		0x01
-
-#define UPLCOM_FLOW_OUT_CTS	0x0001
-#define UPLCOM_FLOW_OUT_DSR	0x0002
-#define UPLCOM_FLOW_IN_DSR	0x0004
-#define UPLCOM_FLOW_IN_DTR	0x0008
-#define UPLCOM_FLOW_IN_RTS	0x0010
-#define UPLCOM_FLOW_OUT_RTS	0x0020
-#define UPLCOM_FLOW_OUT_XON	0x0080
-#define UPLCOM_FLOW_IN_XON	0x0100
 
 struct	uplcom_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
@@ -489,8 +480,8 @@ uplcom_set_line_state(struct uplcom_softc *sc)
 	if (sc->sc_rts == -1)
 		sc->sc_rts = 0;
 
-	ls = (sc->sc_dtr ? UPLCOM_FLOW_OUT_DSR : 0) |
-	    (sc->sc_rts ? UPLCOM_FLOW_OUT_CTS : 0);
+	ls = (sc->sc_dtr ? UCDC_LINE_DTR : 0) |
+	    (sc->sc_rts ? UCDC_LINE_RTS : 0);
 
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	req.bRequest = UCDC_SET_CONTROL_LINE_STATE;
