@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1018 2006/02/09 11:11:40 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1019 2006/02/11 08:33:12 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -7951,11 +7951,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CIOB-E",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_2000_PCIE_1,
-	    "HT-2000 PCIE",
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_2000_PCIX,
+	    "HT-2000 PCIX",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_2000_PCIE_2,
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_2000_PCIE,
 	    "HT-2000 PCIE",
 	},
 	{
