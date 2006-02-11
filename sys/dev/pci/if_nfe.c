@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.26 2006/02/11 09:26:15 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.27 2006/02/11 09:40:36 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -1323,9 +1323,9 @@ nfe_reset_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 		data = &ring->data[i];
 
 		if (data->m != NULL) {
-			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-			    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->sc_dmat, data->map);
+			bus_dmamap_sync(sc->sc_dmat, data->active, 0,
+			    data->active->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, data->active);
 			m_freem(data->m);
 			data->m = NULL;
 		}
@@ -1366,15 +1366,20 @@ nfe_free_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 		data = &ring->data[i];
 
 		if (data->m != NULL) {
-			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-			    data->map->dm_mapsize,
+			bus_dmamap_sync(sc->sc_dmat, data->active, 0,
+			    data->active->dm_mapsize,
 			    BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->sc_dmat, data->map);
+			bus_dmamap_unload(sc->sc_dmat, data->active);
 			m_freem(data->m);
 		}
+	}
 
-		if (data->map != NULL)
-			bus_dmamap_destroy(sc->sc_dmat, data->map);
+	/* ..and now actually destroy the DMA mappings */
+	for (i = 0; i < NFE_TX_RING_COUNT; i++) {
+		data = &ring->data[i];
+		if (data->map == NULL)
+			continue;
+		bus_dmamap_destroy(sc->sc_dmat, data->map);
 	}
 }
 
