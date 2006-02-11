@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1019 2006/02/11 08:33:12 brad Exp $
+$OpenBSD: pcidevs,v 1.1020 2006/02/11 20:52:02 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ vendor	ADVSYS		0x10cd	Advansys
 vendor	MOLEX		0x10d2	Molex
 vendor	MACRONIX	0x10d9	Macronix
 vendor	ES		0x10dd	Evans & Sutherland
-vendor	NVIDIA		0x10de	Nvidia
+vendor	NVIDIA		0x10de	NVidia
 vendor	EMULEX		0x10df	Emulex
 vendor	IMS		0x10e0	Integrated Micro Solutions
 vendor	TEKRAM		0x10e1	Tekram (1st ID)
@@ -2472,6 +2472,8 @@ product NVIDIA GEFORCE3		0x0200	GeForce3
 product NVIDIA GEFORCE3TI200	0x0201	GeForce3 Ti 200
 product NVIDIA GEFORCE3TI500	0x0202	GeForce3 Ti 500
 product NVIDIA QUADRO_DCC	0x0203	Quadro DCC
+product NVIDIA GEFORCE6150	0x0240	GeForce 6150
+product NVIDIA GEFORCE6150LE	0x0241	GeForce 6150 LE
 product NVIDIA GEFORCE6100	0x0242	GeForce 6100
 product NVIDIA GEFORCE4TI4600	0x0250	GeForce4 Ti 4600
 product NVIDIA GEFORCE4TI4400	0x0251	GeForce4 Ti 4400
@@ -2510,6 +2512,7 @@ product NVIDIA C51_PCIE_0	0x02fb	C51 PCIE
 product NVIDIA C51_PCIE_1	0x02fc	C51 PCIE
 product NVIDIA C51_PCIE_2	0x02fd	C51 PCIE
 product NVIDIA C51_MEM_1	0x02fe	C51 Memory
+product NVIDIA C51_MEM_4	0x02ff	C51 Memory
 product NVIDIA GEFORCEFX5800_U	0x0301	GeForce FX 5800 Ultra
 product NVIDIA GEFORCEFX5800	0x0302	GeForce FX 5800
 product NVIDIA GEFORCEFX5600_U	0x0311	GeForce FX 5600 Ultra
