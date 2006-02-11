@@ -1,4 +1,4 @@
-.\"     $OpenBSD: epic.4,v 1.4 2005/09/30 20:34:24 jaredy Exp $
+.\"     $OpenBSD: epic.4,v 1.5 2006/02/11 23:18:24 brad Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -32,6 +32,8 @@
 .Nd SMC 83C170 (EPIC/100) Ethernet driver
 .Sh SYNOPSIS
 .Cd "epic* at pci?"
+.Cd "acphy* at mii?"
+.Cd "lxtphy* at mii?"
 .Cd "qsphy* at mii?"
 .Sh DESCRIPTION
 The
@@ -79,10 +81,12 @@ Use 10baseT, half duplex
 Put the interface into loopback mode
 .El
 .Sh SEE ALSO
+.Xr acphy 4 ,
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
 .Xr inet 4 ,
 .Xr intro 4 ,
+.Xr lxtphy 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
 .Xr qsphy 4 ,
