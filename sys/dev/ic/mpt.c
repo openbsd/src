@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.c,v 1.23 2006/02/05 20:38:16 krw Exp $	*/
+/*	$OpenBSD: mpt.c,v 1.24 2006/02/11 01:20:43 krw Exp $	*/
 /*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
@@ -343,10 +343,9 @@ mpt_get_request(struct mpt_softc *mpt)
 void
 mpt_send_cmd(struct mpt_softc *mpt, struct req_entry *req)
 {
-	req->sequence = mpt->sequence++;
-	u_int32_t *pReq;
+#ifdef MPT_DEBUG
+	u_int32_t *pReq = req->req_vbuf;
 
-	pReq = req->req_vbuf;
 	DNPRINTF(50, "%s: Send Request %d (0x%x):\n",
 	    DEVNAME(mpt), req->index, req->req_pbuf);
 	DNPRINTF(50, "%s: %08x %08x %08x %08x\n",
@@ -357,8 +356,11 @@ mpt_send_cmd(struct mpt_softc *mpt, struct req_entry *req)
 	    DEVNAME(mpt), pReq[8], pReq[9], pReq[10], pReq[11]);
 	DNPRINTF(50, "%s: %08x %08x %08x %08x\n",
 	    DEVNAME(mpt), pReq[12], pReq[13], pReq[14], pReq[15]);
+#endif /* MPT_DEBUG */
 
+	req->sequence = mpt->sequence++;
 	MPT_SYNC_REQ(mpt, req, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
 	req->debug = REQ_ON_CHIP;
 	mpt_write(mpt, MPT_OFFSET_REQUEST_Q, (u_int32_t) req->req_pbuf);
 }
