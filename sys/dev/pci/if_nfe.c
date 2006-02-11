@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.25 2006/02/11 09:18:56 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.26 2006/02/11 09:26:15 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -781,25 +781,21 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 	if (error != 0 && error != EFBIG) {
 		printf("%s: could not map mbuf (error %d)\n",
 		    sc->sc_dev.dv_xname, error);
-		m_freem(m0);
 		return error;
 	}
 	if (error != 0) {
 		/* too many fragments, linearize */
 
 		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
-		if (mnew == NULL) {
-			m_freem(m0);
-			return ENOMEM;
-		}
+		if (mnew == NULL)
+			return ENOBUFS;
 
 		M_DUP_PKTHDR(mnew, m0);
 		if (m0->m_pkthdr.len > MHLEN) {
 			MCLGET(mnew, M_DONTWAIT);
 			if (!(mnew->m_flags & M_EXT)) {
-				m_freem(m0);
 				m_freem(mnew);
-				return ENOMEM;
+				return ENOBUFS;
 			}
 		}
 
@@ -893,7 +889,7 @@ nfe_start(struct ifnet *ifp)
 {
 	struct nfe_softc *sc = ifp->if_softc;
 	struct mbuf *m0;
-	uint32_t txctl = NFE_RXTX_KICKTX;
+	uint32_t txctl;
 	int pkts = 0;
 
 	for (;;) {
@@ -918,11 +914,11 @@ nfe_start(struct ifnet *ifp)
 	if (pkts == 0)
 		return;
 
+	txctl = NFE_RXTX_KICKTX;
 	if (sc->sc_flags & NFE_40BIT_ADDR)
 		txctl |= NFE_RXTX_V3MAGIC;
 	else if (sc->sc_flags & NFE_JUMBO_SUP)
 		txctl |= NFE_RXTX_V2MAGIC;
-
 #ifdef NFE_CSUM
 	if (sc->sc_flags & NFE_HW_CSUM)
 		txctl |= NFE_RXTX_RXCHECK;
