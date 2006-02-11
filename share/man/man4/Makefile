@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.342 2006/02/10 23:07:01 djm Exp $
+#	$OpenBSD: Makefile,v 1.343 2006/02/11 09:30:54 brad Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 acpi.4 acpitimer.4 \
 	adc.4 addcom.4 admcts.4 admlc.4 admtemp.4 \
@@ -50,6 +50,7 @@ MLINKS+=ral.4 ural.4
 MLINKS+=com.4 pccom.4
 MLINKS+=adv.4 advansys.4
 MLINKS+=adv.4 adw.4
+MLINKS+=art.4 musycc.4
 MLINKS+=audio.4 mixer.4
 MLINKS+=cardbus.4 cbb.4
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
