@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.98 2006/01/31 18:24:56 mickey Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.99 2006/02/11 16:46:59 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.98 2006/01/31 18:24:56 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.99 2006/02/11 16:46:59 martin Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,7 @@ struct nlist namelist[] = {
 	{ "_nselcoll" },
 #define X_POOLHEAD	7		/* sysctl */
 	{ "_pool_head" },
+	{ "" },
 };
 
 struct nlist namelist2[] = {
@@ -1144,12 +1145,11 @@ kread(int nlx, void *addr, size_t size)
 }
 
 /*
- * kread reads something from the kernel, given its nlist index.
+ * kreado reads something from the kernel, given its nlist index.
  */
 int
 kreado(struct nlist *nl, void *addr, size_t size)
 {
-	char *sym;
 	int c;
 
 	if ((c = kvm_nlist(kd, nl)) != 0)
