@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1019 2006/02/11 08:33:12 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1020 2006/02/11 20:52:02 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -132,7 +132,7 @@
 #define	PCI_VENDOR_MOLEX	0x10d2		/* Molex */
 #define	PCI_VENDOR_MACRONIX	0x10d9		/* Macronix */
 #define	PCI_VENDOR_ES	0x10dd		/* Evans & Sutherland */
-#define	PCI_VENDOR_NVIDIA	0x10de		/* Nvidia */
+#define	PCI_VENDOR_NVIDIA	0x10de		/* NVidia */
 #define	PCI_VENDOR_EMULEX	0x10df		/* Emulex */
 #define	PCI_VENDOR_IMS	0x10e0		/* Integrated Micro Solutions */
 #define	PCI_VENDOR_TEKRAM	0x10e1		/* Tekram (1st ID) */
@@ -2477,6 +2477,8 @@
 #define	PCI_PRODUCT_NVIDIA_GEFORCE3TI200	0x0201		/* GeForce3 Ti 200 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE3TI500	0x0202		/* GeForce3 Ti 500 */
 #define	PCI_PRODUCT_NVIDIA_QUADRO_DCC	0x0203		/* Quadro DCC */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE6150	0x0240		/* GeForce 6150 */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE6150LE	0x0241		/* GeForce 6150 LE */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE6100	0x0242		/* GeForce 6100 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE4TI4600	0x0250		/* GeForce4 Ti 4600 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE4TI4400	0x0251		/* GeForce4 Ti 4400 */
@@ -2515,6 +2517,7 @@
 #define	PCI_PRODUCT_NVIDIA_C51_PCIE_1	0x02fc		/* C51 PCIE */
 #define	PCI_PRODUCT_NVIDIA_C51_PCIE_2	0x02fd		/* C51 PCIE */
 #define	PCI_PRODUCT_NVIDIA_C51_MEM_1	0x02fe		/* C51 Memory */
+#define	PCI_PRODUCT_NVIDIA_C51_MEM_4	0x02ff		/* C51 Memory */
 #define	PCI_PRODUCT_NVIDIA_GEFORCEFX5800_U	0x0301		/* GeForce FX 5800 Ultra */
 #define	PCI_PRODUCT_NVIDIA_GEFORCEFX5800	0x0302		/* GeForce FX 5800 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCEFX5600_U	0x0311		/* GeForce FX 5600 Ultra */
