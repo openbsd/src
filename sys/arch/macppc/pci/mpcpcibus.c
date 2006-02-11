@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.29 2006/02/03 10:21:18 kettenis Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.30 2006/02/11 05:21:40 brad Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -132,21 +132,6 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	_dmamem_unmap,
 	_dmamem_mmap
 };
-
-/*
- * Code from "pci/if_de.c" used to calculate crc32 of ether rom data.
- */
-#define      TULIP_CRC32_POLY  0xEDB88320UL
-static __inline__ unsigned
-srom_crc32(const unsigned char *databuf, size_t datalen)
-{
-    u_int idx, bit, data, crc = 0xFFFFFFFFUL;
-
-    for (idx = 0; idx < datalen; idx++)
-        for (data = *databuf++, bit = 0; bit < 8; bit++, data >>= 1)
-            crc = (crc >> 1) ^ (((crc ^ data) & 1) ? TULIP_CRC32_POLY : 0);
-    return crc;
-}
 
 int
 mpcpcibrmatch(struct device *parent, void *match, void *aux)
