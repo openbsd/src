@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.28 2006/02/11 11:51:30 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.29 2006/02/11 20:25:21 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -232,9 +232,11 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
 #ifdef NFE_CSUM
 	if (sc->sc_flags & NFE_HW_CSUM) {
-		ifp->if_capabilities = IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
+		ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
 		    IFCAP_CSUM_UDPv4;
 	}
 #endif
