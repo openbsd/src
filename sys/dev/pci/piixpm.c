@@ -1,4 +1,4 @@
-/*	$OpenBSD: piixpm.c,v 1.18 2006/01/18 02:57:27 brad Exp $	*/
+/*	$OpenBSD: piixpm.c,v 1.19 2006/02/11 05:26:32 grange Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -125,7 +125,7 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map I/O space */
 	sc->sc_iot = pa->pa_iot;
-	base = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_BASE);
+	base = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_BASE) & 0xffff;
 	if (bus_space_map(sc->sc_iot, PCI_MAPREG_IO_ADDR(base),
 	    PIIX_SMB_SIZE, 0, &sc->sc_ioh)) {
 		printf(": can't map I/O space\n");
