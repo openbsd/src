@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.39 2005/05/03 05:44:35 djm Exp $ */
+/* $OpenBSD: http_main.c,v 1.40 2006/02/11 19:15:57 otto Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -3078,7 +3078,7 @@ static void standalone_main(int argc, char **argv)
 
 	    /* cleanup pid file on normal shutdown */
 	    {
-		const char *pidfile = NULL;
+		char *pidfile = NULL;
 		pidfile = ap_server_root_relative (pconf, ap_pid_fname);
 		ap_server_strip_chroot(pidfile, 0);
 		if ( pidfile != NULL && unlink(pidfile) == 0)
