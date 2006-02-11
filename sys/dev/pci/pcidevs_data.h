@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1020 2006/02/11 20:52:02 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1021 2006/02/11 22:21:34 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -7103,6 +7103,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce Go 6800 Ultra",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADROFXGO1400,
+	    "Quadro FX Go1400",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADROFX1400,
 	    "Quadro FX 1400",
 	},
@@ -7619,7 +7623,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "C51 Memory",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MEM_4,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MEM_6,
 	    "C51 Memory",
 	},
 	{

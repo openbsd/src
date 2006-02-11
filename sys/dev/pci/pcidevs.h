@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1020 2006/02/11 20:52:02 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1021 2006/02/11 22:21:34 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2388,6 +2388,7 @@
 #define	PCI_PRODUCT_NVIDIA_ITNT2	0x00a0		/* Aladdin TNT2 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE6800GO	0x00c8		/* GeForce Go 6800 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE6800GO_U	0x00c9		/* GeForce Go 6800 Ultra */
+#define	PCI_PRODUCT_NVIDIA_QUADROFXGO1400	0x00cc		/* Quadro FX Go1400 */
 #define	PCI_PRODUCT_NVIDIA_QUADROFX1400	0x00ce		/* Quadro FX 1400 */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_ISA	0x00d0		/* nForce3 ISA */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_PCHB	0x00d1		/* nForce3 PCI Host */
@@ -2517,7 +2518,7 @@
 #define	PCI_PRODUCT_NVIDIA_C51_PCIE_1	0x02fc		/* C51 PCIE */
 #define	PCI_PRODUCT_NVIDIA_C51_PCIE_2	0x02fd		/* C51 PCIE */
 #define	PCI_PRODUCT_NVIDIA_C51_MEM_1	0x02fe		/* C51 Memory */
-#define	PCI_PRODUCT_NVIDIA_C51_MEM_4	0x02ff		/* C51 Memory */
+#define	PCI_PRODUCT_NVIDIA_C51_MEM_6	0x02ff		/* C51 Memory */
 #define	PCI_PRODUCT_NVIDIA_GEFORCEFX5800_U	0x0301		/* GeForce FX 5800 Ultra */
 #define	PCI_PRODUCT_NVIDIA_GEFORCEFX5800	0x0302		/* GeForce FX 5800 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCEFX5600_U	0x0311		/* GeForce FX 5600 Ultra */
