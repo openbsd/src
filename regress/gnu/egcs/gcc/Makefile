@@ -1,11 +1,9 @@
-# $OpenBSD: Makefile,v 1.5 2004/12/29 06:02:14 david Exp $
+# $OpenBSD: Makefile,v 1.6 2006/02/11 23:54:34 david Exp $
 
 .include <bsd.own.mk>
 
 NOMAN=
 NOPROG=
-
-HAVE_DEJAGNU!=pkg_info dejagnu
 
 .if ${USE_GCC3:L:Myes}
 TESTDIR=${BSDSRCDIR}/gnu/usr.bin/gcc
@@ -19,17 +17,15 @@ REGRESS_TARGETS=do-gcc
 REGRESS_SKIP_TARGETS=do-gcc
 .endif
 
-.if empty(HAVE_DEJAGNU)
 do-gcc: 
-	@echo "Error: DejaGnu is required to run this test.";
-	@echo "  You can install the package from the ftp site or compile it";
-	@echo "  from the ports tree (${PORTSDIR}/devel/dejagnu).";
-	@exit 1
-.else
-do-gcc: 
+	@if [ ! "`pkg_info -e dejagnu-\*`" ]; then \
+	    echo "Error: DejaGnu is required to run this test."; \
+	    echo "  You can install the package from the ftp site or compile it"; \
+	    echo "  from the ports tree (${PORTSDIR}/devel/dejagnu)."; \
+	    exit 1; \
+	fi
 	@cd ${TESTDIR} && ${MAKE} -f Makefile.bsd-wrapper && \
 	${MAKE} check RUNTEST=${RUNTEST};
-.endif
 
 .include <bsd.regress.mk>
 
