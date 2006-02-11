@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1021 2006/02/11 22:21:34 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1022 2006/02/11 22:43:08 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1463,6 +1463,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon Mobility X600",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V3200,
+	    "FireGL V3200",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X600_RV380,
 	    "Radeon X600 (RV380)",
 	},
@@ -1779,6 +1783,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon 9500/9700",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON9500_PRO,
+	    "Radeon 9500 Pro",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9800XT,
 	    "Radeon 9800 XT",
 	},
@@ -2073,6 +2081,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_SE,
 	    "Radeon 9200 SE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800_GTO,
+	    "Radeon X800 GTO",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X800_GTO_S,
+	    "Radeon X800 GTO Sec",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS100_PCI,
@@ -6931,6 +6947,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Vanta",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_SMB,
+	    "MCP04 SMBus",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_IDE,
 	    "MCP04 IDE",
 	},
@@ -7256,6 +7276,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE6600GO,
+	    "GeForce 6600 Go",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE6600GO_2,
 	    "GeForce 6600 Go",
 	},
 	{
