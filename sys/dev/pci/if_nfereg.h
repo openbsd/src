@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfereg.h,v 1.8 2006/02/11 09:15:57 damien Exp $	*/
+/*	$OpenBSD: if_nfereg.h,v 1.9 2006/02/11 11:51:30 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
@@ -31,7 +31,7 @@
 #define NFE_TX_CTL		0x084
 #define NFE_TX_STATUS		0x088
 #define NFE_RXFILTER		0x08c
-#define NFE_OFFLD_CFG		0x090
+#define NFE_RXBUFSZ		0x090
 #define NFE_RX_CTL		0x094
 #define NFE_RX_STATUS		0x098
 #define NFE_RNDSEED		0x09c

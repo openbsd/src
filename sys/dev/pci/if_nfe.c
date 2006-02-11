@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.27 2006/02/11 09:40:36 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.28 2006/02/11 11:51:30 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -957,6 +957,8 @@ nfe_init(struct ifnet *ifp)
 
 	nfe_stop(ifp, 0);
 
+	nfe_ifmedia_upd(ifp);
+
 	NFE_WRITE(sc, NFE_TX_UNK, 0);
 
 	rxtxctl = NFE_RXTX_BIT2;
@@ -986,6 +988,8 @@ nfe_init(struct ifnet *ifp)
 	    (NFE_RX_RING_COUNT - 1) << 16 |
 	    (NFE_TX_RING_COUNT - 1));
 
+	NFE_WRITE(sc, NFE_RXBUFSZ, MCLBYTES);
+
 	/* force MAC to wakeup */
 	tmp = NFE_READ(sc, NFE_PWR_STATE);
 	NFE_WRITE(sc, NFE_PWR_STATE, tmp | NFE_PWR_WAKEUP);
@@ -1004,9 +1008,6 @@ nfe_init(struct ifnet *ifp)
 	NFE_WRITE(sc, NFE_RXTX_CTL, rxtxctl);
 	DELAY(10);
 	NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_BIT1 | rxtxctl);
-
-	/* configure media */
-	mii_mediachg(&sc->sc_mii);
 
 	/* set Rx filter */
 	nfe_setmulti(sc);
