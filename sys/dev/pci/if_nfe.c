@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.24 2006/02/11 09:15:57 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.25 2006/02/11 09:18:56 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -192,7 +192,7 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case PCI_PRODUCT_NVIDIA_MCP51_LAN1:
 	case PCI_PRODUCT_NVIDIA_MCP51_LAN2:
-		sc->sc_flags |= NFE_JUMBO_SUP | NFE_40BIT_ADDR;
+		sc->sc_flags |= NFE_40BIT_ADDR;
 		break;
 	case PCI_PRODUCT_NVIDIA_CK804_LAN1:
 	case PCI_PRODUCT_NVIDIA_CK804_LAN2:
