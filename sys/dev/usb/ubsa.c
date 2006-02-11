@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.13 2005/11/21 18:16:43 millert Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.14 2006/02/11 09:33:45 brad Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -172,7 +172,6 @@ struct	ubsa_softc {
 
 	int			sc_iface_number;	/* interface number */
 
-	usbd_interface_handle	sc_intr_iface;	/* interrupt interface */
 	int			sc_intr_number;	/* interrupt number */
 	usbd_pipe_handle	sc_intr_pipe;	/* interrupt pipe */
 	u_char			*sc_intr_buf;	/* interrupt buffer */
@@ -349,9 +348,6 @@ USB_ATTACH(ubsa)
 		sc->sc_dying = 1;
 		goto error;
 	}
-
-	/* keep interface for interrupt */
-	sc->sc_intr_iface = sc->sc_iface;
 
 	if (uca.bulkin == -1) {
 		printf("%s: Could not find data bulk in\n", devname);
@@ -643,7 +639,7 @@ ubsa_open(void *addr, int portno)
 
 	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
 		sc->sc_intr_buf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
-		err = usbd_open_pipe_intr(sc->sc_intr_iface,
+		err = usbd_open_pipe_intr(sc->sc_iface,
 		    sc->sc_intr_number,
 		    USBD_SHORT_XFER_OK,
 		    &sc->sc_intr_pipe,
