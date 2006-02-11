@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.21 2006/02/11 21:53:10 brad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -69,16 +69,20 @@ const struct mii_phy_funcs rlphy_funcs = {
 	rlphy_service, rlphy_status, mii_phy_reset,
 };
 
+static const struct mii_phydesc rlphys[] = {
+	{ MII_OUI_REALTEK,		MII_MODEL_REALTEK_RTL8201L,
+          MII_STR_REALTEK_RTL8201L },
+
+	{ 0,				0,
+	  NULL },
+};
 int
 rlphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	/* Test for RealTek 8201L PHY */
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_REALTEK &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_REALTEK_RTL8201L) {
+	if (mii_phy_match(ma, rlphys) != NULL)
 		return (10);
-	}
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) != 0 ||
 	    MII_MODEL(ma->mii_id2) != 0)
@@ -100,12 +104,14 @@ rlphyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
 
-	if (MII_MODEL(ma->mii_id2) == MII_MODEL_REALTEK_RTL8201L) {
-		printf(": %s, rev. %d\n", MII_STR_REALTEK_RTL8201L,
+	mpd = mii_phy_match(ma, rlphys);
+	if (mpd != NULL) {
+		printf(": %s, rev. %d\n", mpd->mpd_name,
 		    MII_REV(ma->mii_id2));
 	} else
-		printf(": RTL internal phy\n");
+		printf(": RTL internal PHY\n");
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
