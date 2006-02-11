@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.72 2006/01/15 03:06:46 jsg Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.73 2006/02/11 21:12:52 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.69 2006/01/15 03:06:21 jsg Exp 
+ *	OpenBSD: miidevs,v 1.70 2006/02/11 21:11:40 brad Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -72,6 +72,7 @@
 #define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
 #define	MII_OUI_TI	0x080028	/* Texas Instruments */
 #define	MII_OUI_TSC	0x00c039	/* TDK Semiconductor */
+#define	MII_OUI_VIA	0x004063	/* VIA Networking Technologies */
 #define	MII_OUI_XAQTI	0x00e0ae	/* XaQti Corp. */
 
 /* in the 79c873, AMD uses another OUI (which matches Davicom!) */
@@ -79,6 +80,7 @@
 #define	MII_OUI_xxAMD	0x00606e	/* Advanced Micro Devices */
 #define	MII_OUI_xxINTEL	0x00f800	/* Intel (alt) */
 #define	MII_OUI_xxCICADA	0x00c08f	/* Cicada Semiconductor (alt) */
+#define	MII_OUI_xxICPLUS	0x000004	/* IC Plus Corp. */
 
 /* some vendors have the bits swapped within bytes
 	(ie, ordered as on the wire) */
@@ -231,6 +233,10 @@
 #define	MII_MODEL_xxDEC_xxDC	0x0001
 #define	MII_STR_xxDEC_xxDC	"DC"
 
+/* IC Plus Corp. PHYs */
+#define	MII_MODEL_xxICPLUS_IP101	0x90c3
+#define	MII_STR_xxICPLUS_IP101	"IP101 10/100 PHY"
+
 /* Integrated Circuit Systems PHYs */
 #define	MII_MODEL_xxICS_1890	0x0002
 #define	MII_STR_xxICS_1890	"ICS1890 10/100 PHY"
@@ -324,6 +330,12 @@
 #define	MII_STR_TSC_78Q2120	"78Q2120 10/100 PHY"
 #define	MII_MODEL_TSC_78Q2121	0x0015
 #define	MII_STR_TSC_78Q2121	"78Q2121 100baseTX PHY"
+
+/* VIA Networking Technologies PHYs */
+#define	MII_MODEL_VIA_VT6103	0x0032
+#define	MII_STR_VIA_VT6103	"VT6103 10/100 PHY"
+#define	MII_MODEL_VIA_VT6103_2	0x0034
+#define	MII_STR_VIA_VT6103_2	"VT6103 10/100 PHY"
 
 /* XaQti Corp. PHYs */
 #define	MII_MODEL_XAQTI_XMACII	0x0000
