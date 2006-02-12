@@ -1,4 +1,4 @@
-/* $OpenBSD: pcppi.c,v 1.6 2006/01/02 05:21:40 brad Exp $ */
+/* $OpenBSD: pcppi.c,v 1.7 2006/02/12 20:04:16 miod Exp $ */
 /* $NetBSD: pcppi.c,v 1.1 1998/04/15 20:26:18 drochner Exp $ */
 
 /*
@@ -265,7 +265,7 @@ pcppi_pckbd_bell(arg, pitch, period, volume, poll)
 	/*
 	 * Comes in as ms, goes out as ticks; volume ignored.
 	 */
-	pcppi_bell(arg, pitch, (period * hz) / 1000,
+	pcppi_bell(arg, volume ? pitch : 0, (period * hz) / 1000,
 	    poll ? PCPPI_BELL_POLL : 0);
 }
 #endif /* NPCKBD > 0 */
