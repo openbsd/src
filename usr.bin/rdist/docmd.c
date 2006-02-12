@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.17 2003/06/03 02:56:14 millert Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.18 2006/02/12 15:51:36 moritz Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ static char RCSid[] __attribute__((__unused__)) =
 "$From: docmd.c,v 1.8 2001/03/12 18:42:23 kim Exp $";
 #else
 static char RCSid[] __attribute__((__unused__)) = 
-"$OpenBSD: docmd.c,v 1.17 2003/06/03 02:56:14 millert Exp $";
+"$OpenBSD: docmd.c,v 1.18 2006/02/12 15:51:36 moritz Exp $";
 #endif
 
 static char sccsid[] __attribute__((__unused__)) =
@@ -194,7 +194,7 @@ notify(char *rhost, struct namelist *to, time_t lmod)
 	(void) putc('\n', pf);
 	(void) fprintf(pf, "Options: %s\n\n", getondistoptlist(options));
 
-	while ((len = read(fd, buf, sizeof(buf))) != (size_t)-1)
+	while ((len = read(fd, buf, sizeof(buf))) > 0)
 		(void) fwrite(buf, 1, len, pf);
 
 	(void) pclose(pf);
