@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.182 2006/02/10 23:27:04 djm Exp $
+$OpenBSD: usbdevs,v 1.183 2006/02/12 00:08:52 miod Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -600,6 +600,7 @@ product AOX USB101		0x0008	Ethernet
 
 /* Apple Computer products */
 product APPLE OPTMOUSE		0x0302	Optical mouse
+product APPLE ADB		0x1000	ADB device
 product APPLE SPEAKERS		0x1101	Speakers
 
 /* Araneus Information Systems products */
