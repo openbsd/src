@@ -1,4 +1,4 @@
-/* $OpenBSD: isa_machdep.c,v 1.12 2002/03/14 01:26:27 millert Exp $ */
+/* $OpenBSD: isa_machdep.c,v 1.13 2006/02/12 21:09:08 miod Exp $ */
 /* $NetBSD: isa_machdep.c,v 1.12 1998/08/07 10:26:39 drochner Exp $ */
 
 /*
@@ -50,26 +50,6 @@
 #include <dev/isa/vga_isavar.h>
 #endif
 
-#include "pcppi.h"
-#if (NPCPPI > 0)
-#include <dev/isa/pcppivar.h>
-
-int isabeepmatch(struct device *, void *, void *);
-void isabeepattach(struct device *, struct device *, void *);
-void isabeep(int, int);
-
-struct cfattach isabeep_ca = {
-	sizeof(struct device), isabeepmatch, isabeepattach
-};
-
-struct cfdriver isabeep_cd = {
-	NULL, "isabeep", DV_DULL
-};
-
-static int ppi_attached;
-static pcppi_tag_t ppicookie;
-#endif /* PCPPI */
-
 int
 isa_display_console(iot, memt)
 	bus_space_tag_t iot, memt;
@@ -82,33 +62,3 @@ isa_display_console(iot, memt)
 #endif
 	return(res);
 }
-
-#if (NPCPPI > 0)
-int
-isabeepmatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
-{
-	return (!ppi_attached);
-}
-
-void
-isabeepattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	printf("\n");
-
-	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;
-	ppi_attached = 1;
-}
-
-void
-isabeep(pitch, period)
-	int pitch, period;
-{
-	if (ppi_attached)
-		pcppi_bell(ppicookie, pitch, period, 0);
-}
-#endif

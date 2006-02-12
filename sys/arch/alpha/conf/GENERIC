@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.163 2006/02/10 09:40:21 brad Exp $
+#	$OpenBSD: GENERIC,v 1.164 2006/02/12 21:09:06 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -284,7 +284,6 @@ isapnp0	at	isa?
 mcclock* at isa? port 0x70
 pcppi*	at isa?				# PC prog. periph. interface
 spkr0	at pcppi?			# IBM BASIC emulation
-isabeep0 at pcppi?			# "keyboard" beep
 midi*	at pcppi?
 pckbc*	at isa?				# PC keyboard controller
 pckbd*	at pckbc?			# PC keyboard (kbd port)
