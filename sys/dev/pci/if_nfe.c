@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.31 2006/02/12 13:08:42 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.32 2006/02/12 13:25:01 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -701,14 +701,14 @@ nfe_rxeof(struct nfe_softc *sc)
 
 			error = bus_dmamap_load(sc->sc_dmat, data->map,
 			    mtod(mnew, void *), MCLBYTES, NULL,
-			    BUS_DMA_NOWAIT);
+			    BUS_DMA_READ | BUS_DMA_NOWAIT);
 			if (error != 0) {
 				m_freem(mnew);
 
 				/* try to reload the old mbuf */
 				error = bus_dmamap_load(sc->sc_dmat, data->map,
 				    mtod(data->m, void *), MCLBYTES, NULL,
-				    BUS_DMA_NOWAIT);
+				    BUS_DMA_READ | BUS_DMA_NOWAIT);
 				if (error != 0) {
 					/* very unlikely that it will fail.. */
 					panic("%s: could not load old rx mbuf",
@@ -1243,7 +1243,7 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 
 			error = bus_dmamap_load(sc->sc_dmat, data->map,
 			    mtod(data->m, void *), MCLBYTES, NULL,
-			    BUS_DMA_NOWAIT);
+			    BUS_DMA_READ | BUS_DMA_NOWAIT);
 			if (error != 0) {
 				printf("%s: could not load rx buf DMA map",
 				    sc->sc_dev.dv_xname);
@@ -1412,7 +1412,7 @@ nfe_jpool_alloc(struct nfe_softc *sc)
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, ring->jmap, ring->jpool,
-	    NFE_JPOOL_SIZE, NULL, BUS_DMA_NOWAIT);
+	    NFE_JPOOL_SIZE, NULL, BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not load jumbo DMA map\n",
 		    sc->sc_dev.dv_xname);
