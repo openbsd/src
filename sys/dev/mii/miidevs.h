@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.74 2006/02/12 00:06:35 maja Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.75 2006/02/12 00:38:50 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.71 2006/02/12 00:05:33 maja Exp 
+ *	OpenBSD: miidevs,v 1.72 2006/02/12 00:38:27 brad Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -53,7 +53,9 @@
 #define	MII_OUI_LUCENT	0x00601d	/* Lucent Technologies */
 #define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
+#define	MII_OUI_ASIX	0x000ec6	/* ASIX Electronics */
 #define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
+#define	MII_OUI_CENIX	0x000749	/* CENiX Inc. */
 #define	MII_OUI_CICADA	0x0003F1	/* Cicada Semiconductor */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
 #define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
