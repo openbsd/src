@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.4 2005/12/13 00:18:19 jsg Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.5 2006/02/12 19:55:38 miod Exp $	*/
 /*	$NetBSD: isa_machdep.h,v 1.2 2003/05/09 23:51:28 fvdl Exp $	*/
 
 /*-
@@ -200,11 +200,5 @@ extern u_long atdevbase;           /* kernel virtual address of "hole" */
  * return a kernel virtual address.
  */
 #define ISA_HOLE_VADDR(p)  ((void *) ((u_long)(p) - IOM_BEGIN + atdevbase))
-
-
-/*
- * Miscellanous functions.
- */
-void sysbeep(int, int);		/* beep with the system speaker */
 
 #endif /* _I386_ISA_MACHDEP_H_ XXX */

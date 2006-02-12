@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.8 2005/12/13 00:18:19 jsg Exp $	*/
+/*	$OpenBSD: clock.c,v 1.9 2006/02/12 19:55:38 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -109,37 +109,10 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <dev/clock_subr.h>
 #include <machine/specialreg.h> 
 
-#include "pcppi.h"
-#if (NPCPPI > 0)
-#include <dev/isa/pcppivar.h>
-
-#ifdef CLOCKDEBUG
-int clock_debug = 0;
-#define DPRINTF(arg) if (clock_debug) printf arg
-#else
-#define DPRINTF(arg)
-#endif
-
-int sysbeepmatch(struct device *, void *, void *);
-void sysbeepattach(struct device *, struct device *, void *);
-
-struct cfattach sysbeep_ca = {
-	sizeof(struct device), sysbeepmatch, sysbeepattach
-};
-
-struct cfdriver sysbeep_cd = {
-	NULL, "sysbeep", DV_DULL
-};
-
-static int ppi_attached;
-static pcppi_tag_t ppicookie;
-#endif /* PCPPI */
-
 void	spinwait(int);
 int	clockintr(void *);
 int	rtcintr(void *);
 int	gettick(void);
-void	sysbeep(int, int);
 void	rtcdrain(void *v);
 int	rtcget(mc_todregs *);
 void	rtcput(mc_todregs *);
@@ -410,38 +383,6 @@ i8254_delay(int n)
 			n -= otick - tick;
 		otick = tick;
 	}
-}
-
-#if (NPCPPI > 0)
-int
-sysbeepmatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
-{
-	return (!ppi_attached);
-}
-
-void
-sysbeepattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	printf("\n");
-
-	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;
-	ppi_attached = 1;
-}
-#endif
-
-void
-sysbeep(pitch, period)
-	int pitch, period;
-{
-#if (NPCPPI > 0)
-	if (ppi_attached)
-		pcppi_bell(ppicookie, pitch, period, 0);
-#endif
 }
 
 unsigned int delaycount;        /* calibrated loop variable (1 millisecond) */

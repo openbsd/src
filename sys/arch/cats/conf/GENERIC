@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.30 2005/12/27 20:05:34 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.31 2006/02/12 19:55:39 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -241,7 +241,6 @@ wskbd*		at pckbd? mux 1
 wsmouse*	at pms? mux 0
 
 pcppi0	at isa?
-sysbeep0	at pcppi?
 
 # ISA Plug-and-Play serial interfaces
 #com*	at isapnp?			# Modems and serial boards

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.2 2005/10/02 18:55:23 brad Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.3 2006/02/12 19:55:39 miod Exp $	*/
 /*	$NetBSD: isa_machdep.h,v 1.3 2002/01/07 22:58:07 chris Exp $	*/
 
 /*-
@@ -186,7 +186,6 @@ void	isa_intr_init(void);
 /*
  * Miscellanous functions.
  */
-void sysbeep(int, int);		/* beep with the system speaker */
 void isa_fillw(u_int val, void *addr, size_t len);
 
 #endif	/* _ARM32_ISA_MACHDEP_H_ XXX */

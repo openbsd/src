@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.h,v 1.4 2002/03/27 18:54:09 jbm Exp $ */
+/* $OpenBSD: wsmoused.h,v 1.5 2006/02/12 19:55:39 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -76,8 +76,6 @@ void allocate_copybuffer(struct wsdisplay_softc *);
 void mouse_remove(struct wsdisplay_softc *);
 void wsmoused_release(struct wsdisplay_softc *);
 void wsmoused_wakeup(struct wsdisplay_softc *);
-
-void sysbeep(int, int);
 
 extern char *Copybuffer; /* buffer that contains mouse selections */
 extern u_int Copybuffer_size;

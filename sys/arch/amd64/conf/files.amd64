@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.18 2006/01/29 17:29:29 marco Exp $
+#	$OpenBSD: files.amd64,v 1.19 2006/02/12 19:55:36 miod Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -146,9 +146,6 @@ include	"dev/wscons/files.wscons"
 include	"dev/pckbc/files.pckbc"
 
 file	arch/amd64/amd64/wscons_machdep.c	wsdisplay
-
-device	sysbeep
-attach	sysbeep at pcppi
 
 # Floppy disk controller
 device	fdc {[drive = -1]}

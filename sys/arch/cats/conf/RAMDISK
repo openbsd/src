@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.16 2005/12/27 20:05:34 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.17 2006/02/12 19:55:39 miod Exp $
 
 machine	cats	arm
 
@@ -191,7 +191,6 @@ pckbd*	at pckbc?		# PC keyboard
 wskbd*	at pckbd? mux 1
 
 #pcppi0	at isa?
-#sysbeep0	at pcppi?
 
 # ISA Plug-and-Play serial interfaces
 #com*	at isapnp?			# Modems and serial boards

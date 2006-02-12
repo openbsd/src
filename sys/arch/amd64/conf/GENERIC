@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.110 2006/02/10 08:32:54 brad Exp $
+#	$OpenBSD: GENERIC,v 1.111 2006/02/12 19:55:36 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -201,7 +201,6 @@ wsmouse*	at pms? mux 0
 wsmouse*	at pmsi? mux 0
 
 pcppi0		at isa?
-sysbeep0	at pcppi?
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3

@@ -1,4 +1,4 @@
-# 	$OpenBSD: files.cats,v 1.4 2005/03/08 20:00:23 tdeval Exp $
+# 	$OpenBSD: files.cats,v 1.5 2006/02/12 19:55:39 miod Exp $
 #	$NetBSD: files.cats,v 1.27 2003/10/21 08:15:40 skrll Exp $
 #
 # CATS-specific configuration info
@@ -70,10 +70,6 @@ file	arch/arm/footbridge/isa/isa_io_asm.S		isa
 
 # CATS boards have an EBSA285 based core with an ISA bus
 file	arch/arm/footbridge/isa/isa_machdep.c		isa
-
-device	sysbeep
-attach	sysbeep at pcppi with sysbeep_isa
-file	arch/arm/footbridge/isa/sysbeep_isa.c		sysbeep_isa
 
 device ds1687rtc: todservice
 attach ds1687rtc at isa
