@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.3 2006/02/12 18:06:24 miod Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.4 2006/02/12 21:49:08 miod Exp $	*/
 /*	$NetBSD: akbd.c,v 1.17 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -49,7 +49,9 @@
 #include <dev/adb/akbdmap.h>
 #include <dev/adb/akbdvar.h>
 
+#ifdef WSDISPLAY_COMPAT_RAWKBD
 #define KEYBOARD_ARRAY
+#endif
 #include <dev/adb/keyboard.h>
 
 /*
@@ -524,7 +526,7 @@ akbd_input(struct akbd_softc *sc, int key)
 
 		j = npress = 0;
 
-		c = keyboard[val][3];
+		c = keyboard[val];
 		if (c == 0) {
 			return; /* XXX */
 		}
