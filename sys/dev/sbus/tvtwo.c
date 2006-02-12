@@ -1,4 +1,4 @@
-/*	$OpenBSD: tvtwo.c,v 1.7 2006/02/12 12:02:29 miod Exp $	*/
+/*	$OpenBSD: tvtwo.c,v 1.8 2006/02/12 13:18:09 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2006, Miodrag Vallat.
  * All rights reserved.
@@ -108,6 +108,7 @@
 #define	PX_REG_DISPKLUDGE	0x00b8	/* write only */
 #define	DISPKLUDGE_DEFAULT	0xc41f
 #define	DISPKLUDGE_BLANK	(1 << 12)
+#define	DISPKLUDGE_SYNC		(1 << 13)
 
 #define	PX_REG_BT463_RED	0x0480
 #define	PX_REG_BT463_GREEN	0x0490
@@ -410,13 +411,18 @@ void
 tvtwo_burner(void *v, u_int on, u_int flags)
 {
 	struct tvtwo_softc *sc = v;
-	volatile u_int32_t *dispkludge =
-	    (u_int32_t *)(sc->sc_regs + PX_REG_DISPKLUDGE);
+	u_int32_t dispkludge;
 
 	if (on)
-		*dispkludge = DISPKLUDGE_DEFAULT & ~DISPKLUDGE_BLANK;
-	else
-		*dispkludge = DISPKLUDGE_DEFAULT | DISPKLUDGE_BLANK;
+		dispkludge = DISPKLUDGE_DEFAULT & ~DISPKLUDGE_BLANK;
+	else {
+		dispkludge = DISPKLUDGE_DEFAULT | DISPKLUDGE_BLANK;
+		if (flags & WSDISPLAY_BURN_VBLANK)
+			dispkludge |= DISPKLUDGE_SYNC;
+	}
+
+	*(volatile u_int32_t *)(sc->sc_regs + PX_REG_DISPKLUDGE) =
+	    dispkludge;
 }
 
 void
