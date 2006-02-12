@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.29 2006/02/11 20:25:21 brad Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.30 2006/02/12 10:28:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
+#include <sys/queue.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
@@ -85,6 +86,10 @@ void	nfe_start(struct ifnet *);
 void	nfe_watchdog(struct ifnet *);
 int	nfe_init(struct ifnet *);
 void	nfe_stop(struct ifnet *, int);
+struct	nfe_jbuf *nfe_jalloc(struct nfe_softc *);
+void	nfe_jfree(caddr_t, u_int, void *);
+int	nfe_jpool_alloc(struct nfe_softc *);
+void	nfe_jpool_free(struct nfe_softc *);
 int	nfe_alloc_rx_ring(struct nfe_softc *, struct nfe_rx_ring *);
 void	nfe_reset_rx_ring(struct nfe_softc *, struct nfe_rx_ring *);
 void	nfe_free_rx_ring(struct nfe_softc *, struct nfe_rx_ring *);
@@ -107,6 +112,7 @@ struct cfdriver nfe_cd = {
 };
 
 #define NFE_DEBUG
+#define NFE_NO_JUMBO
 
 #ifdef NFE_DEBUG
 int nfedebug = 1;
@@ -204,6 +210,12 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
+#ifndef NFE_NO_JUMBO
+	/* enable jumbo frames for adapters that support it */
+	if (sc->sc_flags & NFE_JUMBO_SUP)
+		sc->sc_flags |= NFE_USE_JUMBO;
+#endif
+
 	/*
 	 * Allocate Tx and Rx rings.
 	 */
@@ -233,7 +245,6 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
-
 #ifdef NFE_CSUM
 	if (sc->sc_flags & NFE_HW_CSUM) {
 		ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
@@ -465,7 +476,11 @@ nfe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
+		if (ifr->ifr_mtu < ETHERMIN ||
+		    ((sc->sc_flags & NFE_USE_JUMBO) &&
+		    ifr->ifr_mtu > ETHERMTU_JUMBO) ||
+		    (!(sc->sc_flags & NFE_USE_JUMBO) &&
+		    ifr->ifr_mtu > ETHERMTU))
 			error = EINVAL;
 		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
@@ -553,7 +568,9 @@ nfe_rxeof(struct nfe_softc *sc)
 	struct nfe_desc32 *desc32;
 	struct nfe_desc64 *desc64;
 	struct nfe_rx_data *data;
+	struct nfe_jbuf *jbuf;
 	struct mbuf *m, *mnew;
+	bus_addr_t physaddr;
 	uint16_t flags;
 	int error, len;
 
@@ -613,33 +630,50 @@ nfe_rxeof(struct nfe_softc *sc)
 			goto skip;
 		}
 
-		MCLGET(mnew, M_DONTWAIT);
-		if (!(mnew->m_flags & M_EXT)) {
-			m_freem(mnew);
-			ifp->if_ierrors++;
-			goto skip;
-		}
+		if (sc->sc_flags & NFE_USE_JUMBO) {
+			if ((jbuf = nfe_jalloc(sc)) == NULL) {
+				m_freem(mnew);
+				ifp->if_ierrors++;
+				goto skip;
+			}
+			MEXTADD(mnew, jbuf->buf, NFE_JBYTES, 0, nfe_jfree, sc);
 
-		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-		    data->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(sc->sc_dmat, data->map);
+			bus_dmamap_sync(sc->sc_dmat, sc->rxq.jmap,
+			    mtod(data->m, caddr_t) - sc->rxq.jpool, NFE_JBYTES,
+			    BUS_DMASYNC_POSTREAD);
 
-		error = bus_dmamap_load(sc->sc_dmat, data->map,
-		    mtod(mnew, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
-		if (error != 0) {
-			m_freem(mnew);
+			physaddr = jbuf->physaddr;
+		} else {
+			MCLGET(mnew, M_DONTWAIT);
+			if (!(mnew->m_flags & M_EXT)) {
+				m_freem(mnew);
+				ifp->if_ierrors++;
+				goto skip;
+			}
 
-			/* try to reload the old mbuf */
+			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+			    data->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+			bus_dmamap_unload(sc->sc_dmat, data->map);
+
 			error = bus_dmamap_load(sc->sc_dmat, data->map,
-			    mtod(data->m, void *), MCLBYTES, NULL,
+			    mtod(mnew, void *), MCLBYTES, NULL,
 			    BUS_DMA_NOWAIT);
 			if (error != 0) {
-				/* very unlikely that it will fail... */
-				panic("%s: could not load old rx mbuf",
-				    sc->sc_dev.dv_xname);
+				m_freem(mnew);
+
+				/* try to reload the old mbuf */
+				error = bus_dmamap_load(sc->sc_dmat, data->map,
+				    mtod(data->m, void *), MCLBYTES, NULL,
+				    BUS_DMA_NOWAIT);
+				if (error != 0) {
+					/* very unlikely that it will fail.. */
+					panic("%s: could not load old rx mbuf",
+					    sc->sc_dev.dv_xname);
+				}
+				ifp->if_ierrors++;
+				goto skip;
 			}
-			ifp->if_ierrors++;
-			goto skip;
+			physaddr = data->map->dm_segs[0].ds_addr;
 		}
 
 		/*
@@ -674,22 +708,24 @@ nfe_rxeof(struct nfe_softc *sc)
 		ifp->if_ipackets++;
 		ether_input_mbuf(ifp, m);
 
-skip:		if (sc->sc_flags & NFE_40BIT_ADDR) {
+		/* update mapping address in h/w descriptor */
+		if (sc->sc_flags & NFE_40BIT_ADDR) {
 #if defined(__LP64__)
-			desc64->physaddr[0] =
-			    htole32(data->map->dm_segs->ds_addr >> 32);
+			desc64->physaddr[0] = htole32(physaddr >> 32);
 #endif
-			desc64->physaddr[1] =
-			    htole32(data->map->dm_segs->ds_addr & 0xffffffff);
+			desc64->physaddr[1] = htole32(physaddr & 0xffffffff);
+		} else {
+			desc32->physaddr = htole32(physaddr);
+		}
+
+skip:		if (sc->sc_flags & NFE_40BIT_ADDR) {
+			desc64->length = htole16(sc->rxq.bufsz);
 			desc64->flags = htole16(NFE_RX_READY);
-			desc64->length = htole16(MCLBYTES);
 
 			nfe_rxdesc64_sync(sc, desc64, BUS_DMASYNC_PREWRITE);
 		} else {
-			desc32->physaddr =
-			    htole32(data->map->dm_segs->ds_addr);
+			desc32->length = htole16(sc->rxq.bufsz);
 			desc32->flags = htole16(NFE_RX_READY);
-			desc32->length = htole16(MCLBYTES);
 
 			nfe_rxdesc32_sync(sc, desc32, BUS_DMASYNC_PREWRITE);
 		}
@@ -990,7 +1026,7 @@ nfe_init(struct ifnet *ifp)
 	    (NFE_RX_RING_COUNT - 1) << 16 |
 	    (NFE_TX_RING_COUNT - 1));
 
-	NFE_WRITE(sc, NFE_RXBUFSZ, MCLBYTES);
+	NFE_WRITE(sc, NFE_RXBUFSZ, sc->rxq.bufsz);
 
 	/* force MAC to wakeup */
 	tmp = NFE_READ(sc, NFE_PWR_STATE);
@@ -1062,10 +1098,12 @@ nfe_stop(struct ifnet *ifp, int disable)
 int
 nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 {
-	struct nfe_rx_data *data;
 	struct nfe_desc32 *desc32;
 	struct nfe_desc64 *desc64;
+	struct nfe_rx_data *data;
+	struct nfe_jbuf *jbuf;
 	void **desc;
+	bus_addr_t physaddr;
 	int i, nsegs, error, descsize;
 
 	if (sc->sc_flags & NFE_40BIT_ADDR) {
@@ -1077,6 +1115,7 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 	}
 
 	ring->cur = ring->next = 0;
+	ring->bufsz = MCLBYTES;
 
 	error = bus_dmamap_create(sc->sc_dmat, NFE_RX_RING_COUNT * descsize, 1,
 	    NFE_RX_RING_COUNT * descsize, 0, BUS_DMA_NOWAIT, &ring->map);
@@ -1111,21 +1150,22 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 	}
 
 	bzero(*desc, NFE_RX_RING_COUNT * descsize);
-	ring->physaddr = ring->map->dm_segs->ds_addr;
+	ring->physaddr = ring->map->dm_segs[0].ds_addr;
+
+	if (sc->sc_flags & NFE_USE_JUMBO) {
+		ring->bufsz = NFE_JBYTES;
+		if ((error = nfe_jpool_alloc(sc)) != 0) {
+			printf("%s: could not allocate jumbo frames\n",
+			    sc->sc_dev.dv_xname);
+			goto fail;
+		}
+	}
 
 	/*
 	 * Pre-allocate Rx buffers and populate Rx ring.
 	 */
 	for (i = 0; i < NFE_RX_RING_COUNT; i++) {
 		data = &sc->rxq.data[i];
-
-		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
-		    0, BUS_DMA_NOWAIT, &data->map);
-		if (error != 0) {
-			printf("%s: could not create DMA map\n",
-			    sc->sc_dev.dv_xname);
-			goto fail;
-		}
 
 		MGETHDR(data->m, M_DONTWAIT, MT_DATA);
 		if (data->m == NULL) {
@@ -1135,37 +1175,55 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 			goto fail;
 		}
 
-		MCLGET(data->m, M_DONTWAIT);
-		if (!(data->m->m_flags & M_EXT)) {
-			printf("%s: could not allocate rx mbuf cluster\n",
-			    sc->sc_dev.dv_xname);
-			error = ENOMEM;
-			goto fail;
-		}
+		if (sc->sc_flags & NFE_USE_JUMBO) {
+			if ((jbuf = nfe_jalloc(sc)) == NULL) {
+				printf("%s: could not allocate jumbo buffer\n",
+				    sc->sc_dev.dv_xname);
+				goto fail;
+			}
+			MEXTADD(data->m, jbuf->buf, NFE_JBYTES, 0, nfe_jfree,
+			    sc);
 
-		error = bus_dmamap_load(sc->sc_dmat, data->map,
-		    mtod(data->m, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
-		if (error != 0) {
-			printf("%s: could not load rx buf DMA map",
-			    sc->sc_dev.dv_xname);
-			goto fail;
+			physaddr = jbuf->physaddr;
+		} else {
+			error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
+			    MCLBYTES, 0, BUS_DMA_NOWAIT, &data->map);
+			if (error != 0) {
+				printf("%s: could not create DMA map\n",
+				    sc->sc_dev.dv_xname);
+				goto fail;
+			}
+			MCLGET(data->m, M_DONTWAIT);
+			if (!(data->m->m_flags & M_EXT)) {
+				printf("%s: could not allocate mbuf cluster\n",
+				    sc->sc_dev.dv_xname);
+				error = ENOMEM;
+				goto fail;
+			}
+
+			error = bus_dmamap_load(sc->sc_dmat, data->map,
+			    mtod(data->m, void *), MCLBYTES, NULL,
+			    BUS_DMA_NOWAIT);
+			if (error != 0) {
+				printf("%s: could not load rx buf DMA map",
+				    sc->sc_dev.dv_xname);
+				goto fail;
+			}
+			physaddr = data->map->dm_segs[0].ds_addr;
 		}
 
 		if (sc->sc_flags & NFE_40BIT_ADDR) {
 			desc64 = &sc->rxq.desc64[i];
 #if defined(__LP64__)
-			desc64->physaddr[0] =
-			    htole32(data->map->dm_segs->ds_addr >> 32);
+			desc64->physaddr[0] = htole32(physaddr >> 32);
 #endif
-			desc64->physaddr[1] =
-			    htole32(data->map->dm_segs->ds_addr & 0xffffffff);
-			desc64->length = htole16(MCLBYTES);
+			desc64->physaddr[1] = htole32(physaddr & 0xffffffff);
+			desc64->length = htole16(sc->rxq.bufsz);
 			desc64->flags = htole16(NFE_RX_READY);
 		} else {
 			desc32 = &sc->rxq.desc32[i];
-			desc32->physaddr =
-			    htole32(data->map->dm_segs->ds_addr);
-			desc32->length = htole16(MCLBYTES);
+			desc32->physaddr = htole32(physaddr);
+			desc32->length = htole16(sc->rxq.bufsz);
 			desc32->flags = htole16(NFE_RX_READY);
 		}
 	}
@@ -1186,10 +1244,10 @@ nfe_reset_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 
 	for (i = 0; i < NFE_RX_RING_COUNT; i++) {
 		if (sc->sc_flags & NFE_40BIT_ADDR) {
-			ring->desc64[i].length = htole16(MCLBYTES);
+			ring->desc64[i].length = htole16(ring->bufsz);
 			ring->desc64[i].flags = htole16(NFE_RX_READY);
 		} else {
-			ring->desc32[i].length = htole16(MCLBYTES);
+			ring->desc32[i].length = htole16(ring->bufsz);
 			ring->desc32[i].flags = htole16(NFE_RX_READY);
 		}
 	}
@@ -1237,6 +1295,127 @@ nfe_free_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 
 		if (data->map != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, data->map);
+	}
+}
+
+struct nfe_jbuf *
+nfe_jalloc(struct nfe_softc *sc)
+{
+	struct nfe_jbuf *jbuf;
+
+	jbuf = SLIST_FIRST(&sc->rxq.jfreelist);
+	if (jbuf == NULL)
+		return NULL;
+	SLIST_REMOVE_HEAD(&sc->rxq.jfreelist, jnext);
+	return jbuf;
+}
+
+/*
+ * This is called automatically by the network stack when the mbuf is freed.
+ * Caution must be taken that the NIC might be reset by the time the mbuf is
+ * freed.
+ */
+void
+nfe_jfree(caddr_t buf, u_int size, void *arg)
+{
+	struct nfe_softc *sc = arg;
+	struct nfe_jbuf *jbuf;
+	int i;
+
+	/* find the jbuf from the base pointer */
+	i = (buf - sc->rxq.jpool) / NFE_JBYTES;
+	if (i < 0 || i >= NFE_JPOOL_COUNT) {
+		printf("%s: request to free a buffer (%p) not managed by us\n",
+		    buf, sc->sc_dev.dv_xname);
+		return;
+	}
+	jbuf = &sc->rxq.jbuf[i];
+
+	/* ..and put it back in the free list */
+	SLIST_INSERT_HEAD(&sc->rxq.jfreelist, jbuf, jnext);
+}
+
+int
+nfe_jpool_alloc(struct nfe_softc *sc)
+{
+	struct nfe_rx_ring *ring = &sc->rxq;
+	struct nfe_jbuf *jbuf;
+	bus_addr_t physaddr;
+	caddr_t buf;
+	int i, nsegs, error;
+
+	/*
+	 * Allocate a big chunk of DMA'able memory.
+	 */
+	error = bus_dmamap_create(sc->sc_dmat, NFE_JPOOL_SIZE, 1,
+	    NFE_JPOOL_SIZE, 0, BUS_DMA_NOWAIT, &ring->jmap);
+	if (error != 0) {
+		printf("%s: could not create jumbo DMA map\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	error = bus_dmamem_alloc(sc->sc_dmat, NFE_JPOOL_SIZE, PAGE_SIZE, 0,
+	    &ring->jseg, 1, &nsegs, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		printf("%s could not allocate jumbo DMA memory\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	error = bus_dmamem_map(sc->sc_dmat, &ring->jseg, nsegs, NFE_JPOOL_SIZE,
+	    &ring->jpool, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		printf("%s: could not map jumbo DMA memory\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	error = bus_dmamap_load(sc->sc_dmat, ring->jmap, ring->jpool,
+	    NFE_JPOOL_SIZE, NULL, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		printf("%s: could not load jumbo DMA map\n",
+		    sc->sc_dev.dv_xname);
+		goto fail;
+	}
+
+	/* ..and split it into 9KB chunks */
+	SLIST_INIT(&ring->jfreelist);
+
+	buf = ring->jpool;
+	physaddr = ring->jmap->dm_segs[0].ds_addr;
+	for (i = 0; i < NFE_JPOOL_COUNT; i++) {
+		jbuf = &ring->jbuf[i];
+
+		jbuf->buf = buf;
+		jbuf->physaddr = physaddr;
+
+		SLIST_INSERT_HEAD(&ring->jfreelist, jbuf, jnext);
+
+		buf += NFE_JBYTES;
+		physaddr += NFE_JBYTES;
+	}
+
+	return 0;
+
+fail:	nfe_jpool_free(sc);
+	return error;
+}
+
+void
+nfe_jpool_free(struct nfe_softc *sc)
+{
+	struct nfe_rx_ring *ring = &sc->rxq;
+
+	if (ring->jmap != NULL) {
+		bus_dmamap_sync(sc->sc_dmat, ring->jmap, 0,
+		    ring->jmap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, ring->jmap);
+		bus_dmamap_destroy(sc->sc_dmat, ring->jmap);
+	}
+	if (ring->jpool != NULL) {
+		bus_dmamem_unmap(sc->sc_dmat, ring->jpool, NFE_JPOOL_SIZE);
+		bus_dmamem_free(sc->sc_dmat, &ring->jseg, 1);
 	}
 }
 
@@ -1292,7 +1471,7 @@ nfe_alloc_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 	}
 
 	bzero(*desc, NFE_TX_RING_COUNT * descsize);
-	ring->physaddr = ring->map->dm_segs->ds_addr;
+	ring->physaddr = ring->map->dm_segs[0].ds_addr;
 
 	for (i = 0; i < NFE_TX_RING_COUNT; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,

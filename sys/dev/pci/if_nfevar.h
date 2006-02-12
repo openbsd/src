@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfevar.h,v 1.7 2006/02/04 21:48:34 damien Exp $	*/
+/*	$OpenBSD: if_nfevar.h,v 1.8 2006/02/12 10:28:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
@@ -36,6 +36,12 @@ struct nfe_tx_ring {
 	int			next;
 };
 
+struct nfe_jbuf {
+	caddr_t			buf;
+	bus_addr_t		physaddr;
+	SLIST_ENTRY(nfe_jbuf)	jnext;
+};
+
 struct nfe_rx_data {
 	bus_dmamap_t	map;
 	struct mbuf	*m;
@@ -44,10 +50,16 @@ struct nfe_rx_data {
 struct nfe_rx_ring {
 	bus_dmamap_t		map;
 	bus_dma_segment_t	seg;
+	bus_dmamap_t		jmap;
+	bus_dma_segment_t	jseg;
 	bus_addr_t		physaddr;
 	struct nfe_desc32	*desc32;
 	struct nfe_desc64	*desc64;
+	caddr_t			jpool;
 	struct nfe_rx_data	data[NFE_RX_RING_COUNT];
+	struct nfe_jbuf		jbuf[NFE_JPOOL_COUNT];
+	SLIST_HEAD(, nfe_jbuf)	jfreelist;
+	int			bufsz;
 	int			cur;
 	int			next;
 };
@@ -68,6 +80,7 @@ struct nfe_softc {
 #define NFE_JUMBO_SUP	0x01
 #define NFE_40BIT_ADDR	0x02
 #define NFE_HW_CSUM	0x04
+#define NFE_USE_JUMBO	0x08
 
 	uint8_t			phyaddr;
 
