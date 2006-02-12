@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyboard.h,v 1.1 2006/01/18 23:21:17 miod Exp $	*/
+/*	$OpenBSD: keyboard.h,v 1.2 2006/02/12 18:06:24 miod Exp $	*/
 /*	$NetBSD: keyboard.h,v 1.1 1998/05/15 10:15:54 tsubai Exp $	*/
 
 /*-
@@ -34,34 +34,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define ADBK_LEFT	0x3B
-#define ADBK_RIGHT	0x3C
-#define ADBK_UP		0x3E
-#define ADBK_DOWN	0x3D
-#define ADBK_PGUP	0x74
-#define ADBK_PGDN	0x79
-#define ADBK_HOME	0x73
-#define ADBK_END	0x77
-#define ADBK_CONTROL	0x36
-#define ADBK_FLOWER	0x37
-#define ADBK_SHIFT	0x38
 #define ADBK_CAPSLOCK	0x39
-#define ADBK_OPTION	0x3A
-#define ADBK_F		0x03
-#define ADBK_O		0x1F
-#define ADBK_P		0x23
-#define ADBK_Q		0x0C
-#define ADBK_V		0x09
-#define ADBK_1		0x12
-#define ADBK_2		0x13
-#define ADBK_3		0x14
-#define ADBK_4		0x15
-#define ADBK_5		0x17
-#define ADBK_6		0x16
-#define ADBK_7		0x1A
-#define ADBK_8		0x1C
-#define ADBK_9		0x19
-#define ADBK_0		0x1D
+#define	ADBK_RESET	0x7f
 
 #define ADBK_KEYVAL(key)	((key) & 0x7f)
 #define ADBK_PRESS(key)		(((key) & 0x80) == 0)

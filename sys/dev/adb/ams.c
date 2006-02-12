@@ -1,4 +1,4 @@
-/*	$OpenBSD: ams.c,v 1.2 2006/02/03 21:51:50 matthieu Exp $	*/
+/*	$OpenBSD: ams.c,v 1.3 2006/02/12 18:06:24 miod Exp $	*/
 /*	$NetBSD: ams.c,v 1.11 2000/12/19 03:13:40 tsubai Exp $	*/
 
 /*
@@ -33,11 +33,6 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/fcntl.h>
-#include <sys/poll.h>
-#include <sys/selinfo.h>
-#include <sys/proc.h>
-#include <sys/signalvar.h>
 #include <sys/systm.h>
 
 #include <machine/autoconf.h>
@@ -423,23 +418,18 @@ ms_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command)
 			buffer[3] = 0x80;
 	}
 
-	event.addr = adbaddr;
-	event.hand_id = sc->handler_id;
-	event.def_addr = sc->origaddr;
 	event.byte_count = buffer[0];
 	memcpy(event.bytes, buffer + 1, event.byte_count);
 
 #ifdef ADB_DEBUG
 	if (adb_debug) {
-		printf("ams: from %d at %d (org %d) %d:", event.addr,
-		    event.hand_id, event.def_addr, buffer[0]);
+		printf("ams: from %d at %d (org %d) %d:", adbaddr,
+		    sc->handler_id, sc->origaddr, buffer[0]);
 		for (i = 1; i <= buffer[0]; i++)
 			printf(" %x", buffer[i]);
 		printf("\n");
 	}
 #endif
-
-	microtime(&event.timestamp);
 
 	ms_processevent(&event, sc);
 }
@@ -451,10 +441,9 @@ ms_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command)
 void
 ms_processevent(adb_event_t *event, struct ams_softc *sc)
 {
-	adb_event_t new_event;
-	int i, button_bit, max_byte, mask, buttons;
+	int i, button_bit, max_byte, mask;
+	int dx, dy, buttons;
 
-	new_event = *event;
 	buttons = 0;
 
 	/*
@@ -463,7 +452,7 @@ ms_processevent(adb_event_t *event, struct ams_softc *sc)
 	 */
 	max_byte = event->byte_count;
 	button_bit = 1;
-	switch (event->hand_id) {
+	switch (sc->handler_id) {
 	case ADBMS_USPEED:
 	case ADBMS_UCONTOUR:
 		/* MicroSpeed mouse and Contour mouse */
@@ -501,15 +490,15 @@ ms_processevent(adb_event_t *event, struct ams_softc *sc)
 			}
 		break;
 	}
-	new_event.u.m.buttons = sc->sc_mb | buttons;
-	new_event.u.m.dx = ((signed int) (event->bytes[1] & 0x3f)) -
-				((event->bytes[1] & 0x40) ? 64 : 0);
-	new_event.u.m.dy = ((signed int) (event->bytes[0] & 0x3f)) -
-				((event->bytes[0] & 0x40) ? 64 : 0);
+
+	buttons |= sc->sc_mb;
+	dx = ((signed int) (event->bytes[1] & 0x3f)) -
+	    ((event->bytes[1] & 0x40) ? 64 : 0);
+	dy = ((signed int) (event->bytes[0] & 0x3f)) -
+	    ((event->bytes[0] & 0x40) ? 64 : 0);
 
 	if (sc->sc_wsmousedev)
-		wsmouse_input(sc->sc_wsmousedev, new_event.u.m.buttons,
-		    new_event.u.m.dx, -new_event.u.m.dy, 0,
+		wsmouse_input(sc->sc_wsmousedev, buttons, dx, -dy, 0,
 		    WSMOUSE_INPUT_DELTA);
 }
 

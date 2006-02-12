@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.h,v 1.1 2006/01/18 23:21:17 miod Exp $	*/
+/*	$OpenBSD: adb.h,v 1.2 2006/02/12 18:06:23 miod Exp $	*/
 /*	$NetBSD: adbsys.h,v 1.4 2000/12/19 02:59:24 tsubai Exp $	*/
 
 /*-
@@ -39,8 +39,6 @@
 
 #ifdef _KERNEL
 
-#include <sys/time.h>	/* timeval stuff */
-
 /*
  * Arguments used to attach a device to the Apple Desktop Bus
  */
@@ -57,22 +55,8 @@ struct adb_attach_args {
 
 /* an ADB event */
 typedef struct adb_event_s {
-	int addr;			/* device address */
-	int hand_id;			/* handler id */
-	int def_addr;			/* default address */
 	int byte_count;			/* number of bytes */
 	unsigned char bytes[8];		/* bytes from register 0 */
-	struct timeval timestamp;	/* time event was acquired */
-	union {
-		struct adb_keydata_s {
-			int key;	/* ADB key code */
-		} k;
-		struct adb_mousedata_s {
-			int dx;		/* mouse delta x */
-			int dy;		/* mouse delta y */
-			int buttons;	/* buttons (down << (buttonnum)) */
-		} m;
-	} u;				/* courtesy interpretation */
 } adb_event_t;
 
 	/* Interesting default addresses */

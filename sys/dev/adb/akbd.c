@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.2 2006/02/06 21:25:40 miod Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.3 2006/02/12 18:06:24 miod Exp $	*/
 /*	$NetBSD: akbd.c,v 1.17 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -35,11 +35,6 @@
 #include <sys/timeout.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/fcntl.h>
-#include <sys/poll.h>
-#include <sys/selinfo.h>
-#include <sys/proc.h>
-#include <sys/signalvar.h>
 #include <sys/systm.h>
 
 #include <dev/wscons/wsconsio.h>
@@ -62,13 +57,6 @@
  */
 int	akbdmatch(struct device *, void *, void *);
 void	akbdattach(struct device *, struct device *, void *);
-void	kbd_adbcomplete(caddr_t, caddr_t, int);
-void	kbd_processevent(adb_event_t *, struct akbd_softc *);
-#ifdef notyet
-u_char	getleds(int);
-int	setleds(struct akbd_softc *, u_char);
-void	blinkleds(struct akbd_softc *);
-#endif
 
 /* Driver definition. */
 struct cfattach akbd_ca = {
@@ -78,11 +66,9 @@ struct cfdriver akbd_cd = {
 	NULL, "akbd", DV_DULL
 };
 
-int akbd_enable(void *, int);
-void akbd_set_leds(void *, int);
-int akbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int akbd_intr(adb_event_t *, struct akbd_softc *);
-void akbd_rawrepeat(void *v);
+int	akbd_enable(void *, int);
+void	akbd_set_leds(void *, int);
+int	akbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 
 struct wskbd_accessops akbd_accessops = {
@@ -100,15 +86,26 @@ struct wskbd_mapdata akbd_keymapdata = {
 #endif
 };
 
+void	akbd_adbcomplete(caddr_t, caddr_t, int);
+void	akbd_capslockwrapper(struct akbd_softc *, int);
+void	akbd_input(struct akbd_softc *, int);
+void	akbd_processevent(struct akbd_softc *, adb_event_t *);
+void	akbd_rawrepeat(void *v);
+#ifdef notyet
+u_char	getleds(int);
+int	setleds(struct akbd_softc *, u_char);
+void	blinkleds(struct akbd_softc *);
+#endif
+
 int
 akbdmatch(struct device *parent, void *vcf, void *aux)
 {
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
 
 	if (aa_args->origaddr == ADBADDR_KBD)
-		return 1;
+		return (1);
 	else
-		return 0;
+		return (0);
 }
 
 void
@@ -130,7 +127,7 @@ akbdattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_leds = (u_int8_t)0x00;	/* initially off */
 
-	adbinfo.siServiceRtPtr = (Ptr)kbd_adbcomplete;
+	adbinfo.siServiceRtPtr = (Ptr)akbd_adbcomplete;
 	adbinfo.siDataAreaAddr = (caddr_t)sc;
 
 	printf(": ");
@@ -259,10 +256,10 @@ akbdattach(struct device *parent, struct device *self, void *aux)
  * an ADB event record.
  */
 void
-kbd_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command)
+akbd_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command)
 {
 	adb_event_t event;
-	struct akbd_softc *ksc;
+	struct akbd_softc *sc;
 	int adbaddr;
 #ifdef ADB_DEBUG
 	int i;
@@ -272,52 +269,23 @@ kbd_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command)
 #endif
 
 	adbaddr = ADB_CMDADDR(adb_command);
-	ksc = (struct akbd_softc *)data_area;
+	sc = (struct akbd_softc *)data_area;
 
-	event.addr = adbaddr;
-	event.hand_id = ksc->handler_id;
-	event.def_addr = ksc->origaddr;
 	event.byte_count = buffer[0];
 	memcpy(event.bytes, buffer + 1, event.byte_count);
 
 #ifdef ADB_DEBUG
 	if (adb_debug) {
-		printf("akbd: from %d at %d (org %d) %d:", event.addr,
-		    event.hand_id, event.def_addr, buffer[0]);
+		printf("akbd: from %d at %d (org %d) %d:", adbaddr,
+		    sc->handler_id, sc->origaddr, buffer[0]);
 		for (i = 1; i <= buffer[0]; i++)
 			printf(" %x", buffer[i]);
 		printf("\n");
 	}
 #endif
 
-	microtime(&event.timestamp);
-
-	kbd_processevent(&event, ksc);
-}
-
-/*
- * Given a keyboard ADB event, record the keycodes and call the key
- * repeat handler, optionally passing the event through the mouse
- * button emulation handler first.
- */
-void
-kbd_processevent(adb_event_t *event, struct akbd_softc *ksc)
-{
-        adb_event_t new_event;
-
-        new_event = *event;
-	new_event.u.k.key = event->bytes[0];
-	new_event.bytes[1] = 0xff;
-	if (ksc->sc_wskbddev != NULL) /* wskbd is attached? */
-		akbd_intr(&new_event, ksc);
-	if (event->bytes[1] != 0xff) {
-		new_event.u.k.key = event->bytes[1];
-		new_event.bytes[0] = event->bytes[1];
-		new_event.bytes[1] = 0xff;
-		if (ksc->sc_wskbddev != NULL) /* wskbd is attached? */
-			akbd_intr(&new_event, ksc);
-	}
-
+	if (sc->sc_wskbddev != NULL)
+		akbd_processevent(sc, &event);
 }
 
 #ifdef notyet
@@ -348,16 +316,13 @@ getleds(int addr)
  * actual keyboard register format
  */
 int
-setleds(struct akbd_softc *ksc, u_char leds)
+setleds(struct akbd_softc *sc, u_char leds)
 {
 	int addr;
 	short cmd;
 	u_char buffer[9];
 
-	if ((leds & 0x07) == (ksc->sc_leds & 0x07))
-		return (0);
-
-	addr = ksc->adbaddr;
+	addr = sc->adbaddr;
 	buffer[0] = 0;
 
 	cmd = ADBTALK(addr, 2);
@@ -376,8 +341,6 @@ setleds(struct akbd_softc *ksc, u_char leds)
 	if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) || buffer[0] == 0)
 		return (EIO);
 
-	ksc->sc_leds = ~((u_int8_t)buffer[2]) & 0x07;
-
 	if ((buffer[2] & 0xf8) != leds)
 		return (EIO);
 	else
@@ -388,27 +351,21 @@ setleds(struct akbd_softc *ksc, u_char leds)
  * Toggle all of the LED's on and off, just for show.
  */
 void
-blinkleds(struct akbd_softc *ksc)
+blinkleds(struct akbd_softc *sc)
 {
-	int addr, i;
-	u_char blinkleds, origleds;
+	u_char origleds;
 
-	addr = ksc->adbaddr;
-	origleds = getleds(addr);
-	blinkleds = LED_NUMLOCK | LED_CAPSLOCK | LED_SCROLL_LOCK;
+	origleds = getleds(sc->adbaddr);
+	setleds(sc, LED_NUMLOCK | LED_CAPSLOCK | LED_SCROLL_LOCK);
+	delay(400000);
+	setleds(sc, origleds);
 
-	(void)setleds(ksc, blinkleds);
-
-	for (i = 0; i < 10000; i++)
-		delay(50);
-
-	/* make sure that we restore the LED settings */
-	i = 10;
-	do {
-		(void)setleds(ksc, (u_char)0x00);
-	} while (setleds(ksc, (u_char)0x00) && (i-- > 0));
-
-	return;
+	if (origleds & LED_NUMLOCK)
+		sc->sc_leds |= WSKBD_LED_NUM;
+	if (origleds & LED_CAPSLOCK)
+		sc->sc_leds |= WSKBD_LED_CAPS;
+	if (origleds & LED_SCROLL_LOCK)
+		sc->sc_leds |= WSKBD_LED_SCROLL;
 }
 #endif
 
@@ -421,14 +378,31 @@ akbd_enable(void *v, int on)
 void
 akbd_set_leds(void *v, int on)
 {
+#ifdef notyet
+	struct akbd_softc *sc = v;
+	int leds;
+
+	if (sc->sc_extended) {
+		if (sc->sc_leds == on)
+			return;
+
+		leds = 0;
+		if (on & WSKBD_LED_NUM)
+			leds |= LED_NUMLOCK;
+		if (on & WSKBD_LED_CAPS)
+			leds |= LED_CAPSLOCK;
+		if (on & WSKBD_LED_SCROLL)
+			leds |= LED_SCROLL_LOCK;
+
+		setleds(sc, leds);
+	}
+#endif
 }
 
 int
 akbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-#ifdef WSDISPLAY_COMPAT_RAWKBD
 	struct akbd_softc *sc = v;
-#endif
 
 	switch (cmd) {
 
@@ -436,9 +410,10 @@ akbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		*(int *)data = WSKBD_TYPE_ADB;
 		return 0;
 	case WSKBDIO_SETLEDS:
+		akbd_set_leds(v, *(int *)data);
 		return 0;
 	case WSKBDIO_GETLEDS:
-		*(int *)data = 0;
+		*(int *)data = sc->sc_leds;
 		return 0;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
@@ -475,35 +450,64 @@ akbd_rawrepeat(void *v)
 }
 #endif
 
-int adb_polledkey;
-int
-akbd_intr(adb_event_t *event, struct akbd_softc *sc)
+/*
+ * Given a keyboard ADB event, decode the keycodes and pass them to wskbd.
+ */
+void
+akbd_processevent(struct akbd_softc *sc, adb_event_t *event)
 {
-	int key, press, val;
-	int type;
-	static int shift;
-
-	key = event->u.k.key;
-
-	/*
-	 * Caps lock is weird. The key sequence generated is:
-	 * press:   down(57) [57]  (LED turns on)
-	 * release: up(127)  [255]
-	 * press:   up(127)  [255]
-	 * release: up(57)   [185] (LED turns off)
-	 */
-	if (ADBK_KEYVAL(key) == ADBK_CAPSLOCK)
-		shift = 0;
-
-	if (key == 255) {
-		if (shift == 0) {
-			key = ADBK_KEYUP(ADBK_CAPSLOCK);
-			shift = 1;
-		} else {
-			key = ADBK_KEYDOWN(ADBK_CAPSLOCK);
-			shift = 0;
-		}
+	switch (event->byte_count) {
+	case 1:
+		akbd_capslockwrapper(sc, event->bytes[0]);
+		break;
+	case 2:
+		/*
+		 * The reset (or power) key sends 0x7f7f on press and
+		 * 0xffff on release, and we ignore it.
+		 */
+		if (event->bytes[0] == event->bytes[1] &&
+		    ADBK_KEYVAL(event->bytes[0]) == ADBK_RESET)
+			break;
+		akbd_capslockwrapper(sc, event->bytes[0]);
+		akbd_capslockwrapper(sc, event->bytes[1]);
+		break;
+	default:
+#ifdef DIAGNOSTIC
+		printf("%s: unexpected message length %d\n",
+		    sc->sc_dev.dv_xname, event->byte_count);
+#endif
+		break;
 	}
+
+}
+
+void
+akbd_capslockwrapper(struct akbd_softc *sc, int key)
+{
+	/*
+	 * Caps lock is special: since on earlier keyboards, the physical
+	 * key stays down when pressed, we will get a notification of the
+	 * key press, but not of the key release. Then, when it is pressed
+	 * again, we will not get a notification of the key press, but will
+	 * see the key release.
+	 * For proper wskbd operation, we should report each capslock
+	 * notification as both events (press and release).
+	 */
+	if (ADBK_KEYVAL(key) == ADBK_CAPSLOCK) {
+		akbd_input(sc, ADBK_KEYDOWN(ADBK_CAPSLOCK));
+		akbd_input(sc, ADBK_KEYUP(ADBK_CAPSLOCK));
+	} else {
+		if (key != 0xff)
+			akbd_input(sc, key);
+	}
+}
+
+int adb_polledkey;
+void
+akbd_input(struct akbd_softc *sc, int key)
+{
+	int press, val;
+	int type;
 
 	press = ADBK_PRESS(key);
 	val = ADBK_KEYVAL(key);
@@ -522,7 +526,7 @@ akbd_intr(adb_event_t *event, struct akbd_softc *sc)
 
 		c = keyboard[val][3];
 		if (c == 0) {
-			return 0; /* XXX */
+			return; /* XXX */
 		}
 		if (c & 0x80)
 			cbuf[j++] = 0xe0;
@@ -543,11 +547,8 @@ akbd_intr(adb_event_t *event, struct akbd_softc *sc)
 		sc->sc_nrep = npress;
 		if (npress != 0)
 			timeout_add(&sc->sc_rawrepeat_ch, hz * REP_DELAY1/1000);
-		return 0;
 #endif
 	} else {
 		wskbd_input(sc->sc_wskbddev, type, val);
 	}
-
-	return 0;
 }
