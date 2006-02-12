@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.21 2006/02/11 21:53:10 brad Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.22 2006/02/12 00:12:11 maja Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -72,6 +72,8 @@ const struct mii_phy_funcs rlphy_funcs = {
 static const struct mii_phydesc rlphys[] = {
 	{ MII_OUI_REALTEK,		MII_MODEL_REALTEK_RTL8201L,
           MII_STR_REALTEK_RTL8201L },
+	{ MII_OUI_ICPLUS,		MII_MODEL_ICPLUS_IP101,
+	  MII_STR_ICPLUS_IP101 },
 
 	{ 0,				0,
 	  NULL },
