@@ -1,6 +1,6 @@
-/*	$OpenBSD: tvtwo.c,v 1.6 2006/02/12 00:04:23 miod Exp $	*/
+/*	$OpenBSD: tvtwo.c,v 1.7 2006/02/12 12:02:29 miod Exp $	*/
 /*
- * Copyright (c) 2003, Miodrag Vallat.
+ * Copyright (c) 2003, 2006, Miodrag Vallat.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,8 +39,8 @@
  */
 
 /*
- * Currently, this driver can only handle the 24-bit plane of the frame
- * buffer, in an unaccelerated mode.
+ * Currently, this driver can only handle the 8-bit and 24-bit planes of the
+ * frame buffer, in an unaccelerated mode.
  *
  * TODO:
  * - nvram handling
@@ -91,13 +91,10 @@
  * We currently refuse to attach to the old version because mapping
  * things requires us to play with the sbus register ranges, and I
  * don't want to play this game without the hardware at hand -- miod
- *
- * At PROM initialization, the board will be in 24-bit mode,
- * so no specific initialization is necessary.
  */
 
 #define	PX_PROM0_OFFSET		0x000000
-#define	PX_OVERAY_OFFSET	0x010000
+#define	PX_OVERLAY_OFFSET	0x010000
 #define	PX_REG_OFFSET		0x040000
 #define	PX_CCUBE_OFFSET		0x050000
 #define	PX_PLANE8_OFFSET	0x080000
@@ -128,6 +125,8 @@ struct tvtwo_softc {
 	bus_space_tag_t	sc_bustag;
 	bus_addr_t	sc_paddr;
 
+	volatile u_int8_t *sc_m8;
+	volatile u_int8_t *sc_m24;
 	volatile u_int8_t *sc_regs;
 
 	int	sc_nscreens;
@@ -142,10 +141,6 @@ int	tvtwo_show_screen(void *, void *, int, void (*cb)(void *, int, int),
 paddr_t	tvtwo_mmap(void *, off_t, int);
 void	tvtwo_burner(void *, u_int, u_int);
 
-static __inline__ void tvtwo_ramdac_wraddr(struct tvtwo_softc *sc,
-    u_int32_t addr);
-void	tvtwo_initcmap(struct tvtwo_softc *);
-
 struct wsdisplay_accessops tvtwo_accessops = {
 	tvtwo_ioctl,
 	tvtwo_mmap,
@@ -157,6 +152,12 @@ struct wsdisplay_accessops tvtwo_accessops = {
 	NULL,	/* getchar */
 	tvtwo_burner,
 };
+
+void	tvtwo_directcmap(struct tvtwo_softc *);
+static __inline__
+void	tvtwo_ramdac_wraddr(struct tvtwo_softc *, u_int32_t);
+void	tvtwo_reset(struct tvtwo_softc *, u_int);
+void	tvtwo_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 int	tvtwomatch(struct device *, void *, void *);
 void	tvtwoattach(struct device *, struct device *, void *);
@@ -247,32 +248,45 @@ tvtwoattach(struct device *parent, struct device *self, void *args)
 
 	width = getpropint(node, "hres", width);
 	height = getpropint(node, "vres", height);
-	fb_setsize(&sc->sc_sunfb, 32, width, height, node, 0);
+
+	/*
+	 * Since the depth property is usually missing, we could do
+	 * fb_setsize(&sc->sc_sunfb, 8, width, height, node, 0);
+	 * but for safety in case it would exist and be set to 32, do it
+	 * manually...
+	 */
+	sc->sc_sunfb.sf_depth = 8;
+	sc->sc_sunfb.sf_width = width;
+	sc->sc_sunfb.sf_height = height;
+	sc->sc_sunfb.sf_linebytes = width;
+	sc->sc_sunfb.sf_fbsize = sc->sc_sunfb.sf_linebytes * height;
 
 	/* Map the frame buffer memory area we're interested in. */
 	sc->sc_paddr = sbus_bus_addr(bt, sa->sa_slot, sa->sa_offset);
-	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + PX_PLANE24_OFFSET,
+	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + PX_PLANE8_OFFSET,
 	    round_page(sc->sc_sunfb.sf_fbsize), BUS_SPACE_MAP_LINEAR, 0,
 	    &bh) != 0) {
-		printf("%s: couldn't map video memory\n", self->dv_xname);
+		printf("%s: couldn't map 8-bit video plane\n", self->dv_xname);
 		return;
 	}
-	sc->sc_sunfb.sf_ro.ri_bits = bus_space_vaddr(bt, bh);
+	sc->sc_m8 = bus_space_vaddr(bt, bh);
+	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + PX_PLANE24_OFFSET,
+	    round_page(4 * sc->sc_sunfb.sf_fbsize), BUS_SPACE_MAP_LINEAR, 0,
+	    &bh) != 0) {
+		printf("%s: couldn't map 32-bit video plane\n", self->dv_xname);
+		return;
+	}
+	sc->sc_m24 = bus_space_vaddr(bt, bh);
 
-	/* Initialize a direct color map. */
-	tvtwo_initcmap(sc);
-
-	/*
-	 * Clear display. We can't pass RI_CLEAR to fbwscons_init
-	 * below and have rasops do it for us as we want a white background.
-	 */
-	memset(sc->sc_sunfb.sf_ro.ri_bits, 0xff, sc->sc_sunfb.sf_fbsize);
+	/* Enable video. */
+	tvtwo_burner(sc, 1, 0);
 
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
-	fbwscons_init(&sc->sc_sunfb, 0);
+	sc->sc_sunfb.sf_ro.ri_bits = (u_char *)sc->sc_m8;
+	fbwscons_init(&sc->sc_sunfb, isconsole ? RI_CLEARMARGINS : RI_CLEAR);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, 0);
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 	}
 
 	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
@@ -289,6 +303,10 @@ tvtwo_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	struct tvtwo_softc *sc = dev;
 	struct wsdisplay_fbinfo *wdf;
 
+	/*
+	 * Note that, although the emulation (text) mode is running in a
+	 * 8-bit plane, we advertize the frame buffer as 32-bit.
+	 */
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_SUN24;
@@ -297,15 +315,25 @@ tvtwo_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		wdf = (struct wsdisplay_fbinfo *)data;
 		wdf->height = sc->sc_sunfb.sf_height;
 		wdf->width = sc->sc_sunfb.sf_width;
-		wdf->depth = sc->sc_sunfb.sf_depth;
+		wdf->depth = 32;
 		wdf->cmsize = 0;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
-		*(u_int *)data = sc->sc_sunfb.sf_linebytes;
+		*(u_int *)data = sc->sc_sunfb.sf_linebytes * 4;
 		break;
 
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
+		break;
+
+	case WSDISPLAYIO_SMODE:
+		if (*(int *)data == WSDISPLAYIO_MODE_EMUL) {
+			/* Back from X11 to text mode */
+			tvtwo_reset(sc, 8);
+		} else {
+			/* Starting X11, initialize 32-bit mode */
+			tvtwo_reset(sc, 32);
+		}
 		break;
 
 	case WSDISPLAYIO_SVIDEO:
@@ -337,7 +365,7 @@ tvtwo_mmap(void *v, off_t offset, int prot)
 		return (-1);
 
 	/* Allow mapping as a dumb framebuffer from offset 0 */
-	if (offset >= 0 && offset < sc->sc_sunfb.sf_fbsize) {
+	if (offset >= 0 && offset < sc->sc_sunfb.sf_fbsize * 4) {
 		return (bus_space_mmap(sc->sc_bustag, sc->sc_paddr,
 		    PX_PLANE24_OFFSET + offset, prot, BUS_SPACE_MAP_LINEAR));
 	}
@@ -378,6 +406,30 @@ tvtwo_show_screen(void *v, void *cookie, int waitok,
 	return (0);
 }
 
+void
+tvtwo_burner(void *v, u_int on, u_int flags)
+{
+	struct tvtwo_softc *sc = v;
+	volatile u_int32_t *dispkludge =
+	    (u_int32_t *)(sc->sc_regs + PX_REG_DISPKLUDGE);
+
+	if (on)
+		*dispkludge = DISPKLUDGE_DEFAULT & ~DISPKLUDGE_BLANK;
+	else
+		*dispkludge = DISPKLUDGE_DEFAULT | DISPKLUDGE_BLANK;
+}
+
+void
+tvtwo_reset(struct tvtwo_softc *sc, u_int depth)
+{
+	if (depth == 32) {
+		/* Initialize a direct color map. */
+		tvtwo_directcmap(sc);
+	} else {
+		fbwscons_setcolormap(&sc->sc_sunfb, tvtwo_setcolor);
+	}
+}
+
 /*
  * Simple Bt463 programming routines.
  */
@@ -392,7 +444,7 @@ tvtwo_ramdac_wraddr(struct tvtwo_softc *sc, u_int32_t addr)
 }
 
 void
-tvtwo_initcmap(struct tvtwo_softc *sc)
+tvtwo_directcmap(struct tvtwo_softc *sc)
 {
 	volatile u_int32_t *dac = (u_int32_t *)(sc->sc_regs + PX_REG_BT463_RED);
 	u_int32_t c;
@@ -406,14 +458,13 @@ tvtwo_initcmap(struct tvtwo_softc *sc)
 }
 
 void
-tvtwo_burner(void *v, u_int on, u_int flags)
+tvtwo_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 {
 	struct tvtwo_softc *sc = v;
-	volatile u_int32_t *dispkludge =
-	    (u_int32_t *)(sc->sc_regs + PX_REG_DISPKLUDGE);
+	volatile u_int32_t *dac = (u_int32_t *)(sc->sc_regs + PX_REG_BT463_RED);
 
-	if (on)
-		*dispkludge = DISPKLUDGE_DEFAULT & ~DISPKLUDGE_BLANK;
-	else
-		*dispkludge = DISPKLUDGE_DEFAULT | DISPKLUDGE_BLANK;
+	tvtwo_ramdac_wraddr(sc, index);
+	dac[3] = r;
+	dac[3] = g;
+	dac[3] = b;
 }

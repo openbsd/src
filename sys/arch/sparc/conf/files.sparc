@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.70 2005/07/17 12:21:25 miod Exp $
+#	$OpenBSD: files.sparc,v 1.71 2006/02/12 12:02:26 miod Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -220,7 +220,7 @@ device	tcx: wsemuldisplaydev, rasops8, wsemul_sun, bt_dac
 attach	tcx at sbus
 file	arch/sparc/dev/tcx.c		tcx
 
-device	tvtwo: wsemuldisplaydev, rasops32, wsemul_sun
+device	tvtwo: wsemuldisplaydev, rasops8, wsemul_sun
 attach	tvtwo at sbus
 file	arch/sparc/dev/tvtwo.c		tvtwo
 

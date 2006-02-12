@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sbus,v 1.31 2005/03/08 20:00:25 tdeval Exp $
+#	$OpenBSD: files.sbus,v 1.32 2006/02/12 12:02:29 miod Exp $
 #	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
 #
 # Config file and device description for machine-independent SBUS code.
@@ -80,7 +80,7 @@ device	rfx: wsemuldisplaydev, rasops8, wsemul_sun
 attach	rfx at sbus
 file	dev/sbus/rfx.c			rfx
 
-device	tvtwo: wsemuldisplaydev, rasops32, wsemul_sun
+device	tvtwo: wsemuldisplaydev, rasops8, wsemul_sun
 attach	tvtwo at sbus
 file	dev/sbus/tvtwo.c		tvtwo
 
