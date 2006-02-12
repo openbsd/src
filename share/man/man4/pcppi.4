@@ -1,4 +1,4 @@
-.\" $OpenBSD: pcppi.4,v 1.7 2004/03/22 20:31:35 miod Exp $
+.\" $OpenBSD: pcppi.4,v 1.8 2006/02/12 21:11:55 miod Exp $
 .\" $NetBSD: pcppi.4,v 1.5 2001/10/02 20:37:00 augustss Exp $
 .\"
 .\" Copyright (c) 1999
@@ -33,8 +33,6 @@
 .Nd PC (ISA) control and timer port driver
 .Sh SYNOPSIS
 .Cd "pcppi*   at isa?"
-.Cd "isabeep* at pcppi?" Pq alpha only
-.Cd "sysbeep* at pcppi?" Pq cats and i386 only
 .Cd "spkr0    at pcppi?"
 .Cd "midi*    at pcppi?"
 .Sh DESCRIPTION
@@ -59,11 +57,7 @@ The
 and
 .Xr midi 4
 devices use this to synthesize sounds.
-The
-.Nm isabeep
-and
-.Nm sysbeep
-devices are helpers used by the
+It also provides helper functions to the
 .Xr pckbd 4
 driver as a substitute for a
 .Dq keyboard beep ,
