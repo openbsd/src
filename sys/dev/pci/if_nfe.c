@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.33 2006/02/12 13:28:30 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.34 2006/02/12 15:53:20 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -1366,7 +1366,7 @@ nfe_jfree(caddr_t buf, u_int size, void *arg)
 	i = (buf - sc->rxq.jpool) / NFE_JBYTES;
 	if (i < 0 || i >= NFE_JPOOL_COUNT) {
 		printf("%s: request to free a buffer (%p) not managed by us\n",
-		    buf, sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname, buf);
 		return;
 	}
 	jbuf = &sc->rxq.jbuf[i];
