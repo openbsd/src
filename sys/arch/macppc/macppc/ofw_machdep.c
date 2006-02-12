@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.29 2006/01/18 23:21:17 miod Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.30 2006/02/12 16:50:13 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -60,7 +60,6 @@
 
 /* XXX, called from asm */
 int save_ofw_mapping(void);
-int restore_ofw_mapping(void);
 
 void OF_exit(void) __attribute__((__noreturn__));
 void OF_boot(char *bootspec) __attribute__((__noreturn__));
@@ -129,20 +128,13 @@ int OF_stdin;
 /* code to save and create the necessary mappings for BSD to handle
  * the vm-setup for OpenFirmware
  */
-static int N_mapping;
-static struct {
-	vaddr_t va;
-	int len;
-	paddr_t pa;
-	int mode;
-} ofw_mapping[256];
 
 int
 save_ofw_mapping()
 {
-	int mmui, mmu;
 	int chosen;
 	int stdout, stdin;
+
 	if ((chosen = OF_finddevice("/chosen")) == -1) {
 		return 0;
 	}
@@ -163,145 +155,9 @@ save_ofw_mapping()
 	}
 	OF_stdout = stdout;
 
-	chosen = OF_finddevice("/chosen");
-
-	OF_getprop(chosen, "mmu", &mmui, 4);
-	mmu = OF_instance_to_package(mmui);
-	bzero(ofw_mapping, sizeof(ofw_mapping));
-
-	N_mapping = OF_getprop(mmu, "translations", ofw_mapping,
-	    sizeof(ofw_mapping));
-	N_mapping /= sizeof(ofw_mapping[0]);
-
 	fw = &ofw_firmware;
 	fwcall = &fwentry;
 	return 0;
-}
-
-struct pmap ofw_pmap;
-int
-restore_ofw_mapping()
-{
-	int i;
-
-	pmap_pinit(&ofw_pmap);
-
-	ofw_pmap.pm_sr[PPC_KERNEL_SR] = PPC_KERNEL_SEGMENT;
-
-	for (i = 0; i < N_mapping; i++) {
-		paddr_t pa = ofw_mapping[i].pa;
-		vaddr_t va = ofw_mapping[i].va;
-		int size = ofw_mapping[i].len;
-
-		if (va < 0xf8000000)			/* XXX */
-			continue;
-
-		while (size > 0) {
-			pmap_enter(&ofw_pmap, va, pa, VM_PROT_ALL, PMAP_WIRED);
-			pa += NBPG;
-			va += NBPG;
-			size -= NBPG;
-		}
-	}
-	pmap_update(pmap_kernel());
-
-	return 0;
-}
-
-typedef void  (void_f) (void);
-extern void_f *pending_int_f;
-void ofw_do_pending_int(void);
-extern int system_type;
-
-void ofw_intr_init(void);
-
-void
-ofrootfound()
-{
-	int node;
-	struct ofprobe probe;
-
-	if (!(node = OF_peer(0)))
-		panic("No PROM root");
-	probe.phandle = node;
-	if (!config_rootfound("ofroot", &probe))
-		panic("ofroot not configured");
-	if (system_type == OFWMACH) {
-		pending_int_f = ofw_do_pending_int;
-		ofw_intr_init();
-	}
-}
-
-void
-ofw_intr_establish()
-{
-	if (system_type == OFWMACH) {
-		pending_int_f = ofw_do_pending_int;
-		ofw_intr_init();
-	}
-}
-
-void
-ofw_intr_init()
-{
-	/*
-	 * There are tty, network and disk drivers that use free() at interrupt
-	 * time, so imp > (tty | net | bio).
-	 */
-	/* with openfirmware drivers all levels block clock
-	 * (have to block polling)
-	 */
-	imask[IPL_IMP] = SPL_CLOCK;
-	imask[IPL_TTY] = SPL_CLOCK | SINT_TTY;
-	imask[IPL_NET] = SPL_CLOCK | SINT_NET;
-	imask[IPL_BIO] = SPL_CLOCK;
-	imask[IPL_IMP] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
-
-	/*
-	 * Enforce a hierarchy that gives slow devices a better chance at not
-	 * dropping data.
-	 */
-	imask[IPL_TTY] |= imask[IPL_NET] | imask[IPL_BIO];
-	imask[IPL_NET] |= imask[IPL_BIO];
-
-	/*
-	 * These are pseudo-levels.
-	 */
-	imask[IPL_NONE] = 0x00000000;
-	imask[IPL_HIGH] = 0xffffffff;
-
-}
-
-void
-ofw_do_pending_int()
-{
-	int pcpl;
-	int s;
-
-	static int processing;
-
-	if(processing)
-		return;
-
-	processing = 1;
-	s = ppc_intr_disable();
-
-	pcpl = splhigh();		/* Turn off all */
-	if((ipending & SINT_CLOCK) && ((pcpl & imask[IPL_CLOCK]) == 0)) {
-		ipending &= ~SINT_CLOCK;
-		softclock();
-	}
-	if((ipending & SINT_NET) && ((pcpl & imask[IPL_NET]) == 0) ) {
-		extern int netisr;
-		int pisr = netisr;
-		netisr = 0;
-		ipending &= ~SINT_NET;
-		softnet(pisr);
-	}
-	ipending &= pcpl;
-	cpl = pcpl;	/* Don't use splx... we are here already! */
-	ppc_intr_enable(s);
-	processing = 0;
 }
 
 #include <dev/pci/pcivar.h>
