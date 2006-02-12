@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.73 2006/02/11 21:12:52 brad Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.74 2006/02/12 00:06:35 maja Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.70 2006/02/11 21:11:40 brad Exp 
+ *	OpenBSD: miidevs,v 1.71 2006/02/12 00:05:33 maja Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -58,6 +58,7 @@
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
 #define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
 #define	MII_OUI_MARVELL	0x005043	/* Marvell Semiconductor */
+#define	MII_OUI_ICPLUS	0x0090c3	/* IC Plus Corp. */
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
 #define	MII_OUI_JATO	0x00e083	/* Jato Technologies */
@@ -80,7 +81,6 @@
 #define	MII_OUI_xxAMD	0x00606e	/* Advanced Micro Devices */
 #define	MII_OUI_xxINTEL	0x00f800	/* Intel (alt) */
 #define	MII_OUI_xxCICADA	0x00c08f	/* Cicada Semiconductor (alt) */
-#define	MII_OUI_xxICPLUS	0x000004	/* IC Plus Corp. */
 
 /* some vendors have the bits swapped within bytes
 	(ie, ordered as on the wire) */
@@ -234,8 +234,8 @@
 #define	MII_STR_xxDEC_xxDC	"DC"
 
 /* IC Plus Corp. PHYs */
-#define	MII_MODEL_xxICPLUS_IP101	0x90c3
-#define	MII_STR_xxICPLUS_IP101	"IP101 10/100 PHY"
+#define	MII_MODEL_ICPLUS_IP101	0x0005
+#define	MII_STR_ICPLUS_IP101	"IP101 10/100 PHY"
 
 /* Integrated Circuit Systems PHYs */
 #define	MII_MODEL_xxICS_1890	0x0002
