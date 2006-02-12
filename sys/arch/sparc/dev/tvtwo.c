@@ -1,4 +1,4 @@
-/*	$OpenBSD: tvtwo.c,v 1.8 2005/03/23 17:16:34 miod Exp $	*/
+/*	$OpenBSD: tvtwo.c,v 1.9 2006/02/12 00:04:21 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -237,17 +237,23 @@ tvtwoattach(struct device *parent, struct device *self, void *args)
 	/* Initialize a direct color map. */
 	tvtwo_initcmap(sc);
 
-	sc->sc_sunfb.sf_ro.ri_hw = sc;
-	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
+	/*
+	 * Clear display. We can't pass RI_CLEAR to fbwscons_init
+	 * below and have rasops do it for us as we want a white background.
+	 */
+	memset(sc->sc_sunfb.sf_ro.ri_bits, 0xff, sc->sc_sunfb.sf_fbsize);
 
-	printf("%s: %dx%d\n", self->dv_xname,
-	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
+	sc->sc_sunfb.sf_ro.ri_hw = sc;
+	fbwscons_init(&sc->sc_sunfb, 0);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, -1);
+		fbwscons_console_init(&sc->sc_sunfb, 0);
 	}
 
 	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
+
+	printf("%s: %dx%d\n", self->dv_xname,
+	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	fbwscons_attach(&sc->sc_sunfb, &tvtwo_accessops, isconsole);
 }
