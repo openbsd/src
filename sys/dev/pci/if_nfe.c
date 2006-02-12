@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.32 2006/02/12 13:25:01 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.33 2006/02/12 13:28:30 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -420,13 +420,13 @@ nfe_intr(void *arg)
 	r = NFE_READ(sc, NFE_IRQ_STATUS);
 	NFE_WRITE(sc, NFE_IRQ_STATUS, r);
 
-	DPRINTFN(5, ("nfe_intr: interrupt register %x\n", r));
-
 	if (r == 0) {
 		/* re-enable interrupts */
 		NFE_WRITE(sc, NFE_IRQ_MASK, NFE_IRQ_WANTED);
 		return 0;
 	}
+
+	DPRINTFN(5, ("nfe_intr: interrupt register %x\n", r));
 
 	if (r & NFE_IRQ_LINK) {
 		NFE_READ(sc, NFE_PHY_STATUS);
