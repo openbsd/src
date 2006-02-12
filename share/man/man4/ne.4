@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ne.4,v 1.25 2005/12/13 06:01:34 uwe Exp $
+.\"	$OpenBSD: ne.4,v 1.26 2006/02/12 00:54:34 brad Exp $
 .\"	$NetBSD: ne.4,v 1.4 1998/02/22 05:21:20 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -49,11 +49,9 @@
 .Cd "ne* at isapnp?"
 .Cd "ne* at pci?"
 .Cd "ne* at pcmcia?"
-.Pp
 .Cd "bmtphy* at mii?"
 .Cd "lxtphy* at mii?"
 .Cd "nsphyter* at mii?"
-.Cd "ukphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -155,6 +153,5 @@ to complete the configuration sequence.
 .Xr nsphyter 4 ,
 .Xr pci 4 ,
 .Xr pcmcia 4 ,
-.Xr ukphy 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
