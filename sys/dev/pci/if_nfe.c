@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.30 2006/02/12 10:28:07 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.31 2006/02/12 13:08:42 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -77,6 +77,8 @@ int	nfe_intr(void *);
 int	nfe_ioctl(struct ifnet *, u_long, caddr_t);
 void	nfe_txdesc32_sync(struct nfe_softc *, struct nfe_desc32 *, int);
 void	nfe_txdesc64_sync(struct nfe_softc *, struct nfe_desc64 *, int);
+void	nfe_txdesc32_rsync(struct nfe_softc *, int, int, int);
+void	nfe_txdesc64_rsync(struct nfe_softc *, int, int, int);
 void	nfe_rxdesc32_sync(struct nfe_softc *, struct nfe_desc32 *, int);
 void	nfe_rxdesc64_sync(struct nfe_softc *, struct nfe_desc64 *, int);
 void	nfe_rxeof(struct nfe_softc *);
@@ -546,6 +548,48 @@ nfe_txdesc64_sync(struct nfe_softc *sc, struct nfe_desc64 *desc64, int ops)
 }
 
 void
+nfe_txdesc32_rsync(struct nfe_softc *sc, int start, int end, int ops)
+{
+	if (end >= start) {
+		bus_dmamap_sync(sc->sc_dmat, sc->txq.map,
+		    (caddr_t)&sc->txq.desc32[start] - (caddr_t)sc->txq.desc32,
+		    (caddr_t)&sc->txq.desc32[end] -
+		    (caddr_t)&sc->txq.desc32[start], ops);
+		return;
+	}
+	/* sync from 'start' to end of ring */
+	bus_dmamap_sync(sc->sc_dmat, sc->txq.map,
+	    (caddr_t)&sc->txq.desc32[start] - (caddr_t)sc->txq.desc32,
+	    (caddr_t)&sc->txq.desc32[NFE_TX_RING_COUNT] -
+	    (caddr_t)&sc->txq.desc32[start], ops);
+
+	/* sync from start of ring to 'end' */
+	bus_dmamap_sync(sc->sc_dmat, sc->txq.map, 0,
+	    (caddr_t)&sc->txq.desc32[end] - (caddr_t)sc->txq.desc32, ops);
+}
+
+void
+nfe_txdesc64_rsync(struct nfe_softc *sc, int start, int end, int ops)
+{
+	if (end >= start) {
+		bus_dmamap_sync(sc->sc_dmat, sc->txq.map,
+		    (caddr_t)&sc->txq.desc64[start] - (caddr_t)sc->txq.desc64,
+		    (caddr_t)&sc->txq.desc64[end] -
+		    (caddr_t)&sc->txq.desc64[start], ops);
+		return;
+	}
+	/* sync from 'start' to end of ring */
+	bus_dmamap_sync(sc->sc_dmat, sc->txq.map,
+	    (caddr_t)&sc->txq.desc64[start] - (caddr_t)sc->txq.desc64,
+	    (caddr_t)&sc->txq.desc64[NFE_TX_RING_COUNT] -
+	    (caddr_t)&sc->txq.desc64[start], ops);
+
+	/* sync from start of ring to 'end' */
+	bus_dmamap_sync(sc->sc_dmat, sc->txq.map, 0,
+	    (caddr_t)&sc->txq.desc64[end] - (caddr_t)sc->txq.desc64, ops);
+}
+
+void
 nfe_rxdesc32_sync(struct nfe_softc *sc, struct nfe_desc32 *desc32, int ops)
 {
 	bus_dmamap_sync(sc->sc_dmat, sc->rxq.map,
@@ -877,16 +921,12 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 			    htole32(map->dm_segs[i].ds_addr & 0xffffffff);
 			desc64->length = htole16(map->dm_segs[i].ds_len - 1);
 			desc64->flags = htole16(flags);
-
-			nfe_txdesc64_sync(sc, desc64, BUS_DMASYNC_PREWRITE);
 		} else {
 			desc32 = &sc->txq.desc32[sc->txq.cur];
 
 			desc32->physaddr = htole32(map->dm_segs[i].ds_addr);
 			desc32->length = htole16(map->dm_segs[i].ds_len - 1);
 			desc32->flags = htole16(flags);
-
-			nfe_txdesc32_sync(sc, desc32, BUS_DMASYNC_PREWRITE);
 		}
 
 		/* csum flags belong to the first fragment only */
@@ -900,17 +940,13 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 	/* the whole mbuf chain has been DMA mapped, fix last descriptor */
 	if (sc->sc_flags & NFE_40BIT_ADDR) {
 		flags |= NFE_TX_LASTFRAG_V2;
-
 		desc64->flags = htole16(flags);
-		nfe_txdesc64_sync(sc, desc64, BUS_DMASYNC_PREWRITE);
 	} else {
 		if (sc->sc_flags & NFE_JUMBO_SUP)
 			flags |= NFE_TX_LASTFRAG_V2;
 		else
 			flags |= NFE_TX_LASTFRAG_V1;
-
 		desc32->flags = htole16(flags);
-		nfe_txdesc32_sync(sc, desc32, BUS_DMASYNC_PREWRITE);
 	}
 
 	data->m = m0;
@@ -926,9 +962,9 @@ void
 nfe_start(struct ifnet *ifp)
 {
 	struct nfe_softc *sc = ifp->if_softc;
+	int old = sc->txq.cur;
 	struct mbuf *m0;
 	uint32_t txctl;
-	int pkts = 0;
 
 	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m0);
@@ -942,15 +978,19 @@ nfe_start(struct ifnet *ifp)
 
 		/* packet put in h/w queue, remove from s/w queue */
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
-		pkts++;
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)
 			bpf_mtap(ifp->if_bpf, m0);
 #endif
 	}
-	if (pkts == 0)
+	if (sc->txq.cur == old)	/* nothing sent */
 		return;
+
+	if (sc->sc_flags & NFE_40BIT_ADDR)
+		nfe_txdesc64_rsync(sc, old, sc->txq.cur, BUS_DMASYNC_PREWRITE);
+	else
+		nfe_txdesc32_rsync(sc, old, sc->txq.cur, BUS_DMASYNC_PREWRITE);
 
 	txctl = NFE_RXTX_KICKTX;
 	if (sc->sc_flags & NFE_40BIT_ADDR)
