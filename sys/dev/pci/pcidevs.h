@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1022 2006/02/11 22:43:08 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1023 2006/02/13 06:11:11 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -132,7 +132,7 @@
 #define	PCI_VENDOR_MOLEX	0x10d2		/* Molex */
 #define	PCI_VENDOR_MACRONIX	0x10d9		/* Macronix */
 #define	PCI_VENDOR_ES	0x10dd		/* Evans & Sutherland */
-#define	PCI_VENDOR_NVIDIA	0x10de		/* NVidia */
+#define	PCI_VENDOR_NVIDIA	0x10de		/* NVIDIA */
 #define	PCI_VENDOR_EMULEX	0x10df		/* Emulex */
 #define	PCI_VENDOR_IMS	0x10e0		/* Integrated Micro Solutions */
 #define	PCI_VENDOR_TEKRAM	0x10e1		/* Tekram (1st ID) */
@@ -206,7 +206,7 @@
 #define	PCI_VENDOR_TRITECH	0x1292		/* TriTech Microelectronics */
 #define	PCI_VENDOR_ALTEON	0x12ae		/* Alteon */
 #define	PCI_VENDOR_USR	0x12b9		/* US Robotics */
-#define	PCI_VENDOR_STB2	0x12d2		/* NVidia/SGS-Thomson */
+#define	PCI_VENDOR_STB2	0x12d2		/* NVIDIA/SGS-Thomson */
 #define	PCI_VENDOR_AUREAL	0x12eb		/* Aureal */
 #define	PCI_VENDOR_ADMTEK	0x1317		/* ADMtek */
 #define	PCI_VENDOR_PE	0x1318		/* Packet Engines */
@@ -2341,7 +2341,7 @@
 #define	PCI_PRODUCT_NUMBER9_I128_T2R	0x493d		/* Imagine-128 T2R */
 #define	PCI_PRODUCT_NUMBER9_I128_T2R4	0x5348		/* Imagine-128 T2R4 */
 
-/* NVidia products */
+/* NVIDIA products */
 #define	PCI_PRODUCT_NVIDIA_NV1	0x0008		/* NV1 */
 #define	PCI_PRODUCT_NVIDIA_DAC64	0x0009		/* DAC64 */
 #define	PCI_PRODUCT_NVIDIA_RIVA_TNT	0x0020		/* Riva TNT */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1022 2006/02/11 22:43:08 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1023 2006/02/13 06:11:11 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -11200,7 +11200,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA,
-	    "NVidia",
+	    "NVIDIA",
 	},
 	{
 	    PCI_VENDOR_EMULEX,
@@ -11496,7 +11496,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_STB2,
-	    "NVidia/SGS-Thomson",
+	    "NVIDIA/SGS-Thomson",
 	},
 	{
 	    PCI_VENDOR_AUREAL,
