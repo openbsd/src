@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.132 2006/02/11 09:01:30 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.133 2006/02/13 00:44:52 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -825,12 +825,6 @@ bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m,
 			return (ENOBUFS);
 		}
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-		if (!sc->bge_rx_alignment_bug)
-		    m_adj(m_new, ETHER_ALIGN);
-
-		if (bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_new,
-		    BUS_DMA_READ|BUS_DMA_NOWAIT))
-			return (ENOBUFS);
 	} else {
 		/*
 		 * We're re-using a previously allocated mbuf;
@@ -840,8 +834,20 @@ bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m,
 		m_new = m;
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 		m_new->m_data = m_new->m_ext.ext_buf;
-		if (!sc->bge_rx_alignment_bug)
-		    m_adj(m_new, ETHER_ALIGN);
+	}
+
+	if (!sc->bge_rx_alignment_bug)
+	    m_adj(m_new, ETHER_ALIGN);
+
+	error = bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_new,
+	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	if (error) {
+		if (m == NULL) {
+			m_freem(m_new);
+			sc->bge_cdata.bge_rx_std_chain[i] = NULL;
+		}
+		return(ENOMEM);
+
 	}
 
 	sc->bge_cdata.bge_rx_std_chain[i] = m_new;
