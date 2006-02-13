@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.94 2006/02/09 11:19:32 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.95 2006/02/13 01:23:05 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -487,6 +487,10 @@ sk_setmulti(struct sk_if_softc *sc_if)
 	case SK_YUKON:
 	case SK_YUKON_LITE:
 	case SK_YUKON_LP:
+	case SK_YUKON_XL:
+	case SK_YUKON_EC_U:
+	case SK_YUKON_EC:
+	case SK_YUKON_FE:
 		SK_YU_WRITE_2(sc_if, YUKON_MCAH1, 0);
 		SK_YU_WRITE_2(sc_if, YUKON_MCAH2, 0);
 		SK_YU_WRITE_2(sc_if, YUKON_MCAH3, 0);
@@ -527,6 +531,10 @@ allmulti:
 				case SK_YUKON:
 				case SK_YUKON_LITE:
 				case SK_YUKON_LP:
+				case SK_YUKON_XL:
+				case SK_YUKON_EC_U:
+				case SK_YUKON_EC:
+				case SK_YUKON_FE:
 					h = sk_yukon_hash(enm->enm_addrlo);
 					break;
 				}
@@ -550,6 +558,10 @@ allmulti:
 	case SK_YUKON:
 	case SK_YUKON_LITE:
 	case SK_YUKON_LP:
+	case SK_YUKON_XL:
+	case SK_YUKON_EC_U:
+	case SK_YUKON_EC:
+	case SK_YUKON_FE:
 		SK_YU_WRITE_2(sc_if, YUKON_MCAH1, hashes[0] & 0xffff);
 		SK_YU_WRITE_2(sc_if, YUKON_MCAH2, (hashes[0] >> 16) & 0xffff);
 		SK_YU_WRITE_2(sc_if, YUKON_MCAH3, hashes[1] & 0xffff);
@@ -921,6 +933,10 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				case SK_YUKON:
 				case SK_YUKON_LITE:
 				case SK_YUKON_LP:
+				case SK_YUKON_XL:
+				case SK_YUKON_EC_U:
+				case SK_YUKON_EC:
+				case SK_YUKON_FE:
 					SK_YU_CLRBIT_2(sc_if, YUKON_RCR,
 					    YU_RCR_UFLEN | YU_RCR_MUFLEN);
 					break;
@@ -937,6 +953,10 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				case SK_YUKON:
 				case SK_YUKON_LITE:
 				case SK_YUKON_LP:
+				case SK_YUKON_XL:
+				case SK_YUKON_EC_U:
+				case SK_YUKON_EC:
+				case SK_YUKON_FE:
 					SK_YU_SETBIT_2(sc_if, YUKON_RCR,
 					    YU_RCR_UFLEN | YU_RCR_MUFLEN);
 					break;
@@ -1548,6 +1568,54 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		case SK_YUKON_LITE_REV_A3:
 			revstr = "A3";
+			break;
+		default:
+			;
+		}
+	}
+
+	if (sc->sk_type == SK_YUKON_XL) {
+		switch (sc->sk_rev) {
+		case SK_YUKON_XL_REV_A0:
+			revstr = "A0";
+			break;
+		case SK_YUKON_XL_REV_A1:
+			revstr = "A1";
+			break;
+		case SK_YUKON_XL_REV_A2:
+			revstr = "A2";
+			break;
+		case SK_YUKON_XL_REV_A3:
+			revstr = "A3";
+			break;
+		default:
+			;
+		}
+	}
+
+	if (sc->sk_type == SK_YUKON_EC) {
+		switch (sc->sk_rev) {
+		case SK_YUKON_EC_REV_A1:
+			revstr = "A1";
+			break;
+		case SK_YUKON_EC_REV_A2:
+			revstr = "A2";
+			break;
+		case SK_YUKON_EC_REV_A3:
+			revstr = "A3";
+			break;
+		default:
+			;
+		}
+	}
+
+	if (sc->sk_type == SK_YUKON_EC_U) {
+		switch (sc->sk_rev) {
+		case SK_YUKON_EC_U_REV_A0:
+			revstr = "A0";
+			break;
+		case SK_YUKON_EC_U_REV_A1:
+			revstr = "A1";
 			break;
 		default:
 			;
@@ -2565,6 +2633,10 @@ sk_init(void *xsc_if)
 	case SK_YUKON:
 	case SK_YUKON_LITE:
 	case SK_YUKON_LP:
+	case SK_YUKON_XL:
+	case SK_YUKON_EC_U:
+	case SK_YUKON_EC:
+	case SK_YUKON_FE:
 		sk_init_yukon(sc_if);
 		break;
 	}
@@ -2704,6 +2776,10 @@ sk_stop(struct sk_if_softc *sc_if)
 	case SK_YUKON:
 	case SK_YUKON_LITE:
 	case SK_YUKON_LP:
+	case SK_YUKON_XL:
+	case SK_YUKON_EC_U:
+	case SK_YUKON_EC:
+	case SK_YUKON_FE:
 		SK_IF_WRITE_1(sc_if,0, SK_RXMF1_CTRL_TEST, SK_RFCTL_RESET_SET);
 		SK_IF_WRITE_1(sc_if,0, SK_TXMF1_CTRL_TEST, SK_TFCTL_RESET_SET);
 		break;
