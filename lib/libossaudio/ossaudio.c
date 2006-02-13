@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudio.c,v 1.8 2006/01/25 21:32:23 brad Exp $	*/
+/*	$OpenBSD: ossaudio.c,v 1.9 2006/02/13 12:01:11 espie Exp $	*/
 /*	$NetBSD: ossaudio.c,v 1.14 2001/05/10 01:53:48 augustss Exp $	*/
 
 /*-
@@ -116,7 +116,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		/* This call is merely advisory, and may be a nop. */
 		break;
 	case SNDCTL_DSP_SPEED:
-		(void) ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		AUDIO_INITINFO(&tmpinfo);
 		tmpinfo.play.sample_rate =
 		tmpinfo.record.sample_rate = INTARG;
 		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
@@ -128,7 +128,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		INTARG = tmpinfo.play.sample_rate;
 		break;
 	case SNDCTL_DSP_STEREO:
-		(void) ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		AUDIO_INITINFO(&tmpinfo);
 		tmpinfo.play.channels =
 		tmpinfo.record.channels = INTARG ? 2 : 1;
 		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
@@ -145,7 +145,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		INTARG = tmpinfo.blocksize;
 		break;
 	case SNDCTL_DSP_SETFMT:
-		(void) ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		AUDIO_INITINFO(&tmpinfo);
 		switch (INTARG) {
 		case AFMT_MU_LAW:
 			tmpinfo.play.precision =
@@ -242,7 +242,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		INTARG = idat;
 		break;
 	case SNDCTL_DSP_CHANNELS:
-		(void) ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		AUDIO_INITINFO(&tmpinfo);
 		tmpinfo.play.channels =
 		tmpinfo.record.channels = INTARG;
 		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
@@ -266,7 +266,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		if (idat == 0)
 			idat = tmpinfo.play.buffer_size / tmpinfo.blocksize;
 		idat = (tmpinfo.play.buffer_size / idat) & -4;
-		(void) ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		AUDIO_INITINFO(&tmpinfo);
 		tmpinfo.blocksize = idat;
 		retval = ioctl(fd, AUDIO_SETINFO, &tmpinfo);
 		if (retval < 0)
@@ -274,7 +274,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		INTARG = tmpinfo.play.buffer_size / tmpinfo.blocksize;
 		break;
 	case SNDCTL_DSP_SETFRAGMENT:
-		(void) ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		AUDIO_INITINFO(&tmpinfo);
 		idat = INTARG;
 		if ((idat & 0xffff) < 4 || (idat & 0xffff) > 17)
 			return EINVAL;
@@ -395,7 +395,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			return retval;
 		break;
 	case SNDCTL_DSP_SETTRIGGER:
-		(void) ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		AUDIO_INITINFO(&tmpinfo);
 		retval = copyin(SCARG(uap, data), &idat, sizeof idat);
 		if (retval < 0)
 			return retval;
@@ -793,7 +793,7 @@ setblocksize(int fd, struct audio_info *info)
 	if (info->blocksize & (info->blocksize-1)) {
 		for(s = 32; s < info->blocksize; s <<= 1)
 			;
-		ioctl(fd, AUDIO_GETINFO, &set);
+		AUDIO_INITINFO(&set);
 		set.blocksize = s;
 		ioctl(fd, AUDIO_SETINFO, &set);
 		ioctl(fd, AUDIO_GETINFO, info);
