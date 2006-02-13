@@ -1,4 +1,4 @@
-.\"     $OpenBSD: epic.4,v 1.5 2006/02/11 23:18:24 brad Exp $
+.\"     $OpenBSD: epic.4,v 1.6 2006/02/13 05:29:42 brad Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -46,13 +46,6 @@ This driver provides support for the
 .Tn SMC
 .Tn EtherPower II 10/100
 Ethernet cards.
-.Pp
-When a
-.Nm
-interface is brought up, by default, it will attempt to auto-negotiate the
-link speed and duplex.
-The speeds, in order of attempt, are: 100Mb/s Full Duplex, 100Mb/s Half Duplex,
-10 Mb/s Full Duplex, and 10 Mb/s Half Duplex.
 .Pp
 The
 .Nm
