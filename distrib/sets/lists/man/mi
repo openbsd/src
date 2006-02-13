@@ -1416,6 +1416,7 @@
 ./usr/share/man/cat4/mtdphy.0
 ./usr/share/man/cat4/mtio.0
 ./usr/share/man/cat4/multicast.0
+./usr/share/man/cat4/musycc.0
 ./usr/share/man/cat4/mvme68k
 ./usr/share/man/cat4/mvme68k/autoconf.0
 ./usr/share/man/cat4/mvme68k/ie.0
@@ -1458,6 +1459,7 @@
 ./usr/share/man/cat4/pcagpio.0
 ./usr/share/man/cat4/pccom.0
 ./usr/share/man/cat4/pcdisplay.0
+./usr/share/man/cat4/pcfadc.0
 ./usr/share/man/cat4/pcfiic.0
 ./usr/share/man/cat4/pchb.0
 ./usr/share/man/cat4/pci.0
