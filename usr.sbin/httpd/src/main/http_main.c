@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.40 2006/02/11 19:15:57 otto Exp $ */
+/* $OpenBSD: http_main.c,v 1.41 2006/02/13 23:15:19 stevesk Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -2950,7 +2950,7 @@ static void standalone_main(int argc, char **argv)
 		if (setresgid(ap_group_id, ap_group_id, ap_group_id) != 0 ||
 		    setresuid(ap_user_id, ap_user_id, ap_user_id) != 0) {
 			ap_log_error(APLOG_MARK, APLOG_CRIT, server_conf,
-			    "can't drop priviliges!");
+			    "can't drop privileges!");
 			exit(1);
 		} else
 		    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE,
