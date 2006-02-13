@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.230 2006/02/01 10:12:05 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.231 2006/02/13 06:19:25 brad Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -296,7 +296,7 @@ Supported hardware {:-include-:}:
 		    Dell OptiPlex GX1 on-board 3c918
 		    Dell Latitude laptop docking station embedded
 			3c905
-		    NVidia nForce2 integrated 3Com 9201 (nForce2-ST, nForce2-GT)
+		    NVIDIA nForce2 integrated 3Com 9201 (nForce2-ST, nForce2-GT)
 		3Com 3c990 3XP Typhoon/Sidewinder PCI adapters, including: [A]
 		  [B] [C]
 		    3C990-TX-95
@@ -1094,7 +1094,7 @@ Supported hardware {:-include-:}:
 		Gravis Ultrasound and Ultrasound Max
 		Intel i810/i820 and 440MX AC'97
 		NeoMagic 256AV/ZX
-		nVidia nForce and nForce AC'97
+		NVIDIA nForce and nForce AC'97
 		SiS 7012 AC'97
 		SoundBlaster ISA cards and 100% compatibles
 		SoundBlaster PCI128
