@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.128 2006/02/09 08:08:56 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.129 2006/02/13 11:02:58 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -475,12 +475,13 @@ rcs_write(RCSFILE *rfp)
 		fprintf(fp, " strict;");
 	fputc('\n', fp);
 
+	fputs("comment\t@", fp);
 	if (rfp->rf_comment != NULL) {
-		fputs("comment\t@", fp);
 		rcs_strprint((const u_char *)rfp->rf_comment,
 		    strlen(rfp->rf_comment), fp);
 		fputs("@;\n", fp);
-	}
+	} else
+		fputs("# @;\n", fp);
 
 	if (rfp->rf_expand != NULL) {
 		fputs("expand @", fp);
