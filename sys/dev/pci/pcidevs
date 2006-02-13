@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1022 2006/02/11 22:43:08 jsg Exp $
+$OpenBSD: pcidevs,v 1.1023 2006/02/13 06:11:11 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ vendor	ADVSYS		0x10cd	Advansys
 vendor	MOLEX		0x10d2	Molex
 vendor	MACRONIX	0x10d9	Macronix
 vendor	ES		0x10dd	Evans & Sutherland
-vendor	NVIDIA		0x10de	NVidia
+vendor	NVIDIA		0x10de	NVIDIA
 vendor	EMULEX		0x10df	Emulex
 vendor	IMS		0x10e0	Integrated Micro Solutions
 vendor	TEKRAM		0x10e1	Tekram (1st ID)
@@ -201,7 +201,7 @@ vendor	LUXSONOR	0x1287	LuxSonor
 vendor	TRITECH		0x1292	TriTech Microelectronics
 vendor	ALTEON		0x12ae	Alteon
 vendor	USR		0x12b9	US Robotics
-vendor	STB2		0x12d2	NVidia/SGS-Thomson
+vendor	STB2		0x12d2	NVIDIA/SGS-Thomson
 vendor	AUREAL		0x12eb	Aureal
 vendor	ADMTEK		0x1317	ADMtek
 vendor	PE		0x1318	Packet Engines
@@ -2336,7 +2336,7 @@ product NUMBER9 I128_2		0x2339	Imagine-128 II
 product NUMBER9 I128_T2R	0x493d	Imagine-128 T2R
 product NUMBER9 I128_T2R4	0x5348	Imagine-128 T2R4
 
-/* NVidia products */
+/* NVIDIA products */
 product NVIDIA NV1		0x0008	NV1
 product NVIDIA DAC64		0x0009	DAC64
 product NVIDIA RIVA_TNT		0x0020	Riva TNT
