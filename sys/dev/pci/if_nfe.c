@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.34 2006/02/12 15:53:20 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.35 2006/02/13 06:15:32 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Driver for nvidia nForce Ethernet */
+/* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include "bpfilter.h"
 #include "vlan.h"
