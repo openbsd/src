@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.35 2006/02/13 06:15:32 brad Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.36 2006/02/13 08:54:54 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -160,9 +160,17 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	struct ifnet *ifp;
 	bus_size_t memsize;
+	pcireg_t memtype;
 
-	if (pci_mapreg_map(pa, NFE_PCI_BA, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_memt, &sc->sc_memh, NULL, &memsize, 0) != 0) {
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, NFE_PCI_BA);
+	switch (memtype) {
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
+	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+		if (pci_mapreg_map(pa, NFE_PCI_BA,
+		    memtype, 0, &sc->sc_memt, &sc->sc_memh,
+		    NULL, &memsize, 0) == 0)
+			break;
+	default:
 		printf(": can't map mem space\n");
 		return;
 	}
