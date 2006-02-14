@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.79 2005/10/10 12:00:52 espie Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.80 2006/02/14 11:14:11 espie Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -1685,10 +1685,6 @@ ifree(void *ptr)
 	u_long		pidx, index;
 	struct pdinfo	*pi;
 
-	/* This is legal */
-	if (ptr == NULL)
-		return;
-
 	if (!malloc_started) {
 		wrtwarning("malloc() has never been called");
 		return;
@@ -1782,6 +1778,10 @@ malloc(size_t size)
 void
 free(void *ptr)
 {
+	/* This is legal. XXX quick path */
+	if (ptr == NULL)
+		return;
+
 	_MALLOC_LOCK();
 	malloc_func = " in free():";
 	if (malloc_active++) {
