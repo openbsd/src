@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.61 2005/09/19 19:36:49 brad Exp $	*/
+/*	$OpenBSD: in6.c,v 1.62 2006/02/14 10:34:31 otto Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -549,7 +549,7 @@ in6_control(so, cmd, data, ifp, p)
 	case SIOCGIFSTAT_ICMP6:
 		if (ifp == NULL)
 			return EINVAL;
-		bzero(&ifr->ifr_ifru.ifru_stat,
+		bzero(&ifr->ifr_ifru.ifru_icmp6stat,
 		    sizeof(ifr->ifr_ifru.ifru_icmp6stat));
 		ifr->ifr_ifru.ifru_icmp6stat =
 		    *((struct in6_ifextra *)ifp->if_afdata[AF_INET6])->icmp6_ifstat;
