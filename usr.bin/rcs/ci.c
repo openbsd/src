@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.92 2006/01/05 10:28:24 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.93 2006/02/14 13:26:43 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -247,6 +247,9 @@ checkin_main(int argc, char **argv)
 		else
 			status = checkin_update(&pb);
 	}
+
+	if (verbose == 1)
+		printf("done\n");
 
 	return (status);
 }
@@ -540,7 +543,7 @@ static int
 checkin_init(struct checkin_params *pb)
 {
 	BUF *bp, *dp;
-	char *filec;
+	char *filec, numb[64];
 	const char *rcs_desc;
 
 	/* Load file contents */
@@ -616,8 +619,12 @@ checkin_init(struct checkin_params *pb)
 		checkout_rev(pb->file, pb->newrev, pb->filename, pb->flags,
 		    pb->username, pb->author, NULL, NULL);
 
+	printf("initial revision: %s\n",
+	    rcsnum_tostr(pb->newrev, numb, sizeof(numb)));
+
 	/* File will NOW be synced */
 	rcs_close(pb->file);
+
 	return (0);
 }
 
@@ -677,8 +684,6 @@ checkin_revert(struct checkin_params *pb)
 		    pb->flags, pb->username, pb->author, NULL, NULL);
 	rcs_lock_remove(pb->file, pb->username, pb->frev);
 	rcs_close(pb->file);
-	if (verbose == 1)
-		printf("done\n");
 }
 
 /*
