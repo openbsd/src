@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofb.c,v 1.7 2005/05/08 01:51:45 miod Exp $	*/
+/*	$OpenBSD: diofb.c,v 1.8 2006/02/14 18:46:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -173,6 +173,9 @@ diofb_fbsetup(struct diofb *fb)
 	ri->ri_stride = (fb->fbwidth * ri->ri_depth) / 8;
 
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
+	/* We don't really support colors on less than 4bpp frame buffers */
+	if (fb->planes < 4)
+		ri->ri_flg |= RI_FORCEMONO;
 	ri->ri_bits = fb->fbkva;
 	ri->ri_width = fb->dwidth;
 	ri->ri_height = fb->dheight;
@@ -187,17 +190,12 @@ diofb_fbsetup(struct diofb *fb)
 	diofb_resetcmap(fb);
 
 	/*
-	 * Rasops is too conservative here, and will constrain
-	 * less-than-8bpp frame buffers to mono mode.
-	 * We know better and override here.
+	 * For low depth frame buffers, since we have faked a 8bpp frame buffer
+	 * to rasops, we actually have to remove capabilities.
 	 */
-	if (fb->planes >= 4) {
+	if (fb->planes == 4) {
 		ri->ri_ops.alloc_attr = diofb_alloc_attr;
-		ri->ri_caps |= WSSCREEN_WSCOLORS;
-	}
-	if (fb->planes > 4) {
-		ri->ri_ops.alloc_attr = rasops_alloc_cattr;
-		ri->ri_caps |= WSSCREEN_HILIT;
+		ri->ri_caps &= ~WSSCREEN_HILIT;
 	}
 		
 	ri->ri_ops.copycols = diofb_copycols;
