@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.50 2005/12/29 04:26:17 brad Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.51 2006/02/14 13:42:54 kettenis Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -98,6 +98,22 @@
 #define I82424_BCTL_PCIMEM_BURSTEN	0x01
 #define I82424_BCTL_PCI_BURSTEN		0x02
 
+/* XXX should be in dev/ic/amd64htreg.h */
+#define AMD64HT_LDT0_BUS	0x94
+#define AMD64HT_LDT0_TYPE	0x98
+#define AMD64HT_LDT1_BUS	0xb4
+#define AMD64HT_LDT1_TYPE	0xb8
+#define AMD64HT_LDT2_BUS	0xd4
+#define AMD64HT_LDT2_TYPE	0xd8
+
+#define AMD64HT_NUM_LDT		3
+
+#define AMD64HT_LDT_TYPE_MASK		0x0000001f
+#define  AMD64HT_LDT_INIT_COMPLETE	0x00000002
+#define  AMD64HT_LDT_NC			0x00000004
+
+#define AMD64HT_LDT_SEC_BUS_NUM(reg)	(((reg) >> 8) & 0xff)
+
 struct pchb_softc {
 	struct device sc_dev;
 
@@ -124,6 +140,7 @@ struct cfdriver pchb_cd = {
 };
 
 void pchb_rnd(void *v);
+void	pchb_amd64ht_attach (struct device *, struct pci_attach_args *, int);
 
 const struct pci_matchid via_devices[] = {
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_PWR },
@@ -186,15 +203,23 @@ pchbattach(parent, self, aux)
 	case PCI_VENDOR_VIATECH:
 		pciagp_set_pchb(pa);
 		break;
+#endif
 	case PCI_VENDOR_AMD:
 		switch (PCI_PRODUCT(pa->pa_id)) {
+#ifdef PCIAGP
 		case PCI_PRODUCT_AMD_SC751_SC:
 		case PCI_PRODUCT_AMD_762_PCHB:
 			pciagp_set_pchb(pa);
 			break;
+#endif
+		case PCI_PRODUCT_AMD_AMD64_HT:
+			neednl = 0;
+			printf("\n");
+			for (i = 0; i < AMD64HT_NUM_LDT; i++)
+				pchb_amd64ht_attach(self, pa, i);
+			break;
 		}
 		break;
-#endif
 	case PCI_VENDOR_RCC:
 		bdnum = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44);
 		if (bdnum >= (sizeof(rcc_bus_visited) * 8) ||
@@ -423,4 +448,30 @@ pchb_rnd(v)
 	}
 
 	timeout_add(&sc->sc_tmo, 1);
+}
+
+void
+pchb_amd64ht_attach (struct device *self, struct pci_attach_args *pa, int i)
+{
+	struct pcibus_attach_args pba;
+	pcireg_t type, bus;
+	int reg;
+
+	reg = AMD64HT_LDT0_TYPE + i * 0x20;
+	type = pci_conf_read(pa->pa_pc, pa->pa_tag, reg);
+	if ((type & AMD64HT_LDT_INIT_COMPLETE) == 0 ||
+	    (type & AMD64HT_LDT_NC) == 0)
+		return;
+
+	reg = AMD64HT_LDT0_BUS + i * 0x20;
+	bus = pci_conf_read(pa->pa_pc, pa->pa_tag, reg);
+	if (AMD64HT_LDT_SEC_BUS_NUM(bus) > 0) {
+		pba.pba_busname = "pci";
+		pba.pba_iot = pa->pa_iot;
+		pba.pba_memt = pa->pa_memt;
+		pba.pba_dmat = pa->pa_dmat;
+		pba.pba_bus = AMD64HT_LDT_SEC_BUS_NUM(bus);
+		pba.pba_pc = pa->pa_pc;
+		config_found(self, &pba, pchb_print);
+	}
 }
