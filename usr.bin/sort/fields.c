@@ -1,4 +1,4 @@
-/*	$OpenBSD: fields.c,v 1.10 2004/07/20 03:50:27 deraadt Exp $	*/
+/*	$OpenBSD: fields.c,v 1.11 2006/02/14 14:45:36 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)fields.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fields.c,v 1.10 2004/07/20 03:50:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fields.c,v 1.11 2006/02/14 14:45:36 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -294,7 +294,7 @@ number(u_char *pos, u_char *bufend, u_char *line, u_char *lineend, int Rflag)
 }
 
 /* This forces a gap around the record delimiter
- * Thus fnum has vaues over (0,254) -> ((0,REC_D-1),(REC_D+1,255));
+ * Thus fnum has values over (0,254) -> ((0,REC_D-1),(REC_D+1,255));
  * rnum over (0,254) -> (255,REC_D+1),(REC_D-1,0))
  */
 void
