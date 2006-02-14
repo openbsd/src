@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.79 2006/01/03 12:20:54 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.80 2006/02/14 12:42:11 mickey Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -921,7 +921,8 @@ ffs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	if (fs->fs_ronly == 0) {
 		fs->fs_clean = (fs->fs_flags & FS_UNCLEAN) ? 0 : 1;
 		error = ffs_sbupdate(ump, MNT_WAIT);
-		if (error) {
+		/* ignore write errors if mounted RW on read-only device */
+		if (error && error != EROFS) {
 			fs->fs_clean = 0;
 			return (error);
 		}
