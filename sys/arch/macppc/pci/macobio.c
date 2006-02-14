@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.c,v 1.15 2005/11/17 00:24:55 deraadt Exp $	*/
+/*	$OpenBSD: macobio.c,v 1.16 2006/02/14 23:05:28 kettenis Exp $	*/
 /*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
 
 /*-
@@ -219,7 +219,7 @@ macobio_print(void *aux, const char *macobio)
 	struct confargs *ca = aux;
 
 	if (macobio)
-		printf("%s at %s", ca->ca_name, macobio);
+		printf("\"%s\" at %s", ca->ca_name, macobio);
 
 	if (ca->ca_nreg > 0)
 		printf(" offset 0x%x", ca->ca_reg[0]);

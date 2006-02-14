@@ -1,4 +1,4 @@
-/*	$OpenBSD: uni_n.c,v 1.13 2005/11/13 21:49:15 drahn Exp $	*/
+/*	$OpenBSD: uni_n.c,v 1.14 2006/02/14 23:06:41 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Dale Rahn.
@@ -133,7 +133,7 @@ memc_print(void *aux, const char *name)
 	struct confargs *ca = aux;
 	/* we dont want extra stuff printing */
 	if (name)
-		printf("%s at %s", ca->ca_name, name);
+		printf("\"%s\" at %s", ca->ca_name, name);
 	if (ca->ca_nreg > 0)
 		printf(" offset 0x%x", ca->ca_reg[0]);
 	return UNCONF;
