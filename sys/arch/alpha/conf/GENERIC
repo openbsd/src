@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.164 2006/02/12 21:09:06 miod Exp $
+#	$OpenBSD: GENERIC,v 1.165 2006/02/14 18:11:00 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -43,10 +43,10 @@ option		TCVERBOSE		# recognize "unknown" TC devices
 option		USBVERBOSE
 
 # Wscons options
-option		WSDISPLAY_COMPAT_USL		# VT handling
-option		WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-option		WSDISPLAY_DEFAULTSCREENS=6
-option		WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+option	WSDISPLAY_COMPAT_USL		# VT handling
+option	WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes; needed for X11
+option	WSDISPLAY_DEFAULTSCREENS=6	# initial number of text consoles
+option	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls; needed for X11
 
 option		APERTURE		# in-kernel aperture driver for XFree86
 option		USER_PCICONF		# user-space PCI configuration

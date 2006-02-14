@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.47 2005/12/27 20:05:34 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.48 2006/02/14 18:11:04 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -30,10 +30,10 @@ options		CPU_XSCALE_PXA2X0	# Support the XScale core
 options		XSCALE_CACHE_WRITE_BACK
 makeoptions	CPUFLAGS="-mcpu=xscale"
 
-option WSDISPLAY_COMPAT_USL		# VT handling
-option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-option WSDISPLAY_DEFAULTSCREENS=2
-option WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+option	WSDISPLAY_COMPAT_USL		# VT handling
+option	WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes; needed for X11
+option	WSDISPLAY_DEFAULTSCREENS=2	# initial number of text consoles
+option	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls; needed for X11
 
 option USBVERBOSE
 

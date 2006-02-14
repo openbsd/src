@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.31 2006/02/12 19:55:39 miod Exp $
+#	$OpenBSD: GENERIC,v 1.32 2006/02/14 18:11:03 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -33,10 +33,10 @@ options		CPU_SA110	# Support the SA110 core
 
 #options	ARMFPE		# ARM Ltd FPE
 
-option WSDISPLAY_COMPAT_USL		# VT handling
-option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-option WSDISPLAY_DEFAULTSCREENS=6	# can get raw scancodes
-option WSDISPLAY_COMPAT_PCVT		# can get raw scancodes
+option	WSDISPLAY_COMPAT_USL		# VT handling
+option	WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes; needed for X11
+option	WSDISPLAY_DEFAULTSCREENS=6	# initial number of text consoles
+option	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls; needed for X11
 
 config		bsd	swap generic
 

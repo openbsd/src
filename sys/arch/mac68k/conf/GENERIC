@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.47 2006/01/29 15:58:20 martin Exp $
+#	$OpenBSD: GENERIC,v 1.48 2006/02/14 18:11:03 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -21,7 +21,7 @@ option		FPSP
 option		FPU_EMULATE
 option		COMPAT_SUNOS	# SunOS m68k binary compatibility
 option		ADBVERBOSE
-option		WSDISPLAY_COMPAT_RAWKBD
+option	WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes; needed for X11
 
 config		bsd	swap generic
 

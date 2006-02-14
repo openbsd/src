@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.111 2006/02/12 19:55:36 miod Exp $
+#	$OpenBSD: GENERIC,v 1.112 2006/02/14 18:11:03 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -185,9 +185,9 @@ puc*	at pci?				# PCI "universal" communication device
 isadma0	at isa?
 
 option	WSDISPLAY_COMPAT_USL		# VT handling
-option	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-option	WSDISPLAY_DEFAULTSCREENS=6
-option	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+option	WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes; needed for X11
+option	WSDISPLAY_DEFAULTSCREENS=6	# initial number of text consoles
+option	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls; needed for X11
 
 pckbc0		at isa?			# PC keyboard controller
 pckbd*		at pckbc?		# PC keyboard
