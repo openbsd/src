@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.5 2004/07/15 21:44:16 tom Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.6 2006/02/14 17:16:19 aaron Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -162,7 +162,7 @@ main(int argc, char *argv[])
 
 	/* Check disklabel. */
 	if (dl.d_magic != DISKMAGIC)
-		err(1, "bad disklabel magic=%0x8x", dl.d_magic);
+		err(1, "bad disklabel magic=0x%08x", dl.d_magic);
 
 	/* Warn on unknown disklabel types. */
 	if (dl.d_type == 0)
