@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.12 2005/12/28 05:57:46 deraadt Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.13 2006/02/14 08:26:20 otto Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -41,15 +41,14 @@ static void astrcat(char **, const char *);
 static void enqueue(const char *, const char, const char *);
 static void freediff(const struct diffline *);
 static void int_usage(void);
-static int parsecmd(FILE *, FILE *);
+static int parsecmd(FILE *, FILE *, FILE *);
 static void printa(FILE *, size_t);
 static void printc(FILE *, size_t, FILE *, size_t);
 static void printcol(const char *, size_t *, const size_t);
-static void printd(FILE *, FILE *, size_t);
+static void printd(FILE *, size_t);
 static void println(const char *, const char, const char *);
 static void processq(void);
 static void prompt(const char *, const char *);
-static void undiff(char *);
 __dead static void usage(void);
 static char *xfgets(FILE *);
 
@@ -57,6 +56,7 @@ SIMPLEQ_HEAD(, diffline) diffhead = SIMPLEQ_HEAD_INITIALIZER(diffhead);
 size_t	 line_width;	/* width of a line (two columns and divider) */
 size_t	 width;		/* width of each column */
 size_t	 file1ln, file2ln;	/* line number of file1 and file2 */
+int	 Iflag = 0;	/* ignore sets matching regexp */
 int	 lflag;		/* print only left column for identical lines */
 int	 sflag;		/* skip identical lines */
 FILE	*outfile;	/* file to save changes to */
@@ -83,11 +83,11 @@ static struct option longopts[] = {
 int
 main(int argc, char **argv)
 {
-	FILE *difffile, *origfile;
+	FILE *diffpipe, *file1, *file2;
 	size_t diffargc = 0, wflag = WIDTH;
 	int ch, fd[2], status;
 	pid_t pid;
-	const char *cmd, **diffargv, *diffprog = "diff";
+	const char **diffargv, *diffprog = "diff", *s1, *s2;
 
 	/*
 	 * Process diff flags.
@@ -133,6 +133,7 @@ main(int argc, char **argv)
 			diffargv[diffargc++] = "-H";
 			break;
 		case 'I':
+			Iflag = 1;
 			diffargv[diffargc++] = "-I";
 			diffargv[diffargc++] = optarg;
 			break;
@@ -216,22 +217,28 @@ main(int argc, char **argv)
 	close(fd[1]);
 
 	/* Open pipe to diff command. */
-	if ((difffile = fdopen(fd[0], "r")) == NULL)
+	if ((diffpipe = fdopen(fd[0], "r")) == NULL)
 		err(2, "could not open diff pipe");
-	/* If file1 was given as `-', open stdin. */
+	/* If file1 or file2 were given as `-', open stdin. */
 	/* XXX - Does not work. */
 	if (strcmp(argv[0], "-") == 0)
-		origfile = stdin;
+		file1 = stdin;
 	/* Otherwise, open as normal file. */
-	else if ((origfile = fopen(argv[0], "r")) == NULL)
+	else if ((file1 = fopen(argv[0], "r")) == NULL)
 		err(2, "could not open file1: %s", argv[0]);
+	/* XXX - Handle (file1 == file2 == stdin) case. */
+	if (strcmp(argv[1], "-") == 0)
+		file2 = stdin;
+	/* Otherwise, open as normal file. */
+	else if ((file2 = fopen(argv[1], "r")) == NULL)
+		err(2, "could not open file2: %s", argv[1]);
 	/* Line numbers start at one. */
 	file1ln = file2ln = 1;
 
 	/* Read and parse diff output. */
-	while (parsecmd(difffile, origfile) != EOF)
+	while (parsecmd(diffpipe, file1, file2) != EOF)
 		;
-	fclose(difffile);
+	fclose(diffpipe);
 
 	/* Wait for diff to exit. */
 	if (waitpid(pid, &status, 0) == -1 || !WIFEXITED(status) ||
@@ -239,9 +246,20 @@ main(int argc, char **argv)
 		err(2, "diff exited abnormally");
 
 	/* No more diffs, so print common lines. */
-	while ((cmd = xfgets(origfile)))
-		enqueue(cmd, ' ', lflag ? NULL : cmd);
-	fclose(origfile);
+	if (lflag)
+		while ((s1 = xfgets(file1)))
+			enqueue(s1, ' ', NULL);
+	else
+		for (;;) {
+			s1 = xfgets(file1);
+			s2 = xfgets(file2);
+			if (s1 || s2)
+				enqueue(s1, ' ', s2);
+			else
+				break;
+		}
+	fclose(file1);
+	fclose(file2);
 	/* Process unmodified lines. */
 	processq();
 
@@ -445,21 +463,21 @@ xfgets(FILE *file)
 }
 
 /*
- * Parse ed commands from diff and print lines from difffile
- * (lines to add or change) or origfile (lines to change or delete).
- * Returns EOF or not.
+ * Parse ed commands from diffpipe and print lines from file1 (lines
+ * to change or delete) or file2 (lines to add or change).
+ * Returns EOF or 0.
  */
 static int
-parsecmd(FILE *difffile, FILE *origfile)
+parsecmd(FILE *diffpipe, FILE *file1, FILE *file2)
 {
-	size_t file1start, file1end, file2start, file2end;
+	size_t file1start, file1end, file2start, file2end, n;
 	/* ed command line and pointer to characters in line */
 	char *line, *p, *q;
 	const char *errstr;
 	char c, cmd;
 
 	/* Read ed command. */
-	if (!(line = xfgets(difffile)))
+	if (!(line = xfgets(diffpipe)))
 		return (EOF);
 
 	p = line;
@@ -544,35 +562,86 @@ parsecmd(FILE *difffile, FILE *origfile)
 		file2start = ++file2end;
 	}
 
-	/* Skip unmodified lines. */
-	for (; file1ln < file1start; ++file1ln, ++file2ln) {
-		const char *line;
+	/*
+	 * Continue reading file1 and file2 until we reach line numbers
+	 * specified by diff.  Should only happen with -I flag.
+	 */
+	for (; file1ln < file1start && file2ln < file2start;
+	    ++file1ln, ++file2ln) {
+		const char *s1, *s2;
 
-		if (!(line = xfgets(origfile)))
+		if (!(s1 = xfgets(file1)))
 			errx(2, "file1 shorter than expected");
+		if (!(s2 = xfgets(file2)))
+			errx(2, "file2 shorter than expected");
 
 		/* If the -l flag was specified, print only left column. */
-		enqueue(line, ' ', lflag ? NULL : line);
+		if (lflag) {
+			free((void *)s2);
+			/*
+			 * XXX - If -l and -I are both specified, all
+			 * unchanged or ignored lines are shown with a
+			 * `(' divider.  This matches GNU sdiff, but I
+			 * believe it is a bug.  Just check out:
+			 * gsdiff -l -I '^$' samefile samefile.
+			 */
+			if (Iflag)
+				enqueue(s1, '(', NULL);
+			else
+				enqueue(s1, ' ', NULL);
+		} else
+			enqueue(s1, ' ', s2);
 	}
-	/* Process unmodified lines. */
+	/* Ignore deleted lines. */
+	for (; file1ln < file1start; ++file1ln) {
+		const char *s;
+
+		if (!(s = xfgets(file1)))
+			errx(2, "file1 shorter than expected");
+
+		enqueue(s, '(', NULL);
+	}
+	/* Ignore added lines. */
+	for (; file2ln < file2start; ++file2ln) {
+		const char *s;
+
+		if (!(s = xfgets(file2)))
+			errx(2, "file2 shorter than expected");
+
+		/* If -l flag was given, don't print right column. */
+		if (lflag)
+			free((void *)s);
+		else
+			enqueue(NULL, ')', s);
+	}
+
+	/* Process unmodified or skipped lines. */
 	processq();
 
 	switch (cmd) {
 	case 'a':
-		printa(difffile, file2end);
+		printa(file2, file2end);
+		n = file2end - file2start + 1;
 		break;
 
 	case 'c':
-		printc(origfile, file1end, difffile, file2end);
+		printc(file1, file1end, file2, file2end);
+		n = file1end - file1start + 1 + 1 + file2end - file2start + 1;
 		break;
 
 	case 'd':
-		printd(origfile, difffile, file1end);
+		printd(file1, file1end);
+		n = file1end - file1start + 1;
 		break;
 
 	default:
 		errx(2, "invalid diff command: %c: %s", cmd, line);
 	}
+
+	/* Skip to next ed line. */
+	while (n--)
+		if (!xfgets(diffpipe))
+			errx(2, "diff ended early");
 
 	return (0);
 }
@@ -599,15 +668,11 @@ enqueue(const char *left, const char div, const char *right)
 static void
 freediff(const struct diffline *diffp)
 {
-
 	if (diffp->left)
 		free((void *)diffp->left);
-	/*
-	 * Free right string only if it is different than left.
-	 * The strings are the same when the lines are identical.
-	 */
-	if (diffp->right && diffp->right != diffp->left)
+	if (diffp->right)
 		free((void *)diffp->right);
+	free((void *)diffp);
 }
 
 /*
@@ -706,10 +771,10 @@ processq(void)
 			div = diffp->div;
 
 		/*
-		 * If the -s flag was not given or the lines are not
-		 * identical then print columns.
+		 * Print changed lines if -s was given,
+		 * print all lines if -s was not given.
 		 */
-		if (!sflag || diffp->div != ' ')
+		if (!sflag || div == '|' || div == '<' || div == '>')
 			println(diffp->left, diffp->div, diffp->right);
 
 		/* Append new lines to diff set. */
@@ -722,38 +787,28 @@ processq(void)
 	/* Empty queue and free each diff line and its elements. */
 	while (!SIMPLEQ_EMPTY(&diffhead)) {
 		diffp = SIMPLEQ_FIRST(&diffhead);
-		freediff(diffp);
 		SIMPLEQ_REMOVE_HEAD(&diffhead, diffentries);
-		free(diffp);
+		freediff(diffp);
 	}
 
 	/* Write to outfile, prompting user if lines are different. */
-	if (outfile) {
-		if (div == ' ')
+	if (outfile)
+		switch (div) {
+		case ' ': case '(': case ')':
 			fprintf(outfile, "%s\n", left);
-		else
+			break;
+		case '|': case '<': case '>':
 			prompt(left, right);
-	}
+			break;
+		default:
+			errx(2, "invalid divider: %c", div);
+		}
 
 	/* Free left and right. */
 	if (left)
 		free(left);
 	if (right)
 		free(right);
-}
-
-/*
- * Remove angle bracket in front of diff line.
- */
-static void
-undiff(char *s)
-{
-	size_t len;
-
-	/* Remove angle bracket and space but keep the NUL. */
-	len = strlen(s) - 2 + 1;
-	/* Move everything two characters over. */
-	memmove(s, s + 2, len);
 }
 
 /*
@@ -767,7 +822,6 @@ printa(FILE *file, size_t line2)
 	for (; file2ln <= line2; ++file2ln) {
 		if (!(line = xfgets(file)))
 			errx(2, "append ended early");
-		undiff(line);
 		enqueue(NULL, '>', line);
 	}
 
@@ -786,21 +840,15 @@ printc(FILE *file1, size_t file1end, FILE *file2, size_t file2end)
 		const char	*line;
 	};
 	SIMPLEQ_HEAD(, fileline) delqhead = SIMPLEQ_HEAD_INITIALIZER(delqhead);
-	char *line;
 
 	/* Read lines to be deleted. */
 	for (; file1ln <= file1end; ++file1ln) {
 		struct fileline *linep;
-		const char *line1, *line2;
+		const char *line1;
 
 		/* Read lines from both. */
 		if (!(line1 = xfgets(file1)))
 			errx(2, "error reading file1 in delete in change");
-		if (!(line2 = xfgets(file2)))
-			errx(2, "error reading diff in delete in change");
-
-		/* Unused now. */
-		free((void *)line2);
 
 		/* Add to delete queue. */
 		if (!(linep = malloc(sizeof(struct fileline))))
@@ -809,18 +857,6 @@ printc(FILE *file1, size_t file1end, FILE *file2, size_t file2end)
 		SIMPLEQ_INSERT_TAIL(&delqhead, linep, fileentries);
 	}
 
-	/* There should be a divider here. */
-	if (!(line = xfgets(file2)))
-		errx(2, "error reading diff in change: expected divider");
-	free(line);
-
-#define getaddln(add) do {					\
-	/* Read diff for line. */				\
-	if (!((add) = xfgets(file2)))				\
-		errx(2, "error reading add in change");		\
-	/* Remove ``> ''. */					\
-	undiff(add);						\
-} while (0)
 	/* Process changed lines.. */
 	for (; !SIMPLEQ_EMPTY(&delqhead) && file2ln <= file2end;
 	    ++file2ln) {
@@ -828,7 +864,8 @@ printc(FILE *file1, size_t file1end, FILE *file2, size_t file2end)
 		char *add;
 
 		/* Get add line. */
-		getaddln(add);
+		if (!(add = xfgets(file2)))
+			errx(2, "error reading add in change");
 
 		del = SIMPLEQ_FIRST(&delqhead);
 		enqueue(del->line, '|', add);
@@ -846,7 +883,8 @@ printc(FILE *file1, size_t file1end, FILE *file2, size_t file2end)
 		char *add;
 
 		/* Get add line. */
-		getaddln(add);
+		if (!(add = xfgets(file2)))
+			errx(2, "error reading add in change");
 
 		enqueue(NULL, '>', add);
 	}
@@ -869,18 +907,15 @@ printc(FILE *file1, size_t file1end, FILE *file2, size_t file2end)
  * Print deleted lines from file, from file1ln to file1end.
  */
 static void
-printd(FILE *file1, FILE *file2, size_t file1end)
+printd(FILE *file1, size_t file1end)
 {
-	const char *line1, *line2;
+	const char *line1;
 
 	/* Print out lines file1ln to line2. */
 	for (; file1ln <= file1end; ++file1ln) {
 		/* XXX - Why can't this handle stdin? */
 		if (!(line1 = xfgets(file1)))
 			errx(2, "file1 ended early in delete");
-		if (!(line2 = xfgets(file2)))
-			errx(2, "diff ended early in delete");
-		free((void *)line2);
 		enqueue(line1, '<', NULL);
 	}
 	processq();
