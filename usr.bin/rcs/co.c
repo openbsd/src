@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.52 2006/01/05 10:28:24 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.53 2006/02/14 13:28:38 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -72,6 +72,10 @@ checkout_main(int argc, char **argv)
 			break;
 		case 'l':
 			rcs_set_rev(rcs_optarg, &rev);
+			if (flags & CO_UNLOCK) {
+				cvs_log(LP_ERR, "warning: -u overridden by -l");
+				flags &= ~CO_UNLOCK;
+			}
 			flags |= CO_LOCK;
 			break;
 		case 'M':
@@ -98,6 +102,10 @@ checkout_main(int argc, char **argv)
 			break;
 		case 'u':
 			rcs_set_rev(rcs_optarg, &rev);
+			if (flags & CO_LOCK) {
+				cvs_log(LP_ERR, "warning: -l overridden by -u");
+				flags &= ~CO_LOCK;
+			}
 			flags |= CO_UNLOCK;
 			break;
 		case 'V':
@@ -282,7 +290,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		}
 	}
 
-	if (verbose == 1)
+	if ((verbose == 1) && !(flags & NEWFILE))
 		printf("revision %s", buf);
 
 
@@ -299,8 +307,8 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		}
 
 		mode = 0644;
-		if (verbose == 1)
-			printf(" (locked)");
+		if ((verbose == 1) && !(flags & NEWFILE))
+			printf(" (locked)\n");
 	} else if (flags & CO_UNLOCK) {
 		if (rcs_lock_remove(file, lockname, frev) < 0) {
 			if (rcs_errno != RCS_ERR_NOENT)
@@ -308,12 +316,9 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		}
 
 		mode = 0444;
-		if (verbose == 1)
-			printf(" (unlocked)");
+		if ((verbose == 1) && !(flags & NEWFILE))
+			printf(" (unlocked)\n");
 	}
-
-	if (verbose == 1)
-		printf("\n");
 
 	if (flags & CO_LOCK) {
 		lcount++;
@@ -368,7 +373,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 				cvs_log(LP_ERRNO, "error setting utimes");
 		}
 
-		if (verbose == 1)
+		if ((verbose == 1) && !(flags & NEWFILE))
 			printf("done\n");
 	}
 
