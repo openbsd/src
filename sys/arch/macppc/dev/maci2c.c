@@ -1,4 +1,4 @@
-/*	$OpenBSD: maci2c.c,v 1.8 2006/02/08 23:15:58 dlg Exp $	*/
+/*	$OpenBSD: maci2c.c,v 1.9 2006/02/14 20:54:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -20,6 +20,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#define _I2C_PRIVATE
 #include <dev/i2c/i2cvar.h>
 #include <dev/ofw/openfirm.h>
 
@@ -29,7 +30,6 @@ void
 maciic_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 {
 	int iba_node = *(int *)aux;
-	extern int iic_print(void *, const char *);
 	struct i2c_attach_args ia;
 	char name[32];
 	u_int32_t reg;
@@ -53,6 +53,11 @@ maciic_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
 				continue;
 			ia.ia_name = name;
 		}
+		/* XXX We should write a real driver for these instead
+		   of reaching over from the sound driver that sits on
+		   the i2s port.  For now hide them.  */
+		if (strcmp(name, "deq") == 0 || strcmp(name, "tas3004") == 0)
+			continue;
 		if (ia.ia_name)
 			config_found(self, &ia, iic_print);
 	}
