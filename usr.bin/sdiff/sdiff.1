@@ -1,4 +1,4 @@
-.\" $OpenBSD: sdiff.1,v 1.6 2005/12/29 10:02:17 jmc Exp $
+.\" $OpenBSD: sdiff.1,v 1.7 2006/02/15 22:27:09 jmc Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
@@ -89,6 +89,9 @@ Minimize diff size.
 .It Fl I Ar regexp
 Ignore line changes matching
 .Ar regexp .
+All lines in the change must match
+.Ar regexp
+for the change to be ignored.
 .It Fl i
 Do a case-insensitive comparison.
 .It Fl t
@@ -124,7 +127,8 @@ the default is
 .Sh SEE ALSO
 .Xr diff 1 ,
 .Xr diff3 1 ,
-.Xr vi 1
+.Xr vi 1 ,
+.Xr re_format 7
 .Sh AUTHORS
 .Nm
 was written from scratch for the public domain by
