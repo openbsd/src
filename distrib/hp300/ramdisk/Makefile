@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2005/11/22 23:10:56 miod Exp $
+#	$OpenBSD: Makefile,v 1.20 2006/02/15 22:00:59 pvalchev Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
@@ -31,7 +31,7 @@ DISKTYPE=       rdroot
 NBLKS=          4096
 NEWFSARGS= -m 0 -o space -c 16 -i 3072
 
-bsd.rd:
+bsd.rd:	rdsetroot
 .ifndef(NOBUILD)
 	cd ${.CURDIR}/../../../sys/arch/hp300/conf && config RAMDISK
 	cd ${.CURDIR}/../../../sys/arch/hp300/compile/RAMDISK && \
