@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.39 2006/02/15 20:08:59 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.40 2006/02/15 20:21:27 brad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -257,8 +257,9 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
 #if NVLAN > 0
-	ifp->if_capabilities |= IFCAP_VLAN_MTU;
 	if (sc->sc_flags & NFE_HW_VLAN)
 		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
