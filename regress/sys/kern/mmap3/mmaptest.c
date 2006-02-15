@@ -1,4 +1,4 @@
-/* $OpenBSD: mmaptest.c,v 1.4 2003/08/02 01:24:36 david Exp $ */
+/* $OpenBSD: mmaptest.c,v 1.5 2006/02/15 12:09:34 mickey Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -60,6 +60,7 @@ main(int argc, char *argv[])
 	if (!a2)
 		err(1, "mmap");
 	a2[10] = 3;
+	msync(a2, 256, MS_SYNC|MS_INVALIDATE);
 	if (ftruncate(fd, 128))
 		err(1, "ftruncate");
 	if (close(fd))
