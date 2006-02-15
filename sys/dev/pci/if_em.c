@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.104 2006/02/10 09:12:25 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.105 2006/02/15 14:53:56 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1242,25 +1242,25 @@ void
 em_update_link_status(struct em_softc *sc)
 {
 	struct ifnet *ifp = &sc->interface_data.ac_if;
-        if (E1000_READ_REG(&sc->hw, STATUS) & E1000_STATUS_LU) {
-                if (sc->link_active == 0) {
-                        em_get_speed_and_duplex(&sc->hw,
-                                                &sc->link_speed,
-                                                &sc->link_duplex);
-                        sc->link_active = 1;
-                        sc->smartspeed = 0;
+	if (E1000_READ_REG(&sc->hw, STATUS) & E1000_STATUS_LU) {
+		if (sc->link_active == 0) {
+			em_get_speed_and_duplex(&sc->hw,
+						&sc->link_speed,
+						&sc->link_duplex);
+			sc->link_active = 1;
+			sc->smartspeed = 0;
 			ifp->if_link_state = LINK_STATE_UP;
 			if_link_state_change(ifp);
-                }
-        } else {
-                if (sc->link_active == 1) {
-                        sc->link_speed = 0;
-                        sc->link_duplex = 0;
-                        sc->link_active = 0;
+		}
+	} else {
+		if (sc->link_active == 1) {
+			sc->link_speed = 0;
+			sc->link_duplex = 0;
+			sc->link_active = 0;
 			ifp->if_link_state = LINK_STATE_DOWN;
 			if_link_state_change(ifp);
-                }
-        }
+		}
+	}
 }
 
 /*********************************************************************
