@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.14 2006/02/15 06:58:06 otto Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.15 2006/02/15 15:27:38 otto Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -682,7 +682,7 @@ astrcat(char **s, const char *append)
 {
 	/* Length of string in previous run. */
 	static size_t offset = 0;
-	size_t newlen;
+	size_t newsiz;
 	/*
 	 * String from previous run.  Compared to *s to see if we are
 	 * dealing with the same string.  If so, we can use offset.
@@ -719,20 +719,23 @@ astrcat(char **s, const char *append)
 		oldstr = *s;
 	}
 
-	/* Length = strlen(*s) + \n + strlen(append) + '\0'. */
-	newlen = offset + 1 + strlen(append) + 1;
+	/* Size = strlen(*s) + \n + strlen(append) + '\0'. */
+	newsiz = offset + 1 + strlen(append) + 1;
 
 	/* Resize *s to fit new string. */
-	newstr = realloc(*s, newlen);
+	newstr = realloc(*s, newsiz);
 	if (newstr == NULL)
 		err(2, "astrcat");
 	*s = newstr;
 
+	/* *s + offset should be end of string. */
 	/* Concatenate. */
-	strlcpy(*s + offset, "\n", newlen - offset);
+	strlcpy(*s + offset, "\n", newsiz - offset);
+	strlcat(*s + offset, append, newsiz - offset);
 
+	/* New string length should be exactly newsiz - 1 characters. */
 	/* Store generated string's values. */
-	offset = newlen - 1;
+	offset = newsiz - 1;
 	oldstr = *s;
 }
 
