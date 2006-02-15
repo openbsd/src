@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.36 2006/02/13 08:54:54 brad Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.37 2006/02/15 19:36:46 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -114,7 +114,7 @@ struct cfdriver nfe_cd = {
 };
 
 #define NFE_DEBUG
-#define NFE_NO_JUMBO
+/*#define NFE_NO_JUMBO*/
 
 #ifdef NFE_DEBUG
 int nfedebug = 1;
@@ -166,17 +166,17 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-		if (pci_mapreg_map(pa, NFE_PCI_BA,
-		    memtype, 0, &sc->sc_memt, &sc->sc_memh,
-		    NULL, &memsize, 0) == 0)
+		if (pci_mapreg_map(pa, NFE_PCI_BA, memtype, 0, &sc->sc_memt,
+		    &sc->sc_memh, NULL, &memsize, 0) == 0)
 			break;
+		/* FALLTHROUGH */
 	default:
-		printf(": can't map mem space\n");
+		printf(": could not map mem space\n");
 		return;
 	}
 
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf(": couldn't map interrupt\n");
+		printf(": could not map interrupt\n");
 		return;
 	}
 
@@ -184,7 +184,7 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, nfe_intr, sc,
 	    sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt");
+		printf(": could not establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
@@ -214,9 +214,12 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_NVIDIA_CK804_LAN2:
 	case PCI_PRODUCT_NVIDIA_MCP04_LAN1:
 	case PCI_PRODUCT_NVIDIA_MCP04_LAN2:
+		sc->sc_flags |= NFE_JUMBO_SUP | NFE_40BIT_ADDR | NFE_HW_CSUM;
+		break;
 	case PCI_PRODUCT_NVIDIA_MCP55_LAN1:
 	case PCI_PRODUCT_NVIDIA_MCP55_LAN2:
-		sc->sc_flags |= NFE_JUMBO_SUP | NFE_40BIT_ADDR | NFE_HW_CSUM;
+		sc->sc_flags |= NFE_JUMBO_SUP | NFE_40BIT_ADDR | NFE_HW_CSUM |
+		    NFE_HW_VLAN;
 		break;
 	}
 
@@ -254,7 +257,11 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_MTU;
+	if (sc->sc_flags & NFE_HW_VLAN)
+		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
 #ifdef NFE_CSUM
 	if (sc->sc_flags & NFE_HW_CSUM) {
 		ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
@@ -957,6 +964,18 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 		desc32->flags = htole16(flags);
 	}
 
+#if NVLAN > 0
+	if (sc->sc_flags & NFE_HW_VLAN) {
+		/* setup h/w VLAN tagging */
+		if ((m0->m_flags & M_PROTO1) && m0->m_pkthdr.rcvif != NULL) {
+			struct ifvlan *ifv = m0->m_pkthdr.rcvif->if_softc;
+			desc64->vtag = htole32(NFE_TX_VTAG |
+			    htons(ifv->ifv_tag));
+		} else
+			desc64->vtag = 0;
+	}
+#endif
+
 	data->m = m0;
 	data->active = map;
 
@@ -1083,9 +1102,16 @@ nfe_init(struct ifnet *ifp)
 	tmp = NFE_READ(sc, NFE_PWR_STATE);
 	NFE_WRITE(sc, NFE_PWR_STATE, tmp | NFE_PWR_VALID);
 
+#ifdef notyet
+	/* configure interrupts coalescing/mitigation */
+	NFE_WRITE(sc, NFE_IMTIMER, NFE_IM_DEFAULT);
+#else
+	/* no interrupt mitigation: one interrupt per packet */
+	NFE_WRITE(sc, NFE_IMTIMER, 970);
+#endif
+
 	NFE_WRITE(sc, NFE_SETUP_R1, NFE_R1_MAGIC);
 	NFE_WRITE(sc, NFE_SETUP_R2, NFE_R2_MAGIC);
-	NFE_WRITE(sc, NFE_TIMER_INT, 970);	/* XXX Magic */
 
 	NFE_WRITE(sc, NFE_SETUP_R4, NFE_R4_MAGIC);
 	NFE_WRITE(sc, NFE_WOL_CTL, NFE_WOL_MAGIC);
@@ -1333,16 +1359,14 @@ nfe_free_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 	for (i = 0; i < NFE_RX_RING_COUNT; i++) {
 		data = &ring->data[i];
 
-		if (data->m != NULL) {
+		if (data->map != NULL) {
 			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-			    data->map->dm_mapsize,
-			    BUS_DMASYNC_POSTREAD);
+			    data->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->sc_dmat, data->map);
-			m_freem(data->m);
-		}
-
-		if (data->map != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, data->map);
+		}
+		if (data->m != NULL)
+			m_freem(data->m);
 	}
 }
 
@@ -1522,8 +1546,8 @@ nfe_alloc_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 	ring->physaddr = ring->map->dm_segs[0].ds_addr;
 
 	for (i = 0; i < NFE_TX_RING_COUNT; i++) {
-		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    NFE_MAX_SCATTER, MCLBYTES, 0, BUS_DMA_NOWAIT,
+		error = bus_dmamap_create(sc->sc_dmat, NFE_JBYTES,
+		    NFE_MAX_SCATTER, NFE_JBYTES, 0, BUS_DMA_NOWAIT,
 		    &ring->data[i].map);
 		if (error != 0) {
 			printf("%s: could not create DMA map\n",
@@ -1597,8 +1621,7 @@ nfe_free_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 
 		if (data->m != NULL) {
 			bus_dmamap_sync(sc->sc_dmat, data->active, 0,
-			    data->active->dm_mapsize,
-			    BUS_DMASYNC_POSTWRITE);
+			    data->active->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, data->active);
 			m_freem(data->m);
 		}

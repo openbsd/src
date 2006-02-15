@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfereg.h,v 1.10 2006/02/12 10:28:07 damien Exp $	*/
+/*	$OpenBSD: if_nfereg.h,v 1.11 2006/02/15 19:36:46 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
@@ -30,7 +30,7 @@
 #define NFE_IRQ_STATUS		0x000
 #define NFE_IRQ_MASK		0x004
 #define NFE_SETUP_R6		0x008
-#define NFE_TIMER_INT		0x00c
+#define NFE_IMTIMER		0x00c
 #define NFE_MISC1		0x080
 #define NFE_TX_CTL		0x084
 #define NFE_TX_STATUS		0x088
@@ -96,13 +96,17 @@
 #define NFE_RXTX_BIT1		0x0002
 #define NFE_RXTX_BIT2		0x0004
 #define NFE_RXTX_RESET		0x0010
+#define NFE_RXTX_VTAG_STRIP	0x0040
+#define NFE_RXTX_VTAG_INSERT	0x0080
 #define NFE_RXTX_RXCHECK	0x0400
 #define NFE_RXTX_V2MAGIC	0x2100
 #define NFE_RXTX_V3MAGIC	0x2200
-
 #define NFE_RXFILTER_MAGIC	0x007f0008
 #define NFE_U2M			(1 << 5)
 #define NFE_PROMISC		(1 << 7)
+
+/* default interrupt moderation timer of 128us */
+#define NFE_IM_DEFAULT	((128 * 100) / 1024)
 
 #define NFE_PWR_VALID		(1 << 8)
 #define NFE_PWR_WAKEUP		(1 << 15)
@@ -138,12 +142,14 @@ struct nfe_desc32 {
 /* V2 Rx/Tx descriptor */
 struct nfe_desc64 {
 	uint32_t	physaddr[2];
-	uint32_t	reserved;
+	uint32_t	vtag;
 	uint16_t	length;
 	uint16_t	flags;
 #define NFE_RX_FIXME_V2		0x4300
+#define NFE_RX_VTAG		(1 << 0)
 #define NFE_RX_VALID_V2		(1 << 13)
 #define NFE_TX_ERROR_V2		0x5c04
+#define NFE_TX_VTAG		(1 << 2)
 #define NFE_TX_LASTFRAG_V2	(1 << 13)
 } __packed;
 
