@@ -69,7 +69,7 @@ int Ubik_Debug(struct rx_call *call,
 	struct hostent *he;
 	struct in_addr tmp;
 
-	if (gethostname (name, sizeof(name) < 0))
+	if (gethostname (name, sizeof(name)) < 0)
 	    return -1;
 	he = gethostbyname (name);
 	if (he == NULL)
