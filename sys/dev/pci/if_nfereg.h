@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfereg.h,v 1.11 2006/02/15 19:36:46 damien Exp $	*/
+/*	$OpenBSD: if_nfereg.h,v 1.12 2006/02/15 20:08:59 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
@@ -48,8 +48,8 @@
 #define NFE_MULTIMASK_HI	0x0b8
 #define NFE_MULTIMASK_LO	0x0bc
 #define NFE_PHY_IFACE		0x0c0
-#define NFE_TX_RING_ADDR	0x100
-#define NFE_RX_RING_ADDR	0x104
+#define NFE_TX_RING_ADDR_LO	0x100
+#define NFE_RX_RING_ADDR_LO	0x104
 #define NFE_RING_SIZE		0x108
 #define NFE_TX_UNK		0x10c
 #define NFE_LINKSPEED		0x110
@@ -57,6 +57,8 @@
 #define NFE_SETUP_R3		0x13C
 #define NFE_SETUP_R7		0x140
 #define NFE_RXTX_CTL		0x144
+#define NFE_TX_RING_ADDR_HI	0x148
+#define NFE_RX_RING_ADDR_HI	0x14c
 #define NFE_PHY_STATUS		0x180
 #define NFE_SETUP_R4		0x184
 #define NFE_STATUS		0x188

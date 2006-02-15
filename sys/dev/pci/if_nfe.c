@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.38 2006/02/15 19:53:17 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.39 2006/02/15 20:08:59 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -1086,8 +1086,14 @@ nfe_init(struct ifnet *ifp)
 	nfe_set_macaddr(sc, sc->sc_arpcom.ac_enaddr);
 
 	/* tell MAC where rings are in memory */
-	NFE_WRITE(sc, NFE_RX_RING_ADDR, sc->rxq.physaddr);
-	NFE_WRITE(sc, NFE_TX_RING_ADDR, sc->txq.physaddr);
+#ifdef __LP64__
+	NFE_WRITE(sc, NFE_RX_RING_ADDR_HI, sc->rxq.physaddr >> 32);
+#endif
+	NFE_WRITE(sc, NFE_RX_RING_ADDR_LO, sc->rxq.physaddr & 0xffffffff);
+#ifdef __LP64__
+	NFE_WRITE(sc, NFE_TX_RING_ADDR_HI, sc->txq.physaddr >> 32);
+#endif
+	NFE_WRITE(sc, NFE_TX_RING_ADDR_LO, sc->txq.physaddr & 0xffffffff);
 
 	NFE_WRITE(sc, NFE_RING_SIZE,
 	    (NFE_RX_RING_COUNT - 1) << 16 |
