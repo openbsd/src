@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.25 2006/02/09 20:47:20 norby Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.26 2006/02/15 11:47:40 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -352,7 +352,8 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 		vertex_free(old);
 		RB_INSERT(lsa_tree, tree, new);
 	} else {
-		nbr->area->dirty = 1;
+		if (lsa->hdr.type != LSA_TYPE_EXTERNAL)
+			nbr->area->dirty = 1;
 		start_spf_timer();
 	}
 
