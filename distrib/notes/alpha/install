@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.27 2005/08/30 17:05:31 miod Exp $
+dnl	$OpenBSD: install,v 1.28 2006/02/15 12:46:47 martin Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk.  The easiest way is
@@ -78,6 +78,14 @@ Booting from Network:
 
 	You will also need to enable tftpd, for the MACHINE to download the
 	"netboot" from the server in the /tftpboot directory.
+
+	Next, you need to add an entry for your MACHINE in /etc/bootparams.
+	For example:
+
+		piper		root=myserver:/alpha
+
+	Enable rpc.bootparamd either by turning it on in /etc/rc.conf and
+	rebooting, or by running it manually.
 
 	Only uncompressed kernels are supported for booting in this release.
 	This means you have to execute the following command on your boot
