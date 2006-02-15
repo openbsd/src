@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.10 2006/02/02 19:30:23 claudio Exp $ */
+/*	$OpenBSD: edit.c,v 1.11 2006/02/15 06:58:06 otto Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -132,7 +132,7 @@ eparse(const char *cmd, const char *left, const char *right)
 {
 	FILE *file;
 	size_t nread, nwritten;
-	const char *filename;
+	char *filename;
 	char buf[BUFSIZ], *text;
 
 	/* Skip whitespace. */
@@ -232,7 +232,7 @@ RIGHT:
 	fclose(file);
 
 	/* filename was malloc()ed in xmktemp(). */
-	free((void *)filename);
+	free(filename);
 
 	return (0);
 }

@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.2 2005/12/27 04:38:36 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2006/02/15 06:58:06 otto Exp $
 
 PROG=sdiff
 SRCS=edit.c sdiff.c
-COPTS+=-Wall
+COPTS+=-Wall -W
 
 LDADD+=	-lutil
 DPADD+=	${LIBUTIL}
