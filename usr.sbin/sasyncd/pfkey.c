@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.12 2006/01/26 09:53:46 moritz Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.13 2006/02/15 05:09:29 david Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -297,7 +297,7 @@ pfkey_handle_message(struct sadb_msg *m)
 		/* FALLTHROUGH */
 
 	default:
-		/* Pass the the rest along to our peers. */
+		/* Pass the rest along to our peers. */
 		memmove(m, msg, msg->sadb_msg_len * CHUNK); /* for realloc */
 		return net_queue(NULL, MSG_PFKEYDATA, (u_int8_t *)m,
 		    m->sadb_msg_len * CHUNK);
