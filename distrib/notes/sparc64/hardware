@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.109 2006/02/16 18:24:21 martin Exp $
+dnl	$OpenBSD: hardware,v 1.110 2006/02/16 20:39:51 martin Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Sun Blade 100/150
 	Sun Fire V100
@@ -75,6 +75,8 @@ Supported devices {:-include-:}:
 		  cards (esp)
 		SBus and PCI QLogic adapters (isp)
 		PCI NCR53c8xx adapters (siop)
+		AMD Am53c974 PCscsi-PCI host adapters including the Tekram
+		  DC-390 (pcscp)
 
 	PCI IDE Controllers: (pciide)
 		Acer Labs M5229

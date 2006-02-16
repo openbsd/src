@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.141 2006/02/10 05:28:56 djm Exp $
+#	$OpenBSD: GENERIC,v 1.142 2006/02/16 20:39:51 martin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -72,6 +72,8 @@ siop*	at pci?			# NCR 538XX SCSI controllers
 scsibus* at siop?
 isp*	at pci?			# Qlogic ISP [12]0x0 SCSI/FibreChannel
 option ISP_COMPILE_FW=1
+pcscp*	at pci?			# AMD 53c974 PCscsi-PCI SCSI
+scsibus* at pcscp?
 
 # PCI crypto
 hifn*	at pci?			# Hifn 7751/7811/7951
