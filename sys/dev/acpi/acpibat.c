@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.11 2006/02/16 21:07:16 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.12 2006/02/16 22:14:32 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -81,7 +81,22 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 	acpibat_getbif(sc); 
 	acpibat_getbst(sc); 
 
-	printf("\n");
+/*
+	printf(": max cap: %u last max cap: %u current cap: %u model: %s "
+	    "serial: %s type: %s oem: %s\n",
+	    sc->sc_bif.bif_capacity,
+	    sc->sc_bif.bif_last_capacity,
+	    sc->sc_bst.bst_capacity,
+	    sc->sc_bif.bif_model,
+	    sc->sc_bif.bif_serial,
+	    sc->sc_bif.bif_type,
+	    sc->sc_bif.bif_oem);
+*/
+	printf(": model: %s serial: %s type: %s oem: %s\n",
+	    sc->sc_bif.bif_model,
+	    sc->sc_bif.bif_serial,
+	    sc->sc_bif.bif_type,
+	    sc->sc_bif.bif_oem);
 }
 
 int
@@ -94,6 +109,14 @@ acpibat_getbif(struct acpibat_softc *sc)
 	memset(&env, 0, sizeof(env));
 
 	ctx = NULL;
+	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_STA", &res, &env)) {
+		dnprintf(10, "%s: no _STA\n",
+		    DEVNAME(sc));
+		return (1);
+	}
+
+	dnprintf(40, "_STA value: %x\n", res.v_integer);
+
 	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_BIF", &res, &env)) {
 		dnprintf(50, "%s: no _BIF\n",
 		    DEVNAME(sc));
