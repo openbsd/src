@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.88 2006/01/12 22:39:20 weingart Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.89 2006/02/16 16:08:53 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -3592,8 +3592,8 @@ pmap_tlb_shootnow(int32_t cpumask)
 	while (self->ci_tlb_ipi_mask != 0)
 #ifdef DIAGNOSTIC
 		if (count++ > 100000000)
-			panic("TLB IPI rendezvous failed (mask %x)",
-			    self->ci_tlb_ipi_mask);
+			panic("%s: TLB IPI rendezvous failed (mask 0x%x)",
+			    self->ci_dev.dv_xname, self->ci_tlb_ipi_mask);
 #else
 		/* XXX insert pause instruction */
 		;
