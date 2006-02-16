@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ci.1,v 1.21 2005/12/12 09:38:22 xsa Exp $
+.\"     $OpenBSD: ci.1,v 1.22 2006/02/16 13:32:27 niallo Exp $
 .\"
 .\" Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .Op Fl f Ns Op Ar rev
 .Op Fl i Ns Op Ar rev
 .Op Fl j Ns Op Ar rev
-.Op Fl k Ns Ar mode
+.Op Fl k Ns Op Ar rev
 .Op Fl l Ns Op Ar rev
 .Op Fl M Ns Op Ar rev
 .Op Fl m Ns Ar msg
@@ -69,8 +69,10 @@ Print error and refuse to do check-in if the RCS file already exists.
 .It Fl j Ns Op Ar rev
 Only do update check-in.
 Print error and refuse to do check-in if the RCS file does not already exist.
-.It Fl k Ns Ar mode
-Specify the keyword substitution mode.
+.It Fl k Ns Op Ar rev
+Search the working file for keywords and set the revision number,
+creation date, state and author to the values found in these keywords
+instead of computing them. 
 .It Fl l Ns Op Ar rev
 The same as
 .Fl r ,

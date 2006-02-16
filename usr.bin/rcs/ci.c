@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.94 2006/02/16 13:22:02 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.95 2006/02/16 13:32:27 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -29,7 +29,7 @@
 #include "rcsprog.h"
 #include "diff.h"
 
-#define CI_OPTSTRING    "d::f::i::j::k:l::m:M::N:n:qr::s:Tt:u::Vw:x:"
+#define CI_OPTSTRING    "d::f::i::j::k::l::m:M::N:n:qr::s:Tt:u::Vw:x:"
 #define DATE_NOW        -1
 #define DATE_MTIME      -2
 
@@ -68,7 +68,7 @@ checkin_usage(void)
 {
 	fprintf(stderr,
 	    "usage: ci [-MNqTV] [-d[date]] [-f[rev]] [-i[rev]] [-j[rev]]\n"
-	    "          [-kmode] [-l[rev]] [-M[rev]] [-mmsg] [-Nsymbol]\n"
+	    "          [-k[rev]] [-l[rev]] [-M[rev]] [-mmsg] [-Nsymbol]\n"
 	    "          [-nsymbol] [-r[rev]] [-sstate] [-tfile|str] [-u[rev]]\n"
 	    "          [-wusername] [-xsuffixes] file ...\n");
 }
