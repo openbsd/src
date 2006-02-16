@@ -1,4 +1,4 @@
-/* $OpenBSD: osf1_cvt.c,v 1.2 2001/11/06 19:53:17 miod Exp $ */
+/* $OpenBSD: osf1_cvt.c,v 1.3 2006/02/16 20:32:33 miod Exp $ */
 /* $NetBSD: osf1_cvt.c,v 1.7 1999/06/26 01:23:23 cgd Exp $ */
 
 /*
@@ -313,7 +313,7 @@ osf1_cvt_flock_from_native(nf, of)
 	struct osf1_flock *of;
 {
 
-	memset(of, 0, sizeof of);
+	memset(of, 0, sizeof *of);
 
 	of->l_start = nf->l_start;
 	of->l_len = nf->l_len;
@@ -354,7 +354,7 @@ osf1_cvt_flock_to_native(of, nf)
 	struct flock *nf;
 {
 
-	memset(nf, 0, sizeof nf);
+	memset(nf, 0, sizeof *nf);
 
 	nf->l_start = of->l_start;
 	nf->l_len = of->l_len;
@@ -404,7 +404,7 @@ osf1_cvt_msghdr_xopen_to_native(omh, bmh)
 {
 	unsigned long leftovers;
 
-	memset(bmh, 0, sizeof bmh);
+	memset(bmh, 0, sizeof *bmh);
 	bmh->msg_name = omh->msg_name;		/* XXX sockaddr translation */
 	bmh->msg_namelen = omh->msg_namelen;
 	bmh->msg_iov = NULL;			/* iovec xlation separate */
