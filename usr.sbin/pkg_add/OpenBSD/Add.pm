@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.47 2006/02/09 09:42:10 espie Exp $
+# $OpenBSD: Add.pm,v 1.48 2006/02/16 11:21:58 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -412,9 +412,41 @@ use File::Copy;
 
 sub validate
 {
-	my $self = shift;
+	my ($self, $state, $problems, $colliding, $totsize, $pkgname) = @_;
 	if (!defined $self->{copyfrom}) {
 		Fatal "\@sample element does not reference a valid file\n";
+	}
+	my $fname = $state->{destdir}.$self->fullname();
+	# If file already exists, we won't change it
+	if (OpenBSD::Vstat::vexists($fname)) {
+		return;
+	}
+	my $size = $self->{copyfrom}->{size};
+	$$totsize += $size if defined $size;
+	my $s = OpenBSD::Vstat::add($fname, $size, \$pkgname);
+	return unless defined $s;
+	if ($s->{ro}) {
+		if ($state->{very_verbose} or ++($s->{problems}) < 4) {
+			Warn "Error: ", $s->{dev}, 
+			    " is read-only ($fname)\n";
+		} elsif ($s->{problems} == 4) {
+			Warn "Error: ... more files can't be written to ",
+				$s->{dev}, "\n";
+		}
+		$$problems++;
+	}
+	if ($state->{forced}->{kitchensink} && $state->{not}) {
+		return;
+	}
+	if ($s->avail() < 0) {
+		if ($state->{very_verbose} or ++($s->{problems}) < 4) {
+			Warn "Error: ", $s->{dev}, 
+			    " is not large enough ($fname)\n";
+		} elsif ($s->{problems} == 4) {
+			Warn "Error: ... more files do not fit on ",
+				$s->{dev}, "\n";
+		}
+		$$problems++;
 	}
 }
 
