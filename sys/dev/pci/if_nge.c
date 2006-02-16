@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.48 2005/11/23 11:30:14 mickey Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.49 2006/02/16 20:54:35 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -892,6 +892,10 @@ nge_attach(parent, self, aux)
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
+#ifdef NGE_VLAN
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
+
 	/*
 	 * Do MII setup.
 	 */
@@ -1768,20 +1772,18 @@ nge_init(xsc)
 	NGE_SETBIT(sc, NGE_RXFILT_CTL, NGE_RXFILTCTL_PERFECT);
 
 	 /* If we want promiscuous mode, set the allframes bit. */
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC)
 		NGE_SETBIT(sc, NGE_RXFILT_CTL, NGE_RXFILTCTL_ALLPHYS);
-	} else {
+	else
 		NGE_CLRBIT(sc, NGE_RXFILT_CTL, NGE_RXFILTCTL_ALLPHYS);
-	}
 
 	/*
 	 * Set the capture broadcast bit to capture broadcast frames.
 	 */
-	if (ifp->if_flags & IFF_BROADCAST) {
+	if (ifp->if_flags & IFF_BROADCAST)
 		NGE_SETBIT(sc, NGE_RXFILT_CTL, NGE_RXFILTCTL_BROAD);
-	} else {
+	else
 		NGE_CLRBIT(sc, NGE_RXFILT_CTL, NGE_RXFILTCTL_BROAD);
-	}
 
 	/*
 	 * Load the multicast filter.
@@ -1810,11 +1812,6 @@ nge_init(xsc)
 
 	/* Set TX configuration */
 	CSR_WRITE_4(sc, NGE_TX_CFG, NGE_TXCFG);
-
-	/*
-	 * Enable TX IPv4 checksumming on a per-packet basis.
-	 */
-	CSR_WRITE_4(sc, NGE_VLAN_IP_TXCTL, NGE_VIPTXCTL_CSUM_PER_PKT);
 
 #if NVLAN > 0
 	/*
