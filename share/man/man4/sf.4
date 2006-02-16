@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sf.4,v 1.16 2004/09/30 19:59:25 mickey Exp $
+.\"	$OpenBSD: sf.4,v 1.17 2006/02/16 21:20:39 martin Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -40,6 +40,7 @@
 .Nd Adaptec AIC-6915 "Starfire" PCI Fast Ethernet driver
 .Sh SYNOPSIS
 .Cd "sf* at pci?"
+.Cd "sqphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -151,6 +152,7 @@ the network connection (cable).
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
+.Xr sqphy 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Rs
