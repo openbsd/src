@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.78 2005/06/15 16:28:09 camield Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.79 2006/02/16 21:02:34 brad Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -63,6 +63,7 @@
 #endif
 
 #if NVLAN > 0
+#include <net/if_types.h>
 #include <net/if_vlan_var.h>
 #endif
 
@@ -2021,8 +2022,9 @@ txp_capabilities(sc)
 	sc->sc_tx_capability = ext->ext_1 & OFFLOAD_MASK;
 	sc->sc_rx_capability = ext->ext_2 & OFFLOAD_MASK;
 
-#if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_MTU;
+
+#if NVLAN > 0
 	if (rsp->rsp_par2 & rsp->rsp_par3 & OFFLOAD_VLAN) {
 		sc->sc_tx_capability |= OFFLOAD_VLAN;
 		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
