@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.183 2006/02/12 00:08:52 miod Exp $
+$OpenBSD: usbdevs,v 1.184 2006/02/16 10:44:01 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -372,6 +372,7 @@ vendor AGATE		0x0c08	Agate Technologies
 vendor DMI		0x0c0b	DMI
 vendor SEALEVEL		0x0c52	Sealevel System
 vendor EASYDISK		0x0c76	EasyDisk
+vendor KYOCERA2		0x0c88	Kyocera
 vendor ZCOM		0x0cde	Z-Com
 vendor TANGTOP		0x0d3d	Tangtop
 vendor SMC3		0x0d5c	SMC
@@ -409,6 +410,7 @@ vendor MOBILITY		0x1342	Mobility
 vendor DICKSMITH	0x1371	Dick Smith Electronics
 vendor CISCOLINKSYS	0x13b1	Cisco-Linksys
 vendor SHARK		0x13d2	Shark
+vendor NOVATEL		0x1410	Novatel Wireless
 vendor SILICOM		0x1485	Silicom
 vendor RALINK		0x148f	Ralink Technology
 vendor CONCEPTRONIC2	0x14b2	Conceptronic
@@ -1212,6 +1214,7 @@ product KYE VIVIDPRO		0x2001	ColorPage Vivid-Pro
 
 /* Kyocera products */
 product KYOCERA AHK3001V	0x0203	AH-K3001V
+product KYOCERA2 KPC650		0x17da	KPC650 EVDO
 
 /* LaCie products */
 product LACIE HD		0xa601	Hard Disk
@@ -1434,6 +1437,9 @@ product NIKON E885		0x0105	E885
 
 /* NHJ product */
 product NHJ CAM2		0x9120	Camera
+
+/* Novatel Wireless products */
+product NOVATEL MERLINV620	0x1110	Merlin V620
 
 /* Olympus products */
 product OLYMPUS C1		0x0102	C-1
