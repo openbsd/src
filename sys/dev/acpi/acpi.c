@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.27 2006/02/16 21:11:13 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.28 2006/02/16 22:42:11 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -53,6 +53,7 @@ void	acpi_write_pmreg(struct acpi_softc *, int, int);
 
 void	acpi_gpe(struct aml_node *, void *);
 void	acpi_foundhid(struct aml_node *, void *);
+void    acpi_inidev(struct aml_node *, void *);
 
 int	acpi_loadtables(struct acpi_softc *, struct acpi_rsdp *);
 void	acpi_load_table(paddr_t, size_t, acpi_qhead_t *);
@@ -445,6 +446,15 @@ acpi_gpe(struct aml_node *node, void *arg)
 }
 
 void
+acpi_inidev(struct aml_node *node, void *arg)
+{
+	struct acpi_softc	*sc = (struct acpi_softc *)arg;
+	struct aml_value res;
+
+	aml_eval_object(sc, node, &res, 0, NULL);
+}
+
+void
 acpi_foundhid(struct aml_node *node, void *arg)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
@@ -704,6 +714,11 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	acpi_softc = sc;
+
+#if 0
+	/* attach devices found in dsdt */
+	aml_find_node(aml_root.child, "_INI", acpi_inidev, sc);
+#endif
 
 	/* attach devices found in dsdt */
 	aml_find_node(aml_root.child, "_HID", acpi_foundhid, sc);

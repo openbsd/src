@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.20 2006/02/16 21:11:13 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.21 2006/02/16 22:42:11 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1888,7 +1888,7 @@ aml_dowhile(struct acpi_context *ctx)
 				break;
 			}
 		}
-		if (*ctx->pos == AMLOP_BREAK) {
+		if (ctx->pos == NULL || *ctx->pos == AMLOP_BREAK) {
 			dnprintf(40, "break\n");
 			break;
 		}
@@ -2795,15 +2795,22 @@ acpi_parse_aml(struct acpi_softc *sc, u_int8_t *start, u_int32_t length)
 {
 	struct acpi_context *ctx;
 	struct aml_value *rv;
+	struct aml_value  aml_os;
 
 	aml_root.depth = -1;
 	aml_root.mnem  = "ROOT";
 	aml_root.start = start;
 	aml_root.end   = start + length;
 
+	/* Add \_OS_ string */
+	aml_os.type = AML_OBJTYPE_STRING;
+	aml_os.v_string = "OpenBSD";
 	ctx = acpi_alloccontext(sc, &aml_root, 0, NULL);
+	aml_addvname(ctx, "\\_OS_", 0, &aml_os);
+
 	rv  = aml_eparselist(ctx, aml_root.end, 0);
 	aml_freevalue(&rv);
+
 	acpi_freecontext(ctx);
 
 	dnprintf(50, " : parsed %d AML bytes\n", length);
