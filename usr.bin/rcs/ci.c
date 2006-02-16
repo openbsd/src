@@ -1,6 +1,6 @@
-/*	$OpenBSD: ci.c,v 1.97 2006/02/16 17:30:46 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.98 2006/02/16 17:44:53 niallo Exp $	*/
 /*
- * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
+ * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,12 +33,30 @@
 #define DATE_NOW        -1
 #define DATE_MTIME      -2
 
+#define KW_ID           "Id"
+#define KW_AUTHOR       "Author"
+#define KW_DATE         "Date"
+#define KW_STATE        "State"
+#define KW_REVISION     "Revision"
+#define KW_TYPE_ID       1
+#define KW_TYPE_AUTHOR   2
+#define KW_TYPE_DATE     3
+#define KW_TYPE_STATE    4
+#define KW_TYPE_REVISION 5
+#define KW_NUMTOKS_ID      10
+#define KW_NUMTOKS_AUTHOR   3
+#define KW_NUMTOKS_DATE     4
+#define KW_NUMTOKS_STATE    3
+#define KW_NUMTOKS_REVISION 3
+
 #define LOG_INIT        "Initial revision"
 #define LOG_PROMPT      "enter log message, terminated with a single '.' "    \
                         "or end of file:\n>> "
 #define DESC_PROMPT     "enter description, terminated with single '.' "      \
 	                "or end of file:\nNOTE: This is NOT the log message!" \
                         "\n>> "
+
+extern struct rcs_kw rcs_expkw[];
 
 struct checkin_params {
 	int flags, openflags;
@@ -47,8 +65,8 @@ struct checkin_params {
 	RCSFILE *file;
 	RCSNUM *frev, *newrev;
 	char fpath[MAXPATHLEN], *rcs_msg, *username, *deltatext, *filename;
-	char *author;
-	const char *symbol, *state, *description;
+	char *author, *state;
+	const char *symbol, *description;
 };
 
 static int	 checkin_attach_symbol(struct checkin_params *);
@@ -59,7 +77,12 @@ static char	*checkin_getdesc(void);
 static char	*checkin_getinput(const char *);
 static char	*checkin_getlogmsg(RCSNUM *, RCSNUM *);
 static int	 checkin_init(struct checkin_params *);
+static int       checkin_keywordscan(char *, RCSNUM **, time_t *, char **,
+    char **);
+static int       checkin_keywordtype(char *);
 static int	 checkin_mtimedate(struct checkin_params *);
+static void      checkin_parsekeyword(char *, RCSNUM **, time_t *, char **,
+    char **);
 static int	 checkin_update(struct checkin_params *);
 static void	 checkin_revert(struct checkin_params *);
 
@@ -89,8 +112,8 @@ checkin_main(int argc, char **argv)
 
 	pb.date = DATE_NOW;
 	pb.file = NULL;
-	pb.rcs_msg = pb.username = pb.author = NULL;
-	pb.state = pb.symbol = pb.description = NULL;
+	pb.rcs_msg = pb.username = pb.author = pb.state = NULL;
+	pb.symbol = pb.description = NULL;
 	pb.newrev =  NULL;
 	pb.fmode = pb.flags = status = 0;
 
@@ -121,6 +144,10 @@ checkin_main(int argc, char **argv)
 			rcs_set_rev(rcs_optarg, &pb.newrev);
 			pb.openflags &= ~RCS_CREATE;
 			pb.flags &= ~CI_INIT;
+			break;
+		case 'k':
+			rcs_set_rev(rcs_optarg, &pb.newrev);
+			pb.flags |= CI_KEYWORDSCAN;
 			break;
 		case 'l':
 			rcs_set_rev(rcs_optarg, &pb.newrev);
@@ -557,6 +584,11 @@ checkin_init(struct checkin_params *pb)
 
 	filec = (char *)cvs_buf_release(bp);
 
+	/* Get default values from working copy if -k specified */
+	if (pb->flags & CI_KEYWORDSCAN)
+		checkin_keywordscan(filec, &pb->newrev, &pb->date, &pb->state,
+		    &pb->author);
+
 	/* Get description from user */
 	if (pb->description == NULL)
 		rcs_desc = (const char *)checkin_getdesc();
@@ -801,4 +833,227 @@ checkin_choose_rcsfile(const char *filename)
 		}
 	}
 	return (basepath);
+}
+
+/*
+ * checkin_keywordscan()
+ *
+ * Searches working file for keyword values to determine its revision
+ * number, creation date and author, and uses these values instead of
+ * calculating them locally.
+ *
+ * Params: The data buffer to scan and pointers to pointers of variables in
+ * which to store the outputs.
+ *
+ * On success, return 0. On error return -1.
+ */
+static int
+checkin_keywordscan(char *data, RCSNUM **rev, time_t *date, char **author,
+    char **state)
+{
+	int kwtype;
+	size_t len;
+	u_int i, j, found, end;
+	char *c, *kwstr, *start, buf[128];
+
+	c = start = kwstr = NULL;
+
+	i =  found =  0;
+	kwtype = 0;
+
+	len = strlen(data);
+	for (c = data; *c != '\0' && i < len; *c++) {
+		if (*c == '$') {
+			start = c;
+			*c++;
+			if (!isalpha(*c)) {
+				c = start;
+				continue;
+			}
+			/* look for any matching keywords */
+                        found = 0;
+                        for (j = 0; j < 10; j++) {
+                                if (!strncmp(c, rcs_expkw[j].kw_str,
+                                    strlen(rcs_expkw[j].kw_str))) {
+                                        found = 1;
+                                        kwstr = rcs_expkw[j].kw_str;
+                                        kwtype = rcs_expkw[j].kw_type;
+                                        break;
+                                }
+                        }
+
+                        /* unknown keyword, continue looking */
+                        if (found == 0) {
+                                c = start;
+                                continue;
+                        }
+
+			c += strlen(kwstr);
+			if (*c != ':' && *c != '$') {
+				c = start;
+				continue;
+			}
+
+			if (*c == ':') {
+				while (*c++) {
+					if (*c == '$') {
+						end = c - start + 2;
+						if (end >= sizeof(buf))
+							fatal("keyword buffer"
+							    " too small!");
+						strlcpy(buf, start, end);
+						checkin_parsekeyword(buf, rev,
+						    date, author, state); 
+						break;
+					}
+				}
+
+				if (*c != '$') {
+					c = start;
+					continue;
+				}
+			}
+		}
+	}
+	if (found == 0)
+		return (-1);
+	else
+		return (0);
+}
+
+/*
+ * checkin_keywordtype()
+ *
+ * Given an RCS keyword string, determine what type of string it is.
+ * This enables us to know what data should be in it.
+ *
+ * Returns type on success, or -1 on failure.
+ */ 
+static int
+checkin_keywordtype(char *keystring)
+{
+	char *p;
+	
+	p = keystring;
+	*p++;
+	if (strncmp(p, KW_ID, strlen(KW_ID)) == 0)
+		return (KW_TYPE_ID);
+	else if (strncmp(p, KW_AUTHOR, strlen(KW_AUTHOR)) == 0)
+		return (KW_TYPE_AUTHOR);
+	else if (strncmp(p, KW_DATE, strlen(KW_DATE)) == 0)
+		return (KW_TYPE_DATE);
+	else if (strncmp(p, KW_STATE, strlen(KW_STATE)) == 0)
+		return (KW_TYPE_STATE);
+	else if (strncmp(p, KW_REVISION, strlen(KW_REVISION)) == 0)
+		return (KW_TYPE_REVISION);
+	else
+		return (-1);
+}
+
+/*
+ * checkin_parsekeyword()
+ *
+ * Do the actual parsing of an RCS keyword string, setting the values passed
+ * to the function to whatever is found.
+ *
+ */
+static void
+checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
+    char **author, char **state)
+{
+	char *tokens[10], *p, *datestring;
+	size_t len = 0;
+	u_int k;
+        /* Parse data out of the expanded keyword */
+	switch (checkin_keywordtype(keystring)) {
+	case KW_TYPE_ID:
+		k = 0;
+		for ((p =strtok(keystring, " ")); p;
+		     (p = strtok(NULL, " "))) {
+			if (k < KW_NUMTOKS_ID - 1)
+				tokens[k++] = p;
+	        }
+		tokens[k] = NULL;
+		if (*author != NULL)
+			xfree(*author);
+		if (*state != NULL)
+			xfree(*state);
+		/* only parse revision if one is not already set */
+		if (*rev == NULL) {
+			if ((*rev = rcsnum_parse(tokens[2])) == NULL)
+				fatal("could not parse rcsnum");
+		}
+		len = strlen(tokens[5]) + 1;
+		*author = xmalloc(len);
+		strlcpy(*author, tokens[5], len);
+		len = strlen(tokens[6]) + 1;
+		*state = xmalloc(len);
+		strlcpy(*state, tokens[6], len);
+		len = strlen(tokens[3]) + strlen(tokens[4]) + 2;
+		datestring = xmalloc(len);
+		strlcpy(datestring, tokens[3], len);
+		strlcat(datestring, " ", len);
+		strlcat(datestring, tokens[4], len);
+		if ((*date = cvs_date_parse(datestring)) <= 0)
+		    fatal("could not parse date\n");
+		xfree(datestring);
+		break;
+	case KW_TYPE_AUTHOR:
+		k = 0;
+		for ((p =strtok(keystring, " ")); p;
+		     (p = strtok(NULL, " "))) {
+			if (k < KW_NUMTOKS_AUTHOR - 1)
+				tokens[k++] = p;
+	        }
+		if (*author != NULL)
+			xfree(*author);
+		len = strlen(tokens[1]) + 1;
+		*author = xmalloc(len);
+		strlcpy(*author, tokens[1], len);
+		break;
+	case KW_TYPE_DATE:
+		k = 0;
+		for ((p =strtok(keystring, " ")); p;
+		     (p = strtok(NULL, " "))) {
+			if (k < KW_NUMTOKS_DATE - 1)
+				tokens[k++] = p;
+		}
+		len = strlen(tokens[1]) + strlen(tokens[2]) + 2;
+		datestring = xmalloc(len);
+		strlcpy(datestring, tokens[1], len);
+		strlcat(datestring, " ", len);
+		strlcat(datestring, tokens[2], len);
+		if ((*date = cvs_date_parse(datestring)) <= 0)
+		    fatal("could not parse date\n");
+		xfree(datestring);
+		break;
+	case KW_TYPE_STATE:
+		k = 0;
+		for ((p =strtok(keystring, " ")); p;
+		     (p = strtok(NULL, " "))) {
+			if (k < KW_NUMTOKS_STATE - 1)
+				tokens[k++] = p;
+	        }
+		if (*state != NULL)
+			xfree(*state);
+		len = strlen(tokens[1]) + 1;
+		*state = xmalloc(len);
+		strlcpy(*state, tokens[1], len);
+		break;
+	case KW_TYPE_REVISION:
+		/* only parse revision if one is not already set */
+		if (*rev != NULL)
+			break;
+		k = 0;
+		for ((p =strtok(keystring, " ")); p;
+		     (p = strtok(NULL, " "))) {
+			if (k < KW_NUMTOKS_REVISION - 1)
+				tokens[k++] = p;
+	        }
+		if ((*rev = rcsnum_parse(tokens[1])) == NULL)
+			fatal("could not parse rcsnum");
+		break;
+	}
+
+	return;
 }
