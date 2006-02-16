@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.74 2006/01/16 01:47:39 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.75 2006/02/16 20:16:30 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1667,8 +1667,10 @@ ti_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
+#if TI_VLAN
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
 #endif
 
 	/* Set up ifmedia support. */
