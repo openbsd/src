@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.29 2006/02/01 10:12:04 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.30 2006/02/16 06:16:05 brad Exp $
 OpenBSD/MACHINE runs on the Chalice/Simtec StrongARM 110 Evaluation Board.
 
 Supported devices {:-include-:}:
@@ -82,7 +82,7 @@ Supported devices {:-include-:}:
 		    Dell OptiPlex GX1 on-board 3c918
 		    Dell Latitude laptop docking station embedded
 			3c905
-		    NVidia nForce2 integrated 3Com 9201 (nForce2-ST, nForce2-GT)
+		    NVIDIA nForce2 integrated 3Com 9201 (nForce2-ST, nForce2-GT)
 		ADMtek AN986-based USB adapters, including
 		    Abocom UFE1000
 		    Abocom DSB650TX
