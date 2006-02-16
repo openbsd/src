@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.40 2006/02/15 20:21:27 brad Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.41 2006/02/16 17:35:51 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -258,7 +258,6 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
-
 #if NVLAN > 0
 	if (sc->sc_flags & NFE_HW_VLAN)
 		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
@@ -430,17 +429,9 @@ nfe_intr(void *arg)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	uint32_t r;
 
-	/* disable interrupts */
-	NFE_WRITE(sc, NFE_IRQ_MASK, 0);
-
-	r = NFE_READ(sc, NFE_IRQ_STATUS);
+	if ((r = NFE_READ(sc, NFE_IRQ_STATUS)) == 0)
+		return 0;	/* not for us */
 	NFE_WRITE(sc, NFE_IRQ_STATUS, r);
-
-	if (r == 0) {
-		/* re-enable interrupts */
-		NFE_WRITE(sc, NFE_IRQ_MASK, NFE_IRQ_WANTED);
-		return 0;
-	}
 
 	DPRINTFN(5, ("nfe_intr: interrupt register %x\n", r));
 
@@ -457,9 +448,6 @@ nfe_intr(void *arg)
 		/* check Tx ring */
 		nfe_txeof(sc);
 	}
-
-	/* re-enable interrupts */
-	NFE_WRITE(sc, NFE_IRQ_MASK, NFE_IRQ_WANTED);
 
 	return 1;
 }
@@ -992,7 +980,6 @@ nfe_start(struct ifnet *ifp)
 	struct nfe_softc *sc = ifp->if_softc;
 	int old = sc->txq.cur;
 	struct mbuf *m0;
-	uint32_t txctl;
 
 	for (;;) {
 		IFQ_POLL(&ifp->if_snd, m0);
@@ -1020,18 +1007,8 @@ nfe_start(struct ifnet *ifp)
 	else
 		nfe_txdesc32_rsync(sc, old, sc->txq.cur, BUS_DMASYNC_PREWRITE);
 
-	txctl = NFE_RXTX_KICKTX;
-	if (sc->sc_flags & NFE_40BIT_ADDR)
-		txctl |= NFE_RXTX_V3MAGIC;
-	else if (sc->sc_flags & NFE_JUMBO_SUP)
-		txctl |= NFE_RXTX_V2MAGIC;
-#ifdef NFE_CSUM
-	if (sc->sc_flags & NFE_HW_CSUM)
-		txctl |= NFE_RXTX_RXCHECK;
-#endif
-
 	/* kick Tx */
-	NFE_WRITE(sc, NFE_RXTX_CTL, txctl);
+	NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_KICKTX | sc->rxtxctl);
 
 	/*
 	 * Set a timeout in case the chip goes out to lunch.
@@ -1056,7 +1033,7 @@ int
 nfe_init(struct ifnet *ifp)
 {
 	struct nfe_softc *sc = ifp->if_softc;
-	uint32_t tmp, rxtxctl;
+	uint32_t tmp;
 
 	if (ifp->if_flags & IFF_RUNNING)
 		return 0;
@@ -1067,19 +1044,19 @@ nfe_init(struct ifnet *ifp)
 
 	NFE_WRITE(sc, NFE_TX_UNK, 0);
 
-	rxtxctl = NFE_RXTX_BIT2;
+	sc->rxtxctl = NFE_RXTX_BIT2;
 	if (sc->sc_flags & NFE_40BIT_ADDR)
-		rxtxctl |= NFE_RXTX_V3MAGIC;
+		sc->rxtxctl |= NFE_RXTX_V3MAGIC;
 	else if (sc->sc_flags & NFE_JUMBO_SUP)
-		rxtxctl |= NFE_RXTX_V2MAGIC;
+		sc->rxtxctl |= NFE_RXTX_V2MAGIC;
 #ifdef NFE_CSUM
 	if (sc->sc_flags & NFE_HW_CSUM)
-		rxtxctl |= NFE_RXTX_RXCHECK;
+		sc->rxtxctl |= NFE_RXTX_RXCSUM;
 #endif
 
-	NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_RESET | rxtxctl);
+	NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_RESET | sc->rxtxctl);
 	DELAY(10);
-	NFE_WRITE(sc, NFE_RXTX_CTL, rxtxctl);
+	NFE_WRITE(sc, NFE_RXTX_CTL, sc->rxtxctl);
 
 	NFE_WRITE(sc, NFE_SETUP_R6, 0);
 
@@ -1123,10 +1100,10 @@ nfe_init(struct ifnet *ifp)
 	NFE_WRITE(sc, NFE_SETUP_R4, NFE_R4_MAGIC);
 	NFE_WRITE(sc, NFE_WOL_CTL, NFE_WOL_MAGIC);
 
-	rxtxctl &= ~NFE_RXTX_BIT2;
-	NFE_WRITE(sc, NFE_RXTX_CTL, rxtxctl);
+	sc->rxtxctl &= ~NFE_RXTX_BIT2;
+	NFE_WRITE(sc, NFE_RXTX_CTL, sc->rxtxctl);
 	DELAY(10);
-	NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_BIT1 | rxtxctl);
+	NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_BIT1 | sc->rxtxctl);
 
 	/* set Rx filter */
 	nfe_setmulti(sc);

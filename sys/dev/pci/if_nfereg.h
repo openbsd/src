@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfereg.h,v 1.12 2006/02/15 20:08:59 damien Exp $	*/
+/*	$OpenBSD: if_nfereg.h,v 1.13 2006/02/16 17:35:51 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
@@ -100,7 +100,7 @@
 #define NFE_RXTX_RESET		0x0010
 #define NFE_RXTX_VTAG_STRIP	0x0040
 #define NFE_RXTX_VTAG_INSERT	0x0080
-#define NFE_RXTX_RXCHECK	0x0400
+#define NFE_RXTX_RXCSUM		0x0400
 #define NFE_RXTX_V2MAGIC	0x2100
 #define NFE_RXTX_V3MAGIC	0x2200
 #define NFE_RXFILTER_MAGIC	0x007f0008
@@ -145,13 +145,13 @@ struct nfe_desc32 {
 struct nfe_desc64 {
 	uint32_t	physaddr[2];
 	uint32_t	vtag;
+#define NFE_RX_VTAG		(1 << 16)
+#define NFE_TX_VTAG		(1 << 18)
 	uint16_t	length;
 	uint16_t	flags;
 #define NFE_RX_FIXME_V2		0x4300
-#define NFE_RX_VTAG		(1 << 0)
 #define NFE_RX_VALID_V2		(1 << 13)
 #define NFE_TX_ERROR_V2		0x5c04
-#define NFE_TX_VTAG		(1 << 2)
 #define NFE_TX_LASTFRAG_V2	(1 << 13)
 } __packed;
 
