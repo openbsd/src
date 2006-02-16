@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.11 2006/02/11 21:15:21 matthieu Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.12 2006/02/16 19:40:43 matthieu Exp $	*/
 /*	$NetBSD: agp_i810.c,v 1.15 2003/01/31 00:07:39 thorpej Exp $	*/
 
 /*-
@@ -551,10 +551,12 @@ agp_i810_alloc_memory(struct vga_pci_softc *sc, int type, vsize_t size)
 			return (NULL);
 	} else if (type == 2) {
 		/*
-		 * Bogus mapping of a single page for the hardware cursor.
+		 * Bogus mapping of 1 or 4 pages for the hardware cursor.
 		 */
-		if (size != AGP_PAGE_SIZE)
+		if (size != AGP_PAGE_SIZE && size != 4 * AGP_PAGE_SIZE) {
+			printf("agp: trying to map %lu for hw cursor\n", size);
 			return (NULL);
+		}
 	}
 
 	mem = malloc(sizeof *mem, M_DEVBUF, M_WAITOK);
@@ -565,8 +567,8 @@ agp_i810_alloc_memory(struct vga_pci_softc *sc, int type, vsize_t size)
 
 	if (type == 2) {
 		/*
-		 * Allocate and wire down the page now so that we can
-		 * get its physical address.
+		 * Allocate and wire down the pages now so that we can
+		 * get their physical address.
 		 */
 		mem->am_dmaseg = malloc(sizeof *mem->am_dmaseg, M_DEVBUF,
 		    M_WAITOK);
@@ -640,7 +642,9 @@ agp_i810_bind_memory(struct vga_pci_softc *sc, struct agp_memory *mem,
 	}
 
 	if (mem->am_type == 2) {
-		WRITE_GATT(offset, mem->am_physical | 1);
+		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE) {
+			WRITE_GATT(offset + i, (mem->am_physical + i) | 1);
+		}
 		mem->am_offset = offset;
 		mem->am_is_bound = 1;
 		return (0);
@@ -667,7 +671,9 @@ agp_i810_unbind_memory(struct vga_pci_softc *sc, struct agp_memory *mem)
 	u_int32_t i;
 
 	if (mem->am_type == 2) {
-		WRITE_GATT(mem->am_offset, 0);
+		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE) {
+			WRITE_GATT(mem->am_offset + i, 0);
+		}
 		mem->am_offset = 0;
 		mem->am_is_bound = 0;
 		return (0);
