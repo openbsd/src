@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1023 2006/02/13 06:11:11 brad Exp $
+$OpenBSD: pcidevs,v 1.1024 2006/02/16 01:36:11 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1309,7 +1309,14 @@ product ENDACE DAG423		0x4230	Endace Dag4.23
 product ENDACE DAG423GE		0x423e	Endace Dag4.23GE
 
 /* ENE Technology products */
+product ENE CB1211		0x1211	CB-1211 CardBus
+product ENE CB1225		0x1225	CB-1225 CardBus
 product ENE CB1410		0x1410	CB-1410 CardBus
+product ENE CB710		0x1411	CB-710 CardBus
+product ENE CB712		0x1412	CB-712 CardBus
+product ENE CB1420		0x1420	CB-1420 CardBus
+product ENE CB720		0x1421	CB-720 CardBus
+product ENE CB722		0x1422	CB-722 CardBus
 
 /* Ensoniq products */
 product ENSONIQ	AUDIOPCI97	0x1371	AudioPCI97
