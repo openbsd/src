@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.12 2006/02/03 23:55:47 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.13 2006/02/16 21:11:13 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -177,7 +177,8 @@ enum aml_objecttype {
 	AML_OBJTYPE_DEBUGOBJ,
 
 	AML_OBJTYPE_NAMEREF = 0x100,
-	AML_OBJTYPE_OBJREF
+	AML_OBJTYPE_OBJREF,
+	AML_OBJTYPE_STATICINT,
 };
 
 /* AML Opcode Arguments */
@@ -232,6 +233,7 @@ struct aml_value
   	int	length;
 	int     refcnt;
 	const char *name;
+	struct aml_node *node;
 	union {
 		int64_t           vinteger;
 		char		 *vstring;
@@ -241,9 +243,6 @@ struct aml_value
 			u_int8_t	iospace;
 			u_int64_t	iobase;
 			u_int32_t	iolen;
-#if 0
-			u_int8_t       *buf;
-#endif
 		} vopregion;
 		struct {
 			int		  flags;
@@ -258,7 +257,6 @@ struct aml_value
 			struct aml_value *ref1;
 			struct aml_value *ref2;
 			int		  ref3;
-		  	const char       *ftyp;
 		} vfield;
 		struct {
 			u_int8_t      	proc_id;
@@ -286,9 +284,8 @@ struct aml_value
 #define v_method    _.vmethod
 #define v_processor _.vprocessor
 #define v_powerrsrc _.vpowerrsrc
-#define v_thrmzone  _.vthrmzone
 
-#define aml_intval(v)   ((v)->v_integer)
+#define xaml_intval(v)   ((v)->v_integer)
 #define aml_strlen(v)   ((v)->length)
 #define aml_strval(v)   ((v)->v_string)
 #define aml_buflen(v)   ((v)->length)

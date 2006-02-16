@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.26 2006/02/06 23:12:09 brad Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.27 2006/02/16 21:11:13 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -36,7 +36,7 @@
 #include <dev/acpi/dsdt.h>
 
 #ifdef ACPI_DEBUG
-int acpi_debug = 60;
+int acpi_debug = 11;
 #endif
 
 #define ACPIEN_RETRIES 15
@@ -95,6 +95,8 @@ int acpi_s5, acpi_evindex, icount;
 #error ACPI supported on i386/amd64 only
 #endif
 
+#define pch(x) (((x)>=' ' && (x)<='z') ? (x) : ' ')
+
 int
 acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address, 
 	   int access_size, int len, void *buffer)
@@ -107,7 +109,8 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 	bus_addr_t ioaddr;
 	int reg, idx, ival, sval;
 
-	dnprintf(10, "gasio: %x %llx %x %x %p\n", iospace, address, access_size, len, buffer);
+	dnprintf(30, "gasio: %.2x 0x%.8llx %s\n",
+		 iospace, address, (iodir == ACPI_IOWRITE) ? "write" : "read");
 
 	pb = (u_int8_t *)buffer;
 	switch (iospace) {
@@ -449,12 +452,12 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	const char		*dev;
 	struct aml_value	res;
 
-	dnprintf(10, "found hid device: %s ", node->parent->name);
+	dnprintf(20, "found hid device: %s ", node->parent->name);
 	aml_eval_object(sc, node, &res, 0, NULL);
 
 	switch (res.type) {
 	case AML_OBJTYPE_STRING:
-		dev = res.v_string;
+		dev = aml_strval(&res);
 		break;
 	case AML_OBJTYPE_INTEGER:
 		dev = aml_eisaid(res.v_integer);
@@ -463,7 +466,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 		dev = "unknown";
 		break;
 	}
-	dnprintf(10, "  device: %s\n", dev);
+	dnprintf(20, "  device: %s\n", dev);
 
 	if (!strcmp(dev, ACPI_DEV_AC)) {
 		struct acpi_attach_args aaa;
@@ -937,10 +940,12 @@ acpi_softintr(void *arg)
 void
 acpi_init_states(struct acpi_softc *sc)
 {
+	struct acpi_context *ctx;
 	struct aml_value res, env;
 	char name[8];
 	int i;
 
+	ctx = NULL;
 	for (i = ACPI_STATE_S0; i <= ACPI_STATE_S5; i++) {
 		snprintf(name, sizeof(name), "_S%d_", i);
 		sc->sc_sleeptype[i].slp_typa = -1;
@@ -948,8 +953,8 @@ acpi_init_states(struct acpi_softc *sc)
 		if (aml_eval_name(sc, aml_root.child, name, &res, &env))
 			continue;
 		if (res.type == AML_OBJTYPE_PACKAGE) {
-			sc->sc_sleeptype[i].slp_typa = aml_intval(res.v_package[0]);
-			sc->sc_sleeptype[i].slp_typb = aml_intval(res.v_package[1]);
+			sc->sc_sleeptype[i].slp_typa = aml_val2int(ctx, res.v_package[0]);
+			sc->sc_sleeptype[i].slp_typb = aml_val2int(ctx, res.v_package[1]);
 		}
 	}
 }
