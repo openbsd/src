@@ -1,4 +1,4 @@
-/*	$OpenBSD: w83l784r.c,v 1.2 2006/01/19 17:08:39 grange Exp $	*/
+/*	$OpenBSD: w83l784r.c,v 1.3 2006/02/16 20:26:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -105,7 +105,7 @@ struct wbenv_sensor w83l784r_sensors[] =
 	{ "Temp2", SENSOR_TEMP, 1, w83l784r_refresh_temp },
 	{ "Temp3", SENSOR_TEMP, 2, w83l784r_refresh_temp },
 	{ "Fan1", SENSOR_FANRPM, W83L784R_FAN1, w83l784r_refresh_fanrpm },
-	{ "Fam2", SENSOR_FANRPM, W83L784R_FAN2, w83l784r_refresh_fanrpm },
+	{ "Fan2", SENSOR_FANRPM, W83L784R_FAN2, w83l784r_refresh_fanrpm },
 
 	{ NULL }
 };
@@ -119,7 +119,7 @@ struct wbenv_sensor w83l785r_sensors[] =
 	{ "Temp1", SENSOR_TEMP, W83L784R_TEMP1, wbenv_refresh_temp },
 	{ "Temp2", SENSOR_TEMP, W83L785R_TEMP2, wbenv_refresh_temp },
 	{ "Fan1", SENSOR_FANRPM, W83L784R_FAN1, w83l785r_refresh_fanrpm },
-	{ "Fam2", SENSOR_FANRPM, W83L784R_FAN1, w83l785r_refresh_fanrpm },
+	{ "Fan2", SENSOR_FANRPM, W83L784R_FAN1, w83l785r_refresh_fanrpm },
 
 	{ NULL }
 };
