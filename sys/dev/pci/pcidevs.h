@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1023 2006/02/13 06:11:11 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1024 2006/02/16 01:36:11 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1314,7 +1314,14 @@
 #define	PCI_PRODUCT_ENDACE_DAG423GE	0x423e		/* Endace Dag4.23GE */
 
 /* ENE Technology products */
+#define	PCI_PRODUCT_ENE_CB1211	0x1211		/* CB-1211 CardBus */
+#define	PCI_PRODUCT_ENE_CB1225	0x1225		/* CB-1225 CardBus */
 #define	PCI_PRODUCT_ENE_CB1410	0x1410		/* CB-1410 CardBus */
+#define	PCI_PRODUCT_ENE_CB710	0x1411		/* CB-710 CardBus */
+#define	PCI_PRODUCT_ENE_CB712	0x1412		/* CB-712 CardBus */
+#define	PCI_PRODUCT_ENE_CB1420	0x1420		/* CB-1420 CardBus */
+#define	PCI_PRODUCT_ENE_CB720	0x1421		/* CB-720 CardBus */
+#define	PCI_PRODUCT_ENE_CB722	0x1422		/* CB-722 CardBus */
 
 /* Ensoniq products */
 #define	PCI_PRODUCT_ENSONIQ_AUDIOPCI97	0x1371		/* AudioPCI97 */

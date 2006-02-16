@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1023 2006/02/13 06:11:11 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1024 2006/02/16 01:36:11 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3423,8 +3423,36 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Endace Dag4.23GE",
 	},
 	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1211,
+	    "CB-1211 CardBus",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1225,
+	    "CB-1225 CardBus",
+	},
+	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1410,
 	    "CB-1410 CardBus",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB710,
+	    "CB-710 CardBus",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB712,
+	    "CB-712 CardBus",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1420,
+	    "CB-1420 CardBus",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB720,
+	    "CB-720 CardBus",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB722,
+	    "CB-722 CardBus",
 	},
 	{
 	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_AUDIOPCI97,
