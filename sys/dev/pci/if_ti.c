@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.75 2006/02/16 20:16:30 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.76 2006/02/16 20:45:37 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1481,7 +1481,8 @@ ti_gibinit(struct ti_softc *sc)
 		rcb->ti_flags = TI_RCB_FLAG_HOST_RING;
 	rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM | TI_RCB_FLAG_NO_PHDR_CKSUM;
 #if NVLAN > 0
-	rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
+	if (ifp->if_capabilities & IFCAP_VLAN_HWTAGGING)
+		rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
 #endif
 	rcb->ti_max_len = TI_TX_RING_CNT;
 	if (sc->ti_hwrev == TI_HWREV_TIGON)
