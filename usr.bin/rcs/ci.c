@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.98 2006/02/16 17:44:53 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.99 2006/02/16 18:05:47 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -963,17 +963,16 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 {
 	char *tokens[10], *p, *datestring;
 	size_t len = 0;
-	u_int k;
+	int i = 0;
         /* Parse data out of the expanded keyword */
 	switch (checkin_keywordtype(keystring)) {
 	case KW_TYPE_ID:
-		k = 0;
 		for ((p =strtok(keystring, " ")); p;
 		     (p = strtok(NULL, " "))) {
-			if (k < KW_NUMTOKS_ID - 1)
-				tokens[k++] = p;
+			if (i < KW_NUMTOKS_ID - 1)
+				tokens[i++] = p;
 	        }
-		tokens[k] = NULL;
+		tokens[i] = NULL;
 		if (*author != NULL)
 			xfree(*author);
 		if (*state != NULL)
@@ -999,11 +998,10 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		xfree(datestring);
 		break;
 	case KW_TYPE_AUTHOR:
-		k = 0;
 		for ((p =strtok(keystring, " ")); p;
 		     (p = strtok(NULL, " "))) {
-			if (k < KW_NUMTOKS_AUTHOR - 1)
-				tokens[k++] = p;
+			if (i < KW_NUMTOKS_AUTHOR - 1)
+				tokens[i++] = p;
 	        }
 		if (*author != NULL)
 			xfree(*author);
@@ -1012,11 +1010,10 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		strlcpy(*author, tokens[1], len);
 		break;
 	case KW_TYPE_DATE:
-		k = 0;
 		for ((p =strtok(keystring, " ")); p;
 		     (p = strtok(NULL, " "))) {
-			if (k < KW_NUMTOKS_DATE - 1)
-				tokens[k++] = p;
+			if (i < KW_NUMTOKS_DATE - 1)
+				tokens[i++] = p;
 		}
 		len = strlen(tokens[1]) + strlen(tokens[2]) + 2;
 		datestring = xmalloc(len);
@@ -1028,11 +1025,10 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		xfree(datestring);
 		break;
 	case KW_TYPE_STATE:
-		k = 0;
 		for ((p =strtok(keystring, " ")); p;
 		     (p = strtok(NULL, " "))) {
-			if (k < KW_NUMTOKS_STATE - 1)
-				tokens[k++] = p;
+			if (i < KW_NUMTOKS_STATE - 1)
+				tokens[i++] = p;
 	        }
 		if (*state != NULL)
 			xfree(*state);
@@ -1044,11 +1040,10 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		/* only parse revision if one is not already set */
 		if (*rev != NULL)
 			break;
-		k = 0;
 		for ((p =strtok(keystring, " ")); p;
 		     (p = strtok(NULL, " "))) {
-			if (k < KW_NUMTOKS_REVISION - 1)
-				tokens[k++] = p;
+			if (i < KW_NUMTOKS_REVISION - 1)
+				tokens[i++] = p;
 	        }
 		if ((*rev = rcsnum_parse(tokens[1])) == NULL)
 			fatal("could not parse rcsnum");
