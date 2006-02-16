@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_nanosleep.c,v 1.7 2001/12/31 18:23:15 fgsch Exp $	*/
+/*	$OpenBSD: uthread_nanosleep.c,v 1.8 2006/02/16 21:53:24 kurt Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -53,7 +53,8 @@ nanosleep(const struct timespec * time_to_sleep,
 	_thread_enter_cancellation_point();
 
 	/* Check if the time to sleep is legal: */
-	if (time_to_sleep == NULL || time_to_sleep->tv_sec < 0 ||
+	if (time_to_sleep == NULL ||
+		time_to_sleep->tv_sec < 0 || time_to_sleep->tv_sec > 100000000 ||
 		time_to_sleep->tv_nsec < 0 || time_to_sleep->tv_nsec >= 1000000000) {
 		/* Return an EINVAL error : */
 		errno = EINVAL;
