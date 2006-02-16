@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.10 2006/02/03 23:55:47 jordan Exp $ */
+/* $OpenBSD: acpibat.c,v 1.11 2006/02/16 21:07:16 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -88,10 +88,12 @@ int
 acpibat_getbif(struct acpibat_softc *sc)
 {
 	struct aml_value res, env;
+	struct acpi_context *ctx;
 
 	memset(&res, 0, sizeof(res));
 	memset(&env, 0, sizeof(env));
 
+	ctx = NULL;
 	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_BIF", &res, &env)) {
 		dnprintf(50, "%s: no _BIF\n",
 		    DEVNAME(sc));
@@ -104,21 +106,21 @@ acpibat_getbif(struct acpibat_softc *sc)
 		return (1);
 	}
 
-	sc->sc_bif.bif_power_unit = aml_intval(res.v_package[0]);
-	sc->sc_bif.bif_capacity = aml_intval(res.v_package[1]);
-	sc->sc_bif.bif_last_capacity = aml_intval(res.v_package[2]);
-	sc->sc_bif.bif_technology = aml_intval(res.v_package[3]);
-	sc->sc_bif.bif_voltage = aml_intval(res.v_package[4]);
-	sc->sc_bif.bif_warning = aml_intval(res.v_package[5]);
-	sc->sc_bif.bif_low = aml_intval(res.v_package[6]);
-	sc->sc_bif.bif_cap_granu1 = aml_intval(res.v_package[7]);
-	sc->sc_bif.bif_cap_granu2 = aml_intval(res.v_package[8]);
+	sc->sc_bif.bif_power_unit = aml_val2int(ctx, res.v_package[0]);
+	sc->sc_bif.bif_capacity = aml_val2int(ctx, res.v_package[1]);
+	sc->sc_bif.bif_last_capacity = aml_val2int(ctx, res.v_package[2]);
+	sc->sc_bif.bif_technology = aml_val2int(ctx, res.v_package[3]);
+	sc->sc_bif.bif_voltage = aml_val2int(ctx, res.v_package[4]);
+	sc->sc_bif.bif_warning = aml_val2int(ctx, res.v_package[5]);
+	sc->sc_bif.bif_low = aml_val2int(ctx, res.v_package[6]);
+	sc->sc_bif.bif_cap_granu1 = aml_val2int(ctx, res.v_package[7]);
+	sc->sc_bif.bif_cap_granu2 = aml_val2int(ctx, res.v_package[8]);
 	sc->sc_bif.bif_model = aml_strval(res.v_package[9]);
 	sc->sc_bif.bif_serial = aml_strval(res.v_package[10]);
 	sc->sc_bif.bif_type = aml_strval(res.v_package[11]);
 	sc->sc_bif.bif_oem = aml_strval(res.v_package[12]);
 
-	dnprintf(20, "power_unit: %u capacity: %u last_cap: %u tech: %u "
+	dnprintf(10, "power_unit: %u capacity: %u last_cap: %u tech: %u "
 	    "volt: %u warn: %u low: %u gran1: %u gran2: %d model: %s "
 	    "serial: %s type: %s oem: %s\n",
 	    sc->sc_bif.bif_power_unit,
@@ -142,10 +144,12 @@ int
 acpibat_getbst(struct acpibat_softc *sc)
 {
 	struct aml_value res, env;
+	struct acpi_context *ctx;
 
 	memset(&res, 0, sizeof(res));
 	memset(&env, 0, sizeof(env));
 
+	ctx = NULL;
 	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_BST", &res, &env)) {
 		dnprintf(50, "%s: no _BST\n",
 		    DEVNAME(sc));
@@ -158,12 +162,12 @@ acpibat_getbst(struct acpibat_softc *sc)
 		return (1);
 	}
 
-	sc->sc_bst.bst_state = aml_intval(res.v_package[0]);
-	sc->sc_bst.bst_rate = aml_intval(res.v_package[1]);
-	sc->sc_bst.bst_capacity = aml_intval(res.v_package[2]);
-	sc->sc_bst.bst_voltage = aml_intval(res.v_package[3]);
+	sc->sc_bst.bst_state = aml_val2int(ctx, res.v_package[0]);
+	sc->sc_bst.bst_rate = aml_val2int(ctx, res.v_package[1]);
+	sc->sc_bst.bst_capacity = aml_val2int(ctx, res.v_package[2]);
+	sc->sc_bst.bst_voltage = aml_val2int(ctx, res.v_package[3]);
 
-	dnprintf(20, "state: %u rate: %u cap: %u volt: %u ",
+	dnprintf(10, "state: %u rate: %u cap: %u volt: %u ",
 	    sc->sc_bst.bst_state,
 	    sc->sc_bst.bst_rate,
 	    sc->sc_bst.bst_capacity,
