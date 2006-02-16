@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.93 2006/02/14 13:26:43 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.94 2006/02/16 13:22:02 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -51,17 +51,17 @@ struct checkin_params {
 	const char *symbol, *state, *description;
 };
 
-static int	 checkin_attach_symbol(struct checkin_params *pb);
-static int	 checkin_checklock(struct checkin_params *pb);
+static int	 checkin_attach_symbol(struct checkin_params *);
+static int	 checkin_checklock(struct checkin_params *);
 static char	*checkin_choose_rcsfile(const char *);
 static char	*checkin_diff_file(struct checkin_params *);
 static char	*checkin_getdesc(void);
 static char	*checkin_getinput(const char *);
 static char	*checkin_getlogmsg(RCSNUM *, RCSNUM *);
 static int	 checkin_init(struct checkin_params *);
-static int	 checkin_mtimedate(struct checkin_params *pb);
-static int	 checkin_update(struct checkin_params *pb);
-static void	 checkin_revert(struct checkin_params *pb);
+static int	 checkin_mtimedate(struct checkin_params *);
+static int	 checkin_update(struct checkin_params *);
+static void	 checkin_revert(struct checkin_params *);
 
 void
 checkin_usage(void)
