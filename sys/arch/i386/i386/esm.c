@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.38 2006/02/17 07:22:43 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.39 2006/02/17 08:17:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -64,6 +64,10 @@ enum esm_sensor_type {
 	ESM_S_ACSWITCH
 };
 
+/*
+ * map esm sensor types to kernel sensor types.
+ * keep this in sync with the esm_sensor_type enum above.
+ */
 enum sensor_type esm_typemap[] = {
 	SENSOR_INTEGER,
 	SENSOR_INDICATOR,
@@ -881,7 +885,7 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 		case ESM_S_PWRSUP:
 			/*
 			 * the esm pwrsup sensor has a bitfield for its value,
-			 * this expands it out to 6 separate indicators/
+			 * this expands it out to 6 separate indicators
 			 */
 			nsensors = 6;
 			s = malloc(sizeof(struct sensor) * nsensors, M_DEVBUF,
