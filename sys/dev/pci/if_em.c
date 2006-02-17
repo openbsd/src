@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.105 2006/02/15 14:53:56 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.106 2006/02/17 03:57:29 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -322,7 +322,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	em_clear_hw_cntrs(&sc->hw);
 	em_update_stats_counters(sc);
 	sc->hw.get_link_status = 1;
-	em_check_for_link(&sc->hw);
+	em_update_link_status(sc);
 
 	printf(", address %s\n", ether_sprintf(sc->interface_data.ac_enaddr));
 
@@ -742,20 +742,7 @@ em_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	INIT_DEBUGOUT("em_media_status: begin");
 
 	em_check_for_link(&sc->hw);
-	if (E1000_READ_REG(&sc->hw, STATUS) & E1000_STATUS_LU) {
-		if (sc->link_active == 0) {
-			em_get_speed_and_duplex(&sc->hw, 
-						&sc->link_speed, 
-						&sc->link_duplex);
-			sc->link_active = 1;
-		}
-	} else {
-		if (sc->link_active == 1) {
-			sc->link_speed = 0;
-			sc->link_duplex = 0;
-			sc->link_active = 0;
-		}
-	}
+	em_update_link_status(sc);
 
 	ifmr->ifm_status = IFM_AVALID;
 	ifmr->ifm_active = IFM_ETHER;
@@ -1242,6 +1229,7 @@ void
 em_update_link_status(struct em_softc *sc)
 {
 	struct ifnet *ifp = &sc->interface_data.ac_if;
+
 	if (E1000_READ_REG(&sc->hw, STATUS) & E1000_STATUS_LU) {
 		if (sc->link_active == 0) {
 			em_get_speed_and_duplex(&sc->hw,
@@ -1249,12 +1237,13 @@ em_update_link_status(struct em_softc *sc)
 						&sc->link_duplex);
 			sc->link_active = 1;
 			sc->smartspeed = 0;
+			ifp->if_baudrate = sc->link_speed * 1000000;
 			ifp->if_link_state = LINK_STATE_UP;
 			if_link_state_change(ifp);
 		}
 	} else {
 		if (sc->link_active == 1) {
-			sc->link_speed = 0;
+			ifp->if_baudrate = sc->link_speed = 0;
 			sc->link_duplex = 0;
 			sc->link_active = 0;
 			ifp->if_link_state = LINK_STATE_DOWN;
@@ -1478,19 +1467,6 @@ em_hardware_init(struct em_softc *sc)
 	}
 
 	em_check_for_link(&sc->hw);
-	if (E1000_READ_REG(&sc->hw, STATUS) & E1000_STATUS_LU)
-		sc->link_active = 1;
-	else
-		sc->link_active = 0;
-
-	if (sc->link_active) {
-		em_get_speed_and_duplex(&sc->hw, 
-					&sc->link_speed, 
-					&sc->link_duplex);
-	} else {
-		sc->link_speed = 0;
-		sc->link_duplex = 0;
-	}
 
 	return (0);
 }
@@ -1509,7 +1485,6 @@ em_setup_interface(struct em_softc *sc)
 	ifp = &sc->interface_data.ac_if;
 	strlcpy(ifp->if_xname, sc->sc_dv.dv_xname, IFNAMSIZ);
 
-	ifp->if_baudrate = 1000000000;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = em_ioctl;
