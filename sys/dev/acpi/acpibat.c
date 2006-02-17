@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.12 2006/02/16 22:14:32 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.13 2006/02/17 00:45:27 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -78,20 +78,12 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node->child;
-	acpibat_getbif(sc); 
+
+	if (acpibat_getbif(sc))
+		return;
+
 	acpibat_getbst(sc); 
 
-/*
-	printf(": max cap: %u last max cap: %u current cap: %u model: %s "
-	    "serial: %s type: %s oem: %s\n",
-	    sc->sc_bif.bif_capacity,
-	    sc->sc_bif.bif_last_capacity,
-	    sc->sc_bst.bst_capacity,
-	    sc->sc_bif.bif_model,
-	    sc->sc_bif.bif_serial,
-	    sc->sc_bif.bif_type,
-	    sc->sc_bif.bif_oem);
-*/
 	printf(": model: %s serial: %s type: %s oem: %s\n",
 	    sc->sc_bif.bif_model,
 	    sc->sc_bif.bif_serial,
@@ -115,7 +107,10 @@ acpibat_getbif(struct acpibat_softc *sc)
 		return (1);
 	}
 
-	dnprintf(40, "_STA value: %x\n", res.v_integer);
+	if (!(res.v_integer & STA_BATTERY)) {
+		printf(": battery not present\n");
+		return (1);
+	}
 
 	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_BIF", &res, &env)) {
 		dnprintf(50, "%s: no _BIF\n",
