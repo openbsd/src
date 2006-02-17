@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.21 2006/02/16 22:42:11 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.22 2006/02/17 00:46:54 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -371,10 +371,8 @@ _aml_freevalue(struct aml_value *v)
 	if (v->node || v->refcnt)
 		return (-1);
 
-#if 0
 	dnprintf(50, "freeing value : %4x %s\n", v->type, 
 		 v->node ? "attached" : "freeable");
-#endif
 	return -1;
 
 	switch (v->type) {
@@ -1321,11 +1319,9 @@ aml_efield(struct acpi_context *ctx, struct aml_value *e_fld,
 	uint8_t *pb;
 	int blen;
 
-#if 0
-	dnprintf(40, "efield %s: ", rhs ? "set" : "get");
+	dnprintf(80, "efield %s: ", rhs ? "set" : "get");
 	aml_showvalue(e_fld);
 	aml_showvalue(rhs);
-#endif
 
 	tmp.type = AML_OBJTYPE_INTEGER;
 	switch (e_fld->v_field.type) {
@@ -1721,13 +1717,11 @@ aml_esetnodevalue(struct acpi_context *ctx,  struct aml_value *lhs,
 		rhs = aml_allocint(rval);
 	}
 
-#if 0
 	dnprintf(50, "------------ SET NODE VALUE -------------\n");
 	dnprintf(50, "new    : ");
 	aml_showvalue(rhs);
 	dnprintf(50, "current: ");
 	aml_showvalue(lhs);
-#endif
 
 	while (lhs->type == AML_OBJTYPE_OBJREF) {
 		lhs = aml_ederef(ctx, lhs);
@@ -1750,10 +1744,8 @@ aml_esetnodevalue(struct acpi_context *ctx,  struct aml_value *lhs,
 		_aml_freevalue(lhs);
 		*lhs = *rhs;
 	}
-#if 0
-	dnprintf(50, "post   : ");
 	aml_showvalue(lhs);
-#endif
+	dnprintf(50, "--------- post set ----------\n");
 	return rhs;
 }
 
@@ -1850,7 +1842,7 @@ aml_doif(struct acpi_context *ctx)
 		/* Parse IF block */
 		rv = aml_eparselist(ctx, end, 1);
 	}
-	if (*end == AMLOP_ELSE) {
+	if (ctx->pos != NULL && *end == AMLOP_ELSE) {
 		/* Parse ELSE block */
 		ctx->pos = ++end;
 		end = aml_eparselen(ctx);
@@ -2084,10 +2076,8 @@ aml_eparseval(struct acpi_context *ctx, int deref)
 	start = ctx->pos;
 	opc = aml_getopcode(ctx);
 
-#if 0
 	dnprintf(40, "### %2d %.4x %s\n",
 		 ctx->depth, opc->opcode, opc->mnem);
-#endif
 
 	ctx->depth++;
 	end = NULL;
@@ -2408,10 +2398,8 @@ aml_eparseval(struct acpi_context *ctx, int deref)
 		break;
 	case AMLOP_RETURN:
 		rv = aml_eparseval(ctx, 1);
-#if 0
 		dnprintf(40, "RETURNING: ");
 		aml_showvalue(rv);
-#endif
 		ctx->pos = NULL;
 		break;
 	case AMLOP_MID:
@@ -2637,11 +2625,14 @@ aml_eval_object(struct acpi_softc *sc, struct aml_node *node,
 	struct acpi_context *ctx;
 	struct aml_value *rv;
 
+	ret->type = 0;
 	ctx = acpi_alloccontext(sc, node, argc, argv);
 	rv = aml_eparsenode(ctx, node);
 	dnprintf(40, "###### RETURNING #####\n");
 	aml_showvalue(rv);
-	*ret = *rv;
+	if (rv != NULL) {
+	  *ret = *rv;
+	}
 
 	/* XXX: must free rv */
 	acpi_freecontext(ctx);

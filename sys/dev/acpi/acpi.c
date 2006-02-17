@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.28 2006/02/16 22:42:11 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.29 2006/02/17 00:46:54 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -715,7 +715,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	acpi_softc = sc;
 
-#if 0
+#if 1
 	/* attach devices found in dsdt */
 	aml_find_node(aml_root.child, "_INI", acpi_inidev, sc);
 #endif

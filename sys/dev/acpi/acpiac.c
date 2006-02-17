@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.3 2006/02/16 22:14:32 marco Exp $ */
+/* $OpenBSD: acpiac.c,v 1.4 2006/02/17 00:46:54 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -106,8 +106,6 @@ acpiac_getsta(struct acpiac_softc *sc)
 		    DEVNAME(sc));
 		return (1);
 	}
-
-	dnprintf(40, "_STA value: %x\n", res.v_integer);
 
 	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_PSR", &res, &env)) {
 		dnprintf(10, "%s: no _PSR\n",
