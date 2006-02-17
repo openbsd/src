@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.4 2006/02/17 00:46:54 jordan Exp $ */
+/* $OpenBSD: acpiac.c,v 1.5 2006/02/17 07:33:40 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -28,6 +28,8 @@
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
 
+#include <sys/sensors.h>
+
 int acpiac_match(struct device *, void *, void *);
 void acpiac_attach(struct device *, struct device *, void *);
 
@@ -41,8 +43,11 @@ struct acpiac_softc {
 	struct aml_node		*sc_devnode;
 
 	int			sc_ac_stat;
+
+	struct sensor sens[1];	/* XXX debug only */
 };
 
+void acpiac_refresh(void *);
 int acpiac_getsta(struct acpiac_softc *);
 
 struct cfattach acpiac_ca = {
@@ -89,6 +94,26 @@ acpiac_attach(struct device *parent, struct device *self, void *aux)
 		printf("AC unit in unknown state");
 
 	printf("\n");
+
+	strlcpy(sc->sens[0].device, DEVNAME(sc), sizeof(sc->sens[0].device));
+	strlcpy(sc->sens[0].desc, "power supply", sizeof(sc->sens[2].desc));
+	sc->sens[0].type = SENSOR_INDICATOR;
+	sensor_add(&sc->sens[0]);
+	sc->sens[0].value = sc->sc_ac_stat;
+
+	if (sensor_task_register(sc, acpiac_refresh, 10))
+		printf(", unable to register update task\n");
+}
+
+/* XXX this is for debug only, remove later */
+void
+acpiac_refresh(void *arg)
+{
+	struct acpiac_softc *sc = arg;
+
+	acpiac_getsta(sc); 
+
+	sc->sens[0].value = sc->sc_ac_stat;
 }
 
 int
