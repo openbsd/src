@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.32 2006/02/17 17:35:59 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.33 2006/02/17 17:42:52 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -171,11 +171,13 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 				}
 			}
 
-			/* XXX bah! blame ACPI spec for this, cleanup later */
+			/* During autoconf some devices are still gathering
+			 * information.  Delay here to give them an opportunity
+			 * to finish.  During runtime we simply need to ignore
+			 * transient values.
+			 */
 			if (cold)
 				delay(10000);
-			else
-				tsleep(sc, PWAIT, "acpiwait", 1);
 		}
 		acpi_bus_space_unmap(sc->sc_iot, ioh, len, &ioaddr);
 		break;
