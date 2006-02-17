@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.37 2006/02/10 04:26:14 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.38 2006/02/17 07:22:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -52,7 +52,8 @@ enum esm_sensor_type {
 	ESM_S_INTRUSION,
 	ESM_S_TEMP,
 	ESM_S_FANRPM,
-	ESM_S_VOLTS, /* arg says if the 4400 volts should be x10 */
+	ESM_S_VOLTS,
+	ESM_S_VOLTSx10,
 	ESM_S_AMPS,
 	ESM_S_PWRSUP,
 	ESM_S_PCISLOT,
@@ -69,6 +70,7 @@ enum sensor_type esm_typemap[] = {
 	SENSOR_TEMP,
 	SENSOR_FANRPM,
 	SENSOR_VOLTS_DC,
+	SENSOR_VOLTS_DC,
 	SENSOR_AMPS,
 	SENSOR_INDICATOR,
 	SENSOR_INTEGER,
@@ -82,7 +84,6 @@ enum sensor_type esm_typemap[] = {
 struct esm_sensor_map {
 	enum sensor_type	type;
 	long			arg;
-#define ESM_A_VOLTx10		0x01
 	const char		*name;
 };
 
@@ -91,7 +92,6 @@ struct esm_sensor {
 	u_int8_t		es_id;
 
 	enum esm_sensor_type	es_type;
-	long			es_arg;
 
 	struct {
 		u_int16_t		th_lo_crit;
@@ -147,7 +147,6 @@ void		esm_make_sensors(struct esm_softc *, struct esm_devmap *,
 int		esm_thresholds(struct esm_softc *, struct esm_devmap *,
 		    struct esm_sensor *);
 
-u_int16_t	esm_sysid(void);
 int		esm_bmc_ready(struct esm_softc *, int, u_int8_t, u_int8_t, int);
 int		esm_cmd(struct esm_softc *, void *, size_t, void *, size_t,
 		    int, int);
@@ -158,19 +157,25 @@ int64_t		esm_val2temp(u_int16_t);
 int64_t		esm_val2volts(u_int16_t);
 int64_t		esm_val2amps(u_int16_t);
 
-
 /* Determine if this is a Dell server */
 int
 esm_probe(void *aux)
 {
 	const char *pdellstr;
+	struct dell_sysid *pdellid;
+	uint16_t sysid;
 
 	pdellstr = (const char *)ISA_HOLE_VADDR(DELL_SYSSTR_ADDR);
 	DPRINTF("Dell String: %s\n", pdellstr);
 	if (strncmp(pdellstr, "Dell System", 11))
 		return (0);
 
-	switch (esm_sysid()) {
+	pdellid = (struct dell_sysid *)ISA_HOLE_VADDR(DELL_SYSID_ADDR);
+	if ((sysid = pdellid->sys_id) == DELL_SYSID_EXT)
+		sysid = pdellid->ext_id;
+	DPRINTF("SysId: %x\n", sysid);
+
+	switch (sysid) {
 	case DELL_SYSID_2300:
 	case DELL_SYSID_4300:
 	case DELL_SYSID_4350:
@@ -373,8 +378,11 @@ esm_refresh(void *arg)
 			es->es_sensor->value = esm_val2temp(val->v_reading);
 			break;
 		case ESM_S_VOLTS:
-			es->es_sensor->value = esm_val2volts(val->v_reading) *
-			    es->es_arg;
+			es->es_sensor->value = esm_val2volts(val->v_reading);
+			break;
+		case ESM_S_VOLTSx10:
+			es->es_sensor->value =
+			    esm_val2volts(val->v_reading) * 10;
 			break;
 		case ESM_S_AMPS:
 			es->es_sensor->value = esm_val2amps(val->v_reading);
@@ -613,31 +621,31 @@ struct esm_sensor_map esm_sensors_backplane[] = {
 
 struct esm_sensor_map esm_sensors_powerunit[] = {
 	{ ESM_S_UNKNOWN,	0,		"Power Unit" },
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 1 +5V" },
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 1 +12V" },
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 1 +3.3V" },
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 1 -5V" },
+	{ ESM_S_VOLTSx10,	0,		"Power Supply 1 +5V" },
+	{ ESM_S_VOLTSx10,	0,		"Power Supply 1 +12V" },
+	{ ESM_S_VOLTSx10,	0,		"Power Supply 1 +3.3V" },
+	{ ESM_S_VOLTSx10,	0,		"Power Supply 1 -5V" },
 
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 1 -12V" },
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 2 +5V" },
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 2 +12V" },
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 2 +3.3V" },
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 2 -5V" },
+	{ ESM_S_VOLTSx10,	0,		"Power Supply 1 -12V" },
+	{ ESM_S_VOLTSx10,	0,		"Power Supply 2 +5V" },
+	{ ESM_S_VOLTSx10,	0,		"Power Supply 2 +12V" },
+	{ ESM_S_VOLTSx10,	0,		"Power Supply 2 +3.3V" },
+	{ ESM_S_VOLTSx10,	0,		"Power Supply 2 -5V" },
 
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 2 -12V" },
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 3 +5V" },
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 3 +12V" },
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 3 +3.3V" },
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 3 -5V" },
+	{ ESM_S_VOLTSx10,	0,		"Power Supply 2 -12V" },
+	{ ESM_S_VOLTSx10,	0,		"Power Supply 3 +5V" },
+	{ ESM_S_VOLTSx10,	0,		"Power Supply 3 +12V" },
+	{ ESM_S_VOLTSx10,	0,		"Power Supply 3 +3.3V" },
+	{ ESM_S_VOLTSx10,	0,		"Power Supply 3 -5V" },
 
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"Power Supply 3 -12V" },
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"System Power Supply +5V" },
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"System Power Supply +12V" },
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"System Power Supply +3.3V" },
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"System Power Supply -5V" },
+	{ ESM_S_VOLTSx10,	0,		"Power Supply 3 -12V" },
+	{ ESM_S_VOLTSx10,	0,		"System Power Supply +5V" },
+	{ ESM_S_VOLTSx10,	0,		"System Power Supply +12V" },
+	{ ESM_S_VOLTSx10,	0,		"System Power Supply +3.3V" },
+	{ ESM_S_VOLTSx10,	0,		"System Power Supply -5V" },
 
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"System Power Supply -12V" },
-	{ ESM_S_VOLTS,		ESM_A_VOLTx10,	"System Power Supply +5V aux" },
+	{ ESM_S_VOLTSx10,	0,		"System Power Supply -12V" },
+	{ ESM_S_VOLTSx10,	0,		"System Power Supply +5V aux" },
 	{ ESM_S_AMPS,		0,		"Power Supply 1 +5V" },
 	{ ESM_S_AMPS,		0,		"Power Supply 1 +12V" },
 	{ ESM_S_AMPS,		0,		"Power Supply 1 +3.3V" },
@@ -811,7 +819,6 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 	const char		*psulabels[] = {
 				    "AC", "SW", "OK", "ON", "FFAN", "OTMP"
 				};
-	u_int16_t		sysid = esm_sysid();
 
 	memset(&req, 0, sizeof(req));
 	req.h_cmd = ESM2_CMD_SMB_XMIT_RECV;
@@ -891,16 +898,11 @@ esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
 			}
 			break;
 
-		case ESM_S_VOLTS:
-			if ((sysid == DELL_SYSID_4400) &&
-			    (sensor_map[i].arg == ESM_A_VOLTx10))
-				es->es_arg = 10;
-			else
-				es->es_arg = 1;
-			/* FALLTHROUGH */
 		case ESM_S_TEMP:
 		case ESM_S_FANRPM:
 		case ESM_S_AMPS:
+		case ESM_S_VOLTS:
+		case ESM_S_VOLTSx10:
 			if (esm_thresholds(sc, devmap, es) != 0) {
 				free(es, M_DEVBUF);
 				continue;
@@ -963,19 +965,6 @@ esm_thresholds(struct esm_softc *sc, struct esm_devmap *devmap,
 	es->es_thresholds.th_hi_crit = thr->t_hi_fail;
 
 	return (0);
-}
-
-u_int16_t
-esm_sysid(void)
-{
-	struct dell_sysid *pdellid;
-	uint16_t sysid;
-
-	pdellid = (struct dell_sysid *)ISA_HOLE_VADDR(DELL_SYSID_ADDR);
-	if ((sysid = pdellid->sys_id) == DELL_SYSID_EXT)
-		sysid = pdellid->ext_id;
-
-	return (sysid);
 }
 
 int
