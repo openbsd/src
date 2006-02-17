@@ -1,4 +1,4 @@
-/*	$OpenBSD: atwvar.h,v 1.10 2005/12/09 03:46:42 jsg Exp $	*/
+/*	$OpenBSD: atwvar.h,v 1.11 2006/02/17 11:07:44 jsg Exp $	*/
 /*	$NetBSD: atwvar.h,v 1.13 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*
@@ -104,6 +104,8 @@ struct atw_txsoft {
 	int txs_firstdesc;		/* first descriptor in packet */
 	int txs_lastdesc;		/* last descriptor in packet */
 	int txs_ndescs;			/* number of descriptors */
+	struct ieee80211_duration txs_d0;
+	struct ieee80211_duration txs_dn;
 	SIMPLEQ_ENTRY(atw_txsoft) txs_q;
 };
 
