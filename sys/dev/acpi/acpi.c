@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.29 2006/02/17 00:46:54 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.30 2006/02/17 05:10:39 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -137,9 +137,11 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 				switch (access_size) {
 				case 1:
 					*(uint8_t *)(pb+reg) = bus_space_read_1(sc->sc_iot, ioh, reg);
+					dnprintf(80, "os_in8(%llx) = %x\n", reg+address, *(uint8_t *)(pb+reg));
 					break;
 				case 2:
 					*(uint16_t *)(pb+reg) = bus_space_read_2(sc->sc_iot, ioh, reg);
+					dnprintf(80, "os_in16(%llx) = %x\n", reg+address, *(uint16_t *)(pb+reg));
 					break;
 				case 4:
 					*(uint32_t *)(pb+reg) = bus_space_read_4(sc->sc_iot, ioh, reg);
@@ -150,15 +152,21 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 				switch (access_size) {
 				case 1:
 					bus_space_write_1(sc->sc_iot, ioh, reg, *(uint8_t *)(pb+reg));
+					dnprintf(80, "os_out8(%llx,%x)\n", reg+address, *(uint8_t *)(pb+reg));
 					break;
 				case 2:
 					bus_space_write_2(sc->sc_iot, ioh, reg, *(uint16_t *)(pb+reg));
+					dnprintf(80, "os_out16(%llx,%x)\n", reg+address, *(uint16_t *)(pb+reg));
 					break;
 				case 4:
 					bus_space_write_4(sc->sc_iot, ioh, reg, *(uint32_t *)(pb+reg));
 					break;
 				}
 			}
+
+			/* XXX bah! blame ACPI spec for this */
+			/* make this a tsleep after !cold */
+			delay(10000);
 		}
 		acpi_bus_space_unmap(sc->sc_iot, ioh, len, &ioaddr);
 		break;
