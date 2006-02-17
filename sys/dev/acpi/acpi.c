@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.30 2006/02/17 05:10:39 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.31 2006/02/17 06:57:58 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -164,9 +164,11 @@ acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address,
 				}
 			}
 
-			/* XXX bah! blame ACPI spec for this */
-			/* make this a tsleep after !cold */
-			delay(10000);
+			/* XXX bah! blame ACPI spec for this, cleanup later */
+			if (cold)
+				delay(10000);
+			else
+				tsleep(sc, PWAIT, "acpiwait", 1);
 		}
 		acpi_bus_space_unmap(sc->sc_iot, ioh, len, &ioaddr);
 		break;
