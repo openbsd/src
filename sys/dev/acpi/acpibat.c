@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.14 2006/02/17 07:09:25 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.15 2006/02/17 07:25:51 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -75,7 +75,6 @@ acpibat_match(struct device *parent, void *match, void *aux)
 	return (1);
 }
 
-/* XXX this is for debug only, remove later */
 void
 acpibat_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -99,6 +98,7 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 
 	memset(sc->sens, 0, sizeof(sc->sens));
 
+	/* XXX this is for debug only, remove later */
 	for (i = 0; i < 13; i++)
 		strlcpy(sc->sens[i].device, DEVNAME(sc), sizeof(sc->sens[i].device));
 
@@ -149,6 +149,7 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 		printf(", unable to register update task\n");
 }
 
+/* XXX this is for debug only, remove later */
 void
 acpibat_refresh(void *arg)
 {
