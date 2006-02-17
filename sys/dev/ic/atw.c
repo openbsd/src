@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.41 2005/10/11 13:07:02 brad Exp $	*/
+/*	$OpenBSD: atw.c,v 1.42 2006/02/17 09:13:22 jsg Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -254,7 +254,6 @@ void	atw_media_status(struct ifnet *, struct ifmediareq *);
 void	atw_filter_setup(struct atw_softc *);
 
 /* 802.11 utilities */
-void	atw_frame_setdurs(struct atw_softc *, struct atw_frame *, int, int);
 struct	ieee80211_node *atw_node_alloc(struct ieee80211com *);
 void	atw_node_free(struct ieee80211com *, struct ieee80211_node *);
 static	__inline uint32_t atw_last_even_tsft(uint32_t, uint32_t, uint32_t);
@@ -3406,90 +3405,6 @@ atw_watchdog(struct ifnet *ifp)
 	ieee80211_watchdog(ifp);
 }
 
-/* Compute the 802.11 Duration field and the PLCP Length fields for
- * a len-byte frame (HEADER + PAYLOAD + FCS) sent at rate * 500Kbps.
- * Write the fields to the ADM8211 Tx header, frm.
- *
- * TBD use the fragmentation threshold to find the right duration for
- * the first & last fragments.
- *
- * TBD make certain of the duration fields applied by the ADM8211 to each
- * fragment. I think that the ADM8211 knows how to subtract the CTS
- * duration when ATW_HDRCTL_RTSCTS is clear; that is why I add it regardless.
- * I also think that the ADM8211 does *some* arithmetic for us, because
- * otherwise I think we would have to set a first duration for CTS/first
- * fragment, a second duration for fragments between the first and the
- * last, and a third duration for the last fragment.
- *
- * TBD make certain that duration fields reflect addition of FCS/WEP
- * and correct duration arithmetic as necessary.
- */
-void
-atw_frame_setdurs(struct atw_softc *sc, struct atw_frame *frm, int rate,
-    int len)
-{
-	int remainder;
-
-	/* deal also with encrypted fragments */
-	if (frm->atw_hdrctl & htole16(ATW_HDRCTL_WEP)) {
-		DPRINTF2(sc, ("%s: atw_frame_setdurs len += 8\n",
-		    sc->sc_dev.dv_xname));
-		len += IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN +
-		       IEEE80211_WEP_CRCLEN;
-	}
-
-	/* 802.11 Duration Field for CTS/Data/ACK sequence minus FCS & WEP
-	 * duration (XXX added by MAC?).
-	 */
-	frm->atw_head_dur = (16 * (len - IEEE80211_CRC_LEN)) / rate;
-	remainder = (16 * (len - IEEE80211_CRC_LEN)) % rate;
-
-	if (rate <= 4)
-		/* 1-2Mbps WLAN: send ACK/CTS at 1Mbps */
-		frm->atw_head_dur += 3 * (IEEE80211_DUR_DS_SIFS +
-		    IEEE80211_DUR_DS_SHORT_PREAMBLE +
-		    IEEE80211_DUR_DS_FAST_PLCPHDR) +
-		    IEEE80211_DUR_DS_SLOW_CTS + IEEE80211_DUR_DS_SLOW_ACK;
-	else
-		/* 5-11Mbps WLAN: send ACK/CTS at 2Mbps */
-		frm->atw_head_dur += 3 * (IEEE80211_DUR_DS_SIFS +
-		    IEEE80211_DUR_DS_SHORT_PREAMBLE +
-		    IEEE80211_DUR_DS_FAST_PLCPHDR) +
-		    IEEE80211_DUR_DS_FAST_CTS + IEEE80211_DUR_DS_FAST_ACK;
-
-	/* lengthen duration if long preamble */
-	if ((sc->sc_flags & ATWF_SHORT_PREAMBLE) == 0)
-		frm->atw_head_dur +=
-		    3 * (IEEE80211_DUR_DS_LONG_PREAMBLE -
-		         IEEE80211_DUR_DS_SHORT_PREAMBLE) +
-		    3 * (IEEE80211_DUR_DS_SLOW_PLCPHDR -
-		         IEEE80211_DUR_DS_FAST_PLCPHDR);
-
-	if (remainder != 0)
-		frm->atw_head_dur++;
-
-	if ((atw_voodoo & VOODOO_DUR_2_4_SPECIALCASE) &&
-	    (rate == 2 || rate == 4)) {
-		/* derived from Linux: how could this be right? */
-		frm->atw_head_plcplen = frm->atw_head_dur;
-	} else {
-		frm->atw_head_plcplen = (16 * len) / rate;
-		remainder = (80 * len) % (rate * 5);
-
-		if (remainder != 0) {
-			frm->atw_head_plcplen++;
-
-			/* XXX magic */
-			if ((atw_voodoo & VOODOO_DUR_11_ROUNDING) &&
-			    rate == 22 && remainder <= 30)
-				frm->atw_head_plcplen |= 0x8000;
-		}
-	}
-	frm->atw_tail_plcplen = frm->atw_head_plcplen =
-	    htole16(frm->atw_head_plcplen);
-	frm->atw_tail_dur = frm->atw_head_dur = htole16(frm->atw_head_dur);
-}
-
 #ifdef ATW_DEBUG
 void
 atw_dump_pkt(struct ifnet *ifp, struct mbuf *m0)
@@ -3531,7 +3446,7 @@ atw_start(struct ifnet *ifp)
 	struct mbuf *m0, *m;
 	struct atw_txsoft *txs, *last_txs;
 	struct atw_txdesc *txd;
-	int do_encrypt, rate;
+	int do_encrypt, npkt, rate;
 	bus_dmamap_t dmamap;
 	int ctl, error, firsttx, nexttx, lasttx = -1, first, ofree, seg;
 
@@ -3584,7 +3499,30 @@ atw_start(struct ifnet *ifp)
 			}
 		}
 
-		rate = MAX(ieee80211_get_rate(ic), 2);
+		wh = mtod(m0, struct ieee80211_frame *);
+
+		/* XXX do real rate control */
+		if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+		    IEEE80211_FC0_TYPE_MGT)
+			rate = 2;
+		else
+			rate = MAX(2, ieee80211_get_rate(ic));
+
+		if (ieee80211_compute_duration(wh, m0->m_pkthdr.len,
+		    ic->ic_flags & ~IEEE80211_F_WEPON, ic->ic_fragthreshold,
+		    rate, &txs->txs_d0, &txs->txs_dn, &npkt,
+		    (sc->sc_if.if_flags & (IFF_DEBUG|IFF_LINK2)) ==
+		    (IFF_DEBUG|IFF_LINK2)) == -1) {
+			DPRINTF2(sc, ("%s: fail compute duration\n", __func__));
+			m_freem(m0);
+			break;
+		}
+
+		/*
+		 * XXX Misleading if fragmentation is enabled.  Better
+		 * to fragment in software?
+		 */
+		*(uint16_t *)wh->i_dur = htole16(txs->txs_d0.d_rts_dur);
 
 #if NBPFILTER > 0
 		/*
@@ -3669,10 +3607,14 @@ atw_start(struct ifnet *ifp)
 			hh->atw_keyid = ic->ic_wep_txkey;
 		}
 
-		/* TBD 4-addr frames */
-		atw_frame_setdurs(sc, hh, rate,
-		    m0->m_pkthdr.len - sizeof(struct atw_frame) +
-		    sizeof(struct ieee80211_frame) + IEEE80211_CRC_LEN);
+		hh->atw_head_plcplen = htole16(txs->txs_d0.d_plcp_len);
+		hh->atw_tail_plcplen = htole16(txs->txs_dn.d_plcp_len);
+		if (txs->txs_d0.d_residue)
+			hh->atw_head_plcplen |= htole16(0x8000);
+		if (txs->txs_dn.d_residue)
+			hh->atw_tail_plcplen |= htole16(0x8000);
+		hh->atw_head_dur = htole16(txs->txs_d0.d_rts_dur);
+		hh->atw_tail_dur = htole16(txs->txs_dn.d_rts_dur);
 
 		/* never fragment multicast frames */
 		if (IEEE80211_IS_MULTICAST(hh->atw_dst)) {
