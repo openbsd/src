@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.106 2006/02/17 03:57:29 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.107 2006/02/17 04:01:05 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -747,8 +747,10 @@ em_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_status = IFM_AVALID;
 	ifmr->ifm_active = IFM_ETHER;
 
-	if (!sc->link_active)
+	if (!sc->link_active) {
+		ifmr->ifm_active |= IFM_NONE;
 		return;
+	}
 
 	ifmr->ifm_status |= IFM_ACTIVE;
 
