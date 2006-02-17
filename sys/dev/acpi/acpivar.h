@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.14 2006/02/03 23:55:47 jordan Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.15 2006/02/17 17:35:59 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -163,6 +163,7 @@ void	 acpi_powerdown(void);
 #define ACPI_IOREAD 0
 #define ACPI_IOWRITE 1
 
+void acpi_delay(struct acpi_softc *, int64_t);
 int acpi_gasio(struct acpi_softc *, int, int, uint64_t, int, int, void *);
 
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.22 2006/02/17 00:46:54 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.23 2006/02/17 17:35:59 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2054,6 +2054,7 @@ aml_domatch(struct acpi_context *ctx)
 	return rv;
 }
 
+
 /* Parse AMLOP_XXXX 
  *
  * This is the guts of the evaluator
@@ -2312,10 +2313,12 @@ aml_eparseval(struct acpi_context *ctx, int deref)
 	case AMLOP_STALL:
 		i1 = aml_eparseint(ctx, AML_ANYINT);
 		dnprintf(40, "stall %lld usecs\n", i1);
+		acpi_delay(ctx->sc, i1);
 		break;
 	case AMLOP_SLEEP:
 		i1 = aml_eparseint(ctx, AML_ANYINT);
 		dnprintf(40, "sleep %lld msecs\n", i1);
+		acpi_delay(ctx->sc, i1 * 1000);
 		break;
 	case AMLOP_MUTEX:
 		name = aml_parse_name(ctx);
@@ -2457,7 +2460,9 @@ aml_eparseval(struct acpi_context *ctx, int deref)
 		break;
 	case AMLOP_OBJECTTYPE:
 		lhs = aml_eparseval(ctx, 1);
-		rv  = aml_allocint(lhs->type);
+		i1 = (lhs->type == AML_OBJTYPE_STATICINT) ?
+			AML_OBJTYPE_INTEGER : lhs->type;
+		rv  = aml_allocint(i1);
 		break;
 	case AMLOP_SIZEOF:
 		lhs = aml_eparseval(ctx, 1);

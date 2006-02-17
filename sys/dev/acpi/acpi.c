@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.31 2006/02/17 06:57:58 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.32 2006/02/17 17:35:59 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -97,6 +97,13 @@ int acpi_s5, acpi_evindex, icount;
 #endif
 
 #define pch(x) (((x)>=' ' && (x)<='z') ? (x) : ' ')
+
+void
+acpi_delay(struct acpi_softc *sc, int64_t uSecs)
+{
+	/* XXX this needs to become a tsleep later */
+	delay(uSecs);
+}
 
 int
 acpi_gasio(struct acpi_softc *sc, int iodir, int iospace, uint64_t address, 
