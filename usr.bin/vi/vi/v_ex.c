@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_ex.c,v 1.6 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: v_ex.c,v 1.7 2006/02/17 19:12:41 otto Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -200,8 +200,12 @@ v_switch(sp, vp)
 	 * Try the alternate file name, then the previous file
 	 * name.  Use the real name, not the user's current name.
 	 */
-	if ((name = sp->alt_name) == NULL) {
+	if (sp->alt_name == NULL) {
 		msgq(sp, M_ERR, "180|No previous file to edit");
+		return (1);
+	}
+	if ((name = strdup(sp->alt_name)) == NULL) {
+		msgq(sp, M_SYSERR, NULL);
 		return (1);
 	}
 
