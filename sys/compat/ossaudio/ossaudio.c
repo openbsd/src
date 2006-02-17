@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudio.c,v 1.10 2006/01/25 21:29:25 brad Exp $	*/
+/*	$OpenBSD: ossaudio.c,v 1.11 2006/02/17 17:49:53 jolan Exp $	*/
 /*	$NetBSD: ossaudio.c,v 1.23 1997/10/19 07:41:52 augustss Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ oss_ioctl_audio(p, uap, retval)
 			goto out;
 		break;
 	case OSS_SNDCTL_DSP_SPEED:
-		(void) ioctlf(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
+		AUDIO_INITINFO(&tmpinfo);
 		error = copyin(SCARG(uap, data), &idat, sizeof idat);
 		if (error)
 			goto out;
@@ -138,7 +138,7 @@ oss_ioctl_audio(p, uap, retval)
 			goto out;
 		break;
 	case OSS_SNDCTL_DSP_STEREO:
-		(void) ioctlf(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
+		AUDIO_INITINFO(&tmpinfo);
 		error = copyin(SCARG(uap, data), &idat, sizeof idat);
 		if (error)
 			goto out;
@@ -164,7 +164,7 @@ oss_ioctl_audio(p, uap, retval)
 			goto out;
 		break;
 	case OSS_SNDCTL_DSP_SETFMT:
-		(void) ioctlf(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
+		AUDIO_INITINFO(&tmpinfo);
 		error = copyin(SCARG(uap, data), &idat, sizeof idat);
 		if (error)
 			goto out;
@@ -267,7 +267,7 @@ oss_ioctl_audio(p, uap, retval)
 			goto out;
 		break;
 	case OSS_SNDCTL_DSP_CHANNELS:
-		(void) ioctlf(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
+		AUDIO_INITINFO(&tmpinfo);
 		error = copyin(SCARG(uap, data), &idat, sizeof idat);
 		if (error)
 			goto out;
@@ -299,7 +299,7 @@ oss_ioctl_audio(p, uap, retval)
 		if (idat == 0)
 			idat = tmpinfo.play.buffer_size / tmpinfo.blocksize;
 		idat = (tmpinfo.play.buffer_size / idat) & -4;
-		(void) ioctlf(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
+		AUDIO_INITINFO(&tmpinfo);
 		tmpinfo.blocksize = idat;
 		error = ioctlf(fp, AUDIO_SETINFO, (caddr_t)&tmpinfo, p);
 		if (error)
@@ -310,7 +310,7 @@ oss_ioctl_audio(p, uap, retval)
 			goto out;
 		break;
 	case OSS_SNDCTL_DSP_SETFRAGMENT:
-		(void) ioctlf(fp, AUDIO_SETINFO, (caddr_t)&tmpinfo, p);
+		AUDIO_INITINFO(&tmpinfo);
 		error = copyin(SCARG(uap, data), &idat, sizeof idat);
 		if (error)
 			goto out;
@@ -458,7 +458,7 @@ oss_ioctl_audio(p, uap, retval)
 			goto out;
 		break;
 	case OSS_SNDCTL_DSP_SETTRIGGER:
-		(void) ioctlf(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
+		AUDIO_INITINFO(&tmpinfo);
 		error = copyin(SCARG(uap, data), &idat, sizeof idat);
 		if (error)
 			goto out;
@@ -885,7 +885,7 @@ static void setblocksize(fp, info, p)
 	if (info->blocksize & (info->blocksize-1)) {
 		for(s = 32; s < info->blocksize; s <<= 1)
 			;
-		(void) fp->f_ops->fo_ioctl(fp, AUDIO_GETINFO, (caddr_t)&set, p);
+		AUDIO_INITINFO(&set);
 		set.blocksize = s;
 		fp->f_ops->fo_ioctl(fp, AUDIO_SETINFO, (caddr_t)&set, p);
 		fp->f_ops->fo_ioctl(fp, AUDIO_GETINFO, (caddr_t)info, p);
