@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.10 2006/01/14 12:43:27 damien Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.11 2006/02/18 09:41:41 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -494,7 +494,7 @@ rt2560_detach(void *xsc)
 	timeout_del(&sc->scan_ch);
 	timeout_del(&sc->rssadapt_ch);
 
-	ieee80211_ifdetach(ifp);
+	ieee80211_ifdetach(ifp);	/* free all nodes */
 	if_detach(ifp);
 
 	rt2560_free_tx_ring(sc, &sc->txq);
@@ -583,7 +583,6 @@ fail:	rt2560_free_tx_ring(sc, ring);
 void
 rt2560_reset_tx_ring(struct rt2560_softc *sc, struct rt2560_tx_ring *ring)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
 	struct rt2560_tx_desc *desc;
 	struct rt2560_tx_data *data;
 	int i;
@@ -600,10 +599,11 @@ rt2560_reset_tx_ring(struct rt2560_softc *sc, struct rt2560_tx_ring *ring)
 			data->m = NULL;
 		}
 
-		if (data->ni != NULL) {
-			ieee80211_release_node(ic, data->ni);
-			data->ni = NULL;
-		}
+		/*
+		 * The node has already been freed at that point so don't call
+		 * ieee80211_release_node() here.
+		 */
+		data->ni = NULL;
 
 		desc->flags = 0;
 	}
@@ -619,7 +619,6 @@ rt2560_reset_tx_ring(struct rt2560_softc *sc, struct rt2560_tx_ring *ring)
 void
 rt2560_free_tx_ring(struct rt2560_softc *sc, struct rt2560_tx_ring *ring)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
 	struct rt2560_tx_data *data;
 	int i;
 
@@ -644,8 +643,11 @@ rt2560_free_tx_ring(struct rt2560_softc *sc, struct rt2560_tx_ring *ring)
 				m_freem(data->m);
 			}
 
-			if (data->ni != NULL)
-				ieee80211_release_node(ic, data->ni);
+			/*
+			 * The node has already been freed at that point so
+			 * don't call ieee80211_release_node() here.
+			 */
+			data->ni = NULL;
 
 			if (data->map != NULL)
 				bus_dmamap_destroy(sc->sc_dmat, data->map);
@@ -2069,6 +2071,13 @@ rt2560_start(struct ifnet *ifp)
 	struct mbuf *m0;
 	struct ieee80211_node *ni;
 
+	/*
+	 * net80211 may still try to send management frames even if the
+	 * IFF_RUNNING flag is not set...
+	 */
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+		return;
+
 	for (;;) {
 		IF_POLL(&ic->ic_mgtq, m0);
 		if (m0 != NULL) {
@@ -2822,11 +2831,11 @@ rt2560_stop(struct ifnet *ifp, int disable)
 	struct rt2560_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 
-	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
-
 	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);	/* free all nodes */
 
 	/* abort Tx */
 	RAL_WRITE(sc, RT2560_TXCSR0, RT2560_ABORT_TX);
