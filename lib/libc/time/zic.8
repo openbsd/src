@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zic.8,v 1.17 2004/06/28 14:47:41 millert Exp $
+.\"	$OpenBSD: zic.8,v 1.18 2006/02/18 21:54:17 millert Exp $
 .Dd May 23, 1999
 .Dt ZIC 8
 .Os
@@ -381,6 +381,18 @@ you may need to use local standard time in the
 .Em AT
 field of the earliest transition time's rule to ensure that
 the earliest transition time recorded in the compiled file is correct.
+.Pp
+If,
+for a particular zone,
+a clock advance caused by the start of daylight saving
+coincides with and is equal to
+a clock retreat caused by a change in UTC offset,
+.Nm
+produces a single transition to daylight saving at the new UTC offset
+(without any change in wall clock time).
+To get separate transitions
+use multiple zone continuation lines
+specifying transition instants using universal time.
 .Sh FILES
 .Bl -tag -width "/usr/share/zoneinfo" -compact
 .It Pa /etc/localtime
@@ -392,6 +404,6 @@ standard directory used for created files
 .Xr ctime 3 ,
 .Xr tzfile 5 ,
 .Xr zdump 8
-.\" @(#)zic.8	7.20
+.\" @(#)zic.8	7.24
 .\" This file is in the public domain, so clarified as of
-.\" 2003-02-14 by Arthur David Olson (arthur_david_olson@nih.gov).
+.\" 2003-02-14 by Arthur David Olson.

@@ -1,27 +1,26 @@
-/*	$OpenBSD: scheck.c,v 1.8 2005/08/08 08:05:38 espie Exp $ */
+/*	$OpenBSD: scheck.c,v 1.9 2006/02/18 21:54:17 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
-** Feb 14, 2003 by Arthur David Olson (arthur_david_olson@nih.gov).
+** Feb 14, 2003 by Arthur David Olson.
 */
 
 /*LINTLIBRARY*/
 
 #include "private.h"
 
-char *
+const char *
 scheck(string, format)
 const char * const	string;
-char * const		format;
+const char * const	format;
 {
 	register char *		fbuf;
 	register const char *	fp;
 	register char *		tp;
 	register int		c;
-	register char *		result;
+	register const char *	result;
 	char			dummy;
-	static char		nada;
 
-	result = &nada;
+	result = "";
 	if (string == NULL || format == NULL)
 		return result;
 	fbuf = imalloc((int) (2 * strlen(format) + 4));

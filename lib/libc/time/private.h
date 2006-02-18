@@ -1,11 +1,11 @@
-/*	$OpenBSD: private.h,v 1.17 2005/07/05 13:40:51 millert Exp $	*/
+/*	$OpenBSD: private.h,v 1.18 2006/02/18 21:54:17 millert Exp $	*/
 #ifndef PRIVATE_H
 
 #define PRIVATE_H
 
 /*
 ** This file is in the public domain, so clarified as of
-** 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
+** 1996-06-05 by Arthur David Olson.
 */
 
 /* OpenBSD defaults */
@@ -233,7 +233,7 @@ char *	imalloc P((int n));
 void *	irealloc P((void * pointer, int size));
 void	icfree P((char * pointer));
 void	ifree P((char * pointer));
-char *	scheck P((const char *string, char *format));
+const char *scheck P((const char *string, const char *format));
 
 /*
 ** Finally, some convenience items.
