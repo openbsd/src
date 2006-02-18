@@ -1,5 +1,7 @@
-# $OpenBSD: northamerica,v 1.20 2005/07/19 15:48:37 millert Exp $
-# @(#)northamerica	7.75
+# $OpenBSD: northamerica,v 1.21 2006/02/18 19:47:24 millert Exp $
+# @(#)northamerica	7.88
+# <pre>
+
 # also includes Central America and the Caribbean
 
 # This data is by no means authoritative; if you think you know better,
@@ -111,21 +113,50 @@
 #
 # He had scored a 20-second scoop on other broadcasters.
 
+# From Arthur David Olson (2005-08-22):
+# Paul has been careful to use the "US" rules only in those locations
+# that are part of the United States; this reflects the real scope of
+# U.S. government action.  So even though the "US" rules have changed
+# in the latest release, other countries won't be affected.
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	US	1918	1919	-	Mar	lastSun	2:00	1:00	D
 Rule	US	1918	1919	-	Oct	lastSun	2:00	0	S
 Rule	US	1942	only	-	Feb	9	2:00	1:00	W # War
 Rule	US	1945	only	-	Aug	14	23:00u	1:00	P # Peace
 Rule	US	1945	only	-	Sep	30	2:00	0	S
+# The Energy Policy Act of 2005 changed the end month of DST from Oct to Nov
 Rule	US	1967	max	-	Oct	lastSun	2:00	0	S
+#Rule	US	1967	2006	-	Oct	lastSun	2:00	0	S
 Rule	US	1967	1973	-	Apr	lastSun	2:00	1:00	D
 Rule	US	1974	only	-	Jan	6	2:00	1:00	D
 Rule	US	1975	only	-	Feb	23	2:00	1:00	D
 Rule	US	1976	1986	-	Apr	lastSun	2:00	1:00	D
+# The Energy Policy Act of 2005 changed the start month of DST from Apr to Mar
 Rule	US	1987	max	-	Apr	Sun>=1	2:00	1:00	D
-# <a href="http://thomas.loc.gov/cgi-bin/bdquery/z?d106:h.r.00177:">
-# H.R.177
-# </a> (introduced 1999-01-06) would change April to March in the above rule.
+#Rule	US	1987	2006	-	Apr	Sun>=1	2:00	1:00	D
+#Rule	US	2007	max	-	Mar	Sun>=8	2:00	1:00	D
+#Rule	US	2007	max	-	Nov	Sun>=1	2:00	0	S
+
+# From Arthur David Olson, 2005-12-19
+# We generate the files specified below to guard against old files with
+# obsolete information being left in the time zone binary directory.
+# We limit the list to names that have appeared in previous versions of
+# this time zone package.
+# We do these as separate Zones rather than as Links to avoid problems if
+# a particular place changes whether it observes DST.
+# We put these specifications here in the northamerica file both to
+# increase the chances that they'll actually get compiled and to
+# avoid the need to duplicate the US rules in another file.
+
+# Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+Zone	EST		 -5:00	-	EST
+Zone	MST		 -7:00	-	MST
+Zone	HST		-10:00	-	HST
+Zone	EST5EDT		 -5:00	US	E%sT
+Zone	CST6CDT		 -6:00	US	C%sT
+Zone	MST7MDT		 -7:00	US	M%sT
+Zone	PST8PDT		 -8:00	US	P%sT
 
 # From Bob Devine (1988-01-28):
 # ...Alaska (and Hawaii) had the timezone names changed in 1967.
@@ -203,13 +234,32 @@ Rule	US	1987	max	-	Apr	Sun>=1	2:00	1:00	D
 # Public law 106-564 (2000-12-23) introduced the abbreviation
 # "Chamorro Standard Time" for time in Guam and the Northern Marianas.
 # See the file "australasia".
-
+ 
+# From Arthur David Olson, 2005-08-09
+# The following was signed into law on 2005-08-08.
+#
+# H.R. 6, Energy Policy Act of 2005, SEC. 110. DAYLIGHT SAVINGS.
+#   (a) Amendment- Section 3(a) of the Uniform Time Act of 1966 (15
+#   U.S.C. 260a(a)) is amended--
+#     (1) by striking `first Sunday of April' and inserting `second
+#     Sunday of March'; and
+#     (2) by striking `last Sunday of October' and inserting `first
+#     Sunday of November'.
+#   (b) Effective Date- Subsection (a) shall take effect 1 year after the
+#   date of enactment of this Act or March 1, 2007, whichever is later.
+#   (c) Report to Congress- Not later than 9 months after the effective
+#   date stated in subsection (b), the Secretary shall report to Congress
+#   on the impact of this section on energy consumption in the United
+#   States.
+#   (d) Right to Revert- Congress retains the right to revert the
+#   Daylight Saving Time back to the 2005 time schedules once the
+#   Department study is complete.
 
 # US eastern time, represented by New York
 
 # Connecticut, Delaware, District of Columbia, most of Florida,
-# Georgia, southeast Indiana (Clark, Dearborn, Floyd, Harrison, and
-# Ohio counties), eastern Kentucky, Maine, Maryland, Massachusetts,
+# Georgia, southeast Indiana (Dearborn and Ohio counties), eastern Kentucky
+# (except America/Kentucky/Louisville below), Maine, Maryland, Massachusetts,
 # New Hampshire, New Jersey, New York, North Carolina, Ohio,
 # Pennsylvania, Rhode Island, South Carolina, eastern Tennessee,
 # Vermont, Virginia, West Virginia
@@ -220,6 +270,16 @@ Rule	US	1987	max	-	Apr	Sun>=1	2:00	1:00	D
 # One of the staff members said that the station was on Eastern Standard Time
 # and didn't change their clocks for Daylight Saving ... so that their
 # reports will always have times which are 5 hours behind UTC.
+
+# From Paul Eggert (2005-08-26):
+# According to today's Huntsville Times
+# <http://www.al.com/news/huntsvilletimes/index.ssf?/base/news/1125047783228320.xml&coll=1>
+# a few towns on Alabama's "eastern border with Georgia, such as Phenix City
+# in Russell County, Lanett in Chambers County and some towns in Lee County,
+# set their watches and clocks on Eastern time."  It quotes H.H. "Bubba"
+# Roberts, city administrator in Phenix City. as saying "We are in the Central
+# time zone, but we do go by the Eastern time zone because so many people work
+# in Columbus." 
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER
 Rule	NYC	1920	only	-	Mar	lastSun	2:00	1:00	D
@@ -266,6 +326,14 @@ Zone America/Chicago	-5:50:36 -	LMT	1883 Nov 18 12:09:24
 Zone America/North_Dakota/Center -6:45:12 - LMT	1883 Nov 18 12:14:48
 			-7:00	US	M%sT	1992 Oct 25 02:00
 			-6:00	US	C%sT
+# From Paul Eggert (2006-01-20):
+# The following is not implemented yet.
+# What is the most populous city in that area?
+# From http://www.statoids.com/tus.html (2006-01-20):
+# 2003-10-26 02:00: All of Morton County, ND, and the part of Sioux
+# County, ND east of ND route 31 moved from MT to CT.  (The area
+# around Fort Yates in Sioux County and the area around Mandan in
+# Morton County were already in CT.)
 
 # US mountain time, represented by Denver
 #
@@ -464,40 +532,55 @@ Zone America/Boise	-7:44:49 -	LMT	1883 Nov 18 12:15:11
 # For a map of Indiana's time zone regions, see:
 # <a href="http://www.mccsc.edu/time.html">
 # What time is it in Indiana?
-# </a> (1999-04-06)
+# </a> (2005-10-30)
 #
-# From Paul Eggert (1995-12-19):
-# Indiana generally observes either EST all year, or CST/CDT,
-# but areas near Cincinnati and Louisville use those cities' timekeeping
-# and in 1969 and 1970 the whole state observed daylight time;
-# and there are other exceptions as noted below.
-# Shanks partitions Indiana into 345 regions, each with its own time history,
-# and writes ``Even newspaper reports present contradictory information.''
+# From Paul Eggert (2006-01-20):
+# Since 1970, most of Indiana has been like America/Indiana/Indianapolis,
+# with the following exceptions:
+#
+# - Gibson, Jasper, Lake, LaPorte, Newton, Porter, Posey, Spencer,
+#   Vandenburgh, and Warrick counties have been like America/Chicago.
+#
+# - Dearborn and Ohio counties have been like America/New_York.
+#
+# - Clark, Floyd, and Harrison counties have been like
+#   America/Kentucky/Louisville.
+#
+# - Daviess, Dubois, Knox, Martin, Perry, and Pulaski counties
+#   have been like America/Indiana/Vincennes.
+#
+# - Crawford, Pike, Starke, and Switzerland counties have their own time zone
+#   histories as noted below.
+#
+# Shanks partitioned Indiana into 345 regions, each with its own time history,
+# and wrote ``Even newspaper reports present contradictory information.''
 # Fortunately, most of the complexity occurred before our cutoff date of 1970.
-#
-# Since 1970, EST-only Indiana has been like America/Indianapolis,
-# with exceptions noted below for Crawford, Starke, and Switzerland counties.
-# The parts of Indiana not listed below have been like America/Chicago,
-# America/Louisville, or America/New_York.
 #
 # Other than Indianapolis, the Indiana place names are so nondescript
 # that they would be ambiguous if we left them at the `America' level.
 # So we reluctantly put them all in a subdirectory `America/Indiana'.
-#
-# Most of EST-only Indiana last observed DST in 1970.
 
-# From Paul Eggert (2001-03-06), following a tip by Markus Kuhn:
-# Pam Belluck reported in the New York Times (2001-01-31) that the
-# Indiana Legislature is considering a bill to adopt DST statewide.
-# Her article mentioned Vevay, whose post office observes a different
-# time zone from Danner's Hardware across the street.
+# From Paul Eggert (2005-08-16):
+# http://www.mccsc.edu/time.html says that Indiana will use DST starting 2006.
+
+# From Deborah Goldsmith (2006-01-18):
+# http://dmses.dot.gov/docimages/pdf95/382329_web.pdf
+# From Paul Eggert (2006-01-20):
+# It says "DOT is relocating the time zone boundary in Indiana to move Starke,
+# Pulaski, Knox, Daviess, Martin, Pike, Dubois, and Perry Counties from the
+# Eastern Time Zone to the Central Time Zone.... The effective date of
+# this rule is 2:OO a.m. EST Sunday, April 2, 2006, which is the
+# changeover date from standard time to Daylight Saving Time."
+# Strictly speaking, this means the affected counties will change their
+# clocks twice that night, but this obviously is in error.  The intent
+# is that 01:59:59 EST be followed by 02:00:00 CDT.
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER
 Rule Indianapolis 1941	only	-	Jun	22	2:00	1:00	D
 Rule Indianapolis 1941	1954	-	Sep	lastSun	2:00	0	S
 Rule Indianapolis 1946	1954	-	Apr	lastSun	2:00	1:00	D
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
-Zone America/Indianapolis -5:44:38 - LMT 1883 Nov 18 12:15:22
+Zone America/Indiana/Indianapolis -5:44:38 - LMT 1883 Nov 18 12:15:22
 			-6:00	US	C%sT	1920
 			-6:00 Indianapolis C%sT	1942
 			-6:00	US	C%sT	1946
@@ -506,11 +589,11 @@ Zone America/Indianapolis -5:44:38 - LMT 1883 Nov 18 12:15:22
 			-6:00	-	CST	1958 Apr 27 2:00
 			-5:00	-	EST	1969
 			-5:00	US	E%sT	1971
-			-5:00	-	EST
-Link America/Indianapolis America/Indiana/Indianapolis
+			-5:00	-	EST	2006
+			-5:00	US	E%sT
 #
-# Part of Crawford County, Indiana, last observed DST in 1975,
-# and left its clocks alone in 1974.
+# Eastern Crawford County, Indiana, left its clocks alone in 1974,
+# as well as from 1976 through 2005.
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER
 Rule	Marengo	1951	only	-	Apr	lastSun	2:00	1:00	D
 Rule	Marengo	1951	only	-	Sep	lastSun	2:00	0	S
@@ -524,9 +607,48 @@ Zone America/Indiana/Marengo -5:45:23 -	LMT	1883 Nov 18 12:14:37
 			-5:00	US	E%sT	1974 Jan  6 2:00
 			-6:00	1:00	CDT	1974 Oct 27 2:00
 			-5:00	US	E%sT	1976
-			-5:00	-	EST
+			-5:00	-	EST	2006
+			-5:00	US	E%sT
 #
-# Starke County, Indiana
+# Daviess, Dubois, Knox, Martin, Perry, and Pulaski Counties, Indiana,
+# switched from eastern to central time in April 2006.
+# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER
+Rule Vincennes	1946	only	-	Apr	lastSun	2:00	1:00	D
+Rule Vincennes	1946	only	-	Sep	lastSun	2:00	0	S
+Rule Vincennes	1953	1954	-	Apr	lastSun	2:00	1:00	D
+Rule Vincennes	1953	1959	-	Sep	lastSun	2:00	0	S
+Rule Vincennes	1955	only	-	May	 1	0:00	1:00	D
+Rule Vincennes	1956	1963	-	Apr	lastSun	2:00	1:00	D
+Rule Vincennes	1960	only	-	Oct	lastSun	2:00	0	S
+Rule Vincennes	1961	only	-	Sep	lastSun	2:00	0	S
+Rule Vincennes	1962	1963	-	Oct	lastSun	2:00	0	S
+# Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+Zone America/Indiana/Vincennes -5:50:07 - LMT	1883 Nov 18 12:09:53
+			-6:00	US	C%sT	1946
+			-6:00 Vincennes	C%sT	1964 Apr 26 2:00
+			-5:00	-	EST	1969
+			-5:00	US	E%sT	1971
+			-5:00	-	EST	2006 Apr  2 2:00
+			-6:00	US	C%sT
+# 
+# Pike County, Indiana moved from central to eastern time in 1977,
+# then switched back in 2006.
+# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER
+Rule	Pike	1955	only	-	May	 1	0:00	1:00	D
+Rule	Pike	1955	1960	-	Sep	lastSun	2:00	0	S
+Rule	Pike	1956	1964	-	Apr	lastSun	2:00	1:00	D
+Rule	Pike	1961	1964	-	Oct	lastSun	2:00	0	S
+# Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+Zone America/Indiana/Petersburg -5:49:07 - LMT	1883 Nov 18 12:10:53
+			-6:00	US	C%sT	1955
+			-6:00	Pike	C%sT	1965 Apr 25 2:00
+			-5:00	-	EST	1966 Oct 30 2:00
+			-6:00	US	C%sT	1977 Oct 30 2:00
+			-5:00	-	EST	2006 Apr  2 2:00
+			-6:00	US	C%sT
+#
+# Starke County, Indiana moved from central to eastern time in 1991,
+# then switched back in 2006.
 # From Arthur David Olson (1991-10-28):
 # An article on page A3 of the Sunday, 1991-10-27 Washington Post
 # notes that Starke County switched from Central time to Eastern time as of
@@ -543,18 +665,20 @@ Zone America/Indiana/Knox -5:46:30 -	LMT	1883 Nov 18 12:13:30
 			-6:00	Starke	C%sT	1962 Apr 29 2:00
 			-5:00	-	EST	1963 Oct 27 2:00
 			-6:00	US	C%sT	1991 Oct 27 2:00
-			-5:00	-	EST
+			-5:00	-	EST	2006 Apr  2 2:00
+			-6:00	US	C%sT
 #
-# Switzerland County, Indiana, last observed DST in 1972.
+# Switzerland County, Indiana, did not observe DST from 1973 through 2005.
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Indiana/Vevay -5:40:16 -	LMT	1883 Nov 18 12:19:44
 			-6:00	US	C%sT	1954 Apr 25 2:00
 			-5:00	-	EST	1969
 			-5:00	US	E%sT	1973
-			-5:00	-	EST
+			-5:00	-	EST	2006
+			-5:00	US	E%sT
 
 # Part of Kentucky left its clocks alone in 1974.
-# This also includes a part of Indiana immediately adjacent to Louisville.
+# This also includes Clark, Floyd, and Harrison counties in Indiana.
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER
 Rule Louisville	1921	only	-	May	1	2:00	1:00	D
 Rule Louisville	1921	only	-	Sep	1	2:00	0	S
@@ -564,7 +688,7 @@ Rule Louisville	1946	only	-	Jun	2	2:00	0	S
 Rule Louisville	1950	1955	-	Sep	lastSun	2:00	0	S
 Rule Louisville	1956	1960	-	Oct	lastSun	2:00	0	S
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
-Zone America/Louisville	-5:43:02 -	LMT	1883 Nov 18 12:16:58
+Zone America/Kentucky/Louisville -5:43:02 -	LMT	1883 Nov 18 12:16:58
 			-6:00	US	C%sT	1921
 			-6:00 Louisville C%sT	1942
 			-6:00	US	C%sT	1946
@@ -573,9 +697,8 @@ Zone America/Louisville	-5:43:02 -	LMT	1883 Nov 18 12:16:58
 			-5:00	US	E%sT	1974 Jan  6 2:00
 			-6:00	1:00	CDT	1974 Oct 27 2:00
 			-5:00	US	E%sT
-Link America/Louisville America/Kentucky/Louisville
 #
-# Wayne, Clinton, and Russell Counties, Kentucky
+# Wayne County, Kentucky
 #
 # From
 # <a href="http://www.lake-cumberland.com/life/archive/news990129time.shtml">
@@ -672,7 +795,8 @@ Zone America/Detroit	-5:32:11 -	LMT	1905
 			-5:00	-	EST	1975 Apr 27 2:00
 			-5:00	US	E%sT
 #
-# The Michigan border with Wisconsin switched from EST to CST/CDT in 1973.
+# Dickinson, Gogebic, Iron, and Menominee Counties, Michigan,
+# switched from EST to CST/CDT in 1973.
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER
 Rule Menominee	1946	only	-	Apr	lastSun	2:00	1:00	D
 Rule Menominee	1946	only	-	Sep	lastSun	2:00	0	S
@@ -695,17 +819,6 @@ Zone America/Menominee	-5:50:27 -	LMT	1885 Sep 18 12:00
 # see Mark Fineman, ``An Isle Rich in Guano and Discord'',
 # _Los Angeles Times_ (1998-11-10), A1, A10; it cites
 # Jimmy Skaggs, _The Great Guano Rush_ (1994).
-
-# Old names, for S5 users
-
-# Link	LINK-FROM		LINK-TO
-Link	America/New_York	EST5EDT
-Link	America/Chicago		CST6CDT
-Link	America/Denver		MST7MDT
-Link	America/Los_Angeles	PST8PDT
-Link	America/Indianapolis	EST
-Link	America/Phoenix		MST
-Link	Pacific/Honolulu	HST
 
 ################################################################################
 
@@ -772,18 +885,37 @@ Link	Pacific/Honolulu	HST
 
 # Unless otherwise specified, the data for Canada are all from Shanks.
 
-# From Paul Eggert (2000-10-02):
+# From Paul Eggert (2005-12-21):
 # H. David Matthews and Mary Vincent's map
-# <a href="http://www.canadiangeographic.ca/SO98/geomap.htm">
+# <a href="http://www.canadiangeographic.ca/Magazine/SO98/geomap.asp">
 # "It's about TIME", _Canadian Geographic_ (September-October 1998)
 # </a> contains detailed boundaries for regions observing nonstandard
 # time and daylight saving time arrangements in Canada circa 1998.
 #
-# INMS, the Institute for National Measurement Standards in Ottawa, has
-# <a href="http://www.nrc.ca/inms/time/tze.html">
+# INMS, the Institute for National Measurement Standards in Ottawa, has <a
+# href="http://inms-ienm.nrc-cnrc.gc.ca/en/time_services/daylight_saving_e.php">
 # information about standard and daylight saving time zones in Canada.
 # </a> (updated periodically).
 # Its unofficial information is often taken from Matthews and Vincent.
+#
+# CBC News reported that Ontario and Manitoba have announced plans to
+# follow the US change, and that Nova Scotia is considering it; see
+# <http://www.cbc.ca/news/background/daylightsavingtime/> (2005-10-21).
+# CBC news also reported that Prince Edward Island is the first
+# province in Atlantic Canada to follow the US change, and that Quebec
+# had agreed; see <http://www.cbc.ca/pei/story/pe_daylight_20051207.html>
+# (2005-12-07).
+#
+# To reflect all this, the Canada and Winn rules have been adjusted to
+# agree with the 2007 US change.  This means we assume most of Canada
+# will fall into line.  However, Alberta, British Columbia,
+# Newfoundland, Northwest Territories, and Yukon already have separate
+# rules in our database, so for now we'll leave them alone, which
+# means that we currently assume these regions will not change their
+# rules and will disagree with the US starting in 2007.  This
+# assumption is probably incorrect, with the possible exception of
+# Newfoundland.  We plan to adjust the Edm, Vanc, StJohns, and NT_YK
+# rules as the corresponding provinces make their announcements.
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Canada	1918	only	-	Apr	14	2:00	1:00	D
@@ -792,8 +924,10 @@ Rule	Canada	1942	only	-	Feb	 9	2:00	1:00	W # War
 Rule	Canada	1945	only	-	Aug	14	23:00u	1:00	P # Peace
 Rule	Canada	1945	only	-	Sep	30	2:00	0	S
 Rule	Canada	1974	1986	-	Apr	lastSun	2:00	1:00	D
-Rule	Canada	1974	max	-	Oct	lastSun	2:00	0	S
-Rule	Canada	1987	max	-	Apr	Sun>=1	2:00	1:00	D
+Rule	Canada	1974	2006	-	Oct	lastSun	2:00	0	S
+Rule	Canada	1987	2006	-	Apr	Sun>=1	2:00	1:00	D
+Rule	Canada	2007	max	-	Mar	Sun>=8	2:00	1:00	D
+Rule	Canada	2007	max	-	Nov	Sun>=1	2:00	0	S
 
 
 # Newfoundland (and far southeast Labrador)
@@ -858,7 +992,7 @@ Zone America/Goose_Bay	-4:01:40 -	LMT	1884 # Happy Valley-Goose Bay
 			-4:00	StJohns	A%sT
 
 
-# west Labrador, New Brunswick, Nova Scotia, Prince Edward I
+# west Labrador, Nova Scotia, Prince Edward I
 
 # From Paul Eggert (1996-06-12):
 # Shanks writes that since 1970 most of this region has been like Halifax.
@@ -867,53 +1001,48 @@ Zone America/Goose_Bay	-4:01:40 -	LMT	1884 # Happy Valley-Goose Bay
 # Shanks also writes that Liverpool, NS was the only town in Canada to observe
 # DST in 1971 but not 1970; for now we'll assume this is a typo.
 
-# From Paul Eggert (2000-10-02):
-# INMS (2000-09-12) says that, since 1988 at least, New Brunswick switches
-# at 00:01 local time.  FIXME: verify and create a new Zone for this.
-
-
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
-Rule Halifax	1916	only	-	Apr	 1	0:00	1:00	D
-Rule Halifax	1916	only	-	Oct	 1	0:00	0	S
-Rule Halifax	1920	only	-	May	 9	0:00	1:00	D
-Rule Halifax	1920	only	-	Aug	29	0:00	0	S
-Rule Halifax	1921	only	-	May	 6	0:00	1:00	D
-Rule Halifax	1921	1922	-	Sep	 5	0:00	0	S
-Rule Halifax	1922	only	-	Apr	30	0:00	1:00	D
-Rule Halifax	1923	1925	-	May	Sun>=1	0:00	1:00	D
-Rule Halifax	1923	only	-	Sep	 4	0:00	0	S
-Rule Halifax	1924	only	-	Sep	15	0:00	0	S
-Rule Halifax	1925	only	-	Sep	28	0:00	0	S
-Rule Halifax	1926	only	-	May	16	0:00	1:00	D
-Rule Halifax	1926	only	-	Sep	13	0:00	0	S
-Rule Halifax	1927	only	-	May	 1	0:00	1:00	D
-Rule Halifax	1927	only	-	Sep	26	0:00	0	S
-Rule Halifax	1928	1931	-	May	Sun>=8	0:00	1:00	D
-Rule Halifax	1928	only	-	Sep	 9	0:00	0	S
-Rule Halifax	1929	only	-	Sep	 3	0:00	0	S
-Rule Halifax	1930	only	-	Sep	15	0:00	0	S
-Rule Halifax	1931	1932	-	Sep	Mon>=24	0:00	0	S
-Rule Halifax	1932	only	-	May	 1	0:00	1:00	D
-Rule Halifax	1933	only	-	Apr	30	0:00	1:00	D
-Rule Halifax	1933	only	-	Oct	 2	0:00	0	S
-Rule Halifax	1934	only	-	May	20	0:00	1:00	D
-Rule Halifax	1934	only	-	Sep	16	0:00	0	S
-Rule Halifax	1935	only	-	Jun	 2	0:00	1:00	D
-Rule Halifax	1935	only	-	Sep	30	0:00	0	S
-Rule Halifax	1936	only	-	Jun	 1	0:00	1:00	D
-Rule Halifax	1936	only	-	Sep	14	0:00	0	S
-Rule Halifax	1937	1938	-	May	Sun>=1	0:00	1:00	D
-Rule Halifax	1937	1941	-	Sep	Mon>=24	0:00	0	S
-Rule Halifax	1939	only	-	May	28	0:00	1:00	D
-Rule Halifax	1940	1941	-	May	Sun>=1	0:00	1:00	D
-Rule Halifax	1946	1949	-	Sep	lastSun	2:00	0	S
-Rule Halifax	1946	1949	-	Apr	lastSun	2:00	1:00	D
-Rule Halifax	1951	1954	-	Sep	lastSun	2:00	0	S
-Rule Halifax	1951	1954	-	Apr	lastSun	2:00	1:00	D
-Rule Halifax	1956	1959	-	Sep	lastSun	2:00	0	S
-Rule Halifax	1956	1959	-	Apr	lastSun	2:00	1:00	D
-Rule Halifax	1962	1973	-	Apr	lastSun	2:00	1:00	D
-Rule Halifax	1962	1973	-	Oct	lastSun	2:00	0	S
+Rule	Halifax	1916	only	-	Apr	 1	0:00	1:00	D
+Rule	Halifax	1916	only	-	Oct	 1	0:00	0	S
+Rule	Halifax	1920	only	-	May	 9	0:00	1:00	D
+Rule	Halifax	1920	only	-	Aug	29	0:00	0	S
+Rule	Halifax	1921	only	-	May	 6	0:00	1:00	D
+Rule	Halifax	1921	1922	-	Sep	 5	0:00	0	S
+Rule	Halifax	1922	only	-	Apr	30	0:00	1:00	D
+Rule	Halifax	1923	1925	-	May	Sun>=1	0:00	1:00	D
+Rule	Halifax	1923	only	-	Sep	 4	0:00	0	S
+Rule	Halifax	1924	only	-	Sep	15	0:00	0	S
+Rule	Halifax	1925	only	-	Sep	28	0:00	0	S
+Rule	Halifax	1926	only	-	May	16	0:00	1:00	D
+Rule	Halifax	1926	only	-	Sep	13	0:00	0	S
+Rule	Halifax	1927	only	-	May	 1	0:00	1:00	D
+Rule	Halifax	1927	only	-	Sep	26	0:00	0	S
+Rule	Halifax	1928	1931	-	May	Sun>=8	0:00	1:00	D
+Rule	Halifax	1928	only	-	Sep	 9	0:00	0	S
+Rule	Halifax	1929	only	-	Sep	 3	0:00	0	S
+Rule	Halifax	1930	only	-	Sep	15	0:00	0	S
+Rule	Halifax	1931	1932	-	Sep	Mon>=24	0:00	0	S
+Rule	Halifax	1932	only	-	May	 1	0:00	1:00	D
+Rule	Halifax	1933	only	-	Apr	30	0:00	1:00	D
+Rule	Halifax	1933	only	-	Oct	 2	0:00	0	S
+Rule	Halifax	1934	only	-	May	20	0:00	1:00	D
+Rule	Halifax	1934	only	-	Sep	16	0:00	0	S
+Rule	Halifax	1935	only	-	Jun	 2	0:00	1:00	D
+Rule	Halifax	1935	only	-	Sep	30	0:00	0	S
+Rule	Halifax	1936	only	-	Jun	 1	0:00	1:00	D
+Rule	Halifax	1936	only	-	Sep	14	0:00	0	S
+Rule	Halifax	1937	1938	-	May	Sun>=1	0:00	1:00	D
+Rule	Halifax	1937	1941	-	Sep	Mon>=24	0:00	0	S
+Rule	Halifax	1939	only	-	May	28	0:00	1:00	D
+Rule	Halifax	1940	1941	-	May	Sun>=1	0:00	1:00	D
+Rule	Halifax	1946	1949	-	Apr	lastSun	2:00	1:00	D
+Rule	Halifax	1946	1949	-	Sep	lastSun	2:00	0	S
+Rule	Halifax	1951	1954	-	Apr	lastSun	2:00	1:00	D
+Rule	Halifax	1951	1954	-	Sep	lastSun	2:00	0	S
+Rule	Halifax	1956	1959	-	Apr	lastSun	2:00	1:00	D
+Rule	Halifax	1956	1959	-	Sep	lastSun	2:00	0	S
+Rule	Halifax	1962	1973	-	Apr	lastSun	2:00	1:00	D
+Rule	Halifax	1962	1973	-	Oct	lastSun	2:00	0	S
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Halifax	-4:14:24 -	LMT	1902 Jun 15
 			-4:00	Halifax	A%sT	1918
@@ -929,6 +1058,43 @@ Zone America/Glace_Bay	-3:59:48 -	LMT	1902 Jun 15
 			-4:00	Halifax	A%sT	1974
 			-4:00	Canada	A%sT
 
+# New Brunswick
+
+# From Paul Eggert (2006-01-20):
+# New Brunswick's Time Definition Act
+# <http://www.gnb.ca/0062/PDF-acts/t-06.pdf> says they change at 00:01, and
+# <http://www.canlii.org/nb/laws/sta/t-6/20030127/whole.html> makes it
+# clear that this has been the case since at least 1993.
+# For now, assume it started in 1993.  The Office of the Premier announced
+# <http://www.gnb.ca/cnb/news/pre/2005e1737pr.htm> (2005-12-23)
+# that they will bring forward proposed amendments to harmonize with the US;
+# for now assume that this will happen, but they'll still switch at 00:01.
+
+# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+Rule	Moncton	1933	1935	-	Jun	Sun>=8	1:00	1:00	D
+Rule	Moncton	1933	1935	-	Sep	Sun>=8	1:00	0	S
+Rule	Moncton	1936	1938	-	Jun	Sun>=1	1:00	1:00	D
+Rule	Moncton	1936	1938	-	Sep	Sun>=1	1:00	0	S
+Rule	Moncton	1939	only	-	May	27	1:00	1:00	D
+Rule	Moncton	1939	1941	-	Sep	Sat>=21	1:00	0	S
+Rule	Moncton	1940	only	-	May	19	1:00	1:00	D
+Rule	Moncton	1941	only	-	May	 4	1:00	1:00	D
+Rule	Moncton	1946	1972	-	Apr	lastSun	2:00	1:00	D
+Rule	Moncton	1946	1956	-	Sep	lastSun	2:00	0	S
+Rule	Moncton	1956	1972	-	Oct	lastSun	2:00	0	S
+Rule	Moncton	1993	2006	-	Apr	Sun>=1	0:01	1:00	D
+Rule	Moncton	1993	2006	-	Oct	lastSun	0:01	0	S
+Rule	Moncton	2007	max	-	Mar	Sun>=8	0:01	1:00	D
+Rule	Moncton	2007	max	-	Nov	Sun>=1	0:01	0	S
+# Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+Zone America/Moncton	-4:19:08 -	LMT	1883 Dec  9
+			-5:00	-	EST	1902 Jun 15
+			-4:00	Canada	A%sT	1933
+			-4:00	Moncton	A%sT	1942
+			-4:00	Canada	A%sT	1946
+			-4:00	Moncton	A%sT	1973
+			-4:00	Canada	A%sT	1993
+			-4:00	Moncton	A%sT
 
 # Ontario, Quebec
 
@@ -1119,11 +1285,13 @@ Rule	Winn	1963	only	-	Apr	lastSun	2:00	1:00	D
 Rule	Winn	1963	only	-	Sep	22	2:00	0	S
 Rule	Winn	1966	1986	-	Apr	lastSun	2:00	1:00	D
 Rule	Winn	1966	1986	-	Oct	lastSun	2:00	0	S
-Rule	Winn	1987	max	-	Apr	Sun>=1	2:00	1:00	D
+Rule	Winn	1987	2006	-	Apr	Sun>=1	2:00s	1:00	D
 # From Paul Eggert (2000-10-02):
 # INMS (2000-09-12) says that, since 1988 at least, Manitoba switches from
 # DST at 03:00 local time.  For now, assume it started in 1987.
-Rule	Winn	1987	max	-	Oct	lastSun	2:00s	0	S
+Rule	Winn	1987	2006	-	Oct	lastSun	2:00s	0	S
+Rule	Winn	2007	max	-	Mar	Sun>=8	2:00s	1:00	D
+Rule	Winn	2007	max	-	Nov	Sun>=1	2:00s	0	S
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Winnipeg	-6:28:36 -	LMT	1887 Jul 16
 			-6:00	Winn	C%sT
@@ -1295,8 +1463,6 @@ Zone America/Dawson_Creek -8:00:56 -	LMT	1884
 # </a> (1999) reports that Pangnirtung operates on eastern time,
 # and that Coral Harbour does not observe DST.  We don't know when
 # Pangnirtung switched to eastern time; we'll guess 1995.
-# We'll ignore the claim about Coral Harbour for now,
-# since we have no further info.
 
 # From Rives McDow (1999-11-08):
 # On October 31, when the rest of Nunavut went to Central time,
@@ -1371,6 +1537,23 @@ Zone America/Dawson_Creek -8:00:56 -	LMT	1884
 # more.
 # [Also see <http://www.nunatsiaq.com/nunavut/nvt10309_06.html> (2001-03-09).]
 
+# From Gwillim Law (2005-05-21):
+# According to maps at
+# http://inms-ienm.nrc-cnrc.gc.ca/images/time_services/TZ01SWE.jpg
+# http://inms-ienm.nrc-cnrc.gc.ca/images/time_services/TZ01SSE.jpg
+# (both dated 2003), and
+# http://www.canadiangeographic.ca/Magazine/SO98/geomap.asp
+# (from a 1998 Canadian Geographic article), the de facto and de jure time
+# for Southampton Island (at the north end of Hudson Bay) is UTC-5 all year
+# round.  Using Google, it's easy to find other websites that confirm this.
+# I wasn't able to find how far back this time regimen goes, but since it
+# predates the creation of Nunavut, it probably goes back many years....
+# The Inuktitut name of Coral Harbour is Sallit, but it's rarely used.
+#
+# From Paul Eggert (2005-07-26):
+# For lack of better information, assume that Southampton Island observed
+# daylight saving only during wartime.
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	NT_YK	1918	only	-	Apr	14	2:00	1:00	D
 Rule	NT_YK	1918	only	-	Oct	27	2:00	0	S
@@ -1394,6 +1577,9 @@ Zone America/Iqaluit	-4:33:52 -	LMT	1884 # Frobisher Bay before 1987
 			-5:00	NT_YK	E%sT	1999 Oct 31 2:00
 			-6:00	Canada	C%sT	2000 Oct 29 2:00
 			-5:00	Canada	E%sT
+Zone America/Coral_Harbour -5:32:40 -	LMT	1884
+			-5:00	NT_YK	E%sT	1946
+			-5:00	-	EST
 Zone America/Rankin_Inlet -6:08:40 -	LMT	1884
 			-6:00	NT_YK	C%sT	2000 Oct 29 2:00
 			-5:00	-	EST	2001 Apr  1 3:00
@@ -1769,6 +1955,11 @@ Zone America/Costa_Rica	-5:36:20 -	LMT	1890		# San Jose
 # to normal hours (after daylight saving time)".
 # For now, let's assume that it's a one-year temporary measure.
 
+# From Carlos A. Carnero Delgado (2005-11-12):
+# This year (just like in 2004-2005) there's no change in time zone
+# adjustment in Cuba.  We will stay in daylight saving time:
+# http://www.granma.cu/espanol/2005/noviembre/mier9/horario.html
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Cuba	1928	only	-	Jun	10	0:00	1:00	D
 Rule	Cuba	1928	only	-	Oct	10	0:00	0	S
@@ -1799,7 +1990,7 @@ Rule	Cuba	1997	only	-	Oct	12	0:00s	0	S
 Rule	Cuba	1998	1999	-	Mar	lastSun	0:00s	1:00	D
 Rule	Cuba	1998	2003	-	Oct	lastSun	0:00s	0	S
 Rule	Cuba	2000	max	-	Apr	Sun>=1	0:00s	1:00	D
-Rule	Cuba	2005	max	-	Oct	lastSun	0:00s	0	S
+Rule	Cuba	2006	max	-	Oct	lastSun	0:00s	0	S
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Havana	-5:29:28 -	LMT	1890
@@ -1969,18 +2160,34 @@ Zone America/Montserrat	-4:08:52 -	LMT	1911 Jul 1 0:01   # Olveston
 # The Decree, no 23-2005 is available here:
 # http://www.presidencia.gob.ni/buscador_gaceta/BD/DECRETOS/2005/Decreto%2023-2005%20Se%20adelanta%20en%20una%20hora%20en%20todo%20el%20territorio%20nacional%20apartir%20de%20las%2024horas%20del%2009%20de%20Abril.pdf
 #
-# From Paul Eggert (2005-04-12):
+# From Paul Eggert (2005-05-01):
 # The decree doesn't say anything about daylight saving, but for now let's
 # assume that it is daylight saving and that they'll switch back on the
-# 2nd Sunday in September.
+# 3rd Sunday in September.
+#
+# From Gwillim Law (2005-04-21):
+# The Associated Press story on the time change, which can be found at
+# http://www.lapalmainteractivo.com/guias/content/gen/ap/America_Latina/AMC_GEN_NICARAGUA_HORA.html
+# and elsewhere, says (fifth paragraph, translated from Spanish):  "The last
+# time that a change of clocks was applied to save energy was in the year 2000
+# during the Arnoldo Aleman administration."...
+# The northamerica file says that Nicaragua has been on UTC-6 continuously
+# since December 1998.  I wasn't able to find any details of Nicaraguan time
+# changes in 2000.  Perhaps a note could be added to the northamerica file, to
+# the effect that we have indirect evidence that DST was observed in 2000.
+#
+# From Jesper Norgaard Welen (2005-11-02):
+# Nicaragua left DST the 2005-10-02 at 00:00 (local time).
+# http://www.presidencia.gob.ni/presidencia/files_index/secretaria/comunicados/2005/septiembre/26septiembre-cambio-hora.htm
+# (2005-09-26)
 #
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Nic	1979	1980	-	Mar	Sun>=16	0:00	1:00	D
 Rule	Nic	1979	1980	-	Jun	Mon>=23	0:00	0	S
-Rule	Nic	1992	only	-	Jan	1	4:00	1:00	D
+Rule	Nic	1992	only	-	Jan	 1	4:00	1:00	D
 Rule	Nic	1992	only	-	Sep	24	0:00	0	S
 Rule	Nic	2005	only	-	Apr	10	0:00	1:00	D
-Rule	Nic	2005	only	-	Sep	11	0:00	0	S
+Rule	Nic	2005	only	-	Oct	 2	0:00	0	S
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Managua	-5:45:08 -	LMT	1890
 			-5:45:12 -	MMT	1934 Jun 23 # Managua Mean Time?
