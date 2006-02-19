@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.7 2006/02/19 04:50:47 marco Exp $ */
+/* $OpenBSD: dsdt.h,v 1.8 2006/02/19 21:32:30 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -44,5 +44,10 @@ int   aml_comparevalue(struct acpi_context *, int, struct aml_value *, struct am
 int64_t aml_val2int(struct acpi_context *, struct aml_value *);
 
 struct aml_node *aml_searchname(struct aml_node *, const char *);
+
+void aml_register_notify(struct aml_node *, 
+			 int (*)(struct aml_node *, int, void *),
+			 void *);
+void aml_notify(struct aml_node *, int);
 
 #endif /* __DEV_ACPI_DSDT_H__ */

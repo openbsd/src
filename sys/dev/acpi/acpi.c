@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.35 2006/02/19 19:03:49 grange Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.36 2006/02/19 21:32:30 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -527,6 +527,19 @@ acpi_foundhid(struct aml_node *node, void *arg)
 		aaa.aaa_memt = sc->sc_memt;
 		aaa.aaa_node = node->parent;
 		config_found(self, &aaa, acpi_print);
+	} else if (!strcmp(dev, ACPI_DEV_LD) ||
+		   !strcmp(dev, ACPI_DEV_PBD) ||
+		   !strcmp(dev, ACPI_DEV_SBD)) {
+#if 0
+		struct acpi_attach_args aaa; 
+
+		memset(&aaa, 0, sizeof(aaa));
+		aaa.aaa_name = "acpibtn";
+		aaa.aaa_iot = sc->sc_iot;
+		aaa.aaa_memt = sc->sc_memt;
+		aaa.aaa_node = node->parent;
+		config_found(self, &aaa, acpi_print);
+#endif
 	}
 }
 
@@ -1242,6 +1255,9 @@ acpi_isr_thread(void *arg)
 			
 		if (sc->sc_powerbtn) {
 			sc->sc_powerbtn = 0;
+
+			if (sc->sc_pbtndev)
+				aml_notify(sc->sc_pbtndev, 0x80);
 			acpi_evindex++;
 			dnprintf(1,"power button pressed\n");
 			KNOTE(sc->sc_note, ACPI_EVENT_COMPOSE(ACPI_EV_PWRBTN,
@@ -1253,6 +1269,9 @@ acpi_isr_thread(void *arg)
 		}
 		if (sc->sc_sleepbtn) {
 			sc->sc_sleepbtn = 0;
+
+			if (sc->sc_sbtndev)
+				aml_notify(sc->sc_sbtndev, 0x80);
 			acpi_evindex++;
 			dnprintf(1,"sleep button pressed\n");
 			KNOTE(sc->sc_note, ACPI_EVENT_COMPOSE(ACPI_EV_SLPBTN,

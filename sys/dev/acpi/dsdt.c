@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.24 2006/02/19 04:50:47 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.25 2006/02/19 21:32:30 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -231,6 +231,56 @@ aml_setbit(u_int8_t *pb, int bit, int val)
 	else {
 		*pb &= ~aml_bitmask(bit);
 	}
+}
+
+/*=====================================
+ * This code handles AML notifications
+ *=====================================*/
+struct aml_notify_data
+{
+	struct aml_node 	*node;
+	void            	*cbarg;
+	int			(*cbproc)(struct aml_node *, int, void *);
+
+	SLIST_ENTRY(aml_notify_data) link;
+};
+
+SLIST_HEAD(aml_notify_head, aml_notify_data);
+struct aml_notify_head aml_notify_list =
+	SLIST_HEAD_INITIALIZER(&aml_notify_list);
+
+void aml_register_notify(struct aml_node *node,
+			 int (*proc)(struct aml_node *, int, void *),
+			 void *arg)
+{
+	struct aml_notify_data *pdata;
+
+	dnprintf(10, "aml_register_notify: %s %x\n",
+		 node->name, cbproc);
+	pdata = acpi_os_allocmem(sizeof(struct aml_notify_data));
+	pdata->node = node;
+	pdata->cbarg = arg;
+	pdata->cbproc = proc;
+
+	SLIST_INSERT_HEAD(&aml_notify_list, pdata, link);
+}
+
+void aml_notify(struct aml_node *node, int notify_value)
+{
+	struct aml_notify_data *pdata = NULL;
+
+	SLIST_FOREACH(pdata, &aml_notify_list, link)
+		if (pdata->node == node) {
+			pdata->cbproc(node, notify_value, pdata->cbarg);
+		}
+}
+
+void _aml_notify(struct aml_node *, void *);
+
+void
+_aml_notify(struct aml_node *node, void *arg)
+{
+	aml_notify(node, *(int64_t *)arg);
 }
 
 void
@@ -2361,12 +2411,16 @@ aml_eparseval(struct acpi_context *ctx, int deref)
 		lhs = aml_eparseval(ctx, 1);
 		i1  = aml_eparseint(ctx, AML_ANYINT);
 		dnprintf(10, "NOTIFY: %llx %s\n", i1, lhs->name);
+		aml_find_node(aml_root.child, lhs->name,
+			      _aml_notify,
+			      &i1);
 		break;
 	case AMLOP_LOAD:
 	case AMLOP_STORE:
 		rhs = aml_eparseval(ctx, 1);
 		lhs = aml_eparseval(ctx, 0);
 		rv  = aml_esetnodevalue(ctx, lhs, rhs, 0);
+		
 		break;
 	case AMLOP_COPYOBJECT:
 		rhs = aml_eparseval(ctx, 1);
