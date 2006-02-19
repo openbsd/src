@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.34 2006/02/19 04:50:46 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.35 2006/02/19 19:03:49 grange Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -28,6 +28,7 @@
 #include <sys/kthread.h>
 
 #include <machine/conf.h>
+#include <machine/cpufunc.h>
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
@@ -981,12 +982,50 @@ void
 acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 {
 #ifdef ACPI_ENABLE
-	u_int16_t flag;
+	u_int16_t rega, regb;
+	int retries;
 
-	flag = acpi_read_pmreg(sc, ACPIREG_PM1_CNT);
-	/* XXX This is sick and wrong and illegal! */
-	acpi_write_pmreg(sc, ACPIREG_PM1_CNT,  flag |= (state << 10));
-	acpi_write_pmreg(sc, ACPIREG_PM1_CNT,  flag |= ACPI_PM1_SLP_EN);
+	if (state == ACPI_STATE_S0)
+		return;
+	if (sc->sc_sleeptype[state].slp_typa == -1 ||
+	    sc->sc_sleeptype[state].slp_typb == -1) {
+		printf("%s: state S%d unavailable\n",
+		    sc->sc_dev.dv_xname, state);
+		return;
+	}
+
+	disable_intr();
+
+	/* Clear WAK_STS bit */
+	acpi_write_pmreg(sc, ACPIREG_PM1_STS, ACPI_PM1_WAK_STS);
+
+	/* Write SLP_TYPx values */
+	rega = acpi_read_pmreg(sc, ACPIREG_PM1A_CNT);
+	regb = acpi_read_pmreg(sc, ACPIREG_PM1B_CNT);
+	rega &= ~(ACPI_PM1_SLP_TYPX_MASK | ACPI_PM1_SLP_EN);
+	regb &= ~(ACPI_PM1_SLP_TYPX_MASK | ACPI_PM1_SLP_EN);
+	rega |= ACPI_PM1_SLP_TYPX(sc->sc_sleeptype[state].slp_typa);
+	regb |= ACPI_PM1_SLP_TYPX(sc->sc_sleeptype[state].slp_typb);
+	acpi_write_pmreg(sc, ACPIREG_PM1A_CNT, rega);
+	acpi_write_pmreg(sc, ACPIREG_PM1B_CNT, regb);
+
+	/* Set SLP_EN bit */
+	rega |= ACPI_PM1_SLP_EN;
+	regb |= ACPI_PM1_SLP_EN;
+	acpi_write_pmreg(sc, ACPIREG_PM1A_CNT, rega);
+	acpi_write_pmreg(sc, ACPIREG_PM1B_CNT, regb);
+
+	/* Loop on WAK_STS */
+	for (retries = 1000; retries > 0; retries--) {
+		rega = acpi_read_pmreg(sc, ACPIREG_PM1A_STS);
+		regb = acpi_read_pmreg(sc, ACPIREG_PM1B_STS);
+		if (rega & ACPI_PM1_WAK_STS ||
+		    regb & ACPI_PM1_WAK_STS)
+			break;
+		DELAY(10);
+	}
+
+	enable_intr();
 #endif
 }
 
