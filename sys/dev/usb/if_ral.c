@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.64 2006/02/11 09:31:42 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.65 2006/02/19 08:44:17 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -527,6 +527,9 @@ USB_DETACH(ural)
 
 	s = splusb();
 
+	ieee80211_ifdetach(ifp);	/* free all nodes */
+	if_detach(ifp);
+
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
 	timeout_del(&sc->scan_ch);
 	timeout_del(&sc->amrr_ch);
@@ -548,9 +551,6 @@ USB_DETACH(ural)
 
 	ural_free_rx_list(sc);
 	ural_free_tx_list(sc);
-
-	ieee80211_ifdetach(ifp);
-	if_detach(ifp);
 
 	splx(s);
 
@@ -600,7 +600,6 @@ fail:	ural_free_tx_list(sc);
 Static void
 ural_free_tx_list(struct ural_softc *sc)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
 	struct ural_tx_data *data;
 	int i;
 
@@ -612,10 +611,11 @@ ural_free_tx_list(struct ural_softc *sc)
 			data->xfer = NULL;
 		}
 
-		if (data->ni != NULL) {
-			ieee80211_release_node(ic, data->ni);
-			data->ni = NULL;
-		}
+		/*
+		 * The node has already been freed at that point so don't call
+		 * ieee80211_release_node() here.
+		 */
+		data->ni = NULL;
 	}
 }
 
@@ -1399,6 +1399,13 @@ ural_start(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni;
 	struct mbuf *m0;
+
+	/*
+	 * net80211 may still try to send management frames even if the
+	 * IFF_RUNNING flag is not set...
+	 */
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+		return;
 
 	for (;;) {
 		IF_POLL(&ic->ic_mgtq, m0);
@@ -2249,7 +2256,11 @@ ural_stop(struct ifnet *ifp, int disable)
 	struct ural_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 
-	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+	sc->sc_tx_timer = 0;
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);	/* free all nodes */
 
 	/* disable Rx */
 	ural_write(sc, RAL_TXRX_CSR2, RAL_DISABLE_RX);
@@ -2257,10 +2268,6 @@ ural_stop(struct ifnet *ifp, int disable)
 	/* reset ASIC and BBP (but won't reset MAC registers!) */
 	ural_write(sc, RAL_MAC_CSR1, RAL_RESET_ASIC | RAL_RESET_BBP);
 	ural_write(sc, RAL_MAC_CSR1, 0);
-
-	sc->sc_tx_timer = 0;
-	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	if (sc->amrr_xfer != NULL) {
 		usbd_free_xfer(sc->amrr_xfer);
