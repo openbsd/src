@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.38 2006/02/10 18:30:47 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.39 2006/02/19 18:52:06 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -170,6 +170,9 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	TAILQ_INIT(&ctl_conns);
 	control_listen();
 
+	if ((pkt_ptr = calloc(1, READ_BUF_SIZE)) == NULL)
+		fatal("ospfe");
+
 	/* start interfaces */
 	LIST_FOREACH(area, &oeconf->area_list, entry) {
 		LIST_FOREACH(iface, &area->iface_list, entry) {
@@ -216,6 +219,7 @@ ospfe_shutdown(void)
 	msgbuf_clear(&ibuf_main->w);
 	free(ibuf_main);
 	free(oeconf);
+	free(pkt_ptr);
 
 	log_info("ospf engine exiting");
 	_exit(0);
@@ -715,7 +719,7 @@ orig_rtr_lsa(struct area *area)
 			    (iface->linkstate != LINK_STATE_UP &&
 			    iface->media_type == IFT_CARP))
 				continue;
-			
+
 			log_debug("orig_rtr_lsa: stub net, "
 			    "interface %s", iface->name);
 

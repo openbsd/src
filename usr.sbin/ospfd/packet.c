@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.18 2005/11/12 18:18:24 deraadt Exp $ */
+/*	$OpenBSD: packet.c,v 1.19 2006/02/19 18:52:06 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -86,7 +86,7 @@ recv_packet(int fd, short event, void *bula)
 	struct iface		*iface;
 	struct nbr		*nbr = NULL;
 	struct in_addr		 addr;
-	char			*buf, *ptr;
+	char			*buf;
 	ssize_t			 r;
 	u_int16_t		 len;
 	int			 l;
@@ -94,18 +94,13 @@ recv_packet(int fd, short event, void *bula)
 	if (event != EV_READ)
 		return;
 
-	/*
-	 * XXX I don't like to allocate a buffer for each packet received
-	 * and freeing that buffer at the end of the function. It would be
-	 * enough to allocate the buffer on startup.
-	 */
-	if ((ptr = buf = calloc(1, READ_BUF_SIZE)) == NULL)
-		fatal("recv_packet");
+	/* setup buffer */
+	buf = pkt_ptr;
 
 	if ((r = recvfrom(fd, buf, READ_BUF_SIZE, 0, NULL, NULL)) == -1) {
 		if (errno != EAGAIN && errno != EINTR)
 			log_debug("recv_packet: error receiving packet");
-		goto done;
+		return;
 	}
 
 	len = (u_int16_t)r;
@@ -113,18 +108,18 @@ recv_packet(int fd, short event, void *bula)
 	/* IP header sanity checks */
 	if (len < sizeof(ip_hdr)) {
 		log_warnx("recv_packet: bad packet size");
-		goto done;
+		return;
 	}
 	memcpy(&ip_hdr, buf, sizeof(ip_hdr));
 	if ((l = ip_hdr_sanity_check(&ip_hdr, len)) == -1)
-		goto done;
+		return;
 	buf += l;
 	len -= l;
 
 	/* find a matching interface */
 	if ((iface = find_iface(xconf, ip_hdr.ip_src)) == NULL) {
 		log_debug("recv_packet: cannot find valid interface");
-		goto done;
+		return;
 	}
 
 	/*
@@ -140,7 +135,7 @@ recv_packet(int fd, short event, void *bula)
 				log_debug("recv_packet: packet sent to wrong "
 				    "address %s, interface %s",
 				    inet_ntoa(ip_hdr.ip_dst), iface->name);
-				goto done;
+				return;
 			}
 		}
 	}
@@ -148,23 +143,23 @@ recv_packet(int fd, short event, void *bula)
 	/* OSPF header sanity checks */
 	if (len < sizeof(*ospf_hdr)) {
 		log_warnx("recv_packet: bad packet size");
-		goto done;
+		return;
 	}
 	ospf_hdr = (struct ospf_hdr *)buf;
 
 	if ((l = ospf_hdr_sanity_check(&ip_hdr, ospf_hdr, len, iface)) == -1)
-		goto done;
+		return;
 
 	nbr = nbr_find_id(iface, ospf_hdr->rtr_id);
 	if (ospf_hdr->type != PACKET_TYPE_HELLO && nbr == NULL) {
 		log_debug("recv_packet: unknown neighbor ID");
-		goto done;
+		return;
 	}
 
 	if (auth_validate(buf, len, iface, nbr)) {
 		log_warnx("recv_packet: authentication error, "
 		    "interface %s", iface->name);
-		goto done;
+		return;
 	}
 
 	buf += sizeof(*ospf_hdr);
@@ -198,8 +193,6 @@ recv_packet(int fd, short event, void *bula)
 		log_debug("recv_packet: unknown OSPF packet type, interface %s",
 		    iface->name);
 	}
-done:
-	free(ptr);
 }
 
 int
