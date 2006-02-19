@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.29 2006/02/19 19:23:17 norby Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.30 2006/02/19 21:48:56 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -117,6 +117,7 @@ const char * const nbr_action_names[] = {
 int
 nbr_fsm(struct nbr *nbr, enum nbr_event event)
 {
+	struct timeval	now;
 	int		old_state;
 	int		new_state = 0;
 	int		i, ret = 0;
@@ -206,6 +207,9 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 			orig_rtr_lsa(nbr->iface->area);
 			if (nbr->iface->state & IF_STA_DR)
 				orig_net_lsa(nbr->iface);
+
+			gettimeofday(&now, NULL);
+			nbr->uptime = now.tv_sec;
 		}
 
 		/* bidirectional communication lost */
@@ -684,6 +688,11 @@ nbr_to_ctl(struct nbr *nbr)
 			nctl.dead_timer = res.tv_sec;
 	} else
 		nctl.dead_timer = 0;
+
+	if (nbr->state == NBR_STA_FULL) {
+		nctl.uptime = now.tv_sec - nbr->uptime;
+	} else
+		nctl.uptime = 0;
 
 	return (&nctl);
 }

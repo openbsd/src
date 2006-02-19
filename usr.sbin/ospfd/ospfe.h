@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.23 2006/02/19 18:55:47 norby Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.24 2006/02/19 21:48:56 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -136,6 +136,7 @@ struct nbr {
 	u_int32_t		 ls_ret_cnt;
 	u_int32_t		 crypt_seq_num;
 
+	time_t			 uptime;
 	int			 state;
 	u_int8_t		 priority;
 	u_int8_t		 options;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.23 2006/02/10 18:31:49 claudio Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.24 2006/02/19 21:48:56 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -135,8 +135,8 @@ main(int argc, char *argv[])
 		    &ifidx, sizeof(ifidx));
 		break;
 	case SHOW_NBR:
-		printf("%-15s %-3s %-17s %-9s %-15s %s\n", "ID", "Pri",
-		    "State", "DeadTime", "Address", "Interface");
+		printf("%-15s %-3s %-12s %-8s %-15s %-9s %s\n", "ID", "Pri",
+		    "State", "DeadTime", "Address", "Iface","Uptime");
 	case SHOW_NBR_DTAIL:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_NBR, 0, 0, NULL, 0);
 		break;
@@ -353,7 +353,7 @@ show_interface_msg(struct imsg *imsg)
 			case AUTH_CRYPT:
 				printf("  Message digest authentication "
 				    "enabled\n");
-				printf("    Primary key id is %d\n", 
+				printf("    Primary key id is %d\n",
 				    iface->auth_keyid);
 				break;
 			default:
@@ -397,19 +397,19 @@ print_if_state(int state)
 	case IF_STA_DOWN:
 		return ("DOWN");
 	case IF_STA_LOOPBACK:
-		return ("LOOPBACK");
+		return ("LOOP");
 	case IF_STA_WAITING:
-		return ("WAITING");
+		return ("WAIT");
 	case IF_STA_POINTTOPOINT:
 		return ("P2P");
 	case IF_STA_DROTHER:
-		return ("DROTHER");
+		return ("OTHER");
 	case IF_STA_BACKUP:
-		return ("BACKUP");
+		return ("BCKUP");
 	case IF_STA_DR:
 		return ("DR");
 	default:
-		return ("UNKNOWN");
+		return ("UNKNW");
 	}
 }
 
@@ -420,23 +420,23 @@ print_nbr_state(int state)
 	case NBR_STA_DOWN:
 		return ("DOWN");
 	case NBR_STA_ATTEMPT:
-		return ("ATTEMPT");
+		return ("ATTMP");
 	case NBR_STA_INIT:
 		return ("INIT");
 	case NBR_STA_2_WAY:
 		return ("2-WAY");
 	case NBR_STA_XSTRT:
-		return ("EXSTART");
+		return ("EXSTA");
 	case NBR_STA_SNAP:
-		return ("SNAPSHOT");
+		return ("SNAP");
 	case NBR_STA_XCHNG:
-		return ("EXCHANGE");
+		return ("EXCHG");
 	case NBR_STA_LOAD:
-		return ("LOADING");
+		return ("LOAD");
 	case NBR_STA_FULL:
 		return ("FULL");
 	default:
-		return ("UNKNOWN");
+		return ("UNKNW");
 	}
 }
 
@@ -842,9 +842,10 @@ show_nbr_msg(struct imsg *imsg)
 		if (asprintf(&state, "%s/%s", print_nbr_state(nbr->nbr_state),
 		    print_if_state(nbr->iface_state)) == -1)
 			err(1, NULL);
-		printf("%-15s %-3d %-17s %-9s ", inet_ntoa(nbr->id),
+		printf("%-15s %-3d %-12s %-9s", inet_ntoa(nbr->id),
 		    nbr->priority, state, fmt_timeframe_core(nbr->dead_timer));
-		printf("%-15s %s\n", inet_ntoa(nbr->addr), nbr->name);
+		printf("%-15s %-9s %s\n", inet_ntoa(nbr->addr), nbr->name,
+		    nbr->uptime == 0 ? "-" : fmt_timeframe_core(nbr->uptime));
 		free(state);
 		break;
 	case IMSG_CTL_END:
