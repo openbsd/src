@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1024 2006/02/16 01:36:11 brad Exp $
+$OpenBSD: pcidevs,v 1.1025 2006/02/19 09:32:00 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -48,6 +48,7 @@ $OpenBSD: pcidevs,v 1.1024 2006/02/16 01:36:11 brad Exp $
 
 vendor	MARTINMARIETTA	0x003d	Martin-Marietta
 vendor	HAUPPAUGE	0x0070	Hauppauge
+vendor	TTTECH		0x0357	TTTech
 vendor	DYNALINK	0x0675	Dynalink
 vendor	COMPAQ		0x0e11	Compaq
 vendor	SYMBIOS		0x1000	Symbios Logic
@@ -3003,6 +3004,9 @@ product SYMPHONY 82C103		0x0103	82C103
 product SYMPHONY 82C105		0x0105	82C105
 product SYMPHONY2 82C101	0x0001	82C101
 product SYMPHONY 82C565		0x0565	82C565 ISA
+
+/* TTTech */
+product TTTECH MC322		0x000a	MC322
 
 /* Tamarack Microelectronics */
 product TAMARACK TC9021		0x1021	TC9021 GigE
