@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.22 2006/02/19 18:52:06 norby Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.23 2006/02/19 18:55:47 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -133,6 +133,7 @@ struct nbr {
 	u_int32_t		 dd_pending;
 	u_int32_t		 peerid;	/* unique ID in DB */
 	u_int32_t		 ls_req_cnt;
+	u_int32_t		 ls_ret_cnt;
 	u_int32_t		 crypt_seq_num;
 
 	int			 state;

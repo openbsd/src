@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.24 2006/02/10 18:30:47 claudio Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.25 2006/02/19 18:55:47 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -195,7 +195,7 @@ add_ls_update(struct buf *buf, struct iface *iface, void *data, int len)
 }
 
 
-	
+
 int
 send_ls_update(struct buf *buf, struct iface *iface, struct in_addr addr,
     u_int32_t nlsa)
@@ -363,6 +363,8 @@ ls_retrans_list_insert(struct nbr *nbr, struct lsa_entry *new)
 	}
 	new->le_when = when;
 	TAILQ_INSERT_TAIL(&nbr->ls_retrans_list, new, entry);
+
+	nbr->ls_ret_cnt++;
 }
 
 void
@@ -379,8 +381,9 @@ ls_retrans_list_remove(struct nbr *nbr, struct lsa_entry *le)
 	if (TAILQ_FIRST(&nbr->ls_retrans_list) == le &&
 	    evtimer_pending(&nbr->ls_retrans_timer, NULL))
 		reset = 1;
-	
+
 	TAILQ_REMOVE(&nbr->ls_retrans_list, le, entry);
+	nbr->ls_ret_cnt--;
 
 	if (reset && TAILQ_FIRST(&nbr->ls_retrans_list)) {
 		evtimer_del(&nbr->ls_retrans_timer);
@@ -409,6 +412,8 @@ ls_retrans_list_clr(struct nbr *nbr)
 
 	while ((le = TAILQ_FIRST(&nbr->ls_retrans_list)) != NULL)
 		ls_retrans_list_free(nbr, le);
+
+	nbr->ls_ret_cnt = 0;
 }
 
 int
@@ -431,7 +436,7 @@ ls_retrans_timer(int fd, short event, void *bula)
 		le->le_when = 0;	/* timer fired */
 	else
 		return;			/* queue empty, nothing to do */
-	
+
 	if (nbr->iface->self == nbr) {
 		/*
 		 * oneshot needs to be set for lsa queued for flooding,
@@ -472,7 +477,7 @@ ls_retrans_timer(int fd, short event, void *bula)
 			TAILQ_REMOVE(&nbr->ls_retrans_list, le, entry);
 			le->le_when = nbr->iface->rxmt_interval;
 			ls_retrans_list_insert(nbr, le);
-		}		
+		}
 	}
 	send_ls_update(buf, nbr->iface, addr, nlsa);
 

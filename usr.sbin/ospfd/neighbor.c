@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.27 2006/02/09 15:23:08 norby Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.28 2006/02/19 18:55:47 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -649,11 +649,7 @@ nbr_to_ctl(struct nbr *nbr)
 		nctl.db_sum_lst_cnt++;
 
 	nctl.ls_req_lst_cnt = nbr->ls_req_cnt;
-
-	/* XXX */
-	nctl.ls_retrans_lst_cnt = 0;
-	TAILQ_FOREACH(le, &nbr->ls_retrans_list, entry)
-		nctl.ls_retrans_lst_cnt++;
+	nctl.ls_retrans_lst_cnt = nbr->ls_ret_cnt;
 
 	nctl.nbr_state = nbr->state;
 
