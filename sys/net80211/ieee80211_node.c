@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.13 2005/10/09 19:44:22 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.14 2006/02/19 17:34:13 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -246,7 +246,7 @@ ieee80211_next_scan(struct ifnet *ifp)
 			chan = &ic->ic_channels[0];
 		if (isset(ic->ic_chan_scan, ieee80211_chan2ieee(ic, chan))) {
 			/*
-			 * Honor channels marked passive-only
+			 * Ignore channels marked passive-only
 			 * during an active scan.
 			 */
 			if ((ic->ic_flags & IEEE80211_F_ASCAN) == 0 ||
