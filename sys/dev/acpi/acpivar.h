@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.15 2006/02/17 17:35:59 marco Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.16 2006/02/19 04:50:46 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -90,21 +90,26 @@ struct acpi_reg_map {
 	const char	   *name;
 };
 
-struct acpi_softc {
-	struct device		 sc_dev;
+struct acpi_thread {
+	struct acpi_softc   *sc;
+	volatile int	    running;
+};
 
-	bus_space_tag_t		 sc_iot;
-	bus_space_tag_t		 sc_memt;
+struct acpi_softc {
+	struct device		sc_dev;
+
+	bus_space_tag_t		sc_iot;
+	bus_space_tag_t		sc_memt;
 #if 0
-	bus_space_tag_t		 sc_pcit;
-	bus_space_tag_t		 sc_smbust;
+	bus_space_tag_t		sc_pcit;
+	bus_space_tag_t		sc_smbust;
 #endif
 
 	/*
 	 * First-level ACPI tables
 	 */
 	struct acpi_fadt	*sc_fadt;
-	acpi_qhead_t		 sc_tables;
+	acpi_qhead_t		sc_tables;
 
 	/*
 	 * Second-level information from FADT
@@ -112,24 +117,41 @@ struct acpi_softc {
 	struct acpi_facs	*sc_facs;	/* Shared with firmware! */
 
 	struct klist		*sc_note;
-	struct acpi_reg_map	 sc_pmregs[ACPIREG_MAXREG];
-	bus_space_handle_t	 sc_ioh_pm1a_evt;
+	struct acpi_reg_map	sc_pmregs[ACPIREG_MAXREG];
+	bus_space_handle_t	sc_ioh_pm1a_evt;
   
 	void			*sc_interrupt;
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	void			*sc_softih;
 #else
-	struct timeout		 sc_timeout;
+	struct timeout		sc_timeout;
 #endif
 
-	int			 sc_powerbtn;
-	int			 sc_sleepbtn;
+	int			sc_powerbtn;
+	int			sc_sleepbtn;
+  	u_int32_t		sc_gpemask;
 
 	struct {
 		int slp_typa;
 		int slp_typb;
-	}			 sc_sleeptype[5];
+	}			sc_sleeptype[5];
+
+  	struct {
+		int             gpe_type;
+	  	int		gpe_number;
+		struct aml_node *gpe_handler;
+	}			sc_gpes[256];
+	int			sc_maxgpe;
+
+	int			sc_wakeup;
+	u_int32_t		sc_gpe_sts;
+	u_int32_t		sc_gpe_en;
+	struct acpi_thread	*sc_thread;
 };
+
+#define GPE_NONE  0x00
+#define GPE_LEVEL 0x01
+#define GPE_EDGE  0x02
 
 struct acpi_table {
 	int	offset;

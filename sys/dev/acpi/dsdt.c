@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.23 2006/02/17 17:35:59 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.24 2006/02/19 04:50:47 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -233,8 +233,9 @@ aml_setbit(u_int8_t *pb, int bit, int val)
 	}
 }
 
-void aml_addchildnode(struct aml_node *parent,
-		      struct aml_node *child)
+void
+aml_addchildnode(struct aml_node *parent,
+		 struct aml_node *child)
 {
 	struct aml_node **tmp;
 
@@ -246,8 +247,9 @@ void aml_addchildnode(struct aml_node *parent,
 	*tmp = child;
 }
 
-struct aml_node *aml_create_node(struct aml_node *parent, int opcode,
-				 const char *mnem, u_int8_t *start)
+struct aml_node *
+aml_create_node(struct aml_node *parent, int opcode,
+		const char *mnem, u_int8_t *start)
 {
 	struct aml_node *node;
 
@@ -299,6 +301,8 @@ aml_allocvalue(int type, int64_t ival, void *bval)
 		break;
 	case AML_OBJTYPE_STRING:
 		/* Allocate string: if pointer valid, copy data */
+		if (ival < 0)
+			ival = strlen((const char *)bval);
 		rv->length = ival;
 		if (ival) {
 			rv->v_string = acpi_os_allocmem(ival+1);
@@ -357,7 +361,7 @@ aml_allocint(u_int64_t ival)
 struct aml_value *
 aml_allocstr(const char *str)
 {
-	return aml_allocvalue(AML_OBJTYPE_STRING, strlen(str), (void *)str);
+	return aml_allocvalue(AML_OBJTYPE_STRING, -1, (void *)str);
 }
 
 int 
@@ -518,6 +522,7 @@ aml_comparevalue(struct acpi_context *ctx, int opcode, struct aml_value *lhs,
 	if (rhs->type == AML_OBJTYPE_INTEGER) {
 		return aml_logicalcmp(opcode, aml_val2int(ctx, lhs), rhs->v_integer);
 	}
+	/* XXX: fix this.. non integer comparisons */
 	dnprintf(40,"comparevalue: %.2x %.2x\n", lhs->type, rhs->type);
 	return 0;
 }
@@ -736,11 +741,9 @@ aml_isnamedop(u_int16_t opcode)
 	case AMLOP_MULTINAMEPREFIX:
 	case AMLOP_DUALNAMEPREFIX:
 	case AMLOP_NAMECHAR:
+	case 'A' ... 'Z':
 		return (1);
 	}
-
-	if (opcode >= 'A' && opcode <= 'Z')
-		return (1);
 
 	return (0);
 }
@@ -816,8 +819,10 @@ aml_evalmath(u_int16_t opcode, int64_t lhs, int64_t rhs)
 {
 	dnprintf(50, "evalmath: %s %lld %lld\n", aml_opname(opcode), lhs, rhs);
 	switch (opcode) {
+	case AMLOP_INCREMENT:
 	case AMLOP_ADD:
 		return (lhs + rhs);
+	case AMLOP_DECREMENT:
 	case AMLOP_SUBTRACT:
 		return (lhs - rhs);
 	case AMLOP_MULTIPLY:
@@ -840,10 +845,6 @@ aml_evalmath(u_int16_t opcode, int64_t lhs, int64_t rhs)
 		return ~(lhs | rhs); 
 	case AMLOP_XOR:
 		return (lhs ^ rhs);
-	case AMLOP_INCREMENT:
-		return (lhs + 1);
-	case AMLOP_DECREMENT:
-		return (lhs - 1);
 	case AMLOP_FINDSETLEFTBIT:
 		return aml_msb(lhs);
 	case AMLOP_FINDSETRIGHTBIT:
@@ -1050,9 +1051,8 @@ struct aml_opcode *aml_getopcode(struct acpi_context *ctx)
 	u_int16_t twocode, opcode;
 
 	/* Check if this is a name object */
-	if (aml_isnamedop(*ctx->pos)) {
+	if (aml_isnamedop(*ctx->pos))
 		opcode = AMLOP_NAMECHAR;
-	}
 	else {
 		opcode = aml_parse_int(ctx, AML_BYTE);
 		twocode = (opcode << 8L) + *ctx->pos;
@@ -1170,13 +1170,11 @@ aml_bufcpy(u_int8_t *pDst, int dstPos, const u_int8_t *pSrc, int srcPos,
 	if (aml_bytealigned(dstPos|srcPos|len)) {
 		/* Aligned transfer: use memcpy */
 		memcpy(pDst+aml_bytepos(dstPos), pSrc+aml_bytepos(srcPos), aml_bytelen(len));
+		return;
 	}
-	else {
-		/* Misaligned transfer: perform bitwise copy */
-		for (idx=0; idx<len; idx++) {
-			aml_setbit(pDst, idx+dstPos, aml_tstbit(pSrc, idx+srcPos));
-		}
-	}
+	/* Misaligned transfer: perform bitwise copy */
+	for (idx = 0; idx < len; idx++)
+		aml_setbit(pDst, idx + dstPos, aml_tstbit(pSrc, idx + srcPos));
 }
 
 /* Search list of objects for a name match 
@@ -1713,6 +1711,8 @@ struct aml_value *
 aml_esetnodevalue(struct acpi_context *ctx,  struct aml_value *lhs, 
 		  struct aml_value *rhs, int64_t rval)
 {
+	struct aml_value *tmp;
+
 	if (rhs == NULL) {
 		rhs = aml_allocint(rval);
 	}
@@ -1723,28 +1723,28 @@ aml_esetnodevalue(struct acpi_context *ctx,  struct aml_value *lhs,
 	dnprintf(50, "current: ");
 	aml_showvalue(lhs);
 
-	while (lhs->type == AML_OBJTYPE_OBJREF) {
-		lhs = aml_ederef(ctx, lhs);
-	}
-
-	switch (lhs->type) {
+	tmp = aml_ederef(ctx, lhs);
+	switch (tmp->type) {
 	case AML_OBJTYPE_UNINITIALIZED:
 		/* Object is not initialized */
-		*lhs = *rhs;
+		*tmp = *rhs;
 		break;
 	case AML_OBJTYPE_FIELDUNIT:
 	case AML_OBJTYPE_BUFFERFIELD:
-		aml_efield(ctx, lhs, rhs);
+		aml_efield(ctx, tmp, rhs);
 		break;
 	case AML_OBJTYPE_STATICINT:
 		/* Read-only */
 		break;
 	default:
 		/* Object is already initialized, free old value */
-		_aml_freevalue(lhs);
-		*lhs = *rhs;
+		_aml_freevalue(tmp);
+		*tmp = *rhs;
 	}
-	aml_showvalue(lhs);
+	aml_showvalue(tmp);
+	if (tmp != lhs) {
+		aml_freevalue(&tmp);
+	}
 	dnprintf(50, "--------- post set ----------\n");
 	return rhs;
 }
@@ -2360,7 +2360,7 @@ aml_eparseval(struct acpi_context *ctx, int deref)
 	case AMLOP_NOTIFY:
 		lhs = aml_eparseval(ctx, 1);
 		i1  = aml_eparseint(ctx, AML_ANYINT);
-		dnprintf(40, "NOTIFY: %llx %s\n", i1, lhs->name);
+		dnprintf(10, "NOTIFY: %llx %s\n", i1, lhs->name);
 		break;
 	case AMLOP_LOAD:
 	case AMLOP_STORE:
