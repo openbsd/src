@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.48 2006/02/19 09:44:55 damien Exp $
+.\" $OpenBSD: ral.4,v 1.49 2006/02/19 17:24:47 jmc Exp $
 .\"
 .\" Copyright (c) 2005, 2006
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -30,7 +30,7 @@
 The
 .Nm
 driver supports PCI/CardBus wireless adapters based on the Ralink RT2500,
-RT2501 and RT2600 chipsets
+RT2501, and RT2600 chipsets
 and the
 .Nm ural
 driver supports USB 2.0 wireless adapters based on the Ralink RT2500USB
@@ -429,7 +429,7 @@ For some reason, the driver was unable to read the microcode file from the
 filesystem.
 The file might be missing or corrupted.
 .It "ral%d: could not load 8051 microcode"
-An error occured while attempting to upload the microcode to the onboard 8051
+An error occurred while attempting to upload the microcode to the onboard 8051
 microcontroller unit.
 .It "ral%d: timeout waiting for MCU to initialize"
 The onboard 8051 microcontroller unit failed to initialize in time.
@@ -474,6 +474,6 @@ specification.
 The
 .Nm ural
 driver supports automatic control of the transmit speed in BSS mode only.
-Therefore, the use of an
+Therefore the use of a
 .Nm ural
-adapter in HostAP mode is discouraged.
+adapter in Host AP mode is discouraged.
