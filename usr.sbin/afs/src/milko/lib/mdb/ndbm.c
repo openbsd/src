@@ -151,7 +151,7 @@ mdb_NDBM_create(MDB **db, const char * filename, int flags, mode_t mode)
     (*db)->db = NULL;
     (*db)->name = strdup(filename);
     if ((*db)->name == NULL) {
-	free((*db)->name);
+	free(*db);
 	return ENOMEM;
     }
     (*db)->flags = flags;
