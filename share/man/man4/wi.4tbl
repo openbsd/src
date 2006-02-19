@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.81 2006/01/13 05:02:19 jsg Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.82 2006/02/19 17:32:17 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -519,19 +519,19 @@ The host-based access point mode on the Intersil PRISM cards has
 bugs when used with firmware versions prior to 0.8.3 and is completely
 unusable with firmware versions prior to 0.8.0 and 1.4.0-1.4.2.
 .Pp
-Software WEP is currently only supported in HostAP and BSS modes.
+Software WEP is currently only supported in Host AP and BSS modes.
 Furthermore, software WEP is currently incapable of decrypting
 fragmented frames.
 Lucent-based cards using firmware 8.10 and above fragment encrypted
 frames sent at 11Mbps.
 To work around this, Lucent clients with this firmware revision
-connecting to a HostAP server should use a 2Mbps connection or
+connecting to a Host AP server should use a 2Mbps connection or
 upgrade their firmware to version 8.72.
 .Pp
-HostAP mode doesn't support WDS or power saving.
+Host AP mode doesn't support WDS or power saving.
 Clients attempting to use power saving mode may experience
 significant packet loss
 (disabling power saving on the client will fix this).
 .Pp
 Support for USB devices is buggy.
-HostAP mode and AP scanning are not currently supported with USB devices.
+Host AP mode and AP scanning are not currently supported with USB devices.
