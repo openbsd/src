@@ -1,6 +1,6 @@
-.\" $OpenBSD: ral.4,v 1.46 2005/12/23 08:10:12 jsg Exp $
+.\" $OpenBSD: ral.4,v 1.47 2006/02/19 09:41:48 damien Exp $
 .\"
-.\" Copyright (c) 2005
+.\" Copyright (c) 2005, 2006
 .\"	Damien Bergamini <damien.bergamini@free.fr>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -15,13 +15,13 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd February 15, 2005
+.Dd February 19, 2006
 .Os
 .Dt RAL 4
 .Sh NAME
 .Nm ral ,
 .Nm ural
-.Nd Ralink Technology RT25x0 IEEE 802.11a/b/g wireless network driver
+.Nd Ralink Technology IEEE 802.11a/b/g wireless network driver
 .Sh SYNOPSIS
 .Cd "ral* at cardbus?"
 .Cd "ral* at pci?"
@@ -29,26 +29,30 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports PCI/CardBus wireless adapters based on the Ralink RT2500
-chipset
+driver supports PCI/CardBus wireless adapters based on the Ralink RT2500,
+RT2501 and RT2600 chipsets
 and the
 .Nm ural
 driver supports USB 2.0 wireless adapters based on the Ralink RT2500USB
 chipset.
-The two drivers are similar and will be merged into one in the future.
 .Pp
-The RT2500 chipset consists of two integrated chips, a RT2560 or RT2570 MAC/BBP
-and a radio transceiver (the model of which depends on the card revision).
+The RT2500 chipset is the first generation of 802.11b/g adapters from Ralink.
+It consists of two integrated chips, a RT2560 or RT2571(USB) MAC/BBP
+and a RT2525 or RT2526(USB) radio transceiver.
 .Pp
-The RT2522, RT2523, RT2524, RT2525, RT2525e and RT2526 radio transceivers
-operate in the 2.4GHz band (802.11b/g) whereas the RT5222 is a dual-band radio
-transceiver that can operate in the 2.4GHz and 5.2GHz bands (802.11a).
+The RT2501 chipset is the second generation of 802.11b/g adapters from Ralink.
+It consists of two integrated chips, a RT2561 MAC/BBP and a RT2527 radio
+transceiver.
+This chipset provides support for the IEEE 802.11e standard with multiple
+hardware transmission queues and allows scatter/gather for efficient DMA
+operations.
 .Pp
-The transmit speed is user-selectable or can be adapted automatically by the
-driver depending on the received-signal strength.
-See
-.Xr rssadapt 9
-for more information.
+The RT2600 chipset consists of two integrated chips, a RT2661 MAC/BBP and a
+RT2529 radio transceiver.
+This chipset uses the MIMO (multiple-input multiple-output) technology with
+multiple antennas to extend the operating range of the adapter and to achieve
+higher throughput.
+MIMO will be the basis of the future IEEE 802.11n standard.
 .Pp
 These are the modes the
 .Nm
@@ -90,6 +94,13 @@ Unfortunately, due to serious weaknesses in WEP protocol
 it is strongly recommended that it not be used as the
 sole mechanism to secure wireless communication.
 WEP is not enabled by default.
+.Pp
+The transmit speed is user-selectable or can be adapted automatically by the
+driver depending on the received signal strength and on the number of hardware
+transmission retries.
+See
+.Xr rssadapt 9
+for more information.
 .Sh CONFIGURATION
 The
 .Nm
@@ -171,7 +182,7 @@ driver supports the following modes:
 .Pp
 .Bl -tag -width 11b -compact
 .It Cm 11a
-Force 802.11a operation (RT5222 only).
+Force 802.11a operation.
 .It Cm 11b
 Force 802.11b operation.
 .It Cm 11g
@@ -218,6 +229,17 @@ or 104-bit (13 characters or 26 hexadecimal digits) keys.
 .It Fl nwkey
 Disable WEP encryption.
 This is the default mode of operation.
+.El
+.Sh FILES
+The following firmware files are potentially loaded when an interface is
+brought up:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It /etc/firmware/ral-rt2561
+.It /etc/firmware/ral-rt2561s
+.It /etc/firmware/ral-rt2661
+.Pp
+RT2500 adapters do not require a firmware to operate.
 .El
 .Sh HARDWARE
 The following PCI adapters should work:
@@ -402,7 +424,17 @@ Join an existing BSS network,
 .Ed
 .Sh DIAGNOSTICS
 .Bl -diag
+.It "ral%d: could not read microcode %s"
+For some reason, the driver was unable to read the microcode file from the
+filesystem.
+The file might be missing or corrupted.
+.It "ral%d: could not load 8051 microcode"
+An error occured while attempting to upload the microcode to the onboard 8051
+microcontroller unit.
+.It "ral%d: timeout waiting for MCU to initialize"
+The onboard 8051 microcontroller unit failed to initialize in time.
 .It "ral%d: device timeout"
+A frame dispatched to the hardware for transmission did not complete in time.
 The driver will reset the hardware.
 This should not happen.
 .El
@@ -425,6 +457,8 @@ The
 .Nm
 driver first appeared in
 .Ox 3.7 .
+Support for the RT2501 and RT2600 chipsets was added in
+.Ox 3.9 .
 .Sh AUTHORS
 The
 .Nm
@@ -439,4 +473,7 @@ specification.
 .Pp
 The
 .Nm ural
-driver supports automatic adaptation of the transmit speed in BSS mode only.
+driver supports automatic control of the transmit speed in BSS mode only.
+Therefore, the use of an
+.Nm ural
+adapter in HostAP mode is discouraged.
