@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.41 2006/02/16 17:35:51 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.42 2006/02/19 13:57:02 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -219,7 +219,7 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_NVIDIA_MCP55_LAN1:
 	case PCI_PRODUCT_NVIDIA_MCP55_LAN2:
 		sc->sc_flags |= NFE_JUMBO_SUP | NFE_40BIT_ADDR | NFE_HW_CSUM |
-		    0/*NFE_HW_VLAN*/;
+		    NFE_HW_VLAN;
 		break;
 	}
 
@@ -386,7 +386,7 @@ nfe_miibus_readreg(struct device *dev, int phy, int reg)
 
 	val = NFE_READ(sc, NFE_PHY_DATA);
 	if (val != 0xffffffff && val != 0)
-		sc->phyaddr = phy;
+		sc->mii_phyaddr = phy;
 
 	DPRINTFN(2, ("mii read phy %d reg 0x%x ret 0x%x\n", phy, reg, val));
 
@@ -859,6 +859,9 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 	struct mbuf *mnew;
 	bus_dmamap_t map;
 	uint16_t flags = NFE_TX_VALID;
+#if NVLAN > 0
+	uint32_t vtag = 0;
+#endif
 	int error, i;
 
 	map = sc->txq.data[sc->txq.cur].map;
@@ -905,6 +908,13 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 		return ENOBUFS;
 	}
 
+#if NVLAN > 0
+	/* setup h/w VLAN tagging */
+	if ((m0->m_flags & M_PROTO1) && m0->m_pkthdr.rcvif != NULL) {
+		struct ifvlan *ifv = m0->m_pkthdr.rcvif->if_softc;
+		vtag = NFE_TX_VTAG | htons(ifv->ifv_tag);
+	}
+#endif
 #ifdef NFE_CSUM
 	if (m0->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 		flags |= NFE_TX_IP_CSUM;
@@ -925,6 +935,9 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 			    htole32(map->dm_segs[i].ds_addr & 0xffffffff);
 			desc64->length = htole16(map->dm_segs[i].ds_len - 1);
 			desc64->flags = htole16(flags);
+#if NVLAN > 0
+			desc64->vtag = htole32(vtag);
+#endif
 		} else {
 			desc32 = &sc->txq.desc32[sc->txq.cur];
 
@@ -933,9 +946,13 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 			desc32->flags = htole16(flags);
 		}
 
-		/* csum flags belong to the first fragment only */
-		if (map->dm_nsegs > 1)
+		/* csum flags and vtag belong to the first fragment only */
+		if (map->dm_nsegs > 1) {
 			flags &= ~(NFE_TX_IP_CSUM | NFE_TX_TCP_CSUM);
+#if NVLAN > 0
+			vtag = 0;
+#endif
+		}
 
 		sc->txq.queued++;
 		sc->txq.cur = (sc->txq.cur + 1) % NFE_TX_RING_COUNT;
@@ -952,18 +969,6 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 			flags |= NFE_TX_LASTFRAG_V1;
 		desc32->flags = htole16(flags);
 	}
-
-#if NVLAN > 0
-	if (sc->sc_flags & NFE_HW_VLAN) {
-		/* setup h/w VLAN tagging */
-		if ((m0->m_flags & M_PROTO1) && m0->m_pkthdr.rcvif != NULL) {
-			struct ifvlan *ifv = m0->m_pkthdr.rcvif->if_softc;
-			desc64->vtag = htole32(NFE_TX_VTAG |
-			    htons(ifv->ifv_tag));
-		} else
-			desc64->vtag = 0;
-	}
-#endif
 
 	data->m = m0;
 	data->active = map;
@@ -1043,6 +1048,7 @@ nfe_init(struct ifnet *ifp)
 	nfe_ifmedia_upd(ifp);
 
 	NFE_WRITE(sc, NFE_TX_UNK, 0);
+	NFE_WRITE(sc, NFE_STATUS, 0);
 
 	sc->rxtxctl = NFE_RXTX_BIT2;
 	if (sc->sc_flags & NFE_40BIT_ADDR)
@@ -1053,10 +1059,23 @@ nfe_init(struct ifnet *ifp)
 	if (sc->sc_flags & NFE_HW_CSUM)
 		sc->rxtxctl |= NFE_RXTX_RXCSUM;
 #endif
-
+#if NVLAN > 0
+	/*
+	 * Although the adapter is capable of stripping VLAN tags from received
+	 * frames (NFE_RXTX_VTAG_STRIP), we do not enable this functionality on
+	 * purpose.  This will be done in software by our network stack.
+	 */
+	if (sc->sc_flags & NFE_HW_VLAN)
+		sc->rxtxctl |= NFE_RXTX_VTAG_INSERT;
+#endif
 	NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_RESET | sc->rxtxctl);
 	DELAY(10);
 	NFE_WRITE(sc, NFE_RXTX_CTL, sc->rxtxctl);
+
+#if NVLAN
+	if (sc->sc_flags & NFE_HW_VLAN)
+		NFE_WRITE(sc, NFE_VTAG_CTL, NFE_VTAG_ENABLE);
+#endif
 
 	NFE_WRITE(sc, NFE_SETUP_R6, 0);
 
@@ -1086,7 +1105,7 @@ nfe_init(struct ifnet *ifp)
 	tmp = NFE_READ(sc, NFE_PWR_STATE);
 	NFE_WRITE(sc, NFE_PWR_STATE, tmp | NFE_PWR_VALID);
 
-#ifdef notyet
+#if 1
 	/* configure interrupts coalescing/mitigation */
 	NFE_WRITE(sc, NFE_IMTIMER, NFE_IM_DEFAULT);
 #else
@@ -1096,6 +1115,10 @@ nfe_init(struct ifnet *ifp)
 
 	NFE_WRITE(sc, NFE_SETUP_R1, NFE_R1_MAGIC);
 	NFE_WRITE(sc, NFE_SETUP_R2, NFE_R2_MAGIC);
+	NFE_WRITE(sc, NFE_SETUP_R6, NFE_R6_MAGIC);
+
+	/* update MAC knowledge of PHY; generates a NFE_IRQ_LINK interrupt */
+	NFE_WRITE(sc, NFE_STATUS, sc->mii_phyaddr << 24 | NFE_STATUS_MAGIC);
 
 	NFE_WRITE(sc, NFE_SETUP_R4, NFE_R4_MAGIC);
 	NFE_WRITE(sc, NFE_WOL_CTL, NFE_WOL_MAGIC);

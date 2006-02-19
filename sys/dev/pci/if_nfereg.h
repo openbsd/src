@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfereg.h,v 1.13 2006/02/16 17:35:51 damien Exp $	*/
+/*	$OpenBSD: if_nfereg.h,v 1.14 2006/02/19 13:57:02 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
@@ -70,15 +70,19 @@
 #define NFE_PATTERN_MASK	0x208
 #define NFE_PWR_CAP		0x268
 #define NFE_PWR_STATE		0x26c
+#define NFE_VTAG_CTL		0x300
 
 #define NFE_PHY_ERROR		0x00001
 #define NFE_PHY_WRITE		0x00400
 #define NFE_PHY_BUSY		0x08000
 #define NFE_PHYADD_SHIFT	5
 
+#define NFE_STATUS_MAGIC	0x140000
+
 #define NFE_R1_MAGIC		0x16070f
 #define NFE_R2_MAGIC		0x16
 #define NFE_R4_MAGIC		0x08
+#define NFE_R6_MAGIC		0x03
 #define NFE_WOL_MAGIC		0x7770
 #define NFE_RX_START		0x01
 #define NFE_TX_START		0x01
@@ -109,6 +113,8 @@
 
 /* default interrupt moderation timer of 128us */
 #define NFE_IM_DEFAULT	((128 * 100) / 1024)
+
+#define NFE_VTAG_ENABLE		(1 << 13)
 
 #define NFE_PWR_VALID		(1 << 8)
 #define NFE_PWR_WAKEUP		(1 << 15)

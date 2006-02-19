@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfevar.h,v 1.10 2006/02/16 17:35:51 damien Exp $	*/
+/*	$OpenBSD: if_nfevar.h,v 1.11 2006/02/19 13:57:02 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
@@ -84,7 +84,7 @@ struct nfe_softc {
 #define NFE_USE_JUMBO	0x10
 
 	uint32_t		rxtxctl;
-	uint8_t			phyaddr;
+	uint8_t			mii_phyaddr;
 
 	struct nfe_tx_ring	txq;
 	struct nfe_rx_ring	rxq;
