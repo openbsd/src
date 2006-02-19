@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.28 2006/02/19 18:55:47 norby Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.29 2006/02/19 19:23:17 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -406,6 +406,9 @@ void
 nbr_adj_timer(int fd, short event, void *arg)
 {
 	struct nbr *nbr = arg;
+
+	if (nbr->state == NBR_STA_2_WAY)
+		return ;
 
 	if (nbr->state & NBR_STA_ACTIVE && nbr->state != NBR_STA_FULL) {
 		log_warnx("nbr_adj_timer: failed to form adjacency with %s",
