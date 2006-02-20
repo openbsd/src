@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.1 2006/02/20 00:48:10 marco Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.2 2006/02/20 04:59:43 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -92,7 +92,7 @@ acpibtn_attach(struct device *parent, struct device *self, void *aux)
 	acpibtn_getsta(sc); 
 
 	/* XXX print which buttons are available and state */
-	printf("\n");
+	printf(": %s\n", sc->sc_devnode->parent->name);
 
 	aml_register_notify(sc->sc_devnode->parent, acpibtn_notify, sc);
 
