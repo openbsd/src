@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.101 2006/02/20 16:27:58 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.102 2006/02/20 16:30:18 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -1037,7 +1037,7 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		/* only parse revision if one is not already set */
 		if (*rev != NULL)
 			break;
-		for ((p =strtok(keystring, " ")); p;
+		for ((p = strtok(keystring, " ")); p;
 		     (p = strtok(NULL, " "))) {
 			if (i < KW_NUMTOKS_REVISION - 1)
 				tokens[i++] = p;
