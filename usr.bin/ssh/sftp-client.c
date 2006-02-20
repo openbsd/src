@@ -20,9 +20,11 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-client.c,v 1.59 2006/02/15 05:08:24 david Exp $");
+RCSID("$OpenBSD: sftp-client.c,v 1.60 2006/02/20 17:19:54 stevesk Exp $");
 
 #include <sys/queue.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "buffer.h"
 #include "bufaux.h"
