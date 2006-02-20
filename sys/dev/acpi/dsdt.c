@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.27 2006/02/20 21:58:49 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.28 2006/02/20 22:03:58 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1392,7 +1392,6 @@ aml_get_pciaddr(struct acpi_context *ctx, struct aml_node *node,
 		uint64_t ioaddr)
 {
 	struct aml_node *val;
-	struct aml_value *rv;
 	uint8_t reg, bus, dev, fn;
 
 	/* ioaddr on input = <reg> */
@@ -1400,17 +1399,13 @@ aml_get_pciaddr(struct acpi_context *ctx, struct aml_node *node,
 	reg = ioaddr;
 	if ((val = aml_searchname(node, "_ADR")) != NULL) {
 		/* _ADR holds <dev>:<fn> */
-		rv = aml_eparsenode(ctx, val);
-		ioaddr = aml_val2int(ctx, rv);
-		aml_freevalue(&rv);
+	  	ioaddr = aml_eparseint(ctx, AML_ANYINT);
 		fn  = ioaddr & 0xFFFF;
 		dev = ioaddr >> 16;
 	}
 	if ((val = aml_searchname(node, "_BBN")) != NULL) {
 		/* _BBN holds <bus> */
-		rv = aml_eparsenode(ctx, val);
-		ioaddr = aml_val2int(ctx, rv);
-		aml_freevalue(&rv);
+		ioaddr = aml_eparseint(ctx, AML_ANYINT);
 		bus = ioaddr;
 	}
 	return ACPI_PCI_ADDR(bus, dev, fn, reg);
