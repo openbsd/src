@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.100 2006/02/16 19:15:30 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.101 2006/02/20 16:27:58 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -964,7 +964,7 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
         /* Parse data out of the expanded keyword */
 	switch (checkin_keywordtype(keystring)) {
 	case KW_TYPE_ID:
-		for ((p =strtok(keystring, " ")); p;
+		for ((p = strtok(keystring, " ")); p;
 		     (p = strtok(NULL, " "))) {
 			if (i < KW_NUMTOKS_ID - 1)
 				tokens[i++] = p;
@@ -995,7 +995,7 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		xfree(datestring);
 		break;
 	case KW_TYPE_AUTHOR:
-		for ((p =strtok(keystring, " ")); p;
+		for ((p = strtok(keystring, " ")); p;
 		     (p = strtok(NULL, " "))) {
 			if (i < KW_NUMTOKS_AUTHOR - 1)
 				tokens[i++] = p;
@@ -1007,7 +1007,7 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		strlcpy(*author, tokens[1], len);
 		break;
 	case KW_TYPE_DATE:
-		for ((p =strtok(keystring, " ")); p;
+		for ((p = strtok(keystring, " ")); p;
 		     (p = strtok(NULL, " "))) {
 			if (i < KW_NUMTOKS_DATE - 1)
 				tokens[i++] = p;
@@ -1022,7 +1022,7 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		xfree(datestring);
 		break;
 	case KW_TYPE_STATE:
-		for ((p =strtok(keystring, " ")); p;
+		for ((p = strtok(keystring, " ")); p;
 		     (p = strtok(NULL, " "))) {
 			if (i < KW_NUMTOKS_STATE - 1)
 				tokens[i++] = p;
