@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.2 2005/11/13 14:23:26 martin Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.3 2006/02/20 05:14:09 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -62,7 +62,7 @@ acpi_map(paddr_t pa, size_t len, struct acpi_mem_map *handle)
 	handle->pa = pa;
 
 	do {
-		pmap_kenter_pa(va, pgpa, VM_PROT_READ);
+		pmap_kenter_pa(va, pgpa, VM_PROT_READ | VM_PROT_WRITE);
 		va += NBPG;
 		pgpa += NBPG;
 	} while (pgpa < endpa);
