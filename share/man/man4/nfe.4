@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfe.4,v 1.4 2006/02/13 06:08:16 brad Exp $
+.\"	$OpenBSD: nfe.4,v 1.5 2006/02/20 02:59:43 jsg Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -24,6 +24,7 @@
 .Cd "nfe* at pci?"
 .Cd "ciphy* at mii?"
 .Cd "eephy* at mii?"
+.Cd "icsphy* at mii?"
 .Cd "rlphy* at mii?"
 .Sh DESCRIPTION
 The
@@ -53,6 +54,7 @@ Set 1000Mbps (Gigabit Ethernet) operation (recent models only).
 .Xr arp 4 ,
 .Xr ciphy 4 ,
 .Xr eephy 4 ,
+.Xr icsphy 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
