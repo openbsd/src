@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.58 2005/12/13 07:38:40 tedu Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.59 2006/02/20 19:39:11 miod Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -119,6 +119,7 @@ exit1(struct proc *p, int rv, int flags)
 		panic("init died (signal %d, exit %d)",
 		    WTERMSIG(rv), WEXITSTATUS(rv));
 	
+#ifdef RTHREADS
 	/*
 	 * if one thread calls exit, we take down everybody.
 	 * we have to be careful not to get recursively caught.
@@ -149,6 +150,7 @@ exit1(struct proc *p, int rv, int flags)
 		while (!LIST_EMPTY(&p->p_thrchildren))
 			tsleep(&p->p_thrchildren, PUSER, "thrdeath", 0);
 	}
+#endif
 
 	if (p->p_flag & P_PROFIL)
 		stopprofclock(p);
@@ -261,13 +263,14 @@ exit1(struct proc *p, int rv, int flags)
 		}
 	}
 
+#ifdef RTHREADS
 	/* unlink oursleves from the active threads */
 	if (p != p->p_thrparent) {
 		LIST_REMOVE(p, p_thrsib);
 		if (LIST_EMPTY(&p->p_thrparent->p_thrchildren))
 			wakeup(&p->p_thrparent->p_thrchildren);
 	}
-	
+#endif
 
 	/*
 	 * Save exit status and final rusage info, adding in child rusage

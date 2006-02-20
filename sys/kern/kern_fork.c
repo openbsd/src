@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.81 2005/12/22 06:55:03 tedu Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.82 2006/02/20 19:39:11 miod Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -285,6 +285,7 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
 	LIST_INIT(&p2->p_children);
 
+#ifdef RTHREADS
 	if (flags & FORK_THREAD) {
 		p2->p_flag |= P_THREAD;
 		p2->p_thrparent = p1->p_thrparent;
@@ -292,6 +293,9 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	} else {
 		p2->p_thrparent = p2;
 	}
+#else
+	p2->p_thrparent = p2;
+#endif
 
 	LIST_INIT(&p2->p_thrchildren);
 

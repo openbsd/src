@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.80 2006/01/18 23:42:12 miod Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.81 2006/02/20 19:39:11 miod Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -97,10 +97,11 @@ cansignal(struct proc *p, struct pcred *pc, struct proc *q, int signum)
 	if (p == q)
 		return (1);		/* process can always signal itself */
 
+#ifdef RTHREADS
 	/* a thread can only be signalled from within the same process */
 	if (q->p_flag & P_THREAD)
 		return (p->p_thrparent == q->p_thrparent);
-
+#endif
 
 	if (signum == SIGCONT && q->p_session == p->p_session)
 		return (1);		/* SIGCONT in session */
@@ -774,7 +775,9 @@ psignal(struct proc *p, int signum)
 	int s, prop;
 	sig_t action;
 	int mask;
+#ifdef RTHREADS
 	struct proc *q;
+#endif
 
 #ifdef DIAGNOSTIC
 	if ((u_int)signum >= NSIG || signum == 0)
@@ -785,6 +788,7 @@ psignal(struct proc *p, int signum)
 	if (p->p_flag & P_WEXIT)
 		return;
 
+#ifdef RTHREADS
 	LIST_FOREACH(q, &p->p_thrchildren, p_thrsib) {
 		if (q->p_sigdivert & (1 << signum)) {
 			q->p_sigdivert = 0;
@@ -792,6 +796,7 @@ psignal(struct proc *p, int signum)
 			return;
 		}
 	}
+#endif
 
 	KNOTE(&p->p_klist, NOTE_SIGNAL | signum);
 
@@ -835,14 +840,18 @@ psignal(struct proc *p, int signum)
 	}
 
 	if (prop & SA_CONT) {
+#ifdef RTHREADS
 		LIST_FOREACH(q, &p->p_thrchildren, p_thrsib)
 			psignal(q, signum);
+#endif
 		p->p_siglist &= ~stopsigmask;
 	}
 
 	if (prop & SA_STOP) {
+#ifdef RTHREADS
 		LIST_FOREACH(q, &p->p_thrchildren, p_thrsib)
 			psignal(q, signum);
+#endif
 		p->p_siglist &= ~contsigmask;
 		p->p_flag &= ~P_CONTINUED;
 	}
