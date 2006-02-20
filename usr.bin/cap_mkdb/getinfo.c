@@ -1,4 +1,4 @@
-/*	$OpenBSD: getinfo.c,v 1.7 2003/06/10 22:20:45 deraadt Exp $	*/
+/*	$OpenBSD: getinfo.c,v 1.8 2006/02/20 09:23:26 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getinfo.c,v 1.7 2003/06/10 22:20:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getinfo.c,v 1.8 2006/02/20 09:23:26 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -62,7 +62,7 @@ static int	 igetclose(void);
 int	igetnext(char **, char **);
 
 /*
- * Cgetcap searches the capability record buf for the capability cap with
+ * Igetcap searches the capability record buf for the capability cap with
  * type `type'.  A pointer to the value of cap is returned on success, NULL
  * if the requested capability couldn't be found.
  *
@@ -455,7 +455,7 @@ getent(char **cap, u_int *len, char **db_array, int fd, char *name, int depth)
 }	
 
 /*
- * Cgetmatch will return 0 if name is one of the names of the capability
+ * Igetmatch will return 0 if name is one of the names of the capability
  * record buf, -1 if not.
  */
 static int
@@ -513,7 +513,7 @@ igetclose(void)
 }
 
 /*
- * Cgetnext() gets either the first or next entry in the logical database 
+ * Igetnext() gets either the first or next entry in the logical database 
  * specified by db_array.  It returns 0 upon completion of the database, 1
  * upon returning an entry with more remaining, and -1 if an error occurs.
  */
