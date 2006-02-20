@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.26 2006/02/20 21:55:42 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.27 2006/02/20 21:58:49 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -133,6 +133,7 @@ int aml_match(int64_t, int, int64_t);
 int  aml_tstbit(const u_int8_t *, int);
 void aml_setbit(u_int8_t *, int, int);
 void aml_bufcpy(u_int8_t *, int, const u_int8_t *, int, int);
+int  aml_bufcmp(const u_int8_t *, int, const u_int8_t *, int);
 
 struct aml_value *aml_ederef(struct acpi_context *ctx, struct aml_value *val);
 void aml_resizevalue(struct aml_value *, int);
@@ -182,7 +183,6 @@ void aml_dump(int, u_int8_t *);
 
 struct aml_node	  aml_root;
 struct aml_value *aml_global_lock;
-struct aml_value *aml_edebugobj;
 
 void *
 acpi_os_allocmem(size_t size)
@@ -566,11 +566,22 @@ int
 aml_comparevalue(struct acpi_context *ctx, int opcode, struct aml_value *lhs, 
 		 struct aml_value *rhs)
 {
+	struct aml_value *tmp;
+	int rc;
+
 	if (lhs->type == AML_OBJTYPE_INTEGER) {
 		return aml_logicalcmp(opcode, lhs->v_integer, aml_val2int(ctx, rhs));
 	}
 	if (rhs->type == AML_OBJTYPE_INTEGER) {
 		return aml_logicalcmp(opcode, aml_val2int(ctx, lhs), rhs->v_integer);
+	}
+	if (lhs->type == AML_OBJTYPE_BUFFER) {
+		tmp = aml_val2buf(ctx, rhs, 0);
+		rc  = aml_bufcmp(lhs->v_buffer, lhs->length,
+				 tmp->v_buffer, tmp->length);
+		return (opcode == AMLOP_LNOTEQUAL) ?
+			(rc != AMLOP_LEQUAL) :
+			(rc == opcode);
 	}
 	/* XXX: fix this.. non integer comparisons */
 	dnprintf(40,"comparevalue: %.2x %.2x\n", lhs->type, rhs->type);
@@ -1227,6 +1238,22 @@ aml_bufcpy(u_int8_t *pDst, int dstPos, const u_int8_t *pSrc, int srcPos,
 		aml_setbit(pDst, idx + dstPos, aml_tstbit(pSrc, idx + srcPos));
 }
 
+/* Compare two buffers; return comparison type */
+int
+aml_bufcmp(const u_int8_t *abuf, int alen, const u_int8_t *bbuf, int blen)
+{
+	int rc;
+
+	while (alen && blen) {
+		rc = *(abuf++) - *(bbuf++);
+		if (rc != 0) 
+			return (rc < 0) ? AMLOP_LLESS : AMLOP_LGREATER;
+		alen--;
+		blen--;
+	}
+	return (alen ? AMLOP_LGREATEREQUAL : (blen ? AMLOP_LLESSEQUAL : AMLOP_LEQUAL));
+}
+
 /* Search list of objects for a name match 
  *  Special case for fields: search children only
  */
@@ -1357,6 +1384,38 @@ struct aml_value *aml_ederef(struct acpi_context *ctx, struct aml_value *val)
 	return val;
 }
 
+uint64_t
+aml_get_pciaddr(struct acpi_context *, struct aml_node *,
+		uint64_t);
+uint64_t
+aml_get_pciaddr(struct acpi_context *ctx, struct aml_node *node,
+		uint64_t ioaddr)
+{
+	struct aml_node *val;
+	struct aml_value *rv;
+	uint8_t reg, bus, dev, fn;
+
+	/* ioaddr on input = <reg> */
+	bus = dev = fn = 0;
+	reg = ioaddr;
+	if ((val = aml_searchname(node, "_ADR")) != NULL) {
+		/* _ADR holds <dev>:<fn> */
+		rv = aml_eparsenode(ctx, val);
+		ioaddr = aml_val2int(ctx, rv);
+		aml_freevalue(&rv);
+		fn  = ioaddr & 0xFFFF;
+		dev = ioaddr >> 16;
+	}
+	if ((val = aml_searchname(node, "_BBN")) != NULL) {
+		/* _BBN holds <bus> */
+		rv = aml_eparsenode(ctx, val);
+		ioaddr = aml_val2int(ctx, rv);
+		aml_freevalue(&rv);
+		bus = ioaddr;
+	}
+	return ACPI_PCI_ADDR(bus, dev, fn, reg);
+}
+
 struct aml_value *
 aml_efield(struct acpi_context *ctx, struct aml_value *e_fld,
 	   struct aml_value *rhs)
@@ -1365,6 +1424,7 @@ aml_efield(struct acpi_context *ctx, struct aml_value *e_fld,
 	struct aml_value *rv;
 	struct aml_value  tmp;
 	uint8_t *pb;
+	uint64_t ioaddr;
 	int blen;
 
 	dnprintf(80, "efield %s: ", rhs ? "set" : "get");
@@ -1396,6 +1456,11 @@ aml_efield(struct acpi_context *ctx, struct aml_value *e_fld,
 			return NULL;
 		}
 
+		ioaddr = e_rgn->v_opregion.iobase + aml_bytepos(e_fld->v_field.bitpos);
+		if (e_rgn->v_opregion.iospace == GAS_PCI_CFG_SPACE) {
+			ioaddr = aml_get_pciaddr(ctx, ctx->scope, ioaddr);
+		}
+
 		blen = aml_bytelen(e_fld->v_field.bitlen);
 		pb = acpi_os_allocmem(blen+8);   // padded space
 		if (rhs == NULL) {
@@ -1409,8 +1474,7 @@ aml_efield(struct acpi_context *ctx, struct aml_value *e_fld,
 					acpi_mutex_acquire(ctx, aml_global_lock, -1);
 				}
 				acpi_gasio(ctx->sc, ACPI_IOREAD,
-					   e_rgn->v_opregion.iospace,
-					   e_rgn->v_opregion.iobase + aml_bytepos(e_fld->v_field.bitpos),
+					   e_rgn->v_opregion.iospace, ioaddr,
 					   AML_FIELD_ACCESS(e_fld->v_field.flags),
 					   blen, pb);
 				if (AML_FIELD_LOCK(e_fld->v_field.flags)) {
@@ -1437,8 +1501,7 @@ aml_efield(struct acpi_context *ctx, struct aml_value *e_fld,
 			dnprintf(40, "old iobase = %llx,%lx\n", 
 				 e_rgn->v_opregion.iobase, aml_bytepos(e_fld->v_field.bitpos));
 			acpi_gasio(ctx->sc, ACPI_IOREAD,
-				   e_rgn->v_opregion.iospace,
-				   e_rgn->v_opregion.iobase + aml_bytepos(e_fld->v_field.bitpos),
+				   e_rgn->v_opregion.iospace, ioaddr,
 				   AML_FIELD_ACCESS(e_fld->v_field.flags),
 				   blen, pb);
 #if 0
@@ -1778,6 +1841,10 @@ aml_esetnodevalue(struct acpi_context *ctx,  struct aml_value *lhs,
 	case AML_OBJTYPE_UNINITIALIZED:
 		/* Object is not initialized */
 		*tmp = *rhs;
+		break;
+        case AML_OBJTYPE_DEBUGOBJ:
+		dnprintf(1, "debug object: ");
+		aml_showvalue(rhs);
 		break;
 	case AML_OBJTYPE_FIELDUNIT:
 	case AML_OBJTYPE_BUFFERFIELD:
@@ -2200,10 +2267,7 @@ aml_eparseval(struct acpi_context *ctx, int deref)
 		rv = aml_ebufferfield(ctx, 8, 64, opc->opcode);
 		break;
 	case AMLOP_DEBUG:
-		if (aml_edebugobj == NULL) {
-			aml_edebugobj = aml_allocvalue(AML_OBJTYPE_DEBUGOBJ, 0, NULL);
-		}
-		rv = aml_edebugobj;
+		rv = aml_allocvalue(AML_OBJTYPE_DEBUGOBJ, 0, NULL);
 		break;
 	case AMLOP_BUFFER:
 		end = aml_eparselen(ctx);
@@ -2211,9 +2275,8 @@ aml_eparseval(struct acpi_context *ctx, int deref)
 		i1  = end - ctx->pos;		       // supplied length
 
 		rv = aml_allocvalue(AML_OBJTYPE_BUFFER, i2, NULL);
-		if (i1 > 0) {
+		if (i1 > 0)
 			memcpy(rv->v_buffer, ctx->pos, i1);
-		}
 		dnprintf(40, "buffer: %lld of %lld\n", i1, i2);
 		break;
 	case AMLOP_PACKAGE:
@@ -2225,9 +2288,8 @@ aml_eparseval(struct acpi_context *ctx, int deref)
 				   AML_BYTE : AML_ANYINT);
 
 		rv = aml_allocvalue(AML_OBJTYPE_PACKAGE, i2, NULL);
-		for (i1=0; i1 < i2 && ctx->pos < end; i1++) {
+		for (i1=0; i1 < i2 && ctx->pos < end; i1++)
 			rv->v_package[i1] = aml_eparseval(ctx, 0);
-		}
 		dnprintf(40, "package: %lld of %lld parsed\n", i1, i2);
 		break;
 	case AMLOP_LOCAL0:
@@ -2332,13 +2394,11 @@ aml_eparseval(struct acpi_context *ctx, int deref)
 		lhs = aml_eparseval(ctx, 1);
 
 		tmp = aml_val2buf(ctx, rhs, 0);
-		if (i1 > tmp->length) {
+		if (i1 > tmp->length)
 			i1 = tmp->length;
-		}
 		for(i2=0; i2<i1; i1++) {
-			if (tmp->v_buffer[i2] == 0) {
+			if (tmp->v_buffer[i2] == 0)
 				break;
-			}
 		}
 		rv  = aml_allocvalue(AML_OBJTYPE_STRING, i2, tmp->v_buffer);
 		aml_esetnodevalue(ctx, lhs, rv, 0);
@@ -2520,9 +2580,8 @@ aml_eparseval(struct acpi_context *ctx, int deref)
 		break;
 	case AMLOP_SIZEOF:
 		lhs = aml_eparseval(ctx, 1);
-		if (aml_valid(lhs)) {
+		if (aml_valid(lhs))
 			rv = aml_allocint(lhs->length);
-		}
 		break;
 	case AMLOP_METHOD:
 		end  = aml_eparselen(ctx);
@@ -2608,9 +2667,8 @@ aml_eparseval(struct acpi_context *ctx, int deref)
 	if (rv != rhs) aml_freevalue(&rhs);
 	if (rv != tmp) aml_freevalue(&tmp);
 
-	if (end > ctx->pos) {
+	if (end > ctx->pos)
 		ctx->pos = end;
-	}
 
 	--ctx->depth;
 	return rv;
@@ -2622,14 +2680,12 @@ aml_delchildren(struct acpi_context *ctx, struct aml_node *node)
 {
 	struct aml_node *pn;
 
-	if (node == NULL) {
+	if (node == NULL)
 		return;
-	}
 	while ((pn = node->child) != NULL) {
 		dnprintf(40, "deleting node..\n");
-		if (pn->value) {
+		if (pn->value)
 			pn->value->node = NULL;
-		}
 		node->child = node->child->sibling;
 		aml_delchildren(ctx, pn);
 		acpi_os_freemem(pn);
@@ -2643,9 +2699,8 @@ aml_eparsenode(struct acpi_context *ctx, struct aml_node *node)
 	struct aml_node *oldscope;
 	struct aml_value *rv;
 
-	if (node->value == NULL) {
+	if (node->value == NULL)
 		return NULL;
-	}
 	switch (node->value->type) {
 	case AML_OBJTYPE_NAMEREF:
 	case AML_OBJTYPE_INTEGER:
@@ -2689,9 +2744,8 @@ aml_eval_object(struct acpi_softc *sc, struct aml_node *node,
 	rv = aml_eparsenode(ctx, node);
 	dnprintf(40, "###### RETURNING #####\n");
 	aml_showvalue(rv);
-	if (rv != NULL) {
-	  *ret = *rv;
-	}
+	if (rv != NULL)
+		*ret = *rv;
 
 	/* XXX: must free rv */
 	acpi_freecontext(ctx);
@@ -2748,9 +2802,8 @@ aml_walktree(struct aml_node *node)
 
 	while(node) {
 		dnprintf(50, " %d ", node->depth);
-		for(idx=0; idx<node->depth; idx++) {
+		for(idx=0; idx<node->depth; idx++)
 			dnprintf(50, "..");
-		}
 		aml_shownode(node);
 		aml_walktree(node->child);
 		node = node->sibling;
