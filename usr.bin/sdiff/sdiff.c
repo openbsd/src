@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.15 2006/02/15 15:27:38 otto Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.16 2006/02/20 08:29:44 otto Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -753,7 +753,9 @@ processq(void)
 	if (SIMPLEQ_EMPTY(&diffhead))
 		return;
 
-	divc = '\0';
+	/* Remember the divider. */
+	divc = SIMPLEQ_FIRST(&diffhead)->div;
+
 	left = NULL;
 	right = NULL;
 	/*
@@ -762,19 +764,11 @@ processq(void)
 	 */
 	SIMPLEQ_FOREACH(diffp, &diffhead, diffentries) {
 		/*
-		 * Make sure that divc is consistent throughout set.
-		 * If divc is set, compare to next entry's divc.  They
-		 * should be the same.  If divc is not set, then store
-		 * this as this set's divc.
-		 */
-		if (divc == '\0')
-			divc = diffp->div;
-
-		/*
 		 * Print changed lines if -s was given,
 		 * print all lines if -s was not given.
 		 */
-		if (!sflag || divc == '|' || divc == '<' || divc == '>')
+		if (!sflag || diffp->div == '|' || diffp->div == '<' ||
+		    diffp->div == '>')
 			println(diffp->left, diffp->div, diffp->right);
 
 		/* Append new lines to diff set. */
