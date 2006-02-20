@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.39 2006/02/17 08:17:34 dlg Exp $ */
+/*	$OpenBSD: esm.c,v 1.40 2006/02/20 07:48:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1065,7 +1065,7 @@ esm_smb_cmd(struct esm_softc *sc, struct esm_smb_req *req,
 int64_t
 esm_val2temp(u_int16_t value)
 {
-	return (((int64_t)value/10 * 1000000) + 273150000);
+	return (((int64_t)value * 100000) + 273150000);
 }
 
 int64_t
