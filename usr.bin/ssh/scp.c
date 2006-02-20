@@ -71,12 +71,13 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.132 2006/02/10 01:44:26 stevesk Exp $");
+RCSID("$OpenBSD: scp.c,v 1.133 2006/02/20 17:02:44 stevesk Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
 
 #include <dirent.h>
+#include <signal.h>
 
 #include "xmalloc.h"
 #include "atomicio.h"

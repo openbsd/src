@@ -34,7 +34,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-agent.c,v 1.128 2006/02/20 16:36:14 stevesk Exp $");
+RCSID("$OpenBSD: ssh-agent.c,v 1.129 2006/02/20 17:02:44 stevesk Exp $");
 
 #include <sys/queue.h>
 #include <sys/resource.h>
@@ -42,6 +42,7 @@ RCSID("$OpenBSD: ssh-agent.c,v 1.128 2006/02/20 16:36:14 stevesk Exp $");
 #include <sys/un.h>
 
 #include <paths.h>
+#include <signal.h>
 
 #include <openssl/evp.h>
 #include <openssl/md5.h>
