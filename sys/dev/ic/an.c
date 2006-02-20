@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.46 2006/01/30 11:41:00 jsg Exp $	*/
+/*	$OpenBSD: an.c,v 1.47 2006/02/20 11:13:57 jsg Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -331,7 +331,7 @@ an_attach(struct an_softc *sc)
 	    sizeof(struct ieee80211_frame) + 64);
 #endif
 
-	shutdownhook_establish(an_shutdown, sc);
+	sc->sc_sdhook = shutdownhook_establish(an_shutdown, sc);
 
 	sc->sc_attached = 1;
 
@@ -1673,6 +1673,7 @@ an_detach(struct an_softc *sc)
 	ifmedia_delete_instance(&sc->sc_ic.ic_media, IFM_INST_ANY);
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
+	shutdownhook_disestablish(sc->sc_sdhook);
 	splx(s);
 	return 0;
 }
