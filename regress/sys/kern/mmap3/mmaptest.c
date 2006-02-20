@@ -1,4 +1,4 @@
-/* $OpenBSD: mmaptest.c,v 1.5 2006/02/15 12:09:34 mickey Exp $ */
+/* $OpenBSD: mmaptest.c,v 1.6 2006/02/20 17:03:27 mickey Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -32,6 +32,7 @@
 #include <err.h>
 #include <unistd.h>
 
+#define	AREA	(16 * 4096)
 /* 
  * Check for mmap/ftruncate interaction.  Specifically, ftruncate on
  * a short file may lose modifications made through an mmapped area.  
@@ -41,34 +42,38 @@ main(int argc, char *argv[])
 {
 	int i;
 	int fd;
-	char area[256];
+	char area[AREA];
 	char *a2;
-	for (i = 0 ; i < 256; i++)
+	for (i = 0 ; i < AREA; i++)
 		area[i] = 5;
 
 	fd = open("test.out", O_WRONLY|O_CREAT|O_TRUNC, 0600);
 	if (fd == -1)
 		err(1, "open(test.out)");
-	if (write(fd, area, 256) != 256)
+	if (write(fd, area, AREA) != AREA)
 		err(1, "write");
 	if (close(fd))
 		err(1, "close");
 	fd = open("test.out", O_RDWR);
 	if (fd == -1)
 		err(1, "open(test.out) 2");
-	a2 = mmap(NULL, 256, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+	a2 = mmap(NULL, AREA, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
 	if (!a2)
 		err(1, "mmap");
 	a2[10] = 3;
-	msync(a2, 256, MS_SYNC|MS_INVALIDATE);
+	msync(a2, AREA, MS_SYNC|MS_INVALIDATE);
+	if (mlock(a2, AREA))
+		err(1, "mlock");
 	if (ftruncate(fd, 128))
 		err(1, "ftruncate");
+	if (munlock(a2, AREA))
+		err(1, "munlock");
 	if (close(fd))
 		err(1, "close");
 	fd = open("test.out", O_RDONLY);
 	if (fd == -1)
 		err(1, "open(test.out) 3");
-	if (read(fd, area, 256) != 128)
+	if (read(fd, area, AREA) != 128)
 		err(1, "read");
 	if (area[10] != 3)
 		errx(1, "area[10] != 3");
