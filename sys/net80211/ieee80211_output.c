@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.14 2006/01/11 00:18:17 millert Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.15 2006/02/20 20:12:14 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -53,10 +53,7 @@
 #include <net/if_media.h>
 #include <net/if_arp.h>
 #include <net/if_llc.h>
-
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>

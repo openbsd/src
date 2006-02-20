@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.45 2006/01/04 06:04:41 canacar Exp $  */
+/*      $OpenBSD: ath.c,v 1.46 2006/02/20 20:12:13 damien Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -2735,6 +2735,7 @@ ath_chan_set(struct ath_softc *sc, struct ieee80211_channel *chan)
 			return EIO;
 		}
 
+#if NBPFILTER > 0
 		/*
 		 * Update BPF state.
 		 */
@@ -2742,6 +2743,7 @@ ath_chan_set(struct ath_softc *sc, struct ieee80211_channel *chan)
 		    htole16(chan->ic_freq);
 		sc->sc_txtap.wt_chan_flags = sc->sc_rxtap.wr_chan_flags =
 		    htole16(chan->ic_flags);
+#endif
 
 		/*
 		 * Change channels and update the h/w rate map

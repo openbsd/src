@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.67 2006/01/29 03:22:52 brad Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.68 2006/02/20 20:12:14 damien Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1843,7 +1843,9 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 	struct atu_tx_hdr	*h;
 	usbd_status		err;
 	u_int8_t		pad;
+#if NBPFILTER > 0
 	struct ieee80211com *ic = &sc->sc_ic;
+#endif
 
 	DPRINTFN(25, ("%s: atu_tx_start\n", USBDEVNAME(sc->atu_dev)));
 

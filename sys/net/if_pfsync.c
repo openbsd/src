@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.59 2005/11/04 08:24:14 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.60 2006/02/20 20:12:14 damien Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1438,7 +1438,9 @@ pfsync_bulkfail(void *v)
 int
 pfsync_sendout(struct pfsync_softc *sc)
 {
+#if NBPFILTER > 0
 	struct ifnet *ifp = &sc->sc_if;
+#endif
 	struct mbuf *m;
 
 	timeout_del(&sc->sc_tmo);
@@ -1467,7 +1469,9 @@ pfsync_sendout(struct pfsync_softc *sc)
 int
 pfsync_tdb_sendout(struct pfsync_softc *sc)
 {
+#if NBPFILTER > 0
 	struct ifnet *ifp = &sc->sc_if;
+#endif
 	struct mbuf *m;
 
 	timeout_del(&sc->sc_tdb_tmo);
