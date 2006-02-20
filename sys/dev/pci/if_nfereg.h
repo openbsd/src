@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfereg.h,v 1.14 2006/02/19 13:57:02 damien Exp $	*/
+/*	$OpenBSD: if_nfereg.h,v 1.15 2006/02/20 20:19:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
@@ -25,7 +25,7 @@
 #define NFE_JPOOL_COUNT		(NFE_RX_RING_COUNT + 64)
 #define NFE_JPOOL_SIZE		(NFE_JPOOL_COUNT * NFE_JBYTES)
 
-#define NFE_MAX_SCATTER		NFE_TX_RING_COUNT
+#define NFE_MAX_SCATTER		(NFE_TX_RING_COUNT - 2)
 
 #define NFE_IRQ_STATUS		0x000
 #define NFE_IRQ_MASK		0x004

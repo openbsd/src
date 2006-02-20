@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.42 2006/02/19 13:57:02 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.43 2006/02/20 20:19:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -554,7 +554,7 @@ nfe_txdesc64_sync(struct nfe_softc *sc, struct nfe_desc64 *desc64, int ops)
 void
 nfe_txdesc32_rsync(struct nfe_softc *sc, int start, int end, int ops)
 {
-	if (end >= start) {
+	if (end > start) {
 		bus_dmamap_sync(sc->sc_dmat, sc->txq.map,
 		    (caddr_t)&sc->txq.desc32[start] - (caddr_t)sc->txq.desc32,
 		    (caddr_t)&sc->txq.desc32[end] -
@@ -575,7 +575,7 @@ nfe_txdesc32_rsync(struct nfe_softc *sc, int start, int end, int ops)
 void
 nfe_txdesc64_rsync(struct nfe_softc *sc, int start, int end, int ops)
 {
-	if (end >= start) {
+	if (end > start) {
 		bus_dmamap_sync(sc->sc_dmat, sc->txq.map,
 		    (caddr_t)&sc->txq.desc64[start] - (caddr_t)sc->txq.desc64,
 		    (caddr_t)&sc->txq.desc64[end] -
@@ -856,7 +856,6 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 	struct nfe_desc32 *desc32;
 	struct nfe_desc64 *desc64;
 	struct nfe_tx_data *data;
-	struct mbuf *mnew;
 	bus_dmamap_t map;
 	uint16_t flags = NFE_TX_VALID;
 #if NVLAN > 0
@@ -867,40 +866,10 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 	map = sc->txq.data[sc->txq.cur].map;
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m0, BUS_DMA_NOWAIT);
-	if (error != 0 && error != EFBIG) {
+	if (error != 0) {
 		printf("%s: could not map mbuf (error %d)\n",
 		    sc->sc_dev.dv_xname, error);
 		return error;
-	}
-	if (error != 0) {
-		/* too many fragments, linearize */
-
-		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
-		if (mnew == NULL)
-			return ENOBUFS;
-
-		M_DUP_PKTHDR(mnew, m0);
-		if (m0->m_pkthdr.len > MHLEN) {
-			MCLGET(mnew, M_DONTWAIT);
-			if (!(mnew->m_flags & M_EXT)) {
-				m_freem(mnew);
-				return ENOBUFS;
-			}
-		}
-
-		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(mnew, caddr_t));
-		m_freem(m0);
-		mnew->m_len = mnew->m_pkthdr.len;
-		m0 = mnew;
-
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m0,
-		    BUS_DMA_NOWAIT);
-		if (error != 0) {
-			printf("%s: could not map mbuf (error %d)\n",
-			    sc->sc_dev.dv_xname, error);
-			m_freem(m0);
-			return error;
-		}
 	}
 
 	if (sc->txq.queued + map->dm_nsegs >= NFE_TX_RING_COUNT - 1) {
