@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.340 2006/01/18 03:45:28 joel Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.341 2006/02/20 11:39:43 camield Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2457,9 +2457,14 @@ rdr on $int_if proto { tcp, udp } from any to any port 80 -> 127.0.0.1 \e
 .Pp
 This longer example uses both a NAT and a redirection.
 The external interface has the address 157.161.48.183.
-On the internal interface, we are running
+On localhost, we are running
 .Xr ftp-proxy 8 ,
-listening for outbound ftp sessions captured to port 8021.
+waiting for FTP sessions to be redirected to it.
+The three mandatory anchors for
+.Xr ftp-proxy 8
+are omitted from this example; see the
+.Xr ftp-proxy 8
+manpage.
 .Bd -literal
 # NAT
 # Translate outgoing packets' source addresses (any protocol).
@@ -2567,11 +2572,6 @@ pass out on $ext_if proto tcp all modulate state
 # pass in certain TCP connections and keep state (SSH, SMTP, DNS, IDENT)
 pass in on $ext_if proto tcp from any to any port { ssh, smtp, domain, \e
       auth } flags S/SA keep state
-
-# pass in data mode connections for ftp-proxy running on this host.
-# (see ftp-proxy(8) for details)
-pass in on $ext_if proto tcp from any to 157.161.48.183 port >= 49152 \e
-      flags S/SA keep state
 
 # Do not allow Windows 9x SMTP connections since they are typically
 # a viral worm. Alternately we could limit these OSes to 1 connection each.
