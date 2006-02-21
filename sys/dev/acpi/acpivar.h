@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.18 2006/02/20 21:39:06 jordan Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.19 2006/02/21 04:30:45 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -39,6 +39,7 @@ struct acpi_attach_args {
 	void		*aaa_table;
 	paddr_t		 aaa_pbase; /* Physical base address of ACPI tables */
 	struct aml_node *aaa_node;
+	const char	*aaa_dev;
 };
 
 struct acpi_mem_map {

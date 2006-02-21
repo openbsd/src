@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.3 2006/02/21 01:10:10 marco Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.4 2006/02/21 04:30:45 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -16,6 +16,8 @@
  */
 
 #include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -43,9 +45,10 @@ struct acpibtn_softc {
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_devnode;
 
-	int			sc_pwr_btn;
-	int			sc_lid_btn;
-	int			sc_sleep_btn;
+	int			sc_btn_type;
+#define ACPIBTN_LID	0
+#define ACPIBTN_POWER	1
+#define ACPIBTN_SLEEP	2
 #if 0
 	struct sensor sens[3];	/* XXX debug only */
 #endif
@@ -88,6 +91,13 @@ acpibtn_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node->child;
+
+	if (!strcmp(aa->aaa_dev, ACPI_DEV_LD))
+		sc->sc_btn_type = ACPIBTN_LID;
+	if (!strcmp(aa->aaa_dev, ACPI_DEV_PBD))
+		sc->sc_btn_type = ACPIBTN_POWER;
+	if (!strcmp(aa->aaa_dev, ACPI_DEV_SBD))
+		sc->sc_btn_type = ACPIBTN_SLEEP;
 
 	acpibtn_getsta(sc); 
 
@@ -144,10 +154,26 @@ acpibtn_getsta(struct acpibtn_softc *sc)
 int
 acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 {
-	struct acpibtn_softc *sc = arg;
+	struct acpibtn_softc	*sc = arg;
+	extern int		acpi_s5;
 
-	printf("acpibtn_notify: %.2x %s\n", notify_type,
+	dnprintf(10, "acpibtn_notify: %.2x %s\n", notify_type,
 	    sc->sc_devnode->parent->name);
+
+	switch (sc->sc_btn_type) {
+	case ACPIBTN_LID:
+		break;
+	case ACPIBTN_POWER:
+		acpi_s5 = 1;
+		psignal(initproc, SIGUSR1);
+		/* NOTREACHED */
+		break;
+	case ACPIBTN_SLEEP:
+		break;
+	default:
+		printf("%s: spurious acpi interrupt\n", DEVNAME(sc));
+		break;
+	}
 
 	return (0);
 }

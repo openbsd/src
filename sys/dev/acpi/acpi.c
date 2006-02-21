@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.37 2006/02/20 00:48:10 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.38 2006/02/21 04:30:44 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -492,6 +492,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	struct device		*self = (struct device *)arg;
 	const char		*dev;
 	struct aml_value	res;
+	struct acpi_attach_args	aaa;
 
 	dnprintf(20, "found hid device: %s ", node->parent->name);
 	aml_eval_object(sc, node, &res, 0, NULL);
@@ -509,35 +510,23 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	}
 	dnprintf(20, "	device: %s\n", dev);
 
-	if (!strcmp(dev, ACPI_DEV_AC)) {
-		struct acpi_attach_args aaa;
+	memset(&aaa, 0, sizeof(aaa));
+	aaa.aaa_iot = sc->sc_iot;
+	aaa.aaa_memt = sc->sc_memt;
+	aaa.aaa_node = node->parent;
+	aaa.aaa_dev = dev;
 
-		memset(&aaa, 0, sizeof(aaa));
+	if (!strcmp(dev, ACPI_DEV_AC))
 		aaa.aaa_name = "acpiac";
-		aaa.aaa_iot = sc->sc_iot;
-		aaa.aaa_memt = sc->sc_memt;
-		aaa.aaa_node = node->parent;
-		config_found(self, &aaa, acpi_print);
-	} else if (!strcmp(dev, ACPI_DEV_CMB)) {
-		struct acpi_attach_args aaa;
-
-		memset(&aaa, 0, sizeof(aaa));
+	else if (!strcmp(dev, ACPI_DEV_CMB))
 		aaa.aaa_name = "acpibat";
-		aaa.aaa_iot = sc->sc_iot;
-		aaa.aaa_memt = sc->sc_memt;
-		aaa.aaa_node = node->parent;
-		config_found(self, &aaa, acpi_print);
-	} else if (!strcmp(dev, ACPI_DEV_LD) || !strcmp(dev, ACPI_DEV_PBD) ||
-	    !strcmp(dev, ACPI_DEV_SBD)) {
-		struct acpi_attach_args aaa; 
-
-		memset(&aaa, 0, sizeof(aaa));
+	else if (!strcmp(dev, ACPI_DEV_LD) ||
+	    !strcmp(dev, ACPI_DEV_PBD) ||
+	    !strcmp(dev, ACPI_DEV_SBD))
 		aaa.aaa_name = "acpibtn";
-		aaa.aaa_iot = sc->sc_iot;
-		aaa.aaa_memt = sc->sc_memt;
-		aaa.aaa_node = node->parent;
+
+	if (aaa.aaa_name)
 		config_found(self, &aaa, acpi_print);
-	}
 }
 
 int
