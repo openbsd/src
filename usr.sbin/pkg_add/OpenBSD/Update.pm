@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.60 2006/01/24 20:14:13 espie Exp $
+# $OpenBSD: Update.pm,v 1.61 2006/02/21 19:20:17 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -152,8 +152,37 @@ sub update_issue($$)
 	}
 }
 
-package OpenBSD::PackingElement::LibDepend;
+package OpenBSD::PackingElement::Depend;
 use OpenBSD::Error;
+
+sub check_replacement_spec
+{
+	my ($self, $state, $wanting, $toreplace, $replacement) = @_;
+
+	# nothing to validate if old dependency doesn't concern us.
+	return unless OpenBSD::PkgSpec::match($self->{pattern}, $toreplace);
+	# nothing to do if new dependency just matches
+	return if OpenBSD::PkgSpec::match($self->{pattern}, $replacement);
+
+	if ($state->{forced}->{updatedepends}) {
+	    Warn "Forward dependency of $wanting on $toreplace doesn't match $replacement, forcing it\n";
+	    $state->{forcedupdates} = {} unless defined $state->{forcedupdates};
+	    $state->{forcedupdates}->{$wanting} = 1;
+	} elsif ($state->{interactive}) {
+
+	    if (OpenBSD::Interactive::confirm("Forward dependency of $wanting on $toreplace doesn't match $replacement, proceed with update anyways", 1, 0, 'updatedepends')) {
+		$state->{forcedupdates} = {} unless defined $state->{forcedupdates};
+		$state->{forcedupdates}->{$wanting} = 1;
+	    } else {
+		$state->{okay} = 0;
+	    }
+	} else {
+	    $state->{okay} = 0;
+	    Warn "Can't update forward dependency of $wanting on $toreplace: $replacement doesn't match (use -F updatedepends to force it)\n";
+	}
+}
+
+package OpenBSD::PackingElement::LibDepend;
 sub validate_depend
 {
 	my ($self, $state, $wanting, $toreplace, $replacement) = @_;
@@ -161,17 +190,7 @@ sub validate_depend
 	if (defined $self->{name}) {
 		return unless $self->{name} eq $wanting;
 	}
-	return unless OpenBSD::PkgSpec::match($self->{pattern}, $toreplace);
-	if (!OpenBSD::PkgSpec::match($self->{pattern}, $replacement)) {
-		if ($state->{forced}->{updatedepends}) {
-		    Warn "Forward dependency of $wanting on $toreplace doesn't match $replacement, forcing it\n";
-		    $state->{forcedupdates} = {} unless defined $state->{forcedupdates};
-		    $state->{forcedupdates}->{$wanting} = 1;
-		} else {
-		    $state->{okay} = 0;
-		    Warn "Can't update forward dependency of $wanting on $toreplace: $replacement doesn't match (use -F updatedepends to force it)\n";
-		}
-	}
+	$self->check_replacement_spec($state, $wanting, $toreplace, $replacement);
 }
 
 package OpenBSD::PackingElement::Lib;
@@ -201,7 +220,6 @@ sub unmark_lib
 }
 
 package OpenBSD::PackingElement::NewDepend;
-use OpenBSD::Error;
 sub validate_depend
 {
 	my ($self, $state, $wanting, $toreplace, $replacement) = @_;
@@ -209,33 +227,15 @@ sub validate_depend
 	if (defined $self->{name}) {
 		return unless $self->{name} eq $wanting;
 	}
-	return unless OpenBSD::PkgSpec::match($self->{pattern}, $toreplace);
-	if (!OpenBSD::PkgSpec::match($self->{pattern}, $replacement)) {
-		if ($state->{forced}->{updatedepends}) {
-		    Warn "Forward dependency of $wanting on $toreplace doesn't match $replacement, forcing it\n";
-		} else {
-		    $state->{okay} = 0;
-		    Warn "Can't update forward dependency of $wanting on $toreplace: $replacement doesn't match (use -F updatedepends to force it)\n";
-		}
-	}
+	$self->check_replacement_spec($state, $wanting, $toreplace, $replacement);
 }
 
 package OpenBSD::PackingElement::Dependency;
-use OpenBSD::Error;
-
 sub validate_depend
 {
 	my ($self, $state, $wanting, $toreplace, $replacement) = @_;
 
-	return unless OpenBSD::PkgSpec::match($self->{pattern}, $toreplace);
-	if (!OpenBSD::PkgSpec::match($self->{pattern}, $replacement)) {
-		if ($state->{forced}->{updatedepends}) {
-		    Warn "Forward dependency of $wanting on $toreplace doesn't match $replacement, forcing it\n";
-		} else {
-		    $state->{okay} = 0;
-		    Warn "Can't update forward dependency of $wanting on $toreplace: $replacement doesn't match (use -F updatedepends to force it)\n";
-		}
-	}
+	$self->check_replacement_spec($state, $wanting, $toreplace, $replacement);
 }
 
 package OpenBSD::Update;
@@ -243,6 +243,7 @@ use OpenBSD::RequiredBy;
 use OpenBSD::PackingList;
 use OpenBSD::PackageInfo;
 use OpenBSD::Error;
+use OpenBSD::Interactive;
 
 sub can_do
 {
@@ -265,9 +266,8 @@ sub can_do
 			Warn "(forcing update)\n";
 			$state->{okay} = 1;
 		} elsif ($state->{interactive}) {
-			require OpenBSD::Interactive;
 
-			if (OpenBSD::Interactive::confirm("proceed with update anyways", 1, 0)) {
+			if (OpenBSD::Interactive::confirm("proceed with update anyways", 1, 0, 'update')) {
 			    $state->{okay} = 1;
 			}
 		}
@@ -319,9 +319,13 @@ sub is_safe
 		for my $i (@{$state->{journal}}) {
 			Warn "\t$i\n";
 		}
-		if ($state->{forced}->{update} || OpenBSD::Interactive::confirm("Proceed with update anyways", $state->{interactive}, 0)) {
+		if ($state->{forced}->{update}) {
 			Warn "(forcing update)\n";
 			$state->{okay} = 1;
+		} elsif ($state->{interactive}) {
+			if (OpenBSD::Interactive::confirm("proceed with update anyways", 1, 0, 'update')) {
+			    $state->{okay} = 1;
+			}
 		}
 	}
 	return $state->{okay};
