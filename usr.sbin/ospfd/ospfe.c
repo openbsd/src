@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.39 2006/02/19 18:52:06 norby Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.40 2006/02/21 13:02:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -504,7 +504,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 			 * IMSG_LS_ACK is used in two cases:
 			 * 1. LSA was a duplicate
 			 * 2. LS age is MaxAge and there is no current
-			 *    instance in the DB plus no neighbor is state
+			 *    instance in the DB plus no neighbor in state
 			 *    Exchange or Loading
 			 */
 			nbr = nbr_find_peerid(imsg.hdr.peerid);
