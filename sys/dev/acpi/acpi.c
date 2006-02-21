@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.38 2006/02/21 04:30:44 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.39 2006/02/21 16:51:30 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -316,8 +316,8 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			size = sc->sc_fadt->gpe0_blk_len >> 1;
 			addr = sc->sc_fadt->gpe0_blk;
 
-			dnprintf(10, "gpe0 block len : %x\n", sc->sc_fadt->gpe0_blk_len >> 1);
-			dnprintf(10, "gpe0 block addr: %x\n", sc->sc_fadt->gpe0_blk);
+			dnprintf(20, "gpe0 block len : %x\n", sc->sc_fadt->gpe0_blk_len >> 1);
+			dnprintf(20, "gpe0 block addr: %x\n", sc->sc_fadt->gpe0_blk);
 			if (reg == ACPIREG_GPE0_EN && addr) {
 				addr += size;
 				name = "gpe0_en";
@@ -329,8 +329,8 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			size = sc->sc_fadt->gpe1_blk_len >> 1;
 			addr = sc->sc_fadt->gpe1_blk;
 
-			dnprintf(10, "gpe1 block len : %x\n", sc->sc_fadt->gpe1_blk_len >> 1);
-			dnprintf(10, "gpe1 block addr: %x\n", sc->sc_fadt->gpe1_blk);
+			dnprintf(20, "gpe1 block len : %x\n", sc->sc_fadt->gpe1_blk_len >> 1);
+			dnprintf(20, "gpe1 block addr: %x\n", sc->sc_fadt->gpe1_blk);
 			if (reg == ACPIREG_GPE1_EN && addr) {
 				addr += size;
 				name = "gpe1_en";
@@ -480,7 +480,7 @@ void
 acpi_inidev(struct aml_node *node, void *arg)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
-	struct aml_value res;
+	struct aml_value	res;
 
 	aml_eval_object(sc, node, &res, 0, NULL);
 }
@@ -494,7 +494,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	struct aml_value	res;
 	struct acpi_attach_args	aaa;
 
-	dnprintf(20, "found hid device: %s ", node->parent->name);
+	dnprintf(10, "found hid device: %s ", node->parent->name);
 	aml_eval_object(sc, node, &res, 0, NULL);
 
 	switch (res.type) {
@@ -508,7 +508,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 		dev = "unknown";
 		break;
 	}
-	dnprintf(20, "	device: %s\n", dev);
+	dnprintf(10, "	device: %s\n", dev);
 
 	memset(&aaa, 0, sizeof(aaa));
 	aaa.aaa_iot = sc->sc_iot;
@@ -532,8 +532,8 @@ acpi_foundhid(struct aml_node *node, void *arg)
 int
 acpi_match(struct device *parent, void *match, void *aux)
 {
-	struct acpi_attach_args *aaa = aux;
-	struct cfdata *cf = match;
+	struct acpi_attach_args	*aaa = aux;
+	struct cfdata		*cf = match;
 
 	/* sanity */
 	if (strcmp(aaa->aaa_name, cf->cf_driver->cd_name))
@@ -948,7 +948,7 @@ acpi_init_gpes(struct acpi_softc *sc)
 		if (gpe != NULL) {
 			sc->sc_gpes[ngpe].gpe_number  = idx;
 			sc->sc_gpes[ngpe].gpe_handler = gpe;
-			dnprintf(10, "%s exists\n", name);
+			dnprintf(20, "%s exists\n", name);
 			ngpe++;
 		}
 	}
