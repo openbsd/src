@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.49 2006/02/09 09:38:41 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.50 2006/02/21 19:20:54 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -197,6 +197,14 @@ sub parse_problems
 		if ($notyet) {
 			print STDERR "Error from $baseurl:\n" if $notyet;
 			$notyet = 0;
+		}
+		if (m/^421\s+/ ||
+		    m/^ftp: connect: Connection timed out/ ||
+		    m/^ftp: Can't connect or login to host/) {
+			$self->{lasterror} = 421;
+		}
+		if (m/^550\s+/) {
+			$self->{lasterror} = 550;
 		}
 		print STDERR  $_;
 	}
@@ -953,7 +961,21 @@ sub find
 	my ($self, $pkgname, $arch, $srcpath) = @_;
 
 	for my $repo (@{$self->{list}}) {
-		my $pkg = $repo->find($pkgname, $arch, $srcpath);
+		my $pkg;
+
+		for (my $retry = 5; $retry < 60; $retry *= 2) {
+			undef $repo->{lasterror};
+			$pkg = $repo->find($pkgname, $arch, $srcpath);
+			if (!defined $pkg && defined $repo->{lasterror} && 
+			    $repo->{lasterror} == 421 && 
+			    defined $self->{avail} &&
+			    $self->{avail}->{$pkgname} eq $repo) { 
+				print STDERR "Temporary error, sleeping $retry seconds\n";
+				sleep($retry);
+			} else {
+				last;
+			}
+		}
 		return $pkg if defined $pkg;
 	}
 	return undef;
@@ -964,7 +986,21 @@ sub grabPlist
 	my ($self, $pkgname, $arch, $code) = @_;
 
 	for my $repo (@{$self->{list}}) {
-		my $plist = $repo->grabPlist($pkgname, $arch, $code);
+		my $plist;
+
+		for (my $retry = 5; $retry < 60; $retry *= 2) {
+			undef $repo->{lasterror};
+			$plist = $repo->grabPlist($pkgname, $arch, $code);
+			if (!defined $plist && defined $repo->{lasterror} && 
+			    $repo->{lasterror} == 421 && 
+			    defined $self->{avail} &&
+			    $self->{avail}->{$pkgname} eq $repo) { 
+				print STDERR "Temporary error, sleeping $retry seconds\n";
+				sleep($retry);
+			} else {
+				last;
+			}
+		}
 		return $plist if defined $plist;
 	}
 	return undef;
