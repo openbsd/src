@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.2 2006/02/20 04:59:43 jordan Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.3 2006/02/21 01:10:10 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -134,12 +134,9 @@ acpibtn_getsta(struct acpibtn_softc *sc)
 	memset(&env, 0, sizeof(env));
 
 	ctx = NULL;
-	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_STA", &res, &env)) {
-		dnprintf(10, "%s: no _STA\n",
-		    DEVNAME(sc));
-		/* XXX this should fall through */
-		return (1);
-	}
+	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_STA", &res, &env))
+		dnprintf(10, "%s: no _STA\n", DEVNAME(sc));
+		/* not all buttons have _STA so FALLTROUGH */
 
 	return (0);
 }
@@ -149,6 +146,8 @@ acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 {
 	struct acpibtn_softc *sc = arg;
 
-	printf("acpibtn_notify: %.2x %s\n", notify_type, sc->sc_devnode->name);
+	printf("acpibtn_notify: %.2x %s\n", notify_type,
+	    sc->sc_devnode->parent->name);
+
 	return (0);
 }
