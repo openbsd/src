@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.6 2006/02/21 17:14:42 jordan Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.7 2006/02/21 20:53:31 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -32,9 +32,9 @@
 
 #include <sys/sensors.h>
 
-int acpibtn_match(struct device *, void *, void *);
-void acpibtn_attach(struct device *, struct device *, void *);
-int  acpibtn_notify(struct aml_node *, int, void *);
+int	acpibtn_match(struct device *, void *, void *);
+void	acpibtn_attach(struct device *, struct device *, void *);
+int	acpibtn_notify(struct aml_node *, int, void *);
 
 struct acpibtn_softc {
 	struct device		sc_dev;
@@ -51,7 +51,7 @@ struct acpibtn_softc {
 #define ACPIBTN_SLEEP	2
 };
 
-int acpibtn_getsta(struct acpibtn_softc *);
+int	acpibtn_getsta(struct acpibtn_softc *);
 
 struct cfattach acpibtn_ca = {
 	sizeof(struct acpibtn_softc), acpibtn_match, acpibtn_attach
