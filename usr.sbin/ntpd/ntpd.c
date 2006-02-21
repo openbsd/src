@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.40 2005/09/06 21:27:10 wvdputte Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.41 2006/02/21 23:47:00 stevesk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -292,7 +292,8 @@ dispatch_imsg(struct ntpd_conf *conf)
 			if (name[imsg.hdr.len] != '\0' ||
 			    strlen(name) != imsg.hdr.len)
 				fatalx("invalid IMSG_HOST_DNS received");
-			cnt = host_dns(name, &hn);
+			if ((cnt = host_dns(name, &hn)) == -1)
+				break;
 			buf = imsg_create(ibuf, IMSG_HOST_DNS,
 			    imsg.hdr.peerid, 0,
 			    cnt * sizeof(struct sockaddr_storage));
