@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.54 2006/02/08 22:11:02 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.55 2006/02/21 19:34:48 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1375,16 +1375,14 @@ gem_ioctl(ifp, cmd, data)
 
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-
+		gem_init(ifp);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			gem_init(ifp);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
 		default:
-			gem_init(ifp);
 			break;
 		}
 		break;
@@ -1406,6 +1404,14 @@ gem_ioctl(ifp, cmd, data)
 #ifdef GEM_DEBUG
 		sc->sc_debug = (ifp->if_flags & IFF_DEBUG) != 0 ? 1 : 0;
 #endif
+		break;
+
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
+			error = EINVAL;
+		} else if (ifp->if_mtu != ifr->ifr_mtu) {
+			ifp->if_mtu = ifr->ifr_mtu;
+		}
 		break;
 
 	case SIOCADDMULTI:
