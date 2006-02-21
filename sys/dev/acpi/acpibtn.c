@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.5 2006/02/21 16:50:50 marco Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.6 2006/02/21 17:14:42 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -49,15 +49,8 @@ struct acpibtn_softc {
 #define ACPIBTN_LID	0
 #define ACPIBTN_POWER	1
 #define ACPIBTN_SLEEP	2
-#if 0
-	struct sensor sens[3];	/* XXX debug only */
-#endif
 };
 
-
-#if 0
-void acpibtn_refresh(void *);
-#endif
 int acpibtn_getsta(struct acpibtn_softc *);
 
 struct cfattach acpibtn_ca = {
@@ -94,45 +87,21 @@ acpibtn_attach(struct device *parent, struct device *self, void *aux)
 
 	if (!strcmp(aa->aaa_dev, ACPI_DEV_LD))
 		sc->sc_btn_type = ACPIBTN_LID;
-	if (!strcmp(aa->aaa_dev, ACPI_DEV_PBD))
+	if (!strcmp(aa->aaa_dev, ACPI_DEV_PBD)) {
 		sc->sc_btn_type = ACPIBTN_POWER;
-	if (!strcmp(aa->aaa_dev, ACPI_DEV_SBD))
+		sc->sc_acpi->sc_pbtndev = sc->sc_devnode;
+	}
+	if (!strcmp(aa->aaa_dev, ACPI_DEV_SBD)) {
 		sc->sc_btn_type = ACPIBTN_SLEEP;
+		sc->sc_acpi->sc_sbtndev = sc->sc_devnode;
+	}
 
 	acpibtn_getsta(sc); 
 
-	/* XXX print which buttons are available and state */
 	printf(": %s\n", sc->sc_devnode->parent->name);
 
 	aml_register_notify(sc->sc_devnode->parent, acpibtn_notify, sc);
-
-	/* XXX: fixme */
-	sc->sc_acpi->sc_pbtndev = sc->sc_devnode;
-	sc->sc_acpi->sc_sbtndev = sc->sc_devnode;
-#if 0
-	strlcpy(sc->sens[0].device, DEVNAME(sc), sizeof(sc->sens[0].device));
-	strlcpy(sc->sens[0].desc, "power supply", sizeof(sc->sens[2].desc));
-	sc->sens[0].type = SENSOR_INDICATOR;
-	sensor_add(&sc->sens[0]);
-	sc->sens[0].value = sc->sc_ac_stat;
-
-	if (sensor_task_register(sc, acpibtn_refresh, 10))
-		printf(", unable to register update task\n");
-#endif
 }
-
-#if 0
-/* XXX this is for debug only, remove later */
-void
-acpibtn_refresh(void *arg)
-{
-	struct acpibtn_softc *sc = arg;
-
-	acpibtn_getsta(sc); 
-
-	sc->sens[0].value = sc->sc_ac_stat;
-}
-#endif
 
 int
 acpibtn_getsta(struct acpibtn_softc *sc)
@@ -146,7 +115,7 @@ acpibtn_getsta(struct acpibtn_softc *sc)
 	ctx = NULL;
 	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_STA", &res, &env))
 		dnprintf(20, "%s: no _STA\n", DEVNAME(sc));
-		/* not all buttons have _STA so FALLTROUGH */
+		/* XXX not all buttons have _STA so FALLTROUGH */
 
 	return (0);
 }
@@ -162,13 +131,12 @@ acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 
 	switch (sc->sc_btn_type) {
 	case ACPIBTN_LID:
+	case ACPIBTN_SLEEP:
 		break;
 	case ACPIBTN_POWER:
 		acpi_s5 = 1;
 		psignal(initproc, SIGUSR1);
 		/* NOTREACHED */
-		break;
-	case ACPIBTN_SLEEP:
 		break;
 	default:
 		printf("%s: spurious acpi interrupt\n", DEVNAME(sc));
