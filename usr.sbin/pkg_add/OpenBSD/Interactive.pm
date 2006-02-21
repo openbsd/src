@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Interactive.pm,v 1.1 2005/09/04 22:47:56 espie Exp $
+# $OpenBSD: Interactive.pm,v 1.2 2006/02/21 19:18:25 espie Exp $
 #
 # Copyright (c) 2005 Marc Espie <espie@openbsd.org>
 #
@@ -54,14 +54,20 @@ LOOP:
 	}
 }
 
+my $always = {};
+
 sub confirm
 {
-	my ($prompt, $interactive, $default) = @_;
+	my ($prompt, $interactive, $default, $key) = @_;
 	if (!$interactive || !-t STDIN) {
 		return 0;
 	}
+	if (defined $key && $always->{$key}) {
+		return 1;
+	}
 LOOP2:
-	print STDERR $prompt, $default ? '? [Y/n] ' : '? [y/N] ';
+	my $a = defined $key ? '/a' : '';
+	print STDERR $prompt, $default ? "? [Y/n$a] " : "? [y/N$a] ";
 
 	my $result = <STDIN>;
 	chomp $result;
@@ -72,6 +78,10 @@ LOOP2:
 	}
 	if ($result eq 'no' or $result eq 'n') {
 		return 0;
+	}
+	if (defined $key && $result eq 'a') {
+		$always->{$key} = 1;
+		return 1;
 	}
 	if ($result eq '') {
 		return $default;
