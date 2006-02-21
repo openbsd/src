@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.134 2006/02/13 00:57:10 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.135 2006/02/21 01:45:47 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -177,6 +177,7 @@ void bge_miibus_writereg(struct device *, int, int, int);
 void bge_miibus_statchg(struct device *);
 
 void bge_reset(struct bge_softc *);
+void bge_link_upd(struct bge_softc *);
 
 #define BGE_DEBUG
 #ifdef BGE_DEBUG
@@ -1669,11 +1670,22 @@ bge_blockinit(struct bge_softc *sc)
 		CSR_WRITE_4(sc, BGE_MI_STS, BGE_MISTS_LINK);
  	} else {
 		BGE_SETBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL|10<<16);
-		if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5700_AX ||
-		    BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5700_BX)
+		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 &&
+		    sc->bge_chipid != BGE_CHIPID_BCM5700_B1)
 			CSR_WRITE_4(sc, BGE_MAC_EVT_ENB,
 			    BGE_EVTENB_MI_INTERRUPT);
 	}
+
+	/*
+	 * Clear any pending link state attention.
+	 * Otherwise some link state change events may be lost until attention
+	 * is cleared by bge_intr() -> bge_link_upd() sequence.
+	 * It's not necessary on newer BCM chips - perhaps enabling link
+	 * state change attentions implies clearing pending attention.
+	 */
+	CSR_WRITE_4(sc, BGE_MAC_STS, BGE_MACSTAT_SYNC_CHANGED|
+	    BGE_MACSTAT_CFG_CHANGED|BGE_MACSTAT_MI_COMPLETE|
+	    BGE_MACSTAT_LINK_CHANGED);
 
 	/* Enable link state change attentions. */
 	BGE_SETBIT(sc, BGE_MAC_EVT_ENB, BGE_EVTENB_LINK_CHANGED);
@@ -2404,7 +2416,6 @@ bge_intr(void *xsc)
 {
 	struct bge_softc *sc;
 	struct ifnet *ifp;
-	u_int32_t status, mimode;
 
 	sc = xsc;
 	ifp = &sc->arpcom.ac_if;
@@ -2417,76 +2428,11 @@ bge_intr(void *xsc)
 	/* Ack interrupt and stop others from occurring. */
 	CSR_WRITE_4(sc, BGE_MBX_IRQ0_LO, 1);
 
-	/*
-	 * Process link state changes.
-	 * Grrr. The link status word in the status block does
-	 * not work correctly on the BCM5700 rev AX and BX chips,
-	 * according to all available information. Hence, we have
-	 * to enable MII interrupts in order to properly obtain
-	 * async link changes. Unfortunately, this also means that
-	 * we have to read the MAC status register to detect link
-	 * changes, thereby adding an additional register access to
-	 * the interrupt handler.
-	 */
-	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5700_AX ||
-	    BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5700_BX) {
-		status = CSR_READ_4(sc, BGE_MAC_STS);
-		if (status & BGE_MACSTAT_MI_INTERRUPT) {
-			sc->bge_link = 0;
-			timeout_del(&sc->bge_timeout);
-			bge_tick(sc);
-			/* Clear the interrupt */
-			CSR_WRITE_4(sc, BGE_MAC_EVT_ENB,
-			    BGE_EVTENB_MI_INTERRUPT);
-			bge_miibus_readreg(&sc->bge_dev, 1, BRGPHY_MII_ISR);
-			bge_miibus_writereg(&sc->bge_dev, 1, BRGPHY_MII_IMR,
-			    BRGPHY_INTRS);
-		}
-	} else {
-		if ((sc->bge_rdata->bge_status_block.bge_status &
-		    BGE_STATFLAG_UPDATED) &&
-		    (sc->bge_rdata->bge_status_block.bge_status &
-		    BGE_STATFLAG_LINKSTATE_CHANGED)) {
-			sc->bge_rdata->bge_status_block.bge_status &=
-			    ~(BGE_STATFLAG_UPDATED | 
-				BGE_STATFLAG_LINKSTATE_CHANGED);
-			/*
-			 * Sometimes PCS encoding errors are detected in
-			 * TBI mode (on fiber NICs), and for some reason
-			 * the chip will signal them as link changes.
-			 * If we get a link change event, but the 'PCS 
-			 * encoding bit' in the MAC status register
-			 * is set, don't bother doing a link check.
-			 * This avoids spurious "gigabit link up" messages
-			 * that sometimes appear on fiber NICs during
-			 * periods of heavy traffic. (There should be no
-			 * effect on copper NICs).
-			 *
-			 * If we do have a copper NIC (bge_tbi == 0) then
-			 * check that the AUTOPOLL bit is set before
-			 * processing the event as a real link change.
-			 * Turning AUTOPOLL on and off in the MII read/write
-			 * functions will often trigger a link status
-			 * interrupt for no reason.
-			 */
-			status = CSR_READ_4(sc, BGE_MAC_STS);
-			mimode = CSR_READ_4(sc, BGE_MI_MODE);
-			if (!(status & (BGE_MACSTAT_PORT_DECODE_ERROR | 
-			    BGE_MACSTAT_MI_COMPLETE)) && (!sc->bge_tbi &&
-			    (mimode & BGE_MIMODE_AUTOPOLL))) {
-				sc->bge_link = 0;
-				timeout_del(&sc->bge_timeout);
-				bge_tick(sc);
-			}
-			/* Clear the interrupt */
-			CSR_WRITE_4(sc, BGE_MAC_STS, BGE_MACSTAT_SYNC_CHANGED|
-			    BGE_MACSTAT_CFG_CHANGED|BGE_MACSTAT_MI_COMPLETE|
-			    BGE_MACSTAT_LINK_CHANGED);
-
-			/* Force flush the status block cached by PCI bridge */
-			CSR_READ_4(sc, BGE_MBX_IRQ0_LO);	
-		}
-	}
+	if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 &&
+	    sc->bge_chipid != BGE_CHIPID_BCM5700_B1) ||
+	    sc->bge_rdata->bge_status_block.bge_status & BGE_STATFLAG_LINKSTATE_CHANGED ||
+	    sc->bge_link_evt)
+		bge_link_upd(sc);
 
 	if (ifp->if_flags & IFF_RUNNING) {
 		/* Check RX return ring producer/consumer */
@@ -2510,8 +2456,6 @@ bge_tick(void *xsc)
 {
 	struct bge_softc *sc = xsc;
 	struct mii_data *mii = &sc->bge_mii;
-	struct ifmedia *ifm = NULL;
-	struct ifnet *ifp = &sc->arpcom.ac_if;
 	int s;
 
 	s = splnet();
@@ -2520,36 +2464,20 @@ bge_tick(void *xsc)
 		bge_stats_update_regs(sc);
 	else
 		bge_stats_update(sc);
+
+	if (!sc->bge_tbi) {
+		mii_tick(mii);
+	} else {
+		/*
+		 * Since in TBI mode auto-polling can't be used we should poll
+		 * link status manually. Here we register pending link event
+		 * and trigger interrupt.
+		 */
+		sc->bge_link_evt++;
+		BGE_SETBIT(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_INTR_SET);
+	}
+
 	timeout_add(&sc->bge_timeout, hz);
-	if (sc->bge_link) {
-		splx(s);
-		return;
-	}
-
-	if (sc->bge_tbi) {
-		ifm = &sc->bge_ifmedia;
-		if (CSR_READ_4(sc, BGE_MAC_STS) &
-		    BGE_MACSTAT_TBI_PCS_SYNCHED) {
-			sc->bge_link++;
-			if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
-				BGE_CLRBIT(sc, BGE_MAC_MODE,
-				    BGE_MACMODE_TBI_SEND_CFGS);
-			CSR_WRITE_4(sc, BGE_MAC_STS, 0xFFFFFFFF);
-			if (!IFQ_IS_EMPTY(&ifp->if_snd))
-				bge_start(ifp);
-		}
-		splx(s);
-		return;
-	}
-
-	mii_tick(mii);
-
-	if (!sc->bge_link && mii->mii_media_status & IFM_ACTIVE &&
-	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
-		sc->bge_link++;
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			bge_start(ifp);
-	}
 
 	splx(s);
 }
@@ -3088,7 +3016,7 @@ bge_ifmedia_upd(struct ifnet *ifp)
 		return (0);
 	}
 
-	sc->bge_link = 0;
+	sc->bge_link_evt++;
 	if (mii->mii_instance) {
 		struct mii_softc *miisc;
 		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
@@ -3359,9 +3287,15 @@ bge_stop(struct bge_softc *sc)
 		ifp->if_flags = itmp;
 	}
 
-	sc->bge_link = 0;
-
 	sc->bge_tx_saved_considx = BGE_TXCONS_UNSET;
+
+	/*
+	 * We can't just call bge_link_upd() cause chip is almost stopped so
+	 * bge_link_upd -> bge_tick_locked -> bge_stats_update sequence may
+	 * lead to hardware deadlock. So we just clearing MAC's link state
+	 * (PHY may still have link UP).
+	 */
+	sc->bge_link = 0;
 }
 
 /*
@@ -3375,4 +3309,104 @@ bge_shutdown(void *xsc)
 
 	bge_stop(sc);
 	bge_reset(sc);
+}
+
+void
+bge_link_upd(struct bge_softc *sc)
+{
+	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct mii_data *mii = &sc->bge_mii;
+	u_int32_t link, status;
+
+	/* Clear 'pending link event' flag */
+	sc->bge_link_evt = 0;
+
+	/*
+	 * Process link state changes.
+	 * Grrr. The link status word in the status block does
+	 * not work correctly on the BCM5700 rev AX and BX chips,
+	 * according to all available information. Hence, we have
+	 * to enable MII interrupts in order to properly obtain
+	 * async link changes. Unfortunately, this also means that
+	 * we have to read the MAC status register to detect link
+	 * changes, thereby adding an additional register access to
+	 * the interrupt handler.
+	 *
+	 * XXX: perhaps link state detection procedure used for
+	 * BGE_CHIPID_BCM5700_B1 can be used for other BCM5700 revisions.
+	 */
+
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 &&
+	    sc->bge_chipid != BGE_CHIPID_BCM5700_B1) {
+		status = CSR_READ_4(sc, BGE_MAC_STS);
+		if (status & BGE_MACSTAT_MI_INTERRUPT) {
+			timeout_del(&sc->bge_timeout);
+			bge_tick(sc);
+
+			if (!sc->bge_link &&
+			    mii->mii_media_status & IFM_ACTIVE &&
+			    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
+				sc->bge_link++;
+			} else if (sc->bge_link &&
+			    (!(mii->mii_media_status & IFM_ACTIVE) ||
+			    IFM_SUBTYPE(mii->mii_media_active) == IFM_NONE)) {
+				sc->bge_link = 0;
+			}
+
+			/* Clear the interrupt */
+			CSR_WRITE_4(sc, BGE_MAC_EVT_ENB,
+			    BGE_EVTENB_MI_INTERRUPT);
+			bge_miibus_readreg(&sc->bge_dev, 1, BRGPHY_MII_ISR);
+			bge_miibus_writereg(&sc->bge_dev, 1, BRGPHY_MII_IMR,
+			    BRGPHY_INTRS);
+		}
+		return;
+	} 
+
+	if (sc->bge_tbi) {
+		status = CSR_READ_4(sc, BGE_MAC_STS);
+		if (status & BGE_MACSTAT_TBI_PCS_SYNCHED) {
+			if (!sc->bge_link) {
+				sc->bge_link++;
+				if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
+					BGE_CLRBIT(sc, BGE_MAC_MODE,
+					    BGE_MACMODE_TBI_SEND_CFGS);
+				CSR_WRITE_4(sc, BGE_MAC_STS, 0xFFFFFFFF);
+				ifp->if_link_state = LINK_STATE_UP;
+				if_link_state_change(ifp);
+			}
+		} else if (sc->bge_link) {
+			sc->bge_link = 0;
+			ifp->if_link_state = LINK_STATE_DOWN;
+			if_link_state_change(ifp);
+		}
+	/* Discard link events for MII/GMII cards if MI auto-polling disabled */
+	} else if (CSR_READ_4(sc, BGE_MI_MODE) & BGE_MIMODE_AUTOPOLL) {
+		/* 
+		 * Some broken BCM chips have BGE_STATFLAG_LINKSTATE_CHANGED bit
+		 * in status word always set. Workaround this bug by reading
+		 * PHY link status directly.
+		 */
+		link = (CSR_READ_4(sc, BGE_MI_STS) & BGE_MISTS_LINK) ? 1 : 0;
+
+		if (link != sc->bge_link ||
+		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700) {
+			timeout_del(&sc->bge_timeout);
+			bge_tick(sc);
+
+			if (!sc->bge_link &&
+			    mii->mii_media_status & IFM_ACTIVE &&
+			    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE)
+				sc->bge_link++;
+			else if (sc->bge_link &&
+			    (!(mii->mii_media_status & IFM_ACTIVE) ||
+			    IFM_SUBTYPE(mii->mii_media_active) == IFM_NONE))
+				sc->bge_link = 0;
+		}
+	}
+
+	/* Clear the attention */
+	CSR_WRITE_4(sc, BGE_MAC_STS, BGE_MACSTAT_SYNC_CHANGED|
+	    BGE_MACSTAT_CFG_CHANGED|BGE_MACSTAT_MI_COMPLETE|
+	    BGE_MACSTAT_LINK_CHANGED);
 }
