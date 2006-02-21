@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.29 2006/01/16 23:57:20 reyk Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.30 2006/02/21 12:19:17 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -337,11 +337,11 @@ and
 .Ar cast
 are allowed.
 If omitted,
-.Xr isakmpd 8
+.Xr ipsecctl 8
 will use the default values
 .Ar hmac-sha1
 and
-.Ar 3des .
+.Ar aes .
 .It Xo
 .Ar quick auth
 .Aq Ar algorithm
