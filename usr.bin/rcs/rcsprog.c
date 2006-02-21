@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.62 2006/01/25 08:01:00 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.63 2006/02/21 16:39:23 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -70,6 +70,8 @@ static void rcs_attach_symbol(RCSFILE *, const char *);
 void
 rcs_set_rev(const char *str, RCSNUM **rev)
 {
+	RCSNUM *t;
+
 	if (str == NULL)
 		return;
 
@@ -78,6 +80,24 @@ rcs_set_rev(const char *str, RCSNUM **rev)
 
 	if ((*rev = rcsnum_parse(str)) == NULL)
 		fatal("bad revision number '%s'", str);
+        /*
+	 * If 0 is specified as a revision number, exit and warn the user.
+	 * This differs from GNU ci's plainly buggy behaviour, where 0 ends up
+	 * being 0.1 and other weird stuff.
+	 */
+	t = rcsnum_parse("0");
+	if (rcsnum_cmp(*rev, t, 0) == 0)
+		fatal("0 is not a valid revision number");
+	rcsnum_free(t);
+	/*
+	 * If 1 is specified as revision number, silently assume 1.1.
+	 * This is what GNU ci does. 
+	 */
+	t = rcsnum_parse(RCS_HEAD_INIT);
+	if (rcsnum_cmp(*rev, t, 0) > 0)
+		rcsnum_cpy(t, *rev, 0); 
+	rcsnum_free(t);
+	
 }
 
 /*
