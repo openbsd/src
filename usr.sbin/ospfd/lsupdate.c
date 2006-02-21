@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.25 2006/02/19 18:55:47 norby Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.26 2006/02/21 10:12:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -357,6 +357,7 @@ ls_retrans_list_insert(struct nbr *nbr, struct lsa_entry *new)
 		if (when < le->le_when) {
 			new->le_when = when;
 			TAILQ_INSERT_BEFORE(le, new, entry);
+			nbr->ls_ret_cnt++;
 			return;
 		}
 		when -= le->le_when;
@@ -475,6 +476,7 @@ ls_retrans_timer(int fd, short event, void *bula)
 			ls_retrans_list_free(nbr, le);
 		else {
 			TAILQ_REMOVE(&nbr->ls_retrans_list, le, entry);
+			nbr->ls_ret_cnt--;
 			le->le_when = nbr->iface->rxmt_interval;
 			ls_retrans_list_insert(nbr, le);
 		}
