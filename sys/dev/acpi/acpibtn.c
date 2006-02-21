@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.4 2006/02/21 04:30:45 marco Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.5 2006/02/21 16:50:50 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -71,8 +71,8 @@ struct cfdriver acpibtn_cd = {
 int
 acpibtn_match(struct device *parent, void *match, void *aux)
 {
-	struct acpi_attach_args *aa = aux;
-	struct cfdata *cf = match;
+	struct acpi_attach_args	*aa = aux;
+	struct cfdata		*cf = match;
 
 	/* sanity */
 	if (aa->aaa_name == NULL ||
@@ -86,7 +86,7 @@ acpibtn_match(struct device *parent, void *match, void *aux)
 void
 acpibtn_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct acpibtn_softc *sc = (struct acpibtn_softc *)self;
+	struct acpibtn_softc	*sc = (struct acpibtn_softc *)self;
 	struct acpi_attach_args *aa = aux;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
@@ -137,15 +137,15 @@ acpibtn_refresh(void *arg)
 int
 acpibtn_getsta(struct acpibtn_softc *sc)
 {
-	struct aml_value res, env;
-	struct acpi_context *ctx;
+	struct aml_value	res, env;
+	struct acpi_context	*ctx;
 
 	memset(&res, 0, sizeof(res));
 	memset(&env, 0, sizeof(env));
 
 	ctx = NULL;
 	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_STA", &res, &env))
-		dnprintf(10, "%s: no _STA\n", DEVNAME(sc));
+		dnprintf(20, "%s: no _STA\n", DEVNAME(sc));
 		/* not all buttons have _STA so FALLTROUGH */
 
 	return (0);
