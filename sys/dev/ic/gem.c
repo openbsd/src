@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.55 2006/02/21 19:34:48 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.56 2006/02/21 19:46:52 brad Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -316,12 +316,6 @@ gem_config(sc)
 		    IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_SX ||
 		    IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_LX ||
 		    IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_CX) {
-#if 0
-			if (sc->sc_variant != GEM_APPLE_GMAC)
-				sc->sc_ethercom.ec_capabilities
-				    |= ETHERCAP_JUMBO_MTU;
-#endif
-
 			sc->sc_flags |= GEM_GIGABIT;
 			break;
 		}
