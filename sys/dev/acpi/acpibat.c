@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.15 2006/02/17 07:25:51 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.16 2006/02/21 01:12:40 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -199,7 +199,7 @@ acpibat_getbif(struct acpibat_softc *sc)
 	}
 
 	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_BIF", &res, &env)) {
-		dnprintf(50, "%s: no _BIF\n",
+		dnprintf(10, "%s: no _BIF\n",
 		    DEVNAME(sc));
 		return (1);
 	}
@@ -224,7 +224,7 @@ acpibat_getbif(struct acpibat_softc *sc)
 	sc->sc_bif.bif_type = aml_strval(res.v_package[11]);
 	sc->sc_bif.bif_oem = aml_strval(res.v_package[12]);
 
-	dnprintf(10, "power_unit: %u capacity: %u last_cap: %u tech: %u "
+	dnprintf(60, "power_unit: %u capacity: %u last_cap: %u tech: %u "
 	    "volt: %u warn: %u low: %u gran1: %u gran2: %d model: %s "
 	    "serial: %s type: %s oem: %s\n",
 	    sc->sc_bif.bif_power_unit,
@@ -255,7 +255,7 @@ acpibat_getbst(struct acpibat_softc *sc)
 
 	ctx = NULL;
 	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_BST", &res, &env)) {
-		dnprintf(50, "%s: no _BST\n",
+		dnprintf(10, "%s: no _BST\n",
 		    DEVNAME(sc));
 		return (1);
 	}
@@ -271,7 +271,7 @@ acpibat_getbst(struct acpibat_softc *sc)
 	sc->sc_bst.bst_capacity = aml_val2int(ctx, res.v_package[2]);
 	sc->sc_bst.bst_voltage = aml_val2int(ctx, res.v_package[3]);
 
-	dnprintf(10, "state: %u rate: %u cap: %u volt: %u ",
+	dnprintf(60, "state: %u rate: %u cap: %u volt: %u ",
 	    sc->sc_bst.bst_state,
 	    sc->sc_bst.bst_rate,
 	    sc->sc_bst.bst_capacity,
