@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.117 2006/02/20 08:50:44 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.118 2006/02/21 17:07:14 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -291,7 +291,10 @@ Establish an additional network address for this interface.
 This is sometimes useful when changing network numbers, and
 one wishes to accept packets addressed to the old interface.
 .It Fl alias
-Remove the specified network address alias.
+A synonym for
+.Cm delete .
+Use of this option is discouraged in favour of
+.Cm delete .
 .It Cm anycast
 (inet6 only)
 Set the IPv6 anycast address bit.
@@ -362,9 +365,8 @@ extra console error logging.
 .It Fl debug
 Disable driver-dependent debugging code.
 .It Cm delete
-Remove the network address specified.
-This would be used if you incorrectly specified an alias, or it
-was no longer needed.
+Remove the specified network address,
+including any netmask or destination address configured with this address.
 .It Cm deletetunnel
 .Pf ( Xr gif 4
 and
