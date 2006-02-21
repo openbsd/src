@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.41 2005/06/03 08:14:01 pascoe Exp $	*/
+/*	$OpenBSD: in.c,v 1.42 2006/02/21 15:33:59 claudio Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -275,6 +275,7 @@ in_control(so, cmd, data, ifp)
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,
 			    ifa_list);
 			ia->ia_addr.sin_family = AF_INET;
+			ia->ia_addr.sin_len = sizeof(ia->ia_addr);
 			ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
 			ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
 			ia->ia_ifa.ifa_netmask = sintosa(&ia->ia_sockmask);
