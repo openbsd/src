@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.28 2006/02/20 22:03:58 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.29 2006/02/22 19:29:24 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -239,6 +239,7 @@ aml_setbit(u_int8_t *pb, int bit, int val)
 struct aml_notify_data
 {
 	struct aml_node 	*node;
+	char                     pnpid[20];
 	void            	*cbarg;
 	int			(*cbproc)(struct aml_node *, int, void *);
 
@@ -249,30 +250,47 @@ SLIST_HEAD(aml_notify_head, aml_notify_data);
 struct aml_notify_head aml_notify_list =
 	SLIST_HEAD_INITIALIZER(&aml_notify_list);
 
-void aml_register_notify(struct aml_node *node,
-			 int (*proc)(struct aml_node *, int, void *),
-			 void *arg)
+void
+aml_register_notify(struct aml_node *node, const char *pnpid,
+		    int (*proc)(struct aml_node *, int, void *),
+		    void *arg)
 {
 	struct aml_notify_data *pdata;
 
-	dnprintf(10, "aml_register_notify: %s %x\n",
-		 node->name, proc);
+	dnprintf(10, "aml_register_notify: %s %s %x\n",
+		 node->name, pnpid ? pnpid : "", proc);
 	pdata = acpi_os_allocmem(sizeof(struct aml_notify_data));
 	pdata->node = node;
 	pdata->cbarg = arg;
 	pdata->cbproc = proc;
-
+	if (pnpid) 
+		strlcpy(pdata->pnpid, pnpid, sizeof(pdata->pnpid));
 	SLIST_INSERT_HEAD(&aml_notify_list, pdata, link);
 }
 
-void aml_notify(struct aml_node *node, int notify_value)
+void
+aml_notify(struct aml_node *node, int notify_value)
 {
 	struct aml_notify_data *pdata = NULL;
 
+	if (node == NULL)
+		return;
 	SLIST_FOREACH(pdata, &aml_notify_list, link)
-		if (pdata->node == node) {
-			pdata->cbproc(node, notify_value, pdata->cbarg);
-		}
+		if (pdata->node == node)
+			pdata->cbproc(pdata->node, notify_value, pdata->cbarg);
+}
+
+void
+aml_notify_dev(const char *pnpid, int notify_value)
+{
+	struct aml_notify_data *pdata = NULL;
+
+	if (pnpid == NULL)
+		return;
+	SLIST_FOREACH(pdata, &aml_notify_list, link) {
+		if (pdata->pnpid && !strcmp(pdata->pnpid, pnpid))
+			pdata->cbproc(pdata->node, notify_value, pdata->cbarg);
+	}
 }
 
 void _aml_notify(struct aml_node *, void *);

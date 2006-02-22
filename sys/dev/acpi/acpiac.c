@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.6 2006/02/22 17:21:33 jordan Exp $ */
+/* $OpenBSD: acpiac.c,v 1.7 2006/02/22 19:29:24 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -83,7 +83,7 @@ acpiac_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node->child;
 
-	aml_register_notify(sc->sc_devnode->parent, acpiac_notify, sc);
+	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev, acpiac_notify, sc);
 
 	acpiac_getsta(sc); 
 
@@ -149,18 +149,16 @@ int
 acpiac_notify(struct aml_node *node, int notify_type, void *arg)
 {
 	struct acpiac_softc *sc = arg;
-	int oldstat;
 
 	dnprintf(10, "acpiac_notify: %.2x %s\n", notify_type,
 	    sc->sc_devnode->parent->name);
 
 	switch (notify_type) {
 	case 0x80:
-		oldstat = sc->sc_ac_stat;
 		acpiac_getsta(sc);
-		dnprintf(10, "A/C status: old:%d new:%d\n", oldstat,
-		    sc->sc_ac_stat);
+		dnprintf(10, "A/C status: %d\n", sc->sc_ac_stat);
 		break;
 	}
+
 	return (0);
 }

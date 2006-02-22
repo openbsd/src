@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.19 2006/02/21 04:30:45 marco Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.20 2006/02/22 19:29:24 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -149,8 +149,6 @@ struct acpi_softc {
 	u_int32_t		sc_gpe_en;
 	struct acpi_thread	*sc_thread;
 
-	struct aml_node *sc_pbtndev;
-	struct aml_node *sc_sbtndev;
 };
 
 #define GPE_NONE  0x00
