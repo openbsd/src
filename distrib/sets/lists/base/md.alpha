@@ -631,10 +631,8 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/db_machdep.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/disklabel.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ecoff_machdep.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/elf_machdep.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/endian.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/exec.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/fbio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/float.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/fpu.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/frame.ph
@@ -643,7 +641,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/internal_types.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/intr.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ioctl_fd.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/kbio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/kcore.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/limits.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/netbsd_machdep.ph
@@ -668,7 +665,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/tc_machdep.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/varargs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/vmparam.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/wsconsio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/altq
 ./usr/libdata/perl5/site_perl/alpha-openbsd/altq/altq.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/altq/altq_cbq.ph

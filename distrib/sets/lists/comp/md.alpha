@@ -18,10 +18,8 @@
 ./usr/include/alpha/db_machdep.h
 ./usr/include/alpha/disklabel.h
 ./usr/include/alpha/ecoff_machdep.h
-./usr/include/alpha/elf_machdep.h
 ./usr/include/alpha/endian.h
 ./usr/include/alpha/exec.h
-./usr/include/alpha/fbio.h
 ./usr/include/alpha/float.h
 ./usr/include/alpha/fpu.h
 ./usr/include/alpha/frame.h
@@ -30,7 +28,6 @@
 ./usr/include/alpha/internal_types.h
 ./usr/include/alpha/intr.h
 ./usr/include/alpha/ioctl_fd.h
-./usr/include/alpha/kbio.h
 ./usr/include/alpha/kcore.h
 ./usr/include/alpha/limits.h
 ./usr/include/alpha/netbsd_machdep.h
@@ -55,7 +52,6 @@
 ./usr/include/alpha/tc_machdep.h
 ./usr/include/alpha/varargs.h
 ./usr/include/alpha/vmparam.h
-./usr/include/alpha/wsconsio.h
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
 ./usr/include/dis-asm.h
