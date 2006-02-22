@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.53 2006/01/03 20:57:36 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.54 2006/02/22 22:17:07 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -6189,7 +6189,7 @@ _C_LABEL(Lfsbail):
 	retl				! and return error indicator
 	 mov	-1, %o0
 
-/* probeget and probeset are meant to be used during autoconfiguration */
+/* probeget is meant to be used during autoconfiguration */
 /*
  * The following probably need to be changed, but to what I don't know.
  */
@@ -6201,9 +6201,9 @@ _C_LABEL(Lfsbail):
  *	int asi;
  *	int size;
  *
- * Read or write a (byte,word,longword) from the given address.
- * Like {fu,su}{byte,halfword,word} but our caller is supposed
- * to know what he is doing... the address can be anywhere.
+ * Read a (byte,short,int,long) from the given address.
+ * Like copyin but our caller is supposed to know what he is doing...
+ * the address can be anywhere.
  *
  * We optimize for space, rather than time, here.
  */
@@ -6261,50 +6261,6 @@ _C_LABEL(Lfsprobe):
 	membar	#StoreStore|#StoreLoad
 	retl				! and return error indicator
 	 mov	-1, %o0
-
-/*
- * probeset(addr, asi, size, val)
- *	paddr_t addr;
- *	int asi;
- *	int size;
- *	long val;
- *
- * As above, but we return 0 on success.
- */
-ENTRY(probeset)
-	mov	%o2, %o4
-	! %o0 = addr, %o1 = asi, %o4 = (1,2,4), %o3 = val
-	sethi	%hi(CPCB), %o2		! Lfserr requires CPCB in %o2
-	ldx	[%o2 + %lo(CPCB)], %o2	! cpcb->pcb_onfault = Lfserr;
-	set	_C_LABEL(Lfsbail), %o5
-	stx	%o5, [%o2 + PCB_ONFAULT]
-	btst	1, %o4
-	wr	%o1, 0, %asi
-	membar	#Sync
-	bz	0f			! if (len & 1)
-	 btst	2, %o4
-	ba,pt	%icc, 1f
-	 stba	%o3, [%o0] %asi		!	*(char *)addr = value;
-0:
-	bz	0f			! if (len & 2)
-	 btst	4, %o4
-	ba,pt	%icc, 1f
-	 stha	%o3, [%o0] %asi		!	*(short *)addr = value;
-0:
-	bz	0f			! if (len & 4)
-	 btst	8, %o4
-	ba,pt	%icc, 1f
-	 sta	%o3, [%o0] %asi		!	*(int *)addr = value;
-0:
-	bz	Lfserr			! if (len & 8)
-	ba,pt	%icc, 1f
-	 sta	%o3, [%o0] %asi		!	*(int *)addr = value;
-1:	membar	#Sync
-	clr	%o0			! made it, clear onfault and return 0
-	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI	
-	stx	%g0, [%o2 + PCB_ONFAULT]
-	retl
-	 membar	#StoreStore|#StoreLoad
 
 /*
  * pmap_zero_page(pa)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.4 2006/02/22 22:16:07 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.5 2006/02/22 22:17:05 miod Exp $	*/
 /*	OpenBSD: locore.s,v 1.64 2005/04/17 18:47:50 miod Exp 	*/
 
 /*
@@ -3723,14 +3723,14 @@ ENTRY(proc_trampoline)
 	b	return_from_syscall
 	 add	%l1, 4, %l2		! npc = pc+4
 
-/* probeget and probeset are meant to be used during autoconfiguration */
+/* probeget is meant to be used during autoconfiguration */
 
 /*
  * probeget(addr, size) caddr_t addr; int size;
  *
- * Read or write a (byte,word,longword) from the given address.
- * Like {fu,su}{byte,halfword,word} but our caller is supposed
- * to know what he is doing... the address can be anywhere.
+ * Read a (byte,short,int) from the given address.
+ * Like copyin but our caller is supposed to know what he is doing...
+ * the address can be anywhere.
  *
  * We optimize for space, rather than time, here.
  */

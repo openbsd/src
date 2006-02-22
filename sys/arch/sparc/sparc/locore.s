@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.67 2006/02/22 22:16:07 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.68 2006/02/22 22:17:07 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -4833,14 +4833,14 @@ ENTRY(proc_trampoline)
 	b	return_from_syscall
 	 ld	[%sp + CCFSZ + 8], %l2	! npc
 
-/* probeget and probeset are meant to be used during autoconfiguration */
+/* probeget is meant to be used during autoconfiguration */
 
 /*
  * probeget(addr, size) caddr_t addr; int size;
  *
- * Read or write a (byte,word,longword) from the given address.
- * Like {fu,su}{byte,halfword,word} but our caller is supposed
- * to know what he is doing... the address can be anywhere.
+ * Read a (byte,short,int) from the given address.
+ * Like copyin but our caller is supposed to know what he is doing...
+ * the address can be anywhere.
  *
  * We optimize for space, rather than time, here.
  */
@@ -4877,30 +4877,6 @@ Lfsbail:
 	st	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
 	retl				! and return error indicator
 	 mov	-1, %o0
-
-/*
- * probeset(addr, size, val) caddr_t addr; int size, val;
- *
- * As above, but we return 0 on success.
- */
-ENTRY(probeset)
-	! %o0 = addr, %o1 = (1,2,4), %o2 = val
-	sethi	%hi(_C_LABEL(cpcb)), %o3
-	ld	[%o3 + %lo(_C_LABEL(cpcb))], %o3	! cpcb->pcb_onfault = Lfserr;
-	set	Lfserr, %o5
-	st	%o5, [%o3 + PCB_ONFAULT]
-	btst	1, %o1
-	bnz,a	0f			! if (len & 1)
-	 stb	%o2, [%o0]		!	*(char *)addr = value;
-0:	btst	2, %o1
-	bnz,a	0f			! if (len & 2)
-	 sth	%o2, [%o0]		!	*(short *)addr = value;
-0:	btst	4, %o1
-	bnz,a	0f			! if (len & 4)
-	 st	%o2, [%o0]		!	*(int *)addr = value;
-0:	clr	%o0			! made it, clear onfault and return 0
-	retl
-	 st	%g0, [%o3 + PCB_ONFAULT]
 
 /*
  * int xldcontrolb(caddr_t, pcb)

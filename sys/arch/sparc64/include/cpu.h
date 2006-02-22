@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.33 2005/11/11 16:50:19 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.34 2006/02/22 22:17:07 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -199,7 +199,6 @@ struct fpstate64;
 void	savefpstate(struct fpstate64 *);
 void	loadfpstate(struct fpstate64 *);
 u_int64_t	probeget(paddr_t, int, int);
-int	probeset(paddr_t, int, int, u_int64_t);
 #define	 write_all_windows() __asm __volatile("flushw" : : )
 #define	 write_user_windows() __asm __volatile("flushw" : : )
 void 	proc_trampoline(void);
