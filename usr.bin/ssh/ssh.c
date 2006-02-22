@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.264 2006/02/20 17:19:54 stevesk Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.265 2006/02/22 00:04:45 stevesk Exp $");
 
 #include <sys/resource.h>
 #include <sys/ioctl.h>
@@ -48,6 +48,7 @@ RCSID("$OpenBSD: ssh.c,v 1.264 2006/02/20 17:19:54 stevesk Exp $");
 #include <sys/un.h>
 #include <sys/stat.h>
 
+#include <ctype.h>
 #include <paths.h>
 #include <signal.h>
 
