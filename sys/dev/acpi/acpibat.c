@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.18 2006/02/22 15:29:23 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.19 2006/02/22 19:28:17 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -127,7 +127,7 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 
 	}
 
-	aml_register_notify(sc->sc_devnode->parent, acpibat_notify, sc);
+	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev, acpibat_notify, sc);
 }
 
 /* XXX this is for debug only, remove later */
@@ -390,28 +390,33 @@ acpibat_notify(struct aml_node *node, int notify_type, void *arg)
 
 			if (sensor_task_register(sc, acpibat_refresh, 10))
 				printf(", unable to register update task\n");
-		}
 
-		sc->sc_bat_present = 1;
-		acpibat_getbif(sc);
-		acpibat_getbst(sc);
+			sc->sc_bat_present = 1;
+		}
 
 		break;
 	case 0x81:	/* _BIF changed */
 		/* XXX consider this a device removal */
-		sensor_task_unregister(sc);
-		sc->sc_bat_present = 0;
-		strlcpy(sc->sc_sens[4].desc, "battery removed",
-		    sizeof(sc->sc_sens[4].desc));
-		printf("%s: %s: removed\n", DEVNAME(sc),
-		    sc->sc_devnode->parent->name);
+		if (sc->sc_bat_present != 0) {
+			sensor_task_unregister(sc);
 
+			strlcpy(sc->sc_sens[4].desc, "battery removed",
+			    sizeof(sc->sc_sens[4].desc));
+			printf("%s: %s: removed\n", DEVNAME(sc),
+			    sc->sc_devnode->parent->name);
+
+			sc->sc_bat_present = 0;
+		}
 		break;
 	default:
 		printf("%s: unhandled battery event %x\n", DEVNAME(sc),
 		    notify_type);
 		break;
 	}
+
+	acpibat_getbif(sc);
+	acpibat_getbst(sc);
+	acpibat_refresh(sc);
 
 	return (0);
 }
