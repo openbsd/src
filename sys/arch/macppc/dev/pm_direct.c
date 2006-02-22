@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.18 2006/01/18 23:21:17 miod Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.19 2006/02/22 07:02:23 miod Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -544,6 +544,10 @@ pm_adb_op(u_char *buffer, void *compRout, void *data, int command)
 	int rval;
 	int ndelay;
 	int waitfor;	/* interrupts to poll for */
+	int ifr;
+#ifdef ADB_DEBUG
+	int oldifr;
+#endif
 	PMData pmdata;
 	struct adbCommand packet;
 
@@ -571,8 +575,17 @@ pm_adb_op(u_char *buffer, void *compRout, void *data, int command)
 	} else
 		pmdata.num_data = 3;
 
+	/*
+	 * Resetting adb on several models, such as
+	 * - PowerBook3,*
+	 * - PowerBook5,*
+	 * - PowerMac10,1
+	 * causes several pmu interrupts with ifr set to PMU_INT_SNDBRT.
+	 * Not processing them prevents us from seeing the adb devices
+	 * afterwards.
+	 */
 	if (command == PMU_RESET_ADB)
-		waitfor = PMU_INT_ADB_AUTO | PMU_INT_ADB;
+		waitfor = PMU_INT_ADB_AUTO | PMU_INT_ADB | PMU_INT_SNDBRT;
 	else
 		waitfor = PMU_INT_ALL;
 
@@ -621,12 +634,25 @@ pm_adb_op(u_char *buffer, void *compRout, void *data, int command)
 
 	/* wait until the PM interrupt is occurred */
 	ndelay = 0x8000;
+#ifdef ADB_DEBUG
+	oldifr = 0;
+#endif
 	while (adbWaiting == 1) {
-		if (read_via_reg(VIA1, vIFR) & waitfor)
+		ifr = read_via_reg(VIA1, vIFR);
+		if (ifr & waitfor) {
 			pm_intr();
 #ifdef PM_GRAB_SI
 			(void)intr_dispatch(0x70);
 #endif
+#ifdef ADB_DEBUG
+		} else if (ifr != oldifr) {
+			if (adb_debug)
+				printf("pm_adb_op: ignoring ifr %02x"
+				    ", expecting %02x\n",
+				    (u_int)ifr, (u_int)waitfor);
+			oldifr = ifr;
+#endif
+		}
 		if ((--ndelay) < 0) {
 			splx(s);
 			return 1;
