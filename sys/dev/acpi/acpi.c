@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.39 2006/02/21 16:51:30 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.40 2006/02/22 19:30:45 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1242,22 +1242,18 @@ acpi_isr_thread(void *arg)
 		if (sc->sc_powerbtn) {
 			sc->sc_powerbtn = 0;
 
-			if (sc->sc_pbtndev)
-				aml_notify(sc->sc_pbtndev, 0x80);
+			aml_notify_dev(ACPI_DEV_PBD, 0x80);
+
 			acpi_evindex++;
 			dnprintf(1,"power button pressed\n");
 			KNOTE(sc->sc_note, ACPI_EVENT_COMPOSE(ACPI_EV_PWRBTN,
 							      acpi_evindex));
-		  
-			/* power down */
-			acpi_s5 = 1;
-			psignal(initproc, SIGUSR1);
 		}
 		if (sc->sc_sleepbtn) {
 			sc->sc_sleepbtn = 0;
 
-			if (sc->sc_sbtndev)
-				aml_notify(sc->sc_sbtndev, 0x80);
+			aml_notify_dev(ACPI_DEV_SBD, 0x80);
+
 			acpi_evindex++;
 			dnprintf(1,"sleep button pressed\n");
 			KNOTE(sc->sc_note, ACPI_EVENT_COMPOSE(ACPI_EV_SLPBTN,

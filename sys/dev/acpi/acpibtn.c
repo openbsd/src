@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.7 2006/02/21 20:53:31 marco Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.8 2006/02/22 19:30:45 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -87,20 +87,16 @@ acpibtn_attach(struct device *parent, struct device *self, void *aux)
 
 	if (!strcmp(aa->aaa_dev, ACPI_DEV_LD))
 		sc->sc_btn_type = ACPIBTN_LID;
-	if (!strcmp(aa->aaa_dev, ACPI_DEV_PBD)) {
+	if (!strcmp(aa->aaa_dev, ACPI_DEV_PBD))
 		sc->sc_btn_type = ACPIBTN_POWER;
-		sc->sc_acpi->sc_pbtndev = sc->sc_devnode;
-	}
-	if (!strcmp(aa->aaa_dev, ACPI_DEV_SBD)) {
+	if (!strcmp(aa->aaa_dev, ACPI_DEV_SBD))
 		sc->sc_btn_type = ACPIBTN_SLEEP;
-		sc->sc_acpi->sc_sbtndev = sc->sc_devnode;
-	}
 
 	acpibtn_getsta(sc); 
 
 	printf(": %s\n", sc->sc_devnode->parent->name);
 
-	aml_register_notify(sc->sc_devnode->parent, acpibtn_notify, sc);
+	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev, acpibtn_notify, sc);
 }
 
 int
