@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1024 2006/02/16 01:36:11 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1025 2006/02/19 09:32:00 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -9223,6 +9223,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82C565 ISA",
 	},
 	{
+	    PCI_VENDOR_TTTECH, PCI_PRODUCT_TTTECH_MC322,
+	    "MC322",
+	},
+	{
 	    PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021,
 	    "TC9021 GigE",
 	},
@@ -10909,6 +10913,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_HAUPPAUGE,
 	    "Hauppauge",
+	},
+	{
+	    PCI_VENDOR_TTTECH,
+	    "TTTech",
 	},
 	{
 	    PCI_VENDOR_DYNALINK,
