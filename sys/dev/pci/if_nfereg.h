@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfereg.h,v 1.15 2006/02/20 20:19:47 damien Exp $	*/
+/*	$OpenBSD: if_nfereg.h,v 1.16 2006/02/22 19:23:44 damien Exp $	*/
 
 /*-
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
@@ -95,8 +95,12 @@
 #define NFE_IRQ_TIMER		0x0020
 #define NFE_IRQ_LINK		0x0040
 #define NFE_IRQ_TXERR2		0x0080
-#define NFE_IRQ_WANTED		0x00ff
 #define NFE_IRQ_TX1		0x0100
+
+#define NFE_IRQ_WANTED							\
+	(NFE_IRQ_RXERR | NFE_IRQ_RX_NOBUF | NFE_IRQ_RX |		\
+	 NFE_IRQ_TXERR | NFE_IRQ_TXERR2 | NFE_IRQ_TX_DONE |		\
+	 NFE_IRQ_LINK)
 
 #define NFE_RXTX_KICKTX		0x0001
 #define NFE_RXTX_BIT1		0x0002

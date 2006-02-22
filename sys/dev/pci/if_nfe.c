@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.45 2006/02/22 03:19:11 brad Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.46 2006/02/22 19:23:44 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -1072,7 +1072,7 @@ nfe_init(struct ifnet *ifp)
 	tmp = NFE_READ(sc, NFE_PWR_STATE);
 	NFE_WRITE(sc, NFE_PWR_STATE, tmp | NFE_PWR_VALID);
 
-#if 0
+#if 1
 	/* configure interrupts coalescing/mitigation */
 	NFE_WRITE(sc, NFE_IMTIMER, NFE_IM_DEFAULT);
 #else
