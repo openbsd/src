@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PackageName.pod,v 1.1 2005/08/17 08:17:44 espie Exp $
+$OpenBSD: OpenBSD::PackageName.pod,v 1.2 2006/02/22 18:34:49 bernd Exp $
 
 =head1 NAME
 
@@ -58,6 +58,6 @@ for further processing.
 
 alternate interface that is faster when lots of look ups are involved.
 Compile a list of C<@pkgnames> into an object C<$h> that can be queried
-using C<$h-E<gt>finstem($stem)>.
+using C<$h-E<gt>findstem($stem)>.
 
 =back
