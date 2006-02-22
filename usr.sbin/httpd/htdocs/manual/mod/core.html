@@ -134,6 +134,12 @@
       <li><a
       href="#maxrequestsperchild">MaxRequestsPerChild</a></li>
 
+      <li><a href="#maxfooperchild">MaxCPUPerChild</a></li>
+      <li><a href="#maxfooperchild">MaxDATAPerChild</a></li>
+      <li><a href="#maxfooperchild">MaxNOFILEPerChild</a></li>
+      <li><a href="#maxfooperchild">MaxRSSPerChild</a></li>
+      <li><a href="#maxfooperchild">MaxSTACKPerChild</a></li>
+
       <li><a href="#maxspareservers">MaxSpareServers</a></li>
 
       <li><a href="#minspareservers">MinSpareServers</a></li>
@@ -2704,6 +2710,39 @@ Syntax OK
     the first request is counted towards this limit. In effect, it
     changes the behavior to limit the number of
     <em>connections</em> per child.</p>
+    <hr />
+
+    <h2><a id="maxfooperchild"
+    name="maxfooperchild">MaxFOOPerChild directive</a></h2>
+
+    <a href="directive-dict.html#Syntax"
+    rel="Help"><strong>Syntax:</strong></a><br>
+    MaxCPUPerChild <em>number</em><br />
+    MaxDATAPerChild <em>number</em><br />
+    MaxNOFILEPerChild <em>number</em><br />
+    MaxRSSPerChild <em>number</em><br />
+    MaxSTACKPerChild <em>number</em><br />
+     <a href="directive-dict.html#Default"
+    rel="Help"><strong>Default:</strong></a>
+    <code>0 (no set limit)</code><br />
+     <a href="directive-dict.html#Context"
+    rel="Help"><strong>Context:</strong></a> server config<br />
+     <a href="directive-dict.html#Status"
+    rel="Help"><strong>Status:</strong></a> core 
+
+    <p>The MaxFOOPerChild directives set the soft and hard resource
+    limits for a child process using setrlimit(2). Each MaxFOOPerChild
+    limit can be set independently of any other limit, or may be left
+    unspecified, thereby using the system default value. The kernel will
+    take appropriate action when a child process a resource limit - see
+    the manpages for setrlimit(2) and signal(3) for more information.
+    Setting resource limits can be very useful when running a busy server
+    with a script interpreter (say, a webmail machine) as these limits
+    can prevent swapping, deadlock or kernel panic due to memory or swap
+    exhaustion.</p>
+
+    <p>The name of the limit to be set is capitalized and spelled as
+    it is found in the setrlimit(2) manpage.</p>
     <hr />
 
     <h2><a id="maxspareservers"

@@ -21,6 +21,13 @@ MaxSpareServers 10
 # Assume no memory leaks at all
 MaxRequestsPerChild 0
 
+# Wide-open rlimits.
+MaxCPUPerChild 0
+MaxDATAPerChild 0
+MaxNOFILEPerChild 0
+MaxRSSPerChild 0
+MaxSTACKPerChild 0
+
 # this is a True Config File
 # see http://www.apache.org/info/three-config-files.html
 ResourceConfig /dev/null

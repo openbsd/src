@@ -321,6 +321,15 @@ DirectoryIndex index.cgi index.pl index.shtml index.html
     href="http://www.research.compaq.com/wrl/techreports/abstracts/95.4.html">
     most of the benefits are lost</a>.</p>
 
+    <p>Related to process creation is process death induced by the <a
+    href="../mod/core.html#maxfooperchild"><code>MaxFOOPerChild</code></a>
+    setting, where FOO is one of the system resource limits. There are
+    directives to control the CPU, DATA, NOFILE, RSS and STACK rlimits.
+    By default, they are set to 0, meaning that the system default values
+    will be used for the child. On a busy server with script interpreters
+    and memory caches, these should be set to some appropriate finite
+    values.</p>
+
     <h4><a name="modules" id="modules">Modules</a></h4>
 
     <p>Since memory usage is such an important consideration in

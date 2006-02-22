@@ -167,6 +167,17 @@ MaxClients 150
 MaxRequestsPerChild 0
 
 #
+# MaxFOOPerChild: these directives set the current and hard rlimits for
+# the child processes. Attempts to exceed them will cause the the OS to
+# take appropriate action. See the setrlimit(2) and signal(3).
+#
+MaxCPUPerChild 0
+MaxDATAPerChild 0
+MaxNOFILEPerChild 0
+MaxRSSPerChild 0
+MaxSTACKPerChild 0
+
+#
 # Listen: Allows you to bind Apache to specific IP addresses and/or
 # ports, instead of the default. See also the <VirtualHost>
 # directive.

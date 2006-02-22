@@ -1,4 +1,4 @@
-/* $OpenBSD: http_config.c,v 1.16 2005/02/09 12:13:09 henning Exp $ */
+/* $OpenBSD: http_config.c,v 1.17 2006/02/22 15:07:12 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1549,6 +1549,11 @@ static void init_config_globals(pool *p)
     ap_scoreboard_fname = DEFAULT_SCOREBOARD;
     ap_lock_fname = DEFAULT_LOCKFILE;
     ap_max_requests_per_child = DEFAULT_MAX_REQUESTS_PER_CHILD;
+    ap_max_cpu_per_child = DEFAULT_MAX_CPU_PER_CHILD;
+    ap_max_data_per_child = DEFAULT_MAX_DATA_PER_CHILD;
+    ap_max_nofile_per_child = DEFAULT_MAX_NOFILE_PER_CHILD;
+    ap_max_rss_per_child = DEFAULT_MAX_RSS_PER_CHILD;
+    ap_max_stack_per_child = DEFAULT_MAX_STACK_PER_CHILD;
     ap_bind_address.s_addr = htonl(INADDR_ANY);
     ap_listeners = NULL;
     ap_listenbacklog = DEFAULT_LISTENBACKLOG;

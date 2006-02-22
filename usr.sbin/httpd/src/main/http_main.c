@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.41 2006/02/13 23:15:19 stevesk Exp $ */
+/* $OpenBSD: http_main.c,v 1.42 2006/02/22 15:07:12 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -100,6 +100,8 @@
 #include "scoreboard.h"
 #include "multithread.h"
 #include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <netinet/tcp.h>
 #ifdef MOD_SSL
 #include <openssl/evp.h>
@@ -155,6 +157,11 @@ API_VAR_EXPORT uid_t ap_user_id=0;
 API_VAR_EXPORT char *ap_user_name=NULL;
 API_VAR_EXPORT gid_t ap_group_id=0;
 API_VAR_EXPORT int ap_max_requests_per_child=0;
+API_VAR_EXPORT int ap_max_cpu_per_child=0;
+API_VAR_EXPORT int ap_max_data_per_child=0;
+API_VAR_EXPORT int ap_max_nofile_per_child=0;
+API_VAR_EXPORT int ap_max_rss_per_child=0;
+API_VAR_EXPORT int ap_max_stack_per_child=0;
 API_VAR_EXPORT int ap_threads_per_child=0;
 API_VAR_EXPORT int ap_excess_requests_per_child=0;
 API_VAR_EXPORT char *ap_pid_fname=NULL;
@@ -2244,6 +2251,7 @@ static void child_main(int child_num_arg)
     struct sockaddr sa_server;
     struct sockaddr sa_client;
     listen_rec *lr;
+    struct rlimit rlp;
 
     /* All of initialization is a critical section, we don't care if we're
      * told to HUP or USR1 before we're done initializing.  For example,
@@ -2264,6 +2272,55 @@ static void child_main(int child_num_arg)
     requests_this_child = 0;
 
     setproctitle("child");
+
+    /*
+     * set up rlimits to keep apache+scripting from leaking horribly
+     */
+    if (ap_max_cpu_per_child != 0){
+	rlp.rlim_cur = rlp.rlim_cur = ap_max_cpu_per_child ;
+	if (setrlimit(RLIMIT_CPU, &rlp) == -1){
+	    ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
+		"setrlimit: unable to set CPU limit to %d",
+		ap_max_cpu_per_child);
+	    clean_child_exit(APEXIT_CHILDFATAL);
+	}
+    }
+    if (ap_max_data_per_child != 0){
+	rlp.rlim_cur = rlp.rlim_cur = ap_max_data_per_child ;
+	if (setrlimit(RLIMIT_DATA, &rlp) == -1){
+	    ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
+		"setrlimit: unable to set data limit to %d",
+		ap_max_data_per_child);
+	    clean_child_exit(APEXIT_CHILDFATAL);
+	}
+    }
+    if (ap_max_nofile_per_child != 0){
+	rlp.rlim_cur = rlp.rlim_cur = ap_max_nofile_per_child ;
+	if (setrlimit(RLIMIT_NOFILE, &rlp) == -1){
+	    ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
+		"setrlimit: unable to set open file limit to %d",
+		ap_max_nofile_per_child);
+	    clean_child_exit(APEXIT_CHILDFATAL);
+	}
+    }
+    if (ap_max_rss_per_child != 0){
+	rlp.rlim_cur = rlp.rlim_cur = ap_max_rss_per_child ;
+	if (setrlimit(RLIMIT_RSS, &rlp) == -1){
+	    ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
+		"setrlimit: unable to set RSS limit to %d",
+		ap_max_rss_per_child);
+	    clean_child_exit(APEXIT_CHILDFATAL);
+	}
+    }
+    if (ap_max_stack_per_child != 0){
+	rlp.rlim_cur = rlp.rlim_cur = ap_max_stack_per_child ;
+	if (setrlimit(RLIMIT_STACK, &rlp) == -1){
+	    ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
+		"setrlimit: unable to set stack size limit to %d",
+		ap_max_stack_per_child);
+	    clean_child_exit(APEXIT_CHILDFATAL);
+	}
+    }
 
     /* Get a sub pool for global allocations in this child, so that
      * we can have cleanups occur when the child exits.

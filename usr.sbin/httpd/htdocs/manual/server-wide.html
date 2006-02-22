@@ -116,6 +116,11 @@
          <a href="mod/core.html#maxclients">MaxClients</a><br />
          <a
         href="mod/core.html#maxrequestsperchild">MaxRequestsPerChild</a><br />
+         <a href="mod/core.html#maxfooperchild">MaxCPUPerChild</a><br />
+         <a href="mod/core.html#maxfooperchild">MaxDATAPerChild</a><br />
+         <a href="mod/core.html#maxfooperchild">MaxNOFILEPerChild</a><br />
+         <a href="mod/core.html#maxfooperchild">MaxRSSPerChild</a><br />
+         <a href="mod/core.html#maxfooperchild">MaxSTACKPerChild</a><br />
          <a
         href="mod/core.html#maxspareservers">MaxSpareServers</a><br />
          <a
@@ -164,6 +169,10 @@
     possible. In addition, unless <a href="suexec.html">suexec</a>
     is used, these directives also set the privileges which will be
     inherited by CGI scripts.</p>
+
+    <p><a href="mod/core.html#maxfooperchild"><code>MaxFOOPerChild</code></a>
+    sets rlimits on a child process to prevent a leaky module from
+    taking down the whole server.</p>
 
     <p><code>MaxRequestsPerChild</code> controls how frequently the
     server recycles processes by killing old ones and launching new

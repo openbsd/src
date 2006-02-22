@@ -492,6 +492,15 @@ static int display_info(request_rec *r)
                         "max: %d</tt><br>\n",
                         ap_daemons_to_start, ap_daemons_min_free,
                         ap_daemons_max_free, ap_daemons_limit);
+            ap_rprintf(r, "<strong>Per-child rlimits:</strong><br>\n"
+                        "<tt>RLIMIT_CPU: %d &nbsp;&nbsp; </tt><br>\n"
+                        "<tt>RLIMIT_DATA: %d &nbsp;&nbsp; </tt><br>\n"
+                        "<tt>RLIMIT_NOFILE: %d &nbsp;&nbsp; </tt><br>\n"
+                        "<tt>RLIMIT_RSS: %d &nbsp;&nbsp; </tt><br>\n"
+                        "<tt>RLIMIT_STACK: %d &nbsp;&nbsp; </tt><br>\n",
+                        ap_max_cpu_per_child, ap_max_data_per_child,
+                        ap_max_nofile_per_child, ap_max_rss_per_child,
+                        ap_max_stack_per_child);
             ap_rprintf(r, "<strong>Max Requests:</strong> "
                         "<tt>per child: %d &nbsp;&nbsp; "
                         "keep alive: %s &nbsp;&nbsp; "

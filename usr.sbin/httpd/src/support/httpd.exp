@@ -204,6 +204,11 @@ ap_make_sub_pool
 ap_make_table
 ap_matches_request_vhost
 ap_max_requests_per_child
+ap_max_cpu_per_child
+ap_max_data_per_child
+ap_max_nofile_per_child
+ap_max_rss_per_child
+ap_max_stack_per_child
 ap_md5
 ap_md5contextTo64
 ap_md5digest

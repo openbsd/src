@@ -1,4 +1,4 @@
-/* $OpenBSD: http_core.c,v 1.20 2005/02/09 12:13:09 henning Exp $ */
+/* $OpenBSD: http_core.c,v 1.21 2006/02/22 15:07:12 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -2191,6 +2191,61 @@ static const char *set_server_limit (cmd_parms *cmd, void *dummy, char *arg)
     return NULL;
 }
 
+static const char *set_child_rl_cpu(cmd_parms *cmd, void *dummy, char *arg) 
+{
+    const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
+    if (err != NULL) {
+        return err;
+    }
+
+    ap_max_cpu_per_child = atoi(arg);
+    return NULL;
+}
+
+static const char *set_child_rl_data(cmd_parms *cmd, void *dummy, char *arg) 
+{
+    const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
+    if (err != NULL) {
+        return err;
+    }
+
+    ap_max_data_per_child = atoi(arg);
+    return NULL;
+}
+
+static const char *set_child_rl_nofile(cmd_parms *cmd, void *dummy, char *arg) 
+{
+    const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
+    if (err != NULL) {
+        return err;
+    }
+
+    ap_max_nofile_per_child = atoi(arg);
+    return NULL;
+}
+
+static const char *set_child_rl_rss(cmd_parms *cmd, void *dummy, char *arg) 
+{
+    const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
+    if (err != NULL) {
+        return err;
+    }
+
+    ap_max_rss_per_child = atoi(arg);
+    return NULL;
+}
+
+static const char *set_child_rl_stack(cmd_parms *cmd, void *dummy, char *arg) 
+{
+    const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
+    if (err != NULL) {
+        return err;
+    }
+
+    ap_max_stack_per_child = atoi(arg);
+    return NULL;
+}
+
 static const char *set_max_requests(cmd_parms *cmd, void *dummy, char *arg) 
 {
     const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
@@ -3108,6 +3163,16 @@ static const command_rec core_cmds[] = {
   "Maximum number of children alive at the same time" },
 { "MaxRequestsPerChild", set_max_requests, NULL, RSRC_CONF, TAKE1,
   "Maximum number of requests a particular child serves before dying." },
+{ "MaxCPUPerChild", set_child_rl_cpu, NULL, RSRC_CONF, TAKE1,
+  "Maximum amount of CPU time a child can use (rlimit)." },
+{ "MaxDATAPerChild", set_child_rl_data, NULL, RSRC_CONF, TAKE1,
+  "Maximum size of the data segment for a child process (rlimit)." },
+{ "MaxNOFILEPerChild", set_child_rl_nofile, NULL, RSRC_CONF, TAKE1,
+  "Maximum number of open file descriptors a child can have (rlimit)." },
+{ "MaxRSSPerChild", set_child_rl_rss, NULL, RSRC_CONF, TAKE1,
+  "Maximum amount of physical memory a child can use (rlimit)." },
+{ "MaxSTACKPerChild", set_child_rl_stack, NULL, RSRC_CONF, TAKE1,
+  "Maximum amount of stack space a child can use (rlimit)." },
 { "RLimitCPU",
   set_limit_cpu, (void*)XtOffsetOf(core_dir_config, limit_cpu),
   OR_ALL, TAKE12, "Soft/hard limits for max CPU usage in seconds" },
