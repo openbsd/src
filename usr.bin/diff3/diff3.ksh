@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: diff3.ksh,v 1.3 2006/01/28 07:27:38 tedu Exp $
+# $OpenBSD: diff3.ksh,v 1.4 2006/02/22 22:35:11 jmc Exp $
 #
 # Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 #
@@ -26,7 +26,7 @@ OPTIND=1		# force getopts to reset itself
 
 export PATH=/bin:/usr/bin
 diff3prog=/usr/libexec/diff3prog
-USAGE="usage: diff3 [-aexEX3] file1 file2 file3"
+USAGE="usage: diff3 [-3aEeXx] file1 file2 file3"
 
 # Pull out any command line flags (some for diff, some for diff3)
 dflags=

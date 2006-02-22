@@ -1,4 +1,4 @@
-.\" $OpenBSD: diff3.1,v 1.5 2005/12/27 12:48:56 jmc Exp $
+.\" $OpenBSD: diff3.1,v 1.6 2006/02/22 22:35:11 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Nd 3-way differential file comparison
 .Sh SYNOPSIS
 .Nm diff3
-.Op Fl aexEX3
+.Op Fl 3aEeXx
 .Ar file1 file2 file3
 .Sh DESCRIPTION
 The
@@ -59,8 +59,23 @@ new versions.
 .Pp
 The options are as follows:
 .Bl -tag -width "-E, -X"
+.It Fl 3
+Produces an output script suitable for
+.Xr ed 1
+with changes
+specific only to
+.Ar file3 .
 .It Fl a
 Treat all files as ASCII.
+.It Fl E , X
+Similar to
+.Fl e
+and
+.Fl x ,
+respectively, but treat overlapping changes (i.e., changes that would
+be noted with ==== in the normal listing) differently.
+The overlapping lines from both files will be inserted by the edit script,
+bracketed by "<<<<<<" and ">>>>>>" lines.
 .It Fl e
 Produces output in a form suitable as an input script for the
 .Xr ed 1
@@ -88,21 +103,6 @@ Produces an output script suitable for
 .Xr ed 1
 with changes
 specific only to all three versions.
-.It Fl 3
-Produces an output script suitable for
-.Xr ed 1
-with changes
-specific only to
-.Ar file3 .
-.It Fl E , X
-Similar to
-.Fl e
-and
-.Fl x ,
-respectively, but treat overlapping changes (i.e., changes that would
-be noted with ==== in the normal listing) differently.
-The overlapping lines from both files will be inserted by the edit script,
-bracketed by "<<<<<<" and ">>>>>>" lines.
 .El
 .Pp
 The
