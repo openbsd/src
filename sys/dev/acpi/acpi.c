@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.41 2006/02/22 19:38:01 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.42 2006/02/22 20:15:03 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -708,18 +708,20 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	 * Attach table-defined devices
 	 */
 	SIMPLEQ_FOREACH(entry, &sc->sc_tables, q_next) {
-		struct acpi_attach_args aaa;
+		if (memcmp(entry->q_table, HPET_SIG,
+		    sizeof(HPET_SIG) - 1) == 0) {
+			struct acpi_attach_args aaa;
 
-		memset(&aaa, 0, sizeof(aaa));
-		aaa.aaa_iot = sc->sc_iot;
-		aaa.aaa_memt = sc->sc_memt;
-#if 0
-		aaa.aaa_pcit = sc->sc_pcit;
-		aaa.aaa_smbust = sc->sc_smbust;
-#endif
-		aaa.aaa_table = entry->q_table;
-
-		config_found_sm(self, &aaa, acpi_print, acpi_submatch);
+			memset(&aaa, 0, sizeof(aaa));
+			aaa.aaa_iot = sc->sc_iot;
+			aaa.aaa_memt = sc->sc_memt;
+	#if 0
+			aaa.aaa_pcit = sc->sc_pcit;
+			aaa.aaa_smbust = sc->sc_smbust;
+	#endif
+			aaa.aaa_table = entry->q_table;
+			config_found_sm(self, &aaa, acpi_print, acpi_submatch);
+		}
 	}
 
 	acpi_softc = sc;
