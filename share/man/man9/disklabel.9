@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.9,v 1.8 2003/04/15 04:14:29 jmc Exp $
+.\"	$OpenBSD: disklabel.9,v 1.9 2006/02/22 08:48:37 jmc Exp $
 .\"	$NetBSD: disklabel.9,v 1.7 1999/03/06 22:09:29 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 .Nm bounds_check_with_label
 .Nd disk label management routines
 .Sh SYNOPSIS
+.Fd #include <sys/param.h>
+.Fd #include <sys/disklabel.h>
 .Ft char *
 .Fn readdisklabel "dev_t dev" "void (*strat)(struct buf *)" "struct disklabel *lp" "struct cpu_disklabel *osdep" "int spoofonly"
 .Ft int
