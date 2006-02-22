@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.16 2005/08/09 04:10:10 mickey Exp $	*/
+/*	$OpenBSD: autri.c,v 1.17 2006/02/22 18:12:24 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -471,10 +471,9 @@ autri_flags_codec(void *v)
  *
  */
 const struct pci_matchid autri_devices[] = {
-	{ PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE_DX },
 	{ PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE_NX },
 	{ PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7018 },
-	{ PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5451 },
+	{ PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5451 }
 };
 
 int
@@ -483,6 +482,20 @@ autri_match(parent, match, aux)
 	void *match;
 	void *aux;
 {
+	struct pci_attach_args *pa = aux;
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_TRIDENT &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TRIDENT_4DWAVE_DX) {
+		/*
+		 * IBM makes a pcn network card and improperly
+		 * sets the vendor and product ID's.  Avoid matching.
+		 */
+		if (PCI_CLASS(pa->pa_class) == PCI_CLASS_NETWORK)
+			return (0);
+		else
+			return (1);
+	}
+
 	return (pci_matchbyid((struct pci_attach_args *)aux, autri_devices,
 	    sizeof(autri_devices)/sizeof(autri_devices[0])));
 }
