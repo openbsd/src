@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.46 2006/02/22 19:23:44 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.47 2006/02/22 21:05:13 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -788,12 +788,10 @@ nfe_txeof(struct nfe_softc *sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct nfe_desc32 *desc32;
 	struct nfe_desc64 *desc64;
-	struct nfe_tx_data *data;
+	struct nfe_tx_data *data = NULL;
 	uint16_t flags;
 
 	while (sc->txq.next != sc->txq.cur) {
-		data = &sc->txq.data[sc->txq.next];
-
 		if (sc->sc_flags & NFE_40BIT_ADDR) {
 			desc64 = &sc->txq.desc64[sc->txq.next];
 			nfe_txdesc64_sync(sc, desc64, BUS_DMASYNC_POSTREAD);
@@ -808,6 +806,8 @@ nfe_txeof(struct nfe_softc *sc)
 
 		if (flags & NFE_TX_VALID)
 			break;
+
+		data = &sc->txq.data[sc->txq.next];
 
 		if ((sc->sc_flags & (NFE_JUMBO_SUP | NFE_40BIT_ADDR)) == 0) {
 			if (!(flags & NFE_TX_LASTFRAG_V1))
@@ -841,13 +841,16 @@ nfe_txeof(struct nfe_softc *sc)
 		m_freem(data->m);
 		data->m = NULL;
 
+		ifp->if_timer = 0;
+
 skip:		sc->txq.queued--;
 		sc->txq.next = (sc->txq.next + 1) % NFE_TX_RING_COUNT;
 	}
 
-	ifp->if_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
-	nfe_start(ifp);
+	if (data != NULL) {	/* at least one slot freed */
+		ifp->if_flags &= ~IFF_OACTIVE;
+		nfe_start(ifp);
+	}
 }
 
 int
