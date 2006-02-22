@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.40 2006/02/22 19:30:45 jordan Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.41 2006/02/22 19:38:01 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -627,6 +627,17 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	p_dsdt = entry->q_table;
 	acpi_parse_aml(sc, p_dsdt->aml, p_dsdt->hdr_length -
 	    sizeof(p_dsdt->hdr));
+
+	/* Load SSDT's */
+	SIMPLEQ_FOREACH(entry, &sc->sc_tables, q_next) {
+		if (memcmp(entry->q_table, SSDT_SIG,
+		    sizeof(SSDT_SIG) - 1) == 0) {
+			p_dsdt = entry->q_table;
+			acpi_parse_aml(sc, p_dsdt->aml, p_dsdt->hdr_length -
+				       sizeof(p_dsdt->hdr));
+		}
+	}
+
 
 	/* Find available sleeping states */
 	acpi_init_states(sc);
