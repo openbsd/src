@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit.c,v 1.11 2005/10/26 18:55:26 otto Exp $ */
+/*	$OpenBSD: atexit.c,v 1.12 2006/02/22 07:16:32 otto Exp $ */
 /*
  * Copyright (c) 2002 Daniel Hartmeier
  * All rights reserved.
@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "atexit.h"
+#include "thread_private.h"
 
 int __atexit_invalid = 1;
 struct atexit *__atexit;
@@ -54,22 +55,25 @@ struct atexit *__atexit;
 int
 atexit(void (*fn)(void))
 {
-	struct atexit *p = __atexit;
+	struct atexit *p;
 	int pgsize = getpagesize();
+	int ret = -1;
 
 	if (pgsize < sizeof(*p))
 		return (-1);
+	_ATEXIT_LOCK();
+	p = __atexit;
 	if (p != NULL) {
 		if (p->ind + 1 >= p->max)
 			p = NULL;
 		else if (mprotect(p, pgsize, PROT_READ | PROT_WRITE))
-			return (-1);
+			goto unlock;
 	}
 	if (p == NULL) {
 		p = mmap(NULL, pgsize, PROT_READ | PROT_WRITE,
 		    MAP_ANON | MAP_PRIVATE, -1, 0);
 		if (p == MAP_FAILED)
-			return (-1);
+			goto unlock;
 		if (__atexit == NULL) {
 			p->fns[0] = NULL;
 			p->ind = 1;
@@ -84,8 +88,11 @@ atexit(void (*fn)(void))
 	}
 	p->fns[p->ind++] = fn;
 	if (mprotect(p, pgsize, PROT_READ))
-		return (-1);
-	return (0);
+		goto unlock;
+	ret = 0;
+unlock:
+	_ATEXIT_UNLOCK();
+	return (ret);
 }
 
 /*
@@ -94,18 +101,20 @@ atexit(void (*fn)(void))
 void
 __atexit_register_cleanup(void (*fn)(void))
 {
-	struct atexit *p = __atexit;
+	struct atexit *p;
 	int pgsize = getpagesize();
 
 	if (pgsize < sizeof(*p))
 		return;
+	_ATEXIT_LOCK();
+	p = __atexit;
 	while (p != NULL && p->next != NULL)
 		p = p->next;
 	if (p == NULL) {
 		p = mmap(NULL, pgsize, PROT_READ | PROT_WRITE,
 		    MAP_ANON | MAP_PRIVATE, -1, 0);
 		if (p == MAP_FAILED)
-			return;
+			goto unlock;
 		p->ind = 1;
 		p->max = (pgsize - ((char *)&p->fns[0] - (char *)p)) /
 		    sizeof(p->fns[0]);
@@ -115,8 +124,10 @@ __atexit_register_cleanup(void (*fn)(void))
 			__atexit_invalid = 0;
 	} else {
 		if (mprotect(p, pgsize, PROT_READ | PROT_WRITE))
-		    return;
+			goto unlock;
 	}
 	p->fns[0] = fn;
 	mprotect(p, pgsize, PROT_READ);
+unlock:
+	_ATEXIT_UNLOCK();
 }
