@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.339 2006/01/12 22:39:20 weingart Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.340 2006/02/22 22:16:05 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3077,45 +3077,6 @@ init386(paddr_t first_avail)
 		kgdb_connect(1);
 	}
 #endif /* KGDB */
-}
-
-struct queue {
-	struct queue *q_next, *q_prev;
-};
-
-/*
- * insert an element into a queue
- */
-void
-_insque(v1, v2)
-	void *v1;
-	void *v2;
-{
-	register struct queue *elem = v1, *head = v2;
-	register struct queue *next;
-
-	next = head->q_next;
-	elem->q_next = next;
-	head->q_next = elem;
-	elem->q_prev = head;
-	next->q_prev = elem;
-}
-
-/*
- * remove an element from a queue
- */
-void
-_remque(v)
-	void *v;
-{
-	register struct queue *elem = v;
-	register struct queue *next, *prev;
-
-	next = elem->q_next;
-	prev = elem->q_prev;
-	next->q_prev = prev;
-	prev->q_next = next;
-	elem->q_prev = 0;
 }
 
 /*

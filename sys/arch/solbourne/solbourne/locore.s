@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.3 2005/11/15 07:02:36 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.4 2006/02/22 22:16:07 miod Exp $	*/
 /*	OpenBSD: locore.s,v 1.64 2005/04/17 18:47:50 miod Exp 	*/
 
 /*
@@ -3791,31 +3791,6 @@ ENTRY(probeset)
 0:	clr	%o0			! made it, clear onfault and return 0
 	retl
 	 st	%g0, [%o3 + PCB_ONFAULT]
-
-/*
- * Insert entry into doubly-linked queue.
- * We could just do this in C, but gcc does not do leaves well (yet).
- */
-ENTRY(_insque)
-	! %o0 = e = what to insert; %o1 = after = entry to insert after
-	st	%o1, [%o0 + 4]		! e->prev = after;
-	ld	[%o1], %o2		! tmp = after->next;
-	st	%o2, [%o0]		! e->next = tmp;
-	st	%o0, [%o1]		! after->next = e;
-	retl
-	st	%o0, [%o2 + 4]		! tmp->prev = e;
-
-
-/*
- * Remove entry from doubly-linked queue.
- */
-ENTRY(_remque)
-	! %o0 = e = what to remove
-	ld	[%o0], %o1		! n = e->next;
-	ld	[%o0 + 4], %o2		! p = e->prev;
-	st	%o2, [%o1 + 4]		! n->prev = p;
-	retl
-	st	%o1, [%o2]		! p->next = n;
 
 /*
  * copywords(src, dst, nbytes)

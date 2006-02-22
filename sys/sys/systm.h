@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.67 2005/12/14 21:46:31 millert Exp $	*/
+/*	$OpenBSD: systm.h,v 1.68 2006/02/22 22:16:08 miod Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -128,13 +128,6 @@ void scdebug_ret(struct proc *p, register_t code, int error, register_t retval[]
 extern int boothowto;		/* reboot flags, from console subsystem */
 
 extern void (*v_putc)(int); /* Virtual console putc routine */
-
-extern	void	_insque(void *, void *);
-extern	void	_remque(void *);
-
-/* casts to keep lint happy, but it should be happy with void * */
-#define	insque(q,p)	_insque(q, p)
-#define	remque(q)	_remque(q)
 
 /*
  * General function declarations.

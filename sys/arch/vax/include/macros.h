@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.12 2003/08/01 02:23:45 avsm Exp $ */
+/*	$OpenBSD: macros.h,v 1.13 2006/02/22 22:16:07 miod Exp $ */
 /*	$NetBSD: macros.h,v 1.20 2000/07/19 01:02:52 matt Exp $	*/
 
 /*
@@ -50,24 +50,6 @@ ffs(int reg)
 			: "=&r" (val)
 			: "r" (reg) );
 	return	val;
-}
-
-static __inline__ void 
-_remque(void *p)
-{
-	__asm__ __volatile ("remque (%0),%0;clrl 4(%0)"
-			:
-			: "r" (p)
-			: "memory" );
-}
-
-static __inline__ void 
-_insque(void *p, void *q)
-{
-	__asm__ __volatile ("insque (%0), (%1)"
-			:
-			: "r" (p),"r" (q)
-			: "memory" );
 }
 
 static __inline__ void *

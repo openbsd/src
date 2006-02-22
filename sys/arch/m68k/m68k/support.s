@@ -1,4 +1,4 @@
-/*	$OpenBSD: support.s,v 1.2 2003/06/02 23:27:48 millert Exp $	*/
+/*	$OpenBSD: support.s,v 1.3 2006/02/22 22:16:07 miod Exp $	*/
 /*	$NetBSD: support.s,v 1.1 1997/03/16 10:47:33 thorpej Exp $	*/
 
 /*
@@ -65,31 +65,4 @@ ENTRY(longjmp)
 	moveml	a0@+,#0xFCFC
 	movl	a0@,sp@
 	moveq	#1,d0
-	rts
-
-/*
- * the queue functions
- */
-ENTRY(_insque)
-	movw	sr,d0
-	movw	#PSL_HIGHIPL,sr		| atomic
-	movl	sp@(8),a0		| where to insert (after)
-	movl	sp@(4),a1		| element to insert (e)
-	movl	a0@,a1@			| e->next = after->next
-	movl	a0,a1@(4)		| e->prev = after
-	movl	a1,a0@			| after->next = e
-	movl	a1@,a0
-	movl	a1,a0@(4)		| e->next->prev = e
-	movw	d0,sr
-	rts
-
-ENTRY(_remque)
-	movw	sr,d0
-	movw	#PSL_HIGHIPL,sr		| atomic
-	movl	sp@(4),a0		| element to remove (e)
-	movl	a0@,a1
-	movl	a0@(4),a0
-	movl	a0,a1@(4)		| e->next->prev = e->prev
-	movl	a1,a0@			| e->prev->next = e->next
-	movw	d0,sr
 	rts
