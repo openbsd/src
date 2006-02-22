@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.107 2006/02/17 04:01:05 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.108 2006/02/22 06:02:09 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -269,8 +269,12 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	/* Initialize eeprom parameters */
 	em_init_eeprom_params(&sc->hw);
 
-	tsize = EM_ROUNDUP(sc->num_tx_desc * sizeof(struct em_tx_desc),
-	    EM_MAX_TXD * sizeof(struct em_tx_desc));
+	if (sc->hw.mac_type >= em_82544)
+	    tsize = EM_ROUNDUP(sc->num_tx_desc * sizeof(struct em_tx_desc),
+		EM_MAX_TXD_82544 * sizeof(struct em_tx_desc));
+	else
+	    tsize = EM_ROUNDUP(sc->num_tx_desc * sizeof(struct em_tx_desc),
+		EM_MAX_TXD * sizeof(struct em_tx_desc));
 	tsize = EM_ROUNDUP(tsize, PAGE_SIZE);
 
 	/* Allocate Transmit Descriptor ring */
@@ -581,7 +585,10 @@ em_init(void *arg)
 	em_stop(sc);
 
 	if (ifp->if_flags & IFF_UP) {
-		sc->num_tx_desc = EM_MAX_TXD;
+		if (sc->hw.mac_type >= em_82544)
+		    sc->num_tx_desc = EM_MAX_TXD_82544;
+		else
+		    sc->num_tx_desc = EM_MAX_TXD;
 		sc->num_rx_desc = EM_MAX_RXD;
 	} else {
 		sc->num_tx_desc = EM_MIN_TXD;

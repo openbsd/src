@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.21 2005/12/10 18:41:50 brad Exp $ */
+/* $OpenBSD: if_em.h,v 1.22 2006/02/22 06:02:09 brad Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -83,7 +83,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Tunables */
 
 /*
- * EM_MAX_TXD: Maximum number of Transmit Descriptors
+ * EM_(MIN/MAX)_TXD: Maximum number of Transmit Descriptors
  * Valid Range: 80-256 for 82542 and 82543-based adapters
  *              80-4096 for others
  * Default Value: 256
@@ -93,9 +93,10 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 #define EM_MIN_TXD                      12
 #define EM_MAX_TXD                      256
+#define EM_MAX_TXD_82544                512
 
 /*
- * EM_MAX_RXD - Maximum number of receive Descriptors
+ * EM_(MIN/MAX)_RXD - Maximum number of receive Descriptors
  * Valid Range: 80-256 for 82542 and 82543-based adapters
  *              80-4096 for others
  * Default Value: 256
@@ -176,7 +177,7 @@ POSSIBILITY OF SUCH DAMAGE.
  * This parameter controls when the driver calls the routine to reclaim
  * transmit descriptors.
  */
-#define EM_TX_CLEANUP_THRESHOLD         EM_MAX_TXD / 8
+#define EM_TX_CLEANUP_THRESHOLD         (sc->num_tx_desc / 8)
 
 /*
  * This parameter controls whether or not autonegotation is enabled.
