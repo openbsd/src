@@ -1,4 +1,4 @@
-.\" $OpenBSD: sdiff.1,v 1.7 2006/02/15 22:27:09 jmc Exp $
+.\" $OpenBSD: sdiff.1,v 1.8 2006/02/22 21:11:50 jmc Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
@@ -123,6 +123,10 @@ nor
 are set,
 the default is
 .Xr vi 1 .
+.It Ev TMPDIR
+Specifies a directory for temporary files to be created.
+The default is
+.Pa /tmp .
 .El
 .Sh SEE ALSO
 .Xr diff 1 ,
