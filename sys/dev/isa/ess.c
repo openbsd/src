@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.10 2005/04/15 13:05:14 mickey Exp $	*/
+/*	$OpenBSD: ess.c,v 1.11 2006/02/22 19:43:42 miod Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -1007,7 +1007,7 @@ essattach(sc)
 
 	snprintf(ess_device.name, sizeof ess_device.name, "ES%s",
 	    essmodel[sc->sc_model]);
-	snprintf(ess_device.version, sizeof ess_device.name, "0x%04x",
+	snprintf(ess_device.version, sizeof ess_device.version, "0x%04x",
 	    sc->sc_version);
 
 	if (ESS_USE_AUDIO1(sc->sc_model))
