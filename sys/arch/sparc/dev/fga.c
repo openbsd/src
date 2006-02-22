@@ -1,4 +1,4 @@
-/*	$OpenBSD: fga.c,v 1.14 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: fga.c,v 1.15 2006/02/22 22:32:12 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -310,8 +310,7 @@ fga_vmerangemap(sc, vmebase, vmelen, vmecap, sbusslot, sbusoffset, oca)
 	if (range & 1) {
 		regs->sbus_ssel[range >> 1] &= ~SBUS_SSEL_Y;
 		regs->sbus_ssel[range >> 1] |= sval;
-	}
-	else {
+	} else {
 		regs->sbus_ssel[range >> 1] &= ~SBUS_SSEL_X;
 		regs->sbus_ssel[range >> 1] |= sval << 4;
 	}
@@ -501,7 +500,7 @@ fga_intr_establish(sc, vec, level, ih, name)
 	const char *name;
 {
 	struct intrhand *ihs;
-	u_int8_t level_to_sint[] = {
+	const u_int8_t level_to_sint[] = {
 		IRQ_MAP_INT,
 		IRQ_MAP_SINT1,
 		IRQ_MAP_SINT2,
@@ -511,10 +510,12 @@ fga_intr_establish(sc, vec, level, ih, name)
 		IRQ_MAP_SINT6,
 		IRQ_MAP_SINT7
 	};
-	u_int8_t level_to_irqmap[] = {0xff, 6, 5, 4, 3, 2, 1, 0};
+	const u_int8_t level_to_irqmap[] = {0xff, 6, 5, 4, 3, 2, 1, 0};
 
+#ifdef DIAGNOSTIC
 	if (level < 1 || level > 7)
 		panic("fga_level");
+#endif
 
 	/* setup vector handler */
 	if (sc->sc_vmevec == NULL) {
@@ -555,7 +556,7 @@ fga_hwintr_establish(sc, sint)
 	struct fga_softc *sc;
 	u_int8_t sint;
 {
-	int sint_to_pri[] = {0, 2, 3, 5, 6, 7, 8, 9};
+	const int sint_to_pri[] = {0, 2, 3, 5, 6, 7, 8, 9};
 
 	if (sc->sc_established & (1 << sint))
 		return (0);
@@ -596,8 +597,10 @@ fga_hwintr_establish(sc, sint)
 		sc->sc_ih7.ih_arg = sc;
 		intr_establish(sint_to_pri[sint], &sc->sc_ih7, -1, NULL);
 		break;
+#ifdef DIAGNOSTIC
 	default:
 		panic("fga_sint");
+#endif
 	}
 
 	sc->sc_established |= 1 << sint;
@@ -693,10 +696,10 @@ fvmematch(parent, vcf, aux)
 	return (1);
 }
 
-struct fvme_types {
+const struct fvme_types {
 	int data_cap;
 	int addr_cap;
-	char *name;
+	const char *name;
 	int bustype;
 } fvme_types[] = {
 	{0, 0, "a16d8", BUS_FGA_A16D8},
@@ -723,7 +726,7 @@ fvmeattach(parent, self, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	struct fvme_types *p;
+	const struct fvme_types *p;
 	int dtype, atype;
 
 	atype = (ca->ca_ra.ra_reg[1].rr_iospace & VME_MASTER_CAP_ADDR) >> 2;
