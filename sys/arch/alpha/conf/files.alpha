@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.71 2006/02/23 20:14:14 miod Exp $
+#	$OpenBSD: files.alpha,v 1.72 2006/02/23 23:54:59 miod Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -160,7 +160,7 @@ include	"dev/eisa/files.eisa"
 
 # include "dev/pci/files.pci" XXX SEE ABOVE
 
-file	arch/alpha/pci/pciide_machdep.c		pci
+file	arch/alpha/pci/pciide_machdep.c		pciide
 
 define	alpha_pci_sgmap_pte64
 file	arch/alpha/pci/pci_sgmap_pte64.c	alpha_pci_sgmap_pte64
@@ -201,7 +201,7 @@ file	arch/alpha/pci/irongate_pci.c		irongate
 
 device	tsc {}
 attach	tsc at mainbus
-file	arch/alpha/pci/tsc.c			dec_6600
+file	arch/alpha/pci/tsc.c			tsc
 
 device	tsp: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
 attach	tsp at tsc
@@ -275,7 +275,7 @@ file	arch/alpha/alpha/process_machdep.c
 file	arch/alpha/alpha/prom.c
 file	arch/alpha/alpha/sys_machdep.c
 file	arch/alpha/alpha/trap.c
-file	arch/alpha/alpha/fp_complete.c
+file	arch/alpha/alpha/fp_complete.c		!no_ieee
 file	arch/alpha/alpha/vm_machdep.c
 file	arch/alpha/alpha/disksubr.c
 file	arch/alpha/dev/bus_dma.c
@@ -291,7 +291,7 @@ file	arch/alpha/alpha/in_cksum.c		inet
 file	arch/alpha/alpha/promcons.c
 
 # XXX
-# file	arch/alpha/alpha/cpuconf.c
+file	arch/alpha/alpha/cpuconf.c
 file	arch/alpha/alpha/dec_2100_a50.c		dec_2100_a50	needs-flag
 file	arch/alpha/alpha/dec_21000.c		dec_21000	needs-flag
 file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300	needs-flag
