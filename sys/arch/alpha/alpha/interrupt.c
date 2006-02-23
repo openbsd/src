@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.18 2004/08/16 16:43:52 art Exp $ */
+/* $OpenBSD: interrupt.c,v 1.19 2006/02/23 20:14:13 miod Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -114,6 +114,11 @@
 
 #include "ppp.h"
 #include "bridge.h"
+
+#include "apecs.h"
+#include "cia.h"
+#include "lca.h"
+#include "tcasic.h"
 
 static u_int schedclk2;
 
@@ -304,6 +309,8 @@ fatal:
 	panic("machine check");
 }
 
+#if NAPECS > 0 || NCIA > 0 || NLCA > 0 || NTCASIC > 0
+
 int
 badaddr(void *addr, size_t size)
 {
@@ -383,6 +390,8 @@ badaddr_read(void *addr, size_t size, void *rptr)
 	/* Return non-zero (i.e. true) if it's a bad address. */
 	return (rv);
 }
+
+#endif	/* NAPECS > 0 || NCIA > 0 || NLCA > 0 || NTCASIC > 0 */
 
 int netisr;
 

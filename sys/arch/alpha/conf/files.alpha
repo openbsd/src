@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.70 2006/02/12 21:09:06 miod Exp $
+#	$OpenBSD: files.alpha,v 1.71 2006/02/23 20:14:14 miod Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -75,7 +75,7 @@ attach	tc at tcbus
 
 device	tcasic: tcbus
 attach	tcasic at mainbus
-file	arch/alpha/tc/tcasic.c			tcasic
+file	arch/alpha/tc/tcasic.c			tcasic	needs-flag
 file	arch/alpha/tc/tc_bus_mem.c		tcasic
 file	arch/alpha/tc/tc_dma.c			tcasic
 file	arch/alpha/tc/tc_dma_3000_300.c		tcasic & dec_3000_300
@@ -167,7 +167,7 @@ file	arch/alpha/pci/pci_sgmap_pte64.c	alpha_pci_sgmap_pte64
 
 device	apecs: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
 attach	apecs at mainbus
-file	arch/alpha/pci/apecs.c			apecs
+file	arch/alpha/pci/apecs.c			apecs	needs-flag
 file	arch/alpha/pci/apecs_bus_io.c		apecs
 file	arch/alpha/pci/apecs_bus_mem.c		apecs
 file	arch/alpha/pci/apecs_pci.c		apecs
@@ -175,7 +175,7 @@ file	arch/alpha/pci/apecs_dma.c		apecs
 
 device	lca: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
 attach	lca at mainbus
-file	arch/alpha/pci/lca.c			lca
+file	arch/alpha/pci/lca.c			lca	needs-flag
 file	arch/alpha/pci/lca_bus_io.c		lca
 file	arch/alpha/pci/lca_bus_mem.c		lca
 file	arch/alpha/pci/lca_pci.c		lca
@@ -183,7 +183,7 @@ file	arch/alpha/pci/lca_dma.c		lca
 
 device	cia: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
 attach	cia at mainbus
-file	arch/alpha/pci/cia.c			cia
+file	arch/alpha/pci/cia.c			cia	needs-flag
 file	arch/alpha/pci/cia_dma.c		cia
 file	arch/alpha/pci/cia_pci.c		cia
 file	arch/alpha/pci/cia_bus_io.c		cia
