@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.26 2006/02/15 11:47:40 norby Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.27 2006/02/23 16:16:27 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -345,7 +345,8 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 
 	if (old != NULL) {
 		if (!lsa_equal(new->lsa, old->lsa)) {
-			nbr->area->dirty = 1;
+			if (lsa->hdr.type != LSA_TYPE_EXTERNAL)
+				nbr->area->dirty = 1;
 			start_spf_timer();
 		}
 		RB_REMOVE(lsa_tree, tree, old);
@@ -619,7 +620,8 @@ lsa_merge(struct rde_nbr *nbr, struct lsa *lsa, struct vertex *v)
 	free(v->lsa);
 	v->lsa = lsa;
 	start_spf_timer();
-	nbr->area->dirty = 1;
+	if (lsa->hdr.type != LSA_TYPE_EXTERNAL)
+		nbr->area->dirty = 1;
 
 	/* set correct timeout for reflooding the LSA */
 	clock_gettime(CLOCK_MONOTONIC, &tp);
