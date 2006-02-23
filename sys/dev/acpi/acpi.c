@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.43 2006/02/22 23:53:09 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.44 2006/02/23 18:53:21 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -57,7 +57,6 @@ void	acpi_unmap_pmregs(struct acpi_softc *);
 int	acpi_read_pmreg(struct acpi_softc *, int);
 void	acpi_write_pmreg(struct acpi_softc *, int, int);
 
-void	acpi_gpe(struct aml_node *, void *);
 void	acpi_foundhid(struct aml_node *, void *);
 void	acpi_inidev(struct aml_node *, void *);
 
@@ -459,21 +458,6 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int regval)
 		 sc->sc_pmregs[reg].name,
 		 sc->sc_pmregs[reg].addr,
 		 regval);
-}
-
-void
-acpi_gpe(struct aml_node *node, void *arg)
-{
-	struct aml_node *child;
-	struct acpi_softc *sc = arg;
-	uint32_t flag;
-
-	flag = acpi_read_pmreg(sc, ACPIREG_GPE0_EN);
-	for (child = node->child; child; child = child->sibling) {
-		dnprintf(30, "gpe: %s\n", child->name);
-	}
-	flag = -1;
-	flag &= ~(1L << 0x1C);
 }
 
 void
