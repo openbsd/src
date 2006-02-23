@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.4,v 1.21 2005/06/12 18:57:57 naddy Exp $
+.\"	$OpenBSD: route.4,v 1.22 2006/02/23 14:19:13 claudio Exp $
 .\"	$NetBSD: route.4,v 1.3 1994/11/30 16:22:31 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -227,7 +227,8 @@ struct rt_msghdr {
 	pid_t	rtm_pid;	/* identify sender */
 	int	rtm_seq;	/* for sender to identify action */
 	int	rtm_errno;	/* why failed */
-	int	rtm_use;	/* from rtentry */
+	int	rtm_use;	/* deprecated use rtm_rmx->rmx_pksent */
+#define rtm_fmask	rtm_use	/* bitmask used in RTM_CHANGE message */
 	u_long	rtm_inits;	/* which metrics we are initializing */
 	struct	rt_metrics rtm_rmx; /* metrics themselves */
 };
