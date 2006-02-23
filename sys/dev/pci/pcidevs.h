@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1025 2006/02/19 09:32:00 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1026 2006/02/23 18:02:54 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3411,6 +3411,7 @@
 #define	PCI_PRODUCT_VORTEX_GDT_7x29RN	0x0261		/* GDT7x29RN */
 #define	PCI_PRODUCT_VORTEX_GDT_8x22RZ	0x02f6		/* GDT8x22RZ */
 #define	PCI_PRODUCT_VORTEX_GDT_ICP	0x0300		/* ICP */
+#define	PCI_PRODUCT_VORTEX_GDT_ICP2	0x0301		/* ICP */
 
 /* VLSI products */
 #define	PCI_PRODUCT_VLSI_82C592	0x0005		/* 82C592 CPU */
