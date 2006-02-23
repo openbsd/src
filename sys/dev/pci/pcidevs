@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1025 2006/02/19 09:32:00 brad Exp $
+$OpenBSD: pcidevs,v 1.1026 2006/02/23 18:02:54 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3406,6 +3406,7 @@ product VORTEX GDT_7x19RN	0x0260	GDT7x19RN
 product VORTEX GDT_7x29RN	0x0261	GDT7x29RN
 product VORTEX GDT_8x22RZ	0x02f6	GDT8x22RZ
 product VORTEX GDT_ICP		0x0300	ICP
+product VORTEX GDT_ICP2		0x0301	ICP
 
 /* VLSI products */
 product VLSI 82C592		0x0005	82C592 CPU
