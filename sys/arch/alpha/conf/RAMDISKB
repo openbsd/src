@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.28 2005/07/31 10:13:49 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.29 2006/02/23 23:53:51 miod Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -67,7 +67,7 @@ pci*	at ppb?
 
 # PCI devices
 ahc*	at pci?				# AHA-28xx SCSI (NOT 64-BIT)
-#de*	at pci?				# 21x4[012]-based Ethernet
+de*	at pci?				# 21x4[012]-based Ethernet
 #dc*	at pci?				# 21143, "tulip" clone ethernet
 fxp*	at pci?				# EtherExpress 10/100B ethernet cards
 #ne*	at pci?				# NE2000-compat ethernet cards
@@ -118,7 +118,7 @@ com*	at isa? port 0x2f8 irq 3
 #ne0	at isa? port 0x240 irq 9	# NE[12]000 ethernet cards
 #ne1	at isa? port 0x300 irq 10	# NE[12]000 ethernet cards
 #ne2	at isa? port 0x280 irq 9	# NE[12]000 ethernet cards
-#cy0	atisa? iomem 0xd4000 irq 12	# ISA cyclom card
+#cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom card
 
 # IDE
 pciide* at pci? flags 0x0000
