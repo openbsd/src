@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.29 2006/02/22 19:29:24 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.30 2006/02/23 19:56:44 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1403,30 +1403,29 @@ struct aml_value *aml_ederef(struct acpi_context *ctx, struct aml_value *val)
 }
 
 uint64_t
-aml_get_pciaddr(struct acpi_context *, struct aml_node *,
-		uint64_t);
-uint64_t
-aml_get_pciaddr(struct acpi_context *ctx, struct aml_node *node,
-		uint64_t ioaddr)
-{
-	struct aml_node *val;
-	uint8_t reg, bus, dev, fn;
+aml_get_pciaddr(struct acpi_context *, struct aml_node *);
 
-	/* ioaddr on input = <reg> */
-	bus = dev = fn = 0;
-	reg = ioaddr;
-	if ((val = aml_searchname(node, "_ADR")) != NULL) {
-		/* _ADR holds <dev>:<fn> */
-	  	ioaddr = aml_eparseint(ctx, AML_ANYINT);
-		fn  = ioaddr & 0xFFFF;
-		dev = ioaddr >> 16;
-	}
-	if ((val = aml_searchname(node, "_BBN")) != NULL) {
+uint64_t
+aml_get_pciaddr(struct acpi_context *ctx, struct aml_node *node)
+{
+	struct aml_node *pn;
+	uint8_t  bus, dev, fn;
+	uint64_t ioaddr;
+
+	if ((pn = aml_searchname(node, "_ADR")) == NULL) 
+		return (0xFFFF);
+
+	/* _ADR holds <dev>:<fn> */
+	ioaddr = aml_val2int(ctx, pn->value);
+	fn  = ioaddr & 0xFFFF;
+	dev = ioaddr >> 16;
+	bus = 0;
+
+	if ((pn = aml_searchname(node, "_BBN")) != NULL) {
 		/* _BBN holds <bus> */
-		ioaddr = aml_eparseint(ctx, AML_ANYINT);
-		bus = ioaddr;
+		bus = aml_val2int(ctx, pn->value);
 	}
-	return ACPI_PCI_ADDR(bus, dev, fn, reg);
+	return ACPI_PCI_ADDR(bus, dev, fn, 0);
 }
 
 struct aml_value *
@@ -1470,9 +1469,6 @@ aml_efield(struct acpi_context *ctx, struct aml_value *e_fld,
 		}
 
 		ioaddr = e_rgn->v_opregion.iobase + aml_bytepos(e_fld->v_field.bitpos);
-		if (e_rgn->v_opregion.iospace == GAS_PCI_CFG_SPACE) {
-			ioaddr = aml_get_pciaddr(ctx, ctx->scope, ioaddr);
-		}
 
 		blen = aml_bytelen(e_fld->v_field.bitlen);
 		pb = acpi_os_allocmem(blen+8);   // padded space
@@ -2509,6 +2505,17 @@ aml_eparseval(struct acpi_context *ctx, int deref)
 			rv->v_opregion.iobase  = aml_eparseint(ctx, AML_ANYINT);
 			rv->v_opregion.iolen   = aml_eparseint(ctx, AML_ANYINT);
 
+			/* Special case: get PCI address */
+			if (rv->v_opregion.iospace == GAS_PCI_CFG_SPACE) {
+				i1 = aml_get_pciaddr(ctx, ctx->scope);
+				if (i1 == 0xFFFF)
+					dnprintf(50, "aml_pciregion: no _ADR for %s!\n",
+						 name);
+				else {
+					rv->v_opregion.iobase += i1;
+					dnprintf(50, "aml_pciregion: %llx\n", rv->v_opregion.iobase);
+				}
+			}
 			aml_addvname(ctx, name, opc->opcode, rv);
 		}
 		break;
@@ -2765,6 +2772,75 @@ aml_eval_object(struct acpi_softc *sc, struct aml_node *node,
 
 	return 0;
 }
+
+#if 0
+struct aml_value *
+aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
+	     int argc, struct aml_value **argv)
+{
+	struct acpi_context *ctx;
+	struct aml_value *rv, **tmparg;
+
+	/* This shouldn't happen... */
+	if (node->value == NULL)
+		return NULL;
+
+	/* Simple objects: return node value */
+	dnprintf(10, "--- eval: (%s)\n", node->name);
+	switch (node->value->type) {
+	case AML_OBJTYPE_NAMEREF:
+	case AML_OBJTYPE_INTEGER:
+	case AML_OBJTYPE_STATICINT:
+	case AML_OBJTYPE_STRING:
+	case AML_OBJTYPE_BUFFER:
+	case AML_OBJTYPE_PACKAGE:
+		return node->value;
+	}
+
+	/* Method or field context required */
+	if ((ctx = acpi_alloccontext(sc, node, 0, NULL)) == NULL)
+		return NULL;
+
+	/* XXX: ugh, fix this, set method argument pointer */
+	tmparg = ctx->args;
+	if (argv != NULL)
+		ctx->args = argv;
+
+	rv = NULL;
+	switch (node->value->type) {
+	case AML_OBJTYPE_BUFFERFIELD:
+	case AML_OBJTYPE_FIELDUNIT:
+		rv = aml_efield(ctx, node->value, NULL);
+		break;
+	case AML_OBJTYPE_METHOD:
+		ctx->pos = node->value->v_method.start;
+		rv = aml_eparselist(ctx, node->value->v_method.end);
+		break;
+	default:
+		dnprintf(1, "aml_evalnode: Unknown type (%d) for %s\n",
+			 node->value->type,
+			 node->name);
+		break;
+	}
+	ctx->args = tmparg;
+	aml_delchildren(node->value);
+	acpi_freecontext(ctx);
+
+	return rv;
+}
+
+struct aml_value *
+aml_evalname(struct acpi_softc *sc, struct aml_node *parent, const char *name,
+	     int argc, struct aml_value **argv)
+{
+	struct aml_value *node;
+
+	if ((node = aml_searchname(parent, name)) != NULL)
+		return aml_evalnode(sc, node, argc, argv);
+
+	return NULL;
+}
+#endif
 
 void
 aml_shownode(struct aml_node *node)

@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.13 2006/02/16 21:11:13 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.14 2006/02/23 19:56:44 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -302,7 +302,6 @@ struct aml_node
 	u_int16_t   	 opcode;
 	u_int8_t   	 *start;
 	u_int8_t   	 *end;
-	u_int8_t    	 flag;
 	const char 	 *name;
 	const char 	 *mnem;
 
