@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.30 2005/12/09 09:09:52 jsg Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.31 2006/02/23 19:58:47 miod Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -80,7 +80,6 @@ static	void extent_insert_and_optimize(struct extent *, u_long, u_long,
 static	struct extent_region *extent_alloc_region_descriptor(struct extent *, int);
 static	void extent_free_region_descriptor(struct extent *,
 	    struct extent_region *);
-static	void extent_register(struct extent *);
 
 /*
  * Macro to align to an arbitrary power-of-two boundary.
@@ -89,11 +88,13 @@ static	void extent_register(struct extent *);
 	(((((_start) - (_skew)) + ((_align) - 1)) & (-(_align))) + (_skew))
 
 
+#if defined(DIAGNOSTIC) || defined(DDB)
 /*
  * Register the extent on a doubly linked list.
  * Should work, no?
  */
 static LIST_HEAD(listhead, extent) ext_list;
+static	void extent_register(struct extent *);
 
 static void
 extent_register(struct extent *ex)
@@ -118,6 +119,7 @@ extent_register(struct extent *ex)
 	/* Insert into list */
 	LIST_INSERT_HEAD(&ext_list, ex, ex_link);
 }
+#endif	/* DIAGNOSTIC || DDB */
 
 struct pool ex_region_pl;
 
@@ -131,26 +133,6 @@ extent_pool_init(void)
 		    "extentpl", NULL);
 		inited = 1;
 	}
-}
-
-/*
- * Find a given extent, and return a pointer to
- * it so that other extent functions can be used
- * on it.
- *
- * Returns NULL on failure.
- */
-struct extent *
-extent_find(char *name)
-{
-	struct extent *ep;
-
-	LIST_FOREACH(ep, &ext_list, ex_link) {
-		if (!strcmp(ep->ex_name, name))
-			return(ep);
-	}
-
-	return(NULL);
 }
 
 #ifdef DDB
@@ -246,7 +228,9 @@ extent_create(char *name, u_long start, u_long end, int mtype, caddr_t storage,
 	if (flags & EX_NOCOALESCE)
 		ex->ex_flags |= EXF_NOCOALESCE;
 
+#if defined(DIAGNOSTIC) || defined(DDB)
 	extent_register(ex);
+#endif
 	return (ex);
 }
 
