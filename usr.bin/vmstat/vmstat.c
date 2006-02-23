@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.99 2006/02/11 16:46:59 martin Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.100 2006/02/23 06:32:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.99 2006/02/11 16:46:59 martin Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.100 2006/02/23 06:32:11 martin Exp $";
 #endif
 #endif /* not lint */
 
@@ -709,8 +709,6 @@ cpustats(void)
 void
 dointr(void)
 {
-	struct device dev;
-
 	time_t uptime;
 	u_int64_t inttotal;
 	int nintr;
