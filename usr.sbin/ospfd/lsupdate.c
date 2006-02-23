@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.26 2006/02/21 10:12:17 claudio Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.27 2006/02/23 16:06:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -18,6 +18,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/hash.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -35,7 +36,7 @@ extern struct ospfd_conf	*oeconf;
 extern struct imsgbuf		*ibuf_rde;
 
 struct buf *prepare_ls_update(struct iface *);
-int	add_ls_update(struct buf *, struct iface *, void *, int);
+int	add_ls_update(struct buf *, struct iface *, void *, int, u_int16_t);
 int	send_ls_update(struct buf *, struct iface *, struct in_addr, u_int32_t);
 
 void	ls_retrans_list_insert(struct nbr *, struct lsa_entry *);
@@ -58,10 +59,10 @@ lsa_flood(struct iface *iface, struct nbr *originator, struct lsa_hdr *lsa_hdr,
 			continue;
 
 		if (iface->state & IF_STA_DROTHER && !queued)
-			if ((le = ls_retrans_list_get(iface->self, lsa_hdr)))
+			while ((le = ls_retrans_list_get(iface->self, lsa_hdr)))
 			    ls_retrans_list_free(iface->self, le);
 
-		if ((le = ls_retrans_list_get(nbr, lsa_hdr)))
+		while ((le = ls_retrans_list_get(nbr, lsa_hdr)))
 			ls_retrans_list_free(nbr, le);
 
 		if (!(nbr->state & NBR_STA_FULL) &&
@@ -169,10 +170,11 @@ fail:
 }
 
 int
-add_ls_update(struct buf *buf, struct iface *iface, void *data, int len)
+add_ls_update(struct buf *buf, struct iface *iface, void *data, int len,
+    u_int16_t older)
 {
-	size_t			 pos;
-	u_int16_t		 age;
+	size_t		pos;
+	u_int16_t	age;
 
 	if (buf->wpos + len >= buf->max - MD5_DIGEST_LENGTH)
 		return (0);
@@ -186,7 +188,7 @@ add_ls_update(struct buf *buf, struct iface *iface, void *data, int len)
 	/* age LSA before sending it out */
 	memcpy(&age, data, sizeof(age));
 	age = ntohs(age);
-	if ((age += iface->transmit_delay) >= MAX_AGE)
+	if ((age += older + iface->transmit_delay) >= MAX_AGE)
 		age = MAX_AGE;
 	age = htons(age);
 	memcpy(buf_seek(buf, pos, sizeof(age)), &age, sizeof(age));
@@ -318,8 +320,7 @@ ls_retrans_list_del(struct nbr *nbr, struct lsa_hdr *lsa_hdr)
 {
 	struct lsa_entry	*le;
 
-	le = ls_retrans_list_get(nbr, lsa_hdr);
-	if (le == NULL)
+	if ((le = ls_retrans_list_get(nbr, lsa_hdr)) == NULL)
 		return (-1);
 	if (lsa_hdr->seq_num == le->le_ref->hdr.seq_num &&
 	    lsa_hdr->ls_chksum == le->le_ref->hdr.ls_chksum) {
@@ -364,7 +365,6 @@ ls_retrans_list_insert(struct nbr *nbr, struct lsa_entry *new)
 	}
 	new->le_when = when;
 	TAILQ_INSERT_TAIL(&nbr->ls_retrans_list, new, entry);
-
 	nbr->ls_ret_cnt++;
 }
 
@@ -427,10 +427,13 @@ void
 ls_retrans_timer(int fd, short event, void *bula)
 {
 	struct timeval		 tv;
+	struct timespec		 tp;
 	struct in_addr		 addr;
 	struct nbr		*nbr = bula;
 	struct lsa_entry	*le;
 	struct buf		*buf;
+	time_t			 now;
+	int			 d;
 	u_int32_t		 nlsa = 0;
 
 	if ((le = TAILQ_FIRST(&nbr->ls_retrans_list)) != NULL)
@@ -438,6 +441,9 @@ ls_retrans_timer(int fd, short event, void *bula)
 	else
 		return;			/* queue empty, nothing to do */
 
+	clock_gettime(CLOCK_MONOTONIC, &tp);
+	now = tp.tv_sec;
+	
 	if (nbr->iface->self == nbr) {
 		/*
 		 * oneshot needs to be set for lsa queued for flooding,
@@ -468,8 +474,14 @@ ls_retrans_timer(int fd, short event, void *bula)
 
 	while ((le = TAILQ_FIRST(&nbr->ls_retrans_list)) != NULL &&
 	    le->le_when == 0) {
+		d = now - le->le_ref->stamp;
+		if (d < 0)
+			d = 0;
+		else if (d > MAX_AGE)
+			d = MAX_AGE;
+
 		if (add_ls_update(buf, nbr->iface, le->le_ref->data,
-		    le->le_ref->len) == 0)
+		    le->le_ref->len, d) == 0)
 			break;
 		nlsa++;
 		if (le->le_oneshot)
@@ -501,7 +513,6 @@ struct lsa_cache {
 } lsacache;
 
 struct lsa_ref		*lsa_cache_look(struct lsa_hdr *);
-struct lsa_cache_head	*lsa_cache_hash(struct lsa_hdr *);
 
 void
 lsa_cache_init(u_int32_t hashsize)
@@ -546,7 +557,8 @@ lsa_cache_add(void *data, u_int16_t len)
 	ref->len = len;
 	ref->refcnt = 1;
 
-	head = lsa_cache_hash(&ref->hdr);
+	head = &lsacache.hashtbl[hash32_buf(&ref->hdr, sizeof(ref->hdr),
+	    HASHINIT) & lsacache.hashmask];
 	LIST_INSERT_HEAD(head, ref, entry);
 	return (ref);
 }
@@ -584,31 +596,15 @@ lsa_cache_look(struct lsa_hdr *lsa_hdr)
 	struct lsa_cache_head	*head;
 	struct lsa_ref		*ref;
 
-	head = lsa_cache_hash(lsa_hdr);
+	head = &lsacache.hashtbl[hash32_buf(lsa_hdr, sizeof(*lsa_hdr),
+	    HASHINIT) & lsacache.hashmask];
+
 	LIST_FOREACH(ref, head, entry) {
-		if (ref->hdr.type == lsa_hdr->type &&
-		    ref->hdr.ls_id == lsa_hdr->ls_id &&
-		    ref->hdr.adv_rtr == lsa_hdr->adv_rtr &&
-		    ref->hdr.seq_num == lsa_hdr->seq_num &&
-		    ref->hdr.ls_chksum == lsa_hdr->ls_chksum) {
+		if (memcmp(&ref->hdr, lsa_hdr, sizeof(*lsa_hdr)) == 0)
 			/* found match */
 			return (ref);
-		}
 	}
+
 	return (NULL);
 }
 
-struct lsa_cache_head *
-lsa_cache_hash(struct lsa_hdr *lsa_hdr)
-{
-	u_int32_t	hash = 8271;
-
-	hash ^= lsa_hdr->type;
-	hash ^= lsa_hdr->ls_id;
-	hash ^= lsa_hdr->adv_rtr;
-	hash ^= lsa_hdr->seq_num;
-	hash ^= lsa_hdr->ls_chksum;
-	hash &= lsacache.hashmask;
-
-	return (&lsacache.hashtbl[hash]);
-}
