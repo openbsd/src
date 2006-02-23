@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gdt.4,v 1.25 2005/09/30 20:34:24 jaredy Exp $
+.\"	$OpenBSD: gdt.4,v 1.26 2006/02/23 20:11:54 brad Exp $
 .\"
 .\" Copyright (c) 2000 Niklas Hallqvist <niklas@openbsd.org>
 .\"
@@ -19,14 +19,14 @@
 .Os
 .Sh NAME
 .Nm gdt
-.Nd Intel and ICP-Vortex GDT RAID driver
+.Nd ICP-Vortex and Intel GDT RAID driver
 .Sh SYNOPSIS
 .Cd "gdt* at pci?"
 .Cd "scsibus* at gdt?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for all currently known ICP Vortex adapters:
+driver provides support for ICP-Vortex adapters such as:
 .Pp
 .Tn GDT4x13RZ ,
 .Tn GDT4x23RZ ,
@@ -103,8 +103,12 @@ driver provides support for all currently known ICP Vortex adapters:
 .Tn GDT8x63RZ , and
 .Tn GDT8x86RZ .
 .Pp
-Some Intel RAID controllers containing firmware derived from ICP Vortex
-are also supported.
+As well as Intel adapters such as:
+.Pp
+.Tn SRCU42L ,
+.Tn SRCU32 ,
+.Tn SRCZCR , and
+.Tn SRCS14L .
 .Pp
 Although the controllers are actual RAID controllers,
 the driver makes them look just like SCSI controllers.
