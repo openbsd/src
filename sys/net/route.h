@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.34 2005/11/29 02:59:42 jolan Exp $	*/
+/*	$OpenBSD: route.h,v 1.35 2006/02/23 14:15:53 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -141,6 +141,11 @@ struct rtentry {
 #define RTF_MPATH	0x40000		/* multipath route or operation */
 #define RTF_JUMBO	0x80000		/* try to use jumbo frames */
 
+/* mask of RTF flags that are allowed to be modified by RTM_CHANGE */
+#define RTF_FMASK	\
+    (RTF_JUMBO | RTF_PROTO1 | RTF_PROTO2 | RTF_PROTO3 | RTF_BLACKHOLE | \
+     RTF_REJECT | RTF_STATIC)
+
 #ifndef _KERNEL
 /* obsoleted */
 #define	RTF_TUNNEL	0x100000	/* Tunnelling bit. */
@@ -170,7 +175,7 @@ struct rt_msghdr {
 	pid_t	rtm_pid;	/* identify sender */
 	int	rtm_seq;	/* for sender to identify action */
 	int	rtm_errno;	/* why failed */
-	int	rtm_use;	/* from rtentry */
+	int	rtm_use;	/* deprecated use rtm_rmx->rmx_pksent */
 #define rtm_fmask	rtm_use	/* bitmask used in RTM_CHANGE message */
 	u_long	rtm_inits;	/* which metrics we are initializing */
 	struct	rt_metrics rtm_rmx; /* metrics themselves */

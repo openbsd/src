@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.52 2006/02/02 13:59:45 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.53 2006/02/23 14:15:53 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -353,6 +353,7 @@ report:
 			}
 			rt_msg2(rtm->rtm_type, &info, (caddr_t)rtm, NULL);
 			rtm->rtm_flags = rt->rt_flags;
+			rtm->rtm_use = 0;
 			rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
 			rtm->rtm_addrs = info.rti_addrs;
 			break;
@@ -390,8 +391,8 @@ report:
 				}
 			}
 
-			/* XXX Hack to allow the jumbo flag to be toggled */
-			if (rtm->rtm_use & RTF_JUMBO)
+			/* XXX Hack to allow some flags to be toggled */
+			if (rtm->rtm_fmask & RTF_FMASK)
 				rt->rt_flags = (rt->rt_flags &
 				    ~rtm->rtm_fmask) |
 				    (rtm->rtm_flags & rtm->rtm_fmask);
@@ -808,7 +809,7 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		struct rt_msghdr *rtm = (struct rt_msghdr *)w->w_tmem;
 
 		rtm->rtm_flags = rt->rt_flags;
-		rtm->rtm_use = rt->rt_use;
+		rtm->rtm_use = 0;
 		rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
 		rtm->rtm_index = rt->rt_ifp->if_index;
 		rtm->rtm_errno = rtm->rtm_pid = rtm->rtm_seq = 0;
