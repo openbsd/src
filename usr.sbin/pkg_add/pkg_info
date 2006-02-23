@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.38 2006/02/09 09:40:31 espie Exp $
+# $OpenBSD: pkg_info,v 1.39 2006/02/23 12:28:22 bernd Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -301,8 +301,8 @@ sub print_info
 		if ($opt_P) {
 			require OpenBSD::PackingList;
 
-			my $plist = OpenBSD::PackingList->from_installation(
-			    $pkg, \&OpenBSD::PackingList::ExtraInfoOnly);
+			my $plist = $handle->plist(
+			    \&OpenBSD::PackingList::ExtraInfoOnly);
 			print "Pkgpath:\n" unless $opt_q;
 			print $plist->{extrainfo}->{subdir}, "\n";
 		}
