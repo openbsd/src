@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ami.4,v 1.29 2006/02/23 20:11:54 brad Exp $
+.\"	$OpenBSD: ami.4,v 1.30 2006/02/24 03:06:31 brad Exp $
 .\"
 .\" Michael Shalayeff, 2001. Public Domain.
 .\"
@@ -23,13 +23,16 @@ Dell CERC-PATA,
 PERC 2/DC,
 PERC 3/DC,
 PERC 3/DCL,
+PERC 3/Di,
 PERC 3/QC,
 PERC 3/SC,
 PERC 4/DC,
-PERC 4/SC,
 PERC 4/Di,
+PERC 4/SC,
+EPRC 4e/DC,
 PERC 4e/Di,
-PERC 4/Si
+PERC 4e/SC,
+PERC 4e/Si
 .It
 Hewlett-Packard 438,
 466,
@@ -44,14 +47,26 @@ SRCS28X,
 SRCZCRX
 .It
 LSI/AMI/Symbios MegaRAID,
-MegaRAID 320,
+MegaRAID 320-0,
 MegaRAID 320-1,
+MegaRAID 320-2,
+MegaRAID 320-1E,
 MegaRAID 320-2E,
+MegaRAID 320-0X,
+MegaRAID 320-2X,
+MegaRAID 320-4X,
 MegaRAID i4,
 523 SATA,
 MegaRAID 150-4,
 MegaRAID 150-6,
+MegaRAID 300-4x,
 MegaRAID 300-8x
+.It
+FSC MegaRAID PCI Express ROMB
+.It
+ACER MegaRAID ROMB-2E
+.It
+NEC MegaRAID PCI Express ROMB
 .El
 .Pp
 These controllers support RAID 0, RAID 1, RAID 5, JBOD,
