@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1028 2006/02/24 02:58:35 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1029 2006/02/24 03:40:42 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -227,6 +227,7 @@
 #define	PCI_VENDOR_CMI	0x13f6		/* C-Media Electronics */
 #define	PCI_VENDOR_LAVA	0x1407		/* Lava */
 #define	PCI_VENDOR_SUNIX	0x1409		/* Sunix */
+#define	PCI_VENDOR_ICENSEMBLE	0x1412		/* IC Ensemble */
 #define	PCI_VENDOR_MICROSOFT	0x1414		/* Microsoft */
 #define	PCI_VENDOR_OXFORD2	0x1415		/* Oxford */
 #define	PCI_VENDOR_CHELSIO	0x1425		/* Chelsio */
@@ -1456,6 +1457,9 @@
 #define	PCI_PRODUCT_IBM_FIREGL2	0x0170		/* FireGL2 */
 #define	PCI_PRODUCT_IBM_PCIX	0x01a7		/* PCIX-PCIX */
 #define	PCI_PRODUCT_IBM_SERVERAID2	0x01bd		/* ServeRAID */
+
+/* IC Ensemble */
+#define	PCI_PRODUCT_ICENSEMBLE_VT172x	0x1712		/* Envy24PT/HT Audio */
 
 /* IDT products */
 #define	PCI_PRODUCT_IDT_77201	0x0001		/* 77201/77211 ATM (NICStAR) */

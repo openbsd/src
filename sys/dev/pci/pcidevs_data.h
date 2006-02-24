@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1028 2006/02/24 02:58:35 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1029 2006/02/24 03:40:42 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3857,6 +3857,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID2,
 	    "ServeRAID",
+	},
+	{
+	    PCI_VENDOR_ICENSEMBLE, PCI_PRODUCT_ICENSEMBLE_VT172x,
+	    "Envy24PT/HT Audio",
 	},
 	{
 	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_77201,
@@ -11613,6 +11617,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_SUNIX,
 	    "Sunix",
+	},
+	{
+	    PCI_VENDOR_ICENSEMBLE,
+	    "IC Ensemble",
 	},
 	{
 	    PCI_VENDOR_MICROSOFT,
