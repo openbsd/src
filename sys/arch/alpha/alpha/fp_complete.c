@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_complete.c,v 1.5 2006/02/23 23:54:56 miod Exp $	*/
+/*	$OpenBSD: fp_complete.c,v 1.6 2006/02/24 03:34:56 deraadt Exp $	*/
 /*	$NetBSD: fp_complete.c,v 1.5 2002/01/18 22:15:56 ross Exp $	*/
 
 /*-
@@ -33,6 +33,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef NO_IEEE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -692,3 +694,4 @@ done:
 	}
 	return 0;
 }
+#endif
