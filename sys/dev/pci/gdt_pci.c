@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.19 2003/08/06 21:08:06 millert Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.20 2006/02/24 00:04:27 brad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -52,6 +52,11 @@
 
 /* Product numbers for Fibre-Channel are greater than or equal to 0x200 */
 #define GDT_PCI_PRODUCT_FC	0x200
+
+#define GDT_DEVICE_ID_MIN	0x100
+#define GDT_DEVICE_ID_MAX	0x2ff
+#define GDT_DEVICE_ID_NEWRX	0x300
+#define GDT_DEVICE_ID_NEWRX2	0x301
 
 /* Mapping registers for various areas */
 #define GDT_PCI_DPMEM		0x10
@@ -151,7 +156,10 @@ gdt_pci_probe(parent, match, aux)
         struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VORTEX &&
-	    PCI_PRODUCT(pa->pa_id) >= 0x100 && PCI_PRODUCT(pa->pa_id) <= 0x300)
+	    ((PCI_PRODUCT(pa->pa_id) >= GDT_DEVICE_ID_MIN &&
+	    PCI_PRODUCT(pa->pa_id) <= GDT_DEVICE_ID_MAX) ||
+	    PCI_PRODUCT(pa->pa_id) == GDT_DEVICE_ID_NEWRX ||
+	    PCI_PRODUCT(pa->pa_id) == GDT_DEVICE_ID_NEWRX2))
 		return (1);
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_GDT_RAID1 ||
