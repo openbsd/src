@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1029 2006/02/24 03:40:42 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1030 2006/02/24 04:19:09 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1459,7 +1459,8 @@
 #define	PCI_PRODUCT_IBM_SERVERAID2	0x01bd		/* ServeRAID */
 
 /* IC Ensemble */
-#define	PCI_PRODUCT_ICENSEMBLE_VT172x	0x1712		/* Envy24PT/HT Audio */
+#define	PCI_PRODUCT_ICENSEMBLE_ICE1712	0x1712		/* Envy24 I/O Ctrlr */
+#define	PCI_PRODUCT_ICENSEMBLE_VT172x	0x1724		/* Envy24PT/HT Audio */
 
 /* IDT products */
 #define	PCI_PRODUCT_IDT_77201	0x0001		/* 77201/77211 ATM (NICStAR) */
