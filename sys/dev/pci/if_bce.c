@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.10 2005/10/06 20:09:28 brad Exp $ */
+/* $OpenBSD: if_bce.c,v 1.11 2006/02/24 00:57:49 brad Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -959,10 +959,15 @@ bce_init(ifp)
 	sc->bce_txsnext = 0;
 	sc->bce_txin = 0;
 
-	/* enable crc32 generation */
+	/* enable crc32 generation and set proper LED modes */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_MACCTL,
 	    bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MACCTL) |
-	    BCE_EMC_CG);
+	    BCE_EMC_CRC32_ENAB | BCE_EMC_LED);
+
+	/* reset or clear powerdown control bit  */
+	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_MACCTL,
+	    bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MACCTL) &
+	    ~BCE_EMC_PDOWN);
 
 	/* setup DMA interrupt control */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMAI_CTL, 1 << 24);	/* MAGIC */
