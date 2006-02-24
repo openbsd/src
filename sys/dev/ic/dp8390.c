@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.29 2005/10/22 23:26:02 brad Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.30 2006/02/24 23:56:19 brad Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -717,7 +717,7 @@ dp8390_intr(arg)
 			 */
 			if (isr & ED_ISR_OVW) {
 				++ifp->if_ierrors;
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 				log(LOG_WARNING, "%s: warning - receiver "
 				    "ring buffer overrun\n",
 				    sc->sc_dev.dv_xname);
