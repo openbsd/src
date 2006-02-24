@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_isa.c,v 1.7 2006/01/23 14:42:55 martin Exp $	*/
+/*	$OpenBSD: if_sm_isa.c,v 1.8 2006/02/24 01:50:31 brad Exp $	*/
 /*	$NetBSD: if_sm_isa.c,v 1.4 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -52,9 +52,6 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#ifdef __NetBSD__
-#include <net/if_ether.h>
-#endif
 #include <net/if_media.h>
 
 #ifdef INET
@@ -62,11 +59,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#ifdef __NetBSD__
-#include <netinet/if_inarp.h>
-#else
 #include <netinet/if_ether.h>
-#endif
 #endif
 
 #if NBPFILTER > 0
