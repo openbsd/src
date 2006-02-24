@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.22 2006/01/23 14:42:55 martin Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.23 2006/02/24 01:48:27 brad Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -90,9 +90,6 @@
 #include <sys/malloc.h>
 #include <sys/ioctl.h> 
 #include <sys/errno.h>
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -324,11 +321,6 @@ smc91cxx_attach(sc, myea)
 		ifmedia_set(ifm, IFM_ETHER | (aui ? IFM_10_5 : IFM_10_T));
 		break;
 	}
-
-#if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
-			  RND_TYPE_NET, 0);
-#endif
 
 	/* The attach is successful. */
 	sc->sc_flags |= SMC_FLAGS_ATTACHED;
@@ -919,11 +911,6 @@ out:
 	mask |= bus_space_read_1(bst, bsh, INTR_MASK_REG_B);
 	bus_space_write_1(bst, bsh, INTR_MASK_REG_B, mask);
 
-#if NRND > 0
-	if (status)
-		rnd_add_uint32(&sc->rnd_source, status);
-#endif
-
 	return (1);
 }
 
@@ -1280,9 +1267,6 @@ smc91cxx_detach(self, flags)
 	/* Delete all media. */
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 
-#if NRND > 0
-	rnd_detach_source(&sc->rnd_source);
-#endif
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
