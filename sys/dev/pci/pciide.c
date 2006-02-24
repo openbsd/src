@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.225 2006/02/10 21:45:41 kettenis Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.226 2006/02/24 20:59:04 kettenis Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -6884,11 +6884,16 @@ svwsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	ss = sc->sc_cookie;
 	bzero(ss, sizeof(*ss));
 
+	/* The 4-port version has a dummy second function. */
+	if (pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    PCI_MAPREG_START + 0x14) == 0) {
+		printf("\n");
+		return;
+	}
+
 	if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x14,
-			   PCI_MAPREG_TYPE_MEM |
-			   PCI_MAPREG_MEM_TYPE_32BIT, 0,
-			   &ss->ba5_st, &ss->ba5_sh,
-			   NULL, NULL, 0) != 0) {
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	    &ss->ba5_st, &ss->ba5_sh, NULL, NULL, 0) != 0) {
 		printf(": unable to map BA5 register space\n");
 		return;
 	}
@@ -7074,7 +7079,7 @@ svwsata_drv_probe(struct channel_softc *chp)
 
 	sstatus = bus_space_read_4(ss->ba5_st, ss->ba5_sh,
 	    (channel << 8) + SVWSATA_SSTATUS);
-#if 1
+#if 0
 	printf("%s: port %d: SStatus=0x%08x, SControl=0x%08x\n",
 	    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel, sstatus,
 	    bus_space_read_4(ss->ba5_st, ss->ba5_sh,
@@ -7125,7 +7130,7 @@ svwsata_drv_probe(struct channel_softc *chp)
 			ch = bus_space_read_1(chp->cmd_iot,
 			    chp->cmd_ioh, wdr_cyl_hi & _WDC_REGMASK);
 		}
-#if 1
+#if 0
 		printf("%s: port %d: scnt=0x%x sn=0x%x cl=0x%x ch=0x%x\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel,
 		    scnt, sn, cl, ch);
