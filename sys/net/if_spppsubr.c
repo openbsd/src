@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.37 2005/10/07 05:19:34 canacar Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.38 2006/02/24 20:34:34 claudio Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -222,9 +222,9 @@ struct lcp_header {
 #define LCP_HEADER_LEN          sizeof (struct lcp_header)
 
 struct cisco_packet {
-	u_long type;
-	u_long par1;
-	u_long par2;
+	u_int32_t type;
+	u_int32_t par1;
+	u_int32_t par2;
 	u_short rel;
 	u_short time0;
 	u_short time1;
@@ -301,7 +301,7 @@ static u_short interactive_ports[8] = {
 HIDE int sppp_output(struct ifnet *ifp, struct mbuf *m,
 		       struct sockaddr *dst, struct rtentry *rt);
 
-HIDE void sppp_cisco_send(struct sppp *sp, int type, long par1, long par2);
+HIDE void sppp_cisco_send(struct sppp *sp, u_int32_t type, u_int32_t par1, u_int32_t par2);
 HIDE void sppp_cisco_input(struct sppp *sp, struct mbuf *m);
 
 HIDE void sppp_cp_input(const struct cp *cp, struct sppp *sp,
@@ -1089,15 +1089,15 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 	if (debug)
 		log(LOG_DEBUG,
 		    SPP_FMT "cisco input: %d bytes "
-		    "<0x%lx 0x%lx 0x%lx 0x%x 0x%x-0x%x>\n",
+		    "<0x%x 0x%x 0x%x 0x%x 0x%x-0x%x>\n",
 		    SPP_ARGS(ifp), m->m_pkthdr.len,
-		    (u_long)ntohl (h->type), (u_long)h->par1, (u_long)h->par2, (u_int)h->rel,
+		    ntohl(h->type), h->par1, h->par2, (u_int)h->rel,
 		    (u_int)h->time0, (u_int)h->time1);
 	switch (ntohl (h->type)) {
 	default:
 		if (debug)
-			addlog(SPP_FMT "cisco unknown packet type: 0x%lx\n",
-			       SPP_ARGS(ifp), (u_long)ntohl (h->type));
+			addlog(SPP_FMT "cisco unknown packet type: 0x%x\n",
+			       SPP_ARGS(ifp), ntohl(h->type));
 		break;
 	case CISCO_ADDR_REPLY:
 		/* Reply on address request, ignore */
@@ -1146,7 +1146,7 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
  * Send Cisco keepalive packet.
  */
 HIDE void
-sppp_cisco_send(struct sppp *sp, int type, long par1, long par2)
+sppp_cisco_send(struct sppp *sp, u_int32_t type, u_int32_t par1, u_int32_t par2)
 {
 	STDDCL;
 	struct ppp_header *h;
@@ -1177,10 +1177,10 @@ sppp_cisco_send(struct sppp *sp, int type, long par1, long par2)
 	ch->time1 = htons ((u_short) tv.tv_sec);
 
 	if (debug)
-		log(LOG_DEBUG,
-		    SPP_FMT "cisco output: <0x%lx 0x%lx 0x%lx 0x%x 0x%x-0x%x>\n",
-			SPP_ARGS(ifp), (u_long)ntohl (ch->type), (u_long)ch->par1,
-			(u_long)ch->par2, (u_int)ch->rel, (u_int)ch->time0, (u_int)ch->time1);
+		log(LOG_DEBUG, SPP_FMT
+		    "cisco output: <0x%lx 0x%lx 0x%lx 0x%x 0x%x-0x%x>\n",
+			SPP_ARGS(ifp), ntohl(ch->type), ch->par1, ch->par2,
+			(u_int)ch->rel, (u_int)ch->time0, (u_int)ch->time1);
 
 	if (IF_QFULL (&sp->pp_cpq)) {
 		IF_DROP (&sp->pp_fastq);
