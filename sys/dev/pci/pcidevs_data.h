@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1026 2006/02/23 18:02:54 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1027 2006/02/24 02:52:41 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3257,6 +3257,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_RAC_4_VUART,
 	    "RAC 4 Virtual UART",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_4E_DiSi,
+	    "PERC 4e/Di/Si",
 	},
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_RAC_4_SMIC,
@@ -6844,7 +6848,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SATA8,
-	    "MegaRAID SATA 8x",
+	    "MegaRAID SATA 4x/8x",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC909,
