@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.108 2006/02/22 06:02:09 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.109 2006/02/24 06:09:44 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -640,6 +640,7 @@ em_init(void *arg)
 		splx(s);
 		return;
 	}
+	em_update_link_status(sc);
 
 	/* Prepare transmit descriptors and buffers */
 	if (em_setup_transmit_structures(sc)) {
