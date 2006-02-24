@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.24 2006/02/19 21:48:56 norby Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.25 2006/02/24 21:06:46 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -166,8 +166,8 @@ main(int argc, char *argv[])
 		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_ASBR, 0, 0, NULL, 0);
 		break;
 	case SHOW_RIB:
-		printf("%-20s %-17s %-12s %-9s %-7s\n", "Destination",
-		    "Nexthop", "Path Type", "Type", "Cost");
+		printf("%-20s %-17s %-12s %-9s %-7s %-8s\n", "Destination",
+		    "Nexthop", "Path Type", "Type", "Cost", "Uptime");
 	case SHOW_RIB_DTAIL:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_RIB, 0, 0, NULL, 0);
 		break;
@@ -932,9 +932,10 @@ show_rib_msg(struct imsg *imsg)
 			errx(1, "Invalid route type");
 		}
 
-		printf("%-20s %-17s %-12s %-9s %-7d\n", dstnet,
+		printf("%-20s %-17s %-12s %-9s %-7d %s\n", dstnet,
 		    inet_ntoa(rt->nexthop), path_type_names[rt->p_type],
-		    dst_type_names[rt->d_type], rt->cost);
+		    dst_type_names[rt->d_type], rt->cost,
+		    rt->uptime == 0 ? "-" : fmt_timeframe_core(rt->uptime));
 		free(dstnet);
 		break;
 	case IMSG_CTL_END:

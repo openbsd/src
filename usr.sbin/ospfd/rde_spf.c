@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.48 2006/02/10 13:00:49 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.49 2006/02/24 21:06:47 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -731,7 +731,10 @@ void
 rt_dump(struct in_addr area, pid_t pid, u_int8_t r_type)
 {
 	static struct ctl_rt	 rtctl;
+	struct timespec		 now;
 	struct rt_node		*r;
+
+	clock_gettime(CLOCK_MONOTONIC, &now);
 
 	RB_FOREACH(r, rt_tree, &rt) {
 		if (r->invalid)
@@ -771,6 +774,7 @@ rt_dump(struct in_addr area, pid_t pid, u_int8_t r_type)
 		rtctl.d_type = r->d_type;
 		rtctl.flags = r->flags;
 		rtctl.prefixlen = r->prefixlen;
+		rtctl.uptime = now.tv_sec - r->uptime;
 
 		rde_imsg_compose_ospfe(IMSG_CTL_SHOW_RIB, 0, pid, &rtctl,
 		    sizeof(rtctl));
@@ -783,11 +787,14 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
      struct in_addr adv_rtr, enum path_type p_type, enum dst_type d_type,
      u_int8_t flags, u_int8_t connected)
 {
+	struct timespec	 now;
 	struct rt_node	*rte;
 	int		 better = 0;
 
 	if (nexthop.s_addr == 0)	/* XXX remove */
 		fatalx("rt_update: invalid nexthop");
+
+	clock_gettime(CLOCK_MONOTONIC, &now);
 
 	if ((rte = rt_find(prefix.s_addr, prefixlen, d_type)) == NULL) {
 		if ((rte = calloc(1, sizeof(struct rt_node))) == NULL)
@@ -804,11 +811,15 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
 		rte->flags = flags;
 		rte->invalid = 0;
 		rte->connected = connected;
+		rte->uptime = now.tv_sec;
 
 		rt_insert(rte);
 	} else {
 		if (rte->invalid) {
 			/* invalidated entry - just update */
+			if (rte->nexthop.s_addr != nexthop.s_addr ||
+			    rte->cost != cost || rte->cost2 != cost2)
+				rte->uptime = now.tv_sec;
 			rte->nexthop.s_addr = nexthop.s_addr;
 			rte->adv_rtr.s_addr = adv_rtr.s_addr;
 			rte->cost = cost;
@@ -850,6 +861,8 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
 					break;
 				}
 			if (better) {
+				if (rte->nexthop.s_addr != nexthop.s_addr)
+					rte->uptime = now.tv_sec;
 				rte->nexthop.s_addr = nexthop.s_addr;
 				rte->adv_rtr.s_addr = adv_rtr.s_addr;
 				rte->cost = cost;
