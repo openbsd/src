@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1027 2006/02/24 02:52:41 brad Exp $
+$OpenBSD: pcidevs,v 1.1028 2006/02/24 02:58:35 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1245,9 +1245,8 @@ product DELL PERC_4DI		0x000e	PERC 4/Di i960
 product DELL PERC_4DI_2		0x000f	PERC 4/Di Verde
 product DELL RAC_4		0x0011	RAC 4
 product DELL RAC_4_VUART	0x0012	RAC 4 Virtual UART
-product DELL PERC_4E_DiSi	0x0013	PERC 4e/Di/Si
-product DELL RAC_4_SMIC		0x0014	RAC 4 SMIC
 product DELL PERC_4EDI		0x0013	PERC 4e/Di
+product DELL RAC_4_SMIC		0x0014	RAC 4 SMIC
 product DELL PERC_3DI_2_SUB	0x00cf	PERC 3/Di
 product DELL PERC_3SI_2_SUB	0x00d0	PERC 3/Si
 product DELL PERC_3DI_SUB2	0x00d1	PERC 3/Di
