@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.53 2006/02/14 13:28:38 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.54 2006/02/24 14:34:56 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -372,9 +372,6 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 			if (utimes(dst, (const struct timeval *)&tv) < 0)
 				cvs_log(LP_ERRNO, "error setting utimes");
 		}
-
-		if ((verbose == 1) && !(flags & NEWFILE))
-			printf("done\n");
 	}
 
 	return (0);
