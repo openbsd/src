@@ -1,4 +1,4 @@
-.\"	$OpenBSD: amd64_iopl.2,v 1.3 2006/02/24 01:09:38 djm Exp $
+.\"	$OpenBSD: amd64_iopl.2,v 1.4 2006/02/24 10:10:16 jmc Exp $
 .\"	$NetBSD: amd64_iopl.2,v 1.3 1996/02/27 22:57:25 jtc Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ is set to indicate the error.
 will fail if:
 .Bl -tag -width [EINVAL]
 .It Bq Er EPERM
-The caller was not the superuser, or the securelevel is non-zero and
+The caller was not the superuser, or the securelevel is greater than zero and
 .Va machdep.allowaperture
 has not been set to a non-zero value.
 .El
