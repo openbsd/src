@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.26 2005/12/18 17:54:12 reyk Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.27 2006/02/25 13:38:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -90,25 +90,29 @@ hostapd_printf(const char *fmt, ...)
 	va_list ap;
 	size_t n;
 
-	if (fmt == NULL) {
- flush:
-		hostapd_log(HOSTAPD_LOG, "%s", printbuf);
-		bzero(printbuf, sizeof(printbuf));
-		return;
-	}
+	if (fmt == NULL)
+		goto flush;
 
 	va_start(ap, fmt);
 	bzero(newfmt, sizeof(newfmt));
 	if ((n = strlcpy(newfmt, printbuf, sizeof(newfmt))) >= sizeof(newfmt))
-		goto flush;
+		goto va_flush;
 	if (strlcpy(newfmt + n, fmt, sizeof(newfmt) - n) >= sizeof(newfmt) - n)
-		goto flush;
+		goto va_flush;
 	if (vsnprintf(printbuf, sizeof(printbuf), newfmt, ap) == -1)
-		goto flush;
+		goto va_flush;
 	va_end(ap);
 
 	if (fmt[0] == '\n')
 		goto flush;
+
+	return;
+
+ va_flush:
+	va_end(ap);
+ flush:
+	hostapd_log(HOSTAPD_LOG, "%s", printbuf);
+	bzero(printbuf, sizeof(printbuf));
 }
 
 void
