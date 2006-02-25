@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1030 2006/02/24 04:19:09 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1031 2006/02/25 17:22:52 damien Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5463,12 +5463,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PRO/Wireless 2225BG",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_3945ABG_1,
+	    "PRO/Wireless 3945ABG",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2915ABG_1,
 	    "PRO/Wireless 2915ABG",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2915ABG_2,
 	    "PRO/Wireless 2915ABG",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_3945ABG_2,
+	    "PRO/Wireless 3945ABG",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RD,
