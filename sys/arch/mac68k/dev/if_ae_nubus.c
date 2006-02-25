@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae_nubus.c,v 1.15 2006/01/05 20:27:14 miod Exp $	*/
+/*	$OpenBSD: if_ae_nubus.c,v 1.16 2006/02/25 15:07:55 martin Exp $	*/
 /*	$NetBSD: if_ae_nubus.c,v 1.17 1997/05/01 18:17:16 briggs Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ ae_nubus_match(parent, vcf, aux)
 {
 	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
 	bus_space_handle_t bsh;
-	int rv;
+	int rv = 0;
 
 	if (bus_space_map(na->na_tag, NUBUS_SLOT2PA(na->slot), NBMEMSIZE,
 	    0, &bsh))
