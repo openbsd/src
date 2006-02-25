@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.48 2005/12/13 06:01:27 kjell Exp $	*/
+/*	$OpenBSD: main.c,v 1.49 2006/02/25 14:40:16 otto Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -140,7 +140,7 @@ notnum:
 			eerase();
 #endif	/* !NO_DPROMPT */
 		if (winch_flag) {
-			redraw(0, 0);
+			do_redraw(0, 0, TRUE);
 			winch_flag = 0;
 		}
 		update();

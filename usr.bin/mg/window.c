@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.20 2005/12/13 06:01:27 kjell Exp $	*/
+/*	$OpenBSD: window.c,v 1.21 2006/02/25 14:40:16 otto Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -59,13 +59,22 @@ reposition(int f, int n)
  * changed size, arrange that everything is redone, then call "update" to
  * fix the display.  We do this so the new size can be displayed.  In the
  * normal case the call to "update" in "main.c" refreshes the screen, and
- * all of the windows need not be recomputed.  Note that when you get to the
- * "display unusable" message, the screen will be messed up. If you make the
- * window bigger again, and send another command, everything will get fixed!
+ * all of the windows need not be recomputed. This call includes a
+ * 'force' parameter to ensure that the redraw is done, even after a
+ * a suspend/continue (where the window size parameters will already
+ * be updated). Note that when you get to the "display unusable"
+ * message, the screen will be messed up. If you make the window bigger
+ * again, and send another command, everything will get fixed!
  */
-/* ARGSUSED */
 int
 redraw(int f, int n)
+{
+	return (do_redraw(f, n, FALSE));
+}
+
+/* ARGSUSED */
+int
+do_redraw(int f, int n, int force)
 {
 	struct mgwin	*wp;
 	int		 oldnrow, oldncol;
@@ -73,7 +82,7 @@ redraw(int f, int n)
 	oldnrow = nrow;
 	oldncol = ncol;
 	ttresize();
-	if (nrow != oldnrow || ncol != oldncol) {
+	if (nrow != oldnrow || ncol != oldncol || force) {
 
 		/* find last */
 		wp = wheadp;
