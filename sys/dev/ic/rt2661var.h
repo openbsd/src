@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661var.h,v 1.3 2006/01/14 12:43:27 damien Exp $	*/
+/*	$OpenBSD: rt2661var.h,v 1.4 2006/02/25 12:56:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -109,6 +109,7 @@ struct rt2661_softc {
 	int				sc_id;
 	int				sc_flags;
 #define RT2661_ENABLED	(1 << 0)
+#define RT2661_FWLOADED	(1 << 1)
 
 	int				sc_tx_timer;
 

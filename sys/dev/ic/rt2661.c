@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.10 2006/02/18 09:41:41 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.11 2006/02/25 12:56:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1968,8 +1968,7 @@ rt2661_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
-			ifp->if_flags &= ~IFF_UP;
-			rt2661_stop(ifp, 1);
+			rt2661_init(ifp);
 			ifp->if_oerrors++;
 			return;
 		}
@@ -2550,34 +2549,37 @@ rt2661_init(struct ifnet *ifp)
 
 	rt2661_stop(ifp, 0);
 
-	switch (sc->sc_id) {
-	case PCI_PRODUCT_RALINK_RT2561:
-		name = "ral-rt2561";
-		break;
-	case PCI_PRODUCT_RALINK_RT2561S:
-		name = "ral-rt2561s";
-		break;
-	case PCI_PRODUCT_RALINK_RT2661:
-		name = "ral-rt2661";
-		break;
-	}
+	if (!(sc->sc_flags & RT2661_FWLOADED)) {
+		switch (sc->sc_id) {
+		case PCI_PRODUCT_RALINK_RT2561:
+			name = "ral-rt2561";
+			break;
+		case PCI_PRODUCT_RALINK_RT2561S:
+			name = "ral-rt2561s";
+			break;
+		case PCI_PRODUCT_RALINK_RT2661:
+			name = "ral-rt2661";
+			break;
+		}
 
-	if (loadfirmware(name, &ucode, &size) != 0) {
-		printf("%s: could not read microcode %s\n",
-		    sc->sc_dev.dv_xname, name);
-		rt2661_stop(ifp, 1);
-		return EIO;
-	}
+		if (loadfirmware(name, &ucode, &size) != 0) {
+			printf("%s: could not read microcode %s\n",
+			    sc->sc_dev.dv_xname, name);
+			rt2661_stop(ifp, 1);
+			return EIO;
+		}
 
-	if (rt2661_load_microcode(sc, ucode, size) != 0) {
-		printf("%s: could not load 8051 microcode\n",
-		    sc->sc_dev.dv_xname);
+		if (rt2661_load_microcode(sc, ucode, size) != 0) {
+			printf("%s: could not load 8051 microcode\n",
+			    sc->sc_dev.dv_xname);
+			free(ucode, M_DEVBUF);
+			rt2661_stop(ifp, 1);
+			return EIO;
+		}
+
 		free(ucode, M_DEVBUF);
-		rt2661_stop(ifp, 1);
-		return EIO;
+		sc->sc_flags |= RT2661_FWLOADED;
 	}
-
-	free(ucode, M_DEVBUF);
 
 	/* initialize Tx rings */
 	RAL_WRITE(sc, RT2661_AC1_BASE_CSR, sc->txq[1].physaddr);
@@ -2702,11 +2704,11 @@ rt2661_stop(struct ifnet *ifp, int disable)
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint32_t tmp;
 
-	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);	/* free all nodes */
-
 	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);	/* free all nodes */
 
 	/* abort Tx (for all 5 Tx rings) */
 	RAL_WRITE(sc, RT2661_TX_CNTL_CSR, 0x1f << 16);
@@ -2735,7 +2737,7 @@ rt2661_stop(struct ifnet *ifp, int disable)
 	if (disable && sc->sc_disable != NULL) {
 		if (sc->sc_flags & RT2661_ENABLED) {
 			(*sc->sc_disable)(sc);
-			sc->sc_flags &= ~RT2661_ENABLED;
+			sc->sc_flags &= ~(RT2661_ENABLED | RT2661_FWLOADED);
 		}
 	}
 }
