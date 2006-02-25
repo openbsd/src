@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.63 2006/02/05 11:06:01 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.64 2006/02/25 15:53:15 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -601,6 +601,23 @@ set localpref 300
 See also the
 .Sx ATTRIBUTE SET
 section.
+.Pp
+.It Xo
+.Ic softreconfig
+.Pq Ic in Ns \&| Ns Ic out
+.Pq Ic yes Ns \&| Ns Ic no
+.Xc
+Turn soft reconfiguration on or off for the specified direction.
+If soft reconfiguration is turned on, filter changes will be applied on
+configuration reloads.
+If turned off, a BGP session needs to be cleared to apply the filter changes.
+Enabling
+.Ic softreconfig in
+will raise the memory requirements of
+.Xr bgpd 8
+because the unmodified
+.Em AS path attributes
+need to be stored as well.
 .Pp
 .It Ic tcp md5sig password Ar secret
 .It Ic tcp md5sig key Ar secret
