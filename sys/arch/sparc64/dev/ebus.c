@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.12 2003/06/12 05:57:43 henric Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.13 2006/02/25 17:48:39 kettenis Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -282,7 +282,7 @@ ebus_print(void *aux, const char *p)
 	int i;
 
 	if (p)
-		printf("%s at %s", ea->ea_name, p);
+		printf("\"%s\" at %s", ea->ea_name, p);
 	for (i = 0; i < ea->ea_nregs; i++)
 		printf("%s %x-%x", i == 0 ? " addr" : ",",
 		    ea->ea_regs[i].lo,
