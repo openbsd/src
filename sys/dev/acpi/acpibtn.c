@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.8 2006/02/22 19:30:45 jordan Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.9 2006/02/25 21:44:45 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -109,9 +109,10 @@ acpibtn_getsta(struct acpibtn_softc *sc)
 	memset(&env, 0, sizeof(env));
 
 	ctx = NULL;
-	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_STA", &res, &env))
+	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_STA", &res, &env)) {
 		dnprintf(20, "%s: no _STA\n", DEVNAME(sc));
 		/* XXX not all buttons have _STA so FALLTROUGH */
+	}
 
 	return (0);
 }
@@ -135,7 +136,8 @@ acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 		/* NOTREACHED */
 		break;
 	default:
-		printf("%s: spurious acpi interrupt\n", DEVNAME(sc));
+		printf("%s: spurious acpi button interrupt %i\n", DEVNAME(sc),
+		    sc->sc_btn_type);
 		break;
 	}
 
