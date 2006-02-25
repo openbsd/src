@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.13 2003/06/18 17:33:33 miod Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.14 2006/02/25 23:41:39 kettenis Exp $	*/
 /*	$NetBSD: sbus.c,v 1.17 1997/06/01 22:10:39 pk Exp $ */
 
 /*
@@ -90,7 +90,7 @@ sbus_print(args, sbus)
 	static char *sl = "slave-only";
 
 	if (sbus != NULL) {
-		printf("%s at %s", ca->ca_ra.ra_name, sbus);
+		printf("\"%s\" at %s", ca->ca_ra.ra_name, sbus);
 		class = getpropstring(ca->ca_ra.ra_node, "device_type");
 		if (*class != '\0')
 			printf(" class %s", class);
