@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.69 2006/02/25 17:58:01 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.70 2006/02/25 21:38:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -638,6 +638,11 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 #ifdef I2C_DEBUG
 	iic_dump(self, addr, name);
 #endif /* I2C_DEBUG */
+
+#if !defined(I2C_VERBOSE) && !defined(I2C_DEBUG)
+	if (name == NULL)
+		name = "unknown";
+#endif
 
 	if (name) {
 		memset(&ia, 0, sizeof(ia));
