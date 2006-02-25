@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.12 2006/02/25 13:02:10 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.13 2006/02/25 13:08:39 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -147,9 +147,11 @@ int		rt2661_init(struct ifnet *);
 void		rt2661_stop(struct ifnet *, int);
 int		rt2661_load_microcode(struct rt2661_softc *, const uint8_t *,
 		    int);
+#ifdef notyet
 void		rt2661_rx_tune(struct rt2661_softc *);
 void		rt2661_radar_start(struct rt2661_softc *);
 int		rt2661_radar_stop(struct rt2661_softc *);
+#endif
 int		rt2661_prepare_beacon(struct rt2661_softc *);
 void		rt2661_enable_tsf_sync(struct rt2661_softc *);
 int		rt2661_get_rssi(struct rt2661_softc *, uint8_t);
@@ -2775,6 +2777,7 @@ rt2661_load_microcode(struct rt2661_softc *sc, const uint8_t *ucode, int size)
 	return 0;
 }
 
+#ifdef notyet
 /*
  * Dynamically tune Rx sensitivity (BBP register 17) based on average RSSI and
  * false CCA count.  This function is called periodically (every seconds) when
@@ -2839,7 +2842,7 @@ rt2661_rx_tune(struct rt2661_softc *sc)
 
 /*
  * Enter/Leave radar detection mode.
- * This is for 802.11d additional regulatory domains.
+ * This is for 802.11h additional regulatory domains.
  */
 void
 rt2661_radar_start(struct rt2661_softc *sc)
@@ -2891,6 +2894,7 @@ rt2661_radar_stop(struct rt2661_softc *sc)
 
 	return bbp66 == 1;
 }
+#endif
 
 int
 rt2661_prepare_beacon(struct rt2661_softc *sc)
