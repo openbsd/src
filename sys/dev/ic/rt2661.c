@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.11 2006/02/25 12:56:47 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.12 2006/02/25 13:02:10 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1706,9 +1706,8 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 		rate = rs->rs_rates[ni->ni_txrate];
 	}
 	rate &= IEEE80211_RATE_VAL;
-
-	/* assert tx rate is non-null so we don't end up dividing by zero */
-	KASSERT(rate != 0);
+	if (rate == 0)
+		rate = 2;	/* fallback to 1Mbps; should not happen */
 
 	if (ic->ic_flags & IEEE80211_F_WEPON) {
 		m0 = ieee80211_wep_crypt(ifp, m0, 1);
