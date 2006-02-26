@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcn.4,v 1.5 2006/02/06 07:53:50 brad Exp $
+.\"	$OpenBSD: pcn.4,v 1.6 2006/02/26 13:56:35 martin Exp $
 .\"	$NetBSD: pcn.4,v 1.3 2001/09/11 22:52:53 wiz Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
@@ -43,6 +43,7 @@
 .Sh SYNOPSIS
 .Cd "pcn* at pci?"
 .Cd "lxtphy* at mii?"
+.Cd "nsphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -84,6 +85,7 @@ by VMware.
 .Xr lxtphy 4 ,
 .Xr mii 4 ,
 .Xr netintro 4 ,
+.Xr nsphy 4 ,
 .Xr pci 4 ,
 .Xr ifconfig 8
 .Sh HISTORY
