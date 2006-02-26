@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.h,v 1.2 2005/12/10 19:19:40 brad Exp $ */
+/* $OpenBSD: if_ixgb.h,v 1.3 2006/02/26 01:27:16 brad Exp $ */
 
 #ifndef _IXGB_H_DEFINED_
 #define _IXGB_H_DEFINED_
@@ -89,7 +89,7 @@ POSSIBILITY OF SUCH DAMAGE.
  * value allows the driver to queue more transmits. Each descriptor is 16
  * bytes.
  */
-#define IXGB_MAX_TXD                      256
+#define IXGB_MAX_TXD                      1024
 
 /*
  * RxDescriptors Valid Range: 64-512 Default Value: 512 This value is the
@@ -124,12 +124,6 @@ POSSIBILITY OF SUCH DAMAGE.
  * 
  */
 #define RDTR 72
-
-/*
- * This parameter controls the maximum no of times the driver will loop in
- * the isr. Minimum Value = 1
- */
-#define IXGB_MAX_INTR                     3
 
 /*
  * This parameter controls the duration of transmit watchdog timer.
@@ -191,7 +185,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #define IOCTL_CMD_TYPE                  u_long
 #define MAX_NUM_MULTICAST_ADDRESSES     128
 #define PCI_ANY_ID                      (~0U)
-#define ETHER_ALIGN                     2
 
 /* Defines for printing debug information */
 #define DEBUG_INIT  0
@@ -324,8 +317,6 @@ struct ixgb_softc {
 	unsigned long   no_tx_map_avail;
 	unsigned long   no_tx_dma_setup;
 	unsigned long	watchdog_events;
-
-	boolean_t       in_detach;
 
 	struct ixgb_hw_stats stats;
 };

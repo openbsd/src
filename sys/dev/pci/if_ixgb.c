@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.8 2006/02/10 09:12:26 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.9 2006/02/26 01:27:16 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -240,6 +240,7 @@ ixgb_attach(struct device *parent, struct device *self, void *aux)
 	/* Initialize statistics */
 	ixgb_clear_hw_cntrs(&sc->hw);
 	ixgb_update_stats_counters(sc);
+	ixgb_update_link_status(sc);
 
 	printf(", address %s\n", ether_sprintf(sc->interface_data.ac_enaddr));
 
@@ -348,9 +349,6 @@ ixgb_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	struct ixgb_softc *sc = ifp->if_softc;
 
 	s = splnet();
-
-	if (sc->in_detach)
-		return (error);
 
 	if ((error = ether_ioctl(ifp, &sc->interface_data, command, data)) > 0) {
 		splx(s);
@@ -611,8 +609,10 @@ ixgb_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_status = IFM_AVALID;
 	ifmr->ifm_active = IFM_ETHER;
 
-	if (!sc->hw.link_up)
+	if (!sc->hw.link_up) {
+		ifmr->ifm_active |= IFM_NONE;
 		return;
+	}
 
 	ifmr->ifm_status |= IFM_ACTIVE;
 	ifmr->ifm_active |= IFM_1000_SX | IFM_FDX;
@@ -846,20 +846,20 @@ ixgb_update_link_status(struct ixgb_softc *sc)
 
 	if (sc->hw.link_up) {
 		if (!sc->link_active) {
+			ifp->if_baudrate = 1000000000;
 			sc->link_active = 1;
 			ifp->if_link_state = LINK_STATE_UP;
 			if_link_state_change(ifp);
 		}
 	} else {
 		if (sc->link_active) {
+			ifp->if_baudrate = 0;
 			sc->link_active = 0;
 			ifp->if_link_state = LINK_STATE_DOWN;
 			if_link_state_change(ifp);
 		}
 	}
 }
-
-
 
 /*********************************************************************
  *
@@ -1035,7 +1035,6 @@ ixgb_setup_interface(struct ixgb_softc *sc)
 	ifp = &sc->interface_data.ac_if;
 	strlcpy(ifp->if_xname, sc->sc_dv.dv_xname, IFNAMSIZ);
 
-	ifp->if_baudrate = 1000000000;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = ixgb_ioctl;
