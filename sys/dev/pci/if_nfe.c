@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.50 2006/02/26 15:58:27 krw Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.51 2006/02/26 19:25:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -356,9 +356,6 @@ int
 nfe_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct nfe_softc *sc = (struct nfe_softc *)dev;
-#ifdef NFE_DEBUG
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-#endif	
 	uint32_t val;
 	int ntries;
 
@@ -377,12 +374,14 @@ nfe_miibus_readreg(struct device *dev, int phy, int reg)
 			break;
 	}
 	if (ntries == 1000) {
-		DPRINTFN(2, ("%s: timeout waiting for PHY\n", ifp->if_xname));
+		DPRINTFN(2, ("%s: timeout waiting for PHY\n",
+		    sc->sc_dev.dv_xname));
 		return 0;
 	}
 
 	if (NFE_READ(sc, NFE_PHY_STATUS) & NFE_PHY_ERROR) {
-		DPRINTFN(2, ("%s: could not read PHY\n", ifp->if_xname));
+		DPRINTFN(2, ("%s: could not read PHY\n",
+		    sc->sc_dev.dv_xname));
 		return 0;
 	}
 
@@ -390,8 +389,8 @@ nfe_miibus_readreg(struct device *dev, int phy, int reg)
 	if (val != 0xffffffff && val != 0)
 		sc->mii_phyaddr = phy;
 
-	DPRINTFN(2, ("%s: mii read phy %d reg 0x%x ret 0x%x\n", ifp->if_xname,
-	    phy, reg, val));
+	DPRINTFN(2, ("%s: mii read phy %d reg 0x%x ret 0x%x\n",
+	    sc->sc_dev.dv_xname, phy, reg, val));
 
 	return val;
 }
@@ -441,7 +440,7 @@ nfe_intr(void *arg)
 	if (r & NFE_IRQ_LINK) {
 		NFE_READ(sc, NFE_PHY_STATUS);
 		NFE_WRITE(sc, NFE_PHY_STATUS, 0xf);
-		DPRINTF(("%s: link state changed\n", ifp->if_xname));
+		DPRINTF(("%s: link state changed\n", sc->sc_dev.dv_xname));
 	}
 
 	if (ifp->if_flags & IFF_RUNNING) {
@@ -817,8 +816,8 @@ nfe_txeof(struct nfe_softc *sc)
 				goto skip;
 
 			if ((flags & NFE_TX_ERROR_V1) != 0) {
-				printf("%s: tx error 0x%04x\n", ifp->if_xname,
-				    flags);
+				printf("%s: tx v1 error 0x%04x\n",
+				    sc->sc_dev.dv_xname, flags);
 				ifp->if_oerrors++;
 			} else
 				ifp->if_opackets++;
@@ -827,16 +826,16 @@ nfe_txeof(struct nfe_softc *sc)
 				goto skip;
 
 			if ((flags & NFE_TX_ERROR_V2) != 0) {
-				printf("%s: tx error 0x%04x\n", ifp->if_xname,
-				    flags);
+				printf("%s: tx v2 error 0x%04x\n",
+				    sc->sc_dev.dv_xname, flags);
 				ifp->if_oerrors++;
 			} else
 				ifp->if_opackets++;
 		}
 
 		if (data->m == NULL) {	/* should not get there */
-			DPRINTF(("%s: last fragment bit w/o associated mbuf!\n",
-			    ifp->if_xname));
+			printf("%s: last fragment bit w/o associated mbuf!\n",
+			    sc->sc_dev.dv_xname);
 			goto skip;
 		}
 
@@ -888,7 +887,7 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 
 #if NVLAN > 0
 	/* setup h/w VLAN tagging */
-	if ((m0->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
+	if ((m0->m_flags & (M_PROTO1 | M_PKTHDR)) == (M_PROTO1 | M_PKTHDR) &&
 	    m0->m_pkthdr.rcvif != NULL) {
 		struct ifvlan *ifv = m0->m_pkthdr.rcvif->if_softc;
 		vtag = NFE_TX_VTAG | htons(ifv->ifv_tag);
