@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.6 2006/02/26 02:26:05 marco Exp $ */
+/* $OpenBSD: acpidev.h,v 1.7 2006/02/26 17:05:33 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -215,6 +215,47 @@ struct acpicpu_pss {
 	u_int32_t	pss_bus_latency;
 	u_int32_t	pss_ctrl;
 	u_int32_t	pss_status;
+};
+
+/*
+ * XXX this is returned in a buffer and is not a "natural" type.
+ *
+ * GRD (Generic Register Descriptor )
+ *
+ */
+struct acpi_grd {
+	u_int8_t	grd_descriptor;
+	u_int16_t	grd_length;
+	u_int8_t	grd_access_type;
+#define GRD_SYS_MEM		0x00
+#define GRD_SYS_IO		0x01
+#define GRD_SYS_PCICONFIG	0x02
+#define GRD_SYS_EMBEDCTRL	0x03
+#define GRD_SYS_SMBUS		0x04
+#define GRD_SYS_FIXEDHW		0x7f
+	u_int8_t	grd_reg_width;
+	u_int8_t	grd_reg_bit_offset;
+	u_int8_t	grd_address_size;
+#define GRD_ADDR_UNDEFINED	0x00
+#define GRD_ADDR_BYTE		0x01
+#define GRD_ADDR_WORD		0x02
+#define GRD_ADDR_DWORD		0x03
+#define GRD_ADDR_QWORD		0x04
+	u_int64_t	grd_address;
+} __packed;
+
+/*
+ * _PCT (Performance Control )
+ * Arguments: none
+ * Results  : package _PCT (Performance Control)
+ * Package {
+ *	Perf_Ctrl_register	//Register
+ *	Perf_Status_register	//Register
+ * }
+ */
+struct acpicpu_pct {
+	struct acpi_grd	pct_ctrl;
+	struct acpi_grd	pct_status;
 };
 
 #endif /* __DEV_ACPI_ACPIDEV_H__ */
