@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.13 2006/01/23 16:49:48 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.14 2006/02/26 10:07:50 xsa Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.13 2006/01/23 16:49:48 xsa Exp $";
+    "$OpenBSD: diff3.c,v 1.14 2006/02/26 10:07:50 xsa Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -234,8 +234,8 @@ cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)
 	data = cvs_buf_release(b1);
 	diffb = b1 = NULL;
 
-	cvs_printf("Merging changes between '%s' and '%s' ", r1, r2);
-	cvs_printf("into '%s'\n", workfile);
+	cvs_printf("Merging differences between %s and %s into %s\n",
+	    r1, r2, workfile);
 
 	if ((diffb = cvs_patchfile(data, patch, ed_patch_lines)) == NULL)
 		goto out;
@@ -438,8 +438,10 @@ readin(char *name, struct diff **dd)
 		(*dd)[i].new.to = d;
 	}
 
-	(*dd)[i].old.from = (*dd)[i-1].old.to;
-	(*dd)[i].new.from = (*dd)[i-1].new.to;
+	if (i) {
+		(*dd)[i].old.from = (*dd)[i-1].old.to;
+		(*dd)[i].new.from = (*dd)[i-1].new.to;
+	}
 	(void)fclose(fp[0]);
 
 	return (i);
