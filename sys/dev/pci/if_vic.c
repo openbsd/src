@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.3 2006/02/26 02:21:31 brad Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.4 2006/02/26 04:30:08 brad Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -112,11 +112,12 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
+	bus_size_t size;
 	struct ifnet *ifp;
 
-	/* Enable memory mapping */
+	/* Enable I/O mapping */
 	if (pci_mapreg_map(pa, VIC_BAR0, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->sc_st, &sc->sc_sh, NULL, NULL, 0)) {
+	    &sc->sc_st, &sc->sc_sh, NULL, &size, 0)) {
 		printf(": I/O mapping of register space failed\n");
 		return;
 	}
@@ -124,7 +125,7 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 	/* Map and enable the interrupt line */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": interrupt mapping failed\n");
-		return;
+		goto fail_1;
 	}
 
 	intrstr = pci_intr_string(pc, ih);
@@ -136,7 +137,7 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		return;
+		goto fail_1;
 	}
 
 	printf(": %s\n", intrstr);
@@ -155,7 +156,7 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 	    VIC_MAGIC > sc->sc_ver_major ||
 	    VIC_MAGIC < sc->sc_ver_minor) {
 		printf("unsupported device\n");
-		return;
+		goto fail_2;
 	}
 
 	VIC_WRITE(VIC_CMD, VIC_CMD_NUM_Rx_BUF);
@@ -214,7 +215,7 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 	/* Allocate Rx and Tx queues */
 	if (vic_alloc_data(sc) != 0) {
 		printf(": could not allocate queues\n", ifp->if_xname);
-		return;
+		goto fail_2;
 	}
 
 	printf(", address: %s\n", ether_sprintf(sc->sc_lladdr));
@@ -230,6 +231,13 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 
 	/* XXX poll */
 	timeout_set(&sc->sc_poll, vic_poll, sc);
+	return;
+
+fail_2:
+	pci_intr_disestablish(pc, sc->sc_ih);
+
+fail_1:
+	bus_space_unmap(sc->sc_st, sc->sc_sh, size);
 }
 
 void
