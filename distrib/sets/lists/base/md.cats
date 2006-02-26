@@ -1221,6 +1221,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_txpreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_vgereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_vgevar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_vicreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_vicvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_vrreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_wbreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/isesreg.ph

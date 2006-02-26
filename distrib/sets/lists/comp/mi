@@ -537,6 +537,8 @@
 ./usr/include/dev/pci/if_txpreg.h
 ./usr/include/dev/pci/if_vgereg.h
 ./usr/include/dev/pci/if_vgevar.h
+./usr/include/dev/pci/if_vicreg.h
+./usr/include/dev/pci/if_vicvar.h
 ./usr/include/dev/pci/if_vrreg.h
 ./usr/include/dev/pci/if_wbreg.h
 ./usr/include/dev/pci/isesreg.h
