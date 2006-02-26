@@ -1,4 +1,4 @@
-/* $OpenBSD: db_disasm.c,v 1.17 2003/05/10 21:11:11 deraadt Exp $ */
+/* $OpenBSD: db_disasm.c,v 1.18 2006/02/26 22:26:16 miod Exp $ */
 /* $NetBSD: db_disasm.c,v 1.8 2000/05/25 19:57:30 jhawk Exp $ */
 
 /* 
@@ -192,7 +192,7 @@ static const char *
 pal_opname(op)
 	int op;
 {
-	static char unk[8];
+	static char unk[11];
 	int i;
 
 	for (i = 0; pal_op_tbl[i].name != NULL; i++) {
