@@ -416,9 +416,10 @@ i386obsd_trapframe_sniffer (const struct frame_unwind *self,
     return 0;
 
   find_pc_partial_function (frame_pc_unwind (next_frame), &name, NULL, NULL);
-  return (name && ((strcmp (name, "calltrap") == 0)
-		   || (strcmp (name, "syscall1") == 0)
-		   || (strncmp (name, "Xintr", 5) == 0)));
+  return (name && (strcmp (name, "calltrap") == 0
+		   || strcmp (name, "syscall1") == 0
+		   || strncmp (name, "Xintr", 5) == 0
+		   || strncmp (name, "Xsoft", 5) == 0));
 }
 
 static const struct frame_unwind i386obsd_trapframe_unwind = {
