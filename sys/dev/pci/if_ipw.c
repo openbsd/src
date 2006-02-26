@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_ipw.c,v 1.54 2006/01/10 17:50:28 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.55 2006/02/26 19:14:39 damien Exp $	*/
 
 /*-
- * Copyright (c) 2004, 2005
+ * Copyright (c) 2004-2006
  *      Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -77,61 +77,68 @@
 static const struct ieee80211_rateset ipw_rateset_11b =
 	{ 4, { 2, 4, 11, 22 } };
 
-int ipw_match(struct device *, void *, void *);
-void ipw_attach(struct device *, struct device *, void *);
-int ipw_detach(struct device *, int);
-void ipw_power(int, void *);
-int ipw_dma_alloc(struct ipw_softc *);
-void ipw_release(struct ipw_softc *);
-int ipw_media_change(struct ifnet *);
-void ipw_media_status(struct ifnet *, struct ifmediareq *);
-int ipw_newstate(struct ieee80211com *, enum ieee80211_state, int);
-u_int16_t ipw_read_prom_word(struct ipw_softc *, u_int8_t);
-void ipw_command_intr(struct ipw_softc *, struct ipw_soft_buf *);
-void ipw_newstate_intr(struct ipw_softc *, struct ipw_soft_buf *);
-void ipw_data_intr(struct ipw_softc *, struct ipw_status *,
-    struct ipw_soft_bd *, struct ipw_soft_buf *);
-void ipw_notification_intr(struct ipw_softc *, struct ipw_soft_buf *);
-void ipw_rx_intr(struct ipw_softc *);
-void ipw_release_sbd(struct ipw_softc *, struct ipw_soft_bd *);
-void ipw_tx_intr(struct ipw_softc *);
-int ipw_intr(void *);
-int ipw_cmd(struct ipw_softc *, u_int32_t, void *, u_int32_t);
-int ipw_tx_start(struct ifnet *, struct mbuf *, struct ieee80211_node *);
-void ipw_start(struct ifnet *);
-void ipw_watchdog(struct ifnet *);
-int ipw_get_table1(struct ipw_softc *, u_int32_t *);
-int ipw_get_radio(struct ipw_softc *, int *);
-int ipw_ioctl(struct ifnet *, u_long, caddr_t);
-u_int32_t ipw_read_table1(struct ipw_softc *, u_int32_t);
-void ipw_write_table1(struct ipw_softc *, u_int32_t, u_int32_t);
-int ipw_read_table2(struct ipw_softc *, u_int32_t, void *, u_int32_t *);
-void ipw_stop_master(struct ipw_softc *);
-int ipw_reset(struct ipw_softc *);
-int ipw_load_ucode(struct ipw_softc *, u_char *, int);
-int ipw_load_firmware(struct ipw_softc *, u_char *, int);
-int ipw_read_firmware(struct ipw_softc *, struct ipw_firmware *);
-int ipw_config(struct ipw_softc *);
-int ipw_init(struct ifnet *);
-void ipw_stop(struct ifnet *, int);
-void ipw_read_mem_1(struct ipw_softc *, bus_size_t, u_int8_t *, bus_size_t);
-void ipw_write_mem_1(struct ipw_softc *, bus_size_t, u_int8_t *, bus_size_t);
+int		ipw_match(struct device *, void *, void *);
+void		ipw_attach(struct device *, struct device *, void *);
+int		ipw_detach(struct device *, int);
+void		ipw_power(int, void *);
+int		ipw_dma_alloc(struct ipw_softc *);
+void		ipw_release(struct ipw_softc *);
+int		ipw_media_change(struct ifnet *);
+void		ipw_media_status(struct ifnet *, struct ifmediareq *);
+int		ipw_newstate(struct ieee80211com *, enum ieee80211_state, int);
+uint16_t	ipw_read_prom_word(struct ipw_softc *, uint8_t);
+void		ipw_command_intr(struct ipw_softc *, struct ipw_soft_buf *);
+void		ipw_newstate_intr(struct ipw_softc *, struct ipw_soft_buf *);
+void		ipw_data_intr(struct ipw_softc *, struct ipw_status *,
+		    struct ipw_soft_bd *, struct ipw_soft_buf *);
+void		ipw_notification_intr(struct ipw_softc *,
+		    struct ipw_soft_buf *);
+void		ipw_rx_intr(struct ipw_softc *);
+void		ipw_release_sbd(struct ipw_softc *, struct ipw_soft_bd *);
+void		ipw_tx_intr(struct ipw_softc *);
+int		ipw_intr(void *);
+int		ipw_cmd(struct ipw_softc *, uint32_t, void *, uint32_t);
+int		ipw_tx_start(struct ifnet *, struct mbuf *,
+		    struct ieee80211_node *);
+void		ipw_start(struct ifnet *);
+void		ipw_watchdog(struct ifnet *);
+int		ipw_get_table1(struct ipw_softc *, uint32_t *);
+int		ipw_get_radio(struct ipw_softc *, int *);
+int		ipw_ioctl(struct ifnet *, u_long, caddr_t);
+uint32_t	ipw_read_table1(struct ipw_softc *, uint32_t);
+void		ipw_write_table1(struct ipw_softc *, uint32_t, uint32_t);
+int		ipw_read_table2(struct ipw_softc *, uint32_t, void *,
+		    uint32_t *);
+void		ipw_stop_master(struct ipw_softc *);
+int		ipw_reset(struct ipw_softc *);
+int		ipw_load_ucode(struct ipw_softc *, u_char *, int);
+int		ipw_load_firmware(struct ipw_softc *, u_char *, int);
+int		ipw_read_firmware(struct ipw_softc *, struct ipw_firmware *);
+int		ipw_config(struct ipw_softc *);
+int		ipw_init(struct ifnet *);
+void		ipw_stop(struct ifnet *, int);
+void		ipw_read_mem_1(struct ipw_softc *, bus_size_t, uint8_t *,
+		    bus_size_t);
+void		ipw_write_mem_1(struct ipw_softc *, bus_size_t, uint8_t *,
+		    bus_size_t);
 
-static __inline u_int8_t MEM_READ_1(struct ipw_softc *sc, u_int32_t addr)
+static __inline uint8_t
+MEM_READ_1(struct ipw_softc *sc, uint32_t addr)
 {
 	CSR_WRITE_4(sc, IPW_CSR_INDIRECT_ADDR, addr);
 	return CSR_READ_1(sc, IPW_CSR_INDIRECT_DATA);
 }
 
-static __inline u_int32_t MEM_READ_4(struct ipw_softc *sc, u_int32_t addr)
+static __inline uint32_t
+MEM_READ_4(struct ipw_softc *sc, uint32_t addr)
 {
 	CSR_WRITE_4(sc, IPW_CSR_INDIRECT_ADDR, addr);
 	return CSR_READ_4(sc, IPW_CSR_INDIRECT_DATA);
 }
 
 #ifdef IPW_DEBUG
-#define DPRINTF(x)	if (ipw_debug > 0) printf x
-#define DPRINTFN(n, x)	if (ipw_debug >= (n)) printf x
+#define DPRINTF(x)	do { if (ipw_debug > 0) printf x; } while (0)
+#define DPRINTFN(n, x)	do { if (ipw_debug >= (n)) printf x; } while (0)
 int ipw_debug = 0;
 #else
 #define DPRINTF(x)
@@ -170,7 +177,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	bus_addr_t base;
 	pci_intr_handle_t ih;
 	pcireg_t data;
-	u_int16_t val;
+	uint16_t val;
 	int error, i;
 
 	sc->sc_pct = pa->pa_pc;
@@ -348,7 +355,7 @@ ipw_dma_alloc(struct ipw_softc *sc)
 	int i, nsegs, error;
 
 	/*
-	 * Allocate and map tx ring
+	 * Allocate and map tx ring.
 	 */
 	error = bus_dmamap_create(sc->sc_dmat, IPW_TBD_SZ, 1, IPW_TBD_SZ, 0,
 	    BUS_DMA_NOWAIT, &sc->tbd_map);
@@ -383,7 +390,7 @@ ipw_dma_alloc(struct ipw_softc *sc)
 	}
 
 	/*
-	 * Allocate and map rx ring
+	 * Allocate and map rx ring.
 	 */
 	error = bus_dmamap_create(sc->sc_dmat, IPW_RBD_SZ, 1, IPW_RBD_SZ, 0,
 	    BUS_DMA_NOWAIT, &sc->rbd_map);
@@ -418,7 +425,7 @@ ipw_dma_alloc(struct ipw_softc *sc)
 	}
 
 	/*
-	 * Allocate and map status ring
+	 * Allocate and map status ring.
 	 */
 	error = bus_dmamap_create(sc->sc_dmat, IPW_STATUS_SZ, 1, IPW_STATUS_SZ,
 	    0, BUS_DMA_NOWAIT, &sc->status_map);
@@ -453,7 +460,7 @@ ipw_dma_alloc(struct ipw_softc *sc)
 	}
 
 	/*
-	 * Allocate command DMA map
+	 * Allocate command DMA map.
 	 */
 	error = bus_dmamap_create(sc->sc_dmat, sizeof (struct ipw_cmd), 1,
 	    sizeof (struct ipw_cmd), 0, BUS_DMA_NOWAIT, &sc->cmd_map);
@@ -464,7 +471,7 @@ ipw_dma_alloc(struct ipw_softc *sc)
 	}
 
 	/*
-	 * Allocate headers DMA maps
+	 * Allocate headers DMA maps.
 	 */
 	SLIST_INIT(&sc->free_shdr);
 	for (i = 0; i < IPW_NDATA; i++) {
@@ -480,7 +487,7 @@ ipw_dma_alloc(struct ipw_softc *sc)
 	}
 
 	/*
-	 * Allocate tx buffers DMA maps
+	 * Allocate tx buffers DMA maps.
 	 */
 	SLIST_INIT(&sc->free_sbuf);
 	for (i = 0; i < IPW_NDATA; i++) {
@@ -496,7 +503,7 @@ ipw_dma_alloc(struct ipw_softc *sc)
 	}
 
 	/*
-	 * Initialize tx ring
+	 * Initialize tx ring.
 	 */
 	for (i = 0; i < IPW_NTBD; i++) {
 		sbd = &sc->stbd_list[i];
@@ -505,7 +512,7 @@ ipw_dma_alloc(struct ipw_softc *sc)
 	}
 
 	/*
-	 * Pre-allocate rx buffers and DMA maps
+	 * Pre-allocate rx buffers and DMA maps.
 	 */
 	for (i = 0; i < IPW_NRBD; i++) {
 		sbd = &sc->srbd_list[i];
@@ -635,11 +642,11 @@ ipw_media_change(struct ifnet *ifp)
 void
 ipw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
+#define N(a)	(sizeof (a) / sizeof (a[0]))
 	struct ipw_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-#define N(a)	(sizeof (a) / sizeof (a[0]))
 	static const struct {
-		u_int32_t	val;
+		uint32_t	val;
 		int		rate;
 	} rates[] = {
 		{ IPW_RATE_DS1,   2 },
@@ -647,7 +654,7 @@ ipw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 		{ IPW_RATE_DS5,  11 },
 		{ IPW_RATE_DS11, 22 },
 	};
-	u_int32_t val;
+	uint32_t val;
 	int rate, i;
 
 	imr->ifm_status = IFM_AVALID;
@@ -690,12 +697,12 @@ ipw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ipw_softc *sc = ic->ic_softc;
 	struct ieee80211_node *ni;
-	u_int8_t macaddr[IEEE80211_ADDR_LEN];
-	u_int32_t len;
+	uint8_t macaddr[IEEE80211_ADDR_LEN];
+	uint32_t len;
 
 	switch (nstate) {
 	case IEEE80211_S_RUN:
-		DELAY(100); /* firmware needs a short delay here */
+		DELAY(100);	/* firmware needs a short delay here */
 
 		len = IEEE80211_ADDR_LEN;
 		ipw_read_table2(sc, IPW_INFO_CURRENT_BSSID, macaddr, &len);
@@ -723,30 +730,30 @@ ipw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
  * Read 16 bits at address 'addr' from the Microwire EEPROM.
  * DON'T PLAY WITH THIS CODE UNLESS YOU KNOW *EXACTLY* WHAT YOU'RE DOING!
  */
-u_int16_t
-ipw_read_prom_word(struct ipw_softc *sc, u_int8_t addr)
+uint16_t
+ipw_read_prom_word(struct ipw_softc *sc, uint8_t addr)
 {
-	u_int32_t tmp;
-	u_int16_t val;
+	uint32_t tmp;
+	uint16_t val;
 	int n;
 
-	/* Clock C once before the first command */
+	/* clock C once before the first command */
 	IPW_EEPROM_CTL(sc, 0);
 	IPW_EEPROM_CTL(sc, IPW_EEPROM_S);
 	IPW_EEPROM_CTL(sc, IPW_EEPROM_S | IPW_EEPROM_C);
 	IPW_EEPROM_CTL(sc, IPW_EEPROM_S);
 
-	/* Write start bit (1) */
+	/* write start bit (1) */
 	IPW_EEPROM_CTL(sc, IPW_EEPROM_S | IPW_EEPROM_D);
 	IPW_EEPROM_CTL(sc, IPW_EEPROM_S | IPW_EEPROM_D | IPW_EEPROM_C);
 
-	/* Write READ opcode (10) */
+	/* write READ opcode (10) */
 	IPW_EEPROM_CTL(sc, IPW_EEPROM_S | IPW_EEPROM_D);
 	IPW_EEPROM_CTL(sc, IPW_EEPROM_S | IPW_EEPROM_D | IPW_EEPROM_C);
 	IPW_EEPROM_CTL(sc, IPW_EEPROM_S);
 	IPW_EEPROM_CTL(sc, IPW_EEPROM_S | IPW_EEPROM_C);
 
-	/* Write address A7-A0 */
+	/* write address A7-A0 */
 	for (n = 7; n >= 0; n--) {
 		IPW_EEPROM_CTL(sc, IPW_EEPROM_S |
 		    (((addr >> n) & 1) << IPW_EEPROM_SHIFT_D));
@@ -756,7 +763,7 @@ ipw_read_prom_word(struct ipw_softc *sc, u_int8_t addr)
 
 	IPW_EEPROM_CTL(sc, IPW_EEPROM_S);
 
-	/* Read data Q15-Q0 */
+	/* read data Q15-Q0 */
 	val = 0;
 	for (n = 15; n >= 0; n--) {
 		IPW_EEPROM_CTL(sc, IPW_EEPROM_S | IPW_EEPROM_C);
@@ -767,7 +774,7 @@ ipw_read_prom_word(struct ipw_softc *sc, u_int8_t addr)
 
 	IPW_EEPROM_CTL(sc, 0);
 
-	/* Clear Chip Select and clock C */
+	/* clear Chip Select and clock C */
 	IPW_EEPROM_CTL(sc, IPW_EEPROM_S);
 	IPW_EEPROM_CTL(sc, 0);
 	IPW_EEPROM_CTL(sc, IPW_EEPROM_C);
@@ -796,12 +803,12 @@ void
 ipw_newstate_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	u_int32_t state;
+	uint32_t state;
 
 	bus_dmamap_sync(sc->sc_dmat, sbuf->map, 0, sizeof state,
 	    BUS_DMASYNC_POSTREAD);
 
-	state = letoh32(*mtod(sbuf->m, u_int32_t *));
+	state = letoh32(*mtod(sbuf->m, uint32_t *));
 
 	DPRINTFN(2, ("RX!NEWSTATE!%u\n", state));
 
@@ -889,7 +896,7 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 	sbuf->m = mnew;	
 	sbd->bd->physaddr = htole32(sbuf->map->dm_segs[0].ds_addr);
 
-	/* Finalize mbuf */
+	/* finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = m->m_len = letoh32(status->len);
 
@@ -916,7 +923,7 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 
 	ni = ieee80211_find_rxnode(ic, wh);
 
-	/* Send the frame to the upper layer */
+	/* send the frame to the upper layer */
 	ieee80211_input(ifp, m, ni, status->rssi, 0);
 
 	ieee80211_release_node(ic, ni);
@@ -934,7 +941,7 @@ ipw_rx_intr(struct ipw_softc *sc)
 	struct ipw_status *status;
 	struct ipw_soft_bd *sbd;
 	struct ipw_soft_buf *sbuf;
-	u_int32_t r, i;
+	uint32_t r, i;
 
 	r = CSR_READ_4(sc, IPW_CSR_RX_READ_INDEX);
 
@@ -981,7 +988,7 @@ ipw_rx_intr(struct ipw_softc *sc)
 		    BUS_DMASYNC_PREWRITE);
 	}
 
-	/* Tell the firmware what we have processed */
+	/* tell the firmware what we have processed */
 	sc->rxcur = (r == 0) ? IPW_NRBD - 1 : r - 1;
 	CSR_WRITE_4(sc, IPW_CSR_RX_WRITE_INDEX, sc->rxcur);
 }
@@ -1026,7 +1033,7 @@ ipw_tx_intr(struct ipw_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	struct ipw_soft_bd *sbd;
-	u_int32_t r, i;
+	uint32_t r, i;
 
 	r = CSR_READ_4(sc, IPW_CSR_TX_READ_INDEX);
 
@@ -1040,10 +1047,10 @@ ipw_tx_intr(struct ipw_softc *sc)
 		sc->txfree++;
 	}
 
-	/* Remember what the firmware has processed */
+	/* remember what the firmware has processed */
 	sc->txold = (r == 0) ? IPW_NTBD - 1 : r - 1;
 
-	/* Call start() since some buffer descriptors have been released */
+	/* call start() since some buffer descriptors have been released */
 	ifp->if_flags &= ~IFF_OACTIVE;
 	(*ifp->if_start)(ifp);
 }
@@ -1052,12 +1059,12 @@ int
 ipw_intr(void *arg)
 {
 	struct ipw_softc *sc = arg;
-	u_int32_t r;
+	uint32_t r;
 
 	if ((r = CSR_READ_4(sc, IPW_CSR_INTR)) == 0 || r == 0xffffffff)
 		return 0;
 
-	/* Disable interrupts */
+	/* disable interrupts */
 	CSR_WRITE_4(sc, IPW_CSR_INTR_MASK, 0);
 
 	DPRINTFN(8, ("INTR!0x%08x\n", r));
@@ -1078,17 +1085,17 @@ ipw_intr(void *arg)
 	if (r & IPW_INTR_TX_TRANSFER)
 		ipw_tx_intr(sc);
 
-	/* Acknowledge interrupts */
+	/* acknowledge interrupts */
 	CSR_WRITE_4(sc, IPW_CSR_INTR, r);
 
-	/* Re-enable interrupts */
+	/* re-enable interrupts */
 	CSR_WRITE_4(sc, IPW_CSR_INTR_MASK, IPW_INTR_MASK);
 
 	return 1;
 }
 
 int
-ipw_cmd(struct ipw_softc *sc, u_int32_t type, void *data, u_int32_t len)
+ipw_cmd(struct ipw_softc *sc, uint32_t type, void *data, uint32_t len)
 {
 	struct ipw_soft_bd *sbd;
 	int error;
@@ -1130,7 +1137,7 @@ ipw_cmd(struct ipw_softc *sc, u_int32_t type, void *data, u_int32_t len)
 
 	DPRINTFN(2, ("TX!CMD!%u!%u!%u!%u\n", type, 0, 0, len));
 
-	/* Wait at most one second for command to complete */
+	/* wait at most one second for command to complete */
 	return tsleep(sc, 0, "ipwcmd", hz);
 }
 
@@ -1273,7 +1280,7 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 		sbd = &sc->stbd_list[sc->txcur];
 		sbd->bd->physaddr = htole32(sbuf->map->dm_segs[i].ds_addr);
 		sbd->bd->len = htole32(sbuf->map->dm_segs[i].ds_len);
-		sbd->bd->nfrag = 0; /* used only in first bd */
+		sbd->bd->nfrag = 0;	/* used only in first bd */
 		sbd->bd->flags = IPW_BD_FLAG_TX_FRAME_802_3;
 		if (i == sbuf->map->dm_nsegs - 1) {
 			sbd->type = IPW_SBD_TYPE_DATA;
@@ -1301,7 +1308,7 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	bus_dmamap_sync(sc->sc_dmat, sbuf->map, 0, MCLBYTES,
 	    BUS_DMASYNC_PREWRITE);
 
-	/* Inform firmware about this new packet */
+	/* inform firmware about this new packet */
 	CSR_WRITE_4(sc, IPW_CSR_TX_WRITE_INDEX, sc->txcur);
 
 	return 0;
@@ -1455,24 +1462,24 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 
-u_int32_t
-ipw_read_table1(struct ipw_softc *sc, u_int32_t off)
+uint32_t
+ipw_read_table1(struct ipw_softc *sc, uint32_t off)
 {
 	return MEM_READ_4(sc, MEM_READ_4(sc, sc->table1_base + off));
 }
 
 void
-ipw_write_table1(struct ipw_softc *sc, u_int32_t off, u_int32_t info)
+ipw_write_table1(struct ipw_softc *sc, uint32_t off, uint32_t info)
 {
 	MEM_WRITE_4(sc, MEM_READ_4(sc, sc->table1_base + off), info);
 }
 
 int
-ipw_read_table2(struct ipw_softc *sc, u_int32_t off, void *buf, u_int32_t *len)
+ipw_read_table2(struct ipw_softc *sc, uint32_t off, void *buf, uint32_t *len)
 {
-	u_int32_t addr, info;
-	u_int16_t count, size;
-	u_int32_t total;
+	uint32_t addr, info;
+	uint16_t count, size;
+	uint32_t total;
 
 	/* addr[4] + count[2] + size[2] */
 	addr = MEM_READ_4(sc, sc->table2_base + off);
@@ -1498,7 +1505,7 @@ ipw_stop_master(struct ipw_softc *sc)
 {
 	int ntries;
 
-	/* Disable interrupts */
+	/* disable interrupts */
 	CSR_WRITE_4(sc, IPW_CSR_INTR_MASK, 0);
 
 	CSR_WRITE_4(sc, IPW_CSR_RST, IPW_RST_STOP_MASTER);
@@ -1524,11 +1531,11 @@ ipw_reset(struct ipw_softc *sc)
 
 	ipw_stop_master(sc);
 
-	/* Move adapter to D0 state */
+	/* move adapter to D0 state */
 	CSR_WRITE_4(sc, IPW_CSR_CTL, CSR_READ_4(sc, IPW_CSR_CTL) |
 	    IPW_CTL_INIT);
 
-	/* Wait for clock stabilization */
+	/* wait for clock stabilization */
 	for (ntries = 0; ntries < 1000; ntries++) {
 		if (CSR_READ_4(sc, IPW_CSR_CTL) & IPW_CTL_CLOCK_READY)
 			break;
@@ -1604,8 +1611,8 @@ int
 ipw_load_firmware(struct ipw_softc *sc, u_char *fw, int size)
 {
 	u_char *p, *end;
-	u_int32_t dst;
-	u_int16_t len;
+	uint32_t dst;
+	uint16_t len;
 	int error;
 
 	p = fw;
@@ -1627,15 +1634,15 @@ ipw_load_firmware(struct ipw_softc *sc, u_char *fw, int size)
 	CSR_WRITE_4(sc, IPW_CSR_IO, IPW_IO_GPIO1_ENABLE | IPW_IO_GPIO3_MASK |
 	    IPW_IO_LED_OFF);
 
-	/* Allow interrupts so we know when the firmware is inited */
+	/* allow interrupts so we know when the firmware is inited */
 	CSR_WRITE_4(sc, IPW_CSR_INTR_MASK, IPW_INTR_MASK);
 
-	/* Tell the adapter to initialize the firmware */
+	/* tell the adapter to initialize the firmware */
 	CSR_WRITE_4(sc, IPW_CSR_RST, 0);
 	CSR_WRITE_4(sc, IPW_CSR_CTL, CSR_READ_4(sc, IPW_CSR_CTL) |
 	    IPW_CTL_ALLOW_STANDBY);
 
-	/* Wait at most one second for firmware initialization to complete */
+	/* wait at most one second for firmware initialization to complete */
 	if ((error = tsleep(sc, 0, "ipwinit", hz)) != 0) {
 		printf("%s: timeout waiting for firmware initialization to "
 		    "complete\n", sc->sc_dev.dv_xname);
@@ -1713,7 +1720,7 @@ ipw_config(struct ipw_softc *sc)
 	struct ipw_wep_key wepkey;
 	struct ipw_scan_options options;
 	struct ipw_configuration config;
-	u_int32_t data;
+	uint32_t data;
 	int error, i;
 
 	switch (ic->ic_opmode) {
@@ -1763,20 +1770,20 @@ ipw_config(struct ipw_softc *sc)
 		config.flags |= htole32(IPW_CFG_IBSS_AUTO_START);
 	if (ifp->if_flags & IFF_PROMISC)
 		config.flags |= htole32(IPW_CFG_PROMISCUOUS);
-	config.bss_chan = htole32(0x3fff); /* channels 1-14 */
-	config.ibss_chan = htole32(0x7ff); /* channels 1-11 */
+	config.bss_chan = htole32(0x3fff);	/* channels 1-14 */
+	config.ibss_chan = htole32(0x7ff);	/* channels 1-11 */
 	DPRINTF(("Setting configuration 0x%x\n", config.flags));
 	error = ipw_cmd(sc, IPW_CMD_SET_CONFIGURATION, &config, sizeof config);
 	if (error != 0)
 		return error;
 
-	data = htole32(0x3); /* 1, 2 */
+	data = htole32(0x3);	/* 1, 2 */
 	DPRINTF(("Setting basic tx rates to 0x%x\n", letoh32(data)));
 	error = ipw_cmd(sc, IPW_CMD_SET_BASIC_TX_RATES, &data, sizeof data);
 	if (error != 0)
 		return error;
 
-	data = htole32(0xf); /* 1, 2, 5.5, 11 */
+	data = htole32(0xf);	/* 1, 2, 5.5, 11 */
 	DPRINTF(("Setting tx rates to 0x%x\n", letoh32(data)));
 	error = ipw_cmd(sc, IPW_CMD_SET_TX_RATES, &data, sizeof data);
 	if (error != 0)
@@ -1789,7 +1796,7 @@ ipw_config(struct ipw_softc *sc)
 		return error;
 
 	if (ic->ic_opmode == IEEE80211_M_IBSS) {
-		data = htole32(32); /* default value */
+		data = htole32(32);	/* default value */
 		DPRINTF(("Setting tx power index to %u\n", letoh32(data)));
 		error = ipw_cmd(sc, IPW_CMD_SET_TX_POWER_INDEX, &data,
 		    sizeof data);
@@ -1889,7 +1896,7 @@ ipw_config(struct ipw_softc *sc)
 	}
 
 	options.flags = htole32(0);
-	options.channels = htole32(0x3fff); /* scan channels 1-14 */
+	options.channels = htole32(0x3fff);	/* scan channels 1-14 */
 	DPRINTF(("Setting scan options to 0x%x\n", letoh32(options.flags)));
 	error = ipw_cmd(sc, IPW_CMD_SET_SCAN_OPTIONS, &options, sizeof options);
 	if (error != 0)
@@ -1927,13 +1934,13 @@ ipw_init(struct ifnet *ifp)
 	ipw_stop_master(sc);
 
 	/*
-	 * Setup tx, rx and status rings
+	 * Setup tx, rx and status rings.
 	 */
 	CSR_WRITE_4(sc, IPW_CSR_TX_BD_BASE, sc->tbd_map->dm_segs[0].ds_addr);
 	CSR_WRITE_4(sc, IPW_CSR_TX_BD_SIZE, IPW_NTBD);
 	CSR_WRITE_4(sc, IPW_CSR_TX_READ_INDEX, 0);
 	CSR_WRITE_4(sc, IPW_CSR_TX_WRITE_INDEX, 0);
-	sc->txold = IPW_NTBD - 1; /* latest bd index ack'ed by firmware */
+	sc->txold = IPW_NTBD - 1;	/* latest bd index ack by firmware */
 	sc->txcur = 0; /* bd index to write to */
 	sc->txfree = IPW_NTBD - 2;
 
@@ -1941,7 +1948,7 @@ ipw_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, IPW_CSR_RX_BD_SIZE, IPW_NRBD);
 	CSR_WRITE_4(sc, IPW_CSR_RX_READ_INDEX, 0);
 	CSR_WRITE_4(sc, IPW_CSR_RX_WRITE_INDEX, IPW_NRBD - 1);
-	sc->rxcur = IPW_NRBD - 1; /* latest bd index I've read */
+	sc->rxcur = IPW_NRBD - 1;	/* latest bd index I've read */
 
 	CSR_WRITE_4(sc, IPW_CSR_RX_STATUS_BASE,
 	    sc->status_map->dm_segs[0].ds_addr);
@@ -1953,7 +1960,7 @@ ipw_init(struct ifnet *ifp)
 
 	sc->flags |= IPW_FLAG_FW_INITED;
 
-	/* Retrieve information tables base addresses */
+	/* retrieve information tables base addresses */
 	sc->table1_base = CSR_READ_4(sc, IPW_CSR_TABLE1_BASE);
 	sc->table2_base = CSR_READ_4(sc, IPW_CSR_TABLE2_BASE);
 
@@ -1990,7 +1997,7 @@ ipw_stop(struct ifnet *ifp, int disable)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	/*
-	 * Release tx buffers
+	 * Release tx buffers.
 	 */
 	for (i = 0; i < IPW_NTBD; i++)
 		ipw_release_sbd(sc, &sc->stbd_list[i]);
@@ -1999,7 +2006,7 @@ ipw_stop(struct ifnet *ifp, int disable)
 }
 
 void
-ipw_read_mem_1(struct ipw_softc *sc, bus_size_t offset, u_int8_t *datap,
+ipw_read_mem_1(struct ipw_softc *sc, bus_size_t offset, uint8_t *datap,
     bus_size_t count)
 {
 	for (; count > 0; offset++, datap++, count--) {
@@ -2009,7 +2016,7 @@ ipw_read_mem_1(struct ipw_softc *sc, bus_size_t offset, u_int8_t *datap,
 }
 
 void
-ipw_write_mem_1(struct ipw_softc *sc, bus_size_t offset, u_int8_t *datap,
+ipw_write_mem_1(struct ipw_softc *sc, bus_size_t offset, uint8_t *datap,
     bus_size_t count)
 {
 	for (; count > 0; offset++, datap++, count--) {

@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_iwivar.h,v 1.12 2005/09/19 20:01:12 damien Exp $	*/
+/*	$OpenBSD: if_iwivar.h,v 1.13 2006/02/26 19:14:40 damien Exp $	*/
 
 /*-
- * Copyright (c) 2004, 2005
+ * Copyright (c) 2004-2006
  *      Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,12 +29,12 @@
 
 struct iwi_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
-	u_int8_t	wr_flags;
-	u_int8_t	wr_rate;
-	u_int16_t	wr_chan_freq;
-	u_int16_t	wr_chan_flags;
-	u_int8_t	wr_antsignal;
-	u_int8_t	wr_antenna;
+	uint8_t		wr_flags;
+	uint8_t		wr_rate;
+	uint16_t	wr_chan_freq;
+	uint16_t	wr_chan_flags;
+	uint8_t		wr_antsignal;
+	uint8_t		wr_antenna;
 } __packed;
 
 #define IWI_RX_RADIOTAP_PRESENT						\
@@ -46,9 +46,9 @@ struct iwi_rx_radiotap_header {
 
 struct iwi_tx_radiotap_header {
 	struct ieee80211_radiotap_header wt_ihdr;
-	u_int8_t	wt_flags;
-	u_int16_t	wt_chan_freq;
-	u_int16_t	wt_chan_flags;
+	uint8_t		wt_flags;
+	uint16_t	wt_chan_freq;
+	uint16_t	wt_chan_flags;
 } __packed;
 
 #define IWI_TX_RADIOTAP_PRESENT						\
@@ -62,7 +62,7 @@ struct iwi_softc {
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
 
-	u_int32_t		flags;
+	uint32_t		flags;
 #define IWI_FLAG_FW_INITED	(1 << 0)
 
 	bus_dma_tag_t		sc_dmat;
@@ -94,8 +94,8 @@ struct iwi_softc {
 	int			rx_cur;
 
 #define IWI_MAX_NODE	32
-	u_int8_t		sta[IWI_MAX_NODE][IEEE80211_ADDR_LEN];
-	u_int8_t		nsta;
+	uint8_t			sta[IWI_MAX_NODE][IEEE80211_ADDR_LEN];
+	uint8_t			nsta;
 
 	bus_space_tag_t		sc_st;
 	bus_space_handle_t	sc_sh;
@@ -115,14 +115,14 @@ struct iwi_softc {
 
 	union {
 		struct iwi_rx_radiotap_header th;
-		u_int8_t	pad[64];
+		uint8_t	pad[64];
 	} sc_rxtapu;
 #define sc_rxtap	sc_rxtapu.th
 	int			sc_rxtap_len;
 
 	union {
 		struct iwi_tx_radiotap_header th;
-		u_int8_t	pad[64];
+		uint8_t	pad[64];
 	} sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int			sc_txtap_len;

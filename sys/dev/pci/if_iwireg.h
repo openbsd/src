@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwireg.h,v 1.19 2006/01/29 15:44:16 damien Exp $	*/
+/*	$OpenBSD: if_iwireg.h,v 1.20 2006/02/26 19:14:40 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -128,25 +128,25 @@
 
 /* firmware binary image header */
 struct iwi_firmware_hdr {
-	u_int32_t	version;
-	u_int32_t	mode;
+	uint32_t	version;
+	uint32_t	mode;
 } __packed;
 
 struct iwi_hdr {
-	u_int8_t	type;
+	uint8_t	type;
 #define IWI_HDR_TYPE_DATA	0
 #define IWI_HDR_TYPE_COMMAND	1
 #define IWI_HDR_TYPE_NOTIF	3
 #define IWI_HDR_TYPE_FRAME	9
-	u_int8_t	seq;
-	u_int8_t	flags;
+	uint8_t	seq;
+	uint8_t	flags;
 #define IWI_HDR_FLAG_IRQ	0x04
-	u_int8_t	reserved;
+	uint8_t	reserved;
 } __packed;
 
 struct iwi_notif {
-	u_int32_t	reserved[2];
-	u_int8_t	type;
+	uint32_t	reserved[2];
+	uint8_t		type;
 #define IWI_NOTIF_TYPE_ASSOCIATION	10
 #define IWI_NOTIF_TYPE_AUTHENTICATION	11
 #define IWI_NOTIF_TYPE_SCAN_CHANNEL	12
@@ -154,95 +154,95 @@ struct iwi_notif {
 #define IWI_NOTIF_TYPE_BEACON		17
 #define IWI_NOTIF_TYPE_CALIBRATION	20
 #define IWI_NOTIF_TYPE_NOISE		25
-	u_int8_t	flags;
-	u_int16_t	len;
+	uint8_t		flags;
+	uint16_t	len;
 } __packed;
 
 /* structure for notification IWI_NOTIF_TYPE_AUTHENTICATION */
 struct iwi_notif_authentication {
-	u_int8_t	state;
+	uint8_t	state;
 #define IWI_DEAUTHENTICATED	0
 #define IWI_AUTHENTICATED	9
 } __packed;
 
 /* structure for notification IWI_NOTIF_TYPE_ASSOCIATION */
 struct iwi_notif_association {
-	u_int8_t		state;
+	uint8_t			state;
 #define IWI_DEASSOCIATED	0
 #define IWI_ASSOCIATED		12
 	struct ieee80211_frame	frame;
-	u_int16_t		capinfo;
-	u_int16_t		status;
-	u_int16_t		associd;
+	uint16_t		capinfo;
+	uint16_t		status;
+	uint16_t		associd;
 } __packed;
 
 /* structure for notification IWI_NOTIF_TYPE_SCAN_CHANNEL */
 struct iwi_notif_scan_channel {
-	u_int8_t	nchan;
-	u_int8_t	reserved[47];
+	uint8_t	nchan;
+	uint8_t	reserved[47];
 } __packed;
 
 /* structure for notification IWI_NOTIF_TYPE_SCAN_COMPLETE */
 struct iwi_notif_scan_complete {
-	u_int8_t	type;
-	u_int8_t	nchan;
-	u_int8_t	status;
-	u_int8_t	reserved;
+	uint8_t	type;
+	uint8_t	nchan;
+	uint8_t	status;
+	uint8_t	reserved;
 } __packed;
 
 /* received frame header */
 struct iwi_frame {
-	u_int32_t	reserved1[2];
-	u_int8_t	chan;
-	u_int8_t	status;
-	u_int8_t	rate;
-	u_int8_t	rssi;	/* receiver signal strength indicator */
-	u_int8_t	agc;	/* automatic gain control */
-	u_int8_t	rssi_dbm;
-	u_int16_t	signal;
-	u_int16_t	noise;
-	u_int8_t	antenna;
-	u_int8_t	control;
-	u_int8_t	reserved2[2];
-	u_int16_t	len;
+	uint32_t	reserved1[2];
+	uint8_t		chan;
+	uint8_t		status;
+	uint8_t		rate;
+	uint8_t		rssi;	/* receiver signal strength indicator */
+	uint8_t		agc;	/* automatic gain control */
+	uint8_t		rssi_dbm;
+	uint16_t	signal;
+	uint16_t	noise;
+	uint8_t		antenna;
+	uint8_t		control;
+	uint8_t		reserved2[2];
+	uint16_t	len;
 } __packed;
 
 /* header for transmission */
 struct iwi_tx_desc {
 	struct iwi_hdr	hdr;
-	u_int32_t	reserved1;
-	u_int8_t	station;
-	u_int8_t	reserved2[3];
-	u_int8_t	cmd;
+	uint32_t	reserved1;
+	uint8_t		station;
+	uint8_t		reserved2[3];
+	uint8_t		cmd;
 #define IWI_DATA_CMD_TX	0x0b
-	u_int8_t	seq;
-	u_int16_t	len;
-	u_int8_t	priority;
-	u_int8_t	flags;
+	uint8_t		seq;
+	uint16_t	len;
+	uint8_t		priority;
+	uint8_t		flags;
 #define IWI_DATA_FLAG_SHPREAMBLE	0x04
 #define IWI_DATA_FLAG_NO_WEP		0x20
 #define IWI_DATA_FLAG_NEED_ACK		0x80
-	u_int8_t	xflags;
-	u_int8_t	wep_txkey;
-	u_int8_t	wepkey[IEEE80211_KEYBUF_SIZE];
-	u_int8_t	rate;
-	u_int8_t	antenna;
-	u_int8_t	reserved3[10];
+	uint8_t		xflags;
+	uint8_t		wep_txkey;
+	uint8_t		wepkey[IEEE80211_KEYBUF_SIZE];
+	uint8_t		rate;
+	uint8_t		antenna;
+	uint8_t		reserved3[10];
 
 	struct ieee80211_qosframe_addr4	wh;
-	u_int32_t	iv[2];
+	uint32_t	iv[2];
 
-	u_int32_t	nseg;
+	uint32_t	nseg;
 #define IWI_MAX_NSEG	6
 
-	u_int32_t	seg_addr[IWI_MAX_NSEG];
-	u_int16_t	seg_len[IWI_MAX_NSEG];
+	uint32_t	seg_addr[IWI_MAX_NSEG];
+	uint16_t	seg_len[IWI_MAX_NSEG];
 } __packed;
 
 /* command */
 struct iwi_cmd_desc {
 	struct iwi_hdr	hdr;
-	u_int8_t	type;
+	uint8_t		type;
 #define IWI_CMD_ENABLE				2
 #define IWI_CMD_SET_CONFIGURATION		6
 #define IWI_CMD_SET_ESSID			8
@@ -258,15 +258,15 @@ struct iwi_cmd_desc {
 #define IWI_CMD_SET_IV				34
 #define IWI_CMD_SET_TX_POWER			35
 #define IWI_CMD_SET_SENSITIVITY			42
-	u_int8_t	len;
-	u_int16_t	reserved;
-	u_int8_t	data[120];
+	uint8_t		len;
+	uint16_t	reserved;
+	uint8_t		data[120];
 } __packed;
 
 /* node information (IBSS) */
 struct iwi_node {
-	u_int8_t	bssid[IEEE80211_ADDR_LEN];
-	u_int8_t	reserved[2];
+	uint8_t	bssid[IEEE80211_ADDR_LEN];
+	uint8_t	reserved[2];
 } __packed;
 
 /* constants for 'mode' fields */
@@ -282,22 +282,22 @@ struct iwi_node {
 
 /* structure for command IWI_CMD_SET_RATES */
 struct iwi_rateset {
-	u_int8_t	mode;
-	u_int8_t	nrates;
-	u_int8_t	type;
+	uint8_t	mode;
+	uint8_t	nrates;
+	uint8_t	type;
 #define IWI_RATESET_TYPE_NEGOTIATED	0
 #define IWI_RATESET_TYPE_SUPPORTED	1
-	u_int8_t	reserved;
-	u_int8_t	rates[12];
+	uint8_t	reserved;
+	uint8_t	rates[12];
 } __packed;
 
 /* structure for command IWI_CMD_SET_TX_POWER */
 struct iwi_txpower {
-	u_int8_t	nchan;
-	u_int8_t	mode;
+	uint8_t	nchan;
+	uint8_t	mode;
 	struct {
-		u_int8_t	chan;
-		u_int8_t	power;
+		uint8_t	chan;
+		uint8_t	power;
 #define IWI_TXPOWER_MAX		20
 #define IWI_TXPOWER_RATIO	(IEEE80211_TXPOWER_MAX / IWI_TXPOWER_MAX)
 	} __packed chan[37];
@@ -305,79 +305,79 @@ struct iwi_txpower {
 
 /* structure for command IWI_CMD_ASSOCIATE */
 struct iwi_associate {
-	u_int8_t	chan;
-	u_int8_t	auth;
+	uint8_t		chan;
+	uint8_t		auth;
 #define IWI_AUTH_OPEN	0
 #define IWI_AUTH_SHARED	1
 #define IWI_AUTH_NONE	3
-	u_int8_t	type;
-	u_int8_t	reserved1;
-	u_int16_t	reserved2;
-	u_int8_t	plen;
-	u_int8_t	mode;
-	u_int8_t	bssid[IEEE80211_ADDR_LEN];
-	u_int8_t	tstamp[8];
-	u_int16_t	capinfo;
-	u_int16_t	lintval;
-	u_int16_t	intval;
-	u_int8_t	dst[IEEE80211_ADDR_LEN];
-	u_int32_t	reserved3;
-	u_int16_t	reserved4;
+	uint8_t		type;
+	uint8_t		reserved1;
+	uint16_t	reserved2;
+	uint8_t		plen;
+	uint8_t		mode;
+	uint8_t		bssid[IEEE80211_ADDR_LEN];
+	uint8_t		tstamp[8];
+	uint16_t	capinfo;
+	uint16_t	lintval;
+	uint16_t	intval;
+	uint8_t		dst[IEEE80211_ADDR_LEN];
+	uint32_t	reserved3;
+	uint16_t	reserved4;
 } __packed;
 
 /* structure for command IWI_CMD_SCAN */
 struct iwi_scan {
-	u_int32_t	index;
-	u_int8_t	channels[54];
+	uint32_t	index;
+	uint8_t		channels[54];
 #define IWI_CHAN_5GHZ	(0 << 6)
 #define IWI_CHAN_2GHZ	(1 << 6)
 
-	u_int8_t	type[27];
+	uint8_t		type[27];
 #define IWI_SCAN_TYPE_PASSIVE	0x11
 #define IWI_SCAN_TYPE_DIRECTED	0x22
 #define IWI_SCAN_TYPE_BROADCAST	0x33
 #define IWI_SCAN_TYPE_BDIRECTED	0x44
 
-	u_int8_t	reserved1;
-	u_int16_t	reserved2;
-	u_int16_t	passive;	/* dwell time */
-	u_int16_t	directed;	/* dwell time */
-	u_int16_t	broadcast;	/* dwell time */
-	u_int16_t	bdirected;	/* dwell time */
+	uint8_t		reserved1;
+	uint16_t	reserved2;
+	uint16_t	passive;	/* dwell time */
+	uint16_t	directed;	/* dwell time */
+	uint16_t	broadcast;	/* dwell time */
+	uint16_t	bdirected;	/* dwell time */
 } __packed;
 
 /* structure for command IWI_CMD_SET_CONFIGURATION */
 struct iwi_configuration {
-	u_int8_t	bluetooth_coexistence;
-	u_int8_t	reserved1;
-	u_int8_t	answer_pbreq;
-	u_int8_t	allow_invalid_frames;
-	u_int8_t	multicast_enabled;
-	u_int8_t	exclude_unicast_unencrypted;
-	u_int8_t	disable_unicast_decryption;
-	u_int8_t	exclude_multicast_unencrypted;
-	u_int8_t	disable_multicast_decryption;
-	u_int8_t	antenna;
-	u_int8_t	reserved2;
-	u_int8_t	bg_autodetection;
-	u_int8_t	reserved3;
-	u_int8_t	enable_multicast_filtering;
-	u_int8_t	bluetooth_threshold;
-	u_int8_t	reserved4;
-	u_int8_t	allow_beacon_and_probe_resp;
-	u_int8_t	allow_mgt;
-	u_int8_t	noise_reported;
-	u_int8_t	reserved5;
+	uint8_t	bluetooth_coexistence;
+	uint8_t	reserved1;
+	uint8_t	answer_pbreq;
+	uint8_t	allow_invalid_frames;
+	uint8_t	multicast_enabled;
+	uint8_t	exclude_unicast_unencrypted;
+	uint8_t	disable_unicast_decryption;
+	uint8_t	exclude_multicast_unencrypted;
+	uint8_t	disable_multicast_decryption;
+	uint8_t	antenna;
+	uint8_t	reserved2;
+	uint8_t	bg_autodetection;
+	uint8_t	reserved3;
+	uint8_t	enable_multicast_filtering;
+	uint8_t	bluetooth_threshold;
+	uint8_t	reserved4;
+	uint8_t	allow_beacon_and_probe_resp;
+	uint8_t	allow_mgt;
+	uint8_t	noise_reported;
+	uint8_t	reserved5;
 } __packed;
 
 /* structure for command IWI_CMD_SET_WEP_KEY */
 struct iwi_wep_key {
-	u_int8_t	cmd;
+	uint8_t	cmd;
 #define IWI_WEP_KEY_CMD_SETKEY	0x08
-	u_int8_t	seq;
-	u_int8_t	idx;
-	u_int8_t	len;
-	u_int8_t	key[IEEE80211_KEYBUF_SIZE];
+	uint8_t	seq;
+	uint8_t	idx;
+	uint8_t	len;
+	uint8_t	key[IEEE80211_KEYBUF_SIZE];
 } __packed;
 
 #define IWI_MEM_EEPROM_CTL	0x00300040

@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_ipwvar.h,v 1.12 2005/03/12 13:37:49 damien Exp $	*/
+/*	$OpenBSD: if_ipwvar.h,v 1.13 2006/02/26 19:14:40 damien Exp $	*/
 
 /*-
- * Copyright (c) 2004, 2005
+ * Copyright (c) 2004-2006
  *      Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -60,10 +60,10 @@ struct ipw_soft_buf {
 
 struct ipw_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
-	u_int8_t	wr_flags;
-	u_int16_t	wr_chan_freq;
-	u_int16_t	wr_chan_flags;
-	u_int8_t	wr_antsignal;
+	uint8_t		wr_flags;
+	uint16_t	wr_chan_freq;
+	uint16_t	wr_chan_flags;
+	uint8_t		wr_antsignal;
 } __packed;
 
 #define IPW_RX_RADIOTAP_PRESENT						\
@@ -73,9 +73,9 @@ struct ipw_rx_radiotap_header {
 
 struct ipw_tx_radiotap_header {
 	struct ieee80211_radiotap_header wt_ihdr;
-	u_int8_t	wt_flags;
-	u_int16_t	wt_chan_freq;
-	u_int16_t	wt_chan_flags;
+	uint8_t		wt_flags;
+	uint16_t	wt_chan_freq;
+	uint16_t	wt_chan_flags;
 } __packed;
 
 #define IPW_TX_RADIOTAP_PRESENT						\
@@ -91,7 +91,7 @@ struct ipw_softc {
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
 
-	u_int32_t			flags;
+	uint32_t			flags;
 #define IPW_FLAG_FW_INITED	(1 << 0)
 
 	struct resource			*irq;
@@ -133,12 +133,12 @@ struct ipw_softc {
 	SLIST_HEAD(, ipw_soft_hdr)	free_shdr;
 	SLIST_HEAD(, ipw_soft_buf)	free_sbuf;
 
-	u_int32_t			table1_base;
-	u_int32_t			table2_base;
+	uint32_t			table1_base;
+	uint32_t			table2_base;
 
-	u_int32_t			txcur;
-	u_int32_t			txold;
-	u_int32_t			rxcur;
+	uint32_t			txcur;
+	uint32_t			txold;
+	uint32_t			rxcur;
 	int				txfree;
 
 	void				*powerhook;
@@ -148,14 +148,14 @@ struct ipw_softc {
 
 	union {
 		struct ipw_rx_radiotap_header th;
-		u_int8_t	pad[64];
+		uint8_t	pad[64];
 	} sc_rxtapu;
 #define sc_rxtap	sc_rxtapu.th
 	int				sc_rxtap_len;
 
 	union {
 		struct ipw_tx_radiotap_header th;
-		u_int8_t	pad[64];
+		uint8_t	pad[64];
 	} sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int				sc_txtap_len;
