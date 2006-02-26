@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.1 2006/02/25 23:49:04 reyk Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.2 2006/02/26 02:13:54 brad Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -56,107 +56,87 @@
 #include <dev/pci/if_vicreg.h>
 #include <dev/pci/if_vicvar.h>
 
-int	 vic_pci_match(struct device *, void *, void *);
-void	 vic_pci_attach(struct device *, struct device *, void *);
-void	 vic_pci_shutdown(void *);
-
-int	 vic_attach(struct vic_softc *);
-void	 vic_link_state(struct vic_softc *);
-void	 vic_shutdown(void *);
-int	 vic_intr(void *);
-void	 vic_rx_proc(struct vic_softc *);
-void	 vic_tx_proc(struct vic_softc *);
-void	 vic_iff(struct vic_softc *, u_int);
-void	 vic_getlladdr(struct vic_softc *);
-void	 vic_setlladdr(struct vic_softc *);
-int	 vic_media_change(struct ifnet *);
-void	 vic_media_status(struct ifnet *, struct ifmediareq *);
-void	 vic_start(struct ifnet *);
-int	 vic_tx_start(struct vic_softc *, struct mbuf *);
-void	 vic_watchdog(struct ifnet *);
-int	 vic_ioctl(struct ifnet *, u_long, caddr_t);
-void	 vic_init(struct ifnet *);
-void	 vic_stop(struct ifnet *);
-void	 vic_printb(unsigned short, char *);
-void	 vic_timer(void *);
-void	 vic_poll(void *); /* XXX poll */
+int	vic_match(struct device *, void *, void *);
+void	vic_attach(struct device *, struct device *, void *);
+void	vic_link_state(struct vic_softc *);
+void	vic_shutdown(void *);
+int	vic_intr(void *);
+void	vic_rx_proc(struct vic_softc *);
+void	vic_tx_proc(struct vic_softc *);
+void	vic_iff(struct vic_softc *, u_int);
+void	vic_getlladdr(struct vic_softc *);
+void	vic_setlladdr(struct vic_softc *);
+int	vic_media_change(struct ifnet *);
+void	vic_media_status(struct ifnet *, struct ifmediareq *);
+void	vic_start(struct ifnet *);
+int	vic_tx_start(struct vic_softc *, struct mbuf *);
+void	vic_watchdog(struct ifnet *);
+int	vic_ioctl(struct ifnet *, u_long, caddr_t);
+void	vic_init(struct ifnet *);
+void	vic_stop(struct ifnet *);
+void	vic_printb(unsigned short, char *);
+void	vic_timer(void *);
+void	vic_poll(void *); /* XXX poll */
 
 struct mbuf *vic_alloc_mbuf(struct vic_softc *, bus_dmamap_t);
-int	 vic_alloc_data(struct vic_softc *);
-void	 vic_reset_data(struct vic_softc *);
-void	 vic_free_data(struct vic_softc *);
-
-struct vic_pci_softc {
-	struct vic_softc	sc_sc;
-	pci_chipset_tag_t	sc_pc;
-	pcitag_t		sc_pcitag;
-	pci_intr_handle_t	sc_iht;
-	void			*sc_ih;
-};
+int	vic_alloc_data(struct vic_softc *);
+void	vic_reset_data(struct vic_softc *);
+void	vic_free_data(struct vic_softc *);
 
 struct cfdriver vic_cd = {
 	0, "vic", DV_IFNET
 };
 
 struct cfattach vic_ca = {
-	sizeof(struct vic_pci_softc),
-	vic_pci_match,
-	vic_pci_attach
+	sizeof(struct vic_softc), vic_match, vic_attach
 };
 
-const struct pci_matchid vic_pci_devices[] = {
+const struct pci_matchid vic_devices[] = {
 	{ PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_NET }
 };
 
 extern int ifqmaxlen;
 
 int
-vic_pci_match(struct device *parent, void *match, void *aux)
+vic_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux,
-	    vic_pci_devices, sizeof(vic_pci_devices) /
-	    sizeof(vic_pci_devices[0])));
+	    vic_devices, sizeof(vic_devices) / sizeof(vic_devices[0])));
 }
 
 void
-vic_pci_attach(struct device *parent, struct device *self, void *aux)
+vic_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct vic_pci_softc *psc = (struct vic_pci_softc *)self;
+	struct vic_softc *sc = (struct vic_softc *)self;
 	struct pci_attach_args *pa = aux;
-	struct vic_softc *sc = &psc->sc_sc;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	pcitag_t pt = pa->pa_tag;
+	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
+	struct ifnet *ifp;
 	void *hook;
-	pcireg_t res;
-
-	psc->sc_pc = pc;
-	psc->sc_pcitag = pt;
-	sc->sc_psc = psc;
-
-	/* Validate PCI configuration */
-	res = pci_conf_read(pc, pt, PCI_COMMAND_STATUS_REG);
-	if ((res & PCI_COMMAND_MEM_ENABLE) == 0) {
-		printf(": memory mapping is not available\n");
-		return;
-	}
 
 	/* Enable memory mapping */
 	if (pci_mapreg_map(pa, VIC_BAR0, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_st, &sc->sc_sh, NULL, NULL, 0)) {
-		printf(": memory mapping of register space failed\n");
+		printf(": I/O mapping of register space failed\n");
 		return;
 	}
 
 	/* Map and enable the interrupt line */
-	if (pci_intr_map(pa, &psc->sc_iht)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": interrupt mapping failed\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, psc->sc_iht);
-	if ((psc->sc_ih = pci_intr_establish(pc,
-	    psc->sc_iht, IPL_NET, vic_intr, sc, sc->sc_dev.dv_xname)) == NULL) {
-		printf(": failed to establish the interrupt\n");
+
+	intrstr = pci_intr_string(pc, ih);
+
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, vic_intr, sc,
+	    sc->sc_dev.dv_xname);
+	if (sc->sc_ih == NULL) {
+		printf(": couldn't establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
 		return;
 	}
 
@@ -164,31 +144,10 @@ vic_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	if ((hook = shutdownhook_establish(vic_pci_shutdown, psc)) == NULL) {
+	if ((hook = shutdownhook_establish(vic_shutdown, sc)) == NULL) {
 		printf(": failed to establish the shutdown hook\n");
 		return;
 	}
-
-	/* Finally, attach the device */
-	if (vic_attach(sc) == 0)
-		return;
-
-	shutdownhook_disestablish(hook);
-
-	return;
-}
-
-void
-vic_pci_shutdown(void *self)
-{
-	struct vic_pci_softc *psc = (struct vic_pci_softc *)self;
-	vic_shutdown(&psc->sc_sc);
-}
-
-int
-vic_attach(struct vic_softc *sc)
-{
-	struct ifnet *ifp;
 
 	sc->sc_ver_major = VIC_READ(VIC_VERSION_MAJOR);
 	sc->sc_ver_minor = VIC_READ(VIC_VERSION_MINOR);
@@ -202,7 +161,7 @@ vic_attach(struct vic_softc *sc)
 	    VIC_MAGIC > sc->sc_ver_major ||
 	    VIC_MAGIC < sc->sc_ver_minor) {
 		printf("unsupported device\n");
-		return (1);
+		return;
 	}
 
 	VIC_WRITE(VIC_CMD, VIC_CMD_NUM_Rx_BUF);
@@ -226,8 +185,6 @@ vic_attach(struct vic_softc *sc)
 	}
 
 	vic_getlladdr(sc);
-
-	printf(", address: %s\n", ether_sprintf(sc->sc_lladdr));
 
 	/* Initialise pseudo media types */
 	ifmedia_init(&sc->sc_media, 0, vic_media_change,
@@ -263,9 +220,11 @@ vic_attach(struct vic_softc *sc)
 
 	/* Allocate Rx and Tx queues */
 	if (vic_alloc_data(sc) != 0) {
-		printf("%s: could not allocate queues\n", ifp->if_xname);
-		return (1);
+		printf(": could not allocate queues\n", ifp->if_xname);
+		return;
 	}
+
+	printf(", address: %s\n", ether_sprintf(sc->sc_lladdr));
 
 	/* Attach the device structures */
 	if_attach(ifp);
@@ -277,7 +236,7 @@ vic_attach(struct vic_softc *sc)
 	/* XXX poll */
 	timeout_set(&sc->sc_poll, vic_poll, sc);
 
-	return (0);
+	return;
 }
 
 void
@@ -297,9 +256,10 @@ vic_link_state(struct vic_softc *sc)
 }
 
 void
-vic_shutdown(void *arg)
+vic_shutdown(void *self)
 {
-	struct vic_softc *sc = (struct vic_softc *)arg;
+	struct vic_softc *sc = (struct vic_softc *)self;
+
 	vic_stop(&sc->sc_ac.ac_if);
 }
 
