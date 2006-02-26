@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.3 2006/02/26 05:17:25 marco Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.4 2006/02/26 07:59:20 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -23,6 +23,9 @@
 #include <sys/malloc.h>
 
 #include <machine/bus.h>
+#include <machine/cpu.h>
+#include <machine/cpufunc.h>
+#include <machine/specialreg.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -93,10 +96,21 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+#ifdef ACPI_DEBUG
+	for (i = 0; i < sc->sc_pss_len; i++) {
+		dnprintf(20, "%d %d %d %d %d %d\n",
+		    sc->sc_pss[i].pss_core_freq,
+		    sc->sc_pss[i].pss_power,
+		    sc->sc_pss[i].pss_trans_latency,
+		    sc->sc_pss[i].pss_bus_latency,
+		    sc->sc_pss[i].pss_ctrl,
+		    sc->sc_pss[i].pss_status);
+	}
+	dnprintf(20, "\n");
+#endif
 	for (i = 0; i < sc->sc_pss_len; i++)
-		printf("%d MHz %d mW  ", sc->sc_pss[i].pss_core_freq,
-		    sc->sc_pss[i].pss_power);
-	printf("\n");
+		printf("%d%s", sc->sc_pss[i].pss_core_freq,
+		    i < sc->sc_pss_len - 1 ? ", " : " MHz\n");
 
 	/* aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev, acpicpu_notify, sc); */
 }
