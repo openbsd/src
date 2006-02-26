@@ -1,4 +1,4 @@
-/*	$OpenBSD: alipm.c,v 1.7 2006/02/09 12:16:25 dlg Exp $	*/
+/*	$OpenBSD: alipm.c,v 1.8 2006/02/26 20:39:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -206,6 +206,19 @@ alipm_attach(struct device *parent, struct device *self, void *aux)
 		printf(" unknown clock speed");
 		break;
 	}
+
+#ifdef __sparc64__
+	/*
+	 * XXX We get data_access_error exceptions on Blade 100 and
+	 * Blade 150 machines with 233KHz clock.  We should
+	 * investigate wether changing the clock speed to 74KHz fixes
+	 * the problem.
+	 */
+	if ((reg & ALIPM_SMB_HOSTC_CLOCK) != ALIPM_SMB_HOSTC_74K) {
+		printf(", disabling to avoid hardware failure\n");
+		return;
+	}
+#endif
 
 	printf("\n");
 
