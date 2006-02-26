@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.113 2006/02/20 00:48:09 marco Exp $
+#	$OpenBSD: GENERIC,v 1.114 2006/02/26 02:49:28 marco Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -51,6 +51,7 @@ pci*	at mainbus0
 #acpiac* at acpi?
 #acpibat* at acpi?
 #acpibtn* at acpi?
+#acpicpu* at acpi?
 
 ipmi0	at mainbus?		# IPMI
 

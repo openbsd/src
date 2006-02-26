@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.7 2006/02/20 00:48:10 marco Exp $
+#	$OpenBSD: files.acpi,v 1.8 2006/02/26 02:49:28 marco Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -29,6 +29,11 @@ file	dev/acpi/acpibat.c		acpibat
 device	acpibtn
 attach	acpibtn at acpi
 file	dev/acpi/acpibtn.c		acpibtn
+
+# cpu device
+device	acpicpu
+attach	acpicpu at acpi
+file	dev/acpi/acpicpu.c		acpicpu
 
 # High Precision Event Timer
 device	hpet
