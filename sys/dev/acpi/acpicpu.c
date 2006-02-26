@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.1 2006/02/26 02:49:28 marco Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.2 2006/02/26 04:38:38 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -44,9 +44,12 @@ struct acpicpu_softc {
 
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_devnode;
+
+	int			sc_pss_len;
+	struct acpicpu_pss	*sc_pss;
 };
 
-int	acpicpu_getsta(struct acpicpu_softc *);
+int	acpicpu_getpss(struct acpicpu_softc *);
 
 struct cfattach acpicpu_ca = {
 	sizeof(struct acpicpu_softc), acpicpu_match, acpicpu_attach
@@ -76,31 +79,65 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpicpu_softc	*sc = (struct acpicpu_softc *)self;
 	struct acpi_attach_args *aa = aux;
+	int			i;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node->child;
 
-	acpicpu_getsta(sc); 
+	sc->sc_pss = NULL;
 
-	printf(":\n");
+	printf(": ");
+	if (acpicpu_getpss(sc)) {
+		/* XXX not the right test but has to do for now */
+		printf("can't attach, no _PSS\n");
+		return;
+	}
 
-	aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev, acpicpu_notify, sc);
+	for (i = 0; i < sc->sc_pss_len; i++)
+		printf("%d MHz %d mW  ", sc->sc_pss[i].pss_core_freq,
+		    sc->sc_pss[i].pss_power);
+	printf("\n");
+
+	/* aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev, acpicpu_notify, sc); */
 }
 
 int
-acpicpu_getsta(struct acpicpu_softc *sc)
+acpicpu_getpss(struct acpicpu_softc *sc)
 {
 	struct aml_value	res, env;
 	struct acpi_context	*ctx;
+	int			i;
 
 	memset(&res, 0, sizeof(res));
 	memset(&env, 0, sizeof(env));
 
 	ctx = NULL;
-	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_STA", &res, &env)) {
-		dnprintf(20, "%s: no _STA\n", DEVNAME(sc));
-		/* XXX not all buttons have _STA so FALLTROUGH */
+	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_PSS", &res, &env)) {
+		dnprintf(20, "%s: no _PSS\n", DEVNAME(sc));
+		return (1);
 	}
+	
+	if (!sc->sc_pss)
+		sc->sc_pss = malloc(res.length * sizeof *sc->sc_pss, M_DEVBUF,
+		    M_WAITOK);
+	memset(sc->sc_pss, 0, res.length * sizeof *sc->sc_pss);
+
+	for (i = 0; i < res.length; i++) {
+		sc->sc_pss[i].pss_core_freq = aml_val2int(ctx,
+		    res.v_package[i]->v_package[0]);
+		sc->sc_pss[i].pss_power = aml_val2int(ctx,
+		    res.v_package[i]->v_package[1]);
+		sc->sc_pss[i].pss_trans_latency = aml_val2int(ctx,
+		    res.v_package[i]->v_package[2]);
+		sc->sc_pss[i].pss_bus_latency = aml_val2int(ctx,
+		    res.v_package[i]->v_package[3]);
+		sc->sc_pss[i].pss_ctrl = aml_val2int(ctx,
+		    res.v_package[i]->v_package[4]);
+		sc->sc_pss[i].pss_status = aml_val2int(ctx,
+		    res.v_package[i]->v_package[5]);
+	}
+
+	sc->sc_pss_len = res.length;
 
 	return (0);
 }
