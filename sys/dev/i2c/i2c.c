@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c.c,v 1.13 2006/02/08 23:15:58 dlg Exp $	*/
+/*	$OpenBSD: i2c.c,v 1.14 2006/02/26 20:24:46 deraadt Exp $	*/
 /*	$NetBSD: i2c.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -118,13 +118,6 @@ iic_match(struct device *parent, void *arg, void *aux)
 	struct cfdata *cf = arg;
 	struct i2cbus_attach_args *iba = aux;
 
-#if NIPMI > 0
-	extern int ipmi_enabled;
-
-	if (ipmi_enabled)
-		return (0);
-#endif
-
 	/* Just make sure we're looking for i2c. */
 	return (strcmp(iba->iba_name, cf->cf_driver->cd_name) == 0);
 }
@@ -136,6 +129,15 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 	struct i2cbus_attach_args *iba = aux;
 
 	sc->sc_tag = iba->iba_tag;
+
+#if NIPMI > 0
+	extern int ipmi_enabled;
+
+	if (ipmi_enabled) {
+		printf(": disabled to avoid ipmi0 interactions\n");
+		return;
+	}
+#endif
 
 	printf("\n");
 
