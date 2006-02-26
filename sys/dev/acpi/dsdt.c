@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.30 2006/02/23 19:56:44 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.31 2006/02/26 07:57:47 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2845,14 +2845,10 @@ aml_evalname(struct acpi_softc *sc, struct aml_node *parent, const char *name,
 void
 aml_shownode(struct aml_node *node)
 {
-	dnprintf(50, " opcode:%.4x  flag:%.2x  mnem:%s %s ",
-		 node->opcode, node->flag, node->mnem, node->name ? node->name : "");
+	dnprintf(50, " opcode:%.4x  mnem:%s %s ",
+		 node->opcode, node->mnem, node->name ? node->name : "");
 	switch(node->opcode) {
 	case AMLOP_METHOD:
-		dnprintf(50, "argcount:%d serialized:%d synclevel:%d",
-			 AML_METHOD_ARGCOUNT(node->flag),
-			 AML_METHOD_SERIALIZED(node->flag),
-			 AML_METHOD_SYNCLEVEL(node->flag));
 		break;
 		
 	case AMLOP_NAMECHAR:
@@ -2862,10 +2858,6 @@ aml_shownode(struct aml_node *node)
 	case AMLOP_FIELD:
 	case AMLOP_BANKFIELD:
 	case AMLOP_INDEXFIELD:
-		dnprintf(50, "access:%d lock:%d update:%d",
-			 AML_FIELD_ACCESS(node->flag),
-			 AML_FIELD_LOCK(node->flag),
-			 AML_FIELD_UPDATE(node->flag));
 		break;
 		
 	case AMLOP_BYTEPREFIX:
