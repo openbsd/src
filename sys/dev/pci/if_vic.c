@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.2 2006/02/26 02:13:54 brad Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.3 2006/02/26 02:21:31 brad Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -113,7 +113,6 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	struct ifnet *ifp;
-	void *hook;
 
 	/* Enable memory mapping */
 	if (pci_mapreg_map(pa, VIC_BAR0, PCI_MAPREG_TYPE_IO, 0,
@@ -143,11 +142,6 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s\n", intrstr);
 
 	sc->sc_dmat = pa->pa_dmat;
-
-	if ((hook = shutdownhook_establish(vic_shutdown, sc)) == NULL) {
-		printf(": failed to establish the shutdown hook\n");
-		return;
-	}
 
 	sc->sc_ver_major = VIC_READ(VIC_VERSION_MAJOR);
 	sc->sc_ver_minor = VIC_READ(VIC_VERSION_MINOR);
@@ -187,8 +181,7 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 	vic_getlladdr(sc);
 
 	/* Initialise pseudo media types */
-	ifmedia_init(&sc->sc_media, 0, vic_media_change,
-	    vic_media_status);
+	ifmedia_init(&sc->sc_media, 0, vic_media_change, vic_media_status);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
@@ -230,13 +223,13 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
+	sc->sc_sdhook = shutdownhook_establish(vic_shutdown, sc);
+
 	/* Initialize timeout for link state update. */
 	timeout_set(&sc->sc_timer, vic_timer, sc);
 
 	/* XXX poll */
 	timeout_set(&sc->sc_poll, vic_poll, sc);
-
-	return;
 }
 
 void
