@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.70 2006/02/25 21:38:56 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.71 2006/02/26 18:38:53 grange Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -97,11 +97,11 @@ iicprobenc(u_int8_t cmd)
 	 */
 	if (skip_fc && cmd == 0xfc)
 		return (0xff);
-	probe_ic->ic_acquire_bus(probe_ic->ic_cookie, 0);
+	iic_acquire_bus(probe_ic, 0);
 	if (iic_exec(probe_ic, I2C_OP_READ_WITH_STOP,
 	    probe_addr, &cmd, 1, &data, 1, 0) != 0)
 		data = 0xff;
-	probe_ic->ic_release_bus(probe_ic->ic_cookie, 0);
+	iic_release_bus(probe_ic, 0);
 	return (data);
 }
 
@@ -116,11 +116,11 @@ iicprobew(u_int8_t cmd)
 	 */
 	if (skip_fc && cmd == 0xfc)
 		return (0xffff);
-	probe_ic->ic_acquire_bus(probe_ic->ic_cookie, 0);
+	iic_acquire_bus(probe_ic, 0);
 	if (iic_exec(probe_ic, I2C_OP_READ_WITH_STOP,
 	    probe_addr, &cmd, 1, &data, 2, 0) != 0)
 		data[0] = data[1] = 0xff;
-	probe_ic->ic_release_bus(probe_ic->ic_cookie, 0);
+	iic_release_bus(probe_ic, 0);
 	return ((data[0] << 8) | data[1]);
 }
 
@@ -671,18 +671,18 @@ iic_scan(struct device *self, struct i2cbus_attach_args *iba)
 		for (addr = probe_addrs[i].start; addr <= probe_addrs[i].end;
 		    addr++) {
 			/* Perform RECEIVE BYTE command */
-			ic->ic_acquire_bus(ic->ic_cookie, 0);
+			iic_acquire_bus(ic, 0);
 			if (iic_exec(ic, I2C_OP_READ_WITH_STOP, addr,
 			    &cmd, 1, NULL, 0, 0) == 0) {
-				ic->ic_release_bus(ic->ic_cookie, 0);
+				iic_release_bus(ic, 0);
 
 				/* Some device exists, so go scope it out */
 				iic_probe(self, iba, addr);
 
-				ic->ic_acquire_bus(ic->ic_cookie, 0);
+				iic_acquire_bus(ic, 0);
 
 			}
-			ic->ic_release_bus(ic->ic_cookie, 0);
+			iic_release_bus(ic, 0);
 		}
 	}
 }
