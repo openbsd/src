@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1031 2006/02/25 17:22:52 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1032 2006/02/26 17:13:48 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1971,11 +1971,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon 9200 Sec",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS480_HB,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_HB,
 	    "RS480 Host",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RX480_HB,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RX480_HB,
 	    "RX480 Host",
 	},
 	{
@@ -2011,23 +2011,23 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon XPRESS 200M",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RX480_PCIE,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RX480_PCIE,
 	    "RX480 PCIE",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS480_PCIE_2,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PCIE_2,
 	    "RS480 PCIE",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS480_PCIE_3,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PCIE_3,
 	    "RS480 PCIE",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAFEON_RX480_PCIE_2,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RX480_PCIE_2,
 	    "RX480 PCIE",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS480_PCIE_1,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PCIE_1,
 	    "RS480 PCIE",
 	},
 	{
@@ -6344,7 +6344,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_MYRICOM, PCI_PRODUCT_MYRICOM_LANAI_92,
-	    "MyriNet LANai 9.2",
+	    "Myrinet LANai 9.2",
 	},
 	{
 	    PCI_VENDOR_MYSON, PCI_PRODUCT_MYSON_MTD800,
