@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.48 2006/02/24 04:58:25 brad Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.49 2006/02/26 11:02:29 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -113,11 +113,10 @@ struct cfdriver nfe_cd = {
 	NULL, "nfe", DV_IFNET
 };
 
-#define NFE_DEBUG
 /*#define NFE_NO_JUMBO*/
 
 #ifdef NFE_DEBUG
-int nfedebug = 1;
+int nfedebug = 0;
 #define DPRINTF(x)	do { if (nfedebug) printf x; } while (0)
 #define DPRINTFN(n,x)	do { if (nfedebug >= (n)) printf x; } while (0)
 #else
@@ -357,6 +356,7 @@ int
 nfe_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct nfe_softc *sc = (struct nfe_softc *)dev;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	uint32_t val;
 	int ntries;
 
@@ -375,12 +375,12 @@ nfe_miibus_readreg(struct device *dev, int phy, int reg)
 			break;
 	}
 	if (ntries == 1000) {
-		DPRINTFN(2, ("timeout waiting for PHY\n"));
+		DPRINTFN(2, ("%s: timeout waiting for PHY\n", ifp->if_xname));
 		return 0;
 	}
 
 	if (NFE_READ(sc, NFE_PHY_STATUS) & NFE_PHY_ERROR) {
-		DPRINTFN(2, ("could not read PHY\n"));
+		DPRINTFN(2, ("%s: could not read PHY\n", ifp->if_xname));
 		return 0;
 	}
 
@@ -388,7 +388,8 @@ nfe_miibus_readreg(struct device *dev, int phy, int reg)
 	if (val != 0xffffffff && val != 0)
 		sc->mii_phyaddr = phy;
 
-	DPRINTFN(2, ("mii read phy %d reg 0x%x ret 0x%x\n", phy, reg, val));
+	DPRINTFN(2, ("%s: mii read phy %d reg 0x%x ret 0x%x\n", ifp->if_xname,
+	    phy, reg, val));
 
 	return val;
 }
@@ -438,7 +439,7 @@ nfe_intr(void *arg)
 	if (r & NFE_IRQ_LINK) {
 		NFE_READ(sc, NFE_PHY_STATUS);
 		NFE_WRITE(sc, NFE_PHY_STATUS, 0xf);
-		DPRINTF(("link state changed\n"));
+		DPRINTF(("%s: link state changed\n", ifp->if_xname));
 	}
 
 	if (ifp->if_flags & IFF_RUNNING) {
@@ -814,7 +815,8 @@ nfe_txeof(struct nfe_softc *sc)
 				goto skip;
 
 			if ((flags & NFE_TX_ERROR_V1) != 0) {
-				DPRINTF(("tx error 0x%04x\n", flags));
+				printf("%s: tx error 0x%04x\n", ifp->if_xname,
+				    flags);
 				ifp->if_oerrors++;
 			} else
 				ifp->if_opackets++;
@@ -823,14 +825,16 @@ nfe_txeof(struct nfe_softc *sc)
 				goto skip;
 
 			if ((flags & NFE_TX_ERROR_V2) != 0) {
-				DPRINTF(("tx error 0x%04x\n", flags));
+				printf("%s: tx error 0x%04x\n", ifp->if_xname,
+				    flags);
 				ifp->if_oerrors++;
 			} else
 				ifp->if_opackets++;
 		}
 
 		if (data->m == NULL) {	/* should not get there */
-			DPRINTF(("last fragment bit w/o associated mbuf!\n"));
+			DPRINTF(("%s: last fragment bit w/o associated mbuf!\n",
+			    ifp->if_xname));
 			goto skip;
 		}
 
