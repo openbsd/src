@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.17 2006/01/28 17:08:13 sturm Exp $	*/
+/*	$OpenBSD: apm.c,v 1.18 2006/02/26 17:59:07 jmc Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -292,7 +292,7 @@ main(int argc, char *argv[])
 			printf("Battery remaining: %d percent",
 			    reply.batterystate.battery_life);
 		else if (dopct)
-			printf(", %d %% remaining",
+			printf(", %d%% remaining",
 			    reply.batterystate.battery_life);
 		if (dopct && !domin)
 			printf("\n");
