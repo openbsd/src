@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.31 2006/01/22 18:37:56 miod Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.32 2006/02/26 22:23:15 martin Exp $	*/
 /*	$NetBSD: grf_nubus.c,v 1.62 2001/01/22 20:27:02 briggs Exp $	*/
 
 /*
@@ -361,10 +361,9 @@ macfb_nubus_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 		break;
 	default:
-		printf("%s: Unknown video card ID 0x%x --",
+		printf("%s: Unknown video card ID 0x%x\n",
 		    sc->sc_dev.dv_xname, sc->card_id);
-		printf(" Not installing interrupt routine.\n");
-		break;
+		goto bad;
 	}
 
 	/* Perform common video attachment. */
