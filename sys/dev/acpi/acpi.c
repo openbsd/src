@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.44 2006/02/23 18:53:21 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.45 2006/02/26 04:39:09 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -57,6 +57,7 @@ void	acpi_unmap_pmregs(struct acpi_softc *);
 int	acpi_read_pmreg(struct acpi_softc *, int);
 void	acpi_write_pmreg(struct acpi_softc *, int, int);
 
+void	acpi_foundpss(struct aml_node *, void *);
 void	acpi_foundhid(struct aml_node *, void *);
 void	acpi_inidev(struct aml_node *, void *);
 
@@ -470,6 +471,26 @@ acpi_inidev(struct aml_node *node, void *arg)
 }
 
 void
+acpi_foundpss(struct aml_node *node, void *arg)
+{
+	struct acpi_softc	*sc = (struct acpi_softc *)arg;
+	struct device		*self = (struct device *)arg;
+	const char		*dev;
+	struct acpi_attach_args	aaa;
+
+	dnprintf(10, "found pss entry: %s\n", node->parent->name);
+
+	memset(&aaa, 0, sizeof(aaa));
+	aaa.aaa_iot = sc->sc_iot;
+	aaa.aaa_memt = sc->sc_memt;
+	aaa.aaa_node = node->parent;
+	aaa.aaa_dev = dev;
+	aaa.aaa_name = "acpicpu";
+
+	config_found(self, &aaa, acpi_print);
+}
+
+void
 acpi_foundhid(struct aml_node *node, void *arg)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
@@ -721,6 +742,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* attach devices found in dsdt */
 	aml_find_node(aml_root.child, "_HID", acpi_foundhid, sc);
+
+	/* attach devices found in dsdt */
+	aml_find_node(aml_root.child, "_PSS", acpi_foundpss, sc);
 
 	/* Setup threads */
 	sc->sc_thread = malloc(sizeof(struct acpi_thread), M_DEVBUF, M_WAITOK);
