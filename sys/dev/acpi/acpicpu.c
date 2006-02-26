@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.4 2006/02/26 07:59:20 marco Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.5 2006/02/26 17:28:26 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -50,8 +50,11 @@ struct acpicpu_softc {
 
 	int			sc_pss_len;
 	struct acpicpu_pss	*sc_pss;
+
+	struct acpicpu_pct	sc_pct;
 };
 
+int	acpicpu_getpct(struct acpicpu_softc *);
 int	acpicpu_getpss(struct acpicpu_softc *);
 
 struct cfattach acpicpu_ca = {
@@ -112,7 +115,65 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 		printf("%d%s", sc->sc_pss[i].pss_core_freq,
 		    i < sc->sc_pss_len - 1 ? ", " : " MHz\n");
 
+	acpicpu_getpct(sc);
+
 	/* aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev, acpicpu_notify, sc); */
+}
+
+int
+acpicpu_getpct(struct acpicpu_softc *sc)
+{
+	struct aml_value	res, env;
+	struct acpi_context	*ctx;
+
+	memset(&res, 0, sizeof(res));
+	memset(&env, 0, sizeof(env));
+
+	ctx = NULL;
+	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_PPC", &res, &env)) {
+		dnprintf(20, "%s: no _PPC\n", DEVNAME(sc));
+		printf("%s: no _PPC\n", DEVNAME(sc));
+		return (1);
+	}
+
+	dnprintf(10, "_PPC: %d\n", aml_val2int(NULL, &res));
+
+	if (aml_eval_name(sc->sc_acpi, sc->sc_devnode, "_PCT", &res, &env)) {
+		dnprintf(20, "%s: no _PCT\n", DEVNAME(sc));
+		printf("%s: no _PCT\n", DEVNAME(sc));
+		return (1);
+	}
+
+	if (res.length != 2) {
+		printf("%s: %s: invalid _PCT length\n", DEVNAME(sc),
+		    sc->sc_devnode->parent->name);
+		return (1);
+	}
+
+	memcpy(&sc->sc_pct.pct_ctrl, res.v_package[0]->v_buffer,
+	    sizeof sc->sc_pct.pct_ctrl);
+	memcpy(&sc->sc_pct.pct_status, res.v_package[1]->v_buffer,
+	    sizeof sc->sc_pct.pct_status);
+
+	dnprintf(10, "_PCT(ctrl)  : %02x %04x %02x %02x %02x %02x %016x\n",
+	    sc->sc_pct.pct_ctrl.grd_descriptor,
+	    sc->sc_pct.pct_ctrl.grd_length,
+	    sc->sc_pct.pct_ctrl.grd_access_type,
+	    sc->sc_pct.pct_ctrl.grd_reg_width,
+	    sc->sc_pct.pct_ctrl.grd_reg_bit_offset,
+	    sc->sc_pct.pct_ctrl.grd_address_size,
+	    sc->sc_pct.pct_ctrl.grd_address);
+
+	dnprintf(10, "_PCT(status): %02x %04x %02x %02x %02x %02x %016x\n",
+	    sc->sc_pct.pct_status.grd_descriptor,
+	    sc->sc_pct.pct_status.grd_length,
+	    sc->sc_pct.pct_status.grd_access_type,
+	    sc->sc_pct.pct_status.grd_reg_width,
+	    sc->sc_pct.pct_status.grd_reg_bit_offset,
+	    sc->sc_pct.pct_status.grd_address_size,
+	    sc->sc_pct.pct_status.grd_address);
+
+	return (0);
 }
 
 int
