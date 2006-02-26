@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.5 2006/02/17 00:46:54 jordan Exp $ */
+/* $OpenBSD: acpidev.h,v 1.6 2006/02/26 02:26:05 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -194,5 +194,27 @@ struct acpibat_bmd {
 
 #define STA_PRESENT   (1L << 0)
 #define STA_BATTERY   (1L << 4)
+
+/*
+ * _PSS (Performance Supported States)
+ * Arguments: none
+ * Results  : package _PSS (Performance Supported States)
+ * Package {
+ *	CoreFreq		//DWORD
+ *	Power			//DWORD
+ *	TransitionLatency	//DWORD
+ *	BusMasterLatency	//DWORD
+ *	Control			//DWORD
+ * 	Status			//DWORD
+ * }
+ */
+struct acpicpu_pss {
+	u_int32_t	pss_core_freq;
+	u_int32_t	pss_power;
+	u_int32_t	pss_trans_latency;
+	u_int32_t	pss_bus_latency;
+	u_int32_t	pss_ctrl;
+	u_int32_t	pss_status;
+};
 
 #endif /* __DEV_ACPI_ACPIDEV_H__ */
