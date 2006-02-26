@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrtoname.c,v 1.27 2006/01/23 17:29:22 millert Exp $	*/
+/*	$OpenBSD: addrtoname.c,v 1.28 2006/02/26 21:10:54 otto Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.27 2006/01/23 17:29:22 millert Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.28 2006/02/26 21:10:54 otto Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -371,6 +371,8 @@ lookup_bytestring(register const u_char *bs, const int nlen)
 	tp->e_addr2 = k;
 
 	tp->e_bs = (u_char *) calloc(1, nlen + 1);
+	if (tp->e_bs == NULL)
+		error("lookup_bytestring: calloc");
 	bcopy(bs, tp->e_bs, nlen);
 	tp->e_nxt = (struct enamemem *)calloc(1, sizeof(*tp));
 	if (tp->e_nxt == NULL)
