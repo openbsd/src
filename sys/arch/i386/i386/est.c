@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.12 2006/02/27 05:37:16 marco Exp $ */
+/*	$OpenBSD: est.c,v 1.13 2006/02/27 14:13:10 marco Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -290,6 +290,18 @@ static const struct fq_info pentium_m_n765[] = {
 	{  600,  988 } 
 };
 
+/* Intel Pentium M processor 770 2.13 GHz */
+static const struct fq_info pentium_m_n770[] = {
+	{ 2130, 1551 },
+	{ 1800, 1429 },
+	{ 1600, 1356 },
+	{ 1400, 1180 },
+	{ 1200, 1132 },
+	{ 1000, 1084 },
+	{  800, 1036 },
+	{  600, 988 }
+};
+
 struct fqlist {
 	const char *brand_tag;
 	const int cpu_id;
@@ -326,6 +338,7 @@ static const struct fqlist pentium_m_dothan[] = {
 	ENTRY("1.80", 0, pentium_m_n745),
 	ENTRY("2.00", 0, pentium_m_n755),
 	ENTRY("2.10", 0, pentium_m_n765),
+	ENTRY("2.13", 0, pentium_m_n770),
 #undef ENTRY
 };
 
