@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfe.4,v 1.5 2006/02/20 02:59:43 jsg Exp $
+.\"	$OpenBSD: nfe.4,v 1.6 2006/02/27 08:03:00 jsg Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -80,3 +80,8 @@ and
 .Sh CAVEATS
 NVIDIA refuse to release any documentation on their products
 so the driver likely doesn't work as well as it otherwise could.
+.Sh BUGS
+Adapters that attach
+.Xr ciphy 4
+currently are unable to transmit and receive data, the cause of
+this is not yet known.
