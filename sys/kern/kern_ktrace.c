@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.38 2005/11/28 00:14:28 jsg Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.39 2006/02/27 00:34:33 niklas Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -99,8 +99,9 @@ ktrsyscall(struct proc *p, register_t code, size_t argsize, register_t args[])
 	register_t *argp;
 	u_int nargs = 0;
 	int i;
+	extern struct emul emul_native;
 
-	if (code == SYS___sysctl) {
+	if (p->p_emul == &emul_native && code == SYS___sysctl) {
 		if (args[1] > 0)
 			nargs = min(args[1], CTL_MAXNAME);
 		len += nargs * sizeof(int);
@@ -113,7 +114,7 @@ ktrsyscall(struct proc *p, register_t code, size_t argsize, register_t args[])
 	argp = (register_t *)((char *)ktp + sizeof(struct ktr_syscall));
 	for (i = 0; i < (argsize / sizeof *argp); i++)
 		*argp++ = args[i];
-	if (code == SYS___sysctl && nargs &&
+	if (p->p_emul == &emul_native && code == SYS___sysctl && nargs &&
 	    copyin((void *)args[0], argp, nargs * sizeof(int)))
 		bzero(argp, nargs * sizeof(int));
 	kth.ktr_buf = (caddr_t)ktp;
