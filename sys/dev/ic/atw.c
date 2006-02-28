@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.42 2006/02/17 09:13:22 jsg Exp $	*/
+/*	$OpenBSD: atw.c,v 1.43 2006/02/28 06:52:35 jsg Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -2126,6 +2126,7 @@ setit:
 	ATW_WRITE(sc, ATW_MAR1, hashes[1]);
 	ATW_WRITE(sc, ATW_NAR, sc->sc_opmode);
 	DELAY(20 * 1000);
+	ATW_WRITE(sc, ATW_RDR, 0x1);
 
 	DPRINTF(sc, ("%s: ATW_NAR %08x opmode %08x\n", sc->sc_dev.dv_xname,
 	    ATW_READ(sc, ATW_NAR), sc->sc_opmode));
@@ -2211,11 +2212,13 @@ void
 atw_write_wep(struct atw_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+#if 0
+	u_int32_t reg;
+	int i;
+#endif
 	/* SRAM shared-key record format: key0 flags key1 ... key12 */
 	u_int8_t buf[IEEE80211_WEP_NKID]
 	            [1 /* key[0] */ + 1 /* flags */ + 12 /* key[1 .. 12] */];
-	u_int32_t reg;
-	int i;
 
 	sc->sc_wepctl = 0;
 	ATW_WRITE(sc, ATW_WEPCTL, sc->sc_wepctl);
@@ -2225,6 +2228,7 @@ atw_write_wep(struct atw_softc *sc)
 
 	memset(&buf[0][0], 0, sizeof(buf));
 
+#if 0
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 		if (ic->ic_nw_keys[i].wk_len > 5) {
 			buf[i][1] = ATW_WEP_ENABLED | ATW_WEP_104BIT;
@@ -2256,6 +2260,7 @@ atw_write_wep(struct atw_softc *sc)
 	default:
 		break;
 	}
+#endif
 
 	atw_write_sram(sc, ATW_SRAM_ADDR_SHARED_KEY, (u_int8_t*)&buf[0][0],
 	    sizeof(buf));
@@ -3220,8 +3225,10 @@ atw_rxintr(struct atw_softc *sc)
 
 		wh = mtod(m, struct ieee80211_frame *);
 		ni = ieee80211_find_rxnode(ic, wh);
+#if 0
 		if (atw_hw_decrypted(sc, wh))
 			wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
+#endif
 		ieee80211_input(ifp, m, ni, (int)rssi, 0);
 		/*
 		 * The frame may have caused the node to be marked for
@@ -3497,6 +3504,13 @@ atw_start(struct ifnet *ifp)
 				ifp->if_oerrors++;
 				break;
 			}
+
+			if (sc->sc_ic.ic_flags & IEEE80211_F_WEPON) {
+				if ((m0 = ieee80211_wep_crypt(ifp, m0, 1)) == NULL) {
+					ifp->if_oerrors++;
+					break;	
+				}
+			}
 		}
 
 		wh = mtod(m0, struct ieee80211_frame *);
@@ -3602,10 +3616,12 @@ atw_start(struct ifnet *ifp)
 		hh->atw_fragthr = htole16(ATW_FRAGTHR_FRAGTHR_MASK);
 		hh->atw_rtylmt = 3;
 		hh->atw_hdrctl = htole16(ATW_HDRCTL_UNKNOWN1);
+#if 0
 		if (do_encrypt) {
 			hh->atw_hdrctl |= htole16(ATW_HDRCTL_WEP);
 			hh->atw_keyid = ic->ic_wep_txkey;
 		}
+#endif
 
 		hh->atw_head_plcplen = htole16(txs->txs_d0.d_plcp_len);
 		hh->atw_tail_plcplen = htole16(txs->txs_dn.d_plcp_len);
