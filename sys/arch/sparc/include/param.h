@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.34 2005/11/01 21:37:09 martin Exp $	*/
+/*	$OpenBSD: param.h,v 1.35 2006/02/28 18:24:18 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1997/03/10 22:50:37 pk Exp $ */
 
 /*
@@ -110,7 +110,7 @@
  * logical pages.
  */
 #define	NKMEMPAGES_MIN_DEFAULT		((4 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT		((8 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT		((4 * 1024 * 1024) >> PAGE_SHIFT)
 
 /* pages ("clicks") to disk blocks */
 #define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
