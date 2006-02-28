@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.41 2005/08/30 17:05:31 miod Exp $
+dnl	$OpenBSD: contents,v 1.42 2006/02/28 20:42:33 miod Exp $
 TopPart
 
 OpenBSDfloppy
@@ -32,24 +32,24 @@ OpenBSDfloppydesc(two,Each,s)
 
 DistributionDescription(eleven)
 
-OpenBSDbase(45333840,136781850,shared)
+OpenBSDbase(48117490,154538091,shared)
 
-OpenBSDcomp(25159162,99752449,shared)
+OpenBSDcomp(67425362,258238694,shared)
 
-OpenBSDetc(1149107,3827044)
+OpenBSDetc(1152535,3836966)
 
-OpenBSDgame(2825221,6650940)
+OpenBSDgame(2827128,6659779)
 
-OpenBSDman(7128745,25500292)
+OpenBSDman(7152297,25591594)
 
-OpenBSDmisc(2276131,7482333)
+OpenBSDmisc(2276114,7482328)
 
-OpenBSDxbase(13329897,46310584)
+OpenBSDxbase(13342860,46152680)
 
-OpenBSDxetc(86013,321653)
+OpenBSDxetc(82930,309151)
 
-OpenBSDxfont(33215681,37555046)
+OpenBSDxfont(33234519,37547572)
 
-OpenBSDxserv(8526742,30581126)
+OpenBSDxserv(8933043,29055163)
 
-OpenBSDxshare(2034398,10735331)
+OpenBSDxshare(2078348,10999893)

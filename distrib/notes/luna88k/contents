@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.5 2005/08/30 17:05:32 miod Exp $
+dnl	$OpenBSD: contents,v 1.6 2006/02/28 20:42:35 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -14,25 +14,25 @@ Media" for more information.
 
 DistributionDescription(ten)
 
-OpenBSDbase(82973968,197523697)
+OpenBSDbase(82275426,203136564)
 
-OpenBSDcomp(18086390,52502829)
+OpenBSDcomp(39864856,141513399)
 
-OpenBSDetc(1679031,6645368)
+OpenBSDetc(1152425,3995805)
 
-OpenBSDgame(7185882,15174157)
+OpenBSDgame(7098734,15193395)
 
-OpenBSDman(6760311,24080510)
+OpenBSDman(6839254,24374923)
 
-OpenBSDmisc(2276394,7482333)
+OpenBSDmisc(2276459,7482328)
 
-OpenBSDxbase(88733302,173155879)
+OpenBSDxbase(22,148531552)
 
-OpenBSDxetc(1040910,2150374)
+OpenBSDxetc(21,1903549)
 
-OpenBSDxfont(33194104,37048786)
+OpenBSDxfont(22,37547572)
 
 dnl No X server yet...
 dnl OpenBSDxserv
 dnl
-OpenBSDxshare(2027786,10711647)
+OpenBSDxshare(23,11019768)
