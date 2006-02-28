@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.60 2006/01/09 21:29:38 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.61 2006/02/28 18:45:54 kettenis Exp $
 #
 # PPC GENERIC config file
 #
@@ -37,6 +37,7 @@ openpic*	at memc?	# openpic interrupt controller
 ki2c*           at memc?        # Keywest I2C
 pchb*		at pci?		# host bridge identifiers
 ht*		at mainbus0
+smu*		at mainbus0
 
 #### PCI Bus devices.
 
