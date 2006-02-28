@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.400 2006/01/19 03:30:04 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.401 2006/02/28 20:33:55 matthieu Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -968,6 +968,9 @@ __EOT
 			echo "'$_f' did not install correctly."
 		else
 			DEFAULTSETS=$(rmel $_f $DEFAULTSETS)
+			# XXX Hack for 3.9. Remove old static X modules.
+			[[ $_f == xserv39.tgz ]] || continue
+			( cd /mnt/usr/X11R6/lib/modules ; rm -f *.[ao] */*.[ao] )
 		fi
 	done
 }
