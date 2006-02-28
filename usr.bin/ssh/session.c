@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.196 2006/02/20 17:19:54 stevesk Exp $");
+RCSID("$OpenBSD: session.c,v 1.197 2006/02/28 01:10:21 djm Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -1816,7 +1816,6 @@ session_exit_message(Session *s, int status)
 
 	/* disconnect channel */
 	debug("session_exit_message: release channel %d", s->chanid);
-	s->pid = 0;
 
 	/*
 	 * Adjust cleanup callback attachment to send close messages when
@@ -1878,6 +1877,7 @@ session_close_by_pid(pid_t pid, int status)
 		session_exit_message(s, status);
 	if (s->ttyfd != -1)
 		session_pty_cleanup(s);
+	s->pid = 0;
 }
 
 /*
