@@ -1595,6 +1595,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/ieeefp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/internal_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/intr.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/iop.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/kcore.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/keyboard.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mac68k/limits.ph
