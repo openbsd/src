@@ -663,12 +663,16 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	/* Always round the size. */
 	size = round_page(size);
 
+	TAILQ_INIT(&mlist);
+
 	/*
 	 * Allocate pages from the VM system.
 	 */
-	TAILQ_INIT(&mlist);
-	error = uvm_pglistalloc(size, low, high,
-	    alignment, boundary, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
+	if (high <= ISA_DMA_BOUNCE_THRESHOLD || (error = uvm_pglistalloc(size,
+	    round_page(ISA_DMA_BOUNCE_THRESHOLD), high, alignment, boundary,
+	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0)))
+		error = uvm_pglistalloc(size, low, high, alignment, boundary,
+		    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
 		return (error);
 
