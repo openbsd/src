@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.51 2006/02/26 19:25:41 damien Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -1107,6 +1107,8 @@ nfe_init(struct ifnet *ifp)
 	/* set Rx filter */
 	nfe_setmulti(sc);
 
+	nfe_ifmedia_upd(ifp);
+
 	/* enable Rx */
 	NFE_WRITE(sc, NFE_RX_CTL, NFE_RX_START);
 
@@ -1117,8 +1119,6 @@ nfe_init(struct ifnet *ifp)
 
 	/* enable interrupts */
 	NFE_WRITE(sc, NFE_IRQ_MASK, NFE_IRQ_WANTED);
-
-	nfe_ifmedia_upd(ifp);
 
 	timeout_add(&sc->sc_tick_ch, hz);
 
