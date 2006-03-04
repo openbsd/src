@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.5 2006/02/22 22:17:05 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.6 2006/03/04 15:59:06 miod Exp $	*/
 /*	OpenBSD: locore.s,v 1.64 2005/04/17 18:47:50 miod Exp 	*/
 
 /*
@@ -3767,30 +3767,6 @@ Lfsbail:
 	st	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
 	retl				! and return error indicator
 	 mov	-1, %o0
-
-/*
- * probeset(addr, size, val) caddr_t addr; int size, val;
- *
- * As above, but we return 0 on success.
- */
-ENTRY(probeset)
-	! %o0 = addr, %o1 = (1,2,4), %o2 = val
-	sethi	%hi(_C_LABEL(cpcb)), %o3
-	ld	[%o3 + %lo(_C_LABEL(cpcb))], %o3	! cpcb->pcb_onfault = Lfserr;
-	set	Lfserr, %o5
-	st	%o5, [%o3 + PCB_ONFAULT]
-	btst	1, %o1
-	bnz,a	0f			! if (len & 1)
-	 stb	%o2, [%o0]		!	*(char *)addr = value;
-0:	btst	2, %o1
-	bnz,a	0f			! if (len & 2)
-	 sth	%o2, [%o0]		!	*(short *)addr = value;
-0:	btst	4, %o1
-	bnz,a	0f			! if (len & 4)
-	 st	%o2, [%o0]		!	*(int *)addr = value;
-0:	clr	%o0			! made it, clear onfault and return 0
-	retl
-	 st	%g0, [%o3 + PCB_ONFAULT]
 
 /*
  * copywords(src, dst, nbytes)
