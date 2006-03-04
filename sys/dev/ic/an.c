@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.47 2006/02/20 11:13:57 jsg Exp $	*/
+/*	$OpenBSD: an.c,v 1.48 2006/03/04 04:43:28 brad Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -256,7 +256,7 @@ an_attach(struct an_softc *sc)
 	else
 		printf("unknown (%x)", sc->sc_config.an_radiotype);
 
-	printf(", address: %s\n", ether_sprintf(ic->ic_myaddr));
+	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 	
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
