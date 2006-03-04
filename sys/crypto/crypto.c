@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.46 2004/12/21 10:07:34 mpf Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.47 2006/03/04 21:33:39 brad Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -54,7 +54,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 	if (crypto_drivers == NULL)
 		return EINVAL;
 
-	s = splimp();
+	s = splvm();
 
 	/*
 	 * The algorithm we use here is pretty stupid; just use the
@@ -188,7 +188,7 @@ crypto_freesession(u_int64_t sid)
 	if (hid >= crypto_drivers_num)
 		return ENOENT;
 
-	s = splimp();
+	s = splvm();
 
 	if (crypto_drivers[hid].cc_sessions)
 		crypto_drivers[hid].cc_sessions--;
@@ -216,7 +216,7 @@ int32_t
 crypto_get_driverid(u_int8_t flags)
 {
 	struct cryptocap *newdrv;
-	int i, s = splimp();
+	int i, s = splvm();
 
 	if (crypto_drivers_num == 0) {
 		crypto_drivers_num = CRYPTO_DRIVERS_INITIAL;
@@ -292,7 +292,7 @@ crypto_kregister(u_int32_t driverid, int *kalg,
 	    crypto_drivers == NULL)
 		return EINVAL;
 
-	s = splimp();
+	s = splvm();
 
 	for (i = 0; i < CRK_ALGORITHM_MAX; i++) {
 		/*
@@ -323,7 +323,7 @@ crypto_register(u_int32_t driverid, int *alg,
 	    crypto_drivers == NULL)
 		return EINVAL;
 	
-	s = splimp();
+	s = splvm();
 
 	for (i = 0; i < CRYPTO_ALGORITHM_ALL; i++) {
 		/*
@@ -355,7 +355,7 @@ crypto_register(u_int32_t driverid, int *alg,
 int
 crypto_unregister(u_int32_t driverid, int alg)
 {
-	int i = CRYPTO_ALGORITHM_MAX + 1, s = splimp();
+	int i = CRYPTO_ALGORITHM_MAX + 1, s = splvm();
 	u_int32_t ses;
 
 	/* Sanity checks. */
@@ -401,7 +401,7 @@ crypto_unregister(u_int32_t driverid, int alg)
 int
 crypto_dispatch(struct cryptop *crp)
 {
-	int s = splimp();
+	int s = splvm();
 	u_int32_t hid;
 
 	/*
@@ -430,7 +430,7 @@ crypto_dispatch(struct cryptop *crp)
 int
 crypto_kdispatch(struct cryptkop *krp)
 {
-	int s = splimp();
+	int s = splvm();
 
 	krp->krp_next = NULL;
 	if (krp_req_queue == NULL) {
@@ -567,7 +567,7 @@ crypto_freereq(struct cryptop *crp)
 	if (crp == NULL)
 		return;
 
-	s = splimp();
+	s = splvm();
 
 	while ((crd = crp->crp_desc) != NULL) {
 		crp->crp_desc = crd->crd_next;
@@ -586,7 +586,7 @@ crypto_getreq(int num)
 {
 	struct cryptodesc *crd;
 	struct cryptop *crp;
-	int s = splimp();
+	int s = splvm();
 
 	if (crypto_pool_initialized == 0) {
 		pool_init(&cryptop_pool, sizeof(struct cryptop), 0, 0,
@@ -630,7 +630,7 @@ crypto_thread(void)
 	struct cryptkop *krp;
 	int s;
 
-	s = splimp();
+	s = splvm();
 
 	for (;;) {
 		crp = crp_req_queue;
