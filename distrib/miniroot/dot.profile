@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.4 2002/09/13 21:38:47 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.5 2006/03/04 20:11:12 krw Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -33,7 +33,8 @@
 
 export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 umask 022
-set -o emacs # emacs-style command line editing
+# emacs-style command line editing
+set -o emacs
 
 rootdisk=`dmesg|sed -n -e '/OpenBSD /h' -e '//!H' -e '${
 	g
