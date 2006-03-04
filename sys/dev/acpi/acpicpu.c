@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.5 2006/02/26 17:28:26 marco Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.6 2006/03/04 05:36:42 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -70,6 +70,9 @@ acpicpu_match(struct device *parent, void *match, void *aux)
 {
 	struct acpi_attach_args	*aa = aux;
 	struct cfdata		*cf = match;
+	
+	printf("acpicpu_match: %s %s\n", 
+		aa->aaa_name, cf->cf_driver->cd_name);
 
 	/* sanity */
 	if (aa->aaa_name == NULL ||
@@ -125,6 +128,7 @@ acpicpu_getpct(struct acpicpu_softc *sc)
 {
 	struct aml_value	res, env;
 	struct acpi_context	*ctx;
+	char			pb[8];
 
 	memset(&res, 0, sizeof(res));
 	memset(&env, 0, sizeof(env));
@@ -158,20 +162,47 @@ acpicpu_getpct(struct acpicpu_softc *sc)
 	dnprintf(10, "_PCT(ctrl)  : %02x %04x %02x %02x %02x %02x %016x\n",
 	    sc->sc_pct.pct_ctrl.grd_descriptor,
 	    sc->sc_pct.pct_ctrl.grd_length,
-	    sc->sc_pct.pct_ctrl.grd_access_type,
-	    sc->sc_pct.pct_ctrl.grd_reg_width,
-	    sc->sc_pct.pct_ctrl.grd_reg_bit_offset,
-	    sc->sc_pct.pct_ctrl.grd_address_size,
-	    sc->sc_pct.pct_ctrl.grd_address);
+	    sc->sc_pct.pct_ctrl.grd_gas.address_space_id,
+	    sc->sc_pct.pct_ctrl.grd_gas.register_bit_width,
+	    sc->sc_pct.pct_ctrl.grd_gas.register_bit_offset,
+	    sc->sc_pct.pct_ctrl.grd_gas.access_size,
+	    sc->sc_pct.pct_ctrl.grd_gas.address);
 
 	dnprintf(10, "_PCT(status): %02x %04x %02x %02x %02x %02x %016x\n",
 	    sc->sc_pct.pct_status.grd_descriptor,
 	    sc->sc_pct.pct_status.grd_length,
-	    sc->sc_pct.pct_status.grd_access_type,
-	    sc->sc_pct.pct_status.grd_reg_width,
-	    sc->sc_pct.pct_status.grd_reg_bit_offset,
-	    sc->sc_pct.pct_status.grd_address_size,
-	    sc->sc_pct.pct_status.grd_address);
+	    sc->sc_pct.pct_status.grd_gas.address_space_id,
+	    sc->sc_pct.pct_status.grd_gas.register_bit_width,
+	    sc->sc_pct.pct_status.grd_gas.register_bit_offset,
+	    sc->sc_pct.pct_status.grd_gas.access_size,
+	    sc->sc_pct.pct_status.grd_gas.address);
+
+	acpi_debug = 111;
+	acpi_gasio(sc->sc_acpi, ACPI_IOREAD,
+	   sc->sc_pct.pct_ctrl.grd_gas.address_space_id,
+	   sc->sc_pct.pct_ctrl.grd_gas.address,
+	   1,
+	   4,
+	   //sc->sc_pct.pct_ctrl.grd_gas.register_bit_width >> 3,
+	   pb);
+
+	acpi_gasio(sc->sc_acpi, ACPI_IOWRITE,
+	   sc->sc_pct.pct_ctrl.grd_gas.address_space_id,
+	   sc->sc_pct.pct_ctrl.grd_gas.address,
+	   1,
+	   4,
+	   //sc->sc_pct.pct_ctrl.grd_gas.register_bit_width >> 3,
+	   &sc->sc_pss[3].pss_ctrl);
+
+	acpi_gasio(sc->sc_acpi, ACPI_IOREAD,
+	   sc->sc_pct.pct_ctrl.grd_gas.address_space_id,
+	   sc->sc_pct.pct_ctrl.grd_gas.address,
+	   1,
+	   4,
+	   //sc->sc_pct.pct_ctrl.grd_gas.register_bit_width >> 3,
+	   pb);
+	printf("acpicpu: %02x %02x %02x %02x\n", pb[0], pb[1], pb[2], pb[3]);
+	acpi_debug = 21;
 
 	return (0);
 }

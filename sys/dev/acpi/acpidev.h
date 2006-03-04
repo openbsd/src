@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.7 2006/02/26 17:05:33 marco Exp $ */
+/* $OpenBSD: acpidev.h,v 1.8 2006/03/04 05:36:42 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -226,22 +226,7 @@ struct acpicpu_pss {
 struct acpi_grd {
 	u_int8_t	grd_descriptor;
 	u_int16_t	grd_length;
-	u_int8_t	grd_access_type;
-#define GRD_SYS_MEM		0x00
-#define GRD_SYS_IO		0x01
-#define GRD_SYS_PCICONFIG	0x02
-#define GRD_SYS_EMBEDCTRL	0x03
-#define GRD_SYS_SMBUS		0x04
-#define GRD_SYS_FIXEDHW		0x7f
-	u_int8_t	grd_reg_width;
-	u_int8_t	grd_reg_bit_offset;
-	u_int8_t	grd_address_size;
-#define GRD_ADDR_UNDEFINED	0x00
-#define GRD_ADDR_BYTE		0x01
-#define GRD_ADDR_WORD		0x02
-#define GRD_ADDR_DWORD		0x03
-#define GRD_ADDR_QWORD		0x04
-	u_int64_t	grd_address;
+	struct acpi_gas	grd_gas;
 } __packed;
 
 /*
