@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.35 2005/12/13 12:13:59 dlg Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.36 2006/03/04 05:21:22 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -98,18 +98,28 @@ struct	ami_pci_subsys {
 	int		flags;
 } ami_pci_subsys[] = {
 	/* only those of a special name or quirk are listed here */
+	{ 0x004d1025,	"ACER MegaRAID ROMB-2E", 0},
 	{ 0x0511101e,	"AMI MegaRAID i4", AMI_BROKEN },
 	{ 0x04931028,	"Dell PERC3/DC", 0 },
-	{ 0x09A0101E,	"Dell 466v1", 0 },
+	{ 0x09a0101e,	"Dell 466v1", 0 },
 	{ 0x11111111,	"Dell 466v2", 0 },
 	{ 0x11121111,	"Dell 438", 0 },
 	{ 0x11111028,	"Dell 466v3", 0 },
+	{ 0x10651734,	"FSC MegaRAID PCI Express ROMB", 0 },
 	{ 0x10c6103c,	"HP 438", 0 },
 	{ 0x10c7103c,	"HP T5/T6", 0 },
 	{ 0x10cc103c,	"HP T7", 0 },
 	{ 0x10cd103c,	"HP 466", 0 },
 	{ 0x45231000,	"LSI 523", 0 },
-	{ 0x05328086,	"Intel SRCU42X", 0 },
+	{ 0x05328086,	"Intel RAID SRCU42X", 0 },
+	{ 0x05238086,	"Intel RAID SRCS16", 0 },
+	{ 0x00028086,	"Intel RAID SRCU42E", 0 },
+	{ 0x05308086,	"Intel RAID SRCZCRX", 0 },
+	{ 0x30088086,	"Intel RAID SRCS28X", 0 },
+	{ 0x34318086,	"Intel RAID SROMBU42E", 0 },
+	{ 0x34998086,	"Intel RAID SROMBU42E", 0 },
+	{ 0x05208086,	"Intel RAID SRCU51L", 0 },
+	{ 0x82871033,	"NEC MegaRAID PCI Express ROMB", 0 },
 	{ 0, NULL, 0 }
 };
 
