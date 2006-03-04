@@ -1,4 +1,4 @@
-/*	$OpenBSD: led.c,v 1.10 2003/06/02 18:40:59 jason Exp $	*/
+/*	$OpenBSD: led.c,v 1.11 2006/03/04 12:38:58 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -56,7 +56,7 @@ struct cfattach led_ca = {
 };
 
 struct cfdriver led_cd = {
-	NULL, "led", DV_IFNET
+	NULL, "led", DV_DULL
 };
 
 static u_int8_t led_pattern[] = {

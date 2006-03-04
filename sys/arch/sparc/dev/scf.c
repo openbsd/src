@@ -1,4 +1,4 @@
-/*	$OpenBSD: scf.c,v 1.8 2006/02/22 22:31:49 miod Exp $	*/
+/*	$OpenBSD: scf.c,v 1.9 2006/03/04 12:38:58 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -72,7 +72,7 @@ struct cfattach scf_ca = {
 };
 
 struct cfdriver scf_cd = {
-	NULL, "scf", DV_IFNET
+	NULL, "scf", DV_DULL
 };
 
 extern int sparc_led_blink;

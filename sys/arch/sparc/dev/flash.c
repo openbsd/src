@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.3 2003/06/02 18:40:59 jason Exp $	*/
+/*	$OpenBSD: flash.c,v 1.4 2006/03/04 12:38:58 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -75,7 +75,7 @@ struct cfattach flash_ca = {
 };
 
 struct cfdriver flash_cd = {
-	NULL, "flash", DV_IFNET
+	NULL, "flash", DV_DULL
 };
 
 int
