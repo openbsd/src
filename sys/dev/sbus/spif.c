@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
+/*	$OpenBSD: spif.c,v 1.13 2006/03/04 13:00:55 miod Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Jason L. Wright (jason@thought.net)
@@ -55,13 +55,6 @@
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/spifreg.h>
 #include <dev/sbus/spifvar.h>
-
-/*
- * useful macros
- */
-#define	SET(t, f)	((t) |= (f))
-#define	CLR(t, f)	((t) &= ~(f))
-#define	ISSET(t, f)	((t) & (f))
 
 int	spifmatch(struct device *, void *, void *);
 void	spifattach(struct device *, struct device *, void *);
