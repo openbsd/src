@@ -1,4 +1,4 @@
-/*	$OpenBSD: alipm.c,v 1.8 2006/02/26 20:39:16 kettenis Exp $	*/
+/*	$OpenBSD: alipm.c,v 1.9 2006/03/04 19:33:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -39,7 +39,7 @@
 
 /* PCI configuration registers. */
 #define ALIPM_CONF	0xd0		/* general configuration */
-#define ALIPM_CONF_SMBEN	0x0400		/* emanble SMBus */
+#define ALIPM_CONF_SMBEN	0x0400		/* enable SMBus */
 #define ALIPM_BASE	0xe0		/* ACPI and SMBus base address */
 #define ALIPM_SMB_HOSTC	0xf0		/* host configuration */
 #define ALIPM_SMB_HOSTC_HSTEN	0x00000001	/* enable host controller */

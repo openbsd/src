@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.12 2005/12/20 07:06:26 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.13 2006/03/04 19:33:21 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -179,7 +179,7 @@ tlb_miss_nopt:
 	.set	at
 
 /*
- * Trampolines copied to exception vectors when code is to big.
+ * Trampolines copied to exception vectors when code is too big.
  */
 	.globl	tlb_miss_tramp
 tlb_miss_tramp:
@@ -464,7 +464,7 @@ LEAF(tlb_flush_addr, 0)
 	mtc0	v0, COP_0_STATUS_REG	# Disable interrupts
 	ITLBNOPFIX
 	li	v0, (PG_HVPN | PG_ASID)
-	and	a0, a0, v0		# Make shure valid hi value.
+	and	a0, a0, v0		# Make sure valid hi value.
 	dmfc0	ta0, COP_0_TLB_HI	# Get current PID
 	dmtc0	a0, COP_0_TLB_HI	# look for addr & PID
 	nop
@@ -582,9 +582,9 @@ LEAF(tlb_update, 0)
 	nop
 	li	v0, 0
 
-4:					# Make shure pipeline
+4:					# Make sure pipeline
 	nop				# advances before we
-	nop				# uses the tlb.
+	nop				# use the tlb.
 	dmtc0	ta0, COP_0_TLB_HI	# restore PID
 	mtc0	v1, COP_0_STATUS_REG	# Restore the status register
 	ITLBNOPFIX

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.8 2005/12/20 06:58:19 miod Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.9 2006/03/04 19:33:21 miod Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -210,7 +210,7 @@ bail:
  * Return to previous pc and psl as specified by
  * context left by sendsig. Check carefully to
  * make sure that the user has not modified the
- * psl to gain improper priviledges or to cause
+ * psl to gain improper privileges or to cause
  * a machine fault.
  */
 /* ARGSUSED */

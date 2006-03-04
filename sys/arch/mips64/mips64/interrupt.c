@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.19 2005/12/20 06:57:52 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.20 2006/03/04 19:33:21 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -81,7 +81,7 @@ int netisr;
 
 /*
  *  Modern versions of MIPS processors have extended interrupt
- *  capabilites. How these are handeled differs from implementation
+ *  capabilities. How these are handled differs from implementation
  *  to implementation. This code tries to hide away some of these
  *  in "higher level" interrupt code.
  *
@@ -96,7 +96,7 @@ int netisr;
  *
  *  The interrupt mechanism in this port uses a delayed masking model
  *  where interrupts are not really masked when doing an spl(). Instead
- *  a masked interrupt will be taken and validiated in the various
+ *  a masked interrupt will be taken and validated in the various
  *  handlers. If the handler finds that an interrupt is masked it will
  *  register this interrupt as pending and return a new mask to this
  *  code that will turn off the interrupt hardware wise. Later when
@@ -113,13 +113,13 @@ int netisr;
  *  in the RM7000. IPL12 extra timer is currently not used.
  *
  *  irq's maps into the software spl register to the bit corresponding
- *  to it's status/mask bit in the cause/sr register shifted right eight
+ *  to its status/mask bit in the cause/sr register shifted right eight
  *  places.
  *
  *  A well designed system uses the CPUs interrupt inputs in a way, such
  *  that masking can be done according to the IPL in the CPU status and
- *  interrupt vontrol register. However support for an external masking
- *  register is provided but will case a slightly higher overhead when
+ *  interrupt control register. However support for an external masking
+ *  register is provided but will cause a slightly higher overhead when
  *  used. When an external masking register is used, no masking in the
  *  CPU is done. Instead a fixed mask is set and used throughout.
  */
@@ -128,7 +128,7 @@ void interrupt (struct trap_frame *);
 void softintr (void);
 
 /*
- * Handle an interrupt. Both kernel and user mode is handeled here.
+ * Handle an interrupt. Both kernel and user mode is handled here.
  *
  * The interrupt handler is called with the CR_INT bits set that
  * was given when the handlers was registred that needs servicing.

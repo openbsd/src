@@ -1,4 +1,4 @@
-/*	$OpenBSD: sid.h,v 1.13 2002/05/25 04:29:53 hugh Exp $	*/
+/*	$OpenBSD: sid.h,v 1.14 2006/03/04 19:33:21 miod Exp $	*/
 /*	$NetBSD: sid.h,v 1.12 1999/12/11 17:55:13 ragge Exp $	*/
 
 /*
@@ -32,9 +32,9 @@
  */
 
 /*
- * Board-Type (?_BTYP_?) and Sub-Type (?_STYP_?) are synonima.
+ * Board-Type (?_BTYP_?) and Sub-Type (?_STYP_?) are synonyms.
  * Michael Kukat changed this 01/27/2001, STYP is relly a subtype now.
- * other synonima are:
+ * other synonyms are:
  */
 #define cpudata	    vax_cpudata
 #define cputype	    vax_cputype

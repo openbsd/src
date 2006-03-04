@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.32 2006/01/18 23:42:12 miod Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.33 2006/03/04 19:33:21 miod Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -811,7 +811,7 @@ ptyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    }
 #endif
 			/*
-			 * We aviod calling ttioctl on the controller since,
+			 * We avoid calling ttioctl on the controller since,
 			 * in that case, tp must be the controlling terminal.
 			 */
 			*(int *)data = tp->t_pgrp ? tp->t_pgrp->pg_id : 0;

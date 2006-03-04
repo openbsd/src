@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.45 2006/02/07 07:59:22 martin Exp $ */
+/* $OpenBSD: pmap.c,v 1.46 2006/03/04 19:33:19 miod Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -312,9 +312,9 @@ const char *pmap_pgu_strings[] = PGU_STRINGS;
  *	  by process A.  *poof*
  *
  * In the scenario above, in addition to the processor using using incorrect
- * TLB entires, the PALcode might use incorrect information to service a
+ * TLB entries, the PALcode might use incorrect information to service a
  * TLB miss.  (The PALcode uses the recursively mapped Virtual Page Table
- * to locate the PTE for a faulting address, and tagged TLB entires exist
+ * to locate the PTE for a faulting address, and tagged TLB entries exist
  * for the Virtual Page Table addresses in order to speed up this procedure,
  * as well.)
  *

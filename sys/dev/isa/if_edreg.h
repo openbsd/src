@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_edreg.h,v 1.6 2002/06/03 20:01:37 deraadt Exp $      */
+/*    $OpenBSD: if_edreg.h,v 1.7 2006/03/04 19:33:21 miod Exp $      */
 /*    $NetBSD: if_edreg.h,v 1.15 1996/01/10 16:49:22 chuck Exp $      */
 
 /*
@@ -180,7 +180,7 @@
 
 /*
  * General Control Register (GCR)
- * Eanbled with SWH bit == 1 in HWR register
+ * Enabled with SWH bit == 1 in HWR register
  */
 #define	ED_WD790_GCR	0x0d
 

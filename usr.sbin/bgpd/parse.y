@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.181 2006/02/10 14:34:40 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.182 2006/03/04 19:33:22 miod Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1254,7 +1254,7 @@ filter_set_opt	: LOCALPREF number		{
 		}
 		| LOCALPREF '+' number		{
 			if ($3 > INT_MAX) {
-				yyerror("localpref to big: max %u", INT_MAX);
+				yyerror("localpref too big: max %u", INT_MAX);
 				YYERROR;
 			}
 			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
@@ -1280,7 +1280,7 @@ filter_set_opt	: LOCALPREF number		{
 		}
 		| MED '+' number			{
 			if ($3 > INT_MAX) {
-				yyerror("metric to big: max %u", INT_MAX);
+				yyerror("metric too big: max %u", INT_MAX);
 				YYERROR;
 			}
 			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
@@ -1306,7 +1306,7 @@ filter_set_opt	: LOCALPREF number		{
 		}
 		| METRIC '+' number			{
 			if ($3 > INT_MAX) {
-				yyerror("metric to big: max %u", INT_MAX);
+				yyerror("metric too big: max %u", INT_MAX);
 				YYERROR;
 			}
 			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
@@ -1332,7 +1332,7 @@ filter_set_opt	: LOCALPREF number		{
 		}
 		| WEIGHT '+' number			{
 			if ($3 > INT_MAX) {
-				yyerror("weight to big: max %u", INT_MAX);
+				yyerror("weight too big: max %u", INT_MAX);
 				YYERROR;
 			}
 			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
