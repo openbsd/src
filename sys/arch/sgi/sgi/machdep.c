@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.29 2006/01/04 20:25:34 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.30 2006/03/04 22:02:47 brad Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -253,7 +253,7 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 		break;
 #endif
 
-#if defined(TGT_ORIGIN200) | defined(TGT_ORIGIN2000)
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
 	case SGI_O200:
 		bios_printf("Found SGI-IP27, setting up.\n");
 		strlcpy(cpu_model, "SGI- Origin200 (IP27)", sizeof(cpu_model));
@@ -454,7 +454,7 @@ bios_printf("SR=%08x\n", getsr()); /* leave this in for now. need to see sr */
 /* XXX */
 #endif
 
-#if defined(TGT_ORIGIN200) | defined(TGT_ORIGIN2000)
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
 	/*
 	 *  If an IP27 system set up Node 0's HUB.
 	 */
