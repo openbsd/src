@@ -1,4 +1,4 @@
-/*	$OpenBSD: asb100.c,v 1.5 2006/01/31 11:18:28 djm Exp $	*/
+/*	$OpenBSD: asb100.c,v 1.6 2006/03/04 08:14:01 djm Exp $	*/
 
 /*
  * Copyright (c) 2005 Damien Miller <djm@openbsd.org>
@@ -400,8 +400,9 @@ asbtm_refresh(void *arg)
 		    sizeof sdata2, 0) == 0 && sdata2 != 0xffff) {
 			sc->sc_sensor[ASB100_SENSOR_TEMP1].value = 273150000 +
 			    500000 * (swap16(sdata2) / 128);
+			sc->sc_sensor[ASB100_SENSOR_TEMP2].flags &=
+			    ~SENSOR_FINVALID;
 		} else {
-			sc->sc_satellite[0] = -1;
 			sc->sc_sensor[ASB100_SENSOR_TEMP2].flags |=
 			    SENSOR_FINVALID;
 		}
@@ -414,8 +415,9 @@ asbtm_refresh(void *arg)
 		    sizeof sdata2, 0) == 0 && sdata2 != 0xffff) {
 			sc->sc_sensor[ASB100_SENSOR_TEMP2].value = 273150000 +
 			    500000 * (swap16(sdata2) / 128);
+			sc->sc_sensor[ASB100_SENSOR_TEMP2].flags &=
+			    ~SENSOR_FINVALID;
 		} else {
-			sc->sc_satellite[1] = -1;
 			sc->sc_sensor[ASB100_SENSOR_TEMP2].flags |=
 			    SENSOR_FINVALID;
 		}
