@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.75 2006/01/05 21:22:24 brad Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.76 2006/03/04 03:34:38 brad Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
  */
 
 #include "bpfilter.h"
-#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
