@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.42 2006/03/04 06:54:18 otto Exp $	*/
+/*	$OpenBSD: top.c,v 1.43 2006/03/04 06:58:12 otto Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -89,7 +89,6 @@ void		(*d_process)(int, char *) = i_process;
 int displays = 0;	/* indicates unspecified */
 char do_unames = Yes;
 struct process_select ps;
-char dostates = No;
 char interactive = Maybe;
 char warnings = 0;
 double delay = Default_DELAY;
@@ -428,18 +427,7 @@ restart:
 		(*d_procstates)(system_info.p_total, system_info.procstates);
 
 		/* display the cpu state percentage breakdown */
-		if (dostates) {	/* but not the first time */
-			(*d_cpustates)(system_info.cpustates);
-		} else {
-			/* we'll do it next time */
-			if (smart_terminal)
-				z_cpustates();
-			else {
-				if (putchar('\n') == EOF)
-					exit(1);
-			}
-			dostates = Yes;
-		}
+		(*d_cpustates)(system_info.cpustates);
 
 		/* display memory stats */
 		(*d_memory)(system_info.memory);

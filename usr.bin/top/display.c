@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.22 2005/07/01 19:33:35 jaredy Exp $	 */
+/* $OpenBSD: display.c,v 1.23 2006/03/04 06:58:11 otto Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -484,34 +484,6 @@ u_cpustates(int64_t *ostates)
 			states++;
 			colp++;
 		}
-	}
-}
-
-void
-z_cpustates(void)
-{
-	char **names, *thisname;
-	int cpu, i;
-	int64_t *lp;
-
-	for (cpu = 0; cpu < ncpu; cpu++) {
-		/* show tag and bump lastline */
-		printf("\n%s", cpustates_tag(cpu));
-		lastline++;
-
-		names = cpustate_names;
-		i = 0;
-		while ((thisname = *names++) != NULL) {
-			if (*thisname != '\0')
-				printf("%s    %% %s", i++ == 0 ? "" : ", ",
-				    thisname);
-		}
-
-		/* fill the "last" array with all -1s, to ensure correct updating */
-		lp = lcpustates[cpu];
-		i = num_cpustates;
-		while (--i >= 0)
-			*lp++ = -1;
 	}
 }
 
