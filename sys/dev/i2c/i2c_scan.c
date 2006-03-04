@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.71 2006/02/26 18:38:53 grange Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.72 2006/03/04 02:58:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -437,7 +437,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		else if (iicprobe(0x3f) == 0x17)
 			name = "lm86";
 		else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
-		    iicprobe(0x3f) == 0x68 && iicprobe(0xf8) != 0x01)
+		    iicprobe(0x3f) == 0x68)
 			name = "lm96000";	/* adt7460 compat? */
 		else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
 		    (iicprobe(0x3f) == 0x60 || iicprobe(0x3f) == 0x62))
