@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.72 2006/03/04 02:58:14 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.73 2006/03/04 12:18:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -28,7 +28,7 @@
 #include <dev/i2c/i2cvar.h>
 
 #undef I2C_DEBUG
-#undef I2C_VERBOSE		/* XXX Re-enable after release. */
+#define I2C_VERBOSE
 
 void	iic_probe(struct device *, struct i2cbus_attach_args *, u_int8_t);
 
