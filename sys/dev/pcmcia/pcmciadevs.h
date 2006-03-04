@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.130 2005/12/17 03:00:20 jsg Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.131 2006/03/04 04:57:18 jsg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.127 2005/12/17 02:59:25 jsg Exp 
+ *		OpenBSD: pcmciadevs,v 1.128 2006/03/04 04:56:53 jsg Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -524,6 +524,8 @@
 #define	PCMCIA_PRODUCT_SOCKET_LP_ETHER	0x000d
 #define	PCMCIA_CIS_SOCKET_LP_ETHER_CF	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SOCKET_LP_ETHER_CF	0x0075
+#define	PCMCIA_CIS_SOCKET_ETHER_CF_10_100	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SOCKET_ETHER_CF_10_100	0x0145
 
 /* Standard Microsystems Corporation */
 #define	PCMCIA_CIS_SMC_8020	{ NULL, NULL, NULL, NULL }
