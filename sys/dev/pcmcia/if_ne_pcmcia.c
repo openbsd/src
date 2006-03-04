@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.86 2005/12/09 06:23:49 uwe Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.87 2006/03/04 04:59:35 jsg Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -413,6 +413,10 @@ const struct ne2000dev {
     { PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETHER,
       PCMCIA_CIS_SOCKET_LP_ETHER,
       0, -1, { 0x00, 0xc0, 0x1b } },
+
+    { PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_ETHER_CF_10_100,
+      PCMCIA_CIS_SOCKET_ETHER_CF_10_100,
+      0, -1, { 0x00, 0x12, 0x0e } },
 
     { PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CFE_10,
       PCMCIA_CIS_XIRCOM_CFE_10,
