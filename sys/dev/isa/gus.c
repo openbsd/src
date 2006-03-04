@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.28 2005/10/19 22:52:02 fgsch Exp $	*/
+/*	$OpenBSD: gus.c,v 1.29 2006/03/04 12:42:23 miod Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -652,7 +652,7 @@ gusclose(addr)
  * GUS for simple playback/record
  */
 
-#ifdef DIAGNOSTIC
+#ifdef AUDIO_DEBUG
 int gusintrcnt;
 int gusdmaintrcnt;
 int gusvocintrcnt;
@@ -671,14 +671,14 @@ gusintr(arg)
 	int retval = 0;
 
 	DPRINTF(("gusintr\n"));
-#ifdef DIAGNOSTIC
+#ifdef AUDIO_DEBUG
 	gusintrcnt++;
 #endif
 	if (HAS_CODEC(sc))
 		retval = ad1848_intr(&sc->sc_codec);
 	if ((intr = bus_space_read_1(iot, ioh1, GUS_IRQ_STATUS)) & GUSMASK_IRQ_DMATC) {
 		DMAPRINTF(("gusintr dma flags=%x\n", sc->sc_flags));
-#ifdef DIAGNOSTIC
+#ifdef AUDIO_DEBUG
 		gusdmaintrcnt++;
 #endif
 		retval += gus_dmaout_intr(sc);
@@ -692,7 +692,7 @@ gusintr(arg)
 	}
 	if (intr & (GUSMASK_IRQ_VOICE | GUSMASK_IRQ_VOLUME)) {
 		DMAPRINTF(("gusintr voice flags=%x\n", sc->sc_flags));
-#ifdef DIAGNOSTIC
+#ifdef AUDIO_DEBUG
 		gusvocintrcnt++;
 #endif
 		retval += gus_voice_intr(sc);
