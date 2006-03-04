@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.10 2005/03/15 18:46:38 miod Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.11 2006/03/04 10:31:50 miod Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.10 2001/07/24 19:32:11 eeh Exp $ */
 
 /*-
@@ -82,7 +82,6 @@
  */
 
 #include <machine/bus.h>
-#include <sparc64/dev/upavar.h>
 #include <dev/sbus/sbusvar.h>
 
 /* This is used to map device classes to IPLs */
@@ -95,10 +94,13 @@ extern struct intrmap intrmap[];
 /* The "mainbus" on ultra desktops is actually the UPA bus.  We need to
  * separate this from peripheral buses like SBUS and PCI because each bus may
  * have different ways of encoding properties, such as "reg" and "interrupts".
- *
- * Eventually I'll create a real UPA bus module to allow servers with multiple
- * peripheral buses and things like FHC bus systems.
  */
+
+/* Device register space description */
+struct upa_reg {
+	int64_t	ur_paddr;
+	int64_t	ur_len;
+};
 
 /* 
  * Attach arguments presented by mainbus_attach() 
