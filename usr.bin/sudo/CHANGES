@@ -94,7 +94,7 @@ CHANGES from sudo 1.3
 31) Native Solaris 2 port from Matthew.Stier@aisg.com
 
 32) Now use sysconf(2) instead of getdtablesize(2) if it is available
-    (see change #31).  Because of the the getdtablesize() emulation for
+    (see change #31).  Because of the getdtablesize() emulation for
     hpux is no longer necessary.
 
 33) Now only do a getcwd(3) or getwd(3) once and do it as the real user.

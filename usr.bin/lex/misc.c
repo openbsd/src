@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.11 2003/06/04 17:34:44 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.12 2006/03/04 16:18:06 miod Exp $	*/
 
 /* misc - miscellaneous flex routines */
 
@@ -33,7 +33,7 @@
  * PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/misc.c,v 1.11 2003/06/04 17:34:44 millert Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/misc.c,v 1.12 2006/03/04 16:18:06 miod Exp $ */
 
 #include "flexdef.h"
 
@@ -715,7 +715,7 @@ const char str[];
 	}
 
 
-/* readable_form - return the the human-readable form of a character
+/* readable_form - return the human-readable form of a character
  *
  * The returned string is in static storage.
  */

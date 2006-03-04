@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_refresh.c,v 1.11 2006/01/08 21:05:40 miod Exp $	*/
+/*	$OpenBSD: vs_refresh.c,v 1.12 2006/03/04 16:18:06 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -508,7 +508,7 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 
 		/*
 		 * Count up the widths of the characters.  If it's a tab
-		 * character, go do it the the slow way.
+		 * character, go do it the slow way.
 		 */
 		for (cwtotal = 0; cnt--; cwtotal += KEY_LEN(sp, ch))
 			if ((ch = *(u_char *)p--) == '\t')
@@ -546,7 +546,7 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 
 		/*
 		 * Count up the widths of the characters.  If it's a tab
-		 * character, go do it the the slow way.  If we cross a
+		 * character, go do it the slow way.  If we cross a
 		 * screen boundary, we can quit.
 		 */
 		for (cwtotal = SCNO; cnt--;) {
