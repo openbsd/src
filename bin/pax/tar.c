@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.40 2005/12/17 19:47:02 otto Exp $	*/
+/*	$OpenBSD: tar.c,v 1.41 2006/03/04 20:24:55 otto Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: tar.c,v 1.40 2005/12/17 19:47:02 otto Exp $";
+static const char rcsid[] = "$OpenBSD: tar.c,v 1.41 2006/03/04 20:24:55 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -926,7 +926,7 @@ ustar_wr(ARCHD *arcn)
 	 * check the length of the linkname
 	 */
 	if (((arcn->type == PAX_SLK) || (arcn->type == PAX_HLK) ||
-	    (arcn->type == PAX_HRG)) && (arcn->ln_nlen >= sizeof(hd->linkname))){
+	    (arcn->type == PAX_HRG)) && (arcn->ln_nlen > sizeof(hd->linkname))){
 		paxwarn(1, "Link name too long for ustar %s", arcn->ln_name);
 		return(1);
 	}
@@ -1116,19 +1116,22 @@ name_split(char *name, int len)
 	/*
 	 * check to see if the file name is small enough to fit in the name
 	 * field. if so just return a pointer to the name.
+	 * The strings can fill the complete name and prefix fields
+	 * without a NUL terminator.
 	 */
-	if (len < TNMSZ)
+	if (len <= TNMSZ)
 		return(name);
-	if (len > (TPFSZ + TNMSZ))
+	if (len > (TPFSZ + TNMSZ + 1))
 		return(NULL);
 
 	/*
 	 * we start looking at the biggest sized piece that fits in the name
 	 * field. We walk forward looking for a slash to split at. The idea is
 	 * to find the biggest piece to fit in the name field (or the smallest
-	 * prefix we can find)
+	 * prefix we can find) (the -1 is correct the biggest piece would
+	 * include the slash between the two parts that gets thrown away)
 	 */
-	start = name + len - TNMSZ;
+	start = name + len - TNMSZ - 1;
 	while ((*start != '\0') && (*start != '/'))
 		++start;
 
@@ -1146,7 +1149,7 @@ name_split(char *name, int len)
 	 * the file would then expand on extract to //str. The len == 0 below
 	 * makes this special case follow the spec to the letter.
 	 */
-	if ((len >= TPFSZ) || (len == 0))
+	if ((len > TPFSZ) || (len == 0))
 		return(NULL);
 
 	/*
