@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_3000_500.c,v 1.12 2004/06/28 02:28:43 aaron Exp $ */
+/* $OpenBSD: tc_3000_500.c,v 1.13 2006/03/04 12:33:17 miod Exp $ */
 /* $NetBSD: tc_3000_500.c,v 1.24 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*
@@ -104,6 +104,7 @@ struct tcintr {
 	int	(*tci_func)(void *);
 	void	*tci_arg;
 	struct evcount tci_count;
+	char	tci_name[12];
 } tc_3000_500_intr[TC_3000_500_NCOOKIES];
 
 u_int32_t tc_3000_500_imask;	/* intrs we want to ignore; mirrors IMR. */
@@ -111,7 +112,6 @@ u_int32_t tc_3000_500_imask;	/* intrs we want to ignore; mirrors IMR. */
 void
 tc_3000_500_intr_setup()
 {
-	char *cp;
 	u_long i;
 
 	/*
@@ -130,13 +130,10 @@ tc_3000_500_intr_setup()
         for (i = 0; i < TC_3000_500_NCOOKIES; i++) {
 		tc_3000_500_intr[i].tci_func = tc_3000_500_intrnull;
 		tc_3000_500_intr[i].tci_arg = (void *)i;
-
-		cp = malloc(12, M_DEVBUF, M_NOWAIT);
-		if (cp == NULL)
-			panic("tc_3000_500_intr_setup");
-		snprintf(cp, 12, "slot %lu", i);
-		evcount_attach(&tc_3000_500_intr[i].tci_count, "tc", NULL,
-		    &evcount_intr);
+		snprintf(tc_3000_500_intr[i].tci_name,
+		    sizeof tc_3000_500_intr[i].tci_name, "tc slot %u", i);
+		evcount_attach(&tc_3000_500_intr[i].tci_count,
+		    tc_3000_500_intr[i].tci_name, NULL, &evcount_intr);
         }
 }
 

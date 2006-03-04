@@ -1,4 +1,4 @@
-/* $OpenBSD: ioasic.c,v 1.11 2004/06/28 02:28:43 aaron Exp $ */
+/* $OpenBSD: ioasic.c,v 1.12 2006/03/04 12:33:17 miod Exp $ */
 /* $NetBSD: ioasic.c,v 1.34 2000/07/18 06:10:06 thorpej Exp $ */
 
 /*-
@@ -124,6 +124,7 @@ struct ioasicintr {
 	int	(*iai_func)(void *);
 	void	*iai_arg;
 	struct evcount iai_count;
+	char	iai_name[16];
 } ioasicintrs[IOASIC_NCOOKIES];
 
 tc_addr_t ioasic_base;		/* XXX XXX XXX */
@@ -163,7 +164,6 @@ ioasicattach(parent, self, aux)
 	u_long ssr;
 #endif
 	u_long i, imsk;
-	char *cp;
 
 	ioasicfound = 1;
 
@@ -202,13 +202,10 @@ ioasicattach(parent, self, aux)
 	for (i = 0; i < IOASIC_NCOOKIES; i++) {
 		ioasicintrs[i].iai_func = ioasic_intrnull;
 		ioasicintrs[i].iai_arg = (void *)i;
-
-		cp = malloc(12, M_DEVBUF, M_NOWAIT);
-		if (cp == NULL)
-			panic("ioasicattach");
-		snprintf(cp, 12, "slot %lu", i);
-		evcount_attach(&ioasicintrs[i].iai_count, self->dv_xname, NULL,
-		    &evcount_intr);
+		snprintf(ioasicintrs[i].iai_name,
+		    sizeof ioasicintrs[i].iai_name, "ioasic slot %u", i);
+		evcount_attach(&ioasicintrs[i].iai_count,
+		    ioasicintrs[i].iai_name, NULL, &evcount_intr);
 	}
 	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_NONE, ioasic_intr, sc);
 
