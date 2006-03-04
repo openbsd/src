@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.472 2006/02/26 02:49:28 marco Exp $
+#	$OpenBSD: GENERIC,v 1.473 2006/03/04 15:33:37 grange Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -635,6 +635,10 @@ safe*	at pci?			# SafeNet SafeXcel 1141/1741
 iop*	at pci?			# I2O
 ioprbs*	at iop?			# Random block storage
 scsibus* at ioprbs?
+
+# GPIO ``pin bus'' drivers
+#gpioiic* at gpio? offset 0 mask 0x3	# I2C bus bit-banging
+#iic*	at gpioiic?
 
 pseudo-device	pctr		1
 pseudo-device	mtrr		1	# Memory range attributes control
