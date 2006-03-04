@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfb.c,v 1.12 2006/01/30 20:41:51 miod Exp $	*/
+/*	$OpenBSD: macfb.c,v 1.13 2006/03/04 10:25:21 miod Exp $	*/
 /* $NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -74,6 +74,7 @@ const struct wsdisplay_accessops macfb_accessops = {
 };
 
 int	macfb_alloc_cattr(void *, int, int, int, long *);
+int	macfb_alloc_hattr(void *, int, int, int, long *);
 int	macfb_alloc_mattr(void *, int, int, int, long *);
 int	macfb_color_setup(struct macfb_devconfig *);
 int	macfb_getcmap(struct macfb_devconfig *, struct wsdisplay_cmap *);
@@ -188,7 +189,7 @@ macfb_color_setup(struct macfb_devconfig *dc)
 		return (0);	/* fill in black */
 
 	if (dc->dc_setcolor == NULL ||
-	    ri->ri_depth < 4 /* XXX unfair with 2bpp */) {
+	    ri->ri_depth < 2) {
 		/*
 		 * Until we know how to setup the colormap, constrain ourselves
 		 * to mono mode. Note that we need to use our own alloc_attr
@@ -205,6 +206,26 @@ macfb_color_setup(struct macfb_devconfig *dc)
 	bcopy(rasops_cmap, dc->dc_cmap, 256 * 3);
 
 	switch (ri->ri_depth) {
+	case 2:
+		/*
+		 * 2bpp mode does not really have colors, only two gray
+		 * shades in addition to black and white, to allow
+		 * hilighting.
+		 *
+		 * Our palette needs to be:
+		 *   00 black
+		 *   01 dark gray (highlighted black, sort of)
+		 *   02 light gray (normal white)
+		 *   03 white (highlighted white)
+		 */
+		bcopy(dc->dc_cmap + (255 - WSCOL_WHITE) * 3,
+		    dc->dc_cmap + 1 * 3, 3);
+		bcopy(dc->dc_cmap + WSCOL_WHITE * 3, dc->dc_cmap + 2 * 3, 3);
+		bcopy(dc->dc_cmap + (8 + WSCOL_WHITE) * 3,
+		    dc->dc_cmap + 3 * 3, 3);
+		ri->ri_caps |= WSSCREEN_HILIT;
+		ri->ri_ops.alloc_attr = macfb_alloc_hattr;
+		break;
 	case 4:
 		/*
 		 * Tweak colormap
@@ -227,6 +248,11 @@ macfb_color_setup(struct macfb_devconfig *dc)
 	return (WSCOL_BLACK);	/* fill in our own black */
 }
 
+/*
+ * Attribute allocator for monochrome displays (either 1bpp or no colormap
+ * control). Note that the colors we return are indexes into ri_devcmap which
+ * will select the actual bits.
+ */
 int
 macfb_alloc_mattr(void *cookie, int fg, int bg, int flg, long *attr)
 {
@@ -249,6 +275,35 @@ macfb_alloc_mattr(void *cookie, int fg, int bg, int flg, long *attr)
 	return (0);
 }
 
+/*
+ * Attribute allocator for 2bpp displays.
+ * Note that the colors we return are indexes into ri_devcmap which will
+ * select the actual bits.
+ */
+int
+macfb_alloc_hattr(void *cookie, int fg, int bg, int flg, long *attr)
+{
+	if ((flg & (WSATTR_BLINK | WSATTR_WSCOLORS)) != 0)
+		return (EINVAL);
+
+	if ((flg & WSATTR_REVERSE) != 0) {
+		fg = WSCOL_BLACK;
+		bg = WSCOL_WHITE;
+	} else {
+		fg = WSCOL_WHITE;
+		bg = WSCOL_BLACK;
+	}
+
+	if ((flg & WSATTR_HILIT) != 0)
+		fg += 8;
+
+	*attr = (bg << 16) | (fg << 24) | ((flg & WSATTR_UNDERLINE) ? 7 : 6);
+	return (0);
+}
+
+/*
+ * Attribute allocator for 4bpp displays.
+ */
 int
 macfb_alloc_cattr(void *cookie, int fg, int bg, int flg, long *attr)
 {
