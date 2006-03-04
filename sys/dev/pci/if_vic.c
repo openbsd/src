@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.4 2006/02/26 04:30:08 brad Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.5 2006/03/04 03:33:05 brad Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -83,12 +83,12 @@ int	vic_alloc_data(struct vic_softc *);
 void	vic_reset_data(struct vic_softc *);
 void	vic_free_data(struct vic_softc *);
 
-struct cfdriver vic_cd = {
-	0, "vic", DV_IFNET
-};
-
 struct cfattach vic_ca = {
 	sizeof(struct vic_softc), vic_match, vic_attach
+};
+
+struct cfdriver vic_cd = {
+	0, "vic", DV_IFNET
 };
 
 const struct pci_matchid vic_devices[] = {
@@ -101,7 +101,7 @@ int
 vic_match(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux,
-	    vic_devices, sizeof(vic_devices) / sizeof(vic_devices[0])));
+	    vic_devices, sizeof(vic_devices)/sizeof(vic_devices[0])));
 }
 
 void
@@ -155,7 +155,7 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 	    (VIC_MAGIC & VIC_VERSION_MAJOR_M)) ||
 	    VIC_MAGIC > sc->sc_ver_major ||
 	    VIC_MAGIC < sc->sc_ver_minor) {
-		printf("unsupported device\n");
+		printf(" unsupported device\n");
 		goto fail_2;
 	}
 
@@ -163,6 +163,7 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_nrxbuf = VIC_READ(VIC_CMD);
 	if (sc->sc_nrxbuf > VIC_NBUF_MAX || sc->sc_nrxbuf == 0)
 		sc->sc_nrxbuf = VIC_NBUF;
+
 	VIC_WRITE(VIC_CMD, VIC_CMD_NUM_Tx_BUF);
 	sc->sc_ntxbuf = VIC_READ(VIC_CMD);
 	if (sc->sc_ntxbuf > VIC_NBUF_MAX || sc->sc_ntxbuf == 0)
@@ -173,52 +174,50 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 
 	VIC_WRITE(VIC_CMD, VIC_CMD_HWCAP);
 	sc->sc_cap = VIC_READ(VIC_CMD);
-
 	if (sc->sc_cap) {
 		printf(", ");
 		vic_printb(sc->sc_cap, VIC_CMD_HWCAP_BITS);
 	}
 
+	printf("\n");
+
 	vic_getlladdr(sc);
 
-	/* Initialise pseudo media types */
-	ifmedia_init(&sc->sc_media, 0, vic_media_change, vic_media_status);
-	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
+	bcopy(sc->sc_lladdr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
 
 	ifp = &sc->sc_ac.ac_if;
-	ifp->if_carp = NULL;
-	ifp->if_type = IFT_ETHER;
 	ifp->if_softc = sc;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_ioctl = vic_ioctl;
 	ifp->if_start = vic_start;
 	ifp->if_watchdog = vic_watchdog;
-	ifp->if_ioctl = vic_ioctl;
-	ifp->if_output = ether_output;
-	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
+	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
+	IFQ_SET_READY(&ifp->if_snd);
 
-	ifp->if_capabilities = 0;
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
 #if 0
 	/* XXX interface capabilities */
 	if (sc->sc_cap & VIC_CMD_HWCAP_VLAN)
-		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING | IFCAP_VLAN_MTU;
+		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 	if (sc->sc_cap & VIC_CMD_HWCAP_CSUM)
 		ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
 		    IFCAP_CSUM_UDPv4;
 #endif
 
-	IFQ_SET_MAXLEN(&ifp->if_snd, ifqmaxlen);
-	IFQ_SET_READY(&ifp->if_snd);
-
-	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof(ifp->if_xname));
-	bcopy(sc->sc_lladdr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
-
 	/* Allocate Rx and Tx queues */
 	if (vic_alloc_data(sc) != 0) {
-		printf(": could not allocate queues\n", ifp->if_xname);
+		printf(": could not allocate queues\n");
 		goto fail_2;
 	}
 
-	printf(", address: %s\n", ether_sprintf(sc->sc_lladdr));
+	printf(", address %s\n", ether_sprintf(sc->sc_lladdr));
+
+	/* Initialise pseudo media types */
+	ifmedia_init(&sc->sc_media, 0, vic_media_change, vic_media_status);
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
+	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
 	/* Attach the device structures */
 	if_attach(ifp);
@@ -274,7 +273,7 @@ vic_intr(void *arg)
 
 #ifdef VIC_DEBUG
 	if (ifp->if_flags & IFF_DEBUG)
-		printf("%s: %s\n", ifp->if_xname, __func__);
+		printf("%s: %s\n", sc->sc_dev.dv_xname, __func__);
 #endif
 
 	vic_rx_proc(sc);
@@ -302,7 +301,7 @@ vic_rx_proc(struct vic_softc *sc)
 			ifp->if_ierrors++;
 			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: receive index error\n",
-				    ifp->if_xname);
+				    sc->sc_dev.dv_xname);
 			break;
 		}
 
@@ -328,7 +327,7 @@ vic_rx_proc(struct vic_softc *sc)
 			ifp->if_ierrors++;
 			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: receive buffer error\n",
-				    ifp->if_xname);
+				    sc->sc_dev.dv_xname);
 			break;
 		}
 
@@ -345,7 +344,7 @@ vic_rx_proc(struct vic_softc *sc)
 			ifp->if_ierrors++;
 			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: receive buffer failed\n",
-				    ifp->if_xname);
+				    sc->sc_dev.dv_xname);
 			break;
 		}
 		desc->rx_physaddr = rxb->rxb_map->dm_segs->ds_addr;
@@ -381,7 +380,7 @@ vic_tx_proc(struct vic_softc *sc)
 			ifp->if_oerrors++;
 			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: transmit index error\n",
-				    ifp->if_xname);
+				    sc->sc_dev.dv_xname);
 			break;
 		}
 
@@ -398,7 +397,7 @@ vic_tx_proc(struct vic_softc *sc)
 			ifp->if_oerrors++;
 			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: transmit buffer error\n",
-				    ifp->if_xname);
+				    sc->sc_dev.dv_xname);
 			break;
 		}
 
@@ -529,7 +528,7 @@ vic_tx_start(struct vic_softc *sc, struct mbuf *m)
 		ifp->if_oerrors++;
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: transmit index error\n",
-			    ifp->if_xname);
+			    sc->sc_dev.dv_xname);
 		return (EINVAL);
 	}
 
@@ -547,7 +546,7 @@ vic_tx_start(struct vic_softc *sc, struct mbuf *m)
 		ifp->if_oerrors++;
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: transmit buffer error\n",
-			    ifp->if_xname);
+			    sc->sc_dev.dv_xname);
 		return (ENOBUFS);
 	} else if (txb->txb_m != NULL) {
 		sc->sc_data->vd_tx_stopped = 1;
@@ -592,7 +591,7 @@ vic_tx_start(struct vic_softc *sc, struct mbuf *m)
 	if (VIC_TXURN_WARN(sc)) {
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: running out of tx descriptors\n",
-			    ifp->if_xname);
+			    sc->sc_dev.dv_xname);
 		desc->tx_flags |= VIC_TX_FLAGS_TXURN;
 	}
 
@@ -617,7 +616,7 @@ vic_watchdog(struct ifnet *ifp)
 
 	if (sc->sc_txpending && sc->sc_txtimeout > 0) {
 		if (--sc->sc_txtimeout == 0) {
-			printf("%s: device timeout\n", ifp->if_xname);
+			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
 			ifp->if_flags &= ~IFF_RUNNING;
 			vic_init(ifp);
 			ifp->if_oerrors++;
@@ -729,7 +728,7 @@ vic_init(struct ifnet *ifp)
 #ifdef VIC_DEBUG
 	if (ifp->if_flags & IFF_DEBUG)
 		printf("%s: physaddr 0x%08x length 0x%08x\n",
-		    ifp->if_xname, sc->sc_physaddr, sc->sc_size);
+		    sc->sc_dev.dv_xname, sc->sc_physaddr, sc->sc_size);
 #endif
 
 	sc->sc_data->vd_tx_stopped = sc->sc_data->vd_tx_queued = 0;
@@ -806,23 +805,20 @@ vic_printb(unsigned short v, char *bits)
 struct mbuf *
 vic_alloc_mbuf(struct vic_softc *sc, bus_dmamap_t map)
 {
-	struct mbuf *m;
+	struct mbuf *m = NULL;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL) {
-		printf("%s: could not allocate mbuf\n",
-		    sc->sc_dev.dv_xname);
+	if (m == NULL)
 		return (NULL);
-	}
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
-		printf("%s: could not allocate mbuf cluster\n",
-		    sc->sc_dev.dv_xname);
+		m_freem(m);
 		return (NULL);
 	}
 	if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT) != 0) {
 		printf("%s: could not load mbuf DMA map",
 		    sc->sc_dev.dv_xname);
+		m_freem(m);
 		return (NULL);
 	}
 
@@ -917,7 +913,7 @@ vic_alloc_data(struct vic_softc *sc)
 	/* Setup the Tx queue */
 	sc->sc_txq = (struct vic_txdesc *)offset;
 	sc->sc_data->vd_tx_offset = htole32(offset);
-	sc->sc_data->vd_tx_length = htole32(sc->sc_nrxbuf);
+	sc->sc_data->vd_tx_length = htole32(sc->sc_ntxbuf);
 	offset += sc->sc_ntxbuf + sizeof(struct vic_txdesc);
 	for (i = 0; i < sc->sc_ntxbuf; i++) {
 		txb = &sc->sc_txbuf[i];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vicvar.h,v 1.3 2006/02/26 02:21:31 brad Exp $	*/
+/*	$OpenBSD: if_vicvar.h,v 1.4 2006/03/04 03:33:06 brad Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -63,8 +63,8 @@ struct vic_txbuf {
 };
 
 struct vic_softc {
-	void			*sc_ih;
 	struct device		sc_dev;
+	void			*sc_ih;
 	void			*sc_sdhook;
 
 	struct arpcom		sc_ac;
