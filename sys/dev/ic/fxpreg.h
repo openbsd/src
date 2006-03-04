@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpreg.h,v 1.10 2005/04/25 01:23:30 brad Exp $	*/
+/*	$OpenBSD: fxpreg.h,v 1.11 2006/03/04 03:48:37 brad Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -290,6 +290,8 @@ struct fxp_stats {
 /*
  * PHY device types
  */
+#define FXP_PHY_DEVICE_MASK	0x3f00
+#define FXP_PHY_SERIAL_ONLY	0x8000
 #define FXP_PHY_NONE		0
 #define FXP_PHY_82553A		1
 #define FXP_PHY_82553C		2
