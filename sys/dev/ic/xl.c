@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.70 2006/01/20 05:49:32 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.71 2006/03/04 23:31:20 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2371,11 +2371,10 @@ xl_ioctl(ifp, command, data)
 		break;
 
 	case SIOCSIFMTU:
-		if(ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
+		if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN)
 			error = EINVAL;
-		} else if (ifp->if_mtu != ifr->ifr_mtu) {
+		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
-		}
 		break;
 
 	case SIOCSIFFLAGS:
