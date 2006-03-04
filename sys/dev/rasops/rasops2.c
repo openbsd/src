@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops2.c,v 1.5 2002/07/27 22:17:49 miod Exp $	*/
+/*	$OpenBSD: rasops2.c,v 1.6 2006/03/04 20:03:49 miod Exp $	*/
 /*	$NetBSD: rasops2.c,v 1.5 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -51,6 +51,7 @@ void	rasops2_copycols(void *, int, int, int, int);
 void	rasops2_erasecols(void *, int, int, int, long);
 void	rasops2_do_cursor(struct rasops_info *);
 void	rasops2_putchar(void *, int, int col, u_int, long);
+u_int	rasops2_mergebits(u_char *, int, int);
 #ifndef RASOPS_SMALL
 void	rasops2_putchar8(void *, int, int col, u_int, long);
 void	rasops2_putchar12(void *, int, int col, u_int, long);
@@ -86,7 +87,6 @@ rasops2_init(ri)
 		break;
 #endif	/* !RASOPS_SMALL */
 	default:
-		panic("fontwidth not 8/12/16 or RASOPS_SMALL - fixme!");
 		ri->ri_ops.putchar = rasops2_putchar;
 		break;
 	}
@@ -98,7 +98,27 @@ rasops2_init(ri)
 	}
 }
 
-#ifdef notyet
+/*
+ * Compute a 2bpp expansion of a font element against the given colors.
+ * Used by rasops2_putchar() below.
+ */
+u_int
+rasops2_mergebits(u_char *fr, int fg, int bg)
+{
+	u_int fb, bits;
+	int mask, shift;
+
+	fg &= 3;
+	bg &= 3;
+
+	bits = fr[1] | (fr[0] << 8);
+	fb = 0;
+	for (mask = 0x8000, shift = 32 - 2; mask != 0; mask >>= 1, shift -= 2)
+		fb |= (bits & mask ? fg : bg) << shift;
+
+	return (fb);
+}
+
 /*
  * Paint a single character. This is the generic version, this is ugly.
  */
@@ -109,7 +129,8 @@ rasops2_putchar(cookie, row, col, uc, attr)
 	u_int uc;
 	long attr;
 {
-	int height, width, fs, rs, fb, bg, fg, lmask, rmask;
+	int height, width, fs, rs, bg, fg, lmask, rmask;
+	u_int fb;
 	struct rasops_info *ri;
 	int32_t *rp;
 	u_char *fr;
@@ -160,10 +181,12 @@ rasops2_putchar(cookie, row, col, uc, attr)
 			}
 		} else {
 			while (height--) {
-				/* get bits, mask */
-				/* compose sl */
-				/* mask sl */
-				/* put word */
+				fb = rasops2_mergebits(fr, fg, bg);
+				*rp = (*rp & lmask) |
+				    (MBE(fb >> col) & rmask);
+
+				fr += fs;
+				DELTA(rp, rs, int32_t *);
 			}
 		}
 
@@ -177,8 +200,8 @@ rasops2_putchar(cookie, row, col, uc, attr)
 		rmask = ~rasops_rmask[(col + width) & 31];
 
 		if (uc == (u_int)-1) {
-			bg = bg & ~lmask;
 			width = bg & ~rmask;
+			bg = bg & ~lmask;
 
 			while (height--) {
 				rp[0] = (rp[0] & lmask) | bg;
@@ -188,16 +211,13 @@ rasops2_putchar(cookie, row, col, uc, attr)
 		} else {
 			width = 32 - col;
 
-			/* NOT fontbits if bg is white */
 			while (height--) {
-				fb = ~(fr[3] | (fr[2] << 8) |
-				    (fr[1] << 16) | (fr[0] << 24));
+				fb = rasops2_mergebits(fr, fg, bg);
 
-				rp[0] = (rp[0] & lmask)
-				    | MBE((u_int)fb >> col);
-
-				rp[1] = (rp[1] & rmask)
-				   | (MBE((u_int)fb << width) & ~rmask);
+				rp[0] = (rp[0] & lmask) |
+				    MBE(fb >> col);
+				rp[1] = (rp[1] & rmask) |
+				    (MBE(fb << width) & ~rmask);
 
 				fr += fs;
 				DELTA(rp, rs, int32_t *);
@@ -211,21 +231,6 @@ rasops2_putchar(cookie, row, col, uc, attr)
 			rp[1] = (rp[1] & rmask) | (fg & ~rmask);
 		}
 	}
-}
-#endif
-
-/*
- * Put a single character. This is the generic version.
- */
-void
-rasops2_putchar(cookie, row, col, uc, attr)
-	void *cookie;
-	int row, col;
-	u_int uc;
-	long attr;
-{
-
-	/* XXX punt */
 }
 
 #ifndef RASOPS_SMALL
