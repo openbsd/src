@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.37 2005/11/23 11:30:14 mickey Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.38 2006/03/04 23:40:14 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1645,8 +1645,6 @@ void tl_init(xsc)
         int			s;
 
 	s = splnet();
-
-	ifp = &sc->arpcom.ac_if;
 
 	/*
 	 * Cancel pending I/O.
