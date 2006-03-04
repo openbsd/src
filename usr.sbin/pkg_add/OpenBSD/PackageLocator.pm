@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.50 2006/02/21 19:20:54 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.51 2006/03/04 11:28:03 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -187,6 +187,7 @@ sub parse_problems
 		next if m/^remote\:\s+/;
 		next if m/^Using binary mode to transfer files/;
 		next if m/^Retrieving\s+/;
+		next if m/^Succesfully retrieved file/;
 		next if m/^\d+\s+bytes\s+received\s+in/;
 		next if m/^ftp: connect to address.*: No route to host/;
 
@@ -441,6 +442,7 @@ sub open_pipe
 		die "Cannot fork: $!";
 	}
 	if ($pid) {
+		$object->{pid} = $pid;
 		return $fh;
 	} else {
 		open STDERR, '>', $object->{errors};
