@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.77 2006/02/09 00:05:55 reyk Exp $	*/
+/*	$OpenBSD: if.h,v 1.78 2006/03/04 22:40:15 brad Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -283,7 +283,7 @@ struct ifnet {				/* and the entries */
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
  * input routines have queues of messages stored on ifqueue structures
  * (defined above).  Entries are added to and deleted from these structures
- * by these macros, which should be called with ipl raised to splimp().
+ * by these macros, which should be called with ipl raised to splnet().
  */
 #define	IF_QFULL(ifq)		((ifq)->ifq_len >= (ifq)->ifq_maxlen)
 #define	IF_DROP(ifq)		((ifq)->ifq_drops++)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.143 2006/02/09 00:05:55 reyk Exp $	*/
+/*	$OpenBSD: if.c,v 1.144 2006/03/04 22:40:15 brad Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -500,7 +500,7 @@ if_detach(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	struct ifg_list *ifg;
-	int i, s = splimp();
+	int i, s = splnet();
 	struct radix_node_head *rnh;
 	struct domain *dp;
 
@@ -732,7 +732,7 @@ if_clone_destroy(const char *name)
 		return (EOPNOTSUPP);
 
 	if (ifp->if_flags & IFF_UP) {
-		s = splimp();
+		s = splnet();
 		if_down(ifp);
 		splx(s);
 	}
@@ -1148,7 +1148,7 @@ if_slowtimo(void *arg)
 {
 	struct timeout *to = (struct timeout *)arg;
 	struct ifnet *ifp;
-	int s = splimp();
+	int s = splnet();
 
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_timer == 0 || --ifp->if_timer)
@@ -1241,12 +1241,12 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		if ((error = suser(p, 0)) != 0)
 			return (error);
 		if (ifp->if_flags & IFF_UP && (ifr->ifr_flags & IFF_UP) == 0) {
-			int s = splimp();
+			int s = splnet();
 			if_down(ifp);
 			splx(s);
 		}
 		if (ifr->ifr_flags & IFF_UP && (ifp->if_flags & IFF_UP) == 0) {
-			int s = splimp();
+			int s = splnet();
 			if_up(ifp);
 			splx(s);
 		}
@@ -1374,7 +1374,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	                return (ENODEV);
 		}
 		if (ifp->if_flags & IFF_UP) {
-		        int s = splimp();
+		        int s = splnet();
 			ifp->if_flags &= ~IFF_UP;
 			(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr);
 			ifp->if_flags |= IFF_UP;

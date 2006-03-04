@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.149 2006/01/23 22:46:57 markus Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.150 2006/03/04 22:40:15 brad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -963,7 +963,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	src = (struct ether_addr *)&eh->ether_shost[0];
 	sc = (struct bridge_softc *)ifp->if_bridge;
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * If bridge is down, but original output interface is up,
@@ -1113,7 +1113,7 @@ bridgeintr(void)
 
 	LIST_FOREACH(sc, &bridge_list, sc_list) {
 		for (;;) {
-			s = splimp();
+			s = splnet();
 			IF_DEQUEUE(&sc->sc_if.if_snd, m);
 			splx(s);
 			if (m == NULL)
@@ -1260,7 +1260,7 @@ bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
 	 */
 	if ((m->m_flags & (M_BCAST | M_MCAST)) || dst_if == NULL) {
 		sc->sc_if.if_imcasts++;
-		s = splimp();
+		s = splnet();
 		bridge_broadcast(sc, src_if, &eh, m);
 		splx(s);
 		return;
@@ -1302,7 +1302,7 @@ bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
 	if ((len - ETHER_HDR_LEN) > dst_if->if_mtu)
 		bridge_fragment(sc, dst_if, &eh, m);
 	else {
-		s = splimp();
+		s = splnet();
 		bridge_ifenqueue(sc, dst_if, m);
 		splx(s);
 	}
@@ -1375,7 +1375,7 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 		if (mc == NULL)
 			return (m);
 		bcopy(eh, mtod(mc, caddr_t), ETHER_HDR_LEN);
-		s = splimp();
+		s = splnet();
 		if (IF_QFULL(&sc->sc_if.if_snd)) {
 			m_freem(mc);
 			splx(s);
@@ -1455,7 +1455,7 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 	if (m == NULL)
 		return (NULL);
 	bcopy(eh, mtod(m, caddr_t), ETHER_HDR_LEN);
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(&sc->sc_if.if_snd)) {
 		m_freem(m);
 		splx(s);
@@ -2530,7 +2530,7 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 	    (ifp->if_capabilities & IFCAP_VLAN_MTU) &&
 	    ((m->m_pkthdr.len - sizeof(struct ether_vlan_header)) <=
 	    ifp->if_mtu)) {
-		s = splimp();
+		s = splnet();
 		bridge_ifenqueue(sc, ifp, m);
 		splx(s);
 		return;
@@ -2598,7 +2598,7 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 			}
 			len = m->m_pkthdr.len;
 			bcopy(eh, mtod(m, caddr_t), sizeof(*eh));
-			s = splimp();
+			s = splnet();
 			error = bridge_ifenqueue(sc, ifp, m);
 			if (error) {
 				splx(s);

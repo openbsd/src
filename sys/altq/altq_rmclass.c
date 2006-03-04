@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.c,v 1.11 2003/10/17 19:13:01 henning Exp $	*/
+/*	$OpenBSD: altq_rmclass.c,v 1.12 2006/03/04 22:40:15 brad Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.10 2001/02/09 07:20:40 kjc Exp $	*/
 
 /*
@@ -291,7 +291,7 @@ rmc_newclass(int pri, struct rm_ifdat *ifd, u_int nsecPerByte,
 	/*
 	 * put the class into the class tree
 	 */
-	s = splimp();
+	s = splnet();
 	if ((peer = ifd->active_[pri]) != NULL) {
 		/* find the last class at this pri */
 		cl->peer_ = peer;
@@ -338,7 +338,7 @@ rmc_modclass(struct rm_class *cl, u_int nsecPerByte, int maxq, u_int maxidle,
 	ifd = cl->ifdat_;
 	old_allotment = cl->allotment_;
 
-	s = splimp();
+	s = splnet();
 	cl->allotment_ = RM_NS_PER_SEC / nsecPerByte; /* Bytes per sec */
 	cl->qthresh_ = 0;
 	cl->ns_per_byte_ = nsecPerByte;
@@ -532,7 +532,7 @@ rmc_delete_class(struct rm_ifdat *ifd, struct rm_class *cl)
 	if (cl->sleeping_)
 		CALLOUT_STOP(&cl->callout_);
 
-	s = splimp();
+	s = splnet();
 	/*
 	 * Free packets in the packet queue.
 	 * XXX - this may not be a desired behavior.  Packets should be
@@ -1506,7 +1506,7 @@ rmc_delay_action(struct rm_class *cl, struct rm_class *borrow)
  *	responsible for locking but this is the only routine that is not
  *	called directly or indirectly from the interface driver so it has
  *	know about system locking conventions.  Under bsd, locking is done
- *	by raising IPL to splimp so that's what's implemented here.  On a
+ *	by raising IPL to splnet so that's what's implemented here.  On a
  *	different system this would probably need to be changed.
  *
  *	Returns:	NONE
@@ -1518,7 +1518,7 @@ rmc_restart(struct rm_class *cl)
 	struct rm_ifdat	*ifd = cl->ifdat_;
 	int		 s;
 
-	s = splimp();
+	s = splnet();
 	if (cl->sleeping_) {
 		cl->sleeping_ = 0;
 		cl->undertime_.tv_sec = 0;

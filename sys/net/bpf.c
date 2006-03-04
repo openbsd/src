@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.60 2005/11/03 20:00:18 reyk Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.61 2006/03/04 22:40:15 brad Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -235,7 +235,7 @@ bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
 
 /*
  * Attach file to the bpf interface, i.e. make d listen on bp.
- * Must be called at splimp.
+ * Must be called at splnet.
  */
 void
 bpf_attachd(struct bpf_d *d, struct bpf_if *bp)
@@ -363,7 +363,7 @@ bpfclose(dev_t dev, int flag, int mode, struct proc *p)
 	int s;
 
 	d = bpfilter_lookup(minor(dev));
-	s = splimp();
+	s = splnet();
 	if (d->bd_bif)
 		bpf_detachd(d);
 	bpf_wakeup(d);
@@ -405,7 +405,7 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 	if (uio->uio_resid != d->bd_bufsize)
 		return (EINVAL);
 
-	s = splimp();
+	s = splnet();
 
 	D_GET(d);
 
@@ -494,7 +494,7 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 	 */
 	error = uiomove(d->bd_hbuf, d->bd_hlen, uio);
 
-	s = splimp();
+	s = splnet();
 	d->bd_fbuf = d->bd_hbuf;
 	d->bd_hbuf = 0;
 	d->bd_hlen = 0;
@@ -569,7 +569,7 @@ bpfwrite(dev_t dev, struct uio *uio, int ioflag)
 
 /*
  * Reset a descriptor by flushing its packet buffer and clearing the
- * receive and drop counts.  Should be called at splimp.
+ * receive and drop counts.  Should be called at splnet.
  */
 void
 bpf_reset_d(struct bpf_d *d)
@@ -649,7 +649,7 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		{
 			int n;
 
-			s = splimp();
+			s = splnet();
 			n = d->bd_slen;
 			if (d->bd_hbuf)
 				n += d->bd_hlen;
@@ -701,7 +701,7 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	 * Flush read packet buffer.
 	 */
 	case BIOCFLUSH:
-		s = splimp();
+		s = splnet();
 		bpf_reset_d(d);
 		splx(s);
 		break;
@@ -717,7 +717,7 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			error = EINVAL;
 			break;
 		}
-		s = splimp();
+		s = splnet();
 		if (d->bd_promisc == 0) {
 			error = ifpromisc(d->bd_bif->bif_ifp, 1);
 			if (error == 0)
@@ -910,7 +910,7 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp, int wf)
 	if (fp->bf_insns == 0) {
 		if (fp->bf_len != 0)
 			return (EINVAL);
-		s = splimp();
+		s = splnet();
 		if (wf)
 			d->bd_wfilter = 0;
 		else
@@ -929,7 +929,7 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp, int wf)
 	fcode = (struct bpf_insn *)malloc(size, M_DEVBUF, M_WAITOK);
 	if (copyin((caddr_t)fp->bf_insns, (caddr_t)fcode, size) == 0 &&
 	    bpf_validate(fcode, (int)flen)) {
-		s = splimp();
+		s = splnet();
 		if (wf)
 			d->bd_wfilter = fcode;
 		else
@@ -984,7 +984,7 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 			if (error != 0)
 				return (error);
 		}
-		s = splimp();
+		s = splnet();
 		if (candidate != d->bd_bif) {
 			if (d->bd_bif)
 				/*
@@ -1028,7 +1028,7 @@ bpfpoll(dev_t dev, int events, struct proc *p)
 	 * An imitation of the FIONREAD ioctl code.
 	 */
 	d = bpfilter_lookup(minor(dev));
-	s = splimp();
+	s = splnet();
 	if (d->bd_hlen == 0 && (!d->bd_immediate || d->bd_slen == 0)) {
 		revents = 0;		/* no data waiting */
 		/*
@@ -1064,7 +1064,7 @@ bpfkqfilter(dev_t dev, struct knote *kn)
 
 	kn->kn_hook = (caddr_t)((u_long)dev);
 
-	s = splimp();
+	s = splnet();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	splx(s);
 
@@ -1079,7 +1079,7 @@ filt_bpfrdetach(struct knote *kn)
 	int s;
 
 	d = bpfilter_lookup(minor(dev));
-	s = splimp();
+	s = splnet();
 	SLIST_REMOVE(&d->bd_sel.si_note, kn, knote, kn_selnext);
 	splx(s);
 }
@@ -1555,7 +1555,7 @@ bpf_setdlt(struct bpf_d *d, u_int dlt)
 	}
 	if (bp == NULL)
 		return (EINVAL);
-	s = splimp();
+	s = splnet();
 	bpf_detachd(d);
 	bpf_attachd(d, bp);
 	bpf_reset_d(d);

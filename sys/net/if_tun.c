@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.74 2006/01/11 12:51:33 claudio Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.75 2006/03/04 22:40:16 brad Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 		tp->tun_flags &= ~TUN_LAYER2;
 		ifp->if_mtu = TUNMTU;
 		ifp->if_flags = IFF_POINTOPOINT;
-		ifp->if_type  = IFT_PROPVIRTUAL;
+		ifp->if_type  = IFF_POINTOPOINT;
 		ifp->if_hdrlen = sizeof(u_int32_t);
 		if_attach(ifp);
 		if_alloc_sadl(ifp);
@@ -219,7 +219,7 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	/* force output function to our function */
 	ifp->if_output = tun_output;
 
-	s = splimp();
+	s = splnet();
 	LIST_INSERT_HEAD(&tun_softc_list, tp, tun_list);
 	splx(s);
 
@@ -239,7 +239,7 @@ tun_clone_destroy(struct ifnet *ifp)
 	klist_invalidate(&tp->tun_wsel.si_note);
 	splx(s);
 
-	s = splimp();
+	s = splnet();
 	LIST_REMOVE(tp, tun_list);
 	splx(s);
 
@@ -330,7 +330,7 @@ tunopen(dev_t dev, int flag, int mode, struct proc *p)
 	tp->tun_flags |= TUN_OPEN;
 
 	/* automatically UP the interface on open */
-	s = splimp();
+	s = splnet();
 	if_up(ifp);
 	ifp->if_flags |= IFF_RUNNING;
 	splx(s);
@@ -361,12 +361,12 @@ tunclose(dev_t dev, int flag, int mode, struct proc *p)
 	/*
 	 * junk all pending output
 	 */
-	s = splimp();
+	s = splnet();
 	IFQ_PURGE(&ifp->if_snd);
 	splx(s);
 
 	if ((ifp->if_flags & IFF_UP) && !(tp->tun_flags & TUN_STAYUP)) {
-		s = splimp();
+		s = splnet();
 		if_down(ifp);
 		if (ifp->if_flags & IFF_RUNNING) {
 			/* find internet addresses and delete routes */
@@ -473,7 +473,7 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq		*ifr = (struct ifreq *)data;
 	int			 error = 0, s;
 
-	s = splimp();
+	s = splnet();
 	if (tp->tun_flags & TUN_LAYER2)
 		if ((error = ether_ioctl(ifp, &tp->arpcom, cmd, data)) > 0) {
 			splx(s);
@@ -596,7 +596,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #endif
 
 	len = m0->m_pkthdr.len + sizeof(*af);
-	s = splimp();
+	s = splnet();
 	IFQ_ENQUEUE(&ifp->if_snd, m0, NULL, error);
 	if (error) {
 		splx(s);
@@ -639,7 +639,7 @@ tunioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if ((tp = tun_lookup(minor(dev))) == NULL)
 		return (ENXIO);
 
-	s = splimp();
+	s = splnet();
 	switch (cmd) {
 	case TUNSIFINFO:
 		tunp = (struct tuninfo *)data;
@@ -754,7 +754,7 @@ tunread(dev_t dev, struct uio *uio, int ioflag)
 
 	tp->tun_flags &= ~TUN_RWAIT;
 
-	s = splimp();
+	s = splnet();
 	do {
 		while ((tp->tun_flags & TUN_READY) != TUN_READY)
 			if ((error = tsleep((caddr_t)tp,
@@ -910,7 +910,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 		return (EAFNOSUPPORT);
 	}
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		splx(s);
@@ -946,7 +946,7 @@ tunpoll(dev_t dev, int events, struct proc *p)
 
 	ifp = &tp->tun_if;
 	revents = 0;
-	s = splimp();
+	s = splnet();
 	TUNDEBUG(("%s: tunpoll\n", ifp->if_xname));
 
 	if (events & (POLLIN | POLLRDNORM)) {
@@ -988,7 +988,7 @@ tunkqfilter(dev_t dev, struct knote *kn)
 
 	ifp = &tp->tun_if;
 
-	s = splimp();
+	s = splnet();
 	TUNDEBUG(("%s: tunkqfilter\n", ifp->if_xname));
 	splx(s);
 

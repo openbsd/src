@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.19 2005/10/12 15:17:18 markus Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.20 2006/03/04 22:40:15 brad Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -231,7 +231,7 @@ bstp_send_config_bpdu(bif, cu)
 	struct bstp_cbpdu bpdu;
 	int s, error;
 
-	s = splimp();
+	s = splnet();
 	ifp = bif->ifp;
 	arp = (struct arpcom *)ifp;
 
@@ -418,7 +418,7 @@ bstp_transmit_tcn(sc)
 	bpdu.tbu_bpdutype = BSTP_MSGTYPE_TCN;
 	bcopy(&bpdu, m->m_data + sizeof(*eh), sizeof(bpdu));
 
-	s = splimp();
+	s = splnet();
 	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
 	if (error == 0 && (ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);

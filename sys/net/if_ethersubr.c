@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.99 2005/11/03 20:00:18 reyk Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.100 2006/03/04 22:40:15 brad Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -450,7 +450,7 @@ ether_output(ifp0, m0, dst, rt0)
 
 	mflags = m->m_flags;
 	len = m->m_pkthdr.len;
-	s = splimp();
+	s = splnet();
 	/*
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
@@ -775,7 +775,7 @@ decapsulate:
 		}
 	}
 
-	s = splimp();
+	s = splnet();
 	IF_INPUT_ENQUEUE(inq, m);
 	splx(s);
 }
@@ -1059,7 +1059,7 @@ ether_addmulti(ifr, ac)
 	struct ether_multi *enm;
 	u_char addrlo[ETHER_ADDR_LEN];
 	u_char addrhi[ETHER_ADDR_LEN];
-	int s = splimp(), error;
+	int s = splnet(), error;
 
 	error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
 	if (error != 0) {
@@ -1120,7 +1120,7 @@ ether_delmulti(ifr, ac)
 	struct ether_multi *enm;
 	u_char addrlo[ETHER_ADDR_LEN];
 	u_char addrhi[ETHER_ADDR_LEN];
-	int s = splimp(), error;
+	int s = splnet(), error;
 
 	error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
 	if (error != 0) {

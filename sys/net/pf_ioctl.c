@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.164 2006/01/06 00:41:21 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.165 2006/03/04 22:40:16 brad Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -920,7 +920,7 @@ pf_enable_altq(struct pf_altq *altq)
 	if (error == 0 && ifp != NULL && ALTQ_IS_ENABLED(&ifp->if_snd)) {
 		tb.rate = altq->ifbandwidth;
 		tb.depth = altq->tbrsize;
-		s = splimp();
+		s = splnet();
 		error = tbr_set(&ifp->if_snd, &tb);
 		splx(s);
 	}
@@ -950,7 +950,7 @@ pf_disable_altq(struct pf_altq *altq)
 	if (error == 0) {
 		/* clear tokenbucket regulator */
 		tb.rate = 0;
-		s = splimp();
+		s = splnet();
 		error = tbr_set(&ifp->if_snd, &tb);
 		splx(s);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.47 2005/10/17 08:43:35 henning Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.48 2006/03/04 22:40:15 brad Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -358,7 +358,7 @@ fddi_output(ifp0, m0, dst, rt0)
 #endif
 	mflags = m->m_flags;
 	len = m->m_pkthdr.len;
-	s = splimp();
+	s = splnet();
 	/*
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
@@ -478,7 +478,7 @@ fddi_input(ifp, fh, m)
 		return;
 	}
 
-	s = splimp();
+	s = splnet();
 	IF_INPUT_ENQUEUE(inq, m);
 	splx(s);
 }

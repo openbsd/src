@@ -1,4 +1,4 @@
-/*	$OpenBSD: hci_raw.c,v 1.3 2005/01/17 18:12:49 mickey Exp $	*/
+/*	$OpenBSD: hci_raw.c,v 1.4 2006/03/04 22:40:16 brad Exp $	*/
 
 /*
  * ng_btsocket_hci_raw.c
@@ -338,7 +338,7 @@ ng_btsocket_hci_raw_node_rcvdata(struct ifnet *ifp, struct mbuf *m)
 			NG_BT_ITEMQ_ENQUEUE(&ng_btsocket_hci_raw_queue, item);
 			error = ng_btsocket_hci_raw_wakeup_input_task();
 #endif
-			s = splimp();
+			s = splnet();
 			IF_INPUT_ENQUEUE(&btintrq, nam);
 			splx(s);
 			schednetisr(NETISR_BT);
@@ -697,7 +697,7 @@ ng_btsocket_hci_raw_output(void *arg1, int arg2)
 			continue;
 
 		if (strcmp(sa->hci_node, ifp->if_xname) == 0) {
-			s = splimp();
+			s = splnet();
 			IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
 			if (error) {
 				splx(s);

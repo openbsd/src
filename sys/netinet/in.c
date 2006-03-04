@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.42 2006/02/21 15:33:59 claudio Exp $	*/
+/*	$OpenBSD: in.c,v 1.43 2006/03/04 22:40:16 brad Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -674,7 +674,7 @@ in_ifinit(ifp, ia, sin, scrub)
 {
 	u_int32_t i = sin->sin_addr.s_addr;
 	struct sockaddr_in oldaddr;
-	int s = splimp(), flags = RTF_UP, error;
+	int s = splnet(), flags = RTF_UP, error;
 
 	oldaddr = ia->ia_addr;
 	ia->ia_addr = *sin;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.62 2006/01/05 05:05:06 jsg Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.63 2006/03/04 22:40:15 brad Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -951,7 +951,7 @@ sorflush(struct socket *so)
 
 	sb->sb_flags |= SB_NOINTR;
 	(void) sblock(sb, M_WAITOK);
-	s = splimp();
+	s = splnet();
 	socantrcvmore(so);
 	sbunlock(sb);
 	asb = *sb;

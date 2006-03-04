@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_ip.c,v 1.19 2004/09/20 23:10:47 drahn Exp $	*/
+/*	$OpenBSD: ipx_ip.c,v 1.20 2006/03/04 22:40:16 brad Exp $	*/
 
 /*-
  *
@@ -223,7 +223,7 @@ ipxip_input( struct mbuf *m, ...)
 	/*
 	 * Deliver to IPX
 	 */
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		m_freem(m);

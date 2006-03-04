@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_subr.c,v 1.19 2004/07/28 17:15:12 tholo Exp $	*/
+/*	$OpenBSD: altq_subr.c,v 1.20 2006/03/04 22:40:15 brad Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -155,7 +155,7 @@ altq_enable(ifq)
 	if (ALTQ_IS_ENABLED(ifq))
 		return 0;
 
-	s = splimp();
+	s = splnet();
 	IFQ_PURGE(ifq);
 	ASSERT(ifq->ifq_len == 0);
 	ifq->altq_flags |= ALTQF_ENABLED;
@@ -175,7 +175,7 @@ altq_disable(ifq)
 	if (!ALTQ_IS_ENABLED(ifq))
 		return 0;
 
-	s = splimp();
+	s = splnet();
 	IFQ_PURGE(ifq);
 	ASSERT(ifq->ifq_len == 0);
 	ifq->altq_flags &= ~(ALTQF_ENABLED|ALTQF_CLASSIFY);
@@ -321,7 +321,7 @@ tbr_timeout(arg)
 	int active, s;
 
 	active = 0;
-	s = splimp();
+	s = splnet();
 	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list)) {
 		if (!TBR_IS_ENABLED(&ifp->if_snd))
 			continue;
@@ -423,7 +423,7 @@ altq_pfdetach(struct pf_altq *a)
 	if (a->altq_disc == NULL || a->altq_disc != ifp->if_snd.altq_disc)
 		return (0);
 
-	s = splimp();
+	s = splnet();
 	if (ALTQ_IS_ENABLED(&ifp->if_snd))
 		error = altq_disable(&ifp->if_snd);
 	if (error == 0)

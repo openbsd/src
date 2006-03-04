@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.19 2005/10/17 08:43:35 henning Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.20 2006/03/04 22:40:15 brad Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ cbq_pfattach(struct pf_altq *a)
 
 	if ((ifp = ifunit(a->ifname)) == NULL || a->altq_disc == NULL)
 		return (EINVAL);
-	s = splimp();
+	s = splnet();
 	error = altq_attach(&ifp->if_snd, ALTQT_CBQ, a->altq_disc,
 	    cbq_enqueue, cbq_dequeue, cbq_request, NULL, NULL);
 	splx(s);
@@ -430,7 +430,7 @@ cbq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
  *	layer (e.g. ether_output).  cbq_enqueue queues the given packet
  *	to the cbq, then invokes the driver's start routine.
  *
- *	Assumptions:	called in splimp
+ *	Assumptions:	called in splnet
  *	Returns:	0 if the queueing is successful.
  *			ENOBUFS if a packet dropping occurred as a result of
  *			the queueing.
@@ -497,7 +497,7 @@ cbq_dequeue(struct ifaltq *ifq, int op)
 /*
  * void
  * cbqrestart(queue_t *) - Restart sending of data.
- * called from rmc_restart in splimp via timeout after waking up
+ * called from rmc_restart in splnet via timeout after waking up
  * a suspended class.
  *	Returns:	NONE
  */

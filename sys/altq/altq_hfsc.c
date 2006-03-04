@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.c,v 1.22 2005/10/17 08:43:35 henning Exp $	*/
+/*	$OpenBSD: altq_hfsc.c,v 1.23 2006/03/04 22:40:15 brad Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.17 2002/11/29 07:48:33 kjc Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ hfsc_pfattach(struct pf_altq *a)
 
 	if ((ifp = ifunit(a->ifname)) == NULL || a->altq_disc == NULL)
 		return (EINVAL);
-	s = splimp();
+	s = splnet();
 	error = altq_attach(&ifp->if_snd, ALTQT_HFSC, a->altq_disc,
 	    hfsc_enqueue, hfsc_dequeue, hfsc_request, NULL, NULL);
 	splx(s);
@@ -446,7 +446,7 @@ hfsc_class_create(struct hfsc_if *hif, struct service_curve *rsc,
 	cl->cl_hif = hif;
 	cl->cl_parent = parent;
 
-	s = splimp();
+	s = splnet();
 	hif->hif_classes++;
 
 	/*
@@ -525,7 +525,7 @@ hfsc_class_destroy(struct hfsc_class *cl)
 	if (is_a_parent_class(cl))
 		return (EBUSY);
 
-	s = splimp();
+	s = splnet();
 
 	if (!qempty(cl->cl_q))
 		hfsc_purgeq(cl);

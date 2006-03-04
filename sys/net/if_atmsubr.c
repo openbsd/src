@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atmsubr.c,v 1.25 2005/09/30 02:39:24 brad Exp $       */
+/*      $OpenBSD: if_atmsubr.c,v 1.26 2006/03/04 22:40:15 brad Exp $       */
 
 /*
  *
@@ -233,7 +233,7 @@ atm_output(ifp, m0, dst, rt0)
 	 * not yet active.
 	 */
 	len = m->m_pkthdr.len;
-	s = splimp();
+	s = splnet();
 	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
 	if (error) {
 		splx(s);
@@ -275,7 +275,7 @@ atm_input(ifp, ah, m, rxhand)
 	if (rxhand) {
 #ifdef NATM
 	  struct natmpcb *npcb = rxhand;
-	  s = splimp();			/* in case 2 atm cards @ diff lvls */
+	  s = splnet();			/* in case 2 atm cards @ diff lvls */
 	  npcb->npcb_inq++;			/* count # in queue */
 	  splx(s);
 	  schednetisr(NETISR_NATM);
@@ -330,7 +330,7 @@ atm_input(ifp, ah, m, rxhand)
 	  }
 	}
 
-	s = splimp();
+	s = splnet();
 	IF_INPUT_ENQUEUE(inq, m);
 	splx(s);
 }

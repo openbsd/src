@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_arcsubr.c,v 1.21 2004/06/21 23:50:36 tholo Exp $	*/
+/*	$OpenBSD: if_arcsubr.c,v 1.22 2006/03/04 22:40:15 brad Exp $	*/
 /*	$NetBSD: if_arcsubr.c,v 1.8 1996/05/07 02:40:29 thorpej Exp $	*/
 
 /*
@@ -207,7 +207,7 @@ arc_output(ifp, m0, dst, rt0)
 			ah->arc_seqid = ac->ac_seqid;
 
 			len = m->m_pkthdr.len;
-			s = splimp();
+			s = splnet();
 			/*
 			 * Queue message on interface, and start output if 
 			 * interface not yet active.
@@ -266,7 +266,7 @@ arc_output(ifp, m0, dst, rt0)
 	}
 
 	len = m->m_pkthdr.len;
-	s = splimp();
+	s = splnet();
 	/*
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
@@ -508,7 +508,7 @@ arc_input(ifp, m)
 		return;
 	}
 
-	s = splimp();
+	s = splnet();
 	IF_INPUT_ENQUEUE(inq, m);
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.38 2006/02/24 20:34:34 claudio Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.39 2006/03/04 22:40:16 brad Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -613,7 +613,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		goto drop;
 
 	/* Check queue. */
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL (inq)) {
 		/* Queue overflow. */
 		IF_DROP(inq);
@@ -643,7 +643,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	int s, len, rv = 0;
 	u_int16_t protocol;
 
-	s = splimp();
+	s = splnet();
 
 	getmicrouptime(&tv);
 	sp->pp_last_activity = tv.tv_sec;
@@ -663,7 +663,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		ifp->if_flags |= IFF_RUNNING;
 		splx(s);
 		lcp.Open(sp);
-		s = splimp();
+		s = splnet();
 	}
 
 #ifdef INET
@@ -914,7 +914,7 @@ sppp_isempty(struct ifnet *ifp)
 	struct sppp *sp = (struct sppp*) ifp;
 	int empty, s;
 
-	s = splimp();
+	s = splnet();
 	empty = !sp->pp_fastq.ifq_head && !sp->pp_cpq.ifq_head &&
 		IFQ_IS_EMPTY(&sp->pp_if.if_snd);
 	splx(s);
@@ -931,7 +931,7 @@ sppp_dequeue(struct ifnet *ifp)
 	struct mbuf *m;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	/*
 	 * Process only the control protocol queue until we have at
 	 * least one NCP open.
@@ -959,8 +959,7 @@ sppp_pick(struct ifnet *ifp)
 	struct mbuf *m;
 	int s;
 
-	s= splimp ();
-
+	s = splnet();
 	m = sp->pp_cpq.ifq_head;
 	if (m == NULL &&
 	    (sp->pp_phase == PHASE_NETWORK ||
@@ -981,7 +980,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct sppp *sp = (struct sppp*) ifp;
 	int s, rv, going_up, going_down, newmode;
 
-	s = splimp();
+	s = splnet();
 	rv = 0;
 	switch (cmd) {
 	case SIOCAIFADDR:
@@ -1787,7 +1786,7 @@ sppp_to_event(const struct cp *cp, struct sppp *sp)
 	STDDCL;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	if (debug)
 		log(LOG_DEBUG, SPP_FMT "%s TO(%s) rst_counter = %d\n",
 		    SPP_ARGS(ifp), cp->name,
@@ -3137,7 +3136,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 			}
 			addlog("\n");
 		}
-		x = splimp();
+		x = splnet();
 		sp->pp_flags &= ~PP_NEEDAUTH;
 		if (sp->myauth.proto == PPP_CHAP &&
 		    (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) &&
@@ -3316,7 +3315,7 @@ sppp_chap_TO(void *cookie)
 	STDDCL;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	if (debug)
 		log(LOG_DEBUG, SPP_FMT "chap TO(%s) rst_counter = %d\n",
 		    SPP_ARGS(ifp),
@@ -3389,7 +3388,7 @@ sppp_chap_tlu(struct sppp *sp)
 			addlog("re-challenging supressed\n");
 	}
 
-	x = splimp();
+	x = splnet();
 	/* indicate to LCP that we need to be closed down */
 	sp->lcp.protos |= (1 << IDX_CHAP);
 
@@ -3557,7 +3556,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			}
 			addlog("\n");
 		}
-		x = splimp();
+		x = splnet();
 		sp->pp_flags &= ~PP_NEEDAUTH;
 		if (sp->myauth.proto == PPP_PAP &&
 		    (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) &&
@@ -3659,7 +3658,7 @@ sppp_pap_TO(void *cookie)
 	STDDCL;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	if (debug)
 		log(LOG_DEBUG, SPP_FMT "pap TO(%s) rst_counter = %d\n",
 		    SPP_ARGS(ifp),
@@ -3716,7 +3715,7 @@ sppp_pap_tlu(struct sppp *sp)
 		log(LOG_DEBUG, SPP_FMT "%s tlu\n",
 		    SPP_ARGS(ifp), pap.name);
 
-	x = splimp();
+	x = splnet();
 	/* indicate to LCP that we need to be closed down */
 	sp->lcp.protos |= (1 << IDX_PAP);
 
@@ -3883,7 +3882,7 @@ sppp_keepalive(void *dummy)
 	int s;
 	struct timeval tv;
 
-	s = splimp();
+	s = splnet();
 	getmicrouptime(&tv);
 	for (sp=spppq; sp; sp=sp->pp_next) {
 		struct ifnet *ifp = &sp->pp_if;
@@ -3997,7 +3996,7 @@ sppp_get_ip_addrs(struct sppp *sp, u_long *src, u_long *dst, u_long *srcmask)
 }
 
 /*
- * Set my IP address.  Must be called at splimp.
+ * Set my IP address.  Must be called at splnet.
  */
 HIDE void
 sppp_set_ip_addr(struct sppp *sp, u_long src)

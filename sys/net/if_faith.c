@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_faith.c,v 1.20 2006/01/04 06:04:42 canacar Exp $	*/
+/*	$OpenBSD: if_faith.c,v 1.21 2006/03/04 22:40:15 brad Exp $	*/
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -180,7 +180,7 @@ faithoutput(ifp, m, dst, rt)
 	/* XXX do we need more sanity checks? */
 
 	m->m_pkthdr.rcvif = ifp;
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		m_freem(m);

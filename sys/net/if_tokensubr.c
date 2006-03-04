@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tokensubr.c,v 1.20 2005/06/08 06:55:33 henning Exp $	*/
+/*	$OpenBSD: if_tokensubr.c,v 1.21 2006/03/04 22:40:16 brad Exp $	*/
 /*	$NetBSD: if_tokensubr.c,v 1.7 1999/05/30 00:39:07 bad Exp $	*/
 
 /*
@@ -345,7 +345,7 @@ send:
 
 	mflags = m->m_flags;
 	len = m->m_pkthdr.len;
-	s = splimp();
+	s = splnet();
 	/*
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
@@ -468,7 +468,7 @@ token_input(ifp, m)
 		return;
 	}
 
-	s = splimp();
+	s = splnet();
 	IF_INPUT_ENQUEUE(inq, m);
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.38 2006/01/04 06:04:42 canacar Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.39 2006/03/04 22:40:15 brad Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -432,7 +432,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int error = 0;
 	struct proc *prc = curproc;		/* XXX */
 
-	s = splimp();
+	s = splnet();
 	switch(cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;

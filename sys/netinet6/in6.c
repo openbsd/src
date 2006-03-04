@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.62 2006/02/14 10:34:31 otto Exp $	*/
+/*	$OpenBSD: in6.c,v 1.63 2006/03/04 22:40:16 brad Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1588,7 +1588,7 @@ in6_ifinit(ifp, ia, sin6, newhost)
 	int newhost;
 {
 	int	error = 0, plen, ifacount = 0;
-	int	s = splimp();
+	int	s = splnet();
 	struct ifaddr *ifa;
 
 	/*

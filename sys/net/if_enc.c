@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.42 2005/06/08 06:35:04 henning Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.43 2006/03/04 22:40:15 brad Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -123,7 +123,7 @@ struct ifnet *ifp;
 
     for (;;)
     {
-        s = splimp();
+        s = splnet();
 	IF_DROP(&ifp->if_snd);
         IF_DEQUEUE(&ifp->if_snd, m);
         splx(s);

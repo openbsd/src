@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.15 2006/02/20 20:12:14 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.16 2006/03/04 22:40:16 brad Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@ ieee80211_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		 * further headers, and start output if interface not
 		 * yet active.
 		 */
-		s = splimp();
+		s = splnet();
 		IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
 		if (error) {
 			/* mbuf is already freed */

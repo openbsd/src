@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.6 2006/01/04 06:04:42 canacar Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.7 2006/03/04 22:40:15 brad Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -259,7 +259,7 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	bpfattach(&sc->sc_sppp.pp_if.if_bpf, &sc->sc_sppp.pp_if, DLT_PPP_ETHER, 0);
 #endif
 	
-	s = splimp();
+	s = splnet();
 	LIST_INSERT_HEAD(&pppoe_softc_list, sc, sc_list);
 	splx(s);
 
@@ -273,7 +273,7 @@ pppoe_clone_destroy(struct ifnet *ifp)
 	struct pppoe_softc *sc = ifp->if_softc;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	LIST_REMOVE(sc, sc_list);
 	timeout_del(&sc->sc_timeout);
 	splx(s);

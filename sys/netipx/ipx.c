@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.12 2003/12/10 07:22:43 itojun Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.13 2006/03/04 22:40:16 brad Exp $	*/
 
 /*-
  *
@@ -235,7 +235,7 @@ ipx_ifinit(ifp, ia, sipx, scrub)
 	int scrub;
 {
 	struct sockaddr_ipx oldaddr;
-	int s = splimp(), error;
+	int s = splnet(), error;
 
 	/*
 	 * Set up new addresses.

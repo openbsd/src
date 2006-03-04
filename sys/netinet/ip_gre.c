@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.27 2005/07/31 03:52:19 pascoe Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.28 2006/03/04 22:40:16 brad Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -196,7 +196,7 @@ gre_input2(m , hlen, proto)
 		bpf_mtap_af(sc->sc_if.if_bpf, af, m);
 #endif
 
-	s = splimp();		/* possible */
+	s = splnet();		/* possible */
 	IF_INPUT_ENQUEUE(ifq, m);
 	splx(s);
 
@@ -322,7 +322,7 @@ gre_mobile_input(struct mbuf *m, ...)
 		bpf_mtap_af(sc->sc_if.if_bpf, AF_INET, m);
 #endif
 
-	s = splimp();       /* possible */
+	s = splnet();       /* possible */
 	IF_INPUT_ENQUEUE(ifq, m);
 	splx(s);
 }

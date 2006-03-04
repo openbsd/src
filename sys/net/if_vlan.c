@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.63 2006/02/09 00:05:55 reyk Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.64 2006/03/04 22:40:16 brad Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -246,7 +246,7 @@ vlan_start(struct ifnet *ifp)
 
 		/*
 		 * Send it, precisely as ether_output() would have.
-		 * We are already running at splimp.
+		 * We are already running at splnet.
 		 */
 		p->if_obytes += m->m_pkthdr.len;
 		if (m->m_flags & M_MCAST)
@@ -565,7 +565,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((error = copyin(ifr->ifr_data, &vlr, sizeof vlr)))
 			break;
 		if (vlr.vlr_parent[0] == '\0') {
-			s = splimp();
+			s = splnet();
 			vlan_unconfig(ifp);
 			if (ifp->if_flags & IFF_UP)
 				if_down(ifp);
@@ -645,6 +645,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ifv->ifv_p != NULL)
 			error = vlan_set_promisc(ifp);
 		break;
+
 	case SIOCADDMULTI:
 		error = (ifv->ifv_p != NULL) ?
 		    vlan_ether_addmulti(ifv, ifr) : EINVAL;

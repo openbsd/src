@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.92 2005/09/28 15:20:12 brad Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.93 2006/03/04 22:40:16 brad Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -626,7 +626,7 @@ tcp_drain()
 {
 	struct inpcb *inp;
 
-	/* called at splimp() */
+	/* called at splnet() */
 	CIRCLEQ_FOREACH(inp, &tcbtable.inpt_queue, inp_queue) {
 		struct tcpcb *tp = (struct tcpcb *)inp->inp_ppcb;
 

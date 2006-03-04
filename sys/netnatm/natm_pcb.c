@@ -1,4 +1,4 @@
-/*	$OpenBSD: natm_pcb.c,v 1.5 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: natm_pcb.c,v 1.6 2006/03/04 22:40:16 brad Exp $	*/
 
 /*
  *
@@ -85,7 +85,7 @@ struct natmpcb *npcb;
 int op;
 
 {
-  int s = splimp();
+  int s = splnet();
 
   if ((npcb->npcb_flags & NPCB_FREE) == 0) {
     LIST_REMOVE(npcb, pcblist);
@@ -117,7 +117,7 @@ u_int8_t vpi;
 
 {
   struct natmpcb *cpcb = NULL;		/* current pcb */
-  int s = splimp();
+  int s = splnet();
 
 
   /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: at_control.c,v 1.7 2004/06/21 18:02:20 tholo Exp $	*/
+/*	$OpenBSD: at_control.c,v 1.8 2006/03/04 22:40:16 brad Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -347,7 +347,7 @@ at_ifinit( ifp, aa, sat )
 {
     struct netrange	nr, onr;
     struct sockaddr_at	oldaddr;
-    int			s = splimp(), error = 0, i, j, netinc, nodeinc, nnets;
+    int			s = splnet(), error = 0, i, j, netinc, nodeinc, nnets;
     u_int16_t		net;
 
     oldaddr = aa->aa_addr;

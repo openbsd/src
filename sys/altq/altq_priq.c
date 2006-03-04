@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_priq.c,v 1.18 2005/10/17 08:43:35 henning Exp $	*/
+/*	$OpenBSD: altq_priq.c,v 1.19 2006/03/04 22:40:15 brad Exp $	*/
 /*	$KAME: altq_priq.c,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -75,7 +75,7 @@ priq_pfattach(struct pf_altq *a)
 
 	if ((ifp = ifunit(a->ifname)) == NULL || a->altq_disc == NULL)
 		return (EINVAL);
-	s = splimp();
+	s = splnet();
 	error = altq_attach(&ifp->if_snd, ALTQT_PRIQ, a->altq_disc,
 	    priq_enqueue, priq_dequeue, priq_request, NULL, NULL);
 	splx(s);
@@ -253,7 +253,7 @@ priq_class_create(struct priq_if *pif, int pri, int qlimit, int flags, int qid)
 
 	if ((cl = pif->pif_classes[pri]) != NULL) {
 		/* modify the class instead of creating a new one */
-		s = splimp();
+		s = splnet();
 		if (!qempty(cl->cl_q))
 			priq_purgeq(cl);
 		splx(s);
@@ -354,7 +354,7 @@ priq_class_destroy(struct priq_class *cl)
 	struct priq_if *pif;
 	int s, pri;
 
-	s = splimp();
+	s = splnet();
 
 	if (!qempty(cl->cl_q))
 		priq_purgeq(cl);

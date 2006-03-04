@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.128 2006/01/01 11:54:31 miod Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.129 2006/03/04 22:40:15 brad Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -380,7 +380,7 @@ main(void *framep)
 	 * Initialize protocols.  Block reception of incoming packets
 	 * until everything is ready.
 	 */
-	s = splimp();
+	s = splnet();
 	ifinit();
 	domaininit();
 	if_attachdomain();

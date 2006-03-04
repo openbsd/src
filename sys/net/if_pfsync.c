@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.60 2006/02/20 20:12:14 damien Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.61 2006/03/04 22:40:15 brad Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -158,7 +158,7 @@ pfsyncstart(struct ifnet *ifp)
 	int s;
 
 	for (;;) {
-		s = splimp();
+		s = splnet();
 		IF_DROP(&ifp->if_snd);
 		IF_DEQUEUE(&ifp->if_snd, m);
 		splx(s);

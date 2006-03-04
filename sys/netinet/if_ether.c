@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.61 2005/11/29 02:59:42 jolan Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.62 2006/03/04 22:40:16 brad Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -464,7 +464,7 @@ arpintr()
 	int s, len;
 
 	while (arpintrq.ifq_head) {
-		s = splimp();
+		s = splnet();
 		IF_DEQUEUE(&arpintrq, m);
 		splx(s);
 		if (m == 0 || (m->m_flags & M_PKTHDR) == 0)
