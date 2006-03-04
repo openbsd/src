@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.81 2006/02/20 19:39:11 miod Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.82 2006/03/04 10:22:20 miod Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1397,42 +1397,16 @@ coredump(struct proc *p)
 	error = cpu_coredump(p, vp, cred, &core);
 	if (error)
 		goto out;
-	if (core.c_midmag == 0) {
-		/* XXX
-		 * cpu_coredump() didn't bother to set the magic; assume
-		 * this is a request to do a traditional dump. cpu_coredump()
-		 * is still responsible for setting sensible values in
-		 * the core header.
-		 */
-		if (core.c_cpusize == 0)
-			core.c_cpusize = USPACE; /* Just in case */
-		error = vn_rdwr(UIO_WRITE, vp, vm->vm_daddr,
-		    (int)core.c_dsize,
-		    (off_t)core.c_cpusize, UIO_USERSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-		if (error)
-			goto out;
-		error = vn_rdwr(UIO_WRITE, vp,
-#ifdef MACHINE_STACK_GROWS_UP
-		    (caddr_t) USRSTACK,
-#else
-		    (caddr_t) trunc_page(USRSTACK - ctob(vm->vm_ssize)),
-#endif
-		    core.c_ssize,
-		    (off_t)(core.c_cpusize + core.c_dsize), UIO_USERSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-	} else {
-		/*
-		 * vm_coredump() spits out all appropriate segments.
-		 * All that's left to do is to write the core header.
-		 */
-		error = uvm_coredump(p, vp, cred, &core);
-		if (error)
-			goto out;
-		error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&core,
-		    (int)core.c_hdrsize, (off_t)0,
-		    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-	}
+	/*
+	 * uvm_coredump() spits out all appropriate segments.
+	 * All that's left to do is to write the core header.
+	 */
+	error = uvm_coredump(p, vp, cred, &core);
+	if (error)
+		goto out;
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&core,
+	    (int)core.c_hdrsize, (off_t)0,
+	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 out:
 	VOP_UNLOCK(vp, 0, p);
 	error1 = vn_close(vp, FWRITE, cred, p);
