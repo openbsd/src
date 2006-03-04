@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.31 2005/12/28 03:00:07 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.32 2006/03/04 14:20:37 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -572,10 +572,10 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsi_xfer *xs,
 
 	hscb->cdb_len = xs->cmdlen;
 	if (hscb->cdb_len > sizeof(hscb->cdb32)) {
-		ahc_set_transaction_status(scb, CAM_REQ_INVALID);
 		ahc_lock(ahc, &s);
 		ahc_free_scb(ahc, scb);
 		ahc_unlock(ahc, &s);
+		xs->error = XS_DRIVER_STUFFUP;
 		xs->flags |= ITSDONE;
 		scsi_done(xs);
 		return (COMPLETE);
