@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.143 2006/02/12 19:55:39 miod Exp $
+#	$OpenBSD: files.i386,v 1.144 2006/03/04 16:27:03 grange Exp $
 #
 # new style config file for i386 architecture
 #
@@ -393,6 +393,11 @@ include "dev/i2c/files.i2c"
 # Machine-independent GPIO drivers
 #
 include "dev/gpio/files.gpio"
+
+#
+# Machine-independent 1-Wire drivers
+#
+include "dev/onewire/files.onewire"
 
 include "../../../dev/acpi/files.acpi"
 file	arch/i386/i386/acpi_machdep.c		acpi

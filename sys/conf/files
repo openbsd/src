@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.365 2006/02/01 11:03:33 dlg Exp $
+#	$OpenBSD: files,v 1.366 2006/03/04 16:27:02 grange Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -18,6 +18,7 @@ define	midisyn
 define	radiobus {}
 define	i2cbus {}
 define	gpiobus {}
+define	onewirebus {}
 
 # filesystem firmware loading attribute
 define firmload
@@ -109,6 +110,9 @@ define	atapi {[channel = -1]}
 # Common code for ESDI/IDE/etc. controllers
 device	wdc: ata, atapi, wdc_base
 file	dev/ic/wdc.c			wdc_base
+
+# 1-Wire bus bit-banging
+define	onewire_bitbang
 
 # "Chipset" drivers.  These are the bus-independent routines which
 # contain the cfdrivers.  Attachments are provided by files.<bus>

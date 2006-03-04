@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.473 2006/03/04 15:33:37 grange Exp $
+#	$OpenBSD: GENERIC,v 1.474 2006/03/04 16:27:03 grange Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -73,6 +73,7 @@ option		ACPIVERBOSE
 option		PCIVERBOSE
 option		EISAVERBOSE
 option		USBVERBOSE
+option		ONEWIREVERBOSE
 
 pchb*	at pci?			# PCI-Host bridges
 ppb*	at pci?			# PCI-PCI bridges
@@ -639,6 +640,12 @@ scsibus* at ioprbs?
 # GPIO ``pin bus'' drivers
 #gpioiic* at gpio? offset 0 mask 0x3	# I2C bus bit-banging
 #iic*	at gpioiic?
+#gpioow* at gpio? offset 0 mask 0x1	# 1-Wire bus bit-banging
+#onewire* at gpioow?
+
+# 1-Wire devices
+#owid*	at onewire?			# ID
+#owtemp* at onewire?			# Temperature
 
 pseudo-device	pctr		1
 pseudo-device	mtrr		1	# Memory range attributes control
