@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nsphyter.4,v 1.6 2004/09/30 19:59:25 mickey Exp $
+.\"	$OpenBSD: nsphyter.4,v 1.7 2006/03/04 03:53:30 brad Exp $
 .\"
 .\" Copyright (c) 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .Os
 .Sh NAME
 .Nm nsphyter
-.Nd National Semiconductor DP83843/DP83815 10/100 Ethernet PHY driver
+.Nd National Semiconductor DP83815/DP83843/DP83847 10/100 Ethernet PHY driver
 .Sh SYNOPSIS
 .Cd "nsphyter* at mii?"
 .Sh DESCRIPTION
@@ -37,7 +37,7 @@ The
 .Nm
 driver supports the National Semiconductor
 .Tn PHYTER
-.Tn DP83843
+.Tn DP83843/DP83847
 Ethernet PHYs.
 This driver also supports the integrated PHY on the
 .Tn MACPHYTER
