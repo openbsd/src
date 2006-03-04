@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.57 2006/03/04 11:56:57 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.58 2006/03/04 13:00:43 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -621,26 +621,14 @@ Complete rewrite.
 Package extraction does need a temporary area that
 can hold executable scripts.
 .Pp
-.Nm
-looks through
-.Ev ${PKG_TMPDIR} ,
-.Ev ${TMPDIR} ,
-.Pa /var/tmp ,
-.Pa /tmp ,
-and
-.Pa /usr/tmp
-for such an area, in sequence.
 .Pp
 If
-.Ev ${TMPDIR}
-and
 .Pa /var/tmp
-are mounted noexec, you must currently set
+is mounted noexec, you must currently set
 .Ev PKG_TMPDIR
 to a suitable area, as
 .Nm
-does not check for noexec status except by failing to run installation
-scripts.
+will refuse to install any package that contains executable scripts.
 .Sh BUGS
 .Xr scp 1
 processes do not die like they should when their pipe is closed,
