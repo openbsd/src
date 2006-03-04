@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.6 2004/12/30 23:41:07 drahn Exp $	*/
+/*	$OpenBSD: fault.c,v 1.7 2006/03/04 10:19:12 miod Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -516,8 +516,6 @@ static int
 dab_align(trapframe_t *tf, u_int fsr, u_int far, struct proc *p,
     struct sigdata *sd)
 {
-	union sigval sv;
-
 	/* Alignment faults are always fatal if they occur in kernel mode */
 	if (!TRAP_USERMODE(tf))
 		dab_fatal(tf, fsr, far, p, NULL);
@@ -535,9 +533,6 @@ dab_align(trapframe_t *tf, u_int fsr, u_int far, struct proc *p,
 	sd->trap = fsr;
 
 	p->p_addr->u_pcb.pcb_tf = tf;
-
-	sv.sival_ptr = (u_int32_t *)far;
-	trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
 
 	return (1);
 }
@@ -717,7 +712,7 @@ prefetch_abort_handler(trapframe_t *tf)
 		p = curproc;
 		p->p_addr->u_pcb.pcb_tf = tf;
 
-		goto do_trapsignal;
+		goto out;
 	default:
 		break;
 	}
@@ -736,7 +731,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	    (fault_pc < VM_MIN_ADDRESS && vector_page == ARM_VECTORS_LOW))) {
 		sv.sival_ptr = (u_int32_t *)fault_pc;
 		trapsignal(p, SIGSEGV, 0, SEGV_ACCERR, sv);
-		goto do_trapsignal;
+		goto out;
 	}
 
 	map = &p->p_vmspace->vm_map;
@@ -771,8 +766,6 @@ prefetch_abort_handler(trapframe_t *tf)
 		trapsignal(p, SIGKILL, 0, SEGV_MAPERR, sv);
 	} else
 		trapsignal(p, SIGSEGV, 0, SEGV_MAPERR, sv);
-
-do_trapsignal:
 
 out:
 	userret(p, tf->tf_pc, p->p_sticks);
