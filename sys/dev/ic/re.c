@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.17 2006/01/30 00:32:45 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.18 2006/03/04 03:47:08 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -816,8 +816,6 @@ re_attach_common(struct rl_softc *sc)
 
 	/* Reset the adapter. */
 	re_reset(sc);
-
-	sc->rl_type = RL_8169;
 
 	if (sc->rl_type == RL_8169) {
 
