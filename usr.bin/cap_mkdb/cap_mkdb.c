@@ -1,4 +1,4 @@
-/*	$OpenBSD: cap_mkdb.c,v 1.13 2003/09/26 21:25:34 tedu Exp $	*/
+/*	$OpenBSD: cap_mkdb.c,v 1.14 2006/03/04 20:32:51 otto Exp $	*/
 /*	$NetBSD: cap_mkdb.c,v 1.5 1995/09/02 05:47:12 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char rcsid[] = "$OpenBSD: cap_mkdb.c,v 1.13 2003/09/26 21:25:34 tedu Exp $";
+static char rcsid[] = "$OpenBSD: cap_mkdb.c,v 1.14 2006/03/04 20:32:51 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -286,6 +286,7 @@ db_build(char **ifiles)
 			if (*p == (info ? ',' : ':'))
 				break;
 		}
+		free(bp);
 	}
 
 	switch(st) {
