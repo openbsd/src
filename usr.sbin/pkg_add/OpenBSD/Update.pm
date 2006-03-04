@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.61 2006/02/21 19:20:17 espie Exp $
+# $OpenBSD: Update.pm,v 1.62 2006/03/04 11:31:18 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -14,549 +14,119 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 #
-
 use strict;
 use warnings;
 
-use OpenBSD::Delete;
-use OpenBSD::Interactive;
-
-package OpenBSD::PackingElement;
-sub can_update
-{
-	my ($self, $install, $state) = @_;
-
-	my $issue = $self->update_issue($install);
-	
-	if (defined $issue) {
-		$state->{okay} = 0;
-	    	push(@{$state->{journal}}, $issue);
-	}
-}
-
-sub validate_depend
-{
-}
-
-sub update_issue($$) { undef }
-
-sub extract
-{
-}
-
-sub mark_lib
-{
-}
-
-sub unmark_lib
-{
-}
-
-package OpenBSD::PackingElement::FileBase;
-use File::Temp qw/tempfile/;
-
-sub extract
-{
-	my ($self, $state) = @_;
-
-	my $file = $self->prepare_to_extract($state);
-
-	if (defined $self->{link} || defined $self->{symlink}) {
-		$self->{zap} = 1;
-		return;
-	}
-	
-	my $d = dirname($file->{destdir}.$file->{name});
-	while (!-d $d && -e _) {
-		$d = dirname($d);
-	}
-	if ($state->{not}) {
-		print "extracting tempfile under $d\n" if $state->{very_verbose};
-		$state->{archive}->skip();
-	} else {
-		if (!-e _) {
-			File::Path::mkpath($d);
-		}
-		my ($fh, $tempname) = tempfile('pkg.XXXXXXXXXX', 
-		    DIR => $d);
-
-		print "extracting $tempname\n" if $state->{very_verbose};
-		$file->{name} = $tempname;
-		$self->{tempname} = $tempname;
-		$file->create();
-	}
-}
-
-package OpenBSD::PackingElement::Dir;
-sub extract
-{
-	my ($self, $state) = @_;
-	my $fullname = $self->fullname();
-	my $destdir = $state->{destdir};
-
-	return if -e $destdir.$fullname;
-	print "new directory ", $destdir, $fullname, "\n" if $state->{very_verbose};
-	return if $state->{not};
-	File::Path::mkpath($destdir.$fullname);
-}
-
-package OpenBSD::PackingElement::Sample;
-sub extract
-{
-}
-
-package OpenBSD::PackingElement::Sampledir;
-sub extract
-{
-}
-
-package OpenBSD::PackingElement::ScriptFile;
-sub update_issue($$) 
-{ 
-	return $_[0]->{name}." script";
-}
-
-package OpenBSD::PackingElement::FINSTALL;
-sub update_issue($$) 
-{ 
-	return undef if !$_[1];
-	return $_[0]->SUPER::update_issue($_[1]);
-}
-
-package OpenBSD::PackingElement::FDEINSTALL;
-sub update_issue($$) 
-{ 
-	return undef if $_[1];
-	return $_[0]->SUPER::update_issue($_[1]);
-}
-
-package OpenBSD::PackingElement::Exec;
-sub update_issue($$) 
-{ 
-	return undef if !$_[1];
-	return '@exec '.$_[0]->{expanded};
-}
-
-package OpenBSD::PackingElement::Unexec;
-sub update_issue($$) 
-{ 
-	return undef if $_[1];
-	my $self = $_[0];
-
-	# those are deemed innocuous
-	if ($self->{expanded} =~ m|^/sbin/ldconfig\s+\-R\b| or
-	    $self->{expanded} =~ m|^install-info\s+\-\-delete\b|) {
-		return undef;
-	} else {
-		return '@unexec '.$self->{expanded};
-	}
-}
-
-package OpenBSD::PackingElement::Depend;
-use OpenBSD::Error;
-
-sub check_replacement_spec
-{
-	my ($self, $state, $wanting, $toreplace, $replacement) = @_;
-
-	# nothing to validate if old dependency doesn't concern us.
-	return unless OpenBSD::PkgSpec::match($self->{pattern}, $toreplace);
-	# nothing to do if new dependency just matches
-	return if OpenBSD::PkgSpec::match($self->{pattern}, $replacement);
-
-	if ($state->{forced}->{updatedepends}) {
-	    Warn "Forward dependency of $wanting on $toreplace doesn't match $replacement, forcing it\n";
-	    $state->{forcedupdates} = {} unless defined $state->{forcedupdates};
-	    $state->{forcedupdates}->{$wanting} = 1;
-	} elsif ($state->{interactive}) {
-
-	    if (OpenBSD::Interactive::confirm("Forward dependency of $wanting on $toreplace doesn't match $replacement, proceed with update anyways", 1, 0, 'updatedepends')) {
-		$state->{forcedupdates} = {} unless defined $state->{forcedupdates};
-		$state->{forcedupdates}->{$wanting} = 1;
-	    } else {
-		$state->{okay} = 0;
-	    }
-	} else {
-	    $state->{okay} = 0;
-	    Warn "Can't update forward dependency of $wanting on $toreplace: $replacement doesn't match (use -F updatedepends to force it)\n";
-	}
-}
-
-package OpenBSD::PackingElement::LibDepend;
-sub validate_depend
-{
-	my ($self, $state, $wanting, $toreplace, $replacement) = @_;
-
-	if (defined $self->{name}) {
-		return unless $self->{name} eq $wanting;
-	}
-	$self->check_replacement_spec($state, $wanting, $toreplace, $replacement);
-}
-
-package OpenBSD::PackingElement::Lib;
-sub mark_lib
-{
-	my ($self, $libs, $libpatterns) = @_;
-	my $libname = $self->fullname();
-	if ($libname =~ m/^(.*\.so\.)(\d+)\.(\d+)$/) {
-		$libpatterns->{"$1"} = [$2, $3, $libname];
-	}
-	$libs->{"$libname"} = 1;
-}
-
-sub unmark_lib
-{
-	my ($self, $libs, $libpatterns) = @_;
-	my $libname = $self->fullname();
-	if ($libname =~ m/^(.*\.so\.)(\d+)\.(\d+)$/) {
-		my ($pat, $major, $minor) = ($1, $2, $3);
-		my $p = $libpatterns->{"$pat"};
-		if (defined $p && $p->[0] == $major && $p->[1] <= $minor) {
-			my $n = $p->[2];
-			delete $libs->{"$n"};
-		}
-	}
-	delete $libs->{"$libname"};
-}
-
-package OpenBSD::PackingElement::NewDepend;
-sub validate_depend
-{
-	my ($self, $state, $wanting, $toreplace, $replacement) = @_;
-
-	if (defined $self->{name}) {
-		return unless $self->{name} eq $wanting;
-	}
-	$self->check_replacement_spec($state, $wanting, $toreplace, $replacement);
-}
-
-package OpenBSD::PackingElement::Dependency;
-sub validate_depend
-{
-	my ($self, $state, $wanting, $toreplace, $replacement) = @_;
-
-	$self->check_replacement_spec($state, $wanting, $toreplace, $replacement);
-}
-
 package OpenBSD::Update;
-use OpenBSD::RequiredBy;
-use OpenBSD::PackingList;
-use OpenBSD::PackageInfo;
-use OpenBSD::Error;
+use OpenBSD::ProgressMeter;
 use OpenBSD::Interactive;
+use OpenBSD::PackageInfo;
+use OpenBSD::PackageLocator;
+use OpenBSD::PackageName;
 
-sub can_do
+
+sub find
 {
-	my ($toreplace, $replacement, $state, $ignore) = @_;
+	my ($old, $new, $state) = @_;
+	my @list = ();
 
-	$state->{okay} = 1;
-	$state->{libs_to_check} = [];
-	my $plist = OpenBSD::PackingList->from_installation($toreplace);
-	if (!defined $plist) {
-		Fatal "Couldn't find packing-list for $toreplace\n";
+	OpenBSD::PackageInfo::solve_installed_names($old, \@list, "(updating them all)", $state);
+	unless (defined $state->{full_update} or defined $state->{forced}->{noclosure}) {
+		require OpenBSD::RequiredBy;
+
+		@list = OpenBSD::Requiring->compute_closure(@list);
 	}
-	$state->{journal} = [];
-	$plist->visit('can_update', 0, $state);
-	if ($state->{okay} == 0) {
-		Warn "Old package ", $plist->pkgname(), " contains potentially unsafe operations\n";
-		for my $i (@{$state->{journal}}) {
-			Warn "\t$i\n";
-		}
-		if ($state->{forced}->{update}) {
-			Warn "(forcing update)\n";
-			$state->{okay} = 1;
-		} elsif ($state->{interactive}) {
+	my @cantupdate = ();
+	my $hash = OpenBSD::PackageName::available_stems($state);
 
-			if (OpenBSD::Interactive::confirm("proceed with update anyways", 1, 0, 'update')) {
-			    $state->{okay} = 1;
-			}
-		}
-	}
-	my @wantlist = OpenBSD::RequiredBy->new($toreplace)->list();
-	my @r = ();
-	for my $wanting (@wantlist) {
-		push(@r, $wanting) if !defined $ignore->{$wanting};
-	}
-	if (@r) {
-		print "Verifying dependencies still match for ", 
-		    join(', ', @r), "\n" if $state->{verbose};
-		for my $wanting (@wantlist) {
-			my $p2 = OpenBSD::PackingList->from_installation(
-			    $wanting, \&OpenBSD::PackingList::DependOnly);
-			if (!defined $p2) {
-				Warn "Error: $wanting missing from installation\n"
-			} else {
-				$p2->visit('validate_depend', $state, $wanting, 
-				    $toreplace, $replacement);
-			}
-		}
-	}
-
-	if ($state->{okay}) {
-		try {
-			OpenBSD::Delete::validate_plist($plist, $state);
-		} catchall {
-			Warn "$_";
-			return 0;
-		};
-	}
-
-	$plist->{wantlist} = \@wantlist;
-	$plist->{libs_to_check} = $state->{libs_to_check};
-	
-	return $state->{okay} ? $plist : 0;
-}
-
-sub is_safe
-{
-	my ($plist, $state) = @_;
-	$state->{okay} = 1;
-	$state->{journal} = [];
-	$plist->visit('can_update', 1, $state);
-	if ($state->{okay} == 0) {
-		Warn "New package ", $plist->pkgname(), 
-		    " contains potentially unsafe operations\n";
-		for my $i (@{$state->{journal}}) {
-			Warn "\t$i\n";
-		}
-		if ($state->{forced}->{update}) {
-			Warn "(forcing update)\n";
-			$state->{okay} = 1;
-		} elsif ($state->{interactive}) {
-			if (OpenBSD::Interactive::confirm("proceed with update anyways", 1, 0, 'update')) {
-			    $state->{okay} = 1;
-			}
-		}
-	}
-	return $state->{okay};
-}
-
-# create a packing-list with only the libraries we want to keep around.
-sub split_libs
-{
-	my ($plist, $to_split) = @_;
-
-	my $items = [];
-
-	my $splitted = OpenBSD::PackingList->new();
-
-	OpenBSD::PackingElement::Name->add($splitted, ".libs-".$plist->pkgname());
-	if (defined $plist->{conflict}) {
-		for my $item (@{$plist->{conflict}}) {
-			$item->clone()->add_object($splitted);
-		}
-	}
-	if (defined $plist->{pkgcfl}) {
-		for my $item (@{$plist->{pkgcfl}}) {
-			$item->clone()->add_object($splitted);
-		}
-	}
-	if (defined $plist->{'no-default-conflict'}) {
-		# we conflict with the package we just removed...
-		OpenBSD::PackingElement::Conflict->add($splitted, $plist->pkgname());
-	} else {
-		require OpenBSD::PackageName;
-
-		my $stem = OpenBSD::PackageName::splitstem($plist->pkgname());
-		OpenBSD::PackingElement::Conflict->add($splitted, $stem."-*");
-	}
-
-	for my $item (@{$plist->{items}}) {
-		if ($item->isa("OpenBSD::PackingElement::Lib") &&
-		    defined $to_split->{$item->fullname()}) {
-		    	$item->clone()->add_object($splitted);
+	OpenBSD::ProgressMeter::set_header("Looking for updates");
+	for my $pkgname (@list) {
+		next if $pkgname =~ m/^\.libs-/;
+		my $stem = OpenBSD::PackageName::splitstem($pkgname);
+		my @l = $hash->findstem($stem);
+		if (@l == 0) {
+			push(@cantupdate, $pkgname);
 			next;
 		}
-		if ($item->isa("OpenBSD::PackingElement::Cwd")) {
-			$item->clone()->add_object($splitted);
+		my @l2 = ();
+		if (@l == 1 && $state->{forced}->{pkgpath}) {
+			OpenBSD::ProgressMeter::clear();
+			print "Directly updating $pkgname -> ", $l[0], "\n";
+			push(@$new, $l[0]);
+			next;
 		}
-		push(@$items, $item);
-	}
-	$plist->{items} = $items;
-	return $splitted;
-}
-
-sub convert_to_requiring
-{
-	my $pkg = shift;
-
-	my $plist = OpenBSD::PackingList->from_installation($pkg);
-	if (!defined $plist) {
-		Warn "Couldn't read plist for $pkg\n";
-		return;
-	}
-	my $r = OpenBSD::Requiring->new($pkg);
-	for my $item (@{$plist->{pkgdep}}) {
-		$r->add($item->{name});
-	}
-	delete $plist->{pkgdep};
-	$plist->to_installation();
-}
-
-sub walk_depends_closure
-{
-	my ($start, $plist, $state) = @_;
-	my @todo = ($start);
-	my $done = {};
-	my $depend = 0;
-	my $name = $plist->pkgname();
-
-	print "Packages that depend on those shared libraries:\n" 
-	    if $state->{beverbose};
-
-	my $write = OpenBSD::RequiredBy->new($name);
-
-	while (my $pkg = shift @todo) {
-		$done->{$pkg} = 1;
-		for my $pkg2 (OpenBSD::RequiredBy->new($pkg)->list()) {
-			next if $done->{$pkg2};
-			push(@todo, $pkg2);
-			print "\t$pkg2\n" if $state->{beverbose};
-			$done->{$pkg2} = 1;
-			$write->add($pkg2);
-			my $l = OpenBSD::Requiring->new($pkg2);
-			if (!$l->list()) {
-				convert_to_requiring($pkg2);
+		my $plist = OpenBSD::PackingList->from_installation($pkgname, \&OpenBSD::PackingList::UpdateInfoOnly);
+		if (!defined $plist) {
+			Fatal("Can't locate $pkgname");
+		}
+		my $found;
+		for my $candidate (@l) {
+		    my $handle = OpenBSD::PackageLocator->find($candidate, $state->{arch});
+		    if (!$handle) {
+			    next;
+		    }
+		    $handle->close_now();
+		    my $p2 = $handle->plist(\&OpenBSD::PackingList::UpdateInfoOnly);
+		    if (!$p2) {
+		    	next;
+		    }
+		    if ($p2->has('arch')) {
+			unless ($p2->{arch}->check($state->{arch})) {
+			    next;
 			}
-			$l->add($name);
-			$depend = 1;
-		}
-	}
-#	if (!$depend && $state->{interactive}) {
-#		if ($state->{forced}->{zapoldlibs} ||
-#		    OpenBSD::Interactive::confirm("Nothing depends on $name.  Delete it", 1, 0)) {
-#		    	OpenBSD::Delete::delete_plist($plist, $state);
-#		}
-#	}
-}
-
-
-
-sub save_old_libraries
-{
-	my ($new_plist, $state) = @_;
-
-	for my $old_plist (@{$new_plist->{replacing}}) {
-
-		my $libs = {};
-		my $p = {};
-
-		print "Looking for changes in shared libraries\n" 
-		    if $state->{beverbose};
-		$old_plist->visit('mark_lib', $libs, $p);
-		$new_plist->visit('unmark_lib', $libs, $p);
-
-		if (%$libs) {
-			print "Libraries to keep: ", join(",", sort(keys %$libs)), "\n" 
-			    if $state->{beverbose};
-			my $stub_list = split_libs($old_plist, $libs);
-			my $stub_name = $stub_list->pkgname();
-			my $dest = installed_info($stub_name);
-			print "Keeping them in $stub_name\n" if $state->{beverbose};
-			if ($state->{not}) {
-				$stub_list->to_cache();
-				$old_plist->to_cache();
-			} else {
-				require OpenBSD::md5;
-
-				mkdir($dest);
-				my $oldname = $old_plist->pkgname();
-				open my $descr, '>', $dest.DESC;
-				print $descr "Stub libraries for $oldname\n";
-				close $descr;
-				my $f = OpenBSD::PackingElement::FDESC->add($stub_list, DESC);
-				$f->{ignore} = 1;
-				$f->{md5} = OpenBSD::md5::fromfile($dest.DESC);
-				$stub_list->to_installation();
-				$old_plist->to_installation();
-			}
-			add_installed($stub_name);
-
-			require OpenBSD::PkgCfl;
-			OpenBSD::PkgCfl::register($stub_list, $state);
-
-			walk_depends_closure($old_plist->pkgname(), $stub_list, $state);
-		} else {
-			print "No libraries to keep\n" if $state->{beverbose};
-		}
-	}
-}
-
-			
-sub adjust_dependency
-{
-	my ($dep, $from, $into) = @_;
-
-	my $l = OpenBSD::Requiring->new($dep);
-	if (!$l->list()) {
-		convert_to_requiring($dep);
-	}
-	$l->delete($from);
-	$l->add($into);
-}
-
-sub figure_out_libs
-{
-	my ($plist, $state, @libs) = @_;
-
-	my $has = {};
-	my $result = [];
-
-	for my $item (@{$plist->{items}}) {
-		next unless $item->IsFile();
-		$has->{$item->fullname()} = 1;
-	}
-
-	for my $oldlib (@libs) {
-		print "Checking for collisions with $oldlib... " 
-		    if $state->{verbose};
-
-#		require OpenBSD::RequiredBy;
-#
-#		if (OpenBSD::RequiredBy->new($oldlib)->list() == 0) {
-#			require OpenBSD::Delete;
-#
-#			OpenBSD::Delete::delete_package($oldlib, $state);
-#			delete_installed($oldlib);
-#			next;
-#		}
-
-		my $p = OpenBSD::PackingList->from_installation($oldlib);
-		my $n = [];
-		my $delete = [];
-		my $empty = 1;
-		my $doit = 0;
-		for my $file (@{$p->{items}}) {
-			if ($file->IsFile()) {
-				if ($has->{$file->fullname()}) {
-					$doit = 1;
-					push(@$delete, $file);
-					next;
-				} else {
-					$empty = 0;
+		    }
+		    if ($plist->signature() eq $p2->signature()) {
+		    	$found = $candidate;
+		    }
+		    if ($p2->{extrainfo}->{subdir} eq $plist->{extrainfo}->{subdir}) {
+			push(@l2, $candidate);
+		    } elsif ($p2->has('pkgpath')) {
+		    	for my $p (@{$p2->{pkgpath}}) {
+				if ($p->{name} eq $plist->{extrainfo}->{subdir}) {
+					push(@l2, $candidate);
+					last;
 				}
+		    	}
+		    }
+		}
+
+		if (defined $found && @l2 == 1 && $found eq  $l2[0]) {
+			if (!$plist->uses_old_libs()) {
+				my $msg = "No need to update $pkgname";
+				OpenBSD::ProgressMeter::message($msg);
+				print "$msg\n" if $state->{beverbose};
+				next;
 			}
-			push(@$n, $file);
 		}
-		$p->{items} = $n;
-		if ($doit) {
-			print "some found\n" if $state->{verbose};
-			my $dummy = {items => $delete};
-			push(@$result, 
-			    { plist => $p, 
-			      todelete => $dummy,
-			      empty => $empty});
-			require OpenBSD::Delete;
-			OpenBSD::Delete::validate_plist($dummy, $state);
+		OpenBSD::ProgressMeter::clear();
+		print "Candidates for updating $pkgname -> ", join(' ', @l2), "\n";
+		# if all packages have the same version, but distinct p,
+		# grab the most recent.
+		if (@l2 > 1) {
+		    @l2 = OpenBSD::PackageName::keep_most_recent(@l2);
+		}
+			
+		if (@l2 == 1) {
+			if (defined $found && $found eq  $l2[0] && !$plist->uses_old_libs()) {
+				my $msg = "No need to update $pkgname";
+				OpenBSD::ProgressMeter::message($msg);
+				print "$msg\n" if $state->{beverbose};
+			} else {
+				push(@$new, $l2[0]);
+			}
+		} elsif (@l2 == 0) {
+			push(@cantupdate, $pkgname);
 		} else {
-			print "none found\n" if $state->{verbose};
+			my $result = OpenBSD::Interactive::choose1($pkgname, $state->{interactive}, sort @l2);
+			if (defined $result) {
+				push(@$new, $result);
+			} else {
+				$state->{issues} = 1;
+			}
 		}
 	}
-	if (@$result) {
-		$plist->{old_libs} = $result;
-		return 0;
-	}
-	return 1;
+	OpenBSD::ProgressMeter::next();
+	return @cantupdate;
 }
 
 1;

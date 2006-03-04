@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.216 2006/02/10 11:42:51 espie Exp $
+# $OpenBSD: pkg_add,v 1.217 2006/03/04 11:31:18 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -41,27 +41,6 @@ my $bad = 0;
 our %forced = ();
 our $not;
 
-sub uses_old_libs
-{
-	my $plist = shift;
-	require OpenBSD::RequiredBy;
-
-	my $d = OpenBSD::Requiring->new($plist->pkgname());
-	return  grep {/^\.libs\-/} $d->list();
-}
-
-sub has_new_sig
-{
-	my ($plist, $state) = @_;
-	if (!defined $plist->{new_sig}) {
-		my $n = OpenBSD::PackingList->from_installation($plist->pkgname())->signature();
-		my $o = $plist->signature();
-		print "Comparing full signature for ", $plist->pkgname(), " \"$o\" vs. \"$n\": ", $n eq $o ? "equal\n" : "different\n" 
-		    if $state->{very_verbose};
-		$plist->{new_sig} = $n ne $o;
-	}
-	return $plist->{new_sig};
-}
 
 
 sub can_install($$$)
@@ -76,7 +55,7 @@ sub can_install($$$)
 
 	if ((keys %conflicts) == 1 && (keys %conflicts)[0] eq $pkgname) {
 		if (!$state->{forced}->{installed} &&
-		    !has_new_sig($plist, $state) && !uses_old_libs($plist)) {
+		    !$plist->has_new_sig($state) && !$plist->uses_old_libs()) {
 			print "Already installed: $pkgname\n";
 			return 1;
 		}
@@ -94,8 +73,8 @@ sub can_install($$$)
 
 	if (!$state->{replace}) {
 		if (@conflicts == 1 && is_installed($plist->pkgname()) &&
-		    !has_new_sig($plist, $state) && 
-		    !uses_old_libs($plist)) {
+		    !$plist->has_new_sig($state) && 
+		    !$plist->uses_old_libs()) {
 			print "Not reinstalling $pkgname\n" if $state->{verbose};
 			OpenBSD::SharedLibs::add_package_libs($plist->pkgname());
 			$state->{installed}->{$pkgname} = 1;
@@ -112,23 +91,23 @@ sub can_install($$$)
 		return undef;
 	}
 
-	require OpenBSD::Update;
+	require OpenBSD::Replace;
 
 	if (is_installed($plist->pkgname()) && !$state->{forced}->{installed}) {
-		if (!has_new_sig($plist, $state) && !uses_old_libs($plist)) {
+		if (!$plist->has_new_sig($state) && !$plist->uses_old_libs()) {
 			    print "Not reinstalling $pkgname\n" if $state->{verbose};
 			    OpenBSD::SharedLibs::add_package_libs($plist->pkgname());
 			    $state->{installed}->{$pkgname} = 1;
 			    return undef;
 			}
 	}
-	if (!OpenBSD::Update::is_safe($plist, $state)) {
+	if (!OpenBSD::Replace::is_safe($plist, $state)) {
 		print "Can't safely update to $pkgname (use -F update to force it)\n";
 		$errors++;
 		return undef;
 	}
 
-	if (!OpenBSD::Update::figure_out_libs($plist, $state, @libs)) {
+	if (!OpenBSD::Replace::figure_out_libs($plist, $state, @libs)) {
 		print "Can't update to $pkgname because of collision with old libs\n";
 		$errors++;
 		return undef;
@@ -141,7 +120,7 @@ sub can_install($$$)
 			return undef;
 		}
 
-		my $rplist = OpenBSD::Update::can_do($toreplace, $pkgname, 
+		my $rplist = OpenBSD::Replace::can_do($toreplace, $pkgname, 
 		    $state, \%conflicts);
 		if (!$rplist) {
 			print "Can't update $toreplace into $pkgname\n";
@@ -315,12 +294,12 @@ sub really_add($$)
 	local $SIG{'TERM'} = $handler;
 
 	if ($replacing) {
-		require OpenBSD::Update;
+		require OpenBSD::Replace;
 
 		OpenBSD::ProgressMeter::set_header("$pkgname (extracting)");
 
 		if (@toreplace) {
-			OpenBSD::Update::save_old_libraries($plist, $state);
+			OpenBSD::Replace::save_old_libraries($plist, $state);
 		}
 
 		my $donesize = 0;
@@ -456,7 +435,7 @@ sub really_add($$)
 	# and add dependencies corresponding to the replacement
 	for my $op (@toreplace) {
 		require OpenBSD::RequiredBy;
-		require OpenBSD::Update;
+		require OpenBSD::Replace;
 		my $opkgname = $op->pkgname();
 
 		print "Adjusting dependencies for $pkgname/$opkgname\n" 
@@ -469,7 +448,7 @@ sub really_add($$)
 			}
 			print "\t$dep\n" if $state->{beverbose};
 			$d->add($dep);
-			OpenBSD::Update::adjust_dependency($dep, $opkgname, $pkgname);
+			OpenBSD::Replace::adjust_dependency($dep, $opkgname, $pkgname);
 		}
 	}
 }
@@ -538,7 +517,7 @@ sub install_package
 
 	if (is_installed($plist->pkgname()) && !$state->{forced}->{installed}) {
 		if ($state->{replace}) {
-			if (!has_new_sig($plist, $state) && !uses_old_libs($plist)) {
+			if (!$plist->has_new_sig($state) && !$plist->uses_old_libs()) {
 				OpenBSD::SharedLibs::add_package_libs($plist->pkgname());
 				$state->{installed}->{$handle->{pkgname}} = 1;
 				$handle->close_now();
@@ -613,143 +592,6 @@ sub install_package
 }
 
 
-sub choose1
-{
-	my ($pkgname, $interactive, @l) = @_;
-	if (@l == 0) {
-	    print "Can't resolve $pkgname\n";
-	    $bad = 1;
-	} elsif (@l == 1) {
-		return $l[0];
-	} elsif (@l != 0) {
-		print "Ambiguous: $pkgname could be ", join(' ', @l),"\n";
-		if ($interactive) {
-		    my $result = OpenBSD::Interactive::ask_list('Choose one package', 1, ("<None>", @l));
-		    if ($result eq '<None>') {
-			$bad = 1;
-		    } else {
-			return $result;
-		    }
-		} else {
-		    $bad = 1;
-		}
-	}
-	return undef;
-}
-
-sub available_stems
-{
-	my $state = shift;
-	my @avail = OpenBSD::PackageLocator::available();
-	if (@avail == 0) {
-		Warn "No packages available in the PKG_PATH\n";
-	}
-	unless ($state->{forced}->{allversions}) {
-	    @avail = OpenBSD::PackageName::keep_most_recent(@avail);
-	}
-	return OpenBSD::PackageName::compile_stemlist(@avail);
-}
-
-sub find_updates
-{
-	my ($old, $new, $state) = @_;
-	my @list = ();
-
-	OpenBSD::PackageInfo::solve_installed_names($old, \@list, "(updating them all)", $state);
-	unless (defined $state->{full_update} or defined $state->{forced}->{noclosure}) {
-		require OpenBSD::RequiredBy;
-
-		@list = OpenBSD::Requiring->compute_closure(@list);
-	}
-	my @cantupdate = ();
-	my $hash = available_stems($state);
-
-	OpenBSD::ProgressMeter::set_header("Looking for updates");
-	for my $pkgname (@list) {
-		next if $pkgname =~ m/^\.libs-/;
-		my $stem = OpenBSD::PackageName::splitstem($pkgname);
-		my @l = $hash->findstem($stem);
-		if (@l == 0) {
-			push(@cantupdate, $pkgname);
-			next;
-		}
-		my @l2 = ();
-		if (@l == 1 && $state->{forced}->{pkgpath}) {
-			OpenBSD::ProgressMeter::clear();
-			print "Directly updating $pkgname -> ", $l[0], "\n";
-			push(@$new, $l[0]);
-			next;
-		}
-		my $plist = OpenBSD::PackingList->from_installation($pkgname, \&OpenBSD::PackingList::UpdateInfoOnly);
-		if (!defined $plist) {
-			Fatal("Can't locate $pkgname");
-		}
-		my $found;
-		for my $candidate (@l) {
-		    my $handle = OpenBSD::PackageLocator->find($candidate, $state->{arch});
-		    if (!$handle) {
-			    next;
-		    }
-		    $handle->close_now();
-		    my $p2 = $handle->plist(\&OpenBSD::PackingList::UpdateInfoOnly);
-		    if (!$p2) {
-		    	next;
-		    }
-		    if ($p2->has('arch')) {
-			unless ($p2->{arch}->check($state->{arch})) {
-			    next;
-			}
-		    }
-		    if ($plist->signature() eq $p2->signature()) {
-		    	$found = $candidate;
-		    }
-		    if ($p2->{extrainfo}->{subdir} eq $plist->{extrainfo}->{subdir}) {
-			push(@l2, $candidate);
-		    } elsif ($p2->has('pkgpath')) {
-		    	for my $p (@{$p2->{pkgpath}}) {
-				if ($p->{name} eq $plist->{extrainfo}->{subdir}) {
-					push(@l2, $candidate);
-					last;
-				}
-		    	}
-		    }
-		}
-
-		if (defined $found && @l2 == 1 && $found eq  $l2[0]) {
-			if (!uses_old_libs($plist)) {
-				my $msg = "No need to update $pkgname";
-				OpenBSD::ProgressMeter::message($msg);
-				print "$msg\n" if $state->{beverbose};
-				next;
-			}
-		}
-		OpenBSD::ProgressMeter::clear();
-		print "Candidates for updating $pkgname -> ", join(' ', @l2), "\n";
-		# if all packages have the same version, but distinct p,
-		# grab the most recent.
-		if (@l2 > 1) {
-		    @l2 = OpenBSD::PackageName::keep_most_recent(@l2);
-		}
-			
-		if (@l2 == 1) {
-			if (defined $found && $found eq  $l2[0] && !uses_old_libs($plist)) {
-				my $msg = "No need to update $pkgname";
-				OpenBSD::ProgressMeter::message($msg);
-				print "$msg\n" if $state->{beverbose};
-			} else {
-				push(@$new, $l2[0]);
-			}
-		} elsif (@l2 == 0) {
-			push(@cantupdate, $pkgname);
-		} else {
-			my $result = choose1($pkgname, $state->{interactive}, sort @l2);
-			push(@$new, $result) if defined $result;
-		}
-	}
-	OpenBSD::ProgressMeter::next();
-	return @cantupdate;
-}
-
 sub find_truenames
 {
 	my ($old, $new, $state) = @_;
@@ -759,14 +601,18 @@ sub find_truenames
 	for my $pkgname (@$old) {
 		if (OpenBSD::PackageName::is_stem($pkgname)) {
 		    if (!defined $h) {
-		    	$h = available_stems($state);
+		    	$h = OpenBSD::PackageName::available_stems($state);
 		    }
 		    my @l = $h->findstem($pkgname);
 		    if (@l > 1) {
 			@l = OpenBSD::PackageName::keep_most_recent(@l);
 		    }
-		    my $result = choose1($pkgname, $state->{interactive}, sort @l);
-		    push(@$new, $result) if defined $result;
+		    my $result = OpenBSD::Interactive::choose1($pkgname, $state->{interactive}, sort @l);
+		    if (defined $result) {
+			    push(@$new, $result);
+		    } else {
+			    $bad = 1;
+		    }
 		} else {
 		    push(@$new, $pkgname);
 		}
@@ -887,11 +733,13 @@ lock_db($state->{not});
 my @todo = ();
 
 if ($opt_u) {
+	require OpenBSD::Update;
+
 	if (@ARGV == 0) {
 		@ARGV = sort(installed_packages());
 		$state->{full_update} = 1;
 	}
-	my @cantupdate = find_updates(\@ARGV, \@todo, $state);
+	my @cantupdate = OpenBSD::Update::find(\@ARGV, \@todo, $state);
 	if (@cantupdate > 0) {
 			print "Cannot find updates for ", join(' ', @cantupdate), "\n";
 		unless ($state->{forced}->{alwaysupdate} ||
@@ -899,7 +747,7 @@ if ($opt_u) {
 				exit(1);
 	    	}
 	}
-	if ($bad) {
+	if (defined $state->{issues}) {
 		print "There are some ambiguities. Please run in interactive ".
 		    "mode again.\n";
 	}
@@ -964,4 +812,28 @@ rethrow $dielater;
 
 if ($bad) {
 	exit(1);
+}
+
+package OpenBSD::PackingList;
+
+sub uses_old_libs
+{
+	my $plist = shift;
+	require OpenBSD::RequiredBy;
+
+	my $d = OpenBSD::Requiring->new($plist->pkgname());
+	return  grep {/^\.libs\-/} $d->list();
+}
+
+sub has_new_sig
+{
+	my ($plist, $state) = @_;
+	if (!defined $plist->{new_sig}) {
+		my $n = OpenBSD::PackingList->from_installation($plist->pkgname())->signature();
+		my $o = $plist->signature();
+		print "Comparing full signature for ", $plist->pkgname(), " \"$o\" vs. \"$n\": ", $n eq $o ? "equal\n" : "different\n" 
+		    if $state->{very_verbose};
+		$plist->{new_sig} = $n ne $o;
+	}
+	return $plist->{new_sig};
 }

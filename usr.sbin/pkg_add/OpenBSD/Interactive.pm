@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Interactive.pm,v 1.2 2006/02/21 19:18:25 espie Exp $
+# $OpenBSD: Interactive.pm,v 1.3 2006/03/04 11:31:18 espie Exp $
 #
 # Copyright (c) 2005 Marc Espie <espie@openbsd.org>
 #
@@ -88,6 +88,25 @@ LOOP2:
 	}
 	print STDERR "Ambiguous answer\n";
 	goto LOOP2;
+}
+
+sub choose1
+{
+	my ($pkgname, $interactive, @l) = @_;
+	if (@l == 0) {
+	    print "Can't resolve $pkgname\n";
+	} elsif (@l == 1) {
+		return $l[0];
+	} elsif (@l != 0) {
+		print "Ambiguous: $pkgname could be ", join(' ', @l),"\n";
+		if ($interactive) {
+		    my $result = OpenBSD::Interactive::ask_list('Choose one package', 1, ("<None>", @l));
+		    if ($result ne '<None>') {
+			return $result;
+		    }
+		}
+	}
+	return undef;
 }
 
 1;
