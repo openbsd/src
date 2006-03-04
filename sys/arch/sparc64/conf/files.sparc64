@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.65 2006/02/10 05:28:56 djm Exp $
+#	$OpenBSD: files.sparc64,v 1.66 2006/03/04 10:29:24 miod Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -71,7 +71,7 @@ attach	sbus at mainbus with sbus_mb
 attach	sbus at xbox with sbus_xbox
 file	arch/sparc64/dev/sbus.c			sbus
 
-device	creator: wsemuldisplaydev, rasops8, rasops16, rasops24, rasops32, wsemul_sun
+device	creator: wsemuldisplaydev, rasops32, wsemul_sun
 file	arch/sparc64/dev/creator.c		creator
 
 attach	creator at mainbus with creator_mainbus
@@ -97,7 +97,7 @@ file	arch/sparc64/dev/pci_machdep.c		psycho | schizo
 attach	hme at pci with hme_pci
 file	dev/pci/if_hme_pci.c			hme_pci
 
-device	vgafb: wsemuldisplaydev, rasops8, rasops16, rasops24, rasops32, wsemul_sun
+device	vgafb: wsemuldisplaydev, rasops8, rasops16, rasops32, wsemul_sun
 attach	vgafb at pci
 file	arch/sparc64/dev/vgafb.c		vgafb
 
