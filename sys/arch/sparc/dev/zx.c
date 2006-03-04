@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.13 2005/03/23 17:18:46 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.14 2006/03/04 10:26:53 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -694,41 +694,55 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	int fs, i, fg, bg, ul;
 
 	ri = (struct rasops_info *)cookie;
-
-	if (uc == ' ') {
-		zx_fillrect(ri, col, row, 1, 1, attr, ZX_STD_ROP);
-		return;
-	}
-
-	sc = ri->ri_hw;
-	zc = sc->sc_zc;
-	zd = sc->sc_zd_ss0;
 	font = ri->ri_font;
+	rasops_unpack_attr(attr, &fg, &bg, &ul);
 
 	dp = (volatile u_int32_t *)ri->ri_bits +
 	    ZX_COORDS(col * font->fontwidth, row * font->fontheight);
-	fb = (u_int8_t *)font->data + (uc - font->firstchar) *
-	    ri->ri_fontscale;
-	fs = font->stride;
-	rasops_unpack_attr(attr, &fg, &bg, &ul);
 
-	while ((zc->zc_csr & ZX_CSR_BLT_BUSY) != 0)
-		;
+	if (uc == ' ') {
+		zx_fillrect(ri, col, row, 1, 1, attr, ZX_STD_ROP);
+		if (ul == 0)
+			return;
 
-	SETREG(zd->zd_rop, ZX_STD_ROP);
-	SETREG(zd->zd_fg, fg << 24);
-	SETREG(zd->zd_bg, bg << 24);
-	SETREG(zc->zc_fontmsk, 0xffffffff << (32 - font->fontwidth));
+		dp += font->fontheight << ZX_WWIDTH;
 
-	if (font->fontwidth <= 8) {
-		for (i = font->fontheight; i != 0; i--, dp += 1 << ZX_WWIDTH) {
-			*dp = *fb << 24;
-			fb += fs;
-		}
+		while ((zc->zc_csr & ZX_CSR_BLT_BUSY) != 0)
+			;
+
+		SETREG(zd->zd_rop, ZX_STD_ROP);
+		SETREG(zd->zd_fg, fg << 24);
+		SETREG(zd->zd_bg, bg << 24);
+		SETREG(zc->zc_fontmsk, 0xffffffff << (32 - font->fontwidth));
 	} else {
-		for (i = font->fontheight; i != 0; i--, dp += 1 << ZX_WWIDTH) {
-			*dp = *((u_int16_t *)fb) << 16;
-			fb += fs;
+		sc = ri->ri_hw;
+		zc = sc->sc_zc;
+		zd = sc->sc_zd_ss0;
+
+		fb = (u_int8_t *)font->data + (uc - font->firstchar) *
+		    ri->ri_fontscale;
+		fs = font->stride;
+
+		while ((zc->zc_csr & ZX_CSR_BLT_BUSY) != 0)
+			;
+
+		SETREG(zd->zd_rop, ZX_STD_ROP);
+		SETREG(zd->zd_fg, fg << 24);
+		SETREG(zd->zd_bg, bg << 24);
+		SETREG(zc->zc_fontmsk, 0xffffffff << (32 - font->fontwidth));
+
+		if (font->fontwidth <= 8) {
+			for (i = font->fontheight; i != 0;
+			    i--, dp += 1 << ZX_WWIDTH) {
+				*dp = *fb << 24;
+				fb += fs;
+			}
+		} else {
+			for (i = font->fontheight; i != 0;
+			    i--, dp += 1 << ZX_WWIDTH) {
+				*dp = *((u_int16_t *)fb) << 16;
+				fb += fs;
+			}
 		}
 	}
 
