@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.56 2006/01/06 13:00:07 jmc Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.57 2006/03/04 11:56:57 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -57,6 +57,36 @@ packages and may not be installed using
 .Nm .
 .Ed
 .Pp
+.Nm
+can be used to install new packages, to replace existing packages with other
+flavors
+.Po 
+option
+.Fl r
+.Pc
+or to update packages to newer versions
+.Po 
+option
+.Fl u
+.Pc .
+.Pp
+In normal mode,
+the package names given on the command lines are names of new packages that
+.Nm
+should install, without ever deinstalling existing packages.
+.Pp
+In replacement mode,
+the package names given on the command lines are names of new packages that
+.Nm
+should install, possibly replacing existing installed packages.
+.Pp
+In update mode,
+the package names given on the command lines are names of installed
+packages, and
+.Nm
+should figure out newer package names for these, then replace the old
+packages with the new.
+.Pp
 Each package name may be specified as a filename (which normally consists of the
 package name itself plus the
 .Dq .tgz
@@ -80,6 +110,25 @@ as a package name causes
 .Nm
 to read from the standard input.
 .Pp
+.Nm
+also understands
+.Sq stems ,
+that is, package names without any version specification.
+For instance, with
+.Li pkg_add kdelibs ,
+.Nm
+will look in the current directory (or the PKG_PATH) for a kdelibs package.
+.Pp
+In case of ambiguities, for instance:
+.Li pkg_add screen 
+(matches screen-4.02  and screen-4.02-static),
+.Nm
+will error out, unless it is invoked in interactive mode
+.Po
+option
+.Fl i
+.Pc .
+.Pp
 If the environment variable
 .Ev PKG_CACHE
 is set, every package retrieved from a distant location will also be
@@ -89,8 +138,9 @@ Some packages may depend on other packages.
 When resolving dependencies
 .Nm
 will first look at already installed packages, then match
-dependencies with the list of packages left to install, then
-install default packages that satisfy the dependencies.
+dependencies with the list of packages left to install, then ask the
+user's opinion in interactive mode, 
+then install default packages that satisfy the dependencies.
 .Pp
 Alternatively, it is possible to add packages interactively from within the
 .Xr ftp 1
@@ -515,6 +565,11 @@ or
 mode.
 The default is
 .Dq passive .
+.It Ev FETCH_CMD
+Override use of
+.Xr ftp 1 .
+Must point to a command that understands
+.Li ${FETCH_CMD} -o - url .
 .It Ev PKG_DBDIR
 Where to register packages instead of
 .Pa /var/db/pkg .
