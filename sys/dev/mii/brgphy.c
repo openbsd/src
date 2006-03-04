@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.46 2005/12/10 22:17:04 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.47 2006/03/04 09:19:13 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -490,7 +490,7 @@ brgphy_reset(struct mii_softc *sc)
 	 */
 	if (strncmp(ifp->if_xname, "bge", 3) == 0 &&
 	    (BGE_ASICREV(bge_sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
-	    (BGE_ASICREV(bge_sc->bge_chipid) == BGE_ASICREV_BCM5750 &&
+	    (BGE_ASICREV(bge_sc->bge_chipid) == BGE_ASICREV_BCM5705 &&
 	     (bge_sc->bge_chipid != BGE_CHIPID_BCM5705_A0 &&
 	      bge_sc->bge_chipid != BGE_CHIPID_BCM5705_A1))))
 		return;
