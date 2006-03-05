@@ -1,4 +1,4 @@
-.\"	$OpenBSD: owid.4,v 1.1 2006/03/04 16:27:03 grange Exp $
+.\"	$OpenBSD: owid.4,v 1.2 2006/03/05 09:15:55 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -26,12 +26,13 @@
 The
 .Nm
 driver provides support for the 1-Wire serial number family type device.
-This device can't do anything except reporting its unique serial number.
+This device can't do anything except report its unique serial number.
 The serial number is available through the
 .Xr sysctl 8
 interface.
 .Pp
 The following chips are supported by the driver:
+.Pp
 .Bl -bullet -compact -offset indent
 .It
 Maxim/Dallas DS1990

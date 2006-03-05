@@ -1,4 +1,4 @@
-.\"	$OpenBSD: owtemp.4,v 1.1 2006/03/04 16:27:03 grange Exp $
+.\"	$OpenBSD: owtemp.4,v 1.2 2006/03/05 09:16:48 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -26,12 +26,13 @@
 The
 .Nm
 driver provides support for the 1-Wire temperature sensor.
-The sensor possesses single temperature value that can be accessed
+The sensor possesses a single temperature value that can be accessed
 through the
 .Xr sysctl 8
 interface.
 .Pp
 The following chips are supported by the driver:
+.Pp
 .Bl -bullet -compact -offset indent
 .It
 Maxim/Dallas DS1820, DS1920
