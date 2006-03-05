@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ci.1,v 1.23 2006/02/17 08:30:34 jmc Exp $
+.\"     $OpenBSD: ci.1,v 1.24 2006/03/05 09:04:54 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Niall O'Higgins <niallo@openbsd.org>
 .\" All rights reserved.
@@ -46,7 +46,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-program is used to check new revisions into RCS files.
+program is used to check in new revisions to RCS files.
 .Pp
 The following options are supported:
 .Bl -tag -width Ds
@@ -58,7 +58,7 @@ If
 .Ar date
 is not specified, use the working file's last modification time.
 .It Fl f Ns Op Ar rev
-Force check in - optionally to
+Force check-in - optionally to
 .Ar rev
 - even if no changes have been made to the working file.
 .It Fl I
