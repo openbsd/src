@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.58 2006/03/04 13:00:43 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.59 2006/03/05 09:02:36 jmc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -60,12 +60,12 @@ packages and may not be installed using
 .Nm
 can be used to install new packages, to replace existing packages with other
 flavors
-.Po 
+.Po
 option
 .Fl r
 .Pc
 or to update packages to newer versions
-.Po 
+.Po
 option
 .Fl u
 .Pc .
@@ -120,7 +120,7 @@ For instance, with
 will look in the current directory (or the PKG_PATH) for a kdelibs package.
 .Pp
 In case of ambiguities, for instance:
-.Li pkg_add screen 
+.Li pkg_add screen
 (matches screen-4.02  and screen-4.02-static),
 .Nm
 will error out, unless it is invoked in interactive mode
@@ -139,7 +139,7 @@ When resolving dependencies
 .Nm
 will first look at already installed packages, then match
 dependencies with the list of packages left to install, then ask the
-user's opinion in interactive mode, 
+user's opinion in interactive mode,
 then install default packages that satisfy the dependencies.
 .Pp
 Alternatively, it is possible to add packages interactively from within the
@@ -620,7 +620,6 @@ Complete rewrite.
 .Sh CAVEATS
 Package extraction does need a temporary area that
 can hold executable scripts.
-.Pp
 .Pp
 If
 .Pa /var/tmp
