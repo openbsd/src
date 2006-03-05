@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.71 2006/01/08 00:32:56 jolan Exp $
+dnl	$OpenBSD: hardware,v 1.72 2006/03/05 05:41:47 brad Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -261,8 +261,15 @@ Supported Peripherals:
 			Hawking PN102TX
 			D-Link DFE530TX
 	Gigabit Ethernet Adapters
-		Intel i82540, i82541, i82542, i82543, i82544, i82545, i82546
-		and i82547 based adapters (em), including: [*]
+		Intel i82540, i82541, i82542, i82543, i82544, i82545, i82546,
+		i82547, i82571, i82572 and i82573 based adapters (em), including: [*]
+		    HP ProLiant NC310F PCI-X Gigabit NIC (SX Fiber)
+		    HP ProLiant NC6134 PCI Gigabit NIC (SX Fiber)
+		    HP ProLiant NC6136 PCI Gigabit NIC (SX Fiber)
+		    HP ProLiant NC6170 PCI-X Gigabit NIC (SX Fiber)
+		    HP ProLiant NC7131 PCI Gigabit NIC
+		    HP ProLiant NC7170 PCI-X Gigabit NIC
+		    HP ProLiant NC7170LP PCI-X Gigabit NIC
 		    Intel PRO/1000 Gigabit Server Adapter (SX Fiber)
 		      (PWLA8490)
 		    Intel PRO/1000F Gigabit Server Adapter (SX Fiber)

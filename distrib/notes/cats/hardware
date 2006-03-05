@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.30 2006/02/16 06:16:05 brad Exp $
+dnl	$OpenBSD: hardware,v 1.31 2006/03/05 05:41:48 brad Exp $
 OpenBSD/MACHINE runs on the Chalice/Simtec StrongARM 110 Evaluation Board.
 
 Supported devices {:-include-:}:
@@ -210,8 +210,15 @@ Supported devices {:-include-:}:
 		    Z-Com XI-735
 		    ZyXEL ZyAIR B-200
 	Gigabit Ethernet Adapters
-		Intel i82540, i82542, i82543, i82544, i82545, and i82546
-	       	based adapters, including:
+		Intel i82540, i82542, i82543, i82544, i82545, i82546,
+		i82547, i82571, i82572 and i83573 based adapters, including:
+		    HP ProLiant NC310F PCI-X Gigabit NIC (SX Fiber)
+		    HP ProLiant NC6134 PCI Gigabit NIC (SX Fiber)
+		    HP ProLiant NC6136 PCI Gigabit NIC (SX Fiber)
+		    HP ProLiant NC6170 PCI-X Gigabit NIC (SX Fiber)
+		    HP ProLiant NC7131 PCI Gigabit NIC
+		    HP ProLiant NC7170 PCI-X Gigabit NIC
+		    HP ProLiant NC7170LP PCI-X Gigabit NIC
 		    Intel PRO/1000 Gigabit Server Adapter (SX Fiber)
 		      (PWLA8490)
 		    Intel PRO/1000F Gigabit Server Adapter (SX Fiber)
