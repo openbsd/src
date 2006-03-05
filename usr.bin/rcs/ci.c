@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.105 2006/03/05 17:20:35 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.106 2006/03/05 17:35:24 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -491,17 +491,21 @@ checkin_update(struct checkin_params *pb)
 	/* Load file contents */
 	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
 		cvs_log(LP_ERR, "failed to load '%s'", pb->filename);
+		rcs_close(pb->file);
 		return (-1);
 	}
 
-	if (cvs_buf_putc(bp, '\0') < 0)
+	if (cvs_buf_putc(bp, '\0') < 0) {
+		rcs_close(pb->file);
 		return (-1);
+	}
 
 	filec = (char *)cvs_buf_release(bp);
 
 	/* Get RCS patch */
 	if ((pb->deltatext = checkin_diff_file(pb)) == NULL) {
 		cvs_log(LP_ERR, "failed to get diff");
+		rcs_close(pb->file);
 		return (-1);
 	}
 
@@ -535,6 +539,7 @@ checkin_update(struct checkin_params *pb)
 	    (pb->newrev == NULL ? RCS_HEAD_REV : pb->newrev),
 	    pb->rcs_msg, pb->date, pb->author) != 0) {
 		cvs_log(LP_ERR, "failed to add new revision");
+		rcs_close(pb->file);
 		return (-1);
 	}
 
@@ -596,11 +601,14 @@ checkin_init(struct checkin_params *pb)
 	/* Load file contents */
 	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
 		cvs_log(LP_ERR, "failed to load '%s'", pb->filename);
+		rcs_close(pb->file);
 		return (-1);
 	}
 
-	if (cvs_buf_putc(bp, '\0') < 0)
+	if (cvs_buf_putc(bp, '\0') < 0) {
+		rcs_close(pb->file);
 		return (-1);
+	}
 
 	filec = (char *)cvs_buf_release(bp);
 
@@ -623,10 +631,12 @@ checkin_init(struct checkin_params *pb)
 				    "failed to load description file '%s'",
 				    pb->description);
 				xfree(filec);
+				rcs_close(pb->file);
 				return (-1);
 			}
 			if (cvs_buf_putc(dp, '\0') < 0) {
 				xfree(filec);
+				rcs_close(pb->file);
 				return (-1);
 			}
 			rcs_desc = (const char *)cvs_buf_release(dp);
@@ -648,6 +658,7 @@ checkin_init(struct checkin_params *pb)
 	    (pb->rcs_msg == NULL ? LOG_INIT : pb->rcs_msg),
 	    pb->date, pb->author) != 0) {
 		cvs_log(LP_ERR, "failed to add new revision");
+		rcs_close(pb->file);
 		return (-1);
 	}
 	/*
@@ -662,6 +673,7 @@ checkin_init(struct checkin_params *pb)
 	/* New head revision has to contain entire file; */
 	if (rcs_deltatext_set(pb->file, pb->file->rf_head, filec) == -1) {
 		cvs_log(LP_ERR, "failed to set new head revision");
+		rcs_close(pb->file);
 		return (-1);
 	}
 	/* Attach a symbolic name to this revision if specified. */
