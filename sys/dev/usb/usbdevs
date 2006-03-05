@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.184 2006/02/16 10:44:01 jsg Exp $
+$OpenBSD: usbdevs,v 1.185 2006/03/05 06:41:36 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -392,6 +392,7 @@ vendor QUALCOMM2	0x1004	Qualcomm
 vendor GIGABYTE		0x1044	GIGABYTE
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
+vendor AUDIOVOX		0x106c	Audiovox
 vendor PLX		0x10b5	PLX
 vendor ASANTE		0x10bd	Asante
 vendor ANALOG		0x1110	Analog Devices
@@ -400,6 +401,7 @@ vendor SPHAIRON		0x114b	Sphairon Access Systems GmbH
 vendor DELORME		0x1163	DeLorme
 vendor SERVERWORKS	0x1166	ServerWorks
 vendor ACERCM		0x1189	Acer Communications & Multimedia
+vendor SIERRA		0x1199	Sierra Wireless
 vendor TSUNAMI		0x1241	Tsunami
 vendor PHEENET		0x124a	Pheenet
 vendor BELKIN2		0x1293	Belkin Components
@@ -656,6 +658,9 @@ product ATMEL AT76C505AS	0x7617	AT76C505AS (RFMD 2958 Radio)
 
 /* Audio-Technica products */
 product AUDIOTECHNICA ATCHA4USB	0x0009	ATC-HA4USB USB headphone
+
+/* Audiovox products */
+product AUDIOVOX PC5740		0x3701	PC5740 EVDO
 
 /* Avance Logic products */
 product AVANCELOGIC USBAUDIO	0x0100	USB Audio Speaker
@@ -1690,6 +1695,9 @@ product SHUTTLE SCM		0x1010	SCM Micro
 product SIEMENS2 WLL013		0x001b	WLL013
 product SIEMENS SPEEDSTREAM	0x1001	SpeedStream
 product SIEMENS SPEEDSTREAM22	0x1022	SpeedStream 1022
+
+/* Sierra Wireless products */
+product SIERRA AIRCARD_580	0x0112	Aircard 580 EVDO
 
 /* Sigmatel products */
 product SIGMATEL IRDA		0x4200	IrDA
