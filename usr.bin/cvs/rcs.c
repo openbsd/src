@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.131 2006/03/05 14:18:56 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.132 2006/03/05 16:06:59 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1094,18 +1094,12 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 		op = *(lp->l_line);
 		lineno = (int)strtol((lp->l_line + 1), &ep, 10);
 		if ((lineno > dlines->l_nblines) || (lineno < 0) ||
-		    (*ep != ' ')) {
-			cvs_log(LP_ERR,
-			    "invalid line specification in RCS patch");
-			return (-1);
-		}
+		    (*ep != ' '))
+			fatal("invalid line specification in RCS patch");
 		ep++;
 		nbln = (int)strtol(ep, &ep, 10);
-		if ((nbln < 0) || (*ep != '\0')) {
-			cvs_log(LP_ERR,
-			    "invalid line number specification in RCS patch");
-			return (-1);
-		}
+		if ((nbln < 0) || (*ep != '\0'))
+			fatal("invalid line number specification in RCS patch");
 
 		/* find the appropriate line */
 		for (;;) {
@@ -1122,11 +1116,8 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 				dlp = ndlp;
 			}
 		}
-		if (dlp == NULL) {
-			cvs_log(LP_ERR,
-			    "can't find referenced line in RCS patch");
-			return (-1);
-		}
+		if (dlp == NULL)
+			fatal("can't find referenced line in RCS patch");
 
 		if (op == 'd') {
 			for (i = 0; (i < nbln) && (dlp != NULL); i++) {
@@ -1138,10 +1129,8 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 			for (i = 0; i < nbln; i++) {
 				ndlp = lp;
 				lp = TAILQ_NEXT(lp, l_list);
-				if (lp == NULL) {
-					cvs_log(LP_ERR, "truncated RCS patch");
-					return (-1);
-				}
+				if (lp == NULL)
+					fatal("truncated RCS patch");
 				TAILQ_REMOVE(&(plines->l_lines), lp, l_list);
 				TAILQ_INSERT_AFTER(&(dlines->l_lines), dlp,
 				    lp, l_list);
@@ -1152,10 +1141,8 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 
 				lp = ndlp;
 			}
-		} else {
-			cvs_log(LP_ERR, "unknown RCS patch operation `%c'", op);
-			return (-1);
-		}
+		} else
+			fatal("unknown RCS patch operation `%c'", op);
 
 		/* last line of the patch, done */
 		if (lp->l_lineno == plines->l_nblines)
