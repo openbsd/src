@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.132 2006/03/05 16:06:59 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.133 2006/03/05 16:22:31 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1110,8 +1110,8 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 			if (dlp->l_lineno > lineno) {
 				dlp = TAILQ_PREV(dlp, cvs_tqh, l_list);
 			} else if (dlp->l_lineno < lineno) {
-				ndlp = TAILQ_NEXT(dlp, l_list);
-				if (ndlp->l_lineno > lineno)
+				if (((ndlp = TAILQ_NEXT(dlp, l_list)) == NULL) ||
+				    (ndlp->l_lineno > lineno)) 
 					break;
 				dlp = ndlp;
 			}
@@ -1124,6 +1124,12 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 				ndlp = TAILQ_NEXT(dlp, l_list);
 				TAILQ_REMOVE(&(dlines->l_lines), dlp, l_list);
 				dlp = ndlp;
+				/* last line is gone - reset dlp */
+				if (dlp == NULL) {
+					ndlp = TAILQ_LAST(&(dlines->l_lines),
+					    cvs_tqh);
+					dlp = ndlp;
+				}
 			}
 		} else if (op == 'a') {
 			for (i = 0; i < nbln; i++) {
