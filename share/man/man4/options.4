@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.174 2006/03/05 09:19:59 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.175 2006/03/05 18:47:25 jmc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -668,7 +668,8 @@ for details.
 .It Cd option MULTIPROCESSOR
 On those architectures that have it, this enables multiprocessor support.
 .It Cd option USER_LDT
-Enable per-process Local Descriptor Table (LDT) entries;
+Enable userland manipulation of per-process
+Local Descriptor Table (LDT) entries;
 see
 .Xr i386_set_ldt 2
 and the
