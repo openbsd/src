@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.63 2006/03/04 22:40:16 brad Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.64 2006/03/05 21:48:57 miod Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -483,9 +483,7 @@ ip6_input(m)
 	 * working right.
 	 */
 	struct ifaddr *ifa;
-	for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first;
-	     ifa;
-	     ifa = ifa->ifa_list.tqe_next) {
+	TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr == NULL)
 			continue;	/* just for safety */
 		if (ifa->ifa_addr->sa_family != AF_INET6)

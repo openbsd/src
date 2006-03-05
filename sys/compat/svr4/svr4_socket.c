@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_socket.c,v 1.4 2002/04/25 21:01:41 espie Exp $	*/
+/*	$OpenBSD: svr4_socket.c,v 1.5 2006/03/05 21:48:56 miod Exp $	*/
 /*	$NetBSD: svr4_socket.c,v 1.4 1997/07/21 23:02:37 christos Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ svr4_find_socket(p, fp, dev, ino)
 
 
 	DPRINTF(("svr4_find_socket: [%p,%d,%d]: ", p, dev, ino));
-	for (e = svr4_head.tqh_first; e != NULL; e = e->entries.tqe_next)
+	TAILQ_FOREACH(e, &svr4_head, entries)
 		if (e->p == p && e->dev == dev && e->ino == ino) {
 #ifdef DIAGNOSTIC
 			if (e->cookie != NULL && e->cookie != cookie)
@@ -123,7 +123,7 @@ svr4_delete_socket(p, fp)
 		return;
 	}
 
-	for (e = svr4_head.tqh_first; e != NULL; e = e->entries.tqe_next)
+	TAILQ_FOREACH(e, &svr4_head, entries)
 		if (e->p == p && e->cookie == cookie) {
 			TAILQ_REMOVE(&svr4_head, e, entries);
 			DPRINTF(("svr4_delete_socket: %s [%p,%d,%d]\n",

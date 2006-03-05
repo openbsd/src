@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.37 2005/12/11 21:30:31 miod Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.38 2006/03/05 21:48:56 miod Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -986,7 +986,7 @@ procfs_readdir(v)
 		int doingzomb = 0;
 #endif
 		int pcnt = i;
-		volatile struct proc *p = allproc.lh_first;
+		volatile struct proc *p = LIST_FIRST(&allproc);
 
 		if (pcnt > 3)
 			pcnt = 3;
@@ -1063,7 +1063,7 @@ procfs_readdir(v)
 #ifdef PROCFS_ZOMBIE
 		if (p == 0 && doingzomb == 0) {
 			doingzomb = 1;
-			p = zombproc.lh_first;
+			p = LIST_FIRST(&zombproc);
 			goto again;
 		}
 #endif

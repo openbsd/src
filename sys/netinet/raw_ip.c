@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.37 2005/05/27 04:55:28 mcbride Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.38 2006/03/05 21:48:57 miod Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -387,7 +387,7 @@ rip_usrreq(so, req, m, nam, control)
 			error = EINVAL;
 			break;
 		}
-		if ((ifnet.tqh_first == 0) ||
+		if ((TAILQ_EMPTY(&ifnet)) ||
 		    ((addr->sin_family != AF_INET) &&
 		     (addr->sin_family != AF_IMPLINK)) ||
 		    (addr->sin_addr.s_addr &&
@@ -406,7 +406,7 @@ rip_usrreq(so, req, m, nam, control)
 			error = EINVAL;
 			break;
 		}
-		if (ifnet.tqh_first == 0) {
+		if (TAILQ_EMPTY(&ifnet)) {
 			error = EADDRNOTAVAIL;
 			break;
 		}

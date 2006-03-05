@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.28 2004/08/23 01:30:30 itojun Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.29 2006/03/05 21:48:57 miod Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -654,7 +654,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 			error = EINVAL;
 			break;
 		}
-		if ((ifnet.tqh_first == 0) || (addr->sin6_family != AF_INET6)) {
+		if (TAILQ_EMPTY(&ifnet) || (addr->sin6_family != AF_INET6)) {
 			error = EADDRNOTAVAIL;
 			break;
 		}
@@ -705,8 +705,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 			error = EINVAL;
 			break;
 		}
-		if (ifnet.tqh_first == 0)
-		{
+		if (TAILQ_EMPTY(&ifnet)) {
 			error = EADDRNOTAVAIL;
 			break;
 		}

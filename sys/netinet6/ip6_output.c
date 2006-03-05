@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.87 2005/01/11 08:57:24 djm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.88 2006/03/05 21:48:57 miod Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2005,8 +2005,7 @@ ip6_setmoptions(optname, im6op, m)
 		/*
 		 * See if the membership already exists.
 		 */
-		for (imm = im6o->im6o_memberships.lh_first;
-		     imm != NULL; imm = imm->i6mm_chain.le_next)
+		LIST_FOREACH(imm, &im6o->im6o_memberships, i6mm_chain)
 			if (imm->i6mm_maddr->in6m_ifp == ifp &&
 			    IN6_ARE_ADDR_EQUAL(&imm->i6mm_maddr->in6m_addr,
 			    &mreq->ipv6mr_multiaddr))
@@ -2072,8 +2071,7 @@ ip6_setmoptions(optname, im6op, m)
 		/*
 		 * Find the membership in the membership list.
 		 */
-		for (imm = im6o->im6o_memberships.lh_first;
-		     imm != NULL; imm = imm->i6mm_chain.le_next) {
+		LIST_FOREACH(imm, &im6o->im6o_memberships, i6mm_chain) {
 			if ((ifp == NULL || imm->i6mm_maddr->in6m_ifp == ifp) &&
 			    IN6_ARE_ADDR_EQUAL(&imm->i6mm_maddr->in6m_addr,
 			    &mreq->ipv6mr_multiaddr))
@@ -2103,7 +2101,7 @@ ip6_setmoptions(optname, im6op, m)
 	if (im6o->im6o_multicast_ifp == NULL &&
 	    im6o->im6o_multicast_hlim == ip6_defmcasthlim &&
 	    im6o->im6o_multicast_loop == IPV6_DEFAULT_MULTICAST_LOOP &&
-	    im6o->im6o_memberships.lh_first == NULL) {
+	    LIST_EMPTY(&im6o->im6o_memberships)) {
 		free(*im6op, M_IPMOPTS);
 		*im6op = NULL;
 	}
@@ -2170,7 +2168,8 @@ ip6_freemoptions(im6o)
 	if (im6o == NULL)
 		return;
 
-	while ((imm = im6o->im6o_memberships.lh_first) != NULL) {
+	while (!LIST_EMPTY(&im6o->im6o_memberships)) {
+		imm = LIST_FIRST(&im6o->im6o_memberships);
 		LIST_REMOVE(imm, i6mm_chain);
 		in6_leavegroup(imm);
 	}

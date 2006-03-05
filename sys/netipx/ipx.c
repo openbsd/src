@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.13 2006/03/04 22:40:16 brad Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.14 2006/03/05 21:48:57 miod Exp $	*/
 
 /*-
  *
@@ -71,7 +71,7 @@ ipx_control(so, cmd, data, ifp)
 	 * Find address for this interface, if it exists.
 	 */
 	if (ifp)
-		for (ia = ipx_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next)
+		TAILQ_FOREACH(ia, &ipx_ifaddr, ia_list)
 			if (ia->ia_ifp == ifp)
 				break;
 
@@ -79,7 +79,8 @@ ipx_control(so, cmd, data, ifp)
 	case SIOCAIFADDR:
 	case SIOCDIFADDR:
 		if (ifra->ifra_addr.sipx_family == AF_IPX)
-			for (; ia; ia = ia->ia_list.tqe_next) {
+			for (; ia != TAILQ_END(&ipx_ifaddr);
+			    ia = TAILQ_NEXT(ia, ia_list)) {
 				if (ia->ia_ifp == ifp  &&
 				    ipx_neteq(ia->ia_addr.sipx_addr,
 					      ifra->ifra_addr.sipx_addr))
@@ -294,7 +295,7 @@ ipx_iaonnetof(dst)
 	struct ipx_ifaddr *ia_maybe = NULL;
 	union ipx_net net = dst->ipx_net;
 
-	for (ia = ipx_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
+	TAILQ_FOREACH(ia, &ipx_ifaddr, ia_list) {
 		if ((ifp = ia->ia_ifp)) {
 			if (ifp->if_flags & IFF_POINTOPOINT) {
 				compare = &satoipx_addr(ia->ia_dstaddr);

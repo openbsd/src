@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_pcb.c,v 1.11 2006/03/04 22:40:16 brad Exp $	*/
+/*	$OpenBSD: ipx_pcb.c,v 1.12 2006/03/05 21:48:57 miod Exp $	*/
 
 /*-
  *
@@ -215,8 +215,7 @@ ipx_pcbconnect(ipxp, nam)
 		 * corresponding to the outgoing interface
 		 */
 		if (ro->ro_rt && (ifp = ro->ro_rt->rt_ifp))
-			for (ia = ipx_ifaddr.tqh_first; ia;
-			     ia = ia->ia_list.tqe_next)
+			TAILQ_FOREACH(ia, &ipx_ifaddr, ia_list)
 				if (ia->ia_ifp == ifp)
 					break;
 		if (ia == NULL) {
@@ -228,7 +227,7 @@ ipx_pcbconnect(ipxp, nam)
 			if (ia == NULL)
 				ia = ipx_iaonnetof(&sipx->sipx_addr);
 			if (ia == NULL)
-				ia = ipx_ifaddr.tqh_first;
+				ia = TAILQ_FIRST(&ipx_ifaddr);
 			if (ia == 0)
 				return (EADDRNOTAVAIL);
 		}
@@ -319,11 +318,11 @@ ipx_pcbnotify(dst, errno, notify, param)
 	struct ipxpcb *ipxp, *oinp;
 	int s = splnet();
 
-	for (ipxp = ipxcbtable.ipxpt_queue.cqh_first;
-	    ipxp != (struct ipxpcb *)&ipxcbtable.ipxpt_queue;) {
+	for (ipxp = CIRCLEQ_FIRST(&ipxcbtable.ipxpt_queue);
+	    ipxp != CIRCLEQ_END(&ipxcbtable.ipxpt_queue);) {
 		if (!ipx_hosteq(*dst,ipxp->ipxp_faddr)) {
 	next:
-			ipxp = ipxp->ipxp_queue.cqe_next;
+			ipxp = CIRCLEQ_NEXT(ipxp, ipxp_queue);
 			continue;
 		}
 		if (ipxp->ipxp_socket == 0)
@@ -331,7 +330,7 @@ ipx_pcbnotify(dst, errno, notify, param)
 		if (errno) 
 			ipxp->ipxp_socket->so_error = errno;
 		oinp = ipxp;
-		ipxp = ipxp->ipxp_queue.cqe_next;
+		ipxp = CIRCLEQ_NEXT(ipxp, ipxp_queue);
 		oinp->ipxp_notify_param = param;
 		(*notify)(oinp);
 	}
@@ -369,9 +368,7 @@ ipx_pcblookup(faddr, lport, wildp)
 	u_short fport;
 
 	fport = faddr->ipx_port;
-	for (ipxp = ipxcbtable.ipxpt_queue.cqh_first;
-	    ipxp != (struct ipxpcb *)&ipxcbtable.ipxpt_queue;
-	    ipxp = ipxp->ipxp_queue.cqe_next) {
+	CIRCLEQ_FOREACH(ipxp, &ipxcbtable.ipxpt_queue, ipxp_queue) {
 		if (ipxp->ipxp_lport != lport)
 			continue;
 		wildcard = 0;

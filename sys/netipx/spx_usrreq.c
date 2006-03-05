@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx_usrreq.c,v 1.24 2005/11/26 04:33:27 marco Exp $	*/
+/*	$OpenBSD: spx_usrreq.c,v 1.25 2006/03/05 21:48:57 miod Exp $	*/
 
 /*-
  *
@@ -1635,10 +1635,8 @@ spx_fasttimo()
 	struct spxpcb *cb;
 	int s = splnet();
 
-	ipxp = ipxcbtable.ipxpt_queue.cqh_first;
-	if (ipxp)
-		for (; ipxp != (struct ipxpcb *)&ipxcbtable.ipxpt_queue;
-		     ipxp = ipxp->ipxp_queue.cqe_next)
+	if (!CIRCLEQ_EMPTY(&ipxpcbtable.ipxpt_queue))
+		CIRCLEQ_FOREACH(ipxp, &ipxpcbtable.ipxpt_queue, ipxp_queue)
 			if ((cb = (struct spxpcb *)ipxp->ipxp_ppcb) &&
 			    (cb->s_flags & SF_DELACK)) {
 				cb->s_flags &= ~SF_DELACK;
@@ -1665,14 +1663,14 @@ spx_slowtimo()
 	/*
 	 * Search through tcb's and update active timers.
 	 */
-	ipx = ipxcbtable.ipxpt_queue.cqh_first;
-	if (ipx == 0) {
+	if (CIRCLEQ_EMPTY(&ipxpcbtable.ipxpt_queue)) {
 		splx(s);
 		return;
 	}
-	while (ipx != (struct ipxpcb *)&ipxcbtable.ipxpt_queue) {
+	for (ipx = CIRCLEQ_FIRST(&ipxcbtable.ipxpt_queue);
+	    ipx != CIRCLEQ_END(&ipxcbtable.ipxpt_queue);) {
 		cb = ipxtospxpcb(ipx);
-		ipxnxt = ipx->ipxp_queue.cqe_next;
+		ipxnxt = CIRCLEQ_NEXT(ipx, ipxp_queue);
 		if (cb == 0)
 			goto tpgone;
 		for (i = 0; i < SPXT_NTIMERS; i++) {

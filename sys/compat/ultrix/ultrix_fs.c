@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_fs.c,v 1.13 2005/12/10 11:45:43 miod Exp $	*/
+/*	$OpenBSD: ultrix_fs.c,v 1.14 2006/03/05 21:48:56 miod Exp $	*/
 /*	$NetBSD: ultrix_fs.c,v 1.4 1996/04/07 17:23:06 jonathan Exp $	*/
 
 /*
@@ -237,14 +237,14 @@ ultrix_sys_getmnt(p, v, retval)
 		if ((error = copyin((caddr_t)SCARG(uap, start), &start,
 				    sizeof(*SCARG(uap, start))))  != 0)
 			goto bad;
-		for (skip = start, mp = mountlist.cqh_first;
-		    mp != (void *)&mountlist && skip-- > 0; mp = nmp)
-			nmp = mp->mnt_list.cqe_next;
+		for (skip = start, mp = CIRCLEQ_FIRST(&mountlist);
+		    mp != CIRCLEQ_END(&mountlist) && skip-- > 0; mp = nmp)
+			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 	}
 
-	for (count = 0, mp = mountlist.cqh_first;
-	    mp != (void *)&mountlist && count < maxcount; mp = nmp) {
-		nmp = mp->mnt_list.cqe_next;
+	for (count = 0, mp = CIRCLEQ_FIRST(&mountlist);
+	    mp != CIRCLEQ_END(&mountlist) && count < maxcount; mp = nmp) {
+		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		if (sfsp != NULL) {
 			struct ultrix_fs_data tem;
 			sp = &mp->mnt_stat;

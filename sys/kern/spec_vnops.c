@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.32 2006/02/20 19:44:58 miod Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.33 2006/03/05 21:48:56 miod Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -511,8 +511,9 @@ spec_fsync(v)
 	 */
 loop:
 	s = splbio();
-	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
-		nbp = bp->b_vnbufs.le_next;
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd);
+	    bp != LIST_END(&vp->v_dirtyblkhd); bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
 		if ((bp->b_flags & B_BUSY))
 			continue;
 		if ((bp->b_flags & B_DELWRI) == 0)
@@ -527,7 +528,7 @@ loop:
 		vwaitforio (vp, 0, "spec_fsync", 0);
 
 #ifdef DIAGNOSTIC
-		if (vp->v_dirtyblkhd.lh_first) {
+		if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
 			splx(s);
 			vprint("spec_fsync: dirty", vp);
 			goto loop;

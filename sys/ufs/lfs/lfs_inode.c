@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_inode.c,v 1.11 2005/12/28 20:48:18 pedro Exp $	*/
+/*	$OpenBSD: lfs_inode.c,v 1.12 2006/03/05 21:48:57 miod Exp $	*/
 /*	$NetBSD: lfs_inode.c,v 1.5 1996/05/11 18:27:35 mycroft Exp $	*/
 
 /*
@@ -336,7 +336,7 @@ lfs_truncate(v)
 	 */
 	a_released = 0;
 	i_released = 0;
-	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = bp->b_vnbufs.le_next)
+	LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs)
 		if (bp->b_flags & B_LOCKED) {
 			a_released += numfrags(fs, bp->b_bcount);
 			/*

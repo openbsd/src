@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.26 2005/12/11 17:21:53 deraadt Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.27 2006/03/05 21:48:57 miod Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -469,7 +469,7 @@ extern unsigned long in6_maxmtu;
 /* struct in6_ifaddr *ia; */				\
 do {									\
 	struct ifaddr *ifa;						\
-	for (ifa = (ifp)->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next) {	\
+	TAILQ_FOREACH(ifa, &(ifp)->if_addrlist, ifa_list) {		\
 		if (!ifa->ifa_addr)					\
 			continue;					\
 		if (ifa->ifa_addr->sa_family == AF_INET6)		\
@@ -525,10 +525,10 @@ do {								\
 	if (ia == NULL)						\
 	  	(in6m) = NULL;					\
 	else							\
-		for ((in6m) = ia->ia6_multiaddrs.lh_first;	\
-		     (in6m) != NULL &&				\
+		for ((in6m) = LIST_FIRST(&ia->ia6_multiaddrs);	\
+		     (in6m) != LIST_END(&ia->ia6_multiaddrs) &&	\
 		     !IN6_ARE_ADDR_EQUAL(&(in6m)->in6m_addr, &(addr));	\
-		     (in6m) = (in6m)->in6m_entry.le_next)	\
+		     (in6m) = LIST_NEXT((in6m), in6m_entry))	\
 			continue;				\
 } while (0)
 
@@ -544,13 +544,13 @@ do {								\
 /* struct in6_multi *in6m; */						\
 do {									\
 	if (((in6m) = (step).i_in6m) != NULL)				\
-		(step).i_in6m = (in6m)->in6m_entry.le_next;		\
+		(step).i_in6m = LIST_NEXT((in6m), in6m_entry);		\
 	else								\
 		while ((step).i_ia != NULL) {				\
-			(in6m) = (step).i_ia->ia6_multiaddrs.lh_first;	\
+			(in6m) = LIST_FIRST(&(step).i_ia->ia6_multiaddrs); \
 			(step).i_ia = (step).i_ia->ia_next;		\
 			if ((in6m) != NULL) {				\
-				(step).i_in6m = (in6m)->in6m_entry.le_next; \
+				(step).i_in6m = LIST_NEXT((in6m), in6m_entry); \
 				break;					\
 			}						\
 		}							\

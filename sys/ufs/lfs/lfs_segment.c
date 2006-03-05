@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_segment.c,v 1.15 2006/01/20 23:27:26 miod Exp $	*/
+/*	$OpenBSD: lfs_segment.c,v 1.16 2006/03/05 21:48:57 miod Exp $	*/
 /*	$NetBSD: lfs_segment.c,v 1.4 1996/02/09 22:28:54 christos Exp $	*/
 
 /*
@@ -125,12 +125,12 @@ lfs_vflush(vp)
 
 
 	ip = VTOI(vp);
-	if (vp->v_dirtyblkhd.lh_first == NULL)
+	if (LIST_EMPTY(&vp->v_dirtyblkhd))
 		lfs_writevnodes(fs, vp->v_mount, sp, VN_EMPTY);
 
 	do {
 		do {
-			if (vp->v_dirtyblkhd.lh_first != NULL)
+			if (!LIST_EMPTY(&vp->v_dirtyblkhd))
 				lfs_writefile(fs, sp, vp);
 		} while (lfs_writeinode(fs, sp, ip));
 
@@ -163,16 +163,15 @@ lfs_writevnodes(fs, mp, sp, op)
 #define		BEG_OF_VLIST	((struct vnode *)(((void *)&mp->mnt_vnodelist.lh_first) - VN_OFFSET))
 
 /* Find last vnode. */
-loop:	for (vp = mp->mnt_vnodelist.lh_first;
-	     vp && vp->v_mntvnodes.le_next != NULL;
-	     vp = vp->v_mntvnodes.le_next);
+loop:	for (vp = LIST_FIRST(&mp->mnt_vnodelist);
+	     vp != LIST_END(&mp->mnt_vnodelist) &&
+	     LIST_NEXT(vp, v_mntvnodes) != LIST_END(&mp->mnt_vnodelist);
+	     vp = LIST_NEXT(&vp->v_mntvnodes));
 	for (; vp && vp != BEG_OF_VLIST; vp = BACK_VP(vp)) {
 /* END HACK */
 /*
 loop:
-	for (vp = mp->mnt_vnodelist.lh_first;
-	     vp != NULL;
-	     vp = vp->v_mntvnodes.le_next) {
+	LIST_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 */
 		/*
 		 * If the vnode that we are about to sync is no longer
@@ -187,7 +186,7 @@ loop:
 			continue;
 		*/
 
-		if (op == VN_EMPTY && vp->v_dirtyblkhd.lh_first)
+		if (op == VN_EMPTY && !LIST_EMPTY(&vp->v_dirtyblkhd))
 			continue;
 
 		if (vp->v_type == VNON)
@@ -203,9 +202,9 @@ loop:
 		ip = VTOI(vp);
 		if ((ip->i_flag &
 		    (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE) ||
-		    vp->v_dirtyblkhd.lh_first != NULL) &&
+		    !LIST_EMPTY(&vp->v_dirtyblkhd)) &&
 		    ip->i_number != LFS_IFILE_INUM) {
-			if (vp->v_dirtyblkhd.lh_first != NULL)
+			if (!LIST_EMPTY(&vp->v_dirtyblkhd))
 				lfs_writefile(fs, sp, vp);
 			(void) lfs_writeinode(fs, sp, ip);
 		}
@@ -301,7 +300,7 @@ redo:
 		vp = fs->lfs_ivnode;
 		while (vget(vp, LK_EXCLUSIVE, p));
 		ip = VTOI(vp);
-		if (vp->v_dirtyblkhd.lh_first != NULL)
+		if (!LIST_EMPTY(&vp->v_dirtyblkhd))
 			lfs_writefile(fs, sp, vp);
 		(void)lfs_writeinode(fs, sp, ip);
 		vput(vp);
@@ -545,10 +544,12 @@ lfs_gather(fs, sp, vp, match)
 #define	BEG_OF_LIST	((struct buf *)(((void *)&vp->v_dirtyblkhd.lh_first) - BUF_OFFSET))
 
 
-/*loop:       for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = bp->b_vnbufs.le_next) {*/
+/*loop:       LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs) {*/
 /* Find last buffer. */
-loop:   for (bp = vp->v_dirtyblkhd.lh_first; bp && bp->b_vnbufs.le_next != NULL;
-	  bp = bp->b_vnbufs.le_next);
+loop:   for (bp = LIST_FIRST(&vp->v_dirtyblkhd);
+	     bp != LIST_END(&vp->v_dirltyblkhd) &&
+	     LIST_NEXT(bp, b_vnbufs) != LIST_END(&vp->v_dirtyblkhd);
+	     bp = LIST_NEXT(bp, b_vnbufs));
 	for (; bp && bp != BEG_OF_LIST; bp = BACK_BUF(bp)) {
 /* END HACK */
 		if (bp->b_flags & B_BUSY || !match(fs, bp) ||

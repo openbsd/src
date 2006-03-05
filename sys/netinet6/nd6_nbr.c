@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.38 2006/02/06 17:37:28 jmc Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.39 2006/03/05 21:48:57 miod Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1028,7 +1028,7 @@ nd6_dad_find(ifa)
 {
 	struct dadq *dp;
 
-	for (dp = dadq.tqh_first; dp; dp = dp->dad_list.tqe_next) {
+	TAILQ_FOREACH(dp, &dadq, dad_list) {
 		if (dp->dad_ifa == ifa)
 			return dp;
 	}

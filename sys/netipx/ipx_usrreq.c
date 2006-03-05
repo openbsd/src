@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_usrreq.c,v 1.14 2004/01/03 14:08:54 espie Exp $	*/
+/*	$OpenBSD: ipx_usrreq.c,v 1.15 2006/03/05 21:48:57 miod Exp $	*/
 
 /*-
  *
@@ -102,8 +102,7 @@ ipx_input(struct mbuf *m, ...)
 	if (ipx_neteqnn(ipx->ipx_sna.ipx_net, ipx_zeronet) && ifp) {
 		struct ifaddr *ifa;
 
-		for (ifa = ifp->if_addrlist.tqh_first;
-		     ifa; ifa = ifa->ifa_list.tqe_next) {
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family == AF_IPX) {
 				ipx_ipx.sipx_addr.ipx_net =
 					IA_SIPX(ifa)->sipx_addr.ipx_net;

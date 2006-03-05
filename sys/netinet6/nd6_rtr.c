@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.35 2005/11/29 02:59:42 jolan Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.36 2006/03/05 21:48:57 miod Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1101,8 +1101,7 @@ prelist_update(new, dr, m)
 	 * form an address.  Note that even a manually configured address
 	 * should reject autoconfiguration of a new address.
 	 */
-	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
-	{
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		struct in6_ifaddr *ifa6;
 		int ifa_plen;
 		u_int32_t storedlifetime;
@@ -1460,10 +1459,7 @@ nd6_prefix_onlink(pr)
 	    IN6_IFF_NOTREADY | IN6_IFF_ANYCAST);
 	if (ifa == NULL) {
 		/* XXX: freebsd does not have ifa_ifwithaf */
-		for (ifa = ifp->if_addrlist.tqh_first;
-		     ifa;
-		     ifa = ifa->ifa_list.tqe_next)
-		{
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family == AF_INET6)
 				break;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.44 2004/06/22 23:52:18 jfb Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.45 2006/03/05 21:48:56 miod Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -824,7 +824,7 @@ svr4_pfind(pid)
 		return p;
 
 	/* look in the zombies */
-	for (p = zombproc.lh_first; p != 0; p = p->p_list.le_next)
+	LIST_FOREACH(p, &zombproc, p_list)
 		if (p->p_pid == pid)
 			return p;
 
@@ -1063,7 +1063,7 @@ svr4_sys_waitsys(q, v, retval)
 
 loop:
 	nfound = 0;
-	for (p = q->p_children.lh_first; p != 0; p = p->p_sibling.le_next) {
+	LIST_FOREACH(p, &q->p_children, p_sibling) {
 		if (SCARG(uap, id) != WAIT_ANY &&
 		    p->p_pid != SCARG(uap, id) &&
 		    p->p_pgid != -SCARG(uap, id)) {

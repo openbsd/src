@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_25.c,v 1.7 2005/11/30 10:35:07 pedro Exp $	*/
+/*	$OpenBSD: vfs_syscalls_25.c,v 1.8 2006/03/05 21:48:54 miod Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -195,7 +195,7 @@ compat_25_sys_getfsstat(p, v, retval)
 			     flags == 0) &&
 			    (error = VFS_STATFS(mp, sp, p))) {
 				simple_lock(&mountlist_slock);
-				nmp = mp->mnt_list.cqe_next;
+				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				vfs_unbusy(mp);
  				continue;
 			}

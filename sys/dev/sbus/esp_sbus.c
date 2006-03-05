@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_sbus.c,v 1.16 2004/09/29 19:17:43 miod Exp $	*/
+/*	$OpenBSD: esp_sbus.c,v 1.17 2006/03/05 21:48:56 miod Exp $	*/
 /*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
@@ -721,9 +721,9 @@ db_esp(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 			  sc->sc_imess[1], sc->sc_imess[2], sc->sc_imess[3],
 			  sc->sc_imess[0]);
 		db_printf("ready: ");
-		for (ecb = sc->ready_list.tqh_first; ecb; ecb = ecb->chain.tqe_next) {
+		TAILQ_FOREACH(ecb, &sc->ready_list, chain) {
 			db_printf("ecb %p ", ecb);
-			if (ecb == ecb->chain.tqe_next) {
+			if (ecb == TAILQ_NEXT(ecb, chain)) {
 				db_printf("\nWARNING: tailq loop on ecb %p", ecb);
 				break;
 			}

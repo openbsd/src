@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_outputfl.c,v 1.7 2003/12/10 07:22:43 itojun Exp $	*/
+/*	$OpenBSD: ipx_outputfl.c,v 1.8 2006/03/05 21:48:57 miod Exp $	*/
 
 /*-
  *
@@ -189,7 +189,7 @@ ipx_output_type20(m)
 	/*
 	 * Now see if we have already seen this.
 	 */
-	for (ia = ipx_ifaddr.tqh_first; ia != NULL; ia = ia->ia_list.tqe_next)
+	TAILQ_FOREACH(ia, &ipx_ifaddr, ia_list)
 		if(ia->ia_ifa.ifa_ifp == m->m_pkthdr.rcvif) {
 			if(tia == NULL)
 				tia = ia;
@@ -229,7 +229,7 @@ ipx_output_type20(m)
 	dst.sipx_len = sizeof(dst);
 	dst.sipx_addr.ipx_host = ipx_broadhost;
 
-	for (ia = ipx_ifaddr.tqh_first; ia != NULL; ia = ia->ia_list.tqe_next)
+	TAILQ_FOREACH(ia, &ipx_ifaddr, ia_list)
 		if(ia->ia_ifa.ifa_ifp != m->m_pkthdr.rcvif) {
         		nbnet = (union ipx_net *)(ipx + 1);
 			for (i = 0; i < ipx->ipx_tc; i++, nbnet++)

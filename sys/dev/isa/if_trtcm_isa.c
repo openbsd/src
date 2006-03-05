@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trtcm_isa.c,v 1.3 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: if_trtcm_isa.c,v 1.4 2006/03/05 21:48:56 miod Exp $	*/
 /*	$NetBSD: if_trtcm_isa.c,v 1.3 1999/04/30 15:29:24 bad Exp $	*/
 
 #undef TRTCMISADEBUG
@@ -227,8 +227,7 @@ trtcm_isa_probe(parent, match, aux)
 	/*
 	 * Probe this bus if we haven't done so already.
 	 */
-	for (tcm = tcm_isa_all_probes.lh_first; tcm != NULL;
-	    tcm = tcm->tcm_link.le_next)
+	LIST_FOREACH(tcm, &tcm_isa_all_probes, tcm_link)
 		if (tcm->tcm_bus == bus)
 			goto bus_probed;
 

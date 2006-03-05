@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_sockio.c,v 1.9 2004/06/22 23:52:18 jfb Exp $	 */
+/*	$OpenBSD: svr4_sockio.c,v 1.10 2006/03/05 21:48:56 miod Exp $	 */
 /*	$NetBSD: svr4_sockio.c,v 1.10 1996/05/03 17:09:15 christos Exp $	 */
 
 /*
@@ -109,13 +109,12 @@ svr4_sock_ioctl(fp, p, retval, fd, cmd, data)
 			 * entry per physical interface?
 			 */
 
-			for (ifp = ifnet.tqh_first;
-			     ifp != 0; ifp = ifp->if_list.tqe_next)
-				if ((ifa = ifp->if_addrlist.tqh_first) == NULL)
+			TAILQ_FOREACH(ifp, &ifnet, if_list)
+				if (TAILQ_EMPTY(&ifp->if_addrlist))
 					ifnum++;
 				else
-					for (;ifa != NULL;
-					    ifa = ifa->ifa_list.tqe_next)
+					TAILQ_FOREACH(ifa, &ifp->if_addrlist,
+					    ifa_list)
 						ifnum++;
 
 

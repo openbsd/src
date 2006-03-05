@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.43 2006/03/04 22:40:16 brad Exp $	*/
+/*	$OpenBSD: in.c,v 1.44 2006/03/05 21:48:56 miod Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -114,11 +114,11 @@ in_localaddr(in)
 	struct in_ifaddr *ia;
 
 	if (subnetsarelocal) {
-		for (ia = in_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
+		TAILQ_FOREACH(ia, &in_ifaddr, ia_list)
 			if ((in.s_addr & ia->ia_netmask) == ia->ia_net)
 				return (1);
 	} else {
-		for (ia = in_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
+		TAILQ_FOREACH(ia, &in_ifaddr, ia_list)
 			if ((in.s_addr & ia->ia_subnetmask) == ia->ia_subnet)
 				return (1);
 	}
@@ -240,7 +240,7 @@ in_control(so, cmd, data, ifp)
 	 * Find address for this interface, if it exists.
 	 */
 	if (ifp)
-		for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next)
+		TAILQ_FOREACH(ia, &in_ifaddr, ia_list)
 			if (ia->ia_ifp == ifp)
 				break;
 
@@ -249,12 +249,13 @@ in_control(so, cmd, data, ifp)
 	case SIOCAIFADDR:
 	case SIOCDIFADDR:
 		if (ifra->ifra_addr.sin_family == AF_INET)
-		    for (; ia != 0; ia = ia->ia_list.tqe_next) {
-			if (ia->ia_ifp == ifp &&
-			    ia->ia_addr.sin_addr.s_addr ==
-				ifra->ifra_addr.sin_addr.s_addr)
-			    break;
-		}
+			for (; ia != TAILQ_END(&in_ifaddr);
+			    ia = TAILQ_NEXT(ia, ia_list)) {
+				if (ia->ia_ifp == ifp &&
+				    ia->ia_addr.sin_addr.s_addr ==
+					ifra->ifra_addr.sin_addr.s_addr)
+				    break;
+			}
 		if (cmd == SIOCDIFADDR && ia == 0)
 			return (EADDRNOTAVAIL);
 		/* FALLTHROUGH */
@@ -307,7 +308,8 @@ in_control(so, cmd, data, ifp)
 		if (ia && satosin(&ifr->ifr_addr)->sin_addr.s_addr) {
 			struct in_ifaddr *ia2;
 
-			for (ia2 = ia; ia2; ia2 = ia2->ia_list.tqe_next) {
+			for (ia2 = ia; ia2 != TAILQ_END(&in_ifaddr);
+			    ia2 = TAILQ_NEXT(ia2, ia_list)) {
 				if (ia2->ia_ifp == ifp &&
 				    ia2->ia_addr.sin_addr.s_addr ==
 				    satosin(&ifr->ifr_addr)->sin_addr.s_addr)
@@ -594,7 +596,7 @@ in_lifaddr_ioctl(so, cmd, data, ifp)
 			}
 		}
 
-		for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next) {
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			if (!cmp)
@@ -833,7 +835,7 @@ in_scrubprefix(target)
 		prefix.s_addr &= mask.s_addr;
 	}
 
-	for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
+	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
 		if (rtinitflags(ia))
 			p = ia->ia_dstaddr.sin_addr;
 		else {
@@ -886,11 +888,11 @@ in_broadcast(in, ifp)
 		return 1;
 
 	if (ifp == NULL) {
-	  	if_first = ifnet.tqh_first;
+	  	if_first = TAILQ_FIRST(&ifnet);
 		if_target = 0;
 	} else {
 		if_first = ifp;
-		if_target = ifp->if_list.tqe_next;
+		if_target = TAILQ_NEXT(ifp, if_list);
 	}
 
 #define ia (ifatoia(ifa))
@@ -899,11 +901,10 @@ in_broadcast(in, ifp)
 	 * with a broadcast address.
 	 * If ifp is NULL, check against all the interfaces.
 	 */
-        for (ifn = if_first; ifn != if_target; ifn = ifn->if_list.tqe_next) {
+        for (ifn = if_first; ifn != if_target; ifn = TAILQ_NEXT(ifn, if_list)) {
 		if ((ifn->if_flags & IFF_BROADCAST) == 0)
 			continue;
-		for (ifa = ifn->if_addrlist.tqh_first; ifa;
-		    ifa = ifa->ifa_list.tqe_next)
+		TAILQ_FOREACH(ifa, &ifn->if_addrlist, ifa_list)
 			if (ifa->ifa_addr->sa_family == AF_INET &&
 			    in.s_addr != ia->ia_addr.sin_addr.s_addr &&
 			    (in.s_addr == ia->ia_broadaddr.sin_addr.s_addr ||

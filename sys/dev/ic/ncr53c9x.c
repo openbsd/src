@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.29 2006/01/09 23:11:49 miod Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.30 2006/03/05 21:48:56 miod Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -906,7 +906,7 @@ ncr53c9x_sched(sc)
 	 * Find first ecb in ready queue that is for a target/lunit
 	 * combinations that is not busy.
 	 */
-	for (ecb = sc->ready_list.tqh_first; ecb; ecb = ecb->chain.tqe_next) {
+	TAILQ_FOREACH(ecb, &sc->ready_list, chain) {
 		sc_link = ecb->xs->sc_link;
 		ti = &sc->sc_tinfo[sc_link->target];
 		lun = sc_link->lun;
@@ -2142,18 +2142,18 @@ again:
 			/* Selection timeout -- discard all LUNs if empty */
 			sc_link = ecb->xs->sc_link;
 			ti = &sc->sc_tinfo[sc_link->target];
-			li = ti->luns.lh_first;
-			while (li) {
+			for (li = LIST_FIRST(&ti->luns);
+			    li != LIST_END(&ti->luns); ) {
 				if (!li->untagged && !li->used) {
 					if (li->lun < NCR_NLUN)
 						ti->lun[li->lun] = NULL;
 					LIST_REMOVE(li, link);
 					free(li, M_DEVBUF);
 					/* Restart the search at the beginning */
-					li = ti->luns.lh_first;
+					li = LIST_FIRST(&ti->luns);
 					continue;
 				}
-				li = li->link.le_next;
+				li = LIST_NEXT(li, link);
 			}
 			goto finish;
 		}
@@ -2805,18 +2805,17 @@ ncr53c9x_watch(arg)
 	s = splbio();
 	for (t=0; t<NCR_NTARG; t++) {
 		ti = &sc->sc_tinfo[t];
-		li = ti->luns.lh_first;
-		while (li) {
+		for (li = LIST_FIRST(&ti->luns); li != LIST_END(&ti->luns); ) {
 			if (li->last_used < old && !li->untagged && !li->used) {
 				if (li->lun < NCR_NLUN)
 					ti->lun[li->lun] = NULL;
 				LIST_REMOVE(li, link);
 				free(li, M_DEVBUF);
 				/* Restart the search at the beginning */
-				li = ti->luns.lh_first;
+				li = LIST_FIRST(&ti->luns);
 				continue; 
 			}
-			li = li->link.le_next;
+			li = LIST_NEXT(li, link);
 		}
 	}
 	splx(s);

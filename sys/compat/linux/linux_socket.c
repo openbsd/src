@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.34 2005/11/21 18:16:37 millert Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.35 2006/03/05 21:48:56 miod Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -1418,12 +1418,10 @@ linux_ioctl_socket(p, v, retval)
 		 * Note that we don't actually respect the name in the ifreq
 		 * structure, as Linux interface names are all different.
 		 */
-		for (ifp = ifnet.tqh_first; ifp != 0;
-		    ifp = ifp->if_list.tqe_next) {
+		TAILQ_FOREACH(ifp, &ifnet, if_list) {
 			if (ifp->if_type != IFT_ETHER)
 				continue;
-			for (ifa = ifp->if_addrlist.tqh_first; ifa;
-			    ifa = ifa->ifa_list.tqe_next) {
+			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 				if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
 				    (sdl->sdl_family == AF_LINK) &&
 				    (sdl->sdl_type == IFT_ETHER)) {

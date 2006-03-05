@@ -1,4 +1,4 @@
-/* 	$OpenBSD: osf1_mount.c,v 1.10 2005/07/03 20:13:59 drahn Exp $ */
+/* 	$OpenBSD: osf1_mount.c,v 1.11 2006/03/05 21:48:56 miod Exp $ */
 /*	$NetBSD: osf1_mount.c,v 1.14 1999/05/05 01:51:34 cgd Exp $	*/
 
 /*
@@ -151,9 +151,10 @@ osf1_sys_getfsstat(p, v, retval)
 
 	maxcount = SCARG(uap, bufsize) / sizeof(struct osf1_statfs);
 	osf_sfsp = (caddr_t)SCARG(uap, buf);
-	for (count = 0, mp = mountlist.cqh_first; mp != (void *)&mountlist;
+	count = 0;
+	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
-		nmp = mp->mnt_list.cqe_next;
+		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		if (osf_sfsp && count < maxcount) {
 			sp = &mp->mnt_stat;
 			/*

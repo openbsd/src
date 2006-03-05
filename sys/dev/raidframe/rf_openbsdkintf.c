@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.32 2006/01/21 12:20:51 miod Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.33 2006/03/05 21:48:56 miod Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -2753,7 +2753,7 @@ rf_find_raid_components(void)
 #ifdef	RAID_AUTOCONFIG
 	/* We begin by trolling through *all* the devices on the system. */
 
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 
 		/* We are only interested in disks... */
 		if (dv->dv_class != DV_DISK)

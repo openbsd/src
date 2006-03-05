@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.19 2003/06/11 02:54:02 itojun Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.20 2006/03/05 21:48:57 miod Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -257,10 +257,7 @@ mld6_input(m, off)
 		mld_all_nodes_linklocal.s6_addr16[1] =
 			htons(ifp->if_index); /* XXX */
 
-		for (in6m = ia->ia6_multiaddrs.lh_first;
-		     in6m;
-		     in6m = in6m->in6m_entry.le_next)
-		{
+		LIST_FOREACH(in6m, &ia->ia6_multiaddrs, in6m_entry) {
 			if (IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr,
 						&mld_all_nodes_linklocal) ||
 			    IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) <

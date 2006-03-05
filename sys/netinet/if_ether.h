@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.35 2005/03/28 06:19:58 tedu Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.36 2006/03/05 21:48:56 miod Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -243,11 +243,11 @@ struct ether_multistep {
 	/* struct arpcom *ac; */					\
 	/* struct ether_multi *enm; */					\
 {									\
-	for ((enm) = (ac)->ac_multiaddrs.lh_first;			\
-	    (enm) != NULL &&						\
+	for ((enm) = LIST_FIRST(&(ac)->ac_multiaddrs);			\
+	    (enm) != LIST_END(&(ac)->ac_multiaddrs) &&			\
 	    (bcmp((enm)->enm_addrlo, (addrlo), ETHER_ADDR_LEN) != 0 ||	\
 	     bcmp((enm)->enm_addrhi, (addrhi), ETHER_ADDR_LEN) != 0);	\
-		(enm) = (enm)->enm_list.le_next);			\
+		(enm) = LIST_NEXT((enm), enm_list));			\
 }
 
 /*
@@ -262,7 +262,7 @@ struct ether_multistep {
 	/* struct ether_multi *enm; */  \
 { \
 	if (((enm) = (step).e_enm) != NULL) \
-		(step).e_enm = (enm)->enm_list.le_next; \
+		(step).e_enm = LIST_NEXT((enm), enm_list); \
 }
 
 #define ETHER_FIRST_MULTI(step, ac, enm) \
@@ -270,7 +270,7 @@ struct ether_multistep {
 	/* struct arpcom *ac; */ \
 	/* struct ether_multi *enm; */ \
 { \
-	(step).e_enm = (ac)->ac_multiaddrs.lh_first; \
+	(step).e_enm = LIST_FIRST(&(ac)->ac_multiaddrs); \
 	ETHER_NEXT_MULTI((step), (enm)); \
 }
 

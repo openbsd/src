@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.175 2006/03/05 02:29:46 brad Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.176 2006/03/05 21:48:56 miod Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -459,9 +459,7 @@ ip_output(struct mbuf *m0, ...)
 		if (ip->ip_src.s_addr == INADDR_ANY) {
 			struct in_ifaddr *ia;
 
-			for (ia = in_ifaddr.tqh_first;
-			     ia;
-			     ia = ia->ia_list.tqe_next)
+			TAILQ_FOREACH(ia, &in_ifaddr, ia_list)
 				if (ia->ia_ifp == ifp) {
 					ip->ip_src = ia->ia_addr.sin_addr;
 					break;

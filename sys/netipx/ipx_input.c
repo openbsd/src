@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_input.c,v 1.20 2006/03/04 22:40:16 brad Exp $	*/
+/*	$OpenBSD: ipx_input.c,v 1.21 2006/03/05 21:48:57 miod Exp $	*/
 
 /*-
  *
@@ -147,9 +147,7 @@ next:
 	/*
 	 * Give any raw listeners a crack at the packet
 	 */
-	for (ipxp = ipxrawcbtable.ipxpt_queue.cqh_first;
-	     ipxp != (struct ipxpcb *)&ipxrawcbtable.ipxpt_queue;
-	     ipxp = ipxp->ipxp_queue.cqe_next) {
+	CIRCLEQ_FOREACH(ipxp, &ipxrawcbtable.input_queue, ipxp_queue) {
 		struct mbuf *m1 = m_copy(m, 0, (int)M_COPYALL);
 		if (m1)
 			ipx_input(m1, ipxp);
@@ -205,8 +203,7 @@ next:
 			 * If it is a broadcast to the net where it was
 			 * received from, treat it as ours.
 			 */
-			for (ia = ipx_ifaddr.tqh_first; ia;
-			    ia = ia->ia_list.tqe_next)
+			TAILQ_FOREACH(ia, &ipx->if_addr, ia_list)
 				if((ia->ia_ifa.ifa_ifp == m->m_pkthdr.rcvif) &&
 				    ipx_neteq(ia->ia_addr.sipx_addr, 
 				    ipx->ipx_dna))
@@ -231,7 +228,7 @@ next:
 	 * Is this our packet? If not, forward.
 	 */
 	} else {
-		for (ia = ipx_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next)
+		TAILQ_FOREACH(ia, &ipx_ifaddr, ia_list)
 			if (ipx_hosteq(ipx->ipx_dna, ia->ia_addr.sipx_addr) &&
 			    (ipx_neteq(ipx->ipx_dna, ia->ia_addr.sipx_addr) ||
 			    ipx_neteqnn(ipx->ipx_dna.ipx_net, ipx_zeronet)))
@@ -460,9 +457,7 @@ struct ifnet *ifp;
 	/*
 	 * Give any raw listeners a crack at the packet
 	 */
-	for (ipxp = ipxrawcbtable.ipxpt_queue.cqh_first;
-	    ipxp != (struct ipxpcb *)&ipxrawcbtable.ipxpt_queue;
-	    ipxp = ipxp->ipxp_queue.cqe_next) {
+	CIRCLEQ_FOREACH(ipxp, &ipxrawcbtable.ipxpt_queue, ipxp_queue) {
 		struct mbuf *m0 = m_copy(m, 0, (int)M_COPYALL);
 		if (m0) {
 			struct ipx *ipx;
@@ -472,8 +467,7 @@ struct ifnet *ifp;
 				continue;
 			ipx = mtod(m0, struct ipx *);
 			ipx->ipx_sna.ipx_net = ipx_zeronet;
-			for (ia = ipx_ifaddr.tqh_first; ia;
-			    ia = ia->ia_list.tqe_next)
+			TAILQ_FOREACH(ia, &ipx_ifaddr, ia_list)
 				if (ifp == ia->ia_ifp)
 					break;
 			if (ia == NULL)
@@ -483,8 +477,7 @@ struct ifnet *ifp;
 				    ia->ia_addr.sipx_addr.ipx_host;
 
 			if (ifp && (ifp->if_flags & IFF_POINTOPOINT))
-			    for(ifa = ifp->if_addrlist.tqh_first; ifa;
-					ifa = ifa->ifa_list.tqe_next) {
+			    TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 				if (ifa->ifa_addr->sa_family == AF_IPX) {
 				    ipx->ipx_sna = IA_SIPX(ifa)->sipx_addr;
 				    break;
