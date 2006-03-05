@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.46 2006/01/21 12:18:47 miod Exp $ */
+/*	$OpenBSD: wd.c,v 1.47 2006/03/05 22:49:22 krw Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -85,9 +85,6 @@
 #include <sys/disk.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
 #include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
@@ -162,9 +159,6 @@ struct wd_softc {
 	int heads;
 	int sectors;
 	int retries; /* number of xfer retry */
-#if NRND > 0
-	rndsource_element_t	rnd_source;
-#endif
 	struct timeout sc_restart_timeout;
 	void *sc_sdhook;
 };
@@ -388,10 +382,6 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	if (wd->sc_sdhook == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    wd->sc_dev.dv_xname);
-#if NRND > 0
-	rnd_attach_source(&wd->rnd_source, wd->sc_dev.dv_xname,
-			  RND_TYPE_DISK, 0);
-#endif
 	timeout_set(&wd->sc_restart_timeout, wdrestart, wd);
 }
 
@@ -446,11 +436,6 @@ wddetach(struct device *self, int flags)
 
 	/* Detach disk. */
 	disk_detach(&sc->sc_dk);
-
-#if NRND > 0
-	/* Unhook the entropy source. */
-	rnd_detach_source(&sc->rnd_source);
-#endif
 
 	return (0);
 }
@@ -661,9 +646,6 @@ noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 	}
 	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid),
 	    (bp->b_flags & B_READ));
-#if NRND > 0
-	rnd_add_uint32(&wd->rnd_source, bp->b_blkno);
-#endif
 	biodone(bp);
 	wd->openings++;
 	wdstart(wd);
