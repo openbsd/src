@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.16 2006/02/20 08:29:44 otto Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.17 2006/03/05 07:12:26 otto Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -7,11 +7,14 @@
 
 #include <sys/param.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <getopt.h>
 #include <limits.h>
 #include <stdio.h>
@@ -20,6 +23,7 @@
 #include <unistd.h>
 #include <util.h>
 
+#include "common.h"
 #include "extern.h"
 
 #define WIDTH 130
@@ -39,6 +43,7 @@ struct diffline {
 
 static void astrcat(char **, const char *);
 static void enqueue(char *, char, char *);
+static char *mktmpcpy(const char *);
 static void freediff(struct diffline *);
 static void int_usage(void);
 static int parsecmd(FILE *, FILE *, FILE *);
@@ -80,6 +85,68 @@ static struct option longopts[] = {
 	{ NULL,				0,			NULL,	 0  }
 };
 
+/*
+ * Create temporary file if source_file is not a regular file.
+ * Returns temporary file name if one was malloced, NULL if unnecessary.
+ */
+static char *
+mktmpcpy(const char *source_file)
+{
+	struct stat sb;
+	ssize_t rcount;
+	int ifd, ofd;
+	u_char buf[BUFSIZ];
+	char *target_file;
+
+	/* Open input and output. */
+	ifd = open(source_file, O_RDONLY, 0);
+	/* File was opened successfully. */
+	if (ifd != -1) {
+		if (fstat(ifd, &sb) == -1)
+			err(2, "error getting file status from %s", source_file);
+
+		/* Regular file. */
+		if (sb.st_mode & S_IFREG)
+			return (NULL);
+	} else {
+		/* If ``-'' does not exist the user meant stdin. */
+		if (errno == ENOENT && strcmp(source_file, "-") == 0)
+			ifd = STDIN_FILENO;
+		else
+			err(2, "error opening %s", source_file);
+	}
+
+	/* Not a regular file, so copy input into temporary file. */
+	target_file = xmktemp(NULL);
+	if ((ofd = open(target_file, O_WRONLY, 0)) == -1) {
+		warn("error opening %s", target_file);
+		goto FAIL;
+	}
+	while ((rcount = read(ifd, buf, sizeof(buf))) != -1 &&
+	    rcount != 0) {
+		ssize_t wcount;
+
+		wcount = write(ofd, buf, (size_t)rcount);
+		if (-1 == wcount || rcount != wcount) {
+			warn("error writing to %s", target_file);
+			goto FAIL;
+		}
+	}
+	if (rcount == -1) {
+		warn("error reading from %s", source_file);
+		goto FAIL;
+	}
+
+	close(ifd);
+	close(ofd);
+
+	return (target_file);
+
+FAIL:
+	unlink(target_file);
+	exit(2);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -87,7 +154,8 @@ main(int argc, char **argv)
 	size_t diffargc = 0, wflag = WIDTH;
 	int ch, fd[2], status;
 	pid_t pid;
-	char **diffargv, *diffprog = "diff", *s1, *s2;
+	char **diffargv, *diffprog = "diff", *filename1, *filename2,
+	    *tmp1, *tmp2, *s1, *s2;
 
 	/*
 	 * Process diff flags.
@@ -179,10 +247,32 @@ main(int argc, char **argv)
 		/* NOTREACHED */
 	}
 
-	/* file1 */
-	diffargv[diffargc++] = argv[0];
-	/* file2 */
-	diffargv[diffargc++] = argv[1];
+	filename1 = argv[0];
+	filename2 = argv[1];
+
+	/*
+	 * Create temporary files for diff and sdiff to share if file1
+	 * or file2 are not regular files.  This allows sdiff and diff
+	 * to read the same inputs if one or both inputs are stdin.
+	 *
+	 * If any temporary files were created, their names would be
+	 * saved in tmp1 or tmp2.  tmp1 should never equal tmp2.
+	 */
+	tmp1 = tmp2 = NULL;
+	/* file1 and file2 are the same, so copy to same temp file. */
+	if (strcmp(filename1, filename2) == 0) {
+		if ((tmp1 = mktmpcpy(filename1)))
+			filename1 = filename2 = tmp1;
+	/* Copy file1 and file2 into separate temp files. */
+	} else {
+		if ((tmp1 = mktmpcpy(filename1)))
+			filename1 = tmp1;
+		if ((tmp2 = mktmpcpy(filename2)))
+			filename2 = tmp2;
+	}
+
+	diffargv[diffargc++] = filename1;
+	diffargv[diffargc++] = filename2;
 	/* Add NULL to end of array to indicate end of array. */
 	diffargv[diffargc++] = NULL;
 
@@ -219,19 +309,11 @@ main(int argc, char **argv)
 	/* Open pipe to diff command. */
 	if ((diffpipe = fdopen(fd[0], "r")) == NULL)
 		err(2, "could not open diff pipe");
-	/* If file1 or file2 were given as `-', open stdin. */
-	/* XXX - Does not work. */
-	if (strcmp(argv[0], "-") == 0)
-		file1 = stdin;
-	/* Otherwise, open as normal file. */
-	else if ((file1 = fopen(argv[0], "r")) == NULL)
-		err(2, "could not open file1: %s", argv[0]);
-	/* XXX - Handle (file1 == file2 == stdin) case. */
-	if (strcmp(argv[1], "-") == 0)
-		file2 = stdin;
-	/* Otherwise, open as normal file. */
-	else if ((file2 = fopen(argv[1], "r")) == NULL)
-		err(2, "could not open file2: %s", argv[1]);
+	if ((file1 = fopen(filename1, "r")) == NULL)
+		err(2, "could not open %s", filename1);
+	if ((file2 = fopen(filename2, "r")) == NULL)
+		err(2, "could not open %s", filename2);
+
 	/* Line numbers start at one. */
 	file1ln = file2ln = 1;
 
@@ -244,6 +326,17 @@ main(int argc, char **argv)
 	if (waitpid(pid, &status, 0) == -1 || !WIFEXITED(status) ||
 	    WEXITSTATUS(status) >= 2)
 		err(2, "diff exited abnormally");
+
+	/* Delete and free unneeded temporary files. */
+	if (tmp1)
+		if (unlink(tmp1))
+			warn("error deleting %s", tmp1);
+	if (tmp2)
+		if (unlink(tmp2))
+			warn("error deleting %s", tmp2);
+	free(tmp1);
+	free(tmp2);
+	filename1 = filename2 = tmp1 = tmp2 = NULL;
 
 	/* No more diffs, so print common lines. */
 	if (lflag)
