@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.102 2006/02/20 16:30:18 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.103 2006/03/05 15:47:17 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -625,7 +625,8 @@ checkin_init(struct checkin_params *pb)
 	/* Now add our new revision */
 	if (rcs_rev_add(pb->file,
 	    (pb->newrev == NULL ? RCS_HEAD_REV : pb->newrev),
-	    LOG_INIT, pb->date, pb->author) != 0) {
+	    (pb->rcs_msg == NULL ? LOG_INIT : pb->rcs_msg),
+	    pb->date, pb->author) != 0) {
 		cvs_log(LP_ERR, "failed to add new revision");
 		return (-1);
 	}
