@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpioow.4,v 1.1 2006/03/04 16:27:03 grange Exp $
+.\"	$OpenBSD: gpioow.4,v 1.2 2006/03/05 09:14:14 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -28,9 +28,9 @@ The
 .Nm
 driver allows bit-banging a 1-Wire bus as a master using one GPIO pin.
 The pin is used as a data signal.
-GPIO pin must be able to drive an output and read an input.
+The GPIO pin must be able to drive an output and read an input.
 .Pp
-Pin number is specified in the kernel configuration with the
+The pin number is specified in the kernel configuration with the
 .Ar offset
 locator.
 The
