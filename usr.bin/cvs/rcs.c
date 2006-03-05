@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.130 2006/02/26 16:06:46 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.131 2006/03/05 14:18:56 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -254,7 +254,7 @@ static int	rcs_pushtok(RCSFILE *, const char *, int);
 static int	rcs_growbuf(RCSFILE *);
 static int	rcs_strprint(const u_char *, size_t, FILE *);
 
-static char*	rcs_expand_keywords(char *, struct rcs_delta *, char *,
+static char*   rcs_expand_keywords(char *, struct rcs_delta *, char *,
                     size_t, int);
 
 /*
@@ -1181,13 +1181,12 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 BUF*
 rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 {
-	int expmode, res;
+	int res;
 	size_t len;
 	void *bp;
 	RCSNUM *crev, *rev;
 	BUF *rbuf;
 	struct rcs_delta *rdp = NULL;
-	char *expanded;				/* XXX */
 
 	if (rfp->rf_head == NULL)
 		return (NULL);
@@ -1250,27 +1249,6 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 	if (cvs_buf_getc(rbuf, cvs_buf_len(rbuf)-1) != '\n'
 	    && rbuf != NULL)
 		cvs_buf_putc(rbuf, '\n');
-	/*
-	 * Do keyword expansion if required.
-	 */
-	if (rfp->rf_expand != NULL)
-		expmode = rcs_kwexp_get(rfp);
-	else
-		expmode = RCS_KWEXP_DEFAULT;
-
-	if ((rbuf != NULL) && !(expmode & RCS_KWEXP_NONE)) {
-		if ((rdp = rcs_findrev(rfp, rev)) == NULL)
-			return (rbuf);
-		cvs_buf_putc(rbuf, '\0');
-		len = cvs_buf_len(rbuf);
-		bp = cvs_buf_release(rbuf);
-		expanded = rcs_expand_keywords(rfp->rf_path, rdp,
-		    bp, len, expmode);
-		rbuf = cvs_buf_alloc(len, BUF_AUTOEXT);
-		cvs_buf_set(rbuf, expanded, strlen(expanded), 0); 
-		xfree(expanded);
-	}
-
 	return (rbuf);
 }
 
@@ -2859,6 +2837,43 @@ rcs_state_get(RCSFILE *rfp, RCSNUM *rev)
 	return (rdp->rd_state);
 }
 
+/*
+ * rcs_kwexp_buf()
+ *
+ * Do keyword expansion on a buffer if necessary
+ *
+ */
+BUF *
+rcs_kwexp_buf(BUF *bp, RCSFILE *rf, RCSNUM *rev)
+{
+	struct rcs_delta *rdp;
+	char *expanded, *tbuf;
+	int expmode;
+	size_t len;
+
+	/*
+	 * Do keyword expansion if required.
+	 */
+	if (rf->rf_expand != NULL)
+		expmode = rcs_kwexp_get(rf);
+	else
+		expmode = RCS_KWEXP_DEFAULT;
+
+	if (!(expmode & RCS_KWEXP_NONE)) {
+		if ((rdp = rcs_findrev(rf, rev)) == NULL)
+		    fatal("could not fetch revision");
+		cvs_buf_putc(bp, '\0');
+		len = cvs_buf_len(bp);
+		tbuf = cvs_buf_release(bp);
+		expanded = rcs_expand_keywords(rf->rf_path, rdp,
+		    tbuf, len, expmode);
+		bp = cvs_buf_alloc(len, BUF_AUTOEXT);
+		cvs_buf_set(bp, expanded, strlen(expanded), 0); 
+		xfree(expanded);
+	}
+	return (bp);
+}
+
 
 #if !defined(RCSPROG)
 
@@ -2915,6 +2930,7 @@ cvs_checkout_rev(RCSFILE *rf, RCSNUM *rev, CVSFILE *cf, char *fpath,
 			    rcsnum_tostr(rev, buf, sizeof(buf)), fpath);
 			goto out;
 		}
+		bp = rcs_kwexp_buf(bp, rf, rev);
 	} else if (type != CHECKOUT_REV_REMOVED) {
 		va_start(ap, type);
 		bp = va_arg(ap, BUF *);

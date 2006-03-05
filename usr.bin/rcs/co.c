@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.54 2006/02/24 14:34:56 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.55 2006/03/05 14:18:56 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -298,6 +298,10 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		cvs_log(LP_ERR, "cannot find revision `%s'", buf);
 		return (-1);
 	}
+	/*
+	 * Do keyword expansion if required.
+	 */
+	bp = rcs_kwexp_buf(bp, file, frev);
 
 	if (flags & CO_LOCK) {
 		if ((lockname != NULL)
