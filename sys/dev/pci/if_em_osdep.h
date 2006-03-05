@@ -31,28 +31,26 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em_osdep.h,v 1.5 2005/10/15 14:43:37 brad Exp $ */
+/* $OpenBSD: if_em_osdep.h,v 1.6 2006/03/05 19:55:10 brad Exp $ */
 /* $FreeBSD: if_em_osdep.h,v 1.11 2003/05/02 21:17:08 pdeuskar Exp $ */
 
 #ifndef _EM_OPENBSD_OS_H_
 #define _EM_OPENBSD_OS_H_
 
-#define ASSERT(x) if(!(x)) panic("EM: x")
-
 /* The happy-fun DELAY macro is defined in /usr/src/sys/i386/include/clock.h */
-#define usec_delay(x) DELAY(x)
-#define msec_delay(x) DELAY(1000*(x))
+#define usec_delay(x)		DELAY(x)
+#define msec_delay(x)		DELAY(1000*(x))
 /* TODO: Should we be paranoid about delaying in interrupt context? */
-#define msec_delay_irq(x) DELAY(1000*(x))
+#define msec_delay_irq(x)	DELAY(1000*(x))
 
-#define MSGOUT(S, A, B)     printf(S "\n", A, B)
-#define DEBUGFUNC(F)        DEBUGOUT(F);
+#define MSGOUT(S, A, B)		printf(S "\n", A, B)
+#define DEBUGFUNC(F)		DEBUGOUT(F);
 #if DBG
-	#define DEBUGOUT(S)         printf(S "\n")
-	#define DEBUGOUT1(S,A)      printf(S "\n",A)
-	#define DEBUGOUT2(S,A,B)    printf(S "\n",A,B)
-	#define DEBUGOUT3(S,A,B,C)  printf(S "\n",A,B,C)
-	#define DEBUGOUT7(S,A,B,C,D,E,F,G)  printf(S "\n",A,B,C,D,E,F,G)
+	#define DEBUGOUT(S)			printf(S "\n")
+	#define DEBUGOUT1(S,A)			printf(S "\n",A)
+	#define DEBUGOUT2(S,A,B)		printf(S "\n",A,B)
+	#define DEBUGOUT3(S,A,B,C)		printf(S "\n",A,B,C)
+	#define DEBUGOUT7(S,A,B,C,D,E,F,G)	printf(S "\n",A,B,C,D,E,F,G)
 #else
 	#define DEBUGOUT(S)
 	#define DEBUGOUT1(S,A)
@@ -61,87 +59,83 @@ POSSIBILITY OF SUCH DAMAGE.
 	#define DEBUGOUT7(S,A,B,C,D,E,F,G)
 #endif
 
-#define FALSE               0
-#define TRUE                1
-#define CMD_MEM_WRT_INVALIDATE          0x0010  /* BIT_4 */
-#define PCI_COMMAND_REGISTER            PCI_COMMAND_STATUS_REG 
+#define CMD_MEM_WRT_INVALIDATE		0x0010  /* BIT_4 */
 
 struct em_osdep
 {
-	bus_space_tag_t    mem_bus_space_tag;
-	bus_space_handle_t mem_bus_space_handle;
-	struct device     *dev;
+	bus_space_tag_t		mem_bus_space_tag;
+	bus_space_handle_t	mem_bus_space_handle;
+	struct device		*dev;
 
-	struct pci_attach_args em_pa;
+	struct pci_attach_args	em_pa;
 
-        bus_size_t              em_memsize;
-        bus_addr_t              em_membase;
+	bus_size_t		em_memsize;
+	bus_addr_t		em_membase;
 
-        bus_space_handle_t      em_iobhandle;
-        bus_space_tag_t         em_iobtag;
-        bus_size_t              em_iosize;
-        bus_addr_t              em_iobase;
+	bus_space_handle_t	em_iobhandle;
+	bus_space_tag_t		em_iobtag;
+	bus_size_t		em_iosize;
+	bus_addr_t		em_iobase;
 };
 
-#define E1000_WRITE_FLUSH(hw) E1000_READ_REG(hw, STATUS)
+#define E1000_WRITE_FLUSH(hw)	E1000_READ_REG(hw, STATUS)
 
 /* Read from an absolute offset in the adapter's memory space */
 #define E1000_READ_OFFSET(hw, offset) \
-    bus_space_read_4( ((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
-                      ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
-                      offset)
+	bus_space_read_4( ((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+			    ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
+			    offset)
 
 /* Write to an absolute offset in the adapter's memory space */
 #define E1000_WRITE_OFFSET(hw, offset, value) \
-    bus_space_write_4( ((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
-                       ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
-                       offset, \
-                       value)
+	bus_space_write_4( ((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+			    ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
+			    offset, value)
 
 /* Convert a register name to its offset in the adapter's memory space */
 #define E1000_REG_OFFSET(hw, reg) \
-    ((hw)->mac_type >= em_82543 ? E1000_##reg : E1000_82542_##reg)
+	((hw)->mac_type >= em_82543 ? E1000_##reg : E1000_82542_##reg)
 
 #define E1000_READ_REG(hw, reg) \
-    E1000_READ_OFFSET(hw, E1000_REG_OFFSET(hw, reg))
+	E1000_READ_OFFSET(hw, E1000_REG_OFFSET(hw, reg))
 
 #define E1000_WRITE_REG(hw, reg, value) \
-    E1000_WRITE_OFFSET(hw, E1000_REG_OFFSET(hw, reg), value)
+	E1000_WRITE_OFFSET(hw, E1000_REG_OFFSET(hw, reg), value)
 
 #define E1000_READ_REG_ARRAY(hw, reg, index) \
-    E1000_READ_OFFSET(hw, E1000_REG_OFFSET(hw, reg) + ((index) << 2))
+	E1000_READ_OFFSET(hw, E1000_REG_OFFSET(hw, reg) + ((index) << 2))
 
-#define E1000_READ_REG_ARRAY_DWORD E1000_READ_REG_ARRAY
+#define E1000_READ_REG_ARRAY_DWORD	E1000_READ_REG_ARRAY
 
 #define E1000_WRITE_REG_ARRAY(hw, reg, index, value) \
-    E1000_WRITE_OFFSET(hw, E1000_REG_OFFSET(hw, reg) + ((index) << 2), value)
+	E1000_WRITE_OFFSET(hw, E1000_REG_OFFSET(hw, reg) + ((index) << 2), value)
 
 #define E1000_WRITE_REG_ARRAY_BYTE(hw, reg, index, value) \
-    bus_space_write_1( ((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
-                       ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
-                       E1000_REG_OFFSET(hw, reg) + (index), \
-                       value)
+	bus_space_write_1( ((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+			    ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
+			    E1000_REG_OFFSET(hw, reg) + (index), \
+			    value)
 
 #define E1000_WRITE_REG_ARRAY_WORD(hw, reg, index, value) \
-    bus_space_write_2( ((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
-                       ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
-                       E1000_REG_OFFSET(hw, reg) + (index), \
-                       value)
+	bus_space_write_2( ((struct em_osdep *)(hw)->back)->mem_bus_space_tag, \
+			    ((struct em_osdep *)(hw)->back)->mem_bus_space_handle, \
+			    E1000_REG_OFFSET(hw, reg) + (index), \
+			    value)
 
 #define E1000_WRITE_REG_ARRAY_DWORD(hw, reg, index, value) \
-    E1000_WRITE_OFFSET(hw, E1000_REG_OFFSET(hw, reg) + ((index) << 2), value)
+	E1000_WRITE_OFFSET(hw, E1000_REG_OFFSET(hw, reg) + ((index) << 2), value)
 
-#define em_io_read(hw, port)						\
-        bus_space_read_4(((struct em_osdep *)(hw)->back)->em_iobtag,	\
-                ((struct em_osdep *)(hw)->back)->em_iobhandle, (port))
+#define em_io_read(hw, port) \
+	bus_space_read_4(((struct em_osdep *)(hw)->back)->em_iobtag, \
+			    ((struct em_osdep *)(hw)->back)->em_iobhandle, (port))
 
-#define em_io_write(hw, port, value)					\
-        bus_space_write_4(((struct em_osdep *)(hw)->back)->em_iobtag,	\
-                        ((struct em_osdep *)(hw)->back)->em_iobhandle,	\
-			(port), (value))
+#define em_io_write(hw, port, value) \
+	bus_space_write_4(((struct em_osdep *)(hw)->back)->em_iobtag, \
+			    ((struct em_osdep *)(hw)->back)->em_iobhandle, \
+			    (port), (value))
 
 #ifdef DEBUG
-#define EM_KASSERT(exp,msg)        do { if (!(exp)) panic msg; } while (0)
+#define EM_KASSERT(exp,msg)	do { if (!(exp)) panic msg; } while (0)
 #else
 #define EM_KASSERT(exp,msg)
 #endif

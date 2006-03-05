@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.22 2006/02/22 06:02:09 brad Exp $ */
+/* $OpenBSD: if_em.h,v 1.23 2006/03/05 19:55:10 brad Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -91,9 +91,9 @@ POSSIBILITY OF SUCH DAMAGE.
  *   Increasing this value allows the driver to queue more transmits. Each
  *   descriptor is 16 bytes.
  */
-#define EM_MIN_TXD                      12
-#define EM_MAX_TXD                      256
-#define EM_MAX_TXD_82544                512
+#define EM_MIN_TXD			12
+#define EM_MAX_TXD			256
+#define EM_MAX_TXD_82544		512
 
 /*
  * EM_(MIN/MAX)_RXD - Maximum number of receive Descriptors
@@ -106,8 +106,8 @@ POSSIBILITY OF SUCH DAMAGE.
  *   descriptor. The maximum MTU size is 16110.
  *
  */
-#define EM_MIN_RXD                      12
-#define EM_MAX_RXD                      256
+#define EM_MIN_RXD			12
+#define EM_MAX_RXD			256
 
 /*
  * EM_TIDV - Transmit Interrupt Delay Value
@@ -119,7 +119,7 @@ POSSIBILITY OF SUCH DAMAGE.
  *   system is reporting dropped transmits, this value may be set too high
  *   causing the driver to run out of available transmit descriptors.
  */
-#define EM_TIDV                         64
+#define EM_TIDV				64
 
 /*
  * EM_TADV - Transmit Absolute Interrupt Delay Value (Not valid for 82542/82543/82544)
@@ -132,7 +132,7 @@ POSSIBILITY OF SUCH DAMAGE.
  *   along with EM_TIDV, may improve traffic throughput in specific
  *   network conditions.
  */
-#define EM_TADV                         64
+#define EM_TADV				64
 
 /*
  * EM_RDTR - Receive Interrupt Delay Timer (Packet Timer)
@@ -153,7 +153,7 @@ POSSIBILITY OF SUCH DAMAGE.
  *            network connection. To eliminate the potential for the hang
  *            ensure that EM_RDTR is set to 0.
  */
-#define EM_RDTR                         0
+#define EM_RDTR				0
 
 /*
  * Receive Interrupt Absolute Delay Timer (Not valid for 82542/82543/82544)
@@ -166,25 +166,25 @@ POSSIBILITY OF SUCH DAMAGE.
  *   along with EM_RDTR, may improve traffic throughput in specific network
  *   conditions.
  */
-#define EM_RADV                         64
+#define EM_RADV				64
 
 /*
  * This parameter controls the duration of transmit watchdog timer.
  */
-#define EM_TX_TIMEOUT                   5    /* set to 5 seconds */
+#define EM_TX_TIMEOUT			5	/* set to 5 seconds */
 
 /*
  * This parameter controls when the driver calls the routine to reclaim
  * transmit descriptors.
  */
-#define EM_TX_CLEANUP_THRESHOLD         (sc->num_tx_desc / 8)
+#define EM_TX_CLEANUP_THRESHOLD		(sc->num_tx_desc / 8)
 
 /*
  * This parameter controls whether or not autonegotation is enabled.
  *              0 - Disable autonegotiation
  *              1 - Enable  autonegotiation
  */
-#define DO_AUTO_NEG                     1
+#define DO_AUTO_NEG			1
 
 /*
  * This parameter control whether or not the driver will wait for
@@ -192,7 +192,7 @@ POSSIBILITY OF SUCH DAMAGE.
  *              1 - Wait for autonegotiation to complete
  *              0 - Don't wait for autonegotiation to complete
  */
-#define WAIT_FOR_AUTO_NEG_DEFAULT       0
+#define WAIT_FOR_AUTO_NEG_DEFAULT	0
 
 /*
  * EM_MASTER_SLAVE is only defined to enable a workaround for a known compatibility issue
@@ -204,54 +204,52 @@ POSSIBILITY OF SUCH DAMAGE.
  *              2 = Slave mode
  *              3 = Auto master/slave
  */
-/* #define EM_MASTER_SLAVE      2 */
+/* #define EM_MASTER_SLAVE	2 */
 
 /* Tunables -- End */
 
-#define AUTONEG_ADV_DEFAULT             (ADVERTISE_10_HALF | ADVERTISE_10_FULL | \
-                                         ADVERTISE_100_HALF | ADVERTISE_100_FULL | \
-                                         ADVERTISE_1000_FULL)
+#define AUTONEG_ADV_DEFAULT		(ADVERTISE_10_HALF | ADVERTISE_10_FULL | \
+					 ADVERTISE_100_HALF | ADVERTISE_100_FULL | \
+					 ADVERTISE_1000_FULL)
 
-#define EM_MMBA                         0x0010 /* Mem base address */
+#define EM_MMBA				0x0010 /* Mem base address */
 #define EM_ROUNDUP(size, unit) (((size) + (unit) - 1) & ~((unit) - 1))
 
-#define EM_JUMBO_PBA                    0x00000028
-#define EM_DEFAULT_PBA                  0x00000030
-#define EM_SMARTSPEED_DOWNSHIFT         3
-#define EM_SMARTSPEED_MAX               15
+#define EM_SMARTSPEED_DOWNSHIFT		3
+#define EM_SMARTSPEED_MAX		15
 
-#define MAX_NUM_MULTICAST_ADDRESSES     128
+#define MAX_NUM_MULTICAST_ADDRESSES	128
 
 /* Defines for printing debug information */
-#define DEBUG_INIT  0
-#define DEBUG_IOCTL 0
-#define DEBUG_HW    0
+#define DEBUG_INIT	0
+#define DEBUG_IOCTL	0
+#define DEBUG_HW	0
 
-#define INIT_DEBUGOUT(S)            if (DEBUG_INIT)  printf(S "\n")
-#define INIT_DEBUGOUT1(S, A)        if (DEBUG_INIT)  printf(S "\n", A)
-#define INIT_DEBUGOUT2(S, A, B)     if (DEBUG_INIT)  printf(S "\n", A, B)
-#define IOCTL_DEBUGOUT(S)           if (DEBUG_IOCTL) printf(S "\n")
-#define IOCTL_DEBUGOUT1(S, A)       if (DEBUG_IOCTL) printf(S "\n", A)
-#define IOCTL_DEBUGOUT2(S, A, B)    if (DEBUG_IOCTL) printf(S "\n", A, B)
-#define HW_DEBUGOUT(S)              if (DEBUG_HW) printf(S "\n")
-#define HW_DEBUGOUT1(S, A)          if (DEBUG_HW) printf(S "\n", A)
-#define HW_DEBUGOUT2(S, A, B)       if (DEBUG_HW) printf(S "\n", A, B)
+#define INIT_DEBUGOUT(S)		if (DEBUG_INIT)  printf(S "\n")
+#define INIT_DEBUGOUT1(S, A)		if (DEBUG_INIT)  printf(S "\n", A)
+#define INIT_DEBUGOUT2(S, A, B)		if (DEBUG_INIT)  printf(S "\n", A, B)
+#define IOCTL_DEBUGOUT(S)		if (DEBUG_IOCTL) printf(S "\n")
+#define IOCTL_DEBUGOUT1(S, A)		if (DEBUG_IOCTL) printf(S "\n", A)
+#define IOCTL_DEBUGOUT2(S, A, B)	if (DEBUG_IOCTL) printf(S "\n", A, B)
+#define HW_DEBUGOUT(S)			if (DEBUG_HW) printf(S "\n")
+#define HW_DEBUGOUT1(S, A)		if (DEBUG_HW) printf(S "\n", A)
+#define HW_DEBUGOUT2(S, A, B)		if (DEBUG_HW) printf(S "\n", A, B)
 
 /* Supported RX Buffer Sizes */
-#define EM_RXBUFFER_2048        2048
-#define EM_RXBUFFER_4096        4096
-#define EM_RXBUFFER_8192        8192
-#define EM_RXBUFFER_16384      16384
+#define EM_RXBUFFER_2048	2048
+#define EM_RXBUFFER_4096	4096
+#define EM_RXBUFFER_8192	8192
+#define EM_RXBUFFER_16384	16384
 
-#define EM_MAX_SCATTER            64
+#define EM_MAX_SCATTER		64
 
 struct em_buffer {
-        struct mbuf    *m_head;
+	struct mbuf	*m_head;
 	bus_dmamap_t	map;		/* bus_dma map for packet */
 };
 
 struct em_q {
-	bus_dmamap_t       map;         /* bus_dma map for packet */
+	bus_dmamap_t	map;		/* bus_dma map for packet */
 };
 
 /*
@@ -259,13 +257,13 @@ struct em_q {
  * em_dma_malloc and em_dma_free.
  */
 struct em_dma_alloc {
-	bus_addr_t              dma_paddr;
-	caddr_t                 dma_vaddr;
-	bus_dma_tag_t           dma_tag;
-	bus_dmamap_t            dma_map;
-	bus_dma_segment_t       dma_seg;
-	bus_size_t              dma_size;
-	int                     dma_nseg;
+	bus_addr_t		dma_paddr;
+	caddr_t			dma_vaddr;
+	bus_dma_tag_t		dma_tag;
+	bus_dmamap_t		dma_map;
+	bus_dma_segment_t	dma_seg;
+	bus_size_t		dma_size;
+	int			dma_nseg;
 };
 
 typedef enum _XSUM_CONTEXT_T {
@@ -277,28 +275,28 @@ typedef enum _XSUM_CONTEXT_T {
 /* For 82544 PCI-X Workaround */
 typedef struct _ADDRESS_LENGTH_PAIR
 {
-    u_int64_t   address;
-    u_int32_t   length;
+	u_int64_t	address;
+	u_int32_t	length;
 } ADDRESS_LENGTH_PAIR, *PADDRESS_LENGTH_PAIR;
 
 typedef struct _DESCRIPTOR_PAIR
 {
-    ADDRESS_LENGTH_PAIR descriptor[4];
-    u_int32_t   elements;
+	ADDRESS_LENGTH_PAIR descriptor[4];
+	u_int32_t	elements;
 } DESC_ARRAY, *PDESC_ARRAY;
 
 /* Our adapter structure */
 struct em_softc {
 	struct device	sc_dv;
 	struct arpcom	interface_data;
-	struct em_hw    hw;
+	struct em_hw	hw;
 
 	/* OpenBSD operating-system-specific structures */
-	struct em_osdep osdep;
-	struct ifmedia  media;
-	int             io_rid;
+	struct em_osdep	osdep;
+	struct ifmedia	media;
+	int		io_rid;
 
-	void           *sc_intrhand;
+	void		*sc_intrhand;
 	struct timeout	em_intr_enable;
 	struct timeout	timer_handle;
 	struct timeout	tx_fifo_timer_handle;
@@ -312,27 +310,27 @@ struct em_softc {
 #endif /* __STRICT_ALIGNMENT */
 
 	/* Info about the board itself */
-	u_int32_t       part_num;
-	u_int8_t        link_active;
-	u_int16_t       link_speed;
-	u_int16_t       link_duplex;
-	u_int32_t       smartspeed;
-	u_int32_t       tx_int_delay;
-	u_int32_t       tx_abs_int_delay;
+	u_int32_t	part_num;
+	u_int8_t	link_active;
+	u_int16_t	link_speed;
+	u_int16_t	link_duplex;
+	u_int32_t	smartspeed;
+	u_int32_t	tx_int_delay;
+	u_int32_t	tx_abs_int_delay;
 	u_int32_t	rx_int_delay;
 	u_int32_t	rx_abs_int_delay;
 
-	XSUM_CONTEXT_T  active_checksum_context;
+	XSUM_CONTEXT_T	active_checksum_context;
 
-        /*
-         * Transmit definitions
-         *
-         * We have an array of num_tx_desc descriptors (handled
-         * by the controller) paired with an array of tx_buffers
-         * (at tx_buffer_area).
-         * The index of the next available descriptor is next_avail_tx_desc.
-         * The number of remaining tx_desc is num_tx_desc_avail.
-         */
+	/*
+	 * Transmit definitions
+	 *
+	 * We have an array of num_tx_desc descriptors (handled
+	 * by the controller) paired with an array of tx_buffers
+	 * (at tx_buffer_area).
+	 * The index of the next available descriptor is next_avail_tx_desc.
+	 * The number of remaining tx_desc is num_tx_desc_avail.
+	 */
 	struct em_dma_alloc	txdma;		/* bus_dma glue for tx desc */
 	struct em_tx_desc	*tx_desc_base;
 	u_int32_t		next_avail_tx_desc;
@@ -343,14 +341,14 @@ struct em_softc {
 	struct em_buffer	*tx_buffer_area;
 	bus_dma_tag_t		txtag;		/* dma tag for tx */
 
-        /*
-         * Receive definitions
-         *
-         * we have an array of num_rx_desc rx_desc (handled by the
-         * controller), and paired with an array of rx_buffers
-         * (at rx_buffer_area).
-         * The next pair to check on receive is at offset next_rx_desc_to_check
-         */
+	/*
+	 * Receive definitions
+	 *
+	 * we have an array of num_rx_desc rx_desc (handled by the
+	 * controller), and paired with an array of rx_buffers
+	 * (at rx_buffer_area).
+	 * The next pair to check on receive is at offset next_rx_desc_to_check
+	 */
 	struct em_dma_alloc	rxdma;		/* bus_dma glue for rx desc */
 	struct em_rx_desc	*rx_desc_base;
 	u_int32_t		next_rx_desc_to_check;
@@ -360,39 +358,39 @@ struct em_softc {
 	bus_dma_tag_t		rxtag;
 
 	/* Jumbo frame */
-	struct mbuf        *fmp;
-	struct mbuf        *lmp;
+	struct mbuf		*fmp;
+	struct mbuf		*lmp;
 
 	/* Misc stats maintained by the driver */
-	unsigned long   dropped_pkts;
-	unsigned long   mbuf_alloc_failed;
-	unsigned long   mbuf_cluster_failed;
-	unsigned long   no_tx_desc_avail1;
-	unsigned long   no_tx_desc_avail2;
-	unsigned long   no_tx_map_avail;
-	unsigned long   no_tx_dma_setup;
-	unsigned long   watchdog_events;
-	unsigned long	rx_overruns;
+	unsigned long		dropped_pkts;
+	unsigned long		mbuf_alloc_failed;
+	unsigned long		mbuf_cluster_failed;
+	unsigned long		no_tx_desc_avail1;
+	unsigned long		no_tx_desc_avail2;
+	unsigned long		no_tx_map_avail;
+	unsigned long		no_tx_dma_setup;
+	unsigned long		watchdog_events;
+	unsigned long		rx_overruns;
 
 	/* Used in for 82547 10Mb Half workaround */
 	#define EM_PBA_BYTES_SHIFT	0xA
 	#define EM_TX_HEAD_ADDR_SHIFT	7
 	#define EM_PBA_TX_MASK		0xFFFF0000
-	#define EM_FIFO_HDR              0x10
+	#define EM_FIFO_HDR		0x10
 
-	#define EM_82547_PKT_THRESH      0x3e0
+	#define EM_82547_PKT_THRESH	0x3e0
 
-	u_int32_t       tx_fifo_size;
-	u_int32_t       tx_fifo_head;
-	u_int32_t       tx_fifo_head_addr;
-	u_int64_t       tx_fifo_reset_cnt;
-	u_int64_t       tx_fifo_wrk_cnt;
-	u_int32_t       tx_head_addr;
+	u_int32_t	tx_fifo_size;
+	u_int32_t	tx_fifo_head;
+	u_int32_t	tx_fifo_head_addr;
+	u_int64_t	tx_fifo_reset_cnt;
+	u_int64_t	tx_fifo_wrk_cnt;
+	u_int32_t	tx_head_addr;
 
-        /* For 82544 PCI-X Workaround */
-        boolean_t       pcix_82544;
+	/* For 82544 PCI-X Workaround */
+	boolean_t	pcix_82544;
 
 	struct em_hw_stats stats;
 };
 
-#endif                                                  /* _EM_H_DEFINED_ */
+#endif /* _EM_H_DEFINED_ */
