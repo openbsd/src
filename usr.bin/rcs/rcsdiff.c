@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.30 2006/01/05 10:28:24 xsa Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.31 2006/03/05 14:23:07 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -182,9 +182,10 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	}
 
 	if ((b1 = rcs_getrev(file, rev)) == NULL) {
-		cvs_log(LP_ERR, "failed to retrieve revision");
+		cvs_log(LP_ERR, "failed to retrieve revision %s", rbuf);
 		return (-1);
 	}
+	b1 = rcs_kwexp_buf(b1, file, rev);
 	tv[0].tv_sec = (long)rcs_rev_getdate(file, rev);
 	tv[1].tv_sec = tv[0].tv_sec;
 
@@ -242,9 +243,10 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, const char *filename)
 		printf("retrieving revision %s\n", rbuf1);
 
 	if ((b1 = rcs_getrev(file, rev1)) == NULL) {
-		cvs_log(LP_ERR, "failed to retrieve revision");
+		cvs_log(LP_ERR, "failed to retrieve revision %s", rbuf1);
 		return (-1);
 	}
+	b1 = rcs_kwexp_buf(b1, file, rev1);
 	tv[0].tv_sec = (long)rcs_rev_getdate(file, rev1);
 	tv[1].tv_sec = tv[0].tv_sec;
 
@@ -253,9 +255,10 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, const char *filename)
 		fprintf(stderr, "retrieving revision %s\n", rbuf2);
 
 	if ((b2 = rcs_getrev(file, rev2)) == NULL) {
-		cvs_log(LP_ERR, "failed to retrieve revision");
+		cvs_log(LP_ERR, "failed to retrieve revision %s", rbuf2);
 		return (-1);
 	}
+	b2 = rcs_kwexp_buf(b2, file, rev2);
 	tv2[0].tv_sec = (long)rcs_rev_getdate(file, rev2);
 	tv2[1].tv_sec = tv2[0].tv_sec;
 
