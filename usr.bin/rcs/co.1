@@ -1,4 +1,4 @@
-.\"     $OpenBSD: co.1,v 1.20 2005/12/02 11:45:02 xsa Exp $
+.\"     $OpenBSD: co.1,v 1.21 2006/03/05 09:05:56 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -41,8 +41,15 @@
 .Ar file ...
 .Ek
 .Sh DESCRIPTION
+The
 .Nm
-always performs keyword substitution.
+program is used to check out revisions from RCS files.
+It always performs keyword substitution
+(see
+.Sx KEYWORD SUBSTITUTION
+in
+.Xr cvs 1
+for more information).
 .Pp
 The following options are supported:
 .Bl -tag -width Ds
