@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.9 2006/02/26 01:27:16 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.10 2006/03/05 01:13:37 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -550,7 +550,7 @@ ixgb_intr(void *arg)
 
 	ifp = &sc->interface_data.ac_if;
 
-	 for (;;) {
+	for (;;) {
 		reg_icr = IXGB_READ_REG(&sc->hw, ICR);
 		if (reg_icr == 0)
 			break;
