@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.174 2006/03/04 22:40:16 brad Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.175 2006/03/05 02:29:46 brad Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1978,7 +1978,7 @@ in_delayed_cksum(struct mbuf *m)
 	ip = mtod(m, struct ip *);
 	offset = ip->ip_hl << 2;
 	csum = in4_cksum(m, 0, offset, m->m_pkthdr.len - offset);
-	if (csum == 0 && (m->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT) != 0)
+	if (csum == 0 && ip->ip_p == IPPROTO_UDP)
 		csum = 0xffff;
 
 	switch (ip->ip_p) {
