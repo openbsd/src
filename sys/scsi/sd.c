@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.102 2006/03/04 19:33:22 miod Exp $	*/
+/*	$OpenBSD: sd.c,v 1.103 2006/03/05 14:58:10 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -316,11 +316,6 @@ sddetach(self, flags)
 
 	/* Detach disk. */
 	disk_detach(&sc->sc_dk);
-
-#if NRND > 0
-	/* Unhook the entropy source. */
-	rnd_detach_source(&sc->rnd_source);
-#endif
 
 	return (0);
 }

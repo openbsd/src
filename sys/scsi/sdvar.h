@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.8 2005/07/05 00:55:25 krw Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.9 2006/03/05 14:58:10 krw Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -79,10 +79,6 @@ struct sd_softc {
 	} params;
 	struct buf buf_queue;
 	void *sc_sdhook;		/* our shutdown hook */
-
-#if NRND > 0
-	rndsource_element_t rnd_source;
-#endif
 };
 
 #define	SDGP_RESULT_OK		0	/* parameters obtained */

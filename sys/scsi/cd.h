@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.h,v 1.9 2005/08/03 23:37:07 krw Exp $	*/
+/*	$OpenBSD: cd.h,v 1.10 2006/03/05 14:58:10 krw Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
@@ -252,10 +252,6 @@ struct cd_softc {
 	struct cd_parms orig_params;    /* filled in when CD-DA mode starts */
 #endif
 	struct buf buf_queue;
-
-#if NRND > 0
-	rndsource_element_t	rnd_source;
-#endif
 };
 
 #endif /* _KERNEL */
