@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.75 2006/03/04 22:40:16 brad Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.76 2006/03/05 02:35:38 brad Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 		tp->tun_flags &= ~TUN_LAYER2;
 		ifp->if_mtu = TUNMTU;
 		ifp->if_flags = IFF_POINTOPOINT;
-		ifp->if_type  = IFF_POINTOPOINT;
+		ifp->if_type = IFT_TUNNEL;
 		ifp->if_hdrlen = sizeof(u_int32_t);
 		if_attach(ifp);
 		if_alloc_sadl(ifp);
