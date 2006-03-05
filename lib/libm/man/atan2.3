@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atan2.3,v 1.9 2003/06/02 20:18:41 millert Exp $
+.\"	$OpenBSD: atan2.3,v 1.10 2006/03/05 09:10:17 jmc Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -88,13 +88,18 @@ if
 < 0,
 .It Ta
 .No 0 Ta
-if x = y = 0, or
+if
+.Ar x
+=
+.Ar y
+= 0, or
 .It Ta
 .Pf sign( Ar y Ns )*\\*(Pi/2 Ta
 if
 .Ar x
-= 0 \*(!=
-.Ar y .
+= 0,
+.Ar y
+!= 0.
 .El
 .Sh NOTES
 The function
