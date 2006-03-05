@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2006/02/21 09:07:52 otto Exp $
+#	$OpenBSD: Makefile,v 1.2 2006/03/05 07:13:11 otto Exp $
 
 SDIFF?=sdiff
 REGRESS_TARGETS=test-lflag test-sflag test-wflag \
@@ -6,10 +6,9 @@ REGRESS_TARGETS=test-lflag test-sflag test-wflag \
     test-merge test-merge2 test-merge3 test-merge4 test-merge5 \
     test-merge6 test-merge7 test-merge8 test-merge9 test-merge10 \
     test-merge11 test-merge12 test-same test-oneline test-oneline2 \
-    test-dot test-dot2 test-short \
+    test-dot test-dot2 test-short test-stdin test-stdin2 \
     test-Iflag12 test-Iflag21 test-Isflag12 test-Isflag21 \
     test-Ilflag12 test-Ilflag21 test-Ilsflag12 test-Ilsflag21
-    #test-stdin test-stdin2
 
 test-Iflag12: file1 file2 Iflag12.out
 	${SDIFF} -w 125 -I '.*filename.*' ${.CURDIR}/file1 ${.CURDIR}/file2 | \
