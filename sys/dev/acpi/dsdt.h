@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.9 2006/02/22 19:29:24 jordan Exp $ */
+/* $OpenBSD: dsdt.h,v 1.10 2006/03/05 14:46:46 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -30,6 +30,7 @@ int     aml_eval_name(struct acpi_softc *, struct aml_node *, const char *,
 void    aml_showvalue(struct aml_value *);
 
 void    aml_walktree(struct aml_node *);
+void	aml_walkroot(void);
 
 struct aml_value *aml_allocint(uint64_t);
 struct aml_value *aml_allocstr(const char *);

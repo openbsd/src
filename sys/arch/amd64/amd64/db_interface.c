@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.6 2005/12/05 21:31:23 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.7 2006/03/05 14:46:45 marco Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -55,6 +55,11 @@
 #include <ddb/db_access.h>
 #include <ddb/db_output.h>
 #include <ddb/db_var.h>
+
+#include "acpi.h"
+#if NACPI > 0
+#include <dev/acpi/acpidebug.h>
+#endif /* NACPI > 0 */
 
 extern label_t *db_recover;
 extern char *trap_type[];
@@ -370,6 +375,13 @@ x86_ipi_db(struct cpu_info *ci)
 }
 #endif /* MULTIPROCESSOR */
 
+#if NACPI > 0
+struct db_command db_acpi_cmds[] = {
+	{ "tree",	db_acpi_tree,		0,	NULL },
+	{ NULL,		NULL,			0,	NULL }
+};
+#endif /* NACPI > 0 */
+
 struct db_command db_machine_command_table[] = {
 #ifdef MULTIPROCESSOR
 	{ "cpuinfo",	db_cpuinfo_cmd,		0,	0 },
@@ -377,6 +389,9 @@ struct db_command db_machine_command_table[] = {
 	{ "stopcpu",	db_stopproc_cmd,	0,	0 },
 	{ "ddbcpu",	db_ddbproc_cmd,		0,	0 },
 #endif
+#if NACPI > 0
+	{ "acpi",	NULL,			0,	db_acpi_cmds },
+#endif /* NACPI > 0 */
 	{ (char *)0, },
 };
 

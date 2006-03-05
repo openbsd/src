@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.31 2006/02/26 07:57:47 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.32 2006/03/05 14:46:46 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -21,6 +21,11 @@
 #include <sys/malloc.h>
 
 #include <machine/bus.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_command.h>
+#endif
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -110,7 +115,6 @@ struct acpi_context *acpi_alloccontext(struct acpi_softc *sc,
 				       int argc, 
 				       struct aml_value *argv);
 
-void aml_walkroot(void);
 struct aml_node *aml_find_name(struct acpi_softc *, struct aml_node *, const char *);
 
 int64_t aml_str2int(const char *, int, int);
@@ -2892,7 +2896,7 @@ aml_walktree(struct aml_node *node)
 }
 
 void
-aml_walkroot()
+aml_walkroot(void)
 {
 	aml_walktree(aml_root.child);
 }
