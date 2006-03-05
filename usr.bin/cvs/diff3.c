@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.14 2006/02/26 10:07:50 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.15 2006/03/05 16:34:31 niallo Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.14 2006/02/26 10:07:50 xsa Exp $";
+    "$OpenBSD: diff3.c,v 1.15 2006/03/05 16:34:31 niallo Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -320,17 +320,17 @@ ed_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 		if (op == 'a') {
 			if ((start > dlines->l_nblines) ||
 			    (start < 0) || (*ep != 'a'))
-				return (-1);
+				fatal("ed_patch_lines");
 		} else if (op == 'c') {
 			if ((start > dlines->l_nblines) ||
 			    (start < 0) || ((*ep != ',') && (*ep != 'c')))
-				return (-1);
+				fatal("ed_patch_lines");
 
 			if (*ep == ',') {
 				ep++;
 				end = (int)strtol(ep, &ep, 10);
 				if ((end < 0) || (*ep != 'c'))
-					return (-1);
+					fatal("ed_patch_lines");
 			} else {
 				end = start;
 			}
@@ -353,7 +353,7 @@ ed_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 		}
 
 		if (dlp == NULL)
-			return (-1);
+			fatal("ed_patch_lines");
 
 
 		if (op == 'c') {
@@ -370,7 +370,7 @@ ed_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 				ndlp = lp;
 				lp = TAILQ_NEXT(lp, l_list);
 				if (lp == NULL)
-					return (-1);
+					fatal("ed_patch_lines");
 
 				if (!strcmp(lp->l_line, "."))
 					break;
