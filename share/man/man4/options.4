@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.173 2005/12/06 20:18:57 pedro Exp $
+.\"	$OpenBSD: options.4,v 1.174 2006/03/05 09:19:59 jmc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -667,6 +667,16 @@ See
 for details.
 .It Cd option MULTIPROCESSOR
 On those architectures that have it, this enables multiprocessor support.
+.It Cd option USER_LDT
+Enable per-process Local Descriptor Table (LDT) entries;
+see
+.Xr i386_set_ldt 2
+and the
+.Va machdep.userldt
+.Xr sysctl 8 .
+This option is supported on the
+.Va i386
+architecture.
 .El
 .Ss Networking Options
 .Bl -ohang
