@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.7 2006/03/04 18:24:34 marco Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.8 2006/03/05 04:48:55 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -117,7 +117,8 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 
 	acpicpu_getpct(sc);
 
-	/* aml_register_notify(sc->sc_devnode->parent, aa->aaa_dev, acpicpu_notify, sc); */
+	aml_register_notify(sc->sc_devnode->parent, NULL, 
+	    acpicpu_notify, sc);
 }
 
 int
@@ -224,6 +225,9 @@ acpicpu_getpss(struct acpicpu_softc *sc)
 	if (!sc->sc_pss)
 		sc->sc_pss = malloc(res.length * sizeof *sc->sc_pss, M_DEVBUF,
 		    M_WAITOK);
+	else
+		free(sc->sc_pss, M_DEVBUF);
+
 	memset(sc->sc_pss, 0, res.length * sizeof *sc->sc_pss);
 
 	for (i = 0; i < res.length; i++) {
@@ -254,8 +258,17 @@ acpicpu_notify(struct aml_node *node, int notify_type, void *arg)
 	dnprintf(10, "acpicpu_notify: %.2x %s\n", notify_type,
 	    sc->sc_devnode->parent->name);
 
-	printf("acpicpu_notify: %.2x %s\n", notify_type,
-	    sc->sc_devnode->parent->name);
+	switch (notify_type) {
+	case 0x80:	/* _PPC changed, retrieve new values */
+		acpicpu_getpct(sc);
+		acpicpu_getpss(sc);
+		break;
+	default:
+		printf("%s: unhandled cpu event %x\n", DEVNAME(sc),
+		    notify_type);
+		break;
+	}
+
 
 	return (0);
 }
