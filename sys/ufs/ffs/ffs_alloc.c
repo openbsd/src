@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.59 2005/12/28 20:48:17 pedro Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.60 2006/03/05 10:35:51 pedro Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -1056,12 +1056,6 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 
 /*
  * Allocate a block in a cylinder group.
- *
- * This algorithm implements the following policy:
- *   1) allocate the requested block.
- *   2) allocate a rotationally optimal block in the same cylinder.
- *   3) allocate the next available block on the block rotor for the
- *      specified cylinder group.
  * Note that this routine only allocates fs_bsize blocks; these
  * blocks may be fragmented by the routine that allocates them.
  */
@@ -1071,105 +1065,55 @@ ffs_alloccgblk(struct inode *ip, struct buf *bp, daddr_t bpref)
 	struct fs *fs;
 	struct cg *cgp;
 	daddr_t bno, blkno;
-	int cylno, pos, delta;
-	short *cylbp;
-	int i;
+	u_int8_t *blksfree;
+	int cylno;
 
 	fs = ip->i_fs;
-	cgp = (struct cg *)bp->b_data;
-	if (bpref == 0 || dtog(fs, bpref) != cgp->cg_cgx) {
+	cgp = (struct cg *) bp->b_data;
+	blksfree = cg_blksfree(cgp);
+
+	if (bpref == 0 || dtog(fs, bpref) != cgp->cg_cgx)
 		bpref = cgp->cg_rotor;
-		goto norot;
-	}
-	bpref = blknum(fs, bpref);
-	bpref = dtogd(fs, bpref);
-	/*
-	 * if the requested block is available, use it
-	 */
-	if (ffs_isblock(fs, cg_blksfree(cgp), fragstoblks(fs, bpref))) {
-		bno = bpref;
-		goto gotit;
-	}
-	if (fs->fs_cpc == 0 || fs->fs_nrpos <= 1) {
+	else {
+		bpref = blknum(fs, bpref);
+		bno = dtogd(fs, bpref);
 		/*
-		 * Block layout information is not available.
-		 * Leaving bpref unchanged means we take the
-		 * next available free block following the one
-		 * we just allocated. Hopefully this will at
-		 * least hit a track cache on drives of unknown
-		 * geometry (e.g. SCSI).
+		 * If the requested block is available, use it.
 		 */
-		goto norot;
+		if (ffs_isblock(fs, blksfree, fragstoblks(fs, bno)))
+			goto gotit;
 	}
+
 	/*
-	 * check for a block available on the same cylinder
+	 * Take the next available block in this cylinder group.
 	 */
-	cylno = cbtocylno(fs, bpref);
-	if (cg_blktot(cgp)[cylno] == 0)
-		goto norot;
-	/*
-	 * check the summary information to see if a block is
-	 * available in the requested cylinder starting at the
-	 * requested rotational position and proceeding around.
-	 */
-	cylbp = cg_blks(fs, cgp, cylno);
-	pos = cbtorpos(fs, bpref);
-	for (i = pos; i < fs->fs_nrpos; i++)
-		if (cylbp[i] > 0)
-			break;
-	if (i == fs->fs_nrpos)
-		for (i = 0; i < pos; i++)
-			if (cylbp[i] > 0)
-				break;
-	if (cylbp[i] > 0) {
-		/*
-		 * found a rotational position, now find the actual
-		 * block. A panic if none is actually there.
-		 */
-		pos = cylno % fs->fs_cpc;
-		bno = (cylno - pos) * fs->fs_spc / NSPB(fs);
-		if (fs_postbl(fs, pos)[i] == -1) {
-			printf("pos = %d, i = %d, fs = %s\n",
-			    pos, i, fs->fs_fsmnt);
-			panic("ffs_alloccgblk: cyl groups corrupted");
-		}
-		for (i = fs_postbl(fs, pos)[i];; ) {
-			if (ffs_isblock(fs, cg_blksfree(cgp), bno + i)) {
-				bno = blkstofrags(fs, (bno + i));
-				goto gotit;
-			}
-			delta = fs_rotbl(fs)[i];
-			if (delta <= 0 ||
-			    delta + i > fragstoblks(fs, fs->fs_fpg))
-				break;
-			i += delta;
-		}
-		printf("pos = %d, i = %d, fs = %s\n", pos, i, fs->fs_fsmnt);
-		panic("ffs_alloccgblk: can't find blk in cyl");
-	}
-norot:
-	/*
-	 * no blocks in the requested cylinder, so take next
-	 * available one in this cylinder group.
-	 */
-	bno = ffs_mapsearch(fs, cgp, bpref, (int)fs->fs_frag);
+	bno = ffs_mapsearch(fs, cgp, bpref, (int) fs->fs_frag);
 	if (bno < 0)
 		return (0);
+
 	cgp->cg_rotor = bno;
+
 gotit:
 	blkno = fragstoblks(fs, bno);
-	ffs_clrblock(fs, cg_blksfree(cgp), (long)blkno);
+	ffs_clrblock(fs, blksfree, (long) blkno);
 	ffs_clusteracct(fs, cgp, blkno, -1);
 	cgp->cg_cs.cs_nbfree--;
 	fs->fs_cstotal.cs_nbfree--;
 	fs->fs_cs(fs, cgp->cg_cgx).cs_nbfree--;
-	cylno = cbtocylno(fs, bno);
-	cg_blks(fs, cgp, cylno)[cbtorpos(fs, bno)]--;
-	cg_blktot(cgp)[cylno]--;
+
+	if ((fs->fs_magic == FS_UFS1_MAGIC) /* && */
+	/*  ((fs->fs_flags & FS_FLAGS_UPDATED) == 0)*/) {
+		cylno = cbtocylno(fs, bno);
+		cg_blks(fs, cgp, cylno)[cbtorpos(fs, bno)]--;
+		cg_blktot(cgp)[cylno]--;
+	}
+
 	fs->fs_fmod = 1;
 	blkno = cgp->cg_cgx * fs->fs_fpg + bno;
+
 	if (DOINGSOFTDEP(ITOV(ip)))
 		softdep_setup_blkmapdep(bp, fs, blkno);
+
 	return (blkno);
 }
 
