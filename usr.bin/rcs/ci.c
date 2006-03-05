@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.103 2006/03/05 15:47:17 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.104 2006/03/05 17:17:27 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -460,6 +460,34 @@ checkin_update(struct checkin_params *pb)
 		return (-1);
 	}
 
+	/*
+	 * Set the date of the revision to be the last modification
+	 * time of the working file if -d has no argument.
+	 */
+	if (pb->date == DATE_MTIME
+	    && (checkin_mtimedate(pb) < 0))
+		return (-1);
+
+	/* Date from argv/mtime must be more recent than HEAD */
+	if (pb->date != DATE_NOW) {
+		time_t head_date = rcs_rev_getdate(pb->file, pb->frev);
+		if (pb->date <= head_date) {
+			char *head_date_str, *tdate;
+			head_date_str = xstrdup(ctime(&head_date));
+			head_date_str[strlen(head_date_str) - 1] = '\0';
+			tdate = xstrdup(ctime(&pb->date));
+			tdate[strlen(tdate) - 1] = '\0';
+			cvs_log(LP_ERR,
+			    "%s: Date %s preceeds %s in revision %s",
+			    pb->file->rf_path, tdate, head_date_str,
+			    rcsnum_tostr(pb->frev, numb2, sizeof(numb2)));
+			rcs_close(pb->file);
+			xfree(head_date_str);
+			xfree(tdate);
+			return (-1);
+		}
+	}
+
 	/* Load file contents */
 	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
 		cvs_log(LP_ERR, "failed to load '%s'", pb->filename);
@@ -501,14 +529,6 @@ checkin_update(struct checkin_params *pb)
 	/* Current head revision gets the RCS patch as rd_text */
 	if (rcs_deltatext_set(pb->file, pb->frev, pb->deltatext) == -1)
 		fatal("failed to set new rd_text for head rev");
-
-	/*
-	 * Set the date of the revision to be the last modification
-	 * time of the working file if -d has no argument.
-	 */
-	if (pb->date == DATE_MTIME
-	    && (checkin_mtimedate(pb) < 0))
-		return (-1);
 
 	/* Now add our new revision */
 	if (rcs_rev_add(pb->file,
