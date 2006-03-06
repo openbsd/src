@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.14 2006/03/06 08:46:55 xsa Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.15 2006/03/06 13:22:59 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -35,7 +35,7 @@ int
 rcsmerge_main(int argc, char **argv)
 {
 	int i, ch;
-	char *fcont, fpath[MAXPATHLEN];
+	char *fcont, fpath[MAXPATHLEN], r1[16], r2[16];
 	RCSFILE *file;
 	RCSNUM *baserev, *rev2, *frev;
 	BUF *bp;
@@ -120,6 +120,12 @@ rcsmerge_main(int argc, char **argv)
 			rcs_close(file);
 			continue;
 		}
+
+		rcsnum_tostr(baserev, r1, sizeof(r1));
+		rcsnum_tostr(frev, r2, sizeof(r2));
+
+		printf("Merging differences between %s and %s into %s%s\n",
+		    r1, r2, argv[i], (pipeout == 1) ? "; result to stdout":"");
 
 		if ((bp = cvs_diff3(file, argv[i], baserev, frev)) == NULL) {
 			cvs_log(LP_ERR, "failed to merge");

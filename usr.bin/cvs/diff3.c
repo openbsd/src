@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.16 2006/03/06 08:46:55 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.17 2006/03/06 13:22:59 xsa Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.16 2006/03/06 08:46:55 xsa Exp $";
+    "$OpenBSD: diff3.c,v 1.17 2006/03/06 13:22:59 xsa Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -233,9 +233,6 @@ cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)
 	patch = cvs_buf_release(diffb);
 	data = cvs_buf_release(b1);
 	diffb = b1 = NULL;
-
-	cvs_printf("Merging differences between %s and %s into %s\n",
-	    r1, r2, workfile);
 
 	if ((diffb = cvs_patchfile(data, patch, ed_patch_lines)) == NULL)
 		goto out;
