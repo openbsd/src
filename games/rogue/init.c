@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.9 2004/01/21 19:12:13 espie Exp $	*/
+/*	$OpenBSD: init.c,v 1.10 2006/03/06 04:41:18 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/04/28 23:49:19 mycroft Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: init.c,v 1.9 2004/01/21 19:12:13 espie Exp $";
+static const char rcsid[] = "$OpenBSD: init.c,v 1.10 2006/03/06 04:41:18 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -250,7 +250,7 @@ do_args(argc, argv)
 	int argc;
 	char *argv[];
 {
-	short i, j;
+	int i, j;
 
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] == '-') {
