@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.66 2006/03/06 13:29:28 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.67 2006/03/06 13:34:03 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -362,11 +362,11 @@ rtredirect(struct sockaddr *dst, struct sockaddr *gateway,
     struct sockaddr *netmask, int flags, struct sockaddr *src,
     struct rtentry **rtp)
 {
-	struct rt_addrinfo	 info;
 	struct rtentry		*rt;
-	struct ifaddr		*ifa;
-	u_int32_t		*stat = NULL;
 	int			 error = 0;
+	u_int32_t		*stat = NULL;
+	struct rt_addrinfo	 info;
+	struct ifaddr		*ifa;
 
 	splassert(IPL_SOFTNET);
 
@@ -625,8 +625,10 @@ rt_getifa(struct rt_addrinfo *info)
 	if (info->rti_ifa == NULL) {
 		struct sockaddr	*sa;
 
-		sa = ifaaddr != NULL ? ifaaddr :
-		    (gateway != NULL ? gateway : dst);
+		if ((sa = ifaaddr) == NULL)
+			if ((sa = gateway) == NULL)
+				sa = dst;
+
 		if (sa != NULL && info->rti_ifp != NULL)
 			info->rti_ifa = ifaof_ifpforaddr(sa, info->rti_ifp);
 		else if (dst != NULL && gateway != NULL)
