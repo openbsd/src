@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.18 2006/02/26 17:59:07 jmc Exp $	*/
+/*	$OpenBSD: apm.c,v 1.19 2006/03/06 15:21:05 mickey Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -128,7 +128,7 @@ open_socket(const char *sockname)
 		errr = errno;
 		close(sock);
 		errno = errr;
-		err(1, "cannot open connection to APM daemon");
+		sock = -1;
 	}
 	return (sock);
 }
