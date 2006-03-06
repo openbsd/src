@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rlog.1,v 1.12 2006/03/06 09:41:53 deraadt Exp $
+.\"	$OpenBSD: rlog.1,v 1.13 2006/03/06 14:47:20 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl bhLNqRTtV
+.Op Fl bhLNqRtV
 .Op Fl d Ns Ar dates
 .Op Fl l Ns Op Ar lockers
 .Op Fl r Ns Op Ar revs
@@ -127,9 +127,6 @@ Print information about revisions whose state matches one of the
 specified
 .Ar states .
 Multiple states may be specified as a comma-separated list.
-.It Fl T
-No effect.
-For compatibility.
 .It Fl t
 Print header and description only.
 .It Fl V
@@ -174,3 +171,8 @@ Print the names of RCS files with locks set:
 .Xr rcsclean 1 ,
 .Xr rcsdiff 1 ,
 .Xr rcsmerge 1
+.Sh STANDARDS
+The flag
+.Op Fl T
+has no effect and is provided
+for compatibility only.
