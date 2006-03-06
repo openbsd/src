@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.106 2006/03/05 17:35:24 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.107 2006/03/06 09:41:53 deraadt Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -29,32 +29,27 @@
 #include "rcsprog.h"
 #include "diff.h"
 
-#define CI_OPTSTRING    "d::f::i::j::k::l::m:M::N:n:qr::s:Tt:u::Vw:x:"
-#define DATE_NOW        -1
-#define DATE_MTIME      -2
+#define CI_OPTSTRING	"d::f::i::j::k::l::m:M::N:n:qr::s:Tt:u::Vw:x:"
+#define DATE_NOW	-1
+#define DATE_MTIME	-2
 
-#define KW_ID           "Id"
-#define KW_AUTHOR       "Author"
-#define KW_DATE         "Date"
-#define KW_STATE        "State"
-#define KW_REVISION     "Revision"
-#define KW_TYPE_ID       1
-#define KW_TYPE_AUTHOR   2
-#define KW_TYPE_DATE     3
-#define KW_TYPE_STATE    4
-#define KW_TYPE_REVISION 5
-#define KW_NUMTOKS_ID      10
-#define KW_NUMTOKS_AUTHOR   3
-#define KW_NUMTOKS_DATE     4
-#define KW_NUMTOKS_STATE    3
-#define KW_NUMTOKS_REVISION 3
+#define KW_ID		"Id"
+#define KW_AUTHOR	"Author"
+#define KW_DATE		"Date"
+#define KW_STATE	"State"
+#define KW_REVISION	"Revision"
 
-#define LOG_INIT        "Initial revision"
-#define LOG_PROMPT      "enter log message, terminated with a single '.' "    \
-                        "or end of file:\n>> "
-#define DESC_PROMPT     "enter description, terminated with single '.' "      \
-	                "or end of file:\nNOTE: This is NOT the log message!" \
-                        "\n>> "
+#define KW_TYPE_ID		1
+#define KW_TYPE_AUTHOR		2
+#define KW_TYPE_DATE		3
+#define KW_TYPE_STATE		4
+#define KW_TYPE_REVISION	5
+
+#define KW_NUMTOKS_ID		10
+#define KW_NUMTOKS_AUTHOR	3
+#define KW_NUMTOKS_DATE		4
+#define KW_NUMTOKS_STATE	3
+#define KW_NUMTOKS_REVISION	3
 
 extern struct rcs_kw rcs_expkw[];
 
@@ -77,11 +72,11 @@ static char	*checkin_getdesc(void);
 static char	*checkin_getinput(const char *);
 static char	*checkin_getlogmsg(RCSNUM *, RCSNUM *);
 static int	 checkin_init(struct checkin_params *);
-static int       checkin_keywordscan(char *, RCSNUM **, time_t *, char **,
+static int	 checkin_keywordscan(char *, RCSNUM **, time_t *, char **,
     char **);
-static int       checkin_keywordtype(char *);
+static int	 checkin_keywordtype(char *);
 static int	 checkin_mtimedate(struct checkin_params *);
-static void      checkin_parsekeyword(char *, RCSNUM **, time_t *, char **,
+static void	 checkin_parsekeyword(char *, RCSNUM **, time_t *, char **,
     char **);
 static int	 checkin_update(struct checkin_params *);
 static void	 checkin_revert(struct checkin_params *);
@@ -91,9 +86,9 @@ checkin_usage(void)
 {
 	fprintf(stderr,
 	    "usage: ci [-MNqTV] [-d[date]] [-f[rev]] [-i[rev]] [-j[rev]]\n"
-	    "          [-k[rev]] [-l[rev]] [-M[rev]] [-mmsg] [-Nsymbol]\n"
-	    "          [-nsymbol] [-r[rev]] [-sstate] [-tfile|str] [-u[rev]]\n"
-	    "          [-wusername] [-xsuffixes] file ...\n");
+	    "	  [-k[rev]] [-l[rev]] [-M[rev]] [-mmsg] [-Nsymbol]\n"
+	    "	  [-nsymbol] [-r[rev]] [-sstate] [-tfile|str] [-u[rev]]\n"
+	    "	  [-wusername] [-xsuffixes] file ...\n");
 }
 
 
@@ -268,7 +263,7 @@ checkin_main(int argc, char **argv)
 
 		if (verbose == 1)
 			printf("%s  <--  %s\n", pb.fpath, pb.filename);
-		
+
 		if (pb.flags & NEWFILE)
 			status = checkin_init(&pb);
 		else
@@ -370,7 +365,8 @@ checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2)
 		printf("new revision: %s; previous revision: %s\n", nrev,
 		    prev);
 
-	rcs_msg = checkin_getinput(LOG_PROMPT);
+	rcs_msg = checkin_getinput("enter log message, terminated with a "
+	    "single '.' or end of file:\n>> ");
 	return (rcs_msg);
 }
 
@@ -386,7 +382,9 @@ checkin_getdesc()
 {
 	char *description;
 
-	description = checkin_getinput(DESC_PROMPT);
+	description = checkin_getinput("enter description, terminated with "
+	    "single '.' or end of file:\n"
+	    "NOTE: This is NOT the log message!\n>> ");
 	return (description);
 }
 
@@ -553,7 +551,7 @@ checkin_update(struct checkin_params *pb)
 		pb->newrev = pb->file->rf_head;
 
 	/* New head revision has to contain entire file; */
-        if (rcs_deltatext_set(pb->file, pb->frev, filec) == -1)
+	if (rcs_deltatext_set(pb->file, pb->frev, filec) == -1)
 		fatal("failed to set new head revision");
 
 	/* Attach a symbolic name to this revision if specified. */
@@ -655,7 +653,7 @@ checkin_init(struct checkin_params *pb)
 	/* Now add our new revision */
 	if (rcs_rev_add(pb->file,
 	    (pb->newrev == NULL ? RCS_HEAD_REV : pb->newrev),
-	    (pb->rcs_msg == NULL ? LOG_INIT : pb->rcs_msg),
+	    (pb->rcs_msg == NULL ? "Initial revision" : pb->rcs_msg),
 	    pb->date, pb->author) != 0) {
 		cvs_log(LP_ERR, "failed to add new revision");
 		rcs_close(pb->file);
@@ -902,21 +900,21 @@ checkin_keywordscan(char *data, RCSNUM **rev, time_t *date, char **author,
 				continue;
 			}
 			/* look for any matching keywords */
-                        found = 0;
-                        for (j = 0; j < 10; j++) {
-                                if (!strncmp(c, rcs_expkw[j].kw_str,
-                                    strlen(rcs_expkw[j].kw_str))) {
-                                        found = 1;
-                                        kwstr = rcs_expkw[j].kw_str;
-                                        break;
-                                }
-                        }
+			found = 0;
+			for (j = 0; j < 10; j++) {
+				if (!strncmp(c, rcs_expkw[j].kw_str,
+				    strlen(rcs_expkw[j].kw_str))) {
+					found = 1;
+					kwstr = rcs_expkw[j].kw_str;
+					break;
+				}
+			}
 
-                        /* unknown keyword, continue looking */
-                        if (found == 0) {
-                                c = start;
-                                continue;
-                        }
+			/* unknown keyword, continue looking */
+			if (found == 0) {
+				c = start;
+				continue;
+			}
 
 			c += strlen(kwstr);
 			if (*c != ':' && *c != '$') {
@@ -933,7 +931,7 @@ checkin_keywordscan(char *data, RCSNUM **rev, time_t *date, char **author,
 							    " too small!");
 						strlcpy(buf, start, end);
 						checkin_parsekeyword(buf, rev,
-						    date, author, state); 
+						    date, author, state);
 						break;
 					}
 				}
@@ -958,12 +956,12 @@ checkin_keywordscan(char *data, RCSNUM **rev, time_t *date, char **author,
  * This enables us to know what data should be in it.
  *
  * Returns type on success, or -1 on failure.
- */ 
+ */
 static int
 checkin_keywordtype(char *keystring)
 {
 	char *p;
-	
+
 	p = keystring;
 	*p++;
 	if (strncmp(p, KW_ID, strlen(KW_ID)) == 0)
@@ -994,14 +992,15 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 	char *tokens[10], *p, *datestring;
 	size_t len = 0;
 	int i = 0;
-        /* Parse data out of the expanded keyword */
+
+	/* Parse data out of the expanded keyword */
 	switch (checkin_keywordtype(keystring)) {
 	case KW_TYPE_ID:
 		for ((p = strtok(keystring, " ")); p;
-		     (p = strtok(NULL, " "))) {
+		    (p = strtok(NULL, " "))) {
 			if (i < KW_NUMTOKS_ID - 1)
 				tokens[i++] = p;
-	        }
+		}
 		tokens[i] = NULL;
 		if (*author != NULL)
 			xfree(*author);
@@ -1029,10 +1028,10 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		break;
 	case KW_TYPE_AUTHOR:
 		for ((p = strtok(keystring, " ")); p;
-		     (p = strtok(NULL, " "))) {
+		    (p = strtok(NULL, " "))) {
 			if (i < KW_NUMTOKS_AUTHOR - 1)
 				tokens[i++] = p;
-	        }
+		}
 		if (*author != NULL)
 			xfree(*author);
 		len = strlen(tokens[1]) + 1;
@@ -1041,7 +1040,7 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		break;
 	case KW_TYPE_DATE:
 		for ((p = strtok(keystring, " ")); p;
-		     (p = strtok(NULL, " "))) {
+		    (p = strtok(NULL, " "))) {
 			if (i < KW_NUMTOKS_DATE - 1)
 				tokens[i++] = p;
 		}
@@ -1056,10 +1055,10 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		break;
 	case KW_TYPE_STATE:
 		for ((p = strtok(keystring, " ")); p;
-		     (p = strtok(NULL, " "))) {
+		    (p = strtok(NULL, " "))) {
 			if (i < KW_NUMTOKS_STATE - 1)
 				tokens[i++] = p;
-	        }
+		}
 		if (*state != NULL)
 			xfree(*state);
 		len = strlen(tokens[1]) + 1;
@@ -1071,10 +1070,10 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		if (*rev != NULL)
 			break;
 		for ((p = strtok(keystring, " ")); p;
-		     (p = strtok(NULL, " "))) {
+		    (p = strtok(NULL, " "))) {
 			if (i < KW_NUMTOKS_REVISION - 1)
 				tokens[i++] = p;
-	        }
+		}
 		if ((*rev = rcsnum_parse(tokens[1])) == NULL)
 			fatal("could not parse rcsnum");
 		break;
