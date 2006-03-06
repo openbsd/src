@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcsmerge.1,v 1.4 2006/03/06 09:41:53 deraadt Exp $
+.\"	$OpenBSD: rcsmerge.1,v 1.5 2006/03/06 14:44:51 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl AEeTV
+.Op Fl AEeV
 .Op Fl k Ns Ar mode
 .Op Fl p Ns Op Ar rev
 .Op Fl q Ns Op Ar rev
@@ -62,9 +62,6 @@ Be quiet about reporting.
 .It Fl r Ns Ar rev
 Merge with respect to revision
 .Ar rev .
-.It Fl T
-No effect.
-For compatibility.
 .It Fl V
 Print RCS's version number.
 .It Fl x Ns Ar suffixes
@@ -101,3 +98,8 @@ overwriting the working copy:
 .Xr rcsclean 1 ,
 .Xr rcsdiff 1 ,
 .Xr rlog 1
+.Sh STANDARDS
+The flag
+.Op Fl T
+has no effect and is provided
+for compatibility only.
