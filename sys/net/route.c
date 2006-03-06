@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.65 2006/03/06 13:24:09 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.66 2006/03/06 13:29:28 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -157,13 +157,11 @@ struct rt_label {
 TAILQ_HEAD(rt_labels, rt_label)	rt_labels = TAILQ_HEAD_INITIALIZER(rt_labels);
 
 #ifdef IPSEC
-
 struct ifaddr *
 encap_findgwifa(struct sockaddr *gw)
 {
 	return (TAILQ_FIRST(&encif.if_addrlist));
 }
-
 #endif
 
 void
@@ -233,7 +231,8 @@ rtalloc2(struct sockaddr *dst, int report, int howstrict)
 			rt->rt_refcnt++;
 	} else {
 		rtstat.rts_unreach++;
-miss:		if (report) {
+miss:
+		if (report) {
 			bzero((caddr_t)&info, sizeof(info));
 			info.rti_info[RTAX_DST] = dst;
 			rt_missmsg(msgtype, &info, 0, err);
@@ -300,7 +299,8 @@ rtalloc1(struct sockaddr *dst, int report)
 	 * the RTM_MISSes that would be generated.  It causes RTM_MISS storms
 	 * sent upward breaking user-level routing queries.
 	 */
-	miss:	if (report && dst->sa_family != PF_KEY) {
+miss:
+		if (report && dst->sa_family != PF_KEY) {
 			bzero((caddr_t)&info, sizeof(info));
 			info.rti_info[RTAX_DST] = dst;
 			rt_missmsg(msgtype, &info, 0, err);
@@ -317,7 +317,9 @@ rtfree(struct rtentry *rt)
 
 	if (rt == NULL)
 		panic("rtfree");
+
 	rt->rt_refcnt--;
+
 	if (rt->rt_refcnt <= 0 && (rt->rt_flags & RTF_UP) == 0) {
 		if (rt->rt_nodes->rn_flags & (RNF_ACTIVE | RNF_ROOT))
 			panic("rtfree 2");
@@ -360,11 +362,11 @@ rtredirect(struct sockaddr *dst, struct sockaddr *gateway,
     struct sockaddr *netmask, int flags, struct sockaddr *src,
     struct rtentry **rtp)
 {
-	struct rtentry		*rt;
-	int			 error = 0;
-	u_int32_t		*stat = NULL;
 	struct rt_addrinfo	 info;
+	struct rtentry		*rt;
 	struct ifaddr		*ifa;
+	u_int32_t		*stat = NULL;
+	int			 error = 0;
 
 	splassert(IPL_SOFTNET);
 
@@ -511,9 +513,6 @@ rtflushclone(struct radix_node_head *rnh, struct rtentry *parent)
 	rnh->rnh_walktree(rnh, rtflushclone1, (void *)parent);
 }
 
-/*
-* Routing table ioctl interface.
-*/
 int
 rtioctl(u_long req, caddr_t data, struct proc *p)
 {
@@ -723,7 +722,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		if (info->rti_ifa == 0 && (error = rt_getifa(info)))
 			senderr(error);
 		ifa = info->rti_ifa;
-	makeroute:
+makeroute:
 		rt = pool_get(&rtentry_pool, PR_NOWAIT);
 		if (rt == NULL)
 			senderr(ENOBUFS);
@@ -890,8 +889,7 @@ int
 rtinit(struct ifaddr *ifa, int cmd, int flags)
 {
 	struct rtentry		*rt;
-	struct sockaddr		*dst;
-	struct sockaddr		*deldst;
+	struct sockaddr		*dst, *deldst;
 	struct mbuf		*m = NULL;
 	struct rtentry		*nrt = NULL;
 	int			 error;
@@ -1026,7 +1024,6 @@ rt_timer_queue_create(u_int timeout)
 void
 rt_timer_queue_change(struct rttimer_queue *rtq, long timeout)
 {
-
 	rtq->rtq_timeout = timeout;
 }
 
@@ -1057,7 +1054,6 @@ rt_timer_queue_destroy(struct rttimer_queue *rtq, int destroy)
 unsigned long
 rt_timer_count(struct rttimer_queue *rtq)
 {
-
 	return (rtq->rtq_count);
 }
 
@@ -1079,7 +1075,7 @@ rt_timer_remove_all(struct rtentry *rt)
 
 int
 rt_timer_add(struct rtentry *rt, void (*func)(struct rtentry *,
-	     struct rttimer *), struct rttimer_queue *queue)
+    struct rttimer *), struct rttimer_queue *queue)
 {
 	struct rttimer	*r;
 	long		 current_time;
