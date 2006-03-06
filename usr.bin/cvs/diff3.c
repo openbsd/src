@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.15 2006/03/05 16:34:31 niallo Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.16 2006/03/06 08:46:55 xsa Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.15 2006/03/05 16:34:31 niallo Exp $";
+    "$OpenBSD: diff3.c,v 1.16 2006/03/06 08:46:55 xsa Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -241,8 +241,8 @@ cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)
 		goto out;
 
 	if (diff3_conflicts != 0) {
-		cvs_printf("%d conflict%s found during merge, "
-		    "please correct.\n", diff3_conflicts,
+		cvs_log(LP_WARN, "%d conflict%s found during merge, "
+		    "please correct.", diff3_conflicts,
 		    (diff3_conflicts > 1) ? "s" : "");
 	}
 

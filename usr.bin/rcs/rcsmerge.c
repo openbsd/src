@@ -1,6 +1,6 @@
-/*	$OpenBSD: rcsmerge.c,v 1.13 2006/01/05 10:28:24 xsa Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.14 2006/03/06 08:46:55 xsa Exp $	*/
 /*
- * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
+ * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,8 +42,10 @@ rcsmerge_main(int argc, char **argv)
 
 	baserev = rev2 = RCS_HEAD_REV;
 
-	while ((ch = rcs_getopt(argc, argv, "k:p::q::r:TVx:")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "AEek:p::q::r:TVx:")) != -1) {
 		switch (ch) {
+		case 'A': case 'E': case 'e':
+			break;
 		case 'k':
 			kflag = rcs_kflag_get(rcs_optarg);
 			if (RCS_KWEXP_INVAL(kflag)) {
@@ -67,7 +69,7 @@ rcsmerge_main(int argc, char **argv)
 			else if (rev2 == RCS_HEAD_REV)
 				rcs_set_rev(rcs_optarg, &rev2);
 			else
-				cvs_log(LP_WARN, "ignored excessive -r option");
+				fatal("too many revision numbers");
 			break;
 		case 'T':
 			/*
@@ -107,12 +109,17 @@ rcsmerge_main(int argc, char **argv)
 		if ((file = rcs_open(fpath, RCS_READ)) == NULL)
 			continue;
 
+		printf("RCS file: %s\n", fpath);
+
 		if (rev2 == RCS_HEAD_REV)
 			frev = file->rf_head;
 		else
 			frev = rev2;
 
-		printf("RCS file: %s\n", fpath);
+		if (rcsnum_cmp(baserev, frev, 0) == 0) {
+			rcs_close(file);
+			continue;
+		}
 
 		if ((bp = cvs_diff3(file, argv[i], baserev, frev)) == NULL) {
 			cvs_log(LP_ERR, "failed to merge");
@@ -136,12 +143,6 @@ rcsmerge_main(int argc, char **argv)
 
 			cvs_buf_free(bp);
 		}
-
-		if (diff3_conflicts > 0) {
-			cvs_log(LP_WARN, "%d conflict%s found during merge",
-			    diff3_conflicts, (diff3_conflicts > 1) ? "s": "");
-		}
-
 		rcs_close(file);
 	}
 
