@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.56 2006/03/06 13:47:34 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.57 2006/03/06 13:49:24 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -312,7 +312,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 
 		mode = 0644;
 		if ((verbose == 1) && !(flags & NEWFILE))
-			printf(" (locked)\n");
+			printf(" (locked)");
 	} else if (flags & CO_UNLOCK) {
 		if (rcs_lock_remove(file, lockname, frev) < 0) {
 			if (rcs_errno != RCS_ERR_NOENT)
@@ -321,7 +321,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 
 		mode = 0444;
 		if ((verbose == 1) && !(flags & NEWFILE))
-			printf(" (unlocked)\n");
+			printf(" (unlocked)");
 	}
 
 	if ((verbose == 1) && !(flags & NEWFILE))
