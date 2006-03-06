@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.6 2005/11/10 14:35:13 mickey Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.7 2006/03/06 19:10:06 kettenis Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -232,7 +232,7 @@ ioapic_set_id(struct ioapic_softc *sc) {
 	if (apic_id != sc->sc_apicid)
 		printf(", can't remap to apid %d\n", sc->sc_apicid);
 	else
-		printf(", remapped to apic %d\n", sc->sc_apicid);
+		printf(", remapped to apid %d\n", sc->sc_apicid);
 }
 
 /*
@@ -372,11 +372,7 @@ apic_set_redir(struct ioapic_softc *sc, int pin)
 
 	pp = &sc->sc_pins[pin];
 	map = pp->ip_map;
-	if (map == NULL) {
-		redlo = IOAPIC_REDLO_MASK;
-	} else {
-		redlo = map->redir;
-	}
+	redlo = (map == NULL) ? IOAPIC_REDLO_MASK : map->redir;
 	delmode = (redlo & IOAPIC_REDLO_DEL_MASK) >> IOAPIC_REDLO_DEL_SHIFT;
 
 	/* XXX magic numbers */

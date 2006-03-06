@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.6 2005/05/31 09:34:22 art Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.7 2006/03/06 19:10:06 kettenis Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.6 2003/05/15 13:30:31 fvdl Exp $	*/
 
 /*-
@@ -119,6 +119,8 @@ int ioapic_cold = 1;
 struct ioapic_softc *ioapics;	 /* head of linked list */
 int nioapics = 0;	   	 /* number attached */
 static int ioapic_vecbase;
+
+void ioapic_set_id(struct ioapic_softc *);
 
 static __inline u_long
 ioapic_lock(struct ioapic_softc *sc)
@@ -259,6 +261,24 @@ ioapic_match(struct device *parent, void *v, void *aux)
 	return 0;
 }
 
+/* Reprogram the APIC ID, and check that it actually got set. */
+void
+ioapic_set_id(struct ioapic_softc *sc) {
+	u_int8_t apic_id;
+
+	ioapic_write(sc, IOAPIC_ID,
+	    (ioapic_read(sc, IOAPIC_ID) & ~IOAPIC_ID_MASK) |
+	    (sc->sc_apicid << IOAPIC_ID_SHIFT));
+
+	apic_id = (ioapic_read(sc, IOAPIC_ID) & IOAPIC_ID_MASK) >>
+	    IOAPIC_ID_SHIFT;
+
+	if (apic_id != sc->sc_apicid)
+		printf(", can't remap to apid %d\n", sc->sc_apicid);
+	else
+		printf(", remapped to apid %d\n", sc->sc_apicid);
+}
+
 /*
  * can't use bus_space_xxx as we don't have a bus handle ...
  */
@@ -278,16 +298,16 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	printf(" apid %d", aaa->apic_id);
 
 	if (ioapic_find(aaa->apic_id) != NULL) {
-		printf(": duplicate apic id (ignored)\n");
+		printf(", duplicate apic id (ignored)\n");
 		return;
 	}
 
 	ioapic_add(sc);
-	
-	printf(": pa 0x%lx", sc->sc_pic.pic_dev.dv_xname, aaa->apic_address);
+
+	printf(" pa 0x%lx", aaa->apic_address);
 
 	if (x86_mem_add_mapping(aaa->apic_address, PAGE_SIZE, 0, &bh) != 0) {
-		printf(": map failed\n");
+		printf(", map failed\n");
 		return;
 	}
 	sc->sc_reg = (volatile u_int32_t *)(bh + IOAPIC_REG);
@@ -302,9 +322,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pic.pic_edge_stubs = ioapic_edge_stubs;
 	sc->sc_pic.pic_level_stubs = ioapic_level_stubs;
 
-	apic_id = (ioapic_read(sc,IOAPIC_ID)&IOAPIC_ID_MASK)>>IOAPIC_ID_SHIFT;
 	ver_sz = ioapic_read(sc, IOAPIC_VER);
-	
 	sc->sc_apic_vers = (ver_sz & IOAPIC_VER_MASK) >> IOAPIC_VER_SHIFT;
 	sc->sc_apic_sz = (ver_sz & IOAPIC_MAX_MASK) >> IOAPIC_MAX_SHIFT;
 	sc->sc_apic_sz++;
@@ -324,8 +342,11 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 		printf(", %s mode",
 		    aaa->flags & IOAPIC_PICMODE ? "PIC" : "virtual wire");
 	}
-	
+
 	printf(", version %x, %d pins\n", sc->sc_apic_vers, sc->sc_apic_sz);
+
+	apic_id = (ioapic_read(sc, IOAPIC_ID) & IOAPIC_ID_MASK) >>
+	    IOAPIC_ID_SHIFT;
 
 	sc->sc_pins = malloc(sizeof(struct ioapic_pin) * sc->sc_apic_sz,
 	    M_DEVBUF, M_WAITOK);
@@ -336,7 +357,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_pins[i].ip_vector = 0;
 		sc->sc_pins[i].ip_type = IST_NONE;
 	}
-	
+
 	/*
 	 * In case the APIC is not initialized to the correct ID
 	 * do it now.
@@ -344,24 +365,9 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	 * mapping later ...
 	 */
 	if (apic_id != sc->sc_apicid) {
-		printf("%s: misconfigured as apic %d\n",
+		printf("%s: misconfigured as apic %d",
 		    sc->sc_pic.pic_dev.dv_xname, apic_id);
-
-		ioapic_write(sc,IOAPIC_ID,
-		    (ioapic_read(sc,IOAPIC_ID)&~IOAPIC_ID_MASK)
-		    |(sc->sc_apicid<<IOAPIC_ID_SHIFT));
-		
-		apic_id = (ioapic_read(sc,IOAPIC_ID)&IOAPIC_ID_MASK)>>IOAPIC_ID_SHIFT;
-		
-		if (apic_id != sc->sc_apicid) {
-			printf("%s: can't remap to apid %d\n",
-			    sc->sc_pic.pic_dev.dv_xname,
-			    sc->sc_apicid);
-		} else {
-			printf("%s: remapped to apic %d\n",
-			    sc->sc_pic.pic_dev.dv_xname,
-			    sc->sc_apicid);
-		}
+		ioapic_set_id(sc);
 	}
 #if 0
 	/* output of this was boring. */
@@ -384,7 +390,7 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 	
 	pp = &sc->sc_pins[pin];
 	map = pp->ip_map;
-	redlo = map == NULL ? IOAPIC_REDLO_MASK : map->redir;
+	redlo = (map == NULL) ? IOAPIC_REDLO_MASK : map->redir;
 	delmode = (redlo & IOAPIC_REDLO_DEL_MASK) >> IOAPIC_REDLO_DEL_SHIFT;
 	
 	/* XXX magic numbers */
@@ -395,9 +401,9 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 	} else {
 		redlo |= (idt_vec & 0xff);
 		redlo &= ~IOAPIC_REDLO_DEL_MASK;
-		redlo |= (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
+		redlo |= (IOAPIC_REDLO_DEL_FIXED << IOAPIC_REDLO_DEL_SHIFT);
 		redlo &= ~IOAPIC_REDLO_DSTMOD;
-		
+
 		/*
 		 * Destination: BSP CPU
 		 *
@@ -421,8 +427,10 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 				redlo &= ~IOAPIC_REDLO_ACTLO;
 		}
 	}
-	ioapic_write(sc, IOAPIC_REDLO(pin), redlo);
+	/* Do atomic write */
+	ioapic_write(sc, IOAPIC_REDLO(pin), IOAPIC_REDLO_MASK);
 	ioapic_write(sc, IOAPIC_REDHI(pin), redhi);
+	ioapic_write(sc, IOAPIC_REDLO(pin), redlo);
 	if (mp_verbose)
 		ioapic_print_redir(sc, "int", pin);
 }
@@ -449,8 +457,11 @@ ioapic_enable(void)
 		outb(IMCR_ADDR, IMCR_REGISTER);
 		outb(IMCR_DATA, IMCR_APIC);
 	}
-			
+
 	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
+		if (mp_verbose)
+			printf("%s: enabling\n", sc->sc_pic.pic_dev.dv_xname);
+
 		for (p = 0; p < sc->sc_apic_sz; p++) {
 			ip = &sc->sc_pins[p];
 			if (ip->ip_type != IST_NONE)
@@ -502,6 +513,7 @@ ioapic_addroute(struct pic *pic, struct cpu_info *ci, int pin,
 	struct ioapic_pin *pp;
 
 	if (ioapic_cold) {
+		printf("ioapic_addroute: pin %d\n", pin);
 		pp = &sc->sc_pins[pin];
 		pp->ip_type = type;
 		pp->ip_vector = idtvec;
