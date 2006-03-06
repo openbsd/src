@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.57 2006/03/06 13:49:24 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.58 2006/03/06 14:03:33 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -175,6 +175,9 @@ checkout_main(int argc, char **argv)
 				rcs_close(file);
 				continue;
 		}
+
+		if (verbose == 1)
+			printf("done\n");
 
 		rcs_close(file);
 
