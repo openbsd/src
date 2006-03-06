@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.7 2006/03/06 19:10:06 kettenis Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.8 2006/03/06 20:51:46 kettenis Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.6 2003/05/15 13:30:31 fvdl Exp $	*/
 
 /*-
@@ -513,7 +513,6 @@ ioapic_addroute(struct pic *pic, struct cpu_info *ci, int pin,
 	struct ioapic_pin *pp;
 
 	if (ioapic_cold) {
-		printf("ioapic_addroute: pin %d\n", pin);
 		pp = &sc->sc_pins[pin];
 		pp->ip_type = type;
 		pp->ip_vector = idtvec;
