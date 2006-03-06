@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.36 2005/11/29 05:37:14 tedu Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.37 2006/03/06 14:27:29 mickey Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1864,16 +1864,13 @@ uvm_fault_unwire_locked(map, start, end)
 
 	for (va = start; va < end ; va += PAGE_SIZE) {
 		if (pmap_extract(pmap, va, &pa) == FALSE)
-			panic("uvm_fault_unwire_locked: unwiring "
-			    "non-wired memory");
+			continue;
 
 		/*
-		 * make sure the current entry is for the address we're
-		 * dealing with.  if not, grab the next entry.
+		 * find the map entry for the current address.
 		 */
-
 		KASSERT(va >= entry->start);
-		if (va >= entry->end) {
+		while (va >= entry->end) {
 			KASSERT(entry->next != &map->header &&
 				entry->next->start <= entry->end);
 			entry = entry->next;
