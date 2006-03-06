@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.3 2006/03/06 11:22:13 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.4 2006/03/06 12:00:28 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -265,41 +265,6 @@ sub may_exist
 {
 	my ($self, $name) = @_;
 	return is_installed($name);
-}
-
-package PackageRepository::Source;
-
-sub find
-{
-	my ($repository, $name, $arch, $srcpath) = @_;
-	my $dir;
-	my $make;
-	if (defined $ENV{'MAKE'}) {
-		$make = $ENV{'MAKE'};
-	} else {
-		$make = '/usr/bin/make';
-	}
-	if (defined $repository->{baseurl} && $repository->{baseurl} ne '') {
-		$dir = $repository->{baseurl}
-	} elsif (defined $ENV{PORTSDIR}) {
-		$dir = $ENV{PORTSDIR};
-	} else {
-		$dir = '/usr/ports';
-	}
-	# figure out the repository name and the pkgname
-	my $pkgfile = `cd $dir && SUBDIR=$srcpath ECHO_MSG=: $make show=PKGFILE`;
-	chomp $pkgfile;
-	if (! -f $pkgfile) {
-		system "cd $dir && SUBDIR=$srcpath $make package BULK=Yes";
-	}
-	if (! -f $pkgfile) {
-		return undef;
-	}
-	$pkgfile =~ m|(.*/)([^/]*)|;
-	my ($base, $fname) = ($1, $2);
-
-	my $repo = OpenBSD::PackageRepository::Local->_new($base);
-	return $repo->find($fname);
 }
 
 package OpenBSD::PackageRepository::Local;
