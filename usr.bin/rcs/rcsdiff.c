@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.32 2006/03/06 09:41:53 deraadt Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.33 2006/03/06 09:59:22 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -263,8 +263,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, const char *filename)
 	tv2[1].tv_sec = tv2[0].tv_sec;
 
 	if (verbose == 1)
-		fprintf(stderr,
-		    "%s -r%s -r%s %s\n", diffargs, rbuf1, rbuf2, filename);
+		fprintf(stderr, "%s -r%s -r%s\n", diffargs, rbuf1, rbuf2);
 
 	strlcpy(path1, rcs_tmpdir, sizeof(path1));
 	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));
