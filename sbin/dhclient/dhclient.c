@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.81 2005/10/26 15:42:04 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.82 2006/03/06 10:45:56 djm Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -363,10 +363,12 @@ main(int argc, char *argv[])
 	if (chdir("/") == -1)
 		error("chdir(\"/\")");
 
-	if (setgroups(1, &pw->pw_gid) ||
-	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
-	    seteuid(pw->pw_uid) || setuid(pw->pw_uid))
-		error("can't drop privileges: %m");
+	if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1)
+		error("setresgid");
+	if (setgroups(1, &pw->pw_gid) == -1)
+		error("setgroups");
+	if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
+		error("setresuid");
 
 	endpwent();
 

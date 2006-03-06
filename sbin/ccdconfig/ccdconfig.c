@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.26 2005/11/12 20:15:13 deraadt Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.27 2006/03/06 10:45:56 djm Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -115,6 +115,7 @@ int
 main(int argc, char *argv[])
 {
 	int ch, options = 0, action = CCD_CONFIG;
+	gid_t gid;
 
 	while ((ch = getopt(argc, argv, "cCf:gM:N:uUv")) != -1) {
 		switch (ch) {
@@ -172,10 +173,10 @@ main(int argc, char *argv[])
 	 * Discard setgid privileges if not the running kernel so that bad
 	 * guys can't print interesting stuff from kernel memory.
 	 */
-	if (core != NULL || kernel != NULL || action != CCD_DUMP) {
-		setegid(getgid());
-		setgid(getgid());
-	}
+	gid = getgid();
+	if (core != NULL || kernel != NULL || action != CCD_DUMP)
+		if (setresgid(gid, gid, gid) == -1)
+			err(1, "setresgid");
 
 	switch (action) {
 	case CCD_CONFIG:

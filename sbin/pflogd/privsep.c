@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.14 2006/01/15 16:38:04 canacar Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.15 2006/03/06 10:45:56 djm Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -98,16 +98,12 @@ priv_init(void)
 			err(1, "unable to chdir");
 
 		gidset[0] = pw->pw_gid;
+		if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1)
+			err(1, "setresgid() failed");
 		if (setgroups(1, gidset) == -1)
 			err(1, "setgroups() failed");
-		if (setegid(pw->pw_gid) == -1)
-			err(1, "setegid() failed");
-		if (setgid(pw->pw_gid) == -1)
-			err(1, "setgid() failed");
-		if (seteuid(pw->pw_uid) == -1)
-			err(1, "seteuid() failed");
-		if (setuid(pw->pw_uid) == -1)
-			err(1, "setuid() failed");
+		if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
+			err(1, "setresuid() failed");
 		close(socks[0]);
 		priv_fd = socks[1];
 		return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.61 2005/12/12 18:45:40 jaredy Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.62 2006/03/06 10:45:57 djm Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -316,6 +316,7 @@ main(int argc, char *argv[])
 #ifdef IPV6_USE_MIN_MTU
 	int mflag = 0;
 #endif
+	uid_t uid;
 
 	/* just to be sure */
 	memset(&smsghdr, 0, sizeof(smsghdr));
@@ -682,8 +683,9 @@ main(int argc, char *argv[])
 	}
 
 	/* revoke root privilege */
-	seteuid(getuid());
-	setuid(getuid());
+	uid = getuid();
+	if (setresuid(uid, uid, uid) == -1)
+		err(1, "setresuid");
 
 	if ((options & F_FLOOD) && (options & F_INTERVAL))
 		errx(1, "-f and -i incompatible options");

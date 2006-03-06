@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.73 2006/01/09 22:42:35 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.74 2006/03/06 10:45:56 djm Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: ping.c,v 1.73 2006/01/09 22:42:35 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ping.c,v 1.74 2006/03/06 10:45:56 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -198,13 +198,15 @@ main(int argc, char *argv[])
 	const char *errstr;
 	fd_set *fdmaskp;
 	size_t fdmasks;
+	uid_t uid;
 
 	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(1, "socket");
 
 	/* revoke privs */
-	seteuid(getuid());
-	setuid(getuid());
+	uid = getuid();
+	if (setresuid(uid, uid, uid) == -1)
+		err(1, "setresuid");
 
 	preload = 0;
 	datap = &outpack[8 + sizeof(struct tvi)];
