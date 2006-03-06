@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.33 2005/10/30 03:37:34 brad Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.34 2006/03/06 18:37:53 otto Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -134,6 +134,8 @@ static void *references[] = {
 	&_thread_malloc_init,
 	&_thread_malloc_lock,
 	&_thread_malloc_unlock,
+	&_thread_atexit_lock,
+	&_thread_atexit_unlock,
 	&_thread_tag_lock,
 	&_thread_tag_unlock,
 	&_thread_tag_storage,
