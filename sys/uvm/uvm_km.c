@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.48 2005/10/06 03:59:50 brad Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.49 2006/03/06 19:11:03 mickey Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -998,23 +998,27 @@ uvm_km_thread(void *arg)
 	struct km_page *head, *tail, *page;
 	int i, s, want;
 
-	for (;;) {
-		if (uvm_km_pages_free >= uvm_km_pages_lowat)
+	for (i = want = 16; ; ) {
+		if (i < want || uvm_km_pages_free >= uvm_km_pages_lowat)
 			tsleep(&uvm_km_pages_head, PVM, "kmalloc", 0);
-		want = 16;
 		for (i = 0; i < want; i++) {
 			page = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE);
 			if (i == 0)
 				head = tail = page;
+			if (page == NULL)
+				break;
 			page->next = head;
 			head = page;
 		}
-		s = splvm();
-		tail->next = uvm_km_pages_head;
-		uvm_km_pages_head = head;
-		uvm_km_pages_free += i;
-		splx(s);
-		wakeup(&uvm_km_pages_free);
+		if (head != NULL) {
+			s = splvm();
+			tail->next = uvm_km_pages_head;
+			uvm_km_pages_head = head;
+			uvm_km_pages_free += i;
+			splx(s);
+		}
+		if (uvm_km_pages_free)
+			wakeup(&uvm_km_pages_free);
 	}
 }
 
