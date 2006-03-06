@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.1 2006/03/04 13:13:05 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.2 2006/03/06 10:40:31 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -35,8 +35,12 @@ sub new
 	} elsif ($baseurl =~ m/^http\:/i) {
 		return OpenBSD::PackageRepository::HTTP->_new($baseurl);
 	} elsif ($baseurl =~ m/^scp\:/i) {
+		require OpenBSD::PackageRepositorySCP;
+
 		return OpenBSD::PackageRepository::SCP->_new($baseurl);
 	} elsif ($baseurl =~ m/src\:/i) {
+		require OpenBSD::PackageRepository::Source;
+
 		return OpenBSD::PackageRepository::Source->_new($baseurl);
 	} else {
 		return OpenBSD::PackageRepository::Local->_new($baseurl);
@@ -505,57 +509,6 @@ sub finish_and_close
 		}
 	}
 	$self->SUPER::finish_and_close($object);
-}
-
-package OpenBSD::PackageRepository::SCP;
-our @ISA=qw(OpenBSD::PackageRepository::Distant);
-
-
-sub grab_object
-{
-	my ($self, $object) = @_;
-
-	exec {"/usr/bin/scp"} 
-	    "scp", 
-	    $self->{host}.":".$self->{path}.$object->{name}, 
-	    "/dev/stdout"
-	or die "can't run scp";
-}
-
-our %distant = ();
-
-sub maxcount
-{
-	return 2;
-}
-
-sub opened
-{
-	my $self = $_[0];
-	my $k = $self->{key};
-	if (!defined $distant{$k}) {
-		$distant{$k} = [];
-	}
-	return $distant{$k};
-}
-
-sub _new
-{
-	my ($class, $baseurl) = @_;
-	$baseurl =~ s/scp\:\/\///i;
-	$baseurl =~ m/\//;
-	bless {	host => $`, key => $`, path => "/$'" }, $class;
-}
-
-sub list
-{
-	my ($self) = @_;
-	if (!defined $self->{list}) {
-		my $host = $self->{host};
-		my $path = $self->{path};
-		$self->{list} = $self->_list("ssh $host ls -l $path");
-	}
-	return $self->{list};
 }
 
 package OpenBSD::PackageRepository::HTTPorFTP;
