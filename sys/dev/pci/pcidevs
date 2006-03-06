@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1032 2006/02/26 17:13:48 brad Exp $
+$OpenBSD: pcidevs,v 1.1033 2006/03/06 22:06:23 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2769,6 +2769,7 @@ product RICOH RF5C478		0x0478	5C478 CardBus
 product RICOH R5C521		0x0521	5C521 Firewire
 product RICOH R5C551		0x0551	5C551 Firewire
 product RICOH RL5C552		0x0552	5C552 Firewire
+product RICOH R5C822		0x0822	5C822 SD/MMC
 
 /* Rockwell products */
 product ROCKWELL RS56SP_PCI11P1	0x2005	RS56/SP-PCI11P1 Modem
