@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcsdiff.1,v 1.16 2006/03/06 09:41:53 deraadt Exp $
+.\"	$OpenBSD: rcsdiff.1,v 1.17 2006/03/06 14:41:04 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Joris Vink <joris@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl cnqTuV
+.Op Fl cnquV
 .Op Fl k Ns Ar mode
 .Oo
 .Fl r Ns Ar rev
@@ -57,9 +57,6 @@ If two -r options are given, the diff is generated between the
 two revisions specified.
 .It Fl q
 Be quiet about reporting.
-.It Fl T
-No effect.
-For compatibility.
 .It Fl u
 Produces a unified diff with three lines of context.
 See
@@ -106,3 +103,8 @@ and ignore differences in keyword values:
 .Xr rcsclean 1 ,
 .Xr rcsmerge 1 ,
 .Xr rlog 1
+.Sh STANDARDS
+The flag
+.Op Fl T
+has no effect and is provided
+for compatibility only.
