@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1032 2006/02/26 17:13:48 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1033 2006/03/06 22:06:23 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2774,6 +2774,7 @@
 #define	PCI_PRODUCT_RICOH_R5C521	0x0521		/* 5C521 Firewire */
 #define	PCI_PRODUCT_RICOH_R5C551	0x0551		/* 5C551 Firewire */
 #define	PCI_PRODUCT_RICOH_RL5C552	0x0552		/* 5C552 Firewire */
+#define	PCI_PRODUCT_RICOH_R5C822	0x0822		/* 5C822 SD/MMC */
 
 /* Rockwell products */
 #define	PCI_PRODUCT_ROCKWELL_RS56SP_PCI11P1	0x2005		/* RS56/SP-PCI11P1 Modem */
