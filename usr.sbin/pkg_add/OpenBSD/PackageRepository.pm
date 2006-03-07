@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.8 2006/03/07 15:00:15 bernd Exp $
+# $OpenBSD: PackageRepository.pm,v 1.9 2006/03/07 17:25:47 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -371,6 +371,7 @@ sub pkg_copy
 	};
 
 	my $nonempty = 0;
+	my $error = 0;
 	{
 
 	local $SIG{'PIPE'} =  $handler;
@@ -390,13 +391,18 @@ sub pkg_copy
 		if ($n > 0) {
 			$nonempty = 1;
 		}
-		syswrite $copy, $buffer;
+		if (!$error) {
+			my $r = syswrite $copy, $buffer;
+			if (!defined $r || $r < $n) {
+				$error = 1;
+			}
+		}
 		syswrite STDOUT, $buffer;
 	} while ($n != 0);
 	close($copy);
 	}
 
-	if ($nonempty) {
+	if ($nonempty && !$error) {
 		rename $filename, "$dir/$name";
 	} else {
 		unlink $filename;
