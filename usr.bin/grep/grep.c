@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.34 2006/02/09 09:54:46 otto Exp $	*/
+/*	$OpenBSD: grep.c,v 1.35 2006/03/07 20:59:56 otto Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -204,6 +204,18 @@ add_pattern(char *pat, size_t len)
 }
 
 static void
+add_patterns(char *pats)
+{
+	char *nl;
+
+	while ((nl = strchr(pats, '\n')) != NULL) {
+		add_pattern(pats, nl - pats);
+		pats = nl + 1;
+	}
+	add_pattern(pats, strlen(pats));
+}
+
+static void
 read_patterns(const char *fn)
 {
 	FILE *f;
@@ -359,7 +371,7 @@ main(int argc, char *argv[])
 			cflag = 1;
 			break;
 		case 'e':
-			add_pattern(optarg, strlen(optarg));
+			add_patterns(optarg);
 			break;
 		case 'f':
 			patfile = grep_malloc(sizeof(*patfile));
@@ -440,7 +452,7 @@ main(int argc, char *argv[])
 		usage();
 
 	if (patterns == 0) {
-		add_pattern(*argv, strlen(*argv));
+		add_patterns(*argv);
 		--argc;
 		++argv;
 	}
