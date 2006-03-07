@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.5 2006/03/07 10:59:27 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.6 2006/03/07 14:00:21 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -351,9 +351,11 @@ my $buffsize = 2 * 1024 * 1024;
 
 sub pkg_copy
 {
-	my ($in, $dir, $name) = @_;
+	my ($self, $in, $object) = @_;
 
 	require File::Temp;
+	my $name = $object->{name};
+	my $dir = $object->{cache_dir};
 	my $template = $name;
 	$template =~ s/\.tgz$/.XXXXXXXX/;
 
@@ -407,6 +409,7 @@ sub open_pipe
 	my ($self, $object) = @_;
 	$object->{errors} = OpenBSD::Temp::file();
 	$object->{cache_dir} = $ENV{'PKG_CACHE'};
+	$object->{parent} = $$;
 	my $pid = open(my $fh, "-|");
 	if (!defined $pid) {
 		die "Cannot fork: $!";
@@ -439,8 +442,7 @@ sub open_pipe
 					die "Cannot fork: $!";
 				}
 				if ($pid3) {
-					pkg_copy($in, $object->{cache_dir}, 
-					    $object->{name});
+					$self->pkg_copy($in, $object);
 					exit(0);
 				} else {
 					$self->grab_object($object);
