@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sensorsd.conf.5,v 1.4 2005/04/02 09:25:08 jmc Exp $
+.\"	$OpenBSD: sensorsd.conf.5,v 1.5 2006/03/07 11:14:02 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
@@ -20,8 +20,7 @@
 .Os
 .Sh NAME
 .Nm sensorsd.conf
-.Nd configuration file for
-.Xr sensorsd 8
+.Nd configuration file for sensorsd
 .Sh SYNOPSIS
 .Nm sensorsd.conf
 .Sh DESCRIPTION
@@ -39,31 +38,61 @@ executed.
 .Nm
 follows the syntax of configuration databases as documented in
 .Xr getcap 3 .
+The following attributes may be used:
 .Pp
-Example:
-.Bd -literal -offset indent
-hw.sensors.0:high=80C:command=/etc/sensorsd/log_warning %1 %2
-hw.sensors.1:high=170F
-hw.sensors.2:low=4.8V:high=5.2V
-hw.sensors.3:low=1000:high=8000
-.Ed
+.Bl -tag -width "commandXX" -offset indent -compact
+.It Li command
+Specify a command to be executed if limits are crossed.
+.It Li high
+Specify an upper limit.
+.It Li low
+Specify a lower limit.
+.El
 .Pp
 The values for temperature sensors can be given in degrees Celsius or
 Fahrenheit, for voltage sensors in volts, and fan speed sensors take a
 unit-less number representing RPM.
 .Pp
 The command is executed on transitions out of, and back into, given limits.
-Tokens in the command are substituted as follows: %1 with
-the sensor number, %2 with the sensor's current value, %3 with the
-sensor's low limit, and %4 with the sensor's high limit.
+Tokens in the command are substituted as follows:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It %1
+the sensor number
+.It %2
+the sensor's current value
+.It %3
+the sensor's low limit
+.It %4
+the sensor's high limit
+.El
 .Sh FILES
 .Bl -tag -width "/etc/sensorsd.conf"
 .It /etc/sensorsd.conf
 Configuration file for
 .Xr sensorsd 8 .
 .El
+.Sh EXAMPLES
+In the following configuration file,
+if hw.sensors.0 goes above 80C, the command
+.Pa /etc/sensorsd/log_warning
+will be executed,
+with the sensor number and current value passed to it.
+Alerts will be sent if hw.sensor.1 goes above 170F;
+if hw.sensors.2 goes below 4.8V or above 5.2V;
+and if the speed of the fan attached to hw.sensors.3
+goes below 1000RPM or above 8000RPM.
+.Bd -literal -offset indent
+# Comments are allowed
+hw.sensors.0:high=80C:command=/etc/sensorsd/log_warning %1 %2
+hw.sensors.1:high=170F
+hw.sensors.2:low=4.8V:high=5.2V
+hw.sensors.3:low=1000:high=8000
+.Ed
 .Sh SEE ALSO
-.Xr sensorsd 8
+.Xr getcap 3 ,
+.Xr sensorsd 8 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
