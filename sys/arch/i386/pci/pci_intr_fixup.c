@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.52 2006/01/12 12:17:02 jsg Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.53 2006/03/07 20:50:48 brad Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*
@@ -186,16 +186,16 @@ const struct pciintr_icu_table {
 	{ PCI_VENDOR_RCC,	PCI_PRODUCT_RCC_CSB5,
 	  osb4_init },
 
-	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT82C596A,
-	  via82c586_init, },
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT82C586_ISA,
+	  via82c586_init, },
+	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT82C596A,
 	  via82c586_init, },
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT82C686A_ISA,
 	  via82c586_init },
-	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8233_ISA,
-	  via82c586_init },
 
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8231_ISA,
+	  via8231_init },
+	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8233_ISA,
 	  via8231_init },
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT8233A_ISA,
 	  via8231_init },
@@ -205,6 +205,8 @@ const struct pciintr_icu_table {
 	  via8231_init },
 
 	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_85C503,
+	  sis85c503_init },
+	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_962,
 	  sis85c503_init },
 	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_963,
 	  sis85c503_init },
