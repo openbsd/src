@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.16 2006/03/06 14:44:51 jmc Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.17 2006/03/07 01:40:52 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -42,7 +42,7 @@ rcsmerge_main(int argc, char **argv)
 
 	baserev = rev2 = RCS_HEAD_REV;
 
-	while ((ch = rcs_getopt(argc, argv, "AEek:p::q::r:TVx:")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "AEek:p::q::r:TVx:z:")) != -1) {
 		switch (ch) {
 		case 'A': case 'E': case 'e':
 			break;
@@ -81,6 +81,9 @@ rcsmerge_main(int argc, char **argv)
 			exit(0);
 		case 'x':
 			rcs_suffixes = rcs_optarg;
+			break;
+		case 'z':
+			timezone_flag = rcs_optarg;
 			break;
 		default:
 			break;

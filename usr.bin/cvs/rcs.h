@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.47 2006/03/05 14:18:56 niallo Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.48 2006/03/07 01:40:52 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -270,5 +270,7 @@ int	 rcsnum_aton(const char *, char **, RCSNUM *);
 char	*rcsnum_tostr(const RCSNUM *, char *, size_t);
 int	 rcsnum_cpy(const RCSNUM *, RCSNUM *, u_int);
 int	 rcsnum_cmp(const RCSNUM *, const RCSNUM *, u_int);
+
+extern char *timezone_flag;
 
 #endif	/* RCS_H */

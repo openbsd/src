@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.109 2006/03/06 15:04:17 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.110 2006/03/07 01:40:52 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -29,7 +29,7 @@
 #include "rcsprog.h"
 #include "diff.h"
 
-#define CI_OPTSTRING	"d::f::i::j::k::l::m:M::N:n:qr::s:Tt:u::Vw:x:"
+#define CI_OPTSTRING	"d::f::i::j::k::l::m:M::N:n:qr::s:Tt:u::Vw:x:z:"
 #define DATE_NOW	-1
 #define DATE_MTIME	-2
 
@@ -199,6 +199,9 @@ checkin_main(int argc, char **argv)
 			break;
 		case 'x':
 			rcs_suffixes = rcs_optarg;
+			break;
+		case 'z':
+			timezone_flag = rcs_optarg;
 			break;
 		default:
 			(usage)();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.133 2006/03/05 16:22:31 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.134 2006/03/07 01:40:52 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -232,7 +232,7 @@ static const char *rcs_errstrs[] = {
 
 
 int rcs_errno = RCS_ERR_NOERR;
-
+char *timezone_flag = NULL;
 
 static int	rcs_write(RCSFILE *);
 static int	rcs_parse_init(RCSFILE *);
@@ -2531,14 +2531,63 @@ static char *
 rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
     size_t len, int mode)
 {
+	int tzone;
 	int kwtype, sizdiff;
 	u_int i, j, found, start_offset, c_offset;
-	char *c, *kwstr, *start, *end, *tbuf;
+	char *c, *kwstr, *start, *end, *tbuf, *m, *h;
 	char expbuf[256], buf[256];
+	struct tm *tb, ltb;
+	time_t now;
+	char *fmt;
 
 	kwtype = 0;
 	kwstr = NULL;
 	i = 0;
+
+	/*
+	 * -z support for RCS
+	 */
+	tb = &rdp->rd_date;
+	if (timezone_flag != NULL) {
+		if (!strcmp(timezone_flag, "LT")) {
+			now = mktime(&rdp->rd_date);
+			tb = localtime(&now);
+			tb->tm_hour += ((int)tb->tm_gmtoff / 3600);
+		} else {
+			h = timezone_flag;
+			if ((m = strrchr(timezone_flag, ':')) != NULL)
+				*(m++) = '\0';
+
+			ltb = rdp->rd_date;
+			tb = &ltb;
+
+			tzone = atoi(h);
+
+			if (tzone >= 24 && tzone <= -24)
+				fatal("not a known time zone: %d", tzone);
+
+			tb->tm_hour += tzone;
+			if (tb->tm_hour >= 24 && tb->tm_hour <= -24)
+				tb->tm_hour = 0;
+
+			tb->tm_gmtoff += (tzone * 3600);
+
+			if (m != NULL) {
+				tzone = atoi(m);
+				if (tzone >= 60)
+					fatal("not a known time zone: %d", tzone);
+
+				if ((tb->tm_min + tzone) >= 60) {
+					tb->tm_hour++;
+					tb->tm_min -= tzone;
+				} else {
+					tb->tm_min += tzone;
+				}
+
+				tb->tm_gmtoff += (tzone * 60);
+			}
+		}
+	}
 
 	/*
 	 * Keyword formats:
@@ -2636,9 +2685,12 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 				}
 
 				if (kwtype & RCS_KW_DATE) {
-					strftime(buf, sizeof(buf),
-					    "%Y/%m/%d %H:%M:%S ",
-					    &rdp->rd_date);
+					if (timezone_flag != NULL)
+						fmt = "%Y/%m/%d %H:%M:%S%z ";
+					else
+						fmt = "%Y/%m/%d %H:%M:%S ";
+
+					strftime(buf, sizeof(buf), fmt, tb);
 					strlcat(expbuf, buf, sizeof(expbuf));
 				}
 
