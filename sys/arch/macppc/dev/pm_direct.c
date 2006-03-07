@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.19 2006/02/22 07:02:23 miod Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.20 2006/03/07 20:00:18 miod Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -550,6 +550,7 @@ pm_adb_op(u_char *buffer, void *compRout, void *data, int command)
 #endif
 	PMData pmdata;
 	struct adbCommand packet;
+	extern int adbempty;
 
 	if (adbWaiting == 1)
 		return 1;
@@ -582,11 +583,14 @@ pm_adb_op(u_char *buffer, void *compRout, void *data, int command)
 	 * - PowerMac10,1
 	 * causes several pmu interrupts with ifr set to PMU_INT_SNDBRT.
 	 * Not processing them prevents us from seeing the adb devices
-	 * afterwards.
+	 * afterwards, so we have to expect it unless we know the adb
+	 * bus is empty.
 	 */
-	if (command == PMU_RESET_ADB)
-		waitfor = PMU_INT_ADB_AUTO | PMU_INT_ADB | PMU_INT_SNDBRT;
-	else
+	if (command == PMU_RESET_ADB) {
+		waitfor = PMU_INT_ADB_AUTO | PMU_INT_ADB;
+		if (adbempty == 0)
+			waitfor |= PMU_INT_SNDBRT;
+	} else
 		waitfor = PMU_INT_ALL;
 
 	pmdata.data[0] = (u_char)(command & 0xff);

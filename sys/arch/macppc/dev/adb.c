@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.18 2006/01/18 23:21:17 miod Exp $	*/
+/*	$OpenBSD: adb.c,v 1.19 2006/03/07 20:00:18 miod Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -249,6 +249,7 @@ int	tickle_serial = 0;		/* the last packet tickled */
 int	adb_cuda_serial = 0;		/* the current packet */
 struct	timeout adb_cuda_timeout;
 struct	timeout adb_softintr_timeout;
+int	adbempty = 0;			/* nonzero if no adb devices */
 
 volatile u_char *Via1Base;
 
@@ -1642,8 +1643,24 @@ adbattach(struct device *parent, struct device *self, void *aux)
 
 	if (strcmp(ca->ca_name, "via-cuda") == 0)
 		adbHardware = ADB_HW_CUDA;
-	else if (strcmp(ca->ca_name, "via-pmu") == 0)
+	else if (strcmp(ca->ca_name, "via-pmu") == 0) {
 		adbHardware = ADB_HW_PMU;
+
+		/*
+		 * Bus reset can take a long time if no adb devices are
+		 * connected, e.g. on a Mac Mini; so check for an adb
+		 * child in the OF tree to speed up pm_adb_op().
+		 */
+		adbempty = 1;
+		for (node = OF_child(ca->ca_node); node; node = OF_peer(node)) {
+			if (OF_getprop(node, "name", name, sizeof name) <= 0)
+				continue;
+			if (strcmp(name, "adb") == 0) {
+				adbempty = 0;
+				break;
+			}
+		}
+	}
 
 	adb_polling = 1;
 	adb_reinit();
