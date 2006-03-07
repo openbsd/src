@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.134 2006/03/07 01:40:52 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.135 2006/03/07 01:43:18 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2564,7 +2564,7 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 			tzone = atoi(h);
 
 			if (tzone >= 24 && tzone <= -24)
-				fatal("not a known time zone: %d", tzone);
+				fatal("not a known time zone");
 
 			tb->tm_hour += tzone;
 			if (tb->tm_hour >= 24 && tb->tm_hour <= -24)
@@ -2575,7 +2575,7 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 			if (m != NULL) {
 				tzone = atoi(m);
 				if (tzone >= 60)
-					fatal("not a known time zone: %d", tzone);
+					fatal("not a known time zone");
 
 				if ((tb->tm_min + tzone) >= 60) {
 					tb->tm_hour++;
