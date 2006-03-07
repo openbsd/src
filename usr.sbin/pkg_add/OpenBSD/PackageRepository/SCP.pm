@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SCP.pm,v 1.1 2006/03/06 10:40:32 espie Exp $
+# $OpenBSD: SCP.pm,v 1.2 2006/03/07 11:03:17 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -21,23 +21,95 @@ use warnings;
 package OpenBSD::PackageRepository::SCP;
 our @ISA=qw(OpenBSD::PackageRepository::Distant);
 
+use IPC::Open2;
+use IO::Handle;
+
+our %distant = ();
+
+# Any SCP repository uses one single connection, reliant on a perl at end.
+# The connection starts by xfering and firing up the `distant' script.
+sub initiate
+{
+	my $self = shift;
+
+	my ($rdfh, $wrfh);
+
+	$self->{controller} = open2($rdfh, $wrfh, 'ssh', $self->{host}, 'perl', '-x');
+	$self->{cmdfh} = $wrfh;
+	$self->{getfh} = $rdfh;
+	$wrfh->autoflush(1);
+	local $_;
+
+	while(<DATA>) {
+		# compress script a bit
+		next if m/^\#/ && !m/^\#!/;
+		s/^\s*//;
+		next if m/^$/;
+		print $wrfh $_;
+	}
+}
+	
+	
+sub may_exist
+{
+	my ($self, $name) = @_;
+	my $l = $self->list();
+	$name =~ s/\.tgz$//;
+	return grep {$_ eq $name } @$l;
+}
 
 sub grab_object
 {
 	my ($self, $object) = @_;
 
-	exec {"/usr/bin/scp"} 
-	    "scp", 
-	    $self->{host}.":".$self->{path}.$object->{name}, 
-	    "/dev/stdout"
-	or die "can't run scp";
+	my $cmdfh = $self->{cmdfh};
+	my $getfh = $self->{getfh};
+	print $cmdfh "ABORT\n";
+	local $_;
+	while (<$getfh>) {
+		last if m/^ABORTED/;
+	}
+	print $cmdfh "GET ", $self->{path}.$object->{name}, "\n";
+	close($cmdfh);
+
+	$_ = <$getfh>;
+	chomp;
+	if (m/^ERROR:/) {
+		die "transfer error: $_";
+	}
+	if (m/^TRANSFER:\s+(\d+)/) {
+		my $buffsize = 10 * 1024;
+		my $buffer;
+		my $size = $1;
+		my $remaining = $size;
+		my $n;
+
+		do {
+			$n = read($getfh, $buffer, 
+				$remaining < $buffsize ? $remaining :$buffsize);
+			if (!defined $n) {
+				die "Error reading\n";
+			}
+			$remaining -= $n;
+			if ($n > 0) {
+				syswrite STDOUT, $buffer;
+			}
+		} while ($n != 0 && $remaining != 0);
+		exit(0);
+	}
 }
 
-our %distant = ();
+sub _new
+{
+	my ($class, $baseurl) = @_;
+	$baseurl =~ s/scp\:\/\///i;
+	$baseurl =~ m/\//;
+	bless {	host => $`, baseurl => $baseurl, key => $`, path => "/$'" }, $class;
+}
 
 sub maxcount
 {
-	return 2;
+	return 1;
 }
 
 sub opened
@@ -50,23 +122,158 @@ sub opened
 	return $distant{$k};
 }
 
-sub _new
-{
-	my ($class, $baseurl) = @_;
-	$baseurl =~ s/scp\:\/\///i;
-	$baseurl =~ m/\//;
-	bless {	host => $`, key => $`, path => "/$'" }, $class;
-}
-
 sub list
 {
 	my ($self) = @_;
 	if (!defined $self->{list}) {
-		my $host = $self->{host};
+		if (!defined $self->{controller}) {
+			$self->initiate();
+		}
+		my $cmdfh = $self->{cmdfh};
+		my $getfh = $self->{getfh};
 		my $path = $self->{path};
-		$self->{list} = $self->_list("ssh $host ls -l $path");
+		my $l = [];
+		print $cmdfh "LIST $path\n";
+		local $_;
+		$_ = <$getfh>;
+		chomp;
+		if (m/^ERROR:/) {
+			die $_;
+		}
+		if (!m/^SUCCESS:/) {
+			die "Synchronization error\n";
+		}
+		while (<$getfh>) {
+			chomp;
+			last if $_ eq '';
+			push(@$l, $_);
+		}
+		$self->{list} = $l;
 	}
 	return $self->{list};
 }
 
+sub finish_and_close
+{
+	my ($self, $object) = @_;
+	$self->SUPER::close($object);
+}
+
+sub close
+{
+	my ($self, $object, $hint) = @_;
+	close($object->{fh}) if defined $object->{fh};
+	# XXX we have to make sure the children are dead.
+	for my $child (qw(pid pid2)) {
+		if (defined $object->{$child}) {
+			my $sleep = 0.05;
+			while (kill 0 => $object->{$child}) {
+				sleep($sleep);
+				$sleep *= 2;
+			}
+		}
+	}
+	
+	$self->parse_problems($object->{errors}, $hint) 
+	    if defined $object->{errors};
+	undef $object->{errors};
+	$object->deref();
+}
+
+# XXX not used yet
+sub cleanup
+{
+	my $self = shift;
+	if (defined $self->{controller}) {
+		print STDERR "Closing repository\n";
+		my $cmdfh = $self->{cmdfh};
+		print $cmdfh "ABORT\nBYE\nBYE\n";
+		CORE::close($cmdfh);
+		waitpid($self->{controller}, 0);
+		print STDERR "Repository closed\n";
+	}
+}
+
 1;
+__DATA__
+# Distant connection script.
+#! /usr/bin/perl
+
+my $pid;
+my $token = 0;
+$|= 1;
+
+sub batch(&)
+{
+	my $code = shift;
+	if (defined $pid) {
+		waitpid($pid, 0);
+		undef $pid;
+	}
+	$token++;
+	$pid = fork();
+	if (!defined $pid) {
+		print "ERROR: fork failed: $!\n";
+	}
+	if ($pid == 0) {
+		&$code();
+		exit(0);
+	}
+}
+
+sub abort_batch()
+{
+	if (defined $pid) {
+		kill 1, $pid;
+		waitpid($pid, 0);
+		undef $pid;
+	}
+	print "\nABORTED $token\n";
+}
+
+
+local $_;
+while (<STDIN>) {
+	chomp;
+	if (m/^LIST\s+/) {
+		my $dname = $';
+		batch(sub {
+			my $d;
+			if (opendir($d, $dname)) {
+				print "SUCCESS: directory $dname\n";
+			} else {
+				print "ERROR: bad directory $dname $!\n";
+			}
+			while (my $e = readdir($d)) {
+				next if $e eq '.' or $e eq '..';
+				next unless $e =~ m/(.+)\.tgz$/;
+				next unless -f "$dname/$e";
+				print "$1\n";
+			}
+			print "\n";
+			closedir($d);
+		});
+	} elsif (m/^GET\s+/) {
+		my $fname = $';
+		batch(sub {
+			if (open(my $fh, '<', $fname)) {
+				my $size = (stat $fh)[7];
+				print "TRANSFER: $size\n";
+				my $buffer = '';
+				while (read($fh, $buffer, 1024 * 1024) > 0) {
+					print $buffer;
+				}
+				close($fh);
+			} else {
+				print "ERROR: bad file $fname $!\n";
+			}
+		});
+	} elsif (m/^BYE$/) {
+		exit(0);
+	} elsif (m/^ABORT$/) {
+		abort_batch();
+	} else {
+		print "ERROR: Unknown command\n";
+	}
+}
+__END__

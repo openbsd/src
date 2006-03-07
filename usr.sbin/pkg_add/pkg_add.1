@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.59 2006/03/05 09:02:36 jmc Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.60 2006/03/07 11:03:17 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -628,9 +628,3 @@ is mounted noexec, you must currently set
 to a suitable area, as
 .Nm
 will refuse to install any package that contains executable scripts.
-.Sh BUGS
-.Xr scp 1
-processes do not die like they should when their pipe is closed,
-so using
-.Nm
-over SCP consumes an insane amount of resources.
