@@ -1,4 +1,4 @@
-/*	$OpenBSD: rogue.h,v 1.15 2006/03/06 04:41:18 deraadt Exp $	*/
+/*	$OpenBSD: rogue.h,v 1.16 2006/03/07 14:35:24 otto Exp $	*/
 /*	$NetBSD: rogue.h,v 1.4 1995/04/24 12:25:04 cgd Exp $	*/
 
 /*
@@ -565,7 +565,7 @@ void	inv_armor_weapon(boolean);
 void	inv_rings(void);
 void	inventory(object *, unsigned short);
 boolean	is_all_connected(void);
-boolean	is_digit(int);
+boolean	is_digit(short);
 boolean	is_direction(short, short *);
 boolean	is_pack_letter(short *, unsigned short *);
 boolean	is_passable(short, short);
