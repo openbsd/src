@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.17 2006/02/03 13:39:29 naddy Exp $	*/
+/*	$OpenBSD: ike.c,v 1.18 2006/03/07 00:19:58 reyk Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -31,10 +31,11 @@
 
 #include "ipsecctl.h"
 
+static void	ike_section_general(struct ipsec_rule *, FILE *);
 static void	ike_section_peer(struct ipsec_addr_wrap *, FILE *,
 		    struct ike_auth *);
 static void	ike_section_ids(struct ipsec_addr_wrap *, struct ipsec_auth *,
-		    FILE *);
+		    FILE *, u_int8_t);
 static void	ike_section_ipsec(struct ipsec_addr_wrap *, struct
 		    ipsec_addr_wrap *, struct ipsec_addr_wrap *, FILE *);
 static int	ike_section_qm(struct ipsec_addr_wrap *, struct
@@ -58,6 +59,20 @@ int		ike_ipsec_establish(int, struct ipsec_rule *);
 
 #define ISAKMPD_FIFO	"/var/run/isakmpd.fifo"
 
+#define CONF_DFLT_DYNAMIC_DPD_CHECK_INTERVAL	5
+#define CONF_DFLT_DYNAMIC_CHECK_INTERVAL	30
+
+static void
+ike_section_general(struct ipsec_rule *r, FILE *fd)
+{
+	if (r->ikemode == IKE_DYNAMIC) {
+		fprintf(fd, SET "[General]:Check-interval=%d force\n",
+		    CONF_DFLT_DYNAMIC_CHECK_INTERVAL);
+		fprintf(fd, SET "[General]:DPD-check-interval=%d force\n",
+		    CONF_DFLT_DYNAMIC_DPD_CHECK_INTERVAL);
+	}
+}
+
 static void
 ike_section_peer(struct ipsec_addr_wrap *peer, FILE *fd, struct ike_auth *auth)
 {
@@ -70,11 +85,20 @@ ike_section_peer(struct ipsec_addr_wrap *peer, FILE *fd, struct ike_auth *auth)
 }
 
 static void
-ike_section_ids(struct ipsec_addr_wrap *peer, struct ipsec_auth *auth, FILE *fd)
+ike_section_ids(struct ipsec_addr_wrap *peer, struct ipsec_auth *auth, FILE *fd,
+    u_int8_t ikemode)
 {
+	char myname[MAXHOSTNAMELEN];
+
 	if (auth == NULL)
 		return;
 
+	if (ikemode == IKE_DYNAMIC && auth->srcid == NULL) {
+		if (gethostname(myname, sizeof(myname)) == -1)
+			err(1, "ike_section_ids: gethostname");
+		if ((auth->srcid = strdup(myname)) == NULL)
+			err(1, "ike_section_ids: strdup");
+	}
 	if (auth->srcid) {
 		fprintf(fd, SET "[peer-%s]:ID=%s-ID force\n", peer->name,
 		    "local");
@@ -290,6 +314,7 @@ ike_connect(u_int8_t mode, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
 {
 	switch (mode) {
 	case IKE_ACTIVE:
+	case IKE_DYNAMIC:
 		fprintf(fd, ADD "[Phase 2]:Connections=IPsec-%s-%s\n",
 		    src->name, dst->name);
 		fprintf(fd, "t IPsec-%s-%s\n", src->name, dst->name);
@@ -308,10 +333,11 @@ ike_connect(u_int8_t mode, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
 static int
 ike_gen_config(struct ipsec_rule *r, FILE *fd)
 {
+	ike_section_general(r, fd);
 	ike_section_peer(r->peer, fd, r->ikeauth);
 	if (ike_section_mm(r->peer, r->mmxfs, fd, r->ikeauth) == -1)
 		return (-1);
-	ike_section_ids(r->peer, r->auth, fd);
+	ike_section_ids(r->peer, r->auth, fd, r->ikemode);
 	ike_section_ipsec(r->src, r->dst, r->peer, fd);
 	if (ike_section_qm(r->src, r->dst, r->proto, r->qmxfs, fd) == -1)
 		return (-1);

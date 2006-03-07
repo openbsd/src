@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.50 2006/01/20 16:11:22 naddy Exp $	*/
+/*	$OpenBSD: parse.y,v 1.51 2006/03/07 00:19:58 reyk Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -190,7 +190,7 @@ typedef struct {
 
 %token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI
 %token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK PASSIVE
-%token	ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT
+%token	ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT DYNAMIC
 %token	<v.string>		STRING
 %type	<v.dir>			dir
 %type	<v.protocol>		protocol
@@ -575,6 +575,7 @@ keyspec		: STRING			{
 
 ikemode		: /* empty */			{ $$ = IKE_ACTIVE; }
 		| PASSIVE			{ $$ = IKE_PASSIVE; }
+		| DYNAMIC			{ $$ = IKE_DYNAMIC; }
 		| ACTIVE			{ $$ = IKE_ACTIVE; }
 		;
 
@@ -633,6 +634,7 @@ lookup(char *s)
 		{ "authkey",		AUTHKEY },
 		{ "comp",		COMPXF },
 		{ "dstid",		DSTID },
+		{ "dynamic",		DYNAMIC },
 		{ "enc",		ENCXF },
 		{ "enckey",		ENCKEY },
 		{ "esp",		ESP },

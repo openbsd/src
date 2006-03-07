@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.30 2006/02/21 12:19:17 hshoexer Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.31 2006/03/07 00:19:58 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -275,17 +275,34 @@ cryptographic transforms are used for
 Some parameters are optional.
 .Bl -tag -width xxxx
 .It Xo
-.Ar passive
+.Ar ike
+.Aq Ar mode
+.Ar esp
 .Xc
 When
 .Ar passive
-is specified
+is specified,
 .Xr isakmpd 8
 will not immediately start negotiation of this tunnel, but wait for an incoming
 request from the remote peer.
-If not specified,
-.Xr isakmpd 8
-will start negotiation at once.
+When
+.Ar active
+or
+.Ar dynamic
+is specified, negotiation will be started at once.
+The
+.Ar dynamic
+mode will additionally enable Dead Peer Detection (DPD) and use the
+local hostname as the identity of the local peer, if not specifed by
+the
+.Ar srcid
+parameter.
+.Ar dynamic
+mode should be used for hosts with dynamic IP addresses like road
+warriors or dialup hosts.
+If omitted,
+.Ar active
+mode will be used.
 .It Xo
 .Ar from
 .Aq Ar src

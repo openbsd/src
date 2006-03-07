@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.27 2006/01/17 00:05:39 deraadt Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.28 2006/03/07 00:19:58 reyk Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -66,7 +66,7 @@ enum {
 	COMPXF_UNKNOWN, COMPXF_DEFLATE, COMPXF_LZS
 };
 enum {
-	IKE_ACTIVE, IKE_PASSIVE
+	IKE_ACTIVE, IKE_PASSIVE, IKE_DYNAMIC
 };
 enum {
 	IKE_AUTH_RSA, IKE_AUTH_PSK
