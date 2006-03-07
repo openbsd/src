@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.32 2006/03/05 14:46:46 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.33 2006/03/07 23:13:28 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -55,24 +55,6 @@
 
 #define aml_ipaddr(n) ((n)-aml_root.start)
 
-struct aml_opcode
-{
-	u_int16_t    opcode;
-	const char  *mnem;
-	const char  *args;
-};
-
-struct acpi_context
-{
-	int depth;
-	uint8_t *pos;
-	uint8_t *start;
-	struct acpi_softc  *sc;
-	struct aml_value  **locals;
-	struct aml_value  **args;
-	struct aml_node	   *scope;
-};
-
 #ifdef ACPI_DEBUG
 const char *opregion(int id);
 
@@ -95,10 +77,8 @@ opregion(int id)
 int	    aml_parse_length(struct acpi_context *);
 u_int64_t   aml_parse_int(struct acpi_context *, int);
 const char *aml_parse_string(struct acpi_context *);
-const char *aml_parse_name(struct acpi_context *);
 
 int aml_isnamedop(u_int16_t);
-struct aml_opcode *aml_getopcode(struct acpi_context *ctx);
 
 void aml_shownode(struct aml_node *);
 
@@ -108,12 +88,6 @@ int	   aml_lsb(u_int64_t);
 int	   aml_msb(u_int64_t);
 
 int _aml_freevalue(struct aml_value *);
-
-void acpi_freecontext(struct acpi_context *ctx);
-struct acpi_context *acpi_alloccontext(struct acpi_softc *sc, 
-				       struct aml_node *node,
-				       int argc, 
-				       struct aml_value *argv);
 
 struct aml_node *aml_find_name(struct acpi_softc *, struct aml_node *, const char *);
 
@@ -141,7 +115,6 @@ int  aml_bufcmp(const u_int8_t *, int, const u_int8_t *, int);
 
 struct aml_value *aml_ederef(struct acpi_context *ctx, struct aml_value *val);
 void aml_resizevalue(struct aml_value *, int);
-int aml_parse_length(struct acpi_context *ctx);
 struct aml_value *aml_eparseval(struct acpi_context *, int deref);
 struct aml_opcode *aml_getopcode(struct acpi_context *);
 struct aml_value *aml_esetnodevalue(struct acpi_context *,  struct aml_value *lhs, 
@@ -150,14 +123,11 @@ struct aml_value *aml_eparselist(struct acpi_context *, u_int8_t *end, int);
 
 struct aml_node *_aml_searchname(struct aml_node *, const char *);
 struct aml_node *aml_doname(struct aml_node *, const char *, int);
-struct aml_node *aml_searchname(struct aml_node *, const char *);
 struct aml_node *aml_createname(struct aml_node *, const char *);
 struct aml_value *aml_eparsescope(struct acpi_context *, const char *, u_int8_t *,
 				  struct aml_opcode *, struct aml_value *);
-int64_t aml_eparseint(struct acpi_context *, int type);
 struct aml_value *aml_efieldunit(struct acpi_context *, int opcode);
 struct aml_value *aml_ebufferfield(struct acpi_context *, int bitlen, int size, int opcode);
-u_int8_t *aml_eparselen(struct acpi_context *);
 struct aml_value *aml_efield(struct acpi_context *, struct aml_value *e_fld,
 			     struct aml_value *rhs);
 struct aml_node *aml_addvname(struct acpi_context *, const char *name, int opcode,
@@ -983,7 +953,7 @@ struct aml_opcode aml_table[] = {
 	{ AMLOP_DWORDPREFIX,	  "DWord",	     "d"  },
 	{ AMLOP_QWORDPREFIX,	  "QWord",	     "q"  },
 	{ AMLOP_REVISION,	  "Revision",	     ""	  },
-	{ AMLOP_STRINGPREFIX,	  "String",	     "s"  },
+	{ AMLOP_STRINGPREFIX,	  "String",	     "a"  },
 	{ AMLOP_DEBUG,		  "DebugOp",	     "",  },
 	{ AMLOP_BUFFER,		  "Buffer",	     "piB" },
 	{ AMLOP_PACKAGE,	  "Package",	     "pbT" },

@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.14 2006/02/23 19:56:44 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.15 2006/03/07 23:13:28 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -189,7 +189,7 @@ enum aml_objecttype {
 #define AML_ARG_QWORD       'q'
 #define AML_ARG_IMPBYTE     '!'
 #define AML_ARG_OBJLEN      'p'
-#define AML_ARG_STRING      's'
+#define AML_ARG_STRING      'a'
 #define AML_ARG_BYTELIST    'B'
 #define AML_ARG_REVISION    'R'
 
@@ -198,6 +198,12 @@ enum aml_objecttype {
 #define AML_ARG_NAMEREF     'n'
 #define AML_ARG_FIELDLIST   'F'
 #define AML_ARG_FLAG        'f'
+
+#define AML_ARG_DATAOBJLIST 'O'
+#define AML_ARG_DATAOBJ     'o'
+
+#define AML_ARG_SIMPLENAME  's'
+#define AML_ARG_SUPERNAME   'S'
 
 #define AML_ARG_TERMOBJLIST 'T'
 #define AML_ARG_TERMOBJ     't'
@@ -223,6 +229,9 @@ enum aml_objecttype {
 # define AML_FIELD_WRITEASONES       0x1
 # define AML_FIELD_WRITEASZEROES     0x2
 #define AML_FIELD_ATTR(v)          ((v) >> 8)
+#define AML_FIELD_RESERVED         0x00
+/* XXX fix this name */
+#define AML_FIELD_ATTR__           0x01
 
 struct aml_node;
 
