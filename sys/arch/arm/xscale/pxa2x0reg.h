@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.26 2006/03/07 22:12:46 uwe Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.27 2006/03/07 22:35:57 uwe Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -131,8 +131,8 @@
 #define PXA2X0_IRQ_MIN		1
 
 /*
- * [4..7] are used as soft intrs by SI_TO_IRQBIT,
- * and [0,1,15,16] are not used by us.
+ * [0..1,15..16] are used as soft intrs by SI_TO_IRQBIT,
+ * and [4..6] are not likely to be used by us.
  */
 #define PXA2X0_INT_USBH2	2	/* USB host (all other events) */
 #define PXA2X0_INT_USBH1	3	/* USB host (OHCI) */

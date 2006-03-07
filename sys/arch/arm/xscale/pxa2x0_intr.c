@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.12 2005/08/08 16:30:47 uwe Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.13 2006/03/07 22:35:57 uwe Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -181,10 +181,13 @@ pxa2x0_intr_bootstrap(vaddr_t addr)
 }
 
 /*
- * Cotulla's integrated ICU doesn't have IRQ0..7, PXA27x has useful
- * interrupts 0..3, so we map software interrupts to bit 4..7.
+ * PXA27x has MSL interface and SSP3 interrupts [0,1], USIM interface
+ * and SSP2 interrupts [15,16]. PXA255 has bits [0..6,15] reserved and
+ * bit [16] network SSP interrupt.  We don't need any of those, so we
+ * map software interrupts to bits [0..1,15..16].  Sadly there are no
+ * four contiguous bits safe enough to use on both processors.
  */
-#define SI_TO_IRQBIT(si)  (1U<<(4+(si)))
+#define SI_TO_IRQBIT(si)  ((si) < 2 ? 1U<<(si) : 1U<<(15-2+(si)))
 
 /*
  * Map a software interrupt queue to an interrupt priority level.
