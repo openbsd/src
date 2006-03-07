@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.20 2006/03/04 22:40:15 brad Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.21 2006/03/07 18:21:10 brad Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -274,13 +274,13 @@ bstp_send_config_bpdu(bif, cu)
 
 	bpdu.cbu_rootpathcost = htonl(cu->cu_root_path_cost);
 
-	bpdu.cbu_bridgepri = htons(cu->cu_rootid >> 48);
-	bpdu.cbu_bridgeaddr[0] = cu->cu_rootid >> 40;
-	bpdu.cbu_bridgeaddr[1] = cu->cu_rootid >> 32;
-	bpdu.cbu_bridgeaddr[2] = cu->cu_rootid >> 24;
-	bpdu.cbu_bridgeaddr[3] = cu->cu_rootid >> 16;
-	bpdu.cbu_bridgeaddr[4] = cu->cu_rootid >> 8;
-	bpdu.cbu_bridgeaddr[5] = cu->cu_rootid >> 0;
+	bpdu.cbu_bridgepri = htons(cu->cu_bridge_id >> 48);
+	bpdu.cbu_bridgeaddr[0] = cu->cu_bridge_id >> 40;
+	bpdu.cbu_bridgeaddr[1] = cu->cu_bridge_id >> 32;
+	bpdu.cbu_bridgeaddr[2] = cu->cu_bridge_id >> 24;
+	bpdu.cbu_bridgeaddr[3] = cu->cu_bridge_id >> 16;
+	bpdu.cbu_bridgeaddr[4] = cu->cu_bridge_id >> 8;
+	bpdu.cbu_bridgeaddr[5] = cu->cu_bridge_id >> 0;
 
 	bpdu.cbu_portid = htons(cu->cu_port_id);
 	bpdu.cbu_messageage = htons(cu->cu_message_age);
