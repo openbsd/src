@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.4 2006/03/06 12:00:28 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.5 2006/03/07 10:59:27 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -413,6 +413,7 @@ sub open_pipe
 	}
 	if ($pid) {
 		$object->{pid} = $pid;
+		$object->{pid2} = <$fh>;
 		return $fh;
 	} else {
 		open STDERR, '>', $object->{errors};
@@ -423,6 +424,7 @@ sub open_pipe
 			die "Cannot fork: $!";
 		}
 		if ($pid2) {
+			print $pid2, "\n";
 			exec {"/usr/bin/gzip"} 
 			    "gzip", 
 			    "-d", 
