@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlint.c,v 1.25 2005/12/10 17:51:50 cloder Exp $	*/
+/*	$OpenBSD: xlint.c,v 1.26 2006/03/07 08:24:55 moritz Exp $	*/
 /*	$NetBSD: xlint.c,v 1.3 1995/10/23 14:29:30 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: xlint.c,v 1.25 2005/12/10 17:51:50 cloder Exp $";
+static char rcsid[] = "$OpenBSD: xlint.c,v 1.26 2006/03/07 08:24:55 moritz Exp $";
 #endif
 
 #include <sys/param.h>
@@ -121,7 +121,7 @@ static	void	terminate(int);
 static	const	char *lbasename(const char *, int);
 static	void	appdef(char ***, const char *);
 static	void	usage(void);
-static	void	fname(const char *, int);
+static	void	fname(const char *);
 static	int	runchild(const char *, char *const *, const char *);
 static	void	findlibs(char *const *);
 static	int	rdok(const char *);
@@ -469,7 +469,9 @@ main(int argc, char *argv[])
 
 		case -1:
 			/* filename */
-			fname(argv[optind++], argc == 1);
+			if (argv[optind] == NULL)
+				break;
+			fname(argv[optind++]);
 			first = 0;
 		}
 
@@ -509,7 +511,7 @@ main(int argc, char *argv[])
  * and pass it through lint1 if it is a C source.
  */
 static void
-fname(const char *name, int last)
+fname(const char *name)
 {
 	const	char *bn, *suff;
 	char	**args, *ofn, *path;
