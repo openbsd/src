@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.35 2006/01/21 19:42:15 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.36 2006/03/07 21:32:51 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -64,6 +64,7 @@
 02/11	Sergei M. Eisenstein died in Moscow, Russia, 1988
 02/12	Abraham Lincoln born, 1809
 02/12	Charles Darwin born in Shrewsbury, England, 1809
+02/13	Feodor Ivanovich Chaliapin born in Oemet Tawi, near Kazan, 1873
 02/15	Galileo Galilei born in Pisa, Italy, 1564
 02/15	Susan B. Anthony born, 1820
 02/16	Pierre Bouguer born, 1698, founder of photometry
@@ -130,6 +131,7 @@
 04/10	Commodore Matthew Calbraith Perry born, 1794
 04/10	William Booth born, 1829, founder of the Salvation Army
 04/11	Edsger Wybe Dijkstra was born at Rotterdam, 1930
+04/12	Feodor Ivanovich Chaliapin died in Paris, 1938
 04/13	Samuel Beckett born in Foxrock, County Dublin, 1906
 04/13	Thomas Jefferson born, 1743
 04/14	Christian Huygen born, 1629, physicist & astronomer;
