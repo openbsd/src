@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.65 2006/03/07 15:06:43 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.66 2006/03/07 17:54:08 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -601,6 +601,12 @@ set localpref 300
 See also the
 .Sx ATTRIBUTE SET
 section.
+Set parameters are applied to the received prefixes; the only exceptions are
+.Ic prepend-self
+and
+.Ic nexthop no-modify .
+These sets are rewritten into filter rules and can be viewed with
+.Dq bgpd -nv .
 .Pp
 .It Xo
 .Ic softreconfig
