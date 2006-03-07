@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.31 2006/03/07 00:19:58 reyk Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.32 2006/03/07 00:30:28 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -115,6 +115,18 @@ is identical to
 the
 .Ar peer
 specification can be left out.
+.It Ar type Aq Ar modifier
+This optional parameter sets up special flows using the modifiers
+.Ar bypass
+or
+.Ar deny .
+A bypass flow is used to specify a flow for which security processing
+will be bypassed: matching packets will not be processed by any other
+flows and handled in normal operation.
+A deny flow is used to drop any matching packets.
+By default,
+.Xr ipsecctl 8
+will automatically set up normal flows with the corresponding type.
 .El
 .Sh IPSEC SAs
 The security parameters for a
@@ -518,6 +530,10 @@ tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
 
 ike esp from 10.1.1.0/24 to 10.1.2.0/24 peer 192.168.3.2
 ike esp from 192.168.3.1 to 192.168.3.2
+
+# Use bypass flow to exclude local subnets from larger VPNs
+flow in from 192.168.62.0/24 to 192.168.62.0/24 type bypass
+ike dynamic esp from 192.168.62.0/24 to 192.168.48.0/20 peer 192.168.3.12
 .Ed
 .Sh SEE ALSO
 .Xr ipcomp 4 ,

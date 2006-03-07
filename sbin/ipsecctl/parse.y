@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.51 2006/03/07 00:19:58 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.52 2006/03/07 00:30:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -133,7 +133,7 @@ struct ipsec_rule	*reverse_sa(struct ipsec_rule *, u_int32_t,
 			     struct ipsec_key *, struct ipsec_key *);
 struct ipsec_rule	*create_flow(u_int8_t, struct ipsec_addr_wrap *, struct
 			     ipsec_addr_wrap *, struct ipsec_addr_wrap *,
-			     u_int8_t, char *, char *);
+			     u_int8_t, char *, char *, u_int8_t);
 struct ipsec_rule	*reverse_rule(struct ipsec_rule *);
 struct ipsec_rule	*create_ike(struct ipsec_addr_wrap *, struct
 			     ipsec_addr_wrap *, struct ipsec_addr_wrap *,
@@ -162,6 +162,7 @@ typedef struct {
 			char *dstid;
 		} ids;
 		char		*id;
+		u_int8_t	 type;
 		struct ike_auth	 ikeauth;
 		struct {
 			u_int32_t	spiout;
@@ -191,6 +192,7 @@ typedef struct {
 %token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI
 %token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK PASSIVE
 %token	ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT DYNAMIC
+%token	TYPE DENY BYPASS
 %token	<v.string>		STRING
 %type	<v.dir>			dir
 %type	<v.protocol>		protocol
@@ -210,6 +212,7 @@ typedef struct {
 %type	<v.qmxfs>		qmxfs
 %type	<v.ikemode>		ikemode
 %type	<v.ikeauth>		ikeauth
+%type	<v.type>		type
 %%
 
 grammar		: /* empty */
@@ -292,11 +295,11 @@ sarule		: protocol tmode hosts spispec transforms authkeyspec
 		}
 		;
 
-flowrule	: FLOW protocol dir hosts peer ids {
+flowrule	: FLOW protocol dir hosts peer ids type {
 			struct ipsec_rule	*r;
 
 			r = create_flow($3, $4.src, $4.dst, $5, $2, $6.srcid,
-			    $6.dstid);
+			    $6.dstid, $7);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
@@ -305,7 +308,7 @@ flowrule	: FLOW protocol dir hosts peer ids {
 				errx(1, "flowrule: ipsecctl_add_rule");
 
 			/* Create and add reverse flow rule. */
-			if ($3 == IPSEC_INOUT) {
+			if ($7 == TYPE_UNKNOWN && $3 == IPSEC_INOUT) {
 				r = reverse_rule(r);
 				r->nr = ipsec->rule_nr++;
 
@@ -418,6 +421,17 @@ ids		: /* empty */			{
 		| DSTID id			{
 			$$.srcid = NULL;
 			$$.dstid = $2;
+		}
+		;
+
+type		: /* empty */			{
+			$$ = TYPE_UNKNOWN;
+		}
+		| TYPE DENY			{
+			$$ = TYPE_DENY;
+		}
+		| TYPE BYPASS			{
+			$$ = TYPE_BYPASS;
 		}
 		;
 
@@ -632,7 +646,9 @@ lookup(char *s)
 		{ "any",		ANY },
 		{ "auth",		AUTHXF },
 		{ "authkey",		AUTHKEY },
+		{ "bypass",		BYPASS },
 		{ "comp",		COMPXF },
+		{ "deny",		DENY },
 		{ "dstid",		DSTID },
 		{ "dynamic",		DYNAMIC },
 		{ "enc",		ENCXF },
@@ -658,6 +674,7 @@ lookup(char *s)
 		{ "to",			TO },
 		{ "transport",		TRANSPORT },
 		{ "tunnel",		TUNNEL },
+		{ "type",		TYPE },
 	};
 	const struct keywords	*p;
 
@@ -1464,7 +1481,7 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
 struct ipsec_rule *
 create_flow(u_int8_t dir, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
     *dst, struct ipsec_addr_wrap *peer, u_int8_t proto, char *srcid, char
-    *dstid)
+    *dstid, u_int8_t type)
 {
 	struct ipsec_rule *r;
 
@@ -1479,13 +1496,19 @@ create_flow(u_int8_t dir, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
 	else
 		r->direction = dir;
 
+	r->proto = proto;
+	r->src = src;
+	r->dst = dst;
+
+	if (type != TYPE_UNKNOWN) {
+		r->flowtype = type;
+		return (r);
+	}
+
 	if (r->direction == IPSEC_IN)
 		r->flowtype = TYPE_USE;
 	else
 		r->flowtype = TYPE_REQUIRE;
-
-	r->src = src;
-	r->dst = dst;
 
 	if (peer == NULL) {
 		/* Set peer to remote host.  Must be a host address. */
@@ -1505,7 +1528,6 @@ create_flow(u_int8_t dir, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
 	} else
 		r->peer = peer;
 
-	r->proto = proto;
 	r->auth = calloc(1, sizeof(struct ipsec_auth));
 	if (r->auth == NULL)
 		err(1, "create_flow: calloc");

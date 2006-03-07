@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.32 2005/12/06 14:27:57 markus Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.33 2006/03/07 00:30:28 reyk Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -139,6 +139,12 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 		break;
 	case TYPE_REQUIRE:
 		sa_flowtype.sadb_protocol_proto = SADB_X_FLOW_TYPE_REQUIRE;
+		break;
+	case TYPE_DENY:
+		sa_flowtype.sadb_protocol_proto = SADB_X_FLOW_TYPE_DENY;
+		break;
+	case TYPE_BYPASS:
+		sa_flowtype.sadb_protocol_proto = SADB_X_FLOW_TYPE_BYPASS;
 		break;
 	default:
 		warnx("unsupported flowtype %d", flowtype);
