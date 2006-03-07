@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.73 2006/03/04 12:18:58 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.74 2006/03/07 21:27:52 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -357,18 +357,21 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "adt7467";
 		else if (iicprobe(0x3d) == 0x33)
 			name = "adm1033";
-		else if ((addr & 0x7c) == 0x2c &&	/* addr 0b01011xx */
+                else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
 		    iicprobe(0x3d) == 0x30 &&
-		    (iicprobe(0x3f) & 0x70) == 0x00 &&
-		    (iicprobe(0x01) & 0x4a) == 0x00 &&
-		    (iicprobe(0x03) & 0x3f) == 0x00 &&
-		    (iicprobe(0x22) & 0xf0) == 0x00 &&
+		    (iicprobe(0x01) & 0x80) == 0x00 &&
 		    (iicprobe(0x0d) & 0x70) == 0x00 &&
 		    (iicprobe(0x0e) & 0x70) == 0x00)
-			name = "adm1030";	/* complete check */
-		else if ((addr & 0x7c) == 0x2c &&	/* addr 0b01011xx */
+			/*
+			 * Revision 3 seems to be an adm1031 with
+			 * remote diode 2 shorted.  Therefore we
+			 * cannot assume the reserved/unused bits of
+			 * register 0x03 and 0x06 are set to zero.
+			 */
+                        name = "adm1030";       /* complete check */
+                else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
 		    iicprobe(0x3d) == 0x31 &&
-		    (iicprobe(0x03) & 0x3f) == 0x00 &&
+		    (iicprobe(0x01) & 0x80) == 0x00 &&
 		    (iicprobe(0x0d) & 0x70) == 0x00 &&
 		    (iicprobe(0x0e) & 0x70) == 0x00 &&
 		    (iicprobe(0x0f) & 0x70) == 0x00)
