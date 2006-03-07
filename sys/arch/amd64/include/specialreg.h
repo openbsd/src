@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.4 2005/12/13 00:18:19 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.5 2006/03/07 05:21:40 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -119,7 +119,7 @@
 #define	CPUID_SS	0x08000000	/* self-snoop */
 #define	CPUID_HTT	0x10000000	/* Hyper-Threading Technology */
 #define	CPUID_TM	0x20000000	/* thermal monitor (TCC) */
-#define	CPUID_IA64	0x40000000	/* IA-64 architecture */
+#define	CPUID_B30	0x40000000	/* reserved */
 #define	CPUID_SBF	0x80000000	/* signal break on FERR */
 
 #define	CPUIDECX_SSE3	0x00000001	/* streaming SIMD extensions #3 */

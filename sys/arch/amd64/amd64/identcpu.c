@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.6 2005/08/20 00:33:59 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.7 2006/03/07 05:21:40 jsg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -81,7 +81,6 @@ const struct {
 	{ CPUID_SS,	"SS" },
 	{ CPUID_HTT,	"HTT" },
 	{ CPUID_TM,	"TM" },
-	{ CPUID_IA64,	"IA64" },
 	{ CPUID_SBF,	"SBF" }
 }, cpu_ecpuid_features[] = {
 	{ CPUID_MPC,	"MPC" },
