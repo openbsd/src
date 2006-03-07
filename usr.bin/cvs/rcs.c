@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.135 2006/03/07 01:43:18 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.136 2006/03/07 16:48:53 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2554,6 +2554,14 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 			tb = localtime(&now);
 			tb->tm_hour += ((int)tb->tm_gmtoff / 3600);
 		} else {
+			switch (*timezone_flag) {
+			case '-':
+			case '+':
+				break;
+			default:
+				fatal("not a known time zone");
+			}
+
 			h = timezone_flag;
 			if ((m = strrchr(timezone_flag, ':')) != NULL)
 				*(m++) = '\0';
