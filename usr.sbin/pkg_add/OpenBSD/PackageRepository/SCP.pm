@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SCP.pm,v 1.4 2006/03/07 14:00:48 espie Exp $
+# $OpenBSD: SCP.pm,v 1.5 2006/03/07 14:18:51 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -109,6 +109,9 @@ sub pkg_copy
 
 	$SIG{'USR1'} = sub {
 		close($in);
+		if (defined $object->{tempname}) {
+			unlink $object->{tempname};
+		}
 		kill USR1 => $object->{parent};
 		exit(1);
 	};
@@ -182,7 +185,7 @@ sub close
 	# XXX we have to make sure the grand-child is dead.
 	if (defined $object->{pid2}) {
 		my $received = 0;
-		local $SIG{'USR1'} = sub { print STDERR "Received USR1\n"; $received = 1; };
+		local $SIG{'USR1'} = sub { $received = 1; };
 		kill USR1 => $object->{pid2};
 		while (!$received) {
 			sleep 0.01;
