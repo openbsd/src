@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.7 2006/03/07 14:18:51 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.8 2006/03/07 15:00:15 bernd Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -362,7 +362,7 @@ sub pkg_copy
 	my ($copy, $filename) = File::Temp::tempfile($template,
 	    DIR => $dir) or die "Can't write copy to cache";
 	chmod 0644, $filename;
-	$object->{tempname] = $filename;
+	$object->{tempname} = $filename;
 	my $handler = sub {
 		my ($sig) = @_;
 		unlink $filename;
