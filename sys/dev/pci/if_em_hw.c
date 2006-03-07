@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.14 2005/11/26 14:31:26 krw Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.15 2006/03/07 09:21:55 jmc Exp $ */
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
  */
@@ -1247,7 +1247,7 @@ em_copper_link_igp_setup(struct em_hw *hw)
         if(hw->dsp_config_state == em_dsp_config_activated)
             hw->dsp_config_state = em_dsp_config_enabled;
 
-        /* when autonegotiation advertisment is only 1000Mbps then we
+        /* when autonegotiation advertisement is only 1000Mbps then we
           * should disable SmartSpeed and enable Auto MasterSlave
           * resolution as hardware default. */
         if(hw->autoneg_advertised == ADVERTISE_1000_FULL) {
@@ -5881,7 +5881,7 @@ em_set_phy_mode(struct em_hw *hw)
  *
  * This function sets the lplu state according to the active flag.  When
  * activating lplu this function also disables smart speed and vise versa.
- * lplu will not be activated unless the device autonegotiation advertisment
+ * lplu will not be activated unless the device autonegotiation advertisement
  * meets standards of either 10 or 10/100 or 10/100/1000 at all duplexes.
  * hw: Struct containing variables accessed by shared code
  * active - true to enable lplu false to disable lplu.
@@ -5994,7 +5994,7 @@ em_set_d3_lplu_state(struct em_hw *hw,
  *
  * This function sets the lplu d0 state according to the active flag.  When
  * activating lplu this function also disables smart speed and vise versa.
- * lplu will not be activated unless the device autonegotiation advertisment
+ * lplu will not be activated unless the device autonegotiation advertisement
  * meets standards of either 10 or 10/100 or 10/100/1000 at all duplexes.
  * hw: Struct containing variables accessed by shared code
  * active - true to enable lplu false to disable lplu.

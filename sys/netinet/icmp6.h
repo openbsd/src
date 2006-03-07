@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.29 2004/02/15 11:16:08 markus Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.30 2006/03/07 09:21:55 jmc Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 /*
@@ -111,9 +111,9 @@ struct icmp6_hdr {
 #endif
 
 #define ND_ROUTER_SOLICIT		133	/* router solicitation */
-#define ND_ROUTER_ADVERT		134	/* router advertisment */
+#define ND_ROUTER_ADVERT		134	/* router advertisement */
 #define ND_NEIGHBOR_SOLICIT		135	/* neighbor solicitation */
-#define ND_NEIGHBOR_ADVERT		136	/* neighbor advertisment */
+#define ND_NEIGHBOR_ADVERT		136	/* neighbor advertisement */
 #define ND_REDIRECT			137	/* redirect */
 
 #define ICMP6_ROUTER_RENUMBERING	138	/* router renumbering */
