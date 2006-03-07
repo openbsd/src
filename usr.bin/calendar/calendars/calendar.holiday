@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.16 2005/10/07 18:59:15 mickey Exp $
+ * $OpenBSD: calendar.holiday,v 1.17 2006/03/07 21:22:55 mickey Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -88,7 +88,7 @@
 03/17	Evacuation Day in Suffolk County, Massachusetts
 03/17	St. Patrick's Day
 03/19	St. Joseph's Day in Colombia, Costa Rica, Holy See, Liechtenstein,
-	San Marino, Spain, Venezuela
+	Bavaria, San Marino, Spain, Venezuela
 03/19	Tree Planting Day in Lestho
 03/20	Independence Day in Tunsia
 03/20	Youth Day in Oklahoma

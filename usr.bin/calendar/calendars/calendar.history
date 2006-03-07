@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.44 2005/12/13 23:39:21 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.45 2006/03/07 21:22:55 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -129,8 +129,9 @@
 04/20	Supreme Court unanimously rules in favor of busing, 1971
 04/21	Lyrid meteor shower
 04/23	Hank Aaron hits his first home run, 1954
-04/23	Reinheitsgebot enacted by the bavarian dukes Wilhelm IV. and Ludwig X.,
-	1516
+04/23	Bavarian co-rulers Duke Wilhelm IV and Duke Ludwig X proclaimed the
+	weighty and consequential Bavarian Beer Purity Law
+	(later Reinheitsgebot), 1516
 04/26	William Shakespeare baptized in Stratford-on-Avon, England, 1564,
 	birthdate less certain
 04/27	Magellan killed in Philippines, 1521
@@ -376,6 +377,8 @@
 10/11	The first steam powered ferry ran between New York and Hoboken, 1811
 10/11	The second Vatican Ecumenical Council opens in Rome, 1962
 10/12	Bahama Natives discover Columbus of Europe lost on their shores, 1492
+10/12	Bavarian Crown Prince Ludwig married Princess Therese of
+	Saxony-Hildburghausen, Oktoberfest, 1810
 10/12	Khrushchev pounds his desk with shoe during a speech to the UN, 1960
 10/12	Man O'War's last race, 1920
 10/13	Italy declares war on Germany, 1943
