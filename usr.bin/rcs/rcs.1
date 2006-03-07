@@ -1,6 +1,7 @@
-.\"	$OpenBSD: rcs.1,v 1.21 2006/03/06 14:37:23 jmc Exp $
+.\"	$OpenBSD: rcs.1,v 1.22 2006/03/07 11:17:07 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
+.\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -48,10 +49,29 @@
 .Op Fl x Ns Ar suffixes
 .Ar file ...
 .Sh DESCRIPTION
+Revision Control System (RCS) is a software tool which lets people
+manage multiple revisions of text that is revised frequently, such as
+source code or documentation.
+.Pp
 The
 .Nm
 program is used to create RCS files or manipulate the contents of existing
 files.
+A set of helper tools is also available:
+specific revisions of files may be checked in or out, using
+.Xr ci 1
+and
+.Xr co 1 ;
+differences between revisions viewed or merged, using
+.Xr rcsdiff 1
+and
+.Xr rcsmerge 1 ;
+and information about RCS files and keyword strings displayed using
+.Xr rlog 1
+and
+.Xr ident 1 .
+See the respective manual pages for more information
+about these utilities.
 .Pp
 The following options are supported:
 .Bl -tag -width "-e usersXX"
@@ -185,6 +205,72 @@ character.
 If set, this variable should contain a list of space-delimited options that
 are prepended to the argument list.
 .El
+.Sh EXAMPLES
+One of the most common uses of
+.Nm
+is to track changes to a document containing source code.
+.Pp
+As an example,
+we'll look at a user wishing to track source changes to a file
+.Ar foo.c .
+.Pp
+If the
+.Ar RCS
+directory does not exist yet, create it as follows and invoke the
+check-in command:
+.Bd -literal -offset indent
+$ mkdir RCS
+$ ci foo.c
+.Ed
+.Pp
+This command creates an RCS file
+.Ar foo.c,v
+in the
+.Ar RCS
+directory, stores
+.Ar foo.c
+into it as revision 1.1, and deletes
+.Ar foo.c .
+.Xr ci 1
+will prompt for a description of the file to be entered.
+Whenever a newly created (or updated) file is checked-in,
+.Xr ci 1
+will prompt for a log message to be entered which should summarize
+the changes made to the file.
+That log message will be added to the RCS file along with the new revision.
+.Pp
+The
+.Xr co 1
+command can now be used to obtain a copy of the checked-in
+.Ar foo.c,v
+file:
+.Pp
+.Dl $ co foo.c
+.Pp
+This command checks the file out in shared or unlocked mode.
+If a user wants to have exclusive access to the file to make changes to it,
+it needs to be checked out in locked mode using the
+.Fl l
+option of the
+.Xr co 1
+command.
+Only one concurrent locked checkout of a revision is permitted.
+.Pp
+Once changes have been made to the
+.Pa foo.c
+file, and before checking the file in, the
+.Xr rcsdiff 1
+command can be used to view changes between the working file
+and the most recently checked-in revision:
+.Pp
+.Dl $ rcsdiff -u foo.c
+.Pp
+The
+.Fl u
+option produces a unified diff.
+See
+.Xr diff 1
+for more information.
 .Sh SEE ALSO
 .Xr ci 1 ,
 .Xr co 1 ,
