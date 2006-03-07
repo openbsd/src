@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.323 2006/02/20 17:19:54 stevesk Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.324 2006/03/07 09:07:40 djm Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -1941,6 +1941,7 @@ do_ssh2_kex(void)
 	kex->kex[KEX_DH_GRP1_SHA1] = kexdh_server;
 	kex->kex[KEX_DH_GRP14_SHA1] = kexdh_server;
 	kex->kex[KEX_DH_GEX_SHA1] = kexgex_server;
+	kex->kex[KEX_DH_GEX_SHA256] = kexgex_server;
 	kex->server = 1;
 	kex->client_version_string=client_version_string;
 	kex->server_version_string=server_version_string;
