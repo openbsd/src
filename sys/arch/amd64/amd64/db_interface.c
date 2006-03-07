@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.7 2006/03/05 14:46:45 marco Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.8 2006/03/07 23:15:02 marco Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -377,6 +377,7 @@ x86_ipi_db(struct cpu_info *ci)
 
 #if NACPI > 0
 struct db_command db_acpi_cmds[] = {
+	{ "disasm",	db_acpi_disasm,		CS_OWN,	NULL },
 	{ "tree",	db_acpi_tree,		0,	NULL },
 	{ NULL,		NULL,			0,	NULL }
 };
