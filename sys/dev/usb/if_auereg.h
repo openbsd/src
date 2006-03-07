@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_auereg.h,v 1.7 2004/05/19 11:37:00 brad Exp $ */
+/*	$OpenBSD: if_auereg.h,v 1.8 2006/03/07 04:41:19 krw Exp $ */
 /*	$NetBSD: if_auereg.h,v 1.16 2001/10/10 02:14:17 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -235,17 +235,11 @@ struct aue_softc {
 #elif defined(__NetBSD__)
 	struct ethercom		aue_ec;
 	struct mii_data		aue_mii;
-#if NRND > 0
-	rndsource_element_t	rnd_source;
-#endif
 #define GET_IFP(sc) (&(sc)->aue_ec.ec_if)
 #define GET_MII(sc) (&(sc)->aue_mii)
 #elif defined(__OpenBSD__)
 	struct arpcom		arpcom;
 	struct mii_data		aue_mii;
-#if NRND > 0
-	rndsource_element_t	rnd_source;
-#endif
 #define GET_IFP(sc) (&(sc)->arpcom.ac_if)
 #define GET_MII(sc) (&(sc)->aue_mii)
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.22 2006/01/29 03:22:52 brad Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.23 2006/03/07 04:41:19 krw Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,9 +63,6 @@
 #include <sys/socket.h>
 
 #include <sys/device.h>
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -159,10 +156,6 @@ struct upl_softc {
 	USBBASEDEVICE		sc_dev;
 
 	struct ifnet		sc_if;
-#if NRND > 0
-	rndsource_element_t	sc_rnd_source;
-#endif
-
 	usb_callout_t		sc_stat_ch;
 
 	usbd_device_handle	sc_udev;
@@ -335,11 +328,6 @@ USB_ATTACH(upl)
 #if defined(__NetBSD__) && NBPFILTER > 0
 	bpfattach(ifp, DLT_RAW, 0);
 #endif
-#if NRND > 0
-	rnd_attach_source(&sc->sc_rnd_source, USBDEVNAME(sc->sc_dev),
-	    RND_TYPE_NET, 0);
-#endif
-
 	sc->sc_attached = 1;
 	splx(s);
 
@@ -367,10 +355,6 @@ USB_DETACH(upl)
 
 	if (ifp->if_flags & IFF_RUNNING)
 		upl_stop(sc);
-
-#if NRND > 0
-	rnd_detach_source(&sc->sc_rnd_source);
-#endif
 
 	if_detach(ifp);
 

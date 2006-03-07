@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urlreg.h,v 1.6 2004/09/29 09:51:07 dlg Exp $ */
+/*	$OpenBSD: if_urlreg.h,v 1.7 2006/03/07 04:41:19 krw Exp $ */
 /*	$NetBSD: if_urlreg.h,v 1.1 2002/03/28 21:09:11 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -181,9 +181,6 @@ struct url_softc {
 	struct lock		sc_mii_lock;
 	int			sc_link;
 #define	sc_media url_mii.mii_media
-#if NRND > 0
-	rndsource_element_t	rnd_source;
-#endif
 	struct url_cdata	sc_cdata;
 
 	int                     sc_attached;

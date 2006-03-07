@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cuereg.h,v 1.6 2004/05/19 11:37:00 brad Exp $ */
+/*	$OpenBSD: if_cuereg.h,v 1.7 2006/03/07 04:41:19 krw Exp $ */
 /*	$NetBSD: if_cuereg.h,v 1.14 2001/01/21 22:09:24 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -172,9 +172,6 @@ struct cue_softc {
 #define GET_IFP(sc) (&(sc)->arpcom.ac_if)
 #elif defined(__NetBSD__)
 	struct ethercom		cue_ec;
-#if NRND > 0
-	rndsource_element_t	rnd_source;
-#endif
 #define GET_IFP(sc) (&(sc)->cue_ec.ec_if)
 #endif
 

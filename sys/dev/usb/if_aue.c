@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.43 2006/01/29 03:22:52 brad Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.44 2006/03/07 04:41:19 krw Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -98,9 +98,6 @@
 #include <sys/socket.h>
 
 #include <sys/device.h>
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #if defined(__NetBSD__)
@@ -847,10 +844,6 @@ USB_ATTACH(aue)
 	/* Attach the interface. */
 	if_attach(ifp);
 	Ether_ifattach(ifp, eaddr);
-#if NRND > 0
-	rnd_attach_source(&sc->rnd_source, USBDEVNAME(sc->aue_dev),
-	    RND_TYPE_NET, 0);
-#endif
 
 	usb_callout_init(sc->aue_stat_ch);
 
@@ -889,11 +882,6 @@ USB_DETACH(aue)
 	if (ifp->if_flags & IFF_RUNNING)
 		aue_stop(sc);
 
-#if defined(__NetBSD__)
-#if NRND > 0
-	rnd_detach_source(&sc->rnd_source);
-#endif
-#endif /* __NetBSD__ */
 	mii_detach(&sc->aue_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	ifmedia_delete_instance(&sc->aue_mii.mii_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);

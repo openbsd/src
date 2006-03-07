@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.28 2006/01/29 03:22:52 brad Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.29 2006/03/07 04:41:19 krw Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -77,9 +77,6 @@
 #include <sys/socket.h>
 
 #include <sys/device.h>
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #if defined(__NetBSD__)
@@ -559,10 +556,6 @@ USB_ATTACH(cue)
 	/* Attach the interface. */
 	if_attach(ifp);
 	Ether_ifattach(ifp, eaddr);
-#if NRND > 0
-	rnd_attach_source(&sc->rnd_source, USBDEVNAME(sc->cue_dev),
-	    RND_TYPE_NET, 0);
-#endif
 
 	usb_callout_init(sc->cue_stat_ch);
 
@@ -601,11 +594,6 @@ USB_DETACH(cue)
 	if (ifp->if_flags & IFF_RUNNING)
 		cue_stop(sc);
 
-#if defined(__NetBSD__)
-#if NRND > 0
-	rnd_detach_source(&sc->rnd_source);
-#endif
-#endif /* __NetBSD__ */
 	ether_ifdetach(ifp);
 
 	if_detach(ifp);

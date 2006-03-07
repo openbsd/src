@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.15 2006/02/06 17:29:11 jmc Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.16 2006/03/07 04:41:19 krw Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -57,9 +57,6 @@
 #include <sys/socket.h>
 
 #include <sys/device.h>
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -295,10 +292,6 @@ USB_ATTACH(udav)
 	if_attach(ifp);
 	Ether_ifattach(ifp, eaddr);
 
-#if NRND > 0
-	rnd_attach_source(&sc->rnd_source, devname, RND_TYPE_NET, 0);
-#endif
-
 	usb_callout_init(sc->sc_stat_ch);
 	sc->sc_attached = 1;
 	splx(s);
@@ -340,9 +333,6 @@ USB_DETACH(udav)
 	if (ifp->if_flags & IFF_RUNNING)
 		udav_stop(GET_IFP(sc), 1);
 
-#if NRND > 0
-	rnd_detach_source(&sc->rnd_source);
-#endif
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);

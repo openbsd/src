@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.h,v 1.4 2002/11/11 02:32:32 nate Exp $	*/
+/*	$OpenBSD: uhidev.h,v 1.5 2006/03/07 04:41:19 krw Exp $	*/
 /*	$NetBSD: uhidev.h,v 1.3 2002/10/08 09:56:17 dan Exp $	*/
 
 /*
@@ -42,9 +42,6 @@
 #include "locators.h"
 #include "rnd.h"
 
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
 #endif
 
 #define uhidevcf_reportid cf_loc[UHIDBUSCF_REPORTID]
@@ -78,9 +75,6 @@ struct uhidev {
 	int sc_in_rep_size;
 #define	UHIDEV_OPEN	0x01	/* device is open */
 	void (*sc_intr)(struct uhidev *, void *, u_int);
-#if defined(__NetBSD__) && NRND > 0
-        rndsource_element_t     rnd_source;
-#endif
 };
 
 struct uhidev_attach_arg {

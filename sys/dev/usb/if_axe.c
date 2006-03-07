@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.45 2006/01/29 03:22:52 brad Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.46 2006/03/07 04:41:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -93,9 +93,6 @@
 #include <sys/socket.h>
 
 #include <sys/device.h>
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -699,10 +696,6 @@ USB_ATTACH(axe)
 	/* Attach the interface. */
 	if_attach(ifp);
 	Ether_ifattach(ifp, eaddr);
-#if NRND > 0
-	rnd_attach_source(&sc->rnd_source, USBDEVNAME(sc->axe_dev),
-	    RND_TYPE_NET, 0);
-#endif
 
 	usb_callout_init(sc->axe_stat_ch);
 
@@ -757,11 +750,6 @@ USB_DETACH(axe)
 	if (ifp->if_flags & IFF_RUNNING)
 		axe_stop(sc);
 
-#if defined(__NetBSD__)
-#if NRND > 0
-	rnd_detach_source(&sc->rnd_source);
-#endif
-#endif /* __NetBSD__ */
 	mii_detach(&sc->axe_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	ifmedia_delete_instance(&sc->axe_mii.mii_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);

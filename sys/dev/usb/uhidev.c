@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.12 2006/01/06 03:36:32 brad Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.13 2006/03/07 04:41:19 krw Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -261,11 +261,6 @@ USB_ATTACH(uhidev)
 					USB_ATTACH_ERROR_RETURN;
 				}
 #endif
-#if defined(__NetBSD__) && NRND > 0
-				rnd_attach_source(&dev->rnd_source, 
-						  USBDEVNAME(dev->sc_dev), 
-						  RND_TYPE_TTY, 0);
-#endif
 			}
 		}
 	}
@@ -361,9 +356,6 @@ USB_DETACH(uhidev)
 	rv = 0;
 	for (i = 0; i < sc->sc_nrepid; i++) {
 		if (sc->sc_subdevs[i] != NULL) {
-#if defined(__NetBSD__) && NRND > 0
-			rnd_detach_source(&sc->sc_subdevs[i]->rnd_source);
-#endif
 			rv |= config_detach(&sc->sc_subdevs[i]->sc_dev, flags);
 			sc->sc_subdevs[i] = NULL;
 		}
@@ -426,9 +418,6 @@ uhidev_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 	if (scd->sc_in_rep_size != cc)
 		printf("%s: bad input length %d != %d\n",USBDEVNAME(sc->sc_dev),
 		       scd->sc_in_rep_size, cc);
-#endif
-#if defined(__NetBSD__) && NRND > 0
-	rnd_add_uint32(&scd->rnd_source, (uintptr_t)(sc->sc_ibuf));
 #endif
 	scd->sc_intr(scd, p, cc);
 }

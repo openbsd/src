@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udavreg.h,v 1.3 2005/01/30 13:22:58 dlg Exp $ */
+/*	$OpenBSD: if_udavreg.h,v 1.4 2006/03/07 04:41:19 krw Exp $ */
 /*	$NetBSD: if_udavreg.h,v 1.2 2003/09/04 15:17:39 tsutsui Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
@@ -191,9 +191,6 @@ struct udav_softc {
 	struct lock		sc_mii_lock;
 	int			sc_link;
 #define	sc_media udav_mii.mii_media
-#if NRND > 0
-	rndsource_element_t	rnd_source;
-#endif
 	struct udav_cdata	sc_cdata;
 
 	int                     sc_attached;

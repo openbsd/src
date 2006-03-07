@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.29 2006/02/06 17:29:11 jmc Exp $ */
+/*	$OpenBSD: if_url.c,v 1.30 2006/03/07 04:41:19 krw Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -62,9 +62,6 @@
 #include <sys/socket.h>
 
 #include <sys/device.h>
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -332,10 +329,6 @@ USB_ATTACH(url)
 	if_attach(ifp);
 	Ether_ifattach(ifp, eaddr);
 
-#if NRND > 0
-	rnd_attach_source(&sc->rnd_source, devname, RND_TYPE_NET, 0);
-#endif
-
 	usb_callout_init(sc->sc_stat_ch);
 	sc->sc_attached = 1;
 	splx(s);
@@ -378,9 +371,6 @@ USB_DETACH(url)
 	if (ifp->if_flags & IFF_RUNNING)
 		url_stop(GET_IFP(sc), 1);
 
-#if NRND > 0
-	rnd_detach_source(&sc->rnd_source);
-#endif
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
