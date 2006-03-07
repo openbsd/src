@@ -1,10 +1,10 @@
-#	$OpenBSD: inter.phone,v 1.34 2005/06/23 22:19:34 pedro Exp $
+#	$OpenBSD: inter.phone,v 1.35 2006/03/07 15:04:47 grange Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
 # Country Code: City Code: City: Country
 1:718:Brooklyn:USA
-7:095:Moscow:Russia
+7:495:Moscow:Russia
 7:3832:Novosibirsk:Russia
 7:812:St. Peterburg:Russia
 7:::Kazakhstan
