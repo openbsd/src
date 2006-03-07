@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.64 2006/02/25 15:53:15 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.65 2006/03/07 15:06:43 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -899,7 +899,7 @@ where
 is an AS number and
 .Ar local
 is a locally-significant number between zero and
-.Li 0xffff .
+.Li 65535 .
 Alternately, well-known communities may be specified by name:
 .Ic NO_EXPORT ,
 .Ic NO_ADVERTISE ,
