@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.8,v 1.27 2006/01/28 17:08:13 sturm Exp $
+.\"	$OpenBSD: apm.8,v 1.28 2006/03/07 05:24:36 deraadt Exp $
 .\"
 .\" Copyright (c) 1996 John T. Kohl
 .\" All rights reserved.
@@ -56,6 +56,18 @@ The options are as follows:
 Set
 .Xr apmd 8
 to automatic performance adjustment mode.
+In this mode, when CPU idle time falls below 10%,
+or if the AC power is connected and the battery is more than 15% charged,
+.Nm
+raises
+.Va hw.setperf
+as much as possible.
+Otherwise, when the CPU idle time
+is above 30% and the system is running on battery power,
+.Nm
+lowers
+.Va hw.setperf
+as much as possible to reduce power consumption.
 .It Fl a
 Display the external charger (A/C status).
 0 means disconnected, 1
@@ -68,6 +80,17 @@ critical, 3 means charging, 4 means absent, and 255 means unknown.
 Set
 .Xr apmd 8
 to cool running performance adjustment mode.
+In this mode, when CPU idle time falls below
+10%,
+.Nm
+raises
+.Va hw.setperf
+as much as necessary.
+Otherwise, when idle time is above 30%
+.Nm
+reduces
+.Va hw.setperf
+as much as possible to reduce heat, noise, and power comsumption.
 .It Fl f Ar sockname
 Set the name of the socket via which to contact
 .Xr apmd 8
