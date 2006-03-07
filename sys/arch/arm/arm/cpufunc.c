@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.4 2005/12/31 22:13:06 drahn Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.5 2006/03/07 20:20:28 miod Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -1576,10 +1576,6 @@ parse_cpu_options(args, optlist, cpuctrl)
 #if defined (CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) \
 	|| defined(CPU_ARM8)
 struct cpu_option arm678_options[] = {
-#ifdef COMPAT_12
-	{ "nocache",		IGN, BIC, CPU_CONTROL_IDC_ENABLE },
-	{ "nowritebuf",		IGN, BIC, CPU_CONTROL_WBUF_ENABLE },
-#endif	/* COMPAT_12 */
 	{ "cpu.cache",		BIC, OR,  CPU_CONTROL_IDC_ENABLE },
 	{ "cpu.nocache",	OR,  BIC, CPU_CONTROL_IDC_ENABLE },
 	{ "cpu.writebuf",	BIC, OR,  CPU_CONTROL_WBUF_ENABLE },
@@ -1644,9 +1640,6 @@ struct cpu_option arm7_options[] = {
 	{ "arm7.nocache",	OR,  BIC, CPU_CONTROL_IDC_ENABLE },
 	{ "arm7.writebuf",	BIC, OR,  CPU_CONTROL_WBUF_ENABLE },
 	{ "arm7.nowritebuf",	OR,  BIC, CPU_CONTROL_WBUF_ENABLE },
-#ifdef COMPAT_12
-	{ "fpaclk2",		BIC, OR,  CPU_CONTROL_CPCLK },
-#endif	/* COMPAT_12 */
 	{ "arm700.fpaclk",	BIC, OR,  CPU_CONTROL_CPCLK },
 	{ NULL,			IGN, IGN, 0 }
 };
@@ -1693,9 +1686,6 @@ struct cpu_option arm7tdmi_options[] = {
 	{ "arm7.nocache",	OR,  BIC, CPU_CONTROL_IDC_ENABLE },
 	{ "arm7.writebuf",	BIC, OR,  CPU_CONTROL_WBUF_ENABLE },
 	{ "arm7.nowritebuf",	OR,  BIC, CPU_CONTROL_WBUF_ENABLE },
-#ifdef COMPAT_12
-	{ "fpaclk2",		BIC, OR,  CPU_CONTROL_CPCLK },
-#endif	/* COMPAT_12 */
 	{ "arm700.fpaclk",	BIC, OR,  CPU_CONTROL_CPCLK },
 	{ NULL,			IGN, IGN, 0 }
 };
@@ -1732,9 +1722,6 @@ struct cpu_option arm8_options[] = {
 	{ "arm8.nocache",	OR,  BIC, CPU_CONTROL_IDC_ENABLE },
 	{ "arm8.writebuf",	BIC, OR,  CPU_CONTROL_WBUF_ENABLE },
 	{ "arm8.nowritebuf",	OR,  BIC, CPU_CONTROL_WBUF_ENABLE },
-#ifdef COMPAT_12
-	{ "branchpredict", 	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
-#endif	/* COMPAT_12 */
 	{ "cpu.branchpredict", 	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
 	{ "arm8.branchpredict",	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
 	{ NULL,			IGN, IGN, 0 }
@@ -1920,10 +1907,6 @@ arm10_setup(args)
 
 #ifdef CPU_SA110
 struct cpu_option sa110_options[] = {
-#ifdef COMPAT_12
-	{ "nocache",		IGN, BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
-	{ "nowritebuf",		IGN, BIC, CPU_CONTROL_WBUF_ENABLE },
-#endif	/* COMPAT_12 */
 	{ "cpu.cache",		BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
 	{ "cpu.nocache",	OR,  BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
 	{ "sa110.cache",	BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
@@ -1981,10 +1964,6 @@ sa110_setup(args)
 
 #if defined(CPU_SA1100) || defined(CPU_SA1110)
 struct cpu_option sa11x0_options[] = {
-#ifdef COMPAT_12
-	{ "nocache",		IGN, BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
-	{ "nowritebuf",		IGN, BIC, CPU_CONTROL_WBUF_ENABLE },
-#endif	/* COMPAT_12 */
 	{ "cpu.cache",		BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
 	{ "cpu.nocache",	OR,  BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
 	{ "sa11x0.cache",	BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
@@ -2091,10 +2070,6 @@ ixp12x0_setup(args)
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(CPU_XSCALE_PXA2X0) || defined(CPU_XSCALE_IXP425)
 struct cpu_option xscale_options[] = {
-#ifdef COMPAT_12
-	{ "branchpredict", 	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
-	{ "nocache",		IGN, BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
-#endif	/* COMPAT_12 */
 	{ "cpu.branchpredict", 	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
 	{ "cpu.cache",		BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
 	{ "cpu.nocache",	OR,  BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },

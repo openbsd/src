@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.5 2005/12/13 00:18:18 jsg Exp $
+#	$OpenBSD: genassym.cf,v 1.6 2006/03/07 20:20:28 miod Exp $
 #	$NetBSD: genassym.cf,v 1.27 2003/11/04 10:33:16 dsl Exp$
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -109,7 +109,6 @@ member	PCB_LR			pcb_un.un_32.pcb32_lr
 member	PCB_PC			pcb_un.un_32.pcb32_pc
 member	PCB_UND_SP		pcb_un.un_32.pcb32_und_sp
 member	pcb_onfault
-export	PCB_NOALIGNFLT
 # XXX use USER_SIZEOF in new code whenever possible
 define	USER_SIZE		sizeof(struct user)
 
@@ -166,9 +165,6 @@ struct	cpu_info
 ifdef MULTIPROCESSOR
 member	ci_curlwp
 member	ci_curpcb
-endif
-if defined(COMPAT_15) && defined(EXEC_AOUT)
-member	ci_ctrl
 endif
 
 # Constants required for in_cksum() and friends.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.4 2005/11/09 18:08:37 martin Exp $	*/
+/*	$OpenBSD: mem.c,v 1.5 2006/03/07 20:20:28 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.11 2003/10/16 12:02:58 jdolecek Exp $	*/
 
 /*
@@ -210,9 +210,6 @@ mmrw(dev, uio, flags)
 				uio->uio_resid = 0;
 			return (0);
 
-#ifdef COMPAT_16
-		case _DEV_ZERO_oARM:
-#endif
 		case DEV_ZERO:
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;
