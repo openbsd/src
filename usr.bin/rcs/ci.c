@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.110 2006/03/07 01:40:52 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.111 2006/03/07 01:47:42 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -88,7 +88,7 @@ checkin_usage(void)
 	    "usage: ci [-jMNqV] [-d[date]] [-f[rev]] [-i[rev]] [-j[rev]]\n"
 	    "	  [-k[rev]] [-l[rev]] [-M[rev]] [-mmsg] [-Nsymbol]\n"
 	    "	  [-nsymbol] [-r[rev]] [-sstate] [-tfile|str] [-u[rev]]\n"
-	    "	  [-wusername] [-xsuffixes] file ...\n");
+	    "	  [-wusername] [-xsuffixes] [-ztz] file ...\n");
 }
 
 
