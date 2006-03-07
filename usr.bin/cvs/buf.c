@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.34 2006/03/06 15:04:17 niallo Exp $	*/
+/*	$OpenBSD: buf.c,v 1.35 2006/03/07 17:22:08 xsa Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -95,7 +95,7 @@ cvs_buf_load(const char *path, u_int flags)
 	BUF *buf;
 
 	if ((fd = open(path, O_RDONLY, 0600)) == -1) {
-		cvs_log(LP_ERRNO, "%s: %s", path, strerror(errno));
+		cvs_log(LP_ERRNO, "%s", path);
 		return (NULL);
 	}
 
