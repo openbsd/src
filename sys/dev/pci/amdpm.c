@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.12 2006/01/15 10:28:17 grange Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.13 2006/03/07 11:56:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -176,12 +176,12 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 		printf(": PMxx space isn't enabled\n");
 		return;
 	}
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NVIDIA) 
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NVIDIA)
 		base = NFPM_PMPTR;
-	else  
+	else
 		/* PCI_VENDOR_AMD */
 		base = AMDPM_PMPTR;
-		
+
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, base);
 	if (bus_space_map(sc->sc_iot, AMDPM_PMBASE(reg), AMDPM_PMSIZE,
 	    0, &sc->sc_ioh)) {
@@ -206,25 +206,25 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC768_PMC ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_8111_PMC) {
 		if ((cfg_reg & AMDPM_RNGEN) ==0) {
-			pci_conf_write(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG, 
+			pci_conf_write(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG,
 			    cfg_reg | AMDPM_RNGEN);
-			cfg_reg = pci_conf_read(pa->pa_pc, pa->pa_tag, 
+			cfg_reg = pci_conf_read(pa->pa_pc, pa->pa_tag,
 			    AMDPM_CONFREG);
 		}
 		if (cfg_reg & AMDPM_RNGEN) {
 			/* Check to see if we can read data from the RNG. */
-			(void) bus_space_read_4(sc->sc_iot, sc->sc_ioh, 
+			(void) bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 			    AMDPM_RNGDATA);
-		        for (i = 1000; i--; ) {
-				if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, 
-				    AMDPM_RNGSTAT) & AMDPM_RNGDONE) 
+			for (i = 1000; i--; ) {
+				if (bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+				    AMDPM_RNGSTAT) & AMDPM_RNGDONE)
 					break;
 				DELAY(10);
 			}
-			if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, 
+			if (bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 			    AMDPM_RNGSTAT) & AMDPM_RNGDONE) {
 				printf(": rng active");
-				timeout_set(&sc->sc_rnd_ch, amdpm_rnd_callout, 
+				timeout_set(&sc->sc_rnd_ch, amdpm_rnd_callout,
 				    sc);
 				amdpm_rnd_callout(sc);
 			}
@@ -322,7 +322,7 @@ amdpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		if (!(st & AMDPM_SMBSTAT_BSY))
 			break;
 		DELAY(AMDPM_SMBUS_DELAY);
-	}			
+	}
 	DPRINTF(("%s: exec: st 0x%b\n", sc->sc_dev.dv_xname, st,
 	    AMDPM_SMBSTAT_BITS));
 	if (st & AMDPM_SMBSTAT_BSY)
