@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.12 2005/04/20 19:16:34 deraadt Exp $	*/
+/*	$OpenBSD: touch.c,v 1.13 2006/03/07 11:49:40 henning Exp $	*/
 /*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
 
 /*
@@ -30,19 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
-#endif
-static char rcsid[] = "$OpenBSD: touch.c,v 1.12 2005/04/20 19:16:34 deraadt Exp $";
-#endif /* not lint */
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -58,20 +45,20 @@ static char rcsid[] = "$OpenBSD: touch.c,v 1.12 2005/04/20 19:16:34 deraadt Exp 
 #include <tzfile.h>
 #include <unistd.h>
 
-void	stime_arg1(char *, struct timeval *);
-void	stime_arg2(char *, int, struct timeval *);
-void	stime_file(char *, struct timeval *);
-void	usage(void);
+void		stime_arg1(char *, struct timeval *);
+void		stime_arg2(char *, int, struct timeval *);
+void		stime_file(char *, struct timeval *);
+__dead void	usage(void);
 
 int
 main(int argc, char *argv[])
 {
-	struct stat sb;
-	struct timeval tv[2];
-	int aflag, cflag, mflag, ch, fd, len, rval, timeset;
-	char *p;
+	struct	 stat sb;
+	struct	 timeval tv[2];
+	int	 aflag, cflag, mflag, ch, fd, len, rval, timeset;
+	char	*p;
 
-	setlocale(LC_ALL, "");
+	(void)setlocale(LC_ALL, "");
 
 	aflag = cflag = mflag = timeset = 0;
 	if (gettimeofday(&tv[0], NULL))
@@ -183,10 +170,10 @@ main(int argc, char *argv[])
 void
 stime_arg1(char *arg, struct timeval *tvp)
 {
-	struct tm *t;
-	time_t tmptime;
-	int yearset;
-	char *p;
+	struct tm	*t;
+	time_t		 tmptime;
+	int		 yearset;
+	char		*p;
 					/* Start with the current time. */
 	tmptime = tvp[0].tv_sec;
 	if ((t = localtime(&tmptime)) == NULL)
@@ -242,8 +229,8 @@ terr:		errx(1,
 void
 stime_arg2(char *arg, int year, struct timeval *tvp)
 {
-	struct tm *t;
-	time_t tmptime;
+	struct tm	*t;
+	time_t		 tmptime;
 					/* Start with the current time. */
 	tmptime = tvp[0].tv_sec;
 	if ((t = localtime(&tmptime)) == NULL)
@@ -275,7 +262,7 @@ stime_arg2(char *arg, int year, struct timeval *tvp)
 void
 stime_file(char *fname, struct timeval *tvp)
 {
-	struct stat sb;
+	struct stat	sb;
 
 	if (stat(fname, &sb))
 		err(1, "%s", fname);
@@ -286,7 +273,9 @@ stime_file(char *fname, struct timeval *tvp)
 __dead void
 usage(void)
 {
+	extern char	*__progname;
+
 	(void)fprintf(stderr,
-	    "usage: touch [-acm] [-r file] [-t time] file ...\n");
+	    "usage: %s [-acm] [-r file] [-t time] file ...\n", __progname);
 	exit(1);
 }
