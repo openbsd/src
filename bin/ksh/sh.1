@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.71 2005/10/07 09:17:38 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.72 2006/03/07 09:31:01 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -88,15 +88,13 @@ Restricted shell.
 A shell is
 .Dq restricted
 if this
-option is used or if either the basename the shell was invoked
-with or the
+option is used;
+if the basename the shell was invoked with was
+.Dq rsh ;
+or if the
 .Ev SHELL
-parameter match the pattern
-.Dq *r*sh
-(e.g.\&
-.Nm rsh ,
-.Nm rksh ,
-.Nm rpdksh ) .
+parameter is set to
+.Dq rsh .
 The following restrictions come into effect after the shell processes any
 profile and
 .Ev ENV
