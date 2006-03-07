@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.340 2006/02/22 22:16:05 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.341 2006/03/07 05:18:08 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1112,6 +1112,7 @@ const struct cpu_cpuid_feature i386_cpuid_features[] = {
 	{ CPUID_PSE36,	"PSE36" },
 	{ CPUID_SER,	"SER" },
 	{ CPUID_CFLUSH,	"CFLUSH" },
+	{ CPUID_DS,	"DS" },
 	{ CPUID_ACPI,	"ACPI" },
 	{ CPUID_MMX,	"MMX" },
 	{ CPUID_FXSR,	"FXSR" },
@@ -1127,9 +1128,12 @@ const struct cpu_cpuid_feature i386_cpuid_features[] = {
 const struct cpu_cpuid_feature i386_cpuid_ecxfeatures[] = {
 	{ CPUIDECX_SSE3,	"SSE3" },
 	{ CPUIDECX_MWAIT,	"MWAIT" },
+	{ CPUIDECX_DSCPL,	"DS-CPL" },
+	{ CPUIDECX_VMX,		"VMX" },
 	{ CPUIDECX_EST,		"EST" },
 	{ CPUIDECX_TM2,		"TM2" },
 	{ CPUIDECX_CNXTID,	"CNXT-ID" },
+	{ CPUIDECX_CX16,	"CX16" },
 };
 
 void
