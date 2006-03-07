@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.25 2005/12/22 18:45:47 deraadt Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.26 2006/03/07 22:12:46 uwe Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -136,6 +136,7 @@
  */
 #define PXA2X0_INT_USBH2	2	/* USB host (all other events) */
 #define PXA2X0_INT_USBH1	3	/* USB host (OHCI) */
+#define PXA2X0_INT_OST		7	/* OS timers */
 #define PXA2X0_INT_GPIO0	8
 #define PXA2X0_INT_GPIO1	9
 #define PXA2X0_INT_GPION	10	/* IRQ from GPIO[2..80] */

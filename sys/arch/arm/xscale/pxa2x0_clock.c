@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_clock.c,v 1.3 2005/12/22 23:23:51 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_clock.c,v 1.4 2006/03/07 22:12:46 uwe Exp $ */
 
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
@@ -231,7 +231,7 @@ cpu_initclocks()
 	pxaost_sc->sc_clock_count = pxaost_sc->sc_clock_step;
 	pxaost_sc->sc_statclock_count = CLK4_TIMER_FREQUENCY / stathz;
 
-	pxa2x0_intr_establish(7, IPL_CLOCK, doclockintr, 0, "clock");
+	pxa2x0_intr_establish(PXA2X0_INT_OST, IPL_CLOCK, doclockintr, 0, "clock");
 
 	clk = bus_space_read_4(pxaost_sc->sc_iot, pxaost_sc->sc_ioh, OST_OSCR4);
 
