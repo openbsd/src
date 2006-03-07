@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SCP.pm,v 1.2 2006/03/07 11:03:17 espie Exp $
+# $OpenBSD: SCP.pm,v 1.3 2006/03/07 13:25:05 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -163,14 +163,12 @@ sub close
 {
 	my ($self, $object, $hint) = @_;
 	close($object->{fh}) if defined $object->{fh};
-	# XXX we have to make sure the children are dead.
-	for my $child (qw(pid pid2)) {
-		if (defined $object->{$child}) {
-			my $sleep = 0.05;
-			while (kill 0 => $object->{$child}) {
-				sleep($sleep);
-				$sleep *= 2;
-			}
+	# XXX we have to make sure the grand-child is dead.
+	if (defined $object->{pid2}) {
+		my $sleep = 0.05;
+		while (kill 0 => $object->{pid2}) {
+			sleep($sleep);
+			$sleep *= 2;
 		}
 	}
 	
