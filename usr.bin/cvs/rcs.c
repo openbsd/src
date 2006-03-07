@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.136 2006/03/07 16:48:53 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.137 2006/03/07 19:17:57 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -419,11 +419,11 @@ rcs_write(RCSFILE *rfp)
 
 	from_fd = to_fd = fd = -1;
 
-	/* Write operations need the whole file parsed */
-	rcs_parse_deltatexts(rfp, NULL);
-
 	if (rfp->rf_flags & RCS_SYNCED)
 		return (0);
+
+	/* Write operations need the whole file parsed */
+	rcs_parse_deltatexts(rfp, NULL);
 
 	strlcpy(fn, "/tmp/rcs.XXXXXXXXXX", sizeof(fn));
 	if ((fd = mkstemp(fn)) == -1)
