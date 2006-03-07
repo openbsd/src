@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.27 2005/11/19 02:18:00 pedro Exp $	*/
+/*	$OpenBSD: iop.c,v 1.28 2006/03/07 20:46:46 brad Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -887,10 +887,18 @@ iop_shutdown(void *junk)
 			continue;
 		if ((sc->sc_flags & IOP_ONLINE) == 0)
 			continue;
+
 		iop_simple_cmd(sc, I2O_TID_IOP, I2O_EXEC_SYS_QUIESCE, IOP_ICTX,
 		    0, 5000);
-		iop_simple_cmd(sc, I2O_TID_IOP, I2O_EXEC_IOP_CLEAR, IOP_ICTX,
-		    0, 1000);
+
+		if (letoh16(sc->sc_status.orgid) != I2O_ORG_AMI) {
+			/*
+			 * Some AMI firmware revisions will go to sleep and
+			 * never come back after this.
+			 */
+			iop_simple_cmd(sc, I2O_TID_IOP, I2O_EXEC_IOP_CLEAR,
+			    IOP_ICTX, 0, 1000);
+		}
 	}
 
 	/* Wait.  Some boards could still be flushing, stupidly enough. */
