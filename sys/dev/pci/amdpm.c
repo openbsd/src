@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.14 2006/03/08 09:21:14 dlg Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.15 2006/03/08 09:58:44 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -75,9 +75,9 @@
 #include <dev/i2c/i2cvar.h>
 
 #ifdef AMDPM_DEBUG
-#define DPRINTF(x) printf x
+#define DPRINTF(x...) printf(x)
 #else
-#define DPRINTF(x)
+#define DPRINTF(x...)
 #endif
 
 #define AMDPM_SMBUS_DELAY	100
@@ -325,8 +325,8 @@ amdpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	u_int16_t st, ctl, data;
 	int retries;
 
-	DPRINTF(("%s: exec: op %d, addr 0x%x, cmdlen %d, len %d, flags 0x%x\n",
-	    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags));
+	DPRINTF("%s: exec: op %d, addr 0x%x, cmdlen %d, len %d, flags 0x%x\n",
+	    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags);
 
 	/* Wait for bus to be idle */
 	for (retries = 100; retries > 0; retries--) {
@@ -335,8 +335,8 @@ amdpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 			break;
 		DELAY(AMDPM_SMBUS_DELAY);
 	}
-	DPRINTF(("%s: exec: st 0x%b\n", sc->sc_dev.dv_xname, st,
-	    AMDPM_SMBSTAT_BITS));
+	DPRINTF("%s: exec: st 0x%b\n", sc->sc_dev.dv_xname, st,
+	    AMDPM_SMBSTAT_BITS);
 	if (st & AMDPM_SMBSTAT_BSY)
 		return (1);
 
@@ -449,8 +449,8 @@ amdpm_intr(void *arg)
 		/* Interrupt was not for us */
 		return (0);
 
-	DPRINTF(("%s: intr: st 0x%b\n", sc->sc_dev.dv_xname, st,
-	    AMDPM_SMBSTAT_BITS));
+	DPRINTF("%s: intr: st 0x%b\n", sc->sc_dev.dv_xname, st,
+	    AMDPM_SMBSTAT_BITS);
 
 	/* Clear status bits */
 	bus_space_write_2(sc->sc_iot, sc->sc_i2c_ioh, AMDPM_SMBSTAT, st);
