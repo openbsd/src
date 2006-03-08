@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.19 2005/12/18 19:21:02 cloder Exp $	*/
+/*	$OpenBSD: decl.c,v 1.20 2006/03/08 07:18:51 moritz Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.19 2005/12/18 19:21:02 cloder Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.20 2006/03/08 07:18:51 moritz Exp $";
 #endif
 
 #include <sys/param.h>
@@ -48,7 +48,7 @@ const	char *unnamed = "<unnamed>";
 /* contains various information and classification on types */
 ttab_t	ttab[NTSPEC];
 
-/* shared type structures for arithmtic types and void */
+/* shared type structures for arithmetic types and void */
 static	type_t	*typetab;
 
 /* value of next enumerator during declaration of enum types */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem1.c,v 1.9 2005/11/29 20:09:39 cloder Exp $	*/
+/*	$OpenBSD: mem1.c,v 1.10 2006/03/08 07:18:51 moritz Exp $	*/
 /*	$NetBSD: mem1.c,v 1.2 1995/07/03 21:24:25 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mem1.c,v 1.9 2005/11/29 20:09:39 cloder Exp $";
+static char rcsid[] = "$OpenBSD: mem1.c,v 1.10 2006/03/08 07:18:51 moritz Exp $";
 #endif
 
 #include <sys/types.h>
@@ -166,7 +166,6 @@ static mbl_t *
 xnewblk(void)
 {
 	mbl_t	*mb;
-	int	prot, flags;
 
 	mb = xmalloc(sizeof (mbl_t));
 	mb->blk = xmalloc(mblklen);

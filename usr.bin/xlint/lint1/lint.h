@@ -1,4 +1,4 @@
-/*	$OpenBSD: lint.h,v 1.3 2005/12/10 18:51:54 martin Exp $	*/
+/*	$OpenBSD: lint.h,v 1.4 2006/03/08 07:18:51 moritz Exp $	*/
 /*	$NetBSD: lint.h,v 1.2 1995/07/03 21:24:18 cgd Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #include "param.h"
 
 /*
- * Type specifiers, used in type structures (type_t) and otherwere.
+ * Type specifiers, used in type structures (type_t) and elsewhere.
  */
 typedef enum {
 	NOTSPEC,

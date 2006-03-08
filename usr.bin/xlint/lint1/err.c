@@ -1,4 +1,4 @@
-/*	$OpenBSD: err.c,v 1.18 2006/01/16 22:16:14 espie Exp $	*/
+/*	$OpenBSD: err.c,v 1.19 2006/03/08 07:18:51 moritz Exp $	*/
 /*	$NetBSD: err.c,v 1.8 1995/10/02 17:37:00 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: err.c,v 1.18 2006/01/16 22:16:14 espie Exp $";
+static char rcsid[] = "$OpenBSD: err.c,v 1.19 2006/03/08 07:18:51 moritz Exp $";
 #endif
 
 /* number of errors found */
@@ -44,6 +44,7 @@ int	sytxerr;
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <err.h>
 
 #include "lint1.h"
 
