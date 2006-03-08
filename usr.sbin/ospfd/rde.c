@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.41 2006/03/08 13:49:07 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.42 2006/03/08 16:03:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -62,7 +62,6 @@ struct lsa	*rde_asext_put(struct kroute *);
 struct lsa	*orig_asext_lsa(struct kroute *, u_int16_t);
 struct lsa	*orig_sum_lsa(struct rt_node *, u_int8_t);
 
-volatile sig_atomic_t	 rde_quit = 0;
 struct ospfd_conf	*rdeconf = NULL;
 struct imsgbuf		*ibuf_ospfe;
 struct imsgbuf		*ibuf_main;
