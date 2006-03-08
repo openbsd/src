@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.27 2006/03/07 09:19:11 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.28 2006/03/08 12:34:53 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -49,8 +49,8 @@ rlog_usage(void)
 {
 	fprintf(stderr,
 	    "usage: rlog [-bhLNqRtV] [-ddates] [-l[lockers]] [-r[revs]]\n"
-	    "		[-sstates] [-w[logins]] [-xsuffixes]\n"
-	    "		[-ztz] file ...\n");
+	    "            [-sstates] [-w[logins]] [-xsuffixes]\n"
+	    "            [-ztz] file ...\n");
 }
 
 int
