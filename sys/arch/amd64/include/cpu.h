@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.17 2005/12/13 00:18:19 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.18 2006/03/08 03:33:21 uwe Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -304,6 +304,10 @@ void kgdb_port_init(void);
 /* bus_machdep.c */
 void x86_bus_space_init(void);
 void x86_bus_space_mallocok(void);
+
+/* powernow-k8.c */
+void k8_powernow_init(void);
+int  k8_powernow_setperf(int);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.7 2006/03/07 05:21:40 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.8 2006/03/08 03:33:21 uwe Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -94,6 +94,18 @@ const struct {
 	{ CPUIDECX_SSE3, "SSE3" }
 };
 
+const struct {
+	u_int32_t mask;
+	const char * name;
+} amd_pn_flags[] = {
+	{ 0x01,		"TS"},
+	{ 0x02,		"FID"},
+	{ 0x04,		"VID"},
+	{ 0x08,		"TTP"},
+	{ 0x10,		"TM"},
+	{ 0x20,		"STC"}
+};
+
 int
 cpu_amd64speed(int *freq)
 {
@@ -105,13 +117,14 @@ void
 identifycpu(struct cpu_info *ci)
 {
 	u_int64_t last_tsc;
-	u_int32_t dummy, val;
+	u_int32_t dummy, val, pnfeatset;
 	u_int32_t brand[12];
 	int i, max;
 	char *brandstr_from, *brandstr_to;
 	int skipspace;
 
 	CPUID(1, ci->ci_signature, val, dummy, ci->ci_feature_flags);
+	CPUID(0x80000000, pnfeatset, dummy, dummy, dummy);
 	CPUID(0x80000001, dummy, dummy, dummy, ci->ci_feature_eflags);
 
 	CPUID(0x80000002, brand[0], brand[1], brand[2], brand[3]);
@@ -168,6 +181,23 @@ identifycpu(struct cpu_info *ci)
 	printf("\n");
 
 	x86_print_cacheinfo(ci);
+
+#ifndef MULTIPROCESSOR
+	if (pnfeatset > 0x80000007) {
+		CPUID(0x80000007, dummy, dummy, dummy, pnfeatset);	
+		printf("%s: AMD Powernow:", ci->ci_dev->dv_xname);
+		for (i = 0; i < 6; i++) {
+			if (pnfeatset & amd_pn_flags[i].mask)
+				printf(" %s", amd_pn_flags[i].name);
+		}
+		printf("\n");
+		
+		if (pnfeatset & 0x06) {
+			if ((ci->ci_signature & 0xF00) == 0xf00)
+				k8_powernow_init();
+		}
+	}
+#endif
 }
 
 void

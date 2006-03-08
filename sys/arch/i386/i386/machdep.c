@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.341 2006/03/07 05:18:08 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.342 2006/03/08 03:33:21 uwe Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1430,6 +1430,7 @@ amd_family6_setup(struct cpu_info *ci)
 		pagezero = sse2_pagezero;
 	else
 		pagezero = i686_pagezero;
+#if !defined(MULTIPROCESSOR)
 	cpuid(0x80000000, regs);
 	if (regs[0] > 0x80000007) {
 		cpuid(0x80000007, regs);
@@ -1451,6 +1452,7 @@ amd_family6_setup(struct cpu_info *ci)
 			}
 		}
 	}
+#endif 
 #endif
 }
 

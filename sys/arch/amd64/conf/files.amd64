@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.19 2006/02/12 19:55:36 miod Exp $
+#	$OpenBSD: files.amd64,v 1.20 2006/03/08 03:33:21 uwe Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -56,6 +56,7 @@ file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 file	arch/amd64/isa/clock.c
 file	dev/clock_subr.c
 
+file	arch/amd64/amd64/powernow-k8.c
 
 include	"dev/mii/files.mii"
 

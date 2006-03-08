@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.4 2006/03/08 03:33:21 uwe Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.1 2006/03/08 03:33:21 uwe Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * All rights reserved.
@@ -57,7 +57,7 @@
 #include <sys/sysctl.h>
 
 #include <dev/isa/isareg.h>
-#include <i386/isa/isa_machdep.h>
+#include <amd64/include/isa_machdep.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -65,6 +65,8 @@
 
 #define BIOS_START		0xe0000
 #define	BIOS_LEN		0x20000
+
+extern int cpuspeed;
 
 /*
  * MSRs and bits used by Powernow technology
@@ -149,7 +151,7 @@ struct pst_s {
 	uint8_t n_states;
 };
 
-struct k8pnow_cpu_state *k8pnow_current_state = NULL; 
+struct k8pnow_cpu_state *k8pnow_current_state;
 
 /*
  * Prototypes
@@ -278,7 +280,7 @@ k8_powernow_setperf(int level)
 	if (cfid != fid || cvid != vid)
 		return (1);
 
-	pentium_mhz = cstate->state_table[i].freq;
+	cpuspeed = cstate->state_table[i].freq;
 	return (0);
 }
 
@@ -367,9 +369,6 @@ k8_powernow_init(void)
 	char * techname = NULL;
 	ci = curcpu();
 
-	if(k8pnow_current_state)
-		return;
-
 	cstate = malloc(sizeof(struct k8pnow_cpu_state), M_DEVBUF, M_NOWAIT);
 	if (!cstate)
 		return;
@@ -391,7 +390,7 @@ k8_powernow_init(void)
 	if (k8pnow_states(cstate, ci->ci_signature, maxfid, maxvid)) {
 		if (cstate->n_states) {
 			printf("%s: AMD %s available states ",
-			    ci->ci_dev.dv_xname, techname);
+			    ci->ci_dev->dv_xname, techname);
 			for(i= 0; i < cstate->n_states; i++) {
 				state = &cstate->state_table[i];
 				printf("%c%d", i==0 ? '(' : ',',
