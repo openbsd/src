@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.137 2006/03/07 19:17:57 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.138 2006/03/08 05:01:50 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1111,7 +1111,7 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 				dlp = TAILQ_PREV(dlp, cvs_tqh, l_list);
 			} else if (dlp->l_lineno < lineno) {
 				if (((ndlp = TAILQ_NEXT(dlp, l_list)) == NULL) ||
-				    (ndlp->l_lineno > lineno)) 
+				    (ndlp->l_lineno > lineno))
 					break;
 				dlp = ndlp;
 			}
@@ -2731,7 +2731,7 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 			/* end the expansion */
 			if (mode & RCS_KWEXP_NAME)
 				strlcat(expbuf, "$", sizeof(expbuf));
-			
+
 			sizdiff = strlen(expbuf) - (end - start);
 			tbuf = xmalloc(strlen(end) + 1);
 			strlcpy(tbuf, end, strlen(end) + 1);
@@ -2921,7 +2921,7 @@ rcs_kwexp_buf(BUF *bp, RCSFILE *rf, RCSNUM *rev)
 		expanded = rcs_expand_keywords(rf->rf_path, rdp,
 		    tbuf, len, expmode);
 		bp = cvs_buf_alloc(len, BUF_AUTOEXT);
-		cvs_buf_set(bp, expanded, strlen(expanded), 0); 
+		cvs_buf_set(bp, expanded, strlen(expanded), 0);
 		xfree(expanded);
 	}
 	return (bp);

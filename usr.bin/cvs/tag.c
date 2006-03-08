@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.40 2006/02/06 08:33:03 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.41 2006/03/08 05:01:50 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -143,7 +143,7 @@ cvs_tag_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 
 	if ((runflags & TAG_BRANCH) && (runflags & TAG_DELETE)) {
 		cvs_log(LP_WARN, "ignoring -b with -d options");
-		runflags &= ~TAG_BRANCH;	
+		runflags &= ~TAG_BRANCH;
 	}
 
 	if ((runflags & TAG_DELETE) && (tag_oldname != NULL))
