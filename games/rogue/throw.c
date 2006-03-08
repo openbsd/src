@@ -1,4 +1,4 @@
-/*	$OpenBSD: throw.c,v 1.7 2004/01/21 19:12:13 espie Exp $	*/
+/*	$OpenBSD: throw.c,v 1.8 2006/03/08 09:44:35 otto Exp $	*/
 /*	$NetBSD: throw.c,v 1.3 1995/04/22 10:28:32 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)throw.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: throw.c,v 1.7 2004/01/21 19:12:13 espie Exp $";
+static const char rcsid[] = "$OpenBSD: throw.c,v 1.8 2006/03/08 09:44:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ static const char rcsid[] = "$OpenBSD: throw.c,v 1.7 2004/01/21 19:12:13 espie E
 #include "rogue.h"
 
 void
-throw()
+throw(void)
 {
 	short wch, d;
 	boolean first_miss = 1;
@@ -120,8 +120,7 @@ throw()
 }
 
 boolean
-throw_at_monster(monster, weapon)
-	object *monster, *weapon;
+throw_at_monster(object *monster, object *weapon)
 {
 	short damage, hit_chance;
 	short t;
@@ -156,10 +155,7 @@ throw_at_monster(monster, weapon)
 }
 
 object *
-get_thrown_at_monster(obj, dir, row, col)
-	object *obj;
-	short dir;
-	short *row, *col;
+get_thrown_at_monster(object *obj, short dir, short *row, short *col)
 {
 	short orow, ocol;
 	short i, ch;
@@ -201,9 +197,7 @@ get_thrown_at_monster(obj, dir, row, col)
 }
 
 void
-flop_weapon(weapon, row, col)
-	object *weapon;
-	short row, col;
+flop_weapon(object *weapon, short row, short col)
 {
 	object *new_weapon, *monster;
 	short i = 0;
@@ -259,8 +253,7 @@ flop_weapon(weapon, row, col)
 }
 
 void
-rand_around(i, r, c)
-	short i, *r, *c;
+rand_around(short i, short *r, short *c)
 {
 	static char pos[] = "\010\007\001\003\004\005\002\006\0";
 	static short row, col;

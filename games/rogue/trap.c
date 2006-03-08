@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.6 2004/01/21 19:12:13 espie Exp $	*/
+/*	$OpenBSD: trap.c,v 1.7 2006/03/08 09:44:35 otto Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1995/04/22 10:28:35 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: trap.c,v 1.6 2004/01/21 19:12:13 espie Exp $";
+static const char rcsid[] = "$OpenBSD: trap.c,v 1.7 2006/03/08 09:44:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,8 +75,7 @@ const char *trap_strings[TRAPS * 2] = {
 };
 
 short
-trap_at(row, col)
-	short row, col;
+trap_at(short row, short col)
 {
 	short i;
 
@@ -89,8 +88,7 @@ trap_at(row, col)
 }
 
 void
-trap_player(row, col)
-	short row, col;
+trap_player(short row, short col)
 {
 	short t;
 
@@ -142,7 +140,7 @@ trap_player(row, col)
 }
 
 void
-add_traps()
+add_traps(void)
 {
 	short i, n, tries = 0;
 	short row, col;
@@ -187,7 +185,7 @@ add_traps()
 }
 
 void
-id_trap()
+id_trap(void)
 {
 	short dir, row, col, d, t;
 
@@ -215,7 +213,7 @@ id_trap()
 }
 
 void
-show_traps()
+show_traps(void)
 {
 	short i, j;
 
@@ -229,9 +227,7 @@ show_traps()
 }
 
 void
-search(n, is_auto)
-	short n;
-	boolean is_auto;
+search(short n, boolean is_auto)
 {
 	short s, i, j, row, col, t;
 	short shown = 0, found = 0;

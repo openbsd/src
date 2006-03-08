@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.11 2004/01/21 19:12:13 espie Exp $	*/
+/*	$OpenBSD: message.c,v 1.12 2006/03/08 09:44:35 otto Exp $	*/
 /*	$NetBSD: message.c,v 1.5 1995/04/22 10:27:43 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)message.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: message.c,v 1.11 2004/01/21 19:12:13 espie Exp $";
+static const char rcsid[] = "$OpenBSD: message.c,v 1.12 2006/03/08 09:44:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,9 +67,7 @@ const char *more = "-more-";
 static void message(const char *, boolean);
 
 static void
-message(msg, intrpt)
-	const char *msg;
-	boolean intrpt;
+message(const char *msg, boolean intrpt)
 {
 	cant_int = 1;
 
@@ -119,8 +117,7 @@ messagef(boolean intrpt, const char *fmt, ...)
 }
 
 void
-remessage(c)
-	short c;
+remessage(short c)
 {
 	if (imsg != -1) {
 		check_message();
@@ -136,7 +133,7 @@ remessage(c)
 }
 
 void
-check_message()
+check_message(void)
 {
 	if (msg_cleared) {
 		return;
@@ -148,14 +145,9 @@ check_message()
 }
 
 int
-get_input_line(prompt, insert, buf, buflen, if_cancelled, add_blank, do_echo)
-	const char *prompt;
-	const char *insert;
-    	char *buf;
-	size_t buflen;
-	const char *if_cancelled;
-	boolean add_blank;
-	boolean do_echo;
+get_input_line(const char *prompt, const char *insert, char *buf,
+		size_t buflen, const char *if_cancelled, boolean add_blank,
+		boolean do_echo)
 {
 	int ch;
 	int i = 0, n;
@@ -210,7 +202,7 @@ get_input_line(prompt, insert, buf, buflen, if_cancelled, add_blank, do_echo)
 }
 
 int
-rgetchar()
+rgetchar(void)
 {
 	int ch;
 
@@ -239,8 +231,7 @@ Level: 99 Gold: 999999 Hp: 999(999) Str: 99(99) Arm: 99 Exp: 21/10000000 Hungry
 */
 
 void
-print_stats(stat_mask)
-	int stat_mask;
+print_stats(int stat_mask)
 {
 	char buf[16];
 	boolean label;
@@ -319,7 +310,7 @@ print_stats(stat_mask)
 }
 
 void
-save_screen()
+save_screen(void)
 {
 	FILE *fp;
 	short i, j;
@@ -343,17 +334,13 @@ save_screen()
 }
 
 boolean
-is_digit(ch)
-	short ch;
+is_digit(short ch)
 {
 	return((ch >= '0') && (ch <= '9'));
 }
 
 int
-r_index(str, ch, last)
-	const char *str;
-	int ch;
-	boolean last;
+r_index(const char *str, int ch, boolean last)
 {
 	int i = 0;
 

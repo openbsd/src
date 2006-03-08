@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 2006/03/08 09:44:35 otto Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/22 10:27:41 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.5 2003/06/03 03:01:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.6 2006/03/08 09:44:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,9 +62,7 @@ static const char rcsid[] = "$OpenBSD: main.c,v 1.5 2003/06/03 03:01:41 millert 
 #include "rogue.h"
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	if (init(argc, argv)) {		/* restored game */
 		goto PL;

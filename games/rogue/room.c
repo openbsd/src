@@ -1,4 +1,4 @@
-/*	$OpenBSD: room.c,v 1.8 2004/01/21 19:12:13 espie Exp $	*/
+/*	$OpenBSD: room.c,v 1.9 2006/03/08 09:44:35 otto Exp $	*/
 /*	$NetBSD: room.c,v 1.3 1995/04/22 10:28:17 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)room.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: room.c,v 1.8 2004/01/21 19:12:13 espie Exp $";
+static const char rcsid[] = "$OpenBSD: room.c,v 1.9 2006/03/08 09:44:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,8 +97,7 @@ const struct option {
 };
 
 void
-light_up_room(rn)
-	int rn;
+light_up_room(int rn)
 {
 	short i, j;
 
@@ -125,8 +124,7 @@ light_up_room(rn)
 }
 
 void
-light_passage(row, col)
-	short row, col;
+light_passage(short row, short col)
 {
 	short i, j, i_end, j_end;
 
@@ -146,8 +144,7 @@ light_passage(row, col)
 }
 
 void
-darken_room(rn)
-	short rn;
+darken_room(short rn)
 {
 	short i, j;
 
@@ -171,8 +168,7 @@ darken_room(rn)
 }
 
 char
-get_dungeon_char(row, col)
-	short row, col;
+get_dungeon_char(short row, short col)
 {
 	unsigned short mask = dungeon[row][col];
 
@@ -220,8 +216,7 @@ get_dungeon_char(row, col)
 }
 
 char
-get_mask_char(mask)
-	unsigned short mask;
+get_mask_char(unsigned short mask)
 {
 		switch(mask) {
 		case SCROL:
@@ -248,9 +243,7 @@ get_mask_char(mask)
 }
 
 void
-gr_row_col(row, col, mask)
-	short *row, *col;
-	unsigned short mask;
+gr_row_col(short *row, short *col, unsigned short mask)
 {
 	short rn;
 	short r, c;
@@ -270,7 +263,7 @@ gr_row_col(row, col, mask)
 }
 
 short
-gr_room()
+gr_room(void)
 {
 	short i;
 
@@ -282,8 +275,7 @@ gr_room()
 }
 
 short
-party_objects(rn)
-	int rn;
+party_objects(int rn)
 {
 	short i, j, nf = 0;
 	object *obj;
@@ -316,8 +308,7 @@ party_objects(rn)
 }
 
 short
-get_room_number(row, col)
-	short row, col;
+get_room_number(short row, short col)
 {
 	short i;
 
@@ -331,7 +322,7 @@ get_room_number(row, col)
 }
 
 boolean
-is_all_connected()
+is_all_connected(void)
 {
 	short i, starting_room;
 
@@ -354,8 +345,7 @@ is_all_connected()
 }
 
 void
-visit_rooms(rn)
-	int rn;
+visit_rooms(int rn)
 {
 	short i;
 	short oth_rn;
@@ -371,7 +361,7 @@ visit_rooms(rn)
 }
 
 void
-draw_magic_map()
+draw_magic_map(void)
 {
 	short i, j, ch, och;
 	unsigned short mask = (HORWALL | VERTWALL | DOOR | TUNNEL | TRAP | STAIRS |
@@ -419,10 +409,7 @@ draw_magic_map()
 }
 
 void
-dr_course(monster, entering, row, col)
-	object *monster;
-	boolean entering;
-	short row, col;
+dr_course(object *monster, boolean entering, short row, short col)
 {
 	short i, j, k, rn;
 	short r, rr;
@@ -494,8 +481,7 @@ dr_course(monster, entering, row, col)
 }
 
 boolean
-get_oth_room(rn, row, col)
-	short rn, *row, *col;
+get_oth_room(short rn, short *row, short *col)
 {
 	short d = -1;
 
@@ -517,7 +503,7 @@ get_oth_room(rn, row, col)
 }
 
 void
-edit_opts()
+edit_opts(void)
 {
 	char save[NOPTS+1][DCOLS];
 	short i, j;
@@ -622,8 +608,7 @@ CH:
 }
 
 void
-opt_show(i)
-	int i;
+opt_show(int i)
 {
 	const char *s;
 	const struct option *opt = &options[i];
@@ -639,8 +624,7 @@ opt_show(i)
 }
 
 void
-opt_erase(i)
-	int i;
+opt_erase(int i)
 {
 	const struct option *opt = &options[i];
 
@@ -649,14 +633,13 @@ opt_erase(i)
 }
 
 void
-opt_go(i)
-	int i;
+opt_go(int i)
 {
 	move(i, strlen(options[i].prompt));
 }
 
 void
-do_shell()
+do_shell(void)
 {
 	const char *sh;
 

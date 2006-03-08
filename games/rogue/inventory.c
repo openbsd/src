@@ -1,4 +1,4 @@
-/*	$OpenBSD: inventory.c,v 1.8 2004/01/21 19:12:13 espie Exp $	*/
+/*	$OpenBSD: inventory.c,v 1.9 2006/03/08 09:44:35 otto Exp $	*/
 /*	$NetBSD: inventory.c,v 1.3 1995/04/22 10:27:35 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)inventory.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: inventory.c,v 1.8 2004/01/21 19:12:13 espie Exp $";
+static const char rcsid[] = "$OpenBSD: inventory.c,v 1.9 2006/03/08 09:44:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -212,9 +212,7 @@ struct id_com_s com_id_tab[COMS] = {
 };
 
 void
-inventory(pack, mask)
-	object *pack;
-	unsigned short mask;
+inventory(object *pack, unsigned short mask)
 {
 	object *obj;
 	short i = 0, j;
@@ -282,7 +280,7 @@ inventory(pack, mask)
 }
 
 void
-id_com()
+id_com(void)
 {
 	int ch = 0;
 	short i, j, k;
@@ -359,8 +357,7 @@ MORE:
 }
 
 int
-pr_com_id(ch)
-	int ch;
+pr_com_id(int ch)
 {
 	int i;
 
@@ -373,9 +370,7 @@ pr_com_id(ch)
 }
 
 int
-get_com_id(indexp, ch)
-	int *indexp;
-	short ch;
+get_com_id(int *indexp, short ch)
 {
 	short i;
 
@@ -389,8 +384,7 @@ get_com_id(indexp, ch)
 }
 
 int
-pr_motion_char(ch)
-	int ch;
+pr_motion_char(int ch)
 {
 	if (	(ch == 'J') ||
 			(ch == 'K') ||
@@ -428,7 +422,7 @@ pr_motion_char(ch)
 }
 
 void
-mix_colors()
+mix_colors(void)
 {
 	short i, j, k;
 	char t[MAX_TITLE_LENGTH];
@@ -444,7 +438,7 @@ mix_colors()
 }
 
 void
-make_scroll_titles()
+make_scroll_titles(void)
 {
 	short i, j, n;
 	short sylls, s;
@@ -478,10 +472,7 @@ static void desc_count(struct sbuf *s, int n);
 static void desc_called(struct sbuf *s, const object *);
 
 static void
-sbuf_init(s, buf, maxlen)
-	struct sbuf *s;
-	char *buf;
-	size_t maxlen;
+sbuf_init(struct sbuf *s, char *buf, size_t maxlen)
 {
 	s->buf = buf;
 	s->maxlen = maxlen;
@@ -489,9 +480,7 @@ sbuf_init(s, buf, maxlen)
 }
 
 static void
-sbuf_addstr(s, str)
-	struct sbuf *s;
-	const char *str;
+sbuf_addstr(struct sbuf *s, const char *str)
 {
 	strlcat(s->buf, str, s->maxlen);
 }
@@ -509,9 +498,7 @@ sbuf_addf(struct sbuf *s, const char *fmt, ...)
 }
 
 static void
-desc_count(s, n)
-	struct sbuf *s;
-	int n;
+desc_count(struct sbuf *s, int n)
 {
 	if (n == 1) {
 		sbuf_addstr(s, "an ");
@@ -521,9 +508,7 @@ desc_count(s, n)
 }
 
 static void
-desc_called(s, obj)
-	struct sbuf *s;
-	const object *obj;
+desc_called(struct sbuf *s, const object *obj)
 {
 	struct id *id_table;
 
@@ -534,10 +519,7 @@ desc_called(s, obj)
 }
 
 void
-get_desc(obj, desc, desclen)
-	const object *obj;
-	char *desc;
-	size_t desclen;
+get_desc(const object *obj, char *desc, size_t desclen)
 {
 	const char *item_name;
 	struct id *id_table;
@@ -680,7 +662,7 @@ get_desc(obj, desc, desclen)
 }
 
 void
-get_wand_and_ring_materials()
+get_wand_and_ring_materials(void)
 {
 	short i, j;
 	boolean used[WAND_MATERIALS];
@@ -711,8 +693,7 @@ get_wand_and_ring_materials()
 }
 
 void
-single_inv(ichar)
-	short ichar;
+single_inv(short ichar)
 {
 	short ch, ch2;
 	char desc[DCOLS];
@@ -733,8 +714,7 @@ single_inv(ichar)
 }
 
 struct id *
-get_id_table(obj)
-	const object *obj;
+get_id_table(const object *obj)
 {
 	switch(obj->what_is) {
 	case SCROL:
@@ -754,8 +734,7 @@ get_id_table(obj)
 }
 
 void
-inv_armor_weapon(is_weapon)
-	boolean is_weapon;
+inv_armor_weapon(boolean is_weapon)
 {
 	if (is_weapon) {
 		if (rogue.weapon) {
@@ -773,7 +752,7 @@ inv_armor_weapon(is_weapon)
 }
 
 void
-id_type()
+id_type(void)
 {
 	const char *id;
 	int ch;

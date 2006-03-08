@@ -1,4 +1,4 @@
-/*	$OpenBSD: use.c,v 1.7 2004/01/21 19:12:13 espie Exp $	*/
+/*	$OpenBSD: use.c,v 1.8 2006/03/08 09:44:36 otto Exp $	*/
 /*	$NetBSD: use.c,v 1.3 1995/04/22 10:28:38 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)use.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: use.c,v 1.7 2004/01/21 19:12:13 espie Exp $";
+static const char rcsid[] = "$OpenBSD: use.c,v 1.8 2006/03/08 09:44:36 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ boolean con_mon = 0;
 const char *strange_feeling = "you have a strange feeling for a moment, then it passes";
 
 void
-quaff()
+quaff(void)
 {
 	short ch;
 	object *obj;
@@ -178,7 +178,7 @@ quaff()
 }
 
 void
-read_scroll()
+read_scroll(void)
 {
 	short ch;
 	object *obj;
@@ -286,10 +286,7 @@ read_scroll()
  */
 
 void
-vanish(obj, rm, pack)
-	object *obj;
-	short rm;
-	object *pack;
+vanish(object *obj, short rm, object *pack)
 {
 	if (obj->quantity > 1) {
 		obj->quantity--;
@@ -310,8 +307,7 @@ vanish(obj, rm, pack)
 }
 
 void
-potion_heal(extra)
-	int extra;
+potion_heal(int extra)
 {
 	float ratio;
 	short add;
@@ -357,7 +353,7 @@ potion_heal(extra)
 }
 
 void
-idntfy()
+idntfy(void)
 {
 	short ch;
 	object *obj;
@@ -385,7 +381,7 @@ AGAIN:
 }
 
 void
-eat()
+eat(void)
 {
 	short ch;
 	short moves;
@@ -425,7 +421,7 @@ eat()
 }
 
 void
-hold_monster()
+hold_monster(void)
 {
 	short i, j;
 	short mcount = 0;
@@ -458,7 +454,7 @@ hold_monster()
 }
 
 void
-tele()
+tele(void)
 {
 	mvaddch(rogue.row, rogue.col, get_dungeon_char(rogue.row, rogue.col));
 
@@ -471,7 +467,7 @@ tele()
 }
 
 void
-hallucinate()
+hallucinate(void)
 {
 	object *obj, *monster;
 	short ch;
@@ -501,7 +497,7 @@ hallucinate()
 }
 
 void
-unhallucinate()
+unhallucinate(void)
 {
 	halluc = 0;
 	relight();
@@ -509,7 +505,7 @@ unhallucinate()
 }
 
 void
-unblind()
+unblind(void)
 {
 	blind = 0;
 	messagef(1, "the veil of darkness lifts");
@@ -523,7 +519,7 @@ unblind()
 }
 
 void
-relight()
+relight(void)
 {
 	if (cur_room == PASSAGE) {
 		light_passage(rogue.row, rogue.col);
@@ -534,7 +530,7 @@ relight()
 }
 
 void
-take_a_nap()
+take_a_nap(void)
 {
 	short i;
 
@@ -549,7 +545,7 @@ take_a_nap()
 }
 
 void
-go_blind()
+go_blind(void)
 {
 	short i, j;
 
@@ -581,7 +577,7 @@ go_blind()
 }
 
 const char *
-get_ench_color()
+get_ench_color(void)
 {
 	if (halluc) {
 		return(id_potions[get_rand(0, POTIONS-1)].title);
@@ -592,20 +588,20 @@ get_ench_color()
 }
 
 void
-cnfs()
+cnfs(void)
 {
 	confused += get_rand(12, 22);
 }
 
 void
-unconfuse()
+unconfuse(void)
 {
 	confused = 0;
 	messagef(1, "you feel less %s now", (halluc ? "trippy" : "confused"));
 }
 
 void
-uncurse_all()
+uncurse_all(void)
 {
 	object *obj;
 

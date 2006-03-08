@@ -1,4 +1,4 @@
-/*	$OpenBSD: pack.c,v 1.10 2004/01/21 19:12:13 espie Exp $	*/
+/*	$OpenBSD: pack.c,v 1.11 2006/03/08 09:44:35 otto Exp $	*/
 /*	$NetBSD: pack.c,v 1.3 1995/04/22 10:27:54 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pack.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: pack.c,v 1.10 2004/01/21 19:12:13 espie Exp $";
+static const char rcsid[] = "$OpenBSD: pack.c,v 1.11 2006/03/08 09:44:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,9 +58,7 @@ static const char rcsid[] = "$OpenBSD: pack.c,v 1.10 2004/01/21 19:12:13 espie E
 const char *curse_message = "you can't, it appears to be cursed";
 
 object *
-add_to_pack(obj, pack, condense)
-	object *obj, *pack;
-	int condense;
+add_to_pack(object *obj, object *pack, int condense)
 {
 	object *op;
 
@@ -87,8 +85,7 @@ add_to_pack(obj, pack, condense)
 }
 
 void
-take_from_pack(obj, pack)
-	object *obj, *pack;
+take_from_pack(object *obj, object *pack)
 {
 	while (pack->next_object != obj) {
 		pack = pack->next_object;
@@ -101,8 +98,7 @@ take_from_pack(obj, pack)
  */
 
 object *
-pick_up(row, col, status)
-	short row, col, *status;
+pick_up(short row, short col, short *status)
 {
 	object *obj;
 
@@ -148,7 +144,7 @@ pick_up(row, col, status)
 }
 
 void
-drop()
+drop(void)
 {
 	object *obj, *new;
 	short ch;
@@ -210,8 +206,7 @@ drop()
 }
 
 object *
-check_duplicate(obj, pack)
-	object *obj, *pack;
+check_duplicate(object *obj, object *pack)
 {
 	object *op;
 
@@ -244,7 +239,7 @@ check_duplicate(obj, pack)
 }
 
 short
-next_avail_ichar()
+next_avail_ichar(void)
 {
 	object *obj;
 	int i;
@@ -270,15 +265,13 @@ next_avail_ichar()
 }
 
 void
-wait_for_ack()
+wait_for_ack(void)
 {
 	while (rgetchar() != ' ') ;
 }
 
 short
-pack_letter(prompt, mask)
-	const char *prompt;
-	unsigned short mask;
+pack_letter(const char *prompt, unsigned short mask)
 {
 	short ch;
 	unsigned short tmask = mask;
@@ -314,7 +307,7 @@ pack_letter(prompt, mask)
 }
 
 void
-take_off()
+take_off(void)
 {
 	char desc[DCOLS];
 	object *obj;
@@ -337,7 +330,7 @@ take_off()
 }
 
 void
-wear()
+wear(void)
 {
 	short ch;
 	object *obj;
@@ -370,8 +363,7 @@ wear()
 }
 
 void
-unwear(obj)
-	object *obj;
+unwear(object *obj)
 {
 	if (obj) {
 		obj->in_use_flags &= (~BEING_WORN);
@@ -380,8 +372,7 @@ unwear(obj)
 }
 
 void
-do_wear(obj)
-	object *obj;
+do_wear(object *obj)
 {
 	rogue.armor = obj;
 	obj->in_use_flags |= BEING_WORN;
@@ -389,7 +380,7 @@ do_wear(obj)
 }
 
 void
-wield()
+wield(void)
 {
 	short ch;
 	object *obj;
@@ -425,16 +416,14 @@ wield()
 }
 
 void
-do_wield(obj)
-	object *obj;
+do_wield(object *obj)
 {
 	rogue.weapon = obj;
 	obj->in_use_flags |= BEING_WIELDED;
 }
 
 void
-unwield(obj)
-	object *obj;
+unwield(object *obj)
 {
 	if (obj) {
 		obj->in_use_flags &= (~BEING_WIELDED);
@@ -443,7 +432,7 @@ unwield(obj)
 }
 
 void
-call_it()
+call_it(void)
 {
 	short ch;
 	object *obj;
@@ -474,8 +463,7 @@ call_it()
 }
 
 short
-pack_count(new_obj)
-	object *new_obj;
+pack_count(object *new_obj)
 {
 	object *obj;
 	short count = 0;
@@ -502,9 +490,7 @@ pack_count(new_obj)
 }
 
 boolean
-mask_pack(pack, mask)
-	object *pack;
-	unsigned short mask;
+mask_pack(object *pack, unsigned short mask)
 {
 	while (pack->next_object) {
 		pack = pack->next_object;
@@ -516,9 +502,7 @@ mask_pack(pack, mask)
 }
 
 boolean
-is_pack_letter(c, mask)
-	short *c;
-	unsigned short *mask;
+is_pack_letter(short *c, unsigned short *mask)
 {
 	if (((*c == '?') || (*c == '!') || (*c == ':') || (*c == '=') ||
 		(*c == ')') || (*c == ']') || (*c == '/') || (*c == ','))) {
@@ -555,13 +539,13 @@ is_pack_letter(c, mask)
 }
 
 boolean
-has_amulet()
+has_amulet(void)
 {
 	return(mask_pack(&rogue.pack, AMULET));
 }
 
 void
-kick_into_pack()
+kick_into_pack(void)
 {
 	object *obj;
 	char desc[DCOLS];

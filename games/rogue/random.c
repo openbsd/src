@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.5 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: random.c,v 1.6 2006/03/08 09:44:35 otto Exp $	*/
 /*	$NetBSD: random.c,v 1.3 1995/04/22 10:28:06 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: random.c,v 1.5 2003/06/03 03:01:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: random.c,v 1.6 2006/03/08 09:44:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,8 +74,7 @@ static int rand_sep = 3;
 static long *end_ptr = &rntb[32];
 
 void
-srrandom(x)
-	int x;
+srrandom(int x)
 {
 	int i;
 
@@ -93,7 +92,7 @@ srrandom(x)
 }
 
 long
-rrandom()
+rrandom(void)
 {
 	long i;
 	
@@ -115,8 +114,7 @@ rrandom()
 }
 
 int
-get_rand(x, y)
-	int x, y;
+get_rand(int x, int y)
 {
 	int r, t;
 	long lr;
@@ -134,14 +132,13 @@ get_rand(x, y)
 }
 
 int
-rand_percent(percentage)
-	int percentage;
+rand_percent(int percentage)
 {
 	return(get_rand(1, 100) <= percentage);
 }
 
 int
-coin_toss()
+coin_toss(void)
 {
 	return(((rrandom() & 01) ? 1 : 0));
 }

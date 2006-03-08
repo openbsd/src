@@ -1,4 +1,4 @@
-/*	$OpenBSD: hit.c,v 1.6 2004/01/21 19:12:13 espie Exp $	*/
+/*	$OpenBSD: hit.c,v 1.7 2006/03/08 09:44:35 otto Exp $	*/
 /*	$NetBSD: hit.c,v 1.3 1995/04/22 10:27:30 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hit.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: hit.c,v 1.6 2004/01/21 19:12:13 espie Exp $";
+static const char rcsid[] = "$OpenBSD: hit.c,v 1.7 2006/03/08 09:44:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,7 @@ object *fight_monster = 0;
 char hit_message[HIT_MESSAGE_LEN] = "";
 
 void
-mon_hit(monster)
-	object *monster;
+mon_hit(object *monster)
 {
 	short damage, hit_chance;
 	const char *mn;
@@ -119,9 +118,7 @@ mon_hit(monster)
 }
 
 void
-rogue_hit(monster, force_hit)
-	object *monster;
-	boolean force_hit;
+rogue_hit(object *monster, boolean force_hit)
 {
 	short damage, hit_chance;
 
@@ -160,10 +157,7 @@ RET:	check_gold_seeker(monster);
 }
 
 void
-rogue_damage(d, monster, other)
-	short d;
-	object *monster;
-	short other;
+rogue_damage(short d, object *monster, short other)
 {
 	if (d >= rogue.hp_current) {
 		rogue.hp_current = 0;
@@ -177,9 +171,7 @@ rogue_damage(d, monster, other)
 }
 
 int
-get_damage(ds, r)
-	const char *ds;
-	boolean r;
+get_damage(const char *ds, boolean r)
 {
 	int i = 0, j, n, d, total = 0;
 
@@ -207,8 +199,7 @@ get_damage(ds, r)
 }
 
 int
-get_w_damage(obj)
-	const object *obj;
+get_w_damage(const object *obj)
 {
 	char new_damage[32];
 	int tmp_to_hit, tmp_damage;
@@ -230,8 +221,7 @@ get_w_damage(obj)
 }
 
 int
-get_number(s)
-	const char *s;
+get_number(const char *s)
 {
 	int i = 0;
 	int total = 0;
@@ -244,8 +234,7 @@ get_number(s)
 }
 
 int
-to_hit(obj)
-	object *obj;
+to_hit(object *obj)
 {
 	if (!obj) {
 		return(1);
@@ -254,7 +243,7 @@ to_hit(obj)
 }
 
 int
-damage_for_strength()
+damage_for_strength(void)
 {
 	short strength;
 
@@ -285,9 +274,7 @@ damage_for_strength()
 }
 
 int
-mon_damage(monster, damage)
-	object *monster;
-	short damage;
+mon_damage(object *monster, short damage)
 {
 	const char *mn;
 	short row, col;
@@ -318,8 +305,7 @@ mon_damage(monster, damage)
 }
 
 void
-fight(to_the_death)
-	boolean to_the_death;
+fight(boolean to_the_death)
 {
 	short ch, c, d;
 	short row, col;
@@ -370,10 +356,7 @@ fight(to_the_death)
 }
 
 void
-get_dir_rc(dir, row, col, allow_off_screen)
-	short dir;
-	short *row, *col;
-	short allow_off_screen;
+get_dir_rc(short dir, short *row, short *col, short allow_off_screen)
 {
 	switch(dir) {
 	case LEFT:
@@ -424,8 +407,7 @@ get_dir_rc(dir, row, col, allow_off_screen)
 }
 
 int
-get_hit_chance(weapon)
-	object *weapon;
+get_hit_chance(object *weapon)
 {
 	short hit_chance;
 
@@ -436,8 +418,7 @@ get_hit_chance(weapon)
 }
 
 int
-get_weapon_damage(weapon)
-	object *weapon;
+get_weapon_damage(object *weapon)
 {
 	short damage;
 
@@ -448,8 +429,7 @@ get_weapon_damage(weapon)
 }
 
 void
-s_con_mon(monster)
-	object *monster;
+s_con_mon(object *monster)
 {
 	if (con_mon) {
 		monster->m_flags |= CONFUSED;

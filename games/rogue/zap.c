@@ -1,4 +1,4 @@
-/*	$OpenBSD: zap.c,v 1.6 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: zap.c,v 1.7 2006/03/08 09:44:36 otto Exp $	*/
 /*	$NetBSD: zap.c,v 1.3 1995/04/22 10:28:41 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)zap.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: zap.c,v 1.6 2003/06/03 03:01:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: zap.c,v 1.7 2006/03/08 09:44:36 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ static const char rcsid[] = "$OpenBSD: zap.c,v 1.6 2003/06/03 03:01:41 millert E
 boolean wizard = 0;
 
 void
-zapp()
+zapp(void)
 {
 	short wch;
 	boolean first_miss = 1;
@@ -113,9 +113,7 @@ zapp()
 }
 
 object *
-get_zapped_monster(dir, row, col)
-	short dir;
-	short *row, *col;
+get_zapped_monster(short dir, short *row, short *col)
 {
 	short orow, ocol;
 
@@ -136,9 +134,7 @@ get_zapped_monster(dir, row, col)
 }
 
 void
-zap_monster(monster, kind)
-	object *monster;
-	unsigned short kind;
+zap_monster(object *monster, unsigned short kind)
 {
 	short row, col;
 	object *nm;
@@ -204,8 +200,7 @@ zap_monster(monster, kind)
 }
 
 void
-tele_away(monster)
-	object *monster;
+tele_away(object *monster)
 {
 	short row, col;
 
@@ -224,7 +219,7 @@ tele_away(monster)
 }
 
 void
-wizardize()
+wizardize(void)
 {
 	char buf[10];
 
@@ -248,8 +243,7 @@ wizardize()
 }
 
 void
-wdrain_life(monster)
-	object *monster;
+wdrain_life(object *monster)
 {
 	short hp;
 	object *lmon, *nm;
@@ -278,8 +272,7 @@ wdrain_life(monster)
 }
 
 void
-bounce(ball, dir, row, col, r)
-	short ball, dir, row, col, r;
+bounce(short ball, short dir, short row, short col, short r)
 {
 	short orow, ocol;
 	const char *s;

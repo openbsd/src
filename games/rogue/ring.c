@@ -1,4 +1,4 @@
-/*	$OpenBSD: ring.c,v 1.6 2004/01/21 19:12:13 espie Exp $	*/
+/*	$OpenBSD: ring.c,v 1.7 2006/03/08 09:44:35 otto Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)ring.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: ring.c,v 1.6 2004/01/21 19:12:13 espie Exp $";
+static const char rcsid[] = "$OpenBSD: ring.c,v 1.7 2006/03/08 09:44:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ boolean sustain_strength;
 boolean maintain_armor;
 
 void
-put_on_ring()
+put_on_ring(void)
 {
 	short ch;
 	char desc[DCOLS];
@@ -130,9 +130,7 @@ put_on_ring()
  */
 
 void
-do_put_on(ring, on_left)
-	object *ring;
-	boolean on_left;
+do_put_on(object *ring, boolean on_left)
 {
 	if (on_left) {
 		ring->in_use_flags |= ON_LEFT_HAND;
@@ -144,7 +142,7 @@ do_put_on(ring, on_left)
 }
 
 void
-remove_ring()
+remove_ring(void)
 {
 	boolean left = 0, right = 0;
 	short ch;
@@ -194,8 +192,7 @@ remove_ring()
 }
 
 void
-un_put_on(ring)
-	object *ring;
+un_put_on(object *ring)
 {
 	if (ring && (ring->in_use_flags & ON_LEFT_HAND)) {
 		ring->in_use_flags &= (~ON_LEFT_HAND);
@@ -208,9 +205,7 @@ un_put_on(ring)
 }
 
 void
-gr_ring(ring, assign_wk)
-	object *ring;
-	boolean assign_wk;
+gr_ring(object *ring, boolean assign_wk)
 {
 	ring->what_is = RING;
 	if (assign_wk) {
@@ -250,7 +245,7 @@ gr_ring(ring, assign_wk)
 }
 
 void
-inv_rings()
+inv_rings(void)
 {
 	char buf[DCOLS];
 
@@ -275,8 +270,7 @@ inv_rings()
 }
 
 void
-ring_stats(pr)
-	boolean pr;
+ring_stats(boolean pr)
 {
 	short i;
 	object *ring;

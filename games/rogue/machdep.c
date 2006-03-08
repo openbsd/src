@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.10 2004/01/21 19:12:13 espie Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.11 2006/03/08 09:44:35 otto Exp $	*/
 /*	$NetBSD: machdep.c,v 1.5 1995/04/28 23:49:22 mycroft Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)machdep.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: machdep.c,v 1.10 2004/01/21 19:12:13 espie Exp $";
+static const char rcsid[] = "$OpenBSD: machdep.c,v 1.11 2006/03/08 09:44:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ static const char rcsid[] = "$OpenBSD: machdep.c,v 1.10 2004/01/21 19:12:13 espi
  */
 
 void
-md_slurp()
+md_slurp(void)
 {
 	(void)fpurge(stdin);
 }
@@ -104,7 +104,7 @@ md_slurp()
  */
 
 void
-md_heed_signals()
+md_heed_signals(void)
 {
 	signal(SIGINT, onintr);
 	signal(SIGQUIT, byebye);
@@ -124,7 +124,7 @@ md_heed_signals()
  */
 
 void
-md_ignore_signals()
+md_ignore_signals(void)
 {
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGINT, SIG_IGN);
@@ -141,8 +141,7 @@ md_ignore_signals()
  */
 
 int
-md_get_file_id(fname)
-	const char *fname;
+md_get_file_id(const char *fname)
 {
 	struct stat sbuf;
 
@@ -161,8 +160,7 @@ md_get_file_id(fname)
  */
 
 int
-md_link_count(fname)
-	char *fname;
+md_link_count(char *fname)
 {
 	struct stat sbuf;
 
@@ -185,8 +183,7 @@ md_link_count(fname)
  */
 
 void
-md_gct(rt_buf)
-	struct rogue_time *rt_buf;
+md_gct(struct rogue_time *rt_buf)
 {
 	struct tm *t;
 	time_t seconds;
@@ -219,9 +216,7 @@ md_gct(rt_buf)
  */
 
 void
-md_gfmt(fname, rt_buf)
-	char *fname;
-	struct rogue_time *rt_buf;
+md_gfmt(char *fname, struct rogue_time *rt_buf)
 {
 	struct stat sbuf;
 	time_t seconds;
@@ -251,8 +246,7 @@ md_gfmt(fname, rt_buf)
  */
 
 boolean
-md_df(fname)
-	const char *fname;
+md_df(const char *fname)
 {
 	if (unlink(fname)) {
 		return(0);
@@ -270,7 +264,7 @@ md_df(fname)
  */
 
 char *
-md_gln()
+md_gln(void)
 {
 	struct passwd *p;
 
@@ -289,8 +283,7 @@ md_gln()
  */
 
 void
-md_sleep(nsecs)
-	int nsecs;
+md_sleep(int nsecs)
 {
 	(void) sleep(nsecs);
 }
@@ -318,8 +311,7 @@ md_sleep(nsecs)
  */
 
 char *
-md_getenv(name)
-	const char *name;
+md_getenv(const char *name)
 {
 	char *value;
 
@@ -337,8 +329,7 @@ md_getenv(name)
  */
 
 char *
-md_malloc(n)
-	int n;
+md_malloc(int n)
 {
 	char *t;
 
@@ -365,7 +356,7 @@ md_malloc(n)
  */
 
 int
-md_gseed()
+md_gseed(void)
 {
 	return(getpid());
 }
@@ -378,8 +369,7 @@ md_gseed()
  */
 
 void
-md_exit(status)
-	int status;
+md_exit(int status)
 {
 	exit(status);
 }
@@ -396,8 +386,7 @@ md_exit(status)
  */
 
 void
-md_lock(l)
-	boolean l;
+md_lock(boolean l)
 {
 	extern gid_t gid, egid;
 	static int fd;
@@ -433,8 +422,7 @@ md_lock(l)
  */
 
 void
-md_shell(shell)
-	const char *shell;
+md_shell(const char *shell)
 {
 	int w;
 	pid_t pid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: object.c,v 1.9 2004/01/21 19:12:13 espie Exp $	*/
+/*	$OpenBSD: object.c,v 1.10 2006/03/08 09:44:35 otto Exp $	*/
 /*	$NetBSD: object.c,v 1.3 1995/04/22 10:27:50 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)object.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: object.c,v 1.9 2004/01/21 19:12:13 espie Exp $";
+static const char rcsid[] = "$OpenBSD: object.c,v 1.10 2006/03/08 09:44:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -162,7 +162,7 @@ struct id id_rings[RINGS] = {
 };
 
 void
-put_objects()
+put_objects(void)
 {
 	short i, n;
 	object *obj;
@@ -185,7 +185,7 @@ put_objects()
 }
 
 void
-put_gold()
+put_gold(void)
 {
 	short i, j;
 	short row,col;
@@ -215,9 +215,7 @@ put_gold()
 }
 
 void
-plant_gold(row, col, is_maze)
-	short row, col;
-	boolean is_maze;
+plant_gold(short row, short col, boolean is_maze)
 {
 	object *obj;
 
@@ -233,9 +231,7 @@ plant_gold(row, col, is_maze)
 }
 
 void
-place_at(obj, row, col)
-	object *obj;
-	short row, col;
+place_at(object *obj, short row, short col)
 {
 	obj->row = row;
 	obj->col = col;
@@ -244,9 +240,7 @@ place_at(obj, row, col)
 }
 
 object *
-object_at(pack, row, col)
-	object *pack;
-	short row, col;
+object_at(object *pack, short row, short col)
 {
 	object *obj = (object *) 0;
 
@@ -264,8 +258,7 @@ object_at(pack, row, col)
 }
 
 object *
-get_letter_object(ch)
-	int ch;
+get_letter_object(int ch)
 {
 	object *obj;
 
@@ -278,8 +271,7 @@ get_letter_object(ch)
 }
 
 void
-free_stuff(objlist)
-	object *objlist;
+free_stuff(object *objlist)
 {
 	object *obj;
 
@@ -292,8 +284,7 @@ free_stuff(objlist)
 }
 
 const char *
-name_of(obj)
-	const object *obj;
+name_of(const object *obj)
 {
 	const char *retstring;
 
@@ -349,7 +340,7 @@ name_of(obj)
 }
 
 object *
-gr_object()
+gr_object(void)
 {
 	object *obj;
 
@@ -388,7 +379,7 @@ gr_object()
 }
 
 unsigned short
-gr_what_is()
+gr_what_is(void)
 {
 	short percent;
 	unsigned short what_is;
@@ -414,8 +405,7 @@ gr_what_is()
 }
 
 void
-gr_scroll(obj)
-	object *obj;
+gr_scroll(object *obj)
 {
 	short percent;
 
@@ -453,8 +443,7 @@ gr_scroll(obj)
 }
 
 void
-gr_potion(obj)
-	object *obj;
+gr_potion(object *obj)
 {
 	short percent;
 
@@ -494,9 +483,7 @@ gr_potion(obj)
 }
 
 void
-gr_weapon(obj, assign_wk)
-	object *obj;
-	int assign_wk;
+gr_weapon(object *obj, int assign_wk)
 {
 	short percent;
 	short i;
@@ -560,8 +547,7 @@ gr_weapon(obj, assign_wk)
 }
 
 void
-gr_armor(obj)
-	object *obj;
+gr_armor(object *obj)
 {
 	short percent;
 	short blessing;
@@ -587,8 +573,7 @@ gr_armor(obj)
 }
 
 void
-gr_wand(obj)
-	object *obj;
+gr_wand(object *obj)
 {
 	obj->what_is = WAND;
 	obj->which_kind = get_rand(0, (WANDS - 1));
@@ -596,9 +581,7 @@ gr_wand(obj)
 }
 
 void
-get_food(obj, force_ration)
-	object *obj;
-	boolean force_ration;
+get_food(object *obj, boolean force_ration)
 {
 	obj->what_is = FOOD;
 
@@ -610,7 +593,7 @@ get_food(obj, force_ration)
 }
 
 void
-put_stairs()
+put_stairs(void)
 {
 	short row, col;
 
@@ -619,8 +602,7 @@ put_stairs()
 }
 
 int
-get_armor_class(obj)
-	const object *obj;
+get_armor_class(const object *obj)
 {
 	if (obj) {
 		return(obj->class + obj->d_enchant);
@@ -629,7 +611,7 @@ get_armor_class(obj)
 }
 
 object *
-alloc_object()
+alloc_object(void)
 {
 	object *obj;
 
@@ -650,15 +632,14 @@ alloc_object()
 }
 
 void
-free_object(obj)
-	object *obj;
+free_object(object *obj)
 {
 	obj->next_object = free_list;
 	free_list = obj;
 }
 
 void
-make_party()
+make_party(void)
 {
 	short n;
 
@@ -671,7 +652,7 @@ make_party()
 }
 
 void
-show_objects()
+show_objects(void)
 {
 	object *obj;
 	short mc, rc, row, col;
@@ -710,7 +691,7 @@ show_objects()
 }
 
 void
-put_amulet()
+put_amulet(void)
 {
 	object *obj;
 
@@ -720,8 +701,7 @@ put_amulet()
 }
 
 void
-rand_place(obj)
-	object *obj;
+rand_place(object *obj)
 {
 	short row, col;
 
@@ -730,7 +710,7 @@ rand_place(obj)
 }
 
 void
-c_object_for_wizard()
+c_object_for_wizard(void)
 {
 	short ch, max, wk;
 	object *obj;

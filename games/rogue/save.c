@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.11 2006/03/06 17:28:58 henning Exp $	*/
+/*	$OpenBSD: save.c,v 1.12 2006/03/08 09:44:35 otto Exp $	*/
 /*	$NetBSD: save.c,v 1.3 1995/04/22 10:28:21 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: save.c,v 1.11 2006/03/06 17:28:58 henning Exp $";
+static const char rcsid[] = "$OpenBSD: save.c,v 1.12 2006/03/08 09:44:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ static boolean has_been_touched(struct rogue_time *, struct rogue_time *);
 
 
 void
-save_game()
+save_game(void)
 {
 	char fname[MAXPATHLEN];
 
@@ -91,8 +91,7 @@ save_game()
 }
 
 void
-save_into_file(sfile)
-	const char *sfile;
+save_into_file(const char *sfile)
 {
 	int fp;
 	int file_id;
@@ -170,8 +169,7 @@ save_into_file(sfile)
 }
 
 void
-restore(fname)
-	char *fname;
+restore(char *fname)
 {
 	int fp;
 	struct rogue_time saved_time, mod_time;
@@ -252,9 +250,7 @@ restore(fname)
 }
 
 static void
-write_pack(pack, fp)
-	object *pack;
-	int fp;
+write_pack(object *pack, int fp)
 {
 	object t;
 
@@ -266,10 +262,7 @@ write_pack(pack, fp)
 }
 
 static void
-read_pack(pack, fp, is_rogue)
-	object *pack;
-	int fp;
-	boolean is_rogue;
+read_pack(object *pack, int fp, boolean is_rogue)
 {
 	object read_obj, *new_obj;
 
@@ -297,9 +290,7 @@ read_pack(pack, fp, is_rogue)
 }
 
 static void
-rw_dungeon(fp, rw)
-	int fp;
-	boolean rw;
+rw_dungeon(int fp, boolean rw)
 {
 	short i, j;
 	char buf[DCOLS];
@@ -322,11 +313,7 @@ rw_dungeon(fp, rw)
 }
 
 static void
-rw_id(id_table, fp, n, wr)
-	struct id id_table[];
-	int fp;
-	int n;
-	boolean wr;
+rw_id(struct id id_table[], int fp, int n, boolean wr)
 {
 	short i;
 
@@ -347,9 +334,7 @@ rw_id(id_table, fp, n, wr)
 }
 
 static void
-write_string(s, fp)
-	char *s;
-	int fp;
+write_string(char *s, int fp)
 {
 	short n;
 
@@ -360,10 +345,7 @@ write_string(s, fp)
 }
 
 static void
-read_string(s, maxlen, fp)
-	char *s;
-	size_t maxlen;
-	int fp;
+read_string(char *s, size_t maxlen, int fp)
 {
 	short n;
 
@@ -377,9 +359,7 @@ read_string(s, maxlen, fp)
 }
 
 static void
-rw_rooms(fp, rw)
-	int fp;
-	boolean rw;
+rw_rooms(int fp, boolean rw)
 {
 	short i;
 
@@ -390,10 +370,7 @@ rw_rooms(fp, rw)
 }
 
 static void
-r_read(fp, buf, n)
-	int fp;
-	char *buf;
-	size_t n;
+r_read(int fp, char *buf, size_t n)
 {
 	if (read(fp, buf, n) != n) {
 		clean_up("read() failed, don't know why");
@@ -401,10 +378,7 @@ r_read(fp, buf, n)
 }
 
 static void
-r_write(fp, buf, n)
-	int fp;
-	char *buf;
-	size_t n;
+r_write(int fp, char *buf, size_t n)
 {
 	if (!write_failed) {
 		if (write(fp, buf, n) != n) {
@@ -416,8 +390,7 @@ r_write(fp, buf, n)
 }
 
 static boolean
-has_been_touched(saved_time, mod_time)
-	struct rogue_time *saved_time, *mod_time;
+has_been_touched(struct rogue_time *saved_time, struct rogue_time *mod_time)
 {
 	if (saved_time->year < mod_time->year) {
 		return(1);

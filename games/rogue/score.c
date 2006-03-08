@@ -1,4 +1,4 @@
-/*	$OpenBSD: score.c,v 1.10 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: score.c,v 1.11 2006/03/08 09:44:35 otto Exp $	*/
 /*	$NetBSD: score.c,v 1.5 1995/04/22 10:28:26 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: score.c,v 1.10 2003/06/03 03:01:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: score.c,v 1.11 2006/03/08 09:44:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,9 +59,7 @@ static const char rcsid[] = "$OpenBSD: score.c,v 1.10 2003/06/03 03:01:41 miller
 #include "pathnames.h"
 
 void
-killed_by(monster, other)
-	const object *monster;
-	short other;
+killed_by(const object *monster, short other)
 {
 	const char *mechanism = "killed by something unknown (?)";
 	char mechanism_buf[128];
@@ -132,7 +130,7 @@ killed_by(monster, other)
 }
 
 void
-win()
+win(void)
 {
 	unwield(rogue.weapon);		/* disarm and relax */
 	unwear(rogue.armor);
@@ -156,8 +154,7 @@ win()
 }
 
 void
-quit(from_intrpt)
-	boolean from_intrpt;
+quit(boolean from_intrpt)
 {
 	char buf[DCOLS];
 	short i, orow, ocol;
@@ -233,9 +230,7 @@ static void make_score(struct score_entry *, const object *, int);
 
 
 static void
-pad_spaces(str, len)
-	char *str;
-	size_t len;
+pad_spaces(char *str, size_t len)
 {
 	size_t x;
 
@@ -246,8 +241,7 @@ pad_spaces(str, len)
 }
 
 static void
-unpad_spaces(str)
-	char *str;
+unpad_spaces(char *str)
 {
 	size_t x;
 
@@ -257,9 +251,7 @@ unpad_spaces(str)
 }
 
 static int
-read_score_entry(se, fp)
-	struct score_entry *se;
-	FILE *fp;
+read_score_entry(struct score_entry *se, FILE *fp)
 {
 	char score_block[80];
 	char nickname_block[30];
@@ -312,10 +304,7 @@ read_score_entry(se, fp)
 }
 
 static void
-write_score_entry(se, rank, fp)
-	const struct score_entry *se;
-	int rank;
-	FILE *fp;
+write_score_entry(const struct score_entry *se, int rank, FILE *fp)
 {
 	char score_block[80];
 	char nickname_block[30];
@@ -340,9 +329,7 @@ write_score_entry(se, rank, fp)
 }
 
 void
-put_scores(monster, other)
-	const object *monster;
-	short other;
+put_scores(const object *monster, short other)
 {
 	short i, rank = -1, found_player = -1, numscores = 0;
 	struct score_entry scores[NUM_SCORE_ENTRIES];
@@ -449,10 +436,7 @@ put_scores(monster, other)
 }
 
 static void
-make_score(se, monster, other)
-	struct score_entry *se;
-	const object *monster;
-	int other;
+make_score(struct score_entry *se, const object *monster, int other)
 {
 	const char *death = "bolts from the blue (?)";
 	const char *hasamulet;
@@ -505,8 +489,7 @@ make_score(se, monster, other)
 }
 
 boolean
-is_vowel(ch)
-	short ch;
+is_vowel(short ch)
 {
 	return( (ch == 'a') ||
 		(ch == 'e') ||
@@ -516,7 +499,7 @@ is_vowel(ch)
 }
 
 void
-sell_pack()
+sell_pack(void)
 {
 	object *obj;
 	short row = 2, val;
@@ -548,8 +531,7 @@ sell_pack()
 }
 
 int
-get_value(obj)
-	object *obj;
+get_value(object *obj)
 {
 	short wc;
 	int val;
@@ -597,7 +579,7 @@ get_value(obj)
 }
 
 void
-id_all()
+id_all(void)
 {
 	short i;
 
@@ -619,9 +601,7 @@ id_all()
 }
 
 void
-xxxx(buf, n)
-	char *buf;
-	short n;
+xxxx(char *buf, short n)
 {
 	short i;
 	unsigned char c;
@@ -636,8 +616,7 @@ xxxx(buf, n)
 }
 
 long
-xxx(st)
-	boolean st;
+xxx(boolean st)
 {
 	static long f, s;
 	long r;
@@ -654,9 +633,7 @@ xxx(st)
 }
 
 void
-center(row, buf)
-	short row;
-	const char *buf;
+center(short row, const char *buf)
 {
 	short margin;
 
@@ -665,7 +642,7 @@ center(row, buf)
 }
 
 void
-sf_error()
+sf_error(void)
 {
 	md_lock(0);
 	messagef(1, "");

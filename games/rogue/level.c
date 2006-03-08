@@ -1,4 +1,4 @@
-/*	$OpenBSD: level.c,v 1.7 2004/01/21 19:12:13 espie Exp $	*/
+/*	$OpenBSD: level.c,v 1.8 2006/03/08 09:44:35 otto Exp $	*/
 /*	$NetBSD: level.c,v 1.3 1995/04/22 10:27:37 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)level.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: level.c,v 1.7 2004/01/21 19:12:13 espie Exp $";
+static const char rcsid[] = "$OpenBSD: level.c,v 1.8 2006/03/08 09:44:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ long level_points[MAX_EXP_LEVEL] = {
 short random_rooms[MAXROOMS] = {3, 7, 5, 2, 0, 6, 1, 4, 8};
 
 void
-make_level()
+make_level(void)
 {
 	short i, j;
 	short must_1, must_2, must_3;
@@ -189,8 +189,7 @@ make_level()
 }
 
 void
-make_room(rn, r1, r2, r3)
-	short rn, r1, r2, r3;
+make_room(short rn, short r1, short r2, short r3)
 {
 	short left_col, right_col, top_row, bottom_row;
 	short width, height;
@@ -302,8 +301,7 @@ END:
 }
 
 int
-connect_rooms(room1, room2)
-	short room1, room2;
+connect_rooms(short room1, short room2)
 {
 	short row1, col1, row2, col2, dir;
 
@@ -350,7 +348,7 @@ connect_rooms(room1, room2)
 }
 
 void
-clear_level()
+clear_level(void)
 {
 	short i, j;
 
@@ -377,10 +375,7 @@ clear_level()
 }
 
 void
-put_door(rm, dir, row, col)
-	room *rm;
-	short dir;
-	short *row, *col;
+put_door(room *rm, short dir, short *row, short *col)
 {
 	short wall_width;
 
@@ -415,8 +410,7 @@ put_door(rm, dir, row, col)
 }
 
 void
-draw_simple_passage(row1, col1, row2, col2, dir)
-	short row1, col1, row2, col2, dir;
+draw_simple_passage(short row1, short col1, short row2, short col2, short dir)
 {
 	short i, middle, t;
 
@@ -457,21 +451,19 @@ draw_simple_passage(row1, col1, row2, col2, dir)
 }
 
 int
-same_row(room1, room2)
-	int room1, room2;
+same_row(int room1, int room2)
 {
 	return((room1 / 3) == (room2 / 3));
 }
 
 int
-same_col(room1, room2)
-	int room1, room2;
+same_col(int room1, int room2)
 {
 	return((room1 % 3) == (room2 % 3));
 }
 
 void
-add_mazes()
+add_mazes(void)
 {
 	short i, j;
 	short start;
@@ -503,7 +495,7 @@ add_mazes()
 }
 
 void
-fill_out_level()
+fill_out_level(void)
 {
 	short i, rn;
 
@@ -524,9 +516,7 @@ fill_out_level()
 }
 
 void
-fill_it(rn, do_rec_de)
-	int rn;
-	boolean do_rec_de;
+fill_it(int rn, boolean do_rec_de)
 {
 	short i, tunnel_dir, door_dir, drow, dcol;
 	short target_room, rooms_found = 0;
@@ -586,10 +576,7 @@ fill_it(rn, do_rec_de)
 }
 
 void
-recursive_deadend(rn, offsets, srow, scol)
-	short rn;
-	short *offsets;
-	short srow, scol;
+recursive_deadend(short rn, short *offsets, short srow, short scol)
 {
 	short i, de;
 	short drow, dcol, tunnel_dir;
@@ -622,10 +609,7 @@ recursive_deadend(rn, offsets, srow, scol)
 }
 
 boolean
-mask_room(rn, row, col, mask)
-	short rn;
-	short *row, *col;
-	unsigned short mask;
+mask_room(short rn, short *row, short *col, unsigned short mask)
 {
 	short i, j;
 
@@ -642,8 +626,7 @@ mask_room(rn, row, col, mask)
 }
 
 void
-make_maze(r, c, tr, br, lc, rc)
-	short r, c, tr, br, lc, rc;
+make_maze(short r, short c, short tr, short br, short lc, short rc)
 {
 	char dirs[4];
 	short i, t;
@@ -708,8 +691,7 @@ make_maze(r, c, tr, br, lc, rc)
 }
 
 void
-hide_boxed_passage(row1, col1, row2, col2, n)
-	short row1, col1, row2, col2, n;
+hide_boxed_passage(short row1, short col1, short row2, short col2, short n)
 {
 	short i, j, t;
 	short row, col, row_cut, col_cut;
@@ -744,8 +726,7 @@ hide_boxed_passage(row1, col1, row2, col2, n)
 }
 
 void
-put_player(nr)
-	short nr;		/* try not to put in this room */
+put_player(short nr)		/* try not to put in this room */
 {
 	short rn = nr, misses;
 	short row, col;
@@ -777,7 +758,7 @@ put_player(nr)
 }
 
 int
-drop_check()
+drop_check(void)
 {
 	if (wizard) {
 		return(1);
@@ -794,7 +775,7 @@ drop_check()
 }
 
 int
-check_up()
+check_up(void)
 {
 	if (!wizard) {
 		if (!(dungeon[rogue.row][rogue.col] & STAIRS)) {
@@ -817,9 +798,7 @@ check_up()
 }
 
 void
-add_exp(e, promotion)
-	int e;
-	boolean promotion;
+add_exp(int e, boolean promotion)
 {
 	short new_exp;
 	short i, hp;
@@ -847,8 +826,7 @@ add_exp(e, promotion)
 }
 
 int
-get_exp_level(e)
-	long e;
+get_exp_level(long e)
 {
 	short i;
 
@@ -861,7 +839,7 @@ get_exp_level(e)
 }
 
 int
-hp_raise()
+hp_raise(void)
 {
 	int hp;
 
@@ -870,7 +848,7 @@ hp_raise()
 }
 
 void
-show_average_hp()
+show_average_hp(void)
 {
 	float real_average;
 	float effective_average;
@@ -888,7 +866,7 @@ show_average_hp()
 }
 
 void
-mix_random_rooms()
+mix_random_rooms(void)
 {
 	short i, t;
 	short x, y;

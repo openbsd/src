@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.10 2006/03/06 04:41:18 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.11 2006/03/08 09:44:35 otto Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/04/28 23:49:19 mycroft Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: init.c,v 1.10 2006/03/06 04:41:18 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: init.c,v 1.11 2006/03/08 09:44:35 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,9 +72,7 @@ const char *byebye_string = "Okay, bye bye!";
 gid_t gid, egid;
 
 int
-init(argc, argv)
-	int argc;
-	char *argv[];
+init(int argc, char *argv[])
 {
 	char *pn;
 	int seed;
@@ -130,7 +128,7 @@ init(argc, argv)
 }
 
 void
-player_init()
+player_init(void)
 {
 	object *obj;
 
@@ -179,8 +177,7 @@ player_init()
 }
 
 void
-clean_up(estr)
-	const char *estr;
+clean_up(const char *estr)
 {
 	if (save_is_interactive) {
 		if (init_curses) {
@@ -194,7 +191,7 @@ clean_up(estr)
 }
 
 void
-start_window()
+start_window(void)
 {
 	cbreak();
 	noecho();
@@ -204,14 +201,13 @@ start_window()
 }
 
 void
-stop_window()
+stop_window(void)
 {
 	endwin();
 }
 
 void
-byebye(dummy)
-	int dummy;
+byebye(int dummy)
 {
 	md_ignore_signals();
 	if (ask_quit) {
@@ -223,8 +219,7 @@ byebye(dummy)
 }
 
 void
-onintr(dummy)
-	int dummy;
+onintr(int dummy)
 {
 	md_ignore_signals();
 	if (cant_int) {
@@ -237,8 +232,7 @@ onintr(dummy)
 }
 
 void
-error_save(dummy)
-	int dummy;
+error_save(int dummy)
 {
 	save_is_interactive = 0;
 	save_into_file(error_file);
@@ -246,9 +240,7 @@ error_save(dummy)
 }
 
 void
-do_args(argc, argv)
-	int argc;
-	char *argv[];
+do_args(int argc, char *argv[])
 {
 	int i, j;
 
@@ -268,7 +260,7 @@ do_args(argc, argv)
 }
 
 void
-do_opts()
+do_opts(void)
 {
 	char *eptr;
 
@@ -315,9 +307,7 @@ do_opts()
 }
 
 void
-env_get_value(s, e, add_blank)
-	char **s, *e;
-	boolean add_blank;
+env_get_value(char **s, char *e, boolean add_blank)
 {
 	short i = 0;
 	char *t;
@@ -340,9 +330,7 @@ env_get_value(s, e, add_blank)
 }
 
 void
-init_str(str, dflt)
-	char **str;
-	const char *dflt;
+init_str(char **str, const char *dflt)
 {
 	if (!(*str)) {
 		/* room.c:edit_opts() depends on length MAX_OPT_LEN + 2 */
