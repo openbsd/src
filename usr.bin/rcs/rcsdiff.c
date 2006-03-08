@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.36 2006/03/07 01:40:52 joris Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.37 2006/03/08 20:19:39 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -165,6 +165,7 @@ rcsdiff_usage(void)
 static int
 rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 {
+	int ret;
 	char path1[MAXPATHLEN], path2[MAXPATHLEN];
 	BUF *b1, *b2;
 	char rbuf[64];
@@ -173,9 +174,12 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	memset(&tv, 0, sizeof(tv));
 	memset(&tv2, 0, sizeof(tv2));
 
+	ret = -1;
+	b1 = b2 = NULL;
+
 	if (stat(filename, &st) == -1) {
 		cvs_log(LP_ERRNO, "%s", filename);
-		return (-1);
+		goto out;
 	}
 
 	rcsnum_tostr(rev, rbuf, sizeof(rbuf));
@@ -186,58 +190,70 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 
 	if ((b1 = rcs_getrev(file, rev)) == NULL) {
 		cvs_log(LP_ERR, "failed to retrieve revision %s", rbuf);
-		return (-1);
+		goto out;
 	}
+
 	b1 = rcs_kwexp_buf(b1, file, rev);
 	tv[0].tv_sec = (long)rcs_rev_getdate(file, rev);
 	tv[1].tv_sec = tv[0].tv_sec;
 
 	if ((b2 = cvs_buf_load(filename, BUF_AUTOEXT)) == NULL) {
 		cvs_log(LP_ERR, "failed to load file: '%s'", filename);
-		cvs_buf_free(b1);
-		return (-1);
+		goto out;
 	}
+
 	tv2[0].tv_sec = st.st_mtime;
 	tv2[1].tv_sec = st.st_mtime;
 
 	strlcpy(path1, rcs_tmpdir, sizeof(path1));
 	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));
-	if (cvs_buf_write_stmp(b1, path1, 0600) == -1) {
-		cvs_log(LP_ERRNO, "could not write temporary file");
-		cvs_buf_free(b1);
-		cvs_buf_free(b2);
-		return (-1);
-	}
+	if (cvs_buf_write_stmp(b1, path1, 0600) == -1)
+		goto out;
+
+	cvs_worklist_add(path1, &rcs_temp_files);
 	cvs_buf_free(b1);
+	b1 = NULL;
+
 	if (utimes(path1, (const struct timeval *)&tv) < 0)
 		cvs_log(LP_ERRNO, "error setting utimes");
 
 	strlcpy(path2, rcs_tmpdir, sizeof(path2));
 	strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2));
-	if (cvs_buf_write_stmp(b2, path2, 0600) == -1) {
-		cvs_buf_free(b2);
-		(void)unlink(path1);
-		return (-1);
-	}
+	if (cvs_buf_write_stmp(b2, path2, 0600) == -1)
+		goto out;
+
+	cvs_worklist_add(path2, &rcs_temp_files);
 	cvs_buf_free(b2);
+	b2 = NULL;
+
 	if (utimes(path2, (const struct timeval *)&tv2) < 0)
 		cvs_log(LP_ERRNO, "error setting utimes");
 
 	cvs_diffreg(path1, path2, NULL);
-	(void)unlink(path1);
-	(void)unlink(path2);
+	ret = 0;
 
-	return (0);
+out:
+	cvs_worklist_run(&rcs_temp_files, cvs_worklist_unlink);
+
+	if (b1 != NULL)
+		cvs_buf_free(b1);
+	if (b2 != NULL)
+		cvs_buf_free(b2);
+
+	return (ret);
 }
 
 static int
 rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, const char *filename)
 {
+	int ret;
 	char path1[MAXPATHLEN], path2[MAXPATHLEN];
 	BUF *b1, *b2;
 	char rbuf1[64], rbuf2[64];
 	struct timeval tv[2], tv2[2];
 
+	ret = -1;
+	b1 = b2 = NULL;
 	memset(&tv, 0, sizeof(tv));
 	memset(&tv2, 0, sizeof(tv2));
 
@@ -247,8 +263,9 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, const char *filename)
 
 	if ((b1 = rcs_getrev(file, rev1)) == NULL) {
 		cvs_log(LP_ERR, "failed to retrieve revision %s", rbuf1);
-		return (-1);
+		goto out;
 	}
+
 	b1 = rcs_kwexp_buf(b1, file, rev1);
 	tv[0].tv_sec = (long)rcs_rev_getdate(file, rev1);
 	tv[1].tv_sec = tv[0].tv_sec;
@@ -259,8 +276,9 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, const char *filename)
 
 	if ((b2 = rcs_getrev(file, rev2)) == NULL) {
 		cvs_log(LP_ERR, "failed to retrieve revision %s", rbuf2);
-		return (-1);
+		goto out;
 	}
+
 	b2 = rcs_kwexp_buf(b2, file, rev2);
 	tv2[0].tv_sec = (long)rcs_rev_getdate(file, rev2);
 	tv2[1].tv_sec = tv2[0].tv_sec;
@@ -270,31 +288,38 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, const char *filename)
 
 	strlcpy(path1, rcs_tmpdir, sizeof(path1));
 	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));
-	if (cvs_buf_write_stmp(b1, path1, 0600) == -1) {
-		cvs_log(LP_ERRNO, "could not write temporary file");
-		cvs_buf_free(b1);
-		cvs_buf_free(b2);
-		return (-1);
-	}
+	if (cvs_buf_write_stmp(b1, path1, 0600) == -1)
+		goto out;
+
+	cvs_worklist_add(path1, &rcs_temp_files);
 	cvs_buf_free(b1);
+	b1 = NULL;
+
 	if (utimes(path1, (const struct timeval *)&tv) < 0)
 		cvs_log(LP_ERRNO, "error setting utimes");
 
 	strlcpy(path2, rcs_tmpdir, sizeof(path2));
 	strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2));
-	if (cvs_buf_write_stmp(b2, path2, 0600) == -1) {
-		cvs_buf_free(b2);
-		(void)unlink(path1);
-		return (-1);
-	}
+	if (cvs_buf_write_stmp(b2, path2, 0600) == -1)
+		goto out;
+
+	cvs_worklist_add(path2, &rcs_temp_files);
 	cvs_buf_free(b2);
+	b2 = NULL;
 
 	if (utimes(path2, (const struct timeval *)&tv2) < 0)
 		cvs_log(LP_ERRNO, "error setting utimes");
 
 	cvs_diffreg(path1, path2, NULL);
-	(void)unlink(path1);
-	(void)unlink(path2);
+	ret = 0;
 
-	return (0);
+out:
+	cvs_worklist_run(&rcs_temp_files, cvs_worklist_unlink);
+
+	if (b1 != NULL)
+		cvs_buf_free(b1);
+	if (b2 != NULL)
+		cvs_buf_free(b2);
+
+	return (ret);
 }

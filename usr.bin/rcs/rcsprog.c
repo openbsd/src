@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.67 2006/03/08 12:25:34 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.68 2006/03/08 20:19:39 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -64,8 +64,18 @@ struct rcs_prog {
 	{ "ident",	ident_main,	ident_usage	},
 };
 
+struct cvs_wklhead rcs_temp_files;
+
+void sighdlr(int);
 static void rcs_set_description(RCSFILE *, const char *);
 static void rcs_attach_symbol(RCSFILE *, const char *);
+
+void
+sighdlr(int sig)
+{
+	cvs_worklist_clean(&rcs_temp_files, cvs_worklist_unlink);
+	_exit(1);
+}
 
 void
 rcs_set_rev(const char *str, RCSNUM **rev)
@@ -330,6 +340,7 @@ main(int argc, char **argv)
 	ret = -1;
 	rcs_optind = 1;
 	cvs_log_init(LD_STD, 0);
+	SLIST_INIT(&rcs_temp_files);
 
 	cmd_argc = 0;
 	cmd_argv[cmd_argc++] = argv[0];
@@ -349,6 +360,13 @@ main(int argc, char **argv)
 
 	for (ret = 1; ret < argc; ret++)
 		cmd_argv[cmd_argc++] = argv[ret];
+
+	signal(SIGHUP, sighdlr);
+	signal(SIGINT, sighdlr);
+	signal(SIGQUIT, sighdlr);
+	signal(SIGABRT, sighdlr);
+	signal(SIGALRM, sighdlr);
+	signal(SIGTERM, sighdlr);
 
 	for (i = 0; i < (sizeof(programs)/sizeof(programs[0])); i++)
 		if (strcmp(__progname, programs[i].prog_name) == 0) {

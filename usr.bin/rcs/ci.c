@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.111 2006/03/07 01:47:42 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.112 2006/03/08 20:19:39 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -292,52 +292,59 @@ checkin_diff_file(struct checkin_params *pb)
 	BUF *b1, *b2, *b3;
 	char rbuf[64], *deltatext;
 
+	b1 = b2 = b3 = NULL;
+	deltatext = NULL;
 	rcsnum_tostr(pb->frev, rbuf, sizeof(rbuf));
 
 	if ((b1 = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
 		cvs_log(LP_ERR, "failed to load file: '%s'", pb->filename);
-		return (NULL);
+		goto out;
 	}
 
 	if ((b2 = rcs_getrev(pb->file, pb->frev)) == NULL) {
 		cvs_log(LP_ERR, "failed to load revision");
-		cvs_buf_free(b1);
-		return (NULL);
+		goto out;
 	}
 
 	if ((b3 = cvs_buf_alloc((size_t)128, BUF_AUTOEXT)) == NULL) {
 		cvs_log(LP_ERR, "failed to allocated buffer for diff");
-		cvs_buf_free(b1);
-		cvs_buf_free(b2);
-		return (NULL);
+		goto out;
 	}
 
 	strlcpy(path1, rcs_tmpdir, sizeof(path1));
 	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));
-	if (cvs_buf_write_stmp(b1, path1, 0600) == -1) {
-		cvs_log(LP_ERRNO, "could not write temporary file");
-		cvs_buf_free(b1);
-		cvs_buf_free(b2);
-		return (NULL);
-	}
+	if (cvs_buf_write_stmp(b1, path1, 0600) == -1)
+		goto out;
+
+	cvs_worklist_add(path1, &rcs_temp_files);
 	cvs_buf_free(b1);
+	b1 = NULL;
 
 	strlcpy(path2, rcs_tmpdir, sizeof(path2));
 	strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2));
-	if (cvs_buf_write_stmp(b2, path2, 0600) == -1) {
-		cvs_buf_free(b2);
-		(void)unlink(path1);
-		return (NULL);
-	}
+	if (cvs_buf_write_stmp(b2, path2, 0600) == -1)
+		goto out;
+
+	cvs_worklist_add(path2, &rcs_temp_files);
 	cvs_buf_free(b2);
+	b2 = NULL;
 
 	diff_format = D_RCSDIFF;
 	cvs_diffreg(path1, path2, b3);
-	(void)unlink(path1);
-	(void)unlink(path2);
 
 	cvs_buf_putc(b3, '\0');
 	deltatext = (char *)cvs_buf_release(b3);
+	b3 = NULL;
+
+out:
+	cvs_worklist_run(&rcs_temp_files, cvs_worklist_unlink);
+
+	if (b1 != NULL)
+		cvs_buf_free(b1);
+	if (b2 != NULL)
+		cvs_buf_free(b2);
+	if (b3 != NULL)
+		cvs_buf_free(b3);
 
 	return (deltatext);
 }

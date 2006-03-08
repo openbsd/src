@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.35 2006/02/16 17:44:53 niallo Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.36 2006/03/08 20:19:39 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -29,6 +29,7 @@
 
 #include "log.h"
 #include "rcs.h"
+#include "worklist.h"
 #include "xmalloc.h"
 
 #define RCS_TMPDIR_DEFAULT	"/tmp"
@@ -62,6 +63,7 @@ extern int	 rcs_optind;
 extern char	*rcs_optarg;
 extern char	*rcs_suffixes;
 extern char	*rcs_tmpdir;
+extern struct cvs_wklhead rcs_temp_files;
 
 /* date.y */
 time_t  cvs_date_parse(const char *);
