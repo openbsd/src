@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.7 2006/03/01 21:51:39 deraadt Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.8 2006/03/08 19:44:02 kettenis Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -121,6 +121,13 @@
 #include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
+
+#include "ioapic.h"
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#include <machine/mpbiosvar.h>
+#endif
 
 #define _X86_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -358,7 +365,27 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 	void *ih_arg;
 	char *ih_what;
 {
-	return intr_establish(irq, &i8259_pic, irq, type, level, ih_fun,
+	struct pic *pic = &i8259_pic;
+	int pin = irq;
+
+#if NIOAPIC > 0
+	struct mp_intr_map *mip;
+
+ 	if (mp_busses != NULL) {
+ 		for (mip = mp_busses[mp_isa_bus].mb_intrs; mip != NULL;
+ 		    mip = mip->next) {
+ 			if (mip->bus_pin == pin) {
+				pin = APIC_IRQ_PIN(mip->ioapic_ih);
+				pic = &mip->ioapic->sc_pic;
+ 				break;
+ 			}
+ 		}
+ 	}
+#endif
+
+	KASSERT(pic);
+
+	return intr_establish(irq, pic, pin, type, level, ih_fun,
 	    ih_arg, ih_what);
 }
 
