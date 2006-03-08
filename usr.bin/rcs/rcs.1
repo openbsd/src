@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.22 2006/03/07 11:17:07 jmc Exp $
+.\"	$OpenBSD: rcs.1,v 1.23 2006/03/08 11:25:58 xsa Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -110,9 +110,6 @@ Files created this way contain no revision.
 Specify the keyword substitution mode.
 .It Fl L
 Enable strict locking on the RCS files.
-See
-.Xr rcsfile 5
-for more details on locking.
 .It Fl M
 Disable mail warnings when breaking a user's lock.
 Normally,
@@ -188,9 +185,6 @@ terminated by end-of-file or by a line containing the
 character by itself.
 .It Fl U
 Disable strict locking on the RCS files.
-See
-.Xr rcsfile 5
-for more details on locking.
 .It Fl V
 Print the program's version string and exit.
 .It Fl x Ns Ar suffixes
