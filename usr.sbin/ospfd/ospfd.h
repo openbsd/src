@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.46 2006/02/24 21:06:47 norby Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.47 2006/03/08 13:49:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -48,11 +48,11 @@
 
 #define	F_OSPFD_INSERTED	0x0001
 #define	F_KERNEL		0x0002
-#define	F_CONNECTED		0x0004
+#define	F_BGPD_INSERTED		0x0004
+#define	F_CONNECTED		0x0008
 #define	F_DOWN			0x0010
 #define	F_STATIC		0x0020
 #define	F_DYNAMIC		0x0040
-#define	F_LONGER		0x0080
 #define	F_REDISTRIBUTED		0x0100
 
 #define REDISTRIBUTE_STATIC	0x01
@@ -119,6 +119,7 @@ enum imsg_type {
 	IMSG_CTL_END,
 	IMSG_KROUTE_CHANGE,
 	IMSG_KROUTE_DELETE,
+	IMSG_KROUTE_GET,
 	IMSG_IFINFO,
 	IMSG_NEIGHBOR_UP,
 	IMSG_NEIGHBOR_DOWN,
