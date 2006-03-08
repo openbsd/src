@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.4 2006/01/07 17:35:35 jmc Exp $
+.\"	$OpenBSD: acpi.4,v 1.5 2006/03/08 17:45:19 grange Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -47,10 +47,10 @@ WARNING: this may cause an overheating on some machines since
 doesn't provide any thermal or cooling control.
 .Sh SUPPORTED DEVICES
 .Bl -tag -width 12n -offset indent -compact
+.It Xr acpihpet 4
+ACPI High Precision Event Timer
 .It Xr acpitimer 4
 ACPI power management timer
-.It Xr hpet 4
-High Precision Event Timer
 .El
 .Sh SEE ALSO
 .Xr acpitimer 4 ,
