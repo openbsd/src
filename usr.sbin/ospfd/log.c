@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.2 2005/03/31 12:14:34 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.3 2006/03/08 15:36:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -26,6 +26,12 @@
 
 #include "ospfd.h"
 #include "log.h"
+
+static const char * const procnames[] = {
+	"parent",
+	"ospfe",
+	"rde"
+};
 
 int	debug;
 
