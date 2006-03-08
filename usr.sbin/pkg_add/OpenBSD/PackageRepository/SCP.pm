@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SCP.pm,v 1.6 2006/03/08 11:22:02 espie Exp $
+# $OpenBSD: SCP.pm,v 1.7 2006/03/08 12:10:48 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -153,17 +153,16 @@ sub list
 	return $self->{list};
 }
 
-# XXX not used yet
 sub cleanup
 {
 	my $self = shift;
 	if (defined $self->{controller}) {
-		print STDERR "Closing repository\n";
 		my $cmdfh = $self->{cmdfh};
+		my $getfh = $self->{getfh};
 		print $cmdfh "ABORT\nBYE\nBYE\n";
 		CORE::close($cmdfh);
+		CORE::close($getfh);
 		waitpid($self->{controller}, 0);
-		print STDERR "Repository closed\n";
 	}
 }
 

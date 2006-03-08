@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.10 2006/03/08 11:22:02 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.11 2006/03/08 12:10:47 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -217,6 +217,11 @@ sub parse_problems
 	}
 	CORE::close($fh);
 	unlink $filename;
+}
+
+sub cleanup
+{
+	# nothing to do
 }
 
 package OpenBSD::PackageRepository::Installed;

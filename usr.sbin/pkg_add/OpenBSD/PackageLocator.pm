@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.52 2006/03/04 13:13:05 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.53 2006/03/08 12:10:47 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -105,6 +105,11 @@ sub grabPlist
 		$plist = $pkgpath->grabPlist($_, $arch, $code);
 	}
 	return $plist;
+}
+
+sub cleanup
+{
+	$pkgpath->cleanup();
 }
 
 1;
