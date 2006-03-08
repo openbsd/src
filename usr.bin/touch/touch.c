@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.13 2006/03/07 11:49:40 henning Exp $	*/
+/*	$OpenBSD: touch.c,v 1.14 2006/03/08 12:20:05 henning Exp $	*/
 /*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
 
 /*
@@ -53,10 +53,10 @@ __dead void	usage(void);
 int
 main(int argc, char *argv[])
 {
-	struct	 stat sb;
-	struct	 timeval tv[2];
-	int	 aflag, cflag, mflag, ch, fd, len, rval, timeset;
-	char	*p;
+	struct stat	 sb;
+	struct timeval	 tv[2];
+	int		 aflag, cflag, mflag, ch, fd, len, rval, timeset;
+	char		*p;
 
 	(void)setlocale(LC_ALL, "");
 
