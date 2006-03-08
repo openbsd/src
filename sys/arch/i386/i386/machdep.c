@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.343 2006/03/08 08:18:24 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.344 2006/03/08 13:52:34 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1415,6 +1415,7 @@ amd_family6_setup(struct cpu_info *ci)
 	extern void (*pagezero)(void *, size_t);
 	extern void sse2_pagezero(void *, size_t);
 	extern void i686_pagezero(void *, size_t);
+#if !defined(MULTIPROCESSOR)
 	static struct amd_pn_flag amd_pn_flags[] = {
 	    {0x01, "TS"},
 	    {0x02, "FID"},
@@ -1425,6 +1426,7 @@ amd_family6_setup(struct cpu_info *ci)
 	};
 	u_int regs[4];
 	int i;
+#endif
 
 	if (cpu_feature & CPUID_SSE2)
 		pagezero = sse2_pagezero;
