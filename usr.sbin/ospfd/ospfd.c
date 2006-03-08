@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.27 2006/02/10 18:30:47 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.28 2006/03/08 16:02:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -61,8 +61,6 @@ int	pipe_parent2ospfe[2];
 int	pipe_parent2rde[2];
 int	pipe_ospfe2rde[2];
 
-volatile sig_atomic_t	 main_quit = 0;
-
 struct ospfd_conf	*conf = NULL;
 struct imsgbuf		*ibuf_ospfe;
 struct imsgbuf		*ibuf_rde;
@@ -70,6 +68,7 @@ struct imsgbuf		*ibuf_rde;
 pid_t			 ospfe_pid = 0;
 pid_t			 rde_pid = 0;
 
+/* ARGSUSED */
 void
 main_sig_handler(int sig, short event, void *arg)
 {
@@ -309,12 +308,13 @@ check_child(pid_t pid, const char *pname)
 }
 
 /* imsg handling */
+/* ARGSUSED */
 void
 main_dispatch_ospfe(int fd, short event, void *bula)
 {
 	struct imsgbuf  *ibuf = bula;
 	struct imsg	 imsg;
-	int		 n;
+	ssize_t		 n;
 
 	switch (event) {
 	case EV_READ:
@@ -371,12 +371,13 @@ main_dispatch_ospfe(int fd, short event, void *bula)
 	imsg_event_add(ibuf);
 }
 
+/* ARGSUSED */
 void
 main_dispatch_rde(int fd, short event, void *bula)
 {
 	struct imsgbuf  *ibuf = bula;
 	struct imsg	 imsg;
-	int		 n;
+	ssize_t		 n;
 
 	switch (event) {
 	case EV_READ:
