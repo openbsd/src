@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.34 2006/03/08 04:05:01 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.35 2006/03/08 21:03:18 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -56,7 +56,7 @@
 #define aml_ipaddr(n) ((n)-aml_root.start)
 
 #ifdef ACPI_DEBUG
-const char		*opregion(int id);
+const char		*opregion(int);
 
 const char *
 opregion(int id)
