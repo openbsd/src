@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.18 2006/03/07 23:15:01 marco Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.19 2006/03/08 21:04:57 marco Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /* 
@@ -330,6 +330,7 @@ db_ddbproc_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 #if NACPI > 0
 struct db_command db_acpi_cmds[] = {
 	{ "disasm",	db_acpi_disasm,		CS_OWN,	NULL },
+	{ "showval",	db_acpi_showval,	CS_OWN,	NULL },
 	{ "tree",	db_acpi_tree,		0,	NULL },
 	{ NULL,		NULL,			0,	NULL }
 };
