@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.40 2006/02/21 13:02:59 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.41 2006/03/08 13:23:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -515,7 +515,17 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 			if (nbr->iface->self == nbr)
 				break;
 
-			/* TODO for case one check for implied acks */
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(lsa_hdr))
+				fatalx("ospfe_dispatch_rde: bad imsg size");
+			memcpy(&lsa_hdr, imsg.data, sizeof(lsa_hdr));
+
+			/* for case one check for implied acks */
+			if (nbr->iface->state & IF_STA_DROTHER)
+				if (ls_retrans_list_del(nbr->iface->self,
+				    &lsa_hdr) == 0)
+					break;
+			if (ls_retrans_list_del(nbr, &lsa_hdr) == 0)
+				break;
 
 			/* send a direct acknowledgement */
 			send_ls_ack(nbr->iface, nbr->addr, imsg.data,
