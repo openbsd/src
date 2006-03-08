@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.2 2006/03/07 23:13:28 marco Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.3 2006/03/08 21:04:18 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -29,14 +29,17 @@
 #include <dev/acpi/acpidebug.h>
 #include <dev/acpi/dsdt.h>
 
+void			db_aml_disasm(struct acpi_context *, int);
+void			db_aml_disint(struct acpi_context *, int, int);
+void			db_aml_disline(uint8_t *, int, const char *, ...);
+void			db_aml_dump(int, u_int8_t *);
 void			db_aml_walktree(struct aml_node *);
 void			db_aml_shownode(struct aml_node *);
-void			db_aml_disline(uint8_t *, int, const char *, ...);
-void			db_aml_disint(struct acpi_context *, int, int);
-void			db_aml_disasm(struct acpi_context *, int);
+void			db_aml_showvalue(struct aml_value *);
 void			db_spaceit(int);
 const char		*db_aml_objtype(struct aml_value *);
 const char		*db_aml_opname(int);
+const char		*db_opregion(int);
 struct aml_opcode	*db_findem(int);
 int			db_aml_nodetype(struct aml_node *);
 
@@ -54,6 +57,142 @@ char			buf[128];
 
 /* name of scope for lexer */
 char			scope[80];
+
+const char *
+db_opregion(int id)
+{
+	switch(id) {
+	case 0:
+		return "SystemMemory";
+	case 1:
+		return "SystemIO";
+	case 2:
+		return "PCIConfig";
+	case 3:
+		return "Embedded";
+	case 4:
+		return "SMBus";
+	case 5:
+		return "CMOS";
+	case 6:
+		return "PCIBAR";
+	}
+	return "";
+}
+void
+db_aml_dump(int len, u_int8_t *buf)
+{
+	int		idx;
+	
+	db_printf("{ ");
+	for (idx = 0; idx < len; idx++) {
+		db_printf("%s0x%.2x", idx ? ", " : "", buf[idx]);
+	}
+	db_printf(" }\n");
+}
+
+void
+db_aml_showvalue(struct aml_value *value)
+{
+	int idx;
+
+	if (value == NULL)
+		return;
+
+	if (value->node)
+		db_printf("node:%.8x ", value->node);
+
+	if (value->name)
+		db_printf("name:%s ", value->name);
+
+	switch (value->type) {
+	case AML_OBJTYPE_OBJREF:
+		db_printf("refof: %x {\n", value->v_objref.index);
+		db_aml_showvalue(value->v_objref.ref);
+		db_printf("}\n");
+		break;
+	case AML_OBJTYPE_NAMEREF:
+		db_printf("nameref: %s %.8x\n", value->name,
+			 value->v_objref.ref);
+		break;
+	case AML_OBJTYPE_STATICINT:
+	case AML_OBJTYPE_INTEGER:
+		db_printf("integer: %llx %s\n", value->v_integer,
+		    (value->type == AML_OBJTYPE_STATICINT) ? "(static)" : "");
+		break;
+	case AML_OBJTYPE_STRING:
+		db_printf("string: %s\n", value->v_string);
+		break;
+	case AML_OBJTYPE_PACKAGE:
+		db_printf("package: %d {\n", value->length);
+		for (idx = 0; idx < value->length; idx++)
+			db_aml_showvalue(value->v_package[idx]);
+		db_printf("}\n");
+		break;
+	case AML_OBJTYPE_BUFFER:
+		db_printf("buffer: %d ", value->length);
+		db_aml_dump(value->length, value->v_buffer);
+		break;
+	case AML_OBJTYPE_DEBUGOBJ:
+		db_printf("debug");
+		break;
+	case AML_OBJTYPE_MUTEX:
+		db_printf("mutex : %llx\n", value->v_integer);
+		break;
+	case AML_OBJTYPE_DEVICE:
+		db_printf("device\n");
+		break;
+	case AML_OBJTYPE_EVENT:
+		db_printf("event\n");
+		break;
+	case AML_OBJTYPE_PROCESSOR:
+		db_printf("cpu: %x,%x,%x\n",
+		    value->v_processor.proc_id,
+		    value->v_processor.proc_addr,
+		    value->v_processor.proc_len);
+		break;
+	case AML_OBJTYPE_METHOD:
+		db_printf("method: args=%d, serialized=%d, synclevel=%d\n",
+		    AML_METHOD_ARGCOUNT(value->v_method.flags),
+		    AML_METHOD_SERIALIZED(value->v_method.flags),
+		    AML_METHOD_SYNCLEVEL(value->v_method.flags));
+		break;
+	case AML_OBJTYPE_FIELDUNIT:
+		db_printf("%s: access=%x,lock=%x,update=%x pos=%.4x "
+		    "len=%.4x\n",
+		    db_aml_opname(value->v_field.type),
+		    AML_FIELD_ACCESS(value->v_field.flags),
+		    AML_FIELD_LOCK(value->v_field.flags),
+		    AML_FIELD_UPDATE(value->v_field.flags),
+		    value->v_field.bitpos,
+		    value->v_field.bitlen);
+
+		db_aml_showvalue(value->v_field.ref1);
+		db_aml_showvalue(value->v_field.ref2);
+		break;
+	case AML_OBJTYPE_BUFFERFIELD:
+		db_printf("%s: pos=%.4x len=%.4x ", 
+		    db_aml_opname(value->v_field.type),
+		    value->v_field.bitpos,
+		    value->v_field.bitlen);
+
+		db_aml_dump(aml_bytelen(value->v_field.bitlen), 
+		    value->v_field.ref1->v_buffer + 
+		    aml_bytepos(value->v_field.bitpos));
+
+		db_aml_showvalue(value->v_field.ref1);
+		break;
+	case AML_OBJTYPE_OPREGION:
+		db_printf("opregion: %s,0x%llx,0x%x\n",
+		    db_opregion(value->v_opregion.iospace),
+		    value->v_opregion.iobase,
+		    value->v_opregion.iolen);
+		break;
+	default:
+		db_printf("unknown: %d\n", value->type);
+		break;
+	}
+}
 
 /* Output disassembled line */
 void
@@ -349,6 +488,50 @@ db_aml_walktree(struct aml_node *node)
 
 /* ddb interface */
 void
+db_acpi_showval(db_expr_t addr, int haddr, db_expr_t count, char *modif)
+{
+	struct aml_node 		*node;
+	int				t;
+
+	memset(scope, 0, sizeof scope);
+	do {
+		t = db_read_token();
+		if (t == tIDENT) {
+			if (strlcat(scope, db_tok_string, sizeof scope) >=
+			    sizeof scope) {
+				printf("Input too long\n");
+				goto error;
+			}
+			t = db_read_token();
+			if (t == tDOT)
+				if (strlcat(scope, ".", sizeof scope) >=
+				    sizeof scope) {
+					printf("Input too long 2\n");
+					goto error;
+				}
+		}
+	}
+	while (t != tEOL);
+
+	if (!strlen(scope)) {
+		db_printf("Invalid input\n");
+		goto error;
+	}
+
+	/* get rid of the rest of input */
+	db_flush_lex();
+
+	node = aml_searchname(&aml_root, scope);
+	if (node)
+		db_aml_showvalue(node->value);
+	else
+		db_printf("Not a valid value\n");
+
+error:
+	db_flush_lex();
+}
+
+void
 db_acpi_disasm(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
 	extern struct acpi_softc	*acpi_softc;
@@ -391,7 +574,9 @@ db_acpi_disasm(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		ctx->pos = node->value->v_method.start;
 		while (ctx->pos < node->value->v_method.end)
 			db_aml_disasm(ctx, 0);
-	}
+	} else
+		db_printf("Not a valid method\n");
+
 	acpi_freecontext(ctx);
 
 error:
