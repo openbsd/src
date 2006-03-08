@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SCP.pm,v 1.5 2006/03/07 14:18:51 espie Exp $
+# $OpenBSD: SCP.pm,v 1.6 2006/03/08 11:22:02 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -64,10 +64,6 @@ sub grab_object
 
 	my $cmdfh = $self->{cmdfh};
 	my $getfh = $self->{getfh};
-	$SIG{'USR1'} = sub {
-		kill USR1 => $object->{parent};
-		exit(1);
-	};
 
 	print $cmdfh "ABORT\n";
 	local $_;
@@ -101,22 +97,6 @@ sub grab_object
 		} while ($n != 0 && $remaining != 0);
 		exit(0);
 	}
-}
-
-sub pkg_copy
-{
-	my ($self, $in, $object) = @_;
-
-	$SIG{'USR1'} = sub {
-		close($in);
-		if (defined $object->{tempname}) {
-			unlink $object->{tempname};
-		}
-		kill USR1 => $object->{parent};
-		exit(1);
-	};
-
-	$self->SUPER::pkg_copy($in, $object);
 }
 
 sub _new
@@ -171,32 +151,6 @@ sub list
 		$self->{list} = $l;
 	}
 	return $self->{list};
-}
-
-sub finish_and_close
-{
-	my ($self, $object) = @_;
-	$self->SUPER::close($object);
-}
-
-sub close
-{
-	my ($self, $object, $hint) = @_;
-	# XXX we have to make sure the grand-child is dead.
-	if (defined $object->{pid2}) {
-		my $received = 0;
-		local $SIG{'USR1'} = sub { $received = 1; };
-		kill USR1 => $object->{pid2};
-		while (!$received) {
-			sleep 0.01;
-		}
-	}
-	close($object->{fh}) if defined $object->{fh};
-	
-	$self->parse_problems($object->{errors}, $hint) 
-	    if defined $object->{errors};
-	undef $object->{errors};
-	$object->deref();
 }
 
 # XXX not used yet

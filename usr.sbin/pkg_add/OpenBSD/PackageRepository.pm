@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.9 2006/03/07 17:25:47 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.10 2006/03/08 11:22:02 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -87,6 +87,7 @@ sub close
 {
 	my ($self, $object, $hint) = @_;
 	close($object->{fh}) if defined $object->{fh};
+	waitpid($object->{pid2}, 0) if defined $object->{pid2};
 	$self->parse_problems($object->{errors}, $hint) 
 	    if defined $object->{errors};
 	undef $object->{errors};
@@ -366,6 +367,7 @@ sub pkg_copy
 	my $handler = sub {
 		my ($sig) = @_;
 		unlink $filename;
+		close($in);
 		$SIG{$sig} = 'DEFAULT';
 		kill $sig, $$;
 	};
@@ -407,6 +409,7 @@ sub pkg_copy
 	} else {
 		unlink $filename;
 	}
+	close($in);
 }
 
 sub open_pipe
@@ -417,48 +420,59 @@ sub open_pipe
 	$object->{errors} = OpenBSD::Temp::file();
 	$object->{cache_dir} = $ENV{'PKG_CACHE'};
 	$object->{parent} = $$;
+
+	my ($rdfh, $wrfh);
+	pipe($rdfh, $wrfh);
+
 	my $pid = open(my $fh, "-|");
 	if (!defined $pid) {
 		die "Cannot fork: $!";
 	}
 	if ($pid) {
 		$object->{pid} = $pid;
-		$object->{pid2} = <$fh>;
-		return $fh;
+	} else {
+		open(STDIN, '<&', $rdfh) or die "Bad dup";
+		close($rdfh);
+		close($wrfh);
+		exec {"/usr/bin/gzip"} 
+		    "gzip", 
+		    "-d", 
+		    "-c", 
+		    "-q", 
+		    "-" 
+		or die "can't run gzip";
+	}
+	my $pid2 = fork();
+
+	if (!defined $pid2) {
+		die "Cannot fork: $!";
+	}
+	if ($pid2) {
+		$object->{pid2} = $pid2;
 	} else {
 		open STDERR, '>', $object->{errors};
-
-		my $pid2 = open(STDIN, "-|");
-
-		if (!defined $pid2) {
-			die "Cannot fork: $!";
-		}
-		if ($pid2) {
-			print $pid2, "\n";
-			exec {"/usr/bin/gzip"} 
-			    "gzip", 
-			    "-d", 
-			    "-c", 
-			    "-q", 
-			    "-" 
-			or die "can't run gzip";
-		} else {
-			if (defined $object->{cache_dir}) {
-				my $pid3 = open(my $in, "-|");
-				if (!defined $pid3) {
-					die "Cannot fork: $!";
-				}
-				if ($pid3) {
-					$self->pkg_copy($in, $object);
-					exit(0);
-				} else {
-					$self->grab_object($object);
-				}
+		open(STDOUT, '>&', $wrfh) or die "Bad dup";
+		close($rdfh);
+		close($wrfh);
+		close($fh);
+		if (defined $object->{cache_dir}) {
+			my $pid3 = open(my $in, "-|");
+			if (!defined $pid3) {
+				die "Cannot fork: $!";
+			}
+			if ($pid3) {
+				$self->pkg_copy($in, $object);
 			} else {
 				$self->grab_object($object);
 			}
+		} else {
+			$self->grab_object($object);
 		}
+		exit(0);
 	}
+	close($rdfh);
+	close($wrfh);
+	return $fh;
 }
 
 sub _list
