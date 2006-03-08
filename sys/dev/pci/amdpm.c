@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.13 2006/03/07 11:56:23 dlg Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.14 2006/03/08 09:21:14 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -108,6 +108,7 @@ struct amdpm_softc {
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;		/* PMxx space */
+	bus_space_handle_t sc_i2c_ioh;		/* I2C space */
 	int sc_poll;
 
 	struct timeout sc_rnd_ch;
@@ -164,70 +165,81 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct i2cbus_attach_args iba;
 	pcireg_t cfg_reg, reg;
-	int i, base;
+	int i;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_poll = 1; /* XXX */
 
-	cfg_reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
-	if ((cfg_reg & AMDPM_PMIOEN) == 0) {
-		printf(": PMxx space isn't enabled\n");
-		return;
-	}
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NVIDIA)
-		base = NFPM_PMPTR;
-	else
-		/* PCI_VENDOR_AMD */
-		base = AMDPM_PMPTR;
+	
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD)  {
+		cfg_reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
+		if ((cfg_reg & AMDPM_PMIOEN) == 0) {
+			printf(": PMxx space isn't enabled\n");
+			return;
+		}
 
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, base);
-	if (bus_space_map(sc->sc_iot, AMDPM_PMBASE(reg), AMDPM_PMSIZE,
-	    0, &sc->sc_ioh)) {
-		printf(": failed to map PMxx space\n");
-		return;
-	}
+		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_PMPTR);
+		if (bus_space_map(sc->sc_iot, AMDPM_PMBASE(reg), AMDPM_PMSIZE, 0, 
+		    &sc->sc_ioh)) {
+			printf(": failed to map PMxx space\n");
+			return;
+		}
+		if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, AMDPM_SMB_REGS,
+		    AMDPM_SMB_SIZE, &sc->sc_i2c_ioh)) {
+			printf(": failed to map I2C subregion\n");
+			return;	
+		}
 
 #ifdef __HAVE_TIMECOUNTER
-	if ((cfg_reg & AMDPM_TMRRST) == 0 &&
-	    (cfg_reg & AMDPM_STOPTMR) == 0 &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC768_PMC) {
-		printf(": %d-bit timer at %dHz",
-		    (cfg_reg & AMDPM_TMR32) ? 32 : 24,
-		    amdpm_timecounter.tc_frequency);
+		if ((cfg_reg & AMDPM_TMRRST) == 0 &&
+		    (cfg_reg & AMDPM_STOPTMR) == 0 &&
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC768_PMC) {
+			printf(": %d-bit timer at %dHz",
+			    (cfg_reg & AMDPM_TMR32) ? 32 : 24,
+			    amdpm_timecounter.tc_frequency);
 
-		amdpm_timecounter.tc_priv = sc;
-		if (cfg_reg & AMDPM_TMR32)
-			amdpm_timecounter.tc_counter_mask = 0xffffffffu;
-		tc_init(&amdpm_timecounter);
-	}
+			amdpm_timecounter.tc_priv = sc;
+			if (cfg_reg & AMDPM_TMR32)
+				amdpm_timecounter.tc_counter_mask = 0xffffffffu;
+			tc_init(&amdpm_timecounter);
+		}	
 #endif
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC768_PMC ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_8111_PMC) {
-		if ((cfg_reg & AMDPM_RNGEN) ==0) {
-			pci_conf_write(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG,
-			    cfg_reg | AMDPM_RNGEN);
-			cfg_reg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-			    AMDPM_CONFREG);
-		}
-		if (cfg_reg & AMDPM_RNGEN) {
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC768_PMC ||
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_8111_PMC) {
+			if ((cfg_reg & AMDPM_RNGEN) ==0) {
+				pci_conf_write(pa->pa_pc, pa->pa_tag, 
+				    AMDPM_CONFREG, cfg_reg | AMDPM_RNGEN);
+				cfg_reg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+				    AMDPM_CONFREG);
+			}
+			if (cfg_reg & AMDPM_RNGEN) {
 			/* Check to see if we can read data from the RNG. */
-			(void) bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			    AMDPM_RNGDATA);
-			for (i = 1000; i--; ) {
+				(void) bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+				    AMDPM_RNGDATA);
+				for (i = 1000; i--; ) {
+					if (bus_space_read_1(sc->sc_iot, 
+					    sc->sc_ioh, AMDPM_RNGSTAT) & 
+					    AMDPM_RNGDONE)
+						break;
+					DELAY(10);
+				}
 				if (bus_space_read_1(sc->sc_iot, sc->sc_ioh,
-				    AMDPM_RNGSTAT) & AMDPM_RNGDONE)
-					break;
-				DELAY(10);
+				    AMDPM_RNGSTAT) & AMDPM_RNGDONE) {
+					printf(": rng active");
+					timeout_set(&sc->sc_rnd_ch, 
+					    amdpm_rnd_callout, sc);
+					amdpm_rnd_callout(sc);
+				}
 			}
-			if (bus_space_read_1(sc->sc_iot, sc->sc_ioh,
-			    AMDPM_RNGSTAT) & AMDPM_RNGDONE) {
-				printf(": rng active");
-				timeout_set(&sc->sc_rnd_ch, amdpm_rnd_callout,
-				    sc);
-				amdpm_rnd_callout(sc);
-			}
+		}
+	} else if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NVIDIA) {
+		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, NFPM_PMPTR);
+		if (bus_space_map(sc->sc_iot, AMDPM_PMBASE(reg), AMDPM_SMB_SIZE, 0,
+		    &sc->sc_i2c_ioh)) {
+			printf(": failed to map I2C subregion\n");
+			return;
 		}
 	}
 	printf("\n");
@@ -318,7 +330,7 @@ amdpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 
 	/* Wait for bus to be idle */
 	for (retries = 100; retries > 0; retries--) {
-		st = bus_space_read_2(sc->sc_iot, sc->sc_ioh, AMDPM_SMBSTAT);
+		st = bus_space_read_2(sc->sc_iot, sc->sc_i2c_ioh, AMDPM_SMBSTAT);
 		if (!(st & AMDPM_SMBSTAT_BSY))
 			break;
 		DELAY(AMDPM_SMBUS_DELAY);
@@ -342,14 +354,14 @@ amdpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	sc->sc_i2c_xfer.error = 0;
 
 	/* Set slave address and transfer direction */
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMDPM_SMBADDR,
+	bus_space_write_2(sc->sc_iot, sc->sc_i2c_ioh, AMDPM_SMBADDR,
 	    AMDPM_SMBADDR_ADDR(addr) |
 	    (I2C_OP_READ_P(op) ? AMDPM_SMBADDR_READ : 0));
 
 	b = (void *)cmdbuf;
 	if (cmdlen > 0)
 		/* Set command byte */
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMDPM_SMBCMD, b[0]);
+		bus_space_write_1(sc->sc_iot, sc->sc_i2c_ioh, AMDPM_SMBCMD, b[0]);
 
 	if (I2C_OP_WRITE_P(op)) {
 		/* Write data */
@@ -360,7 +372,7 @@ amdpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		if (len > 1)
 			data |= ((u_int16_t)b[1] << 8);
 		if (len > 0)
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			bus_space_write_2(sc->sc_iot, sc->sc_i2c_ioh,
 			    AMDPM_SMBDATA, data);
 	}
 
@@ -377,13 +389,13 @@ amdpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 
 	/* Start transaction */
 	ctl |= AMDPM_SMBCTL_START;
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMDPM_SMBCTL, ctl);
+	bus_space_write_2(sc->sc_iot, sc->sc_i2c_ioh, AMDPM_SMBCTL, ctl);
 
 	if (flags & I2C_F_POLL) {
 		/* Poll for completion */
 		DELAY(AMDPM_SMBUS_DELAY);
 		for (retries = 1000; retries > 0; retries--) {
-			st = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+			st = bus_space_read_2(sc->sc_iot, sc->sc_i2c_ioh,
 			    AMDPM_SMBSTAT);
 			if ((st & AMDPM_SMBSTAT_HBSY) == 0)
 				break;
@@ -409,14 +421,14 @@ timeout:
 	 */
 	printf("%s: timeout, status 0x%b\n", sc->sc_dev.dv_xname, st,
 	    AMDPM_SMBSTAT_BITS);
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMDPM_SMBCTL,
+	bus_space_write_2(sc->sc_iot, sc->sc_i2c_ioh, AMDPM_SMBCTL,
 	    AMDPM_SMBCTL_ABORT);
 	DELAY(AMDPM_SMBUS_DELAY);
-	st = bus_space_read_2(sc->sc_iot, sc->sc_ioh, AMDPM_SMBSTAT);
+	st = bus_space_read_2(sc->sc_iot, sc->sc_i2c_ioh, AMDPM_SMBSTAT);
 	if ((st & AMDPM_SMBSTAT_ABRT) == 0)
 		printf("%s: transaction abort failed, status 0x%b\n",
 		    sc->sc_dev.dv_xname, st, AMDPM_SMBSTAT_BITS);
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMDPM_SMBSTAT, st);
+	bus_space_write_2(sc->sc_iot, sc->sc_i2c_ioh, AMDPM_SMBSTAT, st);
 	return (1);
 }
 
@@ -429,7 +441,7 @@ amdpm_intr(void *arg)
 	size_t len;
 
 	/* Read status */
-	st = bus_space_read_2(sc->sc_iot, sc->sc_ioh, AMDPM_SMBSTAT);
+	st = bus_space_read_2(sc->sc_iot, sc->sc_i2c_ioh, AMDPM_SMBSTAT);
 	if ((st & AMDPM_SMBSTAT_HBSY) != 0 || (st & (AMDPM_SMBSTAT_ABRT |
 	    AMDPM_SMBSTAT_COL | AMDPM_SMBSTAT_PRERR | AMDPM_SMBSTAT_CYC |
 	    AMDPM_SMBSTAT_TO | AMDPM_SMBSTAT_SNP | AMDPM_SMBSTAT_SLV |
@@ -441,7 +453,7 @@ amdpm_intr(void *arg)
 	    AMDPM_SMBSTAT_BITS));
 
 	/* Clear status bits */
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMDPM_SMBSTAT, st);
+	bus_space_write_2(sc->sc_iot, sc->sc_i2c_ioh, AMDPM_SMBSTAT, st);
 
 	/* Check for errors */
 	if (st & (AMDPM_SMBSTAT_COL | AMDPM_SMBSTAT_PRERR |
@@ -458,7 +470,7 @@ amdpm_intr(void *arg)
 		b = sc->sc_i2c_xfer.buf;
 		len = sc->sc_i2c_xfer.len;
 		if (len > 0) {
-			data = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+			data = bus_space_read_2(sc->sc_iot, sc->sc_i2c_ioh,
 			    AMDPM_SMBDATA);
 			b[0] = data & 0xff;
 		}

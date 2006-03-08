@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpmreg.h,v 1.6 2006/01/09 19:32:15 deraadt Exp $	*/
+/*	$OpenBSD: amdpmreg.h,v 1.7 2006/03/08 09:21:14 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -80,7 +80,9 @@
 #define	AMDPM_RNGSTAT	0xf4		/* RNG status register */
 #define	AMDPM_RNGDONE	0x00000001	/* Random number generation complete */
 
-#define AMDPM_SMBSTAT	0xe0		/* SMBus status */
+#define AMDPM_SMB_REGS  0xe0		/* offset of SMB register space */
+#define AMDPM_SMB_SIZE  0xf		/* size of SMB register space */ 
+#define AMDPM_SMBSTAT	0x0		/* SMBus status */
 #define AMDPM_SMBSTAT_ABRT	(1 << 0)	/* transfer abort */
 #define AMDPM_SMBSTAT_COL	(1 << 1)	/* collision */
 #define AMDPM_SMBSTAT_PRERR	(1 << 2)	/* protocol error */
@@ -92,7 +94,7 @@
 #define AMDPM_SMBSTAT_SMBA	(1 << 10)	/* SMBALERT# asserted */
 #define AMDPM_SMBSTAT_BSY	(1 << 11)	/* bus busy */
 #define AMDPM_SMBSTAT_BITS	"\020\001ABRT\002COL\003PRERR\004HBSY\005CYC\006TO\011SNP\012SLV\013SMBA\014BSY"
-#define AMDPM_SMBCTL	0xe2		/* SMBus control */
+#define AMDPM_SMBCTL	0x2		/* SMBus control */
 #define AMDPM_SMBCTL_CMD_QUICK	0		/* QUICK command */
 #define AMDPM_SMBCTL_CMD_BYTE	1		/* BYTE command */
 #define AMDPM_SMBCTL_CMD_BDATA	2		/* BYTE DATA command */
@@ -105,8 +107,8 @@
 #define AMDPM_SMBCTL_SNPEN	(1 << 8)	/* intr on snoop addr match */
 #define AMDPM_SMBCTL_SLVEN	(1 << 9)	/* intr on slave addr match */
 #define AMDPM_SMBCTL_SMBAEN	(1 << 10)	/* intr on SMBALERT# */
-#define AMDPM_SMBADDR	0xe4		/* SMBus address */
+#define AMDPM_SMBADDR	0x4		/* SMBus address */
 #define AMDPM_SMBADDR_READ	(1 << 0)	/* read direction */
 #define AMDPM_SMBADDR_ADDR(x)	(((x) & 0x7f) << 1) /* 7-bit address */
-#define AMDPM_SMBDATA	0xe6		/* SMBus data */
-#define AMDPM_SMBCMD	0xe8		/* SMBus command */
+#define AMDPM_SMBDATA	0x6		/* SMBus data */
+#define AMDPM_SMBCMD	0x8		/* SMBus command */
