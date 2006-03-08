@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.66 2006/03/07 17:54:08 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.67 2006/03/08 13:20:25 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -891,11 +891,14 @@ The following attributes can be modified:
 .Pp
 .Bl -tag -width Ds -compact
 .It Xo
-.Ic community
+.Ic community Op Ar delete
 .Ar as-number Ns Li : Ns Ar local
 .Xc
-.It Ic community Ar name
-Set the
+.It Xo
+.Ic community Op Ar delete
+.Ar name
+.Xc
+Set or delete the
 .Em COMMUNITIES
 AS path attribute.
 Communities are specified as
@@ -909,8 +912,9 @@ is a locally-significant number between zero and
 Alternately, well-known communities may be specified by name:
 .Ic NO_EXPORT ,
 .Ic NO_ADVERTISE ,
+.Ic NO_EXPORT_SUBCONFED ,
 or
-.Ic NO_EXPORT_SUBCONFED .
+.Ic NO_PEER .
 .Pp
 .It Ic localpref Ar number
 Set the
