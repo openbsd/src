@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.342 2006/03/08 03:33:21 uwe Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.343 2006/03/08 08:18:24 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1441,6 +1441,7 @@ amd_family6_setup(struct cpu_info *ci)
 		}
 		printf("\n");
 
+#if !defined(MULTIPROCESSOR)
 		if (regs[3] & 0x06) {
 			switch(ci->ci_signature & 0xF00) {
 			case 0x600:
@@ -1451,6 +1452,7 @@ amd_family6_setup(struct cpu_info *ci)
 			break;
 			}
 		}
+#endif 
 	}
 #endif 
 #endif
