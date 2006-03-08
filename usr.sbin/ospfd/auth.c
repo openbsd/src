@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.8 2006/02/02 15:11:54 norby Exp $ */
+/*	$OpenBSD: auth.c,v 1.9 2006/03/08 15:35:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -59,8 +59,8 @@ auth_validate(void *buf, u_int16_t len, struct iface *iface, struct nbr *nbr)
 		     sizeof(ospf_hdr->auth_key.simple));
 
 		if (in_cksum(ospf_hdr, ntohs(ospf_hdr->len))) {
-			log_debug("auth_validate: invalid checksum, interface %s",
-			    iface->name);
+			log_debug("auth_validate: invalid checksum, "
+			    "interface %s", iface->name);
 			return (-1);
 		}
 		break;
@@ -150,8 +150,7 @@ auth_gen(struct buf *buf, struct iface *iface)
 		fatalx("auth_gen: resulting ospf packet too big");
 	ospf_hdr->len = htons((u_int16_t)buf->wpos);
 	/* clear auth_key field */
-	bzero(ospf_hdr->auth_key.simple,
-	    sizeof(ospf_hdr->auth_key.simple));
+	bzero(ospf_hdr->auth_key.simple, sizeof(ospf_hdr->auth_key.simple));
 
 	switch (iface->auth_type) {
 	case AUTH_NONE:
@@ -171,8 +170,7 @@ auth_gen(struct buf *buf, struct iface *iface)
 		iface->crypt_seq_num++;
 
 		/* insert plaintext key */
-		if ((md = md_list_find(iface, iface->auth_keyid))
-		    == NULL) {
+		if ((md = md_list_find(iface, iface->auth_keyid)) == NULL) {
 			log_debug("auth_validate: keyid %d not configured, "
 			    "interface %s", iface->auth_keyid, iface->name);
 			return (-1);

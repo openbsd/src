@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.27 2006/02/23 16:16:27 norby Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.28 2006/03/08 15:35:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -664,7 +664,7 @@ lsa_equal(struct lsa *a, struct lsa *b)
 	if (a == NULL || b == NULL)
 		return (0);
 	if (a->hdr.len != b->hdr.len)
-	       return (0);
+		return (0);
 	if (a->hdr.opts != b->hdr.opts)
 		return (0);
 	/* LSA with age MAX_AGE are never equal */

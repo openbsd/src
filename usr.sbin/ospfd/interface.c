@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.41 2006/01/05 15:53:36 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.42 2006/03/08 15:35:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -107,7 +107,7 @@ if_fsm(struct iface *iface, enum iface_event event)
 		}
 
 	if (iface_fsm[i].state == -1) {
-		/* XXX event outside of the defined fsm, ignore it. */
+		/* event outside of the defined fsm, ignore it. */
 		log_debug("if_fsm: interface %s, "
 		    "event %s not expected in state %s", iface->name,
 		    if_event_name(event), if_state_name(old_state));
@@ -763,7 +763,7 @@ if_set_recvbuf(int fd)
 	bsize = 65535;
 	while (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &bsize,
 	    sizeof(bsize)) == -1)
-		bsize /= 2; 
+		bsize /= 2;
 }
 
 int

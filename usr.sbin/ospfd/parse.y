@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.24 2006/01/20 00:01:20 millert Exp $ */
+/*	$OpenBSD: parse.y,v 1.25 2006/03/08 15:35:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -824,7 +824,7 @@ parse_config(char *filename, int opts)
 
 	if (conf->rtr_id.s_addr == 0)
 		conf->rtr_id.s_addr = get_rtr_id();
-	
+
 	return (conf);
 }
 
@@ -1001,7 +1001,7 @@ get_rtr_id(void)
 			ip = cur;
 	}
 	freeifaddrs(ifap);
-	
+
 	if (ip == 0)
 		fatal("router-id is 0.0.0.0");
 
