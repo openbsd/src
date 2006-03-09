@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.18 2003/06/25 21:23:53 deraadt Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.19 2006/03/09 13:35:02 pedro Exp $	*/
 /*	$NetBSD: dumpfs.c,v 1.12 1997/04/26 05:41:33 lukem Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.2 (Berkeley) 2/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.18 2003/06/25 21:23:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.19 2006/03/09 13:35:02 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ int
 dumpfs(char *name)
 {
 	ssize_t n;
-	int fd, c, i, j, k, size;
+	int fd, i, j, size;
 
 	if ((fd = open(name, O_RDONLY, 0)) < 0)
 		goto err;
@@ -199,22 +199,6 @@ dumpfs(char *name)
 		     afs.fs_nrpos);
 	else
 		printf("insufficient space to maintain rotational tables\n");
-	for (c = 0; c < afs.fs_cpc; c++) {
-		printf("\ncylinder number %d:", c);
-		for (i = 0; i < afs.fs_nrpos; i++) {
-			if (fs_postbl(&afs, c)[i] == -1)
-				continue;
-			printf("\n   position %d:\t", i);
-			for (j = fs_postbl(&afs, c)[i], k = 1; ;
-			     j += fs_rotbl(&afs)[j], k++) {
-				printf("%5d", j);
-				if (k % 12 == 0)
-					printf("\n\t\t");
-				if (fs_rotbl(&afs)[j] == 0)
-					break;
-			}
-		}
-	}
 	printf("\ncs[].cs_(nbfree,ndir,nifree,nffree):\n\t");
 	afs.fs_csp = calloc(1, afs.fs_cssize);
 	for (i = 0, j = 0; i < afs.fs_cssize; i += afs.fs_bsize, j++) {
@@ -308,12 +292,6 @@ dumpcg(char *name, int fd, int c)
 		if (cg_blktot(&acg)[i] == 0)
 			continue;
 		printf("   c%d:\t(%d)\t", i, cg_blktot(&acg)[i]);
-		for (j = 0; j < afs.fs_nrpos; j++) {
-			if (afs.fs_cpc > 0 &&
-			    fs_postbl(&afs, i % afs.fs_cpc)[j] == -1)
-				continue;
-			printf(" %d", cg_blks(&afs, &acg, i)[j]);
-		}
 		printf("\n");
 	}
 	return (0);

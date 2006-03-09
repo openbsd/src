@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.51 2005/10/28 19:10:57 otto Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.52 2006/03/09 13:35:02 pedro Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.51 2005/10/28 19:10:57 otto Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.52 2006/03/09 13:35:02 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -132,18 +132,6 @@ u_short	dkcksum(struct disklabel *);
  */
 #define	NFPI		4
 
-/*
- * For each cylinder we keep track of the availability of blocks at different
- * rotational positions, so that we can lay out the data to be picked
- * up with minimum rotational latency.  NRPOS is the default number of
- * rotational positions that we distinguish.  With NRPOS of 8 the resolution
- * of our summary information is 2ms for a typical 3600 rpm drive.  Caching
- * and zoning pretty much defeats rotational optimization, so we now use a
- * default of 1.
- */
-#define	NRPOS		1	/* number distinct rotational positions */
-
-
 int	mfs;			/* run as the memory based filesystem */
 int	Nflag;			/* run without writing file system */
 int	Oflag;			/* format as an 4.3BSD file system */
@@ -170,7 +158,6 @@ int	density;		/* number of bytes per inode */
 int	maxcontig = 0;		/* max contiguous blocks to allocate */
 int	rotdelay = ROTDELAY;	/* rotational delay between blocks */
 int	maxbpg;			/* maximum blocks per file in a cyl group */
-int	nrpos = NRPOS;		/* # of distinguished rotational positions */
 int	avgfilesize = AVFILESIZ;/* expected average file size */
 int	avgfilesperdir = AFPDIR;/* expected number of files per directory */
 int	bbsize = BBSIZE;	/* boot block size */
@@ -233,7 +220,7 @@ main(int argc, char *argv[])
 
 	opstring = mfs ?
 	    "P:T:a:b:c:d:e:f:i:m:o:s:" :
-	    "NOS:T:a:b:c:d:e:f:g:h:i:k:l:m:n:o:p:qr:s:t:u:x:z:";
+	    "NOS:T:a:b:c:d:e:f:g:h:i:k:l:m:o:p:qr:s:t:u:x:z:";
 	while ((ch = getopt(argc, argv, opstring)) != -1) {
 		switch (ch) {
 		case 'N':
@@ -301,11 +288,6 @@ main(int argc, char *argv[])
 		case 'm':
 			if ((minfree = atoi(optarg)) < 0 || minfree > 99)
 				fatal("%s: bad free space %%\n", optarg);
-			break;
-		case 'n':
-			if ((nrpos = atoi(optarg)) <= 0)
-				fatal("%s: bad rotational layout count\n",
-				    optarg);
 			break;
 		case 'o':
 			if (mfs)

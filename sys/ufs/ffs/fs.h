@@ -1,4 +1,4 @@
-/*	$OpenBSD: fs.h,v 1.18 2005/12/28 20:48:18 pedro Exp $	*/
+/*	$OpenBSD: fs.h,v 1.19 2006/03/09 13:35:02 pedro Exp $	*/
 /*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /*
@@ -267,6 +267,8 @@ struct fs {
 /* actually longer */
 };
 
+#define	fs_opostbl_start	fs_opostbl[0][0]
+
 /*
  * Filesystem identification
  */
@@ -303,11 +305,6 @@ struct fs {
 /*
  * Macros for access to superblock array structures
  */
-#define fs_postbl(fs, cylno) \
-    (((fs)->fs_postblformat == FS_42POSTBLFMT) \
-    ? ((fs)->fs_opostbl[cylno]) \
-    : ((int16_t *)((u_int8_t *)(fs) + \
-	(fs)->fs_postbloff) + (cylno) * (fs)->fs_nrpos))
 #define fs_rotbl(fs) \
     (((fs)->fs_postblformat == FS_42POSTBLFMT) \
     ? ((fs)->fs_space) \

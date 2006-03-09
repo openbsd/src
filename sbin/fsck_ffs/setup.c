@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.22 2005/12/19 15:18:01 pedro Exp $	*/
+/*	$OpenBSD: setup.c,v 1.23 2006/03/09 13:35:02 pedro Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: setup.c,v 1.22 2005/12/19 15:18:01 pedro Exp $";
+static const char rcsid[] = "$OpenBSD: setup.c,v 1.23 2006/03/09 13:35:02 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -309,7 +309,7 @@ setup(char *dev)
 		sblock.fs_postblformat = FS_DYNAMICPOSTBLFMT;
 		sblock.fs_nrpos = 8;
 		sblock.fs_postbloff =
-		    (char *)(&sblock.fs_opostbl[0][0]) -
+		    (char *)(&sblock.fs_opostbl_start) -
 		    (char *)(&sblock.fs_firstfield);
 		sblock.fs_rotbloff = &sblock.fs_space[0] -
 		    (u_char *)(&sblock.fs_firstfield);

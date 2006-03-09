@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.49 2005/12/19 15:18:01 pedro Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.50 2006/03/09 13:35:02 pedro Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.49 2005/12/19 15:18:01 pedro Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.50 2006/03/09 13:35:02 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,17 @@ static char rcsid[] = "$OpenBSD: mkfs.c,v 1.49 2005/12/19 15:18:01 pedro Exp $";
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
 /*
+ * For each cylinder we keep track of the availability of blocks at different
+ * rotational positions, so that we can lay out the data to be picked
+ * up with minimum rotational latency. NRPOS is the default number of
+ * rotational positions that we distinguish. With NRPOS of 8 the resolution
+ * of our summary information is 2ms for a typical 3600 rpm drive. Caching
+ * and zoning pretty much defeats rotational optimization, so we now use a
+ * default of 1.
+ */
+#define	NRPOS		1	/* number distinct rotational positions */
+
+/*
  * variables set up by front end.
  */
 extern int	mfs;		/* run as the memory based filesystem */
@@ -100,7 +111,6 @@ extern int	density;	/* number of bytes per inode */
 extern int	maxcontig;	/* max contiguous blocks to allocate */
 extern int	rotdelay;	/* rotational delay between blocks */
 extern int	maxbpg;		/* maximum blocks per file in a cyl group */
-extern int	nrpos;		/* # of distinguished rotational positions */
 extern int	bbsize;		/* boot block size */
 extern int	sbsize;		/* superblock size */
 extern int	avgfilesize;	/* expected average file size */
@@ -163,7 +173,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo,
     mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 {
 	long i, mincpc, mincpg, inospercg;
-	long cylno, rpos, blk, j, warn = 0;
+	long cylno, j, warn = 0;
 	long used, mincpgcnt, bpcg;
 	long mapcramped, inodecramped;
 	long postblsize, rotblsize, totalsbsize;
@@ -276,7 +286,7 @@ recalc:
 		    sblock.fs_fsize, sblock.fs_bsize,
 		    sblock.fs_bsize / MAXFRAG);
 	}
-	sblock.fs_nrpos = nrpos;
+	sblock.fs_nrpos = NRPOS;
 	sblock.fs_nindir = sblock.fs_bsize / sizeof(daddr_t);
 	sblock.fs_inopb = sblock.fs_bsize / sizeof(struct ufs1_dinode);
 	sblock.fs_nspf = sblock.fs_fsize / sectorsize;
@@ -509,19 +519,11 @@ recalc:
 	postblsize = sblock.fs_nrpos * sblock.fs_cpc * sizeof(int16_t);
 	rotblsize = sblock.fs_cpc * sblock.fs_spc / NSPB(&sblock);
 	totalsbsize = sizeof(struct fs) + rotblsize;
-	if (sblock.fs_nrpos == 8 && sblock.fs_cpc <= 16) {
-		/* use old static table space */
-		sblock.fs_postbloff = (char *)(&sblock.fs_opostbl[0][0]) -
-		    (char *)(&sblock.fs_firstfield);
-		sblock.fs_rotbloff = &sblock.fs_space[0] -
-		    (u_char *)(&sblock.fs_firstfield);
-	} else {
-		/* use dynamic table space */
-		sblock.fs_postbloff = &sblock.fs_space[0] -
-		    (u_char *)(&sblock.fs_firstfield);
-		sblock.fs_rotbloff = sblock.fs_postbloff + postblsize;
-		totalsbsize += postblsize;
-	}
+	/* use dynamic table space */
+	sblock.fs_postbloff = &sblock.fs_space[0] -
+	    (u_char *)(&sblock.fs_firstfield);
+	sblock.fs_rotbloff = sblock.fs_postbloff + postblsize;
+	totalsbsize += postblsize;
 	if (totalsbsize > SBSIZE || fragroundup(&sblock, totalsbsize) > SBSIZE
 	    || sblock.fs_nsect > (1 << NBBY) * NSPB(&sblock)) {
 		printf("%s %s %d %s %d.%s",
@@ -533,24 +535,6 @@ recalc:
 		goto next;
 	}
 	sblock.fs_sbsize = fragroundup(&sblock, totalsbsize);
-	/*
-	 * calculate the available blocks for each rotational position
-	 */
-	for (cylno = 0; cylno < sblock.fs_cpc; cylno++)
-		for (rpos = 0; rpos < sblock.fs_nrpos; rpos++)
-			fs_postbl(&sblock, cylno)[rpos] = -1;
-	for (i = (rotblsize - 1) * sblock.fs_frag;
-	     i >= 0; i -= sblock.fs_frag) {
-		cylno = cbtocylno(&sblock, i);
-		rpos = cbtorpos(&sblock, i);
-		blk = fragstoblks(&sblock, i);
-		if (fs_postbl(&sblock, cylno)[rpos] == -1)
-			fs_rotbl(&sblock)[blk] = 0;
-		else
-			fs_rotbl(&sblock)[blk] =
-			    fs_postbl(&sblock, cylno)[rpos] - blk;
-		fs_postbl(&sblock, cylno)[rpos] = blk;
-	}
 next:
 	/*
 	 * Compute/validate number of cylinder groups.
