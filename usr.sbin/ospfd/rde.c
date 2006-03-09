@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.42 2006/03/08 16:03:40 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.43 2006/03/09 16:55:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -67,6 +67,7 @@ struct imsgbuf		*ibuf_ospfe;
 struct imsgbuf		*ibuf_main;
 struct rde_nbr		*nbrself;
 
+/* ARGSUSED */
 void
 rde_sig_handler(int sig, short event, void *arg)
 {
@@ -81,7 +82,6 @@ rde_sig_handler(int sig, short event, void *arg)
 		/* NOTREACHED */
 	default:
 		fatalx("unexpected signal");
-		/* NOTREACHED */
 	}
 }
 
@@ -97,6 +97,7 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 	switch (pid = fork()) {
 	case -1:
 		fatal("cannot fork");
+		/* NOTREACHED */
 	case 0:
 		break;
 	default:
@@ -205,6 +206,7 @@ rde_imsg_compose_ospfe(int type, u_int32_t peerid, pid_t pid, void *data,
 	return (imsg_compose(ibuf_ospfe, type, peerid, pid, data, datalen));
 }
 
+/* ARGSUSED */
 void
 rde_dispatch_imsg(int fd, short event, void *bula)
 {
@@ -219,8 +221,9 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	struct area		*area;
 	struct vertex		*v;
 	char			*buf;
+	ssize_t			 n;
 	time_t			 now;
-	int			 r, n, state, self;
+	int			 r, state, self;
 	u_int16_t		 l;
 
 	switch (event) {
@@ -556,6 +559,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	imsg_event_add(ibuf);
 }
 
+/* ARGSUSED */
 void
 rde_dispatch_parent(int fd, short event, void *bula)
 {
@@ -565,7 +569,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	struct lsa		*lsa;
 	struct vertex		*v;
 	struct rt_node		*rn;
-	int			 n;
+	ssize_t			 n;
 
 	switch (event) {
 	case EV_READ:
@@ -1025,7 +1029,7 @@ struct lsa *
 orig_asext_lsa(struct kroute *kr, u_int16_t age)
 {
 	struct lsa	*lsa;
-	size_t		 len;
+	u_int16_t	 len;
 
 	len = sizeof(struct lsa_hdr) + sizeof(struct lsa_asext);
 	if ((lsa = calloc(1, len)) == NULL)
@@ -1075,7 +1079,7 @@ struct lsa *
 orig_sum_lsa(struct rt_node *rte, u_int8_t type)
 {
 	struct lsa	*lsa;
-	size_t		 len;
+	u_int16_t	 len;
 
 	len = sizeof(struct lsa_hdr) + sizeof(struct lsa_sum);
 	if ((lsa = calloc(1, len)) == NULL)
