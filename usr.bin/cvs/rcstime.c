@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcstime.c,v 1.1 2006/03/09 10:56:33 xsa Exp $	*/
+/*	$OpenBSD: rcstime.c,v 1.2 2006/03/09 16:53:56 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -77,7 +77,7 @@ rcs_set_tz(char *tz, struct rcs_delta *rdp)
 
 			if ((tb->tm_min + tzone) >= 60) {
 				tb->tm_hour++;
-				tb->tm_min -= tzone;	
+				tb->tm_min -= tzone;
 			} else
 				tb->tm_min += tzone;
 
