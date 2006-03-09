@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.35 2006/03/08 21:03:18 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.36 2006/03/09 05:17:24 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -92,7 +92,6 @@ int			aml_msb(u_int64_t);
 int			aml_parse_length(struct acpi_context *);
 int			aml_strcmp(u_int16_t, const char *, const char *);
 int 			aml_tstbit(const u_int8_t *, int);
-int64_t			_aml_evalint(struct acpi_context *, struct aml_node *);
 int64_t			aml_evalmath(u_int16_t, int64_t, int64_t);
 int64_t			aml_str2int(const char *, int, int);
 int64_t			aml_val2int(struct acpi_context *, struct aml_value *);
@@ -100,10 +99,9 @@ struct aml_opcode	*aml_getopcode(struct acpi_context *);
 struct aml_node		*_aml_searchname(struct aml_node *, const char *);
 struct aml_node		*aml_createname(struct aml_node *, const char *);
 struct aml_node		*aml_doname(struct aml_node *, const char *, int);
-struct aml_value	*_aml_evalref(struct acpi_context *, struct aml_node *);
 struct aml_value	*aml_doconcat(struct acpi_context *);
-struct aml_value	*aml_ebufferfield(struct acpi_context *, int, int, int);
-struct aml_value	*aml_efieldunit(struct acpi_context *, int);
+struct aml_value	*aml_parse_bufferfield(struct acpi_context *, int, int, int);
+struct aml_value	*aml_parse_fieldunit(struct acpi_context *, int);
 struct aml_value	*aml_doif(struct acpi_context *);
 struct aml_value	*aml_doloadtable(struct acpi_context *);
 struct aml_value	*aml_domatch(struct acpi_context *);
@@ -112,11 +110,14 @@ struct aml_value	*aml_domid(struct acpi_context *);
 struct aml_value	*aml_ederef(struct acpi_context *, struct aml_value *);
 struct aml_value	*aml_eparselist(struct acpi_context *, u_int8_t *, int);
 struct aml_value	*aml_eparseval(struct acpi_context *, int);
-struct aml_value	*aml_evalnode(struct acpi_context *, struct aml_node *);
+struct aml_value	*aml_evalnode(struct acpi_softc *, struct aml_node *,
+				      int, struct aml_value **);
+struct aml_value	*aml_evalname(struct acpi_softc *, struct aml_node *, const char *,
+				      int, struct aml_value **);
+struct aml_value	*aml_evalmethod(struct acpi_context *, struct aml_value *);
 u_int64_t		aml_bcd2dec(u_int64_t);
 u_int64_t		aml_dec2bcd(u_int64_t);
 u_int64_t		aml_parse_int(struct acpi_context *, int);
-void			_aml_notify(struct aml_node *, void *);
 void			*acpi_os_allocmem(size_t);
 void			acpi_os_freemem(void *);
 void			aml_addchildnode(struct aml_node *, struct aml_node *);
@@ -134,8 +135,6 @@ struct aml_node		*aml_create_node(struct aml_node *, int, const char *,
 			    u_int8_t *);
 struct aml_node		*aml_find_name(struct acpi_softc *, struct aml_node *,
 			    const char *);
-struct aml_value	*_aml_setnodevalue(struct acpi_context *,
-			    struct aml_node *, struct aml_value *, u_int64_t);
 struct aml_value	*aml_domethod(struct acpi_context *, struct aml_value *,
 			    int, struct aml_value **);
 struct aml_value	*aml_efield(struct acpi_context *, struct aml_value *,
@@ -406,12 +405,6 @@ aml_notify_dev(const char *pnpid, int notify_value)
 	SLIST_FOREACH(pdata, &aml_notify_list, link)
 		if (pdata->pnpid && !strcmp(pdata->pnpid, pnpid))
 			pdata->cbproc(pdata->node, notify_value, pdata->cbarg);
-}
-
-void
-_aml_notify(struct aml_node *node, void *arg)
-{
-	aml_notify(node, *(int64_t *)arg);
 }
 
 void
@@ -1796,7 +1789,7 @@ aml_eparseint(struct acpi_context *ctx, int type)
  */
 
 struct aml_value *
-aml_efieldunit(struct acpi_context *ctx, int opcode)
+aml_parse_fieldunit(struct acpi_context *ctx, int opcode)
 {
 	u_int8_t *end;
 	int attr, access;
@@ -1859,7 +1852,7 @@ aml_efieldunit(struct acpi_context *ctx, int opcode)
  *   AMLOP_CREATEQWORDFIELD
  */
 struct aml_value *
-aml_ebufferfield(struct acpi_context *ctx, int size, int bitlen, int opcode)
+aml_parse_bufferfield(struct acpi_context *ctx, int size, int bitlen, int opcode)
 {
 	struct aml_value *rv;
 
@@ -2237,6 +2230,7 @@ struct aml_value *
 aml_eparseval(struct acpi_context *ctx, int deref)
 {
 	struct aml_opcode *opc;
+	struct aml_node   *node;
 	struct aml_value  *lhs, *rhs, *tmp, *rv;
 	u_int8_t *end, *start;
 	const char *name;
@@ -2303,25 +2297,25 @@ aml_eparseval(struct acpi_context *ctx, int deref)
 	case AMLOP_FIELD:
 	case AMLOP_INDEXFIELD:
 	case AMLOP_BANKFIELD:
-		rv = aml_efieldunit(ctx, opc->opcode);
+		rv = aml_parse_fieldunit(ctx, opc->opcode);
 		break;
 	case AMLOP_CREATEFIELD:
-		rv = aml_ebufferfield(ctx, 1, -1, opc->opcode);
+		rv = aml_parse_bufferfield(ctx, 1, -1, opc->opcode);
 		break;
 	case AMLOP_CREATEBITFIELD:
-		rv = aml_ebufferfield(ctx, 1,  1, opc->opcode);
+		rv = aml_parse_bufferfield(ctx, 1,  1, opc->opcode);
 		break;
 	case AMLOP_CREATEBYTEFIELD:
-		rv = aml_ebufferfield(ctx, 8,  8, opc->opcode);
+		rv = aml_parse_bufferfield(ctx, 8,  8, opc->opcode);
 		break;
 	case AMLOP_CREATEWORDFIELD:
-		rv = aml_ebufferfield(ctx, 8, 16, opc->opcode);
+		rv = aml_parse_bufferfield(ctx, 8, 16, opc->opcode);
 		break;
 	case AMLOP_CREATEDWORDFIELD:
-		rv = aml_ebufferfield(ctx, 8, 32, opc->opcode);
+		rv = aml_parse_bufferfield(ctx, 8, 32, opc->opcode);
 		break;
 	case AMLOP_CREATEQWORDFIELD:
-		rv = aml_ebufferfield(ctx, 8, 64, opc->opcode);
+		rv = aml_parse_bufferfield(ctx, 8, 64, opc->opcode);
 		break;
 	case AMLOP_DEBUG:
 		rv = aml_allocvalue(AML_OBJTYPE_DEBUGOBJ, 0, NULL);
@@ -2527,10 +2521,11 @@ aml_eparseval(struct acpi_context *ctx, int deref)
 	case AMLOP_NOTIFY:
 		lhs = aml_eparseval(ctx, 1);
 		i1  = aml_eparseint(ctx, AML_ANYINT);
+		/* XXX: Fix me when we deref properly */
+		if ((node = lhs->node) == NULL)
+			node = aml_searchname(ctx->scope, lhs->name);
 		dnprintf(10, "NOTIFY: %llx %s\n", i1, lhs->name);
-		aml_find_node(aml_root.child, lhs->name,
-			      _aml_notify,
-			      &i1);
+		aml_notify(node, i1);
 		break;
 	case AMLOP_LOAD:
 	case AMLOP_STORE:
@@ -2821,7 +2816,32 @@ aml_eval_object(struct acpi_softc *sc, struct aml_node *node,
 	return 0;
 }
 
-#if 0
+struct aml_value *
+aml_evalmethod(struct acpi_context *ctx, struct aml_value *method)
+{
+	struct aml_value **argv, *rv;
+	int64_t idx, size, argc;
+
+	/* Decode method arguments from bytestream */
+	size = sizeof(struct aml_value *) * AML_MAX_ARG;
+	argv = (struct aml_value **)acpi_os_allocmem(size);
+
+	argc = AML_METHOD_ARGCOUNT(method->v_method.flags);
+	for (idx = 0; idx < argc; idx++)
+		argv[idx] = aml_eparseval(ctx, 0);
+
+	/* Evaluate method */
+	rv = aml_evalnode(ctx->sc, method->node, argc, argv);
+
+	/* Free arguments */
+	for(idx = 0; idx < AML_MAX_ARG; idx++)
+		aml_freevalue(&argv[idx]);
+
+	acpi_os_freemem(argv);
+
+	return (rv);
+}
+
 struct aml_value *
 aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
 	     int argc, struct aml_value **argv)
@@ -2862,7 +2882,7 @@ aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
 		break;
 	case AML_OBJTYPE_METHOD:
 		ctx->pos = node->value->v_method.start;
-		rv = aml_eparselist(ctx, node->value->v_method.end);
+		rv = aml_eparselist(ctx, node->value->v_method.end, 0);
 		break;
 	default:
 		dnprintf(1, "aml_evalnode: Unknown type (%d) for %s\n",
@@ -2871,7 +2891,7 @@ aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
 		break;
 	}
 	ctx->args = tmparg;
-	aml_delchildren(node->value);
+	aml_delchildren(ctx, node);
 	acpi_freecontext(ctx);
 
 	return rv;
@@ -2881,14 +2901,13 @@ struct aml_value *
 aml_evalname(struct acpi_softc *sc, struct aml_node *parent, const char *name,
 	     int argc, struct aml_value **argv)
 {
-	struct aml_value *node;
+	struct aml_node *node;
 
 	if ((node = aml_searchname(parent, name)) != NULL)
 		return aml_evalnode(sc, node, argc, argv);
 
 	return NULL;
 }
-#endif
 
 void
 aml_shownode(struct aml_node *node)
