@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.12 2006/03/08 04:03:21 marco Exp $ */
+/* $OpenBSD: dsdt.h,v 1.13 2006/03/09 05:38:12 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -36,26 +36,26 @@ struct aml_opcode
 	const char		*args;
 };
 
-const char		*aml_parse_name(struct acpi_context *);
 const char		*aml_eisaid(u_int32_t);
+const char		*aml_opname(int);
+const char		*aml_parse_name(struct acpi_context *);
 int			aml_parse_length(struct acpi_context *);
 int64_t			aml_eparseint(struct acpi_context *, int);
 int64_t			aml_val2int(struct acpi_context *, struct aml_value *);
-struct aml_opcode	*aml_getopcode(struct acpi_context *);
 struct aml_node		*aml_searchname(struct aml_node *, const char *);
+struct aml_opcode	*aml_getopcode(struct acpi_context *);
 struct aml_value	*aml_allocint(uint64_t);
 struct aml_value	*aml_allocstr(const char *);
 struct aml_value	*aml_allocvalue(int, int64_t, void *);
 struct aml_value	*aml_copyvalue(const struct aml_value *);
 u_int8_t		*aml_eparselen(struct acpi_context *);
+void			acpi_freecontext(struct acpi_context *);
 void			aml_freevalue(struct aml_value **);
 void			aml_notify(struct aml_node *, int);
 void			aml_notify_dev(const char *, int);
 void			aml_showvalue(struct aml_value *);
-void			aml_walktree(struct aml_node *);
 void			aml_walkroot(void);
-void			acpi_freecontext(struct acpi_context *);
-
+void			aml_walktree(struct aml_node *);
 
 int			aml_comparevalue(struct acpi_context *, int,
 			    struct aml_value *, struct aml_value *);

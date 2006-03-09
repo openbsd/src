@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.6 2006/03/09 04:41:11 marco Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.7 2006/03/09 05:38:12 jordan Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -30,11 +30,9 @@
 #include <dev/acpi/dsdt.h>
 
 const char		*db_aml_objtype(struct aml_value *);
-const char		*db_aml_opname(int);
 const char		*db_opregion(int);
 int			db_aml_nodetype(struct aml_node *);
 int			db_parse_name(void);
-struct aml_opcode	*db_findem(int);
 void			db_aml_disasm(struct acpi_context *, int);
 void			db_aml_disint(struct acpi_context *, int, int);
 void			db_aml_disline(uint8_t *, int, const char *, ...);
@@ -45,13 +43,6 @@ void			db_aml_walktree(struct aml_node *);
 void			db_spaceit(int);
 
 extern struct aml_node	aml_root;
-
-/* Perfect hash values for AML opcodes */
-#define HASH_VAL     11
-#define HASH_SIZE    204
-#define HASH_KEY(v)  (((v) * HASH_VAL) % HASH_SIZE)
-
-struct aml_opcode	*htab[HASH_SIZE];
 
 /* line buffer */
 char			buf[128];
@@ -161,7 +152,7 @@ db_aml_showvalue(struct aml_value *value)
 	case AML_OBJTYPE_FIELDUNIT:
 		db_printf("%s: access=%x,lock=%x,update=%x pos=%.4x "
 		    "len=%.4x\n",
-		    db_aml_opname(value->v_field.type),
+		    aml_opname(value->v_field.type),
 		    AML_FIELD_ACCESS(value->v_field.flags),
 		    AML_FIELD_LOCK(value->v_field.flags),
 		    AML_FIELD_UPDATE(value->v_field.flags),
@@ -173,7 +164,7 @@ db_aml_showvalue(struct aml_value *value)
 		break;
 	case AML_OBJTYPE_BUFFERFIELD:
 		db_printf("%s: pos=%.4x len=%.4x ", 
-		    db_aml_opname(value->v_field.type),
+		    aml_opname(value->v_field.type),
 		    value->v_field.bitpos,
 		    value->v_field.bitlen);
 
@@ -203,36 +194,10 @@ db_spaceit(int len)
 		db_printf("..");
 }
 
-struct aml_opcode
-*db_findem(int opcode)
-{
-	int		key, cnt;
-
-	cnt = 0;
-	key = HASH_KEY(opcode);
-
-	while (htab[key] != NULL && htab[key]->opcode != opcode) {
-		key = (key + 1) % HASH_SIZE;
-		cnt++;
-	}
-
-	return (htab[key]);
-}
-
 int
 db_aml_nodetype(struct aml_node *node)
 {
 	return (node && node->value) ? node->value->type : -1;
-}
-
-const char *
-db_aml_opname(int opcode)
-{
-	struct aml_opcode	*opc;
-
-	opc = db_findem(opcode);
-
-	return (opc ? opc->mnem : "");
 }
 
 const char *
@@ -278,7 +243,7 @@ db_aml_objtype(struct aml_value *val)
 		return "refof";
 	case AML_OBJTYPE_FIELDUNIT:
 	case AML_OBJTYPE_BUFFERFIELD: 
-		return db_aml_opname(val->v_field.type);
+		return aml_opname(val->v_field.type);
 	};
 
 	return ("");

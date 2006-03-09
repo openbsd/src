@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.37 2006/03/09 05:24:03 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.38 2006/03/09 05:38:12 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -81,7 +81,6 @@ opregion(int id)
 }
 #endif
 
-const char		*aml_opname(int);
 const char		*aml_parse_string(struct acpi_context *);
 int			_aml_freevalue(struct aml_value *);
 int			aml_isnamedop(u_int16_t);
