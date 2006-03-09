@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ttys,v 1.8 2006/01/04 20:39:03 miod Exp $
+#	$OpenBSD: ttys,v 1.9 2006/03/09 20:49:01 miod Exp $
 #
 # name	getty				type	status		comments
 #
@@ -12,7 +12,7 @@ console	"/usr/libexec/getty Pc"		vt220	off secure
 # To enable the serial console, mark ttyC0 'off' and turn on the
 # console entry configuring it as though it were one of the serial
 # ports (e.g., setting the entry to 'std.9600').
-ttyC0	"/usr/libexec/getty Pc"		vt100	on  secure
+ttyC0	"/usr/libexec/getty Pc"		vt220	on  secure
 
 # Hardwired lines are marked off, by default, so getty(8)
 # is quiet when they don't exist.
