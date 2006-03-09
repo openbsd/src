@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.4 2006/03/09 15:43:21 claudio Exp $ */
+/*	$OpenBSD: log.c,v 1.5 2006/03/09 16:58:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -228,6 +228,7 @@ if_type_name(enum iface_type type)
 	case IF_TYPE_VIRTUALLINK:
 		return ("VIRTUALLINK");
 	}
+	/* NOTREACHED */
 	return ("UNKNOWN");
 }
 
@@ -242,6 +243,7 @@ if_auth_name(enum auth_type type)
 	case AUTH_CRYPT:
 		return ("crypt");
 	}
+	/* NOTREACHED */
 	return ("unknown");
 }
 
@@ -254,6 +256,7 @@ dst_type_name(enum dst_type type)
 	case DT_RTR:
 		return ("Router");
 	}
+	/* NOTREACHED */
 	return ("unknown");
 }
 
@@ -270,6 +273,7 @@ path_type_name(enum path_type type)
 	case PT_TYPE2_EXT:
 		return ("Type 2 ext");
 	}
+	/* NOTREACHED */
 	return ("unknown");
 }
 
