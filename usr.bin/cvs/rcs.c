@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.139 2006/03/08 09:03:59 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.140 2006/03/09 10:56:33 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2531,13 +2531,11 @@ static char *
 rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
     size_t len, int mode)
 {
-	int tzone;
 	int kwtype, sizdiff;
 	u_int i, j, found, start_offset, c_offset;
-	char *c, *kwstr, *start, *end, *tbuf, *m, *h;
+	char *c, *kwstr, *start, *end, *tbuf;
 	char expbuf[256], buf[256];
-	struct tm *tb, ltb;
-	time_t now;
+	struct tm *tb;
 	char *fmt;
 
 	kwtype = 0;
@@ -2548,57 +2546,8 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 	 * -z support for RCS
 	 */
 	tb = &rdp->rd_date;
-	if (timezone_flag != NULL) {
-		if (!strcmp(timezone_flag, "LT")) {
-			now = mktime(&rdp->rd_date);
-			tb = localtime(&now);
-			tb->tm_hour += ((int)tb->tm_gmtoff / 3600);
-		} else {
-			switch (*timezone_flag) {
-			case '-':
-			case '+':
-				break;
-			default:
-				fatal("%s: not a known time zone",
-				    timezone_flag);
-			}
-
-			h = timezone_flag;
-			if ((m = strrchr(timezone_flag, ':')) != NULL)
-				*(m++) = '\0';
-
-			ltb = rdp->rd_date;
-			tb = &ltb;
-
-			tzone = atoi(h);
-
-			if (tzone >= 24 && tzone <= -24)
-				fatal("%s: not a known time zone",
-				    timezone_flag);
-
-			tb->tm_hour += tzone;
-			if (tb->tm_hour >= 24 && tb->tm_hour <= -24)
-				tb->tm_hour = 0;
-
-			tb->tm_gmtoff += (tzone * 3600);
-
-			if (m != NULL) {
-				tzone = atoi(m);
-				if (tzone >= 60)
-					fatal("%s: not a known time zone",
-					    timezone_flag);
-
-				if ((tb->tm_min + tzone) >= 60) {
-					tb->tm_hour++;
-					tb->tm_min -= tzone;
-				} else {
-					tb->tm_min += tzone;
-				}
-
-				tb->tm_gmtoff += (tzone * 60);
-			}
-		}
-	}
+	if (timezone_flag != NULL)
+		tb = rcs_set_tz(timezone_flag, rdp);
 
 	/*
 	 * Keyword formats:
