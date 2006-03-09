@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.9 2006/03/09 22:27:53 miod Exp $	*/
+/*	$OpenBSD: spkr.c,v 1.10 2006/03/09 22:35:23 miod Exp $	*/
 /*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
 
 /*
@@ -63,12 +63,8 @@ cdev_decl(spkr);
 int spkrprobe(struct device *, void *, void *);
 void spkrattach(struct device *, struct device *, void *);
 
-struct spkr_softc {
-	struct device sc_dev;
-};
-
 struct cfattach spkr_ca = {
-	sizeof(struct spkr_softc), spkrprobe, spkrattach
+	sizeof(struct device), spkrprobe, spkrattach
 };
 
 struct cfdriver spkr_cd = {
@@ -493,23 +489,27 @@ spkrioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
+	tone_t *tp, ttp;
+	int error;
+
 #ifdef SPKRDEBUG
 	printf("spkrioctl: entering with dev = %x, cmd = %lx\n", dev, cmd);
 #endif /* SPKRDEBUG */
 
 	if (minor(dev) != 0)
 		return (ENXIO);
-	else if (cmd == SPKRTONE) {
-		tone_t *tp = (tone_t *)data;
+
+	switch (cmd) {
+	case SPKRTONE:
+		tp = (tone_t *)data;
 
 		if (tp->frequency == 0)
 			rest(tp->duration);
 		else
 			tone(tp->frequency, tp->duration);
-	} else if (cmd == SPKRTUNE) {
-		tone_t *tp = (tone_t *)(*(caddr_t *)data);
-		tone_t ttp;
-		int error;
+		break;
+	case SPKRTUNE:
+		tp = (tone_t *)(*(caddr_t *)data);
 
 		for (; ; tp++) {
 			error = copyin(tp, &ttp, sizeof(tone_t));
@@ -522,8 +522,10 @@ spkrioctl(dev, cmd, data, flag, p)
 			else
 				tone(ttp.frequency, ttp.duration);
 		}
-	} else
-		return (EINVAL);
+		break;
+	default:
+		return (ENOTTY);
+	}
 
 	return (0);
 }
