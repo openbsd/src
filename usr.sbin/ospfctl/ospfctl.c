@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.27 2006/03/09 15:44:07 claudio Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.28 2006/03/09 18:11:33 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -339,6 +339,8 @@ show_interface_msg(struct imsg *imsg)
 		else
 			printf("    Hello timer due in %s\n",
 			    fmt_timeframe_core(iface->hello_timer));
+		printf("    Uptime %s\n", iface->uptime == 0 ?
+		    "00:00:00" : fmt_timeframe_core(iface->uptime));
 		printf("  Neighbor count is %d, adjacent neighbor count is "
 		    "%d\n", iface->nbr_cnt, iface->adj_cnt);
 		if (iface->auth_type > 0) {

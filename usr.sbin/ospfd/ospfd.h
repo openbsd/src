@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.50 2006/03/09 15:43:21 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.51 2006/03/09 18:11:34 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -339,6 +339,7 @@ struct iface {
 	u_int32_t		 dead_interval;
 	u_int32_t		 ls_ack_cnt;
 	u_int32_t		 crypt_seq_num;
+	time_t			 uptime;
 	unsigned int		 ifindex;
 	int			 fd;
 	int			 state;
@@ -418,6 +419,7 @@ struct ctl_iface {
 	struct in_addr		 bdr_id;
 	struct in_addr		 bdr_addr;
 	time_t			 hello_timer;
+	time_t			 uptime;
 	u_int32_t		 baudrate;
 	u_int32_t		 dead_interval;
 	unsigned int		 ifindex;

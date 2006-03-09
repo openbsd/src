@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.45 2006/03/09 15:43:21 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.46 2006/03/09 18:11:34 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -321,6 +321,7 @@ int
 if_act_start(struct iface *iface)
 {
 	struct in_addr		 addr;
+	struct timeval		 now;
 
 	if (!((iface->flags & IFF_UP) &&
 	    (iface->linkstate == LINK_STATE_UP ||
@@ -343,6 +344,9 @@ if_act_start(struct iface *iface)
 		orig_rtr_lsa(iface->area);
 		return (0);
 	}
+
+	gettimeofday(&now, NULL);
+	iface->uptime = now.tv_sec;
 
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
@@ -668,6 +672,11 @@ if_to_ctl(struct iface *iface)
 		ictl.hello_timer = res.tv_sec;
 	} else
 		ictl.hello_timer = -1;
+
+	if (iface->state != IF_STA_DOWN) {
+		ictl.uptime = now.tv_sec - iface->uptime;
+	} else
+		ictl.uptime = 0;
 
 	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
 		if (nbr == iface->self)
