@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.16 2006/03/08 22:59:14 dlg Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.17 2006/03/09 00:39:04 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -69,8 +69,6 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/pci/amdpmreg.h>
-
 #include <dev/rndvar.h>
 #include <dev/i2c/i2cvar.h>
 
@@ -90,6 +88,15 @@ u_int amdpm_get_timecount(struct timecounter *tc);
 #define AMDPM_FREQUENCY 3579545
 #endif
 
+static struct timecounter amdpm_timecounter = {
+	amdpm_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	0xffffff,		/* counter_mask */
+	AMDPM_FREQUENCY,	/* frequency */
+	"AMDPM",		/* name */
+	1000			/* quality */
+};
+#endif
 
 #define	AMDPM_CONFREG	0x40
 
@@ -152,15 +159,6 @@ u_int amdpm_get_timecount(struct timecounter *tc);
 #define AMDPM_SMBDATA	0x6		/* SMBus data */
 #define AMDPM_SMBCMD	0x8		/* SMBus command */
 
-static struct timecounter amdpm_timecounter = {
-	amdpm_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	0xffffff,		/* counter_mask */
-	AMDPM_FREQUENCY,	/* frequency */
-	"AMDPM",		/* name */
-	1000			/* quality */
-};
-#endif
 
 struct amdpm_softc {
 	struct device sc_dev;
