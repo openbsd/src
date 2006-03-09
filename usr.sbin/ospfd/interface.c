@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.43 2006/03/09 09:32:37 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.44 2006/03/09 13:37:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -218,22 +218,22 @@ if_new(struct kif *kif)
 	iface->media_type = kif->media_type;
 
 	/* get address */
-	if (ioctl(s, SIOCGIFADDR, (caddr_t)ifr) < 0)
+	if (ioctl(s, SIOCGIFADDR, ifr) < 0)
 		err(1, "if_new: cannot get address");
-	sain = (struct sockaddr_in *) &ifr->ifr_addr;
+	sain = (struct sockaddr_in *)&ifr->ifr_addr;
 	iface->addr = sain->sin_addr;
 
 	/* get mask */
-	if (ioctl(s, SIOCGIFNETMASK, (caddr_t)ifr) < 0)
+	if (ioctl(s, SIOCGIFNETMASK, ifr) < 0)
 		err(1, "if_new: cannot get mask");
-	sain = (struct sockaddr_in *) &ifr->ifr_addr;
+	sain = (struct sockaddr_in *)&ifr->ifr_addr;
 	iface->mask = sain->sin_addr;
 
 	/* get p2p dst address */
 	if (kif->flags & IFF_POINTOPOINT) {
-		if (ioctl(s, SIOCGIFDSTADDR, (caddr_t)ifr) < 0)
+		if (ioctl(s, SIOCGIFDSTADDR, ifr) < 0)
 			err(1, "if_new: cannot get dst addr");
-		sain = (struct sockaddr_in *) &ifr->ifr_addr;
+		sain = (struct sockaddr_in *)&ifr->ifr_addr;
 		iface->dst = sain->sin_addr;
 	}
 
@@ -275,6 +275,7 @@ if_init(struct ospfd_conf *xconf, struct iface *iface)
 }
 
 /* timers */
+/* ARGSUSED */
 void
 if_hello_timer(int fd, short event, void *arg)
 {
@@ -304,6 +305,7 @@ if_stop_hello_timer(struct iface *iface)
 	return (evtimer_del(&iface->hello_timer));
 }
 
+/* ARGSUSED */
 void
 if_wait_timer(int fd, short event, void *arg)
 {
@@ -846,8 +848,7 @@ if_set_mcast(struct iface *iface)
 	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
 		if (setsockopt(iface->fd, IPPROTO_IP, IP_MULTICAST_IF,
-		    (char *)&iface->addr.s_addr,
-		    sizeof(iface->addr.s_addr)) < 0) {
+		    &iface->addr.s_addr, sizeof(iface->addr.s_addr)) < 0) {
 			log_debug("if_set_mcast: error setting "
 			    "IP_MULTICAST_IF, interface %s", iface->name);
 			return (-1);
