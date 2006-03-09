@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.35 2006/01/02 05:21:40 brad Exp $ */
+/*	$OpenBSD: mcd.c,v 1.36 2006/03/09 23:05:18 miod Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -910,6 +910,8 @@ mcdprobe(parent, match, aux)
 	if (!opti_cd_setup(OPTI_MITSUMI, ia->ia_iobase, ia->ia_irq, ia->ia_drq))
 		/* printf("mcdprobe: could not setup OPTi chipset.\n") */;
 
+	bzero(&sc, sizeof sc);
+	strlcpy(sc.sc_dev.dv_xname, "mcd", sizeof(sc.sc_dev.dv_xname));
 	sc.debug = 0;
 	sc.probe = 1;
 
