@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.12 2006/02/02 20:46:34 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.13 2006/03/09 14:16:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -44,10 +44,6 @@ send_hello(struct iface *iface)
 	struct buf		*buf;
 	int			 ret;
 
-	/* XXX READ_BUF_SIZE */
-	if ((buf = buf_dynamic(PKG_DEF_SIZE, READ_BUF_SIZE)) == NULL)
-		fatal("send_hello");
-
 	dst.sin_family = AF_INET;
 	dst.sin_len = sizeof(struct sockaddr_in);
 
@@ -58,14 +54,19 @@ send_hello(struct iface *iface)
 		break;
 	case IF_TYPE_NBMA:
 	case IF_TYPE_POINTOMULTIPOINT:
-		/* XXX not supported */
-		break;
+		log_debug("send_hello: type %s not supported, interface %s",
+		    if_type_name(iface->type), iface->name);
+		return (-1);
 	case IF_TYPE_VIRTUALLINK:
 		dst.sin_addr = iface->dst;
 		break;
 	default:
 		fatalx("send_hello: unknown interface type");
 	}
+
+	/* XXX READ_BUF_SIZE */
+	if ((buf = buf_dynamic(PKG_DEF_SIZE, READ_BUF_SIZE)) == NULL)
+		fatal("send_hello");
 
 	/* OSPF header */
 	if (gen_ospf_hdr(buf, iface, PACKET_TYPE_HELLO))
