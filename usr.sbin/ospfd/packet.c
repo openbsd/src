@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.19 2006/02/19 18:52:06 norby Exp $ */
+/*	$OpenBSD: packet.c,v 1.20 2006/03/09 13:31:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -57,7 +57,7 @@ gen_ospf_hdr(struct buf *buf, struct iface *iface, u_int8_t type)
 
 /* send and receive packets */
 int
-send_packet(struct iface *iface, char *pkt, int len, struct sockaddr_in *dst)
+send_packet(struct iface *iface, void *pkt, size_t len, struct sockaddr_in *dst)
 {
 	/* set outgoing interface for multicast traffic */
 	if (IN_MULTICAST(ntohl(dst->sin_addr.s_addr)))
