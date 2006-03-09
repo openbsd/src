@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.47 2006/03/08 13:49:07 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.48 2006/03/09 09:32:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -201,17 +201,6 @@ enum iface_event {
 	IF_EVT_LOOP,
 	IF_EVT_UNLOOP,
 	IF_EVT_DOWN
-};
-
-static const char * const if_event_names[] = {
-	"NOTHING",
-	"UP",
-	"WAITTIMER",
-	"BACKUPSEEN",
-	"NEIGHBORCHANGE",
-	"LOOP",
-	"UNLOOP",
-	"DOWN"
 };
 
 /* interface actions */

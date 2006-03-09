@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.42 2006/03/08 15:35:07 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.43 2006/03/09 09:32:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -68,6 +68,17 @@ struct {
 };
 
 static int vlink_cnt = 0;
+
+const char * const if_event_names[] = {
+	"NOTHING",
+	"UP",
+	"WAITTIMER",
+	"BACKUPSEEN",
+	"NEIGHBORCHANGE",
+	"LOOP",
+	"UNLOOP",
+	"DOWN"
+};
 
 const char * const if_action_names[] = {
 	"NOTHING",
