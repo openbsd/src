@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.5 2006/03/09 03:52:19 marco Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.6 2006/03/09 04:41:11 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -29,20 +29,20 @@
 #include <dev/acpi/acpidebug.h>
 #include <dev/acpi/dsdt.h>
 
+const char		*db_aml_objtype(struct aml_value *);
+const char		*db_aml_opname(int);
+const char		*db_opregion(int);
+int			db_aml_nodetype(struct aml_node *);
+int			db_parse_name(void);
+struct aml_opcode	*db_findem(int);
 void			db_aml_disasm(struct acpi_context *, int);
 void			db_aml_disint(struct acpi_context *, int, int);
 void			db_aml_disline(uint8_t *, int, const char *, ...);
 void			db_aml_dump(int, u_int8_t *);
-void			db_aml_walktree(struct aml_node *);
 void			db_aml_shownode(struct aml_node *);
 void			db_aml_showvalue(struct aml_value *);
+void			db_aml_walktree(struct aml_node *);
 void			db_spaceit(int);
-const char		*db_aml_objtype(struct aml_value *);
-const char		*db_aml_opname(int);
-const char		*db_opregion(int);
-struct aml_opcode	*db_findem(int);
-int			db_aml_nodetype(struct aml_node *);
-int			db_parse_name(void);
 
 extern struct aml_node	aml_root;
 
