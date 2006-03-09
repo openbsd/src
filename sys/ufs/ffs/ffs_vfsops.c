@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.81 2006/03/09 13:21:12 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.82 2006/03/09 13:25:02 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -732,10 +732,10 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		}
 	}
 
-	if (fs->fs_postblformat == FS_42POSTBLFMT) {
+	if (fs->fs_postblformat == FS_42POSTBLFMT && !ronly) {
 #ifndef SMALL_KERNEL
 		printf("ffs_mountfs(): obsolete rotational table format, "
-		    "please use fsck -c\n");
+		    "please use fsck_ffs(8) -c 1\n");
 #endif
 		error = EFTYPE;
 		goto out;
