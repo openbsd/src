@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.49 2006/03/09 09:43:03 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.50 2006/03/09 15:43:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -220,6 +220,58 @@ enum iface_type {
 	IF_TYPE_VIRTUALLINK
 };
 
+/* neighbor states */
+#define	NBR_STA_DOWN		0x0001
+#define	NBR_STA_ATTEMPT		0x0002
+#define	NBR_STA_INIT		0x0004
+#define	NBR_STA_2_WAY		0x0008
+#define	NBR_STA_XSTRT		0x0010
+#define NBR_STA_SNAP		0x0020
+#define	NBR_STA_XCHNG		0x0040
+#define	NBR_STA_LOAD		0x0080
+#define	NBR_STA_FULL		0x0100
+#define	NBR_STA_ACTIVE		(~NBR_STA_DOWN)
+#define	NBR_STA_FLOOD		(NBR_STA_XCHNG | NBR_STA_LOAD | NBR_STA_FULL)
+#define	NBR_STA_ADJFORM		(NBR_STA_XSTRT | NBR_STA_SNAP | NBR_STA_FLOOD)
+#define	NBR_STA_BIDIR		(NBR_STA_2_WAY | NBR_STA_ADJFORM)
+#define	NBR_STA_PRELIM		(NBR_STA_DOWN | NBR_STA_ATTEMPT | NBR_STA_INIT)
+#define	NBR_STA_ANY		0xffff
+
+/* neighbor events */
+enum nbr_event {
+	NBR_EVT_NOTHING,
+	NBR_EVT_HELLO_RCVD,
+	NBR_EVT_2_WAY_RCVD,
+	NBR_EVT_NEG_DONE,
+	NBR_EVT_SNAP_DONE,
+	NBR_EVT_XCHNG_DONE,
+	NBR_EVT_BAD_LS_REQ,
+	NBR_EVT_LOAD_DONE,
+	NBR_EVT_ADJ_OK,
+	NBR_EVT_SEQ_NUM_MIS,
+	NBR_EVT_1_WAY_RCVD,
+	NBR_EVT_KILL_NBR,
+	NBR_EVT_ITIMER,
+	NBR_EVT_LL_DOWN,
+	NBR_EVT_ADJTMOUT
+};
+
+/* neighbor actions */
+enum nbr_action {
+	NBR_ACT_NOTHING,
+	NBR_ACT_RST_ITIMER,
+	NBR_ACT_STRT_ITIMER,
+	NBR_ACT_EVAL,
+	NBR_ACT_SNAP,
+	NBR_ACT_SNAP_DONE,
+	NBR_ACT_XCHNG_DONE,
+	NBR_ACT_ADJ_OK,
+	NBR_ACT_RESTRT_DD,
+	NBR_ACT_DEL,
+	NBR_ACT_CLR_LST,
+	NBR_ACT_HELLO_CHK
+};
+
 /* auth types */
 enum auth_type {
 	AUTH_NONE,
@@ -240,11 +292,6 @@ enum dst_type {
 	DT_RTR
 };
 
-static const char * const dst_type_names[] = {
-	"Network",
-	"Router"
-};
-
 enum path_type {
 	PT_INTRA_AREA,
 	PT_INTER_AREA,
@@ -256,13 +303,6 @@ enum rib_type {
 	RIB_NET = 1,
 	RIB_RTR,
 	RIB_EXT
-};
-
-static const char * const path_type_names[] = {
-	"Intra-Area",
-	"Inter-Area",
-	"Type 1 ext",
-	"Type 2 ext"
 };
 
 struct auth_md {
@@ -505,6 +545,14 @@ struct kif	*kif_findname(char *);
 
 u_int8_t	mask2prefixlen(in_addr_t);
 in_addr_t	prefixlen2mask(u_int8_t);
+
+/* log.h */
+const char	*nbr_state_name(int);
+const char	*if_state_name(int);
+const char	*if_type_name(enum iface_type);
+const char	*if_auth_name(enum auth_type);
+const char	*dst_type_name(enum dst_type);
+const char	*path_type_name(enum path_type);
 
 /* ospfd.c */
 void	main_imsg_compose_ospfe(int, pid_t, void *, u_int16_t);

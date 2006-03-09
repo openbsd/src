@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.30 2006/02/19 21:48:56 norby Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.31 2006/03/09 15:43:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -137,7 +137,7 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		/* XXX event outside of the defined fsm, ignore it. */
 		log_warnx("nbr_fsm: neighbor ID %s, "
 		    "event %s not expected in state %s",
-		    inet_ntoa(nbr->id), nbr_event_name(event),
+		    inet_ntoa(nbr->id), nbr_event_names[event],
 		    nbr_state_name(old_state));
 		return (0);
 	}
@@ -185,7 +185,7 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 	if (ret) {
 		log_warnx("nbr_fsm: error changing state for neighbor ID %s, "
 		    "event %s, state %s", inet_ntoa(nbr->id),
-		    nbr_event_name(event), nbr_state_name(old_state));
+		    nbr_event_names[event], nbr_state_name(old_state));
 		return (-1);
 	}
 
@@ -218,8 +218,8 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 
 		log_debug("nbr_fsm: event %s resulted in action %s and "
 		    "changing state for neighbor ID %s from %s to %s",
-		    nbr_event_name(event),
-		    nbr_action_name(nbr_fsm_tbl[i].action),
+		    nbr_event_names[event],
+		    nbr_action_names[nbr_fsm_tbl[i].action],
 		    inet_ntoa(nbr->id), nbr_state_name(old_state),
 		    nbr_state_name(nbr->state));
 
@@ -695,46 +695,6 @@ nbr_to_ctl(struct nbr *nbr)
 		nctl.uptime = 0;
 
 	return (&nctl);
-}
-
-/* names */
-const char *
-nbr_state_name(int state)
-{
-	switch (state) {
-	case NBR_STA_DOWN:
-		return ("DOWN");
-	case NBR_STA_ATTEMPT:
-		return ("ATTEMPT");
-	case NBR_STA_INIT:
-		return ("INIT");
-	case NBR_STA_2_WAY:
-		return ("2-WAY");
-	case NBR_STA_XSTRT:
-		return ("EXSTART");
-	case NBR_STA_SNAP:
-		return ("SNAPSHOT");
-	case NBR_STA_XCHNG:
-		return ("EXCHANGE");
-	case NBR_STA_LOAD:
-		return ("LOADING");
-	case NBR_STA_FULL:
-		return ("FULL");
-	default:
-		return ("UNKNOWN");
-	}
-}
-
-const char *
-nbr_event_name(int event)
-{
-	return (nbr_event_names[event]);
-}
-
-const char *
-nbr_action_name(int action)
-{
-	return (nbr_action_names[action]);
 }
 
 struct lsa_hdr *

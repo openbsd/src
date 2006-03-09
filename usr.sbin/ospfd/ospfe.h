@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.25 2006/03/09 13:31:57 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.26 2006/03/09 15:43:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -28,58 +28,6 @@
 #include <netinet/ip.h>
 
 TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns;
-
-/* neighbor states */
-#define	NBR_STA_DOWN		0x0001
-#define	NBR_STA_ATTEMPT		0x0002
-#define	NBR_STA_INIT		0x0004
-#define	NBR_STA_2_WAY		0x0008
-#define	NBR_STA_XSTRT		0x0010
-#define NBR_STA_SNAP		0x0020
-#define	NBR_STA_XCHNG		0x0040
-#define	NBR_STA_LOAD		0x0080
-#define	NBR_STA_FULL		0x0100
-#define	NBR_STA_ACTIVE		(~NBR_STA_DOWN)
-#define	NBR_STA_FLOOD		(NBR_STA_XCHNG | NBR_STA_LOAD | NBR_STA_FULL)
-#define	NBR_STA_ADJFORM		(NBR_STA_XSTRT | NBR_STA_SNAP | NBR_STA_FLOOD)
-#define	NBR_STA_BIDIR		(NBR_STA_2_WAY | NBR_STA_ADJFORM)
-#define	NBR_STA_PRELIM		(NBR_STA_DOWN | NBR_STA_ATTEMPT | NBR_STA_INIT)
-#define	NBR_STA_ANY		0xffff
-
-/* neighbor events */
-enum nbr_event {
-	NBR_EVT_NOTHING,
-	NBR_EVT_HELLO_RCVD,
-	NBR_EVT_2_WAY_RCVD,
-	NBR_EVT_NEG_DONE,
-	NBR_EVT_SNAP_DONE,
-	NBR_EVT_XCHNG_DONE,
-	NBR_EVT_BAD_LS_REQ,
-	NBR_EVT_LOAD_DONE,
-	NBR_EVT_ADJ_OK,
-	NBR_EVT_SEQ_NUM_MIS,
-	NBR_EVT_1_WAY_RCVD,
-	NBR_EVT_KILL_NBR,
-	NBR_EVT_ITIMER,
-	NBR_EVT_LL_DOWN,
-	NBR_EVT_ADJTMOUT
-};
-
-/* neighbor actions */
-enum nbr_action {
-	NBR_ACT_NOTHING,
-	NBR_ACT_RST_ITIMER,
-	NBR_ACT_STRT_ITIMER,
-	NBR_ACT_EVAL,
-	NBR_ACT_SNAP,
-	NBR_ACT_SNAP_DONE,
-	NBR_ACT_XCHNG_DONE,
-	NBR_ACT_ADJ_OK,
-	NBR_ACT_RESTRT_DD,
-	NBR_ACT_DEL,
-	NBR_ACT_CLR_LST,
-	NBR_ACT_HELLO_CHK
-};
 
 struct lsa_entry {
 	TAILQ_ENTRY(lsa_entry)	 entry;
@@ -195,12 +143,6 @@ int		 if_act_reset(struct iface *);
 
 struct ctl_iface	*if_to_ctl(struct iface *);
 
-const char	*if_state_name(int);
-const char	*if_event_name(int);
-const char	*if_action_name(int);
-const char	*if_type_name(int);
-const char	*if_auth_name(int);
-
 int	 if_join_group(struct iface *, struct in_addr *);
 int	 if_leave_group(struct iface *, struct in_addr *);
 int	 if_set_mcast(struct iface *);
@@ -284,10 +226,6 @@ int	 nbr_act_clear_lists(struct nbr *);
 int	 nbr_act_hello_check(struct nbr *);
 
 struct ctl_nbr	*nbr_to_ctl(struct nbr *);
-
-const char	*nbr_state_name(int);
-const char	*nbr_event_name(int);
-const char	*nbr_action_name(int);
 
 struct lsa_hdr	*lsa_hdr_new(void);
 

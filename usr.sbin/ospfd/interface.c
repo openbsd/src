@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.44 2006/03/09 13:37:04 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.45 2006/03/09 15:43:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -87,20 +87,6 @@ const char * const if_action_names[] = {
 	"RESET"
 };
 
-const char * const if_type_names[] = {
-	"POINTOPOINT",
-	"BROADCAST",
-	"NBMA",
-	"POINTOMULTIPOINT",
-	"VIRTUALLINK"
-};
-
-const char * const if_auth_names[] = {
-	"none",
-	"simple",
-	"crypt"
-};
-
 int
 if_fsm(struct iface *iface, enum iface_event event)
 {
@@ -121,7 +107,7 @@ if_fsm(struct iface *iface, enum iface_event event)
 		/* event outside of the defined fsm, ignore it. */
 		log_debug("if_fsm: interface %s, "
 		    "event %s not expected in state %s", iface->name,
-		    if_event_name(event), if_state_name(old_state));
+		    if_event_names[event], if_state_name(old_state));
 		return (0);
 	}
 
@@ -142,7 +128,7 @@ if_fsm(struct iface *iface, enum iface_event event)
 
 	if (ret) {
 		log_debug("if_fsm: error changing state for interface %s, "
-		    "event %s, state %s", iface->name, if_event_name(event),
+		    "event %s, state %s", iface->name, if_event_names[event],
 		    if_state_name(old_state));
 		return (-1);
 	}
@@ -155,7 +141,7 @@ if_fsm(struct iface *iface, enum iface_event event)
 
 	log_debug("if_fsm: event %s resulted in action %s and changing "
 	    "state for interface %s from %s to %s",
-	    if_event_name(event), if_action_name(iface_fsm[i].action),
+	    if_event_names[event], if_action_names[iface_fsm[i].action],
 	    iface->name, if_state_name(old_state), if_state_name(iface->state));
 
 	return (ret);
@@ -692,54 +678,6 @@ if_to_ctl(struct iface *iface)
 	}
 
 	return (&ictl);
-}
-
-/* names */
-const char *
-if_state_name(int state)
-{
-	switch (state) {
-	case IF_STA_DOWN:
-		return ("DOWN");
-	case IF_STA_LOOPBACK:
-		return ("LOOPBACK");
-	case IF_STA_WAITING:
-		return ("WAITING");
-	case IF_STA_POINTTOPOINT:
-		return ("POINT-TO-POINT");
-	case IF_STA_DROTHER:
-		return ("DROTHER");
-	case IF_STA_BACKUP:
-		return ("BACKUP");
-	case IF_STA_DR:
-		return ("DR");
-	default:
-		return ("UNKNOWN");
-	}
-}
-
-const char *
-if_event_name(int event)
-{
-	return (if_event_names[event]);
-}
-
-const char *
-if_action_name(int action)
-{
-	return (if_action_names[action]);
-}
-
-const char *
-if_type_name(int type)
-{
-	return (if_type_names[type]);
-}
-
-const char *
-if_auth_name(int type)
-{
-	return (if_auth_names[type]);
 }
 
 /* misc */
