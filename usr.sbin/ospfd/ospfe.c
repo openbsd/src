@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.42 2006/03/08 16:03:40 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.43 2006/03/09 09:03:22 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -293,9 +293,14 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 						if (link_ok) {
 							if_fsm(iface,
 							    IF_EVT_UP);
+							log_warnx("interface %s"
+							    " up", iface->name);
 						} else {
 							if_fsm(iface,
 							    IF_EVT_DOWN);
+							log_warnx("interface %s"
+							    " down",
+							    iface->name);
 						}
 					}
 				}
