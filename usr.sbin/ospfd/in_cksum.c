@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.2 2005/10/19 15:44:25 stevesk Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.3 2006/03/09 09:43:03 claudio Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.3 1995/04/22 13:53:48 cgd Exp $	*/
 
 /*
@@ -50,10 +50,11 @@
  * code and should be modified for each CPU to be as fast as possible.
  * In particular, it should not be this one.
  */
-int
+u_int16_t
 in_cksum(void *p, int len)
 {
-	int sum = 0, oddbyte = 0, v = 0;
+	unsigned int sum = 0;
+	int oddbyte = 0, v = 0;
 	u_char *cp = p;
 
 	/* we assume < 2^16 bytes being summed */
