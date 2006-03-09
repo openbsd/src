@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.3 2006/03/08 21:04:18 marco Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.4 2006/03/09 03:40:31 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -42,6 +42,7 @@ const char		*db_aml_opname(int);
 const char		*db_opregion(int);
 struct aml_opcode	*db_findem(int);
 int			db_aml_nodetype(struct aml_node *);
+int			db_parse_name(void);
 
 extern struct aml_node	aml_root;
 
@@ -486,12 +487,10 @@ db_aml_walktree(struct aml_node *node)
 	}
 }
 
-/* ddb interface */
-void
-db_acpi_showval(db_expr_t addr, int haddr, db_expr_t count, char *modif)
+int
+db_parse_name(void)
 {
-	struct aml_node 		*node;
-	int				t;
+	int				t, rv = 1;
 
 	memset(scope, 0, sizeof scope);
 	do {
@@ -518,17 +517,27 @@ db_acpi_showval(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		goto error;
 	}
 
+	rv = 0;
+error:
 	/* get rid of the rest of input */
 	db_flush_lex();
+	return (rv);
+}
+
+/* ddb interface */
+void
+db_acpi_showval(db_expr_t addr, int haddr, db_expr_t count, char *modif)
+{
+	struct aml_node 		*node;
+
+	if (db_parse_name())
+		return;
 
 	node = aml_searchname(&aml_root, scope);
 	if (node)
 		db_aml_showvalue(node->value);
 	else
 		db_printf("Not a valid value\n");
-
-error:
-	db_flush_lex();
 }
 
 void
@@ -538,35 +547,9 @@ db_acpi_disasm(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 	struct acpi_softc 		*sc = acpi_softc;
 	struct acpi_context 		*ctx;
 	struct aml_node 		*node;
-	int				t;
 
-	memset(scope, 0, sizeof scope);
-	do {
-		t = db_read_token();
-		if (t == tIDENT) {
-			if (strlcat(scope, db_tok_string, sizeof scope) >=
-			    sizeof scope) {
-				printf("Input too long\n");
-				goto error;
-			}
-			t = db_read_token();
-			if (t == tDOT)
-				if (strlcat(scope, ".", sizeof scope) >=
-				    sizeof scope) {
-					printf("Input too long 2\n");
-					goto error;
-				}
-		}
-	}
-	while (t != tEOL);
-
-	if (!strlen(scope)) {
-		db_printf("Invalid input\n");
-		goto error;
-	}
-
-	/* get rid of the rest of input */
-	db_flush_lex();
+	if (db_parse_name())
+		return;
 
 	ctx = acpi_alloccontext(sc, &aml_root, 0, NULL);
 	node = aml_searchname(&aml_root, scope);
@@ -578,14 +561,10 @@ db_acpi_disasm(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		db_printf("Not a valid method\n");
 
 	acpi_freecontext(ctx);
-
-error:
-	db_flush_lex();
 }
 
 void
 db_acpi_tree(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
 	db_aml_walktree(aml_root.child);
-
 }
