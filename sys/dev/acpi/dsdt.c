@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.36 2006/03/09 05:17:24 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.37 2006/03/09 05:24:03 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -480,7 +480,7 @@ aml_allocvalue(int type, int64_t ival, void *bval)
 		if (ival) {
 			rv->v_string = acpi_os_allocmem(ival + 1);
 			if (bval) 
-				strncpy(rv->v_string, bval, ival); /* XXX */
+				strncpy(rv->v_string, bval, ival);
 		}
 		break;
 	case AML_OBJTYPE_BUFFER:
