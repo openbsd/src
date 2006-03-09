@@ -2487,6 +2487,13 @@ check_format_info (info, params)
 	      if (pedantic)
 		warning ("ANSI C does not support the `Z' length modifier");
 	    }
+	  else if (*format_chars == 'z')
+	    {
+	      length_char = 'Z', format_chars++;
+	      /* FIXME: Is allowed in ISO C 9x.  */
+	      if (pedantic)
+		warning ("ANSI C does not support the `z' length modifier");
+	    }
 	  else
 	    length_char = 0;
 	  if (length_char == 'l' && *format_chars == 'l')
