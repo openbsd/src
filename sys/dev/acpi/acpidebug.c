@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.4 2006/03/09 03:40:31 marco Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.5 2006/03/09 03:52:19 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -86,16 +86,16 @@ db_aml_dump(int len, u_int8_t *buf)
 	int		idx;
 	
 	db_printf("{ ");
-	for (idx = 0; idx < len; idx++) {
+	for (idx = 0; idx < len; idx++)
 		db_printf("%s0x%.2x", idx ? ", " : "", buf[idx]);
-	}
+
 	db_printf(" }\n");
 }
 
 void
 db_aml_showvalue(struct aml_value *value)
 {
-	int idx;
+	int		idx;
 
 	if (value == NULL)
 		return;
@@ -199,15 +199,14 @@ db_aml_showvalue(struct aml_value *value)
 void
 db_spaceit(int len)
 {
-	while(len--) {
+	while (len--)
 		db_printf("..");
-	}
 }
 
 struct aml_opcode
 *db_findem(int opcode)
 {
-	int			key, cnt;
+	int		key, cnt;
 
 	cnt = 0;
 	key = HASH_KEY(opcode);
@@ -288,7 +287,7 @@ db_aml_objtype(struct aml_value *val)
 void
 db_aml_disline(uint8_t *pos, int level, const char *fmt, ...)
 {
-	va_list			ap;
+	va_list		ap;
 
 	db_printf("%.4x %.2x ", pos - aml_root.start, level);
 	db_spaceit(level);
@@ -305,8 +304,8 @@ db_aml_disline(uint8_t *pos, int level, const char *fmt, ...)
 void
 db_aml_disint(struct acpi_context *ctx, int level, int type)
 {
-	u_int8_t		*pos;
-	int64_t			i1;
+	u_int8_t	*pos;
+	int64_t		i1;
 
 	pos = ctx->pos;
 	i1 = aml_eparseint(ctx, type);
@@ -372,7 +371,7 @@ db_aml_disasm(struct acpi_context *ctx, int level)
 				db_aml_disasm(ctx, level + 1);
 			break;
 		case AML_ARG_BYTELIST:
-			for (idx = 0; idx < end - ctx->pos - 7; idx += 8) {
+			for (idx = 0; idx < end - ctx->pos - 7; idx += 8)
 				db_aml_disline(np, level + 1, "buf %.4x: %.2x "
 				    "%.2x %.2x %.2x %.2x %.2x %.2x %.2x", 
 				    idx, ctx->pos[idx],
@@ -380,7 +379,7 @@ db_aml_disasm(struct acpi_context *ctx, int level)
 				    ctx->pos[idx + 2], ctx->pos[idx + 3],
 				    ctx->pos[idx + 4], ctx->pos[idx + 5], 
 				    ctx->pos[idx + 6], ctx->pos[idx + 7]);
-			}
+
 			ctx->pos = end;
 			break;
 		case AML_ARG_FLAG:
@@ -474,7 +473,7 @@ db_aml_shownode(struct aml_node *node)
 void
 db_aml_walktree(struct aml_node *node)
 {
-	int			i;
+	int		i;
 
 	while(node) {
 		db_printf(" %d ", node->depth);
@@ -490,7 +489,7 @@ db_aml_walktree(struct aml_node *node)
 int
 db_parse_name(void)
 {
-	int				t, rv = 1;
+	int		t, rv = 1;
 
 	memset(scope, 0, sizeof scope);
 	do {
@@ -528,7 +527,7 @@ error:
 void
 db_acpi_showval(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
-	struct aml_node 		*node;
+	struct aml_node *node;
 
 	if (db_parse_name())
 		return;
