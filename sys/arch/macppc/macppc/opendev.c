@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.8 2004/01/07 22:45:59 brad Exp $	*/
+/*	$OpenBSD: opendev.c,v 1.9 2006/03/09 23:06:19 miod Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -32,11 +32,11 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/stdarg.h>
 #include <machine/psl.h>
 
 #include <dev/ofw/openfirm.h>
-#include <lib/libkern/libkern.h>
 
 extern void ofw_stack(void);
 extern void ofbcopy(const void *, void *, size_t);
