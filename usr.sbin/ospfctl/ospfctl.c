@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.26 2006/03/08 15:02:15 claudio Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.27 2006/03/09 15:44:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -40,9 +40,6 @@
 __dead void	 usage(void);
 int		 show_summary_msg(struct imsg *);
 int		 show_interface_msg(struct imsg *);
-const char	*print_if_type(enum iface_type type);
-const char	*print_if_state(int);
-const char	*print_nbr_state(int);
 const char	*print_link(int);
 const char	*fmt_timeframe(time_t t);
 const char	*fmt_timeframe_core(time_t t);
@@ -321,9 +318,9 @@ show_interface_msg(struct imsg *imsg)
 		printf("Area %s\n", inet_ntoa(iface->area));
 		printf("  Router ID %s, network type %s, cost: %d\n",
 		    inet_ntoa(iface->rtr_id),
-		    print_if_type(iface->type), iface->metric);
+		    if_type_name(iface->type), iface->metric);
 		printf("  Transmit delay is %d sec(s), state %s, priority %d\n",
-		    iface->transmit_delay, print_if_state(iface->state),
+		    iface->transmit_delay, if_state_name(iface->state),
 		    iface->priority);
 		printf("  Designated Router (ID) %s, ",
 		    inet_ntoa(iface->dr_id));
@@ -369,75 +366,6 @@ show_interface_msg(struct imsg *imsg)
 	}
 
 	return (0);
-}
-
-const char *
-print_if_type(enum iface_type type)
-{
-	switch (type) {
-	case IF_TYPE_POINTOPOINT:
-		return ("POINTOPOINT");
-	case IF_TYPE_BROADCAST:
-		return ("BROADCAST");
-	case IF_TYPE_NBMA:
-		return ("NBMA");
-	case IF_TYPE_POINTOMULTIPOINT:
-		return ("POINTOMULTIPOINT");
-	case IF_TYPE_VIRTUALLINK:
-		return ("VIRTUALLINK");
-	default:
-		return ("UNKNOWN");
-	}
-}
-
-const char *
-print_if_state(int state)
-{
-	switch (state) {
-	case IF_STA_DOWN:
-		return ("DOWN");
-	case IF_STA_LOOPBACK:
-		return ("LOOP");
-	case IF_STA_WAITING:
-		return ("WAIT");
-	case IF_STA_POINTTOPOINT:
-		return ("P2P");
-	case IF_STA_DROTHER:
-		return ("OTHER");
-	case IF_STA_BACKUP:
-		return ("BCKUP");
-	case IF_STA_DR:
-		return ("DR");
-	default:
-		return ("UNKNW");
-	}
-}
-
-const char *
-print_nbr_state(int state)
-{
-	switch (state) {
-	case NBR_STA_DOWN:
-		return ("DOWN");
-	case NBR_STA_ATTEMPT:
-		return ("ATTMP");
-	case NBR_STA_INIT:
-		return ("INIT");
-	case NBR_STA_2_WAY:
-		return ("2-WAY");
-	case NBR_STA_XSTRT:
-		return ("EXSTA");
-	case NBR_STA_SNAP:
-		return ("SNAP");
-	case NBR_STA_XCHNG:
-		return ("EXCHG");
-	case NBR_STA_LOAD:
-		return ("LOAD");
-	case NBR_STA_FULL:
-		return ("FULL");
-	default:
-		return ("UNKNW");
-	}
 }
 
 const char *
@@ -839,8 +767,8 @@ show_nbr_msg(struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NBR:
 		nbr = imsg->data;
-		if (asprintf(&state, "%s/%s", print_nbr_state(nbr->nbr_state),
-		    print_if_state(nbr->iface_state)) == -1)
+		if (asprintf(&state, "%s/%s", nbr_state_name(nbr->nbr_state),
+		    if_state_name(nbr->iface_state)) == -1)
 			err(1, NULL);
 		printf("%-15s %-3d %-12s %-9s", inet_ntoa(nbr->id),
 		    nbr->priority, state, fmt_timeframe_core(nbr->dead_timer));
@@ -886,7 +814,7 @@ show_nbr_detail_msg(struct imsg *imsg)
 		    nbr->name);
 		printf("  Neighbor priority is %d, "
 		    "State is %s, %d state changes\n",
-		    nbr->priority, print_nbr_state(nbr->nbr_state),
+		    nbr->priority, nbr_state_name(nbr->nbr_state),
 		    nbr->state_chng_cnt);
 		printf("  DR is %s, ", inet_ntoa(nbr->dr));
 		printf("BDR is %s\n", inet_ntoa(nbr->bdr));
@@ -933,8 +861,8 @@ show_rib_msg(struct imsg *imsg)
 		}
 
 		printf("%-20s %-17s %-12s %-9s %-7d %s\n", dstnet,
-		    inet_ntoa(rt->nexthop), path_type_names[rt->p_type],
-		    dst_type_names[rt->d_type], rt->cost,
+		    inet_ntoa(rt->nexthop), path_type_name(rt->p_type),
+		    dst_type_name(rt->d_type), rt->cost,
 		    rt->uptime == 0 ? "-" : fmt_timeframe_core(rt->uptime));
 		free(dstnet);
 		break;
@@ -1044,7 +972,7 @@ show_rib_detail_msg(struct imsg *imsg)
 			}
 			printf("%-18s %-15s ", dstnet, inet_ntoa(rt->nexthop));
 			printf("%-15s %-12s %-7d", inet_ntoa(rt->adv_rtr),
-			    path_type_names[rt->p_type], rt->cost);
+			    path_type_name(rt->p_type), rt->cost);
 			free(dstnet);
 
 			if (rt->d_type == DT_RTR)
@@ -1064,7 +992,7 @@ show_rib_detail_msg(struct imsg *imsg)
 
 			printf("%-18s %-15s ", dstnet, inet_ntoa(rt->nexthop));
 			printf("%-15s %-12s %-7d %-7d\n",
-			    inet_ntoa(rt->adv_rtr), path_type_names[rt->p_type],
+			    inet_ntoa(rt->adv_rtr), path_type_name(rt->p_type),
 			    rt->cost, rt->cost2);
 
 			lasttype = RIB_EXT;
