@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_chpass.c,v 1.14 2005/04/14 18:33:42 biorn Exp $	*/
+/*	$OpenBSD: login_chpass.c,v 1.15 2006/03/09 19:14:09 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -73,6 +73,7 @@ int	_yp_check(char **);
 char	*ypgetnewpasswd(struct passwd *, char **);
 struct passwd *ypgetpwnam(char *);
 void	kbintr(int);
+int	pwd_gensalt(char *, int, login_cap_t *, char);
 #endif
 
 void	local_chpass(char **);
@@ -199,9 +200,15 @@ yp_chpass(char *username)
 		}
 	}
 	if (pw == NULL) {
-		char *p = getpass("Old password:");
-		if (p != NULL) {
-			crypt(p, "xx");
+		char *p, salt[_PASSWORD_LEN + 1];
+		login_cap_t *lc;
+
+		/* no such user, get appropriate salt to thwart timing attack */
+		if ((p = getpass("Old password:")) != NULL) {
+			if ((lc = login_getclass(NULL)) == NULL ||
+			    pwd_gensalt(salt, sizeof(salt), lc, 'y') == 0)
+				strlcpy(salt, "xx", sizeof(salt));
+			crypt(p, salt);
 			memset(p, 0, strlen(p));
 		}
 		warnx("YP passwd database unchanged.");

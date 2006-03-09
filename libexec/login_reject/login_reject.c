@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_reject.c,v 1.6 2002/09/06 18:45:07 deraadt Exp $	*/
+/*	$OpenBSD: login_reject.c,v 1.7 2006/03/09 19:14:10 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -55,9 +55,10 @@
 int
 main(int argc, char *argv[])
 {
-	FILE *back;
-	char passbuf[1];
 	struct rlimit rl;
+	login_cap_t *lc;
+	FILE *back;
+	char passbuf[1], salt[_PASSWORD_LEN + 1];
 	int mode = 0, c;
 
 	rl.rlim_cur = 0;
@@ -121,7 +122,11 @@ main(int argc, char *argv[])
 	} else
 		getpass("Password:");
 
-	crypt("password", "xx");
+	if ((lc = login_getclass(NULL)) == NULL ||
+	    pwd_gensalt(salt, sizeof(salt), lc, 'l') == 0)
+		strlcpy(salt, "xx", sizeof(salt));
+	crypt("password", salt);
+
 	fprintf(back, BI_REJECT "\n");
 	exit(1);
 }

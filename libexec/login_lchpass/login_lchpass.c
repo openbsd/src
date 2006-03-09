@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_lchpass.c,v 1.12 2004/03/10 21:30:27 millert Exp $	*/
+/*	$OpenBSD: login_lchpass.c,v 1.13 2006/03/09 19:14:10 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -56,13 +56,15 @@
 #define BACK_CHANNEL	3
 
 int local_passwd(char *, int);
+int pwd_gensalt(char *, int, login_cap_t *, char);
 
 int
 main(int argc, char *argv[])
 {
+	login_cap_t *lc;
 	struct iovec iov[2];
 	struct passwd *pwd;
-	char *username = NULL, *salt, *p;
+	char *username = NULL, *salt, *p, saltbuf[_PASSWORD_LEN + 1];
 	struct rlimit rl;
 	int c;
 
@@ -119,8 +121,14 @@ main(int argc, char *argv[])
 
 	if (pwd)
 		salt = pwd->pw_passwd;
-	else
-		salt = "xx";
+	else {
+		/* no such user, get appropriate salt */
+		if ((lc = login_getclass(NULL)) == NULL ||
+		    pwd_gensalt(saltbuf, sizeof(saltbuf), lc, 'l') == 0)
+			salt = "xx";
+		else
+			salt = saltbuf;
+	}
 
 	(void)setpriority(PRIO_PROCESS, 0, -4);
 
