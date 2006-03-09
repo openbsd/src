@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.45 2006/01/19 18:21:03 grange Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.46 2006/03/09 17:24:00 weingart Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -176,7 +176,7 @@ struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 
 #ifdef NBUF
-int	nbuf = NUF;
+int	nbuf = NBUF;
 #else
 int	nbuf = 0;
 #endif
