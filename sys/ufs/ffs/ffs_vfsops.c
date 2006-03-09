@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.80 2006/02/14 12:42:11 mickey Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.81 2006/03/09 13:21:12 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -731,11 +731,16 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 			goto out;
 		}
 	}
-	/* XXX updating 4.2 FFS superblocks trashes rotational layout tables */
-	if (fs->fs_postblformat == FS_42POSTBLFMT && !ronly) {
-		error = EROFS;		/* XXX what should be returned? */
+
+	if (fs->fs_postblformat == FS_42POSTBLFMT) {
+#ifndef SMALL_KERNEL
+		printf("ffs_mountfs(): obsolete rotational table format, "
+		    "please use fsck -c\n");
+#endif
+		error = EFTYPE;
 		goto out;
 	}
+
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
 	bzero(ump, sizeof *ump);
 	ump->um_fs = malloc((u_long)fs->fs_sbsize, M_UFSMNT,
