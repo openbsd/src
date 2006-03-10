@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pcmcia.c,v 1.18 2006/01/30 11:41:00 jsg Exp $	*/
+/*	$OpenBSD: if_an_pcmcia.c,v 1.19 2006/03/10 00:27:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -75,9 +75,7 @@ struct cfattach an_pcmcia_ca = {
 };
 
 int
-an_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+an_pcmcia_match(struct device *parent, void *match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -98,9 +96,7 @@ an_pcmcia_match(parent, match, aux)
 }
 
 void
-an_pcmcia_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+an_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct an_pcmcia_softc *psc = (struct an_pcmcia_softc *)self;
 	struct an_softc *sc = (struct an_softc *)self;
@@ -155,9 +151,7 @@ an_pcmcia_attach(parent, self, aux)
 }
 
 int
-an_pcmcia_detach(dev, flags)
-	struct device *dev;
-	int flags;
+an_pcmcia_detach(struct device *dev, int flags)
 {
 	struct an_pcmcia_softc *psc = (struct an_pcmcia_softc *)dev;
 	int error;
@@ -176,9 +170,7 @@ an_pcmcia_detach(dev, flags)
 }
 
 int
-an_pcmcia_activate(dev, act)
-	struct device *dev;
-	enum devact act;
+an_pcmcia_activate(struct device *dev, enum devact act)
 {
 	struct an_pcmcia_softc *psc = (struct an_pcmcia_softc *)dev;
 	struct an_softc *sc = &psc->sc_an;

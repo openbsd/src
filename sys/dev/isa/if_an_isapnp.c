@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_isapnp.c,v 1.8 2006/01/30 11:41:00 jsg Exp $	*/
+/*	$OpenBSD: if_an_isapnp.c,v 1.9 2006/03/10 00:27:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -59,17 +59,13 @@ struct cfattach an_isapnp_ca = {
 };
 
 int
-an_isapnp_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+an_isapnp_match(struct device *parent, void *match, void *aux)
 {
 	return 1;
 }
 
 void
-an_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+an_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct an_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
