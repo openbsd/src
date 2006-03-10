@@ -1,4 +1,4 @@
-/*	$OpenBSD: worklist.c,v 1.2 2006/03/10 00:48:56 joris Exp $	*/
+/*	$OpenBSD: worklist.c,v 1.3 2006/03/10 12:26:18 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -84,8 +84,8 @@ cvs_worklist_clean(struct cvs_wklhead *list, void (*cb)(struct cvs_worklist *))
 {
 	struct cvs_worklist *wkl;
 
-	while ((wkl = SLIST_FIRST(list)) != NULL)
-		cb(wkl);
+	SLIST_FOREACH(wkl, list, wkl_list)
+	    cb(wkl);
 }
 
 void
