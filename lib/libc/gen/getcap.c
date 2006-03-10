@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcap.c,v 1.23 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: getcap.c,v 1.24 2006/03/10 05:26:55 ray Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -747,8 +747,13 @@ cgetnext(char **bp, char **db_array)
 						(void)cgetclose();
 						return (-1);
 					}
+					/* Move on to next file. */
 					(void)fclose(pfp);
 					pfp = NULL;
+					++dbp;
+					/* NUL terminate nbuf. */
+					*np = '\0';
+					break;
 				} else
 					/* XXX - assumes newline */
 					line[len - 1] = '\0';
