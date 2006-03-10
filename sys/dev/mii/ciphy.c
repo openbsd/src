@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciphy.c,v 1.12 2006/03/10 08:12:20 jsg Exp $	*/
+/*	$OpenBSD: ciphy.c,v 1.13 2006/03/10 09:53:16 jsg Exp $	*/
 /*	$FreeBSD: ciphy.c,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -315,23 +315,17 @@ ciphy_status(struct mii_softc *sc)
 		mii->mii_media_active |= IFM_FDX;
 }
 
-#define PHY_SETBIT(x, y, z) \
-	PHY_WRITE(x, y, (PHY_READ(x, y) | (z)))
-#define PHY_CLRBIT(x, y, z) \
-	PHY_WRITE(x, y, (PHY_READ(x, y) & ~(z)))
-
 void
 ciphy_reset(struct mii_softc *sc)
 {
 	mii_phy_reset(sc);
 	DELAY(1000);
-
-	if (strcmp(sc->mii_dev.dv_parent->dv_cfdata->cf_driver->cd_name, "nfe") == 0) {
-		/* need to set for 2.5V RGMII for NVIDIA adapters */
-		PHY_SETBIT(sc, CIPHY_MII_ECTL1, CIPHY_INTSEL_RGMII);
-		PHY_SETBIT(sc, CIPHY_MII_ECTL1, CIPHY_IOVOL_2500MV);
-	}
 }
+
+#define PHY_SETBIT(x, y, z) \
+	PHY_WRITE(x, y, (PHY_READ(x, y) | (z)))
+#define PHY_CLRBIT(x, y, z) \
+	PHY_WRITE(x, y, (PHY_READ(x, y) & ~(z)))
 
 void
 ciphy_fixup(struct mii_softc *sc)
@@ -342,6 +336,12 @@ ciphy_fixup(struct mii_softc *sc)
 	model = MII_MODEL(PHY_READ(sc, CIPHY_MII_PHYIDR2));
 	status = PHY_READ(sc, CIPHY_MII_AUXCSR);
 	speed = status & CIPHY_AUXCSR_SPEED;
+
+	if (strcmp(sc->mii_dev.dv_parent->dv_cfdata->cf_driver->cd_name, "nfe") == 0) {
+		/* need to set for 2.5V RGMII for NVIDIA adapters */
+		PHY_SETBIT(sc, CIPHY_MII_ECTL1, CIPHY_INTSEL_RGMII);
+		PHY_SETBIT(sc, CIPHY_MII_ECTL1, CIPHY_IOVOL_2500MV);
+	}
 
 	switch (model) {
 	case MII_MODEL_CICADA_CS8201:
