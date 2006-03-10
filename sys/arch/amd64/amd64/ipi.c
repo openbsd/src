@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipi.c,v 1.2 2005/09/25 20:48:18 miod Exp $	*/
+/*	$OpenBSD: ipi.c,v 1.3 2006/03/10 21:09:22 mickey Exp $	*/
 /*	$NetBSD: ipi.c,v 1.2 2003/03/01 13:05:37 fvdl Exp $	*/
 
 /*-
@@ -126,6 +126,7 @@ x86_multicast_ipi(int cpumask, int ipimask)
 void
 x86_ipi_handler(void)
 {
+	extern struct evcount clk_count;
 	struct cpu_info *ci = curcpu();
 	u_int32_t pending;
 	int bit;
@@ -137,6 +138,7 @@ x86_ipi_handler(void)
 			pending &= ~(1<<bit);
 			ci->ci_ipi_events[bit].ev_count++;
 			(*ipifunc[bit])(ci);
+			ipi_count.ec_count++;
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.4 2005/12/13 23:33:25 mickey Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.5 2006/03/10 21:09:22 mickey Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -64,6 +64,7 @@
 #include <machine/i82489var.h>
 
 struct evcount clk_count;
+struct evcount ipi_count;
 
 void		lapic_delay(int);
 void		lapic_microtime(struct timeval *);
@@ -197,6 +198,7 @@ lapic_boot_init(lapic_base)
 	paddr_t lapic_base;
 {
 	static u_int64_t clk_irq = 0;
+	static u_int64_t ipi_irq = 0;
 
 	lapic_map(lapic_base);
 
@@ -211,6 +213,7 @@ lapic_boot_init(lapic_base)
 	idt_vec_set(LAPIC_TIMER_VECTOR, Xintr_lapic_ltimer);
 
 	evcount_attach(&clk_count, "clock", (void *)&clk_irq, &evcount_intr);
+	evcount_attach(&ipi_count, "ipi", (void *)&ipi_irq, &evcount_intr);
 }
 
 static inline u_int32_t lapic_gettick()

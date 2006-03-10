@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.5 2004/06/28 02:00:20 deraadt Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.6 2006/03/10 21:09:22 mickey Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -64,6 +64,7 @@
 #include <i386/isa/timerreg.h>	/* XXX for TIMER_FREQ */
 
 struct evcount clk_count;
+struct evcount ipi_count;
 
 void	lapic_delay(int);
 void	lapic_microtime(struct timeval *);
@@ -165,6 +166,7 @@ lapic_boot_init(lapic_base)
 	paddr_t lapic_base;
 {
 	static int clk_irq = 0;
+	static int ipi_irq = 0;
 
 	lapic_map(lapic_base);
 
@@ -175,6 +177,7 @@ lapic_boot_init(lapic_base)
 	idt_vec_set(LAPIC_TIMER_VECTOR, Xintrltimer);
 
 	evcount_attach(&clk_count, "clock", (void *)&clk_irq, &evcount_intr);
+	evcount_attach(&ipi_count, "ipi", (void *)&ipi_irq, &evcount_intr);
 }
 
 static __inline u_int32_t
