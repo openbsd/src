@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.13 2006/01/08 16:34:55 miod Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.14 2006/03/10 20:03:38 miod Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -719,16 +719,23 @@ void
 rasops_init_devcmap(ri)
 	struct rasops_info *ri;
 {
+	int i;
+#if NRASOPS15 > 0 || NRASOPS16 > 0 || NRASOPS24 > 0 || NRASOPS32 > 0
 	const u_char *p;
-	int i, c;
+#endif
+#if NRASOPS4 > 0 || NRASOPS15 > 0 || NRASOPS16 > 0 || NRASOPS24 > 0 || NRASOPS32 > 0
+	int c;
+#endif
 
 	switch (ri->ri_depth) {
+#if NRASOPS1 > 0
 	case 1:
 		ri->ri_devcmap[0] = 0;
 		for (i = 1; i < 16; i++)
 			ri->ri_devcmap[i] = 0xffffffff;
 		return;
-
+#endif
+#if NRASOPS2 > 0
 	case 2:
 		for (i = 1; i < 15; i++)
 			ri->ri_devcmap[i] = 0xaaaaaaaa;
@@ -737,20 +744,26 @@ rasops_init_devcmap(ri)
 		ri->ri_devcmap[8] = 0x55555555;
 		ri->ri_devcmap[15] = 0xffffffff;
 		return;
-
+#endif
+#if NRASOPS4 > 0
 	case 4:
 		for (i = 0; i < 16; i++) {
 			c = i | (i << 4);
 			ri->ri_devcmap[i] = c | (c<<8) | (c<<16) | (c<<24);
 		}
 		return;
-
+#endif
+#if NRASOPS8 > 0
 	case 8:
 		for (i = 0; i < 16; i++)
 			ri->ri_devcmap[i] = i | (i<<8) | (i<<16) | (i<<24);
 		return;
+#endif
+	default:
+		break;
 	}
 
+#if NRASOPS15 > 0 || NRASOPS16 > 0 || NRASOPS24 > 0 || NRASOPS32 > 0
 	p = rasops_cmap;
 
 	for (i = 0; i < 16; i++) {
@@ -788,6 +801,7 @@ rasops_init_devcmap(ri)
 		else
 			ri->ri_devcmap[i] = c;
 	}
+#endif
 }
 
 /*
