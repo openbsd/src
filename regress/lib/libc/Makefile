@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.21 2005/08/29 18:41:56 otto Exp $
+#	$OpenBSD: Makefile,v 1.22 2006/03/10 05:46:17 ray Exp $
 
-SUBDIR+= _setjmp alloca atexit db getaddrinfo getopt_long hsearch longjmp
+SUBDIR+= _setjmp alloca atexit db getaddrinfo getcap getopt_long hsearch longjmp
 SUBDIR+= locale malloc
 SUBDIR+= netdb popen regex setjmp setjmp-signal sigreturn sigsetjmp
 SUBDIR+= sprintf strerror strtonum time vis
