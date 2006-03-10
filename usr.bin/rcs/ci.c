@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.112 2006/03/08 20:19:39 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.113 2006/03/10 11:51:19 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -480,19 +480,19 @@ checkin_update(struct checkin_params *pb)
 	if (pb->date != DATE_NOW) {
 		time_t head_date = rcs_rev_getdate(pb->file, pb->frev);
 		if (pb->date <= head_date) {
-			char *head_date_str, *tdate;
-			head_date_str = xstrdup(ctime(&head_date));
-			head_date_str[strlen(head_date_str) - 1] = '\0';
-			tdate = xstrdup(ctime(&pb->date));
-			tdate[strlen(tdate) - 1] = '\0';
-			cvs_log(LP_ERR,
-			    "%s: Date %s preceeds %s in revision %s",
-			    pb->file->rf_path, tdate, head_date_str,
+			char dbuf1[256], dbuf2[256], *fmt;
+			struct tm *t, *t_head;
+
+			fmt = "%Y/%m/%d %H:%M:%S";
+
+			t = localtime(&pb->date);
+			strftime(dbuf1, sizeof(dbuf1), fmt, t);
+			t_head = localtime(&head_date);
+			strftime(dbuf2, sizeof(dbuf2), fmt, t_head);
+
+			fatal("%s: Date %s preceeds %s in revision %s.",
+			    pb->file->rf_path, dbuf1, dbuf2,
 			    rcsnum_tostr(pb->frev, numb2, sizeof(numb2)));
-			rcs_close(pb->file);
-			xfree(head_date_str);
-			xfree(tdate);
-			return (-1);
 		}
 	}
 
