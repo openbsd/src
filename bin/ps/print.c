@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.39 2006/03/10 06:32:00 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.40 2006/03/10 11:31:41 moritz Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.39 2006/03/10 06:32:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.40 2006/03/10 11:31:41 moritz Exp $";
 #endif
 #endif /* not lint */
 
@@ -674,6 +674,7 @@ printval(char *bp, VAR *v)
 		break;
 	case INT64:
 		(void)printf(ofmt, v->width, GET(int64_t));
+		break;
 	case UINT64:
 		(void)printf(ofmt, v->width, CHK_INF127(GET(u_int64_t)));
 		break;
