@@ -1,4 +1,4 @@
-/*	$OpenBSD: column.c,v 1.10 2003/09/26 22:24:09 tedu Exp $	*/
+/*	$OpenBSD: column.c,v 1.11 2006/03/10 19:14:58 otto Exp $	*/
 /*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: column.c,v 1.10 2003/09/26 22:24:09 tedu Exp $";
+static char rcsid[] = "$OpenBSD: column.c,v 1.11 2006/03/10 19:14:58 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -55,7 +55,7 @@ static char rcsid[] = "$OpenBSD: column.c,v 1.10 2003/09/26 22:24:09 tedu Exp $"
 #include <unistd.h>
 
 void  c_columnate(void);
-void *emalloc(int);
+void *emalloc(size_t);
 void  input(FILE *);
 void  maketbl(void);
 void  print(void);
@@ -230,8 +230,8 @@ maketbl(void)
 					err(1, NULL);
 				cols = cols2;
 				lens = lens2;
-				memset((char *)lens + maxcols * sizeof(int),
-				    0, DEFCOLS * sizeof(int));
+				memset(lens + maxcols, 0,
+				    DEFCOLS * sizeof(int));
 				maxcols += DEFCOLS;
 			}
 		t->list = emalloc(coloff * sizeof(char *));
@@ -257,7 +257,7 @@ maketbl(void)
 void
 input(FILE *fp)
 {
-	static int maxentry;
+	static size_t maxentry;
 	int len;
 	char *p, buf[MAXLINELEN];
 
@@ -277,19 +277,23 @@ input(FILE *fp)
 		if (maxlength < len)
 			maxlength = len;
 		if (entries == maxentry) {
-			maxentry += DEFNUM;
-			if (!(list = realloc(list,
-			    (u_int)maxentry * sizeof(char *))))
+			char **nlist;	
+			size_t nsize = maxentry + DEFNUM;
+
+			if (!(nlist = realloc(list, nsize * sizeof(char *))))
 				err(1, NULL);
+			list = nlist;
+			maxentry = nsize;
 		}
-		list[entries++] = strdup(buf);
+		if (!(list[entries++] = strdup(buf)))
+			err(1, NULL);
 	}
 }
 
 void *
-emalloc(int size)
+emalloc(size_t size)
 {
-	char *p;
+	void *p;
 
 	if (!(p = malloc(size)))
 		err(1, NULL);
