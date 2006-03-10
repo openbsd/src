@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipi.c,v 1.4 2006/03/10 21:11:08 mickey Exp $	*/
+/*	$OpenBSD: ipi.c,v 1.5 2006/03/10 21:21:08 brad Exp $	*/
 /*	$NetBSD: ipi.c,v 1.2 2003/03/01 13:05:37 fvdl Exp $	*/
 
 /*-
@@ -75,19 +75,10 @@ x86_send_ipi(struct cpu_info *ci, int ipimask)
 }
 
 void
-x86_self_ipi (int vector)
-{
-	i82489_writereg(LAPIC_ICRLO,
-	    vector | LAPIC_DLMODE_FIXED | LAPIC_LVL_ASSERT | LAPIC_DEST_SELF);
-}
-
-
-void
-x86_broadcast_ipi (int ipimask)
+x86_broadcast_ipi(int ipimask)
 {
 	struct cpu_info *ci, *self = curcpu();
 	int count = 0;
-
 	CPU_INFO_ITERATOR cii;
 
 	CPU_INFO_FOREACH(cii, ci) {
@@ -101,9 +92,7 @@ x86_broadcast_ipi (int ipimask)
 	if (!count)
 		return;
 
-	i82489_writereg(LAPIC_ICRLO,
-	    LAPIC_IPI_VECTOR | LAPIC_DLMODE_FIXED | LAPIC_LVL_ASSERT |
-	    LAPIC_DEST_ALLEXCL);
+	x86_ipi(LAPIC_IPI_VECTOR, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED);
 }
 
 void
