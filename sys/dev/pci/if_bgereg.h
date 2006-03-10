@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.42 2006/02/21 01:45:48 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.43 2006/03/10 21:39:01 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -343,7 +343,7 @@
  * register is set.
  */
 #define BGE_PCISTATE_FORCE_RESET	0x00000001
-#define BGE_PCISTATE_INTR_STATE		0x00000002
+#define BGE_PCISTATE_INTR_NOT_ACTIVE	0x00000002
 #define BGE_PCISTATE_PCI_BUSMODE	0x00000004 /* 1 = PCI, 0 = PCI-X */
 #define BGE_PCISTATE_PCI_BUSSPEED	0x00000008 /* 1 = 33/66, 0 = 66/133 */
 #define BGE_PCISTATE_32BIT_BUS		0x00000010 /* 1 = 32bit, 0 = 64bit */

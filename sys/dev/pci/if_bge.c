@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.135 2006/02/21 01:45:47 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.136 2006/03/10 21:39:01 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2420,35 +2420,42 @@ bge_intr(void *xsc)
 	sc = xsc;
 	ifp = &sc->arpcom.ac_if;
 
-	/* Make sure this is really our interrupt. */
-	if (!(sc->bge_rdata->bge_status_block.bge_status &
-	    BGE_STATFLAG_UPDATED))
+	/* It is possible for the interrupt to arrive before
+	 * the status block is updated prior to the interrupt.
+	 * Reading the PCI State register will confirm whether the
+	 * interrupt is ours and will flush the status block.
+	 */
+	if ((sc->bge_rdata->bge_status_block.bge_status &
+	    BGE_STATFLAG_UPDATED) ||
+	    (!(CSR_READ_4(sc, BGE_PCI_PCISTATE) & BGE_PCISTATE_INTR_NOT_ACTIVE))) {
+
+		/* Ack interrupt and stop others from occurring. */
+		CSR_WRITE_4(sc, BGE_MBX_IRQ0_LO, 1);
+
+		if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 &&
+		    sc->bge_chipid != BGE_CHIPID_BCM5700_B1) ||
+		    sc->bge_rdata->bge_status_block.bge_status &
+		    BGE_STATFLAG_LINKSTATE_CHANGED ||
+		    sc->bge_link_evt)
+			bge_link_upd(sc);
+
+		if (ifp->if_flags & IFF_RUNNING) {
+			/* Check RX return ring producer/consumer */
+			bge_rxeof(sc);
+
+			/* Check TX ring producer/consumer */
+			bge_txeof(sc);
+		}
+
+		/* Re-enable interrupts. */
+		CSR_WRITE_4(sc, BGE_MBX_IRQ0_LO, 0);
+
+		if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
+			bge_start(ifp);
+
+		return (1);
+	} else
 		return (0);
-
-	/* Ack interrupt and stop others from occurring. */
-	CSR_WRITE_4(sc, BGE_MBX_IRQ0_LO, 1);
-
-	if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 &&
-	    sc->bge_chipid != BGE_CHIPID_BCM5700_B1) ||
-	    sc->bge_rdata->bge_status_block.bge_status & BGE_STATFLAG_LINKSTATE_CHANGED ||
-	    sc->bge_link_evt)
-		bge_link_upd(sc);
-
-	if (ifp->if_flags & IFF_RUNNING) {
-		/* Check RX return ring producer/consumer */
-		bge_rxeof(sc);
-
-		/* Check TX ring producer/consumer */
-		bge_txeof(sc);
-	}
-
-	/* Re-enable interrupts. */
-	CSR_WRITE_4(sc, BGE_MBX_IRQ0_LO, 0);
-
-	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
-		bge_start(ifp);
-
-	return (1);
 }
 
 void
