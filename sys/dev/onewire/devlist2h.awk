@@ -1,4 +1,4 @@
-# $OpenBSD: devlist2h.awk,v 1.2 2006/03/04 16:32:40 grange Exp $
+# $OpenBSD: devlist2h.awk,v 1.3 2006/03/10 14:36:32 grange Exp $
 
 #
 # Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -32,7 +32,7 @@ NR == 1	{
 	       "/*\n * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n" \
 	       " *\n * Generated from:\n *\t%s\n */\n\n", VERSION) > dfile
 	printf("static const struct onewire_family " \
-	       "onewire_familytab[] = {\n") > dfile
+	       "onewire_famtab[] = {\n") > dfile
 }
 
 $1 == "family" {
