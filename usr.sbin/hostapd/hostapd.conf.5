@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.29 2005/12/29 04:33:58 reyk Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.30 2006/03/10 18:10:16 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -196,8 +196,10 @@ multicast forwarding, for example for use with
 Use broadcast frames.
 .El
 .Pp
-The default is multicast using the multicast address 224.0.1.178 with a TTL
-limited to 1 hop.
+The default is multicast using the multicast address 224.0.1.178 and
+port 3517 with a TTL limited to 1 hop.
+Some access point vendors still use broadcast with the pre-standard
+IAPP port 2313.
 .El
 .Sh EVENT RULES
 Event rules provide a powerful way to trigger a certain action when
