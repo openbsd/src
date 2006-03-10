@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.140 2006/03/09 10:56:33 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.141 2006/03/10 05:57:39 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -512,8 +512,7 @@ rcs_write(RCSFILE *rfp)
 	}
 
 	fputs("\ndesc\n@", fp);
-	if (rfp->rf_desc != NULL) {
-		len = strlen(rfp->rf_desc);
+	if (rfp->rf_desc != NULL && (len = strlen(rfp->rf_desc)) > 0) {
 		rcs_strprint((const u_char *)rfp->rf_desc, len, fp);
 		if (rfp->rf_desc[len-1] != '\n')
 			fputc('\n', fp);
