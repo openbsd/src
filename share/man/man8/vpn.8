@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.107 2005/12/23 18:19:30 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.108 2006/03/10 04:29:49 david Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -347,7 +347,6 @@ Connections=		VPN-A-B
 
 [peer-machineB]
 Phase=			1
-Transport=		udp
 Address=		192.168.1.15
 Configuration=		Default-main-mode
 Authentication=		yoursharedsecret
@@ -377,12 +376,10 @@ Netmask=		255.255.255.0
 # (as used by peers and connections).
 
 [Default-main-mode]
-DOI=			IPSEC
 EXCHANGE_TYPE=		ID_PROT
 Transforms=		3DES-SHA,BLF-SHA
 
 [Default-quick-mode]
-DOI=			IPSEC
 EXCHANGE_TYPE=		QUICK_MODE
 Suites=			QM-ESP-3DES-SHA-SUITE
 .Ed
@@ -418,7 +415,6 @@ Connections=		VPN-B-A
 
 [peer-machineA]
 Phase=			1
-Transport=		udp
 Address=		192.168.1.13
 Configuration=		Default-main-mode
 Authentication=		yoursharedsecret
@@ -448,12 +444,10 @@ Netmask=		255.255.255.0
 # (as used by peers and connections).
 
 [Default-main-mode]
-DOI=			IPSEC
 EXCHANGE_TYPE=		ID_PROT
 Transforms=		3DES-SHA,BLF-SHA
 
 [Default-quick-mode]
-DOI=			IPSEC
 EXCHANGE_TYPE=		QUICK_MODE
 Suites=			QM-ESP-3DES-SHA-SUITE
 .Ed
