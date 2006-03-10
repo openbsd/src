@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.25 2005/11/22 11:36:12 reyk Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.26 2006/03/10 18:17:41 reyk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.25 2005/11/22 11:36:12 reyk Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.26 2006/03/10 18:17:41 reyk Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -607,7 +607,7 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
                         radius_print((const u_char *)(up + 1), length);
 		else if (dport == 3456)
 			vat_print((const void *)(up + 1), length, up);
-		else if (ISPORT(IAPP_PORT))
+		else if (ISPORT(IAPP_PORT) || ISPORT(IAPP_OLD_PORT))
 			iapp_print((const u_char *)(up + 1), length);
 #ifdef INET6
 		else if (ISPORT(RIPNG_PORT))
