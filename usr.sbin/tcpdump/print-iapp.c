@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-iapp.c,v 1.2 2005/12/18 17:52:46 reyk Exp $	*/
+/*	$OpenBSD: print-iapp.c,v 1.3 2006/03/10 18:13:11 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -56,7 +56,7 @@ iapp_print(const u_char *p, u_int len)
 	/* Print common IAPP information */
 	printf(" IAPPv%u ", wf->i_version);
 	if (wf->i_command & 0xf0)
-		printf("unknown: 0x%0x", wf->i_command);
+		printf("unknown: 0x%0x ", wf->i_command);
 	else
 		printf("%s ", ieee80211_iapp_frame_type_name[wf->i_command]);
 	printf("(id %u) %u: ", wf->i_identifier, wf->i_length);
