@@ -1,4 +1,4 @@
-/*	$OpenBSD: worklist.c,v 1.1 2006/03/08 20:18:41 joris Exp $	*/
+/*	$OpenBSD: worklist.c,v 1.2 2006/03/10 00:48:56 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -61,28 +61,31 @@ void
 cvs_worklist_run(struct cvs_wklhead *list, void (*cb)(struct cvs_worklist *))
 {
 	sigset_t old, new;
+	struct cvs_worklist *wkl;
 
 	sigfillset(&new);
 	sigprocmask(SIG_BLOCK, &new, &old);
 
 	cvs_worklist_clean(list, cb);
 
+	while ((wkl = SLIST_FIRST(list)) != NULL) {
+		SLIST_REMOVE_HEAD(list, wkl_list);
+		xfree(wkl);
+	}
+
 	sigprocmask(SIG_SETMASK, &old, NULL);
 }
 
 /*
- * clean the worklist by passing the elements to the specified callback
+ * pass elements to the specified callback, which has to be signal safe.
  */
 void
 cvs_worklist_clean(struct cvs_wklhead *list, void (*cb)(struct cvs_worklist *))
 {
 	struct cvs_worklist *wkl;
 
-	while ((wkl = SLIST_FIRST(list)) != NULL) {
-		SLIST_REMOVE_HEAD(list, wkl_list);
+	while ((wkl = SLIST_FIRST(list)) != NULL)
 		cb(wkl);
-		xfree(wkl);
-	}
 }
 
 void
