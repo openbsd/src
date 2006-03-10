@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.37 2006/03/09 23:06:20 miod Exp $ */
+/*	$OpenBSD: mcd.c,v 1.38 2006/03/10 18:13:10 miod Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -909,7 +909,6 @@ mcdprobe(parent, match, aux)
 		/* printf("mcdprobe: could not setup OPTi chipset.\n") */;
 
 	bzero(&sc, sizeof sc);
-	strlcpy(sc.sc_dev.dv_xname, "mcd", sizeof(sc.sc_dev.dv_xname));
 	sc.debug = 0;
 	sc.probe = 1;
 
@@ -973,7 +972,7 @@ mcd_getresult(sc, res)
 	if ((x = mcd_getreply(sc)) < 0) {
 		if (sc->debug)
 			printf(" timeout\n");
-		else if (sc->probe)
+		else if (sc->probe == 0)
 			printf("%s: timeout in getresult\n", sc->sc_dev.dv_xname);
 		return EIO;
 	}
