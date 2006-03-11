@@ -1,5 +1,9 @@
-/*	$OpenBSD: aapic.c,v 1.1 2005/05/24 00:51:27 brad Exp $	*/
+/*	$OpenBSD: aapic.c,v 1.2 2006/03/11 02:37:54 brad Exp $	*/
 /* 	$NetBSD: aapic.c,v 1.3 2005/01/13 23:40:01 fvdl Exp $	*/
+
+/*
+ * The AMD 8131 IO APIC can hang the box when an APIC IRQ is masked.
+ */
 
 #if 0
 #include <sys/cdefs.h>
