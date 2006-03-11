@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.114 2006/03/11 18:38:54 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.115 2006/03/11 22:44:11 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -50,6 +50,8 @@
 #define KW_NUMTOKS_DATE		4
 #define KW_NUMTOKS_STATE	3
 #define KW_NUMTOKS_REVISION	3
+
+#define RCSNUM_ZERO_ENDING(x) (x->rn_id[x->rn_len - 1] == 0)
 
 extern struct rcs_kw rcs_expkw[];
 
@@ -453,6 +455,10 @@ checkin_update(struct checkin_params *pb)
 	 */
 	pb->frev = pb->file->rf_head;
 
+	/* If this is a zero-ending RCSNUM eg 4.0, increment it (eg to 4.1) */
+	if ((pb->newrev != NULL) && (RCSNUM_ZERO_ENDING(pb->newrev)))
+		pb->newrev = rcsnum_inc(pb->newrev);
+
 	if (checkin_checklock(pb) < 0)
 		return (-1);
 
@@ -606,7 +612,16 @@ checkin_init(struct checkin_params *pb)
 {
 	BUF *bp, *dp;
 	char *filec, numb[64];
+	int fetchlog = 0;
 	const char *rcs_desc;
+
+	/* If this is a zero-ending RCSNUM eg 4.0, increment it (eg to 4.1) */
+	if ((pb->newrev != NULL) && (RCSNUM_ZERO_ENDING(pb->newrev))) {
+		pb->frev = rcsnum_alloc();
+		rcsnum_cpy(pb->newrev, pb->frev, 0);
+		pb->newrev = rcsnum_inc(pb->newrev);
+		fetchlog = 1;
+	}
 
 	/* Load file contents */
 	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
@@ -653,6 +668,14 @@ checkin_init(struct checkin_params *pb)
 	}
 	rcs_desc_set(pb->file, rcs_desc);
 
+	/*
+	 * If the user had specified a zero-ending revision number e.g. 4
+	 * emulate odd GNU behaviour and fetch log message.
+	 */
+	if (fetchlog == 1) {
+		pb->rcs_msg = checkin_getlogmsg(pb->frev, pb->newrev);
+		rcsnum_free(pb->frev);
+	}
 	/*
 	 * Set the date of the revision to be the last modification
 	 * time of the working file if -d has no argument.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.142 2006/03/11 18:40:14 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.143 2006/03/11 22:44:11 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1264,9 +1264,7 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 	time_t now;
 	struct passwd *pw;
 	struct rcs_delta *ordp, *rdp;
-	RCSNUM *old;
 
-	old = rcsnum_alloc();
 	if (rev == RCS_HEAD_REV) {
 		if (rf->rf_flags & RCS_CREATE) {
 			if ((rev = rcsnum_parse(RCS_HEAD_INIT)) == NULL)
@@ -1274,23 +1272,12 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 			rf->rf_head = rcsnum_alloc();
 			rcsnum_cpy(rev, rf->rf_head, 0);
 		} else {
-			rcsnum_cpy(rf->rf_head, old, 0);
 			rev = rcsnum_inc(rf->rf_head);
 		}
 	} else {
 		if ((rdp = rcs_findrev(rf, rev)) != NULL) {
 			rcs_errno = RCS_ERR_DUPENT;
-			rcsnum_free(old);
 			return (-1);
-		}
-
-		if (!(rf->rf_flags & RCS_CREATE)) {
-			ordp = NULL;
-			rcsnum_cpy(rev, old, 0);
-			while (ordp == NULL) {
-				old = rcsnum_dec(old);
-				ordp = rcs_findrev(rf, old);
-			}
 		}
 	}
 
@@ -1308,10 +1295,12 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 
 	rdp->rd_next = rcsnum_alloc();
 
-	if (!(rf->rf_flags & RCS_CREATE))
-		rcsnum_cpy(old, rdp->rd_next, 0);
+	if (!(rf->rf_flags & RCS_CREATE)) {
+		/* next should point to the previous HEAD */
+		ordp = TAILQ_FIRST(&(rf->rf_delta));
+		rcsnum_cpy(ordp->rd_num, rdp->rd_next, 0);
+	}
 
-	rcsnum_free(old);
 
 	if (username == NULL)
 		username = pw->pw_name;
@@ -2970,8 +2959,9 @@ cvs_checkout_rev(RCSFILE *rf, RCSNUM *rev, CVSFILE *cf, char *fpath,
 		oldrev = rcsnum_alloc();
 		rcsnum_cpy(rev, oldrev, 0);
 
-		if (rcsnum_dec(oldrev) == NULL)
+		if (oldrev->rn_id[oldrev->rn_len - 1] <= 0)
 			goto out;
+		oldrev = rcsnum_dec(oldrev);
 
 		l = snprintf(copyfile, sizeof(copyfile), ".#%s.%s",
 		    cf->cf_name, rcsnum_tostr(oldrev, buf, sizeof(buf)));

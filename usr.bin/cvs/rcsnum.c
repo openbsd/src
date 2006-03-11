@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.25 2006/03/11 06:28:49 ray Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.26 2006/03/11 22:44:11 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -124,6 +124,9 @@ rcsnum_itoa(u_int16_t num, char *buf, size_t len)
 	u_int16_t i;
 	char *p;
 
+	if (num == 0)
+		return "0";
+		
 	p = buf + len - 1;
 	i = num;
 	bzero(buf, len);
@@ -295,6 +298,14 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 		}
 	}
 
+	/* We can't have a single-digit rcs number. */
+	if (nump->rn_len == 0) {
+		tmp = xrealloc(nump->rn_id,
+		    (nump->rn_len + 1) * sizeof(u_int16_t));
+		nump->rn_id = (u_int16_t *)tmp;
+		nump->rn_id[nump->rn_len + 1] = 0;
+		nump->rn_len++;
+	}
 	nump->rn_len++;
 	return (nump->rn_len);
 
@@ -323,14 +334,15 @@ rcsnum_inc(RCSNUM *num)
 /*
  * rcsnum_dec()
  *
- * Decreases the revision number specified in <num>
- * Returns pointer to the <num> on success, or NULL on failure.
+ * Decreases the revision number specified in <num>, if doing so will not
+ * result in an ending value below 1. E.g. 4.2 will go to 4.1 but 4.1 will
+ * be returned as 4.1.
  */
 RCSNUM *
 rcsnum_dec(RCSNUM *num)
 {
 	if (num->rn_id[num->rn_len - 1] <= 0)
-		return (NULL);
+		return (num);
 	num->rn_id[num->rn_len - 1]--;
 	return (num);
 }
