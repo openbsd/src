@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1037 2006/03/11 01:47:00 marco Exp 
+ *	OpenBSD: pcidevs,v 1.1038 2006/03/11 02:08:58 marco Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1245,18 +1245,18 @@
 #define	PCI_PRODUCT_DELL_PERC_3DI	0x0002		/* PERC 3/Di */
 #define	PCI_PRODUCT_DELL_PERC_3SI	0x0003		/* PERC 3/Si */
 #define	PCI_PRODUCT_DELL_PERC_3SI_2	0x0004		/* PERC 3/Si */
-#define	PCI_PRODUCT_DELL_RAC_3_ADDIN	0x0007		/* RAC 3 Add-in */
+#define	PCI_PRODUCT_DELL_DRAC_3_ADDIN	0x0007		/* DRAC 3 Add-in */
 #define	PCI_PRODUCT_DELL_PERC_3DI_2	0x0008		/* PERC 3/Di */
-#define	PCI_PRODUCT_DELL_RAC_3_EMBD	0x0009		/* RAC 3 Embedded/Optional */
+#define	PCI_PRODUCT_DELL_DRAC_3_EMBD	0x0009		/* DRAC 3 Embedded/Optional */
 #define	PCI_PRODUCT_DELL_PERC_3DI_3	0x000a		/* PERC 3/Di */
-#define	PCI_PRODUCT_DELL_RAC_4_EMBD	0x000c		/* RAC 4 Embedded/Optional */
-#define	PCI_PRODUCT_DELL_RAC_3_OPT	0x000d		/* RAC 3 Optional */
+#define	PCI_PRODUCT_DELL_DRAC_4_EMBD	0x000c		/* DRAC 4 Embedded/Optional */
+#define	PCI_PRODUCT_DELL_DRAC_3_OPT	0x000d		/* DRAC 3 Optional */
 #define	PCI_PRODUCT_DELL_PERC_4DI	0x000e		/* PERC 4/Di i960 */
 #define	PCI_PRODUCT_DELL_PERC_4DI_2	0x000f		/* PERC 4/Di Verde */
-#define	PCI_PRODUCT_DELL_RAC_4	0x0011		/* RAC 4 */
-#define	PCI_PRODUCT_DELL_RAC_4_VUART	0x0012		/* RAC 4 Virtual UART */
+#define	PCI_PRODUCT_DELL_DRAC_4	0x0011		/* DRAC 4 */
+#define	PCI_PRODUCT_DELL_DRAC_4_VUART	0x0012		/* DRAC 4 Virtual UART */
 #define	PCI_PRODUCT_DELL_PERC_4EDI	0x0013		/* PERC 4e/Di */
-#define	PCI_PRODUCT_DELL_RAC_4_SMIC	0x0014		/* RAC 4 SMIC */
+#define	PCI_PRODUCT_DELL_DRAC_4_SMIC	0x0014		/* DRAC 4 SMIC */
 #define	PCI_PRODUCT_DELL_PERC_3DI_2_SUB	0x00cf		/* PERC 3/Di */
 #define	PCI_PRODUCT_DELL_PERC_3SI_2_SUB	0x00d0		/* PERC 3/Si */
 #define	PCI_PRODUCT_DELL_PERC_3DI_SUB2	0x00d1		/* PERC 3/Di */
