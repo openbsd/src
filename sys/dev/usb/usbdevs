@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.185 2006/03/05 06:41:36 jsg Exp $
+$OpenBSD: usbdevs,v 1.186 2006/03/11 04:05:44 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -283,6 +283,7 @@ vendor ALLIEDTELESYN	0x07c9	Allied Telesyn International
 vendor AVERMEDIA	0x07ca	AVerMedia Technologies
 vendor SIIG		0x07cc	SIIG
 vendor CASIO		0x07cf	CASIO
+vendor DLINK2		0x07d1	D-Link
 vendor APTIO		0x07d2	Aptio Products
 vendor ARASAN		0x07da	Arasan Chip Systems
 vendor ALLIEDCABLE	0x07e6	Allied Cable
@@ -847,6 +848,7 @@ product DLINK DWL120E		0x3200	DWL-120 rev E
 product DLINK DWL122		0x3700	DWL-122
 product DLINK DWL120F		0x3702	DWL-120 rev F
 product DLINK RT2570		0x3c00	RT2570
+product DLINK2 DWLG122C1	0x3c03	DWL-G122 rev C1
 product DLINK DSB650C		0x4000	10Mbps ethernet
 product DLINK DSB650TX1		0x4001	10/100 ethernet
 product DLINK DSB650TX		0x4002	10/100 ethernet
