@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.34 2006/03/04 22:40:15 brad Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.35 2006/03/11 03:58:37 brad Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -548,9 +548,12 @@ gif_ioctl(ifp, cmd, data)
 		/* if_ioctl() takes care of it */
 		break;
 
-        case SIOCSIFMTU:
-                ifp->if_mtu = ((struct ifreq *)data)->ifr_mtu;
-                break;
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu < GIF_MTU_MIN || ifr->ifr_mtu > GIF_MTU_MAX)
+			error = EINVAL;
+		else
+			ifp->if_mtu = ifr->ifr_mtu;
+		break;
 
 	default:
 		error = EINVAL;
