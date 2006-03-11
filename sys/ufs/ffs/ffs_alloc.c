@@ -1,7 +1,16 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.60 2006/03/05 10:35:51 pedro Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.61 2006/03/11 21:00:48 pedro Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
+ * Copyright (c) 2002 Networks Associates Technology, Inc.
+ * All rights reserved.
+ *
+ * This software was developed for the FreeBSD Project by Marshall
+ * Kirk McKusick and Network Associates Laboratories, the Security
+ * Research Division of Network Associates, Inc. under DARPA/SPAWAR
+ * contract N66001-01-C-8035 ("CBOSS"), as part of the DARPA CHATS
+ * research program.
+ *
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -69,6 +78,11 @@ static u_long	ffs_hashalloc(struct inode *, int, long, int,
 		    daddr_t (*)(struct inode *, int, daddr_t, int));
 static daddr_t	ffs_nodealloccg(struct inode *, int, daddr_t, int);
 static daddr_t	ffs_mapsearch(struct fs *, struct cg *, daddr_t, int);
+
+int ffs1_reallocblks(void *);
+#ifdef FFS2
+int ffs2_reallocblks(void *);
+#endif
 
 #ifdef DIAGNOSTIC
 static int      ffs_checkblk(struct inode *, daddr_t, long);
@@ -338,7 +352,7 @@ int doreallocblks = 1;
 int prtrealloc = 0;
 
 int
-ffs_reallocblks(void *v)
+ffs1_reallocblks(void *v)
 {
 	struct vop_reallocblks_args /* {
 		struct vnode *a_vp;
@@ -371,17 +385,17 @@ ffs_reallocblks(void *v)
 	for (i = 0; i < len; i++)
 		if (!ffs_checkblk(ip,
 		   dbtofsb(fs, buflist->bs_children[i]->b_blkno), fs->fs_bsize))
-			panic("ffs_reallocblks: unallocated block 1");
+			panic("ffs1_reallocblks: unallocated block 1");
 		
 	for (i = 1; i < len; i++)
 		if (buflist->bs_children[i]->b_lblkno != start_lbn + i)
-			panic("ffs_reallocblks: non-logical cluster");
+			panic("ffs1_reallocblks: non-logical cluster");
 
 	blkno = buflist->bs_children[0]->b_blkno;
 	ssize = fsbtodb(fs, fs->fs_frag);
 	for (i = 1; i < len - 1; i++)
 		if (buflist->bs_children[i]->b_blkno != blkno + (i * ssize))
-			panic("ffs_reallocblks: non-physical cluster %d", i);
+			panic("ffs1_reallocblks: non-physical cluster %d", i);
 #endif
 	/*
 	 * If the latest allocation is in a new cylinder group, assume that
@@ -412,7 +426,7 @@ ffs_reallocblks(void *v)
 	/*
 	 * Find the preferred location for the cluster.
 	 */
-	pref = ffs_blkpref(ip, start_lbn, soff, sbap);
+	pref = ffs1_blkpref(ip, start_lbn, soff, sbap);
 	/*
 	 * If the block range spans two block maps, get the second map.
 	 */
@@ -422,7 +436,7 @@ ffs_reallocblks(void *v)
 #ifdef DIAGNOSTIC
 		if (start_lvl > 1 &&
 		    start_ap[start_lvl-1].in_lbn == idp->in_lbn)
-			panic("ffs_reallocblk: start == end");
+			panic("ffs1_reallocblk: start == end");
 #endif
 		ssize = len - (idp->in_off + 1);
 		if (bread(vp, idp->in_lbn, (int)fs->fs_bsize, NOCRED, &ebp))
@@ -456,9 +470,9 @@ ffs_reallocblks(void *v)
 #ifdef DIAGNOSTIC
 		if (!ffs_checkblk(ip,
 		   dbtofsb(fs, buflist->bs_children[i]->b_blkno), fs->fs_bsize))
-			panic("ffs_reallocblks: unallocated block 2");
+			panic("ffs1_reallocblks: unallocated block 2");
 		if (dbtofsb(fs, buflist->bs_children[i]->b_blkno) != *bap)
-			panic("ffs_reallocblks: alloc mismatch");
+			panic("ffs1_reallocblks: alloc mismatch");
 #endif
 #ifdef DEBUG
 		if (prtrealloc)
@@ -524,7 +538,7 @@ ffs_reallocblks(void *v)
 #ifdef DIAGNOSTIC
 		if (!ffs_checkblk(ip,
 		   dbtofsb(fs, buflist->bs_children[i]->b_blkno), fs->fs_bsize))
-			panic("ffs_reallocblks: unallocated block 3");
+			panic("ffs1_reallocblks: unallocated block 3");
 		if (prtrealloc)
 			printf(" %d,", blkno);
 #endif
@@ -543,6 +557,247 @@ fail:
 	if (sbap != &ip->i_ffs1_db[0])
 		brelse(sbp);
 	return (ENOSPC);
+}
+
+#ifdef FFS2
+int
+ffs2_reallocblks(void *v)
+{
+	struct vop_reallocblks_args /* {
+		struct vnode *a_vp;
+		struct cluster_save *a_buflist;
+	} */ *ap = v;
+	struct fs *fs;
+	struct inode *ip;
+	struct vnode *vp;
+	struct buf *sbp, *ebp;
+	ufs2_daddr_t *bap, *sbap, *ebap = 0;
+	struct cluster_save *buflist;
+	struct ufsmount *ump;
+	ufs_lbn_t start_lbn, end_lbn;
+	ufs2_daddr_t soff, newblk, blkno, pref;
+	struct indir start_ap[NIADDR + 1], end_ap[NIADDR + 1], *idp;
+	int i, len, start_lvl, end_lvl, ssize;
+
+	vp = ap->a_vp;
+	ip = VTOI(vp);
+	fs = ip->i_fs;
+	ump = ip->i_ump;
+
+	if (fs->fs_contigsumsize <= 0)
+		return (ENOSPC);
+
+	buflist = ap->a_buflist;
+	len = buflist->bs_nchildren;
+	start_lbn = buflist->bs_children[0]->b_lblkno;
+	end_lbn = start_lbn + len - 1;
+
+#ifdef DIAGNOSTIC
+	for (i = 0; i < len; i++)
+		if (!ffs_checkblk(ip,
+		   dbtofsb(fs, buflist->bs_children[i]->b_blkno), fs->fs_bsize))
+			panic("ffs2_reallocblks: unallocated block 1");
+
+	for (i = 1; i < len; i++)
+		if (buflist->bs_children[i]->b_lblkno != start_lbn + i)
+			panic("ffs2_reallocblks: non-logical cluster");
+
+	blkno = buflist->bs_children[0]->b_blkno;
+	ssize = fsbtodb(fs, fs->fs_frag);
+
+	for (i = 1; i < len - 1; i++)
+		if (buflist->bs_children[i]->b_blkno != blkno + (i * ssize))
+			panic("ffs2_reallocblks: non-physical cluster %d", i);
+#endif
+
+	/*
+	 * If the latest allocation is in a new cylinder group, assume that
+	 * the filesystem has decided to move and do not force it back to
+	 * the previous cylinder group.
+	 */
+	if (dtog(fs, dbtofsb(fs, buflist->bs_children[0]->b_blkno)) !=
+	    dtog(fs, dbtofsb(fs, buflist->bs_children[len - 1]->b_blkno)))
+		return (ENOSPC);
+	if (ufs_getlbns(vp, start_lbn, start_ap, &start_lvl) ||
+	    ufs_getlbns(vp, end_lbn, end_ap, &end_lvl))
+		return (ENOSPC);
+
+	/*
+	 * Get the starting offset and block map for the first block.
+	 */
+	if (start_lvl == 0) {
+		sbap = &ip->i_din2->di_db[0];
+		soff = start_lbn;
+	} else {
+		idp = &start_ap[start_lvl - 1];
+		if (bread(vp, idp->in_lbn, (int)fs->fs_bsize, NOCRED, &sbp)) {
+			brelse(sbp);
+			return (ENOSPC);
+		}
+		sbap = (ufs2_daddr_t *)sbp->b_data;
+		soff = idp->in_off;
+	}
+
+	/*
+	 * If the block range spans two block maps, get the second map.
+	 */
+	if (end_lvl == 0 || (idp = &end_ap[end_lvl - 1])->in_off + 1 >= len) {
+		ssize = len;
+	} else {
+#ifdef DIAGNOSTIC
+		if (start_ap[start_lvl-1].in_lbn == idp->in_lbn)
+			panic("ffs2_reallocblk: start == end");
+#endif
+		ssize = len - (idp->in_off + 1);
+		if (bread(vp, idp->in_lbn, (int)fs->fs_bsize, NOCRED, &ebp))
+			goto fail;
+		ebap = (ufs2_daddr_t *)ebp->b_data;
+	}
+
+	/*
+	 * Find the preferred location for the cluster.
+	 */
+	pref = ffs2_blkpref(ip, start_lbn, soff, sbap);
+
+	/*
+	 * Search the block map looking for an allocation of the desired size.
+	 */
+	if ((newblk = ffs_hashalloc(ip, dtog(fs, pref), pref,
+	    len, ffs_clusteralloc)) == 0)
+		goto fail;
+
+	/*
+	 * We have found a new contiguous block.
+	 *
+	 * First we have to replace the old block pointers with the new
+	 * block pointers in the inode and indirect blocks associated
+	 * with the file.
+	 */
+#ifdef DEBUG
+	if (prtrealloc)
+		printf("realloc: ino %d, lbns %jd-%jd\n\told:", ip->i_number,
+		    (intmax_t)start_lbn, (intmax_t)end_lbn);
+#endif
+
+	blkno = newblk;
+
+	for (bap = &sbap[soff], i = 0; i < len; i++, blkno += fs->fs_frag) {
+		if (i == ssize) {
+			bap = ebap;
+			soff = -i;
+		}
+#ifdef DIAGNOSTIC
+		if (!ffs_checkblk(ip,
+		   dbtofsb(fs, buflist->bs_children[i]->b_blkno), fs->fs_bsize))
+			panic("ffs2_reallocblks: unallocated block 2");
+		if (dbtofsb(fs, buflist->bs_children[i]->b_blkno) != *bap)
+			panic("ffs2_reallocblks: alloc mismatch");
+#endif
+#ifdef DEBUG
+		if (prtrealloc)
+			printf(" %jd,", (intmax_t)*bap);
+#endif
+		if (DOINGSOFTDEP(vp)) {
+			if (sbap == &ip->i_din2->di_db[0] && i < ssize)
+				softdep_setup_allocdirect(ip, start_lbn + i,
+				    blkno, *bap, fs->fs_bsize, fs->fs_bsize,
+				    buflist->bs_children[i]);
+			else
+				softdep_setup_allocindir_page(ip, start_lbn + i,
+				    i < ssize ? sbp : ebp, soff + i, blkno,
+				    *bap, buflist->bs_children[i]);
+		}
+		*bap++ = blkno;
+	}
+
+	/*
+	 * Next we must write out the modified inode and indirect blocks.
+	 * For strict correctness, the writes should be synchronous since
+	 * the old block values may have been written to disk. In practise
+	 * they are almost never written, but if we are concerned about
+	 * strict correctness, the `doasyncfree' flag should be set to zero.
+	 *
+	 * The test on `doasyncfree' should be changed to test a flag
+	 * that shows whether the associated buffers and inodes have
+	 * been written. The flag should be set when the cluster is
+	 * started and cleared whenever the buffer or inode is flushed.
+	 * We can then check below to see if it is set, and do the
+	 * synchronous write only when it has been cleared.
+	 */
+	if (sbap != &ip->i_din2->di_db[0]) {
+		if (doasyncfree)
+			bdwrite(sbp);
+		else
+			bwrite(sbp);
+	} else {
+		ip->i_flag |= IN_CHANGE | IN_UPDATE;
+		if (!doasyncfree)
+			ffs_update(ip, NULL, NULL, MNT_WAIT);
+	}
+
+	if (ssize < len) {
+		if (doasyncfree)
+			bdwrite(ebp);
+		else
+			bwrite(ebp);
+	}
+
+	/*
+	 * Last, free the old blocks and assign the new blocks to the buffers.
+	 */
+#ifdef DEBUG
+	if (prtrealloc)
+		printf("\n\tnew:");
+#endif
+	for (blkno = newblk, i = 0; i < len; i++, blkno += fs->fs_frag) {
+		if (!DOINGSOFTDEP(vp))
+			ffs_blkfree(ip, dbtofsb(fs,
+			    buflist->bs_children[i]->b_blkno), fs->fs_bsize);
+		buflist->bs_children[i]->b_blkno = fsbtodb(fs, blkno);
+#ifdef DIAGNOSTIC
+		if (!ffs_checkblk(ip,
+		   dbtofsb(fs, buflist->bs_children[i]->b_blkno), fs->fs_bsize))
+			panic("ffs2_reallocblks: unallocated block 3");
+#endif
+#ifdef DEBUG
+		if (prtrealloc)
+			printf(" %jd,", (intmax_t)blkno);
+#endif
+	}
+#ifdef DEBUG
+	if (prtrealloc) {
+		prtrealloc--;
+		printf("\n");
+	}
+#endif
+
+	return (0);
+
+fail:
+	if (ssize < len)
+		brelse(ebp);
+
+	if (sbap != &ip->i_din2->di_db[0])
+		brelse(sbp);
+
+	return (ENOSPC);
+}
+#endif /* FFS2 */
+
+int
+ffs_reallocblks(void *v)
+{
+	if (!doreallocblks)
+		return (ENOSPC);
+
+#ifdef FFS2
+	struct vop_reallocblks_args *ap = v;
+
+	if (VTOI(ap->a_vp)->i_ump->um_fstype == UM_UFS2)
+		return (ffs2_reallocblks(v));
+#endif
+
+	return (ffs1_reallocblks(v));
 }
 
 /*
@@ -784,13 +1039,13 @@ end:
  * fs_rotdelay milliseconds.  This is to allow time for the processor to
  * schedule another I/O transfer.
  */
-daddr_t
-ffs_blkpref(struct inode *ip, daddr_t lbn, int indx, daddr_t *bap)
+ufs1_daddr_t
+ffs1_blkpref(struct inode *ip, daddr_t lbn, int indx, ufs1_daddr_t *bap)
 {
 	struct fs *fs;
 	int cg;
 	int avgbfree, startcg;
-	daddr_t nextblk;
+	ufs1_daddr_t nextblk;
 
 	fs = ip->i_fs;
 	if (indx % fs->fs_maxbpg == 0 || bap[indx - 1] == 0) {
@@ -842,6 +1097,55 @@ ffs_blkpref(struct inode *ip, daddr_t lbn, int indx, daddr_t *bap)
 		    (NSPF(fs) * 1000), fs->fs_frag);
 	return (nextblk);
 }
+
+/*
+ * Same as above, for UFS2.
+ */
+#ifdef FFS2
+ufs2_daddr_t
+ffs2_blkpref(struct inode *ip, daddr_t lbn, int indx, ufs2_daddr_t *bap)
+{
+	struct fs *fs;
+	int cg, avgbfree, startcg;
+
+	fs = ip->i_fs;
+
+	if (indx % fs->fs_maxbpg == 0 || bap[indx - 1] == 0) {
+		if (lbn < NDADDR + NINDIR(fs)) {
+			cg = ino_to_cg(fs, ip->i_number);
+			return (fs->fs_fpg * cg + fs->fs_frag);
+		}
+
+		/*
+		 * Find a cylinder with greater than average number of
+		 * unused data blocks.
+		 */
+		if (indx == 0 || bap[indx - 1] == 0)
+			startcg = ino_to_cg(fs, ip->i_number) +
+			    lbn / fs->fs_maxbpg;
+		else
+			startcg = dtog(fs, bap[indx - 1] + 1);
+
+		startcg %= fs->fs_ncg;
+		avgbfree = fs->fs_cstotal.cs_nbfree / fs->fs_ncg;
+
+		for (cg = startcg; cg < fs->fs_ncg; cg++)
+			if (fs->fs_cs(fs, cg).cs_nbfree >= avgbfree)
+				return (fs->fs_fpg * cg + fs->fs_frag);
+
+		for (cg = 0; cg < startcg; cg++)
+			if (fs->fs_cs(fs, cg).cs_nbfree >= avgbfree)
+				return (fs->fs_fpg * cg + fs->fs_frag);
+
+		return (0);
+	}
+
+	/*
+	 * We always just try to lay things out contiguously.
+	 */
+	return (bap[indx - 1] + fs->fs_frag);
+}
+#endif /* FFS2 */
 
 /*
  * Implement the cylinder overflow algorithm.
