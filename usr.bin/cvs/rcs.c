@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.141 2006/03/10 05:57:39 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.142 2006/03/11 18:40:14 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -305,7 +305,7 @@ rcs_open(const char *path, int flags, ...)
 	memset(rfp, 0, sizeof(*rfp));
 
 	rfp->rf_path = xstrdup(path);
-	rfp->rf_flags = flags | RCS_SLOCK;
+	rfp->rf_flags = flags | RCS_SLOCK | RCS_SYNCED;
 	rfp->rf_mode = fmode;
 
 	TAILQ_INIT(&(rfp->rf_delta));
