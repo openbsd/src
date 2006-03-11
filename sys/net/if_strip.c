@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_strip.c,v 1.30 2004/06/24 19:35:25 tholo Exp $	*/
+/*	$OpenBSD: if_strip.c,v 1.31 2006/03/11 22:44:47 brad Exp $	*/
 /*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
@@ -85,9 +85,6 @@
  * pinging you can use up all your bandwidth).  Made low clist behavior
  * more robust and slightly less likely to hang serial line.
  * Sped up a bunch of things.
- * 
- * Note that splimp() is used throughout to block both (tty) input
- * interrupts and network activity; thus, splimp must be >= spltty.
  */
 
 #include "strip.h"
@@ -507,7 +504,7 @@ stripclose(tp)
 
 	ttywflush(tp);
 
-	s = splimp();		/* actually, max(spltty, splsoftnet) */
+	s = spltty();
 	tp->t_line = 0;
 	sc = (struct st_softc *)tp->t_sc;
 	if (sc != NULL) {
@@ -831,8 +828,7 @@ stripoutput(ifp, m, dst, rt)
  	bcopy((caddr_t)dldst, (caddr_t)shp->starmode_addr,
 		sizeof (shp->starmode_addr));
 
-
-	s = splimp();
+	s = spltty();
 	if (sc->sc_oqlen && sc->sc_ttyp->t_outq.c_cc == sc->sc_oqlen) {
 		struct timeval tv, tm;
 
@@ -845,6 +841,8 @@ stripoutput(ifp, m, dst, rt)
 			stripstart(sc->sc_ttyp);
 		}
 	}
+
+	(void) splnet();
 	if (ifq != NULL) {
 		if (IF_QFULL(ifq)) {
 			IF_DROP(ifq);
@@ -861,6 +859,8 @@ stripoutput(ifp, m, dst, rt)
 		sc->sc_if.if_oerrors++;
 		return (error);
 	}
+
+	(void) spltty();
 	getmicrotime(&sc->sc_lastpacket);
 	if ((sc->sc_oqlen = sc->sc_ttyp->t_outq.c_cc) == 0) {
 		stripstart(sc->sc_ttyp);
@@ -945,7 +945,7 @@ stripstart(tp)
 		/*
 		 * Get a packet and send it to the interface.
 		 */
-		s = splimp();
+		s = splnet();
 		IF_DEQUEUE(&sc->sc_fastq, m);
 		if (m)
 			sc->sc_if.if_omcasts++;		/* XXX */
@@ -1262,7 +1262,7 @@ stripinput(c, tp)
 
 	sc->sc_if.if_ipackets++;
 	getmicrotime(&sc->sc_lastpacket);
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(&ipintrq)) {
 		IF_DROP(&ipintrq);
 		sc->sc_if.if_ierrors++;
@@ -1296,7 +1296,7 @@ stripioctl(ifp, cmd, data)
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr;
-	int s = splimp(), error = 0;
+	int s = splnet(), error = 0;
 
 	switch (cmd) {
 
@@ -1350,7 +1350,7 @@ stripioctl(ifp, cmd, data)
 
 /*
  * Set a radio into starmode.
- * XXX must be called at spltty() or higher (e.g., splimp()
+ * XXX must be called at spltty() or higher (e.g., splvm()
  */
 void
 strip_resetradio(sc, tp)

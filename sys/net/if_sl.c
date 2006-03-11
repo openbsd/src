@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.30 2006/01/04 06:04:42 canacar Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.31 2006/03/11 22:44:47 brad Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -58,9 +58,6 @@
  * pinging you can use up all your bandwidth).  Made low clist behavior
  * more robust and slightly less likely to hang serial line.
  * Sped up a bunch of things.
- * 
- * Note that splimp() is used throughout to block both (tty) input
- * interrupts and network activity; thus, splimp must be >= spltty.
  */
 
 #include "bpfilter.h"
@@ -232,7 +229,7 @@ sl_clone_create(ifc, unit)
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
 #endif
-	s = splimp();
+	s = splnet();
 	LIST_INSERT_HEAD(&sl_softc_list, sc, sc_list);
 	splx(s);
 
@@ -249,7 +246,7 @@ sl_clone_destroy(ifp)
 	if (sc->sc_ttyp != NULL)
 		return (EBUSY);
 
-	s = splimp();
+	s = splnet();
 	LIST_REMOVE(sc, sc_list);
 	splx(s);
 
@@ -358,7 +355,7 @@ slclose(tp)
 	tp->t_line = 0;
 	sc = (struct sl_softc *)tp->t_sc;
 	if (sc != NULL) {
-		s = splimp();		/* actually, max(spltty, splsoftnet) */
+		s = spltty();
 
 		if_down(&sc->sc_if);
 		sc->sc_ttyp = NULL;
@@ -447,7 +444,7 @@ sloutput(ifp, m, dst, rtp)
 		m_freem(m);
 		return (ENETRESET);		/* XXX ? */
 	}
-	s = splimp();
+	s = spltty();
 	if (sc->sc_oqlen && sc->sc_ttyp->t_outq.c_cc == sc->sc_oqlen) {
 		struct timeval tv, tm;
 
@@ -459,6 +456,8 @@ sloutput(ifp, m, dst, rtp)
 			slstart(sc->sc_ttyp);
 		}
 	}
+
+	(void) splnet();
 	IFQ_ENQUEUE(&sc->sc_if.if_snd, m, NULL, error);
 	if (error) {
 		splx(s);
@@ -466,6 +465,7 @@ sloutput(ifp, m, dst, rtp)
 		return (error);
 	}
 
+	(void) spltty();
 	getmicrotime(&sc->sc_lastpacket);
 	if ((sc->sc_oqlen = sc->sc_ttyp->t_outq.c_cc) == 0)
 		slstart(sc->sc_ttyp);
@@ -527,7 +527,7 @@ slstart(tp)
 		/*
 		 * Get a packet and send it to the interface.
 		 */
-		s = splimp();
+		s = splnet();
 		IF_DEQUEUE(&sc->sc_fastq, m);
 		if (m)
 			sc->sc_if.if_omcasts++;		/* XXX */
@@ -875,7 +875,7 @@ slinput(c, tp)
 
 		sc->sc_if.if_ipackets++;
 		getmicrotime(&sc->sc_lastpacket);
-		s = splimp();
+		s = splnet();
 		if (IF_QFULL(&ipintrq)) {
 			IF_DROP(&ipintrq);
 			sc->sc_if.if_ierrors++;
@@ -919,7 +919,7 @@ slioctl(ifp, cmd, data)
 	struct sl_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr;
-	int s = splimp(), error = 0;
+	int s = splnet(), error = 0;
 	struct sl_stats *slsp;
 
 	switch (cmd) {
