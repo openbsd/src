@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.42 2005/06/29 03:53:28 brad Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.43 2006/03/11 22:08:07 brad Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
  * provided by pci_machdep.h.
  */
 
+#include <sys/device.h>
 #include <machine/bus.h>
 #include <dev/pci/pcireg.h>
 
@@ -50,6 +51,7 @@
  */
 typedef u_int32_t pcireg_t;		/* configuration space register XXX */
 struct pcibus_attach_args;
+struct pci_softc;
 
 /*
  * Machine-dependent definitions.
@@ -140,6 +142,14 @@ struct pci_quirkdata {
 	int			quirks;		/* quirks; see below */
 };
 #define	PCI_QUIRK_MULTIFUNCTION		0x00000001
+
+struct pci_softc {
+	struct device sc_dev;
+	pci_chipset_tag_t sc_pc;
+	void *sc_powerhook;
+	LIST_HEAD(, pci_dev) sc_devs;
+	int sc_bus;
+};
 
 /*
  * Locators devices that attach to 'pcibus', as specified to config.

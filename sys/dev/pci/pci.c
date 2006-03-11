@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.39 2005/07/10 19:03:09 mickey Exp $	*/
+/*	$OpenBSD: pci.c,v 1.40 2006/03/11 22:08:07 brad Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -47,16 +47,6 @@
 int pcimatch(struct device *, void *, void *);
 void pciattach(struct device *, struct device *, void *);
 void pcipower(int, void *);
-
-struct pci_softc {
-	struct device sc_dev;
-	pci_chipset_tag_t sc_pc;
-	void *sc_powerhook;
-	LIST_HEAD(, pci_dev) sc_devs;
-#ifdef USER_PCICONF
-	int sc_bus;		/* PCI configuration space bus # */
-#endif
-};
 
 #define NMAPREG			((PCI_MAPREG_END - PCI_MAPREG_START) / \
 				    sizeof(pcireg_t))
