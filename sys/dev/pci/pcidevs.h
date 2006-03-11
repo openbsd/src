@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1036 2006/03/11 01:20:22 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1037 2006/03/11 01:47:00 marco Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1249,6 +1249,7 @@
 #define	PCI_PRODUCT_DELL_PERC_3DI_2	0x0008		/* PERC 3/Di */
 #define	PCI_PRODUCT_DELL_RAC_3_EMBD	0x0009		/* RAC 3 Embedded/Optional */
 #define	PCI_PRODUCT_DELL_PERC_3DI_3	0x000a		/* PERC 3/Di */
+#define	PCI_PRODUCT_DELL_RAC_4_EMBD	0x000c		/* RAC 4 Embedded/Optional */
 #define	PCI_PRODUCT_DELL_RAC_3_OPT	0x000d		/* RAC 3 Optional */
 #define	PCI_PRODUCT_DELL_PERC_4DI	0x000e		/* PERC 4/Di i960 */
 #define	PCI_PRODUCT_DELL_PERC_4DI_2	0x000f		/* PERC 4/Di Verde */
