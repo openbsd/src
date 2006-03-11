@@ -1,0 +1,33 @@
+<<<<<<< blah.c
+/* $Id: rcsmerge.out,v 1.1 2006/03/11 06:22:47 ray Exp $ */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+/* a comment */
+
+/* main function */
+int
+main(int argc, char **argv)
+{
+	printf("foo bar\n");
+
+	return (0);
+}
+=======
+/* $Id: rcsmerge.out,v 1.1 2006/03/11 06:22:47 ray Exp $ */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+/* a comment */
+
+/* main function */
+int
+main(int argc, char **argv)
+{
+	printf("foo bar\n");
+
+	return (0);
+}
+>>>>>>> 1.3

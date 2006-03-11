@@ -1,0 +1,10 @@
+@@ -1,2 +1,9 @@
+ this is a test file
+ another revision
++new stuff
++a third revision
++a line for ci -u
++a line for ci -l
++blah blah
++output for ci -w
++a line for rcsdiff test
