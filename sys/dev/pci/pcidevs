@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1037 2006/03/11 01:47:00 marco Exp $
+$OpenBSD: pcidevs,v 1.1038 2006/03/11 02:08:58 marco Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1240,18 +1240,18 @@ product DELL PERC_2SI		0x0001	PERC 2/Si
 product DELL PERC_3DI		0x0002	PERC 3/Di
 product DELL PERC_3SI		0x0003	PERC 3/Si
 product DELL PERC_3SI_2		0x0004	PERC 3/Si
-product DELL RAC_3_ADDIN	0x0007	RAC 3 Add-in
+product DELL DRAC_3_ADDIN	0x0007	DRAC 3 Add-in
 product DELL PERC_3DI_2		0x0008	PERC 3/Di
-product DELL RAC_3_EMBD		0x0009	RAC 3 Embedded/Optional
+product DELL DRAC_3_EMBD	0x0009	DRAC 3 Embedded/Optional
 product DELL PERC_3DI_3		0x000a	PERC 3/Di
-product DELL RAC_4_EMBD		0x000c	RAC 4 Embedded/Optional
-product DELL RAC_3_OPT		0x000d	RAC 3 Optional
+product DELL DRAC_4_EMBD	0x000c	DRAC 4 Embedded/Optional
+product DELL DRAC_3_OPT		0x000d	DRAC 3 Optional
 product DELL PERC_4DI		0x000e	PERC 4/Di i960
 product DELL PERC_4DI_2		0x000f	PERC 4/Di Verde
-product DELL RAC_4		0x0011	RAC 4
-product DELL RAC_4_VUART	0x0012	RAC 4 Virtual UART
+product DELL DRAC_4		0x0011	DRAC 4
+product DELL DRAC_4_VUART	0x0012	DRAC 4 Virtual UART
 product DELL PERC_4EDI		0x0013	PERC 4e/Di
-product DELL RAC_4_SMIC		0x0014	RAC 4 SMIC
+product DELL DRAC_4_SMIC	0x0014	DRAC 4 SMIC
 product DELL PERC_3DI_2_SUB	0x00cf	PERC 3/Di
 product DELL PERC_3SI_2_SUB	0x00d0	PERC 3/Si
 product DELL PERC_3DI_SUB2	0x00d1	PERC 3/Di
