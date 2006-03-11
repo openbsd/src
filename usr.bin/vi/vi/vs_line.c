@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_line.c,v 1.10 2006/03/11 06:58:00 ray Exp $	*/
+/*	$OpenBSD: vs_line.c,v 1.11 2006/03/11 07:02:43 ray Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -48,10 +48,10 @@ vs_line(sp, smp, yp, xp)
 	CHAR_T *kp;
 	GS *gp;
 	SMAP *tsmp;
-	size_t chlen, cno_cnt, cols_per_screen, len, nlen;
+	size_t chlen = 0, cno_cnt, cols_per_screen, len, nlen;
 	size_t offset_in_char, offset_in_line, oldx, oldy;
 	size_t scno, skip_cols, skip_screens;
-	int ch, dne, is_cached, is_partial, is_tab, no_draw;
+	int ch = 0, dne, is_cached, is_partial, is_tab, no_draw;
 	int list_tab, list_dollar;
 	char *p, *cbp, *ecbp, cbuf[128];
 
