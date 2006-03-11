@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_line.c,v 1.8 2006/01/08 21:05:40 miod Exp $	*/
+/*	$OpenBSD: vs_line.c,v 1.9 2006/03/11 06:54:12 ray Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -404,11 +404,11 @@ display:
 		if (is_cached)
 			continue;
 
-#define	FLUSH {								\
-	*cbp = '\0';							\
-	(void)gp->scr_addstr(sp, cbuf, cbp - cbuf);			\
-	cbp = cbuf;							\
-}
+#define	FLUSH(gp, sp, cbp, cbuf) do {					\
+	*(cbp) = '\0';							\
+	(void)(gp)->scr_addstr((sp), (cbuf), (cbp) - (cbuf));		\
+	(cbp) = (cbuf);							\
+} while (0)
 		/*
 		 * Display the character.  We do tab expansion here because
 		 * the screen interface doesn't have any way to set the tab
@@ -419,12 +419,12 @@ display:
 		if (is_tab)
 			while (chlen--) {
 				if (cbp >= ecbp)
-					FLUSH;
+					FLUSH(gp, sp, cbp, cbuf);
 				*cbp++ = TABCH;
 			}
 		else {
 			if (cbp + chlen >= ecbp)
-				FLUSH;
+				FLUSH(gp, sp, cbp, cbuf);
 			for (kp = KEY_NAME(sp, ch) + offset_in_char; chlen--;)
 				*cbp++ = *kp++;
 		}
@@ -445,7 +445,7 @@ display:
 
 			chlen = KEY_LEN(sp, '$');
 			if (cbp + chlen >= ecbp)
-				FLUSH;
+				FLUSH(gp, sp, cbp, cbuf);
 			for (kp = KEY_NAME(sp, '$'); chlen--;)
 				*cbp++ = *kp++;
 		}
@@ -457,7 +457,7 @@ display:
 
 	/* Flush any buffered characters. */
 	if (cbp > cbuf)
-		FLUSH;
+		FLUSH(gp, sp, cbp, cbuf);
 
 ret1:	(void)gp->scr_move(sp, oldy, oldx);
 	return (0);
