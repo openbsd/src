@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.29 2005/04/19 15:29:48 mickey Exp $ */
+/*	$OpenBSD: intr.h,v 1.30 2006/03/11 15:07:29 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -40,7 +40,8 @@
 #define	IPL_AUDIO	IPL_BIO /* XXX - was defined this val in audio_if.h */
 #define	IPL_NET		2
 #define	IPL_TTY		3
-#define	IPL_IMP		4
+#define	IPL_VM		4
+#define	IPL_IMP		IPL_VM
 #define	IPL_CLOCK	5
 #define	IPL_HIGH	6
 #define	IPL_NUM		7
