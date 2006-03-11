@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.12 2006/01/08 21:05:39 miod Exp $	*/
+/*	$OpenBSD: options.c,v 1.13 2006/03/11 07:04:53 ray Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -291,7 +291,7 @@ opts_init(sp, oargs)
 	ARGS *argv[2], a, b;
 	OPTLIST const *op;
 	u_long v;
-	int cnt, optindx;
+	int optindx;
 	char *s, b1[1024];
 
 	a.bp = b1;
@@ -306,7 +306,7 @@ opts_init(sp, oargs)
 		(void)strlcpy(b1, (str), sizeof(b1));			\
 	a.len = strlen(b1);						\
 	if (opts_set(sp, argv, NULL)) {					\
-		 optindx = indx;					\
+		optindx = indx;						\
 		goto err;						\
 	}								\
 }
@@ -315,17 +315,25 @@ opts_init(sp, oargs)
 	 * terminal, lines, columns first, they're used by other options.
 	 * Note, don't set the flags until we've set up the indirection.
 	 */
-	if (o_set(sp, O_TERM, 0, NULL, GO_TERM))
+	if (o_set(sp, O_TERM, 0, NULL, GO_TERM)) {
+		optindx = O_TERM;
 		goto err;
+	}
 	F_SET(&sp->opts[O_TERM], OPT_GLOBAL);
-	if (o_set(sp, O_LINES, 0, NULL, GO_LINES))
+	if (o_set(sp, O_LINES, 0, NULL, GO_LINES)) {
+		optindx = O_LINES;
 		goto err;
+	}
 	F_SET(&sp->opts[O_LINES], OPT_GLOBAL);
-	if (o_set(sp, O_COLUMNS, 0, NULL, GO_COLUMNS))
+	if (o_set(sp, O_COLUMNS, 0, NULL, GO_COLUMNS)) {
+		optindx = O_COLUMNS;
 		goto err;
+	}
 	F_SET(&sp->opts[O_COLUMNS], OPT_GLOBAL);
-	if (o_set(sp, O_SECURE, 0, NULL, GO_SECURE))
+	if (o_set(sp, O_SECURE, 0, NULL, GO_SECURE)) {
+		optindx = O_SECURE;
 		goto err;
+	}
 	F_SET(&sp->opts[O_SECURE], OPT_GLOBAL);
 
 	/* Initialize string values. */
@@ -399,20 +407,20 @@ opts_init(sp, oargs)
 	 * Set boolean default values, and copy all settings into the default
 	 * information.  OS_NOFREE is set, we're copying, not replacing.
 	 */
-	for (op = optlist, cnt = 0; op->name != NULL; ++op, ++cnt)
+	for (op = optlist, optindx = 0; op->name != NULL; ++op, ++optindx)
 		switch (op->type) {
 		case OPT_0BOOL:
 			break;
 		case OPT_1BOOL:
-			O_SET(sp, cnt);
-			O_D_SET(sp, cnt);
+			O_SET(sp, optindx);
+			O_D_SET(sp, optindx);
 			break;
 		case OPT_NUM:
-			o_set(sp, cnt, OS_DEF, NULL, O_VAL(sp, cnt));
+			o_set(sp, optindx, OS_DEF, NULL, O_VAL(sp, optindx));
 			break;
 		case OPT_STR:
-			if (O_STR(sp, cnt) != NULL && o_set(sp, cnt,
-			    OS_DEF | OS_NOFREE | OS_STRDUP, O_STR(sp, cnt), 0))
+			if (O_STR(sp, optindx) != NULL && o_set(sp, optindx,
+			    OS_DEF | OS_NOFREE | OS_STRDUP, O_STR(sp, optindx), 0))
 				goto err;
 			break;
 		default:
@@ -766,7 +774,7 @@ o_set(sp, opt, flags, str, val)
 	}
 
 	/* Free the previous string, if requested, and set the value. */
-	if LF_ISSET(OS_DEF)
+	if (LF_ISSET(OS_DEF))
 		if (LF_ISSET(OS_STR | OS_STRDUP)) {
 			if (!LF_ISSET(OS_NOFREE) && op->o_def.str != NULL)
 				free(op->o_def.str);
