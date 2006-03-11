@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.21 2006/03/04 22:40:16 brad Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.22 2006/03/11 03:12:36 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -253,7 +253,7 @@ trunk_port_lladdr(struct trunk_port *tp, u_int8_t *lladdr)
 
 	/* Reset the port to update the lladdr */
 	if (ifp->if_flags & IFF_UP) {
-		int s = splimp();
+	        int s = splnet();
 		ifp->if_flags &= ~IFF_UP;
 		(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr);
 		ifp->if_flags |= IFF_UP;
