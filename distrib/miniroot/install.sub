@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.401 2006/02/28 20:33:55 matthieu Exp $
+#	$OpenBSD: install.sub,v 1.402 2006/03/11 19:23:31 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1564,7 +1564,7 @@ questions() {
 	fi
 
 	if [[ -n $MDXAPERTURE ]]; then
-		ask_yn "Do you expect to run the X Window System?" yes
+		ask_yn "Do you expect to run the X Window System?"
 		if [[ $resp == y ]]; then
 			sed -e "/^#\(machdep\.allowaperture=${MDXAPERTURE}\)/s//\1	/" \
 			    /mnt/etc/sysctl.conf >/tmp/sysctl.conf
