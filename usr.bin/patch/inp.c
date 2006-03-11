@@ -1,4 +1,4 @@
-/*	$OpenBSD: inp.c,v 1.33 2005/11/14 19:54:10 miod Exp $	*/
+/*	$OpenBSD: inp.c,v 1.34 2006/03/11 19:41:30 otto Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: inp.c,v 1.33 2005/11/14 19:54:10 miod Exp $";
+static const char rcsid[] = "$OpenBSD: inp.c,v 1.34 2006/03/11 19:41:30 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -136,11 +136,10 @@ plan_a(const char *filename)
 {
 	int		ifd, statfailed;
 	char		*p, *s, lbuf[MAXLINELEN];
-	LINENUM		iline;
 	struct stat	filestat;
 	off_t		i;
 	ptrdiff_t	sz;
-	size_t		lines_allocated;
+	size_t		iline, lines_allocated;
 
 #ifdef DEBUGGING
 	if (debug & 8)
@@ -339,7 +338,7 @@ static void
 plan_b(const char *filename)
 {
 	FILE	*ifp;
-	int	i = 0, j, maxlen = 1;
+	size_t	i = 0, j, maxlen = 1;
 	char	*p;
 	bool	found_revision = (revision == NULL);
 
@@ -439,8 +438,9 @@ ifetch(LINENUM line, int whichbuf)
 		else {
 			tiline[whichbuf] = baseline;
 
-			lseek(tifd, (off_t) (baseline / lines_per_buf *
-			    BUFFERSIZE), SEEK_SET);
+			if (lseek(tifd, (off_t) (baseline / lines_per_buf *
+			    BUFFERSIZE), SEEK_SET) < 0)
+				pfatal("cannot seek in the temporary input file");
 
 			if (read(tifd, tibuf[whichbuf], BUFFERSIZE) < 0)
 				pfatal("error reading tmp file %s", TMPINNAME);
@@ -456,7 +456,7 @@ static bool
 rev_in_string(const char *string)
 {
 	const char	*s;
-	int		patlen;
+	size_t		patlen;
 
 	if (revision == NULL)
 		return true;

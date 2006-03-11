@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.25 2003/10/31 20:20:45 millert Exp $	*/
+/*	$OpenBSD: common.h,v 1.26 2006/03/11 19:41:30 otto Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -25,6 +25,8 @@
  * -C option added in 1998, original code by Marc Espie, based on FreeBSD
  * behaviour
  */
+
+#include <sys/types.h>
 
 #include <stdbool.h>
 
@@ -61,7 +63,7 @@ typedef long    LINENUM;	/* must be signed */
 
 /* globals */
 
-extern int	filemode;
+extern mode_t	filemode;
 
 extern char	buf[MAXLINELEN];/* general purpose buffer */
 

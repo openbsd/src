@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.43 2004/11/19 20:08:11 otto Exp $	*/
+/*	$OpenBSD: patch.c,v 1.44 2006/03/11 19:41:30 otto Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: patch.c,v 1.43 2004/11/19 20:08:11 otto Exp $";
+static const char rcsid[] = "$OpenBSD: patch.c,v 1.44 2006/03/11 19:41:30 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,7 +48,7 @@ static const char rcsid[] = "$OpenBSD: patch.c,v 1.43 2004/11/19 20:08:11 otto E
 #include "backupfile.h"
 #include "pathnames.h"
 
-int		filemode = 0644;
+mode_t		filemode = 0644;
 
 char		buf[MAXLINELEN];	/* general purpose buffer */
 

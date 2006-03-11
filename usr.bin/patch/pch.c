@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.35 2004/08/05 21:47:24 deraadt Exp $	*/
+/*	$OpenBSD: pch.c,v 1.36 2006/03/11 19:41:30 otto Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pch.c,v 1.35 2004/08/05 21:47:24 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pch.c,v 1.36 2006/03/11 19:41:30 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1367,9 +1367,8 @@ do_ed_script(void)
 {
 	char	*t;
 	long	beginning_of_this_line;
-	FILE	*pipefp;
+	FILE	*pipefp = NULL;
 
-	pipefp = NULL;
 	if (!skip_rest_of_patch) {
 		if (copy_file(filearg[0], TMPOUTNAME) < 0) {
 			unlink(TMPOUTNAME);
