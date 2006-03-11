@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.61 2006/03/11 21:00:48 pedro Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.62 2006/03/11 22:52:56 pedro Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -367,9 +367,6 @@ ffs1_reallocblks(void *v)
 	daddr_t start_lbn, end_lbn, soff, newblk, blkno;
 	struct indir start_ap[NIADDR + 1], end_ap[NIADDR + 1], *idp;
 	int i, len, start_lvl, end_lvl, pref, ssize;
-
-	if (doreallocblks == 0)
-		return (ENOSPC);
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
