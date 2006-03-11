@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_write.c,v 1.7 2002/02/17 19:42:34 millert Exp $	*/
+/*	$OpenBSD: ex_write.c,v 1.8 2006/03/11 06:52:00 ray Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -140,7 +140,7 @@ exwr(sp, cmdp, cmd)
 {
 	MARK rm;
 	int flags;
-	char *name, *p;
+	char *name, *p = NULL;
 
 	NEEDFILE(sp, cmdp);
 
@@ -151,7 +151,8 @@ exwr(sp, cmdp, cmd)
 
 	/* Skip any leading whitespace. */
 	if (cmdp->argc != 0)
-		for (p = cmdp->argv[0]->bp; *p != '\0' && isblank(*p); ++p);
+		for (p = cmdp->argv[0]->bp; *p != '\0' && isblank(*p); ++p)
+			;
 
 	/* If "write !" it's a pipe to a utility. */
 	if (cmdp->argc != 0 && cmd == WRITE && *p == '!') {
