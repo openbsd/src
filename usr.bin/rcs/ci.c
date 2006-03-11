@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.113 2006/03/10 11:51:19 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.114 2006/03/11 18:38:54 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -271,9 +271,12 @@ checkin_main(int argc, char **argv)
 			status = checkin_init(&pb);
 		else
 			status = checkin_update(&pb);
+
+		/* reset NEWFILE flag */
+		pb.flags &= ~NEWFILE;
 	}
 
-	if (verbose == 1)
+	if ((verbose == 1) && (status == 0))
 		printf("done\n");
 
 	return (status);
