@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_refresh.c,v 1.12 2006/03/04 16:18:06 miod Exp $	*/
+/*	$OpenBSD: vs_refresh.c,v 1.13 2006/03/11 06:55:56 ray Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -171,7 +171,7 @@ vs_paint(sp, flags)
 	VI_PRIVATE *vip;
 	recno_t lastline, lcnt;
 	size_t cwtotal, cnt, len, notused, off, y;
-	int ch, didpaint, isempty, leftright_warp;
+	int ch = 0, didpaint, isempty, leftright_warp;
 	char *p;
 
 #define	 LNO	sp->lno			/* Current file line. */
