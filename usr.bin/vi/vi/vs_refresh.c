@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_refresh.c,v 1.13 2006/03/11 06:55:56 ray Exp $	*/
+/*	$OpenBSD: vs_refresh.c,v 1.14 2006/03/11 06:58:00 ray Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -778,7 +778,7 @@ vs_modeline(sp)
 	};
 	GS *gp;
 	size_t cols, curcol, curlen, endpoint, len, midpoint;
-	const char *t;
+	const char *t = NULL;
 	int ellipsis;
 	char *p, buf[20];
 
@@ -856,8 +856,8 @@ vs_modeline(sp)
 	cols = sp->cols - 1;
 	if (O_ISSET(sp, O_RULER)) {
 		vs_column(sp, &curcol);
-		len =
-		    snprintf(buf, sizeof(buf), "%lu,%lu", sp->lno, curcol + 1);
+		len = snprintf(buf, sizeof(buf), "%lu,%zu",
+		    (ulong)sp->lno, curcol + 1);
 
 		midpoint = (cols - ((len + 1) / 2)) / 2;
 		if (curlen < midpoint) {

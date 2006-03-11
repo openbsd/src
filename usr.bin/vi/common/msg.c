@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.15 2006/01/08 21:05:39 miod Exp $	*/
+/*	$OpenBSD: msg.c,v 1.16 2006/03/11 06:58:00 ray Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -55,11 +55,16 @@ msgq(SCR *sp, mtype_t mt, const char *fmt, ...)
 	} str[__NL_ARGMAX];
 #endif
 	static int reenter;		/* STATIC: Re-entrancy check. */
-	CHAR_T ch;
 	GS *gp;
-	size_t blen, cnt1, cnt2, len, mlen, nlen, soff;
-	const char *p, *t, *u;
-	char *bp, *mp, *rbp, *s_rbp;
+	size_t blen, len, mlen, nlen;
+	const char *p;
+	char *bp, *mp;
+#ifndef NL_ARGMAX
+	size_t cnt1, cnt2, soff;
+	CHAR_T ch;
+	const char *t, *u;
+	char *rbp, *s_rbp;
+#endif
         va_list ap;
 
 	/*
@@ -259,9 +264,10 @@ retry:		FREE_SPACE(sp, bp, blen);
 			}
 	*s_rbp = '\0';
 	fmt = rbp;
-#endif
 
-format:	/* Format the arguments into the string. */
+format:
+#endif
+	/* Format the arguments into the string. */
         va_start(ap, fmt);
 	len = vsnprintf(mp, REM, fmt, ap);
 	va_end(ap);
@@ -457,7 +463,7 @@ mod_rpt(sp)
 				*p++ = ' ';
 				tlen += 2;
 			}
-			len = snprintf(p, MAXNUM, "%lu ", sp->rptlines[cnt]);
+			len = snprintf(p, MAXNUM, "%u ", sp->rptlines[cnt]);
 			p += len;
 			tlen += len;
 			t = msg_cat(sp,
@@ -501,7 +507,6 @@ msgq_status(sp, lno, flags)
 	recno_t lno;
 	u_int flags;
 {
-	static int poisoned;
 	recno_t last;
 	size_t blen, len;
 	int cnt, needsep;

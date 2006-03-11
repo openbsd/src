@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_print.c,v 1.6 2002/02/19 19:39:39 millert Exp $	*/
+/*	$OpenBSD: ex_print.c,v 1.7 2006/03/11 06:58:00 ray Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -119,7 +119,7 @@ ex_print(sp, cmdp, fp, tp, flags)
 		 */
 		if (LF_ISSET(E_C_HASH)) {
 			if (from <= 999999) {
-				snprintf(buf, sizeof(buf), "%6ld  ", from);
+				snprintf(buf, sizeof(buf), "%6lu  ", (ulong)from);
 				p = buf;
 			} else
 				p = "TOOBIG  ";

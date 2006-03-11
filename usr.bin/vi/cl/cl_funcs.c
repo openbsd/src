@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_funcs.c,v 1.10 2003/07/18 23:11:43 david Exp $	*/
+/*	$OpenBSD: cl_funcs.c,v 1.11 2006/03/11 06:58:00 ray Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -281,9 +281,12 @@ int
 cl_deleteln(sp)
 	SCR *sp;
 {
+#ifndef mvchgat
 	CHAR_T ch;
+	size_t col, lno, spcnt;
+#endif
 	CL_PRIVATE *clp;
-	size_t col, lno, spcnt, oldy, oldx;
+	size_t oldy, oldx;
 
 	clp = CLP(sp);
 

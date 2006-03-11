@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_line.c,v 1.9 2006/03/11 06:54:12 ray Exp $	*/
+/*	$OpenBSD: vs_line.c,v 1.10 2006/03/11 06:58:00 ray Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -141,8 +141,8 @@ vs_line(sp, smp, yp, xp)
 		if (O_ISSET(sp, O_NUMBER)) {
 			cols_per_screen -= O_NUMBER_LENGTH;
 			if ((!dne || smp->lno == 1) && skip_cols == 0) {
-				nlen = snprintf(cbuf,
-				    sizeof(cbuf), O_NUMBER_FMT, smp->lno);
+				nlen = snprintf(cbuf, sizeof(cbuf),
+				    O_NUMBER_FMT, (ulong)smp->lno);
 				if (nlen >= sizeof(cbuf))
 					nlen = sizeof(cbuf) - 1;
 				(void)gp->scr_addstr(sp, cbuf, nlen);
@@ -516,7 +516,7 @@ vs_number(sp)
 			break;
 
 		(void)gp->scr_move(sp, smp - HMAP, 0);
-		len = snprintf(nbuf, sizeof(nbuf), O_NUMBER_FMT, smp->lno);
+		len = snprintf(nbuf, sizeof(nbuf), O_NUMBER_FMT, (ulong)smp->lno);
 		if (len >= sizeof(nbuf))
 			len = sizeof(nbuf) - 1;
 		(void)gp->scr_addstr(sp, nbuf, len);

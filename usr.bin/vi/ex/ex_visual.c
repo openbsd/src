@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_visual.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: ex_visual.c,v 1.7 2006/03/11 06:58:00 ray Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -83,9 +83,9 @@ ex_visual(sp, cmdp)
 
 	if (FL_ISSET(cmdp->iflags, E_C_COUNT))
 		len = snprintf(buf, sizeof(buf),
-		     "%luz%c%lu", sp->lno, pos, cmdp->count);
+		     "%luz%c%lu", (ulong)sp->lno, pos, cmdp->count);
 	else
-		len = snprintf(buf, sizeof(buf), "%luz%c", sp->lno, pos);
+		len = snprintf(buf, sizeof(buf), "%luz%c", (ulong)sp->lno, pos);
 	if (len >= sizeof(buf))
 		len = sizeof(buf) - 1;
 	(void)v_event_push(sp, NULL, buf, len, CH_NOMAP | CH_QUOTED);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_split.c,v 1.8 2005/10/17 19:12:16 otto Exp $	*/
+/*	$OpenBSD: vs_split.c,v 1.9 2006/03/11 06:58:00 ray Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -232,8 +232,10 @@ vs_discard(sp, spp)
 		nsp->rows += sp->rows;
 		sp = nsp;
 		dir = BACKWARD;
-	} else
+	} else {
 		sp = NULL;
+		dir = 0;	/* unused */
+	}
 
 	if (spp != NULL)
 		*spp = sp;

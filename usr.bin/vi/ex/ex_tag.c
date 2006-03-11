@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_tag.c,v 1.12 2006/01/08 21:05:40 miod Exp $	*/
+/*	$OpenBSD: ex_tag.c,v 1.13 2006/03/11 06:58:00 ray Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -406,7 +406,7 @@ ex_tag_pop(sp, cmdp)
 	EXCMD *cmdp;
 {
 	EX_PRIVATE *exp;
-	TAGQ *tqp, *dtqp;
+	TAGQ *tqp, *dtqp = NULL;
 	size_t arglen;
 	long off;
 	char *arg, *p, *t;
@@ -470,6 +470,7 @@ filearg:	arglen = strlen(arg);
 		break;
 	default:
 		abort();
+		/* NOTREACHED */
 	}
 
 	return (tag_pop(sp, dtqp, FL_ISSET(cmdp->iflags, E_C_FORCE)));
@@ -571,7 +572,7 @@ ex_tag_display(sp)
 	TAGQ *tqp;
 	int cnt;
 	size_t len;
-	char *p, *sep;
+	char *p;
 
 	exp = EXP(sp);
 	if ((tqp = CIRCLEQ_FIRST(&exp->tq)) == CIRCLEQ_END(&exp->tq)) {
