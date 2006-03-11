@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.42 2006/03/11 04:07:28 brad Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.43 2006/03/11 09:58:34 brad Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -1096,6 +1096,8 @@ pccbbintr_function(sc)
 			s = splclock();
 		} else if (pil->pil_level == IPL_AUDIO) {
 			s = splaudio();
+		} else if (pil->pil_level == IPL_VM) {
+			s = splvm();
 		} else if (pil->pil_level == IPL_TTY) {
 			s = spltty();
 #if 0
