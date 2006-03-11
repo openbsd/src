@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1035 2006/03/07 07:35:00 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1036 2006/03/11 01:20:22 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3239,12 +3239,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "RAC 3 Add-in",
 	},
 	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_RAC_3_EMBD,
-	    "RAC 3 Embedded/Optional",
-	},
-	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2,
 	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_RAC_3_EMBD,
+	    "RAC 3 Embedded/Optional",
 	},
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3,
