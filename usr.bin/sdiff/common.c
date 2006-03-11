@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.1 2006/02/20 08:38:18 otto Exp $	*/
+/*	$OpenBSD: common.c,v 1.2 2006/03/11 07:12:42 ray Exp $	*/
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -6,6 +6,7 @@
  */
 
 #include <err.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -33,9 +34,9 @@ xmktemp(const char *s)
 	const char *tmpdir;
 	char *filename;
 
-	/* If TMPDIR is set, use it; otherwise use /tmp. */
+	/* If TMPDIR is set, use it; otherwise use _PATH_TMP. */
 	if (!(tmpdir = getenv("TMPDIR")))
-		tmpdir = "/tmp";
+		tmpdir = _PATH_TMP;
 	if (asprintf(&filename, "%s/sdiff.XXXXXXXXXX", tmpdir) == -1)
 		err(2, "xmktemp");
 
