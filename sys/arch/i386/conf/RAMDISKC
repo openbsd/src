@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.64 2006/02/08 23:56:29 pvalchev Exp $
+#	$OpenBSD: RAMDISKC,v 1.65 2006/03/12 17:29:49 martin Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -244,7 +244,6 @@ scsibus* at atapiscsi?
 #ep0	at eisa?
 #ep*	at eisa?			# 3C579 ethernet
 #fea*	at eisa?			# DEC DEFEA FDDI
-#le*	at pci?				# PCnet-PCI based ethernet
 #ep*	at isapnp?			# 3C509 PnP ethernet
 #le*	at isapnp?
 #de*	at pci?				# DC21X4X-based ethernet
@@ -283,6 +282,7 @@ re*	at cardbus?			# Realtek 8169/8169S/8110S
 #bce*	at pci?				# Broadcom BCM4401
 vge*	at pci?				# VIA VT612x
 nfe*	at pci?				# NVIDIA nForce Ethernet
+pcn*	at pci?				# AMD PCnet-PCI Ethernet
 
 # Wireless network cards
 ath*	at pci?				# Atheros AR5k (802.11a/b/g)

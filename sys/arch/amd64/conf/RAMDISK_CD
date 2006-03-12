@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.48 2006/02/05 18:16:18 brad Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.49 2006/03/12 17:29:48 martin Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -203,7 +203,6 @@ atapiscsi* at wdc?
 atapiscsi* at pciide?
 scsibus* at atapiscsi?
 
-#le*	at pci?			# PCnet-PCI based ethernet
 de*	at pci?			# DC21X4X-based ethernet
 fxp*	at pci?			# EtherExpress 10/100B ethernet
 fxp*	at cardbus?		# Intel PRO/100 ethernet

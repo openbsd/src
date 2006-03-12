@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.141 2006/02/08 23:56:29 pvalchev Exp $
+#	$OpenBSD: RAMDISK,v 1.142 2006/03/12 17:29:49 martin Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -207,7 +207,6 @@ le0	at isa? port 0x360 irq 15 drq 6	# IsoLan, NE2100, and DEPCA
 ep0	at eisa?
 ep*	at eisa?			# 3C579 ethernet cards
 #fea*	at eisa?			# DEC DEFEA FDDI cards
-le*	at pci?				# PCnet-PCI based ethernet cards
 ep*	at isapnp?			# 3C509 PnP ethernet cards
 le*	at isapnp?
 de*	at pci?				# DC21X4X-based ethernet cards
@@ -243,6 +242,7 @@ em*	at pci?				# Intel Pro/1000 ethernet
 re*	at pci?				# Realtek 8169/8169S/8110S
 vge*	at pci?				# VIA VT612x
 nfe*	at pci?				# NVIDIA nForce Ethernet
+pcn*	at pci?				# AMD PCnet-PCI Ethernet
 
 # Wireless network cards
 wi*	at pci?				# WaveLAN IEEE 802.11DS

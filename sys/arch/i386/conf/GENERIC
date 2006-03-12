@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.475 2006/03/06 03:13:42 marco Exp $
+#	$OpenBSD: GENERIC,v 1.476 2006/03/12 17:29:48 martin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -429,7 +429,6 @@ ep*	at eisa?			# 3C579 ethernet
 fea*	at eisa?			# DEC DEFEA FDDI
 lmc*	at pci?				# Lan Media Corp SSI/T3/HSSI
 san*	at pci?				# Sangoma PCI AFT card
-le*	at pci?				# PCnet-PCI based ethernet
 le*	at isapnp?
 pcn*	at pci?				# AMD PCnet-PCI Ethernet
 de*	at pci?				# DC21X4X-based ethernet

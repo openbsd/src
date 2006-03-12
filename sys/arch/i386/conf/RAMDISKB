@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.85 2006/02/08 23:56:29 pvalchev Exp $
+#	$OpenBSD: RAMDISKB,v 1.86 2006/03/12 17:29:49 martin Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -232,7 +232,6 @@ scsibus* at atapiscsi?
 #ep0	at eisa?
 #ep*	at eisa?			# 3C579 ethernet cards
 #fea*	at eisa?			# DEC DEFEA FDDI cards
-#le*	at pci?				# PCnet-PCI based ethernet cards
 #ep*	at isapnp?			# 3C509 PnP ethernet cards
 #le*	at isapnp?
 de*	at pci?				# DC21X4X-based ethernet cards

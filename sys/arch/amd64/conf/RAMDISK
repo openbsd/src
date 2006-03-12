@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.30 2006/02/10 04:10:00 pvalchev Exp $
+#	$OpenBSD: RAMDISK,v 1.31 2006/03/12 17:29:48 martin Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -185,7 +185,6 @@ wd*	at pciide? flags 0x0000
 atapiscsi* at pciide?
 scsibus* at atapiscsi?
 
-#le*	at pci?			# PCnet-PCI based ethernet
 #de*	at pci?			# DC21X4X-based ethernet
 fxp*	at pci?			# EtherExpress 10/100B ethernet
 #fxp*	at cardbus?		# Intel PRO/100 ethernet
@@ -217,6 +216,7 @@ bge*	at pci?			# Broadcom BCM570x (aka Tigon3)
 #mtd*	at pci?			# Myson MTD803
 vge*	at pci?			# VIA VT612x
 nfe*	at pci?			# NVIDIA nForce Ethernet
+pcn*	at pci?			# AMD PCnet-PCI Ethernet
 
 # Wireless network cards
 #wi*	at pci?			# WaveLAN IEEE 802.11DS

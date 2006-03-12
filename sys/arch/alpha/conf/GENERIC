@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.166 2006/03/11 01:12:14 brad Exp $
+#	$OpenBSD: GENERIC,v 1.167 2006/03/12 17:29:48 martin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -167,7 +167,6 @@ pceb*	at pci?				# Intel PCI-EISA bridge
 cy*	at pci?				# PCI cyclom card
 
 # PCI SCSI devices
-
 ahc*	at pci?				# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
 isp*	at pci?				# Qlogic ISP [12]0x0 SCSI/FibreChannel
@@ -225,7 +224,6 @@ art*	at musycc?			# Accoom Artery E1/T1 cards
 #UNTESTED:  the following section of drivers is untested on alpha.
 en*	at pci?				# ENI PCI ATM (untested)
 tl*	at pci?				# Compaq Thunderlan ethernet
-le*	at pci?				# PCI LANCE Ethernet (untested)
 wb*	at pci?				# Winbond W89C840F ethernet
 sf*	at pci?				# Adaptec AIC-6915 ethernet
 ste*	at pci?				# Sundance ST201 ethernet

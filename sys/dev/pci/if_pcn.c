@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.6 2006/02/22 18:12:24 brad Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.7 2006/03/12 17:29:48 martin Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -524,8 +524,7 @@ pcn_match(struct device *parent, void *match, void *aux)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_AMD_PCNET_PCI:
-		/* Beat if_le_pci.c */
-		return (10);
+		return (1);
 	}
 
 	return (0);

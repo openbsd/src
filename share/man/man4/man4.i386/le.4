@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.11 2004/09/30 19:59:27 mickey Exp $
+.\"	$OpenBSD: le.4,v 1.12 2006/03/12 17:29:48 martin Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -30,7 +30,6 @@
 .Nd AMD LANCE Ethernet interface
 .Sh SYNOPSIS
 .Cd "le0 at isa? port 0x360 irq 15 drq 6"
-.Cd "le* at pci?"
 .Cd "le* at isapnp?"
 .Sh DESCRIPTION
 The
@@ -42,7 +41,7 @@ This includes the following models:
 .Bl -tag -width Ds -offset indent -compact
 .It AT&T StarLAN 10, EN100, and StarLAN Fiber
 .It BICC Isolan
-.It BOCALANcard/PCI
+.It BOCALANcard
 .It Digital DEPCA
 .It Kingston 21xx
 .It Novell NE1500T
@@ -55,6 +54,5 @@ This includes the following models:
 .Xr isa 4 ,
 .Xr isapnp 4 ,
 .Xr netintro 4 ,
-.Xr pci 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8

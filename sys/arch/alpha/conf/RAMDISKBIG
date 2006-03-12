@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.61 2006/02/10 09:40:21 brad Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.62 2006/03/12 17:29:48 martin Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -199,7 +199,6 @@ ral*	at pci?				# Ralink RT2500/RT2501/RT2600
 #UNTESTED:  the following section of drivers is untested on alpha.
 en*	at pci?				# ENI PCI ATM (untested)
 tl*	at pci?				# Compaq Thunderlan ethernet
-le*	at pci?				# PCI LANCE Ethernet (untested)
 wb*	at pci?				# Winbond W89C840F ethernet
 sf*	at pci?				# Adaptec AIC-6915 ethernet
 ste*	at pci?				# Sundance ST201 ethernet
