@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofb.c,v 1.8 2006/02/14 18:46:17 miod Exp $	*/
+/*	$OpenBSD: diofb.c,v 1.9 2006/03/12 22:22:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -301,7 +301,6 @@ diofb_end_attach(void *sc, struct wsdisplay_accessops *accessops,
 {
 	struct wsemuldisplaydev_attach_args waa;
 	struct wsscreen_descr *scrlist[1];
-	struct wsscreen_list screenlist;
 
 	printf(": %dx%d", fb->dwidth, fb->dheight);
 
@@ -315,11 +314,11 @@ diofb_end_attach(void *sc, struct wsdisplay_accessops *accessops,
 	printf(" frame buffer\n");
 
 	scrlist[0] = &fb->wsd;
-	screenlist.nscreens = 1;
-	screenlist.screens = (const struct wsscreen_descr **)scrlist;
+	fb->wsl.nscreens = 1;
+	fb->wsl.screens = (const struct wsscreen_descr **)scrlist;
 
 	waa.console = console;
-	waa.scrdata = &screenlist;
+	waa.scrdata = &fb->wsl;
 	waa.accessops = accessops;
 	waa.accesscookie = fb;
 
