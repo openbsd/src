@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1038 2006/03/11 02:08:58 marco Exp 
+ *	OpenBSD: pcidevs,v 1.1039 2006/03/12 21:02:34 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1955,8 +1955,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Mach64 VV",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS300_HB,
-	    "RS300 Host",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS300_100_HB,
+	    "RS300_100 Host",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS300_133_HB,
+	    "RS300_133 Host",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS300_166_HB,
+	    "RS300_166 Host",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_IGP9100_HB,
@@ -2113,6 +2121,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS200_AGP,
 	    "RS200 AGP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS250_AGP,
+	    "RS250 AGP",
 	},
 	{
 	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5933,

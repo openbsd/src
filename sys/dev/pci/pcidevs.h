@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1038 2006/03/11 02:08:58 marco Exp 
+ *	OpenBSD: pcidevs,v 1.1039 2006/03/12 21:02:34 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -851,7 +851,9 @@
 #define	PCI_PRODUCT_ATI_MACH64_VT	0x5654		/* Mach64 VT */
 #define	PCI_PRODUCT_ATI_MACH64_VU	0x5655		/* Mach64 VU */
 #define	PCI_PRODUCT_ATI_MACH64_VV	0x5656		/* Mach64 VV */
-#define	PCI_PRODUCT_ATI_RS300_HB	0x5831		/* RS300 Host */
+#define	PCI_PRODUCT_ATI_RS300_100_HB	0x5830		/* RS300_100 Host */
+#define	PCI_PRODUCT_ATI_RS300_133_HB	0x5831		/* RS300_133 Host */
+#define	PCI_PRODUCT_ATI_RS300_166_HB	0x5832		/* RS300_166 Host */
 #define	PCI_PRODUCT_ATI_RADEON_IGP9100_HB	0x5833		/* Radeon IGP 9100 Host */
 #define	PCI_PRODUCT_ATI_RADEON_IGP9100	0x5835		/* Radeon Mobility IGP 9100 */
 #define	PCI_PRODUCT_ATI_RADEON_IGP9100_AGP	0x5838		/* Radeon IGP 9100 AGP */
@@ -891,6 +893,7 @@
 #define	PCI_PRODUCT_ATI_RS200_PCI	0x7010		/* RS200 PCI */
 #define	PCI_PRODUCT_ATI_RS100_AGP	0xcab0		/* RS100 AGP */
 #define	PCI_PRODUCT_ATI_RS200_AGP	0xcab2		/* RS200 AGP */
+#define	PCI_PRODUCT_ATI_RS250_AGP	0xcab3		/* RS250 AGP */
 
 /* Applied Micro Circuits products */
 #define	PCI_PRODUCT_AMCIRCUITS_S5933	0x4750		/* S5933 PCI Matchmaker */
