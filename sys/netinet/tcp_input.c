@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.195 2006/02/26 17:50:45 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.196 2006/03/12 18:42:40 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2025,6 +2025,10 @@ dodata:							/* XXX */
 	 */
 	if ((tlen || (tiflags & TH_FIN)) &&
 	    TCPS_HAVERCVDFIN(tp->t_state) == 0) {
+#ifdef TCP_SACK
+		tcp_seq laststart = th->th_seq;
+		tcp_seq lastend = th->th_seq + tlen;
+#endif
 		tcp_reass_lock(tp);
 		if (th->th_seq == tp->rcv_nxt && TAILQ_EMPTY(&tp->t_segq) &&
 		    tp->t_state == TCPS_ESTABLISHED) {
@@ -2050,7 +2054,7 @@ dodata:							/* XXX */
 		}
 #ifdef TCP_SACK
 		if (tp->sack_enable)
-			tcp_update_sack_list(tp, th->th_seq, th->th_seq + tlen);
+			tcp_update_sack_list(tp, laststart, lastend);
 #endif
 
 		/*
