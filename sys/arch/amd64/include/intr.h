@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.6 2005/04/19 15:29:47 mickey Exp $	*/
+/*	$OpenBSD: intr.h,v 1.7 2006/03/12 02:34:39 brad Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -158,8 +158,7 @@ void softintr(int);
 /*
  * Miscellaneous
  */
-#define splimp()	splraise(IPL_IMP)
-#define	splvm()		splraise(IPL_IMP)
+#define	splvm()		splraise(IPL_VM)
 #define	splhigh()	splraise(IPL_HIGH)
 #define	spl0()		spllower(IPL_NONE)
 #define	splsched()	splraise(IPL_SCHED)
