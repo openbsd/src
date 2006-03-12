@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.7 2006/03/12 17:29:48 martin Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.8 2006/03/12 17:44:07 brad Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -446,6 +446,11 @@ struct cfattach pcn_ca = {
 	sizeof(struct pcn_softc), pcn_match, pcn_attach,
 };
 
+const struct pci_matchid pcn_devices[] = {
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCHOME_PCI }
+};
+
 struct cfdriver pcn_cd = {
 	0, "pcn", DV_IFNET
 };
@@ -519,15 +524,8 @@ pcn_match(struct device *parent, void *match, void *aux)
 	    PCI_CLASS(pa->pa_class) == PCI_CLASS_NETWORK)
 		return(1);
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_AMD)
-		return (0);
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_AMD_PCNET_PCI:
-		return (1);
-	}
-
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, pcn_devices,
+	    sizeof(pcn_devices)/sizeof(pcn_devices[0])));
 }
 
 void
