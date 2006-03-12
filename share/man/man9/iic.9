@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.9,v 1.3 2004/08/24 05:48:22 david Exp $
+.\"	$OpenBSD: iic.9,v 1.4 2006/03/12 06:29:49 dlg Exp $
 .\"
 .\" Copyright (c) 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -136,6 +136,9 @@ struct i2c_attach_args {
 	i2c_tag_t ia_tag;	/* controller */
 	i2c_addr_t ia_addr;	/* address of device */
 	int ia_size;		/* size (for EEPROMs) */
+	char *ia_name;		/* chip name */
+	void *ia_cookie;	/* pass extra info from
+				   bus to dev */
 };
 .Ed
 .El
