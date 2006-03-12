@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.14 2003/09/25 04:19:39 deraadt Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.15 2006/03/12 02:28:28 deraadt Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -216,5 +216,5 @@ struct inoinfo *getinoinfo(ino_t);
 void getblk(struct bufarea *, daddr_t, long);
 ino_t allocino(ino_t, int);
 
-int	(*info_fn)(char *, int);
+int	(*info_fn)(char *);
 char	*info_filesys;
