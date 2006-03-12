@@ -1,4 +1,4 @@
-/*	$OpenBSD: w83l784r.c,v 1.4 2006/02/17 13:11:54 kettenis Exp $	*/
+/*	$OpenBSD: w83l784r.c,v 1.5 2006/03/12 12:09:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -66,6 +66,7 @@ struct wbenv_softc {
 
 	i2c_tag_t sc_tag;
 	i2c_addr_t sc_addr[3];
+	u_int8_t sc_chip_id;
 
 	struct sensor sc_sensors[WBENV_MAX_SENSORS];
 	struct wbenv_sensor *sc_wbenv_sensors;
@@ -166,7 +167,9 @@ wbenv_attach(struct device *parent, struct device *self, void *aux)
 
 	iic_release_bus(sc->sc_tag, 0);
 
-	switch (data) {
+	sc->sc_chip_id = data;
+
+	switch (sc->sc_chip_id) {
 	case WBENV_CHIPID_W83L784R:
 		printf(": W83L784R\n");
 		wbenv_setup_sensors(sc, w83l784r_sensors);
@@ -180,7 +183,7 @@ wbenv_attach(struct device *parent, struct device *self, void *aux)
 		wbenv_setup_sensors(sc, w83l785ts_l_sensors);
 		goto start;;
 	default:
-		printf(": unknownd Winbond chip (ID 0x%x)\n", data);
+		printf(": unknownd Winbond chip (ID 0x%x)\n", sc->sc_chip_id);
 		return;
 	}
 
@@ -229,7 +232,7 @@ wbenv_setup_sensors(struct wbenv_softc *sc, struct wbenv_sensor *sensors)
 		    sizeof(sc->sc_sensors[i].device));
 		sc->sc_sensors[i].type = sensors[i].type;
 		strlcpy(sc->sc_sensors[i].desc, sensors[i].desc,
-		     sizeof(sc->sc_sensors[i].desc));
+		    sizeof(sc->sc_sensors[i].desc));
 		sc->sc_numsensors++;
 	}
 	sc->sc_wbenv_sensors = sensors;
@@ -253,11 +256,14 @@ void
 wbenv_refresh_volts(struct wbenv_softc *sc, int n)
 {
 	struct sensor *sensor = &sc->sc_sensors[n];
-	int data;
+	int data, reg = sc->sc_wbenv_sensors[n].reg;
 
-	data = wbenv_readreg(sc, sc->sc_wbenv_sensors[n].reg);
+	data = wbenv_readreg(sc, reg);
 	sensor->value = (data << 4);
-	sensor->value *= 1000;
+	if (reg == W83L784R_VCC && sc->sc_chip_id == WBENV_CHIPID_W83L784R)
+		sensor->value *= 1000 * (50 + 34) / 50;
+	else
+		sensor->value *= 1000;
 }
 
 void
