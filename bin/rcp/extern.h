@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.5 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.6 2006/03/12 01:51:15 djm Exp $	*/
 /*	$NetBSD: extern.h,v 1.2 1995/03/21 08:19:01 cgd Exp $	*/
 
 /*-
@@ -40,11 +40,23 @@ typedef struct {
 extern int iamremote;
 extern char *__progname;
 
+typedef struct arglist arglist;
+struct arglist {
+	char    **list;
+	u_int   num;
+	u_int   nalloc;
+};
+void	 addargs(arglist *, char *, ...)
+	     __attribute__((format(printf, 2, 3)));
+void	 replacearg(arglist *, u_int, char *, ...)
+	     __attribute__((format(printf, 3, 4)));
+void	 freeargs(arglist *);
+
 BUF	*allocbuf(BUF *, int, int);
 char	*colon(char *);
 void	 lostconn(int);
 void	 nospace(void);
 int	 okname(char *);
 void	 run_err(const char *, ...);
-int	 susystem(char *, int);
 void	 verifydir(char *);
+int	 do_local_cmd(arglist *, uid_t, gid_t);

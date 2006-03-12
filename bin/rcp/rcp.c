@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.42 2005/11/12 18:34:25 deraadt Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.43 2006/03/12 01:51:15 djm Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-static const char rcsid[] = "$OpenBSD: rcp.c,v 1.42 2005/11/12 18:34:25 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: rcp.c,v 1.43 2006/03/12 01:51:15 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,6 +87,7 @@ int	doencrypt = 0;
 struct passwd *pwd;
 u_short	port;
 uid_t	userid;
+gid_t	groupid;
 int errs, rem;
 int pflag, iamremote, iamrecursive, targetshouldbedirectory;
 
@@ -177,6 +178,7 @@ main(int argc, char *argv[])
 
 	if ((pwd = getpwuid(userid = getuid())) == NULL)
 		errx(1, "unknown user %u", userid);
+	groupid = pwd->pw_gid;
 
 	unsetenv("RSH");		/* Force the use of /usr/bin/rsh */
 
@@ -184,15 +186,17 @@ main(int argc, char *argv[])
 
 	if (fflag) {			/* Follow "protocol", send data. */
 		(void)response();
-		(void)seteuid(userid);
-		(void)setuid(userid);
+		(void)setresgid(groupid, groupid, groupid);
+		(void)setgroups(1, &groupid);
+		(void)setresuid(userid, userid, userid);
 		source(argc, argv);
 		exit(errs != 0);
 	}
 
 	if (tflag) {			/* Receive data. */
-		(void)seteuid(userid);
-		(void)setuid(userid);
+		(void)setresgid(groupid, groupid, groupid);
+		(void)setgroups(1, &groupid);
+		(void)setresuid(userid, userid, userid);
 		sink(argc, argv);
 		exit(errs != 0);
 	}
@@ -232,6 +236,10 @@ toremote(char *targ, int argc, char *argv[])
 {
 	int i, tos;
 	char *bp, *host, *src, *suser, *thost, *tuser, *user, *arg;
+	arglist alist;
+
+	memset(&alist, '\0', sizeof(alist));
+	alist.list = NULL;
 
 	if ((user = strdup(pwd->pw_name)) == NULL)
 		err(1, "malloc");
@@ -259,9 +267,14 @@ toremote(char *targ, int argc, char *argv[])
 	for (i = 0; i < argc - 1; i++) {
 		src = colon(argv[i]);
 		if (src) {			/* remote to remote */
+			freeargs(&alist);
+			addargs(&alist, "%s", _PATH_RSH);
+			addargs(&alist, "%s", "-n");
+
 			*src++ = 0;
 			if (*src == 0)
 				src = ".";
+
 			host = strchr(argv[i], '@');
 			if (host) {
 				*host++ = 0;
@@ -270,22 +283,18 @@ toremote(char *targ, int argc, char *argv[])
 					suser = user;
 				else if (!okname(suser))
 					continue;
-				if (asprintf(&bp,
-				    "%s %s -l %s -n %s %s '%s%s%s:%s'",
-				    _PATH_RSH, host, suser, cmd, src,
-				    tuser ? tuser : "", tuser ? "@" : "",
-				    thost, targ) == -1)
-					err(1, NULL);
-			} else {
-				if (asprintf(&bp,
-				    "exec %s %s -n %s %s '%s%s%s:%s'",
-				    _PATH_RSH, argv[i], cmd, src,
-				    tuser ? tuser : "", tuser ? "@" : "",
-				    thost, targ) == -1)
-					err(1, NULL);
-			}
-			(void)susystem(bp, userid);
-			(void)free(bp);
+
+				addargs(&alist, "-l");
+				addargs(&alist, "%s", suser);
+			} else
+				host = argv[1];
+			addargs(&alist, "%s", host);
+			addargs(&alist, "%s", cmd);
+			addargs(&alist, "%s", src);
+			addargs(&alist, "%s%s%s:%s",
+			    tuser ? tuser : "", tuser ? "@" : "",
+			    thost, targ);
+			do_local_cmd(&alist, userid, groupid);
 		} else {			/* local to remote */
 			if (rem == -1) {
 				if (asprintf(&bp, "%s -t %s", cmd, targ) == -1)
@@ -309,8 +318,9 @@ toremote(char *targ, int argc, char *argv[])
 				if (response() < 0)
 					exit(1);
 				(void)free(bp);
-				(void)seteuid(userid);
-				(void)setuid(userid);
+				(void)setresgid(groupid, groupid, groupid);
+				(void)setgroups(1, &groupid);
+				(void)setresuid(userid, userid, userid);
 			}
 			source(1, argv+i);
 		}
@@ -323,19 +333,26 @@ tolocal(int argc, char *argv[])
 {
 	int i, tos;
 	char *bp, *host, *src, *suser, *user;
+	arglist alist;
+
+	memset(&alist, '\0', sizeof(alist));
+	alist.list = NULL;
 
 	if ((user = strdup(pwd->pw_name)) == NULL)
 		err(1, "malloc");
 
 	for (i = 0; i < argc - 1; i++) {
 		if (!(src = colon(argv[i]))) {		/* Local to local. */
-			if (asprintf(&bp, "exec %s%s%s %s %s", _PATH_CP,
-			    iamrecursive ? " -R" : "", pflag ? " -p" : "",
-			    argv[i], argv[argc - 1]) == -1)
-				err(1, NULL);
-			if (susystem(bp, userid))
+			freeargs(&alist);
+			addargs(&alist, "%s", _PATH_CP);
+			if (iamrecursive)
+				addargs(&alist, "-R");
+			if (pflag)
+				addargs(&alist, "-p");
+			addargs(&alist, "%s", argv[i]);
+			addargs(&alist, "%s", argv[argc-1]);
+			if (do_local_cmd(&alist, userid, groupid))
 				++errs;
-			(void)free(bp);
 			continue;
 		}
 		*src++ = 0;

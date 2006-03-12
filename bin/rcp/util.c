@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.15 2004/09/14 22:06:19 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.16 2006/03/12 01:51:15 djm Exp $	*/
 /*	$NetBSD: util.c,v 1.2 1995/03/21 08:19:08 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.2 (Berkeley) 4/2/94";
 #else
-static const char rcsid[] = "$OpenBSD: util.c,v 1.15 2004/09/14 22:06:19 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.16 2006/03/12 01:51:15 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,8 +51,11 @@ static const char rcsid[] = "$OpenBSD: util.c,v 1.15 2004/09/14 22:06:19 deraadt
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdarg.h>
 
 #include "extern.h"
+
+static pid_t do_cmd_pid = -1; /* PID of subprocess during do_local_cmd() */
 
 char *
 colon(char *cp)
@@ -100,33 +103,6 @@ bad:	warnx("%s: invalid user name", cp0);
 	return (0);
 }
 
-int
-susystem(char *s, int userid)
-{
-	sig_t istat, qstat;
-	int status;
-	pid_t pid;
-
-	pid = vfork();
-	switch (pid) {
-	case -1:
-		return (127);
-
-	case 0:
-		(void)seteuid(userid);
-		(void)setuid(userid);
-		execl(_PATH_BSHELL, "sh", "-c", s, (char *)NULL);
-		_exit(127);
-	}
-	istat = signal(SIGINT, SIG_IGN);
-	qstat = signal(SIGQUIT, SIG_IGN);
-	if (waitpid(pid, &status, 0) < 0)
-		status = -1;
-	(void)signal(SIGINT, istat);
-	(void)signal(SIGQUIT, qstat);
-	return (status);
-}
-
 BUF *
 allocbuf(BUF *bp, int fd, int blksize)
 {
@@ -169,4 +145,124 @@ lostconn(int signo)
 		write(STDERR_FILENO, buf, strlen(buf));
 	}
 	_exit(1);
+}
+
+
+static void
+killchild(int signo)
+{
+	if (do_cmd_pid > 1) {
+		kill(do_cmd_pid, signo ? signo : SIGTERM);
+		waitpid(do_cmd_pid, NULL, 0);
+	}
+
+	if (signo)
+		_exit(1);
+	exit(1);
+}
+
+int
+do_local_cmd(arglist *a, uid_t userid, gid_t groupid)
+{
+	u_int i;
+	int status;
+	pid_t pid;
+
+	if (a->num == 0)
+		errx(1, "do_local_cmd: no arguments");
+
+	if ((pid = fork()) == -1)
+		err(1, "do_local_cmd: fork");
+
+	if (pid == 0) {
+		setresgid(groupid, groupid, groupid);
+		setgroups(1, &groupid);
+		setresuid(userid, userid, userid);
+		execvp(a->list[0], a->list);
+		perror(a->list[0]);
+		exit(1);
+	}
+
+	do_cmd_pid = pid;
+	signal(SIGTERM, killchild);
+	signal(SIGINT, killchild);
+	signal(SIGHUP, killchild);
+
+	while (waitpid(pid, &status, 0) == -1)
+		if (errno != EINTR)
+			err(1, "do_local_cmd: waitpid");
+
+	do_cmd_pid = -1;
+
+	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+		return (-1);
+
+	signal(SIGTERM, SIG_DFL);
+	signal(SIGINT, SIG_DFL);
+	signal(SIGHUP, SIG_DFL);
+
+	return (0);
+}
+
+/* function to assist building execv() arguments */
+void
+addargs(arglist *args, char *fmt, ...)
+{
+	va_list ap;
+	char *cp;
+	u_int nalloc;
+	int r;
+
+	va_start(ap, fmt);
+	r = vasprintf(&cp, fmt, ap);
+	va_end(ap);
+	if (r == -1)
+		errx(1, "addargs: argument too long");
+
+	nalloc = args->nalloc;
+	if (args->list == NULL) {
+		nalloc = 32;
+		args->num = 0;
+	} else if (args->num+2 >= nalloc)
+		nalloc *= 2;
+
+	if ((args->list = realloc(args->list, nalloc * sizeof(char *))) == NULL)
+		errx(1, "addargs: realloc failed");
+	args->nalloc = nalloc;
+	args->list[args->num++] = cp;
+	args->list[args->num] = NULL;
+}
+
+void
+replacearg(arglist *args, u_int which, char *fmt, ...)
+{
+	va_list ap;
+	char *cp;
+	int r;
+
+	va_start(ap, fmt);
+	r = vasprintf(&cp, fmt, ap);
+	va_end(ap);
+	if (r == -1)
+		errx(1, "replacearg: argument too long");
+
+	if (which >= args->num)
+		errx(1, "replacearg: tried to replace invalid arg %d >= %d",
+		    which, args->num);
+	free(args->list[which]);
+	args->list[which] = cp;
+}
+
+void
+freeargs(arglist *args)
+{
+	u_int i;
+
+	if (args->list != NULL) {
+		for (i = 0; i < args->num; i++)
+			free(args->list[i]);
+		free(args->list);
+		args->nalloc = args->num = 0;
+		args->list = NULL;
+	}
 }
