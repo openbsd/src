@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.h,v 1.14 2006/01/28 09:53:37 dlg Exp $	*/
+/*	$OpenBSD: sensors.h,v 1.15 2006/03/12 13:48:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -80,8 +80,6 @@ struct sensor {
 #define SENSOR_FINVALID		0x0001	/* sensor is invalid */
 #define SENSOR_FUNKNOWN		0x0002	/* sensor value is unknown */
 };
-
-SLIST_HEAD(sensors_head, sensor);
 
 #ifdef _KERNEL
 
