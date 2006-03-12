@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.277 2006/01/12 21:54:15 deraadt Exp $
+#	$OpenBSD: rc,v 1.278 2006/03/12 20:07:48 otto Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -254,8 +254,8 @@ if [ X"${pf}" != X"NO" ]; then
 	fi
 fi
 
-mount /usr >/dev/null 2>&1
-mount /var >/dev/null 2>&1
+mount -s /usr >/dev/null 2>&1
+mount -s /var >/dev/null 2>&1
 
 # if there's no /var/db/host.random, make one through /dev/urandom
 if [ ! -f /var/db/host.random ]; then
@@ -401,7 +401,7 @@ if [ X"${ntpd_flags}" != X"NO" ]; then
 fi
 echo '.'
 
-mount -a -t nfs
+mount -a
 
 swapctl -A -t noblk
 
