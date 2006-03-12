@@ -1,4 +1,4 @@
-/*	$OpenBSD: intrdefs.h,v 1.5 2005/05/31 09:31:15 art Exp $	*/
+/*	$OpenBSD: intrdefs.h,v 1.6 2006/03/12 02:04:16 brad Exp $	*/
 /*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 #ifndef _i386_INTRDEFS_H
@@ -63,7 +63,6 @@
 #define	IPL_SOFTTTY	MAKEIPL(4)	/* delayed terminal handling */
 #define	IPL_TTY		MAKEIPL(5)	/* terminal */
 #define	IPL_VM		MAKEIPL(6)	/* memory allocation */
-#define IPL_IMP		IPL_VM		/* XXX - should not be here. */
 #define	IPL_AUDIO	MAKEIPL(7)	/* audio */
 #define	IPL_CLOCK	MAKEIPL(8)	/* clock */
 #define	IPL_STATCLOCK	MAKEIPL(9)	/* statclock */
