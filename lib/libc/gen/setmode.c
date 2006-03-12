@@ -1,4 +1,4 @@
-/*	$OpenBSD: setmode.c,v 1.18 2005/10/26 20:37:13 otto Exp $	*/
+/*	$OpenBSD: setmode.c,v 1.19 2006/03/12 18:36:46 otto Exp $	*/
 /*	$NetBSD: setmode.c,v 1.15 1997/02/07 22:21:06 christos Exp $	*/
 
 /*
@@ -162,15 +162,15 @@ void *
 setmode(const char *p)
 {
 	char op, *ep;
-	BITCMD *set, *saveset = NULL, *endset;
+	BITCMD *set, *saveset, *endset;
 	sigset_t sigset, sigoset;
 	mode_t mask, perm, permXbits, who;
-	int equalopdone, setlen, serrno;
+	int equalopdone, setlen;
 	u_long perml;
 
 	if (!*p) {
 		errno = EINVAL;
-		goto out;
+		return (NULL);
 	}
 
 	/*
@@ -188,7 +188,7 @@ setmode(const char *p)
 	setlen = SET_LEN + 2;
 	
 	if ((set = malloc((u_int)(sizeof(BITCMD) * setlen))) == NULL)
-		goto out;
+		return (NULL);
 	saveset = set;
 	endset = set + (setlen - 2);
 
@@ -200,8 +200,9 @@ setmode(const char *p)
 		perml = strtoul(p, &ep, 8);
 		/* The test on perml will also catch overflow. */
 		if (*ep != '\0' || (perml & ~(STANDARD_BITS|S_ISTXT))) {
+			free(saveset);
 			errno = ERANGE;
-			goto out;
+			return (NULL);
 		}
 		perm = (mode_t)perml;
 		ADDCMD('=', (STANDARD_BITS|S_ISTXT), perm, mask);
@@ -235,8 +236,9 @@ setmode(const char *p)
 		}
 
 getop:		if ((op = *p++) != '+' && op != '-' && op != '=') {
+			free(saveset);
 			errno = EINVAL;
-			goto out;
+			return (NULL);
 		}
 		if (op == '=')
 			equalopdone = 0;
@@ -331,11 +333,6 @@ apply:		if (!*p)
 	dumpmode(saveset);
 #endif
 	return (saveset);
-out:
-	serrno = errno;
-	free(saveset);
-	errno = serrno;
-	return (NULL);
 }
 
 static BITCMD *
