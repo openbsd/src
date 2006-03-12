@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.75 2006/03/07 22:36:39 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.76 2006/03/12 11:18:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -459,7 +459,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 	case 0x5c:		/* SMSC */
 		if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
 		    (iicprobe(0x3f) & 0xf0) == 0x60)
-			name = "emc6d100";	/* adt7460 compat */
+			name = "emc6d100";   /* emc6d101, emc6d102, emc6d103 */
 		else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
 		    (iicprobe(0x3f) & 0xf0) == 0x80)
 			name = "sch5017";
