@@ -1,7 +1,5 @@
-@@ -1,2 +1,15 @@
--/* $Id: rcsdiff.out,v 1.1 2006/03/11 06:22:47 ray Exp $ */
+@@ -1 +1,14 @@
 -blah();
-+/* $Id: rcsdiff.out,v 1.1 2006/03/11 06:22:47 ray Exp $ */
 +#include <stdio.h>
 +#include <stdlib.h>
 +#include <string.h>

@@ -1,4 +1,3 @@
-/* $Id: rev3,v 1.1 2006/03/11 06:22:47 ray Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

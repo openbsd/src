@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2006/03/11 06:22:47 ray Exp $
+#	$OpenBSD: Makefile,v 1.2 2006/03/12 00:36:00 ray Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -164,7 +164,6 @@ test-rcsmerge:
 	@${CI} -q -l -m"third rev" blah.c
 
 	@${RCSMERGE} -q -r1.1 -r1.3 -p blah.c |				\
-	    sed 's/\($$Id: Makefile,v 1.1 2006/03/11 06:22:47 ray Exp $$]*/\1/' |	\
 	    diff -u ${.CURDIR}/rcsmerge.out -
 
 test-rcsdiff:
@@ -178,7 +177,6 @@ test-rcsdiff:
 	@${CI} -q -l -m"third rev" blah.c
 
 	@${RCSDIFF} -q -r1.1 -r1.3 -u blah.c | tail -n +3 |		\
-	    sed 's/\($$Id: Makefile,v 1.1 2006/03/11 06:22:47 ray Exp $$]*/\1/' |	\
 	    diff -u ${.CURDIR}/rcsdiff.out -
 
 # Testing 'ci -d'2037-01-12 04:00:00+00' -l test
