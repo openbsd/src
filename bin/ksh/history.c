@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.32 2005/12/11 18:53:51 deraadt Exp $	*/
+/*	$OpenBSD: history.c,v 1.33 2006/03/12 00:26:58 deraadt Exp $	*/
 
 /*
  * command history
@@ -65,7 +65,7 @@ c_fc(char **wp)
 	}
 
 	while ((optc = ksh_getopt(wp, &builtin_opt,
-	    "e:glnrs0,1,2,3,4,5,6,7,8,9,")) != EOF)
+	    "e:glnrs0,1,2,3,4,5,6,7,8,9,")) != -1)
 		switch (optc) {
 		case 'e':
 			p = builtin_opt.optarg;

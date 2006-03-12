@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.28 2005/12/11 20:31:21 otto Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.29 2006/03/12 00:26:58 deraadt Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -24,7 +24,7 @@ c_cd(char **wp)
 	int phys_path;
 	char *cdpath;
 
-	while ((optc = ksh_getopt(wp, &builtin_opt, "LP")) != EOF)
+	while ((optc = ksh_getopt(wp, &builtin_opt, "LP")) != -1)
 		switch (optc) {
 		case 'L':
 			physical = 0;
@@ -159,7 +159,7 @@ c_pwd(char **wp)
 	int physical = Flag(FPHYSICAL);
 	char *p;
 
-	while ((optc = ksh_getopt(wp, &builtin_opt, "LP")) != EOF)
+	while ((optc = ksh_getopt(wp, &builtin_opt, "LP")) != -1)
 		switch (optc) {
 		case 'L':
 			physical = 0;
@@ -241,7 +241,7 @@ c_print(char **wp)
 	} else {
 		int optc;
 		const char *options = "Rnprsu,";
-		while ((optc = ksh_getopt(wp, &builtin_opt, options)) != EOF)
+		while ((optc = ksh_getopt(wp, &builtin_opt, options)) != -1)
 			switch (optc) {
 			case 'R': /* fake BSD echo command */
 				flags |= PO_PMINUSMINUS;
@@ -398,7 +398,7 @@ c_whence(char **wp)
 	int fcflags;
 	const char *options = iam_whence ? "pv" : "pvV";
 
-	while ((optc = ksh_getopt(wp, &builtin_opt, options)) != EOF)
+	while ((optc = ksh_getopt(wp, &builtin_opt, options)) != -1)
 		switch (optc) {
 		case 'p':
 			pflag = 1;
@@ -557,7 +557,7 @@ c_typeset(char **wp)
 	 * Here, the number must follow the RLZi option, but is optional
 	 * (see the # kludge in ksh_getopt()).
 	 */
-	while ((optc = ksh_getopt(wp, &builtin_opt, options)) != EOF) {
+	while ((optc = ksh_getopt(wp, &builtin_opt, options)) != -1) {
 		flag = 0;
 		switch (optc) {
 		case 'L':
@@ -825,7 +825,7 @@ c_alias(char **wp)
 	int optc;
 
 	builtin_opt.flags |= GF_PLUSOPT;
-	while ((optc = ksh_getopt(wp, &builtin_opt, "dprtUx")) != EOF) {
+	while ((optc = ksh_getopt(wp, &builtin_opt, "dprtUx")) != -1) {
 		prefix = builtin_opt.info & GI_PLUS ? '+' : '-';
 		switch (optc) {
 		case 'd':
@@ -959,7 +959,7 @@ c_unalias(char **wp)
 	int rv = 0, all = 0;
 	int optc;
 
-	while ((optc = ksh_getopt(wp, &builtin_opt, "adt")) != EOF)
+	while ((optc = ksh_getopt(wp, &builtin_opt, "adt")) != -1)
 		switch (optc) {
 		case 'a':
 			all = 1;
@@ -1029,7 +1029,7 @@ c_jobs(char **wp)
 	int nflag = 0;
 	int rv = 0;
 
-	while ((optc = ksh_getopt(wp, &builtin_opt, "lpnz")) != EOF)
+	while ((optc = ksh_getopt(wp, &builtin_opt, "lpnz")) != -1)
 		switch (optc) {
 		case 'l':
 			flag = 1;
@@ -1129,7 +1129,7 @@ c_kill(char **wp)
 	} else {
 		int optc;
 
-		while ((optc = ksh_getopt(wp, &builtin_opt, "ls:")) != EOF)
+		while ((optc = ksh_getopt(wp, &builtin_opt, "ls:")) != -1)
 			switch (optc) {
 			case 'l':
 				lflag = 1;
@@ -1333,7 +1333,7 @@ c_bind(char **wp)
 	int optc, rv = 0, macro = 0, list = 0;
 	char *cp;
 
-	while ((optc = ksh_getopt(wp, &builtin_opt, "lm")) != EOF)
+	while ((optc = ksh_getopt(wp, &builtin_opt, "lm")) != -1)
 		switch (optc) {
 		case 'l':
 			list = 1;
