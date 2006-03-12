@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.48 2006/01/02 05:21:37 brad Exp $	*/
+/*	$OpenBSD: audio.c,v 1.49 2006/03/12 10:34:50 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -849,7 +849,9 @@ audio_init_ringbuffer(rp)
 	rp->end = rp->start + nblks * blksize;
 	rp->inp = rp->outp = rp->start;
 	rp->stamp = 0;
+	rp->stamp_last = 0;
 	rp->drops = 0;
+	rp->pdrops = 0;
 	rp->pause = 0;
 	rp->copying = 0;
 	rp->needfill = 0;
