@@ -1,4 +1,4 @@
-/*	$OpenBSD: adt7460.c,v 1.7 2006/03/04 02:58:14 deraadt Exp $	*/
+/*	$OpenBSD: adt7460.c,v 1.8 2006/03/12 11:21:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -84,8 +84,9 @@ adt_match(struct device *parent, void *match, void *aux)
 	    strcmp(ia->ia_name, "adt7476") == 0 ||
 	    strcmp(ia->ia_name, "adm1027") == 0 ||
 	    strcmp(ia->ia_name, "lm85") == 0 ||
-	    strcmp(ia->ia_name, "emc6d10x") == 0 ||
-	    strcmp(ia->ia_name, "lm96000") == 0)
+	    strcmp(ia->ia_name, "lm96000") == 0 ||
+	    strcmp(ia->ia_name, "emc6d100") == 0 ||
+	    strcmp(ia->ia_name, "emc6w201") == 0)
 		return (1);
 	return (0);
 }
@@ -130,7 +131,7 @@ adt_attach(struct device *parent, struct device *self, void *aux)
 
 	iic_release_bus(sc->sc_tag, 0);
 
-	printf(": %s (ADT%d) rev %x", ia->ia_name, sc->sc_chip, rev);
+	printf(": %s (ADT%d) rev 0x%02x", ia->ia_name, sc->sc_chip, rev);
 
 	/* Initialize sensor data. */
 	for (i = 0; i < ADT_NUM_SENSORS; i++)
@@ -154,7 +155,7 @@ adt_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensor[ADT_LOCAL_TEMP].desc));
 
 	sc->sc_sensor[ADT_REM2_TEMP].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADT_REM2_TEMP].desc, "Rem1 Temp.",
+	strlcpy(sc->sc_sensor[ADT_REM2_TEMP].desc, "Rem2 Temp.",
 	    sizeof(sc->sc_sensor[ADT_REM2_TEMP].desc));
 
 	sc->sc_sensor[ADT_TACH1].type = SENSOR_FANRPM;
