@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: makelintstub.sh,v 1.4 2004/07/17 07:02:29 deraadt Exp $
+#	$OpenBSD: makelintstub.sh,v 1.5 2006/03/12 20:12:14 deraadt Exp $
 #	$NetBSD: makelintstub,v 1.2 1997/11/05 05:46:18 thorpej Exp $
 #
 # Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,11 +105,6 @@ syscall_stub()
 	returntype=$1
 	shift 2			# kill return type and "args:"
 
-	cat <<- __EOF__
-	/*ARGSUSED*/
-	$returntype
-	__EOF__
-
 	if [ "`eval echo -n \\$$#`" = "..." ]; then
 		varargs=YES
 		nargs=$(($# - 1))
@@ -119,18 +114,25 @@ syscall_stub()
 	fi
 	nargswithva=$#
 
+	echo "/*ARGSUSED*/"
+	echo "$returntype"
+
 	# do ANSI C function header
 
 	echo -n	"$funcname("
-	i=1
-	while [ $i -le $nargs ]; do
-		eval echo -n \""\$$i"\"
-		echo -n	" arg$i"
-		if [ $i -lt $nargswithva ]; then
-			echo -n	", "
-		fi
-		i=$(($i + 1))
-	done
+	if [ $nargs -eq 0 ]; then
+		echo -n "void"
+	else
+		i=1
+		while [ $i -le $nargs ]; do
+			eval echo -n \""\$$i"\"
+			echo -n	" arg$i"
+			if [ $i -lt $nargswithva ]; then
+				echo -n	", "
+			fi
+			i=$(($i + 1))
+		done
+	fi
 	if [ $varargs = YES ]; then
 		echo -n "..."
 	fi
