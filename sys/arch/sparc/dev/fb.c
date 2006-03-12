@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.35 2006/03/12 22:17:47 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.36 2006/03/12 22:53:01 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -463,7 +463,6 @@ void
 fbwscons_attach(struct sunfb *sf, struct wsdisplay_accessops *op, int isconsole)
 {
 	struct wsemuldisplaydev_attach_args waa;
-	struct wsscreen_descr *scrlist[1];
 
 	if (isconsole == 0) {
 		/* done in wsdisplay_cnattach() earlier if console */
@@ -481,9 +480,9 @@ fbwscons_attach(struct sunfb *sf, struct wsdisplay_accessops *op, int isconsole)
 		op->show_screen = fb_show_screen;
 	}
 
-	scrlist[0] = &sf->sf_wsd;
+	sf->sf_scrlist[0] = &sf->sf_wsd;
 	sf->sf_wsl.nscreens = 1;
-	sf->sf_wsl.screens = (const struct wsscreen_descr **)scrlist;
+	sf->sf_wsl.screens = (const struct wsscreen_descr **)sf->sf_scrlist;
 
 	waa.console = isconsole;
 	waa.scrdata = &sf->sf_wsl;

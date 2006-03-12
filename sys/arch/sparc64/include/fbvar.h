@@ -1,4 +1,4 @@
-/*	$OpenBSD: fbvar.h,v 1.5 2006/03/12 22:17:51 miod Exp $	*/
+/*	$OpenBSD: fbvar.h,v 1.6 2006/03/12 22:53:02 miod Exp $	*/
 /*	$NetBSD: fbvar.h,v 1.9 1997/07/07 23:31:30 pk Exp $ */
 
 /*
@@ -61,6 +61,7 @@ struct sunfb {
 
 	struct	wsscreen_descr sf_wsd;
 	struct	wsscreen_list sf_wsl;
+	struct	wsscreen_descr *sf_scrlist[1];
 };
 
 /*
