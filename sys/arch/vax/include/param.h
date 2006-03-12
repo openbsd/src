@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.29 2005/11/08 15:05:56 martin Exp $ */
+/*	$OpenBSD: param.h,v 1.30 2006/03/12 03:14:37 brad Exp $ */
 /*      $NetBSD: param.h,v 1.39 1999/10/22 21:14:34 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -188,7 +188,6 @@
 #define splbio()	_splraise(0x15)	/* IPL15 */
 #define splnet()	_splraise(0x15)	/* IPL15 */
 #define spltty()	_splraise(0x15)	/* IPL15 */
-#define splimp()	_splraise(0x17)	/* IPL17 */
 #define splvm()		_splraise(0x17)	/* IPL17 */
 #define splclock()	_splraise(0x18)	/* IPL18 */
 #define splhigh()	_splraise(0x1f)	/* IPL1F */

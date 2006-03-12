@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.21 2006/01/29 10:47:35 martin Exp $ */
+/* $OpenBSD: intr.h,v 1.22 2006/03/12 03:14:36 brad Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -125,7 +125,6 @@ int _splraise(int);
 #define splsoftnet()		splsoft()
 #define splnet()                _splraise(ALPHA_PSL_IPL_IO)
 #define splbio()                _splraise(ALPHA_PSL_IPL_IO)
-#define splimp()                _splraise(ALPHA_PSL_IPL_IO)
 #define spltty()                _splraise(ALPHA_PSL_IPL_IO)
 #define splserial()             _splraise(ALPHA_PSL_IPL_IO)
 #define splaudio()		_splraise(ALPHA_PSL_IPL_IO)

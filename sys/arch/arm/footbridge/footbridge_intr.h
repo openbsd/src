@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge_intr.h,v 1.5 2005/09/22 04:14:44 drahn Exp $	*/
+/*	$OpenBSD: footbridge_intr.h,v 1.6 2006/03/12 03:14:36 brad Exp $	*/
 /* 	$NetBSD: footbridge_intr.h,v 1.4 2003/01/03 00:56:00 thorpej Exp $	*/
 
 /*
@@ -171,7 +171,6 @@ void	_setsoftintr(int);
 #define	spltty()	_splraise(IPL_TTY)
 #define spllpt()        spltty()
 #define	splvm()		_splraise(IPL_VM)
-#define	splimp()	_splraise(IPL_VM)
 #define	splaudio()	_splraise(IPL_AUDIO)
 #define	splclock()	_splraise(IPL_CLOCK)
 #define	splstatclock()	_splraise(IPL_STATCLOCK)

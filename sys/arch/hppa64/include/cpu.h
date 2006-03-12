@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.8 2005/09/25 20:48:21 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.9 2006/03/12 03:14:37 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -101,7 +101,6 @@
 #define	splsofttty()	splraise(IPL_SOFTTTY)
 #define	spltty()	splraise(IPL_TTY)
 #define	splvm()		splraise(IPL_VM)
-#define	splimp()	splvm()
 #define	splaudio()	splraise(IPL_AUDIO)
 #define	splclock()	splraise(IPL_CLOCK)
 #define	splsched()	splraise(IPL_SCHED)

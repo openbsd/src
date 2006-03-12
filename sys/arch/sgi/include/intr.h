@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.13 2005/04/19 15:29:48 mickey Exp $ */
+/*	$OpenBSD: intr.h,v 1.14 2006/03/12 03:14:37 brad Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -87,7 +87,6 @@
 #define spltty()		splraise(imask[IPL_TTY])
 #define splaudio()		splraise(imask[IPL_AUDIO])
 #define splclock()		splraise(SPL_CLOCKMASK|SINT_ALLMASK)
-#define splimp()		splraise(imask[IPL_VM])
 #define splvm()			splraise(imask[IPL_VM])
 #define splsoftclock()		splraise(SINT_CLOCKMASK)
 #define splsoftnet()		splraise(SINT_NETMASK|SINT_CLOCKMASK)
@@ -97,7 +96,6 @@
 #define splnet()		splhigh()
 #define spltty()		splhigh()
 #define splclock()		splhigh()
-#define splimp()		splhigh()
 #define splvm()			splhigh()
 #define splsoftclock()		splhigh()
 #define splsoftnet()		splhigh()

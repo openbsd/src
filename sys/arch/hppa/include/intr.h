@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.19 2005/04/19 15:29:47 mickey Exp $	*/
+/*	$OpenBSD: intr.h,v 1.20 2006/03/12 03:14:36 brad Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -110,7 +110,6 @@ splx(int ncpl)
 #define	splsofttty()	splraise(IPL_SOFTTTY)
 #define	spltty()	splraise(IPL_TTY)
 #define	splvm()		splraise(IPL_VM)
-#define	splimp()	splvm()
 #define	splaudio()	splraise(IPL_AUDIO)
 #define	splclock()	splraise(IPL_CLOCK)
 #define	splstatclock()	splraise(IPL_STATCLOCK)
