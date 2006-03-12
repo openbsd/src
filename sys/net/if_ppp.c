@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.44 2006/03/04 22:40:15 brad Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.45 2006/03/12 00:18:07 brad Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -379,6 +379,7 @@ pppdealloc(sc)
     sc->sc_xc_state = NULL;
     sc->sc_rc_state = NULL;
 #endif /* PPP_COMPRESS */
+#if NBPFILTER > 0
     if (sc->sc_pass_filt.bf_insns != 0) {
 	FREE(sc->sc_pass_filt.bf_insns, M_DEVBUF);
 	sc->sc_pass_filt.bf_insns = 0;
@@ -389,6 +390,7 @@ pppdealloc(sc)
 	sc->sc_active_filt.bf_insns = 0;
 	sc->sc_active_filt.bf_len = 0;
     }
+#endif
 #ifdef VJC
     if (sc->sc_comp != 0) {
 	FREE(sc->sc_comp, M_DEVBUF);
@@ -414,9 +416,11 @@ pppioctl(sc, cmd, data, flag, p)
     struct compressor **cp;
     struct npioctl *npi;
     time_t t;
+#if NBPFILTER > 0
     struct bpf_program *bp, *nbp;
     struct bpf_insn *newcode, *oldcode;
     int newcodelen;
+#endif
 #ifdef	PPP_COMPRESS
     u_char ccp_option[CCP_MAX_OPTION_LENGTH];
 #endif
@@ -572,6 +576,7 @@ pppioctl(sc, cmd, data, flag, p)
 	splx(s);
 	break;
 
+#if NBPFILTER > 0
     case PPPIOCSPASS:
     case PPPIOCSACTIVE:
 	nbp = (struct bpf_program *) data;
@@ -600,6 +605,7 @@ pppioctl(sc, cmd, data, flag, p)
 	if (oldcode != 0)
 	    FREE(oldcode, M_DEVBUF);
 	break;
+#endif
 
     default:
 	return (-1);
@@ -801,6 +807,7 @@ pppoutput(ifp, m0, dst, rtp)
     }
 
     if ((protocol & 0x8000) == 0) {
+#if NBPFILTER > 0
 	/*
 	 * Apply the pass and active filters to the packet,
 	 * but only if it is a data packet.
@@ -821,6 +828,12 @@ pppoutput(ifp, m0, dst, rtp)
 	    sc->sc_last_sent = time_second;
 
 	*mtod(m0, u_char *) = address;
+#else
+	/*
+	 * Update the time we sent the most recent packet.
+	 */
+	sc->sc_last_sent = time_second;
+#endif
     }
 
 #if NBPFILTER > 0
@@ -1463,6 +1476,7 @@ ppp_inproc(sc, m)
     m->m_pkthdr.rcvif = ifp;
 
     if ((proto & 0x8000) == 0) {
+#if NBPFILTER > 0
 	/*
 	 * See whether we want to pass this packet, and
 	 * if it counts as link activity.
@@ -1481,6 +1495,12 @@ ppp_inproc(sc, m)
 	    sc->sc_last_recv = time_second;
 
 	*mtod(m, u_char *) = adrs;
+#else
+	/*
+	 * Record the time that we received this packet.
+	 */
+	sc->sc_last_recv = time_second;
+#endif
     }
 
 #if NBPFILTER > 0

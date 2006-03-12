@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.366 2006/03/04 16:27:02 grange Exp $
+#	$OpenBSD: files,v 1.367 2006/03/12 00:18:07 brad Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -694,7 +694,7 @@ file ntfs/ntfs_subr.c			ntfs
 file ntfs/ntfs_vfsops.c			ntfs
 file ntfs/ntfs_vnops.c			ntfs
 file net/bpf.c				bpfilter		needs-count
-file net/bpf_filter.c			bpfilter | ppp
+file net/bpf_filter.c			bpfilter
 file net/if.c
 file net/if_arcsubr.c			arc			needs-flag
 file net/if_atmsubr.c			atm			needs-flag
