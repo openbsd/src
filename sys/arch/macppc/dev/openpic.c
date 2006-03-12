@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.33 2005/11/17 15:03:51 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.34 2006/03/12 02:49:50 brad Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -361,15 +361,15 @@ intr_calculatemasks()
 
 	/*
 	 * There are tty, network and disk drivers that use free() at interrupt
-	 * time, so imp > (tty | net | bio).
+	 * time, so vm > (tty | net | bio).
 	 *
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
 	imask[IPL_NET] |= imask[IPL_BIO];
 	imask[IPL_TTY] |= imask[IPL_NET];
-	imask[IPL_IMP] |= imask[IPL_TTY];
-	imask[IPL_CLOCK] |= imask[IPL_IMP] | SPL_CLOCK;
+	imask[IPL_VM] |= imask[IPL_TTY];
+	imask[IPL_CLOCK] |= imask[IPL_VM] | SPL_CLOCK;
 
 	/*
 	 * These are pseudo-levels.
