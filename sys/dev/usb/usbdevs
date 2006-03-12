@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.186 2006/03/11 04:05:44 jsg Exp $
+$OpenBSD: usbdevs,v 1.187 2006/03/12 00:33:45 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -405,6 +405,7 @@ vendor ACERCM		0x1189	Acer Communications & Multimedia
 vendor SIERRA		0x1199	Sierra Wireless
 vendor TSUNAMI		0x1241	Tsunami
 vendor PHEENET		0x124a	Pheenet
+vendor RAPTORGAMING	0x1267	Raptor Gaming
 vendor BELKIN2		0x1293	Belkin Components
 vendor ARANEUS		0x12d8	Araneus Information Systems
 vendor TAPWAVE		0x12ef	Tapwave
