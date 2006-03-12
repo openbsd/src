@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.30 2006/03/11 15:07:29 miod Exp $ */
+/*	$OpenBSD: intr.h,v 1.31 2006/03/12 02:55:58 brad Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -41,7 +41,6 @@
 #define	IPL_NET		2
 #define	IPL_TTY		3
 #define	IPL_VM		4
-#define	IPL_IMP		IPL_VM
 #define	IPL_CLOCK	5
 #define	IPL_HIGH	6
 #define	IPL_NUM		7
@@ -138,10 +137,9 @@ set_sint(int pending)
 #define splbio()	splraise(imask[IPL_BIO])
 #define splnet()	splraise(imask[IPL_NET])
 #define spltty()	splraise(imask[IPL_TTY])
-#define splimp()	splraise(imask[IPL_IMP])
 #define splaudio()	splraise(imask[IPL_AUDIO])
 #define splclock()	splraise(imask[IPL_CLOCK])
-#define splvm()		splraise(imask[IPL_IMP])
+#define splvm()		splraise(imask[IPL_VM])
 #define splstatclock()	splhigh()
 #define	splsoftclock()	splraise(SINT_CLOCK)
 #define	splsoftnet()	splraise(SINT_NET|SINT_CLOCK)
