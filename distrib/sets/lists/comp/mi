@@ -100,6 +100,7 @@
 ./usr/include/des.h
 ./usr/include/dev
 ./usr/include/dev/acpi
+./usr/include/dev/acpi/acpidebug.h
 ./usr/include/dev/acpi/acpidev.h
 ./usr/include/dev/acpi/acpireg.h
 ./usr/include/dev/acpi/acpivar.h
@@ -460,10 +461,14 @@
 ./usr/include/dev/ofw
 ./usr/include/dev/ofw/ofw_pci.h
 ./usr/include/dev/ofw/openfirm.h
+./usr/include/dev/onewire
+./usr/include/dev/onewire/onewiredevs.h
+./usr/include/dev/onewire/onewiredevs_data.h
+./usr/include/dev/onewire/onewirereg.h
+./usr/include/dev/onewire/onewirevar.h
 ./usr/include/dev/pci
 ./usr/include/dev/pci/agpreg.h
 ./usr/include/dev/pci/agpvar.h
-./usr/include/dev/pci/amdpmreg.h
 ./usr/include/dev/pci/auixpreg.h
 ./usr/include/dev/pci/auixpvar.h
 ./usr/include/dev/pci/autrireg.h

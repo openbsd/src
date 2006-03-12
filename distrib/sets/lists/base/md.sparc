@@ -144,6 +144,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/des.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi/acpidebug.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi/acpidev.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi/acpireg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/acpi/acpivar.ph
@@ -504,10 +505,14 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ofw
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ofw/ofw_pci.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ofw/openfirm.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/onewire
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/onewire/onewiredevs.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/onewire/onewiredevs_data.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/onewire/onewirereg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/onewire/onewirevar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/agpreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/agpvar.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/amdpmreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/auixpreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/auixpvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/autrireg.ph
