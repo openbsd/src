@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.12 2005/05/01 09:55:49 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.13 2006/03/12 03:28:28 brad Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -97,7 +97,6 @@ u_long	allocate_sir(void (*proc)(void *), void *arg);
 #define	splsoftnet()		splsoft()
 #define	splbio()		_splraise(PSL_S | PSL_IPL2)
 #define	splnet()		_splraise(PSL_S | PSL_IPL3)
-#define	splimp()		_splraise(PSL_S | PSL_IPL3)
 #define	spltty()		_splraise(PSL_S | PSL_IPL3)
 #define	splvm()			_splraise(PSL_S | PSL_IPL3)
 #define	splclock()		_splraise(PSL_S | PSL_IPL5)
