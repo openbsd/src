@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace-translate.c,v 1.18 2005/05/03 18:03:26 sturm Exp $	*/
+/*	$OpenBSD: systrace-translate.c,v 1.19 2006/03/12 20:56:10 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -33,6 +33,8 @@
 #include <sys/wait.h>
 #include <sys/tree.h>
 #include <sys/socket.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -61,6 +63,9 @@ static int print_number(char *, size_t, struct intercept_translate *);
 static int print_uname(char *, size_t, struct intercept_translate *);
 static int print_pidname(char *, size_t, struct intercept_translate *);
 static int print_signame(char *, size_t, struct intercept_translate *);
+static int print_fcntlcmd(char *, size_t, struct intercept_translate *);
+static int print_memprot(char *, size_t, struct intercept_translate *);
+static int print_fileflags(char *, size_t, struct intercept_translate *);
 static int get_argv(struct intercept_translate *, int, pid_t, void *);
 static int print_argv(char *, size_t, struct intercept_translate *);
 
@@ -371,6 +376,162 @@ print_signame(char *buf, size_t buflen, struct intercept_translate *tl)
 }
 
 static int
+print_fcntlcmd(char *buf, size_t buflen, struct intercept_translate *tl)
+{
+	int cmd = (intptr_t)tl->trans_addr;
+	char *name;
+
+	switch (cmd) {
+	case F_DUPFD:
+		name = "F_DUPFD";
+		break;
+	case F_GETFD:
+		name = "F_GETFD";
+		break;
+	case F_SETFD:
+		name = "F_SETFD";
+		break;
+	case F_GETFL:
+		name = "F_GETFL";
+		break;
+	case F_SETFL:
+		name = "F_SETFL";
+		break;
+	case F_GETOWN:
+		name = "F_GETOWN";
+		break;
+	case F_SETOWN:
+		name = "F_SETOWN";
+		break;
+	case F_GETLK:
+		name = "F_GETLK";
+		break;
+	case F_SETLK:
+		name = "F_SETLK";
+		break;
+	case F_SETLKW:
+		name = "F_SETLKW";
+		break;
+	default:
+		snprintf(buf, buflen, "<unknown>: %d", cmd);
+		return (0);
+	}
+
+	snprintf(buf, buflen, "%s", name);
+	return (0);
+}
+
+static int
+print_memprot(char *buf, size_t buflen, struct intercept_translate *tl)
+{
+	int prot = (intptr_t)tl->trans_addr;
+	char lbuf[64];
+
+	if (prot == PROT_NONE) {
+		strlcpy(buf, "PROT_NONE", buflen);
+		return (0);
+	} else
+		*buf = '\0';
+
+	while (prot) {
+		if (*buf)
+			strlcat(buf, "|", buflen);
+
+		if (prot & PROT_READ) {
+			strlcat(buf, "PROT_READ", buflen);
+			prot &= ~PROT_READ;
+			continue;
+		}
+
+		if (prot & PROT_WRITE) {
+			strlcat(buf, "PROT_WRITE", buflen);
+			prot &= ~PROT_WRITE;
+			continue;
+		}
+
+		if (prot & PROT_EXEC) {
+			strlcat(buf, "PROT_EXEC", buflen);
+			prot &= ~PROT_EXEC;
+			continue;
+		}
+
+		if (prot) {
+			snprintf(lbuf, sizeof(lbuf), "<unknown:0x%x>", prot);
+			strlcat(buf, lbuf, buflen);
+			prot = 0;
+			continue;
+		}
+	}
+
+	return (0);
+}
+
+static int
+print_fileflags(char *buf, size_t buflen, struct intercept_translate *tl)
+{
+	unsigned int flags = (intptr_t)tl->trans_addr;
+	char lbuf[64];
+
+	*buf = '\0';
+
+	while (flags) {
+		if (*buf)
+			strlcat(buf, "|", buflen);
+
+		if (flags & UF_NODUMP) {
+			strlcat(buf, "UF_NODUMP", buflen);
+			flags &= ~UF_NODUMP;
+			continue;
+		}
+
+		if (flags & UF_IMMUTABLE) {
+			strlcat(buf, "UF_IMMUTABLE", buflen);
+			flags &= ~UF_IMMUTABLE;
+			continue;
+		}
+
+		if (flags & UF_APPEND) {
+			strlcat(buf, "UF_APPEND", buflen);
+			flags &= ~UF_APPEND;
+			continue;
+		}
+
+		if (flags & UF_OPAQUE) {
+			strlcat(buf, "UF_OPAQUE", buflen);
+			flags &= ~UF_OPAQUE;
+			continue;
+		}
+
+		if (flags & SF_ARCHIVED) {
+			strlcat(buf, "SF_ARCHIVED", buflen);
+			flags &= ~SF_ARCHIVED;
+			continue;
+		}
+
+		if (flags & SF_IMMUTABLE) {
+			strlcat(buf, "SF_IMMUTABLE", buflen);
+			flags &= ~SF_IMMUTABLE;
+			continue;
+		}
+
+		if (flags & SF_APPEND) {
+			strlcat(buf, "SF_APPEND", buflen);
+			flags &= ~SF_APPEND;
+			continue;
+		}
+
+		if (flags) {
+			snprintf(lbuf, sizeof(lbuf), "<unknown:0x%x>", flags);
+			strlcat(buf, lbuf, buflen);
+			flags = 0;
+			continue;
+		}
+	}
+
+	return (0);
+}
+
+static int
 get_argv(struct intercept_translate *trans, int fd, pid_t pid, void *addr)
 {
 	char *arg;
@@ -479,4 +640,19 @@ struct intercept_translate ic_pidname = {
 struct intercept_translate ic_signame = {
 	"signame",
 	NULL, print_signame,
+};
+
+struct intercept_translate ic_fcntlcmd = {
+	"cmd",
+	NULL, print_fcntlcmd,
+};
+
+struct intercept_translate ic_memprot = {
+	"prot",
+	NULL, print_memprot,
+};
+
+struct intercept_translate ic_fileflags = {
+	"flags",
+	NULL, print_fileflags,
 };
