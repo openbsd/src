@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.40 2005/05/26 20:16:21 fgsch Exp $	*/
+/*	$OpenBSD: mount.c,v 1.41 2006/03/12 20:01:31 otto Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.40 2005/05/26 20:16:21 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.41 2006/03/12 20:01:31 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ static char rcsid[] = "$OpenBSD: mount.c,v 1.40 2005/05/26 20:16:21 fgsch Exp $"
 
 #include "pathnames.h"
 
-int	debug, verbose;
+int	debug, verbose, skip;
 char	**typelist = NULL;
 
 int	selected(const char *);
@@ -126,7 +126,7 @@ main(int argc, char * const argv[])
 	all = forceall = 0;
 	options = NULL;
 	vfstype = "ffs";
-	while ((ch = getopt(argc, argv, "Aadfo:rwt:uv")) != -1)
+	while ((ch = getopt(argc, argv, "Aadfo:rswt:uv")) != -1)
 		switch (ch) {
 		case 'A':
 			all = forceall = 1;
@@ -148,6 +148,9 @@ main(int argc, char * const argv[])
 		case 'r':
 			if (!hasopt(options, "ro"))
 				options = catopt(options, "ro");
+			break;
+		case 's':
+			skip = 1;
 			break;
 		case 't':
 			if (typelist != NULL)
@@ -254,7 +257,7 @@ main(int argc, char * const argv[])
 			mntonname = fs->fs_file;
 		}
 		rval = mountfs(fs->fs_vfstype, fs->fs_spec,
-		    mntonname, options, fs->fs_mntops, 0);
+		    mntonname, options, fs->fs_mntops, skip);
 		break;
 	case 2:
 		/*
@@ -721,7 +724,7 @@ usage(void)
 	    "[-dfruvw] [-o options] [-t ffs | external_type]",
 	    "special node",
 	    "[-Aadfruvw] [-t ffs | external_type]",
-	    "[-dfruvw] special | node");
+	    "[-dfrsuvw] special | node");
 	exit(1);
 }
 
