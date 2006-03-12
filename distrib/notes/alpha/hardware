@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.72 2006/03/05 05:41:47 brad Exp $
+dnl	$OpenBSD: hardware,v 1.73 2006/03/12 18:13:41 martin Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -417,7 +417,7 @@ work. It's our best guess that they do, but any feedback is appreciated.
 			System TALKS SGC-X2UL
 			TRENDnet TU2-ET100
 			Z-TEK ZK-R01-2
-		AMD LANCE and PCnet-based PCI adapters (le), including: [*]
+		AMD PCnet-based PCI adapters (pcn), including: [*]
 			BOCALANcard/PCI
 			AT&T StarLAN 10, EN100, and StarLAN Fiber
 		ASIX 88140A/88141-based PCI adapters (dc), including: [*]
