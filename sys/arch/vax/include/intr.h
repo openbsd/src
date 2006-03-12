@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.1 2000/04/26 06:08:27 bjc Exp $	*/
+/*	$OpenBSD: intr.h,v 1.2 2006/03/12 03:18:38 brad Exp $	*/
 /* 	$NetBSD: intr.h,v 1.1 1998/08/18 23:55:00 matt Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 #define IPL_BIO		0	/* block I/O */
 #define IPL_NET		1	/* network */
 #define IPL_TTY		2	/* terminal */
-#define IPL_IMP		3	/* memory allocation */
+#define IPL_VM		3	/* memory allocation */
 #define	IPL_AUDIO	4	/* audio */
 #define IPL_CLOCK	5	/* clock */
 #define IPL_NONE	6
