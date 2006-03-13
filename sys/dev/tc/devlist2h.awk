@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.5 2002/05/03 20:27:44 miod Exp $
+#	$OpenBSD: devlist2h.awk,v 1.6 2006/03/13 22:00:31 miod Exp $
 #	$NetBSD: devlist2h.awk,v 1.3 1996/06/05 18:32:19 cgd Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -31,9 +31,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 BEGIN {
-	nproducts = 0
 	dfile="tcdevs_data.h"
-	hfile="tcdevs.h"
 }
 NR == 1 {
 	VERSION = $0
@@ -48,78 +46,21 @@ NR == 1 {
 	printf(" *\t%s\n", VERSION) > dfile
 	printf(" */\n") > dfile
 
-	printf("/*\t\$OpenBSD\$\t*/\n\n") > hfile
-	printf("/*\n") > hfile
-	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
-	    > hfile
-	printf(" *\n") > hfile
-	printf(" * generated from:\n") > hfile
-	printf(" *\t%s\n", VERSION) > hfile
-	printf(" */\n") > hfile
-
 	next
 }
 $1 == "device" {
 	ndevices++
 
-	devices[ndevices, 0] = $2;		# devices id
-	devices[ndevices, 1] = $2;		# C identifier for device
-	gsub("-", "_", devices[ndevices, 1]);
+	devices[ndevices] = $2;		# devices id
+	description[ndevices] = $4
 
-	printf("\n") > hfile
-	if ($3 == "???") { # driver name
-		printf("#define\tTC_DEVICE_%s\tNULL\n",
-		    devices[ndevices, 1]) > hfile
-	} else {
-		printf("#define\tTC_DEVICE_%s\t\"%s\"\n",
-		    devices[ndevices, 1], $3) > hfile
-	}
-
-	printf("#define\tTC_DESCRIPTION_%s\t\"", devices[ndevices, 1]) > hfile
-
-	f = 4;
-	i = 3;
-
-	# comments
-	ocomment = oparen = 0
-	if (f <= NF) {
-		ocomment = 1;
-	}
+	f = 5;
 	while (f <= NF) {
-		if ($f == "#") {
-			printf("(") > hfile
-			oparen = 1
-			f++
-			continue
-		}
-		if (oparen) {
-			printf("%s", $f) > hfile
-			if (f < NF)
-				printf(" ") > hfile
-			f++
-			continue
-		}
-		devices[ndevices, i] = $f
-		printf("%s", devices[ndevices, i]) > hfile
-		if (f < NF)
-			printf(" ") > hfile
-		i++; f++;
+		description[ndevices] = sprintf("%s %s", description[ndevices], $f)
+		f++;
 	}
-	if (oparen)
-		printf(")") > hfile
-	if (ocomment)
-		printf("\"") > hfile
-	printf("\n") > hfile
 
 	next
-}
-{
-	if ($0 == "")
-		blanklines++
-	if (blanklines < 2)
-		print $0 > hfile
-	if (blanklines < 2)
-		print $0 > dfile
 }
 END {
 	# print out the match tables
@@ -129,15 +70,13 @@ END {
 	printf("struct tc_knowndev tc_knowndevs[] = {\n") > dfile
 	for (i = 1; i <= ndevices; i++) {
 		printf("\t{\n") > dfile
-		printf("\t    \"%-8s\",\n", devices[i, 0]) \
+		printf("\t    \"%-8s\",\n", devices[i]) \
 		    > dfile
-		printf("\t    TC_DEVICE_%s,\n", devices[i, 1]) \
-		    > dfile
-		printf("\t    TC_DESCRIPTION_%s,\n", devices[i, 1]) \
+		printf("\t    \"%s\"\n", description[i]) \
 		    > dfile
 
 		printf("\t},\n") > dfile
 	}
-	printf("\t{ NULL, NULL, NULL, }\n") > dfile
+	printf("\t{ NULL, NULL }\n") > dfile
 	printf("};\n") > dfile
 }

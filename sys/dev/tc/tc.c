@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc.c,v 1.15 2004/06/28 02:28:43 aaron Exp $	*/
+/*	$OpenBSD: tc.c,v 1.16 2006/03/13 22:00:31 miod Exp $	*/
 /*	$NetBSD: tc.c,v 1.29 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -34,7 +34,6 @@
 
 #include <dev/tc/tcreg.h>
 #include <dev/tc/tcvar.h>
-#include <dev/tc/tcdevs.h>
 
 
 /* Definition of the driver for autoconfig. */
@@ -288,7 +287,7 @@ tc_intr_disestablish(dev, cookie)
  * Descriptions of of known devices.
  */
 struct tc_knowndev {
-	const char *id, *driver, *description;
+	const char *id, *description;
 };
 
 #include <dev/tc/tcdevs_data.h>
@@ -297,32 +296,22 @@ struct tc_knowndev {
 void
 tc_devinfo(const char *id, char *cp, size_t cp_len)
 {
-	const char *driver;
 #ifdef TCVERBOSE
 	struct tc_knowndev *tdp;
-	int match;
 	const char *description;
-#endif
 
-	driver = NULL;
-
-#ifdef TCVERBOSE
 	/* find the device in the table, if possible. */
 	description = NULL;
-	tdp = tc_knowndevs;
-	while (tdp->id != NULL) {
+	for (tdp = tc_knowndevs; tdp->id != NULL; tdp++) {
 		/* check this entry for a match */
-		match = !strcmp(tdp->id, id);
-		if (match) {
-			driver = tdp->driver;
+		if (strcmp(tdp->id, id) == 0) {
 			description = tdp->description;
 			break;
 		}
-		tdp++;
 	}
-	if (driver != NULL)
-		snprintf(cp, cp_len, "%s (%s)", driver, description);
+	if (description != NULL)
+		snprintf(cp, cp_len, "\"%s\" (%s)", id, description);
 	else
 #endif
-		snprintf(cp, cp_len, "%s", id);
+		snprintf(cp, cp_len, "\"%s\"", id);
 }
