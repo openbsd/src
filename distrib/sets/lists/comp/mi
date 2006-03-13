@@ -515,7 +515,6 @@
 ./usr/include/dev/pci/if_iwivar.h
 ./usr/include/dev/pci/if_ixgb.h
 ./usr/include/dev/pci/if_ixgb_osdep.h
-./usr/include/dev/pci/if_levar.h
 ./usr/include/dev/pci/if_lgereg.h
 ./usr/include/dev/pci/if_lmc_types.h
 ./usr/include/dev/pci/if_lmcioctl.h

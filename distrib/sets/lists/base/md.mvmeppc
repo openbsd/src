@@ -1093,7 +1093,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_iwivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_ixgb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_ixgb_osdep.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_levar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_lgereg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_lmc_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_lmcioctl.ph
