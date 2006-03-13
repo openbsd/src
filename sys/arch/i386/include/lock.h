@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.2 2004/06/13 21:49:16 niklas Exp $	*/
+/*	$OpenBSD: lock.h,v 1.3 2006/03/13 18:42:16 mickey Exp $	*/
 /*	$NetBSD: lock.h,v 1.1.2.2 2000/05/03 14:40:55 sommerfeld Exp $	*/
 
 /*-
@@ -59,6 +59,8 @@ typedef	__volatile int		__cpu_simple_lock_t;
 
 #define __lockbarrier() __asm __volatile("": : :"memory")
 
+#define SPINLOCK_SPIN_HOOK	__asm __volatile("pause": : :"memory")
+
 #ifdef LOCKDEBUG
 
 extern void __cpu_simple_lock_init(__cpu_simple_lock_t *);
@@ -90,9 +92,8 @@ static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *lockp)
 {
 	while (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
-	    == __SIMPLELOCK_LOCKED) {
-		continue;	/* spin */
-	}
+	    == __SIMPLELOCK_LOCKED)
+		SPINLOCK_SPIN_HOOK;
 	__lockbarrier();
 }
 

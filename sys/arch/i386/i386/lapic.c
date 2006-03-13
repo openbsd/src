@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.6 2006/03/10 21:09:22 mickey Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.7 2006/03/13 18:42:16 mickey Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -441,25 +441,28 @@ i386_ipi_init(target)
 {
 	unsigned j;
 
-	if ((target & LAPIC_DEST_MASK) == 0) {
+	if ((target & LAPIC_DEST_MASK) == 0)
 		i82489_writereg(LAPIC_ICRHI, target << LAPIC_ID_SHIFT);
-	}
 
 	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
 	    LAPIC_DLMODE_INIT | LAPIC_LVL_ASSERT );
 
-	for (j = 100000; j > 0; j--)
+	for (j = 100000; j > 0; j--) {
+		__asm __volatile("pause": : :"memory");
 		if ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) == 0)
 			break;
+	}
 
 	delay(10000);
 
 	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
 	     LAPIC_DLMODE_INIT | LAPIC_LVL_TRIG | LAPIC_LVL_DEASSERT);
 
-	for (j = 100000; j > 0; j--)
+	for (j = 100000; j > 0; j--) {
+		__asm __volatile("pause": : :"memory");
 		if ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) == 0)
 			break;
+	}
 
 	return (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY)?EBUSY:0;
 }
@@ -479,7 +482,7 @@ i386_ipi(vec,target,dl)
 	for (j = 100000;
 	     j > 0 && (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY);
 	     j--)
-		;
+		SPINLOCK_SPIN_HOOK;
 
 	return (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) ? EBUSY : 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.37 2005/06/06 14:25:20 mickey Exp $	*/
+/*	$OpenBSD: npx.c,v 1.38 2006/03/13 18:42:16 mickey Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -823,22 +823,17 @@ npxsave_proc(struct proc *p, int save)
 #ifdef DIAGNOSTIC
 		spincount = 0;
 #endif
-		while (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		while (p->p_addr->u_pcb.pcb_fpcpu != NULL) {
+			SPINLOCK_SPIN_HOOK;
 #ifdef DIAGNOSTIC
-		{
-			spincount++;
-			if (spincount > 100000000) {
-				panic("fp_save ipi didn't");
-			}
-		}
-#else
-		__splbarrier();		/* XXX replace by generic barrier */
-		;
+			if (spincount++ > 100000000)
+				panic("%s: fp_save ipi didn't (%s)",
+				    ci->ci_dev.dv_xname, oci->ci_dev.dv_xname);
 #endif
+		}
 	}
 #else
 	KASSERT(ci->ci_fpcurproc == p);
 	npxsave_cpu(ci, save);
 #endif
 }
-
