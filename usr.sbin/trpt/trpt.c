@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.21 2005/05/03 03:41:11 djm Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.22 2006/03/13 16:30:18 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -133,8 +133,8 @@ static int aflag, follow, sflag, tflag;
 extern	char *__progname;
 
 void	dotrace(caddr_t);
-void	tcp_trace(short, short, struct tcpcb *, struct tcpcb *,
-	    struct tcpiphdr *, struct tcpipv6hdr *, int);
+void	tcp_trace(short, short, struct tcpcb *, struct tcpiphdr *,
+	    struct tcpipv6hdr *, int);
 int	numeric(const void *, const void *);
 void	usage(void);
 
@@ -143,7 +143,7 @@ kvm_t	*kd;
 int
 main(int argc, char *argv[])
 {
-	char *system = NULL, *core = NULL, *cp, errbuf[_POSIX2_LINE_MAX];
+	char *sys = NULL, *core = NULL, *cp, errbuf[_POSIX2_LINE_MAX];
 	int ch, i, jflag = 0, npcbs = 0;
 	unsigned long l;
 	gid_t gid;
@@ -178,7 +178,7 @@ main(int argc, char *argv[])
 			++tflag;
 			break;
 		case 'N':
-			system = optarg;
+			sys = optarg;
 			break;
 		case 'M':
 			core = optarg;
@@ -199,20 +199,20 @@ main(int argc, char *argv[])
 	 * guys can't print interesting stuff from kernel memory.
 	 */
 	gid = getgid();
-	if (core != NULL || system != NULL)
+	if (core != NULL || sys != NULL)
 		if (setresgid(gid, gid, gid) == -1)
 			err(1, "setresgid");
 
-	kd = kvm_openfiles(system, core, NULL, O_RDONLY, errbuf);
+	kd = kvm_openfiles(sys, core, NULL, O_RDONLY, errbuf);
 	if (kd == NULL)
 		errx(1, "can't open kmem: %s", errbuf);
 
-	if (core == NULL && system == NULL)
+	if (core == NULL && sys == NULL)
 		if (setresgid(gid, gid, gid) == -1)
 			err(1, "setresgid");
 
 	if (kvm_nlist(kd, nl))
-		errx(2, "%s: no namelist", system ? system : _PATH_UNIX);
+		errx(2, "%s: no namelist", sys ? sys : _PATH_UNIX);
 
 	if (kvm_read(kd, nl[N_TCP_DEBX].n_value, (char *)&tcp_debx,
 	    sizeof(tcp_debx)) != sizeof(tcp_debx))
@@ -278,7 +278,7 @@ dotrace(caddr_t tcpcb)
 			continue;
 		ntime = ntohl(td->td_time);
 		tcp_trace(td->td_act, td->td_ostate,
-		    (struct tcpcb *)td->td_tcb, &td->td_cb, &td->td_ti,
+		    &td->td_cb, &td->td_ti,
 		    &td->td_ti6, td->td_req);
 		if (i == tcp_debx)
 			goto done;
@@ -289,7 +289,7 @@ dotrace(caddr_t tcpcb)
 			continue;
 		ntime = ntohl(td->td_time);
 		tcp_trace(td->td_act, td->td_ostate,
-		    (struct tcpcb *)td->td_tcb, &td->td_cb, &td->td_ti,
+		    &td->td_cb, &td->td_ti,
 		    &td->td_ti6, td->td_req);
 	}
  done:
@@ -318,8 +318,8 @@ dotrace(caddr_t tcpcb)
  */
 /*ARGSUSED*/
 void
-tcp_trace(short act, short ostate, struct tcpcb *atp,
-    struct tcpcb *tp, struct tcpiphdr *ti, struct tcpipv6hdr *ti6, int req)
+tcp_trace(short act, short ostate, struct tcpcb *tp,
+    struct tcpiphdr *ti, struct tcpipv6hdr *ti6, int req)
 {
 	tcp_seq seq, ack;
 	int flags, len, win, timer;
