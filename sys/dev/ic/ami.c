@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.109 2006/03/13 11:49:52 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.110 2006/03/13 12:08:40 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1278,8 +1278,6 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 
 	AMI_DPRINTF(AMI_D_CMD, ("ami_scsi_raw_cmd "));
 
-	s = splbio();
-
 	if (!cold && target == rsc->sc_proctarget)
 		strlcpy(rsc->sc_procdev, dev->dv_xname,
 		    sizeof(rsc->sc_procdev));
@@ -1292,16 +1290,17 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
 		xs->error = XS_SENSE;
 		scsi_done(xs);
-		splx(s);
 		return (COMPLETE);
 	}
 
 	xs->error = XS_NOERROR;
 
-	if ((ccb = ami_get_ccb(sc)) == NULL) {
+	s = splbio();	
+	ccb = ami_get_ccb(sc);
+	splx(s);
+	if (ccb == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
-		splx(s);
 		return (COMPLETE);
 	}
 
@@ -1323,11 +1322,13 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 	cmd = &ccb->ccb_cmd;
 	cmd->acc_cmd = AMI_PASSTHRU;
 
-	if ((error = ami_cmd(ccb, ((xs->flags & SCSI_NOSLEEP) ?
-	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK), xs->flags & SCSI_POLL))) {
+	s = splbio();
+	error = ami_cmd(ccb, (xs->flags & SCSI_NOSLEEP) ?
+	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK, xs->flags & SCSI_POLL);
+	splx(s);
+	if (error) {
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
-		splx(s);
 		return (COMPLETE);
 	}
 
@@ -1345,7 +1346,6 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 		scsi_done(xs);
 	}
 
-	splx(s);
 	if (xs->flags & SCSI_POLL)
 		return (COMPLETE);
 	else
