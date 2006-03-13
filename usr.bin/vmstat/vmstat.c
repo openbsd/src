@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.100 2006/02/23 06:32:11 martin Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.101 2006/03/13 19:29:26 otto Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.100 2006/02/23 06:32:11 martin Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.101 2006/03/13 19:29:26 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -120,6 +120,7 @@ kvm_t *kd;
 #define	VMSTAT		0x20
 
 void	cpustats(void);
+time_t	getuptime(void);
 void	dkstats(void);
 void	dointr(void);
 void	domem(void);
@@ -131,6 +132,8 @@ int	kreado(struct nlist *, void *, size_t);
 void	usage(void);
 void	dotimes(void);
 void	doforkst(void);
+void	needhdr(int);
+int	pct(long, long);
 void	printhdr(void);
 
 char	**choosedrives(char **);
@@ -148,8 +151,6 @@ int ncpu;
 int
 main(int argc, char *argv[])
 {
-	extern int optind;
-	extern char *optarg;
 	int mib[2];
 	size_t size;
 	int c, todo;
@@ -367,7 +368,6 @@ dovmstat(u_int interval, int reps)
 {
 	struct vmtotal total;
 	time_t uptime, halfuptime;
-	void needhdr(int);
 	int mib[2];
 	struct clockinfo clkinfo;
 	size_t size;
@@ -692,18 +692,18 @@ void
 cpustats(void)
 {
 	int state;
-	double pct, total;
+	double percent, total;
 
 	total = 0;
 	for (state = 0; state < CPUSTATES; ++state)
 		total += cur.cp_time[state];
 	if (total)
-		pct = 100 / total;
+		percent = 100 / total;
 	else
-		pct = 0;
-	(void)printf("%2.0f ", (cur.cp_time[CP_USER] + cur.cp_time[CP_NICE]) * pct);
-	(void)printf("%2.0f ", (cur.cp_time[CP_SYS] + cur.cp_time[CP_INTR]) * pct);
-	(void)printf("%2.0f", cur.cp_time[CP_IDLE] * pct);
+		percent = 0;
+	(void)printf("%2.0f ", (cur.cp_time[CP_USER] + cur.cp_time[CP_NICE]) * percent);
+	(void)printf("%2.0f ", (cur.cp_time[CP_SYS] + cur.cp_time[CP_INTR]) * percent);
+	(void)printf("%2.0f", cur.cp_time[CP_IDLE] * percent);
 }
 
 void
@@ -786,7 +786,7 @@ dointr(void)
 /*
  * These names are defined in <sys/malloc.h>.
  */
-char *kmemnames[] = INITKMEMNAMES;
+const char *kmemnames[] = INITKMEMNAMES;
 
 void
 domem(void)
@@ -797,7 +797,7 @@ domem(void)
 	int len, size, first;
 	u_long totuse = 0, totfree = 0;
 	quad_t totreq = 0;
-	char *name;
+	const char *name;
 	struct kmemstats kmemstats[M_LAST];
 	struct kmembuckets buckets[MINBUCKET + 16];
 	int mib[4];

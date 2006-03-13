@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.27 2005/10/17 19:04:20 otto Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.28 2006/03/13 19:29:26 otto Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -396,7 +396,7 @@ dkreadstats(void)
  * track disk statistics.
  */
 int
-dkinit(int select)
+dkinit(int sel)
 {
 #if !defined(NOKVM)
 	struct disklist_head disk_head;
@@ -513,7 +513,7 @@ dkinit(int select)
 		bufpp = disknames;
 		for (i = 0; i < dk_ndrive && (name = strsep(&bufpp, ",")) != NULL; i++) {
 			cur.dk_name[i] = name;
-			cur.dk_select[i] = select;
+			cur.dk_select[i] = sel;
 		}
 	} else {
 #if !defined(NOKVM)
@@ -526,7 +526,7 @@ dkinit(int select)
 			cur.dk_name[i] = strdup(buf);
 			if (!cur.dk_name[i])
 				errx(1, "Memory allocation failure.");
-			cur.dk_select[i] = select;
+			cur.dk_select[i] = sel;
 
 			p = TAILQ_NEXT(&cur_disk, dk_link);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.22 2005/04/01 03:32:47 deraadt Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.23 2006/03/13 19:31:07 otto Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ static void sigheader(int);
 static void header(void);
 static void usage(void);
 static void display(void);
-static void selectdrives(int, char **);
+static void selectdrives(char **);
 
 void dkswap(void);
 void dkreadstats(void);
@@ -173,7 +173,7 @@ main(int argc, char *argv[])
 
 	dkinit(0);
 	dkreadstats();
-	selectdrives(argc, argv);
+	selectdrives(argv);
 
 	tv.tv_sec = interval;
 	tv.tv_usec = 0;
@@ -237,17 +237,17 @@ header(void)
 
 	if (ISSET(todo, SHOW_STATS_1))
 	for (i = 0; i < dk_ndrive; i++)
-		if (cur.dk_select[i])
+		if (cur.dk_select[i]) {
 			if (ISSET(todo, SHOW_TOTALS))
 				(void)printf("  KB/t xfr MB   ");
 			else
 				(void)printf("  KB/t t/s MB/s ");
-
+		}
 	if (ISSET(todo, SHOW_STATS_2))
 	for (i = 0; i < dk_ndrive; i++)
-		if (cur.dk_select[i])
+		if (cur.dk_select[i]) {
 			(void)printf("   KB xfr time ");
-
+		}
 	if (ISSET(todo, SHOW_CPU))
 		(void)printf(" us ni sy in id");
 	printf("\n");
@@ -319,16 +319,15 @@ static void
 cpustats(void)
 {
 	int state;
-	double time;
+	double t = 0;
 
-	time = 0;
 	for (state = 0; state < CPUSTATES; ++state)
-		time += cur.cp_time[state];
-	if (!time)
-		time = 1.0;
+		t += cur.cp_time[state];
+	if (!t)
+		t = 1.0;
 	/* States are generally never 100% and can use %3.0f. */
 	for (state = 0; state < CPUSTATES; ++state)
-		printf("%3.0f", 100. * cur.cp_time[state] / time);
+		printf("%3.0f", 100. * cur.cp_time[state] / t);
 }
 
 static void
@@ -378,7 +377,7 @@ display(void)
 }
 
 static void
-selectdrives(int argc, char *argv[])
+selectdrives(char *argv[])
 {
 	int	i, ndrives;
 
