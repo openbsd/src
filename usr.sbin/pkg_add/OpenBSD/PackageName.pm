@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.10 2006/03/04 11:31:18 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.11 2006/03/13 14:06:58 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -50,7 +50,7 @@ sub splitstem
 sub is_stem
 {
 	local $_ = shift;
-	if (m/\-\d/) {
+	if (m/\-\d/ || $_ eq '-') {
 		return 0;
 	} else {
 		return 1;
