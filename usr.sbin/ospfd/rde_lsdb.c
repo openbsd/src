@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.28 2006/03/08 15:35:07 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.29 2006/03/13 09:36:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -94,7 +94,7 @@ vertex_free(struct vertex *v)
 	if (v == NULL)
 		return;
 
-	evtimer_del(&v->ev);
+	(void)evtimer_del(&v->ev);
 	free(v->lsa);
 	free(v);
 }
@@ -545,6 +545,7 @@ lsa_dump(struct lsa_tree *tree, int imsg_type, pid_t pid)
 	}
 }
 
+/* ARGSUSED */
 void
 lsa_timeout(int fd, short event, void *bula)
 {
@@ -585,7 +586,8 @@ lsa_refresh(struct vertex *v)
 
 	timerclear(&tv);
 	tv.tv_sec = LS_REFRESH_TIME;
-	evtimer_add(&v->ev, &tv);
+	if (evtimer_add(&v->ev, &tv) == -1)
+		fatal("lsa_refresh");
 }
 
 void
@@ -629,7 +631,8 @@ lsa_merge(struct rde_nbr *nbr, struct lsa *lsa, struct vertex *v)
 	timerclear(&tv);
 	if (v->changed + MIN_LS_INTERVAL >= now)
 		tv.tv_sec = MIN_LS_INTERVAL;
-	evtimer_add(&v->ev, &tv);
+	if (evtimer_add(&v->ev, &tv) == -1)
+		fatal("lsa_merge");
 }
 
 void

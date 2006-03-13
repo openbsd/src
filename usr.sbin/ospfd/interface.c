@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.46 2006/03/09 18:11:34 norby Exp $ */
+/*	$OpenBSD: interface.c,v 1.47 2006/03/13 09:36:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -39,12 +39,12 @@
 #include "ospfe.h"
 
 void		 if_hello_timer(int, short, void *);
-int		 if_start_hello_timer(struct iface *);
-int		 if_stop_hello_timer(struct iface *);
-int		 if_stop_wait_timer(struct iface *);
+void		 if_start_hello_timer(struct iface *);
+void		 if_stop_hello_timer(struct iface *);
+void		 if_stop_wait_timer(struct iface *);
 void		 if_wait_timer(int, short, void *);
-int		 if_start_wait_timer(struct iface *);
-int		 if_stop_wait_timer(struct iface *);
+void		 if_start_wait_timer(struct iface *);
+void		 if_stop_wait_timer(struct iface *);
 struct nbr	*if_elect(struct nbr *, struct nbr *);
 
 struct {
@@ -273,22 +273,25 @@ if_hello_timer(int fd, short event, void *arg)
 	/* reschedule hello_timer */
 	timerclear(&tv);
 	tv.tv_sec = iface->hello_interval;
-	evtimer_add(&iface->hello_timer, &tv);
+	if (evtimer_add(&iface->hello_timer, &tv) == -1)
+		fatal("if_hello_timer");
 }
 
-int
+void
 if_start_hello_timer(struct iface *iface)
 {
 	struct timeval tv;
 
 	timerclear(&tv);
-	return (evtimer_add(&iface->hello_timer, &tv));
+	if (evtimer_add(&iface->hello_timer, &tv) == -1)
+		fatal("if_start_hello_timer");
 }
 
-int
+void
 if_stop_hello_timer(struct iface *iface)
 {
-	return (evtimer_del(&iface->hello_timer));
+	if (evtimer_del(&iface->hello_timer) == -1)
+		fatal("if_stop_hello_timer");
 }
 
 /* ARGSUSED */
@@ -300,20 +303,22 @@ if_wait_timer(int fd, short event, void *arg)
 	if_fsm(iface, IF_EVT_WTIMER);
 }
 
-int
+void
 if_start_wait_timer(struct iface *iface)
 {
 	struct timeval	tv;
 
 	timerclear(&tv);
 	tv.tv_sec = iface->dead_interval;
-	return (evtimer_add(&iface->wait_timer, &tv));
+	if (evtimer_add(&iface->wait_timer, &tv) == -1)
+		fatal("if_start_wait_timer");
 }
 
-int
+void
 if_stop_wait_timer(struct iface *iface)
 {
-	return (evtimer_del(&iface->wait_timer));
+	if (evtimer_del(&iface->wait_timer) == -1)
+		fatal("if_stop_wait_timer");
 }
 
 /* actions */
@@ -357,15 +362,9 @@ if_act_start(struct iface *iface)
 			return (-1);
 		}
 		iface->state = IF_STA_POINTTOPOINT;
-		if (if_start_hello_timer(iface))
-			log_warnx("if_act_start: cannot schedule hello "
-			    "timer, interface %s", iface->name);
 		break;
 	case IF_TYPE_VIRTUALLINK:
 		iface->state = IF_STA_POINTTOPOINT;
-		if (if_start_hello_timer(iface))
-			log_warnx("if_act_start: cannot schedule hello "
-			    "timer, interface %s", iface->name);
 		break;
 	case IF_TYPE_POINTOMULTIPOINT:
 	case IF_TYPE_NBMA:
@@ -381,23 +380,17 @@ if_act_start(struct iface *iface)
 		}
 		if (iface->priority == 0) {
 			iface->state = IF_STA_DROTHER;
-			if (if_start_hello_timer(iface))
-				log_warnx("if_act_start: cannot schedule hello "
-				    "timer, interface %s", iface->name);
 		} else {
 			iface->state = IF_STA_WAITING;
-			if (if_start_hello_timer(iface))
-				log_warnx("if_act_start: cannot schedule hello "
-				    "timer, interface %s", iface->name);
-			if (if_start_wait_timer(iface))
-				log_warnx("if_act_start: cannot schedule wait "
-				    "timer, interface %s", iface->name);
+			if_start_wait_timer(iface);
 		}
 		break;
 	default:
 		fatalx("if_act_start: unknown interface type");
 	}
 
+	/* hello timer needs to be started in any case */
+	if_start_hello_timer(iface);
 	return (0);
 }
 
@@ -547,11 +540,7 @@ start:
 			orig_net_lsa(iface);
 	}
 
-	if (if_start_hello_timer(iface)) {
-		log_warnx("if_act_elect: cannot schedule hello_timer");
-		return (-1);
-	}
-
+	if_start_hello_timer(iface);
 	return (0);
 }
 
@@ -599,23 +588,9 @@ if_act_reset(struct iface *iface)
 	iface->bdr = NULL;
 
 	ls_ack_list_clr(iface);
-	if (stop_ls_ack_tx_timer(iface)) {
-		log_warnx("if_act_reset: error removing ls_ack_tx_timer, "
-		    "interface %s", iface->name);
-		return (-1);
-	}
-
-	if (if_stop_hello_timer(iface)) {
-		log_warnx("if_act_reset: error removing hello_timer, "
-		    "interface %s", iface->name);
-		return (-1);
-	}
-
-	if (if_stop_wait_timer(iface)) {
-		log_warnx("if_act_reset: error removing wait_timer, "
-		    "interface %s", iface->name);
-		return (-1);
-	}
+	stop_ls_ack_tx_timer(iface);
+	if_stop_hello_timer(iface);
+	if_stop_wait_timer(iface);
 
 	return (0);
 }

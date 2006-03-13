@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.26 2006/02/24 21:06:47 norby Exp $ */
+/*	$OpenBSD: rde.h,v 1.27 2006/03/13 09:36:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -131,9 +131,9 @@ int		 cand_list_present(struct vertex *);
 void		 cand_list_clr(void);
 
 void		 spf_timer(int, short, void *);
-int		 start_spf_timer(void);
-int		 stop_spf_timer(struct ospfd_conf *);
-int		 start_spf_holdtimer(struct ospfd_conf *);
+void		 start_spf_timer(void);
+void		 stop_spf_timer(struct ospfd_conf *);
+void		 start_spf_holdtimer(struct ospfd_conf *);
 
 void		 rt_init(void);
 int		 rt_compare(struct rt_node *, struct rt_node *);

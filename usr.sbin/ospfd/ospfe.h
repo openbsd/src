@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.26 2006/03/09 15:43:21 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.27 2006/03/13 09:36:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -109,8 +109,8 @@ void	 db_sum_list_add(struct nbr *, struct lsa_hdr *);
 int	 db_sum_list_del(struct nbr *, struct lsa_hdr *);
 void	 db_sum_list_clr(struct nbr *);
 void	 db_tx_timer(int, short, void *);
-int	 start_db_tx_timer(struct nbr *);
-int	 stop_db_tx_timer(struct nbr *);
+void	 start_db_tx_timer(struct nbr *);
+void	 stop_db_tx_timer(struct nbr *);
 
 /* hello.c */
 int	 send_hello(struct iface *);
@@ -161,8 +161,8 @@ void	 ls_ack_list_free(struct iface *, struct lsa_entry *);
 void	 ls_ack_list_clr(struct iface *);
 int	 ls_ack_list_empty(struct iface *);
 void	 ls_ack_tx_timer(int, short, void *);
-int	 start_ls_ack_tx_timer(struct iface *);
-int	 stop_ls_ack_tx_timer(struct iface *);
+void	 start_ls_ack_tx_timer(struct iface *);
+void	 stop_ls_ack_tx_timer(struct iface *);
 
 /* lsreq.c */
 int	 send_ls_req(struct nbr *);
@@ -174,8 +174,8 @@ void	 ls_req_list_free(struct nbr *, struct lsa_entry *);
 void	 ls_req_list_clr(struct nbr *);
 int	 ls_req_list_empty(struct nbr *);
 void	 ls_req_tx_timer(int, short, void *);
-int	 start_ls_req_tx_timer(struct nbr *);
-int	 stop_ls_req_tx_timer(struct nbr *);
+void	 start_ls_req_tx_timer(struct nbr *);
+void	 stop_ls_req_tx_timer(struct nbr *);
 
 /* lsupdate.c */
 int		 lsa_flood(struct iface *, struct nbr *, struct lsa_hdr *,
@@ -207,12 +207,12 @@ struct nbr	*nbr_find_peerid(u_int32_t);
 int	 nbr_fsm(struct nbr *, enum nbr_event);
 
 void	 nbr_itimer(int, short, void *);
-int	 nbr_start_itimer(struct nbr *);
-int	 nbr_stop_itimer(struct nbr *);
-int	 nbr_reset_itimer(struct nbr *);
+void	 nbr_start_itimer(struct nbr *);
+void	 nbr_stop_itimer(struct nbr *);
+void	 nbr_reset_itimer(struct nbr *);
 
 void	 nbr_adj_timer(int, short, void *);
-int	 nbr_start_adj_timer(struct nbr *);
+void	 nbr_start_adj_timer(struct nbr *);
 
 int	 nbr_act_reset_itimer(struct nbr *);
 int	 nbr_act_start_itimer(struct nbr *);

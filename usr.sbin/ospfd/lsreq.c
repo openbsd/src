@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.13 2006/03/09 13:34:19 claudio Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.14 2006/03/13 09:36:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -220,28 +220,30 @@ ls_req_tx_timer(int fd, short event, void *arg)
 	if (nbr->state == NBR_STA_LOAD) {
 		timerclear(&tv);
 		tv.tv_sec = nbr->iface->rxmt_interval;
-		evtimer_add(&nbr->lsreq_tx_timer, &tv);
+		if (evtimer_add(&nbr->lsreq_tx_timer, &tv) == -1)
+			fatal("ls_req_tx_timer");
 	}
 }
 
-int
+void
 start_ls_req_tx_timer(struct nbr *nbr)
 {
 	struct timeval tv;
 
 	if (nbr == nbr->iface->self)
-		return (0);
+		return;
 
 	timerclear(&tv);
-
-	return (evtimer_add(&nbr->lsreq_tx_timer, &tv));
+	if (evtimer_add(&nbr->lsreq_tx_timer, &tv) == -1)
+		fatal("start_ls_req_tx_timer");
 }
 
-int
+void
 stop_ls_req_tx_timer(struct nbr *nbr)
 {
 	if (nbr == nbr->iface->self)
-		return (0);
+		return;
 
-	return (evtimer_del(&nbr->lsreq_tx_timer));
+	if (evtimer_del(&nbr->lsreq_tx_timer) == -1)
+		fatal("stop_ls_req_tx_timer");
 }

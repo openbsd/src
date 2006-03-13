@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.28 2006/03/08 15:35:07 claudio Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.29 2006/03/13 09:36:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -311,7 +311,7 @@ ls_retrans_list_add(struct nbr *nbr, struct lsa_hdr *lsa,
 		tv.tv_sec = TAILQ_FIRST(&nbr->ls_retrans_list)->le_when;
 
 		if (evtimer_add(&nbr->ls_retrans_timer, &tv) == -1)
-			log_warn("ls_retrans_list_add: evtimer_add failed");
+			fatal("ls_retrans_list_add");
 	}
 }
 
@@ -387,13 +387,14 @@ ls_retrans_list_remove(struct nbr *nbr, struct lsa_entry *le)
 	nbr->ls_ret_cnt--;
 
 	if (reset && TAILQ_FIRST(&nbr->ls_retrans_list)) {
-		evtimer_del(&nbr->ls_retrans_timer);
+		if (evtimer_del(&nbr->ls_retrans_timer) == -1)
+			fatal("ls_retrans_list_remove");
 
 		timerclear(&tv);
 		tv.tv_sec = TAILQ_FIRST(&nbr->ls_retrans_list)->le_when;
 
 		if (evtimer_add(&nbr->ls_retrans_timer, &tv) == -1)
-			log_warn("ls_retrans_timer: evtimer_add failed");
+			fatal("ls_retrans_list_remove");
 	}
 }
 
@@ -501,7 +502,7 @@ done:
 		tv.tv_sec = le->le_when;
 
 		if (evtimer_add(&nbr->ls_retrans_timer, &tv) == -1)
-			log_warn("ls_retrans_timer: evtimer_add failed");
+			fatal("ls_retrans_timer");
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.31 2006/03/09 15:43:21 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.32 2006/03/13 09:36:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -358,27 +358,27 @@ nbr_find_id(struct iface *iface, u_int32_t rtr_id)
 	struct nbr	*nbr = NULL;
 
 	LIST_FOREACH(nbr, &iface->nbr_list, entry) {
-		if (nbr->id.s_addr == rtr_id) {
+		if (nbr->id.s_addr == rtr_id)
 			return (nbr);
-		}
 	}
 
 	return (NULL);
 }
 
 /* timers */
+/* ARGSUSED */
 void
 nbr_itimer(int fd, short event, void *arg)
 {
 	struct nbr *nbr = arg;
 
-	if (nbr->state == NBR_STA_DOWN) {
+	if (nbr->state == NBR_STA_DOWN)
 		nbr_del(nbr);
-	} else
+	else
 		nbr_fsm(nbr, NBR_EVT_ITIMER);
 }
 
-int
+void
 nbr_start_itimer(struct nbr *nbr)
 {
 	struct timeval	tv;
@@ -386,16 +386,18 @@ nbr_start_itimer(struct nbr *nbr)
 	timerclear(&tv);
 	tv.tv_sec = nbr->iface->dead_interval;
 
-	return (evtimer_add(&nbr->inactivity_timer, &tv));
+	if (evtimer_add(&nbr->inactivity_timer, &tv) == -1)
+		fatal("nbr_start_itimer");
 }
 
-int
+void
 nbr_stop_itimer(struct nbr *nbr)
 {
-	return (evtimer_del(&nbr->inactivity_timer));
+	if (evtimer_del(&nbr->inactivity_timer) == -1)
+		fatal("nbr_stop_itimer");
 }
 
-int
+void
 nbr_reset_itimer(struct nbr *nbr)
 {
 	struct timeval	tv;
@@ -403,9 +405,11 @@ nbr_reset_itimer(struct nbr *nbr)
 	timerclear(&tv);
 	tv.tv_sec = nbr->iface->dead_interval;
 
-	return (evtimer_add(&nbr->inactivity_timer, &tv));
+	if (evtimer_add(&nbr->inactivity_timer, &tv) == -1)
+		fatal("nbr_reset_itimer");
 }
 
+/* ARGSUSED */
 void
 nbr_adj_timer(int fd, short event, void *arg)
 {
@@ -421,7 +425,7 @@ nbr_adj_timer(int fd, short event, void *arg)
 	}
 }
 
-int
+void
 nbr_start_adj_timer(struct nbr *nbr)
 {
 	struct timeval	tv;
@@ -429,18 +433,15 @@ nbr_start_adj_timer(struct nbr *nbr)
 	timerclear(&tv);
 	tv.tv_sec = DEFAULT_ADJ_TMOUT;
 
-	return (evtimer_add(&nbr->adj_timer, &tv));
+	if (evtimer_add(&nbr->adj_timer, &tv) == -1)
+		fatal("nbr_start_adj_timer");
 }
 
 /* actions */
 int
 nbr_act_reset_itimer(struct nbr *nbr)
 {
-	if (nbr_reset_itimer(nbr)) {
-		log_warnx("nbr_act_reset_itimer: cannot schedule inactivity "
-		    "timer, neighbor ID %s", inet_ntoa(nbr->id));
-		return (-1);
-	}
+	nbr_reset_itimer(nbr);
 
 	return (0);
 }
@@ -448,12 +449,7 @@ nbr_act_reset_itimer(struct nbr *nbr)
 int
 nbr_act_start_itimer(struct nbr *nbr)
 {
-	if (nbr_start_itimer(nbr)) {
-		log_warnx("nbr_act_start_itimer: cannot schedule inactivity "
-		    "timer, neighbor ID %s",
-		    inet_ntoa(nbr->id));
-		return (-1);
-	}
+	nbr_start_itimer(nbr);
 
 	return (0);
 }
@@ -581,16 +577,11 @@ nbr_act_delete(struct nbr *nbr)
 		return (0);
 
 	/* stop timers */
-	if (nbr_stop_itimer(nbr)) {
-		log_warnx("nbr_act_delete: error removing inactivity timer, "
-		    "neighbor ID %s", inet_ntoa(nbr->id));
-		return (-1);
-	}
+	nbr_stop_itimer(nbr);
 
 	/* clear dr and bdr */
 	nbr->dr.s_addr = 0;
 	nbr->bdr.s_addr = 0;
-
 	nbr->crypt_seq_num = 0;
 
 	/* schedule kill timer */
@@ -608,17 +599,9 @@ nbr_act_delete(struct nbr *nbr)
 int
 nbr_act_clear_lists(struct nbr *nbr)
 {
-	if (stop_db_tx_timer(nbr)) {
-		log_warnx("nbr_act_clear_lists: error removing db_tx_timer, "
-		    "neighbor ID %s", inet_ntoa(nbr->id));
-		return (-1);
-	}
-
-	if (stop_ls_req_tx_timer(nbr)) {
-		log_warnx("nbr_act_clear_lists: error removing lsreq_tx_timer, "
-		    "neighbor ID %s", inet_ntoa(nbr->id));
-		return (-1);
-	}
+	/* stop timers */
+	stop_db_tx_timer(nbr);
+	stop_ls_req_tx_timer(nbr);
 
 	/* clear lists */
 	ls_retrans_list_clr(nbr);

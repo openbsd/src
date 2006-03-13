@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.49 2006/02/24 21:06:47 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.50 2006/03/13 09:36:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -519,6 +519,7 @@ cand_list_clr(void)
 }
 
 /* timers */
+/* ARGSUSED */
 void
 spf_timer(int fd, short event, void *arg)
 {
@@ -583,7 +584,7 @@ spf_timer(int fd, short event, void *arg)
 	}
 }
 
-int
+void
 start_spf_timer(void)
 {
 	struct timeval	tv;
@@ -594,7 +595,9 @@ start_spf_timer(void)
 		timerclear(&tv);
 		tv.tv_sec = rdeconf->spf_delay;
 		rdeconf->spf_state = SPF_DELAY;
-		return (evtimer_add(&rdeconf->ev, &tv));
+		if (evtimer_add(&rdeconf->ev, &tv) == -1)
+			fatal("start_spf_timer");
+		break;
 	case SPF_DELAY:
 		/* ignore */
 		break;
@@ -608,17 +611,16 @@ start_spf_timer(void)
 	default:
 		fatalx("start_spf_timer: invalid spf_state");
 	}
-
-	return (1);
 }
 
-int
+void
 stop_spf_timer(struct ospfd_conf *conf)
 {
-	return (evtimer_del(&conf->ev));
+	if (evtimer_del(&conf->ev) == -1)
+		fatal("stop_spf_timer");
 }
 
-int
+void
 start_spf_holdtimer(struct ospfd_conf *conf)
 {
 	struct timeval	tv;
@@ -629,7 +631,9 @@ start_spf_holdtimer(struct ospfd_conf *conf)
 		tv.tv_sec = conf->spf_hold_time;
 		conf->spf_state = SPF_HOLD;
 		log_debug("spf_start_holdtimer: DELAY -> HOLD");
-		return (evtimer_add(&conf->ev, &tv));
+		if (evtimer_add(&conf->ev, &tv) == -1)
+			fatal("start_spf_holdtimer");
+		break;
 	case SPF_IDLE:
 	case SPF_HOLD:
 	case SPF_HOLDQUEUE:
@@ -637,8 +641,6 @@ start_spf_holdtimer(struct ospfd_conf *conf)
 	default:
 		fatalx("spf_start_holdtimer: unknown state");
 	}
-
-	return (1);
 }
 
 /* route table */

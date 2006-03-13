@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.15 2005/11/12 18:18:24 deraadt Exp $ */
+/*	$OpenBSD: lsack.c,v 1.16 2006/03/13 09:36:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -31,7 +31,7 @@
 #include "log.h"
 #include "ospfe.h"
 
-int	 start_ls_ack_tx_timer_now(struct iface *);
+void	 start_ls_ack_tx_timer_now(struct iface *);
 
 /* link state acknowledgement packet handling */
 int
@@ -96,9 +96,9 @@ recv_ls_ack(struct nbr *nbr, char *buf, u_int16_t len)
 			if (lsa_hdr_check(nbr, &lsa_hdr)) {
 				/* try both list in case of DROTHER */
 				if (nbr->iface->state & IF_STA_DROTHER)
-					ls_retrans_list_del(nbr->iface->self,
-					    &lsa_hdr);
-				ls_retrans_list_del(nbr, &lsa_hdr);
+					(void)ls_retrans_list_del(
+					    nbr->iface->self, &lsa_hdr);
+				(void)ls_retrans_list_del(nbr, &lsa_hdr);
 			}
 
 			buf += sizeof(lsa_hdr);
@@ -265,7 +265,7 @@ ls_ack_tx_timer(int fd, short event, void *arg)
 	free(buf);
 }
 
-int
+void
 start_ls_ack_tx_timer(struct iface *iface)
 {
 	struct timeval tv;
@@ -273,21 +273,23 @@ start_ls_ack_tx_timer(struct iface *iface)
 	timerclear(&tv);
 	tv.tv_sec = iface->rxmt_interval / 2;
 
-	return (evtimer_add(&iface->lsack_tx_timer, &tv));
+	if (evtimer_add(&iface->lsack_tx_timer, &tv) == -1)
+		fatal("start_ls_ack_tx_timer");
 }
 
-int
+void
 start_ls_ack_tx_timer_now(struct iface *iface)
 {
 	struct timeval tv;
 
 	timerclear(&tv);
-
-	return (evtimer_add(&iface->lsack_tx_timer, &tv));
+	if (evtimer_add(&iface->lsack_tx_timer, &tv) == -1)
+		fatal("start_ls_ack_tx_timer_now");
 }
 
-int
+void
 stop_ls_ack_tx_timer(struct iface *iface)
 {
-	return (evtimer_del(&iface->lsack_tx_timer));
+	if (evtimer_del(&iface->lsack_tx_timer) == -1)
+		fatal("stop_ls_ack_tx_timer");
 }
