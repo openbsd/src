@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfb.c,v 1.13 2006/03/04 10:25:21 miod Exp $	*/
+/*	$OpenBSD: macfb.c,v 1.14 2006/03/13 22:07:55 miod Exp $	*/
 /* $NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -80,6 +80,7 @@ int	macfb_color_setup(struct macfb_devconfig *);
 int	macfb_getcmap(struct macfb_devconfig *, struct wsdisplay_cmap *);
 int	macfb_init(struct macfb_devconfig *);
 int	macfb_is_console(paddr_t);
+void	macfb_palette_setup(struct macfb_devconfig *);
 int	macfb_putcmap(struct macfb_devconfig *, struct wsdisplay_cmap *);
 
 paddr_t macfb_consaddr;
@@ -188,10 +189,11 @@ macfb_color_setup(struct macfb_devconfig *dc)
 	if (ri->ri_depth > 8)
 		return (0);	/* fill in black */
 
-	if (dc->dc_setcolor == NULL ||
+	if (dc->dc_setcolor == NULL || ISSET(dc->dc_flags, FB_MACOS_PALETTE) ||
 	    ri->ri_depth < 2) {
 		/*
-		 * Until we know how to setup the colormap, constrain ourselves
+		 * Until we know how to setup the colormap, or if we are
+		 * already initialized (i.e. glass console), constrain ourselves
 		 * to mono mode. Note that we need to use our own alloc_attr
 		 * routine to compensate for inverted black and white colors.
 		 */
@@ -199,6 +201,9 @@ macfb_color_setup(struct macfb_devconfig *dc)
 		ri->ri_caps &= ~(WSSCREEN_WSCOLORS | WSSCREEN_HILIT);
 		if (ri->ri_depth == 8)
 			ri->ri_devcmap[15] = 0xffffffff;
+
+		macfb_palette_setup(dc);
+
 		return (0xff);	/* fill in black inherited from MacOS */
 	}
 
@@ -246,6 +251,17 @@ macfb_color_setup(struct macfb_devconfig *dc)
 	(*dc->dc_setcolor)(dc, 0, 1 << ri->ri_depth);
 
 	return (WSCOL_BLACK);	/* fill in our own black */
+}
+
+/*
+ * Initialize a black and white, MacOS compatible, shadow colormap.
+ * This is necessary if we still want to be able to run X11 with colors.
+ */
+void
+macfb_palette_setup(struct macfb_devconfig *dc)
+{
+	memset(dc->dc_cmap, 0xff, 3);		/* white */
+	bzero(dc->dc_cmap + 3, 255 * 3);	/* black */
 }
 
 /*
@@ -332,6 +348,8 @@ macfb_attach_common(struct macfb_softc *sc, struct macfb_devconfig *dc)
 	isconsole = macfb_is_console(sc->sc_basepa + dc->dc_offset);
 
 	if (isconsole) {
+		macfb_console_dc.dc_setcolor = dc->dc_setcolor;
+		macfb_console_dc.dc_cmapregs = dc->dc_cmapregs;
 		free(dc, M_DEVBUF);
 		dc = sc->sc_dc = &macfb_console_dc;
 		dc->nscreens = 1;
@@ -372,25 +390,34 @@ macfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		wdf->height = dc->dc_ri.ri_height;
 		wdf->width = dc->dc_ri.ri_width;
 		wdf->depth = dc->dc_ri.ri_depth;
-		if (dc->dc_ri.ri_depth > 8)
+		if (dc->dc_ri.ri_depth > 8 || dc->dc_setcolor == NULL)
 			wdf->cmsize = 0;
 		else
-			wdf->cmsize = (dc->dc_ri.ri_caps & WSSCREEN_WSCOLORS) ?
-			    1 << dc->dc_ri.ri_depth : 0;
+			wdf->cmsize = 1 << dc->dc_ri.ri_depth;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = dc->dc_ri.ri_stride;
 		break;
 	case WSDISPLAYIO_GETCMAP:
-		if (dc->dc_ri.ri_depth > 8 ||
-		    (dc->dc_ri.ri_caps & WSSCREEN_WSCOLORS) == 0)
+		if (dc->dc_ri.ri_depth > 8 || dc->dc_setcolor == NULL)
 			return (0);
 		return (macfb_getcmap(dc, (struct wsdisplay_cmap *)data));
 	case WSDISPLAYIO_PUTCMAP:
-		if (dc->dc_ri.ri_depth > 8 ||
-		    (dc->dc_ri.ri_caps & WSSCREEN_WSCOLORS) == 0)
+		if (dc->dc_ri.ri_depth > 8 || dc->dc_setcolor == NULL)
 			return (0);
 		return (macfb_putcmap(dc, (struct wsdisplay_cmap *)data));
+	case WSDISPLAYIO_SMODE:
+		if (dc->dc_ri.ri_depth > 8 || dc->dc_setcolor == NULL)
+			return (0);
+		if (*(u_int *)data == WSDISPLAYIO_MODE_EMUL &&
+		    ISSET(dc->dc_flags, FB_MACOS_PALETTE)) {
+			macfb_palette_setup(dc);
+			(*dc->dc_setcolor)(dc, 0, 1 << dc->dc_ri.ri_depth);
+			/* clear display */
+			memset((char *)dc->dc_vaddr + dc->dc_offset, 0xff,
+			     dc->dc_rowbytes * dc->dc_ht);
+		}
+		break;
 	case WSDISPLAYIO_GVIDEO:
 	case WSDISPLAYIO_SVIDEO:
 		break;
@@ -538,6 +565,7 @@ macfb_cnattach()
 	    mac68k_vidlen : dc->dc_ht * dc->dc_rowbytes;
 
 	/* set up the display */
+	dc->dc_flags |= FB_MACOS_PALETTE;
 	if (macfb_init(dc) != 0)
 		return (-1);
 
