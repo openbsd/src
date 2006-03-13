@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_variables.c,v 1.9 2002/03/14 01:26:51 millert Exp $	*/
+/*	$OpenBSD: db_variables.c,v 1.10 2006/03/13 06:23:20 jsg Exp $	*/
 /*	$NetBSD: db_variables.c,v 1.8 1996/02/05 01:57:19 christos Exp $	*/
 
 /* 
@@ -51,8 +51,7 @@ struct db_variable db_vars[] = {
 struct db_variable *db_evars = db_vars + sizeof(db_vars)/sizeof(db_vars[0]);
 
 int
-db_find_variable(varp)
-	struct db_variable	**varp;
+db_find_variable(struct db_variable **varp)
 {
 	int	t;
 	struct db_variable *vp;
@@ -78,8 +77,7 @@ db_find_variable(varp)
 }
 
 int
-db_get_variable(valuep)
-	db_expr_t	*valuep;
+db_get_variable(db_expr_t *valuep)
 {
 	struct db_variable *vp;
 
@@ -92,8 +90,7 @@ db_get_variable(valuep)
 }
 
 int
-db_set_variable(value)
-	db_expr_t	value;
+db_set_variable(db_expr_t value)
 {
 	struct db_variable *vp;
 
@@ -107,9 +104,7 @@ db_set_variable(value)
 
 
 void
-db_read_variable(vp, valuep)
-	struct db_variable *vp;
-	db_expr_t	*valuep;
+db_read_variable(struct db_variable *vp, db_expr_t *valuep)
 {
 	int	(*func)(struct db_variable *, db_expr_t *, int) = vp->fcn;
 
@@ -120,9 +115,7 @@ db_read_variable(vp, valuep)
 }
 
 void
-db_write_variable(vp, valuep)
-	struct db_variable *vp;
-	db_expr_t	*valuep;
+db_write_variable(struct db_variable *vp, db_expr_t *valuep)
 {
 	int	(*func)(struct db_variable *, db_expr_t *, int) = vp->fcn;
 
@@ -134,11 +127,7 @@ db_write_variable(vp, valuep)
 
 /*ARGSUSED*/
 void
-db_set_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+db_set_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	db_expr_t	value;
 	struct db_variable *vp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.25 2005/01/08 19:36:30 mickey Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.26 2006/03/13 06:23:20 jsg Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -87,13 +87,8 @@ static void db_hang_forall(db_symtab_t *, db_sym_t, char *, char *, int,
 			void *);
 
 static void
-db_hang_forall(stab, sym, name, suff, pre, varg)
-	db_symtab_t *stab;
-	db_sym_t sym;
-	char *name;
-	char *suff;
-	int pre;
-	void *varg;
+db_hang_forall(db_symtab_t *stab, db_sym_t sym, char *name, char *suff, int pre,
+    void *varg)
 {
 	struct db_hang_forall_arg *arg = (struct db_hang_forall_arg *)varg;
 
@@ -143,12 +138,9 @@ db_randomsym(size_t *lenp)
 }
 
 void
-db_hang(tries, word, sabc)
-	int	tries;
-	register char	*word;
-	register struct _abc *sabc;
+db_hang(int tries, char *word, struct _abc *sabc)
 {
-	register const char	*p;
+	const char	*p;
 	int i;
 	int c;
 #ifdef ABC_BITMASK
@@ -185,11 +177,7 @@ db_hang(tries, word, sabc)
 }
 
 void
-db_hangman(addr, haddr, count, modif)
-	db_expr_t addr;
-	int	haddr;
-	db_expr_t count;
-	char	*modif;
+db_hangman(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
 	char	*word;
 	size_t	tries;
@@ -215,15 +203,15 @@ db_hangman(addr, haddr, count, modif)
 		}
 
 		{
-			register int c;
+			int c;
 
 			db_hang(tries, word, sabc);
 			c = cngetc();
 			c = TOLOWER(c);
 
 			if (ISLOWALPHA(c) && ABC_ISCLR(c)) {
-				register char	*p;
-				register size_t	n;
+				char	*p;
+				size_t	n;
 
 					/* strchr(word,c) */
 				for (n = 0, p = word; *p ; p++)
@@ -244,7 +232,7 @@ db_hangman(addr, haddr, count, modif)
 			continue;
 
 		if (!tries && skill > 2) {
-			register char	*p = word;
+			char	*p = word;
 			for (; *p; p++)
 				if (ISALPHA(*p))
 					ABC_SETRIGHT(TOLOWER(*p));

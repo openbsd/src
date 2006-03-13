@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_break.c,v 1.12 2002/05/16 13:01:41 art Exp $	*/
+/*	$OpenBSD: db_break.c,v 1.13 2006/03/13 06:23:20 jsg Exp $	*/
 /*	$NetBSD: db_break.c,v 1.7 1996/03/30 22:30:03 christos Exp $	*/
 
 /* 
@@ -53,9 +53,9 @@ db_breakpoint_t		db_free_breakpoints = 0;
 db_breakpoint_t		db_breakpoint_list = 0;
 
 db_breakpoint_t
-db_breakpoint_alloc()
+db_breakpoint_alloc(void)
 {
-	register db_breakpoint_t	bkpt;
+	db_breakpoint_t	bkpt;
 
 	if ((bkpt = db_free_breakpoints) != 0) {
 	    db_free_breakpoints = bkpt->link;
@@ -72,20 +72,16 @@ db_breakpoint_alloc()
 }
 
 void
-db_breakpoint_free(bkpt)
-	register db_breakpoint_t	bkpt;
+db_breakpoint_free(db_breakpoint_t bkpt)
 {
 	bkpt->link = db_free_breakpoints;
 	db_free_breakpoints = bkpt;
 }
 
 void
-db_set_breakpoint(map, addr, count)
-	struct vm_map  *map;
-	db_addr_t	addr;
-	int		count;
+db_set_breakpoint(struct vm_map *map, db_addr_t addr, int count)
 {
-	register db_breakpoint_t	bkpt;
+	db_breakpoint_t	bkpt;
 
 	if (db_find_breakpoint(map, addr)) {
 	    db_printf("Already set.\n");
@@ -116,12 +112,10 @@ db_set_breakpoint(map, addr, count)
 }
 
 void
-db_delete_breakpoint(map, addr)
-	struct vm_map  *map;
-	db_addr_t	addr;
+db_delete_breakpoint(struct vm_map *map, db_addr_t addr)
 {
-	register db_breakpoint_t	bkpt;
-	register db_breakpoint_t	*prev;
+	db_breakpoint_t	bkpt;
+	db_breakpoint_t	*prev;
 
 	for (prev = &db_breakpoint_list;
 	     (bkpt = *prev) != 0;
@@ -141,11 +135,9 @@ db_delete_breakpoint(map, addr)
 }
 
 db_breakpoint_t
-db_find_breakpoint(map, addr)
-	struct vm_map  *map;
-	db_addr_t	addr;
+db_find_breakpoint(struct vm_map *map, db_addr_t addr)
 {
-	register db_breakpoint_t	bkpt;
+	db_breakpoint_t	bkpt;
 
 	for (bkpt = db_breakpoint_list;
 	     bkpt != 0;
@@ -159,8 +151,7 @@ db_find_breakpoint(map, addr)
 }
 
 db_breakpoint_t
-db_find_breakpoint_here(addr)
-	db_addr_t	addr;
+db_find_breakpoint_here(db_addr_t addr)
 {
     return db_find_breakpoint(db_map_addr(addr), addr);
 }
@@ -168,9 +159,9 @@ db_find_breakpoint_here(addr)
 boolean_t	db_breakpoints_inserted = TRUE;
 
 void
-db_set_breakpoints()
+db_set_breakpoints(void)
 {
-	register db_breakpoint_t	bkpt;
+	db_breakpoint_t	bkpt;
 
 	if (!db_breakpoints_inserted) {
 
@@ -188,9 +179,9 @@ db_set_breakpoints()
 }
 
 void
-db_clear_breakpoints()
+db_clear_breakpoints(void)
 {
-	register db_breakpoint_t	bkpt;
+	db_breakpoint_t	bkpt;
 
 	if (db_breakpoints_inserted) {
 
@@ -210,8 +201,7 @@ db_clear_breakpoints()
  * so the breakpoint does not have to be on the breakpoint list.
  */
 db_breakpoint_t
-db_set_temp_breakpoint(addr)
-	db_addr_t	addr;
+db_set_temp_breakpoint(db_addr_t addr)
 {
 	db_breakpoint_t	bkpt;
 
@@ -240,8 +230,7 @@ db_set_temp_breakpoint(addr)
 }
 
 void
-db_delete_temp_breakpoint(bkpt)
-	db_breakpoint_t	bkpt;
+db_delete_temp_breakpoint(db_breakpoint_t bkpt)
 {
 	db_put_value(bkpt->address, BKPT_SIZE, bkpt->bkpt_inst);
 	db_breakpoint_free(bkpt);
@@ -251,9 +240,9 @@ db_delete_temp_breakpoint(bkpt)
  * List breakpoints.
  */
 void
-db_list_breakpoints()
+db_list_breakpoints(void)
 {
-	register db_breakpoint_t	bkpt;
+	db_breakpoint_t	bkpt;
 
 	if (db_breakpoint_list == 0) {
 	    db_printf("No breakpoints set\n");
@@ -276,11 +265,7 @@ db_list_breakpoints()
 /* Delete breakpoint */
 /*ARGSUSED*/
 void
-db_delete_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+db_delete_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	db_delete_breakpoint(db_map_addr(addr), (db_addr_t)addr);
 }
@@ -288,11 +273,7 @@ db_delete_cmd(addr, have_addr, count, modif)
 /* Set breakpoint with skip count */
 /*ARGSUSED*/
 void
-db_breakpoint_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+db_breakpoint_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	if (count == -1)
 	    count = 1;
@@ -303,11 +284,7 @@ db_breakpoint_cmd(addr, have_addr, count, modif)
 /* list breakpoints */
 /*ARGSUSED*/
 void
-db_listbreak_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+db_listbreak_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	db_list_breakpoints();
 }
@@ -319,8 +296,7 @@ db_listbreak_cmd(addr, have_addr, count, modif)
  */
 
 boolean_t
-db_map_equal(map1, map2)
-	struct vm_map *map1, *map2;
+db_map_equal(struct vm_map *map1, struct vm_map *map2)
 {
 	return ((map1 == map2) ||
 		((map1 == NULL) && (map2 == kernel_map)) ||
@@ -328,8 +304,7 @@ db_map_equal(map1, map2)
 }
 
 boolean_t
-db_map_current(map)
-	struct vm_map *map;
+db_map_current(struct vm_map *map)
 {
 #if 0
 	thread_t	thread;
@@ -344,8 +319,7 @@ db_map_current(map)
 }
 
 struct vm_map *
-db_map_addr(addr)
-	vaddr_t addr;
+db_map_addr(vaddr_t addr)
 {
 #if 0
 	thread_t	thread;

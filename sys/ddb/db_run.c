@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.18 2005/09/06 19:49:21 miod Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.19 2006/03/13 06:23:20 jsg Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /* 
@@ -75,9 +75,7 @@ int		db_loop_count;
 int		db_call_depth;
 
 boolean_t
-db_stop_at_pc(regs, is_breakpoint)
-	db_regs_t	*regs;
-	boolean_t	*is_breakpoint;
+db_stop_at_pc(db_regs_t *regs, boolean_t *is_breakpoint)
 {
 	db_addr_t	pc, old_pc;
 	db_breakpoint_t	bkpt;
@@ -154,7 +152,7 @@ db_stop_at_pc(regs, is_breakpoint)
 		(!inst_return(ins) || --db_call_depth != 0)) {
 		if (db_sstep_print) {
 		    if (inst_call(ins) || inst_return(ins)) {
-			register int i;
+			int i;
 
 			db_printf("[after %6d]     ", db_inst_count);
 			for (i = db_call_depth; --i > 0; )
@@ -183,9 +181,7 @@ db_stop_at_pc(regs, is_breakpoint)
 }
 
 void
-db_restart_at_pc(regs, watchpt)
-	db_regs_t *regs;
-	boolean_t watchpt;
+db_restart_at_pc(db_regs_t *regs, boolean_t watchpt)
 {
 	db_addr_t pc = PC_REGS(regs);
 
@@ -230,8 +226,7 @@ db_restart_at_pc(regs, watchpt)
 }
 
 void
-db_single_step(regs)
-	db_regs_t *regs;
+db_single_step(db_regs_t *regs)
 {
 	if (db_run_mode == STEP_CONTINUE) {
 	    db_run_mode = STEP_INVISIBLE;
@@ -244,11 +239,7 @@ extern int	db_cmd_loop_done;
 /* single-step */
 /*ARGSUSED*/
 void
-db_single_step_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+db_single_step_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	boolean_t	print = FALSE;
 
@@ -271,11 +262,8 @@ db_single_step_cmd(addr, have_addr, count, modif)
 /* trace and print until call/return */
 /*ARGSUSED*/
 void
-db_trace_until_call_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+db_trace_until_call_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+    char *modif)
 {
 	boolean_t	print = FALSE;
 
@@ -293,11 +281,8 @@ db_trace_until_call_cmd(addr, have_addr, count, modif)
 
 /*ARGSUSED*/
 void
-db_trace_until_matching_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+db_trace_until_matching_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+    char *modif)
 {
 	boolean_t	print = FALSE;
 
@@ -317,11 +302,7 @@ db_trace_until_matching_cmd(addr, have_addr, count, modif)
 /* continue */
 /*ARGSUSED*/
 void
-db_continue_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+db_continue_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	if (modif[0] == 'c')
 	    db_run_mode = STEP_COUNT;
@@ -368,8 +349,7 @@ db_continue_cmd(addr, have_addr, count, modif)
  */			
 
 void
-db_set_single_step(regs)
-	register db_regs_t *regs;
+db_set_single_step(db_regs_t *regs)
 {
 	db_addr_t pc = PC_REGS(regs);
 #ifndef SOFTWARE_SSTEP_EMUL
@@ -397,8 +377,7 @@ db_set_single_step(regs)
 }
 
 void
-db_clear_single_step(regs)
-	db_regs_t *regs;
+db_clear_single_step(db_regs_t *regs)
 {
 	if (db_taken_bkpt != 0) {
 	    db_delete_temp_breakpoint(db_taken_bkpt);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_expr.c,v 1.7 2001/11/06 19:53:18 miod Exp $	*/
+/*	$OpenBSD: db_expr.c,v 1.8 2006/03/13 06:23:20 jsg Exp $	*/
 /*	$NetBSD: db_expr.c,v 1.5 1996/02/05 01:56:58 christos Exp $	*/
 
 /* 
@@ -45,8 +45,7 @@
 #include <ddb/db_variables.h>
 
 boolean_t
-db_term(valuep)
-	db_expr_t *valuep;
+db_term(db_expr_t *valuep)
 {
 	int	t;
 
@@ -100,8 +99,7 @@ db_term(valuep)
 }
 
 boolean_t
-db_unary(valuep)
-	db_expr_t *valuep;
+db_unary(db_expr_t *valuep)
 {
 	int	t;
 
@@ -128,8 +126,7 @@ db_unary(valuep)
 }
 
 boolean_t
-db_mult_expr(valuep)
-	db_expr_t *valuep;
+db_mult_expr(db_expr_t *valuep)
 {
 	db_expr_t	lhs, rhs;
 	int		t;
@@ -165,8 +162,7 @@ db_mult_expr(valuep)
 }
 
 boolean_t
-db_add_expr(valuep)
-	db_expr_t *valuep;
+db_add_expr(db_expr_t *valuep)
 {
 	db_expr_t	lhs, rhs;
 	int		t;
@@ -192,8 +188,7 @@ db_add_expr(valuep)
 }
 
 boolean_t
-db_shift_expr(valuep)
-	db_expr_t *valuep;
+db_shift_expr(db_expr_t *valuep)
 {
 	db_expr_t	lhs, rhs;
 	int		t;
@@ -225,8 +220,7 @@ db_shift_expr(valuep)
 }
 
 int
-db_expression(valuep)
-	db_expr_t *valuep;
+db_expression(db_expr_t *valuep)
 {
 	return (db_shift_expr(valuep));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.28 2002/03/14 01:26:51 millert Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.29 2006/03/13 06:23:20 jsg Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.29 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /* 
@@ -90,15 +90,14 @@ static int slen;
 
 /*
  * Find the symbol table and strings; tell ddb about them.
+ *
+ * symsize:	size of symbol table
+ * vsymtab:	pointer to end of string table
+ * vesymtab:	pointer to end of string table, for checking - rounded up to
+ * 		    integer boundry
  */
 boolean_t
-db_aout_sym_init(symsize, vsymtab, vesymtab, name)
-	int symsize;		/* size of symbol table */
-	void *vsymtab;		/* pointer to start of symbol table */
-	void *vesymtab;		/* pointer to end of string table,
-				   for checking - rounded up to integer
-				   boundary */
-	const char *name;
+db_aout_sym_init(int symsize, void *vsymtab, void *vesymtab, const char *name)
 {
 	struct nlist	*sym_start, *sym_end;
 	struct nlist	*sp;
@@ -173,9 +172,7 @@ db_aout_sym_init(symsize, vsymtab, vesymtab, name)
 }
 
 db_sym_t
-db_aout_lookup(stab, symstr)
-	db_symtab_t	*stab;
-	char *		symstr;
+db_aout_lookup(db_symtab_t *stab, char *symstr)
 {
 	struct nlist *sp, *ep;
 	char *n_name;
@@ -194,11 +191,8 @@ db_aout_lookup(stab, symstr)
 }
 
 db_sym_t
-db_aout_search_symbol(symtab, off, strategy, diffp)
-	db_symtab_t *	symtab;
-	db_addr_t	off;
-	db_strategy_t	strategy;
-	db_expr_t	*diffp;		/* in/out */
+db_aout_search_symbol(db_symtab_t *symtab, db_addr_t off,
+    db_strategy_t strategy, db_expr_t *diffp)
 {
 	unsigned int	diff = *diffp;
 	struct nlist	*symp = 0;
@@ -243,11 +237,8 @@ db_aout_search_symbol(symtab, off, strategy, diffp)
  * Return the name and value for a symbol.
  */
 void
-db_aout_symbol_values(symtab, sym, namep, valuep)
-	db_symtab_t	*symtab;
-	db_sym_t	sym;
-	char		**namep;
-	db_expr_t	*valuep;
+db_aout_symbol_values(db_symtab_t *symtab, db_sym_t sym, char **namep,
+    db_expr_t *valuep)
 {
 	struct nlist *sp;
 
@@ -260,12 +251,8 @@ db_aout_symbol_values(symtab, sym, namep, valuep)
 
 
 boolean_t
-db_aout_line_at_pc(symtab, cursym, filename, linenum, off)
-	db_symtab_t *	symtab;
-	db_sym_t	cursym;
-	char 		**filename;
-	int 		*linenum;
-	db_expr_t	off;
+db_aout_line_at_pc(db_symtab_t *symtab, db_sym_t cursym, char **filename,
+    int *linenum, db_expr_t off)
 {
 	struct nlist	*sp, *ep;
 	unsigned long	sodiff = -1UL, lndiff = -1UL, ln = 0;
@@ -326,11 +313,8 @@ db_aout_line_at_pc(symtab, cursym, filename, linenum, off)
 }
 
 boolean_t
-db_aout_sym_numargs(symtab, cursym, nargp, argnamep)
-	db_symtab_t *	symtab;
-	db_sym_t	cursym;
-	int		*nargp;
-	char		**argnamep;
+db_aout_sym_numargs(db_symtab_t *symtab, db_sym_t cursym, int *nargp,
+    char **argnamep)
 {
 	struct nlist	*sp, *ep;
 	u_long		addr;
@@ -369,10 +353,7 @@ db_aout_sym_numargs(symtab, cursym, nargp, argnamep)
 }
 
 void
-db_aout_forall(stab, db_forall_func, arg)
-	db_symtab_t		*stab;
-	db_forall_func_t	db_forall_func;
-	void			*arg;
+db_aout_forall(db_symtab_t *stab, db_forall_func_t db_forall_func, void *arg)
 {
 	static char suffix[2];
 	struct nlist *sp, *ep;

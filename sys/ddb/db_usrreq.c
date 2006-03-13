@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_usrreq.c,v 1.9 2004/02/06 22:19:21 tedu Exp $	*/
+/*	$OpenBSD: db_usrreq.c,v 1.10 2006/03/13 06:23:20 jsg Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.  All rights reserved.
@@ -36,14 +36,8 @@
 int	db_log = 1;
 
 int
-ddb_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int	*name;
-	u_int	namelen;
-	void	*oldp;
-	size_t	*oldlenp;
-	void	*newp;
-	size_t	newlen;
-	struct proc *p;
+ddb_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	int error, ctlval;
 

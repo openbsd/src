@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_examine.c,v 1.11 2004/04/25 03:21:50 itojun Exp $	*/
+/*	$OpenBSD: db_examine.c,v 1.12 2006/03/13 06:23:20 jsg Exp $	*/
 /*	$NetBSD: db_examine.c,v 1.11 1996/03/30 22:30:07 christos Exp $	*/
 
 /*
@@ -57,11 +57,7 @@ char	db_examine_format[TOK_STRING_SIZE] = "x";
  */
 /*ARGSUSED*/
 void
-db_examine_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+db_examine_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	if (modif[0] != '\0')
 		db_strlcpy(db_examine_format, modif, sizeof(db_examine_format));
@@ -73,10 +69,7 @@ db_examine_cmd(addr, have_addr, count, modif)
 }
 
 void
-db_examine(addr, fmt, count)
-	db_addr_t	addr;
-	char *		fmt;	/* format string */
-	int		count;	/* repeat count */
+db_examine(db_addr_t addr, char *fmt, int count)
 {
 	int		c;
 	db_expr_t	value;
@@ -188,11 +181,7 @@ char	db_print_format = 'x';
 
 /*ARGSUSED*/
 void
-db_print_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+db_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	db_expr_t	value;
 
@@ -233,8 +222,7 @@ db_print_cmd(addr, have_addr, count, modif)
 }
 
 void
-db_print_loc_and_inst(loc)
-	db_addr_t	loc;
+db_print_loc_and_inst(db_addr_t loc)
 {
 	db_printsym(loc, DB_STGY_PROC, db_printf);
 	db_printf(":\t");
@@ -274,11 +262,7 @@ db_strlcpy(char *dst, const char *src, size_t siz)
  */
 /*ARGSUSED*/
 void
-db_search_cmd(daddr, have_addr, dcount, modif)
-	db_expr_t	daddr;
-	int		have_addr;
-	db_expr_t	dcount;
-	char *		modif;
+db_search_cmd(db_expr_t daddr, int have_addr, db_expr_t dcount, char *modif)
 {
 	int		t;
 	db_addr_t	addr;
@@ -343,13 +327,8 @@ db_search_cmd(daddr, have_addr, dcount, modif)
 }
 
 void
-db_search(addr, size, value, mask, count)
-	register
-	db_addr_t	addr;
-	int		size;
-	db_expr_t	value;
-	db_expr_t	mask;
-	db_expr_t	count;
+db_search(db_addr_t addr, int size, db_expr_t value, db_expr_t mask,
+    db_expr_t count)
 {
 	/* Negative counts means forever.  */
 	while (count < 0 || count-- != 0) {

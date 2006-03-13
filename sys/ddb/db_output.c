@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.c,v 1.23 2006/03/09 23:06:20 miod Exp $	*/
+/*	$OpenBSD: db_output.c,v 1.24 2006/03/13 06:23:20 jsg Exp $	*/
 /*	$NetBSD: db_output.c,v 1.13 1996/04/01 17:27:14 christos Exp $	*/
 
 /* 
@@ -88,9 +88,9 @@ static void db_more(void);
  * Force pending whitespace.
  */
 void
-db_force_whitespace()
+db_force_whitespace(void)
 {
-	register int last_print, next_tab;
+	int last_print, next_tab;
 
 	last_print = db_last_non_space;
 	while (last_print < db_output_position) {
@@ -111,9 +111,9 @@ db_force_whitespace()
 
 #ifdef DDB
 static void
-db_more()
+db_more(void)
 {
-	register  char *p;
+	char *p;
 	int quit_output = 0;
 
 	for (p = "--db_more--"; *p; p++)
@@ -145,8 +145,7 @@ db_more()
  * Output character.  Buffer whitespace.
  */
 void
-db_putchar(c)
-	int	c;		/* character to output */
+db_putchar(int c)
 {
 #ifdef DDB
 	if (db_max_line >= DB_MIN_MAX_LINE && db_output_line >= db_max_line-1)
@@ -200,7 +199,7 @@ db_putchar(c)
  * Return output position
  */
 int
-db_print_position()
+db_print_position(void)
 {
 	return (db_output_position);
 }
@@ -209,8 +208,7 @@ db_print_position()
  * End line if too long.
  */
 void
-db_end_line(space)
-	int space;
+db_end_line(int space)
 {
 	if (db_output_position >= db_max_width - space)
 	    db_printf("\n");
