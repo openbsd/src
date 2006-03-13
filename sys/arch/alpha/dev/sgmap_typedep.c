@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmap_typedep.c,v 1.4 2004/11/09 19:17:01 claudio Exp $ */
+/* $OpenBSD: sgmap_typedep.c,v 1.5 2006/03/13 19:50:07 miod Exp $ */
 /* $NetBSD: sgmap_typedep.c,v 1.17 2001/07/19 04:27:37 thorpej Exp $ */
 
 /*-
@@ -68,7 +68,7 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	bus_addr_t dmaoffset, sgva;
 	bus_size_t sgvalen, boundary, alignment;
 	SGMAP_PTE_TYPE *pte, *page_table = sgmap->aps_pt;
-	int pteidx, error, spill;
+	int s, pteidx, error, spill;
 
 	/* Initialize the spill page PTE if it hasn't been already. */
 	if (__C(SGMAP_TYPE,_prefetch_spill_page_pte) == 0)
@@ -123,8 +123,10 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	    (endva - va), sgvalen, map->_dm_boundary, boundary);
 #endif
 
+	s = splvm();
 	error = extent_alloc(sgmap->aps_ex, sgvalen, alignment, 0, boundary,
 	    (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT : EX_WAITOK, &sgva);
+	splx(s);
 	if (error)
 		return (error);
 
@@ -301,7 +303,7 @@ __C(SGMAP_TYPE,_unload)(bus_dma_tag_t t, bus_dmamap_t map,
 {
 	SGMAP_PTE_TYPE *pte, *page_table = sgmap->aps_pt;
 	bus_addr_t osgva, sgva, esgva;
-	int spill, seg, pteidx;
+	int s, error, spill, seg, pteidx;
 
 	for (seg = 0; seg < map->dm_nsegs; seg++) {
 		/* XXX Always have a spill page for now... */
@@ -330,8 +332,11 @@ __C(SGMAP_TYPE,_unload)(bus_dma_tag_t t, bus_dmamap_t map,
 		alpha_mb();
 
 		/* Free the virtual address space used by the mapping. */
-		if (extent_free(sgmap->aps_ex, osgva, (esgva - osgva),
-		    EX_NOWAIT) != 0)
+		s = splvm();
+		error = extent_free(sgmap->aps_ex, osgva, (esgva - osgva),
+		    EX_NOWAIT);
+		splx(s);
+		if (error != 0)
 			panic(__S(__C(SGMAP_TYPE,_unload)));
 	}
 
