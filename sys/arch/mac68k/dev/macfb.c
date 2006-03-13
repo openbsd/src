@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfb.c,v 1.14 2006/03/13 22:07:55 miod Exp $	*/
+/*	$OpenBSD: macfb.c,v 1.15 2006/03/13 22:35:17 miod Exp $	*/
 /* $NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -168,13 +168,13 @@ macfb_init(struct macfb_devconfig *dc)
 	memset((char *)dc->dc_vaddr + dc->dc_offset, bgcolor,
 	     dc->dc_rowbytes * dc->dc_ht);
 
-	strlcpy(dc->wsd.name, "std", sizeof(dc->wsd.name));
-	dc->wsd.ncols = ri->ri_cols;
-	dc->wsd.nrows = ri->ri_rows;
-	dc->wsd.textops = &ri->ri_ops;
-	dc->wsd.fontwidth = ri->ri_font->fontwidth;
-	dc->wsd.fontheight = ri->ri_font->fontheight;
-	dc->wsd.capabilities = ri->ri_caps;
+	strlcpy(dc->dc_wsd.name, "std", sizeof(dc->dc_wsd.name));
+	dc->dc_wsd.ncols = ri->ri_cols;
+	dc->dc_wsd.nrows = ri->ri_rows;
+	dc->dc_wsd.textops = &ri->ri_ops;
+	dc->dc_wsd.fontwidth = ri->ri_font->fontwidth;
+	dc->dc_wsd.fontheight = ri->ri_font->fontheight;
+	dc->dc_wsd.capabilities = ri->ri_caps;
 
 	return (0);
 }
@@ -333,8 +333,6 @@ void
 macfb_attach_common(struct macfb_softc *sc, struct macfb_devconfig *dc)
 {
 	struct wsemuldisplaydev_attach_args waa;
-	struct wsscreen_descr *scrlist[1];
-	struct wsscreen_list screenlist;
 	int isconsole;
 
 	/* Print hardware characteristics. */
@@ -352,7 +350,7 @@ macfb_attach_common(struct macfb_softc *sc, struct macfb_devconfig *dc)
 		macfb_console_dc.dc_cmapregs = dc->dc_cmapregs;
 		free(dc, M_DEVBUF);
 		dc = sc->sc_dc = &macfb_console_dc;
-		dc->nscreens = 1;
+		dc->dc_nscreens = 1;
 		macfb_color_setup(dc);
 		/* XXX at this point we should reset the emulation to have
 		 * it pick better attributes for kernel messages. Oh well. */
@@ -362,12 +360,13 @@ macfb_attach_common(struct macfb_softc *sc, struct macfb_devconfig *dc)
 			return;
 	}
 
-	scrlist[0] = &dc->wsd;
-	screenlist.nscreens = 1;
-	screenlist.screens = (const struct wsscreen_descr **)scrlist;
+	dc->dc_scrlist[0] = &dc->dc_wsd;
+	dc->dc_screenlist.nscreens = 1;
+	dc->dc_screenlist.screens =
+	    (const struct wsscreen_descr **)dc->dc_scrlist;
 
 	waa.console = isconsole;
-	waa.scrdata = &screenlist;
+	waa.scrdata = &dc->dc_screenlist;
 	waa.accessops = &macfb_accessops;
 	waa.accesscookie = sc;
 
@@ -451,7 +450,7 @@ macfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	struct macfb_softc *sc = v;
 	struct rasops_info *ri = &sc->sc_dc->dc_ri;
 
-	if (sc->sc_dc->nscreens > 0)
+	if (sc->sc_dc->dc_nscreens > 0)
 		return (ENOMEM);
 
 	*cookiep = ri;
@@ -461,7 +460,7 @@ macfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 		    WSATTR_WSCOLORS, defattrp);
 	else
 		ri->ri_ops.alloc_attr(ri, 0, 0, 0, defattrp);
-	sc->sc_dc->nscreens++;
+	sc->sc_dc->dc_nscreens++;
 
 	return (0);
 }
@@ -471,7 +470,7 @@ macfb_free_screen(void *v, void *cookie)
 {
 	struct macfb_softc *sc = v;
 
-	sc->sc_dc->nscreens--;
+	sc->sc_dc->dc_nscreens--;
 }
 
 int
@@ -576,7 +575,7 @@ macfb_cnattach()
 	else
 		ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 
-	wsdisplay_cnattach(&dc->wsd, ri, 0, 0, defattr);
+	wsdisplay_cnattach(&dc->dc_wsd, ri, 0, 0, defattr);
 
 	macfb_consaddr = mac68k_vidphys;
 	return (0);

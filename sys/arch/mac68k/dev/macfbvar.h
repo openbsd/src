@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfbvar.h,v 1.6 2006/03/13 22:07:56 miod Exp $	*/
+/*	$OpenBSD: macfbvar.h,v 1.7 2006/03/13 22:35:17 miod Exp $	*/
 /* $NetBSD: macfbvar.h,v 1.3 2005/01/15 16:00:59 chs Exp $ */
 /*	$NetBSD: grfvar.h,v 1.11 1996/08/04 06:03:58 scottr Exp $	*/
 /*	$NetBSD: grfioctl.h,v 1.5 1995/07/02 05:26:45 briggs Exp $	*/
@@ -123,8 +123,10 @@ struct macfb_devconfig {
 	void		(*dc_setcolor)(void *, u_int, u_int);
 
 	/* wsdisplay information */
-	struct wsscreen_descr wsd;
-	int		nscreens;
+	struct wsscreen_descr dc_wsd;
+	struct wsscreen_descr *dc_scrlist[1];
+	struct wsscreen_list dc_screenlist;
+	int		dc_nscreens;
 };
 
 struct macfb_softc {

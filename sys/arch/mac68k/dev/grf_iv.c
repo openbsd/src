@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_iv.c,v 1.40 2006/01/30 20:47:15 miod Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.41 2006/03/13 22:35:17 miod Exp $	*/
 /*	$NetBSD: grf_iv.c,v 1.17 1997/02/20 00:23:27 scottr Exp $	*/
 
 /*
@@ -367,7 +367,6 @@ macfb_obio_attach(struct device *parent, struct device *self, void *aux)
 	dc->dc_depth = videobitdepth;
 	dc->dc_rowbytes = videorowbytes;
 	dc->dc_size = dc->dc_ht * dc->dc_rowbytes;
-	dc->nscreens = 0;
 
 	/* Perform common video attachment. */
 	macfb_attach_common(sc, dc);
