@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.65 2005/07/22 08:38:46 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.66 2006/03/13 14:49:59 millert Exp $	*/
 
 #ifndef SMALL
 static const char copyright[] =
@@ -36,7 +36,7 @@ static const char license[] =
 #endif /* SMALL */
 
 #ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.65 2005/07/22 08:38:46 jmc Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.66 2006/03/13 14:49:59 millert Exp $";
 #endif
 
 #include <sys/param.h>
@@ -137,15 +137,14 @@ main(int argc, char *argv[])
 {
 	FTS *ftsp;
 	FTSENT *entry;
-	struct stat osb;
 	const struct compressor *method;
 	const char *s;
 	char *p, *infile;
 	char outfile[MAXPATHLEN], _infile[MAXPATHLEN], suffix[16];
 	char *nargv[512];	/* some estimate based on ARG_MAX */
-	int bits, exists, oreg, ch, error, i, rc, oflag;
+	int bits, ch, error, i, rc, cflag, oflag;
 
-	oreg = exists = bits = oflag = 0;
+	bits = cflag = oflag = 0;
 	nosave = -1;
 	p = __progname;
 	if (p[0] == 'g') {
@@ -162,7 +161,7 @@ main(int argc, char *argv[])
 	decomp = 0;
 	if (!strcmp(p, "zcat")) {
 		decomp++;
-		cat = 1;
+		cflag = 1;
 	} else {
 		if (p[0] == 'u' && p[1] == 'n') {
 			p += 2;
@@ -222,7 +221,7 @@ main(int argc, char *argv[])
 				errx(1, "illegal bit count -- %s", optarg);
 			break;
 		case 'c':
-			cat = 1;
+			cflag = 1;
 			break;
 		case 'd':		/* Backward compatible. */
 			decomp++;
@@ -304,19 +303,8 @@ main(int argc, char *argv[])
 		if (nargv[0] == NULL)
 			argv = nargv;
 		/* XXX - make sure we don't oflow nargv in $GZIP case (millert) */
-		argv[0] = "/dev/stdin";
+		argv[0] = "-";
 		argv[1] = NULL;
-		pipin++;
-		if (!oflag)
-			cat = 1;
-	} else {
-		for (i = 0; i < argc; i++) {
-			if (argv[i][0] == '-' && argv[i][1] == '\0') {
-				argv[i] = "/dev/stdin";
-				pipin++;
-				cat = 1;
-			}
-		}
 	}
 	if (oflag && (recurse || argc > 1))
 		errx(1, "-o option may only be used with a single input file");
@@ -329,6 +317,8 @@ main(int argc, char *argv[])
 	if ((ftsp = fts_open(argv, FTS_PHYSICAL|FTS_NOCHDIR, 0)) == NULL)
 		err(1, NULL);
 	for (rc = SUCCESS; (entry = fts_read(ftsp)) != NULL;) {
+		cat = cflag;
+		pipin = 0;
 		infile = entry->fts_path;
 		switch (entry->fts_info) {
 		case FTS_D:
@@ -345,16 +335,23 @@ main(int argc, char *argv[])
 			 * If file does not exist and has no suffix,
 			 * tack on the default suffix and try that.
 			 */
-			/* XXX - is overwriting fts_statp legal? (millert) */
-			if (entry->fts_errno == ENOENT &&
-			    ((p = strrchr(entry->fts_accpath, '.')) == NULL ||
-			    strcmp(p, suffix) != 0) &&
-			    snprintf(_infile, sizeof(_infile), "%s%s", infile,
-			    suffix) < sizeof(_infile) &&
-			    stat(_infile, entry->fts_statp) == 0 &&
-			    S_ISREG(entry->fts_statp->st_mode)) {
-				infile = _infile;
-				break;
+			if (entry->fts_errno == ENOENT) {
+				if (infile[0] == '-' && infile[1] == '\0') {
+					infile = "stdin";
+					pipin++;
+					if (!oflag)
+						cat = 1;
+					break;
+				}
+				p = strrchr(entry->fts_accpath, '.');
+				if ((p == NULL || strcmp(p, suffix) != 0) &&
+				    snprintf(_infile, sizeof(_infile), "%s%s",
+				    infile, suffix) < sizeof(_infile) &&
+				    stat(_infile, entry->fts_statp) == 0 &&
+				    S_ISREG(entry->fts_statp->st_mode)) {
+					infile = _infile;
+					break;
+				}
 			}
 		case FTS_ERR:
 		case FTS_DNR:
@@ -362,7 +359,7 @@ main(int argc, char *argv[])
 			rc = rc ? rc : WARNING;
 			continue;
 		default:
-			if (!S_ISREG(entry->fts_statp->st_mode) && !pipin &&
+			if (!S_ISREG(entry->fts_statp->st_mode) &&
 			    !(S_ISLNK(entry->fts_statp->st_mode) && cat)) {
 				warnx("%s not a regular file%s",
 				    infile, cat ? "" : ": unchanged");
@@ -379,10 +376,10 @@ main(int argc, char *argv[])
 			continue;
 		}
 
-		if (cat)
-			strlcpy(outfile, "/dev/stdout", sizeof outfile);
-		else if (!oflag) {
-			if (decomp) {
+		if (!oflag) {
+			if (cat)
+				strlcpy(outfile, "stdout", sizeof(outfile));
+			else if (decomp) {
 				if (set_outfile(infile, outfile,
 				    sizeof outfile) == NULL) {
 					if (!recurse) {
@@ -403,16 +400,6 @@ main(int argc, char *argv[])
 			}
 		}
 
-		if (!testmode) {
-			exists = !stat(outfile, &osb);
-			if (!force && exists && S_ISREG(osb.st_mode) &&
-			    !permission(outfile)) {
-				rc = rc ? rc : WARNING;
-				continue;
-			}
-			oreg = !exists || S_ISREG(osb.st_mode);
-		}
-
 		if (verbose > 0 && !pipin && !list)
 			fprintf(stderr, "%s:\t", infile);
 
@@ -431,13 +418,6 @@ main(int argc, char *argv[])
 			break;
 		default:
 			rc = FAILURE;
-			if (oreg && unlink(outfile) && errno != ENOENT &&
-			    verbose >= 0) {
-				if (force)
-					warn("output: %s", outfile);
-				else
-					err(1, "output: %s", outfile);
-			}
 			break;
 		}
 	}
@@ -454,25 +434,42 @@ docompress(const char *in, char *out, const struct compressor *method,
 #ifndef SMALL
 	u_char buf[Z_BUFSIZE];
 	char *name;
-	int error, ifd, ofd, flags;
+	int error, ifd, ofd, flags, oreg;
 	void *cookie;
 	ssize_t nr;
 	u_int32_t mtime;
 	struct z_info info;
+	struct stat osb;
 
 	mtime = 0;
-	flags = 0;
+	flags = oreg = 0;
 	error = SUCCESS;
 	name = NULL;
 	cookie  = NULL;
 
-	if ((ifd = open(in, O_RDONLY)) < 0) {
+	if (pipin)
+		ifd = dup(STDIN_FILENO);
+	else
+		ifd = open(in, O_RDONLY);
+	if (ifd < 0) {
 		if (verbose >= 0)
 			warn("%s", in);
 		return (FAILURE);
 	}
 
-	if ((ofd = open(out, O_WRONLY|O_CREAT, S_IWUSR)) < 0) {
+	if (cat)
+		ofd = dup(STDOUT_FILENO);
+	else {
+		if (stat(out, &osb) == 0) {
+			oreg = S_ISREG(osb.st_mode);
+			if (!force && oreg && !permission(out)) {
+				(void) close(ifd);
+				return (WARNING);
+			}
+		}
+		ofd = open(out, O_WRONLY|O_CREAT, S_IWUSR);
+	}
+	if (ofd < 0) {
 		if (verbose >= 0)
 			warn("%s", out);
 		(void) close(ifd);
@@ -494,7 +491,9 @@ docompress(const char *in, char *out, const struct compressor *method,
 	}
 	if ((cookie = (*method->open)(ofd, "w", name, bits, mtime, flags)) == NULL) {
 		if (verbose >= 0)
-			warn("%s", in);
+			warn("%s", out);
+		if (oreg)
+			(void) unlink(out);
 		(void) close(ofd);
 		(void) close(ifd);
 		return (FAILURE);
@@ -529,10 +528,14 @@ docompress(const char *in, char *out, const struct compressor *method,
 	if (!force && info.total_out >= info.total_in) {
 		if (verbose > 0)
 			fprintf(stderr, "file would grow; left unmodified\n");
-		error = FAILURE;
+		(void) unlink(out);
+		error = WARNING;
 	}
 
-	if (!error && verbose > 0)
+	if (error) {
+		if (oreg)
+			(void) unlink(out);
+	} else if (verbose > 0)
 		verbose_info(out, info.total_out, info.total_in, info.hlen);
 
 	return (error);
@@ -570,15 +573,22 @@ dodecompress(const char *in, char *out, const struct compressor *method,
     int bits, struct stat *sb)
 {
 	u_char buf[Z_BUFSIZE];
-	int error, ifd, ofd;
+	char oldname[MAXPATHLEN];
+	int error, oreg, ifd, ofd;
 	void *cookie;
 	ssize_t nr;
 	struct z_info info;
+	struct stat osb;
 
+	oreg = 0;
 	error = SUCCESS;
 	cookie = NULL;
 
-	if ((ifd = open(in, O_RDONLY)) < 0) {
+	if (pipin)
+		ifd = dup(STDIN_FILENO);
+	else
+		ifd = open(in, O_RDONLY);
+	if (ifd < 0) {
 		if (verbose >= 0)
 			warn("%s", in);
 		return -1;
@@ -600,21 +610,39 @@ dodecompress(const char *in, char *out, const struct compressor *method,
 	}
 
 	/* XXX - open constrains outfile to MAXPATHLEN so this is safe */
-	if ((cookie = (*method->open)(ifd, "r", nosave ? NULL : out,
-	    bits, 0, 1)) == NULL) {
+	oldname[0] = '\0';
+	if ((cookie = (*method->open)(ifd, "r", oldname, bits, 0, 1)) == NULL) {
 		if (verbose >= 0)
 			warn("%s", in);
 		close (ifd);
 		return (FAILURE);
 	}
+	if (!nosave && oldname[0] != '\0') {
+		strlcpy(out, oldname, MAXPATHLEN);
+		cat = 0;			/* XXX should -c override? */
+	}
 
 	if (testmode)
 		ofd = -1;
-	else if ((ofd = open(out, O_WRONLY|O_CREAT|O_TRUNC, S_IWUSR)) < 0) {
-		if (verbose >= 0)
-			warn("%s", in);
-		(method->close)(cookie, NULL, NULL, NULL);
-		return (FAILURE);
+	else {
+		if (cat)
+			ofd = dup(STDOUT_FILENO);
+		else {
+			if (stat(out, &osb) == 0) {
+				oreg = S_ISREG(osb.st_mode);
+				if (!force && oreg && !permission(out)) {
+					(void) close(ifd);
+					return (WARNING);
+				}
+			}
+			ofd = open(out, O_WRONLY|O_CREAT|O_TRUNC, S_IWUSR);
+		}
+		if (ofd < 0) {
+			if (verbose >= 0)
+				warn("%s", in);
+			(method->close)(cookie, NULL, NULL, NULL);
+			return (FAILURE);
+		}
 	}
 
 	while ((nr = (method->read)(cookie, buf, sizeof(buf))) > 0) {
@@ -638,7 +666,7 @@ dodecompress(const char *in, char *out, const struct compressor *method,
 			warnx("%s", in);
 		error = FAILURE;
 	}
-	if (!nosave) {
+	if (!nosave && !cat) {
 		if (info.mtime != 0) {
 			sb->st_mtimespec.tv_sec =
 			    sb->st_atimespec.tv_sec = info.mtime;
@@ -646,9 +674,6 @@ dodecompress(const char *in, char *out, const struct compressor *method,
 			    sb->st_atimespec.tv_nsec = 0;
 		} else
 			nosave = 1;		/* no timestamp to restore */
-
-		if (cat && strcmp(out, "/dev/stdout") != 0)
-			cat = 0;		/* have a real output name */
 	}
 	if (error == SUCCESS)
 		setfile(out, ofd, sb);
@@ -669,6 +694,10 @@ dodecompress(const char *in, char *out, const struct compressor *method,
 			    info.hlen);
 		}
 	}
+
+	/* On error, clean up the file we created but preserve errno. */
+	if (error && oreg)
+		unlink(out);
 
 	return (error);
 }
@@ -804,8 +833,6 @@ list_stats(const char *name, const struct compressor *method,
 	nruns++;
 
 	if (name != NULL) {
-		if (strcmp(name, "/dev/stdout") == 0)
-			name += 5;
 		if (verbose > 0) {
 			timestr = ctime(&info->mtime) + 4;
 			timestr[12] = '\0';
