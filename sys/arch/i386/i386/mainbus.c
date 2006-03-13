@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.23 2006/01/19 03:50:44 marco Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.24 2006/03/13 15:40:37 marco Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -155,6 +155,9 @@ mainbus_attach(parent, self, aux)
 	}
 #endif
 #if NACPI > 0
+#if NPCI > 0
+	if (pci_mode_detect() != 0)
+#endif
 	{
 		memset(&mba.mba_aaa, 0, sizeof(mba.mba_aaa));
 		mba.mba_aaa.aaa_name = "acpi";
