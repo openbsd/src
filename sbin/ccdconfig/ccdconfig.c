@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.27 2006/03/06 10:45:56 djm Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.28 2006/03/13 19:14:56 otto Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -99,13 +99,14 @@ static	struct nlist nl[] = {
 #define CCD_UNCONFIGALL		3	/* unconfigure all devices */
 #define CCD_DUMP		4	/* dump a ccd's configuration */
 
-static	int checkdev(char *);
+static	int checkdev(const char *);
 static	int do_io(char *, u_long, struct ccd_ioctl *);
 static	int do_single(int, char **, int);
 static	int do_all(int);
 static	int dump_ccd(int, char **);
 static	int flags_to_val(char *);
 #ifndef SMALL
+static 	int pathtounit(const char *, int *);
 static	void print_ccd_info(struct ccd_softc *, kvm_t *);
 #endif
 static	char *resolve_ccdname(char *);
@@ -203,8 +204,8 @@ static int
 do_single(int argc, char *argv[], int action)
 {
 	struct ccd_ioctl ccio;
-	char *ccd, *cp, *cp2, **disks;
-	int noflags = 0, i, ileave, flags = 0, j;
+	char *ccd, *cp, *cp2, **disks = NULL;
+	int noflags = 0, i, ileave, flags = 0, j, ret = 1;
 
 	memset(&ccio, 0, sizeof(ccio));
 
@@ -221,9 +222,12 @@ do_single(int argc, char *argv[], int action)
 			}
 			if (do_io(ccd, CCDIOCCLR, &ccio))
 				i = 1;
-			else
+			else {
 				if (verbose)
 					printf("%s unconfigured\n", cp);
+			}
+
+			free(ccd);
 		}
 		return (i);
 	}
@@ -255,7 +259,7 @@ do_single(int argc, char *argv[], int action)
 	ileave = (int)strtol(cp, &cp2, 10);
 	if ((errno == ERANGE) || (ileave < 0) || (*cp2 != '\0')) {
 		warnx("invalid interleave factor: %s", cp);
-		return (1);
+		goto done;	
 	}
 
 	if (noflags == 0) {
@@ -263,7 +267,7 @@ do_single(int argc, char *argv[], int action)
 		cp = *argv++; --argc;
 		if ((flags = flags_to_val(cp)) < 0) {
 			warnx("invalid flags argument: %s", cp);
-			return (1);
+			goto done;
 		}
 	}
 
@@ -271,7 +275,7 @@ do_single(int argc, char *argv[], int action)
 	disks = malloc(argc * sizeof(char *));
 	if (disks == NULL) {
 		warnx("no memory to configure ccd");
-		return (1);
+		goto done;
 	}
 	for (i = 0; argc != 0; ) {
 		cp = *argv++; --argc;
@@ -279,8 +283,7 @@ do_single(int argc, char *argv[], int action)
 			disks[i++] = cp;
 		else {
 			warnx("%s: %s", cp, strerror(j));
-			free(disks);
-			return (1);
+			goto done;
 		}
 	}
 
@@ -290,10 +293,8 @@ do_single(int argc, char *argv[], int action)
 	ccio.ccio_ileave = ileave;
 	ccio.ccio_flags = flags;
 
-	if (do_io(ccd, CCDIOCSET, &ccio)) {
-		free(disks);
-		return (1);
-	}
+	if (do_io(ccd, CCDIOCSET, &ccio))
+		goto done;
 
 	if (verbose) {
 		printf("ccd%d: %d components ", ccio.ccio_unit,
@@ -314,8 +315,12 @@ do_single(int argc, char *argv[], int action)
 			printf("concatenated\n");
 	}
 
+	ret = 0;
+
+done:
 	free(disks);
-	return (0);
+	free(ccd);
+	return (ret);
 }
 
 static int
@@ -385,7 +390,7 @@ do_all(int action)
 }
 
 static int
-checkdev(char *path)
+checkdev(const char *path)
 {
 	struct stat st;
 
@@ -400,7 +405,7 @@ checkdev(char *path)
 
 #ifndef SMALL
 static int
-pathtounit(char *path, int *unitp)
+pathtounit(const char *path, int *unitp)
 {
 	struct stat st;
 	int maxpartitions;
@@ -567,8 +572,10 @@ dump_ccd(int argc, char *argv[])
 			}
 			if ((error = pathtounit(ccd, &i)) != 0) {
 				warnx("%s: %s", ccd, strerror(error));
+				free(ccd);
 				continue;
 			}
+			free(ccd);
 			if (i >= numccd) {
 				warnx("ccd%d not configured", i);
 				continue;
