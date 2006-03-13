@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.25 2006/01/22 18:37:56 miod Exp $	*/
+/*	$OpenBSD: esp.c,v 1.26 2006/03/13 19:39:52 brad Exp $	*/
 /*	$NetBSD: esp.c,v 1.17 1998/09/05 15:15:35 pk Exp $	*/
 
 /*
@@ -602,7 +602,7 @@ esp_iosb_have_dreq(esc)
 
 /* Faster spl constructs, without saving old values */
 #define	__splx(s)	__asm __volatile ("movew %0,sr" : : "di" (s));
-#define	__splimp()	__splx(mac68k_impipl)
+#define	__splvm()	__splx(mac68k_vmipl)
 #define	__splbio()	__splx(mac68k_bioipl)
 
 void
@@ -651,7 +651,7 @@ restart_dmago:
 	if (esc->sc_datain == 0) {
 		while (esc->sc_pdmalen) {
 			WAIT;
-			__splimp(); *pdma = *(esc->sc_pdmaddr)++; __splbio();
+			__splvm(); *pdma = *(esc->sc_pdmaddr)++; __splbio();
 			esc->sc_pdmalen -= 2;
 		}
 		if (esc->sc_pad) {
@@ -660,19 +660,19 @@ restart_dmago:
 			c = (unsigned char *) esc->sc_pdmaddr;
 			us = *c;
 			WAIT;
-			__splimp(); *pdma = us; __splbio();
+			__splvm(); *pdma = us; __splbio();
 		}
 	} else {
 		while (esc->sc_pdmalen) {
 			WAIT;
-			__splimp(); *(esc->sc_pdmaddr)++ = *pdma; __splbio();
+			__splvm(); *(esc->sc_pdmaddr)++ = *pdma; __splbio();
 			esc->sc_pdmalen -= 2;
 		}
 		if (esc->sc_pad) {
 			unsigned short  us;
 			unsigned char   *c;
 			WAIT;
-			__splimp(); us = *pdma; __splbio();
+			__splvm(); us = *pdma; __splbio();
 			c = (unsigned char *) esc->sc_pdmaddr;
 			*c = us & 0xff;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.13 2006/01/13 19:36:44 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.14 2006/03/13 19:39:52 brad Exp $	*/
 /*	$NetBSD: intr.h,v 1.9 1998/08/12 06:58:42 scottr Exp $	*/
 
 /*
@@ -68,12 +68,12 @@
 
 /*
  * splnet must block hardware network interrupts
- * splimp must be > spltty
+ * splvm must be > spltty
  */
 extern u_short	mac68k_ttyipl;
 extern u_short	mac68k_bioipl;
 extern u_short	mac68k_netipl;
-extern u_short	mac68k_impipl;
+extern u_short	mac68k_vmipl;
 extern u_short	mac68k_audioipl;
 extern u_short	mac68k_clockipl;
 extern u_short	mac68k_statclockipl;
@@ -111,8 +111,7 @@ extern u_short	mac68k_statclockipl;
 #define	spltty()		_splraise(mac68k_ttyipl)
 #define	splbio()		_splraise(mac68k_bioipl)
 #define	splnet()		_splraise(mac68k_netipl)
-#define	splimp()		_splraise(mac68k_impipl)
-#define	splvm()			_splraise(mac68k_impipl)
+#define	splvm()			_splraise(mac68k_vmipl)
 #define	splaudio()		_splraise(mac68k_audioipl)
 #define	splclock()		_splraise(mac68k_clockipl)
 #define	splstatclock()		_splraise(mac68k_statclockipl)

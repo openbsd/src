@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.16 2005/05/01 09:55:49 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.17 2006/03/13 19:39:52 brad Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
@@ -95,7 +95,7 @@ struct isr {
 extern	unsigned short hp300_bioipl;
 extern	unsigned short hp300_netipl;
 extern	unsigned short hp300_ttyipl;
-extern	unsigned short hp300_impipl;
+extern	unsigned short hp300_vmipl;
 
 /*
  * Interrupt "levels".  These are a more abstract representation
@@ -123,10 +123,9 @@ extern	unsigned short hp300_impipl;
 #define	splbio()		_splraise(hp300_bioipl)
 #define	splnet()		_splraise(hp300_netipl)
 #define	spltty()		_splraise(hp300_ttyipl)
-#define	splimp()		_splraise(hp300_impipl)
 #define	splclock()		_splraise(PSL_S | PSL_IPL6)
 #define	splstatclock()		_splraise(PSL_S | PSL_IPL6)
-#define	splvm()			_splraise(hp300_impipl)
+#define	splvm()			_splraise(hp300_vmipl)
 #define	splhigh()		_spl(PSL_S | PSL_IPL7)
 
 /* watch out for side effects */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.6 2006/01/01 13:16:01 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.7 2006/03/13 19:39:52 brad Exp $	*/
 /*	$NetBSD: intr.c,v 1.2 1998/08/25 04:03:56 scottr Exp $	*/
 
 /*-
@@ -72,7 +72,7 @@ int	intr_debug = 0;
 u_short	mac68k_ttyipl;
 u_short	mac68k_bioipl;
 u_short	mac68k_netipl;
-u_short	mac68k_impipl;
+u_short	mac68k_vmipl;
 u_short	mac68k_clockipl;
 u_short	mac68k_statclockipl;
 
@@ -89,12 +89,12 @@ intr_init()
 
 	if (mac68k_machine.aux_interrupts) {
 		mac68k_netipl = (PSL_S | PSL_IPL3);
-		mac68k_impipl = (PSL_S | PSL_IPL6);
+		mac68k_vmipl = (PSL_S | PSL_IPL6);
 		mac68k_clockipl = (PSL_S | PSL_IPL6);
 		mac68k_statclockipl = (PSL_S | PSL_IPL6);
 	} else {
 		mac68k_netipl = (PSL_S | PSL_IPL2);
-		mac68k_impipl = (PSL_S | PSL_IPL2);
+		mac68k_vmipl = (PSL_S | PSL_IPL2);
 		mac68k_clockipl = (PSL_S | PSL_IPL2);
 		mac68k_statclockipl = (PSL_S | PSL_IPL2);
 
@@ -122,11 +122,11 @@ intr_computeipl()
 	if (mac68k_netipl > mac68k_ttyipl)
 		mac68k_ttyipl = mac68k_netipl;
 
-	if (mac68k_ttyipl > mac68k_impipl)
-		mac68k_impipl = mac68k_ttyipl;
+	if (mac68k_ttyipl > mac68k_vmipl)
+		mac68k_vmipl = mac68k_ttyipl;
 
-	if (mac68k_impipl > mac68k_statclockipl)
-		mac68k_statclockipl = mac68k_impipl;
+	if (mac68k_vmipl > mac68k_statclockipl)
+		mac68k_statclockipl = mac68k_vmipl;
 
 	if (mac68k_statclockipl > mac68k_clockipl)
 		mac68k_clockipl = mac68k_statclockipl;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.15 2004/12/25 23:02:24 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.16 2006/03/13 19:39:52 brad Exp $	*/
 /*	$NetBSD: intr.c,v 1.5 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@ void	netintr(void);
 typedef LIST_HEAD(, isr) isr_list_t;
 isr_list_t isr_list[NISR];
 
-u_short	hp300_bioipl, hp300_netipl, hp300_ttyipl, hp300_impipl;
+u_short	hp300_bioipl, hp300_netipl, hp300_ttyipl, hp300_vmipl;
 
 void	intr_computeipl(void);
 
@@ -81,7 +81,7 @@ intr_init()
 		LIST_INIT(&isr_list[i]);
 
 	/* Default interrupt priorities. */
-	hp300_bioipl = hp300_netipl = hp300_ttyipl = hp300_impipl =
+	hp300_bioipl = hp300_netipl = hp300_ttyipl = hp300_vmipl =
 	    (PSL_S|PSL_IPL3);
 }
 
@@ -96,7 +96,7 @@ intr_computeipl()
 	int ipl;
 
 	/* Start with low values. */
-	hp300_bioipl = hp300_netipl = hp300_ttyipl = hp300_impipl =
+	hp300_bioipl = hp300_netipl = hp300_ttyipl = hp300_vmipl =
 	    (PSL_S|PSL_IPL3);
 
 	for (ipl = 0; ipl < NISR; ipl++) {
@@ -130,7 +130,7 @@ intr_computeipl()
 	}
 
 	/*
-	 * Enforce `bio <= net <= tty <= imp'
+	 * Enforce `bio <= net <= tty <= vm'
 	 */
 
 	if (hp300_netipl < hp300_bioipl)
@@ -139,8 +139,8 @@ intr_computeipl()
 	if (hp300_ttyipl < hp300_netipl)
 		hp300_ttyipl = hp300_netipl;
 
-	if (hp300_impipl < hp300_ttyipl)
-		hp300_impipl = hp300_ttyipl;
+	if (hp300_vmipl < hp300_ttyipl)
+		hp300_vmipl = hp300_ttyipl;
 }
 
 void
@@ -148,8 +148,8 @@ intr_printlevels()
 {
 
 #ifdef DEBUG
-	printf("psl: bio = 0x%x, net = 0x%x, tty = 0x%x, imp = 0x%x\n",
-	    hp300_bioipl, hp300_netipl, hp300_ttyipl, hp300_impipl);
+	printf("psl: bio = 0x%x, net = 0x%x, tty = 0x%x, vm = 0x%x\n",
+	    hp300_bioipl, hp300_netipl, hp300_ttyipl, hp300_vmipl);
 #endif
 
 	printf("interrupt levels: bio = %d, net = %d, tty = %d\n",
