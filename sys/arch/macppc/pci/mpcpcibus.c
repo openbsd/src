@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.30 2006/02/11 05:21:40 brad Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.31 2006/03/13 20:10:49 brad Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -444,6 +444,7 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt = &sc->sc_membus_space;
 	pba.pba_pc = &lcp->lc_pc;
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 
 	/* we want to check pci irq settings */
 	if (of_node != 0) {

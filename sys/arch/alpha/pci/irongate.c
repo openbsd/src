@@ -1,4 +1,4 @@
-/*	$OpenBSD: irongate.c,v 1.6 2004/07/18 02:18:26 deraadt Exp $	*/
+/*	$OpenBSD: irongate.c,v 1.7 2006/03/13 20:10:49 brad Exp $	*/
 /* $NetBSD: irongate.c,v 1.3 2000/11/29 06:29:10 thorpej Exp $ */
 
 /*-
@@ -185,6 +185,7 @@ irongate_attach(struct device *parent, struct device *self, void *aux)
 	    alphabus_dma_get_tag(&icp->ic_dmat_pci, ALPHA_BUS_PCI);
 	pba.pba_pc = &icp->ic_pc;
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 #ifdef notyet
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;

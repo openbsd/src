@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.13 2006/02/27 02:05:19 drahn Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.14 2006/03/13 20:10:49 brad Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -50,11 +50,17 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
 
+struct ppb_softc {
+	struct device sc_dev;		/* generic device glue */
+	pci_chipset_tag_t sc_pc;	/* our PCI chipset... */
+	pcitag_t sc_tag;		/* ...and tag. */
+};
+
 int	ppbmatch(struct device *, void *, void *);
 void	ppbattach(struct device *, struct device *, void *);
 
 struct cfattach ppb_ca = {
-	sizeof(struct device), ppbmatch, ppbattach
+	sizeof(struct ppb_softc), ppbmatch, ppbattach
 };
 
 struct cfdriver ppb_cd = {
@@ -96,12 +102,16 @@ ppbattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct ppb_softc *sc = (void *) self;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct pcibus_attach_args pba;
 	pcireg_t busdata;
 
 	printf("\n");
+
+	sc->sc_pc = pc;
+	sc->sc_tag = pa->pa_tag;
 
 	busdata = pci_conf_read(pc, pa->pa_tag, PPB_REG_BUSINFO);
 
@@ -132,6 +142,7 @@ ppbattach(parent, self, aux)
 	pba.pba_dmat = pa->pa_dmat;
 	pba.pba_pc = pc;
 	pba.pba_bus = PPB_BUSINFO_SECONDARY(busdata);
+	pba.pba_bridgetag = &sc->sc_tag;
 	pba.pba_intrswiz = pa->pa_intrswiz;
 	pba.pba_intrtag = pa->pa_intrtag;
 

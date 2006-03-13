@@ -1,4 +1,4 @@
-/*	$OpenBSD: lca.c,v 1.16 2002/03/14 01:26:27 millert Exp $	*/
+/*	$OpenBSD: lca.c,v 1.17 2006/03/13 20:10:49 brad Exp $	*/
 /*	$NetBSD: lca.c,v 1.14 1996/12/05 01:39:35 cgd Exp $	*/
 
 /*-
@@ -256,6 +256,7 @@ lcaattach(parent, self, aux)
 	    alphabus_dma_get_tag(&lcp->lc_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &lcp->lc_pc;
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 #ifdef notyet
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;

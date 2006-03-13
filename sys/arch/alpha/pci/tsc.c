@@ -1,4 +1,4 @@
-/* $OpenBSD: tsc.c,v 1.10 2005/12/13 01:16:11 martin Exp $ */
+/* $OpenBSD: tsc.c,v 1.11 2006/03/13 20:10:49 brad Exp $ */
 /* $NetBSD: tsc.c,v 1.3 2000/06/25 19:17:40 thorpej Exp $ */
 
 /*-
@@ -200,6 +200,7 @@ tspattach(parent, self, aux)
 	    alphabus_dma_get_tag(&pcp->pc_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &pcp->pc_pc;
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 #ifdef	notyet
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;

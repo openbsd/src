@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.9 2006/01/04 20:23:09 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.10 2006/03/13 20:10:49 brad Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB (www.opsycon.se)
@@ -243,6 +243,7 @@ mace_pcibrattach(struct device *parent, struct device *self, void *aux)
 	*pba.pba_dmat = pci_bus_dma_tag;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_bus = sc->sc_dev.dv_unit;
+	pba.pba_bridgetag = NULL;
 	config_found(self, &pba, mace_pcibrprint);
 
 	/* Clear PCI errors and set up error interrupt */

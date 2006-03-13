@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.16 2005/09/06 23:53:38 mickey Exp $	*/
+/*	$OpenBSD: dino.c,v 1.17 2006/03/13 20:10:49 brad Exp $	*/
 
 /*
  * Copyright (c) 2003-2005 Michael Shalayeff
@@ -1623,6 +1623,7 @@ dinoattach(parent, self, aux)
 	pba.pba_dmat = &sc->sc_dmatag;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 	config_found(self, &pba, dinoprint);
 
 	/* enable interrupts now that all the devices are there */

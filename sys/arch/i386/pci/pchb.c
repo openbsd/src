@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.51 2006/02/14 13:42:54 kettenis Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.52 2006/03/13 20:10:49 brad Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -238,6 +238,7 @@ pchbattach(parent, self, aux)
 		pba.pba_memt = pa->pa_memt;
 		pba.pba_dmat = pa->pa_dmat;
 		pba.pba_bus = bdnum;
+		pba.pba_bridgetag = NULL;
 		pba.pba_pc = pa->pa_pc;
 		printf("\n");
 		config_found(self, &pba, pchb_print);

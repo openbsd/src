@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.3 2006/02/12 23:46:27 kettenis Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.4 2006/03/13 20:10:49 brad Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -171,6 +171,7 @@ pchb_amd64ht_attach (struct device *self, struct pci_attach_args *pa, int i)
 		pba.pba_memt = pa->pa_memt;
 		pba.pba_dmat = pa->pa_dmat;
 		pba.pba_bus = AMD64HT_LDT_SEC_BUS_NUM(bus);
+		pba.pba_bridgetag = NULL;
 		pba.pba_pc = pa->pa_pc;
 		config_found(self, &pba, pchb_print);
 	}

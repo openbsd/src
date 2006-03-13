@@ -1,4 +1,4 @@
-/* $OpenBSD: cia.c,v 1.20 2003/10/18 20:14:42 jmc Exp $ */
+/* $OpenBSD: cia.c,v 1.21 2006/03/13 20:10:49 brad Exp $ */
 /* $NetBSD: cia.c,v 1.56 2000/06/29 08:58:45 mrg Exp $ */
 
 /*-
@@ -402,6 +402,7 @@ ciaattach(parent, self, aux)
 	    alphabus_dma_get_tag(&ccp->cc_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &ccp->cc_pc;
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 
 #ifdef notyet
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;

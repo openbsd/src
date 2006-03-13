@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.43 2006/03/11 22:08:07 brad Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.44 2006/03/13 20:10:49 brad Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -83,6 +83,12 @@ struct pcibus_attach_args {
 	int		pba_bus;	/* PCI bus number */
 
 	/*
+	 * Pointer to the pcitag of our parent bridge.  If there is no
+	 * parent bridge, then we assume we are a root bus.
+	 */
+	pcitag_t	*pba_bridgetag;
+
+	/*
 	 * Interrupt swizzling information.  These fields
 	 * are only used by secondary busses.
 	 */
@@ -149,6 +155,7 @@ struct pci_softc {
 	void *sc_powerhook;
 	LIST_HEAD(, pci_dev) sc_devs;
 	int sc_bus;
+	pcitag_t *sc_bridgetag;
 };
 
 /*

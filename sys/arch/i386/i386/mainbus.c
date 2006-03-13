@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.24 2006/03/13 15:40:37 marco Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.25 2006/03/13 20:10:49 brad Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -237,6 +237,7 @@ mainbus_attach(parent, self, aux)
 		mba.mba_pba.pba_memt = I386_BUS_SPACE_MEM;
 		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
 		mba.mba_pba.pba_bus = 0;
+		mba.mba_pba.pba_bridgetag = NULL;
 		config_found(self, &mba.mba_pba, mainbus_print);
 	}
 #endif
