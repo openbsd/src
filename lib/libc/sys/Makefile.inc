@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.75 2005/11/29 21:29:15 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.76 2006/03/13 19:00:58 moritz Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -183,7 +183,7 @@ ${PSEUDO_NOERR}: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/sysca
 LSRCS+=	LintSysNormal.c LintSysPseudoNoerr.c
 DPSRCS+= LintSysNormal.c LintSysPseudoNoerr.c
 
-CLEANFILES+= LintSysNormal.c LintSysNoerr.c LintSysPseudo.c
+CLEANFILES+= LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
 
 LintSysNormal.c: ${LIBCSRCDIR}/sys/makelintstub.sh \
     ${DESTDIR}/usr/include/sys/syscall.h
