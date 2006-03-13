@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.13 2006/02/02 22:13:04 brad Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -401,7 +401,7 @@ cissminphys(struct buf *bp)
 		bp->b_bcount = CISS_MAXFER;
 #endif
 	minphys(bp);
-}               
+}
 
 /*
  * submit a command and optionally wait for completition.
@@ -549,6 +549,7 @@ ciss_done(struct ciss_ccb *ccb)
 {
 	struct ciss_softc *sc = ccb->ccb_sc;
 	struct scsi_xfer *xs = ccb->ccb_xs;
+	struct ciss_cmd *cmd;
 	ciss_lock_t lock;
 	int error = 0;
 
@@ -567,9 +568,10 @@ ciss_done(struct ciss_ccb *ccb)
 	if (ccb->ccb_cmd.id & CISS_CMD_ERR)
 		error = ciss_error(ccb);
 
+	cmd = &ccb->ccb_cmd;
 	if (ccb->ccb_data) {
 		bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
-		    ccb->ccb_dmamap->dm_mapsize, (xs->flags & SCSI_DATA_IN) ?
+		    ccb->ccb_dmamap->dm_mapsize, (cmd->flags & CISS_CDB_IN) ?
 		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
 		ccb->ccb_xs = NULL;
@@ -655,6 +657,7 @@ ciss_inq(struct ciss_softc *sc, struct ciss_inquiry *inq)
 	ccb = ciss_get_ccb(sc);
 	ccb->ccb_len = sizeof(*inq);
 	ccb->ccb_data = inq;
+	ccb->ccb_xs = NULL;
 	cmd = &ccb->ccb_cmd;
 	cmd->tgt = htole32(CISS_CMD_MODE_PERIPH);
 	cmd->tgt2 = 0;
@@ -687,6 +690,7 @@ ciss_ldmap(struct ciss_softc *sc)
 	ccb = ciss_get_ccb(sc);
 	ccb->ccb_len = total;
 	ccb->ccb_data = lmap;
+	ccb->ccb_xs = NULL;
 	cmd = &ccb->ccb_cmd;
 	cmd->tgt = CISS_CMD_MODE_PERIPH;
 	cmd->tgt2 = 0;
@@ -727,6 +731,7 @@ ciss_sync(struct ciss_softc *sc)
 	ccb = ciss_get_ccb(sc);
 	ccb->ccb_len = sizeof(*flush);
 	ccb->ccb_data = flush;
+	ccb->ccb_xs = NULL;
 	cmd = &ccb->ccb_cmd;
 	cmd->tgt = CISS_CMD_MODE_PERIPH;
 	cmd->tgt2 = 0;
@@ -780,8 +785,6 @@ ciss_scsi_raw_cmd(struct scsi_xfer *xs)	/* TODO */
 	ccb->ccb_len = xs->datalen;
 	ccb->ccb_data = xs->data;
 	ccb->ccb_xs = xs;
-
-
 
 	cmd->cdblen = xs->cmdlen;
 	cmd->flags = CISS_CDB_CMD | CISS_CDB_SIMPL;
