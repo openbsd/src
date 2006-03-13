@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.3 2006/03/07 10:59:27 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.4 2006/03/13 16:08:12 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -25,8 +25,12 @@ use OpenBSD::Temp;
 
 sub new
 {
-	my ($class, $repository, $name) = @_;
-	my $self = { repository => $repository, name => $name};
+	my ($class, $repository, $name, $arch) = @_;
+
+	if (defined $name) {
+		$name =~ s/\.tgz$//;
+	}
+	my $self = { repository => $repository, name => $name, arch => $arch};
 	bless $self, $class;
 }
 
@@ -106,9 +110,9 @@ sub scanPackage
 
 sub grabPlist
 {
-	my ($self, $pkgname, $arch, $code) = @_;
+	my ($self, $code) = @_;
 
-	my $pkg = $self->openPackage($pkgname, $arch);
+	my $pkg = $self->openPackage();
 	if (defined $pkg) {
 		my $plist = $self->plist($code);
 		$pkg->wipe_info();
@@ -121,7 +125,8 @@ sub grabPlist
 
 sub openPackage
 {
-	my ($self, $pkgname, $arch) = @_;
+	my $self = shift;
+	my $arch = $self->{arch};
 	if (!$self->openArchive()) {
 		return undef;
 	}
@@ -140,11 +145,11 @@ sub openPackage
 		my $contents = $e->contents();
 		require OpenBSD::PackingList;
 
-		$pkgname =~ s/\.tgz$//;
-
 		my $plist = OpenBSD::PackingList->fromfile(\$contents, 
 		    \&OpenBSD::PackingList::FatOnly);
-		next if defined $pkgname and $plist->pkgname() ne $pkgname;
+		if (defined $self->{name}) {
+			next if $plist->pkgname() ne $self->{name};
+		}
 		if ($plist->has('arch')) {
 			if ($plist->{arch}->check($arch)) {
 				$self->{filter} = $prefix;

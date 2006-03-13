@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.11 2006/03/08 12:10:47 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.12 2006/03/13 16:08:12 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -160,19 +160,17 @@ sub open
 sub find
 {
 	my ($repository, $name, $arch, $srcpath) = @_;
-	$name.=".tgz" unless $name =~ m/\.tgz$/;
-	my $self = OpenBSD::PackageLocation->new($repository, $name);
+	my $self = OpenBSD::PackageLocation->new($repository, $name, $arch);
 
-	return $self->openPackage($name, $arch);
+	return $self->openPackage();
 }
 
 sub grabPlist
 {
 	my ($repository, $name, $arch, $code) = @_;
-	$name.=".tgz" unless $name =~ m/\.tgz$/;
-	my $self = OpenBSD::PackageLocation->new($repository, $name);
+	my $self = OpenBSD::PackageLocation->new($repository, $name, $arch);
 
-	return $self->grabPlist($name, $arch, $code);
+	return $self->grabPlist($code);
 }
 
 sub parse_problems
@@ -293,7 +291,7 @@ sub open_pipe
 		    "-c", 
 		    "-q", 
 		    "-f", 
-		    $self->{baseurl}.$object->{name}
+		    $self->{baseurl}.$object->{name}.".tgz"
 		or die "Can't run gzip";
 	}
 }
@@ -301,7 +299,7 @@ sub open_pipe
 sub may_exist
 {
 	my ($self, $name) = @_;
-	return -r $self->{baseurl}.$name;
+	return -r $self->{baseurl}.$name.".tgz";
 }
 
 sub list
@@ -330,7 +328,6 @@ sub may_exist
 sub open_pipe
 {
 	my ($self, $object) = @_;
-	my $fullname = $self->{baseurl}.$object->{name};
 	my $pid = open(my $fh, "-|");
 	if (!defined $pid) {
 		die "Cannot fork: $!";
@@ -362,8 +359,7 @@ sub pkg_copy
 	require File::Temp;
 	my $name = $object->{name};
 	my $dir = $object->{cache_dir};
-	my $template = $name;
-	$template =~ s/\.tgz$/.XXXXXXXX/;
+	my $template = "$name.XXXXXXXXX";
 
 	my ($copy, $filename) = File::Temp::tempfile($template,
 	    DIR => $dir) or die "Can't write copy to cache";
@@ -410,7 +406,7 @@ sub pkg_copy
 	}
 
 	if ($nonempty && !$error) {
-		rename $filename, "$dir/$name";
+		rename $filename, "$dir/$name.tgz";
 	} else {
 		unlink $filename;
 	}
@@ -519,7 +515,7 @@ sub grab_object
 	exec {$ftp} 
 	    "ftp", 
 	    "-o", 
-	    "-", $self->{baseurl}.$object->{name}
+	    "-", $self->{baseurl}.$object->{name}.".tgz"
 	or die "can't run ftp";
 }
 
