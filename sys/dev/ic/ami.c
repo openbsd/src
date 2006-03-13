@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.110 2006/03/13 12:08:40 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.111 2006/03/13 22:11:23 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -524,7 +524,7 @@ ami_attach(struct ami_softc *sc)
 	sc->sc_link.adapter_buswidth = sc->sc_maxunits;
 
 #ifdef AMI_DEBUG
-	printf(": FW %s, BIOS v%s, %dMB RAM\n"
+	printf(", FW %s, BIOS v%s, %dMB RAM\n"
 	    "%s: %d channels, %d %ss, %d logical drives, "
 	    "openings %d, max commands %d, quirks: %04x\n",
 	    sc->sc_fwver, sc->sc_biosver, sc->sc_memory,
@@ -532,7 +532,7 @@ ami_attach(struct ami_softc *sc)
 	    sc->sc_channels, sc->sc_targets, p, sc->sc_nunits,
 	    sc->sc_link.openings, sc->sc_maxcmds, sc->sc_flags);
 #else
-	printf(": FW %s, BIOS v%s, %dMB RAM\n"
+	printf(", FW %s, BIOS v%s, %dMB RAM\n"
 	    "%s: %d channels, %d %ss, %d logical drives\n",
 	    sc->sc_fwver, sc->sc_biosver, sc->sc_memory,
 	    sc->sc_dev.dv_xname,

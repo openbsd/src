@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.36 2006/03/04 05:21:22 brad Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.37 2006/03/13 22:11:23 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -240,7 +240,7 @@ ami_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	printf(": %s", intrstr);
+	printf(": %s\n", intrstr);
 
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	for (ssp = ami_pci_subsys; ssp->id; ssp++) {
@@ -295,7 +295,7 @@ ami_pci_attach(struct device *parent, struct device *self, void *aux)
 		panic("ami device dissapeared between match() and attach()");
 	}
 
-	printf(" %s %s\n%s", model, lhc, sc->sc_dev.dv_xname);
+	printf("%s: %s, %s", sc->sc_dev.dv_xname, model, lhc);
 
 	if (ami_attach(sc)) {
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
