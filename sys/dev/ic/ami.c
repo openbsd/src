@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.108 2006/03/13 11:11:55 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.109 2006/03/13 11:49:52 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1372,7 +1372,6 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 
 	AMI_DPRINTF(AMI_D_CMD, ("ami_scsi_cmd "));
 
-	s = splbio();
 	if (target >= sc->sc_nunits || !sc->sc_hdr[target].hd_present ||
 	    link->lun != 0) {
 		AMI_DPRINTF(AMI_D_CMD, ("no target %d ", target));
@@ -1380,7 +1379,6 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		xs->error = XS_DRIVER_STUFFUP;
 		xs->flags |= ITSDONE;
 		scsi_done(xs);
-		splx(s);
 		return (COMPLETE);
 	}
 
@@ -1438,17 +1436,17 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 
 	case PREVENT_ALLOW:
 		AMI_DPRINTF(AMI_D_CMD, ("PREVENT/ALLOW "));
-		splx(s);
 		return (COMPLETE);
 
 	case SYNCHRONIZE_CACHE:
 		AMI_DPRINTF(AMI_D_CMD, ("SYNCHRONIZE CACHE "));
 
+		s = splbio();
 		ccb = ami_get_ccb(sc);
+		splx(s);
 		if (ccb == NULL) {
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
-			splx(s);
 			return (COMPLETE);
 		}
 
@@ -1459,15 +1457,16 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		cmd = &ccb->ccb_cmd;
 		cmd->acc_cmd = AMI_FLUSH;
 
-		if (ami_cmd(ccb, (xs->flags & SCSI_NOSLEEP) ?
-		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK, xs->flags & SCSI_POLL)) {
+		s = splbio();
+		error = ami_cmd(ccb, (xs->flags & SCSI_NOSLEEP) ?
+		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK, xs->flags & SCSI_POLL);
+		splx(s);
+		if (error) {
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
-			splx(s);
 			return (COMPLETE);
 		}
 
-		splx(s);
 		if (xs->flags & SCSI_POLL)
 			return (COMPLETE);
 		else
@@ -1519,15 +1518,15 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 			    sc->sc_hdr[target].hd_size);
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
-			splx(s);
 			return (COMPLETE);
 		}
 
+		s = splbio();
 		ccb = ami_get_ccb(sc);
+		splx(s);
 		if (ccb == NULL) {
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
-			splx(s);
 			return (COMPLETE);
 		}
 
@@ -1551,15 +1550,16 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 			break;
 		}
 
-		if (ami_cmd(ccb, (xs->flags & SCSI_NOSLEEP) ?
-		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK, xs->flags & SCSI_POLL)) {
+		s = splbio();
+		error = ami_cmd(ccb, (xs->flags & SCSI_NOSLEEP) ?
+		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK, xs->flags & SCSI_POLL);
+		splx(s);
+		if (error) {
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
-			splx(s);
 			return (COMPLETE);
 		}
 
-		splx(s);
 		if (xs->flags & SCSI_POLL)
 			return (COMPLETE);
 		else
@@ -1571,7 +1571,6 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		xs->error = XS_DRIVER_STUFFUP;
 	}
 
-	splx(s);
 	return (COMPLETE);
 }
 
