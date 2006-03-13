@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 2005/03/04 08:48:46 djm Exp $
+#	$OpenBSD: Makefile,v 1.37 2006/03/13 08:48:28 dtucker Exp $
 
 REGRESS_TARGETS=	t1 t2 t3 t4 t5 t6 t7
 
@@ -51,6 +51,10 @@ CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
 
 t1:
 	ssh-keygen -if ${.CURDIR}/rsa_ssh2.prv | diff - ${.CURDIR}/rsa_openssh.prv
+	sed 's/$$/\r/g' ${.CURDIR}/rsa_ssh2.prv > ${OBJ}/rsa_ssh2_crnl.prv
+	ssh-keygen -if ${OBJ}/rsa_ssh2_crnl.prv | diff - ${.CURDIR}/rsa_openssh.prv
+	tr '\n' '\r' <${.CURDIR}/rsa_ssh2.prv > ${OBJ}/rsa_ssh2_cr.prv
+	ssh-keygen -if ${OBJ}/rsa_ssh2_cr.prv | diff - ${.CURDIR}/rsa_openssh.prv
 
 t2:
 	cat ${.CURDIR}/rsa_openssh.prv > t2.out
