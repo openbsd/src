@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.107 2006/01/29 00:48:19 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.108 2006/03/13 11:11:55 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1367,7 +1367,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 	u_int32_t blockno, blockcnt;
 	struct scsi_rw *rw;
 	struct scsi_rw_big *rwb;
-	int error, flags;
+	int error;
 	int s;
 
 	AMI_DPRINTF(AMI_D_CMD, ("ami_scsi_cmd "));
@@ -1443,7 +1443,36 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 
 	case SYNCHRONIZE_CACHE:
 		AMI_DPRINTF(AMI_D_CMD, ("SYNCHRONIZE CACHE "));
-		error++;
+
+		ccb = ami_get_ccb(sc);
+		if (ccb == NULL) {
+			xs->error = XS_DRIVER_STUFFUP;
+			scsi_done(xs);
+			splx(s);
+			return (COMPLETE);
+		}
+
+		ccb->ccb_xs = xs;
+		if (xs->timeout < 30000)
+			xs->timeout = 30000;	/* at least 30sec */
+
+		cmd = &ccb->ccb_cmd;
+		cmd->acc_cmd = AMI_FLUSH;
+
+		if (ami_cmd(ccb, (xs->flags & SCSI_NOSLEEP) ?
+		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK, xs->flags & SCSI_POLL)) {
+			xs->error = XS_DRIVER_STUFFUP;
+			scsi_done(xs);
+			splx(s);
+			return (COMPLETE);
+		}
+
+		splx(s);
+		if (xs->flags & SCSI_POLL)
+			return (COMPLETE);
+		else
+			return (SUCCESSFULLY_QUEUED);
+
 	case READ_COMMAND:
 		if (!error) {
 			AMI_DPRINTF(AMI_D_CMD, ("READ "));
@@ -1465,41 +1494,40 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 			error++;
 		}
 
-		flags = xs->flags;
-		if (xs->cmd->opcode != SYNCHRONIZE_CACHE) {
-			/* A read or write operation. */
-			if (xs->cmdlen == 6) {
-				rw = (struct scsi_rw *)xs->cmd;
-				blockno = _3btol(rw->addr) &
-				    (SRW_TOPADDR << 16 | 0xffff);
-				blockcnt = rw->length ? rw->length : 0x100;
-			} else {
-				rwb = (struct scsi_rw_big *)xs->cmd;
-				blockno = _4btol(rwb->addr);
-				blockcnt = _2btol(rwb->length);
-				/* TODO: reflect DPO & FUA flags */
-				if (xs->cmd->opcode == WRITE_BIG &&
-				    rwb->byte2 & 0x18)
-					flags |= 0;
-			}
-			if (blockno >= sc->sc_hdr[target].hd_size ||
-			    blockno + blockcnt > sc->sc_hdr[target].hd_size) {
-				printf("%s: out of bounds %u-%u >= %u\n",
-				    sc->sc_dev.dv_xname, blockno, blockcnt,
-				    sc->sc_hdr[target].hd_size);
-				xs->error = XS_DRIVER_STUFFUP;
-				scsi_done(xs);
-				splx(s);
-				return (COMPLETE);
-			}
+		/* A read or write operation. */
+		if (xs->cmdlen == 6) {
+			rw = (struct scsi_rw *)xs->cmd;
+			blockno = _3btol(rw->addr) &
+			    (SRW_TOPADDR << 16 | 0xffff);
+			blockcnt = rw->length ? rw->length : 0x100;
+		} else {
+			rwb = (struct scsi_rw_big *)xs->cmd;
+			blockno = _4btol(rwb->addr);
+			blockcnt = _2btol(rwb->length);
+#if 0
+			/* TODO: reflect DPO & FUA flags */
+			if (xs->cmd->opcode == WRITE_BIG &&
+			    rwb->byte2 & 0x18)
+				flags |= 0;
+#endif
 		}
 
-		if ((ccb = ami_get_ccb(sc)) == NULL) {
-			AMI_DPRINTF(AMI_D_CMD, ("no more ccbs "));
+		if (blockno >= sc->sc_hdr[target].hd_size ||
+		    blockno + blockcnt > sc->sc_hdr[target].hd_size) {
+			printf("%s: out of bounds %u-%u >= %u\n",
+			    sc->sc_dev.dv_xname, blockno, blockcnt,
+			    sc->sc_hdr[target].hd_size);
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
 			splx(s);
-		__asm __volatile(".globl _bpamiccb\n_bpamiccb:");
+			return (COMPLETE);
+		}
+
+		ccb = ami_get_ccb(sc);
+		if (ccb == NULL) {
+			xs->error = XS_DRIVER_STUFFUP;
+			scsi_done(xs);
+			splx(s);
 			return (COMPLETE);
 		}
 
@@ -1515,11 +1543,6 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		cmd->acc_mbox.amb_data = 0;
 
 		switch (xs->cmd->opcode) {
-		case SYNCHRONIZE_CACHE:
-			cmd->acc_cmd = AMI_FLUSH;
-			if (xs->timeout < 30000)
-				xs->timeout = 30000;	/* at least 30sec */
-			break;
 		case READ_COMMAND: case READ_BIG:
 			cmd->acc_cmd = AMI_READ;
 			break;
@@ -1528,24 +1551,16 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 			break;
 		}
 
-		if ((error = ami_cmd(ccb, ((flags & SCSI_NOSLEEP)?
-		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK), flags & SCSI_POLL))) {
-
-			AMI_DPRINTF(AMI_D_CMD, ("failed %p ", xs));
-		__asm __volatile(".globl _bpamifail\n_bpamifail:");
-			if (flags & SCSI_POLL) {
-				splx(s);
-				return (TRY_AGAIN_LATER);
-			} else {
-				xs->error = XS_DRIVER_STUFFUP;
-				scsi_done(xs);
-				splx(s);
-				return (COMPLETE);
-			}
+		if (ami_cmd(ccb, (xs->flags & SCSI_NOSLEEP) ?
+		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK, xs->flags & SCSI_POLL)) {
+			xs->error = XS_DRIVER_STUFFUP;
+			scsi_done(xs);
+			splx(s);
+			return (COMPLETE);
 		}
 
 		splx(s);
-		if (flags & SCSI_POLL)
+		if (xs->flags & SCSI_POLL)
 			return (COMPLETE);
 		else
 			return (SUCCESSFULLY_QUEUED);
