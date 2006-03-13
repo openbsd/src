@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.324 2006/03/07 09:07:40 djm Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.325 2006/03/13 08:16:00 djm Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -1259,10 +1259,10 @@ main(int ac, char **av)
 			num_listen_socks++;
 
 			/* Start listening on the port. */
-			logit("Server listening on %s port %s.", ntop, strport);
 			if (listen(listen_sock, SSH_LISTEN_BACKLOG) < 0)
-				fatal("listen: %.100s", strerror(errno));
-
+				fatal("listen on [%s]:%s: %.100s",
+				    ntop, strport, strerror(errno));
+			logit("Server listening on %s port %s.", ntop, strport);
 		}
 		freeaddrinfo(options.listen_addrs);
 
