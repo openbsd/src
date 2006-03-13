@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.49 2006/02/15 20:34:23 otto Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.50 2006/03/13 19:05:56 moritz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.49 2006/02/15 20:34:23 otto Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.50 2006/03/13 19:05:56 moritz Exp $ (LBL)";
 #endif
 
 /*
@@ -195,7 +195,7 @@ pcap_list_linktypes(pcap_t *p)
 		err(1, "BIOCGDLTLIST");
 
 	if (dl.bfl_len > MAXDLT)
-		error("Invalid number of linktypes: %u\n", dl.bfl_len);
+		error("Invalid number of linktypes: %u", dl.bfl_len);
 
 	fprintf(stderr, "%d link type%s supported:\n", dl.bfl_len,
 	    dl.bfl_len == 1 ? "" : "s");

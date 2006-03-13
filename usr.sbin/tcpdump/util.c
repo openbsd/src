@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.19 2005/03/07 16:13:38 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.20 2006/03/13 19:05:56 moritz Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.19 2005/03/07 16:13:38 reyk Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.20 2006/03/13 19:05:56 moritz Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -217,11 +217,7 @@ error(const char *fmt, ...)
 	va_start(ap, fmt);
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
-	if (*fmt) {
-		fmt += strlen(fmt);
-		if (fmt[-1] != '\n')
-			(void)fputc('\n', stderr);
-	}
+	(void)fputc('\n', stderr);
 	exit(1);
 	/* NOTREACHED */
 }
@@ -236,11 +232,7 @@ warning(const char *fmt, ...)
 	va_start(ap, fmt);
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
-	if (*fmt) {
-		fmt += strlen(fmt);
-		if (fmt[-1] != '\n')
-			(void)fputc('\n', stderr);
-	}
+	(void)fputc('\n', stderr);
 }
 
 
