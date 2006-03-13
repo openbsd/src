@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.200 2006/02/10 14:34:40 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.201 2006/03/13 16:49:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -343,7 +343,22 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				break;
 			}
 			session_set = NULL;
-			network_add(&netconf_s, 0);
+			switch (netconf_s.prefix.af) {
+			case AF_INET:
+				if (netconf_s.prefixlen > 32)
+					goto badnet;
+				network_add(&netconf_s, 0);
+				break;
+			case AF_INET6:
+				if (netconf_s.prefixlen > 128)
+					goto badnet;
+				network_add(&netconf_s, 0);
+				break;
+			default:
+badnet:
+				log_warnx("rde_dispatch: bad network");
+				break;
+			}
 			break;
 		case IMSG_NETWORK_REMOVE:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
