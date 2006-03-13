@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.10 2004/09/16 18:35:43 deraadt Exp $ */
+/*	$OpenBSD: tree.c,v 1.11 2006/03/13 19:57:42 otto Exp $ */
 
 /* Routines for manipulating parse trees... */
 
@@ -70,37 +70,6 @@ tree_cache(struct tree *tree)
 	tc->timeout = 0;
 	tc->tree = tree;
 	return tc;
-}
-
-struct tree *
-tree_host_lookup(char *name)
-{
-	struct tree	*nt;
-
-	nt = new_tree("tree_host_lookup");
-	if (!nt)
-		error("No memory for host lookup tree node.");
-	nt->op = TREE_HOST_LOOKUP;
-	nt->data.host_lookup.host = enter_dns_host(name);
-	return nt;
-}
-
-struct dns_host_entry *
-enter_dns_host(char *name)
-{
-	struct dns_host_entry	*dh;
-	int			 len = strlen(name) + 1;
-
-	if (!(dh = (struct dns_host_entry *)dmalloc
-	    (sizeof(struct dns_host_entry), "enter_dns_host")) ||
-	    !(dh->hostname = dmalloc(len, "enter_dns_host")))
-		error("Can't allocate space for new host.");
-	strlcpy(dh->hostname, name, len);
-	dh->data = NULL;
-	dh->data_len = 0;
-	dh->buf_len = 0;
-	dh->timeout = 0;
-	return dh;
 }
 
 struct tree *

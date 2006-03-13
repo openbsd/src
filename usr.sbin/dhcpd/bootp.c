@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootp.c,v 1.12 2005/01/31 21:23:08 claudio Exp $	*/
+/*	$OpenBSD: bootp.c,v 1.13 2006/03/13 19:57:42 otto Exp $	*/
 
 /*
  * BOOTP Protocol support.
@@ -254,7 +254,7 @@ lose:
 			netmask_tree.value = lease->subnet->netmask.iabuf;
 			netmask_tree.len = lease->subnet->netmask.len;
 			netmask_tree.buf_size = lease->subnet->netmask.len;
-			netmask_tree.timeout = 0xFFFFFFFF;
+			netmask_tree.timeout = -1;
 			netmask_tree.tree = NULL;
 		}
 

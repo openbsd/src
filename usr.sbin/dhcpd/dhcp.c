@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.20 2005/11/22 21:33:56 beck Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.21 2006/03/13 19:57:42 otto Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -509,7 +509,7 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 	options[DHO_DHCP_MESSAGE_TYPE]->value = &nak;
 	options[DHO_DHCP_MESSAGE_TYPE]->len = sizeof nak;
 	options[DHO_DHCP_MESSAGE_TYPE]->buf_size = sizeof nak;
-	options[DHO_DHCP_MESSAGE_TYPE]->timeout = 0xFFFFFFFF;
+	options[DHO_DHCP_MESSAGE_TYPE]->timeout = -1;
 	options[DHO_DHCP_MESSAGE_TYPE]->tree = NULL;
 
 	/* Set DHCP_MESSAGE to whatever the message is */
@@ -517,7 +517,7 @@ nak_lease(struct packet *packet, struct iaddr *cip)
 	options[DHO_DHCP_MESSAGE]->value = (unsigned char *)dhcp_message;
 	options[DHO_DHCP_MESSAGE]->len = strlen(dhcp_message);
 	options[DHO_DHCP_MESSAGE]->buf_size = strlen(dhcp_message);
-	options[DHO_DHCP_MESSAGE]->timeout = 0xFFFFFFFF;
+	options[DHO_DHCP_MESSAGE]->timeout = -1;
 	options[DHO_DHCP_MESSAGE]->tree = NULL;
 
 	/* Do not use the client's requested parameter list. */
@@ -915,7 +915,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 		state->options[i]->value = (unsigned char *)lease->hostname;
 		state->options[i]->len = strlen (lease->hostname);
 		state->options[i]->buf_size = state->options[i]->len;
-		state->options[i]->timeout = 0xFFFFFFFF;
+		state->options[i]->timeout = -1;
 		state->options[i]->tree = NULL;
 	}
 
@@ -930,7 +930,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 		state->options[i]->value = &state->offer;
 		state->options[i]->len = sizeof state->offer;
 		state->options[i]->buf_size = sizeof state->offer;
-		state->options[i]->timeout = 0xFFFFFFFF;
+		state->options[i]->timeout = -1;
 		state->options[i]->tree = NULL;
 
 		i = DHO_DHCP_SERVER_IDENTIFIER;
@@ -943,7 +943,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 			    sizeof state->ip->primary_address;
 			state->options[i]->buf_size =
 			    state->options[i]->len;
-			state->options[i]->timeout = 0xFFFFFFFF;
+			state->options[i]->timeout = -1;
 			state->options[i]->tree = NULL;
 			state->from.len = sizeof state->ip->primary_address;
 			memcpy(state->from.iabuf, &state->ip->primary_address,
@@ -978,7 +978,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 		state->options[i]->value = (unsigned char *)&state->expiry;
 		state->options[i]->len = sizeof state->expiry;
 		state->options[i]->buf_size = sizeof state->expiry;
-		state->options[i]->timeout = 0xFFFFFFFF;
+		state->options[i]->timeout = -1;
 		state->options[i]->tree = NULL;
 
 		/* Renewal time is lease time * 0.5. */
@@ -992,7 +992,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 			(unsigned char *)&state->renewal;
 		state->options[i]->len = sizeof state->renewal;
 		state->options[i]->buf_size = sizeof state->renewal;
-		state->options[i]->timeout = 0xFFFFFFFF;
+		state->options[i]->timeout = -1;
 		state->options[i]->tree = NULL;
 
 
@@ -1008,7 +1008,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 			(unsigned char *)&state->rebind;
 		state->options[i]->len = sizeof state->rebind;
 		state->options[i]->buf_size = sizeof state->rebind;
-		state->options[i]->timeout = 0xFFFFFFFF;
+		state->options[i]->timeout = -1;
 		state->options[i]->tree = NULL;
 
 		/* If we used the vendor class the client specified, we
@@ -1024,7 +1024,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 				strlen (vendor_class->name);
 			state->options[i]->buf_size =
 				state->options[i]->len;
-			state->options[i]->timeout = 0xFFFFFFFF;
+			state->options[i]->timeout = -1;
 			state->options[i]->tree = NULL;
 		}
 
@@ -1040,7 +1040,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 				strlen (user_class->name);
 			state->options[i]->buf_size =
 				state->options[i]->len;
-			state->options[i]->timeout = 0xFFFFFFFF;
+			state->options[i]->timeout = -1;
 			state->options[i]->tree = NULL;
 		}
 	}
@@ -1056,7 +1056,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 		state->options[i]->len = lease->subnet->netmask.len;
 		state->options[i]->buf_size =
 			lease->subnet->netmask.len;
-		state->options[i]->timeout = 0xFFFFFFFF;
+		state->options[i]->timeout = -1;
 		state->options[i]->tree = NULL;
 	}
 
@@ -1086,7 +1086,7 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 		state->options[i]->value = lease->ip_addr.iabuf;
 		state->options[i]->len = lease->ip_addr.len;
 		state->options[i]->buf_size = lease->ip_addr.len;
-		state->options[i]->timeout = 0xFFFFFFFF;
+		state->options[i]->timeout = -1;
 		state->options[i]->tree = NULL;
 	}
 

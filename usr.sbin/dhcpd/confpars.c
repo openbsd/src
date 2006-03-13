@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.12 2004/09/16 18:35:42 deraadt Exp $ */
+/*	$OpenBSD: confpars.c,v 1.13 2006/03/13 19:57:42 otto Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -560,8 +560,7 @@ void parse_host_declaration(cfile, group)
 			(unsigned char *)name;
 		host->group->options[DHO_HOST_NAME]->buf_size =
 			host->group->options[DHO_HOST_NAME]->len;
-		host->group->options[DHO_HOST_NAME]->timeout =
-			0xFFFFFFFF;
+		host->group->options[DHO_HOST_NAME]->timeout = -1;
 		host->group->options[DHO_HOST_NAME]->tree =
 			NULL;
 	}
@@ -1113,21 +1112,6 @@ void parse_option_param(cfile, group)
 		return;
 	}
 	group->options[option->code] = tree_cache(tree);
-}
-
-/* timestamp :== date
-
-   Timestamps are actually not used in dhcpd.conf, which is a static file,
-   but rather in the database file and the journal file.  (Okay, actually
-   they're not even used there yet). */
-
-time_t
-parse_timestamp(FILE *cfile)
-{
-	time_t rv;
-
-	rv = parse_date(cfile);
-	return rv;
 }
 
 /* lease_declaration :== LEASE ip_address LBRACE lease_parameters RBRACE
