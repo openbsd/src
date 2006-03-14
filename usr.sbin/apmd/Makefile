@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.8 2005/03/29 16:26:45 miod Exp $
+#	$OpenBSD: Makefile,v 1.9 2006/03/14 22:30:53 sturm Exp $
 
-.if (${MACHINE} == "i386") || (${MACHINE} == "macppc") || \
-    (${MACHINE} == "sparc") || (${MACHINE} == "zaurus")
+.if (${MACHINE} == "amd64") || (${MACHINE} == "i386") || \
+    (${MACHINE} == "macppc") || (${MACHINE} == "sparc") || \
+    (${MACHINE} == "zaurus")
 SRCS=	apmd.c apmsubr.c
 
 PROG=	apmd
@@ -10,6 +11,6 @@ NOPROG=yes
 .endif
 
 MAN=	apmd.8
-MANSUBDIR=i386 macppc sparc zaurus
+MANSUBDIR=amd64 i386 macppc sparc zaurus
 
 .include <bsd.prog.mk>

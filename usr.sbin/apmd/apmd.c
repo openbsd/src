@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.41 2006/01/19 19:17:10 sturm Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.42 2006/03/14 22:30:53 sturm Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -493,7 +493,7 @@ main(int argc, char *argv[])
 	(void) signal(SIGINT, sigexit);
 
 	if ((ctl_fd = open(fname, O_RDWR)) == -1) {
-		if (errno != ENXIO)
+		if (errno != ENXIO && errno != ENOENT)
 			error("cannot open device file `%s'", fname);
 	} else if (fcntl(ctl_fd, F_SETFD, 1) == -1)
 		error("cannot set close-on-exec for `%s'", fname);
