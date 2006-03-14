@@ -734,7 +734,6 @@
 ./usr/include/dev/tc/if_levar.h
 ./usr/include/dev/tc/ioasicreg.h
 ./usr/include/dev/tc/ioasicvar.h
-./usr/include/dev/tc/tcdevs.h
 ./usr/include/dev/tc/tcdevs_data.h
 ./usr/include/dev/tc/tcdsreg.h
 ./usr/include/dev/tc/tcdsvar.h

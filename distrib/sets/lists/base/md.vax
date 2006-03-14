@@ -713,7 +713,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/tc/if_levar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/tc/ioasicreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/tc/ioasicvar.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/tc/tcdevs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/tc/tcdevs_data.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/tc/tcdsreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/tc/tcdsvar.ph

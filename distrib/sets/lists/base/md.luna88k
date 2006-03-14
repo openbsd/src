@@ -1209,7 +1209,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/tc/if_levar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/tc/ioasicreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/tc/ioasicvar.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/tc/tcdevs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/tc/tcdevs_data.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/tc/tcdsreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/tc/tcdsvar.ph
