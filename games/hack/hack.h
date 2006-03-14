@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.h,v 1.8 2003/05/19 06:30:56 pjanzen Exp $*/
+/*	$OpenBSD: hack.h,v 1.9 2006/03/14 22:06:10 deraadt Exp $*/
 /*	$NetBSD: hack.h,v 1.3 1995/03/23 08:30:21 cgd Exp $*/
 
 /*
@@ -214,7 +214,7 @@ extern char lock[PL_NSIZ+4];
 
 
 /* alloc.c */
-long *alloc(unsigned int);
+void *alloc(unsigned int);
 
 /* hack.apply.c */
 int  doapply(void);

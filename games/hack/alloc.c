@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.6 2006/03/14 22:06:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,41 +62,18 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: alloc.c,v 1.5 2003/05/19 06:30:56 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: alloc.c,v 1.6 2006/03/14 22:06:10 deraadt Exp $";
 #endif /* not lint */
-
-#ifdef LINT
-
-/*
-   a ridiculous definition, suppressing
-	"possible pointer alignment problem" for (long *) malloc()
-	"enlarg defined but never used"
-	"ftell defined (in <stdio.h>) but never used"
-   from lint
-*/
-#include <stdio.h>
-long *
-alloc(unsigned int n)
-{
-	long dummy = ftell(stderr);
-
-	if(n) dummy = 0;	/* make sure arg is used */
-	return(&dummy);
-}
-
-#else
 
 #include <stdlib.h>
 #include "hack.h"
 
-long *
+void *
 alloc(unsigned int lth)
 {
-	char *ptr;
+	void *ptr;
 
 	if(!(ptr = malloc(lth)))
 		panic("Cannot get %d bytes", lth);
-	return((long *) ptr);
+	return(ptr);
 }
-
-#endif /* LINT */
