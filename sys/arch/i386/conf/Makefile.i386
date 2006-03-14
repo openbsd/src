@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.41 2004/11/19 06:41:13 miod Exp $
+#	$OpenBSD: Makefile.i386,v 1.42 2006/03/14 09:02:29 mickey Exp $
 
 # Makefile for OpenBSD
 #
@@ -51,7 +51,7 @@ CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-log
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-Ttext 0xD0100120 -e start -N
+LINKFLAGS=	-Ttext 0xD0200120 -e start -N
 STRIPFLAGS=	-g -X -x
 
 HOSTCC= ${CC}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.344 2006/03/08 13:52:34 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.345 2006/03/14 09:02:29 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2803,7 +2803,7 @@ cpu_init_ldt(struct cpu_info *ci)
 void
 init386(paddr_t first_avail)
 {
-	int i;
+	int i, kb;
 	struct region_descriptor region;
 	bios_memmap_t *im;
 
@@ -3014,6 +3014,15 @@ init386(paddr_t first_avail)
 #ifdef DEBUG
 	printf("physload: ");
 #endif
+	kb = atop(KERNTEXTOFF - KERNBASE);
+	if (kb > atop(0x100000)) {
+		paddr_t lim = atop(0x100000);
+#ifdef DEBUG
+		printf(" %x-%x (<16M)", lim, kb);
+#endif
+		uvm_page_physload(lim, kb, lim, kb, VM_FREELIST_FIRST16);
+	}
+
 	for (i = 0; i < ndumpmem; i++) {
 		paddr_t a, e;
 		paddr_t lim;
