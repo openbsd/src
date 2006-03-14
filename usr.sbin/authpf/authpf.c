@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.96 2005/12/12 16:06:01 beck Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.97 2006/03/14 21:45:14 beck Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -739,7 +739,8 @@ change_table(int add, const char *luser, const char *ipsrc)
 	struct pfr_addr		addr;
 
 	bzero(&io, sizeof(io));
-	strlcpy(io.pfrio_table.pfrt_name, tablename, sizeof(io.pfrio_table));
+	strlcpy(io.pfrio_table.pfrt_name, tablename,
+	    sizeof(io.pfrio_table.pfrt_name));
 	io.pfrio_buffer = &addr;
 	io.pfrio_esize = sizeof(addr);
 	io.pfrio_size = 1;
