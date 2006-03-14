@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.27 2004/10/26 09:48:59 henning Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.28 2006/03/14 22:56:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -113,7 +113,7 @@ void	unpack_ntp(struct ntp_data *, u_char *);
 double	current_time(double);
 void	create_timeval(double, struct timeval *, struct timeval *);
 
-#if DEBUG
+#ifdef DEBUG
 void	print_packet(const struct ntp_data *);
 #endif
 
