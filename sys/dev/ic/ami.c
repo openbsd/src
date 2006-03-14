@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.114 2006/03/14 13:33:23 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.115 2006/03/14 15:03:11 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -131,6 +131,9 @@ int		ami_start(struct ami_ccb *, int);
 int		ami_done(struct ami_softc *, int);
 void		ami_copy_internal_data(struct scsi_xfer *, void *, size_t);
 int		ami_inquire(struct ami_softc *, u_int8_t);
+
+int		ami_load_ptmem(struct ami_softc*, struct ami_ccb *,
+		    void *, size_t, int, int);
 
 #if NBIO > 0
 int		ami_mgmt(struct ami_softc *, u_int8_t, u_int8_t, u_int8_t,
@@ -958,52 +961,8 @@ int
 ami_cmd(struct ami_ccb *ccb, int flags, int wait)
 {
 	struct ami_softc *sc = ccb->ccb_sc;
-	struct ami_iocmd *cmd = &ccb->ccb_cmd;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
-	int error = 0, i;
-
-	if (cmd->acc_cmd == AMI_PASSTHRU && ccb->ccb_data) {
-		bus_dma_segment_t *sgd;
-
-		error = bus_dmamap_load(sc->sc_dmat, dmap, ccb->ccb_data,
-		    ccb->ccb_len, NULL, flags);
-		if (error) {
-			if (error == EFBIG)
-				printf("more than %d dma segs\n",
-				    AMI_MAXOFFSETS);
-			else
-				printf("error %d loading dma map\n", error);
-
-			ami_put_ccb(ccb);
-			return (error);
-		}
-
-		cmd->acc_passthru.apt_data = ccb->ccb_ptpa;
-
-		sgd = dmap->dm_segs;
-		if(dmap->dm_nsegs > 1) {
-			struct ami_sgent *sgl = ccb->ccb_sglist;
-
-			ccb->ccb_pt->apt_nsge = dmap->dm_nsegs;
-			ccb->ccb_pt->apt_data = ccb->ccb_sglistpa;
-
-			for (i = 0; i < dmap->dm_nsegs; i++, sgd++) {
-				sgl[i].asg_addr = htole32(sgd->ds_addr);
-				sgl[i].asg_len  = htole32(sgd->ds_len);
-			}
-		} else {
-			ccb->ccb_pt->apt_nsge = 0;
-			ccb->ccb_pt->apt_data = htole32(sgd->ds_addr);
-		}
-
-		bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_ccbmem_am),
-		    ccb->ccb_offset, sizeof(struct ami_ccbmem),
-		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-		bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
-		    (ccb->ccb_dir == AMI_CCB_IN) ?
-		    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
-	}
+	int error = 0;
 
 	if (wait) {
 		AMI_DPRINTF(AMI_D_DMA, ("waiting "));
@@ -1249,7 +1208,6 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 	u_int8_t channel = rsc->sc_channel, target = link->target;
 	struct device *dev = link->device_softc;
 	struct ami_ccb *ccb;
-	struct ami_iocmd *cmd;
 	int error;
 	int s;
 	char type;
@@ -1288,6 +1246,9 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 	ccb->ccb_len  = xs->datalen;
 	ccb->ccb_data = xs->data;
 	ccb->ccb_dir = (xs->flags & SCSI_DATA_IN) ? AMI_CCB_IN : AMI_CCB_OUT;
+
+	ccb->ccb_cmd.acc_cmd = AMI_PASSTHRU;
+	ccb->ccb_cmd.acc_passthru.apt_data = ccb->ccb_ptpa;
 	
 	ccb->ccb_pt->apt_param = AMI_PTPARAM(AMI_TIMEOUT_6,1,0);
 	ccb->ccb_pt->apt_channel = channel;
@@ -1298,8 +1259,15 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 	ccb->ccb_pt->apt_datalen = xs->datalen;
 	ccb->ccb_pt->apt_data = 0;
 
-	cmd = &ccb->ccb_cmd;
-	cmd->acc_cmd = AMI_PASSTHRU;
+	if (ami_load_ptmem(sc, ccb, xs->data, xs->datalen,
+	    xs->flags & SCSI_DATA_IN, xs->flags & SCSI_NOSLEEP) != 0) {
+		s = splbio();
+		ami_put_ccb(ccb);
+		splx(s);
+		xs->error = XS_DRIVER_STUFFUP;
+		scsi_done(xs);
+		return (COMPLETE);
+	}
 
 	s = splbio();
 	error = ami_cmd(ccb, (xs->flags & SCSI_NOSLEEP) ?
@@ -1329,6 +1297,54 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 		return (COMPLETE);
 	else
 		return (SUCCESSFULLY_QUEUED);
+}
+
+int
+ami_load_ptmem(struct ami_softc *sc, struct ami_ccb *ccb, void *data,
+    size_t len, int read, int nowait)
+{
+	bus_dmamap_t dmap = ccb->ccb_dmamap;
+	bus_dma_segment_t *sgd;
+	int error = 0, i;
+
+	if (data == NULL) /* nothing to do */
+		return (0);
+
+	error = bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmamap, data, len,
+	    NULL, nowait ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+	if (error) {
+		if (error == EFBIG)
+			printf("more than %d dma segs\n", AMI_MAXOFFSETS);
+		else
+			printf("error %d loading dma map\n", error);
+
+		return (1);
+	}
+
+	sgd = dmap->dm_segs;
+	if (dmap->dm_nsegs > 1) {
+		struct ami_sgent *sgl = ccb->ccb_sglist;
+
+		ccb->ccb_pt->apt_nsge = dmap->dm_nsegs;
+		ccb->ccb_pt->apt_data = ccb->ccb_sglistpa;
+
+		for (i = 0; i < dmap->dm_nsegs; i++) {
+			sgl[i].asg_addr = htole32(sgd[i].ds_addr);
+			sgl[i].asg_len = htole32(sgd[i].ds_len);
+		}
+	} else {
+		ccb->ccb_pt->apt_nsge = 0;
+		ccb->ccb_pt->apt_data = htole32(sgd->ds_addr);
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_ccbmem_am),
+	    ccb->ccb_offset, sizeof(struct ami_ccbmem),
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0, dmap->dm_mapsize,
+	    read ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+
+	return (0);
 }
 
 int
@@ -1698,9 +1714,9 @@ ami_drv_inq(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, u_int8_t page,
 	ccb->ccb_dir = AMI_CCB_IN;
 
 	ccb->ccb_cmd.acc_cmd = AMI_PASSTHRU;
+	ccb->ccb_cmd.acc_passthru.apt_data = ccb->ccb_ptpa;
 
 	pt = ccb->ccb_pt;
-
 	memset(pt, 0, sizeof(struct ami_passthrough));
 	pt->apt_channel = ch;
 	pt->apt_target = tg;
@@ -1719,6 +1735,12 @@ ami_drv_inq(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, u_int8_t page,
 	if (page != 0) {
 		pt->apt_cdb[1] = SI_EVPD;
 		pt->apt_cdb[2] = page;
+	}
+
+	if (ami_load_ptmem(sc, ccb, inqbuf, sizeof(struct scsi_inquiry_data),
+	    1, 0) != 0) {
+		ami_put_ccb(ccb);
+		return (ENOMEM);
 	}
 
 	if (ami_cmd(ccb, BUS_DMA_WAITOK, 0) != 0)
