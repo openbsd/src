@@ -1,4 +1,4 @@
-/* $OpenBSD: memconfig.c,v 1.10 2003/12/04 03:08:26 deraadt Exp $ */
+/* $OpenBSD: memconfig.c,v 1.11 2006/03/14 19:23:16 moritz Exp $ */
 
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
@@ -40,7 +40,7 @@
 #include <unistd.h>
 
 struct {
-	char	*name;
+	const char	*name;
 	int		val;
 	int		kind;
 #define MDF_SETTABLE	(1<<0)
@@ -64,13 +64,13 @@ static void	listfunc(int, int, char *[]);
 static void	setfunc(int, int, char *[]);
 static void	clearfunc(int, int, char *[]);
 static void	helpfunc(int, int, char *[]);
-static void	help(char *);
+static void	help(const char *);
 static struct mem_range_desc *mrgetall(int, int *);
 
 struct
 {
-	char	*cmd;
-	char	*desc;
+	const char	*cmd;
+	const char	*desc;
 	void	(*func)(int, int, char *[]);
 } functions[] = {
 	{"list",
@@ -136,7 +136,7 @@ mrgetall(int memfd, int *nmr)
 	*nmr = mro.mo_arg[0];
 	mrd = malloc(*nmr * sizeof(struct mem_range_desc));
 	if (mrd == NULL)
-		errx(1, "can't allocate %d bytes for %d range descriptors",
+		errx(1, "can't allocate %zu bytes for %d range descriptors",
 		     *nmr * sizeof(struct mem_range_desc), *nmr);
 
 	mro.mo_arg[0] = *nmr;
@@ -319,7 +319,7 @@ helpfunc(int memfd, int argc, char *argv[])
 }
 
 static void
-help(char *what)
+help(const char *what)
 {
 	int	 i;
 
