@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_i386.c,v 1.13 2004/07/01 02:04:10 mickey Exp $ */
+/*	$OpenBSD: kvm_i386.c,v 1.14 2006/03/14 19:23:52 kettenis Exp $ */
 /*	$NetBSD: kvm_i386.c,v 1.9 1996/03/18 22:33:38 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.13 2004/07/01 02:04:10 mickey Exp $";
+static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.14 2006/03/14 19:23:52 kettenis Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -91,19 +91,19 @@ _kvm_initvtop(kvm_t *kd)
 	u_long pa;
 
 	vm = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
-	if (vm == 0)
+	if (vm == NULL)
 		return (-1);
 	kd->vmst = vm;
 
+	vm->PTD = NULL;
+
 	nlist[0].n_name = "_PTDpaddr";
-	nlist[1].n_name = 0;
+	nlist[1].n_name = NULL;
 
 	if (kvm_nlist(kd, nlist) != 0) {
 		_kvm_err(kd, kd->program, "bad namelist");
 		return (-1);
 	}
-
-	vm->PTD = 0;
 
 	if (_kvm_pread(kd, kd->pmfd, &pa, sizeof pa,
 	    (off_t)_kvm_pa2off(kd, nlist[0].n_value - KERNBASE)) != sizeof pa)
@@ -118,8 +118,10 @@ _kvm_initvtop(kvm_t *kd)
 	return (0);
 
 invalid:
-	if (vm->PTD != 0)
+	if (vm->PTD != NULL) {
 		free(vm->PTD);
+		vm->PTD = NULL;
+	}
 	return (-1);
 }
 
@@ -150,7 +152,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
 	 * If we are initializing (kernel page table descriptor pointer
 	 * not yet set) * then return pa == va to avoid infinite recursion.
 	 */
-	if (vm->PTD == 0) {
+	if (vm->PTD == NULL) {
 		*pa = va;
 		return (NBPG - offset);
 	}
