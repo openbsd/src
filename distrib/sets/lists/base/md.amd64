@@ -2276,11 +2276,14 @@
 ./usr/mdec/pxeboot
 ./usr/sbin/acpid
 ./usr/sbin/acpidump
+./usr/sbin/apm
+./usr/sbin/apmd
 ./usr/sbin/fdformat
 ./usr/sbin/hotplugd
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
 ./usr/sbin/wsmoused
+./usr/sbin/zzz
 ./usr/share/misc/pcvtfonts
 ./usr/share/misc/pcvtfonts/iso8859-1-euro.816
 ./usr/share/misc/pcvtfonts/iso8859-13.808

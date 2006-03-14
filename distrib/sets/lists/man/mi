@@ -1993,6 +1993,8 @@
 ./usr/share/man/cat8/amd64
 ./usr/share/man/cat8/amd64/MAKEDEV.0
 ./usr/share/man/cat8/amd64/acpid.0
+./usr/share/man/cat8/amd64/apm.0
+./usr/share/man/cat8/amd64/apmd.0
 ./usr/share/man/cat8/amd64/biosboot.0
 ./usr/share/man/cat8/amd64/boot.0
 ./usr/share/man/cat8/amd64/boot.conf.0
@@ -2007,6 +2009,7 @@
 ./usr/share/man/cat8/amd64/wsconsctl.0
 ./usr/share/man/cat8/amd64/wsfontload.0
 ./usr/share/man/cat8/amd64/wsmoused.0
+./usr/share/man/cat8/amd64/zzz.0
 ./usr/share/man/cat8/amq.0
 ./usr/share/man/cat8/apachectl.0
 ./usr/share/man/cat8/apxs.0
