@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.71 2006/03/14 01:51:35 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.72 2006/03/14 03:33:30 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -29,7 +29,6 @@
 #include "rcsprog.h"
 
 #define RCS_CMD_MAXARG	128
-#define RCS_DEFAULT_SUFFIX	",v/"
 #define RCSPROG_OPTSTRING	"A:a:b::c:e::hik:Lm:Mn:N:qt::TUVx:z:"
 
 #define DESC_PROMPT	"enter description, terminated with single '.' "      \

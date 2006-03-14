@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2006/03/14 01:51:35 ray Exp $
+#	$OpenBSD: Makefile,v 1.4 2006/03/14 03:33:30 ray Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -9,7 +9,7 @@ RCS?=		rcs
 RCSDIFF?=	rcsdiff
 RCSMERGE?=	rcsmerge
 
-CLEANFILES=	blah.c blah.c,v test test,v
+CLEANFILES=	blah.c blah.c,v test test,v RCS
 
 # XXX - These may need to be done in order.  (At least start with
 #	test-ci-initial.)
@@ -22,7 +22,7 @@ REGRESS_TARGETS+=test-rcsdiff-rflag test-rcs-mflag test-rcs-mflag2
 REGRESS_TARGETS+=test-co-RCSINIT test-ci-nflag test-ci-Nflag
 REGRESS_TARGETS+=test-ci-sflag test-co-lflag2 test-rcsdiff
 #REGRESS_TARGETS+=test-rcsmerge
-REGRESS_TARGETS+=test-ci-dflag test-comma
+REGRESS_TARGETS+=test-ci-dflag test-ci-xflag test-comma
 
 test-ci-initial: clean
 	@echo 'this is a test file' > test
@@ -185,6 +185,28 @@ test-ci-dflag:
 	@${CI} -q -d'2037-01-12 04:00:00+00' -m'dated revision' -l test
 	@grep -q 'dated revision' test,v
 
+test-ci-xflag:
+	@mkdir -p RCS
+	@rm -rf RCS/file*
+	@touch file
+	@echo . | ${CI} -x,abcd/,v file
+	@test -e RCS/file,abcd
+	@test ! -e RCS/file,v
+
+	@mv -f RCS/file,abcd RCS/file,v
+	@${CO} -l file
+	@echo revision >> file
+	@echo . | ${CI} -x,abcd/,v/xyz file
+	@test ! -e RCS/file,abcd
+	@fgrep -q revision RCS/file,v
+	@test ! -e RCS/filexyz
+
+	@# XXX - Coming soon
+	@#touch file
+	@#echo more >> file
+	@#${CI} -x file
+	@#fgrep -q more RCS/file
+
 test-comma:
 	@rm -rf RCS
 	@mkdir -p RCS
@@ -192,5 +214,8 @@ test-comma:
 	@echo . | ${CI} -q file,notext
 	@test -e RCS/file,notext,v
 	@test ! -e RCS/file,v
+
+clean:
+	@rm -rf ${CLEANFILES}
 
 .include <bsd.regress.mk>

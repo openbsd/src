@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.36 2006/03/08 20:19:39 joris Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.37 2006/03/14 03:33:30 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -32,6 +32,7 @@
 #include "worklist.h"
 #include "xmalloc.h"
 
+#define RCS_DEFAULT_SUFFIX	",v/"
 #define RCS_TMPDIR_DEFAULT	"/tmp"
 
 /* flags specific to ci.c */
