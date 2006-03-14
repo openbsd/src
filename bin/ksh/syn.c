@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.23 2005/12/11 20:31:21 otto Exp $	*/
+/*	$OpenBSD: syn.c,v 1.24 2006/03/14 22:08:40 deraadt Exp $	*/
 
 /*
  * shell parser (C version)
@@ -777,14 +777,12 @@ compile(Source *s)
 static int
 assign_command(char *s)
 {
-	char c = *s;
-
 	if (Flag(FPOSIX) || !*s)
 		return 0;
-	return (c == 'a' && strcmp(s, "alias") == 0) ||
-	    (c == 'e' && strcmp(s, "export") == 0) ||
-	    (c == 'r' && strcmp(s, "readonly") == 0) ||
-	    (c == 't' && strcmp(s, "typeset") == 0);
+	return (strcmp(s, "alias") == 0) ||
+	    (strcmp(s, "export") == 0) ||
+	    (strcmp(s, "readonly") == 0) ||
+	    (strcmp(s, "typeset") == 0);
 }
 
 /* Check if we are in the middle of reading an alias */
