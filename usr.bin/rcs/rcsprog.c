@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.70 2006/03/12 01:20:38 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.71 2006/03/14 01:51:35 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -238,10 +238,6 @@ rcs_statfile(char *fname, char *out, size_t len)
 	struct stat st;
 
 	strdir = found = 0;
-
-	/* we might have gotten a RCS file as argument */
-	if ((ext = strchr(fname, ',')) != NULL)
-		*ext = '\0';
 
 	/* we might have gotten the RCS/ dir in the argument string */
 	if (strstr(fname, RCSDIR) != NULL)

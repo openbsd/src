@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2006/03/12 00:36:00 ray Exp $
+#	$OpenBSD: Makefile,v 1.3 2006/03/14 01:51:35 ray Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -22,7 +22,7 @@ REGRESS_TARGETS+=test-rcsdiff-rflag test-rcs-mflag test-rcs-mflag2
 REGRESS_TARGETS+=test-co-RCSINIT test-ci-nflag test-ci-Nflag
 REGRESS_TARGETS+=test-ci-sflag test-co-lflag2 test-rcsdiff
 #REGRESS_TARGETS+=test-rcsmerge
-REGRESS_TARGETS+=test-ci-dflag
+REGRESS_TARGETS+=test-ci-dflag test-comma
 
 test-ci-initial: clean
 	@echo 'this is a test file' > test
@@ -184,5 +184,13 @@ test-ci-dflag:
 	@echo "some text for date test" >> test
 	@${CI} -q -d'2037-01-12 04:00:00+00' -m'dated revision' -l test
 	@grep -q 'dated revision' test,v
+
+test-comma:
+	@rm -rf RCS
+	@mkdir -p RCS
+	@touch file,notext
+	@echo . | ${CI} -q file,notext
+	@test -e RCS/file,notext,v
+	@test ! -e RCS/file,v
 
 .include <bsd.regress.mk>
