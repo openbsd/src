@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.278 2006/03/12 20:07:48 otto Exp $
+#	$OpenBSD: rc,v 1.279 2006/03/14 22:48:46 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -212,6 +212,8 @@ ttyflags -a
 if [ -f /sbin/kbd -a -f /etc/kbdtype ]; then
 	kbd `cat /etc/kbdtype`
 fi
+
+wsconsctl_conf
 
 if [ X"${pf}" != X"NO" ]; then
 	RULES="block all"
@@ -690,8 +692,6 @@ if [ X"${mopd_flags}" != X"NO" -a -d /tftpboot/mop ]; then
 fi
 
 echo '.'
-
-wsconsctl_conf
 
 mixerctl_conf
 
