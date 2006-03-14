@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.9,v 1.4 2006/03/12 06:29:49 dlg Exp $
+.\"	$OpenBSD: iic.9,v 1.5 2006/03/14 02:18:20 ray Exp $
 .\"
 .\" Copyright (c) 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -165,9 +165,18 @@ flag was passed to
 .Fn iic_acquire_bus ,
 it must also be passed to
 .Fn iic_release_bus .
-.\" XXXJRT Someone help me with the mark-up here!
-.\" .It Fn iic_exec "ic" "op" "addr" "cmdbuf" "cmdlen" "buf" "len" "flags"
-.It Fn iic_exec "ic" "op" "addr" "cmdbuf" "cmdlen" "buf" "len"
+.It Xo
+.Fo iic_exec
+.Fa "ic"
+.Fa "op"
+.Fa "addr"
+.Fa "cmdbuf"
+.Fa "cmdlen"
+.Fa "buf"
+.Fa "len"
+.Fa "flags"
+.Fc
+.Xc
 Perform a series of I2C transactions on the bus.
 .Fn iic_exec
 initiates the operation by sending a START condition on the I2C
