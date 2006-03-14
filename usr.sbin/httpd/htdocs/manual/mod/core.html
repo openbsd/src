@@ -2734,8 +2734,8 @@ Syntax OK
     limits for a child process using setrlimit(2). Each MaxFOOPerChild
     limit can be set independently of any other limit, or may be left
     unspecified, thereby using the system default value. The kernel will
-    take appropriate action when a child process a resource limit - see
-    the manpages for setrlimit(2) and signal(3) for more information.
+    take appropriate action when a child process exceeds a resource limit
+    - see the manpages for setrlimit(2) and signal(3) for more information.
     Setting resource limits can be very useful when running a busy server
     with a script interpreter (say, a webmail machine) as these limits
     can prevent swapping, deadlock or kernel panic due to memory or swap
