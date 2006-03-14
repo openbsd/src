@@ -2465,6 +2465,8 @@
 ./usr/share/nls/fi/libc.cat
 ./usr/share/nls/fr
 ./usr/share/nls/fr/libc.cat
+./usr/share/nls/it
+./usr/share/nls/it/libc.cat
 ./usr/share/nls/nl
 ./usr/share/nls/nl/libc.cat
 ./usr/share/nls/no
