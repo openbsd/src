@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.54 2006/01/27 15:26:38 xsa Exp $	*/
+/*	$OpenBSD: update.c,v 1.55 2006/03/14 15:59:06 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -284,7 +284,7 @@ cvs_update_local(CVSFILE *cf, void *arg)
 		 * available, we try to merge it into the existing changes.
 		 */
 		if (revdiff == 1) {
-			fbuf = cvs_diff3(rf, fpath, cf->cf_lrev, frev);
+			fbuf = cvs_diff3(rf, fpath, cf->cf_lrev, frev, 0);
 			if (fbuf == NULL) {
 				cvs_log(LP_ERR, "merge failed");
 				break;

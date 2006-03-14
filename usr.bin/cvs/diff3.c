@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.17 2006/03/06 13:22:59 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.18 2006/03/14 15:59:06 xsa Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.17 2006/03/06 13:22:59 xsa Exp $";
+    "$OpenBSD: diff3.c,v 1.18 2006/03/14 15:59:06 xsa Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -155,7 +155,7 @@ static int diff3_internal(int, char **, const char *, const char *);
 int diff3_conflicts = 0;
 
 BUF *
-cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)
+cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 {
 	int ret, argc;
 	char *data, *patch;
@@ -173,11 +173,13 @@ cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)
 	if ((b1 = cvs_buf_load(workfile, BUF_AUTOEXT)) == NULL)
 		goto out;
 
-	cvs_printf("Retrieving revision %s\n", r1);
+	if (verbose == 1)
+		cvs_printf("Retrieving revision %s\n", r1);
 	if ((b2 = rcs_getrev(rf, rev1)) == NULL)
 		goto out;
 
-	cvs_printf("Retrieving revision %s\n", r2);
+	if (verbose == 1)
+		cvs_printf("Retrieving revision %s\n", r2);
 	if ((b3 = rcs_getrev(rf, rev2)) == NULL)
 		goto out;
 
@@ -237,7 +239,7 @@ cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2)
 	if ((diffb = cvs_patchfile(data, patch, ed_patch_lines)) == NULL)
 		goto out;
 
-	if (diff3_conflicts != 0) {
+	if ((verbose ==1) && (diff3_conflicts != 0)) {
 		cvs_log(LP_WARN, "%d conflict%s found during merge, "
 		    "please correct.", diff3_conflicts,
 		    (diff3_conflicts > 1) ? "s" : "");
