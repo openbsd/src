@@ -234,7 +234,9 @@ int BN_is_prime_fasttest(const BIGNUM *a, int checks,
 
 	/* first look for small factors */
 	if (!BN_is_odd(a))
-		return 0;
+		/* a is even => a is prime if and only if a == 2 */
+		return BN_is_word(a, 2);
+
 	if (do_trial_division)
 		{
 		for (i = 1; i < NUMPRIMES; i++)
