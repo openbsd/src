@@ -1,5 +1,5 @@
-/* $OpenBSD: apicvec.s,v 1.5 2004/12/24 21:22:00 pvalchev Exp $ */	
-/* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */	
+/* $OpenBSD: apicvec.s,v 1.6 2006/03/14 14:46:53 mickey Exp $ */
+/* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,9 +38,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-	
+
 #include <machine/i82093reg.h>
-#include <machine/i82489reg.h>	
+#include <machine/i82489reg.h>
 
 #ifdef __ELF__
 #define XINTR(vec) Xintr/**/vec
@@ -51,28 +51,28 @@
 #ifdef MULTIPROCESSOR
 	.globl	XINTR(ipi)
 XINTR(ipi):
-	pushl	$0		
+	pushl	$0
 	pushl	$T_ASTFLT
-	INTRENTRY		
-	MAKE_FRAME		
+	INTRENTRY
+	MAKE_FRAME
 	pushl	CPL
 	movl	_C_LABEL(lapic_ppr),%eax
 	movl	%eax,CPL
 	ioapic_asm_ack()
-        sti			/* safe to take interrupts.. */
+	sti			/* safe to take interrupts.. */
 	call	_C_LABEL(i386_ipi_handler)
 	jmp	_C_LABEL(Xdoreti)
 #endif
-	
+
 	/*
 	 * Interrupt from the local APIC timer.
 	 */
 	.globl	XINTR(ltimer)
-XINTR(ltimer):			
-	pushl	$0		
+XINTR(ltimer):
+	pushl	$0
 	pushl	$T_ASTFLT
-	INTRENTRY		
-	MAKE_FRAME		
+	INTRENTRY
+	MAKE_FRAME
 	pushl	CPL
 	movl	_C_LABEL(lapic_ppr),%eax
 	movl	%eax,CPL
@@ -84,7 +84,7 @@ XINTR(ltimer):
 	movl	%esp,%eax
 	pushl	%eax
 	call	_C_LABEL(lapic_clockintr)
-	addl	$4,%esp		
+	addl	$4,%esp
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(i386_softintunlock)
 #endif
@@ -92,10 +92,10 @@ XINTR(ltimer):
 
 	.globl	XINTR(softclock), XINTR(softnet), XINTR(softtty)
 XINTR(softclock):
-	pushl	$0		
+	pushl	$0
 	pushl	$T_ASTFLT
-	INTRENTRY		
-	MAKE_FRAME		
+	INTRENTRY
+	MAKE_FRAME
 	pushl	CPL
 	movl	$IPL_SOFTCLOCK,CPL
 	andl	$~(1<<SIR_CLOCK),_C_LABEL(ipending)
@@ -109,7 +109,7 @@ XINTR(softclock):
 	call	_C_LABEL(i386_softintunlock)
 #endif
 	jmp	_C_LABEL(Xdoreti)
-	
+
 #define DONETISR(s, c) \
 	.globl  _C_LABEL(c)	;\
 	testl	$(1 << s),%edi	;\
@@ -118,10 +118,10 @@ XINTR(softclock):
 1:
 
 XINTR(softnet):
-	pushl	$0		
+	pushl	$0
 	pushl	$T_ASTFLT
-	INTRENTRY		
-	MAKE_FRAME		
+	INTRENTRY
+	MAKE_FRAME
 	pushl	CPL
 	movl	$IPL_SOFTNET,CPL
 	andl	$~(1<<SIR_NET),_C_LABEL(ipending)
@@ -139,11 +139,11 @@ XINTR(softnet):
 	jmp	_C_LABEL(Xdoreti)
 #undef DONETISR
 
-XINTR(softtty):	
-	pushl	$0		
+XINTR(softtty):
+	pushl	$0
 	pushl	$T_ASTFLT
-	INTRENTRY		
-	MAKE_FRAME		
+	INTRENTRY
+	MAKE_FRAME
 	pushl	CPL
 	movl	$IPL_SOFTTTY,CPL
 	andl	$~(1<<SIR_TTY),_C_LABEL(ipending)
@@ -164,13 +164,13 @@ XINTR(softtty):
 
 	/*
 	 * I/O APIC interrupt.
-	 * We sort out which one is which based on the value of 
+	 * We sort out which one is which based on the value of
 	 * the processor priority register.
 	 *
 	 * XXX no stray interrupt mangling stuff..
 	 * XXX use cmove when appropriate.
 	 */
-	
+
 #define APICINTR(name, num, early_ack, late_ack, mask, unmask, level_mask) \
 _C_LABEL(Xintr_/**/name/**/num):					\
 	pushl	$0							;\
@@ -213,7 +213,7 @@ _C_LABEL(Xintr_/**/name/**/num):					\
 	unmask(num)			/* unmask it in hardware */	;\
 	late_ack(num)							;\
 	jmp	_C_LABEL(Xdoreti)
-	
+
 APICINTR(ioapic,0, voidop, ioapic_asm_ack, voidop, voidop, voidop)
 APICINTR(ioapic,1, voidop, ioapic_asm_ack, voidop, voidop, voidop)
 APICINTR(ioapic,2, voidop, ioapic_asm_ack, voidop, voidop, voidop)
@@ -241,7 +241,7 @@ APICINTR(ioapic,15, voidop, ioapic_asm_ack, voidop, voidop, voidop)
 	.globl	_C_LABEL(Xintr_ioapic14),_C_LABEL(Xintr_ioapic15)
 	.globl _C_LABEL(apichandler)
 
-_C_LABEL(apichandler):	
+_C_LABEL(apichandler):
 	.long	_C_LABEL(Xintr_ioapic0),_C_LABEL(Xintr_ioapic1)
 	.long	_C_LABEL(Xintr_ioapic2),_C_LABEL(Xintr_ioapic3)
 	.long	_C_LABEL(Xintr_ioapic4),_C_LABEL(Xintr_ioapic5)
@@ -252,4 +252,4 @@ _C_LABEL(apichandler):
 	.long	_C_LABEL(Xintr_ioapic14),_C_LABEL(Xintr_ioapic15)
 
 #endif
-	
+

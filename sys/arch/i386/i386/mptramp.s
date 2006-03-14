@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.s,v 1.4 2006/01/13 16:44:22 mickey Exp $	*/
+/*	$OpenBSD: mptramp.s,v 1.5 2006/03/14 14:44:37 mickey Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-	
+
 /*
  * Copyright (c) 1999 Stefan Grefen
  *
@@ -81,7 +81,7 @@
  *	2) halt the processors waiting for them to be enabled
  *	   by a idle-thread
  */
-	
+
 #include "assym.h"
 #include <machine/param.h>
 #include <machine/asm.h>
@@ -105,8 +105,8 @@
  * cpu_trace[1] is the point which the cpu has reached.
  * cpu_trace[2] is the last value stored by HALTT.
  */
-	
-	
+
+
 #ifdef MPDEBUG
 #define HALT(x)	1: movl (%edi),%ebx;cmpl $ x,%ebx ; jle 1b ; movl $x,4(%edi)
 #define HALTT(x,y)	movl y,8(%edi); HALT(x)
@@ -159,10 +159,10 @@ _TRMP_LABEL(mp_startup)
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
 	popfl
-	
+
 	movl	RELOC(mp_pdirpa),%ecx
 	HALTT(0x5,%ecx)
-	
+
 	/* Load base of page directory and enable mapping. */
 	movl	%ecx,%cr3		# load ptd addr into mmu
 	movl	%cr0,%eax		# get control word
@@ -174,7 +174,7 @@ _TRMP_LABEL(mp_startup)
 	leal	_C_LABEL(cpu_trace),%edi
 #endif
 	HALT(0x6)
-	
+
 # ok, we're now running with paging enabled and sharing page tables with cpu0.
 # figure out which processor we really are, what stack we should be on, etc.
 
@@ -182,7 +182,7 @@ _TRMP_LABEL(mp_startup)
 	shrl	$LAPIC_ID_SHIFT,%ecx
 	leal	0(,%ecx,4),%ecx
 	movl	_C_LABEL(cpu_info)(%ecx),%ecx
-	
+
 	HALTT(0x7, %ecx)
 
 # %ecx points at our cpu_info structure..
@@ -190,12 +190,12 @@ _TRMP_LABEL(mp_startup)
 	movw	$((MAXGDTSIZ*8) - 1), 6(%esp)	# prepare segment descriptor
 	movl	CPU_INFO_GDT(%ecx), %eax	# for real gdt
 	movl	%eax, 8(%esp)
-	HALTT(0x8, %eax)	
+	HALTT(0x8, %eax)
 	lgdt	6(%esp)
-	HALT(0x9)	
+	HALT(0x9)
 	jmp	1f
 	nop
-1:	
+1:
 	HALT(0xa)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	#switch to new segment
 	HALTT(0x10, %eax)
@@ -214,7 +214,7 @@ _TRMP_LABEL(gdt_table)
 	.word	0x0,0x0,0x0,0x0			# null GDTE
 	 GDTE(0x9f,0xcf)			# Kernel text
 	 GDTE(0x93,0xcf)			# Kernel data
-_TRMP_LABEL(gdt_desc)	
+_TRMP_LABEL(gdt_desc)
 	.word	0x17				# limit 3 entries
 	.long	gdt_table			# where is is gdt
 
@@ -222,37 +222,37 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 mp_cont:
 
 	movl	CPU_INFO_IDLE_PCB(%ecx),%esi
-	
+
 # %esi now points at our PCB.
-	
+
 	HALTT(0x19, %esi)
 
 	movl	PCB_ESP(%esi),%esp
 	movl	PCB_EBP(%esi),%ebp
-	
-	HALT(0x20)	
+
+	HALT(0x20)
 	/* Switch address space. */
 	movl	PCB_CR3(%esi),%eax
-	HALTT(0x22, %eax)		
+	HALTT(0x22, %eax)
 	movl	%eax,%cr3
 	HALT(0x25)
 	/* Load segment registers. */
 	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax
-	HALTT(0x26,%eax)	
-	movl	%eax,%fs		
+	HALTT(0x26,%eax)
+	movl	%eax,%fs
 	xorl	%eax,%eax
-	HALTT(0x27,%eax)		
+	HALTT(0x27,%eax)
 	movl	%eax,%gs
 	movl	PCB_CR0(%esi),%eax
-	HALTT(0x28,%eax)		
+	HALTT(0x28,%eax)
 	movl	%eax,%cr0
-	HALTT(0x30,%ecx)	
+	HALTT(0x30,%ecx)
 	pushl	%ecx
 	call	_C_LABEL(cpu_hatch)
-	HALT(0x33)	
+	HALT(0x33)
 	xorl	%esi,%esi
 	jmp	_C_LABEL(idle_start)
-	
+
 	.data
 _C_LABEL(mp_pdirpa):
 	.long	0
@@ -261,5 +261,5 @@ _C_LABEL(mp_pdirpa):
 _C_LABEL(cpu_trace):
 	.long	0x40
 	.long	0xff
-	.long	0xff		
+	.long	0xff
 #endif
