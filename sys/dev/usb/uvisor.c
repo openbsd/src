@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.23 2006/03/14 10:08:45 dlg Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.24 2006/03/14 10:18:10 dlg Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -173,15 +173,7 @@ struct uvisor_type {
 #define PALM4	0x0001
 #define VISOR	0x0002
 #define NOFRE	0x0004
-/*
- * This flag is a combination it is used to reassign the probe value later on a
- * failed PALM4 request if the error is STALLED and the vendor ID is SONY
- * Note that the init routines have been ordered to try PALM4 first allowing
- * reallocation of the sc_flags so that the Visor routine may also be called
- * It is important to also skip the free check for effected devices though, hence
- * the combined flag value.	
- */	
-#define CLIE4	0x0006
+#define CLIE4	(VISOR|NOFRE)
 };
 static const struct uvisor_type uvisor_devs[] = {
 	{{ USB_VENDOR_HANDSPRING, USB_PRODUCT_HANDSPRING_VISOR }, VISOR },
@@ -265,7 +257,7 @@ USB_ATTACH(uvisor)
 	sc->sc_vendor = uaa->vendor;
 	
 	if ((sc->sc_flags & (VISOR | PALM4)) == 0) {
-		printf("%s: init failed, device type is neither visor nor palm\n", 
+		printf("%s: device is neither visor nor palm\n", 
 		    USBDEVNAME(sc->sc_dev));
 		goto bad;
 	}
@@ -443,13 +435,11 @@ uvisor_init(struct uvisor_softc *sc, struct uvisor_connection_info *ci,
 		USETW(req.wLength, UVISOR_GET_PALM_INFORMATION_LEN);
 		err = usbd_do_request_flags(sc->sc_udev, &req, cpi,
 		    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);
-		if (err == USBD_STALLED && sc->sc_vendor == USB_VENDOR_SONY)
-		{
-/*
- * Here we switch personality in the driver to a basic Visor type with the flag set to
- * avoid the Free Space checks, this is ONLY done if the PALM4 command STALLED
- * and the Vendor of the device is Sony
- */
+		if (err == USBD_STALLED && sc->sc_vendor == USB_VENDOR_SONY) {
+			/* some sony clie devices stall on palm4 requests,
+			 * switch them over to using visor. dont do free space
+			 * checks on them since they dont like them either.
+			 */
 			DPRINTF(("switching role for CLIE probe\n"))
 			sc->sc_flags = CLIE4;
 			err = 0;
@@ -471,12 +461,8 @@ uvisor_init(struct uvisor_softc *sc, struct uvisor_connection_info *ci,
 			return (err);
 	}
 	
-/*
- * Skip the free bytes check if NOFRE flag is set (part of the CLIE4 mask
- * some CLIE_40 devices that stall on the PALM4 commands also hang the serial
- * devices if subjected to the free space check
- */
-	if (sc->sc_flags & NOFRE) return (err);
+	if (sc->sc_flags & NOFRE)
+		return (err);
 	
 	DPRINTF(("uvisor_init: getting available bytes\n"));
 	req.bmRequestType = UT_READ_VENDOR_ENDPOINT;
