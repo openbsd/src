@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.30 2006/03/04 22:02:47 brad Exp $ */
+/*	$OpenBSD: machdep.c,v 1.31 2006/03/14 22:42:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -96,13 +96,6 @@ void dump_tlb(void);
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* machine "architecture" */
 char	cpu_model[30];
-#ifdef APERTURE
-#if defined(INSECURE) || defined(DEBUG)
-int allowaperture = 1;
-#else
-int allowaperture = 0;
-#endif
-#endif
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -755,15 +748,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return ENOTDIR;		/* overloaded */
 
 	switch (name[0]) {
-	case CPU_ALLOWAPERTURE:
-#ifdef APERTURE
-	if (securelevel > 0)
-		return sysctl_rdint(oldp, oldlenp, newp, allowaperture);
-	else
-		return sysctl_int(oldp, oldlenp, newp, newlen, &allowaperture);
-#else
-		return (sysctl_rdint(oldp, oldlenp, newp, 0));
-#endif
 	default:
 		return EOPNOTSUPP;
 	}
