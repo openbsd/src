@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmap_size.c,v 1.1 2005/01/06 10:14:20 otto Exp $	*/
+/*	$OpenBSD: mmap_size.c,v 1.2 2006/03/14 09:31:51 mickey Exp $	*/
 
 /*
  * Public domain. 2005, Otto Moerbeek <otto@drijf.net>
@@ -16,7 +16,7 @@ f(size_t sz)
 {
 	char *p;
 	p = mmap(NULL, sz, PROT_READ|PROT_WRITE,
-                    MAP_ANON|MAP_PRIVATE, -1, (off_t)0);	
+	    MAP_ANON|MAP_PRIVATE, -1, (off_t)0);
 
 	if (p == MAP_FAILED)
 		return;
@@ -38,8 +38,6 @@ main()
 		f(i);
 		f(-i);
 		f(SIZE_T_MAX/2 - 0x1000);
-	}	
+	}
 	return (0);
 }
-
-	
