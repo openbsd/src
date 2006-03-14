@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.112 2006/03/14 11:44:08 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.113 2006/03/14 11:57:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1441,38 +1441,38 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 
 	case REQUEST_SENSE:
 		AMI_DPRINTF(AMI_D_CMD, ("REQUEST SENSE tgt %d ", target));
-		bzero(&sd, sizeof sd);
+		bzero(&sd, sizeof(sd));
 		sd.error_code = 0x70;
 		sd.segment = 0;
 		sd.flags = SKEY_NO_SENSE;
 		*(u_int32_t*)sd.info = htole32(0);
 		sd.extra_len = 0;
-		ami_copy_internal_data(xs, &sd, sizeof sd);
+		ami_copy_internal_data(xs, &sd, sizeof(sd));
 		scsi_done(xs);
 		return (COMPLETE);
 
 	case INQUIRY:
 		AMI_DPRINTF(AMI_D_CMD, ("INQUIRY tgt %d ", target));
-		bzero(&inq, sizeof inq);
+		bzero(&inq, sizeof(inq));
 		inq.device = T_DIRECT;
 		inq.dev_qual2 = 0;
 		inq.version = 2;
 		inq.response_format = 2;
 		inq.additional_length = 32;
-		strlcpy(inq.vendor, "AMI    ", sizeof inq.vendor);
-		snprintf(inq.product, sizeof inq.product, "Host drive  #%02d",
-		    target);
-		strlcpy(inq.revision, "   ", sizeof inq.revision);
-		ami_copy_internal_data(xs, &inq, sizeof inq);
+		strlcpy(inq.vendor, "AMI    ", sizeof(inq.vendor));
+		snprintf(inq.product, sizeof(inq.product),
+		    "Host drive  #%02d", target);
+		strlcpy(inq.revision, "   ", sizeof(inq.revision));
+		ami_copy_internal_data(xs, &inq, sizeof(inq));
 		scsi_done(xs);
 		return (COMPLETE);
 
 	case READ_CAPACITY:
 		AMI_DPRINTF(AMI_D_CMD, ("READ CAPACITY tgt %d ", target));
-		bzero(&rcd, sizeof rcd);
+		bzero(&rcd, sizeof(rcd));
 		_lto4b(sc->sc_hdr[target].hd_size - 1, rcd.addr);
 		_lto4b(AMI_SECTOR_SIZE, rcd.length);
-		ami_copy_internal_data(xs, &rcd, sizeof rcd);
+		ami_copy_internal_data(xs, &rcd, sizeof(rcd));
 		scsi_done(xs);
 		return (COMPLETE);
 
