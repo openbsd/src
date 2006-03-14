@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.233 2005/11/04 08:24:15 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.234 2006/03/14 11:09:42 djm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -110,7 +110,7 @@ enum	{ PF_LIMIT_STATES, PF_LIMIT_SRC_NODES, PF_LIMIT_FRAGS,
 enum	{ PF_POOL_NONE, PF_POOL_BITMASK, PF_POOL_RANDOM,
 	  PF_POOL_SRCHASH, PF_POOL_ROUNDROBIN };
 enum	{ PF_ADDR_ADDRMASK, PF_ADDR_NOROUTE, PF_ADDR_DYNIFTL,
-	  PF_ADDR_TABLE, PF_ADDR_RTLABEL };
+	  PF_ADDR_TABLE, PF_ADDR_RTLABEL, PF_ADDR_URPFFAILED };
 #define PF_POOL_TYPEMASK	0x0f
 #define PF_POOL_STICKYADDR	0x20
 #define	PF_WSCALE_FLAG		0x80
@@ -315,22 +315,25 @@ struct pfi_dynaddr {
 #endif /* PF_INET6_ONLY */
 #endif /* PF_INET_INET6 */
 
-#define	PF_MISMATCHAW(aw, x, af, neg)				\
-	(							\
-		(((aw)->type == PF_ADDR_NOROUTE &&		\
-		    pf_routable((x), (af))) ||			\
-		((aw)->type == PF_ADDR_RTLABEL &&		\
-		    !pf_rtlabel_match((x), (af), (aw))) ||	\
-		((aw)->type == PF_ADDR_TABLE &&			\
-		    !pfr_match_addr((aw)->p.tbl, (x), (af))) ||	\
-		((aw)->type == PF_ADDR_DYNIFTL &&		\
-		    !pfi_match_addr((aw)->p.dyn, (x), (af))) || \
-		((aw)->type == PF_ADDR_ADDRMASK &&		\
-		    !PF_AZERO(&(aw)->v.a.mask, (af)) &&		\
-		    !PF_MATCHA(0, &(aw)->v.a.addr,		\
-		    &(aw)->v.a.mask, (x), (af)))) !=		\
-		(neg)						\
+#define	PF_MISMATCHAW(aw, x, af, neg, ifp)				\
+	(								\
+		(((aw)->type == PF_ADDR_NOROUTE &&			\
+		    pf_routable((x), (af), NULL)) ||			\
+		(((aw)->type == PF_ADDR_URPFFAILED && (ifp) != NULL &&	\
+		    pf_routable((x), (af), (ifp))) ||			\
+		((aw)->type == PF_ADDR_RTLABEL &&			\
+		    !pf_rtlabel_match((x), (af), (aw))) ||		\
+		((aw)->type == PF_ADDR_TABLE &&				\
+		    !pfr_match_addr((aw)->p.tbl, (x), (af))) ||		\
+		((aw)->type == PF_ADDR_DYNIFTL &&			\
+		    !pfi_match_addr((aw)->p.dyn, (x), (af))) || 	\
+		((aw)->type == PF_ADDR_ADDRMASK &&			\
+		    !PF_AZERO(&(aw)->v.a.mask, (af)) &&			\
+		    !PF_MATCHA(0, &(aw)->v.a.addr,			\
+		    &(aw)->v.a.mask, (x), (af))))) !=			\
+		(neg)							\
 	)
+
 
 struct pf_rule_uid {
 	uid_t		 uid[2];
@@ -1513,7 +1516,7 @@ int	pf_normalize_tcp_stateful(struct mbuf *, int, struct pf_pdesc *,
 u_int32_t
 	pf_state_expires(const struct pf_state *);
 void	pf_purge_expired_fragments(void);
-int	pf_routable(struct pf_addr *addr, sa_family_t af);
+int	pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *);
 int	pf_rtlabel_match(struct pf_addr *, sa_family_t, struct pf_addr_wrap *);
 int	pf_socket_lookup(int, struct pf_pdesc *);
 void	pfr_initialize(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.510 2006/02/07 18:41:14 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.511 2006/03/14 11:09:42 djm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2378,7 +2378,8 @@ pf_match_translation(struct pf_pdesc *pd, struct mbuf *m, int off,
 			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != pd->proto)
 			r = r->skip[PF_SKIP_PROTO].ptr;
-		else if (PF_MISMATCHAW(&src->addr, saddr, pd->af, src->neg))
+		else if (PF_MISMATCHAW(&src->addr, saddr, pd->af,
+		    src->neg, kif))
 			r = r->skip[src == &r->src ? PF_SKIP_SRC_ADDR :
 			    PF_SKIP_DST_ADDR].ptr;
 		else if (src->port_op && !pf_match_port(src->port_op,
@@ -2386,9 +2387,10 @@ pf_match_translation(struct pf_pdesc *pd, struct mbuf *m, int off,
 			r = r->skip[src == &r->src ? PF_SKIP_SRC_PORT :
 			    PF_SKIP_DST_PORT].ptr;
 		else if (dst != NULL &&
-		    PF_MISMATCHAW(&dst->addr, daddr, pd->af, dst->neg))
+		    PF_MISMATCHAW(&dst->addr, daddr, pd->af, dst->neg, NULL))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
-		else if (xdst != NULL && PF_MISMATCHAW(xdst, daddr, pd->af, 0))
+		else if (xdst != NULL && PF_MISMATCHAW(xdst, daddr, pd->af,
+		    0, NULL))
 			r = TAILQ_NEXT(r, entries);
 		else if (dst != NULL && dst->port_op &&
 		    !pf_match_port(dst->port_op, dst->port[0],
@@ -2868,12 +2870,14 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != IPPROTO_TCP)
 			r = r->skip[PF_SKIP_PROTO].ptr;
-		else if (PF_MISMATCHAW(&r->src.addr, saddr, af, r->src.neg))
+		else if (PF_MISMATCHAW(&r->src.addr, saddr, af,
+		    r->src.neg, kif))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (r->src.port_op && !pf_match_port(r->src.port_op,
 		    r->src.port[0], r->src.port[1], th->th_sport))
 			r = r->skip[PF_SKIP_SRC_PORT].ptr;
-		else if (PF_MISMATCHAW(&r->dst.addr, daddr, af, r->dst.neg))
+		else if (PF_MISMATCHAW(&r->dst.addr, daddr, af,
+		    r->dst.neg, NULL))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], th->th_dport))
@@ -3242,12 +3246,14 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != IPPROTO_UDP)
 			r = r->skip[PF_SKIP_PROTO].ptr;
-		else if (PF_MISMATCHAW(&r->src.addr, saddr, af, r->src.neg))
+		else if (PF_MISMATCHAW(&r->src.addr, saddr, af,
+		    r->src.neg, kif))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (r->src.port_op && !pf_match_port(r->src.port_op,
 		    r->src.port[0], r->src.port[1], uh->uh_sport))
 			r = r->skip[PF_SKIP_SRC_PORT].ptr;
-		else if (PF_MISMATCHAW(&r->dst.addr, daddr, af, r->dst.neg))
+		else if (PF_MISMATCHAW(&r->dst.addr, daddr, af,
+		    r->dst.neg, NULL))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], uh->uh_dport))
@@ -3579,9 +3585,11 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != pd->proto)
 			r = r->skip[PF_SKIP_PROTO].ptr;
-		else if (PF_MISMATCHAW(&r->src.addr, saddr, af, r->src.neg))
+		else if (PF_MISMATCHAW(&r->src.addr, saddr, af,
+		    r->src.neg, kif))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
-		else if (PF_MISMATCHAW(&r->dst.addr, daddr, af, r->dst.neg))
+		else if (PF_MISMATCHAW(&r->dst.addr, daddr, af,
+		    r->dst.neg, NULL))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->type && r->type != icmptype + 1)
 			r = TAILQ_NEXT(r, entries);
@@ -3836,9 +3844,11 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != pd->proto)
 			r = r->skip[PF_SKIP_PROTO].ptr;
-		else if (PF_MISMATCHAW(&r->src.addr, pd->src, af, r->src.neg))
+		else if (PF_MISMATCHAW(&r->src.addr, pd->src, af,
+		    r->src.neg, kif))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
-		else if (PF_MISMATCHAW(&r->dst.addr, pd->dst, af, r->dst.neg))
+		else if (PF_MISMATCHAW(&r->dst.addr, pd->dst, af,
+		    r->dst.neg, NULL))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->tos && !(r->tos & pd->tos))
 			r = TAILQ_NEXT(r, entries);
@@ -4047,9 +4057,11 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != pd->proto)
 			r = r->skip[PF_SKIP_PROTO].ptr;
-		else if (PF_MISMATCHAW(&r->src.addr, pd->src, af, r->src.neg))
+		else if (PF_MISMATCHAW(&r->src.addr, pd->src, af,
+		    r->src.neg, kif))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
-		else if (PF_MISMATCHAW(&r->dst.addr, pd->dst, af, r->dst.neg))
+		else if (PF_MISMATCHAW(&r->dst.addr, pd->dst, af,
+		    r->dst.neg, NULL))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->tos && !(r->tos & pd->tos))
 			r = TAILQ_NEXT(r, entries);
@@ -5327,9 +5339,10 @@ pf_pull_hdr(struct mbuf *m, int off, void *p, int len,
 }
 
 int
-pf_routable(struct pf_addr *addr, sa_family_t af)
+pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif)
 {
 	struct sockaddr_in	*dst;
+	int ret = 1;
 #ifdef INET6
 	struct sockaddr_in6	*dst6;
 	struct route_in6	 ro;
@@ -5360,11 +5373,16 @@ pf_routable(struct pf_addr *addr, sa_family_t af)
 	rtalloc_noclone((struct route *)&ro, NO_CLONING);
 
 	if (ro.ro_rt != NULL) {
+		/* Perform uRPF check if passed input interface */
+		/* XXX doesn't try to grok multipath */
+		if (kif != NULL && (kif->pfik_ifp == NULL ||
+		    kif->pfik_ifp != ro.ro_rt->rt_ifp))
+			ret = 0;
 		RTFREE(ro.ro_rt);
-		return (1);
-	}
+	} else
+		ret = 0;
 
-	return (0);
+	return (ret);
 }
 
 int

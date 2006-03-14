@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.341 2006/02/20 11:39:43 camield Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.342 2006/03/14 11:09:44 djm Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1296,6 +1296,10 @@ and
 .Xr route 8 .
 .It Ar no-route
 Any address which is not currently routable.
+.It Ar urpf-failed
+Any source address that fails a unicast reverse path forwarding (URPF)
+check, i.e. packets coming in on an interface other than that which holds
+the route back to the packet's source address.
 .It Ar <table>
 Any address that matches the given table.
 .El
@@ -2533,6 +2537,10 @@ block return log on $ext_if all
 # block anything coming from source we have no back routes for
 block in from no-route to any
 
+# block packets whose ingress interface does not match the one in 
+# the route back to their source address
+block in from urpf-failed to any
+
 # block and log outgoing packets that do not have our address as source,
 # they are either spoofed or something is misconfigured (NAT disabled,
 # for instance), we want to be nice and do not send out garbage.
@@ -2720,7 +2728,7 @@ protospec      = "proto" ( proto-name | proto-number |
 proto-list     = ( proto-name | proto-number ) [ [ "," ] proto-list ]
 
 hosts          = "all" |
-                 "from" ( "any" | "no-route" | "self" | host |
+                 "from" ( "any" | "no-route" | "urpf-failed" | "self" | host |
                  "{" host-list "}" | "route" string ) [ port ] [ os ]
                  "to"   ( "any" | "no-route" | "self" | host |
                  "{" host-list "}" | "route" string ) [ port ]

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.104 2006/01/18 22:03:21 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.105 2006/03/14 11:09:42 djm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -840,10 +840,12 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 		else if (r->proto && r->proto != h->ip_p)
 			r = r->skip[PF_SKIP_PROTO].ptr;
 		else if (PF_MISMATCHAW(&r->src.addr,
-		    (struct pf_addr *)&h->ip_src.s_addr, AF_INET, r->src.neg))
+		    (struct pf_addr *)&h->ip_src.s_addr, AF_INET,
+		    r->src.neg, kif))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (PF_MISMATCHAW(&r->dst.addr,
-		    (struct pf_addr *)&h->ip_dst.s_addr, AF_INET, r->dst.neg))
+		    (struct pf_addr *)&h->ip_dst.s_addr, AF_INET,
+		    r->dst.neg, NULL))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else
 			break;
@@ -1053,10 +1055,12 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 			r = r->skip[PF_SKIP_PROTO].ptr;
 #endif
 		else if (PF_MISMATCHAW(&r->src.addr,
-		    (struct pf_addr *)&h->ip6_src, AF_INET6, r->src.neg))
+		    (struct pf_addr *)&h->ip6_src, AF_INET6,
+		    r->src.neg, kif))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (PF_MISMATCHAW(&r->dst.addr,
-		    (struct pf_addr *)&h->ip6_dst, AF_INET6, r->dst.neg))
+		    (struct pf_addr *)&h->ip6_dst, AF_INET6,
+		    r->dst.neg, NULL))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else
 			break;
@@ -1218,12 +1222,14 @@ pf_normalize_tcp(int dir, struct pfi_kif *kif, struct mbuf *m, int ipoff,
 			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != pd->proto)
 			r = r->skip[PF_SKIP_PROTO].ptr;
-		else if (PF_MISMATCHAW(&r->src.addr, pd->src, af, r->src.neg))
+		else if (PF_MISMATCHAW(&r->src.addr, pd->src, af,
+		    r->src.neg, kif))
 			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
 		else if (r->src.port_op && !pf_match_port(r->src.port_op,
 			    r->src.port[0], r->src.port[1], th->th_sport))
 			r = r->skip[PF_SKIP_SRC_PORT].ptr;
-		else if (PF_MISMATCHAW(&r->dst.addr, pd->dst, af, r->dst.neg))
+		else if (PF_MISMATCHAW(&r->dst.addr, pd->dst, af,
+		    r->dst.neg, NULL))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 			    r->dst.port[0], r->dst.port[1], th->th_dport))

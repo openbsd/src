@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.494 2005/11/17 20:52:39 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.495 2006/03/14 11:09:43 djm Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -254,6 +254,7 @@ struct node_hfsc_opts	hfsc_opts;
 
 int	yyerror(const char *, ...);
 int	disallow_table(struct node_host *, const char *);
+int	disallow_urpf_failed(struct node_host *, const char *);
 int	disallow_alias(struct node_host *, const char *);
 int	rule_consistent(struct pf_rule *, int);
 int	filter_consistent(struct pf_rule *, int);
@@ -399,7 +400,7 @@ typedef struct {
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token	ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
 %token	MINTTL ERROR ALLOWOPTS FASTROUTE FILENAME ROUTETO DUPTO REPLYTO NO LABEL
-%token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP TABLE
+%token	NOROUTE URPFFAILED FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP TABLE
 %token	REASSEMBLE FRAGDROP FRAGCROP ANCHOR NATANCHOR RDRANCHOR BINATANCHOR
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY RANDOMID
 %token	REQUIREORDER SYNPROXY FINGERPRINTS NOSYNC DEBUG SKIP HOSTID
@@ -1095,6 +1096,10 @@ table_opt	: STRING		{
 				case PF_ADDR_NOROUTE:
 					yyerror("\"no-route\" is not permitted "
 					    "inside tables");
+					break;
+				case PF_ADDR_URPFFAILED:
+					yyerror("\"urpf-failed\" is not "
+					    "permitted inside tables");
 					break;
 				default:
 					yyerror("unknown address type %d",
@@ -2183,6 +2188,9 @@ to		: /* empty */			{
 			$$.port = NULL;
 		}
 		| TO ipportspec		{
+			if (disallow_urpf_failed($2.host, "\"urpf-failed\" is "
+			    "not permitted in a destination address"))
+				YYERROR;
 			$$ = $2;
 		}
 		;
@@ -2227,12 +2235,22 @@ xhost		: not host			{
 				n->not = $1;
 			$$ = $2;
 		}
-		| NOROUTE			{
+		| not NOROUTE			{
 			$$ = calloc(1, sizeof(struct node_host));
 			if ($$ == NULL)
 				err(1, "xhost: calloc");
 			$$->addr.type = PF_ADDR_NOROUTE;
 			$$->next = NULL;
+			$$->not = $1;
+			$$->tail = $$;
+		}
+		| not URPFFAILED		{
+			$$ = calloc(1, sizeof(struct node_host));
+			if ($$ == NULL)
+				err(1, "xhost: calloc");
+			$$->addr.type = PF_ADDR_URPFFAILED;
+			$$->next = NULL;
+			$$->not = $1;
 			$$->tail = $$;
 		}
 		;
@@ -3380,6 +3398,9 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag tagged
 
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
+			if (disallow_urpf_failed($10, "\"urpf-failed\" is not "
+			    "permitted as a binat destination"))
+				YYERROR;
 
 			memset(&binat, 0, sizeof(binat));
 
@@ -3702,6 +3723,17 @@ disallow_table(struct node_host *h, const char *fmt)
 }
 
 int
+disallow_urpf_failed(struct node_host *h, const char *fmt)
+{
+	for (; h != NULL; h = h->next)
+		if (h->addr.type == PF_ADDR_URPFFAILED) {
+			yyerror(fmt);
+			return (1);
+		}
+	return (0);
+}
+
+int
 disallow_alias(struct node_host *h, const char *fmt)
 {
 	for (; h != NULL; h = h->next)
@@ -3958,6 +3990,9 @@ expand_label_addr(const char *name, char *label, size_t len, sa_family_t af,
 			break;
 		case PF_ADDR_NOROUTE:
 			snprintf(tmp, sizeof(tmp), "no-route");
+			break;
+		case PF_ADDR_URPFFAILED:
+			snprintf(tmp, sizeof(tmp), "urpf-failed");
 			break;
 		case PF_ADDR_ADDRMASK:
 			if (!af || (PF_AZERO(&h->addr.v.a.addr, af) &&
@@ -4672,6 +4707,7 @@ lookup(char *s)
 		{ "tos",		TOS},
 		{ "ttl",		TTL},
 		{ "upperlimit",		UPPERLIMIT},
+		{ "urpf-failed",	URPFFAILED},
 		{ "user",		USER},
 	};
 	const struct keywords	*p;
