@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.81 2005/11/30 20:44:07 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.82 2006/03/14 22:49:41 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -576,7 +576,7 @@ initcon(struct con *cp, int fd, struct sockaddr *sa)
 		errx(1, "not supported yet");
 	memcpy(&cp->ss, sa, sa->sa_len);
 	cp->af = sa->sa_family;
-	cp->ia = &((struct sockaddr_in *)sa)->sin_addr;
+	cp->ia = &((struct sockaddr_in *)&cp->ss)->sin_addr;
 	cp->blacklists = sdl_lookup(blacklists, cp->af, cp->ia);
 	cp->stutter = (greylist && !grey_stutter && cp->blacklists == NULL) ?
 	    0 : stutter;
