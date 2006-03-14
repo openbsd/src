@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.111 2006/03/13 22:11:23 brad Exp $	*/
+/*	$OpenBSD: ami.c,v 1.112 2006/03/14 11:44:08 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1386,61 +1386,14 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 	xs->error = XS_NOERROR;
 
 	switch (xs->cmd->opcode) {
-	case TEST_UNIT_READY:
-		/* save off sd? after autoconf */
-		if (!cold)	/* XXX bogus */
-			strlcpy(sc->sc_hdr[target].dev, dev->dv_xname,
-			    sizeof(sc->sc_hdr[target].dev));
-
-	case START_STOP:
-#if 0
-	case VERIFY:
-#endif
-		AMI_DPRINTF(AMI_D_CMD, ("opc %d tgt %d ", xs->cmd->opcode,
-		    target));
+	case READ_COMMAND:
+	case READ_BIG:
+	case WRITE_COMMAND:
+	case WRITE_BIG:
+		/* deal with io outside the switch */
 		break;
-
-	case REQUEST_SENSE:
-		AMI_DPRINTF(AMI_D_CMD, ("REQUEST SENSE tgt %d ", target));
-		bzero(&sd, sizeof sd);
-		sd.error_code = 0x70;
-		sd.segment = 0;
-		sd.flags = SKEY_NO_SENSE;
-		*(u_int32_t*)sd.info = htole32(0);
-		sd.extra_len = 0;
-		ami_copy_internal_data(xs, &sd, sizeof sd);
-		break;
-
-	case INQUIRY:
-		AMI_DPRINTF(AMI_D_CMD, ("INQUIRY tgt %d ", target));
-		bzero(&inq, sizeof inq);
-		inq.device = T_DIRECT;
-		inq.dev_qual2 = 0;
-		inq.version = 2;
-		inq.response_format = 2;
-		inq.additional_length = 32;
-		strlcpy(inq.vendor, "AMI    ", sizeof inq.vendor);
-		snprintf(inq.product, sizeof inq.product, "Host drive  #%02d",
-		    target);
-		strlcpy(inq.revision, "   ", sizeof inq.revision);
-		ami_copy_internal_data(xs, &inq, sizeof inq);
-		break;
-
-	case READ_CAPACITY:
-		AMI_DPRINTF(AMI_D_CMD, ("READ CAPACITY tgt %d ", target));
-		bzero(&rcd, sizeof rcd);
-		_lto4b(sc->sc_hdr[target].hd_size - 1, rcd.addr);
-		_lto4b(AMI_SECTOR_SIZE, rcd.length);
-		ami_copy_internal_data(xs, &rcd, sizeof rcd);
-		break;
-
-	case PREVENT_ALLOW:
-		AMI_DPRINTF(AMI_D_CMD, ("PREVENT/ALLOW "));
-		return (COMPLETE);
 
 	case SYNCHRONIZE_CACHE:
-		AMI_DPRINTF(AMI_D_CMD, ("SYNCHRONIZE CACHE "));
-
 		s = splbio();
 		ccb = ami_get_ccb(sc);
 		splx(s);
@@ -1472,106 +1425,126 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		else
 			return (SUCCESSFULLY_QUEUED);
 
-	case READ_COMMAND:
-		if (!error) {
-			AMI_DPRINTF(AMI_D_CMD, ("READ "));
-			error++;
-		}
-	case READ_BIG:
-		if (!error) {
-			AMI_DPRINTF(AMI_D_CMD, ("READ BIG "));
-			error++;
-		}
-	case WRITE_COMMAND:
-		if (!error) {
-			AMI_DPRINTF(AMI_D_CMD, ("WRITE "));
-			error++;
-		}
-	case WRITE_BIG:
-		if (!error) {
-			AMI_DPRINTF(AMI_D_CMD, ("WRITE BIG "));
-			error++;
-		}
-
-		/* A read or write operation. */
-		if (xs->cmdlen == 6) {
-			rw = (struct scsi_rw *)xs->cmd;
-			blockno = _3btol(rw->addr) &
-			    (SRW_TOPADDR << 16 | 0xffff);
-			blockcnt = rw->length ? rw->length : 0x100;
-		} else {
-			rwb = (struct scsi_rw_big *)xs->cmd;
-			blockno = _4btol(rwb->addr);
-			blockcnt = _2btol(rwb->length);
+	case TEST_UNIT_READY:
+		/* save off sd? after autoconf */
+		if (!cold)	/* XXX bogus */
+			strlcpy(sc->sc_hdr[target].dev, dev->dv_xname,
+			    sizeof(sc->sc_hdr[target].dev));
+	case START_STOP:
 #if 0
-			/* TODO: reflect DPO & FUA flags */
-			if (xs->cmd->opcode == WRITE_BIG &&
-			    rwb->byte2 & 0x18)
-				flags |= 0;
+	case VERIFY:
 #endif
-		}
+	case PREVENT_ALLOW:
+		AMI_DPRINTF(AMI_D_CMD, ("opc %d tgt %d ", xs->cmd->opcode,
+		    target));
+		return (COMPLETE);
 
-		if (blockno >= sc->sc_hdr[target].hd_size ||
-		    blockno + blockcnt > sc->sc_hdr[target].hd_size) {
-			printf("%s: out of bounds %u-%u >= %u\n",
-			    sc->sc_dev.dv_xname, blockno, blockcnt,
-			    sc->sc_hdr[target].hd_size);
-			xs->error = XS_DRIVER_STUFFUP;
-			scsi_done(xs);
-			return (COMPLETE);
-		}
+	case REQUEST_SENSE:
+		AMI_DPRINTF(AMI_D_CMD, ("REQUEST SENSE tgt %d ", target));
+		bzero(&sd, sizeof sd);
+		sd.error_code = 0x70;
+		sd.segment = 0;
+		sd.flags = SKEY_NO_SENSE;
+		*(u_int32_t*)sd.info = htole32(0);
+		sd.extra_len = 0;
+		ami_copy_internal_data(xs, &sd, sizeof sd);
+		scsi_done(xs);
+		return (COMPLETE);
 
-		s = splbio();
-		ccb = ami_get_ccb(sc);
-		splx(s);
-		if (ccb == NULL) {
-			xs->error = XS_DRIVER_STUFFUP;
-			scsi_done(xs);
-			return (COMPLETE);
-		}
+	case INQUIRY:
+		AMI_DPRINTF(AMI_D_CMD, ("INQUIRY tgt %d ", target));
+		bzero(&inq, sizeof inq);
+		inq.device = T_DIRECT;
+		inq.dev_qual2 = 0;
+		inq.version = 2;
+		inq.response_format = 2;
+		inq.additional_length = 32;
+		strlcpy(inq.vendor, "AMI    ", sizeof inq.vendor);
+		snprintf(inq.product, sizeof inq.product, "Host drive  #%02d",
+		    target);
+		strlcpy(inq.revision, "   ", sizeof inq.revision);
+		ami_copy_internal_data(xs, &inq, sizeof inq);
+		scsi_done(xs);
+		return (COMPLETE);
 
-		ccb->ccb_xs = xs;
-		ccb->ccb_len  = xs->datalen;
-		ccb->ccb_dir  = (xs->flags & SCSI_DATA_IN) ?
-		    AMI_CCB_IN : AMI_CCB_OUT;
-		ccb->ccb_data = xs->data;
-		cmd = &ccb->ccb_cmd;
-		cmd->acc_mbox.amb_nsect = htole16(blockcnt);
-		cmd->acc_mbox.amb_lba = htole32(blockno);
-		cmd->acc_mbox.amb_ldn = target;
-		cmd->acc_mbox.amb_data = 0;
-
-		switch (xs->cmd->opcode) {
-		case READ_COMMAND: case READ_BIG:
-			cmd->acc_cmd = AMI_READ;
-			break;
-		case WRITE_COMMAND: case WRITE_BIG:
-			cmd->acc_cmd = AMI_WRITE;
-			break;
-		}
-
-		s = splbio();
-		error = ami_cmd(ccb, (xs->flags & SCSI_NOSLEEP) ?
-		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK, xs->flags & SCSI_POLL);
-		splx(s);
-		if (error) {
-			xs->error = XS_DRIVER_STUFFUP;
-			scsi_done(xs);
-			return (COMPLETE);
-		}
-
-		if (xs->flags & SCSI_POLL)
-			return (COMPLETE);
-		else
-			return (SUCCESSFULLY_QUEUED);
+	case READ_CAPACITY:
+		AMI_DPRINTF(AMI_D_CMD, ("READ CAPACITY tgt %d ", target));
+		bzero(&rcd, sizeof rcd);
+		_lto4b(sc->sc_hdr[target].hd_size - 1, rcd.addr);
+		_lto4b(AMI_SECTOR_SIZE, rcd.length);
+		ami_copy_internal_data(xs, &rcd, sizeof rcd);
+		scsi_done(xs);
+		return (COMPLETE);
 
 	default:
 		AMI_DPRINTF(AMI_D_CMD, ("unsupported scsi command %#x tgt %d ",
 		    xs->cmd->opcode, target));
 		xs->error = XS_DRIVER_STUFFUP;
+		scsi_done(xs);
+		return (COMPLETE);
 	}
 
-	return (COMPLETE);
+	/* A read or write operation. */
+	if (xs->cmdlen == 6) {
+		rw = (struct scsi_rw *)xs->cmd;
+		blockno = _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
+		blockcnt = rw->length ? rw->length : 0x100;
+	} else {
+		rwb = (struct scsi_rw_big *)xs->cmd;
+		blockno = _4btol(rwb->addr);
+		blockcnt = _2btol(rwb->length);
+#if 0
+		/* TODO: reflect DPO & FUA flags */
+		if (xs->cmd->opcode == WRITE_BIG && rwb->byte2 & 0x18)
+			flags |= 0;
+#endif
+	}
+
+	if (blockno >= sc->sc_hdr[target].hd_size ||
+	    blockno + blockcnt > sc->sc_hdr[target].hd_size) {
+		printf("%s: out of bounds %u-%u >= %u\n",
+		    sc->sc_dev.dv_xname, blockno, blockcnt,
+		    sc->sc_hdr[target].hd_size);
+		xs->error = XS_DRIVER_STUFFUP;
+		scsi_done(xs);
+		return (COMPLETE);
+	}
+
+	s = splbio();
+	ccb = ami_get_ccb(sc);
+	splx(s);
+	if (ccb == NULL) {
+		xs->error = XS_DRIVER_STUFFUP;
+		scsi_done(xs);
+		return (COMPLETE);
+	}
+
+	ccb->ccb_xs = xs;
+	ccb->ccb_len = xs->datalen;
+	ccb->ccb_dir = (xs->flags & SCSI_DATA_IN) ? AMI_CCB_IN : AMI_CCB_OUT;
+	ccb->ccb_data = xs->data;
+
+	cmd = &ccb->ccb_cmd;
+	cmd->acc_cmd = (xs->flags & SCSI_DATA_IN) ? AMI_READ : AMI_WRITE;
+	cmd->acc_mbox.amb_nsect = htole16(blockcnt);
+	cmd->acc_mbox.amb_lba = htole32(blockno);
+	cmd->acc_mbox.amb_ldn = target;
+	cmd->acc_mbox.amb_data = 0;
+
+	s = splbio();
+	error = ami_cmd(ccb, (xs->flags & SCSI_NOSLEEP) ?
+	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK, xs->flags & SCSI_POLL);
+	splx(s);
+	if (error) {
+		xs->error = XS_DRIVER_STUFFUP;
+		scsi_done(xs);
+		return (COMPLETE);
+	}
+
+	if (xs->flags & SCSI_POLL)
+		return (COMPLETE);
+	else
+		return (SUCCESSFULLY_QUEUED);
 }
 
 int
