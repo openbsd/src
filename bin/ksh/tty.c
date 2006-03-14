@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.8 2005/03/30 17:16:37 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.9 2006/03/14 22:08:01 deraadt Exp $	*/
 
 #include "sh.h"
 #include <sys/stat.h>
@@ -22,12 +22,9 @@ tty_init(int init_ttystate)
 	tty_devtty = 1;
 
 	if ((tfd = open("/dev/tty", O_RDWR, 0)) < 0) {
-		if (tfd < 0) {
-			tty_devtty = 0;
-			warningf(false,
-			    "No controlling tty (open /dev/tty: %s)",
-			    strerror(errno));
-		}
+		tty_devtty = 0;
+		warningf(false, "No controlling tty (open /dev/tty: %s)",
+		    strerror(errno));
 	}
 
 	if (tfd < 0) {
