@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.11 2004/07/06 02:46:06 vincent Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.12 2006/03/14 19:36:44 moritz Exp $	*/
 /*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
 #include <sys/audioio.h>
 
 struct field *findfield(char *name);
-void prfield(struct field *p, char *sep);
+void prfield(struct field *p, const char *sep);
 void rdfield(struct field *p, char *q);
 void getinfo(int fd);
 void usage(void);
@@ -69,7 +69,7 @@ char encbuf[1000];
 int properties, fullduplex, rerror;
 
 struct field {
-	char *name;
+	const char *name;
 	void *valp;
 	int format;
 #define STRING 1
@@ -139,8 +139,8 @@ struct field {
 };
 
 struct {
-	char *ename;
-	int eno;
+	const char *ename;
+	u_int eno;
 } encs[] = {
 	{ AudioEmulaw,		AUDIO_ENCODING_ULAW },
 	{ "ulaw",		AUDIO_ENCODING_ULAW },
@@ -166,7 +166,7 @@ struct {
 };
 
 static struct {
-	char *name;
+	const char *name;
 	u_int prop;
 } props[] = {
 	{ "full_duplex",	AUDIO_PROP_FULLDUPLEX },
@@ -186,10 +186,10 @@ findfield(char *name)
 }
 
 void
-prfield(struct field *p, char *sep)
+prfield(struct field *p, const char *sep)
 {
 	u_int v;
-	char *cm;
+	const char *cm;
 	int i;
 
 	if (sep)
@@ -337,8 +337,8 @@ main(int argc, char **argv)
 	int aflag = 0, canwrite, writeinfo = 0;
 	struct stat dstat, ostat;
 	struct field *p;
-	char *file;
-	char *sep = "=";
+	const char *file;
+	const char *sep = "=";
     
 	if ((file = getenv("AUDIOCTLDEVICE")) == 0 || *file == '\0')
 		file = "/dev/audioctl";
