@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.35 2006/03/07 17:22:08 xsa Exp $	*/
+/*	$OpenBSD: buf.c,v 1.36 2006/03/15 19:48:12 niallo Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -416,6 +416,7 @@ cvs_buf_write_stmp(BUF *b, char *template, mode_t mode)
 		(void)unlink(template);
 		fatal("cvs_buf_write_stmp: cvs_buf_write_fd: `%s'", template);
 	}
+	(void)fchmod(fd, mode);
 	(void)close(fd);
 
 	return (0);
