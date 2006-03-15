@@ -1,4 +1,4 @@
-/*	$OpenBSD: worklist.c,v 1.3 2006/03/10 12:26:18 niallo Exp $	*/
+/*	$OpenBSD: worklist.c,v 1.4 2006/03/15 13:32:41 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include "xmalloc.h"
 
 /*
- * adds an path to a worklist.
+ * adds a path to a worklist.
  */
 void
 cvs_worklist_add(const char *path, struct cvs_wklhead *worklist)
