@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.51 2005/12/13 10:33:14 jsg Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.52 2006/03/15 11:22:16 claudio Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -928,7 +928,9 @@ done:
 	 */
 	switch (error) {
 	case ERESTART:
-		error = EINTR;
+		error = copyout(pl, SCARG(uap, fds), sz);
+		if (error == 0)
+			error = EINTR;
 		break;
 	case EWOULDBLOCK:
 	case 0:
