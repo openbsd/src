@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.19 2006/01/17 20:30:10 miod Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.20 2006/03/15 21:41:37 deraadt Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -452,8 +452,8 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_ALLOWAPERTURE:
 #ifdef APERTURE
 		if (securelevel > 0)
-			return (sysctl_rdint(oldp, oldlenp, newp,
-			    allowaperture));
+			return (sysctl_int_lower(oldp, oldlenp, newp, newlen,
+			    &allowaperture));
 		else
 			return (sysctl_int(oldp, oldlenp, newp, newlen,
 			    &allowaperture));
