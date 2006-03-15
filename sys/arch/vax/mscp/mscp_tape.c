@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_tape.c,v 1.8 2002/06/08 08:50:26 art Exp $ */
+/*	$OpenBSD: mscp_tape.c,v 1.9 2006/03/15 20:04:36 miod Exp $ */
 /*	$NetBSD: mscp_tape.c,v 1.16 2001/11/13 07:38:28 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -263,7 +263,7 @@ mtstrategy(bp)
 	 * Make sure this is a reasonable drive to use.
 	 */
 	unit = mtunit(bp->b_dev);
-	if (unit > mt_cd.cd_ndevs || (mt = mt_cd.cd_devs[unit]) == NULL) {
+	if (unit >= mt_cd.cd_ndevs || (mt = mt_cd.cd_devs[unit]) == NULL) {
 		bp->b_error = ENXIO;
 		goto bad;
 	}

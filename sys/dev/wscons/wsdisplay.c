@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.65 2005/11/05 16:04:20 uwe Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.66 2006/03/15 20:04:37 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -3100,7 +3100,7 @@ wsmoused_release(struct wsdisplay_softc *sc)
 
 		if (is_wsmouse && (minor(sc->wsmoused_dev) <= NWSMOUSE)) {
 			/* /dev/wsmouseX case */
-			if (minor(sc->wsmoused_dev) <= wsmouse_cd.cd_ndevs) {
+			if (minor(sc->wsmoused_dev) < wsmouse_cd.cd_ndevs) {
 				wsms_dev =
 				    wsms_dev_list[minor(sc->wsmoused_dev)];
 			}
