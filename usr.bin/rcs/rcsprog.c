@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.72 2006/03/14 03:33:30 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.73 2006/03/15 02:46:14 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -230,17 +230,13 @@ rcs_getopt(int argc, char **argv, const char *optstr)
 int
 rcs_statfile(char *fname, char *out, size_t len)
 {
-	int found, strdir;
+	int found;
 	char defaultsuffix[] = RCS_DEFAULT_SUFFIX;
 	char filev[MAXPATHLEN], fpath[MAXPATHLEN];
 	char *ext, *slash;
 	struct stat st;
 
-	strdir = found = 0;
-
-	/* we might have gotten the RCS/ dir in the argument string */
-	if (strstr(fname, RCSDIR) != NULL)
-		strdir = 1;
+	found = 0;
 
 	if (rcs_suffixes != NULL)
 		ext = rcs_suffixes;
@@ -266,8 +262,7 @@ rcs_statfile(char *fname, char *out, size_t len)
 		    strlcat(filev, ext, sizeof(filev)) >= sizeof(filev))
 			fatal("rcs_statfile: path truncation");
 
-		if ((strdir == 0) &&
-		    (stat(RCSDIR, &st) != -1) && (st.st_mode & S_IFDIR)) {
+		if (stat(RCSDIR, &st) != -1 && (st.st_mode & S_IFDIR)) {
 			if (strlcpy(fpath, RCSDIR,
 			    sizeof(fpath)) >= sizeof(fpath) ||
 			    strlcat(fpath, "/",
