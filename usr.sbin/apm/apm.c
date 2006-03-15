@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.19 2006/03/06 15:21:05 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.20 2006/03/15 20:30:27 sturm Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -277,7 +277,7 @@ main(int argc, char *argv[])
 				printf("%d\n",
 				    reply.batterystate.ac_state);
 			if (doperf)
-				printf("%d\n", reply.perfstate);
+				printf("%d\n", reply.perfmode);
 			break;
 		}
 
@@ -346,8 +346,8 @@ main(int argc, char *argv[])
 			    ac_state(reply.batterystate.ac_state));
 
 		if (doperf)
-			printf("Performance state: %s (%d MHz)\n",
-			    perf_state(reply.perfstate), reply.cpuspeed);
+			printf("Performance adjustment mode: %s (%d MHz)\n",
+			    perf_mode(reply.perfmode), reply.cpuspeed);
 		break;
 	default:
 		break;

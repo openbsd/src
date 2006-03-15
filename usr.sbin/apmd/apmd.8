@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.33 2006/01/19 19:17:10 sturm Exp $
+.\"	$OpenBSD: apmd.8,v 1.34 2006/03/15 20:30:28 sturm Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -48,7 +48,7 @@ For suspend and standby request events delivered by the BIOS, or via
 .Xr apm 8 ,
 .Nm
 runs the appropriate configuration program (if one exists),
-syncs the buffer cache to disk and initiates the requested mode.
+syncs the buffer cache to disk and initiates the requested state.
 When resuming after suspend or standby,
 .Nm
 runs the appropriate configuration program (if one exists).
@@ -112,13 +112,13 @@ Specify an alternate device file name,
 .It Fl H
 Start
 .Nm
-in high performance mode, initialising
+in manual performance adjustment mode, initialising
 .Va hw.setperf
 to 100.
 .It Fl L
 Start
 .Nm
-in low performance mode, initialising
+in manual performance adjustment mode, initialising
 .Va hw.setperf
 to 0.
 .It Fl m
@@ -166,15 +166,15 @@ once per 10 minutes, but may be specified using the
 command-line flag.
 .El
 .Pp
-When a client requests a suspend or stand-by mode,
+When a client requests a suspend or stand-by state,
 .Nm
 does not wait for positive confirmation that the requested
-mode has been entered before replying to the client; to do so would mean
+state has been entered before replying to the client; to do so would mean
 the client does not get a reply until the system resumes from its sleep state.
 Rather,
 .Nm
 replies with the intended state to the client and then places the system
-in the requested mode after running the configuration script and
+in the requested state after running the configuration script and
 flushing the buffer cache.
 .Pp
 Actions can be configured for the following five transitions:
@@ -187,7 +187,7 @@ and
 The suspend and standby actions are run prior to
 .Nm
 performing any other actions (such as disk syncs) and entering the new
-mode.
+state.
 The resume program is run after resuming from a stand-by or
 suspended state.
 The powerup and powerdown programs are run after the power status (AC

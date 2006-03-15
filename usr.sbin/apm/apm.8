@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.8,v 1.28 2006/03/07 05:24:36 deraadt Exp $
+.\"	$OpenBSD: apm.8,v 1.29 2006/03/15 20:30:27 sturm Exp $
 .\"
 .\" Copyright (c) 1996 John T. Kohl
 .\" All rights reserved.
@@ -99,13 +99,13 @@ to
 .It Fl H
 Set
 .Xr apmd 8
-to high performance mode and
+to manual performance adjustment mode and
 .Va hw.setperf
 to 100.
 .It Fl L
 Set
 .Xr apmd 8
-to low performance mode and
+to manual performance adjustment mode and
 .Va hw.setperf
 to 0.
 .It Fl l
@@ -114,28 +114,27 @@ Display the estimated battery lifetime (in percent).
 Display the estimated battery lifetime (in minutes).
 .It Fl P
 Display the performance adjustment mode.
-0 means uninitialized, 1 means low performance mode, 2 means high performance
-mode, 3 means automatic mode, and 4 means cool running mode.
+0 means manual mode, 1 means automatic mode, and 2 means cool running mode.
 .It Fl S
-Put the system into stand-by (light sleep) mode.
+Put the system into stand-by (light sleep) state.
 .It Fl v
 Request more verbose description of the displayed states.
 .It Fl z
-Put the system into suspend (deep sleep) mode.
+Put the system into suspend (deep sleep) state.
 .El
 .Pp
 The
 .Nm zzz
-variant on this command is an alternative for suspending the system.
+variant of this command is an alternative for suspending the system.
 With no arguments,
 .Nm zzz
-places the system into suspend mode.
+places the system into suspend state.
 The command line flags serve the same purpose as for the
 .Nm
 variant of this command.
 .Pp
 This command does not wait for positive confirmation that the requested
-mode has been entered; to do so would mean the command does not return
+state has been entered; to do so would mean the command does not return
 until the system resumes from its sleep state.
 .Sh FILES
 .Bl -tag -width /var/run/apmdev -compact

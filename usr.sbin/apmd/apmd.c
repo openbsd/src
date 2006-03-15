@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.42 2006/03/14 22:30:53 sturm Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.43 2006/03/15 20:30:28 sturm Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -338,13 +338,13 @@ handle_client(int sock_fd, int ctl_fd)
 		reply.newstate = STANDING_BY;
 		break;
 	case SETPERF_LOW:
-		doperf = PERF_LOW;
+		doperf = PERF_MANUAL;
 		reply.newstate = NORMAL;
 		syslog(LOG_NOTICE, "setting hw.setperf to %d", PERFMIN);
 		setperf(PERFMIN);
 		break;
 	case SETPERF_HIGH:
-		doperf = PERF_HIGH;
+		doperf = PERF_MANUAL;
 		reply.newstate = NORMAL;
 		syslog(LOG_NOTICE, "setting hw.setperf to %d", PERFMAX);
 		setperf(PERFMAX);
@@ -368,7 +368,7 @@ handle_client(int sock_fd, int ctl_fd)
 		syslog(LOG_INFO, "cannot read hw.cpuspeed");
 
 	reply.cpuspeed = cpuspeed;
-	reply.perfstate = doperf;
+	reply.perfmode = doperf;
 	reply.vno = APMD_VNO;
 	if (send(cli_fd, &reply, sizeof(reply), 0) != sizeof(reply))
 		syslog(LOG_INFO, "client reply botch");
@@ -460,13 +460,13 @@ main(int argc, char *argv[])
 		case 'L':
 			if (doperf != PERF_NONE)
 				usage();
-			doperf = PERF_LOW;
+			doperf = PERF_MANUAL;
 			setperf(PERFMIN);
 			break;
 		case 'H':
 			if (doperf != PERF_NONE)
 				usage();
-			doperf = PERF_HIGH;
+			doperf = PERF_MANUAL;
 			setperf(PERFMAX);
 			break;
 		case 'm':
@@ -479,6 +479,9 @@ main(int argc, char *argv[])
 
 	argc -= optind;
 	argv += optind;
+
+	if (doperf == PERF_NONE)
+		doperf = PERF_MANUAL;
 
 	if (debug)
 		openlog(__progname, LOG_CONS, LOG_LOCAL1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmsubr.c,v 1.7 2006/01/28 17:08:14 sturm Exp $	*/
+/*	$OpenBSD: apmsubr.c,v 1.8 2006/03/15 20:30:28 sturm Exp $	*/
 
 /*
  *  Copyright (c) 1995,1996 John T. Kohl
@@ -72,20 +72,16 @@ ac_state(int state)
 }
 
 const char *
-perf_state(int state)
+perf_mode(int mode)
 {
-	switch (state) {
-	case PERF_NONE:
-		return "uninitialized";
-	case PERF_LOW:
-		return "low";
-	case PERF_HIGH:
-		return "high";
+	switch (mode) {
+	case PERF_MANUAL:
+		return "manual";
 	case PERF_AUTO:
 		return "auto";
 	case PERF_COOL:
 		return "cool running";
 	default:
-		return "invalid performance status";
+		return "invalid";
 	}
 }
