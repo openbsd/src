@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.7 2003/06/10 22:20:47 deraadt Exp $	*/
+/*	$OpenBSD: logger.c,v 1.8 2006/03/15 03:08:34 dhill Exp $	*/
 /*	$NetBSD: logger.c,v 1.4 1994/12/22 06:27:00 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)logger.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: logger.c,v 1.7 2003/06/10 22:20:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: logger.c,v 1.8 2006/03/15 03:08:34 dhill Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -107,7 +107,7 @@ main(int argc, char *argv[])
 	/* log input line if appropriate */
 	if (argc > 0) {
 		char *p, *endp;
-		int len;
+		size_t len;
 
 		for (p = buf, endp = buf + sizeof(buf) - 2; *argv;) {
 			len = strlen(*argv);
