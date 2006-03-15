@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.83 2006/01/24 13:34:33 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.84 2006/03/15 15:37:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -952,7 +952,7 @@ nexthop_compare(struct nexthop *na, struct nexthop *nb)
 {
 	struct bgpd_addr	*a, *b;
 
-	if (na == NULL && nb == NULL)
+	if (na == nb)
 		return (0);
 	if (na == NULL)
 		return (-1);
