@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.16 2006/01/24 17:55:09 jmc Exp $
+.\" $OpenBSD: bgpd.8,v 1.17 2006/03/15 12:51:40 claudio Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -29,6 +29,7 @@
 .Xc
 .Op Fl f Ar file
 .Op Fl r Ar path
+.Op Fl s Ar path
 .Ek
 .Sh DESCRIPTION
 .Nm
@@ -102,6 +103,10 @@ can use.
 Only
 .Em show
 requests are allowed on this socket.
+.It Fl s Ar path
+Use an alternate location for the main control socket than
+.Xr bgpctl 8
+can use.
 .It Fl v
 Produce more verbose output.
 .El
