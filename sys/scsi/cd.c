@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.105 2006/03/04 19:33:22 miod Exp $	*/
+/*	$OpenBSD: cd.c,v 1.106 2006/03/15 20:20:42 miod Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -213,8 +213,6 @@ cdattach(parent, self, aux)
 	cd->sc_dk.dk_name = cd->sc_dev.dv_xname;
 	disk_attach(&cd->sc_dk);
 
-	dk_establish(&cd->sc_dk, &cd->sc_dev);
-  
 	/*
 	 * Note if this device is ancient.  This is used in cdminphys().
 	 */

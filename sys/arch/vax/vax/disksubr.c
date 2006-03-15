@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.26 2006/01/20 23:27:26 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.27 2006/03/15 20:20:41 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -180,13 +180,6 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
 	return (msg);
-}
-
-void 
-dk_establish(p, q)
-	struct disk *p;
-	struct device *q;
-{
 }
 
 /*

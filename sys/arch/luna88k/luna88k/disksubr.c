@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.6 2006/01/26 07:11:08 miod Exp $ */
+/* $OpenBSD: disksubr.c,v 1.7 2006/03/15 20:20:39 miod Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -336,13 +336,6 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 bad:
 	bp->b_flags |= B_ERROR;
 	return (-1);
-}
-
-void
-dk_establish(dk, dev)
-        struct disk *dk;
-        struct device *dev;
-{
 }
 
 /************************************************************************

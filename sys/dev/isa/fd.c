@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.52 2006/01/22 00:40:02 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.53 2006/03/15 20:20:41 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -278,7 +278,6 @@ fdattach(parent, self, aux)
 	fd->sc_dk.dk_driver = &fddkdriver;
 	disk_attach(&fd->sc_dk);
 
-	dk_establish(&fd->sc_dk, &fd->sc_dev);
 	/* Needed to power off if the motor is on when we halt. */
 	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
 

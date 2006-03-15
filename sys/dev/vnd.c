@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.59 2006/03/04 22:53:32 pedro Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.60 2006/03/15 20:20:41 miod Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -873,7 +873,6 @@ vndioctl(dev, cmd, addr, flag, p)
 		vnd->sc_dk.dk_driver = &vnddkdriver;
 		vnd->sc_dk.dk_name = vnd->sc_dev.dv_xname;
 		disk_attach(&vnd->sc_dk);
-		dk_establish(&vnd->sc_dk, &vnd->sc_dev);
 
 		vndunlock(vnd);
 

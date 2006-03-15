@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.43 2006/01/22 00:40:02 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.44 2006/03/15 20:20:41 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -682,9 +682,6 @@ fdattach(parent, self, aux)
 
 	/* Make sure the drive motor gets turned off at shutdown time. */
 	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
-
-	/* XXX Need to do some more fiddling with sc_dk. */
-	dk_establish(&fd->sc_dk, &fd->sc_dv);
 }
 
 __inline struct fd_type *

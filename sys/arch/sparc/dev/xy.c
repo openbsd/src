@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.27 2006/01/20 23:27:25 miod Exp $	*/
+/*	$OpenBSD: xy.c,v 1.28 2006/03/15 20:20:41 miod Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -688,8 +688,6 @@ xyattach(parent, self, aux)
 					xy->xy_drive == bp->val[0])
 			bp->dev = &xy->sc_dev;
 	}
-
-	dk_establish(&xy->sc_dk, &xy->sc_dev);		/* XXX */
 
 done:
 	xy->state = newstate;

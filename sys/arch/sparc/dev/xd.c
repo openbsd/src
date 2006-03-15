@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.31 2006/01/20 23:27:25 miod Exp $	*/
+/*	$OpenBSD: xd.c,v 1.32 2006/03/15 20:20:41 miod Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -728,8 +728,6 @@ xdattach(parent, self, aux)
 						xd->xd_drive == bp->val[0])
 			bp->dev = &xd->sc_dev;
 	}
-
-	dk_establish(&xd->sc_dk, &xd->sc_dev);		/* XXX */
 
 done:
 	xd->state = newstate;

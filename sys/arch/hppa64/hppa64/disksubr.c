@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.5 2006/03/04 19:33:21 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.6 2006/03/15 20:20:39 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -85,13 +85,6 @@ char   *readliflabel(struct buf *, void (*)(struct buf *),
 #endif
 
 static enum disklabel_tag probe_order[] = { LABELPROBES, -1 };
-
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-}
 
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_AMIGA) || defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
 

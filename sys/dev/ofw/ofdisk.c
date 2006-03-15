@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdisk.c,v 1.9 2004/11/29 12:50:05 jsg Exp $	*/
+/*	$OpenBSD: ofdisk.c,v 1.10 2006/03/15 20:20:41 miod Exp $	*/
 /*	$NetBSD: ofdisk.c,v 1.3 1996/10/13 01:38:13 christos Exp $	*/
 
 /*
@@ -98,7 +98,6 @@ ofdattach(struct device *parent, struct device *self, void *aux)
 	of->sc_dk.dk_name = of->sc_name;
 	strlcpy(of->sc_name, of->sc_dev.dv_xname, sizeof of->sc_name);
 	disk_attach(&of->sc_dk);
-	dk_establish(&of->sc_dk, self);				/* XXX */
 	printf("\n");
 }
 

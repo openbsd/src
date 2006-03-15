@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.60 2005/12/27 22:48:01 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.61 2006/03/15 20:20:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -208,11 +208,11 @@ vsattach(struct device *parent, struct device *self, void *args)
 
 	/*
 	 * Attach all scsi units on us, watching for boot device
-	 * (see dk_establish).
+	 * (see device_register).
 	 */
 	tmp = bootpart;
 	if (sc->sc_paddr != bootaddr)
-		bootpart = -1;		/* invalid flag to dk_establish */
+		bootpart = -1;		/* invalid flag to device_register */
 
 	for (bus = 0; bus < 2; bus++) {
 		if (sc->sc_id[bus] < 0)

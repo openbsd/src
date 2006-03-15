@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.15 2006/03/04 19:33:21 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.16 2006/03/15 20:20:40 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -43,11 +43,6 @@
 
 #define BOOT_MAGIC 0xAA55
 #define BOOT_MAGIC_OFF (DOSPARTOFF+NDOSPART*sizeof(struct dos_partition))
-
-void
-dk_establish(struct disk *dk, struct device *dev)
-{
-}
 
 /*
  * Attempt to read a disk label from a device

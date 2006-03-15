@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.7 2006/03/04 19:33:20 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.8 2006/03/15 20:20:38 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -40,13 +40,6 @@
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 #include <sys/disk.h>
-
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-}
 
 /*
  * Attempt to read a disk label from a device

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.28 2006/01/22 00:40:01 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.29 2006/03/15 20:20:40 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -606,11 +606,4 @@ bad:
 	bp->b_flags |= B_ERROR;
 done:
 	return (0);
-}
-
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
 }

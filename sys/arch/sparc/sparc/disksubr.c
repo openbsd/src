@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.38 2006/03/15 20:07:28 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.39 2006/03/15 20:20:41 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -52,15 +52,6 @@
 static	char *disklabel_sun_to_bsd(char *, struct disklabel *);
 static	int disklabel_bsd_to_sun(struct disklabel *, char *);
 static __inline u_long sun_extended_sum(struct sun_disklabel *);
-
-extern struct device *bootdv;
-
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-}
 
 #if NCD > 0
 /* XXX for comparison below. */

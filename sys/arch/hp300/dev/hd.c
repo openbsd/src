@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.39 2006/01/22 00:40:01 miod Exp $	*/
+/*	$OpenBSD: hd.c,v 1.40 2006/03/15 20:20:39 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -314,8 +314,6 @@ hdattach(parent, self, aux)
 
 	/* Initialize timeout structure */
 	timeout_set(&sc->sc_timeout, hdrestart, sc);
-
-	dk_establish(&sc->sc_dkdev, &sc->sc_dev);	/* XXX */
 }
 
 int

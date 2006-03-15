@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.3 2005/12/27 18:31:10 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.4 2006/03/15 20:20:40 miod Exp $	*/
 /*	OpenBSD: autoconf.c,v 1.64 2005/03/23 17:10:24 miod Exp 	*/
 
 /*
@@ -257,7 +257,7 @@ bootpath_build()
  *
  * XXX. required because of SCSI... we don't have control over the "sd"
  * device, so we can't set boot device there.   we patch in with
- * dk_establish(), and use this to recover the bootpath.
+ * device_register(), and use this to recover the bootpath.
  */
 
 struct bootpath *

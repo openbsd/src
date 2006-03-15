@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.33 2006/01/22 00:40:01 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.34 2006/03/15 20:20:40 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -47,14 +47,6 @@ static void cputobsdlabel(struct disklabel *lp,
 static void printlp(struct disklabel *lp, char *str);
 static void printclp(struct cpu_disklabel *clp, char *str);
 #endif
-
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-}
-
 
 /*
  * Attempt to read a disk label from a device

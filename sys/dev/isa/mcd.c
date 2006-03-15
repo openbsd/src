@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.38 2006/03/10 18:13:10 miod Exp $ */
+/*	$OpenBSD: mcd.c,v 1.39 2006/03/15 20:20:41 miod Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -252,8 +252,6 @@ mcdattach(parent, self, aux)
 	sc->sc_dk.dk_driver = &mcddkdriver;
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
 	disk_attach(&sc->sc_dk);
-
-	dk_establish(&sc->sc_dk, &sc->sc_dev);
 
 	printf(": model %s\n", sc->type != 0 ? sc->type : "unknown");
 

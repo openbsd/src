@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshdma.c,v 1.12 2005/11/24 22:43:16 miod Exp $ */
+/*	$OpenBSD: sshdma.c,v 1.13 2006/03/15 20:20:40 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -171,11 +171,11 @@ void *auxp;
 
 	/*
 	 * attach all scsi units on us, watching for boot device
-	 * (see dk_establish).
+	 * (see device_register).
 	 */
 	tmp = bootpart;
 	if (ca->ca_paddr != bootaddr)
-		bootpart = -1;				/* invalid flag to dk_establish */
+		bootpart = -1;		/* invalid flag to device_register */
 	config_found(self, &sc->sc_link, scsiprint);
 	bootpart = tmp;				 /* restore old value */
 
