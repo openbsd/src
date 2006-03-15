@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.22 2005/11/16 03:44:12 deraadt Exp 
+#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.23 2006/03/15 02:20:28 deraadt Exp 
 #	OpenBSD: MAKEDEV.common,v 1.23 2005/12/27 19:02:42 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -222,7 +222,6 @@ std)
 	M drum		c 3 0 640 kmem
 	M klog		c 6 0 600
 	M xf86		c 2 4 600
-	M reload	c 2 20 640 kmem
 	;;
 
 
