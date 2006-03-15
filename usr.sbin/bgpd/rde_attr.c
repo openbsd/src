@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.63 2006/02/09 21:05:09 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.64 2006/03/15 11:26:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -774,6 +774,7 @@ community_set(struct rde_aspath *asp, int as, int type)
 
 	attr_optadd(asp, f, t, p, ncommunities << 2);
 
+	free(p);
 	return (1);
 }
 
@@ -836,5 +837,6 @@ community_delete(struct rde_aspath *asp, int as, int type)
 
 	attr_free(asp, attr);
 	attr_optadd(asp, f, t, n, len);
+	free(n);
 }
 
