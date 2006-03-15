@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xf86.4,v 1.10 2005/04/20 01:30:26 jaredy Exp $
+.\"	$OpenBSD: xf86.4,v 1.11 2006/03/15 21:04:15 deraadt Exp $
 .\"
 .\" Copyright (c) 1998 Matthieu Herrb
 .\" All rights reserved.
@@ -43,7 +43,17 @@ and to the PCI configuration registers
 for use by the X servers
 when running with a kernel security level greater than 0.
 .Pp
-The XFree86 and X.Org X servers require the use of this driver.
+The X servers require the use of this driver for
+.Xr isa 4
+or
+.Xr pci 4
+video cards on
+.Ar alpha ,
+.Ar amd64 ,
+.Ar i386 ,
+.Ar macpppc ,
+and
+.Ar sparc64 Ns .
 .Sh ACCESS CONTROL
 Access to the
 .Pa /dev/xf86
@@ -53,7 +63,7 @@ variable
 .Va machdep.allowaperture
 is greater than or equal to 1.
 This variable (which has a default value of 0)
-can only be manipulated when the security level
+can only be raised when the security level
 is less than or equal to 0, so it should be
 set in
 .Pa /etc/sysctl.conf .
@@ -75,8 +85,7 @@ in addition to allowing access to
 .Xr pci 4
 configuration registers,
 the aperture driver allows access to the whole first megabyte of physical
-memory, permitting use of the int10 emulation in XFree86 4.x and X.Org 6.8
-and later.
+memory, permitting use of the int10 emulation in X.Org 6.8 and later.
 Note that this can cause some security problems, since the process that
 has access to the aperture driver can also access part of the kernel
 memory.
@@ -94,10 +103,7 @@ This mode is not supported on alpha or sparc64.
 .Xr sysctl 8
 .Sh HISTORY
 .Pa /dev/xf86
-was introduced as a loadable kernel module for
-.Nx 0.9 c
-with XFree86 3.1.
-It was integrated as an in-kernel device on
+was integrated as an in-kernel device on
 .Ox 2.3 .
 It is required in order to allow access to I/O ports for all X servers since
 .Ox 2.4 .
