@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.119 2006/03/15 16:04:08 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.120 2006/03/15 20:57:14 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -113,6 +113,7 @@ checkin_main(int argc, char **argv)
 	pb.newrev =  NULL;
 	pb.fmode = pb.flags = status = 0;
 
+	pb.flags = INTERACTIVE;
 	pb.openflags = RCS_RDWR|RCS_CREATE|RCS_PARSE_FULLY;
 
 	while ((ch = rcs_getopt(argc, argv, CI_OPTSTRING)) != -1) {
