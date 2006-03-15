@@ -209,7 +209,7 @@ $ SIGXCPU
 $ SIGXFSZ
 25 Filstorleksgränsen överskriden
 $ SIGVTALRM
-26 Virituella äggklockan ringde
+26 Virtuella äggklockan ringde
 $ SIGPROF
 27 Profileringsäggklockan ringde
 $ SIGWINCH
