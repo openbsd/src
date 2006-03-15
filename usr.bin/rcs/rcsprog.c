@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.73 2006/03/15 02:46:14 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.74 2006/03/15 03:29:01 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -223,6 +223,131 @@ rcs_getopt(int argc, char **argv, const char *optstr)
 		cvs_log(LP_ERR, "unknown option -%c", opt);
 	else if (ret == 1)
 		cvs_log(LP_ERR, "missing argument for option -%c", opt);
+
+	return (ret);
+}
+
+/*
+ * rcs_choosefile()
+ *
+ * Given a relative filename, decide where the corresponding RCS file
+ * should be.  Tries each extension until a file is found.  If no file
+ * was found, returns a path with the first extension.
+ *
+ * Returns pointer to a char array on success, NULL on failure.
+ */
+char *
+rcs_choosefile(const char *filename)
+{
+	struct stat sb;
+	char *ext, name[MAXPATHLEN], *next, *ptr, rcsdir[MAXPATHLEN],
+	    *ret, *suffixes, rcspath[MAXPATHLEN];
+
+	/* If -x flag was not given, use default. */
+	if (rcs_suffixes == NULL)
+		rcs_suffixes = RCS_DEFAULT_SUFFIX;
+
+	/*
+	 * If `filename' contains a directory, `rcspath' contains that
+	 * directory, including a trailing slash.  Otherwise `rcspath'
+	 * contains an empty string.
+	 */
+	if (strlcpy(rcspath, filename, sizeof(rcspath)) >= sizeof(rcspath))
+		return (NULL);
+	/* If `/' is found, end string after `/'. */
+	if ((ptr = strrchr(rcspath, '/')) != NULL)
+		*(++ptr) = '\0';
+	else
+		rcspath[0] = '\0';
+
+	/* Append RCS/ to `rcspath' if it exists. */
+	if (strlcpy(rcsdir, rcspath, sizeof(rcsdir)) >= sizeof(rcsdir) ||
+	    strlcat(rcsdir, RCSDIR, sizeof(rcsdir)) >= sizeof(rcsdir))
+		return (NULL);
+	if ((stat(rcsdir, &sb) == 0) && (sb.st_mode & S_IFDIR))
+		if (strlcpy(rcspath, rcsdir, sizeof(rcspath)) >= sizeof(rcspath) ||
+		    strlcat(rcspath, "/", sizeof(rcspath)) >= sizeof(rcspath))
+			return (NULL);
+
+	/* Name of file without path. */
+	if ((ptr = strrchr(filename, '/')) == NULL) {
+		if (strlcpy(name, filename, sizeof(name)) >= sizeof(name))
+			return (NULL);
+	} else {
+		/* Skip `/'. */
+		if (strlcpy(name, ptr + 1, sizeof(name)) >= sizeof(name))
+			return (NULL);
+	}
+
+	/* Name of RCS file without an extension. */
+	if (strlcat(rcspath, name, sizeof(rcspath)) >= sizeof(rcspath))
+		return (NULL);
+
+	/*
+	 * If only the empty suffix was given, use existing rcspath.
+	 * This ensures that there is at least one suffix for strsep().
+	 */
+	if (strcmp(rcs_suffixes, "") == 0) {
+		if ((ret = strdup(rcspath)) == NULL);
+			fatal("out of memory");
+		return (ret);
+	}
+
+	/*
+	 * Cycle through slash-separated `rcs_suffixes', appending each
+	 * extension to `rcspath' and testing if the file exists.  If it
+	 * does, return that string.  Otherwise return path with first
+	 * extension.
+	 */
+	if ((suffixes = strdup(rcs_suffixes)) == NULL)
+		fatal("out of memory");
+	for (ret = NULL, next = suffixes; (ext = strsep(&next, "/")) != NULL;) {
+		char fpath[MAXPATHLEN];
+
+		/* Construct RCS file path. */
+		if (strlcpy(fpath, rcspath, sizeof(fpath)) >= sizeof(fpath) ||
+		    strlcat(fpath, ext, sizeof(fpath)) >= sizeof(fpath)) {
+			xfree(suffixes);
+			return (NULL);
+		}
+
+		/* Don't use `filename' as RCS file. */
+		if (strcmp(fpath, filename) == 0)
+			continue;
+
+		if (stat(fpath, &sb) == 0) {
+			if ((ret = strdup(fpath)) == NULL)
+				fatal("out of memory");
+			break;
+		}
+	}
+	xfree(suffixes);
+
+	/*
+	 * If `ret' is still NULL no RCS file with any extension exists
+	 * so we use the first extension.
+	 */
+	if (ret == NULL) {
+		/*
+		 * XXX - We shouldn't need to do strsep again,
+		 * suffixes should now be NUL separated.
+		 */
+		if ((suffixes = strdup(rcs_suffixes)) == NULL)
+			fatal("out of memory");
+		next = suffixes;
+		/* Get first extension again. */
+		if ((ext = strsep(&next, "/")) == NULL) {
+			xfree(suffixes);
+			return (NULL);
+		}
+		if (strlcat(rcspath, ext, sizeof(rcspath)) >= sizeof(rcspath)) {
+			xfree(suffixes);
+			return (NULL);
+		}
+		if ((ret = strdup(rcspath)) == NULL)
+			fatal("out of memory");
+		xfree(suffixes);
+	}
 
 	return (ret);
 }
