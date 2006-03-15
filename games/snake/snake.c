@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.10 2005/05/01 02:43:12 djm Exp $	*/
+/*	$OpenBSD: snake.c,v 1.11 2006/03/15 17:57:57 dhill Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: snake.c,v 1.10 2005/05/01 02:43:12 djm Exp $";
+static char rcsid[] = "$OpenBSD: snake.c,v 1.11 2006/03/15 17:57:57 dhill Exp $";
 #endif
 #endif /* not lint */
 
@@ -522,21 +522,13 @@ post(int iscore, int flag)
 {
 	short	score = iscore;
 	short	oldbest = 0;
-	uid_t	uid;
+	uid_t	uid = getuid();
 
 	/* I want to printf() the scores for terms that clear on endwin(),
 	 * but this routine also gets called with flag == 0 to see if
 	 * the snake should wink.  If (flag) then we're at game end and
 	 * can printf.
 	 */
-	/*
-	 * Neg uid cannot have scores recorded.
-	 */
-	if ((uid = getuid()) < 0) {
-		if (flag)
-			printf("\nNo saved scores for uid %u.\n", uid);
-		return(1);
-	}
 	if (rawscores == -1) {
 		if (flag)
 			warnx("Can't open score file %s", _PATH_RAWSCORES);
@@ -635,7 +627,7 @@ spacewarp(int w)
 {
 	struct point p;
 	int	j;
-	char	*str;
+	const char  *str;
 
 	snrand(&you);
 	p.col = COLS / 2 - 8;
