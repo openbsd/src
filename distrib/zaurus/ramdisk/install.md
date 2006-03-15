@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.7 2005/04/28 16:26:15 deraadt Exp $
+#	$OpenBSD: install.md,v 1.8 2006/03/15 16:13:30 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@
 #
 
 MDFSTYPE=msdos
-MDXAPERTURE=2
 ARCH=ARCH
 
 md_installboot() {
