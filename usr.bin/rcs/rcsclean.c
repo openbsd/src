@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.24 2006/03/06 14:59:06 jmc Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.25 2006/03/15 05:05:36 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -174,7 +174,7 @@ rcsclean_file(char *fname, RCSNUM *rev)
 	c1 = cvs_buf_release(b1);
 	c2 = cvs_buf_release(b2);
 
-	for (s1 = c1, s2 = c2; *s1 && *s2; *s1++, *s2++) {
+	for (s1 = c1, s2 = c2; *s1 && *s2; s1++, s2++) {
 		if (*s1 != *s2) {
 			match = 0;
 			break;

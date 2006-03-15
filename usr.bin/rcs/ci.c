@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.117 2006/03/15 03:29:01 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.118 2006/03/15 05:05:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -861,10 +861,10 @@ checkin_keywordscan(char *data, RCSNUM **rev, time_t *date, char **author,
 	i =  found =  0;
 
 	len = strlen(data);
-	for (c = data; *c != '\0' && i < len; *c++) {
+	for (c = data; *c != '\0' && i < len; c++) {
 		if (*c == '$') {
 			start = c;
-			*c++;
+			c++;
 			if (!isalpha(*c)) {
 				c = start;
 				continue;
@@ -933,7 +933,7 @@ checkin_keywordtype(char *keystring)
 	char *p;
 
 	p = keystring;
-	*p++;
+	p++;
 	if (strncmp(p, KW_ID, strlen(KW_ID)) == 0)
 		return (KW_TYPE_ID);
 	else if (strncmp(p, KW_AUTHOR, strlen(KW_AUTHOR)) == 0)

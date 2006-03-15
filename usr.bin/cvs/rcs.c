@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.143 2006/03/11 22:44:11 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.144 2006/03/15 05:05:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2542,14 +2542,14 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 	 * $Keyword$
 	 * $Keyword: value$
 	 */
-	for (c = data; *c != '\0' && i < len; *c++) {
+	for (c = data; *c != '\0' && i < len; c++) {
 		if (*c == '$') {
 			/* remember start of this possible keyword */
 			start = c;
 			start_offset = start - data;
 
 			/* first following character has to be alphanumeric */
-			*c++;
+			c++;
 			if (!isalpha(*c)) {
 				c = start;
 				continue;

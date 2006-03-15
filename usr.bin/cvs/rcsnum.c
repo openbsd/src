@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.26 2006/03/11 22:44:11 niallo Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.27 2006/03/15 05:05:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -281,9 +281,9 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 		 * Look for ".0.x" at the end of the branch number.
 		 */
 		if ((s = strrchr(str, '.')) != NULL) {
-			*s--;
+			s--;
 			while (*s != '.')
-				*s--;
+				s--;
 
 			/*
 			 * If we have a "magic" branch, adjust it
