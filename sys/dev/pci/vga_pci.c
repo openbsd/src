@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.21 2006/03/15 20:46:15 matthieu Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.22 2006/03/15 21:46:32 miod Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*-
@@ -424,6 +424,7 @@ vga_pci_ioctl(v, cmd, addr, flag, p)
 }
 
 #ifdef PCIAGP
+#ifdef notyet
 void
 vga_pci_close(void *v)
 {
@@ -448,6 +449,7 @@ vga_pci_close(void *v)
 
 	sc->sc_state = AGP_ACQUIRE_FREE;
 }
+#endif
 
 struct agp_memory *
 agp_find_memory(struct vga_pci_softc *sc, int id)
