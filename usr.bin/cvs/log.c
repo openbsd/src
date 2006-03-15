@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.30 2006/01/02 17:06:10 xsa Exp $	*/
+/*	$OpenBSD: log.c,v 1.31 2006/03/15 21:34:59 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -337,22 +337,4 @@ cvs_printf(const char *fmt, ...)
 
 	va_end(vap);
 	return (ret);
-}
-void
-cvs_putchar(int c)
-{
-#if !defined(RCSPROG)
-	if (cvs_cmdop == CVS_OP_SERVER && send_m) {
-		send_m = 0;
-		putc('M', stdout);
-		putc(' ', stdout);
-	}
-#endif
-
-	putc(c, stdout);
-
-#if !defined(RCSPROG)
-	if (cvs_cmdop == CVS_OP_SERVER && c == '\n')
-		send_m = 1;
-#endif
 }
