@@ -1,4 +1,5 @@
-/* $OpenBSD: powernow-k7.c,v 1.9 2005/11/28 17:48:02 mickey Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.10 2006/03/15 19:56:48 deraadt Exp $ */
+
 /*
  * Copyright (c) 2004 Martin Végiard.
  * All rights reserved.
@@ -153,10 +154,10 @@ struct k7pnow_cpu_state {
 };
 
 struct psb_s {
-	char signature[10];     /* AMDK7PNOW! */
+	char signature[10];	/* AMDK7PNOW! */
 	uint8_t version;
 	uint8_t flags;
-	uint16_t ttime;         /* Min Settling time */
+	uint16_t ttime;		/* Min Settling time */
 	uint8_t reserved;
 	uint8_t n_pst;
 };
@@ -309,7 +310,7 @@ k7pnow_states(struct k7pnow_cpu_state *cstate, uint32_t cpusig,
 
 				if (cpusig == pst->signature && fid == pst->fid
 				    && vid == pst->vid) {
-					switch(pst->signature) {
+					switch (pst->signature) {
 					case 0x760:
 					case 0x761:
 					case 0x762:
@@ -327,8 +328,8 @@ k7pnow_states(struct k7pnow_cpu_state *cstate, uint32_t cpusig,
 						continue;
 					cstate->n_states = pst->n_states;
 					return (k7pnow_decode_pst(cstate,
-					     p + sizeof(struct pst_s),
-					     cstate->n_states));
+					    p + sizeof(struct pst_s),
+					    cstate->n_states));
 				}
 				p += sizeof(struct pst_s) + (2 * pst->n_states);
 			}
@@ -383,14 +384,14 @@ k7_powernow_init(void)
 	}
 	if (k7pnow_states(cstate, ci->ci_signature, maxfid, startvid)) {
 		if (cstate->n_states) {
-			printf("%s: AMD %s: available states ", 
+			printf("%s: AMD %s: available states ",
 			    ci->ci_dev.dv_xname, techname);
-			for(i = 0; i < cstate->n_states; i++) {
+			for (i = 0; i < cstate->n_states; i++) {
 				state = &cstate->state_table[i];
 				printf("%c%d", i==0 ? '(' : ',',
 				    ((state->freq / 100000)+1)*100);
 			}
-			printf(")\n");	
+			printf(")\n");
 			k7pnow_current_state[cpu_number()] = cstate;
 			cpu_setperf = k7_powernow_setperf;
 		}

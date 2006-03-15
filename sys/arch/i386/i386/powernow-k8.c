@@ -1,4 +1,5 @@
-/*	$OpenBSD: powernow-k8.c,v 1.4 2006/03/08 03:33:21 uwe Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.5 2006/03/15 19:56:48 deraadt Exp $ */
+
 /*
  * Copyright (c) 2004 Martin Végiard.
  * All rights reserved.
@@ -133,10 +134,10 @@ struct k8pnow_cpu_state {
 };
 
 struct psb_s {
-	char signature[10];     /* AMDK7PNOW! */
+	char signature[10];	/* AMDK7PNOW! */
 	uint8_t version;
 	uint8_t flags;
-	uint16_t ttime;         /* Min Settling time */
+	uint16_t ttime;		/* Min Settling time */
 	uint8_t reserved;
 	uint8_t n_pst;
 };
@@ -149,7 +150,7 @@ struct pst_s {
 	uint8_t n_states;
 };
 
-struct k8pnow_cpu_state *k8pnow_current_state = NULL; 
+struct k8pnow_cpu_state *k8pnow_current_state = NULL;
 
 /*
  * Prototypes
@@ -159,9 +160,12 @@ int k8pnow_decode_pst(struct k8pnow_cpu_state *, uint8_t *);
 int k8pnow_states(struct k8pnow_cpu_state *, uint32_t, unsigned int,
     unsigned int);
 
-int k8pnow_read_pending_wait(uint64_t * status) {
+int
+k8pnow_read_pending_wait(uint64_t *status)
+{
 	unsigned int i = 1000;
-	while(i--) {
+
+	while (i--) {
 		*status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
 		if (!PN8_STA_PENDING(*status))
 			return 0;
@@ -176,8 +180,7 @@ k8_powernow_setperf(int level)
 {
 	unsigned int i, low, high, freq;
 	uint64_t status;
-	int cfid, cvid, fid = 0, vid = 0;
-	int rvo;
+	int cfid, cvid, fid = 0, vid = 0, rvo;
 	u_int val;
 	struct k8pnow_cpu_state *cstate;
 
@@ -291,14 +294,15 @@ k8pnow_decode_pst(struct k8pnow_cpu_state *cstate, uint8_t *p)
 {
 	int i, j, n;
 	struct k8pnow_state state;
+
 	for (n = 0, i = 0; i < cstate->n_states; i++) {
 		state.fid = *p++;
 		state.vid = *p++;
-	
-		/* 
+
+		/*
 		 * The minimum supported frequency per the data sheet is 800MHz
-	   	 * The maximum supported frequency is 5000MHz. 
-		 */ 	   
+		 * The maximum supported frequency is 5000MHz.
+		 */
 		state.freq = 800 + state.fid * 100;
 		j = n;
 		while (j > 0 && cstate->state_table[j - 1].freq > state.freq) {
@@ -337,7 +341,7 @@ k8pnow_states(struct k8pnow_cpu_state *cstate, uint32_t cpusig,
 			cstate->low = PN8_PSB_TO_BATT(psb->reserved);
 			p+= sizeof(struct psb_s);
 
-			for(i = 0; i < psb->n_pst; ++i) {
+			for (i = 0; i < psb->n_pst; ++i) {
 				pst = (struct pst_s *) p;
 
 				cstate->pll = pst->pll;
@@ -367,7 +371,7 @@ k8_powernow_init(void)
 	char * techname = NULL;
 	ci = curcpu();
 
-	if(k8pnow_current_state)
+	if (k8pnow_current_state)
 		return;
 
 	cstate = malloc(sizeof(struct k8pnow_cpu_state), M_DEVBUF, M_NOWAIT);
@@ -392,7 +396,7 @@ k8_powernow_init(void)
 		if (cstate->n_states) {
 			printf("%s: AMD %s available states ",
 			    ci->ci_dev.dv_xname, techname);
-			for(i= 0; i < cstate->n_states; i++) {
+			for (i= 0; i < cstate->n_states; i++) {
 				state = &cstate->state_table[i];
 				printf("%c%d", i==0 ? '(' : ',',
 				    state->freq);
