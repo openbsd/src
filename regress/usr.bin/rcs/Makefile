@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2006/03/14 03:33:30 ray Exp $
+#	$OpenBSD: Makefile,v 1.5 2006/03/15 02:36:46 ray Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -21,7 +21,7 @@ REGRESS_TARGETS+=test-rcsdiff-uflag
 REGRESS_TARGETS+=test-rcsdiff-rflag test-rcs-mflag test-rcs-mflag2
 REGRESS_TARGETS+=test-co-RCSINIT test-ci-nflag test-ci-Nflag
 REGRESS_TARGETS+=test-ci-sflag test-co-lflag2 test-rcsdiff
-#REGRESS_TARGETS+=test-rcsmerge
+REGRESS_TARGETS+=test-rcsmerge
 REGRESS_TARGETS+=test-ci-dflag test-ci-xflag test-comma
 
 test-ci-initial: clean
