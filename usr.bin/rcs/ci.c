@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.118 2006/03/15 05:05:35 deraadt Exp $	*/
+/*	$OpenBSD: ci.c,v 1.119 2006/03/15 16:04:08 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -29,7 +29,7 @@
 #include "rcsprog.h"
 #include "diff.h"
 
-#define CI_OPTSTRING	"d::f::i::j::k::l::m:M::N:n:qr::s:Tt:u::Vw:x:z:"
+#define CI_OPTSTRING	"d::f::I::i::j::k::l::m:M::N:n:qr::s:Tt:u::Vw:x:z:"
 #define DATE_NOW	-1
 #define DATE_MTIME	-2
 
@@ -86,10 +86,10 @@ void
 checkin_usage(void)
 {
 	fprintf(stderr,
-	    "usage: ci [-jMNqV] [-d[date]] [-f[rev]] [-i[rev]] [-j[rev]]\n"
-	    "	  [-k[rev]] [-l[rev]] [-M[rev]] [-mmsg] [-Nsymbol]\n"
-	    "	  [-nsymbol] [-r[rev]] [-sstate] [-tfile|str] [-u[rev]]\n"
-	    "	  [-wusername] [-xsuffixes] [-ztz] file ...\n");
+	    "usage: ci [-jMNqV] [-d[date]] [-f[rev]] [-I[rev]] [-i[rev]]\n"
+	    "	  [-j[rev]] [-k[rev]] [-l[rev]] [-M[rev]] [-mmsg]\n"
+	    "	  [-Nsymbol] [-nsymbol] [-r[rev]] [-sstate] [-tfile|str]\n"
+	    "	  [-u[rev]] [-wusername] [-xsuffixes] [-ztz] file ...\n");
 }
 
 
@@ -113,7 +113,6 @@ checkin_main(int argc, char **argv)
 	pb.newrev =  NULL;
 	pb.fmode = pb.flags = status = 0;
 
-	pb.flags = INTERACTIVE;
 	pb.openflags = RCS_RDWR|RCS_CREATE|RCS_PARSE_FULLY;
 
 	while ((ch = rcs_getopt(argc, argv, CI_OPTSTRING)) != -1) {
@@ -131,6 +130,10 @@ checkin_main(int argc, char **argv)
 		case 'h':
 			(usage)();
 			exit(0);
+		case 'I':
+			rcs_set_rev(rcs_optarg, &pb.newrev);
+			pb.flags |= INTERACTIVE;
+			break;
 		case 'i':
 			rcs_set_rev(rcs_optarg, &pb.newrev);
 			pb.openflags |= RCS_CREATE;
@@ -419,13 +422,17 @@ checkin_getinput(const char *prompt)
 		return (NULL);
 	}
 
-	printf(prompt);
+	if (isatty(STDIN_FILENO))
+		fprintf(stderr, "%s", prompt);
+
 	for (;;) {
 		fgets(buf, (int)sizeof(buf), stdin);
 		if (feof(stdin) || ferror(stdin) || buf[0] == '.')
 			break;
 		cvs_buf_append(inputbuf, buf, strlen(buf));
-		printf(">> ");
+
+		if (isatty(STDIN_FILENO))
+			fprintf(stderr, ">> ");
 	}
 
 	cvs_buf_putc(inputbuf, '\0');
@@ -725,8 +732,10 @@ checkin_init(struct checkin_params *pb)
 		checkout_rev(pb->file, pb->newrev, pb->filename, pb->flags,
 		    pb->username, pb->author, NULL, NULL);
 
-	printf("initial revision: %s\n",
-	    rcsnum_tostr(pb->newrev, numb, sizeof(numb)));
+	if (verbose == 1) {
+		fprintf(stderr, "initial revision: %s\n",
+		    rcsnum_tostr(pb->newrev, numb, sizeof(numb)));
+	}
 
 	/* File will NOW be synced */
 	rcs_close(pb->file);
