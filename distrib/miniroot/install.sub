@@ -1,7 +1,7 @@
-#	$OpenBSD: install.sub,v 1.402 2006/03/11 19:23:31 krw Exp $
+#	$OpenBSD: install.sub,v 1.403 2006/03/15 01:17:12 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
-# Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
+# Copyright (c) 1997-2006 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -1050,9 +1050,8 @@ install_url() {
 	[[ $resp == none ]] || export ftp_proxy=$resp http_proxy=$resp
 
 	rm -f $SERVERLIST
-	ask_yn "Display the list of known $_url_type servers?" "${_get_server_list:-yes}"
-	_get_server_list=$resp
-	if [[ $_get_server_list == y ]]; then
+	ask_yn "Display the list of known $_url_type servers?"
+	if [[ $resp == y ]]; then
 		# ftp.openbsd.org == 129.128.5.191 and will remain at
 		# that address for the forseeable future.
 		echo -n "Getting the list from 129.128.5.191 (ftp.openbsd.org)..."
@@ -1557,7 +1556,7 @@ questions() {
 		    >>/mnt/etc/rc.conf.local
 	fi
 
-	ask_yn "Start ntpd(8) by default?" no
+	ask_yn "Start ntpd(8) by default?"
 	if [[ $resp == y ]]; then
 		echo "ntpd_flags=		# enabled during install" \
 		    >>/mnt/etc/rc.conf.local
