@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.37 2006/03/08 20:19:39 joris Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.38 2006/03/15 21:20:57 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -30,7 +30,7 @@
 #include "diff.h"
 
 static int rcsdiff_file(RCSFILE *, RCSNUM *, const char *);
-static int rcsdiff_rev(RCSFILE *, RCSNUM *, RCSNUM *, const char *);
+static int rcsdiff_rev(RCSFILE *, RCSNUM *, RCSNUM *);
 
 static int kflag = RCS_KWEXP_ERR;
 
@@ -141,7 +141,7 @@ rcsdiff_main(int argc, char **argv)
 				continue;
 			}
 		} else {
-			if (rcsdiff_rev(file, rev, rev2, argv[i]) < 0) {
+			if (rcsdiff_rev(file, rev, rev2) < 0) {
 				rcs_close(file);
 				status = 2;
 				continue;
@@ -244,7 +244,7 @@ out:
 }
 
 static int
-rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, const char *filename)
+rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 {
 	int ret;
 	char path1[MAXPATHLEN], path2[MAXPATHLEN];
