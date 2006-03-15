@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.115 2006/03/14 15:03:11 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.116 2006/03/15 12:02:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -151,6 +151,8 @@ int		ami_ioctl_disk(struct ami_softc *, struct bioc_disk *);
 int		ami_ioctl_alarm(struct ami_softc *, struct bioc_alarm *);
 int		ami_ioctl_setstate(struct ami_softc *, struct bioc_setstate *);
 #endif /* NBIO > 0 */
+
+#define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
 
 struct ami_ccb *
 ami_get_ccb(struct ami_softc *sc)
@@ -530,26 +532,23 @@ ami_attach(struct ami_softc *sc)
 	printf(", FW %s, BIOS v%s, %dMB RAM\n"
 	    "%s: %d channels, %d %ss, %d logical drives, "
 	    "openings %d, max commands %d, quirks: %04x\n",
-	    sc->sc_fwver, sc->sc_biosver, sc->sc_memory,
-	    sc->sc_dev.dv_xname,
+	    sc->sc_fwver, sc->sc_biosver, sc->sc_memory, DEVNAME(sc),
 	    sc->sc_channels, sc->sc_targets, p, sc->sc_nunits,
 	    sc->sc_link.openings, sc->sc_maxcmds, sc->sc_flags);
 #else
 	printf(", FW %s, BIOS v%s, %dMB RAM\n"
 	    "%s: %d channels, %d %ss, %d logical drives\n",
-	    sc->sc_fwver, sc->sc_biosver, sc->sc_memory,
-	    sc->sc_dev.dv_xname,
+	    sc->sc_fwver, sc->sc_biosver, sc->sc_memory, DEVNAME(sc),
 	    sc->sc_channels, sc->sc_targets, p, sc->sc_nunits);
 #endif /* AMI_DEBUG */
 
 	if (sc->sc_flags & AMI_BROKEN && sc->sc_nunits > 1)
 		printf("%s: firmware buggy, limiting access to first logical "
-		    "disk\n", sc->sc_dev.dv_xname);
+		    "disk\n", DEVNAME(sc));
 
 #if NBIO > 0
 	if (bio_register(&sc->sc_dev, ami_ioctl) != 0)
-		printf("%s: controller registration failed",
-		    sc->sc_dev.dv_xname);
+		printf("%s: controller registration failed", DEVNAME(sc));
 	else
 		sc->sc_ioctl = ami_ioctl;
 #endif /* NBIO > 0 */
@@ -563,8 +562,7 @@ ami_attach(struct ami_softc *sc)
 	rsc = malloc(sizeof(struct ami_rawsoftc) * sc->sc_channels,
 	    M_DEVBUF, M_NOWAIT);
 	if (!rsc) {
-		printf("%s: no memory for raw interface\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: no memory for raw interface\n", DEVNAME(sc));
 		return (0);
 	}
 
@@ -688,7 +686,7 @@ ami_quartz_done(struct ami_softc *sc, struct ami_iocmd *mbox)
 
 	/* this should never happen, someone screwed up the completion status */
 	if ((status = sc->sc_mbox->acc_status) == 0xff)
-		panic("%s: status 0xff from the firmware", sc->sc_dev.dv_xname);
+		panic("%s: status 0xff from the firmware", DEVNAME(sc));
 
 	sc->sc_mbox->acc_status = 0xff;
 
@@ -748,7 +746,7 @@ ami_quartz_poll(struct ami_softc *sc, struct ami_iocmd *cmd)
 	}
 	if (i >= AMI_MAX_POLLWAIT) {
 		printf("%s: command not accepted, polling disabled\n",
-		    sc->sc_dev.dv_xname);
+		    DEVNAME(sc));
 		sc->sc_dis_poll = 1;
 		return (1);
 	}
@@ -760,8 +758,7 @@ ami_quartz_poll(struct ami_softc *sc, struct ami_iocmd *cmd)
 		i++;
 	}
 	if (i >= AMI_MAX_POLLWAIT) {
-		printf("%s: bad status, polling disabled\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: bad status, polling disabled\n", DEVNAME(sc));
 		sc->sc_dis_poll = 1;
 		return (1);
 	}
@@ -775,7 +772,7 @@ ami_quartz_poll(struct ami_softc *sc, struct ami_iocmd *cmd)
 	}
 	if (i >= AMI_MAX_POLLWAIT) {
 		printf("%s: firmware didn't reply, polling disabled\n",
-		    sc->sc_dev.dv_xname);
+		    DEVNAME(sc));
 		sc->sc_dis_poll = 1;
 		return 1;
 	}
@@ -793,7 +790,7 @@ ami_quartz_poll(struct ami_softc *sc, struct ami_iocmd *cmd)
 	}
 	if (i >= AMI_MAX_POLLWAIT) {
 		printf("%s: firmware didn't ack the ack, polling disabled\n",
-		    sc->sc_dev.dv_xname);
+		    DEVNAME(sc));
 		sc->sc_dis_poll = 1;
 		return (1);
 	}
@@ -923,7 +920,7 @@ ami_schwartz_poll(struct ami_softc *sc, struct ami_iocmd *mbox)
 	}
 	if (i >= AMI_MAX_POLLWAIT) {
 		printf("%s: command not accepted, polling disabled\n",
-		    sc->sc_dev.dv_xname);
+		    DEVNAME(sc));
 		sc->sc_dis_poll = 1;
 		return (1); /* fail */
 	}
@@ -937,7 +934,7 @@ ami_schwartz_poll(struct ami_softc *sc, struct ami_iocmd *mbox)
 	}
 	if (i >= AMI_MAX_POLLWAIT) {
 		printf("%s: interrupt didn't arrive, polling disabled\n",
-		    sc->sc_dev.dv_xname);
+		    DEVNAME(sc));
 		sc->sc_dis_poll = 1;
 		return (1); /* fail */
 	}
@@ -1023,8 +1020,8 @@ ami_start(struct ami_ccb *ccb, int wait)
 	AMI_DPRINTF(AMI_D_CMD, ("start(%d) ", cmd->acc_id));
 
 	if (ccb->ccb_state != AMI_CCB_READY) {
-		printf("%s: ccb %d not ready <%d>\n",
-		    sc->sc_dev.dv_xname, cmd->acc_id, ccb->ccb_state);
+		printf("%s: ccb %d not ready <%d>\n", DEVNAME(sc),
+		    cmd->acc_id, ccb->ccb_state);
 		return (EINVAL);
 	}
 
@@ -1100,8 +1097,7 @@ ami_stimeout(void *v)
 
 	case AMI_CCB_QUEUED:
 		/* XXX need to kill all cmds in the queue and reset the card */
-		printf("%s: timeout ccb %d\n",
-		    sc->sc_dev.dv_xname, cmd->acc_id);
+		printf("%s: timeout ccb %d\n", DEVNAME(sc), cmd->acc_id);
 		AMI_DPRINTF(AMI_D_CMD, ("timeout(%d) ", cmd->acc_id));
 		if (xs->cmd->opcode != PREVENT_ALLOW &&
 		    xs->cmd->opcode != SYNCHRONIZE_CACHE) {
@@ -1136,7 +1132,7 @@ ami_done(struct ami_softc *sc, int idx)
 
 	if (ccb->ccb_state != AMI_CCB_QUEUED) {
 		printf("%s: unqueued ccb %d ready, state = %d\n",
-		    sc->sc_dev.dv_xname, idx, ccb->ccb_state);
+		    DEVNAME(sc), idx, ccb->ccb_state);
 		return (1);
 	}
 
@@ -1499,9 +1495,8 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 
 	if (blockno >= sc->sc_hdr[target].hd_size ||
 	    blockno + blockcnt > sc->sc_hdr[target].hd_size) {
-		printf("%s: out of bounds %u-%u >= %u\n",
-		    sc->sc_dev.dv_xname, blockno, blockcnt,
-		    sc->sc_hdr[target].hd_size);
+		printf("%s: out of bounds %u-%u >= %u\n", DEVNAME(sc),
+		    blockno, blockcnt, sc->sc_hdr[target].hd_size);
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		return (COMPLETE);
@@ -1644,7 +1639,7 @@ ami_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 	int s;
 	int error = 0;
 
-	AMI_DPRINTF(AMI_D_IOCTL, ("%s: ioctl ", sc->sc_dev.dv_xname));
+	AMI_DPRINTF(AMI_D_IOCTL, ("%s: ioctl ", DEVNAME(sc)));
 
 	if (sc->sc_flags & AMI_BROKEN)
 		return (ENODEV); /* can't do this to broken device for now */
@@ -1684,8 +1679,7 @@ ami_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 		break;
 
 	default:
-		AMI_DPRINTF(AMI_D_IOCTL, ("%s: invalid ioctl\n",
-		    sc->sc_dev.dv_xname));
+		AMI_DPRINTF(AMI_D_IOCTL, (" invalid ioctl\n"));
 		error = EINVAL;
 	}
 
@@ -1841,13 +1835,13 @@ ami_ioctl_inq(struct ami_softc *sc, struct bioc_inq *bi)
 
 	p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
 	if (!p) {
-		printf("%s: no memory for disk array\n",sc->sc_dev.dv_xname);
+		printf("%s: no memory for disk array\n", DEVNAME(sc));
 		return (ENOMEM);
 	}
 
 	plist = malloc(AMI_BIG_MAX_PDRIVES, M_DEVBUF, M_NOWAIT);
 	if (!plist) {
-		printf("%s: no memory for disk list\n",sc->sc_dev.dv_xname);
+		printf("%s: no memory for disk list\n", DEVNAME(sc));
 		error = ENOMEM;
 		goto bail;
 	}
@@ -1862,7 +1856,7 @@ ami_ioctl_inq(struct ami_softc *sc, struct bioc_inq *bi)
 	bi->bi_novol = p->ada_nld;
 	bi->bi_nodisk = 0;
 
-	strlcpy(bi->bi_dev, sc->sc_dev.dv_xname, sizeof(bi->bi_dev));
+	strlcpy(bi->bi_dev, DEVNAME(sc), sizeof(bi->bi_dev));
 
 	/* do we actually care how many disks we have at this point? */
 	for (i = 0; i < p->ada_nld; i++)
@@ -1926,7 +1920,7 @@ ami_vol(struct ami_softc *sc, struct bioc_vol *bv, struct ami_big_diskarray *p)
 
 	plist = malloc(AMI_BIG_MAX_PDRIVES, M_DEVBUF, M_NOWAIT);
 	if (!plist) {
-		printf("%s: no memory for disk list\n",sc->sc_dev.dv_xname);
+		printf("%s: no memory for disk list\n", DEVNAME(sc));
 		return (ENOMEM);
 	}
 
@@ -2003,7 +1997,7 @@ ami_disk(struct ami_softc *sc, struct bioc_disk *bd,
 
 	plist = malloc(AMI_BIG_MAX_PDRIVES, M_DEVBUF, M_NOWAIT);
 	if (!plist) {
-		printf("%s: no memory for disk list\n",sc->sc_dev.dv_xname);
+		printf("%s: no memory for disk list\n", DEVNAME(sc));
 		return (ENOMEM);
 	}
 
@@ -2100,7 +2094,7 @@ ami_ioctl_vol(struct ami_softc *sc, struct bioc_vol *bv)
 
 	p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
 	if (!p) {
-		printf("%s: no memory for raw interface\n",sc->sc_dev.dv_xname);
+		printf("%s: no memory for raw interface\n", DEVNAME(sc));
 		return (ENOMEM);
 	}
 
@@ -2184,7 +2178,7 @@ ami_ioctl_disk(struct ami_softc *sc, struct bioc_disk *bd)
 
 	p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
 	if (!p) {
-		printf("%s: no memory for raw interface\n",sc->sc_dev.dv_xname);
+		printf("%s: no memory for raw interface\n", DEVNAME(sc));
 		return (ENOMEM);
 	}
 
@@ -2310,7 +2304,7 @@ int ami_ioctl_alarm(struct ami_softc *sc, struct bioc_alarm *ba)
 
 	default:
 		AMI_DPRINTF(AMI_D_IOCTL, ("%s: biocalarm invalid opcode %x\n",
-		    sc->sc_dev.dv_xname, ba->ba_opcode));
+		    DEVNAME(sc), ba->ba_opcode));
 		return (EINVAL);
 	}
 
@@ -2345,8 +2339,7 @@ ami_ioctl_setstate(struct ami_softc *sc, struct bioc_setstate *bs)
 	case BIOC_SSHOTSPARE:
 		p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
 		if (!p) {
-			printf("%s: no memory for setstate\n",
-			    sc->sc_dev.dv_xname);
+			printf("%s: no memory for setstate\n", DEVNAME(sc));
 			return (ENOMEM);
 		}
 
@@ -2366,7 +2359,7 @@ ami_ioctl_setstate(struct ami_softc *sc, struct bioc_setstate *bs)
 
 	default:
 		AMI_DPRINTF(AMI_D_IOCTL, ("%s: biocsetstate invalid opcode %x\n"
-		    , sc->sc_dev.dv_xname, bs->bs_status));
+		    , DEVNAME(sc), bs->bs_status));
 		return (EINVAL);
 	}
 
