@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.90 2006/02/08 19:24:19 joris Exp $	*/
+/*	$OpenBSD: proto.c,v 1.91 2006/03/15 18:24:50 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -944,7 +944,7 @@ cvs_initlog(void)
 
 	s = buf;
 	while ((s = strchr(s, '%')) != NULL) {
-		*s++;
+		s++;
 		switch (*s) {
 		case 'c':
 			strlcpy(fpath, cvs_command, sizeof(fpath));
