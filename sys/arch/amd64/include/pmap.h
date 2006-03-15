@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.9 2005/10/26 18:46:07 martin Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.10 2006/03/15 20:01:58 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -519,23 +519,15 @@ pmap_protect(pmap, sva, eva, prot)
  *  kvtopte: return a pointer to the PTE mapping a kernel VA
  */
 
-#include <lib/libkern/libkern.h>
-
 static __inline pt_entry_t *
 vtopte(vaddr_t va)
 {
-
-	KASSERT(va < (L4_SLOT_KERN * NBPD_L4));
-
 	return (PTE_BASE + pl1_i(va));
 }
 
 static __inline pt_entry_t *
 kvtopte(vaddr_t va)
 {
-
-	KASSERT(va >= (L4_SLOT_KERN * NBPD_L4));
-
 #ifdef LARGEPAGES
 	{
 		pd_entry_t *pde;
