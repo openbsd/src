@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.118 2006/03/15 13:51:04 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.119 2006/03/15 14:31:29 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1726,7 +1726,7 @@ ami_drv_inq(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, u_int8_t page,
 		return (ENOMEM);
 	}
 
-	if (ami_cmd(ccb, BUS_DMA_WAITOK, 0) != 0)
+	if (ami_start(sc, ccb) != 0)
 		return (EIO);
 
 	while (ccb->ccb_wakeup)
@@ -1792,7 +1792,7 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 
 	cmd->acc_io.aio_data = am ? htole32(AMIMEM_DVA(am)) : 0;
 
-	if (ami_cmd(ccb, BUS_DMA_WAITOK, 0) == 0) {
+	if (ami_start(sc, ccb) == 0) {
 		while (ccb->ccb_wakeup)
 			tsleep(ccb, PRIBIO,"ami_mgmt", 0);
 
