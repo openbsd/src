@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.59 2006/03/07 01:40:52 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.60 2006/03/15 20:00:50 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -218,7 +218,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 {
 	BUF *bp;
 	int lcount;
-	char buf[16], yn;
+	char buf[16];
 	mode_t mode = 0444;
 	struct stat st;
 	struct rcs_delta *rdp;
@@ -341,7 +341,6 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 
 	if ((pipeout == 0) && (stat(dst, &st) == 0) && !(flags & FORCE)) {
 		if (st.st_mode & S_IWUSR) {
-			yn = 0;
 			if (verbose == 0) {
 				cvs_log(LP_ERR,
 				    "writable %s exists; checkout aborted",
@@ -349,16 +348,12 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 				return (-1);
 			}
 
-			while ((yn != 'y') && (yn != 'n')) {
-				printf("writable %s exists%s; ", dst,
-				    ((uid_t)getuid() == st.st_uid) ? "" :
-				    ", and you do not own it");
-				printf("remove it? [ny](n): ");
-				fflush(stdout);
-				yn = getchar();
-			}
-
-			if (yn == 'n') {
+			printf("writable %s exists%s; ", dst,
+			    (getuid() == st.st_uid) ? "" :
+			    ", and you do not own it");
+			printf("remove it? [ny](n): ");
+			/* default is n */
+			if (cvs_yesno() == -1) {
 				cvs_log(LP_ERR, "checkout aborted");
 				return (-1);
 			}
