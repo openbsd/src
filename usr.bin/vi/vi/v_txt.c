@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_txt.c,v 1.19 2006/03/11 06:58:00 ray Exp $	*/
+/*	$OpenBSD: v_txt.c,v 1.20 2006/03/15 23:43:27 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -512,15 +512,6 @@ next:	if (v_event_get(sp, evp, 0, ec_flags))
 	case E_EOF:
 		F_SET(sp, SC_EXIT_FORCE);
 		return (1);
-	case E_INTERRUPT:
-		/*
-		 * !!!
-		 * Historically, <interrupt> exited the user from text input
-		 * mode or cancelled a colon command, and returned to command
-		 * mode.  It also beeped the terminal, but that seems a bit
-		 * excessive.
-		 */
-		goto k_escape;
 	case E_REPAINT:
 		if (vs_repaint(sp, &ev))
 			return (1);
@@ -528,10 +519,37 @@ next:	if (v_event_get(sp, evp, 0, ec_flags))
 	case E_WRESIZE:
 		/* <resize> interrupts the input mode. */
 		v_emsg(sp, NULL, VIM_WRESIZE);
-		goto k_escape;
+	/* FALLTHROUGH */
 	default:
-		v_event_err(sp, evp);
-		goto k_escape;
+		if (evp->e_event != E_INTERRUPT && evp->e_event != E_WRESIZE)
+			v_event_err(sp, evp);
+		/*
+		 * !!!
+		 * Historically, <interrupt> exited the user from text input
+		 * mode or cancelled a colon command, and returned to command
+		 * mode.  It also beeped the terminal, but that seems a bit
+		 * excessive.
+		 */
+		/*
+		 * If we are recording, morph into <escape> key so that
+		 * we can repeat the command safely: there is no way to
+		 * invalidate the repetition of an instance of a command,
+		 * which would be the alternative possibility.
+		 * If we are not recording (most likely on the command line),
+		 * simply discard the input and return to command mode
+		 * so that an INTERRUPT doesn't become for example a file
+		 * completion request. -aymeric
+		 */
+		if (LF_ISSET(TXT_RECORD)) {
+		    evp->e_event = E_CHARACTER;
+		    evp->e_c = 033;
+		    evp->e_flags = 0;
+		    evp->e_value = K_ESCAPE;
+		    break;
+		} else {
+		    tp->term = TERM_ESC;
+		    goto k_escape;
+		}
 	}
 
 	/*
