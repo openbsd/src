@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.34 2005/12/20 02:09:23 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.35 2006/03/15 03:15:07 dhill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2005 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -57,8 +57,8 @@ union ANY_CTX {
 
 #define NHASHES	10
 struct hash_functions {
-	char *name;
-	int digestlen;
+	const char *name;
+	size_t digestlen;
 	int style;
 	void *ctx;	/* XXX - only used by digest_file() */
 	void (*init)(void *);
@@ -147,7 +147,7 @@ struct hash_functions {
 		(char *(*)(void *, char *))SHA512_End
 	}, {
 		NULL,
-	},
+	}
 };
 
 void usage(void) __attribute__((__noreturn__));
@@ -364,8 +364,9 @@ int
 digest_filelist(const char *file, struct hash_functions *defhash)
 {
 	int fd, found, error;
-	int algorithm_max, algorithm_min;
-	char *algorithm, *filename, *checksum, *buf, *p;
+	size_t algorithm_max, algorithm_min;
+	const char *algorithm;
+	char *filename, *checksum, *buf, *p;
 	char digest[MAX_DIGEST_LEN + 1];
 	char *lbuf = NULL;
 	FILE *fp;
@@ -549,7 +550,7 @@ digest_test(struct hash_functions **hashes)
 	int i;
 	char digest[MAX_DIGEST_LEN + 1];
 	unsigned char buf[1000];
-	unsigned char *test_strings[] = {
+	unsigned const char *test_strings[] = {
 		"",
 		"a",
 		"abc",
