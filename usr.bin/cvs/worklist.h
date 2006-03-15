@@ -1,4 +1,4 @@
-/*	$OpenBSD: worklist.h,v 1.2 2006/03/15 13:30:48 niallo Exp $	*/
+/*	$OpenBSD: worklist.h,v 1.3 2006/03/15 18:24:43 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -28,7 +28,7 @@
 #define WORKLIST_H
 
 struct cvs_worklist {
-	volatile char				wkl_path[MAXPATHLEN];
+	char					wkl_path[MAXPATHLEN];
 	volatile SLIST_ENTRY(cvs_worklist)	wkl_list;
 };
 
