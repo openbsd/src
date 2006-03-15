@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.37 2006/01/27 23:03:12 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.38 2006/03/15 20:07:28 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -36,9 +36,6 @@
 #include <sys/disk.h>
 #include <sys/dkbad.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
-
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 #include <dev/sun/disklabel.h>
@@ -58,62 +55,11 @@ static __inline u_long sun_extended_sum(struct sun_disklabel *);
 
 extern struct device *bootdv;
 
-/*
- * find the boot device (if it was a disk).   we must check to see if
- * unit info in saved bootpath structure matches unit info in our softc.
- * note that knowing the device name (e.g. "xd0") is not useful... we
- * must check the drive number (or target/lun, in the case of SCSI).
- * (XXX is it worth ifdef'ing this?)
- */
-
 void
 dk_establish(dk, dev)
 	struct disk *dk;
 	struct device *dev;
 {
-	struct bootpath *bp = bootpath_store(0, NULL); /* restore bootpath! */
-	struct scsibus_softc *sbsc;
-	int target, lun;
-
-	if (bp == NULL)
-		return;
-
-	/*
-	 * scsi: sd,cd
-	 */
-	if (strncmp("sd", dev->dv_xname, 2) == 0 ||
-	    strncmp("cd", dev->dv_xname, 2) == 0) {
-
-		sbsc = (struct scsibus_softc *)dev->dv_parent;
-
-		target = bp->val[0];
-		lun = bp->val[1];
-
-#if defined(SUN4)
-		if (CPU_ISSUN4 && dev->dv_xname[0] == 's' &&
-		    target == 0 && sbsc->sc_link[0][0] == NULL) {
-			/*
-			 * disk unit 0 is magic: if there is actually no
-			 * target 0 scsi device, the PROM will call
-			 * target 3 `sd0'.
-			 * XXX - what if someone puts a tape at target 0?
-			 */
-			target = 3;	/* remap to 3 */
-			lun = 0;
-		}
-#endif
-
-#if defined(SUN4C)
-		if (CPU_ISSUN4C && dev->dv_xname[0] == 's')
-			target = sd_crazymap(target);
-#endif
-
-		if (sbsc->sc_link[target][lun] != NULL &&
-		    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
-			bp->dev = dev;	/* got it! */
-			return;
-		}
-	}
 }
 
 #if NCD > 0

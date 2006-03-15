@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.71 2006/02/06 17:19:31 jmc Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.72 2006/03/15 20:07:28 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -59,6 +59,9 @@
 #include <sys/user.h>
 
 #include <net/if.h>
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
 
 #include <dev/cons.h>
 
@@ -562,7 +565,7 @@ bootpath_fake(bp, cp)
 			}
 			/*
 			 * Deal with target/lun encodings.
-			 * Note: more special casing in dk_establish().
+			 * Note: more special casing in device_register().
 			 */
 			if (oldpvec->monId[0] > '1') {
 				target = v0val[1] >> 3; /* new format */
@@ -667,7 +670,7 @@ bootpath_print(bp)
  *
  * XXX. required because of SCSI... we don't have control over the "sd"
  * device, so we can't set boot device there.   we patch in with
- * dk_establish(), and use this to recover the bootpath.
+ * device_register(), and use this to recover the bootpath.
  */
 
 struct bootpath *
@@ -725,7 +728,7 @@ crazymap(prop, map)
 	} else {
 		/*
 		 * Set up the identity mapping for old sun4 monitors
-		 * and v[2-] OpenPROMs. Note: dkestablish() does the
+		 * and v[2-] OpenPROMs. Note: device_register() does the
 		 * SCSI-target juggling for sun4 monitors.
 		 */
 		for (i = 0; i < 8; ++i)
@@ -2146,4 +2149,69 @@ getdevunit(name, unit)
 			return NULL;
 	}
 	return dev;
+}
+
+/*
+ * find the boot device (if it was a disk).   we must check to see if
+ * unit info in saved bootpath structure matches unit info in our softc.
+ * note that knowing the device name (e.g. "xd0") is not useful... we
+ * must check the drive number (or target/lun, in the case of SCSI).
+ * (XXX is it worth ifdef'ing this?)
+ */
+
+void
+device_register(struct device *dev, void *aux)
+{
+	struct bootpath *bp = bootpath_store(0, NULL); /* restore bootpath! */
+
+	if (bp == NULL)
+		return;
+
+	/*
+	 * scsi: sd,cd
+	 */
+	if (strncmp("sd", dev->dv_xname, 2) == 0 ||
+	    strncmp("cd", dev->dv_xname, 2) == 0) {
+		struct scsibus_attach_args *sa = aux;
+		struct scsibus_softc *sbsc;
+		int target, lun;
+
+		sbsc = (struct scsibus_softc *)dev->dv_parent;
+
+		target = bp->val[0];
+		lun = bp->val[1];
+
+#if defined(SUN4)
+		if (CPU_ISSUN4 && dev->dv_xname[0] == 's' &&
+		    target == 0 && sbsc->sc_link[0][0] == NULL) {
+			/*
+			 * disk unit 0 is magic: if there is actually no
+			 * target 0 scsi device, the PROM will call
+			 * target 3 `sd0'.
+			 * XXX - what if someone puts a tape at target 0?
+			 */
+			/* Note that sc_link[0][0] will be NULL when we are
+			 * invoked to match the device for target 0, if it
+			 * exists. But then the attachment args will have
+			 * its own target set to zero. It this case, skip
+			 * the remapping.
+			 */
+			if (sa->sa_sc_link->target != 0) {
+				target = 3;	/* remap to 3 */
+				lun = 0;
+			}
+		}
+#endif
+
+#if defined(SUN4C)
+		if (CPU_ISSUN4C && dev->dv_xname[0] == 's')
+			target = sd_crazymap(target);
+#endif
+
+		if (sa->sa_sc_link->target == target &&
+		    sa->sa_sc_link->lun == lun) {
+			bp->dev = dev;	/* got it! */
+			return;
+		}
+	}
 }
