@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.1 2006/03/08 03:33:21 uwe Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.2 2006/03/15 19:56:00 deraadt Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * All rights reserved.
@@ -161,9 +161,12 @@ int k8pnow_decode_pst(struct k8pnow_cpu_state *, uint8_t *);
 int k8pnow_states(struct k8pnow_cpu_state *, uint32_t, unsigned int,
     unsigned int);
 
-int k8pnow_read_pending_wait(uint64_t * status) {
+int
+k8pnow_read_pending_wait(uint64_t *status)
+{
 	unsigned int i = 1000;
-	while(i--) {
+
+	while (i--) {
 		*status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
 		if (!PN8_STA_PENDING(*status))
 			return 0;
@@ -297,10 +300,10 @@ k8pnow_decode_pst(struct k8pnow_cpu_state *cstate, uint8_t *p)
 		state.fid = *p++;
 		state.vid = *p++;
 	
-		/* 
+		/*
 		 * The minimum supported frequency per the data sheet is 800MHz
-	   	 * The maximum supported frequency is 5000MHz. 
-		 */ 	   
+		 * The maximum supported frequency is 5000MHz.
+		 */
 		state.freq = 800 + state.fid * 100;
 		j = n;
 		while (j > 0 && cstate->state_table[j - 1].freq > state.freq) {
