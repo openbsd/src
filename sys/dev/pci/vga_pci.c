@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.20 2005/11/19 02:18:00 pedro Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.21 2006/03/15 20:46:15 matthieu Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*-
@@ -176,13 +176,8 @@ vga_pci_match(parent, match, aux)
 	/*
 	 * If we might match, make sure that the card actually looks OK.
 	 */
-#ifdef MD_DISPLAY_ISA_IOT
-	if (!vga_common_probe(MD_DISPLAY_ISA_IOT, MD_DISPLAY_ISA_MEMT))
-		return (0);
-#else
 	if (!vga_common_probe(pa->pa_iot, pa->pa_memt))
 		return (0);
-#endif
 
 	return (1);
 }
@@ -192,9 +187,7 @@ vga_pci_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-#ifndef MD_DISPLAY_ISA_IOT
 	struct pci_attach_args *pa = aux;
-#endif
 #ifdef PCIAGP
 	struct vga_pci_softc *sc = (struct vga_pci_softc *)self;
 	const struct agp_product *ap;
@@ -259,13 +252,8 @@ vga_pci_attach(parent, self, aux)
 	}
 #endif
 	printf("\n");
-#ifdef MD_DISPLAY_ISA_IOT
-	vga_extended_attach(self, MD_DISPLAY_ISA_IOT, ppc_isa_membus_space,
-	    WSDISPLAY_TYPE_PCIVGA, vga_pci_mmap);
-#else
 	vga_common_attach(self, pa->pa_iot, pa->pa_memt,
 	    WSDISPLAY_TYPE_PCIVGA);
-#endif
 }
 
 paddr_t
@@ -436,6 +424,31 @@ vga_pci_ioctl(v, cmd, addr, flag, p)
 }
 
 #ifdef PCIAGP
+void
+vga_pci_close(void *v)
+{
+	struct vga_config *vc = v;
+	struct vga_pci_softc *sc = (struct vga_pci_softc *)vc->vc_softc;
+	struct agp_memory *mem;
+
+	/*
+	 * Clear out the aperture and free any
+	 * outstanding memory blocks.
+	 */
+	TAILQ_FOREACH(mem, &sc->sc_memory, am_link) {
+		if (mem->am_is_bound) {
+			AGP_UNBIND_MEMORY(sc, mem);
+		}
+	}
+
+	while (!TAILQ_EMPTY(&sc->sc_memory)) {
+		mem = TAILQ_FIRST(&sc->sc_memory);
+		AGP_FREE_MEMORY(sc, mem);
+	}
+
+	sc->sc_state = AGP_ACQUIRE_FREE;
+}
+
 struct agp_memory *
 agp_find_memory(struct vga_pci_softc *sc, int id)
 {
@@ -889,4 +902,4 @@ agp_free_dmamem(bus_dma_tag_t tag, size_t size, bus_dmamap_t map,
 	bus_dmamem_unmap(tag, vaddr, size);
 	bus_dmamem_free(tag, seg, nseg);
 }
-#endif
+#endif	/* PCIAGP */
