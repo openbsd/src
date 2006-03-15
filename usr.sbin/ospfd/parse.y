@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.26 2006/03/15 13:25:33 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.27 2006/03/15 13:29:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -275,34 +275,30 @@ conf_main	: METRIC number {
 		;
 
 authmd		: AUTHMD number STRING {
-			if (iface != NULL) {
-				if ($2 < MIN_MD_ID || $2 > MAX_MD_ID) {
-					yyerror("auth-md key-id out of range "
-					    "(%d-%d)", MIN_MD_ID, MAX_MD_ID);
-					free($3);
-					YYERROR;
-				}
-				if (strlen($3) > MD5_DIGEST_LENGTH) {
-					yyerror("auth-md key length out of range "
-					    "(max length %d)",
-					    MD5_DIGEST_LENGTH);
-					free($3);
-					YYERROR;
-				}
-				md_list_add(iface, $2, $3);
+			if ($2 < MIN_MD_ID || $2 > MAX_MD_ID) {
+				yyerror("auth-md key-id out of range "
+				    "(%d-%d)", MIN_MD_ID, MAX_MD_ID);
+				free($3);
+				YYERROR;
 			}
+			if (strlen($3) > MD5_DIGEST_LENGTH) {
+				yyerror("auth-md key length out of range "
+				    "(max length %d)",
+				    MD5_DIGEST_LENGTH);
+				free($3);
+				YYERROR;
+			}
+			md_list_add(iface, $2, $3);
 			free($3);
 		}
 
 authmdkeyid	: AUTHMDKEYID number {
-			if (iface != NULL) {
-				if ($2 < MIN_MD_ID || $2 > MAX_MD_ID) {
-					yyerror("auth-md-keyid out of range "
-					    "(%d-%d)", MIN_MD_ID, MAX_MD_ID);
-					YYERROR;
-				}
-				iface->auth_keyid = $2;
+			if ($2 < MIN_MD_ID || $2 > MAX_MD_ID) {
+				yyerror("auth-md-keyid out of range "
+				    "(%d-%d)", MIN_MD_ID, MAX_MD_ID);
+				YYERROR;
 			}
+			iface->auth_keyid = $2;
 		}
 
 authtype	: AUTHTYPE STRING {
@@ -325,16 +321,14 @@ authtype	: AUTHTYPE STRING {
 		;
 
 authkey		: AUTHKEY STRING {
-			if (iface != NULL) {
-				if (strlen($2) > MAX_SIMPLE_AUTH_LEN) {
-					yyerror("auth-key too long "
-					    "(max length %d)", MAX_SIMPLE_AUTH_LEN);
+			if (strlen($2) > MAX_SIMPLE_AUTH_LEN) {
+				yyerror("auth-key too long (max length %d)",
+				    MAX_SIMPLE_AUTH_LEN);
 					free($2);
 					YYERROR;
-				}
-				strncpy(iface->auth_key, $2,
-				    sizeof(iface->auth_key));
 			}
+			strncpy(iface->auth_key, $2,
+			    sizeof(iface->auth_key));
 			free($2);
 		}
 		;
