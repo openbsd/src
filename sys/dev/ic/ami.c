@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.117 2006/03/15 12:38:56 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.118 2006/03/15 13:51:04 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -127,7 +127,7 @@ struct ami_mem	*ami_allocmem(struct ami_softc *, size_t);
 void		ami_freemem(struct ami_softc *, struct ami_mem *);
 void		ami_stimeout(void *);
 int 		ami_cmd(struct ami_ccb *, int, int);
-int		ami_start(struct ami_ccb *, int);
+int		ami_start(struct ami_softc *, struct ami_ccb *);
 int		ami_poll(struct ami_softc *, struct ami_ccb *);
 int		ami_done(struct ami_softc *, int);
 void		ami_copy_internal_data(struct scsi_xfer *, void *, size_t);
@@ -959,43 +959,22 @@ int
 ami_cmd(struct ami_ccb *ccb, int flags, int wait)
 {
 	struct ami_softc *sc = ccb->ccb_sc;
-	bus_dmamap_t dmap = ccb->ccb_dmamap;
 	int error = 0;
 
 	if (wait)
 		error = ami_poll(sc, ccb);
-	else if ((error = ami_start(ccb, wait))) {
-		AMI_DPRINTF(AMI_D_DMA, ("error=%d ", error));
-		__asm __volatile(".globl _bpamierr\n_bpamierr:");
-		if (ccb->ccb_data) {
-			bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
-			    ccb->ccb_dmamap->dm_mapsize,
-			    (ccb->ccb_dir == AMI_CCB_IN) ?
-			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-
-			bus_dmamap_sync(sc->sc_dmat,
-			    AMIMEM_MAP(sc->sc_ccbmem_am),
-			    ccb->ccb_offset, sizeof(struct ami_ccbmem),
-			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-
-			bus_dmamap_unload(sc->sc_dmat, dmap);
-		}
-		ami_put_ccb(ccb);
-	}
+	else
+		error = ami_start(sc, ccb);
 
 	return (error);
 }
 
 int
-ami_start(struct ami_ccb *ccb, int wait)
+ami_start(struct ami_softc *sc, struct ami_ccb *ccb)
 {
-	struct ami_softc *sc = ccb->ccb_sc;
 	struct ami_iocmd *cmd = &ccb->ccb_cmd;
 	struct scsi_xfer *xs = ccb->ccb_xs;
-	volatile struct ami_iocmd *mbox = sc->sc_mbox;
-	int i;
-
-	AMI_DPRINTF(AMI_D_CMD, ("start(%d) ", cmd->acc_id));
+	int error;
 
 	if (ccb->ccb_state != AMI_CCB_READY) {
 		printf("%s: ccb %d not ready <%d>\n", DEVNAME(sc),
@@ -1003,45 +982,49 @@ ami_start(struct ami_ccb *ccb, int wait)
 		return (EINVAL);
 	}
 
-	if (xs)
+	if (xs != NULL)
 		timeout_set(&xs->stimeout, ami_stimeout, ccb);
 
-	if (wait && mbox->acc_busy) {
-
-		for (i = 100000; i-- && mbox->acc_busy; DELAY(10));
-
-		if (mbox->acc_busy) {
-			AMI_DPRINTF(AMI_D_CMD, ("mbox_busy "));
-			return (EAGAIN);
-		}
-	}
-
-	AMI_DPRINTF(AMI_D_CMD, ("exec "));
-
-	if (!(i = (sc->sc_exec)(sc, cmd))) {
+	error = sc->sc_exec(sc, cmd);
+	if (!error) {
 		ccb->ccb_state = AMI_CCB_QUEUED;
 		TAILQ_INSERT_TAIL(&sc->sc_ccbq, ccb, ccb_link);
-		if (!wait) {
-#ifdef AMI_POLLING
-			if (!timeout_pending(&sc->sc_poll_tmo))
-				timeout_add(&sc->sc_poll_tmo, 1);
-#endif
-			if (xs) {
-				struct timeval tv;
-				/* add 5sec for whacky done() loops */
-				tv.tv_sec = 5 + xs->timeout / 1000;
-				tv.tv_usec = 1000 * (xs->timeout % 1000);
-				timeout_add(&xs->stimeout, tvtohz(&tv));
-			}
+
+		if (xs) {
+			struct timeval tv;
+			/* add 5sec for whacky done() loops */
+			tv.tv_sec = 5 + xs->timeout / 1000;
+			tv.tv_usec = 1000 * (xs->timeout % 1000);
+			timeout_add(&xs->stimeout, tvtohz(&tv));
 		}
-	} else if (!wait && xs) {
-		AMI_DPRINTF(AMI_D_CMD, ("2queue1(%d) ", cmd->acc_id));
+
+		return (0);
+	}
+
+	if (xs) {
 		ccb->ccb_state = AMI_CCB_PREQUEUED;
 		timeout_add(&xs->stimeout, 1);
 		return (0);
 	}
 
-	return (i);
+	/* error path */
+	if (ccb->ccb_data) {
+		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
+		    ccb->ccb_dmamap->dm_mapsize,
+		    (ccb->ccb_dir == AMI_CCB_IN) ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_sync(sc->sc_dmat,
+		    AMIMEM_MAP(sc->sc_ccbmem_am),
+		    ccb->ccb_offset, sizeof(struct ami_ccbmem),
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
+	}
+
+	ami_put_ccb(ccb);
+
+	return (error);
 }
 
 int
@@ -1094,7 +1077,7 @@ ami_stimeout(void *v)
 		AMI_DPRINTF(AMI_D_CMD, ("requeue(%d) ", cmd->acc_id));
 
 		ccb->ccb_state = AMI_CCB_READY;
-		if (ami_start(ccb, 0)) {
+		if (ami_start(sc, ccb)) {
 			AMI_DPRINTF(AMI_D_CMD, ("requeue(%d) again\n", cmd->acc_id));
 			ccb->ccb_state = AMI_CCB_PREQUEUED;
 			timeout_add(&xs->stimeout, 1);
