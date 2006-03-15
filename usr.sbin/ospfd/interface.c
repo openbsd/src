@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.47 2006/03/13 09:36:06 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.48 2006/03/15 13:25:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -242,7 +242,6 @@ if_del(struct iface *iface)
 
 	ls_ack_list_clr(iface);
 	md_list_clr(iface);
-	free(iface->auth_key);
 	free(iface);
 }
 

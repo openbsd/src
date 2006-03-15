@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.51 2006/03/09 18:11:34 norby Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.52 2006/03/15 13:25:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -28,6 +28,8 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <event.h>
+
+#include "ospf.h"
 
 #define CONF_FILE		"/etc/ospfd.conf"
 #define	OSPFD_SOCKET		"/var/run/ospfd.sock"
@@ -325,11 +327,11 @@ struct iface {
 	struct lsa_head		 ls_ack_list;
 
 	char			 name[IF_NAMESIZE];
+	char			 auth_key[MAX_SIMPLE_AUTH_LEN];
 	struct in_addr		 addr;
 	struct in_addr		 dst;
 	struct in_addr		 mask;
 	struct in_addr		 abr_id;
-	char			*auth_key;
 	struct nbr		*dr;	/* designated router */
 	struct nbr		*bdr;	/* backup designated router */
 	struct nbr		*self;

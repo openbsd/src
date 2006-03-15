@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.25 2006/03/08 15:35:07 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.26 2006/03/15 13:25:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -327,14 +327,15 @@ authtype	: AUTHTYPE STRING {
 authkey		: AUTHKEY STRING {
 			if (iface != NULL) {
 				if (strlen($2) > MAX_SIMPLE_AUTH_LEN) {
-					yyerror("auth-key length out of range "
+					yyerror("auth-key too long "
 					    "(max length %d)", MAX_SIMPLE_AUTH_LEN);
 					free($2);
 					YYERROR;
 				}
-				iface->auth_key = $2;
-			} else
-				free($2);
+				strncpy(iface->auth_key, $2,
+				    sizeof(iface->auth_key));
+			}
+			free($2);
 		}
 		;
 
