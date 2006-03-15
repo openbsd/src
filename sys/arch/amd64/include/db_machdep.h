@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.5 2005/11/13 17:51:53 fgsch Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.6 2006/03/15 15:50:41 mickey Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.2 2003/04/29 17:06:04 scw Exp $	*/
 
 /* 
@@ -75,25 +75,6 @@ extern db_regs_t ddb_regs;	/* register state */
 				  ((ins)&0x3800) == 0x1000))
 #define inst_load(ins)		0
 #define inst_store(ins)		0
-
-/* access capability and access macros */
-
-#define DB_ACCESS_LEVEL		2	/* access any space */
-#define DB_CHECK_ACCESS(addr,size,task)				\
-	db_check_access(addr,size,task)
-#define DB_PHYS_EQ(task1,addr1,task2,addr2)			\
-	db_phys_eq(task1,addr1,task2,addr2)
-#define DB_VALID_KERN_ADDR(addr)				\
-	((addr) >= VM_MIN_KERNEL_ADDRESS && 			\
-	 (addr) < VM_MAX_KERNEL_ADDRESS)
-#define DB_VALID_ADDRESS(addr,user)				\
-	((!(user) && DB_VALID_KERN_ADDR(addr)) ||		\
-	 ((user) && (addr) < VM_MAX_ADDRESS))
-
-#if 0
-boolean_t 	db_check_access(vaddr_t, int, task_t);
-boolean_t	db_phys_eq(task_t, vaddr_t, task_t, vaddr_t);
-#endif
 
 /* macros for printing OS server dependent task name */
 
