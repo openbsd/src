@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.116 2006/03/15 12:02:35 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.117 2006/03/15 12:38:56 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -128,6 +128,7 @@ void		ami_freemem(struct ami_softc *, struct ami_mem *);
 void		ami_stimeout(void *);
 int 		ami_cmd(struct ami_ccb *, int, int);
 int		ami_start(struct ami_ccb *, int);
+int		ami_poll(struct ami_softc *, struct ami_ccb *);
 int		ami_done(struct ami_softc *, int);
 void		ami_copy_internal_data(struct scsi_xfer *, void *, size_t);
 int		ami_inquire(struct ami_softc *, u_int8_t);
@@ -357,7 +358,7 @@ ami_attach(struct ami_softc *sc)
 		cmd->acc_io.aio_channel = AMI_FC_EINQ3;
 		cmd->acc_io.aio_param = AMI_FC_EINQ3_SOLICITED_FULL;
 		cmd->acc_io.aio_data = pa;
-		if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) == 0) {
+		if (ami_poll(sc, ccb) == 0) {
 			struct ami_fc_einquiry *einq = AMIMEM_KVA(am);
 			struct ami_fc_prodinfo *pi = AMIMEM_KVA(am);
 
@@ -372,7 +373,7 @@ ami_attach(struct ami_softc *sc)
 			cmd->acc_io.aio_channel = AMI_FC_PRODINF;
 			cmd->acc_io.aio_param = 0;
 			cmd->acc_io.aio_data = pa;
-			if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) == 0) {
+			if (ami_poll(sc, ccb) == 0) {
 				sc->sc_maxunits = AMI_BIG_MAX_LDRIVES;
 
 				bcopy (pi->api_fwver, sc->sc_fwver, 16);
@@ -397,7 +398,7 @@ ami_attach(struct ami_softc *sc)
 			cmd->acc_io.aio_channel = 0;
 			cmd->acc_io.aio_param = 0;
 			cmd->acc_io.aio_data = pa;
-			if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) != 0) {
+			if (ami_poll(sc, ccb) != 0) {
 				ccb = ami_get_ccb(sc);
 				cmd = &ccb->ccb_cmd;
 
@@ -405,7 +406,7 @@ ami_attach(struct ami_softc *sc)
 				cmd->acc_io.aio_channel = 0;
 				cmd->acc_io.aio_param = 0;
 				cmd->acc_io.aio_data = pa;
-				if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) != 0) {
+				if (ami_poll(sc, ccb) != 0) {
 					splx(s);
 					printf(": cannot do inquiry\n");
 					goto destroy;
@@ -453,7 +454,7 @@ ami_attach(struct ami_softc *sc)
 		cmd->acc_io.aio_param = 0;
 		cmd->acc_io.aio_data = pa;
 
-		if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) != 0) {
+		if (ami_poll(sc, ccb) != 0) {
 			AMI_DPRINTF(AMI_D_MISC, ("getting io completion values"
 			    " failed\n"));
 		} else {
@@ -471,7 +472,7 @@ ami_attach(struct ami_softc *sc)
 			pp[0] = 0; /* minimal outstanding commands, 0 disable */
 			pp[1] = 0; /* maximal timeout in us, 0 disable */
 
-			if (ami_cmd(ccb, BUS_DMA_NOWAIT, 1) != 0) {
+			if (ami_poll(sc, ccb) != 0) {
 				AMI_DPRINTF(AMI_D_MISC, ("setting io completion"
 				    " values failed\n"));
 			} else {
@@ -961,32 +962,9 @@ ami_cmd(struct ami_ccb *ccb, int flags, int wait)
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
 	int error = 0;
 
-	if (wait) {
-		AMI_DPRINTF(AMI_D_DMA, ("waiting "));
-		/* FIXME remove all wait out ami_start */
-		error = sc->sc_poll(sc, &ccb->ccb_cmd);
-#ifdef AMI_DEBUG
-		if (error)
-			AMI_DPRINTF(AMI_D_MISC, ("pf "));
-#endif
-		if (ccb->ccb_data) {
-			bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
-			    ccb->ccb_dmamap->dm_mapsize,
-			    (ccb->ccb_dir == AMI_CCB_IN) ?
-			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-
-			bus_dmamap_sync(sc->sc_dmat,
-			    AMIMEM_MAP(sc->sc_ccbmem_am),
-			    ccb->ccb_offset, sizeof(struct ami_ccbmem),
-			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-
-			bus_dmamap_unload(sc->sc_dmat, dmap);
-		}
-		if (ccb->ccb_wakeup)
-			ccb->ccb_wakeup = 0;
-		else
-			ami_put_ccb(ccb);
-	} else if ((error = ami_start(ccb, wait))) {
+	if (wait)
+		error = ami_poll(sc, ccb);
+	else if ((error = ami_start(ccb, wait))) {
 		AMI_DPRINTF(AMI_D_DMA, ("error=%d ", error));
 		__asm __volatile(".globl _bpamierr\n_bpamierr:");
 		if (ccb->ccb_data) {
@@ -1064,6 +1042,34 @@ ami_start(struct ami_ccb *ccb, int wait)
 	}
 
 	return (i);
+}
+
+int
+ami_poll(struct ami_softc *sc, struct ami_ccb *ccb)
+{
+	int error;
+
+	error = sc->sc_poll(sc, &ccb->ccb_cmd);
+
+	if (ccb->ccb_data) {
+		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
+		    ccb->ccb_dmamap->dm_mapsize,
+		    (ccb->ccb_dir == AMI_CCB_IN) ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_sync(sc->sc_dmat,
+		    AMIMEM_MAP(sc->sc_ccbmem_am),
+		    ccb->ccb_offset, sizeof(struct ami_ccbmem),
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
+	}
+	if (ccb->ccb_wakeup)
+		ccb->ccb_wakeup = 0;
+	else
+		ami_put_ccb(ccb);
+
+	return (error);
 }
 
 /* FIXME timeouts should be rethought */
