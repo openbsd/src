@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.192 2006/02/10 14:34:40 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.193 2006/03/15 11:33:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -142,6 +142,7 @@ struct bgpd_config {
 	struct filter_set_head			 staticset;
 	struct filter_set_head			 staticset6;
 	struct listen_addrs			*listen_addrs;
+	char					*csock;
 	char					*rcsock;
 	int					 opts;
 	int					 flags;
