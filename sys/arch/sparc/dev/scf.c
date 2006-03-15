@@ -1,4 +1,4 @@
-/*	$OpenBSD: scf.c,v 1.9 2006/03/04 12:38:58 miod Exp $	*/
+/*	$OpenBSD: scf.c,v 1.10 2006/03/15 20:03:06 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -153,8 +153,9 @@ scfopen(dev, flags, mode, p)
 
 	if (card >= scf_cd.cd_ndevs)
 		return (ENXIO);
-
 	sc = scf_cd.cd_devs[card];
+	if (sc == NULL)
+		return (ENXIO);
 	if (sc->sc_open)
 		return (EBUSY);
 

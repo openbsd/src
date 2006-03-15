@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.22 2006/01/22 18:37:56 miod Exp $	*/
+/*	$OpenBSD: asc.c,v 1.23 2006/03/15 20:03:06 miod Exp $	*/
 /*	$NetBSD: asc.c,v 1.20 1997/02/24 05:47:33 scottr Exp $	*/
 
 /*
@@ -196,8 +196,10 @@ ascopen(dev, flag, mode, p)
 	int unit;
 
 	unit = ASCUNIT(dev);
-	sc = asc_cd.cd_devs[unit];
 	if (unit >= asc_cd.cd_ndevs)
+		return (ENXIO);
+	sc = asc_cd.cd_devs[unit];
+	if (sc == NULL)
 		return (ENXIO);
 	if (sc->sc_open)
 		return (EBUSY);

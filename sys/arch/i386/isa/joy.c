@@ -1,4 +1,4 @@
-/*	$OpenBSD: joy.c,v 1.10 2002/06/02 22:49:59 deraadt Exp $	*/
+/*	$OpenBSD: joy.c,v 1.11 2006/03/15 20:03:04 miod Exp $	*/
 /*	$NetBSD: joy.c,v 1.3 1996/05/05 19:46:15 christos Exp $	*/
 
 /*-
@@ -69,6 +69,8 @@ joyopen(dev, flag, mode, p)
 		return (ENXIO);
 
 	sc = joy_cd.cd_devs[unit];
+	if (sc == NULL)
+		return (ENXIO);
 
 	if (sc->timeout[i])
 		return EBUSY;

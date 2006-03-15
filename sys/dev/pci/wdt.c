@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.6 2005/09/11 18:17:08 mickey Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.7 2006/03/15 20:03:07 miod Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -217,8 +217,8 @@ wdtattach (parent, self, aux)
 int
 wdtopen (dev_t dev, int flags, int fmt, struct proc *p)
 {
-	if (UNIT(dev) >= wdt_cd.cd_ndevs)
-		return(ENXIO);
+	if (UNIT(dev) >= wdt_cd.cd_ndevs || wdt_cd.cd_devs[UNIT(dev)] == NULL)
+		return (ENXIO);
 
 	return(0);
 }
