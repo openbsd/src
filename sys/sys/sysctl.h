@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.86 2006/02/06 17:37:28 jmc Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.87 2006/03/15 21:02:04 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -660,6 +660,7 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 typedef int (sysctlfn)(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 
 int sysctl_int(void *, size_t *, void *, size_t, int *);
+int sysctl_int_lower(void *, size_t *, void *, size_t, int *);
 int sysctl_rdint(void *, size_t *, void *, int);
 int sysctl_int_arr(int **, int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_quad(void *, size_t *, void *, size_t, int64_t *);

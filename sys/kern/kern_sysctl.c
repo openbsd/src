@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.138 2006/01/28 09:53:37 dlg Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.139 2006/03/15 21:02:09 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -672,6 +672,26 @@ debug_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	/* NOTREACHED */
 }
 #endif /* DEBUG */
+
+/*
+ * Reads, or writes that lower the value
+ */
+int
+sysctl_int_lower(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int *valp)
+{
+	unsigned int oval = *valp, val = *valp;
+	int error;
+
+	if (newp == NULL)
+		return (sysctl_rdint(oldp, oldlenp, newp, *valp));
+
+	if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &val)))
+		return (error);
+	if (val > oval)
+		return (EPERM);		/* do not allow raising */
+	*(unsigned int *)valp = val;
+	return (0);
+}
 
 /*
  * Validate parameters and get old / set new parameters
