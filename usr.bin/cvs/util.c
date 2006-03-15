@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.69 2006/01/27 12:56:28 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.70 2006/03/15 19:59:36 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -28,9 +28,9 @@
 
 #include "cvs.h"
 #include "log.h"
+#include "util.h"
 
 #if !defined(RCSPROG)
-
 /* letter -> mode type map */
 static const int cvs_modetypes[26] = {
 	-1, -1, -1, -1, -1, -1,  1, -1, -1, -1, -1, -1, -1,
@@ -1018,3 +1018,29 @@ cvs_hack_time(time_t oldtime, int togmt)
 
 	return (cvs_date_parse(tbuf));
 }
+
+/*
+ * cvs_yesno()
+ *
+ * Read from standart input for `y' or `Y' character.
+ * Returns 0 on success, or -1 on failure.
+ */
+int
+cvs_yesno(void)
+{
+	int c, ret;
+
+	ret = 0;
+
+	fflush(stderr);
+	fflush(stdout);
+
+	if ((c = getchar()) != 'y' && c != 'Y')
+		ret = -1;
+	else
+		while (c != EOF && c != '\n')
+			c = getchar();
+
+	return (ret);
+}
+

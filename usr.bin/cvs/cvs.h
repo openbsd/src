@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.101 2006/02/10 10:15:48 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.102 2006/03/15 19:59:36 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -29,6 +29,7 @@
 
 #include "rcs.h"
 #include "file.h"
+#include "util.h"
 #include "xmalloc.h"
 
 #define CVS_VERSION	"OpenCVS 0.3"
@@ -410,49 +411,6 @@ void	cvs_logmsg_send(struct cvsroot *, const char *);
 
 /* date.y */
 time_t	cvs_date_parse(const char *);
-
-/* util.c */
-
-struct cvs_line {
-	char			*l_line;
-	int			 l_lineno;
-	TAILQ_ENTRY(cvs_line)	 l_list;
-};
-
-TAILQ_HEAD(cvs_tqh, cvs_line);
-
-struct cvs_lines {
-	int		l_nblines;
-	char		*l_data;
-	struct cvs_tqh	l_lines;
-};
-
-int	  cvs_readrepo(const char *, char *, size_t);
-void	  cvs_modetostr(mode_t, char *, size_t);
-void	  cvs_strtomode(const char *, mode_t *);
-void	  cvs_splitpath(const char *, char *, size_t, char **);
-int	  cvs_mkadmin(const char *, const char *, const char *, char *,
-		char *, int);
-int	  cvs_cksum(const char *, char *, size_t);
-int	  cvs_exec(int, char **, int []);
-int	  cvs_getargv(const char *, char **, int);
-int	  cvs_chdir(const char *, int);
-int	  cvs_rename(const char *, const char *);
-int	  cvs_unlink(const char *);
-int	  cvs_rmdir(const char *);
-int	  cvs_create_dir(const char *, int, char *, char *);
-char	 *cvs_rcs_getpath(CVSFILE *, char *, size_t);
-char	**cvs_makeargv(const char *, int *);
-void	  cvs_freeargv(char **, int);
-void	  cvs_write_tagfile(char *, char *, int);
-void	  cvs_parse_tagfile(char **, char **, int *);
-size_t	  cvs_path_cat(const char *, const char *, char *, size_t);
-time_t	  cvs_hack_time(time_t, int);
-
-BUF			*cvs_patchfile(const char *, const char *,
-			    int (*p)(struct cvs_lines *, struct cvs_lines *));
-struct cvs_lines	*cvs_splitlines(const char *);
-void			cvs_freelines(struct cvs_lines *);
 
 /* XXX */
 int			rcs_patch_lines(struct cvs_lines *, struct cvs_lines *);

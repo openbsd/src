@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.31 2006/01/27 15:26:38 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.32 2006/03/15 19:59:36 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -36,7 +36,6 @@ extern char *__progname;
 
 static int	cvs_release_init(struct cvs_cmd *, int, char **, int *);
 static int	cvs_release_pre_exec(struct cvsroot *);
-static int	cvs_release_yesno(void);
 static int	cvs_release_dir(CVSFILE *, void *);
 
 struct cvs_cmd cvs_cmd_release = {
@@ -91,31 +90,6 @@ cvs_release_pre_exec(struct cvsroot *root)
 			cvs_sendarg(root, "-d", 0);
 	}
 	return (0);
-}
-
-/*
- * cvs_release_yesno()
- *
- * Read from standart input for `y' or `Y' character.
- * Returns 0 on success, or -1 on failure.
- */
-static int
-cvs_release_yesno(void)
-{
-	int c, ret;
-
-	ret = 0;
-
-	fflush(stderr);
-	fflush(stdout);
-
-	if ((c = getchar()) != 'y' && c != 'Y')
-		ret = -1;
-	else
-		while (c != EOF && c != '\n')
-			c = getchar();
-
-	return (ret);
 }
 
 /*
@@ -200,7 +174,7 @@ cvs_release_dir(CVSFILE *cf, void *arg)
 	printf("Are you sure you want to release %sdirectory `%s': ",
 	    dflag ? "(and delete) " : "", dpath);
 
-	if (cvs_release_yesno() == -1) {	/* No */
+	if (cvs_yesno() == -1) {	/* No */
 		fprintf(stderr,
 		    "** `%s' aborted by user choice.\n", cvs_command);
 
