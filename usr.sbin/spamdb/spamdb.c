@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.14 2005/03/11 23:45:45 beck Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.15 2006/03/15 01:32:08 dhill Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -37,8 +37,11 @@
 #define TRAPHIT 1
 #define SPAMTRAP 2
 
+int	dblist(const char *);
+int	dbupdate(const char *, char *, int, int);
+
 int
-dbupdate(char *dbname, char *ip, int add, int type)
+dbupdate(const char *dbname, char *ip, int add, int type)
 {
 	BTREEINFO	btreeinfo;
 	DBT		dbk, dbd;
@@ -175,7 +178,7 @@ dbupdate(char *dbname, char *ip, int add, int type)
 }
 
 int
-dblist(char *dbname)
+dblist(const char *dbname)
 {
 	BTREEINFO	btreeinfo;
 	DBT		dbk, dbd;
