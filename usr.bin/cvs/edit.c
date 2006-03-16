@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.11 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: edit.c,v 1.12 2006/03/16 09:06:19 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -96,10 +96,7 @@ struct cvs_cmd cvs_cmd_unedit = {
 static int
 cvs_edit_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
-	int ch, dflag, mod_count;
-
-	dflag = 0;
-	mod_count = 0;
+	int ch;
 
 	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
@@ -134,10 +131,6 @@ cvs_edit_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 static int
 cvs_edit_remote(CVSFILE *cf, void *arg)
 {
-	int *mod_count;
-
-	mod_count = (int *)arg;
-
 	return (CVS_EX_OK);
 }
 
@@ -149,10 +142,6 @@ cvs_edit_remote(CVSFILE *cf, void *arg)
 static int
 cvs_edit_local(CVSFILE *cf, void *arg)
 {
-	int *mod_count;
-
-	mod_count = (int *)arg;
-
 	return (CVS_EX_OK);
 }
 

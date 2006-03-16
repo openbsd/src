@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.42 2006/01/27 12:45:21 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.43 2006/03/16 09:06:19 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -92,11 +92,9 @@ cvs_remove_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 static int
 cvs_remove_remote(CVSFILE *cf, void *arg)
 {
-	int ret;
 	char fpath[MAXPATHLEN];
 	struct cvsroot *root;
 
-	ret = 0;
 	root = CVS_DIR_ROOT(cf);
 
 	if (cf->cf_type == DT_DIR) {

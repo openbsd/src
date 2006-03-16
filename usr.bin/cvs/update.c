@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.55 2006/03/14 15:59:06 xsa Exp $	*/
+/*	$OpenBSD: update.c,v 1.56 2006/03/16 09:06:19 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -203,21 +203,17 @@ cvs_update_remote(CVSFILE *cf, void *arg)
 static int
 cvs_update_local(CVSFILE *cf, void *arg)
 {
-	int ret, islocal, revdiff;
+	int islocal, revdiff;
 	char fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
-	char *repo;
 	RCSFILE *rf;
 	RCSNUM *frev;
 	BUF *fbuf;
-	struct cvsroot *root;
 
-	revdiff = ret = 0;
+	revdiff = 0;
 	rf = NULL;
 	frev = NULL;
 	islocal = (cvs_cmdop != CVS_OP_SERVER);
 
-	root = CVS_DIR_ROOT(cf);
-	repo = CVS_DIR_REPO(cf);
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
