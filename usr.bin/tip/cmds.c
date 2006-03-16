@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.22 2006/03/16 19:32:46 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.23 2006/03/16 21:13:12 moritz Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.22 2006/03/16 19:32:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.23 2006/03/16 21:13:12 moritz Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -54,9 +54,9 @@ char	null = '\0';
 char	*sep[] = { "second", "minute", "hour" };
 static char *argv[10];		/* argument vector for take and put */
 
-void	timeout();		/* timeout function called on alarm */
-void	stopsnd();		/* SIGINT handler during file transfers */
-void	intcopy();		/* interrupt routine for file transfers */
+void	timeout(int);		/* timeout function called on alarm */
+void	stopsnd(int);		/* SIGINT handler during file transfers */
+void	intcopy(int);		/* interrupt routine for file transfers */
 
 /*
  * FTP - remote ==> local

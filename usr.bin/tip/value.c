@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.11 2006/03/16 19:32:46 deraadt Exp $	*/
+/*	$OpenBSD: value.c,v 1.12 2006/03/16 21:13:12 moritz Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: value.c,v 1.11 2006/03/16 19:32:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: value.c,v 1.12 2006/03/16 21:13:12 moritz Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -199,7 +199,6 @@ vtoken(char *s)
 static void
 vprint(value_t *p)
 {
-	extern char *interp();
 	char *cp;
 
 	if (col > 0 && col < MIDDLE)
@@ -220,7 +219,7 @@ vprint(value_t *p)
 		printf("%s=", p->v_name);
 		col++;
 		if (p->v_value) {
-			cp = interp(p->v_value, NULL);
+			cp = interp(p->v_value);
 			col += size(cp);
 			printf("%s", cp);
 		}

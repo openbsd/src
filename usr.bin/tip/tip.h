@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.19 2006/03/16 19:32:46 deraadt Exp $	*/
+/*	$OpenBSD: tip.h,v 1.20 2006/03/16 21:13:12 moritz Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -269,43 +269,44 @@ extern	int disc;		/* current tty discpline */
 
 extern	char *__progname;	/* program name */
 
-extern	char *ctrl(char c);
+extern	char *ctrl(char);
 extern	char *vinterp(char *, int);
 extern	char *con(void);
 
-char	*sname(char *s);
-int	any(int cc, char *p);
-int	anyof(char *s1, char *s2);
-int	args(char *buf, char *a[], int num);
+char	*sname(char *);
+char	*interp(char *);
+int	any(int, char *);
+int	anyof(char *, char *);
+int	args(char *, char **, int);
 int	escape(void);
-int	prompt(char *s, char *p, size_t sz);
-int	size(char *s);
-int	ttysetup(int speed);
-int	uu_lock(char *ttyname);
-int	uu_unlock(char *ttyname);
-int	vstring(char *s, char *v);
-long	hunt(char *name);
-void	cumain(int argc, char *argv[]);
+int	prompt(char *, char *, size_t);
+int	size(char *);
+int	ttysetup(int);
+int	uu_lock(char *);
+int	uu_unlock(char *);
+int	vstring(char *, char *);
+long	hunt(char *);
+void	cumain(int, char **);
 void	daemon_uid(void);
-void	disconnect(char *reason);
-void	execute(char *s);
-void	hardwareflow(char *option);
-void	logent(char *group, char *num, char *acu, char *message);
+void	disconnect(char *);
+void	execute(char *);
+void	hardwareflow(char *);
+void	logent(char *, char *, char *, char *);
 void	loginit(void);
-void	prtime(char *s, time_t a);
-void	parwrite(int fd, char *buf, int n);
+void	prtime(char *, time_t);
+void	parwrite(int, char *, int);
 void	raw(void);
-void	send(int c);
-void	setparity(char *defparity);
+void	send(int);
+void	setparity(char *);
 void	setscript(void);
 void	shell_uid(void);
-void	tandem(char *option);
-void	tipabort(char *msg);
+void	tandem(char *);
+void	tipabort(char *);
 void	tipin(void);
 void	tipout(void);
-void	transfer(char *buf, int fd, char *eofchars);
-void	transmit(FILE *fd, char *eofchars, char *command);
+void	transfer(char *, int, char *);
+void	transmit(FILE *, char *, char *);
 void	unraw(void);
 void	user_uid(void);
 void	vinit(void);
-void	vlex(char *s);
+void	vlex(char *);
