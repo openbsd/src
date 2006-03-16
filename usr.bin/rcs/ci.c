@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.120 2006/03/15 20:57:14 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.121 2006/03/16 04:04:57 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -131,6 +131,7 @@ checkin_main(int argc, char **argv)
 		case 'h':
 			(usage)();
 			exit(0);
+			/* NOTREACHED */
 		case 'I':
 			rcs_set_rev(rcs_optarg, &pb.newrev);
 			pb.flags |= INTERACTIVE;
@@ -199,6 +200,7 @@ checkin_main(int argc, char **argv)
 		case 'V':
 			printf("%s\n", rcs_version);
 			exit(0);
+			/* NOTREACHED */
 		case 'w':
 			pb.author = xstrdup(rcs_optarg);
 			break;

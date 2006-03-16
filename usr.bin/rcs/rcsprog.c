@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.75 2006/03/16 03:51:18 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.76 2006/03/16 04:04:57 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -430,6 +430,7 @@ main(int argc, char **argv)
 		}
 
 	exit(ret);
+	/* NOTREACHED */
 }
 
 
@@ -487,6 +488,7 @@ rcs_main(int argc, char **argv)
 		case 'h':
 			(usage)();
 			exit(0);
+			/* NOTREACHED */
 		case 'i':
 			flags |= RCS_CREATE;
 			rcsflags |= RCS_CREATE;
@@ -536,6 +538,7 @@ rcs_main(int argc, char **argv)
 		case 'V':
 			printf("%s\n", rcs_version);
 			exit(0);
+			/* NOTREACHED */
 		case 'x':
 			rcs_suffixes = rcs_optarg;
 			break;

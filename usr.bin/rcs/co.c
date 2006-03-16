@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.61 2006/03/16 04:01:46 ray Exp $	*/
+/*	$OpenBSD: co.c,v 1.62 2006/03/16 04:04:57 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -111,6 +111,7 @@ checkout_main(int argc, char **argv)
 		case 'V':
 			printf("%s\n", rcs_version);
 			exit(0);
+			/* NOTREACHED */
 		case 'w':
 			/* if no argument, assume current user */
 			if (rcs_optarg == NULL) {
