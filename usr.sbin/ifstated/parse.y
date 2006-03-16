@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.11 2006/01/20 00:01:20 millert Exp $	*/
+/*	$OpenBSD: parse.y,v 1.12 2006/03/16 06:17:42 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -699,6 +699,11 @@ link_states(struct ifsd_action *action)
 				action->act.nextstate = state;
 				break;
 			}
+		}
+		if (state == NULL) {
+			fprintf(stderr, "error: state '%s' not declared\n",
+			    action->act.statename);
+			errors++;
 		}
 		break;
 	}
