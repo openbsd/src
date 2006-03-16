@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.3 2006/03/16 02:35:08 dlg Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.4 2006/03/16 02:39:57 dlg Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * All rights reserved.
@@ -401,6 +401,8 @@ k8_powernow_init(void)
 			printf(" Mhz\n");
 			k8pnow_current_state = cstate;
 			cpu_setperf = k8_powernow_setperf;
+			return;
 		}
 	}
+	free(cstate, M_DEVBUF);
 }
