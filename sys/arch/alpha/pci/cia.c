@@ -1,4 +1,4 @@
-/* $OpenBSD: cia.c,v 1.21 2006/03/13 20:10:49 brad Exp $ */
+/* $OpenBSD: cia.c,v 1.22 2006/03/16 22:32:44 miod Exp $ */
 /* $NetBSD: cia.c,v 1.56 2000/06/29 08:58:45 mrg Exp $ */
 
 /*-
@@ -103,7 +103,7 @@ int	ciamatch(struct device *, void *, void *);
 void	ciaattach(struct device *, struct device *, void *);
 
 struct cfattach cia_ca = {
-	sizeof(struct cia_softc), ciamatch, ciaattach,
+	sizeof(struct device), ciamatch, ciaattach,
 };
 
 struct cfdriver cia_cd = {
@@ -268,7 +268,6 @@ ciaattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct cia_softc *sc = (struct cia_softc *)self;
 	struct cia_config *ccp;
 	struct pcibus_attach_args pba;
 	const char *name;
@@ -282,7 +281,7 @@ ciaattach(parent, self, aux)
 	 * (maybe), but we must do it here as well to take care of things
 	 * that need to use memory allocation.
 	 */
-	ccp = sc->sc_ccp = &cia_configuration;
+	ccp = &cia_configuration;
 	cia_init(ccp, 1);
 
 	if (ccp->cc_flags & CCF_ISPYXIS) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcavar.h,v 1.10 2002/03/14 01:26:27 millert Exp $	*/
+/*	$OpenBSD: lcavar.h,v 1.11 2006/03/16 22:32:44 miod Exp $	*/
 /* $NetBSD: lcavar.h,v 1.7 1997/06/06 23:54:32 thorpej Exp $ */
 
 /*
@@ -53,12 +53,6 @@ struct lca_config {
 
 	struct extent *lc_io_ex, *lc_d_mem_ex, *lc_s_mem_ex;
 	int	lc_mallocsafe;
-};
-
-struct lca_softc {
-	struct	device sc_dev;
-
-	struct	lca_config *sc_lcp;
 };
 
 void	lca_init(struct lca_config *, int);

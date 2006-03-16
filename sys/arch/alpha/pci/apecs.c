@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs.c,v 1.18 2006/03/13 20:10:49 brad Exp $	*/
+/*	$OpenBSD: apecs.c,v 1.19 2006/03/16 22:32:44 miod Exp $	*/
 /*	$NetBSD: apecs.c,v 1.16 1996/12/05 01:39:34 cgd Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@ int	apecsmatch(struct device *, void *, void *);
 void	apecsattach(struct device *, struct device *, void *);
 
 struct cfattach apecs_ca = {
-	sizeof(struct apecs_softc), apecsmatch, apecsattach,
+	sizeof(struct device), apecsmatch, apecsattach,
 };
 
 struct cfdriver apecs_cd = {
@@ -180,7 +180,6 @@ apecsattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct apecs_softc *sc = (struct apecs_softc *)self;
 	struct apecs_config *acp;
 	struct pcibus_attach_args pba;
 
@@ -191,7 +190,7 @@ apecsattach(parent, self, aux)
 	 * set up the chipset's info; done once at console init time
 	 * (maybe), but doesn't hurt to do twice.
 	 */
-	acp = sc->sc_acp = &apecs_configuration;
+	acp = &apecs_configuration;
 	apecs_init(acp, 1);
 
 	apecs_dma_init(acp);

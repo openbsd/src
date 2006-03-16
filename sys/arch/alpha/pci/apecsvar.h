@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecsvar.h,v 1.9 2002/03/14 01:26:27 millert Exp $	*/
+/*	$OpenBSD: apecsvar.h,v 1.10 2006/03/16 22:32:44 miod Exp $	*/
 /*	$NetBSD: apecsvar.h,v 1.5 1996/11/25 03:49:36 cgd Exp $	*/
 
 /*
@@ -57,12 +57,6 @@ struct apecs_config {
 
 	struct extent *ac_io_ex, *ac_d_mem_ex, *ac_s_mem_ex;
 	int	ac_mallocsafe;
-};
-
-struct apecs_softc {
-	struct	device sc_dev;
-
-	struct	apecs_config *sc_acp;
 };
 
 void	apecs_init(struct apecs_config *, int);

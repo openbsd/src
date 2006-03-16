@@ -1,4 +1,4 @@
-/*	$OpenBSD: irongatevar.h,v 1.3 2001/12/14 00:44:59 nate Exp $	*/
+/*	$OpenBSD: irongatevar.h,v 1.4 2006/03/16 22:32:44 miod Exp $	*/
 /* $NetBSD: irongatevar.h,v 1.3 2000/11/29 06:29:10 thorpej Exp $ */
 
 /*-
@@ -59,12 +59,6 @@ struct irongate_config {
 
 	struct extent *ic_io_ex, *ic_mem_ex;
 	int	ic_mallocsafe;
-};
-
-struct irongate_softc {
-	struct	device sc_dev;
-
-	struct	irongate_config *sc_icp;
 };
 
 void	irongate_init(struct irongate_config *, int);

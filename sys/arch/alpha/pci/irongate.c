@@ -1,4 +1,4 @@
-/*	$OpenBSD: irongate.c,v 1.7 2006/03/13 20:10:49 brad Exp $	*/
+/*	$OpenBSD: irongate.c,v 1.8 2006/03/16 22:32:44 miod Exp $	*/
 /* $NetBSD: irongate.c,v 1.3 2000/11/29 06:29:10 thorpej Exp $ */
 
 /*-
@@ -61,7 +61,7 @@ int	irongate_match(struct device *, void *, void *);
 void	irongate_attach(struct device *, struct device *, void *);
 
 struct cfattach irongate_ca = {
-	sizeof(struct irongate_softc), irongate_match, irongate_attach,
+	sizeof(struct device), irongate_match, irongate_attach,
 };
 
 int	irongate_print(void *, const char *pnp);
@@ -142,7 +142,6 @@ irongate_match(struct device *parent, void *match, void *aux)
 void
 irongate_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct irongate_softc *sc = (void *) self;
 	struct irongate_config *icp;
 	struct pcibus_attach_args pba;
 
@@ -154,7 +153,7 @@ irongate_attach(struct device *parent, struct device *self, void *aux)
 	 * (maybe), but we must do it here as well to take care of things
 	 * that need to use memory allocation.
 	 */
-	icp = sc->sc_icp = &irongate_configuration;
+	icp = &irongate_configuration;
 	irongate_init(icp, 1);
 
 	printf(": rev. %d\n", icp->ic_rev);

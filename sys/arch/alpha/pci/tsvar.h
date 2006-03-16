@@ -1,4 +1,4 @@
-/* $OpenBSD: tsvar.h,v 1.5 2003/09/02 17:25:21 miod Exp $ */
+/* $OpenBSD: tsvar.h,v 1.6 2006/03/16 22:32:44 miod Exp $ */
 /* $NetBSD: tsvar.h,v 1.1 1999/06/29 06:46:47 ross Exp $ */
 
 /*-
@@ -37,10 +37,6 @@
 #include <alpha/pci/pci_sgmap_pte64.h>
 
 #define	tsvar() { Generate ctags(1) key. }
-
-struct tsc_softc {
-	struct	device tsc_dev;
-};
 
 struct tsp_config {
 	int	pc_pslot;		/* Pchip 0 or 1 */
