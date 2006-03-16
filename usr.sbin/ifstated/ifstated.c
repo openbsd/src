@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.28 2006/02/08 13:50:26 camield Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.29 2006/03/16 06:12:58 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -141,13 +141,13 @@ main(int argc, char *argv[])
 	event_init();
 	log_init(opt_debug);
 
-	signal_set(&sigchld_ev, SIGCHLD, sigchld_handler, &sigchld_ev);
+	signal_set(&sigchld_ev, SIGCHLD, sigchld_handler, NULL);
 	signal_add(&sigchld_ev, NULL);
 
 	/* Loading the config needs to happen in the event loop */
 	tv.tv_usec = 0;
 	tv.tv_sec = 0;
-	evtimer_set(&startup_ev, startup_handler, &startup_ev);
+	evtimer_set(&startup_ev, startup_handler, NULL);
 	evtimer_add(&startup_ev, &tv);
 
 	event_loop(0);
@@ -167,11 +167,10 @@ startup_handler(int fd, short event, void *arg)
 		exit(1);
 	}
 
-	event_set(&rt_msg_ev, rt_fd, EV_READ|EV_PERSIST,
-	    rt_msg_handler, &rt_msg_ev);
+	event_set(&rt_msg_ev, rt_fd, EV_READ|EV_PERSIST, rt_msg_handler, NULL);
 	event_add(&rt_msg_ev, NULL);
 
-	signal_set(&sighup_ev, SIGHUP, sighup_handler, &sighup_ev);
+	signal_set(&sighup_ev, SIGHUP, sighup_handler, NULL);
 	signal_add(&sighup_ev, NULL);
 
 	logit(IFSD_LOG_NORMAL, "started");
