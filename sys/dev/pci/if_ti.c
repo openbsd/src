@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.77 2006/03/16 02:23:53 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.78 2006/03/16 02:32:37 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2402,8 +2402,10 @@ ti_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_status = IFM_AVALID;
 	ifmr->ifm_active = IFM_ETHER;
 
-	if (sc->ti_linkstat == TI_EV_CODE_LINK_DOWN)
+	if (sc->ti_linkstat == TI_EV_CODE_LINK_DOWN) {
+		ifmr->ifm_active |= IFM_NONE;
 		return;
+	}
 
 	ifmr->ifm_status |= IFM_ACTIVE;
 
