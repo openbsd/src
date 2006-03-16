@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.60 2006/03/15 20:00:50 niallo Exp $	*/
+/*	$OpenBSD: co.c,v 1.61 2006/03/16 04:01:46 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -340,23 +340,23 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	}
 
 	if ((pipeout == 0) && (stat(dst, &st) == 0) && !(flags & FORCE)) {
-		if (st.st_mode & S_IWUSR) {
-			if (verbose == 0) {
-				cvs_log(LP_ERR,
-				    "writable %s exists; checkout aborted",
-				    dst);
-				return (-1);
-			}
+		if (verbose == 0) {
+			cvs_log(LP_ERR,
+			    "writable %s exists; checkout aborted",
+			    dst);
+			return (-1);
+		}
 
-			printf("writable %s exists%s; ", dst,
-			    (getuid() == st.st_uid) ? "" :
-			    ", and you do not own it");
-			printf("remove it? [ny](n): ");
-			/* default is n */
-			if (cvs_yesno() == -1) {
-				cvs_log(LP_ERR, "checkout aborted");
-				return (-1);
-			}
+		if (st.st_mode & S_IWUSR)
+			printf("writable ");
+		printf("%s exists%s; ", dst,
+		    (getuid() == st.st_uid) ? "" :
+		    ", and you do not own it");
+		printf("remove it? [ny](n): ");
+		/* default is n */
+		if (cvs_yesno() == -1) {
+			cvs_log(LP_ERR, "checkout aborted");
+			return (-1);
 		}
 	}
 
