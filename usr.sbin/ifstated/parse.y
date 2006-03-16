@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2006/03/16 06:17:42 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.13 2006/03/16 06:27:02 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -675,6 +675,7 @@ parse_config(char *filename, int opts)
 
 	if (errors) {
 		clear_config(conf);
+		errors = 0;
 		return (NULL);
 	}
 
