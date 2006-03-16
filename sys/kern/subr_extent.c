@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.31 2006/02/23 19:58:47 miod Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.32 2006/03/16 22:14:28 miod Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -82,10 +82,13 @@ static	void extent_free_region_descriptor(struct extent *,
 	    struct extent_region *);
 
 /*
- * Macro to align to an arbitrary power-of-two boundary.
+ * Shortcut to align to an arbitrary power-of-two boundary.
  */
-#define EXTENT_ALIGN(_start, _align, _skew)		\
-	(((((_start) - (_skew)) + ((_align) - 1)) & (-(_align))) + (_skew))
+static __inline__ u_long
+extent_align(u_long start, u_long align, u_long skew)
+{
+	return ((((start - skew) + (align - 1)) & (-align)) + skew);
+}
 
 
 #if defined(DIAGNOSTIC) || defined(DDB)
@@ -599,7 +602,7 @@ extent_alloc_subregion(struct extent *ex, u_long substart, u_long subend,
 	 * check is the area from the beginning of the subregion
 	 * to the first allocated region after that point.
 	 */
-	newstart = EXTENT_ALIGN(substart, alignment, skew);
+	newstart = extent_align(substart, alignment, skew);
 	if (newstart < ex->ex_start) {
 #ifdef DIAGNOSTIC
 		printf(
@@ -629,7 +632,7 @@ extent_alloc_subregion(struct extent *ex, u_long substart, u_long subend,
 	 * our subrange).
 	 */
 	if (last != NULL && last->er_end >= newstart)
-		newstart = EXTENT_ALIGN((last->er_end + 1), alignment, skew);
+		newstart = extent_align((last->er_end + 1), alignment, skew);
 
 	for (; rp != LIST_END(&ex->ex_regions); rp = LIST_NEXT(rp, er_link)) {
 		/*
@@ -658,7 +661,7 @@ extent_alloc_subregion(struct extent *ex, u_long substart, u_long subend,
 				 * Calculate the next boundary after the start
 				 * of this region.
 				 */
-				dontcross = EXTENT_ALIGN(newstart+1, boundary, 
+				dontcross = extent_align(newstart+1, boundary, 
 				    (flags & EX_BOUNDZERO) ? 0 : ex->ex_start)
 				    - 1;
 
@@ -720,7 +723,7 @@ skip:
 		/*
 		 * Skip past the current region and check again.
 		 */
-		newstart = EXTENT_ALIGN((rp->er_end + 1), alignment, skew);
+		newstart = extent_align((rp->er_end + 1), alignment, skew);
 		if (newstart < rp->er_end) {
 			/*
 			 * Overflow condition.  Don't error out, since
@@ -753,7 +756,7 @@ skip:
 			 * Calculate the next boundary after the start
 			 * of this region.
 			 */
-			dontcross = EXTENT_ALIGN(newstart+1, boundary, 
+			dontcross = extent_align(newstart+1, boundary, 
 			    (flags & EX_BOUNDZERO) ? 0 : ex->ex_start)
 			    - 1;
 
