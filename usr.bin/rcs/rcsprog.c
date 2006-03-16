@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.74 2006/03/15 03:29:01 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.75 2006/03/16 03:51:18 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -352,76 +352,34 @@ rcs_choosefile(const char *filename)
 	return (ret);
 }
 
+/*
+ * Find the name of an RCS file, given a file name `fname'.  If an RCS
+ * file is found, the name is copied to the `len' sized buffer `out'.
+ * Returns 0 if RCS file was found, -1 otherwise.
+ */
 int
 rcs_statfile(char *fname, char *out, size_t len)
 {
-	int found;
-	char defaultsuffix[] = RCS_DEFAULT_SUFFIX;
-	char filev[MAXPATHLEN], fpath[MAXPATHLEN];
-	char *ext, *slash;
 	struct stat st;
+	char *rcspath;
 
-	found = 0;
+	/* XXX - do this in rcs_choosefile? */
+	if ((rcspath = rcs_choosefile(fname)) == NULL)
+		fatal("rcs_statfile: path truncation");
 
-	if (rcs_suffixes != NULL)
-		ext = rcs_suffixes;
-	else
-		ext = defaultsuffix;
-
-	for (;;) {
-		/*
-		 * GNU documentation says -x,v/ specifies two suffixes,
-		 * namely the ,v one and an empty one (which matches
-		 * everything).
-		 * The problem is that they don't follow this rule at
-		 * all, and their documentation seems flawed.
-		 * We try to be compatible, so let's do so.
-		 */
-		if (*ext == '\0')
-			break;
-
-		if ((slash = strchr(ext, '/')) != NULL)
-			*slash = '\0';
-
-		if (strlcpy(filev, fname, sizeof(filev)) >= sizeof(filev) ||
-		    strlcat(filev, ext, sizeof(filev)) >= sizeof(filev))
-			fatal("rcs_statfile: path truncation");
-
-		if (stat(RCSDIR, &st) != -1 && (st.st_mode & S_IFDIR)) {
-			if (strlcpy(fpath, RCSDIR,
-			    sizeof(fpath)) >= sizeof(fpath) ||
-			    strlcat(fpath, "/",
-			    sizeof(fpath)) >= sizeof(fpath) ||
-			    strlcat(fpath, filev,
-			    sizeof(fpath)) >= sizeof(fpath))
-				fatal("rcs_statfile: path truncation");
-		} else {
-			if (strlcpy(fpath, filev,
-			    sizeof(fpath)) >= sizeof(fpath))
-				fatal("rcs_statfile: path truncation");
-		}
-
-		if ((stat(fpath, &st) != -1) || (rcsflags & RCS_CREATE)) {
-			found++;
-			break;
-		}
-
-		if (slash == NULL)
-			break;
-
-		*slash++ = '/';
-		ext = slash;
-	}
-
-	if (found != 1) {
+	/* File not found. */
+	if (stat(rcspath, &st) == -1) {
 		if ((strcmp(__progname, "rcsclean") != 0)
 		    && (strcmp(__progname, "ci") != 0))
-			cvs_log(LP_ERRNO, "%s", fpath);
+			cvs_log(LP_ERRNO, "%s", rcspath);
+		xfree(rcspath);
 		return (-1);
 	}
 
-	if (strlcpy(out, fpath, len) >= len)
+	if (strlcpy(out, rcspath, len) >= len)
 		fatal("rcs_statfile: path truncation");
+
+	xfree(rcspath);
 
 	return (0);
 }
