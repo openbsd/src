@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.12 2006/01/09 20:03:37 damien Exp $
+#	$OpenBSD: Makefile,v 1.13 2006/03/16 00:26:09 deraadt Exp $
 
-SUBDIR=	atmel neomagic symbol kue typhoon uyap cirruslogic yds fxp ral
+SUBDIR=	atmel cirruslogic fxp kue neomagic ral symbol typhoon uyap yds
 
 .include <bsd.subdir.mk>
