@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.348 2006/03/16 22:21:39 dim Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.349 2006/03/16 22:23:26 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1424,13 +1424,13 @@ amd_family6_setup(struct cpu_info *ci)
 		cpuid(0x80000007, regs);
 
 		if (regs[3] & 0x06) {
-			switch(ci->ci_signature & 0xF00) {
+			switch (ci->ci_signature & 0xF00) {
 			case 0x600:
 				k7_powernow_init();
-			break;
+				break;
 			case 0xf00:
 				k8_powernow_init();
-			break;
+				break;
 			}
 		}
 	}
@@ -1941,7 +1941,7 @@ tm86_cpu_name(model)
 
 	cpuid(0x80860001, regs);
 
-	switch(model) {
+	switch (model) {
 	case 4:
 		if (((regs[1] >> 16) & 0xff) >= 0x3)
 			name = "TMS5800";
