@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.18 2006/03/14 15:59:06 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.19 2006/03/16 08:32:34 xsa Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.18 2006/03/14 15:59:06 xsa Exp $";
+    "$OpenBSD: diff3.c,v 1.19 2006/03/16 08:32:34 xsa Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -157,14 +157,13 @@ int diff3_conflicts = 0;
 BUF *
 cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 {
-	int ret, argc;
+	int argc;
 	char *data, *patch;
 	char *argv[5], r1[16], r2[16];
 	char path1[MAXPATHLEN], path2[MAXPATHLEN], path3[MAXPATHLEN];
 	char dp13[MAXPATHLEN], dp23[MAXPATHLEN];
 	BUF *b1, *b2, *b3, *d1, *d2, *diffb;
 
-	ret = -1;
 	b1 = b2 = b3 = d1 = d2 = diffb = NULL;
 
 	rcsnum_tostr(rev1, r1, sizeof(r1));
@@ -306,12 +305,12 @@ ed_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 {
 	char op, *ep;
 	struct cvs_line *sort, *lp, *dlp, *ndlp;
-	int start, end, busy, i, lineno;
+	int start, end, i, lineno;
 
 	dlp = TAILQ_FIRST(&(dlines->l_lines));
 	lp = TAILQ_FIRST(&(plines->l_lines));
 
-	busy = end = 0;
+	end = 0;
 	for (lp = TAILQ_NEXT(lp, l_list); lp != NULL;
 	    lp = TAILQ_NEXT(lp, l_list)) {
 		op = lp->l_line[strlen(lp->l_line) - 1];
