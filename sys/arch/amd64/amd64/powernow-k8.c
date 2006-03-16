@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.2 2006/03/15 19:56:00 deraadt Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.3 2006/03/16 02:35:08 dlg Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * All rights reserved.
@@ -392,14 +392,13 @@ k8_powernow_init(void)
 
 	if (k8pnow_states(cstate, ci->ci_signature, maxfid, maxvid)) {
 		if (cstate->n_states) {
-			printf("%s: AMD %s available states ",
-			    ci->ci_dev->dv_xname, techname);
-			for(i= 0; i < cstate->n_states; i++) {
-				state = &cstate->state_table[i];
-				printf("%c%d", i==0 ? '(' : ',',
-				    state->freq);
+			printf("%s: %s %d Mhz: speeds:",
+			    ci->ci_dev->dv_xname, techname, cpuspeed);
+			for(i = cstate->n_states; i > 0; i--) {
+				state = &cstate->state_table[i-1];
+				printf(" %d", state->freq);
 			}
-			printf(")\n");
+			printf(" Mhz\n");
 			k8pnow_current_state = cstate;
 			cpu_setperf = k8_powernow_setperf;
 		}
