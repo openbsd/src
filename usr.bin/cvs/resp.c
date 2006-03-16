@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.71 2006/01/27 12:56:28 xsa Exp $	*/
+/*	$OpenBSD: resp.c,v 1.72 2006/03/16 08:43:43 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -336,9 +336,10 @@ cvs_resp_statdir(struct cvsroot *root, int type, char *line)
 	if (strlcpy(statpath, line, sizeof(statpath)) >= sizeof(statpath) ||
 	    strlcat(statpath, "/", sizeof(statpath)) >= sizeof(statpath) ||
 	    strlcat(statpath, CVS_PATH_STATICENTRIES,
-	    sizeof(statpath)) >= sizeof(statpath))
+	    sizeof(statpath)) >= sizeof(statpath)) {
 		cvs_log(LP_ERR, "Entries.static path truncation");
 		return (-1);
+	}
 
 	if (cvs_noexec == 0) {
 		if ((type == CVS_RESP_CLRSTATDIR) &&
