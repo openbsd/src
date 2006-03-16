@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.63 2006/03/16 17:11:30 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.64 2006/03/16 23:53:27 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -36,7 +36,7 @@ static void	checkout_err_nobranch(RCSFILE *, const char *, const char *,
 int
 checkout_main(int argc, char **argv)
 {
-	int i, ch, flags, kflag;
+	int i, ch, flags, kflag, status;
 	RCSNUM *frev, *rev;
 	RCSFILE *file;
 	char fpath[MAXPATHLEN];
@@ -44,7 +44,7 @@ checkout_main(int argc, char **argv)
 	const char *state;
 	time_t rcs_mtime = -1;
 
-	flags = 0;
+	flags = status = 0;
 	kflag = RCS_KWEXP_ERR;
 	rev = RCS_HEAD_REV;
 	frev = NULL;
@@ -174,8 +174,8 @@ checkout_main(int argc, char **argv)
 		else
 			frev = rev;
 
-		if (checkout_rev(file, frev, argv[i], flags,
-		    username, author, state, date) < 0) {
+		if ((status = checkout_rev(file, frev, argv[i], flags,
+		    username, author, state, date)) < 0) {
 				rcs_close(file);
 				continue;
 		}
@@ -192,7 +192,7 @@ checkout_main(int argc, char **argv)
 	if (rev != RCS_HEAD_REV)
 		rcsnum_free(frev);
 
-	return (0);
+	return (status);
 }
 
 void
