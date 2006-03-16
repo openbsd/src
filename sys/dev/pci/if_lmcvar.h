@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmcvar.h,v 1.8 2005/11/07 00:29:21 brad Exp $ */
+/*	$OpenBSD: if_lmcvar.h,v 1.9 2006/03/16 21:36:58 miod Exp $ */
 /*	$NetBSD: if_lmcvar.h,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -423,17 +423,6 @@ struct lmc___softc {
 #define	LMC_HAVE_NOMEDIA	0x00004000	/* did not detect any media */
 #define	LMC_HAVE_STOREFWD	0x00008000	/* have CMD_STOREFWD */
 #define	LMC_HAVE_SIA100		0x00010000	/* has LS100 in SIA status */
-
-static const char * const lmc_system_errors[] = {
-    "parity error",
-    "master abort",
-    "target abort",
-    "reserved #3",
-    "reserved #4",
-    "reserved #5",
-    "reserved #6",
-    "reserved #7",
-};
 
 #if 0
 static const char * const lmc_status_bits[] = {
