@@ -1,4 +1,4 @@
-/*	$OpenBSD: acu.c,v 1.10 2004/05/26 18:17:58 deraadt Exp $	*/
+/*	$OpenBSD: acu.c,v 1.11 2006/03/16 19:32:46 deraadt Exp $	*/
 /*	$NetBSD: acu.c,v 1.4 1996/12/29 10:34:03 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)acu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: acu.c,v 1.10 2004/05/26 18:17:58 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: acu.c,v 1.11 2006/03/16 19:32:46 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -61,7 +61,7 @@ static jmp_buf jmpbuf;
  *   found in the file).
  */
 char *
-connect()
+con(void)
 {
 	char *cp = PN;
 	char *phnum, string[256];
@@ -136,7 +136,7 @@ connect()
 			conflag = (*acu->acu_dialer)(phnum, CU);
 			if (conflag)
 				break;
-			
+
 			logent(value(HOST), phnum, acu->acu_name, "call failed");
 			tried++;
 		}
@@ -157,8 +157,7 @@ connect()
 }
 
 void
-disconnect(reason)
-	char *reason;
+disconnect(char *reason)
 {
 	if (!conflag) {
 		logent(value(HOST), "", DV, "call terminated");
@@ -168,7 +167,7 @@ disconnect(reason)
 		logent(value(HOST), "", acu->acu_name, "call terminated");
 		if (boolean(value(VERBOSE)))
 			printf("\r\ndisconnecting...");
-	} else 
+	} else
 		logent(value(HOST), "", acu->acu_name, reason);
 	(*acu->acu_disconnect)();
 }
@@ -181,8 +180,7 @@ acuabort(int s)
 }
 
 static acu_t *
-acutype(s)
-	char *s;
+acutype(char *s)
 {
 	acu_t *p;
 	extern acu_t acutable[];

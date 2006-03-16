@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.10 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: value.c,v 1.11 2006/03/16 19:32:46 deraadt Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -34,26 +34,26 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: value.c,v 1.10 2003/06/03 02:56:18 millert Exp $";
+static const char rcsid[] = "$OpenBSD: value.c,v 1.11 2006/03/16 19:32:46 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
 
 #define MIDDLE	35
 
-static value_t *vlookup();
+static value_t *vlookup(char *);
+static int vaccess(unsigned int mode, unsigned int rw);
 static int col = 0;
 
 /*
  * Variable manipulation
  */
 void
-vinit()
+vinit(void)
 {
+	char file[FILENAME_MAX], *cp;
 	value_t *p;
-	char *cp;
-	FILE *f;
-	char file[FILENAME_MAX];
+	FILE *fp;
 
 	for (p = vtable; p->v_name != NULL; p++) {
 		if (p->v_type&ENVIRON)
@@ -68,20 +68,20 @@ vinit()
 	 */
 	if (strlen(value(HOME)) + sizeof("/.tiprc") > sizeof(file)) {
 		(void)fprintf(stderr, "Home directory path too long: %s\n",
-			value(HOME));
+		    value(HOME));
 	} else {
 		snprintf(file, sizeof file, "%s/.tiprc", value(HOME));
-		if ((f = fopen(file, "r")) != NULL) {
+		if ((fp = fopen(file, "r")) != NULL) {
 			char *tp;
 
-			while (fgets(file, sizeof(file)-1, f) != NULL) {
+			while (fgets(file, sizeof(file)-1, fp) != NULL) {
 				if (vflag)
 					printf("set %s", file);
 				if ((tp = strrchr(file, '\n')))
 					*tp = '\0';
 				vlex(file);
 			}
-			fclose(f);
+			fclose(fp);
 		}
 	}
 	/*
@@ -90,21 +90,17 @@ vinit()
 	vtable[EXCEPTIONS].v_access &= ~(WRITE<<PUBLIC);
 }
 
-static int vaccess();
-
 /*VARARGS1*/
 void
-vassign(p, v)
-	value_t *p;
-	char *v;
+vassign(value_t *p, char *v)
 {
 
 	if (!vaccess(p->v_access, WRITE)) {
 		printf("access denied\r\n");
 		return;
 	}
-	switch (p->v_type&TMASK) {
 
+	switch (p->v_type&TMASK) {
 	case STRING:
 		if (p->v_value && equal(p->v_value, v))
 			return;
@@ -116,19 +112,16 @@ vassign(p, v)
 		}
 		p->v_type &= ~(ENVIRON|INIT);
 		break;
-
 	case NUMBER:
 		if (number(p->v_value) == number(v))
 			return;
 		setnumber(p->v_value, number(v));
 		break;
-
 	case BOOL:
 		if (boolean(p->v_value) == (*v != '!'))
 			return;
 		setboolean(p->v_value, (*v != '!'));
 		break;
-
 	case CHAR:
 		if (character(p->v_value) == *v)
 			return;
@@ -141,18 +134,16 @@ static void vprint();
 static void vtoken();
 
 void
-vlex(s)
-	char *s;
+vlex(char *s)
 {
 	value_t *p;
+	char *cp;
 
 	if (equal(s, "all")) {
 		for (p = vtable; p->v_name; p++)
 			if (vaccess(p->v_access, READ))
 				vprint(p);
 	} else {
-		char *cp;
-
 		do {
 			if ((cp = vinterp(s, ' ')))
 				cp++;
@@ -167,19 +158,18 @@ vlex(s)
 }
 
 static void
-vtoken(s)
-	char *s;
+vtoken(char *s)
 {
 	value_t *p;
 	char *cp;
-	char *expand();
+	char *expand(char *);
 
 	if ((cp = strchr(s, '='))) {
 		*cp = '\0';
 		if ((p = vlookup(s))) {
 			cp++;
 			if (p->v_type&NUMBER)
-				vassign(p, atoi(cp));
+				vassign(p, (char *)atoi(cp));
 			else {
 				if (strcmp(s, "record") == 0)
 					cp = expand(cp);
@@ -207,11 +197,10 @@ vtoken(s)
 }
 
 static void
-vprint(p)
-	value_t *p;
+vprint(value_t *p)
 {
+	extern char *interp();
 	char *cp;
-	extern char *interp(), *ctrl();
 
 	if (col > 0 && col < MIDDLE)
 		while (col++ < MIDDLE)
@@ -261,8 +250,7 @@ vprint(p)
 
 
 static int
-vaccess(mode, rw)
-	unsigned int mode, rw;
+vaccess(unsigned int mode, unsigned int rw)
 {
 	if (mode & (rw<<PUBLIC))
 		return (1);
@@ -272,8 +260,7 @@ vaccess(mode, rw)
 }
 
 static value_t *
-vlookup(s)
-	char *s;
+vlookup(char *s)
 {
 	value_t *p;
 
@@ -284,14 +271,12 @@ vlookup(s)
 }
 
 char *
-vinterp(s, stop)
-	char *s;
-	char stop;
+vinterp(char *s, int stop)
 {
 	char *p = s, c;
 	int num;
 
-	while ((c = *s++) && c != stop)
+	while ((c = *s++) && c != stop) {
 		switch (c) {
 
 		case '^':
@@ -332,6 +317,7 @@ vinterp(s, stop)
 		default:
 			*p++ = c;
 		}
+	}
 	*p = '\0';
 	return (c == stop ? s-1 : NULL);
 }
@@ -340,18 +326,16 @@ vinterp(s, stop)
  * assign variable s with value v (for NUMBER or STRING or CHAR types)
  */
 int
-vstring(s,v)
-	char *s;
-	char *v;
+vstring(char *s, char *v)
 {
 	value_t *p;
-	char *expand();
+	char *expand(char *);
 
-	p = vlookup(s); 
+	p = vlookup(s);
 	if (p == 0)
 		return (1);
 	if (p->v_type&NUMBER)
-		vassign(p, atoi(v));
+		vassign(p, (char *)atoi(v));
 	else {
 		if (strcmp(s, "record") == 0)
 			v = expand(v);

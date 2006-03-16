@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucplock.c,v 1.10 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: uucplock.c,v 1.11 2006/03/16 19:32:46 deraadt Exp $	*/
 /*	$NetBSD: uucplock.c,v 1.7 1997/02/11 09:24:08 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)uucplock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: uucplock.c,v 1.10 2003/06/03 02:56:18 millert Exp $";
+static const char rcsid[] = "$OpenBSD: uucplock.c,v 1.11 2006/03/16 19:32:46 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,15 +48,14 @@ static const char rcsid[] = "$OpenBSD: uucplock.c,v 1.10 2003/06/03 02:56:18 mil
 #include <errno.h>
 #include "pathnames.h"
 
-/* 
+/*
  * uucp style locking routines
  * return: 0 - success
- * 	  -1 - failure
+ *	  -1 - failure
  */
 
 int
-uu_lock(ttyname)
-	char *ttyname;
+uu_lock(char *ttyname)
 {
 	int fd, len;
 	char tbuf[sizeof(_PATH_LOCKDIRNAME) + MAXNAMLEN];
@@ -77,7 +76,7 @@ uu_lock(ttyname)
 			return(-1);
 		}
 		len = read(fd, text_pid, sizeof(text_pid)-1);
-		if(len<=0) {
+		if (len<=0) {
 			perror(tbuf);
 			(void)close(fd);
 			fprintf(stderr, "Can't read lock file.\n");
@@ -118,8 +117,7 @@ uu_lock(ttyname)
 }
 
 int
-uu_unlock(ttyname)
-	char *ttyname;
+uu_unlock(char *ttyname)
 {
 	char tbuf[sizeof(_PATH_LOCKDIRNAME) + MAXNAMLEN];
 

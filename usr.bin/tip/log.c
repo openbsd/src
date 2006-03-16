@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.7 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: log.c,v 1.8 2006/03/16 19:32:46 deraadt Exp $	*/
 /*	$NetBSD: log.c,v 1.4 1994/12/24 17:56:28 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: log.c,v 1.7 2003/06/03 02:56:18 millert Exp $";
+static const char rcsid[] = "$OpenBSD: log.c,v 1.8 2006/03/16 19:32:46 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -46,8 +46,7 @@ static	FILE *flog = NULL;
  * Log file maintenance routines
  */
 void
-logent(group, num, acu, message)
-	char *group, *num, *acu, *message;
+logent(char *group, char *num, char *acu, char *message)
 {
 	char *user, *timestamp;
 	struct passwd *pwd;
@@ -81,7 +80,7 @@ logent(group, num, acu, message)
 }
 
 void
-loginit()
+loginit(void)
 {
 	flog = fopen(value(LOG), "a");
 	if (flog == NULL)

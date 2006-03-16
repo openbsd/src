@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.18 2004/05/26 18:17:59 deraadt Exp $	*/
+/*	$OpenBSD: tip.h,v 1.19 2006/03/16 19:32:46 deraadt Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -165,10 +165,10 @@ typedef
 
 typedef
 	struct {
-		char	e_char;		/* char to match on */
-		char	e_flags;	/* experimental, privileged */
-		char	*e_help;	/* help string */
-		int 	(*e_func)();	/* command */
+		char	e_char;			/* char to match on */
+		char	e_flags;		/* experimental, privileged */
+		char	*e_help;		/* help string */
+		int	(*e_func)(int);		/* command */
 	}
 	esctable_t;
 
@@ -269,9 +269,9 @@ extern	int disc;		/* current tty discpline */
 
 extern	char *__progname;	/* program name */
 
-extern	char *ctrl();
-extern	char *vinterp();
-extern	char *connect();
+extern	char *ctrl(char c);
+extern	char *vinterp(char *, int);
+extern	char *con(void);
 
 char	*sname(char *s);
 int	any(int cc, char *p);

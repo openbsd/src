@@ -1,4 +1,4 @@
-/*	$OpenBSD: tipout.c,v 1.12 2005/04/11 19:59:07 deraadt Exp $	*/
+/*	$OpenBSD: tipout.c,v 1.13 2006/03/16 19:32:46 deraadt Exp $	*/
 /*	$NetBSD: tipout.c,v 1.5 1996/12/29 10:34:12 cgd Exp $	*/
 
 /*
@@ -34,10 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)tipout.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tipout.c,v 1.12 2005/04/11 19:59:07 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tipout.c,v 1.13 2006/03/16 19:32:46 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
+
 /*
  * tip
  *
@@ -52,7 +53,7 @@ static	jmp_buf sigbuf;
  *   sent by TIPIN when it wants to posses the remote host
  */
 void
-intIOT()
+intIOT(int signo)
 {
 
 	write(repdes[1],&ccc,1);
@@ -65,7 +66,7 @@ intIOT()
  *  accepts script file name over the pipe and acts accordingly
  */
 void
-intEMT()
+intEMT(int signo)
 {
 	char c, line[256];
 	char *pline = line;
@@ -97,7 +98,6 @@ intEMT()
 void
 intTERM(int signo)
 {
-
 	if (boolean(value(SCRIPT)) && fscript != NULL)
 		fclose(fscript);
 	if (signo && tipin_pid)
@@ -106,7 +106,7 @@ intTERM(int signo)
 }
 
 void
-intSYS()
+intSYS(int signo)
 {
 
 	setboolean(value(BEAUTIFY), !boolean(value(BEAUTIFY)));
@@ -117,7 +117,7 @@ intSYS()
  * ****TIPOUT   TIPOUT****
  */
 void
-tipout()
+tipout(void)
 {
 	char buf[BUFSIZ];
 	char *cp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.10 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.11 2006/03/16 19:32:46 deraadt Exp $	*/
 /*	$NetBSD: hunt.c,v 1.6 1997/04/20 00:02:10 mellon Exp $	*/
 
 /*
@@ -34,26 +34,25 @@
 #if 0
 static char sccsid[] = "@(#)hunt.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: hunt.c,v 1.10 2003/06/03 02:56:18 millert Exp $";
+static const char rcsid[] = "$OpenBSD: hunt.c,v 1.11 2006/03/16 19:32:46 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
 
-extern char *getremote();
+extern char *getremote(char *);
 
 static	jmp_buf deadline;
 static	int deadfl;
 
 void
-dead()
+dead(int signo)
 {
 	deadfl = 1;
 	longjmp(deadline, 1);
 }
 
 long
-hunt(name)
-	char *name;
+hunt(char *name)
 {
 	char *cp;
 	sig_t f;
@@ -81,7 +80,7 @@ hunt(name)
 		if (setjmp(deadline) == 0) {
 			alarm(10);
 			FD = open(cp, (O_RDWR |
-				       (boolean(value(DC)) ? O_NONBLOCK : 0)));
+			    (boolean(value(DC)) ? O_NONBLOCK : 0)));
 		}
 		alarm(0);
 		if (FD < 0) {

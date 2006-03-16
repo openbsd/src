@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.16 2004/11/07 09:48:08 otto Exp $	*/
+/*	$OpenBSD: cu.c,v 1.17 2006/03/16 19:32:46 deraadt Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: cu.c,v 1.16 2004/11/07 09:48:08 otto Exp $";
+static const char rcsid[] = "$OpenBSD: cu.c,v 1.17 2006/03/16 19:32:46 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -46,9 +46,7 @@ void	cuusage();
  * Botch the interface to look like cu's
  */
 void
-cumain(argc, argv)
-	int argc;
-	char *argv[];
+cumain(int argc, char *argv[])
 {
 	int ch, i, parity;
 	long l;
@@ -61,7 +59,7 @@ cumain(argc, argv)
 	BR = DEFBR;
 	parity = 0;	/* none */
 	while ((ch = getopt(argc, argv, "a:l:s:htoe0123456789")) != -1) {
-		switch(ch) {
+		switch (ch) {
 		case 'a':
 			CU = optarg;
 			break;
@@ -174,7 +172,7 @@ cumain(argc, argv)
 		(void)uu_unlock(uucplock);
 		exit(3);
 	}
-	if (connect()) {
+	if (con()) {
 		printf("Connect failed\n");
 		daemon_uid();
 		(void)uu_unlock(uucplock);
@@ -190,7 +188,7 @@ cumain(argc, argv)
 }
 
 void
-cuusage()
+cuusage(void)
 {
 	fprintf(stderr, "usage: cu [-ehot] [-a acu] [-l line] [-s speed] [-#] "
 	    "[phone-number]\n");

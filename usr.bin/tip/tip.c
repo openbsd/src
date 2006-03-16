@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.24 2004/11/07 09:48:08 otto Exp $	*/
+/*	$OpenBSD: tip.c,v 1.25 2006/03/16 19:32:46 deraadt Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tip.c,v 1.24 2004/11/07 09:48:08 otto Exp $";
+static const char rcsid[] = "$OpenBSD: tip.c,v 1.25 2006/03/16 19:32:46 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -59,14 +59,10 @@ void	cleanup(int);
 char	PNbuf[256];			/* This limits the size of a number */
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
-	char *system = NOSTR;
+	char *system = NOSTR, sbuf[12], *p;
 	int i;
-	char *p;
-	char sbuf[12];
 
 	gid = getgid();
 	egid = getegid();
@@ -182,7 +178,7 @@ notnumber:
 		(void)uu_unlock(uucplock);
 		exit(3);
 	}
-	if ((p = connect())) {
+	if ((p = con())) {
 		printf("\07%s\n[EOT]\n", p);
 		daemon_uid();
 		(void)uu_unlock(uucplock);
@@ -222,8 +218,8 @@ cucommon:
 	term.c_cc[VTIME] = 0;
 	defchars = term;
 	term.c_cc[VINTR] = term.c_cc[VQUIT] = term.c_cc[VSUSP] =
-		term.c_cc[VDSUSP] = term.c_cc[VDISCARD] = 
-	 	term.c_cc[VLNEXT] = _POSIX_VDISABLE;
+	    term.c_cc[VDSUSP] = term.c_cc[VDISCARD] =
+	    term.c_cc[VLNEXT] = _POSIX_VDISABLE;
 	raw();
 
 	pipe(fildes); pipe(repdes);
@@ -273,7 +269,7 @@ cleanup(int signo)
 static int uidswapped;
 
 void
-user_uid()
+user_uid(void)
 {
 	if (uidswapped == 0) {
 		seteuid(uid);
@@ -282,7 +278,7 @@ user_uid()
 }
 
 void
-daemon_uid()
+daemon_uid(void)
 {
 
 	if (uidswapped) {
@@ -292,7 +288,7 @@ daemon_uid()
 }
 
 void
-shell_uid()
+shell_uid(void)
 {
 	setegid(gid);
 	seteuid(uid);
@@ -302,7 +298,7 @@ shell_uid()
  * put the controlling keyboard into raw mode
  */
 void
-raw()
+raw(void)
 {
 	tcsetattr(0, TCSADRAIN, &term);
 }
@@ -312,7 +308,7 @@ raw()
  * return keyboard to normal mode
  */
 void
-unraw()
+unraw(void)
 {
 	if (gotdefterm)
 		tcsetattr(0, TCSADRAIN, &defterm);
@@ -326,10 +322,7 @@ static	jmp_buf promptbuf;
  *  normal erase and kill characters.
  */
 int
-prompt(s, p, sz)
-	char *s;
-	char *p;
-	size_t sz;
+prompt(char *s, char *p, size_t sz)
 {
 	int c;
 	char *b = p;
@@ -355,7 +348,7 @@ prompt(s, p, sz)
  * Interrupt service routine during prompting
  */
 void
-intprompt()
+intprompt(void)
 {
 
 	(void)signal(SIGINT, SIG_IGN);
@@ -368,7 +361,7 @@ intprompt()
  * ****TIPIN   TIPIN****
  */
 void
-tipin()
+tipin(void)
 {
 	char bol = 1;
 	int gch;
@@ -423,7 +416,7 @@ extern esctable_t etable[];
  *  called on recognition of ``escapec'' at the beginning of a line
  */
 int
-escape()
+escape(void)
 {
 	int gch;
 	esctable_t *p;
@@ -446,9 +439,7 @@ escape()
 }
 
 int
-any(cc, p)
-	int cc;
-	char *p;
+any(int cc, char *p)
 {
 	char c = cc;
 	while (p && *p)
@@ -458,8 +449,7 @@ any(cc, p)
 }
 
 int
-size(s)
-	char *s;
+size(char *s)
 {
 	int i = 0;
 
@@ -469,8 +459,7 @@ size(s)
 }
 
 char *
-interp(s)
-	char *s;
+interp(char *s)
 {
 	static char buf[256];
 	char *p = buf, c, *q;
@@ -495,8 +484,7 @@ interp(s)
 }
 
 char *
-ctrl(c)
-	char c;
+ctrl(char c)
 {
 	static char s[3];
 
@@ -515,8 +503,7 @@ ctrl(c)
  * Help command
  */
 void
-help(c)
-	char c;
+help(char c)
 {
 	esctable_t *p;
 
@@ -534,8 +521,7 @@ help(c)
  * Set up the "remote" tty's state
  */
 int
-ttysetup(speed)
-	int speed;
+ttysetup(int speed)
 {
 	struct termios	cntrl;
 
@@ -547,7 +533,7 @@ ttysetup(speed)
 	if (boolean(value(DC)))
 		cntrl.c_cflag |= CLOCAL;
 	if (boolean(value(HARDWAREFLOW)))
-		cntrl.c_cflag |= CRTSCTS;	
+		cntrl.c_cflag |= CRTSCTS;
 	cntrl.c_iflag &= ~(ISTRIP|ICRNL);
 	cntrl.c_oflag &= ~OPOST;
 	cntrl.c_lflag &= ~(ICANON|ISIG|IEXTEN|ECHO);
@@ -566,10 +552,7 @@ static char partab[0200];
  * with the right parity and output it.
  */
 void
-parwrite(fd, buf, n)
-	int fd;
-	char *buf;
-	int n;
+parwrite(int fd, char *buf, int n)
 {
 	int i;
 	char *bp;
@@ -592,8 +575,7 @@ parwrite(fd, buf, n)
  * Build a parity table with appropriate high-order bit.
  */
 void
-setparity(defparity)
-	char *defparity;
+setparity(char *defparity)
 {
 	int i, flip, clr, set;
 	char *parity;
