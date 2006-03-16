@@ -1,4 +1,4 @@
-/*	$OpenBSD: tpms.c,v 1.3 2005/12/22 13:47:31 xsa Exp $	*/
+/*	$OpenBSD: tpms.c,v 1.4 2006/03/16 06:57:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -528,7 +528,7 @@ reorder_sample(signed char *to, signed char *from)
 		to[i + 16] = from[5 * i + 42];
 #if 0
 		/* 
-		 * XXX This seems to introduce random ventical jumps, so
+		 * XXX This seems to introduce random vertical jumps, so
 		 * we ignore these sensors until we figure out their meaning.
 		 */
 		if (i < 2)
