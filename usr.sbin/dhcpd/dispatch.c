@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.16 2005/01/31 18:27:38 millert Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.17 2006/03/16 15:44:40 claudio Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -378,7 +378,7 @@ got_one(struct protocol *l)
 	} u;
 	struct interface_info *ip = l->local;
 
-	if ((result = receive_packet (ip, u.packbuf, sizeof u,
+	if ((result = receive_packet(ip, u.packbuf, sizeof u,
 	    &from, &hfrom)) == -1) {
 		warning("receive_packet failed on %s: %s", ip->name,
 		    strerror(errno));
