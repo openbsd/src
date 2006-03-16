@@ -1,4 +1,4 @@
-/*	$OpenBSD: odsyntax.c,v 1.13 2003/06/12 20:58:09 deraadt Exp $	*/
+/*	$OpenBSD: odsyntax.c,v 1.14 2006/03/16 01:23:59 deraadt Exp $	*/
 /*	$NetBSD: odsyntax.c,v 1.15 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*-
@@ -32,7 +32,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)odsyntax.c	5.4 (Berkeley) 3/8/91";*/
-static char rcsid[] = "$OpenBSD: odsyntax.c,v 1.13 2003/06/12 20:58:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: odsyntax.c,v 1.14 2006/03/16 01:23:59 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -183,7 +183,8 @@ oldsyntax(int argc, char ***argvp)
 			warnx("od(1) has been deprecated for hexdump(1).");
 			if (ch != '?')
 				warnx(
-"hexdump(1) compatibility doesn't support the -%c option%s\n",
+				    "hexdump(1) compatibility doesn't"
+				    " support the -%c option%s",
 				    ch, ch == 's' ? "; see strings(1)." : ".");
 			oldusage();
 		}
@@ -303,8 +304,8 @@ oldusage(void)
 {
 	extern char *__progname;
 	fprintf(stderr, "usage: %s [-aBbcDdeFfHhIiLlOovXx] [-j skip] "
-			"[-N length] [-t type_string] "
-			"[[+]offset[.][Bb]] [file ...]\n", __progname);
+	    "[-N length] [-t type_string]\n"
+	    "          [[+]offset[.][Bb]] [file ...]\n", __progname);
 	exit(1);
 }
 
