@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.8 2006/03/08 03:33:21 uwe Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.9 2006/03/16 02:55:52 dlg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -94,18 +94,6 @@ const struct {
 	{ CPUIDECX_SSE3, "SSE3" }
 };
 
-const struct {
-	u_int32_t mask;
-	const char * name;
-} amd_pn_flags[] = {
-	{ 0x01,		"TS"},
-	{ 0x02,		"FID"},
-	{ 0x04,		"VID"},
-	{ 0x08,		"TTP"},
-	{ 0x10,		"TM"},
-	{ 0x20,		"STC"}
-};
-
 int
 cpu_amd64speed(int *freq)
 {
@@ -185,12 +173,6 @@ identifycpu(struct cpu_info *ci)
 #ifndef MULTIPROCESSOR
 	if (pnfeatset > 0x80000007) {
 		CPUID(0x80000007, dummy, dummy, dummy, pnfeatset);	
-		printf("%s: AMD Powernow:", ci->ci_dev->dv_xname);
-		for (i = 0; i < 6; i++) {
-			if (pnfeatset & amd_pn_flags[i].mask)
-				printf(" %s", amd_pn_flags[i].name);
-		}
-		printf("\n");
 		
 		if (pnfeatset & 0x06) {
 			if ((ci->ci_signature & 0xF00) == 0xf00)

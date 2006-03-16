@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.346 2006/03/15 21:03:38 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.347 2006/03/16 02:55:52 dlg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1403,11 +1403,6 @@ amd_family5_setup(struct cpu_info *ci)
 	}
 }
 
-struct amd_pn_flag {
-	int mask;
-	const char *name;
-};
-
 void
 amd_family6_setup(struct cpu_info *ci)
 {
@@ -1416,16 +1411,7 @@ amd_family6_setup(struct cpu_info *ci)
 	extern void sse2_pagezero(void *, size_t);
 	extern void i686_pagezero(void *, size_t);
 #if !defined(MULTIPROCESSOR)
-	static struct amd_pn_flag amd_pn_flags[] = {
-	    {0x01, "TS"},
-	    {0x02, "FID"},
-	    {0x04, "VID"},
-	    {0x08, "TTP"},
-	    {0x10, "TM"},
-	    {0x20, "STC"}
-	};
 	u_int regs[4];
-	int i;
 #endif
 
 	if (cpu_feature & CPUID_SSE2)
@@ -1436,14 +1422,7 @@ amd_family6_setup(struct cpu_info *ci)
 	cpuid(0x80000000, regs);
 	if (regs[0] > 0x80000007) {
 		cpuid(0x80000007, regs);
-		printf("%s: AMD Powernow:", ci->ci_dev.dv_xname);
-		for (i = 0; i < 6; i++) {
-			if (regs[3] & amd_pn_flags[i].mask)
-				printf(" %s", amd_pn_flags[i].name);
-		}
-		printf("\n");
 
-#if !defined(MULTIPROCESSOR)
 		if (regs[3] & 0x06) {
 			switch(ci->ci_signature & 0xF00) {
 			case 0x600:
@@ -1454,7 +1433,6 @@ amd_family6_setup(struct cpu_info *ci)
 			break;
 			}
 		}
-#endif 
 	}
 #endif 
 #endif
