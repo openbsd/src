@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.347 2006/03/16 02:55:52 dlg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.348 2006/03/16 22:21:39 dim Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -250,7 +250,7 @@ struct vm_map *phys_map = NULL;
 
 int kbd_reset;
 int p4_model;
-int p3_step;
+int p3_early;
 int setperf_prio = 0;		/* for concurrent handlers */
 
 void (*delay_func)(int) = i8254_delay;
@@ -1505,7 +1505,7 @@ intel686_cpu_setup(struct cpu_info *ci)
 	}
 
 #if !defined(SMALL_KERNEL) && defined(I686_CPU)
-	p3_step = step;
+	p3_early = (model == 8 && step == 1) ? 1 : 0;
 	update_cpuspeed = p3_update_cpuspeed;
 #endif
 }
@@ -2018,7 +2018,7 @@ p3_update_cpuspeed(void)
 
 	mult = (msr >> 22) & 0xf;
 	mult = mult_code[mult];
-	if (p3_step > 1)
+	if (!p3_early)
 		mult += ((msr >> 27) & 0x1) * 40;
 
 	pentium_mhz = (bus * mult) / 10;
