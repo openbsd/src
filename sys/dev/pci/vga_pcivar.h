@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pcivar.h,v 1.5 2002/07/12 20:17:03 mickey Exp $ */
+/* $OpenBSD: vga_pcivar.h,v 1.6 2006/03/16 21:32:34 matthieu Exp $ */
 /* $NetBSD: vga_pcivar.h,v 1.1 1998/03/22 15:16:19 drochner Exp $ */
 
 /*
@@ -67,7 +67,7 @@ struct vga_pci_softc {
 #if 0
 	struct vga_config *sc_vc;	/* VGA configuration */
 #endif
-
+#ifdef PCIAGP
 	/* agp stuff */
 	bus_space_tag_t sc_bt, sc_memt;
 	bus_space_handle_t sc_bh;
@@ -91,8 +91,10 @@ struct vga_pci_softc {
 	u_int32_t		sc_allocated;	/* amount allocated */
 	enum agp_acquire_state	sc_state;
 	struct agp_memory_list	sc_memory;	/* list of allocated memory */
+#endif
 };
 
+#ifdef PCIAGP
 struct agp_product {
 	int	ap_vendor;
 	int	ap_product;
@@ -101,6 +103,11 @@ struct agp_product {
 };
 /* MD-defined */
 extern const struct agp_product agp_products[];
+
+void agp_attach(struct device *, struct device *, void *);
+paddr_t agp_mmap(void *, off_t, int);
+int agp_ioctl(void *, u_long, caddr_t, int, struct proc *);
+#endif /* PCIAGP */
 
 int vga_pci_cnattach(bus_space_tag_t, bus_space_tag_t,
 			  pci_chipset_tag_t, int, int, int);
