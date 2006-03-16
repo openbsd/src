@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.62 2006/03/16 04:04:57 ray Exp $	*/
+/*	$OpenBSD: co.c,v 1.63 2006/03/16 17:11:30 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -336,8 +336,9 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 
 	if (flags & CO_LOCK) {
 		lcount++;
-		if (lcount > 1)
-			cvs_log(LP_WARN, "You now have %d locks.", lcount);
+		if ((verbose == 1) && (lcount > 1))
+			cvs_log(LP_WARN, "%s: warning: You now have %d locks.",
+			    file->rf_path, lcount);
 	}
 
 	if ((pipeout == 0) && (stat(dst, &st) == 0) && !(flags & FORCE)) {
