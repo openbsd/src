@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.76 2006/03/05 02:35:38 brad Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.77 2006/03/16 09:30:54 claudio Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -200,7 +200,7 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	IFQ_SET_READY(&ifp->if_snd);
 	if ((flags & TUN_LAYER2) == 0) {
 		tp->tun_flags &= ~TUN_LAYER2;
-		ifp->if_mtu = TUNMTU;
+		ifp->if_mtu = ETHERMTU;
 		ifp->if_flags = IFF_POINTOPOINT;
 		ifp->if_type = IFT_TUNNEL;
 		ifp->if_hdrlen = sizeof(u_int32_t);
@@ -828,6 +828,14 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	if (m == NULL)
 		return (ENOBUFS);
 	mlen = MHLEN;
+	if (uio->uio_resid >= MINCLSIZE) {
+		MCLGET(m, M_DONTWAIT);
+		if (!(m->m_flags & M_EXT)) {
+			m_freem(m);
+			return (ENOBUFS);
+		}
+		mlen = MCLBYTES;
+	}
 
 	top = NULL;
 	mp = &top;
@@ -851,6 +859,14 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 				break;
 			}
 			mlen = MLEN;
+			if (uio->uio_resid >= MINCLSIZE) {
+				MCLGET(m, M_DONTWAIT);
+				if (!(m->m_flags & M_EXT)) {
+					error = ENOBUFS;
+					break;
+				}
+				mlen = MCLBYTES;
+			}
 		}
 	}
 	if (error) {
