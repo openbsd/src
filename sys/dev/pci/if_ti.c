@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.76 2006/02/16 20:45:37 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.77 2006/03/16 02:23:53 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -195,7 +195,7 @@ const struct pci_matchid ti_devices[] = {
 	{ PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENICT },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C985 },
 	{ PCI_VENDOR_SGI, PCI_PRODUCT_SGI_TIGON },
-	{ PCI_VENDOR_DEC, PCI_PRODUCT_DEC_PN9000SX },
+	{ PCI_VENDOR_DEC, PCI_PRODUCT_DEC_PN9000SX }
 };
 
 /*
@@ -215,11 +215,10 @@ ti_eeprom_putbyte(struct ti_softc *sc, int byte)
 	 * Feed in each bit and strobe the clock.
 	 */
 	for (i = 0x80; i; i >>= 1) {
-		if (byte & i) {
+		if (byte & i)
 			TI_SETBIT(sc, TI_MISC_LOCAL_CTL, TI_MLC_EE_DOUT);
-		} else {
+		else
 			TI_CLRBIT(sc, TI_MISC_LOCAL_CTL, TI_MLC_EE_DOUT);
-		}
 		DELAY(1);
 		TI_SETBIT(sc, TI_MISC_LOCAL_CTL, TI_MLC_EE_CLK);
 		DELAY(1);
@@ -1242,13 +1241,8 @@ ti_chipinit(struct ti_softc *sc)
 	sc->ti_linkstat = TI_EV_CODE_LINK_DOWN;
 
 	/* Set endianness before we access any non-PCI registers. */
-#if 0 && BYTE_ORDER == BIG_ENDIAN
-	CSR_WRITE_4(sc, TI_MISC_HOST_CTL,
-	    TI_MHC_BIGENDIAN_INIT | (TI_MHC_BIGENDIAN_INIT << 24));
-#else
 	CSR_WRITE_4(sc, TI_MISC_HOST_CTL,
 	    TI_MHC_LITTLEENDIAN_INIT | (TI_MHC_LITTLEENDIAN_INIT << 24));
-#endif
 
 	/* Check the ROM failed bit to see if self-tests passed. */
 	if (CSR_READ_4(sc, TI_CPU_STATE) & TI_CPUSTATE_ROMFAIL) {
@@ -1285,9 +1279,8 @@ ti_chipinit(struct ti_softc *sc)
 
 	/* Set up the PCI state register. */
 	CSR_WRITE_4(sc, TI_PCI_STATE, TI_PCI_READ_CMD|TI_PCI_WRITE_CMD);
-	if (sc->ti_hwrev == TI_HWREV_TIGON_II) {
+	if (sc->ti_hwrev == TI_HWREV_TIGON_II)
 		TI_SETBIT(sc, TI_PCI_STATE, TI_PCISTATE_USE_MEM_RD_MULT);
-	}
 
 	/* Clear the read/write max DMA parameters. */
 	TI_CLRBIT(sc, TI_PCI_STATE, (TI_PCISTATE_WRITE_MAXDMA|
@@ -1336,16 +1329,9 @@ ti_chipinit(struct ti_softc *sc)
 	TI_SETBIT(sc, TI_PCI_STATE, TI_PCISTATE_MINDMA);
 
 	/* Configure DMA variables. */
-#if BYTE_ORDER == BIG_ENDIAN
-	CSR_WRITE_4(sc, TI_GCR_OPMODE, TI_OPMODE_BYTESWAP_BD |
-	    TI_OPMODE_BYTESWAP_DATA | TI_OPMODE_WORDSWAP_BD |
+	CSR_WRITE_4(sc, TI_GCR_OPMODE, TI_DMA_SWAP_OPTIONS |
 	    TI_OPMODE_WARN_ENB | TI_OPMODE_FATAL_ENB |
 	    TI_OPMODE_DONT_FRAG_JUMBO);
-#else
-	CSR_WRITE_4(sc, TI_GCR_OPMODE, TI_OPMODE_BYTESWAP_DATA|
-	    TI_OPMODE_WORDSWAP_BD|TI_OPMODE_DONT_FRAG_JUMBO|
-	    TI_OPMODE_WARN_ENB|TI_OPMODE_FATAL_ENB);
-#endif
 
 	/* Recommended settings from Tigon manual. */
 	CSR_WRITE_4(sc, TI_GCR_DMA_WRITECFG, TI_DMA_STATE_THRESH_8W);
@@ -2470,17 +2456,12 @@ ti_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
+		if ((ifp->if_flags & IFF_RUNNING) == 0)
+			ti_init(sc);
 #ifdef INET
-		case AF_INET:
-			ti_init(sc);
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-			break;
 #endif /* INET */
-		default:
-			ti_init(sc);
-			break;
-		}
 		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
@@ -2508,12 +2489,13 @@ ti_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			    sc->ti_if_flags & IFF_PROMISC) {
 				TI_DO_CMD(TI_CMD_SET_PROMISC_MODE,
 				    TI_CMD_CODE_PROMISC_DIS, 0);
-			} else
-				ti_init(sc);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING) {
-				ti_stop(sc);
+			} else {
+				if ((ifp->if_flags & IFF_RUNNING) == 0)
+					ti_init(sc);
 			}
+		} else {
+			if (ifp->if_flags & IFF_RUNNING)
+				ti_stop(sc);
 		}
 		sc->ti_if_flags = ifp->if_flags;
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tireg.h,v 1.21 2006/01/16 01:47:39 brad Exp $	*/
+/*	$OpenBSD: if_tireg.h,v 1.22 2006/03/16 02:23:53 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -313,6 +313,15 @@
 #define TI_OPMODE_NO_TX_INTRS		0x00002000
 #define TI_OPMODE_NO_RX_INTRS		0x00004000
 #define TI_OPMODE_FATAL_ENB		0x40000000 /* not yet implemented */
+
+#if BYTE_ORDER == BIG_ENDIAN
+#define TI_DMA_SWAP_OPTIONS \
+	TI_OPMODE_BYTESWAP_DATA| \
+	TI_OPMODE_BYTESWAP_BD|TI_OPMODE_WORDSWAP_BD
+#else
+#define TI_DMA_SWAP_OPTIONS \
+	TI_OPMODE_BYTESWAP_DATA
+#endif
 
 /*
  * DMA configuration thresholds.
