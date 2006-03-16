@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.136 2006/03/10 21:39:01 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.137 2006/03/16 02:40:16 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3048,8 +3048,11 @@ bge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 		ifmr->ifm_status = IFM_AVALID;
 		ifmr->ifm_active = IFM_ETHER;
 		if (CSR_READ_4(sc, BGE_MAC_STS) &
-		    BGE_MACSTAT_TBI_PCS_SYNCHED)
+		    BGE_MACSTAT_TBI_PCS_SYNCHED) {
 			ifmr->ifm_status |= IFM_ACTIVE;
+		} else {
+			ifmr->ifm_active |= IFM_NONE;
+		}
 		ifmr->ifm_active |= IFM_1000_SX;
 		if (CSR_READ_4(sc, BGE_MAC_MODE) & BGE_MACMODE_HALF_DUPLEX)
 			ifmr->ifm_active |= IFM_HDX;
