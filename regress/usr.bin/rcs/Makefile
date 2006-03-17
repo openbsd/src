@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2006/03/16 03:54:43 ray Exp $
+#	$OpenBSD: Makefile,v 1.7 2006/03/17 14:06:00 xsa Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -11,18 +11,39 @@ RCSMERGE?=	rcsmerge
 
 CLEANFILES=	blah.c blah.c,v test test,v RCS
 
-# XXX - These may need to be done in order.  (At least start with
-#	test-ci-initial.)
-REGRESS_TARGETS= test-ci-initial test-ci-mflag test-ci-lflag
-REGRESS_TARGETS+=test-ci-rflag test-co-lflag test-ci-rev test-co-perm
-REGRESS_TARGETS+=test-co-perm2 test-ci-perm test-ci-perm2
-REGRESS_TARGETS+=test-ci-dinvalid test-ci-dold test-ci-wflag
-REGRESS_TARGETS+=test-rcsdiff-uflag
-REGRESS_TARGETS+=test-rcsdiff-rflag test-rcs-mflag test-rcs-mflag2
-REGRESS_TARGETS+=test-co-RCSINIT test-ci-nflag test-ci-Nflag
-REGRESS_TARGETS+=test-ci-sflag test-co-lflag2 test-rcsdiff
-REGRESS_TARGETS+=test-rcsmerge
-REGRESS_TARGETS+=test-ci-dflag test-ci-xflag test-comma
+# XXX - These may need to be done in order.
+#	(At least start with ci-initial.)
+LTESTS= ci-initial \
+	ci-mflag \
+	ci-lflag \
+	ci-rflag \
+	co-lflag \
+	ci-rev \
+	co-perm \
+	co-perm2 \
+	ci-perm \
+	ci-perm2 \
+	ci-dinvalid \
+	ci-dold \
+	ci-wflag \
+	rcsdiff-uflag \
+	rcsdiff-rflag \
+	rcs-mflag \
+	rcs-mflag2 \
+	co-RCSINIT \
+	ci-nflag \
+	ci-Nflag \
+	ci-sflag \
+	co-lflag2 \
+	rcsdiff \
+	rcsmerge \
+	ci-dflag \
+	ci-xflag \
+	comma
+
+.for t in ${LTESTS}
+REGRESS_TARGETS+=test-${t}
+.endfor
 
 test-ci-initial: clean
 	@echo 'this is a test file' > test
