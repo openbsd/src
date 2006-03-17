@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.121 2006/03/16 04:04:57 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.122 2006/03/17 07:32:03 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -864,16 +864,15 @@ static int
 checkin_keywordscan(char *data, RCSNUM **rev, time_t *date, char **author,
     char **state)
 {
-	size_t len;
-	u_int i, j, found, end;
+	size_t end;
+	u_int j, found;
 	char *c, *kwstr, *start, buf[128];
 
 	c = start = kwstr = NULL;
 
-	i =  found =  0;
+	found = 0;
 
-	len = strlen(data);
-	for (c = data; *c != '\0' && i < len; c++) {
+	for (c = data; *c != '\0'; c++) {
 		if (*c == '$') {
 			start = c;
 			c++;
