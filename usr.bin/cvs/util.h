@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.2 2006/03/17 08:51:45 xsa Exp $	*/
+/*	$OpenBSD: util.h,v 1.3 2006/03/17 13:40:41 niallo Exp $	*/
 /*
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -50,10 +50,10 @@ void	  cvs_freeargv(char **, int);
 void	  cvs_write_tagfile(char *, char *, int);
 void	  cvs_parse_tagfile(char **, char **, int *);
 size_t	  cvs_path_cat(const char *, const char *, char *, size_t);
+time_t	  cvs_hack_time(time_t, int);
 
 #endif	/* !RCSPROG */
 
-time_t	  cvs_hack_time(time_t, int);
 
 struct cvs_line {
 	char			*l_line;
