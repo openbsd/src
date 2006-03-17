@@ -1,6 +1,8 @@
-/*	$OpenBSD: util.c,v 1.70 2006/03/15 19:59:36 niallo Exp $	*/
+/*	$OpenBSD: util.c,v 1.71 2006/03/17 08:51:45 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
+ * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
+ * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1044,3 +1046,28 @@ cvs_yesno(void)
 	return (ret);
 }
 
+/*
+ * cvs_strsplit()
+ *
+ * Split a string <str> of <sep>-separated values and allocate
+ * an argument vector for the values found.
+ */
+char **
+cvs_strsplit(char *str, const char *sep)
+{
+	char **argv, **nargv;
+	char *cp, *p;
+	int i = 0;
+
+	cp = xstrdup(str);
+	argv = (char **)xmalloc((i+1) * sizeof(char *));
+
+	while ((p = strsep(&cp, sep)) != NULL) {
+		argv[i++] = p;
+		nargv = (char **)xrealloc((void *)argv, (i+1) * sizeof(char *));
+		argv = nargv;
+	}
+	argv[i] = NULL;
+
+	return (argv);
+}

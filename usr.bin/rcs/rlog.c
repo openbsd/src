@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.29 2006/03/16 04:04:57 ray Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.30 2006/03/17 08:51:45 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -32,7 +32,6 @@
 
 static int	  rlog_file(const char *, const char *);
 static void	  rlog_rev_print(struct rcs_delta *);
-static char	**rlog_strsplit(char *, const char *);
 
 #define REVSEP		"----------------------------"
 #define REVEND \
@@ -236,7 +235,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 			/* if locker is empty, no need to go further. */
 			if (rdp->rd_locker == NULL)
 				return;
-			largv = rlog_strsplit(llist, ",");
+			largv = cvs_strsplit(llist, ",");
 			for (i = 0; largv[i] != NULL; i++) {
 				if (strcmp(rdp->rd_locker, largv[i]) == 0) {
 					found++;
@@ -248,7 +247,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 	}
 	/* -sstates */
 	if (slist != NULL) {
-		sargv = rlog_strsplit(slist, ",");
+		sargv = cvs_strsplit(slist, ",");
 		for (i = 0; sargv[i] != NULL; i++) {
 			if (strcmp(rdp->rd_state, sargv[i]) == 0) {
 				found++;
@@ -260,7 +259,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 	/* -w[logins] */
 	if (wflag == 1) {
 		if (wlist != NULL) {
-			wargv = rlog_strsplit(wlist, ",");
+			wargv = cvs_strsplit(wlist, ",");
 			for (i = 0; wargv[i] != NULL; i++) {
 				if (strcmp(rdp->rd_author, wargv[i]) == 0) {
 					found++;
@@ -300,30 +299,4 @@ rlog_rev_print(struct rcs_delta *rdp)
 	    rdp->rd_date.tm_min, rdp->rd_date.tm_sec,
 	    rdp->rd_author, rdp->rd_state);
 	printf("%s", rdp->rd_log);
-}
-
-/*
- * rlog_strsplit()
- *
- * Split a string <str> of <sep>-separated values and allocate
- * an argument vector for the values found.
- */
-static char **
-rlog_strsplit(char *str, const char *sep)
-{
-	char **argv, **nargv;
-	char *cp, *p;
-	int i = 0;
-
-	cp = xstrdup(str);
-	argv = (char **)xmalloc((i+1) * sizeof(char *));
-
-	while ((p = strsep(&cp, sep)) != NULL) {
-		argv[i++] = p;
-		nargv = (char **)xrealloc((void *)argv, (i+1) * sizeof(char *));
-		argv = nargv;
-	}
-	argv[i] = NULL;
-
-	return (argv);
 }

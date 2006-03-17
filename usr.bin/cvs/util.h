@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.1 2006/03/15 19:59:36 niallo Exp $	*/
+/*	$OpenBSD: util.h,v 1.2 2006/03/17 08:51:45 xsa Exp $	*/
 /*
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -75,5 +75,6 @@ BUF			*cvs_patchfile(const char *, const char *,
 struct cvs_lines	*cvs_splitlines(const char *);
 void			cvs_freelines(struct cvs_lines *);
 int			cvs_yesno(void);
+char			**cvs_strsplit(char *, const char *);
 
-#endif
+#endif	/* UTIL_H */
