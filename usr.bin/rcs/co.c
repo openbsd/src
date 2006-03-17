@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.64 2006/03/16 23:53:27 niallo Exp $	*/
+/*	$OpenBSD: co.c,v 1.65 2006/03/17 13:09:26 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -28,7 +28,7 @@
 
 #include "rcsprog.h"
 
-#define CO_OPTSTRING	"d:f::k:l::M::p::q::r::s:Tu::Vw::x:z:"
+#define CO_OPTSTRING	"d:f::I::k:l::M::p::q::r::s:Tu::Vw::x:z:"
 
 static void	checkout_err_nobranch(RCSFILE *, const char *, const char *,
     const char *, int);
@@ -61,6 +61,11 @@ checkout_main(int argc, char **argv)
 			rcs_set_rev(rcs_optarg, &rev);
 			flags |= FORCE;
 			break;
+		case 'I':
+			rcs_set_rev(rcs_optarg, &rev);
+			flags |= INTERACTIVE;
+			break;
+
 		case 'k':
 			kflag = rcs_kflag_get(rcs_optarg);
 			if (RCS_KWEXP_INVAL(kflag)) {
