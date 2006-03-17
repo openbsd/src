@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.62 2006/03/06 10:45:57 djm Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.63 2006/03/17 16:11:06 otto Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -2433,7 +2433,7 @@ pr_icmph(struct icmp6_hdr *icp, u_char *end)
 			break;
 		}
 		if (options & F_VERBOSE) {
-			if (ni->ni_code > sizeof(nircode) / sizeof(nircode[0]))
+			if (ni->ni_code >= sizeof(nircode) / sizeof(nircode[0]))
 				printf(", invalid");
 			else
 				printf(", %s", nircode[ni->ni_code]);
