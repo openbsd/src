@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.81 2006/03/05 13:08:05 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.82 2006/03/17 20:44:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -27,22 +27,15 @@ require 5.008_000;
 # It does provide base methods for stuff under it, though.
 package OpenBSD::PackingElement;
 our %keyword;
-our %oldkeyword;
 
 sub Factory
 {
 	local $_ = shift;
-	if (m/^\@(\S+)\s*/) {
-		my $cmd = $1;
-		my $args = $';
-
-		if (defined $keyword{$cmd}) {
-			$keyword{$cmd}->add(@_, $args);
-		} elsif (defined $oldkeyword{$cmd}) {
-			$oldkeyword{$cmd}->add(@_, $args);
-			print STDERR "Warning: obsolete construct: \@$cmd $args\n";
+	if (m/^\@(\S+)\s*(.*)$/) {
+		if (defined $keyword{$1}) {
+			$keyword{$1}->add(@_, $2);
 		} else {
-			print STDERR "Unknown element: \@$cmd $args\n";
+			print STDERR "Unknown element: $_\n";
 			exit(1);
 		}
 	} else {
@@ -54,11 +47,6 @@ sub setKeyword
 {
 	my ($class, $k) = @_;
 	$keyword{$k} = $class;
-}
-
-sub setOldKeyword {
-	my ($class, $k) = @_;
-	$oldkeyword{$k} = $class;
 }
 
 sub category() { 'items' }
