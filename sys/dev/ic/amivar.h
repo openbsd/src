@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.38 2006/03/17 10:49:12 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.39 2006/03/17 13:34:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -64,6 +64,8 @@ struct ami_ccb {
 		AMI_CCB_OUT
 	}			ccb_dir;
 	bus_dmamap_t		ccb_dmamap;
+	int			(*ccb_done)(struct ami_softc *sc,
+				    struct ami_ccb *ccb);
 
 	volatile int		ccb_wakeup;
 

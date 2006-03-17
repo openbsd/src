@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.120 2006/03/17 10:49:12 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.121 2006/03/17 13:34:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -130,6 +130,7 @@ int 		ami_cmd(struct ami_ccb *, int, int);
 int		ami_start(struct ami_softc *, struct ami_ccb *);
 int		ami_poll(struct ami_softc *, struct ami_ccb *);
 int		ami_done(struct ami_softc *, int);
+int		ami_done_ccb(struct ami_softc *, struct ami_ccb *);
 void		ami_copy_internal_data(struct scsi_xfer *, void *, size_t);
 int		ami_inquire(struct ami_softc *, u_int8_t);
 
@@ -1112,7 +1113,6 @@ int
 ami_done(struct ami_softc *sc, int idx)
 {
 	struct ami_ccb *ccb = &sc->sc_ccbs[idx - 1];
-	struct scsi_xfer *xs = ccb->ccb_xs;
 	int s;
 
 	AMI_DPRINTF(AMI_D_CMD, ("done(%d) ", ccb->ccb_cmd.acc_id));
@@ -1126,6 +1126,18 @@ ami_done(struct ami_softc *sc, int idx)
 	s = splbio();
 	ccb->ccb_state = AMI_CCB_READY;
 	TAILQ_REMOVE(&sc->sc_ccbq, ccb, ccb_link);
+	splx(s);
+
+	ccb->ccb_done(sc, ccb);
+
+	return (0);
+}
+
+int
+ami_done_ccb(struct ami_softc *sc, struct ami_ccb *ccb)
+{
+	struct scsi_xfer *xs = ccb->ccb_xs;
+	int s;
 
 	if (ccb->ccb_data != NULL) {
 		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
@@ -1143,8 +1155,11 @@ ami_done(struct ami_softc *sc, int idx)
 	if (ccb->ccb_wakeup) {
 		ccb->ccb_wakeup = 0;
 		wakeup(ccb);
-	} else
+	} else {
+		s = splbio();
 		ami_put_ccb(ccb);
+		splx(s);
+	}
 
 	if (xs) {
 		timeout_del(&xs->stimeout);
@@ -1153,8 +1168,6 @@ ami_done(struct ami_softc *sc, int idx)
 		AMI_DPRINTF(AMI_D_CMD, ("scsi_done(%d) ", idx));
 		scsi_done(xs);
 	}
-
-	splx(s);
 
 	return (0);
 }
@@ -1229,6 +1242,7 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 	ccb->ccb_len  = xs->datalen;
 	ccb->ccb_data = xs->data;
 	ccb->ccb_dir = (xs->flags & SCSI_DATA_IN) ? AMI_CCB_IN : AMI_CCB_OUT;
+	ccb->ccb_done = ami_done_ccb;
 
 	ccb->ccb_cmd.acc_cmd = AMI_PASSTHRU;
 	ccb->ccb_cmd.acc_passthru.apt_data = ccb->ccb_ptpa;
@@ -1384,6 +1398,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		}
 
 		ccb->ccb_xs = xs;
+		ccb->ccb_done = ami_done_ccb;
 		if (xs->timeout < 30000)
 			xs->timeout = 30000;	/* at least 30sec */
 
@@ -1502,6 +1517,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 	ccb->ccb_len  = xs->datalen;
 	ccb->ccb_data = xs->data;
 	ccb->ccb_dir = (xs->flags & SCSI_DATA_IN) ? AMI_CCB_IN : AMI_CCB_OUT;
+	ccb->ccb_done = ami_done_ccb;
 
 	cmd = &ccb->ccb_cmd;
 	cmd->acc_cmd = (xs->flags & SCSI_DATA_IN) ? AMI_READ : AMI_WRITE;
@@ -1686,6 +1702,7 @@ ami_drv_inq(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, u_int8_t page,
 	ccb->ccb_data = inqbuf;
 	ccb->ccb_len = sizeof(struct scsi_inquiry_data);
 	ccb->ccb_dir = AMI_CCB_IN;
+	ccb->ccb_done = ami_done_ccb;
 
 	ccb->ccb_cmd.acc_cmd = AMI_PASSTHRU;
 	ccb->ccb_cmd.acc_passthru.apt_data = ccb->ccb_ptpa;
@@ -1757,6 +1774,7 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 	}
 
 	ccb->ccb_data = NULL;
+	ccb->ccb_done = ami_done_ccb;
 	ccb->ccb_wakeup = 1;
 	cmd = &ccb->ccb_cmd;
 
