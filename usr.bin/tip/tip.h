@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.20 2006/03/16 21:13:12 moritz Exp $	*/
+/*	$OpenBSD: tip.h,v 1.21 2006/03/17 14:43:06 moritz Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -168,7 +168,7 @@ typedef
 		char	e_char;			/* char to match on */
 		char	e_flags;		/* experimental, privileged */
 		char	*e_help;		/* help string */
-		int	(*e_func)(int);		/* command */
+		void	(*e_func)(int);		/* command */
 	}
 	esctable_t;
 
@@ -269,16 +269,12 @@ extern	int disc;		/* current tty discpline */
 
 extern	char *__progname;	/* program name */
 
-extern	char *ctrl(char);
-extern	char *vinterp(char *, int);
-extern	char *con(void);
-
-char	*sname(char *);
+char	*con(void);
+char	*ctrl(char);
+char	*expand(char *);
+char	*getremote(char *);
 char	*interp(char *);
 int	any(int, char *);
-int	anyof(char *, char *);
-int	args(char *, char **, int);
-int	escape(void);
 int	prompt(char *, char *, size_t);
 int	size(char *);
 int	ttysetup(int);
@@ -286,27 +282,36 @@ int	uu_lock(char *);
 int	uu_unlock(char *);
 int	vstring(char *, char *);
 long	hunt(char *);
+void	chdirectory(int);
+void	cleanup(int);
+void	consh(int);
+void	cu_put(int);
+void	cu_take(int);
 void	cumain(int, char **);
 void	daemon_uid(void);
 void	disconnect(char *);
-void	execute(char *);
-void	hardwareflow(char *);
+void	finish(int);
+void	genbrk(int);
+void	getfl(int);
+void	help(int);
+void	listvariables(int);
 void	logent(char *, char *, char *, char *);
 void	loginit(void);
-void	prtime(char *, time_t);
 void	parwrite(int, char *, int);
+void	pipefile(int);
+void	pipeout(int);
 void	raw(void);
-void	send(int);
+void	sendfile(int);
 void	setparity(char *);
 void	setscript(void);
+void	shell(int);
 void	shell_uid(void);
-void	tandem(char *);
+void	suspend(int);
+void	timeout(int);
 void	tipabort(char *);
-void	tipin(void);
 void	tipout(void);
-void	transfer(char *, int, char *);
-void	transmit(FILE *, char *, char *);
-void	unraw(void);
 void	user_uid(void);
+void	unraw(void);
+void	variable(int);
 void	vinit(void);
 void	vlex(char *);

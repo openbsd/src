@@ -1,4 +1,4 @@
-/*	$OpenBSD: hayes.c,v 1.11 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: hayes.c,v 1.12 2006/03/17 14:43:06 moritz Exp $	*/
 /*	$NetBSD: hayes.c,v 1.6 1997/02/11 09:24:17 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)hayes.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: hayes.c,v 1.11 2003/06/03 02:56:18 millert Exp $";
+static const char rcsid[] = "$OpenBSD: hayes.c,v 1.12 2006/03/17 14:43:06 moritz Exp $";
 #endif /* not lint */
 
 /*
@@ -68,7 +68,7 @@ static const char rcsid[] = "$OpenBSD: hayes.c,v 1.11 2003/06/03 02:56:18 miller
 #define	min(a,b)	((a < b) ? a : b)
 
 static	void sigALRM();
-static	int timeout = 0;
+static	int dialtimeout = 0;
 static	jmp_buf timeoutbuf;
 static 	char gobble();
 static	void error_rep(char c);
@@ -131,13 +131,13 @@ hay_dialer(num, acu)
 	}
 	tcflush(FD, TCIOFLUSH);
 #ifdef ACULOG
-	if (timeout) {
+	if (dialtimeout) {
 		(void)snprintf(line, sizeof line, "%ld second dial timeout",
 			number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "hayes", line);
 	}
 #endif
-	if (timeout)
+	if (dialtimeout)
 		hay_disconnect();	/* insurance */
 	return (connected);
 }
@@ -169,7 +169,7 @@ sigALRM()
 {
 
 	printf("\07timeout waiting for reply\n\r");
-	timeout = 1;
+	dialtimeout = 1;
 	longjmp(timeoutbuf, 1);
 }
 
@@ -182,7 +182,7 @@ gobble(match)
 	int i, status = 0;
 
 	f = signal(SIGALRM, sigALRM);
-	timeout = 0;
+	dialtimeout = 0;
 #ifdef DEBUG
 	printf("\ngobble: waiting for %s\n", match);
 #endif

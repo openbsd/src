@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.7 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: df.c,v 1.8 2006/03/17 14:43:06 moritz Exp $	*/
 /*	$NetBSD: df.c,v 1.4 1995/10/29 00:49:51 pk Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)df.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: df.c,v 1.7 2003/06/03 02:56:18 millert Exp $";
+static const char rcsid[] = "$OpenBSD: df.c,v 1.8 2006/03/17 14:43:06 moritz Exp $";
 #endif /* not lint */
 
 /*
@@ -44,9 +44,9 @@ static const char rcsid[] = "$OpenBSD: df.c,v 1.7 2003/06/03 02:56:18 millert Ex
 #include "tip.h"
 
 static jmp_buf Sjbuf;
-static void timeout();
-static int df_dialer(char *num, char *acu, int df03);
-static void df_disconnect();
+static void alrm_timeout(int);
+static int df_dialer(char *, char *, int);
+static void df_disconnect(void);
 
 int
 df02_dialer(num, acu)
@@ -100,7 +100,7 @@ df_dialer(num, acu, df03)
 			ioctl(f, TIOCMBIS, &st); /* set ST for 1200 baud */
 	}
 #endif
-	signal(SIGALRM, timeout);
+	signal(SIGALRM, alrm_timeout);
 	alarm(5 * strlen(num) + 10);
 	tcflush(f, TCIOFLUSH);
 	write(f, "\001", 1);
@@ -119,25 +119,22 @@ df_dialer(num, acu, df03)
 }
 
 void
-df_disconnect()
+df_disconnect(void)
 {
 	write(FD, "\001", 1);
 	sleep(1);
 	tcflush(FD, TCIOFLUSH);
 }
 
-
 void
 df_abort()
 {
-
 	df_disconnect();
 }
 
-
+/*ARGSUSED*/
 static void
-timeout()
+alrm_timeout(int signo)
 {
-
 	longjmp(Sjbuf, 1);
 }

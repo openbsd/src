@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.6 2006/03/16 19:32:46 deraadt Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.7 2006/03/17 14:43:06 moritz Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.3 1994/12/08 09:30:46 jtc Exp $	*/
 
 /*
@@ -34,14 +34,10 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: cmdtab.c,v 1.6 2006/03/16 19:32:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: cmdtab.c,v 1.7 2006/03/17 14:43:06 moritz Exp $";
 #endif /* not lint */
 
 #include "tip.h"
-
-extern	int shell(int), getfl(int), sendfile(int), chdirectory(int);
-extern	int finish(int), help(int), pipefile(int), pipeout(int), consh(int), variable(int);
-extern	int cu_take(int), cu_put(int), dollar(int), genbrk(int), suspend(int), listvariables(int);
 
 esctable_t etable[] = {
 	{ '!',	NORM,	"shell",			 shell },

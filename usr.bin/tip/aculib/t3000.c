@@ -1,4 +1,4 @@
-/*	$OpenBSD: t3000.c,v 1.12 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: t3000.c,v 1.13 2006/03/17 14:43:06 moritz Exp $	*/
 /*	$NetBSD: t3000.c,v 1.5 1997/02/11 09:24:18 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)t3000.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: t3000.c,v 1.12 2003/06/03 02:56:18 millert Exp $";
+static const char rcsid[] = "$OpenBSD: t3000.c,v 1.13 2006/03/17 14:43:06 moritz Exp $";
 #endif /* not lint */
 
 /*
@@ -49,7 +49,7 @@ static const char rcsid[] = "$OpenBSD: t3000.c,v 1.12 2003/06/03 02:56:18 miller
 #define	MAXRETRY	5
 
 static	void sigALRM();
-static	int timeout = 0;
+static	int dialtimeout = 0;
 static	int connected = 0;
 static	jmp_buf timeoutbuf;
 static	int t3000_sync(), t3000_connect(), t3000_swallow();
@@ -104,13 +104,13 @@ badsynch:
 	t3000_write(FD, "\r", 1);
 	connected = t3000_connect();
 #ifdef ACULOG
-	if (timeout) {
+	if (dialtimeout) {
 		(void)snprintf(line, sizeof line, "%ld second dial timeout",
 			number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "t3000", line);
 	}
 #endif
-	if (timeout)
+	if (dialtimeout)
 		t3000_disconnect();
 	return (connected);
 }
@@ -137,7 +137,7 @@ static void
 sigALRM()
 {
 	printf("\07timeout waiting for reply\n");
-	timeout = 1;
+	dialtimeout = 1;
 	longjmp(timeoutbuf, 1);
 }
 
@@ -149,7 +149,7 @@ t3000_swallow(match)
 	char c;
 
 	f = signal(SIGALRM, sigALRM);
-	timeout = 0;
+	dialtimeout = 0;
 	do {
 		if (*match =='\0') {
 			signal(SIGALRM, f);
@@ -217,7 +217,7 @@ t3000_connect()
 again:
 	nc = 0; nl = sizeof(dialer_buf)-1;
 	bzero(dialer_buf, sizeof(dialer_buf));
-	timeout = 0;
+	dialtimeout = 0;
 	for (nc = 0, nl = sizeof(dialer_buf)-1 ; nl > 0 ; nc++, nl--) {
 		if (setjmp(timeoutbuf))
 			break;

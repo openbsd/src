@@ -1,4 +1,4 @@
-/*	$OpenBSD: tipout.c,v 1.13 2006/03/16 19:32:46 deraadt Exp $	*/
+/*	$OpenBSD: tipout.c,v 1.14 2006/03/17 14:43:06 moritz Exp $	*/
 /*	$NetBSD: tipout.c,v 1.5 1996/12/29 10:34:12 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tipout.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tipout.c,v 1.13 2006/03/16 19:32:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tipout.c,v 1.14 2006/03/17 14:43:06 moritz Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -48,14 +48,18 @@ static const char rcsid[] = "$OpenBSD: tipout.c,v 1.13 2006/03/16 19:32:46 deraa
 
 static	jmp_buf sigbuf;
 
+static void	intIOT(int);
+static void	intEMT(int);
+static void	intTERM(int);
+static void	intSYS(int);
+
 /*
  * TIPOUT wait state routine --
  *   sent by TIPIN when it wants to posses the remote host
  */
-void
+static void
 intIOT(int signo)
 {
-
 	write(repdes[1],&ccc,1);
 	read(fildes[0], &ccc,1);
 	longjmp(sigbuf, 1);
@@ -65,7 +69,7 @@ intIOT(int signo)
  * Scripting command interpreter --
  *  accepts script file name over the pipe and acts accordingly
  */
-void
+static void
 intEMT(int signo)
 {
 	char c, line[256];
@@ -95,7 +99,7 @@ intEMT(int signo)
 	longjmp(sigbuf, 1);
 }
 
-void
+static void
 intTERM(int signo)
 {
 	if (boolean(value(SCRIPT)) && fscript != NULL)
@@ -105,10 +109,9 @@ intTERM(int signo)
 	exit(0);
 }
 
-void
+static void
 intSYS(int signo)
 {
-
 	setboolean(value(BEAUTIFY), !boolean(value(BEAUTIFY)));
 	longjmp(sigbuf, 1);
 }

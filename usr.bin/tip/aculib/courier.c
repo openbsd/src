@@ -1,4 +1,4 @@
-/*	$OpenBSD: courier.c,v 1.13 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: courier.c,v 1.14 2006/03/17 14:43:06 moritz Exp $	*/
 /*	$NetBSD: courier.c,v 1.7 1997/02/11 09:24:16 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)courier.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: courier.c,v 1.13 2003/06/03 02:56:18 millert Exp $";
+static const char rcsid[] = "$OpenBSD: courier.c,v 1.14 2006/03/17 14:43:06 moritz Exp $";
 #endif /* not lint */
 
 /*
@@ -49,7 +49,7 @@ static const char rcsid[] = "$OpenBSD: courier.c,v 1.13 2003/06/03 02:56:18 mill
 
 static	void cour_write(int fd, char *cp, int n);
 static	void sigALRM();
-static	int timeout = 0;
+static	int dialtimeout = 0;
 static	int connected = 0;
 static	jmp_buf timeoutbuf;
 static	int coursync(), cour_connect(), cour_swallow();
@@ -104,13 +104,13 @@ badsynch:
 	cour_write(FD, "\r", 1);
 	connected = cour_connect();
 #ifdef ACULOG
-	if (timeout) {
+	if (dialtimeout) {
 		(void)snprintf(line, sizeof line, "%ld second dial timeout",
 			number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "cour", line);
 	}
 #endif
-	if (timeout)
+	if (dialtimeout)
 		cour_disconnect();
 	return (connected);
 }
@@ -137,7 +137,7 @@ static void
 sigALRM()
 {
 	printf("\07timeout waiting for reply\n");
-	timeout = 1;
+	dialtimeout = 1;
 	longjmp(timeoutbuf, 1);
 }
 
@@ -149,7 +149,7 @@ cour_swallow(match)
 	char c;
 
 	f = signal(SIGALRM, sigALRM);
-	timeout = 0;
+	dialtimeout = 0;
 	do {
 		if (*match =='\0') {
 			signal(SIGALRM, f);
@@ -203,7 +203,7 @@ cour_connect()
 again:
 	nc = 0; nl = sizeof(dialer_buf)-1;
 	bzero(dialer_buf, sizeof(dialer_buf));
-	timeout = 0;
+	dialtimeout = 0;
 	for (nc = 0, nl = sizeof(dialer_buf)-1 ; nl > 0 ; nc++, nl--) {
 		if (setjmp(timeoutbuf))
 			break;

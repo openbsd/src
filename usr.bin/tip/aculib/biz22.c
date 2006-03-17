@@ -1,4 +1,4 @@
-/*	$OpenBSD: biz22.c,v 1.11 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: biz22.c,v 1.12 2006/03/17 14:43:06 moritz Exp $	*/
 /*	$NetBSD: biz22.c,v 1.6 1997/02/11 09:24:11 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)biz22.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: biz22.c,v 1.11 2003/06/03 02:56:18 millert Exp $";
+static const char rcsid[] = "$OpenBSD: biz22.c,v 1.12 2006/03/17 14:43:06 moritz Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -42,7 +42,7 @@ static const char rcsid[] = "$OpenBSD: biz22.c,v 1.11 2003/06/03 02:56:18 miller
 #define DISCONNECT_CMD	"\20\04"	/* disconnection string */
 
 static	void sigALRM();
-static	int timeout = 0;
+static	int dialtimeout = 0;
 static	jmp_buf timeoutbuf;
 
 static	int cmd(), detect();
@@ -91,7 +91,7 @@ biz_dialer(num, mod)
 	 */
 	connected = detect("1\r");
 #ifdef ACULOG
-	if (timeout) {
+	if (dialtimeout) {
 		char line[80];
 
 		(void)snprintf(line, sizeof line, "%ld second dial timeout",
@@ -99,7 +99,7 @@ biz_dialer(num, mod)
 		logent(value(HOST), num, "biz1022", line);
 	}
 #endif
-	if (timeout)
+	if (dialtimeout)
 		biz22_disconnect();	/* insurance */
 	return (connected);
 }
@@ -138,8 +138,7 @@ biz22_abort()
 static void
 sigALRM()
 {
-
-	timeout = 1;
+	dialtimeout = 1;
 	longjmp(timeoutbuf, 1);
 }
 
@@ -173,7 +172,7 @@ detect(s)
 	char c;
 
 	f = signal(SIGALRM, sigALRM);
-	timeout = 0;
+	dialtimeout = 0;
 	while (*s) {
 		if (setjmp(timeoutbuf)) {
 			biz22_abort();
@@ -187,5 +186,5 @@ detect(s)
 			return (0);
 	}
 	signal(SIGALRM, f);
-	return (timeout == 0);
+	return (dialtimeout == 0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.12 2006/03/16 21:13:12 moritz Exp $	*/
+/*	$OpenBSD: value.c,v 1.13 2006/03/17 14:43:06 moritz Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: value.c,v 1.12 2006/03/16 21:13:12 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: value.c,v 1.13 2006/03/17 14:43:06 moritz Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -42,7 +42,12 @@ static const char rcsid[] = "$OpenBSD: value.c,v 1.12 2006/03/16 21:13:12 moritz
 #define MIDDLE	35
 
 static value_t *vlookup(char *);
-static int vaccess(unsigned int mode, unsigned int rw);
+static void vassign(value_t *, char *);
+static void vtoken(char *);
+static void vprint(value_t *);
+static int vaccess(unsigned int, unsigned int);
+static char *vinterp(char *, int);
+
 static int col = 0;
 
 /*
@@ -91,10 +96,9 @@ vinit(void)
 }
 
 /*VARARGS1*/
-void
+static void
 vassign(value_t *p, char *v)
 {
-
 	if (!vaccess(p->v_access, WRITE)) {
 		printf("access denied\r\n");
 		return;
@@ -130,9 +134,6 @@ vassign(value_t *p, char *v)
 	p->v_access |= CHANGED;
 }
 
-static void vprint();
-static void vtoken();
-
 void
 vlex(char *s)
 {
@@ -162,7 +163,6 @@ vtoken(char *s)
 {
 	value_t *p;
 	char *cp;
-	char *expand(char *);
 
 	if ((cp = strchr(s, '='))) {
 		*cp = '\0';
@@ -247,7 +247,6 @@ vprint(value_t *p)
 	}
 }
 
-
 static int
 vaccess(unsigned int mode, unsigned int rw)
 {
@@ -269,7 +268,7 @@ vlookup(char *s)
 	return (NULL);
 }
 
-char *
+static char *
 vinterp(char *s, int stop)
 {
 	char *p = s, c;
@@ -328,7 +327,6 @@ int
 vstring(char *s, char *v)
 {
 	value_t *p;
-	char *expand(char *);
 
 	p = vlookup(s);
 	if (p == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.17 2006/03/16 19:32:46 deraadt Exp $	*/
+/*	$OpenBSD: cu.c,v 1.18 2006/03/17 14:43:06 moritz Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -34,13 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: cu.c,v 1.17 2006/03/16 19:32:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: cu.c,v 1.18 2006/03/17 14:43:06 moritz Exp $";
 #endif /* not lint */
 
 #include "tip.h"
 
-void	cleanup();
-void	cuusage();
+static void	cuusage(void);
 
 /*
  * Botch the interface to look like cu's
@@ -187,7 +186,7 @@ cumain(int argc, char *argv[])
 	}
 }
 
-void
+static void
 cuusage(void)
 {
 	fprintf(stderr, "usage: cu [-ehot] [-a acu] [-l line] [-s speed] [-#] "

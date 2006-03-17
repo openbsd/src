@@ -1,4 +1,4 @@
-/*	$OpenBSD: ventel.c,v 1.10 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: ventel.c,v 1.11 2006/03/17 14:43:06 moritz Exp $	*/
 /*	$NetBSD: ventel.c,v 1.6 1997/02/11 09:24:21 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ventel.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: ventel.c,v 1.10 2003/06/03 02:56:18 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ventel.c,v 1.11 2006/03/17 14:43:06 moritz Exp $";
 #endif /* not lint */
 
 /*
@@ -48,7 +48,7 @@ static const char rcsid[] = "$OpenBSD: ventel.c,v 1.10 2003/06/03 02:56:18 mille
 #define	MAXRETRY	5
 
 static	void sigALRM();
-static	int timeout = 0;
+static	int dialtimeout = 0;
 static	jmp_buf timeoutbuf;
 
 static	int gobble(), vensync();
@@ -103,15 +103,15 @@ ven_dialer(num, acu)
 		connected = gobble('!', line);
 	tcflush(FD, TCIOFLUSH);
 #ifdef ACULOG
-	if (timeout) {
+	if (dialtimeout) {
 		(void)snprintf(line, sizeof line, "%ld second dial timeout",
 			number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "ventel", line);
 	}
 #endif
-	if (timeout)
+	if (dialtimeout)
 		ven_disconnect();	/* insurance */
-	if (connected || timeout || !boolean(value(VERBOSE)))
+	if (connected || dialtimeout || !boolean(value(VERBOSE)))
 		return (connected);
 	/* call failed, parse response for user */
 	cp = strchr(line, '\r');
@@ -177,7 +177,7 @@ static void
 sigALRM()
 {
 	printf("\07timeout waiting for reply\n");
-	timeout = 1;
+	dialtimeout = 1;
 	longjmp(timeoutbuf, 1);
 }
 
@@ -191,7 +191,7 @@ gobble(match, response)
 	char c;
 
 	f = signal(SIGALRM, sigALRM);
-	timeout = 0;
+	dialtimeout = 0;
 	do {
 		if (setjmp(timeoutbuf)) {
 			signal(SIGALRM, f);

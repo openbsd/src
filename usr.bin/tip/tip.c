@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.25 2006/03/16 19:32:46 deraadt Exp $	*/
+/*	$OpenBSD: tip.c,v 1.26 2006/03/17 14:43:06 moritz Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tip.c,v 1.25 2006/03/16 19:32:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tip.c,v 1.26 2006/03/17 14:43:06 moritz Exp $";
 #endif /* not lint */
 
 /*
@@ -53,10 +53,11 @@ static const char rcsid[] = "$OpenBSD: tip.c,v 1.25 2006/03/16 19:32:46 deraadt 
 #include "pathnames.h"
 
 int	disc = TTYDISC;		/* tip normally runs this way */
-void	intprompt();
-void	timeout();
-void	cleanup(int);
 char	PNbuf[256];			/* This limits the size of a number */
+
+static void	intprompt(int);
+static void	tipin(void);
+static int	escape(void);
 
 int
 main(int argc, char *argv[])
@@ -245,7 +246,6 @@ cucommon:
 void
 cleanup(int signo)
 {
-
 	daemon_uid();
 	(void)uu_unlock(uucplock);
 	if (odisc)
@@ -347,10 +347,9 @@ prompt(char *s, char *p, size_t sz)
 /*
  * Interrupt service routine during prompting
  */
-void
-intprompt(void)
+static void
+intprompt(int signo)
 {
-
 	(void)signal(SIGINT, SIG_IGN);
 	stoprompt = 1;
 	printf("\r\n");
@@ -360,7 +359,7 @@ intprompt(void)
 /*
  * ****TIPIN   TIPIN****
  */
-void
+static void
 tipin(void)
 {
 	char bol = 1;
@@ -415,7 +414,7 @@ extern esctable_t etable[];
  * Escape handler --
  *  called on recognition of ``escapec'' at the beginning of a line
  */
-int
+static int
 escape(void)
 {
 	int gch;
@@ -503,7 +502,7 @@ ctrl(char c)
  * Help command
  */
 void
-help(char c)
+help(int c)
 {
 	esctable_t *p;
 
