@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.21 2006/03/17 14:43:06 moritz Exp $	*/
+/*	$OpenBSD: tip.h,v 1.22 2006/03/17 19:12:20 deraadt Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -146,6 +146,7 @@ typedef
  */
 
 #define value(v)	vtable[v].v_value
+#define lvalue(v)	(long)vtable[v].v_value
 
 #define	number(v)	((long)(v))
 #define	boolean(v)      ((short)(long)(v))
@@ -261,7 +262,6 @@ int	bits8;			/* terminal is is 8-bit mode */
 char	fname[PATH_MAX];	/* file name buffer for ~< */
 char	copyname[PATH_MAX];	/* file name buffer for ~> */
 char	ccc;			/* synchronization character */
-char	ch;			/* for tipout */
 char	*uucplock;		/* name of lock file for uucp's */
 
 int	odisc;			/* initial tty line discipline */
