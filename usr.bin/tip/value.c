@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.13 2006/03/17 14:43:06 moritz Exp $	*/
+/*	$OpenBSD: value.c,v 1.14 2006/03/17 22:02:58 moritz Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: value.c,v 1.13 2006/03/17 14:43:06 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: value.c,v 1.14 2006/03/17 22:02:58 moritz Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -48,7 +48,7 @@ static void vprint(value_t *);
 static int vaccess(unsigned int, unsigned int);
 static char *vinterp(char *, int);
 
-static int col = 0;
+static size_t col = 0;
 
 /*
  * Variable manipulation
