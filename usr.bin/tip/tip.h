@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.24 2006/03/17 19:39:46 deraadt Exp $	*/
+/*	$OpenBSD: tip.h,v 1.25 2006/03/17 21:43:51 deraadt Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -285,7 +285,7 @@ int	df03_dialer(char *, char *);
 int	dn_dialer(char *, char *);
 int	hay_dialer(char *, char *);
 int	prompt(char *, char *, size_t);
-int	size(char *);
+size_t	size(char *);
 int	t3000_dialer(char *, char *);
 int	ttysetup(int);
 int	uu_lock(char *);
