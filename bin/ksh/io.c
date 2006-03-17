@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.21 2005/03/30 17:16:37 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.22 2006/03/17 16:30:13 millert Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -232,7 +232,7 @@ ksh_dup2(int ofd, int nfd, int errok)
  * set close-on-exec flag.
  */
 int
-savefd(int fd, int noclose)
+savefd(int fd)
 {
 	int nfd;
 
@@ -244,8 +244,6 @@ savefd(int fd, int noclose)
 			else
 				errorf("too many files open in shell");
 		}
-		if (!noclose)
-			close(fd);
 	} else
 		nfd = fd;
 	fcntl(nfd, F_SETFD, FD_CLOEXEC);
@@ -268,10 +266,16 @@ restfd(int fd, int ofd)
 void
 openpipe(int *pv)
 {
-	if (pipe(pv) < 0)
+	int lpv[2];
+
+	if (pipe(lpv) < 0)
 		errorf("can't create pipe - try again");
-	pv[0] = savefd(pv[0], 0);
-	pv[1] = savefd(pv[1], 0);
+	pv[0] = savefd(lpv[0]);
+	if (pv[0] != lpv[0])
+		close(lpv[0]);
+	pv[1] = savefd(lpv[1]);
+	if (pv[1] != lpv[1])
+		close(lpv[1]);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.28 2005/12/11 20:31:21 otto Exp $	*/
+/*	$OpenBSD: eval.c,v 1.29 2006/03/17 16:30:13 millert Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -862,7 +862,7 @@ comsub(Expand *xp, char *cp)
 		int ofd1, pv[2];
 		openpipe(pv);
 		shf = shf_fdopen(pv[0], SHF_RD, (struct shf *) 0);
-		ofd1 = savefd(1, 0);	/* fd 1 may be closed... */
+		ofd1 = savefd(1);
 		if (pv[1] != 1) {
 			ksh_dup2(pv[1], 1, false);
 			close(pv[1]);

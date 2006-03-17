@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.33 2006/03/12 00:26:58 deraadt Exp $	*/
+/*	$OpenBSD: history.c,v 1.34 2006/03/17 16:30:13 millert Exp $	*/
 
 /*
  * command history
@@ -646,7 +646,9 @@ hist_init(Source *s)
 	if ((fd = open(hname, O_RDWR|O_CREAT|O_APPEND, 0600)) < 0)
 		return;
 
-	histfd = savefd(fd, 0);
+	histfd = savefd(fd);
+	if (histfd != fd)
+		close(fd);
 
 	(void) flock(histfd, LOCK_EX);
 
