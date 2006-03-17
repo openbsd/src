@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.119 2006/03/15 14:31:29 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.120 2006/03/17 10:49:12 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -340,8 +340,6 @@ ami_attach(struct ami_softc *sc)
 
 		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
 	}
-
-	timeout_set(&sc->sc_poll_tmo, (void (*)(void *))ami_intr, sc);
 
 	(sc->sc_init)(sc);
 	{
@@ -1593,13 +1591,6 @@ ami_intr(void *v)
 				rv |= 1;
 		}
 	}
-
-#ifdef AMI_POLLING
-	if (!TAILQ_EMPTY(&sc->sc_ccbq) && !timeout_pending(&sc->sc_poll_tmo)) {
-		AMI_DPRINTF(AMI_D_INTR, ("tmo "));
-		timeout_add(&sc->sc_poll_tmo, 2);
-	}
-#endif
 
 	splx(s);
 	AMI_DPRINTF(AMI_D_INTR, ("exit "));
