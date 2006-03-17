@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.121 2006/03/17 13:34:23 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.122 2006/03/17 14:18:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -131,6 +131,7 @@ int		ami_start(struct ami_softc *, struct ami_ccb *);
 int		ami_poll(struct ami_softc *, struct ami_ccb *);
 int		ami_done(struct ami_softc *, int);
 int		ami_done_ccb(struct ami_softc *, struct ami_ccb *);
+int		ami_done_xs(struct ami_softc *, struct ami_ccb *);
 void		ami_copy_internal_data(struct scsi_xfer *, void *, size_t);
 int		ami_inquire(struct ami_softc *, u_int8_t);
 
@@ -1134,6 +1135,40 @@ ami_done(struct ami_softc *sc, int idx)
 }
 
 int
+ami_done_xs(struct ami_softc *sc, struct ami_ccb *ccb)
+{
+	struct scsi_xfer *xs = ccb->ccb_xs;
+	int s;
+
+	if (xs->data != NULL) {
+		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
+		    ccb->ccb_dmamap->dm_mapsize,
+		    (xs->flags & SCSI_DATA_IN) ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_ccbmem_am),
+		    ccb->ccb_offset, sizeof(struct ami_ccbmem),
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
+		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
+	}
+
+	s = splbio();
+	ami_put_ccb(ccb);
+	splx(s);
+
+	if (xs) {
+		timeout_del(&xs->stimeout);
+		xs->resid = 0;
+		xs->flags |= ITSDONE;
+		AMI_DPRINTF(AMI_D_CMD, ("scsi_done(%d) ", idx));
+		scsi_done(xs);
+	}
+
+	return (0);
+}
+
+int
 ami_done_ccb(struct ami_softc *sc, struct ami_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->ccb_xs;
@@ -1242,7 +1277,7 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 	ccb->ccb_len  = xs->datalen;
 	ccb->ccb_data = xs->data;
 	ccb->ccb_dir = (xs->flags & SCSI_DATA_IN) ? AMI_CCB_IN : AMI_CCB_OUT;
-	ccb->ccb_done = ami_done_ccb;
+	ccb->ccb_done = ami_done_xs;
 
 	ccb->ccb_cmd.acc_cmd = AMI_PASSTHRU;
 	ccb->ccb_cmd.acc_passthru.apt_data = ccb->ccb_ptpa;
@@ -1517,7 +1552,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 	ccb->ccb_len  = xs->datalen;
 	ccb->ccb_data = xs->data;
 	ccb->ccb_dir = (xs->flags & SCSI_DATA_IN) ? AMI_CCB_IN : AMI_CCB_OUT;
-	ccb->ccb_done = ami_done_ccb;
+	ccb->ccb_done = ami_done_xs;
 
 	cmd = &ccb->ccb_cmd;
 	cmd->acc_cmd = (xs->flags & SCSI_DATA_IN) ? AMI_READ : AMI_WRITE;
