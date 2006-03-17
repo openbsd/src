@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.36 2006/03/15 19:48:12 niallo Exp $	*/
+/*	$OpenBSD: buf.c,v 1.37 2006/03/17 07:37:08 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -293,10 +293,10 @@ cvs_buf_append(BUF *b, const void *data, size_t len)
  * cvs_buf_fappend()
  *
  */
-int
+ssize_t
 cvs_buf_fappend(BUF *b, const char *fmt, ...)
 {
-	int ret;
+	ssize_t ret;
 	char *str;
 	va_list vap;
 
