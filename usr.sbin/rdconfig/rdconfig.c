@@ -50,7 +50,7 @@ int
 main(int argc, char *argv[])
 {
 	struct rd_conf rd;
-	int nblks, fd, error;
+	int nblks, fd;
 
 	if (argc <= 2) {
 		fprintf(stderr, "usage: rdconfig <device> <%d-byte-blocks>\n",
