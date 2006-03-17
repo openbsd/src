@@ -1,4 +1,4 @@
-/*	$OpenBSD: tipout.c,v 1.14 2006/03/17 14:43:06 moritz Exp $	*/
+/*	$OpenBSD: tipout.c,v 1.15 2006/03/17 17:43:15 deraadt Exp $	*/
 /*	$NetBSD: tipout.c,v 1.5 1996/12/29 10:34:12 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tipout.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tipout.c,v 1.14 2006/03/17 14:43:06 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: tipout.c,v 1.15 2006/03/17 17:43:15 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -57,6 +57,7 @@ static void	intSYS(int);
  * TIPOUT wait state routine --
  *   sent by TIPIN when it wants to posses the remote host
  */
+/*ARGSUSED*/
 static void
 intIOT(int signo)
 {
@@ -69,6 +70,7 @@ intIOT(int signo)
  * Scripting command interpreter --
  *  accepts script file name over the pipe and acts accordingly
  */
+/*ARGSUSED*/
 static void
 intEMT(int signo)
 {
@@ -109,6 +111,7 @@ intTERM(int signo)
 	exit(0);
 }
 
+/*ARGSUSED*/
 static void
 intSYS(int signo)
 {
