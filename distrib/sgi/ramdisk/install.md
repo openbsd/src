@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.6 2005/07/08 19:40:31 krw Exp $
+#	$OpenBSD: install.md,v 1.7 2006/03/17 09:22:43 otto Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -148,9 +148,10 @@ __EOT
 
 	cat <<__EOT
 
-You will now create an OpenBSD disklabel. The default disklabel have an 'a'
-partition which is the space available for OpenBSD. The 'i' partition must
-be retained since it contains the Volume Header nad the boot.
+You will now create an OpenBSD disklabel. The default disklabel must have
+an 'a' partition which is the space available for OpenBSD.
+The 'i' partition must be retained since it contains the Volume Header and
+the boot loader.
 
 Do not change any parameters except the partition layout and the label name.
 Also, don't change the 'i' partition or start any other partition below the
