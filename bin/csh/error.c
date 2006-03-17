@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.6 2003/06/11 21:09:50 deraadt Exp $	*/
+/*	$OpenBSD: error.c,v 1.7 2006/03/17 17:12:36 otto Exp $	*/
 /*	$NetBSD: err.c,v 1.6 1995/03/21 09:02:47 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: error.c,v 1.6 2003/06/11 21:09:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: error.c,v 1.7 2006/03/17 17:12:36 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -292,7 +292,7 @@ seterror(int id, ...)
 	va_list va;
 
 	va_start(va, id);
-	if (id < 0 || id > sizeof(errorlist) / sizeof(errorlist[0]))
+	if (id < 0 || id >= sizeof(errorlist) / sizeof(errorlist[0]))
 	    id = ERR_INVALID;
 	vsnprintf(berr, sizeof(berr), errorlist[id], va);
 	va_end(va);
