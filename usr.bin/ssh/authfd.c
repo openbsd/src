@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfd.c,v 1.68 2006/03/17 22:31:11 djm Exp $");
+RCSID("$OpenBSD: authfd.c,v 1.69 2006/03/17 22:31:50 djm Exp $");
 
 #include <sys/types.h>
 #include <sys/un.h>
@@ -519,7 +519,6 @@ ssh_add_identity_constrained(AuthenticationConnection *auth, Key *key,
 	default:
 		buffer_free(&msg);
 		return 0;
-		break;
 	}
 	if (constrained) {
 		if (life != 0) {
