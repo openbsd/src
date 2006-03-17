@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.97 2006/03/14 21:45:14 beck Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.98 2006/03/17 22:00:27 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -556,9 +556,11 @@ check_luser(char *luserdir, char *luser)
 		while (fputs(tmp, stdout) != EOF && !feof(f)) {
 			if (fgets(tmp, sizeof(tmp), f) == NULL) {
 				fflush(stdout);
+				fclose(f);
 				return (0);
 			}
 		}
+		fclose(f);
 	}
 	fflush(stdout);
 	return (0);
