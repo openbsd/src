@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfd.c,v 1.67 2006/02/20 16:36:14 stevesk Exp $");
+RCSID("$OpenBSD: authfd.c,v 1.68 2006/03/17 22:31:11 djm Exp $");
 
 #include <sys/types.h>
 #include <sys/un.h>
@@ -338,7 +338,6 @@ ssh_get_next_identity(AuthenticationConnection *auth, char **comment, int versio
 		break;
 	default:
 		return NULL;
-		break;
 	}
 	/* Decrement the number of remaining entries. */
 	auth->howmany--;
