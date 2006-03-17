@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.12 2006/03/17 14:43:06 moritz Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.13 2006/03/17 19:39:46 deraadt Exp $	*/
 /*	$NetBSD: hunt.c,v 1.6 1997/04/20 00:02:10 mellon Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)hunt.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: hunt.c,v 1.12 2006/03/17 14:43:06 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: hunt.c,v 1.13 2006/03/17 19:39:46 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -44,6 +44,7 @@ static	int deadfl;
 
 static void	dead(int);
 
+/*ARGSUSED*/
 static void
 dead(int signo)
 {

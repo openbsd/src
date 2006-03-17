@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.24 2006/03/17 14:43:06 moritz Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.25 2006/03/17 19:39:46 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.24 2006/03/17 14:43:06 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.25 2006/03/17 19:39:46 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -133,10 +133,10 @@ static	jmp_buf intbuf;
 static void
 transfer(char *buf, int fd, char *eofchars)
 {
-	int ct;
+	int ct, eof;
 	char c, buffer[BUFSIZ];
 	char *p = buffer;
-	int cnt, eof;
+	size_t cnt;
 	time_t start;
 	sig_t f;
 	char r;
@@ -355,7 +355,7 @@ transmit(FILE *fp, char *eofchars, char *command)
 			printf("\r%d", ++lcount);
 		if (boolean(value(ECHOCHECK))) {
 			timedout = 0;
-			alarm((unsigned int)value(ETIMEOUT));
+			alarm((unsigned int)lvalue(ETIMEOUT));
 			do {	/* wait for prompt */
 				read(FD, (char *)&c, 1);
 				if (timedout || stop) {
@@ -443,7 +443,7 @@ send(int c)
 	}
 tryagain:
 	timedout = 0;
-	alarm((long)value(ETIMEOUT));
+	alarm((unsigned int)lvalue(ETIMEOUT));
 	read(FD, &cc, 1);
 	alarm(0);
 	if (timedout) {
@@ -455,6 +455,7 @@ tryagain:
 	}
 }
 
+/*ARGSUSED*/
 void
 timeout(int signo)
 {
@@ -546,8 +547,6 @@ consh(int c)
 		while ((p = wait(&status)) > 0 && p != cpid)
 			;
 	} else {
-		int i;
-
 		dup2(FD, 0);
 		dup2(3, 1);
 		closefrom(3);
@@ -610,6 +609,7 @@ void
 setscript(void)
 {
 	char c;
+
 	/*
 	 * enable TIPOUT side for dialogue
 	 */
@@ -675,6 +675,7 @@ finish(int c)
 	tipabort(NOSTR);
 }
 
+/*ARGSUSED*/
 static void
 intcopy(int signo)
 {

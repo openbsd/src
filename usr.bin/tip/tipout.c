@@ -1,4 +1,4 @@
-/*	$OpenBSD: tipout.c,v 1.15 2006/03/17 17:43:15 deraadt Exp $	*/
+/*	$OpenBSD: tipout.c,v 1.16 2006/03/17 19:39:46 deraadt Exp $	*/
 /*	$NetBSD: tipout.c,v 1.5 1996/12/29 10:34:12 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tipout.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tipout.c,v 1.15 2006/03/17 17:43:15 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tipout.c,v 1.16 2006/03/17 19:39:46 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -127,7 +127,7 @@ tipout(void)
 {
 	char buf[BUFSIZ];
 	char *cp;
-	int cnt;
+	size_t cnt;
 	sigset_t mask, omask;
 
 	signal(SIGINT, SIG_IGN);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.26 2006/03/17 14:43:06 moritz Exp $	*/
+/*	$OpenBSD: tip.c,v 1.27 2006/03/17 19:39:46 deraadt Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tip.c,v 1.26 2006/03/17 14:43:06 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: tip.c,v 1.27 2006/03/17 19:39:46 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -62,7 +62,7 @@ static int	escape(void);
 int
 main(int argc, char *argv[])
 {
-	char *system = NOSTR, sbuf[12], *p;
+	char *sys = NOSTR, sbuf[12], *p;
 	int i;
 
 	gid = getgid();
@@ -86,7 +86,7 @@ main(int argc, char *argv[])
 
 	for (; argc > 1; argv++, argc--) {
 		if (argv[1][0] != '-')
-			system = argv[1];
+			sys = argv[1];
 		else switch (argv[1][1]) {
 
 		case 'v':
@@ -109,26 +109,26 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (system == NOSTR)
+	if (sys == NOSTR)
 		goto notnumber;
-	if (isalpha(*system))
+	if (isalpha(*sys))
 		goto notnumber;
 	/*
 	 * System name is really a phone number...
 	 * Copy the number then stomp on the original (in case the number
 	 *	is private, we don't want 'ps' or 'w' to find it).
 	 */
-	if (strlen(system) > sizeof PNbuf - 1) {
+	if (strlen(sys) > sizeof PNbuf - 1) {
 		fprintf(stderr, "%s: phone number too long (max = %d bytes)\n",
 			__progname, (int)sizeof(PNbuf) - 1);
 		exit(1);
 	}
-	strncpy( PNbuf, system, sizeof PNbuf - 1 );
-	for (p = system; *p; p++)
+	strlcpy(PNbuf, sys, sizeof PNbuf - 1);
+	for (p = sys; *p; p++)
 		*p = '\0';
 	PN = PNbuf;
 	(void)snprintf(sbuf, sizeof(sbuf), "tip%ld", BR);
-	system = sbuf;
+	sys = sbuf;
 
 notnumber:
 	(void)signal(SIGINT, cleanup);
@@ -137,7 +137,7 @@ notnumber:
 	(void)signal(SIGTERM, cleanup);
 	(void)signal(SIGCHLD, SIG_DFL);
 
-	if ((i = hunt(system)) == 0) {
+	if ((i = hunt(sys)) == 0) {
 		printf("all ports busy\n");
 		exit(3);
 	}
@@ -249,7 +249,7 @@ cleanup(int signo)
 	daemon_uid();
 	(void)uu_unlock(uucplock);
 	if (odisc)
-		ioctl(0, TIOCSETD, (char *)&odisc);
+		ioctl(0, TIOCSETD, &odisc);
 	unraw();
 	if (signo && tipout_pid) {
 		kill(tipout_pid, signo);
@@ -347,6 +347,7 @@ prompt(char *s, char *p, size_t sz)
 /*
  * Interrupt service routine during prompting
  */
+/*ARGSUSED*/
 static void
 intprompt(int signo)
 {
@@ -362,7 +363,7 @@ intprompt(int signo)
 static void
 tipin(void)
 {
-	char bol = 1;
+	int bol = 1;
 	int gch;
 	char ch;
 
@@ -551,7 +552,7 @@ static char partab[0200];
  * with the right parity and output it.
  */
 void
-parwrite(int fd, char *buf, int n)
+parwrite(int fd, char *buf, size_t n)
 {
 	int i;
 	char *bp;

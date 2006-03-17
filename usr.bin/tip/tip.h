@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.23 2006/03/17 19:17:13 moritz Exp $	*/
+/*	$OpenBSD: tip.h,v 1.24 2006/03/17 19:39:46 deraadt Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -322,7 +322,7 @@ void	help(int);
 void	listvariables(int);
 void	logent(char *, char *, char *, char *);
 void	loginit(void);
-void	parwrite(int, char *, int);
+void	parwrite(int, char *, size_t);
 void	pipefile(int);
 void	pipeout(int);
 void	raw(void);
