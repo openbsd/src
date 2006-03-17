@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.9 2006/02/23 23:53:30 miod Exp $	*/
+/*	$OpenBSD: proc.h,v 1.10 2006/03/17 21:43:29 miod Exp $	*/
 /*	$NetBSD: proc.h,v 1.2 1995/03/24 15:01:36 cgd Exp $	*/
 
 /*
@@ -63,9 +63,9 @@ struct mdproc {
  *      C99 API's, the use of the MDP_FP_C bits is defined variously in
  *      ieeefp.h and fpu.h.
  */
-#define	MDP_FPUSED	0x0001		/* Process used the FPU */
+#define	MDP_FPUSED	0x00000001		/* Process used the FPU */
 #ifndef NO_IEEE
-#define	MDP_FP_C	0x7ffffe	/* Extended FP_C Quadword bits */
+#define	MDP_FP_C	0x007ffffe	/* Extended FP_C Quadword bits */
 #endif
-#define MDP_STEP1	0x0002		/* Single step normal */
-#define MDP_STEP2	0x0003		/* Single step branch */
+#define MDP_STEP1	0x00800000	/* Single step normal */
+#define MDP_STEP2	0x01800000	/* Single step branch */
