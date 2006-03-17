@@ -1,4 +1,4 @@
-/*	$OpenBSD: ventel.c,v 1.11 2006/03/17 14:43:06 moritz Exp $	*/
+/*	$OpenBSD: ventel.c,v 1.12 2006/03/17 19:17:13 moritz Exp $	*/
 /*	$NetBSD: ventel.c,v 1.6 1997/02/11 09:24:21 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ventel.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: ventel.c,v 1.11 2006/03/17 14:43:06 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: ventel.c,v 1.12 2006/03/17 19:17:13 moritz Exp $";
 #endif /* not lint */
 
 /*
@@ -47,13 +47,13 @@ static const char rcsid[] = "$OpenBSD: ventel.c,v 1.11 2006/03/17 14:43:06 morit
 
 #define	MAXRETRY	5
 
-static	void sigALRM();
 static	int dialtimeout = 0;
 static	jmp_buf timeoutbuf;
 
-static	int gobble(), vensync();
-static	void echo();
-void	ven_disconnect();
+static void	echo(char *);
+static void	sigALRM(int);
+static int	gobble(char, char *);
+static int	vensync(int);
 
 /*
  * some sleep calls have been replaced by this macro
@@ -66,9 +66,7 @@ void	ven_disconnect();
 #define busyloop(n) do { DELAY(n); } while (0)
 
 int
-ven_dialer(num, acu)
-	char *num;
-	char *acu;
+ven_dialer(char *num, char *acu)
 {
 	char *cp;
 	int connected = 0;
@@ -135,23 +133,20 @@ ven_dialer(num, acu)
 }
 
 void
-ven_disconnect()
+ven_disconnect(void)
 {
-
 	close(FD);
 }
 
 void
-ven_abort()
+ven_abort(void)
 {
-
 	write(FD, "\03", 1);
 	close(FD);
 }
 
 static void
-echo(s)
-	char *s;
+echo(char *s)
 {
 	char c;
 
@@ -173,8 +168,9 @@ echo(s)
 		}
 }
 
+/*ARGSUSED*/
 static void
-sigALRM()
+sigALRM(int signo)
 {
 	printf("\07timeout waiting for reply\n");
 	dialtimeout = 1;
@@ -182,9 +178,7 @@ sigALRM()
 }
 
 static int
-gobble(match, response)
-	char match;
-	char response[];
+gobble(char match, char response[])
 {
 	char *cp = response;
 	sig_t f;
@@ -219,7 +213,7 @@ gobble(match, response)
  * there are gory ways to simulate this.
  */
 static int
-vensync(fd)
+vensync(int fd)
 {
 	int already = 0, nread;
 	char buf[60];
@@ -260,4 +254,3 @@ vensync(fd)
 	}
 	return (0);
 }
-

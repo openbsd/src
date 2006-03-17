@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.8 2006/03/17 14:43:06 moritz Exp $	*/
+/*	$OpenBSD: df.c,v 1.9 2006/03/17 19:17:13 moritz Exp $	*/
 /*	$NetBSD: df.c,v 1.4 1995/10/29 00:49:51 pk Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)df.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: df.c,v 1.8 2006/03/17 14:43:06 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: df.c,v 1.9 2006/03/17 19:17:13 moritz Exp $";
 #endif /* not lint */
 
 /*
@@ -44,30 +44,24 @@ static const char rcsid[] = "$OpenBSD: df.c,v 1.8 2006/03/17 14:43:06 moritz Exp
 #include "tip.h"
 
 static jmp_buf Sjbuf;
-static void alrm_timeout(int);
-static int df_dialer(char *, char *, int);
-static void df_disconnect(void);
+
+static int	df_dialer(char *, char *, int);
+static void	alrm_timeout(int);
 
 int
-df02_dialer(num, acu)
-	char *num, *acu;
+df02_dialer(char *num, char *acu)
 {
-
 	return (df_dialer(num, acu, 0));
 }
 
 int
-df03_dialer(num, acu)
-	char *num, *acu;
+df03_dialer(char *num, char *acu)
 {
-
 	return (df_dialer(num, acu, 1));
 }
 
-int
-df_dialer(num, acu, df03)
-	char *num, *acu;
-	int df03;
+static int
+df_dialer(char *num, char *acu, int df03)
 {
 	int f = FD;
 	struct termios cntrl;
@@ -127,7 +121,7 @@ df_disconnect(void)
 }
 
 void
-df_abort()
+df_abort(void)
 {
 	df_disconnect();
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: t3000.c,v 1.13 2006/03/17 14:43:06 moritz Exp $	*/
+/*	$OpenBSD: t3000.c,v 1.14 2006/03/17 19:17:13 moritz Exp $	*/
 /*	$NetBSD: t3000.c,v 1.5 1997/02/11 09:24:18 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)t3000.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: t3000.c,v 1.13 2006/03/17 14:43:06 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: t3000.c,v 1.14 2006/03/17 19:17:13 moritz Exp $";
 #endif /* not lint */
 
 /*
@@ -48,19 +48,22 @@ static const char rcsid[] = "$OpenBSD: t3000.c,v 1.13 2006/03/17 14:43:06 moritz
 
 #define	MAXRETRY	5
 
-static	void sigALRM();
 static	int dialtimeout = 0;
 static	int connected = 0;
 static	jmp_buf timeoutbuf;
-static	int t3000_sync(), t3000_connect(), t3000_swallow();
-static	void t3000_write(int fd, char *cp, int n);
-static	void t3000_nap();
-void	t3000_disconnect();
+
+static void	sigALRM(int);
+static int	t3000_swallow(char *);
+static int	t3000_connect(void);
+static int	t3000_sync(void);
+static void	t3000_write(int, char *, int);
+static void	t3000_nap(void);
+#ifdef DEBUG
+static void	t3000_verbose_read(void);
+#endif
 
 int
-t3000_dialer(num, acu)
-	char *num;
-	char *acu;
+t3000_dialer(char *num, char *acu)
 {
 	char *cp;
 	struct termios cntrl;
@@ -116,7 +119,7 @@ badsynch:
 }
 
 void
-t3000_disconnect()
+t3000_disconnect(void)
 {
 	 /* first hang up the modem*/
 	ioctl(FD, TIOCCDTR, 0);
@@ -127,14 +130,15 @@ t3000_disconnect()
 }
 
 void
-t3000_abort()
+t3000_abort(void)
 {
 	t3000_write(FD, "\r", 1);	/* send anything to abort the call */
 	t3000_disconnect();
 }
 
+/*ARGSUSED*/
 static void
-sigALRM()
+sigALRM(int signo)
 {
 	printf("\07timeout waiting for reply\n");
 	dialtimeout = 1;
@@ -142,8 +146,7 @@ sigALRM()
 }
 
 static int
-t3000_swallow(match)
-	char *match;
+t3000_swallow(char *match)
 {
 	sig_t f;
 	char c;
@@ -203,7 +206,7 @@ struct tbaud_msg {
 };
 
 static int
-t3000_connect()
+t3000_connect(void)
 {
 	char c;
 	int nc, nl, n;
@@ -276,7 +279,7 @@ again:
  * the t3000 in sync.
  */
 static int
-t3000_sync()
+t3000_sync(void)
 {
 	int already = 0;
 	int len;
@@ -321,10 +324,7 @@ if (len == 0) len = 1;
 }
 
 static void
-t3000_write(fd, cp, n)
-int fd;
-char *cp;
-int n;
+t3000_write(int fd, char *cp, int n)
 {
 #ifdef notdef
 	if (boolean(value(VERBOSE)))
@@ -340,7 +340,8 @@ int n;
 }
 
 #ifdef DEBUG
-t3000_verbose_read()
+static void
+t3000_verbose_read(void)
 {
 	int n = 0;
 	char buf[BUFSIZ];
@@ -356,8 +357,8 @@ t3000_verbose_read()
 #endif
 
 /* Give the t3000 50 milliseconds between characters */
-void
-t3000_nap()
+static void
+t3000_nap(void)
 {
 	struct timespec ts;
 

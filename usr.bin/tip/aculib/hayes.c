@@ -1,4 +1,4 @@
-/*	$OpenBSD: hayes.c,v 1.12 2006/03/17 14:43:06 moritz Exp $	*/
+/*	$OpenBSD: hayes.c,v 1.13 2006/03/17 19:17:13 moritz Exp $	*/
 /*	$NetBSD: hayes.c,v 1.6 1997/02/11 09:24:17 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)hayes.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: hayes.c,v 1.12 2006/03/17 14:43:06 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: hayes.c,v 1.13 2006/03/17 19:17:13 moritz Exp $";
 #endif /* not lint */
 
 /*
@@ -67,14 +67,8 @@ static const char rcsid[] = "$OpenBSD: hayes.c,v 1.12 2006/03/17 14:43:06 moritz
 
 #define	min(a,b)	((a < b) ? a : b)
 
-static	void sigALRM();
 static	int dialtimeout = 0;
 static	jmp_buf timeoutbuf;
-static 	char gobble();
-static	void error_rep(char c);
-int	hay_sync(void);
-void	hay_disconnect(void);
-void	goodbye(void);
 
 #define DUMBUFLEN	40
 static char dumbuf[DUMBUFLEN];
@@ -85,10 +79,14 @@ static char dumbuf[DUMBUFLEN];
 #define	FAILED		4
 static	int state = IDLE;
 
+static void	sigALRM(int);
+static char	gobble(char *);
+static void	error_rep(char);
+static void	goodbye(void);
+static int	hay_sync(void);
+
 int
-hay_dialer(num, acu)
-	char *num;
-	char *acu;
+hay_dialer(char *num, char *acu)
 {
 	char *cp;
 	int connected = 0;
@@ -142,9 +140,8 @@ hay_dialer(num, acu)
 	return (connected);
 }
 
-
 void
-hay_disconnect()
+hay_disconnect(void)
 {
 	/* first hang up the modem*/
 #ifdef DEBUG
@@ -157,25 +154,23 @@ hay_disconnect()
 }
 
 void
-hay_abort()
+hay_abort(void)
 {
-
 	write(FD, "\r", 1);	/* send anything to abort the call */
 	hay_disconnect();
 }
 
+/*ARGSUSED*/
 static void
-sigALRM()
+sigALRM(int signo)
 {
-
 	printf("\07timeout waiting for reply\n\r");
 	dialtimeout = 1;
 	longjmp(timeoutbuf, 1);
 }
 
 static char
-gobble(match)
-	char *match;
+gobble(char *match)
 {
 	char c;
 	sig_t f;
@@ -222,23 +217,23 @@ error_rep(char c)
 	case '1':
 		printf("CONNECT");
 		break;
-	
+
 	case '2':
 		printf("RING");
 		break;
-	
+
 	case '3':
 		printf("NO CARRIER");
 		break;
-	
+
 	case '4':
 		printf("ERROR in input");
 		break;
-	
+
 	case '5':
 		printf("CONNECT 1200");
 		break;
-	
+
 	default:
 		printf("Unknown Modem error: %c (0x%x)", c, c);
 	}
@@ -249,8 +244,8 @@ error_rep(char c)
 /*
  * set modem back to normal verbose status codes.
  */
-void
-goodbye()
+static void
+goodbye(void)
 {
 	int len;
 	char c;
@@ -294,8 +289,8 @@ goodbye()
 
 #define MAXRETRY	5
 
-int
-hay_sync()
+static int
+hay_sync(void)
 {
 	int len, retry = 0;
 

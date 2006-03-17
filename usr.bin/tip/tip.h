@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.22 2006/03/17 19:12:20 deraadt Exp $	*/
+/*	$OpenBSD: tip.h,v 1.23 2006/03/17 19:17:13 moritz Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -130,9 +130,9 @@ typedef
 typedef
 	struct {
 		char	*acu_name;
-		int	(*acu_dialer)();
-		int	(*acu_disconnect)();
-		int	(*acu_abort)();
+		int	(*acu_dialer)(char *, char *);
+		void	(*acu_disconnect)(void);
+		void	(*acu_abort)(void);
 	}
 	acu_t;
 
@@ -275,24 +275,49 @@ char	*expand(char *);
 char	*getremote(char *);
 char	*interp(char *);
 int	any(int, char *);
+int	biz22w_dialer(char *, char *);
+int	biz22f_dialer(char *, char *);
+int	biz31w_dialer(char *, char *);
+int	biz31f_dialer(char *, char *);
+int	cour_dialer(char *, char *);
+int	df02_dialer(char *, char *);
+int	df03_dialer(char *, char *);
+int	dn_dialer(char *, char *);
+int	hay_dialer(char *, char *);
 int	prompt(char *, char *, size_t);
 int	size(char *);
+int	t3000_dialer(char *, char *);
 int	ttysetup(int);
 int	uu_lock(char *);
 int	uu_unlock(char *);
+int	v3451_dialer(char *, char *);
+int	v831_dialer(char *, char *);
+int	ven_dialer(char *, char *);
 int	vstring(char *, char *);
 long	hunt(char *);
+void	biz22_disconnect(void);
+void	biz22_abort(void);
+void	biz31_disconnect(void);
+void	biz31_abort(void);
 void	chdirectory(int);
 void	cleanup(int);
 void	consh(int);
+void	cour_abort(void);
+void	cour_disconnect(void);
 void	cu_put(int);
 void	cu_take(int);
 void	cumain(int, char **);
 void	daemon_uid(void);
+void	df_abort(void);
+void	df_disconnect(void);
 void	disconnect(char *);
+void	dn_abort(void);
+void	dn_disconnect(void);
 void	finish(int);
 void	genbrk(int);
 void	getfl(int);
+void	hay_abort(void);
+void	hay_disconnect(void);
 void	help(int);
 void	listvariables(int);
 void	logent(char *, char *, char *, char *);
@@ -307,11 +332,19 @@ void	setscript(void);
 void	shell(int);
 void	shell_uid(void);
 void	suspend(int);
+void	t3000_disconnect(void);
+void	t3000_abort(void);
 void	timeout(int);
 void	tipabort(char *);
 void	tipout(void);
 void	user_uid(void);
 void	unraw(void);
+void	v3451_abort(void);
+void	v3451_disconnect(void);
+void	v831_disconnect(void);
+void	v831_abort(void);
 void	variable(int);
+void	ven_disconnect(void);
+void	ven_abort(void);
 void	vinit(void);
 void	vlex(char *);
