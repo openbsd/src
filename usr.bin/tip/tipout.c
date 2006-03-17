@@ -1,4 +1,4 @@
-/*	$OpenBSD: tipout.c,v 1.16 2006/03/17 19:39:46 deraadt Exp $	*/
+/*	$OpenBSD: tipout.c,v 1.17 2006/03/17 19:42:47 deraadt Exp $	*/
 /*	$NetBSD: tipout.c,v 1.5 1996/12/29 10:34:12 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tipout.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tipout.c,v 1.16 2006/03/17 19:39:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tipout.c,v 1.17 2006/03/17 19:42:47 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -127,6 +127,7 @@ tipout(void)
 {
 	char buf[BUFSIZ];
 	char *cp;
+	ssize_t scnt;
 	size_t cnt;
 	sigset_t mask, omask;
 
@@ -141,10 +142,10 @@ tipout(void)
 	sigprocmask(SIG_BLOCK, NULL, &omask);
 	for (;;) {
 		sigprocmask(SIG_SETMASK, &omask, NULL);
-		cnt = read(FD, buf, BUFSIZ);
-		if (cnt <= 0) {
+		scnt = read(FD, buf, BUFSIZ);
+		if (scnt <= 0) {
 			/* lost carrier */
-			if (cnt < 0 && errno == EIO) {
+			if (scnt < 0 && errno == EIO) {
 				sigemptyset(&mask);
 				sigaddset(&mask, SIGTERM);
 				sigprocmask(SIG_BLOCK, &mask, NULL);
@@ -153,6 +154,7 @@ tipout(void)
 			}
 			continue;
 		}
+		cnt = scnt;
 		sigemptyset(&mask);
 		sigaddset(&mask, SIGEMT);
 		sigaddset(&mask, SIGTERM);
