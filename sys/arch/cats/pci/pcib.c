@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcib.c,v 1.2 2004/05/19 04:11:31 drahn Exp $	*/
+/*	$OpenBSD: pcib.c,v 1.3 2006/03/17 20:48:46 miod Exp $	*/
 /*	$NetBSD: pcib.c,v 1.4 2003/01/01 01:25:34 thorpej Exp $	*/
 
 /*-
@@ -98,18 +98,7 @@ pcibattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pci_attach_args *pa = aux;
-	char devinfo[256];
-
 	printf("\n");
-
-	/*
-	 * Just print out a description and set the ISA bus
-	 * callback.
-	 */
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof devinfo);
-	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
-	    PCI_REVISION(pa->pa_class));
 
 	/* Set the ISA bus callback */
 	config_defer(self, pcib_callback);
