@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.73 2006/03/05 00:44:25 brad Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.74 2006/03/17 04:21:57 brad Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -433,7 +433,9 @@ out:	if (((m = m0)->m_flags & M_PKTHDR) && (m->m_pkthdr.len < totlen))
 
 /*
  * Concatenate mbuf chain n to m.
- * Both chains must be of the same type (e.g. MT_DATA).
+ * n might be copied into m (when n->m_len is small), therefore data portion of
+ * n could be copied into an mbuf of different mbuf type.
+ * Therefore both chains should be of the same type (e.g. MT_DATA).
  * Any m_pkthdr is not updated.
  */
 void
@@ -442,8 +444,7 @@ m_cat(struct mbuf *m, struct mbuf *n)
 	while (m->m_next)
 		m = m->m_next;
 	while (n) {
-		if (m->m_flags & M_EXT ||
-		    m->m_data + m->m_len + n->m_len >= &m->m_dat[MLEN]) {
+		if (M_READONLY(m) || n->m_len > M_TRAILINGSPACE(m)) {
 			/* just join the two chains */
 			m->m_next = n;
 			return;
