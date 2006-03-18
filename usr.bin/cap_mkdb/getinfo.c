@@ -1,4 +1,4 @@
-/*	$OpenBSD: getinfo.c,v 1.9 2006/03/10 05:20:35 ray Exp $	*/
+/*	$OpenBSD: getinfo.c,v 1.10 2006/03/18 03:55:09 ray Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getinfo.c,v 1.9 2006/03/10 05:20:35 ray Exp $";
+static char rcsid[] = "$OpenBSD: getinfo.c,v 1.10 2006/03/18 03:55:09 ray Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -532,9 +532,9 @@ igetnext(char **bp, char **db_array)
 		(void)igetclose();
 		return (-1);
 	}
-	for(;;) {
+	for (;;) {
 		line = fgetln(pfp, &len);
-		if (line == NULL && pfp) {
+		if (line == NULL) {
 			if (ferror(pfp)) {
 				(void)igetclose();
 				return (-1);
@@ -589,7 +589,7 @@ igetnext(char **bp, char **db_array)
 				break;
 			} else { /* name field extends beyond the line */
 				line = fgetln(pfp, &len);
-				if (line == NULL && pfp) {
+				if (line == NULL) {
 					if (ferror(pfp)) {
 						(void)igetclose();
 						return (-1);

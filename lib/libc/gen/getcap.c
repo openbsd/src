@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcap.c,v 1.24 2006/03/10 05:26:55 ray Exp $ */
+/*	$OpenBSD: getcap.c,v 1.25 2006/03/18 03:55:09 ray Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -669,13 +669,13 @@ cgetnext(char **bp, char **db_array)
 		(void)cgetclose();
 		return (-1);
 	}
-	for(;;) {
+	for (;;) {
 		if (toprec && !gottoprec) {
 			gottoprec = 1;
 			line = toprec;
 		} else {
 			line = fgetln(pfp, &len);
-			if (line == NULL && pfp) {
+			if (line == NULL) {
 				if (ferror(pfp)) {
 					(void)cgetclose();
 					return (-1);
@@ -742,7 +742,7 @@ cgetnext(char **bp, char **db_array)
 				break;
 			} else { /* name field extends beyond the line */
 				line = fgetln(pfp, &len);
-				if (line == NULL && pfp) {
+				if (line == NULL) {
 					if (ferror(pfp)) {
 						(void)cgetclose();
 						return (-1);
