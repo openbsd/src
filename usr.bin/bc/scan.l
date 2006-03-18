@@ -1,5 +1,5 @@
 %{
-/*      $OpenBSD: scan.l,v 1.20 2006/01/24 19:38:44 otto Exp $	*/
+/*      $OpenBSD: scan.l,v 1.21 2006/03/18 20:44:43 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: scan.l,v 1.20 2006/01/24 19:38:44 otto Exp $";
+static const char rcsid[] = "$OpenBSD: scan.l,v 1.21 2006/03/18 20:44:43 otto Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -32,11 +32,11 @@ static const char rcsid[] = "$OpenBSD: scan.l,v 1.20 2006/01/24 19:38:44 otto Ex
 #include "y.tab.h"
 
 int		lineno;
+bool		interactive;
 
 static char	*strbuf = NULL;
 static size_t	strbuf_sz = 1;
 static bool	dot_seen;
-static volatile sig_atomic_t	interactive = 0;
 
 static void	init_strbuf(void);
 static void	add_str(const char *);
@@ -232,12 +232,10 @@ abort_line(int sig)
 	const char str[] = "[\n]P\n";
 	int save_errno;
 
-	if (interactive) {
-		save_errno = errno;
-		YY_FLUSH_BUFFER;	/* XXX signal race? */
-		write(STDOUT_FILENO, str, sizeof(str) - 1);
-		errno = save_errno;
-	}
+	save_errno = errno;
+	YY_FLUSH_BUFFER;	/* XXX signal race? */
+	write(STDOUT_FILENO, str, sizeof(str) - 1);
+	errno = save_errno;
 }
 
 int
@@ -277,7 +275,8 @@ yywrap(void)
 	} else if (fileindex == sargc) {
 		fileindex++;
 		yyin = stdin;
-		interactive = isatty(fileno(yyin));
+		if (interactive)
+			signal(SIGINT, abort_line);
 		lineno = 1;
 		filename = "stdin";
 		return (0);

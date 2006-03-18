@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.27 2005/09/18 19:29:41 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.28 2006/03/18 20:44:43 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,11 +31,15 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.27 2005/09/18 19:29:41 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.28 2006/03/18 20:44:43 otto Exp $";
 #endif /* not lint */
+
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <limits.h>
 #include <search.h>
 #include <signal.h>
@@ -102,6 +106,7 @@ static bool		st_has_continue;
 static char		str_table[UCHAR_MAX][2];
 static bool		do_fork = true;
 static u_short		var_count;
+static pid_t		dc;
 
 extern char *__progname;
 
@@ -277,9 +282,12 @@ statement	: expression
 			}
 		| QUIT
 			{
+				sigset_t mask;
+
 				putchar('q');
 				fflush(stdout);
-				exit(0);
+				sigprocmask(SIG_BLOCK, NULL, &mask);
+				sigsuspend(&mask);
 			}
 		| RETURN return_expression
 			{
@@ -1045,6 +1053,27 @@ escape(const char *str)
 	return ret;
 }
 
+/* ARGSUSED */
+void
+sigchld(int signo)
+{
+	pid_t pid;
+	int status;
+
+	for (;;) {
+		pid = waitpid(dc, &status, WCONTINUED);
+		if (pid == -1) {
+			if (errno == EINTR)
+				continue;
+			_exit(0);
+		}
+		if (WIFEXITED(status) || WIFSIGNALED(status))
+			_exit(0);
+		else
+			break;
+	}
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1085,16 +1114,18 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	interactive = isatty(STDIN_FILENO);
 	for (i = 0; i < argc; i++)
 		sargv[sargc++] = argv[i];
 
 	if (do_fork) {
 		if (pipe(p) == -1)
 			err(1, "cannot create pipe");
-		ret = fork();
-		if (ret == -1)
+		dc = fork();
+		if (dc == -1)
 			err(1, "cannot fork");
-		else if (ret == 0) {
+		else if (dc != 0) {
+			signal(SIGCHLD, sigchld);
 			close(STDOUT_FILENO);
 			dup(p[1]);
 			close(p[0]);
@@ -1108,7 +1139,6 @@ main(int argc, char *argv[])
 			err(1, "cannot find dc");
 		}
 	}
-	signal(SIGINT, abort_line);
 	yywrap();
 	return yyparse();
 }
