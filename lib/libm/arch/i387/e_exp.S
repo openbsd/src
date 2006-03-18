@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_exp.S,v 1.6 2005/11/15 20:41:35 otto Exp $	*/
+/*	$OpenBSD: e_exp.S,v 1.7 2006/03/18 23:56:14 kettenis Exp $	*/
 /*	$NetBSD: e_exp.S,v 1.12 2002/02/27 16:32:46 christos Exp $	*/
 
 /*
@@ -40,35 +40,6 @@
 
 /* e^x = 2^(x * log2(e)) */
 ENTRY(__ieee754_exp)
-#ifndef __i386__
-	/*
-	 * XXX: This code is broken and needs to be merged with the i386 case.
-	 */
-	fstcw	-12(%rsp)
-	movw	-12(%rsp),%dx
-	orw	$0x0180,%dx
-	movw	%dx,-16(%rsp)
-	fldcw	-16(%rsp)
-	movsd	%xmm0,-8(%rsp)
-	fldl	-8(%rsp)
-
-	fldl2e
-	fmulp				/* x * log2(e) */
-	fld	%st(0)
-	frndint				/* int(x * log2(e)) */
-	fxch	%st(1)
-	fsub	%st(1),%st		/* fract(x * log2(e)) */
-	f2xm1				/* 2^(fract(x * log2(e))) - 1 */
-	fld1
-	faddp				/* 2^(fract(x * log2(e))) */
-	fscale				/* e^x */
-	fstp	%st(1)
-
-	fstpl	-8(%rsp)
-	movsd	-8(%rsp),%xmm0
-	fldcw	-12(%rsp)
-	ret
-#else
 	/*
 	 * If x is +-Inf, then the subtraction would give Inf-Inf = NaN.
 	 * Avoid this.  Also avoid it if x is NaN for convenience.
@@ -124,4 +95,3 @@ x_Inf_or_NaN:
 x_not_minus_Inf:
 	fldl	4(%esp)
 	ret
-#endif
