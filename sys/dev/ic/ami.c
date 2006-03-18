@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.124 2006/03/18 03:13:43 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.125 2006/03/18 04:44:52 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1157,13 +1157,10 @@ ami_done_xs(struct ami_softc *sc, struct ami_ccb *ccb)
 	ami_put_ccb(ccb);
 	splx(s);
 
-	if (xs) {
-		timeout_del(&xs->stimeout);
-		xs->resid = 0;
-		xs->flags |= ITSDONE;
-		AMI_DPRINTF(AMI_D_CMD, ("scsi_done(%d) ", idx));
-		scsi_done(xs);
-	}
+	timeout_del(&xs->stimeout);
+	xs->resid = 0;
+	xs->flags |= ITSDONE;
+	scsi_done(xs);
 
 	return (0);
 }
@@ -1171,7 +1168,6 @@ ami_done_xs(struct ami_softc *sc, struct ami_ccb *ccb)
 int
 ami_done_ccb(struct ami_softc *sc, struct ami_ccb *ccb)
 {
-	struct scsi_xfer *xs = ccb->ccb_xs;
 	int s;
 
 	if (ccb->ccb_data != NULL) {
@@ -1194,14 +1190,6 @@ ami_done_ccb(struct ami_softc *sc, struct ami_ccb *ccb)
 		s = splbio();
 		ami_put_ccb(ccb);
 		splx(s);
-	}
-
-	if (xs) {
-		timeout_del(&xs->stimeout);
-		xs->resid = 0;
-		xs->flags |= ITSDONE;
-		AMI_DPRINTF(AMI_D_CMD, ("scsi_done(%d) ", idx));
-		scsi_done(xs);
 	}
 
 	return (0);
