@@ -1,4 +1,4 @@
-/*	$OpenBSD: usage.c,v 1.7 2005/02/10 22:24:52 matthieu Exp $	*/
+/*	$OpenBSD: usage.c,v 1.8 2006/03/18 03:34:22 dhill Exp $	*/
 /*	$NetBSD: usage.c,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
@@ -185,7 +185,7 @@ hid_start(const char *hidname)
 fail:
 	if (f)
 		fclose(f);
-	for (no = 0; no++; no < npages) {
+	for (no = 0; no < npages; no++) {
 		if (pages[no].name)
 			free((char *)pages[no].name);
 		if (pages[no].page_contents)
