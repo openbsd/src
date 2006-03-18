@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.27 2006/03/15 05:05:35 deraadt Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.28 2006/03/18 03:33:55 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -341,7 +341,8 @@ rcsnum_inc(RCSNUM *num)
 RCSNUM *
 rcsnum_dec(RCSNUM *num)
 {
-	if (num->rn_id[num->rn_len - 1] <= 0)
+	/* XXX - Is it an error for the number to be 0? */
+	if (num->rn_id[num->rn_len - 1] <= 1)
 		return (num);
 	num->rn_id[num->rn_len - 1]--;
 	return (num);
