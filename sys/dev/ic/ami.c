@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.122 2006/03/17 14:18:39 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.123 2006/03/18 02:28:29 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -126,8 +126,8 @@ void		ami_copyhds(struct ami_softc *, const u_int32_t *,
 struct ami_mem	*ami_allocmem(struct ami_softc *, size_t);
 void		ami_freemem(struct ami_softc *, struct ami_mem *);
 void		ami_stimeout(void *);
-int 		ami_cmd(struct ami_ccb *, int, int);
 int		ami_start(struct ami_softc *, struct ami_ccb *);
+int 		ami_start_xs(struct ami_ccb *, int, int);
 int		ami_poll(struct ami_softc *, struct ami_ccb *);
 int		ami_done(struct ami_softc *, int);
 int		ami_done_ccb(struct ami_softc *, struct ami_ccb *);
@@ -956,7 +956,7 @@ ami_schwartz_poll(struct ami_softc *sc, struct ami_iocmd *mbox)
 }
 
 int
-ami_cmd(struct ami_ccb *ccb, int flags, int wait)
+ami_start_xs(struct ami_ccb *ccb, int flags, int wait)
 {
 	struct ami_softc *sc = ccb->ccb_sc;
 	int error = 0;
@@ -1302,7 +1302,7 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 	}
 
 	s = splbio();
-	error = ami_cmd(ccb, (xs->flags & SCSI_NOSLEEP) ?
+	error = ami_start_xs(ccb, (xs->flags & SCSI_NOSLEEP) ?
 	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK, xs->flags & SCSI_POLL);
 	splx(s);
 	if (error) {
@@ -1441,7 +1441,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		cmd->acc_cmd = AMI_FLUSH;
 
 		s = splbio();
-		error = ami_cmd(ccb, (xs->flags & SCSI_NOSLEEP) ?
+		error = ami_start_xs(ccb, (xs->flags & SCSI_NOSLEEP) ?
 		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK, xs->flags & SCSI_POLL);
 		splx(s);
 		if (error) {
@@ -1602,7 +1602,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	s = splbio();
-	error = ami_cmd(ccb, (xs->flags & SCSI_NOSLEEP) ?
+	error = ami_start_xs(ccb, (xs->flags & SCSI_NOSLEEP) ?
 	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK, xs->flags & SCSI_POLL);
 	splx(s);
 	if (error) {
