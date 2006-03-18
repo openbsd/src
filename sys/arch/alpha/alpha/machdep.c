@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.97 2006/03/15 21:03:33 deraadt Exp $ */
+/* $OpenBSD: machdep.c,v 1.98 2006/03/18 12:03:33 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -2044,18 +2044,39 @@ void
 delay(n)
 	unsigned long n;
 {
-	long N = cycles_per_usec * (n);
+	unsigned long pcc0, pcc1, curcycle, cycles, usec;
 
-	/*
-	 * XXX Should be written to use RPCC?
-	 */
+	if (n == 0)
+		return;
 
-	__asm __volatile(
-		"# The 2 corresponds to the insn count\n"
-		"1:	subq	%2, %1, %0	\n"
-		"	bgt	%0, 1b"
-		: "=r" (N)
-		: "i" (2), "0" (N));
+	pcc0 = alpha_rpcc() & 0xffffffffUL;
+	cycles = 0;
+	usec = 0;
+
+	while (usec <= n) {
+		/*
+		 * Get the next CPU cycle count - assumes that we can not
+		 * have had more than one 32 bit overflow.
+		 */
+		pcc1 = alpha_rpcc() & 0xffffffffUL;
+		if (pcc1 < pcc0)
+			curcycle = (pcc1 + 0x100000000UL) - pcc0;
+		else
+			curcycle = pcc1 - pcc0;
+
+		/*
+		 * We now have the number of processor cycles since we
+		 * last checked. Add the current cycle count to the
+		 * running total. If it's over cycles_per_usec, increment
+		 * the usec counter.
+		 */
+		cycles += curcycle;
+		while (cycles > cycles_per_usec) {
+			usec++;
+			cycles -= cycles_per_usec;
+		}
+		pcc0 = pcc1;
+	}
 }
 
 #if defined(COMPAT_OSF1)
