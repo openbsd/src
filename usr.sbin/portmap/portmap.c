@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.35 2006/01/03 18:54:07 millert Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.36 2006/03/18 00:40:14 dhill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";
 #else
-static char rcsid[] = "$OpenBSD: portmap.c,v 1.35 2006/01/03 18:54:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: portmap.c,v 1.36 2006/03/18 00:40:14 dhill Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,8 @@ static char sccsid[] = "@(#)portmap.c 1.32 87/08/06 Copyr 1984 Sun Micro";
 void reg_service(struct svc_req *, SVCXPRT *);
 void reap(int);
 void callit(struct svc_req *, SVCXPRT *);
-int check_callit(struct sockaddr_in *, u_long, u_long, u_long);
+int check_callit(struct sockaddr_in *, u_long, u_long);
+struct pmaplist *find_service(u_long, u_long, u_long);
 
 struct pmaplist *pmaplist;
 int debugging = 0;
@@ -612,8 +613,7 @@ callit(struct svc_req *rqstp, SVCXPRT *xprt)
 	a.rmt_args.args = buf;
 	if (!svc_getargs(xprt, xdr_rmtcall_args, (caddr_t)&a))
 		return;
-	if (!check_callit(svc_getcaller(xprt), rqstp->rq_proc,
-	    a.rmt_prog, a.rmt_proc))
+	if (!check_callit(svc_getcaller(xprt), a.rmt_prog, a.rmt_proc))
 		return;
 	if ((pml = find_service(a.rmt_prog, a.rmt_vers,
 	    (u_long)IPPROTO_UDP)) == NULL)
@@ -676,8 +676,7 @@ reap(int signo)
 #define XXXPROC_NOP		((u_long) 0)
 
 int
-check_callit(struct sockaddr_in *addr, u_long proc, u_long prog,
-    u_long aproc)
+check_callit(struct sockaddr_in *addr, u_long prog, u_long aproc)
 {
 	if ((prog == PMAPPROG && aproc != XXXPROC_NOP) ||
 	    (prog == NFSPROG && aproc != XXXPROC_NOP) ||
