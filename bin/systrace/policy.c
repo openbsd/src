@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.29 2003/07/19 11:48:58 sturm Exp $	*/
+/*	$OpenBSD: policy.c,v 1.30 2006/03/18 19:03:23 robert Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -477,7 +477,7 @@ systrace_readtemplate(char *filename, struct policy *policy,
 		}
 
 		if (policy == NULL)
-			return (template);
+			goto out;
 
 		if (systrace_policyprocess(policy, p) == -1)
 			goto error;
