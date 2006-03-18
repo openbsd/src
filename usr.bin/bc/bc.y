@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.28 2006/03/18 20:44:43 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.29 2006/03/18 21:05:50 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.28 2006/03/18 20:44:43 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.29 2006/03/18 21:05:50 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -286,8 +286,11 @@ statement	: expression
 
 				putchar('q');
 				fflush(stdout);
-				sigprocmask(SIG_BLOCK, NULL, &mask);
-				sigsuspend(&mask);
+				if (dc) {
+					sigprocmask(SIG_BLOCK, NULL, &mask);
+					sigsuspend(&mask);
+				} else
+					exit(0);
 			}
 		| RETURN return_expression
 			{
