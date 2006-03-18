@@ -4853,6 +4853,8 @@
 ./usr/share/man/cat3/tparm.0
 ./usr/share/man/cat3/tputs.0
 ./usr/share/man/cat3/tree.0
+./usr/share/man/cat3/trunc.0
+./usr/share/man/cat3/truncf.0
 ./usr/share/man/cat3/tsearch.0
 ./usr/share/man/cat3/ttyname.0
 ./usr/share/man/cat3/ttyname_r.0

@@ -32,7 +32,7 @@
 ./usr/lib/libcurses.so.10.0
 ./usr/lib/libdes.so.9.0
 ./usr/lib/libedit.so.3.0
-./usr/lib/libevent.so.1.1
+./usr/lib/libevent.so.1.2
 ./usr/lib/libform.so.3.0
 ./usr/lib/libg2c.so.8.0
 ./usr/lib/libgssapi.so.4.0
@@ -40,7 +40,7 @@
 ./usr/lib/libkafs.so.15.0
 ./usr/lib/libkrb5.so.15.0
 ./usr/lib/libkvm.so.8.0
-./usr/lib/libm.so.2.1
+./usr/lib/libm.so.2.2
 ./usr/lib/libmenu.so.3.0
 ./usr/lib/libmilter.so.1.0
 ./usr/lib/libncurses.so.10.0
