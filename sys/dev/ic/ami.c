@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.123 2006/03/18 02:28:29 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.124 2006/03/18 03:13:43 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1441,19 +1441,13 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		cmd->acc_cmd = AMI_FLUSH;
 
 		s = splbio();
-		error = ami_start_xs(ccb, (xs->flags & SCSI_NOSLEEP) ?
-		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK, xs->flags & SCSI_POLL);
+		error = ami_poll(sc, ccb);
 		splx(s);
-		if (error) {
+		if (error)
 			xs->error = XS_DRIVER_STUFFUP;
-			scsi_done(xs);
-			return (COMPLETE);
-		}
 
-		if (xs->flags & SCSI_POLL)
-			return (COMPLETE);
-		else
-			return (SUCCESSFULLY_QUEUED);
+		scsi_done(xs);
+		return (COMPLETE);
 
 	case TEST_UNIT_READY:
 		/* save off sd? after autoconf */
