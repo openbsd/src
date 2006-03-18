@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.9 2006/01/25 05:25:33 brad Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.10 2006/03/18 20:23:42 brad Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -119,8 +119,10 @@ evbuffer_add_buffer(struct evbuffer *outbuf, struct evbuffer *inbuf)
 	}
 
 	res = evbuffer_add(outbuf, inbuf->buffer, inbuf->off);
-	if (res == 0)
+	if (res == 0) {
+		/* We drain the input buffer on success */
 		evbuffer_drain(inbuf, inbuf->off);
+	}
 
 	return (res);
 }
@@ -342,8 +344,21 @@ evbuffer_read(struct evbuffer *buf, int fd, int howmuch)
 #endif
 
 #ifdef FIONREAD
-	if (ioctl(fd, FIONREAD, &n) == -1 || n == 0)
+	if (ioctl(fd, FIONREAD, &n) == -1 || n == 0) {
 		n = EVBUFFER_MAX_READ;
+	} else if (n > EVBUFFER_MAX_READ && n > howmuch) {
+		/*
+		 * It's possible that a lot of data is available for
+		 * reading.  We do not want to exhaust resources
+		 * before the reader has a chance to do something
+		 * about it.  If the reader does not tell us how much
+		 * data we should read, we artifically limit it.
+		 */
+		if (n > buf->totallen << 2)
+			n = buf->totallen << 2;
+		if (n < EVBUFFER_MAX_READ)
+			n = EVBUFFER_MAX_READ;
+	}
 #endif	
 	if (howmuch < 0 || howmuch > n)
 		howmuch = n;
