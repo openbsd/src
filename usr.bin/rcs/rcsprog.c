@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.76 2006/03/16 04:04:57 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.77 2006/03/18 03:41:54 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -288,8 +288,7 @@ rcs_choosefile(const char *filename)
 	 * This ensures that there is at least one suffix for strsep().
 	 */
 	if (strcmp(rcs_suffixes, "") == 0) {
-		if ((ret = strdup(rcspath)) == NULL);
-			fatal("out of memory");
+		ret = xstrdup(rcspath);
 		return (ret);
 	}
 
@@ -299,8 +298,7 @@ rcs_choosefile(const char *filename)
 	 * does, return that string.  Otherwise return path with first
 	 * extension.
 	 */
-	if ((suffixes = strdup(rcs_suffixes)) == NULL)
-		fatal("out of memory");
+	suffixes = xstrdup(rcs_suffixes);
 	for (ret = NULL, next = suffixes; (ext = strsep(&next, "/")) != NULL;) {
 		char fpath[MAXPATHLEN];
 
@@ -316,8 +314,7 @@ rcs_choosefile(const char *filename)
 			continue;
 
 		if (stat(fpath, &sb) == 0) {
-			if ((ret = strdup(fpath)) == NULL)
-				fatal("out of memory");
+			ret = xstrdup(fpath);
 			break;
 		}
 	}
@@ -332,9 +329,7 @@ rcs_choosefile(const char *filename)
 		 * XXX - We shouldn't need to do strsep again,
 		 * suffixes should now be NUL separated.
 		 */
-		if ((suffixes = strdup(rcs_suffixes)) == NULL)
-			fatal("out of memory");
-		next = suffixes;
+		next = suffixes = xstrdup(rcs_suffixes);
 		/* Get first extension again. */
 		if ((ext = strsep(&next, "/")) == NULL) {
 			xfree(suffixes);
@@ -344,8 +339,7 @@ rcs_choosefile(const char *filename)
 			xfree(suffixes);
 			return (NULL);
 		}
-		if ((ret = strdup(rcspath)) == NULL)
-			fatal("out of memory");
+		ret = xstrdup(rcspath);
 		xfree(suffixes);
 	}
 
