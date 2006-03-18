@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.77 2006/03/18 03:41:54 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.78 2006/03/18 04:00:34 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -69,6 +69,7 @@ void sighdlr(int);
 static void rcs_set_description(RCSFILE *, const char *);
 static void rcs_attach_symbol(RCSFILE *, const char *);
 
+/* ARGSUSED */
 void
 sighdlr(int sig)
 {
@@ -477,6 +478,7 @@ rcs_main(int argc, char **argv)
 			comment = rcs_optarg;
 			break;
 		case 'e':
+			/* XXX - Not implemented. */
 			elist = rcs_optarg;
 			break;
 		case 'h':
