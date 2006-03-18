@@ -1,4 +1,4 @@
-/* $OpenBSD: hash.c,v 1.4 2003/07/15 06:10:46 deraadt Exp $ */
+/* $OpenBSD: hash.c,v 1.5 2006/03/18 23:17:36 deraadt Exp $ */
 /*
  * Copyright (c) 1995
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -40,7 +40,7 @@
 #include "hash.h"
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: hash.c,v 1.4 2003/07/15 06:10:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: hash.c,v 1.5 2006/03/18 23:17:36 deraadt Exp $";
 #endif
 
 /*
@@ -188,11 +188,14 @@ mstore(struct member_entry *table[], char *key, char *data, char *domain)
 
 	/* Check if all we have to do is insert a new groupname. */
 	while (cur) {
-		if (!strcmp(cur->key, key) && !strcmp(cur->domain,domain)) {
+		if (!strcmp(cur->key, key) && !strcmp(cur->domain, domain)) {
 			p = cur->groups;
 			while (p) {
-				if (!strcmp(p->groupname,data))
+				if (!strcmp(p->groupname, data)) {
+					free(tmp->groupname);
+					free(tmp);
 					return;
+				}
 				p = p->next;
 			}
 			tmp->next = cur->groups;
