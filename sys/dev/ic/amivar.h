@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.39 2006/03/17 13:34:23 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.40 2006/03/19 11:53:23 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -75,6 +75,8 @@ struct ami_ccb {
 		AMI_CCB_QUEUED,
 		AMI_CCB_PREQUEUED
 	}			ccb_state;
+	int			ccb_flags;
+#define AMI_CCB_F_ERR			(1<<0)
 	TAILQ_ENTRY(ami_ccb)	ccb_link;
 };
 
@@ -119,12 +121,12 @@ struct ami_softc {
 	paddr_t			sc_mbox_pa;
 
 	struct ami_ccb		sc_ccbs[AMI_MAXCMDS];
-	ami_queue_head		sc_free_ccb, sc_ccbq, sc_ccbdone;
+	ami_queue_head		sc_ccb_freeq, sc_ccb_preq, sc_ccb_runq;
 
 	struct ami_mem		*sc_ccbmem_am;
 
 	int			sc_timeout;
-	struct timeout		sc_requeue_tmo;
+	struct timeout		sc_run_tmo;
 	int			sc_dis_poll;
 
 	char			sc_fwver[16];
