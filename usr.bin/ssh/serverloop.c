@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: serverloop.c,v 1.128 2006/03/04 04:12:58 djm Exp $");
+RCSID("$OpenBSD: serverloop.c,v 1.129 2006/03/19 02:22:32 djm Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -1081,6 +1081,7 @@ server_input_global_request(int type, u_int32_t seq, void *ctxt)
 
 		success = channel_cancel_rport_listener(cancel_address,
 		    cancel_port);
+		xfree(cancel_address);
 	}
 	if (want_reply) {
 		packet_start(success ?
