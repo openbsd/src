@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.42 2006/03/13 20:10:49 brad Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.43 2006/03/19 02:43:38 brad Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -650,7 +650,6 @@ psycho_alloc_chipset(struct psycho_pbm *pp, int node, pci_chipset_tag_t pc)
 	memcpy(npc, pc, sizeof *pc);
 	npc->cookie = pp;
 	npc->rootnode = node;
-	npc->curnode = node;
 
 	return (npc);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.14 2005/09/04 20:40:53 brad Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.15 2006/03/19 02:43:38 brad Exp $	*/
 /* $NetBSD: pci_machdep.h,v 1.7 2001/07/20 00:07:14 eeh Exp $ */
 
 /*
@@ -31,12 +31,6 @@
 
 #ifndef _MACHINE_PCI_MACHDEP_H_
 #define _MACHINE_PCI_MACHDEP_H_
-
-/*
- * We want to control both device & function probe order.
- */
-#define		__PCI_BUS_DEVORDER
-#define		__PCI_DEV_FUNCORDER
 
 /*
  * Forward declarations.
@@ -73,18 +67,11 @@ struct sparc_pci_chipset {
 	bus_space_tag_t		bustag;
 	bus_space_handle_t	bushandle;
 	int			rootnode;	/* PCI controller */
-	int			curnode;	/* Current OFW node */
 	int (*intr_map)(struct pci_attach_args *, pci_intr_handle_t *);
 };
 
 void		pci_attach_hook(struct device *, struct device *,
 				     struct pcibus_attach_args *);
-#ifdef __PCI_BUS_DEVORDER
-int		pci_bus_devorder(pci_chipset_tag_t, int, char *);
-#endif
-#ifdef __PCI_DEV_FUNCORDER
-int		pci_dev_funcorder(pci_chipset_tag_t, int, int, char *);
-#endif
 int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
 void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *,
@@ -97,6 +84,12 @@ const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 				 int, int (*)(void *), void *, char *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
+
+int		sparc64_pci_enumerate_bus(struct pci_softc *,
+		    int (*match)(struct pci_attach_args *),
+		    struct pci_attach_args *);
+
+#define PCI_MACHDEP_ENUMERATE_BUS sparc64_pci_enumerate_bus
 
 #define pciide_machdep_compat_intr_establish(a, b, c, d, e) (NULL)
 #define pciide_machdep_compat_intr_disestablish(a, b) do { } while (0)

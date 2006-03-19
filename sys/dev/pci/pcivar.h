@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.44 2006/03/13 20:10:49 brad Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.45 2006/03/19 02:43:38 brad Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -151,11 +151,15 @@ struct pci_quirkdata {
 
 struct pci_softc {
 	struct device sc_dev;
+	bus_space_tag_t sc_iot, sc_memt;
+	bus_dma_tag_t sc_dmat;
 	pci_chipset_tag_t sc_pc;
 	void *sc_powerhook;
 	LIST_HEAD(, pci_dev) sc_devs;
-	int sc_bus;
+	int sc_bus, sc_maxndevs;
 	pcitag_t *sc_bridgetag;
+	u_int sc_intrswiz;
+	pcitag_t sc_intrtag;
 };
 
 /*
@@ -204,6 +208,8 @@ int pci_matchbyid(struct pci_attach_args *, const struct pci_matchid *, int);
  * Helper functions for autoconfiguration.
  */
 const char *pci_findvendor(pcireg_t);
+int	pci_probe_device(struct pci_softc *, pcitag_t tag,
+	    int (*)(struct pci_attach_args *), struct pci_attach_args *);
 void	pci_devinfo(pcireg_t, pcireg_t, int, char *, size_t);
 const struct pci_quirkdata *
 	pci_lookup_quirkdata(pci_vendor_id_t, pci_product_id_t);

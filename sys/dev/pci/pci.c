@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.40 2006/03/11 22:08:07 brad Exp $	*/
+/*	$OpenBSD: pci.c,v 1.41 2006/03/19 02:43:38 brad Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -75,6 +75,13 @@ struct cfdriver pci_cd = {
 int	pciprint(void *, const char *);
 int	pcisubmatch(struct device *, void *, void *);
 
+#ifdef PCI_MACHDEP_ENUMERATE_BUS
+#define pci_enumerate_bus PCI_MACHDEP_ENUMERATE_BUS
+#else
+int pci_enumerate_bus(struct pci_softc *,
+    int (*)(struct pci_attach_args *), struct pci_attach_args *);
+#endif
+
 /*
  * Important note about PCI-ISA bridges:
  *
@@ -125,7 +132,7 @@ pcimatch(parent, match, aux)
 	 * XXX check other (hardware?) indicators
 	 */
 
-	return 1;
+	return (1);
 }
 
 void
@@ -134,171 +141,25 @@ pciattach(parent, self, aux)
 	void *aux;
 {
 	struct pcibus_attach_args *pba = aux;
-	bus_space_tag_t iot, memt;
-	pci_chipset_tag_t pc;
-	int bus, device, maxndevs, function, nfunctions;
 	struct pci_softc *sc = (struct pci_softc *)self;
-	struct pci_dev *pd;
-	struct device *dev;
-#ifdef __PCI_BUS_DEVORDER
-	char devs[32];
-	int i;
-#endif
-#ifdef __PCI_DEV_FUNCORDER
-	char funcs[8];
-	int j;
-#endif 
 
 	pci_attach_hook(parent, self, pba);
+
 	printf("\n");
 
-	iot = pba->pba_iot;
-	memt = pba->pba_memt;
-	pc = pba->pba_pc;
-	bus = pba->pba_bus;
-	maxndevs = pci_bus_maxdevs(pc, bus);
-
-	sc->sc_pc = pba->pba_pc;
 	LIST_INIT(&sc->sc_devs);
 	sc->sc_powerhook = powerhook_establish(pcipower, sc);
-#ifdef USER_PCICONF
-	sc->sc_bus = bus;
-#endif
 
-#ifdef __PCI_BUS_DEVORDER
-	pci_bus_devorder(pc, bus, devs);
-	for (i = 0; (device = devs[i]) < 32 && device >= 0; i++) {
-#else
-	for (device = 0; device < maxndevs; device++) {
-#endif
-		pcitag_t tag;
-		pcireg_t id, class, intr;
-#ifndef __sparc64__
-		pcireg_t bhlcr;
-#endif
-		struct pci_attach_args pa;
-		int pin;
-
-		tag = pci_make_tag(pc, bus, device, 0);
-		id = pci_conf_read(pc, tag, PCI_ID_REG);
-
-#ifdef __sparc64__
-		pci_dev_funcorder(pc, bus, device, funcs);
-		nfunctions = 8;
-
-		/* Invalid vendor ID value or 0 (see below for zero)
-		 * ... of course, if the pci_dev_funcorder found
-		 *     functions other than zero, we probably want
-		 *     to attach them.
-		 */
-		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID || PCI_VENDOR(id) == 0)
-			if (funcs[0] < 0)
-				continue;
-
-		for (j = 0; (function = funcs[j]) < nfunctions &&
-		    function >= 0; j++) {
-#else
-
-		/* Invalid vendor ID value? */
-		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
-			continue;
-		/* XXX Not invalid, but we've done this ~forever. */
-		if (PCI_VENDOR(id) == 0)
-			continue;
-
-		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
-		nfunctions = PCI_HDRTYPE_MULTIFN(bhlcr) ? 8 : 1;
-
-#ifdef __PCI_DEV_FUNCORDER
-		pci_dev_funcorder(pc, bus, device, funcs);
-		for (j = 0; (function = funcs[j]) < nfunctions &&
-		    function >= 0; j++) {
-#else
-		for (function = 0; function < nfunctions; function++) {
-#endif
-#endif
-			tag = pci_make_tag(pc, bus, device, function);
-			id = pci_conf_read(pc, tag, PCI_ID_REG);
-
-			/* Invalid vendor ID value? */
-			if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
-				continue;
-			/* XXX Not invalid, but we've done this ~forever. */
-			if (PCI_VENDOR(id) == 0)
-				continue;
-
-			class = pci_conf_read(pc, tag, PCI_CLASS_REG);
-			intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-
-			pa.pa_iot = iot;
-			pa.pa_memt = memt;
-			pa.pa_dmat = pba->pba_dmat;
-			pa.pa_pc = pc;
-			pa.pa_device = device;
-			pa.pa_function = function;
-			pa.pa_bus = bus;
-			pa.pa_tag = tag;
-			pa.pa_id = id;
-			pa.pa_class = class;
-
-			/* This is a simplification of the NetBSD code.
-			   We don't support turning off I/O or memory
-			   on broken hardware. <csapuntz@stanford.edu> */
-			pa.pa_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
-#ifdef __i386__
-			/*
-			 * on i386 we really need to know the device tag
-			 * and not the pci bridge tag, in intr_map
-			 * to be able to program the device and the
-			 * pci interrupt router.
-			 */
-			pa.pa_intrtag = tag;
-			pa.pa_intrswiz = 0;
-#else
-			if (bus == 0) {
-				pa.pa_intrswiz = 0;
-				pa.pa_intrtag = tag;
-			} else {
-				pa.pa_intrswiz = pba->pba_intrswiz + device;
-				pa.pa_intrtag = pba->pba_intrtag;
-			}
-#endif
-			pin = PCI_INTERRUPT_PIN(intr);
-			pa.pa_rawintrpin = pin;
-			if (pin == PCI_INTERRUPT_PIN_NONE) {
-				/* no interrupt */
-				pa.pa_intrpin = 0;
-			} else {
-				/*
-				 * swizzle it based on the number of
-				 * busses we're behind and our device
-				 * number.
-				 */
-				pa.pa_intrpin =			/* XXX */
-				    ((pin + pa.pa_intrswiz - 1) % 4) + 1;
-			}
-			pa.pa_intrline = PCI_INTERRUPT_LINE(intr);
-
-			if ((dev = config_found_sm(self, &pa, pciprint,
-			    pcisubmatch))) {
-				pcireg_t reg;
-
-				/* skip header type != 0 */
-				reg = pci_conf_read(pc, tag, PCI_BHLC_REG);
-				if (PCI_HDRTYPE_TYPE(reg) != 0)
-					continue;
-				if (pci_get_capability(pc, tag,
-				    PCI_CAP_PWRMGMT, NULL, NULL) == 0)
-					continue;
-				if (!(pd = malloc(sizeof *pd, M_DEVBUF,
-				    M_NOWAIT)))
-					continue;
-				pd->pd_tag = tag;
-				pd->pd_dev = dev;
-				LIST_INSERT_HEAD(&sc->sc_devs, pd, pd_next);
-			}
-		}
-	}
+	sc->sc_iot = pba->pba_iot;
+	sc->sc_memt = pba->pba_memt;
+	sc->sc_dmat = pba->pba_dmat;
+	sc->sc_pc = pba->pba_pc;
+	sc->sc_bus = pba->pba_bus;
+	sc->sc_bridgetag = pba->pba_bridgetag;
+	sc->sc_maxndevs = pci_bus_maxdevs(pba->pba_pc, pba->pba_bus);
+	sc->sc_intrswiz = pba->pba_intrswiz;
+	sc->sc_intrtag = pba->pba_intrtag;
+	pci_enumerate_bus(sc, NULL, NULL);
 }
 
 /* save and restore the pci config space */
@@ -373,10 +234,10 @@ pcisubmatch(parent, match, aux)
 
 	if (cf->pcicf_dev != PCI_UNK_DEV &&
 	    cf->pcicf_dev != pa->pa_device)
-		return 0;
+		return (0);
 	if (cf->pcicf_function != PCI_UNK_FUNCTION &&
 	    cf->pcicf_function != pa->pa_function)
-		return 0;
+		return (0);
 
 	success = (*cf->cf_attach->ca_match)(parent, match, aux);
 
@@ -396,6 +257,109 @@ pcisubmatch(parent, match, aux)
 	}
 
 	return (success);
+}
+
+int
+pci_probe_device(struct pci_softc *sc, pcitag_t tag,
+    int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
+{
+	pci_chipset_tag_t pc = sc->sc_pc;
+	struct pci_attach_args pa;
+	struct pci_dev *pd;
+	struct device *dev;
+	pcireg_t id, csr, class, intr, bhlcr;
+	int ret, pin, bus, device, function;
+
+	pci_decompose_tag(pc, tag, &bus, &device, &function);
+
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+	intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+	bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+
+	/* Invalid vendor ID value? */
+	if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+		return (0);
+	/* XXX Not invalid, but we've done this ~forever. */
+	if (PCI_VENDOR(id) == 0)
+		return (0);
+
+	pa.pa_iot = sc->sc_iot;
+	pa.pa_memt = sc->sc_memt;
+	pa.pa_dmat = sc->sc_dmat;
+	pa.pa_pc = pc;
+	pa.pa_bus = bus;
+	pa.pa_device = device;
+	pa.pa_function = function;
+	pa.pa_tag = tag;
+	pa.pa_id = id;
+	pa.pa_class = class;
+
+	/* This is a simplification of the NetBSD code.
+	   We don't support turning off I/O or memory
+	   on broken hardware. <csapuntz@stanford.edu> */
+	pa.pa_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+
+#ifdef __i386__
+	/*
+	 * on i386 we really need to know the device tag
+	 * and not the pci bridge tag, in intr_map
+	 * to be able to program the device and the
+	 * pci interrupt router.
+	 */
+	pa.pa_intrtag = tag;
+	pa.pa_intrswiz = 0;
+#else
+	if (sc->sc_bridgetag == NULL) {
+		pa.pa_intrswiz = 0;
+		pa.pa_intrtag = tag;
+	} else {
+		pa.pa_intrswiz = sc->sc_intrswiz + device;
+		pa.pa_intrtag = sc->sc_intrtag;
+	}
+#endif
+	pin = PCI_INTERRUPT_PIN(intr);
+	pa.pa_rawintrpin = pin;
+	if (pin == PCI_INTERRUPT_PIN_NONE) {
+		/* no interrupt */
+		pa.pa_intrpin = 0;
+	} else {
+		/*
+		 * swizzle it based on the number of busses we're
+		 * behind and our device number.
+		 */
+		pa.pa_intrpin = 	/* XXX */
+		    ((pin + pa.pa_intrswiz - 1) % 4) + 1;
+	}
+	pa.pa_intrline = PCI_INTERRUPT_LINE(intr);
+
+	if (match != NULL) {
+		ret = (*match)(&pa);
+		if (ret != 0 && pap != NULL)
+			*pap = pa;
+	} else {
+		if ((dev = config_found_sm(&sc->sc_dev, &pa, pciprint,
+		    pcisubmatch))) {
+				pcireg_t reg;
+
+				/* skip header type != 0 */
+				reg = pci_conf_read(pc, tag, PCI_BHLC_REG);
+				if (PCI_HDRTYPE_TYPE(reg) != 0)
+					return(0);
+				if (pci_get_capability(pc, tag,
+				    PCI_CAP_PWRMGMT, NULL, NULL) == 0)
+					return(0);
+				if (!(pd = malloc(sizeof *pd, M_DEVBUF,
+				    M_NOWAIT)))
+					return(0);
+				pd->pd_tag = tag;
+				pd->pd_dev = dev;
+				LIST_INSERT_HEAD(&sc->sc_devs, pd, pd_next);
+			}
+	}
+
+	return (ret);
 }
 
 int
@@ -445,6 +409,54 @@ pci_get_capability(pc, tag, capid, offset, value)
 
 	return (0);
 }
+
+#ifndef PCI_MACHDEP_ENUMERATE_BUS
+/*
+ * Generic PCI bus enumeration routine.  Used unless machine-dependent
+ * code needs to provide something else.
+ */
+int
+pci_enumerate_bus(struct pci_softc *sc,
+    int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
+{
+	pci_chipset_tag_t pc = sc->sc_pc;
+	int device, function, nfunctions, ret;
+	const struct pci_quirkdata *qd;
+	pcireg_t id, bhlcr;
+	pcitag_t tag;
+
+	for (device = 0; device < sc->sc_maxndevs; device++) {
+		tag = pci_make_tag(pc, sc->sc_bus, device, 0);
+		id = pci_conf_read(pc, tag, PCI_ID_REG);
+
+		/* Invalid vendor ID value? */
+		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+			continue;
+		/* XXX Not invalid, but we've done this ~forever. */
+		if (PCI_VENDOR(id) == 0)
+			continue;
+
+		qd = pci_lookup_quirkdata(PCI_VENDOR(id), PCI_PRODUCT(id));
+
+		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+		if (PCI_HDRTYPE_MULTIFN(bhlcr) ||
+		    (qd != NULL &&
+		      (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
+			nfunctions = 8;
+		else
+			nfunctions = 1;
+
+		for (function = 0; function < nfunctions; function++) {
+			tag = pci_make_tag(pc, sc->sc_bus, device, function);
+			ret = pci_probe_device(sc, tag, match, pap);
+			if (match != NULL && ret != 0)
+				return (ret);
+		}
+ 	}
+
+	return (0);
+}
+#endif /* PCI_MACHDEP_ENUMERATE_BUS */
 
 int
 pci_matchbyid(struct pci_attach_args *pa, const struct pci_matchid *ids,
