@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.9 2005/11/09 18:08:37 martin Exp $	*/
+/*	$OpenBSD: param.h,v 1.10 2006/03/19 01:47:23 martin Exp $	*/
 /*	$NetBSD: param.h,v 1.9 2002/03/24 03:37:23 thorpej Exp $	*/
 
 /*
@@ -166,14 +166,6 @@ void	delay (unsigned);
 	((bytes) >> DEV_BSHIFT)
 #define	dbtob(db)			/* calculates (db * DEV_BSIZE) */ \
 	((db) << DEV_BSHIFT)
-
-/*
- * Map a ``block device block'' to a file system block.
- * This should be device dependent, and should use the bsize
- * field from the disk label.
- * For now though just use DEV_BSIZE.
- */
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
 
 /*
  * Constants related to network buffer management.

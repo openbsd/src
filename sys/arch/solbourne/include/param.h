@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.3 2005/09/12 23:05:05 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.4 2006/03/19 01:47:24 martin Exp $	*/
 /*     OpenBSD: param.h,v 1.29 2004/08/06 22:31:31 mickey Exp 	*/
 
 /*
@@ -119,14 +119,6 @@
 /* bytes to disk blocks */
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 #define	dbtob(x)	((x) << DEV_BSHIFT)
-
-/*
- * Map a ``block device block'' to a file system block.
- * This should be device dependent, and should use the bsize
- * field from the disk label.
- * For now though just use DEV_BSIZE.
- */
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
 
 /*
  * dvmamap manages a range of DVMA addresses intended to create double

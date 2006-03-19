@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.30 2006/03/12 03:14:37 brad Exp $ */
+/*	$OpenBSD: param.h,v 1.31 2006/03/19 01:47:24 martin Exp $ */
 /*      $NetBSD: param.h,v 1.39 1999/10/22 21:14:34 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -139,15 +139,6 @@
 /* MD conversion macros */
 #define	vax_btoc(x)	(((unsigned)(x) + VAX_PGOFSET) >> VAX_PGSHIFT)
 #define	vax_btop(x)	(((unsigned)(x)) >> VAX_PGSHIFT)
-
-/*
- * Map a ``block device block'' to a file system block.
- * This should be device dependent, and will be if we
- * add an entry to cdevsw/bdevsw for that purpose.
- * For now though just use DEV_BSIZE.
- */
-
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
 
 #define       ovbcopy(x,y,z)  bcopy(x, y, z)
 
