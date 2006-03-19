@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.45 2006/03/19 02:43:38 brad Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.46 2006/03/19 21:25:04 brad Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -147,7 +147,8 @@ struct pci_quirkdata {
 	pci_product_id_t	product;	/* Product ID */
 	int			quirks;		/* quirks; see below */
 };
-#define	PCI_QUIRK_MULTIFUNCTION		0x00000001
+#define	PCI_QUIRK_MULTIFUNCTION		1
+#define	PCI_QUIRK_MONOFUNCTION		2
 
 struct pci_softc {
 	struct device sc_dev;

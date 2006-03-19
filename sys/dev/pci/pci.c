@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.41 2006/03/19 02:43:38 brad Exp $	*/
+/*	$OpenBSD: pci.c,v 1.42 2006/03/19 21:25:04 brad Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -272,11 +272,13 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
 
+	bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+	if (PCI_HDRTYPE_TYPE(bhlcr) > 2)
+		return (0);
+
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
-	intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-	bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
 
 	/* Invalid vendor ID value? */
 	if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
@@ -319,6 +321,9 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 		pa.pa_intrtag = sc->sc_intrtag;
 	}
 #endif
+
+	intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+
 	pin = PCI_INTERRUPT_PIN(intr);
 	pa.pa_rawintrpin = pin;
 	if (pin == PCI_INTERRUPT_PIN_NONE) {
@@ -427,6 +432,11 @@ pci_enumerate_bus(struct pci_softc *sc,
 
 	for (device = 0; device < sc->sc_maxndevs; device++) {
 		tag = pci_make_tag(pc, sc->sc_bus, device, 0);
+
+		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+		if (PCI_HDRTYPE_TYPE(bhlcr) > 2)
+			continue;
+
 		id = pci_conf_read(pc, tag, PCI_ID_REG);
 
 		/* Invalid vendor ID value? */
@@ -438,13 +448,14 @@ pci_enumerate_bus(struct pci_softc *sc,
 
 		qd = pci_lookup_quirkdata(PCI_VENDOR(id), PCI_PRODUCT(id));
 
-		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
-		if (PCI_HDRTYPE_MULTIFN(bhlcr) ||
-		    (qd != NULL &&
-		      (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
+		if (qd != NULL &&
+		      (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0)
 			nfunctions = 8;
-		else
+		else if (qd != NULL &&
+		      (qd->quirks & PCI_QUIRK_MONOFUNCTION) != 0)
 			nfunctions = 1;
+		else
+			nfunctions = PCI_HDRTYPE_MULTIFN(bhlcr) ? 8 : 1;
 
 		for (function = 0; function < nfunctions; function++) {
 			tag = pci_make_tag(pc, sc->sc_bus, device, function);
