@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.14 2006/03/13 20:10:49 brad Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.15 2006/03/19 21:57:55 brad Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -31,15 +31,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * XXX NOTE:
- * XXX PROPER OPERATION OF DEVICES BEHIND PPB'S WHICH USE INTERRUPTS
- * XXX ON SYSTEMS OTHER THAN THE i386 IS NOT POSSIBLE AT THIS TIME.
- * XXX There needs to be some support for 'swizzling' the interrupt
- * XXX pin.  In general, pci_intr_map() has to have a different
- * XXX interface.
- */
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -70,9 +61,7 @@ struct cfdriver ppb_cd = {
 int	ppbprint(void *, const char *pnp);
 
 int
-ppbmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ppbmatch(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -98,9 +87,7 @@ ppbmatch(parent, match, aux)
 }
 
 void
-ppbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ppbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ppb_softc *sc = (void *) self;
 	struct pci_attach_args *pa = aux;
@@ -135,12 +122,18 @@ ppbattach(parent, self, aux)
 
 	/*
 	 * Attach the PCI bus than hangs off of it.
+	 *
+	 * XXX Don't pass-through Memory Read Multiple.  Should we?
+	 * XXX Consult the spec...
 	 */
 	pba.pba_busname = "pci";
 	pba.pba_iot = pa->pa_iot;
 	pba.pba_memt = pa->pa_memt;
 	pba.pba_dmat = pa->pa_dmat;
 	pba.pba_pc = pc;
+#if 0
+	pba.pba_flags = pa->pa_flags & ~PCI_FLAGS_MRM_OKAY;
+#endif
 	pba.pba_bus = PPB_BUSINFO_SECONDARY(busdata);
 	pba.pba_bridgetag = &sc->sc_tag;
 	pba.pba_intrswiz = pa->pa_intrswiz;
@@ -150,9 +143,7 @@ ppbattach(parent, self, aux)
 }
 
 int
-ppbprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+ppbprint(void *aux, const char *pnp)
 {
 	struct pcibus_attach_args *pba = aux;
 
