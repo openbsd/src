@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.8 2006/03/12 17:44:07 brad Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.9 2006/03/19 02:50:54 brad Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -431,6 +431,14 @@ static const struct pcn_variant {
 	{ "Am79c975",
 	  pcn_79c971_mediainit,
 	  PARTID_Am79c975 },
+
+	{ "Am79c976",
+	  pcn_79c971_mediainit,
+	  PARTID_Am79c976 },
+
+	{ "Am79c978",
+	  pcn_79c971_mediainit,
+	  PARTID_Am79c978 },
 
 	{ "Unknown",
 	  pcn_79c971_mediainit,
