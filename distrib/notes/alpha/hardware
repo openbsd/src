@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.73 2006/03/12 18:13:41 martin Exp $
+dnl	$OpenBSD: hardware,v 1.74 2006/03/19 12:15:42 martin Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -218,6 +218,24 @@ Supported Peripherals:
 			Accton EN2242 MiniPCI
 			Linksys LNE100TX v4.x
 			Mototech ME316
+		ASIX 88140A/88141-based PCI adapters (dc), including: [*]
+			CNet Pro110B
+			Alfa Inc. GFC2204
+		Davicom DM9009, DM9100, DM9102, and DM9102A based PCI adapters
+		  (dc), including: [*]
+			Jaton XpressNet
+		Lite-On PNIC/PNIC-II-based adapters (dc), including: [*]
+			Kingston KNE110TX
+			Linksys LNE100TX
+			Matrox Networks FastNIC 10/100
+			Netgear FA310TX
+		Macronix 98713/98715/98725-based adapters (dc), including: [*]
+			Accton EN1217
+			Addtron AEF-320TX/AEF-330TX
+			CNet PRO120A/B
+			Complex RL-100TX
+			NDC Communications SOHOware SFA110A
+			SVEC PN102-TX Fast Ethernet card
 		DEC EtherWORKS III adapters, including: [-]
 			DEC DE203, DE204, DE205
 		Digital DC21x4x-based PCI adapters (de), including:
@@ -231,6 +249,11 @@ Supported Peripherals:
 			Asante 21140A
 			D-Link DFE-570TX Quad port
 			Almost all other variants work.
+		Digital DC2114x-based four port cards, (de) including:
+			Adaptec ANA-6944A
+			Cogent EM400
+			Compex 400TX
+			Znyx ZX346
 		Intel i8255x-based (except the i82556) PCI adapters (fxp),
 		  including:
 			Intel EtherExpress PRO/10+
@@ -260,6 +283,9 @@ Supported Peripherals:
 			Addtron AEF-360TX
 			Hawking PN102TX
 			D-Link DFE530TX
+		AMD PCnet-based PCI adapters (pcn), including: [*]
+			BOCALANcard/PCI
+			AT&T StarLAN 10, EN100, and StarLAN Fiber
 	Gigabit Ethernet Adapters
 		Intel i82540, i82541, i82542, i82543, i82544, i82545, i82546,
 		i82547, i82571, i82572 and i82573 based adapters (em), including: [*]
@@ -327,6 +353,25 @@ Supported Peripherals:
 			Linksys EG1032v2 (1000baseT)
 			Linksys EG1064v2 (1000baseT)
 			SMC 9452TX (1000baseT)
+	Communications Controllers [*]
+		Universal Serial Bus host controllers, including:
+		    USB Universal Host Controller (uhci)
+		    USB Open Host Controller (ohci)
+	Universal Serial Bus (USB) Devices [*]
+		USB Audio (uaudio) [-]
+		USB Diamond MultiMedia Rio MP3 players (urio) [-]
+		USB Ethernet adapters (aue, cue, kue), see above
+		USB Generic Human Interface Devices (catch-all) (uhid)
+		USB Handspring Visor (uvisor) [-]
+		USB Hubs (uhub)
+		USB Keyboards (ukbd)
+		USB Mass Storage devices, i.e., USB floppy drives and USB
+		  memory stick controllers (umass)
+		USB Mice (umouse) [-]
+		USB Modems (umodem) [-]
+		USB Printers (ulpt) [-]
+		USB Scanners (uscanner, usscanner) [-]
+		USB-USB cables (upl) [-]
 	FDDI Adapters [*]
 		Digital DEFPA PCI FDDI adapters (fpa)
 	Cryptography Accelerators [*]
@@ -362,10 +407,6 @@ work. It's our best guess that they do, but any feedback is appreciated.
 		ICP-Vortex GDT 6xxxR[DNPS] series (gdt)
 	Serial Ports [*]
 		Cyclades PCI Cyclom-{4, 8, 16}Y serial boards (cy)
-	Communications Controllers [*]
-		Universal Serial Bus host controllers, including:
-		    USB Universal Host Controller (uhci)
-		    USB Open Host Controller (ohci)
 	Ethernet Adapters
 		3Com 3c503 (ec) [*]
 		3Com 3c509, 3c579, and 3c59x (ep) [*]
@@ -417,25 +458,11 @@ work. It's our best guess that they do, but any feedback is appreciated.
 			System TALKS SGC-X2UL
 			TRENDnet TU2-ET100
 			Z-TEK ZK-R01-2
-		AMD PCnet-based PCI adapters (pcn), including: [*]
-			BOCALANcard/PCI
-			AT&T StarLAN 10, EN100, and StarLAN Fiber
-		ASIX 88140A/88141-based PCI adapters (dc), including: [*]
-			CNet Pro110B
-			Alfa Inc. GFC2204
 		CATC USB-EL1210A-based USB adapters (cue), including: [*]
 			CATC Netmate and Netmate II
 			Belkin F5U011/F5U111
-		Davicom DM9009, DM9100, DM9102, and DM9102A based PCI adapters
-		  (dc), including: [*]
-			Jaton XpressNet
 		Davicom DM9601 based USB adapters, including: [*]
 			Corega FEther USB-TXC
-		Digital DC2114x-based four port cards, (de) including:
-			Adaptec ANA-6944A
-			Cogent EM400
-			Compex 400TX
-			Znyx ZX346
 		Kawasaki LSI KL5KUSB101B-based USB adapters (kue),
 		  including: [*]
 			3Com 3C19250
@@ -463,18 +490,6 @@ work. It's our best guess that they do, but any feedback is appreciated.
 			Shark Pocket Adapter
 			Silicom U2E
 			SMC 2102/2104USB
-		Lite-On PNIC/PNIC-II-based adapters (dc), including: [*]
-			Kingston KNE110TX
-			Linksys LNE100TX
-			Matrox Networks FastNIC 10/100
-			Netgear FA310TX
-		Macronix 98713/98715/98725-based adapters (dc), including: [*]
-			Accton EN1217
-			Addtron AEF-320TX/AEF-330TX
-			CNet PRO120A/B
-			Complex RL-100TX
-			NDC Communications SOHOware SFA110A
-			SVEC PN102-TX Fast Ethernet card
 		National Semiconductor DP83815/DP83816-based PCI adapters (sis),
 		  including: [*]
 			Netgear FA311
@@ -651,21 +666,6 @@ work. It's our best guess that they do, but any feedback is appreciated.
 	WAN Adapters [*]
 		Lan Media Corporation SSI (T1)/HSSI/DS1/DS3 WAN interfaces
 		  (lmc)
-	Universal Serial Bus (USB) Devices [*]
-		USB Audio (uaudio) [-]
-		USB Diamond MultiMedia Rio MP3 players (urio) [-]
-		USB Ethernet adapters (aue, cue, kue), see above
-		USB Generic Human Interface Devices (catch-all) (uhid)
-		USB Handspring Visor (uvisor) [-]
-		USB Hubs (uhub)
-		USB Keyboards (ukbd)
-		USB Mass Storage devices, i.e., USB floppy drives and USB
-		  memory stick controllers (umass)
-		USB Mice (umouse) [-]
-		USB Modems (umodem) [-]
-		USB Printers (ulpt) [-]
-		USB Scanners (uscanner, usscanner) [-]
-		USB-USB cables (upl) [-]
 	Sound Devices [-]
 		C-Media CMI8[37]38 (cmpci)
 		ESS Solo-1 PCI AudioDrive (eso)
