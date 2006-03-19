@@ -40,7 +40,6 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.266 2006/03/12 04:23:07 djm Exp $");
 
 #include <sys/resource.h>
 #include <sys/ioctl.h>

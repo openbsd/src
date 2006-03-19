@@ -71,7 +71,6 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.136 2006/03/16 10:31:45 biorn Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
