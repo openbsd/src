@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.37 2005/11/12 13:30:46 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.38 2006/03/19 18:43:56 otto Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.37 2005/11/12 13:30:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.38 2006/03/19 18:43:56 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -825,8 +825,13 @@ construct_argv(char *command)
 	    sizeof (char *));
 	static const char separators[] = " \t";
 
-	if ((argv[argc++] = strtok(command, separators)) == 0)
+	if (argv == NULL)
 		return (0);
+
+	if ((argv[argc++] = strtok(command, separators)) == 0) {
+		free(argv);
+		return (0);
+	}
 	while ((argv[argc++] = strtok(NULL, separators)))
 		continue;
 	return (argv);
