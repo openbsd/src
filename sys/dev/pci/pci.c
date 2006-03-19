@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.42 2006/03/19 21:25:04 brad Exp $	*/
+/*	$OpenBSD: pci.c,v 1.43 2006/03/19 22:06:12 brad Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -109,9 +109,7 @@ int pci_enumerate_bus(struct pci_softc *,
  */
 
 int
-pcimatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+pcimatch(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 	struct pcibus_attach_args *pba = aux;
@@ -136,9 +134,7 @@ pcimatch(parent, match, aux)
 }
 
 void
-pciattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pciattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
 	struct pci_softc *sc = (struct pci_softc *)self;
@@ -201,9 +197,7 @@ pcipower(int why, void *arg)
 }
 
 int
-pciprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+pciprint(void *aux, const char *pnp)
 {
 	register struct pci_attach_args *pa = aux;
 	char devinfo[256];
@@ -224,9 +218,7 @@ pciprint(aux, pnp)
 }
 
 int
-pcisubmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+pcisubmatch(struct device *parent, void *match,  void *aux)
 {
 	struct cfdata *cf = match;
 	struct pci_attach_args *pa = aux;
@@ -368,12 +360,8 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 }
 
 int
-pci_get_capability(pc, tag, capid, offset, value)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int capid;
-	int *offset;
-	pcireg_t *value;
+pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
+    int *offset, pcireg_t *value)
 {
 	pcireg_t reg;
 	unsigned int ofs;
@@ -516,14 +504,14 @@ pciopen(dev_t dev, int oflags, int devtype, struct proc *p)
 		return EPERM;
 	}
 #endif
-	return 0;
+	return (0);
 }
 
 int
 pciclose(dev_t dev, int flag, int devtype, struct proc *p)
 {
 	PCIDEBUG(("pciclose\n"));
-	return 0;
+	return (0);
 }
 
 int
