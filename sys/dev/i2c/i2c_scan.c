@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.77 2006/03/18 23:06:47 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.78 2006/03/19 04:02:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -368,7 +368,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			 * cannot assume the reserved/unused bits of
 			 * register 0x03 and 0x06 are set to zero.
 			 */
-                        name = "adm1030";       /* complete check */
+			name = "adm1030";       /* complete check */
                 else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
 		    iicprobe(0x3d) == 0x31 &&
 		    (iicprobe(0x01) & 0x80) == 0x00 &&
@@ -555,7 +555,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			 * register bank.  Assume it's a W83781D and
 			 * let lm(4) sort out the real model.
 			 */
-			 name = "w83781d";
+			name = "w83781d";
 		}
 	} else if (addr == iicprobe (0x4a) && iicprobe(0x4e) == 0x50 &&
 	    iicprobe(0x4c) == 0xa3 && iicprobe(0x4d) == 0x5c) {
@@ -643,7 +643,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		if (iicprobe(0x5b) == 0x12)
 			name = "it8712";
 		else if (iicprobe(0x5b) == 0x00)
-			name = "sis950";		/* we think */
+			name = "it8712f-a";		/* we think */
 	}
 
 	if (name == NULL) {
