@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.82 2006/03/17 20:44:01 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.83 2006/03/19 12:01:13 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -31,9 +31,9 @@ our %keyword;
 sub Factory
 {
 	local $_ = shift;
-	if (m/^\@(\S+)\s*(.*)$/) {
+	if (m/^\@(\S+)\s*/) {
 		if (defined $keyword{$1}) {
-			$keyword{$1}->add(@_, $2);
+			$keyword{$1}->add(@_, $');
 		} else {
 			print STDERR "Unknown element: $_\n";
 			exit(1);
