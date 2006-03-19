@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.78 2006/03/19 04:02:22 deraadt Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.79 2006/03/19 18:19:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -643,7 +643,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		if (iicprobe(0x5b) == 0x12)
 			name = "it8712";
 		else if (iicprobe(0x5b) == 0x00)
-			name = "it8712f-a";		/* we think */
+			name = "it8712f-a";		/* sis950 too */
 	}
 
 	if (name == NULL) {
