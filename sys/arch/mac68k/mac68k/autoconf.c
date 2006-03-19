@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.25 2006/01/18 23:21:17 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.26 2006/03/19 21:58:53 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.38 1996/12/18 05:46:09 scottr Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/disk.h>
-#include <sys/lock.h>
 
 #include <dev/cons.h>
 
@@ -66,10 +65,6 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-
-#include <ufs/ufs/quota.h>
-#include <ufs/ufs/inode.h>
-#include <ufs/ffs/ffs_extern.h>
 
 struct device	*booted_device;
 int		booted_partition;
@@ -370,7 +365,7 @@ gotswap:
 		return;
 #endif
 	case DV_DISK:
-		mountroot = ffs_mountroot;
+		mountroot = dk_mountroot;
 		printf("root on %s%c", rootdv->dv_xname,
 		    DISKPART(rootdev) + 'a');
 		if (nswapdev != NODEV)
