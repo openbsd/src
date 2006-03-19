@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_quirks.c,v 1.2 2000/03/28 03:43:54 mickey Exp $	*/
+/*	$OpenBSD: pci_quirks.c,v 1.3 2006/03/19 22:30:26 brad Exp $	*/
 /*	$NetBSD: pci_quirks.c,v 1.1 1998/05/31 06:03:44 cgd Exp $	*/
 
 /*
@@ -48,9 +48,7 @@ static const struct pci_quirkdata pci_quirks[] = {
 };
 
 const struct pci_quirkdata *
-pci_lookup_quirkdata(vendor, product)
-	pci_vendor_id_t vendor;
-	pci_product_id_t product;
+pci_lookup_quirkdata(pci_vendor_id_t vendor, pci_product_id_t product)
 {
 	int i;
 

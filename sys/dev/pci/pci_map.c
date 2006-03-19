@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.12 2005/03/15 20:18:10 miod Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.13 2006/03/19 22:28:40 brad Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -49,20 +49,14 @@
 #include <dev/pci/pcivar.h>
 
 
-static int nbsd_pci_io_find(pci_chipset_tag_t, pcitag_t, int, pcireg_t,
+static int obsd_pci_io_find(pci_chipset_tag_t, pcitag_t, int, pcireg_t,
     bus_addr_t *, bus_size_t *, int *);
-static int nbsd_pci_mem_find(pci_chipset_tag_t, pcitag_t, int, pcireg_t,
+static int obsd_pci_mem_find(pci_chipset_tag_t, pcitag_t, int, pcireg_t,
     bus_addr_t *, bus_size_t *, int *);
 
 static int
-nbsd_pci_io_find(pc, tag, reg, type, basep, sizep, flagsp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t type;
-	bus_addr_t *basep;
-	bus_size_t *sizep;
-	int *flagsp;
+obsd_pci_io_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
+    bus_addr_t *basep, bus_size_t *sizep, int *flagsp)
 {
 	pcireg_t address, mask;
 	int s;
@@ -112,14 +106,8 @@ nbsd_pci_io_find(pc, tag, reg, type, basep, sizep, flagsp)
 }
 
 static int
-nbsd_pci_mem_find(pc, tag, reg, type, basep, sizep, flagsp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t type;
-	bus_addr_t *basep;
-	bus_size_t *sizep;
-	int *flagsp;
+obsd_pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
+    bus_addr_t *basep, bus_size_t *sizep, int *flagsp)
 {
 	pcireg_t address, mask, address1 = 0, mask1 = 0xffffffff;
 	u_int64_t waddress, wmask;
@@ -234,34 +222,22 @@ nbsd_pci_mem_find(pc, tag, reg, type, basep, sizep, flagsp)
 }
 
 int
-pci_io_find(pc, pcitag, reg, iobasep, iosizep)
-	pci_chipset_tag_t pc;
-	pcitag_t pcitag;
-	int reg;
-	bus_addr_t *iobasep;
-	bus_size_t *iosizep;
+pci_io_find(pci_chipset_tag_t pc, pcitag_t pcitag, int reg,
+    bus_addr_t *iobasep, bus_size_t *iosizep)
 {
-	return (nbsd_pci_io_find(pc, pcitag, reg, 0, iobasep, iosizep, 0));
+	return (obsd_pci_io_find(pc, pcitag, reg, 0, iobasep, iosizep, 0));
 }
 
 int
-pci_mem_find(pc, pcitag, reg, membasep, memsizep, cacheablep)
-	pci_chipset_tag_t pc;
-	pcitag_t pcitag;
-	int reg;
-	bus_addr_t *membasep;
-	bus_size_t *memsizep;
-	int *cacheablep;
+pci_mem_find(pci_chipset_tag_t pc, pcitag_t pcitag, int reg,
+    bus_addr_t *membasep, bus_size_t *memsizep, int *cacheablep)
 {
-	return (nbsd_pci_mem_find(pc, pcitag, reg, -1, membasep, memsizep,
+	return (obsd_pci_mem_find(pc, pcitag, reg, -1, membasep, memsizep,
 				  cacheablep));
 }
 
 pcireg_t
-pci_mapreg_type(pc, tag, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
+pci_mapreg_type(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	pcireg_t rv;
 
@@ -274,34 +250,22 @@ pci_mapreg_type(pc, tag, reg)
 }
 
 int
-pci_mapreg_info(pc, tag, reg, type, basep, sizep, flagsp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t type;
-	bus_addr_t *basep;
-	bus_size_t *sizep;
-	int *flagsp;
+pci_mapreg_info(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
+    bus_addr_t *basep, bus_size_t *sizep, int *flagsp)
 {
 
 	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO)
-		return (nbsd_pci_io_find(pc, tag, reg, type, basep, sizep,
+		return (obsd_pci_io_find(pc, tag, reg, type, basep, sizep,
 		    flagsp));
 	else
-		return (nbsd_pci_mem_find(pc, tag, reg, type, basep, sizep,
+		return (obsd_pci_mem_find(pc, tag, reg, type, basep, sizep,
 		    flagsp));
 }
 
 int
-pci_mapreg_map(pa, reg, type, busflags, tagp, handlep, basep, sizep, maxsize)
-	struct pci_attach_args *pa;
-	int reg, busflags;
-	pcireg_t type;
-	bus_space_tag_t *tagp;
-	bus_space_handle_t *handlep;
-	bus_addr_t *basep;
-	bus_size_t *sizep;
-	bus_size_t maxsize;
+pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type, int busflags,
+    bus_space_tag_t *tagp, bus_space_handle_t *handlep, bus_addr_t *basep,
+    bus_size_t *sizep, bus_size_t maxsize)
 {
 	bus_space_tag_t tag;
 	bus_space_handle_t handle;
@@ -313,14 +277,14 @@ pci_mapreg_map(pa, reg, type, busflags, tagp, handlep, basep, sizep, maxsize)
 	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO) {
 		if ((pa->pa_flags & PCI_FLAGS_IO_ENABLED) == 0)
 			return (EINVAL);
-		if ((rv = nbsd_pci_io_find(pa->pa_pc, pa->pa_tag, reg, type,
+		if ((rv = obsd_pci_io_find(pa->pa_pc, pa->pa_tag, reg, type,
 		    &base, &size, &flags)) != 0)
 			return (rv);
 		tag = pa->pa_iot;
 	} else {
 		if ((pa->pa_flags & PCI_FLAGS_MEM_ENABLED) == 0)
 			return (EINVAL);
-		if ((rv = nbsd_pci_mem_find(pa->pa_pc, pa->pa_tag, reg, type,
+		if ((rv = obsd_pci_mem_find(pa->pa_pc, pa->pa_tag, reg, type,
 		    &base, &size, &flags)) != 0)
 			return (rv);
 		tag = pa->pa_memt;
