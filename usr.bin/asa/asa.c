@@ -1,4 +1,4 @@
-/*	$OpenBSD: asa.c,v 1.5 2003/06/25 21:08:59 deraadt Exp $	*/
+/*	$OpenBSD: asa.c,v 1.6 2006/03/19 19:06:40 robert Exp $	*/
 /*	$NetBSD: asa.c,v 1.10 1995/04/21 03:01:41 cgd Exp $	*/
 
 /*
@@ -32,22 +32,32 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: asa.c,v 1.5 2003/06/25 21:08:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: asa.c,v 1.6 2006/03/19 19:06:40 robert Exp $";
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <err.h>
+#include <unistd.h>
 
 static void asa(FILE *);
+static void usage(void);
 
 int
 main(int argc, char *argv[])
 {
+	int ch;
 	FILE *fp;
 
-	/* skip progname */
-	argv++;
+	while ((ch = getopt(argc, argv, "")) != -1) {
+		switch(ch) {
+		default:
+			usage();
+			/* NOTREACHED */
+		}
+	}
+	argc -= optind;
+	argv += optind;
 
 	fp = stdin;
 	do {
@@ -114,4 +124,12 @@ asa(FILE *f)
 
 		putchar ('\n');
 	}
+}
+
+static void
+usage(void)
+{
+	extern char *__progname;
+	fprintf(stderr, "usage: %s [file ...]\n", __progname);
+	exit(1);
 }
