@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.49 2005/12/25 00:22:45 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.50 2006/03/19 22:00:29 miod Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -128,6 +128,8 @@
 
 void		userret(struct proc *, u_int64_t, u_quad_t);
 
+#ifndef SMALL_KERNEL
+
 unsigned long	Sfloat_to_reg(unsigned int);
 unsigned int	reg_to_Sfloat(unsigned long);
 unsigned long	Tfloat_reg_cvt(unsigned long);
@@ -139,6 +141,8 @@ unsigned long	Gfloat_reg_cvt(unsigned long);
 
 int		unaligned_fixup(unsigned long, unsigned long,
 		    unsigned long, struct proc *);
+#endif	/* SMALL_KERNEL */
+
 int		handle_opdec(struct proc *p, u_int64_t *ucodep);
 
 #ifndef NO_IEEE
@@ -325,8 +329,10 @@ trap(a0, a1, a2, entry, framep)
 		 * and per-process unaligned-access-handling flags).
 		 */
 		if (user) {
+#ifndef SMALL_KERNEL
 			if ((i = unaligned_fixup(a0, a1, a2, p)) == 0)
 				goto out;
+#endif
 
 			ucode = a0;		/* VA */
 			break;
@@ -801,6 +807,7 @@ ast(framep)
  * Unaligned access handler.  It's not clear that this can get much slower...
  *
  */
+
 const static int reg_to_framereg[32] = {
 	FRAME_V0,	FRAME_T0,	FRAME_T1,	FRAME_T2,
 	FRAME_T3,	FRAME_T4,	FRAME_T5,	FRAME_T6,
@@ -815,6 +822,8 @@ const static int reg_to_framereg[32] = {
 #define	irp(p, reg)							\
 	((reg_to_framereg[(reg)] == -1) ? NULL :			\
 	    &(p)->p_md.md_tf->tf_regs[reg_to_framereg[(reg)]])
+
+#ifndef SMALL_KERNEL
 
 #define	frp(p, reg)							\
 	(&(p)->p_addr->u_pcb.pcb_fp.fpr_regs[(reg)])
@@ -1162,6 +1171,8 @@ out:
 	return (signal);
 }
 
+#endif	/* SMALL_KERNEL */
+
 /*
  * Reserved/unimplemented instruction (opDec fault) handler
  *
@@ -1218,11 +1229,15 @@ handle_opdec(p, ucodep)
 		if (inst.mem_format.opcode == op_ldwu ||
 		    inst.mem_format.opcode == op_stw) {
 			if (memaddr & 0x01) {
+#ifndef SMALL_KERNEL
 				sig = unaligned_fixup(memaddr,
 				    inst.mem_format.opcode,
 				    inst.mem_format.ra, p);
 				if (sig)
 					goto unaligned_fixup_sig;
+#else
+				goto sigill;
+#endif
 				break;
 			}
 		}
@@ -1319,7 +1334,9 @@ sigill:
 sigsegv:
 	sig = SIGSEGV;
 	p->p_md.md_tf->tf_regs[FRAME_PC] = inst_pc;	/* re-run instr. */
+#ifndef SMALL_KERNEL
 unaligned_fixup_sig:
+#endif
 	*ucodep = memaddr;				/* faulting address */
 	return (sig);
 }
