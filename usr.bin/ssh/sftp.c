@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp.c,v 1.75 2006/02/20 17:19:54 stevesk Exp $");
+RCSID("$OpenBSD: sftp.c,v 1.76 2006/03/19 02:22:56 djm Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -1277,6 +1277,7 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 			if (parse_dispatch_command(conn, cmd, &pwd, 1) != 0) {
 				xfree(dir);
 				xfree(pwd);
+				xfree(conn);
 				return (-1);
 			}
 		} else {
@@ -1289,6 +1290,7 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 			err = parse_dispatch_command(conn, cmd, &pwd, 1);
 			xfree(dir);
 			xfree(pwd);
+			xfree(conn);
 			return (err);
 		}
 		xfree(dir);
@@ -1345,6 +1347,7 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 			break;
 	}
 	xfree(pwd);
+	xfree(conn);
 
 	if (el != NULL)
 		el_end(el);
