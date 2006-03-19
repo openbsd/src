@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.27 2005/10/26 18:57:51 martin Exp $	*/
+/*	$OpenBSD: param.h,v 1.28 2006/03/19 22:01:32 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-
@@ -62,7 +62,7 @@
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)
-#define	BLKDEV_IOSIZE	NBPG
+#define	BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
 #define	UPAGES		4
