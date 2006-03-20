@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_powerpc.c,v 1.4 2005/01/14 15:18:00 kevlo Exp $	*/
+/*	$OpenBSD: kvm_powerpc.c,v 1.5 2006/03/20 15:11:48 mickey Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -61,14 +61,14 @@ _kvm_initvtop(kvm_t *kd)
 }
 
 int
-_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
+_kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 {
 	_kvm_err(kd, 0, "vatop not yet implemented!");
 	return (0);
 }
 
 off_t
-_kvm_pa2off(kvm_t *kd, u_long pa)
+_kvm_pa2off(kvm_t *kd, paddr_t pa)
 {
 	_kvm_err(kd, 0, "pa2off not yet implemented!");
 	return (0);

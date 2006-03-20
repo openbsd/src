@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_vax.c,v 1.11 2004/09/15 19:31:31 miod Exp $ */
+/*	$OpenBSD: kvm_vax.c,v 1.12 2006/03/20 15:11:48 mickey Exp $ */
 /*	$NetBSD: kvm_vax.c,v 1.3 1996/03/18 22:34:06 thorpej Exp $ */
 
 /*-
@@ -110,7 +110,7 @@ _kvm_initvtop(kvm_t *kd)
  * physical address.  This routine is used only for crashdumps.
  */
 int
-_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
+_kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 {
 	u_long end;
 
@@ -139,7 +139,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
  * XXX crashdumps not working yet anyway
  */
 off_t
-_kvm_pa2off(kvm_t *kd, u_long pa)
+_kvm_pa2off(kvm_t *kd, paddr_t pa)
 {
 	return (kd->dump_off+pa);
 }

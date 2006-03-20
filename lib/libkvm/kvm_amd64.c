@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_amd64.c,v 1.3 2004/06/15 03:52:59 deraadt Exp $	*/
+/*	$OpenBSD: kvm_amd64.c,v 1.4 2006/03/20 15:11:48 mickey Exp $	*/
 /*	$NetBSD: kvm_x86_64.c,v 1.3 2002/06/05 22:01:55 fvdl Exp $	*/
 
 /*-
@@ -89,7 +89,7 @@ _kvm_initvtop(kvm_t *kd)
  * Translate a kernel virtual address to a physical address.
  */
 int
-_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
+_kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 {
 	cpu_kcore_hdr_t *cpu_kh;
 	paddr_t pde_pa, pte_pa;
@@ -180,7 +180,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
  * Translate a physical address to a file-offset in the crash dump.
  */
 off_t
-_kvm_pa2off(kvm_t *kd, u_long pa)
+_kvm_pa2off(kvm_t *kd, paddr_t pa)
 {
 	cpu_kcore_hdr_t *cpu_kh;
 	phys_ram_seg_t *ramsegs;

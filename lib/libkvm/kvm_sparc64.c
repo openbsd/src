@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_sparc64.c,v 1.5 2004/06/15 03:52:59 deraadt Exp $	*/
+/*	$OpenBSD: kvm_sparc64.c,v 1.6 2006/03/20 15:11:48 mickey Exp $	*/
 /*	$NetBSD: kvm_sparc64.c,v 1.7 2001/08/05 03:33:15 matt Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@ _kvm_initvtop(kvm_t *kd)
  * physical address.  This routine is used only for crashdumps.
  */
 int
-_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
+_kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 {
 	cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	u_long kernbase = cpup->kernbase;
@@ -186,7 +186,7 @@ lose:
  * Translate a physical address to a file-offset in the crash-dump.
  */
 off_t
-_kvm_pa2off(kvm_t *kd, u_long pa)
+_kvm_pa2off(kvm_t *kd, paddr_t pa)
 {
 	cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	phys_ram_seg_t *mp;

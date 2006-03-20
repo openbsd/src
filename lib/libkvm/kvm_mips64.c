@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mips64.c,v 1.2 2004/09/15 19:31:31 miod Exp $ */
+/*	$OpenBSD: kvm_mips64.c,v 1.3 2006/03/20 15:11:48 mickey Exp $ */
 /*	$NetBSD: kvm_mips.c,v 1.3 1996/03/18 22:33:44 thorpej Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_mips.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_mips64.c,v 1.2 2004/09/15 19:31:31 miod Exp $";
+static char *rcsid = "$OpenBSD: kvm_mips64.c,v 1.3 2006/03/20 15:11:48 mickey Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -118,7 +118,7 @@ _kvm_initvtop(kvm_t *kd)
  * Translate a kernel virtual address to a physical address.
  */
 int
-_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
+_kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 {
 	struct vmstate *vm;
 	u_long pte, addr, offset;
@@ -162,7 +162,7 @@ invalid:
 }
 
 off_t
-_kvm_pa2off(kvm_t *kd, u_long pa)
+_kvm_pa2off(kvm_t *kd, paddr_t pa)
 {
 	_kvm_err(kd, 0, "pa2off going to be implemented!");
 	return 0;

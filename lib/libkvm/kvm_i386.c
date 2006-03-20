@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_i386.c,v 1.14 2006/03/14 19:23:52 kettenis Exp $ */
+/*	$OpenBSD: kvm_i386.c,v 1.15 2006/03/20 15:11:48 mickey Exp $ */
 /*	$NetBSD: kvm_i386.c,v 1.9 1996/03/18 22:33:38 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.14 2006/03/14 19:23:52 kettenis Exp $";
+static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.15 2006/03/20 15:11:48 mickey Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -129,7 +129,7 @@ invalid:
  * Translate a kernel virtual address to a physical address.
  */
 int
-_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
+_kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 {
 	u_long offset, pte_pa;
 	struct vmstate *vm;
@@ -179,7 +179,7 @@ invalid:
  * Translate a physical address to a file-offset in the crash-dump.
  */
 off_t
-_kvm_pa2off(kvm_t *kd, u_long pa)
+_kvm_pa2off(kvm_t *kd, paddr_t pa)
 {
 	return ((off_t)(kd->dump_off + pa));
 }

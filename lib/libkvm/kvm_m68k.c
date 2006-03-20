@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_m68k.c,v 1.15 2004/09/15 19:31:31 miod Exp $ */
+/*	$OpenBSD: kvm_m68k.c,v 1.16 2006/03/20 15:11:48 mickey Exp $ */
 /*	$NetBSD: kvm_m68k.c,v 1.9 1996/05/07 06:09:11 leo Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.15 2004/09/15 19:31:31 miod Exp $";
+static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.16 2006/03/20 15:11:48 mickey Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -192,7 +192,7 @@ invalid:
 }
 
 int
-_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
+_kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 {
 	cpu_kcore_hdr_t *cpu_kh;
 
@@ -204,7 +204,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
  * Translate a physical address to a file-offset in the crash-dump.
  */
 off_t
-_kvm_pa2off(kvm_t *kd, u_long pa)
+_kvm_pa2off(kvm_t *kd, paddr_t pa)
 {
 	cpu_kcore_hdr_t *cpu_kh;
 	phys_ram_seg_t	*rsp;
