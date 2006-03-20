@@ -49,7 +49,7 @@ static void
 crc_update(u_int32_t *a, u_int32_t b)
 {
 	b ^= *a;
-	*a = ssh_crc32((u_char *) &b, sizeof(b));
+	*a = ssh_crc32((u_char *)&b, sizeof(b));
 }
 
 /* detect if a block is used in a particular pattern */
