@@ -1092,6 +1092,7 @@ server_input_global_request(int type, u_int32_t seq, void *ctxt)
 	}
 	xfree(rtype);
 }
+
 static void
 server_input_channel_req(int type, u_int32_t seq, void *ctxt)
 {

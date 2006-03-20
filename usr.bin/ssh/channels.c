@@ -192,7 +192,6 @@ channel_lookup(int id)
  * Register filedescriptors for a channel, used when allocating a channel or
  * when the channel consumer/producer is ready, e.g. shell exec'd
  */
-
 static void
 channel_register_fds(Channel *c, int rfd, int wfd, int efd,
     int extusage, int nonblock)
@@ -238,7 +237,6 @@ channel_register_fds(Channel *c, int rfd, int wfd, int efd,
  * Allocate a new channel object and set its type and socket. This will cause
  * remote_name to be freed.
  */
-
 Channel *
 channel_new(char *ctype, int type, int rfd, int wfd, int efd,
     u_int window, u_int maxpack, int extusage, char *remote_name, int nonblock)
@@ -340,7 +338,6 @@ channel_close_fd(int *fdp)
 }
 
 /* Close all channel fd/socket. */
-
 static void
 channel_close_fds(Channel *c)
 {
@@ -355,7 +352,6 @@ channel_close_fds(Channel *c)
 }
 
 /* Free the channel and close its fd/socket. */
-
 void
 channel_free(Channel *c)
 {
@@ -402,7 +398,6 @@ channel_free_all(void)
  * Closes the sockets/fds of all channels.  This is used to close extra file
  * descriptors after a fork.
  */
-
 void
 channel_close_all(void)
 {
@@ -416,7 +411,6 @@ channel_close_all(void)
 /*
  * Stop listening to channels.
  */
-
 void
 channel_stop_listening(void)
 {
@@ -443,7 +437,6 @@ channel_stop_listening(void)
  * Returns true if no channel has too much buffered data, and false if one or
  * more channel is overfull.
  */
-
 int
 channel_not_very_much_buffered_data(void)
 {
@@ -473,7 +466,6 @@ channel_not_very_much_buffered_data(void)
 }
 
 /* Returns true if any channel is still open. */
-
 int
 channel_still_open(void)
 {
@@ -516,7 +508,6 @@ channel_still_open(void)
 }
 
 /* Returns the id of an open channel suitable for keepaliving */
-
 int
 channel_find_open(void)
 {
@@ -561,7 +552,6 @@ channel_find_open(void)
  * suitable for sending to the client.  The message contains crlf pairs for
  * newlines.
  */
-
 char *
 channel_open_message(void)
 {
@@ -646,6 +636,7 @@ channel_request_start(int id, char *service, int wantconfirm)
 	packet_put_cstring(service);
 	packet_put_char(wantconfirm);
 }
+
 void
 channel_register_confirm(int id, channel_callback_fn *fn, void *ctx)
 {
@@ -658,6 +649,7 @@ channel_register_confirm(int id, channel_callback_fn *fn, void *ctx)
 	c->confirm = fn;
 	c->confirm_ctx = ctx;
 }
+
 void
 channel_register_cleanup(int id, channel_callback_fn *fn, int do_close)
 {
@@ -670,6 +662,7 @@ channel_register_cleanup(int id, channel_callback_fn *fn, int do_close)
 	c->detach_user = fn;
 	c->detach_close = do_close;
 }
+
 void
 channel_cancel_cleanup(int id)
 {
@@ -682,6 +675,7 @@ channel_cancel_cleanup(int id)
 	c->detach_user = NULL;
 	c->detach_close = 0;
 }
+
 void
 channel_register_filter(int id, channel_infilter_fn *ifn,
     channel_outfilter_fn *ofn)
@@ -1454,6 +1448,7 @@ channel_handle_rfd(Channel *c, fd_set *readset, fd_set *writeset)
 	}
 	return 1;
 }
+
 static int
 channel_handle_wfd(Channel *c, fd_set *readset, fd_set *writeset)
 {
@@ -1536,6 +1531,7 @@ channel_handle_wfd(Channel *c, fd_set *readset, fd_set *writeset)
 	}
 	return 1;
 }
+
 static int
 channel_handle_efd(Channel *c, fd_set *readset, fd_set *writeset)
 {
@@ -1579,6 +1575,7 @@ channel_handle_efd(Channel *c, fd_set *readset, fd_set *writeset)
 	}
 	return 1;
 }
+
 static int
 channel_handle_ctl(Channel *c, fd_set *readset, fd_set *writeset)
 {
@@ -1606,6 +1603,7 @@ channel_handle_ctl(Channel *c, fd_set *readset, fd_set *writeset)
 	}
 	return 1;
 }
+
 static int
 channel_check_window(Channel *c)
 {
@@ -1817,7 +1815,6 @@ channel_after_select(fd_set *readset, fd_set *writeset)
 
 
 /* If there is data to send to the connection, enqueue some of it now. */
-
 void
 channel_output_poll(void)
 {
@@ -1937,7 +1934,6 @@ channel_output_poll(void)
 
 
 /* -- protocol input */
-
 void
 channel_input_data(int type, u_int32_t seq, void *ctxt)
 {
@@ -2547,7 +2543,6 @@ channel_request_rforward_cancel(const char *host, u_short port)
  * listening for the port, and sends back a success reply (or disconnect
  * message if there was an error).  This never returns if there was an error.
  */
-
 void
 channel_input_port_forward_request(int is_root, int gateway_ports)
 {
@@ -2615,7 +2610,6 @@ channel_clear_permitted_opens(void)
 	num_permitted_opens = 0;
 
 }
-
 
 /* return socket to remote host, port */
 static int

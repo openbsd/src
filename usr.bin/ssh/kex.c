@@ -255,6 +255,7 @@ choose_enc(Enc *enc, char *client, char *server)
 	enc->key_len = cipher_keylen(enc->cipher);
 	enc->block_size = cipher_blocksize(enc->cipher);
 }
+
 static void
 choose_mac(Mac *mac, char *client, char *server)
 {
@@ -270,6 +271,7 @@ choose_mac(Mac *mac, char *client, char *server)
 	mac->key = NULL;
 	mac->enabled = 0;
 }
+
 static void
 choose_comp(Comp *comp, char *client, char *server)
 {
@@ -287,6 +289,7 @@ choose_comp(Comp *comp, char *client, char *server)
 	}
 	comp->name = name;
 }
+
 static void
 choose_kex(Kex *k, char *client, char *server)
 {
@@ -477,7 +480,8 @@ kex_derive_keys(Kex *kex, u_char *hash, u_int hashlen, BIGNUM *shared_secret)
 	for (mode = 0; mode < MODE_MAX; mode++) {
 		current_keys[mode] = kex->newkeys[mode];
 		kex->newkeys[mode] = NULL;
-		ctos = (!kex->server && mode == MODE_OUT) || (kex->server && mode == MODE_IN);
+		ctos = (!kex->server && mode == MODE_OUT) ||
+		    (kex->server && mode == MODE_IN);
 		current_keys[mode]->enc.iv  = keys[ctos ? 0 : 1];
 		current_keys[mode]->enc.key = keys[ctos ? 2 : 3];
 		current_keys[mode]->mac.key = keys[ctos ? 4 : 5];
