@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 2004/07/17 02:14:33 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 2006/03/20 18:55:13 dhill Exp $	*/
 /*	$NetBSD: main.c,v 1.13 1997/07/01 05:37:51 lukem Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.15 2004/07/17 02:14:33 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.16 2006/03/20 18:55:13 dhill Exp $";
 #endif
 #endif /* not lint */
 
@@ -355,6 +355,8 @@ obsolete(int *argcp, char **argvp[])
 	if (flags) {
 		*p = '\0';
 		*nargv++ = flagsp;
+	} else {
+		free(flagsp);
 	}
 
 	/* Copy remaining arguments. */
