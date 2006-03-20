@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.126 2006/03/19 11:53:23 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.127 2006/03/20 08:59:42 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -972,19 +972,13 @@ ami_schwartz_poll(struct ami_softc *sc, struct ami_iocmd *mbox)
 int
 ami_start_xs(struct ami_softc *sc, struct ami_ccb *ccb, struct scsi_xfer *xs)
 {
-	struct timeval tv;
-
 	if (xs->flags & SCSI_POLL) {
 		ami_poll(sc, ccb);
 		return (COMPLETE);
 	} 
 
 	timeout_set(&xs->stimeout, ami_stimeout, ccb);
-
-	/* add 5sec for whacky done() loops */
-	tv.tv_sec = 5 + xs->timeout / 1000;
-	tv.tv_usec = 1000 * (xs->timeout % 1000);
-	timeout_add(&xs->stimeout, tvtohz(&tv));
+	timeout_add(&xs->stimeout, (xs->timeout * hz) / 1000);
 
 	ami_start(sc, ccb);
 
