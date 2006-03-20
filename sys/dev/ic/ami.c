@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.129 2006/03/20 09:12:05 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.130 2006/03/20 09:34:37 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -137,7 +137,9 @@ int		ami_done_xs(struct ami_softc *, struct ami_ccb *);
 int		ami_done_pt(struct ami_softc *, struct ami_ccb *);
 void		ami_stimeout(void *);
 
+int		ami_done_ioctl(struct ami_softc *, struct ami_ccb *);
 int		ami_done_ccb(struct ami_softc *, struct ami_ccb *);
+
 void		ami_copy_internal_data(struct scsi_xfer *, void *, size_t);
 int		ami_inquire(struct ami_softc *, u_int8_t);
 
@@ -1174,6 +1176,15 @@ ami_done_xs(struct ami_softc *sc, struct ami_ccb *ccb)
 }
 
 int
+ami_done_ioctl(struct ami_softc *sc, struct ami_ccb *ccb)
+{
+	ccb->ccb_wakeup = 0;
+	wakeup(ccb);
+
+	return (0);
+}
+
+int
 ami_done_ccb(struct ami_softc *sc, struct ami_ccb *ccb)
 {
 	int s;
@@ -1670,16 +1681,14 @@ ami_drv_inq(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, u_int8_t page,
 	struct ami_ccb *ccb;
 	struct ami_passthrough *pt;
 	struct scsi_inquiry_data *inq = inqbuf;
+	int error = 0;
 
 	ccb = ami_get_ccb(sc);
 	if (ccb == NULL)
 		return (ENOMEM);
 
 	ccb->ccb_wakeup = 1;
-	ccb->ccb_data = inqbuf;
-	ccb->ccb_len = sizeof(struct scsi_inquiry_data);
-	ccb->ccb_dir = AMI_CCB_IN;
-	ccb->ccb_done = ami_done_ccb;
+	ccb->ccb_done = ami_done_ioctl;
 
 	ccb->ccb_cmd.acc_cmd = AMI_PASSTHRU;
 	ccb->ccb_cmd.acc_passthru.apt_data = ccb->ccb_ptpa;
@@ -1716,15 +1725,23 @@ ami_drv_inq(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, u_int8_t page,
 	while (ccb->ccb_wakeup)
 		tsleep(ccb, PRIBIO, "ami_drv_inq", 0);
 
+	bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
+	    ccb->ccb_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+	bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_ccbmem_am),
+	    ccb->ccb_offset, sizeof(struct ami_ccbmem),
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
+
+	if (ccb->ccb_flags & AMI_CCB_F_ERR)
+		error = EIO;
+	else if (pt->apt_scsistat != 0x00)
+		error = EIO;
+	else if ((inq->device & SID_TYPE) != T_DIRECT)
+		error = EINVAL;
+
 	ami_put_ccb(ccb);
 
-	if (pt->apt_scsistat != 0x00)
-		return (EIO);
-
-	if ((inq->device & SID_TYPE) != T_DIRECT)
-		return (EINVAL);
-
-	return (0);
+	return (error);
 }
 
 int
