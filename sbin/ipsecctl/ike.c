@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.19 2006/03/20 16:49:12 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.20 2006/03/20 17:09:38 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -378,11 +378,13 @@ ike_delete_config(struct ipsec_rule *r, FILE *fd)
 	return (0);
 }
 
-/* ARGSUSED1 */
 int
 ike_print_config(struct ipsec_rule *r, int opts)
 {
-	return (ike_gen_config(r, stdout));
+	if (opts & IPSECCTL_OPT_DELETE)
+		return (ike_delete_config(r, stdout));
+	else
+		return (ike_gen_config(r, stdout));
 }
 
 int
