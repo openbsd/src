@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.44 2006/03/20 10:55:19 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.45 2006/03/20 20:27:45 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -55,7 +55,8 @@ extern void doprintlineno(struct input_file *);
 extern void doprintfilename(struct input_file *);
 
 extern void doesyscmd(const char *);
-extern void	getdivfile(const char *);
+extern void getdivfile(const char *);
+extern void doformat(const char *[], int);
  
 
 /* look.c */

@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.32 2006/03/20 10:55:19 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.33 2006/03/20 20:27:45 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -500,6 +500,52 @@ doregexp(const char *argv[], int argc)
 		do_regexp(argv[2], &re, argv[4], pmatch);
 	free(pmatch);
 	regfree(&re);
+}
+
+void
+doformat(const char *argv[], int argc)
+{
+	const char *format = argv[2];
+	int pos = 3;
+	while (*format != 0) {
+		if (*format != '%') {
+			addchar(*format++);
+		} else {
+			format++;
+			if (*format == '%' || *format == 0) {
+				addchar('%');
+				if (*format == '%')
+					format++;
+			} else {
+			    int left_padded = 0;
+			    unsigned long width;
+			    size_t l;
+
+			    if (*format == '-') {
+			    	left_padded = 1;
+				format++;
+			    }
+			    width = strtoul(format, &format, 10);
+			    if (*format != 's') {
+			    	m4errx(1, "Unsupported format specification: %s.", argv[2]);
+			    }
+			    format++;
+			    if (pos >= argc)
+			    	m4errx(1, "Format with too many values.");
+			    l = strlen(argv[pos]);
+			    if (!left_padded) {
+				    while (l < width--)
+					    addchar(' ');
+			    }
+			    addchars(argv[pos++], l);
+			    if (left_padded) {
+			    	while (l < width--)
+					addchar(' ');
+			    }
+			}
+		}
+	}
+	pbstr(getstring());
 }
 
 void

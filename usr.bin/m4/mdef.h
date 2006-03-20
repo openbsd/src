@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.28 2003/06/30 22:13:33 espie Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.29 2006/03/20 20:27:45 espie Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -84,6 +84,7 @@
 #define ESYSCMDTYPE	41
 #define TRACEONTYPE	42
 #define TRACEOFFTYPE	43
+#define FORMATTYPE	44
 
 #define BUILTIN_MARKER	"__builtin_"
  

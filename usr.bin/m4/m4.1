@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.43 2005/09/30 20:34:26 jaredy Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.44 2006/03/20 20:27:45 espie Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -251,6 +251,16 @@ specifies the minimum number of digits in the result.
 .It Fn expr expr
 This is an alias for
 .Ic eval .
+.It Fn format formatstring arg1 ...
+Returns 
+.Fa formatstring 
+with escape sequences substituted with
+.Fa arg1
+and following arguments, in a way similar to
+.Xr printf 3 .
+This built-in is only available in GNU-m4 compatibility mode, and the 
+left-padding flag, an optional field width and the %s data type 
+are the only supported parameters.
 .It Fn ifdef name yes no
 If the macro named by the first argument is defined then return the second
 argument, otherwise the third.
@@ -439,6 +449,7 @@ For portability, one should not use the macros
 .Ic builtin ,
 .Ic esycmd ,
 .Ic expr ,
+.Ic format ,
 .Ic indir ,
 .Ic paste ,
 .Ic patsubst ,

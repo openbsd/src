@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.60 2006/03/20 10:55:19 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.61 2006/03/20 20:27:45 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -282,6 +282,12 @@ expand_builtin(const char *argv[], int argc, int td)
 	case SPASTYPE:
 		if (argc > 2)
 			(void) dopaste(argv[2]);
+		break;
+	case FORMATTYPE:
+		if (mimic_gnu)
+			doformat(argv, argc);
+		else
+			m4errx(1, "format builtin is only available in gnu-m4 mode.");
 		break;
 #endif
 	case CHNQTYPE:
