@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.35 2006/02/23 14:15:53 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.36 2006/03/20 10:03:49 henning Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -351,6 +351,7 @@ int	 rtrequest(int, struct sockaddr *,
 			struct sockaddr *, struct sockaddr *, int,
 			struct rtentry **);
 int	 rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
+void	 rt_if_remove(struct ifnet *);
 
 #endif /* _KERNEL */
 #endif /* _NET_ROUTE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.68 2006/03/06 13:36:03 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.69 2006/03/20 10:03:49 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -144,6 +144,7 @@ int	okaytoclone(u_int, int);
 int	rtdeletemsg(struct rtentry *);
 int	rtflushclone1(struct radix_node *, void *);
 void	rtflushclone(struct radix_node_head *, struct rtentry *);
+int	rt_if_remove_rtdelete(struct radix_node *, void *);
 
 #define	LABELID_MAX	50000
 
@@ -1229,4 +1230,47 @@ rtlabel_unref(u_int16_t id)
 			break;
 		}
 	}
+}
+
+void
+rt_if_remove(struct ifnet *ifp)
+{
+	int			 i;
+	struct radix_node_head	*rnh;
+
+	for (i = 1; i <= AF_MAX; i++) {
+		rnh = rt_tables[i];
+		if (rnh)
+			while ((*rnh->rnh_walktree)(rnh,
+			    rt_if_remove_rtdelete, ifp) == EAGAIN)
+				;
+	}
+}
+
+/*
+ * Note that deleting a RTF_CLONING route can trigger the
+ * deletion of more entries, so we need to cancel the walk
+ * and return EAGAIN.  The caller should restart the walk
+ * as long as EAGAIN is returned.
+ */
+int
+rt_if_remove_rtdelete(struct radix_node *rn, void *vifp)
+{
+	struct ifnet	*ifp = vifp;
+	struct rtentry	*rt = (struct rtentry *)rn;
+
+	if (rt->rt_ifp == ifp) {
+		int	cloning = (rt->rt_flags & RTF_CLONING);
+
+		if (rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway,
+		    rt_mask(rt), 0, NULL) == 0 && cloning)
+			return (EAGAIN);
+	}
+
+	/*
+	 * XXX There should be no need to check for rt_ifa belonging to this
+	 * interface, because then rt_ifp is set, right?
+	 */
+
+	return (0);
 }
