@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.38 2006/03/04 23:40:14 brad Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.39 2006/03/20 16:15:03 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -422,7 +422,7 @@ u_int8_t tl_eeprom_putbyte(sc, byte)
 	struct tl_softc		*sc;
 	int			byte;
 {
-	register int		i, ack = 0;
+	int			i, ack = 0;
 
 	/*
 	 * Make sure we're in TX mode.
@@ -467,7 +467,7 @@ u_int8_t tl_eeprom_getbyte(sc, addr, dest)
 	int			addr;
 	u_int8_t		*dest;
 {
-	register int		i;
+	int			i;
 	u_int8_t		byte = 0;
 
 	tl_dio_write8(sc, TL_NETSIO, 0);
@@ -552,7 +552,7 @@ int tl_read_eeprom(sc, dest, off, cnt)
 void tl_mii_sync(sc)
 	struct tl_softc		*sc;
 {
-	register int		i;
+	int			i;
 
 	tl_dio_clrbit(sc, TL_NETSIO, TL_SIO_MTXEN);
 
@@ -1882,7 +1882,7 @@ void tl_watchdog(ifp)
 void tl_stop(sc)
 	struct tl_softc		*sc;
 {
-	register int		i;
+	int			i;
 	struct ifnet		*ifp;
 
 	ifp = &sc->arpcom.ac_if;

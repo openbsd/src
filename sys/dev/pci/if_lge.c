@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.36 2005/12/24 19:16:31 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.37 2006/03/20 16:15:03 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -200,7 +200,7 @@ const struct pci_matchid lge_devices[] = {
 void
 lge_eeprom_getword(struct lge_softc *sc, int addr, u_int16_t *dest)
 {
-	register int		i;
+	int			i;
 	u_int32_t		val;
 
 	CSR_WRITE_4(sc, LGE_EECTL, LGE_EECTL_CMD_READ|
@@ -370,7 +370,7 @@ allmulti:
 void
 lge_reset(struct lge_softc *sc)
 {
-	register int		i;
+	int			i;
 
 	LGE_SETBIT(sc, LGE_MODE1, LGE_MODE1_SETRST_CTL0|LGE_MODE1_SOFTRST);
 
@@ -1498,7 +1498,7 @@ lge_watchdog(struct ifnet *ifp)
 void
 lge_stop(struct lge_softc *sc)
 {
-	register int		i;
+	int			i;
 	struct ifnet		*ifp;
 
 	ifp = &sc->arpcom.ac_if;

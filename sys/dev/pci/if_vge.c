@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.18 2005/11/07 02:57:45 brad Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.19 2006/03/20 16:15:03 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -188,7 +188,7 @@ const struct pci_matchid vge_devices[] = {
 void
 vge_eeprom_getword(struct vge_softc *sc, int addr, u_int16_t *dest)
 {
-	register int		i;
+	int			i;
 	u_int16_t		word = 0;
 
 	/*
@@ -532,7 +532,7 @@ allmulti:
 void
 vge_reset(struct vge_softc *sc)
 {
-	register int		i;
+	int			i;
 
 	CSR_WRITE_1(sc, VGE_CRS1, VGE_CR1_SOFTRESET);
 
@@ -1829,7 +1829,7 @@ vge_watchdog(struct ifnet *ifp)
 void
 vge_stop(struct vge_softc *sc)
 {
-	register int		i;
+	int			i;
 	struct ifnet		*ifp;
 
 	ifp = &sc->arpcom.ac_if;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.34 2005/11/07 02:57:45 brad Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.35 2006/03/20 16:15:03 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -533,7 +533,7 @@ int sf_ioctl(ifp, command, data)
 void sf_reset(sc)
 	struct sf_softc		*sc;
 {
-	register int		i;
+	int			i;
 
 	csr_write_4(sc, SF_GEN_ETH_CTL, 0);
 	SF_SETBIT(sc, SF_MACCFG_1, SF_MACCFG1_SOFTRESET);

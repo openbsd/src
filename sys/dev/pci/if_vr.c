@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.59 2006/02/07 18:15:20 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.60 2006/03/20 16:15:03 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -189,7 +189,7 @@ const struct pci_matchid vr_devices[] = {
 void
 vr_mii_sync(struct vr_softc *sc)
 {
-	register int		i;
+	int			i;
 
 	SIO_SET(VR_MIICMD_DIR|VR_MIICMD_DATAIN);
 
@@ -567,7 +567,7 @@ vr_setcfg(struct vr_softc *sc, int media)
 void
 vr_reset(struct vr_softc *sc)
 {
-	register int		i;
+	int			i;
 
 	VR_SETBIT16(sc, VR_COMMAND, VR_CMD_RESET);
 

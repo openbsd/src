@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.61 2005/11/04 16:59:45 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.62 2006/03/20 16:15:03 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -191,7 +191,7 @@ void sis_delay(sc)
 void sis_eeprom_idle(sc)
 	struct sis_softc	*sc;
 {
-	register int		i;
+	int			i;
 
 	SIO_SET(SIS_EECTL_CSEL);
 	sis_delay(sc);
@@ -221,7 +221,7 @@ void sis_eeprom_putbyte(sc, addr)
 	struct sis_softc	*sc;
 	int			addr;
 {
-	register int		d, i;
+	int			d, i;
 
 	d = addr | SIS_EECMD_READ;
 
@@ -252,7 +252,7 @@ void sis_eeprom_getword(sc, addr, dest)
 	int			addr;
 	u_int16_t		*dest;
 {
-	register int		i;
+	int			i;
 	u_int16_t		word = 0;
 
 	/* Force EEPROM to idle state. */
@@ -391,7 +391,7 @@ void sis_read96x_mac(sc)
 void sis_mii_sync(sc)
 	struct sis_softc	*sc;
 {
-	register int		i;
+	int			i;
  
  	SIO_SET(SIS_MII_DIR|SIS_MII_DATA);
  
@@ -842,7 +842,7 @@ allmulti:
 void sis_reset(sc)
 	struct sis_softc	*sc;
 {
-	register int		i;
+	int			i;
 
 	SIS_SETBIT(sc, SIS_CSR, SIS_CSR_RESET);
 
@@ -2025,7 +2025,7 @@ void sis_watchdog(ifp)
 void sis_stop(sc)
 	struct sis_softc	*sc;
 {
-	register int		i;
+	int			i;
 	struct ifnet		*ifp;
 
 	if (sc->sis_stopped)

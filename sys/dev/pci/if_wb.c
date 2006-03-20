@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.32 2005/11/23 11:30:14 mickey Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.33 2006/03/20 16:15:03 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -198,7 +198,7 @@ void wb_eeprom_putbyte(sc, addr)
 	struct wb_softc		*sc;
 	int			addr;
 {
-	register int		d, i;
+	int			d, i;
 
 	d = addr | WB_EECMD_READ;
 
@@ -229,7 +229,7 @@ void wb_eeprom_getword(sc, addr, dest)
 	int			addr;
 	u_int16_t		*dest;
 {
-	register int		i;
+	int			i;
 	u_int16_t		word = 0;
 
 	/* Enter EEPROM access mode. */
@@ -293,7 +293,7 @@ void wb_read_eeprom(sc, dest, off, cnt, swap)
 void wb_mii_sync(sc)
 	struct wb_softc		*sc;
 {
-	register int		i;
+	int			i;
 
 	SIO_SET(WB_SIO_MII_DIR|WB_SIO_MII_DATAIN);
 
@@ -630,7 +630,7 @@ void
 wb_reset(sc)
 	struct wb_softc *sc;
 {
-	register int i;
+	int i;
 	struct mii_data *mii = &sc->sc_mii;
 
 	CSR_WRITE_4(sc, WB_NETCFG, 0);
@@ -1709,7 +1709,7 @@ void wb_watchdog(ifp)
 void wb_stop(sc)
 	struct wb_softc		*sc;
 {
-	register int		i;
+	int			i;
 	struct ifnet		*ifp;
 
 	ifp = &sc->arpcom.ac_if;
