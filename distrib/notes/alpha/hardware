@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.74 2006/03/19 12:15:42 martin Exp $
+dnl	$OpenBSD: hardware,v 1.75 2006/03/20 01:32:15 brad Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -287,6 +287,13 @@ Supported Peripherals:
 			BOCALANcard/PCI
 			AT&T StarLAN 10, EN100, and StarLAN Fiber
 	Gigabit Ethernet Adapters
+		Alteon Tigon I/II-based adapters (ti), including:
+			3Com 3c985 and 3c985B
+			Alteon ACEnic V (fiber and copper)
+			Digital EtherWORKS 1000SX
+			Farallon PN9000SX
+			Netgear GA620 and GA620T
+			SGI Tigon
 		Intel i82540, i82541, i82542, i82543, i82544, i82545, i82546,
 		i82547, i82571, i82572 and i82573 based adapters (em), including: [*]
 		    HP ProLiant NC310F PCI-X Gigabit NIC (SX Fiber)
@@ -374,6 +381,9 @@ Supported Peripherals:
 		USB-USB cables (upl) [-]
 	FDDI Adapters [*]
 		Digital DEFPA PCI FDDI adapters (fpa)
+	WAN Adapters [*]
+		Lan Media Corporation SSI (T1)/HSSI/DS1/DS3 WAN interfaces
+		  (lmc)
 	Cryptography Accelerators [*]
 		Hifn 7751/7811/7951/7955/7956-based boards (hifn), including:
 		    Soekris Engineering vpn1201, vpn1211, vpn1401, and vpn1411
@@ -533,14 +543,6 @@ work. It's our best guess that they do, but any feedback is appreciated.
 		Please be aware that many NE2000 adapters fail or perform
 		very poorly. We do not recommend using them, but your
 		mileage may vary.
-	Gigabit Ethernet Adapters [*]
-		Alteon Tigon I/II-based adapters (ti), including:
-			3Com 3c985 and 3c985B
-			Alteon ACEnic V (fiber and copper)
-			Digital EtherWORKS 1000SX
-			Farallon PN9000SX
-			Netgear GA620 and GA620T
-			SGI Tigon
 	Wireless Ethernet Adapters
 		Ralink RT2500 based PCI IEEE 802.11b/g adapters  [*]
 		    A-Link WL54H
@@ -663,9 +665,6 @@ work. It's our best guess that they do, but any feedback is appreciated.
 		  (en)
 	FDDI Adapters [*]
 		Digital DEFEA EISA FDDI adapters (fea)
-	WAN Adapters [*]
-		Lan Media Corporation SSI (T1)/HSSI/DS1/DS3 WAN interfaces
-		  (lmc)
 	Sound Devices [-]
 		C-Media CMI8[37]38 (cmpci)
 		ESS Solo-1 PCI AudioDrive (eso)
