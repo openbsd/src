@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.h,v 1.17 2005/05/28 18:52:12 hshoexer Exp $	 */
+/* $OpenBSD: monitor.h,v 1.18 2006/03/20 16:43:22 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -35,7 +35,6 @@
 #define ISAKMP_PORT_DEFAULT	500
 
 enum monitor_reqtypes {
-	MONITOR_UI_INIT,
 	MONITOR_PFKEY_OPEN,
 	MONITOR_GET_FD,
 	MONITOR_SETSOCKOPT,
@@ -61,7 +60,6 @@ int		monitor_req_readdir(const char *);
 int		monitor_readdir(char *, size_t);
 void            monitor_init_done(void);
 
-void		monitor_ui_init(void);
 int		monitor_pf_key_v2_open(void);
 void		monitor_exit(int);
 

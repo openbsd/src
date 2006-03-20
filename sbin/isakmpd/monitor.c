@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.63 2006/01/02 10:42:51 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.64 2006/03/20 16:43:22 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -70,11 +70,10 @@ static void	m_priv_getfd(void);
 static void	m_priv_setsockopt(void);
 static void	m_priv_req_readdir(void);
 static void	m_priv_bind(void);
-static void	m_priv_ui_init(void);
 static void	m_priv_pfkey_open(void);
-static int      m_priv_local_sanitize_path(char *, size_t, int);
-static int      m_priv_check_sockopt(int, int);
-static int      m_priv_check_bind(const struct sockaddr *, socklen_t);
+static int	m_priv_local_sanitize_path(char *, size_t, int);
+static int	m_priv_check_sockopt(int, int);
+static int	m_priv_check_bind(const struct sockaddr *, socklen_t);
 
 static void	set_monitor_signals(void);
 static void	sig_pass_to_chld(int);
@@ -165,25 +164,6 @@ monitor_exit(int code)
 
 	close(m_state.s);
 	exit(code);
-}
-
-void
-monitor_ui_init(void)
-{
-	int	err, cmd;
-
-	cmd = MONITOR_UI_INIT;
-	must_write(&cmd, sizeof cmd);
-
-	must_read(&err, sizeof err);
-	if (err != 0)
-		log_fatal("monitor_ui_init: parent could not create FIFO "
-		    "\"%s\"", ui_fifo);
-
-	ui_socket = mm_receive_fd(m_state.s);
-	if (ui_socket < 0)
-		log_fatal("monitor_ui_init: parent could not create FIFO "
-		    "\"%s\"", ui_fifo);
 }
 
 int
@@ -452,12 +432,6 @@ monitor_loop(int debug)
 			m_priv_getfd();
 			break;
 
-		case MONITOR_UI_INIT:
-			LOG_DBG((LOG_MISC, 80,
-			    "monitor_loop: MONITOR_UI_INIT"));
-			m_priv_ui_init();
-			break;
-
 		case MONITOR_PFKEY_OPEN:
 			LOG_DBG((LOG_MISC, 80,
 			    "monitor_loop: MONITOR_PFKEY_OPEN"));
@@ -501,30 +475,6 @@ monitor_loop(int debug)
 	exit(0);
 }
 
-
-/* Privileged: called by monitor_loop.  */
-static void
-m_priv_ui_init(void)
-{
-	int	err = 0;
-
-	ui_init();
-
-	if (ui_socket < 0)
-		err = -1;
-
-	must_write(&err, sizeof err);
-
-	if (ui_socket >= 0 && mm_send_fd(m_state.s, ui_socket)) {
-		log_error("m_priv_ui_init: read/write operation failed");
-		close(ui_socket);
-		return;
-	}
-
-	/* In case of stdin, we do not close the socket. */
-	if (ui_socket > 0)
-		close(ui_socket);
-}
 
 /* Privileged: called by monitor_loop.  */
 static void

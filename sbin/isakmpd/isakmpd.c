@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.90 2005/12/20 22:03:53 moritz Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.91 2006/03/20 16:43:22 hshoexer Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -388,6 +388,9 @@ main(int argc, char *argv[])
 	/* Open protocols and services databases.  */
 	setprotoent(1);
 	setservent(1);
+
+	/* Open command fifo */
+	ui_init();
 
 	set_slave_signals();
 	/* Daemonize before forking unpriv'ed child */
