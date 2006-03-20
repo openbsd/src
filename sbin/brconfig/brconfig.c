@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.34 2005/12/21 01:40:23 millert Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.35 2006/03/20 20:01:34 dhill Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1353,8 +1353,9 @@ printb(char *s, unsigned short v, char *bits)
 		printf("%s=%o", s, v);
 	else
 		printf("%s=%x", s, v);
-	bits++;
+	
 	if (bits) {
+		bits++;
 		putchar('<');
 		while ((i = *bits++)) {
 			if (v & (1 << (i-1))) {
