@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.43 2006/03/19 22:06:12 brad Exp $	*/
+/*	$OpenBSD: pci.c,v 1.44 2006/03/20 01:53:24 brad Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -199,7 +199,7 @@ pcipower(int why, void *arg)
 int
 pciprint(void *aux, const char *pnp)
 {
-	register struct pci_attach_args *pa = aux;
+	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 
 	if (pnp) {
