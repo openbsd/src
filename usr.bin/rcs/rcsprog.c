@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.78 2006/03/18 04:00:34 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.79 2006/03/20 17:41:37 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -448,10 +448,10 @@ rcs_usage(void)
 int
 rcs_main(int argc, char **argv)
 {
-	int i, ch, flags, kflag, lkmode;
+	int i, j, ch, flags, kflag, lkmode;
 	char fpath[MAXPATHLEN], ofpath[MAXPATHLEN];
 	char *logstr, *logmsg, *nflag, *descfile;
-	char *alist, *comment, *elist, *unp, *sp;
+	char *alist, *comment, *elist;
 	mode_t fmode;
 	RCSFILE *file, *oldfile;
 	RCSNUM *logrev;
@@ -621,16 +621,13 @@ rcs_main(int argc, char **argv)
 
 		/* entries to add to the access list */
 		if (alist != NULL) {
-			unp = alist;
-			do {
-				sp = strchr(unp, ',');
-				if (sp != NULL)
-					*(sp++) = '\0';
+			char **aargv;
 
-				rcs_access_add(file, unp);
+			aargv = cvs_strsplit(alist, ",");
+			for (j = 0; aargv[j] != NULL; j++)
+				rcs_access_add(file, aargv[j]);
 
-				unp = sp;
-			} while (sp != NULL);
+			xfree(aargv);
 		}
 
 		if (comment != NULL)
