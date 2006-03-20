@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.34 2005/09/07 13:22:24 jmc Exp $	*/
+/*	$OpenBSD: misc.c,v 1.35 2006/03/20 10:55:19 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -122,10 +122,10 @@ pbnumbase(int n, int base, int d)
 	int printed = 0;
 
 	if (base > 36)
-		errx(1, "base %d > 36: not supported", base);
+		m4errx(1, "base %d > 36: not supported.", base);
 
 	if (base < 2)
-		errx(1, "bad base %d for conversion", base);
+		m4errx(1, "bad base %d for conversion.", base);
 
 	num = (n < 0) ? -n : n;
 	do {
@@ -228,7 +228,7 @@ getdiv(int n)
 	int c;
 
 	if (active == outfile[n])
-		errx(1, "undivert: diversion still active");
+		m4errx(1, "undivert: diversion still active.");
 	rewind(outfile[n]);
 	while ((c = getc(outfile[n])) != EOF)
 		putc(c, active);
@@ -256,6 +256,23 @@ killdiv()
 		if (outfile[n] != NULL) {
 			(void) fclose(outfile[n]);
 		}
+}
+
+extern char *__progname;
+
+void
+m4errx(int eval, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	fprintf(stderr, "%s: ", __progname);
+	fprintf(stderr, "%s at line %lu: ", CURRENT_NAME, CURRENT_LINE);
+	if (fmt != NULL)
+		vfprintf(stderr, fmt, ap);
+	fprintf(stderr, "\n");
+	exit(eval);
+	va_end(ap);
 }
 
 /*
