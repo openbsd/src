@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.130 2006/03/20 09:34:37 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.131 2006/03/20 09:46:28 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1766,9 +1766,8 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 		idata = AMIMEM_KVA(am);
 	}
 
-	ccb->ccb_data = NULL;
-	ccb->ccb_done = ami_done_ccb;
 	ccb->ccb_wakeup = 1;
+	ccb->ccb_done = ami_done_ioctl;
 	cmd = &ccb->ccb_cmd;
 
 	cmd->acc_cmd = opcode;
@@ -1795,7 +1794,6 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 	cmd->acc_io.aio_data = am ? htole32(AMIMEM_DVA(am)) : 0;
 
 	ami_start(sc, ccb);
-
 	while (ccb->ccb_wakeup)
 		tsleep(ccb, PRIBIO,"ami_mgmt", 0);
 
