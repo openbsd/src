@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.22 2006/03/12 02:28:28 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.23 2006/03/20 20:00:05 dhill Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: utilities.c,v 1.22 2006/03/12 02:28:28 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: utilities.c,v 1.23 2006/03/20 20:00:05 dhill Exp $";
 #endif
 #endif /* not lint */
 
@@ -144,8 +144,12 @@ bufinit(void)
 		bp = malloc(sizeof(struct bufarea));
 		bufp = malloc((unsigned int)sblock.fs_bsize);
 		if (bp == NULL || bufp == NULL) {
-			if (i >= MINBUFS)
+			if (i >= MINBUFS) {
+				free(bp);
+				free(bufp);
+				
 				break;
+			}
 			errexit("cannot allocate buffer pool\n");
 		}
 		bp->b_un.b_buf = bufp;
