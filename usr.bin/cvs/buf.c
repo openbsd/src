@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.37 2006/03/17 07:37:08 ray Exp $	*/
+/*	$OpenBSD: buf.c,v 1.38 2006/03/20 16:18:13 niallo Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -404,7 +404,7 @@ cvs_buf_write(BUF *b, const char *path, mode_t mode)
  * specified using <template> (see mkstemp.3). NB. This function will modify
  * <template>, as per mkstemp
  */
-int
+void
 cvs_buf_write_stmp(BUF *b, char *template, mode_t mode)
 {
 	int fd;
@@ -418,8 +418,6 @@ cvs_buf_write_stmp(BUF *b, char *template, mode_t mode)
 	}
 	(void)fchmod(fd, mode);
 	(void)close(fd);
-
-	return (0);
 }
 
 /*
