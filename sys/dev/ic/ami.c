@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.132 2006/03/20 09:59:26 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.133 2006/03/20 10:10:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -185,7 +185,6 @@ ami_put_ccb(struct ami_ccb *ccb)
 	struct ami_softc *sc = ccb->ccb_sc;
 
 	ccb->ccb_state = AMI_CCB_FREE;
-	ccb->ccb_wakeup = 0;
 	ccb->ccb_xs = NULL;
 	ccb->ccb_flags = 0;
 	ccb->ccb_done = NULL;
@@ -1177,9 +1176,7 @@ ami_done_xs(struct ami_softc *sc, struct ami_ccb *ccb)
 int
 ami_done_ioctl(struct ami_softc *sc, struct ami_ccb *ccb)
 {
-	ccb->ccb_wakeup = 0;
 	wakeup(ccb);
-
 	return (0);
 }
 
@@ -1668,7 +1665,6 @@ ami_drv_inq(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, u_int8_t page,
 	if (ccb == NULL)
 		return (ENOMEM);
 
-	ccb->ccb_wakeup = 1;
 	ccb->ccb_done = ami_done_ioctl;
 
 	ccb->ccb_cmd.acc_cmd = AMI_PASSTHRU;
@@ -1703,7 +1699,7 @@ ami_drv_inq(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, u_int8_t page,
 
 	ami_start(sc, ccb);
 
-	while (ccb->ccb_wakeup)
+	while (ccb->ccb_state != AMI_CCB_READY)
 		tsleep(ccb, PRIBIO, "ami_drv_inq", 0);
 
 	bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
@@ -1747,7 +1743,6 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 		idata = AMIMEM_KVA(am);
 	}
 
-	ccb->ccb_wakeup = 1;
 	ccb->ccb_done = ami_done_ioctl;
 	cmd = &ccb->ccb_cmd;
 
@@ -1775,7 +1770,7 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 	cmd->acc_io.aio_data = am ? htole32(AMIMEM_DVA(am)) : 0;
 
 	ami_start(sc, ccb);
-	while (ccb->ccb_wakeup)
+	while (ccb->ccb_state != AMI_CCB_READY)
 		tsleep(ccb, PRIBIO,"ami_mgmt", 0);
 
 	if (!(ccb->ccb_flags & AMI_CCB_F_ERR)) {

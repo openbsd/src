@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.41 2006/03/20 09:59:26 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.42 2006/03/20 10:10:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -60,9 +60,7 @@ struct ami_ccb {
 	int			(*ccb_done)(struct ami_softc *sc,
 				    struct ami_ccb *ccb);
 
-	volatile int		ccb_wakeup;
-
-	enum {
+	volatile enum {
 		AMI_CCB_FREE,
 		AMI_CCB_READY,
 		AMI_CCB_QUEUED,
