@@ -1,4 +1,4 @@
-/*	$OpenBSD: smu.c,v 1.11 2006/01/19 17:08:39 grange Exp $	*/
+/*	$OpenBSD: smu.c,v 1.12 2006/03/20 22:40:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -411,6 +411,8 @@ smu_time_read(time_t *secs)
 	cmd->data[0] = SMU_RTC_GET_DATETIME;
 	error = smu_do_cmd(sc, 800);
 	if (error) {
+		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+
 		*secs = 0;
 		return (error);
 	}
