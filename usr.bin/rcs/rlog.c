@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.30 2006/03/17 08:51:45 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.31 2006/03/20 17:14:47 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -243,6 +243,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 				}
 				found = 0;
 			}
+			xfree(largv);
 		}
 	}
 	/* -sstates */
@@ -255,6 +256,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 			}
 			found = 0;
 		}
+		xfree(sargv);
 	}
 	/* -w[logins] */
 	if (wflag == 1) {
@@ -267,6 +269,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 				}
 				found = 0;
 			}
+			xfree(wargv);
 		} else {
 			if ((author = getlogin()) == NULL)
 				fatal("getlogin failed");
