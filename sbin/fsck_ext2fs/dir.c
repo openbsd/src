@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.13 2005/04/30 13:56:15 niallo Exp $	*/
+/*	$OpenBSD: dir.c,v 1.14 2006/03/20 21:35:37 dhill Exp $	*/
 /*	$NetBSD: dir.c,v 1.5 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -126,6 +126,7 @@ dirscan(struct inodesc *idesc)
 	blksiz = idesc->id_numfrags * sblock.e2fs_bsize;
 	if (chkrange(idesc->id_blkno, idesc->id_numfrags)) {
 		idesc->id_filesize -= blksiz;
+		free(dbuf);
 		return (SKIP);
 	}
 	idesc->id_loc = 0;
@@ -514,11 +515,6 @@ expanddir(struct ext2fs_dinode *dp, char *name)
 	struct bufarea *bp;
 	char *firstblk;
 
-	if ((firstblk = malloc(sblock.e2fs_bsize)) == NULL) {
-		fprintf(stderr, "out of memory");
-		exit(8);
-	}
-
 	lastbn = lblkno(&sblock, inosize(dp));
 	if (lastbn >= NDADDR - 1 || fs2h32(dp->e2di_blocks[lastbn]) == 0 ||
 		inosize(dp) == 0)
@@ -533,11 +529,18 @@ expanddir(struct ext2fs_dinode *dp, char *name)
 		sblock.e2fs_bsize);
 	if (bp->b_errs)
 		goto bad;
+	if ((firstblk = malloc(sblock.e2fs_bsize)) == NULL) {
+		fprintf(stderr, "out of memory\n");
+		exit(8);
+	}	
 	memcpy(firstblk, bp->b_un.b_buf, sblock.e2fs_bsize);
 	bp = getdirblk(newblk, sblock.e2fs_bsize);
-	if (bp->b_errs)
+	if (bp->b_errs) {
+		free(firstblk);
 		goto bad;
+	}
 	memcpy(bp->b_un.b_buf, firstblk, sblock.e2fs_bsize);
+	free(firstblk);
 	dirty(bp);
 	bp = getdirblk(fs2h32(dp->e2di_blocks[lastbn + 1]),
 		sblock.e2fs_bsize);
