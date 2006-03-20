@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.18 2006/03/07 00:19:58 reyk Exp $	*/
+/*	$OpenBSD: ike.c,v 1.19 2006/03/20 16:49:12 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -317,8 +317,6 @@ ike_connect(u_int8_t mode, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
 	case IKE_DYNAMIC:
 		fprintf(fd, ADD "[Phase 2]:Connections=IPsec-%s-%s\n",
 		    src->name, dst->name);
-		fprintf(fd, "t IPsec-%s-%s\n", src->name, dst->name);
-		fprintf(fd, "c IPsec-%s-%s\n", src->name, dst->name);
 		break;
 	case IKE_PASSIVE:
 		fprintf(fd, ADD "[Phase 2]:Passive-Connections=IPsec-%s-%s\n",
