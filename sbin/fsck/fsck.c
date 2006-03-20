@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.23 2005/11/21 14:27:55 millert Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.24 2006/03/20 19:50:09 dhill Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  *
  */
 
-static const char rcsid[] = "$OpenBSD: fsck.c,v 1.23 2005/11/21 14:27:55 millert Exp $";
+static const char rcsid[] = "$OpenBSD: fsck.c,v 1.24 2006/03/20 19:50:09 dhill Exp $";
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -270,6 +270,7 @@ checkfs(const char *vfstype, const char *spec, const char *mntpt, void *auxarg,
 		warn("fork");
 		if (optbuf)
 			free(optbuf);
+		free(argv);
 		return (1);
 
 	case 0:					/* Child. */
@@ -302,6 +303,7 @@ checkfs(const char *vfstype, const char *spec, const char *mntpt, void *auxarg,
 	default:				/* Parent. */
 		if (optbuf)
 			free(optbuf);
+		free(argv);
 
 		if (pidp) {
 			*pidp = pid;
