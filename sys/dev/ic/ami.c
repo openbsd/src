@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.131 2006/03/20 09:46:28 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.132 2006/03/20 09:59:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -186,7 +186,6 @@ ami_put_ccb(struct ami_ccb *ccb)
 
 	ccb->ccb_state = AMI_CCB_FREE;
 	ccb->ccb_wakeup = 0;
-	ccb->ccb_data = NULL;
 	ccb->ccb_xs = NULL;
 	ccb->ccb_flags = 0;
 	ccb->ccb_done = NULL;
@@ -1189,27 +1188,9 @@ ami_done_ccb(struct ami_softc *sc, struct ami_ccb *ccb)
 {
 	int s;
 
-	if (ccb->ccb_data != NULL) {
-		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
-		    ccb->ccb_dmamap->dm_mapsize,
-		    (ccb->ccb_dir == AMI_CCB_IN) ?
-		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-
-		bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_ccbmem_am),
-		    ccb->ccb_offset, sizeof(struct ami_ccbmem),
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-
-		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
-	}
-
-	if (ccb->ccb_wakeup) {
-		ccb->ccb_wakeup = 0;
-		wakeup(ccb);
-	} else {
-		s = splbio();
-		ami_put_ccb(ccb);
-		splx(s);
-	}
+	s = splbio();
+	ami_put_ccb(ccb);
+	splx(s);
 
 	return (0);
 }

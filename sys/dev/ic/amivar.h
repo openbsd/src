@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.40 2006/03/19 11:53:23 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.41 2006/03/20 09:59:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -54,16 +54,9 @@ struct ami_ccb {
 	struct ami_sgent	*ccb_sglist;
 	paddr_t			ccb_sglistpa;
 	int			ccb_offset;
+	bus_dmamap_t		ccb_dmamap;
 
 	struct scsi_xfer	*ccb_xs;
-
-	void			*ccb_data;
-	int			ccb_len;
-	enum {
-		AMI_CCB_IN,
-		AMI_CCB_OUT
-	}			ccb_dir;
-	bus_dmamap_t		ccb_dmamap;
 	int			(*ccb_done)(struct ami_softc *sc,
 				    struct ami_ccb *ccb);
 
