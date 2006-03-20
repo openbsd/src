@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.30 2005/12/17 21:08:27 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.31 2006/03/20 05:05:30 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.30 2005/12/17 21:08:27 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.31 2006/03/20 05:05:30 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -139,7 +139,7 @@ initmtab(void)
 		    ">" } },
 		{ GE,     { 1,1,0,1,0,1,1,0,1,0,1,1,0,1,1,0,1,
 		    ">=" } },
-		{ EQ,     { 1,1,0,1,0,1,1,0,1,0,0,0,0,1,1,0,1,
+		{ EQ,     { 1,1,0,1,0,1,1,0,1,0,0,0,0,1,1,0,0,
 		    "==" } },
 		{ NE,     { 1,1,0,1,0,1,1,0,1,0,0,0,0,1,1,0,1,
 		    "!=" } },
