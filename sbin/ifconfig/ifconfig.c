@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.156 2006/01/05 15:00:10 norby Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.157 2006/03/20 20:12:45 dhill Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3434,8 +3434,9 @@ printb(char *s, unsigned short v, char *bits)
 		printf("%s=%o", s, v);
 	else
 		printf("%s=%x", s, v);
-	bits++;
+
 	if (bits) {
+		bits++;
 		putchar('<');
 		while ((i = *bits++)) {
 			if (v & (1 << (i-1))) {
@@ -3461,8 +3462,8 @@ printb_status(unsigned short v, char *bits)
 	int i, any = 0;
 	char c;
 
-	bits++;
 	if (bits) {
+		bits++;
 		while ((i = *bits++)) {
 			if (v & (1 << (i-1))) {
 				if (any)
