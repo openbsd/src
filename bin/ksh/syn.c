@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.24 2006/03/14 22:08:40 deraadt Exp $	*/
+/*	$OpenBSD: syn.c,v 1.25 2006/03/20 20:54:08 otto Exp $	*/
 
 /*
  * shell parser (C version)
@@ -851,7 +851,8 @@ dbtestp_isa(Test_env *te, Test_meta meta)
 		ret = uqword && strcmp(yylval.cp, db_close) == 0;
 	if (ret) {
 		ACCEPT;
-		if (meta != TM_END) {
+		if (meta != TM_END && meta >= 0 &&
+		    meta < sizeof(dbtest_tokens) / sizeof(dbtest_tokens[0])) {
 			if (!save)
 				save = wdcopy(dbtest_tokens[(int) meta], ATEMP);
 			XPput(*te->pos.av, save);

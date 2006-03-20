@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.32 2006/03/12 00:26:58 deraadt Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.33 2006/03/20 20:54:08 otto Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -595,7 +595,8 @@ c_brkcont(char **wp)
 		 * shall be used.  Doesn't say to print an error but we
 		 * do anyway 'cause the user messed up.
 		 */
-		last_ep->flags &= ~EF_BRKCONT_PASS;
+		if (last_ep)
+			last_ep->flags &= ~EF_BRKCONT_PASS;
 		warningf(true, "%s: can only %s %d level(s)",
 		    wp[0], wp[0], n - quit);
 	}
