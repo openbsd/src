@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.10 2006/03/15 19:56:48 deraadt Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.11 2006/03/20 12:08:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -67,15 +67,17 @@
 
 #define BIOS_START		0xe0000
 #define	BIOS_LEN		0x20000
+#define BIOS_STEP		0x16
 
 /*
  * MSRs and bits used by Powernow technology
  */
 #define MSR_AMDK7_FIDVID_CTL		0xc0010041
 #define MSR_AMDK7_FIDVID_STATUS		0xc0010042
+#define AMD_PN_FID_VID			0x06
 
 /* Bitfields used by K7 */
-
+#define PN7_PSB_VERSION			0x12
 #define PN7_CTR_FID(x)			((x) & 0x1f)
 #define PN7_CTR_VID(x)			(((x) & 0x1f) << 8)
 #define PN7_CTR_FIDC			0x00010000
@@ -93,8 +95,8 @@
 /*
  * ACPI ctr_val status register to powernow k7 configuration
  */
-#define ACPI_PN7_CTRL_TO_VID(x)		(((x) >> 5) & 0x1f)
-#define ACPI_PN7_CTRL_TO_SGTC(x)	(((x) >> 10) & 0xffff)
+#define PN7_ACPI_CTRL_TO_VID(x)		(((x) >> 5) & 0x1f)
+#define PN7_ACPI_CTRL_TO_SGTC(x)	(((x) >> 10) & 0xffff)
 
 #define WRITE_FIDVID(fid, vid, ctrl)	\
 	wrmsr(MSR_AMDK7_FIDVID_CTL,	\
@@ -111,31 +113,6 @@ static int k7pnow_fid_to_mult[32] = {
 	150, 225, 160, 165, 170, 180, -1, -1
 };
 
-/*
- * Units are in mV.
- */
-
-/*
- * Mobile VRM (K7)
- */
-static int k7pnow_mobile_vid_to_volts[] = {
-	2000, 1950, 1900, 1850, 1800, 1750, 1700, 1650,
-	1600, 1550, 1500, 1450, 1400, 1350, 1300, 0,
-	1275, 1250, 1225, 1200, 1175, 1150, 1125, 1100,
-	1075, 1050, 1025, 1000, 975, 950, 925, 0,
-};
-
-/*
- * Desktop VRM (K7)
- */
-
-static int k7pnow_desktop_vid_to_volts[] = {
-	2000, 1950, 1900, 1850, 1800, 1750, 1700, 1650,
-	1600, 1550, 1500, 1450, 1400, 1350, 1300, 0,
-	1275, 1250, 1225, 1200, 1175, 1150, 1125, 1100,
-	1075, 1050, 1025, 1000, 975, 950, 925, 0,
-};
-
 #define POWERNOW_MAX_STATES		16
 
 struct k7pnow_state {
@@ -150,7 +127,6 @@ struct k7pnow_cpu_state {
 	struct k7pnow_state state_table[POWERNOW_MAX_STATES];
 	unsigned int n_states;
 	int errata_a0;
-	int *vid_to_volts;
 };
 
 struct psb_s {
@@ -255,7 +231,7 @@ k7pnow_decode_pst(struct k7pnow_cpu_state * cstate, uint8_t *p, int npst)
 	for (n = 0, i = 0; i < npst; ++i) {
 		state.fid = *p++;
 		state.vid = *p++;
-		state.freq = 100 * k7pnow_fid_to_mult[state.fid] * cstate->fsb;
+		state.freq = k7pnow_fid_to_mult[state.fid]/10 * cstate->fsb;
 		if (cstate->errata_a0 &&
 		    (k7pnow_fid_to_mult[state.fid] % 10) == 5)
 			continue;
@@ -293,10 +269,11 @@ k7pnow_states(struct k7pnow_cpu_state *cstate, uint32_t cpusig,
 	 * range for the pst tables; 16 byte blocks
 	 */
 	for (p = (u_int8_t *)ISA_HOLE_VADDR(BIOS_START);
-	    p < (u_int8_t *)ISA_HOLE_VADDR(BIOS_START + BIOS_LEN); p+= 16) {
+	    p < (u_int8_t *)ISA_HOLE_VADDR(BIOS_START + BIOS_LEN); p+= 
+	    BIOS_STEP) {
 		if (memcmp(p, "AMDK7PNOW!", 10) == 0) {
 			psb = (struct psb_s *)p;
-			if (psb->version != 0x12)
+			if (psb->version != PN7_PSB_VERSION)
 				return 0;
 
 			cstate->sgtc = psb->ttime * cstate->fsb;
@@ -310,20 +287,7 @@ k7pnow_states(struct k7pnow_cpu_state *cstate, uint32_t cpusig,
 
 				if (cpusig == pst->signature && fid == pst->fid
 				    && vid == pst->vid) {
-					switch (pst->signature) {
-					case 0x760:
-					case 0x761:
-					case 0x762:
-					case 0x770:
-					case 0x771:
-					case 0x780:
-					case 0x781:
-					case 0x7a0:
-						break;
-					default:
-						return 0;
-					}
-
+					
 					if (abs(cstate->fsb - pst->fsb) > 5)
 						continue;
 					cstate->n_states = pst->n_states;
@@ -357,6 +321,14 @@ k7_powernow_init(void)
 	if (!cstate)
 		return;
 
+	cpuid(0x80000000, regs);
+	if (regs[0] < 0x80000007)
+		return;
+
+	cpuid(0x80000007, regs);
+	if (!(regs[3] & AMD_PN_FID_VID))
+		return;
+	
 	cpuid(0x80000001, regs);
 	if ((regs[0] & 0xfff) == 0x760)
 		cstate->errata_a0 = TRUE;
@@ -368,32 +340,31 @@ k7_powernow_init(void)
 	startvid = PN7_STA_SVID(status);
 	currentfid = PN7_STA_CFID(status);
 
-	CPU_CLOCKUPDATE();
-	cstate->fsb = pentium_base_tsc / 100000 / k7pnow_fid_to_mult[currentfid];
+	cstate->fsb = pentium_mhz / (k7pnow_fid_to_mult[currentfid]/10);
 	/*
 	 * If start FID is different to max FID, then it is a
 	 * mobile processor.  If not, it is a low powered desktop
 	 * processor.
 	 */
 	if (maxfid != currentfid) {
-		cstate->vid_to_volts = k7pnow_mobile_vid_to_volts;
 		techname = "PowerNow! K7";
 	} else {
-		cstate->vid_to_volts = k7pnow_desktop_vid_to_volts;
 		techname = "Cool`n'Quiet K7";
 	}
 	if (k7pnow_states(cstate, ci->ci_signature, maxfid, startvid)) {
 		if (cstate->n_states) {
-			printf("%s: AMD %s: available states ",
-			    ci->ci_dev.dv_xname, techname);
-			for (i = 0; i < cstate->n_states; i++) {
-				state = &cstate->state_table[i];
-				printf("%c%d", i==0 ? '(' : ',',
-				    ((state->freq / 100000)+1)*100);
+			printf("%s: %s %d Mhz: speeds:",
+			    ci->ci_dev.dv_xname, techname, pentium_mhz);
+			for(i = cstate->n_states; i > 0; i--) {
+				state = &cstate->state_table[i-1];
+				printf(" %d", state->freq); 
 			}
-			printf(")\n");
+			printf(" Mhz\n");	
+			
 			k7pnow_current_state[cpu_number()] = cstate;
 			cpu_setperf = k7_powernow_setperf;
+			return;
 		}
 	}
+	free(cstate, M_DEVBUF);
 }

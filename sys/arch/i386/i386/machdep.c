@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.349 2006/03/16 22:23:26 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.350 2006/03/20 12:08:59 dlg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1411,28 +1411,22 @@ amd_family6_setup(struct cpu_info *ci)
 	extern void sse2_pagezero(void *, size_t);
 	extern void i686_pagezero(void *, size_t);
 #if !defined(MULTIPROCESSOR)
-	u_int regs[4];
+	int family = (ci->ci_signature >> 8) & 15;	
 #endif
 
 	if (cpu_feature & CPUID_SSE2)
 		pagezero = sse2_pagezero;
 	else
 		pagezero = i686_pagezero;
-#if !defined(MULTIPROCESSOR)
-	cpuid(0x80000000, regs);
-	if (regs[0] > 0x80000007) {
-		cpuid(0x80000007, regs);
 
-		if (regs[3] & 0x06) {
-			switch (ci->ci_signature & 0xF00) {
-			case 0x600:
-				k7_powernow_init();
-				break;
-			case 0xf00:
-				k8_powernow_init();
-				break;
-			}
-		}
+#if !defined(MULTIPROCESSOR)
+	switch (family) {
+	case 6:
+		k7_powernow_init();
+		break;
+	case 15:
+		k8_powernow_init();
+		break;
 	}
 #endif 
 #endif

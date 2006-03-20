@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.7 2006/03/16 02:39:57 dlg Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.8 2006/03/20 12:08:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -66,12 +66,14 @@
 
 #define BIOS_START		0xe0000
 #define	BIOS_LEN		0x20000
+#define BIOS_STEP		16
 
 /*
  * MSRs and bits used by Powernow technology
  */
 #define MSR_AMDK7_FIDVID_CTL		0xc0010041
 #define MSR_AMDK7_FIDVID_STATUS		0xc0010042
+#define AMD_PN_FID_VID			0x06
 
 /* Bitfields used by K8 */
 
@@ -88,29 +90,30 @@
 #define PN8_STA_MVID(x)			(((x) >> 48) & 0x1f)
 
 /* Reserved1 to powernow k8 configuration */
+#define PN8_PSB_VERSION			0x14
 #define PN8_PSB_TO_RVO(x)		((x) & 0x03)
 #define PN8_PSB_TO_IRT(x)		(((x) >> 2) & 0x03)
 #define PN8_PSB_TO_MVS(x)		(((x) >> 4) & 0x03)
 #define PN8_PSB_TO_BATT(x)		(((x) >> 6) & 0x03)
 
 /* ACPI ctr_val status register to powernow k8 configuration */
-#define ACPI_PN8_CTRL_TO_FID(x)		((x) & 0x3f)
-#define ACPI_PN8_CTRL_TO_VID(x)		(((x) >> 6) & 0x1f)
-#define ACPI_PN8_CTRL_TO_VST(x)		(((x) >> 11) & 0x1f)
-#define ACPI_PN8_CTRL_TO_MVS(x)		(((x) >> 18) & 0x03)
-#define ACPI_PN8_CTRL_TO_PLL(x)		(((x) >> 20) & 0x7f)
-#define ACPI_PN8_CTRL_TO_RVO(x)		(((x) >> 28) & 0x03)
-#define ACPI_PN8_CTRL_TO_IRT(x)		(((x) >> 30) & 0x03)
+#define PN8_ACPI_CTRL_TO_FID(x)		((x) & 0x3f)
+#define PN8_ACPI_CTRL_TO_VID(x)		(((x) >> 6) & 0x1f)
+#define PN8_ACPI_CTRL_TO_VST(x)		(((x) >> 11) & 0x1f)
+#define PN8_ACPI_CTRL_TO_MVS(x)		(((x) >> 18) & 0x03)
+#define PN8_ACPI_CTRL_TO_PLL(x)		(((x) >> 20) & 0x7f)
+#define PN8_ACPI_CTRL_TO_RVO(x)		(((x) >> 28) & 0x03)
+#define PN8_ACPI_CTRL_TO_IRT(x)		(((x) >> 30) & 0x03)
 
+#define PN8_PLL_LOCK(x)			((x) * 1000/5)
 #define WRITE_FIDVID(fid, vid, ctrl)	\
 	wrmsr(MSR_AMDK7_FIDVID_CTL,	\
 	    (((ctrl) << 32) | (1ULL << 16) | ((vid) << 8) | (fid)))
 
+#define COUNT_OFF_IRT(irt)		DELAY(10 * (1 << (irt)))
+#define COUNT_OFF_VST(vst)		DELAY(20 * (vst))
 
-#define COUNT_OFF_IRT(irt)	DELAY(10 * (1 << (irt)))
-#define COUNT_OFF_VST(vst)	DELAY(20 * (vst))
-
-#define FID_TO_VCO_FID(fid)	\
+#define FID_TO_VCO_FID(fid)		\
 	(((fid) < 8) ? (8 + ((fid) << 1)) : (fid))
 
 #define POWERNOW_MAX_STATES		16
@@ -251,7 +254,8 @@ k8_powernow_setperf(int level)
 					val = FID_TO_VCO_FID(cfid) + 2;
 			} else
 				val = cfid - 2;
-			WRITE_FIDVID(val, cvid, (uint64_t)cstate->pll * 1000 / 5);
+			WRITE_FIDVID(val, cvid, (uint64_t)
+			    PN8_PLL_LOCK(cstate->pll));
 
 			if (k8pnow_read_pending_wait(&status))
 				return 1;
@@ -261,7 +265,7 @@ k8_powernow_setperf(int level)
 			vco_cfid = FID_TO_VCO_FID(cfid);
 		}
 
-		WRITE_FIDVID(fid, cvid, (uint64_t) cstate->pll * 1000 / 5);
+		WRITE_FIDVID(fid, cvid, (uint64_t) PN8_PLL_LOCK(cstate->pll));
 		if (k8pnow_read_pending_wait(&status))
 			return 1;
 		cfid = PN8_STA_CFID(status);
@@ -328,10 +332,11 @@ k8pnow_states(struct k8pnow_cpu_state *cstate, uint32_t cpusig,
 	int i;
 
 	for (p = (u_int8_t *)ISA_HOLE_VADDR(BIOS_START);
-	    p < (u_int8_t *)ISA_HOLE_VADDR(BIOS_START + BIOS_LEN); p += 16) {
+	    p < (u_int8_t *)ISA_HOLE_VADDR(BIOS_START + BIOS_LEN); p += 
+	    BIOS_STEP) {
 		if (memcmp(p, "AMDK7PNOW!", 10) == 0) {
 			psb = (struct psb_s *)p;
-			if (psb->version != 0x14)
+			if (psb->version != PN8_PSB_VERSION)
 				return 0;
 
 			cstate->vst = psb->ttime;
@@ -369,9 +374,19 @@ k8_powernow_init(void)
 	struct k8pnow_state *state;
 	struct cpu_info * ci;
 	char * techname = NULL;
+	u_int32_t regs[4];
+
 	ci = curcpu();
 
 	if (k8pnow_current_state)
+		return;
+
+	cpuid(0x80000000, regs);
+	if (regs[0] < 0x80000007)
+		return;
+	
+	cpuid(0x80000007, regs);
+	if (!(regs[3] & AMD_PN_FID_VID))
 		return;
 
 	cstate = malloc(sizeof(struct k8pnow_cpu_state), M_DEVBUF, M_NOWAIT);
