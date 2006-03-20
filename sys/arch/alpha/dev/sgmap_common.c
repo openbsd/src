@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmap_common.c,v 1.6 2003/10/18 20:14:41 jmc Exp $ */
+/* $OpenBSD: sgmap_common.c,v 1.7 2006/03/20 01:00:58 martin Exp $ */
 /* $NetBSD: sgmap_common.c,v 1.13 2000/06/29 09:02:57 mrg Exp $ */
 
 /*-
@@ -37,6 +37,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#define _ALPHA_BUS_DMA_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,4 +229,47 @@ alpha_sgmap_free(map, sgmap)
 	splx(s);
 
 	map->_dm_flags &= ~DMAMAP_HAS_SGMAP;
+}
+
+int
+alpha_sgmap_dmamap_create(t, size, nsegments, maxsegsz, boundary,
+    flags, dmamp)
+	bus_dma_tag_t t;
+	bus_size_t size;
+	int nsegments;
+	bus_size_t maxsegsz;
+	bus_size_t boundary;
+	int flags;
+	bus_dmamap_t *dmamp;
+{
+	bus_dmamap_t map;
+	int error;
+
+	error = _bus_dmamap_create(t, size, nsegments, maxsegsz,
+	    boundary, flags, dmamp);
+	if (error)
+		return (error);
+
+	map = *dmamp;
+
+	if (flags & BUS_DMA_ALLOCNOW) {
+		error = alpha_sgmap_alloc(map, round_page(size),
+		    t->_sgmap, flags);
+		if (error)
+			alpha_sgmap_dmamap_destroy(t, map);
+}
+
+ return (error);
+}
+
+void
+alpha_sgmap_dmamap_destroy(t, map)
+	bus_dma_tag_t t;
+	bus_dmamap_t map;
+{
+
+	if (map->_dm_flags & DMAMAP_HAS_SGMAP)
+	alpha_sgmap_free(map, t->_sgmap);
+
+	_bus_dmamap_destroy(t, map);
 }

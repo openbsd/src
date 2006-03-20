@@ -1,4 +1,4 @@
-/* $OpenBSD: tsp_dma.c,v 1.3 2002/03/14 01:26:27 millert Exp $ */
+/* $OpenBSD: tsp_dma.c,v 1.4 2006/03/20 01:00:58 martin Exp $ */
 /* $NetBSD: tsp_dma.c,v 1.1 1999/06/29 06:46:47 ross Exp $ */
 
 /*-
@@ -95,11 +95,6 @@
 
 bus_dma_tag_t tsp_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
 
-int	tsp_bus_dmamap_create_sgmap(bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
-
-void	tsp_bus_dmamap_destroy_sgmap(bus_dma_tag_t, bus_dmamap_t);
-
 int	tsp_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int);
 
@@ -185,8 +180,8 @@ tsp_dma_init(pcp)
 	t->_boundary = 0;
 	t->_sgmap = &pcp->pc_sgmap;
 	t->_get_tag = tsp_dma_get_tag;
-	t->_dmamap_create = tsp_bus_dmamap_create_sgmap;
-	t->_dmamap_destroy = tsp_bus_dmamap_destroy_sgmap;
+	t->_dmamap_create = alpha_sgmap_dmamap_create;
+	t->_dmamap_destroy = alpha_sgmap_dmamap_destroy;
 	t->_dmamap_load = tsp_bus_dmamap_load_sgmap;
 	t->_dmamap_load_mbuf = tsp_bus_dmamap_load_mbuf_sgmap;
 	t->_dmamap_load_uio = tsp_bus_dmamap_load_uio_sgmap;
@@ -272,55 +267,6 @@ tsp_dma_get_tag(t, bustype)
 	default:
 		panic("tsp_dma_get_tag: shouldn't be here, really...");
 	}
-}
-
-/*
- * Create a TSP SGMAP-mapped DMA map.
- */
-int
-tsp_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
-    flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;  
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags; 
-	bus_dmamap_t *dmamp;
-{
-	bus_dmamap_t map;
-	int error;
-
-	error = _bus_dmamap_create(t, size, nsegments, maxsegsz,
-	    boundary, flags, dmamp);
-	if (error)
-		return (error);
-
-	map = *dmamp;
-
-	if (flags & BUS_DMA_ALLOCNOW) {
-		error = alpha_sgmap_alloc(map, round_page(size),
-		    t->_sgmap, flags);
-		if (error)
-			tsp_bus_dmamap_destroy_sgmap(t, map);
-	}
-
-	return (error);
-}
-
-/*
- * Destroy a TSP SGMAP-mapped DMA map.
- */
-void
-tsp_bus_dmamap_destroy_sgmap(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-{
-
-	if (map->_dm_flags & DMAMAP_HAS_SGMAP)
-		alpha_sgmap_free(map, t->_sgmap);
-
-	_bus_dmamap_destroy(t, map);
 }
 
 /*
