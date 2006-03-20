@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.134 2006/03/20 10:49:53 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.135 2006/03/20 10:52:34 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1810,14 +1810,11 @@ ami_ioctl_inq(struct ami_softc *sc, struct bioc_inq *bi)
 	u_int8_t ch, tg;
 
 	p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
-	if (!p) {
-		printf("%s: no memory for disk array\n", DEVNAME(sc));
+	if (!p)
 		return (ENOMEM);
-	}
 
 	plist = malloc(AMI_BIG_MAX_PDRIVES, M_DEVBUF, M_NOWAIT);
 	if (!plist) {
-		printf("%s: no memory for disk list\n", DEVNAME(sc));
 		error = ENOMEM;
 		goto bail;
 	}
@@ -1895,10 +1892,8 @@ ami_vol(struct ami_softc *sc, struct bioc_vol *bv, struct ami_big_diskarray *p)
 	u_int8_t ch, tg;
 
 	plist = malloc(AMI_BIG_MAX_PDRIVES, M_DEVBUF, M_NOWAIT);
-	if (!plist) {
-		printf("%s: no memory for disk list\n", DEVNAME(sc));
+	if (!plist)
 		return (ENOMEM);
-	}
 
 	memset(plist, 0, AMI_BIG_MAX_PDRIVES);
 
@@ -1972,10 +1967,8 @@ ami_disk(struct ami_softc *sc, struct bioc_disk *bd,
 	u_int8_t ch, tg;
 
 	plist = malloc(AMI_BIG_MAX_PDRIVES, M_DEVBUF, M_NOWAIT);
-	if (!plist) {
-		printf("%s: no memory for disk list\n", DEVNAME(sc));
+	if (!plist)
 		return (ENOMEM);
-	}
 
 	memset(plist, 0, AMI_BIG_MAX_PDRIVES);
 
@@ -2069,10 +2062,8 @@ ami_ioctl_vol(struct ami_softc *sc, struct bioc_vol *bv)
 	int error = 0;
 
 	p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
-	if (!p) {
-		printf("%s: no memory for raw interface\n", DEVNAME(sc));
+	if (!p)
 		return (ENOMEM);
-	}
 
 	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof *p, p)) {
 		error = EINVAL;
@@ -2153,10 +2144,8 @@ ami_ioctl_disk(struct ami_softc *sc, struct bioc_disk *bd)
 	u_int16_t ch, tg;
 
 	p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
-	if (!p) {
-		printf("%s: no memory for raw interface\n", DEVNAME(sc));
+	if (!p)
 		return (ENOMEM);
-	}
 
 	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof *p, p)) {
 		error = EINVAL;
@@ -2314,10 +2303,8 @@ ami_ioctl_setstate(struct ami_softc *sc, struct bioc_setstate *bs)
 
 	case BIOC_SSHOTSPARE:
 		p = malloc(sizeof *p, M_DEVBUF, M_NOWAIT);
-		if (!p) {
-			printf("%s: no memory for setstate\n", DEVNAME(sc));
+		if (!p)
 			return (ENOMEM);
-		}
 
 		if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof *p, p))
 			goto bail;
