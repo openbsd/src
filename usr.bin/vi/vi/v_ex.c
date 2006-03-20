@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_ex.c,v 1.7 2006/02/17 19:12:41 otto Exp $	*/
+/*	$OpenBSD: v_ex.c,v 1.8 2006/03/20 01:00:36 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -425,8 +425,8 @@ v_ex(sp, vp)
 				break;
 			}
 
-			/* If the user didn't enter anything, return. */
-			if (tp->term == TERM_BS)
+			/* If the user changed their mind, return. */
+			if (tp->term != TERM_OK)
 				break;
 
 			/* Log the command. */
