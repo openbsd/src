@@ -179,7 +179,7 @@ auth_input_request_forwarding(struct passwd * pw)
 	sunaddr.sun_family = AF_UNIX;
 	strlcpy(sunaddr.sun_path, auth_sock_name, sizeof(sunaddr.sun_path));
 
-	if (bind(sock, (struct sockaddr *) & sunaddr, sizeof(sunaddr)) < 0)
+	if (bind(sock, (struct sockaddr *)&sunaddr, sizeof(sunaddr)) < 0)
 		packet_disconnect("bind: %.100s", strerror(errno));
 
 	/* Restore the privileged uid. */
@@ -626,7 +626,7 @@ do_login(Session *s, const char *command)
 	fromlen = sizeof(from);
 	if (packet_connection_is_on_socket()) {
 		if (getpeername(packet_get_connection_in(),
-		    (struct sockaddr *) & from, &fromlen) < 0) {
+		    (struct sockaddr *)&from, &fromlen) < 0) {
 			debug("getpeername: %.100s", strerror(errno));
 			cleanup_exit(255);
 		}

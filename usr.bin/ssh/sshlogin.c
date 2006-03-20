@@ -129,7 +129,7 @@ store_lastlog_message(const char *user, uid_t uid)
  */
 void
 record_login(pid_t pid, const char *tty, const char *user, uid_t uid,
-    const char *host, struct sockaddr * addr, socklen_t addrlen)
+    const char *host, struct sockaddr *addr, socklen_t addrlen)
 {
 	int fd;
 	struct lastlog ll;
