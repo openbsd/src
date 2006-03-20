@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.133 2006/03/20 10:10:59 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.134 2006/03/20 10:49:53 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -55,6 +55,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/lock.h>
 
 #include <machine/bus.h>
 
@@ -560,6 +561,9 @@ ami_attach(struct ami_softc *sc)
 	if (sc->sc_flags & AMI_BROKEN && sc->sc_nunits > 1)
 		printf("%s: firmware buggy, limiting access to first logical "
 		    "disk\n", DEVNAME(sc));
+
+	/* lock around ioctl requests */
+	lockinit(&sc->sc_lock, PZERO, DEVNAME(sc), 0, 0);
 
 #if NBIO > 0
 	if (bio_register(&sc->sc_dev, ami_ioctl) != 0)
@@ -1598,21 +1602,12 @@ int
 ami_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 {
 	struct ami_softc *sc = (struct ami_softc *)dev;
-	int s;
 	int error = 0;
 
 	AMI_DPRINTF(AMI_D_IOCTL, ("%s: ioctl ", DEVNAME(sc)));
 
 	if (sc->sc_flags & AMI_BROKEN)
 		return (ENODEV); /* can't do this to broken device for now */
-
-	s = splbio();
-	if (sc->sc_flags & AMI_CMDWAIT) {
-		splx(s);
-		return (EBUSY);
-	}
-
-	sc->sc_flags |= AMI_CMDWAIT;
 
 	switch (cmd) {
 	case BIOCINQ:
@@ -1645,10 +1640,6 @@ ami_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 		error = EINVAL;
 	}
 
-	sc->sc_flags &= ~AMI_CMDWAIT;
-
-	splx(s);
-
 	return (error);
 }
 
@@ -1660,10 +1651,17 @@ ami_drv_inq(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, u_int8_t page,
 	struct ami_passthrough *pt;
 	struct scsi_inquiry_data *inq = inqbuf;
 	int error = 0;
+	int s;
 
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+
+	s = splbio();
 	ccb = ami_get_ccb(sc);
-	if (ccb == NULL)
-		return (ENOMEM);
+	splx(s);
+	if (ccb == NULL) {
+		error = ENOMEM;
+		goto err;
+	}
 
 	ccb->ccb_done = ami_done_ioctl;
 
@@ -1693,8 +1691,8 @@ ami_drv_inq(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, u_int8_t page,
 
 	if (ami_load_ptmem(sc, ccb, inqbuf, sizeof(struct scsi_inquiry_data),
 	    1, 0) != 0) {
-		ami_put_ccb(ccb);
-		return (ENOMEM);
+		error = ENOMEM;
+		goto ptmemerr;
 	}
 
 	ami_start(sc, ccb);
@@ -1716,8 +1714,13 @@ ami_drv_inq(struct ami_softc *sc, u_int8_t ch, u_int8_t tg, u_int8_t page,
 	else if ((inq->device & SID_TYPE) != T_DIRECT)
 		error = EINVAL;
 
+ptmemerr:
+	s = splbio();
 	ami_put_ccb(ccb);
+	splx(s);
 
+err:
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 	return (error);
 }
 
@@ -1729,15 +1732,23 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 	struct ami_iocmd *cmd;
 	struct ami_mem *am = NULL;
 	char *idata = NULL;
-	int error = EINVAL;
+	int error = 0;
+	int s;
 
+	lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+
+	s = splbio();
 	ccb = ami_get_ccb(sc);
-	if (ccb == NULL)
-		return (ENOMEM);
+	splx(s);
+	if (ccb == NULL) {
+		error = ENOMEM;
+		goto err;
+	}
 
 	if (size) {
 		if ((am = ami_allocmem(sc, size)) == NULL) {
-			ami_put_ccb(ccb);
+			error = ENOMEM;
+			goto memerr;
 			return (ENOMEM);
 		}
 		idata = AMIMEM_KVA(am);
@@ -1754,10 +1765,6 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 	 */
 	switch (opcode) {
 	case AMI_SPEAKER:
-		if (!idata) {
-			ami_put_ccb(ccb);
-			return (ENOMEM);
-		}
 		*idata = par1;
 		break;
 	default:
@@ -1773,17 +1780,21 @@ ami_mgmt(struct ami_softc *sc, u_int8_t opcode, u_int8_t par1, u_int8_t par2,
 	while (ccb->ccb_state != AMI_CCB_READY)
 		tsleep(ccb, PRIBIO,"ami_mgmt", 0);
 
-	if (!(ccb->ccb_flags & AMI_CCB_F_ERR)) {
-		if (buffer && size)
-			memcpy(buffer, idata, size);
+	if (ccb->ccb_flags & AMI_CCB_F_ERR)
+		error = EIO;
+	else if (buffer && size)
+		memcpy(buffer, idata, size);
 
-		error = 0;
-	}
-
-	ami_put_ccb(ccb);
 	if (am)
 		ami_freemem(sc, am);
 
+memerr:
+	s = splbio();
+	ami_put_ccb(ccb);
+	splx(s);
+
+err:
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
 	return (error);
 }
 

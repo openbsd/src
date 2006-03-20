@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.42 2006/03/20 10:10:59 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.43 2006/03/20 10:49:53 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -90,7 +90,6 @@ struct ami_softc {
 	int			sc_flags;
 #define AMI_CHECK_SIGN	0x0001
 #define AMI_BROKEN 	0x0002
-#define	AMI_CMDWAIT	0x0004
 #define AMI_QUARTZ	0x0008
 
 	/* low-level interface */
@@ -119,6 +118,8 @@ struct ami_softc {
 	int			sc_timeout;
 	struct timeout		sc_run_tmo;
 	int			sc_dis_poll;
+
+	struct lock		sc_lock;
 
 	char			sc_fwver[16];
 	char			sc_biosver[16];
