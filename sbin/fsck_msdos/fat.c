@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.c,v 1.12 2004/07/17 02:14:33 deraadt Exp $	*/
+/*	$OpenBSD: fat.c,v 1.13 2006/03/20 20:11:02 dhill Exp $	*/
 /*	$NetBSD: fat.c,v 1.8 1997/10/17 11:19:53 ws Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fat.c,v 1.12 2004/07/17 02:14:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fat.c,v 1.13 2006/03/20 20:11:02 dhill Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -191,7 +191,11 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 	}
 
 	free(buffer);
-	*fp = fat;
+	if (ret & FSFATAL) {
+		free(fat);
+		*fp = NULL;
+	} else
+		*fp = fat;	
 	return (ret);
 }
 
