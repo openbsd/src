@@ -359,7 +359,8 @@ tty_parse_modes(int fd, int *n_bytes_ptr)
 			n_bytes += 4;
 			baud = packet_get_int();
 			debug3("tty_parse_modes: ispeed %d", baud);
-			if (failure != -1 && cfsetispeed(&tio, baud_to_speed(baud)) == -1)
+			if (failure != -1 &&
+			    cfsetispeed(&tio, baud_to_speed(baud)) == -1)
 				error("cfsetispeed failed for %d", baud);
 			break;
 
@@ -369,7 +370,8 @@ tty_parse_modes(int fd, int *n_bytes_ptr)
 			n_bytes += 4;
 			baud = packet_get_int();
 			debug3("tty_parse_modes: ospeed %d", baud);
-			if (failure != -1 && cfsetospeed(&tio, baud_to_speed(baud)) == -1)
+			if (failure != -1 &&
+			    cfsetospeed(&tio, baud_to_speed(baud)) == -1)
 				error("cfsetospeed failed for %d", baud);
 			break;
 
@@ -417,11 +419,12 @@ tty_parse_modes(int fd, int *n_bytes_ptr)
 					/*
 					 * It is a truly undefined opcode (160 to 255).
 					 * We have no idea about its arguments.  So we
-					 * must stop parsing.  Note that some data may be
-					 * left in the packet; hopefully there is nothing
-					 * more coming after the mode data.
+					 * must stop parsing.  Note that some data
+					 * may be left in the packet; hopefully there
+					 * is nothing more coming after the mode data.
 					 */
-					logit("parse_tty_modes: unknown opcode %d", opcode);
+					logit("parse_tty_modes: unknown opcode %d",
+					    opcode);
 					goto set;
 				}
 			} else {
@@ -437,7 +440,8 @@ tty_parse_modes(int fd, int *n_bytes_ptr)
 					(void) packet_get_int();
 					break;
 				} else {
-					logit("parse_tty_modes: unknown opcode %d", opcode);
+					logit("parse_tty_modes: unknown opcode %d",
+					    opcode);
 					goto set;
 				}
 			}
