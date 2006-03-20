@@ -342,13 +342,11 @@ main(int argc, char **argv)
 			if (list_identities(ac, ch == 'l' ? 1 : 0) == -1)
 				ret = 1;
 			goto done;
-			break;
 		case 'x':
 		case 'X':
 			if (lock_agent(ac, ch == 'x' ? 1 : 0) == -1)
 				ret = 1;
 			goto done;
-			break;
 		case 'c':
 			confirm = 1;
 			break;
@@ -359,7 +357,6 @@ main(int argc, char **argv)
 			if (delete_all(ac) == -1)
 				ret = 1;
 			goto done;
-			break;
 		case 's':
 			sc_reader_id = optarg;
 			break;
