@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.20 2006/02/06 21:32:20 moritz Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.21 2006/03/20 15:19:03 dhill Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -36,8 +36,9 @@
 #define REPORT_PERIOD	60	/* report every n seconds */
 #define CHECK_PERIOD	60	/* check every n seconds */
 
-int		 main(int, char *[]);
+void		 usage(void);
 void		 check_sensors(void);
+void		 execute(char *);
 void		 report(time_t);
 static char	*print_sensor(enum sensor_type, int64_t);
 int		 parse_config(char *);
@@ -57,7 +58,7 @@ struct limits_t {
 	int64_t			lower;			/* lower limit */
 	int64_t			upper;			/* upper limit */
 	char			*command;		/* failure command */
-	enum sensor_status	status;			/* last status */
+	enum sensorsd_status	status;			/* last status */
 	time_t			status_changed;
 	int64_t			last_val;
 };
@@ -174,11 +175,11 @@ main(int argc, char *argv[])
 void
 check_sensors(void)
 {
-	struct sensor	 sensor;
-	struct limits_t	*limit;
-	size_t		 len;
-	int		 mib[3];
-	int		 newstatus;
+	struct sensor		 sensor;
+	struct limits_t		*limit;
+	size_t		 	 len;
+	int		 	 mib[3];
+	enum sensorsd_status 	 newstatus;
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_SENSORS;
