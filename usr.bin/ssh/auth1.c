@@ -91,6 +91,7 @@ get_authname(int type)
 	return (buf);
 }
 
+/*ARGSUSED*/
 static int
 auth1_process_password(Authctxt *authctxt, char *info, size_t infolen)
 {
@@ -115,6 +116,7 @@ auth1_process_password(Authctxt *authctxt, char *info, size_t infolen)
 	return (authenticated);
 }
 
+/*ARGSUSED*/
 static int
 auth1_process_rsa(Authctxt *authctxt, char *info, size_t infolen)
 {
@@ -132,6 +134,7 @@ auth1_process_rsa(Authctxt *authctxt, char *info, size_t infolen)
 	return (authenticated);
 }
 
+/*ARGSUSED*/
 static int
 auth1_process_rhosts_rsa(Authctxt *authctxt, char *info, size_t infolen)
 {
@@ -172,6 +175,7 @@ auth1_process_rhosts_rsa(Authctxt *authctxt, char *info, size_t infolen)
 	return (authenticated);
 }
 
+/*ARGSUSED*/
 static int
 auth1_process_tis_challenge(Authctxt *authctxt, char *info, size_t infolen)
 {
@@ -190,6 +194,7 @@ auth1_process_tis_challenge(Authctxt *authctxt, char *info, size_t infolen)
 	return (-1);
 }
 
+/*ARGSUSED*/
 static int
 auth1_process_tis_response(Authctxt *authctxt, char *info, size_t infolen)
 {

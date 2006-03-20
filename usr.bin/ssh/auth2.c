@@ -93,6 +93,7 @@ do_authentication2(Authctxt *authctxt)
 	dispatch_run(DISPATCH_BLOCK, &authctxt->success, authctxt);
 }
 
+/*ARGSUSED*/
 static void
 input_service_request(int type, u_int32_t seq, void *ctxt)
 {
@@ -126,6 +127,7 @@ input_service_request(int type, u_int32_t seq, void *ctxt)
 	xfree(service);
 }
 
+/*ARGSUSED*/
 static void
 input_userauth_request(int type, u_int32_t seq, void *ctxt)
 {
