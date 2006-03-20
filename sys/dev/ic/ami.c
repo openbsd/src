@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.128 2006/03/20 09:02:02 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.129 2006/03/20 09:12:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -989,14 +989,6 @@ void
 ami_start(struct ami_softc *sc, struct ami_ccb *ccb)
 {
 	int s;
-
-	if (ccb->ccb_state != AMI_CCB_READY) {
-		printf("%s: ccb %d not ready (%d)\n", DEVNAME(sc),
-		    ccb->ccb_cmd.acc_id, ccb->ccb_state);
-		ccb->ccb_flags |= AMI_CCB_F_ERR;
-		ccb->ccb_done(sc, ccb);
-		return;
-	}
 
 	s = splbio();
 	ccb->ccb_state = AMI_CCB_PREQUEUED;
