@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.81 2006/03/21 02:50:15 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.82 2006/03/21 08:34:36 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -39,8 +39,9 @@ const char rcs_version[] = "OpenCVS RCS version 3.6";
 int verbose = 1;
 int pipeout = 0;
 
-#define RCS_NFLAG	1
-#define RCS_TFLAG	2
+#define RCS_EFLAG	(1<<0)
+#define RCS_NFLAG	(1<<1)
+#define RCS_TFLAG	(1<<2)
 static int rcsflags = 0;
 
 int	 rcs_optind;
@@ -471,8 +472,8 @@ rcs_main(int argc, char **argv)
 			comment = rcs_optarg;
 			break;
 		case 'e':
-			/* XXX - Not implemented. */
 			elist = rcs_optarg;
+			rcsflags |= RCS_EFLAG;
 			break;
 		case 'h':
 			(usage)();
@@ -625,6 +626,28 @@ rcs_main(int argc, char **argv)
 
 		if (comment != NULL)
 			rcs_comment_set(file, comment);
+
+		if (elist != NULL) {
+			char **eargv;
+
+			eargv = cvs_strsplit(elist, ",");
+			for (j = 0; eargv[j] != NULL; j++)
+				rcs_access_remove(file, eargv[j]);
+
+			xfree(eargv);
+		} else if (rcsflags & RCS_EFLAG) {
+			struct rcs_access *rap;
+
+			/* XXX rcs_access_remove(file, NULL); ?? */
+			while (!TAILQ_EMPTY(&(file->rf_access))) {
+				rap = TAILQ_FIRST(&(file->rf_access));
+				TAILQ_REMOVE(&(file->rf_access), rap, ra_list);
+				xfree(rap->ra_name);
+				xfree(rap);
+			}
+			/* not synced anymore */
+			file->rf_flags &= ~RCS_SYNCED;
+		}
 
 		if (kflag != -1)
 			rcs_kwexp_set(file, kflag);
