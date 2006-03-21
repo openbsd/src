@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.50 2006/03/13 09:36:06 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.51 2006/03/21 08:36:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -42,7 +42,7 @@ void		 rt_update(struct in_addr, u_int8_t, struct in_addr, u_int32_t,
 		     u_int32_t, struct in_addr, struct in_addr, enum path_type,
 		     enum dst_type, u_int8_t, u_int8_t);
 struct rt_node	*rt_lookup(enum dst_type, in_addr_t);
-void		 rt_invalidate(void);
+void		 rt_invalidate(struct area *);
 int		 linked(struct vertex *, struct vertex *);
 
 void
@@ -536,10 +536,11 @@ spf_timer(int fd, short event, void *arg)
 		conf->spf_state = SPF_DELAY;
 		/* FALLTHROUGH */
 	case SPF_DELAY:
-		rt_invalidate();
-
 		LIST_FOREACH(area, &conf->area_list, entry) {
 			if (area->dirty) {
+				/* invalidate RIB entries of this area */
+				rt_invalidate(area);
+
 				/* calculate SPF tree */
 				spf_calc(area);
 
@@ -552,7 +553,8 @@ spf_timer(int fd, short event, void *arg)
 			}
 		}
 
-		/* calculate as-external routes */
+		/* calculate as-external routes, first invalidate them */
+		rt_invalidate(NULL);
 		RB_FOREACH(v, lsa_tree, &conf->lsa_tree) {
 			asext_calc(v);
 		}
@@ -707,12 +709,22 @@ rt_remove(struct rt_node *r)
 }
 
 void
-rt_invalidate(void)
+rt_invalidate(struct area *area)
 {
 	struct rt_node	*r, *nr;
 
 	for (r = RB_MIN(rt_tree, &rt); r != NULL; r = nr) {
 		nr = RB_NEXT(rt_tree, &rt, r);
+		if (area == NULL) {
+			/* look only at as_ext routes */
+			if (r->p_type != PT_TYPE1_EXT &&
+			    r->p_type != PT_TYPE2_EXT)
+				continue;
+		} else {
+			/* look only at routes matching the area */
+			if (r->area.s_addr != area->id.s_addr)
+				continue;
+		}
 		if (r->invalid)
 			rt_remove(r);
 		else
