@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.80 2006/03/21 02:45:09 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.81 2006/03/21 02:50:15 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -319,7 +319,6 @@ rcs_choosefile(const char *filename)
 			break;
 		}
 	}
-	xfree(suffixes);
 
 	/*
 	 * If `ret' is still NULL no RCS file with any extension exists
@@ -327,23 +326,17 @@ rcs_choosefile(const char *filename)
 	 */
 	if (ret == NULL) {
 		/*
-		 * XXX - We shouldn't need to do strsep again,
-		 * suffixes should now be NUL separated.
+		 * `suffixes' should now be NUL separated, so the first
+		 * extension can be read just by reading `suffixes'.
 		 */
-		next = suffixes = xstrdup(rcs_suffixes);
-		/* Get first extension again. */
-		if ((ext = strsep(&next, "/")) == NULL) {
-			xfree(suffixes);
-			return (NULL);
-		}
-		if (strlcat(rcspath, ext, sizeof(rcspath)) >= sizeof(rcspath)) {
+		if (strlcat(rcspath, suffixes, sizeof(rcspath)) >= sizeof(rcspath)) {
 			xfree(suffixes);
 			return (NULL);
 		}
 		ret = xstrdup(rcspath);
-		xfree(suffixes);
 	}
 
+	xfree(suffixes);
 	return (ret);
 }
 
