@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.40 2005/10/26 09:47:48 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.41 2006/03/21 18:41:34 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -74,6 +74,9 @@ sub skip
     	my $actual = read($self->{fh}, $temp, $toread);
 	if (!defined $actual) {
 		die "Error while skipping archive: $!\n";
+	}
+	if ($actual == 0) {
+		die "Premature end of archive in header: $!\n";
 	}
 	$self->{swallow} -= $actual;
     }
