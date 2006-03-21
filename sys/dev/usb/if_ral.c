@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.65 2006/02/19 08:44:17 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.66 2006/03/21 11:19:22 pedro Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -430,9 +430,9 @@ USB_ATTACH(ural)
 	/* retrieve MAC address and various other things from EEPROM */
 	ural_read_eeprom(sc);
 
-	printf("%s: MAC/BBP RT2570 (rev 0x%02x), RF %s, address %s\n",
-	    USBDEVNAME(sc->sc_dev), sc->asic_rev, ural_get_rf(sc->rf_rev),
-	    ether_sprintf(ic->ic_myaddr));
+	printf("%s: MAC/BBP RT%02x (rev 0x%02x), RF %s, address %s\n",
+	    USBDEVNAME(sc->sc_dev), sc->macbbp_rev, sc->asic_rev,
+	    ural_get_rf(sc->rf_rev), ether_sprintf(ic->ic_myaddr));
 
 	ic->ic_phytype = IEEE80211_T_OFDM; /* not only, but not used */
 	ic->ic_opmode = IEEE80211_M_STA; /* default to BSS mode */
@@ -1996,6 +1996,10 @@ ural_read_eeprom(struct ural_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint16_t val;
+
+	/* retrieve MAC/BBP type */
+	ural_eeprom_read(sc, RAL_EEPROM_MACBBP, &val, 2);
+	sc->macbbp_rev = letoh16(val);
 
 	ural_eeprom_read(sc, RAL_EEPROM_CONFIG0, &val, 2);
 	val = letoh16(val);

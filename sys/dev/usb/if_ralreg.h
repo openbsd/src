@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ralreg.h,v 1.8 2006/01/14 12:40:39 damien Exp $  */
+/*	$OpenBSD: if_ralreg.h,v 1.9 2006/03/21 11:19:22 pedro Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -200,6 +200,7 @@ struct ural_rx_desc {
 #define RAL_RF3	1
 #define RAL_RF4	3
 
+#define RAL_EEPROM_MACBBP	0x0000
 #define RAL_EEPROM_ADDRESS	0x0004
 #define RAL_EEPROM_TXPOWER	0x003c
 #define RAL_EEPROM_CONFIG0	0x0016
