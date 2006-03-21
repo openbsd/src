@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.7 2006/03/09 05:38:12 jordan Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.8 2006/03/21 21:11:10 jordan Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -34,13 +34,18 @@ const char		*db_opregion(int);
 int			db_aml_nodetype(struct aml_node *);
 int			db_parse_name(void);
 void			db_aml_disasm(struct acpi_context *, int);
-void			db_aml_disint(struct acpi_context *, int, int);
-void			db_aml_disline(uint8_t *, int, const char *, ...);
+void			db_aml_disint(struct acpi_context *, int);
+void			db_aml_disline(int, const char *, ...);
 void			db_aml_dump(int, u_int8_t *);
 void			db_aml_shownode(struct aml_node *);
 void			db_aml_showvalue(struct aml_value *);
 void			db_aml_walktree(struct aml_node *);
 void			db_spaceit(int);
+int 			db_aml_issimplearg(char);
+
+const char		*db_aml_fieldacc(int);
+const char		*db_aml_fieldlock(int);
+const char		*db_aml_fieldupdate(int);
 
 extern struct aml_node	aml_root;
 
@@ -49,6 +54,37 @@ char			buf[128];
 
 /* name of scope for lexer */
 char			scope[80];
+
+const char *
+db_aml_fieldacc(int key)
+{
+	switch (key) {	
+	case AML_FIELD_ANYACC: return "any";
+	case AML_FIELD_BYTEACC: return "byte";
+	case AML_FIELD_WORDACC: return "word";
+	case AML_FIELD_DWORDACC: return "dword";
+	case AML_FIELD_QWORDACC: return "qword";
+	case AML_FIELD_BUFFERACC: return "buffer";
+	}
+	return "";
+}
+
+const char *
+db_aml_fieldlock(int key)
+{
+	return (key ? "lock" : "nolock");
+}
+
+const char *
+db_aml_fieldupdate(int key)
+{
+	switch (key) {
+	case AML_FIELD_PRESERVE: return "preserve";
+	case AML_FIELD_WRITEASONES: return "writeasones";
+	case AML_FIELD_WRITEASZEROES: return "writeaszeroes";
+	}
+	return "";
+}
 
 const char *
 db_opregion(int id)
@@ -250,31 +286,41 @@ db_aml_objtype(struct aml_value *val)
 }
 
 void
-db_aml_disline(uint8_t *pos, int level, const char *fmt, ...)
+db_aml_disline(int level, const char *fmt, ...)
 {
 	va_list		ap;
 
-	db_printf("%.4x %.2x ", pos - aml_root.start, level);
 	db_spaceit(level);
 
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof buf, fmt, ap);
 	db_printf(buf);
 	va_end(ap);
-
-	db_printf("\n");
 }
 
 /* Output disassembled integer */
 void
-db_aml_disint(struct acpi_context *ctx, int level, int type)
+db_aml_disint(struct acpi_context *ctx, int type)
 {
-	u_int8_t	*pos;
 	int64_t		i1;
 
-	pos = ctx->pos;
 	i1 = aml_eparseint(ctx, type);
-	db_aml_disline(pos, level, "%c:0x%.8llx (%lld)", type, i1, i1);
+	db_aml_disline(0, "0x%.8llx", i1);
+}
+
+int
+db_aml_issimplearg(char arg)
+{
+	switch (arg) {
+	case AML_ARG_DATAOBJLIST:
+	case AML_ARG_TERMOBJLIST:
+	case AML_ARG_METHOD:
+	case AML_ARG_BYTELIST:
+	case AML_ARG_FIELDLIST:
+	case '\0': // end of list
+		return (0);
+	}
+	return (1);
 }
 
 /* Disassemble AML Opcode */
@@ -282,45 +328,58 @@ void
 db_aml_disasm(struct acpi_context *ctx, int level)
 {
 	struct aml_opcode	*opc;
-	uint8_t			*end, *np;
-	const char		*arg, *fname;
+	uint8_t			*end;
+	const char		*arg, *fname, *pfx;
 	struct aml_node		*node;
-	int			idx, len;
+	int			idx, len, narg;
 
-#if 0
-	/* if we want separators */
-	if (level == 0) 
-		db_printf("<<<<<<<<<<<<<<\n");
-#endif
-	np = ctx->pos;
+	narg = 0;
 	opc = aml_getopcode(ctx);
-	db_aml_disline(np, level, opc->mnem);
-	for (arg = opc->args; *arg; arg++) {
-		np = ctx->pos;
+	arg = opc->args;
+	pfx = "";
+	if (opc->mnem[0] != '.') {
+		/* Don't display implied opcodes */
+		db_aml_disline(0, opc->mnem);
+		pfx = "(";
+		narg++;
+	}
+	if (*arg == AML_ARG_OBJLEN) {
+		++arg;
+		end = aml_eparselen(ctx);
+	}
+	if (*arg == AML_ARG_IMPBYTE)
+		++arg;
+	while (db_aml_issimplearg(*arg)) {
+		narg++;
+		db_aml_disline(0, pfx);
 		switch (*arg) {
 		case AML_ARG_BYTE: 
 		case AML_ARG_WORD:
 		case AML_ARG_DWORD:
 		case AML_ARG_QWORD: 
-			db_aml_disint(ctx, level + 1, *arg);
+			db_aml_disint(ctx, *arg);
 			break;
 		case AML_ARG_STRING: 
-			db_aml_disline(np, level + 1, ctx->pos);
+			db_aml_disline(0, ctx->pos);
 			ctx->pos += strlen(ctx->pos) + 1;
 			break;
 		case AML_ARG_NAMESTRING:
 			fname = aml_parse_name(ctx);
-			db_aml_disline(np, level + 1, fname);
+			db_aml_disline(0, fname);
 			break;
 		case AML_ARG_NAMEREF:
 			fname = aml_parse_name(ctx);
 			node = aml_searchname(ctx->scope, fname);
-			db_aml_disline(np, level + 1, "%s:%s", fname, 
-			    node ? db_aml_objtype(node->value) : "none");
-			if (db_aml_nodetype(node) == AML_OBJTYPE_METHOD)
+			db_aml_disline(0, fname);
+			if (db_aml_nodetype(node) == AML_OBJTYPE_METHOD) {
 				/* Parse method arguments */
-				for (idx = 0; idx < AML_METHOD_ARGCOUNT(node->value->v_method.flags); idx++)
+				db_aml_disline(0, "(");
+				for (idx = 0; idx < AML_METHOD_ARGCOUNT(node->value->v_method.flags); idx++) {
+					db_aml_disline(0, idx ? ", " : "");
 					db_aml_disasm(ctx, level + 1);
+				}
+				db_aml_disline(0, ")");
+			}
 			break;
 		case AML_ARG_INTEGER:
 		case AML_ARG_TERMOBJ:
@@ -329,75 +388,75 @@ db_aml_disasm(struct acpi_context *ctx, int level)
 		case AML_ARG_SUPERNAME:
 			db_aml_disasm(ctx, level + 1);
 			break;
-		case AML_ARG_DATAOBJLIST:
-		case AML_ARG_TERMOBJLIST:
-		case AML_ARG_METHOD:
-			while (ctx->pos < end)
-				db_aml_disasm(ctx, level + 1);
-			break;
-		case AML_ARG_BYTELIST:
-			for (idx = 0; idx < end - ctx->pos - 7; idx += 8)
-				db_aml_disline(np, level + 1, "buf %.4x: %.2x "
-				    "%.2x %.2x %.2x %.2x %.2x %.2x %.2x", 
-				    idx, ctx->pos[idx],
-				    ctx->pos[idx + 1], 
-				    ctx->pos[idx + 2], ctx->pos[idx + 3],
-				    ctx->pos[idx + 4], ctx->pos[idx + 5], 
-				    ctx->pos[idx + 6], ctx->pos[idx + 7]);
-
-			ctx->pos = end;
-			break;
 		case AML_ARG_FLAG:
 			/* Flags */
-			idx = aml_eparseint(ctx, AML_ARG_BYTE);
-			if (opc->opcode == AMLOP_METHOD)
-				db_aml_disline(np, level + 1,
-				    "args:%d serialized:%d synclevel:%d",
-				    AML_METHOD_ARGCOUNT(idx),
-				    AML_METHOD_SERIALIZED(idx),
-				    AML_METHOD_SYNCLEVEL(idx));
-			else
-				db_aml_disline(np, level + 1,
-				    "acc:%d lock:%d update:%d",
-				    AML_FIELD_ACCESS(idx),
-				    AML_FIELD_LOCK(idx),
-				    AML_FIELD_UPDATE(idx));
-			break;
-		case AML_ARG_FIELDLIST:
-			for (idx = 0; ctx->pos < end; idx += len) {
-				np = ctx->pos;
-				switch (*ctx->pos) {
-				case AML_FIELD_RESERVED:
-					ctx->pos++;
-					len = aml_parse_length(ctx);
-					break;
-				case AML_FIELD_ATTR__:
-					db_aml_disline(np, level + 1,
-					    "-- attr %.2x %.2x", 
-					    ctx->pos[1], ctx->pos[2]);
-					ctx->pos += 3;
-					len = 0;
-					break;
-				default:
-					fname = aml_parse_name(ctx);
-					len = aml_parse_length(ctx);
-					db_aml_disline(np, level + 1,
-					    "pos:%.4x len:%.4x name:%s", 
-					    idx, len, fname);
-					break;
-				}
+			if (opc->opcode == AMLOP_METHOD) 
+				db_aml_disint(ctx, AML_ARG_BYTE);
+			else {
+				idx = aml_eparseint(ctx, AML_ARG_BYTE);
+				db_aml_disline(0,
+				    "%s, %s, %s",
+				    db_aml_fieldacc(AML_FIELD_ACCESS(idx)),
+				    db_aml_fieldlock(AML_FIELD_LOCK(idx)),
+				    db_aml_fieldupdate(AML_FIELD_UPDATE(idx)));
 			}
 			break;
-		case AML_ARG_OBJLEN:
-			end = aml_eparselen(ctx);
-			break;
 		}
+		pfx = ", ";
+		arg++;
 	}
-#if 0
-	/* if we want separators */
-	if (level == 0) 
-		db_printf(">>>>>>>>>>>>>>\n");
-#endif
+	if (narg > 1)
+		db_aml_disline(0, ")");
+
+	/* Parse remaining argument */
+	switch (*arg) {
+	case AML_ARG_DATAOBJLIST:
+	case AML_ARG_TERMOBJLIST:
+	case AML_ARG_METHOD:
+		db_aml_disline(0, " {\n");
+		while (ctx->pos < end) {
+			db_aml_disline(level + 1, "");
+			db_aml_disasm(ctx, level + 1);
+			db_aml_disline(0, "\n");
+		}
+		db_aml_disline(level, "}");
+		break;
+	case AML_ARG_BYTELIST:
+		db_aml_disline(0, " { ");
+		for (idx = 0; idx < end - ctx->pos; idx++)
+			db_aml_disline(0, "%s0x%.2x", (idx ? ", " : ""),
+			    ctx->pos[idx]);
+		db_aml_disline(0, " }");
+		ctx->pos = end;
+		break;
+	case AML_ARG_FIELDLIST:
+		db_aml_disline(0, " {\n");
+		for (idx = 0; ctx->pos < end; idx += len) {
+			switch (*ctx->pos) {
+			case AML_FIELD_RESERVED:
+				ctx->pos++;
+				len = aml_parse_length(ctx);
+				db_aml_disline(level + 1, "Offset(%x),\n", (idx+len)>>3);
+				break;
+			case AML_FIELD_ATTR__:
+				db_aml_disline(level + 1,
+				    "-- attr %.2x %.2x", 
+				    ctx->pos[1], ctx->pos[2]);
+				ctx->pos += 3;
+				len = 0;
+				break;
+			default:
+				fname = aml_parse_name(ctx);
+				len = aml_parse_length(ctx);
+				db_aml_disline(level + 1, "%s, %d,\n", fname, len);
+				break;
+			}
+		}
+		db_aml_disline(level, "}");
+		break;
+	}
+	if (level == 0)
+		db_aml_disline(0, "\n");
 }
 
 void

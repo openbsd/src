@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.38 2006/03/09 05:38:12 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.39 2006/03/21 21:11:10 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -163,12 +163,12 @@ struct aml_opcode aml_table[] = {
 	{ AMLOP_ZERO,		  "Zero",	     "!"  },
 	{ AMLOP_ONE,		  "One",	     "!"  },
 	{ AMLOP_ONES,		  "Ones",	     "!"  },
-	{ AMLOP_BYTEPREFIX,	  "Byte",	     "b"  },
-	{ AMLOP_WORDPREFIX,	  "Word",	     "w"  },
-	{ AMLOP_DWORDPREFIX,	  "DWord",	     "d"  },
-	{ AMLOP_QWORDPREFIX,	  "QWord",	     "q"  },
+	{ AMLOP_BYTEPREFIX,	  ".Byte",	     "b"  },
+	{ AMLOP_WORDPREFIX,	  ".Word",	     "w"  },
+	{ AMLOP_DWORDPREFIX,	  ".DWord",	     "d"  },
+	{ AMLOP_QWORDPREFIX,	  ".QWord",	     "q"  },
 	{ AMLOP_REVISION,	  "Revision",	     ""	  },
-	{ AMLOP_STRINGPREFIX,	  "String",	     "a"  },
+	{ AMLOP_STRINGPREFIX,	  ".String",	     "a"  },
 	{ AMLOP_DEBUG,		  "DebugOp",	     "",  },
 	{ AMLOP_BUFFER,		  "Buffer",	     "piB" },
 	{ AMLOP_PACKAGE,	  "Package",	     "pbT" },
@@ -233,7 +233,7 @@ struct aml_opcode aml_table[] = {
 	{ AMLOP_LLESS,		  "LLess",	     "tt",    },
 
 	/* Named objects */
-	{ AMLOP_NAMECHAR,	  "NameRef",	     "n" },
+	{ AMLOP_NAMECHAR,	  ".NameRef",	     "n" },
 	{ AMLOP_ALIAS,		  "Alias",	     "nN",  },
 	{ AMLOP_NAME,		  "Name",	     "Nt",  },
 	{ AMLOP_EVENT,		  "Event",	     "N",   },
