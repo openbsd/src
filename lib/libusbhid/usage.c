@@ -1,4 +1,4 @@
-/*	$OpenBSD: usage.c,v 1.8 2006/03/18 03:34:22 dhill Exp $	*/
+/*	$OpenBSD: usage.c,v 1.9 2006/03/21 21:38:55 jaredy Exp $	*/
 /*	$NetBSD: usage.c,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
@@ -153,8 +153,10 @@ hid_start(const char *hidname)
 					len = npagesmax * 5;
 					new = realloc(pages,
 					    len * sizeof (struct usage_page));
-					if (!new)
+					if (!new) {
+						free(n);
 						goto fail;
+					}
 					pages = new;
 					bzero(pages + npagesmax,
 					    npagesmax - npagesmax);
@@ -185,14 +187,16 @@ hid_start(const char *hidname)
 fail:
 	if (f)
 		fclose(f);
-	for (no = 0; no < npages; no++) {
-		if (pages[no].name)
-			free((char *)pages[no].name);
-		if (pages[no].page_contents)
-			free((char *)pages[no].page_contents);
+	if (pages) {
+		for (no = 0; no < npages; no++) {
+			if (pages[no].name)
+				free((char *)pages[no].name);
+			if (pages[no].page_contents)
+				free((char *)pages[no].page_contents);
+		}
+		free(pages);
+		pages = NULL;
 	}
-	free(pages);
-	pages = NULL;
 	npages = 0;
 	npagesmax = 0;
 	return -1;
