@@ -18,5 +18,3 @@ C set [rid-10.1.2.0/24]:ID-type=IPV4_ADDR_SUBNET force
 C set [rid-10.1.2.0/24]:Network=10.1.2.0 force
 C set [rid-10.1.2.0/24]:Netmask=255.255.255.0 force
 C add [Phase 2]:Connections=IPsec-10.1.1.0/24-10.1.2.0/24
-t IPsec-10.1.1.0/24-10.1.2.0/24
-c IPsec-10.1.1.0/24-10.1.2.0/24
