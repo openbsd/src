@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.19 2005/08/30 21:00:05 jmc Exp $	*/
+/*	$OpenBSD: rm.c,v 1.20 2006/03/21 20:28:52 otto Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: rm.c,v 1.19 2005/08/30 21:00:05 jmc Exp $";
+static char rcsid[] = "$OpenBSD: rm.c,v 1.20 2006/03/21 20:28:52 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -225,6 +225,7 @@ rm_tree(char **argv)
 	}
 	if (errno)
 		err(1, "fts_read");
+	fts_close(fts);
 }
 
 void
