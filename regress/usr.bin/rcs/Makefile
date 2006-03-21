@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2006/03/17 14:06:00 xsa Exp $
+#	$OpenBSD: Makefile,v 1.8 2006/03/21 08:32:10 xsa Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -8,6 +8,7 @@ CO?=		co
 RCS?=		rcs
 RCSDIFF?=	rcsdiff
 RCSMERGE?=	rcsmerge
+RLOG?=		rlog
 
 CLEANFILES=	blah.c blah.c,v test test,v RCS
 
@@ -235,6 +236,17 @@ test-comma:
 	@echo . | ${CI} -q file,notext
 	@test -e RCS/file,notext,v
 	@test ! -e RCS/file,v
+
+# Testing 'rcs -afoo,bar,baz'
+test-rcs-aflag: clean
+	@echo "." | ${RCS} -q -i test
+	@${RCS} -q -afoo,bar,baz test
+	@${RLOG} test | diff -u ${.CURDIR}/rcs-aflag.out -
+
+# Testing 'rcs -efoo,bar,baz'
+test-rcs-eflag: test-rcs-aflag
+	@${RCS} -q -efoo,bar,baz test
+	@${RLOG} test | diff -u ${.CURDIR}/rcs-eflag.out -
 
 clean:
 	@rm -rf ${CLEANFILES}

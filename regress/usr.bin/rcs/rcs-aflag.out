@@ -1,0 +1,15 @@
+
+RCS file: test,v
+Working file: test
+head:
+branch:
+locks: strict
+access list:
+	foo
+	bar
+	baz
+symbolic names:
+keyword substitution: kv
+total revisions: 0
+description:
+=============================================================================
