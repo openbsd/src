@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.74 2005/12/06 20:18:56 pedro Exp $
+#	$OpenBSD: security,v 1.75 2006/03/21 19:59:28 david Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -136,7 +136,7 @@ umaskset=no
 list="/etc/csh.cshrc /etc/csh.login ${rhome}/.cshrc ${rhome}/.login"
 for i in $list ; do
 	if [ -s $i ] ; then
-		if egrep -q '[[:space:]]*umask[[:space:]]' $i ; then
+		if egrep -aq '[[:space:]]*umask[[:space:]]' $i ; then
 			umaskset=yes
 		fi
 		awk '{
@@ -188,10 +188,10 @@ umaskset=no
 list="/etc/profile ${rhome}/.profile"
 for i in $list; do
 	if [ -s $i ] ; then
-		if egrep umask $i > /dev/null ; then
+		if egrep -a umask $i > /dev/null ; then
 			umaskset=yes
 		fi
-		egrep umask $i |
+		egrep -a umask $i |
 		awk '$2 % 100 < 20 \
 			{ print "Root umask is group writable" } \
 		     $2 % 10 < 2 \
@@ -243,12 +243,12 @@ list="/etc/ksh.kshrc `cat $TMP2`"
 (cd $rhome
  for i in $list; do
 	if [ -s $i ] ; then
-		egrep umask $i |
+		egrep -a umask $i |
 		awk '$2 % 100 < 20 \
 			{ print "Root umask is group writable" } \
 		     $2 % 10 < 2 \
 			{ print "Root umask is other writable" }' >> $OUTPUT
-		if egrep PATH= $i > /dev/null ; then
+		if egrep -a PATH= $i > /dev/null ; then
 			SAVE_PATH=$PATH
 			unset PATH
 			/bin/ksh << end-of-sh > /dev/null 2>&1
