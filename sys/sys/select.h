@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.h,v 1.8 2005/12/13 00:35:23 millert Exp $	*/
+/*	$OpenBSD: select.h,v 1.9 2006/03/21 08:17:33 otto Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 #define	__NBBY	8				/* number of bits in a byte */
 typedef int32_t	__fd_mask;
-#define __NFDBITS (sizeof(__fd_mask) * __NBBY)	/* bits per mask */
+#define __NFDBITS ((unsigned)(sizeof(__fd_mask) * __NBBY)) /* bits per mask */
 #define	__howmany(x, y)	(((x) + ((y) - 1)) / (y))
 
 typedef	struct fd_set {
