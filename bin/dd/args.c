@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.15 2005/04/08 01:46:45 jsg Exp $	*/
+/*	$OpenBSD: args.c,v 1.16 2006/03/22 18:08:04 dhill Exp $	*/
 /*	$NetBSD: args.c,v 1.7 1996/03/01 01:18:58 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: args.c,v 1.15 2005/04/08 01:46:45 jsg Exp $";
+static char rcsid[] = "$OpenBSD: args.c,v 1.16 2006/03/22 18:08:04 dhill Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ static size_t	get_bsz(char *);
 static off_t	get_off(char *);
 
 static const struct arg {
-	char *name;
+	const char *name;
 	void (*f)(char *);
 	u_int set, noset;
 } args[] = {
@@ -267,7 +267,7 @@ f_conv(char *arg)
 #else	/* NO_CONV */
 
 static const struct conv {
-	char *name;
+	const char *name;
 	u_int set, noset;
 	const u_char *ctab;
 } clist[] = {
