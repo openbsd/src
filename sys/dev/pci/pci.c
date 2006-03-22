@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.44 2006/03/20 01:53:24 brad Exp $	*/
+/*	$OpenBSD: pci.c,v 1.45 2006/03/22 00:36:03 jsg Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -400,6 +400,24 @@ pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
 		ofs = PCI_CAPLIST_NEXT(reg);
 	}
 
+	return (0);
+}
+
+int
+pci_find_device(struct pci_attach_args *pa,
+		int (*match)(struct pci_attach_args *))
+{
+	extern struct cfdriver pci_cd;
+	struct device *pcidev;
+	int i;
+
+	for (i = 0; i < pci_cd.cd_ndevs; i++) {
+		pcidev = pci_cd.cd_devs[i];
+		if (pcidev != NULL &&
+		    pci_enumerate_bus((struct pci_softc *)pcidev,
+		    		      match, pa) != 0)
+			return (1);
+	}
 	return (0);
 }
 
