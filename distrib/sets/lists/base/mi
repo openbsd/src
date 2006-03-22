@@ -2632,6 +2632,7 @@
 ./usr/share/sendmail/ostype/dynix3.2.m4
 ./usr/share/sendmail/ostype/freebsd4.m4
 ./usr/share/sendmail/ostype/freebsd5.m4
+./usr/share/sendmail/ostype/freebsd6.m4
 ./usr/share/sendmail/ostype/gnu.m4
 ./usr/share/sendmail/ostype/hpux10.m4
 ./usr/share/sendmail/ostype/hpux11.m4

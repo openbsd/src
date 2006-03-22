@@ -754,6 +754,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto/des_locl.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto/md5.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/crypto/michael.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto/podd.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto/rijndael.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto/rmd160.ph

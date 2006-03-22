@@ -649,6 +649,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/des_locl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/md5.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/michael.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/podd.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/rijndael.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/crypto/rmd160.ph

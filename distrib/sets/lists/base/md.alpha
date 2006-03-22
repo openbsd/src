@@ -706,6 +706,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/des_locl.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/md5.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/michael.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/podd.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/rijndael.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/crypto/rmd160.ph

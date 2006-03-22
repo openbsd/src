@@ -145,6 +145,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/crypto/des_locl.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/crypto/md5.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/crypto/michael.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/crypto/podd.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/crypto/rijndael.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/crypto/rmd160.ph
