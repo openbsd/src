@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcap.c,v 1.25 2006/03/18 03:55:09 ray Exp $ */
+/*	$OpenBSD: getcap.c,v 1.26 2006/03/22 02:42:11 ray Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -659,7 +659,7 @@ cgetnext(char **bp, char **db_array)
 {
 	size_t len;
 	int status, done;
-	char *cp, *line, *np, buf[BSIZE], nbuf[BSIZE];
+	char *line, *np, buf[BSIZE], nbuf[BSIZE];
 	u_int dummy;
 
 	if (dbp == NULL)
@@ -719,17 +719,12 @@ cgetnext(char **bp, char **db_array)
 		done = 0;
 		np = nbuf;
 		for (;;) {
-			for (cp = line; *cp != '\0'; cp++) {
-				if (*cp == ':') {
-					done = 1;
-					cp++;
-					break;
-				}
-				if (*cp == '\\')
-					break;
+			len = strcspn(line, ":\\");
+			if (line[len] == ':') {
+				done = 1;
+				++len;
 			}
 			/* copy substring */
-			len = cp - line;
 			if (len >= sizeof(nbuf) - (np - nbuf)) {
 				(void)cgetclose();
 				return (-1);
