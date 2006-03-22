@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.53 2005/07/18 14:38:39 jmc Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.54 2006/03/22 13:29:26 ray Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -1185,7 +1185,7 @@ _dns_getaddrinfo(const char *name, const struct addrinfo *pai)
 	struct addrinfo sentinel, *cur;
 	struct res_target q, q2;
 
-	memset(&q, 0, sizeof(q2));
+	memset(&q, 0, sizeof(q));
 	memset(&q2, 0, sizeof(q2));
 	memset(&sentinel, 0, sizeof(sentinel));
 	cur = &sentinel;
