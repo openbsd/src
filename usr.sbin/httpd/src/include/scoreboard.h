@@ -1,4 +1,4 @@
-/* $OpenBSD: scoreboard.h,v 1.11 2005/03/28 23:26:51 niallo Exp $ */
+/* $OpenBSD: scoreboard.h,v 1.12 2006/03/22 13:19:19 ray Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -167,7 +167,6 @@ typedef struct {
 
 #define SCOREBOARD_SIZE		sizeof(scoreboard)
 
-API_EXPORT(void) ap_sync_scoreboard_image(void);
 API_EXPORT(int) ap_exists_scoreboard_image(void);
 
 API_VAR_EXPORT extern scoreboard *ap_scoreboard_image;

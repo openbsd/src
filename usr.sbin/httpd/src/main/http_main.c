@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.42 2006/02/22 15:07:12 henning Exp $ */
+/* $OpenBSD: http_main.c,v 1.43 2006/03/22 13:19:19 ray Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1176,10 +1176,6 @@ static void setup_shared_mem(pool *p)
     ap_scoreboard_image->global.running_generation = 0;
 }
 
-static void reopen_scoreboard(pool *p)
-{
-}
-
 /* Called by parent process */
 static void reinit_scoreboard(pool *p)
 {
@@ -1205,18 +1201,9 @@ static void reinit_scoreboard(pool *p)
  * anyway.
  */
 
-ap_inline void ap_sync_scoreboard_image(void)
-{
-}
-
 API_EXPORT(int) ap_exists_scoreboard_image(void)
 {
     return (ap_scoreboard_image ? 1 : 0);
-}
-
-static ap_inline void put_scoreboard_info(int child_num,
-				       short_score *new_score_rec)
-{
 }
 
 /* a clean exit from the parent with proper cleanup */
@@ -1240,7 +1227,6 @@ API_EXPORT(int) ap_update_child_status(int child_num, int status, request_rec *r
 
     ap_check_signals();
 
-    ap_sync_scoreboard_image();
     ss = &ap_scoreboard_image->servers[child_num];
     old_status = ss->status;
     ss->status = status;
@@ -1289,13 +1275,8 @@ API_EXPORT(int) ap_update_child_status(int child_num, int status, request_rec *r
 	ss->vhostrec = NULL;
 	ap_scoreboard_image->parent[child_num].generation = ap_my_generation;
     }
-    put_scoreboard_info(child_num, ss);
 
     return old_status;
-}
-
-static void update_scoreboard_global(void)
-{
 }
 
 void ap_time_process_request(int child_num, int status)
@@ -1305,7 +1286,6 @@ void ap_time_process_request(int child_num, int status)
     if (child_num < 0)
 	return;
 
-    ap_sync_scoreboard_image();
     ss = &ap_scoreboard_image->servers[child_num];
 
     if (status == START_PREQUEST) {
@@ -1321,8 +1301,6 @@ void ap_time_process_request(int child_num, int status)
 		ss->start_time.tv_usec = 0L;
 
     }
-
-    put_scoreboard_info(child_num, ss);
 }
 
 static void increment_counts(int child_num, request_rec *r)
@@ -1330,7 +1308,6 @@ static void increment_counts(int child_num, request_rec *r)
     long int bs = 0;
     short_score *ss;
 
-    ap_sync_scoreboard_image();
     ss = &ap_scoreboard_image->servers[child_num];
 
     if (r->sent_bodyct)
@@ -1343,8 +1320,6 @@ static void increment_counts(int child_num, request_rec *r)
     ss->bytes_served += (unsigned long) bs;
     ss->my_bytes_served += (unsigned long) bs;
     ss->conn_bytes += (unsigned long) bs;
-
-    put_scoreboard_info(child_num, ss);
 }
 
 static int find_child_by_pid(int pid)
@@ -1367,8 +1342,6 @@ static void reclaim_child_processes(int terminate)
     int not_dead_yet;
     int ret;
     other_child_rec *ocr, *nocr;
-
-    ap_sync_scoreboard_image();
 
     for (tries = terminate ? 4 : 1; tries <= 12; ++tries) {
 	/* don't want to hold up progress any more than 
@@ -2333,7 +2306,6 @@ static void child_main(int child_num_arg)
     pmutex = ap_make_sub_pool(pchild);
 
     /* needs to be done before we switch UIDs so we have permissions */
-    reopen_scoreboard(pchild);
     SAFE_ACCEPT(accept_mutex_child_init(pmutex));
 
     set_group_privs();
@@ -2385,7 +2357,6 @@ static void child_main(int child_num_arg)
 
 	ap_clear_pool(ptrans);
 
-	ap_sync_scoreboard_image();
 	if (ap_scoreboard_image->global.running_generation != ap_my_generation) {
 	    clean_child_exit(0);
 	}
@@ -2515,7 +2486,6 @@ static void child_main(int child_num_arg)
 	    /* or maybe we missed a signal, you never know on systems
 	     * without reliable signals
 	     */
-	    ap_sync_scoreboard_image();
 	    if (ap_scoreboard_image->global.running_generation != ap_my_generation) {
 		clean_child_exit(0);
 	    }
@@ -2597,7 +2567,6 @@ static void child_main(int child_num_arg)
 	    (void) ap_update_child_status(my_child_num, SERVER_BUSY_KEEPALIVE,
 				       (request_rec *) NULL);
 
-	    ap_sync_scoreboard_image();
 	    if (ap_scoreboard_image->global.running_generation != ap_my_generation) {
 		ap_call_close_connection_hook(current_conn);
 		ap_bclose(conn_io);
@@ -2763,7 +2732,6 @@ static void perform_idle_server_maintenance(void)
     last_non_dead = -1;
     total_non_dead = 0;
 
-    ap_sync_scoreboard_image();
     for (i = 0; i < ap_daemons_limit; ++i) {
 	int status;
 
@@ -3074,7 +3042,6 @@ static void standalone_main(int argc, char **argv)
 	    if (pid >= 0) {
 		process_child_status(pid, status);
 		/* non-fatal death... note that it's gone in the scoreboard. */
-		ap_sync_scoreboard_image();
 		child_slot = find_child_by_pid(pid);
 		Explain2("Reaping child %d slot %d", pid, child_slot);
 		if (child_slot >= 0) {
@@ -3165,7 +3132,6 @@ static void standalone_main(int argc, char **argv)
 	 */
 	++ap_my_generation;
 	ap_scoreboard_image->global.running_generation = ap_my_generation;
-	update_scoreboard_global();
 
 	if (is_graceful) {
 	    int i;
@@ -3181,7 +3147,6 @@ static void standalone_main(int argc, char **argv)
 	     * do it if we're in a SCOREBOARD_FILE because it'll cause
 	     * corruption too easily.
 	     */
-	    ap_sync_scoreboard_image();
 	    for (i = 0; i < ap_daemons_limit; ++i) {
 		if (ap_scoreboard_image->servers[i].status != SERVER_DEAD) {
 		    ap_scoreboard_image->servers[i].status = SERVER_GRACEFUL;

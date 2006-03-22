@@ -389,7 +389,6 @@ extern "C" {
 #define sub_req_lookup_file            ap_sub_req_lookup_file
 #define sub_req_lookup_uri             ap_sub_req_lookup_uri
 #define suexec_enabled                 ap_suexec_enabled
-#define sync_scoreboard_image          ap_sync_scoreboard_image
 #define table_add                      ap_table_add
 #define table_addn                     ap_table_addn
 #define table_do                       ap_table_do

@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.h,v 1.12 2005/03/28 23:26:51 niallo Exp $ */
+/* $OpenBSD: http_main.h,v 1.13 2006/03/22 13:19:19 ray Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -124,7 +124,6 @@ API_EXPORT(void) ap_kill_timeout(request_rec *);
 API_EXPORT(void) ap_reset_timeout(request_rec *);
 
 API_EXPORT(void) ap_child_terminate(request_rec *r);
-API_EXPORT(void) ap_sync_scoreboard_image(void);
 API_EXPORT(int) ap_update_child_status(int child_num, int status,
     request_rec *r);
 void ap_time_process_request(int child_num, int status);

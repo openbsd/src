@@ -285,7 +285,6 @@ static int status_handler(request_rec *r)
     if (r->header_only)
 	return 0;
 
-    ap_sync_scoreboard_image();
     for (i = 0; i < HARD_SERVER_LIMIT; ++i) {
 	score_record = ap_scoreboard_image->servers[i];
 	ps_record = ap_scoreboard_image->parent[i];

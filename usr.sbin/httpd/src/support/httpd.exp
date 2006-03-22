@@ -363,7 +363,6 @@ ap_sub_req_lookup_file
 ap_sub_req_lookup_uri
 ap_sub_req_method_uri
 ap_suexec_enabled
-ap_sync_scoreboard_image
 ap_sys_siglist
 ap_table_add
 ap_table_addn
