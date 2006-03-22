@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.7 2005/11/18 08:49:32 camield Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.8 2006/03/22 10:16:03 camield Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -84,7 +84,6 @@ struct session {
 
 LIST_HEAD(, session) sessions = LIST_HEAD_INITIALIZER(sessions);
 
-void	catch_signal(int);
 void	client_error(struct bufferevent *, short, void *);
 int	client_parse(struct session *s);
 int	client_parse_anon(struct session *s);
@@ -96,6 +95,7 @@ void	end_session(struct session *);
 int	exit_daemon(void);
 int	getline(char *, size_t *);
 void	handle_connection(const int, short, void *);
+void	handle_signal(int, short, void *);
 struct session * init_session(void);
 void	logmsg(int, const char *, ...);
 u_int16_t parse_port(int);
@@ -119,15 +119,6 @@ char *fixed_server, *fixed_server_port, *fixed_proxy, *listen_ip, *listen_port,
 int anonymous_only, caught_sig, daemonize, id_count, ipv6_mode, loglevel,
     max_sessions, rfc_mode, session_count, timeout, verbose;
 extern char *__progname;
-
-void
-catch_signal(int sig)
-{
-	extern int event_gotsig;
-
-	event_gotsig = 1;
-	caught_sig = sig;
-}
 
 void
 client_error(struct bufferevent *bufev, short what, void *arg)
@@ -318,8 +309,6 @@ int
 exit_daemon(void)
 {
 	struct session *s, *next;
-
-	logmsg(LOG_ERR, "%s exiting on signal %d", __progname, caught_sig);
 
 	for (s = LIST_FIRST(&sessions); s != LIST_END(&sessions); s = next) {
 		next = LIST_NEXT(s, entry);
@@ -519,6 +508,19 @@ handle_connection(const int listen_fd, short event, void *ev)
 	end_session(s);
 }
 
+void
+handle_signal(int sig, short event, void *arg)
+{
+	/*
+	 * Signal handler rules don't apply, libevent decouples for us.
+	 */
+
+	logmsg(LOG_ERR, "%s exiting on signal %d", __progname, sig);
+
+	exit_daemon();
+}
+	
+
 struct session *
 init_session(void)
 {
@@ -575,10 +577,9 @@ logmsg(int pri, const char *message, ...)
 int
 main(int argc, char *argv[])
 {
-	extern int (*event_sigcb)(void);
 	struct rlimit rlp;
 	struct addrinfo hints, *res;
-	struct event ev;
+	struct event ev, ev_sighup, ev_sigint, ev_sigterm;
 	int ch, error, listenfd, on;
 
 	/* Defaults. */
@@ -741,13 +742,17 @@ main(int argc, char *argv[])
 	}
 	
 	event_init();
+
+	/* Setup signal handler. */
+	signal_set(&ev_sighup, SIGHUP, handle_signal, NULL);
+	signal_set(&ev_sigint, SIGINT, handle_signal, NULL);
+	signal_set(&ev_sigterm, SIGTERM, handle_signal, NULL);
+	signal_add(&ev_sighup, NULL);
+	signal_add(&ev_sigint, NULL);
+	signal_add(&ev_sigterm, NULL);
+
 	event_set(&ev, listenfd, EV_READ | EV_PERSIST, handle_connection, &ev);
 	event_add(&ev, NULL);
-
-	signal(SIGHUP, catch_signal);
-	signal(SIGINT, catch_signal);
-	signal(SIGTERM, catch_signal);
-	event_sigcb = exit_daemon;
 
 	logmsg(LOG_NOTICE, "listening on %s port %s", listen_ip, listen_port);
 
