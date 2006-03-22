@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.13 2006/03/16 04:04:57 ray Exp $	*/
+/*	$OpenBSD: ident.c,v 1.14 2006/03/22 17:04:52 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -33,8 +33,8 @@
 
 static int found = 0;
 
-static int	ident_file(const char *, FILE *);
-static int	ident_line(FILE *);
+static void	ident_file(const char *, FILE *);
+static void	ident_line(FILE *);
 
 int
 ident_main(int argc, char **argv)
@@ -78,7 +78,7 @@ ident_main(int argc, char **argv)
 }
 
 
-static int
+static void
 ident_file(const char *filename, FILE *fp)
 {
 	int c;
@@ -100,11 +100,9 @@ ident_file(const char *filename, FILE *fp)
 		    filename);
 
 	found = 0;
-
-	return (0);
 }
 
-static int
+static void
 ident_line(FILE *fp)
 {
 	int c;
@@ -114,28 +112,28 @@ ident_line(FILE *fp)
 
 	while ((c = getc(fp)) != VALDELIM) {
 		if ((c == EOF) && (feof(fp) | ferror(fp)))
-			return (0);
+			return;
 
 		if (isalpha(c))
 			*(p++) = c;
 		else
-			return (0);
+			return;
 	}
 
 	*(p++) = VALDELIM;
 
 	while ((c = getc(fp)) != KEYDELIM) {
 		if ((c == EOF) && (feof(fp) | ferror(fp)))
-			return (0);
+			return;
 
 		if (c == '\n')
-			return (0);
+			return;
 
 		*(p++) = c;
 	}
 
 	if (p[-1] != ' ')
-		return (0);
+		return;
 
 	/* append trailing KEYDELIM */
 	*(p++) = c;
@@ -144,7 +142,7 @@ ident_line(FILE *fp)
 	found++;
 	printf("     %c%s\n", KEYDELIM, linebuf);
 
-	return (0);
+	return;
 }
 
 void
