@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.27 2006/03/13 09:36:06 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.28 2006/03/22 16:01:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -86,6 +86,8 @@ struct abr_rtr {
 	struct in_addr		 area;
 	u_int16_t		 metric;
 };
+
+extern struct lsa_tree	asext_tree;
 
 /* rde.c */
 pid_t		 rde(struct ospfd_conf *, int [2], int [2], int [2]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.43 2006/03/09 16:55:51 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.44 2006/03/22 16:01:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -66,6 +66,7 @@ struct ospfd_conf	*rdeconf = NULL;
 struct imsgbuf		*ibuf_ospfe;
 struct imsgbuf		*ibuf_main;
 struct rde_nbr		*nbrself;
+struct lsa_tree		 asext_tree;
 
 /* ARGSUSED */
 void
@@ -104,7 +105,7 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 		return (pid);
 	}
 
-	rdeconf = xconf; /* XXX may not be replaced because of the lsa_tree */
+	rdeconf = xconf;
 
 	if ((pw = getpwnam(OSPFD_USER)) == NULL)
 		fatal("getpwnam");
@@ -124,7 +125,7 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 
 	event_init();
 	rde_nbr_init(NBR_HASHSIZE);
-	lsa_init(&rdeconf->lsa_tree);
+	lsa_init(&asext_tree);
 
 	/* setup signal handler */
 	signal_set(&ev_sigint, SIGINT, rde_sig_handler, NULL);
@@ -509,7 +510,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 					lsa_dump(&area->lsa_tree, imsg.hdr.type,
 					    imsg.hdr.pid);
 				}
-				lsa_dump(&rdeconf->lsa_tree, imsg.hdr.type,
+				lsa_dump(&asext_tree, imsg.hdr.type,
 				    imsg.hdr.pid);
 			} else {
 				memcpy(&aid, imsg.data, sizeof(aid));
@@ -520,7 +521,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 					lsa_dump(&area->lsa_tree, imsg.hdr.type,
 					    imsg.hdr.pid);
 					if (!area->stub)
-						lsa_dump(&rdeconf->lsa_tree,
+						lsa_dump(&asext_tree,
 						    imsg.hdr.type,
 						    imsg.hdr.pid);
 				}
@@ -684,7 +685,6 @@ void
 rde_send_summary(pid_t pid)
 {
 	static struct ctl_sum	 sumctl;
-	struct lsa_tree		*tree = &rdeconf->lsa_tree;
 	struct area		*area;
 	struct vertex		*v;
 
@@ -697,7 +697,7 @@ rde_send_summary(pid_t pid)
 	LIST_FOREACH(area, &rdeconf->area_list, entry)
 		sumctl.num_area++;
 
-	RB_FOREACH(v, lsa_tree, tree)
+	RB_FOREACH(v, lsa_tree, &asext_tree)
 		sumctl.num_ext_lsa++;
 
 	sumctl.rfc1583compat = rdeconf->rfc1583compat;

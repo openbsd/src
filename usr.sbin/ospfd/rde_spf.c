@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.51 2006/03/21 08:36:27 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.52 2006/03/22 16:01:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -555,7 +555,7 @@ spf_timer(int fd, short event, void *arg)
 
 		/* calculate as-external routes, first invalidate them */
 		rt_invalidate(NULL);
-		RB_FOREACH(v, lsa_tree, &conf->lsa_tree) {
+		RB_FOREACH(v, lsa_tree, &asext_tree) {
 			asext_calc(v);
 		}
 

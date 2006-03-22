@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.29 2006/03/13 09:36:06 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.30 2006/03/22 16:01:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -34,15 +34,12 @@ void		 lsa_timeout(int, short, void *);
 void		 lsa_refresh(struct vertex *);
 int		 lsa_equal(struct lsa *, struct lsa *);
 
-struct lsa_tree	*global_lsa_tree;
-
 RB_GENERATE(lsa_tree, vertex, entry, lsa_compare)
 
 void
 lsa_init(struct lsa_tree *t)
 {
-	global_lsa_tree = t;
-	RB_INIT(global_lsa_tree);
+	RB_INIT(t);
 }
 
 int
@@ -336,7 +333,7 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 	struct timeval	 tv;
 
 	if (lsa->hdr.type == LSA_TYPE_EXTERNAL)
-		tree = global_lsa_tree;
+		tree = &asext_tree;
 	else
 		tree = &nbr->area->lsa_tree;
 
@@ -383,7 +380,7 @@ lsa_del(struct rde_nbr *nbr, struct lsa_hdr *lsa)
 	}
 
 	if (lsa->type == LSA_TYPE_EXTERNAL)
-		tree = global_lsa_tree;
+		tree = &asext_tree;
 	else
 		tree = &nbr->area->lsa_tree;
 
@@ -432,7 +429,7 @@ lsa_find(struct area *area, u_int8_t type, u_int32_t ls_id, u_int32_t adv_rtr)
 	key.type = type;
 
 	if (type == LSA_TYPE_EXTERNAL)
-		tree = global_lsa_tree;
+		tree = &asext_tree;
 	else
 		tree = &area->lsa_tree;
 
@@ -495,7 +492,7 @@ lsa_snap(struct area *area, u_int32_t peerid)
 		}
 		if (tree != &area->lsa_tree)
 			break;
-		tree = global_lsa_tree;
+		tree = &asext_tree;
 	} while (1);
 }
 
