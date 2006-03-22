@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.100 2006/01/24 15:28:03 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.101 2006/03/22 09:05:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -44,7 +44,7 @@ enum neighbor_views {
 
 __dead void	 usage(void);
 int		 main(int, char *[]);
-char		*fmt_peer(const struct peer_config *, int);
+char		*fmt_peer(const char *, const struct bgpd_addr *, int, int);
 void		 show_summary_head(void);
 int		 show_summary_msg(struct imsg *, int);
 int		 show_summary_terse_msg(struct imsg *, int);
@@ -352,21 +352,22 @@ main(int argc, char *argv[])
 }
 
 char *
-fmt_peer(const struct peer_config *peer, int nodescr)
+fmt_peer(const char *descr, const struct bgpd_addr *remote_addr,
+    int masklen, int nodescr)
 {
 	const char	*ip;
 	char		*p;
 
-	if (peer->descr[0] && !nodescr) {
-		if ((p = strdup(peer->descr)) == NULL)
+	if (descr[0] && !nodescr) {
+		if ((p = strdup(descr)) == NULL)
 			err(1, NULL);
 		return (p);
 	}
 
-	ip = log_addr(&peer->remote_addr);
-	if ((peer->remote_addr.af == AF_INET && peer->remote_masklen != 32) ||
-	    (peer->remote_addr.af == AF_INET6 && peer->remote_masklen != 128)) {
-		if (asprintf(&p, "%s/%u", ip, peer->remote_masklen) == -1)
+	ip = log_addr(remote_addr);
+	if (masklen != -1 && ((remote_addr->af == AF_INET && masklen != 32) ||
+	    (remote_addr->af == AF_INET6 && masklen != 128))) {
+		if (asprintf(&p, "%s/%u", ip, masklen) == -1)
 			err(1, NULL);
 	} else {
 		if ((p = strdup(ip)) == NULL)
@@ -392,7 +393,8 @@ show_summary_msg(struct imsg *imsg, int nodescr)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		p = imsg->data;
-		s = fmt_peer(&p->conf, nodescr);
+		s = fmt_peer(p->conf.descr, &p->conf.remote_addr,
+		    p->conf.remote_masklen, nodescr);
 		if (strlen(s) >= 20)
 			s[20] = 0;
 		printf("%-20s %5u %10llu %10llu %5u %-8s ",
@@ -432,7 +434,8 @@ show_summary_terse_msg(struct imsg *imsg, int nodescr)
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		p = imsg->data;
-		s = fmt_peer(&p->conf, nodescr);
+		s = fmt_peer(p->conf.descr, &p->conf.remote_addr,
+		    p->conf.remote_masklen, nodescr);
 		printf("%s %u %s\n", s, p->conf.remote_as,
 		    statenames[p->state]);
 		free(s);
