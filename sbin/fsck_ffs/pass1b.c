@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1b.c,v 1.12 2006/03/12 02:28:28 deraadt Exp $	*/
+/*	$OpenBSD: pass1b.c,v 1.13 2006/03/22 20:24:32 deraadt Exp $	*/
 /*	$NetBSD: pass1b.c,v 1.10 1996/09/23 16:18:37 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1b.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: pass1b.c,v 1.12 2006/03/12 02:28:28 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pass1b.c,v 1.13 2006/03/22 20:24:32 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,9 +54,9 @@ static struct dups *duphead;
 static ino_t info_inumber;
 
 static int
-pass1b_info(char *buf)
+pass1b_info(char *buf, size_t buflen)
 {
-	return (asprintf(&buf, "phase 1b, inode %d/%d",
+	return (snprintf(buf, buflen, "phase 1b, inode %d/%d",
 	    info_inumber, sblock.fs_ipg * sblock.fs_ncg) > 0);
 }
 
