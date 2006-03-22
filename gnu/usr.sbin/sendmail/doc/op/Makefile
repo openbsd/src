@@ -1,4 +1,4 @@
-#	@(#)Makefile	8.2 (Berkeley) 2/28/1994
+#	$Sendmail: Makefile,v 8.16 2006/01/05 22:03:31 ca Exp $
 
 DIR=	smm/08.sendmailop
 SRCS=	op.me

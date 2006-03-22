@@ -2,14 +2,14 @@ divert(-1)
 #
 # Sendmail 8 configuration file for courtesan.com.
 # This machine gets a lot of mail so we use a queue-only config and:
-#	sendmail_flags="-L sm-mta -bd -q1s"
+#	sendmail_flags="-L sm-mta -bd -qp1s"
 # The queue group limits and confMIN_QUEUE_AGE keep things sane
 # and prevent a sendmail DoS when thousands of messages (bounces)
 # come in at once.
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: courtesan.mc,v 1.14 2004/01/26 04:49:11 millert Exp $')
+VERSIONID(`$OpenBSD: courtesan.mc,v 1.15 2006/03/22 18:43:53 millert Exp $')
 OSTYPE(openbsd)
 dnl
 dnl First, we override some default values
@@ -107,6 +107,21 @@ Kcheckaddress regex -a@MATCH
 # Regex to catch sobig worm
 #
 KSobigWormMarker regex -f -aSOBIG multipart/mixed;boundary=_NextPart_000_........$
+
+# Body regex to catch virii
+# See http://web.abnormal.com/~thogard/sendmail/
+#
+Krv1 regex -aVirus-Detect1 (I send you this file in order to have your advice)
+Krv2 regex -aVirus-Detect2 ^TVqQAAMAAAAEAAA
+Krv3 regex -aVirus-Detect3 ^TVpQAAIAAAAEAA
+Krv4 regex -aVirus-Detect4 ^3sSUDhYWiuS/z9goBJ
+Krv5 regex -aVirus-Detect5 ^cnVuIGluI
+Krv6 regex -aVirus-Detect6 attached.file.for.details
+Krv7 regex -aVirus-Detect7 ^R0lGODl
+Krv8 regex -aVirus-Detect8 7-bit.ASCII.encoding.and
+# Collect all regex into a single sequence to be rejected
+Ksv1 sequence rv1 rv2 rv3 rv4 rv5 rv6 rv7 rv8
+Kbodyregex sequence sv1
 
 #
 #  Names that won't be allowed in a To: line (local-part and domains)

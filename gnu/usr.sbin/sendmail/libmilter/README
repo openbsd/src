@@ -12,6 +12,9 @@ issuing the './Build' command in SRCDIR/libmilter .
 Starting with 8.13 sendmail is compiled by default with support for
 the milter API.
 
+Note: if you want to write a milter in Java, then see
+http://sendmail-jilter.sourceforge.net/
+
 +----------------+
 | SECURITY HINTS |
 +----------------+
@@ -466,4 +469,4 @@ main(argc, argv)
 
 /* eof */
 
-$Revision: 1.12 $, Last updated $Date: 2004/06/24 03:59:25 $
+$Revision: 1.13 $, Last updated $Date: 2006/03/22 18:43:54 $

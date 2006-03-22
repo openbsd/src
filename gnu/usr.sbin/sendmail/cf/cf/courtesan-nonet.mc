@@ -5,8 +5,8 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: courtesan-nonet.mc,v 1.2 2000/05/15 03:38:25 millert Exp $')
+VERSIONID(`$OpenBSD: courtesan-nonet.mc,v 1.3 2006/03/22 18:43:53 millert Exp $')
 OSTYPE(openbsd)
 dnl
-dnl Pass everything to xerxes.courtesan.com for processing
-FEATURE(nullclient, `xerxes.courtesan.com')dnl
+dnl Pass everything to xxx.courtesan.com for processing
+FEATURE(nullclient, `xxx.courtesan.com')dnl
