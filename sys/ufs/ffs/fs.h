@@ -1,4 +1,4 @@
-/*	$OpenBSD: fs.h,v 1.19 2006/03/09 13:35:02 pedro Exp $	*/
+/*	$OpenBSD: fs.h,v 1.20 2006/03/22 13:39:10 pedro Exp $	*/
 /*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /*
@@ -138,9 +138,8 @@
  * however throughput drops by fifty percent if the file system
  * is run at between 95% and 100% full; thus the minimum default
  * value of fs_minfree is 5%. However, to get good clustering
- * performance, 10% is a better choice. hence we use 10% as our
- * default value. With 10% free space, fragmentation is not a
- * problem, so we choose to optimize for time.
+ * performance, 10% is a better choice. With 5% free space,
+ * fragmentation is not a problem, so we choose to optimize for time.
  */
 #define MINFREE		5
 #define DEFAULTOPT	FS_OPTTIME
