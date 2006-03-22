@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.7 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: read.c,v 1.8 2006/03/22 19:43:29 kjell Exp $	*/
 /*	$NetBSD: read.c,v 1.4 1994/11/23 07:42:07 jtc Exp $	*/
 
 /*-
@@ -37,11 +37,12 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: read.c,v 1.7 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.8 2006/03/22 19:43:29 kjell Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/limits.h>
 
 #include <err.h>
 #include <errno.h>
@@ -71,10 +72,14 @@ bytes(fp, off)
 	FILE *fp;
 	off_t off;
 {
-	int ch, len, tlen;
+	int ch;
+	size_t len, tlen;
 	char *ep, *p, *t;
 	int wrap;
 	char *sp;
+
+	if (off > SIZE_T_MAX)
+		errx(1, "offset too large");
 
 	if ((sp = p = malloc(off)) == NULL)
 		err(1, NULL);
@@ -143,14 +148,18 @@ lines(fp, off)
 	off_t off;
 {
 	struct {
-		u_int blen;
-		u_int len;
+		size_t blen;
+		size_t len;
 		char *l;
 	} *lines;
 	int ch;
 	char *p = NULL;
-	int blen, cnt, recno, wrap;
-	char *sp = NULL;
+	int wrap;
+	size_t cnt, recno, blen, newsize;
+	char *sp = NULL, *newp = NULL;
+
+	if (off > SIZE_T_MAX)
+		errx(1, "offset too large");
 
 	if ((lines = calloc(off, sizeof(*lines))) == NULL)
 		err(1, NULL);
@@ -159,17 +168,22 @@ lines(fp, off)
 
 	while ((ch = getc(fp)) != EOF) {
 		if (++cnt > blen) {
-			if ((sp = realloc(sp, blen += 1024)) == NULL)
+			newsize = blen + 1024;
+			if ((newp = realloc(sp, newsize)) == NULL)
 				err(1, NULL);
+			sp = newp;
+			blen = newsize;
 			p = sp + cnt - 1;
 		}
 		*p++ = ch;
 		if (ch == '\n') {
 			if (lines[recno].blen < cnt) {
-				lines[recno].blen = cnt + 256;
-				if ((lines[recno].l = realloc(lines[recno].l,
-				    lines[recno].blen)) == NULL)
+				newsize = cnt + 256;
+				if ((newp = realloc(lines[recno].l,
+				    newsize)) == NULL)
 					err(1, NULL);
+				lines[recno].l = newp;
+				lines[recno].blen = newsize;
 			}
 			memcpy(lines[recno].l, sp, (lines[recno].len = cnt));
 			cnt = 0;
@@ -194,11 +208,11 @@ lines(fp, off)
 	}
 
 	if (rflag) {
-		for (cnt = recno - 1; cnt >= 0; --cnt)
-			WR(lines[cnt].l, lines[cnt].len);
+		for (cnt = recno; cnt > 0; --cnt)
+			WR(lines[cnt - 1].l, lines[cnt - 1].len);
 		if (wrap)
-			for (cnt = off - 1; cnt >= recno; --cnt)
-				WR(lines[cnt].l, lines[cnt].len);
+			for (cnt = off; cnt > recno; --cnt)
+				WR(lines[cnt - 1].l, lines[cnt - 1].len);
 	} else {
 		if (wrap)
 			for (cnt = recno; cnt < off; ++cnt)
