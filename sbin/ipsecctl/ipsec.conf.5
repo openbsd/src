@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.32 2006/03/07 00:30:28 reyk Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.33 2006/03/22 16:01:23 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -37,6 +37,25 @@ IP security services.
 The rulesets themselves can be loaded, viewed, and modified via the
 .Xr ipsecctl 8
 userland utility.
+.Sh MACROS
+Much like
+.Xr cpp 1
+or
+.Xr m4 1 ,
+macros can be defined that will later be expanded in context.
+Macro names must start with a letter, and may contain letters, digits
+and underscores.
+Macro names may not be reserved words (for example
+.Ar flow ,
+.Ar from ,
+.Ar esp ) .
+Macros are not expanded inside quotes.
+.Pp
+For example,
+.Bd -literal -offset indent
+remote_gw = \&"192.168.3.12\&"
+flow esp from 192.168.7.0/24 to 192.168.8.0/24 peer $remote_gw
+.Ed
 .Sh FLOWS
 IPsec uses
 .Em flows

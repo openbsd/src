@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.42 2006/02/01 12:38:47 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.43 2006/03/22 16:01:23 reyk Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -484,8 +484,8 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-dFnv] [-f file] [-s modifier]\n",
-	    __progname);
+	fprintf(stderr, "usage: %s [-dFnv] [-D macro=value] [-f file]"
+	    " [-s modifier]\n", __progname);
 	exit(1);
 }
 
@@ -510,8 +510,13 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "df:Fnvs:")) != -1) {
+	while ((ch = getopt(argc, argv, "D:df:Fnvs:")) != -1) {
 		switch (ch) {
+		case 'D':
+			if (cmdline_symset(optarg) < 0)
+				warnx("could not parse macro definition %s",
+				    optarg);
+			break;
 		case 'd':
 			opts |= IPSECCTL_OPT_DELETE;
 			break;

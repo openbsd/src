@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.52 2006/03/07 00:30:28 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.53 2006/03/22 16:01:23 reyk Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -194,6 +194,7 @@ typedef struct {
 %token	ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT DYNAMIC
 %token	TYPE DENY BYPASS
 %token	<v.string>		STRING
+%type	<v.string>		string
 %type	<v.dir>			dir
 %type	<v.protocol>		protocol
 %type	<v.tmode>		tmode
@@ -221,6 +222,7 @@ grammar		: /* empty */
 		| grammar flowrule '\n'
 		| grammar sarule '\n'
 		| grammar tcpmd5rule '\n'
+		| grammar varset '\n'
 		| grammar error '\n'		{ errors++; }
 		;
 
@@ -608,6 +610,27 @@ ikeauth		: /* empty */			{
 		}
 		;
 
+string		: string STRING
+		{
+			if (asprintf(&$$, "%s %s", $1, $2) == -1)
+				err(1, "string: asprintf");
+			free($1);
+			free($2);
+		}
+		| STRING
+		;
+
+varset		: STRING '=' string
+		{
+			if (ipsec->opts & IPSECCTL_OPT_VERBOSE)
+				printf("%s = \"%s\"\n", $1, $3);
+			if (symset($1, $3, 0) == -1)
+				err(1, "cannot store variable");
+			free($1);
+			free($3);
+		}
+		;
+
 %%
 
 struct keywords {
@@ -893,6 +916,9 @@ parse_rules(FILE *input, struct ipsecctl *ipsecx)
 
 	/* Free macros and check which have not been used. */
 	while ((sym = TAILQ_FIRST(&symhead))) {
+		if ((ipsec->opts & IPSECCTL_OPT_VERBOSE2) && !sym->used)
+			fprintf(stderr, "warning: macro '%s' not "
+			    "used\n", sym->nam);
 		TAILQ_REMOVE(&symhead, sym, entries);
 		free(sym->nam);
 		free(sym->val);
