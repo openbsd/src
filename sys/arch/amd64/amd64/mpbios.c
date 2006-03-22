@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.3 2005/10/21 18:55:00 martin Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.4 2006/03/22 21:16:00 kettenis Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.7 2003/05/15 16:32:50 fvdl Exp $	*/
 
 /*-
@@ -122,10 +122,13 @@
 #include <machine/i82489var.h>
 
 #include <dev/isa/isareg.h>
+#include <dev/pci/pcivar.h>
 
 #ifdef X86_MPBIOS_SUPPORT_EISA
 #include <dev/eisa/eisavar.h>	/* for ELCR* def'ns */
 #endif
+
+#include "pci.h"
 
 
 static struct mpbios_ioapic default_ioapic = {
@@ -662,6 +665,11 @@ mpbios_scan(self)
 		mpbios_unmap (&mp_cfg_table_map);
 	}
 	mpbios_scanned = 1;
+
+#if NPCI > 0
+	if (pci_mode != 0)
+		mpbios_intr_fixup();
+#endif
 }
 
 void

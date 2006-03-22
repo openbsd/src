@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.20 2006/03/08 03:33:21 uwe Exp $
+#	$OpenBSD: files.amd64,v 1.21 2006/03/22 21:16:00 kettenis Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -34,6 +34,7 @@ file	arch/amd64/amd64/ipi.c			multiprocessor
 file	arch/amd64/amd64/apic.c			ioapic | lapic
 
 file	arch/amd64/amd64/mpbios.c		mpbios
+file	arch/amd64/amd64/mpbios_intr_fixup.c	mpbios & pci
 
 
 file	arch/amd64/amd64/consinit.c
