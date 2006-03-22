@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.201 2006/03/13 16:49:35 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.202 2006/03/22 10:18:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -58,9 +58,9 @@ void		 rde_update_log(const char *,
 		     const struct rde_peer *, const struct bgpd_addr *,
 		     const struct bgpd_addr *, u_int8_t);
 int		 rde_reflector(struct rde_peer *, struct rde_aspath *);
-void		 rde_dump_rib_as(struct prefix *, pid_t);
+void		 rde_dump_rib_as(struct prefix *, pid_t, int);
 void		 rde_dump_upcall(struct pt_entry *, void *);
-void		 rde_dump_as(struct filter_as *, pid_t);
+void		 rde_dump_as(struct filter_as *, pid_t, int);
 void		 rde_dump_prefix_upcall(struct pt_entry *, void *);
 void		 rde_dump_prefix(struct ctl_show_rib_prefix *, pid_t);
 void		 rde_softreconfig_out(struct pt_entry *, void *);
@@ -305,7 +305,8 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			memcpy(&pconf, imsg.data, sizeof(pconf));
 			peer = peer_add(imsg.hdr.peerid, &pconf);
 			if (peer == NULL) {
-				log_warnx("peer_up: peer id %d already exists",
+				log_warnx("session add: "
+				    "peer id %d already exists",
 				    imsg.hdr.peerid);
 				break;
 			}
@@ -422,7 +423,7 @@ badnet:
 				break;
 			}
 			pid = imsg.hdr.pid;
-			rde_dump_as(imsg.data, pid);
+			rde_dump_as(imsg.data, pid, 1);
 			imsg_compose(ibuf_se, IMSG_CTL_END, 0, pid, -1,
 			    NULL, 0);
 			break;
@@ -1473,17 +1474,25 @@ rde_reflector(struct rde_peer *peer, struct rde_aspath *asp)
  * control specific functions
  */
 void
-rde_dump_rib_as(struct prefix *p, pid_t pid)
+rde_dump_rib_as(struct prefix *p, pid_t pid, int all)
 {
 	struct ctl_show_rib	 rib;
 	struct buf		*wbuf;
+	struct attr		*a;
+	void			*bp;
+	u_int8_t		 l;
 
+	bzero(&rib, sizeof(rib));
 	rib.lastchange = p->lastchange;
 	rib.local_pref = p->aspath->lpref;
 	rib.med = p->aspath->med;
 	rib.prefix_cnt = p->aspath->prefix_cnt;
 	rib.active_cnt = p->aspath->active_cnt;
 	rib.adjrib_cnt = p->aspath->adjrib_cnt;
+	strlcpy(rib.descr, p->aspath->peer->conf.descr, sizeof(rib.descr));
+	memcpy(&rib.remote_addr, &p->aspath->peer->remote_addr,
+	    sizeof(rib.remote_addr));
+	rib.remote_id = p->aspath->peer->remote_bgpid;
 	if (p->aspath->nexthop != NULL)
 		memcpy(&rib.nexthop, &p->aspath->nexthop->true_nexthop,
 		    sizeof(rib.nexthop));
@@ -1516,6 +1525,26 @@ rde_dump_rib_as(struct prefix *p, pid_t pid)
 		return;
 	if (imsg_close(ibuf_se, wbuf) == -1)
 		return;
+
+	if (all)
+		for (l = 0; l < p->aspath->others_len; l++) {
+			if ((a = p->aspath->others[l]) == NULL)
+				break;
+			if ((wbuf = imsg_create(ibuf_se, IMSG_CTL_SHOW_RIB_ATTR,
+			    0, pid, attr_optlen(a))) == NULL)
+				return;
+			if ((bp = buf_reserve(wbuf, attr_optlen(a))) == NULL) {
+				buf_free(wbuf);
+				return;
+			}
+			if (attr_write(bp, attr_optlen(a), a->flags,
+			    a->type, a->data, a->len) == -1) {
+				buf_free(wbuf);
+				return;
+			}
+			if (imsg_close(ibuf_se, wbuf) == -1)
+				return;
+		}
 }
 
 void
@@ -1529,11 +1558,11 @@ rde_dump_upcall(struct pt_entry *pt, void *ptr)
 	LIST_FOREACH(p, &pt->prefix_h, prefix_l)
 		/* for now dump only stuff from the local-RIB */
 		if (p->flags & F_LOCAL)
-			rde_dump_rib_as(p, pid);
+			rde_dump_rib_as(p, pid, 0);
 }
 
 void
-rde_dump_as(struct filter_as *a, pid_t pid)
+rde_dump_as(struct filter_as *a, pid_t pid, int flags)
 {
 	extern struct path_table	 pathtable;
 	struct rde_aspath		*asp;
@@ -1548,7 +1577,7 @@ rde_dump_as(struct filter_as *a, pid_t pid)
 			LIST_FOREACH(p, &asp->prefix_h, path_l)
 				/* for now dump only stuff from the local-RIB */
 				if (p->flags & F_LOCAL)
-					rde_dump_rib_as(p, pid);
+					rde_dump_rib_as(p, pid, flags);
 		}
 	}
 }
@@ -1572,7 +1601,7 @@ rde_dump_prefix_upcall(struct pt_entry *pt, void *ptr)
 		LIST_FOREACH(p, &pt->prefix_h, prefix_l)
 			/* for now dump only stuff from the local-RIB */
 			if (p->flags & F_LOCAL)
-				rde_dump_rib_as(p, ctl->pid);
+				rde_dump_rib_as(p, ctl->pid, 0);
 }
 
 void
@@ -2247,20 +2276,22 @@ void
 network_init(struct network_head *net_l)
 {
 	struct network	*n;
+	struct in_addr   id;
 
 	reloadtime = time(NULL);
 	bzero(&peerself, sizeof(peerself));
 	peerself.state = PEER_UP;
 	peerself.remote_bgpid = conf->bgpid;
+	id.s_addr = conf->bgpid;
 	peerself.conf.remote_as = conf->as;
 	snprintf(peerself.conf.descr, sizeof(peerself.conf.descr),
-	    "LOCAL AS %hu", conf->as);
+	    "LOCAL: ID %s", inet_ntoa(id));
 	bzero(&peerdynamic, sizeof(peerdynamic));
 	peerdynamic.state = PEER_UP;
 	peerdynamic.remote_bgpid = conf->bgpid;
 	peerdynamic.conf.remote_as = conf->as;
 	snprintf(peerdynamic.conf.descr, sizeof(peerdynamic.conf.descr),
-	    "LOCAL AS %hu", conf->as);
+	    "LOCAL: ID %s", inet_ntoa(id));
 
 	while ((n = TAILQ_FIRST(net_l)) != NULL) {
 		TAILQ_REMOVE(net_l, n, entry);

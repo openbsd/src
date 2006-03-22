@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.193 2006/03/15 11:33:42 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.194 2006/03/22 10:18:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -76,6 +76,7 @@
 #define	F_REJECT		0x0080
 #define	F_BLACKHOLE		0x0100
 #define	F_LONGER		0x0200
+#define	F_CTL_DETAIL		0x1000	/* only used by bgpctl */
 
 enum {
 	PROC_MAIN,
@@ -317,6 +318,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_RIB,
 	IMSG_CTL_SHOW_RIB_AS,
 	IMSG_CTL_SHOW_RIB_PREFIX,
+	IMSG_CTL_SHOW_RIB_ATTR,
 	IMSG_CTL_SHOW_NETWORK,
 	IMSG_CTL_SHOW_NETWORK6,
 	IMSG_CTL_SHOW_RIB_MEM,
@@ -464,7 +466,10 @@ struct kroute6_label {
 struct ctl_show_rib {
 	struct bgpd_addr	nexthop;
 	struct bgpd_addr	prefix;
+	struct bgpd_addr	remote_addr;
+	char			descr[PEER_DESCR_LEN];
 	time_t			lastchange;
+	u_int32_t		remote_id;
 	u_int32_t		local_pref;
 	u_int32_t		med;
 	u_int32_t		prefix_cnt;
