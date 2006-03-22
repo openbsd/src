@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.22 2003/06/18 02:26:58 itojun Exp $	*/
+/*	$OpenBSD: config.c,v 1.23 2006/03/22 10:49:17 claudio Exp $	*/
 /*	$KAME: config.c,v 1.62 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
@@ -450,7 +450,7 @@ get_prefix(struct rainfo *rai)
 		{
 			p = (u_char *)&pp->prefix;
 			ep = (u_char *)(&pp->prefix + 1);
-			while (m < lim)
+			while (m < lim && p < ep)
 				*p++ &= *m++;
 			while (p < ep)
 				*p++ = 0x00;
