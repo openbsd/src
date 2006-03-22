@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfontedpr.c,v 1.9 2003/06/03 02:56:21 millert Exp $	*/
+/*	$OpenBSD: vfontedpr.c,v 1.10 2006/03/22 19:38:45 deraadt Exp $	*/
 /*	$NetBSD: vfontedpr.c,v 1.7 1998/12/19 23:41:53 christos Exp $	*/
 
 /*
@@ -40,11 +40,12 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vfontedpr.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: vfontedpr.c,v 1.9 2003/06/03 02:56:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: vfontedpr.c,v 1.10 2006/03/22 19:38:45 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/limits.h>
 #include <time.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -185,10 +186,11 @@ main(int argc, char *argv[])
 
 	    /* specify the font size */
 	    if (!strncmp(argv[0], "-s", 2)) {
-		i = 0;
-		cp = argv[0] + 2;
-		while (*cp)
-		    i = i * 10 + (*cp++ - '0');
+		const char *errstr;
+
+		i = (int)strtonum(argv[0] + 2, 0, UINT_MAX, &errstr);
+		if (errstr)
+			perror(argv[0]);
 		printf("'ps %d\n'vs %d\n", i, i+1);
 		argc--, argv++;
 		continue;
