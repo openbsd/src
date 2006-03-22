@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.53 2006/02/23 14:15:53 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.54 2006/03/22 14:37:44 henning Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -263,11 +263,11 @@ route_output(struct mbuf *m, ...)
 	case RTM_GET:
 	case RTM_CHANGE:
 	case RTM_LOCK:
-		if ((rnh = rt_tables[dst->sa_family]) == 0) {
+		if ((rnh = rt_gettable(dst->sa_family, 0)) == NULL) {
 			error = EAFNOSUPPORT;
 			goto flush;
 		}
-		rn = rnh->rnh_lookup(dst, netmask, rnh);
+		rn = rt_lookup(dst, netmask, 0);
 		if (rn == NULL || (rn->rn_flags & RNF_ROOT) != 0) {
 			error = ESRCH;
 			goto flush;
@@ -907,7 +907,7 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 	case NET_RT_DUMP:
 	case NET_RT_FLAGS:
 		for (i = 1; i <= AF_MAX; i++)
-			if ((rnh = rt_tables[i]) && (af == 0 || af == i) &&
+			if ((rnh = rt_gettable(i, 0)) && (af == 0 || af == i) &&
 			    (error = (*rnh->rnh_walktree)(rnh,
 			    sysctl_dumpentry, &w)))
 				break;

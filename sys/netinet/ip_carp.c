@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.119 2006/01/28 23:47:20 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.120 2006/03/22 14:37:44 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -341,8 +341,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 			int count = 0;
 			struct sockaddr sa;
 			struct rtentry *rt;
-			struct radix_node_head *rnh =
-			    rt_tables[ifa->ifa_addr->sa_family];
+			struct radix_node_head *rnh;
 			struct radix_node *rn;
 			int hr_otherif, nr_ourif;
 
@@ -367,6 +366,8 @@ carp_setroute(struct carp_softc *sc, int cmd)
 			    RTF_HOST, NULL);
 
 			/* Check for our address on another interface */
+			/* XXX cries for proper API */
+			rnh = rt_gettable(ifa->ifa_addr->sa_family, 0);
 			rn = rnh->rnh_matchaddr(ifa->ifa_addr, rnh);
 			rt = (struct rtentry *)rn;
 			hr_otherif = (rt && rt->rt_ifp != &sc->sc_if &&
@@ -376,8 +377,8 @@ carp_setroute(struct carp_softc *sc, int cmd)
 			bcopy(ifa->ifa_addr, &sa, sizeof(sa));
 			satosin(&sa)->sin_addr.s_addr = satosin(ifa->ifa_netmask
 			    )->sin_addr.s_addr & satosin(&sa)->sin_addr.s_addr;
-			rn = rnh->rnh_lookup(&sa, ifa->ifa_netmask, rnh);
-			rt = (struct rtentry *)rn;
+			rt = (struct rtentry *)rt_lookup(&sa,
+			    ifa->ifa_netmask, 0);
 			nr_ourif = (rt && rt->rt_ifp == &sc->sc_if);
 
 			switch (cmd) {
