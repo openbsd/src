@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.279 2006/03/14 22:48:46 deraadt Exp $
+#	$OpenBSD: rc,v 1.280 2006/03/22 15:57:55 hshoexer Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -326,6 +326,15 @@ fi
 # If $isakmpd_flags == NO, isakmpd isn't run.
 if [ X"${isakmpd_flags}" != X"NO" ]; then
 	echo 'starting isakmpd';	isakmpd ${isakmpd_flags}
+fi
+
+# $ipsec is imported from /etc/rc.conf;
+# if $ipsec == NO or /etc/ipsec.conf doesn't exist, then
+# ipsecctl isn't run.
+if [ X"${ipsec}" != X"NO" ]; then
+	if [ -f ${ipsec_rules} ]; then
+		ipsecctl -f ${ipsec_rules}
+	fi
 fi
 
 echo -n 'starting initial daemons:'
