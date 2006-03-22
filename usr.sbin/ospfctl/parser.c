@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.9 2005/06/16 18:48:43 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.10 2006/03/22 15:37:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -50,6 +50,7 @@ struct token {
 };
 
 static const struct token t_main[];
+static const struct token t_fib[];
 static const struct token t_show[];
 static const struct token t_show_iface[];
 static const struct token t_show_db[];
@@ -60,8 +61,15 @@ static const struct token t_show_fib[];
 
 static const struct token t_main[] = {
 /*	{KEYWORD,	"reload",	RELOAD,		NULL}, */
+	{KEYWORD,	"fib",		FIB,		t_fib},
 	{KEYWORD,	"show",		SHOW,		t_show},
 	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_fib[] = {
+	{ KEYWORD,	"couple",	FIB_COUPLE,	NULL},
+	{ KEYWORD,	"decouple",	FIB_DECOUPLE,	NULL},
+	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token t_show[] = {

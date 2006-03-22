@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.28 2006/03/09 18:11:33 norby Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.29 2006/03/22 15:37:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -185,6 +185,19 @@ main(int argc, char *argv[])
 			imsg_compose(ibuf, IMSG_CTL_IFINFO, 0, 0, NULL, 0);
 		show_interface_head();
 		break;
+	case FIB:
+		errx(1, "fib couple|decouple");
+		break;
+	case FIB_COUPLE:
+		imsg_compose(ibuf, IMSG_CTL_FIB_COUPLE, 0, 0, NULL, 0);
+		printf("couple request sent.\n");
+		done = 1;
+		break;
+	case FIB_DECOUPLE:
+		imsg_compose(ibuf, IMSG_CTL_FIB_DECOUPLE, 0, 0, NULL, 0);
+		printf("decouple request sent.\n");
+		done = 1;
+		break;
 	case RELOAD:
 		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, NULL, 0);
 		printf("reload request sent.\n");
@@ -246,6 +259,9 @@ main(int argc, char *argv[])
 				done = show_fib_interface_msg(&imsg);
 				break;
 			case NONE:
+			case FIB:
+			case FIB_COUPLE:
+			case FIB_DECOUPLE:
 			case RELOAD:
 				break;
 			}
