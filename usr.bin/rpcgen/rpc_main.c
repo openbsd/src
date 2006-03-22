@@ -1,4 +1,4 @@
-/* $OpenBSD: rpc_main.c,v 1.20 2004/05/09 22:22:45 deraadt Exp $	 */
+/* $OpenBSD: rpc_main.c,v 1.21 2006/03/22 18:20:31 dhill Exp $	 */
 /* $NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	 */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 
 #ifndef lint
 static char     sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
-static char     cvsid[] = "$OpenBSD: rpc_main.c,v 1.20 2004/05/09 22:22:45 deraadt Exp $";
+static char     cvsid[] = "$OpenBSD: rpc_main.c,v 1.21 2006/03/22 18:20:31 dhill Exp $";
 #endif
 
 /*
@@ -487,7 +487,7 @@ char            rpcgen_table_dcl[] = "struct rpcgen_table {\n\
 static char *
 generate_guard(char *pathname)
 {
-	char           *filename, *guard, *tmp;
+	char           *filename, *guard, *tmp, *tmp2;
 
 	filename = strrchr(pathname, '/');	/* find last component */
 	filename = ((filename == 0) ? pathname : filename + 1);
@@ -505,7 +505,10 @@ generate_guard(char *pathname)
 		tmp++;
 	}
 
-	guard = extendfile(guard, "_H_RPCGEN");
+	tmp2 = extendfile(guard, "_H_RPCGEN");
+	free(guard);
+	guard = tmp2;
+
 	return (guard);
 }
 
@@ -557,6 +560,8 @@ h_output(infile, define, extend, outfile)
 		fprintf(fout, rpcgen_table_dcl);
 	}
 	fprintf(fout, "\n#endif /* !_%s */\n", guard);
+
+	free(guard);
 }
 
 /*

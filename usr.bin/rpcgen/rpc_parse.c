@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_parse.c,v 1.14 2003/07/09 03:35:21 deraadt Exp $	*/
+/*	$OpenBSD: rpc_parse.c,v 1.15 2006/03/22 18:20:31 dhill Exp $	*/
 /*	$NetBSD: rpc_parse.c,v 1.5 1995/08/29 23:05:55 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -91,6 +91,7 @@ get_definition(void)
 		def_const(defp);
 		break;
 	case TOK_EOF:
+		free(defp);
 		return (NULL);
 	default:
 		error("definition keyword expected");

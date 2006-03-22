@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_scan.c,v 1.11 2003/03/30 20:57:27 deraadt Exp $	*/
+/*	$OpenBSD: rpc_scan.c,v 1.12 2006/03/22 18:20:31 dhill Exp $	*/
 /*	$NetBSD: rpc_scan.c,v 1.4 1995/06/11 21:50:02 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -508,6 +508,7 @@ docppline(line, lineno, fname)
 	*p = 0;
 	if (*file == 0) {
 		*fname = NULL;
+		free(file);
 	} else {
 		*fname = file;
 	}
