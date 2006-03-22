@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.82 2006/03/21 08:34:36 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.83 2006/03/22 02:58:15 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -306,10 +306,8 @@ rcs_choosefile(const char *filename)
 
 		/* Construct RCS file path. */
 		if (strlcpy(fpath, rcspath, sizeof(fpath)) >= sizeof(fpath) ||
-		    strlcat(fpath, ext, sizeof(fpath)) >= sizeof(fpath)) {
-			xfree(suffixes);
-			return (NULL);
-		}
+		    strlcat(fpath, ext, sizeof(fpath)) >= sizeof(fpath))
+			goto out;
 
 		/* Don't use `filename' as RCS file. */
 		if (strcmp(fpath, filename) == 0)
@@ -317,26 +315,24 @@ rcs_choosefile(const char *filename)
 
 		if (stat(fpath, &sb) == 0) {
 			ret = xstrdup(fpath);
-			break;
+			goto out;
 		}
 	}
 
 	/*
-	 * If `ret' is still NULL no RCS file with any extension exists
+	 * `ret' is still NULL.  No RCS file with any extension exists
 	 * so we use the first extension.
+	 *
+	 * `suffixes' should now be NUL separated, so the first
+	 * extension can be read just by reading `suffixes'.
 	 */
-	if (ret == NULL) {
-		/*
-		 * `suffixes' should now be NUL separated, so the first
-		 * extension can be read just by reading `suffixes'.
-		 */
-		if (strlcat(rcspath, suffixes, sizeof(rcspath)) >= sizeof(rcspath)) {
-			xfree(suffixes);
-			return (NULL);
-		}
-		ret = xstrdup(rcspath);
-	}
+	if (strlcat(rcspath, suffixes, sizeof(rcspath)) >=
+	    sizeof(rcspath))
+		goto out;
+	ret = xstrdup(rcspath);
 
+out:
+	/* `ret' may be NULL, which indicates an error. */
 	xfree(suffixes);
 	return (ret);
 }
