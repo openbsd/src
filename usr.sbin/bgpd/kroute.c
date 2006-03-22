@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.144 2006/02/23 15:25:18 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.145 2006/03/22 13:30:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -116,8 +116,8 @@ int			 kif_validate(struct kif *);
 int			 kroute_validate(struct kroute *);
 int			 kroute6_validate(struct kroute6 *);
 void			 knexthop_validate(struct knexthop_node *);
-struct kroute_node	*kroute_match(in_addr_t);
-struct kroute6_node	*kroute6_match(struct in6_addr *);
+struct kroute_node	*kroute_match(in_addr_t, int);
+struct kroute6_node	*kroute6_match(struct in6_addr *, int);
 void			 kroute_detach_nexthop(struct knexthop_node *);
 
 int		protect_lo(void);
@@ -536,13 +536,13 @@ kr_show_route(struct imsg *imsg)
 		kr = NULL;
 		switch (addr->af) {
 		case AF_INET:
-			kr = kroute_match(addr->v4.s_addr);
+			kr = kroute_match(addr->v4.s_addr, 1);
 			if (kr != NULL)
 				send_imsg_session(IMSG_CTL_KROUTE,
 				    imsg->hdr.pid, &kr->r, sizeof(kr->r));
 			break;
 		case AF_INET6:
-			kr6 = kroute6_match(&addr->v6);
+			kr6 = kroute6_match(&addr->v6, 1);
 			if (kr6 != NULL)
 				send_imsg_session(IMSG_CTL_KROUTE6,
 				    imsg->hdr.pid, &kr6->r, sizeof(kr6->r));
@@ -746,13 +746,18 @@ kr_redistribute6(int type, struct kroute6 *kr6)
 }
 
 int
-kr_redist_reload(void)
+kr_reload(void)
 {
 	struct redist_node	*rn;
+	struct knexthop_node	*nh;
 
 	LIST_FOREACH(rn, &redistlist, entry)
 		if (bgpd_redistribute(IMSG_NETWORK_ADD, rn->kr, rn->kr6) == -1)
 			return (-1);
+	
+	RB_FOREACH(nh, knexthop_tree, &knt)
+		knexthop_validate(nh);
+	
 	return (0);
 }
 
@@ -1307,7 +1312,7 @@ knexthop_validate(struct knexthop_node *kn)
 
 	switch (kn->nexthop.af) {
 	case AF_INET:
-		if ((kr = kroute_match(kn->nexthop.v4.s_addr)) == NULL) {
+		if ((kr = kroute_match(kn->nexthop.v4.s_addr, 0)) == NULL) {
 			if (was_valid)
 				send_nexthop_update(&n);
 		} else {					/* match */
@@ -1328,7 +1333,7 @@ knexthop_validate(struct knexthop_node *kn)
 		}
 		break;
 	case AF_INET6:
-		if ((kr6 = kroute6_match(&kn->nexthop.v6)) == NULL) {
+		if ((kr6 = kroute6_match(&kn->nexthop.v6, 0)) == NULL) {
 			if (was_valid)
 				send_nexthop_update(&n);
 		} else {					/* match */
@@ -1355,7 +1360,7 @@ knexthop_validate(struct knexthop_node *kn)
 }
 
 struct kroute_node *
-kroute_match(in_addr_t key)
+kroute_match(in_addr_t key, int matchall)
 {
 	int			 i;
 	struct kroute_node	*kr;
@@ -1367,17 +1372,19 @@ kroute_match(in_addr_t key)
 	for (i = 32; i > 0; i--)
 		if ((kr =
 		    kroute_find(htonl(ina & prefixlen2mask(i)), i)) != NULL)
-			return (kr);
+			if (matchall || bgpd_filternexthop(&kr->r, NULL) == 0)
+			    return (kr);
 
 	/* if we don't have a match yet, try to find a default route */
 	if ((kr = kroute_find(0, 0)) != NULL)
+		if (matchall || bgpd_filternexthop(&kr->r, NULL) == 0)
 			return (kr);
 
 	return (NULL);
 }
 
 struct kroute6_node *
-kroute6_match(struct in6_addr *key)
+kroute6_match(struct in6_addr *key, int matchall)
 {
 	int			 i;
 	struct kroute6_node	*kr6;
@@ -1387,11 +1394,13 @@ kroute6_match(struct in6_addr *key)
 	for (i = 128; i > 0; i--) {
 		inet6applymask(&ina, key, i);
 		if ((kr6 = kroute6_find(&ina, i)) != NULL)
-			return (kr6);
+			if (matchall || bgpd_filternexthop(NULL, &kr6->r) == 0)
+				return (kr6);
 	}
 
 	/* if we don't have a match yet, try to find a default route */
 	if ((kr6 = kroute6_find(&in6addr_any, 0)) != NULL)
+		if (matchall || bgpd_filternexthop(NULL, &kr6->r) == 0)
 			return (kr6);
 
 	return (NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.183 2006/03/07 19:47:03 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.184 2006/03/22 13:30:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -164,6 +164,7 @@ typedef struct {
 %token	ERROR
 %token	IPSEC ESP AH SPI IKE
 %token	IPV4 IPV6
+%token	QUALIFY VIA
 %token	<v.string>		STRING
 %type	<v.number>		number asnumber optnumber yesno inout espah
 %type	<v.number>		family
@@ -427,6 +428,19 @@ conf_main	: AS asnumber		{
 				conf->flags &= ~BGPD_FLAG_DECISION_MED_ALWAYS;
 			else {
 				yyerror("rde med compare: "
+				    "unknown setting \"%s\"", $4);
+				free($4);
+				YYERROR;
+			}
+			free($4);
+		}
+		| NEXTHOP QUALIFY VIA STRING	{
+			if (!strcmp($4, "bgp"))
+				conf->flags |= BGPD_FLAG_NEXTHOP_BGP;
+			else if (!strcmp($4, "default"))
+				conf->flags |= BGPD_FLAG_NEXTHOP_DEFAULT;
+			else {
+				yyerror("nexthop depend on: "
 				    "unknown setting \"%s\"", $4);
 				free($4);
 				YYERROR;
@@ -1576,6 +1590,7 @@ lookup(char *s)
 		{ "prefixlen",		PREFIXLEN},
 		{ "prepend-neighbor",	PREPEND_PEER},
 		{ "prepend-self",	PREPEND_SELF},
+		{ "qualify",		QUALIFY},
 		{ "quick",		QUICK},
 		{ "rde",		RDE},
 		{ "reject",		REJECT},
@@ -1593,6 +1608,7 @@ lookup(char *s)
 		{ "to",			TO},
 		{ "transit-as",		TRANSITAS},
 		{ "transparent-as",	TRANSPARENT},
+		{ "via",		VIA},
 		{ "weight",		WEIGHT}
 	};
 	const struct keywords	*p;

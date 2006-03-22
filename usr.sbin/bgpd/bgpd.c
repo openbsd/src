@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.134 2006/03/15 12:54:01 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.135 2006/03/22 13:30:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -470,7 +470,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	}
 
 	/* redistribute list needs to be reloaded too */
-	if (kr_redist_reload() == -1)
+	if (kr_reload() == -1)
 		return (-1);
 
 	/* filters for the RDE */
@@ -720,3 +720,28 @@ bgpd_redistribute(int type, struct kroute *kr, struct kroute6 *kr6)
 	return (1);
 }
 
+int
+bgpd_filternexthop(struct kroute *kr, struct kroute6 *kr6)
+{
+	/* kernel routes are never filtered */
+	if (kr && kr->flags & F_KERNEL && kr->prefixlen != 0)
+		return (0);
+	if (kr6 && kr6->flags & F_KERNEL && kr6->prefixlen != 0)
+		return (0);
+
+	if (cflags & BGPD_FLAG_NEXTHOP_BGP) {
+		if (kr && kr->flags & F_BGPD_INSERTED)
+			return (0);
+		if (kr6 && kr6->flags & F_BGPD_INSERTED)
+			return (0);
+	}
+
+	if (cflags & BGPD_FLAG_NEXTHOP_DEFAULT) {
+		if (kr && kr->prefixlen == 0)
+			return (0);
+		if (kr6 && kr6->prefixlen == 0)
+			return (0);
+	}
+
+	return (1);
+}
