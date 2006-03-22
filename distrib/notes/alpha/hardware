@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.75 2006/03/20 01:32:15 brad Exp $
+dnl	$OpenBSD: hardware,v 1.76 2006/03/22 08:44:06 martin Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -286,6 +286,17 @@ Supported Peripherals:
 		AMD PCnet-based PCI adapters (pcn), including: [*]
 			BOCALANcard/PCI
 			AT&T StarLAN 10, EN100, and StarLAN Fiber
+		National Semiconductor DP83815/DP83816-based PCI adapters (sis),
+		  including: [*]
+			Netgear FA311
+			Netgear FA312
+			Netgear FA331
+		SiS 900 and SiS 7016-based PCI adapters (sis), including: [*]
+			Mototech ME313
+			NetSurf NS-KFE30D
+		Please be aware that many NE2000 adapters fail or perform
+		very poorly. We do not recommend using them, but your
+		mileage may vary.
 	Gigabit Ethernet Adapters
 		Alteon Tigon I/II-based adapters (ti), including:
 			3Com 3c985 and 3c985B
@@ -500,11 +511,6 @@ work. It's our best guess that they do, but any feedback is appreciated.
 			Shark Pocket Adapter
 			Silicom U2E
 			SMC 2102/2104USB
-		National Semiconductor DP83815/DP83816-based PCI adapters (sis),
-		  including: [*]
-			Netgear FA311
-			Netgear FA312
-			Netgear FA331
 		RealTek RTL8150L based USB adapters, including: [*]
 			Abocom RTL8151
 			BAFO BF-310
@@ -523,9 +529,6 @@ work. It's our best guess that they do, but any feedback is appreciated.
 			TRENDnet TU-ET100C
 			Zt USB10/100
 			Z-TEK ZK-R02
-		SiS 900 and SiS 7016-based PCI adapters (sis), including: [*]
-			Mototech ME313
-			NetSurf NS-KFE30D
 		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards (we) [*]
 		Sundance ST201-based PCI adapters (ste), including: [*]
 			D-Link DFE-550TX
