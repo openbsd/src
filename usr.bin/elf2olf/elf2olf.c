@@ -1,4 +1,4 @@
-/*      $OpenBSD: elf2olf.c,v 1.7 2003/06/10 22:20:46 deraadt Exp $	*/
+/*      $OpenBSD: elf2olf.c,v 1.8 2006/03/22 13:25:58 ray Exp $	*/
 /*
  * Copyright (c) 1996 Erik Theisen.  All rights reserved.
  *
@@ -30,7 +30,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "@(#) $Id: elf2olf.c,v 1.7 2003/06/10 22:20:46 deraadt Exp $";
+static char rcsid[] = "@(#) $Id: elf2olf.c,v 1.8 2006/03/22 13:25:58 ray Exp $";
 #endif
 
 #include <stdlib.h>
@@ -122,7 +122,7 @@ main(int argc, char*argv[])
     do {
 	okay = 0;
 
-	if ((fd = open(*argv, O_RDWR | O_EXLOCK, 0)) > 0 &&
+	if ((fd = open(*argv, O_RDWR | O_EXLOCK, 0)) != -1 &&
 	    lseek(fd, (off_t)0, SEEK_SET) == 0 &&
 	    fstat(fd, &st) == 0) {
 
