@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn.c,v 1.38 2005/09/12 10:07:29 martin Exp $        */
+/*    $OpenBSD: if_sn.c,v 1.39 2006/03/23 03:59:58 brad Exp $        */
 /*    $NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $        */
 
 /*
@@ -117,9 +117,7 @@ int sndebug = 0;
  * to accept packets.
  */
 int
-snsetup(sc, lladdr)
-	struct sn_softc	*sc;
-	u_int8_t *lladdr;
+snsetup(struct sn_softc *sc, u_int8_t *lladdr)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	u_char	*p;
@@ -261,10 +259,7 @@ snsetup(sc, lladdr)
 }
 
 static int
-snioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+snioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ifaddr *ifa;
 	struct ifreq *ifr;
@@ -344,8 +339,7 @@ snioctl(ifp, cmd, data)
  * Encapsulate a packet of type family for the local net.
  */
 static void
-snstart(ifp)
-	struct ifnet *ifp;
+snstart(struct ifnet *ifp)
 {
 	struct sn_softc	*sc = ifp->if_softc;
 	struct mbuf	*m;
@@ -406,16 +400,14 @@ outloop:
  * hardware/software errors.
  */
 static void
-snreset(sc)
-	struct sn_softc *sc;
+snreset(struct sn_softc *sc)
 {
 	snstop(sc);
 	sninit(sc);
 }
 
 static int 
-sninit(sc)
-	struct sn_softc *sc;
+sninit(struct sn_softc *sc)
 {
 	u_long	s_rcr;
 	int	s;
@@ -485,8 +477,7 @@ sninit(sc)
  * part way through.
  */
 static int 
-snstop(sc)
-	struct sn_softc *sc;
+snstop(struct sn_softc *sc)
 {
 	struct mtd *mtd;
 	int	s = splnet();
@@ -518,8 +509,7 @@ snstop(sc)
  * will be handled by higher level protocol timeouts.
  */
 static void
-snwatchdog(ifp)
-	struct ifnet *ifp;
+snwatchdog(struct ifnet *ifp)
 {
 	struct sn_softc *sc = ifp->if_softc;
 	struct mtd *mtd;
@@ -541,10 +531,7 @@ snwatchdog(ifp)
  * stuff packet into sonic (at splnet)
  */
 static __inline__ int 
-sonicput(sc, m0, mtd_next)
-	struct sn_softc *sc;
-	struct mbuf *m0;
-	int mtd_next;
+sonicput(struct sn_softc *sc, struct mbuf *m0, int mtd_next)
 {
 	struct mtd *mtdp;
 	struct mbuf *m;
@@ -627,8 +614,7 @@ sonicput(sc, m0, mtd_next)
  * CAM support
  */
 static void 
-caminitialise(sc)
-	struct sn_softc *sc;
+caminitialise(struct sn_softc *sc)
 {
 	void	*p_cda = sc->p_cda;
 	int	i;
@@ -646,10 +632,7 @@ caminitialise(sc)
 }
 
 static void 
-camentry(sc, entry, ea)
-	int entry;
-	u_char *ea;
-	struct sn_softc *sc;
+camentry(struct sn_softc *sc, int entry, u_char *ea)
 {
 	void	*p_cda = sc->p_cda;
 	int	bitmode = sc->bitmode;
@@ -664,8 +647,7 @@ camentry(sc, entry, ea)
 }
 
 static void 
-camprogram(sc)
-	struct sn_softc *sc;
+camprogram(struct sn_softc *sc)
 {
 	struct ether_multistep step;
 	struct ether_multi *enm;
@@ -737,8 +719,7 @@ camprogram(sc)
 
 #ifdef SNDEBUG
 static void 
-camdump(sc)
-	struct sn_softc *sc;
+camdump(struct sn_softc *sc)
 {
 	int	i;
 
@@ -763,8 +744,7 @@ camdump(sc)
 #endif
 
 static void 
-initialise_tda(sc)
-	struct sn_softc *sc;
+initialise_tda(struct sn_softc *sc)
 {
 	struct mtd *mtd;
 	int	i;
@@ -785,8 +765,7 @@ initialise_tda(sc)
 }
 
 static void
-initialise_rda(sc)
-	struct sn_softc *sc;
+initialise_rda(struct sn_softc *sc)
 {
 	int		bitmode = sc->bitmode;
 	int		i;
@@ -815,8 +794,7 @@ initialise_rda(sc)
 }
 
 static void
-initialise_rra(sc)
-	struct sn_softc *sc;
+initialise_rra(struct sn_softc *sc)
 {
 	int	i;
 	u_int	v;
@@ -914,8 +892,7 @@ snintr(void *arg)
  * Transmit interrupt routine
  */
 static void 
-sonictxint(sc)
-	struct sn_softc *sc;
+sonictxint(struct sn_softc *sc)
 {
 	struct mtd	*mtd;
 	void		*txp;
@@ -987,8 +964,7 @@ sonictxint(sc)
  * Receive interrupt routine
  */
 static void 
-sonicrxint(sc)
-	struct sn_softc *sc;
+sonicrxint(struct sn_softc *sc)
 {
 	caddr_t	rda;
 	int	orra;
@@ -1078,10 +1054,7 @@ sonicrxint(sc)
  * appropriate protocol handler
  */
 static __inline__ int 
-sonic_read(sc, pkt, len)
-	struct sn_softc *sc;
-	caddr_t pkt;
-	int len;
+sonic_read(struct sn_softc *sc, caddr_t pkt, int len)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_header *et;
@@ -1129,10 +1102,7 @@ sonic_read(sc, pkt, len)
  * munge the received packet into an mbuf chain
  */
 static __inline__ struct mbuf *
-sonic_get(sc, eh, datalen)
-	struct sn_softc *sc;
-	struct ether_header *eh;
-	int datalen;
+sonic_get(struct sn_softc *sc, struct ether_header *eh, int datalen)
 {
 	struct	mbuf *m, *top, **mp;
 	int	len;
@@ -1180,11 +1150,8 @@ static u_char bbr4[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
 #define bbr(v)	((bbr4[(v)&0xf] << 4) | bbr4[((v)>>4) & 0xf])
 
 void
-sn_get_enaddr(t, h, o, dst)
-	bus_space_tag_t	t;
-	bus_space_handle_t h;
-	bus_addr_t o;
-	u_char *dst;
+sn_get_enaddr(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
+    u_char *dst)
 {
 	int	i, do_bbr;
 	u_char	b;
