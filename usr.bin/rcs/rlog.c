@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.31 2006/03/20 17:14:47 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.32 2006/03/23 13:28:23 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -30,8 +30,8 @@
 #include "rcsprog.h"
 #include "diff.h"
 
-static int	  rlog_file(const char *, const char *);
-static void	  rlog_rev_print(struct rcs_delta *);
+static void	rlog_file(const char *, const char *);
+static void	rlog_rev_print(struct rcs_delta *);
 
 #define REVSEP		"----------------------------"
 #define REVEND \
@@ -152,7 +152,7 @@ rlog_main(int argc, char **argv)
 	return (0);
 }
 
-static int
+static void
 rlog_file(const char *fname, const char *fpath)
 {
 	char numb[64];
@@ -209,7 +209,6 @@ rlog_file(const char *fname, const char *fpath)
 	}
 
 	printf("%s\n", REVEND);
-	return (0);
 }
 
 static void
