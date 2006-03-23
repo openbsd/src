@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.34 2006/03/23 07:57:33 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.35 2006/03/23 08:04:54 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -507,6 +507,7 @@ doformat(const char *argv[], int argc)
 {
 	const char *format = argv[2];
 	int pos = 3;
+
 	while (*format != 0) {
 		if (*format != '%') {
 			addchar(*format++);
@@ -522,16 +523,16 @@ doformat(const char *argv[], int argc)
 			    size_t l;
 
 			    if (*format == '-') {
-			    	left_padded = 1;
-				format++;
+				    left_padded = 1;
+				    format++;
 			    }
 			    width = strtoul(format, (char **)&format, 10);
 			    if (*format != 's') {
-			    	m4errx(1, "Unsupported format specification: %s.", argv[2]);
+				    m4errx(1, "Unsupported format specification: %s.", argv[2]);
 			    }
 			    format++;
 			    if (pos >= argc)
-			    	m4errx(1, "Format with too many values.");
+				    m4errx(1, "Format with too many values.");
 			    l = strlen(argv[pos]);
 			    if (!left_padded) {
 				    while (l < width--)
@@ -539,8 +540,8 @@ doformat(const char *argv[], int argc)
 			    }
 			    addchars(argv[pos++], l);
 			    if (left_padded) {
-			    	while (l < width--)
-					addchar(' ');
+				    while (l < width--)
+					    addchar(' ');
 			    }
 			}
 		}
