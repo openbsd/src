@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.44 2006/02/01 19:00:22 otto Exp $	*/
+/*	$OpenBSD: show.c,v 1.45 2006/03/23 13:38:27 mcbride Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -680,6 +680,7 @@ link_print(struct sockaddr *sa)
 	} else
 		switch (sdl->sdl_type) {
 		case IFT_ETHER:
+		case IFT_CARP:
 			return (ether_ntoa((struct ether_addr *)lla));
 		}
 	return (link_ntoa(sdl));
