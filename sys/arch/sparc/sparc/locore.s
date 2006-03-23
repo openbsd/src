@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.68 2006/02/22 22:17:07 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.69 2006/03/23 02:29:36 ray Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -5097,7 +5097,7 @@ Lbcopy_doubles:
 	btst	7, %o2		! if ((len & 7) == 0)
 	be	Lbcopy_done	!	goto bcopy_done;
 
-	btst	4, %o2		! if ((len & 4)) == 0)
+	btst	4, %o2		! if ((len & 4) == 0)
 	be,a	Lbcopy_mopw	!	goto mop_up_word_and_byte;
 	btst	2, %o2		! [delay slot: if (len & 2)]
 	ld	[%o0], %o4	!	*(int *)dst = *(int *)src;
@@ -5438,7 +5438,7 @@ Lkcopy_doubles2:
 	btst	7, %o2		! if ((len & 7) == 0)
 	be	Lkcopy_done	!	goto bcopy_done;
 
-	 btst	4, %o2		! if ((len & 4)) == 0)
+	 btst	4, %o2		! if ((len & 4) == 0)
 	be,a	Lkcopy_mopw	!	goto mop_up_word_and_byte;
 	 btst	2, %o2		! [delay slot: if (len & 2)]
 	ld	[%o0], %o4	!	*(int *)dst = *(int *)src;

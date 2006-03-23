@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.54 2006/02/22 22:17:07 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.55 2006/03/23 02:29:36 ray Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -5358,7 +5358,7 @@ Lcopyin_doubles:
 	btst	7, %o2		! if ((len & 7) == 0)
 	be	Lcopyin_done	!	goto copyin_done;
 
-	 btst	4, %o2		! if ((len & 4)) == 0)
+	 btst	4, %o2		! if ((len & 4) == 0)
 	be,a	Lcopyin_mopw	!	goto mop_up_word_and_byte;
 	 btst	2, %o2		! [delay slot: if (len & 2)]
 	lduwa	[%o0] %asi, %o4	!	*(int *)dst = *(int *)src;
@@ -5554,7 +5554,7 @@ Lcopyout_doubles:
 	btst	7, %o2		! if ((len & 7) == 0)
 	be	Lcopyout_done	!	goto copyout_done;
 
-	 btst	4, %o2		! if ((len & 4)) == 0)
+	 btst	4, %o2		! if ((len & 4) == 0)
 	be,a	Lcopyout_mopw	!	goto mop_up_word_and_byte;
 	 btst	2, %o2		! [delay slot: if (len & 2)]
 	lduw	[%o0], %o4	!	*(int *)dst = *(int *)src;
@@ -8686,7 +8686,7 @@ Lkcopy_doubles:
 	btst	7, %o2		! if ((len & 7) == 0)
 	be	Lkcopy_done	!	goto kcopy_done;
 
-	 btst	4, %o2		! if ((len & 4)) == 0)
+	 btst	4, %o2		! if ((len & 4) == 0)
 	be,a	Lkcopy_mopw	!	goto mop_up_word_and_byte;
 	 btst	2, %o2		! [delay slot: if (len & 2)]
 	ld	[%o0], %o4	!	*(int *)dst = *(int *)src;
