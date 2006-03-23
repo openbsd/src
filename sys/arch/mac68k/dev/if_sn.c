@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn.c,v 1.39 2006/03/23 03:59:58 brad Exp $        */
+/*    $OpenBSD: if_sn.c,v 1.40 2006/03/23 04:17:23 brad Exp $        */
 /*    $NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $        */
 
 /*
@@ -130,7 +130,7 @@ snsetup(struct sn_softc *sc, u_int8_t *lladdr)
 	 * for its descriptor areas, or expect the MD attach code
 	 * to do that?
 	 */
-	sc->space = malloc((SN_NPAGES + 1) * NBPG, M_DEVBUF, M_WAITOK);
+	sc->space = malloc((SN_NPAGES + 1) * PAGE_SIZE, M_DEVBUF, M_WAITOK);
 
 	/*
 	 * Put the pup in reset mode (sninit() will fix it later),
@@ -151,7 +151,7 @@ snsetup(struct sn_softc *sc, u_int8_t *lladdr)
 	 * around problems near the end of 64k !!
 	 */
 	p = sc->space;
-	pp = (u_char *)ROUNDUP ((int)p, NBPG);
+	pp = (u_char *)ROUNDUP ((int)p, PAGE_SIZE);
 	p = pp;
 
 	/*
@@ -160,9 +160,9 @@ snsetup(struct sn_softc *sc, u_int8_t *lladdr)
 	 * each page individually.
 	 */
 	for (i = 0; i < SN_NPAGES; i++) {
-		physaccess (p, (caddr_t)SONIC_GETDMA(p), NBPG,
+		physaccess (p, (caddr_t)SONIC_GETDMA(p), PAGE_SIZE,
 			PG_V | PG_RW | PG_CI);
-		p += NBPG;
+		p += PAGE_SIZE;
 	}
 	p = pp;
 
@@ -190,29 +190,29 @@ snsetup(struct sn_softc *sc, u_int8_t *lladdr)
 
 	p = (u_char *)SOALIGN(sc, p);
 
-	if ((p - pp) > NBPG) {
+	if ((p - pp) > PAGE_SIZE) {
 		printf ("%s: sizeof RRA (%ld) + CDA (%ld) +"
-		    "TDA (%ld) > NBPG (%d). Punt!\n",
+		    "TDA (%ld) > PAGE_SIZE (%d). Punt!\n",
 		    sc->sc_dev.dv_xname,
 		    (ulong)sc->p_cda - (ulong)sc->p_rra[0],
 		    (ulong)sc->mtda[0].mtd_txp - (ulong)sc->p_cda,
 		    (ulong)p - (ulong)sc->mtda[0].mtd_txp,
-		    NBPG);
+		    PAGE_SIZE);
 		return(1);
 	}
 
-	p = pp + NBPG;
+	p = pp + PAGE_SIZE;
 	pp = p;
 
-	sc->sc_nrda = NBPG / RXPKT_SIZE(sc);
+	sc->sc_nrda = PAGE_SIZE / RXPKT_SIZE(sc);
 	sc->p_rda = (caddr_t) p;
 	sc->v_rda = SONIC_GETDMA(p);
 
-	p = pp + NBPG;
+	p = pp + PAGE_SIZE;
 
 	for (i = 0; i < NRBA; i++) {
 		sc->rbuf[i] = (caddr_t)p;
-		p += NBPG;
+		p += PAGE_SIZE;
 	}
 
 	pp = p;
@@ -223,10 +223,10 @@ snsetup(struct sn_softc *sc, u_int8_t *lladdr)
 		mtdp->mtd_buf = p;
 		mtdp->mtd_vbuf = SONIC_GETDMA(p);
 		offset += TXBSIZE;
-		if (offset < NBPG) {
+		if (offset < PAGE_SIZE) {
 			p += TXBSIZE;
 		} else {
-			p = pp + NBPG;
+			p = pp + PAGE_SIZE;
 			pp = p;
 			offset = TXBSIZE;
 		}
@@ -817,8 +817,8 @@ initialise_rra(struct sn_softc *sc)
 		v = SONIC_GETDMA(sc->rbuf[i]);
 		SWO(bitmode, sc->p_rra[i], RXRSRC_PTRHI, UPPER(v));
 		SWO(bitmode, sc->p_rra[i], RXRSRC_PTRLO, LOWER(v));
-		SWO(bitmode, sc->p_rra[i], RXRSRC_WCHI, UPPER(NBPG/2));
-		SWO(bitmode, sc->p_rra[i], RXRSRC_WCLO, LOWER(NBPG/2));
+		SWO(bitmode, sc->p_rra[i], RXRSRC_WCHI, UPPER(PAGE_SIZE/2));
+		SWO(bitmode, sc->p_rra[i], RXRSRC_WCLO, LOWER(PAGE_SIZE/2));
 	}
 	sc->sc_rramark = NRBA;
 	NIC_PUT(sc, SNR_RWP, LOWER(sc->v_rra[sc->sc_rramark]));

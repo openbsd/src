@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn_obio.c,v 1.22 2006/03/23 04:10:13 brad Exp $    */
+/*    $OpenBSD: if_sn_obio.c,v 1.23 2006/03/23 04:17:23 brad Exp $    */
 /*    $NetBSD: if_sn_obio.c,v 1.9 1997/04/22 20:56:15 scottr Exp $    */
 
 /*
@@ -38,6 +38,8 @@
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -187,20 +189,20 @@ sn_obio_getaddr(struct sn_softc *sc, u_int8_t *lladdr)
 {
 	bus_space_handle_t bsh;
 
-	if (bus_space_map(sc->sc_regt, SONIC_PROM_BASE, NBPG, 0, &bsh)) {
+	if (bus_space_map(sc->sc_regt, SONIC_PROM_BASE, PAGE_SIZE, 0, &bsh)) {
 		printf(": failed to map space to read SONIC address.\n%s",
 		    sc->sc_dev.dv_xname);
 		return (-1);
 	}
 
 	if (!mac68k_bus_space_probe(sc->sc_regt, bsh, 0, 1)) {
-		bus_space_unmap(sc->sc_regt, bsh, NBPG);
+		bus_space_unmap(sc->sc_regt, bsh, PAGE_SIZE);
 		return (-1);
 	}
 
 	sn_get_enaddr(sc->sc_regt, bsh, 0, lladdr);
 
-	bus_space_unmap(sc->sc_regt, bsh, NBPG);
+	bus_space_unmap(sc->sc_regt, bsh, PAGE_SIZE);
 
 	return (0);
 }
