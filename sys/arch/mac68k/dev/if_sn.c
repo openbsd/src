@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn.c,v 1.40 2006/03/23 04:17:23 brad Exp $        */
+/*    $OpenBSD: if_sn.c,v 1.41 2006/03/23 18:51:37 brad Exp $        */
 /*    $NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $        */
 
 /*
@@ -54,30 +54,29 @@
 #include <mac68k/dev/if_snvar.h>
 
 static void	snwatchdog(struct ifnet *);
-static int	sninit(struct sn_softc *sc);
-static int	snstop(struct sn_softc *sc);
-static int	snioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
-static void	snstart(struct ifnet *ifp);
-static void	snreset(struct sn_softc *sc);
+static int	sninit(struct sn_softc *);
+static int	snstop(struct sn_softc *);
+static int	snioctl(struct ifnet *, u_long, caddr_t);
+static void	snstart(struct ifnet *);
+static void	snreset(struct sn_softc *);
 
 static void	caminitialise(struct sn_softc *);
-static void	camentry(struct sn_softc *, int, u_char *ea);
+static void	camentry(struct sn_softc *, int, u_char *);
 static void	camprogram(struct sn_softc *);
 static void	initialise_tda(struct sn_softc *);
 static void	initialise_rda(struct sn_softc *);
 static void	initialise_rra(struct sn_softc *);
 #ifdef SNDEBUG
-static void	camdump(struct sn_softc *sc);
+static void	camdump(struct sn_softc *);
 #endif
 
 static void	sonictxint(struct sn_softc *);
 static void	sonicrxint(struct sn_softc *);
 
-static __inline__ int	sonicput(struct sn_softc *sc, struct mbuf *m0,
-			    int mtd_next);
+static __inline__ int	sonicput(struct sn_softc *, struct mbuf *,
+			    int);
 static __inline__ int	sonic_read(struct sn_softc *, caddr_t, int);
-static __inline__ struct mbuf *sonic_get(struct sn_softc *,
-			    struct ether_header *, int);
+static __inline__ struct mbuf *sonic_get(struct sn_softc *, caddr_t, int);
 
 struct cfdriver sn_cd = {
 	NULL, "sn", DV_IFNET
@@ -574,10 +573,10 @@ sonicput(struct sn_softc *sc, struct mbuf *m0, int mtd_next)
 	SWO(sc->bitmode, txp, TXP_FRAGOFF + (0 * TXP_FRAGSIZE) + TXP_FPTRHI,
 	    UPPER(mtdp->mtd_vbuf));
 
-	if (totlen < ETHERMIN + sizeof(struct ether_header)) {
-		int pad = ETHERMIN + sizeof(struct ether_header) - totlen;
+	if (totlen < ETHERMIN + ETHER_HDR_LEN) {
+		int pad = ETHERMIN + ETHER_HDR_LEN - totlen;
 		bzero(mtdp->mtd_buf + totlen, pad);
-		totlen = ETHERMIN + sizeof(struct ether_header);
+		totlen = ETHERMIN + ETHER_HDR_LEN;
 	}
 
 	SWO(sc->bitmode, txp, TXP_FRAGOFF + (0 * TXP_FRAGSIZE) + TXP_FSIZE,
@@ -981,8 +980,7 @@ sonicrxint(struct sn_softc *sc)
 
 		orra = RBASEQ(SRO(bitmode, rda, RXPKT_SEQNO)) & RRAMASK;
 		rxpkt_ptr = SRO(bitmode, rda, RXPKT_PTRLO);
-		len = SRO(bitmode, rda, RXPKT_BYTEC) -
-			sizeof(struct ether_header) - FCSSIZE;
+		len = SRO(bitmode, rda, RXPKT_BYTEC) - FCSSIZE;
 		if (status & RCR_PRX) {
 			caddr_t pkt = sc->rbuf[orra & RBAMASK] +
 			    m68k_page_offset(rxpkt_ptr);
@@ -1057,56 +1055,50 @@ static __inline__ int
 sonic_read(struct sn_softc *sc, caddr_t pkt, int len)
 {
 	struct ifnet *ifp = &sc->sc_if;
+#ifdef SNDEBUG
 	struct ether_header *et;
+#endif
 	struct mbuf *m;
 
+#ifdef SNDEBUG
 	/*
 	 * Get pointer to ethernet header (in input buffer).
 	 */
 	et = (struct ether_header *)pkt;
 
-#ifdef SNDEBUG
-	{
-		printf("%s: rcvd %p len=%d type=0x%x from %s",
-		    sc->sc_dev.dv_xname, et, len, htons(et->ether_type),
-		    ether_sprintf(et->ether_shost));
-		printf(" (to %s)\n", ether_sprintf(et->ether_dhost));
-	}
+	printf("%s: rcvd %p len=%d type=0x%x from %s",
+	    sc->sc_dev.dv_xname, et, len, htons(et->ether_type),
+	    ether_sprintf(et->ether_shost));
+	printf(" (to %s)\n", ether_sprintf(et->ether_dhost));
 #endif /* SNDEBUG */
 
-	if (len < ETHERMIN || len > ETHERMTU) {
+	if (len < (ETHER_MIN_LEN - ETHER_CRC_LEN) ||
+	    len > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
 		printf("%s: invalid packet length %d bytes\n",
 		    sc->sc_dev.dv_xname, len);
 		return (0);
 	}
 
-#if NBPFILTER > 0
-	/*
-	 * Check if there's a bpf filter listening on this interface.
-	 * If so, hand off the raw packet to enet.
-	 */
-	if (ifp->if_bpf)
-		bpf_tap(ifp->if_bpf, pkt,
-		    len + sizeof(struct ether_header));
-#endif
-	m = sonic_get(sc, et, len);
+	m = sonic_get(sc, pkt, len);
 	if (m == NULL)
 		return (0);
-	ether_input(ifp, et, m);
+#if NBPFILTER > 0
+	/* Pass this up to any BPF listeners. */
+	if (ifp->if_bpf) 
+		bpf_mtap(ifp->if_bpf, m); 
+#endif
+	ether_input_mbuf(ifp, m);
 	return (1);
 }
-
-#define sonicdataaddr(eh, off, type)	((type)(((caddr_t)((eh) + 1) + (off))))
 
 /*
  * munge the received packet into an mbuf chain
  */
 static __inline__ struct mbuf *
-sonic_get(struct sn_softc *sc, struct ether_header *eh, int datalen)
+sonic_get(struct sn_softc *sc, caddr_t pkt, int datalen)
 {
 	struct	mbuf *m, *top, **mp;
 	int	len;
-	caddr_t	pkt = sonicdataaddr(eh, 0, caddr_t);
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
