@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.67 2006/03/08 13:20:25 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.68 2006/03/23 20:26:44 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -239,6 +239,23 @@ network 192.168.7.0/24 set localpref 220
 See also the
 .Sx ATTRIBUTE SET
 section.
+.Pp
+.It Xo
+.Ic nexthop
+.Ic qualify
+.Ic via
+.Pq Ic bgp Ns \&| Ns Ic default
+.Xc
+If set to
+.Ic bgp ,
+.Xr bgpd 8
+may use BGP routes to verify nexthops.
+If set to
+.Ic default ,
+bgpd may use the default route to verify nexthops.
+By default bgpd will only use static routes or routes added by other routing
+daemons like
+.Xr ospfd 8 .
 .Pp
 .It Xo
 .Ic rde
