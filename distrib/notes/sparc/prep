@@ -101,12 +101,9 @@ both OpenBSD and SunOS environments on the same system.
     filesystem with soft update flags enabled.
 
 The OpenBSD "Sun Compatible" disklabel has been extended to support 16
-partitions, which may be compatible with Solaris, but the old SunOS
-format(8) utility only sees the first 8 partitions and may "lose"
-information about the extended partitions.
-
-Use SunOS format(8) only with *extreme* caution on drives that contain
-OpenBSD partitions.
+partitions, which may be compatible with Solaris and SunOS, but they will
+only see the first 8 partitions and you may "lose" information about the
+extended partitions.
 
 
 OpenBSD and Sun BSD bootblocks are similar in concept, though implemented

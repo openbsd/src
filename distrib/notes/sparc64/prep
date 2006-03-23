@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.18 2005/08/09 16:48:11 deraadt Exp $
+dnl	$OpenBSD: prep,v 1.19 2006/03/23 06:10:20 deraadt Exp $
 If your UltraSPARC machine is somewhat old, it might need a firmware update
 before it can be used under OpenBSD. You are advised to try to install
 OpenBSD first; if it can't boot or fails mysteriously, you might need to
@@ -34,12 +34,10 @@ both OpenBSD and Solaris environments on the same system.
     enabled.
 
 The OpenBSD "Sun Compatible" disklabel has been extended to support 16
-partitions, which may be compatible with Solaris, but the Solaris
-format(1M) utility only sees the first 8 partitions and may "lose"
-information about the extended partitions.
+partitions, which may be compatible with Solaris, but Solaris only sees
+the first 8 partitions and may "lose" information about the extended
+partitions.
 
-Use Solaris format(1M) only with *extreme* caution on drives that contain
-OpenBSD partitions.
 
 
 OpenBSD and Sun bootblocks are similar in concept, though implemented

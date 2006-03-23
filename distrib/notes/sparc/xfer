@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.42 2005/04/27 03:07:16 jsg Exp $
+dnl	$OpenBSD: xfer,v 1.43 2006/03/23 06:10:19 deraadt Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
@@ -92,13 +92,6 @@ Creating a bootable hard disk using SunOS, Solaris or other Un*x-like system:
 	OS involved.  Second, after doing this, the disklabel will be one
 	that would be appropriate for a floppy, i.e. one partition of 2880
 	blocks, and you'll probably want to change that later on.
-
-	If you're starting with a virgin disk and trying to do this under
-	SunOS or Solaris, use format(8/1M) and newfs(8/1M) to set up the
-	partitions and mark the intended partition as an normal partition
-	type.  If you're using OpenBSD, perhaps on another architecture,
-	OpenBSD will create a "fictitious label" that will let you access
-	the whole disk.
 
 	To copy the floppy image to the hard disk, preserving SunOS,
 	Solaris, NetBSD or OpenBSD labels:

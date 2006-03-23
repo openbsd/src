@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.24 2005/03/18 13:30:53 miod Exp $
+dnl	$OpenBSD: xfer,v 1.25 2006/03/23 06:10:20 deraadt Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM (NOT supported if booting from floppy)
@@ -62,13 +62,6 @@ Creating a bootable hard disk using SunOS, Solaris or other Un*x-like system:
 	that the bootable image installed this way includes a "disk label"
 	which can wipe out any pre-existing disklabels or partitioning for
 	the drive.
-
-	If you're starting with a virgin disk and trying to do this under
-	SunOS, use format(8) and newfs(8) to set up the partitions and
-	mark the intended partition as an normal partition type.  If you're
-	using OpenBSD, perhaps on another architecture, OpenBSD will
-	create a "fictitious label" that will let you access the whole
-	disk.
 
 Creating a network bootable setup using SunOS or other Un*x-like system:
 
