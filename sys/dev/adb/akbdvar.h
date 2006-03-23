@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbdvar.h,v 1.1 2006/01/18 23:21:17 miod Exp $	*/
+/*	$OpenBSD: akbdvar.h,v 1.2 2006/03/23 21:54:26 miod Exp $	*/
 /*	$NetBSD: akbdvar.h,v 1.4 1999/02/17 14:56:56 tsubai Exp $	*/
 
 /*
@@ -46,7 +46,10 @@ struct akbd_softc {
 	int		handler_id;	/* type of keyboard */
 
 	u_int8_t	sc_leds;	/* current LED state */
+
+	int		sc_caps;	/* capslock key state */
 	struct device	*sc_wskbddev;
+
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 #define MAXKEYS 20
 #define REP_DELAY1 400

@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.4 2006/02/12 21:49:08 miod Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.5 2006/03/23 21:54:26 miod Exp $	*/
 /*	$NetBSD: akbd.c,v 1.17 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -128,6 +128,7 @@ akbdattach(struct device *parent, struct device *self, void *aux)
 	sc->handler_id = aa_args->handler_id;
 
 	sc->sc_leds = (u_int8_t)0x00;	/* initially off */
+	sc->sc_caps = 0;
 
 	adbinfo.siServiceRtPtr = (Ptr)akbd_adbcomplete;
 	adbinfo.siDataAreaAddr = (caddr_t)sc;
@@ -453,6 +454,30 @@ akbd_rawrepeat(void *v)
 #endif
 
 /*
+ * The ``caps lock'' key is special: since on earlier keyboards, the physical
+ * key stays down when pressed, we will get a notification of the key press,
+ * but not of the key release. Then, when it is pressed again, we will not get
+ * a notification of the key press, but will see the key release.
+ *
+ * This is not exactly true. We see the missing release and press events both
+ * as the release of the power (reset) key.
+ *
+ * To avoid confusing them with real power key presses, we maintain two
+ * states for the caps lock key: logically down (from wscons' point of view),
+ * and ``physically'' down (from the adb messages point of view), to ignore
+ * the power key. But since one may press the power key while the caps lock
+ * is held down, we also have to remember the state of the power key... this
+ * is quite messy.
+ */
+
+/*
+ * Values for caps lock state machine
+ */
+#define	CL_DOWN_ADB	0x01
+#define	CL_DOWN_LOGICAL	0x02
+#define	CL_DOWN_RESET	0x04
+
+/*
  * Given a keyboard ADB event, decode the keycodes and pass them to wskbd.
  */
 void
@@ -468,10 +493,24 @@ akbd_processevent(struct akbd_softc *sc, adb_event_t *event)
 		 * 0xffff on release, and we ignore it.
 		 */
 		if (event->bytes[0] == event->bytes[1] &&
-		    ADBK_KEYVAL(event->bytes[0]) == ADBK_RESET)
-			break;
-		akbd_capslockwrapper(sc, event->bytes[0]);
-		akbd_capslockwrapper(sc, event->bytes[1]);
+		    ADBK_KEYVAL(event->bytes[0]) == ADBK_RESET) {
+			if (event->bytes[0] == ADBK_KEYDOWN(ADBK_RESET))
+				SET(sc->sc_caps, CL_DOWN_RESET);
+			else {
+				if (ISSET(sc->sc_caps, CL_DOWN_RESET))
+					CLR(sc->sc_caps, CL_DOWN_RESET);
+				else if (ISSET(sc->sc_caps, CL_DOWN_ADB)) {
+					akbd_input(sc, ISSET(sc->sc_caps,
+					    CL_DOWN_LOGICAL) ?
+					      ADBK_KEYDOWN(ADBK_CAPSLOCK) :
+					      ADBK_KEYUP(ADBK_CAPSLOCK));
+					sc->sc_caps ^= CL_DOWN_LOGICAL;
+				}
+			}
+		} else {
+			akbd_capslockwrapper(sc, event->bytes[0]);
+			akbd_capslockwrapper(sc, event->bytes[1]);
+		}
 		break;
 	default:
 #ifdef DIAGNOSTIC
@@ -486,22 +525,11 @@ akbd_processevent(struct akbd_softc *sc, adb_event_t *event)
 void
 akbd_capslockwrapper(struct akbd_softc *sc, int key)
 {
-	/*
-	 * Caps lock is special: since on earlier keyboards, the physical
-	 * key stays down when pressed, we will get a notification of the
-	 * key press, but not of the key release. Then, when it is pressed
-	 * again, we will not get a notification of the key press, but will
-	 * see the key release.
-	 * For proper wskbd operation, we should report each capslock
-	 * notification as both events (press and release).
-	 */
-	if (ADBK_KEYVAL(key) == ADBK_CAPSLOCK) {
-		akbd_input(sc, ADBK_KEYDOWN(ADBK_CAPSLOCK));
-		akbd_input(sc, ADBK_KEYUP(ADBK_CAPSLOCK));
-	} else {
-		if (key != 0xff)
-			akbd_input(sc, key);
-	}
+	if (ADBK_KEYVAL(key) == ADBK_CAPSLOCK)
+		sc->sc_caps ^= CL_DOWN_ADB;
+
+	if (key != 0xff)
+		akbd_input(sc, key);
 }
 
 int adb_polledkey;
