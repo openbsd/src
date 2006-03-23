@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.120 2006/03/22 14:37:44 henning Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.121 2006/03/23 14:18:55 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1535,7 +1535,9 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 void
 carp_set_enaddr(struct carp_softc *sc)
 {
-	if (sc->sc_carpdev && sc->sc_carpdev->if_type == IFT_ISO88025) {
+	if (sc->sc_vhid == -1) {
+		bzero(&sc->sc_ac.ac_enaddr, sizeof (sc->sc_ac.ac_enaddr));
+	} else if (sc->sc_carpdev && sc->sc_carpdev->if_type == IFT_ISO88025) {
 		sc->sc_ac.ac_enaddr[0] = 3;
 		sc->sc_ac.ac_enaddr[1] = 0;
 		sc->sc_ac.ac_enaddr[2] = 0x40 >> (sc->sc_vhid - 1);
