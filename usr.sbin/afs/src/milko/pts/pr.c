@@ -141,7 +141,7 @@ PR_IDToName(struct rx_call *call, const idlist *ilist, namelist *nlist)
 	return 0;
     }
 
-    nlist->val = calloc(1, sizeof(prname) * nlist->len);
+    nlist->val = calloc(nlist->len, sizeof(prname));
     if (nlist->val == NULL)
 	return PRDBBAD;
 
