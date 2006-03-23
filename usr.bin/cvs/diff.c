@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.80 2006/02/26 18:35:08 niallo Exp $	*/
+/*	$OpenBSD: diff.c,v 1.81 2006/03/23 13:09:09 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -188,7 +188,7 @@ static void	 change(const char *, FILE *, const char *, FILE *, int,
 static void	 sort(struct line *, int);
 static int	 ignoreline(char *);
 static int	 asciifile(FILE *);
-static int	 fetch(long *, int, int, FILE *, int, int);
+static void	 fetch(long *, int, int, FILE *, int, int);
 static int	 newcand(int, int, int);
 static int	 search(int *, int, int);
 static int	 skipline(FILE *);
@@ -1362,14 +1362,14 @@ proceed:
 		if (a <= b && c <= d && diff_format == D_NORMAL)
 			diff_output("---\n");
 	}
-	i = fetch(ixnew, c, d, f2, diff_format == D_NORMAL ? '>' : '\0', 0);
+	fetch(ixnew, c, d, f2, diff_format == D_NORMAL ? '>' : '\0', 0);
 	if (inifdef) {
 		diff_output("#endif /* %s */\n", ifdefname);
 		inifdef = 0;
 	}
 }
 
-static int
+static void
 fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile)
 {
 	int i, j, c, lastc, col, nc;
@@ -1386,7 +1386,7 @@ fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile)
 			diff_output("%c", getc(lb));
 	}
 	if (a > b)
-		return (0);
+		return;
 	if (diff_format == D_IFDEF) {
 		if (inifdef) {
 			diff_output("#else /* %s%s */\n",
@@ -1420,7 +1420,7 @@ fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile)
 				else
 					diff_output("\n\\ No newline at end of "
 					    "file");
-				return (0);
+				return;
 			}
 			if ((c == '\t') && (tflag == 1)) {
 				do {
@@ -1432,7 +1432,6 @@ fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile)
 			}
 		}
 	}
-	return (0);
 }
 
 /*
