@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.158 2006/03/21 14:23:29 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.159 2006/03/23 14:20:09 mcbride Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2141,7 +2141,8 @@ status(int link, struct sockaddr_dl *sdl)
 	if (mtu)
 		printf(" mtu %lu", mtu);
 	putchar('\n');
-	if (sdl != NULL && sdl->sdl_type == IFT_ETHER && sdl->sdl_alen)
+	if (sdl != NULL && sdl->sdl_alen &&
+	    (sdl->sdl_type == IFT_ETHER || sdl->sdl_type == IFT_CARP))
 		(void)printf("\tlladdr %s\n", ether_ntoa(
 		    (struct ether_addr *)LLADDR(sdl)));
 
