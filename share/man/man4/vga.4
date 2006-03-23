@@ -1,4 +1,4 @@
-.\" $OpenBSD: vga.4,v 1.12 2006/03/16 21:33:17 deraadt Exp $
+.\" $OpenBSD: vga.4,v 1.13 2006/03/23 10:47:34 jmc Exp $
 .\" $NetBSD: vga.4,v 1.2.4.1 2000/08/09 07:48:40 drochner Exp $
 .\"
 .\" Copyright (c) 1999, 2000
@@ -119,9 +119,7 @@ This is only useful with the
 .Dq *bf
 screen types; a font containing the ASCII
 range of characters must be available too on this screen.
-.Pp
 .Sh AGP SUPPORT
-The
 .Ic option PCIAGP
 enables support for programming the AGP GART through
 .Xr ioctl 2 ,
@@ -131,8 +129,8 @@ The following
 .Xr ioctl 2
 operations can be performed on
 .Pa /dev/ttyC0 ,
-which are defined in
-.In sys/agpio.h :
+and are defined in
+.Aq Pa sys/agpio.h :
 .Bl -tag -width indent
 .It Dv AGPIOC_INFO
 Returns information about the AGP subsystem.
@@ -170,7 +168,7 @@ typedef struct _agp_setup {
 .Ed
 .Pp
 The mode bits are defined in
-.In sys/agpio.h .
+.Aq Pa sys/agpio.h .
 .It Dv AGPIOC_ALLOCATE
 Allocate physical memory suitable for mapping into the AGP aperture.
 This
@@ -188,7 +186,7 @@ typedef struct _agp_allocate {
 } agp_allocate;
 .Ed
 .Pp
-Returns a handle to the allocated memory.
+It returns a handle to the allocated memory.
 .It Dv AGPIOC_DEALLOCATE
 Free the previously allocated memory associated with the handle passed.
 .It Dv AGPIOC_BIND
@@ -224,6 +222,7 @@ typedef struct _agp_unbind {
 .Ed
 .El
 .Sh SEE ALSO
+.Xr ioctl 2 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
 .Xr pcdisplay 4 ,
@@ -231,8 +230,7 @@ typedef struct _agp_unbind {
 .Xr wscons 4 ,
 .Xr wsdisplay 4 ,
 .Xr wsconscfg 8 ,
-.Xr wsfontload 8 ,
-.Xr ioctl 2
+.Xr wsfontload 8
 .Sh BUGS
 Only a subset of the possible text modes is supported.
 .Pp
