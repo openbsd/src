@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.33 2006/03/20 20:27:45 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.34 2006/03/23 07:57:33 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -525,7 +525,7 @@ doformat(const char *argv[], int argc)
 			    	left_padded = 1;
 				format++;
 			    }
-			    width = strtoul(format, &format, 10);
+			    width = strtoul(format, (char **)&format, 10);
 			    if (*format != 's') {
 			    	m4errx(1, "Unsupported format specification: %s.", argv[2]);
 			    }
