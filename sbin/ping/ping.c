@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.74 2006/03/06 10:45:56 djm Exp $	*/
+/*	$OpenBSD: ping.c,v 1.75 2006/03/23 03:30:49 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: ping.c,v 1.74 2006/03/06 10:45:56 djm Exp $";
+static const char rcsid[] = "$OpenBSD: ping.c,v 1.75 2006/03/23 03:30:49 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -136,7 +136,7 @@ int moptions;
 int mx_dup_ck = MAX_DUP_CHK;
 char rcvd_tbl[MAX_DUP_CHK / 8];
 
-struct sockaddr whereto;	/* who to ping */
+struct sockaddr_in whereto;	/* who to ping */
 struct sockaddr_in whence;		/* Which interface we come from */
 unsigned int datalen = DEFDATALEN;
 int s;				/* socket file descriptor */
@@ -334,8 +334,8 @@ main(int argc, char *argv[])
 
 	target = *argv;
 
-	memset(&whereto, 0, sizeof(struct sockaddr));
-	to = (struct sockaddr_in *)&whereto;
+	memset(&whereto, 0, sizeof(whereto));
+	to = &whereto;
 	to->sin_len = sizeof(struct sockaddr_in);
 	to->sin_family = AF_INET;
 	if (inet_aton(target, &to->sin_addr) != 0)
@@ -633,8 +633,8 @@ pinger(void)
 		ip->ip_sum = in_cksum((u_short *)outpackhdr, cc);
 	}
 
-	i = sendto(s, (char *)packet, cc, 0, &whereto,
-	    sizeof(struct sockaddr));
+	i = sendto(s, (char *)packet, cc, 0, (struct sockaddr *)&whereto,
+	    sizeof(whereto));
 
 	if (i < 0 || i != cc)  {
 		if (i < 0)
