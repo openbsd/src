@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.17 2006/03/15 12:51:40 claudio Exp $
+.\" $OpenBSD: bgpd.8,v 1.18 2006/03/23 20:20:45 claudio Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -104,18 +104,20 @@ Only
 .Em show
 requests are allowed on this socket.
 .It Fl s Ar path
-Use an alternate location for the main control socket than
-.Xr bgpctl 8
-can use.
+Use an alternate location for the default control socket.
 .It Fl v
 Produce more verbose output.
 .El
 .Sh FILES
-.Bl -tag -width "/etc/bgpd.confXXX" -compact
+.Bl -tag -width "/var/run/bgpd.sockXXX" -compact
 .It Pa /etc/bgpd.conf
 default
 .Nm
 configuration file
+.It Pa /var/run/bgpd.sock
+default
+.Nm
+control socket
 .El
 .Sh SEE ALSO
 .Xr bgpd.conf 5 ,
