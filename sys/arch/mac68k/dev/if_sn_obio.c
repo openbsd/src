@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn_obio.c,v 1.21 2006/01/01 13:15:59 miod Exp $    */
+/*    $OpenBSD: if_sn_obio.c,v 1.22 2006/03/23 04:10:13 brad Exp $    */
 /*    $NetBSD: if_sn_obio.c,v 1.9 1997/04/22 20:56:15 scottr Exp $    */
 
 /*
@@ -64,10 +64,7 @@ struct cfattach sn_obio_ca = {
 };
 
 static int
-sn_obio_match(parent, cf, aux)
-	struct device *parent;
-	void *cf;
-	void *aux;
+sn_obio_match(struct device *parent, void *cf, void *aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	bus_space_handle_t bsh;
@@ -92,9 +89,7 @@ sn_obio_match(parent, cf, aux)
  * Install interface into kernel networking data structures
  */
 static void
-sn_obio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+sn_obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	struct sn_softc	*sc = (void *)self;
@@ -188,9 +183,7 @@ sn_obio_attach(parent, self, aux)
 }
 
 static int
-sn_obio_getaddr(sc, lladdr)
-	struct sn_softc	*sc;
-	u_int8_t *lladdr;
+sn_obio_getaddr(struct sn_softc *sc, u_int8_t *lladdr)
 {
 	bus_space_handle_t bsh;
 
@@ -209,7 +202,7 @@ sn_obio_getaddr(sc, lladdr)
 
 	bus_space_unmap(sc->sc_regt, bsh, NBPG);
 
-	return 0;
+	return (0);
 }
 
 /*
@@ -217,9 +210,7 @@ sn_obio_getaddr(sc, lladdr)
  * when we can properly get the MAC address on the PBs.
  */
 static int
-sn_obio_getaddr_kludge(sc, lladdr)
-	struct sn_softc	*sc;
-	u_int8_t *lladdr;
+sn_obio_getaddr_kludge(struct sn_softc *sc, u_int8_t *lladdr)
 {
 	int i, ors = 0;
 
@@ -254,7 +245,7 @@ sn_obio_getaddr_kludge(sc, lladdr)
 	wbflush();
 
 	if (ors == 0)
-		return -1;
+		return (-1);
 
-	return 0;
+	return (0);
 }

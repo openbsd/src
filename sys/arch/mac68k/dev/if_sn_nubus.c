@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn_nubus.c,v 1.17 2005/04/26 21:09:35 martin Exp $  */
+/*    $OpenBSD: if_sn_nubus.c,v 1.18 2006/03/23 04:10:13 brad Exp $  */
 /*    $NetBSD: if_sn_nubus.c,v 1.13 1997/05/11 19:11:34 scottr Exp $  */
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -65,10 +65,7 @@ struct cfattach sn_nubus_ca = {
 
 
 static int
-sn_nubus_match(parent, cf, aux)
-	struct device *parent;
-	void *cf;
-	void *aux;
+sn_nubus_match(struct device *parent, void *cf, void *aux)
 {
 	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
 	bus_space_handle_t bsh;
@@ -97,16 +94,14 @@ sn_nubus_match(parent, cf, aux)
 
 	bus_space_unmap(na->na_tag, bsh, NBMEMSIZE);
 
-	return rv;
+	return (rv);
 }
 
 /*
  * Install interface into kernel networking data structures
  */
 static void
-sn_nubus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+sn_nubus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sn_softc *sc = (void *)self;
 	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
@@ -266,10 +261,8 @@ sn_nubus_attach(parent, self, aux)
 }
 
 static int
-sn_nb_card_vendor(bst, bsh, na)
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	struct nubus_attach_args *na;
+sn_nb_card_vendor(bus_space_tag_t bst, bus_space_handle_t bsh,
+    struct nubus_attach_args *na)
 {
 	int vendor = SN_VENDOR_UNKNOWN;
 
@@ -300,5 +293,5 @@ sn_nb_card_vendor(bst, bsh, na)
 		break;
 	}
 
-	return vendor;
+	return (vendor);
 }
