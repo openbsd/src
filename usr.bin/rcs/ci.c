@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.123 2006/03/20 16:18:13 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.124 2006/03/23 08:50:41 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -518,11 +518,7 @@ checkin_update(struct checkin_params *pb)
 		return (-1);
 	}
 
-	if (cvs_buf_putc(bp, '\0') < 0) {
-		rcs_close(pb->file);
-		return (-1);
-	}
-
+	cvs_buf_putc(bp, '\0');
 	filec = (char *)cvs_buf_release(bp);
 
 	/* Get RCS patch */
@@ -636,11 +632,7 @@ checkin_init(struct checkin_params *pb)
 		return (-1);
 	}
 
-	if (cvs_buf_putc(bp, '\0') < 0) {
-		rcs_close(pb->file);
-		return (-1);
-	}
-
+	cvs_buf_putc(bp, '\0');
 	filec = (char *)cvs_buf_release(bp);
 
 	/* Get default values from working copy if -k specified */
@@ -665,11 +657,7 @@ checkin_init(struct checkin_params *pb)
 				rcs_close(pb->file);
 				return (-1);
 			}
-			if (cvs_buf_putc(dp, '\0') < 0) {
-				xfree(filec);
-				rcs_close(pb->file);
-				return (-1);
-			}
+			cvs_buf_putc(dp, '\0');
 			rcs_desc = (const char *)cvs_buf_release(dp);
 		}
 	}

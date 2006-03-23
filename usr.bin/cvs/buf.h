@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.11 2006/03/20 16:18:13 niallo Exp $	*/
+/*	$OpenBSD: buf.h,v 1.12 2006/03/23 08:50:41 xsa Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -56,7 +56,7 @@ ssize_t		 cvs_buf_set(BUF *, const void *, size_t, size_t);
 ssize_t		 cvs_buf_append(BUF *, const void *, size_t);
 ssize_t		 cvs_buf_fappend(BUF *, const char *, ...)
 		     __attribute__((format(printf, 2, 3)));
-int		 cvs_buf_putc(BUF *, int);
+void		 cvs_buf_putc(BUF *, int);
 size_t		 cvs_buf_len(BUF *);
 const void	*cvs_buf_peek(BUF *, size_t);
 int		 cvs_buf_write_fd(BUF *, int);
