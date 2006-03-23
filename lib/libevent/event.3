@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.25 2006/03/18 20:23:42 brad Exp $
+.\"	$OpenBSD: event.3,v 1.26 2006/03/23 10:51:27 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -486,14 +486,15 @@ A
 pointer is returned on success, NULL on error.
 .Pp
 Once initialized, the bufferevent structure can be used repeatedly with
-bufferevent_enable() and bufferevent_disable().  The flags parameter can
-be a combination of 
+bufferevent_enable() and bufferevent_disable().
+The flags parameter can be a combination of
 .Va EV_READ
 and
 .Va EV_WRITE .
-When read enabled the bufferevent will try to read from the file 
-descriptor and call the read callback. The write callback is executed
-whenever the output buffer is drained below the write low watermark, 
+When read enabled the bufferevent will try to read from the file
+descriptor and call the read callback.
+The write callback is executed
+whenever the output buffer is drained below the write low watermark,
 which is
 .Va 0
 by default.
