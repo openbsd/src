@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.49 2006/03/09 10:56:33 xsa Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.50 2006/03/23 02:21:33 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -168,10 +168,7 @@ struct rcs_branch {
 	TAILQ_ENTRY(rcs_branch)	rb_list;
 };
 
-struct rcs_dlist {
-	struct rcs_delta	*tqh_first;
-	struct rcs_delta	**tqh_last;
-};
+TAILQ_HEAD(rcs_dlist, rcs_delta);
 
 struct rcs_delta {
 	RCSNUM		*rd_num;
