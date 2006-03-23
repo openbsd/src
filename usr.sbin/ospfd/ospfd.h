@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.53 2006/03/22 16:01:20 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.54 2006/03/23 18:37:34 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -435,6 +435,7 @@ struct ctl_iface {
 	u_int16_t		 rxmt_interval;
 	enum iface_type		 type;
 	u_int8_t		 linkstate;
+	u_int8_t		 mediatype;
 	u_int8_t		 priority;
 	u_int8_t		 passive;
 	enum auth_type		 auth_type;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.10 2006/03/22 15:37:44 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.11 2006/03/23 18:37:34 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -84,9 +84,10 @@ static const struct token t_show[] = {
 };
 
 static const struct token t_show_iface[] = {
-	{NOTOKEN,	"",		NONE,		NULL},
-	{IFNAME,	"",		NONE,		NULL},
-	{ENDTOKEN,	"",		NONE,		NULL}
+	{NOTOKEN,	"",		NONE,			NULL},
+	{KEYWORD,	"detail",	SHOW_IFACE_DTAIL,	NULL},
+	{IFNAME,	"",		SHOW_IFACE_DTAIL,	NULL},
+	{ENDTOKEN,	"",		NONE,			NULL}
 };
 
 static const struct token t_show_db[] = {
@@ -219,6 +220,8 @@ match_token(const char *word, const struct token table[])
 					err(1, "interface name too long");
 				match++;
 				t = &table[i];
+				if (t->value)
+					res.action = t->value;
 			}
 			break;
 

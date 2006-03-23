@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.7 2006/03/22 15:37:44 claudio Exp $ */
+/*	$OpenBSD: parser.h,v 1.8 2006/03/23 18:37:34 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -32,6 +32,7 @@ enum actions {
 	SHOW,
 	SHOW_SUM,
 	SHOW_IFACE,
+	SHOW_IFACE_DTAIL,
 	SHOW_NBR,
 	SHOW_NBR_DTAIL,
 	SHOW_DB,

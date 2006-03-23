@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.29 2006/03/22 15:37:44 claudio Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.30 2006/03/23 18:37:34 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -40,6 +40,7 @@
 __dead void	 usage(void);
 int		 show_summary_msg(struct imsg *);
 int		 show_interface_msg(struct imsg *);
+int		 show_interface_detail_msg(struct imsg *);
 const char	*print_link(int);
 const char	*fmt_timeframe(time_t t);
 const char	*fmt_timeframe_core(time_t t);
@@ -123,6 +124,10 @@ main(int argc, char *argv[])
 		imsg_compose(ibuf, IMSG_CTL_SHOW_SUM, 0, 0, NULL, 0);
 		break;
 	case SHOW_IFACE:
+		printf("%-11s %-18s %-6s %-10s %-10s %-8s %3s %3s\n",
+		    "Interface", "Address", "State", "HelloTimer", "Linkstate",
+		    "Uptime", "nc", "ac");
+	case SHOW_IFACE_DTAIL:
 		if (*res->ifname) {
 			ifidx = if_nametoindex(res->ifname);
 			if (ifidx == 0)
@@ -228,6 +233,9 @@ main(int argc, char *argv[])
 			case SHOW_IFACE:
 				done = show_interface_msg(&imsg);
 				break;
+			case SHOW_IFACE_DTAIL:
+				done = show_interface_detail_msg(&imsg);
+				break;
 			case SHOW_NBR:
 				done = show_nbr_msg(&imsg);
 				break;
@@ -319,6 +327,58 @@ show_summary_msg(struct imsg *imsg)
 
 int
 show_interface_msg(struct imsg *imsg)
+{
+	struct ctl_iface	*iface;
+	char			*netid;
+	int			 ifms_type;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_INTERFACE:
+		iface = imsg->data;
+
+		switch (iface->mediatype) {
+		case IFT_ETHER:
+			ifms_type = IFM_ETHER;
+			break;
+		case IFT_FDDI:
+			ifms_type = IFM_FDDI;
+			break;
+		case IFT_ISO88025:
+			ifms_type = IFM_TOKEN;
+			break;
+		case IFT_CARP:
+			ifms_type = IFM_CARP;
+			break;
+		default:
+			ifms_type = 0;
+			break;
+		}
+
+		if (asprintf(&netid, "%s/%d", inet_ntoa(iface->addr),
+		    mask2prefixlen(iface->mask.s_addr)) == -1)
+			err(1, NULL);
+		printf("%-11s %-18s %-6s %-10s %-10s %s %3d %3d\n",
+		    iface->name, netid, if_state_name(iface->state),
+		    iface->hello_timer < 0 ? "stopped" :
+		    fmt_timeframe_core(iface->hello_timer),
+		    get_linkstate(ifms_type, iface->linkstate),
+		    iface->uptime == 0 ? "00:00:00" :
+		    fmt_timeframe_core(iface->uptime), iface->nbr_cnt,
+		    iface->adj_cnt);
+		free(netid);
+		break;
+	case IMSG_CTL_END:
+		printf("\n");
+		return (1);
+	default:
+		break;
+	}
+
+	return (0);
+}
+
+int
+show_interface_detail_msg(struct imsg *imsg)
 {
 	struct ctl_iface	*iface;
 
