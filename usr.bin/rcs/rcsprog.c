@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.83 2006/03/22 02:58:15 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.84 2006/03/23 09:03:28 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -649,7 +649,7 @@ rcs_main(int argc, char **argv)
 			rcs_kwexp_set(file, kflag);
 
 		if (lkmode != -1)
-			rcs_lock_setmode(file, lkmode);
+			(void)rcs_lock_setmode(file, lkmode);
 
 		rcs_close(file);
 
