@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.72 2006/03/23 07:57:05 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.73 2006/03/23 08:01:02 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -204,6 +204,7 @@ main(int argc, char *argv[])
 			break;
 		case 'g':
 			mimic_gnu = 1;
+			setup_builtin("format", FORMATTYPE);
 			break;
 		case 'd':
 			set_trace_flags(optarg);
