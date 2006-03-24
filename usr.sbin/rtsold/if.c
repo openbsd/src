@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.18 2004/01/05 20:32:50 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.19 2006/03/24 22:27:07 otto Exp $	*/
 /*	$KAME: if.c,v 1.18 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -276,8 +276,10 @@ if_nametosdl(char *name)
 		return(NULL);
 	}
 
-	if ((ret_sdl = malloc(sdl->sdl_len)) == NULL)
+	if ((ret_sdl = malloc(sdl->sdl_len)) == NULL) {
+		free(buf);
 		return(NULL);
+	}
 	memcpy((caddr_t)ret_sdl, (caddr_t)sdl, sdl->sdl_len);
 
 	free(buf);
