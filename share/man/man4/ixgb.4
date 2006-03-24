@@ -1,4 +1,4 @@
-.\" $OpenBSD: ixgb.4,v 1.4 2005/11/15 00:47:16 jmc Exp $
+.\" $OpenBSD: ixgb.4,v 1.5 2006/03/24 00:05:36 deraadt Exp $
 .\" Copyright (c) 2002 Intel Corporation
 .\" All rights reserved.
 .\" Redistribution and use in source and binary forms of the Software, with or without
@@ -107,7 +107,7 @@ driver was written by
 Under small packet UDP stress tests with 10GbE driver, the
 .Ox
 system will drop UDP packets due to the fullness of the socket buffers.
-You many want to change the driver's Flow Control variables to the minimum
+You may want to change the driver's Flow Control variables to the minimum
 value for controlling packet reception.
 .Pp
 Excessive CRC errors may be observed if the Intel PRO/10GbE CX4 Server
