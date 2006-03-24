@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.82 2006/01/11 21:57:53 martin Exp $
+#	$OpenBSD: GENERIC,v 1.83 2006/03/24 12:54:32 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -122,6 +122,8 @@ umct*	at uhub?		# MCT USB-RS232 serial adapter
 ucom*	at umct?
 uipaq*	at uhub?		# iPAQ serial adapter
 ucom*	at uipaq?
+umsm*	at uhub?		# Qualcomm MSM EVDO
+ucom*	at umsm?
 uaudio* at uhub?		# USB Audio
 audio*	at uaudio?
 umidi*	at uhub?		# USB MIDI
