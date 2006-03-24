@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfctl.8,v 1.13 2006/03/24 10:48:13 claudio Exp $
+.\"	$OpenBSD: ospfctl.8,v 1.14 2006/03/24 14:53:18 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
 .\"
@@ -41,7 +41,7 @@ Remove the learned routes from the Forward Information Base a.k.a. the kernel
 routing table.
 Decoupling the FIB from an OSPF router may create routing loops and could cause
 major routing issues in the complete OSPF cloud.
-Only routers with just one link to the OSPF cloud can savely decouple the FIB.
+Only routers with just one link to the OSPF cloud can safely decouple the FIB.
 .It Cm show database Op Ar filter
 Show the link state database.
 .Ar filter
