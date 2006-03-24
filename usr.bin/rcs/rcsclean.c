@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.27 2006/03/24 05:14:48 ray Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.28 2006/03/24 15:57:29 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -29,7 +29,8 @@
 #include "rcsprog.h"
 #include "diff.h"
 
-static int rcsclean_file(char *, RCSNUM *);
+static void	rcsclean_file(char *, RCSNUM *);
+
 static int nflag = 0;
 static int kflag = RCS_KWEXP_ERR;
 static int uflag = 0;
@@ -124,7 +125,7 @@ rcsclean_usage(void)
 	    "                [-rrev] [-u[rev]] [-xsuffixes] [-ztz] [file] ...\n");
 }
 
-static int
+static void
 rcsclean_file(char *fname, RCSNUM *rev)
 {
 	int match;
@@ -139,13 +140,13 @@ rcsclean_file(char *fname, RCSNUM *rev)
 	match = 1;
 
 	if (stat(fname, &st) == -1)
-		return (-1);
+		return;
 
 	if (rcs_statfile(fname, fpath, sizeof(fpath)) < 0)
-		return (-1);
+		return;
 
 	if ((file = rcs_open(fpath, RCS_RDWR)) == NULL)
-		return (-1);
+		return;
 
 	if (flags & PRESERVETIME)
 		rcs_mtime = rcs_get_mtime(file->rf_path);
@@ -161,13 +162,13 @@ rcsclean_file(char *fname, RCSNUM *rev)
 	if ((b1 = rcs_getrev(file, frev)) == NULL) {
 		cvs_log(LP_ERR, "failed to get needed revision");
 		rcs_close(file);
-		return (-1);
+		return;
 	}
 
 	if ((b2 = cvs_buf_load(fname, BUF_AUTOEXT)) == NULL) {
 		cvs_log(LP_ERRNO, "failed to load '%s'", fname);
 		rcs_close(file);
-		return (-1);
+		return;
 	}
 
 	cvs_buf_putc(b1, '\0');
@@ -209,6 +210,4 @@ rcsclean_file(char *fname, RCSNUM *rev)
 
 	if (flags & PRESERVETIME)
 		rcs_set_mtime(fpath, rcs_mtime);
-
-	return (0);
 }
