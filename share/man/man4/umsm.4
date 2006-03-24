@@ -1,0 +1,95 @@
+.\"	$OpenBSD: umsm.4,v 1.1 2006/03/24 10:31:21 jsg Exp $
+.\"
+.\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd March 24, 2006
+.Dt UMSM 4
+.Os
+.Sh NAME
+.Nm umsm
+.Nd Qualcomm MSM EVDO modem driver
+.Sh SYNOPSIS
+.Cd "umsm* at uhub?"
+.Cd "ucom* at uplcom?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports Qualcomm MSM based EVDO adapters.  Typically
+these are actually CardBus cards that incorporate a USB controller
+with the actual device attached to it.
+.Pp
+The following devices known to work with the
+.Nm
+driver:
+.Bd -literal -offset indent
+Kyocera KPC650
+.Ed
+.Pp
+Devices suspected of being compatible are:
+.Bd -literal -offset indent
+Audiovox PC5740
+AirPrime PC5220
+Novatel Merlin V620
+Sierra Wireless AirCard 580
+.Ed
+.Sh EXAMPLES
+An example 
+.Pa /etc/ppp/ppp.conf
+configuration for Verizon Wireless might look something like the below,
+see
+.Xr ppp 8
+for more information.
+.Bd -literal -offset indent
+default:
+   set device /dev/cuaU0
+   set speed 230400
+   set dial "ABORT BUSY ABORT NO\\\\sCARRIER TIMEOUT 5 \\
+             \\"\\" AT OK-AT-OK ATE1Q0s7=60 OK \\\\dATDT\\\\T TIMEOUT 40 CONNECT"
+   set phone "#777"
+   set login
+   set authname 4517654321@vzw3g.com
+   set authkey vzw
+   set timeout 120
+   set ifaddr 10.0.0.1/0 10.0.0.2/0 255.255.255.0 0.0.0.0
+   add default HISADDR
+   enable dns
+.Ed
+.Pp
+In this example the phone number is (451) 765-4321, replace this with
+the number issued for the card or your phone's number if a handset is being
+used.
+.Sh SEE ALSO
+.Xr ucom 4 ,
+.Xr uhub 4 ,
+.Xr usb 4 ,
+.Xr ppp 8
+.Sh HISTORY
+The
+.Nm
+device driver first appeared in
+.Ox 4.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Jonathan Gray
+.Aq jsg@openbsd.org
+.Sh CAVEATS
+For Verizon Wireless and possibly other services cards require a
+one time activation before they will work,
+.Nm
+does not currently support this.
+.Pp

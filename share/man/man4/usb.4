@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.53 2005/12/20 21:47:57 jmc Exp $
+.\"	$OpenBSD: usb.4,v 1.54 2006/03/24 10:31:22 jsg Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -171,6 +171,8 @@ MCT USB-RS232 serial adapters.
 Modems.
 .It Xr uplcom 4
 Prolific PL-2303 serial adapters.
+.It Xr umsm 4
+Qualcomm MSM EVDO modems
 .It Xr uvscom 4
 SUNTAC Slipper U VS-10U serial adapters.
 .El
@@ -555,6 +557,7 @@ Human Interface Devices
 .Xr umidi 4 ,
 .Xr umodem 4 ,
 .Xr ums 4 ,
+.Xr umsm 4 ,
 .Xr upl 4 ,
 .Xr uplcom 4 ,
 .Xr ural 4 ,
