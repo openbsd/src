@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.350 2006/03/20 12:08:59 dlg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.351 2006/03/24 12:17:03 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2940,9 +2940,9 @@ init386(paddr_t first_avail)
 				e = 0xfffff000;
 			}
 
-			/* skip first four pages */
-			if (a < 5 * NBPG)
-				a = 5 * NBPG;
+			/* skip first eight pages */
+			if (a < 8 * NBPG)
+				a = 8 * NBPG;
 
 			/* skip shorter than page regions */
 			if (a >= e || (e - a) < NBPG) {
