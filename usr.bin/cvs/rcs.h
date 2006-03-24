@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.50 2006/03/23 02:21:33 ray Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.51 2006/03/24 03:22:03 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -86,7 +86,7 @@
 
 #define RCS_KWEXP_INVAL(k) \
 	((k & RCS_KWEXP_ERR) || \
-	((k & RCS_KWEXP_OLD) && (RCS_KWEXP_OLD & ~RCS_KWEXP_OLD)))
+	((k & RCS_KWEXP_OLD) && (k & ~RCS_KWEXP_OLD)))
 
 
 struct rcs_kw {
