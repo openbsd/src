@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfctl.8,v 1.12 2005/10/25 20:38:14 stevesk Exp $
+.\"	$OpenBSD: ospfctl.8,v 1.13 2006/03/24 10:48:13 claudio Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
 .\"
@@ -33,6 +33,15 @@ daemon.
 .Pp
 The following commands are available:
 .Bl -tag -width Ds
+.It Cm fib couple
+Insert the learned routes into the Forward Information Base a.k.a. the kernel
+routing table.
+.It Cm fib decouple
+Remove the learned routes from the Forward Information Base a.k.a. the kernel
+routing table.
+Decoupling the FIB from an OSPF router may create routing loops and could cause
+major routing issues in the complete OSPF cloud.
+Only routers with just one link to the OSPF cloud can savely decouple the FIB.
 .It Cm show database Op Ar filter
 Show the link state database.
 .Ar filter
