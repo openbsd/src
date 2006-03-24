@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1040 2006/03/19 21:01:28 brad Exp $
+$OpenBSD: pcidevs,v 1.1041 2006/03/24 18:58:46 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -230,6 +230,7 @@ vendor	TAMARACK	0x143d	Tamarack
 vendor	ASKEY		0x144f	Askey
 vendor	AVERMEDIA	0x1461	Avermedia
 vendor	AIRONET		0x14b9	Aironet
+vendor	GLOBESPAN	0x14bc	Globespan
 vendor	MYRICOM		0x14c1	Myricom
 vendor	OXFORD		0x14d2	VScom
 vendor	AVLAB		0x14db	Avlab
