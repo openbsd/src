@@ -1,4 +1,4 @@
-/*	$OpenBSD: reverse.c,v 1.16 2006/03/22 19:43:29 kjell Exp $	*/
+/*	$OpenBSD: reverse.c,v 1.17 2006/03/24 17:10:02 kjell Exp $	*/
 /*	$NetBSD: reverse.c,v 1.6 1994/11/23 07:42:10 jtc Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: reverse.c,v 1.16 2006/03/22 19:43:29 kjell Exp $";
+static char rcsid[] = "$OpenBSD: reverse.c,v 1.17 2006/03/24 17:10:02 kjell Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -88,11 +88,7 @@ static int r_reg(FILE *, enum STYLE, off_t, struct stat *);
  *	NOREG	cyclically read input into a linked list of buffers
  */
 void
-reverse(fp, style, off, sbp)
-	FILE *fp;
-	enum STYLE style;
-	off_t off;
-	struct stat *sbp;
+reverse(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 {
 	if (style != REVERSE && off == 0)
 		return;
@@ -181,8 +177,7 @@ typedef struct bf {
  * user warned).
  */
 static void
-r_buf(fp)
-	FILE *fp;
+r_buf(FILE *fp)
 {
 	BF *mark, *tr, *tl = NULL;
 	int ch;

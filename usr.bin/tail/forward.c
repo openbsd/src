@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.20 2004/03/12 19:40:05 otto Exp $	*/
+/*	$OpenBSD: forward.c,v 1.21 2006/03/24 17:10:02 kjell Exp $	*/
 /*	$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: forward.c,v 1.20 2004/03/12 19:40:05 otto Exp $";
+static char rcsid[] = "$OpenBSD: forward.c,v 1.21 2006/03/24 17:10:02 kjell Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,11 +81,7 @@ static int rlines(FILE *, off_t, struct stat *);
  *	NOREG	cyclically read lines into a wrap-around array of buffers
  */
 void
-forward(fp, style, off, sbp)
-	FILE *fp;
-	enum STYLE style;
-	off_t off;
-	struct stat *sbp;
+forward(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 {
 	int ch;
 	struct stat nsb;
