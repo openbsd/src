@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.187 2006/03/12 00:33:45 deraadt Exp $
+$OpenBSD: usbdevs,v 1.188 2006/03/24 08:37:23 dlg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -490,6 +490,9 @@ product ACCTON USB320_EC	0x1046	USB320-EC Ethernet
 product ACCTON 2664W		0x3501	2664W
 product ACCTON 111		0x3503	T-Sinus 111 WLAN
 product ACCTON SS1001		0x5046	SpeedStream Ethernet
+
+/* Acer Labs products */
+product ACERLABS M5632		0x5632	USB 2.0 Data Link
 
 /* Acer Products */
 product ACERW WARPLINK		0x0204 Warplink
