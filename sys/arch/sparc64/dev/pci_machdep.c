@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.22 2006/03/19 02:43:38 brad Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.23 2006/03/24 03:08:00 brad Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -56,7 +56,6 @@ int sparc_pci_debug = 0x0;
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
-
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 
@@ -66,11 +65,14 @@ int sparc_pci_debug = 0x0;
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/psychoreg.h>
 #include <sparc64/dev/psychovar.h>
+#include <sparc64/sparc64/cache.h>
 
 /* this is a base to be copied */
 struct sparc_pci_chipset _sparc_pci_chipset = {
 	NULL,
 };
+
+static int pci_bus_frequency(int node);
 
 static pcitag_t
 ofpci_make_tag(pci_chipset_tag_t pc, int node, int b, int d, int f)
@@ -242,6 +244,27 @@ pci_decompose_tag(pc, tag, bp, dp, fp)
 		*fp = PCITAG_FUN(tag);
 }
 
+static int 
+pci_bus_frequency(int node)
+{
+	int len, bus_frequency;
+
+	len = OF_getproplen(node, "clock-frequency");
+	if (len < sizeof(bus_frequency)) {
+		DPRINTF(SPDB_PROBE,
+		    ("pci_bus_frequency: clock-frequency len %d too small\n",
+		     len));
+		return 33;
+	}
+	if (OF_getprop(node, "clock-frequency", &bus_frequency,
+		       sizeof(bus_frequency)) != len) {
+		DPRINTF(SPDB_PROBE,
+		    ("pci_bus_frequency: could not read clock-frequency\n"));
+		return 33;
+	}
+	return bus_frequency / 1000000;
+}
+
 int
 sparc64_pci_enumerate_bus(struct pci_softc *sc,
     int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
@@ -249,14 +272,41 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc,
 	struct ofw_pci_register reg;
 	pci_chipset_tag_t pc = sc->sc_pc;
 	pcitag_t tag;
-	pcireg_t class;
+	pcireg_t class, csr, bhlc, ic;
 	int node, b, d, f, ret;
+	int bus_frequency, lt, cl, cacheline;
 	char name[30];
 
 	if (sc->sc_bridgetag)
 		node = PCITAG_NODE(*sc->sc_bridgetag);
 	else
 		node = pc->rootnode;
+
+	bus_frequency = pci_bus_frequency(node);
+
+	/*
+	 * Make sure the cache line size is at least as big as the
+	 * ecache line and the streaming cache (64 byte).
+	 */
+	cacheline = max(cacheinfo.ec_linesize, 64);
+	KASSERT((cacheline/64)*64 == cacheline &&
+	    (cacheline/cacheinfo.ec_linesize)*cacheinfo.ec_linesize == cacheline &&
+	    (cacheline/4)*4 == cacheline);
+
+	/* Turn on parity for the bus. */
+	tag = ofpci_make_tag(pc, node, sc->sc_bus, 0, 0);
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	csr |= PCI_COMMAND_PARITY_ENABLE;
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
+	/*
+	 * Initialize the latency timer register.
+	 * The value 0x40 is from Solaris.
+	 */
+	bhlc = pci_conf_read(pc, tag, PCI_BHLC_REG);
+	bhlc &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+	bhlc |= 0x40 << PCI_LATTIMER_SHIFT;
+	pci_conf_write(pc, tag, PCI_BHLC_REG, bhlc);
 
 	for (node = OF_child(node); node != 0 && node != -1;
 	     node = OF_peer(node)) {
@@ -280,6 +330,40 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc,
 		}
 
 		tag = ofpci_make_tag(pc, node, b, d, f);
+
+		/*
+		 * Turn on parity and fast-back-to-back for the device.
+		 */
+		csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+		if (csr & PCI_STATUS_BACKTOBACK_SUPPORT)
+			csr |= PCI_COMMAND_BACKTOBACK_ENABLE;
+		csr |= PCI_COMMAND_PARITY_ENABLE;
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
+		/*
+		 * Initialize the latency timer register for busmaster
+		 * devices to work properly.
+		 *   latency-timer = min-grant * bus-freq / 4  (from FreeBSD)
+		 * Also initialize the cache line size register.
+		 * Solaris anytime sets this register to the value 0x10.
+		 */
+		bhlc = pci_conf_read(pc, tag, PCI_BHLC_REG);
+		ic = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+
+		lt = min(PCI_MIN_GNT(ic) * bus_frequency / 4, 255);
+		if (lt == 0 || lt < PCI_LATTIMER(bhlc))
+			lt = PCI_LATTIMER(bhlc);
+
+		cl = PCI_CACHELINE(bhlc);
+		if (cl == 0)
+			cl = cacheline;
+
+		bhlc &= ~((PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT) |
+			  (PCI_CACHELINE_MASK << PCI_CACHELINE_SHIFT));
+		bhlc |= (lt << PCI_LATTIMER_SHIFT) |
+			(cl << PCI_CACHELINE_SHIFT);
+		pci_conf_write(pc, tag, PCI_BHLC_REG, bhlc);
+
 		ret = pci_probe_device(sc, tag, match, pap);
 		if (match != NULL && ret != 0)
 			return (ret);
