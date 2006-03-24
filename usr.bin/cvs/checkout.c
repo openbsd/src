@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.50 2006/01/31 13:55:20 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.51 2006/03/24 13:34:27 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -92,7 +92,6 @@ static int
 cvs_checkout_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
-	RCSNUM *rcs;
 
 	date = tag = koptstr = tgtdir = rcsid = NULL;
 
@@ -164,11 +163,11 @@ cvs_checkout_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 
 	/* `export' command exceptions */
 	if (cvs_cmdop == CVS_OP_EXPORT) {
-		if (!tag && !date)
+		if ((tag == NULL) && (date == NULL))
 			fatal("must specify a tag or date");
 
 		/* we don't want numerical revisions here */
-		if (tag && (rcs = rcsnum_parse(tag)) != NULL)
+		if ((tag != NULL) && (rcsnum_parse(tag) != NULL))
 			fatal("tag `%s' must be a symbolic tag", tag);
 	}
 

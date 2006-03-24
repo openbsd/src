@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.81 2006/03/23 13:09:09 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.82 2006/03/24 13:34:27 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -337,7 +337,6 @@ struct cvs_cmd cvs_cmd_rdiff = {
 
 #if !defined(RCSPROG)
 static struct diff_arg *dap = NULL;
-static int recurse;
 
 static int
 cvs_diff_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
@@ -367,7 +366,6 @@ cvs_diff_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 			break;
 		case 'l':
 			strlcat(diffargs, " -l", sizeof(diffargs));
-			recurse = 0;
 			cvs_cmd_diff.file_flags &= ~CF_RECURSE;
 			break;
 		case 'i':
@@ -472,8 +470,7 @@ cvs_diff_pre_exec(struct cvsroot *root)
 static int
 cvs_diff_remote(struct cvs_file *cfp, void *arg)
 {
-	char *dir, *repo;
-	char fpath[MAXPATHLEN], dfpath[MAXPATHLEN];
+	char fpath[MAXPATHLEN];
 	struct cvsroot *root;
 
 	if (cfp->cf_type == DT_DIR) {
@@ -503,15 +500,10 @@ cvs_diff_remote(struct cvs_file *cfp, void *arg)
 
 	diff_file = cvs_file_getpath(cfp, fpath, sizeof(fpath));
 
-	if (cfp->cf_parent != NULL) {
-		dir = cvs_file_getpath(cfp->cf_parent, dfpath, sizeof(dfpath));
+	if (cfp->cf_parent != NULL)
 		root = cfp->cf_parent->cf_root;
-		repo = cfp->cf_parent->cf_repo;
-	} else {
-		dir = ".";
+	else
 		root = NULL;
-		repo = NULL;
-	}
 
 	if (cfp->cf_cvstat == CVS_FST_UNKNOWN) {
 		cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cfp->cf_name);
@@ -535,21 +527,18 @@ cvs_diff_remote(struct cvs_file *cfp, void *arg)
 static int
 cvs_diff_local(CVSFILE *cf, void *arg)
 {
-	char *repo, buf[64];
+	char buf[64];
 	char fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	char path_tmp1[MAXPATHLEN], path_tmp2[MAXPATHLEN];
 	BUF *b1, *b2;
 	RCSNUM *r1, *r2;
 	RCSFILE *rf;
-	struct cvsroot *root;
 	struct timeval tv[2], tv2[2];
 
 	memset(&tv, 0, sizeof(tv));
 	memset(&tv2, 0, sizeof(tv2));
 
 	rf = NULL;
-	root = CVS_DIR_ROOT(cf);
-	repo = CVS_DIR_REPO(cf);
 	diff_file = cvs_file_getpath(cf, fpath, sizeof(fpath));
 
 	if (cf->cf_type == DT_DIR) {
@@ -1372,7 +1361,8 @@ proceed:
 static void
 fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile)
 {
-	int i, j, c, lastc, col, nc;
+	long j, nc;
+	int i, c, col;
 
 	/*
 	 * When doing #ifdef's, copy down to current line
@@ -1412,7 +1402,7 @@ fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile)
 				diff_output(" ");
 		}
 		col = 0;
-		for (j = 0, lastc = '\0'; j < nc; j++, lastc = c) {
+		for (j = 0; j < nc; j++) {
 			if ((c = getc(lb)) == EOF) {
 				if (diff_format == D_RCSDIFF)
 					cvs_log(LP_WARN,
@@ -1500,7 +1490,7 @@ static int
 asciifile(FILE *f)
 {
 	char buf[BUFSIZ];
-	int i, cnt;
+	size_t i, cnt;
 
 	if ((aflag == 1) || (f == NULL))
 		return (1);

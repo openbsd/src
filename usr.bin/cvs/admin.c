@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.30 2006/03/16 09:06:19 xsa Exp $	*/
+/*	$OpenBSD: admin.c,v 1.31 2006/03/24 13:34:27 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -322,6 +322,7 @@ cvs_admin_remote(CVSFILE *cf, void *arg)
 	case CVS_FST_MODIFIED:
 		cvs_sendreq(root, CVS_REQ_MODIFIED, cf->cf_name);
 		cvs_sendfile(root, fpath);
+		break;
 	default:
 		break;
 	}
