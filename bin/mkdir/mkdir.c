@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.17 2004/07/01 18:25:47 otto Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.18 2006/03/24 04:17:26 ray Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-static char rcsid[] = "$OpenBSD: mkdir.c,v 1.17 2004/07/01 18:25:47 otto Exp $";
+static char rcsid[] = "$OpenBSD: mkdir.c,v 1.18 2006/03/24 04:17:26 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -143,11 +143,11 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 {
 	struct stat sb;
 	char *slash;
-	int done = 0;
+	int done;
 
 	slash = path;
 
-	while (!done) {
+	for (;;) {
 		slash += strspn(slash, "/");
 		slash += strcspn(slash, "/");
 
@@ -165,6 +165,9 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 			warnx("%s: %s", path, strerror(ENOTDIR));
 			return (-1);
 		}
+
+		if (done)
+			break;
 
 		*slash = '/';
 	}
