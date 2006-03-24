@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.145 2006/03/23 09:03:28 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.146 2006/03/24 16:18:22 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -238,9 +238,9 @@ static int	rcs_write(RCSFILE *);
 static int	rcs_parse_init(RCSFILE *);
 static int	rcs_parse_admin(RCSFILE *);
 static int	rcs_parse_delta(RCSFILE *);
-static int	rcs_parse_deltas(RCSFILE *, RCSNUM *);
+static void	rcs_parse_deltas(RCSFILE *, RCSNUM *);
 static int	rcs_parse_deltatext(RCSFILE *);
-static int	rcs_parse_deltatexts(RCSFILE *, RCSNUM *);
+static void	rcs_parse_deltatexts(RCSFILE *, RCSNUM *);
 static int	rcs_parse_desc(RCSFILE *, RCSNUM *);
 
 static int	rcs_parse_access(RCSFILE *);
@@ -1522,17 +1522,16 @@ rcs_kflag_usage(void)
  *
  * Parse deltas. If <rev> is not NULL, parse only as far as that
  * revision. If <rev> is NULL, parse all deltas.
- *
- * Returns 0 on success, -1 on failure.
  */
-static int
+static void
 rcs_parse_deltas(RCSFILE *rfp, RCSNUM *rev)
 {
 	int ret;
 	struct rcs_delta *enddelta;
-	if ((rfp->rf_flags & PARSED_DELTAS)
-	    || (rfp->rf_flags & RCS_CREATE))
-		return (0);
+
+	if ((rfp->rf_flags & PARSED_DELTAS) || (rfp->rf_flags & RCS_CREATE))
+		return;
+
 	for (;;) {
 		ret = rcs_parse_delta(rfp);
 		if (rev != NULL) {
@@ -1547,24 +1546,23 @@ rcs_parse_deltas(RCSFILE *rfp, RCSNUM *rev)
 		else if (ret == -1)
 			fatal("error parsing deltas");
 	}
-	return (0);
 }
 
 /* rcs_parse_deltatexts()
  *
  * Parse deltatexts. If <rev> is not NULL, parse only as far as that
  * revision. If <rev> is NULL, parse everything.
- *
- * Returns 0 on success, -1 on failure.
  */
-static int
+static void
 rcs_parse_deltatexts(RCSFILE *rfp, RCSNUM *rev)
 {
 	int ret;
 	struct rcs_delta *rdp;
+
 	if ((rfp->rf_flags & PARSED_DELTATEXTS)
 	    || (rfp->rf_flags & RCS_CREATE))
-		return (0);
+		return;
+
 	if (!(rfp->rf_flags & PARSED_DESC))
 		rcs_parse_desc(rfp, rev);
 	for (;;) {
@@ -1580,12 +1578,9 @@ rcs_parse_deltatexts(RCSFILE *rfp, RCSNUM *rev)
 			rfp->rf_flags |= PARSED_DELTATEXTS;
 			break;
 		}
-		else if (ret == -1) {
+		else if (ret == -1)
 			fatal("problem parsing deltatexts");
-		}
 	}
-
-	return (0);
 }
 
 /* rcs_parse_desc()
