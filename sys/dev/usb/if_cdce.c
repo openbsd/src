@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.14 2006/02/20 20:12:13 damien Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.15 2006/03/24 13:50:14 dlg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -90,6 +90,7 @@ Static void	 cdce_stop(struct cdce_softc *);
 static uint32_t	 cdce_crc32(const void *, size_t);
 
 Static const struct cdce_type cdce_devs[] = {
+    {{ USB_VENDOR_ACERLABS, USB_PRODUCT_ACERLABS_M5632 }, CDCE_NO_UNION },
     {{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2501 }, CDCE_NO_UNION },
     {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_SL5500 }, CDCE_ZAURUS },
     {{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_A300 }, CDCE_ZAURUS | CDCE_NO_UNION },
