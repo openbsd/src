@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.32 2006/03/23 13:28:23 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.33 2006/03/24 05:14:48 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -60,7 +60,7 @@ rlog_main(int argc, char **argv)
 	char fpath[MAXPATHLEN];
 
 	hflag = Rflag = 0;
-	while ((ch = rcs_getopt(argc, argv, "hLl::NqRs:TtVw::x:z:")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "hLl::NqRs:TtVw::x::z:")) != -1) {
 		switch (ch) {
 		case 'h':
 			hflag = 1;
@@ -101,7 +101,8 @@ rlog_main(int argc, char **argv)
 			wlist = rcs_optarg;
 			break;
 		case 'x':
-			rcs_suffixes = rcs_optarg;
+			/* Use blank extension if none given. */
+			rcs_suffixes = rcs_optarg ? rcs_optarg : "";
 			break;
 		case 'z':
 			timezone_flag = rcs_optarg;

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2006/03/23 03:18:29 ray Exp $
+#	$OpenBSD: Makefile,v 1.10 2006/03/24 05:14:48 ray Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -223,11 +223,10 @@ test-ci-xflag:
 	@fgrep -q revision RCS/file,v
 	@test ! -e RCS/filexyz
 
-	@# XXX - Coming soon
-	@#touch file
-	@#echo more >> file
-	@#${CI} -q -x file
-	@#fgrep -q more RCS/file
+	@touch file
+	@echo more >> file
+	@echo . | ${CI} -q -x file
+	@fgrep -q more RCS/file
 
 test-comma:
 	@rm -rf RCS

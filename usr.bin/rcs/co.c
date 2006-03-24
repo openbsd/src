@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.65 2006/03/17 13:09:26 niallo Exp $	*/
+/*	$OpenBSD: co.c,v 1.66 2006/03/24 05:14:48 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -28,7 +28,7 @@
 
 #include "rcsprog.h"
 
-#define CO_OPTSTRING	"d:f::I::k:l::M::p::q::r::s:Tu::Vw::x:z:"
+#define CO_OPTSTRING	"d:f::I::k:l::M::p::q::r::s:Tu::Vw::x::z:"
 
 static void	checkout_err_nobranch(RCSFILE *, const char *, const char *,
     const char *, int);
@@ -127,7 +127,8 @@ checkout_main(int argc, char **argv)
 			flags |= CO_AUTHOR;
 			break;
 		case 'x':
-			rcs_suffixes = rcs_optarg;
+			/* Use blank extension if none given. */
+			rcs_suffixes = rcs_optarg ? rcs_optarg : "";
 			break;
 		case 'z':
 			timezone_flag = rcs_optarg;

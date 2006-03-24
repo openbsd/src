@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.40 2006/03/20 16:18:13 niallo Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.41 2006/03/24 05:14:48 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -48,7 +48,7 @@ rcsdiff_main(int argc, char **argv)
 
 	strlcpy(diffargs, "diff", sizeof(diffargs));
 
-	while ((ch = rcs_getopt(argc, argv, "ck:nqr:TuVx:z:")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "ck:nqr:TuVx::z:")) != -1) {
 		switch (ch) {
 		case 'c':
 			strlcat(diffargs, " -c", sizeof(diffargs));
@@ -93,7 +93,8 @@ rcsdiff_main(int argc, char **argv)
 			exit(0);
 			/* NOTREACHED */
 		case 'x':
-			rcs_suffixes = rcs_optarg;
+			/* Use blank extension if none given. */
+			rcs_suffixes = rcs_optarg ? rcs_optarg : "";
 			break;
 		case 'z':
 			timezone_flag = rcs_optarg;
