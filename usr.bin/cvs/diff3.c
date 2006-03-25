@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.19 2006/03/16 08:32:34 xsa Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.20 2006/03/25 21:29:59 ray Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.19 2006/03/16 08:32:34 xsa Exp $";
+    "$OpenBSD: diff3.c,v 1.20 2006/03/25 21:29:59 ray Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -140,10 +140,10 @@ static int edit(struct diff *, int, int);
 static char *getchange(FILE *);
 static char *getline(FILE *, size_t *);
 static int number(char **);
-static int readin(char *, struct diff **);
+static size_t readin(char *, struct diff **);
 static int skip(int, int, char *);
 static int edscript(int);
-static int merge(int, int);
+static int merge(size_t, size_t);
 static void change(int, struct range *, int);
 static void keep(int, struct range *);
 static void prange(struct range *);
@@ -271,7 +271,8 @@ out:
 static int
 diff3_internal(int argc, char **argv, const char *fmark, const char *rmark)
 {
-	int i, m, n;
+	size_t m, n;
+	int i;
 
 	/* XXX */
 	eflag = 3;
@@ -402,7 +403,7 @@ ed_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
  * since the vector is processed in one sequential pass.
  * The vector could be optimized out of existence)
  */
-static int
+static size_t
 readin(char *name, struct diff **dd)
 {
 	int a, b, c, d;
@@ -499,7 +500,7 @@ getline(FILE *b, size_t *n)
 }
 
 static int
-merge(int m1, int m2)
+merge(size_t m1, size_t m2)
 {
 	struct diff *d1, *d2, *d3;
 	int dpl, j, t1, t2;
@@ -510,10 +511,10 @@ merge(int m1, int m2)
 	while ((t1 = d1 < d13 + m1) | (t2 = d2 < d23 + m2)) {
 		if (debug) {
 			printf("%d,%d=%d,%d %d,%d=%d,%d\n",
-			d1->old.from,d1->old.to,
-			d1->new.from,d1->new.to,
-			d2->old.from,d2->old.to,
-			d2->new.from,d2->new.to);
+			d1->old.from, d1->old.to,
+			d1->new.from, d1->new.to,
+			d2->old.from, d2->old.to,
+			d2->new.from, d2->new.to);
 		}
 
 		/* first file is different from others */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.12 2006/03/23 08:50:41 xsa Exp $	*/
+/*	$OpenBSD: buf.h,v 1.13 2006/03/25 21:29:59 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -49,7 +49,7 @@ BUF		*cvs_buf_alloc(size_t, u_int);
 BUF		*cvs_buf_load(const char *, u_int);
 void		 cvs_buf_free(BUF *);
 void		*cvs_buf_release(BUF *);
-u_char		 cvs_buf_getc(BUF *, u_int);
+u_char		 cvs_buf_getc(BUF *, size_t);
 void		 cvs_buf_empty(BUF *);
 ssize_t		 cvs_buf_copy(BUF *, size_t, void *, size_t);
 ssize_t		 cvs_buf_set(BUF *, const void *, size_t, size_t);

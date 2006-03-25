@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.146 2006/03/24 16:18:22 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.147 2006/03/25 21:29:59 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1429,7 +1429,7 @@ rcs_kwexp_set(RCSFILE *file, int mode)
 
 	tmp = xstrdup(buf);
 	if (file->rf_expand != NULL)
-		free(file->rf_expand);
+		xfree(file->rf_expand);
 	file->rf_expand = tmp;
 	/* not synced anymore */
 	file->rf_flags &= ~RCS_SYNCED;
@@ -1688,7 +1688,7 @@ rcs_parse_admin(RCSFILE *rfp)
 		if (tok == RCS_TOK_ERR) {
 			rcs_errno = RCS_ERR_PARSE;
 			cvs_log(LP_ERR, "parse error in RCS admin section");
-			return (-1);
+			goto fail;
 		} else if ((tok == RCS_TOK_NUM) || (tok == RCS_TOK_DESC)) {
 			/*
 			 * Assume this is the start of the first delta or
@@ -1707,7 +1707,7 @@ rcs_parse_admin(RCSFILE *rfp)
 		if (hmask & (1 << tok)) {
 			rcs_errno = RCS_ERR_PARSE;
 			cvs_log(LP_ERR, "duplicate RCS key");
-			return (-1);
+			goto fail;
 		}
 		hmask |= (1 << tok);
 
@@ -1736,7 +1736,7 @@ rcs_parse_admin(RCSFILE *rfp)
 					rfp->rf_branch = rcsnum_alloc();
 				if (rcsnum_aton(RCS_TOKSTR(rfp), NULL,
 				    rfp->rf_branch) < 0)
-					return (-1);
+					goto fail;
 			} else if (tok == RCS_TOK_COMMENT) {
 				rfp->rf_comment = xstrdup(RCS_TOKSTR(rfp));
 			} else if (tok == RCS_TOK_EXPAND) {
@@ -1750,31 +1750,32 @@ rcs_parse_admin(RCSFILE *rfp)
 				cvs_log(LP_ERR,
 				    "missing semi-colon after RCS `%s' key",
 				    rk->rk_str);
-				return (-1);
+				goto fail;
 			}
 			break;
 		case RCS_TOK_ACCESS:
 			if (rcs_parse_access(rfp) < 0)
-				return (-1);
+				goto fail;
 			break;
 		case RCS_TOK_SYMBOLS:
 			if (rcs_parse_symbols(rfp) < 0)
-				return (-1);
+				goto fail;
 			break;
 		case RCS_TOK_LOCKS:
 			if (rcs_parse_locks(rfp) < 0)
-				return (-1);
+				goto fail;
 			break;
 		default:
 			rcs_errno = RCS_ERR_PARSE;
 			cvs_log(LP_ERR,
 			    "unexpected token `%s' in RCS admin section",
 			    RCS_TOKSTR(rfp));
-			return (-1);
+			goto fail;
 		}
 	}
 
-	return (0);
+fail:
+	return (-1);
 }
 
 /*
@@ -2512,8 +2513,9 @@ static char *
 rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
     size_t len, int mode)
 {
+	size_t i;
 	int kwtype, sizdiff;
-	u_int i, j, found, start_offset, c_offset;
+	u_int j, found, start_offset, c_offset;
 	char *c, *kwstr, *start, *end, *tbuf;
 	char expbuf[256], buf[256];
 	struct tm *tb;

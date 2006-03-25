@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.82 2006/03/24 13:34:27 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.83 2006/03/25 21:29:59 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -172,7 +172,7 @@ static int	cvs_diff_pre_exec(struct cvsroot *);
 static int	cvs_diff_cleanup(void);
 #endif
 
-static void	 output(const char *, FILE *, const char *, FILE *);
+static void	 output(FILE *, FILE *);
 static void	 check(FILE *, FILE *);
 static void	 range(int, int, char *);
 static void	 uni_range(int, int);
@@ -183,8 +183,7 @@ static void	 prune(void);
 static void	 equiv(struct line *, int, struct line *, int, int *);
 static void	 unravel(int);
 static void	 unsort(struct line *, int, int *);
-static void	 change(const char *, FILE *, const char *, FILE *, int,
-		    int, int, int);
+static void	 change(FILE *, FILE *, int, int, int, int);
 static void	 sort(struct line *, int);
 static int	 ignoreline(char *);
 static int	 asciifile(FILE *);
@@ -745,7 +744,7 @@ cvs_diffreg(const char *file1, const char *file2, BUF *out)
 	tmp = xrealloc(ixnew, (diff_len[1] + 2) * sizeof(long));
 	ixnew = (long *)tmp;
 	check(f1, f2);
-	output(file1, f1, file2, f2);
+	output(f1, f2);
 
 closem:
 	if (anychange == 1) {
@@ -966,9 +965,9 @@ search(int *c, int k, int y)
 		return (k + 1);
 	i = 0;
 	j = k + 1;
-	while (1) {
-		l = i + j;
-		if ((l >>= 1) <= i)
+	for (;;) {
+		l = (i + j) / 2;
+		if (l <= i)
 			break;
 		t = clist[c[l]].y;
 		if (t > y)
@@ -1155,7 +1154,7 @@ skipline(FILE *f)
 }
 
 static void
-output(const char *file1, FILE *f1, const char *file2, FILE *f2)
+output(FILE *f1, FILE *f2)
 {
 	int m, i0, i1, j0, j1;
 
@@ -1173,10 +1172,10 @@ output(const char *file1, FILE *f1, const char *file2, FILE *f2)
 			i1++;
 		j1 = J[i1 + 1] - 1;
 		J[i1] = j1;
-		change(file1, f1, file2, f2, i0, i1, j0, j1);
+		change(f1, f2, i0, i1, j0, j1);
 	}
 	if (m == 0)
-		change(file1, f1, file2, f2, 1, 0, 1, diff_len[1]);
+		change(f1, f2, 1, 0, 1, diff_len[1]);
 	if (diff_format == D_IFDEF) {
 		for (;;) {
 #define	c i0
@@ -1246,8 +1245,7 @@ ignoreline(char *line)
  * lines missing from the to file.
  */
 static void
-change(const char *file1, FILE *f1, const char *file2, FILE *f2,
-	int a, int b, int c, int d)
+change(FILE *f1, FILE *f2, int a, int b, int c, int d)
 {
 	static size_t max_context = 64;
 	int i;

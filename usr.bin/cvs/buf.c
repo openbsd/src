@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.39 2006/03/23 08:50:41 xsa Exp $	*/
+/*	$OpenBSD: buf.c,v 1.40 2006/03/25 21:29:58 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -246,7 +246,7 @@ cvs_buf_putc(BUF *b, int c)
  *
  */
 u_char
-cvs_buf_getc(BUF *b, u_int pos)
+cvs_buf_getc(BUF *b, size_t pos)
 {
 	return (b->cb_cur[pos]);
 }
