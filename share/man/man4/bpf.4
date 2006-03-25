@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.27 2005/11/03 20:00:18 reyk Exp $
+.\"	$OpenBSD: bpf.4,v 1.28 2006/03/25 23:00:26 djm Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -227,17 +227,20 @@ ioctls, the
 .Dv BIOCLOCK
 ioctl prevents this abuse.
 The allowable ioctls are
-.Dv BIOCGBLEN ,
 .Dv BIOCFLUSH ,
+.Dv BIOCGBLEN ,
+.Dv BIOCGDIRFILT ,
 .Dv BIOCGDLT ,
+.Dv BIOCGDLTLIST ,
 .Dv BIOCGETIF ,
-.Dv BIOCGRTIMEOUT ,
-.Dv BIOCSRTIMEOUT ,
-.Dv BIOCIMMEDIATE ,
-.Dv BIOCGSTATS ,
-.Dv BIOCVERSION ,
-.Dv BIOCGRSIG ,
 .Dv BIOCGHDRCMPLT ,
+.Dv BIOCGRSIG ,
+.Dv BIOCGRTIMEOUT ,
+.Dv BIOCGSTATS ,
+.Dv BIOCIMMEDIATE ,
+.Dv BIOCLOCK ,
+.Dv BIOCSRTIMEOUT ,
+.Dv BIOCVERSION ,
 .Dv TIOCGPGRP ,
 and
 .Dv FIONREAD .
@@ -413,6 +416,17 @@ Get or set the status of the
 flag.
 If non-zero, packets matching any filters will be reported to the
 associated interface so that they can be dropped.
+.Pp
+.It Dv BIOCGDIRFILT Fa "u_int *"
+.It Dv BIOCSDIRFILT Fa "u_int *"
+Get or set the status of the
+.Dq direction filter
+flag.
+If non-zero, packets matching the specified direction (either
+.Dv BPF_DIRECTION_IN
+or
+.Dv BPF_DIRECTION_OUT )
+will be ignored.
 .El
 .Ss Standard ioctls
 .Nm
