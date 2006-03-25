@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.73 2006/03/04 03:53:30 brad Exp $
+$OpenBSD: miidevs,v 1.74 2006/03/25 22:41:19 brad Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -66,6 +66,7 @@ oui REALTEK			0x000020	Realtek Semiconductor
 oui REALTEK2			0x00e04c	Realtek Semiconductor
 oui SEEQ			0x00a07d	Seeq
 oui SIS				0x00e006	Silicon Integrated Systems
+oui SMSC			0x00800f	Standard Microsystems
 oui TI				0x080028	Texas Instruments
 oui TSC				0x00c039	TDK Semiconductor
 oui VIA				0x004063	VIA Networking Technologies
@@ -230,6 +231,9 @@ model xxSEEQ 80225		0x0008 Seeq 80225 10/100 PHY
 
 /* Silicon Integrated Systems PHYs */
 model xxSIS 900			0x0000 SiS 900 10/100 PHY
+
+/* Standard Microsystems PHYs */
+model SMSC LAN83C185		0x000a LAN83C185 10/100 PHY
 
 /* Texas Instruments PHYs */
 model xxTI TLAN10T		0x0001 ThunderLAN 10baseT PHY
