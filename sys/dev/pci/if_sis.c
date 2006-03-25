@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.64 2006/03/25 05:00:28 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.65 2006/03/25 20:09:17 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -115,8 +115,7 @@ struct cfdriver sis_cd = {
 
 int sis_intr(void *);
 void sis_shutdown(void *);
-int sis_newbuf(struct sis_softc *, struct sis_desc *,
-				struct mbuf *);
+int sis_newbuf(struct sis_softc *, struct sis_desc *, struct mbuf *);
 int sis_encap(struct sis_softc *, struct mbuf *, u_int32_t *);
 void sis_rxeof(struct sis_softc *);
 void sis_rxeoc(struct sis_softc *);
@@ -1224,7 +1223,7 @@ sis_ring_init(struct sis_softc *sc)
  * Initialize an RX descriptor and attach an MBUF cluster.
  */
 int
-sis_newbuf(struct sis_softc *sc, struct sis_desc*c, struct mbuf *m)
+sis_newbuf(struct sis_softc *sc, struct sis_desc *c, struct mbuf *m)
 {
 	struct mbuf		*m_new = NULL;
 	bus_dmamap_t		map;
