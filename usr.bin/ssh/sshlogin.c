@@ -1,4 +1,4 @@
-/* $OpenBSD: sshlogin.c,v 1.16 2006/03/25 13:17:03 djm Exp $ */
+/* $OpenBSD: sshlogin.c,v 1.17 2006/03/25 18:36:15 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -56,9 +56,9 @@ extern ServerOptions options;
  * information is not available.  This must be called before record_login.
  * The host the user logged in from will be returned in buf.
  */
-u_long
+time_t
 get_last_login_time(uid_t uid, const char *logname,
-    char *buf, u_int bufsize)
+    char *buf, size_t bufsize)
 {
 	struct lastlog ll;
 	char *lastlog;
@@ -91,7 +91,7 @@ get_last_login_time(uid_t uid, const char *logname,
 		bufsize = sizeof(ll.ll_host) + 1;
 	strncpy(buf, ll.ll_host, bufsize - 1);
 	buf[bufsize - 1] = '\0';
-	return ll.ll_time;
+	return (time_t)ll.ll_time;
 }
 
 /*
