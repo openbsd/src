@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.62 2006/03/20 16:15:03 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.63 2006/03/25 03:21:56 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -143,6 +143,7 @@ void sis_miibus_writereg(struct device *, int, int, int);
 void sis_miibus_statchg(struct device *);
 
 u_int32_t sis_mchash(struct sis_softc *, const uint8_t *);
+void sis_setmulti(struct sis_softc *);
 void sis_setmulti_sis(struct sis_softc *);
 void sis_setmulti_ns(struct sis_softc *);
 void sis_reset(struct sis_softc *);
@@ -724,6 +725,15 @@ sis_mchash(struct sis_softc *sc, const uint8_t *addr)
 }
 
 void
+sis_setmulti(struct sis_softc *sc)
+{
+	if (sc->sis_type == SIS_TYPE_83815)
+		sis_setmulti_ns(sc);
+	else
+		sis_setmulti_sis(sc);
+}
+
+void
 sis_setmulti_ns(struct sis_softc *sc)
 {
 	struct ifnet		*ifp;
@@ -735,8 +745,8 @@ sis_setmulti_ns(struct sis_softc *sc)
 
 	ifp = &sc->arpcom.ac_if;
 
-allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
+allmulti:
 		SIS_CLRBIT(sc, SIS_RXFILT_CTL, NS_RXFILTCTL_MCHASH);
 		SIS_SETBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ALLMULTI);
 		return;
@@ -801,8 +811,8 @@ sis_setmulti_sis(struct sis_softc *sc)
 	if (ifp->if_flags & IFF_BROADCAST)
 		ctl |= SIS_RXFILTCTL_BROAD;
 
-allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
+allmulti:
 		ctl |= SIS_RXFILTCTL_ALLMULTI;
 		if (ifp->if_flags & IFF_PROMISC)
 			ctl |= SIS_RXFILTCTL_BROAD|SIS_RXFILTCTL_ALLPHYS;
@@ -1764,10 +1774,7 @@ void sis_init(xsc)
 	/*
 	 * Load the multicast filter.
 	 */
-	if (sc->sis_type == SIS_TYPE_83815)
-		sis_setmulti_ns(sc);
-	else
-		sis_setmulti_sis(sc);
+	sis_setmulti(sc);
 
 	/* Turn the receive filter on */
 	SIS_SETBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ENABLE);
@@ -1931,24 +1938,38 @@ int sis_ioctl(ifp, command, data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
+		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			sis_init(sc);
+#ifdef INET
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-			break;
-		default:
-			sis_init(sc);
-			break;
-		}
+#endif
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			sis_init(sc);
+			if (ifp->if_flags & IFF_RUNNING &&
+			    ifp->if_flags & IFF_PROMISC &&
+			    !(sc->sc_if_flags & IFF_PROMISC)) {
+				SIS_SETBIT(sc, SIS_RXFILT_CTL,
+				    SIS_RXFILTCTL_ALLPHYS);
+				sis_setmulti(sc);
+			} else if (ifp->if_flags & IFF_RUNNING &&
+			    !(ifp->if_flags & IFF_PROMISC) &&
+			    sc->sc_if_flags & IFF_PROMISC) {
+				SIS_CLRBIT(sc, SIS_RXFILT_CTL,
+				    SIS_RXFILTCTL_ALLPHYS);
+				sis_setmulti(sc);
+			} else if (ifp->if_flags & IFF_RUNNING &&
+			    (ifp->if_flags ^ sc->sc_if_flags) & IFF_ALLMULTI) {
+				sis_setmulti(sc);
+			} else {
+				if ((ifp->if_flags & IFF_RUNNING) == 0)
+					sis_init(sc);
+			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				sis_stop(sc);
 		}
-		error = 0;
 		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
@@ -1967,12 +1988,8 @@ int sis_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			if (ifp->if_flags & IFF_RUNNING) {
-				if (sc->sis_type == SIS_TYPE_83815)
-					sis_setmulti_ns(sc);
-				else
-					sis_setmulti_sis(sc);
-			}
+			if (ifp->if_flags & IFF_RUNNING)
+				sis_setmulti(sc);
 			error = 0;
 		}
 		break;
