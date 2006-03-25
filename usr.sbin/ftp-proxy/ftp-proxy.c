@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.8 2006/03/22 10:16:03 camield Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.9 2006/03/25 20:21:42 camield Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -116,8 +116,8 @@ char ntop_buf[NTOP_BUFS][INET6_ADDRSTRLEN];
 struct sockaddr_storage fixed_server_ss, fixed_proxy_ss;
 char *fixed_server, *fixed_server_port, *fixed_proxy, *listen_ip, *listen_port,
     *qname;
-int anonymous_only, caught_sig, daemonize, id_count, ipv6_mode, loglevel,
-    max_sessions, rfc_mode, session_count, timeout, verbose;
+int anonymous_only, daemonize, id_count, ipv6_mode, loglevel, max_sessions,
+    rfc_mode, session_count, timeout, verbose;
 extern char *__progname;
 
 void
