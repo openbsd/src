@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.9 2005/11/24 04:49:25 brad Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.10 2006/03/25 22:41:42 djm Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -343,7 +343,7 @@ zestart(ifp)
 		
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 		/*
 		 * m now points to a mbuf chain that can be loaded.
@@ -428,7 +428,7 @@ sgec_intr(sc)
 			eh = mtod(m, struct ether_header *);
 #if NBPFILTER > 0
 			if (ifp->if_bpf) {
-				bpf_mtap(ifp->if_bpf, m);
+				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 				if ((ifp->if_flags & IFF_PROMISC) != 0 &&
 				    ((eh->ether_dhost[0] & 1) == 0) &&
 				    bcmp(sc->sc_ac.ac_enaddr, eh->ether_dhost,

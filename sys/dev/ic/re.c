@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.18 2006/03/04 03:47:08 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.19 2006/03/25 22:41:43 djm Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1201,7 +1201,7 @@ re_rxeof(sc)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 		ether_input_mbuf(ifp, m);
 	}
@@ -1510,7 +1510,7 @@ re_start(ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
+			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 		queued++;
 	}

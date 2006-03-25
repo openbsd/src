@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.56 2006/02/21 19:46:52 brad Exp $	*/
+/*	$OpenBSD: gem.c,v 1.57 2006/03/25 22:41:43 djm Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -976,7 +976,7 @@ gem_rint(sc)
 		 * pass it up the stack if its for us.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif /* NPBFILTER > 0 */
 
 		/* Pass it on. */
@@ -1656,7 +1656,7 @@ gem_start(ifp)
 		 * packet before we commit it to the wire.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 		/*

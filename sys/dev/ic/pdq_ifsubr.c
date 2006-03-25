@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdq_ifsubr.c,v 1.17 2005/11/09 05:50:25 brad Exp $	*/
+/*	$OpenBSD: pdq_ifsubr.c,v 1.18 2006/03/25 22:41:43 djm Exp $	*/
 /*	$NetBSD: pdq_ifsubr.c,v 1.5 1996/05/20 00:26:21 thorpej Exp $	*/
 
 /*-
@@ -187,7 +187,7 @@ pdq_os_receive_pdu(
     sc->sc_if.if_ipackets++;
 #if NBPFILTER > 0
     if (sc->sc_bpf != NULL)
-	PDQ_BPF_MTAP(sc, m);
+	PDQ_BPF_MTAP(sc, m, BPF_DIRECTION_IN);
     if ((fh->fddi_fc & (FDDIFC_L|FDDIFC_F)) != FDDIFC_LLC_ASYNC) {
 	m_freem(m);
 	return;
@@ -223,7 +223,7 @@ pdq_os_transmit_done(
     pdq_softc_t *sc = (pdq_softc_t *) pdq->pdq_os_ctx;
 #if NBPFILTER > 0
     if (sc->sc_bpf != NULL)
-	PDQ_BPF_MTAP(sc, m);
+	PDQ_BPF_MTAP(sc, m, BPF_DIRECTION_OUT);
 #endif
     m_freem(m);
     sc->sc_if.if_opackets++;

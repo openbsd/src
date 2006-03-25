@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.31 2006/03/11 22:44:47 brad Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.32 2006/03/25 22:41:47 djm Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -580,7 +580,8 @@ slstart(tp)
 			 */
 			bpfbuf[SLX_DIR] = SLIPDIR_OUT;
 			bcopy(mtod(m, caddr_t), &bpfbuf[SLX_CHDR], CHDR_LEN);
-			bpf_tap(sc->sc_bpf, bpfbuf, len + SLIP_HDRLEN);
+			bpf_tap(sc->sc_bpf, bpfbuf, len + SLIP_HDRLEN,
+			    BPF_DIRECTION_OUT);
 		}
 #endif
 		getmicrotime(&sc->sc_lastpacket);
@@ -866,7 +867,7 @@ slinput(c, tp)
 			memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
 
 			s = splnet();
-			bpf_mtap(sc->sc_bpf, m);
+			bpf_mtap(sc->sc_bpf, m, BPF_DIRECTION_IN);
 			splx(s);
 
 			m_adj(m, SLIP_HDRLEN);

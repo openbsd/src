@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.91 2006/01/28 10:08:38 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.92 2006/03/25 22:41:42 djm Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2269,7 +2269,7 @@ dc_rxeof(sc)
 		ifp->if_ipackets++;
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 		ether_input_mbuf(ifp, m);
 	}
@@ -2780,7 +2780,7 @@ dc_start(ifp)
 		 */
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
+			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 		if (sc->dc_flags & DC_TX_ONE) {
 			ifp->if_flags |= IFF_OACTIVE;

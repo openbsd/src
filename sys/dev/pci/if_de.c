@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.87 2005/11/07 00:03:16 brad Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.88 2006/03/25 22:41:44 djm Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -3322,10 +3322,11 @@ tulip_rx_intr(
 
 #if NBPFILTER > 0
 	    if (sc->tulip_bpf != NULL) {
-		if (me == ms)
-		    bpf_tap(sc->tulip_if.if_bpf, mtod(ms, caddr_t), total_len);
-		else
-		    bpf_mtap(sc->tulip_if.if_bpf, ms);
+		if (me == ms) {
+		    bpf_tap(sc->tulip_if.if_bpf, mtod(ms, caddr_t),
+		        total_len, BPF_DIRECTION_IN);
+		} else
+		    bpf_mtap(sc->tulip_if.if_bpf, ms, BPF_DIRECTION_IN);
 	    }
 #endif
 	    sc->tulip_flags |= TULIP_RXACT;
@@ -3543,7 +3544,7 @@ tulip_tx_intr(
 		    sc->tulip_txmaps[sc->tulip_txmaps_free++] = map;
 #if NBPFILTER > 0
 		    if (sc->tulip_bpf != NULL)
-			bpf_mtap(sc->tulip_if.if_bpf, m);
+			bpf_mtap(sc->tulip_if.if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 		    m_freem(m);
 #if defined(TULIP_DEBUG)

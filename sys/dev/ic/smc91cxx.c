@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.23 2006/02/24 01:48:27 brad Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.24 2006/03/25 22:41:43 djm Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -707,7 +707,7 @@ smc91cxx_start(ifp)
 #if NBPFILTER > 0
 	/* Hand off a copy to the bpf. */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, top);
+		bpf_mtap(ifp->if_bpf, top, BPF_DIRECTION_OUT);
 #endif
 
 	ifp->if_opackets++;
@@ -1010,7 +1010,7 @@ smc91cxx_read(sc)
 	 * we need to check if the packet is ours.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 	m->m_pkthdr.len = m->m_len = packetlen;

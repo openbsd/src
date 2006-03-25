@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.20 2005/11/21 18:16:40 millert Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.21 2006/03/25 22:41:44 djm Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -279,7 +279,7 @@ startagain:
 
 #if NBPFILTER
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 
 	IFQ_DEQUEUE(&ifp->if_snd, m0);
@@ -740,7 +740,7 @@ efread(sc)
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 	ether_input_mbuf(ifp, m);

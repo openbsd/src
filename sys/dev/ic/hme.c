@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.41 2006/01/12 15:06:12 brad Exp $	*/
+/*	$OpenBSD: hme.c,v 1.42 2006/03/25 22:41:43 djm Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -656,7 +656,7 @@ hme_start(ifp)
 		 * packet before we commit it to the wire.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 		if (hme_encap(sc, m, &bix)) {
@@ -879,7 +879,7 @@ hme_rint(sc)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 		ether_input_mbuf(ifp, m);

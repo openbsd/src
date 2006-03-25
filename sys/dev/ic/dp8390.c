@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.30 2006/02/24 23:56:19 brad Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.31 2006/03/25 22:41:42 djm Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -452,7 +452,7 @@ outloop:
 #if NBPFILTER > 0
 	/* Tap off here if there is a BPF listener. */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 
 	/* txb_new points to next open buffer slot. */
@@ -929,7 +929,7 @@ dp8390_read(sc, buf, len)
 	 * If so, hand off the raw packet to bpf.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 	ether_input_mbuf(ifp, m);

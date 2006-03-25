@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.13 2006/02/25 13:08:39 damien Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.14 2006/03/25 22:41:43 djm Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1251,7 +1251,7 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 			mb.m_len = sc->sc_txtap_len;
 			mb.m_next = m;
 			mb.m_pkthdr.len += mb.m_len;
-			bpf_mtap(sc->sc_drvbpf, &mb);
+			bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
 		}
 #endif
 
@@ -1597,7 +1597,7 @@ rt2661_tx_mgt(struct rt2661_softc *sc, struct mbuf *m0,
 		mb.m_len = sc->sc_txtap_len;
 		mb.m_next = m0;
 		mb.m_pkthdr.len += mb.m_len;
-		bpf_mtap(sc->sc_drvbpf, &mb);
+		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
 	}
 #endif
 
@@ -1847,7 +1847,7 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 		mb.m_len = sc->sc_txtap_len;
 		mb.m_next = m0;
 		mb.m_pkthdr.len += mb.m_len;
-		bpf_mtap(sc->sc_drvbpf, &mb);
+		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
 	}
 #endif
 
@@ -1918,7 +1918,8 @@ rt2661_start(struct ifnet *ifp)
 			m0->m_pkthdr.rcvif = NULL;
 #if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)
-				bpf_mtap(ic->ic_rawbpf, m0);
+				bpf_mtap(ic->ic_rawbpf, m0,
+				    BPF_DIRECTION_OUT);
 #endif
 			if (rt2661_tx_mgt(sc, m0, ni) != 0)
 				break;
@@ -1937,14 +1938,15 @@ rt2661_start(struct ifnet *ifp)
 			}
 #if NBPFILTER > 0
 			if (ifp->if_bpf != NULL)
-				bpf_mtap(ifp->if_bpf, m0);
+				bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 			m0 = ieee80211_encap(ifp, m0, &ni);
 			if (m0 == NULL)
 				continue;
 #if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)
-				bpf_mtap(ic->ic_rawbpf, m0);
+				bpf_mtap(ic->ic_rawbpf, m0,
+				    BPF_DIRECTION_OUT);
 #endif
 			if (rt2661_tx_data(sc, m0, ni, 0) != 0) {
 				if (ni != NULL)

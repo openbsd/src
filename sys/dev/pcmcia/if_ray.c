@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.30 2005/11/23 11:39:37 mickey Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.31 2006/03/25 22:41:46 djm Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -1342,7 +1342,7 @@ ray_intr_start(sc)
 				m0->m_len -=  sizeof(struct ieee80211_frame);
 				m0->m_pkthdr.len -=  sizeof(struct ieee80211_frame);
 			}
-			bpf_mtap(ifp->if_bpf, m0);
+			bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 			if (ifp->if_flags & IFF_LINK0) {
 				m0->m_data -= sizeof(struct ieee80211_frame);
 				m0->m_len +=  sizeof(struct ieee80211_frame);
@@ -1633,7 +1633,7 @@ done:
 	m_adj(m, (caddr_t)eh - (caddr_t)frame);
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 	ifp->if_ipackets++;
 

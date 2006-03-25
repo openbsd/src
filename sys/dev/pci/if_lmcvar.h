@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmcvar.h,v 1.9 2006/03/16 21:36:58 miod Exp $ */
+/*	$OpenBSD: if_lmcvar.h,v 1.10 2006/03/25 22:41:45 djm Exp $ */
 /*	$NetBSD: if_lmcvar.h,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -544,8 +544,8 @@ extern struct cfdriver lmc_cd;
  * it does add yet more conditional code to this driver.  Sigh.
  */
 #if !defined(LMC_BPF_MTAP) && NBPFILTER > 0
-#define	LMC_BPF_MTAP(sc, m)	bpf_mtap((sc)->lmc_bpf, m)
-#define	LMC_BPF_TAP(sc, p, l)	bpf_tap((sc)->lmc_bpf, p, l)
+#define	LMC_BPF_MTAP(sc, m, d)		bpf_mtap((sc)->lmc_bpf, m, d)
+#define	LMC_BPF_TAP(sc, p, l, d)	bpf_tap((sc)->lmc_bpf, p, l, d)
 #define	LMC_BPF_ATTACH(sc)	bpfattach(&(sc)->lmc_bpf, &(sc)->lmc_sppp.pp_if, DLT_PPP, PPP_HEADER_LEN)
 #endif
 

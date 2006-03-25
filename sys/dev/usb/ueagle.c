@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.9 2006/01/29 03:22:52 brad Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.10 2006/03/25 22:41:47 djm Exp $	*/
 
 /*-
  * Copyright (c) 2003-2005
@@ -875,7 +875,7 @@ ueagle_push_cell(struct ueagle_softc *sc, uint8_t *cell)
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf != NULL)
-		bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 	/* send the AAL5 CPCS-PDU to the ATM layer */
@@ -1088,7 +1088,7 @@ ueagle_start(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf != NULL)
-		bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 
 	m_freem(m0);

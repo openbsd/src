@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.65 2006/03/25 20:09:17 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.66 2006/03/25 22:41:45 djm Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1351,7 +1351,7 @@ sis_rxeof(struct sis_softc *sc)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 		/* pass it on. */
@@ -1614,7 +1614,7 @@ sis_start(struct ifnet *ifp)
 		 */
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
+			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 	}
 

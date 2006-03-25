@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.31 2005/11/23 11:39:37 mickey Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.32 2006/03/25 22:41:46 djm Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -837,7 +837,7 @@ xe_get(sc)
 	
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, top);
+		bpf_mtap(ifp->if_bpf, top, BPF_DIRECTION_IN);
 #endif
 	
 	ether_input_mbuf(ifp, top);
@@ -1133,7 +1133,7 @@ xe_start(ifp)
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 
 	/*

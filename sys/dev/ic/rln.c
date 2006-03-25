@@ -1,4 +1,4 @@
-/*	$OpenBSD: rln.c,v 1.17 2005/11/07 03:20:00 brad Exp $	*/
+/*	$OpenBSD: rln.c,v 1.18 2006/03/25 22:41:43 djm Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -249,7 +249,7 @@ rlnstart(ifp)
 #if NBPFILTER > 0
 	/* Tap packet stream here for BPF listeners. */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 
 	/* We need to use m->m_pkthdr.len, so require the header. */
@@ -587,7 +587,7 @@ rlnread(sc, hdr, len)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 		ether_input_mbuf(ifp, m);

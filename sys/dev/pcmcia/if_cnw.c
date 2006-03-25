@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.15 2005/01/27 17:04:55 millert Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.16 2006/03/25 22:41:46 djm Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -477,7 +477,7 @@ cnw_start(ifp)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
+			bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 		
 		cnw_transmit(sc, m0);
@@ -667,7 +667,7 @@ cnw_recv(sc)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 		/*

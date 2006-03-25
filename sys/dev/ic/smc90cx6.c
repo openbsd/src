@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc90cx6.c,v 1.11 2005/02/14 14:00:49 brad Exp $ */
+/*	$OpenBSD: smc90cx6.c,v 1.12 2006/03/25 22:41:43 djm Exp $ */
 /*	$NetBSD: smc90cx6.c,v 1.17 1996/05/07 01:43:18 thorpej Exp $ */
 
 /*
@@ -574,7 +574,7 @@ bah_start(ifp)
 	 * that RAM is just accessed as on every other byte)
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 #ifdef BAH_DEBUG
@@ -871,7 +871,7 @@ bah_srint(vsc, dummy)
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, head);
+		bpf_mtap(ifp->if_bpf, head, BPF_DIRECTION_IN);
 #endif
 
 	arc_input(&sc->sc_arccom.ac_if, head);

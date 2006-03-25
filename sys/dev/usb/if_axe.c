@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.46 2006/03/07 04:41:19 krw Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.47 2006/03/25 22:41:46 djm Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -102,8 +102,6 @@
 #endif
 #include <net/if_dl.h>
 #include <net/if_media.h>
-
-#define BPF_MTAP(ifp, m) bpf_mtap((ifp)->if_bpf, (m))
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -990,7 +988,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		s = splnet();
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			BPF_MTAP(ifp, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 		IF_INPUT(ifp, m);
@@ -1206,7 +1204,7 @@ axe_start(struct ifnet *ifp)
 	 */
 #if NBPFILTER > 0
 	 if (ifp->if_bpf)
-	 	BPF_MTAP(ifp, m_head);
+	 	bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 
 	ifp->if_flags |= IFF_OACTIVE;

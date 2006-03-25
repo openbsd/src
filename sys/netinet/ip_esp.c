@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.96 2005/12/20 13:36:28 markus Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.97 2006/03/25 22:41:48 djm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -752,7 +752,8 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		if (esph)
 			hdr.flags |= M_AUTH;
 
-		bpf_mtap_hdr(ifn->if_bpf, (char *)&hdr, ENC_HDRLEN, m);
+		bpf_mtap_hdr(ifn->if_bpf, (char *)&hdr, ENC_HDRLEN, m,
+		    BPF_DIRECTION_OUT);
 	}
 #endif
 

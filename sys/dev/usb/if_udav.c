@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.16 2006/03/07 04:41:19 krw Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.17 2006/03/25 22:41:47 djm Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -66,7 +66,6 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
-#define	BPF_MTAP(ifp, m)	bpf_mtap((ifp)->if_bpf, (m))
 
 #ifdef INET
 #include <netinet/in.h>
@@ -982,7 +981,7 @@ udav_start(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m_head);
+		bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 
 	ifp->if_flags |= IFF_OACTIVE;
@@ -1161,7 +1160,7 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
-		BPF_MTAP(ifp, m);
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 	DPRINTF(("%s: %s: deliver %d\n", USBDEVNAME(sc->sc_dev),

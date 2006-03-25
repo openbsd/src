@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.13 2005/06/08 17:03:02 henning Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.14 2006/03/25 22:41:41 djm Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.24 2004/10/30 18:08:34 thorpej Exp $	*/
 
 /*-
@@ -274,7 +274,7 @@ mcstart(ifp)
 		 * see the packet before we commit it to the wire.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 		/*
@@ -609,7 +609,7 @@ mace_read(sc, pkt, len)
 #if NBPFILTER > 0
 	/* Pass the packet to any BPF listeners. */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 	/* Pass the packet up. */

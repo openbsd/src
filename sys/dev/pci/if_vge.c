@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.19 2006/03/20 16:15:03 brad Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.20 2006/03/25 22:41:46 djm Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1110,7 +1110,7 @@ vge_rxeof(struct vge_softc *sc)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 		ether_input_mbuf(ifp, m);
 
@@ -1435,7 +1435,7 @@ vge_start(struct ifnet *ifp)
 		 */
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
+			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 
 		if (vge_encap(sc, m_head, idx)) {

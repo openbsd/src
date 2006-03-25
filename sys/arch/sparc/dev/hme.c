@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.51 2006/01/12 15:06:12 brad Exp $	*/
+/*	$OpenBSD: hme.c,v 1.52 2006/03/25 22:41:41 djm Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -299,7 +299,7 @@ hmestart(ifp)
 		 * packet before we commit it to the wire.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 		/*
@@ -977,7 +977,7 @@ hme_read(sc, idx, len, flags)
 	 * If so, hand off the raw packet to BPF.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 	/* Pass the packet up. */
 	ether_input_mbuf(ifp, m);

@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.39 2006/03/04 22:40:15 brad Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.40 2006/03/25 22:41:47 djm Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -233,7 +233,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 #if NBPFILTER >0
 	if (ifp->if_bpf)
-		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m);
+		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m, BPF_DIRECTION_OUT);
 #endif
 
 	if (sc->g_proto == IPPROTO_MOBILE) {

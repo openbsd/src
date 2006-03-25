@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.5 2006/03/04 03:33:05 brad Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.6 2006/03/25 22:41:46 djm Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -351,7 +351,7 @@ vic_rx_proc(struct vic_softc *sc)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 		ether_input_mbuf(ifp, m);
@@ -502,7 +502,7 @@ vic_start(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 		if ((error = vic_tx_start(sc, m)) != 0)

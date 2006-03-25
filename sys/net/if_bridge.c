@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.150 2006/03/04 22:40:15 brad Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.151 2006/03/25 22:41:47 djm Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1144,7 +1144,7 @@ bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
 
 #if NBPFILTER > 0
 	if (sc->sc_if.if_bpf)
-		bpf_mtap(sc->sc_if.if_bpf, m);
+		bpf_mtap(sc->sc_if.if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 	sc->sc_if.if_ipackets++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.48 2006/03/04 04:43:28 brad Exp $	*/
+/*	$OpenBSD: an.c,v 1.49 2006/03/25 22:41:42 djm Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -452,7 +452,7 @@ an_rxeof(struct an_softc *sc)
 		mb.m_len = sizeof(sc->sc_rxtapu);
 		mb.m_next = m;
 		mb.m_pkthdr.len += mb.m_len;
-		bpf_mtap(sc->sc_drvbpf, &mb);
+		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
 	}
 #endif /* NPBFILTER > 0 */
 
@@ -1131,7 +1131,7 @@ an_start(struct ifnet *ifp)
 		ifp->if_opackets++;
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 		if ((m = ieee80211_encap(ifp, m, &ni)) == NULL) {
 			ifp->if_oerrors++;
@@ -1141,7 +1141,7 @@ an_start(struct ifnet *ifp)
 			ieee80211_release_node(ic, ni);
 #if NBPFILTER > 0
 		if (ic->ic_rawbpf)
-			bpf_mtap(ic->ic_rawbpf, m);
+			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
 #endif
 
 		wh = mtod(m, struct ieee80211_frame *);
@@ -1205,7 +1205,7 @@ an_start(struct ifnet *ifp)
 			mb.m_len = sizeof(sc->sc_txtapu);
 			mb.m_next = m;
 			mb.m_pkthdr.len += mb.m_len;
-			bpf_mtap(sc->sc_drvbpf, m);
+			bpf_mtap(sc->sc_drvbpf, m, BPF_DIRECTION_OUT);
 		}
 #endif
 

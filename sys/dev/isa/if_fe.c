@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fe.c,v 1.24 2005/05/23 23:26:56 tedu Exp $	*/
+/*	$OpenBSD: if_fe.c,v 1.25 2006/03/25 22:41:44 djm Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -1502,7 +1502,7 @@ fe_start(ifp)
 #if NBPFILTER > 0
 		/* Tap off here if there is a BPF listener. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 		/*
@@ -2055,7 +2055,7 @@ fe_get_packet(sc, len)
 	 * the raw packet to bpf.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 	ether_input_mbuf(ifp, m);

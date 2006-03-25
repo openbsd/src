@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_strip.c,v 1.31 2006/03/11 22:44:47 brad Exp $	*/
+/*	$OpenBSD: if_strip.c,v 1.32 2006/03/25 22:41:47 djm Exp $	*/
 /*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
@@ -1000,7 +1000,8 @@ stripstart(tp)
 			cp[SLX_DIR] = SLIPDIR_OUT;
 
 			bcopy(mtod(m, caddr_t)+STRIP_HDRLEN, &cp[SLX_CHDR], CHDR_LEN);
-			bpf_tap(sc->sc_bpf, cp, len + SLIP_HDRLEN);
+			bpf_tap(sc->sc_bpf, cp, len + SLIP_HDRLEN,
+			    BPF_DIRECTION_OUT);
 		}
 #endif
 		getmicrotime(&sc->sc_lastpacket);
@@ -1252,7 +1253,7 @@ stripinput(c, tp)
 
 		hp[SLX_DIR] = SLIPDIR_IN;
 		bcopy(chdr, &hp[SLX_CHDR], CHDR_LEN);
-		bpf_tap(sc->sc_bpf, hp, len + SLIP_HDRLEN);
+		bpf_tap(sc->sc_bpf, hp, len + SLIP_HDRLEN, BPF_DIRECTION_IN);
 	}
 #endif
 	m = strip_btom(sc, len);

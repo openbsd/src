@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpfdesc.h,v 1.16 2005/11/21 18:16:45 millert Exp $	*/
+/*	$OpenBSD: bpfdesc.h,v 1.17 2006/03/25 22:41:47 djm Exp $	*/
 /*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
@@ -77,6 +77,7 @@ struct bpf_d {
 	u_char		bd_immediate;	/* true to return on packet arrival */
 	u_char		bd_locked;	/* true if descriptor is locked */
 	u_char		bd_fildrop;	/* true if filtered packets will be dropped */
+	u_char		bd_dirfilt;	/* direction filter */
 	int		bd_hdrcmplt;	/* false to fill in src lladdr automatically */
 	int		bd_async;	/* non-zero if packet reception should generate signal */
 	int		bd_sig;		/* signal to send upon packet reception */

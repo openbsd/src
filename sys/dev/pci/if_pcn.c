@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.9 2006/03/19 02:50:54 brad Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.10 2006/03/25 22:41:45 djm Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -1009,7 +1009,7 @@ pcn_start(struct ifnet *ifp)
 #if NBPFILTER > 0
 		/* Pass the packet to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
+			bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif /* NBPFILTER > 0 */
 	}
 
@@ -1472,7 +1472,7 @@ pcn_rxintr(struct pcn_softc *sc)
 #if NBPFILTER > 0
 		/* Pass this up to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif /* NBPFILTER > 0 */
 
 		/* Pass it on. */

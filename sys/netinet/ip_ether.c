@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.48 2005/07/31 03:52:19 pascoe Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.49 2006/03/25 22:41:48 djm Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -243,7 +243,8 @@ etherip_input(struct mbuf *m, ...)
 	}
 #if NBPFILTER > 0
 	if (sc->gif_if.if_bpf)
-		bpf_mtap_af(sc->gif_if.if_bpf, sdst.sa.sa_family, m);
+		bpf_mtap_af(sc->gif_if.if_bpf, sdst.sa.sa_family, m,
+		    BPF_DIRECTION_IN);
 #endif
 
 #if NBRIDGE > 0

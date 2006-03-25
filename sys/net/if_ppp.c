@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.45 2006/03/12 00:18:07 brad Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.46 2006/03/25 22:41:47 djm Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -841,7 +841,7 @@ pppoutput(ifp, m0, dst, rtp)
      * See if bpf wants to look at the packet.
      */
     if (sc->sc_bpf)
-	bpf_mtap(sc->sc_bpf, m0);
+	bpf_mtap(sc->sc_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 
     /*
@@ -1506,7 +1506,7 @@ ppp_inproc(sc, m)
 #if NBPFILTER > 0
     /* See if bpf wants to look at the packet. */
     if (sc->sc_bpf)
-	bpf_mtap(sc->sc_bpf, m);
+	bpf_mtap(sc->sc_bpf, m, BPF_DIRECTION_IN);
 #endif
 
     rv = 0;

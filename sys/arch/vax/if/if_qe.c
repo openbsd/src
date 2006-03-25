@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.18 2004/07/07 23:10:45 deraadt Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.19 2006/03/25 22:41:42 djm Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -464,7 +464,7 @@ qestart(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 		/*
 		 * m now points to a mbuf chain that can be loaded.
@@ -560,7 +560,7 @@ qeintr(void *arg)
 			eh = mtod(m, struct ether_header *);
 #if NBPFILTER > 0
 			if (ifp->if_bpf) {
-				bpf_mtap(ifp->if_bpf, m);
+				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 				if ((ifp->if_flags & IFF_PROMISC) != 0 &&
 				    bcmp(sc->sc_ac.ac_enaddr, eh->ether_dhost,
 				    ETHER_ADDR_LEN) != 0 &&

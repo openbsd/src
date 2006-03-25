@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.6 2006/01/17 20:26:16 miod Exp $ */
+/*	$OpenBSD: if_de.c,v 1.7 2006/03/25 22:41:42 djm Exp $ */
 /*	$NetBSD: if_de.c,v 1.11 2001/11/13 07:11:24 lukem Exp $	*/
 
 /*
@@ -400,7 +400,7 @@ destart(struct ifnet *ifp)
 			panic("deuna xmit in progress");
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 		len = if_ubaput(&sc->sc_ifuba, &sc->sc_ifw[sc->sc_xfree], m);
@@ -521,7 +521,7 @@ derecv(struct de_softc *sc)
 		}
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 		(*ifp->if_input)(ifp, m);

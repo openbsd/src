@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_hp.c,v 1.15 2005/11/21 18:16:40 millert Exp $       */
+/*    $OpenBSD: if_hp.c,v 1.16 2006/03/25 22:41:44 djm Exp $       */
 /*    $NetBSD: if_hp.c,v 1.21 1995/12/24 02:31:31 mycroft Exp $       */
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
@@ -531,7 +531,7 @@ hpstart(ifp)
 
 #if NBPFILTER > 0
 	if (ns->ns_bpf)
-		bpf_mtap(ns->ns_bpf, m);
+		bpf_mtap(ns->ns_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 	for (m0 = m; m != 0;) {
@@ -796,7 +796,8 @@ hpread(ns, buf, len)
 
 #if NBPFILTER > 0
 	if (ns->ns_bpf)
-		bpf_tap(ns->ns_bpf, buf, len + sizeof(struct ether_header));
+		bpf_tap(ns->ns_bpf, buf, len + sizeof(struct ether_header),
+		    BPF_DIRECTION_IN);
 #endif
 	/*
 	       * Pull packet off interface.  Off is nonzero if packet

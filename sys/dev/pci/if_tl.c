@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.39 2006/03/20 16:15:03 brad Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.40 2006/03/25 22:41:45 djm Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1166,7 +1166,7 @@ int tl_intvec_rxeof(xsc, type)
 	 	 * since it can be used again later.
 	 	 */
 		if (ifp->if_bpf) {
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 		}
 #endif
 		/* pass it on. */
@@ -1595,7 +1595,8 @@ void tl_start(ifp)
 		 */
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, cur_tx->tl_mbuf);
+			bpf_mtap(ifp->if_bpf, cur_tx->tl_mbuf,
+			    BPF_DIRECTION_OUT);
 #endif
 	}
 

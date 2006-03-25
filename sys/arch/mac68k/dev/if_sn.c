@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn.c,v 1.41 2006/03/23 18:51:37 brad Exp $        */
+/*    $OpenBSD: if_sn.c,v 1.42 2006/03/25 22:41:41 djm Exp $        */
 /*    $NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $        */
 
 /*
@@ -371,7 +371,7 @@ outloop:
 	 * see the packet before we commit it to the wire.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 	/*
@@ -1085,7 +1085,7 @@ sonic_read(struct sn_softc *sc, caddr_t pkt, int len)
 #if NBPFILTER > 0
 	/* Pass this up to any BPF listeners. */
 	if (ifp->if_bpf) 
-		bpf_mtap(ifp->if_bpf, m); 
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN); 
 #endif
 	ether_input_mbuf(ifp, m);
 	return (1);

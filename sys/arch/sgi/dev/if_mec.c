@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.9 2005/11/09 06:11:42 brad Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.10 2006/03/25 22:41:41 djm Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -932,7 +932,7 @@ mec_start(struct ifnet *ifp)
 		 * Pass packet to bpf if there is a listener.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
+			bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 
 		/*
@@ -1377,7 +1377,7 @@ mec_rxintr(struct mec_softc *sc, uint32_t stat)
 		 * pass it up the stack it its for us.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 		/* Pass it on. */

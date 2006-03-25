@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.64 2006/03/04 22:40:16 brad Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.65 2006/03/25 22:41:48 djm Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -201,7 +201,7 @@ vlan_start(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 		/*
@@ -315,7 +315,8 @@ vlan_input(eh, m)
 
 #if NBPFILTER > 0
 	if (ifv->ifv_if.if_bpf)
-		bpf_mtap_hdr(ifv->ifv_if.if_bpf, (char *)eh, ETHER_HDR_LEN, m);
+		bpf_mtap_hdr(ifv->ifv_if.if_bpf, (char *)eh, ETHER_HDR_LEN,
+		    m, BPF_DIRECTION_IN);
 #endif
 	ifv->ifv_if.if_ipackets++;
 	ether_input(&ifv->ifv_if, eh, m);

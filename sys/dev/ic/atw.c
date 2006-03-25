@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.44 2006/03/22 19:39:06 deraadt Exp $	*/
+/*	$OpenBSD: atw.c,v 1.45 2006/03/25 22:41:42 djm Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -3219,7 +3219,7 @@ atw_rxintr(struct atw_softc *sc)
 			mb.m_len = tap->ar_ihdr.it_len;
 			mb.m_next = m;
 			mb.m_pkthdr.len += mb.m_len;
-			bpf_mtap(sc->sc_radiobpf, &mb);
+			bpf_mtap(sc->sc_radiobpf, &mb, BPF_DIRECTION_IN);
  		}
 #endif /* NPBFILTER > 0 */
 
@@ -3498,7 +3498,7 @@ atw_start(struct ifnet *ifp)
 				break;
 #if NBPFILTER > 0
 			if (ifp->if_bpf != NULL)
-				bpf_mtap(ifp->if_bpf, m0);
+				bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif /* NBPFILTER > 0 */
 			if ((m0 = ieee80211_encap(ifp, m0, &ni)) == NULL) {
 				ifp->if_oerrors++;
@@ -3543,7 +3543,7 @@ atw_start(struct ifnet *ifp)
 		 * Pass the packet to any BPF listeners.
 		 */
 		if (ic->ic_rawbpf != NULL)
-			bpf_mtap(ic->ic_rawbpf, m0);
+			bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
 
 		if (sc->sc_radiobpf != NULL) {
 			struct mbuf mb;
@@ -3560,7 +3560,7 @@ atw_start(struct ifnet *ifp)
 			mb.m_len = tap->at_ihdr.it_len;
 			mb.m_next = m0;
 			mb.m_pkthdr.len += mb.m_len;
-			bpf_mtap(sc->sc_radiobpf, &mb);
+			bpf_mtap(sc->sc_radiobpf, &mb, BPF_DIRECTION_OUT);
 		}
 #endif /* NBPFILTER > 0 */
 

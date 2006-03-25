@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.61 2006/03/04 22:40:15 brad Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.62 2006/03/25 22:41:47 djm Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -630,6 +630,7 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		case BIOCSRTIMEOUT:
 		case BIOCIMMEDIATE:
 		case TIOCGPGRP:
+		case BIOCGDIRFILT:
 			break;
 		default:
 			return (EPERM);
@@ -845,6 +846,15 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 	case BIOCSFILDROP:	/* set "filter-drop" flag */
 		d->bd_fildrop = *(u_int *)addr ? 1 : 0;
+		break;
+
+	case BIOCGDIRFILT:	/* get direction filter */
+		*(u_int *)addr = d->bd_dirfilt;
+		break;
+
+	case BIOCSDIRFILT:	/* set direction filter */
+		d->bd_dirfilt = (*(u_int *)addr) &
+		    (BPF_DIRECTION_IN|BPF_DIRECTION_OUT);
 		break;
 
 	case FIONBIO:		/* Non-blocking I/O */
@@ -1104,7 +1114,7 @@ filt_bpfread(struct knote *kn, long hint)
  * buffer.
  */
 int
-bpf_tap(caddr_t arg, u_char *pkt, u_int pktlen)
+bpf_tap(caddr_t arg, u_char *pkt, u_int pktlen, u_int direction)
 {
 	struct bpf_if *bp;
 	struct bpf_d *d;
@@ -1119,7 +1129,10 @@ bpf_tap(caddr_t arg, u_char *pkt, u_int pktlen)
 	bp = (struct bpf_if *)arg;
 	for (d = bp->bif_dlist; d != 0; d = d->bd_next) {
 		++d->bd_rcount;
-		slen = bpf_filter(d->bd_rfilter, pkt, pktlen, pktlen);
+		if ((direction & d->bd_dirfilt) != 0)
+			slen = 0;
+		else
+			slen = bpf_filter(d->bd_rfilter, pkt, pktlen, pktlen);
 		if (slen != 0) {
 			bpf_catchpacket(d, pkt, pktlen, slen, bcopy);
 			if (d->bd_fildrop)
@@ -1158,7 +1171,7 @@ bpf_mcopy(const void *src_arg, void *dst_arg, size_t len)
  * Incoming linkage from device drivers, when packet is in an mbuf chain.
  */
 void
-bpf_mtap(caddr_t arg, struct mbuf *m)
+bpf_mtap(caddr_t arg, struct mbuf *m, u_int direction)
 {
 	struct bpf_if *bp = (struct bpf_if *)arg;
 	struct bpf_d *d;
@@ -1174,7 +1187,11 @@ bpf_mtap(caddr_t arg, struct mbuf *m)
 
 	for (d = bp->bif_dlist; d != 0; d = d->bd_next) {
 		++d->bd_rcount;
-		slen = bpf_filter(d->bd_rfilter, (u_char *)m, pktlen, 0);
+		if ((direction & d->bd_dirfilt) != 0)
+			slen = 0;
+		else
+			slen = bpf_filter(d->bd_rfilter, (u_char *)m,
+			    pktlen, 0);
 
 		if (slen == 0)
 		    continue;
@@ -1195,7 +1212,8 @@ bpf_mtap(caddr_t arg, struct mbuf *m)
  * it or keep a pointer to it.
  */
 void
-bpf_mtap_hdr(caddr_t arg, caddr_t data, u_int dlen, struct mbuf *m)
+bpf_mtap_hdr(caddr_t arg, caddr_t data, u_int dlen, struct mbuf *m,
+    u_int direction)
 {
 	struct m_hdr mh;
 
@@ -1204,7 +1222,7 @@ bpf_mtap_hdr(caddr_t arg, caddr_t data, u_int dlen, struct mbuf *m)
 	mh.mh_len = dlen;
 	mh.mh_data = data;
 
-	bpf_mtap(arg, (struct mbuf *) &mh);
+	bpf_mtap(arg, (struct mbuf *) &mh, direction);
 	m->m_flags |= mh.mh_flags & M_FILDROP;
 }
 
@@ -1218,7 +1236,7 @@ bpf_mtap_hdr(caddr_t arg, caddr_t data, u_int dlen, struct mbuf *m)
  * it or keep a pointer to it.
  */
 void
-bpf_mtap_af(caddr_t arg, u_int32_t af, struct mbuf *m)
+bpf_mtap_af(caddr_t arg, u_int32_t af, struct mbuf *m, u_int direction)
 {
 	struct m_hdr mh;
 
@@ -1227,7 +1245,7 @@ bpf_mtap_af(caddr_t arg, u_int32_t af, struct mbuf *m)
 	mh.mh_len = 4;
 	mh.mh_data = (caddr_t)&af;
 
-	bpf_mtap(arg, (struct mbuf *) &mh);
+	bpf_mtap(arg, (struct mbuf *) &mh, direction);
 	m->m_flags |= mh.mh_flags & M_FILDROP;
 }
 

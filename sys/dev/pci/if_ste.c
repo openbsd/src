@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.34 2005/11/07 02:57:45 brad Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.35 2006/03/25 22:41:45 djm Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -705,7 +705,7 @@ void ste_rxeof(sc)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 		/* pass it on. */
@@ -1499,7 +1499,8 @@ void ste_start(ifp)
 		 * to him.
 	 	 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, cur_tx->ste_mbuf);
+			bpf_mtap(ifp->if_bpf, cur_tx->ste_mbuf,
+			    BPF_DIRECTION_OUT);
 #endif
 
 		STE_INC(idx, STE_TX_LIST_CNT);

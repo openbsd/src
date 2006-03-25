@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.35 2006/03/11 03:58:37 brad Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.36 2006/03/25 22:41:47 djm Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ gif_output(ifp, m, dst, rt)
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m);
+		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m, BPF_DIRECTION_OUT);
 #endif
 	ifp->if_opackets++;	
 	ifp->if_obytes += m->m_pkthdr.len;

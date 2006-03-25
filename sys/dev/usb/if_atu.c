@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.68 2006/02/20 20:12:14 damien Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.69 2006/03/25 22:41:46 djm Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1748,7 +1748,7 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		mb.m_len = sizeof(sc->sc_txtapu);
 		mb.m_next = m;
 		mb.m_pkthdr.len += mb.m_len;
-		bpf_mtap(sc->sc_radiobpf, &mb);
+		bpf_mtap(sc->sc_radiobpf, &mb, BPF_DIRECTION_IN);
 	}
 #endif /* NPBFILTER > 0 */
 
@@ -1871,7 +1871,7 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 		mb.m_len = sizeof(sc->sc_txtapu);
 		mb.m_next = m;
 		mb.m_pkthdr.len += mb.m_len;
-		bpf_mtap(sc->sc_radiobpf, &mb);
+		bpf_mtap(sc->sc_radiobpf, &mb, BPF_DIRECTION_OUT);
 	}
 #endif
 
@@ -1992,7 +1992,7 @@ atu_start(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
+				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 			m = ieee80211_encap(ifp, m, &ni);
@@ -2002,7 +2002,7 @@ atu_start(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)
-				bpf_mtap(ic->ic_rawbpf, m);
+				bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
 #endif
 		} else {
 			DPRINTFN(25, ("%s: atu_start: mgmt packet\n",

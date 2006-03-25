@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.55 2006/02/26 19:14:39 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.56 2006/03/25 22:41:45 djm Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -915,7 +915,7 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 		mb.m_len = sc->sc_rxtap_len;
 		mb.m_next = m;
 		mb.m_pkthdr.len += mb.m_len;
-		bpf_mtap(sc->sc_drvbpf, &mb);
+		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
 	}
 #endif
 
@@ -1173,7 +1173,7 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 		mb.m_len = sc->sc_txtap_len;
 		mb.m_next = m;
 		mb.m_pkthdr.len += mb.m_len;
-		bpf_mtap(sc->sc_drvbpf, &mb);
+		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
 	}
 #endif
 
@@ -1338,7 +1338,7 @@ ipw_start(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 		m = ieee80211_encap(ifp, m, &ni);
@@ -1347,7 +1347,7 @@ ipw_start(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 		if (ic->ic_rawbpf != NULL)
-			bpf_mtap(ic->ic_rawbpf, m);
+			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_OUT);
 #endif
 
 		if (ipw_tx_start(ifp, m, ni) != 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdqvar.h,v 1.17 2005/11/23 11:30:14 mickey Exp $	*/
+/*	$OpenBSD: pdqvar.h,v 1.18 2006/03/25 22:41:43 djm Exp $	*/
 /*	$NetBSD: pdqvar.h,v 1.11 1996/10/25 21:33:37 cgd Exp $	*/
 
 /*-
@@ -110,8 +110,8 @@ typedef	u_int16_t pdq_bus_ioport_t;
 typedef volatile pdq_uint32_t *pdq_bus_memaddr_t;
 typedef pdq_bus_memaddr_t pdq_bus_memoffset_t;
 #if BSD >= 199506	/* __FreeBSD__ */
-#define	PDQ_BPF_MTAP(sc, m)	bpf_mtap(&(sc)->sc_if, m)
-#define	PDQ_BPFATTACH(sc, t, s)	bpfattach(&(sc)->sc_if, t, s)
+#define	PDQ_BPF_MTAP(sc, m, dir)	bpf_mtap(&(sc)->sc_if, m, dir)
+#define	PDQ_BPFATTACH(sc, t, s)		bpfattach(&(sc)->sc_if, t, s)
 #endif
 
 
@@ -155,11 +155,11 @@ typedef pdq_uint32_t pdq_bus_memoffset_t;
 #endif
 
 #if !defined(PDQ_BPF_MTAP)
-#define	PDQ_BPF_MTAP(sc, m)	bpf_mtap((sc)->sc_bpf, m)
+#define	PDQ_BPF_MTAP(sc, m, dir) bpf_mtap((sc)->sc_bpf, m, dir)
 #endif
 
 #if !defined(PDQ_BPFATTACH)
-#define	PDQ_BPFATTACH(sc, t, s)	bpfattach(&(sc)->sc_bpf, &(sc)->sc_if, t, s)
+#define	PDQ_BPFATTACH(sc, t, s)bpfattach(&(sc)->sc_bpf, &(sc)->sc_if, t, s)
 #endif
 
 #if !defined(PDQ_OS_PTR_FMT)

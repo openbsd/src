@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.76 2006/03/04 03:34:38 brad Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.77 2006/03/25 22:41:42 djm Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -787,7 +787,7 @@ fxp_start(ifp)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
+			bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 
 		FXP_MBUF_SYNC(sc, txs->tx_map, BUS_DMASYNC_PREWRITE);
@@ -973,7 +973,8 @@ rcvloop:
 					    total_len;
 #if NBPFILTER > 0
 					if (ifp->if_bpf)
-						bpf_mtap(ifp->if_bpf, m);
+						bpf_mtap(ifp->if_bpf, m,
+						    BPF_DIRECTION_IN);
 #endif /* NBPFILTER > 0 */
 					ether_input_mbuf(ifp, m);
 				}

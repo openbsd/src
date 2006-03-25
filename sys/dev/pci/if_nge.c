@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.50 2006/03/04 04:40:57 brad Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.51 2006/03/25 22:41:45 djm Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1340,7 +1340,7 @@ nge_rxeof(sc)
 		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 		/* Do IP checksum checking. */
@@ -1699,7 +1699,7 @@ nge_start(ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
+			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 	}
 	if (pkts == 0)

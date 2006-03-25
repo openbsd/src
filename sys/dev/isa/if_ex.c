@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.14 2005/11/09 05:46:21 brad Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.15 2006/03/25 22:41:44 djm Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -543,7 +543,8 @@ ex_start(ifp)
 			sc->tx_tail = next;
 #if NBPFILTER > 0
 			if (ifp->if_bpf != NULL)
-				bpf_mtap(ifp->if_bpf, opkt);
+				bpf_mtap(ifp->if_bpf, opkt,
+				    BPF_DIRECTION_OUT);
 #endif
 			ifp->if_timer = 2;
 			ifp->if_opackets++;
@@ -752,7 +753,8 @@ ex_rx_intr(sc)
 #endif
 #if NBPFILTER > 0
 			if (ifp->if_bpf != NULL)
-				bpf_mtap(ifp->if_bpf, ipkt);
+				bpf_mtap(ifp->if_bpf, ipkt,
+				    BPF_DIRECTION_IN);
 #endif
 			ether_input_mbuf(ifp, ipkt);
 			ifp->if_ipackets++;

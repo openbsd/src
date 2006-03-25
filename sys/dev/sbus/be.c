@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.17 2005/06/08 17:03:01 henning Exp $	*/
+/*	$OpenBSD: be.c,v 1.18 2006/03/25 22:41:46 djm Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -571,7 +571,7 @@ be_read(struct be_softc *sc, int idx, int len)
 	 * If so, hand off the raw packet to BPF.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 	/* Pass the packet up. */
 	ether_input_mbuf(ifp, m);
@@ -611,7 +611,7 @@ bestart(struct ifnet *ifp)
 		 * packet before we commit it to the wire.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 		/*

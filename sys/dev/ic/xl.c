@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.71 2006/03/04 23:31:20 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.72 2006/03/25 22:41:43 djm Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1305,7 +1305,7 @@ again:
 		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
 		if (ifp->if_bpf) {
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 		}
 #endif
 
@@ -1839,7 +1839,8 @@ xl_start(ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, cur_tx->xl_mbuf);
+			bpf_mtap(ifp->if_bpf, cur_tx->xl_mbuf,
+			    BPF_DIRECTION_OUT);
 #endif
 	}
 
@@ -1961,7 +1962,8 @@ xl_start_90xB(ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, cur_tx->xl_mbuf);
+			bpf_mtap(ifp->if_bpf, cur_tx->xl_mbuf,
+			    BPF_DIRECTION_OUT);
 #endif
 
 		XL_INC(idx, XL_TX_LIST_CNT);

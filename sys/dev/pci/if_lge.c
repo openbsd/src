@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.37 2006/03/20 16:15:03 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.38 2006/03/25 22:41:45 djm Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -956,7 +956,7 @@ lge_rxeof(struct lge_softc *sc, int cnt)
 		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 		/* Do IP checksum checking. */
@@ -1212,7 +1212,7 @@ lge_start(struct ifnet *ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
+			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 	}
 	if (pkts == 0)

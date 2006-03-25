@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.10 2006/03/05 01:13:37 brad Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.11 2006/03/25 22:41:45 djm Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -323,7 +323,7 @@ ixgb_start(struct ifnet *ifp)
 #if NBPFILTER > 0
 		/* Send a copy of the frame to the BPF listener */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
+			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 
 		/* Set timeout in case hardware has problems transmitting */
@@ -1753,7 +1753,8 @@ ixgb_process_receive_interrupts(struct ixgb_softc *sc, int count)
 				 * user see the packet.
 				 */
 				if (ifp->if_bpf)
-					bpf_mtap(ifp->if_bpf, sc->fmp);
+					bpf_mtap(ifp->if_bpf, sc->fmp,
+					    BPF_DIRECTION_IN);
 #endif
 
 				ixgb_receive_checksum(sc, current_desc,

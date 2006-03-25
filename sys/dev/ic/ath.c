@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.46 2006/02/20 20:12:13 damien Exp $  */
+/*      $OpenBSD: ath.c,v 1.47 2006/03/25 22:41:42 djm Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -936,7 +936,7 @@ ath_start(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
+				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 			/*
@@ -2008,7 +2008,7 @@ ath_rx_proc(void *arg, int npending)
 			mb.m_next = m;
 			mb.m_pkthdr.len += mb.m_len;
 
-			bpf_mtap(sc->sc_drvbpf, &mb);
+			bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_IN);
 		}
 #endif
 
@@ -2378,7 +2378,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 
 #if NBPFILTER > 0
 	if (ic->ic_rawbpf)
-		bpf_mtap(ic->ic_rawbpf, m0);
+		bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
 
 	if (sc->sc_drvbpf) {
 		struct mbuf mb;
@@ -2399,7 +2399,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 		mb.m_len = sc->sc_txtap_len;
 		mb.m_next = m0;
 		mb.m_pkthdr.len += mb.m_len;
-		bpf_mtap(sc->sc_drvbpf, &mb);
+		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
 	}
 #endif
 

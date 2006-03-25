@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.28 2005/11/09 06:14:50 brad Exp $	*/
+/*	$OpenBSD: qe.c,v 1.29 2006/03/25 22:41:41 djm Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -219,7 +219,7 @@ qestart(ifp)
 		 * packet before we commit it to the wire.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 		/*
@@ -798,7 +798,7 @@ qe_read(sc, idx, len)
 	 * If so, hand off the raw packet to BPF.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 	/* Pass the packet up. */
 	ether_input_mbuf(ifp, m);

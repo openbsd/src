@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.20 2005/10/09 19:22:23 brad Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.21 2006/03/25 22:41:41 djm Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -553,7 +553,7 @@ bmac_rint(void *v)
 		 * If so, hand off the raw packet to BPF.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 		ether_input_mbuf(ifp, m);
 		ifp->if_ipackets++;
@@ -632,7 +632,7 @@ bmac_start(struct ifnet *ifp)
 		 * packet before we commit it to the wire.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 		ifp->if_flags |= IFF_OACTIVE;

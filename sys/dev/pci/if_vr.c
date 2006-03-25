@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.60 2006/03/20 16:15:03 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.61 2006/03/25 22:41:46 djm Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1022,7 +1022,7 @@ vr_rxeof(struct vr_softc *sc)
 		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
+			bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_IN);
 #endif
 		/* pass it on. */
 		ether_input_mbuf(ifp, m0);
@@ -1345,7 +1345,8 @@ vr_start(struct ifnet *ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, cur_tx->vr_mbuf);
+			bpf_mtap(ifp->if_bpf, cur_tx->vr_mbuf,
+			BPF_DIRECTION_OUT);
 #endif
 		cur_tx = cur_tx->vr_nextdesc;
 	}

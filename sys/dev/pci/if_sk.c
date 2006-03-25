@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.95 2006/02/13 01:23:05 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.96 2006/03/25 22:41:45 djm Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1800,7 +1800,7 @@ sk_start(struct ifnet *ifp)
 		 */
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
+			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 	}
 	if (pkts == 0)
@@ -1926,7 +1926,7 @@ sk_rxeof(struct sk_if_softc *sc_if)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 		/* pass it on. */

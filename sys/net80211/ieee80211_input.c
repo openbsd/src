@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.14 2006/01/11 00:18:17 millert Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.15 2006/03/25 22:41:48 djm Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -302,7 +302,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 #if NBPFILTER > 0
 		/* copy to listener after decrypt */
 		if (ic->ic_rawbpf)
-			bpf_mtap(ic->ic_rawbpf, m);
+			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_IN);
 #endif
 		m = ieee80211_decap(ifp, m);
 		if (m == NULL) {
@@ -352,7 +352,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			 * we don't need to duplicate for DLT_EN10MB.
 			 */
 			if (ifp->if_bpf && m1 == NULL)
-				bpf_mtap(ifp->if_bpf, m);
+				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 			ether_input_mbuf(ifp, m);
 		}
@@ -407,7 +407,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		}
 #if NBPFILTER > 0
 		if (ic->ic_rawbpf)
-			bpf_mtap(ic->ic_rawbpf, m);
+			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_IN);
 		/*
 		 * Drop mbuf if it was filtered by bpf. Normally, this is
 		 * done in ether_input() but IEEE 802.11 management frames
@@ -449,7 +449,7 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	if (m != NULL) {
 #if NBPFILTER > 0
 		if (ic->ic_rawbpf)
-			bpf_mtap(ic->ic_rawbpf, m);
+			bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_IN);
 #endif
 		m_freem(m);
 	}

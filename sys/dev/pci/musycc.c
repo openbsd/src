@@ -1,4 +1,4 @@
-/*	$OpenBSD: musycc.c,v 1.14 2006/01/27 13:57:03 claudio Exp $ */
+/*	$OpenBSD: musycc.c,v 1.15 2006/03/25 22:41:46 djm Exp $ */
 
 /*
  * Copyright (c) 2004,2005  Internet Business Solutions AG, Zurich, Switzerland
@@ -1103,7 +1103,7 @@ musycc_start(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 		/* now we are committed to transmit the packet */
@@ -1213,7 +1213,7 @@ musycc_rxeom(struct musycc_group *mg, int channel, int forcekick)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 		/* pass it on. */

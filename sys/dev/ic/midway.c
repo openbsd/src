@@ -1,4 +1,4 @@
-/*	$OpenBSD: midway.c,v 1.36 2006/03/15 20:04:37 miod Exp $	*/
+/*	$OpenBSD: midway.c,v 1.37 2006/03/25 22:41:43 djm Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -176,8 +176,6 @@
 #endif
 
 #endif	/* __FreeBSD__ */
-
-#define BPF_MTAP(ifp, m) bpf_mtap((ifp)->if_bpf, (m))
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -1940,7 +1938,7 @@ again:
 		launch.t->m_data += size;
 		launch.t->m_len -= size;
 
-		BPF_MTAP(&sc->enif, launch.t);
+		bpf_mtap(sc->enif.if_bpf, launch.t, BPF_DIRECTION_OUT);
 
 		launch.t->m_data -= size;
 		launch.t->m_len += size;
@@ -2513,7 +2511,7 @@ void *arg;
 
 #if NBPFILTER > 0
 	  if (sc->enif.if_bpf)
-		BPF_MTAP(&sc->enif, m);
+		bpf_mtap(sc->enif.if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 	  atm_input(&sc->enif, &ah, m, sc->rxslot[slot].rxhand);

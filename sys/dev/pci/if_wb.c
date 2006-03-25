@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.33 2006/03/20 16:15:03 brad Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.34 2006/03/25 22:41:46 djm Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1068,7 +1068,7 @@ void wb_rxeof(sc)
 		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 		/* pass it on. */
 		ether_input_mbuf(ifp, m);
@@ -1411,7 +1411,8 @@ void wb_start(ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, cur_tx->wb_mbuf);
+			bpf_mtap(ifp->if_bpf, cur_tx->wb_mbuf,
+			    BPF_DIRECTION_OUT);
 #endif
 	}
 

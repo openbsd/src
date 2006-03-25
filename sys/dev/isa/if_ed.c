@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.55 2005/04/03 10:20:47 brad Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.56 2006/03/25 22:41:44 djm Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -2001,7 +2001,7 @@ outloop:
 #if NBPFILTER > 0
 	/* Tap off here if there is a BPF listener. */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 
 	/* txb_new points to next open buffer slot. */
@@ -2543,7 +2543,7 @@ edread(sc, buf, len)
 	 * If so, hand off the raw packet to BPF.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 	ether_input_mbuf(ifp, m);

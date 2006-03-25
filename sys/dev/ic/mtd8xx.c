@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.11 2005/11/19 01:59:37 aaron Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.12 2006/03/25 22:41:43 djm Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -745,7 +745,7 @@ mtd_start(struct ifnet *ifp)
 		 */
 #if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m_head);
+			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 	}
 
@@ -965,7 +965,7 @@ mtd_rxeof(struct mtd_softc *sc)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 		ether_input_mbuf(ifp, m);
 	}

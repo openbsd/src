@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.47 2005/11/07 03:20:00 brad Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.48 2006/03/25 22:41:43 djm Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -718,7 +718,7 @@ rl_rxeof(sc)
 		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 		ether_input_mbuf(ifp, m);
 
@@ -926,7 +926,8 @@ void rl_start(ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, RL_CUR_TXMBUF(sc));
+			bpf_mtap(ifp->if_bpf, RL_CUR_TXMBUF(sc),
+			    BPF_DIRECTION_OUT);
 #endif
 		/*
 		 * Transmit the frame.

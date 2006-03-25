@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.78 2006/03/20 10:03:49 henning Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.79 2006/03/25 22:41:48 djm Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -581,7 +581,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 
 	len = m0->m_pkthdr.len + sizeof(*af);
@@ -870,7 +870,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, top);
+		bpf_mtap(ifp->if_bpf, top, BPF_DIRECTION_IN);
 #endif
 
 	if (tp->tun_flags & TUN_LAYER2) {
@@ -1118,7 +1118,7 @@ tunstart(struct ifnet *ifp)
 		if (tp->tun_flags & TUN_LAYER2) {
 #if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
+				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 			ifp->if_opackets++;
 		}

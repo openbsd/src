@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ni.c,v 1.7 2006/01/17 20:26:14 miod Exp $ */
+/*	$OpenBSD: if_ni.c,v 1.8 2006/03/25 22:41:41 djm Exp $ */
 /*	$NetBSD: if_ni.c,v 1.15 2002/05/22 16:03:14 wiz Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -544,7 +544,7 @@ nistart(ifp)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 		bdp = &bbd[(data->bufs[0]._index & 0x7fff)];
 		for (m0 = m, i = 0, mlen = 0; m0; m0 = m0->m_next) {
@@ -631,7 +631,7 @@ niintr(void *arg)
 
 #if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
+				bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 			(*ifp->if_input)(ifp, m);
 			break;

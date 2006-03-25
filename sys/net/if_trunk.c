@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.22 2006/03/11 03:12:36 brad Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.23 2006/03/25 22:41:47 djm Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -874,7 +874,7 @@ trunk_start(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 		if (tr->tr_proto != TRUNK_PROTO_NONE)
@@ -931,7 +931,8 @@ trunk_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 
 #if NBPFILTER > 0
 	if (trifp->if_bpf)
-		bpf_mtap_hdr(trifp->if_bpf, (char *)eh, ETHER_HDR_LEN, m);
+		bpf_mtap_hdr(trifp->if_bpf, (char *)eh, ETHER_HDR_LEN, m,
+		    BPF_DIRECTION_IN);
 #endif
 
 	trifp->if_ipackets++;

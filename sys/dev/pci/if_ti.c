@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.78 2006/03/16 02:32:37 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.79 2006/03/25 22:41:45 djm Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1816,7 +1816,7 @@ ti_rxeof(struct ti_softc *sc)
 	 	 * Handle BPF listeners. Let the BPF user see the packet.
 	 	 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
 		if ((cur_rx->ti_ip_cksum ^ 0xffff) == 0)
@@ -2205,7 +2205,7 @@ ti_start(struct ifnet *ifp)
 		 */
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
+			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
 #endif
 	}
 	if (pkts == 0)
