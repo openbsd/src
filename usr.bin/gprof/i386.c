@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386.c,v 1.8 2003/06/04 16:24:45 deraadt Exp $	*/
+/*	$OpenBSD: i386.c,v 1.9 2006/03/25 19:06:36 espie Exp $	*/
 /*	$NetBSD: i386.c,v 1.5 1995/04/19 07:16:04 cgd Exp $	*/
 
 /*-
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: i386.c,v 1.8 2003/06/04 16:24:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: i386.c,v 1.9 2006/03/25 19:06:36 espie Exp $";
 #endif /* not lint */
 
 #include "gprof.h"
@@ -35,10 +35,7 @@ static char rcsid[] = "$OpenBSD: i386.c,v 1.8 2003/06/04 16:24:45 deraadt Exp $"
 #define	iscall(off)	((*(u_char *)&textspace[off]) == 0xE8)
 
 void
-findcall( parentp , p_lowpc , p_highpc )
-    nltype		*parentp;
-    unsigned long	p_lowpc;
-    unsigned long	p_highpc;
+findcall(nltype *parentp, unsigned long p_lowpc, unsigned long p_highpc)
 {
 	unsigned long pc;
 	long len;
@@ -62,7 +59,7 @@ findcall( parentp , p_lowpc , p_highpc )
 		off = pc - s_lowpc;
 		len = 1;
 		if (iscall(off)) {
-			destpc = *(u_long *)&textspace[off + 1] + off + 5;
+			destpc = *(unsigned long *)&textspace[off + 1] + off + 5;
 #			ifdef DEBUG
 				if ( debug & CALLDEBUG ) {
 					printf( "[findcall]\t0x%x:calls" , pc - textspace );

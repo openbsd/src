@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.c,v 1.16 2005/12/08 22:34:00 millert Exp $	*/
+/*	$OpenBSD: gprof.c,v 1.17 2006/03/25 19:06:36 espie Exp $	*/
 /*	$NetBSD: gprof.c,v 1.8 1995/04/19 07:15:59 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)gprof.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: gprof.c,v 1.16 2005/12/08 22:34:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: gprof.c,v 1.17 2006/03/25 19:06:36 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -213,10 +213,9 @@ main(int argc, char *argv[])
      *	and the arcs.
      */
 void
-getpfile(char *filename)
+getpfile(const char *filename)
 {
     FILE		*pfile;
-    FILE		*openpfile();
     struct rawarc	arc;
 
     pfile = openpfile(filename);
@@ -241,7 +240,7 @@ getpfile(char *filename)
 }
 
 FILE *
-openpfile(char *filename)
+openpfile(const char *filename)
 {
     struct gmonhdr	tmp;
     FILE		*pfile;
@@ -321,7 +320,7 @@ tally(struct rawarc *rawp)
  * dump out the gmon.sum file
  */
 void
-dumpsum(char *sumfile)
+dumpsum(const char *sumfile)
 {
     nltype *nlp;
     arctype *arcp;

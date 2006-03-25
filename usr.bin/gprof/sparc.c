@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc.c,v 1.5 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: sparc.c,v 1.6 2006/03/25 19:06:36 espie Exp $	*/
 /*	$NetBSD: sparc.c,v 1.4 1995/04/19 07:16:24 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sparc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: sparc.c,v 1.5 2003/06/03 02:56:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: sparc.c,v 1.6 2006/03/25 19:06:36 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,12 +72,9 @@ nltype	indirectchild = {
 };
 
 void
-findcall(parentp, p_lowpc, p_highpc)
-	nltype		*parentp;
-	unsigned long	p_lowpc;
-	unsigned long	p_highpc;
+findcall(nltype *parentp, unsigned long p_lowpc, unsigned long p_highpc)
 {
-	u_long pc;
+	unsigned long pc;
 	nltype *childp;
 	unsigned long destpc;
 	long op;
@@ -92,7 +89,7 @@ findcall(parentp, p_lowpc, p_highpc)
 
 	for (pc = p_lowpc; pc < p_highpc; pc += 4) {
 		off = pc - s_lowpc;
-		op = *(u_long *)&textspace[off];
+		op = *(unsigned long *)&textspace[off];
 		if ((op & 0xc0000000) == 0x40000000) {
 			/*
 			 * a pc relative call insn -- check that this

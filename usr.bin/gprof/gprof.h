@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.h,v 1.11 2004/07/20 18:20:55 marc Exp $	*/
+/*	$OpenBSD: gprof.h,v 1.12 2006/03/25 19:06:36 espie Exp $	*/
 /*	$NetBSD: gprof.h,v 1.13 1996/04/01 21:54:06 mark Exp $	*/
 
 /*
@@ -228,67 +228,63 @@ struct stringlist	*ktolist;
     /*
      *	function declarations
      */
-void		addarc();
+void		addarc(nltype *, nltype *, long);
 int		addcycle(arctype **, arctype **);
-void		addlist(struct stringlist *listp, char *funcname);
-int		arccmp();
-arctype		*arclookup();
-void		asgnsamples();
-void		alignentries();
-void		printblurb();
+void		addlist(struct stringlist *, char *);
+int		arccmp(arctype *, arctype *);
+arctype		*arclookup(nltype *, nltype *);
+void		asgnsamples(void);
+void		alignentries(void);
+void		printblurb(const char *);
 int		cycleanalyze(void);
 void		cyclelink(void);
 void		cycletime(void);
 void		compresslist(void);
-int		descend(nltype *node, arctype **stkstart, arctype **stkp);
-void		dfn();
-bool		dfn_busy();
-void		dfn_findcycle();
-void		dfn_init();
-bool		dfn_numbered();
-void		dfn_post_visit();
-void		dfn_pre_visit();
-void		dfn_self_cycle();
-nltype		**doarcs();
+int		descend(nltype *, arctype **, arctype **);
+void		dfn(nltype *);
+bool		dfn_busy(nltype *);
+void		dfn_findcycle(nltype *);
+void		dfn_init(void);
+bool		dfn_numbered(nltype *);
+void		dfn_post_visit(nltype *);
+void		dfn_pre_visit(nltype *);
+void		dfn_self_cycle(nltype *);
+nltype		**doarcs(void);
 void		doflags(void);
 void		dotime(void);
-void		dumpsum();
-void		findcall(nltype *, u_long, u_long);
-void		flatprofheader();
-void		flatprofline();
+void		dumpsum(const char *);
+void		findcall(nltype *, unsigned long, unsigned long);
+void		flatprofheader(void);
+void		flatprofline(nltype *);
 int		getnfile(const char *, char ***);
-void		getpfile();
-void		gprofheader();
-void		gprofline();
-int		hertz();
-void		inheritflags(nltype *childp);
-unsigned long	max();
-int		membercmp();
-unsigned long	min();
-nltype		*nllookup();
-bool		onlist();
-FILE		*openpfile();
-long		operandlength();
-operandenum	operandmode();
-char		*operandname();
-void		printchildren();
-void		printcycle();
-void		printgprof();
-void		printindex();
-void		printmembers();
-void		printname();
-void		printparents();
-void		printprof();
+void		getpfile(const char *);
+void		gprofheader(void);
+void		gprofline(nltype *);
+int		hertz(void);
+void		inheritflags(nltype *);
+unsigned long	max(unsigned long, unsigned long);
+int		membercmp(nltype *, nltype *);
+unsigned long	min(unsigned long, unsigned long);
+nltype		*nllookup(unsigned long);
+bool		onlist(struct stringlist *, const char *);
+FILE		*openpfile(const char *);
+void		printchildren(nltype *);
+void		printcycle(nltype *);
+void		printgprof(nltype **);
+void		printindex(void);
+void		printmembers(nltype *);
+void		printname(nltype *);
+void		printparents(nltype *);
+void		printprof(void);
 void		readsamples(FILE *);
-unsigned long	reladdr();
-void		sortchildren();
-void		sortmembers();
-void		sortparents();
-void		tally();
-int		timecmp();
+void		sortchildren(nltype *);
+void		sortmembers(nltype *);
+void		sortparents(nltype *);
+void		tally(struct rawarc *);
+int		timecmp(nltype **, nltype **);
 void		timepropagate(nltype *);
-int		topcmp();
-int		totalcmp();
+int		topcmp(nltype **, nltype **);
+int		totalcmp(nltype **, nltype **);
 
 #define	LESSTHAN	-1
 #define	EQUALTO		0

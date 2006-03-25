@@ -1,4 +1,4 @@
-/*	$OpenBSD: lookup.c,v 1.6 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: lookup.c,v 1.7 2006/03/25 19:06:36 espie Exp $	*/
 /*	$NetBSD: lookup.c,v 1.5 1995/04/19 07:16:06 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lookup.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lookup.c,v 1.6 2003/06/03 02:56:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: lookup.c,v 1.7 2006/03/25 19:06:36 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,8 +46,7 @@ static char rcsid[] = "$OpenBSD: lookup.c,v 1.6 2003/06/03 02:56:08 millert Exp 
      *	    entry point.
      */
 nltype *
-nllookup( address )
-    unsigned long	address;
+nllookup(unsigned long address)
 {
     long	low;
     long	middle;
@@ -84,9 +83,7 @@ nllookup( address )
 }
 
 arctype *
-arclookup( parentp , childp )
-    nltype	*parentp;
-    nltype	*childp;
+arclookup(nltype *parentp, nltype *childp)
 {
     arctype	*arcp;
 

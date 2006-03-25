@@ -1,4 +1,4 @@
-/*	$OpenBSD: printgprof.c,v 1.10 2004/07/20 08:46:23 art Exp $	*/
+/*	$OpenBSD: printgprof.c,v 1.11 2006/03/25 19:06:36 espie Exp $	*/
 /*	$NetBSD: printgprof.c,v 1.5 1995/04/19 07:16:21 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)printgprof.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: printgprof.c,v 1.10 2004/07/20 08:46:23 art Exp $";
+static char rcsid[] = "$OpenBSD: printgprof.c,v 1.11 2006/03/25 19:06:36 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -42,6 +42,8 @@ static char rcsid[] = "$OpenBSD: printgprof.c,v 1.10 2004/07/20 08:46:23 art Exp
 
 #include "gprof.h"
 #include "pathnames.h"
+
+int namecmp(nltype **, nltype **);
 
 void
 printprof()
@@ -72,8 +74,7 @@ printprof()
 }
 
 int
-timecmp( npp1 , npp2 )
-    nltype **npp1, **npp2;
+timecmp(nltype **npp1, nltype **npp2)
 {
     double	timediff;
     long	calldiff;
@@ -119,8 +120,7 @@ flatprofheader()
 }
 
 void
-flatprofline( np )
-    nltype	*np;
+flatprofline(nltype *np)
 {
 
     if ( zflag == 0 && np -> ncall == 0 && np -> time == 0 ) {
@@ -170,8 +170,7 @@ gprofheader()
 }
 
 void
-gprofline( np )
-    nltype	*np;
+gprofline(nltype *np)
 {
     char	kirkbuffer[ BUFSIZ ];
 
@@ -194,8 +193,7 @@ gprofline( np )
 }
 
 void
-printgprof(timesortnlp)
-    nltype	**timesortnlp;
+printgprof(nltype **timesortnlp)
 {
     int		index;
     nltype	*parentp;
@@ -243,9 +241,7 @@ printgprof(timesortnlp)
      *	all else being equal, sort by names.
      */
 int
-totalcmp( npp1 , npp2 )
-    nltype	**npp1;
-    nltype	**npp2;
+totalcmp(nltype **npp1, nltype **npp2)
 {
     nltype		*np1 = *npp1;
     nltype		*np2 = *npp2;
@@ -277,8 +273,7 @@ totalcmp( npp1 , npp2 )
 }
 
 void
-printparents( childp )
-    nltype	*childp;
+printparents(nltype *childp)
 {
     nltype	*parentp;
     arctype	*arcp;
@@ -322,8 +317,7 @@ printparents( childp )
 }
 
 void
-printchildren( parentp )
-    nltype	*parentp;
+printchildren(nltype *parentp)
 {
     nltype	*childp;
     arctype	*arcp;
@@ -356,8 +350,7 @@ printchildren( parentp )
 }
 
 void
-printname( selfp )
-    nltype	*selfp;
+printname(nltype *selfp)
 {
 
     if ( selfp -> name != 0 ) {
@@ -384,8 +377,7 @@ printname( selfp )
 }
 
 void
-sortchildren( parentp )
-    nltype	*parentp;
+sortchildren(nltype *parentp)
 {
     arctype	*arcp;
     arctype	*detachedp;
@@ -425,8 +417,7 @@ sortchildren( parentp )
 }
 
 void
-sortparents( childp )
-    nltype	*childp;
+sortparents(nltype *childp)
 {
     arctype	*arcp;
     arctype	*detachedp;
@@ -465,8 +456,7 @@ sortparents( childp )
      *	print a cycle header
      */
 void
-printcycle( cyclep )
-    nltype	*cyclep;
+printcycle(nltype *cyclep)
 {
     char	kirkbuffer[ BUFSIZ ];
 
@@ -486,8 +476,7 @@ printcycle( cyclep )
      *	print the members of a cycle
      */
 void
-printmembers( cyclep )
-    nltype	*cyclep;
+printmembers(nltype *cyclep)
 {
     nltype	*memberp;
 
@@ -509,8 +498,7 @@ printmembers( cyclep )
      *	sort members of a cycle
      */
 void
-sortmembers( cyclep )
-    nltype	*cyclep;
+sortmembers(nltype *cyclep)
 {
     nltype	*todo;
     nltype	*doing;
@@ -537,9 +525,7 @@ sortmembers( cyclep )
      *	next is sort on ncalls + selfcalls.
      */
 int
-membercmp( this , that )
-    nltype	*this;
-    nltype	*that;
+membercmp(nltype *this , nltype *that)
 {
     double	thistime = this -> propself + this -> propchild;
     double	thattime = that -> propself + that -> propchild;
@@ -570,9 +556,7 @@ membercmp( this , that )
      *		arc count as minor key
      */
 int
-arccmp( thisp , thatp )
-    arctype	*thisp;
-    arctype	*thatp;
+arccmp(arctype *thisp, arctype *thatp)
 {
     nltype	*thisparentp = thisp -> arc_parentp;
     nltype	*thischildp = thisp -> arc_childp;
@@ -649,8 +633,7 @@ arccmp( thisp , thatp )
 }
 
 void
-printblurb( blurbname )
-    char	*blurbname;
+printblurb(const char *blurbname)
 {
     FILE	*blurbfile;
     int		input;
@@ -667,8 +650,7 @@ printblurb( blurbname )
 }
 
 int
-namecmp( npp1 , npp2 )
-    nltype **npp1, **npp2;
+namecmp(nltype **npp1, nltype **npp2)
 {
     return( strcmp( (*npp1) -> name , (*npp2) -> name ) );
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcs.c,v 1.9 2004/07/23 23:15:18 marc Exp $	*/
+/*	$OpenBSD: arcs.c,v 1.10 2006/03/25 19:06:35 espie Exp $	*/
 /*	$NetBSD: arcs.c,v 1.6 1995/04/19 07:15:52 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)arcs.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: arcs.c,v 1.9 2004/07/23 23:15:18 marc Exp $";
+static char rcsid[] = "$OpenBSD: arcs.c,v 1.10 2006/03/25 19:06:35 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,10 +52,7 @@ void printsubcycle(cltype *);
      *	add (or just increment) an arc
      */
 void
-addarc( parentp , childp , count )
-    nltype	*parentp;
-    nltype	*childp;
-    long	count;
+addarc(nltype *parentp, nltype *childp, long count)
 {
     arctype		*arcp;
 
@@ -106,9 +103,7 @@ addarc( parentp , childp , count )
 nltype	**topsortnlp;
 
 int
-topcmp( npp1 , npp2 )
-    nltype	**npp1;
-    nltype	**npp2;
+topcmp(nltype **npp1, nltype **npp2)
 {
     return (*npp1) -> toporder - (*npp2) -> toporder;
 }
@@ -266,8 +261,7 @@ dotime()
 }
 
 void
-timepropagate( parentp )
-    nltype	*parentp;
+timepropagate(nltype *parentp)
 {
     arctype	*arcp;
     nltype	*childp;
@@ -525,10 +519,7 @@ cycleanalyze()
 }
 
 int
-descend( node , stkstart , stkp )
-    nltype	*node;
-    arctype	**stkstart;
-    arctype	**stkp;
+descend(nltype *node, arctype **stkstart, arctype **stkp)
 {
     arctype	*arcp;
     bool	ret;
@@ -560,9 +551,7 @@ descend( node , stkstart , stkp )
 }
 
 int
-addcycle( stkstart , stkend )
-    arctype	**stkstart;
-    arctype	**stkend;
+addcycle(arctype **stkstart, arctype **stkend)
 {
     arctype	**arcpp;
     arctype	**stkloc;
@@ -752,8 +741,7 @@ compresslist()
 
 #ifdef DEBUG
 void
-printsubcycle( clp )
-    cltype	*clp;
+printsubcycle(cltype *clp)
 {
     arctype	**arcpp;
     arctype	**endlist;
@@ -893,8 +881,7 @@ doflags()
      *	similarly, deal with propagation fractions from parents.
      */
 void
-inheritflags( childp )
-    nltype	*childp;
+inheritflags(nltype *childp)
 {
     nltype	*headp;
     arctype	*arcp;

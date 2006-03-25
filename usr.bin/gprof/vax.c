@@ -1,4 +1,4 @@
-/*	$OpenBSD: vax.c,v 1.6 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: vax.c,v 1.7 2006/03/25 19:06:36 espie Exp $	*/
 /*	$NetBSD: vax.c,v 1.6 1996/04/20 14:56:37 ragge Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vax.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: vax.c,v 1.6 2003/06/03 02:56:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: vax.c,v 1.7 2006/03/25 19:06:36 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,8 +68,7 @@ nltype	indirectchild = {
     };
 
 operandenum
-operandmode( modep )
-    struct modebyte	*modep;
+operandmode(struct modebyte *modep)
 {
     long	usesreg = modep -> regfield;
     
@@ -108,8 +107,7 @@ operandmode( modep )
 }
 
 char *
-operandname( mode )
-    operandenum	mode;
+operandname(operandenum mode)
 {
     
     switch ( mode ) {
@@ -160,8 +158,7 @@ operandname( mode )
 }
 
 long
-operandlength( modep )
-    struct modebyte	*modep;
+operandlength(struct modebyte *modep)
 {
     
     switch ( operandmode( modep ) ) {
@@ -196,8 +193,7 @@ operandlength( modep )
 }
 
 unsigned long
-reladdr( modep )
-    struct modebyte	*modep;
+reladdr(struct modebyte *modep)
 {
     operandenum	mode = operandmode( modep );
     char	*cp;
@@ -222,10 +218,7 @@ reladdr( modep )
 }
 
 void
-findcall( parentp , p_lowpc , p_highpc )
-    nltype		*parentp;
-    unsigned long	p_lowpc;
-    unsigned long	p_highpc;
+findcall(nltype *parentp, unsigned long p_lowpc, unsigned long p_highpc)
 {
     unsigned char	*instructp;
     long		length;

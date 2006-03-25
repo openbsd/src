@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64.c,v 1.1 2004/08/11 11:25:16 pefo Exp $	*/
+/*	$OpenBSD: mips64.c,v 1.2 2006/03/25 19:06:36 espie Exp $	*/
 /*	$NetBSD: mips.c,v 1.4 1995/04/19 07:16:11 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)mips.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mips64.c,v 1.1 2004/08/11 11:25:16 pefo Exp $";
+static char rcsid[] = "$OpenBSD: mips64.c,v 1.2 2006/03/25 19:06:36 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,12 +74,9 @@ nltype	indirectchild = {
 };
 
 void
-findcall(parentp, p_lowpc, p_highpc)
-	nltype		*parentp;
-	unsigned long	p_lowpc;
-	unsigned long	p_highpc;
+findcall(nltype *parentp, unsigned long p_lowpc, unsigned long p_highpc)
 {
-	u_long pc;
+	unsigned long pc;
 	nltype *childp;
 	unsigned long destpc;
 	long op;
@@ -94,7 +91,7 @@ findcall(parentp, p_lowpc, p_highpc)
 
 	for (pc = p_lowpc; pc < p_highpc; pc += 4) {
 		off = pc - s_lowpc;
-		op = *(u_long *)&textspace[off];
+		op = *(unsigned long *)&textspace[off];
 		if ((op & 0xfc000000) == 0x0c000000) {
 			/*
 			 * a jal insn -- check that this

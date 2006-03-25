@@ -1,4 +1,4 @@
-/*	$OpenBSD: tahoe.c,v 1.5 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: tahoe.c,v 1.6 2006/03/25 19:06:36 espie Exp $	*/
 /*	$NetBSD: tahoe.c,v 1.5 1995/04/19 07:16:27 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tahoe.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: tahoe.c,v 1.5 2003/06/03 02:56:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: tahoe.c,v 1.6 2006/03/25 19:06:36 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,8 +65,7 @@ nltype	indirectchild = {
     };
 
 operandenum
-operandmode( modep )
-    unsigned char	*modep;
+operandmode(unsigned char *modep)
 {
     long	usesreg = ((long)*modep) & 0xf;
     
@@ -105,8 +104,7 @@ operandmode( modep )
 }
 
 char *
-operandname( mode )
-    operandenum	mode;
+operandname(operandenum mode)
 {
     
     switch ( mode ) {
@@ -157,8 +155,7 @@ operandname( mode )
 }
 
 long
-operandlength( modep )
-    unsigned char	*modep;
+operandlength(unsigned char *modep)
 {
     
     switch ( operandmode( modep ) ) {
@@ -193,8 +190,7 @@ operandlength( modep )
 }
 
 unsigned long
-reladdr( modep )
-    char	*modep;
+reladdr(char *modep)
 {
     operandenum	mode = operandmode( modep );
     char	*cp;
@@ -223,10 +219,7 @@ reladdr( modep )
 }
 
 void
-findcall( parentp , p_lowpc , p_highpc )
-    nltype		*parentp;
-    unsigned long	p_lowpc;
-    unsigned long	p_highpc;
+findcall(nltype *parentp, unsigned long p_lowpc, unsigned long p_highpc)
 {
     unsigned char	*instructp;
     long		length;

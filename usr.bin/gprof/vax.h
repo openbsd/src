@@ -1,4 +1,4 @@
-/*	$OpenBSD: vax.h,v 1.3 2003/06/03 02:56:08 millert Exp $	*/
+/*	$OpenBSD: vax.h,v 1.4 2006/03/25 19:06:36 espie Exp $	*/
 /*	$NetBSD: vax.h,v 1.4 1995/04/19 07:16:31 cgd Exp $	*/
 
 /*
@@ -62,3 +62,7 @@ struct modebyte {
     unsigned int	modefield:4;
 };
 
+unsigned long	reladdr(struct modebyte *);
+long		operandlength(struct modebyte *);
+operandenum	operandmode(struct modebyte *);
+char		*operandname(operandenum);

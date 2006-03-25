@@ -1,4 +1,4 @@
-/*	$OpenBSD: printlist.c,v 1.5 2003/07/10 00:06:51 david Exp $	*/
+/*	$OpenBSD: printlist.c,v 1.6 2006/03/25 19:06:36 espie Exp $	*/
 /*	$NetBSD: printlist.c,v 1.5 1995/04/19 07:16:23 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)printlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: printlist.c,v 1.5 2003/07/10 00:06:51 david Exp $";
+static char rcsid[] = "$OpenBSD: printlist.c,v 1.6 2006/03/25 19:06:36 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,9 +62,7 @@ struct stringlist	Ehead = { 0 , 0 };
 struct stringlist	*Elist = &Ehead;
 
 void
-addlist( listp , funcname )
-    struct stringlist	*listp;
-    char		*funcname;
+addlist(struct stringlist *listp, char *funcname)
 {
     struct stringlist	*slp;
 
@@ -77,9 +75,7 @@ addlist( listp , funcname )
 }
 
 bool
-onlist( listp , funcname )
-    struct stringlist	*listp;
-    char		*funcname;
+onlist(struct stringlist *listp, const char *funcname)
 {
     struct stringlist	*slp;
 
