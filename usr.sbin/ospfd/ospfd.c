@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.29 2006/03/14 16:14:30 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.30 2006/03/25 09:34:13 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -24,6 +24,8 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -120,6 +122,9 @@ main(int argc, char *argv[])
 	char			*conffile;
 	int			 ch, opts = 0;
 	int			 debug = 0;
+	int			 ipforwarding;
+	int			 mib[4];
+	size_t			 len;
 
 	conffile = CONF_FILE;
 	ospfd_process = PROC_MAIN;
@@ -151,6 +156,17 @@ main(int argc, char *argv[])
 	}
 
 	log_init(debug);
+
+	mib[0] = CTL_NET;
+	mib[1] = PF_INET;
+	mib[2] = IPPROTO_IP;
+	mib[3] = IPCTL_FORWARDING;
+	len = sizeof(ipforwarding);
+	if (sysctl(mib, 4, &ipforwarding, &len, NULL, 0) == -1)
+		err(1, "sysctl");
+
+	if (!ipforwarding)
+		log_warnx("WARNING: forwarding NOT enabled");
 
 	/* fetch interfaces early */
 	kif_init();
