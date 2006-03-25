@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.8 2006/03/24 21:13:45 otto Exp $	*/
+/*	$OpenBSD: dc.c,v 1.9 2006/03/25 07:49:56 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: dc.c,v 1.8 2006/03/24 21:13:45 otto Exp $";
+static const char rcsid[] = "$OpenBSD: dc.c,v 1.9 2006/03/25 07:49:56 otto Exp $";
 #endif /* not lint */
 
 #include <sys/stat.h>
@@ -89,16 +89,15 @@ main(int argc, char *argv[])
 			return (0);
 	}
 	if (argc == 1) {
-		if (stat(argv[0], &st) == -1)
+		file = fopen(argv[0], "r");
+		if (file == NULL)
+			err(1, "cannot open file %s", argv[0]);
+		if (fstat(fileno(file), &st) == -1)
 			err(1, "%s", argv[0]);
 		if (S_ISDIR(st.st_mode)) {
 			errno = EISDIR;
 			err(1, "%s", argv[0]);
 		}
-
-		file = fopen(argv[0], "r");
-		if (file == NULL)
-			err(1, "cannot open file %s", argv[0]);
 		src_setstream(&src, file);
 		reset_bmachine(&src);
 		eval();
