@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.76 2006/03/04 03:54:06 brad Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.77 2006/03/25 22:41:39 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.73 2006/03/04 03:53:30 brad Exp 
+ *	OpenBSD: miidevs,v 1.74 2006/03/25 22:41:19 brad Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -73,6 +73,7 @@
 #define	MII_OUI_REALTEK2	0x00e04c	/* Realtek Semiconductor */
 #define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
 #define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
+#define	MII_OUI_SMSC	0x00800f	/* Standard Microsystems */
 #define	MII_OUI_TI	0x080028	/* Texas Instruments */
 #define	MII_OUI_TSC	0x00c039	/* TDK Semiconductor */
 #define	MII_OUI_VIA	0x004063	/* VIA Networking Technologies */
@@ -320,6 +321,10 @@
 /* Silicon Integrated Systems PHYs */
 #define	MII_MODEL_xxSIS_900	0x0000
 #define	MII_STR_xxSIS_900	"SiS 900 10/100 PHY"
+
+/* Standard Microsystems PHYs */
+#define	MII_MODEL_SMSC_LAN83C185	0x000a
+#define	MII_STR_SMSC_LAN83C185	"LAN83C185 10/100 PHY"
 
 /* Texas Instruments PHYs */
 #define	MII_MODEL_xxTI_TLAN10T	0x0001
