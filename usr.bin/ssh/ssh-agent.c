@@ -101,8 +101,8 @@ int max_fd = 0;
 pid_t parent_pid = -1;
 
 /* pathname and directory for AUTH_SOCKET */
-char socket_name[1024];
-char socket_dir[1024];
+char socket_name[MAXPATHLEN];
+char socket_dir[MAXPATHLEN];
 
 /* locking */
 int locked = 0;
@@ -795,10 +795,7 @@ new_socket(sock_type type, int fd)
 		}
 	old_alloc = sockets_alloc;
 	new_alloc = sockets_alloc + 10;
-	if (sockets)
-		sockets = xrealloc(sockets, new_alloc * sizeof(sockets[0]));
-	else
-		sockets = xmalloc(new_alloc * sizeof(sockets[0]));
+	sockets = xrealloc(sockets, new_alloc * sizeof(sockets[0]));
 	for (i = old_alloc; i < new_alloc; i++)
 		sockets[i].type = AUTH_UNUSED;
 	sockets_alloc = new_alloc;

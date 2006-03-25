@@ -672,7 +672,7 @@ main(int ac, char **av)
 	if (options.rhosts_rsa_authentication ||
 	    options.hostbased_authentication) {
 		sensitive_data.nkeys = 3;
-		sensitive_data.keys = xmalloc(sensitive_data.nkeys *
+		sensitive_data.keys = xcalloc(sensitive_data.nkeys, 
 		    sizeof(Key));
 
 		PRIV_START;
@@ -1229,7 +1229,8 @@ env_permitted(char *env)
 	int i;
 	char name[1024], *cp;
 
-	strlcpy(name, env, sizeof(name));
+	if (strlcpy(name, env, sizeof(name)) >= sizeof(name))
+		fatal("env_permitted: name too long");
 	if ((cp = strchr(name, '=')) == NULL)
 		return (0);
 

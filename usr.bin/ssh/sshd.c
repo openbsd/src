@@ -868,7 +868,7 @@ main(int ac, char **av)
 {
 	extern char *optarg;
 	extern int optind;
-	int opt, j, i, fdsetsz, on = 1;
+	int opt, j, i, on = 1;
 	int sock_in = -1, sock_out = -1, newsock = -1;
 	pid_t pid;
 	socklen_t fromlen;
@@ -1052,7 +1052,7 @@ main(int ac, char **av)
 	debug("sshd version %.100s", SSH_VERSION);
 
 	/* load private host keys */
-	sensitive_data.host_keys = xmalloc(options.num_host_key_files *
+	sensitive_data.host_keys = xcalloc(options.num_host_key_files,
 	    sizeof(Key *));
 	for (i = 0; i < options.num_host_key_files; i++)
 		sensitive_data.host_keys[i] = NULL;
@@ -1137,7 +1137,7 @@ main(int ac, char **av)
 		exit(0);
 
 	if (rexec_flag) {
-		rexec_argv = xmalloc(sizeof(char *) * (rexec_argc + 2));
+		rexec_argv = xcalloc(rexec_argc + 2, sizeof(char *));
 		for (i = 0; i < rexec_argc; i++) {
 			debug("rexec_argv[%d]='%s'", i, saved_argv[i]);
 			rexec_argv[i] = saved_argv[i];
@@ -1315,7 +1315,7 @@ main(int ac, char **av)
 			if (listen_socks[i] > maxfd)
 				maxfd = listen_socks[i];
 		/* pipes connected to unauthenticated childs */
-		startup_pipes = xmalloc(options.max_startups * sizeof(int));
+		startup_pipes = xcalloc(options.max_startups, sizeof(int));
 		for (i = 0; i < options.max_startups; i++)
 			startup_pipes[i] = -1;
 
@@ -1328,9 +1328,8 @@ main(int ac, char **av)
 				sighup_restart();
 			if (fdset != NULL)
 				xfree(fdset);
-			fdsetsz = howmany(maxfd+1, NFDBITS) * sizeof(fd_mask);
-			fdset = (fd_set *)xmalloc(fdsetsz);
-			memset(fdset, 0, fdsetsz);
+			fdset = (fd_set *)xcalloc(howmany(maxfd + 1, NFDBITS),
+			    sizeof(fd_mask));
 
 			for (i = 0; i < num_listen_socks; i++)
 				FD_SET(listen_socks[i], fdset);
@@ -1626,8 +1625,7 @@ main(int ac, char **av)
 	packet_set_nonblocking();
 
 	/* allocate authentication context */
-	authctxt = xmalloc(sizeof(*authctxt));
-	memset(authctxt, 0, sizeof(*authctxt));
+	authctxt = xcalloc(1, sizeof(*authctxt));
 
 	/* XXX global for cleanup, access from other modules */
 	the_authctxt = authctxt;
