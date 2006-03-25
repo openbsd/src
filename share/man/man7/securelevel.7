@@ -1,4 +1,4 @@
-.\"     $OpenBSD: securelevel.7,v 1.17 2005/05/12 08:16:06 jmc Exp $
+.\"     $OpenBSD: securelevel.7,v 1.18 2006/03/25 08:28:45 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Hugh Graham
 .\"
@@ -87,6 +87,13 @@ the
 .Va machdep.kbdreset
 .Xr sysctl 8
 variable may not be changed
+.It
+the
+.Va ddb.console
+and
+.Va ddb.panic
+.Xr sysctl 8
+variables may not be raised
 .El
 .It \ 2 Em Highly secure mode
 .Bl -hyphen -compact
@@ -102,13 +109,6 @@ may not set the time backwards or close to overflow
 .It
 .Xr pf 4
 filter and NAT rules may not be altered
-.It
-the
-.Va ddb.console
-and
-.Va ddb.panic
-.Xr sysctl 8
-variables may not be raised
 .El
 .El
 .Sh DESCRIPTION
@@ -146,7 +146,7 @@ affected because the clock may still be slowed.
 Because securelevel can be modified with the in-kernel debugger
 .Xr ddb 4 ,
 a convenient means of locking it off (if present) is provided
-on highly secure systems.
+at securelevels 1 and 2.
 This is accomplished by setting
 .Va ddb.console
 and
