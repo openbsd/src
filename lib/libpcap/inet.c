@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.18 2005/11/25 20:25:44 krw Exp $	*/
+/*	$OpenBSD: inet.c,v 1.19 2006/03/26 20:58:50 djm Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996, 1997, 1998
@@ -246,13 +246,11 @@ pcap_lookupdev(errbuf)
 }
 
 int
-pcap_lookupnet(device, netp, maskp, errbuf)
-	register char *device;
-	register bpf_u_int32 *netp, *maskp;
-	register char *errbuf;
+pcap_lookupnet(const char *device, bpf_u_int32 *netp, bpf_u_int32 *maskp,
+    char *errbuf)
 {
-	register int fd;
-	register struct sockaddr_in *sin;
+	int fd;
+	struct sockaddr_in *sin;
 	struct ifreq ifr;
 
 	fd = socket(AF_INET, SOCK_DGRAM, 0);

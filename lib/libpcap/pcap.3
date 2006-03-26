@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.27 2005/11/18 15:27:09 jmc Exp $
+.\"	$OpenBSD: pcap.3,v 1.28 2006/03/26 20:58:51 djm Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,10 +33,12 @@
 .Fn pcap_open_offline "char *fname" "char *errbuf"
 .Ft "pcap_dumper_t *"
 .Fn pcap_dump_open "pcap_t *p" "char *fname"
+.Ft "pcap_dumper_t *"
+.Fn pcap_dump_fopen "pcap_t *p" "FILE *f"
 .Ft "char *"
 .Fn pcap_lookupdev "char *errbuf"
 .Ft uint
-.Fn pcap_lookupnet "char *device" "bpf_u_int32 *netp" "bpf_u_int32 *maskp" "char *errbuf"
+.Fn pcap_lookupnet "const char *device" "bpf_u_int32 *netp" "bpf_u_int32 *maskp" "char *errbuf"
 .Ft int
 .Fn pcap_dispatch "pcap_t *p" "int cnt" "pcap_handler callback" "u_char *user"
 .Ft int
@@ -46,6 +48,8 @@
 .Ft int
 .Fn pcap_inject "pcap_t *p" "void *, size_t"
 .Ft int
+.Fn pcap_sendpacket "pcap_t *p" "void *, int"
+.Ft int
 .Fn pcap_compile "pcap_t *p" "struct bpf_program *fp" "char *str" "int optimize" "bpf_u_int32 netmask"
 .Ft int
 .Fn pcap_setfilter "pcap_t *p" "struct bpf_program *fp"
@@ -53,6 +57,10 @@
 .Fn pcap_freecode "struct bpf_program *fp"
 .Ft "u_char *"
 .Fn pcap_next "pcap_t *p" "struct pcap_pkthdr *h"
+.Ft int
+.Fn pcap_next_ex "pcap_t *p" "struct pcap_pkthdr **hp" "const u_char **pktp"
+.Ft int
+.Fn pcap_setdirection "pcap_t *p" "pcap_direction_t dir"
 .Ft int
 .Fn pcap_datalink "pcap_t *p"
 .Ft int
@@ -77,6 +85,12 @@
 .Fn pcap_strerror "int error"
 .Ft void
 .Fn pcap_close "pcap_t *p"
+.Ft "FILE *"
+.Fn pcap_dump_file "pcap_dumper_t *p"
+.Ft long
+.Fn pcap_dump_ftell "pcap_dumper_t *p"
+.Ft int
+.Fn pcap_dump_flush "pcap_dumper_t *p"
 .Ft void
 .Fn pcap_dump_close "pcap_dumper_t *p"
 .Ft int
@@ -95,6 +109,8 @@
 .Fn pcap_list_datalinks "pcap_t *p" "int **dlts"
 .Ft pcap_t
 .Fn pcap_open_dead "int linktype" "int snaplen"
+.Ft pcap_t
+.Fn pcap_fopen_offline "FILE *fp" "char *errbuf"
 .Ft const char *
 .Fn pcap_lib_version "void"
 .Ft const char *
@@ -187,6 +203,10 @@ is returned,
 .Fn pcap_geterr
 can be used to get the error text.
 .Pp
+.Fn pcap_dump_fopen
+allows the use of savefile functions on the already-opened stream
+.Dq f .
+.Pp
 .Fn pcap_lookupdev
 returns a pointer to a network device suitable for use with
 .Fn pcap_open_live
@@ -257,6 +277,11 @@ Note that its calling arguments are suitable for use with
 uses
 .Xr write 2
 to inject a raw packet through the network interface.
+It returns the number of bytes written or \-1 on failure.
+.Pp
+.Fn pcap_sendpacket
+is an alternate interface for packet injection (provided for compatibility).
+It returns 0 on success or \-1 on failure.
 .Pp
 .Fn pcap_compile
 is used to compile the string
@@ -325,6 +350,13 @@ returns a
 .Fa u_char
 pointer to the next packet.
 .Pp
+.Fn pcap_next_ex
+reads the next packet and returns a success/failure indication: a
+return value of 1 indicates success, 0 means that the timeout was exceeded
+on a live capture, \-1 indicates that an error occurred whilst reading
+the packet and \-2 is returned when there are no more packets to read in a
+savefile.
+.Pp
 .Fn pcap_datalink
 returns the link layer type, e.g.,
 .Tn DLT_EN10MB .
@@ -382,6 +414,15 @@ closes the files associated with
 .Fa p
 and deallocates resources.
 .Pp
+.Fn pcap_dump_file
+returns the stream associated with a savefile.
+.Pp
+.Fn pcap_dump_ftell
+returns the current file offset within a savefile.
+.Pp
+.Fn pcap_dump_flush
+ensures that any buffered data has been written to a savefile.
+.Pp
 .Fn pcap_dump_close
 closes the savefile.
 .Pp
@@ -405,6 +446,10 @@ sets or resets non-blocking mode on a capture file descriptor.
 sets the datalink type on a live capture device that supports multiple
 datalink types.
 .Pp
+.Fn pcap_setdirection
+is used to limit the direction that packets must be flowing in order
+to be captured.
+.Pp
 .Fn pcap_list_datalinks
 returns an array of the supported datalink types for an opened live capture
 device as a \-1 terminated array.
@@ -420,6 +465,10 @@ signal handler.
 is used for creating a pcap_t structure to use when calling the
 other functions in libpcap.
 It is typically used when just using libpcap for compiling BPF code.
+.Pp
+.Fn pcap_fopen_offline
+may be used to read dumped data from an existing open stream
+.Dq fp .
 .Pp
 .Fn pcap_lib_version
 returns a string describing the version of libpcap.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.c,v 1.9 2005/11/18 11:05:39 djm Exp $	*/
+/*	$OpenBSD: pcap.c,v 1.10 2006/03/26 20:58:51 djm Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -109,6 +109,70 @@ pcap_next(pcap_t *p, struct pcap_pkthdr *h)
 	if (pcap_dispatch(p, 1, pcap_oneshot, (u_char*)&s) <= 0)
 		return (0);
 	return (s.pkt);
+}
+
+struct pkt_for_fakecallback {
+	struct pcap_pkthdr *hdr;
+	const u_char **pkt;
+};
+
+static void
+pcap_fakecallback(u_char *userData, const struct pcap_pkthdr *h,
+    const u_char *pkt)
+{
+	struct pkt_for_fakecallback *sp = (struct pkt_for_fakecallback *)userData;
+
+	*sp->hdr = *h;
+	*sp->pkt = pkt;
+}
+
+int 
+pcap_next_ex(pcap_t *p, struct pcap_pkthdr **pkt_header,
+    const u_char **pkt_data)
+{
+	struct pkt_for_fakecallback s;
+
+	s.hdr = &p->pcap_header;
+	s.pkt = pkt_data;
+
+	/* Saves a pointer to the packet headers */
+	*pkt_header= &p->pcap_header;
+
+	if (p->sf.rfile != NULL) {
+		int status;
+
+		/* We are on an offline capture */
+		status = pcap_offline_read(p, 1, pcap_fakecallback,
+		    (u_char *)&s);
+
+		/*
+		 * Return codes for pcap_offline_read() are:
+		 *   -  0: EOF
+		 *   - -1: error
+		 *   - >1: OK
+		 * The first one ('0') conflicts with the return code of
+		 * 0 from pcap_read() meaning "no packets arrived before
+		 * the timeout expired", so we map it to -2 so you can
+		 * distinguish between an EOF from a savefile and a
+		 * "no packets arrived before the timeout expired, try
+		 * again" from a live capture.
+		 */
+		if (status == 0)
+			return (-2);
+		else
+			return (status);
+	}
+
+	/*
+	 * Return codes for pcap_read() are:
+	 *   -  0: timeout
+	 *   - -1: error
+	 *   - -2: loop was broken out of with pcap_breakloop()
+	 *   - >1: OK
+	 * The first one ('0') conflicts with the return code of 0 from
+	 * pcap_offline_read() meaning "end of file".
+	*/
+	return (pcap_read(p, 1, pcap_fakecallback, (u_char *)&s));
 }
 
 /*
@@ -269,6 +333,12 @@ void
 pcap_perror(pcap_t *p, char *prefix)
 {
 	fprintf(stderr, "%s: %s\n", prefix, p->errbuf);
+}
+
+int
+pcap_get_selectable_fd(pcap_t *p)
+{
+	return (p->fd);
 }
 
 char *

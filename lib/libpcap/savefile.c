@@ -1,4 +1,4 @@
-/*	$OpenBSD: savefile.c,v 1.8 2004/01/27 06:58:03 tedu Exp $	*/
+/*	$OpenBSD: savefile.c,v 1.9 2006/03/26 20:58:51 djm Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -101,8 +101,31 @@ swap_hdr(struct pcap_file_header *hp)
 pcap_t *
 pcap_open_offline(const char *fname, char *errbuf)
 {
-	register pcap_t *p;
-	register FILE *fp;
+	pcap_t *p;
+	FILE *fp;
+
+	if (fname[0] == '-' && fname[1] == '\0')
+		fp = stdin;
+	else {
+		fp = fopen(fname, "r");
+		if (fp == NULL) {
+			snprintf(errbuf, PCAP_ERRBUF_SIZE, "%s: %s", fname,
+			    pcap_strerror(errno));
+			return (NULL);
+		}
+	}
+	p = pcap_fopen_offline(fp, errbuf);
+	if (p == NULL) {
+		if (fp != stdin)
+			fclose(fp);
+	}
+	return (p);
+}
+
+pcap_t *
+pcap_fopen_offline(FILE *fp, char *errbuf)
+{
+	pcap_t *p;
 	struct pcap_file_header hdr;
 	int linklen;
 
@@ -114,20 +137,10 @@ pcap_open_offline(const char *fname, char *errbuf)
 
 	memset((char *)p, 0, sizeof(*p));
 	/*
-	 * Set this field so we don't close stdin in pcap_close!
+	 * Set this field so we don't double-close in pcap_close!
 	 */
 	p->fd = -1;
 
-	if (fname[0] == '-' && fname[1] == '\0')
-		fp = stdin;
-	else {
-		fp = fopen(fname, "r");
-		if (fp == NULL) {
-			snprintf(errbuf, PCAP_ERRBUF_SIZE, "%s: %s", fname,
-			    pcap_strerror(errno));
-			goto bad;
-		}
-	}
 	if (fread((char *)&hdr, sizeof(hdr), 1, fp) != 1) {
 		snprintf(errbuf, PCAP_ERRBUF_SIZE, "fread: %s",
 		    pcap_strerror(errno));
@@ -328,6 +341,19 @@ pcap_dump(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
 	(void)fwrite((char *)sp, h->caplen, 1, f);
 }
 
+static pcap_dumper_t *
+pcap_setup_dump(pcap_t *p, FILE *f, const char *fname)
+{
+	if (sf_write_header(f, p->linktype, p->tzoff, p->snapshot) == -1) {
+		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "Can't write to %s: %s",
+		    fname, pcap_strerror(errno));
+		if (f != stdout)
+			(void)fclose(f);
+		return (NULL);
+	}
+	return ((pcap_dumper_t *)f);
+}
+
 /*
  * Initialize so that sf_write() will output to the file named 'fname'.
  */
@@ -345,8 +371,37 @@ pcap_dump_open(pcap_t *p, const char *fname)
 			return (NULL);
 		}
 	}
-	(void)sf_write_header(f, p->linktype, p->tzoff, p->snapshot);
-	return ((pcap_dumper_t *)f);
+	return (pcap_setup_dump(p, f, fname));
+}
+
+/*
+ * Initialize so that sf_write() will output to the given stream.
+ */
+pcap_dumper_t *
+pcap_dump_fopen(pcap_t *p, FILE *f)
+{	
+	return (pcap_setup_dump(p, f, "stream"));
+}
+
+FILE *
+pcap_dump_file(pcap_dumper_t *p)
+{
+	return ((FILE *)p);
+}
+
+long
+pcap_dump_ftell(pcap_dumper_t *p)
+{
+	return (ftell((FILE *)p));
+}
+
+pcap_dump_flush(pcap_dumper_t *p)
+{
+
+	if (fflush((FILE *)p) == EOF)
+		return (-1);
+	else
+		return (0);
 }
 
 void

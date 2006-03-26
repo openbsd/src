@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.h,v 1.13 2005/11/18 11:05:39 djm Exp $	*/
+/*	$OpenBSD: pcap.h,v 1.14 2006/03/26 20:58:51 djm Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /home/cvs/src/lib/libpcap/pcap.h,v 1.13 2005/11/18 11:05:39 djm Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/lib/libpcap/pcap.h,v 1.14 2006/03/26 20:58:51 djm Exp $ (LBL)
  */
 
 #ifndef lib_pcap_h
@@ -79,6 +79,12 @@ struct pcap_file_header {
 	bpf_u_int32 snaplen;	/* max length saved portion of each pkt */
 	bpf_u_int32 linktype;	/* data link type (DLT_*) */
 };
+
+typedef enum {
+       PCAP_D_INOUT = 0,
+       PCAP_D_IN,
+       PCAP_D_OUT
+} pcap_direction_t;
 
 /*
  * Each packet in the dump file is prepended with this generic header.
@@ -129,21 +135,26 @@ typedef void (*pcap_handler)(u_char *, const struct pcap_pkthdr *,
 
 __BEGIN_DECLS
 char	*pcap_lookupdev(char *);
-int	pcap_lookupnet(char *, bpf_u_int32 *, bpf_u_int32 *, char *);
+int	pcap_lookupnet(const char *, bpf_u_int32 *, bpf_u_int32 *, char *);
 pcap_t	*pcap_open_live(const char *, int, int, int, char *);
-pcap_t	*pcap_open_offline(const char *, char *);
 pcap_t	*pcap_open_dead(int, int);
+pcap_t	*pcap_open_offline(const char *, char *);
+pcap_t	*pcap_fopen_offline(FILE *, char *);
 void	pcap_close(pcap_t *);
 int	pcap_loop(pcap_t *, int, pcap_handler, u_char *);
 int	pcap_dispatch(pcap_t *, int, pcap_handler, u_char *);
 const u_char*
 	pcap_next(pcap_t *, struct pcap_pkthdr *);
+int 	pcap_next_ex(pcap_t *, struct pcap_pkthdr **, const u_char **);
+void	pcap_breakloop(pcap_t *);
 int	pcap_stats(pcap_t *, struct pcap_stat *);
-int	pcap_inject(pcap_t *, const void *, size_t);
 int	pcap_setfilter(pcap_t *, struct bpf_program *);
+int 	pcap_setdirection(pcap_t *, pcap_direction_t);
 int	pcap_getnonblock(pcap_t *, char *);
 int	pcap_setnonblock(pcap_t *, int, char *);
 void	pcap_perror(pcap_t *, char *);
+int	pcap_inject(pcap_t *, const void *, size_t);
+int	pcap_sendpacket(pcap_t *, const u_char *, int);
 char	*pcap_strerror(int);
 char	*pcap_geterr(pcap_t *);
 int	pcap_compile(pcap_t *, struct bpf_program *, char *, int,
@@ -151,14 +162,12 @@ int	pcap_compile(pcap_t *, struct bpf_program *, char *, int,
 int	pcap_compile_nopcap(int, int, struct bpf_program *,
 	    char *, int, bpf_u_int32);
 void	pcap_freecode(struct bpf_program *);
-void	pcap_breakloop(pcap_t *);
 int	pcap_datalink(pcap_t *);
 int	pcap_list_datalinks(pcap_t *, int **);
 int	pcap_set_datalink(pcap_t *, int);
 int	pcap_datalink_name_to_val(const char *);
 const char *pcap_datalink_val_to_name(int);
 const char *pcap_datalink_val_to_description(int);
-const char *pcap_lib_version(void);
 int	pcap_snapshot(pcap_t *);
 int	pcap_is_swapped(pcap_t *);
 int	pcap_major_version(pcap_t *);
@@ -169,14 +178,23 @@ FILE	*pcap_file(pcap_t *);
 int	pcap_fileno(pcap_t *);
 
 pcap_dumper_t *pcap_dump_open(pcap_t *, const char *);
+pcap_dumper_t *pcap_dump_fopen(pcap_t *, FILE *fp);
+FILE	*pcap_dump_file(pcap_dumper_t *);
+long	pcap_dump_ftell(pcap_dumper_t *);
+int	pcap_dump_flush(pcap_dumper_t *);
 void	pcap_dump_close(pcap_dumper_t *);
 void	pcap_dump(u_char *, const struct pcap_pkthdr *, const u_char *);
 
 int	pcap_findalldevs(pcap_if_t **, char *);
 void	pcap_freealldevs(pcap_if_t *);
 
+const char *pcap_lib_version(void);
+
 /* XXX this guy lives in the bpf tree */
 u_int	bpf_filter(struct bpf_insn *, u_char *, u_int, u_int);
 char	*bpf_image(struct bpf_insn *, int);
+
+int	pcap_get_selectable_fd(pcap_t *);
+
 __END_DECLS
 #endif
