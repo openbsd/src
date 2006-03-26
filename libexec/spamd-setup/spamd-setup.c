@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.25 2006/03/26 19:56:21 kjell Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.26 2006/03/26 23:54:00 kjell Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -70,7 +70,6 @@ u_int8_t	  maxdiff(u_int32_t, u_int32_t);
 struct cidr	 *range2cidrlist(u_int32_t, u_int32_t);
 void		  cidr2range(struct cidr, u_int32_t *, u_int32_t *);
 char		 *atop(u_int32_t);
-u_int32_t	  ptoa(char *);
 int		  parse_netblock(char *, struct bl *, struct bl *, int);
 int		  open_child(char *, char **);
 int		  fileget(char *);
