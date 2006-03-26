@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.131 2006/01/07 07:39:55 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.132 2006/03/26 17:47:10 mickey Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1439,6 +1439,7 @@ sys_lseek(struct proc *p, void *v, register_t *retval)
 		return (EINVAL);
 	}
 	*(off_t *)retval = fp->f_offset;
+	fp->f_seek++;
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.55 2005/12/28 20:48:18 pedro Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.56 2006/03/26 17:47:11 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.55 2005/12/28 20:48:18 pedro Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.56 2006/03/26 17:47:11 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -123,6 +123,7 @@ int	uflg;	/* show files open by a particular (effective) user */
 int	checkfile; /* true if restricting to particular files or filesystems */
 int	nflg;	/* (numerical) display f.s. and rdev as dev_t */
 int	oflg;	/* display file offset */
+int	sflg;	/* display file xfer/bytes counters */
 int	vflg;	/* display errors in locating kernel data objects etc... */
 
 struct file **ofiles;	/* buffer of pointers to file structures */
@@ -152,14 +153,14 @@ int nfs_filestat(struct vnode *, struct filestat *);
 int xfs_filestat(struct vnode *, struct filestat *);
 void dofiles(struct kinfo_proc2 *);
 void getinetproto(int);
-void socktrans(struct socket *, int);
 void usage(void);
-void vtrans(struct vnode *, int, int, off_t);
 int getfname(char *);
-void pipetrans(struct pipe *, int);
-void kqueuetrans(struct kqueue *, int);
-void cryptotrans(void *, int);
-void systracetrans(struct fsystrace *, int);
+void socktrans(struct socket *, int, struct file *);
+void vtrans(struct vnode *, int, int, struct file *);
+void pipetrans(struct pipe *, int, struct file *);
+void kqueuetrans(struct kqueue *, int, struct file *);
+void cryptotrans(void *, int, struct file *);
+void systracetrans(struct fsystrace *, int, struct file *);
 char *getmnton(struct mount *);
 const char *inet6_addrstr(struct in6_addr *);
 
@@ -180,7 +181,7 @@ main(int argc, char *argv[])
 	what = KERN_PROC_ALL;
 	nlistf = memf = NULL;
 	oflg = 0;
-	while ((ch = getopt(argc, argv, "fnop:u:vN:M:")) != -1)
+	while ((ch = getopt(argc, argv, "fnop:su:vN:M:")) != -1)
 		switch((char)ch) {
 		case 'f':
 			fsflg = 1;
@@ -206,6 +207,9 @@ main(int argc, char *argv[])
 			}
 			what = KERN_PROC_PID;
 			arg = atoi(optarg);
+			break;
+		case 's':
+			sflg = 1;
 			break;
 		case 'u':
 			if (uflg++)
@@ -267,9 +271,10 @@ main(int argc, char *argv[])
 	if (oflg)
 		printf("%s", ":OFFSET  ");
 	if (checkfile && fsflg == 0)
-		printf(" NAME\n");
-	else
-		putchar('\n');
+		printf(" NAME");
+	if (sflg)
+		printf("    XFERS   KBYTES");
+	putchar('\n');
 
 	for (plast = &p[cnt]; p < plast; ++p) {
 		if (p->p_stat == SZOMB)
@@ -335,16 +340,17 @@ dofiles(struct kinfo_proc2 *kp)
 	 * root directory vnode, if one
 	 */
 	if (filed.fd_rdir)
-		vtrans(filed.fd_rdir, RDIR, FREAD, 0);
+		vtrans(filed.fd_rdir, RDIR, FREAD, NULL);
 	/*
 	 * current working directory vnode
 	 */
-	vtrans(filed.fd_cdir, CDIR, FREAD, 0);
+	vtrans(filed.fd_cdir, CDIR, FREAD, NULL);
+
 	/*
 	 * ktrace vnode, if one
 	 */
 	if (kp->p_tracep)
-		vtrans((struct vnode *)(u_long)kp->p_tracep, TRACE, FREAD|FWRITE, 0);
+		vtrans((struct vnode *)(u_long)kp->p_tracep, TRACE, FREAD|FWRITE, NULL);
 	/*
 	 * open files
 	 */
@@ -369,22 +375,25 @@ dofiles(struct kinfo_proc2 *kp)
 		}
 		if (file.f_type == DTYPE_VNODE)
 			vtrans((struct vnode *)file.f_data, i, file.f_flag,
-			    file.f_offset);
+			    &file);
 		else if (file.f_type == DTYPE_SOCKET) {
 			if (checkfile == 0)
-				socktrans((struct socket *)file.f_data, i);
+				socktrans((struct socket *)file.f_data, i,
+				    &file);
 		} else if (file.f_type == DTYPE_PIPE) {
 			if (checkfile == 0)
-				pipetrans((struct pipe *)file.f_data, i);
+				pipetrans((struct pipe *)file.f_data, i, &file);
 		} else if (file.f_type == DTYPE_KQUEUE) {
 			if (checkfile == 0)
-				kqueuetrans((struct kqueue *)file.f_data, i);
+				kqueuetrans((struct kqueue *)file.f_data, i,
+				    &file);
 		} else if (file.f_type == DTYPE_CRYPTO) {
 			if (checkfile == 0)
-				cryptotrans(file.f_data, i);
+				cryptotrans(file.f_data, i, &file);
 		} else if (file.f_type == DTYPE_SYSTRACE) {
 			if (checkfile == 0)
-				systracetrans((struct fsystrace *)file.f_data, i);
+				systracetrans((struct fsystrace *)file.f_data,
+				    i, &file);
 		} else {
 			dprintf("unknown file type %d for file %d of pid %ld",
 				file.f_type, i, (long)Pid);
@@ -393,7 +402,7 @@ dofiles(struct kinfo_proc2 *kp)
 }
 
 void
-vtrans(struct vnode *vp, int i, int flag, off_t offset)
+vtrans(struct vnode *vp, int i, int flag, struct file *fp)
 {
 	struct vnode vn;
 	struct filestat fst;
@@ -498,8 +507,12 @@ vtrans(struct vnode *vp, int i, int flag, off_t offset)
 	default:
 		printf(" %8lld", (long long)fst.size);
 		if (oflg)
-			printf(":%-8lld", (long long)offset);
+			printf(":%-8lld", (long long)(fp? fp->f_offset : 0));
 	}
+	if (sflg)
+		printf(" %8lld %8lld",
+		    (long long)(fp? fp->f_rxfer + fp->f_wxfer : 0),
+		    (long long)(fp? fp->f_rbytes + fp->f_wbytes : 0) / 1024);
 	if (filename && !fsflg)
 		printf(" %s", filename);
 	putchar('\n');
@@ -677,7 +690,7 @@ getmnton(struct mount *m)
 }
 
 void
-pipetrans(struct pipe *pipe, int i)
+pipetrans(struct pipe *pipe, int i, struct file *fp)
 {
 	struct pipe pi;
 	void *maxaddr;
@@ -700,17 +713,22 @@ pipetrans(struct pipe *pipe, int i)
 	 */
 	maxaddr = MAX(pipe, pi.pipe_peer);
 
-	printf("pipe %p state: %s%s%s\n", maxaddr,
+	printf("pipe %p state: %s%s%s", maxaddr,
 	    (pi.pipe_state & PIPE_WANTR) ? "R" : "",
 	    (pi.pipe_state & PIPE_WANTW) ? "W" : "",
 	    (pi.pipe_state & PIPE_EOF) ? "E" : "");
+	if (sflg)
+		printf("\t%8lld %8lld",
+		    (long long)(fp? fp->f_rxfer + fp->f_wxfer : 0),
+		    (long long)(fp? fp->f_rbytes + fp->f_wbytes : 0) / 1024);
+	printf("\n");
 	return;
 bad:
 	printf("* error\n");
 }
 
 void
-kqueuetrans(struct kqueue *kq, int i)
+kqueuetrans(struct kqueue *kq, int i, struct file *fp)
 {
 	struct kqueue kqi;
 
@@ -724,7 +742,7 @@ kqueuetrans(struct kqueue *kq, int i)
 		goto bad;
 	}
 
-	printf("kqueue %p %d state: %s%s\n", kq, kqi.kq_count,
+	printf("kqueue %p %d state: %s%s", kq, kqi.kq_count,
 	    (kqi.kq_state & KQ_SEL) ? "S" : "",
 	    (kqi.kq_state & KQ_SLEEP) ? "W" : "");
 	return;
@@ -733,7 +751,7 @@ bad:
 }
 
 void
-cryptotrans(void *f, int i)
+cryptotrans(void *f, int i, struct file *fp)
 {
 	PREFIX(i);
 
@@ -743,7 +761,7 @@ cryptotrans(void *f, int i)
 }
 
 void
-systracetrans(struct fsystrace *f, int i)
+systracetrans(struct fsystrace *f, int i, struct file *fp)
 {
 	struct fsystrace fi;
 
@@ -791,7 +809,7 @@ inet6_addrstr(struct in6_addr *p)
 #endif
 
 void
-socktrans(struct socket *sock, int i)
+socktrans(struct socket *sock, int i, struct file *fp)
 {
 	static char *stypename[] = {
 		"unused",	/* 0 */
@@ -986,6 +1004,10 @@ socktrans(struct socket *sock, int i)
 		/* print protocol number and socket address */
 		printf(" %d %p", proto.pr_protocol, sock);
 	}
+	if (sflg)
+		printf("\t%8lld %8lld",
+		    (long long)(fp? fp->f_rxfer + fp->f_wxfer : 0),
+		    (long long)(fp? fp->f_rbytes + fp->f_wbytes : 0) / 1024);
 	printf("\n");
 	return;
 bad:
@@ -1035,7 +1057,7 @@ getfname(char *filename)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: fstat [-fnov] [-M core] [-N system] "
+	fprintf(stderr, "usage: fstat [-fnosv] [-M core] [-N system] "
 	    "[-p pid] [-u user] [file ...]\n");
 	exit(1);
 }

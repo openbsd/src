@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.23 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: file.h,v 1.24 2006/03/26 17:47:10 mickey Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -79,6 +79,11 @@ struct file {
 	void 	*f_data;	/* private data */
 	int	f_iflags;	/* internal flags */
 	int	f_usecount;	/* number of users (temporary references). */
+	u_int64_t f_rxfer;	/* total number of read transfers */
+	u_int64_t f_wxfer;	/* total number of write transfers */
+	u_int64_t f_seek;	/* total independent seek operations */
+	u_int64_t f_rbytes;	/* total bytes read */
+	u_int64_t f_wbytes;	/* total bytes written */
 };
 
 #define FIF_WANTCLOSE		0x01	/* a close is waiting for usecount */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.52 2006/03/15 11:22:16 claudio Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.53 2006/03/26 17:47:10 mickey Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -138,6 +138,9 @@ dofileread(struct proc *p, int fd, struct file *fp, void *buf, size_t nbyte,
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 	cnt -= auio.uio_resid;
+
+	fp->f_rxfer++;
+	fp->f_rbytes += cnt;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO) && error == 0)
 		ktrgenio(p, fd, UIO_READ, &ktriov, cnt, error);
@@ -243,6 +246,9 @@ dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 	cnt -= auio.uio_resid;
+
+	fp->f_rxfer++;
+	fp->f_rbytes += cnt;
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0) 
@@ -334,6 +340,9 @@ dofilewrite(struct proc *p, int fd, struct file *fp, const void *buf,
 			psignal(p, SIGPIPE);
 	}
 	cnt -= auio.uio_resid;
+
+	fp->f_wxfer++;
+	fp->f_wbytes += cnt;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO) && error == 0)
 		ktrgenio(p, fd, UIO_WRITE, &ktriov, cnt, error);
@@ -442,11 +451,13 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 			psignal(p, SIGPIPE);
 	}
 	cnt -= auio.uio_resid;
+
+	fp->f_wxfer++;
+	fp->f_wbytes += cnt;
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0) 
-			ktrgenio(p, fd, UIO_WRITE, ktriov, cnt,
-			    error);
+			ktrgenio(p, fd, UIO_WRITE, ktriov, cnt, error);
 		free(ktriov, M_TEMP);
 	}
 #endif

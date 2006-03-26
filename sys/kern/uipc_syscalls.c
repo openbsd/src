@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.62 2006/01/05 05:05:07 jsg Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.63 2006/03/26 17:47:10 mickey Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -522,8 +522,11 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 		if (error == EPIPE)
 			psignal(p, SIGPIPE);
 	}
-	if (error == 0)
+	if (error == 0) {
 		*retsize = len - auio.uio_resid;
+		fp->f_wxfer++;
+		fp->f_wbytes += *retsize;
+	}
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0)
@@ -755,6 +758,10 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 			len = p - (caddr_t)mp->msg_control;
 		}
 		mp->msg_controllen = len;
+	}
+	if (!error) {
+		fp->f_rxfer++;
+		fp->f_rbytes += *retsize;
 	}
 out:
 	FRELE(fp);
