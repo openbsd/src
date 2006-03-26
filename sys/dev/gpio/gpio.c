@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
+/*	$OpenBSD: gpio.c,v 1.7 2006/03/26 18:48:17 grange Exp $	*/
 
 /*
  * Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/gpio.h>
 #include <sys/vnode.h>
@@ -284,6 +285,9 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		op->gp_value = gpiobus_pin_read(gc, pin);
 		break;
 	case GPIOPINWRITE:
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
 		op = (struct gpio_pin_op *)data;
 
 		pin = op->gp_pin;
@@ -303,6 +307,9 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		sc->sc_pins[pin].pin_state = value;
 		break;
 	case GPIOPINTOGGLE:
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
 		op = (struct gpio_pin_op *)data;
 
 		pin = op->gp_pin;
@@ -320,6 +327,9 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		sc->sc_pins[pin].pin_state = value;
 		break;
 	case GPIOPINCTL:
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
 		ctl = (struct gpio_pin_ctl *)data;
 
 		pin = ctl->gp_pin;
