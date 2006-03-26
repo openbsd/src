@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_1000.c,v 1.3 2006/01/29 10:47:35 martin Exp $ */
+/* $OpenBSD: pci_1000.c,v 1.4 2006/03/26 20:23:08 brad Exp $ */
 /* $NetBSD: pci_1000.c,v 1.12 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*
@@ -163,7 +163,7 @@ dec_1000_intr_map(ccv, bustag, buspin, line, ihp)
 	if (!(1 <= buspin && buspin <= 4))
 		goto bad;
 
-	alpha_pci_decompose_tag(pc_tag, bustag, NULL, &device, NULL);
+	pci_decompose_tag(pc_tag, bustag, NULL, &device, NULL);
 
 	switch(device) {
 	case 6:

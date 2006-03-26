@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_550.c,v 1.14 2006/01/29 10:47:35 martin Exp $ */
+/* $OpenBSD: pci_550.c,v 1.15 2006/03/26 20:23:08 brad Exp $ */
 /* $NetBSD: pci_550.c,v 1.18 2000/06/29 08:58:48 mrg Exp $ */
 
 /*-
@@ -195,7 +195,7 @@ dec_550_intr_map(ccv, bustag, buspin, line, ihp)
 		return 1;
 	}
 
-	alpha_pci_decompose_tag(pc, bustag, &bus, &device, &function);
+	pci_decompose_tag(pc, bustag, &bus, &device, &function);
 
 	/*
 	 * There are two main variants of Miata: Miata 1 (Intel SIO)
@@ -372,7 +372,7 @@ dec_550_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
 	void *cookie = NULL;
 	int bus, irq;
 
-	alpha_pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
+	pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
 
 	/*
 	 * If this isn't PCI bus #0, all bets are off.

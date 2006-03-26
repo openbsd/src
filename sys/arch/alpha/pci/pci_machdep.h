@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.19 2002/03/14 03:15:50 millert Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.20 2006/03/26 20:23:08 brad Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.6 1996/11/19 04:49:21 cgd Exp $	*/
 
 /*
@@ -118,8 +118,6 @@ int alpha_sysctl_chipset(int *, u_int, char *, size_t *);
  */
 void	pci_display_console(bus_space_tag_t, bus_space_tag_t,
 	    pci_chipset_tag_t, int, int, int);
-#define alpha_pci_decompose_tag(c, t, bp, dp, fp)			\
-    (*(c)->pc_decompose_tag)((c)->pc_conf_v, (t), (bp), (dp), (fp))
 #define alpha_pciide_compat_intr_establish(c, d, p, ch, f, a)		\
     ((c)->pc_pciide_compat_intr_establish == NULL ? NULL :		\
      (*(c)->pc_pciide_compat_intr_establish)((c)->pc_conf_v, (d), (p),	\

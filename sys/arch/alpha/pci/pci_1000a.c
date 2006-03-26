@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_1000a.c,v 1.3 2006/01/29 10:47:35 martin Exp $ */
+/* $OpenBSD: pci_1000a.c,v 1.4 2006/03/26 20:23:08 brad Exp $ */
 /* $NetBSD: pci_1000a.c,v 1.14 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*
@@ -188,7 +188,7 @@ dec_1000a_intr_map(ccv, bustag, buspin, line, ihp)
 		return 1;
 	if (!(1 <= buspin && buspin <= 4))
 		goto bad;
-	alpha_pci_decompose_tag(pc_tag, bustag, NULL, &device, NULL);
+	pci_decompose_tag(pc_tag, bustag, NULL, &device, NULL);
 	if (0 <= device && device < sizeof imrmap / sizeof imrmap[0]) {
 		if (device == 0)
 			printf("dec_1000a_intr_map: ?! UNEXPECTED DEV 0\n");

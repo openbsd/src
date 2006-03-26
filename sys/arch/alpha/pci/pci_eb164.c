@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb164.c,v 1.17 2006/01/29 10:47:35 martin Exp $ */
+/* $OpenBSD: pci_eb164.c,v 1.18 2006/03/26 20:23:08 brad Exp $ */
 /* $NetBSD: pci_eb164.c,v 1.27 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -186,7 +186,7 @@ dec_eb164_intr_map(ccv, bustag, buspin, line, ihp)
 		return 1;
 	}
 
-	alpha_pci_decompose_tag(pc, bustag, &bus, &device, &function);
+	pci_decompose_tag(pc, bustag, &bus, &device, &function);
 
 	variation = hwrpb->rpb_variation & SV_ST_MASK;
 
@@ -325,7 +325,7 @@ dec_eb164_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
 	void *cookie = NULL;
 	int bus, irq;
 
-	alpha_pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
+	pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
 
 	/*
 	 * If this isn't PCI bus #0, all bets are off.
