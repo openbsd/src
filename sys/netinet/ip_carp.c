@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.122 2006/03/25 22:41:48 djm Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.123 2006/03/26 14:54:01 camield Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2026,7 +2026,7 @@ carp_set_state(struct carp_softc *sc, int state)
 		sc->sc_if.if_link_state = LINK_STATE_UNKNOWN;
 		break;
 	}
-	rt_ifmsg(&sc->sc_if);
+	if_link_state_change(&sc->sc_if);
 }
 
 void
