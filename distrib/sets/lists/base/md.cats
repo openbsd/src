@@ -91,7 +91,7 @@
 ./usr/lib/libossaudio.so.3.0
 ./usr/lib/libotermcap.so.5.0
 ./usr/lib/libpanel.so.3.0
-./usr/lib/libpcap.so.4.0
+./usr/lib/libpcap.so.5.0
 ./usr/lib/libperl.so.10.0
 ./usr/lib/libpthread.so.6.2
 ./usr/lib/libreadline.so.3.0
