@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umsm.4,v 1.1 2006/03/24 10:31:21 jsg Exp $
+.\"	$OpenBSD: umsm.4,v 1.2 2006/03/26 22:23:26 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -26,7 +26,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports Qualcomm MSM based EVDO adapters.  Typically
+driver supports Qualcomm MSM based EVDO adapters.
+Typically
 these are actually CardBus cards that incorporate a USB controller
 with the actual device attached to it.
 .Pp
@@ -39,15 +40,15 @@ Kyocera KPC650
 .Pp
 Devices suspected of being compatible are:
 .Bd -literal -offset indent
-Audiovox PC5740
 AirPrime PC5220
+Audiovox PC5740
 Novatel Merlin V620
 Sierra Wireless AirCard 580
 .Ed
 .Sh EXAMPLES
-An example 
+An example
 .Pa /etc/ppp/ppp.conf
-configuration for Verizon Wireless might look something like the below,
+configuration for Verizon Wireless might look something like below;
 see
 .Xr ppp 8
 for more information.
@@ -55,8 +56,8 @@ for more information.
 default:
    set device /dev/cuaU0
    set speed 230400
-   set dial "ABORT BUSY ABORT NO\\\\sCARRIER TIMEOUT 5 \\
-             \\"\\" AT OK-AT-OK ATE1Q0s7=60 OK \\\\dATDT\\\\T TIMEOUT 40 CONNECT"
+   set dial "ABORT BUSY ABORT NO\e\esCARRIER TIMEOUT 5 \e
+             \e"\e" AT OK-AT-OK ATE1Q0s7=60 OK \e\edATDT\e\eT TIMEOUT 40 CONNECT"
    set phone "#777"
    set login
    set authname 4517654321@vzw3g.com
@@ -67,7 +68,7 @@ default:
    enable dns
 .Ed
 .Pp
-In this example the phone number is (451) 765-4321, replace this with
+In this example the phone number is (451) 765-4321: replace this with
 the number issued for the card or your phone's number if a handset is being
 used.
 .Sh SEE ALSO
@@ -86,10 +87,9 @@ The
 .Nm
 driver was written by
 .An Jonathan Gray
-.Aq jsg@openbsd.org
+.Aq jsg@openbsd.org .
 .Sh CAVEATS
-For Verizon Wireless and possibly other services cards require a
-one time activation before they will work,
+Verizon Wireless cards (and possibly cards from other vendors) require a
+one time activation before they will work;
 .Nm
 does not currently support this.
-.Pp
