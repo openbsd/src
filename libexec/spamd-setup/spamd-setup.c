@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.23 2006/03/26 05:21:28 kjell Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.24 2006/03/26 19:18:49 kjell Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -136,15 +136,15 @@ range2cidrlist(u_int32_t start, u_int32_t end)
 {
 	struct cidr *list = NULL;
 	size_t cs = 0, cu = 0;
+	u_int8_t maxsize, diff;
+	struct cidr *tmp;
 
 	while (end >= start) {
-		u_int8_t maxsize = maxblock(start, 32);
-		u_int8_t diff = maxdiff(start, end);
+		maxsize = maxblock(start, 32);
+		diff = maxdiff(start, end);
 
 		maxsize = MAX(maxsize, diff);
 		if (cs == cu) {
-			struct cidr *tmp;
-
 			tmp = realloc(list, (cs + 32) * sizeof(struct cidr));
 			if (tmp == NULL)
 				errx(1, "malloc failed");
@@ -183,6 +183,7 @@ parse_netblock(char *buf, struct bl *start, struct bl *end, int white)
 {
 	char astring[16], astring2[16];
 	unsigned maskbits;
+	struct cidr c;
 
 	/* skip leading spaces */
 	while (*buf == ' ')
@@ -193,8 +194,6 @@ parse_netblock(char *buf, struct bl *start, struct bl *end, int white)
 	/* otherwise, look for a netblock of some sort */
 	if (sscanf(buf, "%15[^/]/%u", astring, &maskbits) == 2) {
 		/* looks like a cidr */
-		struct cidr c;
-
 		memset(&c.addr, 0, sizeof(c.addr));
 		if (inet_net_pton(AF_INET, astring, &c.addr, sizeof(c.addr))
 		    == -1)
@@ -288,20 +287,20 @@ fileget(char *url)
 	if (debug)
 		fprintf(stderr, "Getting %s\n", url);
 
-	return open_child(PATH_FTP, argv);
+	return(open_child(PATH_FTP, argv));
 }
 
 int
 open_file(char *method, char *file)
 {
 	char *url;
+	char **ap, **argv;
+	int len, i, oerrno;
 
 	if ((method == NULL) || (strcmp(method, "file") == 0))
 		return(open(file, O_RDONLY));
 	if ((strcmp(method, "http") == 0) ||
 	    strcmp(method, "ftp") == 0) {
-		int i;
-
 		asprintf(&url, "%s://%s", method, file);
 		if (url == NULL)
 			return(-1);
@@ -309,9 +308,6 @@ open_file(char *method, char *file)
 		free(url);
 		return(i);
 	} else if (strcmp(method, "exec") == 0) {
-		char **ap, **argv;
-		int len, i, oerrno;
-
 		len = strlen(file);
 		argv = malloc(len * sizeof(char *));
 		if (argv == NULL)
@@ -348,12 +344,12 @@ char *
 fix_quoted_colons(char *buf)
 {
 	int nbs = 0, i = 0, j = 0, in = 0;
-	char *newbuf, last;
+	char *newbuf, last, *tmp;
 
 	nbs = strlen(buf) + 128;
 	newbuf = malloc(nbs);
 	if (newbuf == NULL)
-		return NULL;
+		return(NULL);
 	last = '\0';
 	for (i = 0; i < strlen(buf); i++) {
 		switch (buf[i]) {
@@ -373,8 +369,6 @@ fix_quoted_colons(char *buf)
 			newbuf[j++] = buf[i];
 		}
 		if (j == nbs) {
-			char *tmp;
-
 			nbs += 128;
 			tmp = realloc(newbuf, nbs);
 			if (tmp == NULL)
@@ -391,7 +385,7 @@ void
 do_message(FILE *sdc, char *msg)
 {
 	int i, n, bu = 0, bs = 0, len;
-	char *buf = NULL, last;
+	char *buf = NULL, last, *tmp;
 
 	len = strlen(msg);
 	if (msg[0] == '"' && msg[len - 1] == '"') {
@@ -412,8 +406,6 @@ do_message(FILE *sdc, char *msg)
 			err(1, "Can't open message from %s", msg);
 		for (;;) {
 			if (bu == bs) {
-				char *tmp;
-
 				tmp = realloc(buf, bs + 8192);
 				if (tmp == NULL)
 					errx(1, "malloc failed");
@@ -466,13 +458,12 @@ struct bl *
 add_blacklist(struct bl *bl, int *blc, int *bls, gzFile gzf, int white)
 {
 	int i, n, start, bu = 0, bs = 0, serrno = 0;
-	char *buf = NULL;
+	char *buf = NULL, *tmp;
+	struct bl *blt;
 
 	for (;;) {
 		/* read in gzf, then parse */
 		if (bu == bs) {
-			char *tmp;
-
 			tmp = realloc(buf, bs + 8192 + 1);
 			if (tmp == NULL) {
 				free(buf);
@@ -498,23 +489,21 @@ add_blacklist(struct bl *bl, int *blc, int *bls, gzFile gzf, int white)
 	start = 0;
 	for (i = 0; i <= bu; i++) {
 		if (*blc == *bls) {
-			struct bl *tmp;
-
 			*bls += 1024;
-			tmp = realloc(bl, *bls * sizeof(struct bl));
-			if (tmp == NULL) {
+			blt = realloc(bl, *bls * sizeof(struct bl));
+			if (blt == NULL) {
 				*bls -= 1024;
 				serrno = errno;
 				goto bldone;
 			}
-			bl = tmp;
+			bl = blt;
 		}
 		if (i == bu || buf[i] == '\n') {
 			buf[i] = '\0';
 			if (parse_netblock(buf + start,
 			    bl + *blc, bl + *blc + 1, white))
-				*blc+=2;
-			start = i+1;
+				*blc += 2;
+			start = i + 1;
 		}
 	}
 	if (bu == 0)
