@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isagpio.4,v 1.1 2006/03/26 20:19:54 grange Exp $
+.\"	$OpenBSD: isagpio.4,v 1.2 2006/03/26 20:34:49 grange Exp $
 .\"
 .\" Copyright (c) 2006 Oleg Safiullin <form@pdp-11.org.ru>
 .\" All rights reserved.
@@ -40,8 +40,8 @@ The
 .Nm
 driver allows to access 8-bit ISA I/O space through the
 .Xr gpio 4
-framework.
-Each bit represents one GPIO pin.
+framework, thus making use of the simple GPIO devices connected directly
+to the ISA bus.
 .Sh SEE ALSO
 .Xr gpio 4 ,
 .Xr intro 4 ,
