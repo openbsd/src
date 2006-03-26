@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.58 2006/03/25 23:35:13 pedro Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.59 2006/03/26 15:04:10 uwe Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.58 2006/03/25 23:35:13 pedro Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.59 2006/03/26 15:04:10 uwe Exp $";
 #endif
 #endif /* not lint */
 
@@ -277,7 +277,7 @@ vnodemode(void)
 void
 vnode_header(void)
 {
-	(void)printf("ADDR     TYP VFLAG  USE HOLD");
+	(void)printf("%*s TYP VFLAG  USE HOLD", 2 * sizeof(long), "ADDR");
 }
 
 void
@@ -341,7 +341,7 @@ vnode_print(struct vnode *avnode, struct vnode *vp)
 	if (flag == 0)
 		*fp++ = '-';
 	*fp = '\0';
-	(void)printf("%8lx %s %5s %4d %4u",
+	(void)printf("%*lx %s %5s %4d %4u", 2 * sizeof(long), 
 	    (long)avnode, type, flags, vp->v_usecount, vp->v_holdcnt);
 }
 
@@ -918,12 +918,12 @@ filemode(void)
 	(void)printf("%d/%d open files\n", nfile, maxfile);
 
 	(void)printf("%*s TYPE       FLG  CNT  MSG  %*s  OFFSET\n",
-	    8, "LOC", 8, "DATA");
+	    2 * sizeof(long), "LOC", 2 * sizeof(long), "DATA");
 	for (; (char *)ffp < buf + len; addr = LIST_NEXT(ffp, f_list), ffp++) {
 		memmove(&fp, ffp, sizeof fp);
 		if ((unsigned)fp.f_type > DTYPE_SOCKET)
 			continue;
-		(void)printf("%lx ", (long)addr);
+		(void)printf("%*lx ", 2 * sizeof(long), (long)addr);
 		(void)printf("%-8.8s", dtypes[fp.f_type]);
 		fbp = flagbuf;
 		if (fp.f_flag & FREAD)
@@ -939,7 +939,7 @@ filemode(void)
 		*fbp = '\0';
 		(void)printf("%6s  %3ld", flagbuf, fp.f_count);
 		(void)printf("  %3ld", fp.f_msgcount);
-		(void)printf("  %8.1lx", (long)fp.f_data);
+		(void)printf("  %*.1lx", 2 * sizeof(long), (long)fp.f_data);
 
 		if (fp.f_offset < 0)
 			(void)printf("  %llx\n", (long long)fp.f_offset);
