@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.28 2006/03/13 19:14:56 otto Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.29 2006/03/26 18:06:00 grunk Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -608,7 +608,7 @@ print_ccd_info(struct ccd_softc *cs, kvm_t *kd)
 	int i;
 
 	if (header_printed == 0 && verbose) {
-		printf("# ccd\t\tileave\tflags\tcompnent devices\n");
+		printf("# ccd\t\tileave\tflags\tcomponent devices\n");
 		header_printed = 1;
 	}
 
@@ -621,7 +621,7 @@ print_ccd_info(struct ccd_softc *cs, kvm_t *kd)
 	memset(cip, 0, readsize);
 
 	/* Dump out softc information. */
-	printf("%s\t%d\t0x%x\t", cs->sc_xname, cs->sc_ileave,
+	printf("%s\t\t%d\t0x%x\t", cs->sc_xname, cs->sc_ileave,
 	    cs->sc_cflags & CCDF_USERMASK);
 	fflush(stdout);
 
