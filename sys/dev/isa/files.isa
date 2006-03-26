@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.93 2006/01/28 11:25:17 kettenis Exp $
+#	$OpenBSD: files.isa,v 1.94 2006/03/26 20:19:53 grange Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -402,6 +402,11 @@ file	dev/isa/viasio.c		viasio
 device	aps
 attach	aps at isa
 file	dev/isa/aps.c			aps
+
+# ISA I/O mapped as GPIO
+device	isagpio: gpiobus
+attach	isagpio at isa
+file	dev/isa/isagpio.c		isagpio
 
 #
 # PCMCIA PCIC (i82365SL and compatibles):

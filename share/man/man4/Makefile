@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.347 2006/03/24 10:31:21 jsg Exp $
+#	$OpenBSD: Makefile,v 1.348 2006/03/26 20:19:54 grange Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 acpi.4 acpihpet.4 acpitimer.4 \
 	adc.4 addcom.4 admcts.4 admlc.4 admtemp.4 \
@@ -18,7 +18,8 @@ MAN=	aac.4 ac97.4 acphy.4 acpi.4 acpihpet.4 acpitimer.4 \
 	hifn.4 hil.4 hilid.4 hilkbd.4 hilms.4 hme.4 hotplug.4 hsq.4 \
 	ichiic.4 ichwdt.4 icmp.4 icmp6.4 icsphy.4 idp.4 ifmedia.4 \
 	iha.4 iic.4 inet.4 inet6.4 inphy.4 iop.4 iophy.4 ioprbs.4 \
-	iopsp.4 ip.4 ip6.4 ipcomp.4 ipmi.4 ipsec.4 ipw.4 isa.4 isapnp.4 \
+	iopsp.4 ip.4 ip6.4 ipcomp.4 ipmi.4 ipsec.4 ipw.4 \
+	isa.4 isagpio.4 isapnp.4 \
 	ises.4 isp.4 it.4 iwi.4 ixgb.4 ksyms.4 kue.4 lc.4 lge.4 lkm.4 lm.4 \
 	lmc.4 lmenv.4 lmtemp.4 lo.4 lofn.4 lpt.4 lxtphy.4 luphy.4 \
 	maestro.4 maxds.4 maxtmp.4 midi.4 \

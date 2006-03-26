@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.477 2006/03/24 10:39:08 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.478 2006/03/26 20:19:53 grange Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -139,6 +139,9 @@ maxtmp*	at iic?				# Maxim MAX6642/MAX6690
 asbtm*	at iic?				# Asus ASB100
 wbenv*	at iic?				# Winbond W83L784R/W83L785R/W83L785TS-L
 glenv*	at iic?				# Genesys Logic GL518SM
+
+#isagpio0 at isa? port 0x78		# ISA I/O mapped as GPIO
+#isagpio1 at isa? port 0x80
 
 # ISA PCMCIA controllers
 #option PCMCIAVERBOSE
