@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.42 2006/01/18 06:36:05 jakemsr Exp $
+.\"	$OpenBSD: malloc.3,v 1.43 2006/03/26 19:56:08 ray Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -83,6 +83,29 @@ The minimum size of the protection on each object is suitably aligned and
 sized as previously stated, but the protection may extend further depending
 on where in a protected zone the object lands.
 .Pp
+When using
+.Fn malloc
+be careful to avoid the following idiom:
+.Bd -literal -offset indent
+if ((p = malloc(num * size)) == NULL)
+	err(1, "malloc");
+.Ed
+.Pp
+The multiplication may lead to an integer overflow.
+To avoid this,
+.Fn calloc
+is recommended.
+.Pp
+If
+.Fn malloc
+must be used, be sure to test for overflow:
+.Bd -literal -offset indent
+if (num && size && SIZE_T_MAX / num < size) {
+	errno = ENOMEM;
+	err(1, "overflow");
+}
+.Ed
+.Pp
 The
 .Fn calloc
 function allocates space for an array of
@@ -90,6 +113,10 @@ function allocates space for an array of
 objects, each of whose size is
 .Fa size .
 The space is initialized to all bits zero.
+The use of
+.Fn calloc
+is strongly encouraged when allocating multiple sized objects
+in order to avoid possible integer overflows.
 .Pp
 The
 .Fn free
@@ -140,7 +167,7 @@ object is returned.
 .Pp
 When using
 .Fn realloc
-one must be careful to avoid the following idiom:
+be careful to avoid the following idiom:
 .Bd -literal -offset indent
 size += 50;
 if ((p = realloc(p, size)) == NULL)
@@ -148,7 +175,7 @@ if ((p = realloc(p, size)) == NULL)
 .Ed
 .Pp
 Do not adjust the variable describing how much memory has been allocated
-until one knows the allocation has been successful.
+until the allocation has been successful.
 This can cause aberrant program behavior if the incorrect size value is used.
 In most cases, the above sample will also result in a leak of memory.
 As stated earlier, a return value of
@@ -165,6 +192,15 @@ if ((newp = realloc(p, newsize)) == NULL) {
 }
 p = newp;
 size = newsize;
+.Ed
+.Pp
+As with
+.Fn malloc
+it is important to ensure the new size value will not overflow;
+i.e. avoid allocations like the following:
+.Bd -literal -offset indent
+if ((newp = realloc(p, num * size)) == NULL) {
+	...
 .Ed
 .Pp
 Malloc will first look for a symbolic link called
@@ -255,8 +291,7 @@ Reduce the size of the cache by a factor of two.
 Double the size of the cache by a factor of two.
 .El
 .Pp
-So to set a systemwide reduction of cache size and coredumps on problems
-one would:
+So to set a systemwide reduction of cache size and coredumps on problems:
 .Li ln -s 'A<' /etc/malloc.conf
 .Pp
 The
