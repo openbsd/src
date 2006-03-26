@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.25 2005/08/01 05:36:48 brad Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.26 2006/03/26 18:57:00 grange Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -162,7 +162,8 @@ USB_MATCH(uftdi)
 	    (uaa->product == USB_PRODUCT_BBELECTRONICS_USOTL4))
 		return (UMATCH_VENDOR_PRODUCT);
 	if (uaa->vendor == USB_VENDOR_FALCOM &&
-	    (uaa->product == USB_PRODUCT_FALCOM_TWIST))
+	    (uaa->product == USB_PRODUCT_FALCOM_TWIST ||
+	     uaa->product == USB_PRODUCT_FALCOM_SAMBA))
 		 return (UMATCH_VENDOR_PRODUCT);
 	if (uaa->vendor == USB_VENDOR_SEALEVEL &&
 	    uaa->product == USB_PRODUCT_SEALEVEL_USBSERIAL)
@@ -281,6 +282,7 @@ USB_ATTACH(uftdi)
 	case USB_VENDOR_FALCOM:
 		switch( uaa->product ){
 		case USB_PRODUCT_FALCOM_TWIST:
+		case USB_PRODUCT_FALCOM_SAMBA:
 			sc->sc_type = UFTDI_TYPE_8U232AM;
 			sc->sc_hdrlen = 0;
 			break;

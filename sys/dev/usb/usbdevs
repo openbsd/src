@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.188 2006/03/24 08:37:23 dlg Exp $
+$OpenBSD: usbdevs,v 1.189 2006/03/26 18:57:00 grange Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -932,6 +932,7 @@ product EXTENDED XTNDACCESS	0x0100	XTNDAccess IrDA
 
 /* Falcom Wireless Communications GmbH products */
 product FALCOM TWIST		0x0001	Falcom Twist USB
+product FALCOM SAMBA		0x0005	Falcom Samba USB
 
 /* Freecom products */
 product FREECOM DVD		0xfc01	Connector for DVD drive
