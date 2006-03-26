@@ -1,4 +1,4 @@
-/*	$OpenBSD: houses.c,v 1.5 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: houses.c,v 1.6 2006/03/26 17:20:51 deraadt Exp $	*/
 /*	$NetBSD: houses.c,v 1.3 1995/03/23 08:34:40 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)houses.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: houses.c,v 1.5 2003/06/03 03:01:40 millert Exp $";
+static const char rcsid[] = "$OpenBSD: houses.c,v 1.6 2006/03/26 17:20:51 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -152,9 +152,9 @@ over:
 			mp->sq[i]->name, pp->houses);
 		input[i] = get_int(cur_prop);
 		temp[i] = input[i] + pp->houses;
-		if (temp[i] > 5) {
+		if (temp[i] > 5 || temp[i] < 0) {
 			printf("That's too many.  The most you can buy is %d\n",
-				5 - pp->houses);
+			    5 - pp->houses);
 				goto over;
 			}
 	}
