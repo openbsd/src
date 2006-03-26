@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.125 2006/03/24 05:14:48 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.126 2006/03/26 12:56:31 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -463,12 +463,21 @@ checkin_update(struct checkin_params *pb)
 	 */
 	pb->frev = pb->file->rf_head;
 
+	/* Load file contents */
+	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
+		rcs_close(pb->file);
+		return (-1);
+	}
+
+	cvs_buf_putc(bp, '\0');
+	filec = (char *)cvs_buf_release(bp);
+
 	/* If this is a zero-ending RCSNUM eg 4.0, increment it (eg to 4.1) */
 	if ((pb->newrev != NULL) && (RCSNUM_ZERO_ENDING(pb->newrev)))
 		pb->newrev = rcsnum_inc(pb->newrev);
 
 	if (checkin_checklock(pb) < 0)
-		return (-1);
+		goto fail;
 
 	/* If revision passed on command line is less than HEAD, bail.
 	 * XXX only applies to ci -r1.2 foo for example if HEAD is > 1.2 and
@@ -481,8 +490,7 @@ checkin_update(struct checkin_params *pb)
 		    pb->file->rf_path,
 		    rcsnum_tostr(pb->newrev, numb1, sizeof(numb1)),
 		    rcsnum_tostr(pb->frev, numb2, sizeof(numb2)));
-		rcs_close(pb->file);
-		return (-1);
+		goto fail;
 	}
 
 	/*
@@ -491,7 +499,7 @@ checkin_update(struct checkin_params *pb)
 	 */
 	if (pb->date == DATE_MTIME
 	    && (checkin_mtimedate(pb) < 0))
-		return (-1);
+		goto fail;
 
 	/* Date from argv/mtime must be more recent than HEAD */
 	if (pb->date != DATE_NOW) {
@@ -513,20 +521,10 @@ checkin_update(struct checkin_params *pb)
 		}
 	}
 
-	/* Load file contents */
-	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
-		rcs_close(pb->file);
-		return (-1);
-	}
-
-	cvs_buf_putc(bp, '\0');
-	filec = (char *)cvs_buf_release(bp);
-
 	/* Get RCS patch */
 	if ((pb->deltatext = checkin_diff_file(pb)) == NULL) {
 		cvs_log(LP_ERR, "failed to get diff");
-		rcs_close(pb->file);
-		return (-1);
+		goto fail;
 	}
 
 	/*
@@ -535,7 +533,7 @@ checkin_update(struct checkin_params *pb)
 	 */
 	if (!(pb->flags & FORCE) && (strlen(pb->deltatext) < 1)) {
 		checkin_revert(pb);
-		return (0);
+		goto fail;
 	}
 
 	/* If no log message specified, get it interactively. */
@@ -559,8 +557,7 @@ checkin_update(struct checkin_params *pb)
 	    (pb->newrev == NULL ? RCS_HEAD_REV : pb->newrev),
 	    pb->rcs_msg, pb->date, pb->author) != 0) {
 		cvs_log(LP_ERR, "failed to add new revision");
-		rcs_close(pb->file);
-		return (-1);
+		goto fail;
 	}
 
 	/*
@@ -579,7 +576,7 @@ checkin_update(struct checkin_params *pb)
 	/* Attach a symbolic name to this revision if specified. */
 	if (pb->symbol != NULL
 	    && (checkin_attach_symbol(pb) < 0))
-		return (-1);
+		goto fail;
 
 	/* Set the state of this revision if specified. */
 	if (pb->state != NULL)
@@ -603,6 +600,11 @@ checkin_update(struct checkin_params *pb)
 		pb->rcs_msg = NULL;
 	}
 	return (0);
+
+fail:
+	xfree(filec);
+	rcs_close(pb->file);
+	return (-1);
 }
 
 /*
@@ -654,9 +656,7 @@ checkin_init(struct checkin_params *pb)
 				cvs_log(LP_ERR,
 				    "failed to load description file '%s'",
 				    pb->description);
-				xfree(filec);
-				rcs_close(pb->file);
-				return (-1);
+				goto fail;
 			}
 			cvs_buf_putc(dp, '\0');
 			rcs_desc = (const char *)cvs_buf_release(dp);
@@ -678,7 +678,7 @@ checkin_init(struct checkin_params *pb)
 	 */
 	if (pb->date == DATE_MTIME
 	    && (checkin_mtimedate(pb) < 0))
-		return (-1);
+		goto fail;
 
 	/* Now add our new revision */
 	if (rcs_rev_add(pb->file,
@@ -686,8 +686,7 @@ checkin_init(struct checkin_params *pb)
 	    (pb->rcs_msg == NULL ? "Initial revision" : pb->rcs_msg),
 	    pb->date, pb->author) != 0) {
 		cvs_log(LP_ERR, "failed to add new revision");
-		rcs_close(pb->file);
-		return (-1);
+		goto fail;
 	}
 	/*
 	 * If we are checking in to a non-default (ie user-specified)
@@ -701,13 +700,12 @@ checkin_init(struct checkin_params *pb)
 	/* New head revision has to contain entire file; */
 	if (rcs_deltatext_set(pb->file, pb->file->rf_head, filec) == -1) {
 		cvs_log(LP_ERR, "failed to set new head revision");
-		rcs_close(pb->file);
-		return (-1);
+		goto fail;
 	}
 	/* Attach a symbolic name to this revision if specified. */
 	if (pb->symbol != NULL
 	    && (checkin_attach_symbol(pb) < 0))
-		return (-1);
+		goto fail;
 
 	/* Set the state of this revision if specified. */
 	if (pb->state != NULL)
@@ -731,6 +729,10 @@ checkin_init(struct checkin_params *pb)
 	rcs_close(pb->file);
 
 	return (0);
+fail:
+	xfree(filec);
+	rcs_close(pb->file);
+	return (-1);
 }
 
 /*
@@ -755,12 +757,10 @@ checkin_attach_symbol(struct checkin_params *pb)
 		cvs_log(LP_ERR,
 		    "symbolic name %s already bound to %s",
 		    pb->symbol, rbuf);
-		rcs_close(pb->file);
 		return (-1);
 	} else if (ret == -1) {
 		cvs_log(LP_ERR, "problem adding symbol: %s",
 		    pb->symbol);
-		rcs_close(pb->file);
 		return (-1);
 	}
 	return (0);
@@ -788,7 +788,6 @@ checkin_revert(struct checkin_params *pb)
 		checkout_rev(pb->file, pb->frev, pb->filename,
 		    pb->flags, pb->username, pb->author, NULL, NULL);
 	rcs_lock_remove(pb->file, pb->username, pb->frev);
-	rcs_close(pb->file);
 }
 
 /*
@@ -810,7 +809,6 @@ checkin_checklock(struct checkin_params *pb)
 
 	cvs_log(LP_ERR,
 	    "%s: no lock set by %s", pb->file->rf_path, pb->username);
-	rcs_close(pb->file);
 	return (-1);
 }
 
@@ -828,7 +826,6 @@ checkin_mtimedate(struct checkin_params *pb)
 	struct stat sb;
 	if (stat(pb->filename, &sb) != 0) {
 		cvs_log(LP_ERRNO, "failed to stat `%s'", pb->filename);
-		rcs_close(pb->file);
 		return (-1);
 	}
 	pb->date = (time_t)sb.st_mtimespec.tv_sec;
