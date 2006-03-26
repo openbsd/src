@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.59 2005/10/20 03:33:20 deraadt Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.60 2006/03/26 19:16:06 camield Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -710,10 +710,14 @@ Synonymous with the
 modifier.
 .It Cm action Ar act
 True if PF took the specified action when the packet was logged.
-Known actions are:
+Valid actions are:
 .Ar pass ,
+.Ar block ,
+.Ar nat ,
+.Ar rdr ,
+.Ar binat
 and
-.Ar block
+.Ar scrub
 (applies only to packets logged by
 .Xr pf 4 ) .
 .It Xo
