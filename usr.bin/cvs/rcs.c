@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.147 2006/03/25 21:29:59 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.148 2006/03/26 20:02:54 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -241,7 +241,7 @@ static int	rcs_parse_delta(RCSFILE *);
 static void	rcs_parse_deltas(RCSFILE *, RCSNUM *);
 static int	rcs_parse_deltatext(RCSFILE *);
 static void	rcs_parse_deltatexts(RCSFILE *, RCSNUM *);
-static int	rcs_parse_desc(RCSFILE *, RCSNUM *);
+static void	rcs_parse_desc(RCSFILE *, RCSNUM *);
 
 static int	rcs_parse_access(RCSFILE *);
 static int	rcs_parse_symbols(RCSFILE *);
@@ -1586,39 +1586,29 @@ rcs_parse_deltatexts(RCSFILE *rfp, RCSNUM *rev)
 /* rcs_parse_desc()
  *
  * Parse RCS description.
- *
- * Returns 0 on success, -1 on failure.
  */
-static int
+static void
 rcs_parse_desc(RCSFILE *rfp, RCSNUM *rev)
 {
 	int ret = 0;
-	if ((rfp->rf_flags & PARSED_DESC)
-	    || (rfp->rf_flags & RCS_CREATE))
-		return (0);
+
+	if ((rfp->rf_flags & PARSED_DESC) || (rfp->rf_flags & RCS_CREATE))
+		return;
 	if (!(rfp->rf_flags & PARSED_DELTAS))
 		rcs_parse_deltas(rfp, rev);
 	/* do parsing */
 	ret = rcs_gettok(rfp);
-	if (ret != RCS_TOK_DESC) {
-		rcs_errno = RCS_ERR_PARSE;
-		cvs_log(LP_ERR, "token `%s' found where RCS desc expected",
+	if (ret != RCS_TOK_DESC)
+		fatal("token `%s' found where RCS desc expected",
 		    RCS_TOKSTR(rfp));
-		fatal("problem parsing RCS desc");
-		return (-1);
-	}
 
 	ret = rcs_gettok(rfp);
-	if (ret != RCS_TOK_STRING) {
-		rcs_errno = RCS_ERR_PARSE;
-		cvs_log(LP_ERR, "token `%s' found where RCS desc expected",
+	if (ret != RCS_TOK_STRING)
+		fatal("token `%s' found where RCS desc expected",
 		    RCS_TOKSTR(rfp));
-		fatal("problem parsing RCS desc");
-	}
 
 	rfp->rf_desc = xstrdup(RCS_TOKSTR(rfp));
 	rfp->rf_flags |= PARSED_DESC;
-	return (0);
 }
 
 /*
