@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.22 2006/01/17 17:52:49 millert Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.23 2006/03/26 05:21:28 kjell Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -64,32 +64,32 @@ struct blacklist {
 	int count;
 };
 
-u_int32_t	imask(u_int8_t b);
-u_int8_t	maxblock(u_int32_t addr, u_int8_t bits);
-u_int8_t	maxdiff(u_int32_t a, u_int32_t b);
-struct cidr	*range2cidrlist(u_int32_t start, u_int32_t end);
-void		cidr2range(struct cidr cidr, u_int32_t *start, u_int32_t *end);
-char		*atop(u_int32_t addr);
-u_int32_t	ptoa(char *cp);
-int		parse_netblock(char *buf, struct bl *start, struct bl *end,
+u_int32_t	  imask(u_int8_t b);
+u_int8_t	  maxblock(u_int32_t addr, u_int8_t bits);
+u_int8_t	  maxdiff(u_int32_t a, u_int32_t b);
+struct cidr	 *range2cidrlist(u_int32_t start, u_int32_t end);
+void		  cidr2range(struct cidr cidr, u_int32_t *start, u_int32_t *end);
+char		 *atop(u_int32_t addr);
+u_int32_t	  ptoa(char *cp);
+int		  parse_netblock(char *buf, struct bl *start, struct bl *end,
 		    int white);
-int		open_child(char *file, char **argv);
-int		fileget(char *url);
-int		open_file(char *method, char *file);
-char		*fix_quoted_colons(char *buf);
-void		do_message(FILE *sdc, char *msg);
-struct bl	*add_blacklist(struct bl *bl, int *blc, int *bls, gzFile gzf,
+int		  open_child(char *file, char **argv);
+int		  fileget(char *url);
+int		  open_file(char *method, char *file);
+char		 *fix_quoted_colons(char *buf);
+void		  do_message(FILE *sdc, char *msg);
+struct bl	 *add_blacklist(struct bl *bl, int *blc, int *bls, gzFile gzf,
 		    int white);
-int		cmpbl(const void *a, const void *b);
+int		  cmpbl(const void *a, const void *b);
 struct cidr	**collapse_blacklist(struct bl *bl, int blc);
-int		configure_spamd(u_short dport, char *name, char *message,
+int		  configure_spamd(u_short dport, char *name, char *message,
 		    struct cidr **blacklists);
-int		configure_pf(struct cidr **blacklists);
-int		getlist(char ** db_array, char *name, struct blacklist *blist,
+int		  configure_pf(struct cidr **blacklists);
+int		  getlist(char ** db_array, char *name, struct blacklist *blist,
 		    struct blacklist *blistnew);
 
-int		debug;
-int		dryrun;
+int		  debug;
+int		  dryrun;
 
 u_int32_t
 imask(u_int8_t b)
@@ -109,7 +109,7 @@ maxblock(u_int32_t addr, u_int8_t bits)
 		u_int32_t m = imask(bits - 1);
 
 		if ((addr & m) != addr)
-			return (bits);
+			return(bits);
 		bits--;
 	}
 	return(bits);
@@ -125,7 +125,7 @@ maxdiff(u_int32_t a, u_int32_t b)
 		u_int32_t m = imask(bits);
 
 		if ((a & m) != (b & m))
-			return (bits);
+			return(bits);
 		bits++;
 	}
 	return(bits);
@@ -524,7 +524,7 @@ add_blacklist(struct bl *bl, int *blc, int *bls, gzFile gzf, int white)
 		free(buf);
 	if (serrno)
 		errno = serrno;
-	return (bl);
+	return(bl);
 }
 
 int
@@ -554,7 +554,7 @@ collapse_blacklist(struct bl *bl, int blc)
 		return(NULL);
 	cl = malloc((blc / 2) * sizeof(struct cidr));
 	if (cl == NULL) {
-		return (NULL);
+		return(NULL);
 	}
 	qsort(bl, blc, sizeof(struct bl), cmpbl);
 	cli = 0;
@@ -585,7 +585,7 @@ collapse_blacklist(struct bl *bl, int blc)
 		}
 		laststate = state;
 	}
-	return (cl);
+	return(cl);
 }
 
 int
@@ -853,5 +853,5 @@ main(int argc, char *argv[])
 			free(blists[i].bl);
 		}
 	}
-	return (0);
+	return(0);
 }
