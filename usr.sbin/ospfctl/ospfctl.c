@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.31 2006/03/26 09:45:55 norby Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.32 2006/03/26 09:47:54 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -906,6 +906,7 @@ show_nbr_detail_msg(struct imsg *imsg)
 		printf("  Options %s\n", print_ospf_options(nbr->options));
 		printf("  Dead timer due in %s\n",
 		    fmt_timeframe_core(nbr->dead_timer));
+		printf("  Uptime %s\n", fmt_timeframe_core(nbr->uptime));
 		printf("  Database Summary List %d\n", nbr->db_sum_lst_cnt);
 		printf("  Link State Request List %d\n", nbr->ls_req_lst_cnt);
 		printf("  Link State Retransmission List %d\n",
