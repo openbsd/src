@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.30 2006/03/23 18:37:34 norby Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.31 2006/03/26 09:45:55 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -39,6 +39,7 @@
 
 __dead void	 usage(void);
 int		 show_summary_msg(struct imsg *);
+int		 get_ifms_type(int);
 int		 show_interface_msg(struct imsg *);
 int		 show_interface_detail_msg(struct imsg *);
 const char	*print_link(int);
@@ -326,33 +327,36 @@ show_summary_msg(struct imsg *imsg)
 }
 
 int
+get_ifms_type(int mediatype)
+{
+	switch (mediatype) {
+	case IFT_ETHER:
+		return (IFM_ETHER);
+		break;
+	case IFT_FDDI:
+		return (IFM_FDDI);
+		break;
+	case IFT_ISO88025:
+		return (IFM_TOKEN);
+		break;
+	case IFT_CARP:
+		return (IFM_CARP);
+		break;
+	default:
+		return (0);
+		break;
+	}
+}
+
+int
 show_interface_msg(struct imsg *imsg)
 {
 	struct ctl_iface	*iface;
 	char			*netid;
-	int			 ifms_type;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_INTERFACE:
 		iface = imsg->data;
-
-		switch (iface->mediatype) {
-		case IFT_ETHER:
-			ifms_type = IFM_ETHER;
-			break;
-		case IFT_FDDI:
-			ifms_type = IFM_FDDI;
-			break;
-		case IFT_ISO88025:
-			ifms_type = IFM_TOKEN;
-			break;
-		case IFT_CARP:
-			ifms_type = IFM_CARP;
-			break;
-		default:
-			ifms_type = 0;
-			break;
-		}
 
 		if (asprintf(&netid, "%s/%d", inet_ntoa(iface->addr),
 		    mask2prefixlen(iface->mask.s_addr)) == -1)
@@ -361,8 +365,8 @@ show_interface_msg(struct imsg *imsg)
 		    iface->name, netid, if_state_name(iface->state),
 		    iface->hello_timer < 0 ? "stopped" :
 		    fmt_timeframe_core(iface->hello_timer),
-		    get_linkstate(ifms_type, iface->linkstate),
-		    iface->uptime == 0 ? "00:00:00" :
+		    get_linkstate(get_ifms_type(iface->mediatype),
+		    iface->linkstate), iface->uptime == 0 ? "00:00:00" :
 		    fmt_timeframe_core(iface->uptime), iface->nbr_cnt,
 		    iface->adj_cnt);
 		free(netid);
@@ -386,12 +390,15 @@ show_interface_detail_msg(struct imsg *imsg)
 	case IMSG_CTL_SHOW_INTERFACE:
 		iface = imsg->data;
 		printf("\n");
-		printf("Interface %s is %d, line protocol is %s\n",
-		    iface->name, iface->linkstate, print_link(iface->flags));
+		printf("Interface %s, line protocol is %s\n",
+		    iface->name, print_link(iface->flags));
 		printf("  Internet address %s/%d, ",
 		    inet_ntoa(iface->addr),
 		    mask2prefixlen(iface->mask.s_addr));
 		printf("Area %s\n", inet_ntoa(iface->area));
+		printf("  Linkstate %s\n",
+		    get_linkstate(get_ifms_type(iface->mediatype),
+		    iface->linkstate));
 		printf("  Router ID %s, network type %s, cost: %d\n",
 		    inet_ntoa(iface->rtr_id),
 		    if_type_name(iface->type), iface->metric);
