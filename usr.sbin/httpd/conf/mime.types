@@ -13,6 +13,7 @@ application/activemessage
 application/andrew-inset	ez
 application/applefile
 application/atomicmail
+application/atom+xml           atom
 application/batch-smtp
 application/beep+xml
 application/cals-1840
