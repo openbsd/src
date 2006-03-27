@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1043 2006/03/27 16:21:45 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1044 2006/03/27 17:52:22 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4367,6 +4367,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PRO/100 VM",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80003ES2LAN_CPR_DPT,
+	    "PRO/1000 PT (80003ES2)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80003ES2LAN_SDS_DPT,
+	    "PRO/1000 PT (80003ES2)",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573L,
 	    "PRO/1000MT (82573L)",
 	},
@@ -4375,8 +4383,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PRO/10GbE CX4 (82597EX)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_QUAD_CPR,
 	    "PRO/1000MT QP (82546GB)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_QUAD_CPR_K,
+	    "PRO/1000MT QP (82546GB)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI,
+	    "PRO/1000 PT (82572EI)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
