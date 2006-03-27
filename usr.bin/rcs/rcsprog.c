@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.86 2006/03/27 06:13:51 pat Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.87 2006/03/27 07:38:24 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -39,11 +39,12 @@ const char rcs_version[] = "OpenCVS RCS version 3.6";
 int verbose = 1;
 int pipeout = 0;
 
-#define RCS_EFLAG	(1<<0)
-#define RCS_NFLAG	(1<<1)
-#define RCS_TFLAG	(1<<2)
+#define RCSPROG_EFLAG	(1<<0)
+#define RCSPROG_NFLAG	(1<<1)
+#define RCSPROG_TFLAG	(1<<2)
 static int rcsflags = 0;
 
+int	 flags;
 int	 rcs_optind;
 char	*rcs_optarg;
 char	*rcs_suffixes;
@@ -353,7 +354,7 @@ rcs_statfile(char *fname, char *out, size_t len)
 		fatal("rcs_statfile: path truncation");
 
 	/* Error out if file not found and we are not creating one. */
-	if (stat(rcspath, &st) == -1 && !(rcsflags & RCS_CREATE)) {
+	if (stat(rcspath, &st) == -1 && !(flags & RCS_CREATE)) {
 		if ((strcmp(__progname, "rcsclean") != 0)
 		    && (strcmp(__progname, "ci") != 0))
 			cvs_log(LP_ERRNO, "%s", rcspath);
@@ -438,7 +439,7 @@ rcs_usage(void)
 int
 rcs_main(int argc, char **argv)
 {
-	int i, j, ch, flags, kflag, lkmode;
+	int i, j, ch, kflag, lkmode;
 	char fpath[MAXPATHLEN], ofpath[MAXPATHLEN];
 	char *logstr, *logmsg, *nflag, *descfile;
 	char *alist, *comment, *elist;
@@ -469,7 +470,7 @@ rcs_main(int argc, char **argv)
 			break;
 		case 'e':
 			elist = rcs_optarg;
-			rcsflags |= RCS_EFLAG;
+			rcsflags |= RCSPROG_EFLAG;
 			break;
 		case 'h':
 			(usage)();
@@ -477,7 +478,6 @@ rcs_main(int argc, char **argv)
 			/* NOTREACHED */
 		case 'i':
 			flags |= RCS_CREATE;
-			rcsflags |= RCS_CREATE;
 			break;
 		case 'k':
 			kflag = rcs_kflag_get(rcs_optarg);
@@ -504,14 +504,14 @@ rcs_main(int argc, char **argv)
 			break;
 		case 'N':
 			nflag = xstrdup(rcs_optarg);
-			rcsflags |= RCS_NFLAG;
+			rcsflags |= RCSPROG_NFLAG;
 			break;
 		case 'q':
 			verbose = 0;
 			break;
 		case 't':
 			descfile = rcs_optarg;
-			rcsflags |= RCS_TFLAG;
+			rcsflags |= RCSPROG_TFLAG;
 			break;
 		case 'T':
 			rcsflags |= PRESERVETIME;
@@ -559,11 +559,10 @@ rcs_main(int argc, char **argv)
 		if ((file = rcs_open(fpath, flags, fmode)) == NULL)
 			continue;
 
-		if (rcsflags & RCS_CREATE)
-			rcs_set_description(file, NULL);
-
-		if (rcsflags & RCS_TFLAG)
+		if (rcsflags & RCSPROG_TFLAG)
 			rcs_set_description(file, descfile);
+		else if (flags & RCS_CREATE)
+			rcs_set_description(file, NULL);
 
 		if (rcsflags & PRESERVETIME)
 			rcs_mtime = rcs_get_mtime(file->rf_path);
@@ -632,7 +631,7 @@ rcs_main(int argc, char **argv)
 				rcs_access_remove(file, eargv->argv[j]);
 
 			cvs_argv_destroy(eargv);
-		} else if (rcsflags & RCS_EFLAG) {
+		} else if (rcsflags & RCSPROG_EFLAG) {
 			struct rcs_access *rap;
 
 			/* XXX rcs_access_remove(file, NULL); ?? */
@@ -693,17 +692,17 @@ rcs_attach_symbol(RCSFILE *file, const char *symname)
 			fatal("bad revision %s", rnum);
 	}
 
-	if (rcsflags & RCS_NFLAG)
+	if (rcsflags & RCSPROG_NFLAG)
 		rm = 1;
 
 	if (rm == 1) {
 		if (rcs_sym_remove(file, symname) < 0) {
 			if ((rcs_errno == RCS_ERR_NOENT) &&
-			    !(rcsflags & RCS_NFLAG))
+			    !(rcsflags & RCSPROG_NFLAG))
 				cvs_log(LP_WARN,
 				    "can't delete nonexisting symbol %s", symname);
 		} else {
-			if (rcsflags & RCS_NFLAG)
+			if (rcsflags & RCSPROG_NFLAG)
 				rm = 0;
 		}
 	}
