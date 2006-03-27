@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2006/03/27 08:21:01 ray Exp $
+#	$OpenBSD: Makefile,v 1.13 2006/03/27 21:57:32 niallo Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -47,6 +47,9 @@ LTESTS= ci-initial \
 	rcs-tflag-stdin3 \
 	rcs-tflag-inline \
 	rcs-tflag-file \
+	co-lock-filemodes \
+	co-unlock-filemodes \
+	ci-filemodes
 
 .for t in ${LTESTS}
 REGRESS_TARGETS+=test-${t}
@@ -281,6 +284,84 @@ test-rcs-tflag-file: clean
 	@echo 'This is a description.' > description
 	@${RCS} -q -i -tdescription file
 	@fgrep -q 'This is a description.' file,v
+
+# Testing 'co -l blah.c' for permissions inheritance
+test-co-lock-filemodes:
+	@rm -rf RCS/blah.c,v blah.c
+	@mkdir -p RCS
+	@cp ${.CURDIR}/rev3 blah.c
+	@chmod 444 blah.c
+	@echo "blah" | ${CI} -q blah.c
+	@chmod 755 RCS/blah.c,v
+	@${CO} -q -l blah.c
+	@eval 'test `stat -f%p blah.c` = 100755'
+	@rm -rf blah.c
+	@chmod 666 RCS/blah.c,v
+	@${CO} -q -l blah.c
+	@eval 'test `stat -f%p blah.c` = 100644'
+	@rm -rf blah.c
+	@chmod 600 RCS/blah.c,v
+	@${CO} -q -l blah.c
+	@eval 'test `stat -f%p blah.c` = 100600'
+	@rm -rf blah.c
+	@chmod 604 RCS/blah.c,v
+	@${CO} -q -l blah.c
+	@eval 'test `stat -f%p blah.c` = 100604'
+	@rm -rf blah.c
+	@chmod 754 RCS/blah.c,v
+	@${CO} -q -l blah.c
+	@eval 'test `stat -f%p blah.c` = 100754'
+	
+
+# Testing 'co -u blah.c' for permissions inheritance
+test-co-unlock-filemodes: test-co-lock-filemodes
+	@rm -rf RCS/blah.c,v blah.c
+	@mkdir -p RCS
+	@cp ${.CURDIR}/rev3 blah.c
+	@echo "blah" | ${CI} -q blah.c
+	@chmod 755 RCS/blah.c,v
+	@${CO} -q -u blah.c
+	@eval 'test `stat -f%p blah.c` = 100555'
+	@rm -rf blah.c
+	@chmod 666 RCS/blah.c,v
+	@${CO} -q -u blah.c
+	@eval 'test `stat -f%p blah.c` = 100444'
+	@rm -rf blah.c
+	@chmod 600 RCS/blah.c,v
+	@${CO} -q -u blah.c
+	@eval 'test `stat -f%p blah.c` = 100400'
+	@rm -rf blah.c
+	@chmod 604 RCS/blah.c,v
+	@${CO} -q -u blah.c
+	@eval 'test `stat -f%p blah.c` = 100404'
+	@rm -rf blah.c
+	@chmod 754 RCS/blah.c,v
+	@${CO} -q -u blah.c
+	@eval 'test `stat -f%p blah.c` = 100554'
+
+# Testing 'ci blah.c' for permissions inheritance
+test-ci-filemodes: test-co-unlock-filemodes
+	@rm -rf RCS/blah.c,v blah.c
+	@mkdir -p RCS
+	@cp ${.CURDIR}/rev3 blah.c
+	@chmod 755 blah.c
+	@echo "blah" | ${CI} -q blah.c
+	@eval 'test `stat -f%p RCS/blah.c,v` = 100555'
+	@rm -rf RCS/blah.c,v blah.c
+	@cp ${.CURDIR}/rev3 blah.c
+	@chmod 666 blah.c
+	@echo "blah" | ${CI} -q blah.c
+	@eval 'test `stat -f%p RCS/blah.c,v` = 100444'
+	@rm -rf RCS/blah.c,v blah.c
+	@cp ${.CURDIR}/rev3 blah.c
+	@chmod 700 blah.c
+	@echo "blah" | ${CI} -q blah.c
+	@eval 'test `stat -f%p RCS/blah.c,v` = 100500'
+	@rm -rf RCS/blah.c,v blah.c
+	@cp ${.CURDIR}/rev3 blah.c
+	@chmod 606 blah.c
+	@echo "blah" | ${CI} -q blah.c
+	@eval 'test `stat -f%p RCS/blah.c,v` = 100404'
 
 clean:
 	@rm -rf ${CLEANFILES}
