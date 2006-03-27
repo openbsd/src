@@ -1,4 +1,4 @@
-/*	$OpenBSD: isagpio.c,v 1.1 2006/03/26 20:19:53 grange Exp $	*/
+/*	$OpenBSD: isagpio.c,v 1.2 2006/03/27 07:16:04 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Oleg Safiullin <form@pdp-11.org.ru>
@@ -93,7 +93,6 @@ isagpio_attach(struct device *parent, struct device *self, void *aux)
 	struct isagpio_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	struct gpiobus_attach_args gba;
-	u_int16_t mask;
 	int i;
 
 	if (bus_space_map(ia->ia_iot, ia->ia_iobase, ia->ia_iosize, 0,
@@ -107,7 +106,7 @@ isagpio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_gpio_mask = 0;
 
-	for (i = 0, mask = 0x01; i < ISAGPIO_NPINS; mask <<= 1, i++) {
+	for (i = 0; i < ISAGPIO_NPINS; i++) {
 		sc->sc_gpio_pins[i].pin_num = i;
 		sc->sc_gpio_pins[i].pin_caps = GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
 		sc->sc_gpio_pins[i].pin_state = 0;
@@ -133,7 +132,7 @@ isagpio_pin_read(void *arg, int pin)
 	u_int8_t mask;
 
 	mask = bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0);
-	return ((mask >> pin) & 0x0001);
+	return ((mask >> pin) & 0x01);
 }
 
 void
