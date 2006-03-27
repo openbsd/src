@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rlog.1,v 1.13 2006/03/06 14:47:20 jmc Exp $
+.\"	$OpenBSD: rlog.1,v 1.14 2006/03/27 08:20:55 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -72,6 +72,10 @@ character to imply an inclusive specification.
 Several specifications can be used by separating them with the
 .Sq \&;
 character.
+.Pp
+See also the
+.Fl z
+option, below.
 .It Fl h
 Print header.
 .It Fl L
@@ -143,9 +147,16 @@ Suffixes should be separated by the
 .Sq /
 character.
 .It Fl z Ns Ar tz
-Specify the date output format, and the default time zone for
-.Ar dates
-used in the
+Specify the date output format.
+The
+.Ar tz
+argument should be a numeric UTC offset
+(e.g. +02.45 would specify an offset of 2 hours 45 minutes).
+.Sq LT
+may instead be used to specify local time.
+If no argument is given, a default format is used.
+This option is also used to set the default time zone for
+dates used in the
 .Fl d
 option.
 .El
