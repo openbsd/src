@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.149 2006/03/27 07:14:13 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.150 2006/03/27 15:26:12 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1038,9 +1038,8 @@ rcs_comment_get(RCSFILE *file)
  * rcs_comment_set()
  *
  * Set the comment leader for the RCS file <file>.
- * Returns 0 on success, or -1 on failure.
  */
-int
+void
 rcs_comment_set(RCSFILE *file, const char *comment)
 {
 	char *tmp;
@@ -1050,8 +1049,6 @@ rcs_comment_set(RCSFILE *file, const char *comment)
 		xfree(file->rf_comment);
 	file->rf_comment = tmp;
 	file->rf_flags &= ~RCS_SYNCED;
-
-	return (0);
 }
 
 /*
