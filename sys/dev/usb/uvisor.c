@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.24 2006/03/14 10:18:10 dlg Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.25 2006/03/27 09:29:01 jsg Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -440,7 +440,7 @@ uvisor_init(struct uvisor_softc *sc, struct uvisor_connection_info *ci,
 			 * switch them over to using visor. dont do free space
 			 * checks on them since they dont like them either.
 			 */
-			DPRINTF(("switching role for CLIE probe\n"))
+			DPRINTF(("switching role for CLIE probe\n"));
 			sc->sc_flags = CLIE4;
 			err = 0;
 		}
