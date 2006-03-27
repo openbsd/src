@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.36 2006/03/07 21:32:51 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.37 2006/03/27 16:33:52 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -114,6 +114,7 @@
 03/26	Benjamin Thompson born, 1753, Count Rumford; physicist
 03/26	David Packard died, 1996; age of 83
 03/27	Wilhelm Conrad Roentgen born, 1845, discoverer of X-rays
+03/27	Stanislaw Lem died, 2006
 03/30	Francisco Jose de Goya born, 1746
 03/30	Sean O'Casey born, 1880
 03/30	Vincent Van Gogh born, 1853
