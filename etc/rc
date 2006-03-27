@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.280 2006/03/22 15:57:55 hshoexer Exp $
+#	$OpenBSD: rc,v 1.281 2006/03/27 16:53:10 reyk Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -612,6 +612,10 @@ if ifconfig lo0 inet6 >/dev/null 2>&1; then
 			/usr/sbin/rtadvd ${rtadvd_flags}
 		fi
 	fi
+fi
+
+if [ X"${hostapd_flags}" != X"NO" ]; then
+	echo -n ' hostapd';		/usr/sbin/hostapd ${hostapd_flags};
 fi
 
 # $rwhod is imported from /etc/rc.conf;
