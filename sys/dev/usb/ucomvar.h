@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucomvar.h,v 1.12 2005/01/10 08:17:49 dlg Exp $ */
+/*	$OpenBSD: ucomvar.h,v 1.13 2006/03/27 08:19:39 dlg Exp $ */
 /*	$NetBSD: ucomvar.h,v 1.10 2001/12/31 12:15:21 augustss Exp $	*/
 
 /*
@@ -37,16 +37,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-
-#if defined(__NetBSD__)
-/* Macros to clear/set/test flags. */
-#define SET(t, f)       (t) |= (f)
-#define CLR(t, f)       (t) &= ~(f)
-#define ISSET(t, f)     ((t) & (f))
-
-#include "locators.h"
-#endif
 
 #define ucomcf_portno cf_loc[UCOMBUSCF_PORTNO]
 #define UCOM_UNK_PORTNO UCOMBUSCF_PORTNO_DEFAULT
