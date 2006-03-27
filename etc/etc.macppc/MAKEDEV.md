@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.24 2006/03/27 04:00:02 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.25 2006/03/27 06:34:36 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -105,8 +105,8 @@ _std(1, 2, 43, 3, 6)
 dnl
 dnl *** macppc specific targets
 dnl
-twrget(all, s64_tzs, tty, a, b, c, d)dnl
-twrget(all, s64_czs, cua, a, b, c, d)dnl
+twrget(all, s64_tzs, tty, a, b)dnl
+twrget(all, s64_czs, cua, a, b)dnl
 target(all, ch, 0)dnl
 target(all, ss, 0, 1)dnl
 target(all, xfs, 0)dnl
