@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.27 2005/11/16 03:43:40 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.28 2006/03/27 06:15:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -95,6 +95,9 @@ cdev_decl(ofrtc);
 cdev_decl(kbd);
 cdev_decl(ms);
 
+#include "com.h"
+cdev_decl(com);
+
 #include "wsdisplay.h"
 #include "wskbd.h"
 #include "wsmouse.h"
@@ -173,8 +176,8 @@ struct cdevsw cdevsw[] = {
 	cdev_bpftun_init(NBPFILTER,bpf),/* 22: berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 23: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 24: loadable module driver */
-        cdev_apm_init(NAPM,apm),	/* 25: APM interface */
-	cdev_notdef(),			/* 26 */
+	cdev_apm_init(NAPM,apm),	/* 25: APM interface */
+	cdev_tty_init(NCOM,com),        /* 26: Serial Ports via com(4) */
 	cdev_notdef(),			/* 27 */
 	cdev_notdef(),			/* 28 */
 	cdev_notdef(),			/* 29 */
@@ -341,6 +344,7 @@ int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
 cons_decl(ws);
 cons_decl(zs);
 cons_decl(ofc);
+cons_decl(com);
 
 struct consdev constab[] = {
 #if NWSDISPLAY > 0
