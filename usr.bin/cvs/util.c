@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.72 2006/03/17 13:40:41 niallo Exp $	*/
+/*	$OpenBSD: util.c,v 1.73 2006/03/27 06:13:51 pat Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -1052,22 +1052,39 @@ cvs_yesno(void)
  * Split a string <str> of <sep>-separated values and allocate
  * an argument vector for the values found.
  */
-char **
+struct cvs_argvector *
 cvs_strsplit(char *str, const char *sep)
 {
-	char **argv, **nargv;
+	struct cvs_argvector *av;
+	char **nargv;
 	char *cp, *p;
 	int i = 0;
 
 	cp = xstrdup(str);
-	argv = (char **)xmalloc((i+1) * sizeof(char *));
+	av = xmalloc(sizeof(struct cvs_argvector));
+	av->str = cp;
+	av->argv = (char **)xmalloc((i+1) * sizeof(char *));
 
 	while ((p = strsep(&cp, sep)) != NULL) {
-		argv[i++] = p;
-		nargv = (char **)xrealloc((void *)argv, (i+1) * sizeof(char *));
-		argv = nargv;
+		av->argv[i++] = p;
+		nargv = (char **)xrealloc((void *)av->argv,
+		    (i+1) * sizeof(char *));
+		av->argv = nargv;
 	}
-	argv[i] = NULL;
+	av->argv[i] = NULL;
 
-	return (argv);
+	return (av);
+}
+
+/*
+ * cvs_argv_destroy()
+ *
+ * Free an argument vector previously allocated by cvs_strsplit().
+ */
+void
+cvs_argv_destroy(struct cvs_argvector *av)
+{
+	xfree(av->str);
+	xfree(av->argv);
+	xfree(av);
 }

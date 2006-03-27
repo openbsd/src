@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.85 2006/03/24 05:14:48 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.86 2006/03/27 06:13:51 pat Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -612,26 +612,26 @@ rcs_main(int argc, char **argv)
 
 		/* entries to add to the access list */
 		if (alist != NULL) {
-			char **aargv;
+			struct cvs_argvector *aargv;
 
 			aargv = cvs_strsplit(alist, ",");
-			for (j = 0; aargv[j] != NULL; j++)
-				rcs_access_add(file, aargv[j]);
+			for (j = 0; aargv->argv[j] != NULL; j++)
+				rcs_access_add(file, aargv->argv[j]);
 
-			xfree(aargv);
+			cvs_argv_destroy(aargv);
 		}
 
 		if (comment != NULL)
 			rcs_comment_set(file, comment);
 
 		if (elist != NULL) {
-			char **eargv;
+			struct cvs_argvector *eargv;
 
 			eargv = cvs_strsplit(elist, ",");
-			for (j = 0; eargv[j] != NULL; j++)
-				rcs_access_remove(file, eargv[j]);
+			for (j = 0; eargv->argv[j] != NULL; j++)
+				rcs_access_remove(file, eargv->argv[j]);
 
-			xfree(eargv);
+			cvs_argv_destroy(eargv);
 		} else if (rcsflags & RCS_EFLAG) {
 			struct rcs_access *rap;
 

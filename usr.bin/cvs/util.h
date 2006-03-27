@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.3 2006/03/17 13:40:41 niallo Exp $	*/
+/*	$OpenBSD: util.h,v 1.4 2006/03/27 06:13:51 pat Exp $	*/
 /*
  * Copyright (c) 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -69,12 +69,18 @@ struct cvs_lines {
 	struct cvs_tqh	l_lines;
 };
 
+struct cvs_argvector {
+	char *str;
+	char **argv;
+};
 
 BUF			*cvs_patchfile(const char *, const char *,
 			    int (*p)(struct cvs_lines *, struct cvs_lines *));
 struct cvs_lines	*cvs_splitlines(const char *);
 void			cvs_freelines(struct cvs_lines *);
 int			cvs_yesno(void);
-char			**cvs_strsplit(char *, const char *);
+struct cvs_argvector	*cvs_strsplit(char *, const char *);
+
+void			cvs_argv_destroy(struct cvs_argvector *);
 
 #endif	/* UTIL_H */
