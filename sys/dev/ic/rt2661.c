@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.14 2006/03/25 22:41:43 djm Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.15 2006/03/27 20:54:15 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1047,6 +1047,10 @@ rt2661_tx_intr(struct rt2661_softc *sc)
 		data = &txq->data[txq->stat];
 		rn = (struct rt2661_node *)data->ni;
 
+		/* if no frame has been sent, ignore */
+		if (rn == NULL)
+			continue;
+
 		switch (RT2661_TX_RESULT(val)) {
 		case RT2661_TX_SUCCESS:
 			retrycnt = RT2661_TX_RETRYCNT(val);
@@ -1319,11 +1323,16 @@ int
 rt2661_intr(void *arg)
 {
 	struct rt2661_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	uint32_t r1, r2;
 
 	/* disable MAC and MCU interrupts */
 	RAL_WRITE(sc, RT2661_INT_MASK_CSR, 0xffffff7f);
 	RAL_WRITE(sc, RT2661_MCU_INT_MASK_CSR, 0xffffffff);
+
+	/* don't re-enable interrupts if we're shutting down */
+	if (!(ifp->if_flags & IFF_RUNNING))
+		return 0;
 
 	r1 = RAL_READ(sc, RT2661_INT_SOURCE_CSR);
 	RAL_WRITE(sc, RT2661_INT_SOURCE_CSR, r1);
@@ -2727,6 +2736,10 @@ rt2661_stop(struct ifnet *ifp, int disable)
 	/* disable interrupts */
 	RAL_WRITE(sc, RT2661_INT_MASK_CSR, 0xffffff7f);
 	RAL_WRITE(sc, RT2661_MCU_INT_MASK_CSR, 0xffffffff);
+
+	/* clear any pending interrupt */
+	RAL_WRITE(sc, RT2661_INT_SOURCE_CSR, 0xffffffff);
+	RAL_WRITE(sc, RT2661_MCU_INT_SOURCE_CSR, 0xffffffff);
 
 	/* reset Tx and Rx rings */
 	rt2661_reset_tx_ring(sc, &sc->txq[0]);
