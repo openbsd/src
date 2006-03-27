@@ -1330,6 +1330,7 @@
 ./usr/share/man/cat4/ipsec.0
 ./usr/share/man/cat4/ipw.0
 ./usr/share/man/cat4/isa.0
+./usr/share/man/cat4/isagpio.0
 ./usr/share/man/cat4/isapnp.0
 ./usr/share/man/cat4/ises.0
 ./usr/share/man/cat4/isp.0
