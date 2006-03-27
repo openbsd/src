@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.30 2006/03/25 09:34:13 norby Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.31 2006/03/27 11:57:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -166,7 +166,7 @@ main(int argc, char *argv[])
 		err(1, "sysctl");
 
 	if (!ipforwarding)
-		log_warnx("WARNING: forwarding NOT enabled");
+		log_warnx("WARNING: IP forwarding NOT enabled");
 
 	/* fetch interfaces early */
 	kif_init();
