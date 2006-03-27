@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.8 2003/12/16 19:26:44 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.9 2006/03/27 00:10:15 tedu Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/23 08:34:47 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: misc.c,v 1.8 2003/12/16 19:26:44 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: misc.c,v 1.9 2006/03/27 00:10:15 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -204,19 +204,29 @@ set_ownlist(pl)
 #ifdef DEBUG
 			printf("num = %d\n", num);
 #endif
-			if (orig == 0) {
+			if (orig == NULL) {
 				printf("panic:  bad monopoly descriptor: orig = %p\n", orig);
 				printf("player # %d\n", pl+1);
 				printhold(pl);
 				printf("orig_op = %p\n", orig_op);
-				printf("orig_op->sqr->type = %d (PRPTY)\n", op->sqr->type);
-				printf("orig_op->next = %p\n", op->next);
-				printf("orig_op->sqr->desc = %p\n", op->sqr->desc);
+				if (orig_op) {
+					printf("orig_op->sqr->type = %d (PRPTY)\n",
+					    orig_op->sqr->type);
+					printf("orig_op->next = %p\n",
+					    orig_op->next);
+					printf("orig_op->sqr->desc = %p\n",
+					    orig_op->sqr->desc);
+				}
 				printf("op = %p\n", op);
-				printf("op->sqr->type = %d (PRPTY)\n", op->sqr->type);
-				printf("op->next = %p\n", op->next);
-				printf("op->sqr->desc = %p\n", op->sqr->desc);
+				if (op) {
+					printf("op->sqr->type = %d (PRPTY)\n",
+					    op->sqr->type);
+					printf("op->next = %p\n", op->next);
+					printf("op->sqr->desc = %p\n",
+					    op->sqr->desc);
+				}
 				printf("num = %d\n", num);
+				exit(1);
 			}
 #ifdef DEBUG
 			printf("orig->num_in = %d\n", orig->num_in);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: otto.c,v 1.8 2003/08/07 20:19:10 jolan Exp $	*/
+/*	$OpenBSD: otto.c,v 1.9 2006/03/27 00:10:15 tedu Exp $	*/
 /*	$NetBSD: otto.c,v 1.2 1997/10/10 16:32:39 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -294,7 +294,8 @@ ottolook(rel_dir, itemp)
 	cont_north:
 		if (itemp->flags & DEADEND) {
 			itemp->flags |= BEEN;
-			been_there[r][col] |= NORTH;
+			if (r >= 0)
+				been_there[r][col] |= NORTH;
 			for (r = row - 1; r > row - itemp->distance; r--)
 				been_there[r][col] = ALLDIRS;
 		}
@@ -314,7 +315,8 @@ ottolook(rel_dir, itemp)
 	cont_south:
 		if (itemp->flags & DEADEND) {
 			itemp->flags |= BEEN;
-			been_there[r][col] |= SOUTH;
+			if (r < HEIGHT)
+				been_there[r][col] |= SOUTH;
 			for (r = row + 1; r < row + itemp->distance; r++)
 				been_there[r][col] = ALLDIRS;
 		}
@@ -553,17 +555,8 @@ wander()
 		duck(random() % NUMDIRECTIONS);
 		num_turns = 0;
 		return;
-	} else if (dir_count == 1)
+	} else {
 		rel_dir = ffs(dir_mask) - 1;
-	else {
-		rel_dir = ffs(dir_mask) - 1;
-		dir_mask &= ~(1 << rel_dir);
-		while (dir_mask != 0) {
-			i = ffs(dir_mask) - 1;
-			if (random() % 5 == 0)
-				rel_dir = i;
-			dir_mask &= ~(1 << i);
-		}
 	}
 	if (rel_dir == FRONT)
 		num_turns++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snscore.c,v 1.5 2004/07/10 07:26:24 deraadt Exp $	*/
+/*	$OpenBSD: snscore.c,v 1.6 2006/03/27 00:10:15 tedu Exp $	*/
 /*	$NetBSD: snscore.c,v 1.5 1995/04/24 12:25:43 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)snscore.c	8.1 (Berkeley) 7/19/93";
 #else
-static char rcsid[] = "$OpenBSD: snscore.c,v 1.5 2004/07/10 07:26:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: snscore.c,v 1.6 2006/03/27 00:10:15 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ snscore(int fd, int topn)
 		if (read(fd, &score, sizeof(short)) == 0)
 			break;
 		if (score > 0) {
-			if (noplayers > MAXPLAYERS)
+			if (noplayers >= MAXPLAYERS)
 				errx(2, "Too many entries in scorefile!");
 			players[noplayers].uids = uid;
 			players[noplayers].scores = score;

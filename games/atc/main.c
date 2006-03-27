@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2005/05/01 02:43:11 djm Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2006/03/27 00:10:14 tedu Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.13 2005/05/01 02:43:11 djm Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.14 2006/03/27 00:10:14 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -265,6 +265,7 @@ default_game(void)
 	}
 	if (fgets(line, sizeof(line), fp) == NULL) {
 		warnx("%s: no default game available", games);
+		fclose(fp);
 		return (NULL);
 	}
 	fclose(fp);

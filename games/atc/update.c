@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.9 2004/11/29 08:52:28 jsg Exp $	*/
+/*	$OpenBSD: update.c,v 1.10 2006/03/27 00:10:14 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: update.c,v 1.9 2004/11/29 08:52:28 jsg Exp $";
+static char rcsid[] = "$OpenBSD: update.c,v 1.10 2006/03/27 00:10:14 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -263,7 +263,7 @@ name(const PLANE *p)
 int
 number(char l)
 {
-	if (l < 'a' && l > 'z' && l < 'A' && l > 'Z')
+	if ((l < 'a' && l > 'z') || (l < 'A' && l > 'Z'))
 		return (-1);
 	else if (l >= 'a' && l <= 'z')
 		return (l - 'a');

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dr_1.c,v 1.4 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: dr_1.c,v 1.5 2006/03/27 00:10:15 tedu Exp $	*/
 /*	$NetBSD: dr_1.c,v 1.4 1995/04/24 12:25:10 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dr_1.c,v 1.4 2003/06/03 03:01:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: dr_1.c,v 1.5 2006/03/27 00:10:15 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -419,7 +419,7 @@ next()
 				bestship = s;
 			}
 		}
-		if (best > 0.0) {
+		if (bestship) {
 			char *tp = getenv("WOTD");
 			const char *p;
 			if (tp == 0)

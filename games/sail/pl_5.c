@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_5.c,v 1.4 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: pl_5.c,v 1.5 2006/03/27 00:10:15 tedu Exp $	*/
 /*	$NetBSD: pl_5.c,v 1.4 1995/04/24 12:25:21 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_5.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: pl_5.c,v 1.4 2003/06/03 03:01:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: pl_5.c,v 1.5 2006/03/27 00:10:15 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -214,7 +214,7 @@ parties(crew, to, isdefense, buf)
 		ptr = isdefense ? to->file->DBP : to->file->OBP; 
 		for (j = 0; j < NBP && ptr[j].turnsent; j++)
 			;
-		if (!ptr[j].turnsent && buf > '0') {
+		if (j < NBP && buf > '0') {
 			men = 0;
 			for (k = 0; k < 3 && buf > '0'; k++) {
 				men += crew[k]

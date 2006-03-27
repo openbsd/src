@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.15 2004/07/09 15:59:26 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.16 2006/03/27 00:10:14 tedu Exp $	*/
 /*	$NetBSD: io.c,v 1.3 1995/04/24 12:21:37 cgd Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.15 2004/07/09 15:59:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.16 2006/03/27 00:10:14 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -378,7 +378,7 @@ rtrav(void)				/* read travel table		*/
 		if (locc == -1)
 			return;
 		if (locc != oldloc) {	/* getting a new entry		*/
-			t = travel[locc] = (struct travlist *) malloc(sizeof (struct travlist));
+			t = travel[locc] = calloc(1, sizeof(*t));
 			if (t == NULL)
 				err(1, NULL);
 		/*	printf("New travel list for %d\n", locc);	*/
@@ -400,10 +400,13 @@ rtrav(void)				/* read travel table		*/
 			m = atoi(buf);
 		}
 		while (breakch != LF) {	/* only do one line at a time	*/
+			if (t ==  NULL)
+				errx(1, "corrupt file");
 			if (entries++) {
-				t = t->next = (struct travlist *) malloc(sizeof (struct travlist));
-				if (t == NULL)
+				t->next = calloc(1, sizeof (*t->next));
+				if (t->next == NULL)
 					err(1, NULL);
+				t = t->next;
 			}
 			t->tverb = rnum();/* get verb from the file	*/
 			t->tloc = n;	/* table entry mod 1000		*/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shots.c,v 1.8 2004/01/16 00:13:19 espie Exp $	*/
+/*	$OpenBSD: shots.c,v 1.9 2006/03/27 00:10:15 tedu Exp $	*/
 /*	$NetBSD: shots.c,v 1.3 1997/10/11 08:13:50 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -378,7 +378,7 @@ move_normal_shot(bp)
 				pp->p_ident->i_absorbed += bp->b_charge;
 
 				/* Deallocate storage: */
-				free((char *) bp);
+				free(bp);
 
 				/* Update ammo display: */
 				ammo_update(pp);
@@ -569,7 +569,7 @@ drone_move:
 			message(pp, "**** Absorbed drone ****");
 
 			/* Release drone storage: */
-			free((char *) bp);
+			free(bp);
 
 			/* Update ammo: */
 			ammo_update(pp);
@@ -904,7 +904,7 @@ move_slime(bp, speed, next)
 
 	if (speed == 0) {
 		if (bp->b_charge <= 0)
-			free((char *) bp);
+			free(bp);
 		else
 			save_bullet(bp);
 		return;
@@ -1046,7 +1046,7 @@ move_slime(bp, speed, next)
 		move_slime(nbp, speed - 1, next);
 	}
 
-	free((char *) bp);
+	free(bp);
 }
 
 /*

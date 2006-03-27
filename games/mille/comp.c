@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp.c,v 1.5 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: comp.c,v 1.6 2006/03/27 00:10:15 tedu Exp $	*/
 /*	$NetBSD: comp.c,v 1.4 1995/03/24 05:01:11 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)comp.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: comp.c,v 1.5 2003/06/03 03:01:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: comp.c,v 1.6 2006/03/27 00:10:15 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -342,8 +342,7 @@ normbad:
 						*value /= ++badcount;
 					if (op->mileage == 0)
 						*value += 5;
-					if ((card == C_LIMIT &&
-					     op->speed == C_LIMIT) ||
+					if ((op->speed == C_LIMIT) ||
 					    !op->can_go)
 						*value -= 5;
 					if (cango && pp->safety[S_RIGHT_WAY] !=

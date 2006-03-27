@@ -1,4 +1,4 @@
-/*	$OpenBSD: odds.c,v 1.3 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: odds.c,v 1.4 2006/03/27 00:10:14 tedu Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)odds.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: odds.c,v 1.3 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: odds.c,v 1.4 2006/03/27 00:10:14 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ canhit(i, c)
 		if (board[j] * a > 0) {
 			diff = abs(j - i);
 			addon = place + ((board[j] * a > 2 || j == b) ? 5 : 0);
-			if ((j == b && menstuck == 1) &&
+			if ((j == b && menstuck == 1) ||
 			    (j != b && menstuck == 0))
 				for (k = 1; k < diff; k++)
 					if (k < 7 && diff - k < 7 &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: support.c,v 1.9 2004/07/10 07:26:23 deraadt Exp $	*/
+/*	$OpenBSD: support.c,v 1.10 2006/03/27 00:10:15 tedu Exp $	*/
 /*	$NetBSD: support.c,v 1.3 1995/03/21 15:08:59 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: support.c,v 1.9 2004/07/10 07:26:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: support.c,v 1.10 2006/03/27 00:10:15 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -114,6 +114,8 @@ cchose(CARD h[], int n, int s)
 			break;
 		}
 	}
+	if (j < 0)
+		errx("cchose internal error %d %d", j, n);
 	return (j);
 }
 

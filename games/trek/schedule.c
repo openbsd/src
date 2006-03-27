@@ -1,4 +1,4 @@
-/*	$OpenBSD: schedule.c,v 1.4 2003/06/03 03:01:42 millert Exp $	*/
+/*	$OpenBSD: schedule.c,v 1.5 2006/03/27 00:10:15 tedu Exp $	*/
 /*	$NetBSD: schedule.c,v 1.3 1995/04/22 10:59:23 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)schedule.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: schedule.c,v 1.4 2003/06/03 03:01:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: schedule.c,v 1.5 2006/03/27 00:10:15 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ schedule(type, offset, x, y, z)
 		e->x = x;
 		e->y = y;
 		e->systemname = z;
-		Now.eventptr[type] = e;
+		Now.eventptr[type & E_EVENT] = e;
 		return (e);
 	}
 	errx(1, "Cannot schedule event %d parm %d %d %d", type, x, y, z);
