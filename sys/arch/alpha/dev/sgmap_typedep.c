@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmap_typedep.c,v 1.5 2006/03/13 19:50:07 miod Exp $ */
+/* $OpenBSD: sgmap_typedep.c,v 1.6 2006/03/27 20:46:44 brad Exp $ */
 /* $NetBSD: sgmap_typedep.c,v 1.17 2001/07/19 04:27:37 thorpej Exp $ */
 
 /*-
@@ -46,8 +46,7 @@ SGMAP_PTE_TYPE		__C(SGMAP_TYPE,_prefetch_spill_page_pte);
 
 int			__C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t,
 			    bus_dmamap_t, void *buf, size_t buflen,
-			    struct proc *, int, int *,
-			    struct alpha_sgmap *);
+			    struct proc *, int, int, struct alpha_sgmap *);
 
 void
 __C(SGMAP_TYPE,_init_spill_page_pte)(void)
@@ -60,7 +59,7 @@ __C(SGMAP_TYPE,_init_spill_page_pte)(void)
 
 int
 __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
-    size_t buflen, struct proc *p, int flags, int *segp,
+    size_t buflen, struct proc *p, int flags, int seg,
     struct alpha_sgmap *sgmap)
 {
 	vaddr_t endva, va = (vaddr_t)buf;
@@ -145,22 +144,21 @@ __C(SGMAP_TYPE,_load_buffer)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 #endif
 
 	/* Generate the DMA address. */
-	map->dm_segs[*segp].ds_addr = sgmap->aps_wbase | sgva | dmaoffset;
-	map->dm_segs[*segp].ds_len = buflen;
+	map->dm_segs[seg].ds_addr = sgmap->aps_wbase | sgva | dmaoffset;
+	map->dm_segs[seg].ds_len = buflen;
 
 #ifdef SGMAP_DEBUG
 	if (__C(SGMAP_TYPE,_debug))
 		printf("sgmap_load: wbase = 0x%lx, vpage = 0x%x, "
 		    "dma addr = 0x%lx\n", sgmap->aps_wbase, sgva,
-		    map->dm_segs[0].ds_addr);
+		    map->dm_segs[seg].ds_addr);
 #endif
 
 	for (; va < endva; va += NBPG, pteidx++,
-	    pte = &page_table[pteidx * SGMAP_PTE_SPACING]) {
+	     pte = &page_table[pteidx * SGMAP_PTE_SPACING]) {
 		/* Get the physical address for this segment. */
 		if (p != NULL)
-			(void) pmap_extract(p->p_vmspace->vm_map.pmap, va,
-			    &pa);
+			(void) pmap_extract(p->p_vmspace->vm_map.pmap, va, &pa);
 		else
 			pa = vtophys(va);
 
@@ -206,7 +204,7 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 	seg = 0;
 	error = __C(SGMAP_TYPE,_load_buffer)(t, map, buf, buflen, p,
-	    flags, &seg, sgmap);
+	    flags, seg, sgmap);
 
 	alpha_mb();
 
@@ -249,11 +247,12 @@ __C(SGMAP_TYPE,_load_mbuf)(bus_dma_tag_t t, bus_dmamap_t map,
 
 	seg = 0;
 	error = 0;
-	for (m = m0; m != NULL && error == 0; m = m->m_next, seg++) {
+	for (m = m0; m != NULL && error == 0; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
 		error = __C(SGMAP_TYPE,_load_buffer)(t, map,
-		    m->m_data, m->m_len, NULL, flags, &seg, sgmap);
+		    m->m_data, m->m_len, NULL, flags, seg, sgmap);
+		seg++;
 	}
 
 	alpha_mb();
