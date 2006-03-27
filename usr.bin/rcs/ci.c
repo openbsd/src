@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.127 2006/03/27 13:07:37 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.128 2006/03/27 21:56:32 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -111,7 +111,8 @@ checkin_main(int argc, char **argv)
 	pb.rcs_msg = pb.username = pb.author = pb.state = NULL;
 	pb.symbol = pb.description = NULL;
 	pb.newrev =  NULL;
-	pb.fmode = pb.flags = status = 0;
+	pb.flags = status = 0;
+	pb.fmode = S_IRUSR|S_IRGRP|S_IROTH;
 
 	pb.flags = INTERACTIVE;
 	pb.openflags = RCS_RDWR|RCS_CREATE|RCS_PARSE_FULLY;
@@ -454,6 +455,7 @@ static int
 checkin_update(struct checkin_params *pb)
 {
 	char  *filec, numb1[64], numb2[64];
+	struct stat st;
 	BUF *bp;
 
 	/*
@@ -582,9 +584,20 @@ checkin_update(struct checkin_params *pb)
 	if (pb->state != NULL)
 		(void)rcs_state_set(pb->file, pb->newrev, pb->state);
 
+	/* Maintain RCSFILE permissions */
+	if (stat(pb->filename, &st) == -1)
+		goto fail;
+
+	/* Strip all the write bits */
+	pb->file->rf_mode = st.st_mode &
+	    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
+
 	xfree(pb->deltatext);
 	xfree(filec);
 	(void)unlink(pb->filename);
+	
+	/* Write out RCSFILE before calling checkout_rev() */
+	rcs_write(pb->file);
 
 	/* Do checkout if -u or -l are specified. */
 	if (((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
@@ -592,7 +605,6 @@ checkin_update(struct checkin_params *pb)
 		checkout_rev(pb->file, pb->newrev, pb->filename, pb->flags,
 		    pb->username, pb->author, NULL, NULL);
 
-	/* File will NOW be synced */
 	rcs_close(pb->file);
 
 	if (pb->flags & INTERACTIVE) {
@@ -620,6 +632,7 @@ checkin_init(struct checkin_params *pb)
 	char *filec, numb[64];
 	int fetchlog = 0;
 	const char *rcs_desc;
+	struct stat st;
 
 	/* If this is a zero-ending RCSNUM eg 4.0, increment it (eg to 4.1) */
 	if ((pb->newrev != NULL) && (RCSNUM_ZERO_ENDING(pb->newrev))) {
@@ -711,21 +724,32 @@ checkin_init(struct checkin_params *pb)
 	if (pb->state != NULL)
 		(void)rcs_state_set(pb->file, pb->newrev, pb->state);
 
+	/* Inherit RCSFILE permissions from file being checked in */
+	if (stat(pb->filename, &st) == -1)
+		goto fail;
+	/* Strip all the write bits */
+	pb->file->rf_mode = st.st_mode &
+	    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
+
 	xfree(filec);
 	(void)unlink(pb->filename);
 
+	/* Write out RCSFILE before calling checkout_rev() */
+	rcs_write(pb->file);
+
 	/* Do checkout if -u or -l are specified. */
 	if (((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
-	    && !(pb->flags & CI_DEFAULT))
+	    && !(pb->flags & CI_DEFAULT)) {
 		checkout_rev(pb->file, pb->newrev, pb->filename, pb->flags,
 		    pb->username, pb->author, NULL, NULL);
+	}
+
 
 	if (verbose == 1) {
 		fprintf(stderr, "initial revision: %s\n",
 		    rcsnum_tostr(pb->newrev, numb, sizeof(numb)));
 	}
 
-	/* File will NOW be synced */
 	rcs_close(pb->file);
 
 	return (0);

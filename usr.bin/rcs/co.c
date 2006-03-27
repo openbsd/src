@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.66 2006/03/24 05:14:48 ray Exp $	*/
+/*	$OpenBSD: co.c,v 1.67 2006/03/27 21:56:32 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -316,6 +316,14 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	 */
 	bp = rcs_kwexp_buf(bp, file, frev);
 
+	/*
+	 * File inherits permissions from its ,v file
+	 */
+	if (stat(file->rf_path, &st) == -1)
+		fatal("could not stat rcsfile");
+
+	mode = st.st_mode;
+
 	if (flags & CO_LOCK) {
 		if ((lockname != NULL)
 		    && (rcs_lock_add(file, lockname, frev) < 0)) {
@@ -323,7 +331,10 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 				return (-1);
 		}
 
-		mode = 0644;
+		/* Strip all write bits from mode */
+		mode = st.st_mode &
+		    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
+		mode |= S_IWUSR;
 		if ((verbose == 1) && !(flags & NEWFILE))
 			printf(" (locked)");
 	} else if (flags & CO_UNLOCK) {
@@ -332,7 +343,9 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 				return (-1);
 		}
 
-		mode = 0444;
+		/* Strip all write bits from mode */
+		mode = st.st_mode &
+		    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
 		if ((verbose == 1) && !(flags & NEWFILE))
 			printf(" (unlocked)");
 	}

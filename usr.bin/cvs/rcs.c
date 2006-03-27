@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.151 2006/03/27 16:01:18 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.152 2006/03/27 21:56:32 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -234,7 +234,6 @@ static const char *rcs_errstrs[] = {
 int rcs_errno = RCS_ERR_NOERR;
 char *timezone_flag = NULL;
 
-static int	rcs_write(RCSFILE *);
 static int	rcs_parse_init(RCSFILE *);
 static int	rcs_parse_admin(RCSFILE *);
 static int	rcs_parse_delta(RCSFILE *);
@@ -280,7 +279,7 @@ rcs_open(const char *path, int flags, ...)
 	struct rcs_delta *rdp;
 	struct rcs_lock *lkr;
 
-	fmode = 0;
+	fmode = S_IRUSR|S_IRGRP|S_IROTH;
 	flags &= 0xffff;	/* ditch any internal flags */
 
 	if (((ret = stat(path, &st)) == -1) && (errno == ENOENT)) {
@@ -402,7 +401,7 @@ rcs_close(RCSFILE *rfp)
  * path is in <rf_path>.
  * Returns 0 on success, or -1 on failure.
  */
-static int
+int
 rcs_write(RCSFILE *rfp)
 {
 	FILE *fp;
@@ -602,7 +601,7 @@ err:				if (unlink(rfp->rf_path) == -1)
 		}
 	}
 
-	if ((chmod(rfp->rf_path, S_IRUSR|S_IRGRP|S_IROTH) == -1)) {
+	if ((chmod(rfp->rf_path, rfp->rf_mode) == -1)) {
 		cvs_log(LP_ERRNO, "failed to chmod `%s'",
 		    rfp->rf_path);
 		return (-1);
@@ -2830,7 +2829,6 @@ rcs_kwexp_buf(BUF *bp, RCSFILE *rf, RCSNUM *rev)
 	}
 	return (bp);
 }
-
 
 #if !defined(RCSPROG)
 
