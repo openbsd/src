@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.11 2006/03/25 22:41:45 djm Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.12 2006/03/27 17:07:10 brad Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -44,7 +44,7 @@ int             ixgb_display_debug_stats = 0;
  *  Driver version
  *********************************************************************/
 
-char ixgb_driver_version[] = "1.0.26";
+char ixgb_driver_version[] = "5.0.1";
 
 /*********************************************************************
  *  PCI Device ID Table
@@ -126,8 +126,8 @@ struct cfdriver ixgb_cd = {
 };
 
 /* some defines for controlling descriptor fetches in h/w */
-#define RXDCTL_PTHRESH_DEFAULT 128	/* chip considers prefech below this */
-#define RXDCTL_HTHRESH_DEFAULT 16	/* chip will only prefetch if tail is
+#define RXDCTL_PTHRESH_DEFAULT 0	/* chip considers prefech below this */
+#define RXDCTL_HTHRESH_DEFAULT 0	/* chip will only prefetch if tail is
 					 * pushed this many descriptors from
 					 * head */
 #define RXDCTL_WTHRESH_DEFAULT 0	/* chip writes back at this many or RXT0 */

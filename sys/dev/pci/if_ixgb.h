@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.h,v 1.3 2006/02/26 01:27:16 brad Exp $ */
+/* $OpenBSD: if_ixgb.h,v 1.4 2006/03/27 17:07:10 brad Exp $ */
 
 #ifndef _IXGB_H_DEFINED_
 #define _IXGB_H_DEFINED_
@@ -84,7 +84,7 @@ POSSIBILITY OF SUCH DAMAGE.
 /* Tunables */
 
 /*
- * TxDescriptors Valid Range: 64-4096 Default Value: 256 This value is the
+ * TxDescriptors Valid Range: 64-4096 Default Value: 1024 This value is the
  * number of transmit descriptors allocated by the driver. Increasing this
  * value allows the driver to queue more transmits. Each descriptor is 16
  * bytes.
@@ -92,15 +92,13 @@ POSSIBILITY OF SUCH DAMAGE.
 #define IXGB_MAX_TXD                      1024
 
 /*
- * RxDescriptors Valid Range: 64-512 Default Value: 512 This value is the
+ * RxDescriptors Valid Range: 64-4096 Default Value: 1024 This value is the
  * number of receive descriptors allocated by the driver. Increasing this
  * value allows the driver to buffer more incoming packets. Each descriptor
  * is 16 bytes.  A receive buffer is also allocated for each descriptor. The
  * maximum MTU size is 16110.
- * Note: Maximum number of receive descriptors is limited to 512 to avoid a
- * hardware descriptor cache issue under heavy receive traffic. 
  */
-#define IXGB_MAX_RXD                     512
+#define IXGB_MAX_RXD                     1024
 
 /*
  * TxIntDelay Valid Range: 0-65535 (0=off) Default Value: 32 This value
@@ -121,7 +119,6 @@ POSSIBILITY OF SUCH DAMAGE.
  * of TCP traffic. If the system is reporting dropped receives, this value
  * may be set too high, causing the driver to run out of available receive
  * descriptors.
- * 
  */
 #define RDTR 72
 
