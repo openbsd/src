@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.128 2006/03/27 21:56:32 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.129 2006/03/27 22:11:08 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -283,6 +283,8 @@ checkin_main(int argc, char **argv)
 
 		/* reset NEWFILE flag */
 		pb.flags &= ~NEWFILE;
+
+		rcs_close(pb.file);
 	}
 
 	if ((verbose == 1) && (status == 0))
@@ -605,8 +607,6 @@ checkin_update(struct checkin_params *pb)
 		checkout_rev(pb->file, pb->newrev, pb->filename, pb->flags,
 		    pb->username, pb->author, NULL, NULL);
 
-	rcs_close(pb->file);
-
 	if (pb->flags & INTERACTIVE) {
 		xfree(pb->rcs_msg);
 		pb->rcs_msg = NULL;
@@ -615,7 +615,6 @@ checkin_update(struct checkin_params *pb)
 
 fail:
 	xfree(filec);
-	rcs_close(pb->file);
 	return (-1);
 }
 
@@ -750,12 +749,9 @@ checkin_init(struct checkin_params *pb)
 		    rcsnum_tostr(pb->newrev, numb, sizeof(numb)));
 	}
 
-	rcs_close(pb->file);
-
 	return (0);
 fail:
 	xfree(filec);
-	rcs_close(pb->file);
 	return (-1);
 }
 
