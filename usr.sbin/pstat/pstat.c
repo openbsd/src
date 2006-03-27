@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.61 2006/03/26 20:15:50 uwe Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.62 2006/03/27 14:08:14 pedro Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.61 2006/03/26 20:15:50 uwe Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.62 2006/03/27 14:08:14 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -260,6 +260,13 @@ vnodemode(void)
 			(void)printf("\n");
 		}
 		vnode_print(evp->vptr, vp);
+
+		/* Syncer vnodes have no associated fs-specific data */
+		if (vp->v_data == NULL) {
+			printf(" %6c %5c %7c\n", '-', '-', '-');
+			continue;
+		}
+
 		if (!strncmp(mp->mnt_stat.f_fstypename, MOUNT_FFS, MFSNAMELEN) ||
 		    !strncmp(mp->mnt_stat.f_fstypename, MOUNT_MFS, MFSNAMELEN)) {
 			ufs_print(vp);
@@ -360,12 +367,6 @@ ufs_print(struct vnode *vp)
 	char flagbuf[16], *flags = flagbuf;
 	char *name;
 	mode_t type;
-
-	/* Syncer vnodes have no associated inode/dinode. */
-	if (VTOI(vp) == NULL) {
-		printf(" %6c %5c %7c", '-', '-', '-');
-		return (0);
-	}
 
 	KGETRET(VTOI(vp), &inode, sizeof(struct inode), "vnode's inode");
 	KGETRET(inode.i_din1, &di1, sizeof(struct ufs1_dinode),
