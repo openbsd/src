@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.24 2005/09/10 19:05:32 uwe Exp $
+.\"	$OpenBSD: com.4,v 1.25 2006/03/27 06:16:08 deraadt Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -69,6 +69,9 @@
 .Cd "com1 at gsc? offset 0x822000 irq 6"
 .Cd "com2 at gsc? irq 13"
 .Cd "com1 at dino? irq 11"
+.Pp
+.Cd "# macppc"
+.Cd "com* at pcmcia?"
 .Pp
 .Cd "# sparc"
 .Cd "com* at obio?                            " Pq "built-in modem on SPARCbook"
