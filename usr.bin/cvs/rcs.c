@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.148 2006/03/26 20:02:54 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.149 2006/03/27 07:14:13 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -986,9 +986,8 @@ rcs_desc_get(RCSFILE *file)
  * rcs_desc_set()
  *
  * Set the description for the RCS file <file>.
- * Returns 0 on success, or -1 on failure.
  */
-int
+void
 rcs_desc_set(RCSFILE *file, const char *desc)
 {
 	char *tmp;
@@ -998,8 +997,6 @@ rcs_desc_set(RCSFILE *file, const char *desc)
 		xfree(file->rf_desc);
 	file->rf_desc = tmp;
 	file->rf_flags &= ~RCS_SYNCED;
-
-	return (0);
 }
 
 /*
