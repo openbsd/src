@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2006/03/24 15:26:22 xsa Exp $
+#	$OpenBSD: Makefile,v 1.12 2006/03/27 08:21:01 ray Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -10,7 +10,8 @@ RCSDIFF?=	rcsdiff
 RCSMERGE?=	rcsmerge
 RLOG?=		rlog
 
-CLEANFILES=	RCS blah.c blah.c,v file file,v newfile newfile,v test test,v
+CLEANFILES=	RCS blah.c blah.c,v description file file,v newfile	\
+		newfile,v test test,v
 
 # XXX - These may need to be done in order.
 #	(At least start with ci-initial.)
@@ -40,7 +41,12 @@ LTESTS= ci-initial \
 	rcsmerge \
 	ci-dflag \
 	ci-xflag \
-	comma
+	comma \
+	rcs-tflag-stdin \
+	rcs-tflag-stdin2 \
+	rcs-tflag-stdin3 \
+	rcs-tflag-inline \
+	rcs-tflag-file \
 
 .for t in ${LTESTS}
 REGRESS_TARGETS+=test-${t}
@@ -252,6 +258,29 @@ test-rcs-Aflag: test-rcs-aflag
 	@echo "." | ${RCS} -q -i newfile
 	@${RCS} -q -Atest newfile
 	@${RLOG} newfile | diff -u ${.CURDIR}/rcs-Aflag.out -
+
+test-rcs-tflag-stdin: clean
+	@echo 'This is a description.' | ${RCS} -q -i -t file
+	@fgrep -q 'This is a description.' file,v
+
+test-rcs-tflag-stdin2: clean
+	@echo '.This is not the description end.' | ${RCS} -q -i -t file
+	@fgrep -q '.This is not the description end.' file,v
+
+test-rcs-tflag-stdin3: clean
+	@echo "This is the description end.\n.\nThis should not be here." | \
+	    ${RCS} -q -i -t file
+	@fgrep -q 'This should not be here.' file,v || \
+	    case "$$?" in 1) exit 0;; esac && exit 1
+
+test-rcs-tflag-inline: clean
+	@${RCS} -q -i '-t-This is a description.' file
+	@fgrep -q 'This is a description.' file,v
+
+test-rcs-tflag-file: clean
+	@echo 'This is a description.' > description
+	@${RCS} -q -i -tdescription file
+	@fgrep -q 'This is a description.' file,v
 
 clean:
 	@rm -rf ${CLEANFILES}

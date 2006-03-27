@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.87 2006/03/27 07:38:24 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.88 2006/03/27 08:21:01 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -718,6 +718,12 @@ rcs_attach_symbol(RCSFILE *file, const char *symname)
 	}
 }
 
+/*
+ * Load description from <in> to <file>.
+ * If <in> starts with a `-', <in> is taken as the description.
+ * Otherwise <in> is the name of the file containing the description.
+ * If <in> is NULL, the description is read from stdin.
+ */
 static void
 rcs_set_description(RCSFILE *file, const char *in)
 {
@@ -725,15 +731,31 @@ rcs_set_description(RCSFILE *file, const char *in)
 	char *content, buf[128];
 
 	content = NULL;
-	if (in != NULL) {
+	/* Description is in file <in>. */
+	if (in != NULL && *in != '-')
 		bp = cvs_buf_load(in, BUF_AUTOEXT);
+	/* Description is in <in>. */
+	else if (in != NULL) {
+		size_t len;
+		const char *desc;
+
+		/* Skip leading `-'. */
+		desc = in + 1;
+		len = strlen(desc);
+
+		bp = cvs_buf_alloc(len + 1, BUF_AUTOEXT);
+		cvs_buf_append(bp, desc, len);
+	/* Get description from stdin. */
 	} else {
 		bp = cvs_buf_alloc(64, BUF_AUTOEXT);
 
 		printf(DESC_PROMPT);
 		for (;;) {
+			/* XXX - fgetln() may be more elegant. */
 			fgets(buf, sizeof(buf), stdin);
-			if (feof(stdin) || ferror(stdin) || buf[0] == '.')
+			if (feof(stdin) || ferror(stdin) ||
+			    strcmp(buf, ".\n") == 0 ||
+			    strcmp(buf, ".") == 0)
 				break;
 			cvs_buf_append(bp, buf, strlen(buf));
 			printf(">> ");
