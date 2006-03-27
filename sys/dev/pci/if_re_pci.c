@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.4 2005/08/09 04:10:12 mickey Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.5 2006/03/27 16:26:05 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -63,10 +63,11 @@ struct re_pci_softc {
 };
 
 const struct pci_matchid re_pci_devices[] = {
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8111B },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169 },
 	{ PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_CGLAPCIGT },
 	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE528T },
-	{ PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR997902 },
+	{ PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR997902 }
 };
 
 #define RE_LINKSYS_EG1032_SUBID 0x00241737
@@ -120,7 +121,6 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t		iosize;
 	pcireg_t		command;
 
-#ifndef BURN_BRIDGES
 	/*
 	 * Handle power management nonsense.
 	 */
@@ -146,7 +146,6 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 		pci_conf_write(pc, pa->pa_tag, RL_PCI_LOMEM, membase);
 		pci_conf_write(pc, pa->pa_tag, RL_PCI_INTLINE, irq);
 	}
-#endif
 
 	/*
 	 * Map control/status registers.
@@ -190,7 +189,12 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_flags |= RL_ENABLED;
-	sc->rl_type = RL_8169;
+
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RT8139 ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TTTECH_MC322)
+		sc->rl_type = RL_8139CPLUS;
+	else
+		sc->rl_type = RL_8169;
 
 	/* Call bus-independent attach routine */
 	re_attach_common(sc);
