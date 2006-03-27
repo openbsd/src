@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwivar.h,v 1.13 2006/02/26 19:14:40 damien Exp $	*/
+/*	$OpenBSD: if_iwivar.h,v 1.14 2006/03/27 20:46:35 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -55,6 +55,45 @@ struct iwi_tx_radiotap_header {
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
 	 (1 << IEEE80211_RADIOTAP_CHANNEL))
 
+
+struct iwi_cmd_ring {
+	bus_dmamap_t		map;
+	bus_dma_segment_t	seg;
+	struct iwi_cmd_desc	desc[IWI_CMD_RING_COUNT];
+	int			queued;
+	int			cur;
+	int			next;
+};
+
+struct iwi_tx_data {
+	bus_dmamap_t		map;
+	struct mbuf		*m;
+	struct ieee80211_node	*ni;
+};
+
+struct iwi_tx_ring {
+	bus_dmamap_t		map;
+	bus_dma_segment_t	seg;
+	bus_addr_t		csr_ridx;
+	bus_addr_t		csr_widx;
+	struct iwi_tx_desc	*desc;
+	struct iwi_tx_data	data[IWI_TX_RING_COUNT];
+	int			queued;
+	int			cur;
+	int			next;
+};
+
+struct iwi_rx_data {
+	bus_dmamap_t		map;
+	struct mbuf		*m;
+	uint32_t		reg;
+};
+
+struct iwi_rx_ring {
+	struct iwi_rx_data	data[IWI_RX_RING_COUNT];
+	int			cur;
+};
+
 struct iwi_softc {
 	struct device		sc_dev;
 
@@ -67,31 +106,9 @@ struct iwi_softc {
 
 	bus_dma_tag_t		sc_dmat;
 
-	struct iwi_tx_desc	*tx_desc;
-	bus_dmamap_t		tx_ring_map;
-	bus_dma_segment_t	tx_ring_seg;
-
-	struct iwi_tx_buf {
-		bus_dmamap_t		map;
-		struct mbuf		*m;
-		struct ieee80211_node	*ni;
-	} tx_buf[IWI_TX_RING_SIZE];
-
-	int			tx_cur;
-	int			tx_old;
-	int			tx_queued;
-
-	struct iwi_cmd_desc	*cmd_desc;
-	bus_dmamap_t		cmd_ring_map;
-	bus_dma_segment_t	cmd_ring_seg;
-	int			cmd_cur;
-
-	struct iwi_rx_buf {
-		bus_dmamap_t	map;
-		struct mbuf	*m;
-	} rx_buf[IWI_RX_RING_SIZE];
-
-	int			rx_cur;
+	struct iwi_cmd_ring	cmdq;
+	struct iwi_tx_ring	txq[4];
+	struct iwi_rx_ring	rxq;
 
 #define IWI_MAX_NODE	32
 	uint8_t			sta[IWI_MAX_NODE][IEEE80211_ADDR_LEN];
