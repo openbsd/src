@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.17 2006/01/06 18:53:05 millert Exp $	*/
+/*	$OpenBSD: endian.h,v 1.18 2006/03/27 07:09:24 otto Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -84,7 +84,7 @@
 
 /* Note that these macros evaluate their arguments several times.  */
 #define __swap16gen(x)							\
-    (__uint16_t)(((__uint16_t)(x) & 0xff) << 8 | ((__uint16_t)(x) & 0xff00) >> 8)
+    (__uint16_t)(((__uint16_t)(x) & 0xffU) << 8 | ((__uint16_t)(x) & 0xff00U) >> 8)
 
 #define __swap32gen(x)							\
     (__uint32_t)(((__uint32_t)(x) & 0xff) << 24 |			\
