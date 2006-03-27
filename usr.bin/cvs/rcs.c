@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.150 2006/03/27 15:26:12 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.151 2006/03/27 16:01:18 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -251,7 +251,7 @@ static void	rcs_freedelta(struct rcs_delta *);
 static void	rcs_freepdata(struct rcs_pdata *);
 static int	rcs_gettok(RCSFILE *);
 static int	rcs_pushtok(RCSFILE *, const char *, int);
-static int	rcs_growbuf(RCSFILE *);
+static void	rcs_growbuf(RCSFILE *);
 static int	rcs_strprint(const u_char *, size_t, FILE *);
 
 static char*   rcs_expand_keywords(char *, struct rcs_delta *, char *,
@@ -2334,10 +2334,7 @@ rcs_gettok(RCSFILE *rfp)
 			pdp->rp_tlen++;
 			if (bp == pdp->rp_bufend - 1) {
 				len = bp - pdp->rp_buf;
-				if (rcs_growbuf(rfp) < 0) {
-					type = RCS_TOK_ERR;
-					break;
-				}
+				rcs_growbuf(rfp);
 				bp = pdp->rp_buf + len;
 			}
 		}
@@ -2370,10 +2367,7 @@ rcs_gettok(RCSFILE *rfp)
 			pdp->rp_tlen++;
 			if (bp == pdp->rp_bufend - 1) {
 				len = bp - pdp->rp_buf;
-				if (rcs_growbuf(rfp) < 0) {
-					type = RCS_TOK_ERR;
-					break;
-				}
+				rcs_growbuf(rfp);
 				bp = pdp->rp_buf + len;
 			}
 		}
@@ -2432,26 +2426,17 @@ rcs_pushtok(RCSFILE *rfp, const char *tok, int type)
  * Attempt to grow the internal parse buffer for the RCS file <rf> by
  * RCS_BUFEXTSIZE.
  * In case of failure, the original buffer is left unmodified.
- * Returns 0 on success, or -1 on failure.
  */
-static int
+static void
 rcs_growbuf(RCSFILE *rf)
 {
 	void *tmp;
 	struct rcs_pdata *pdp = (struct rcs_pdata *)rf->rf_pdata;
 
 	tmp = xrealloc(pdp->rp_buf, pdp->rp_blen + RCS_BUFEXTSIZE);
-	if (tmp == NULL) {
-		rcs_errno = RCS_ERR_ERRNO;
-		cvs_log(LP_ERRNO, "failed to grow RCS parse buffer");
-		return (-1);
-	}
-
 	pdp->rp_buf = (char *)tmp;
 	pdp->rp_blen += RCS_BUFEXTSIZE;
 	pdp->rp_bufend = pdp->rp_buf + pdp->rp_blen - 1;
-
-	return (0);
 }
 
 /*
