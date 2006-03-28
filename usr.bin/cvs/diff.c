@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.84 2006/03/28 02:13:44 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.85 2006/03/28 07:17:16 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -721,10 +721,10 @@ cvs_diffreg(const char *file1, const char *file2, BUF *out)
 	tmp = xrealloc(class, slen[0] + 2, sizeof(int));
 	class = (int *)tmp;
 
-	klist = xmalloc((slen[0] + 2) * sizeof(int));
+	klist = xcalloc(slen[0] + 2, sizeof(int));
 	clen = 0;
 	clistlen = 100;
-	clist = xmalloc(clistlen * sizeof(cand));
+	clist = xcalloc(clistlen, sizeof(cand));
 
 	if ((i = stone(class, slen[0], member, klist)) < 0)
 		goto closem;
@@ -801,7 +801,7 @@ prepare(int i, FILE *fd, off_t filesize)
 	if (sz < 100)
 		sz = 100;
 
-	p = (struct line *)xmalloc((sz + 3) * sizeof(struct line));
+	p = (struct line *)xcalloc(sz + 3, sizeof(struct line));
 	for (j = 0; (h = readhash(fd));) {
 		if (j == (int)sz) {
 			sz = sz * 3 / 2;
@@ -1135,7 +1135,7 @@ unsort(struct line *f, int l, int *b)
 {
 	int *a, i;
 
-	a = (int *)xmalloc((l + 1) * sizeof(int));
+	a = (int *)xcalloc(l + 1, sizeof(int));
 	for (i = 1; i <= l; i++)
 		a[f[i].serial] = f[i].value;
 	for (i = 1; i <= l; i++)

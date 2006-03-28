@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.42 2006/01/27 12:56:28 xsa Exp $	*/
+/*	$OpenBSD: req.c,v 1.43 2006/03/28 07:17:17 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -485,10 +485,8 @@ cvs_req_argument(int reqid, char *line)
 		if (cvs_req_nargs == 0)
 			cvs_log(LP_WARN, "no argument to append to");
 		else {
-			asprintf(&nap, "%s%s", cvs_req_args[cvs_req_nargs - 1],
+			xasprintf(&nap, "%s%s", cvs_req_args[cvs_req_nargs - 1],
 			    line);
-			if (nap == NULL)
-				fatal("cvs_req_argument: asprintf failed");
 
 			xfree(cvs_req_args[cvs_req_nargs - 1]);
 			cvs_req_args[cvs_req_nargs - 1] = nap;

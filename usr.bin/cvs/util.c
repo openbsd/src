@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.74 2006/03/28 02:13:44 ray Exp $	*/
+/*	$OpenBSD: util.c,v 1.75 2006/03/28 07:17:17 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -1063,7 +1063,7 @@ cvs_strsplit(char *str, const char *sep)
 	cp = xstrdup(str);
 	av = xmalloc(sizeof(struct cvs_argvector));
 	av->str = cp;
-	av->argv = (char **)xmalloc((i+1) * sizeof(char *));
+	av->argv = (char **)xcalloc(i + 1, sizeof(char *));
 
 	while ((p = strsep(&cp, sep)) != NULL) {
 		av->argv[i++] = p;
