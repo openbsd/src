@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.6 2005/06/14 17:57:21 moritz Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.7 2006/03/28 15:48:34 reyk Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -49,6 +49,7 @@ static const char rcsid[] =
 #include "interface.h"
 #include "addrtoname.h"
 #include "extract.h"
+#include "afnum.h"
 
 struct bgp {
 	u_int8_t bgp_marker[16];
@@ -204,29 +205,7 @@ static const char *bgpattr_nlri_safi[] = {
 #define BGP_COMMUNITY_NO_ADVERT			0xffffff02
 #define BGP_COMMUNITY_NO_EXPORT_SUBCONFED	0xffffff03
 
-/* RFC1700 address family numbers */
-#define AFNUM_INET	1
-#define AFNUM_INET6	2
-#define AFNUM_NSAP	3
-#define AFNUM_HDLC	4
-#define AFNUM_BBN1822	5
-#define AFNUM_802	6
-#define AFNUM_E163	7
-#define AFNUM_E164	8
-#define AFNUM_F69	9
-#define AFNUM_X121	10
-#define AFNUM_IPX	11
-#define AFNUM_ATALK	12
-#define AFNUM_DECNET	13
-#define AFNUM_BANYAN	14
-#define AFNUM_E164NSAP	15
-
-static const char *afnumber[] = {
-	"Reserved", "IPv4", "IPv6", "NSAP", "HDLC",
-	"BBN 1822", "802", "E.163", "E.164", "F.69",
-	"X.121", "IPX", "Appletalk", "Decnet IV", "Banyan Vines",
-	"E.164 with NSAP subaddress",
-};
+static const char *afnumber[] = AFNUM_NAME_STR;
 #define af_name(x) \
 	(((x) == 65535) ? afnumber[0] : \
 		num_or_str(afnumber, \

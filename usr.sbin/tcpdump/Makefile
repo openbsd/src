@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.49 2005/11/22 11:36:12 reyk Exp $
+#	$OpenBSD: Makefile,v 1.50 2006/03/28 15:48:33 reyk Exp $
 #
 #  Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
 # 	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@ SRCS=	tcpdump.c addrtoname.c privsep.c privsep_fdpass.c privsep_pcap.c \
 	print-ipsec.c print-ike.c print-raw.c print-l2tp.c print-mobile.c \
 	print-ip6.c print-ip6opts.c print-icmp6.c print-dhcp6.c print-frag6.c \
 	print-bgp.c print-ospf6.c print-ripng.c print-rt6.c print-stp.c \
-	print-etherip.c print-lwres.c print-cdp.c print-pflog.c \
+	print-etherip.c print-lwres.c print-lldp.c print-cdp.c print-pflog.c \
 	print-pfsync.c pf_print_state.c \
 	print-udpencap.c print-carp.c \
 	print-802_11.c print-iapp.c print-mpls.c \

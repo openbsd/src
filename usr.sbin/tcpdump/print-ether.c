@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ether.c,v 1.20 2005/10/08 19:45:15 canacar Exp $	*/
+/*	$OpenBSD: print-ether.c,v 1.21 2006/03/28 15:48:33 reyk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ether.c,v 1.20 2005/10/08 19:45:15 canacar Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ether.c,v 1.21 2006/03/28 15:48:33 reyk Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -238,6 +238,10 @@ recurse:
 	case ETHERTYPE_MPLS:
 	case ETHERTYPE_MPLS_MCAST:
 		mpls_print(p, length);
+		return (1);
+
+	case ETHERTYPE_LLDP:
+		lldp_print(p, length);
 		return (1);
 
 	case ETHERTYPE_LAT:
