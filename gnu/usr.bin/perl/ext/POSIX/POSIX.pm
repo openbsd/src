@@ -2,7 +2,7 @@ package POSIX;
 
 our(@ISA, %EXPORT_TAGS, @EXPORT_OK, $AUTOLOAD) = ();
 
-our $VERSION = "1.08";
+our $VERSION = "1.09";
 
 use AutoLoader;
 

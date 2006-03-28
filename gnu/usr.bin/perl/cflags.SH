@@ -127,6 +127,7 @@ for file do
 warn=''
 case "$gccversion" in
 '') ;;
+Intel*) ;;
 *)  case "$ccflags" in
     *-Wall*) ;;
     *) warn="$warn -Wall" ;;

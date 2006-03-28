@@ -3,7 +3,7 @@ package autouse;
 #use strict;		# debugging only
 use 5.003_90;		# ->can, for my $var
 
-$autouse::VERSION = '1.04';
+$autouse::VERSION = '1.05';
 
 $autouse::DEBUG ||= 0;
 
@@ -50,8 +50,7 @@ sub import {
 
 	my $load_sub = sub {
 	    unless ($INC{$pm}) {
-		eval {require $pm};
-		die if $@;
+		require $pm;
 		vet_import $module;
 	    }
             no warnings 'redefine';
@@ -63,7 +62,8 @@ sub import {
 	};
 
 	if (defined $proto) {
-	    *$closure_import_func = eval "sub ($proto) { &\$load_sub }";
+	    *$closure_import_func = eval "sub ($proto) { goto &\$load_sub }"
+	        || die;
 	} else {
 	    *$closure_import_func = $load_sub;
 	}

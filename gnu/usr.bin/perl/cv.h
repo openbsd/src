@@ -170,7 +170,7 @@ C<CvWEAKOUTSIDE> flag in the child. This allows us to determine under what
 circumstances we should decrement the refcount of the parent when freeing
 the child.
 
-There is a further complication with non-closure anonymous subs (ie those
+There is a further complication with non-closure anonymous subs (i.e. those
 that do not refer to any lexicals outside that sub). In this case, the
 anonymous prototype is shared rather than being cloned. This has the
 consequence that the parent may be freed while there are still active

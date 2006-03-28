@@ -440,7 +440,7 @@ argexpr	:	argexpr ','
 	;
 
 /* List operators */
-listop	:	LSTOP indirob argexpr          /* print $fh @args */
+listop	:	LSTOP indirob argexpr /* map {...} @args or print $fh @args */
 			{ $$ = convert($1, OPf_STACKED,
 				prepend_elem(OP_LIST, newGVREF($1,$2), $3) ); }
 	|	FUNC '(' indirob expr ')'      /* print ($fh @args */
@@ -469,7 +469,7 @@ listop	:	LSTOP indirob argexpr          /* print $fh @args */
 			{ $$ = convert($1, 0, $2); }
 	|	FUNC '(' listexprcom ')'             /* print (@args) */
 			{ $$ = convert($1, 0, $3); }
-	|	LSTOPSUB startanonsub block          /* map { foo } ... */
+	|	LSTOPSUB startanonsub block /* sub f(&@);   f { foo } ... */
 			{ $3 = newANONATTRSUB($2, 0, Nullop, $3); }
 		    listexpr		%prec LSTOP  /* ... @bar */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
@@ -712,7 +712,8 @@ term	:	termbinop
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
 				scalar($1)); }
 	|	FUNC1 '(' ')'                        /* not () */
-			{ $$ = newOP($1, OPf_SPECIAL); }
+			{ $$ = $1 == OP_NOT ? newUNOP($1, 0, newSVOP(OP_CONST, 0, newSViv(0)))
+					    : newOP($1, OPf_SPECIAL); }
 	|	FUNC1 '(' expr ')'                   /* not($foo) */
 			{ $$ = newUNOP($1, 0, $3); }
 	|	PMFUNC '(' term ')'                  /* split (/foo/) */

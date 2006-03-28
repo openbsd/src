@@ -5,7 +5,7 @@ use 5.006_00;
 use warnings::register;
 
 our($VERSION, %declared);
-$VERSION = '1.04';
+$VERSION = '1.05';
 
 #=======================================================================
 
@@ -71,11 +71,6 @@ sub import {
 		} elsif ($forced_into_main{$name}) {
 		    warnings::warn("Constant name '$name' is " .
 			"forced into package main::");
-		} else {
-		    # Catch-all - what did I miss? If you get this error,
-		    # please let me know what your constant's name was.
-		    # Write to <rootbeer@redcat.com>. Thanks!
-		    warnings::warn("Constant name '$name' has unknown problems");
 		}
 	    }
 

@@ -230,6 +230,17 @@ typedef long		gid_t;
 #  endif
 #endif
 
+/* <stdint.h>, pulled in by <io.h> as of mingw-runtime-3.3, typedef's
+ * (u)intptr_t but doesn't set the _(U)INTPTR_T_DEFINED defines */
+#ifdef _STDINT_H
+#  ifndef _INTPTR_T_DEFINED
+#    define _INTPTR_T_DEFINED
+#  endif
+#  ifndef _UINTPTR_T_DEFINED
+#    define _UINTPTR_T_DEFINED
+#  endif
+#endif
+
 #endif /* __MINGW32__ */
 
 /* both GCC/Mingw32 and MSVC++ 4.0 are missing this, so we put it here */

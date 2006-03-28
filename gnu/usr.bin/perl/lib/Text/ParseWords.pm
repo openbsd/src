@@ -1,7 +1,7 @@
 package Text::ParseWords;
 
 use vars qw($VERSION @ISA @EXPORT $PERL_SINGLE_QUOTE);
-$VERSION = "3.23";
+$VERSION = "3.24";
 
 require 5.000;
 
@@ -12,7 +12,7 @@ use Exporter;
 
 
 sub shellwords {
-    local(@lines) = @_;
+    my(@lines) = @_;
     $lines[$#lines] =~ s/\s+$//;
     return(quotewords('\s+', 0, @lines));
 }
@@ -22,7 +22,6 @@ sub shellwords {
 sub quotewords {
     my($delim, $keep, @lines) = @_;
     my($line, @words, @allwords);
-    
 
     foreach $line (@lines) {
 	@words = parse_line($delim, $keep, $line);
@@ -37,7 +36,7 @@ sub quotewords {
 sub nested_quotewords {
     my($delim, $keep, @lines) = @_;
     my($i, @allwords);
-    
+
     for ($i = 0; $i < @lines; $i++) {
 	@{$allwords[$i]} = parse_line($delim, $keep, $lines[$i]);
 	return() unless (@{$allwords[$i]} || !length($lines[$i]));
@@ -48,12 +47,10 @@ sub nested_quotewords {
 
 
 sub parse_line {
-	# We will be testing undef strings
-	no warnings;
-	use re 'taint'; # if it's tainted, leave it as such
-
     my($delimiter, $keep, $line) = @_;
     my($word, @pieces);
+
+    no warnings 'uninitialized';	# we will be testing undef strings
 
     while (length($line)) {
 	$line =~ s/^(["'])			# a $quote
@@ -77,6 +74,7 @@ sub parse_line {
 		$quoted =~ s/\\([\\'])/$1/g if ( $PERL_SINGLE_QUOTE && $quote eq "'");
             }
 	}
+        $word .= substr($line, 0, 0);	# leave results tainted
         $word .= defined $quote ? $quoted : $unquoted;
  
         if (length($delim)) {
@@ -100,41 +98,48 @@ sub old_shellwords {
     #	@words = old_shellwords($line);
     #	or
     #	@words = old_shellwords(@lines);
+    #	or
+    #	@words = old_shellwords();	# defaults to $_ (and clobbers it)
 
-    local($_) = join('', @_);
-    my(@words,$snippet,$field);
+    no warnings 'uninitialized';	# we will be testing undef strings
+    local *_ = \join('', @_) if @_;
+    my (@words, $snippet);
 
-    s/^\s+//;
+    s/\A\s+//;
     while ($_ ne '') {
-	$field = '';
+	my $field = substr($_, 0, 0);	# leave results tainted
 	for (;;) {
-	    if (s/^"(([^"\\]|\\.)*)"//) {
-		($snippet = $1) =~ s#\\(.)#$1#g;
+	    if (s/\A"(([^"\\]|\\.)*)"//s) {
+		($snippet = $1) =~ s#\\(.)#$1#sg;
 	    }
-	    elsif (/^"/) {
+	    elsif (/\A"/) {
+		require Carp;
+		Carp::carp("Unmatched double quote: $_");
 		return();
 	    }
-	    elsif (s/^'(([^'\\]|\\.)*)'//) {
-		($snippet = $1) =~ s#\\(.)#$1#g;
+	    elsif (s/\A'(([^'\\]|\\.)*)'//s) {
+		($snippet = $1) =~ s#\\(.)#$1#sg;
 	    }
-	    elsif (/^'/) {
+	    elsif (/\A'/) {
+		require Carp;
+		Carp::carp("Unmatched single quote: $_");
 		return();
 	    }
-	    elsif (s/^\\(.)//) {
+	    elsif (s/\A\\(.)//s) {
 		$snippet = $1;
 	    }
-	    elsif (s/^([^\s\\'"]+)//) {
+	    elsif (s/\A([^\s\\'"]+)//) {
 		$snippet = $1;
 	    }
 	    else {
-		s/^\s+//;
+		s/\A\s+//;
 		last;
 	    }
 	    $field .= $snippet;
 	}
 	push(@words, $field);
     }
-    @words;
+    return @words;
 }
 
 1;

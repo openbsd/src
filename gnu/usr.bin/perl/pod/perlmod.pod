@@ -5,6 +5,7 @@ perlmod - Perl modules (packages and symbol tables)
 =head1 DESCRIPTION
 
 =head2 Packages
+X<package> X<namespace> X<variable, global> X<global variable> X<global>
 
 Perl provides a mechanism for alternative namespaces to protect
 packages from stomping on each other's variables.  In fact, there's
@@ -38,6 +39,7 @@ supported for backwards compatibility, if you try to use a string like
 C<"This is $owner's house">, you'll be accessing C<$owner::s>; that is,
 the $s variable in package C<owner>, which is probably not what you meant.
 Use braces to disambiguate, as in C<"This is ${owner}'s house">.
+X<::> X<'>
 
 Packages may themselves contain package separators, as in
 C<$OUTER::INNER::var>.  This implies nothing about the order of
@@ -57,6 +59,7 @@ even when used for other purposes than their built-in ones.  If you
 have a package called C<m>, C<s>, or C<y>, then you can't use the
 qualified form of an identifier because it would be instead interpreted
 as a pattern match, a substitution, or a transliteration.
+X<variable, punctuation> 
 
 Variables beginning with underscore used to be forced into package
 main, but we decided it was more useful for package writers to be able
@@ -83,6 +86,7 @@ See L<perlsub> for other scoping issues related to my() and local(),
 and L<perlref> regarding closures.
 
 =head2 Symbol Tables
+X<symbol table> X<stash> X<%::> X<%main::> X<typeglob> X<glob> X<alias>
 
 The symbol table for a package happens to be stored in the hash of that
 name with two colons appended.  The main symbol table's name is thus
@@ -179,6 +183,7 @@ when you don't want to have to remember to dereference variables
 explicitly.
 
 Another use of symbol tables is for making "constant" scalars.
+X<constant> X<scalar, constant>
 
     *PI = \3.14159265358979;
 
@@ -254,6 +259,7 @@ This also has implications for the use of the SUPER:: qualifier
 (see L<perlobj>).
 
 =head2 BEGIN, CHECK, INIT and END
+X<BEGIN> X<CHECK> X<INIT> X<END>
 
 Four specially named code blocks are executed at the beginning and at the end
 of a running Perl program.  These are the C<BEGIN>, C<CHECK>, C<INIT>, and
@@ -283,7 +289,7 @@ a string eval, which e.g. can be a problem in a mod_perl environment.
 An C<END> code block is executed as late as possible, that is, after
 perl has finished running the program and just before the interpreter
 is being exited, even if it is exiting as a result of a die() function.
-(But not if it's polymorphing into another program via C<exec>, or
+(But not if it's morphing into another program via C<exec>, or
 being blown out of the water by a signal--you have to trap that yourself
 (if you can).)  You may have multiple C<END> blocks within a file--they
 will execute in reverse order of definition; that is: last in, first
@@ -299,6 +305,7 @@ Inside an C<END> code block, C<$?> contains the value that the program is
 going to pass to C<exit()>.  You can modify C<$?> to change the exit
 value of the program.  Beware of changing C<$?> by accident (e.g. by
 running something via C<system>).
+X<$?>
 
 C<CHECK> and C<INIT> code blocks are useful to catch the transition between
 the compilation phase and the execution phase of the main program.
@@ -348,6 +355,7 @@ The B<begincheck> program makes it all clear, eventually:
   __END__
 
 =head2 Perl Classes
+X<class> X<@ISA>
 
 There is no special class syntax in Perl, but a package may act
 as a class if it provides subroutines to act as methods.  Such a
@@ -358,6 +366,7 @@ must be a package global, not a lexical).
 For more on this, see L<perltoot> and L<perlobj>.
 
 =head2 Perl Modules
+X<module>
 
 A module is just a set of related functions in a library file, i.e.,
 a Perl package with the same name as the file.  It is specifically
@@ -383,7 +392,7 @@ create a file called F<Some/Module.pm> and start with this template:
         # set the version for version checking
         $VERSION     = 1.00;
         # if using RCS/CVS, this may be preferred
-        $VERSION = sprintf "%d.%03d", q$Revision: 1.8 $ =~ /(\d+)/g;
+        $VERSION = sprintf "%d.%03d", q$Revision: 1.9 $ =~ /(\d+)/g;
 
         @ISA         = qw(Exporter);
         @EXPORT      = qw(&func1 &func2 &func4);
@@ -529,6 +538,9 @@ although the POSIX module happens to do both dynamic loading and
 autoloading, the user can say just C<use POSIX> to get it all.
 
 =head2 Making your module threadsafe
+X<threadsafe> X<thread safe>
+X<module, threadsafe> X<module, thread safe>
+X<CLONE> X<CLONE_SKIP> X<thread> X<threads> X<ithread>
 
 Since 5.6.0, Perl has had support for a new type of threads called
 interpreter threads (ithreads). These threads can be used explicitly
@@ -539,7 +551,8 @@ between different threads. These threads can be used by using the C<threads>
 module or by doing fork() on win32 (fake fork() support). When a
 thread is cloned all Perl data is cloned, however non-Perl data cannot
 be cloned automatically.  Perl after 5.7.2 has support for the C<CLONE>
-special subroutine.  In C<CLONE> you can do whatever you need to do,
+special subroutine.  In C<CLONE> you can do whatever
+you need to do,
 like for example handle the cloning of non-Perl data, if necessary.
 C<CLONE> will be called once as a class method for every package that has it
 defined (or inherits it).  It will be called in the context of the new thread,
@@ -550,6 +563,22 @@ will be passed in to give more information about the state of cloning.
 
 If you want to CLONE all objects you will need to keep track of them per
 package. This is simply done using a hash and Scalar::Util::weaken().
+
+Perl after 5.8.7 has support for the C<CLONE_SKIP> special subroutine.
+Like C<CLONE>, C<CLONE_SKIP> is called once per package; however, it is
+called just before cloning starts, and in the context of the parent
+thread. If it returns a true value, then no objects of that class will
+be cloned; or rather, they will be copied as unblessed, undef values.
+This provides a simple mechanism for making a module threadsafe; just add
+C<sub CLONE_SKIP { 1 }> at the top of the class, and C<DESTROY()> will be
+now only be called once per object. Of course, if the child thread needs
+to make use of the objects, then a more sophisticated approach is
+needed.
+
+Like C<CLONE>, C<CLONE_SKIP> is currently called with no parameters other
+than the invocant package name, although that may change. Similarly, to
+allow for future expansion, the return value should be a single C<0> or
+C<1> value.
 
 =head1 SEE ALSO
 

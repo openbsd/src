@@ -12,6 +12,7 @@ BEGIN {
 }
 
 use Config;
+require './test.pl'; # for runperl()
 
 print "1..187\n";
 
@@ -446,8 +447,8 @@ END
 	      close READ2;
 	      open STDOUT, ">&WRITE"  or die "Can't redirect STDOUT: $!";
 	      open STDERR, ">&WRITE2" or die "Can't redirect STDERR: $!";
-	      exec './perl', '-w', '-'
-		or die "Can't exec ./perl: $!";
+	      exec which_perl(), '-w', '-'
+		or die "Can't exec perl: $!";
 	    } else {
 	      # Parent process here.
 	      close WRITE;
@@ -466,11 +467,7 @@ END
 	    my $errfile = "terr$$";  $errfile++ while -e $errfile;
 	    my @tmpfiles = ($cmdfile, $errfile);
 	    open CMD, ">$cmdfile"; print CMD $code; close CMD;
-	    my $cmd = (($^O eq 'VMS') ? "MCR $^X"
-		       : ($^O eq 'MSWin32') ? '.\perl'
-		       : ($^O eq 'MacOS') ? $^X
-		       : ($^O eq 'NetWare') ? 'perl'
-		       : './perl');
+	    my $cmd = which_perl();
 	    $cmd .= " -w $cmdfile 2>$errfile";
 	    if ($^O eq 'VMS' or $^O eq 'MSWin32' or $^O eq 'NetWare') {
 	      # Use pipe instead of system so we don't inherit STD* from
@@ -613,8 +610,6 @@ curr_test(182);
 SKIP: { skip("tests not in 5.8.", 3) }
 
 $test= 185;
-
-require './test.pl'; # for runperl()
 
 {
    # bugid #23265 - this used to coredump during destruction of PL_maincv

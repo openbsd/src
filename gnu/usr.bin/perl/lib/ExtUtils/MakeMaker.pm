@@ -1,23 +1,28 @@
+# $Id: MakeMaker.pm,v 1.8 2006/03/28 19:23:06 millert Exp $
 package ExtUtils::MakeMaker;
 
 BEGIN {require 5.005_03;}
 
-$VERSION = '6.17';
-($Revision) = q$Revision: 1.7 $ =~ /Revision:\s+(\S+)/;
-
 require Exporter;
-use Config;
+use ExtUtils::MakeMaker::Config;
 use Carp ();
 use File::Path;
 
 use vars qw(
             @ISA @EXPORT @EXPORT_OK
-            $Revision $VERSION $Verbose %Config 
+            $VERSION $Verbose %Config 
             @Prepend_parent @Parent
             %Recognized_Att_Keys @Get_from_Config @MM_Sections @Overridable 
             $Filename
            );
+
+# Has to be on its own line with no $ after it to avoid being noticed by
+# the version control system
+use vars qw($Revision);
 use strict;
+
+$VERSION = '6.30';
+($Revision = q$Revision: 1.8 $) =~ /Revision:\s+(\S+)/;
 
 @ISA = qw(Exporter);
 @EXPORT = qw(&WriteMakefile &writeMakefile $Verbose &prompt);
@@ -167,9 +172,11 @@ sub eval_in_subdirs {
 
     foreach my $dir (@{$self->{DIR}}){
         my($abs) = $self->catdir($pwd,$dir);
-        $self->eval_in_x($abs);
+        eval { $self->eval_in_x($abs); };
+        last if $@;
     }
     chdir $pwd;
+    die $@ if $@;
 }
 
 sub eval_in_x {
@@ -207,7 +214,7 @@ sub full_setup {
 
     INST_ARCHLIB INST_SCRIPT INST_BIN INST_LIB INST_MAN1DIR INST_MAN3DIR
     INSTALLDIRS
-    DESTDIR PREFIX
+    DESTDIR PREFIX INSTALLBASE
     PERLPREFIX      SITEPREFIX      VENDORPREFIX
     INSTALLPRIVLIB  INSTALLSITELIB  INSTALLVENDORLIB
     INSTALLARCHLIB  INSTALLSITEARCH INSTALLVENDORARCH
@@ -226,7 +233,7 @@ sub full_setup {
     PERL_SRC PERM_RW PERM_RWX
     PL_FILES PM PM_FILTER PMLIBDIRS POLLUTE PPM_INSTALL_EXEC
     PPM_INSTALL_SCRIPT PREREQ_FATAL PREREQ_PM PREREQ_PRINT PRINT_PREREQ
-    SKIP TYPEMAPS VERSION VERSION_FROM XS XSOPT XSPROTOARG
+    SIGN SKIP TYPEMAPS VERSION VERSION_FROM XS XSOPT XSPROTOARG
     XS_VERSION clean depend dist dynamic_lib linkext macro realclean
     tool_autosplit
 
@@ -260,12 +267,12 @@ sub full_setup {
 
  special_targets
  c_o xs_c xs_o
- top_targets linkext dlsyms dynamic dynamic_bs
+ top_targets blibdirs linkext dlsyms dynamic dynamic_bs
  dynamic_lib static static_lib manifypods processPL
  installbin subdirs
  clean_subdirs clean realclean_subdirs realclean 
- metafile metafile_addtomanifest
- dist_basics dist_core distdir dist_test dist_ci
+ metafile signature
+ dist_basics dist_core distdir dist_test dist_ci distmeta distsignature
  install force perldepend makefile staticmake test ppd
 
           ); # loses section ordering
@@ -273,7 +280,7 @@ sub full_setup {
     @Overridable = @MM_Sections;
     push @Overridable, qw[
 
- dir_target libscan makeaperl needs_linking perm_rw perm_rwx
+ libscan makeaperl needs_linking perm_rw perm_rwx
  subdir_x test_via_harness test_via_script init_PERL
                          ];
 
@@ -380,7 +387,9 @@ sub new {
     foreach my $prereq (sort keys %{$self->{PREREQ_PM}}) {
         # 5.8.0 has a bug with require Foo::Bar alone in an eval, so an
         # extra statement is a workaround.
-        eval "require $prereq; 0";
+        my $file = "$prereq.pm";
+        $file =~ s{::}{/}g;
+        eval { require $file };
 
         my $pr_version = $prereq->VERSION || 0;
 
@@ -1013,7 +1022,7 @@ The generated Makefile enables the user of the extension to invoke
 The Makefile to be produced may be altered by adding arguments of the
 form C<KEY=VALUE>. E.g.
 
-  perl Makefile.PL PREFIX=/tmp/myperl5
+  perl Makefile.PL PREFIX=~
 
 Other interesting targets in the generated Makefile are
 
@@ -1090,6 +1099,15 @@ And to check the sequence in which the library directories are
 searched by perl, run
 
     perl -le 'print join $/, @INC'
+
+Sometimes older versions of the module you're installing live in other
+directories in @INC.  Because Perl loads the first version of a module it 
+finds, not the newest, you might accidentally get one of these older
+versions even after installing a brand new version.  To delete I<all other
+versions of the module you're installing> (not simply older ones) set the
+C<UNINST> variable.
+
+    make install UNINST=1
 
 
 =head2 PREFIX and LIB attribute
@@ -1355,13 +1373,13 @@ Something like C<"-DHAVE_UNISTD_H">
 
 This is the root directory into which the code will be installed.  It
 I<prepends itself to the normal prefix>.  For example, if your code
-would normally go into /usr/local/lib/perl you could set DESTDIR=/tmp/
-and installation would go into /tmp/usr/local/lib/perl.
+would normally go into F</usr/local/lib/perl> you could set DESTDIR=~/tmp/
+and installation would go into F<~/tmp/usr/local/lib/perl>.
 
 This is primarily of use for people who repackage Perl modules.
 
 NOTE: Due to the nature of make, it is important that you put the trailing
-slash on your DESTDIR.  "/tmp/" not "/tmp".
+slash on your DESTDIR.  F<~/tmp/> not F<~/tmp>.
 
 =item DIR
 
@@ -1854,18 +1872,39 @@ See also L<MM_Unix/perm_rwx>.
 
 =item PL_FILES
 
-Ref to hash of files to be processed as perl programs. MakeMaker
-will default to any found *.PL file (except Makefile.PL) being keys
-and the basename of the file being the value. E.g.
+MakeMaker can run programs to generate files for you at build time.
+By default any file named *.PL (except Makefile.PL and Build.PL) in
+the top level directory will be assumed to be a Perl program and run
+passing its own basename in as an argument.  For example...
 
-  {'foobar.PL' => 'foobar'}
+    perl foo.PL foo
 
-The *.PL files are expected to produce output to the target files
-themselves. If multiple files can be generated from the same *.PL
-file then the value in the hash can be a reference to an array of
-target file names. E.g.
+This behavior can be overridden by supplying your own set of files to
+search.  PL_FILES accepts a hash ref, the key being the file to run
+and the value is passed in as the first argument when the PL file is run.
 
-  {'foobar.PL' => ['foobar1','foobar2']}
+    PL_FILES => {'bin/foobar.PL' => 'bin/foobar'}
+
+Would run bin/foobar.PL like this:
+
+    perl bin/foobar.PL bin/foobar
+
+If multiple files from one program are desired an array ref can be used.
+
+    PL_FILES => {'bin/foobar.PL' => [qw(bin/foobar1 bin/foobar2)]}
+
+In this case the program will be run multiple times using each target file.
+
+    perl bin/foobar.PL bin/foobar1
+    perl bin/foobar.PL bin/foobar2
+
+PL files are normally run B<after> pm_to_blib and include INST_LIB and
+INST_ARCH in its C<@INC> so the just built modules can be
+accessed... unless the PL file is making a module (or anything else in
+PM) in which case it is run B<before> pm_to_blib and does not include
+INST_LIB and INST_ARCH in its C<@INC>.  This apparently odd behavior
+is there for backwards compatibility (and its somewhat DWIM).
+
 
 =item PM
 
@@ -1991,6 +2030,17 @@ $Config{installprefix} will be used.
 
 Overridable by PREFIX
 
+=item SIGN
+
+When true, perform the generation and addition to the MANIFEST of the
+SIGNATURE file in the distdir during 'make distdir', via 'cpansign
+-s'.
+
+Note that you need to install the Module::Signature module to
+perform this operation.
+
+Defaults to false.
+
 =item SKIP
 
 Arrayref. E.g. [qw(name1 name2)] skip (do not write) sections of the
@@ -2040,7 +2090,7 @@ MakeMaker object. The following lines will be parsed o.k.:
 
     $VERSION = '1.00';
     *VERSION = \'1.01';
-    $VERSION = sprintf "%d.%03d", q$Revision: 1.7 $ =~ /(\d+)/g;
+    $VERSION = sprintf "%d.%03d", q$Revision: 1.8 $ =~ /(\d+)/g;
     $FOO::VERSION = '1.10';
     *FOO::VERSION = \'1.11';
     our $VERSION = 1.2.3;       # new for perl5.6.0 
@@ -2192,7 +2242,7 @@ for embedding.
 
 If you still need a different solution, try to develop another
 subroutine that fits your needs and submit the diffs to
-F<makemaker@perl.org>
+C<makemaker@perl.org>
 
 For a complete description of all MakeMaker methods see
 L<ExtUtils::MM_Unix>.
@@ -2219,13 +2269,13 @@ Some of the most common mistakes:
 
 =over 2
 
-=item C<<MAN3PODS => ' '>>
+=item C<< MAN3PODS => ' ' >>
 
 This is commonly used to supress the creation of man pages.  MAN3PODS
 takes a hash ref not a string, but the above worked by accident in old
 versions of MakeMaker.
 
-The correct code is C<<MAN3PODS => { }>>.
+The correct code is C<< MAN3PODS => { } >>.
 
 =back
 
@@ -2285,9 +2335,9 @@ Copies all the files that are in the MANIFEST file to a newly created
 directory with the name C<$(DISTNAME)-$(VERSION)>. If that directory
 exists, it will be removed first.
 
-Additionally, it will create a META.yml module meta-data file and add
-this to your MANFIEST.  You can shut this behavior off with the NO_META
-flag.
+Additionally, it will create a META.yml module meta-data file in the
+distdir and add this to the distdir's MANFIEST.  You can shut this
+behavior off with the NO_META flag.
 
 =item   make disttest
 
@@ -2431,6 +2481,10 @@ is processed before any actual command line arguments are processed.
 If set to a true value then MakeMaker's prompt function will
 always return the default without waiting for user input.
 
+=item PERL_CORE
+
+Same as the PERL_CORE parameter.  The parameter overrides this.
+
 =back
 
 =head1 SEE ALSO
@@ -2440,26 +2494,26 @@ ExtUtils::Embed
 
 =head1 AUTHORS
 
-Andy Dougherty <F<doughera@lafayette.edu>>, Andreas KE<ouml>nig
-<F<andreas.koenig@mind.de>>, Tim Bunce <F<timb@cpan.org>>.  VMS
-support by Charles Bailey <F<bailey@newman.upenn.edu>>.  OS/2 support
-by Ilya Zakharevich <F<ilya@math.ohio-state.edu>>.
+Andy Dougherty C<doughera@lafayette.edu>, Andreas KE<ouml>nig
+C<andreas.koenig@mind.de>, Tim Bunce C<timb@cpan.org>.  VMS
+support by Charles Bailey C<bailey@newman.upenn.edu>.  OS/2 support
+by Ilya Zakharevich C<ilya@math.ohio-state.edu>.
 
-Currently maintained by Michael G Schwern <F<schwern@pobox.com>>
+Currently maintained by Michael G Schwern C<schwern@pobox.com>
 
-Send patches and ideas to <F<makemaker@perl.org>>.
+Send patches and ideas to C<makemaker@perl.org>.
 
 Send bug reports via http://rt.cpan.org/.  Please send your
 generated Makefile along with your report.
 
-For more up-to-date information, see http://www.makemaker.org.
+For more up-to-date information, see L<http://www.makemaker.org>.
 
 =head1 LICENSE
 
 This program is free software; you can redistribute it and/or 
 modify it under the same terms as Perl itself.
 
-See F<http://www.perl.com/perl/misc/Artistic.html>
+See L<http://www.perl.com/perl/misc/Artistic.html>
 
 
 =cut

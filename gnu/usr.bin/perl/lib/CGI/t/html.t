@@ -53,30 +53,37 @@ test(9,header() eq "Content-Type: text/html; charset=ISO-8859-1${CRLF}${CRLF}","
 test(10,header(-type=>'image/gif') eq "Content-Type: image/gif${CRLF}${CRLF}","header()");
 test(11,header(-type=>'image/gif',-status=>'500 Sucks') eq "Status: 500 Sucks${CRLF}Content-Type: image/gif${CRLF}${CRLF}","header()");
 test(12,header(-nph=>1) =~ m!HTTP/1.0 200 OK${CRLF}Server: cmdline${CRLF}Date:.+${CRLF}Content-Type: text/html; charset=ISO-8859-1${CRLF}${CRLF}!,"header()");
-test(13,start_html() ."\n" eq <<END,"start_html()");
-<?xml version="1.0" encoding="iso-8859-1"?>
+test(13,start_html() eq <<END,"start_html()");
 <!DOCTYPE html
 	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US"><head><title>Untitled Document</title>
-</head><body>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
+<head>
+<title>Untitled Document</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+</head>
+<body>
 END
     ;
-test(14,start_html(-Title=>'The world of foo') ."\n" eq <<END,"start_html()");
-<?xml version="1.0" encoding="iso-8859-1"?>
+test(14,start_html(-Title=>'The world of foo') eq <<END,"start_html()");
 <!DOCTYPE html
 	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US"><head><title>The world of foo</title>
-</head><body>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
+<head>
+<title>The world of foo</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+</head>
+<body>
 END
     ;
 # Note that this test will turn off XHTML until we make a new CGI object.
-test(15,start_html(-dtd=>"-//IETF//DTD HTML 3.2//FR",-lang=>'fr') ."\n" eq <<END,"start_html()");
+test(15,start_html(-dtd=>"-//IETF//DTD HTML 3.2//FR",-lang=>'fr') eq <<END,"start_html()");
 <!DOCTYPE html
 	PUBLIC "-//IETF//DTD HTML 3.2//FR">
 <html lang="fr"><head><title>Untitled Document</title>
-</head><body>
+</head>
+<body>
 END
     ;
 test(16,($cookie=cookie(-name=>'fred',-value=>['chocolate','chip'],-path=>'/')) eq 'fred=chocolate&chip; path=/',"cookie()");

@@ -2,7 +2,7 @@
 
 # $RCSfile: my.t,v $
 
-print "1..33\n";
+print "1..36\n";
 
 sub foo {
     my($a, $b) = @_;
@@ -111,3 +111,13 @@ print "ok 32\n";
 eval { my $x = opth };
 print "not " if $@;
 print "ok 33\n";
+# my $foo = undef should always assign [perl #37776]
+{
+    my $count = 34;
+    loop:
+    my $test = undef;
+    print "not " if defined $test;
+    print "ok $count\n";
+    $test = 42;
+    goto loop if ++$count < 37;
+}

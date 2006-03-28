@@ -1,5 +1,27 @@
-This directory contains files from the IO distribution created by
-Graham Barr.  It is currently maintained by the Perl Porters as part
-of the Perl source distribution. If you find that you have to modify
-any files in this directory then please forward them a patch at
-<perl5-porters@perl.org>.
+This is the perl5 IO distribution.
+
+This distribution is included in the perl5 core distribution. You should
+only need to install this distribution if it is newer than your perl
+installation.
+
+To install this distribution you will need access rights to the perl
+install ation on your system, as it overwrites your currently installed
+version of IO.
+
+This distribution relies upon the Socket module (version 1.3), which is
+avaliable from CPAN. Although you should not need to get this if your
+version of perl is fairly recent, as Socket is also distributed in the
+core perl distribution.
+
+If you do not have the required modules, you will see a warning when 
+the Makefile is built.
+
+To build, test and install this distribution type:
+
+ perl Makefile.PL
+ make test
+ make install
+
+Share and Enjoy!
+Graham Barr <gbarr@pobox.com>
+

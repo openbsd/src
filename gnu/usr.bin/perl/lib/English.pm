@@ -1,6 +1,6 @@
 package English;
 
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 
 require Exporter;
 @ISA = (Exporter);
@@ -114,6 +114,7 @@ sub import {
 	*PROGRAM_NAME
 	*PERL_VERSION
 	*ACCUMULATOR
+	*COMPILING
 	*DEBUGGING
 	*SYSTEM_FD_MAX
 	*INPLACE_EDIT

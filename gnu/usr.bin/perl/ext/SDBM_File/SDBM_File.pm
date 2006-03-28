@@ -7,7 +7,7 @@ require Tie::Hash;
 use XSLoader ();
 
 our @ISA = qw(Tie::Hash);
-our $VERSION = "1.04" ;
+our $VERSION = "1.05";
 
 XSLoader::load 'SDBM_File', $VERSION;
 
@@ -100,7 +100,7 @@ sets C<$!> to contain the reason the file could not be tied.
 
 =head2 C<sdbm store returned -1, errno 22, key "..." at ...>
 
-This warning is emmitted when you try to store a key or a value that
+This warning is emitted when you try to store a key or a value that
 is too long.  It means that the change was not recorded in the
 database.  See BUGS AND WARNINGS below.
 

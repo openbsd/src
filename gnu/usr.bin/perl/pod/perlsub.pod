@@ -1,10 +1,12 @@
 =head1 NAME
+X<subroutine> X<function>
 
 perlsub - Perl subroutines
 
 =head1 SYNOPSIS
 
 To declare subroutines:
+X<subroutine, declaration> X<sub>
 
     sub NAME;			  # A "forward" declaration.
     sub NAME(PROTO);		  #  ditto, but with prototypes
@@ -17,6 +19,7 @@ To declare subroutines:
     sub NAME(PROTO) : ATTRS BLOCK #  with prototypes and attributes
 
 To define an anonymous subroutine at runtime:
+X<subroutine, anonymous>
 
     $subref = sub BLOCK;		 # no proto
     $subref = sub (PROTO) BLOCK;	 # with proto
@@ -24,10 +27,12 @@ To define an anonymous subroutine at runtime:
     $subref = sub (PROTO) : ATTRS BLOCK; # with proto and attributes
 
 To import subroutines:
+X<import>
 
     use MODULE qw(NAME1 NAME2 NAME3);
 
 To call subroutines:
+X<subroutine, call> X<call>
 
     NAME(LIST);	   # & is optional with parentheses.
     NAME LIST;	   # Parentheses optional if predeclared/imported.
@@ -52,6 +57,7 @@ pass-by-reference instead to avoid this.  Both call and return lists may
 contain as many or as few scalar elements as you'd like.  (Often a
 function without an explicit return statement is called a subroutine, but
 there's really no difference from Perl's perspective.)
+X<subroutine, parameter> X<parameter>
 
 Any arguments passed in show up in the array C<@_>.  Therefore, if
 you called a function with two arguments, those would be stored in
@@ -65,17 +71,22 @@ or a reference to it is taken.  (Some earlier versions of Perl
 created the element whether or not the element was assigned to.)
 Assigning to the whole array C<@_> removes that aliasing, and does
 not update any arguments.
+X<subroutine, argument> X<argument> X<@_>
 
-The return value of a subroutine is the value of the last expression
-evaluated by that sub, or the empty list in the case of an empty sub.
-More explicitly, a C<return> statement may be used to exit the
-subroutine, optionally specifying the returned value, which will be
-evaluated in the appropriate context (list, scalar, or void) depending
-on the context of the subroutine call.  If you specify no return value,
-the subroutine returns an empty list in list context, the undefined
-value in scalar context, or nothing in void context.  If you return
-one or more aggregates (arrays and hashes), these will be flattened
-together into one large indistinguishable list.
+A C<return> statement may be used to exit a subroutine, optionally
+specifying the returned value, which will be evaluated in the
+appropriate context (list, scalar, or void) depending on the context of
+the subroutine call.  If you specify no return value, the subroutine
+returns an empty list in list context, the undefined value in scalar
+context, or nothing in void context.  If you return one or more
+aggregates (arrays and hashes), these will be flattened together into
+one large indistinguishable list.
+
+If no C<return> is found and if the last statement is an expression, its
+value is returned. If the last statement is a loop control structure
+like a C<foreach> or a C<while>, the returned value is unspecified. The
+empty sub returns the empty list.
+X<subroutine, return value> X<return value> X<return>
 
 Perl does not have named formal parameters.  In practice all you
 do is assign to a C<my()> list of these.  Variables that aren't
@@ -84,6 +95,7 @@ on creating private variables, see L<"Private Variables via my()">
 and L<"Temporary Values via local()">.  To create protected
 environments for a set of functions in a separate package (and
 probably a separate file), see L<perlmod/"Packages">.
+X<formal parameter> X<parameter, formal>
 
 Example:
 
@@ -130,6 +142,7 @@ Because the assignment copies the values, this also has the effect
 of turning call-by-reference into call-by-value.  Otherwise a
 function is free to do in-place modifications of C<@_> and change
 its caller's values.
+X<call-by-reference> X<call-by-value>
 
     upcase_in($v1, $v2);  # this changes $v1 and $v2
     sub upcase_in {
@@ -139,6 +152,7 @@ its caller's values.
 You aren't allowed to modify constants in this way, of course.  If an
 argument were actually literal and you tried to change it, you'd take a
 (presumably fatal) exception.   For example, this won't work:
+X<call-by-reference> X<call-by-value>
 
     upcase_in("frederick");
 
@@ -182,12 +196,14 @@ want to do an indirect subroutine call with a subroutine name or
 reference using the C<&$subref()> or C<&{$subref}()> constructs,
 although the C<< $subref->() >> notation solves that problem.
 See L<perlref> for more about all that.
+X<&>
 
 Subroutines may be called recursively.  If a subroutine is called
 using the C<&> form, the argument list is optional, and if omitted,
 no C<@_> array is set up for the subroutine: the C<@_> array at the
 time of the call is visible to subroutine instead.  This is an
 efficiency mechanism that new users may wish to avoid.
+X<recursion>
 
     &foo(1,2,3);	# pass three arguments
     foo(1,2,3);		# the same
@@ -202,6 +218,7 @@ Not only does the C<&> form make the argument list optional, it also
 disables any prototype checking on arguments you do provide.  This
 is partly for historical reasons, and partly for having a convenient way
 to cheat if you know what you're doing.  See L<Prototypes> below.
+X<&>
 
 Subroutines whose names are in all upper case are reserved to the Perl
 core, as are modules whose names are in all lower case.  A subroutine in
@@ -216,6 +233,8 @@ than one in a package, and which you can B<not> call explicitly.  See
 L<perlmod/"BEGIN, CHECK, INIT and END">
 
 =head2 Private Variables via my()
+X<my> X<variable, lexical> X<lexical> X<lexical variable> X<scope, lexical>
+X<lexical scope> X<attributes, my>
 
 Synopsis:
 
@@ -243,6 +262,7 @@ variables declared with C<my> are totally hidden from the outside
 world, including any called subroutines.  This is true if it's the
 same subroutine called from itself or elsewhere--every call gets
 its own copy.
+X<local>
 
 This doesn't mean that a C<my> variable declared in a statically
 enclosing lexical scope would be invisible.  Only dynamic scopes
@@ -256,6 +276,7 @@ occurred at the same scope, presumably file scope.
 An C<eval()>, however, can see lexical variables of the scope it is
 being evaluated in, so long as the names aren't hidden by declarations within
 the C<eval()> itself.  See L<perlref>.
+X<eval, scope of>
 
 The parameter list to my() may be assigned to if desired, which allows you
 to initialize your variables.  (If no initializer is given for a
@@ -338,6 +359,7 @@ in the manner of C<local>.  However, if the index variable is
 prefixed with the keyword C<my>, or if there is already a lexical
 by that name in scope, then a new lexical is created instead.  Thus
 in the loop
+X<foreach> X<for>
 
     for my $i (1, 2, 3) {
         some_function();
@@ -345,6 +367,7 @@ in the loop
 
 the scope of $i extends to the end of the loop, but not beyond it,
 rendering the value of $i inaccessible within C<some_function()>.
+X<foreach> X<for>
 
 Some users may wish to encourage the use of lexically scoped variables.
 As an aid to catching implicit uses to package variables,
@@ -409,6 +432,7 @@ L<perlref/"Function Templates"> for something of a work-around to
 this.
 
 =head2 Persistent Private Variables
+X<static> X<variable, persistent> X<variable, static> X<closure>
 
 Just because a lexical variable is lexically (also called statically)
 scoped to its enclosing block, C<eval>, or C<do> FILE, this doesn't mean that
@@ -465,6 +489,8 @@ from outside that file.  This strategy is sometimes used in modules
 to create private variables that the whole module can see.
 
 =head2 Temporary Values via local()
+X<local> X<scope, dynamic> X<dynamic scope> X<variable, local>
+X<variable, temporary>
 
 B<WARNING>: In general, you should be using C<my> instead of C<local>, because
 it's faster and safer.  Exceptions to this include the global punctuation
@@ -520,6 +546,7 @@ through a loop.  Consequently, it's more efficient to localize your
 variables outside the loop.
 
 =head3 Grammatical note on local()
+X<local, context>
 
 A C<local> is simply a modifier on an lvalue expression.  When you assign to
 a C<local>ized variable, the C<local> doesn't change whether its list is viewed
@@ -535,6 +562,7 @@ both supply a list context to the right-hand side, while
 supplies a scalar context.
 
 =head3 Localization of special variables
+X<local, special variable>
 
 If you localize a special variable, you'll be giving a new value to it,
 but its magic won't go away.  That means that all side-effects related
@@ -570,8 +598,10 @@ code that relies on any particular behaviour of localising tied arrays
 or hashes (localising individual elements is still okay).
 See L<perl58delta/"Localising Tied Arrays and Hashes Is Broken"> for more
 details.
+X<local, tie>
 
 =head3 Localization of globs
+X<local, glob> X<glob>
 
 The construct
 
@@ -591,6 +621,7 @@ $_, and avoid the potential problem listed above about $_ previously
 carrying a magic value, you should use C<local *_> instead of C<local $_>.
 
 =head3 Localization of elements of composite types
+X<local, composite type element> X<local, array element> X<local, hash element>
 
 It's also worth taking a moment to explain what happens when you
 C<local>ize a member of a composite type (i.e. an array or hash element).
@@ -633,6 +664,7 @@ The behavior of local() on non-existent members of composite
 types is subject to change in future.
 
 =head2 Lvalue subroutines
+X<lvalue> X<subroutine, lvalue>
 
 B<WARNING>: Lvalue subroutines are still experimental and the
 implementation may change in future versions of Perl.
@@ -702,6 +734,7 @@ subroutine never gets that chance.  Consider;
 =back
 
 =head2 Passing Symbol Table Entries (typeglobs)
+X<typeglob> X<*>
 
 B<WARNING>: The mechanism described in this section was originally
 the only way to simulate pass-by-reference in older versions of
@@ -744,6 +777,7 @@ the individual arrays.  For more on typeglobs, see
 L<perldata/"Typeglobs and Filehandles">.
 
 =head2 When to Still Use local()
+X<local> X<variable, local>
 
 Despite the existence of C<my>, there are still three places where the
 C<local> operator still shines.  In fact, in these three places, you
@@ -821,6 +855,7 @@ this operation could on occasion misbehave.
 =back
 
 =head2 Pass by Reference
+X<pass by reference> X<pass-by-reference> X<reference>
 
 If you want to pass more than one array or hash into a function--or
 return them from it--and have them maintain their integrity, then
@@ -934,6 +969,7 @@ Notice to pass back just the bare *FH, not its reference.
     }
 
 =head2 Prototypes
+X<prototype> X<subroutine, prototype>
 
 Perl supports a very limited kind of compile-time argument checking
 using function prototyping.  If you declare
@@ -1034,6 +1070,7 @@ without a prototype.
 
 The interesting thing about C<&> is that you can generate new syntax with it,
 provided it's in the initial position:
+X<&>
 
     sub try (&@) {
 	my($try,$catch) = @_;
@@ -1058,6 +1095,7 @@ scoped, those anonymous subroutines can act like closures... (Gee,
 is this sounding a little Lispish?  (Never mind.))))
 
 And here's a reimplementation of the Perl C<grep> operator:
+X<grep>
 
     sub mygrep (&@) {
 	my $code = shift;
@@ -1111,6 +1149,7 @@ This is all very powerful, of course, and should be used only in moderation
 to make the world a better place.
 
 =head2 Constant Functions
+X<constant>
 
 Functions with a prototype of C<()> are potential candidates for
 inlining.  If the result after optimization and constant folding
@@ -1166,6 +1205,7 @@ inlining mechanism in some other way, such as
     }
 
 =head2 Overriding Built-in Functions
+X<built-in> X<override> X<CORE> X<CORE::GLOBAL>
 
 Many built-in functions may be overridden, though this should be tried
 only occasionally and for good reason.  Typically this might be
@@ -1288,6 +1328,7 @@ the equivalent I/O operator C<< <FILEHANDLE> >>.
 Finally, some built-ins (e.g. C<exists> or C<grep>) can't be overridden.
 
 =head2 Autoloading
+X<autoloading> X<AUTOLOAD>
 
 If you call a subroutine that is undefined, you would ordinarily
 get an immediate, fatal error complaining that the subroutine doesn't
@@ -1338,6 +1379,7 @@ SelfLoader modules in L<SelfLoader>, and the document on adding C
 functions to Perl code in L<perlxs>.
 
 =head2 Subroutine Attributes
+X<attribute> X<subroutine, attribute> X<attrs>
 
 A subroutine declaration or definition may have a list of attributes
 associated with it.  If such an attribute list is present, it is
@@ -1355,17 +1397,17 @@ nest properly.
 
 Examples of valid syntax (even though the attributes are unknown):
 
-    sub fnord (&\%) : switch(10,foo(7,3))  :  expensive ;
-    sub plugh () : Ugly('\(") :Bad ;
+    sub fnord (&\%) : switch(10,foo(7,3))  :  expensive;
+    sub plugh () : Ugly('\(") :Bad;
     sub xyzzy : _5x5 { ... }
 
 Examples of invalid syntax:
 
-    sub fnord : switch(10,foo() ; # ()-string not balanced
-    sub snoid : Ugly('(') ;	  # ()-string not balanced
-    sub xyzzy : 5x5 ;		  # "5x5" not a valid identifier
-    sub plugh : Y2::north ;	  # "Y2::north" not a simple identifier
-    sub snurt : foo + bar ;	  # "+" not a colon or space
+    sub fnord : switch(10,foo(); # ()-string not balanced
+    sub snoid : Ugly('(');	  # ()-string not balanced
+    sub xyzzy : 5x5;		  # "5x5" not a valid identifier
+    sub plugh : Y2::north;	  # "Y2::north" not a simple identifier
+    sub snurt : foo + bar;	  # "+" not a colon or space
 
 The attribute list is passed as a list of constant strings to the code
 which associates them with the subroutine.  In particular, the second example

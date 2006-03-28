@@ -1,8 +1,8 @@
 # Term::ANSIColor -- Color screen output using ANSI escape sequences.
-# $Id: ANSIColor.pm,v 1.6 2004/08/09 18:09:46 millert Exp $
+# $Id: ANSIColor.pm,v 1.7 2006/03/28 19:23:08 millert Exp $
 #
-# Copyright 1996, 1997, 1998, 2000, 2001, 2002
-#   by Russ Allbery <rra@stanford.edu> and Zenin <zenin@bawdycaste.com>
+# Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2005
+#   by Russ Allbery <rra@stanford.edu> and Zenin
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
@@ -34,7 +34,7 @@ Exporter::export_ok_tags ('constants');
 
 # Don't use the CVS revision as the version, since this module is also in Perl
 # core and too many things could munge CVS magic revision strings.
-$VERSION = 1.08;
+$VERSION = '1.10';
 
 ##############################################################################
 # Internal data structures
@@ -182,8 +182,9 @@ sub colored {
     if (defined $EACHLINE) {
         my $attr = color (@codes);
         join '',
-            map { $_ && $_ ne $EACHLINE ? $attr . $_ . "\e[0m" : $_ }
-                split (/(\Q$EACHLINE\E)/, $string);
+            map { $_ ne $EACHLINE ? $attr . $_ . "\e[0m" : $_ }
+                grep { length ($_) > 0 }
+                    split (/(\Q$EACHLINE\E)/, $string);
     } else {
         color (@codes) . $string . "\e[0m";
     }
@@ -424,12 +425,14 @@ me flesh it out:
  PuTTY         yes     color     no      yes      no       yes      no
  Windows       yes      no       no      no       no       yes      no
  Cygwin SSH    yes      yes      no     color    color    color     yes
+ Mac Terminal  yes      yes      no      yes      yes      yes      yes
 
-Windows is Windows telnet, and Cygwin SSH is the OpenSSH implementation under
-Cygwin on Windows NT.  Where the entry is other than yes or no, that emulator
-displays the given attribute as something else instead.  Note that on an
-aixterm, clear doesn't reset colors; you have to explicitly set the colors
-back to what you want.  More entries in this table are welcome.
+Windows is Windows telnet, Cygwin SSH is the OpenSSH implementation under
+Cygwin on Windows NT, and Mac Terminal is the Terminal application in Mac OS
+X.  Where the entry is other than yes or no, that emulator displays the
+given attribute as something else instead.  Note that on an aixterm, clear
+doesn't reset colors; you have to explicitly set the colors back to what you
+want.  More entries in this table are welcome.
 
 Note that codes 3 (italic), 6 (rapid blink), and 9 (strikethrough) are
 specified in ANSI X3.64 and ECMA-048 but are not commonly supported by most
@@ -463,7 +466,7 @@ with input from Zenin.  Russ Allbery now maintains this module.
 =head1 COPYRIGHT AND LICENSE
 
 Copyright 1996, 1997, 1998, 2000, 2001, 2002 Russ Allbery <rra@stanford.edu>
-and Zenin <zenin@bawdycaste.org>.  This program is free software; you may
-redistribute it and/or modify it under the same terms as Perl itself.
+and Zenin.  This program is free software; you may redistribute it and/or
+modify it under the same terms as Perl itself.
 
 =cut

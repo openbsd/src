@@ -126,11 +126,11 @@ Also remember that C doesn't allow you to safely say C<foo(SvPV(s, len),
 len);>. It might work with your compiler, but it won't work for everyone.
 Break this sort of statement up into separate assignments:
 
-	SV *s;
-	STRLEN len;
-	char * ptr;
-	ptr = SvPV(s, len);
-	foo(ptr, len);
+    SV *s;
+    STRLEN len;
+    char * ptr;
+    ptr = SvPV(s, len);
+    foo(ptr, len);
 
 If you want to know if the scalar value is TRUE, you can use:
 
@@ -304,7 +304,7 @@ The are various ways in which the private and public flags may differ.
 For example, a tied SV may have a valid underlying value in the IV slot
 (so SvIOKp is true), but the data should be accessed via the FETCH
 routine rather than directly, so SvIOK is false. Another is when
-numeric conversion has occured and precision has been lost: only the
+numeric conversion has occurred and precision has been lost: only the
 private flag is set on 'lossy' values. So when an NV is converted to an
 IV with loss, SvIOKp, SvNOKp and SvNOK will be set, while SvIOK wont be.
 
@@ -1485,25 +1485,20 @@ platforms, it may cause spurious malloc or free errors.
 
 The following three macros are used to initially allocate memory :
 
-    New(x, pointer, number, type);
-    Newc(x, pointer, number, type, cast);
-    Newz(x, pointer, number, type);
+    Newx(pointer, number, type);
+    Newxc(pointer, number, type, cast);
+    Newxz(pointer, number, type);
 
-The first argument C<x> was a "magic cookie" that was used to keep track
-of who called the macro, to help when debugging memory problems.  However,
-the current code makes no use of this feature (most Perl developers now
-use run-time memory checkers), so this argument can be any number.
-
-The second argument C<pointer> should be the name of a variable that will
+The first argument C<pointer> should be the name of a variable that will
 point to the newly allocated memory.
 
-The third and fourth arguments C<number> and C<type> specify how many of
+The second and third arguments C<number> and C<type> specify how many of
 the specified type of data structure should be allocated.  The argument
-C<type> is passed to C<sizeof>.  The final argument to C<Newc>, C<cast>,
+C<type> is passed to C<sizeof>.  The final argument to C<Newxc>, C<cast>,
 should be used if the C<pointer> argument is different from the C<type>
 argument.
 
-Unlike the C<New> and C<Newc> macros, the C<Newz> macro calls C<memzero>
+Unlike the C<Newx> and C<Newxc> macros, the C<Newxz> macro calls C<memzero>
 to zero out all the newly allocated memory.
 
 =head3 Reallocation
@@ -2140,16 +2135,18 @@ after that are the arguments. The first column is a set of flags:
 
 =item A
 
-This function is a part of the public API.
+This function is a part of the public API. All such functions should also
+have 'd', very few do not.
 
 =item p
 
-This function has a C<Perl_> prefix; ie, it is defined as C<Perl_av_fetch>
+This function has a C<Perl_> prefix; i.e. it is defined as
+C<Perl_av_fetch>.
 
 =item d
 
 This function has documentation using the C<apidoc> feature which we'll
-look at in a second.
+look at in a second.  Some functions have 'd' but not 'A'; docs are good.
 
 =back
 
@@ -2159,12 +2156,13 @@ Other available flags are:
 
 =item s
 
-This is a static function and is defined as C<S_whatever>, and usually
-called within the sources as C<whatever(...)>.
+This is a static function and is defined as C<STATIC S_whatever>, and
+usually called within the sources as C<whatever(...)>.
 
 =item n
 
-This does not use C<aTHX_> and C<pTHX> to pass interpreter context. (See
+This does not need a interpreter context, so the definition has no
+C<pTHX>, and it follows that callers don't use C<aTHX>.  (See
 L<perlguts/Background and PERL_IMPLICIT_CONTEXT>.)
 
 =item r
@@ -2208,6 +2206,10 @@ This function is visible to extensions included in the Perl core.
 
 Binary backward compatibility; this function is a macro but also has
 a C<Perl_> implementation (which is exported).
+
+=item others
+
+See the comments at the top of C<embed.fnc> for others.
 
 =back
 
@@ -2281,6 +2283,26 @@ source, like this:
 
 Please try and supply some documentation if you add functions to the
 Perl core.
+
+=head2 Backwards compatibility
+
+The Perl API changes over time. New functions are added or the interfaces
+of existing functions are changed. The C<Devel::PPPort> module tries to
+provide compatibility code for some of these changes, so XS writers don't
+have to code it themselves when supporting multiple versions of Perl.
+
+C<Devel::PPPort> generates a C header file F<ppport.h> that can also
+be run as a Perl script. To generate F<ppport.h>, run:
+
+    perl -MDevel::PPPort -eDevel::PPPort::WriteFile
+
+Besides checking existing XS code, the script can also be used to retrieve
+compatibility information for various API calls using the C<--api-info>
+command line switch. For example:
+
+  % perl ppport.h --api-info=sv_magicext
+
+For details, see C<perldoc ppport.h>.
 
 =head1 Unicode Support
 
@@ -2499,7 +2521,7 @@ define your own ops. This is primarily to allow the building of
 interpreters for other languages in the Perl core, but it also allows
 optimizations through the creation of "macro-ops" (ops which perform the
 functions of multiple ops which are usually executed together, such as
-C<gvsv, gvsv, add>.) 
+C<gvsv, gvsv, add>.)
 
 This feature is implemented as a new op type, C<OP_CUSTOM>. The Perl
 core does not "know" anything special about this op type, and so it will
@@ -2531,9 +2553,7 @@ need to enter a name and description for your op at the appropriate
 place in the C<PL_custom_op_names> and C<PL_custom_op_descs> hashes.
 
 Forthcoming versions of C<B::Generate> (version 1.0 and above) should
-directly support the creation of custom ops by name; C<Opcodes::Custom> 
-will provide functions which make it trivial to "register" custom ops to
-the Perl interpreter.
+directly support the creation of custom ops by name.
 
 =head1 AUTHORS
 

@@ -1,5 +1,5 @@
 #
-# $Id: tr_7jis.t,v 1.1.1.2 2004/08/09 17:48:37 millert Exp $
+# $Id$
 #
 # This script is written intentionally in ISO-2022-JP
 # requires Encode 1.83 or better to work

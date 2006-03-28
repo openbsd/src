@@ -1,8 +1,9 @@
-/*
+/* -*- buffer-read-only: t -*-
+ *
  *    opcode.h
  *
  *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, 2005, 2006 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -632,8 +633,8 @@ EXT char *PL_op_desc[] = {
 	"-w",
 	"-x",
 	"-e",
-	"-O",
 	"-o",
+	"-O",
 	"-z",
 	"-s",
 	"-M",
@@ -1826,3 +1827,4 @@ EXT U32 PL_opargs[] = {
 #endif
 
 END_EXTERN_C
+/* ex: set ro: */

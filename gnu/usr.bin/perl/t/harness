@@ -16,7 +16,7 @@ use Test::Harness;
 $Test::Harness::switches = "";    # Too much noise otherwise
 $Test::Harness::verbose = shift if @ARGV && $ARGV[0] eq '-v';
 
-if ($ARGV[0] eq '-torture') {
+if ($ARGV[0] && $ARGV[0] eq '-torture') {
     shift;
     $torture = 1;
 }
@@ -50,6 +50,20 @@ my @tests = ();
 # [.VMS]TEST.COM calls harness with empty arguments, so clean-up @ARGV
 @ARGV = grep $_ && length( $_ ) => @ARGV;
 
+sub _populate_hash {
+    return map {$_, 1} split /\s+/, $_[0];
+}
+
+if ($ARGV[0] && $ARGV[0]=~/^-re/) {
+    if ($ARGV[0]!~/=/) {
+        shift;
+        $re=join "|",@ARGV;
+        @ARGV=();
+    } else {
+        (undef,$re)=split/=/,shift;
+    }
+}
+
 if (@ARGV) {
     if ($^O eq 'MSWin32') {
 	@tests = map(glob($_),@ARGV);
@@ -69,13 +83,28 @@ if (@ARGV) {
         push @tests, <lib/*.t>;
         push @tests, <japh/*.t> if $torture;
 	push @tests, <win32/*.t> if $^O eq 'MSWin32';
+	use Config;
+	my %skip;
+	{
+	    my %extensions = _populate_hash $Config{'extensions'};
+	    my %known_extensions = _populate_hash $Config{'known_extensions'};
+	    foreach (keys %known_extensions) {
+		$skip{$_}++ unless $extensions{$_};
+	    }
+	}
 	use File::Spec;
 	my $updir = File::Spec->updir;
 	my $mani  = File::Spec->catfile(File::Spec->updir, "MANIFEST");
 	if (open(MANI, $mani)) {
 	    while (<MANI>) { # similar code in t/TEST
-	    if (m!^(ext/\S+/?(?:[^/\s]+\.t|test\.pl)|lib/\S+?(?:\.t|test\.pl))\s!) {
-		    push @tests, File::Spec->catfile($updir, $1);
+		if (m!^(ext/(\S+)/+(?:[^/\s]+\.t|test\.pl)|lib/\S+?(?:\.t|test\.pl))\s!) {
+		    my ($test, $extension) = ($1, $2);
+		    if (defined $extension) {
+			$extension =~ s!/t$!!;
+			# XXX Do I want to warn that I'm skipping these?
+			next if $skip{$extension};
+		    }
+		    push @tests, File::Spec->catfile($updir, $test);
 		}
 	    }
 	    close MANI;
@@ -89,6 +118,8 @@ if (@ARGV) {
 if ($^O eq 'MSWin32') {
     s,\\,/,g for @tests;
 }
+@tests=grep /$re/, @tests 
+    if $re;
 Test::Harness::runtests @tests;
 exit(0) unless -e "../testcompile";
 

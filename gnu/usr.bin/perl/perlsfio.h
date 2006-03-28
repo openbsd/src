@@ -49,20 +49,10 @@ extern int	_stdprintf _ARG_((const char*, ...));
 #define PerlIO_fileno(f)		sffileno(f)
 #define PerlIO_clearerr(f)		sfclrerr(f)
 #define PerlIO_flush(f)			sfsync(f)
-#if 0
-/* This breaks tests */
-#define PerlIO_tell(f)			sfseek(f,0,1|SF_SHARE)
-#else
 #define PerlIO_tell(f)			sftell(f)
-#endif
 #define PerlIO_seek(f,o,w)		sfseek(f,o,w)
 #define PerlIO_rewind(f)		(void) sfseek((f),0L,0)
 #define PerlIO_tmpfile()		sftmp(0)
-
-#if 0
-#define PerlIO_importFILE(f,fl)		((void) Perl_croak(aTHX_ "Import from FILE * unimplemented"), NULL)
-#define PerlIO_findFILE(f)		NULL
-#endif
 #define PerlIO_exportFILE(f,fl)		Perl_croak(aTHX_ "Export to FILE * unimplemented")
 #define PerlIO_releaseFILE(p,f)		Perl_croak(aTHX_ "Release of FILE * unimplemented")
 

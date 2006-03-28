@@ -36,7 +36,7 @@ sub skip {
     return 1;
 }
 
-print "1..54\n";
+print "1..58\n";
 
 $Is_MSWin32  = $^O eq 'MSWin32';
 $Is_NetWare  = $^O eq 'NetWare';
@@ -47,11 +47,13 @@ $Is_Cygwin   = $^O eq 'cygwin';
 $Is_MacOS    = $^O eq 'MacOS';
 $Is_MPE      = $^O eq 'mpeix';		
 $Is_miniperl = $ENV{PERL_CORE_MINITEST};
+$Is_BeOS     = $^O eq 'beos';
 
-$PERL = ($Is_NetWare            ? 'perl'   :
-	 ($Is_MacOS || $Is_VMS) ? $^X      :
-	 $Is_MSWin32            ? '.\perl' :
-	 './perl');
+$PERL = $ENV{PERL}
+    || ($Is_NetWare           ? 'perl'   :
+       ($Is_MacOS || $Is_VMS) ? $^X      :
+       $Is_MSWin32            ? '.\perl' :
+       './perl');
 
 eval '$ENV{"FOO"} = "hi there";';	# check that ENV is inited inside eval
 # cmd.exe will echo 'variable=value' but 4nt will echo just the value
@@ -249,12 +251,14 @@ EOF
     ok chmod(0755, $script), $!;
     $_ = ($Is_MacOS || $Is_VMS) ? `$perl $script` : `$script`;
     s/\.exe//i if $Is_Dos or $Is_Cygwin or $Is_os2;
+    s{./$script}{$script} if $Is_BeOS; # revert BeOS execvp() side-effect
     s{\bminiperl\b}{perl}; # so that test doesn't fail with miniperl
     s{is perl}{is $perl}; # for systems where $^X is only a basename
     s{\\}{/}g;
     ok((($Is_MSWin32 || $Is_os2) ? uc($_) eq uc($s1) : $_ eq $s1), " :$_:!=:$s1:");
     $_ = `$perl $script`;
     s/\.exe//i if $Is_Dos or $Is_os2;
+    s{./$perl}{$perl} if $Is_BeOS; # revert BeOS execvp() side-effect
     s{\\}{/}g;
     ok((($Is_MSWin32 || $Is_os2) ? uc($_) eq uc($s1) : $_ eq $s1), " :$_:!=:$s1: after `$perl $script`");
     ok unlink($script), $!;
@@ -264,6 +268,14 @@ EOF
 ok $] >= 5.00319, $];
 ok $^O;
 ok $^T > 850000000, $^T;
+
+# Test change 25062 is working
+my $orig_osname = $^O;
+{
+local $^I = '.bak';
+ok($^O eq $orig_osname, 'Assigning $^I does not clobber $^O');
+}
+$^O = $orig_osname;
 
 if ($Is_VMS || $Is_Dos || $Is_MacOS) {
     skip("%ENV manipulations fail or aren't safe on $^O") for 1..4;
@@ -355,7 +367,7 @@ if ($Is_miniperl) {
 
 # Make sure Errno hasn't been prematurely autoloaded
 
-   ok !defined %Errno::;
+   ok !keys %Errno::;
 
 # Test auto-loading of Errno when %! is used
 
@@ -422,4 +434,25 @@ ok "@+" eq "10 1 6 10";
     };
     my @y = f();
     ok( $x eq "@y", "return a magic array ($x) vs (@y)" );
+}
+
+# Test for bug [perl #36434]
+if (!$Is_VMS) {
+    local @ISA;
+    local %ENV;
+    eval { push @ISA, __PACKAGE__ };
+    ok( $@ eq '', 'Push a constant on a magic array');
+    $@ and print "# $@";
+    eval { %ENV = (PATH => __PACKAGE__) };
+    ok( $@ eq '', 'Assign a constant to a magic hash');
+    $@ and print "# $@";
+    eval { my %h = qw(A B); %ENV = (PATH => (keys %h)[0]) };
+    ok( $@ eq '', 'Assign a shared key to a magic hash');
+    $@ and print "# $@";
+}
+else {
+# Can not do this test on VMS, EPOC, and SYMBIAN according to comments
+# in mg.c/Perl_magic_clear_all_env()
+#
+    skip('Can\'t make assignment to \%ENV on this system') for 1..3;
 }

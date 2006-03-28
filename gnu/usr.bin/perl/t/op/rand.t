@@ -27,7 +27,7 @@ require "test.pl";
 plan(tests => 8);
 
 
-my $reps = 10000;	# How many times to try rand each time.
+my $reps = 15000;	# How many times to try rand each time.
 			# May be changed, but should be over 500.
 			# The more the better! (But slower.)
 

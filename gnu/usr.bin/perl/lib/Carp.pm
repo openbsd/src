@@ -1,6 +1,6 @@
 package Carp;
 
-our $VERSION = '1.03';
+our $VERSION = '1.04';
 
 =head1 NAME
 
@@ -224,8 +224,8 @@ sub export_fail {
 
 sub longmess {
     {
-	local $@;
-	# XXX fix require to not clear $@?
+	local($@, $!);
+	# XXX fix require to not clear $@ or $!?
 	# don't use require unless we need to (for Safe compartments)
 	require Carp::Heavy unless $INC{"Carp/Heavy.pm"};
     }
@@ -249,8 +249,8 @@ sub longmess {
 
 sub shortmess {	# Short-circuit &longmess if called via multiple packages
     {
-	local $@;
-	# XXX fix require to not clear $@?
+	local($@, $!);
+	# XXX fix require to not clear $@ or $!?
 	# don't use require unless we need to (for Safe compartments)
 	require Carp::Heavy unless $INC{"Carp/Heavy.pm"};
     }

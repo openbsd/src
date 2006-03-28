@@ -1,7 +1,7 @@
 /*    sv.h
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, 2005, 2006 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -156,7 +156,7 @@ perform the upgrade if necessary.  See C<svtype>.
 #if defined(__GNUC__) && !defined(__STRICT_ANSI__) && !defined(PERL_GCC_PEDANTIC)
 #  define SvREFCNT_inc(sv)		\
     ({					\
-	SV *_sv = (SV*)(sv);		\
+	SV * const _sv = (SV*)(sv);	\
 	if (_sv)			\
 	     ATOMIC_INC(SvREFCNT(_sv));	\
 	_sv;				\
@@ -234,6 +234,7 @@ perform the upgrade if necessary.  See C<svtype>.
 
 #define SVrepl_EVAL	0x40000000	/* Replacement part of s///e */
 
+#define SVphv_CLONEABLE	0x08000000	/* for stashes: clone its objects */
 #define SVphv_REHASH	0x10000000	/* HV is recalculating hash values */
 #define SVphv_SHAREKEYS 0x20000000	/* keys live on shared string table */
 #define SVphv_LAZYDEL	0x40000000	/* entry in xhv_eiter must be deleted */
@@ -541,8 +542,36 @@ See C<SvCUR>.  Access the character as *(SvEND(sv)).
 =for apidoc Am|HV*|SvSTASH|SV* sv
 Returns the stash of the SV.
 
+=for apidoc Am|void|SvIV_set|SV* sv|IV val
+Set the value of the IV pointer in sv to val.  It is possible to perform
+the same function of this macro with an lvalue assignment to C<SvIVX>.
+With future Perls, however, it will be more efficient to use 
+C<SvIV_set> instead of the lvalue assignment to C<SvIVX>.
+
+=for apidoc Am|void|SvNV_set|SV* sv|NV val
+Set the value of the NV pointer in sv to val.  See C<SvIV_set>.
+
+=for apidoc Am|void|SvPV_set|SV* sv|char* val
+Set the value of the PV pointer in sv to val.  See C<SvIV_set>.
+
+=for apidoc Am|void|SvUV_set|SV* sv|UV val
+Set the value of the UV pointer in sv to val.  See C<SvIV_set>.
+
+=for apidoc Am|void|SvRV_set|SV* sv|SV* val
+Set the value of the RV pointer in sv to val.  See C<SvIV_set>.
+
+=for apidoc Am|void|SvMAGIC_set|SV* sv|MAGIC* val
+Set the value of the MAGIC pointer in sv to val.  See C<SvIV_set>.
+
+=for apidoc Am|void|SvSTASH_set|SV* sv|STASH* val
+Set the value of the STASH pointer in sv to val.  See C<SvIV_set>.
+
 =for apidoc Am|void|SvCUR_set|SV* sv|STRLEN len
-Set the length of the string which is in the SV.  See C<SvCUR>.
+Set the current length of the string which is in the SV.  See C<SvCUR>
+and C<SvIV_set>.
+
+=for apidoc Am|void|SvLEN_set|SV* sv|STRLEN len
+Set the actual length of the string which is in the SV.  See C<SvIV_set>.
 
 =cut
 */
@@ -739,17 +768,22 @@ and leaves the UTF-8 status as it was.
 #define SvRVx(sv) SvRV(sv)
 
 #define SvIVX(sv) ((XPVIV*)  SvANY(sv))->xiv_iv
-#define SvIVXx(sv) SvIVX(sv)
 #define SvUVX(sv) ((XPVUV*)  SvANY(sv))->xuv_uv
-#define SvUVXx(sv) SvUVX(sv)
 #define SvNVX(sv)  ((XPVNV*)SvANY(sv))->xnv_nv
-#define SvNVXx(sv) SvNVX(sv)
 #define SvPVX(sv)  ((XPV*)  SvANY(sv))->xpv_pv
-#define SvPVXx(sv) SvPVX(sv)
+/* Given that these two are new, there can't be any existing code using them
+ *  as LVALUEs  */
+#define SvPVX_mutable(sv)	(0 + SvPVX(sv))
+#define SvPVX_const(sv)	((const char*) (0 + SvPVX(sv)))
 #define SvCUR(sv) ((XPV*)  SvANY(sv))->xpv_cur
 #define SvLEN(sv) ((XPV*)  SvANY(sv))->xpv_len
-#define SvLENx(sv) SvLEN(sv)
 #define SvEND(sv)(((XPV*)  SvANY(sv))->xpv_pv + ((XPV*)SvANY(sv))->xpv_cur)
+
+#define SvIVXx(sv) SvIVX(sv)
+#define SvUVXx(sv) SvUVX(sv)
+#define SvNVXx(sv) SvNVX(sv)
+#define SvPVXx(sv) SvPVX(sv)
+#define SvLENx(sv) SvLEN(sv)
 #define SvENDx(sv) ((PL_Sv = (sv)), SvEND(PL_Sv))
 #define SvMAGIC(sv)	((XPVMG*)  SvANY(sv))->xmg_magic
 #define SvSTASH(sv)	((XPVMG*)  SvANY(sv))->xmg_stash
@@ -760,24 +794,69 @@ and leaves the UTF-8 status as it was.
 #define SvIV_please(sv) \
 	STMT_START {if (!SvIOKp(sv) && (SvNOK(sv) || SvPOK(sv))) \
 		(void) SvIV(sv); } STMT_END
+/* Put the asserts back at some point and figure out where they reveal bugs
+*/
 #define SvIV_set(sv, val) \
 	STMT_START { assert(SvTYPE(sv) == SVt_IV || SvTYPE(sv) >= SVt_PVIV); \
-		(SvIVX(sv) = (val)); } STMT_END
+		(((XPVIV*)  SvANY(sv))->xiv_iv = (val)); } STMT_END
 #define SvNV_set(sv, val) \
 	STMT_START { assert(SvTYPE(sv) == SVt_NV || SvTYPE(sv) >= SVt_PVNV); \
-		(SvNVX(sv) = (val)); } STMT_END
+		(((XPVNV*)SvANY(sv))->xnv_nv = (val)); } STMT_END
+/* assert(SvTYPE(sv) >= SVt_PV); */
 #define SvPV_set(sv, val) \
-	STMT_START { assert(SvTYPE(sv) >= SVt_PV); \
-		(SvPVX(sv) = (val)); } STMT_END
+	STMT_START { \
+		(((XPV*)  SvANY(sv))->xpv_pv = (val)); } STMT_END
+/* assert(SvTYPE(sv) == SVt_IV || SvTYPE(sv) >= SVt_PVIV); */
+#define SvUV_set(sv, val) \
+	STMT_START { \
+		(((XPVUV*)SvANY(sv))->xuv_uv = (val)); } STMT_END
+/* assert(SvTYPE(sv) >=  SVt_RV); */
+#define SvRV_set(sv, val) \
+        STMT_START { \
+                (((XRV*)SvANY(sv))->xrv_rv = (val)); } STMT_END
+/* assert(SvTYPE(sv) >= SVt_PVMG); */
+#define SvMAGIC_set(sv, val) \
+        STMT_START {  \
+                (((XPVMG*)SvANY(sv))->xmg_magic = (val)); } STMT_END
+/* assert(SvTYPE(sv) >= SVt_PVMG); */
+#define SvSTASH_set(sv, val) \
+        STMT_START { \
+                (((XPVMG*)  SvANY(sv))->xmg_stash = (val)); } STMT_END
+/* assert(SvTYPE(sv) >= SVt_PV); */
 #define SvCUR_set(sv, val) \
-	STMT_START { assert(SvTYPE(sv) >= SVt_PV); \
-		(SvCUR(sv) = (val)); } STMT_END
+	STMT_START { \
+		(((XPV*)  SvANY(sv))->xpv_cur = (val)); } STMT_END
+/* assert(SvTYPE(sv) >= SVt_PV); */
 #define SvLEN_set(sv, val) \
-	STMT_START { assert(SvTYPE(sv) >= SVt_PV); \
-		(SvLEN(sv) = (val)); } STMT_END
+	STMT_START { \
+		(((XPV*)  SvANY(sv))->xpv_len = (val)); } STMT_END
 #define SvEND_set(sv, val) \
 	STMT_START { assert(SvTYPE(sv) >= SVt_PV); \
 		(SvCUR(sv) = (val) - SvPVX(sv)); } STMT_END
+
+#define SvPV_renew(sv,n) \
+	STMT_START { SvLEN_set(sv, n); \
+		SvPV_set((sv), (MEM_WRAP_CHECK_(n,char)			\
+				(char*)saferealloc((Malloc_t)SvPVX(sv), \
+						   (MEM_SIZE)((n)))));  \
+		 } STMT_END
+
+#define SvPV_shrink_to_cur(sv) STMT_START { \
+		   const STRLEN _lEnGtH = SvCUR(sv) + 1; \
+		   SvPV_renew(sv, _lEnGtH); \
+		 } STMT_END
+
+#define SvPV_free(sv) \
+	STMT_START { assert(SvTYPE(sv) >= SVt_PV);	\
+		if (SvLEN(sv)) {			\
+		    if(SvOOK(sv)) {			\
+		      Safefree(SvPVX(sv) - SvIVX(sv));	\
+		      SvFLAGS(sv) &= ~SVf_OOK;		\
+		    } else {				\
+		      Safefree(SvPVX(sv));		\
+		    }					\
+		}					\
+	} STMT_END
 
 #define BmRARE(sv)	((XPVBM*)  SvANY(sv))->xbm_rare
 #define BmUSEFUL(sv)	((XPVBM*)  SvANY(sv))->xbm_useful
@@ -974,24 +1053,54 @@ Like C<sv_catsv> but doesn't process magic.
 /* ----*/
 
 #define SvPV(sv, lp) SvPV_flags(sv, lp, SV_GMAGIC)
+#define SvPV_const(sv, lp) SvPV_flags_const(sv, lp, SV_GMAGIC)
+#define SvPV_mutable(sv, lp) SvPV_flags_mutable(sv, lp, SV_GMAGIC)
 
 #define SvPV_flags(sv, lp, flags) \
     ((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
      ? ((lp = SvCUR(sv)), SvPVX(sv)) : sv_2pv_flags(sv, &lp, flags))
+#define SvPV_flags_const(sv, lp, flags) \
+    ((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
+     ? ((lp = SvCUR(sv)), SvPVX_const(sv)) : \
+     (const char*) sv_2pv_flags(sv, &lp, flags|SV_CONST_RETURN))
+#define SvPV_flags_const_nolen(sv, flags) \
+    ((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
+     ? SvPVX_const(sv) : \
+     (const char*) sv_2pv_flags(sv, 0, flags|SV_CONST_RETURN))
+#define SvPV_flags_mutable(sv, lp, flags) \
+    ((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
+     ? ((lp = SvCUR(sv)), SvPVX_mutable(sv)) : \
+     sv_2pv_flags(sv, &lp, flags|SV_MUTABLE_RETURN))
 
 #define SvPV_force(sv, lp) SvPV_force_flags(sv, lp, SV_GMAGIC)
+#define SvPV_force_nolen(sv) SvPV_force_flags_nolen(sv, SV_GMAGIC)
+#define SvPV_force_mutable(sv, lp) SvPV_force_flags_mutable(sv, lp, SV_GMAGIC)
 
 #define SvPV_force_nomg(sv, lp) SvPV_force_flags(sv, lp, 0)
+#define SvPV_force_nomg_nolen(sv) SvPV_force_flags_nolen(sv, 0)
 
 #define SvPV_force_flags(sv, lp, flags) \
     ((SvFLAGS(sv) & (SVf_POK|SVf_THINKFIRST)) == SVf_POK \
     ? ((lp = SvCUR(sv)), SvPVX(sv)) : sv_pvn_force_flags(sv, &lp, flags))
+#define SvPV_force_flags_nolen(sv, flags) \
+    ((SvFLAGS(sv) & (SVf_POK|SVf_THINKFIRST)) == SVf_POK \
+    ? SvPVX(sv) : sv_pvn_force_flags(sv, 0, flags))
+#define SvPV_force_flags_mutable(sv, lp, flags) \
+    ((SvFLAGS(sv) & (SVf_POK|SVf_THINKFIRST)) == SVf_POK \
+    ? ((lp = SvCUR(sv)), SvPVX_mutable(sv)) \
+     : sv_pvn_force_flags(sv, &lp, flags|SV_MUTABLE_RETURN))
 
 #define SvPV_nolen(sv) \
     ((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
-     ? SvPVX(sv) : sv_2pv_nolen(sv))
+     ? SvPVX(sv) : sv_2pv_flags(sv, 0, SV_GMAGIC))
+
+#define SvPV_nolen_const(sv) \
+    ((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
+     ? SvPVX_const(sv) : sv_2pv_flags(sv, 0, SV_GMAGIC|SV_CONST_RETURN))
 
 #define SvPV_nomg(sv, lp) SvPV_flags(sv, lp, 0)
+#define SvPV_nomg_const(sv, lp) SvPV_flags_const(sv, lp, 0)
+#define SvPV_nomg_const_nolen(sv) SvPV_flags_const_nolen(sv, 0)
 
 /* ----*/
 
@@ -1006,7 +1115,7 @@ Like C<sv_catsv> but doesn't process magic.
 
 #define SvPVutf8_nolen(sv) \
     ((SvFLAGS(sv) & (SVf_POK|SVf_UTF8)) == (SVf_POK|SVf_UTF8)\
-     ? SvPVX(sv) : sv_2pvutf8_nolen(sv))
+     ? SvPVX(sv) : sv_2pvutf8(sv, 0))
 
 /* ----*/
 
@@ -1020,7 +1129,7 @@ Like C<sv_catsv> but doesn't process magic.
 
 #define SvPVbyte_nolen(sv) \
     ((SvFLAGS(sv) & (SVf_POK|SVf_UTF8)) == (SVf_POK)\
-     ? SvPVX(sv) : sv_2pvbyte_nolen(sv))
+     ? SvPVX(sv) : sv_2pvbyte(sv, 0))
 
 
     
@@ -1039,8 +1148,12 @@ Like C<sv_catsv> but doesn't process magic.
 #  define SvUVx(sv) ({SV *_sv = (SV*)(sv); SvUV(_sv); })
 #  define SvNVx(sv) ({SV *_sv = (SV*)(sv); SvNV(_sv); })
 #  define SvPVx(sv, lp) ({SV *_sv = (sv); SvPV(_sv, lp); })
+#  define SvPVx_const(sv, lp) ({SV *_sv = (sv); SvPV_const(_sv, lp); })
+#  define SvPVx_nolen(sv) ({SV *_sv = (sv); SvPV_nolen(_sv); })
+#  define SvPVx_nolen_const(sv) ({SV *_sv = (sv); SvPV_nolen_const(_sv); })
 #  define SvPVutf8x(sv, lp) ({SV *_sv = (sv); SvPVutf8(_sv, lp); })
 #  define SvPVbytex(sv, lp) ({SV *_sv = (sv); SvPVbyte(_sv, lp); })
+#  define SvPVbytex_nolen(sv) ({SV *_sv = (sv); SvPVbyte_nolen(_sv); })
 #  define SvTRUE(sv) (						\
     !sv								\
     ? 0								\
@@ -1080,8 +1193,12 @@ Like C<sv_catsv> but doesn't process magic.
 #    define SvUVx(sv) ((PL_Sv = (sv)), SvUV(PL_Sv))
 #    define SvNVx(sv) ((PL_Sv = (sv)), SvNV(PL_Sv))
 #    define SvPVx(sv, lp) ((PL_Sv = (sv)), SvPV(PL_Sv, lp))
+#    define SvPVx_const(sv, lp) ((PL_Sv = (sv)), SvPV_const(PL_Sv, lp))
+#    define SvPVx_nolen(sv) ((PL_Sv = (sv)), SvPV_nolen(PL_Sv))
+#    define SvPVx_nolen_const(sv) ((PL_Sv = (sv)), SvPV_nolen_const(PL_Sv))
 #    define SvPVutf8x(sv, lp) ((PL_Sv = (sv)), SvPVutf8(PL_Sv, lp))
 #    define SvPVbytex(sv, lp) ((PL_Sv = (sv)), SvPVbyte(PL_Sv, lp))
+#    define SvPVbytex_nolen(sv) ((PL_Sv = (sv)), SvPVbyte_nolen(PL_Sv))
 #    define SvTRUE(sv) (						\
     !sv								\
     ? 0								\
@@ -1105,12 +1222,16 @@ Like C<sv_catsv> but doesn't process magic.
 				    (SVf_FAKE | SVf_READONLY))
 #define SvIsCOW_shared_hash(sv)	(SvIsCOW(sv) && SvLEN(sv) == 0)
 
+#define SvSHARED_HASH(sv) (0 + SvUVX(sv))
+
 /* flag values for sv_*_flags functions */
 #define SV_IMMEDIATE_UNREF	1
 #define SV_GMAGIC		2
 #define SV_COW_DROP_PV		4	/* Unused in Perl 5.8.x */
 #define SV_UTF8_NO_ENCODING	8
 #define SV_NOSTEAL		16
+#define SV_CONST_RETURN		32
+#define SV_MUTABLE_RETURN	64
 
 /* all these 'functions' are now just macros */
 
@@ -1250,6 +1371,8 @@ Returns a pointer to the character buffer.
 #define isGV(sv) (SvTYPE(sv) == SVt_PVGV)
 
 #define SvGROW(sv,len) (SvLEN(sv) < (len) ? sv_grow(sv,len) : SvPVX(sv))
+#define SvGROW_mutable(sv,len) \
+    (SvLEN(sv) < (len) ? sv_grow(sv,len) : SvPVX_mutable(sv))
 #define Sv_Grow sv_grow
 
 #define CLONEf_COPY_STACKS 1

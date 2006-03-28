@@ -16,7 +16,7 @@ echo find it.  By default, it is placed in /usr/local/include/gdbm.h.	>&4
 echo It will not be found there.  Try moving it to			>&4
 echo /NextDeveloper/Headers/bsd/gdbm.h.					>&4
 
-ccflags="$ccflags -DUSE_NEXT_CTYPE -DNEXT30_NO_ATTRIBUTE"
+ccflags="$ccflags -DUSE_NEXT_CTYPE"
 POSIX_cflags='ccflags="-posix $ccflags"'
 useposix='undef'
 ldflags="$ldflags -u libsys_s"
@@ -51,3 +51,11 @@ d_setpgid='undef'
 # (Thanks to Andreas Koenig <k@franz.ww.tu-berlin.de>)
 ranlib='sleep 5; /bin/ranlib' 
 
+# Doesn't support attributes, so we'll set that here.
+d_attribute_format='undef'
+d_attribute_malloc='undef'
+d_attribute_nonnull='undef'
+d_attribute_noreturn='undef'
+d_attribute_pure='undef'
+d_attribute_unused='undef'
+d_attribute_warn_unused_result='undef'

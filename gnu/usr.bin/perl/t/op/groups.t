@@ -94,11 +94,11 @@ if ($groups =~ /groups=(.+)( [ug]id=|$)/) {
     my @g1;
     # prefer names over numbers
     for (@g0) {
-        # 42(zot me)
+	# 42(zot me)
 	if (/^(\d+)(?:\(([^)]+)\))?/) {
 	    push @g1, ($2 || $1);
 	}
-        # zot me(42)
+	# zot me(42)
 	elsif (/^([^(]*)\((\d+)\)/) {
 	    push @g1, ($1 || $2);
 	}
@@ -129,15 +129,17 @@ for (split(' ', $()) {
     else {
 	push(@gr, $_);
     }
-} 
+}
 
 print "# gr = @gr\n";
 
-if ($^O =~ /^(?:uwin|cygwin|solaris)$/) {
+my %did;
+if ($^O =~ /^(?:uwin|cygwin|interix|solaris)$/) {
 	# Or anybody else who can have spaces in group names.
 	$gr1 = join(' ', grep(!$did{$_}++, sort split(' ', join(' ', @gr))));
 } else {
-	$gr1 = join(' ', sort @gr);
+	# Don't assume that there aren't duplicate groups
+	$gr1 = join(' ', sort grep defined $_ && !$did{$_}++, @gr);
 }
 
 if ($Config{myuname} =~ /^cygwin_nt/i) { # basegroup on CYGWIN_NT has id = 0.

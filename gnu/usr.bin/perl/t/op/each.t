@@ -42,8 +42,8 @@ $h{'z'} = 'Z';
 @keys = keys %h;
 @values = values %h;
 
-ok ($#keys == 29, "keys");
-ok ($#values == 29, "values");
+is ($#keys, 29, "keys");
+is ($#values, 29, "values");
 
 $i = 0;		# stop -w complaints
 
@@ -55,58 +55,58 @@ while (($key,$value) = each(%h)) {
     }
 }
 
-ok ($i == 30, "each count");
+is ($i, 30, "each count");
 
 @keys = ('blurfl', keys(%h), 'dyick');
-ok ($#keys == 31, "added a key");
+is ($#keys, 31, "added a key");
 
 $size = ((split('/',scalar %h))[1]);
 keys %h = $size * 5;
 $newsize = ((split('/',scalar %h))[1]);
-ok ($newsize == $size * 8, "resize");
+is ($newsize, $size * 8, "resize");
 keys %h = 1;
 $size = ((split('/',scalar %h))[1]);
-ok ($size == $newsize, "same size");
+is ($size, $newsize, "same size");
 %h = (1,1);
 $size = ((split('/',scalar %h))[1]);
-ok ($size == $newsize, "still same size");
+is ($size, $newsize, "still same size");
 undef %h;
 %h = (1,1);
 $size = ((split('/',scalar %h))[1]);
-ok ($size == 8, "size 8");
+is ($size, 8, "size 8");
 
 # test scalar each
 %hash = 1..20;
 $total = 0;
 $total += $key while $key = each %hash;
-ok ($total == 100, "test scalar each");
+is ($total, 100, "test scalar each");
 
 for (1..3) { @foo = each %hash }
 keys %hash;
 $total = 0;
 $total += $key while $key = each %hash;
-ok ($total == 100, "test scalar keys resets iterator");
+is ($total, 100, "test scalar keys resets iterator");
 
 for (1..3) { @foo = each %hash }
 $total = 0;
 $total += $key while $key = each %hash;
-ok ($total != 100, "test iterator of each is being maintained");
+isnt ($total, 100, "test iterator of each is being maintained");
 
 for (1..3) { @foo = each %hash }
 values %hash;
 $total = 0;
 $total += $key while $key = each %hash;
-ok ($total == 100, "test values keys resets iterator");
+is ($total, 100, "test values keys resets iterator");
 
 $size = (split('/', scalar %hash))[1];
 keys(%hash) = $size / 2;
-ok ($size == (split('/', scalar %hash))[1]);
+is ($size, (split('/', scalar %hash))[1]);
 keys(%hash) = $size + 100;
-ok ($size != (split('/', scalar %hash))[1]);
+isnt ($size, (split('/', scalar %hash))[1]);
 
-ok (keys(%hash) == 10, "keys (%hash)");
+is (keys(%hash), 10, "keys (%hash)");
 
-ok (keys(hash) == 10, "keys (hash)");
+is (keys(hash), 10, "keys (hash)");
 
 $i = 0;
 %h = (a => A, b => B, c=> C, d => D, abc => ABC);
@@ -117,7 +117,7 @@ while (($key, $value) = each(h)) {
 		$i++;
 	}
 }
-ok ($i == 5);
+is ($i, 5);
 
 @tests = (&next_test, &next_test, &next_test);
 {
@@ -139,7 +139,7 @@ $u{"\x{12345}"}  = "bar";
 
 my %u2;
 foreach (keys %u) {
-    ok (length() == 1, "Check length of " . _qq $_);
+    is (length(), 1, "Check length of " . _qq $_);
     $u2{$_} = $u{$_};
 }
 ok (eq_hash(\%u, \%u2), "copied unicode hash keys correctly?");
@@ -148,8 +148,8 @@ $a = "\xe3\x81\x82"; $A = "\x{3042}";
 %b = ( $a => "non-utf8");
 %u = ( $A => "utf8");
 
-ok (!exists $b{$A}, "utf8 key in bytes hash");
-ok (!exists $u{$a}, "bytes key in utf8 hash");
+is (exists $b{$A}, '', "utf8 key in bytes hash");
+is (exists $u{$a}, '', "bytes key in utf8 hash");
 print "# $b{$_}\n" for keys %b; # Used to core dump before change #8056.
 pass ("if we got here change 8056 worked");
 print "# $u{$_}\n" for keys %u; # Used to core dump before change #8056.
@@ -159,14 +159,14 @@ pass ("change 8056 is thanks to Inaba Hiroto");
 # there too.
 $d = pack("U*", 0xe3, 0x81, 0xAF);
 { use bytes; $ol = bytes::length($d) }
-ok ($ol > 3, "check encoding on EBCDIC");
+cmp_ok ($ol, '>', 3, "check encoding on EBCDIC");
 %u = ($d => "downgrade");
 for (keys %u) {
-    ok (length == 3, "check length"); 
+    is (length, 3, "check length"); 
     is ($_, pack("U*", 0xe3, 0x81, 0xAF), "check value");
 }
 {
-    { use bytes; ok (bytes::length($d) == $ol) }
+    { use bytes; is (bytes::length($d), $ol) }
 }
 
 {

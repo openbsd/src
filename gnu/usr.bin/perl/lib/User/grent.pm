@@ -2,7 +2,7 @@ package User::grent;
 use strict;
 
 use 5.006_001;
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 BEGIN { 
     use Exporter   ();
@@ -51,7 +51,7 @@ User::grent - by-name interface to Perl's built-in getgr*() functions
      print "gid zero name wheel, with other members";
  } 
 
- use User::grent qw(:FIELDS;
+ use User::grent qw(:FIELDS);
  getgrgid(0) or die "No group zero";
  if ( $gr_name eq 'wheel' && @gr_members > 1 ) {
      print "gid zero name wheel, with other members";

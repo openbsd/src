@@ -52,8 +52,8 @@ different models for different pieces of your program.
 
 =head2 Boss/Worker
 
-The boss/worker model usually has one `boss' thread and one or more
-`worker' threads.  The boss thread gathers or generates tasks that need
+The boss/worker model usually has one "boss" thread and one or more
+"worker" threads.  The boss thread gathers or generates tasks that need
 to be done, then parcels those tasks out to the appropriate worker
 thread.
 

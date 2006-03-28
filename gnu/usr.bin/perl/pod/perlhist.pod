@@ -382,9 +382,15 @@ the strings?).
           5.8.5         2004-Jul-19
           5.8.6-RC1     2004-Nov-11
           5.8.6         2004-Nov-27
+          5.8.7-RC1     2005-May-18
+          5.8.7         2005-May-30
+          5.8.8-RC1     2006-Jan-20
+          5.8.8         2006-Jan-31
 
  Hugo     5.9.0         2003-Oct-27
  Rafael   5.9.1         2004-Mar-16
+          5.9.2         2005-Apr-01
+          5.9.3         2006-Jan-28
 
 =head2 SELECTED RELEASE SIZES
 

@@ -85,6 +85,26 @@ char *tzname[] = { "" , "" };
 #endif
 #endif
 
+#ifndef PERL_UNUSED_DECL
+#  ifdef HASATTRIBUTE
+#    if (defined(__GNUC__) && defined(__cplusplus)) || defined(__INTEL_COMPILER)
+#      define PERL_UNUSED_DECL
+#    else
+#      define PERL_UNUSED_DECL __attribute__((unused))
+#    endif
+#  else
+#    define PERL_UNUSED_DECL
+#  endif
+#endif
+
+#ifndef dNOOP
+#define dNOOP extern int Perl___notused PERL_UNUSED_DECL
+#endif
+
+#ifndef dVAR
+#define dVAR dNOOP
+#endif
+
 #if defined(__VMS) && !defined(__POSIX_SOURCE)
 #  include <libdef.h>       /* LIB$_INVARG constant */
 #  include <lib$routines.h> /* prototype for lib$ediv() */
@@ -391,7 +411,6 @@ foreach (C_constant ("POSIX", 'int_macro_int', 'IV', $types, undef, 5, @names) )
 }
 print "#### XS Section:\n";
 print XS_constant ("POSIX", $types);
-__END__
    */
 
   switch (len) {
@@ -565,7 +584,7 @@ new(packname = "POSIX::SigSet", ...)
     CODE:
 	{
 	    int i;
-	    New(0, RETVAL, 1, sigset_t);
+	    Newx(RETVAL, 1, sigset_t);
 	    sigemptyset(RETVAL);
 	    for (i = 1; i < items; i++)
 		sigaddset(RETVAL, SvIV(ST(i)));
@@ -611,7 +630,7 @@ new(packname = "POSIX::Termios", ...)
     CODE:
 	{
 #ifdef I_TERMIOS
-	    New(0, RETVAL, 1, struct termios);
+	    Newx(RETVAL, 1, struct termios);
 #else
 	    not_here("termios");
         RETVAL = 0;
@@ -1239,11 +1258,11 @@ sigaction(sig, optaction, oldaction = 0)
 	    SV** svp;
 	    SV** sigsvp;
 	    if (sig == 0 && SvPOK(ST(0))) {
-	        char *s = SvPVX(ST(0));
-		int i = whichsig(s);
+	        const char *s = SvPVX_const(ST(0));
+		int i = whichsig((char *)s);
 
 	        if (i < 0 && memEQ(s, "SIG", 3))
-		    i = whichsig(s + 3);
+		    i = whichsig((char *)s + 3);
 	        if (i < 0) {
 	            if (ckWARN(WARN_SIGNAL))
 		        Perl_warner(aTHX_ packWARN(WARN_SIGNAL),
@@ -1307,7 +1326,7 @@ sigaction(sig, optaction, oldaction = 0)
 		    sigset = INT2PTR(sigset_t*, tmp);
 		}
 		else {
-		    New(0, sigset, 1, sigset_t);
+		    Newx(sigset, 1, sigset_t);
 		    sv_setptrobj(*svp, sigset, "POSIX::SigSet");
 		}
 		*sigset = oact.sa_mask;
@@ -1318,7 +1337,9 @@ sigaction(sig, optaction, oldaction = 0)
 
 		/* Get back whether the old handler used safe signals. */
 		svp = hv_fetch(oldaction, "SAFE", 4, TRUE);
-		sv_setiv(*svp, oact.sa_handler == PL_csighandlerp);
+		sv_setiv(*svp,
+		/* compare incompatible pointers by casting to integer */
+		    PTR2nat(oact.sa_handler) == PTR2nat(PL_csighandlerp));
 	    }
 
 	    if (action) {
@@ -1326,8 +1347,12 @@ sigaction(sig, optaction, oldaction = 0)
 		   PL_sighandlerp pointer when it's safe to do so.
 		   (BTW, "csighandler" is very different from "sighandler".) */
 		svp = hv_fetch(action, "SAFE", 4, FALSE);
-		act.sa_handler = (*svp && SvTRUE(*svp))
-				 ? PL_csighandlerp : PL_sighandlerp;
+		act.sa_handler =
+			DPTR2FPTR(
+			    void (*)(),
+			    (*svp && SvTRUE(*svp))
+				? PL_csighandlerp : PL_sighandlerp
+			);
 
 		/* Vector new Perl handler through %SIG.
 		   (The core signal handlers read %SIG to dispatch.) */
@@ -1344,7 +1369,7 @@ sigaction(sig, optaction, oldaction = 0)
 
 		/* And here again we duplicate -- DEFAULT/IGNORE checking. */
 		if(SvPOK(*svp)) {
-			char *s=SvPVX(*svp);
+			const char *s=SvPVX_const(*svp);
 			if(strEQ(s,"IGNORE")) {
 				act.sa_handler = SIG_IGN;
 			}
@@ -1373,8 +1398,8 @@ sigaction(sig, optaction, oldaction = 0)
 		 * essentially meaningless anyway.
 		 */
 		RETVAL = sigaction(sig, & act, (struct sigaction *)0);
-               if(RETVAL == -1)
-                   XSRETURN_UNDEF;
+		if(RETVAL == -1)
+		    XSRETURN_UNDEF;
 	    }
 
 	    LEAVE;
@@ -1476,7 +1501,7 @@ read(fd, buffer, nbytes)
         char *          buffer = sv_grow( sv_buffer, nbytes+1 );
     CLEANUP:
         if (RETVAL >= 0) {
-            SvCUR(sv_buffer) = RETVAL;
+            SvCUR_set(sv_buffer, RETVAL);
             SvPOK_only(sv_buffer);
             *SvEND(sv_buffer) = '\0';
             SvTAINTED_on(sv_buffer);
@@ -1652,7 +1677,7 @@ strxfrm(src)
               strxfrm(SvPVX(ST(0)), p, (size_t)dstlen);
               dstlen--;
           }
-          SvCUR(ST(0)) = dstlen;
+          SvCUR_set(ST(0), dstlen);
 	    SvPOK_only(ST(0));
 	}
 

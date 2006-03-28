@@ -424,12 +424,9 @@ for that.  (Mnemonic: when you want your pipes to be piping hot.)
 
 =item $,
 
-The output field separator for the print operator.  Ordinarily the
-print operator simply prints out its arguments without further
-adornment.  To get behavior more like B<awk>, set this variable as
-you would set B<awk>'s OFS variable to specify what is printed
-between fields.  (Mnemonic: what is printed when there is a "," in
-your print statement.)
+The output field separator for the print operator.  If defined, this
+value is printed between each of print's arguments.  Default is C<undef>.
+(Mnemonic: what is printed when there is a "," in your print statement.)
 
 =item IO::Handle->output_record_separator EXPR
 
@@ -439,14 +436,10 @@ your print statement.)
 
 =item $\
 
-The output record separator for the print operator.  Ordinarily the
-print operator simply prints out its arguments as is, with no
-trailing newline or other end-of-record string added.  To get
-behavior more like B<awk>, set this variable as you would set
-B<awk>'s ORS variable to specify what is printed at the end of the
-print.  (Mnemonic: you set C<$\> instead of adding "\n" at the
-end of the print.  Also, it's just like C<$/>, but it's what you
-get "back" from Perl.)
+The output record separator for the print operator.  If defined, this
+value is printed after the last of print's arguments.  Default is C<undef>.
+(Mnemonic: you set C<$\> instead of adding "\n" at the end of the print.
+Also, it's just like C<$/>, but it's what you get "back" from Perl.)
 
 =item $LIST_SEPARATOR
 
@@ -541,9 +534,9 @@ C<$-[>I<n>C<]> is the offset of the start of the substring matched by
 I<n>-th subpattern, or undef if the subpattern did not match.
 
 Thus after a match against $_, $& coincides with C<substr $_, $-[0],
-$+[0] - $-[0]>.  Similarly, C<$>I<n> coincides with C<substr $_, $-[>I<n>C<],
-$+[>I<n>C<] - $-[>I<n>C<]> if C<$-[>I<n>C<]> is defined, and $+ coincides with
-C<substr $_, $-[$#-], $+[$#-]>.  One can use C<$#-> to find the last
+$+[0] - $-[0]>.  Similarly, $I<n> coincides with C<substr $_, $-[n],
+$+[n] - $-[n]> if C<$-[n]> is defined, and $+ coincides with
+C<substr $_, $-[$#-], $+[$#-] - $-[$#-]>.  One can use C<$#-> to find the last
 matched subgroup in the last successful match.  Contrast with
 C<$#+>, the number of subgroups in the regular expression.  Compare
 with C<@+>.
@@ -569,7 +562,7 @@ After a match against some variable $var:
 
 =item C<$2> is the same as C<substr($var, $-[2], $+[2] - $-[2])>
 
-=item C<$3> is the same as C<substr $var, $-[3], $+[3] - $-[3])>
+=item C<$3> is the same as C<substr($var, $-[3], $+[3] - $-[3])>
 
 =back
 
@@ -886,7 +879,7 @@ and version).  This is an operating system feature, Perl cannot help it.
 
 In multithreaded scripts Perl coordinates the threads so that any
 thread may modify its copy of the C<$0> and the change becomes visible
-to ps(1) (assuming the operating system plays along).  Note that the
+to ps(1) (assuming the operating system plays along).  Note that
 the view of C<$0> the other threads have will not change since they
 have their own copies of it.
 
@@ -904,8 +897,8 @@ directive, and cannot influence the behavior of any other file.
 Its use is highly discouraged.
 
 Note that, unlike other compile-time directives (such as L<strict>),
-assignment to $[ can be seen from outer lexical scopes in the same file.
-However, you can use local() on it to strictly bound its value to a
+assignment to C<$[> can be seen from outer lexical scopes in the same file.
+However, you can use local() on it to strictly bind its value to a
 lexical block.
 
 =item $]
@@ -1023,15 +1016,16 @@ inplace editing.  (Mnemonic: value of B<-i> switch.)
 By default, running out of memory is an untrappable, fatal error.
 However, if suitably built, Perl can use the contents of C<$^M>
 as an emergency memory pool after die()ing.  Suppose that your Perl
-were compiled with -DPERL_EMERGENCY_SBRK and used Perl's malloc.
+were compiled with C<-DPERL_EMERGENCY_SBRK> and used Perl's malloc.
 Then
 
     $^M = 'a' x (1 << 16);
 
 would allocate a 64K buffer for use in an emergency.  See the
 F<INSTALL> file in the Perl distribution for information on how to
-enable this option.  To discourage casual use of this advanced
-feature, there is no L<English|English> long name for this variable.
+add custom C compilation flags when compiling perl.  To discourage casual
+use of this advanced feature, there is no L<English|English> long name for
+this variable.
 
 =item $OSNAME
 
@@ -1155,6 +1149,13 @@ documentation for the C<-C> switch for more information about
 the possible values. This variable is set during Perl startup
 and is thereafter read-only.
 
+=item ${^UTF8LOCALE}
+
+This variable indicates whether an UTF-8 locale was detected by perl at
+startup. This information is used by perl when it's in
+adjust-utf8ness-to-locale mode (as when run with the C<-CL> command-line
+switch); see L<perlrun> for more info on this.
+
 =item $PERL_VERSION
 
 =item $^V
@@ -1199,7 +1200,7 @@ See the documentation of C<warnings> for more details.
 =item $^X
 
 The name used to execute the current copy of Perl, from C's
-C<argv[0]>.
+C<argv[0]> or (where supported) F</proc/self/exe>.
 
 Depending on the host operating system, the value of $^X may be
 a relative or absolute pathname of the perl program file, or may
@@ -1224,7 +1225,7 @@ executable files do not require use of the suffix when invoking
 a command.  To convert the value of $^X to a path name, use the
 following statements:
 
-# Build up a set of file names (not command names).
+  # Build up a set of file names (not command names).
   use Config;
   $this_perl = $^X;
   if ($^O ne 'VMS')
@@ -1441,7 +1442,7 @@ C<$@> is set if the string to be C<eval>-ed did not compile (this
 may happen if C<open> or C<close> were imported with bad prototypes),
 or if Perl code executed during evaluation die()d .  In these cases
 the value of $@ is the compile error, or the argument to C<die>
-(which will interpolate C<$!> and C<$?>!).  (See also L<Fatal>,
+(which will interpolate C<$!> and C<$?>).  (See also L<Fatal>,
 though.)
 
 When the eval() expression above is executed, open(), C<< <PIPE> >>,

@@ -18,7 +18,8 @@ installhtml - converts a collection of POD pages to HTML format.
     installhtml  [--help] [--podpath=<name>:...:<name>] [--podroot=<name>]
          [--htmldir=<name>] [--htmlroot=<name>]  [--norecurse] [--recurse]
          [--splithead=<name>,...,<name>]   [--splititem=<name>,...,<name>]
-	 [--libpods=<name>,...,<name>]  [--verbose]
+         [--libpods=<name>,...,<name>]        [--ignore=<name>,...,<name>]
+         [--verbose]
 
 =head1 DESCRIPTION
 
@@ -81,6 +82,11 @@ The directory containing the splitpod program. The default is `podroot/pod'.
 Comma-separated list of "library" pod files.  This is the same list that
 will be passed to pod2html when any pod is converted.
 
+=item B<--ignore> files to be ignored
+
+Comma-separated of files that shouldn't be installed, given relative
+to podroot.
+
 =item B<--verbose> verbose output
 
 Self-explanatory.
@@ -116,7 +122,7 @@ $usage =<<END_OF_USAGE;
 Usage: $0 --help --podpath=<name>:...:<name> --podroot=<name>
          --htmldir=<name> --htmlroot=<name> --norecurse --recurse
          --splithead=<name>,...,<name> --splititem=<name>,...,<name>
-	 --libpods=<name>,...,<name> --verbose
+         --libpods=<name>,...,<name> --ignore=<name>,...,<name> --verbose
 
     --help      - this message
     --podpath   - colon-separated list of directories containing .pod and
@@ -124,7 +130,7 @@ Usage: $0 --help --podpath=<name>:...:<name> --podroot=<name>
     --podroot   - filesystem base directory from which all relative paths in
                   podpath stem (default is .).
     --htmldir   - directory to store resulting html files in relative
-                  to the filesystem (\$podroot/html by default). 
+                  to the filesystem (\$podroot/html by default).
     --htmlroot  - http-server base directory from which all relative paths
                   in podpath stem (default is /).
     --libpods   - comma-separated list of files to search for =item pod
@@ -140,12 +146,13 @@ Usage: $0 --help --podpath=<name>:...:<name> --podroot=<name>
                   splitpod.
     --splitpod  - directory where the program splitpod can be found
                   (\$podroot/pod by default).
+    --ignore    - comma-separated list of files that shouldn't be installed.
     --verbose   - self-explanatory.
 
 END_OF_USAGE
 
 my (@libpods, @podpath, $podroot, $htmldir, $htmlroot, $recurse, @splithead,
-    @splititem, $splitpod, $verbose, $pod2html);
+    @splititem, $splitpod, $verbose, $pod2html, @ignore);
 
 @libpods = ();
 @podpath = ( "." );	# colon-separated list of directories containing .pod
@@ -158,7 +165,7 @@ $recurse = 0;		# default behavior
 @splititem = ();	# don't split any files by default
 $splitpod = "";		# nothing for now.
 
-$verbose = 0; 	    	# whether or not to print debugging info
+$verbose = 0;		# whether or not to print debugging info
 
 $pod2html = "pod/pod2html";
 
@@ -178,6 +185,7 @@ my $result = GetOptions( \%Options, qw(
 	htmldir=s
 	htmlroot=s
 	libpods=s
+	ignore=s
 	recurse!
 	splithead=s
 	splititem=s
@@ -203,11 +211,10 @@ $splitpod = "$podroot/pod" unless $splitpod;
 # ignored in the conversion process.  these are files that have been
 # process by splititem or splithead and should not be converted as a
 # result.
-my @ignore = ();
 my @splitdirs;
 
-# split pods.  its important to do this before convert ANY pods because
-#  it may effect some of the links
+# split pods. It's important to do this before convert ANY pods because
+# it may affect some of the links
 @splitdirs = ();    # files in these directories won't get an index
 split_on_head($podroot, $htmldir, \@splitdirs, \@ignore, @splithead);
 split_on_item($podroot,           \@splitdirs, \@ignore, @splititem);
@@ -256,7 +263,7 @@ foreach my $dir (@splithead) {
     }
     close(H);
 
-    # now rewrite the file 
+    # now rewrite the file
     open(H, ">$file.html") ||
 	die "$0: error opening $file.html for output: $!\n";
     print H "@data", "\n";
@@ -291,6 +298,8 @@ sub parse_command_line {
 
     $recurse  = $Options{recurse}	    if defined $Options{recurse};
     $verbose  = $Options{verbose}	    if defined $Options{verbose};
+
+    @ignore = map "$podroot/$_", split(",", $Options{ignore}) if defined $Options{ignore};
 }
 
 
@@ -542,7 +551,8 @@ sub installdir {
     # install all the pods we found
     foreach my $pod (@podlist) {
 	# check if we should ignore it.
-	next if grep($_ eq "$podroot/$pod.pod", @$ignore);
+	next if $pod =~ m(/t/); # comes from a test file
+	next if grep($_ eq "$pod.pod", @$ignore);
 
 	# check if a .pm files exists too
 	if (grep($_ eq $pod, @pmlist)) {
@@ -556,6 +566,7 @@ sub installdir {
     # install all the .pm files we found
     foreach my $pm (@pmlist) {
 	# check if we should ignore it.
+	next if $pm =~ m(/t/); # comes from a test file
 	next if grep($_ eq "$pm.pm", @ignore);
 
 	runpod2html("$pm.pm", $doindex);

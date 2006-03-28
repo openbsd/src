@@ -6,7 +6,7 @@
 
 $| = 1;
 
-print "1..1065\n";
+print "1..1187\n";
 
 BEGIN {
     chdir 't' if -d 't';
@@ -81,12 +81,21 @@ $XXX{345} = 345;
 while ($_ = shift(@XXX)) {
     ?(.*)? && (print $1,"\n");
     /not/ && reset;
-    /not ok 26/ && reset 'X';
+    if (/not ok 26/) {
+      if ($^O eq 'VMS') {
+	$_ = shift(@XXX);
+      }
+      else {
+	reset 'X';
+      }
+   }
 }
 
-while (($key,$val) = each(%XXX)) {
+if ($^O ne 'VMS') {
+  while (($key,$val) = each(%XXX)) {
     print "not ok 27\n";
     exit;
+  }
 }
 
 print "ok 27\n";
@@ -3278,4 +3287,113 @@ ok(("abc" =~ /^abc(\z)?/) && defined($1),
 ok(("abc" =~ /^abc(\z)??/) && !defined($1),
     'optional zero-width match at end of string');
 
-# last test 1065
+
+
+{ # TRIE related
+    my @got=();
+    "words"=~/(word|word|word)(?{push @got,$1})s$/;
+    ok(@got==1,"TRIE optimation is working") or warn "# @got";
+    @got=();
+    "words"=~/(word|word|word)(?{push @got,$1})s$/i;
+    ok(@got==1,"TRIEF optimisation is working") or warn "# @got";
+
+    my @nums=map {int rand 1000} 1..100;
+    my $re="(".(join "|",@nums).")";
+    $re=qr/\b$re\b/;
+
+    foreach (@nums) {
+        ok($_=~/$re/,"Trie nums");
+    }
+    $_=join " ", @nums;
+    @got=();
+    push @got,$1 while /$re/g;
+
+    my %count;
+    $count{$_}++ for @got;
+    my $ok=1;
+    for (@nums) {
+        $ok=0 if --$count{$_}<0;
+    }
+    ok($ok,"Trie min count matches");
+}
+
+
+# TRIE related
+# LATIN SMALL/CAPITAL LETTER A WITH MACRON
+ok(("foba  \x{101}foo" =~ qr/(foo|\x{100}foo|bar)/i) && $1 eq "\x{101}foo",
+   "TRIEF + LATIN SMALL/CAPITAL LETTER A WITH MACRON");
+
+# LATIN SMALL/CAPITAL LETTER A WITH RING BELOW
+ok(("foba  \x{1E01}foo" =~ qr/(foo|\x{1E00}foo|bar)/i) && $1 eq "\x{1E01}foo",
+   "TRIEF + LATIN SMALL/CAPITAL LETTER A WITH RING BELOW");
+
+# DESERET SMALL/CAPITAL LETTER LONG I
+ok(("foba  \x{10428}foo" =~ qr/(foo|\x{10400}foo|bar)/i) &&  $1 eq "\x{10428}foo",
+   "TRIEF + DESERET SMALL/CAPITAL LETTER LONG I");
+
+# LATIN SMALL/CAPITAL LETTER A WITH RING BELOW + 'X'
+ok(("foba  \x{1E01}xfoo" =~ qr/(foo|\x{1E00}Xfoo|bar)/i) &&  $1 eq "\x{1E01}xfoo",
+   "TRIEF + LATIN SMALL/CAPITAL LETTER A WITH RING BELOW + 'X'");
+
+{# TRIE related
+
+use charnames ':full';
+
+$s="\N{LATIN SMALL LETTER SHARP S}";
+ok(("foba  ba$s" =~ qr/(foo|Ba$s|bar)/i)
+    &&  $1 eq "ba$s",
+   "TRIEF + LATIN SMALL LETTER SHARP S =~ ss");
+ok(("foba  ba$s" =~ qr/(Ba$s|foo|bar)/i)
+    &&  $1 eq "ba$s",
+   "TRIEF + LATIN SMALL LETTER SHARP S =~ ss");
+ok(("foba  ba$s" =~ qr/(foo|bar|Ba$s)/i)
+    &&  $1 eq "ba$s",
+   "TRIEF + LATIN SMALL LETTER SHARP S =~ ss");
+
+ok(("foba  ba$s" =~ qr/(foo|Bass|bar)/i)
+    &&  $1 eq "ba$s",
+   "TRIEF + LATIN SMALL LETTER SHARP S =~ ss");
+
+ok(("foba  ba$s" =~ qr/(foo|BaSS|bar)/i)
+    &&  $1 eq "ba$s",
+   "TRIEF + LATIN SMALL LETTER SHARP S =~ SS");
+}
+
+
+
+{
+    my @normal=qw(these are some normal words);
+    my $psycho=join "|",@normal,map chr $_,255..20000;
+    ok(('these'=~/($psycho)/) && $1 eq 'these','Pyscho');
+}
+
+# [perl #36207] mixed utf8 / latin-1 and case folding
+
+{
+    my $utf8 = "\xe9\x{100}"; chop $utf8;
+    my $latin1 = "\xe9";
+
+    ok($utf8 =~ /\xe9/i, "utf8/latin");
+    ok($utf8 =~ /$latin1/i, "utf8/latin runtime");
+    ok($utf8 =~ /(abc|\xe9)/i, "utf8/latin trie");
+    ok($utf8 =~ /(abc|$latin1)/i, "utf8/latin trie runtime");
+
+    ok("\xe9" =~ /$utf8/i, "# TODO latin/utf8");
+    ok("\xe9" =~ /(abc|$utf8)/i, "# latin/utf8 trie");
+    ok($latin1 =~ /$utf8/i, "# TODO latin/utf8 runtime");
+    ok($latin1 =~ /(abc|$utf8)/i, "# latin/utf8 trie runtime");
+}
+
+# [perl #37038] Global regular matches generate invalid pointers
+
+{
+    my $s = "abcd";
+    $s =~ /(..)(..)/g;
+    $s = $1;
+    $s = $2;
+    ok($s eq 'cd',
+       "# assigning to original string should not corrupt match vars");
+}
+
+# last test 1187
+

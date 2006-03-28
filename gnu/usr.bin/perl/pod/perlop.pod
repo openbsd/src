@@ -1,10 +1,12 @@
 =head1 NAME
+X<operator>
 
 perlop - Perl operators and precedence
 
 =head1 DESCRIPTION
 
-=head2 Operator Precedence and Associativity
+=head2 Operator Precedence and Associativity 
+X<operator, precedence> X<precedence> X<associativity>
 
 Operator precedence and associativity work in Perl more or less like
 they do in mathematics.
@@ -58,6 +60,7 @@ In the following sections, these operators are covered in precedence order.
 Many operators can be overloaded for objects.  See L<overload>.
 
 =head2 Terms and List Operators (Leftward)
+X<list operator> X<operator, list> X<term>
 
 A TERM has the highest precedence in Perl.  They include variables,
 quote and quote-like operators, any expression in parentheses,
@@ -119,6 +122,7 @@ See also L<Quote and Quote-like Operators> toward the end of this section,
 as well as L<"I/O Operators">.
 
 =head2 The Arrow Operator
+X<arrow> X<dereference> X<< -> >>
 
 "C<< -> >>" is an infix dereference operator, just as it is in C
 and C++.  If the right side is either a C<[...]>, C<{...}>, or a
@@ -134,6 +138,7 @@ and the left side must be either an object (a blessed reference)
 or a class name (that is, a package name).  See L<perlobj>.
 
 =head2 Auto-increment and Auto-decrement
+X<increment> X<auto-increment> X<++> X<decrement> X<auto-decrement> X<-->
 
 "++" and "--" work as in C.  That is, if placed before a variable,
 they increment or decrement the variable by one before returning the
@@ -175,6 +180,7 @@ will return C<0> rather than C<undef>).
 The auto-decrement operator is not magical.
 
 =head2 Exponentiation
+X<**> X<exponentiation> X<power>
 
 Binary "**" is the exponentiation operator.  It binds even more
 tightly than unary minus, so -2**4 is -(2**4), not (-2)**4. (This is
@@ -182,16 +188,23 @@ implemented using C's pow(3) function, which actually works on doubles
 internally.)
 
 =head2 Symbolic Unary Operators
+X<unary operator> X<operator, unary>
 
 Unary "!" performs logical negation, i.e., "not".  See also C<not> for a lower
 precedence version of this.
+X<!>
 
 Unary "-" performs arithmetic negation if the operand is numeric.  If
 the operand is an identifier, a string consisting of a minus sign
 concatenated with the identifier is returned.  Otherwise, if the string
 starts with a plus or minus, a string starting with the opposite sign
 is returned.  One effect of these rules is that -bareword is equivalent
-to "-bareword".
+to the string "-bareword".  If, however, the string begins with a
+non-alphabetic character (exluding "+" or "-"), Perl will attempt to convert
+the string to a numeric and the arithmetic negation is performed. If the
+string cannot be cleanly converted to a numeric, Perl will give the warning
+B<Argument "the string" isn't numeric in negation (-) at ...>.
+X<-> X<negation, arithmetic>
 
 Unary "~" performs bitwise negation, i.e., 1's complement.  For
 example, C<0666 & ~027> is 0640.  (See also L<Integer Arithmetic> and
@@ -199,18 +212,22 @@ L<Bitwise String Operators>.)  Note that the width of the result is
 platform-dependent: ~0 is 32 bits wide on a 32-bit platform, but 64
 bits wide on a 64-bit platform, so if you are expecting a certain bit
 width, remember to use the & operator to mask off the excess bits.
+X<~> X<negation, binary>
 
 Unary "+" has no effect whatsoever, even on strings.  It is useful
 syntactically for separating a function name from a parenthesized expression
 that would otherwise be interpreted as the complete list of function
 arguments.  (See examples above under L<Terms and List Operators (Leftward)>.)
+X<+>
 
 Unary "\" creates a reference to whatever follows it.  See L<perlreftut>
 and L<perlref>.  Do not confuse this behavior with the behavior of
 backslash within a string, although both forms do convey the notion
 of protecting the next thing from interpolation.
+X<\> X<reference> X<backslash>
 
 =head2 Binding Operators
+X<binding> X<operator, binding> X<=~> X<!~>
 
 Binary "=~" binds a scalar expression to a pattern match.  Certain operations
 search or modify the string $_ by default.  This operator makes that kind
@@ -230,10 +247,13 @@ Binary "!~" is just like "=~" except the return value is negated in
 the logical sense.
 
 =head2 Multiplicative Operators
+X<operator, multiplicative>
 
 Binary "*" multiplies two numbers.
+X<*>
 
 Binary "/" divides two numbers.
+X</> X<slash>
 
 Binary "%" computes the modulus of two numbers.  Given integer
 operands C<$a> and C<$b>: If C<$b> is positive, then C<$a % $b> is
@@ -245,14 +265,16 @@ Note that when C<use integer> is in scope, "%" gives you direct access
 to the modulus operator as implemented by your C compiler.  This
 operator is not as well defined for negative operands, but it will
 execute faster.
+X<%> X<remainder> X<modulus> X<mod>
 
 Binary "x" is the repetition operator.  In scalar context or if the left
 operand is not enclosed in parentheses, it returns a string consisting
 of the left operand repeated the number of times specified by the right
 operand.  In list context, if the left operand is enclosed in
-parentheses, it repeats the list.  If the right operand is zero or
-negative, it returns an empty string or an empty list, depending on the
-context.
+parentheses or is a list formed by C<qw/STRING/>, it repeats the list.
+If the right operand is zero or negative, it returns an empty string
+or an empty list, depending on the context.
+X<x>
 
     print '-' x 80;		# print row of dashes
 
@@ -263,14 +285,22 @@ context.
 
 
 =head2 Additive Operators
+X<operator, additive>
 
 Binary "+" returns the sum of two numbers.
+X<+>
 
 Binary "-" returns the difference of two numbers.
+X<->
 
 Binary "." concatenates two strings.
+X<string, concatenation> X<concatenation>
+X<cat> X<concat> X<concatenate> X<.>
 
 =head2 Shift Operators
+X<shift operator> X<operator, shift> X<<< << >>>
+X<<< >> >>> X<right shift> X<left shift> X<bitwise shift>
+X<shl> X<shr> X<shift, right> X<shift, left>
 
 Binary "<<" returns the value of its left argument shifted left by the
 number of bits specified by the right argument.  Arguments should be
@@ -293,6 +323,7 @@ integers, C<< 1 << 32 >> is undefined.  Shifting by a negative number
 of bits is also undefined.
 
 =head2 Named Unary Operators
+X<operator, named unary>
 
 The various named unary operators are treated as functions with one
 argument, with optional parentheses.
@@ -324,42 +355,55 @@ Regarding precedence, the filetest operators, like C<-f>, C<-M>, etc. are
 treated like named unary operators, but they don't follow this functional
 parenthesis rule.  That means, for example, that C<-f($file).".bak"> is
 equivalent to C<-f "$file.bak">.
+X<-X> X<filetest> X<operator, filetest>
 
 See also L<"Terms and List Operators (Leftward)">.
 
 =head2 Relational Operators
+X<relational operator> X<operator, relational>
 
 Binary "<" returns true if the left argument is numerically less than
 the right argument.
+X<< < >>
 
 Binary ">" returns true if the left argument is numerically greater
 than the right argument.
+X<< > >>
 
 Binary "<=" returns true if the left argument is numerically less than
 or equal to the right argument.
+X<< <= >>
 
 Binary ">=" returns true if the left argument is numerically greater
 than or equal to the right argument.
+X<< >= >>
 
 Binary "lt" returns true if the left argument is stringwise less than
 the right argument.
+X<< lt >>
 
 Binary "gt" returns true if the left argument is stringwise greater
 than the right argument.
+X<< gt >>
 
 Binary "le" returns true if the left argument is stringwise less than
 or equal to the right argument.
+X<< le >>
 
 Binary "ge" returns true if the left argument is stringwise greater
 than or equal to the right argument.
+X<< ge >>
 
 =head2 Equality Operators
+X<equality> X<equal> X<equals> X<operator, equality>
 
 Binary "==" returns true if the left argument is numerically equal to
 the right argument.
+X<==>
 
 Binary "!=" returns true if the left argument is numerically not equal
 to the right argument.
+X<!=>
 
 Binary "<=>" returns -1, 0, or 1 depending on whether the left
 argument is numerically less than, equal to, or greater than the right
@@ -368,24 +412,29 @@ values, using them with "<=>" returns undef.  NaN is not "<", "==", ">",
 "<=" or ">=" anything (even NaN), so those 5 return false. NaN != NaN
 returns true, as does NaN != anything else. If your platform doesn't
 support NaNs then NaN is just a string with numeric value 0.
+X<< <=> >> X<spaceship>
 
-    perl -le '$a = NaN; print "No NaN support here" if $a == $a'
-    perl -le '$a = NaN; print "NaN support here" if $a != $a'
+    perl -le '$a = "NaN"; print "No NaN support here" if $a == $a'
+    perl -le '$a = "NaN"; print "NaN support here" if $a != $a'
 
 Binary "eq" returns true if the left argument is stringwise equal to
 the right argument.
+X<eq>
 
 Binary "ne" returns true if the left argument is stringwise not equal
 to the right argument.
+X<ne>
 
 Binary "cmp" returns -1, 0, or 1 depending on whether the left
 argument is stringwise less than, equal to, or greater than the right
 argument.
+X<cmp>
 
 "lt", "le", "ge", "gt" and "cmp" use the collation (sort) order specified
 by the current locale if C<use locale> is in effect.  See L<perllocale>.
 
 =head2 Bitwise And
+X<operator, bitwise, and> X<bitwise and> X<&>
 
 Binary "&" returns its operands ANDed together bit by bit.
 (See also L<Integer Arithmetic> and L<Bitwise String Operators>.)
@@ -396,6 +445,8 @@ the brackets are essential in a test like
 	print "Even\n" if ($x & 1) == 0;
 
 =head2 Bitwise Or and Exclusive Or
+X<operator, bitwise, or> X<bitwise or> X<|> X<operator, bitwise, xor>
+X<bitwise xor> X<^>
 
 Binary "|" returns its operands ORed together bit by bit.
 (See also L<Integer Arithmetic> and L<Bitwise String Operators>.)
@@ -409,6 +460,7 @@ for example the brackets are essential in a test like
 	print "false\n" if (8 | 2) != 10;
 
 =head2 C-style Logical And
+X<&&> X<logical and> X<operator, logical, and>
 
 Binary "&&" performs a short-circuit logical AND operation.  That is,
 if the left operand is false, the right operand is not even evaluated.
@@ -416,6 +468,7 @@ Scalar or list context propagates down to the right operand if it
 is evaluated.
 
 =head2 C-style Logical Or
+X<||> X<operator, logical, or>
 
 Binary "||" performs a short-circuit logical OR operation.  That is,
 if the left operand is true, the right operand is not even evaluated.
@@ -453,6 +506,7 @@ With the C-style operators that would have been written like this:
 Using "or" for assignment is unlikely to do what you want; see below.
 
 =head2 Range Operators
+X<operator, range> X<range> X<..> X<...>
 
 Binary ".." is the range operator, which is really two different
 operators depending on the context.  In list context, it returns a
@@ -516,9 +570,12 @@ As a scalar operator:
 
     if (101 .. 200) { print; } # print 2nd hundred lines, short for
                                #   if ($. == 101 .. $. == 200) ...
-    next line if (1 .. /^$/);  # skip header lines, short for
+
+    next LINE if (1 .. /^$/);  # skip header lines, short for
                                #   ... if ($. == 1 .. /^$/);
-    s/^/> / if (/^$/ .. eof());	# quote body
+                               # (typically in a loop labeled LINE)
+
+    s/^/> / if (/^$/ .. eof());  # quote body
 
     # parse mail messages
     while (<>) {
@@ -541,16 +598,14 @@ the two range operators:
               "1  - Baz",
               "   - Quux");
 
-    foreach(@lines)
-    {
-        if (/0/ .. /1/)
-        {
+    foreach (@lines) {
+        if (/0/ .. /1/) {
             print "$_\n";
         }
     }
 
-This program will print only the line containing "Bar". If 
-the range operator is changed to C<...>, it will also print the 
+This program will print only the line containing "Bar". If
+the range operator is changed to C<...>, it will also print the
 "Baz" line.
 
 And now some examples as a list operator:
@@ -584,6 +639,7 @@ return two elements in list context.
     @list = (2.18 .. 3.14); # same as @list = (2 .. 3);
 
 =head2 Conditional Operator
+X<operator, conditional> X<operator, ternary> X<ternary> X<?:>
 
 Ternary "?:" is the conditional operator, just as in C.  It works much
 like an if-then-else.  If the argument before the ? is true, the
@@ -623,6 +679,9 @@ That should probably be written more simply as:
     $a += ($a % 2) ? 10 : 2;
 
 =head2 Assignment Operators
+X<assignment> X<operator, assignment> X<=> X<**=> X<+=> X<*=> X<&=>
+X<<< <<= >>> X<&&=> X<-=> X</=> X<|=> X<<< >>= >>> X<||=> X<.=>
+X<%=> X<^=> X<x=>
 
 "=" is the ordinary assignment operator.
 
@@ -641,7 +700,7 @@ The following are recognized:
     **=    +=    *=    &=    <<=    &&=
            -=    /=    |=    >>=    ||=
            .=    %=    ^=
-	         x=
+                 x=
 
 Although these are grouped by family, they all have the precedence
 of assignment.
@@ -668,6 +727,7 @@ the number of elements produced by the expression on the right hand
 side of the assignment.
 
 =head2 Comma Operator
+X<comma> X<operator, comma> X<,>
 
 Binary "," is the comma operator.  In scalar context it evaluates
 its left argument, throws that value away, then evaluates its right
@@ -677,11 +737,33 @@ In list context, it's just the list argument separator, and inserts
 both its arguments into the list.
 
 The C<< => >> operator is a synonym for the comma, but forces any word
-to its left to be interpreted as a string (as of 5.001). It is helpful
-in documenting the correspondence between keys and values in hashes,
-and other paired elements in lists.
+(consisting entirely of word characters) to its left to be interpreted
+as a string (as of 5.001).  This includes words that might otherwise be
+considered a constant or function call.
+
+    use constant FOO => "something";
+
+    my %h = ( FOO => 23 );
+
+is equivalent to:
+
+    my %h = ("FOO", 23);
+
+It is I<NOT>:
+
+    my %h = ("something", 23);
+
+If the argument on the left is not a word, it is first interpreted as
+an expression, and then the string value of that is used.
+
+The C<< => >> operator is helpful in documenting the correspondence
+between keys and values in hashes, and other paired elements in lists.
+
+        %hash = ( $key => $value );
+        login( $username => $password );
 
 =head2 List Operators (Rightward)
+X<operator, list, rightward> X<list operator>
 
 On the right side of a list operator, it has very low precedence,
 such that it controls all comma-separated expressions found there.
@@ -695,11 +777,13 @@ operators without the need for extra parentheses:
 See also discussion of list operators in L<Terms and List Operators (Leftward)>.
 
 =head2 Logical Not
+X<operator, logical, not> X<not>
 
 Unary "not" returns the logical negation of the expression to its right.
 It's the equivalent of "!" except for the very low precedence.
 
 =head2 Logical And
+X<operator, logical, and> X<and>
 
 Binary "and" returns the logical conjunction of the two surrounding
 expressions.  It's equivalent to && except for the very low
@@ -707,6 +791,9 @@ precedence.  This means that it short-circuits: i.e., the right
 expression is evaluated only if the left expression is true.
 
 =head2 Logical or and Exclusive Or
+X<operator, logical, or> X<operator, logical, xor> X<operator, logical, err>
+X<operator, logical, defined or> X<operator, logical, exclusive or>
+X<or> X<xor> X<err>
 
 Binary "or" returns the logical disjunction of the two surrounding
 expressions.  It's equivalent to || except for the very low precedence.
@@ -735,6 +822,8 @@ Binary "xor" returns the exclusive-OR of the two surrounding expressions.
 It cannot short circuit, of course.
 
 =head2 C Operators Missing From Perl
+X<operator, missing from perl> X<&> X<*>
+X<typecasting> X<(TYPE)>
 
 Here is what C has that Perl doesn't:
 
@@ -756,13 +845,17 @@ Type-casting operator.
 =back
 
 =head2 Quote and Quote-like Operators
+X<operator, quote> X<operator, quote-like> X<q> X<qq> X<qx> X<qw> X<m> 
+X<qr> X<s> X<tr> X<'> X<''> X<"> X<""> X<//> X<`> X<``> X<<< << >>>
+X<escape sequence> X<escape>
+
 
 While we usually think of quotes as literal values, in Perl they
 function as operators, providing various kinds of interpolating and
 pattern matching capabilities.  Perl provides customary quote characters
 for these behaviors, but also provides a way for you to choose your
 quote character for any of them.  In the following table, a C<{}> represents
-any pair of delimiters you choose.  
+any pair of delimiters you choose.
 
     Customary  Generic        Meaning	     Interpolates
 	''	 q{}	      Literal		  no
@@ -779,11 +872,11 @@ any pair of delimiters you choose.
 
 Non-bracketing delimiters use the same character fore and aft, but the four
 sorts of brackets (round, angle, square, curly) will all nest, which means
-that 
+that
 
-	q{foo{bar}baz} 
+	q{foo{bar}baz}
 
-is the same as 
+is the same as
 
 	'foo{bar}baz'
 
@@ -806,6 +899,7 @@ from the next line.  This allows you to write:
 
 The following escape sequences are available in constructs that interpolate
 and in transliterations.
+X<\t> X<\n> X<\r> X<\f> X<\b> X<\a> X<\e> X<\x> X<\0> X<\c> X<\N>
 
     \t		tab             (HT, TAB)
     \n		newline         (NL)
@@ -825,6 +919,7 @@ the vertical tab (VT - ASCII 11).
 
 The following escape sequences are available in constructs that interpolate
 but not in transliterations.
+X<\l> X<\u> X<\L> X<\U> X<\E> X<\Q>
 
     \l		lowercase next char
     \u		uppercase next char
@@ -853,6 +948,8 @@ and prefer a CR+LF (C<"\015\012"> or C<"\cM\cJ">) for line terminators,
 and although they often accept just C<"\012">, they seldom tolerate just
 C<"\015">.  If you get in the habit of using C<"\n"> for networking,
 you may be burned some day.
+X<newline> X<line terminator> X<eol> X<end of line>
+X<\n> X<\r> X<\r\n>
 
 For constructs that do interpolate, variables beginning with "C<$>"
 or "C<@>" are interpolated.  Subscripted variables such as C<$a[3]> or
@@ -882,6 +979,7 @@ within double quotes, nor do single quotes impede evaluation of
 variables when used within double quotes.
 
 =head2 Regexp Quote-Like Operators
+X<operator, regexp>
 
 Here are the quote-like operators that apply to pattern
 matching and related activities.
@@ -889,6 +987,7 @@ matching and related activities.
 =over 8
 
 =item ?PATTERN?
+X<?>
 
 This is just like the C</pattern/> search, except that it matches only
 once between calls to the reset() operator.  This is a useful
@@ -909,6 +1008,9 @@ be removed in some distant future version of Perl, perhaps somewhere
 around the year 2168.
 
 =item m/PATTERN/cgimosx
+X<m> X<operator, match> 
+X<regexp, options> X<regexp> X<regex, options> X<regex> 
+X</c> X</i> X</m> X</o> X</s> X</x>
 
 =item /PATTERN/cgimosx
 
@@ -1081,6 +1183,7 @@ Here is the output (split into several lines):
  MiXeD line-noise. That's all!
 
 =item q/STRING/
+X<q> X<quote, double> X<'> X<''>
 
 =item C<'STRING'>
 
@@ -1093,6 +1196,7 @@ the delimiter or backslash is interpolated.
     $baz = '\n';		# a two-character string
 
 =item qq/STRING/
+X<qq> X<quote, double> X<"> X<"">
 
 =item "STRING"
 
@@ -1104,6 +1208,7 @@ A double-quoted, interpolated string.
     $baz = "\n";		# a one-character string
 
 =item qr/STRING/imosx
+X<qr> X</i> X</m> X</o> X</s> X</x>
 
 This operator quotes (and possibly compiles) its I<STRING> as a regular
 expression.  I<STRING> is interpolated the same way as I<PATTERN>
@@ -1161,6 +1266,7 @@ See L<perlre> for additional information on valid syntax for STRING, and
 for a detailed look at the semantics of regular expressions.
 
 =item qx/STRING/
+X<qx> X<`> X<``> X<backtick>
 
 =item `STRING`
 
@@ -1242,6 +1348,7 @@ Just understand what you're getting yourself into.
 See L<"I/O Operators"> for more discussion.
 
 =item qw/STRING/
+X<qw> X<quote, list> X<quote, words>
 
 Evaluates to a list of the words extracted out of STRING, using embedded
 whitespace as the word delimiters.  It can be understood as being roughly
@@ -1270,6 +1377,8 @@ C<use warnings> pragma and the B<-w> switch (that is, the C<$^W> variable)
 produces warnings if the STRING contains the "," or the "#" character.
 
 =item s/PATTERN/REPLACEMENT/egimosx
+X<substitute> X<substitution> X<replace> X<regexp, replace>
+X<regexp, substitute> X</e> X</g> X</i> X</m> X</o> X</s> X</x>
 
 Searches a string for a pattern, and if found, replaces that pattern
 with the replacement text and returns the number of substitutions
@@ -1354,9 +1463,9 @@ Examples:
 	\*/	# Match the closing delimiter.
     } []gsx;
 
-    s/^\s*(.*?)\s*$/$1/;	# trim white space in $_, expensively
+    s/^\s*(.*?)\s*$/$1/;	# trim whitespace in $_, expensively
 
-    for ($variable) {		# trim white space in $variable, cheap
+    for ($variable) {		# trim whitespace in $variable, cheap
 	s/^\s+//;
 	s/\s+$//;
     }
@@ -1377,6 +1486,7 @@ to occur that you might want.  Here are two common cases:
     1 while s/\t+/' ' x (length($&)*8 - length($`)%8)/e;
 
 =item tr/SEARCHLIST/REPLACEMENTLIST/cds
+X<tr> X<y> X<transliterate> X</c> X</d> X</s>
 
 =item y/SEARCHLIST/REPLACEMENTLIST/cds
 
@@ -1466,6 +1576,7 @@ must use an eval():
     eval "tr/$oldlist/$newlist/, 1" or die $@;
 
 =item <<EOF
+X<here-doc> X<heredoc> X<here-document> X<<< << >>>
 
 A line-oriented form of quoting is based on the shell "here-document"
 syntax.  Following a C<< << >> you specify a string to terminate
@@ -1560,6 +1671,7 @@ should be safe.
 =back
 
 =head2 Gory details of parsing quoted constructs
+X<quote, gory details>
 
 When presented with something that might have several different
 interpretations, Perl uses the B<DWIM> (that's "Do What I Mean")
@@ -1622,6 +1734,11 @@ Because the slash that terminated C<m//> was followed by a C<SPACE>,
 the example above is not C<m//x>, but rather C<m//> with no C</x>
 modifier.  So the embedded C<#> is interpreted as a literal C<#>.
 
+Also no attention is paid to C<\c\> during this search.
+Thus the second C<\> in C<qq/\c\/> is interpreted as a part of C<\/>,
+and the following C</> is not recognized as a delimiter.
+Instead, use C<\034> or C<\x1c> at the end of quoted constructs.
+
 =item Removal of backslashes before delimiters
 
 During the second pass, text between the starting and ending
@@ -1635,6 +1752,7 @@ Starting from this step no information about the delimiters is
 used in parsing.
 
 =item Interpolation
+X<interpolation>
 
 The next step is interpolation in the text obtained, which is now
 delimiter-independent.  There are four different cases.
@@ -1748,6 +1866,7 @@ This step is the last one for all constructs except regular expressions,
 which are processed further.
 
 =item Interpolation of regular expressions
+X<regexp, interpolation>
 
 Previous steps were performed during the compilation of Perl code,
 but this one happens at run time--although it may be optimized to
@@ -1786,6 +1905,7 @@ in the C<use L<re>> pragma, as well as Perl's B<-Dr> command-line
 switch documented in L<perlrun/"Command Switches">.
 
 =item Optimization of regular expressions
+X<regexp, optimization>
 
 This step is listed for completeness only.  Since it does not change
 semantics, details of this step are not documented and are subject
@@ -1798,6 +1918,8 @@ mean C</^/m>.
 =back
 
 =head2 I/O Operators
+X<operator, i/o> X<operator, io> X<io> X<while> X<filehandle>
+X<< <> >> X<@ARGV>
 
 There are several I/O operators you should know about.
 
@@ -1817,6 +1939,7 @@ literal dollar-sign through to the shell you need to hide it with a
 backslash.  The generalized form of backticks is C<qx//>.  (Because
 backticks always undergo shell expansion as well, see L<perlsec> for
 security concerns.)
+X<qx> X<`> X<``> X<backtick> X<glob>
 
 In scalar context, evaluating a filehandle in angle brackets yields
 the next line from that file (the newline, if any, included), or
@@ -1870,6 +1993,7 @@ in packages, where they would be interpreted as local identifiers
 rather than global.)  Additional filehandles may be created with
 the open() function, amongst others.  See L<perlopentut> and
 L<perlfunc/open> for details on this.
+X<stdin> X<stdout> X<sterr>
 
 If a <FILEHANDLE> is used in a context that is looking for
 a list, a list comprising all input lines is returned, one line per
@@ -1958,7 +2082,8 @@ depending on context.  This distinction is determined on syntactic
 grounds alone.  That means C<< <$x> >> is always a readline() from
 an indirect handle, but C<< <$hash{key}> >> is always a glob().
 That's because $x is a simple scalar variable, but C<$hash{key}> is
-not--it's a hash element.
+not--it's a hash element.  Even C<< <$x > >> (note the extra space)
+is treated as C<glob("$x ")>, not C<readline($x)>.
 
 One level of double-quote interpretation is done first, but you can't
 say C<< <$foo> >> because that's an indirect filehandle as explained
@@ -2014,6 +2139,7 @@ to become confused with the indirect filehandle notation.
     @files = glob($files[$i]);
 
 =head2 Constant Folding
+X<constant folding> X<folding>
 
 Like C, Perl does a certain amount of expression evaluation at
 compile time whenever it determines that all arguments to an
@@ -2036,6 +2162,7 @@ the compiler will precompute the number which that expression
 represents so that the interpreter won't have to.
 
 =head2 No-ops
+X<no-op> X<nop>
 
 Perl doesn't officially have a no-op operator, but the bare constants
 C<0> and C<1> are special-cased to not produce a warning in a void
@@ -2044,6 +2171,7 @@ context, so you can for example safely do
     1 while foo();
 
 =head2 Bitwise String Operators
+X<operator, bitwise, string>
 
 Bitstrings of any size may be manipulated by the bitwise operators
 (C<~ | & ^>).
@@ -2066,8 +2194,8 @@ you're supplying bitstrings: If an operand is a number, that will imply
 a B<numeric> bitwise operation.  You may explicitly show which type of
 operation you intend by using C<""> or C<0+>, as in the examples below.
 
-    $foo =  150  |  105 ;	# yields 255  (0x96 | 0x69 is 0xFF)
-    $foo = '150' |  105 ;	# yields 255
+    $foo =  150  |  105;	# yields 255  (0x96 | 0x69 is 0xFF)
+    $foo = '150' |  105;	# yields 255
     $foo =  150  | '105';	# yields 255
     $foo = '150' | '105';	# yields string '155' (under ASCII)
 
@@ -2078,6 +2206,7 @@ See L<perlfunc/vec> for information on how to manipulate individual bits
 in a bit vector.
 
 =head2 Integer Arithmetic
+X<integer>
 
 By default, Perl assumes that it must do most of its arithmetic in
 floating point.  But by saying
@@ -2106,6 +2235,7 @@ integral value.  However, C<use integer; ~0> is C<-1> on twos-complement
 machines.
 
 =head2 Floating-point Arithmetic
+X<floating-point> X<floating point> X<float> X<real>
 
 While C<use integer> provides integer-only arithmetic, there is no
 analogous mechanism to provide automatic rounding or truncation to a
@@ -2148,6 +2278,7 @@ being used by Perl, but to instead implement the rounding function you
 need yourself.
 
 =head2 Bigger Numbers
+X<number, arbitrary precision>
 
 The standard Math::BigInt and Math::BigFloat modules provide
 variable-precision arithmetic and overloaded operators, although

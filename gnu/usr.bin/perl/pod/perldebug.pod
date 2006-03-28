@@ -1,4 +1,5 @@
 =head1 NAME
+X<debug> X<debugger>
 
 perldebug - Perl debugging
 
@@ -19,6 +20,7 @@ source code, set breakpoints, get stack backtraces, change the values of
 variables, etc.  This is so convenient that you often fire up
 the debugger all by itself just to test out Perl constructs
 interactively to see what they do.  For example:
+X<-d>
 
     $ perl -d -e 42
 
@@ -59,6 +61,7 @@ The debugger understands the following commands:
 =over 12
 
 =item h
+X<debugger command, h>
 
 Prints out a summary help message
 
@@ -80,6 +83,7 @@ You may change the pager which is used via C<o pager=...> command.
 
 
 =item p expr
+X<debugger command, p>
 
 Same as C<print {$DB::OUT} expr> in the current package.  In particular,
 because this is just Perl's own C<print> function, this means that nested
@@ -89,6 +93,7 @@ The C<DB::OUT> filehandle is opened to F</dev/tty>, regardless of
 where STDOUT may be redirected to.
 
 =item x [maxdepth] expr
+X<debugger command, x>
 
 Evaluates its expression in list context and dumps out the result in a
 pretty-printed fashion.  Nested data structures are printed out
@@ -104,8 +109,9 @@ dumped only I<N> levels deep, as if the C<dumpDepth> option had been
 temporarily set to I<N>.
 
 =item V [pkg [vars]]
+X<debugger command, V>
 
-Display all (or some) variables in package (defaulting to C<main>) 
+Display all (or some) variables in package (defaulting to C<main>)
 using a data pretty-printer (hashes show their keys and values so
 you see what's what, control characters are made printable, etc.).
 Make sure you don't put the type specifier (like C<$>) there, just
@@ -118,10 +124,12 @@ Use C<~pattern> and C<!pattern> for positive and negative regexes.
 This is similar to calling the C<x> command on each applicable var.
 
 =item X [vars]
+X<debugger command, X>
 
 Same as C<V currentpackage [vars]>.
 
 =item y [level [vars]]
+X<debugger command, y>
 
 Display all (or some) lexical variables (mnemonic: C<mY> variables)
 in the current scope or I<level> scopes higher.  You can limit the
@@ -132,16 +140,19 @@ is pretty-printed in the same style as for C<V> and the format is
 controlled by the same options.
 
 =item T
+X<debugger command, T> X<backtrace> X<stack, backtrace>
 
 Produce a stack backtrace.  See below for details on its output.
 
 =item s [expr]
+X<debugger command, s> X<step>
 
 Single step.  Executes until the beginning of another
 statement, descending into subroutine calls.  If an expression is
 supplied that includes function calls, it too will be single-stepped.
 
 =item n [expr]
+X<debugger command, n>
 
 Next.  Executes over subroutine calls, until the beginning
 of the next statement.  If an expression is supplied that includes
@@ -149,6 +160,7 @@ function calls, those functions will be executed with stops before
 each statement.
 
 =item r
+X<debugger command, r>
 
 Continue until the return from the current subroutine.
 Dump the return value if the C<PrintRet> option is set (default).
@@ -158,11 +170,13 @@ Dump the return value if the C<PrintRet> option is set (default).
 Repeat last C<n> or C<s> command.
 
 =item c [line|sub]
+X<debugger command, c>
 
 Continue, optionally inserting a one-time-only breakpoint
 at the specified line or subroutine.
 
 =item l
+X<debugger command, l>
 
 List next window of lines.
 
@@ -184,22 +198,26 @@ List first window of lines from subroutine.  I<subname> may
 be a variable that contains a code reference.
 
 =item -
+X<debugger command, ->
 
 List previous window of lines.
 
 =item v [line]
+X<debugger command, v>
 
 View a few lines of code around the current line.
 
 =item .
+X<debugger command, .>
 
 Return the internal debugger pointer to the line last
 executed, and print out that line.
 
 =item f filename
+X<debugger command, f>
 
 Switch to viewing a different file or C<eval> statement.  If I<filename>
-is not a full pathname found in the values of %INC, it is considered 
+is not a full pathname found in the values of %INC, it is considered
 a regex.
 
 C<eval>ed strings (when accessible) are considered to be filenames:
@@ -219,27 +237,35 @@ Search backwards for pattern; final ? is optional.
 The search is case-insensitive by default.
 
 =item L [abw]
+X<debugger command, L>
 
 List (default all) actions, breakpoints and watch expressions
 
 =item S [[!]regex]
+X<debugger command, S>
 
 List subroutine names [not] matching the regex.
 
 =item t
+X<debugger command, t>
 
 Toggle trace mode (see also the C<AutoTrace> option).
 
 =item t expr
+X<debugger command, t>
 
 Trace through execution of C<expr>.
 See L<perldebguts/"Frame Listing Output Examples"> for examples.
 
 =item b
+X<breakpoint>
+X<debugger command, b>
 
 Sets breakpoint on current line
 
 =item b [line] [condition]
+X<breakpoint>
+X<debugger command, b>
 
 Set a breakpoint before the given line.  If a condition
 is specified, it's evaluated each time the statement is reached: a
@@ -252,34 +278,47 @@ don't use C<if>:
     b 33 /pattern/i
 
 =item b subname [condition]
+X<breakpoint>
+X<debugger command, b>
 
 Set a breakpoint before the first line of the named subroutine.  I<subname> may
 be a variable containing a code reference (in this case I<condition>
 is not supported).
 
 =item b postpone subname [condition]
+X<breakpoint>
+X<debugger command, b>
 
 Set a breakpoint at first line of subroutine after it is compiled.
 
 =item b load filename
+X<breakpoint>
+X<debugger command, b>
 
 Set a breakpoint before the first executed line of the I<filename>,
 which should be a full pathname found amongst the %INC values.
 
 =item b compile subname
+X<breakpoint>
+X<debugger command, b>
 
 Sets a breakpoint before the first statement executed after the specified
 subroutine is compiled.
 
 =item B line
+X<breakpoint>
+X<debugger command, B>
 
-Delete a breakpoint from the specified I<line>.  
+Delete a breakpoint from the specified I<line>.
 
 =item B *
+X<breakpoint>
+X<debugger command, B>
 
 Delete all installed breakpoints.
 
 =item a [line] command
+X<debugger command, a>
 
 Set an action to be done before the line is executed.  If I<line> is
 omitted, set an action on the line about to be executed.
@@ -297,39 +336,48 @@ For example, this will print out $foo every time line
     a 53 print "DB FOUND $foo\n"
 
 =item A line
+X<debugger command, A>
 
-Delete an action from the specified line.  
+Delete an action from the specified line.
 
 =item A *
+X<debugger command, A>
 
 Delete all installed actions.
 
 =item w expr
+X<debugger command, w>
 
 Add a global watch-expression.  We hope you know what one of these
-is, because they're supposed to be obvious.  
+is, because they're supposed to be obvious.
 
 =item W expr
+X<debugger command, W>
 
 Delete watch-expression
 
 =item W *
+X<debugger command, W>
 
 Delete all watch-expressions.
 
 =item o
+X<debugger command, o>
 
 Display all options
 
 =item o booloption ...
+X<debugger command, o>
 
 Set each listed Boolean option to the value C<1>.
 
 =item o anyoption? ...
+X<debugger command, o>
 
 Print out the value of one or more options.
 
 =item o option=value ...
+X<debugger command, o>
 
 Set the value of one or more options.  If the value has internal
 whitespace, it should be quoted.  For example, you could set C<o
@@ -346,85 +394,100 @@ For historical reasons, the C<=value> is optional, but defaults to
 1 only where it is safe to do so--that is, mostly for Boolean
 options.  It is always better to assign a specific value using C<=>.
 The C<option> can be abbreviated, but for clarity probably should
-not be.  Several options can be set together.  See L<"Configurable Options"> 
+not be.  Several options can be set together.  See L<"Configurable Options">
 for a list of these.
 
-=item < ? 
+=item < ?
+X<< debugger command, < >>
 
 List out all pre-prompt Perl command actions.
 
 =item < [ command ]
+X<< debugger command, < >>
 
 Set an action (Perl command) to happen before every debugger prompt.
-A multi-line command may be entered by backslashing the newlines.  
+A multi-line command may be entered by backslashing the newlines.
 
-=item < * 
+=item < *
+X<< debugger command, < >>
 
 Delete all pre-prompt Perl command actions.
 
 =item << command
+X<< debugger command, << >>
 
 Add an action (Perl command) to happen before every debugger prompt.
 A multi-line command may be entered by backwhacking the newlines.
 
 =item > ?
+X<< debugger command, > >>
 
 List out post-prompt Perl command actions.
 
 =item > command
+X<< debugger command, > >>
 
 Set an action (Perl command) to happen after the prompt when you've
 just given a command to return to executing the script.  A multi-line
 command may be entered by backslashing the newlines (we bet you
-couldn't've guessed this by now). 
+couldn't've guessed this by now).
 
-=item > * 
+=item > *
+X<< debugger command, > >>
 
 Delete all post-prompt Perl command actions.
 
 =item >> command
+X<<< debugger command, >> >>>
 
 Adds an action (Perl command) to happen after the prompt when you've
 just given a command to return to executing the script.  A multi-line
 command may be entered by backslashing the newlines.
 
 =item { ?
+X<debugger command, {>
 
 List out pre-prompt debugger commands.
 
 =item { [ command ]
 
 Set an action (debugger command) to happen before every debugger prompt.
-A multi-line command may be entered in the customary fashion.  
+A multi-line command may be entered in the customary fashion.
 
 Because this command is in some senses new, a warning is issued if
 you appear to have accidentally entered a block instead.  If that's
-what you mean to do, write it as with C<;{ ... }> or even 
+what you mean to do, write it as with C<;{ ... }> or even
 C<do { ... }>.
 
-=item { * 
+=item { *
+X<debugger command, {>
 
 Delete all pre-prompt debugger commands.
 
 =item {{ command
+X<debugger command, {{>
 
 Add an action (debugger command) to happen before every debugger prompt.
 A multi-line command may be entered, if you can guess how: see above.
 
 =item ! number
+X<debugger command, !>
 
 Redo a previous command (defaults to the previous command).
 
 =item ! -number
+X<debugger command, !>
 
 Redo number'th previous command.
 
 =item ! pattern
+X<debugger command, !>
 
 Redo last command that started with pattern.
 See C<o recallCommand>, too.
 
 =item !! cmd
+X<debugger command, !!>
 
 Run cmd in a subprocess (reads from DB::IN, writes to DB::OUT) See
 C<o shellBang>, also.  Note that the user's current shell (well,
@@ -433,26 +496,31 @@ with proper interpretation of exit status or signal and coredump
 information.
 
 =item source file
+X<debugger command, source>
 
 Read and execute debugger commands from I<file>.
 I<file> may itself contain C<source> commands.
 
 =item H -number
+X<debugger command, H>
 
 Display last n commands.  Only commands longer than one character are
 listed.  If I<number> is omitted, list them all.
 
 =item q or ^D
+X<debugger command, q>
+X<debugger command, ^D>
 
 Quit.  ("quit" doesn't work for this, unless you've made an alias)
 This is the only supported way to exit the debugger, though typing
 C<exit> twice might work.
 
 Set the C<inhibit_exit> option to 0 if you want to be able to step
-off the end the script.  You may also need to set $finished to 0 
+off the end the script.  You may also need to set $finished to 0
 if you want to step through global destruction.
 
 =item R
+X<debugger command, R>
 
 Restart the debugger by C<exec()>ing a new session.  We try to maintain
 your history across this, but internal settings and command-line options
@@ -463,14 +531,17 @@ actions, debugger options, and the Perl command-line
 options B<-w>, B<-I>, and B<-e>.
 
 =item |dbcmd
+X<debugger command, |>
 
 Run the debugger command, piping DB::OUT into your current pager.
 
 =item ||dbcmd
+X<debugger command, ||>
 
 Same as C<|dbcmd> but DB::OUT is temporarily C<select>ed as well.
 
 =item = [alias value]
+X<debugger command, =>
 
 Define a command alias, like
 
@@ -485,17 +556,20 @@ supplied.  If the Perl statement would otherwise be confused for a
 Perl debugger, use a leading semicolon, too.
 
 =item m expr
+X<debugger command, m>
 
 List which methods may be called on the result of the evaluated
-expression.  The expression may evaluated to a reference to a 
+expression.  The expression may evaluated to a reference to a
 blessed object, or to a package name.
 
 =item M
+X<debugger command, M>
 
 Displays all loaded modules and their versions
 
 
 =item man [manpage]
+X<debugger command, man>
 
 Despite its name, this calls your system's default documentation
 viewer on the given page, or on the viewer itself if I<manpage> is
@@ -528,11 +602,14 @@ either interactively or from the environment or an rc file.
 =over 12
 
 =item C<recallCommand>, C<ShellBang>
+X<debugger option, recallCommand>
+X<debugger option, ShellBang>
 
 The characters used to recall command or spawn shell.  By
 default, both are set to C<!>, which is unfortunate.
 
 =item C<pager>
+X<debugger option, pager>
 
 Program to use for output of pager-piped commands (those beginning
 with a C<|> character.)  By default, C<$ENV{PAGER}> will be used.
@@ -542,10 +619,13 @@ sequences through unchanged, the output of some debugger commands
 will not be readable when sent through the pager.
 
 =item C<tkRunning>
+X<debugger option, tkRunning>
 
 Run Tk while prompting (with ReadLine).
 
 =item C<signalLevel>, C<warnLevel>, C<dieLevel>
+X<debugger option, signalLevel> X<debugger option, warnLevel>
+X<debugger option, dieLevel>
 
 Level of verbosity.  By default, the debugger leaves your exceptions
 and warnings alone, because altering them can break correctly running
@@ -566,11 +646,13 @@ This may perhaps be useful for some tracing purposes, but tends to hopelessly
 destroy any program that takes its exception handling seriously.
 
 =item C<AutoTrace>
+X<debugger option, AutoTrace>
 
 Trace mode (similar to C<t> command, but can be put into
 C<PERLDB_OPTS>).
 
 =item C<LineInfo>
+X<debugger option, LineInfo>
 
 File or pipe to print line number info to.  If it is a pipe (say,
 C<|visual_perl_db>), then a short message is used.  This is the
@@ -579,14 +661,17 @@ such as the special C<vi> or C<emacs> hooks, or the C<ddd> graphical
 debugger.
 
 =item C<inhibit_exit>
+X<debugger option, inhibit_exit>
 
 If 0, allows I<stepping off> the end of the script.
 
 =item C<PrintRet>
+X<debugger option, PrintRet>
 
 Print return value after C<r> command if set (default).
 
 =item C<ornaments>
+X<debugger option, ornaments>
 
 Affects screen appearance of the command line (see L<Term::ReadLine>).
 There is currently no way to disable these, which can render
@@ -594,6 +679,7 @@ some output illegible on some displays, or with some pagers.
 This is considered a bug.
 
 =item C<frame>
+X<debugger option, frame>
 
 Affects the printing of messages upon entry and exit from subroutines.  If
 C<frame & 2> is false, messages are printed on entry only. (Printing
@@ -608,11 +694,13 @@ The length at which the argument list is truncated is governed by the
 next option:
 
 =item C<maxTraceLen>
+X<debugger option, maxTraceLen>
 
 Length to truncate the argument list when the C<frame> option's
 bit 4 is set.
 
 =item C<windowSize>
+X<debugger option, windowSize>
 
 Change the size of code list window (default is 10 lines).
 
@@ -624,36 +712,45 @@ commands:
 =over 12
 
 =item C<arrayDepth>, C<hashDepth>
+X<debugger option, arrayDepth> X<debugger option, hashDepth>
 
 Print only first N elements ('' for all).
 
 =item C<dumpDepth>
+X<debugger option, dumpDepth>
 
 Limit recursion depth to N levels when dumping structures.
 Negative values are interpreted as infinity.  Default: infinity.
 
 =item C<compactDump>, C<veryCompact>
+X<debugger option, compactDump> X<debugger option, veryCompact>
 
 Change the style of array and hash output.  If C<compactDump>, short array
 may be printed on one line.
 
 =item C<globPrint>
+X<debugger option, globPrint>
 
 Whether to print contents of globs.
 
 =item C<DumpDBFiles>
+X<debugger option, DumpDBFiles>
 
 Dump arrays holding debugged files.
 
 =item C<DumpPackages>
+X<debugger option, DumpPackages>
 
 Dump symbol tables of packages.
 
 =item C<DumpReused>
+X<debugger option, DumpReused>
 
 Dump contents of "reused" addresses.
 
 =item C<quote>, C<HighBit>, C<undefPrint>
+X<debugger option, quote> X<debugger option, HighBit>
+X<debugger option, undefPrint>
 
 Change the style of string dump.  The default value for C<quote>
 is C<auto>; one can enable double-quotish or single-quotish format
@@ -661,6 +758,7 @@ by setting it to C<"> or C<'>, respectively.  By default, characters
 with their high bit set are printed verbatim.
 
 =item C<UsageOnly>
+X<debugger option, UsageOnly>
 
 Rudimentary per-package memory usage dump.  Calculates total
 size of strings found in variables in the package.  This does not
@@ -669,7 +767,7 @@ include lexicals in a module's file scope, or lost in closures.
 =back
 
 After the rc file is read, the debugger reads the C<$ENV{PERLDB_OPTS}>
-environment variable and parses this as the remainder of a `O ...'
+environment variable and parses this as the remainder of a "O ..."
 line as one might enter at the debugger prompt.  You may place the
 initialization options C<TTY>, C<noTTY>, C<ReadLine>, and C<NonStop>
 there.
@@ -685,10 +783,12 @@ better reset C<LineInfo> to F</dev/tty> if you expect to see anything.)
 =over 12
 
 =item C<TTY>
+X<debugger option, TTY>
 
 The TTY to use for debugging I/O.
 
 =item C<noTTY>
+X<debugger option, noTTY>
 
 If set, the debugger goes into C<NonStop> mode and will not connect to a TTY.  If
 interrupted (or if control goes to the debugger via explicit setting of
@@ -700,16 +800,18 @@ This module should implement a method named C<new> that returns an object
 with two methods: C<IN> and C<OUT>.  These should return filehandles to use
 for debugging input and output correspondingly.  The C<new> method should
 inspect an argument containing the value of C<$ENV{PERLDB_NOTTY}> at
-startup, or C<".perldbtty$$"> otherwise.  This file is not 
+startup, or C<"$ENV{HOME}/.perldbtty$$"> otherwise.  This file is not
 inspected for proper ownership, so security hazards are theoretically
 possible.
 
 =item C<ReadLine>
+X<debugger option, ReadLine>
 
 If false, readline support in the debugger is disabled in order
 to debug applications that themselves use ReadLine.
 
 =item C<NonStop>
+X<debugger option, NonStop>
 
 If set, the debugger goes into non-interactive mode until interrupted, or
 programmatically by setting $DB::signal or $DB::single.
@@ -792,6 +894,7 @@ Note that this business of escaping a newline is specific to interactive
 commands typed into the debugger.
 
 =item Stack backtrace
+X<backtrace> X<stack, backtrace>
 
 Here's an example of what a stack backtrace via C<T> command might
 look like:
@@ -912,7 +1015,7 @@ You can mock TTY input to debugger by adding arbitrary commands to
     sub afterinit { push @DB::typeahead, "b 4", "b 6"; }
 
 Which would attempt to set breakpoints on lines 4 and 6 immediately
-after debugger initilization. Note that @DB::typeahead is not a supported
+after debugger initialization. Note that @DB::typeahead is not a supported
 interface and is subject to change in future releases.
 
 If you want to modify the debugger, copy F<perl5db.pl> from the
@@ -961,13 +1064,14 @@ time of this writing, however, that tool's eventual location in the
 Perl distribution was uncertain.
 
 Users of B<vi> should also look into B<vim> and B<gvim>, the mousey
-and windy version, for coloring of Perl keywords.  
+and windy version, for coloring of Perl keywords.
 
 Note that only perl can truly parse Perl, so all such CASE tools
 fall somewhat short of the mark, especially if you don't program
 your Perl as a C programmer might.
 
 =head2 The Perl Profiler
+X<profile> X<profiling> X<profiler>
 
 If you wish to supply an alternative debugger for Perl to run, just
 invoke your script with a colon and a package argument given to the
@@ -984,6 +1088,8 @@ also supplied with the standard Perl distribution, can be used to
 interpret the information in that profile.
 
 =head1 Debugging regular expressions
+X<regular expression, debugging>
+X<regex, debugging> X<regexp, debugging>
 
 C<use re 'debug'> enables you to see the gory details of how the Perl
 regular expression engine works. In order to understand this typically
@@ -994,6 +1100,7 @@ are explored in some detail in
 L<perldebguts/"Debugging regular expressions">.
 
 =head1 Debugging memory usage
+X<memory usage>
 
 Perl contains internal support for reporting its own memory usage,
 but this is a fairly advanced concept that requires some understanding
@@ -1016,7 +1123,7 @@ L<perlrun>.
 
 When debugging a script that uses #! and is thus normally found in
 $PATH, the -S option causes perl to search $PATH for it, so you don't
-have to type the path or `which $scriptname`.
+have to type the path or C<which $scriptname>.
 
   $ perl -Sd foo.pl
 

@@ -7,6 +7,7 @@ BEGIN {
 }
 
 use Config;
+no warnings 'once';
 
 my $test = 1;
 print "1..26\n";
@@ -96,7 +97,7 @@ SKIP: {
     isnt(fileno(F), fileno(STDOUT));
     close F;
 
-    ok(open(F, "<&=STDIN"));
+    ok(open(F, "<&=STDIN")) or _diag $!;
     is(fileno(F), fileno(STDIN));
     close F;
 

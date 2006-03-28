@@ -281,7 +281,7 @@ use File::Spec;
 
 $main::SIG{__WARN__}=\&CGI::Carp::warn;
 
-$CGI::Carp::VERSION    = '1.28';
+$CGI::Carp::VERSION    = '1.29';
 $CGI::Carp::CUSTOM_MSG = undef;
 
 
@@ -371,7 +371,7 @@ sub _warn {
 # eval.  These evals don't count when looking at the stack backtrace.
 sub _longmess {
     my $message = Carp::longmess();
-    $message =~ s,eval[^\n]+(ModPerl|Apache)/Registry\w*\.pm.*,,s
+    $message =~ s,eval[^\n]+(ModPerl|Apache)/(?:Registry|Dispatch)\w*\.pm.*,,s
         if exists $ENV{MOD_PERL};
     return $message;
 }
@@ -465,17 +465,20 @@ END
   ;
 
   if ($mod_perl) {
-    require mod_perl;
-    if ($mod_perl::VERSION >= 1.99) {
+    my $r;
+    if ($ENV{MOD_PERL_API_VERSION} && $ENV{MOD_PERL_API_VERSION} == 2) {
       $mod_perl = 2;
-      require Apache::RequestRec;
-      require Apache::RequestIO;
-      require Apache::RequestUtil;
+      require Apache2::RequestRec;
+      require Apache2::RequestIO;
+      require Apache2::RequestUtil;
       require APR::Pool;
       require ModPerl::Util;
-      require Apache::Response;
+      require Apache2::Response;
+      $r = Apache2::RequestUtil->request;
     }
-    my $r = Apache->request;
+    else {
+      $r = Apache->request;
+    }
     # If bytes have already been sent, then
     # we print the message out directly.
     # Otherwise we make a custom error

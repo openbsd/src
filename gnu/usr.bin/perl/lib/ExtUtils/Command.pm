@@ -8,10 +8,11 @@ use File::Compare;
 use File::Basename;
 use File::Path qw(rmtree);
 require Exporter;
-use vars qw(@ISA @EXPORT $VERSION);
-@ISA     = qw(Exporter);
-@EXPORT  = qw(cp rm_f rm_rf mv cat eqtime mkpath touch test_f);
-$VERSION = '1.05';
+use vars qw(@ISA @EXPORT @EXPORT_OK $VERSION);
+@ISA       = qw(Exporter);
+@EXPORT    = qw(cp rm_f rm_rf mv cat eqtime mkpath touch test_f chmod 
+                dos2unix);
+$VERSION = '1.09';
 
 my $Is_VMS = $^O eq 'VMS';
 
@@ -21,16 +22,17 @@ ExtUtils::Command - utilities to replace common UNIX commands in Makefiles etc.
 
 =head1 SYNOPSIS
 
-  perl -MExtUtils::Command       -e cat files... > destination
-  perl -MExtUtils::Command       -e mv source... destination
-  perl -MExtUtils::Command       -e cp source... destination
-  perl -MExtUtils::Command       -e touch files...
-  perl -MExtUtils::Command       -e rm_f files...
-  perl -MExtUtils::Command       -e rm_rf directories...
-  perl -MExtUtils::Command       -e mkpath directories...
-  perl -MExtUtils::Command       -e eqtime source destination
-  perl -MExtUtils::Command       -e test_f file
-  perl -MExtUtils::Command=chmod -e chmod mode files...
+  perl -MExtUtils::Command  -e cat files... > destination
+  perl -MExtUtils::Command  -e mv source... destination
+  perl -MExtUtils::Command  -e cp source... destination
+  perl -MExtUtils::Command  -e touch files...
+  perl -MExtUtils::Command  -e rm_f files...
+  perl -MExtUtils::Command  -e rm_rf directories...
+  perl -MExtUtils::Command  -e mkpath directories...
+  perl -MExtUtils::Command  -e eqtime source destination
+  perl -MExtUtils::Command  -e test_f file
+  perl -MExtUtils::Command  -e chmod mode files...
+  ...
 
 =head1 DESCRIPTION
 
@@ -43,6 +45,8 @@ them easier to deal with in Makefiles.
 I<NOT>
 
   perl -MExtUtils::Command -e 'some_command qw(some files to work on)'
+
+For that use L<Shell::Command>.
 
 Filenames with * and ? will be glob expanded.
 
@@ -58,7 +62,9 @@ sub expand_wildcards
 }
 
 
-=item cat 
+=item cat
+
+    cat file ...
 
 Concatenates all files mentioned on command line to STDOUT.
 
@@ -70,9 +76,11 @@ sub cat ()
  print while (<>);
 }
 
-=item eqtime src dst
+=item eqtime
 
-Sets modified time of dst to that of src
+    eqtime source destination
+
+Sets modified time of destination to that of source.
 
 =cut 
 
@@ -83,9 +91,11 @@ sub eqtime
  utime((stat($src))[8,9],$dst);
 }
 
-=item rm_rf files....
+=item rm_rf
 
-Removes directories - recursively (even if readonly)
+    rm_rf files or directories ...
+
+Removes files and directories - recursively (even if readonly)
 
 =cut 
 
@@ -95,26 +105,44 @@ sub rm_rf
  rmtree([grep -e $_,@ARGV],0,0);
 }
 
-=item rm_f files....
+=item rm_f
+
+    rm_f file ...
 
 Removes files (even if readonly)
 
 =cut 
 
-sub rm_f
-{
- expand_wildcards();
- foreach (@ARGV)
-  {
-   next unless -f $_;
-   next if unlink($_);
-   chmod(0777,$_);
-   next if unlink($_);
-   carp "Cannot delete $_:$!";
-  }
+sub rm_f {
+    expand_wildcards();
+
+    foreach my $file (@ARGV) {
+        next unless -f $file;
+
+        next if _unlink($file);
+
+        chmod(0777, $file);
+
+        next if _unlink($file);
+
+        carp "Cannot delete $file: $!";
+    }
 }
 
-=item touch files ...
+sub _unlink {
+    my $files_unlinked = 0;
+    foreach my $file (@_) {
+        my $delete_count = 0;
+        $delete_count++ while unlink $file;
+        $files_unlinked++ if $delete_count;
+    }
+    return $files_unlinked;
+}
+
+
+=item touch
+
+    touch file ...
 
 Makes files exist, with current timestamp 
 
@@ -130,53 +158,94 @@ sub touch {
     }
 }
 
-=item mv source... destination
+=item mv
 
-Moves source to destination.
-Multiple sources are allowed if destination is an existing directory.
+    mv source_file destination_file
+    mv source_file source_file destination_dir
+
+Moves source to destination.  Multiple sources are allowed if
+destination is an existing directory.
+
+Returns true if all moves succeeded, false otherwise.
 
 =cut 
 
 sub mv {
-    my $dst = pop(@ARGV);
     expand_wildcards();
-    croak("Too many arguments") if (@ARGV > 1 && ! -d $dst);
-    foreach my $src (@ARGV) {
-        move($src,$dst);
+    my @src = @ARGV;
+    my $dst = pop @src;
+
+    croak("Too many arguments") if (@src > 1 && ! -d $dst);
+
+    my $nok = 0;
+    foreach my $src (@src) {
+        $nok ||= !move($src,$dst);
     }
+    return !$nok;
 }
 
-=item cp source... destination
+=item cp
 
-Copies source to destination.
-Multiple sources are allowed if destination is an existing directory.
+    cp source_file destination_file
+    cp source_file source_file destination_dir
+
+Copies sources to the destination.  Multiple sources are allowed if
+destination is an existing directory.
+
+Returns true if all copies succeeded, false otherwise.
 
 =cut
 
 sub cp {
-    my $dst = pop(@ARGV);
     expand_wildcards();
-    croak("Too many arguments") if (@ARGV > 1 && ! -d $dst);
-    foreach my $src (@ARGV) {
-        copy($src,$dst);
+    my @src = @ARGV;
+    my $dst = pop @src;
+
+    croak("Too many arguments") if (@src > 1 && ! -d $dst);
+
+    my $nok = 0;
+    foreach my $src (@src) {
+        $nok ||= !copy($src,$dst);
     }
+    return $nok;
 }
 
-=item chmod mode files...
+=item chmod
+
+    chmod mode files ...
 
 Sets UNIX like permissions 'mode' on all the files.  e.g. 0666
 
 =cut 
 
 sub chmod {
+    local @ARGV = @ARGV;
     my $mode = shift(@ARGV);
     expand_wildcards();
+
+    if( $Is_VMS ) {
+        foreach my $idx (0..$#ARGV) {
+            my $path = $ARGV[$idx];
+            next unless -d $path;
+
+            # chmod 0777, [.foo.bar] doesn't work on VMS, you have to do
+            # chmod 0777, [.foo]bar.dir
+            my @dirs = File::Spec->splitdir( $path );
+            $dirs[-1] .= '.dir';
+            $path = File::Spec->catfile(@dirs);
+
+            $ARGV[$idx] = $path;
+        }
+    }
+
     chmod(oct $mode,@ARGV) || die "Cannot chmod ".join(' ',$mode,@ARGV).":$!";
 }
 
-=item mkpath directory...
+=item mkpath
 
-Creates directory, including any parent directories.
+    mkpath directory ...
+
+Creates directories, including any parent directories.
 
 =cut 
 
@@ -186,7 +255,9 @@ sub mkpath
  File::Path::mkpath([@ARGV],0,0777);
 }
 
-=item test_f file
+=item test_f
+
+    test_f file
 
 Tests if a file exists
 
@@ -194,26 +265,55 @@ Tests if a file exists
 
 sub test_f
 {
- exit !-f shift(@ARGV);
+ exit !-f $ARGV[0];
 }
 
+=item dos2unix
 
-1;
-__END__ 
+    dos2unix files or dirs ...
+
+Converts DOS and OS/2 linefeeds to Unix style recursively.
+
+=cut
+
+sub dos2unix {
+    require File::Find;
+    File::Find::find(sub {
+        return if -d;
+        return unless -w _;
+        return unless -r _;
+        return if -B _;
+
+        local $\;
+
+	my $orig = $_;
+	my $temp = '.dos2unix_tmp';
+	open ORIG, $_ or do { warn "dos2unix can't open $_: $!"; return };
+	open TEMP, ">$temp" or 
+	    do { warn "dos2unix can't create .dos2unix_tmp: $!"; return };
+        while (my $line = <ORIG>) { 
+            $line =~ s/\015\012/\012/g;
+            print TEMP $line;
+        }
+	close ORIG;
+	close TEMP;
+	rename $temp, $orig;
+
+    }, @ARGV);
+}
 
 =back
 
-=head1 BUGS
-
-Should probably be Auto/Self loaded.
-
 =head1 SEE ALSO 
 
-ExtUtils::MakeMaker, ExtUtils::MM_Unix, ExtUtils::MM_Win32
+Shell::Command which is these same functions but take arguments normally.
+
 
 =head1 AUTHOR
 
-Nick Ing-Simmons <F<nick@ni-s.u-net.com>>.
+Nick Ing-Simmons C<ni-s@cpan.org>
+
+Currently maintained by Michael G Schwern C<schwern@pobox.com>.
 
 =cut
 

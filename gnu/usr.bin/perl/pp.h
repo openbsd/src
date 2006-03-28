@@ -1,7 +1,7 @@
 /*    pp.h
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
- *    2000, 2001, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, 2005 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -63,9 +63,12 @@ Refetch the stack pointer.  Used after a callback.  See L<perlcall>.
 #define MARK mark
 #define TARG targ
 
-#define PUSHMARK(p) if (++PL_markstack_ptr == PL_markstack_max)	\
-			markstack_grow();			\
-		    *PL_markstack_ptr = (p) - PL_stack_base
+#define PUSHMARK(p)	\
+	STMT_START {					\
+	    if (++PL_markstack_ptr == PL_markstack_max)	\
+	    markstack_grow();				\
+	    *PL_markstack_ptr = (p) - PL_stack_base;	\
+	} STMT_END
 
 #define TOPMARK		(*PL_markstack_ptr)
 #define POPMARK		(*PL_markstack_ptr--)
@@ -73,12 +76,11 @@ Refetch the stack pointer.  Used after a callback.  See L<perlcall>.
 #define dSP		register SV **sp = PL_stack_sp
 #define djSP		dSP
 #define dMARK		register SV **mark = PL_stack_base + POPMARK
-#define dORIGMARK	I32 origmark = mark - PL_stack_base
-#define SETORIGMARK	origmark = mark - PL_stack_base
+#define dORIGMARK	const I32 origmark = mark - PL_stack_base
 #define ORIGMARK	(PL_stack_base + origmark)
 
 #define SPAGAIN		sp = PL_stack_sp
-#define MSPAGAIN	sp = PL_stack_sp; mark = ORIGMARK
+#define MSPAGAIN	STMT_START { sp = PL_stack_sp; mark = ORIGMARK; } STMT_END
 
 #define GETTARGETSTACKED targ = (PL_op->op_flags & OPf_STACKED ? POPs : PAD_SV(PL_op->op_targ))
 #define dTARGETSTACKED SV * GETTARGETSTACKED
@@ -93,6 +95,9 @@ Refetch the stack pointer.  Used after a callback.  See L<perlcall>.
 
 #define NORMAL PL_op->op_next
 #define DIE return Perl_die
+#ifndef PERL_CORE
+#  define DIE_NULL return DieNull
+#endif
 
 /*
 =for apidoc Ams||PUTBACK
@@ -103,16 +108,13 @@ See C<PUSHMARK> and L<perlcall> for other uses.
 Pops an SV off the stack.
 
 =for apidoc Amn|char*|POPp
-Pops a string off the stack. Deprecated. New code should provide
-a STRLEN n_a and use POPpx.
+Pops a string off the stack. Deprecated. New code should use POPpx.
 
 =for apidoc Amn|char*|POPpx
 Pops a string off the stack.
-Requires a variable STRLEN n_a in scope.
 
 =for apidoc Amn|char*|POPpbytex
 Pops a string off the stack which must consist of bytes i.e. characters < 256.
-Requires a variable STRLEN n_a in scope.
 
 =for apidoc Amn|NV|POPn
 Pops a double off the stack.
@@ -133,8 +135,9 @@ Pops a long off the stack.
 
 #define POPs		(*sp--)
 #define POPp		(SvPVx(POPs, PL_na))		/* deprecated */
-#define POPpx		(SvPVx(POPs, n_a))
-#define POPpbytex	(SvPVbytex(POPs, n_a))
+#define POPpx		(SvPVx_nolen(POPs))
+#define POPpconstx	(SvPVx_nolen_const(POPs))
+#define POPpbytex	(SvPVbytex_nolen(POPs))
 #define POPn		(SvNVx(POPs))
 #define POPi		((IV)SvIVx(POPs))
 #define POPu		((UV)SvUVx(POPs))
@@ -149,7 +152,7 @@ Pops a long off the stack.
 #define TOPm1s		(*(sp-1))
 #define TOPp1s		(*(sp+1))
 #define TOPp		(SvPV(TOPs, PL_na))		/* deprecated */
-#define TOPpx		(SvPV(TOPs, n_a))
+#define TOPpx		(SvPV_nolen(TOPs))
 #define TOPn		(SvNV(TOPs))
 #define TOPi		((IV)SvIV(TOPs))
 #define TOPu		((UV)SvUV(TOPs))
@@ -290,8 +293,8 @@ and C<PUSHu>.
 			} } STMT_END
 
 /* Same thing, but update mark register too. */
-#define MEXTEND(p,n)	STMT_START {if (PL_stack_max - p < (int)(n)) {		\
-			    int markoff = mark - PL_stack_base;		\
+#define MEXTEND(p,n)	STMT_START {if (PL_stack_max - p < (int)(n)) {	\
+			    const int markoff = mark - PL_stack_base;	\
 			    sp = stack_grow(sp,p,(int) (n));		\
 			    mark = PL_stack_base + markoff;		\
 			} } STMT_END
@@ -408,7 +411,7 @@ and C<PUSHu>.
 #define tryAMAGICbinW(meth,assign,set) STMT_START { \
           if (PL_amagic_generation) { \
 	    SV* tmpsv; \
-	    SV* right= *(sp); SV* left= *(sp-1);\
+	    SV* const right= *(sp); SV* const left= *(sp-1);\
 	    if ((SvAMAGIC(left)||SvAMAGIC(right))&&\
 		(tmpsv=amagic_call(left, \
 				   right, \
@@ -445,17 +448,20 @@ and C<PUSHu>.
 #define tryAMAGICun(meth)	tryAMAGICunW(meth,SETsvUN,0,RETURN)
 #define tryAMAGICunSET(meth)	tryAMAGICunW(meth,SETs,0,RETURN)
 #define tryAMAGICunTARGET(meth, shift)					\
-	{ dSP; sp--; 	/* get TARGET from below PL_stack_sp */		\
+	STMT_START { dSP; sp--; 	/* get TARGET from below PL_stack_sp */		\
 	    { dTARGETSTACKED; 						\
-		{ dSP; tryAMAGICunW(meth,FORCE_SETs,shift,RETURN);}}}
+		{ dSP; tryAMAGICunW(meth,FORCE_SETs,shift,RETURN);}}} STMT_END
 
-#define setAGAIN(ref) sv = ref;							\
-  if (!SvROK(ref))								\
-      Perl_croak(aTHX_ "Overloaded dereference did not return a reference");	\
-  if (ref != arg && SvRV(ref) != SvRV(arg)) {					\
-      arg = ref;								\
-      goto am_again;								\
-  }
+#define setAGAIN(ref)	\
+    STMT_START {					\
+	sv = ref;					\
+	if (!SvROK(ref))				\
+	    Perl_croak(aTHX_ "Overloaded dereference did not return a reference");	\
+	if (ref != arg && SvRV(ref) != SvRV(arg)) {	\
+	    arg = ref;					\
+	    goto am_again;				\
+	}						\
+    } STMT_END
 
 #define tryAMAGICunDEREF(meth) tryAMAGICunW(meth,setAGAIN,0,(void)0)
 
@@ -477,7 +483,7 @@ and C<PUSHu>.
    changed SV* ref to SV* tmpRef */
 #define RvDEEPCP(rv) STMT_START { SV* tmpRef=SvRV(rv);      \
   if (SvREFCNT(tmpRef)>1) {                 \
-    SvRV(rv)=AMG_CALLun(rv,copy);	\
+    SvRV_set(rv, AMG_CALLun(rv,copy));	\
     SvREFCNT_dec(tmpRef);                   \
   } } STMT_END
 
@@ -487,3 +493,13 @@ True if this op will be the return value of an lvalue subroutine
 
 =cut */
 #define LVRET ((PL_op->op_private & OPpMAYBE_LVSUB) && is_lvalue_sub())
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ *
+ * ex: set ts=8 sts=4 sw=4 noet:
+ */

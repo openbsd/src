@@ -129,6 +129,18 @@ dl_load_file(filename,flags=0)
 	sv_setiv( ST(0), (IV)RETVAL);
   }
 
+int
+dl_unload_file(libref)
+    void *	libref
+  CODE:
+    DLDEBUG(1,PerlIO_printf(Perl_debug_log, "dl_unload_file(%lx):\n", PTR2ul(libref)));
+    RETVAL = FreeLibrary(libref);
+    if (!RETVAL)
+        SaveError(aTHX_ "unload_file:%s", OS_Error_String(aTHX)) ;
+    DLDEBUG(2,PerlIO_printf(Perl_debug_log, " retval = %d\n", RETVAL));
+  OUTPUT:
+    RETVAL
+
 void *
 dl_find_symbol(libhandle, symbolname)
     void *	libhandle

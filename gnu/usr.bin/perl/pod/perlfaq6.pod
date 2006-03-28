@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq6 - Regular Expressions ($Revision: 1.6 $, $Date: 2003/12/03 03:02:44 $)
+perlfaq6 - Regular Expressions
 
 =head1 DESCRIPTION
 
@@ -8,11 +8,13 @@ This section is surprisingly small because the rest of the FAQ is
 littered with answers involving regular expressions.  For example,
 decoding a URL and checking whether something is a number are handled
 with regular expressions, but those answers are found elsewhere in
-this document (in L<perlfaq9>: ``How do I decode or create those %-encodings
-on the web'' and L<perlfaq4>: ``How do I determine whether a scalar is
-a number/whole/integer/float'', to be precise).
+this document (in L<perlfaq9>: "How do I decode or create those %-encodings
+on the web" and L<perlfaq4>: "How do I determine whether a scalar is
+a number/whole/integer/float", to be precise).
 
 =head2 How can I hope to use regular expressions without creating illegible and unmaintainable code?
+X<regex, legibility> X<regexp, legibility>
+X<regular expression, legibility> X</x>
 
 Three techniques can make regular expressions maintainable and
 understandable.
@@ -69,6 +71,7 @@ delimiter within the pattern:
 =back
 
 =head2 I'm having trouble matching over more than one line.  What's wrong?
+X<regex, multiline> X<regexp, multiline> X<regular expression, multiline>
 
 Either you don't have more than one line in the string you're looking
 at (probably), or else you aren't using the correct modifier(s) on
@@ -121,6 +124,7 @@ Here's code that finds everything between START and END in a paragraph:
     }
 
 =head2 How can I pull out lines between two patterns that are themselves on different lines?
+X<..>
 
 You can use Perl's somewhat exotic C<..> operator (documented in
 L<perlop>):
@@ -146,6 +150,8 @@ Here's another example of using C<..>:
     }
 
 =head2 I put a regular expression into $/ but it didn't work. What's wrong?
+X<$/, regexes in> X<$INPUT_RECORD_SEPARATOR, regexes in>
+X<$RS, regexes in>
 
 Up to Perl 5.8.0, $/ has to be a string.  This may change in 5.10,
 but don't get your hopes up. Until then, you can use these examples
@@ -189,6 +195,8 @@ complete line (using your regular expression).
 
 
 =head2 How do I substitute case insensitively on the LHS while preserving case on the RHS?
+X<replace, case preserving> X<substitute, case preserving>
+X<substitution, case preserving> X<s, case preserving>
 
 Here's a lovely Perlish solution by Larry Rosler.  It exploits
 properties of bitwise xor on ASCII strings.
@@ -278,6 +286,7 @@ the case of the last character is used for the rest of the substitution.
     }
 
 =head2 How can I make C<\w> match national character sets?
+X<\w>
 
 Put C<use locale;> in your script.  The \w character class is taken
 from the current locale.
@@ -285,6 +294,7 @@ from the current locale.
 See L<perllocale> for details.
 
 =head2 How can I match a locale-smart version of C</[a-zA-Z]/>?
+X<alpha>
 
 You can use the POSIX character class syntax C</[[:alpha:]]/>
 documented in L<perlre>.
@@ -296,6 +306,7 @@ the non-alphabetics, is then everything in \W along with
 the digits and the underscore, or C</[\W\d_]/>.
 
 =head2 How can I quote a variable to use in a regex?
+X<regex, escaping> X<regexp, escaping> X<regular expression, escaping>
 
 The Perl parser will expand $variable and @variable references in
 regular expressions unless the delimiter is a single quote.  Remember,
@@ -326,6 +337,7 @@ The use of C<\Q> causes the <.> in the regex to be treated as a
 regular character, so that C<P.> matches a C<P> followed by a dot.
 
 =head2 What is C</o> really for?
+X</o>
 
 Using a variable in a regular expression match forces a re-evaluation
 (and perhaps recompilation) each time the regular expression is
@@ -414,6 +426,8 @@ A slight modification also removes C++ comments:
     s#/\*[^*]*\*+([^/*][^*]*\*+)*/|//[^\n]*|("(\\.|[^"\\])*"|'(\\.|[^'\\])*'|.[^/"'\\]*)#defined $2 ? $2 : ""#gse;
 
 =head2 Can I use Perl regular expressions to match balanced text?
+X<regex, matching balanced test> X<regexp, matching balanced test>
+X<regular expression, matching balanced test>
 
 Historically, Perl regular expressions were not capable of matching
 balanced text.  As of more recent versions of perl including 5.6.1
@@ -442,6 +456,7 @@ The C::Scan module from CPAN also contains such subs for internal use,
 but they are undocumented.
 
 =head2 What does it mean that regexes are greedy?  How can I get around it?
+X<greedy> X<greediness>
 
 Most people mean that greedy regexes match as much as they can.
 Technically speaking, it's actually the quantifiers (C<?>, C<*>, C<+>,
@@ -462,6 +477,7 @@ control on to whatever is next in line, like you would if you were
 playing hot potato.
 
 =head2 How do I process each word on each line?
+X<word>
 
 Use the split function:
 
@@ -509,83 +525,152 @@ regular expression:
 	print "$count $line";
     }
 
-If you want these output in a sorted order, see L<perlfaq4>: ``How do I
-sort a hash (optionally by value instead of key)?''.
+If you want these output in a sorted order, see L<perlfaq4>: "How do I
+sort a hash (optionally by value instead of key)?".
 
 =head2 How can I do approximate matching?
+X<match, approximate> X<matching, approximate>
 
 See the module String::Approx available from CPAN.
 
 =head2 How do I efficiently match many regular expressions at once?
+X<regex, efficiency> X<regexp, efficiency>
+X<regular expression, efficiency>
 
-The following is extremely inefficient:
+( contributed by brian d foy )
 
-    # slow but obvious way
-    @popstates = qw(CO ON MI WI MN);
-    while (defined($line = <>)) {
-	for $state (@popstates) {
-	    if ($line =~ /\b$state\b/i) {
-		print $line;
-		last;
-	    }
-	}
-    }
+Avoid asking Perl to compile a regular expression every time
+you want to match it.  In this example, perl must recompile
+the regular expression for every iteration of the foreach()
+loop since it has no way to know what $pattern will be.
 
-That's because Perl has to recompile all those patterns for each of
-the lines of the file.  As of the 5.005 release, there's a much better
-approach, one which makes use of the new C<qr//> operator:
+    @patterns = qw( foo bar baz );
 
-    # use spiffy new qr// operator, with /i flag even
-    use 5.005;
-    @popstates = qw(CO ON MI WI MN);
-    @poppats   = map { qr/\b$_\b/i } @popstates;
-    while (defined($line = <>)) {
-	for $patobj (@poppats) {
-	    print $line if $line =~ /$patobj/;
-	}
-    }
+    LINE: while( <> )
+    	{
+		foreach $pattern ( @patterns )
+			{
+	    	print if /\b$pattern\b/i;
+	    	next LINE;
+	   		}
+		}
+
+The qr// operator showed up in perl 5.005.  It compiles a
+regular expression, but doesn't apply it.  When you use the
+pre-compiled version of the regex, perl does less work. In
+this example, I inserted a map() to turn each pattern into
+its pre-compiled form.  The rest of the script is the same,
+but faster.
+
+    @patterns = map { qr/\b$_\b/i } qw( foo bar baz );
+
+    LINE: while( <> )
+    	{
+		foreach $pattern ( @patterns )
+			{
+	    	print if /\b$pattern\b/i;
+	    	next LINE;
+	   		}
+		}
+
+In some cases, you may be able to make several patterns into
+a single regular expression.  Beware of situations that require
+backtracking though.
+
+	$regex = join '|', qw( foo bar baz );
+
+    LINE: while( <> )
+    	{
+		print if /\b(?:$regex)\b/i;
+		}
+
+For more details on regular expression efficiency, see Mastering
+Regular Expressions by Jeffrey Freidl.  He explains how regular
+expressions engine work and why some patterns are surprisingly
+inefficient.  Once you understand how perl applies regular
+expressions, you can tune them for individual situations.
 
 =head2 Why don't word-boundary searches with C<\b> work for me?
+X<\b>
 
-Two common misconceptions are that C<\b> is a synonym for C<\s+> and
-that it's the edge between whitespace characters and non-whitespace
-characters.  Neither is correct.  C<\b> is the place between a C<\w>
-character and a C<\W> character (that is, C<\b> is the edge of a
-"word").  It's a zero-width assertion, just like C<^>, C<$>, and all
-the other anchors, so it doesn't consume any characters.  L<perlre>
-describes the behavior of all the regex metacharacters.
+(contributed by brian d foy)
 
-Here are examples of the incorrect application of C<\b>, with fixes:
+Ensure that you know what \b really does: it's the boundary between a
+word character, \w, and something that isn't a word character. That
+thing that isn't a word character might be \W, but it can also be the
+start or end of the string.
 
-    "two words" =~ /(\w+)\b(\w+)/;	    # WRONG
-    "two words" =~ /(\w+)\s+(\w+)/;	    # right
+It's not (not!) the boundary between whitespace and non-whitespace,
+and it's not the stuff between words we use to create sentences.
 
-    " =matchless= text" =~ /\b=(\w+)=\b/;   # WRONG
-    " =matchless= text" =~ /=(\w+)=/;       # right
+In regex speak, a word boundary (\b) is a "zero width assertion",
+meaning that it doesn't represent a character in the string, but a
+condition at a certain position.
 
-Although they may not do what you thought they did, C<\b> and C<\B>
-can still be quite useful.  For an example of the correct use of
-C<\b>, see the example of matching duplicate words over multiple
-lines.
+For the regular expression, /\bPerl\b/, there has to be a word
+boundary before the "P" and after the "l".  As long as something other
+than a word character precedes the "P" and succeeds the "l", the
+pattern will match. These strings match /\bPerl\b/.
 
-An example of using C<\B> is the pattern C<\Bis\B>.  This will find
-occurrences of "is" on the insides of words only, as in "thistle", but
-not "this" or "island".
+	"Perl"    # no word char before P or after l
+	"Perl "   # same as previous (space is not a word char)
+	"'Perl'"  # the ' char is not a word char
+	"Perl's"  # no word char before P, non-word char after "l"
+
+These strings do not match /\bPerl\b/.
+
+	"Perl_"   # _ is a word char!
+	"Perler"  # no word char before P, but one after l
+
+You don't have to use \b to match words though.  You can look for
+non-word characters surrounded by word characters.  These strings
+match the pattern /\b'\b/.
+
+	"don't"   # the ' char is surrounded by "n" and "t"
+	"qep'a'"  # the ' char is surrounded by "p" and "a"
+
+These strings do not match /\b'\b/.
+
+	"foo'"    # there is no word char after non-word '
+
+You can also use the complement of \b, \B, to specify that there
+should not be a word boundary.
+
+In the pattern /\Bam\B/, there must be a word character before the "a"
+and after the "m". These patterns match /\Bam\B/:
+
+	"llama"   # "am" surrounded by word chars
+	"Samuel"  # same
+
+These strings do not match /\Bam\B/
+
+	"Sam"      # no word boundary before "a", but one after "m"
+	"I am Sam" # "am" surrounded by non-word chars
+
 
 =head2 Why does using $&, $`, or $' slow my program down?
+X<$MATCH> X<$&> X<$POSTMATCH> X<$'> X<$PREMATCH> X<$`>
 
-Once Perl sees that you need one of these variables anywhere in
-the program, it provides them on each and every pattern match.
-The same mechanism that handles these provides for the use of $1, $2,
-etc., so you pay the same price for each regex that contains capturing
-parentheses.  If you never use $&, etc., in your script, then regexes
-I<without> capturing parentheses won't be penalized. So avoid $&, $',
-and $` if you can, but if you can't, once you've used them at all, use
-them at will because you've already paid the price.  Remember that some
-algorithms really appreciate them.  As of the 5.005 release.  the $&
-variable is no longer "expensive" the way the other two are.
+(contributed by Anno Siegel)
+
+Once Perl sees that you need one of these variables anywhere in the
+program, it provides them on each and every pattern match. That means
+that on every pattern match the entire string will be copied, part of it
+to $`, part to $&, and part to $'. Thus the penalty is most severe with
+long strings and patterns that match often. Avoid $&, $', and $` if you
+can, but if you can't, once you've used them at all, use them at will
+because you've already paid the price. Remember that some algorithms
+really appreciate them. As of the 5.005 release, the $& variable is no
+longer "expensive" the way the other two are.
+
+Since Perl 5.6.1 the special variables @- and @+ can functionally replace
+$`, $& and $'.  These arrays contain pointers to the beginning and end
+of each match (see perlvar for the full story), so they give you
+essentially the same information, but without the risk of excessive
+string copying.
 
 =head2 What good is C<\G> in a regular expression?
+X<\G>
 
 You use the C<\G> anchor to start the next match on the same
 string where the last match left off.  The regular
@@ -679,6 +764,7 @@ match starts at the same position to try a different
 pattern.
 
 =head2 Are Perl regexes DFAs or NFAs?  Are they POSIX compliant?
+X<DFA> X<NFA> X<POSIX>
 
 While it's true that Perl's regular expressions resemble the DFAs
 (deterministic finite automata) of the egrep(1) program, they are in
@@ -692,6 +778,7 @@ hope to know on these matters (a full citation appears in
 L<perlfaq2>).
 
 =head2 What's wrong with using grep in a void context?
+X<grep>
 
 The problem is that grep builds a return list, regardless of the context.
 This means you're making Perl go to the trouble of building a list that
@@ -704,6 +791,8 @@ But since 5.8.1, this has been fixed, and map is context aware - in void
 context, no lists are constructed.
 
 =head2 How can I match strings with multibyte characters?
+X<regex, and multibyte characters> X<regexp, and multibyte characters>
+X<regular expression, and multibyte characters>
 
 Starting from Perl 5.6 Perl has had some level of multibyte character
 support.  Perl 5.8 or later is recommended.  Supported multibyte
@@ -737,7 +826,7 @@ looks like it is because "SG" is next to "XX", but there's no real
 
 Here are a few ways, all painful, to deal with it:
 
-   $martian =~ s/([A-Z][A-Z])/ $1 /g; # Make sure adjacent ``martian''
+   $martian =~ s/([A-Z][A-Z])/ $1 /g; # Make sure adjacent "martian"
                                       # bytes are no longer adjacent.
    print "found GX!\n" if $martian =~ /GX/;
 
@@ -784,9 +873,9 @@ a valid regular expression, trap the exception this way:
 
     if (eval { $line =~ /$pattern/ }) { }
 
-If all you really want to search for a string, not a pattern,
+If all you really want is to search for a string, not a pattern,
 then you should either use the index() function, which is made for
-string searching, or if you can't be disabused of using a pattern
+string searching, or, if you can't be disabused of using a pattern
 match on a non-pattern, then be sure to use C<\Q>...C<\E>, documented
 in L<perlre>.
 
@@ -800,8 +889,8 @@ in L<perlre>.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2002 Tom Christiansen and Nathan Torkington.
-All rights reserved.
+Copyright (c) 1997-2006 Tom Christiansen, Nathan Torkington, and
+other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it
 under the same terms as Perl itself.

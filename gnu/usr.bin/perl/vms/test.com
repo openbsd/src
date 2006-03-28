@@ -60,7 +60,12 @@ $   EndIf
 $!
 $!  Pick up a copy of perl to use for the tests
 $   If F$Search("Perl.").nes."" Then Delete/Log/NoConfirm Perl.;*
-$   Copy/Log/NoConfirm [-]'ndbg'Perl'exe' []Perl.
+$   If PERL_TEST_DRIVER .eqs. "minitest"
+$   Then
+$       Copy/Log/NoConfirm [-]miniperl'exe' []Perl.
+$   Else
+$       Copy/Log/NoConfirm [-]'ndbg'Perl'exe' []Perl.
+$   EndIf
 $!
 $!  Pick up a copy of vmspipe.com to use for the tests
 $   If F$Search("VMSPIPE.COM").nes."" then Delete/Log/Noconfirm VMSPIPE.COM;*
@@ -76,7 +81,12 @@ $   testdir = "Directory/NoHead/NoTrail/Column=1"
 $   PerlShr_filespec = f$parse("Sys$Disk:[-]''dbg'PerlShr''exe'")
 $   Define 'dbg'Perlshr 'PerlShr_filespec'
 $   If F$Mode() .nes. "INTERACTIVE" Then Define/Nolog PERL_SKIP_TTY_TEST 1
-$   MCR Sys$Disk:[]Perl. "-I[-.lib]" 'PERL_TEST_DRIVER' "''p3'" "''p4'" "''p5'" "''p6'" "''p7'"
+$   If PERL_TEST_DRIVER .eqs. "minitest"
+$   Then
+$       MCR Sys$Disk:[]Perl. TEST. "-minitest" "base/*.t" "comp/*.t" "cmd/*.t" "run/*.t" "io/*.t" "op/*.t" "uni/*.t"
+$   Else
+$       MCR Sys$Disk:[]Perl. "-I[-.lib]" 'PERL_TEST_DRIVER' "''p3'" "''p4'" "''p5'" "''p6'" "''p7'"
+$   EndIf
 $   goto wrapup
 $!
 $ Control_Y_exit:

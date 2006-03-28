@@ -234,6 +234,11 @@ The benefit of using C<-Mlib=/foo> over C<-I/foo>, is that the former
 will automagically remove any duplicated directories, while the later
 will not.
 
+Note that if a tainted string is added to C<@INC>, the following
+problem will be reported:
+
+  Insecure dependency in require while running with -T switch
+
 =head2 Cleaning Up Your Path
 
 For "Insecure C<$ENV{PATH}>" messages, you need to set C<$ENV{'PATH'}> to

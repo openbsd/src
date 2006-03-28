@@ -30,6 +30,8 @@ POD = \
 	perl584delta.pod	\
 	perl585delta.pod	\
 	perl586delta.pod	\
+	perl587delta.pod	\
+	perl588delta.pod	\
 	perl58delta.pod	\
 	perlapi.pod	\
 	perlapio.pod	\
@@ -66,6 +68,7 @@ POD = \
 	perlfork.pod	\
 	perlform.pod	\
 	perlfunc.pod	\
+	perlglossary.pod	\
 	perlgpl.pod	\
 	perlguts.pod	\
 	perlhack.pod	\
@@ -132,6 +135,8 @@ MAN = \
 	perl584delta.man	\
 	perl585delta.man	\
 	perl586delta.man	\
+	perl587delta.man	\
+	perl588delta.man	\
 	perl58delta.man	\
 	perlapi.man	\
 	perlapio.man	\
@@ -168,6 +173,7 @@ MAN = \
 	perlfork.man	\
 	perlform.man	\
 	perlfunc.man	\
+	perlglossary.man	\
 	perlgpl.man	\
 	perlguts.man	\
 	perlhack.man	\
@@ -234,6 +240,8 @@ HTML = \
 	perl584delta.html	\
 	perl585delta.html	\
 	perl586delta.html	\
+	perl587delta.html	\
+	perl588delta.html	\
 	perl58delta.html	\
 	perlapi.html	\
 	perlapio.html	\
@@ -270,6 +278,7 @@ HTML = \
 	perlfork.html	\
 	perlform.html	\
 	perlfunc.html	\
+	perlglossary.html	\
 	perlgpl.html	\
 	perlguts.html	\
 	perlhack.html	\
@@ -336,6 +345,8 @@ TEX = \
 	perl584delta.tex	\
 	perl585delta.tex	\
 	perl586delta.tex	\
+	perl587delta.tex	\
+	perl588delta.tex	\
 	perl58delta.tex	\
 	perlapi.tex	\
 	perlapio.tex	\
@@ -372,6 +383,7 @@ TEX = \
 	perlfork.tex	\
 	perlform.tex	\
 	perlfunc.tex	\
+	perlglossary.tex	\
 	perlgpl.tex	\
 	perlguts.tex	\
 	perlhack.tex	\

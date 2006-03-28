@@ -564,7 +564,13 @@ $useEXTBRE =~ s/[^<>wWyB]//g; # gawk RE's handle these
 my $doAutoPrint = 1;          # automatic printing of pattern space (-n => 0)
 my $doOpenWrite = 1;          # open w command output files at start (-a => 0)
 my $svOpenWrite = 0;          # save $doOpenWrite
-my $doGenerate  = $0 eq 's2p';
+
+# lower case $0 below as a VMSism.  The VMS build procedure creates the
+# s2p file traditionally in upper case on the disk.  When VMS is in a
+# case preserved or case sensitive mode, $0 will be returned in the exact
+# case which will be on the disk, and that is not predictable at this time.
+
+my $doGenerate  = lc($0) eq 's2p';
 
 # Collected and compiled script
 #
@@ -2046,9 +2052,9 @@ way you wish, provided you do not restrict others from doing the same.
 close OUT or die "Can't close $file: $!";
 chmod 0755, $file or die "Can't reset permissions for $file: $!\n";
 unlink 'psed';
-print "Linking s2p to psed.\n";
+print "Linking $file to psed.\n";
 if (defined $Config{d_link}) {
-  link 's2p', 'psed';
+  link $file, 'psed';
 } else {
   unshift @INC, '../lib';
   require File::Copy;

@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..30\n";
+print "1..31\n";
 
 @foo = (1, 2, 3, 4);
 if ($foo[0] == 1 && $foo[3] == 4) {print "ok 1\n";} else {print "not ok 1\n";}
@@ -95,4 +95,8 @@ for ($x = 0; $x < 3; $x++) {
     @b = (30, scalar @h{()});
     print "not " if join(':',@b) ne '30:';
     print "ok 30\n";
+
+    my $size = scalar(()[1..1]);
+    print "not " if $size != 0;
+    print "ok 31\n";
 }

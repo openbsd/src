@@ -94,7 +94,7 @@ To find how (UCS-2|UTF-(16|32))(LE|BE)? differ from one another,
 see L<Encode::Unicode>. 
 
 UTF-7 is a special encoding which "re-encodes" UTF-16BE into a 7-bit
-encoding.  It is implemeneted seperately by Encode::Unicode::UTF7.
+encoding.  It is implemented seperately by Encode::Unicode::UTF7.
 
 =head2 Encode::Byte -- Extended ASCII
 
@@ -834,7 +834,7 @@ The glossary of this document is based upon this site.
 
 L<http://czyborra.com/>
 
-Contains a a lot of useful information, especially gory details of ISO
+Contains a lot of useful information, especially gory details of ISO
 vs. vendor mappings.
 
 =item CJK.inf

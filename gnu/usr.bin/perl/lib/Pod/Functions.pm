@@ -27,13 +27,13 @@ It exports the following variables:
 
 =item %Kinds
 
-This holds a hash-of-lists. Each list contains the functions in the catagory
+This holds a hash-of-lists. Each list contains the functions in the category
 the key denotes.
 
 =item %Type
 
-In this hash each key represents a function and the value is the catagory.
-The catagory can be a comma separated list.
+In this hash each key represents a function and the value is the category.
+The category can be a comma separated list.
 
 =item %Flavor
 
@@ -42,12 +42,12 @@ description of that function.
 
 =item %Type_Description
 
-In this hash each key represents a catagory of functions and the value is 
-a short description of that catagory.
+In this hash each key represents a category of functions and the value is 
+a short description of that category.
 
 =item @Type_Order
 
-This list of catagories is used to produce the same order as the
+This list of categories is used to produce the same order as the
 L<perlfunc/"Perl Functions by Category"> section.
 
 =back
@@ -67,7 +67,7 @@ L<perlfunc/"Perl Functions by Category"> section.
 
 =cut
 
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 
 require Exporter;
 

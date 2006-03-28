@@ -18,26 +18,13 @@ BEGIN {
 sub do_not_edit ($)
 {
     my $file = shift;
-    
-    my $years;
 
-    if ($file eq 'embed.h') {
-        $years = '1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004';
-    } elsif ($file eq 'embedvar.h') {
-        $years = '1999, 2000, 2001, 2002, 2003, 2004';
-    } elsif ($file eq 'global.sym') {
-        $years = '1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004';
-    } elsif ($file eq 'perlapi.c') {
-        $years = '1999, 2000, 2001';
-    } elsif ($file eq 'perlapi.h') {
-        $years = '1999, 2000, 2001, 2002, 2003, 2004';
-    } elsif ($file eq 'proto.h') {
-        $years = '1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004';
-    }
+    my $years = '1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006';
 
     $years =~ s/1999,/1999,\n  / if length $years > 40;
 
     my $warning = <<EOW;
+ -*- buffer-read-only: t -*-
 
    $file
 
@@ -93,8 +80,9 @@ sub walk_table (&@) {
 	$F = $filename;
     }
     else {
-	safer_unlink $filename;
+	safer_unlink $filename if $filename ne '/dev/null';
 	open F, ">$filename" or die "Can't open $filename: $!";
+	binmode F;
 	$F = \*F;
     }
     print $F $leader if $leader;
@@ -106,6 +94,7 @@ sub walk_table (&@) {
 	    $_ .= <IN>;
 	    chomp;
 	}
+	s/\s+$//;
 	my @args;
 	if (/^\s*(#|$)/) {
 	    @args = $_;
@@ -113,8 +102,8 @@ sub walk_table (&@) {
 	else {
 	    @args = split /\s*\|\s*/, $_;
 	}
-        my @outs = &{$function}(@args);
-        print $F @outs; # $function->(@args) is not 5.003
+	my @outs = &{$function}(@args);
+	print $F @outs; # $function->(@args) is not 5.003
     }
     print $F $trailer if $trailer;
     unless (ref $filename) {
@@ -125,14 +114,14 @@ sub walk_table (&@) {
 sub munge_c_files () {
     my $functions = {};
     unless (@ARGV) {
-        warn "\@ARGV empty, nothing to do\n";
+	warn "\@ARGV empty, nothing to do\n";
 	return;
     }
     walk_table {
 	if (@_ > 1) {
 	    $functions->{$_[2]} = \@_ if $_[@_-1] =~ /\.\.\./;
 	}
-    } '/dev/null', '';
+    } '/dev/null', '', '';
     local $^I = '.bak';
     while (<>) {
 #	if (/^#\s*include\s+"perl.h"/) {
@@ -184,6 +173,8 @@ sub write_protos {
     }
     else {
 	my ($flags,$retval,$func,@args) = @_;
+	my @nonnull;
+	my $has_context = ( $flags !~ /n/ );
 	$ret .= '/* ' if $flags =~ /m/;
 	if ($flags =~ /s/) {
 	    $retval = "STATIC $retval";
@@ -196,27 +187,63 @@ sub write_protos {
 	    }
 	}
 	$ret .= "$retval\t$func(";
-	unless ($flags =~ /n/) {
-	    $ret .= "pTHX";
-	    $ret .= "_ " if @args;
+	if ( $has_context ) {
+	    $ret .= @args ? "pTHX_ " : "pTHX";
 	}
 	if (@args) {
+	    my $n;
+	    for my $arg ( @args ) {
+		++$n;
+		if ( $arg =~ /\*/ && $arg !~ /\b(NN|NULLOK)\b/ ) {
+		    warn "$func: $arg needs NN or NULLOK\n";
+		    our $unflagged_pointers;
+		    ++$unflagged_pointers;
+		}
+		# Given the bugs fixed by changes 25822 and 26253, for now
+		# strip NN with no effect, until I'm confident that there are
+		# no similar bugs lurking.
+		# push( @nonnull, $n ) if ( $arg =~ s/\s*\bNN\b\s+// );
+		$arg =~ s/\s*\bNN\b\s+//;
+
+		$arg =~ s/\s*\bNULLOK\b\s+//; # strip NULLOK with no effect
+	    }
 	    $ret .= join ", ", @args;
 	}
 	else {
-	    $ret .= "void" if $flags =~ /n/;
+	    $ret .= "void" if !$has_context;
 	}
 	$ret .= ")";
-	$ret .= " __attribute__((noreturn))" if $flags =~ /r/;
+	my @attrs;
+	if ( $flags =~ /r/ ) {
+	    push @attrs, "__attribute__noreturn__";
+	}
+	if ( $flags =~ /a/ ) {
+	    push @attrs, "__attribute__malloc__";
+	    $flags .= "R"; # All allocing must check return value
+	}
+	if ( $flags =~ /R/ ) {
+	    push @attrs, "__attribute__warn_unused_result__";
+	}
+	if ( $flags =~ /P/ ) {
+	    push @attrs, "__attribute__pure__";
+	}
 	if( $flags =~ /f/ ) {
-	    my $prefix = $flags =~ /n/ ? '' : 'pTHX_';
+	    my $prefix = $has_context ? 'pTHX_' : '';
 	    my $args = scalar @args;
-	    $ret .= sprintf "\n\t__attribute__format__(__printf__,%s%d,%s%d)",
+	    push @attrs, sprintf "__attribute__format__(__printf__,%s%d,%s%d)",
 				    $prefix, $args - 1, $prefix, $args;
+	}
+	if ( @nonnull ) {
+	    my @pos = map { $has_context ? "pTHX_$_" : $_ } @nonnull;
+	    push @attrs, map { sprintf( "__attribute__nonnull__(%s)", $_ ) } @pos;
+	}
+	if ( @attrs ) {
+	    $ret .= "\n";
+	    $ret .= join( "\n", map { "\t\t\t$_" } @attrs );
 	}
 	$ret .= ";";
 	$ret .= ' */' if $flags =~ /m/;
-	$ret .= "\n";
+	$ret .= @attrs ? "\n\n" : "\n";
     }
     $ret;
 }
@@ -235,20 +262,22 @@ sub write_global_sym {
     $ret;
 }
 
-walk_table(\&write_protos,     "proto.h", undef);
-walk_table(\&write_global_sym, "global.sym", undef);
+our $unflagged_pointers;
+walk_table(\&write_protos,     "proto.h", undef, "/* ex: set ro: */\n");
+warn "$unflagged_pointers pointer arguments to clean up\n" if $unflagged_pointers;
+walk_table(\&write_global_sym, "global.sym", undef, "# ex: set ro:\n");
 
 # XXX others that may need adding
 #       warnhook
 #       hints
 #       copline
 my @extvars = qw(sv_undef sv_yes sv_no na dowarn
-                 curcop compiling
-                 tainting tainted stack_base stack_sp sv_arenaroot
+		 curcop compiling
+		 tainting tainted stack_base stack_sp sv_arenaroot
 		 no_modify
-                 curstash DBsub DBsingle debstash
-                 rsfp
-                 stdingv
+		 curstash DBsub DBsingle debstash
+		 rsfp
+		 stdingv
 		 defgv
 		 errgv
 		 rsfp_filters
@@ -338,6 +367,7 @@ sub multoff ($$) {
 
 safer_unlink 'embed.h';
 open(EM, '> embed.h') or die "Can't create embed.h: $!\n";
+binmode EM;
 
 print EM do_not_edit ("embed.h"), <<'END';
 
@@ -355,8 +385,19 @@ print EM do_not_edit ("embed.h"), <<'END';
 
 END
 
+# Try to elimiate lots of repeated
+# #ifdef PERL_CORE
+# foo
+# #endif
+# #ifdef PERL_CORE
+# bar
+# #endif
+# by tracking state and merging foo and bar into one block.
+my $ifdef_state = '';
+
 walk_table {
     my $ret = "";
+    my $new_ifdef_state = '';
     if (@_ == 1) {
 	my $arg = shift;
 	$ret .= "$arg\n" if $arg =~ /^#\s*(if|ifn?def|else|endif)\b/;
@@ -373,14 +414,30 @@ walk_table {
 	}
 	if ($ret ne '' && $flags !~ /A/) {
 	    if ($flags =~ /E/) {
-		$ret = "#if defined(PERL_CORE) || defined(PERL_EXT)\n$ret#endif\n";
-	    } else {
-		$ret = "#ifdef PERL_CORE\n$ret#endif\n";
+		$new_ifdef_state
+		    = "#if defined(PERL_CORE) || defined(PERL_EXT)\n";
+	    }
+	    else {
+		$new_ifdef_state = "#ifdef PERL_CORE\n";
+	    }
+
+	    if ($new_ifdef_state ne $ifdef_state) {
+		$ret = $new_ifdef_state . $ret;
 	    }
         }
     }
+    if ($ifdef_state && $new_ifdef_state ne $ifdef_state) {
+	# Close the old one ahead of opening the new one.
+	$ret = "#endif\n$ret";
+    }
+    # Remember the new state.
+    $ifdef_state = $new_ifdef_state;
     $ret;
 } \*EM, "";
+
+if ($ifdef_state) {
+    print EM "#endif\n";
+}
 
 for $sym (sort keys %ppsym) {
     $sym =~ s/^Perl_//;
@@ -395,8 +452,10 @@ END
 
 my @az = ('a'..'z');
 
+$ifdef_state = '';
 walk_table {
     my $ret = "";
+    my $new_ifdef_state = '';
     if (@_ == 1) {
 	my $arg = shift;
 	$ret .= "$arg\n" if $arg =~ /^#\s*(if|ifn?def|else|endif)\b/;
@@ -431,16 +490,32 @@ walk_table {
 		$ret .= $alist . ")\n";
 	    }
 	}
-         unless ($flags =~ /A/) {
+	unless ($flags =~ /A/) {
 	    if ($flags =~ /E/) {
-		$ret = "#if defined(PERL_CORE) || defined(PERL_EXT)\n$ret#endif\n";
-	    } else {
-		$ret = "#ifdef PERL_CORE\n$ret#endif\n";
+		$new_ifdef_state
+		    = "#if defined(PERL_CORE) || defined(PERL_EXT)\n";
+	    }
+	    else {
+		$new_ifdef_state = "#ifdef PERL_CORE\n";
+	    }
+
+	    if ($new_ifdef_state ne $ifdef_state) {
+		$ret = $new_ifdef_state . $ret;
 	    }
         }
     }
+    if ($ifdef_state && $new_ifdef_state ne $ifdef_state) {
+	# Close the old one ahead of opening the new one.
+	$ret = "#endif\n$ret";
+    }
+    # Remember the new state.
+    $ifdef_state = $new_ifdef_state;
     $ret;
 } \*EM, "";
+
+if ($ifdef_state) {
+    print EM "#endif\n";
+}
 
 for $sym (sort keys %ppsym) {
     $sym =~ s/^Perl_//;
@@ -540,6 +615,7 @@ print EM <<'END';
 #  define Perl_sv_setpvf_mg_nocontext	Perl_sv_setpvf_mg
 #endif
 
+/* ex: set ro: */
 END
 
 close(EM) or die "Error closing EM: $!";
@@ -547,6 +623,7 @@ close(EM) or die "Error closing EM: $!";
 safer_unlink 'embedvar.h';
 open(EM, '> embedvar.h')
     or die "Can't create embedvar.h: $!\n";
+binmode EM;
 
 print EM do_not_edit ("embedvar.h"), <<'END';
 
@@ -678,6 +755,8 @@ for $sym (sort @extvars) {
 print EM <<'END';
 
 #endif /* PERL_POLLUTE */
+
+/* ex: set ro: */
 END
 
 close(EM) or die "Error closing EM: $!";
@@ -685,7 +764,9 @@ close(EM) or die "Error closing EM: $!";
 safer_unlink 'perlapi.h';
 safer_unlink 'perlapi.c';
 open(CAPI, '> perlapi.c') or die "Can't create perlapi.c: $!\n";
+binmode CAPI;
 open(CAPIH, '> perlapi.h') or die "Can't create perlapi.h: $!\n";
+binmode CAPIH;
 
 print CAPIH do_not_edit ("perlapi.h"), <<'EOT';
 
@@ -742,9 +823,26 @@ EXT void *PL_force_link_funcs[] = {
 #define PERLVARI(v,t,i)	PERLVAR(v,t)
 #define PERLVARIC(v,t,i) PERLVAR(v,t)
 
+/* In Tru64 (__DEC && __osf__) the cc option -std1 causes that one
+ * cannot cast between void pointers and function pointers without
+ * info level warnings.  The PL_force_link_funcs[] would cause a few
+ * hundred of those warnings.  In code one can circumnavigate this by using
+ * unions that overlay the different pointers, but in declarations one
+ * cannot use this trick.  Therefore we just disable the warning here
+ * for the duration of the PL_force_link_funcs[] declaration. */
+
+#if defined(__DECC) && defined(__osf__)
+#pragma message save
+#pragma message disable (nonstandcast)
+#endif
+
 #include "thrdvar.h"
 #include "intrpvar.h"
 #include "perlvars.h"
+
+#if defined(__DECC) && defined(__osf__)
+#pragma message restore
+#endif
 
 #undef PERLVAR
 #undef PERLVARA
@@ -780,6 +878,7 @@ print CAPIH <<'EOT';
 
 #endif /* __perlapi_h__ */
 
+/* ex: set ro: */
 EOT
 close CAPIH or die "Error closing CAPIH: $!";
 
@@ -829,6 +928,8 @@ START_EXTERN_C
 END_EXTERN_C
 
 #endif /* MULTIPLICITY */
+
+/* ex: set ro: */
 EOT
 
 close(CAPI) or die "Error closing CAPI: $!";
@@ -853,3 +954,5 @@ my %vfuncs = qw(
     Perl_dump_indent		Perl_dump_vindent
     Perl_default_protect	Perl_vdefault_protect
 );
+
+# ex: set ts=8 sts=4 sw=4 noet:

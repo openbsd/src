@@ -142,7 +142,7 @@ while (defined (my $file = next_file())) {
 			    $curargs{$arg} = 1;
 			}
 			$args =~ s/\b(\w)/\$$1/g;
-			$args = "local($args) = \@_;\n$t    ";
+			$args = "my($args) = \@_;\n$t    ";
 		    }
 		    s/^\s+//;
 		    expr();
@@ -276,6 +276,8 @@ while (defined (my $file = next_file())) {
 		chomp $next;
 		# drop "#define FOO FOO" in enums
 		$next =~ s/^\s*#\s*define\s+(\w+)\s+\1\s*$//;
+		# #defines in enums (aliases)
+		$next =~ s/^\s*#\s*define\s+(\w+)\s+(\w+)\s*$/$1 = $2,/;
 		$_ .= $next;
 		print OUT "# $next\n" if $opt_D;
 	    }
@@ -288,6 +290,7 @@ while (defined (my $file = next_file())) {
 	    my $enum_val = -1;
 	    foreach my $enum (@enum_subs) {
 		my ($enum_name, $enum_value) = $enum =~ /^([a-zA-Z_]\w*)(=.+)?$/;
+		$enum_name or next;
 		$enum_value =~ s/^=//;
 		$enum_val = (length($enum_value) ? $enum_value : $enum_val + 1);
 		if ($opt_h) {
@@ -338,7 +341,7 @@ while (defined (my $file = next_file())) {
 	    }
 	    $args = (
 		@args
-		? "local(" . (join ',', map "\$$_", @args) . ") = \@_;\n$t    "
+		? "my(" . (join ',', map "\$$_", @args) . ") = \@_;\n$t    "
 		: ""
 	    );
 	    my $proto = @args ? '' : '() ';
@@ -351,6 +354,7 @@ while (defined (my $file = next_file())) {
 		use re "eval";
 		my $typelist = join '|', keys %isatype;
 		$new =~ s['
+		  (?:(?:__)?const(?:__)?\s+)?
 		  (?:(?:un)?signed\s+)?
 		  (?:long\s+)?
 		  (?:$typelist)\s+
@@ -359,6 +363,7 @@ while (defined (my $file = next_file())) {
 		  ']
 		 [my \$$1]gx;
 		$new =~ s['
+		  (?:(?:__)?const(?:__)?\s+)?
 		  (?:(?:un)?signed\s+)?
 		  (?:long\s+)?
 		  (?:$typelist)\s+
@@ -391,6 +396,7 @@ if ($opt_e && (scalar(keys %bad_file) > 0)) {
 exit $Exit;
 
 sub expr {
+    $new = '"(assembly code)"' and return if /\b__asm__\b/; # freak out.
     my $joined_args;
     if(keys(%curargs)) {
 	$joined_args = join('|', keys(%curargs));
@@ -399,7 +405,7 @@ sub expr {
 	s/^\&\&// && do { $new .= " &&"; next;}; # handle && operator
 	s/^\&([\(a-z\)]+)/$1/i;	# hack for things that take the address of
 	s/^(\s+)//		&& do {$new .= ' '; next;};
-	s/^0X([0-9A-F]+)[UL]*//i 
+	s/^0X([0-9A-F]+)[UL]*//i
 	    && do {my $hex = $1;
 		   $hex =~ s/^0+//;
 		   if (length $hex > 8 && !$Config{use64bitint}) {
@@ -535,7 +541,7 @@ sub next_line
 
         while (length $in) {
             if ($pre_sub_tri_graphs) {
-                # Preprocess all tri-graphs 
+                # Preprocess all tri-graphs
                 # including things stuck in quoted string constants.
                 $in =~ s/\?\?=/#/g;                         # | ??=|  #|
                 $in =~ s/\?\?\!/|/g;                        # | ??!|  ||
@@ -548,17 +554,19 @@ sub next_line
                 $in =~ s/\?\?>/}/g;                         # | ??>|  }|
             }
 	    if ($in =~ s/^\#ifdef __LANGUAGE_PASCAL__//) {
-                # Tru64 disassembler.h evilness: mixed C and Pascal.
+		# Tru64 disassembler.h evilness: mixed C and Pascal.
 		while (<IN>) {
-		    last if /^\#endif/; 
+		    last if /^\#endif/;
 		}
+		$in = "";
 		next READ;
 	    }
 	    # Skip inlined functions in headers
 	    if ($in =~ s/^(extern|static) (__inline__|inline) .*[^;]\s*$//) {
- 		while (<IN>) {
-		    last if /^}/; 
+		while (<IN>) {
+		    last if /^}/;
 		}
+		$in = "";
 		next READ;
 	    }
             if ($in =~ s/\\$//) {                           # \-newline
@@ -728,9 +736,15 @@ sub queue_includes_from
 # non-GCC?) C compilers, but gcc uses an additional include directory.
 sub inc_dirs
 {
-    my $from_gcc    = `$Config{cc} -v 2>&1`;
-    $from_gcc       =~ s:^Reading specs from (.*?)/specs\b.*:$1/include:s;
-
+    my $from_gcc    = `LC_ALL=C $Config{cc} -v 2>&1`;
+    if( !( $from_gcc =~ s:^Reading specs from (.*?)/specs\b.*:$1/include:s ) )
+    { # gcc-4+ :
+       $from_gcc   = `LC_ALL=C $Config{cc} -print-search-dirs 2>&1`;
+       if ( !($from_gcc =~ s/^install:\s*([^\s]+[^\s\/])([\s\/]*).*$/$1\/include/s) )
+       {
+           $from_gcc = '';
+       };
+    };
     length($from_gcc) ? ($from_gcc, $Config{usrinc}) : ($Config{usrinc});
 }
 

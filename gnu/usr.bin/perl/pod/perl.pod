@@ -4,13 +4,17 @@ perl - Practical Extraction and Report Language
 
 =head1 SYNOPSIS
 
-B<perl>	S<[ B<-sTuU> ]> S<[ B<-hv> ] [ B<-V>[:I<configvar>] ]>
-    S<[ B<-cw> ] [ B<-d>[:I<debugger>] ] [ B<-D>[I<number/list>] ]>
-    S<[ B<-pna> ] [ B<-F>I<pattern> ] [ B<-l>[I<octal>] ] [ B<-0>[I<octal>] ]>
-    S<[ B<-I>I<dir> ] [ B<-m>[B<->]I<module> ] [ B<-M>[B<->]I<'module...'> ]>
-    S<[ B<-P> ]> S<[ B<-S> ]> S<[ B<-x>[I<dir>] ]>
-    S<[ B<-i>[I<extension>] ]> S<[ B<-e> I<'command'> ] 
-    [ B<--> ] [ I<programfile> ] [ I<argument> ]...>
+B<perl>	S<[ B<-sTtuUWX> ]>
+	S<[ B<-hv> ] [ B<-V>[:I<configvar>] ]>
+	S<[ B<-cw> ] [ B<-d>[B<t>][:I<debugger>] ] [ B<-D>[I<number/list>] ]>
+	S<[ B<-pna> ] [ B<-F>I<pattern> ] [ B<-l>[I<octal>] ] [ B<-0>[I<octal/hexadecimal>] ]>
+	S<[ B<-I>I<dir> ] [ B<-m>[B<->]I<module> ] [ B<-M>[B<->]I<'module...'> ] [ B<-f> ]>
+	S<[ B<-C [I<number/list>] >]>
+	S<[ B<-P> ]>
+	S<[ B<-S> ]>
+	S<[ B<-x>[I<dir>] ]>
+	S<[ B<-i>[I<extension>] ]>
+	S<[ B<-e> I<'command'> ] [ B<--> ] [ I<programfile> ] [ I<argument> ]...>
 
 If you're new to Perl, you should start with L<perlintro>, which is a 
 general intro for beginners and provides some background to help you
@@ -106,6 +110,8 @@ For ease of access, the Perl manual has been split up into several sections.
 
     perlfilter		Perl source filters
 
+    perlglossary	Perl Glossary
+
 =head2 Internals and C Language Interface
 
     perlembed		Perl ways to embed perl in your C or C++ application
@@ -132,6 +138,8 @@ For ease of access, the Perl manual has been split up into several sections.
 
     perlhist		Perl history records
     perldelta		Perl changes since previous version
+    perl587delta	Perl changes in version 5.8.7
+    perl586delta	Perl changes in version 5.8.6
     perl585delta	Perl changes in version 5.8.5
     perl584delta	Perl changes in version 5.8.4
     perl583delta	Perl changes in version 5.8.3
@@ -173,12 +181,14 @@ For ease of access, the Perl manual has been split up into several sections.
     perlhpux		Perl notes for HP-UX
     perlhurd		Perl notes for Hurd
     perlirix		Perl notes for Irix
+    perllinux		Perl notes for Linux
     perlmachten 	Perl notes for Power MachTen
     perlmacos		Perl notes for Mac OS (Classic)
     perlmacosx		Perl notes for Mac OS X
     perlmint		Perl notes for MiNT
     perlmpeix		Perl notes for MPE/iX
     perlnetware 	Perl notes for NetWare
+    perlopenbsd 	Perl notes for OpenBSD
     perlos2		Perl notes for OS/2
     perlos390		Perl notes for OS/390
     perlos400		Perl notes for OS/400
@@ -372,7 +382,7 @@ Perl developers, please write to perl-thanks@perl.org .
  s2p	sed to perl translator
 
  http://www.perl.org/       the Perl homepage
- http://www.perl.com/       Perl articles (O'Reilly Media)
+ http://www.perl.com/       Perl articles (O'Reilly)
  http://www.cpan.org/       the Comprehensive Perl Archive
  http://www.pm.org/         the Perl Mongers
 

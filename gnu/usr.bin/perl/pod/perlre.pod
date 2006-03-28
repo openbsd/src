@@ -1,4 +1,5 @@
 =head1 NAME
+X<regular expression> X<regex> X<regexp>
 
 perlre - Perl regular expressions
 
@@ -24,6 +25,8 @@ L<perlop/"Gory details of parsing quoted constructs">.
 =over 4
 
 =item i
+X</i> X<regex, case-insensitive> X<regexp, case-insensitive>
+X<regular expression, case-insensitive>
 
 Do case-insensitive pattern matching.
 
@@ -31,12 +34,15 @@ If C<use locale> is in effect, the case map is taken from the current
 locale.  See L<perllocale>.
 
 =item m
+X</m> X<regex, multiline> X<regexp, multiline> X<regular expression, multiline>
 
 Treat string as multiple lines.  That is, change "^" and "$" from matching
 the start or end of the string to matching the start or end of any
 line anywhere within the string.
 
 =item s
+X</s> X<regex, single-line> X<regexp, single-line>
+X<regular expression, single-line>
 
 Treat string as single line.  That is, change "." to match any character
 whatsoever, even a newline, which normally it would not match.
@@ -50,6 +56,7 @@ while still allowing "^" and "$" to match, respectively, just after
 and just before newlines within the string.
 
 =item x
+X</x>
 
 Extend your pattern's legibility by permitting whitespace and comments.
 
@@ -74,6 +81,7 @@ more readable.  Note that you have to be careful not to include the
 pattern delimiter in the comment--perl has no way of knowing you did
 not intend to close the pattern early.  See the C-comment deletion code
 in L<perlop>.
+X</x>
 
 =head2 Regular Expressions
 
@@ -85,6 +93,9 @@ details.
 
 In particular the following metacharacters have their standard I<egrep>-ish
 meanings:
+X<metacharacter>
+X<\> X<^> X<.> X<$> X<|> X<(> X<()> X<[> X<[]>
+
 
     \	Quote the next metacharacter
     ^	Match the beginning of the line
@@ -104,14 +115,17 @@ newline within the string, and "$" will match before any newline.  At the
 cost of a little more overhead, you can do this by using the /m modifier
 on the pattern match operator.  (Older programs did this by setting C<$*>,
 but this practice is now deprecated.)
+X<^> X<$> X</m>
 
 To simplify multi-line substitutions, the "." character never matches a
 newline unless you use the C</s> modifier, which in effect tells Perl to pretend
 the string is a single line--even if it isn't.  The C</s> modifier also
 overrides the setting of C<$*>, in case you have some (badly behaved) older
 code that sets it in another module.
+X<.> X</s>
 
 The following standard quantifiers are recognized:
+X<metacharacter> X<quantifier> X<*> X<+> X<?> X<{n}> X<{n,}> X<{n,m}>
 
     *	   Match 0 or more times
     +	   Match 1 or more times
@@ -135,6 +149,8 @@ many times as possible (given a particular starting location) while still
 allowing the rest of the pattern to match.  If you want it to match the
 minimum number of times possible, follow the quantifier with a "?".  Note
 that the meanings don't change, just the "greediness":
+X<metacharacter> X<greedy> X<greedyness>
+X<?> X<*?> X<+?> X<??> X<{n}?> X<{n,}?> X<{n,m}?>
 
     *?	   Match 0 or more times
     +?	   Match 1 or more times
@@ -145,6 +161,8 @@ that the meanings don't change, just the "greediness":
 
 Because patterns are processed as double quoted strings, the following
 also work:
+X<\t> X<\n> X<\r> X<\f> X<\a> X<\l> X<\u> X<\L> X<\U> X<\E> X<\Q>
+X<\0> X<\c> X<\N> X<\x>
 
     \t		tab                   (HT, TAB)
     \n		newline               (LF, NL)
@@ -174,6 +192,9 @@ while escaping will cause the literal string C<\$> to be matched.
 You'll need to write something like C<m/\Quser\E\@\Qhost/>.
 
 In addition, Perl defines the following:
+X<metacharacter>
+X<\w> X<\W> X<\s> X<\S> X<\d> X<\D> X<\X> X<\p> X<\P> X<\C>
+X<word> X<whitespace>
 
     \w	Match a "word" character (alphanumeric plus "_")
     \W	Match a non-"word" character
@@ -202,13 +223,18 @@ literally.  If Unicode is in effect, C<\s> matches also "\x{85}",
 "\x{2028}, and "\x{2029}", see L<perlunicode> for more details about
 C<\pP>, C<\PP>, and C<\X>, and L<perluniintro> about Unicode in general.
 You can define your own C<\p> and C<\P> properties, see L<perlunicode>.
+X<\w> X<\W> X<word>
 
 The POSIX character class syntax
+X<character class>
 
     [:class:]
 
 is also available.  The available classes and their backslash
 equivalents (if available) are as follows:
+X<character class>
+X<alpha> X<alnum> X<ascii> X<blank> X<cntrl> X<digit> X<graph>
+X<lower> X<print> X<punct> X<space> X<upper> X<word> X<xdigit>
 
     alpha
     alnum
@@ -229,12 +255,12 @@ equivalents (if available) are as follows:
 
 =item [1]
 
-A GNU extension equivalent to C<[ \t]>, `all horizontal whitespace'.
+A GNU extension equivalent to C<[ \t]>, "all horizontal whitespace".
 
 =item [2]
 
 Not exactly equivalent to C<\s> since the C<[[:space:]]> includes
-also the (very rare) `vertical tabulator', "\ck", chr(11).
+also the (very rare) "vertical tabulator", "\ck", chr(11).
 
 =item [3]
 
@@ -252,13 +278,14 @@ matches zero, one, any alphabetic character, and the percentage sign.
 
 The following equivalences to Unicode \p{} constructs and equivalent
 backslash character classes (if available), will hold:
+X<character class> X<\p> X<\p{}>
 
     [:...:]	\p{...}		backslash
 
     alpha       IsAlpha
     alnum       IsAlnum
     ascii       IsASCII
-    blank	IsSpace
+    blank       IsSpace
     cntrl       IsCntrl
     digit       IsDigit        \d
     graph       IsGraph
@@ -275,13 +302,14 @@ For example C<[:lower:]> and C<\p{IsLower}> are equivalent.
 
 If the C<utf8> pragma is not used but the C<locale> pragma is, the
 classes correlate with the usual isalpha(3) interface (except for
-`word' and `blank').
+"word" and "blank").
 
 The assumedly non-obviously named classes are:
 
 =over 4
 
 =item cntrl
+X<cntrl>
 
 Any control character.  Usually characters that don't produce output as
 such but instead control the terminal somehow: for example newline and
@@ -291,18 +319,22 @@ the ISO Latin character sets, and Unicode), as is the character with
 the ord() value of 127 (C<DEL>).
 
 =item graph
+X<graph>
 
 Any alphanumeric or punctuation (special) character.
 
 =item print
+X<print>
 
 Any alphanumeric or punctuation (special) character or the space character.
 
 =item punct
+X<punct>
 
 Any punctuation (special) character.
 
 =item xdigit
+X<xdigit>
 
 Any hexadecimal digit.  Though this may feel silly ([0-9A-Fa-f] would
 work just fine) it is included for completeness.
@@ -311,6 +343,7 @@ work just fine) it is included for completeness.
 
 You can negate the [::] character classes by prefixing the class name
 with a '^'. This is a Perl extension.  For example:
+X<character class, negation>
 
     POSIX	traditional Unicode
 
@@ -324,6 +357,10 @@ only supported within a character class.  The POSIX character classes
 use them will cause an error.
 
 Perl defines the following zero-width assertions:
+X<zero-width assertion> X<assertion> X<regex, zero-width assertion>
+X<regexp, zero-width assertion>
+X<regular expression, zero-width assertion>
+X<\b> X<\B> X<\A> X<\Z> X<\z> X<\G>
 
     \b	Match a word boundary
     \B	Match a non-(word boundary)
@@ -344,6 +381,7 @@ won't match multiple times when the C</m> modifier is used, while
 "^" and "$" will match at every internal line boundary.  To match
 the actual end of the string and not ignore an optional trailing
 newline, use C<\z>.
+X<\b> X<\A> X<\Z> X<\z> X</m>
 
 The C<\G> assertion can be used to chain global matches (using
 C<m//g>), as described in L<perlop/"Regexp Quote-Like Operators">.
@@ -356,6 +394,7 @@ supported when anchored to the start of the pattern; while it
 is permitted to use it elsewhere, as in C</(?<=\G..)./g>, some
 such uses (C</.\G/g>, for example) currently cause problems, and
 it is recommended that you avoid such usage for now.
+X<\G>
 
 The bracketing construct C<( ... )> creates capture buffers.  To
 refer to the digit'th buffer use \<digit> within the
@@ -364,6 +403,8 @@ match.  Outside the match use "$" instead of "\".  (The
 the match.  See the warning below about \1 vs $1 for details.)
 Referring back to another part of the match is called a
 I<backreference>.
+X<regex, capture buffer> X<regexp, capture buffer>
+X<regular expression, capture buffer> X<backreference>
 
 There is no limit to the number of captured substrings that you may
 use.  However Perl also uses \10, \11, etc. as aliases for \010,
@@ -399,14 +440,18 @@ after the matched string. And C<$^N> contains whatever was matched by
 the most-recently closed group (submatch). C<$^N> can be used in
 extended patterns (see below), for example to assign a submatch to a
 variable. 
+X<$+> X<$^N> X<$&> X<$`> X<$'>
 
 The numbered match variables ($1, $2, $3, etc.) and the related punctuation
 set (C<$+>, C<$&>, C<$`>, C<$'>, and C<$^N>) are all dynamically scoped
 until the end of the enclosing block or until the next successful
 match, whichever comes first.  (See L<perlsyn/"Compound Statements">.)
+X<$+> X<$^N> X<$&> X<$`> X<$'>
+X<$1> X<$2> X<$3> X<$4> X<$5> X<$6> X<$7> X<$8> X<$9>
+
 
 B<NOTE>: failed matches in Perl do not reset the match variables,
-which makes easier to write code that tests for a series of more
+which makes it easier to write code that tests for a series of more
 specific cases and remembers the best match.
 
 B<WARNING>: Once Perl sees that you need one of C<$&>, C<$`>, or
@@ -422,6 +467,7 @@ if you can, but if you can't (and some algorithms really appreciate
 them), once you've used them once, use them at will, because you've
 already paid the price.  As of 5.005, C<$&> is not so costly as the
 other two.
+X<$&> X<$`> X<$'>
 
 Backslashed metacharacters in Perl are alphanumeric, such as C<\b>,
 C<\w>, C<\n>.  Unlike some other regular expression languages, there
@@ -469,6 +515,7 @@ expressions, and 2) whenever you see one, you should stop and
 =over 10
 
 =item C<(?#text)>
+X<(?#)>
 
 A comment.  The text is ignored.  If the C</x> modifier enables
 whitespace formatting, a simple C<#> will suffice.  Note that Perl closes
@@ -476,6 +523,7 @@ the comment as soon as it sees a C<)>, so there is no way to put a literal
 C<)> in the comment.
 
 =item C<(?imsx-imsx)>
+X<(?)>
 
 One or more embedded pattern-match modifiers, to be turned on (or
 turned off, if preceded by C<->) for the remainder of the pattern or
@@ -503,6 +551,7 @@ case, assuming C<x> modifier, and no C<i> modifier outside this
 group.
 
 =item C<(?:pattern)>
+X<(?:)>
 
 =item C<(?imsx-imsx:pattern)>
 
@@ -528,11 +577,13 @@ is equivalent to the more verbose
     /(?:(?s-i)more.*than).*million/i
 
 =item C<(?=pattern)>
+X<(?=)> X<look-ahead, positive> X<lookahead, positive>
 
 A zero-width positive look-ahead assertion.  For example, C</\w+(?=\t)/>
 matches a word followed by a tab, without including the tab in C<$&>.
 
 =item C<(?!pattern)>
+X<(?!)> X<look-ahead, negative> X<lookahead, negative>
 
 A zero-width negative look-ahead assertion.  For example C</foo(?!bar)/>
 matches any occurrence of "foo" that isn't followed by "bar".  Note
@@ -552,18 +603,21 @@ Sometimes it's still easier just to say:
 For look-behind see below.
 
 =item C<(?<=pattern)>
+X<(?<=)> X<look-behind, positive> X<lookbehind, positive>
 
 A zero-width positive look-behind assertion.  For example, C</(?<=\t)\w+/>
 matches a word that follows a tab, without including the tab in C<$&>.
 Works only for fixed-width look-behind.
 
 =item C<(?<!pattern)>
+X<(?<!)> X<look-behind, negative> X<lookbehind, negative>
 
 A zero-width negative look-behind assertion.  For example C</(?<!bar)foo/>
 matches any occurrence of "foo" that does not follow "bar".  Works
 only for fixed-width look-behind.
 
 =item C<(?{ code })>
+X<(?{})> X<regex, code in> X<regexp, code in> X<regular expression, code in>
 
 B<WARNING>: This extended regular expression feature is considered
 highly experimental, and may be changed or deleted without notice.
@@ -638,6 +692,9 @@ Better yet, use the carefully constrained evaluation within a Safe
 compartment.  See L<perlsec> for details about both these mechanisms.
 
 =item C<(??{ code })>
+X<(??{})>
+X<regex, postponed> X<regexp, postponed> X<regular expression, postponed>
+X<regex, recursive> X<regexp, recursive> X<regular expression, recursive>
 
 B<WARNING>: This extended regular expression feature is considered
 highly experimental, and may be changed or deleted without notice.
@@ -665,6 +722,7 @@ The following pattern matches a parenthesized group:
 	  }x;
 
 =item C<< (?>pattern) >>
+X<backtrack> X<backtracking>
 
 B<WARNING>: This extended regular expression feature is considered
 highly experimental, and may be changed or deleted without notice.
@@ -758,6 +816,7 @@ Which one you pick depends on which of these expressions better reflects
 the above specification of comments.
 
 =item C<(?(condition)yes-pattern|no-pattern)>
+X<(?()>
 
 =item C<(?(condition)yes-pattern)>
 
@@ -781,6 +840,7 @@ themselves.
 =back
 
 =head2 Backtracking
+X<backtrack> X<backtracking>
 
 NOTE: This section presents an abstract approximation of regular
 expression behavior.  For a more rigorous (and complicated) view of
@@ -906,14 +966,14 @@ But that isn't going to match; at least, not the way you're hoping.  It
 claims that there is no 123 in the string.  Here's a clearer picture of
 why that pattern matches, contrary to popular expectations:
 
-    $x = 'ABC123' ;
-    $y = 'ABC445' ;
+    $x = 'ABC123';
+    $y = 'ABC445';
 
-    print "1: got $1\n" if $x =~ /^(ABC)(?!123)/ ;
-    print "2: got $1\n" if $y =~ /^(ABC)(?!123)/ ;
+    print "1: got $1\n" if $x =~ /^(ABC)(?!123)/;
+    print "2: got $1\n" if $y =~ /^(ABC)(?!123)/;
 
-    print "3: got $1\n" if $x =~ /^(\D*)(?!123)/ ;
-    print "4: got $1\n" if $y =~ /^(\D*)(?!123)/ ;
+    print "3: got $1\n" if $x =~ /^(\D*)(?!123)/;
+    print "4: got $1\n" if $y =~ /^(\D*)(?!123)/;
 
 This prints
 
@@ -948,8 +1008,8 @@ are zero-width expressions--they only look, but don't consume any
 of the string in their match.  So rewriting this way produces what
 you'd expect; that is, case 5 will fail, but case 6 succeeds:
 
-    print "5: got $1\n" if $x =~ /^(\D*)(?=\d)(?!123)/ ;
-    print "6: got $1\n" if $y =~ /^(\D*)(?=\d)(?!123)/ ;
+    print "5: got $1\n" if $x =~ /^(\D*)(?=\d)(?!123)/;
+    print "6: got $1\n" if $y =~ /^(\D*)(?=\d)(?!123)/;
 
     6: got ABC
 
@@ -987,6 +1047,7 @@ where side-effects of look-ahead I<might> have influenced the
 following match, see L<C<< (?>pattern) >>>.
 
 =head2 Version 8 Regular Expressions
+X<regular expression, version 8> X<regex, version 8> X<regexp, version 8>
 
 In case you're not familiar with the "regular" Version 8 regex
 routines, here are the pattern-matching rules not described above.
@@ -1271,7 +1332,7 @@ Overloaded constants (see L<overload>) provide a simple way to extend
 the functionality of the RE engine.
 
 Suppose that we want to enable a new RE escape-sequence C<\Y|> which
-matches at boundary between white-space characters and non-whitespace
+matches at boundary between whitespace characters and non-whitespace
 characters.  Note that C<(?=\S)(?<!\S)|(?!\S)(?<=\S)> matches exactly
 at these positions, so we want to have each C<\Y|> in the place of the
 more complicated version.  We can create a module C<customre> to do
@@ -1288,7 +1349,9 @@ this:
 
     sub invalid { die "/$_[0]/: invalid escape '\\$_[1]'"}
 
-    my %rules = ( '\\' => '\\', 
+    # We must also take care of not escaping the legitimate \\Y|
+    # sequence, hence the presence of '\\' in the conversion rules.
+    my %rules = ( '\\' => '\\\\', 
 		  'Y|' => qr/(?=\S)(?<!\S)|(?!\S)(?<=\S)/ );
     sub convert {
       my $re = shift;

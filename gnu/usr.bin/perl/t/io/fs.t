@@ -47,7 +47,7 @@ $needs_fh_reopen = 1 if (defined &Win32::IsWin95 && Win32::IsWin95());
 my $skip_mode_checks =
     $^O eq 'cygwin' && $ENV{CYGWIN} !~ /ntsec/;
 
-plan tests => 34;
+plan tests => 42;
 
 
 if (($^O eq 'MSWin32') || ($^O eq 'NetWare')) {
@@ -78,10 +78,10 @@ SKIP: {
     is((umask(0)&0777), 022, 'umask'),
 }
 
-open(fh,'>x') || die "Can't create x";
-close(fh);
-open(fh,'>a') || die "Can't create a";
-close(fh);
+open(FH,'>x') || die "Can't create x";
+close(FH);
+open(FH,'>a') || die "Can't create a";
+close(FH);
 
 my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
     $blksize,$blocks);
@@ -164,6 +164,43 @@ SKIP: {
      $blksize,$blocks) = stat('x');
 
     is($ino, undef, "ino of removed file x should be undef");
+}
+
+SKIP: {
+    skip "no fchmod", 5 unless ($Config{d_fchmod} || "") eq "define";
+    ok(open(my $fh, "<", "a"), "open a");
+    is(chmod(0, $fh), 1, "fchmod");
+    $mode = (stat "a")[2];
+    SKIP: {
+        skip "no mode checks", 1 if $skip_mode_checks;
+        is($mode & 0777, 0, "perm reset");
+    }
+    is(chmod($newmode, "a"), 1, "fchmod");
+    $mode = (stat $fh)[2];
+    SKIP: { 
+        skip "no mode checks", 1 if $skip_mode_checks;
+        is($mode & 0777, $newmode, "perm restored");
+    }
+}
+
+SKIP: {
+    skip "no fchown", 1 unless ($Config{d_fchown} || "") eq "define";
+    open(my $fh, "<", "a");
+    is(chown(-1, -1, $fh), 1, "fchown");
+}
+
+SKIP: {
+    skip "has fchmod", 1 if ($Config{d_fchmod} || "") eq "define";
+    open(my $fh, "<", "a");
+    eval { chmod(0777, $fh); };
+    like($@, qr/^The fchmod function is unimplemented at/, "fchmod is unimplemented");
+}
+
+SKIP: {
+    skip "has fchown", 1 if ($Config{d_fchown} || "") eq "define";
+    open(my $fh, "<", "a");
+    eval { chown(0, 0, $fh); };
+    like($@, qr/^The fchown function is unimplemented at/, "fchown is unimplemented");
 }
 
 is(rename('a','b'), 1, "rename a b");
@@ -349,8 +386,8 @@ SKIP: {
       if $^O eq 'cygwin';
 
     chdir './tmp';
-    open(fh,'>x') || die "Can't create x";
-    close(fh);
+    open(FH,'>x') || die "Can't create x";
+    close(FH);
     rename('x', 'X');
 
     # this works on win32 only, because fs isn't casesensitive
@@ -372,5 +409,31 @@ if ($^O eq 'VMS') {
 
 ok(-d 'tmp1', "rename on directories working");
 
+# FIXME - for some reason change 26009/26011 merged as 26627 still segfaults
+# after all the tests have completed:
+# #0  0x08124dd0 in Perl_pop_scope (my_perl=0x81b5ec8) at scope.c:143
+# #1  0x080e88d8 in Perl_pp_leave (my_perl=0x81b5ec8) at pp_hot.c:1843
+# #2  0x080c7dc1 in Perl_runops_debug (my_perl=0x81b5ec8) at dump.c:1459
+# #3  0x080660af in S_run_body (my_perl=0x81b5ec8, oldscope=1) at perl.c:2369
+# #4  0x08065ab1 in perl_run (my_perl=0x81b5ec8) at perl.c:2286
+# #5  0x080604c3 in main (argc=2, argv=0xbffffc64, env=0xbffffc70)
+#     at perlmain.c:99
+#
+# 143         const I32 oldsave = PL_scopestack[--PL_scopestack_ix];
+# (gdb) p my_perl->Tscopestack_ix
+# $1 = 136787683
+#
+
+if (0) {
+    # Change 26011: Re: A surprising segfault
+    # to make sure only that these obfuscated sentences will not crash.
+
+    map chmod(+()), ('')x68;
+    ok(1, "extend sp in pp_chmod");
+
+    map chown(+()), ('')x68;
+    ok(1, "extend sp in pp_chown");
+}
+
 # need to remove 'tmp' if rename() in test 28 failed!
-END { rmdir 'tmp1'; rmdir 'tmp'; unlink "Iofs.tmp"; }
+END { rmdir 'tmp1'; rmdir 'tmp'; 1 while unlink "Iofs.tmp"; }

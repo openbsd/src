@@ -2,8 +2,9 @@ package ExtUtils::Manifest;
 
 require Exporter;
 use Config;
-use File::Find;
+use File::Basename;
 use File::Copy 'copy';
+use File::Find;
 use File::Spec;
 use Carp;
 use strict;
@@ -12,7 +13,7 @@ use vars qw($VERSION @ISA @EXPORT_OK
           $Is_MacOS $Is_VMS 
           $Debug $Verbose $Quiet $MANIFEST $DEFAULT_MSKIP);
 
-$VERSION = 1.42;
+$VERSION = '1.46';
 @ISA=('Exporter');
 @EXPORT_OK = qw(mkmanifest
                 manicheck  filecheck  fullcheck  skipcheck
@@ -29,9 +30,7 @@ $Verbose = defined $ENV{PERL_MM_MANIFEST_VERBOSE} ?
 $Quiet = 0;
 $MANIFEST = 'MANIFEST';
 
-my $Filename = __FILE__;
-$DEFAULT_MSKIP = (File::Spec->splitpath($Filename))[1].
-                 "$MANIFEST.SKIP";
+$DEFAULT_MSKIP = File::Spec->catfile( dirname(__FILE__), "$MANIFEST.SKIP" );
 
 
 =head1 NAME
@@ -367,17 +366,21 @@ sub _maniskip {
 
 =item manicopy
 
-    manicopy($src, $dest_dir);
-    manicopy($src, $dest_dir, $how);
+    manicopy(\%src, $dest_dir);
+    manicopy(\%src, $dest_dir, $how);
 
-copies the files that are the keys in the HASH I<%$src> to the
-$dest_dir. The HASH reference $read is typically returned by the
-maniread() function. This function is useful for producing a directory
-tree identical to the intended distribution tree. The third parameter
-$how can be used to specify a different methods of "copying". Valid
+Copies the files that are the keys in %src to the $dest_dir.  %src is
+typically returned by the maniread() function.
+
+    manicopy( maniread(), $dest_dir );
+
+This function is useful for producing a directory tree identical to the 
+intended distribution tree. 
+
+$how can be used to specify a different methods of "copying".  Valid
 values are C<cp>, which actually copies the files, C<ln> which creates
 hard links, and C<best> which mostly links the files but copies any
-symbolic link to make a tree without any symbolic link. Best is the
+symbolic link to make a tree without any symbolic link.  C<cp> is the 
 default.
 
 =cut
@@ -429,7 +432,7 @@ sub cp_if_diff {
 	if (-e $to) {
 	    unlink($to) or confess "unlink $to: $!";
 	}
-      STRICT_SWITCH: {
+        STRICT_SWITCH: {
 	    best($from,$to), last STRICT_SWITCH if $how eq 'best';
 	    cp($from,$to), last STRICT_SWITCH if $how eq 'cp';
 	    ln($from,$to), last STRICT_SWITCH if $how eq 'ln';
@@ -442,43 +445,43 @@ sub cp_if_diff {
 
 sub cp {
     my ($srcFile, $dstFile) = @_;
-    my ($perm,$access,$mod) = (stat $srcFile)[2,8,9];
+    my ($access,$mod) = (stat $srcFile)[8,9];
+
     copy($srcFile,$dstFile);
     utime $access, $mod + ($Is_VMS ? 1 : 0), $dstFile;
-    # chmod a+rX-w,go-w
-    chmod(  0444 | ( $perm & 0111 ? 0111 : 0 ),  $dstFile ) 
-      unless ($^O eq 'MacOS');
+    _manicopy_chmod($dstFile);
 }
+
 
 sub ln {
     my ($srcFile, $dstFile) = @_;
     return &cp if $Is_VMS or ($^O eq 'MSWin32' and Win32::IsWin95());
     link($srcFile, $dstFile);
 
-    # chmod a+r,go-w+X (except "X" only applies to u=x)
-    local($_) = $dstFile;
-    my $mode= 0444 | (stat)[2] & 0700;
-    if (! chmod(  $mode | ( $mode & 0100 ? 0111 : 0 ),  $_  )) {
+    unless( _manicopy_chmod($dstFile) ) {
         unlink $dstFile;
         return;
     }
     1;
 }
 
-unless (defined $Config{d_link}) {
-    # Really cool fix from Ilya :)
-    local $SIG{__WARN__} = sub { 
-        warn @_ unless $_[0] =~ /^Subroutine .* redefined/;
-    };
-    *ln = \&cp;
+# 1) Strip off all group and world permissions.
+# 2) Let everyone read it.
+# 3) If the owner can execute it, everyone can.
+sub _manicopy_chmod {
+    my($file) = shift;
+
+    my $perm = 0444 | (stat $file)[2] & 0700;
+    chmod( $perm | ( $perm & 0100 ? 0111 : 0 ), $file );
 }
 
-
-
-
+# Files that are often modified in the distdir.  Don't hard link them.
+my @Exceptions = qw(MANIFEST META.yml SIGNATURE);
 sub best {
     my ($srcFile, $dstFile) = @_;
-    if (-l $srcFile) {
+
+    my $is_exception = grep $srcFile =~ /$_/, @Exceptions;
+    if ($is_exception or !$Config{d_link} or -l $srcFile) {
 	cp($srcFile, $dstFile);
     } else {
 	ln($srcFile, $dstFile) or cp($srcFile, $dstFile);
@@ -489,21 +492,21 @@ sub _macify {
     my($file) = @_;
 
     return $file unless $Is_MacOS;
-    
+
     $file =~ s|^\./||;
     if ($file =~ m|/|) {
 	$file =~ s|/+|:|g;
 	$file = ":$file";
     }
-    
+
     $file;
 }
 
 sub _maccat {
     my($f1, $f2) = @_;
-    
+
     return "$f1/$f2" unless $Is_MacOS;
-    
+
     $f1 .= ":$f2";
     $f1 =~ s/([^:]:):/$1/g;
     return $f1;
@@ -513,11 +516,11 @@ sub _unmacify {
     my($file) = @_;
 
     return $file unless $Is_MacOS;
-    
+
     $file =~ s|^:||;
     $file =~ s|([/ \n])|sprintf("\\%03o", unpack("c", $1))|ge;
     $file =~ y|:|/|;
-    
+
     $file;
 }
 
@@ -572,7 +575,7 @@ sub _fix_manifest {
         close MANIFEST;
     }
 }
-        
+
 
 # UNIMPLEMENTED
 sub _normalize {
@@ -584,9 +587,17 @@ sub _normalize {
 
 =head2 MANIFEST
 
+A list of files in the distribution, one file per line.  The MANIFEST
+always uses Unix filepath conventions even if you're not on Unix.  This
+means F<foo/bar> style not F<foo\bar>.
+
 Anything between white space and an end of line within a C<MANIFEST>
-file is considered to be a comment.  Filenames and comments are
-separated by one or more TAB characters in the output. 
+file is considered to be a comment.  Any line beginning with # is also
+a comment.
+
+    # this a comment
+    some/file
+    some/other/file            comment about some/file
 
 
 =head2 MANIFEST.SKIP
@@ -595,7 +606,9 @@ The file MANIFEST.SKIP may contain regular expressions of files that
 should be ignored by mkmanifest() and filecheck(). The regular
 expressions should appear one on each line. Blank lines and lines
 which start with C<#> are skipped.  Use C<\#> if you need a regular
-expression to start with a sharp character. A typical example:
+expression to start with a C<#>.
+
+For example:
 
     # Version control files and dirs.
     \bRCS\b
@@ -686,7 +699,9 @@ L<ExtUtils::MakeMaker> which has handy targets for most of the functionality.
 
 =head1 AUTHOR
 
-Andreas Koenig <F<andreas.koenig@anima.de>>
+Andreas Koenig C<andreas.koenig@anima.de>
+
+Currently maintained by Michael G Schwern C<schwern@pobox.com>
 
 =cut
 

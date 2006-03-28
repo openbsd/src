@@ -7,7 +7,7 @@
  * that running config_h.SH again will wipe out any changes you've made.
  * For a more permanent change edit config.sh and rerun config_h.SH.
  *
- * $Id: config_h.sample,v 1.2 2003/12/03 03:02:43 millert Exp $
+ * $Id: config_h.sample,v 1.3 2004/08/09 18:10:12 millert Exp $
  */
 
 /*
@@ -3886,6 +3886,18 @@
  *	available to do time formatting.
  */
 #define HAS_STRFTIME		/**/
+
+/* HAS_STRLCAT
+ *      This symbol, if defined, indicates that the strlcat routine is
+ *      available to do string concatenation.
+ */
+/*#define HAS_STRLCAT			/**/
+
+/* HAS_STRLCPY:
+ *      This symbol, if defined, indicates that the strlcpy routine is
+ *      available to do string copying.
+ */
+/*#define HAS_STRLCPY			/**/
 
 /* HAS_SYSCALL_PROTO:
  *	This symbol, if defined, indicates that the system provides

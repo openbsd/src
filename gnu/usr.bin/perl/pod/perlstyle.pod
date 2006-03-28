@@ -10,7 +10,7 @@ make your programs easier to read, understand, and maintain.
 
 The most important thing is to run your programs under the B<-w>
 flag at all times.  You may turn it off explicitly for particular
-portions of code via the C<no warnings> pragma or the C<$^W> variable 
+portions of code via the C<no warnings> pragma or the C<$^W> variable
 if you must.  You should also always run under C<use strict> or know the
 reason why not.  The C<use sigtrap> and even C<use diagnostics> pragmas
 may also prove useful.
@@ -72,7 +72,7 @@ Space after each comma.
 
 =item *
 
-Long lines broken after an operator (except "and" and "or").
+Long lines broken after an operator (except C<and> and C<or>).
 
 =item *
 
@@ -159,10 +159,10 @@ previous example.
 
 =item *
 
-Avoid using grep() (or map()) or `backticks` in a void context, that is,
+Avoid using C<grep()> (or C<map()>) or `backticks` in a void context, that is,
 when you just throw away their return values.  Those functions all
-have return values, so use them.  Otherwise use a foreach() loop or
-the system() function instead.
+have return values, so use them.  Otherwise use a C<foreach()> loop or
+the C<system()> function instead.
 
 =item *
 
@@ -180,10 +180,11 @@ you've got a problem.
 
 =item *
 
-While short identifiers like $gotit are probably ok, use underscores to
-separate words.  It is generally easier to read $var_names_like_this than
-$VarNamesLikeThis, especially for non-native speakers of English. It's
-also a simple rule that works consistently with VAR_NAMES_LIKE_THIS.
+While short identifiers like C<$gotit> are probably ok, use underscores to
+separate words in longer identifiers.  It is generally easier to read
+C<$var_names_like_this> than C<$VarNamesLikeThis>, especially for
+non-native speakers of English. It's also a simple rule that works
+consistently with C<VAR_NAMES_LIKE_THIS>.
 
 Package names are sometimes an exception to this rule.  Perl informally
 reserves lowercase module names for "pragma" modules like C<integer> and
@@ -202,7 +203,7 @@ or nature of a variable. For example:
     $no_caps_here    function scope my() or local() variables
 
 Function and method names seem to work best as all lowercase.
-E.g., $obj-E<gt>as_string().
+E.g., C<$obj-E<gt>as_string()>.
 
 You can use a leading underscore to indicate that a variable or
 function should not be used outside the package that defined it.
@@ -215,14 +216,14 @@ Don't use slash as a delimiter when your regexp has slashes or backslashes.
 
 =item *
 
-Use the new "and" and "or" operators to avoid having to parenthesize
+Use the new C<and> and C<or> operators to avoid having to parenthesize
 list operators so much, and to reduce the incidence of punctuation
 operators like C<&&> and C<||>.  Call your subroutines as if they were
 functions or list operators to avoid excessive ampersands and parentheses.
 
 =item *
 
-Use here documents instead of repeated print() statements.
+Use here documents instead of repeated C<print()> statements.
 
 =item *
 
@@ -241,7 +242,7 @@ to fit on one line anyway.
 =item *
 
 Always check the return codes of system calls.  Good error messages should
-go to STDERR, include which program caused the problem, what the failed
+go to C<STDERR>, include which program caused the problem, what the failed
 system call and arguments were, and (VERY IMPORTANT) should contain the
 standard system error message for what went wrong.  Here's a simple but
 sufficient example:
@@ -263,6 +264,33 @@ code.  Consider writing a module or object class.  Consider making your
 code run cleanly with C<use strict> and C<use warnings> (or B<-w>) in
 effect.  Consider giving away your code.  Consider changing your whole
 world view.  Consider... oh, never mind.
+
+=item *
+
+Try to document your code and use Pod formatting in a consistent way. Here
+are commonly expected conventions:
+
+=over 4
+
+=item *
+
+use C<CE<lt>E<gt>> for function, variable and module names (and more
+generally anything that can be considered part of code, like filehandles
+or specific values). Note that function names are considered more readable
+with parentheses after their name, that is C<function()>.
+
+=item *
+
+use C<BE<lt>E<gt>> for commands names like B<cat> or B<grep>.
+
+=item *
+
+use C<FE<lt>E<gt>> or C<CE<lt>E<gt>> for file names. C<FE<lt>E<gt>> should
+be the only Pod code for file names, but as most Pod formatters render it
+as italic, Unix and Windows paths with their slashes and backslashes may
+be less readable, and better rendered with C<CE<lt>E<gt>>.
+
+=back
 
 =item *
 

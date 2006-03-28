@@ -6,7 +6,7 @@ use vars qw($VERSION @ISA);
 use ExtUtils::MakeMaker qw(neatvalue);
 use File::Spec;
 
-$VERSION = '1.04';
+$VERSION = '1.05';
 
 require ExtUtils::MM_Any;
 require ExtUtils::MM_Unix;
@@ -32,7 +32,7 @@ the semantics.
 
 =over 4
 
-=item init_dist (o)
+=item init_dist
 
 Define TO_UNIX to convert OS2 linefeeds to Unix style.
 

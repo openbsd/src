@@ -77,7 +77,7 @@ xs_init(pTHX)
 EOP
 
 if test X"$args" != "X" ; then
-    echo "    char *file = __FILE__;"
+    echo "    const char file[] = __FILE__;"
     echo "    dXSUB_SYS;"
 
     ai=''
@@ -92,9 +92,9 @@ if test X"$args" != "X" ; then
 	if test "$ext" = "DynaLoader"; then
 	    : Must NOT install 'DynaLoader::boot_DynaLoader' as 'bootstrap'!
 	    : boot_DynaLoader is called directly in DynaLoader.pm
-	    echo "        newXS(\"${mname}::boot_${ext}\", boot_${cname}, file);"
+	    echo "        newXS(\"${mname}::boot_${ext}\", boot_${cname}, (char *)file);"
 	else
-	    echo "        newXS(\"${mname}::bootstrap\", boot_${cname}, file);"
+	    echo "        newXS(\"${mname}::bootstrap\", boot_${cname}, (char *)file);"
 	fi
     done
 fi

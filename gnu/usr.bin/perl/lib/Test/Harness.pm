@@ -1,9 +1,8 @@
 # -*- Mode: cperl; cperl-indent-level: 4 -*-
-# $Id: Harness.pm,v 1.9 2004/08/09 18:09:48 millert Exp $
 
 package Test::Harness;
 
-require 5.004;
+require 5.00405;
 use Test::Harness::Straps;
 use Test::Harness::Assert;
 use Exporter;
@@ -11,17 +10,24 @@ use Benchmark;
 use Config;
 use strict;
 
+
 use vars qw(
     $VERSION 
     @ISA @EXPORT @EXPORT_OK 
     $Verbose $Switches $Debug
     $verbose $switches $debug
-    $Have_Devel_Corestack
     $Curtest
     $Columns 
+    $Timer
     $ML $Last_ML_Print
     $Strap
+    $has_time_hires
 );
+
+BEGIN {
+    eval "use Time::HiRes 'time'";
+    $has_time_hires = !$@;
+}
 
 =head1 NAME
 
@@ -29,26 +35,24 @@ Test::Harness - Run Perl standard test scripts with statistics
 
 =head1 VERSION
 
-Version 2.42
-
-    $Header: /home/cvs/src/gnu/usr.bin/perl/lib/Test/Attic/Harness.pm,v 1.9 2004/08/09 18:09:48 millert Exp $
+Version 2.56
 
 =cut
 
-$VERSION = '2.42';
+$VERSION = "2.56";
 
 # Backwards compatibility for exportable variable names.
 *verbose  = *Verbose;
 *switches = *Switches;
 *debug    = *Debug;
 
-$Have_Devel_Corestack = 0;
-
 $ENV{HARNESS_ACTIVE} = 1;
+$ENV{HARNESS_VERSION} = $VERSION;
 
 END {
     # For VMS.
     delete $ENV{HARNESS_ACTIVE};
+    delete $ENV{HARNESS_VERSION};
 }
 
 # Some experimental versions of OS/2 build have broken $?
@@ -56,9 +60,9 @@ my $Ignore_Exitcode = $ENV{HARNESS_IGNORE_EXITCODE};
 
 my $Files_In_Dir = $ENV{HARNESS_FILELEAK_IN_DIR};
 
-my $Ok_Slow = $ENV{HARNESS_OK_SLOW};
-
 $Strap = Test::Harness::Straps->new;
+
+sub strap { return $Strap };
 
 @ISA = ('Exporter');
 @EXPORT    = qw(&runtests);
@@ -69,6 +73,7 @@ $Debug    = $ENV{HARNESS_DEBUG} || 0;
 $Switches = "-w";
 $Columns  = $ENV{HARNESS_COLUMNS} || $ENV{COLUMNS} || 80;
 $Columns--;             # Some shells have trouble with a full line of text.
+$Timer    = $ENV{HARNESS_TIMER} || 0;
 
 =head1 SYNOPSIS
 
@@ -78,165 +83,21 @@ $Columns--;             # Some shells have trouble with a full line of text.
 
 =head1 DESCRIPTION
 
-B<STOP!> If all you want to do is write a test script, consider using
-Test::Simple.  Otherwise, read on.
+B<STOP!> If all you want to do is write a test script, consider
+using Test::Simple.  Test::Harness is the module that reads the
+output from Test::Simple, Test::More and other modules based on
+Test::Builder.  You don't need to know about Test::Harness to use
+those modules.
 
-(By using the Test module, you can write test scripts without
-knowing the exact output this module expects.  However, if you need to
-know the specifics, read on!)
+Test::Harness runs tests and expects output from the test in a
+certain format.  That format is called TAP, the Test Anything
+Protocol.  It is defined in L<Test::Harness::TAP>.
 
-Perl test scripts print to standard output C<"ok N"> for each single
-test, where C<N> is an increasing sequence of integers. The first line
-output by a standard test script is C<"1..M"> with C<M> being the
-number of tests that should be run within the test
-script. Test::Harness::runtests(@tests) runs all the testscripts
-named as arguments and checks standard output for the expected
-C<"ok N"> strings.
+C<Test::Harness::runtests(@tests)> runs all the testscripts named
+as arguments and checks standard output for the expected strings
+in TAP format.
 
-After all tests have been performed, runtests() prints some
-performance statistics that are computed by the Benchmark module.
-
-=head2 The test script output
-
-The following explains how Test::Harness interprets the output of your
-test program.
-
-=over 4
-
-=item B<'1..M'>
-
-This header tells how many tests there will be.  For example, C<1..10>
-means you plan on running 10 tests.  This is a safeguard in case your
-test dies quietly in the middle of its run.
-
-It should be the first non-comment line output by your test program.
-
-In certain instances, you may not know how many tests you will
-ultimately be running.  In this case, it is permitted for the 1..M
-header to appear as the B<last> line output by your test (again, it
-can be followed by further comments).
-
-Under B<no> circumstances should 1..M appear in the middle of your
-output or more than once.
-
-
-=item B<'ok', 'not ok'.  Ok?>
-
-Any output from the testscript to standard error is ignored and
-bypassed, thus will be seen by the user. Lines written to standard
-output containing C</^(not\s+)?ok\b/> are interpreted as feedback for
-runtests().  All other lines are discarded.
-
-C</^not ok/> indicates a failed test.  C</^ok/> is a successful test.
-
-
-=item B<test numbers>
-
-Perl normally expects the 'ok' or 'not ok' to be followed by a test
-number.  It is tolerated if the test numbers after 'ok' are
-omitted. In this case Test::Harness maintains temporarily its own
-counter until the script supplies test numbers again. So the following
-test script
-
-    print <<END;
-    1..6
-    not ok
-    ok
-    not ok
-    ok
-    ok
-    END
-
-will generate
-
-    FAILED tests 1, 3, 6
-    Failed 3/6 tests, 50.00% okay
-
-=item B<test names>
-
-Anything after the test number but before the # is considered to be
-the name of the test.
-
-  ok 42 this is the name of the test
-
-Currently, Test::Harness does nothing with this information.
-
-=item B<Skipping tests>
-
-If the standard output line contains the substring C< # Skip> (with
-variations in spacing and case) after C<ok> or C<ok NUMBER>, it is
-counted as a skipped test.  If the whole testscript succeeds, the
-count of skipped tests is included in the generated output.
-C<Test::Harness> reports the text after C< # Skip\S*\s+> as a reason
-for skipping.
-
-  ok 23 # skip Insufficient flogiston pressure.
-
-Similarly, one can include a similar explanation in a C<1..0> line
-emitted if the test script is skipped completely:
-
-  1..0 # Skipped: no leverage found
-
-=item B<Todo tests>
-
-If the standard output line contains the substring C< # TODO > after
-C<not ok> or C<not ok NUMBER>, it is counted as a todo test.  The text
-afterwards is the thing that has to be done before this test will
-succeed.
-
-  not ok 13 # TODO harness the power of the atom
-
-Note that the TODO must have a space after it. 
-
-=begin _deprecated
-
-Alternatively, you can specify a list of what tests are todo as part
-of the test header.
-
-  1..23 todo 5 12 23
-
-This only works if the header appears at the beginning of the test.
-
-This style is B<deprecated>.
-
-=end _deprecated
-
-These tests represent a feature to be implemented or a bug to be fixed
-and act as something of an executable "thing to do" list.  They are
-B<not> expected to succeed.  Should a todo test begin succeeding,
-Test::Harness will report it as a bonus.  This indicates that whatever
-you were supposed to do has been done and you should promote this to a
-normal test.
-
-=item B<Bail out!>
-
-As an emergency measure, a test script can decide that further tests
-are useless (e.g. missing dependencies) and testing should stop
-immediately. In that case the test script prints the magic words
-
-  Bail out!
-
-to standard output. Any message after these words will be displayed by
-C<Test::Harness> as the reason why testing is stopped.
-
-=item B<Comments>
-
-Additional comments may be put into the testing output on their own
-lines.  Comment lines should begin with a '#', Test::Harness will
-ignore them.
-
-  ok 1
-  # Life is good, the sun is shining, RAM is cheap.
-  not ok 2
-  # got 'Bush' expected 'Gore'
-
-=item B<Anything else>
-
-Any other output Test::Harness sees it will silently ignore B<BUT WE
-PLAN TO CHANGE THIS!> If you wish to place additional output in your
-test script, please use a comment.
-
-=back
+The F<prove> utility is a thin wrapper around Test::Harness.
 
 =head2 Taint mode
 
@@ -254,26 +115,30 @@ Test::Harness.  They are exported on request.
 
 =over 4
 
-=item B<$Test::Harness::Verbose>
+=item C<$Test::Harness::Verbose>
 
-The global variable C<$Test::Harness::Verbose> is exportable and can be
+The package variable C<$Test::Harness::Verbose> is exportable and can be
 used to let C<runtests()> display the standard output of the script
 without altering the behavior otherwise.  The F<prove> utility's C<-v>
 flag will set this.
 
-=item B<$Test::Harness::switches>
+=item C<$Test::Harness::switches>
 
-The global variable C<$Test::Harness::switches> is exportable and can be
+The package variable C<$Test::Harness::switches> is exportable and can be
 used to set perl command line options used for running the test
 script(s). The default value is C<-w>. It overrides C<HARNESS_SWITCHES>.
+
+=item C<$Test::Harness::Timer>
+
+If set to true, and C<Time::HiRes> is available, print elapsed seconds
+after each test file.
 
 =back
 
 
 =head2 Failure
 
-It will happen: your tests will fail.  After you mop up your ego, you
-can begin examining the summary report:
+When tests fail, analyze the summary report:
 
   t/base..............ok
   t/nonumbers.........ok
@@ -288,7 +153,7 @@ can begin examining the summary report:
   t/waterloo.t    3   768    20   10  50.00%  1 3 5 7 9 11 13 15 17 19
   Failed 1/5 test scripts, 80.00% okay. 10/44 subtests failed, 77.27% okay.
 
-Everything passed but t/waterloo.t.  It failed 10 of 20 tests and
+Everything passed but F<t/waterloo.t>.  It failed 10 of 20 tests and
 exited with non-zero status indicating something dubious happened.
 
 The columns in the summary report mean:
@@ -338,17 +203,13 @@ Test::Harness currently only has one function, here it is.
 
   my $allok = runtests(@test_files);
 
-This runs all the given @test_files and divines whether they passed
+This runs all the given I<@test_files> and divines whether they passed
 or failed based on their output to STDOUT (details above).  It prints
 out each individual test which failed along with a summary report and
 a how long it all took.
 
-It returns true if everything was ok.  Otherwise it will die() with
+It returns true if everything was ok.  Otherwise it will C<die()> with
 one of the messages in the DIAGNOSTICS section.
-
-=for _private
-
-This is just _run_all_tests() plus _show_results()
 
 =cut
 
@@ -389,7 +250,7 @@ sub _all_ok {
   my @files = _globdir $dir;
 
 Returns all the files in a directory.  This is shorthand for backwards
-compatibility on systems where glob() doesn't work right.
+compatibility on systems where C<glob()> doesn't work right.
 
 =cut
 
@@ -442,10 +303,20 @@ B<NOTE> Currently this function is still noisy.  I'm working on it.
 
 =cut
 
-#'#
+# Turns on autoflush for the handle passed
+sub _autoflush {
+    my $flushy_fh = shift;
+    my $old_fh = select $flushy_fh;
+    $| = 1;
+    select $old_fh;
+}
+
 sub _run_all_tests {
-    my(@tests) = @_;
-    local($|) = 1;
+    my @tests = @_;
+
+    _autoflush(\*STDOUT);
+    _autoflush(\*STDERR);
+
     my(%failedtests);
 
     # Test-wide totals.
@@ -464,14 +335,10 @@ sub _run_all_tests {
                );
 
     my @dir_files = _globdir $Files_In_Dir if defined $Files_In_Dir;
-    my $t_start = new Benchmark;
+    my $run_start_time = new Benchmark;
 
     my $width = _leader_width(@tests);
     foreach my $tfile (@tests) {
-	if ( $Test::Harness::Debug ) {
-	    print "# Running: ", $Strap->_command_line($tfile), "\n";
-	}
-
         $Last_ML_Print = 0;  # so each test prints at least once
         my($leader, $ml) = _mk_leader($tfile, $width);
         local $ML = $ml;
@@ -481,8 +348,25 @@ sub _run_all_tests {
         $tot{files}++;
 
         $Strap->{_seen_header} = 0;
+        if ( $Test::Harness::Debug ) {
+            print "# Running: ", $Strap->_command_line($tfile), "\n";
+        }
+        my $test_start_time = $Timer ? time : 0;
         my %results = $Strap->analyze_file($tfile) or
           do { warn $Strap->{error}, "\n";  next };
+        my $elapsed;
+        if ( $Timer ) {
+            $elapsed = time - $test_start_time;
+            if ( $has_time_hires ) {
+                $elapsed = sprintf( " %8.3fs", $elapsed );
+            }
+            else {
+                $elapsed = sprintf( " %8ss", $elapsed ? $elapsed : "<1" );
+            }
+        }
+        else {
+            $elapsed = "";
+        }
 
         # state of the current test.
         my @failed = grep { !$results{details}[$_-1]{ok} }
@@ -508,19 +392,23 @@ sub _run_all_tests {
         my($estatus, $wstatus) = @results{qw(exit wait)};
 
         if ($results{passing}) {
+            # XXX Combine these first two
             if ($test{max} and $test{skipped} + $test{bonus}) {
                 my @msg;
                 push(@msg, "$test{skipped}/$test{max} skipped: $test{skip_reason}")
                     if $test{skipped};
                 push(@msg, "$test{bonus}/$test{max} unexpectedly succeeded")
                     if $test{bonus};
-                print "$test{ml}ok\n        ".join(', ', @msg)."\n";
-            } elsif ($test{max}) {
-                print "$test{ml}ok\n";
-            } elsif (defined $test{skip_all} and length $test{skip_all}) {
+                print "$test{ml}ok$elapsed\n        ".join(', ', @msg)."\n";
+            }
+            elsif ( $test{max} ) {
+                print "$test{ml}ok$elapsed\n";
+            }
+            elsif ( defined $test{skip_all} and length $test{skip_all} ) {
                 print "skipped\n        all skipped: $test{skip_all}\n";
                 $tot{skipped}++;
-            } else {
+            }
+            else {
                 print "skipped\n        all skipped: no reason given\n";
                 $tot{skipped}++;
             }
@@ -534,8 +422,7 @@ sub _run_all_tests {
             # List overruns as failures.
             else {
                 my $details = $results{details};
-                foreach my $overrun ($test{max}+1..@$details)
-                {
+                foreach my $overrun ($test{max}+1..@$details) {
                     next unless ref $details->[$overrun-1];
                     push @{$test{failed}}, $overrun
                 }
@@ -559,7 +446,8 @@ sub _run_all_tests {
                                              estat   => '',
                                              wstat   => '',
                                            };
-                } else {
+                }
+                else {
                     print "Don't know which tests failed: got $test{ok} ok, ".
                           "expected $test{max}\n";
                     $failedtests{$tfile} = { canon   => '??',
@@ -572,7 +460,8 @@ sub _run_all_tests {
                                            };
                 }
                 $tot{bad}++;
-            } else {
+            }
+            else {
                 print "FAILED before any test output arrived\n";
                 $tot{bad}++;
                 $failedtests{$tfile} = { canon       => '??',
@@ -597,8 +486,8 @@ sub _run_all_tests {
                 @dir_files = @new_dir_files;
             }
         }
-    }
-    $tot{bench} = timediff(new Benchmark, $t_start);
+    } # foreach test
+    $tot{bench} = timediff(new Benchmark, $run_start_time);
 
     $Strap->_restore_PERL5LIB;
 
@@ -609,7 +498,7 @@ sub _run_all_tests {
 
   my($leader, $ml) = _mk_leader($test_file, $width);
 
-Generates the 't/foo........' $leader for the given C<$test_file> as well
+Generates the 't/foo........' leader for the given C<$test_file> as well
 as a similar version which will overwrite the current line (by use of
 \r and such).  C<$ml> may be empty if Test::Harness doesn't think you're
 on TTY.
@@ -623,13 +512,15 @@ sub _mk_leader {
     chomp($te);
     $te =~ s/\.\w+$/./;
 
-    if ($^O eq 'VMS') { $te =~ s/^.*\.t\./\[.t./s; }
-    my $blank = (' ' x 77);
+    if ($^O eq 'VMS') {
+        $te =~ s/^.*\.t\./\[.t./s;
+    }
     my $leader = "$te" . '.' x ($width - length($te));
     my $ml = "";
 
-    $ml = "\r$blank\r$leader"
-      if -t STDOUT and not $ENV{HARNESS_NOTTY} and not $Verbose;
+    if ( -t STDOUT and not $ENV{HARNESS_NOTTY} and not $Verbose ) {
+        $ml = "\r" . (' ' x 77) . "\r$leader"
+    }
 
     return($leader, $ml);
 }
@@ -666,13 +557,16 @@ sub _show_results {
 
     if (_all_ok($tot)) {
         print "All tests successful$bonusmsg.\n";
-    } elsif (!$tot->{tests}){
+    }
+    elsif (!$tot->{tests}){
         die "FAILED--no tests were run for some reason.\n";
-    } elsif (!$tot->{max}) {
+    }
+    elsif (!$tot->{max}) {
         my $blurb = $tot->{tests}==1 ? "script" : "scripts";
         die "FAILED--$tot->{tests} test $blurb could be run, ".
             "alas--no output ever seen\n";
-    } else {
+    }
+    else {
         $pct = sprintf("%.2f", $tot->{good} / $tot->{tests} * 100);
         my $percent_ok = 100*$tot->{ok}/$tot->{max};
         my $subpct = sprintf " %d/%d subtests failed, %.2f%% okay.",
@@ -699,8 +593,14 @@ sub _show_results {
 }
 
 
-my %Handlers = ();
-$Strap->{callback} = sub {
+my %Handlers = (
+    header => \&header_handler,
+    test => \&test_handler,
+    bailout => \&bailout_handler,
+);
+
+$Strap->{callback} = \&strap_callback;
+sub strap_callback {
     my($self, $line, $type, $totals) = @_;
     print $line if $Verbose;
 
@@ -709,7 +609,7 @@ $Strap->{callback} = sub {
 };
 
 
-$Handlers{header} = sub {
+sub header_handler {
     my($self, $line, $type, $totals) = @_;
 
     warn "Test header seen more than once!\n" if $self->{_seen_header};
@@ -721,7 +621,7 @@ $Handlers{header} = sub {
          $totals->{max}  < $totals->{seen};
 };
 
-$Handlers{test} = sub {
+sub test_handler {
     my($self, $line, $type, $totals) = @_;
 
     my $curr = $totals->{seen};
@@ -753,7 +653,7 @@ $Handlers{test} = sub {
 
 };
 
-$Handlers{bailout} = sub {
+sub bailout_handler {
     my($self, $line, $type, $totals) = @_;
 
     die "FAILED--Further testing stopped" .
@@ -766,12 +666,12 @@ sub _print_ml {
 }
 
 
-# For slow connections, we save lots of bandwidth by printing only once
-# per second.
+# Print updates only once per second.
 sub _print_ml_less {
-    if( !$Ok_Slow || $Last_ML_Print != time ) {
+    my $now = CORE::time;
+    if ( $Last_ML_Print != $now ) {
         _print_ml(@_);
-        $Last_ML_Print = time;
+        $Last_ML_Print = $now;
     }
 }
 
@@ -810,14 +710,6 @@ sub _dubious_return {
            "(wstat %d, 0x%x)\n",
            $wstatus,$wstatus;
     print "\t\t(VMS status is $estatus)\n" if $^O eq 'VMS';
-
-    if (_corestatus($wstatus)) { # until we have a wait module
-        if ($Have_Devel_Corestack) {
-            Devel::CoreStack::stack($^X);
-        } else {
-            print "\ttest program seems to have generated a core\n";
-        }
-    }
 
     $tot->{bad}++;
 
@@ -897,29 +789,6 @@ sub _create_fmts {
     return($fmt_top, $fmt);
 }
 
-{
-    my $tried_devel_corestack;
-
-    sub _corestatus {
-        my($st) = @_;
-
-        my $did_core;
-        eval { # we may not have a WCOREDUMP
-            local $^W = 0;  # *.ph files are often *very* noisy
-            require 'wait.ph';
-            $did_core = WCOREDUMP($st);
-        };
-        if( $@ ) {
-            $did_core = $st & 0200;
-        }
-
-        eval { require Devel::CoreStack; $Have_Devel_Corestack++ } 
-          unless $tried_devel_corestack++;
-
-        return $did_core;
-    }
-}
-
 sub _canonfailed ($$@) {
     my($max,$skipped,@failed) = @_;
     my %seen;
@@ -933,11 +802,7 @@ sub _canonfailed ($$@) {
     if (@failed) {
         for (@failed, $failed[-1]) { # don't forget the last one
             if ($_ > $last+1 || $_ == $last) {
-                if ($min == $last) {
-                    push @canon, $last;
-                } else {
-                    push @canon, "$min-$last";
-                }
+                push @canon, ($min == $last) ? $last : "$min-$last";
                 $min = $_;
             }
             $last = $_;
@@ -945,7 +810,8 @@ sub _canonfailed ($$@) {
         local $" = ", ";
         push @result, "FAILED tests @canon\n";
         $canon = join ' ', @canon;
-    } else {
+    }
+    else {
         push @result, "FAILED test $last\n";
         $canon = $last;
     }
@@ -953,17 +819,19 @@ sub _canonfailed ($$@) {
     push @result, "\tFailed $failed/$max tests, ";
     if ($max) {
 	push @result, sprintf("%.2f",100*(1-$failed/$max)), "% okay";
-    } else {
+    }
+    else {
 	push @result, "?% okay";
     }
     my $ender = 's' x ($skipped > 1);
-    my $good = $max - $failed - $skipped;
     if ($skipped) {
+        my $good = $max - $failed - $skipped;
 	my $skipmsg = " (less $skipped skipped test$ender: $good okay, ";
 	if ($max) {
 	    my $goodper = sprintf("%.2f",100*($good/$max));
 	    $skipmsg .= "$goodper%)";
-	} else {
+        }
+        else {
 	    $skipmsg .= "?%)";
 	}
 	push @result, $skipmsg;
@@ -1023,15 +891,26 @@ the script dies with this message.
 
 =back
 
-=head1 ENVIRONMENT
+=head1 ENVIRONMENT VARIABLES THAT TEST::HARNESS SETS
+
+Test::Harness sets these before executing the individual tests.
 
 =over 4
 
 =item C<HARNESS_ACTIVE>
 
-Harness sets this before executing the individual tests.  This allows
-the tests to determine if they are being executed through the harness
-or by any other means.
+This is set to a true value.  It allows the tests to determine if they
+are being executed through the harness or by any other means.
+
+=item C<HARNESS_VERSION>
+
+This is the version of Test::Harness.
+
+=back
+
+=head1 ENVIRONMENT VARIABLES THAT AFFECT TEST::HARNESS
+
+=over 4
 
 =item C<HARNESS_COLUMNS>
 
@@ -1078,12 +957,6 @@ output more frequent progress messages using carriage returns.  Some
 consoles may not handle carriage returns properly (which results in a
 somewhat messy output).
 
-=item C<HARNESS_OK_SLOW>
-
-If true, the C<ok> messages are printed out only every second.  This
-reduces output and may help increase testing speed over slow
-connections, or with very large numbers of tests.
-
 =item C<HARNESS_PERL>
 
 Usually your tests will be run by C<$^X>, the currently-executing Perl.
@@ -1125,26 +998,8 @@ Here's how Test::Harness tests itself
 
 The included F<prove> utility for running test scripts from the command line,
 L<Test> and L<Test::Simple> for writing test scripts, L<Benchmark> for
-the underlying timing routines, L<Devel::CoreStack> to generate core
-dumps from failed tests and L<Devel::Cover> for test coverage
+the underlying timing routines, and L<Devel::Cover> for test coverage
 analysis.
-
-=head1 AUTHORS
-
-Either Tim Bunce or Andreas Koenig, we don't know. What we know for
-sure is, that it was inspired by Larry Wall's TEST script that came
-with perl distributions for ages. Numerous anonymous contributors
-exist.  Andreas Koenig held the torch for many years, and then
-Michael G Schwern.
-
-Current maintainer is Andy Lester C<< <andy@petdance.com> >>.
-
-=head1 LICENSE
-
-This program is free software; you can redistribute it and/or 
-modify it under the same terms as Perl itself.
-
-See L<http://www.perl.com/perl/misc/Artistic.html>
 
 =head1 TODO
 
@@ -1161,8 +1016,6 @@ Figure a way to report test names in the failure summary.
 
 Rework the test summary so long test names are not truncated as badly.
 (Partially done with new skip test styles)
-
-Deal with VMS's "not \nok 4\n" mistake.
 
 Add option for coverage analysis.
 
@@ -1190,11 +1043,7 @@ Fix stats display when there's an overrun.
 
 Fix so perls with spaces in the filename work.
 
-=for _private
-
 Keeping whittling away at _run_all_tests()
-
-=for _private
 
 Clean up how the summary is printed.  Get rid of those damned formats.
 
@@ -1205,16 +1054,23 @@ directory.
 
 Please use the CPAN bug ticketing system at L<http://rt.cpan.org/>.
 You can also mail bugs, fixes and enhancements to 
-C<< <bug-test-harness@rt.cpan.org> >>.
+C<< <bug-test-harness >> at C<< rt.cpan.org> >>.
 
 =head1 AUTHORS
 
-Original code by Michael G Schwern, maintained by Andy Lester.
+Either Tim Bunce or Andreas Koenig, we don't know. What we know for
+sure is, that it was inspired by Larry Wall's TEST script that came
+with perl distributions for ages. Numerous anonymous contributors
+exist.  Andreas Koenig held the torch for many years, and then
+Michael G Schwern.
+
+Current maintainer is Andy Lester C<< <andy at petdance.com> >>.
 
 =head1 COPYRIGHT
 
-Copyright 2003 by Michael G Schwern C<< <schwern@pobox.com> >>,
-                  Andy Lester C<< <andy@petdance.com> >>.
+Copyright 2002-2005
+by Michael G Schwern C<< <schwern at pobox.com> >>,
+Andy Lester C<< <andy at petdance.com> >>.
 
 This program is free software; you can redistribute it and/or 
 modify it under the same terms as Perl itself.

@@ -1,7 +1,7 @@
 #!./perl
 # tests for "goto &sub"-ing into XSUBs
 
-# $RCSfile$$Revision$$Date$
+# $RCSfile: goto_xs.t,v $$Revision: 1.6 $$Date: 2003/12/03 03:02:48 $
 
 # Note: This only tests things that should *work*.  At some point, it may
 #       be worth while to write some failure tests for things that should
@@ -9,17 +9,20 @@
 #       guessing that if all of these work correctly, the bad ones will
 #       break correctly as well.
 
-chdir 't' if -d 't';
-@INC = '../lib';
-$ENV{PERL5LIB} = "../lib";
+BEGIN { $| = 1; }
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+    $ENV{PERL5LIB} = "../lib";
 
 # turn warnings into fatal errors
-$SIG{__WARN__} = sub { die "WARNING: @_" } ;
+    $SIG{__WARN__} = sub { die "WARNING: @_" } ;
 
-BEGIN { $| = 1; }
-eval 'require Fcntl'
-  or do { print "1..0\n# Fcntl unavailable, can't test XS goto.\n"; exit 0 };
-
+    foreach (qw(Fcntl XS::APItest)) {
+	eval "require $_"
+	or do { print "1..0\n# $_ unavailable, can't test XS goto.\n"; exit 0 }
+    }
+}
 print "1..10\n";
 
 # We don't know what symbols are defined in platform X's system headers.

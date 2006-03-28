@@ -121,7 +121,7 @@ directory, and the procedure for building the extension is simply
 I<N.B.> The procedure by which extensions are built and
 tested creates several levels (at least 4) under the
 directory in which the extension's source files live.
-For this reason if you are runnning a version of VMS prior
+For this reason if you are running a version of VMS prior
 to V7.1 you shouldn't nest the source directory
 too deeply in your directory structure lest you exceed RMS'
 maximum of 8 levels of subdirectory in a filespec.  (You

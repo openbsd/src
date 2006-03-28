@@ -1,12 +1,10 @@
-/* $RCSfile: str.c,v $$Revision: 4.1 $$Date: 92/08/07 18:29:26 $
+/*    str.c
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999,
  *    2001, 2002, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
- *
- * $Log:	str.c,v $
  */
 
 #include "EXTERN.h"
@@ -44,23 +42,6 @@ str_2ptr(register STR *str)
     return str->str_ptr;
 }
 
-double
-str_2num(register STR *str)
-{
-    if (!str)
-	return 0.0;
-    if (str->str_len && str->str_pok)
-	str->str_nval = atof(str->str_ptr);
-    else
-	str->str_nval = 0.0;
-    str->str_nok = 1;
-#ifdef DEBUGGING
-    if (debug & 32)
-	fprintf(stderr,"0x%lx num(%g)\n",(unsigned long)str,str->str_nval);
-#endif
-    return str->str_nval;
-}
-
 void
 str_sset(STR *dstr, register STR *sstr)
 {
@@ -96,19 +77,6 @@ str_set(register STR *str, register char *ptr)
     GROWSTR(&(str->str_ptr), &(str->str_len), len + 1);
     memcpy(str->str_ptr,ptr,len+1);
     str->str_cur = len;
-    str->str_nok = 0;		/* invalidate number */
-    str->str_pok = 1;		/* validate pointer */
-}
-
-void
-str_chop(register STR *str, register char *ptr)	/* like set but assuming ptr is in str */
-                  
-                   
-{
-    if (!(str->str_pok))
-	str_2ptr(str);
-    str->str_cur -= (ptr - str->str_ptr);
-    memcpy(str->str_ptr, ptr, str->str_cur + 1);
     str->str_nok = 0;		/* invalidate number */
     str->str_pok = 1;		/* validate pointer */
 }
@@ -152,41 +120,6 @@ str_cat(register STR *str, register char *ptr)
     str->str_pok = 1;		/* validate pointer */
 }
 
-char *
-str_append_till(register STR *str, register char *from, register int delim, char *keeplist)
-{
-    register char *to;
-    register int len;
-
-    if (!from)
-	return Nullch;
-    len = strlen(from);
-    GROWSTR(&(str->str_ptr), &(str->str_len), str->str_cur + len + 1);
-    str->str_nok = 0;		/* invalidate number */
-    str->str_pok = 1;		/* validate pointer */
-    to = str->str_ptr+str->str_cur;
-    for (; *from; from++,to++) {
-	if (*from == '\\' && from[1] && delim != '\\') {
-	    if (!keeplist) {
-		if (from[1] == delim || from[1] == '\\')
-		    from++;
-		else
-		    *to++ = *from++;
-	    }
-	    else if (strchr(keeplist,from[1]))
-		*to++ = *from++;
-	    else
-		from++;
-	}
-	else if (*from == delim)
-	    break;
-	*to = *from;
-    }
-    *to = '\0';
-    str->str_cur = to - str->str_ptr;
-    return from;
-}
-
 STR *
 str_new(int len)
 {
@@ -205,27 +138,7 @@ str_new(int len)
     return str;
 }
 
-void
-str_grow(register STR *str, int len)
-{
-    if (len && str)
-	GROWSTR(&(str->str_ptr), &(str->str_len), len + 1);
-}
-
 /* make str point to what nstr did */
-
-void
-str_replace(register STR *str, register STR *nstr)
-{
-    safefree(str->str_ptr);
-    str->str_ptr = nstr->str_ptr;
-    str->str_len = nstr->str_len;
-    str->str_cur = nstr->str_cur;
-    str->str_pok = nstr->str_pok;
-    if ((str->str_nok = nstr->str_nok))
-	str->str_nval = nstr->str_nval;
-    safefree((char*)nstr);
-}
 
 void
 str_free(register STR *str)
@@ -336,95 +249,6 @@ thats_all_folks:
     return str->str_cur ? str->str_ptr : Nullch;
 }
 
-void
-str_inc(register STR *str)
-{
-    register char *d;
-
-    if (!str)
-	return;
-    if (str->str_nok) {
-	str->str_nval += 1.0;
-	str->str_pok = 0;
-	return;
-    }
-    if (!str->str_pok) {
-	str->str_nval = 1.0;
-	str->str_nok = 1;
-	return;
-    }
-    for (d = str->str_ptr; *d && *d != '.'; d++) ;
-    d--;
-    if (!isDIGIT(*str->str_ptr) || !isDIGIT(*d) ) {
-        str_numset(str,atof(str->str_ptr) + 1.0);  /* punt */
-	return;
-    }
-    while (d >= str->str_ptr) {
-	if (++*d <= '9')
-	    return;
-	*(d--) = '0';
-    }
-    /* oh,oh, the number grew */
-    GROWSTR(&(str->str_ptr), &(str->str_len), str->str_cur + 2);
-    str->str_cur++;
-    for (d = str->str_ptr + str->str_cur; d > str->str_ptr; d--)
-	*d = d[-1];
-    *d = '1';
-}
-
-void
-str_dec(register STR *str)
-{
-    register char *d;
-
-    if (!str)
-	return;
-    if (str->str_nok) {
-	str->str_nval -= 1.0;
-	str->str_pok = 0;
-	return;
-    }
-    if (!str->str_pok) {
-	str->str_nval = -1.0;
-	str->str_nok = 1;
-	return;
-    }
-    for (d = str->str_ptr; *d && *d != '.'; d++) ;
-    d--;
-    if (!isDIGIT(*str->str_ptr) || !isDIGIT(*d) || (*d == '0' && d == str->str_ptr)) {
-        str_numset(str,atof(str->str_ptr) - 1.0);  /* punt */
-	return;
-    }
-    while (d >= str->str_ptr) {
-	if (--*d >= '0')
-	    return;
-	*(d--) = '9';
-    }
-}
-
-/* make a string that will exist for the duration of the expression eval */
-
-STR *
-str_mortal(STR *oldstr)
-{
-    register STR *str = str_new(0);
-    static long tmps_size = -1;
-
-    str_sset(str,oldstr);
-    if (++tmps_max > tmps_size) {
-	tmps_size = tmps_max;
-	if (!(tmps_size & 127)) {
-	    if (tmps_size)
-		tmps_list = (STR**)saferealloc((char*)tmps_list,
-		    (tmps_size + 128) * sizeof(STR*) );
-	    else
-		tmps_list = (STR**)safemalloc(128 * sizeof(char*));
-	}
-    }
-    tmps_list[tmps_max] = str;
-    return str;
-}
-
 STR *
 str_make(char *s)
 {
@@ -434,11 +258,3 @@ str_make(char *s)
     return str;
 }
 
-STR *
-str_nmake(double n)
-{
-    register STR *str = str_new(0);
-
-    str_numset(str,n);
-    return str;
-}

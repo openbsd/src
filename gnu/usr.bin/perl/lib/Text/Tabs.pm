@@ -7,7 +7,7 @@ require Exporter;
 @EXPORT = qw(expand unexpand $tabstop);
 
 use vars qw($VERSION $tabstop $debug);
-$VERSION = 98.112801;
+$VERSION = 2005.0824;
 
 use strict;
 
@@ -16,15 +16,21 @@ BEGIN	{
 	$debug = 0;
 }
 
-sub expand
-{
-	my (@l) = @_;
-	for $_ (@l) {
-		1 while s/(^|\n)([^\t\n]*)(\t+)/
-			$1. $2 . (" " x 
-				($tabstop * length($3)
-				- (length($2) % $tabstop)))
-			/sex;
+sub expand {
+	my @l;
+	my $pad;
+	for ( @_ ) {
+		my $s = '';
+		for (split(/^/m, $_, -1)) {
+			my $offs = 0;
+			s{\t}{
+				$pad = $tabstop - (pos() + $offs) % $tabstop;
+				$offs += $pad - 1;
+				" " x $pad;
+			}eg;
+			$s .= $_;
+		}
+		push(@l, $s);
 	}
 	return @l if wantarray;
 	return $l[0];
@@ -66,6 +72,20 @@ sub unexpand
 1;
 __END__
 
+sub expand
+{
+	my (@l) = @_;
+	for $_ (@l) {
+		1 while s/(^|\n)([^\t\n]*)(\t+)/
+			$1. $2 . (" " x 
+				($tabstop * length($3)
+				- (length($2) % $tabstop)))
+			/sex;
+	}
+	return @l if wantarray;
+	return $l[0];
+}
+
 
 =head1 NAME
 
@@ -92,6 +112,10 @@ compression with plain ascii!
 expand doesn't handle newlines very quickly -- do not feed it an
 entire document in one string.  Instead feed it an array of lines.
 
-=head1 AUTHOR
+=head1 LICENSE
 
-David Muir Sharnoff <muir@idiom.com>
+Copyright (C) 1996-2002,2005 David Muir Sharnoff.  
+Copyright (C) 2005 Aristotle Pagaltzis 
+This module may be modified, used, copied, and redistributed at your own risk.
+Publicly redistributed modified versions must use a different name.
+

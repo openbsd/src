@@ -8,13 +8,13 @@ B<perl>	S<[ B<-sTtuUWX> ]>
 	S<[ B<-hv> ] [ B<-V>[:I<configvar>] ]>
 	S<[ B<-cw> ] [ B<-d>[B<t>][:I<debugger>] ] [ B<-D>[I<number/list>] ]>
 	S<[ B<-pna> ] [ B<-F>I<pattern> ] [ B<-l>[I<octal>] ] [ B<-0>[I<octal/hexadecimal>] ]>
-	S<[ B<-I>I<dir> ] [ B<-m>[B<->]I<module> ] [ B<-M>[B<->]I<'module...'> ]>
+	S<[ B<-I>I<dir> ] [ B<-m>[B<->]I<module> ] [ B<-M>[B<->]I<'module...'> ] [ B<-f> ]>
+	S<[ B<-C [I<number/list>] >]>
 	S<[ B<-P> ]>
 	S<[ B<-S> ]>
 	S<[ B<-x>[I<dir>] ]>
 	S<[ B<-i>[I<extension>] ]>
 	S<[ B<-e> I<'command'> ] [ B<--> ] [ I<programfile> ] [ I<argument> ]...>
-	S<[ B<-C [I<number/list>] >]> ]>
 
 =head1 DESCRIPTION
 
@@ -109,6 +109,7 @@ runs off the end without hitting an exit() or die() operator, an implicit
 C<exit(0)> is provided to indicate successful completion.
 
 =head2 #! and quoting on non-Unix systems
+X<hashbang> X<#!>
 
 Unix's #! technique can be simulated on other systems:
 
@@ -140,8 +141,10 @@ Perl program and a Perl library file.
 
 =item Macintosh
 
-A Macintosh perl program will have the appropriate Creator and
-Type, so that double-clicking them will invoke the perl application.
+Under "Classic" MacOS, a perl program will have the appropriate Creator and
+Type, so that double-clicking them will invoke the MacPerl application.
+Under Mac OS X, clickable apps can be made from any C<#!> script using Wil
+Sanchez' DropScript utility: http://www.wsanchez.net/software/ .
 
 =item VMS
 
@@ -203,6 +206,7 @@ characters as control characters.
 There is no general solution to all of this.  It's just a mess.
 
 =head2 Location of Perl
+X<perl, location of interpreter>
 
 It may seem obvious to say, but Perl is useful only when users can
 easily find it.  When possible, it's good for both F</usr/bin/perl>
@@ -224,6 +228,7 @@ like this at the top of your program:
     use 5.005_54;
 
 =head2 Command Switches
+X<perl, command switches> X<command switches>
 
 As with all standard commands, a single-character switch may be
 clustered with the following switch, if any.
@@ -235,6 +240,7 @@ Switches include:
 =over 5
 
 =item B<-0>[I<octal/hexadecimal>]
+X<-0> X<$/>
 
 specifies the input record separator (C<$/>) as an octal or
 hexadecimal number.  If there are no digits, the null character is the
@@ -254,6 +260,7 @@ format: C<-0xHHH...>, where the C<H> are valid hexadecimal digits.
 consists of hexadecimal digits.)
 
 =item B<-a>
+X<-a> X<autosplit>
 
 turns on autosplit mode when used with a B<-n> or B<-p>.  An implicit
 split command to the @F array is done as the first thing inside the
@@ -271,6 +278,7 @@ is equivalent to
 An alternate delimiter may be specified using B<-F>.
 
 =item B<-C [I<number/list>]>
+X<-C>
 
 The C<-C> flag controls some Unicode of the Perl Unicode features.
 
@@ -325,6 +333,7 @@ This feature was practically unused, however, and the command line
 switch was therefore "recycled".)
 
 =item B<-c>
+X<-c>
 
 causes Perl to check the syntax of the program and then exit without
 executing it.  Actually, it I<will> execute C<BEGIN>, C<CHECK>, and
@@ -333,6 +342,7 @@ execution of your program.  C<INIT> and C<END> blocks, however, will
 be skipped.
 
 =item B<-d>
+X<-d> X<-dt>
 
 =item B<-dt>
 
@@ -341,6 +351,7 @@ If B<t> is specified, it indicates to the debugger that threads
 will be used in the code being debugged.
 
 =item B<-d:>I<foo[=bar,baz]>
+X<-d> X<-dt>
 
 =item B<-dt:>I<foo[=bar,baz]>
 
@@ -355,6 +366,7 @@ will be used in the code being debugged.
 See L<perldebug>.
 
 =item B<-D>I<letters>
+X<-D> X<DEBUGGING> X<-DDEBUGGING>
 
 =item B<-D>I<number>
 
@@ -401,7 +413,7 @@ as it executes, the way that C<sh -x> provides for shell scripts,
 you can't use Perl's B<-D> switch.  Instead do this
 
   # If you have "env" utility
-  env=PERLDB_OPTS="NonStop=1 AutoTrace=1 frame=2" perl -dS program
+  env PERLDB_OPTS="NonStop=1 AutoTrace=1 frame=2" perl -dS program
 
   # Bourne shell syntax
   $ PERLDB_OPTS="NonStop=1 AutoTrace=1 frame=2" perl -dS program
@@ -412,23 +424,38 @@ you can't use Perl's B<-D> switch.  Instead do this
 See L<perldebug> for details and variations.
 
 =item B<-e> I<commandline>
+X<-e>
 
 may be used to enter one line of program.  If B<-e> is given, Perl
 will not look for a filename in the argument list.  Multiple B<-e>
 commands may be given to build up a multi-line script.  Make sure
 to use semicolons where you would in a normal program.
 
+=item B<-f>
+X<-f>
+
+Disable executing F<$Config{sitelib}/sitecustomize.pl> at startup.
+
+Perl can be built so that it by default will try to execute
+F<$Config{sitelib}/sitecustomize.pl> at startup.  This is a hook that
+allows the sysadmin to customize how perl behaves.  It can for
+instance be used to add entries to the @INC array to make perl find
+modules in non-standard locations.
+
 =item B<-F>I<pattern>
+X<-F>
 
 specifies the pattern to split on if B<-a> is also in effect.  The
 pattern may be surrounded by C<//>, C<"">, or C<''>, otherwise it will be
-put in single quotes.
+put in single quotes. You can't use literal whitespace in the pattern.
 
 =item B<-h>
+X<-h>
 
 prints a summary of the options.
 
 =item B<-i>[I<extension>]
+X<-i> X<in-place>
 
 specifies that files processed by the C<E<lt>E<gt>> construct are to be
 edited in-place.  It does this by renaming the input file, opening the
@@ -540,6 +567,7 @@ files are given on the command line.  In this case, no backup is made
 proceeds from STDIN to STDOUT as might be expected.
 
 =item B<-I>I<directory>
+X<-I> X<@INC>
 
 Directories specified by B<-I> are prepended to the search path for
 modules (C<@INC>), and also tells the C preprocessor where to search for
@@ -547,6 +575,7 @@ include files.  The C preprocessor is invoked with B<-P>; by default it
 searches /usr/include and /usr/lib/perl.
 
 =item B<-l>[I<octnum>]
+X<-l> X<$/> X<$\>
 
 enables automatic line-ending processing.  It has two separate
 effects.  First, it automatically chomps C<$/> (the input record
@@ -567,6 +596,7 @@ separator if the B<-l> switch is followed by a B<-0> switch:
 This sets C<$\> to newline and then sets C<$/> to the null character.
 
 =item B<-m>[B<->]I<module>
+X<-m> X<-M>
 
 =item B<-M>[B<->]I<module>
 
@@ -591,7 +621,12 @@ importing symbols.  The actual code generated by B<-Mmodule=foo,bar> is
 C<use module split(/,/,q{foo,bar})>.  Note that the C<=> form
 removes the distinction between B<-m> and B<-M>.
 
+A consequence of this is that B<-MFoo=number> never does a version check
+(unless C<Foo::import()> itself is set up to do a version check, which
+could happen for example if Foo inherits from Exporter.)
+
 =item B<-n>
+X<-n>
 
 causes Perl to assume the following loop around your program, which
 makes it iterate over filename arguments somewhat like B<sed -n> or
@@ -620,6 +655,7 @@ C<BEGIN> and C<END> blocks may be used to capture control before or after
 the implicit program loop, just as in B<awk>.
 
 =item B<-p>
+X<-p>
 
 causes Perl to assume the following loop around your program, which
 makes it iterate over filename arguments somewhat like B<sed>:
@@ -642,6 +678,7 @@ C<BEGIN> and C<END> blocks may be used to capture control before or after
 the implicit loop, just as in B<awk>.
 
 =item B<-P>
+X<-P>
 
 B<NOTE: Use of -P is strongly discouraged because of its inherent
 problems, including poor portability.>
@@ -707,11 +744,11 @@ The C<-x> does not work with C<-P>.
 =back
 
 =item B<-s>
+X<-s>
 
 enables rudimentary switch parsing for switches on the command
 line after the program name but before any filename arguments (or before
-an argument of B<-->).  This means you can have switches with two leading
-dashes (B<--help>).  Any switch found there is removed from @ARGV and sets the
+an argument of B<-->).  Any switch found there is removed from @ARGV and sets the
 corresponding variable in the Perl program.  The following program
 prints "1" if the program is invoked with a B<-xyz> switch, and "abc"
 if it is invoked with B<-xyz=abc>.
@@ -719,10 +756,12 @@ if it is invoked with B<-xyz=abc>.
     #!/usr/bin/perl -s
     if ($xyz) { print "$xyz\n" }
 
-Do note that B<--help> creates the variable ${-help}, which is not compliant
-with C<strict refs>.
+Do note that a switch like B<--help> creates the variable ${-help}, which is not compliant
+with C<strict refs>.  Also, when using this option on a script with
+warnings enabled you may get a lot of spurious "used only once" warnings.
 
 =item B<-S>
+X<-S>
 
 makes Perl use the PATH environment variable to search for the
 program (unless the name of the program contains directory separators).
@@ -775,6 +814,7 @@ before being searched for on the PATH.  On Unix platforms, the
 program will be searched for strictly on the PATH.
 
 =item B<-t>
+X<-t>
 
 Like B<-T>, but taint checks will issue warnings rather than fatal
 errors.  These warnings can be controlled normally with C<no warnings
@@ -786,6 +826,7 @@ for real production code and for new secure code written from scratch
 always use the real B<-T>.
 
 =item B<-T>
+X<-T>
 
 forces "taint" checks to be turned on so you can test them.  Ordinarily
 these checks are done only when running setuid or setgid.  It's a
@@ -798,6 +839,7 @@ on the command line or in the #! line for systems which support
 that construct.
 
 =item B<-u>
+X<-u>
 
 This obsolete switch causes Perl to dump core after compiling your
 program.  You can then in theory take this core dump and turn it
@@ -814,19 +856,22 @@ generator backends to the compiler.  See L<B> and L<B::Bytecode>
 for details.
 
 =item B<-U>
+X<-U>
 
 allows Perl to do unsafe operations.  Currently the only "unsafe"
-operations are the unlinking of directories while running as superuser,
-and running setuid programs with fatal taint checks turned into
-warnings.  Note that the B<-w> switch (or the C<$^W> variable) must
-be used along with this option to actually I<generate> the
-taint-check warnings.
+operations are attempting to unlink directories while running as 
+superuser, and running setuid programs with fatal taint checks turned
+into warnings.  Note that the B<-w> switch (or the C<$^W> variable) 
+must be used along with this option to actually I<generate> the
+taint-check warnings.  
 
 =item B<-v>
+X<-v>
 
 prints the version and patchlevel of your perl executable.
 
 =item B<-V>
+X<-V>
 
 prints summary of the major perl configuration values and the current
 values of @INC.
@@ -872,12 +917,13 @@ below, the PERL_API params are returned in alphabetical order.
     building_on 'linux' '5' '1' '9' now
 
 =item B<-w>
+X<-w>
 
 prints warnings about dubious constructs, such as variable names
 that are mentioned only once and scalar variables that are used
 before being set, redefined subroutines, references to undefined
 filehandles or filehandles opened read-only that you are attempting
-to write on, values used as a number that doesn't look like numbers,
+to write on, values used as a number that don't look like numbers,
 using an array as though it were a scalar, if your subroutines
 recurse more than 100 deep, and innumerable other things.
 
@@ -889,16 +935,19 @@ facility is also available if you want to manipulate entire classes
 of warnings; see L<warnings> or L<perllexwarn>.
 
 =item B<-W>
+X<-W>
 
 Enables all warnings regardless of C<no warnings> or C<$^W>.
 See L<perllexwarn>.
 
 =item B<-X>
+X<-X>
 
 Disables all warnings regardless of C<use warnings> or C<$^W>.
 See L<perllexwarn>.
 
 =item B<-x>
+X<-x>
 
 =item B<-x> I<directory>
 
@@ -916,23 +965,28 @@ if desired).
 =back
 
 =head1 ENVIRONMENT
+X<perl, environment variables>
 
 =over 12
 
 =item HOME
+X<HOME>
 
 Used if chdir has no argument.
 
 =item LOGDIR
+X<LOGDIR>
 
 Used if chdir has no argument and HOME is not set.
 
 =item PATH
+X<PATH>
 
 Used in executing subprocesses, and in finding the program if B<-S> is
 used.
 
 =item PERL5LIB
+X<PERL5LIB>
 
 A list of directories in which to look for Perl library
 files before looking in the standard library and the current
@@ -949,6 +1003,7 @@ The program should instead say:
     use lib "/my/directory";
 
 =item PERL5OPT
+X<PERL5OPT>
 
 Command-line options (switches).  Switches in this variable are taken
 as if they were on every Perl command line.  Only the B<-[DIMUdmtw]>
@@ -958,6 +1013,7 @@ variable is ignored.  If PERL5OPT begins with B<-T>, tainting will be
 enabled, and any subsequent options ignored.
 
 =item PERLIO
+X<PERLIO>
 
 A space (or colon) separated list of PerlIO layers. If perl is built
 to use PerlIO system for IO (the default) these layers effect perl's IO.
@@ -980,12 +1036,14 @@ variable are briefly summarised below. For more details see L<PerlIO>.
 =over 8
 
 =item :bytes
+X<:bytes>
 
 A pseudolayer that turns I<off> the C<:utf8> flag for the layer below.
 Unlikely to be useful on its own in the global PERLIO environment variable.
 You perhaps were thinking of C<:crlf:bytes> or C<:perlio:bytes>.
 
 =item :crlf
+X<:crlf>
 
 A layer which does CRLF to "\n" translation distinguishing "text" and
 "binary" files in the manner of MS-DOS and similar operating systems.
@@ -993,23 +1051,27 @@ A layer which does CRLF to "\n" translation distinguishing "text" and
 as being an end-of-file marker.)
 
 =item :mmap
+X<:mmap>
 
 A layer which implements "reading" of files by using C<mmap()> to
 make (whole) file appear in the process's address space, and then
 using that as PerlIO's "buffer".
 
 =item :perlio
+X<:perlio>
 
 This is a re-implementation of "stdio-like" buffering written as a
 PerlIO "layer".  As such it will call whatever layer is below it for
 its operations (typically C<:unix>).
 
 =item :pop
+X<:pop>
 
 An experimental pseudolayer that removes the topmost layer.
 Use with the same care as is reserved for nitroglycerin.
 
 =item :raw
+X<:raw>
 
 A pseudolayer that manipulates other layers.  Applying the C<:raw>
 layer is equivalent to calling C<binmode($fh)>.  It makes the stream
@@ -1021,6 +1083,7 @@ just the inverse of C<:crlf> - other layers which would affect the
 binary nature of the stream are also removed or disabled.
 
 =item :stdio
+X<:stdio>
 
 This layer provides PerlIO interface by wrapping system's ANSI C "stdio"
 library calls. The layer provides both buffering and IO.
@@ -1029,10 +1092,12 @@ is platforms normal behaviour. You will need a C<:crlf> layer above it
 to do that.
 
 =item :unix
+X<:unix>
 
 Low level layer which calls C<read>, C<write> and C<lseek> etc.
 
 =item :utf8
+X<:utf8>
 
 A pseudolayer that turns on a flag on the layer below to tell perl
 that output should be in utf8 and that input should be regarded as
@@ -1041,6 +1106,7 @@ variable to make UTF-8 the default. (To turn off that behaviour
 use C<:bytes> layer.)
 
 =item :win32
+X<:win32>
 
 On Win32 platforms this I<experimental> layer uses native "handle" IO
 rather than unix-like numeric file descriptor layer. Known to be
@@ -1068,6 +1134,7 @@ C<win32> layer which is expected to be enhanced and should eventually be
 the default under Win32.
 
 =item PERLIO_DEBUG
+X<PERLIO_DEBUG>
 
 If set to the name of a file or device then certain operations of PerlIO
 sub-system will be logged to that file (opened as append). Typical uses
@@ -1080,25 +1147,31 @@ and Win32 approximate equivalent:
    set PERLIO_DEBUG=CON
    perl script ...
 
+This functionality is disabled for setuid scripts and for scripts run
+with B<-T>.
 
 =item PERLLIB
+X<PERLLIB>
 
 A list of directories in which to look for Perl library
 files before looking in the standard library and the current directory.
 If PERL5LIB is defined, PERLLIB is not used.
 
 =item PERL5DB
+X<PERL5DB>
 
 The command used to load the debugger code.  The default is:
 
 	BEGIN { require 'perl5db.pl' }
 
 =item PERL5DB_THREADED
+X<PERL5DB_THREADED>
 
 If set to a true value, indicates to the debugger that the code being
 debugged uses threads.
 
 =item PERL5SHELL (specific to the Win32 port)
+X<PERL5SHELL>
 
 May be set to an alternative shell that perl must use internally for
 executing "backtick" commands or system().  Default is C<cmd.exe /x/d/c>
@@ -1114,6 +1187,7 @@ interfere with the proper functioning of other programs (which usually
 look in COMSPEC to find a shell fit for interactive use).
 
 =item PERL_ALLOW_NON_IFS_LSP (specific to the Win32 port)
+X<PERL_ALLOW_NON_IFS_LSP>
 
 Set to 1 to allow the use of non-IFS compatible LSP's.
 Perl normally searches for an IFS-compatible LSP because this is required
@@ -1128,6 +1202,7 @@ Guardian's LSP actually plays some other games which allow applications
 requiring IFS compatibility to work).
 
 =item PERL_DEBUG_MSTATS
+X<PERL_DEBUG_MSTATS>
 
 Relevant only if perl is compiled with the malloc included with the perl
 distribution (that is, if C<perl -V:d_mymalloc> is 'define').
@@ -1136,12 +1211,14 @@ to an integer greater than one, also causes memory statistics to be dumped
 after compilation.
 
 =item PERL_DESTRUCT_LEVEL
+X<PERL_DESTRUCT_LEVEL>
 
 Relevant only if your perl executable was built with B<-DDEBUGGING>,
 this controls the behavior of global destruction of objects and other
 references.  See L<perlhack/PERL_DESTRUCT_LEVEL> for more information.
 
 =item PERL_DL_NONLAZY
+X<PERL_DL_NONLAZY>
 
 Set to one to have perl resolve B<all> undefined symbols when it loads
 a dynamic library.  The default behaviour is to resolve symbols when
@@ -1150,11 +1227,13 @@ extensions as it ensures that you get an error on misspelled function
 names even if the test suite doesn't call it.
 
 =item PERL_ENCODING
+X<PERL_ENCODING>
 
 If using the C<encoding> pragma without an explicit encoding name, the
 PERL_ENCODING environment variable is consulted for an encoding name.
 
 =item PERL_HASH_SEED
+X<PERL_HASH_SEED>
 
 (Since Perl 5.8.1.)  Used to randomise Perl's internal hash function.
 To emulate the pre-5.8.1 behaviour, set to an integer (zero means
@@ -1180,6 +1259,7 @@ See L<perlsec/"Algorithmic Complexity Attacks"> and
 L</PERL_HASH_SEED_DEBUG> for more information.
 
 =item PERL_HASH_SEED_DEBUG
+X<PERL_HASH_SEED_DEBUG>
 
 (Since Perl 5.8.1.)  Set to one to display (to STDERR) the value of
 the hash seed at the beginning of execution.  This, combined with
@@ -1193,6 +1273,7 @@ B<Do not disclose the hash seed> to people who don't need to know it.
 See also hash_seed() of L<Hash::Util>.
 
 =item PERL_ROOT (specific to the VMS port)
+X<PERL_ROOT>
 
 A translation concealed rooted logical name that contains perl and the
 logical device for the @INC path on VMS only.  Other logical names that
@@ -1201,6 +1282,7 @@ SYS$TIMEZONE_DIFFERENTIAL but are optional and discussed further in
 L<perlvms> and in F<README.vms> in the Perl source distribution.
 
 =item PERL_SIGNALS
+X<PERL_SIGNALS>
 
 In Perls 5.8.1 and later.  If set to C<unsafe> the pre-Perl-5.8.0
 signals behaviour (immediate but unsafe) is restored.  If set to
@@ -1208,6 +1290,7 @@ C<safe> the safe (or deferred) signals are used.
 See L<perlipc/"Deferred Signals (Safe Signals)">.
 
 =item PERL_UNICODE
+X<PERL_UNICODE>
 
 Equivalent to the B<-C> command-line switch.  Note that this is not
 a boolean variable-- setting this to C<"1"> is not the right way to
@@ -1217,6 +1300,7 @@ your shell before starting Perl).  See the description of the C<-C>
 switch for more information.
 
 =item SYS$LOGIN (specific to the VMS port)
+X<SYS$LOGIN>
 
 Used if chdir has no argument and HOME and LOGDIR are not set.
 

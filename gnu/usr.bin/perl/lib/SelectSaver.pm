@@ -1,6 +1,6 @@
 package SelectSaver;
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 
 =head1 NAME
 
@@ -41,14 +41,14 @@ use Symbol;
 sub new {
     @_ >= 1 && @_ <= 2 or croak 'usage: new SelectSaver [FILEHANDLE]';
     my $fh = select;
-    my $self = bless [$fh], $_[0];
+    my $self = bless \$fh, $_[0];
     select qualify($_[1], caller) if @_ > 1;
     $self;
 }
 
 sub DESTROY {
-    my $this = $_[0];
-    select $$this[0];
+    my $self = $_[0];
+    select $$self;
 }
 
 1;

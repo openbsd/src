@@ -406,10 +406,42 @@ d_atoll (atoll.U):
 	This variable conditionally defines the HAS_ATOLL symbol, which
 	indicates to the C program that the atoll() routine is available.
 
-d_attribut (d_attribut.U):
-	This variable conditionally defines HASATTRIBUTE, which
-	indicates the C compiler can check for function attributes,
-	such as printf formats.
+d_attribute_format (d_attribut_format.U):
+	This variable conditionally defines HASATTRIBUTE_FORMAT, which
+	indicates the C compiler can check for printf-like formats.
+
+d_attribute_malloc (d_attribute_malloc.U):
+	This variable conditionally defines HASATTRIBUTE_MALLOC, which
+	indicates the C compiler can understand functions as having
+	malloc-like semantics.
+
+d_attribute_nonnull (d_attribute_nonnull.U):
+	This variable conditionally defines HASATTRIBUTE_NONNULL, which
+	indicates that the C compiler can know that certain arguments
+	must not be NULL, and will check accordingly at compile time.
+
+d_attribute_noreturn (d_attribute_noreturn.U):
+	This variable conditionally defines HASATTRIBUTE_NORETURN, which
+	indicates that the C compiler can know that certain functions
+	are guaranteed never to return.
+
+d_attribute_pure (d_attribute_pure.U):
+	This variable conditionally defines HASATTRIBUTE_PURE, which
+	indicates that the C compiler can know that certain functions
+	are "pure" functions, meaning that they have no side effects, and
+	only rely on function input and/or global data for their results.
+
+d_attribute_unused (d_attribute_unused.U):
+	This variable conditionally defines HASATTRIBUTE_UNUSED, which
+	indicates that the C compiler can know that certain variables
+	and arguments may not always be used, and to not throw warnings
+	if they don't get used.
+
+d_attribute_warn_unused_result (d_attribute_warn_unused_result.U):
+	This variable conditionally defines
+	HASATTRIBUTE_WARN_UNUSED_RESULT, which indicates that the C
+	compiler can know that certain functions have a return values
+	that must not be ignored, such as malloc() or open().
 
 d_bcmp (d_bcmp.U):
 	This variable conditionally defines the HAS_BCMP symbol if
@@ -465,6 +497,10 @@ d_chsize (d_chsize.U):
 d_class (d_class.U):
 	This variable conditionally defines the HAS_CLASS symbol, which
 	indicates to the C program that the class() routine is available.
+
+d_clearenv (d_clearenv.U):
+	This variable conditionally defines the HAS_CLEARENV symbol, which
+	indicates to the C program that the clearenv () routine is available.
 
 d_closedir (d_closedir.U):
 	This variable conditionally defines HAS_CLOSEDIR if closedir() is
@@ -773,6 +809,10 @@ d_ftime (d_ftime.U):
 	This variable conditionally defines the HAS_FTIME symbol, which indicates
 	that the ftime() routine exists.  The ftime() routine is basically
 	a sub-second accuracy clock.
+
+d_futimes (f_futimes.U):
+	This variable conditionally defines the HAS_FUTIMES symbol, which
+	indicates to the C program that the futimes() routine is available.
 
 d_Gconvert (d_gconvert.U):
 	This variable holds what Gconvert is defined as to convert
@@ -1183,6 +1223,14 @@ d_madvise (d_madvise.U):
 	This variable conditionally defines HAS_MADVISE if madvise() is
 	available to map a file into memory.
 
+d_malloc_size (d_malloc_size.U):
+	This symbol, if defined, indicates that the malloc_size
+	routine is available for use.
+
+d_malloc_good_size (d_malloc_good_size.U):
+	This symbol, if defined, indicates that the malloc_good_size
+	routine is available for use.
+
 d_mblen (d_mblen.U):
 	This variable conditionally defines the HAS_MBLEN symbol, which
 	indicates to the C program that the mblen() routine is available
@@ -1354,6 +1402,10 @@ d_nl_langinfo (d_nl_langinfo.U):
 d_nv_preserves_uv (perlxv.U):
 	This variable indicates whether a variable of type nvtype
 	can preserve all the bits a variable of type uvtype.
+
+d_nv_zero_is_allbits_zero (perlxv.U):
+	This variable indicates whether a variable of type nvtype
+	stores 0.0 in memory as all bits zero.
 
 d_off64_t (d_off64_t.U):
 	This symbol will be defined if the C compiler supports off64_t.
@@ -1870,6 +1922,12 @@ d_socks5_init (d_socks5_init.U):
 	This variable conditionally defines the HAS_SOCKS5_INIT symbol, which
 	indicates to the C program that the socks5_init() routine is available.
 
+d_sprintf_returns_strlen (d_sprintf_returns_strlen.U):
+	This variable defines whether sprintf returns the length of the string
+	(as per the ANSI spec). Some C libraries retain compatibility with
+	pre-ANSI C and return a pointer to the passed in buffer; for these
+	this variable will be undef.
+
 d_sqrtl (d_sqrtl.U):
 	This variable conditionally defines the HAS_SQRTL symbol, which
 	indicates to the C program that the sqrtl() routine is available.
@@ -1977,6 +2035,14 @@ d_strerror_r (d_strerror_r.U):
 d_strftime (d_strftime.U):
 	This variable conditionally defines the HAS_STRFTIME symbol, which
 	indicates to the C program that the strftime() routine is available.
+
+d_strlcat (d_strlcat.U):
+	This variable conditionally defines the HAS_STRLCAT symbol, which
+	indicates to the C program that the strlcat () routine is available.
+
+d_strlcpy (d_strlcpy.U):
+	This variable conditionally defines the HAS_STRLCPY symbol, which
+	indicates to the C program that the strlcpy () routine is available.
 
 d_strtod (d_strtod.U):
 	This variable conditionally defines the HAS_STRTOD symbol, which
@@ -2134,6 +2200,10 @@ d_union_semun (d_union_semun.U):
 d_unordered (d_unordered.U):
 	This variable conditionally defines the HAS_UNORDERED symbol, which
 	indicates to the C program that the unordered() routine is available.
+
+d_unsetenv (d_unsetenv.U):
+	This variable conditionally defines the HAS_UNSETENV symbol, which
+	indicates to the C program that the unsetenv () routine is available.
 
 d_usleep (d_usleep.U):
 	This variable conditionally defines HAS_USLEEP if usleep() is
@@ -4602,6 +4672,10 @@ uselargefiles (uselfs.U):
 uselongdouble (uselongdbl.U):
 	This variable conditionally defines the USE_LONG_DOUBLE symbol,
 	and indicates that long doubles should be used when available.
+
+usemallocwrap (mallocsrc.U):
+	This variable contains y if we are wrapping malloc to prevent
+	integer overflow during size calculations.
 
 usemorebits (usemorebits.U):
 	This variable conditionally defines the USE_MORE_BITS symbol,

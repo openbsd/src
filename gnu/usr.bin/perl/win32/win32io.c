@@ -258,7 +258,7 @@ PerlIOWin32_seek(pTHX_ PerlIO *f, Off_t offset, int whence)
  PerlIOWin32 *s = PerlIOSelf(f,PerlIOWin32);
  DWORD high = (sizeof(offset) > sizeof(DWORD)) ? (DWORD)(offset >> 32) : 0;
  DWORD low  = (DWORD) offset;
- DWORD res  = SetFilePointer(s->h,low,&high,where[whence]);
+ DWORD res  = SetFilePointer(s->h,(LONG)low,(LONG *)&high,where[whence]);
  if (res != 0xFFFFFFFF || GetLastError() != NO_ERROR)
   {
    return 0;
@@ -274,7 +274,7 @@ PerlIOWin32_tell(pTHX_ PerlIO *f)
 {
  PerlIOWin32 *s = PerlIOSelf(f,PerlIOWin32);
  DWORD high = 0;
- DWORD res  = SetFilePointer(s->h,0,&high,FILE_CURRENT);
+ DWORD res  = SetFilePointer(s->h,0,(LONG *)&high,FILE_CURRENT);
  if (res != 0xFFFFFFFF || GetLastError() != NO_ERROR)
   {
    return ((Off_t) high << 32) | res;

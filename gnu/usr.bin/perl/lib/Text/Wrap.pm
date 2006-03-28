@@ -6,10 +6,10 @@ require Exporter;
 @EXPORT = qw(wrap fill);
 @EXPORT_OK = qw($columns $break $huge);
 
-$VERSION = 2001.09292;
+$VERSION = 2005.0824_01;
 
 use vars qw($VERSION $columns $debug $break $huge $unexpand $tabstop
-	$separator);
+	$separator $separator2);
 use strict;
 
 BEGIN	{
@@ -20,6 +20,7 @@ BEGIN	{
 	$unexpand = 1;
 	$tabstop = 8;
 	$separator = "\n";
+	$separator2 = undef;
 }
 
 use Text::Tabs qw(expand unexpand);
@@ -43,7 +44,7 @@ sub wrap
 
 	pos($t) = 0;
 	while ($t !~ /\G\s*\Z/gc) {
-		if ($t =~ /\G([^\n]{0,$ll})($break|\z)/xmgc) {
+		if ($t =~ /\G([^\n]{0,$ll})($break|\n*\z)/xmgc) {
 			$r .= $unexpand 
 				? unexpand($nl . $lead . $1)
 				: $nl . $lead . $1;
@@ -52,7 +53,7 @@ sub wrap
 			$r .= $unexpand 
 				? unexpand($nl . $lead . $1)
 				: $nl . $lead . $1;
-			$remainder = $separator;
+			$remainder = defined($separator2) ? $separator2 : $separator;
 		} elsif ($huge eq 'overflow' && $t =~ /\G([^\n]*?)($break|\z)/xmgc) {
 			$r .= $unexpand 
 				? unexpand($nl . $lead . $1)
@@ -66,7 +67,11 @@ sub wrap
 			
 		$lead = $xp;
 		$ll = $nll;
-		$nl = $separator;
+		$nl = defined($separator2)
+			? ($remainder eq "\n"
+				? "\n"
+				: $separator2)
+			: $separator;
 	}
 	$r .= $remainder;
 
@@ -151,7 +156,7 @@ be used: it is unlikley you would want to pass in a number.
 
 Text::Wrap::fill() is a simple multi-paragraph formatter.  It formats
 each paragraph separately and then joins them together when it's done.  It
-will destory any whitespace in the original text.  It breaks text into
+will destroy any whitespace in the original text.  It breaks text into
 paragraphs by looking for whitespace after a newline.  In other respects
 it acts like wrap().
 
@@ -183,12 +188,15 @@ C<$Text::Wrap::columns> is set in its own namespace without importing it.
 C<Text::Wrap::wrap()> starts its work by expanding all the tabs in its
 input into spaces.  The last thing it does it to turn spaces back
 into tabs.  If you do not want tabs in your results, set 
-C<$Text::Wrap::unexapand> to a false value.  Likewise if you do not
+C<$Text::Wrap::unexpand> to a false value.  Likewise if you do not
 want to use 8-character tabstops, set C<$Text::Wrap::tabstop> to
 the number of characters you do want for your tabstops.
 
 If you want to separate your lines with something other than C<\n>
-then set C<$Text::Wrap::seporator> to your preference.
+then set C<$Text::Wrap::separator> to your preference.  This replaces
+all newlines with C<$Text::Wrap::separator>.  If you just to preserve
+existing newlines but add new breaks with something else, set 
+C<$Text::Wrap::separator2> instead.
 
 When words that are longer than C<$columns> are encountered, they
 are broken up.  C<wrap()> adds a C<"\n"> at column C<$columns>.
@@ -205,8 +213,11 @@ C<$huge>.  Now, 'wrap' is the default value.
 	print wrap("\t","","This is a bit of text that forms 
 		a normal book-style paragraph");
 
-=head1 AUTHOR
+=head1 LICENSE
 
 David Muir Sharnoff <muir@idiom.com> with help from Tim Pierce and
-many many others.  
+many many others.  Copyright (C) 1996-2002 David Muir Sharnoff.  
+This module may be modified, used, copied, and redistributed at
+your own risk.  Publicly redistributed modified versions must use 
+a different name.
 

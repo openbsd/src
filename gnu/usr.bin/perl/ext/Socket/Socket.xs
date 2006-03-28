@@ -272,7 +272,7 @@ inet_ntoa(ip_address_sv)
 	 * in HP-UX + GCC + 64bitint (returns "0.0.0.0"),
 	 * so let's use this sprintf() workaround everywhere.
 	 * This is also more threadsafe than using inet_ntoa(). */
-	New(1138, addr_str, 4 * 3 + 3 + 1, char); /* IPv6? */
+	Newx(addr_str, 4 * 3 + 3 + 1, char); /* IPv6? */
 	sprintf(addr_str, "%d.%d.%d.%d",
 		((addr.s_addr >> 24) & 0xFF),
 		((addr.s_addr >> 16) & 0xFF),

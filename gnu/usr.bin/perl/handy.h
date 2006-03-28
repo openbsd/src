@@ -1,7 +1,7 @@
 /*    handy.h
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999,
- *    2000, 2001, 2002, 2004, by Larry Wall and others
+ *    2000, 2001, 2002, 2004, 2005, 2006, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -87,6 +87,21 @@ Null SV pointer.
 # define HAS_BOOL 1
 #endif
 
+/* Try to figure out __func__ or __FUNCTION__ equivalent, if any.
+ * XXX Should really be a Configure probe, with HAS__FUNCTION__
+ *     and FUNCTION__ as results.
+ * XXX Similarly, a Configure probe for __FILE__ and __LINE__ is needed. */
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || (defined(__SUNPRO_C)) /* C99 or close enough. */
+#  define FUNCTION__ __func__
+#else
+#  if (defined(_MSC_VER) && _MSC_VER < 1300) || /* Pre-MSVC 7.0 has neither __func__ nor __FUNCTION and no good workarounds, either. */ \
+      (defined(__DECC_VER)) /* Tru64 or VMS, and strict C89 being used, but not modern enough cc (in Tur64, -c99 not known, only -std1). */
+#    define FUNCTION__ ""
+#  else
+#    define FUNCTION__ __FUNCTION__ /* Common extension. */
+#  endif
+#endif
+
 /* XXX A note on the perl source internal type system.  The
    original intent was that I32 be *exactly* 32 bits.
 
@@ -157,6 +172,11 @@ typedef U64TYPE U64;
 #           endif
 #       endif
 #   endif
+#endif
+
+/* HMB H.Merijn Brand - a placeholder for preparing Configure patches */
+#if defined(HAS_MALLOC_SIZE) && defined(HAS_MALLOC_GOOD_SIZE)
+/* Not (yet) used at top level, but mention them for metaconfig */
 #endif
 
 /* Mention I8SIZE, U8SIZE, I16SIZE, U16SIZE, I32SIZE, U32SIZE,
@@ -514,11 +534,7 @@ Converts the specified character to lowercase.
 
 /* Line numbers are unsigned, 32 bits. */
 typedef U32 line_t;
-#ifdef lint
-#define NOLINE ((line_t)0)
-#else
 #define NOLINE ((line_t) 4294967295UL)
-#endif
 
 
 /*
@@ -533,16 +549,21 @@ C<id> is an integer id between 0 and 1299 (used to identify leaks).
 
 =head1 Memory Management
 
-=for apidoc Am|void|New|int id|void* ptr|int nitems|type
+=for apidoc Am|void|Newx|void* ptr|int nitems|type
 The XSUB-writer's interface to the C C<malloc> function.
 
-=for apidoc Am|void|Newc|int id|void* ptr|int nitems|type|cast
+=for apidoc Am|void|Newxc|void* ptr|int nitems|type|cast
 The XSUB-writer's interface to the C C<malloc> function, with
 cast.
 
-=for apidoc Am|void|Newz|int id|void* ptr|int nitems|type
+=for apidoc Am|void|Newxz|void* ptr|int nitems|type
 The XSUB-writer's interface to the C C<malloc> function.  The allocated
 memory is zeroed with C<memzero>.
+
+In 5.9.3, we removed the 1st parameter, a debug aid, from the api.  It
+was used to uniquely identify each usage of these allocation
+functions, but was deemed unnecessary with the availability of better
+memory tracking tools, valgrind for example.
 
 =for apidoc Am|void|Renew|void* ptr|int nitems|type
 The XSUB-writer's interface to the C C<realloc> function.
@@ -593,91 +614,62 @@ hopefully catches attempts to access uninitialized memory.
 
 =cut */
 
-#ifndef lint
-
 #define NEWSV(x,len)	newSV(len)
 
 #ifdef PERL_MALLOC_WRAP
-#define MEM_WRAP_CHECK(n,t) \
-	(void)((n)>((MEM_SIZE)~0)/sizeof(t)?(Perl_croak_nocontext(PL_memory_wrap),0):0)
+#define MEM_WRAP_CHECK(n,t) MEM_WRAP_CHECK_1(n,t,PL_memory_wrap)
 #define MEM_WRAP_CHECK_1(n,t,a) \
-	(void)((n)>((MEM_SIZE)~0)/sizeof(t)?(Perl_croak_nocontext(a),0):0)
-#define MEM_WRAP_CHECK_2(n,t,a,b) \
-	(void)((n)>((MEM_SIZE)~0)/sizeof(t)?(Perl_croak_nocontext(a,b),0):0)
+	(void)(sizeof(t) > 1 && (n) > ((MEM_SIZE)~0)/sizeof(t) && (Perl_croak_nocontext(a),0))
+#define MEM_WRAP_CHECK_(n,t) MEM_WRAP_CHECK(n,t),
 
-#define New(x,v,n,t)	(v = (MEM_WRAP_CHECK(n,t), (t*)safemalloc((MEM_SIZE)((n)*sizeof(t)))))
-#define Newc(x,v,n,t,c)	(v = (MEM_WRAP_CHECK(n,t), (c*)safemalloc((MEM_SIZE)((n)*sizeof(t)))))
-#define Newz(x,v,n,t)	(v = (MEM_WRAP_CHECK(n,t), (t*)safemalloc((MEM_SIZE)((n)*sizeof(t))))), \
-			memzero((char*)(v), (n)*sizeof(t))
-#define Renew(v,n,t) \
-	  (v = (MEM_WRAP_CHECK(n,t), (t*)saferealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t)))))
-#define Renewc(v,n,t,c) \
-	  (v = (MEM_WRAP_CHECK(n,t), (c*)saferealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t)))))
-#define Safefree(d)	safefree((Malloc_t)(d))
-
-#define Move(s,d,n,t)	(MEM_WRAP_CHECK(n,t), (void)memmove((char*)(d),(char*)(s), (n) * sizeof(t)))
-#define Copy(s,d,n,t)	(MEM_WRAP_CHECK(n,t), (void)memcpy((char*)(d),(char*)(s), (n) * sizeof(t)))
-#define Zero(d,n,t)	(MEM_WRAP_CHECK(n,t), (void)memzero((char*)(d), (n) * sizeof(t)))
-
-#define MoveD(s,d,n,t)	(MEM_WRAP_CHECK(n,t), memmove((char*)(d),(char*)(s), (n) * sizeof(t)))
-#define CopyD(s,d,n,t)	(MEM_WRAP_CHECK(n,t), memcpy((char*)(d),(char*)(s), (n) * sizeof(t)))
-#ifdef HAS_MEMSET
-#define ZeroD(d,n,t)	(MEM_WRAP_CHECK(n,t), memzero((char*)(d), (n) * sizeof(t)))
-#else
-/* Using bzero(), which returns void.  */
-#define ZeroD(d,n,t)	(MEM_WRAP_CHECK(n,t), memzero((char*)(d), (n) * sizeof(t)),d)
-#endif
-
-#define Poison(d,n,t)	(MEM_WRAP_CHECK(n,t), (void)memset((char*)(d), 0xAB, (n) * sizeof(t)))
+#define PERL_STRLEN_ROUNDUP(n) ((void)(((n) > (MEM_SIZE)~0 - 2 * PERL_STRLEN_ROUNDUP_QUANTUM) ? (Perl_croak_nocontext(PL_memory_wrap),0):0),((n-1+PERL_STRLEN_ROUNDUP_QUANTUM)&~((MEM_SIZE)PERL_STRLEN_ROUNDUP_QUANTUM-1)))
 
 #else
 
 #define MEM_WRAP_CHECK(n,t)
 #define MEM_WRAP_CHECK_1(n,t,a)
 #define MEM_WRAP_CHECK_2(n,t,a,b)
+#define MEM_WRAP_CHECK_(n,t)
 
-#define New(x,v,n,t)	(v = (t*)safemalloc((MEM_SIZE)((n)*sizeof(t))))
-#define Newc(x,v,n,t,c)	(v = (c*)safemalloc((MEM_SIZE)((n)*sizeof(t))))
-#define Newz(x,v,n,t)	(v = (t*)safemalloc((MEM_SIZE)((n)*sizeof(t)))), \
+#define PERL_STRLEN_ROUNDUP(n) (((n-1+PERL_STRLEN_ROUNDUP_QUANTUM)&~((MEM_SIZE)PERL_STRLEN_ROUNDUP_QUANTUM-1)))
+
+#endif
+
+#define Newx(v,n,t)	(v = (MEM_WRAP_CHECK_(n,t) (t*)safemalloc((MEM_SIZE)((n)*sizeof(t)))))
+#define Newxc(v,n,t,c)	(v = (MEM_WRAP_CHECK_(n,t) (c*)safemalloc((MEM_SIZE)((n)*sizeof(t)))))
+#define Newxz(v,n,t)	(v = (MEM_WRAP_CHECK_(n,t) (t*)safemalloc((MEM_SIZE)((n)*sizeof(t))))), \
 			memzero((char*)(v), (n)*sizeof(t))
+/* pre 5.9.x compatibility */
+#define New(x,v,n,t)	Newx(v,n,t)
+#define Newc(x,v,n,t,c)	Newxc(v,n,t,c)
+#define Newz(x,v,n,t)	Newxz(v,n,t)
+
 #define Renew(v,n,t) \
-	  (v = (t*)saferealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t))))
+	  (v = (MEM_WRAP_CHECK_(n,t) (t*)saferealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t)))))
 #define Renewc(v,n,t,c) \
-	  (v = (c*)saferealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t))))
-#define Safefree(d)	safefree((Malloc_t)(d))
+	  (v = (MEM_WRAP_CHECK_(n,t) (c*)saferealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t)))))
 
-#define Move(s,d,n,t)	(void)memmove((char*)(d),(char*)(s), (n) * sizeof(t))
-#define Copy(s,d,n,t)	(void)memcpy((char*)(d),(char*)(s), (n) * sizeof(t))
-#define Zero(d,n,t)	(void)memzero((char*)(d), (n) * sizeof(t))
-
-#define MoveD(s,d,n,t)	memmove((char*)(d),(char*)(s), (n) * sizeof(t))
-#define CopyD(s,d,n,t)	memcpy((char*)(d),(char*)(s), (n) * sizeof(t))
-#ifdef HAS_MEMSET
-#define ZeroD(d,n,t)	memzero((char*)(d), (n) * sizeof(t))
+#ifdef PERL_POISON
+#define Safefree(d) \
+  (d ? (void)(safefree((Malloc_t)(d)), Poison(&(d), 1, Malloc_t)) : (void) 0)
 #else
-#define ZeroD(d,n,t)	((void)memzero((char*)(d), (n) * sizeof(t)),d)
+#define Safefree(d)	safefree((Malloc_t)(d))
 #endif
 
-#define Poison(d,n,t)	(void)memset((char*)(d), 0xAB, (n) * sizeof(t))
+#define Move(s,d,n,t)	(MEM_WRAP_CHECK_(n,t) (void)memmove((char*)(d),(const char*)(s), (n) * sizeof(t)))
+#define Copy(s,d,n,t)	(MEM_WRAP_CHECK_(n,t) (void)memcpy((char*)(d),(const char*)(s), (n) * sizeof(t)))
+#define Zero(d,n,t)	(MEM_WRAP_CHECK_(n,t) (void)memzero((char*)(d), (n) * sizeof(t)))
 
+#define MoveD(s,d,n,t)	(MEM_WRAP_CHECK_(n,t) memmove((char*)(d),(const char*)(s), (n) * sizeof(t)))
+#define CopyD(s,d,n,t)	(MEM_WRAP_CHECK_(n,t) memcpy((char*)(d),(const char*)(s), (n) * sizeof(t)))
+#ifdef HAS_MEMSET
+#define ZeroD(d,n,t)	(MEM_WRAP_CHECK_(n,t) memzero((char*)(d), (n) * sizeof(t)))
+#else
+/* Using bzero(), which returns void.  */
+#define ZeroD(d,n,t)	(MEM_WRAP_CHECK_(n,t) memzero((char*)(d), (n) * sizeof(t)),d)
 #endif
 
-#else /* lint */
-
-#define New(x,v,n,s)	(v = Null(s *))
-#define Newc(x,v,n,s,c)	(v = Null(s *))
-#define Newz(x,v,n,s)	(v = Null(s *))
-#define Renew(v,n,s)	(v = Null(s *))
-#define Move(s,d,n,t)
-#define Copy(s,d,n,t)
-#define Zero(d,n,t)
-#define MoveD(s,d,n,t)	d
-#define CopyD(s,d,n,t)	d
-#define ZeroD(d,n,t)	d
-#define Poison(d,n,t)
-#define Safefree(d)	(d) = (d)
-
-#endif /* lint */
+#define Poison(d,n,t)	(MEM_WRAP_CHECK_(n,t) (void)memset((char*)(d), 0xAB, (n) * sizeof(t)))
 
 #ifdef USE_STRUCT_COPY
 #define StructCopy(s,d,t) (*((t*)(d)) = *((t*)(s)))
@@ -703,10 +695,10 @@ hopefully catches attempts to access uninitialized memory.
 #ifdef USE_ITHREADS
 #define pTHX_FORMAT  "Perl interpreter: 0x%p"
 #define pTHX__FORMAT ", Perl interpreter: 0x%p"
-#define pTHX_VALUE_   (unsigned long)my_perl,
-#define pTHX_VALUE    (unsigned long)my_perl
-#define pTHX__VALUE_ ,(unsigned long)my_perl,
-#define pTHX__VALUE  ,(unsigned long)my_perl
+#define pTHX_VALUE_   (void *)my_perl,
+#define pTHX_VALUE    (void *)my_perl
+#define pTHX__VALUE_ ,(void *)my_perl,
+#define pTHX__VALUE  ,(void *)my_perl
 #else
 #define pTHX_FORMAT 
 #define pTHX__FORMAT

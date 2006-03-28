@@ -1,5 +1,5 @@
 package PerlIO::via;
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 use XSLoader ();
 XSLoader::load 'PerlIO::via';
 1;

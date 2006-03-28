@@ -20,7 +20,7 @@ BEGIN {
   #require AutoLoader;
 
   our @ISA = qw(Exporter);
-  our $VERSION = "1.01";
+  our $VERSION = "1.02";
   XSLoader::load('OS2::Process', $VERSION);
 }
 
@@ -704,7 +704,7 @@ Set to 1 for 32-bit executable files.
 file_type() may croak with one of the strings C<"Invalid EXE
 signature"> or C<"EXE marked invalid"> to indicate typical error
 conditions.  If given non-absolute path, will look on C<PATH>, will
-add extention F<.exe> if no extension is present (add extension F<.>
+add extension F<.exe> if no extension is present (add extension F<.>
 to suppress).
 
 =item C<@list = process_codepages()>
@@ -787,7 +787,7 @@ gets a buffer with characters and attributes of the screen.
 =item C<screen_set($buffer)>
 
 restores the screen given the result of screen().  E.g., if the file
-C<$file> contains the sceen contents, then
+C<$file> contains the screen contents, then
 
   open IN, $file or die;
   binmode IN;
@@ -1102,7 +1102,7 @@ Set visible/hidden flag of the window.  Default: $show is TRUE.
 Set window visibility state flag for the window for subsequent drawing.
 No actual drawing is done at this moment.  Use C<ShowWindow($hwnd, $state)>
 when redrawing is needed.  While update is disabled, changes to the "window
-state" do not change the appearence of the window.  Default: $update is TRUE.
+state" do not change the appearance of the window.  Default: $update is TRUE.
 
 (What is manipulated is the bit C<WS_VISIBLE> of the window style.)
 
@@ -1147,7 +1147,7 @@ message id $msg, they default to 0.  E.g.,
   PostMsg $hwnd, WM_CLOSE;
   PostMsg $hwnd, WM_QUIT;
 
-In fact, MPFROMSHORT() may be omited above.
+In fact, MPFROMSHORT() may be omitted above.
 
 For messages to other processes, messages which take/return a pointer are
 not supported.

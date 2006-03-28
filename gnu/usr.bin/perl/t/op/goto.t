@@ -5,14 +5,14 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = qw(. ../lib);
+    require "test.pl";
 }
 
-print "1..47\n";
+use warnings;
+use strict;
+plan tests => 57;
 
-require "test.pl";
-
-$purpose; # update per test, and include in print ok's !
-
+our $foo;
 while ($?) {
     $foo = 1;
   label1:
@@ -30,32 +30,28 @@ goto label1;
 $foo = 3;
 
 label2:
-print "#1\t:$foo: == 2\n";
-if ($foo == 2) {print "ok 1\n";} else {print "not ok 1\n";}
+is($foo, 2, 'escape while loop');
 goto label3;
 
 label4:
-print "#2\t:$foo: == 4\n";
-if ($foo == 4) {print "ok 2\n";} else {print "not ok 2\n";}
+is($foo, 4, 'second escape while loop');
 
-$PERL = ($^O eq 'MSWin32') ? '.\perl' : ($^O eq 'MacOS') ? $^X : ($^O eq 'NetWare') ? 'perl' : './perl';
-$CMD = qq[$PERL -e "goto foo;" 2>&1 ];
-$x = `$CMD`;
+my $r = run_perl(prog => 'goto foo;', stderr => 1);
+like($r, qr/label/, 'cant find label');
 
-if ($x =~ /label/) {print "ok 3\n";} else {print "not ok 3\n";}
-
+my $ok = 0;
 sub foo {
     goto bar;
-    print "not ok 4\n";
     return;
 bar:
-    print "ok 4\n";
+    $ok = 1;
 }
 
 &foo;
+ok($ok, 'goto in sub');
 
 sub bar {
-    $x = 'bypass';
+    my $x = 'bypass';
     eval "goto $x";
 }
 
@@ -63,12 +59,12 @@ sub bar {
 exit;
 
 FINALE:
-print "ok 13\n";
+is(curr_test(), 16, 'FINALE');
 
 # does goto LABEL handle block contexts correctly?
-$purpose = 'handles block contexts correctly (does scope-hopping)';
 # note that this scope-hopping differs from last & next,
 # which always go up-scope strictly.
+my $count = 0;
 my $cond = 1;
 for (1) {
     if ($cond == 1) {
@@ -78,71 +74,71 @@ for (1) {
     elsif ($cond == 0) {
       OTHER:
 	$cond = 2;
-	print "ok 14 - $purpose\n";
+	is($count, 0, 'OTHER');
+	$count++;
 	goto THIRD;
     }
     else {
       THIRD:
-	print "ok 15 - $purpose\n";
+	is($count, 1, 'THIRD');
+	$count++;
     }
 }
-print "ok 16\n";
+is($count, 2, 'end of loop');
 
 # Does goto work correctly within a for(;;) loop?
 #  (BUG ID 20010309.004)
 
-$purpose = 'goto inside a for(;;) loop body from inside the body';
 for(my $i=0;!$i++;) {
   my $x=1;
   goto label;
-  label: print (defined $x?"ok ": "not ok ", "17 - $purpose\n")
+  label: is($x, 1, 'goto inside a for(;;) loop body from inside the body');
 }
 
 # Does goto work correctly going *to* a for(;;) loop?
 #  (make sure it doesn't skip the initializer)
 
-$purpose = 'goto a for(;;) loop, from outside (does initializer)';
 my ($z, $y) = (0);
-FORL1: for($y="ok 18 - $purpose\n"; $z;) {print $y; goto TEST19}
-($y,$z) = ("not ok 18 - $purpose\n", 1);
+FORL1: for ($y=1; $z;) {
+    ok($y, 'goto a for(;;) loop, from outside (does initializer)');
+    goto TEST19}
+($y,$z) = (0, 1);
 goto FORL1;
 
 # Even from within the loop?
 TEST19: $z = 0;
-$purpose = 'goto a for(;;) loop, from inside (does initializer)';
-FORL2: for($y="ok 19 - $purpose\n"; 1;) {
+FORL2: for($y=1; 1;) {
   if ($z) {
-    print $y;
+    ok($y, 'goto a for(;;) loop, from inside (does initializer)');
     last;
   }
-  ($y, $z) = ("not ok 19 - $purpose\n", 1);
+  ($y, $z) = (0, 1);
   goto FORL2;
 }
 
 # Does goto work correctly within a try block?
-#  (BUG ID 20000313.004)
-$purpose = 'works correctly within a try block';
-my $ok = 0;
+#  (BUG ID 20000313.004) - [perl #2359]
+$ok = 0;
 eval {
   my $variable = 1;
   goto LABEL20;
   LABEL20: $ok = 1 if $variable;
 };
-print ($ok&&!$@ ? "ok 20" : "not ok 20", " - $purpose\n");
+ok($ok, 'works correctly within a try block');
+is($@, "", '...and $@ not set');
 
 # And within an eval-string?
-$purpose = 'works correctly within an eval string';
 $ok = 0;
 eval q{
   my $variable = 1;
   goto LABEL21;
   LABEL21: $ok = 1 if $variable;
 };
-print ($ok&&!$@ ? "ok" : "not ok", " 21 - $purpose\n");
+ok($ok, 'works correctly within an eval string');
+is($@, "", '...and $@ still not set');
 
 
 # Test that goto works in nested eval-string
-$purpose = 'works correctly in a nested eval string';
 $ok = 0;
 {eval q{
   eval q{
@@ -155,59 +151,56 @@ $ok = 0;
 };
 $ok = 0 if $@;
 }
-print ($ok ? "ok" : "not ok", " 22 - $purpose\n");
+ok($ok, 'works correctly in a nested eval string');
 
 {
     my $false = 0;
+    my $count;
 
     $ok = 0;
     { goto A; A: $ok = 1 } continue { }
-    print "not " unless $ok;
-    print "ok 23 - #20357 goto inside /{ } continue { }/ loop\n";
+    ok($ok, '#20357 goto inside /{ } continue { }/ loop');
 
     $ok = 0;
     { do { goto A; A: $ok = 1 } while $false }
-    print "not " unless $ok;
-    print "ok 24 - #20154 goto inside /do { } while ()/ loop\n";
-
+    ok($ok, '#20154 goto inside /do { } while ()/ loop');
     $ok = 0;
     foreach(1) { goto A; A: $ok = 1 } continue { };
-    print "not " unless $ok;
-    print "ok 25 - goto inside /foreach () { } continue { }/ loop\n";
+    ok($ok, 'goto inside /foreach () { } continue { }/ loop');
 
     $ok = 0;
     sub a {
 	A: { if ($false) { redo A; B: $ok = 1; redo A; } }
-	goto B unless $r++
+	goto B unless $count++;
     }
     a();
-    print "not " unless $ok;
-    print "ok 26 - #19061 loop label wiped away by goto\n";
+    ok($ok, '#19061 loop label wiped away by goto');
 
     $ok = 0;
+    my $p;
     for ($p=1;$p && goto A;$p=0) { A: $ok = 1 }
-    print "not " unless $ok;
-    print "ok 27 - weird case of goto and for(;;) loop\n";
+    ok($ok, 'weird case of goto and for(;;) loop');
 }
 
 # bug #9990 - don't prematurely free the CV we're &going to.
 
 sub f1 {
     my $x;
-    goto sub { $x; print "ok 28 - don't prematurely free CV\n" }
+    goto sub { $x=0; ok(1,"don't prematurely free CV\n") }
 }
 f1();
 
 # bug #22181 - this used to coredump or make $x undefined, due to
 # erroneous popping of the inner BLOCK context
 
-for ($i=0; $i<2; $i++) {
+undef $ok;
+for ($count=0; $count<2; $count++) {
     my $x = 1;
     goto LABEL29;
     LABEL29:
-    print "not " if !defined $x || $x != 1;
+    $ok = $x;
 }
-print "ok 29 - goto in for(;;) with continuation\n";
+is($ok, 1, 'goto in for(;;) with continuation');
 
 # bug #22299 - goto in require doesn't find label
 
@@ -221,91 +214,99 @@ YYY: print "OK\n";
 EOT
 close $f;
 
-curr_test(30);
-my $r = runperl(prog => 'use goto01; print qq[DONE\n]');
+$r = runperl(prog => 'use goto01; print qq[DONE\n]');
 is($r, "OK\nDONE\n", "goto within use-d file"); 
 unlink "goto01.pm";
 
 # test for [perl #24108]
+$ok = 1;
+$count = 0;
 sub i_return_a_label {
-    print "ok 31 - i_return_a_label called\n";
+    $count++;
     return "returned_label";
 }
 eval { goto +i_return_a_label; };
-print "not ";
-returned_label : print "ok 32 - done to returned_label\n";
+$ok = 0;
+
+returned_label:
+is($count, 1, 'called i_return_a_label');
+ok($ok, 'skipped to returned_label');
 
 # [perl #29708] - goto &foo could leave foo() at depth two with
 # @_ == PL_sv_undef, causing a coredump
 
 
-my $r = runperl(
+$r = runperl(
     prog =>
 	'sub f { return if $d; $d=1; my $a=sub {goto &f}; &$a; f() } f(); print qq(ok\n)',
     stderr => 1
     );
-print "not " if $r ne "ok\n";
-print "ok 33 - avoid pad without an \@_\n";
+is($r, "ok\n", 'avoid pad without an @_');
 
 goto moretests;
+fail('goto moretests');
 exit;
 
 bypass:
-$purpose = 'eval "goto $x"';
-print "ok 5 - $purpose\n";
+
+is(curr_test(), 5, 'eval "goto $x"');
 
 # Test autoloading mechanism.
 
 sub two {
-    ($pack, $file, $line) = caller;	# Should indicate original call stats.
-    $purpose = 'autoloading mechanism.';
-    print "@_ $pack $file $line" eq "1 2 3 main $FILE $LINE"
-	? "ok 7 - $purpose\n"
-	: "not ok 7 - $purpose\n";
+    my ($pack, $file, $line) = caller;	# Should indicate original call stats.
+    is("@_ $pack $file $line", "1 2 3 main $::FILE $::LINE",
+	'autoloading mechanism.');
 }
 
 sub one {
     eval <<'END';
-    sub one { print "ok 6\n"; goto &two; print "not ok 6\n"; }
+    no warnings 'redefine';
+    sub one { pass('sub one'); goto &two; fail('sub one tail'); }
 END
     goto &one;
 }
 
-$FILE = __FILE__;
-$LINE = __LINE__ + 1;
+$::FILE = __FILE__;
+$::LINE = __LINE__ + 1;
 &one(1,2,3);
 
-$purpose = 'goto NOWHERE sets $@';
-$wherever = NOWHERE;
-eval { goto $wherever };
-print $@ =~ /Can't find label NOWHERE/
- ? "ok 8 - $purpose\n" : "not ok 8 - $purpose\n"; #'
+{
+    my $wherever = 'NOWHERE';
+    eval { goto $wherever };
+    like($@, qr/Can't find label NOWHERE/, 'goto NOWHERE sets $@');
+}
 
 # see if a modified @_ propagates
 {
+  my $i;
   package Foo;
-  sub DESTROY	{ my $s = shift; print "ok $s->[0]\n"; }
-  sub show	{ print "# @_\nnot ok $_[0][0]\n" if @_ != 5; }
+  sub DESTROY	{ my $s = shift; ::is($s->[0], $i, "destroy $i"); }
+  sub show	{ ::is(+@_, 5, "show $i",); }
   sub start	{ push @_, 1, "foo", {}; goto &show; }
-  for (9..11)	{ start(bless([$_]), 'bar'); }
+  for (1..3)	{ $i = $_; start(bless([$_]), 'bar'); }
 }
 
 sub auto {
     goto &loadit;
 }
 
-sub AUTOLOAD { print @_ }
+sub AUTOLOAD { $ok = 1 if "@_" eq "foo" }
 
-auto("ok 12\n");
+$ok = 0;
+auto("foo");
+ok($ok, 'autoload');
 
-$wherever = FINALE;
-goto $wherever;
+{
+    my $wherever = 'FINALE';
+    goto $wherever;
+}
+fail('goto $wherever');
 
 moretests:
 # test goto duplicated labels.
 {
     my $z = 0;
-    $purpose = "catch goto middle of foreach";
     eval {
 	$z = 0;
 	for (0..1) {
@@ -316,78 +317,72 @@ moretests:
 	goto L4 if $z == 10;
 	last;
     };
-    print ($@ =~ /Can't "goto" into the middle of a foreach loop/ #'
-	   ? "ok" : "not ok", " 34 - $purpose\n");    
+    like($@, qr/Can't "goto" into the middle of a foreach loop/,
+	    'catch goto middle of foreach');
 
     $z = 0;
     # ambiguous label resolution (outer scope means endless loop!)
-    $purpose = "prefer same scope (loop body) to outer scope (loop entry)";
   L1:
     for my $x (0..1) {
 	$z += 10;
-	print $z == 10 ? "" : "not ", "ok 35 - $purpose\n";
+	is($z, 10, 'prefer same scope (loop body) to outer scope (loop entry)');
 	goto L1 unless $x;
 	$z += 10;
       L1:
-	print $z == 10 ? "" : "not ", "ok 36 - $purpose\n";
+	is($z, 10, 'prefer same scope: second');
 	last;
     }
 
-    $purpose = "prefer this scope (block body) to outer scope (block entry)";
     $z = 0;
   L2: 
     { 
 	$z += 10;
-	print $z == 10 ? "" : "not ", "ok 37 - $purpose\n";
+	is($z, 10, 'prefer this scope (block body) to outer scope (block entry)');
 	goto L2 if $z == 10;
 	$z += 10;
       L2:
-	print $z == 10 ? "" : "not ", "ok 38 - $purpose\n";
+	is($z, 10, 'prefer this scope: second');
     }
 
 
     { 
-	$purpose = "prefer this scope to inner scope";
 	$z = 0;
 	while (1) {
 	  L3: # not inner scope
 	    $z += 10;
 	    last;
 	}
-	print $z == 10 ? "": "not ", "ok 39 - $purpose\n";
+	is($z, 10, 'prefer this scope to inner scope');
 	goto L3 if $z == 10;
 	$z += 10;
       L3: # this scope !
-	print $z == 10 ? "" : "not ", "ok 40 - $purpose\n";
+	is($z, 10, 'prefer this scope to inner scope: second');
     }
 
   L4: # not outer scope
     { 
-	$purpose = "prefer this scope to inner,outer scopes";
 	$z = 0;
 	while (1) {
 	  L4: # not inner scope
 	    $z += 1;
 	    last;
 	}
-	print $z == 1 ? "": "not ", "ok 41 - $purpose\n";
+	is($z, 1, 'prefer this scope to inner,outer scopes');
 	goto L4 if $z == 1;
 	$z += 10;
       L4: # this scope !
-	print $z == 1 ? "": "not ", "ok 42 - $purpose\n";
+	is($z, 1, 'prefer this scope to inner,outer scopes: second');
     }
 
     {
-	$purpose = "same label, multiple times in same scope (choose 1st)";
-	my $tnum = 43;
-	my $loop;
-	for $x (0..1) { 
+	my $loop = 0;
+	for my $x (0..1) { 
 	  L2: # without this, fails 1 (middle) out of 3 iterations
 	    $z = 0;
 	  L2: 
 	    $z += 10;
-	    print $z == 10 ? "": "not ", "ok $tnum - $purpose\n";
-	    $tnum++;
+	    is($z, 10,
+		"same label, multiple times in same scope (choose 1st) $loop");
 	    goto L2 if $z == 10 and not $loop++;
 	}
     }
@@ -398,21 +393,56 @@ moretests:
 
 sub recurse1 {
     unshift @_, "x";
+    no warnings 'recursion';
     goto &recurse2;
 }
 sub recurse2 {
-    $x = shift;
+    my $x = shift;
     $_[0] ? +1 + recurse1($_[0] - 1) : 0
 }
-print "not " unless recurse1(500) == 500;
-print "ok 46 - recursive goto &foo\n";
+is(recurse1(500), 500, 'recursive goto &foo');
 
 # [perl #32039] Chained goto &sub drops data too early. 
 
 sub a32039 { @_=("foo"); goto &b32039; }
 sub b32039 { goto &c32039; }
-sub c32039 { print $_[0] eq 'foo' ? "" : "not ", "ok 47 - chained &goto\n" }
+sub c32039 { is($_[0], 'foo', 'chained &goto') }
 a32039();
 
+# [perl #35214] next and redo re-entered the loop with the wrong cop,
+# causing a subsequent goto to crash
+
+{
+    my $r = runperl(
+		stderr => 1,
+		prog =>
+'for ($_=0;$_<3;$_++){A: if($_==1){next} if($_==2){$_++;goto A}}print qq(ok\n)'
+    );
+    is($r, "ok\n", 'next and goto');
+
+    $r = runperl(
+		stderr => 1,
+		prog =>
+'for ($_=0;$_<3;$_++){A: if($_==1){$_++;redo} if($_==2){$_++;goto A}}print qq(ok\n)'
+    );
+    is($r, "ok\n", 'redo and goto');
+}
+
+# goto &foo not allowed in evals
 
 
+sub null { 1 };
+eval 'goto &null';
+like($@, qr/Can't goto subroutine from an eval-string/, 'eval string');
+eval { goto &null };
+like($@, qr/Can't goto subroutine from an eval-block/, 'eval block');
+
+# [perl #36521] goto &foo in warn handler could defeat recursion avoider
+
+{
+    my $r = runperl(
+		stderr => 1,
+		prog => 'my $d; my $w = sub { return if $d++; warn q(bar)}; local $SIG{__WARN__} = sub { goto &$w; }; warn q(foo);'
+    );
+    like($r, qr/bar/, "goto &foo in warn");
+}

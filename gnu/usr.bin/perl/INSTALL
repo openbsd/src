@@ -527,7 +527,7 @@ One can still revert to the old guaranteed repeatable order (and be
 vulnerable to attack by wily crackers) by setting the environment
 variable PERL_HASH_SEED, see L<perlrun/PERL_HASH_SEED>.  Another option
 is to add -DUSE_HASH_SEED_EXPLICIT to the compilation flags (for
-example by using C<Configure -Accflags=-DUSE_HAS_SEED_EXPLICIT>), in
+example by using C<Configure -Accflags=-DUSE_HASH_SEED_EXPLICIT>), in
 which case one has to explicitly set the PERL_HASH_SEED environment
 variable to enable the security feature, or by adding -DNO_HASH_SEED to
 the compilation flags to completely disable the randomisation feature.
@@ -666,7 +666,7 @@ to avoid these leaks. The default is now to perform direct manipulation
 whenever perl is running as a stand alone interpreter, and to call the safe
 but potentially leaky C<putenv()> function when the perl interpreter is
 embedded in another application. You can force perl to always use C<putenv()>
-by compiling with -DPERL_USE_SAVE_PUTENV. You can force an embedded perl to
+by compiling with -DPERL_USE_SAFE_PUTENV. You can force an embedded perl to
 use direct manipulation by setting C<PL_use_safe_putenv = 0;> after the
 C<perl_construct()> call.
 
@@ -844,6 +844,17 @@ version and architecture specific subdirectories are also searched, if
 present, at run time.  Of course, you can still search other @INC
 directories ahead of those in APPLLIB_EXP by using any of the standard
 run-time methods: $PERLLIB, $PERL5LIB, -I, use lib, etc.
+
+=item USE_SITECUSTOMIZE
+
+Run-time customization of @INC can be enabled with:
+
+	sh Configure -Dusesitecustomize
+
+Which will define USE_SITECUSTOMIZE and $Config{usesitecustomize}.
+When enabled, make perl run F<$sitelibexp/sitecustomize.pl> before
+anything else.  This script can then be set up to add additional
+entries to @INC.
 
 =item Man Pages
 
@@ -1848,36 +1859,75 @@ to avoid the BIND.
 
 =head2 Cross-compilation
 
-Starting from version 5.8, Perl has the beginnings of cross-compilation
-support.  What is known to work is running Configure in a
-cross-compilation environment and building the miniperl executable.
-What is known not to work is building the perl executable because
-that would require building extensions: Dynaloader statically and
-File::Glob dynamically, for extensions one needs MakeMaker and
-MakeMaker is not yet cross-compilation aware, and neither is
-the main Makefile.
+Perl can be cross-compiled.  It is just not trivial, cross-compilation
+rarely is.  Perl is routinely cross-compiled for many platforms (as of
+June 2005 at least PocketPC aka WinCE, Open Zaurus, EPOC, Symbian, and
+the IBM OS/400).  These platforms are known as the B<target> platforms,
+while the systems where the compilation takes place are the B<host>
+platforms.
 
-Since the functionality is so lacking, it must be considered
-highly experimental.  It is so experimental that it is not even
-mentioned during an interactive Configure session, a direct command
-line invocation (detailed shortly) is required to access the
-functionality.
+What makes the situation difficult is that first of all,
+cross-compilation environments vary significantly in how they are set
+up and used, and secondly because the primary way of configuring Perl
+(using the rather large Unix-tool-dependent Configure script) is not
+awfully well suited for cross-compilation.  However, starting from
+version 5.8.0, the Configure script also knows one way of supporting
+cross-compilation support, please keep reading.
 
-    NOTE: Perl is routinely built using cross-compilation
-    in the EPOC environment, in the WinCE, and in the OpenZaurus
-    project, but all those use something slightly different setup
-    than what described here.  For the WinCE setup, read the
-    wince/README.compile.  For the OpenZaurus setup, read the
-    Cross/README.
+See the following files for more information about compiling Perl for
+the particular platforms:
 
-The one environment where this cross-compilation setup has
-successfully been used as of this writing is the Compaq iPAQ running
-ARM Linux.  The build host was Intel Linux, the networking setup was
-PPP + SSH.  The exact setup details are beyond the scope of this
-document, see http://www.handhelds.org/ for more information.
+=over 4
 
-To run Configure in cross-compilation mode the basic switch is
-C<-Dusecrosscompile>.
+=item WinCE/PocketPC
+
+README.ce, wince/README.perlce
+
+=item Open Zaurus
+
+Cross/README
+
+=item EPOC
+
+README.epoc
+
+=item Symbian
+
+README.symbian
+
+=item OS/400
+
+README.os400
+
+=back
+
+Packaging and transferring either the core Perl modules or CPAN
+modules to the target platform is also left up to the each
+cross-compilation environment.  Often the cross-compilation target
+platforms are somewhat limited in diskspace: see the section
+L<Minimizing the Perl installation> to learn more of the minimal set
+of files required for a functional Perl installation.
+
+For some cross-compilation environments the Configure option
+C<-Dinstallprefix=...> might be handy, see L<Changing the installation
+directory>.
+
+About the cross-compilation support of Configure: what is known to
+work is running Configure in a cross-compilation environment and
+building the miniperl executable.  What is known not to work is
+building the perl executable because that would require building
+extensions: Dynaloader statically and File::Glob dynamically, for
+extensions one needs MakeMaker and MakeMaker is not yet
+cross-compilation aware, and neither is the main Makefile.
+
+The cross-compilation setup of Configure has successfully been used in
+at least two Linux cross-compilation environments.  The setups were
+both such that the host system was Intel Linux with a gcc built for
+cross-compiling into ARM Linux, and there was a SSH connection to the
+target system.
+
+To run Configure in cross-compilation mode the basic switch that
+has to be used is C<-Dusecrosscompile>.
 
    sh ./Configure -des -Dusecrosscompile -D...
 
@@ -1946,12 +1996,22 @@ Putting it all together:
         -Dlibpth=/skiff/local/arm-linux/lib \
         -D...
 
-or if you are happy with the defaults
+or if you are happy with the defaults:
 
     sh ./Configure -des -Dusecrosscompile \
         -Dtargethost=so.me.ho.st \
         -Dcc=arm-linux-gcc \
         -D...
+
+Another example where the cross-compiler has been installed under
+F</usr/local/arm/2.95.5>:
+
+    sh ./Configure -des -Dusecrosscompile \
+        -Dtargethost=so.me.ho.st \
+        -Dcc=/usr/local/arm/2.95.5/bin/arm-linux-gcc \
+        -Dincpth=/usr/local/arm/2.95.5/include \
+        -Dusrinc=/usr/local/arm/2.95.5/include \
+        -Dlibpth=/usr/local/arm/2.95.5/lib
 
 =head1 make test
 
@@ -2436,113 +2496,121 @@ Firstly, the bare minimum to run this script
      print("$f\n");
   }
 
-in Solaris is as follows (under $Config{prefix}):
+in Linux is as follows (under $Config{prefix}):
 
   ./bin/perl
-  ./lib/perl5/5.6.1/sun4-solaris-64int/auto/DynaLoader/autosplit.ix
-  ./lib/perl5/5.6.1/sun4-solaris-64int/auto/DynaLoader/dl_expandspec.al
-  ./lib/perl5/5.6.1/sun4-solaris-64int/auto/DynaLoader/dl_find_symbol_anywhere.al
-  ./lib/perl5/5.6.1/sun4-solaris-64int/auto/DynaLoader/dl_findfile.al
-  ./lib/perl5/5.6.1/sun4-solaris-64int/auto/File/Glob/Glob.so
-  ./lib/perl5/5.6.1/sun4-solaris-64int/auto/File/Glob/autosplit.ix
-  ./lib/perl5/5.6.1/sun4-solaris-64int/Config.pm
-  ./lib/perl5/5.6.1/sun4-solaris-64int/XSLoader.pm
-  ./lib/perl5/5.6.1/sun4-solaris-64int/DynaLoader.pm
-  ./lib/perl5/5.6.1/sun4-solaris-64int/CORE/libperl.so
-  ./lib/perl5/5.6.1/strict.pm
-  ./lib/perl5/5.6.1/warnings.pm
-  ./lib/perl5/5.6.1/Carp.pm
-  ./lib/perl5/5.6.1/Exporter.pm
-  ./lib/perl5/5.6.1/File/Glob.pm
-  ./lib/perl5/5.6.1/AutoLoader.pm
-  ./lib/perl5/5.6.1/vars.pm
-  ./lib/perl5/5.6.1/warnings/register.pm
-  ./lib/perl5/5.6.1/Carp/Heavy.pm
-  ./lib/perl5/5.6.1/Exporter/Heavy.pm
+  ./lib/perl5/5.9.3/strict.pm
+  ./lib/perl5/5.9.3/warnings.pm
+  ./lib/perl5/5.9.3/i686-linux/File/Glob.pm
+  ./lib/perl5/5.9.3/i686-linux/XSLoader.pm
+  ./lib/perl5/5.9.3/i686-linux/auto/File/Glob/Glob.so
 
 Secondly, Debian perl-base package contains the following files,
-size about 1.2MB in its i386 version:
+size about 1.9MB in its i386 version:
 
-  /usr/share/doc/perl/Documentation
-  /usr/share/doc/perl/README.Debian
-  /usr/share/doc/perl/copyright
-  /usr/share/doc/perl/AUTHORS.gz
-  /usr/share/doc/perl/changelog.Debian.gz
-  /usr/share/man/man1/perl.1.gz
-  /usr/share/perl/5.6.1/AutoLoader.pm
-  /usr/share/perl/5.6.1/Carp.pm
-  /usr/share/perl/5.6.1/Carp/Heavy.pm
-  /usr/share/perl/5.6.1/Cwd.pm
-  /usr/share/perl/5.6.1/Exporter.pm
-  /usr/share/perl/5.6.1/Exporter/Heavy.pm
-  /usr/share/perl/5.6.1/File/Spec.pm
-  /usr/share/perl/5.6.1/File/Spec/Unix.pm
-  /usr/share/perl/5.6.1/FileHandle.pm
-  /usr/share/perl/5.6.1/Getopt/Long.pm
-  /usr/share/perl/5.6.1/IO/Socket/INET.pm
-  /usr/share/perl/5.6.1/IO/Socket/UNIX.pm
-  /usr/share/perl/5.6.1/IPC/Open2.pm
-  /usr/share/perl/5.6.1/IPC/Open3.pm
-  /usr/share/perl/5.6.1/SelectSaver.pm
-  /usr/share/perl/5.6.1/Symbol.pm
-  /usr/share/perl/5.6.1/Text/Tabs.pm
-  /usr/share/perl/5.6.1/Text/Wrap.pm
-  /usr/share/perl/5.6.1/attributes.pm
-  /usr/share/perl/5.6.1/auto/Getopt/Long/GetOptions.al
-  /usr/share/perl/5.6.1/auto/Getopt/Long/FindOption.al
-  /usr/share/perl/5.6.1/auto/Getopt/Long/Configure.al
-  /usr/share/perl/5.6.1/auto/Getopt/Long/config.al
-  /usr/share/perl/5.6.1/auto/Getopt/Long/Croak.al
-  /usr/share/perl/5.6.1/auto/Getopt/Long/autosplit.ix
-  /usr/share/perl/5.6.1/base.pm
-  /usr/share/perl/5.6.1/constant.pm
-  /usr/share/perl/5.6.1/fields.pm
-  /usr/share/perl/5.6.1/integer.pm
-  /usr/share/perl/5.6.1/lib.pm
-  /usr/share/perl/5.6.1/locale.pm
-  /usr/share/perl/5.6.1/overload.pm
-  /usr/share/perl/5.6.1/strict.pm
-  /usr/share/perl/5.6.1/vars.pm
-  /usr/share/perl/5.6.1/warnings.pm
-  /usr/share/perl/5.6.1/warnings/register.pm
   /usr/bin/perl
-  /usr/lib/perl/5.6.1/Config.pm
-  /usr/lib/perl/5.6.1/Data/Dumper.pm
-  /usr/lib/perl/5.6.1/DynaLoader.pm
-  /usr/lib/perl/5.6.1/Errno.pm
-  /usr/lib/perl/5.6.1/Fcntl.pm
-  /usr/lib/perl/5.6.1/File/Glob.pm
-  /usr/lib/perl/5.6.1/IO.pm
-  /usr/lib/perl/5.6.1/IO/File.pm
-  /usr/lib/perl/5.6.1/IO/Handle.pm
-  /usr/lib/perl/5.6.1/IO/Pipe.pm
-  /usr/lib/perl/5.6.1/IO/Seekable.pm
-  /usr/lib/perl/5.6.1/IO/Select.pm
-  /usr/lib/perl/5.6.1/IO/Socket.pm
-  /usr/lib/perl/5.6.1/POSIX.pm
-  /usr/lib/perl/5.6.1/Socket.pm
-  /usr/lib/perl/5.6.1/XSLoader.pm
-  /usr/lib/perl/5.6.1/auto/Data/Dumper/Dumper.so
-  /usr/lib/perl/5.6.1/auto/Data/Dumper/Dumper.bs
-  /usr/lib/perl/5.6.1/auto/DynaLoader/dl_findfile.al
-  /usr/lib/perl/5.6.1/auto/DynaLoader/dl_expandspec.al
-  /usr/lib/perl/5.6.1/auto/DynaLoader/dl_find_symbol_anywhere.al
-  /usr/lib/perl/5.6.1/auto/DynaLoader/autosplit.ix
-  /usr/lib/perl/5.6.1/auto/DynaLoader/DynaLoader.a
-  /usr/lib/perl/5.6.1/auto/DynaLoader/extralibs.ld
-  /usr/lib/perl/5.6.1/auto/Fcntl/Fcntl.so
-  /usr/lib/perl/5.6.1/auto/Fcntl/Fcntl.bs
-  /usr/lib/perl/5.6.1/auto/File/Glob/Glob.bs
-  /usr/lib/perl/5.6.1/auto/File/Glob/Glob.so
-  /usr/lib/perl/5.6.1/auto/File/Glob/autosplit.ix
-  /usr/lib/perl/5.6.1/auto/IO/IO.so
-  /usr/lib/perl/5.6.1/auto/IO/IO.bs
-  /usr/lib/perl/5.6.1/auto/POSIX/POSIX.bs
-  /usr/lib/perl/5.6.1/auto/POSIX/POSIX.so
-  /usr/lib/perl/5.6.1/auto/POSIX/autosplit.ix
-  /usr/lib/perl/5.6.1/auto/POSIX/load_imports.al
-  /usr/lib/perl/5.6.1/auto/Socket/Socket.so
-  /usr/lib/perl/5.6.1/auto/Socket/Socket.bs
+  /usr/bin/perl5.8.4
+  /usr/lib/perl/5.8
+  /usr/lib/perl/5.8.4/B.pm
+  /usr/lib/perl/5.8.4/B/Deparse.pm
+  /usr/lib/perl/5.8.4/Config.pm
+  /usr/lib/perl/5.8.4/Cwd.pm
+  /usr/lib/perl/5.8.4/Data/Dumper.pm
+  /usr/lib/perl/5.8.4/DynaLoader.pm
+  /usr/lib/perl/5.8.4/Errno.pm
+  /usr/lib/perl/5.8.4/Fcntl.pm
+  /usr/lib/perl/5.8.4/File/Glob.pm
+  /usr/lib/perl/5.8.4/IO.pm
+  /usr/lib/perl/5.8.4/IO/File.pm
+  /usr/lib/perl/5.8.4/IO/Handle.pm
+  /usr/lib/perl/5.8.4/IO/Pipe.pm
+  /usr/lib/perl/5.8.4/IO/Seekable.pm
+  /usr/lib/perl/5.8.4/IO/Select.pm
+  /usr/lib/perl/5.8.4/IO/Socket.pm
+  /usr/lib/perl/5.8.4/POSIX.pm
+  /usr/lib/perl/5.8.4/Socket.pm
+  /usr/lib/perl/5.8.4/XSLoader.pm
+  /usr/lib/perl/5.8.4/auto/Cwd/Cwd.bs
+  /usr/lib/perl/5.8.4/auto/Cwd/Cwd.so
+  /usr/lib/perl/5.8.4/auto/Data/Dumper/Dumper.bs
+  /usr/lib/perl/5.8.4/auto/Data/Dumper/Dumper.so
+  /usr/lib/perl/5.8.4/auto/DynaLoader/DynaLoader.a
+  /usr/lib/perl/5.8.4/auto/DynaLoader/autosplit.ix
+  /usr/lib/perl/5.8.4/auto/DynaLoader/dl_expandspec.al
+  /usr/lib/perl/5.8.4/auto/DynaLoader/dl_find_symbol_anywhere.al
+  /usr/lib/perl/5.8.4/auto/DynaLoader/dl_findfile.al
+  /usr/lib/perl/5.8.4/auto/DynaLoader/extralibs.ld
+  /usr/lib/perl/5.8.4/auto/Fcntl/Fcntl.bs
+  /usr/lib/perl/5.8.4/auto/Fcntl/Fcntl.so
+  /usr/lib/perl/5.8.4/auto/File/Glob/Glob.bs
+  /usr/lib/perl/5.8.4/auto/File/Glob/Glob.so
+  /usr/lib/perl/5.8.4/auto/IO/IO.bs
+  /usr/lib/perl/5.8.4/auto/IO/IO.so
+  /usr/lib/perl/5.8.4/auto/POSIX/POSIX.bs
+  /usr/lib/perl/5.8.4/auto/POSIX/POSIX.so
+  /usr/lib/perl/5.8.4/auto/POSIX/autosplit.ix
+  /usr/lib/perl/5.8.4/auto/POSIX/load_imports.al
+  /usr/lib/perl/5.8.4/auto/Socket/Socket.bs
+  /usr/lib/perl/5.8.4/auto/Socket/Socket.so
+  /usr/lib/perl/5.8.4/lib.pm
+  /usr/lib/perl/5.8.4/re.pm
+  /usr/share/doc/perl-base
+  /usr/share/doc/perl/AUTHORS.gz
+  /usr/share/doc/perl/Documentation
+  /usr/share/doc/perl/README.Debian.gz
+  /usr/share/doc/perl/changelog.Debian.gz
+  /usr/share/doc/perl/copyright
+  /usr/share/man/man1/perl.1.gz
+  /usr/share/perl/5.8
+  /usr/share/perl/5.8.4/AutoLoader.pm
+  /usr/share/perl/5.8.4/Carp.pm
+  /usr/share/perl/5.8.4/Carp/Heavy.pm
+  /usr/share/perl/5.8.4/Exporter.pm
+  /usr/share/perl/5.8.4/Exporter/Heavy.pm
+  /usr/share/perl/5.8.4/File/Spec.pm
+  /usr/share/perl/5.8.4/File/Spec/Unix.pm
+  /usr/share/perl/5.8.4/FileHandle.pm
+  /usr/share/perl/5.8.4/Getopt/Long.pm
+  /usr/share/perl/5.8.4/IO/Socket/INET.pm
+  /usr/share/perl/5.8.4/IO/Socket/UNIX.pm
+  /usr/share/perl/5.8.4/IPC/Open2.pm
+  /usr/share/perl/5.8.4/IPC/Open3.pm
+  /usr/share/perl/5.8.4/List/Util.pm
+  /usr/share/perl/5.8.4/Scalar/Util.pm
+  /usr/share/perl/5.8.4/SelectSaver.pm
+  /usr/share/perl/5.8.4/Symbol.pm
+  /usr/share/perl/5.8.4/Text/ParseWords.pm
+  /usr/share/perl/5.8.4/Text/Tabs.pm
+  /usr/share/perl/5.8.4/Text/Wrap.pm
+  /usr/share/perl/5.8.4/attributes.pm
+  /usr/share/perl/5.8.4/base.pm
+  /usr/share/perl/5.8.4/bytes.pm
+  /usr/share/perl/5.8.4/bytes_heavy.pl
+  /usr/share/perl/5.8.4/constant.pm
+  /usr/share/perl/5.8.4/fields.pm
+  /usr/share/perl/5.8.4/integer.pm
+  /usr/share/perl/5.8.4/locale.pm
+  /usr/share/perl/5.8.4/overload.pm
+  /usr/share/perl/5.8.4/strict.pm
+  /usr/share/perl/5.8.4/utf8.pm
+  /usr/share/perl/5.8.4/utf8_heavy.pl
+  /usr/share/perl/5.8.4/vars.pm
+  /usr/share/perl/5.8.4/warnings.pm
+  /usr/share/perl/5.8.4/warnings/register.pm
+
+A nice trick to find out the minimal set of Perl library files you will
+need to run a Perl program is
+
+   perl -e 'do "prog.pl"; END { print "$_\n" for sort keys %INC }' 
+
+(this will not find libraries required in runtime, unfortunately, but
+it's a minimal set) and if you want to find out all the files you can
+use something like the below
+
+   strace perl -le 'do "x.pl"' 2>&1 | perl -nle '/^open\(\"(.+?)"/ && print $1'
+
+(The 'strace' is Linux-specific, other similar utilities include 'truss'
+and 'ktrace'.)
 
 =head1 DOCUMENTATION
 

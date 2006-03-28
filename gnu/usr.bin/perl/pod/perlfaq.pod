@@ -1,72 +1,79 @@
 =head1 NAME
 
-perlfaq - frequently asked questions about Perl ($Date: 2003/12/03 03:02:44 $)
+perlfaq - frequently asked questions about Perl
 
 =head1 DESCRIPTION
 
-The perlfaq is divided into several documents based on topics.  A table
-of contents is at the end of this document.
+The perlfaq comprises several documents that answer the most commonly
+asked questions about Perl and Perl programming. It's divided by topic
+into nine major sections outlined in this document.
 
 =head2 Where to get the perlfaq
 
-Extracts of the perlfaq are posted regularly to
-comp.lang.perl.misc.  It is available on many web sites:
-http://www.perldoc.com/ and http://faq.perl.org/
+The perlfaq comes with the standard Perl distribution, so if you have Perl
+you should have the perlfaq. You should also have the C<perldoc> tool
+that let's you read the L<perlfaq>:
+
+	$ perldoc perlfaq
+
+Besides your local system, you can find the perlfaq on the web, including
+at http://perldoc.perl.org/ .
+
+The perlfaq is an evolving document and you can read the latest version
+at http://faq.perl.org/ . The perlfaq-workers periodically post extracts
+of the latest perlfaq to comp.lang.perl.misc.
+
+You can view the source tree at
+http://cvs.perl.org/viewcvs/cvs-public/perlfaq/ (which is outside of the
+main Perl source tree).  The CVS repository notes all changes to the FAQ
+and holds the latest version of the working documents and may vary
+significantly from the version distributed with the latest version of
+Perl. Check the repository before sending your corrections.
 
 =head2 How to contribute to the perlfaq
 
-You may mail corrections, additions, and suggestions to
-perlfaq-workers@perl.org .  This alias should not be used to
-I<ask> FAQs.  It's for fixing the current FAQ. Send
-questions to the comp.lang.perl.misc newsgroup.  You can
-view the source tree at http://cvs.perl.org/cvsweb/perlfaq/
-(which is outside of the main Perl source tree).  The CVS
-repository notes all changes to the FAQ.
+You can mail corrections, additions, and suggestions to 
+C<< <perlfaq-workers AT perl DOT org> >>. The perlfaq volunteers use this
+address to coordinate their efforts and track the perlfaq development.
+They appreciate your contributions to the FAQ but do not have time to
+provide individual help, so don't use this address to ask FAQs.
 
-=head2 What will happen if you mail your Perl programming problems to the authors
+The perlfaq server posts extracts of the perlfaq to that newsgroup every
+6 hours (or so), and the community of volunteers reviews and updates the
+answers. If you'd like to help review and update the answers, check out
+comp.lang.perl.misc.
 
-Your questions will probably go unread, unless they're
-suggestions of new questions to add to the FAQ, in which
-case they should have gone to the perlfaq-workers@perl.org
-instead.
+=head2 What will happen if you mail your Perl programming problems to the authors?
 
-You should have read section 2 of this faq.  There you would
-have learned that comp.lang.perl.misc is the appropriate
-place to go for free advice.  If your question is really
-important and you require a prompt and correct answer, you
-should hire a consultant.
+The perlfaq-workers like to keep all traffic on the perlfaq-workers list
+so that everyone can see the work being done (and the work that needs to
+be done). The mailing list serves as an official record. If you email the
+authors or maintainers directly, you'll probably get a reply asking you
+to post to the mailing list. If you don't get a reply, it probably means
+that the person never saw the message or didn't have time to deal with
+it. Posting to the list allows the volunteers with time to deal with it
+when others are busy.
 
-=head1 Credits
+If you have a question that isn't in the FAQ and you would like help with
+it, try the resources in L<perlfaq2>.
 
-The original perlfaq was written by Tom Christiansen, then expanded
-by collaboration between Tom and Nathan Torkington.  The current
-document is maintained by the perlfaq-workers (perlfaq-workers@perl.org).
-Several people have contributed answers, corrections, and comments.
+=head1 CREDITS
 
-=head1 Author and Copyright Information
+Tom Christiansen wrote the original perlfaq then expanded it with the
+help of Nat Torkington.  The perlfaq-workers maintain current document
+and the dezinens of comp.lang.perl.misc regularly review and update the
+FAQ. Several people have contributed answers, corrections, and comments,
+and the perlfaq notes those contributions wherever appropriate.
 
-Copyright (c) 1997-2003 Tom Christiansen, Nathan Torkington, and 
-other contributors noted in the answers.
+=head1 AUTHOR AND COPYRIGHT
 
-All rights reserved.
+Tom Christainsen wrote the original version of this document.
+brian d foy C<< <bdfoy@cpan.org> >> wrote this version. See the
+individual perlfaq documents for additional copyright information.
 
-=head2 Bundled Distributions
-
-This documentation is free; you can redistribute it and/or modify it
-under the same terms as Perl itself.
-
-Irrespective of its distribution, all code examples in these files
-are hereby placed into the public domain.  You are permitted and
-encouraged to use this code in your own programs for fun
-or for profit as you see fit.  A simple comment in the code giving
-credit would be courteous but is not required.
-
-=head2 Disclaimer
-
-This information is offered in good faith and in the hope that it may
-be of use, but is not guaranteed to be correct, up to date, or suitable
-for any particular purpose whatsoever.  The authors accept no liability
-in respect of this information or its use.
+This document is available under the same terms as Perl itself. Code
+examples in all the perlfaq documents are in the public domain. Use
+them as you see fit (and at your own risk with no warranty from anyone).
 
 =head1 Table of Contents
 
@@ -92,12 +99,9 @@ in respect of this information or its use.
 
 =item perlfaq9 - Networking
 
-
 =back
 
-
 =head1 The Questions
-
 
 =head2 L<perlfaq1>: General Questions About Perl
 
@@ -119,7 +123,7 @@ Which version of Perl should I use?
 
 =item *
 
-What are perl4 and perl5?
+What are perl4, perl5, or perl6?
 
 =item *
 
@@ -180,19 +184,19 @@ Where to find source and documentation for Perl, support, and related matters.
 
 =item *
 
-What machines support Perl?  Where do I get it?
+What machines support perl?  Where do I get it?
 
 =item *
 
-How can I get a binary version of Perl?
+How can I get a binary version of perl?
 
 =item *
 
-I don't have a C compiler on my system.  How can I compile perl?
+I don't have a C compiler. How can I build my own Perl interpreter?
 
 =item *
 
-I copied the Perl binary from one machine to another, but scripts don't work.
+I copied the perl binary from one machine to another, but scripts don't work.
 
 =item *
 
@@ -224,11 +228,7 @@ Perl Books
 
 =item *
 
-Perl in Magazines
-
-=item *
-
-Perl on the Net: FTP and WWW Access
+Which magazines have Perl content?
 
 =item *
 
@@ -236,11 +236,11 @@ What mailing lists are there for Perl?
 
 =item *
 
-Archives of comp.lang.perl.misc
+Where are the archives for comp.lang.perl.misc?
 
 =item *
 
-Where can I buy a commercial version of Perl?
+Where can I buy a commercial version of perl?
 
 =item *
 
@@ -317,10 +317,6 @@ How can I use X or Tk with Perl?
 
 =item *
 
-How can I generate simple menus without using CGI or Tk?
-
-=item *
-
 How can I make my Perl program run faster?
 
 =item *
@@ -373,11 +369,11 @@ Where can I learn about object-oriented Perl programming?
 
 =item *
 
-Where can I learn about linking C with Perl? [h2xs, xsubpp]
+Where can I learn about linking C with Perl?
 
 =item *
 
-I've read perlembed, perlguts, etc., but I can't embed perl in
+I've read perlembed, perlguts, etc., but I can't embed perl in my C program; what am I doing wrong?
 
 =item *
 
@@ -727,6 +723,10 @@ How can I use Perl's C<-i> option from within a program?
 
 =item *
 
+How can I copy a file?
+
+=item *
+
 How do I make a temporary file name?
 
 =item *
@@ -862,7 +862,7 @@ Why do I get weird spaces when I print an array of lines?
 
 =head2 L<perlfaq6>: Regular Expressions
 
-This section is surprisingly small because the rest of the FAQ is littered with answers involving regular expressions. For example, decoding a URL and checking whether something is a number are handled with regular expressions, but those answers are found elsewhere in this document (in L<perlfaq9>: ``How do I decode or create those %-encodings on the web'' and L<perlfaq4>: ``How do I determine whether a scalar is a number/whole/integer/float'', to be precise).
+This section is surprisingly small because the rest of the FAQ is littered with answers involving regular expressions. For example, decoding a URL and checking whether something is a number are handled with regular expressions, but those answers are found elsewhere in this document (in L<perlfaq9>: "How do I decode or create those %-encodings on the web" and L<perlfaq4>: "How do I determine whether a scalar is a number/whole/integer/float", to be precise).
 
 =over 4
 
@@ -1391,7 +1391,7 @@ How do I read mail?
 
 =item *
 
-How do I find out my hostname/domainname/IP address?
+How do I find out my hostname, domainname, or IP address?
 
 =item *
 

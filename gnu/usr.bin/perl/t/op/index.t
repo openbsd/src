@@ -5,15 +5,16 @@ BEGIN {
     @INC = '../lib';
 }
 
+use strict;
 require './test.pl';
-plan( tests => 28 );
+plan( tests => 58 );
 
-$foo = 'Now is the time for all good men to come to the aid of their country.';
+my $foo = 'Now is the time for all good men to come to the aid of their country.';
 
-$first = substr($foo,0,index($foo,'the'));
+my $first = substr($foo,0,index($foo,'the'));
 is($first, "Now is ");
 
-$last = substr($foo,rindex($foo,'the'),100);
+my $last = substr($foo,rindex($foo,'the'),100);
 is($last, "their country.");
 
 $last = substr($foo,index($foo,'Now'),2);
@@ -44,6 +45,20 @@ is(rindex("ababa","a",3), 2);
 is(rindex("ababa","a",4), 4);
 is(rindex("ababa","a",5), 4);
 
+# tests for empty search string
+is(index("abc", "", -1), 0);
+is(index("abc", "", 0), 0);
+is(index("abc", "", 1), 1);
+is(index("abc", "", 2), 2);
+is(index("abc", "", 3), 3);
+is(index("abc", "", 4), 3);
+is(rindex("abc", "", -1), 0);
+is(rindex("abc", "", 0), 0);
+is(rindex("abc", "", 1), 1);
+is(rindex("abc", "", 2), 2);
+is(rindex("abc", "", 3), 3);
+is(rindex("abc", "", 4), 3);
+
 $a = "foo \x{1234}bar";
 
 is(index($a, "\x{1234}"), 4);
@@ -68,4 +83,41 @@ is(rindex($a, "foo",    ), 0);
 	my $b = index ( $haystack, $_ );
 	is($a, $b, q{[perl #22375] 'split'/'index' problem for utf8});
     }
+}
+
+{
+    my $search = "foo \xc9 bar";
+    my $text = "a\xa3\xa3a $search    $search quux";
+
+    my $text_utf8 = $text;
+    utf8::upgrade($text_utf8);
+    my $search_utf8 = $search;
+    utf8::upgrade($search_utf8);
+
+    is (index($text, $search), 5);
+    is (rindex($text, $search), 18);
+    is (index($text, $search_utf8), 5);
+    is (rindex($text, $search_utf8), 18);
+    is (index($text_utf8, $search), 5);
+    is (rindex($text_utf8, $search), 18);
+    is (index($text_utf8, $search_utf8), 5);
+    is (rindex($text_utf8, $search_utf8), 18);
+
+    my $text_octets = $text_utf8;
+    utf8::encode ($text_octets);
+    my $search_octets = $search_utf8;
+    utf8::encode ($search_octets);
+
+    is (index($text_octets, $search_octets), 7, "index octets, octets")
+	or _diag ($text_octets, $search_octets);
+    is (rindex($text_octets, $search_octets), 21, "rindex octets, octets");
+    is (index($text_octets, $search_utf8), -1);
+    is (rindex($text_octets, $search_utf8), -1);
+    is (index($text_utf8, $search_octets), -1);
+    is (rindex($text_utf8, $search_octets), -1);
+
+    is (index($text_octets, $search), -1);
+    is (rindex($text_octets, $search), -1);
+    is (index($text, $search_octets), -1);
+    is (rindex($text, $search_octets), -1);
 }

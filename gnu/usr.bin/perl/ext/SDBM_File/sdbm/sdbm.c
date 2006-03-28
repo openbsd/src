@@ -34,13 +34,9 @@
 /*
  * externals
  */
-#ifndef WIN32
-#ifndef sun
-#ifndef errno
-extern int errno;
-#endif
-#endif
-#endif
+
+#include <errno.h> /* See notes in perl.h about avoiding
+			extern int errno; */
 
 extern Malloc_t malloc proto((MEM_SIZE));
 extern Free_t free proto((Malloc_t));

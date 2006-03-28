@@ -509,7 +509,7 @@ variable C<$(>, see L<perlvar/$EGID>.
 
 =item getenv
 
-Returns the value of the specified enironment variable.
+Returns the value of the specified environment variable.
 The same information is available through the C<%ENV> array.
 
 =item geteuid
@@ -547,7 +547,7 @@ L<perlfunc/getlogin>.
 =item getpgrp
 
 This is identical to Perl's builtin C<getpgrp()> function for
-returning the prcess group identifier of the current process, see
+returning the process group identifier of the current process, see
 L<perlfunc/getpgrp>.
 
 =item getpid
@@ -1219,7 +1219,7 @@ see L<perlre>.
 =item stat
 
 This is identical to Perl's builtin C<stat()> function
-for retutning information about files and directories.
+for returning information about files and directories.
 
 =item strcat
 
@@ -1342,8 +1342,8 @@ To parse a string $str as a floating point number use
 
 The second returned item and $! can be used to check for valid input:
 
-    if (($str eq '') || ($n_unparsed != 0) || !$!) {
-        die "Non-numeric input $str" . $! ? ": $!\n" : "\n";
+    if (($str eq '') || ($n_unparsed != 0) || $!) {
+        die "Non-numeric input $str" . ($! ? ": $!\n" : "\n");
     }
 
 When called in a scalar context strtod returns the parsed number.

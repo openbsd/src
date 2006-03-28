@@ -7,14 +7,14 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     $| = 1;
+    require "./test.pl";
 }
 
-print "1..100\n";
+print "1..102\n";
 
 $a = {};
 bless $a, "Bob";
-print "not " unless $a->isa("Bob");
-print "ok 1\n";
+ok $a->isa("Bob");
 
 package Human;
 sub eat {}
@@ -45,147 +45,141 @@ $Alice::VERSION = 2.718;
 
 package main;
 
-{ my $i = 2;
-  sub test {
-      print "not " unless $_[0];
-      print "ok ", $i++;
-      print " # at ", (caller)[1], ", line ", (caller)[2] unless $_[0];
-      print "\n";
-  }
-}
+
 
 $a = new Alice;
 
-test $a->isa("Alice");
-test $a->isa("main::Alice");    # check that alternate class names work
+ok $a->isa("Alice");
+ok $a->isa("main::Alice");    # check that alternate class names work
 
-test(("main::Alice"->new)->isa("Alice"));
+ok(("main::Alice"->new)->isa("Alice"));
 
-test $a->isa("Bob");
-test $a->isa("main::Bob");
+ok $a->isa("Bob");
+ok $a->isa("main::Bob");
 
-test $a->isa("Female");
+ok $a->isa("Female");
 
-test $a->isa("Human");
+ok $a->isa("Human");
 
-test ! $a->isa("Male");
+ok ! $a->isa("Male");
 
-test ! $a->isa('Programmer');
+ok ! $a->isa('Programmer');
 
-test $a->isa("HASH");
+ok $a->isa("HASH");
 
-test $a->can("eat");
-test ! $a->can("sleep");
-test my $ref = $a->can("drink");        # returns a coderef
-test $a->$ref("tea") eq "drinking tea"; # ... which works
-test $ref = $a->can("sing");
+ok $a->can("eat");
+ok ! $a->can("sleep");
+ok my $ref = $a->can("drink");        # returns a coderef
+is $a->$ref("tea"), "drinking tea"; # ... which works
+ok $ref = $a->can("sing");
 eval { $a->$ref() };
-test $@;                                # ... but not if no actual subroutine
+ok $@;                                # ... but not if no actual subroutine
 
-test (!Cedric->isa('Programmer'));
+ok (!Cedric->isa('Programmer'));
 
-test (Cedric->isa('Human'));
+ok (Cedric->isa('Human'));
 
 push(@Cedric::ISA,'Programmer');
 
-test (Cedric->isa('Programmer'));
+ok (Cedric->isa('Programmer'));
 
 {
     package Alice;
     base::->import('Programmer');
 }
 
-test $a->isa('Programmer');
-test $a->isa("Female");
+ok $a->isa('Programmer');
+ok $a->isa("Female");
 
 @Cedric::ISA = qw(Bob);
 
-test (!Cedric->isa('Programmer'));
+ok (!Cedric->isa('Programmer'));
 
 my $b = 'abc';
 my @refs = qw(SCALAR SCALAR     LVALUE      GLOB ARRAY HASH CODE);
 my @vals = (  \$b,   \3.14, \substr($b,1,1), \*b,  [],  {}, sub {} );
 for ($p=0; $p < @refs; $p++) {
     for ($q=0; $q < @vals; $q++) {
-        test UNIVERSAL::isa($vals[$p], $refs[$q]) eq ($p==$q or $p+$q==1);
+        is UNIVERSAL::isa($vals[$p], $refs[$q]), ($p==$q or $p+$q==1);
     };
 };
 
-test ! UNIVERSAL::can(23, "can");
+ok ! UNIVERSAL::can(23, "can");
 
-test $a->can("VERSION");
+ok $a->can("VERSION");
 
-test $a->can("can");
-test ! $a->can("export_tags");	# a method in Exporter
+ok $a->can("can");
+ok ! $a->can("export_tags");	# a method in Exporter
 
-test (eval { $a->VERSION }) == 2.718;
+cmp_ok eval { $a->VERSION }, '==', 2.718;
 
-test ! (eval { $a->VERSION(2.719) }) &&
-         $@ =~ /^Alice version 2.71(?:9|8999\d+) required--this is only version 2.718 at /;
+ok ! (eval { $a->VERSION(2.719) });
+like $@, qr/^Alice version 2.71(?:9|8999\d+) required--this is only version 2.718 at /;
 
-test (eval { $a->VERSION(2.718) }) && ! $@;
+ok (eval { $a->VERSION(2.718) });
+is $@, '';
 
 my $subs = join ' ', sort grep { defined &{"UNIVERSAL::$_"} } keys %UNIVERSAL::;
 ## The test for import here is *not* because we want to ensure that UNIVERSAL
 ## can always import; it is an historical accident that UNIVERSAL can import.
 if ('a' lt 'A') {
-    test $subs eq "can import isa VERSION";
+    is $subs, "can import isa VERSION";
 } else {
-    test $subs eq "VERSION can import isa";
+    is $subs, "VERSION can import isa";
 }
 
-test $a->isa("UNIVERSAL");
+ok $a->isa("UNIVERSAL");
 
-test ! UNIVERSAL::isa([], "UNIVERSAL");
+ok ! UNIVERSAL::isa([], "UNIVERSAL");
 
-test ! UNIVERSAL::can({}, "can");
+ok ! UNIVERSAL::can({}, "can");
 
-test UNIVERSAL::isa(Alice => "UNIVERSAL");
+ok UNIVERSAL::isa(Alice => "UNIVERSAL");
 
-test UNIVERSAL::can(Alice => "can") == \&UNIVERSAL::can;
+cmp_ok UNIVERSAL::can(Alice => "can"), '==', \&UNIVERSAL::can;
 
 # now use UNIVERSAL.pm and see what changes
 eval "use UNIVERSAL";
 
-test $a->isa("UNIVERSAL");
+ok $a->isa("UNIVERSAL");
 
 my $sub2 = join ' ', sort grep { defined &{"UNIVERSAL::$_"} } keys %UNIVERSAL::;
 # XXX import being here is really a bug
 if ('a' lt 'A') {
-    test $sub2 eq "can import isa VERSION";
+    is $sub2, "can import isa VERSION";
 } else {
-    test $sub2 eq "VERSION can import isa";
+    is $sub2, "VERSION can import isa";
 }
 
 eval 'sub UNIVERSAL::sleep {}';
-test $a->can("sleep");
+ok $a->can("sleep");
 
-test ! UNIVERSAL::can($b, "can");
+ok ! UNIVERSAL::can($b, "can");
 
-test ! $a->can("export_tags");	# a method in Exporter
+ok ! $a->can("export_tags");	# a method in Exporter
 
-test ! UNIVERSAL::isa("\xff\xff\xff\0", 'HASH');
+ok ! UNIVERSAL::isa("\xff\xff\xff\0", 'HASH');
 
 {
     package Pickup;
     use UNIVERSAL qw( isa can VERSION );
 
-    main::test isa "Pickup", UNIVERSAL;
-    main::test can( "Pickup", "can" ) == \&UNIVERSAL::can;
-    main::test VERSION "UNIVERSAL" ;
+    ::ok isa "Pickup", UNIVERSAL;
+    ::cmp_ok can( "Pickup", "can" ), '==', \&UNIVERSAL::can;
+    ::ok VERSION "UNIVERSAL" ;
 }
 
 {
     # test isa() and can() on magic variables
     "Human" =~ /(.*)/;
-    test $1->isa("Human");
-    test $1->can("eat");
+    ok $1->isa("Human");
+    ok $1->can("eat");
     package HumanTie;
     sub TIESCALAR { bless {} }
     sub FETCH { "Human" }
     tie my($x), "HumanTie";
-    ::test $x->isa("Human");
-    ::test $x->can("eat");
+    ::ok $x->isa("Human");
+    ::ok $x->can("eat");
 }
 
 # bugid 3284
@@ -193,5 +187,5 @@ test ! UNIVERSAL::isa("\xff\xff\xff\0", 'HASH');
 
 @X::ISA=();
 my $x = {}; bless $x, 'X';
-test $x->isa('UNIVERSAL');
-test $x->isa('UNIVERSAL');
+ok $x->isa('UNIVERSAL');
+ok $x->isa('UNIVERSAL');

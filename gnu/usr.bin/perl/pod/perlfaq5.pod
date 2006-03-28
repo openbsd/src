@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq5 - Files and Formats ($Revision: 1.7 $, $Date: 2004/04/07 21:33:08 $)
+perlfaq5 - Files and Formats
 
 =head1 DESCRIPTION
 
@@ -8,6 +8,7 @@ This section deals with I/O and the "f" issues: filehandles, flushing,
 formats, and footers.
 
 =head2 How do I flush/unbuffer an output filehandle?  Why must I do this?
+X<flush> X<buffer> X<unbuffer> X<autoflush>
 
 Perl does not support truly unbuffered output (except
 insofar as you can C<syswrite(OUT, $char, 1)>), although it
@@ -56,16 +57,18 @@ thing you do with them.  You can use IO::Handle:
 or IO::Socket:
 
     use IO::Socket;		  # this one is kinda a pipe?
-	my $sock = IO::Socket::INET->new( 'www.example.com:80' ) ;
+	my $sock = IO::Socket::INET->new( 'www.example.com:80' );
 
     $sock->autoflush();
 
 =head2 How do I change one line in a file/delete a line in a file/insert a line in the middle of a file/append to the beginning of a file?
+X<file, editing>
 
 Use the Tie::File module, which is included in the standard
 distribution since Perl 5.8.0.
 
 =head2 How do I count the number of lines in a file?
+X<file, counting lines> X<lines> X<line>
 
 One fairly efficient way is to count newlines in the file. The
 following program uses a feature of tr///, as documented in L<perlop>.
@@ -82,6 +85,7 @@ proper text file, so this may report one fewer line than you expect.
 This assumes no funny games with newline translations.
 
 =head2 How can I use Perl's C<-i> option from within a program?
+X<-i> X<in-place>
 
 C<-i> sets the value of Perl's C<$^I> variable, which in turn affects
 the behavior of C<< <> >>; see L<perlrun> for more details.  By
@@ -106,9 +110,33 @@ This block modifies all the C<.c> files in the current directory,
 leaving a backup of the original data from each file in a new
 C<.c.orig> file.
 
-=head2 How do I make a temporary file name?
+=head2 How can I copy a file?
+X<copy> X<file, copy>
 
-Use the File::Temp module, see L<File::Temp> for more information.
+(contributed by brian d foy)
+
+Use the File::Copy module. It comes with Perl and can do a
+true copy across file systems, and it does its magic in
+a portable fashion.
+
+	use File::Copy;
+
+	copy( $original, $new_copy ) or die "Copy failed: $!";
+
+If you can't use File::Copy, you'll have to do the work yourself:
+open the original file, open the destination file, then print
+to the destination file as you read the original.
+
+=head2 How do I make a temporary file name?
+X<file, temporary>
+
+If you don't need to know the name of the file, you can use C<open()>
+with C<undef> in place of the file name.  The C<open()> function
+creates an anonymous temporary file.
+
+	open my $tmp, '+>', undef or die $!;
+
+Otherwise, you can use the File::Temp module.
 
   use File::Temp qw/ tempfile tempdir /;
 
@@ -153,6 +181,7 @@ temporary files in one process, use a counter:
     }
 
 =head2 How can I manipulate fixed-record-length files?
+X<fixed-length> X<file, fixed-length records>
 
 The most efficient way is using L<pack()|perlfunc/"pack"> and
 L<unpack()|perlfunc/"unpack">.  This is faster than using
@@ -184,6 +213,7 @@ group or loop over them with for. It also avoids polluting the program
 with global variables and using symbolic references.
 
 =head2 How can I make a filehandle local to a subroutine?  How do I pass filehandles between subroutines?  How do I make an array of filehandles?
+X<filehandle, local> X<filehandle, passing> X<filehandle, reference>
 
 As of perl5.6, open() autovivifies file and directory handles
 as references if you pass it an uninitialized scalar variable.
@@ -212,6 +242,7 @@ If you want to create many anonymous handles, you should
 check out the Symbol or IO::Handle modules.
 
 =head2 How can I use a filehandle indirectly?
+X<filehandle, indirect>
 
 An indirect filehandle is using something other than a symbol
 in a place that a filehandle is expected.  Here are ways
@@ -307,15 +338,25 @@ It's the syntax of the fundamental operators.  Playing the object
 game doesn't help you at all here.
 
 =head2 How can I set up a footer format to be used with write()?
+X<footer>
 
 There's no builtin way to do this, but L<perlform> has a couple of
 techniques to make it possible for the intrepid hacker.
 
 =head2 How can I write() into a string?
+X<write, into a string>
 
 See L<perlform/"Accessing Formatting Internals"> for an swrite() function.
 
 =head2 How can I output my numbers with commas added?
+X<number, commify>
+
+(contributed by brian d foy and Benjamin Goldberg)
+
+You can use L<Number::Format> to separate places in a number.
+It handles locale information for those of you who want to insert
+full stops instead (or anything else that they want to use,
+really).
 
 This subroutine will add commas to your number:
 
@@ -333,7 +374,7 @@ It is easier to see with comments:
 
    s/(
        ^[-+]?            # beginning of number.
-       \d{1,3}?          # first digits before first comma
+       \d+?              # first digits before first comma
        (?=               # followed by, (but not included in the match) :
           (?>(?:\d{3})+) # some positive multiple of three digits.
           (?!\d)         # an *exact* multiple, not x * 3 + 1 or whatever.
@@ -344,6 +385,7 @@ It is easier to see with comments:
    )/$1,/xg;
 
 =head2 How can I translate tildes (~) in a filename?
+X<tilde> X<tilde expansion>
 
 Use the <> (glob()) operator, documented in L<perlfunc>.  Older
 versions of Perl require that you have a shell installed that groks
@@ -366,6 +408,7 @@ Within Perl, you may use this directly:
 	}ex;
 
 =head2 How come when I open a file read-write it wipes it out?
+X<clobber> X<read-write> X<clobbering> X<truncate> X<truncating>
 
 Because you're using something like this, which truncates the file and
 I<then> gives you read-write access:
@@ -439,6 +482,7 @@ isn't as exclusive as you might wish.
 See also the new L<perlopentut> if you have it (new for 5.6).
 
 =head2 Why do I sometimes get an "Argument list too long" when I use E<lt>*E<gt>?
+X<argument list too long>
 
 The C<< <> >> operator performs a globbing operation (see above).
 In Perl versions earlier than v5.6.0, the internal glob() operator forks
@@ -452,6 +496,7 @@ yourself with readdir() and patterns, or use a module like File::KGlob,
 one that doesn't use the shell to do globbing.
 
 =head2 Is there a leak/bug in glob()?
+X<glob>
 
 Due to the current implementation on some operating systems, when you
 use the glob() function or its angle-bracket alias in a scalar
@@ -459,27 +504,24 @@ context, you may cause a memory leak and/or unpredictable behavior.  It's
 best therefore to use glob() only in list context.
 
 =head2 How can I open a file with a leading ">" or trailing blanks?
+X<filename, special characters>
 
-Normally perl ignores trailing blanks in filenames, and interprets
-certain leading characters (or a trailing "|") to mean something
-special.
+(contributed by Brian McCauley)
 
-The three argument form of open() lets you specify the mode
-separately from the filename.  The open() function treats
-special mode characters and whitespace in the filename as
-literals
+The special two argument form of Perl's open() function ignores
+trailing blanks in filenames and infers the mode from certain leading
+characters (or a trailing "|"). In older versions of Perl this was the
+only version of open() and so it is prevalent in old code and books.
+
+Unless you have a particular reason to use the two argument form you
+should use the three argument form of open() which does not treat any
+charcters in the filename as special.
 
 	open FILE, "<", "  file  ";  # filename is "   file   "
 	open FILE, ">", ">file";     # filename is ">file"
 
-It may be a lot clearer to use sysopen(), though:
-
-    use Fcntl;
-    $badpath = "<<<something really wicked   ";
-    sysopen (FH, $badpath, O_WRONLY | O_CREAT | O_TRUNC)
-	or die "can't open $badpath: $!";
-
 =head2 How can I reliably rename a file?
+X<rename> X<mv> X<move> X<file, rename> X<ren>
 
 If your operating system supports a proper mv(1) utility or its
 functional equivalent, this works:
@@ -495,6 +537,7 @@ permissions, timestamps, inode info, etc.
 Newer versions of File::Copy export a move() function.
 
 =head2 How can I lock a file?
+X<lock> X<file, lock> X<flock>
 
 Perl's builtin flock() function (see L<perlfunc> for details) will call
 flock(2) if that exists, fcntl(2) if it doesn't (on perl version 5.004 and
@@ -542,6 +585,7 @@ L<perlopentut/"File Locking"> if you have it (new for 5.6).
 =back
 
 =head2 Why can't I just open(FH, "E<gt>file.lock")?
+X<lock, lockfile race condition>
 
 A common bit of code B<NOT TO USE> is this:
 
@@ -561,6 +605,7 @@ Various schemes involving link() have been suggested, but
 these tend to involve busy-wait, which is also subdesirable.
 
 =head2 I still don't get locking.  I just want to increment the number in the file.  How can I do this?
+X<counter> X<file, counter>
 
 Didn't anyone ever tell you web-page hit counters were useless?
 They don't count number of hits, they're a waste of time, and they serve
@@ -585,6 +630,7 @@ Here's a much better web-page hit counter:
 If the count doesn't impress your friends, then the code might.  :-)
 
 =head2 All I want to do is append a small amount of text to the end of a file.  Do I still have to use locking?
+X<append> X<file, append>
 
 If you are on a system that correctly implements flock() and you use the
 example appending code from "perldoc -f flock" everything will be OK
@@ -613,6 +659,7 @@ level write()s even if the buffer was empty to start.  There may be some
 systems where this probability is reduced to zero.
 
 =head2 How do I randomly update a binary file?
+X<file, binary patch>
 
 If you're just trying to patch a binary, in many cases something as
 simple as this works:
@@ -636,10 +683,11 @@ Locking and error checking are left as an exercise for the reader.
 Don't forget them or you'll be quite sorry.
 
 =head2 How do I get a file's timestamp in perl?
+X<timestamp> X<file, timestamp>
 
 If you want to retrieve the time at which the file was last
 read, written, or had its meta-data (owner, etc) changed,
-you use the B<-M>, B<-A>, or B<-C> file test operations as
+you use the B<-A>, B<-M>, or B<-C> file test operations as
 documented in L<perlfunc>.  These retrieve the age of the
 file (measured against the start-time of your program) in
 days as a floating point number. Some platforms may not have
@@ -669,6 +717,7 @@ in theory, independent of the current locale.  See L<perllocale>
 for details.
 
 =head2 How do I set a file's timestamp in perl?
+X<timestamp> X<file, timestamp>
 
 You use the utime() function documented in L<perlfunc/utime>.
 By way of example, here's a little program that copies the
@@ -684,11 +733,17 @@ of them.
 
 Error checking is, as usual, left as an exercise for the reader.
 
-Note that utime() currently doesn't work correctly with Win95/NT
-ports.  A bug has been reported.  Check it carefully before using
-utime() on those platforms.
+The perldoc for utime also has an example that has the same
+effect as touch(1) on files that I<already exist>.
+
+Certain file systems have a limited ability to store the times
+on a file at the expected level of precision.  For example, the
+FAT and HPFS filesystem are unable to create dates on files with
+a finer granularity than two seconds.  This is a limitation of
+the filesystems, not of utime().
 
 =head2 How do I print to more than one file at once?
+X<print, to multiple files>
 
 To connect one filehandle to several output filehandles,
 you can use the IO::Tee or Tie::FileHandle::Multiplex modules.
@@ -699,6 +754,7 @@ to each filehandle.
     for $fh (FH1, FH2, FH3) { print $fh "whatever\n" }
 
 =head2 How can I read in an entire file all at once?
+X<slurp> X<file, slurping>
 
 You can use the File::Slurp module to do it in one step.
 
@@ -752,6 +808,7 @@ The third argument tests the byte size of the data on the INPUT filehandle
 and reads that many bytes into the buffer $var.
 
 =head2 How can I read in a file by paragraphs?
+X<file, reading by paragraphs>
 
 Use the C<$/> variable (see L<perlvar> for details).  You can either
 set it to C<""> to eliminate empty paragraphs (C<"abc\n\n\n\ndef">,
@@ -762,6 +819,7 @@ Note that a blank line must have no blanks in it.  Thus
 S<C<"fred\n \nstuff\n\n">> is one paragraph, but C<"fred\n\nstuff\n\n"> is two.
 
 =head2 How can I read a single character from a file?  From the keyboard?
+X<getc> X<file, reading one character at a time>
 
 You can use the builtin C<getc()> function for most filehandles, but
 it won't (easily) work on a terminal device.  For STDIN, either use
@@ -893,6 +951,7 @@ FIONREAD requires a filehandle connected to a stream, meaning that sockets,
 pipes, and tty devices work, but I<not> files.
 
 =head2 How do I do a C<tail -f> in perl?
+X<tail>
 
 First try
 
@@ -921,6 +980,7 @@ more.  Lather, rinse, repeat.
 There's also a File::Tail module from CPAN.
 
 =head2 How do I dup() a filehandle in Perl?
+X<dup>
 
 If you check L<perlfunc/open>, you'll see that several of the ways
 to call open() should do the trick.  For example:
@@ -941,6 +1001,7 @@ a copied one.
 Error checking, as always, has been left as an exercise for the reader.
 
 =head2 How do I close a file descriptor by number?
+X<file, closing file descriptors>
 
 This should rarely be necessary, as the Perl close() function is to be
 used for things that Perl opened itself, even if it was a dup of a
@@ -960,6 +1021,7 @@ Or, just use the fdopen(3S) feature of open():
     }
 
 =head2 Why can't I use "C:\temp\foo" in DOS paths?  Why doesn't `C:\temp\foo.exe` work?
+X<filename, DOS issues>
 
 Whoops!  You just put a tab and a formfeed into that filename!
 Remember that within double quoted strings ("like\this"), the
@@ -976,6 +1038,7 @@ awk, Tcl, Java, or Python, just to mention a few.  POSIX paths
 are more portable, too.
 
 =head2 Why doesn't glob("*.*") get all the files?
+X<glob>
 
 Because even on non-Unix ports, Perl's glob function follows standard
 Unix globbing semantics.  You'll need C<glob("*")> to get all (non-hidden)
@@ -998,6 +1061,7 @@ of the directory, not of the file).  If you try to write to the file,
 the permissions of the file govern whether you're allowed to.
 
 =head2 How do I select a random line from a file?
+X<file, selecting a random line>
 
 Here's an algorithm from the Camel Book:
 
@@ -1042,8 +1106,8 @@ If your array contains lines, just print them:
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2002 Tom Christiansen and Nathan Torkington.
-All rights reserved.
+Copyright (c) 1997-2006 Tom Christiansen, Nathan Torkington, and
+other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it
 under the same terms as Perl itself.

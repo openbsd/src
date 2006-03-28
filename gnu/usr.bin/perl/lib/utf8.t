@@ -37,7 +37,7 @@ no utf8; # Ironic, no?
 #
 #
 
-plan tests => 145;
+plan tests => 150;
 
 {
     # bug id 20001009.001
@@ -424,4 +424,18 @@ SKIP: {
     $b =~ s/^...//;
     utf8::upgrade($b);
     is($b, $a, "utf8::upgrade OffsetOK");
+}
+
+{
+    fresh_perl_like ('use utf8; utf8::moo()',
+		     qr/Undefined subroutine utf8::moo/, {stderr=>1},
+		    "Check Carp is loaded for AUTOLOADing errors")
+}
+
+{
+    # failure of is_utf8_char() without NATIVE_TO_UTF on EBCDIC (0260..027F)
+    ok(utf8::valid(chr(0x250)), "0x250");
+    ok(utf8::valid(chr(0x260)), "0x260");
+    ok(utf8::valid(chr(0x270)), "0x270");
+    ok(utf8::valid(chr(0x280)), "0x280");
 }

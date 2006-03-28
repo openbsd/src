@@ -5,7 +5,7 @@ require Exporter;
 use strict;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(Complete);
-our $VERSION = '1.401';
+our $VERSION = '1.402';
 
 #      @(#)complete.pl,v1.2            (me@anywhere.EBay.Sun.COM) 09/23/91
 
@@ -113,6 +113,7 @@ sub Complete {
     }
     system $tty_raw_noecho if defined $tty_raw_noecho;
     LOOP: {
+        local $_;
         print($prompt, $return);
         while (($_ = getc(STDIN)) ne "\r") {
             CASE: {

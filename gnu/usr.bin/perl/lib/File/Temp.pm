@@ -8,11 +8,15 @@ File::Temp - return name and handle of a temporary file safely
 
 =head1 PORTABILITY
 
-This module is designed to be portable across operating systems
-and it currently supports Unix, VMS, DOS, OS/2, Windows and
-Mac OS (Classic). When
-porting to a new OS there are generally three main issues
-that have to be solved:
+This section is at the top in order to provide easier access to
+porters.  It is not expected to be rendered by a standard pod
+formatting tool. Please skip straight to the SYNOPSIS section if you
+are not trying to port this module to a new platform.
+
+This module is designed to be portable across operating systems and it
+currently supports Unix, VMS, DOS, OS/2, Windows and Mac OS
+(Classic). When porting to a new OS there are generally three main
+issues that have to be solved:
 
 =over 4
 
@@ -43,13 +47,15 @@ The C<_can_do_level> method should be modified accordingly.
 
   use File::Temp qw/ tempfile tempdir /;
 
-  $dir = tempdir( CLEANUP => 1 );
-  ($fh, $filename) = tempfile( DIR => $dir );
+  $fh = tempfile();
+  ($fh, $filename) = tempfile();
 
   ($fh, $filename) = tempfile( $template, DIR => $dir);
   ($fh, $filename) = tempfile( $template, SUFFIX => '.dat');
 
-  $fh = tempfile();
+
+  $dir = tempdir( CLEANUP => 1 );
+  ($fh, $filename) = tempfile( DIR => $dir );
 
 Object interface:
 
@@ -63,6 +69,8 @@ Object interface:
   print $tmp "Some data\n";
   print "Filename is $tmp\n";
 
+The following interfaces are provided for compatibility with
+existing APIs. They should not be used in new code.
 
 MkTemp family:
 
@@ -83,8 +91,6 @@ POSIX functions:
   $fh = tmpfile();
 
   ($fh, $file) = tmpnam();
-  $fh = tmpfile();
-
 
 Compatibility functions:
 
@@ -141,9 +147,10 @@ use overload '""' => "STRINGIFY";
 
 
 # use 'our' on v5.6.0
-use vars qw($VERSION @EXPORT_OK %EXPORT_TAGS $DEBUG);
+use vars qw($VERSION @EXPORT_OK %EXPORT_TAGS $DEBUG $KEEP_ALL);
 
 $DEBUG = 0;
+$KEEP_ALL = 0;
 
 # We are exporting functions
 
@@ -161,6 +168,7 @@ use base qw/Exporter/;
 	      mkstemps
 	      mkdtemp
 	      unlink0
+	      cleanup
 		};
 
 # Groups of functions for export
@@ -175,7 +183,7 @@ Exporter::export_tags('POSIX','mktemp');
 
 # Version number
 
-$VERSION = '0.14';
+$VERSION = '0.16';
 
 # This is a list of characters that can be used in random filenames
 
@@ -186,7 +194,7 @@ my @CHARS = (qw/ A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
 
 # Maximum number of tries to make a temp file before failing
 
-use constant MAX_TRIES => 10;
+use constant MAX_TRIES => 1000;
 
 # Minimum number of X characters that should be in a template
 use constant MINX => 4;
@@ -207,7 +215,7 @@ use constant HIGH     => 2;
 my $OPENFLAGS = O_CREAT | O_EXCL | O_RDWR;
 
 unless ($^O eq 'MacOS') {
-  for my $oflag (qw/ FOLLOW BINARY LARGEFILE EXLOCK NOINHERIT /) {
+  for my $oflag (qw/ NOFOLLOW BINARY LARGEFILE EXLOCK NOINHERIT /) {
     my ($bit, $func) = (0, "Fcntl::O_" . $oflag);
     no strict 'refs';
     $OPENFLAGS |= $bit if eval {
@@ -345,7 +353,7 @@ sub _gettemp {
   # we know where we are looking and what we are looking for
 
   if (substr($template, $start - MINX + 1, MINX) ne 'X' x MINX) {
-    ${$options{ErrStr}} = "The template must contain at least ".
+    ${$options{ErrStr}} = "The template must end with at least ".
       MINX . " 'X' characters\n";
     return ();
   }
@@ -417,7 +425,7 @@ sub _gettemp {
     ${$options{ErrStr}} = "Parent directory ($parent) is not a directory";
     return ();
   }
-  unless (-w _) {
+  unless (-w $parent) {
     ${$options{ErrStr}} = "Parent directory ($parent) is not writable\n";
       return ();
   }
@@ -467,12 +475,12 @@ sub _gettemp {
 
       # Attempt to open the file
       my $open_success = undef;
-      if ( $^O eq 'VMS' and $options{"unlink_on_close"} ) {
+      if ( $^O eq 'VMS' and $options{"unlink_on_close"} && !$KEEP_ALL) {
         # make it auto delete on close by setting FAB$V_DLT bit
 	$fh = VMS::Stdio::vmssysopen($path, $OPENFLAGS, 0600, 'fop=dlt');
 	$open_success = $fh;
       } else {
-	my $flags = ( $options{"unlink_on_close"} ?
+	my $flags = ( ($options{"unlink_on_close"} && !$KEEP_ALL) ?
 		      $OPENTEMPFLAGS :
 		      $OPENFLAGS );
 	$open_success = sysopen($fh, $path, $flags, 0600);
@@ -623,9 +631,20 @@ sub _replace_XX {
   } else {
     $path =~ s/X(?=X*\z)/$CHARS[ int( rand( $#CHARS ) ) ]/ge;
   }
-
   return $path;
 }
+
+# Internal routine to force a temp file to be writable after
+# it is created so that we can unlink it. Windows seems to occassionally
+# force a file to be readonly when written to certain temp locations
+sub _force_writable {
+  my $file = shift;
+  my $umask = umask();
+  umask(066);
+  chmod 0600, $file;
+  umask($umask) if defined $umask;
+}
+
 
 # internal routine to check to see if the directory is safe
 # First checks to see if the directory is not owned by the
@@ -680,13 +699,13 @@ sub _is_safe {
   if (($info[2] & &Fcntl::S_IWGRP) ||   # Is group writable?
       ($info[2] & &Fcntl::S_IWOTH) ) {  # Is world writable?
     # Must be a directory
-    unless (-d _) {
+    unless (-d $path) {
       $$err_ref = "Path ($path) is not a directory"
       if ref($err_ref);
       return 0;
     }
     # Must have sticky bit set
-    unless (-k _) {
+    unless (-k $path) {
       $$err_ref = "Sticky bit not set on $path when dir is group|world writable"
 	if ref($err_ref);
       return 0;
@@ -832,34 +851,62 @@ sub _can_do_level {
 
 {
   # Will set up two lexical variables to contain all the files to be
-  # removed. One array for files, another for directories
-  # They will only exist in this block
-  # This means we only have to set up a single END block to remove all files
-  # @files_to_unlink contains an array ref with the filehandle and filename
-  my (@files_to_unlink, @dirs_to_unlink);
+  # removed. One array for files, another for directories They will
+  # only exist in this block.
+
+  #  This means we only have to set up a single END block to remove
+  #  all files. 
+
+  # in order to prevent child processes inadvertently deleting the parent
+  # temp files we use a hash to store the temp files and directories
+  # created by a particular process id.
+
+  # %files_to_unlink contains values that are references to an array of
+  # array references containing the filehandle and filename associated with
+  # the temp file.
+  my (%files_to_unlink, %dirs_to_unlink);
 
   # Set up an end block to use these arrays
   END {
-    # Files
-    foreach my $file (@files_to_unlink) {
-      # close the filehandle without checking its state
-      # in order to make real sure that this is closed
-      # if its already closed then I dont care about the answer
-      # probably a better way to do this
-      close($file->[0]);  # file handle is [0]
-
-      if (-f $file->[1]) {  # file name is [1]
-	unlink $file->[1] or warn "Error removing ".$file->[1];
-      }
-    }
-    # Dirs
-    foreach my $dir (@dirs_to_unlink) {
-      if (-d $dir) {
-	rmtree($dir, $DEBUG, 0);
-      }
-    }
-
+    cleanup();
   }
+
+  # Cleanup function. Always triggered on END but can be invoked
+  # manually.
+  sub cleanup {
+    if (!$KEEP_ALL) {
+      # Files
+      my @files = (exists $files_to_unlink{$$} ?
+		   @{ $files_to_unlink{$$} } : () );
+      foreach my $file (@files) {
+	# close the filehandle without checking its state
+	# in order to make real sure that this is closed
+	# if its already closed then I dont care about the answer
+	# probably a better way to do this
+	close($file->[0]);  # file handle is [0]
+
+	if (-f $file->[1]) {  # file name is [1]
+	  _force_writable( $file->[1] ); # for windows
+	  unlink $file->[1] or warn "Error removing ".$file->[1];
+	}
+      }
+      # Dirs
+      my @dirs = (exists $dirs_to_unlink{$$} ?
+		  @{ $dirs_to_unlink{$$} } : () );
+      foreach my $dir (@dirs) {
+	if (-d $dir) {
+	  rmtree($dir, $DEBUG, 0);
+	}
+      }
+
+      # clear the arrays
+      @{ $files_to_unlink{$$} } = ()
+	if exists $files_to_unlink{$$};
+      @{ $dirs_to_unlink{$$} } = ()
+	if exists $dirs_to_unlink{$$};
+    }
+  }
+
 
   # This is the sub called to register a file for deferred unlinking
   # This could simply store the input parameters and defer everything
@@ -884,7 +931,9 @@ sub _can_do_level {
 	# Directory exists so store it
 	# first on VMS turn []foo into [.foo] for rmtree
 	$fname = VMS::Filespec::vmspath($fname) if $^O eq 'VMS';
-	push (@dirs_to_unlink, $fname);
+	$dirs_to_unlink{$$} = [] 
+	  unless exists $dirs_to_unlink{$$};
+	push (@{ $dirs_to_unlink{$$} }, $fname);
 
       } else {
 	carp "Request to remove directory $fname could not be completed since it does not exist!\n" if $^W;
@@ -895,7 +944,9 @@ sub _can_do_level {
       if (-f $fname) {
 
 	# file exists so store handle and name for later removal
-	push(@files_to_unlink, [$fh, $fname]);
+	$files_to_unlink{$$} = []
+	  unless exists $files_to_unlink{$$};
+	push(@{ $files_to_unlink{$$} }, [$fh, $fname]);
 
       } else {
 	carp "Request to remove file $fname could not be completed since it is not there!\n" if $^W;
@@ -908,7 +959,7 @@ sub _can_do_level {
 
 }
 
-=head1 OO INTERFACE
+=head1 OBJECT-ORIENTED INTERFACE
 
 This is the primary interface for interacting with
 C<File::Temp>. Using the OO interface a temporary file can be created
@@ -976,9 +1027,12 @@ sub new {
 
   # Store unlink information in hash slot (plus other constructor info)
   %{*$fh} = %args;
-  ${*$fh}{UNLINK} = $unlink;
 
+  # create the object
   bless $fh, $class;
+
+  # final method-based configuration
+  $fh->unlink_on_destroy( $unlink );
 
   return $fh;
 }
@@ -1004,6 +1058,25 @@ sub STRINGIFY {
   return $self->filename;
 }
 
+=item B<unlink_on_destroy>
+
+Control whether the file is unlinked when the object goes out of scope.
+The file is removed if this value is true and $KEEP_ALL is not.
+
+ $fh->unlink_on_destroy( 1 );
+
+Default is for the file to be removed.
+
+=cut
+
+sub unlink_on_destroy {
+  my $self = shift;
+  if (@_) {
+    ${*$self}{UNLINK} = shift;
+  }
+  return ${*$self}{UNLINK};
+}
+
 =item B<DESTROY>
 
 When the object goes out of scope, the destructor is called. This
@@ -1013,11 +1086,13 @@ if UNLINK is not specified).
 
 No error is given if the unlink fails.
 
+If the global variable $KEEP_ALL is true, the file will not be removed.
+
 =cut
 
 sub DESTROY {
   my $self = shift;
-  if (${*$self}{UNLINK}) {
+  if (${*$self}{UNLINK} && !$KEEP_ALL) {
     print "# --------->   Unlinking $self\n" if $DEBUG;
 
     # The unlink1 may fail if the file has been closed
@@ -1026,6 +1101,7 @@ sub DESTROY {
     # do an unlink without test. Seems to be silly
     # to do this when we are trying to be careful
     # about security
+    _force_writable( $self->filename ); # for windows
     unlink1( $self, $self->filename )
       or unlink($self->filename);
   }
@@ -1045,6 +1121,7 @@ temporary files and directories.
 This is the basic function to generate temporary files.
 The behaviour of the file can be changed using various options:
 
+  $fh = tempfile();
   ($fh, $filename) = tempfile();
 
 Create a temporary file in  the directory specified for temporary
@@ -1072,10 +1149,15 @@ is specified.
   ($fh, $filename) = tempfile($template, UNLINK => 1);
 
 Return the filename and filehandle as before except that the file is
-automatically removed when the program exits. Default is for the file
-to be removed if a file handle is requested and to be kept if the
-filename is requested. In a scalar context (where no filename is
-returned) the file is always deleted either on exit or when it is closed.
+automatically removed when the program exits (dependent on
+$KEEP_ALL). Default is for the file to be removed if a file handle is
+requested and to be kept if the filename is requested. In a scalar
+context (where no filename is returned) the file is always deleted
+either (depending on the operating system) on exit or when it is
+closed (unless $KEEP_ALL is true when the temp file is created).
+
+Use the object-oriented interface if fine-grained control of when
+a file is removed is required.
 
 If the template is not specified, a template is always
 automatically generated. This temporary file is placed in tmpdir()
@@ -1084,16 +1166,16 @@ DIR option.
 
   $fh = tempfile( $template, DIR => $dir );
 
-If called in scalar context, only the filehandle is returned
-and the file will automatically be deleted when closed (see
-the description of tmpfile() elsewhere in this document).
-This is the preferred mode of operation, as if you only
-have a filehandle, you can never create a race condition
-by fumbling with the filename. On systems that can not unlink
-an open file or can not mark a file as temporary when it is opened
-(for example, Windows NT uses the C<O_TEMPORARY> flag)
-the file is marked for deletion when the program ends (equivalent
-to setting UNLINK to 1). The C<UNLINK> flag is ignored if present.
+If called in scalar context, only the filehandle is returned and the
+file will automatically be deleted when closed on operating systems
+that support this (see the description of tmpfile() elsewhere in this
+document).  This is the preferred mode of operation, as if you only
+have a filehandle, you can never create a race condition by fumbling
+with the filename. On systems that can not unlink an open file or can
+not mark a file as temporary when it is opened (for example, Windows
+NT uses the C<O_TEMPORARY> flag) the file is marked for deletion when
+the program ends (equivalent to setting UNLINK to 1). The C<UNLINK>
+flag is ignored if present.
 
   (undef, $filename) = tempfile($template, OPEN => 0);
 
@@ -1180,7 +1262,8 @@ sub tempfile {
   # we have to indicate temporary-ness when we open the file. In general
   # we only want a true temporary file if we are returning just the
   # filehandle - if the user wants the filename they probably do not
-  # want the file to disappear as soon as they close it.
+  # want the file to disappear as soon as they close it (which may be
+  # important if they want a child process to use the file)
   # For this reason, tie unlink_on_close to the return context regardless
   # of OS.
   my $unlink_on_close = ( wantarray ? 0 : 1);
@@ -1695,7 +1778,8 @@ verify that the number of links on that file is now 0.  This is the
 closest you can come to making sure that the filename unlinked was the
 same as the file whose descriptor you hold.
 
-  unlink0($fh, $path) or die "Error unlinking file $path safely";
+  unlink0($fh, $path)
+     or die "Error unlinking file $path safely";
 
 Returns false on error. The filehandle is not closed since on some
 occasions this is not required.
@@ -1720,6 +1804,10 @@ Finally, on NFS file systems the link count of the file handle does
 not always go to zero immediately after unlinking. Currently, this
 command is expected to fail on NFS disks.
 
+This function is disabled if the global variable $KEEP_ALL is true
+and an unlink on open file is supported. If the unlink is to be deferred
+to the END block, the file is still registered for removal.
+
 =cut
 
 sub unlink0 {
@@ -1734,6 +1822,10 @@ sub unlink0 {
 
   # attempt remove the file (does not work on some platforms)
   if (_can_unlink_opened_file()) {
+
+    # return early (Without unlink) if we have been instructed to retain files.
+    return 1 if $KEEP_ALL;
+
     # XXX: do *not* call this on a directory; possible race
     #      resulting in recursive removal
     croak "unlink0: $path has become a directory!" if -d $path;
@@ -1765,7 +1857,8 @@ can be used to check that the filename and filehandle initially point
 to the same file and that the number of links to the file is 1 (all
 fields returned by stat() are compared).
 
-  cmpstat($fh, $path) or die "Error comparing handle with file";
+  cmpstat($fh, $path)
+     or die "Error comparing handle with file";
 
 Returns false if the stat information differs or if the link count is
 greater than 1.
@@ -1816,7 +1909,7 @@ sub cmpstat {
   }
 
   # this is no longer a file, but may be a directory, or worse
-  unless (-f _) {
+  unless (-f $path) {
     confess "panic: $path is no longer a file: SB=@fh";
   }
 
@@ -1861,11 +1954,14 @@ allows the file to be removed without using an END block, but does
 mean that the post-unlink comparison of the filehandle state provided
 by C<unlink0> is not available.
 
-  unlink1($fh, $path) or die "Error closing and unlinking file";
+  unlink1($fh, $path)
+     or die "Error closing and unlinking file";
 
 Usually called from the object destructor when using the OO interface.
 
 Not exported by default.
+
+This function is disabled if the global variable $KEEP_ALL is true.
 
 =cut
 
@@ -1881,9 +1977,31 @@ sub unlink1 {
   # Close the file
   close( $fh ) or return 0;
 
+  # Make sure the file is writable (for windows)
+  _force_writable( $path );
+
+  # return early (without unlink) if we have been instructed to retain files.
+  return 1 if $KEEP_ALL;
+
   # remove the file
   return unlink($path);
 }
+
+=item B<cleanup>
+
+Calling this function will cause any temp files or temp directories
+that are registered for removal to be removed. This happens automatically
+when the process exits but can be triggered manually if the caller is sure
+that none of the temp files are required. This method can be registered as
+an Apache callback.
+
+On OSes where temp files are automatically removed when the temp file
+is closed, calling this function will have no effect other than to remove
+temporary directories (which may include temporary files).
+
+  File::Temp::cleanup();
+
+Not exported by default.
 
 =back
 
@@ -2006,8 +2124,6 @@ UID.
 This value can be adjusted to reduce security checking if required.
 The value is only relevant when C<safe_level> is set to MEDIUM or higher.
 
-=back
-
 =cut
 
 {
@@ -2023,6 +2139,32 @@ The value is only relevant when C<safe_level> is set to MEDIUM or higher.
     return $TopSystemUID;
   }
 }
+
+=item B<$KEEP_ALL>
+
+Controls whether temporary files and directories should be retained
+regardless of any instructions in the program to remove them
+automatically.  This is useful for debugging but should not be used in
+production code.
+
+  $File::Temp::KEEP_ALL = 1;
+
+Default is for files to be removed as requested by the caller.
+
+In some cases, files will only be retained if this variable is true
+when the file is created. This means that you can not create a temporary
+file, set this variable and expect the temp file to still be around
+when the program exits.
+
+=item B<$DEBUG>
+
+Controls whether debugging messages should be enabled.
+
+  $File::Temp::DEBUG = 1;
+
+Default is for debugging mode to be disabled.
+
+=back
 
 =head1 WARNING
 
@@ -2052,26 +2194,42 @@ fail when the temp file is not local. Additionally, be aware that
 the performance of I/O operations over NFS will not be as good as for
 a local disk.
 
+=head2 Forking
+
+In some cases files created by File::Temp are removed from within an
+END block. Since END blocks are triggered when a child process exits
+(unless C<POSIX::_exit()> is used by the child) File::Temp takes care
+to only remove those temp files created by a particular process ID. This
+means that a child will not attempt to remove temp files created by the
+parent process.
+
+=head2 BINMODE
+
+The file returned by File::Temp will have been opened in binary mode
+if such a mode is available. If that is not correct, use the binmode()
+function to change the mode of the filehandle.
+
 =head1 HISTORY
 
 Originally began life in May 1999 as an XS interface to the system
 mkstemp() function. In March 2000, the OpenBSD mkstemp() code was
 translated to Perl for total control of the code's
 security checking, to ensure the presence of the function regardless of
-operating system and to help with portability.
+operating system and to help with portability. The module was shipped
+as a standard part of perl from v5.6.1.
 
 =head1 SEE ALSO
 
 L<POSIX/tmpnam>, L<POSIX/tmpfile>, L<File::Spec>, L<File::Path>
 
-See L<IO::File> and L<File::MkTemp> for different implementations of
-temporary file handling.
+See L<IO::File> and L<File::MkTemp>, L<Apachae::TempFile> for
+different implementations of temporary file handling.
 
 =head1 AUTHOR
 
 Tim Jenness E<lt>tjenness@cpan.orgE<gt>
 
-Copyright (C) 1999-2003 Tim Jenness and the UK Particle Physics and
+Copyright (C) 1999-2005 Tim Jenness and the UK Particle Physics and
 Astronomy Research Council. All Rights Reserved.  This program is free
 software; you can redistribute it and/or modify it under the same
 terms as Perl itself.

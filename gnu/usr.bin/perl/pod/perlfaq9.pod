@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq9 - Networking ($Revision: 1.6 $, $Date: 2003/12/03 03:02:45 $)
+perlfaq9 - Networking
 
 =head1 DESCRIPTION
 
@@ -16,9 +16,8 @@ a program ("CGI script") and a web server (HTTPD). It is not specific
 to Perl, and has its own FAQs and tutorials, and usenet group,
 comp.infosystems.www.authoring.cgi
 
-The original CGI specification is at: http://hoohoo.ncsa.uiuc.edu/cgi/
-
-Current best-practice RFC draft at: http://CGI-Spec.Golux.Com/
+The CGI specification is outlined in an informational RFC:
+http://www.ietf.org/rfc/rfc3875
 
 Other relevant documentation listed in: http://www.perl.org/CGI_MetaFAQ.html
 
@@ -227,6 +226,10 @@ through proxies:
 
 =head2 How do I automate an HTML form submission?
 
+If you are doing something complex, such as moving through many pages
+and forms or a web site, you can use C<WWW::Mechanize>.  See its
+documentation for all the details.
+
 If you're submitting values using the GET method, create a URL and encode
 the form using the C<query_form> method:
 
@@ -250,19 +253,18 @@ the content appropriately.
 
 =head2 How do I decode or create those %-encodings on the web?
 
-
 If you are writing a CGI script, you should be using the CGI.pm module
 that comes with perl, or some other equivalent module.  The CGI module
 automatically decodes queries for you, and provides an escape()
 function to handle encoding.
-
 
 The best source of detailed information on URI encoding is RFC 2396.
 Basically, the following substitutions do it:
 
     s/([^\w()'*~!.-])/sprintf '%%%02x', ord $1/eg;   # encode
 
-    s/%([A-Fa-f\d]{2})/chr hex $1/eg;            # decode
+    s/%([A-Fa-f\d]{2})/chr hex $1/eg;                # decode
+	s/%([[:xdigit:]]{2})/chr hex $1/eg;          # same thing
 
 However, you should only apply them to individual URI components, not
 the entire URI, otherwise you'll lose information and generally mess
@@ -319,7 +321,7 @@ The HTTPD::UserAdmin and HTTPD::GroupAdmin modules provide a
 consistent OO interface to these files, regardless of how they're
 stored.  Databases may be text, dbm, Berkeley DB or any database with
 a DBI compatible driver.  HTTPD::UserAdmin supports files used by the
-`Basic' and `Digest' authentication schemes.  Here's an example:
+"Basic" and "Digest" authentication schemes.  Here's an example:
 
     use HTTPD::UserAdmin ();
     HTTPD::UserAdmin
@@ -348,35 +350,42 @@ the Mail::Header module from CPAN (part of the MailTools package).
 
 =head2 How do I decode a CGI form?
 
-You use a standard module, probably CGI.pm.  Under no circumstances
-should you attempt to do so by hand!
+(contributed by brian d foy)
 
-You'll see a lot of CGI programs that blindly read from STDIN the number
-of bytes equal to CONTENT_LENGTH for POSTs, or grab QUERY_STRING for
-decoding GETs.  These programs are very poorly written.  They only work
-sometimes.  They typically forget to check the return value of the read()
-system call, which is a cardinal sin.  They don't handle HEAD requests.
-They don't handle multipart forms used for file uploads.  They don't deal
-with GET/POST combinations where query fields are in more than one place.
-They don't deal with keywords in the query string.
+Use the CGI.pm module that comes with Perl.  It's quick,
+it's easy, and it actually does quite a bit of work to
+ensure things happen correctly.  It handles GET, POST, and
+HEAD requests, multipart forms, multivalued fields, query
+string and message body combinations, and many other things
+you probably don't want to think about.
 
-In short, they're bad hacks.  Resist them at all costs.  Please do not be
-tempted to reinvent the wheel.  Instead, use the CGI.pm or CGI_Lite.pm
-(available from CPAN), or if you're trapped in the module-free land
-of perl1 .. perl4, you might look into cgi-lib.pl (available from
-http://cgi-lib.stanford.edu/cgi-lib/ ).
+It doesn't get much easier: the CGI module automatically
+parses the input and makes each value available through the
+C<param()> function.
 
-Make sure you know whether to use a GET or a POST in your form.
-GETs should only be used for something that doesn't update the server.
-Otherwise you can get mangled databases and repeated feedback mail
-messages.  The fancy word for this is ``idempotency''.  This simply
-means that there should be no difference between making a GET request
-for a particular URL once or multiple times.  This is because the
-HTTP protocol definition says that a GET request may be cached by the
-browser, or server, or an intervening proxy.  POST requests cannot be
-cached, because each request is independent and matters.  Typically,
-POST requests change or depend on state on the server (query or update
-a database, send mail, or purchase a computer).
+	use CGI qw(:standard);
+
+	my $total = param( 'price' ) + param( 'shipping' );
+
+	my @items = param( 'item' ); # multiple values, same field name
+
+If you want an object-oriented approach, CGI.pm can do that too.
+
+	use CGI;
+
+	my $cgi = CGI->new();
+
+	my $total = $cgi->param( 'price' ) + $cgi->param( 'shipping' );
+
+	my @items = $cgi->param( 'item' );
+
+You might also try CGI::Minimal which is a lightweight version
+of the same thing.  Other CGI::* modules on CPAN might work better
+for you, too.
+
+Many people try to write their own decoder (or copy one from
+another program) and then run into one of the many "gotchas"
+of the task.  It's much easier and less hassle to use CGI.pm.
 
 =head2 How do I check a valid mail address?
 
@@ -429,7 +438,7 @@ A related strategy that's less open to forgery is to give them a PIN
 (personal ID number).  Record the address and PIN (best that it be a
 random one) for later processing.  In the mail you send, ask them to
 include the PIN in their reply.  But if it bounces, or the message is
-included via a ``vacation'' script, it'll be there anyway.  So it's
+included via a "vacation" script, it'll be there anyway.  So it's
 best to ask them to mail back a slight alteration of the PIN, such as
 with the characters reversed, one added or subtracted to each digit, etc.
 
@@ -586,29 +595,37 @@ Or more succinctly,
     $msg[$msgno] .= $_;
     END { print @msg[ sort { $sub[$a] cmp $sub[$b] || $a <=> $b } (0 .. $#msg) ] }
 
-=head2 How do I find out my hostname/domainname/IP address?
+=head2 How do I find out my hostname, domainname, or IP address?
+X<hostname, domainname, IP address, host, domain, hostfqdn, inet_ntoa,
+gethostbyname, Socket, Net::Domain, Sys::Hostname>
 
-The normal way to find your own hostname is to call the C<`hostname`>
-program.  While sometimes expedient, this has some problems, such as
-not knowing whether you've got the canonical name or not.  It's one of
-those tradeoffs of convenience versus portability.
+(contributed by brian d foy)
 
-The Sys::Hostname module (part of the standard perl distribution) will
-give you the hostname after which you can find out the IP address
-(assuming you have working DNS) with a gethostbyname() call.
+The Net::Domain module, which is part of the standard distribution starting
+in perl5.7.3, can get you the fully qualified domain name (FQDN), the host
+name, or the domain name.
+
+	use Net::Domain qw(hostname hostfqdn hostdomain);
+
+	my $host = hostfqdn();
+
+The C<Sys::Hostname> module, included in the standard distribution since
+perl5.6, can also get the hostname.
+
+	use Sys::Hostname;
+
+	$host = hostname();
+
+To get the IP address, you can use the C<gethostbyname> built-in function
+to turn the name into a number. To turn that number into the dotted octet
+form (a.b.c.d) that most people expect, use the C<inet_ntoa> function
+from the <Socket> module, which also comes with perl.
 
     use Socket;
-    use Sys::Hostname;
-    my $host = hostname();
-    my $addr = inet_ntoa(scalar gethostbyname($host || 'localhost'));
 
-Probably the simplest way to learn your DNS domain name is to grok
-it out of /etc/resolv.conf, at least under Unix.  Of course, this
-assumes several things about your resolv.conf configuration, including
-that it exists.
-
-(We still need a good DNS domain name-learning method for non-Unix
-systems.)
+    my $address = inet_ntoa(
+    	scalar gethostbyname( $host || 'localhost' )
+    	);
 
 =head2 How do I fetch a news article or the active newsgroups?
 
@@ -625,15 +642,15 @@ available from CPAN) is more complex but can put as well as fetch.
 
 =head2 How can I do RPC in Perl?
 
-A DCE::RPC module is being developed (but is not yet available) and
-will be released as part of the DCE-Perl package (available from
-CPAN).  The rpcgen suite, available from CPAN/authors/id/JAKE/, is
-an RPC stub generator and includes an RPC::ONC module.
+(Contributed by brian d foy)
+
+Use one of the RPC modules you can find on CPAN (
+http://search.cpan.org/search?query=RPC&mode=all ).
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2002 Tom Christiansen and Nathan Torkington.
-All rights reserved.
+Copyright (c) 1997-2006 Tom Christiansen, Nathan Torkington, and
+other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it
 under the same terms as Perl itself.

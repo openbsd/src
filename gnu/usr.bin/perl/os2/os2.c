@@ -360,7 +360,7 @@ pthread_startit(void *arg1)
 	    Renew(thread_join_data, thread_join_count, thread_join_t);
 	    Zero(thread_join_data + oc, thread_join_count - oc, thread_join_t);
 	} else {
-	    Newz(1323, thread_join_data, thread_join_count, thread_join_t);
+	    Newxz(thread_join_data, thread_join_count, thread_join_t);
 	}
     }
     if (thread_join_data[tid].state != pthreads_st_none) {
@@ -789,7 +789,7 @@ get_sysinfo(ULONG pid, ULONG flags)
 		return 0;
         }
     }
-    New(1322, pbuffer, buf_len, char);
+    Newx(pbuffer, buf_len, char);
     /* QSS_PROCESS | QSS_MODULE | QSS_SEMAPHORES | QSS_SHARED */
     rc = QuerySysState(flags, pid, pbuffer, buf_len);
     while (rc == ERROR_BUFFER_OVERFLOW) {
@@ -1374,7 +1374,7 @@ do_spawn3(pTHX_ char *cmd, int execf, int flag)
     if (strnEQ(cmd,"/bin/sh",7) && isSPACE(cmd[7])) {
 	STRLEN l = strlen(PL_sh_path);
 	
-	New(1302, news, strlen(cmd) - 7 + l + 1, char);
+	Newx(news, strlen(cmd) - 7 + l + 1, char);
 	strcpy(news, PL_sh_path);
 	strcpy(news + l, cmd + 7);
 	cmd = news;
@@ -1447,7 +1447,7 @@ do_spawn3(pTHX_ char *cmd, int execf, int flag)
     }
 
     /* cmd="a" may lead to "sh", "-c", "\"$@\"", "a", "a.cmd", NULL */
-    New(1303,PL_Argv, (s - cmd + 11) / 2, char*);
+    Newx(PL_Argv, (s - cmd + 11) / 2, char*);
     PL_Cmd = savepvn(cmd, s-cmd);
     a = PL_Argv;
     for (s = PL_Cmd; *s;) {
@@ -1481,7 +1481,7 @@ os2_aspawn4(pTHX_ SV *really, register SV **vmark, register SV **vsp, int execin
     STRLEN n_a;
 
     if (sp > mark) {
-	New(1301,PL_Argv, sp - mark + 3, char*);
+	Newx(PL_Argv, sp - mark + 3, char*);
 	a = PL_Argv;
 
 	if (mark < sp && SvNIOKp(*(mark+1)) && !SvPOKp(*(mark+1))) {
@@ -4377,7 +4377,7 @@ check_emx_runtime(char **env, EXCEPTIONREGISTRATIONRECORD *preg)
 	    c++;
 	    e = e + strlen(e) + 1;
 	}
-	New(1307, env, c + 1, char*);
+	Newx(env, c + 1, char*);
 	ep = env;
 	e = pib->pib_pchenv;
 	while (c--) {
@@ -4436,10 +4436,10 @@ Perl_OS2_init3(char **env, void **preg, int flags)
     if (perl_sh_installed) {
 	int l = strlen(perl_sh_installed);
 
-	New(1304, PL_sh_path, l + 1, char);
+	Newx(PL_sh_path, l + 1, char);
 	memcpy(PL_sh_path, perl_sh_installed, l + 1);
     } else if ( (shell = getenv("PERL_SH_DRIVE")) ) {
-	New(1304, PL_sh_path, strlen(SH_PATH) + 1, char);
+	Newx(PL_sh_path, strlen(SH_PATH) + 1, char);
 	strcpy(PL_sh_path, SH_PATH);
 	PL_sh_path[0] = shell[0];
     } else if ( (shell = getenv("PERL_SH_DIR")) ) {
@@ -4447,7 +4447,7 @@ Perl_OS2_init3(char **env, void **preg, int flags)
 
 	while (l && (shell[l-1] == '/' || shell[l-1] == '\\'))
 	    l--;
-	New(1304, PL_sh_path, l + 8, char);
+	Newx(PL_sh_path, l + 8, char);
 	strncpy(PL_sh_path, shell, l);
 	strcpy(PL_sh_path + l, "/sh.exe");
 	for (i = 0; i < l; i++) {
@@ -4567,7 +4567,7 @@ my_rmdir (__const__ char *s)
 
     if (s[l-1] == '/' || s[l-1] == '\\') {	/* EMX mkdir fails... */
 	if (l >= sizeof b)
-	    New(1305, buf, l + 1, char);
+	    Newx(buf, l + 1, char);
 	strcpy(buf,s);
 	while (l > 1 && (s[l-1] == '/' || s[l-1] == '\\'))
 	    l--;
@@ -4592,7 +4592,7 @@ my_mkdir (__const__ char *s, long perm)
 
     if (s[l-1] == '/' || s[l-1] == '\\') {	/* EMX mkdir fails... */
 	if (l >= sizeof b)
-	    New(1305, buf, l + 1, char);
+	    Newx(buf, l + 1, char);
 	strcpy(buf,s);
 	while (l > 1 && (s[l-1] == '/' || s[l-1] == '\\'))
 	    l--;

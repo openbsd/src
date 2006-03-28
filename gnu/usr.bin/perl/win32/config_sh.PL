@@ -34,8 +34,6 @@ sub loadopts {
     }
 }
 
-FindExt::scan_ext("../ext");
-
 my %opt;
 
 my $optref = loadopts();
@@ -44,21 +42,21 @@ while (@{$optref} && $optref->[0] =~ /^([\w_]+)=(.*)$/) {
     shift(@{$optref});
 }
 
-my @dynamic = FindExt::dynamic_extensions();
-my @noxs    = FindExt::noxs_extensions();
-my @known   = sort(@dynamic,split(/\s+/,$opt{'staticext'}),@noxs);
-$opt{'known_extensions'} = join(' ',@known);
+FindExt::scan_ext("../ext");
+FindExt::set_static_extensions(split ' ', $opt{'static_ext'});
 
+my @dynamic_ext = FindExt::dynamic_ext();
+my @extensions  = FindExt::extensions();
 if (!$opt{'use5005threads'} || $opt{'use5005threads'} eq 'undef')
  {
-  @dynamic = grep(!/Thread/,@dynamic);
-  @known   = grep(!/Thread/,@dynamic);
+  @dynamic_ext = grep(!/Thread/,@dynamic_ext);
+  @extensions  = grep(!/Thread/,@extensions);
  }
-
-$opt{'dynamic_ext'} = join(' ',@dynamic);
-$opt{'nonxs_ext'}   = join(' ',@noxs);
-
-$opt{'extensions'} = join(' ',@known);
+$opt{'nonxs_ext'}        = join(' ',FindExt::nonxs_ext()) || ' ';
+$opt{'static_ext'}       = join(' ',FindExt::static_ext()) || ' ';
+$opt{'dynamic_ext'}      = join(' ',@dynamic_ext) || ' ';
+$opt{'extensions'}       = join(' ',@extensions) || ' ';
+$opt{'known_extensions'} = join(' ',FindExt::known_extensions()) || ' ';
 
 my $pl_h = '../patchlevel.h';
 
@@ -78,6 +76,23 @@ $opt{VERSION} = "$opt{PERL_REVISION}.$opt{PERL_VERSION}.$opt{PERL_SUBVERSION}";
 $opt{INST_VER} =~ s|~VERSION~|$opt{VERSION}|g;
 $opt{'version_patchlevel_string'} = "version $opt{PERL_VERSION} subversion $opt{PERL_SUBVERSION}";
 $opt{'version_patchlevel_string'} .= " patchlevel $opt{PERL_PATCHLEVEL}" if exists $opt{PERL_PATCHLEVEL};
+
+$opt{'osvers'} = join '.', (Win32::GetOSVersion())[1,2];
+
+if (exists $opt{cc}) {
+    # cl and bcc32 version detection borrowed from Test::Smoke's configsmoke.pl
+    if ($opt{cc} eq 'cl') {
+        my $output = `cl --version 2>&1`;
+        $opt{ccversion} = $output =~ /^.*Version\s+([\d.]+)/ ? $1 : '?';
+    }
+    elsif ($opt{cc} eq 'bcc32') {
+        my $output = `bcc32 --version 2>&1`;
+        $opt{ccversion} = $output =~ /([\d.]+)/ ? $1 : '?';
+    }
+    elsif ($opt{cc} eq 'gcc') {
+        chomp($opt{gccversion} = `gcc -dumpversion`);
+    }
+}
 
 $opt{'cf_by'} = $ENV{USERNAME} unless $opt{'cf_by'};
 $opt{'cf_email'} = $opt{'cf_by'} . '@' . (gethostbyname('localhost'))[0]

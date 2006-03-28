@@ -4,6 +4,7 @@ This document is in Pod format.  To read this, use a Pod formatter,
 like "perldoc perlpod".
 
 =head1 NAME
+X<POD> X<plain old documentation>
 
 perlpod - the Plain Old Documentation format
 
@@ -22,6 +23,7 @@ L<command|/"Command Paragraph">.
 
 
 =head2 Ordinary Paragraph
+X<POD, ordinary paragraph>
 
 Most paragraphs in your documentation will be ordinary blocks
 of text, like this one.  You can simply type in your text without
@@ -37,6 +39,7 @@ section, below.
 
 
 =head2 Verbatim Paragraph
+X<POD, verbatim paragraph> X<verbatim>
 
 Verbatim paragraphs are usually used for presenting a codeblock or
 other text which does not require any special parsing or formatting,
@@ -51,6 +54,7 @@ nothing else.
 
 
 =head2 Command Paragraph
+X<POD, command>
 
 A command paragraph is used for special treatment of whole chunks
 of text, usually as headings or parts of lists.
@@ -60,6 +64,7 @@ with "=", followed by an identifier, followed by arbitrary text that
 the command can use however it pleases.  Currently recognized commands
 are
 
+    =pod
     =head1 Heading Text
     =head2 Heading Text
     =head3 Heading Text
@@ -67,17 +72,19 @@ are
     =over indentlevel
     =item stuff
     =back
-    =cut
-    =pod
     =begin format
     =end format
     =for format text...
+    =encoding type
+    =cut
 
 To explain them each in detail:
 
 =over
 
 =item C<=head1 I<Heading Text>>
+X<=head1> X<=head2> X<=head3> X<=head4>
+X<head1> X<head2> X<head3> X<head4>
 
 =item C<=head2 I<Heading Text>>
 
@@ -102,6 +109,7 @@ Such commands are explained in the
 "L<Formatting Codes|/"Formatting Codes">" section, below.
 
 =item C<=over I<indentlevel>>
+X<=over> X<=item> X<=back> X<over> X<item> X<back>
 
 =item C<=item I<stuff...>>
 
@@ -157,6 +165,7 @@ list.
 =back
 
 =item C<=cut>
+X<=cut> X<cut>
 
 To end a Pod block, use a blank line,
 then a line beginning with "=cut", and a blank
@@ -165,6 +174,7 @@ this is where Perl code is resuming.  (The blank line before the "=cut"
 is not technically necessary, but many older Pod processors require it.)
 
 =item C<=pod>
+X<=pod> X<pod>
 
 The "=pod" command by itself doesn't do much of anything, but it
 signals to Perl (and Pod formatters) that a Pod block starts here.  A
@@ -191,6 +201,7 @@ paragraph or a verbatim paragraph.  For example:
   =cut
 
 =item C<=begin I<formatname>>
+X<=begin> X<=end> X<=for> X<begin> X<end> X<for>
 
 =item C<=end I<formatname>>
 
@@ -270,6 +281,7 @@ normal formatting (e.g., may not be a normal-use paragraph, but might
 be for formatting as a footnote).
 
 =item C<=encoding I<encodingname>>
+X<=encoding> X<encoding>
 
 This command is used for declaring the encoding of a document.  Most
 users won't need this; but if your encoding isn't US-ASCII or Latin-1,
@@ -321,6 +333,8 @@ Some examples of lists include:
 
 
 =head2 Formatting Codes
+X<POD, formatting code> X<formatting code>
+X<POD, interior sequence> X<interior sequence>
 
 In ordinary paragraphs and in some command paragraphs, various
 formatting codes (a.k.a. "interior sequences") can be used:
@@ -332,11 +346,13 @@ formatting codes (a.k.a. "interior sequences") can be used:
 =over
 
 =item C<IE<lt>textE<gt>> -- italic text
+X<I> X<< IZ<><> >> X<POD, formatting code, italic> X<italic>
 
 Used for emphasis ("C<be IE<lt>careful!E<gt>>") and parameters
 ("C<redo IE<lt>LABELE<gt>>")
 
 =item C<BE<lt>textE<gt>> -- bold text
+X<B> X<< BZ<><> >> X<POD, formatting code, bold> X<bold>
 
 Used for switches ("C<perl's BE<lt>-nE<gt> switch>"), programs
 ("C<some systems provide a BE<lt>chfnE<gt> for that>"),
@@ -344,12 +360,14 @@ emphasis ("C<be BE<lt>careful!E<gt>>"), and so on
 ("C<and that feature is known as BE<lt>autovivificationE<gt>>").
 
 =item C<CE<lt>codeE<gt>> -- code text
+X<C> X<< CZ<><> >> X<POD, formatting code, code> X<code>
 
 Renders code in a typewriter font, or gives some other indication that
 this represents program text ("C<CE<lt>gmtime($^T)E<gt>>") or some other
 form of computerese ("C<CE<lt>drwxr-xr-xE<gt>>").
 
 =item C<LE<lt>nameE<gt>> -- a hyperlink
+X<L> X<< LZ<><> >> X<POD, formatting code, hyperlink> X<hyperlink>
 
 There are various syntaxes, listed below.  In the syntaxes given,
 C<text>, C<name>, and C<section> cannot contain the characters
@@ -435,6 +453,7 @@ various reasons.
 =back
 
 =item C<EE<lt>escapeE<gt>> -- a character escape
+X<E> X<< EZ<><> >> X<POD, formatting code, escape> X<escape>
 
 Very similar to HTML/XML C<&I<foo>;> "entity references":
 
@@ -487,21 +506,26 @@ rendering C<EE<lt>eacuteE<gt>> as just a plain "e".)
 =back
 
 =item C<FE<lt>filenameE<gt>> -- used for filenames
+X<F> X<< FZ<><> >> X<POD, formatting code, filename> X<filename>
 
 Typically displayed in italics.  Example: "C<FE<lt>.cshrcE<gt>>"
 
 =item C<SE<lt>textE<gt>> -- text contains non-breaking spaces
+X<S> X<< SZ<><> >> X<POD, formatting code, non-breaking space> 
+X<non-breaking space>
 
 This means that the words in I<text> should not be broken
 across lines.  Example: S<C<SE<lt>$x ? $y : $zE<gt>>>.
 
 =item C<XE<lt>topic nameE<gt>> -- an index entry
+X<X> X<< XZ<><> >> X<POD, formatting code, index entry> X<index entry>
 
 This is ignored by most formatters, but some may use it for building
 indexes.  It always renders as empty-string.
 Example: C<XE<lt>absolutizing relative URLsE<gt>>
 
 =item C<ZE<lt>E<gt>> -- a null (zero-effect) formatting code
+X<Z> X<< ZZ<><> >> X<POD, formatting code, null> X<null>
 
 This is rarely used.  It's one way to get around using an
 EE<lt>...E<gt> code sometimes.  For example, instead of
@@ -538,6 +562,7 @@ angle brackets ("<<" and ">>") may be used I<if and only if there is
 whitespace right after the opening delimiter and whitespace right
 before the closing delimiter!>  For example, the following will
 do the trick:
+X<POD, formatting code, escaping with multiple brackets>
 
     C<< $a <=> $b >>
 
@@ -547,6 +572,7 @@ delimiters, and make sure that whitespace immediately follows the last
 '<' of the opening delimiter, and immediately precedes the first '>'
 of the closing delimiter.  (The whitespace is ignored.)  So the
 following will also work:
+X<POD, formatting code, escaping with multiple brackets>
 
     C<<< $a <=> $b >>>
     C<<<<  $a <=> $b     >>>>
@@ -576,6 +602,7 @@ and any other pod2xxx or Pod::Xxxx translators that use
 Pod::Parser 1.093 or later, or Pod::Tree 1.02 or later.
 
 =head2 The Intent
+X<POD, intent of>
 
 The intent is simplicity of use, not power of expression.  Paragraphs
 look like paragraphs (block format), so that they stand out
@@ -595,6 +622,7 @@ B<pod2fm>.  Various others are available in CPAN.
 
 
 =head2 Embedding Pods in Perl Modules
+X<POD, embedding>
 
 You can embed Pod documentation in your Perl modules and scripts.
 Start your documentation with an empty line, a "=head1" command at the
@@ -618,6 +646,7 @@ have recognized the "=head1" as starting a Pod block.
 =over
 
 =item *
+X<podchecker> X<POD, validating>
 
 The B<podchecker> command is provided for checking Pod syntax for errors
 and warnings.  For example, it checks for completely blank lines in

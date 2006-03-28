@@ -80,13 +80,21 @@ sub stringify {
 	} elsif ($unctrl eq 'quote') {
 	  s/([\"\\\$\@])/\\$1/g if $tick eq '"';
 	  s/\033/\\e/g;
-	  s/([\000-\037\177])/'\\c'.chr(ord($1)^64)/eg;
+	  s/([\000-\037\177])/'\\c'._escaped_ord($1)/eg;
 	}
 	$_ = uniescape($_);
 	s/([\200-\377])/'\\'.sprintf('%3o',ord($1))/eg if $quoteHighBit;
 	($noticks || /^\d+(\.\d*)?\Z/) 
 	  ? $_ 
 	  : $tick . $_ . $tick;
+}
+
+# Ensure a resulting \ is escaped to be \\
+sub _escaped_ord {
+    my $chr = shift;
+    $chr = chr(ord($chr)^64);
+    $chr =~ s{\\}{\\\\}g;
+    return $chr;
 }
 
 sub ShortArray {

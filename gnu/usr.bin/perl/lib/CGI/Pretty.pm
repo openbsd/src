@@ -148,11 +148,12 @@ sub new {
     my $this = $class->SUPER::new( @_ );
 
     if ($CGI::MOD_PERL) {
-        my $r = Apache->request;
         if ($CGI::MOD_PERL == 1) {
+            my $r = Apache->request;
             $r->register_cleanup(\&CGI::Pretty::_reset_globals);
         }
         else {
+            my $r = Apache2::RequestUtil->request;
             $r->pool->cleanup_register(\&CGI::Pretty::_reset_globals);
         }
     }

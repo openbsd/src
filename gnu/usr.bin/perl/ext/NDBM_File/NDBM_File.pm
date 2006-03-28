@@ -7,7 +7,7 @@ require Tie::Hash;
 use XSLoader ();
 
 our @ISA = qw(Tie::Hash);
-our $VERSION = "1.05";
+our $VERSION = "1.06";
 
 XSLoader::load 'NDBM_File', $VERSION;
 
@@ -24,9 +24,12 @@ NDBM_File - Tied access to ndbm files
   use Fcntl;   # For O_RDWR, O_CREAT, etc.
   use NDBM_File;
 
+  tie(%h, 'NDBM_File', 'filename', O_RDWR|O_CREAT, 0666)
+    or die "Couldn't tie NDBM file 'filename': $!; aborting";
+
   # Now read and change the hash
   $h{newkey} = newvalue;
-  print $h{oldkey}; 
+  print $h{oldkey};
   ...
 
   untie %h;
@@ -49,14 +52,14 @@ C<tie> should be:
 
 The hash variable you want to tie.
 
-=item 2. 
+=item 2.
 
 The string C<"NDBM_File">.  (Ths tells Perl to use the C<NDBM_File>
 package to perform the functions of the hash.)
 
-=item 3. 
+=item 3.
 
-The name of the file you want to tie to the hash.  
+The name of the file you want to tie to the hash.
 
 =item 4.
 
@@ -97,7 +100,7 @@ sets C<$!> to contain the reason the file could not be tied.
 
 =head2 C<ndbm store returned -1, errno 22, key "..." at ...>
 
-This warning is emmitted when you try to store a key or a value that
+This warning is emitted when you try to store a key or a value that
 is too long.  It means that the change was not recorded in the
 database.  See BUGS AND WARNINGS below.
 

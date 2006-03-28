@@ -81,13 +81,12 @@ dprofpp B<-V> [profile]
 
 The I<dprofpp> command interprets profile data produced by a profiler, such
 as the Devel::DProf profiler.  Dprofpp will read the file F<tmon.out> and
-will display the 15 subroutines which are using the most time.  By default
+display the 15 subroutines which are using the most time.  By default
 the times for each subroutine are given exclusive of the times of their
 child subroutines.
 
 To profile a Perl script run the perl interpreter with the B<-d> switch.  So
-to profile script F<test.pl> with Devel::DProf the following command should
-be used.
+to profile script F<test.pl> with Devel::DProf use the following:
 
 	$ perl5 -d:DProf test.pl
 
@@ -243,7 +242,7 @@ times in the same branch then all these calls go into one branch of
 the next level.  A repeat count is output together with combined
 inclusive, exclusive and kids time.
 
-Branches are sorted w.r.t. inclusive time.
+Branches are sorted with regard to inclusive time.
 
 =item B<-U>
 
@@ -285,11 +284,19 @@ or to group subroutines by name:
 
 =item B<-P>
 
-Used with -G to aggregate "Pull"  together all calls that did not match -G.
+Used with -G to aggregate "Pull" together all calls that did not match -G.
 
 =item B<-f> <regexp>
 
 Filter all calls matching the pattern.
+
+=item B<-h>
+
+Display brief help and exit.
+
+=item B<-H>
+
+Display long help and exit.
 
 =back
 
@@ -326,11 +333,46 @@ L<perl>, L<Devel::DProf>, times(2)
 
 =cut
 
+sub shortusage {
+    print <<'EOF';
+dprofpp [options] [profile]
+
+    -A          Count autoloaded to *AUTOLOAD
+    -a          Sort by alphabetic name of subroutines.
+    -d          Reverse sort
+    -E          Sub times are reported exclusive of child times. (default)
+    -f          Filter all calls mathcing the pattern.
+    -G          Group all calls matching the pattern together.
+    -g subr     Count only those who are SUBR or called from SUBR
+    -H          Display long manual page.
+    -h          Display this short usage message.
+    -I          Sub times are reported inclusive of child times.
+    -l          Sort by number of calls to subroutines.
+    -O cnt      Specifies maximum number of subroutines to display.
+    -P          Used with -G to pull all other calls together.
+    -p script   Specifies name of script to be profiled.
+    -Q          Used with -p to indicate the dprofpp should quit
+                after profiling the script, without interpreting the data.
+    -q          Do not print column headers.
+    -R          Count anonyms separately even if from the same package
+    -r          Use real elapsed time rather than user+system time.
+    -S          Create statistics for all the depths
+    -s          Use system time rather than user+system time.
+    -T          Show call tree.
+    -t          Show call tree, compressed.
+    -U          Do not sort subroutines.
+    -u          Use user time rather than user+system time.
+    -V          Print dprofpp's version.
+    -v          Sort by average amount of time spent in subroutines.
+    -z          Sort by user+system time spent in subroutines. (default)
+EOF
+}
+
 use Getopt::Std 'getopts';
 use Config '%Config';
 
 Setup: {
-	my $options = 'O:g:G:Pf:dlzaAvuTtqrRsUFEIp:QVS';
+	my $options = 'O:g:G:Pf:dlzaAvuTtqrRsUFEIp:QVShH';
 
 	$Monfile = 'tmon.out';
 	if( exists $ENV{DPROFPP_OPTS} ){
@@ -344,39 +386,21 @@ Setup: {
 		@ARGV = @tmpargv;
 	}
 
-	getopts( $options );
+	getopts( $options ) or die "Try 'dprofpp -h' for help.\n";
 	if( @ARGV ){
 		# there was a filename, it overrides any earlier name.
 		$Monfile = shift;
 	}
 
-# -O cnt	Specifies maximum number of subroutines to display.
-# -a		Sort by alphabetic name of subroutines.
-# -z		Sort by user+system time spent in subroutines. (default)
-# -l		Sort by number of calls to subroutines.
-# -v		Sort by average amount of time spent in subroutines.
-# -T		Show call tree.
-# -t		Show call tree, compressed.
-# -q		Do not print column headers.
-# -u		Use user time rather than user+system time.
-# -s		Use system time rather than user+system time.
-# -r		Use real elapsed time rather than user+system time.
-# -U		Do not sort subroutines.
-# -E		Sub times are reported exclusive of child times. (default)
-# -I		Sub times are reported inclusive of child times.
-# -V		Print dprofpp's version.
-# -p script	Specifies name of script to be profiled.
-# -Q		Used with -p to indicate the dprofpp should quit after
-#		profiling the script, without interpreting the data.
-# -A		count autoloaded to *AUTOLOAD
-# -R		count anonyms separately even if from the same package
-# -g subr	count only those who are SUBR or called from SUBR
-# -S		Create statistics for all the depths
-
-# -G		Group all calls matching the pattern together.
-# -P		Used with -G to pull all other calls together.
-# -f		Filter all calls mathcing the pattern.
-# -d		Reverse sort
+        if ( defined $opt_h ) {
+                shortusage();
+                exit;
+        }
+        if ( defined $opt_H ) {
+                require Pod::Usage;
+                Pod::Usage::pod2usage( {-verbose => 2, -input => $0 } );
+                exit;
+        }
 
 	if( defined $opt_V ){
 		my $fh = 'main::fh';
@@ -711,7 +735,7 @@ sub parsestack {
 
 		my $ot = $t;
 		if ( $dir eq '/' ) {
-		  $syst = $stack[-1][0];
+		  $syst = $stack[-1][0] if scalar @stack;
 		  $usert = '&';
 		  $dir = '-';
 		  #warn("Inserted exit for $stack[-1][0].\n")
@@ -739,9 +763,9 @@ sub parsestack {
 			}
 			add_to_tree($curdeep_times, $ename,
 				    $t - $overhead) if $opt_S;
-			exitstamp( \@stack, \@tstack, 
-				   $t - $overhead, 
-				   $times, $ctimes, $ename, \$in, $tab, 
+			exitstamp( \@stack, \@tstack,
+				   $t - $overhead,
+				   $times, $ctimes, $name, \$in, $tab,
 				   $curdeep_times, \%outer );
 		} 
 		next unless $in_level or $name eq $opt_g;

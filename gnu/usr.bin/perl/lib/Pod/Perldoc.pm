@@ -12,7 +12,7 @@ use File::Spec::Functions qw(catfile catdir splitdir);
 use vars qw($VERSION @Pagers $Bindir $Pod2man
   $Temp_Files_Created $Temp_File_Lifetime
 );
-$VERSION = '3.13';
+$VERSION = '3.14';
 #..........................................................................
 
 BEGIN {  # Make a DEBUG constant very first thing...
@@ -1079,7 +1079,7 @@ sub MSWin_perldoc_tempfile {
   my $spec;
   
   do {
-    $spec = sprintf "%s/perldoc_%s_T%x_%x%02x.%s", # used also in MSWin_temp_cleanup
+    $spec = sprintf "%s\\perldoc_%s_T%x_%x%02x.%s", # used also in MSWin_temp_cleanup
       # Yes, we embed the create-time in the filename!
       $tempdir,
       $infix || 'x',
@@ -1232,6 +1232,13 @@ sub pagers_guessing {
         push @pagers, qw( more less pg view cat );
         unshift @pagers, $ENV{PAGER}  if $ENV{PAGER};
     }
+
+    if (IS_Cygwin) {
+        if (($pagers[0] eq 'less') || ($pagers[0] eq '/usr/bin/less')) {
+            unshift @pagers, '/usr/bin/less -isrR';
+        }
+    }
+
     unshift @pagers, $ENV{PERLDOC_PAGER} if $ENV{PERLDOC_PAGER};
     
     return;   
@@ -1494,6 +1501,12 @@ sub page {  # apply a pager to the output file
         # extension get the wrong default extension (such as .LIS for TYPE)
 
         $output = VMS::Filespec::rmsexpand($output, '.') if IS_VMS;
+
+        $output =~ s{/}{\\}g if IS_MSWin32 || IS_Dos;
+          # Altho "/" under MSWin is in theory good as a pathsep,
+          #  many many corners of the OS don't like it.  So we
+          #  have to force it to be "\" to make everyone happy.
+
         foreach my $pager (@pagers) {
             $self->aside("About to try calling $pager $output\n");
             if (IS_VMS) {

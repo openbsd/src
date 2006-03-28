@@ -1,27 +1,59 @@
 #!./perl
 
-# $RCSfile: exp.t,v $$Revision: 4.1 $$Date: 92/08/07 18:27:50 $
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+    require './test.pl';
+}
 
-print "1..6\n";
+plan tests => 16;
 
 # compile time evaluation
 
 $s = sqrt(2);
-if (substr($s,0,5) eq '1.414') {print "ok 1\n";} else {print "not ok 1\n";}
+is(substr($s,0,5), '1.414');
 
 $s = exp(1);
-if (substr($s,0,7) eq '2.71828') {print "ok 2\n";} else {print "not ok 2\n";}
+is(substr($s,0,7), '2.71828');
 
-if (exp(log(1)) == 1) {print "ok 3\n";} else {print "not ok 3\n";}
+cmp_ok(exp(log(1)), '==', 1);
 
 # run time evaluation
 
 $x1 = 1;
 $x2 = 2;
 $s = sqrt($x2);
-if (substr($s,0,5) eq '1.414') {print "ok 4\n";} else {print "not ok 4\n";}
+is(substr($s,0,5), '1.414');
 
 $s = exp($x1);
-if (substr($s,0,7) eq '2.71828') {print "ok 5\n";} else {print "not ok 5\n";}
+is(substr($s,0,7), '2.71828');
 
-if (exp(log($x1)) == 1) {print "ok 6\n";} else {print "not ok 6\n";}
+cmp_ok(exp(log($x1)), '==', 1);
+
+# tests for transcendental functions
+
+my $pi = 3.1415926535897931160;
+my $pi_2 = 1.5707963267948965580;
+
+sub round {
+   my $result = shift;
+   return sprintf("%.9f", $result);
+}
+
+# sin() tests
+cmp_ok(sin(0), '==', 0.0);
+cmp_ok(round(sin($pi)), '==', 0.0);
+cmp_ok(round(sin(-1 * $pi)), '==', 0.0);
+cmp_ok(round(sin($pi_2)), '==', 1.0);
+cmp_ok(round(sin(-1 * $pi_2)), '==', -1.0);
+
+# cos() tests
+cmp_ok(cos(0), '==', 1.0);
+cmp_ok(round(cos($pi)), '==', -1.0);
+cmp_ok(round(cos(-1 * $pi)), '==', -1.0);
+cmp_ok(round(cos($pi_2)), '==', 0.0);
+cmp_ok(round(cos(-1 * $pi_2)), '==', 0.0);
+
+# atan2() tests were removed due to differing results from calls to
+# atan2() on various OS's and architectures.  See perlport.pod for
+# more information.

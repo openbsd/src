@@ -112,12 +112,12 @@ dl_generic_private_init(pTHX)	/* called by dl_*.xs dl_private_init() */
 
 /* SaveError() takes printf style args and saves the result in dl_last_error */
 static void
-SaveError(pTHX_ char* pat, ...)
+SaveError(pTHX_ const char* pat, ...)
 {
     dMY_CXT;
     va_list args;
     SV *msv;
-    char *message;
+    const char *message;
     STRLEN len;
 
     /* This code is based on croak/warn, see mess() in util.c */

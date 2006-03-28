@@ -15,7 +15,11 @@ extern "C" {
 #  define Win32_Winsock
 #endif
 #include <windows.h>
-#include <winsock.h>
+
+/* Too late to include winsock2.h if winsock.h has already been loaded */
+#ifndef _WINSOCKAPI_
+#  include <winsock2.h>
+#endif
 
 #include "win32.h"
 

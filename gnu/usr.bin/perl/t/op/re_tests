@@ -943,3 +943,19 @@ a(b)??	abc	y	<$1>	<>	# undef [perl #16773]
 .*a(?!(b|cd)*e).*f	......abef	n	-	-	# [perl #23030]
 x(?#	x	c	-	Sequence (?#... not terminated
 :x(?#:	x	c	-	Sequence (?#... not terminated
+(WORDS|WORD)S	WORDS	y	$1	WORD
+(X.|WORDS|X.|WORD)S	WORDS	y	$1	WORD
+(WORDS|WORLD|WORD)S	WORDS	y	$1	WORD
+(X.|WORDS|WORD|Y.)S	WORDS	y	$1	WORD
+(foo|fool|x.|money|parted)$	fool	y	$1	fool
+(x.|foo|fool|x.|money|parted|y.)$	fool	y	$1	fool
+(foo|fool|money|parted)$	fool	y	$1	fool
+(foo|fool|x.|money|parted)$	fools	n	-	-
+(x.|foo|fool|x.|money|parted|y.)$	fools	n	-	-
+(foo|fool|money|parted)$	fools	n	-	-
+(a|aa|aaa|aaaa|aaaaa|aaaaaa)(b|c)	aaaaaaaaaaaaaaab	y	$1$2	aaaaaab
+(a|aa|aaa|aaaa|aaaaa|aaaaaa)(??{$1&&""})(b|c)	aaaaaaaaaaaaaaab	y	$1$2	aaaaaab
+(a|aa|aaa|aaaa|aaaaa|aaaaaa)(??{$1&&"foo"})(b|c)	aaaaaaaaaaaaaaab	n	-	-
+^(a*?)(?!(aa|aaaa)*$)	aaaaaaaaaaaaaaaaaaaa	y	$1	a	# [perl #34195]
+^(a*?)(?!(aa|aaaa)*$)(?=a\z)	aaaaaaaa	y	$1	aaaaaaa
+^(.)\s+.$(?(1))	A B	y	$1	A	# [perl #37688]

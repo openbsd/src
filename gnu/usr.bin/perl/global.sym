@@ -1,8 +1,9 @@
+#  -*- buffer-read-only: t -*-
 #
 #    global.sym
 #
-#    Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999,
-#    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
+#    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+#    2000, 2001, 2002, 2003, 2004, 2005, 2006, by Larry Wall and others
 #
 #    You may distribute under the terms of either the GNU General Public
 #    License or the Artistic License, as specified in the README file.
@@ -211,8 +212,8 @@ Perl_is_uni_print_lc
 Perl_is_uni_punct_lc
 Perl_is_uni_xdigit_lc
 Perl_is_utf8_char
-Perl_is_utf8_string
 Perl_is_utf8_string_loc
+Perl_is_utf8_string
 Perl_is_utf8_alnum
 Perl_is_utf8_alnumc
 Perl_is_utf8_idfirst
@@ -376,8 +377,8 @@ Perl_rninstr
 Perl_rsignal
 Perl_rsignal_state
 Perl_savepv
-Perl_savesharedpv
 Perl_savepvn
+Perl_savesharedpv
 Perl_savestack_grow
 Perl_savestack_grow_cnt
 Perl_save_aelem
@@ -417,11 +418,13 @@ Perl_save_padsv
 Perl_save_sptr
 Perl_save_svref
 Perl_save_threadsv
+Perl_save_threadsv
 Perl_scan_bin
 Perl_scan_hex
 Perl_scan_num
 Perl_scan_oct
 Perl_screaminstr
+Perl_share_hek
 Perl_csighandler
 Perl_stack_grow
 Perl_start_subparse
@@ -544,6 +547,7 @@ Perl_uvchr_to_utf8_flags
 Perl_uvuni_to_utf8_flags
 Perl_pv_uni_display
 Perl_sv_uni_display
+Perl_seed
 Perl_warn
 Perl_vwarn
 Perl_warner
@@ -617,6 +621,7 @@ Perl_dirp_dup
 Perl_gp_dup
 Perl_mg_dup
 Perl_sv_dup
+Perl_rvpv_dup
 Perl_sys_intern_dup
 Perl_ptr_table_new
 Perl_ptr_table_fetch
@@ -667,3 +672,52 @@ Perl_PerlIO_stdout
 Perl_PerlIO_stderr
 Perl_hv_clear_placeholders
 Perl_hv_scalar
+Perl_op_refcnt_lock
+Perl_op_refcnt_unlock
+Perl_savesvpv
+Perl_ck_anoncode
+Perl_ck_bitop
+Perl_ck_concat
+Perl_ck_defined
+Perl_ck_delete
+Perl_ck_die
+Perl_ck_eof
+Perl_ck_eval
+Perl_ck_exec
+Perl_ck_exists
+Perl_ck_exit
+Perl_ck_ftst
+Perl_ck_fun
+Perl_ck_glob
+Perl_ck_grep
+Perl_ck_index
+Perl_ck_join
+Perl_ck_lengthconst
+Perl_ck_lfun
+Perl_ck_listiob
+Perl_ck_match
+Perl_ck_method
+Perl_ck_null
+Perl_ck_open
+Perl_ck_repeat
+Perl_ck_require
+Perl_ck_return
+Perl_ck_rfun
+Perl_ck_rvconst
+Perl_ck_sassign
+Perl_ck_select
+Perl_ck_shift
+Perl_ck_sort
+Perl_ck_spair
+Perl_ck_split
+Perl_ck_subr
+Perl_ck_substr
+Perl_ck_svconst
+Perl_ck_trunc
+Perl_is_utf8_string_loclen
+Perl_newSVhek
+Perl_stashpv_hvname_match
+Perl_gv_SVadd
+Perl_ckwarn
+Perl_ckwarn_d
+# ex: set ro:

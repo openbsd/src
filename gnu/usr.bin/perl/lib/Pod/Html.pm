@@ -3,7 +3,7 @@ use strict;
 require Exporter;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
-$VERSION = 1.0502;
+$VERSION = 1.0504;
 @ISA = qw(Exporter);
 @EXPORT = qw(pod2html htmlify);
 @EXPORT_OK = qw(anchorify);
@@ -462,10 +462,12 @@ sub pod2html {
 END_OF_BLOCK
 
     print HTML <<END_OF_HEAD;
+<?xml version="1.0" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title>$Title</title>$csslink
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:$Config{perladmin}" />
 </head>
 
@@ -524,13 +526,13 @@ END_OF_HEAD
 		} elsif (/^=over\s*(.*)/) {		# =over N
 		    process_over();
 		} elsif (/^=back/) {		# =back
-		    process_back();
+		    process_back($need_dd);
 		} elsif (/^=for\s+(\S+)\s*(.*)/si) {# =for
 		    process_for($1,$2);
 		} else {
 		    /^=(\S*)\s*/;
 		    warn "$0: $Podfile: unknown pod directive '$1' in "
-		       . "paragraph $Paragraph.  ignoring.\n";
+		       . "paragraph $Paragraph.  ignoring.\n" unless $Quiet;
 		}
 	    }
 	    $Top = 0;
@@ -571,11 +573,9 @@ END_OF_HEAD
 		## end of experimental
 
 		if( $after_item ){
-		    print HTML "$text\n";
 		    $After_Lpar = 1;
-		} else {
-		    print HTML "<p>$text</p>\n";
 		}
+		print HTML "<p>$text</p>\n";
 	    }
 	    print HTML "</dd>\n" if $need_dd;
 	    $after_item = 0;
@@ -637,7 +637,7 @@ Usage:  $0 --help --htmlroot=<name> --infile=<name> --outfile=<name>
                    pods (empty by default).
   --podroot      - filesystem base directory from which all relative paths
                    in podpath stem (default is .).
-  --[no]quiet    - supress some benign warning messages (default is off).
+  --[no]quiet    - suppress some benign warning messages (default is off).
   --[no]recurse  - recurse on those subdirectories listed in podpath
                    (default behaviour).
   --title        - title that will appear in resulting html file.
@@ -889,7 +889,7 @@ sub scan_podpath {
 
 	    scan_items( \%Items, "$pod", @poddata);
 	} else {
-	    warn "$0: shouldn't be here (line ".__LINE__."\n";
+	    warn "$0: shouldn't be here (line ".__LINE__."\n" unless $Quiet;
 	}
     }
     @poddata = ();	# clean-up a bit
@@ -959,6 +959,19 @@ sub scan_dir {
 	    $Pages{$_}  = "" unless defined $Pages{$_};
 	    $Pages{$_} .= "$dir/$_.pm:";
 	    push(@pods, "$dir/$_.pm");
+	} elsif (-T "$dir/$_") {			    # script(?)
+	    local *F;
+	    if (open(F, "$dir/$_")) {
+		my $line;
+		while (defined($line = <F>)) {
+		    if ($line =~ /^=(?:pod|head1)/) {
+			$Pages{$_}  = "" unless defined $Pages{$_};
+			$Pages{$_} .= "$dir/$_.pod:";
+			last;
+		    }
+		}
+		close(F);
+	    }
 	}
     }
     closedir(DIR);
@@ -1065,7 +1078,7 @@ sub process_head {
     my $level = $1;
 
     if( $Listlevel ){
-	warn "$0: $Podfile: unterminated list at =head in paragraph $Paragraph.  ignoring.\n";
+	warn "$0: $Podfile: unterminated list at =head in paragraph $Paragraph.  ignoring.\n" unless $Quiet;
         while( $Listlevel ){
             process_back();
         }
@@ -1107,7 +1120,7 @@ sub emit_item_tag($$$){
         $name = anchorify($name);
 	print HTML qq{<a name="$name">}, process_text( \$otext ), '</a>';
     }
-    print HTML "</strong><br />\n";
+    print HTML "</strong>\n";
     undef( $EmittedItem );
 }
 
@@ -1133,13 +1146,13 @@ sub process_item {
     # bad!  but, the proper thing to do seems to be to just assume
     # they did do an =over.  so warn them once and then continue.
     if( $Listlevel == 0 ){
-	warn "$0: $Podfile: unexpected =item directive in paragraph $Paragraph.  ignoring.\n";
+	warn "$0: $Podfile: unexpected =item directive in paragraph $Paragraph.  ignoring.\n" unless $Quiet;
 	process_over();
     }
 
     # formatting: insert a paragraph if preceding item has >1 paragraph
     if( $After_Lpar ){
-	print HTML "<p></p>\n";
+	print HTML $need_dd ? "</dd>\n" : "</li>\n" if $After_Lpar;
 	$After_Lpar = 0;
     }
 
@@ -1172,7 +1185,6 @@ sub process_item {
         }
         $need_dd = 1;
     }
-    print HTML "</$emitted>" if $emitted;
     print HTML "\n";
     return $need_dd;
 }
@@ -1191,8 +1203,9 @@ sub process_over {
 # process_back - process a pod back tag and convert it to HTML format.
 #
 sub process_back {
+    my $need_dd = shift;
     if( $Listlevel == 0 ){
-	warn "$0: $Podfile: unexpected =back directive in paragraph $Paragraph.  ignoring.\n";
+	warn "$0: $Podfile: unexpected =back directive in paragraph $Paragraph.  ignoring.\n" unless $Quiet;
 	return;
     }
 
@@ -1201,7 +1214,7 @@ sub process_back {
     # $Listend[$Listlevel] may have never been initialized.
     $Listlevel--;
     if( defined $Listend[$Listlevel] ){
-	print HTML '<p></p>' if $After_Lpar;
+	print HTML $need_dd ? "</dd>\n" : "</li>\n" if $After_Lpar;
 	print HTML $Listend[$Listlevel];
         print HTML "\n";
         pop( @Listend );
@@ -1395,7 +1408,7 @@ sub inIS_text($){
 sub process_puretext {
     my($text, $quote, $notinIS) = @_;
 
-    ## Guessing at func() or [$@%&]*var references in plain text is destined
+    ## Guessing at func() or [\$\@%&]*var references in plain text is destined
     ## to produce some strange looking ref's. uncomment to disable:
     ## $notinIS = 0;
 
@@ -1621,7 +1634,7 @@ sub process_text1($$;$$){
 
             # warning; show some text.
             $linktext = $opar unless defined $linktext;
-            warn "$0: $Podfile: cannot resolve L<$opar> in paragraph $Paragraph.\n";
+            warn "$0: $Podfile: cannot resolve L<$opar> in paragraph $Paragraph.\n" unless $Quiet;
         }
 
         # now we have a URL or just plain code
@@ -1644,7 +1657,7 @@ sub process_text1($$;$$){
     } elsif( $func eq 'Z' ){
 	# Z<> - empty
 	warn "$0: $Podfile: invalid X<> in paragraph $Paragraph.\n"
-	    unless $$rstr =~ s/^>//;
+	    unless $$rstr =~ s/^>// or $Quiet;
 
     } else {
         my $term = pattern $closing;
@@ -1662,7 +1675,7 @@ sub process_text1($$;$$){
 	if( $lev == 1 ){
 	    $res .= pure_text( $$rstr );
 	} else {
-	    warn "$0: $Podfile: undelimited $func<> in paragraph $Paragraph.\n";
+	    warn "$0: $Podfile: undelimited $func<> in paragraph $Paragraph.\n" unless $Quiet;
 	}
     }
     return $res;
@@ -1686,7 +1699,7 @@ sub go_ahead($$$){
 	}
 	$res .= $2;
     }
-    warn "$0: $Podfile: undelimited $func<> in paragraph $Paragraph.\n";
+    warn "$0: $Podfile: undelimited $func<> in paragraph $Paragraph.\n" unless $Quiet;
     return $res;
 }
 
@@ -1883,7 +1896,7 @@ sub coderef($$){
     my( $url );
 
     my $fid = fragment_id( $item );
-    if( defined( $page ) ){
+    if( defined( $page ) && $page ne "" ){
 	# we have been given a $page...
 	$page =~ s{::}{/}g;
 
@@ -2059,7 +2072,7 @@ sub fragment_id {
 	return $1 if $text =~ /->\s*(\w+)\s*\(?/;
 
 	# a variable name?
-	return $1 if $text =~ /^([$@%*]\S+)/;
+	return $1 if $text =~ /^([\$\@%*]\S+)/;
 
 	# some pattern matching operator?
 	return $1 if $text =~ m|^(\w+/).*/\w*$|;
@@ -2069,7 +2082,7 @@ sub fragment_id {
 
 	# honour the perlfunc manpage: func [PAR[,[ ]PAR]...]
 	# and some funnies with ... Module ...
-	return $1 if $text =~ m{^([a-z\d]+)(\s+[A-Z\d,/& ]+)?$};
+	return $1 if $text =~ m{^([a-z\d_]+)(\s+[A-Z\d,/& ]+)?$};
 	return $1 if $text =~ m{^([a-z\d]+)\s+Module(\s+[A-Z\d,/& ]+)?$};
 
 	# text? normalize!

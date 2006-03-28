@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.69 2005/01/15 21:30:17 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.70 2006/03/28 19:22:56 millert Exp $
 #
 # Build wrapper for Perl 5.8.6
 #
@@ -71,6 +71,8 @@ MANSRCALL=
     perl584delta 1		pod/perl584delta.pod \
     perl585delta 1		pod/perl585delta.pod \
     perl586delta 1		pod/perl586delta.pod \
+    perl587delta 1		pod/perl587delta.pod \
+    perl588delta 1		pod/perl588delta.pod \
     perlapi 1			pod/perlapi.pod \
     perlapio 1			pod/perlapio.pod \
     perlartistic 1		pod/perlartistic.pod \
@@ -107,6 +109,7 @@ MANSRCALL=
     perlfork 1			pod/perlfork.pod \
     perlform 1			pod/perlform.pod \
     perlfunc 1			pod/perlfunc.pod \
+    perlglossary 1		pod/perlglossary.pod \
     perlgpl 1			pod/perlgpl.pod \
     perlguts 1			pod/perlguts.pod \
     perlhack 1			pod/perlhack.pod \
@@ -229,6 +232,7 @@ MANSRCALL=
     Devel::SelfStubber 3p	lib/Devel/SelfStubber.pm \
     Digest 3p			lib/Digest.pm \
     Digest::base 3p		lib/Digest/base.pm \
+    Digest::file 3p		lib/Digest/file.pm \
     Digest::MD5 3p		ext/Digest/MD5/MD5.pm \
     DirHandle 3p		lib/DirHandle.pm \
     Dumpvalue 3p		lib/Dumpvalue.pm \
@@ -264,11 +268,15 @@ MANSRCALL=
     ExtUtils::Command 3p	lib/ExtUtils/Command.pm \
     ExtUtils::Command::MM 3p	lib/ExtUtils/Command/MM.pm \
     ExtUtils::Constant 3p	lib/ExtUtils/Constant.pm \
+    ExtUtils::Constant::Base 3p	lib/ExtUtils/Constant/Base.pm \
+    ExtUtils::Constant::Utils 3p	lib/ExtUtils/Constant/Utils.pm \
+    ExtUtils::Constant::XS 3p	lib/ExtUtils/Constant/XS.pm \
     ExtUtils::Embed 3p		lib/ExtUtils/Embed.pm \
     ExtUtils::Install 3p	lib/ExtUtils/Install.pm \
     ExtUtils::Installed 3p	lib/ExtUtils/Installed.pm \
     ExtUtils::Liblist 3p	lib/ExtUtils/Liblist.pm \
     ExtUtils::MM 3p		lib/ExtUtils/MM.pm \
+    ExtUtils::MM_AIX 3p		lib/ExtUtils/MM_AIX.pm \
     ExtUtils::MM_Any 3p		lib/ExtUtils/MM_Any.pm \
     ExtUtils::MM_BeOS 3p	lib/ExtUtils/MM_BeOS.pm \
     ExtUtils::MM_Cygwin 3p	lib/ExtUtils/MM_Cygwin.pm \
@@ -276,13 +284,16 @@ MANSRCALL=
     ExtUtils::MM_MacOS 3p	lib/ExtUtils/MM_MacOS.pm \
     ExtUtils::MM_NW5 3p		lib/ExtUtils/MM_NW5.pm \
     ExtUtils::MM_OS2 3p		lib/ExtUtils/MM_OS2.pm \
+    ExtUtils::MM_QNX 3p		lib/ExtUtils/MM_QNX.pm \
     ExtUtils::MM_UWIN 3p	lib/ExtUtils/MM_UWIN.pm \
     ExtUtils::MM_Unix 3p	lib/ExtUtils/MM_Unix.pm \
     ExtUtils::MM_VMS 3p		lib/ExtUtils/MM_VMS.pm \
+    ExtUtils::MM_VOS 3p		lib/ExtUtils/MM_VOS.pm \
     ExtUtils::MM_Win32 3p	lib/ExtUtils/MM_Win32.pm \
     ExtUtils::MM_Win95 3p	lib/ExtUtils/MM_Win95.pm \
     ExtUtils::MY 3p		lib/ExtUtils/MY.pm \
     ExtUtils::MakeMaker 3p	lib/ExtUtils/MakeMaker.pm \
+    ExtUtils::MakeMaker::Config 3p	lib/ExtUtils/MakeMaker/Config.pm \
     ExtUtils::MakeMaker::FAQ 3p	lib/ExtUtils/MakeMaker/FAQ.pod \
     ExtUtils::MakeMaker::Tutorial 3p	lib/ExtUtils/MakeMaker/Tutorial.pod \
     ExtUtils::MakeMaker::bytes 3p	lib/ExtUtils/MakeMaker/bytes.pm \
@@ -438,10 +449,15 @@ MANSRCALL=
     Term::ReadLine 3p		lib/Term/ReadLine.pm \
     Test 3p			lib/Test.pm \
     Test::Builder 3p		lib/Test/Builder.pm \
+    Test::Builder::Module 3p	lib/Test/Builder/Module.pm \
+    Test::Builder::Tester 3p	lib/Test/Builder/Tester.pm \
+    Test::Builder::Tester::Color 3p	lib/Test/Builder/Tester/Color.pm \
     Test::Harness 3p		lib/Test/Harness.pm \
     Test::Harness::Assert 3p	lib/Test/Harness/Assert.pm \
     Test::Harness::Iterator 3p	lib/Test/Harness/Iterator.pm \
+    Test::Harness::Point 3p	lib/Test/Harness/Point.pm \
     Test::Harness::Straps 3p	lib/Test/Harness/Straps.pm \
+    Test::Harness::TAP 3p	lib/Test/Harness/TAP.pod \
     Test::More 3p		lib/Test/More.pm \
     Test::Simple 3p		lib/Test/Simple.pm \
     Test::Tutorial 3p		lib/Test/Tutorial.pod \
@@ -508,6 +524,7 @@ MANSRCALL=
     threads::shared 3p		ext/threads/shared/shared.pm \
     utf8 3p			lib/utf8.pm \
     vars 3p			lib/vars.pm \
+    vmsish 3p			lib/vmsish.pm \
     warnings 3p			lib/warnings.pm \
     warnings::register 3p	lib/warnings/register.pm
 .  ifndef NOMAN

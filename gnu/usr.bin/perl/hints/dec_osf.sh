@@ -84,7 +84,7 @@ gcc)	if [ "X$gccversion" = "X" ]; then
 ***
 *** Therefore, I strongly suggest upgrading your gcc.  (Why don't you use
 *** the vendor cc is also a good question.  It comes with the operating
-*** system and produces good code.)
+*** system, produces good code, and is very ANSI C fastidious.)
 
 Cannot continue, aborting.
 
@@ -105,11 +105,16 @@ Since you explicitly chose gcc, I assume that you know what are doing.
 
 EOF
 	fi
+	# -ansi is fine for gcc in Tru64 (-ansi is not universally so).
+	_ccflags_strict_ansi="-ansi"
         ;;
-*)	# compile something small: taint.c is fine for this.
+*)	# compile something.
+	cat >try.c <<EOF
+int main() { return 0; }
+EOF
 	ccversion=`cc -V | awk '/(Compaq|DEC) C/ {print $3}' | grep '^V'`
     	# the main point is the '-v' flag of 'cc'.
-       	case "`cc -v -I. -c taint.c -o taint$$.o 2>&1`" in
+       	case "`cc -v -c try.c 2>&1`" in
 	*/gemc_cc*)	# we have the new DEC GEM CC
 			_DEC_cc_style=new
 			;;
@@ -117,18 +122,44 @@ EOF
 			_DEC_cc_style=old
 			;;
 	esac
-	# cleanup
-	rm -f taint$$.o
+	# We need to figure out whether -c99 is a valid flag to use.
+	# If it is, we can use it for being nauseatingly C99 ANSI --
+	# but even then the lddlflags needs to stay -std1.
+	# If it is not, we must use -std1 for both flags.
+	#
+       	case "`cc -c99 try.c 2>&1`" in
+	*"-c99: Unknown flag"*)
+		_ccflags_strict_ansi="-std1"
+		;;
+	*)	# However, use the -c99 only if compiling for
+		# -DPERL_MEM_LOG, where the C99 feature __func__
+		# is useful to have.  Otherwise use the good old
+		# -std1 so that we stay C89 strict, which the goal
+		# of the Perl C code base (no //, no code between
+		# declarations, etc).  Moreover, the Tru64 cc is
+		# not fully C99, and most probably never will be.
+		#
+		# The -DPERL_MEM_LOG can be either in ccflags
+		# (if using an old config.sh) or in the command line
+		# (which has been stowed away in UU/cmdline.opt).
+		#
+		case "$ccflags `cat UU/cmdline.opt`" in
+		*-DPERL_MEM_LOG*)	_ccflags_strict_ansi="-c99"  ;;
+		*)			_ccflags_strict_ansi="-std1" ;;
+		esac
+		;;
+	esac
+	_lddlflags_strict_ansi="-std1"
+	# -no_ansi_alias because Perl code is not that strict
+	# (also gcc uses by default -fno-strict-aliasing).
+	_ccflags_strict_ansi="$_ccflags_strict_ansi -no_ansi_alias"
+	# Cleanup.
+	rm -f try.c try.o
 	;;
 esac
 
-# be nauseatingly ANSI
-case "$isgcc" in
-gcc)	ccflags="$ccflags -ansi"
-	;;
-*)	ccflags="$ccflags -std"
-	;;
-esac
+# Be nauseatingly ANSI
+ccflags="$ccflags $_ccflags_strict_ansi"
 
 # for gcc the Configure knows about the -fpic:
 # position-independent code for dynamic loading
@@ -181,6 +212,17 @@ kernel parameter: see man sysconfigtab, and man sys_attrs_proc.
 EOM
 toke_cflags='optimize=-O2'
     fi
+;;
+esac
+
+# The patch 23787
+# http://public.activestate.com/cgi-bin/perlbrowse?patch=23787
+# broke things for gcc (at least gcc 3.3) so that many of the pack()
+# checksum tests for formats L, j, J, especially when combined
+# with the < and > specifiers, started to fail if compiled with plain -O3.
+case "$isgcc" in
+gcc)
+pp_pack_cflags='optimize="-O3 -fno-cse-skip-blocks"'
 ;;
 esac
 
@@ -248,7 +290,7 @@ case "`uname -r`" in
 		  esac
 		  # -msym: If using a sufficiently recent /sbin/loader,
 		  # keep the module symbols with the modules.
-                  lddlflags="$lddlflags -msym -std"
+                  lddlflags="$lddlflags -msym $_lddlflags_strict_ansi"
               fi
 		;;
 esac
@@ -385,7 +427,7 @@ EOF
 		exit 1
 		;;
 	*)
-		# Test whether libc's been fixed yet.
+		# Test whether libc's been fixed yet for long doubles.
 		cat >try.c <<\TRY
 #include <stdio.h>
 int main(int argc, char **argv)
@@ -402,7 +444,7 @@ TRY
 		# Don't bother trying to work with Configure's idea of
 		# cc and the various flags.  This might not work as-is
 		# with gcc -- but we're testing libc, not the compiler.
-		if cc -o try -std try.c && ./try
+		if cc -o try $_ccflags_strict_ansi try.c && ./try
 		then
 			: ok
 		else
@@ -584,3 +626,4 @@ unset _DEC_cc_style
 #	* Set -Olimit to 3200 because perl_yylex.c got too big
 #	  for the optimizer.
 #
+

@@ -13,7 +13,7 @@ package CGI::Cookie;
 # wish, but if you redistribute a modified version, please attach a note
 # listing the modifications you have made.
 
-$CGI::Cookie::VERSION='1.24';
+$CGI::Cookie::VERSION='1.26';
 
 use CGI::Util qw(rearrange unescape escape);
 use overload '""' => \&as_string,
@@ -23,15 +23,13 @@ use overload '""' => \&as_string,
 # Turn on special checking for Doug MacEachern's modperl
 my $MOD_PERL = 0;
 if (exists $ENV{MOD_PERL}) {
-  eval "require mod_perl";
-  if (defined $mod_perl::VERSION) {
-    if ($mod_perl::VERSION >= 1.99) {
+  if (exists $ENV{MOD_PERL_API_VERSION} && $ENV{MOD_PERL_API_VERSION} == 2) {
       $MOD_PERL = 2;
-      require Apache::RequestUtil;
-    } else {
-      $MOD_PERL = 1;
-      require Apache;
-    }
+      require Apache2::RequestUtil;
+      require APR::Table;
+  } else {
+    $MOD_PERL = 1;
+    require Apache;
   }
 }
 
@@ -71,7 +69,9 @@ sub fetch {
 
 sub get_raw_cookie {
   my $r = shift;
-  $r ||= eval { Apache->request() } if $MOD_PERL;
+  $r ||= eval { $MOD_PERL == 2                    ? 
+                  Apache2::RequestUtil->request() :
+                  Apache->request } if $MOD_PERL;
   if ($r) {
     $raw_cookie = $r->headers_in->{'Cookie'};
   } else {
@@ -159,7 +159,7 @@ sub as_string {
     push(@constant_values,"secure") if $secure = $self->secure;
 
     my($key) = escape($self->name);
-    my($cookie) = join("=",$key,join("&",map escape($_),$self->value));
+    my($cookie) = join("=",($key||''),join("&",map escape($_||''),$self->value));
     return join("; ",$cookie,@constant_values);
 }
 
@@ -199,7 +199,7 @@ sub value {
 sub domain {
     my $self = shift;
     my $domain = shift;
-    $self->{'domain'} = $domain if defined $domain;
+    $self->{'domain'} = lc $domain if defined $domain;
     return $self->{'domain'};
 }
 

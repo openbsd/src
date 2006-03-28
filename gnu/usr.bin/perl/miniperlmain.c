@@ -1,7 +1,7 @@
 /*    miniperlmain.c
  *
- *    Copyright (C) 1994, 1995, 1996, 1997, 1999, 2000, 2001, 2002,
- *    by Larry Wall and others
+ *    Copyright (C) 1994, 1995, 1996, 1997, 1999, 2000, 2001, 2002, 2003,
+ *    2004, 2005 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -48,6 +48,7 @@ int
 main(int argc, char **argv, char **env)
 {
     int exitstatus;
+    (void)env;
 #ifndef PERL_USE_SAFE_PUTENV
     PL_use_safe_putenv = 0;
 #endif /* PERL_USE_SAFE_PUTENV */
@@ -116,3 +117,13 @@ xs_init(pTHX)
 {
     dXSUB_SYS;
 }
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ *
+ * ex: set ts=8 sts=4 sw=4 noet:
+ */

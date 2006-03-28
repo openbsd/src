@@ -80,7 +80,7 @@ exec_in_REXX_with(pTHX_ char *cmd, int c, char **handlerNames, RexxFunctionHandl
     incompartment++;
 
     if (c)
-	Newz(728, subs, c, char);
+	Newxz(subs, c, char);
     while (n--) {
 	rc = pRexxRegisterFunctionExe(handlerNames[n], handlers[n]);
 	if (rc == RXFUNC_DEFINED)
@@ -90,7 +90,7 @@ exec_in_REXX_with(pTHX_ char *cmd, int c, char **handlerNames, RexxFunctionHandl
     s = cmd;
     while (*s) {
 	if (*s == '\n') {		/* Is not preceeded by \r! */
-	    New(728, cmd, 2*strlen(cmd)+1, char);
+	    Newx(cmd, 2*strlen(cmd)+1, char);
 	    s = ocmd;
 	    t = cmd;
 	    while (*s) {
@@ -553,8 +553,8 @@ _REXX_eval_with(cmd,...)
 
 	if ((items % 2) == 0)
 	    Perl_croak(aTHX_ "Name/values should come in pairs in REXX_eval_with()");
-	New(730, names, n, char*);
-	New(730, cvs, n, SV*);
+	Newx(names, n, char*);
+	Newx(cvs, n, SV*);
 	/* XXX Unfinished... */
 	RETVAL = Nullsv;
 	Safefree(names);

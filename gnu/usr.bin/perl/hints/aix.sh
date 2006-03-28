@@ -113,7 +113,7 @@ case "$cc" in
 	    fi
 	;;
 
-    *)  ccversion=`lslpp -L | grep 'C for AIX Compiler$' | grep -v '\.msg\.[A-Za-z_]*\.' | head -1 | awk '{print $1,$2}'`
+    *)  ccversion=`lslpp -ql -Ou vac.C | grep -v '^Path' | head -1 | awk '{print $1,$2}'`
 	case "$ccversion" in
 	    '') ccversion=`lslpp -L | grep 'IBM C and C++ Compilers LUM$'` ;;
 
@@ -320,8 +320,8 @@ libswanted_uselargefiles="`getconf XBS5_ILP32_OFFBIG_LIBS 2>/dev/null|sed -e 's@
 		lddlflags="`echo ' '$lddlflags | sed -e 's@ -b@ -Wl,-b@g'`"
 		lddlflags="`echo ' '$lddlflags | sed -e 's@ -G @ -Wl,-G @g'`"
 		case "$use64bitall" in
-		    $define|true|[yY]*) ld="gcc -maix64"	;;
-		    *)			ld="gcc"		;;
+		    $define|true|[yY]*) ld="$cc -maix64"	;;
+		    *)			ld="$cc"		;;
 		    esac
 		echo >&4 "(using ccflags   $ccflags)"
 		echo >&4 "(using ldflags   $ldflags)"

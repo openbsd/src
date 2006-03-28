@@ -65,7 +65,7 @@ sub writemain{
     my ($tail1,$tail2) = ( $tail =~ /\A(.*\n)(\s*\}.*)\Z/s );
     print $tail1;
 
-    print "\tchar *file = __FILE__;\n";
+    print "\tconst char file[] = __FILE__;\n";
     print "\tdXSUB_SYS;\n" if $] > 5.002;
 
     foreach $_ (@exts){

@@ -10,13 +10,14 @@ package Math::Trig;
 use 5.006;
 use strict;
 
+use Math::Complex 1.35;
 use Math::Complex qw(:trig);
 
 our($VERSION, $PACKAGE, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 
 @ISA = qw(Exporter);
 
-$VERSION = 1.02;
+$VERSION = 1.03;
 
 my @angcnv = qw(rad2deg rad2grad
 		deg2rad deg2grad
@@ -32,12 +33,30 @@ my @rdlcnv = qw(cartesian_to_cylindrical
 		spherical_to_cartesian
 		spherical_to_cylindrical);
 
-@EXPORT_OK = (@rdlcnv, 'great_circle_distance', 'great_circle_direction');
+my @greatcircle = qw(
+		     great_circle_distance
+		     great_circle_direction
+		     great_circle_bearing
+		     great_circle_waypoint
+		     great_circle_midpoint
+		     great_circle_destination
+		    );
 
-%EXPORT_TAGS = ('radial' => [ @rdlcnv ]);
+my @pi = qw(pi2 pip2 pip4);
+
+@EXPORT_OK = (@rdlcnv, @greatcircle, @pi);
+
+# See e.g. the following pages:
+# http://www.movable-type.co.uk/scripts/LatLong.html
+# http://williams.best.vwh.net/avform.htm
+
+%EXPORT_TAGS = ('radial' => [ @rdlcnv ],
+	        'great_circle' => [ @greatcircle ],
+	        'pi'     => [ @pi ]);
 
 sub pi2  () { 2 * pi }
 sub pip2 () { pi / 2 }
+sub pip4 () { pi / 4 }
 
 sub DR  () { pi2/360 }
 sub RD  () { 360/pi2 }
@@ -148,6 +167,57 @@ sub great_circle_direction {
     return rad2rad($direction);
 }
 
+*great_circle_bearing = \&great_circle_direction;
+
+sub great_circle_waypoint {
+    my ( $theta0, $phi0, $theta1, $phi1, $point ) = @_;
+
+    $point = 0.5 unless defined $point;
+
+    my $d = great_circle_distance( $theta0, $phi0, $theta1, $phi1 );
+
+    return undef if $d == pi;
+
+    my $sd = sin($d);
+
+    return ($theta0, $phi0) if $sd == 0;
+
+    my $A = sin((1 - $point) * $d) / $sd;
+    my $B = sin(     $point  * $d) / $sd;
+
+    my $lat0 = pip2 - $phi0;
+    my $lat1 = pip2 - $phi1;
+
+    my $x = $A * cos($lat0) * cos($theta0) + $B * cos($lat1) * cos($theta1);
+    my $y = $A * cos($lat0) * sin($theta0) + $B * cos($lat1) * sin($theta1);
+    my $z = $A * sin($lat0)                + $B * sin($lat1);
+
+    my $theta = atan2($y, $x);
+    my $phi   = atan2($z, sqrt($x*$x + $y*$y));
+    
+    return ($theta, $phi);
+}
+
+sub great_circle_midpoint {
+    great_circle_waypoint(@_[0..3], 0.5);
+}
+
+sub great_circle_destination {
+    my ( $theta0, $phi0, $dir0, $dst ) = @_;
+
+    my $lat0 = pip2 - $phi0;
+
+    my $phi1   = asin(sin($lat0)*cos($dst)+cos($lat0)*sin($dst)*cos($dir0));
+    my $theta1 = $theta0 + atan2(sin($dir0)*sin($dst)*cos($lat0),
+				 cos($dst)-sin($lat0)*sin($phi1));
+
+    my $dir1 = great_circle_bearing($theta1, $phi1, $theta0, $phi0) + pi;
+
+    $dir1 -= pi2 if $dir1 > pi2;
+
+    return ($theta1, $phi1, $dir1);
+}
+
 1;
 
 __END__
@@ -169,12 +239,21 @@ Math::Trig - trigonometric functions
 
 	$rad = deg2rad(120);
 
+        # Import constants pi2, pip2, pip4 (2*pi, pi/2, pi/4).
+	use Math::Trig ':pi';
+
+        # Import the conversions between cartesian/spherical/cylindrical.
+	use Math::Trig ':radial';
+
+        # Import the great circle formulas.
+	use Math::Trig ':great_circle';
+
 =head1 DESCRIPTION
 
 C<Math::Trig> defines many trigonometric functions not defined by the
 core Perl which defines only the C<sin()> and C<cos()>.  The constant
 B<pi> is also defined as are a few convenience functions for angle
-conversions.
+conversions, and I<great circle formulas> for spherical movement.
 
 =head1 TRIGONOMETRIC FUNCTIONS
 
@@ -265,7 +344,7 @@ C<asech>, C<acsch>, the argument cannot be C<0> (zero).  For the
 C<atanh>, C<acoth>, the argument cannot be C<1> (one).  For the
 C<atanh>, C<acoth>, the argument cannot be C<-1> (minus one).  For the
 C<tan>, C<sec>, C<tanh>, C<sech>, the argument cannot be I<pi/2 + k *
-pi>, where I<k> is any integer.
+pi>, where I<k> is any integer.  atan2(0, 0) is undefined.
 
 =head2 SIMPLE (REAL) ARGUMENTS, COMPLEX RESULTS
 
@@ -338,8 +417,7 @@ B<All angles are in radians>.
 
 =head2 COORDINATE SYSTEMS
 
-B<Cartesian> coordinates are the usual rectangular I<(x, y,
-z)>-coordinates.
+B<Cartesian> coordinates are the usual rectangular I<(x, y, z)>-coordinates.
 
 Spherical coordinates, I<(rho, theta, pi)>, are three-dimensional
 coordinates which define a point in three-dimensional space.  They are
@@ -347,8 +425,8 @@ based on a sphere surface.  The radius of the sphere is B<rho>, also
 known as the I<radial> coordinate.  The angle in the I<xy>-plane
 (around the I<z>-axis) is B<theta>, also known as the I<azimuthal>
 coordinate.  The angle from the I<z>-axis is B<phi>, also known as the
-I<polar> coordinate.  The `North Pole' is therefore I<0, 0, rho>, and
-the `Bay of Guinea' (think of the missing big chunk of Africa) I<0,
+I<polar> coordinate.  The North Pole is therefore I<0, 0, rho>, and
+the Gulf of Guinea (think of the missing big chunk of Africa) I<0,
 pi/2, rho>.  In geographical terms I<phi> is latitude (northward
 positive, southward negative) and I<theta> is longitude (eastward
 positive, westward negative).
@@ -430,15 +508,55 @@ degrees).
   $distance = great_circle_distance($lon0, pi/2 - $lat0,
                                     $lon1, pi/2 - $lat1, $rho);
 
-The direction you must follow the great circle can be computed by the
-great_circle_direction() function:
+The direction you must follow the great circle (also known as I<bearing>)
+can be computed by the great_circle_direction() function:
 
   use Math::Trig 'great_circle_direction';
 
   $direction = great_circle_direction($theta0, $phi0, $theta1, $phi1);
 
+(Alias 'great_circle_bearing' is also available.)
 The result is in radians, zero indicating straight north, pi or -pi
 straight south, pi/2 straight west, and -pi/2 straight east.
+
+You can inversely compute the destination if you know the
+starting point, direction, and distance:
+
+  use Math::Trig 'great_circle_destination';
+
+  # thetad and phid are the destination coordinates,
+  # dird is the final direction at the destination.
+
+  ($thetad, $phid, $dird) =
+    great_circle_destination($theta, $phi, $direction, $distance);
+
+or the midpoint if you know the end points:
+
+  use Math::Trig 'great_circle_midpoint';
+
+  ($thetam, $phim) =
+    great_circle_midpoint($theta0, $phi0, $theta1, $phi1);
+
+The great_circle_midpoint() is just a special case of
+
+  use Math::Trig 'great_circle_waypoint';
+
+  ($thetai, $phii) =
+    great_circle_waypoint($theta0, $phi0, $theta1, $phi1, $way);
+
+Where the $way is a value from zero ($theta0, $phi0) to one ($theta1,
+$phi1).  Note that antipodal points (where their distance is I<pi>
+radians) do not have waypoints between them (they would have an an
+"equator" between them), and therefore C<undef> is returned for
+antipodal points.  If the points are the same and the distance
+therefore zero and all waypoints therefore identical, the first point
+(either point) is returned.
+
+The thetas, phis, direction, and distance in the above are all in radians.
+
+You can import all the great circle formulas by
+
+  use Math::Trig ':great_circle';
 
 Notice that the resulting directions might be somewhat surprising if
 you are looking at a flat worldmap: in such map projections the great
@@ -454,31 +572,31 @@ To calculate the distance between London (51.3N 0.5W) and Tokyo
         use Math::Trig qw(great_circle_distance deg2rad);
 
         # Notice the 90 - latitude: phi zero is at the North Pole.
-	@L = (deg2rad(-0.5), deg2rad(90 - 51.3));
-        @T = (deg2rad(139.8),deg2rad(90 - 35.7));
+	sub NESW { deg2rad($_[0]), deg2rad(90 - $_[1]) }
+	my @L = NESW( -0.5, 51.3);
+        my @T = NESW(139.8, 35.7);
+        my $km = great_circle_distance(@L, @T, 6378); # About 9600 km.
 
-        $km = great_circle_distance(@L, @T, 6378);
-
-The direction you would have to go from London to Tokyo
+The direction you would have to go from London to Tokyo (in radians,
+straight north being zero, straight east being pi/2).
 
         use Math::Trig qw(great_circle_direction);
 
-        $rad = great_circle_direction(@L, @T);
+        my $rad = great_circle_direction(@L, @T); # About 0.547 or 0.174 pi.
+
+The midpoint between London and Tokyo being
+
+        use Math::Trig qw(great_circle_midpoint);
+
+        my @M = great_circle_midpoint(@L, @T);
+
+or about 68.11N 24.74E, in the Finnish Lapland.
 
 =head2 CAVEAT FOR GREAT CIRCLE FORMULAS
 
 The answers may be off by few percentages because of the irregular
-(slightly aspherical) form of the Earth.  The formula used for
-grear circle distances
-
-	lat0 = 90 degrees - phi0
-	lat1 = 90 degrees - phi1
-	d = R * arccos(cos(lat0) * cos(lat1) * cos(lon1 - lon01) +
-                       sin(lat0) * sin(lat1))
-
-is also somewhat unreliable for small distances (for locations
-separated less than about five degrees) because it uses arc cosine
-which is rather ill-conditioned for values close to zero.
+(slightly aspherical) form of the Earth.  The errors are at worst
+about 0.55%, but generally below 0.3%.
 
 =head1 BUGS
 
@@ -491,6 +609,8 @@ C<Math::Complex> and thus go quite near complex numbers while doing
 the computations even when the arguments are not. This, however,
 cannot be completely avoided if we want things like C<asin(2)> to give
 an answer instead of giving a fatal runtime error.
+
+Do not attempt navigation using these formulas.
 
 =head1 AUTHORS
 

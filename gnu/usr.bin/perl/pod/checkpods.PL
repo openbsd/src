@@ -66,7 +66,7 @@ $exit = $last_unempty = 0;
 while (<>) {
     s/(\012|\015\012|\015)$//;
     if (/^=(\S+)/ && $directive{$1} && $last_unempty) {
-	printf "%s: line %5d, no blank line preceeding directive =%s\n",
+	printf "%s: line %5d, no blank line preceding directive =%s\n",
 		$ARGV, $., $1;
 	$exit = 1;
     }

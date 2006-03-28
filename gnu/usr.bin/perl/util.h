@@ -16,7 +16,7 @@
 		 && (isALNUM((f)[1]) || strchr("$-_]>",(f)[1])))))
 
 #else		/* !VMS */
-#  ifdef WIN32
+#  if defined(WIN32) || defined(__CYGWIN__)
 #    define PERL_FILE_IS_ABSOLUTE(f) \
 	(*(f) == '/' || *(f) == '\\'		/* UNC/rooted path */	\
 	 || ((f)[0] && (f)[1] == ':'))		/* drive name */

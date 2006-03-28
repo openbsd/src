@@ -1,7 +1,7 @@
 /*    scope.h
  *
  *    Copyright (C) 1993, 1994, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2004, by Larry Wall and others
+ *    2000, 2001, 2002, 2004, 2005 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -198,7 +198,7 @@ Closing bracket on a callback.  See C<ENTER> and L<perlcall>.
  * SSNEWa() works like SSNEW(), but also aligns the data to the specified
  * number of bytes.  MEM_ALIGNBYTES is perhaps the most useful.  The
  * alignment will be preserved therough savestack reallocation *only* if
- * realloc returns data aligned to a size divisible by `align'!
+ * realloc returns data aligned to a size divisible by "align"!
  *
  * SSPTR() converts the index returned by SSNEW/SSNEWa() into a pointer.
  */

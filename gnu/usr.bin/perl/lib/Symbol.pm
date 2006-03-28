@@ -69,13 +69,12 @@ explicitly.
 
 =head1 BUGS
 
-C<Symbol::delete_package> is a bit too powerful. It undefines every symbol
-that lives in the specified package and in its sub-packages. Since perl,
-for performance reasons, does not perform a symbol table lookup each time
-a function is called or a global variable is accessed, some code that has
-already been loaded and that makes use of symbols in package C<Foo> may
-stop working after you delete C<Foo>, even if you reload the C<Foo> module
-afterwards.
+C<Symbol::delete_package> is a bit too powerful. It undefines every symbol that
+lives in the specified package. Since perl, for performance reasons, does not
+perform a symbol table lookup each time a function is called or a global
+variable is accessed, some code that has already been loaded and that makes use
+of symbols in package C<Foo> may stop working after you delete C<Foo>, even if
+you reload the C<Foo> module afterwards.
 
 =cut
 
@@ -86,7 +85,7 @@ require Exporter;
 @EXPORT = qw(gensym ungensym qualify qualify_to_ref);
 @EXPORT_OK = qw(delete_package geniosym);
 
-$VERSION = '1.05';
+$VERSION = '1.06';
 
 my $genpkg = "Symbol::";
 my $genseq = 0;

@@ -103,14 +103,14 @@ sub rearrange {
 	}
     }
 
-    push (@result,make_attributes(\%leftover,1)) if %leftover;
+    push (@result,make_attributes(\%leftover,defined $CGI::Q ? $CGI::Q->{escape} : 1)) if %leftover;
     @result;
 }
 
 sub make_attributes {
     my $attr = shift;
     return () unless $attr && ref($attr) && ref($attr) eq 'HASH';
-    my $escape = shift || 0;
+    my $escape =  shift || 0;
     my(@att);
     foreach (keys %{$attr}) {
 	my($key) = $_;
@@ -141,6 +141,7 @@ sub simple_escape {
 
 sub utf8_chr {
         my $c = shift(@_);
+	return chr($c) if $] >= 5.006;
 
         if ($c < 0x80) {
                 return sprintf("%c", $c);
@@ -180,7 +181,7 @@ sub utf8_chr {
 
 # unescape URL-encoded data
 sub unescape {
-  shift() if @_ > 1 and (ref($_[0]) || (defined $_[1] && $_[0] eq $CGI::DefaultClass));
+  shift() if @_ > 0 and (ref($_[0]) || (defined $_[1] && $_[0] eq $CGI::DefaultClass));
   my $todecode = shift;
   return undef unless defined($todecode);
   $todecode =~ tr/+/ /;       # pluses become spaces

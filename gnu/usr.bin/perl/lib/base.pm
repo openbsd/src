@@ -2,7 +2,7 @@ package base;
 
 use strict 'vars';
 use vars qw($VERSION);
-$VERSION = '2.06';
+$VERSION = '2.07';
 
 # constant.pm is slow
 sub SUCCESS () { 1 }
@@ -78,7 +78,7 @@ sub import {
 	      unless defined ${$base.'::VERSION'};
         }
         else {
-            local $SIG{__DIE__} = 'IGNORE';
+            local $SIG{__DIE__};
             eval "require $base";
             # Only ignore "Can't locate" errors from our eval require.
             # Other fatal errors (syntax etc) must be reported.

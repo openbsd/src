@@ -6,7 +6,7 @@ our ($VERSION, @ISA, @EXPORT);
 require 5.000;
 require Exporter;
 
-$VERSION	= 1.01;
+$VERSION	= 1.02;
 @ISA		= qw(Exporter);
 @EXPORT		= qw(open2);
 
@@ -18,31 +18,31 @@ IPC::Open2, open2 - open a process for both reading and writing
 
     use IPC::Open2;
 
-    $pid = open2(\*RDRFH, \*WTRFH, 'some cmd and args');
+    $pid = open2(\*CHLD_OUT, \*CHLD_IN, 'some cmd and args');
       # or without using the shell
-    $pid = open2(\*RDRFH, \*WTRFH, 'some', 'cmd', 'and', 'args');
+    $pid = open2(\*CHLD_OUT, \*CHLD_IN, 'some', 'cmd', 'and', 'args');
 
     # or with handle autovivification
-    my($rdrfh, $wtrfh);
-    $pid = open2($rdrfh, $wtrfh, 'some cmd and args');
+    my($chld_out, $chld_in);
+    $pid = open2($chld_out, $chld_in, 'some cmd and args');
       # or without using the shell
-    $pid = open2($rdrfh, $wtrfh, 'some', 'cmd', 'and', 'args');
+    $pid = open2($chld_out, $chld_in, 'some', 'cmd', 'and', 'args');
 
 =head1 DESCRIPTION
 
-The open2() function runs the given $cmd and connects $rdrfh for
-reading and $wtrfh for writing.  It's what you think should work 
+The open2() function runs the given $cmd and connects $chld_out for
+reading and $chld_in for writing.  It's what you think should work 
 when you try
 
     $pid = open(HANDLE, "|cmd args|");
 
 The write filehandle will have autoflush turned on.
 
-If $rdrfh is a string (that is, a bareword filehandle rather than a glob
+If $chld_out is a string (that is, a bareword filehandle rather than a glob
 or a reference) and it begins with C<< >& >>, then the child will send output
-directly to that file handle.  If $wtrfh is a string that begins with
-C<< <& >>, then $wtrfh will be closed in the parent, and the child will read
-from it directly.  In both cases, there will be a dup(2) instead of a
+directly to that file handle.  If $chld_in is a string that begins with
+C<< <& >>, then $chld_in will be closed in the parent, and the child will
+read from it directly.  In both cases, there will be a dup(2) instead of a
 pipe(2) made.
 
 If either reader or writer is the null string, this will be replaced

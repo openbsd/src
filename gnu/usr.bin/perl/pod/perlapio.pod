@@ -237,7 +237,7 @@ seeking the handle to the current logical position.
 
 This corresponds to fseek().  Sends buffered write data to the
 underlying file, or discards any buffered read data, then positions
-the file desciptor as specified by B<offset> and B<whence> (sic).
+the file descriptor as specified by B<offset> and B<whence> (sic).
 This is the correct thing to do when switching between read and write
 on the same handle (see issues with PerlIO_flush() above).  Offset is
 of type C<Off_t> which is a perl Configure value which may not be same

@@ -1,13 +1,18 @@
 #!./miniperl -w
+use strict;
+use vars qw(%Config $Config_SH_expanded);
 
-# commonly used names to put first (and hence lookup fastest)
-my %Common = map {($_,$_)}
-             qw(archname osname osvers prefix libs libpth
-                dynamic_ext static_ext dlsrc so
-                cc ccflags cppflags
-                privlibexp archlibexp installprivlib installarchlib
-                sharpbang startsh shsharp
-               );
+my $how_many_common = 22;
+
+# commonly used names to precache (and hence lookup fastest)
+my %Common;
+
+while ($how_many_common--) {
+    $_ = <DATA>;
+    chomp;
+    /^(\S+):\s*(\d+)$/ or die "Malformed line '$_'";
+    $Common{$1} = $1;
+}
 
 # names of things which may need to have slashes changed to double-colons
 my %Extensions = map {($_,$_)}
@@ -15,14 +20,15 @@ my %Extensions = map {($_,$_)}
 
 # libpaths that should be truncated after the first path element
 my %Libpathtrunc = map {($_,$_)}
-                 qw(archlib archlibexp privlib privlibexp sitearch sitearchexp
-		    sitelib sitelibexp);
+		   qw(archlib archlibexp privlib privlibexp sitearch sitearchexp
+		      sitelib sitelibexp);
 
 # allowed opts as well as specifies default and initial values
 my %Allowed_Opts = (
-    'cross'    => '', # --cross=PALTFORM - crosscompiling for PLATFORM
-    'glossary' => 1,  # --no-glossary  - no glossary file inclusion, 
+    'cross'    => '', # --cross=PLATFORM - crosscompiling for PLATFORM
+    'glossary' => 1,  # --no-glossary  - no glossary file inclusion,
                       #                  for compactness
+    'heavy' => '',   # pathname of the Config_heavy.pl file
 );
 
 sub opts {
@@ -47,7 +53,7 @@ sub opts {
 
 my %Opts = opts();
 
-my $Config_PM;
+my ($Config_PM, $Config_heavy);
 my $Glossary = $ARGV[1] || 'Porting/Glossary';
 
 if ($Opts{cross}) {
@@ -59,9 +65,27 @@ if ($Opts{cross}) {
 else {
   $Config_PM = $ARGV[0] || 'lib/Config.pm';
 }
-
+if ($Opts{heavy}) {
+  $Config_heavy = $Opts{heavy};
+}
+else {
+  ($Config_heavy = $Config_PM) =~ s!\.pm$!_heavy.pl!;
+  die "Can't automatically determine name for Config_heavy.pl from '$Config_PM'"
+    if $Config_heavy eq $Config_PM;
+}
 
 open CONFIG, ">$Config_PM" or die "Can't open $Config_PM: $!\n";
+open CONFIG_HEAVY, ">$Config_heavy" or die "Can't open $Config_heavy: $!\n";
+
+print CONFIG_HEAVY <<'ENDOFBEG';
+# This file was created by configpm when Perl was built. Any changes
+# made to this file will be lost the next time perl is built.
+
+package Config;
+use strict;
+# use warnings; Pulls in Carp
+# use vars pulls in Carp
+ENDOFBEG
 
 my $myver = sprintf "v%vd", $^V;
 
@@ -70,19 +94,33 @@ printf CONFIG <<'ENDOFBEG', ($myver) x 3;
 # made to this file will be lost the next time perl is built.
 
 package Config;
-@EXPORT = qw(%%Config);
-@EXPORT_OK = qw(myconfig config_sh config_vars config_re);
+use strict;
+# use warnings; Pulls in Carp
+# use vars pulls in Carp
+@Config::EXPORT = qw(%%Config);
+@Config::EXPORT_OK = qw(myconfig config_sh config_vars config_re);
 
-my %%Export_Cache = map {($_ => 1)} (@EXPORT, @EXPORT_OK);
+# Need to stub all the functions to make code such as print Config::config_sh
+# keep working
+
+sub myconfig;
+sub config_sh;
+sub config_vars;
+sub config_re;
+
+my %%Export_Cache = map {($_ => 1)} (@Config::EXPORT, @Config::EXPORT_OK);
+
+our %%Config;
 
 # Define our own import method to avoid pulling in the full Exporter:
 sub import {
     my $pkg = shift;
-    @_ = @EXPORT unless @_;
+    @_ = @Config::EXPORT unless @_;
 
     my @funcs = grep $_ ne '%%Config', @_;
     my $export_Config = @funcs < @_ ? 1 : 0;
 
+    no strict 'refs';
     my $callpkg = caller(0);
     foreach my $func (@funcs) {
 	die sprintf qq{"%%s" is not exported by the %%s module\n},
@@ -105,67 +143,16 @@ ENDOFBEG
 
 
 my @non_v    = ();
-my @v_fast   = ();
-my %v_fast   = ();
 my @v_others = ();
 my $in_v     = 0;
 my %Data     = ();
 
-# This is somewhat grim, but I want the code for parsing config.sh here and
-# now so that I can expand $Config{ivsize} and $Config{ivtype}
 
-my $fetch_string = <<'EOT';
-
-# Search for it in the big string 
-sub fetch_string {
-    my($self, $key) = @_;
-
-    my $quote_type = "'";
-    my $marker = "$key=";
-
-    # Check for the common case, ' delimited
-    my $start = index($Config_SH, "\n$marker$quote_type");
-    # If that failed, check for " delimited
-    if ($start == -1) {
-        $quote_type = '"';
-        $start = index($Config_SH, "\n$marker$quote_type");
-    }
-    return undef if ( ($start == -1) &&  # in case it's first 
-                      (substr($Config_SH, 0, length($marker)) ne $marker) );
-    if ($start == -1) { 
-        # It's the very first thing we found. Skip $start forward
-        # and figure out the quote mark after the =.
-        $start = length($marker) + 1;
-        $quote_type = substr($Config_SH, $start - 1, 1);
-    } 
-    else { 
-        $start += length($marker) + 2;
-    }
-
-    my $value = substr($Config_SH, $start, 
-                       index($Config_SH, "$quote_type\n", $start) - $start);
-
-    # If we had a double-quote, we'd better eval it so escape
-    # sequences and such can be interpolated. Since the incoming
-    # value is supposed to follow shell rules and not perl rules,
-    # we escape any perl variable markers
-    if ($quote_type eq '"') {
-	$value =~ s/\$/\\\$/g;
-	$value =~ s/\@/\\\@/g;
-	eval "\$value = \"$value\"";
-    }
-
-    # So we can say "if $Config{'foo'}".
-    $value = undef if $value eq 'undef';
-    $self->{$key} = $value; # cache it
-}
-EOT
-
-eval $fetch_string;
-die if $@;
-
-open(CONFIG_SH, 'config.sh') || die "Can't open config.sh: $!";
-while (<CONFIG_SH>) {
+my %seen_quotes;
+{
+  my ($name, $val);
+  open(CONFIG_SH, 'config.sh') || die "Can't open config.sh: $!";
+  while (<CONFIG_SH>) {
     next if m:^#!/bin/sh:;
 
     # Catch PERL_CONFIG_SH=true and PERL_VERSION=n line from Configure.
@@ -190,7 +177,7 @@ while (<CONFIG_SH>) {
 	push(@non_v, "#$_"); # not a name='value' line
 	next;
     }
-    $quote = $2;
+    my $quote = $2;
     if ($in_v) { 
         $val .= $_;
     }
@@ -208,19 +195,88 @@ while (<CONFIG_SH>) {
     $val =~ s/$quote\n?\z//;
 
     my $line = "$name=$quote$val$quote\n";
-    if (!$Common{$name}){
-        push(@v_others, $line);
-    }
-    else {
-        push(@v_fast, $line);
-        $v_fast{$name} = "'$name' => $quote$val$quote";
-    }
+    push(@v_others, $line);
+    $seen_quotes{$quote}++;
+  }
+  close CONFIG_SH;
 }
-close CONFIG_SH;
+
+# This is somewhat grim, but I want the code for parsing config.sh here and
+# now so that I can expand $Config{ivsize} and $Config{ivtype}
+
+my $fetch_string = <<'EOT';
+
+# Search for it in the big string
+sub fetch_string {
+    my($self, $key) = @_;
+
+EOT
+
+if ($seen_quotes{'"'}) {
+    # We need the full ' and " code
+    $fetch_string .= <<'EOT';
+    my $quote_type = "'";
+    my $marker = "$key=";
+
+    # Check for the common case, ' delimited
+    my $start = index($Config_SH_expanded, "\n$marker$quote_type");
+    # If that failed, check for " delimited
+    if ($start == -1) {
+        $quote_type = '"';
+        $start = index($Config_SH_expanded, "\n$marker$quote_type");
+    }
+EOT
+} else {
+    $fetch_string .= <<'EOT';
+    # We only have ' delimted.
+    my $start = index($Config_SH_expanded, "\n$key=\'");
+EOT
+}
+$fetch_string .= <<'EOT';
+    # Start can never be -1 now, as we've rigged the long string we're
+    # searching with an initial dummy newline.
+    return undef if $start == -1;
+
+    $start += length($key) + 3;
+
+EOT
+if (!$seen_quotes{'"'}) {
+    # Don't need the full ' and " code, or the eval expansion.
+    $fetch_string .= <<'EOT';
+    my $value = substr($Config_SH_expanded, $start,
+                       index($Config_SH_expanded, "'\n", $start)
+		       - $start);
+EOT
+} else {
+    $fetch_string .= <<'EOT';
+    my $value = substr($Config_SH_expanded, $start,
+                       index($Config_SH_expanded, "$quote_type\n", $start)
+		       - $start);
+
+    # If we had a double-quote, we'd better eval it so escape
+    # sequences and such can be interpolated. Since the incoming
+    # value is supposed to follow shell rules and not perl rules,
+    # we escape any perl variable markers
+    if ($quote_type eq '"') {
+	$value =~ s/\$/\\\$/g;
+	$value =~ s/\@/\\\@/g;
+	eval "\$value = \"$value\"";
+    }
+EOT
+}
+$fetch_string .= <<'EOT';
+    # So we can say "if $Config{'foo'}".
+    $value = undef if $value eq 'undef';
+    $self->{$key} = $value; # cache it
+}
+EOT
+
+eval $fetch_string;
+die if $@;
 
 # Calculation for the keys for byteorder
 # This is somewhat grim, but I need to run fetch_string here.
-our $Config_SH = join "\n", @v_fast, @v_others;
+our $Config_SH_expanded = join "\n", '', @v_others;
 
 my $t = fetch_string ({}, 'ivtype');
 my $s = fetch_string ({}, 'ivsize');
@@ -237,35 +293,32 @@ if ($s == 4 || $s == 8) {
     my $list = join ',', reverse(2..$s);
     my $format = 'a'x$s;
     $byteorder_code = <<"EOT";
+
 my \$i = 0;
 foreach my \$c ($list) { \$i |= ord(\$c); \$i <<= 8 }
 \$i |= ord(1);
-my \$byteorder = join('', unpack('$format', pack('$f', \$i)));
+our \$byteorder = join('', unpack('$format', pack('$f', \$i)));
 EOT
 } else {
-    $byteorder_code = "my \$byteorder = '?'x$s;\n";
+    $byteorder_code = "our \$byteorder = '?'x$s;\n";
 }
 
-print CONFIG @non_v, "\n";
+print CONFIG_HEAVY @non_v, "\n";
 
 # copy config summary format from the myconfig.SH script
-print CONFIG "our \$summary : unique = <<'!END!';\n";
+print CONFIG_HEAVY "our \$summary = <<'!END!';\n";
 open(MYCONFIG,"<myconfig.SH") || die "open myconfig.SH failed: $!";
 1 while defined($_ = <MYCONFIG>) && !/^Summary of/;
-do { print CONFIG $_ } until !defined($_ = <MYCONFIG>) || /^\s*$/;
+do { print CONFIG_HEAVY $_ } until !defined($_ = <MYCONFIG>) || /^\s*$/;
 close(MYCONFIG);
 
-# NB. as $summary is unique, we need to copy it in a lexical variable
-# before expanding it, because may have been made readonly if a perl
-# interpreter has been cloned.
-
-print CONFIG "\n!END!\n", $byteorder_code, <<'EOT';
+print CONFIG_HEAVY "\n!END!\n", <<'EOT';
 my $summary_expanded;
 
 sub myconfig {
     return $summary_expanded if $summary_expanded;
     ($summary_expanded = $summary) =~ s{\$(\w+)}
-		 { my $c = $Config{$1}; defined($c) ? $c : 'undef' }ge;
+		 { my $c = $Config::Config{$1}; defined($c) ? $c : 'undef' }ge;
     $summary_expanded;
 }
 
@@ -273,91 +326,109 @@ local *_ = \my $a;
 $_ = <<'!END!';
 EOT
 
-print CONFIG join("", @v_fast, sort @v_others);
+print CONFIG_HEAVY join('', sort @v_others), "!END!\n";
 
-print CONFIG <<'EOT';
-!END!
-s/(byteorder=)(['"]).*?\2/$1$2$byteorder$2/m;
-our $Config_SH : unique = $_;
+# Only need the dynamic byteorder code in Config.pm if 'byteorder' is one of
+# the precached keys
+if ($Common{byteorder}) {
+    print CONFIG $byteorder_code;
+} else {
+    print CONFIG_HEAVY $byteorder_code;
+}
+
+print CONFIG_HEAVY <<'EOT';
+s/(byteorder=)(['"]).*?\2/$1$2$Config::byteorder$2/m;
+
+my $config_sh_len = length $_;
+
+our $Config_SH_expanded = "\n$_" . << 'EOVIRTUAL';
 EOT
 
-print CONFIG $fetch_string;
+foreach my $prefix (qw(ccflags ldflags)) {
+    my $value = fetch_string ({}, $prefix);
+    my $withlargefiles = fetch_string ({}, $prefix . "_uselargefiles");
+    $value =~ s/\Q$withlargefiles\E\b//;
+    print CONFIG_HEAVY "${prefix}_nolargefiles='$value'\n";
+}
+
+foreach my $prefix (qw(libs libswanted)) {
+    my $value = fetch_string ({}, $prefix);
+    my @lflibswanted
+       = split(' ', fetch_string ({}, 'libswanted_uselargefiles'));
+    if (@lflibswanted) {
+	my %lflibswanted;
+	@lflibswanted{@lflibswanted} = ();
+	if ($prefix eq 'libs') {
+	    my @libs = grep { /^-l(.+)/ &&
+                            not exists $lflibswanted{$1} }
+		                    split(' ', fetch_string ({}, 'libs'));
+	    $value = join(' ', @libs);
+	} else {
+	    my @libswanted = grep { not exists $lflibswanted{$_} }
+	                          split(' ', fetch_string ({}, 'libswanted'));
+	    $value = join(' ', @libswanted);
+	}
+    }
+    print CONFIG_HEAVY "${prefix}_nolargefiles='$value'\n";
+}
+
+print CONFIG_HEAVY "EOVIRTUAL\n";
+
+print CONFIG_HEAVY $fetch_string;
 
 print CONFIG <<'ENDOFEND';
 
-sub fetch_virtual {
-    my($self, $key) = @_;
-
-    my $value;
-
-    if ($key =~ /^((?:cc|ld)flags|libs(?:wanted)?)_nolargefiles/) {
-	# These are purely virtual, they do not exist, but need to
-	# be computed on demand for largefile-incapable extensions.
-	my $new_key = "${1}_uselargefiles";
-	$value = $Config{$1};
-	my $withlargefiles = $Config{$new_key};
-	if ($new_key =~ /^(?:cc|ld)flags_/) {
-	    $value =~ s/\Q$withlargefiles\E\b//;
-	} elsif ($new_key =~ /^libs/) {
-	    my @lflibswanted = split(' ', $Config{libswanted_uselargefiles});
-	    if (@lflibswanted) {
-		my %lflibswanted;
-		@lflibswanted{@lflibswanted} = ();
-		if ($new_key =~ /^libs_/) {
-		    my @libs = grep { /^-l(.+)/ &&
-                                      not exists $lflibswanted{$1} }
-		                    split(' ', $Config{libs});
-		    $Config{libs} = join(' ', @libs);
-		} elsif ($new_key =~ /^libswanted_/) {
-		    my @libswanted = grep { not exists $lflibswanted{$_} }
-		                          split(' ', $Config{libswanted});
-		    $Config{libswanted} = join(' ', @libswanted);
-		}
-	    }
-	}
-    }
-
-    $self->{$key} = $value;
-}
-
-sub FETCH { 
+sub FETCH {
     my($self, $key) = @_;
 
     # check for cached value (which may be undef so we use exists not defined)
     return $self->{$key} if exists $self->{$key};
 
-    $self->fetch_string($key);
-    return $self->{$key} if exists $self->{$key};
-    $self->fetch_virtual($key);
-
-    # Might not exist, in which undef is correct.
-    return $self->{$key};
+    return $self->fetch_string($key);
 }
- 
+ENDOFEND
+
+print CONFIG_HEAVY <<'ENDOFEND';
+
 my $prevpos = 0;
 
 sub FIRSTKEY {
     $prevpos = 0;
-    substr($Config_SH, 0, index($Config_SH, '=') );
+    substr($Config_SH_expanded, 1, index($Config_SH_expanded, '=') - 1 );
 }
 
 sub NEXTKEY {
+ENDOFEND
+if ($seen_quotes{'"'}) {
+print CONFIG_HEAVY <<'ENDOFEND';
     # Find out how the current key's quoted so we can skip to its end.
-    my $quote = substr($Config_SH, index($Config_SH, "=", $prevpos)+1, 1);
-    my $pos = index($Config_SH, qq($quote\n), $prevpos) + 2;
-    my $len = index($Config_SH, "=", $pos) - $pos;
+    my $quote = substr($Config_SH_expanded,
+		       index($Config_SH_expanded, "=", $prevpos)+1, 1);
+    my $pos = index($Config_SH_expanded, qq($quote\n), $prevpos) + 2;
+ENDOFEND
+} else {
+    # Just ' quotes, so it's much easier.
+print CONFIG_HEAVY <<'ENDOFEND';
+    my $pos = index($Config_SH_expanded, qq('\n), $prevpos) + 2;
+ENDOFEND
+}
+print CONFIG_HEAVY <<'ENDOFEND';
+    my $len = index($Config_SH_expanded, "=", $pos) - $pos;
     $prevpos = $pos;
-    $len > 0 ? substr($Config_SH, $pos, $len) : undef;
+    $len > 0 ? substr($Config_SH_expanded, $pos, $len) : undef;
 }
 
-sub EXISTS { 
+sub EXISTS {
     return 1 if exists($_[0]->{$_[1]});
 
-    return(index($Config_SH, "\n$_[1]='") != -1 or
-           substr($Config_SH, 0, length($_[1])+2) eq "$_[1]='" or
-           index($Config_SH, "\n$_[1]=\"") != -1 or
-           substr($Config_SH, 0, length($_[1])+2) eq "$_[1]=\"" or
-           $_[1] =~ /^(?:(?:cc|ld)flags|libs(?:wanted)?)_nolargefiles$/
+    return(index($Config_SH_expanded, "\n$_[1]='") != -1
+ENDOFEND
+if ($seen_quotes{'"'}) {
+print CONFIG_HEAVY <<'ENDOFEND';
+           or index($Config_SH_expanded, "\n$_[1]=\"") != -1
+ENDOFEND
+}
+print CONFIG_HEAVY <<'ENDOFEND';
           );
 }
 
@@ -367,12 +438,13 @@ sub STORE  { die "\%Config::Config is read-only\n" }
 
 
 sub config_sh {
-    $Config_SH
+    substr $Config_SH_expanded, 1, $config_sh_len;
 }
 
 sub config_re {
     my $re = shift;
-    return map { chomp; $_ } grep eval{ /^(?:$re)=/ }, split /^/, $Config_SH;
+    return map { chomp; $_ } grep eval{ /^(?:$re)=/ }, split /^/,
+    $Config_SH_expanded;
 }
 
 sub config_vars {
@@ -390,22 +462,30 @@ sub config_vars {
 	    print map "$_$lnend", @matches ? @matches : "$qry: not found"		if !$notag;
 	    print map { s/\w+=//; "$_$lnend" } @matches ? @matches : "$qry: not found"	if  $notag;
 	} else {
-	    my $v = (exists $Config{$qry}) ? $Config{$qry} : 'UNKNOWN';
+	    my $v = (exists $Config::Config{$qry}) ? $Config::Config{$qry}
+						   : 'UNKNOWN';
 	    $v = 'undef' unless defined $v;
 	    print "${prfx}'${v}'$lnend";
 	}
     }
 }
 
+# Called by the real AUTOLOAD
+sub launcher {
+    undef &AUTOLOAD;
+    goto \&$Config::AUTOLOAD;
+}
+
+1;
 ENDOFEND
 
 if ($^O eq 'os2') {
     print CONFIG <<'ENDOFSET';
 my %preconfig;
 if ($OS2::is_aout) {
-    my ($value, $v) = $Config_SH =~ m/^used_aout='(.*)'\s*$/m;
+    my ($value, $v) = $Config_SH_expanded =~ m/^used_aout='(.*)'\s*$/m;
     for (split ' ', $value) {
-        ($v) = $Config_SH =~ m/^aout_$_='(.*)'\s*$/m;
+        ($v) = $Config_SH_expanded =~ m/^aout_$_='(.*)'\s*$/m;
         $preconfig{$_} = $v eq 'undef' ? undef : $v;
     }
 }
@@ -431,19 +511,41 @@ sub TIEHASH {
 ENDOFSET
 }
 
-my $fast_config = join '', map { "    $_,\n" }
-    sort values (%v_fast), 'byteorder => $byteorder' ;
+foreach my $key (keys %Common) {
+    my $value = fetch_string ({}, $key);
+    # Is it safe on the LHS of => ?
+    my $qkey = $key =~ /^[A-Za-z_][A-Za-z0-9_]*$/ ? $key : "'$key'";
+    if (defined $value) {
+	# Quote things for a '' string
+	$value =~ s!\\!\\\\!g;
+	$value =~ s!'!\\'!g;
+	$value = "'$value'";
+    } else {
+	$value = "undef";
+    }
+    $Common{$key} = "$qkey => $value";
+}
 
+if ($Common{byteorder}) {
+    $Common{byteorder} = 'byteorder => $byteorder';
+}
+my $fast_config = join '', map { "    $_,\n" } sort values %Common;
+
+# Sanity check needed to stop an infite loop if Config_heavy.pl fails to define
+# &launcher for some reason (eg it got truncated)
 print CONFIG sprintf <<'ENDOFTIE', $fast_config;
 
-# avoid Config..Exporter..UNIVERSAL search for DESTROY then AUTOLOAD
 sub DESTROY { }
 
-tie %%Config, 'Config', {
-%s
-};
+sub AUTOLOAD {
+    require 'Config_heavy.pl';
+    goto \&launcher unless $Config::AUTOLOAD =~ /launcher$/;
+    die "&Config::AUTOLOAD failed on $Config::AUTOLOAD";
+}
 
-1;
+# tie returns the object, so the value returned to require will be true.
+tie %%Config, 'Config', {
+%s};
 ENDOFTIE
 
 
@@ -569,8 +671,8 @@ ENDOFTAIL
 if ($Opts{glossary}) {
   open(GLOS, "<$Glossary") or die "Can't open $Glossary: $!";
 }
-%seen = ();
-$text = 0;
+my %seen = ();
+my $text = 0;
 $/ = '';
 
 sub process {
@@ -645,6 +747,7 @@ outside of it.
 
 ENDOFTAIL
 
+close(CONFIG_HEAVY);
 close(CONFIG);
 close(GLOS);
 close(CONFIG_POD);
@@ -679,6 +782,7 @@ EOS
 # Now do some simple tests on the Config.pm file we have created
 unshift(@INC,'lib');
 require $Config_PM;
+require $Config_heavy;
 import Config;
 
 die "$0: $Config_PM not valid"
@@ -696,3 +800,106 @@ die "$0: error processing $Config_PM"
 
 
 exit 0;
+# Popularity of various entries in %Config, based on a large build and test
+# run of code in the Fotango build system:
+__DATA__
+path_sep:	8490
+d_readlink:	7101
+d_symlink:	7101
+archlibexp:	4318
+sitearchexp:	4305
+sitelibexp:	4305
+privlibexp:	4163
+ldlibpthname:	4041
+libpth:	2134
+archname:	1591
+exe_ext:	1256
+scriptdir:	1155
+version:	1116
+useithreads:	1002
+osvers:	982
+osname:	851
+inc_version_list:	783
+dont_use_nlink:	779
+intsize:	759
+usevendorprefix:	642
+dlsrc:	624
+cc:	541
+lib_ext:	520
+so:	512
+ld:	501
+ccdlflags:	500
+ldflags:	495
+obj_ext:	495
+cccdlflags:	493
+lddlflags:	493
+ar:	492
+dlext:	492
+libc:	492
+ranlib:	492
+full_ar:	491
+vendorarchexp:	491
+vendorlibexp:	491
+installman1dir:	489
+installman3dir:	489
+installsitebin:	489
+installsiteman1dir:	489
+installsiteman3dir:	489
+installvendorman1dir:	489
+installvendorman3dir:	489
+d_flexfnam:	474
+eunicefix:	360
+d_link:	347
+installsitearch:	344
+installscript:	341
+installprivlib:	337
+binexp:	336
+installarchlib:	336
+installprefixexp:	336
+installsitelib:	336
+installstyle:	336
+installvendorarch:	336
+installvendorbin:	336
+installvendorlib:	336
+man1ext:	336
+man3ext:	336
+sh:	336
+siteprefixexp:	336
+installbin:	335
+usedl:	332
+ccflags:	285
+startperl:	232
+optimize:	231
+usemymalloc:	229
+cpprun:	228
+sharpbang:	228
+perllibs:	225
+usesfio:	224
+usethreads:	220
+perlpath:	218
+extensions:	217
+usesocks:	208
+shellflags:	198
+make:	191
+d_pwage:	189
+d_pwchange:	189
+d_pwclass:	189
+d_pwcomment:	189
+d_pwexpire:	189
+d_pwgecos:	189
+d_pwpasswd:	189
+d_pwquota:	189
+gccversion:	189
+libs:	186
+useshrplib:	186
+cppflags:	185
+ptrsize:	185
+shrpenv:	185
+static_ext:	185
+use5005threads:	185
+uselargefiles:	185
+alignbytes:	184
+byteorder:	184
+ccversion:	184
+config_args:	184
+cppminus:	184

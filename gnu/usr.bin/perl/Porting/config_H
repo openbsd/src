@@ -7,7 +7,7 @@
  * that running config_h.SH again will wipe out any changes you've made.
  * For a more permanent change edit config.sh and rerun config_h.SH.
  *
- * $Id: config_H,v 1.7 2004/04/07 21:33:01 millert Exp $
+ * $Id: config_H,v 1.8 2004/08/09 18:09:01 millert Exp $
  */
 
 /*
@@ -703,6 +703,12 @@
  *	include <math.h>.
  */
 #define I_MATH		/**/
+
+/* LIBM_LIB_VERSION:
+ *    This symbol, if defined, indicates that libm exports _LIB_VERSION
+ *    and that math.h defines the enum to manipulate it.
+ */
+#undef LIBM_LIB_VERSION         /**/
 
 /* I_MEMORY:
  *	This symbol, if defined, indicates to the C program that it should

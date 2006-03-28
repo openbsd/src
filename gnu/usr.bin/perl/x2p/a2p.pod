@@ -4,7 +4,7 @@ a2p - Awk to Perl translator
 
 =head1 SYNOPSIS
 
-B<a2p [options] filename>
+B<a2p> [I<options>] [I<filename>]
 
 =head1 DESCRIPTION
 
@@ -12,7 +12,7 @@ I<A2p> takes an awk script specified on the command line (or from
 standard input) and produces a comparable I<perl> script on the
 standard output.
 
-=head2 Options
+=head2 OPTIONS
 
 Options include:
 

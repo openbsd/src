@@ -65,7 +65,7 @@ directory) and use this approach.
 
 =item *
 
-B<If you're on a Unix or Linux system,>
+B<If you're on a Unix or Unix-like system,>
 
 You can use Andreas Koenig's CPAN module
 ( http://www.cpan.org/modules/by-module/CPAN )
@@ -164,7 +164,7 @@ While still in that directory, type:
 
 =item *
 
-B<If you're using a Macintosh,>
+B<If you're using a Macintosh with "Classic" MacOS and MacPerl,>
 
 
 A. DECOMPRESS

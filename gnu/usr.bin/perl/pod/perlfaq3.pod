@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq3 - Programming Tools ($Revision: 1.7 $, $Date: 2004/04/07 21:33:08 $)
+perlfaq3 - Programming Tools
 
 =head1 DESCRIPTION
 
@@ -31,7 +31,7 @@ A crude table of contents for the Perl manpage set is found in L<perltoc>.
 =head2 How can I use Perl interactively?
 
 The typical approach uses the Perl debugger, described in the
-perldebug(1) manpage, on an ``empty'' program, like this:
+perldebug(1) manpage, on an "empty" program, like this:
 
     perl -de 42
 
@@ -42,12 +42,12 @@ operations typically found in symbolic debuggers.
 
 =head2 Is there a Perl shell?
 
-The psh (Perl sh) is currently at version 1.8. The Perl Shell is a
-shell that combines the interactive nature of a Unix shell with the
-power of Perl. The goal is a full featured shell that behaves as
-expected for normal shell activity and uses Perl syntax and
-functionality for control-flow statements and other things.
-You can get psh at http://www.focusresearch.com/gregor/psh/ .
+The psh (Perl sh) is currently at version 1.8. The Perl Shell is a shell
+that combines the interactive nature of a Unix shell with the power of
+Perl. The goal is a full featured shell that behaves as expected for
+normal shell activity and uses Perl syntax and functionality for
+control-flow statements and other things. You can get psh at
+http://sourceforge.net/projects/psh/ .
 
 Zoidberg is a similar project and provides a shell written in perl,
 configured in perl and operated in perl. It is intended as a login shell
@@ -55,17 +55,16 @@ and development environment. It can be found at http://zoidberg.sf.net/
 or your local CPAN mirror.
 
 The Shell.pm module (distributed with Perl) makes Perl try commands
-which aren't part of the Perl language as shell commands.  perlsh
-from the source distribution is simplistic and uninteresting, but
-may still be what you want.
+which aren't part of the Perl language as shell commands.  perlsh from
+the source distribution is simplistic and uninteresting, but may still
+be what you want.
 
 =head2 How do I find which modules are installed on my system?
 
-You can use the ExtUtils::Installed module to show all
-installed distributions, although it can take awhile to do
-its magic.  The standard library which comes with Perl just
-shows up as "Perl" (although you can get those with
-Module::CoreList).
+You can use the ExtUtils::Installed module to show all installed
+distributions, although it can take awhile to do its magic.  The
+standard library which comes with Perl just shows up as "Perl" (although
+you can get those with Module::CoreList).
 
 	use ExtUtils::Installed;
 
@@ -85,8 +84,14 @@ with File::Find which is part of the standard library.
     use File::Find;
     my @files;
 
-    find sub { push @files, $File::Find::name if -f _ && /\.pm$/ },
-         @INC;
+    find(
+      sub {
+      	push @files, $File::Find::name
+      		if -f $File::Find::name && /\.pm$/
+      	},
+
+      @INC
+      );
 
 	print join "\n", @files;
 
@@ -202,13 +207,11 @@ documents, as does enscript at http://people.ssh.fi/mtr/genscript/ .
 
 =head2 Is there a ctags for Perl?
 
-Recent versions of ctags do much more than older versions did.
-EXUBERANT CTAGS is available from http://ctags.sourceforge.net/
-and does a good job of making tags files for perl code.
+(contributed by brian d foy)
 
-There is also a simple one at
-http://www.cpan.org/authors/id/TOMC/scripts/ptags.gz which may do
-the trick.  It can be easy to hack this into what you want.
+Exuberent ctags supports Perl: http://ctags.sourceforge.net/
+
+You might also try pltags: http://www.mscha.com/pltags.zip
 
 =head2 Is there an IDE or Windows Perl Editor?
 
@@ -225,68 +228,91 @@ order of preference):
 
 =item Eclipse
 
-The Eclipse Perl Integration Project integrates Perl 
+http://e-p-i-c.sf.net/
+
+The Eclipse Perl Integration Project integrates Perl
 editing/debugging with Eclipse.
 
-The website for the project is http://e-p-i-c.sf.net/
+=item Enginsite
+
+http://www.enginsite.com/
+
+Perl Editor by EngInSite is a complete integrated development
+environment (IDE) for creating, testing, and  debugging  Perl scripts;
+the tool runs on Windows 9x/NT/2000/XP or later.
 
 =item Komodo
 
+http://www.ActiveState.com/Products/Komodo/
+
 ActiveState's cross-platform (as of October 2004, that's Windows, Linux,
 and Solaris), multi-language IDE has Perl support, including a regular expression
-debugger and remote debugging
-( http://www.ActiveState.com/Products/Komodo/ ).
+debugger and remote debugging.
 
 =item Open Perl IDE
 
-( http://open-perl-ide.sourceforge.net/ )
+http://open-perl-ide.sourceforge.net/
+
 Open Perl IDE is an integrated development environment for writing
 and debugging Perl scripts with ActiveState's ActivePerl distribution
 under Windows 95/98/NT/2000.
 
 =item OptiPerl
 
-( http://www.optiperl.com/ ) is a Windows IDE with simulated CGI
-environment, including debugger and syntax highlighting editor.
+http://www.optiperl.com/
+
+OptiPerl is a Windows IDE with simulated CGI environment, including
+debugger and syntax highlighting editor.
 
 =item PerlBuilder
 
-( http://www.solutionsoft.com/perl.htm ) is an integrated development
-environment for Windows that supports Perl development.
+http://www.solutionsoft.com/perl.htm
+
+PerlBuidler is an integrated development environment for Windows that
+supports Perl development.
 
 =item visiPerl+
 
-( http://helpconsulting.net/visiperl/ )
+http://helpconsulting.net/visiperl/
+
 From Help Consulting, for Windows.
 
 =item Visual Perl
 
-( http://www.activestate.com/Products/Visual_Perl/ )
+http://www.activestate.com/Products/Visual_Perl/
+
 Visual Perl is a Visual Studio.NET plug-in from ActiveState.
 
+=item Zeus
+
+http://www.zeusedit.com/lookmain.html
+
+Zeus for Window is another Win32 multi-language editor/IDE
+that comes with support for Perl:
 
 =back
 
-For editors: if you're on Unix you probably have vi or a vi clone already,
-and possibly an emacs too, so you may not need to download anything.
-In any emacs the cperl-mode (M-x cperl-mode) gives you perhaps the
-best available Perl editing mode in any editor.
+For editors: if you're on Unix you probably have vi or a vi clone
+already, and possibly an emacs too, so you may not need to download
+anything. In any emacs the cperl-mode (M-x cperl-mode) gives you
+perhaps the best available Perl editing mode in any editor.
 
-If you are using Windows, you can use any editor that lets
-you work with plain text, such as NotePad or WordPad.  Word
-processors, such as Microsoft Word or WordPerfect, typically
-do not work since they insert all sorts of behind-the-scenes
-information, although some allow you to save files as "Text
-Only". You can also download text editors designed
-specifically for programming, such as Textpad
-( http://www.textpad.com/ ) and UltraEdit
-( http://www.ultraedit.com/ ), among others.
+If you are using Windows, you can use any editor that lets you work
+with plain text, such as NotePad or WordPad.  Word processors, such as
+Microsoft Word or WordPerfect, typically do not work since they insert
+all sorts of behind-the-scenes information, although some allow you to
+save files as "Text Only". You can also download text editors designed
+specifically for programming, such as Textpad (
+http://www.textpad.com/ ) and UltraEdit ( http://www.ultraedit.com/ ),
+among others.
 
-If you are using MacOS, the same concerns apply.  MacPerl
-(for Classic environments) comes with a simple editor.
-Popular external editors are BBEdit ( http://www.bbedit.com/ )
-or Alpha ( http://www.his.com/~jguyer/Alpha/Alpha8.html ). MacOS X users can
-use Unix editors as well.
+If you are using MacOS, the same concerns apply.  MacPerl (for Classic
+environments) comes with a simple editor. Popular external editors are
+BBEdit ( http://www.bbedit.com/ ) or Alpha (
+http://www.his.com/~jguyer/Alpha/Alpha8.html ). MacOS X users can use
+Unix editors as well. Neil Bowers (the man behind Geekcruises) has a
+list of Mac editors that can handle Perl (
+http://www.neilbowers.org/macperleditors.html ).
 
 =over 4
 
@@ -407,8 +433,8 @@ no 32k limit).
 
 =item Affrus
 
-is a full Perl development enivornment with full debugger support (
-http://www.latenightsw.com ).
+is a full Perl development environment with full debugger support
+( http://www.latenightsw.com ).
 
 =item Alpha
 
@@ -472,11 +498,6 @@ http://www.cpan.org/authors/Stephen_O_Lidie/ , and the
 online manpages at
 http://www-users.cs.umn.edu/%7Eamundson/perl/perltk/toc.html .
 
-=head2 How can I generate simple menus without using CGI or Tk?
-
-The http://www.cpan.org/authors/id/SKUNZ/perlmenu.v4.0.tar.gz
-module, which is curses-based, can help with this.
-
 =head2 How can I make my Perl program run faster?
 
 The best way to do this is to come up with a better algorithm.  This
@@ -486,8 +507,8 @@ on optimization, too.  Advice on benchmarking boils down to: benchmark
 and profile to make sure you're optimizing the right part, look for
 better algorithms instead of microtuning your code, and when all else
 fails consider just buying faster hardware.  You will probably want to
-read the answer to the earlier question ``How do I profile my Perl
-programs?'' if you haven't done so already.
+read the answer to the earlier question "How do I profile my Perl
+programs?" if you haven't done so already.
 
 A different approach is to autoload seldom-used Perl code.  See the
 AutoSplit and AutoLoader modules in the standard distribution for
@@ -649,23 +670,25 @@ everything works out right.
 
 =head2 How can I free an array or hash so my program shrinks?
 
-You usually can't. On most operating systems, memory
-allocated to a program can never be returned to the system.
-That's why long-running programs sometimes re-exec
-themselves. Some operating systems (notably, systems that
-use mmap(2) for allocating large chunks of memory) can
-reclaim memory that is no longer used, but on such systems,
-perl must be configured and compiled to use the OS's malloc,
-not perl's.
+(contributed by Michael Carman)
 
-However, judicious use of my() on your variables will help make sure
-that they go out of scope so that Perl can free up that space for
-use in other parts of your program.  A global variable, of course, never
-goes out of scope, so you can't get its space automatically reclaimed,
-although undef()ing and/or delete()ing it will achieve the same effect.
+You usually can't. Memory allocated to lexicals (i.e. my() variables)
+cannot be reclaimed or reused even if they go out of scope. It is
+reserved in case the variables come back into scope. Memory allocated
+to global variables can be reused (within your program) by using
+undef()ing and/or delete().
+
+On most operating systems, memory allocated to a program can never be
+returned to the system. That's why long-running programs sometimes re-
+exec themselves. Some operating systems (notably, systems that use
+mmap(2) for allocating large chunks of memory) can reclaim memory that
+is no longer used, but on such systems, perl must be configured and
+compiled to use the OS's malloc, not perl's.
+
 In general, memory allocation and de-allocation isn't something you can
-or should be worrying about much in Perl, but even this capability
-(preallocation of data types) is in the works.
+or should be worrying about much in Perl.
+
+See also "How can I make my Perl program take less memory?"
 
 =head2 How can I make my CGI script more efficient?
 
@@ -699,19 +722,10 @@ care.
 
 See http://www.cpan.org/modules/by-category/15_World_Wide_Web_HTML_HTTP_CGI/ .
 
-A non-free, commercial product, ``The Velocity Engine for Perl'',
-(http://www.binevolve.com/ or http://www.binevolve.com/velocigen/ )
-might also be worth looking at.  It will allow you to increase the
-performance of your Perl programs, running programs up to 25 times
-faster than normal CGI Perl when running in persistent Perl mode or 4
-to 5 times faster without any modification to your existing CGI
-programs. Fully functional evaluation copies are available from the
-web site.
-
 =head2 How can I hide the source for my Perl program?
 
 Delete it. :-) Seriously, there are a number of (mostly
-unsatisfactory) solutions with varying levels of ``security''.
+unsatisfactory) solutions with varying levels of "security".
 
 First of all, however, you I<can't> take away read permission, because
 the source code has to be readable in order to be compiled and
@@ -746,48 +760,43 @@ unique to Perl.
 If you're concerned about people profiting from your code, then the
 bottom line is that nothing but a restrictive license will give you
 legal security.  License your software and pepper it with threatening
-statements like ``This is unpublished proprietary software of XYZ Corp.
+statements like "This is unpublished proprietary software of XYZ Corp.
 Your access to it does not give you permission to use it blah blah
-blah.''  We are not lawyers, of course, so you should see a lawyer if
+blah."  We are not lawyers, of course, so you should see a lawyer if
 you want to be sure your license's wording will stand up in court.
 
 =head2 How can I compile my Perl program into byte code or C?
 
-Malcolm Beattie has written a multifunction backend compiler,
-available from CPAN, that can do both these things.  It is included
-in the perl5.005 release, but is still considered experimental.
-This means it's fun to play with if you're a programmer but not
-really for people looking for turn-key solutions.
+(contributed by brian d foy)
 
-Merely compiling into C does not in and of itself guarantee that your
-code will run very much faster.  That's because except for lucky cases
-where a lot of native type inferencing is possible, the normal Perl
-run-time system is still present and so your program will take just as
-long to run and be just as big.  Most programs save little more than
-compilation time, leaving execution no more than 10-30% faster.  A few
-rare programs actually benefit significantly (even running several times
-faster), but this takes some tweaking of your code.
+In general, you can't do this.  There are some things that may work
+for your situation though.  People usually ask this question
+because they want to distribute their works without giving away
+the source code, and most solutions trade disk space for convenience.
+You probably won't see much of a speed increase either, since most
+solutions simply bundle a Perl interpreter in the final product
+(but see L<How can I make my Perl program run faster?>).
 
-You'll probably be astonished to learn that the current version of the
-compiler generates a compiled form of your script whose executable is
-just as big as the original perl executable, and then some.  That's
-because as currently written, all programs are prepared for a full
-eval() statement.  You can tremendously reduce this cost by building a
-shared I<libperl.so> library and linking against that.  See the
-F<INSTALL> podfile in the Perl source distribution for details.  If
-you link your main perl binary with this, it will make it minuscule.
-For example, on one author's system, F</usr/bin/perl> is only 11k in
-size!
+The Perl Archive Toolkit ( http://par.perl.org/index.cgi ) is Perl's
+analog to Java's JAR.  It's freely available and on CPAN (
+http://search.cpan.org/dist/PAR/ ).
 
-In general, the compiler will do nothing to make a Perl program smaller,
-faster, more portable, or more secure.  In fact, it can make your
-situation worse.  The executable will be bigger, your VM system may take
-longer to load the whole thing, the binary is fragile and hard to fix,
-and compilation never stopped software piracy in the form of crackers,
-viruses, or bootleggers.  The real advantage of the compiler is merely
-packaging, and once you see the size of what it makes (well, unless
-you use a shared I<libperl.so>), you'll probably want a complete
-Perl install anyway.
+The B::* namespace, often called "the Perl compiler", but is really a way
+for Perl programs to peek at its innards rather than create pre-compiled
+versions of your program.  However. the B::Bytecode module can turn your
+script  into a bytecode format that could be loaded later by the
+ByteLoader module and executed as a regular Perl script.
+
+There are also some commercial products that may work for you, although
+you have to buy a license for them.
+
+The Perl Dev Kit ( http://www.activestate.com/Products/Perl_Dev_Kit/ )
+from ActiveState can "Turn your Perl programs into ready-to-run
+executables for HP-UX, Linux, Solaris and Windows."
+
+Perl2Exe ( http://www.indigostar.com/perl2exe.htm ) is a command line
+program for converting perl scripts to executable files.  It targets both
+Windows and unix platforms.
 
 =head2 How can I compile Perl into Java?
 
@@ -806,7 +815,7 @@ For OS/2 just use
     extproc perl -S -your_switches
 
 as the first line in C<*.cmd> file (C<-S> due to a bug in cmd.exe's
-`extproc' handling).  For DOS one should first invent a corresponding
+"extproc" handling).  For DOS one should first invent a corresponding
 batch file and codify it in C<ALTERNATE_SHEBANG> (see the
 F<dosish.h> file in the source distribution for more information).
 
@@ -819,8 +828,10 @@ the Registry yourself.  In addition to associating C<.pl> with the
 interpreter, NT people can use: C<SET PATHEXT=%PATHEXT%;.PL> to let them
 run the program C<install-linux.pl> merely by typing C<install-linux>.
 
-Macintosh Perl programs will have the appropriate Creator and
-Type, so that double-clicking them will invoke the Perl application.
+Under "Classic" MacOS, a perl program will have the appropriate Creator and
+Type, so that double-clicking them will invoke the MacPerl application.
+Under Mac OS X, clickable apps can be made from any C<#!> script using Wil
+Sanchez' DropScript utility: http://www.wsanchez.net/software/ .
 
 I<IMPORTANT!>: Whatever you do, PLEASE don't get frustrated, and just
 throw the perl interpreter into your cgi-bin directory, in order to
@@ -902,9 +913,9 @@ There is no general solution to all of this.  It is a mess.
 
 For modules, get the CGI or LWP modules from CPAN.  For textbooks,
 see the two especially dedicated to web stuff in the question on
-books.  For problems and questions related to the web, like ``Why
-do I get 500 Errors'' or ``Why doesn't it run from the browser right
-when it runs fine on the command line'', see the troubleshooting
+books.  For problems and questions related to the web, like "Why
+do I get 500 Errors" or "Why doesn't it run from the browser right
+when it runs fine on the command line", see the troubleshooting
 guides and references in L<perlfaq9> or in the CGI MetaFAQ:
 
 	http://www.perl.org/CGI_MetaFAQ.html
@@ -913,14 +924,13 @@ guides and references in L<perlfaq9> or in the CGI MetaFAQ:
 
 A good place to start is L<perltoot>, and you can use L<perlobj>,
 L<perlboot>, L<perltoot>, L<perltooc>, and L<perlbot> for reference.
-(If you are using really old Perl, you may not have all of these,
-try http://www.perldoc.com/ , but consider upgrading your perl.)
 
 A good book on OO on Perl is the "Object-Oriented Perl"
-by Damian Conway from Manning Publications,
-http://www.manning.com/Conway/index.html
+by Damian Conway from Manning Publications, or "Learning Perl
+References, Objects, & Modules" by Randal Schwartz and Tom
+Phoenix from O'Reilly Media.
 
-=head2 Where can I learn about linking C with Perl? [h2xs, xsubpp]
+=head2 Where can I learn about linking C with Perl?
 
 If you want to call C from Perl, start with L<perlxstut>,
 moving on to L<perlxs>, L<xsubpp>, and L<perlguts>.  If you want to
@@ -929,8 +939,13 @@ L<perlguts>.  Don't forget that you can learn a lot from looking at
 how the authors of existing extension modules wrote their code and
 solved their problems.
 
-=head2 I've read perlembed, perlguts, etc., but I can't embed perl in
-my C program; what am I doing wrong?
+You might not need all the power of XS. The Inline::C module lets
+you put C code directly in your Perl source. It handles all the
+magic to make it work. You still have to learn at least some of
+the perl API but you won't have to deal with the complexity of the
+XS support files.
+
+=head2 I've read perlembed, perlguts, etc., but I can't embed perl in my C program; what am I doing wrong?
 
 Download the ExtUtils::Embed kit from CPAN and run `make test'.  If
 the tests pass, read the pods again and again and again.  If they
@@ -962,8 +977,8 @@ information, see L<ExtUtils::MakeMaker>.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2002 Tom Christiansen and Nathan Torkington.
-All rights reserved.
+Copyright (c) 1997-2006 Tom Christiansen, Nathan Torkington, and
+other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it
 under the same terms as Perl itself.

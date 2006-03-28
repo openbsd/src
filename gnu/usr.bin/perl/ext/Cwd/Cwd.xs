@@ -1,6 +1,8 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#define NEED_sv_2pv_nolen
+#include "ppport.h"
 
 #ifdef I_UNISTD
 #   include <unistd.h>
@@ -8,7 +10,14 @@
 
 /* The realpath() implementation from OpenBSD 2.9 (realpath.c 1.4)
  * Renamed here to bsd_realpath() to avoid library conflicts.
- * --jhi 2000-06-20 */
+ * --jhi 2000-06-20 
+ */
+
+/* See
+ * http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2004-11/msg00979.html
+ * for the details of why the BSD license is compatible with the
+ * AL/GPL standard perl license.
+ */
 
 /*
  * Copyright (c) 1994
@@ -61,9 +70,7 @@ static char *rcsid = "$OpenBSD: realpath.c,v 1.4 1998/05/18 09:55:19 deraadt Exp
  */
 static
 char *
-bsd_realpath(path, resolved)
-	const char *path;
-	char *resolved;
+bsd_realpath(const char *path, char *resolved)
 {
 #ifdef VMS
        dTHX;
@@ -206,6 +213,31 @@ err2:
 #endif
 }
 
+#ifndef SV_CWD_RETURN_UNDEF
+#define SV_CWD_RETURN_UNDEF \
+sv_setsv(sv, &PL_sv_undef); \
+return FALSE
+#endif
+
+#ifndef OPpENTERSUB_HASTARG
+#define OPpENTERSUB_HASTARG     32      /* Called from OP tree. */
+#endif
+
+#ifndef dXSTARG
+#define dXSTARG SV * targ = ((PL_op->op_private & OPpENTERSUB_HASTARG) \
+                             ? PAD_SV(PL_op->op_targ) : sv_newmortal())
+#endif
+
+#ifndef XSprePUSH
+#define XSprePUSH (sp = PL_stack_base + ax - 1)
+#endif
+
+#ifndef SV_CWD_ISDOT
+#define SV_CWD_ISDOT(dp) \
+    (dp->d_name[0] == '.' && (dp->d_name[1] == '\0' || \
+        (dp->d_name[1] == '.' && dp->d_name[2] == '\0')))
+#endif
+
 #ifndef getcwd_sv
 /* Taken from perl 5.8's util.c */
 #define getcwd_sv(a) Perl_getcwd_sv(aTHX_ a)
@@ -236,7 +268,7 @@ int Perl_getcwd_sv(pTHX_ register SV *sv)
     }
 
 #else
-
+  {
     Stat_t statbuf;
     int orig_cdev, orig_cino, cdev, cino, odev, oino, tdev, tino;
     int namelen, pathlen=0;
@@ -348,6 +380,7 @@ int Perl_getcwd_sv(pTHX_ register SV *sv)
     }
 
     return TRUE;
+  }
 #endif
 
 #else
@@ -378,13 +411,14 @@ PPCODE:
 void
 abs_path(pathsv=Nullsv)
     SV *pathsv
+PROTOTYPE: DISABLE
 PPCODE:
 {
     dXSTARG;
     char *path;
     char buf[MAXPATHLEN];
 
-    path = pathsv ? SvPV_nolen(pathsv) : ".";
+    path = pathsv ? SvPV_nolen(pathsv) : (char *)".";
 
     if (bsd_realpath(path, buf)) {
         sv_setpvn(TARG, buf, strlen(buf));
@@ -423,11 +457,12 @@ PPCODE:
     New(0,dir,MAXPATHLEN,char);
     if (_getdcwd(drive, dir, MAXPATHLEN)) {
         sv_setpvn(TARG, dir, strlen(dir));
-        Safefree(dir);
         SvPOK_only(TARG);
     }
     else
         sv_setsv(TARG, &PL_sv_undef);
+
+    Safefree(dir);
 
     XSprePUSH; PUSHTARG;
 #ifndef INCOMPLETE_TAINTS

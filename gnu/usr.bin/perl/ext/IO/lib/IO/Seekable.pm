@@ -107,7 +107,7 @@ require Exporter;
 @EXPORT = qw(SEEK_SET SEEK_CUR SEEK_END);
 @ISA = qw(Exporter);
 
-$VERSION = "1.09";
+$VERSION = "1.10";
 $VERSION = eval $VERSION;
 
 sub seek {

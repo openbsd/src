@@ -7,7 +7,7 @@ BEGIN {
 
 use Config;
 
-print "1..37\n";
+print "1..45\n";
 
 print join(':',1..5) eq '1:2:3:4:5' ? "ok 1\n" : "not ok 1\n";
 
@@ -140,3 +140,51 @@ print join(":", map "[$_]", @foo) eq '' ? "ok 36\n" : "not ok 36\n";
 
 @foo=(); push @foo, $_ for undef..undef;
 print join(":", map "[$_]", @foo) eq '[]' ? "ok 37\n" : "not ok 37\n";
+
+# again with magic
+{
+    my @a = (1..3);
+    @foo=(); push @foo, $_ for undef..$#a;
+    print join(":", @foo) eq '0:1:2' ? "ok 38\n" : "not ok 38\n";
+}
+{
+    my @a = ();
+    @foo=(); push @foo, $_ for $#a..undef;
+    print join(":", @foo) eq '-1:0' ? "ok 39\n" : "not ok 39\n";
+}
+{
+    local $1;
+    "2" =~ /(.+)/;
+    @foo=(); push @foo, $_ for undef..$1;
+    print join(":", @foo) eq '0:1:2' ? "ok 40\n" : "not ok 40\n";
+}
+{
+    local $1;
+    "-2" =~ /(.+)/;
+    @foo=(); push @foo, $_ for $1..undef;
+    print join(":", @foo) eq '-2:-1:0' ? "ok 41\n" : "not ok 41\n";
+}
+{
+    local $1;
+    "B" =~ /(.+)/;
+    @foo=(); push @foo, $_ for undef..$1;
+    print join(":", map "[$_]", @foo) eq '[]' ? "ok 42\n" : "not ok 42\n";
+}
+{
+    local $1;
+    "B" =~ /(.+)/;
+    @foo=(); push @foo, $_ for ""..$1;
+    print join(":", map "[$_]", @foo) eq '[]' ? "ok 43\n" : "not ok 43\n";
+}
+{
+    local $1;
+    "B" =~ /(.+)/;
+    @foo=(); push @foo, $_ for $1..undef;
+    print join(":", map "[$_]", @foo) eq '' ? "ok 44\n" : "not ok 44\n";
+}
+{
+    local $1;
+    "B" =~ /(.+)/;
+    @foo=(); push @foo, $_ for $1.."";
+    print join(":", map "[$_]", @foo) eq '' ? "ok 45\n" : "not ok 45\n";
+}

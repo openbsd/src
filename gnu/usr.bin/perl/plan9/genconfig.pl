@@ -118,7 +118,13 @@ EndOfIntro
 
 # Plan 9 compiler stuff
 print OUT "cc='pcc'\n";
-print OUT "d_attribut='undef'\n";
+print OUT "d_attribute_format='undef'\n";
+print OUT "d_attribute_malloc='undef'\n";
+print OUT "d_attribute_nonnull='undef'\n";
+print OUT "d_attribute_noreturn='undef'\n";
+print OUT "d_attribute_pure='undef'\n";
+print OUT "d_attribute_unused='undef'\n";
+print OUT "d_attribute_warn_unused_result='undef'\n";
 print OUT "d_socket='define'\n";
 print OUT "d_sockpair='define'\n";
 print OUT "d_sigsetjmp='define'\n";

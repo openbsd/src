@@ -381,7 +381,7 @@ Perl_my_getenv(pTHX_ const char *lnm, bool sys)
         Renew(__my_getenv_eqv,LNM$C_NAMLENGTH*midx+1,char);
       }
       else {
-        New(1380,__my_getenv_eqv,LNM$C_NAMLENGTH*midx+1,char);
+        Newx(__my_getenv_eqv,LNM$C_NAMLENGTH*midx+1,char);
       }
       eqv = __my_getenv_eqv;  
     }
@@ -466,7 +466,7 @@ Perl_my_getenv_len(pTHX_ const char *lnm, unsigned long *len, bool sys)
         Renew(__my_getenv_len_eqv,LNM$C_NAMLENGTH*midx+1,char);
       }
       else {
-        New(1381,__my_getenv_len_eqv,LNM$C_NAMLENGTH*midx+1,char);
+        Newx(__my_getenv_len_eqv,LNM$C_NAMLENGTH*midx+1,char);
       }
       buf = __my_getenv_len_eqv;  
     }
@@ -642,7 +642,7 @@ prime_env_iter(void)
       defflags &= ~CLI$M_TRUSTED;
     } while (retsts == LIB$_INVARG && (flags | CLI$M_TRUSTED));
     _ckvmssts(retsts);
-    if (!buf) New(1322,buf,mbxbufsiz + 1,char);
+    if (!buf) Newx(buf,mbxbufsiz + 1,char);
     if (seenhv) SvREFCNT_dec(seenhv);
     seenhv = newHV();
     while (1) {
@@ -853,7 +853,7 @@ Perl_vmssetenv(pTHX_ char *lnm, char *eqv, struct dsc$descriptor_s **tabvec)
               nseg = PERL_LNM_MAX_ALLOWED_INDEX + 1;
 	    }
 
-            New(1382,ilist,nseg+1,struct itmlst_3);
+            Newx(ilist,nseg+1,struct itmlst_3);
             ile = ilist;
             if (!ile) {
 	      set_errno(ENOMEM); set_vaxc_errno(SS$_INSFMEM);
@@ -1220,7 +1220,7 @@ my_tmpfile(void)
 
   if ((fp = tmpfile())) return fp;
 
-  New(1323,cp,L_tmpnam+24,char);
+  Newx(cp,L_tmpnam+24,char);
   strcpy(cp,"Sys$Scratch:");
   tmpnam(cp+strlen(cp));
   strcat(cp,".Perltmp");
@@ -1787,7 +1787,7 @@ pipe_tochild_setup(pTHX_ char *rmbx, char *wmbx)
     unsigned int dviitm = DVI$_DEVBUFSIZ;
     int j, n;
 
-    New(1368, p, 1, Pipe);
+    Newx(p, 1, Pipe);
 
     create_mbx(aTHX_ &p->chan_in , &d_mbx1);
     create_mbx(aTHX_ &p->chan_out, &d_mbx2);
@@ -1956,12 +1956,12 @@ pipe_infromchild_setup(pTHX_ char *rmbx, char *wmbx)
                                       DSC$K_CLASS_S, mbx2};
     unsigned int dviitm = DVI$_DEVBUFSIZ;
 
-    New(1367, p, 1, Pipe);
+    Newx(p, 1, Pipe);
     create_mbx(aTHX_ &p->chan_in , &d_mbx1);
     create_mbx(aTHX_ &p->chan_out, &d_mbx2);
 
     _ckvmssts(lib$getdvi(&dviitm, &p->chan_in, 0, &p->bufsize));
-    New(1367, p->buf, p->bufsize, char);
+    Newx(p->buf, p->bufsize, char);
     p->shut_on_empty = FALSE;
     p->info   = 0;
     p->type   = 0;
@@ -2079,11 +2079,11 @@ pipe_mbxtofd_setup(pTHX_ int fd, char *out)
         }
     }
 
-    New(1366, p, 1, Pipe);
+    Newx(p, 1, Pipe);
     p->fd_out = dup(fd);
     create_mbx(aTHX_ &p->chan_in, &d_mbx);
     _ckvmssts(lib$getdvi(&dviitm, &p->chan_in, 0, &p->bufsize));
-    New(1366, p->buf, p->bufsize+1, char);
+    Newx(p->buf, p->bufsize+1, char);
     p->shut_on_empty = FALSE;
     p->retry = 0;
     p->info  = 0;
@@ -2183,7 +2183,7 @@ store_pipelocs(pTHX)
 
 /*  the . directory from @INC comes last */
 
-    New(1370,p,1,PLOC);
+    Newx(p,1,PLOC);
     p->next = head_PLOC;
     head_PLOC = p;
     strcpy(p->dir,"./");
@@ -2200,7 +2200,7 @@ store_pipelocs(pTHX)
         if (x) x[1] = '\0';
 
         if ((unixdir = tounixpath(temp, Nullch)) != Nullch) {
-            New(1370,p,1,PLOC);
+            Newx(p,1,PLOC);
             p->next = head_PLOC;
             head_PLOC = p;
             strncpy(p->dir,unixdir,sizeof(p->dir)-1);
@@ -2224,7 +2224,7 @@ store_pipelocs(pTHX)
         if ((unixdir = tounixpath(dir, Nullch)) == Nullch)
             continue;
 
-        New(1370,p,1,PLOC);
+        Newx(p,1,PLOC);
         p->next = head_PLOC;
         head_PLOC = p;
         strncpy(p->dir,unixdir,sizeof(p->dir)-1);
@@ -2235,7 +2235,7 @@ store_pipelocs(pTHX)
 
 #ifdef ARCHLIB_EXP
     if ((unixdir = tounixpath(ARCHLIB_EXP, Nullch)) != Nullch) {
-        New(1370,p,1,PLOC);
+        Newx(p,1,PLOC);
         p->next = head_PLOC;
         head_PLOC = p;
         strncpy(p->dir,unixdir,sizeof(p->dir)-1);
@@ -2468,7 +2468,7 @@ safe_popen(pTHX_ char *cmd, char *in_mode, int *psts)
       *psts = sts;
       return Nullfp; 
     }
-    New(1301,info,1,Info);
+    Newx(info,1,Info);
         
     strcpy(mode,in_mode);
     info->mode = *mode;
@@ -2995,7 +2995,7 @@ mp_do_rmsexpand(pTHX_ char *filespec, char *outbuf, int ts, char *defspec, unsig
     return NULL;
   }
   if (!outbuf) {
-    if (ts) out = New(1319,outbuf,NAM$C_MAXRSS+1,char);
+    if (ts) out = Newx(outbuf,NAM$C_MAXRSS+1,char);
     else    outbuf = __rmsexpand_retbuf;
   }
   if ((isunix = (strchr(filespec,'/') != NULL))) {
@@ -3299,7 +3299,7 @@ static char *mp_do_fileify_dirspec(pTHX_ char *dir,char *buf,int ts)
       }
       retlen = dirlen + (addmfd ? 13 : 6);
       if (buf) retspec = buf;
-      else if (ts) New(1309,retspec,retlen+1,char);
+      else if (ts) Newx(retspec,retlen+1,char);
       else retspec = __fileify_retbuf;
       if (addmfd) {
         dirlen = lastdir - dir;
@@ -3383,7 +3383,7 @@ static char *mp_do_fileify_dirspec(pTHX_ char *dir,char *buf,int ts)
       if (dirnam.nam$l_fnb & NAM$M_EXP_NAME) {
         /* They provided at least the name; we added the type, if necessary, */
         if (buf) retspec = buf;                            /* in sys$parse() */
-        else if (ts) New(1311,retspec,dirnam.nam$b_esl+1,char);
+        else if (ts) Newx(retspec,dirnam.nam$b_esl+1,char);
         else retspec = __fileify_retbuf;
         strcpy(retspec,esa);
         dirnam.nam$b_nop |= NAM$M_SYNCHK;  dirnam.nam$l_rlf = NULL;
@@ -3408,7 +3408,7 @@ static char *mp_do_fileify_dirspec(pTHX_ char *dir,char *buf,int ts)
         /* There's more than one directory in the path.  Just roll back. */
         *cp1 = term;
         if (buf) retspec = buf;
-        else if (ts) New(1311,retspec,retlen+7,char);
+        else if (ts) Newx(retspec,retlen+7,char);
         else retspec = __fileify_retbuf;
         strcpy(retspec,esa);
       }
@@ -3425,7 +3425,7 @@ static char *mp_do_fileify_dirspec(pTHX_ char *dir,char *buf,int ts)
           }
           retlen = dirnam.nam$b_esl - 9; /* esa - '][' - '].DIR;1' */
           if (buf) retspec = buf;
-          else if (ts) New(1312,retspec,retlen+16,char);
+          else if (ts) Newx(retspec,retlen+16,char);
           else retspec = __fileify_retbuf;
           cp1 = strstr(esa,"][");
           if (!cp1) cp1 = strstr(esa,"]<");
@@ -3454,11 +3454,11 @@ static char *mp_do_fileify_dirspec(pTHX_ char *dir,char *buf,int ts)
         }
         else {  /* This is a top-level dir.  Add the MFD to the path. */
           if (buf) retspec = buf;
-          else if (ts) New(1312,retspec,retlen+16,char);
+          else if (ts) Newx(retspec,retlen+16,char);
           else retspec = __fileify_retbuf;
           cp1 = esa;
           cp2 = retspec;
-          while (*cp1 != ':') *(cp2++) = *(cp1++);
+          while ((*cp1 != ':')  && (*cp1 != '\0')) *(cp2++) = *(cp1++);
           strcpy(cp2,":[000000]");
           cp1 += 2;
           strcpy(cp2+9,cp1);
@@ -3509,7 +3509,7 @@ static char *mp_do_pathify_dirspec(pTHX_ char *dir,char *buf, int ts)
       /* Trap simple rooted lnms, and return lnm:[000000] */
       if (!strcmp(trndir+trnlen-2,".]")) {
         if (buf) retpath = buf;
-        else if (ts) New(1318,retpath,strlen(dir)+10,char);
+        else if (ts) Newx(retpath,strlen(dir)+10,char);
         else retpath = __pathify_retbuf;
         strcpy(retpath,dir);
         strcat(retpath,":[000000]");
@@ -3549,7 +3549,7 @@ static char *mp_do_pathify_dirspec(pTHX_ char *dir,char *buf, int ts)
         }
       }
       if (buf) retpath = buf;
-      else if (ts) New(1313,retpath,retlen+1,char);
+      else if (ts) Newx(retpath,retlen+1,char);
       else retpath = __pathify_retbuf;
       strncpy(retpath,dir,retlen-1);
       if (retpath[retlen-2] != '/') { /* If the path doesn't already end */
@@ -3594,7 +3594,7 @@ static char *mp_do_pathify_dirspec(pTHX_ char *dir,char *buf, int ts)
           dir[dirfab.fab$b_fns-1] == '>' ||
           dir[dirfab.fab$b_fns-1] == ':') { /* It's already a VMS 'path' */
         if (buf) retpath = buf;
-        else if (ts) New(1314,retpath,strlen(dir)+1,char);
+        else if (ts) Newx(retpath,strlen(dir)+1,char);
         else retpath = __pathify_retbuf;
         strcpy(retpath,dir);
         return retpath;
@@ -3655,7 +3655,7 @@ static char *mp_do_pathify_dirspec(pTHX_ char *dir,char *buf, int ts)
       *(dirnam.nam$l_type + 1) = '\0';
       retlen = dirnam.nam$l_type - esa + 2;
       if (buf) retpath = buf;
-      else if (ts) New(1314,retpath,retlen,char);
+      else if (ts) Newx(retpath,retlen,char);
       else retpath = __pathify_retbuf;
       strcpy(retpath,esa);
       dirnam.nam$b_nop |= NAM$M_SYNCHK;  dirnam.nam$l_rlf = NULL;
@@ -3697,7 +3697,7 @@ static char *mp_do_tounixspec(pTHX_ char *spec, char *buf, int ts)
           { expand++; cp1 +=2; } /* VMS '...' ==> Unix '/.../' */
       }
     }
-    New(1315,rslt,retlen+2+2*expand,char);
+    Newx(rslt,retlen+2+2*expand,char);
   }
   else rslt = __tounixspec_retbuf;
   if (strchr(spec,'/') != NULL) {
@@ -3816,7 +3816,7 @@ static char *mp_do_tovmsspec(pTHX_ char *path, char *buf, int ts) {
 
   if (path == NULL) return NULL;
   if (buf) rslt = buf;
-  else if (ts) New(1316,rslt,strlen(path)+9,char);
+  else if (ts) Newx(rslt,NAM$C_MAXRSS+1,char);
   else rslt = __tovmsspec_retbuf;
   if (strpbrk(path,"]:>") ||
       (dirend = strrchr(path,'/')) == NULL) {
@@ -3842,7 +3842,6 @@ static char *mp_do_tovmsspec(pTHX_ char *path, char *buf, int ts) {
 
     while (*(cp2+1) == '/') cp2++;  /* Skip multiple /s */
     if (!*(cp2+1)) {
-      if (!buf & ts) Renew(rslt,18,char);
       strcpy(rslt,"sys$disk:[000000]");
       return rslt;
     }
@@ -3865,8 +3864,10 @@ static char *mp_do_tovmsspec(pTHX_ char *path, char *buf, int ts) {
         if (!buf && ts) Renew(rslt,strlen(path)-strlen(rslt)+trnend+4,char);
         strcpy(rslt,trndev);
         cp1 = rslt + trnend;
-        *(cp1++) = '.';
-        cp2++;
+	if (*cp2 != 0) {
+          *(cp1++) = '.';
+          cp2++;
+        }
       }
       else {
         *(cp1++) = ':';
@@ -3963,7 +3964,7 @@ static char *mp_do_tovmspath(pTHX_ char *path, char *buf, int ts) {
   if (buf) return buf;
   else if (ts) {
     vmslen = strlen(vmsified);
-    New(1317,cp,vmslen+1,char);
+    Newx(cp,vmslen+1,char);
     memcpy(cp,vmsified,vmslen);
     cp[vmslen] = '\0';
     return cp;
@@ -3992,7 +3993,7 @@ static char *mp_do_tounixpath(pTHX_ char *path, char *buf, int ts) {
   if (buf) return buf;
   else if (ts) {
     unixlen = strlen(unixified);
-    New(1317,cp,unixlen+1,char);
+    Newx(cp,unixlen+1,char);
     memcpy(cp,unixified,unixlen);
     cp[unixlen] = '\0';
     return cp;
@@ -4210,7 +4211,7 @@ mp_getredirection(pTHX_ int *ac, char ***av)
      * Allocate and fill in the new argument vector, Some Unix's terminate
      * the list with an extra null pointer.
      */
-    New(1302, argv, item_count+1, char *);
+    Newx(argv, item_count+1, char *);
     *av = argv;
     for (j = 0; j < item_count; ++j, list_head = list_head->next)
 	argv[j] = list_head->value;
@@ -4305,11 +4306,11 @@ static void add_item(struct list_item **head,
 {
     if (*head == 0)
 	{
-	New(1303,*head,1,struct list_item);
+	Newx(*head,1,struct list_item);
 	*tail = *head;
 	}
     else {
-	New(1304,(*tail)->next,1,struct list_item);
+	Newx((*tail)->next,1,struct list_item);
 	*tail = (*tail)->next;
 	}
     (*tail)->value = value;
@@ -4382,7 +4383,7 @@ unsigned long int zero = 0, sts;
 	char *string;
 	char *c;
 
-	New(1305,string,resultspec.dsc$w_length+1,char);
+	Newx(string,resultspec.dsc$w_length+1,char);
 	strncpy(string, resultspec.dsc$a_pointer, resultspec.dsc$w_length);
 	string[resultspec.dsc$w_length] = '\0';
 	if (NULL == had_version)
@@ -4622,7 +4623,7 @@ vms_image_init(int *argcp, char ***argvp)
          exit(SS$_ABORT);
       }
       if (jpilist[1].bufadr != rlst) Safefree(jpilist[1].bufadr);
-      jpilist[1].bufadr = New(1320,mask,rsz,unsigned long int);
+      jpilist[1].bufadr = Newx(mask,rsz,unsigned long int);
       jpilist[1].buflen = rsz * sizeof(unsigned long int);
       _ckvmssts_noperl(sys$getjpiw(0,NULL,NULL,&jpilist[1],iosb,NULL,NULL));
       _ckvmssts_noperl(iosb[0]);
@@ -4646,9 +4647,9 @@ vms_image_init(int *argcp, char ***argvp)
   if (will_taint) {
     char **newargv, **oldargv;
     oldargv = *argvp;
-    New(1320,newargv,(*argcp)+2,char *);
+    Newx(newargv,(*argcp)+2,char *);
     newargv[0] = oldargv[0];
-    New(1320,newargv[1],3,char);
+    Newx(newargv[1],3,char);
     strcpy(newargv[1], "-T");
     Copy(&oldargv[1],&newargv[2],(*argcp)-1,char **);
     (*argcp)++;
@@ -4675,12 +4676,12 @@ vms_image_init(int *argcp, char ***argvp)
   for (tabidx = 0;
        len = my_trnlnm("PERL_ENV_TABLES",eqv,tabidx);
        tabidx++) {
-    if (!tabidx) New(1321,tabvec,tabct,struct dsc$descriptor_s *);
+    if (!tabidx) Newx(tabvec,tabct,struct dsc$descriptor_s *);
     else if (tabidx >= tabct) {
       tabct += 8;
       Renew(tabvec,tabct,struct dsc$descriptor_s *);
     }
-    New(1322,tabvec[tabidx],1,struct dsc$descriptor_s);
+    Newx(tabvec[tabidx],1,struct dsc$descriptor_s);
     tabvec[tabidx]->dsc$w_length  = 0;
     tabvec[tabidx]->dsc$b_dtype   = DSC$K_DTYPE_T;
     tabvec[tabidx]->dsc$b_class   = DSC$K_CLASS_D;
@@ -4911,8 +4912,8 @@ Perl_opendir(pTHX_ char *name)
       return NULL;
     }
     /* Get memory for the handle, and the pattern. */
-    New(1306,dd,1,DIR);
-    New(1307,dd->pattern,strlen(dir)+sizeof "*.*" + 1,char);
+    Newx(dd,1,DIR);
+    Newx(dd->pattern,strlen(dir)+sizeof "*.*" + 1,char);
 
     /* Fill in the fields; mainly playing with the descriptor. */
     (void)sprintf(dd->pattern, "%s*.*",dir);
@@ -4924,7 +4925,7 @@ Perl_opendir(pTHX_ char *name)
     dd->pat.dsc$b_dtype = DSC$K_DTYPE_T;
     dd->pat.dsc$b_class = DSC$K_CLASS_S;
 #if defined(USE_5005THREADS) || defined(USE_ITHREADS)
-    New(1308,dd->mutex,1,perl_mutex);
+    Newx(dd->mutex,1,perl_mutex);
     MUTEX_INIT( (perl_mutex *) dd->mutex );
 #else
     dd->mutex = NULL;
@@ -4980,7 +4981,7 @@ collectversions(pTHX_ DIR *dd)
 
     /* Add the version wildcard, ignoring the "*.*" put on before */
     i = strlen(dd->pattern);
-    New(1308,text,i + e->d_namlen + 3,char);
+    Newx(text,i + e->d_namlen + 3,char);
     (void)strcpy(text, dd->pattern);
     (void)sprintf(&text[i - 3], "%s;*", e->d_name);
 
@@ -5209,7 +5210,7 @@ setup_argstr(pTHX_ SV *really, SV **mark, SV **sp)
       cmdlen += rlen ? rlen + 1 : 0;
     }
   }
-  New(401,PL_Cmd,cmdlen+1,char);
+  Newx(PL_Cmd,cmdlen+1,char);
 
   if (tmps && *tmps) {
     strcpy(PL_Cmd,tmps);
@@ -5243,7 +5244,7 @@ setup_cmddsc(pTHX_ char *cmd, int check_img, int *suggest_quote,
   register char *s, *rest, *cp, *wordbreak;
   register int isdcl;
 
-  New(402,vmscmd,sizeof(struct dsc$descriptor_s),struct dsc$descriptor_s);
+  Newx(vmscmd,sizeof(struct dsc$descriptor_s),struct dsc$descriptor_s);
   vmscmd->dsc$a_pointer = NULL;
   vmscmd->dsc$b_dtype  = DSC$K_DTYPE_T;
   vmscmd->dsc$b_class  = DSC$K_CLASS_S;
@@ -5323,7 +5324,7 @@ setup_cmddsc(pTHX_ char *cmd, int check_img, int *suggest_quote,
       *s = '\0';
 
       /* check that it's really not DCL with no file extension */
-      fp = fopen(resspec,"r","ctx=bin,shr=get");
+      fp = fopen(resspec,"r","ctx=bin","shr=get");
       if (fp) {
         char b[4] = {0,0,0,0};
         read(fileno(fp),b,4);
@@ -5333,7 +5334,7 @@ setup_cmddsc(pTHX_ char *cmd, int check_img, int *suggest_quote,
       if (check_img && isdcl) return RMS$_FNF;
 
       if (cando_by_name(S_IXUSR,0,resspec)) {
-        New(402,vmscmd->dsc$a_pointer,7 + s - resspec + (rest ? strlen(rest) : 0),char);
+        Newx(vmscmd->dsc$a_pointer,7 + s - resspec + (rest ? strlen(rest) : 0),char);
         if (!isdcl) {
             strcpy(vmscmd->dsc$a_pointer,"$ MCR ");
             if (suggest_quote) *suggest_quote = 1;
@@ -5532,7 +5533,7 @@ FILE *my_fdopen(int fd, const char *mode)
     struct stat sbuf; /* native stat; we don't need flex_stat */
     if (!sockflagsize || fdoff > sockflagsize) {
       if (sockflags) Renew(     sockflags,fdoff+2,unsigned int);
-      else           New  (1324,sockflags,fdoff+2,unsigned int);
+      else           Newx  (sockflags,fdoff+2,unsigned int);
       memset(sockflags+sockflagsize,0,fdoff + 2 - sockflagsize);
       sockflagsize = fdoff + 2;
     }
@@ -6866,7 +6867,7 @@ Perl_cando_by_name(pTHX_ I32 bit, Uid_t effective, char *fname)
                                     &usrprodsc.dsc$w_length,0));
 
   /* allocate space for the profile and get it filled in */
-  New(1330,usrprodsc.dsc$a_pointer,usrprodsc.dsc$w_length,char);
+  Newx(usrprodsc.dsc$a_pointer,usrprodsc.dsc$w_length,char);
   _ckvmssts(sys$create_user_profile(&usrdsc,&usrprolst,0,usrprodsc.dsc$a_pointer,
                                     &usrprodsc.dsc$w_length,0));
 
@@ -6906,7 +6907,16 @@ int
 Perl_flex_fstat(pTHX_ int fd, Stat_t *statbufp)
 {
   if (!fstat(fd,(stat_t *) statbufp)) {
-    if (statbufp == (Stat_t *) &PL_statcache) *namecache == '\0';
+    if (statbufp == (Stat_t *) &PL_statcache) {
+    char *cptr;
+
+	/* Save name for cando by name in VMS format */
+	cptr = getname(fd, namecache, 1);
+
+	/* This should not happen, but just in case */
+	if (cptr == NULL)
+	   namecache[0] = '\0';
+    }
     statbufp->st_dev = encode_dev(aTHX_ statbufp->st_devnam);
 #   ifdef RTL_USES_UTC
 #   ifdef VMSISH_TIME

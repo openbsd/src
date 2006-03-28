@@ -7,7 +7,7 @@ BEGIN {
 }
 
 require './test.pl';
-plan( tests => 130 );
+plan( tests => 131 );
 
 $x = 'foo';
 $_ = "x";
@@ -539,3 +539,17 @@ my $name = "chris";
     $name =~ s/hr//e;
 }
 is($name, "cis", q[#22351 bug with 'e' substitution modifier]);
+
+
+# [perl #34171] $1 didn't honour 'use bytes' in s//e
+{
+    my $s="\x{100}";
+    my $x;
+    {
+	use bytes;
+	$s=~ s/(..)/$x=$1/e
+    }
+    is(length($x), 2, '[perl #34171]');
+}
+
+

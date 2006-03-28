@@ -182,7 +182,8 @@ is($?, 42,      'status unaffected by implicit close');
 $? = 0;
 
 # check that child is reaped if the piped program can't be executed
-{
+SKIP: {
+  skip "/no_such_process exists", 1 if -e "/no_such_process";
   open NIL, '/no_such_process |';
   close NIL;
 

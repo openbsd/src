@@ -1,4 +1,5 @@
 =head1 NAME
+X<syntax>
 
 perlsyn - Perl syntax
 
@@ -27,6 +28,7 @@ you will see familiar pieces in Perl.  They often work the same, but
 see L<perltrap> for information about how they differ.
 
 =head2 Declarations
+X<declaration> X<undef> X<undefined> X<uninitialized>
 
 The only things you need to declare in Perl are report formats and
 subroutines (and sometimes not even subroutines).  A variable holds
@@ -63,6 +65,7 @@ as the my if you expect to be able to access those private variables.
 Declaring a subroutine allows a subroutine name to be used as if it were a
 list operator from that point forward in the program.  You can declare a
 subroutine without defining it by saying C<sub name>, thus:
+X<subroutine, declaration>
 
     sub myname;
     $me = myname $0 		or die "can't get myname";
@@ -84,12 +87,14 @@ statements as if it were an ordinary statement.  That means it actually
 has both compile-time and run-time effects.
 
 =head2 Comments
+X<comment> X<#>
 
 Text from a C<"#"> character until the end of the line is a comment,
 and is ignored.  Exceptions include C<"#"> inside a string or regular
 expression.
 
 =head2 Simple Statements
+X<statement> X<semicolon> X<expression> X<;>
 
 The only kind of simple statement is an expression evaluated for its
 side effects.  Every simple statement must be terminated with a
@@ -102,11 +107,17 @@ TERMs in an expression), and thus need an explicit termination if used
 as the last item in a statement.
 
 =head2 Truth and Falsehood
+X<truth> X<falsehood> X<true> X<false> X<!> X<not> X<negation> X<0>
 
 The number 0, the strings C<'0'> and C<''>, the empty list C<()>, and
 C<undef> are all false in a boolean context. All other values are true.
+Negation of a true value by C<!> or C<not> returns a special false value.
+When evaluated as a string it is treated as C<''>, but as a number, it
+is treated as 0.
 
 =head2 Statement Modifiers
+X<statement modifier> X<modifier> X<if> X<unless> X<while>
+X<until> X<foreach> X<for>
 
 Any simple statement may optionally be followed by a I<SINGLE> modifier,
 just before the terminating semicolon (or block ending).  The possible
@@ -157,6 +168,7 @@ later will I<NOT> work in this construct, because modifiers don't take
 loop labels.  Sorry.  You can always put another block inside of it
 (for C<next>) or around it (for C<last>) to do that sort of thing.
 For C<next>, just double the braces:
+X<next> X<last> X<redo>
 
     do {{
 	next if $x == $y;
@@ -164,6 +176,7 @@ For C<next>, just double the braces:
     }} until $x++ > $z;
 
 For C<last>, you have to be more elaborate:
+X<last>
 
     LOOP: { 
 	    do {
@@ -178,8 +191,11 @@ B<undefined>.  The value of the C<my> variable may be C<undef>, any
 previously assigned value, or possibly anything else.  Don't rely on
 it.  Future versions of perl might do something different from the
 version of perl you try it out on.  Here be dragons.
+X<my>
 
 =head2 Compound Statements
+X<statement, compound> X<block> X<bracket, curly> X<curly bracket> X<brace>
+X<{> X<}> X<if> X<unless> X<while> X<until> X<foreach> X<for> X<continue>
 
 In Perl, a sequence of statements that defines a scope is called a block.
 Sometimes a block is delimited by the file containing it (in the case
@@ -196,6 +212,8 @@ The following compound statements may be used to control flow:
     if (EXPR) BLOCK elsif (EXPR) BLOCK ... else BLOCK
     LABEL while (EXPR) BLOCK
     LABEL while (EXPR) BLOCK continue BLOCK
+    LABEL until (EXPR) BLOCK
+    LABEL until (EXPR) BLOCK continue BLOCK
     LABEL for (EXPR; EXPR; EXPR) BLOCK
     LABEL foreach VAR (LIST) BLOCK
     LABEL foreach VAR (LIST) BLOCK continue BLOCK
@@ -220,6 +238,8 @@ the sense of the test is reversed.
 
 The C<while> statement executes the block as long as the expression is
 true (does not evaluate to the null string C<""> or C<0> or C<"0">).
+The C<until> statement executes the block as long as the expression is
+false.
 The LABEL is optional, and if present, consists of an identifier followed
 by a colon.  The LABEL identifies the loop for the loop control
 statements C<next>, C<last>, and C<redo>.
@@ -235,6 +255,7 @@ increment a loop variable, even when the loop has been continued via
 the C<next> statement.
 
 =head2 Loop Control
+X<loop control> X<loop, control> X<next> X<last> X<redo> X<continue>
 
 The C<next> command starts the next iteration of the loop:
 
@@ -316,6 +337,7 @@ The form C<while/if BLOCK BLOCK>, available in Perl 4, is no longer
 available.   Replace any occurrence of C<if BLOCK> by C<if (do BLOCK)>.
 
 =head2 For Loops
+X<for> X<foreach>
 
 Perl's C-style C<for> loop works like the corresponding C<while> loop;
 that means that this:
@@ -337,12 +359,14 @@ There is one minor difference: if variables are declared with C<my>
 in the initialization section of the C<for>, the lexical scope of
 those variables is exactly the C<for> loop (the body of the loop
 and the control sections).
+X<my>
 
 Besides the normal array index looping, C<for> can lend itself
 to many other interesting applications.  Here's one that avoids the
 problem you get into if you explicitly test for end-of-file on
 an interactive file descriptor causing your program to appear to
 hang.
+X<eof> X<end-of-file> X<end of file>
 
     $on_a_tty = -t STDIN && -t STDOUT;
     sub prompt { print "yes? " if $on_a_tty }
@@ -353,12 +377,14 @@ hang.
 Using C<readline> (or the operator form, C<< <EXPR> >>) as the
 conditional of a C<for> loop is shorthand for the following.  This
 behaviour is the same as a C<while> loop conditional.
+X<readline> X<< <> >>
 
     for ( prompt(); defined( $_ = <STDIN> ); prompt() ) {
         # do something
     }
 
 =head2 Foreach Loops
+X<for> X<foreach>
 
 The C<foreach> loop iterates over a normal list value and sets the
 variable VAR to be each element of the list in turn.  If the variable
@@ -369,21 +395,25 @@ the loop.  If the variable was previously declared with C<my>, it uses
 that variable instead of the global one, but it's still localized to
 the loop.  This implicit localisation occurs I<only> in a C<foreach>
 loop.
+X<my> X<local>
 
 The C<foreach> keyword is actually a synonym for the C<for> keyword, so
 you can use C<foreach> for readability or C<for> for brevity.  (Or because
 the Bourne shell is more familiar to you than I<csh>, so writing C<for>
 comes more naturally.)  If VAR is omitted, C<$_> is set to each value.
+X<$_>
 
 If any element of LIST is an lvalue, you can modify it by modifying
 VAR inside the loop.  Conversely, if any element of LIST is NOT an
 lvalue, any attempt to modify that element will fail.  In other words,
 the C<foreach> loop index variable is an implicit alias for each item
 in the list that you're looping over.
+X<alias>
 
 If any part of LIST is an array, C<foreach> will get very confused if
 you add or remove elements within the loop body, for example with
 C<splice>.   So don't do that.
+X<splice>
 
 C<foreach> probably won't do what you expect if VAR is a tied or other
 special variable.   Don't do that either.
@@ -437,6 +467,7 @@ Perl executes a C<foreach> statement more rapidly than it would the
 equivalent C<for> loop.
 
 =head2 Basic BLOCKs and Switch Statements
+X<switch> X<block> X<case>
 
 A BLOCK by itself (labeled or not) is semantically equivalent to a
 loop that executes once.  Thus you can use any of the loop control
@@ -584,6 +615,7 @@ You might also consider writing a hash of subroutine references
 instead of synthesizing a C<switch> statement.
 
 =head2 Goto
+X<goto>
 
 Although not for the faint of heart, Perl does support a C<goto>
 statement.  There are three forms: C<goto>-LABEL, C<goto>-EXPR, and
@@ -619,6 +651,7 @@ resorting to a C<goto>.  For certain applications, the catch and throw pair of
 C<eval{}> and die() for exception processing can also be a prudent approach.
 
 =head2 PODs: Embedded Documentation
+X<POD> X<documentation>
 
 Perl has a mechanism for intermixing documentation with source code.
 While it's expecting the beginning of a new statement, if the compiler
@@ -666,6 +699,7 @@ One may also use pod directives to quickly comment out a section
 of code.
 
 =head2 Plain Old Comments (Not!)
+X<comment> X<line> X<#> X<preprocessor> X<eval>
 
 Perl can process line directives, much like the C preprocessor.  Using
 this, one can control Perl's idea of filenames and line numbers in

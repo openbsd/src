@@ -6,7 +6,7 @@ BEGIN {
 }
 
 require './test.pl';
-plan(tests => 41);
+plan(tests => 42);
 
 # compile time
 
@@ -151,3 +151,6 @@ is(77, scalar ((1,7)x2),    'stack truncation');
     }
     is($y, 'abcdabcd');
 }
+
+# [perl #35885]
+is( (join ',', (qw(a b c) x 3)), 'a,b,c,a,b,c,a,b,c', 'x on qw produces list' );

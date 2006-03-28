@@ -93,14 +93,30 @@ it passes all the three arguments to the three-argument C<open> operator.
 For convenience, C<IO::File> exports the O_XXX constants from the
 Fcntl module, if this module is available.
 
+=item binmode( [LAYER] )
+
+C<binmode> sets C<binmode> on the underlying C<IO> object, as documented
+in C<perldoc -f binmode>.
+
+C<binmode> accepts one optional parameter, which is the layer to be
+passed on to the C<binmode> call.
+
 =back
+
+=head1 NOTE
+
+Some operating systems may perform  C<IO::File::new()> or C<IO::File::open()>
+on a directory without errors.  This behavior is not portable and not
+suggested for use.  Using C<opendir()> and C<readdir()> or C<IO::Dir> are
+suggested instead.
 
 =head1 SEE ALSO
 
 L<perlfunc>, 
 L<perlop/"I/O Operators">,
-L<IO::Handle>
-L<IO::Seekable>
+L<IO::Handle>,
+L<IO::Seekable>,
+L<IO::Dir>
 
 =head1 HISTORY
 
@@ -121,7 +137,7 @@ require Exporter;
 
 @ISA = qw(IO::Handle IO::Seekable Exporter);
 
-$VERSION = "1.10";
+$VERSION = "1.13";
 
 @EXPORT = @IO::Seekable::EXPORT;
 
@@ -174,6 +190,19 @@ sub open {
 	$file = IO::Handle::_open_mode_string($mode) . " $file\0";
     }
     open($fh, $file);
+}
+
+################################################
+## Binmode
+##
+
+sub binmode {
+    ( @_ == 1 or @_ == 2 ) or croak 'usage $fh->binmode([LAYER])';
+
+    my($fh, $layer) = @_;
+
+    return binmode $$fh unless $layer;
+    return binmode $$fh, $layer;
 }
 
 1;

@@ -25,7 +25,7 @@ struct mgvtbl {
 
 struct magic {
     MAGIC*	mg_moremagic;
-    MGVTBL*	mg_virtual;	/* pointer to magic functions */
+    MGVTBL* mg_virtual;	/* pointer to magic functions */
     U16		mg_private;
     char	mg_type;
     U8		mg_flags;
@@ -48,6 +48,12 @@ struct magic {
 #define MgPV(mg,lp)		((((int)(lp = (mg)->mg_len)) == HEf_SVKEY) ?   \
 				 SvPV((SV*)((mg)->mg_ptr),lp) :		\
 				 (mg)->mg_ptr)
+#define MgPV_const(mg,lp)	((((int)(lp = (mg)->mg_len)) == HEf_SVKEY) ? \
+				 SvPV_const((SV*)((mg)->mg_ptr),lp) :        \
+				 (const char*)(mg)->mg_ptr)
+#define MgPV_nolen_const(mg)	(((((int)(mg)->mg_len)) == HEf_SVKEY) ?   \
+				 SvPV_nolen_const((SV*)((mg)->mg_ptr)) :  \
+				 (const char*)(mg)->mg_ptr)
 
 #define SvTIED_mg(sv,how) \
     (SvRMAGICAL(sv) ? mg_find((sv),(how)) : Null(MAGIC*))

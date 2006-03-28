@@ -1,6 +1,6 @@
 package overload;
 
-our $VERSION = '1.02';
+our $VERSION = '1.04';
 
 $overload::hint_bits = 0x20000; # HINT_LOCALIZE_HH
 
@@ -93,11 +93,7 @@ sub AddrRef {
 	return sprintf("$class_prefix$type(0x%x)", $addr);
 }
 
-sub StrVal {
-  (ref $_[0] && OverloadedStringify($_[0]) or ref($_[0]) eq 'Regexp') ?
-    (AddrRef(shift)) :
-    "$_[0]";
-}
+*StrVal = *AddrRef;
 
 sub mycan {				# Real can would leave stubs.
   my ($package, $meth) = @_;
@@ -174,7 +170,7 @@ __END__
 
 =head1 NAME
 
-overload - Package for overloading perl operations
+overload - Package for overloading Perl operations
 
 =head1 SYNOPSIS
 
@@ -721,12 +717,12 @@ Returns C<undef> or a reference to the method that implements C<op>.
 
 =head1 Overloading constants
 
-For some application Perl parser mangles constants too much.  It is possible
-to hook into this process via overload::constant() and overload::remove_constant()
-functions.
+For some applications, the Perl parser mangles constants too much.
+It is possible to hook into this process via C<overload::constant()>
+and C<overload::remove_constant()> functions.
 
 These functions take a hash as an argument.  The recognized keys of this hash
-are
+are:
 
 =over 8
 

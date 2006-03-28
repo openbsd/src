@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 133;
+plan tests => 139;
 
 $_ = 'abc';
 $c = do foo();
@@ -221,4 +221,25 @@ foreach my $start (@chars) {
     $a = "A$/";
     $b = chomp $a;
     is ($b, 2);
+}
+
+{
+    # [perl #36569] chop fails on decoded string with trailing nul
+    my $asc = "perl\0";
+    my $utf = "perl".pack('U',0); # marked as utf8
+    is(chop($asc), "\0", "chopping ascii NUL");
+    is(chop($utf), "\0", "chopping utf8 NUL");
+    is($asc, "perl", "chopped ascii NUL");
+    is($utf, "perl", "chopped utf8 NUL");
+}
+
+{
+    # Change 26011: Re: A surprising segfault
+    # to make sure only that these obfuscated sentences will not crash.
+
+    map chop(+()), ('')x68;
+    ok(1, "extend sp in pp_chop");
+
+    map chomp(+()), ('')x68;
+    ok(1, "extend sp in pp_chomp");
 }

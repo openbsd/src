@@ -60,7 +60,7 @@ allowing duplicate user messages to be displayed.
 
 This module also adds a stack trace to the error message when perl dies.
 This is useful for pinpointing what caused the death. The B<-traceonly> (or
-just B<-t>) flag turns off the explantions of warning messages leaving just
+just B<-t>) flag turns off the explanations of warning messages leaving just
 the stack traces. So if your script is dieing, run it again with
 
   perl -Mdiagnostics=-traceonly my_bad_script
@@ -185,7 +185,7 @@ use 5.006;
 use Carp;
 $Carp::Internal{__PACKAGE__.""}++;
 
-our $VERSION = 1.14;
+our $VERSION = 1.15;
 our $DEBUG;
 our $VERBOSE;
 our $PRETTY;

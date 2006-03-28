@@ -1,6 +1,7 @@
 package ExtUtils::MakeMaker::FAQ;
 
-(our $VERSION) = sprintf "%03d", q$Revision: 1.2 $ =~ /Revision:\s+(\S+)/;
+use vars qw($VERSION);
+$VERSION = '1.11';
 
 1;
 __END__
@@ -12,6 +13,46 @@ ExtUtils::MakeMaker::FAQ - Frequently Asked Questions About MakeMaker
 =head1 DESCRIPTION
 
 FAQs, tricks and tips for C<ExtUtils::MakeMaker>.
+
+
+=head2 Module Installation
+
+=over 4
+
+=item How do I keep from installing man pages?
+
+Recent versions of MakeMaker will only install man pages on Unix like
+operating systems.
+
+For an individual module:
+
+        perl Makefile.PL INSTALLMAN1DIR=none INSTALLMAN3DIR=none
+
+If you want to suppress man page installation for all modules you have
+to reconfigure Perl and tell it 'none' when it asks where to install
+man pages.
+
+
+=item How do I use a module without installing it?
+
+Two ways.  One is to build the module normally...
+
+        perl Makefile.PL
+        make
+
+...and then set the PERL5LIB environment variable to point at the
+blib/lib and blib/arch directories.
+
+The other is to install the module in a temporary location.
+
+        perl Makefile.PL PREFIX=~/tmp LIB=~/tmp/lib/perl
+
+And then set PERL5LIB to F<~/tmp/lib/perl>.  This works well when you have
+multiple modules to work with.  It also ensures that the module goes
+through its full installation process which may modify it.
+
+=back
+
 
 =head2 Philosophy and History
 
@@ -28,13 +69,13 @@ compatibility.
 Perl is one of the most ported pieces of software ever.  It works on
 operating systems I've never even heard of (see perlport for details).
 It needs a build tool that can work on all those platforms and with
-any wacky C compilers they might have.
+any wacky C compilers and linkers they might have.
 
-No such build tool existed at the time and I only know of one now
-(Module::Build).
+No such build tool exists.  Even make itself has wildly different
+dialects.  So we have to build our own.
 
 
-=item What's Module::Build and how does it relate to MakeMaker?
+=item What is Module::Build and how does it relate to MakeMaker?
 
 Module::Build is a project by Ken Williams to supplant MakeMaker.
 Its primary advantages are:
@@ -52,10 +93,11 @@ Its primary advantages are:
 =back
 
 Module::Build is the official heir apparent to MakeMaker and we
-encourage people to work on M::B rather than spending time improving
-MakeMaker.
+encourage people to work on M::B rather than spending time adding features
+to MakeMaker.
 
 =back
+
 
 =head2 Module Writing
 
@@ -73,22 +115,23 @@ by hand is a pain and you often forget.
 Simplest way to do it automatically is to use your version control
 system's revision number (you are using version control, right?).
 
-In CVS and RCS you use $Z<>Revision$ writing it like so:
+In CVS, RCS and SVN you use $Revision: 1.3 $ (see the documentation of your
+version control system for details) writing it like so:
 
-    $VERSION = sprintf "%d.%03d", q$Revision: 1.2 $ =~ /(\d+)/g;
+    $VERSION = sprintf "%d.%03d", q$Revision: 1.3 $ =~ /(\d+)/g;
 
-Every time the file is checked in the $Z<>Revision$ will be updated,
+Every time the file is checked in the $Revision: 1.3 $ will be updated,
 updating your $VERSION.
 
 In CVS version 1.9 is followed by 1.10.  Since CPAN compares version
 numbers numerically we use a sprintf() to convert 1.9 to 1.009 and
 1.10 to 1.010 which compare properly.
 
-If branches are involved (ie. $Z<>Revision: 1.5.3.4) its a little more
+If branches are involved (ie. $Revision: 1.3 $) its a little more
 complicated.
 
     # must be all on one line or MakeMaker will get confused.
-    $VERSION = do { my @r = (q$Revision: 1.2 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
+    $VERSION = do { my @r = (q$Revision: 1.3 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
 
 =item What's this F<META.yml> thing and how did it get in my F<MANIFEST>?!
 

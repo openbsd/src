@@ -2,154 +2,145 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
+    @INC = '.', '../lib';
 }
 
-print "1..82\n";
+require 'test.pl';
+
+plan (91);
 
 #
 # @foo, @bar, and @ary are also used from tie-stdarray after tie-ing them
 #
 
 @ary = (1,2,3,4,5);
-if (join('',@ary) eq '12345') {print "ok 1\n";} else {print "not ok 1\n";}
+is(join('',@ary), '12345');
 
 $tmp = $ary[$#ary]; --$#ary;
-if ($tmp == 5) {print "ok 2\n";} else {print "not ok 2\n";}
-if ($#ary == 3) {print "ok 3\n";} else {print "not ok 3\n";}
-if (join('',@ary) eq '1234') {print "ok 4\n";} else {print "not ok 4\n";}
+is($tmp, 5);
+is($#ary, 3);
+is(join('',@ary), '1234');
 
 $[ = 1;
 @ary = (1,2,3,4,5);
-if (join('',@ary) eq '12345') {print "ok 5\n";} else {print "not ok 5\n";}
+is(join('',@ary), '12345');
 
 $tmp = $ary[$#ary]; --$#ary;
-if ($tmp == 5) {print "ok 6\n";} else {print "not ok 6\n";}
-if ($#ary == 4) {print "ok 7\n";} else {print "not ok 7\n";}
-if (join('',@ary) eq '1234') {print "ok 8\n";} else {print "not ok 8\n";}
+is($tmp, 5);
+# Must do == here beacuse $[ isn't 0
+ok($#ary == 4);
+is(join('',@ary), '1234');
 
-if ($ary[5] eq '') {print "ok 9\n";} else {print "not ok 9\n";}
+is($ary[5], undef);
 
 $#ary += 1;	# see if element 5 gone for good
-if ($#ary == 5) {print "ok 10\n";} else {print "not ok 10\n";}
-if (defined $ary[5]) {print "not ok 11\n";} else {print "ok 11\n";}
+ok($#ary == 5);
+ok(!defined $ary[5]);
 
 $[ = 0;
 @foo = ();
 $r = join(',', $#foo, @foo);
-if ($r eq "-1") {print "ok 12\n";} else {print "not ok 12 $r\n";}
+is($r, "-1");
 $foo[0] = '0';
 $r = join(',', $#foo, @foo);
-if ($r eq "0,0") {print "ok 13\n";} else {print "not ok 13 $r\n";}
+is($r, "0,0");
 $foo[2] = '2';
 $r = join(',', $#foo, @foo);
-if ($r eq "2,0,,2") {print "ok 14\n";} else {print "not ok 14 $r\n";}
+is($r, "2,0,,2");
 @bar = ();
 $bar[0] = '0';
 $bar[1] = '1';
 $r = join(',', $#bar, @bar);
-if ($r eq "1,0,1") {print "ok 15\n";} else {print "not ok 15 $r\n";}
+is($r, "1,0,1");
 @bar = ();
 $r = join(',', $#bar, @bar);
-if ($r eq "-1") {print "ok 16\n";} else {print "not ok 16 $r\n";}
+is($r, "-1");
 $bar[0] = '0';
 $r = join(',', $#bar, @bar);
-if ($r eq "0,0") {print "ok 17\n";} else {print "not ok 17 $r\n";}
+is($r, "0,0");
 $bar[2] = '2';
 $r = join(',', $#bar, @bar);
-if ($r eq "2,0,,2") {print "ok 18\n";} else {print "not ok 18 $r\n";}
-reset 'b';
+is($r, "2,0,,2");
+reset 'b' if $^O ne 'VMS';
 @bar = ();
 $bar[0] = '0';
 $r = join(',', $#bar, @bar);
-if ($r eq "0,0") {print "ok 19\n";} else {print "not ok 19 $r\n";}
+is($r, "0,0");
 $bar[2] = '2';
 $r = join(',', $#bar, @bar);
-if ($r eq "2,0,,2") {print "ok 20\n";} else {print "not ok 20 $r\n";}
+is($r, "2,0,,2");
 
 $foo = 'now is the time';
-if (($F1,$F2,$Etc) = ($foo =~ /^(\S+)\s+(\S+)\s*(.*)/)) {
-    if ($F1 eq 'now' && $F2 eq 'is' && $Etc eq 'the time') {
-	print "ok 21\n";
-    }
-    else {
-	print "not ok 21\n";
-    }
-}
-else {
-    print "not ok 21\n";
-}
+ok(scalar (($F1,$F2,$Etc) = ($foo =~ /^(\S+)\s+(\S+)\s*(.*)/)));
+is($F1, 'now');
+is($F2, 'is');
+is($Etc, 'the time');
 
 $foo = 'lskjdf';
-if ($cnt = (($F1,$F2,$Etc) = ($foo =~ /^(\S+)\s+(\S+)\s*(.*)/))) {
-    print "not ok 22 $cnt $F1:$F2:$Etc\n";
-}
-else {
-    print "ok 22\n";
-}
+ok(!($cnt = (($F1,$F2,$Etc) = ($foo =~ /^(\S+)\s+(\S+)\s*(.*)/))))
+   or diag("$cnt $F1:$F2:$Etc");
 
 %foo = ('blurfl','dyick','foo','bar','etc.','etc.');
 %bar = %foo;
-print $bar{'foo'} eq 'bar' ? "ok 23\n" : "not ok 23\n";
+is($bar{'foo'}, 'bar');
 %bar = ();
-print $bar{'foo'} eq '' ? "ok 24\n" : "not ok 24\n";
+is($bar{'foo'}, undef);
 (%bar,$a,$b) = (%foo,'how','now');
-print $bar{'foo'} eq 'bar' ? "ok 25\n" : "not ok 25\n";
-print $bar{'how'} eq 'now' ? "ok 26\n" : "not ok 26\n";
+is($bar{'foo'}, 'bar');
+is($bar{'how'}, 'now');
 @bar{keys %foo} = values %foo;
-print $bar{'foo'} eq 'bar' ? "ok 27\n" : "not ok 27\n";
-print $bar{'how'} eq 'now' ? "ok 28\n" : "not ok 28\n";
+is($bar{'foo'}, 'bar');
+is($bar{'how'}, 'now');
 
 @foo = grep(/e/,split(' ','now is the time for all good men to come to'));
-print join(' ',@foo) eq 'the time men come' ? "ok 29\n" : "not ok 29\n";
+is(join(' ',@foo), 'the time men come');
 
 @foo = grep(!/e/,split(' ','now is the time for all good men to come to'));
-print join(' ',@foo) eq 'now is for all good to to' ? "ok 30\n" : "not ok 30\n";
+is(join(' ',@foo), 'now is for all good to to');
 
 $foo = join('',('a','b','c','d','e','f')[0..5]);
-print $foo eq 'abcdef' ? "ok 31\n" : "not ok 31\n";
+is($foo, 'abcdef');
 
 $foo = join('',('a','b','c','d','e','f')[0..1]);
-print $foo eq 'ab' ? "ok 32\n" : "not ok 32\n";
+is($foo, 'ab');
 
 $foo = join('',('a','b','c','d','e','f')[6]);
-print $foo eq '' ? "ok 33\n" : "not ok 33\n";
+is($foo, '');
 
 @foo = ('a','b','c','d','e','f')[0,2,4];
 @bar = ('a','b','c','d','e','f')[1,3,5];
 $foo = join('',(@foo,@bar)[0..5]);
-print $foo eq 'acebdf' ? "ok 34\n" : "not ok 34\n";
+is($foo, 'acebdf');
 
 $foo = ('a','b','c','d','e','f')[0,2,4];
-print $foo eq 'e' ? "ok 35\n" : "not ok 35\n";
+is($foo, 'e');
 
 $foo = ('a','b','c','d','e','f')[1];
-print $foo eq 'b' ? "ok 36\n" : "not ok 36\n";
+is($foo, 'b');
 
 @foo = ( 'foo', 'bar', 'burbl');
 push(foo, 'blah');
-print $#foo == 3 ? "ok 37\n" : "not ok 37\n";
+is($#foo, 3);
 
 # various AASSIGN_COMMON checks (see newASSIGNOP() in op.c)
 
-$test = 37;
-sub t { ++$test; print "not " unless $_[0]; print "ok $test\n"; }
+#curr_test(38);
 
 @foo = @foo;
-t("@foo" eq "foo bar burbl blah");				# 38
+is("@foo", "foo bar burbl blah");				# 38
 
 (undef,@foo) = @foo;
-t("@foo" eq "bar burbl blah");					# 39
+is("@foo", "bar burbl blah");					# 39
 
 @foo = ('XXX',@foo, 'YYY');
-t("@foo" eq "XXX bar burbl blah YYY");				# 40
+is("@foo", "XXX bar burbl blah YYY");				# 40
 
 @foo = @foo = qw(foo b\a\r bu\\rbl blah);
-t("@foo" eq 'foo b\a\r bu\\rbl blah');				# 41
+is("@foo", 'foo b\a\r bu\\rbl blah');				# 41
 
 @bar = @foo = qw(foo bar);					# 42
-t("@foo" eq "foo bar");
-t("@bar" eq "foo bar");						# 43
+is("@foo", "foo bar");
+is("@bar", "foo bar");						# 43
 
 # try the same with local
 # XXX tie-stdarray fails the tests involving local, so we use
@@ -159,102 +150,94 @@ t("@bar" eq "foo bar");						# 43
 {
 
     local @bee = @bee;
-    t("@bee" eq "foo bar burbl blah");				# 44
+    is("@bee", "foo bar burbl blah");				# 44
     {
 	local (undef,@bee) = @bee;
-	t("@bee" eq "bar burbl blah");				# 45
+	is("@bee", "bar burbl blah");				# 45
 	{
 	    local @bee = ('XXX',@bee,'YYY');
-	    t("@bee" eq "XXX bar burbl blah YYY");		# 46
+	    is("@bee", "XXX bar burbl blah YYY");		# 46
 	    {
 		local @bee = local(@bee) = qw(foo bar burbl blah);
-		t("@bee" eq "foo bar burbl blah");		# 47
+		is("@bee", "foo bar burbl blah");		# 47
 		{
 		    local (@bim) = local(@bee) = qw(foo bar);
-		    t("@bee" eq "foo bar");			# 48
-		    t("@bim" eq "foo bar");			# 49
+		    is("@bee", "foo bar");			# 48
+		    is("@bim", "foo bar");			# 49
 		}
-		t("@bee" eq "foo bar burbl blah");		# 50
+		is("@bee", "foo bar burbl blah");		# 50
 	    }
-	    t("@bee" eq "XXX bar burbl blah YYY");		# 51
+	    is("@bee", "XXX bar burbl blah YYY");		# 51
 	}
-	t("@bee" eq "bar burbl blah");				# 52
+	is("@bee", "bar burbl blah");				# 52
     }
-    t("@bee" eq "foo bar burbl blah");				# 53
+    is("@bee", "foo bar burbl blah");				# 53
 }
 
 # try the same with my
 {
 
     my @bee = @bee;
-    t("@bee" eq "foo bar burbl blah");				# 54
+    is("@bee", "foo bar burbl blah");				# 54
     {
 	my (undef,@bee) = @bee;
-	t("@bee" eq "bar burbl blah");				# 55
+	is("@bee", "bar burbl blah");				# 55
 	{
 	    my @bee = ('XXX',@bee,'YYY');
-	    t("@bee" eq "XXX bar burbl blah YYY");		# 56
+	    is("@bee", "XXX bar burbl blah YYY");		# 56
 	    {
 		my @bee = my @bee = qw(foo bar burbl blah);
-		t("@bee" eq "foo bar burbl blah");		# 57
+		is("@bee", "foo bar burbl blah");		# 57
 		{
 		    my (@bim) = my(@bee) = qw(foo bar);
-		    t("@bee" eq "foo bar");			# 58
-		    t("@bim" eq "foo bar");			# 59
+		    is("@bee", "foo bar");			# 58
+		    is("@bim", "foo bar");			# 59
 		}
-		t("@bee" eq "foo bar burbl blah");		# 60
+		is("@bee", "foo bar burbl blah");		# 60
 	    }
-	    t("@bee" eq "XXX bar burbl blah YYY");		# 61
+	    is("@bee", "XXX bar burbl blah YYY");		# 61
 	}
-	t("@bee" eq "bar burbl blah");				# 62
+	is("@bee", "bar burbl blah");				# 62
     }
-    t("@bee" eq "foo bar burbl blah");				# 63
+    is("@bee", "foo bar burbl blah");				# 63
 }
 
 # make sure reification behaves
-my $t = 63;
-sub reify { $_[1] = ++$t; print "@_\n"; }
+my $t = curr_test();
+sub reify { $_[1] = $t++; print "@_\n"; }
 reify('ok');
 reify('ok');
 
-# qw() is no more a runtime split, it's compiletime.
-print "not " unless qw(foo bar snorfle)[2] eq 'snorfle';
-print "ok 66\n";
+curr_test($t);
+
+# qw() is no longer a runtime split, it's compiletime.
+is (qw(foo bar snorfle)[2], 'snorfle');
 
 @ary = (12,23,34,45,56);
 
-print "not " unless shift(@ary) == 12;
-print "ok 67\n";
-
-print "not " unless pop(@ary) == 56;
-print "ok 68\n";
-
-print "not " unless push(@ary,56) == 4;
-print "ok 69\n";
-
-print "not " unless unshift(@ary,12) == 5;
-print "ok 70\n";
+is(shift(@ary), 12);
+is(pop(@ary), 56);
+is(push(@ary,56), 4);
+is(unshift(@ary,12), 5);
 
 sub foo { "a" }
 @foo=(foo())[0,0];
-$foo[1] eq "a" or print "not ";
-print "ok 71\n";
+is ($foo[1], "a");
 
 # $[ should have the same effect regardless of whether the aelem
 #    op is optimized to aelemfast.
 
+
+
 sub tary {
   local $[ = 10;
   my $five = 5;
-  print "not " unless $tary[5] == $tary[$five];
-  print "ok 72\n";
+  is ($tary[5], $tary[$five]);
 }
 
 @tary = (0..50);
 tary();
 
-
-require './test.pl';
 
 # bugid #15439 - clearing an array calls destructors which may try
 # to modify the array - caused 'Attempt to free unreferenced scalar'
@@ -269,31 +252,45 @@ my $got = runperl (
     );
 
 $got =~ s/\n/ /g;
-print "# $got\nnot " unless $got eq '';
-print "ok 73\n";
+is ($got, '');
 
 # Test negative and funky indices.
 
+
 {
     my @a = 0..4;
-    print $a[-1] == 4 ? "ok 74\n" : "not ok 74\n";
-    print $a[-2] == 3 ? "ok 75\n" : "not ok 75\n";
-    print $a[-5] == 0 ? "ok 76\n" : "not ok 76\n";
-    print defined $a[-6] ? "not ok 77\n" : "ok 77\n";
+    is($a[-1], 4);
+    is($a[-2], 3);
+    is($a[-5], 0);
+    ok(!defined $a[-6]);
 
-    print $a[2.1]   == 2 ? "ok 78\n" : "not ok 78\n";
-    print $a[2.9]   == 2 ? "ok 79\n" : "not ok 79\n";
-    print $a[undef] == 0 ? "ok 80\n" : "not ok 80\n";
-    print $a["3rd"] == 3 ? "ok 81\n" : "not ok 81\n";
+    is($a[2.1]  , 2);
+    is($a[2.9]  , 2);
+    is($a[undef], 0);
+    is($a["3rd"], 3);
 }
 
-sub kindalike { # TODO: test.pl-ize the array.t.
-    my ($s, $r, $m, $n) = @_;
-    print $s =~ /$r/ ? "ok $n - $m\n" : "not ok $n - $m ($s)\n";
-}
 
 {
     my @a;
     eval '$a[-1] = 0';
-    kindalike($@, qr/Modification of non-creatable array value attempted, subscript -1/, "\$a[-1] = 0", 82);
+    like($@, qr/Modification of non-creatable array value attempted, subscript -1/, "\$a[-1] = 0");
+}
+
+sub test_arylen {
+    my $ref = shift;
+    local $^W = 1;
+    is ($$ref, undef, "\$# on freed array is undef");
+    my @warn;
+    local $SIG{__WARN__} = sub {push @warn, "@_"};
+    $$ref = 1000;
+    is (scalar @warn, 1);
+    like ($warn[0], qr/^Attempt to set length of freed array/);
+}
+
+{
+    my $a = \$#{[]};
+    # Need a new statement to make it go out of scope
+    test_arylen ($a);
+    test_arylen (do {my @a; \$#a});
 }

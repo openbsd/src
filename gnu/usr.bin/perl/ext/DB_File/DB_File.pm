@@ -1,10 +1,10 @@
 # DB_File.pm -- Perl 5 interface to Berkeley DB 
 #
 # written by Paul Marquess (pmqs@cpan.org)
-# last modified 7th August 2004
-# version 1.810
+# last modified 11th November 2005
+# version 1.814
 #
-#     Copyright (c) 1995-2004 Paul Marquess. All rights reserved.
+#     Copyright (c) 1995-2005 Paul Marquess. All rights reserved.
 #     This program is free software; you can redistribute it and/or
 #     modify it under the same terms as Perl itself.
 
@@ -161,11 +161,11 @@ package DB_File ;
 use warnings;
 use strict;
 our ($VERSION, @ISA, @EXPORT, $AUTOLOAD, $DB_BTREE, $DB_HASH, $DB_RECNO);
-our ($db_version, $use_XSLoader, $splice_end_array);
+our ($db_version, $use_XSLoader, $splice_end_array, $Error);
 use Carp;
 
 
-$VERSION = "1.810" ;
+$VERSION = "1.814" ;
 
 {
     local $SIG{__WARN__} = sub {$splice_end_array = "@_";};
@@ -268,6 +268,10 @@ sub tie_hash_or_array
 
     # make recno in Berkeley DB version 2 (or better) work like 
     # recno in version 1.
+    if ($db_version >= 4 and ! $tieHASH) {
+        $arg[2] |= O_CREAT();
+    }
+
     if ($db_version > 1 and defined $arg[4] and $arg[4] =~ /RECNO/ and 
 	$arg[1] and ! -e $arg[1]) {
 	open(FH, ">$arg[1]") or return undef ;
@@ -1851,7 +1855,7 @@ Here is another real-life example. By default, whenever Perl writes to
 a DBM database it always writes the key and value as strings. So when
 you use this:
 
-    $hash{12345} = "soemthing" ;
+    $hash{12345} = "something" ;
 
 the key 12345 will get stored in the DBM database as the 5 byte string
 "12345". If you actually want the key to be stored in the DBM database
@@ -2253,7 +2257,7 @@ compile properly on IRIX 5.3.
 
 =head1 COPYRIGHT
 
-Copyright (c) 1995-2004 Paul Marquess. All rights reserved. This program
+Copyright (c) 1995-2005 Paul Marquess. All rights reserved. This program
 is free software; you can redistribute it and/or modify it under the
 same terms as Perl itself.
 

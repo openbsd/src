@@ -24,24 +24,22 @@
 void
 Perl_taint_proper(pTHX_ const char *f, const char *s)
 {
-    char *ug;
-
 #if defined(HAS_SETEUID) && defined(DEBUGGING)
 #   if Uid_t_size == 1
     {
-	 UV  uid = PL_uid;
-	 UV euid = PL_euid;
+	const UV  uid = PL_uid;
+	const UV euid = PL_euid;
 
-	 DEBUG_u(PerlIO_printf(Perl_debug_log,
+	DEBUG_u(PerlIO_printf(Perl_debug_log,
 			       "%s %d %"UVuf" %"UVuf"\n",
 			       s, PL_tainted, uid, euid));
     }
 #   else
     {
-	 IV  uid = PL_uid;
-	 IV euid = PL_euid;
+	const IV  uid = PL_uid;
+	const IV euid = PL_euid;
 
-	 DEBUG_u(PerlIO_printf(Perl_debug_log,
+	DEBUG_u(PerlIO_printf(Perl_debug_log,
 			       "%s %d %"IVdf" %"IVdf"\n",
 			       s, PL_tainted, uid, euid));
     }
@@ -49,6 +47,8 @@ Perl_taint_proper(pTHX_ const char *f, const char *s)
 #endif
 
     if (PL_tainted) {
+	const char *ug;
+
 	if (!f)
 	    f = PL_no_security;
 	if (PL_euid != PL_uid)
@@ -74,8 +74,8 @@ Perl_taint_env(pTHX)
 {
     SV** svp;
     MAGIC* mg;
-    char** e;
-    static char* misc_env[] = {
+    const char* const *e;
+    static const char* const misc_env[] = {
 	"IFS",		/* most shells' inter-field separators */
 	"CDPATH",	/* ksh dain bramage #1 */
 	"ENV",		/* ksh dain bramage #2 */
@@ -83,8 +83,25 @@ Perl_taint_env(pTHX)
 	NULL
     };
 
+    /* Don't bother if there's no *ENV glob */
     if (!PL_envgv)
 	return;
+    /* If there's no %ENV hash of if it's not magical, croak, because
+     * it probably doesn't reflect the actual environment */
+    if (!GvHV(PL_envgv) || !(SvRMAGICAL(GvHV(PL_envgv))
+	    && mg_find((SV*)GvHV(PL_envgv), PERL_MAGIC_env))) {
+	const bool was_tainted = PL_tainted;
+	const char * const name = GvENAME(PL_envgv);
+	PL_tainted = TRUE;
+	if (strEQ(name,"ENV"))
+	    /* hash alias */
+	    taint_proper("%%ENV is aliased to %s%s", "another variable");
+	else
+	    /* glob alias: report it in the error message */
+	    taint_proper("%%ENV is aliased to %%%s%s", name);
+	/* this statement is reached under -t or -U */
+	PL_tainted = was_tainted;
+    }
 
 #ifdef VMS
     {
@@ -126,10 +143,10 @@ Perl_taint_env(pTHX)
     /* tainted $TERM is okay if it contains no metachars */
     svp = hv_fetch(GvHVn(PL_envgv),"TERM",4,FALSE);
     if (svp && *svp && SvTAINTED(*svp)) {
-	STRLEN n_a;
-	bool was_tainted = PL_tainted;
-	char *t = SvPV(*svp, n_a);
-	char *e = t + n_a;
+	STRLEN len;
+	const bool was_tainted = PL_tainted;
+	const char *t = SvPV_const(*svp, len);
+	const char * const e = t + len;
 	PL_tainted = was_tainted;
 	if (t < e && isALNUM(*t))
 	    t++;
@@ -143,10 +160,20 @@ Perl_taint_env(pTHX)
 #endif /* !VMS */
 
     for (e = misc_env; *e; e++) {
-	svp = hv_fetch(GvHVn(PL_envgv), *e, strlen(*e), FALSE);
+	SV ** const svp = hv_fetch(GvHVn(PL_envgv), *e, strlen(*e), FALSE);
 	if (svp && *svp != &PL_sv_undef && SvTAINTED(*svp)) {
 	    TAINT;
 	    taint_proper("Insecure $ENV{%s}%s", *e);
 	}
     }
 }
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ *
+ * ex: set ts=8 sts=4 sw=4 noet:
+ */

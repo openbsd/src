@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..18\n";
+print "1..22\n";
 
 @x = (1, 2, 3);
 if (join(':',@x) eq '1:2:3') {print "ok 1\n";} else {print "not ok 1\n";}
@@ -79,15 +79,35 @@ if ($f eq 'baeak') {print "ok 6\n";} else {print "# '$f'\nnot ok 6\n";}
   my $jb2 = join_into_my_variable("", $b);
   my $ju2 = join_into_my_variable("", $u);
 
-  print "not " unless unpack('H*', $jb1) eq unpack('H*', $b);
-  print "ok 15\n";
-
-  print "not " unless unpack('H*', $ju1) eq unpack('H*', $u);
+  {
+      use bytes;
+      print "not " unless $jb1 eq $b;
+      print "ok 15\n";
+  }
+  print "not " unless $jb1 eq $b;
   print "ok 16\n";
 
-  print "not " unless unpack('H*', $jb2) eq unpack('H*', $b);
-  print "ok 17\n";
-
-  print "not " unless unpack('H*', $ju2) eq unpack('H*', $u);
+  {
+      use bytes;
+      print "not " unless $ju1 eq $u;
+      print "ok 17\n";
+  }
+  print "not " unless $ju1 eq $u;
   print "ok 18\n";
+
+  {
+      use bytes;
+      print "not " unless $jb2 eq $b;
+      print "ok 19\n";
+  }
+  print "not " unless $jb2 eq $b;
+  print "ok 20\n";
+
+  {
+      use bytes;
+      print "not " unless $ju2 eq $u;
+      print "ok 21\n";
+  }
+  print "not " unless $ju2 eq $u;
+  print "ok 22\n";
 }

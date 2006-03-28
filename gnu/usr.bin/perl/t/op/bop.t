@@ -8,13 +8,14 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require "./test.pl";
+    require Config;
 }
 
 # Tests don't have names yet.
 # If you find tests are failing, please try adding names to tests to track
 # down where the failure is, and supply your new names as a patch.
 # (Just-in-time test naming)
-plan tests => 46;
+plan tests => 49;
 
 # numerics
 ok ((0xdead & 0xbeef) == 0x9ead);
@@ -178,3 +179,21 @@ $a = "\0\x{100}"; chop($a);
 ok(utf8::is_utf8($a)); # make sure UTF8 flag is still there
 $a = ~$a;
 is($a, "\xFF", "~ works with utf-8");
+
+# [rt.perl.org 33003]
+# This would cause a segfault without malloc wrap
+SKIP: {
+  skip "No malloc wrap checks" unless $Config::Config{usemallocwrap};
+  like( runperl(prog => 'eval q($#a>>=1); print 1'), "^1\n?" );
+}
+
+# [perl #37616] Bug in &= (string) and/or m//
+{
+    $a = "aa";
+    $a &= "a";
+    ok($a =~ /a+$/, 'ASCII "a" is NUL-terminated');
+
+    $b = "bb\x{100}";
+    $b &= "b";
+    ok($b =~ /b+$/, 'Unicode "b" is NUL-terminated');
+}

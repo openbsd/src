@@ -5,6 +5,7 @@ perldata - Perl data types
 =head1 DESCRIPTION
 
 =head2 Variable names
+X<variable, name> X<variable name> X<data type> X<type>
 
 Perl has three built-in data types: scalars, arrays of scalars, and
 associative arrays of scalars, known as "hashes".  A scalar is a 
@@ -27,6 +28,7 @@ to locate the namespace in which to look up the final identifier
 for a simple identifier, an expression that produces a reference
 to the value at runtime.   This is described in more detail below
 and in L<perlref>.
+X<identifier>
 
 Perl also has its own built-in variables whose names don't follow
 these rules.  They have strange names so they don't accidentally
@@ -36,11 +38,13 @@ containing only digits after the C<$> (see L<perlop> and L<perlre>).
 In addition, several special variables that provide windows into
 the inner working of Perl have names containing punctuation characters
 and control characters.  These are documented in L<perlvar>.
+X<variable, built-in>
 
 Scalar values are always named with '$', even when referring to a
 scalar that is part of an array or a hash.  The '$' symbol works
 semantically like the English word "the" in that it indicates a
 single value is expected.
+X<scalar>
 
     $days		# the simple scalar value "days"
     $days[28]		# the 29th element of array @days
@@ -50,12 +54,14 @@ single value is expected.
 Entire arrays (and slices of arrays and hashes) are denoted by '@',
 which works much like the word "these" or "those" does in English,
 in that it indicates multiple values are expected.
+X<array>
 
     @days		# ($days[0], $days[1],... $days[n])
     @days[3,4,5]	# same as ($days[3],$days[4],$days[5])
     @days{'a','c'}	# same as ($days{'a'},$days{'c'})
 
 Entire hashes are denoted by '%':
+X<hash>
 
     %days		# (key1, val1, key2, val2 ...)
 
@@ -72,6 +78,7 @@ subroutine name, a format name, or a label.  This means that $foo
 and @foo are two different variables.  It also means that C<$foo[1]>
 is a part of @foo, not a part of $foo.  This may seem a bit weird,
 but that's okay, because it is weird.
+X<namespace>
 
 Because variable references always start with '$', '@', or '%', the
 "reserved" words aren't in fact reserved with respect to variable
@@ -83,6 +90,8 @@ uppercase filehandles also improves readability and protects you
 from conflict with future reserved words.  Case I<is> significant--"FOO",
 "Foo", and "foo" are all different names.  Names that start with a
 letter or underscore may also contain digits and underscores.
+X<identifier, case sensitivity>
+X<case>
 
 It is possible to replace such an alphanumeric name with an expression
 that returns a reference to the appropriate type.  For a description
@@ -96,6 +105,7 @@ significance to Perl.  For instance, C<$$> is the current process
 id.)
 
 =head2 Context
+X<context> X<scalar context> X<list context>
 
 The interpretation of operations and values in Perl sometimes depends
 on the requirements of the context around the operation or value.
@@ -148,6 +158,7 @@ for how you would dynamically discern your function's calling
 context.
 
 =head2 Scalar values
+X<scalar> X<number> X<string> X<reference>
 
 All data in Perl is a scalar, an array of scalars, or a hash of
 scalars.  A scalar may contain one single value in any of three
@@ -172,6 +183,7 @@ A scalar value is interpreted as TRUE in the Boolean sense if it is not
 the null string or the number 0 (or its string equivalent, "0").  The
 Boolean context is just a special kind of scalar context where no 
 conversion to a string or a number is ever performed.
+X<boolean> X<bool> X<true> X<false> X<truth>
 
 There are actually two varieties of null strings (sometimes referred
 to as "empty" strings), a defined one and an undefined one.  The
@@ -186,6 +198,7 @@ rare cases of autovivification as explained in L<perlref>.  You can
 use the defined() operator to determine whether a scalar value is
 defined (this has no meaning on arrays or hashes), and the undef()
 operator to produce an undefined value.
+X<defined> X<undefined> X<undef> X<null> X<string, null>
 
 To find out whether a given string is a valid non-zero number, it's
 sometimes enough to test it against both numeric 0 and also lexical
@@ -220,6 +233,7 @@ Shortening an array this way destroys intervening values.  Lengthening
 an array that was previously shortened does not recover values
 that were in those elements.  (It used to do so in Perl 4, but we
 had to break this to make sure destructors were called when expected.)
+X<$#> X<array, length>
 
 You can also gain some minuscule measure of efficiency by pre-extending
 an array that is going to get big.  You can also extend an array
@@ -235,6 +249,7 @@ of the array.  (Note that this is not true of lists, which return
 the last value, like the C comma operator, nor of built-in functions,
 which return whatever they feel like returning.)  The following is
 always true:
+X<array, length>
 
     scalar(@whatever) == $#whatever - $[ + 1;
 
@@ -242,6 +257,7 @@ Version 5 of Perl changed the semantics of C<$[>: files that don't set
 the value of C<$[> no longer need to worry about whether another
 file changed its value.  (In other words, use of C<$[> is deprecated.)
 So in general you can assume that
+X<$[>
 
     scalar(@whatever) == $#whatever + 1;
 
@@ -260,6 +276,7 @@ set.  For example, you stick 10,000 things in a hash, but evaluating
 %HASH in scalar context reveals C<"1/16">, which means only one out
 of sixteen buckets has been touched, and presumably contains all
 10,000 of your items.  This isn't supposed to happen.
+X<hash, scalar context> X<hash, bucket> X<bucket>
 
 You can preallocate space for a hash by assigning to the keys() function.
 This rounds up the allocated buckets to the next power of two:
@@ -267,6 +284,7 @@ This rounds up the allocated buckets to the next power of two:
     keys(%users) = 1000;		# allocate 1024 buckets
 
 =head2 Scalar value constructors
+X<scalar, literal> X<scalar, constant>
 
 Numeric literals are specified in any of the following floating point or
 integer formats:
@@ -278,13 +296,14 @@ integer formats:
     4_294_967_296       # underscore for legibility
     0xff                # hex
     0xdead_beef         # more hex   
-    0377                # octal
+    0377                # octal (only numbers, begins with 0)
     0b011011            # binary
 
 You are allowed to use underscores (underbars) in numeric literals
 between digits for legibility.  You could, for example, group binary
 digits by threes (as for a Unix-style mode argument such as 0b110_100_100)
 or by fours (to represent nibbles, as in 0b1010_0110) or in other groups.
+X<number, literal>
 
 String literals are usually delimited by either single or double
 quotes.  They work much like quotes in the standard Unix shells:
@@ -293,6 +312,7 @@ substitution; single-quoted strings are not (except for C<\'> and
 C<\\>).  The usual C-style backslash rules apply for making
 characters such as newline, tab, etc., as well as some more exotic
 forms.  See L<perlop/"Quote and Quote-like Operators"> for a list.
+X<string, literal>
 
 Hexadecimal, octal, or binary, representations in string literals
 (e.g. '0xff') are not automatically converted to their integer
@@ -308,6 +328,7 @@ scalar variables, arrays, and array or hash slices.  (In other words,
 names beginning with $ or @, followed by an optional bracketed
 expression as a subscript.)  The following code segment prints out "The
 price is $Z<>100."
+X<interpolation>
 
     $Price = '$100';	# not interpolated
     print "The price is $Price.\n";	# interpolated
@@ -320,6 +341,7 @@ You must also do
 this when interpolating a variable into a string to separate the
 variable name from a following double-colon or an apostrophe, since
 these would be otherwise treated as a package separator:
+X<interpolation>
 
     $who = "Larry";
     print PASSWD "${who}::0:0:Superuser:/:/bin/perl\n";
@@ -334,10 +356,12 @@ In fact, an identifier within such curlies is forced to be a string,
 as is any simple identifier within a hash subscript.  Neither need
 quoting.  Our earlier example, C<$days{'Feb'}> can be written as
 C<$days{Feb}> and the quotes will be assumed automatically.  But
-anything more complicated in the subscript will be interpreted as
-an expression.
+anything more complicated in the subscript will be interpreted as an
+expression.  This means for example that C<$version{2.0}++> is
+equivalent to C<$version{2}++>, not to C<$version{'2.0'}++>.
 
 =head3 Version Strings
+X<version string> X<vstring> X<v-string>
 
 B<Note:> Version Strings (v-strings) have been deprecated.  They will
 not be available after Perl 5.8.  The marginal benefits of v-strings
@@ -371,6 +395,8 @@ Multi-number v-strings like C<v65.66> and C<65.66.67> continue to
 be v-strings always.
 
 =head3 Special Literals
+X<special literal> X<__END__> X<__DATA__> X<END> X<DATA>
+X<end> X<data> X<^D> X<^Z>
 
 The special literals __FILE__, __LINE__, and __PACKAGE__
 represent the current filename, line number, and package name at that
@@ -378,6 +404,7 @@ point in your program.  They may be used only as separate tokens; they
 will not be interpolated into strings.  If there is no current package
 (due to an empty C<package;> directive), __PACKAGE__ is the undefined
 value.
+X<__FILE__> X<__LINE__> X<__PACKAGE__> X<line> X<file> X<package>
 
 The two control characters ^D and ^Z, and the tokens __END__ and __DATA__
 may be used to indicate the logical end of the script before the actual
@@ -400,6 +427,7 @@ as it is seen (during compilation), at which point the corresponding
 __DATA__ (or __END__) token has not yet been seen.
 
 =head3 Barewords
+X<bareword>
 
 A word that has no other interpretation in the grammar will
 be treated as if it were a quoted string.  These are known as
@@ -418,6 +446,7 @@ end of the enclosing block.  An inner block may countermand this
 by saying C<no strict 'subs'>.
 
 =head3 Array Joining Delimiter
+X<array, interpolation> X<interpolation, array> X<$">
 
 Arrays and slices are interpolated into double-quoted strings
 by joining the elements with the delimiter specified in the C<$">
@@ -444,6 +473,7 @@ which used to be here, that's been moved to
 L<perlop/Quote and Quote-like Operators>.
 
 =head2 List value constructors
+X<list>
 
 List values are denoted by separating individual values by commas
 (and enclosing the list in parentheses where precedence requires it):
@@ -656,6 +686,7 @@ are used. For example:
     print "Darwin's First Name is ", $scientists{"Darwin"}, "\n";
 
 =head2 Slices
+X<slice> X<array, slice> X<hash, slice>
 
 A common way to access an array or a hash is one scalar element at a
 time.  You can also subscript a list to get a single element from it.
@@ -732,6 +763,7 @@ hash indicates whether you are getting back a singular value (a
 scalar) or a plural one (a list).
 
 =head2 Typeglobs and Filehandles
+X<typeglob> X<filehandle> X<*>
 
 Perl uses an internal type called a I<typeglob> to hold an entire
 symbol table entry.  The type prefix of a typeglob is a C<*>, because

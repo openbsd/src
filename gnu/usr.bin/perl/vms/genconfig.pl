@@ -140,7 +140,14 @@ foreach (@ARGV) {
       $d_attr = 'undef';
     }
     print OUT "vms_cc_type='$cctype'\n";
-    print OUT "d_attribut='$d_attr'\n";
+    print OUT "d_attribute_format='$d_attr'\n";
+    # XXX The following attributes may be able to use $d_attr, too.
+    print OUT "d_attribute_malloc='undef'\n";
+    print OUT "d_attribute_nonnull='undef'\n";
+    print OUT "d_attribute_noreturn='undef'\n";
+    print OUT "d_attribute_pure='undef'\n";
+    print OUT "d_attribute_unused='undef'\n";
+    print OUT "d_attribute_warn_unused_result='undef'\n";
     print OUT "cc='$cc'\n";
     if ( ($cctype eq 'decc' and $archsufx eq 'VAX') || $cctype eq 'gcc') {
       # gcc and DECC for VAX requires filename in /object qualifier, so we

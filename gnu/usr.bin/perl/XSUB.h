@@ -1,7 +1,7 @@
 /*    XSUB.h
  *
  *    Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, 2005, 2006 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -54,6 +54,10 @@ C<xsubpp>.
 Sets up the C<ax> variable.
 This is usually handled automatically by C<xsubpp> by calling C<dXSARGS>.
 
+=for apidoc Ams||dAXMARK
+Sets up the C<ax> variable and stack marker variable C<mark>.
+This is usually handled automatically by C<xsubpp> by calling C<dXSARGS>.
+
 =for apidoc Ams||dITEMS
 Sets up the C<items> variable.
 This is usually handled automatically by C<xsubpp> by calling C<dXSARGS>.
@@ -70,23 +74,48 @@ handled automatically by C<xsubpp>.
 =cut
 */
 
+#ifndef PERL_UNUSED_ARG
+#  ifdef lint
+#    include <note.h>
+#    define PERL_UNUSED_ARG(x) NOTE(ARGUNUSED(x))
+#  else
+#    define PERL_UNUSED_ARG(x) ((void)x)
+#  endif
+#endif
+#ifndef PERL_UNUSED_VAR
+#  define PERL_UNUSED_VAR(x) ((void)x)
+#endif
+
 #define ST(off) PL_stack_base[ax + (off)]
 
 #if defined(__CYGWIN__) && defined(USE_DYNAMIC_LOADING)
 #  define XS(name) __declspec(dllexport) void name(pTHX_ CV* cv)
 #else
-#  define XS(name) void name(pTHX_ CV* cv)
+#  ifdef HASATTRIBUTE_UNUSED
+#    define XS(name) void name(pTHX_ CV* cv __attribute__unused__)
+#  else
+#    define XS(name) void name(pTHX_ CV* cv)
+#  endif
 #endif
 
-#define dAX I32 ax = MARK - PL_stack_base + 1
+#define dAX const I32 ax = MARK - PL_stack_base + 1
+
+#define dAXMARK				\
+	I32 ax = POPMARK;	\
+	register SV **mark = PL_stack_base + ax++
 
 #define dITEMS I32 items = SP - MARK
 
-#define dXSARGS				\
-	dSP; dMARK;			\
-	dAX; dITEMS
+#ifdef lint
+#  define dXSARGS \
+	NOTE(ARGUNUSED(cv)) \
+	dSP; dAXMARK; dITEMS
+#else
+#  define dXSARGS \
+	dSP; dAXMARK; dITEMS
+#endif
 
-#define dXSTARG SV * targ = ((PL_op->op_private & OPpENTERSUB_HASTARG) \
+#define dXSTARG SV * const targ = ((PL_op->op_private & OPpENTERSUB_HASTARG) \
 			     ? PAD_SV(PL_op->op_targ) : sv_newmortal())
 
 /* Should be used before final PUSHi etc. if not in PPCODE section. */
@@ -213,8 +242,8 @@ C<xsubpp>.  See L<perlxs/"The VERSIONCHECK: Keyword">.
 #ifdef XS_VERSION
 #  define XS_VERSION_BOOTCHECK \
     STMT_START {							\
-	SV *_sv; STRLEN n_a;						\
-	char *vn = Nullch, *module = SvPV(ST(0),n_a);			\
+	SV *_sv;							\
+	const char *vn = Nullch, *module = SvPV_nolen_const(ST(0));	\
 	if (items >= 2)	 /* version supplied as bootstrap arg */	\
 	    _sv = ST(1);						\
 	else {								\
@@ -225,7 +254,7 @@ C<xsubpp>.  See L<perlxs/"The VERSIONCHECK: Keyword">.
 		_sv = get_sv(Perl_form(aTHX_ "%s::%s", module,	\
 				    vn = "VERSION"), FALSE);		\
 	}								\
-	if (_sv && (!SvOK(_sv) || strNE(XS_VERSION, SvPV(_sv, n_a))))	\
+	if (_sv && (!SvOK(_sv) || strNE(XS_VERSION, SvPV_nolen_const(_sv))))	\
 	    Perl_croak(aTHX_ "%s object version %s does not match %s%s%s%s %"SVf,\
 		  module, XS_VERSION,					\
 		  vn ? "$" : "", vn ? module : "", vn ? "::" : "",	\
@@ -540,3 +569,13 @@ C<xsubpp>.  See L<perlxs/"The VERSIONCHECK: Keyword">.
 #endif  /* PERL_IMPLICIT_SYS && !PERL_CORE */
 
 #endif /* _INC_PERL_XSUB_H */		/* include guard */
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ *
+ * ex: set ts=8 sts=4 sw=4 noet:
+ */

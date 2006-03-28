@@ -7,9 +7,9 @@
 
 package Math::Complex;
 
-our($VERSION, @ISA, @EXPORT, %EXPORT_TAGS, $Inf);
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $Inf);
 
-$VERSION = 1.34;
+$VERSION = 1.35;
 
 BEGIN {
     unless ($^O eq 'unicosmk') {
@@ -38,7 +38,8 @@ my $i;
 my %LOGN;
 
 # Regular expression for floating point numbers.
-my $gre = qr'\s*([\+\-]?(?:(?:(?:\d+(?:_\d+)*(?:\.\d*(?:_\d+)*)?|\.\d+(?:_\d+)*)(?:[eE][\+\-]?\d+(?:_\d+)*)?)))';
+# These days we could use Scalar::Util::lln(), I guess.
+my $gre = qr'\s*([\+\-]?(?:(?:(?:\d+(?:_\d+)*(?:\.\d*(?:_\d+)*)?|\.\d+(?:_\d+)*)(?:[eE][\+\-]?\d+(?:_\d+)*)?))|inf)'i;
 
 require Exporter;
 
@@ -61,8 +62,11 @@ my @trig = qw(
 	     sqrt log ln
 	     log10 logn cbrt root
 	     cplx cplxe
+	     atan2
 	     ),
 	   @trig);
+
+@EXPORT_OK = qw(decplx);
 
 %EXPORT_TAGS = (
     'trig' => [@trig],
@@ -108,27 +112,53 @@ my $eps            = 1e-14;		# Epsilon
 # Die on bad *make() arguments.
 
 sub _cannot_make {
-    die "@{[(caller(1))[3]]}: Cannot take $_[0] of $_[1].\n";
+    die "@{[(caller(1))[3]]}: Cannot take $_[0] of '$_[1]'.\n";
 }
 
-sub _remake {
+sub _make {
     my $arg = shift;
-    my ($made, $p, $q);
+    my ($p, $q);
 
-    if ($arg =~ /^(?:$gre)?$gre\s*i\s*$/) {
+    if ($arg =~ /^$gre$/) {
+	($p, $q) = ($1, 0);
+    } elsif ($arg =~ /^(?:$gre)?$gre\s*i\s*$/) {
 	($p, $q) = ($1 || 0, $2);
-	$made = 'cart';
-    } elsif ($arg =~ /^\s*\[\s*$gre\s*(?:,\s*$gre\s*)?\]\s*$/) {
+    } elsif ($arg =~ /^\s*\(\s*$gre\s*(?:,\s*$gre\s*)?\)\s*$/) {
 	($p, $q) = ($1, $2 || 0);
-	$made = 'exp';
     }
 
-    if ($made) {
+    if (defined $p) {
+	$p =~ s/^\+//;
+	$p =~ s/^(-?)inf$/"${1}9**9**9"/e;
+	$q =~ s/^\+//;
+	$q =~ s/^(-?)inf$/"${1}9**9**9"/e;
+    }
+
+    return ($p, $q);
+}
+
+sub _emake {
+    my $arg = shift;
+    my ($p, $q);
+
+    if ($arg =~ /^\s*\[\s*$gre\s*(?:,\s*$gre\s*)?\]\s*$/) {
+	($p, $q) = ($1, $2 || 0);
+    } elsif ($arg =~ m!^\s*\[\s*$gre\s*(?:,\s*([-+]?\d*\s*)?pi(?:/\s*(\d+))?\s*)?\]\s*$!) {
+	($p, $q) = ($1, ($2 eq '-' ? -1 : ($2 || 1)) * pi() / ($3 || 1));
+    } elsif ($arg =~ /^\s*\[\s*$gre\s*\]\s*$/) {
+	($p, $q) = ($1, 0);
+    } elsif ($arg =~ /^\s*$gre\s*$/) {
+	($p, $q) = ($1, 0);
+    }
+
+    if (defined $p) {
 	$p =~ s/^\+//;
 	$q =~ s/^\+//;
+	$p =~ s/^(-?)inf$/"${1}9**9**9"/e;
+	$q =~ s/^(-?)inf$/"${1}9**9**9"/e;
     }
 
-    return ($made, $p, $q);
+    return ($p, $q);
 }
 
 #
@@ -137,42 +167,26 @@ sub _remake {
 # Create a new complex number (cartesian form)
 #
 sub make {
-	my $self = bless {}, shift;
-	my ($re, $im) = @_;
-	if (@_ == 1) {
-	    my ($remade, $p, $q) = _remake($re);
-	    if ($remade) {
-		if ($remade eq 'cart') {
-		    ($re, $im) = ($p, $q);
-		} else {
-		    return (ref $self)->emake($p, $q);
-		}
-	    }
-	}
-	my $rre = ref $re;
-	if ( $rre ) {
-	    if ( $rre eq ref $self ) {
-		$re = Re($re);
-	    } else {
-		_cannot_make("real part", $rre);
-	    }
-	}
-	my $rim = ref $im;
-	if ( $rim ) {
-	    if ( $rim eq ref $self ) {
-		$im = Im($im);
-	    } else {
-		_cannot_make("imaginary part", $rim);
-	    }
-	}
+    my $self = bless {}, shift;
+    my ($re, $im);
+    if (@_ == 0) {
+	($re, $im) = (0, 0);
+    } elsif (@_ == 1) {
+	return (ref $self)->emake($_[0])
+	    if ($_[0] =~ /^\s*\[/);
+	($re, $im) = _make($_[0]);
+    } elsif (@_ == 2) {
+	($re, $im) = @_;
+    }
+    if (defined $re) {
 	_cannot_make("real part",      $re) unless $re =~ /^$gre$/;
-	$im ||= 0;
-	_cannot_make("imaginary part", $im) unless $im =~ /^$gre$/;
-	$self->{'cartesian'} = [ $re, $im ];
-	$self->{c_dirty} = 0;
-	$self->{p_dirty} = 1;
-	$self->display_format('cartesian');
-	return $self;
+    }
+    $im ||= 0;
+    _cannot_make("imaginary part", $im) unless $im =~ /^$gre$/;
+    $self->set_cartesian([$re, $im ]);
+    $self->display_format('cartesian');
+
+    return $self;
 }
 
 #
@@ -181,46 +195,32 @@ sub make {
 # Create a new complex number (exponential form)
 #
 sub emake {
-	my $self = bless {}, shift;
-	my ($rho, $theta) = @_;
-	if (@_ == 1) {
-	    my ($remade, $p, $q) = _remake($rho);
-	    if ($remade) {
-		if ($remade eq 'exp') {
-		    ($rho, $theta) = ($p, $q);
-		} else {
-		    return (ref $self)->make($p, $q);
-		}
-	    }
-	}
-	my $rrh = ref $rho;
-	if ( $rrh ) {
-	    if ( $rrh eq ref $self ) {
-		$rho = rho($rho);
-	    } else {
-		_cannot_make("rho", $rrh);
-	    }
-	}
-	my $rth = ref $theta;
-	if ( $rth ) {
-	    if ( $rth eq ref $self ) {
-		$theta = theta($theta);
-	    } else {
-		_cannot_make("theta", $rth);
-	    }
-	}
+    my $self = bless {}, shift;
+    my ($rho, $theta);
+    if (@_ == 0) {
+	($rho, $theta) = (0, 0);
+    } elsif (@_ == 1) {
+	return (ref $self)->make($_[0])
+	    if ($_[0] =~ /^\s*\(/ || $_[0] =~ /i\s*$/);
+	($rho, $theta) = _emake($_[0]);
+    } elsif (@_ == 2) {
+	($rho, $theta) = @_;
+    }
+    if (defined $rho && defined $theta) {
 	if ($rho < 0) {
 	    $rho   = -$rho;
 	    $theta = ($theta <= 0) ? $theta + pi() : $theta - pi();
 	}
+    }
+    if (defined $rho) {
 	_cannot_make("rho",   $rho)   unless $rho   =~ /^$gre$/;
-	$theta ||= 0;
-	_cannot_make("theta", $theta) unless $theta =~ /^$gre$/;
-	$self->{'polar'} = [$rho, $theta];
-	$self->{p_dirty} = 0;
-	$self->{c_dirty} = 1;
-	$self->display_format('polar');
-	return $self;
+    }
+    $theta ||= 0;
+    _cannot_make("theta", $theta) unless $theta =~ /^$gre$/;
+    $self->set_polar([$rho, $theta]);
+    $self->display_format('polar');
+
+    return $self;
 }
 
 sub new { &make }		# For backward compatibility only.
@@ -312,8 +312,10 @@ sub cartesian {$_[0]->{c_dirty} ?
 sub polar     {$_[0]->{p_dirty} ?
 		   $_[0]->update_polar : $_[0]->{'polar'}}
 
-sub set_cartesian { $_[0]->{p_dirty}++; $_[0]->{'cartesian'} = $_[1] }
-sub set_polar     { $_[0]->{c_dirty}++; $_[0]->{'polar'} = $_[1] }
+sub set_cartesian { $_[0]->{p_dirty}++; $_[0]->{c_dirty} = 0;
+		    $_[0]->{'cartesian'} = $_[1] }
+sub set_polar     { $_[0]->{c_dirty}++; $_[0]->{p_dirty} = 0;
+		    $_[0]->{'polar'} = $_[1] }
 
 #
 # ->update_cartesian
@@ -659,7 +661,7 @@ sub cbrt {
 # Die on bad root.
 #
 sub _rootbad {
-    my $mess = "Root $_[0] illegal, root rank must be positive integer.\n";
+    my $mess = "Root '$_[0]' illegal, root rank must be positive integer.\n";
 
     my @up = caller(1);
 
@@ -679,22 +681,27 @@ sub _rootbad {
 # z^(1/n) = r^(1/n) (cos ((t+2 k pi)/n) + i sin ((t+2 k pi)/n))
 #
 sub root {
-	my ($z, $n) = @_;
+	my ($z, $n, $k) = @_;
 	_rootbad($n) if ($n < 1 or int($n) != $n);
 	my ($r, $t) = ref $z ?
 	    @{$z->polar} : (CORE::abs($z), $z >= 0 ? 0 : pi);
-	my @root;
-	my $k;
 	my $theta_inc = pit2 / $n;
 	my $rho = $r ** (1/$n);
-	my $theta;
 	my $cartesian = ref $z && $z->{c_dirty} == 0;
-	for ($k = 0, $theta = $t / $n; $k < $n; $k++, $theta += $theta_inc) {
-	    my $w = cplxe($rho, $theta);
-	    # Yes, $cartesian is loop invariant.
-	    push @root, $cartesian ? cplx(@{$w->cartesian}) : $w;
+	if (@_ == 2) {
+	    my @root;
+	    for (my $i = 0, my $theta = $t / $n;
+		 $i < $n;
+		 $i++, $theta += $theta_inc) {
+		my $w = cplxe($rho, $theta);
+		# Yes, $cartesian is loop invariant.
+		push @root, $cartesian ? cplx(@{$w->cartesian}) : $w;
+	    }
+	    return @root;
+	} elsif (@_ == 3) {
+	    my $w = cplxe($rho, $t / $n + $k * $theta_inc);
+	    return $cartesian ? cplx(@{$w->cartesian}) : $w;
 	}
-	return @root;
 }
 
 #
@@ -1265,27 +1272,30 @@ sub acotanh { Math::Complex::acoth(@_) }
 #
 # (atan2)
 #
-# Compute atan(z1/z2).
+# Compute atan(z1/z2), minding the right quadrant.
 #
 sub atan2 {
 	my ($z1, $z2, $inverted) = @_;
 	my ($re1, $im1, $re2, $im2);
 	if ($inverted) {
 	    ($re1, $im1) = ref $z2 ? @{$z2->cartesian} : ($z2, 0);
-	    ($re2, $im2) = @{$z1->cartesian};
+	    ($re2, $im2) = ref $z1 ? @{$z1->cartesian} : ($z1, 0);
 	} else {
-	    ($re1, $im1) = @{$z1->cartesian};
+	    ($re1, $im1) = ref $z1 ? @{$z1->cartesian} : ($z1, 0);
 	    ($re2, $im2) = ref $z2 ? @{$z2->cartesian} : ($z2, 0);
 	}
-	if ($im2 == 0) {
-	    return CORE::atan2($re1, $re2) if $im1 == 0;
-	    return ($im1<=>0) * pip2 if $re2 == 0;
+	if ($im1 || $im2) {
+	    # In MATLAB the imaginary parts are ignored.
+	    # warn "atan2: Imaginary parts ignored";
+	    # http://documents.wolfram.com/mathematica/functions/ArcTan
+	    # NOTE: Mathematica ArcTan[x,y] while atan2(y,x)
+	    my $s = $z1 * $z1 + $z2 * $z2;
+	    _divbyzero("atan2") if $s == 0;
+	    my $i = &i;
+	    my $r = $z2 + $z1 * $i;
+	    return -$i * &log($r / &sqrt( $s ));
 	}
-	my $w = atan($z1/$z2);
-	my ($u, $v) = ref $w ? @{$w->cartesian} : ($w, 0);
-	$u += pi   if $re2 < 0;
-	$u -= pit2 if $u > pi;
-	return cplx($u, $v);
+	return CORE::atan2($re1, $re2);
 }
 
 #
@@ -1659,7 +1669,11 @@ the following (overloaded) operations are supported on complex numbers:
 	log(z) = log(r1) + i*t
 	sin(z) = 1/2i (exp(i * z1) - exp(-i * z))
 	cos(z) = 1/2 (exp(i * z1) + exp(-i * z))
-	atan2(z1, z2) = atan(z1/z2)
+	atan2(y, x) = atan(y / x) # Minding the right quadrant, note the order.
+
+The definition used for complex arguments of atan2() is
+
+       -i log((x + iy)/sqrt(x*x+y*y))
 
 The following extra operations are supported on both real and complex
 numbers:
@@ -1726,6 +1740,9 @@ The I<k>th root for C<z = [r,t]> is given by:
 
 	(root(z, n))[k] = r**(1/n) * exp(i * (t + 2*k*pi)/n)
 
+You can return the I<k>th root directly by C<root(z, n, k)>,
+indexing starting from I<zero> and ending at I<n - 1>.
+
 The I<spaceship> comparison operator, E<lt>=E<gt>, is also defined. In
 order to ensure its restriction to real numbers is conform to what you
 would expect, the comparison is run on the real part of the complex
@@ -1773,17 +1790,22 @@ understand a single (string) argument of the forms
     	2-3i
     	-3i
 	[2,3]
+	[2,-3pi/4]
 	[2]
 
 in which case the appropriate cartesian and exponential components
 will be parsed from the string and used to create new complex numbers.
 The imaginary component and the theta, respectively, will default to zero.
 
-=head1 STRINGIFICATION
+The C<new>, C<make>, C<emake>, C<cplx>, and C<cplxe> will also
+understand the case of no arguments: this means plain zero or (0, 0).
+
+=head1 DISPLAYING
 
 When printed, a complex number is usually shown under its cartesian
 style I<a+bi>, but there are legitimate cases where the polar style
-I<[r,t]> is more appropriate.
+I<[r,t]> is more appropriate.  The process of converting the complex
+number into a string that can be displayed is known as I<stringification>.
 
 By calling the class method C<Math::Complex::display_format> and
 supplying either C<"polar"> or C<"cartesian"> as an argument, you
@@ -1808,6 +1830,8 @@ For instance:
 The polar style attempts to emphasize arguments like I<k*pi/n>
 (where I<n> is a positive integer and I<k> an integer within [-9, +9]),
 this is called I<polar pretty-printing>.
+
+For the reverse of stringifying, see the C<make> and C<emake>.
 
 =head2 CHANGED IN PERL 5.6
 
@@ -1902,7 +1926,8 @@ C<-1> (minus one).  For the C<atan>, C<acot>, the argument cannot be
 C<i> (the imaginary unit).  For the C<atan>, C<acoth>, the argument
 cannot be C<-i> (the negative imaginary unit).  For the C<tan>,
 C<sec>, C<tanh>, the argument cannot be I<pi/2 + k * pi>, where I<k>
-is any integer.
+is any integer.  atan2(0, 0) is undefined, and if the complex arguments
+are used for atan2(), a division by zero will happen if z1**2+z2**2 == 0.
 
 Note that because we are operating on approximations of real numbers,
 these errors can happen when merely `too close' to the singularities
@@ -1922,7 +1947,7 @@ messages like the following
 =head1 BUGS
 
 Saying C<use Math::Complex;> exports many mathematical routines in the
-caller environment and even overrides some (C<sqrt>, C<log>).
+caller environment and even overrides some (C<sqrt>, C<log>, C<atan2>).
 This is construed as a feature by the Authors, actually... ;-)
 
 All routines expect to be given real or complex numbers. Don't attempt to

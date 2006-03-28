@@ -435,7 +435,7 @@ our(@ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS, $VERSION);
 	      clearcache clearallcache disablecache enablecache);
 %EXPORT_TAGS=( all => [ @EXPORT, @EXPORT_OK ] ) ;
 
-$VERSION = 1.06;
+$VERSION = 1.07;
 
 # --- ':hireswallclock' special handling
 
@@ -648,7 +648,7 @@ sub runloop {
     # &runloop a lot, and thus reduce additive errors.
     my $tbase = Benchmark->new(0)->[1];
     while ( ( $t0 = Benchmark->new(0) )->[1] == $tbase ) {} ;
-    &$subref;
+    $subref->();
     $t1 = Benchmark->new($n);
     $td = &timediff($t1, $t0);
     timedebug("runloop:",$td);

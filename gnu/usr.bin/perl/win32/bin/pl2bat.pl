@@ -219,7 +219,7 @@ use B<pl2bat>.
 
 The generated batch file is initially processed as a batch file each
 time it is run.  This means that, to use it from within another batch
-file you should preceed it with C<call> or else the calling batch
+file you should precede it with C<call> or else the calling batch
 file will not run any commands after the script:
 
     call script [args]

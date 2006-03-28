@@ -42,16 +42,18 @@ system).  Currently, this port is capable of using one of the
 following compilers on the Intel x86 architecture:
 
       Borland C++           version 5.02 or later
-      Microsoft Visual C++  version 4.2 or later
+      Microsoft Visual C++  version 2.0 or later
       MinGW with gcc        gcc version 2.95.2 or later
 
 The last of these is a high quality freeware compiler.  Use version
 3.2.x or later for the best results with this compiler.
 
-The Microsoft Visual C++ compiler is also now being given away free in
-the "Visual C++ Toolkit 2003", and also as part of the ".NET Framework
-SDK".  This is the same compiler that ships with "Visual Studio .NET 2003
-Professional".
+The Borland C++ and Microsoft Visual C++ compilers are also now being given
+away free.  The Borland compiler is available as "Borland C++ Compiler Free
+Command Line Tools" and is the same compiler that ships with the full
+"Borland C++ Builder" product.  The Microsoft compiler is available as
+"Visual C++ Toolkit 2003", and also as part of the ".NET Framework SDK", and
+is the same compiler that ships with "Visual Studio .NET 2003 Professional".
 
 This port can also be built on the Intel IA64 using:
 
@@ -79,15 +81,9 @@ and parallelability.
 
 A port of dmake for Windows is available from:
 
-    http://www.cpan.org/authors/id/GSAR/dmake-4.1pl1-win32.zip
+    http://search.cpan.org/dist/dmake/
 
-(This is a fixed version of the original dmake sources obtained from
-http://www.wticorp.com/  As of version 4.1PL1, the original
-sources did not build as shipped and had various other problems.
-A patch is included in the above fixed version.)
-
-Fetch and install dmake somewhere on your path (follow the instructions
-in the README.NOW file).
+Fetch and install dmake somewhere on your path.
 
 There exists a minor coexistence problem with dmake and Borland C++
 compilers.  Namely, if a distribution has C files named with mixed
@@ -151,13 +147,14 @@ Framework Redistributable" to be installed first.  This can be downloaded and
 installed separately, but is included in the "Visual C++ Toolkit 2003" anyway.
 
 These packages can all be downloaded by searching in the Download Center at
-http://www.microsoft.com/downloads/search.aspx?displaylang=en
+http://www.microsoft.com/downloads/search.aspx?displaylang=en.  (Providing exact
+links to these packages has proven a pointless task because the links keep on
+changing so often.)
 
-Note that the "Platform SDK February 2003" download requires Internet Explorer
-5.0 to function.  Alternatively, the very latest version at the time of writing
-(called "Windows XP Service Pack 2 Platform SDK RC2") is now available as an
-ISO-9660 CD image file and does not require IE5 to be downloaded but will only
-work on Windows XP.
+Try to obtain the latest version of the Platform SDK.  Sometimes these packages
+contain a particular Windows OS version in their name, but actually work on
+other OS versions too.  For example, the "Windows Server 2003 SP1 Platform SDK"
+also runs on Windows XP SP2 and Windows 2000.
 
 According to the download pages the Toolkit and the .NET Framework SDK are only
 supported on Windows 2000/XP/2003, so trying to use these tools on Windows
@@ -188,14 +185,25 @@ Copy it from there to C:\Program Files\Microsoft SDK\Bin
 =item *
 
 lib.exe is normally used to build libraries, but link.exe with the /lib
-option also works, so create a batch file called lib.bat in
+option also works, so change win32/config.vc to use it instead:
+
+Change the line reading:
+
+	ar='lib'
+
+to:
+
+	ar='link /lib'
+
+It may also be useful to create a batch file called lib.bat in
 C:\Program Files\Microsoft Visual C++ Toolkit 2003\bin containing:
 
 	@echo off
 	link /lib %*
 
-This will work as long as "lib.exe" is invoked simply as "lib" (which it is
-during the Perl build process).
+for the benefit of any naughty C extension modules that you might want to build
+later which explicitly reference "lib" rather than taking their value from
+$Config{ar}.
 
 =item *
 
@@ -208,12 +216,18 @@ internal.h from there to some temporary location and build setargv.obj using
 
 Then copy setargv.obj to C:\Program Files\Microsoft SDK\lib
 
+Alternatively, if you don't need perlglob.exe and don't need to enable the
+USE_SETARGV option then you can safely just remove all mention of $(GLOBEXE)
+from win32/Makefile and setargv.obj won't be required anyway.
+
 =back
 
 Perl should now build using the win32/Makefile.  You will need to edit that
-file to comment-out CCTYPE = MSVC60 (since that enables delay-loading of the
-Winsock DLL which the free toolkit does not support) and to set CCHOME,
-CCINCDIR and CCLIBDIR as per the environment setup above.
+file to set
+
+	CCTYPE = MSVC70FREE
+
+and to set CCHOME, CCINCDIR and CCLIBDIR as per the environment setup above.
 
 =item Microsoft Platform SDK 64-bit Compiler
 
@@ -223,7 +237,7 @@ shells available after you install the Platform SDK from the Start Menu.
 
 =item MinGW release 3 with gcc
 
-The latest release of MinGW at the time of writing is 3.1.0, which contains 
+The latest release of MinGW at the time of writing is 3.1.0, which contains
 gcc-3.2.3.  It can be downloaded here:
 
     http://www.mingw.org/
@@ -285,7 +299,7 @@ defaults in the dmake makefile are setup to build using MinGW/gcc.
 
 =item *
 
-Edit the makefile.mk (or Makefile, if you're using nmake) and change 
+Edit the makefile.mk (or Makefile, if you're using nmake) and change
 the values of INST_DRV and INST_TOP.   You can also enable various
 build flags.  These are explained in the makefiles.
 
@@ -296,12 +310,16 @@ lib/ExtUtils/t/Embed.t test, which attempts to build a test program and
 may end up building against the installed perl's lib/CORE directory rather
 than the one being tested.
 
-You will have to make sure that CCTYPE is set correctly and that 
+You will have to make sure that CCTYPE is set correctly and that
 CCHOME points to wherever you installed your compiler.
 
 The default value for CCHOME in the makefiles for Visual C++
 may not be correct for some versions.  Make sure the default exists
 and is valid.
+
+You may also need to comment out the C<DELAYLOAD = ...> line in the
+Makefile if you're using VC++ 6.0 without the latest service pack and
+the linker reports an internal error.
 
 If you have either the source or a library that contains des_fcrypt(),
 enable the appropriate option in the makefile.  A ready-to-use version
@@ -312,6 +330,9 @@ Alternatively, if you have built a library that contains des_fcrypt(),
 you can set CRYPT_LIB to point to the library name.
 Perl will also build without des_fcrypt(), but the crypt() builtin will
 fail at run time.
+
+If you want build some core extensions statically into perl's dll, specify
+them in the STATIC_EXT macro.
 
 Be sure to read the instructions near the top of the makefiles carefully.
 
@@ -607,10 +628,10 @@ be a source of frustration if you use such a perl binary with an
 alternate shell that *does* expand wildcards.
 
 Instead, the following solution works rather well. The nice things
-about it are 1) you can start using it right away; 2) it is more 
+about it are 1) you can start using it right away; 2) it is more
 powerful, because it will do the right thing with a pattern like
 */*/*.c; 3) you can decide whether you do/don't want to use it; and
-4) you can extend the method to add any customizations (or even 
+4) you can extend the method to add any customizations (or even
 entirely different kinds of wildcard expansion).
 
 	C:\> copy con c:\perl\lib\Wild.pm
@@ -660,13 +681,12 @@ To ensure smooth transitioning of existing code that uses the
 ActiveState port, there is a bundle of Win32 extensions that contains
 all of the ActiveState extensions and several other Win32 extensions from
 CPAN in source form, along with many added bugfixes, and with MakeMaker
-support.  This bundle is available at:
+support.  The latest version of this bundle is available at:
 
-   http://www.cpan.org/modules/by-module/Win32/libwin32-0.191.zip
+    http://search.cpan.org/dist/libwin32/
 
 See the README in that distribution for building and installation
-instructions.  Look for later versions that may be available at the
-same location.
+instructions.
 
 =item Notes on 64-bit Windows
 
@@ -808,15 +828,15 @@ find a mailer on your system).
 
 =head1 BUGS AND CAVEATS
 
-Norton AntiVirus interferes with the build process, particularly if 
-set to "AutoProtect, All Files, when Opened". Unlike large applications 
-the perl build process opens and modifies a lot of files. Having the  
+Norton AntiVirus interferes with the build process, particularly if
+set to "AutoProtect, All Files, when Opened". Unlike large applications
+the perl build process opens and modifies a lot of files. Having the
 the AntiVirus scan each and every one slows build the process significantly.
 Worse, with PERLIO=stdio the build process fails with peculiar messages
-as the virus checker interacts badly with miniperl.exe writing configure 
+as the virus checker interacts badly with miniperl.exe writing configure
 files (it seems to either catch file part written and treat it as suspicious,
 or virus checker may have it "locked" in a way which inhibits miniperl
-updating it). The build does complete with 
+updating it). The build does complete with
 
    set PERLIO=perlio
 
@@ -849,7 +869,7 @@ Thus, signals may work only for simple things like setting a flag
 variable in the handler.  Using signals under this port should
 currently be considered unsupported.
 
-Please send detailed descriptions of any problems and solutions that 
+Please send detailed descriptions of any problems and solutions that
 you may find to E<lt>F<perlbug@perl.org>E<gt>, along with the output
 produced by C<perl -V>.
 
@@ -868,9 +888,13 @@ of O'Reilly and Associates, Inc. Used with permission.
 
 =item Nick Ing-Simmons E<lt>nick@ing-simmons.netE<gt>
 
+=item Jan Dubois E<lt>jand@activestate.comE<gt>
+
+=item Steve Hay E<lt>steve.hay@uk.radan.comE<gt>
+
 =back
 
-This document is maintained by Gurusamy Sarathy.
+This document is maintained by Jan Dubois.
 
 =head1 SEE ALSO
 
@@ -895,6 +919,6 @@ Win9x support was added in 5.6 (Benjamin Stuhl).
 
 Support for 64-bit Windows added in 5.8 (ActiveState Corp).
 
-Last updated: 30 July 2004
+Last updated: 30 September 2005
 
 =cut

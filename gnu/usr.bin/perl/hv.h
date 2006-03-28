@@ -1,7 +1,7 @@
 /*    hv.h
  *
  *    Copyright (C) 1991, 1992, 1993, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, by Larry Wall and others
+ *    2000, 2001, 2002, 2005, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -54,7 +54,7 @@ struct xpvhv {
 /* The use of a temporary pointer and the casting games
  * is needed to serve the dual purposes of
  * (a) the hashed data being interpreted as "unsigned char" (new since 5.8,
- *     a "char" can be either signed or signed, depending on the compiler)
+ *     a "char" can be either signed or unsigned, depending on the compiler)
  * (b) catering for old code that uses a "char"
  *
  * The "hash seed" feature was added in Perl 5.8.1 to perturb the results
@@ -64,7 +64,7 @@ struct xpvhv {
  * If USE_HASH_SEED_EXPLICIT is defined, hash randomisation is done
  * only if the environment variable PERL_HASH_SEED is set.
  * For maximal control, one can define PERL_HASH_SEED.
- * (see also erl.c:perl_parse()).
+ * (see also perl.c:perl_parse()).
  */
 #ifndef PERL_HASH_SEED
 #   if defined(USE_HASH_SEED) || defined(USE_HASH_SEED_EXPLICIT)
@@ -124,7 +124,8 @@ Null HV pointer.
 =head1 Hash Manipulation Functions
 
 =for apidoc Am|char*|HvNAME|HV* stash
-Returns the package name of a stash.  See C<SvSTASH>, C<CvSTASH>.
+Returns the package name of a stash, or NULL if C<stash> isn't a stash.
+See C<SvSTASH>, C<CvSTASH>.
 
 =for apidoc Am|void*|HeKEY|HE* he
 Returns the actual pointer stored in the key slot of the hash entry. The
@@ -180,9 +181,18 @@ C<SV*>.
 #define HvFILL(hv)	((XPVHV*)  SvANY(hv))->xhv_fill
 #define HvMAX(hv)	((XPVHV*)  SvANY(hv))->xhv_max
 #define HvRITER(hv)	((XPVHV*)  SvANY(hv))->xhv_riter
+#define HvRITER_get(hv)	(0 + ((XPVHV*)  SvANY(hv))->xhv_riter)
+#define HvRITER_set(hv,r)	(HvRITER(hv) = (r))
 #define HvEITER(hv)	((XPVHV*)  SvANY(hv))->xhv_eiter
+#define HvEITER_get(hv)	(0 + ((XPVHV*)  SvANY(hv))->xhv_eiter)
+#define HvEITER_set(hv,e)	(HvEITER(hv) = (e))
 #define HvPMROOT(hv)	((XPVHV*)  SvANY(hv))->xhv_pmroot
 #define HvNAME(hv)	((XPVHV*)  SvANY(hv))->xhv_name
+/* FIXME - all of these should use a UTF8 aware API, which should also involve
+   getting the length. */
+#define HvNAME_get(hv)	(0 + ((XPVHV*)  SvANY(hv))->xhv_name)
+#define hv_name_set(hv,name,length,flags) \
+    (HvNAME((hv)) = (name) ? savepvn(name, length) : 0)
 
 /* the number of keys (including any placeholers) */
 #define XHvTOTALKEYS(xhv)	((xhv)->xhv_keys)
@@ -201,7 +211,10 @@ C<SV*>.
 #define HvKEYS(hv)		XHvUSEDKEYS((XPVHV*)  SvANY(hv))
 #define HvUSEDKEYS(hv)		XHvUSEDKEYS((XPVHV*)  SvANY(hv))
 #define HvTOTALKEYS(hv)		XHvTOTALKEYS((XPVHV*)  SvANY(hv))
-#define HvPLACEHOLDERS(hv)	XHvPLACEHOLDERS((XPVHV*)  SvANY(hv))
+#define HvPLACEHOLDERS(hv)	(XHvPLACEHOLDERS((XPVHV*)  SvANY(hv)))
+#define HvPLACEHOLDERS_get(hv)	(0 + XHvPLACEHOLDERS((XPVHV*)  SvANY(hv)))
+#define HvPLACEHOLDERS_set(hv, p)	\
+	(XHvPLACEHOLDERS((XPVHV*)  SvANY(hv)) = (p))
 
 #define HvSHAREKEYS(hv)		(SvFLAGS(hv) & SVphv_SHAREKEYS)
 #define HvSHAREKEYS_on(hv)	(SvFLAGS(hv) |= SVphv_SHAREKEYS)
@@ -305,7 +318,10 @@ C<SV*>.
 #define HEK_REHASH_on(hek)	(HEK_FLAGS(hek) |= HVhek_REHASH)
 
 /* calculate HV array allocation */
-#if defined(STRANGE_MALLOC) || defined(MYMALLOC)
+#ifndef PERL_USE_LARGE_HV_ALLOC
+/* Default to allocating the correct size - default to assuming that malloc()
+   is not broken and is efficient at allocating blocks sized at powers-of-two.
+*/   
 #  define PERL_HV_ARRAY_ALLOC_BYTES(size) ((size) * sizeof(HE*))
 #else
 #  define MALLOC_OVERHEAD 16
@@ -321,3 +337,13 @@ C<SV*>.
 /* available as a function in hv.c */
 #define Perl_sharepvn(sv, len, hash) HEK_KEY(share_hek(sv, len, hash))
 #define sharepvn(sv, len, hash)	     Perl_sharepvn(sv, len, hash)
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ *
+ * ex: set ts=8 sts=4 sw=4 noet:
+ */

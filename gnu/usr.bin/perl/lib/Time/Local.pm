@@ -7,7 +7,7 @@ use strict;
 use integer;
 
 use vars qw( $VERSION @ISA @EXPORT @EXPORT_OK );
-$VERSION    = '1.10';
+$VERSION    = '1.11';
 $VERSION    = eval $VERSION;
 @ISA	= qw( Exporter );
 @EXPORT	= qw( timegm timelocal );
@@ -33,13 +33,18 @@ if ($^O eq 'MacOS') {
 } else {
     $MaxInt = ((1 << (8 * $Config{intsize} - 2))-1)*2 + 1;
     $MinInt = -$MaxInt - 1;
+
+    # On Win32 (and others?) time_t appears to be signed, but negative
+    # epochs still don't work. - XXX - this is experimental
+    $MinInt = 0
+        unless defined ((localtime(-1))[0]);
 }
 
 $Max{Day} = ($MaxInt >> 1) / 43200;
-$Min{Day} = ($MinInt)? -($Max{Day}+1) : 0;
+$Min{Day} = $MinInt ? -($Max{Day} + 1) : 0;
 
-$Max{Sec} =  $MaxInt - 86400 * $Max{Day};
-$Min{Sec} =  $MinInt - 86400 * $Min{Day};
+$Max{Sec} = $MaxInt - 86400 * $Max{Day};
+$Min{Sec} = $MinInt - 86400 * $Min{Day};
 
 # Determine the EPOC day for this machine
 my $Epoc = 0;
@@ -111,6 +116,8 @@ sub timegm {
 	croak "Month '$month' out of range 0..11" if $month > 11 or $month < 0;
 
 	my $md = $MonthDays[$month];
+#        ++$md if $month == 1 and $year % 4 == 0 and
+#            ($year % 100 != 0 or ($year + 1900) % 400 == 0);
 	++$md unless $month != 1 or $year % 4 or !($year % 400);
 
 	croak "Day '$mday' out of range 1..$md"   if $mday  > $md  or $mday  < 1;
@@ -252,8 +259,8 @@ values, the following conventions are followed:
 =item *
 
 Years greater than 999 are interpreted as being the actual year,
-rather than the offset from 1900.  Thus, 1963 would indicate the year
-Martin Luther King won the Nobel prize, not the year 3863.
+rather than the offset from 1900.  Thus, 1964 would indicate the year
+Martin Luther King won the Nobel prize, not the year 3864.
 
 =item *
 

@@ -60,21 +60,18 @@ $(LIBPERL): perl.imp perl5.def libperl_override.lib
 	cp $(LIBPERL) perl.lib
 
 imp_version: $(FIRSTMAKEFILE)
-	echo $(PERL_DLL_BASE) > imp_version.tmp
-	sh mv-if-diff imp_version.tmp $@
+	echo $(PERL_DLL_BASE) > $@
 
 libperl_override.imp: os2/os2add.sym miniperl imp_version
-	./miniperl -wnle 'print "$$_\t$(PERL_DLL_BASE)\t$$_\t?"' os2/os2add.sym > tmp.imp
-	echo	'strdup	$(PERL_DLL_BASE)	Perl_strdup	?' >> tmp.imp
-	echo	'putenv	$(PERL_DLL_BASE)	Perl_putenv	?' >> tmp.imp
-	sh mv-if-diff tmp.imp $@
+	./miniperl -wnle 'print "$$_\t$(PERL_DLL_BASE)\t$$_\t?"' os2/os2add.sym > $@
+	echo	'strdup	$(PERL_DLL_BASE)	Perl_strdup	?' >> $@
+	echo	'putenv	$(PERL_DLL_BASE)	Perl_putenv	?' >> $@
 
 libperl_override.lib: libperl_override.imp
 	emximp -o $@ libperl_override.imp
 
 libperl_dllmain.imp: imp_version
-	echo	'main	$(PERL_DLL_BASE)	dll_perlmain	?' >> tmpdll.imp
-	sh mv-if-diff tmpdll.imp $@
+	echo	'main	$(PERL_DLL_BASE)	dll_perlmain	?' >> $@
 
 libperl_dllmain.lib: libperl_dllmain.imp
 	emximp -o $@ libperl_dllmain.imp
@@ -238,12 +235,10 @@ perlmain(AOUT_OBJ_EXT): perlmain.c
 
 # Assume that extensions are at most 4 deep (this is so with 5.8.1)
 aout_extlist: $(aout_static_ext) $(AOUT_DYNALOADER)
-	echo lib/auto/*.a lib/auto/*/*.a lib/auto/*/*/*.a lib/auto/*/*/*/*.a | tr ' ' '\n' | grep -v '\*' > $@.tmp
-	sh mv-if-diff $@.tmp $@
+	echo lib/auto/*.a lib/auto/*/*.a lib/auto/*/*/*.a lib/auto/*/*/*/*.a | tr ' ' '\n' | grep -v '\*' > $@
 
 aout_perlmain.c: miniperlmain.c config.sh makefile $(static_ext_autoinit) $(aout_static_ext) writemain aout_extlist
-	sh writemain `cat aout_extlist` > aout_perlmain.tmp
-	sh mv-if-diff aout_perlmain.tmp aout_perlmain.c
+	sh writemain `cat aout_extlist` > aout_perlmain.c
 
 _preplibrary = miniperl lib/Config.pm lib/lib.pm lib/re.pm
 
@@ -305,20 +300,19 @@ $(PERLREXX_DLL): perlrexx$(OBJ_EXT) perlrexx.def
 	$(SHRPENV) $(CC) $(SO_CLDFLAGS) $(CCDLFLAGS) -o $@ perlrexx$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LIBPERL) `cat ext.libs` $(libs) perlrexx.def
 
 perlrexx.def: miniperl $(_preplibrary)
-	echo	"LIBRARY 'perlrexx' INITINSTANCE TERMINSTANCE"	> tmp.def
-	echo	"DESCRIPTION '@#perl5-porters@perl.org:`miniperl -Ilib -MConfig -e 'print \$$]'`#@ REXX to Perl `miniperl -Ilib -MConfig -e 'print \$$Config{version}'` interface'" >> tmp.def
-	echo	"EXPORTS"					>> tmp.def
-	echo	'  "PERL"'					>> tmp.def
-	echo	'  "PERLTERM"'					>> tmp.def
-	echo	'  "PERLINIT"'					>> tmp.def
-	echo	'  "PERLEXIT"'					>> tmp.def
-	echo	'  "PERLEVAL"'					>> tmp.def
-	echo	'  "PERLLASTERROR"'				>> tmp.def
-	echo	'  "PERLEVALSUBCOMMAND"'			>> tmp.def
-	echo	'  "PERLEXPORTALL"'				>> tmp.def
-	echo	'  "PERLDROPALL"'				>> tmp.def
-	echo	'  "PERLDROPALLEXIT"'				>> tmp.def
-	sh mv-if-diff tmp.def $@
+	echo	"LIBRARY 'perlrexx' INITINSTANCE TERMINSTANCE"	> $@
+	echo	"DESCRIPTION '@#perl5-porters@perl.org:`miniperl -Ilib -MConfig -e 'print \$$]'`#@ REXX to Perl `miniperl -Ilib -MConfig -e 'print \$$Config{version}'` interface'" >> $@
+	echo	"EXPORTS"					>> $@
+	echo	'  "PERL"'					>> $@
+	echo	'  "PERLTERM"'					>> $@
+	echo	'  "PERLINIT"'					>> $@
+	echo	'  "PERLEXIT"'					>> $@
+	echo	'  "PERLEVAL"'					>> $@
+	echo	'  "PERLLASTERROR"'				>> $@
+	echo	'  "PERLEVALSUBCOMMAND"'			>> $@
+	echo	'  "PERLEXPORTALL"'				>> $@
+	echo	'  "PERLDROPALL"'				>> $@
+	echo	'  "PERLDROPALLEXIT"'				>> $@
 
 
 perlrexx$(OBJ_EXT): perlrexx.c

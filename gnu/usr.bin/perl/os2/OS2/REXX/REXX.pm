@@ -11,7 +11,7 @@ require OS2::DLL;
 # Other items we are prepared to export if requested
 @EXPORT_OK = qw(drop register);
 
-$VERSION = '1.02';
+$VERSION = '1.03';
 
 # We cannot just put OS2::DLL in @ISA, since some scripts would use
 # function interface, not method interface...

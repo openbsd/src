@@ -1,12 +1,10 @@
-/* $RCSfile: util.c,v $$Revision: 4.1 $$Date: 92/08/07 18:29:29 $
+/*    util.c
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999,
  *    2000, 2001, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
- *
- * $Log:	util.c,v $
  */
 
 #include "EXTERN.h"
@@ -17,7 +15,7 @@
 #include <stdarg.h>
 #define FLUSH
 
-static char nomem[] = "Out of memory!\n";
+static const char nomem[] = "Out of memory!\n";
 
 /* paranoid version of malloc */
 
@@ -79,19 +77,6 @@ safefree(Malloc_t where)
 	fprintf(stderr,"0x%lx: (%05d) free\n",(unsigned long)where,an++);
 #endif
     free(where);
-}
-
-/* safe version of string copy */
-
-char *
-safecpy(char *to, register char *from, register int len)
-{
-    register char *dest = to;
-
-    if (from != Nullch) 
-	for (len--; len && (*dest++ = *from++); len--) ;
-    *dest = '\0';
-    return to;
 }
 
 /* copy a string up to some (non-backslashed) delimiter, if any */
@@ -156,7 +141,7 @@ instr(char *big, char *little)
 char *
 savestr(char *str)
 {
-    register char *newaddr = (char *) safemalloc((MEM_SIZE)(strlen(str)+1));
+    register char * const newaddr = (char *) safemalloc((MEM_SIZE)(strlen(str)+1));
 
     (void)strcpy(newaddr,str);
     return newaddr;
@@ -177,22 +162,7 @@ growstr(char **strptr, int *curlen, int newlen)
 }
 
 void
-croak(char *pat,...)
-{
-#if defined(HAS_VPRINTF)
-    va_list args;
-
-    va_start(args, pat);
-    vfprintf(stderr,pat,args);
-    va_end(args);
-#else
-    fprintf(stderr,pat,a1,a2,a3,a4);
-#endif
-    exit(1);
-}
-
-void
-fatal(char *pat,...)
+fatal(const char *pat,...)
 {
 #if defined(HAS_VPRINTF)
     va_list args;
@@ -210,7 +180,7 @@ fatal(char *pat,...)
 __private_extern__	/* warn() conflicts with libc */
 #endif
 void
-warn(char *pat,...)
+warn(const char *pat,...)
 {
 #if defined(HAS_VPRINTF)
     va_list args;

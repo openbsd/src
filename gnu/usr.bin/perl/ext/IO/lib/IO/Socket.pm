@@ -19,11 +19,11 @@ use Errno;
 # legacy
 
 require IO::Socket::INET;
-require IO::Socket::UNIX if ($^O ne 'epoc');
+require IO::Socket::UNIX if ($^O ne 'epoc' && $^O ne 'symbian');
 
 @ISA = qw(IO::Handle);
 
-$VERSION = "1.28";
+$VERSION = "1.29";
 
 @EXPORT_OK = qw(sockatmark);
 
@@ -404,7 +404,7 @@ false otherwise.
     use IO::Socket;
 
     my $sock = IO::Socket::INET->new('some_server');
-    $sock->read(1024,$data) until $sock->atmark;
+    $sock->read($data, 1024) until $sock->atmark;
 
 Note: this is a reasonably new addition to the family of socket
 functions, so all systems may not support this yet.  If it is

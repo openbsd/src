@@ -7,6 +7,9 @@ the Open Zaurus (http://www.openzaurus.com/) distribution.
 Most / All of the arm compiler optimisations are "borrowed"
 from this excellent project.
 
+(Further discussion about cross-compiling Perl in the top level
+INSTALL file, see the section "Cross-compilation".)
+
 The main target is arm-linux but I have also managed to
 successfully cross-compile Perl for Solaris x86 using the same
 buildsystem.
@@ -19,7 +22,7 @@ You need a working and tested cross-compiler for your build
 and target combination.  The binary directory must be in
 your path.
 
-1)	You should be reading me (README) in perl-5.8.3/Cross
+1)	You should be reading me (README) in perl-5.x.y/Cross
 
 2)	Make sure you are in the Cross directory.
 

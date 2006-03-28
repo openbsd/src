@@ -99,8 +99,10 @@ while (@ARGV) {
     } elsif ($_ eq '!') {
         $out .= tab . "!";
         next;
-    } elsif ($_ eq 'name') {
-        $out .= tab . '/' . fileglob_to_re(shift) . "/s";
+    } elsif (/^(i)?name$/) {
+        $out .= tab . '/' . fileglob_to_re(shift) . "/s$1";
+    } elsif (/^(i)?path$/) {
+        $out .= tab . '$File::Find::name =~ /' . fileglob_to_re(shift) . "/s$1";
     } elsif ($_ eq 'perm') {
         my $onum = shift;
         $onum =~ /^-?[0-7]+$/
@@ -782,6 +784,18 @@ Do not traverse mount points (prunes search at mount-point directories).
 File name matches specified GLOB wildcard pattern.  GLOB may need to be
 quoted to avoid interpretation by the shell (just as with using
 C<find(1)>).
+
+=item C<-iname GLOB>
+
+Like C<-name>, but the match is case insensitive.
+
+=item C<-path GLOB>
+
+Path name matches specified GLOB wildcard pattern.
+
+=item C<-ipath GLOB>
+
+Like C<-path>, but the match is case insensitive.
 
 =item C<-perm PERM>
 

@@ -1,6 +1,6 @@
 package Tie::RefHash;
 
-our $VERSION = 1.31;
+our $VERSION = 1.32;
 
 =head1 NAME
 
@@ -61,7 +61,7 @@ Gurusamy Sarathy        gsar@activestate.com
 
 =head1 VERSION
 
-Version 1.30
+Version 1.32
 
 =head1 SEE ALSO
 
@@ -115,7 +115,9 @@ sub STORE {
 
 sub DELETE {
   my($s, $k) = @_;
-  (ref $k) ? delete($s->[0]{overload::StrVal($k)}) : delete($s->[1]{$k});
+  (ref $k)
+    ? (delete($s->[0]{overload::StrVal($k)}) || [])->[1]
+    : delete($s->[1]{$k});
 }
 
 sub EXISTS {

@@ -246,7 +246,12 @@ mechanism for processes communicating on the same machine.  It works
 just like a regular, connected anonymous pipes, except that the
 processes rendezvous using a filename and don't have to be related.
 
-To create a named pipe, use the Unix command mknod(1) or on some
+To create a named pipe, use the C<POSIX::mkfifo()> function.
+
+    use POSIX qw(mkfifo);
+    mkfifo($path, 0700) or die "mkfifo $path failed: $!";
+
+You can also use the Unix command mknod(1) or on some
 systems, mkfifo(1).  These may not be in your normal path.
 
     # system return val is backwards, so && not ||
@@ -272,13 +277,13 @@ to find out whether anyone (or anything) has accidentally removed our fifo.
 
     chdir; # go home
     $FIFO = '.signature';
-    $ENV{PATH} .= ":/etc:/usr/games";
 
     while (1) {
 	unless (-p $FIFO) {
 	    unlink $FIFO;
-	    system('mknod', $FIFO, 'p')
-		&& die "can't mknod $FIFO: $!";
+	    require POSIX;
+	    POSIX::mkfifo($FIFO, 0700)
+		or die "can't mkfifo $FIFO: $!";
 	}
 
 	# next line blocks until there's a reader
@@ -307,8 +312,8 @@ value, and return.  This doesn't help you if you're in a slow system call,
 which will just restart.  That means you have to C<die> to longjump(3) out
 of the handler.  Even this is a little cavalier for the true paranoiac,
 who avoids C<die> in a handler because the system I<is> out to get you.
-The pragmatic approach was to say ``I know the risks, but prefer the
-convenience'', and to do anything you wanted in your signal handler,
+The pragmatic approach was to say "I know the risks, but prefer the
+convenience", and to do anything you wanted in your signal handler,
 and be prepared to clean up core dumps now and again.
 
 In Perl 5.7.3 and later to avoid these problems signals are
@@ -621,7 +626,7 @@ the syntax
 
 forks the ps(1) command (without spawning a shell, as there are more than
 three arguments to open()), and reads its standard output via the
-C<KID_PS> filehandle.  The corresponding syntax to read from command
+C<KID_PS> filehandle.  The corresponding syntax to write to command
 pipes (with C<"|-"> in place of C<"-|">) is also implemented.
 
 Note that these operations are full Unix forks, which means they may not be
@@ -1007,7 +1012,7 @@ differ from the system on which it's being run:
 	my $rtime = '    ';
 	read(SOCKET, $rtime, 4);
 	close(SOCKET);
-	my $histime = unpack("N", $rtime) - $SECS_of_70_YEARS ;
+	my $histime = unpack("N", $rtime) - $SECS_of_70_YEARS;
 	printf "%8d %s\n", $histime - time, ctime($histime);
     }
 
@@ -1511,7 +1516,7 @@ with TCP, you'd have to use a different socket handle for each host.
 	($hispaddr = recv(SOCKET, $rtime, 4, 0)) 	|| die "recv: $!";
 	($port, $hisiaddr) = sockaddr_in($hispaddr);
 	$host = gethostbyaddr($hisiaddr, AF_INET);
-	$histime = unpack("N", $rtime) - $SECS_of_70_YEARS ;
+	$histime = unpack("N", $rtime) - $SECS_of_70_YEARS;
 	printf "%-12s ", $host;
 	printf "%8d %s\n", $histime - time, scalar localtime($histime);
 	$count--;

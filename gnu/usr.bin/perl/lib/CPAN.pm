@@ -1,12 +1,12 @@
 # -*- Mode: cperl; coding: utf-8; cperl-indent-level: 4 -*-
 package CPAN;
-$VERSION = '1.76_01';
+$VERSION = '1.76_02';
 $VERSION = eval $VERSION;
-# $Id: CPAN.pm,v 1.6 2003/12/03 03:02:35 millert Exp $
+# $Id: CPAN.pm,v 1.7 2006/03/28 19:23:05 millert Exp $
 
 # only used during development:
 $Revision = "";
-# $Revision = "[".substr(q$Revision: 1.6 $, 10)."]";
+# $Revision = "[".substr(q$Revision: 1.7 $, 10)."]";
 
 use Carp ();
 use Config ();
@@ -739,7 +739,6 @@ sub has_inst {
     my $file = $mod;
     my $obj;
     $file =~ s|::|/|g;
-    $file =~ s|/|\\|g if $^O eq 'MSWin32';
     $file .= ".pm";
     if ($INC{$file}) {
 	# checking %INC is wrong, because $INC{LWP} may be true

@@ -117,6 +117,16 @@ static DWORD	w32_platform = (DWORD)-1;
 
 #define ONE_K_BUFSIZE	1024
 
+#ifdef __BORLANDC__
+/* Silence STDERR grumblings from Borland's math library. */
+DllExport int
+_matherr(struct _exception *a)
+{
+    PERL_UNUSED_VAR(a);
+    return 1;
+}
+#endif
+
 int
 IsWin95(void)
 {
@@ -137,6 +147,10 @@ set_w32_module_name(void)
 				? GetModuleHandle(NULL)
 				: w32_perldll_handle),
 		      w32_module_name, sizeof(w32_module_name));
+
+    /* remove \\?\ prefix */
+    if (memcmp(w32_module_name, "\\\\?\\", 4) == 0)
+        memmove(w32_module_name, w32_module_name+4, strlen(w32_module_name+4)+1);
 
     /* try to get full path to binary (which may be mangled when perl is
      * run from a 16-bit app) */
@@ -253,7 +267,8 @@ get_emd_part(SV **prev_pathp, char *trailing_path, ...)
 	dTHX;
 	if (!*prev_pathp)
 	    *prev_pathp = sv_2mortal(newSVpvn("",0));
-	sv_catpvn(*prev_pathp, ";", 1);
+	else if (SvPVX(*prev_pathp))
+	    sv_catpvn(*prev_pathp, ";", 1);
 	sv_catpv(*prev_pathp, mod_name);
 	return SvPVX(*prev_pathp);
     }
@@ -457,8 +472,8 @@ tokenize(const char *str, char **dest, char ***destv)
 	int slen = strlen(str);
 	register char *ret;
 	register char **retv;
-	New(1307, ret, slen+2, char);
-	New(1308, retv, (slen+3)/2, char*);
+	Newx(ret, slen+2, char);
+	Newx(retv, (slen+3)/2, char*);
 
 	retstart = ret;
 	retvstart = retv;
@@ -527,7 +542,7 @@ Perl_do_aspawn(pTHX_ SV *really, SV **mark, SV **sp)
 	return -1;
 
     get_shell();
-    New(1306, argv, (sp - mark) + w32_perlshell_items + 2, char*);
+    Newx(argv, (sp - mark) + w32_perlshell_items + 2, char*);
 
     if (SvNIOKp(*(mark+1)) && !SvPOKp(*(mark+1))) {
 	++mark;
@@ -615,8 +630,8 @@ do_spawn2(pTHX_ char *cmd, int exectype)
     /* Save an extra exec if possible. See if there are shell
      * metacharacters in it */
     if (!has_shell_metachars(cmd)) {
-	New(1301,argv, strlen(cmd) / 2 + 2, char*);
-	New(1302,cmd2, strlen(cmd) + 1, char);
+	Newx(argv, strlen(cmd) / 2 + 2, char*);
+	Newx(cmd2, strlen(cmd) + 1, char);
 	strcpy(cmd2, cmd);
 	a = argv;
 	for (s = cmd2; *s;) {
@@ -653,7 +668,7 @@ do_spawn2(pTHX_ char *cmd, int exectype)
 	char **argv;
 	int i = -1;
 	get_shell();
-	New(1306, argv, w32_perlshell_items + 2, char*);
+	Newx(argv, w32_perlshell_items + 2, char*);
 	while (++i < w32_perlshell_items)
 	    argv[i] = w32_perlshell_vec[i];
 	argv[i++] = cmd;
@@ -741,7 +756,7 @@ win32_opendir(char *filename)
 	return NULL;
 
     /* Get us a DIR structure */
-    Newz(1303, dirp, 1, DIR);
+    Newxz(dirp, 1, DIR);
 
     /* Create the search pattern */
     strcpy(scanname, filename);
@@ -802,7 +817,7 @@ win32_opendir(char *filename)
 	dirp->size = 128;
     else
 	dirp->size = idx;
-    New(1304, dirp->start, dirp->size, char);
+    Newx(dirp->start, dirp->size, char);
     strcpy(dirp->start, ptr);
     dirp->nfiles++;
     dirp->end = dirp->curr = dirp->start;
@@ -1466,7 +1481,7 @@ win32_putenv(const char *name)
     if (name) {
 	if (USING_WIDE()) {
 	    length = strlen(name)+1;
-	    New(1309,wCuritem,length,WCHAR);
+	    Newx(wCuritem,length,WCHAR);
 	    A2WHELPER(name, wCuritem, length*sizeof(WCHAR));
 	    wVal = wcschr(wCuritem, '=');
 	    if (wVal) {
@@ -1477,7 +1492,7 @@ win32_putenv(const char *name)
 	    Safefree(wCuritem);
 	}
 	else {
-	    New(1309,curitem,strlen(name)+1,char);
+	    Newx(curitem,strlen(name)+1,char);
 	    strcpy(curitem, name);
 	    val = strchr(curitem, '=');
 	    if (val) {
@@ -2582,7 +2597,7 @@ DllExport Off_t
 win32_ftell(FILE *pf)
 {
 #if defined(WIN64) || defined(USE_LARGE_FILES)
-#if defined(__BORLAND__) /* buk */
+#if defined(__BORLANDC__) /* buk */
     return win32_tell( fileno( pf ) );
 #else
     fpos_t pos;
@@ -2627,7 +2642,7 @@ win32_fseek(FILE *pf, Off_t offset,int origin)
     return fsetpos(pf, &offset);
 #endif
 #else
-    return fseek(pf, offset, origin);
+    return fseek(pf, (long)offset, origin);
 #endif
 }
 
@@ -2719,9 +2734,31 @@ win32_fstat(int fd, Stat_t *sbufptr)
      * for write operations, probably because it is opened for reading.
      * --Vadim Konovalov
      */
-    int rc = fstat(fd,sbufptr);
     BY_HANDLE_FILE_INFORMATION bhfi;
+#if defined(WIN64) || defined(USE_LARGE_FILES)    
+    /* Borland 5.5.1 has a 64-bit stat, but only a 32-bit fstat */
+    struct stat tmp;
+    int rc = fstat(fd,&tmp);
+   
+    sbufptr->st_dev   = tmp.st_dev;
+    sbufptr->st_ino   = tmp.st_ino;
+    sbufptr->st_mode  = tmp.st_mode;
+    sbufptr->st_nlink = tmp.st_nlink;
+    sbufptr->st_uid   = tmp.st_uid;
+    sbufptr->st_gid   = tmp.st_gid;
+    sbufptr->st_rdev  = tmp.st_rdev;
+    sbufptr->st_size  = tmp.st_size;
+    sbufptr->st_atime = tmp.st_atime;
+    sbufptr->st_mtime = tmp.st_mtime;
+    sbufptr->st_ctime = tmp.st_ctime;
+#else
+    int rc = fstat(fd,sbufptr);
+#endif       
+
     if (GetFileInformationByHandle((HANDLE)_get_osfhandle(fd), &bhfi)) {
+#if defined(WIN64) || defined(USE_LARGE_FILES)    
+        sbufptr->st_size = (bhfi.nFileSizeHigh << 32) + bhfi.nFileSizeLow ;
+#endif
         sbufptr->st_mode &= 0xFE00;
         if (bhfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
             sbufptr->st_mode |= (S_IREAD + (S_IREAD >> 3) + (S_IREAD >> 6));
@@ -3177,7 +3214,7 @@ finish:
     win32_lseek(fd, cur, SEEK_SET);
     return retval;
 #else
-    return chsize(fd, size);
+    return chsize(fd, (long)size);
 #endif
 }
 
@@ -3203,7 +3240,7 @@ win32_lseek(int fd, Off_t offset, int origin)
     return _lseeki64(fd, offset, origin);
 #endif
 #else
-    return lseek(fd, offset, origin);
+    return lseek(fd, (long)offset, origin);
 #endif
 }
 
@@ -3636,7 +3673,7 @@ create_command_line(char *cname, STRLEN clen, const char * const *args)
     DEBUG_p(PerlIO_printf(Perl_debug_log, "\n"));
 
     argc = index;
-    New(1310, cmd, len, char);
+    Newx(cmd, len, char);
     ptr = cmd;
 
     if (bat_file && !IsWin95()) {
@@ -3740,7 +3777,7 @@ qualified_path(const char *cmd)
 
     /* worst case: PATH is a single directory; we need additional space
      * to append "/", ".exe" and trailing "\0" */
-    New(0, fullcmd, (pathstr ? strlen(pathstr) : 0) + cmdlen + 6, char);
+    Newx(fullcmd, (pathstr ? strlen(pathstr) : 0) + cmdlen + 6, char);
     curfullcmd = fullcmd;
 
     while (1) {
@@ -3855,7 +3892,7 @@ win32_get_childdir(void)
 	GetCurrentDirectoryA(MAX_PATH+1, szfilename);
     }
 
-    New(0, ptr, strlen(szfilename)+1, char);
+    Newx(ptr, strlen(szfilename)+1, char);
     strcpy(ptr, szfilename);
     return ptr;
 }
@@ -3903,7 +3940,7 @@ win32_spawnvp(int mode, const char *cmdname, const char *const *argv)
 	/* if command name contains dquotes, must remove them */
 	if (strchr(cname, '"')) {
 	    cmd = cname;
-	    New(0,cname,clen+1,char);
+	    Newx(cname,clen+1,char);
 	    clen = 0;
 	    while (*cmd) {
 		if (*cmd != '"') {
@@ -4049,9 +4086,17 @@ win32_execv(const char *cmdname, const char *const *argv)
     /* if this is a pseudo-forked child, we just want to spawn
      * the new program, and return */
     if (w32_pseudo_id)
+#  ifdef __BORLANDC__
 	return spawnv(P_WAIT, cmdname, (char *const *)argv);
+#  else
+	return spawnv(P_WAIT, cmdname, argv);
+#  endif
 #endif
+#ifdef __BORLANDC__
     return execv(cmdname, (char *const *)argv);
+#else
+    return execv(cmdname, argv);
+#endif
 }
 
 DllExport int
@@ -4071,7 +4116,11 @@ win32_execvp(const char *cmdname, const char *const *argv)
 	    return status;
     }
 #endif
+#ifdef __BORLANDC__
     return execvp(cmdname, (char *const *)argv);
+#else
+    return execvp(cmdname, argv);
+#endif
 }
 
 DllExport void
@@ -5114,11 +5163,11 @@ Perl_sys_intern_init(pTHX)
     w32_perlshell_vec		= (char**)NULL;
     w32_perlshell_items		= 0;
     w32_fdpid			= newAV();
-    New(1313, w32_children, 1, child_tab);
+    Newx(w32_children, 1, child_tab);
     w32_num_children		= 0;
 #  ifdef USE_ITHREADS
     w32_pseudo_id		= 0;
-    New(1313, w32_pseudo_children, 1, child_tab);
+    Newx(w32_pseudo_children, 1, child_tab);
     w32_num_pseudo_children	= 0;
 #  endif
     w32_init_socktype		= 0;
@@ -5133,8 +5182,8 @@ Perl_sys_intern_init(pTHX)
     {
 #  endif
 	/* Force C runtime signal stuff to set its console handler */
-	signal(SIGINT,&win32_csighandler);
-	signal(SIGBREAK,&win32_csighandler);
+	signal(SIGINT,win32_csighandler);
+	signal(SIGBREAK,win32_csighandler);
 	/* Push our handler on top */
 	SetConsoleCtrlHandler(win32_ctrlhandler,TRUE);
     }
@@ -5172,9 +5221,9 @@ Perl_sys_intern_dup(pTHX_ struct interp_intern *src, struct interp_intern *dst)
     dst->perlshell_vec		= (char**)NULL;
     dst->perlshell_items	= 0;
     dst->fdpid			= newAV();
-    Newz(1313, dst->children, 1, child_tab);
+    Newxz(dst->children, 1, child_tab);
     dst->pseudo_id		= 0;
-    Newz(1313, dst->pseudo_children, 1, child_tab);
+    Newxz(dst->pseudo_children, 1, child_tab);
     dst->thr_intern.Winit_socktype = 0;
     dst->timerid                 = 0;
     dst->poll_count              = 0;
@@ -5203,7 +5252,7 @@ win32_argv2utf8(int argc, char** argv)
     if (lpwStr && argc) {
 	while (argc--) {
 	    length = WideCharToMultiByte(CP_UTF8, 0, lpwStr[--wargc], -1, NULL, 0, NULL, NULL);
-	    Newz(0, psz, length, char);
+	    Newxz(psz, length, char);
 	    WideCharToMultiByte(CP_UTF8, 0, lpwStr[wargc], -1, psz, length, NULL, NULL);
 	    argv[argc] = psz;
 	}

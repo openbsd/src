@@ -72,7 +72,10 @@ undef $^I;
 
 ok( eof TRY );
 
-ok( eof NEVEROPENED,    'eof() true on unopened filehandle' );
+{
+    no warnings 'once';
+    ok( eof NEVEROPENED,    'eof() true on unopened filehandle' );
+}
 
 open STDIN, 'Io_argv1.tmp' or die $!;
 @ARGV = ();

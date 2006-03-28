@@ -3,7 +3,7 @@ package Safe;
 use 5.003_11;
 use strict;
 
-$Safe::VERSION = "2.11";
+$Safe::VERSION = "2.12";
 
 # *** Don't declare any lexicals above this point ***
 #
@@ -367,6 +367,9 @@ is implicit in each case.
 
 Permit the listed operators to be used when compiling code in the
 compartment (in I<addition> to any operators already permitted).
+
+You can list opcodes by names, or use a tag name; see
+L<Opcode/"Predefined Opcode Tags">.
 
 =item permit_only (OP, ...)
 

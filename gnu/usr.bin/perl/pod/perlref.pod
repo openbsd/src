@@ -1,4 +1,5 @@
 =head1 NAME
+X<reference> X<pointer> X<data structure> X<structure> X<struct>
 
 perlref - Perl references and nested data structures
 
@@ -34,12 +35,15 @@ symbolic link in a Unix filesystem contains merely the name of a file.
 The C<*glob> notation is something of a symbolic reference.  (Symbolic
 references are sometimes called "soft references", but please don't call
 them that; references are confusing enough without useless synonyms.)
+X<reference, symbolic> X<reference, soft>
+X<symbolic reference> X<soft reference>
 
 In contrast, hard references are more like hard links in a Unix file
 system: They are used to access an underlying object without concern for
 what its (other) name is.  When the word "reference" is used without an
 adjective, as in the following paragraph, it is usually talking about a
 hard reference.
+X<reference, hard> X<hard reference>
 
 References are easy to use in Perl.  There is just one overriding
 principle: Perl does no implicit referencing or dereferencing.  When a
@@ -48,12 +52,14 @@ doesn't magically start being an array or hash or subroutine; you have to
 tell it explicitly to do so, by dereferencing it.
 
 =head2 Making References
+X<reference, creation> X<referencing>
 
 References can be created in several ways.
 
 =over 4
 
 =item 1.
+X<\> X<backslash>
 
 By using the backslash operator on a variable, subroutine, or value.
 (This works much like the & (address-of) operator in C.)  
@@ -75,6 +81,8 @@ But see the explanation of the C<*foo{THING}> syntax below.  However,
 you can still use type globs and globrefs as though they were IO handles.
 
 =item 2.
+X<array, anonymous> X<[> X<[]> X<square bracket>
+X<bracket, square> X<arrayref> X<array reference> X<reference, array>
 
 A reference to an anonymous array can be created using square
 brackets:
@@ -100,6 +108,8 @@ except that the key references are to copies (since the keys are just
 strings rather than full-fledged scalars).
 
 =item 3.
+X<hash, anonymous> X<{> X<{}> X<curly bracket>
+X<bracket, curly> X<brace> X<hashref> X<hash reference> X<reference, hash>
 
 A reference to an anonymous hash can be created using curly
 brackets:
@@ -140,6 +150,8 @@ The leading C<+{> and C<{;> always serve to disambiguate
 the expression to mean either the HASH reference, or the BLOCK.
 
 =item 4.
+X<subroutine, anonymous> X<subroutine, reference> X<reference, subroutine>
+X<scope, lexical> X<closure> X<lexical> X<lexical scope>
 
 A reference to an anonymous subroutine can be created by using
 C<sub> without a subname:
@@ -196,6 +208,7 @@ continue to work as they have always worked.  Closure is not something
 that most Perl programmers need trouble themselves about to begin with.
 
 =item 5.
+X<constructor> X<new>
 
 References are often returned by special subroutines called constructors.
 Perl objects are just references to a special type of object that happens to know
@@ -220,12 +233,14 @@ But don't have to be:
                             -borderwidth         => 2)
 
 =item 6.
+X<autovivification>
 
 References of the appropriate type can spring into existence if you
 dereference them in a context that assumes they exist.  Because we haven't
 talked about dereferencing yet, we can't show you any examples yet.
 
 =item 7.
+X<*foo{THING}> X<*>
 
 A reference can be created by using a special syntax, lovingly known as
 the *foo{THING} syntax.  *foo{THING} returns a reference to the THING
@@ -238,6 +253,7 @@ known as foo).
     $coderef   = *handler{CODE};
     $ioref     = *STDIN{IO};
     $globref   = *foo{GLOB};
+    $formatref = *foo{FORMAT};
 
 All of these are self-explanatory except for C<*foo{IO}>.  It returns
 the IO handle, used for file handles (L<perlfunc/open>), sockets
@@ -281,6 +297,7 @@ below, there's no risk of that happening.
 =back
 
 =head2 Using References
+X<reference, use> X<dereferencing> X<dereference>
 
 That's it for creating references.  By now you're probably dying to
 know how to use references to get back to your long-lost data.  There
@@ -312,6 +329,7 @@ However, a "simple scalar" includes an identifier that itself uses method
     print $$$$refrefref;
 
 =item 2.
+X<${}> X<@{}> X<%{}>
 
 Anywhere you'd put an identifier (or chain of identifiers) as part of a
 variable or subroutine name, you can replace the identifier with a
@@ -348,6 +366,7 @@ called %hashref, not dereferencing through $hashref to the hash
 it's presumably referencing.  That would be case 3.
 
 =item 3.
+X<autovivification> X<< -> >> X<arrow>
 
 Subroutine calls and lookups of individual array elements arise often
 enough that it gets cumbersome to use method 2.  As a form of
@@ -385,6 +404,7 @@ Well, okay, not entirely like C's arrays, actually.  C doesn't know how
 to grow its arrays on demand.  Perl does.
 
 =item 4.
+X<encapsulation>
 
 If a reference happens to be a reference to an object, then there are
 probably methods to access the things referred to, and you should probably
@@ -401,6 +421,7 @@ as explained above.  Using a reference as a number produces an
 integer representing its storage location in memory.  The only
 useful thing to be done with this is to compare two references
 numerically to see whether they refer to the same location.
+X<reference, numeric context>
 
     if ($ref1 == $ref2) {  # cheap numeric compare of references
 	print "refs 1 and 2 refer to the same thing\n";
@@ -411,6 +432,7 @@ including any package blessing as described in L<perlobj>, as well
 as the numeric address expressed in hex.  The ref() operator returns
 just the type of thing the reference is pointing to, without the
 address.  See L<perlfunc/ref> for details and examples of its use.
+X<reference, string context>
 
 The bless() operator may be used to associate the object a reference
 points to with a package functioning as an object class.  See L<perlobj>.
@@ -433,6 +455,8 @@ chicanery is also useful for arbitrary expressions:
     print "That yields @{[$n + 5]} widgets\n";
 
 =head2 Symbolic references
+X<reference, symbolic> X<reference, soft>
+X<symbolic reference> X<soft reference>
 
 We said that references spring into existence as necessary if they are
 undefined, but we didn't say what happens if a value used as a
@@ -536,6 +560,7 @@ But it will no longer warn you about using lowercase words, because the
 string is effectively quoted.
 
 =head2 Pseudo-hashes: Using an array as a hash
+X<pseudo-hash> X<pseudo hash> X<pseudohash>
 
 B<WARNING>:  This section describes an experimental feature.  Details may
 change without notice in future versions.
@@ -610,11 +635,13 @@ explicitly delete it from the first hash element.
     print $phash->{foo};            # runtime exception
 
 =head2 Function Templates
+X<scope, lexical> X<closure> X<lexical> X<lexical scope>
+X<subroutine, nested> X<sub, nested> X<subroutine, local> X<sub, local>
 
-As explained above, a closure is an anonymous function with access to the
-lexical variables visible when that function was compiled.  It retains
-access to those variables even though it doesn't get run until later,
-such as in a signal handler or a Tk callback.
+As explained above, an anonymous function with access to the lexical
+variables visible when that function was compiled, creates a closure.  It
+retains access to those variables even though it doesn't get run until
+later, such as in a signal handler or a Tk callback.
 
 Using a closure as a function template allows us to generate many functions
 that act similarly.  Suppose you wanted functions named after the colors
@@ -654,17 +681,19 @@ to occur during compilation.
 Access to lexicals that change over type--like those in the C<for> loop
 above--only works with closures, not general subroutines.  In the general
 case, then, named subroutines do not nest properly, although anonymous
-ones do.  If you are accustomed to using nested subroutines in other
-programming languages with their own private variables, you'll have to
-work at it a bit in Perl.  The intuitive coding of this type of thing
-incurs mysterious warnings about ``will not stay shared''.  For example,
-this won't work:
+ones do. Thus is because named subroutines are created (and capture any
+outer lexicals) only once at compile time, whereas anonymous subroutines
+get to capture each time you execute the 'sub' operator.  If you are
+accustomed to using nested subroutines in other programming languages with
+their own private variables, you'll have to work at it a bit in Perl.  The
+intuitive coding of this type of thing incurs mysterious warnings about
+"will not stay shared".  For example, this won't work:
 
     sub outer {
         my $x = $_[0] + 35;
         sub inner { return $x * 19 }   # WRONG
         return $x + inner();
-    } 
+    }
 
 A work-around is the following:
 
@@ -672,7 +701,7 @@ A work-around is the following:
         my $x = $_[0] + 35;
         local *inner = sub { return $x * 19 };
         return $x + inner();
-    } 
+    }
 
 Now inner() can only be called from within outer(), because of the
 temporary assignments of the closure (anonymous subroutine).  But when
@@ -683,6 +712,7 @@ This has the interesting effect of creating a function local to another
 function, something not normally supported in Perl.
 
 =head1 WARNING
+X<reference, string context> X<reference, use as hash key>
 
 You may not (usefully) use a reference as the key to a hash.  It will be
 converted into a string:

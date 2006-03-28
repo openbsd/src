@@ -1,12 +1,10 @@
-/* $RCSfile: walk.c,v $$Revision: 4.1 $$Date: 92/08/07 18:29:31 $
+/*    walk.c
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1997, 1998, 1999,
  *    2000, 2001, 2002, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
- *
- * $Log:	walk.c,v $
  */
 
 #include "EXTERN.h"
@@ -43,11 +41,6 @@ char *instr(char *big, char *little);
 
 STR *
 walk(int useval, int level, register int node, int *numericptr, int minprec)
-           
-          
-                  
-                
-            			/* minimum precedence without parens */
 {
     register int len;
     register STR *str;
@@ -660,13 +653,11 @@ sub Pick {\n\
 	str_cat(str,", ");
 	str_scat(str,fstr=walk(1,level,ops[node+2].ival,&numarg,P_COMMA+1));
 	str_free(fstr);
-	str_cat(str,", ");
 	if (len == 3) {
+	    str_cat(str,", ");
 	    str_scat(str,fstr=walk(1,level,ops[node+3].ival,&numarg,P_COMMA+1));
 	    str_free(fstr);
 	}
-	else
-	    str_cat(str,"999999");
 	str_cat(str,")");
 	break;
     case OSTRING:
@@ -675,7 +666,7 @@ sub Pick {\n\
 	break;
     case OSPLIT:
 	str = str_new(0);
-	limit = ", 9999)";
+	limit = ", -1)";
 	numeric = 1;
 	tmpstr = walk(1,level,ops[node+2].ival,&numarg,P_MIN);
 	if (useval)
@@ -858,7 +849,7 @@ sub Pick {\n\
 	    }
 	    *d = '\0';
 	    str_set(tmp2str,tokenbuf);
-	    s = gsub ? "/g" : "/";
+	    s = (char *) (gsub ? "/g" : "/");
 	}
 	else {
 	    tmp2str=walk(1,level,ops[node+2].ival,&numarg,P_MIN);
@@ -866,7 +857,7 @@ sub Pick {\n\
 	    str_scat(tmp3str,tmp2str);
 	    str_cat(tmp3str,").'\"') =~ s/&/\\$&/g, ");
 	    str_set(tmp2str,"eval $s_");
-	    s = gsub ? "/ge" : "/e";
+	    s = (char *) (gsub ? "/ge" : "/e");
 	    i++;
 	}
 	str_cat(tmp2str,s);
@@ -1617,13 +1608,13 @@ emit_split(register STR *str, int level)
 	str_cat(str,tokenbuf);
     }
     if (const_FS) {
-	sprintf(tokenbuf," = split(/[%c\\n]/, $_, 9999);\n",const_FS);
+	sprintf(tokenbuf," = split(/[%c\\n]/, $_, -1);\n",const_FS);
 	str_cat(str,tokenbuf);
     }
     else if (saw_FS)
-	str_cat(str," = split($FS, $_, 9999);\n");
+	str_cat(str," = split($FS, $_, -1);\n");
     else
-	str_cat(str," = split(' ', $_, 9999);\n");
+	str_cat(str," = split(' ', $_, -1);\n");
     tab(str,level);
 }
 

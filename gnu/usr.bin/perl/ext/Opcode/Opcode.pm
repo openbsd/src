@@ -6,7 +6,7 @@ use strict;
 
 our($VERSION, $XS_VERSION, @ISA, @EXPORT_OK);
 
-$VERSION = "1.05";
+$VERSION = "1.06";
 $XS_VERSION = "1.03";
 
 use Carp;
@@ -351,7 +351,7 @@ available memory).
 
     anonlist anonhash
 
-Note that despite the existance of this optag a memory resource attack
+Note that despite the existence of this optag a memory resource attack
 may still be possible using only :base_core ops.
 
 Disabling these ops is a I<very> heavy handed way to attempt to prevent
@@ -553,7 +553,7 @@ SystemV Interprocess Communications:
 =item :dangerous
 
 This tag is simply a bucket for opcodes that are unlikely to be used via
-a tag name but need to be tagged for completness and documentation.
+a tag name but need to be tagged for completeness and documentation.
 
     syscall dump chroot
 

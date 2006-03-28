@@ -1,6 +1,6 @@
 /*    nostdio.h
  *
- *    Copyright (C) 1996, 2000, 2001, by Larry Wall and others
+ *    Copyright (C) 1996, 2000, 2001, 2005, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -111,7 +111,7 @@ struct _FILE;
 #define _flsbuf(c,f)  _CANNOT _flsbuf_
 #define fdopen(fd,p)  _CANNOT _fdopen_
 #define fileno(f)  _CANNOT _fileno_
-#if SFIO_VERSION < 20000101L
+#if defined(SFIO_VERSION) && SFIO_VERSION < 20000101L
 #define flockfile(f)  _CANNOT _flockfile_
 #define ftrylockfile(f)  _CANNOT _ftrylockfile_
 #define funlockfile(f)  _CANNOT _funlockfile_

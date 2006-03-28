@@ -2,7 +2,7 @@
 
 # Copyright (C) 2005  Joshua Hoblitt
 #
-# $Id: contains_pod.t,v 1.1.1.1 2006/03/28 18:48:57 millert Exp $
+# $Id: contains_pod.t,v 1.2 2006/03/28 19:23:08 millert Exp $
 
 use strict;
 

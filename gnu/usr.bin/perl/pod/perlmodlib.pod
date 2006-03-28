@@ -61,7 +61,7 @@ Postpone load of modules until a function is used
 
 =item base
 
-Establish IS-A relationship with base class at compile time
+Establish IS-A relationship with base classes at compile time
 
 =item bigint
 
@@ -137,7 +137,7 @@ Restrict unsafe operations when compiling
 
 =item overload
 
-Package for overloading perl operations
+Package for overloading Perl operations
 
 =item re
 
@@ -341,13 +341,17 @@ Utility for CPAN::Config file Initialization
 
 Wrapper around CPAN.pm without using any XS module
 
+=item CPAN::Version
+
+Utility functions to compare CPAN versions
+
 =item Carp
 
 Warn of errors (from perspective of caller)
 
 =item Carp::Heavy
 
-No user serviceable parts inside
+Heavy machinery, no user serviceable parts inside
 
 =item Class::ISA
 
@@ -368,6 +372,10 @@ Get pathname of current working directory
 =item DB
 
 Programmatic interface to the Perl debugging API (draft, subject to
+
+=item DBM_Filter
+
+Filter DBM keys/values 
 
 =item DB_File
 
@@ -404,6 +412,10 @@ Perl interface to the MD5 Algorithm
 =item Digest::base
 
 Digest base class
+
+=item Digest::file
+
+Calculate digests of files
 
 =item DirHandle
 
@@ -541,6 +553,18 @@ Commands for the MM's to use in Makefiles
 
 Generate XS code to import C header constants
 
+=item ExtUtils::Constant::Base
+
+Base class for ExtUtils::Constant objects
+
+=item ExtUtils::Constant::Utils
+
+Helper functions for ExtUtils::Constant
+
+=item ExtUtils::Constant::XS
+
+Base class for ExtUtils::Constant objects
+
 =item ExtUtils::Embed
 
 Utilities for embedding Perl in C/C++ applications
@@ -561,6 +585,10 @@ Determine libraries to use and how to use them
 
 OS adjusted ExtUtils::MakeMaker subclass
 
+=item ExtUtils::MM_AIX
+
+AIX specific subclass of ExtUtils::MM_Unix
+
 =item ExtUtils::MM_Any
 
 Platform-agnostic MM methods
@@ -579,7 +607,7 @@ DOS specific subclass of ExtUtils::MM_Unix
 
 =item ExtUtils::MM_MacOS
 
-Methods to override UN*X behaviour in ExtUtils::MakeMaker
+Once produced Makefiles for MacOS Classic
 
 =item ExtUtils::MM_NW5
 
@@ -588,6 +616,10 @@ Methods to override UN*X behaviour in ExtUtils::MakeMaker
 =item ExtUtils::MM_OS2
 
 Methods to override UN*X behaviour in ExtUtils::MakeMaker
+
+=item ExtUtils::MM_QNX
+
+QNX specific subclass of ExtUtils::MM_Unix
 
 =item ExtUtils::MM_UWIN
 
@@ -600,6 +632,10 @@ Methods used by ExtUtils::MakeMaker
 =item ExtUtils::MM_VMS
 
 Methods to override UN*X behaviour in ExtUtils::MakeMaker
+
+=item ExtUtils::MM_VOS
+
+VOS specific subclass of ExtUtils::MM_Unix
 
 =item ExtUtils::MM_Win32
 
@@ -616,6 +652,10 @@ ExtUtils::MakeMaker subclass for customization
 =item ExtUtils::MakeMaker
 
 Create a module Makefile
+
+=item ExtUtils::MakeMaker::Config
+
+Wrapper around Config.pm
 
 =item ExtUtils::MakeMaker::FAQ
 
@@ -663,7 +703,7 @@ Load the C Fcntl.h defines
 
 =item File::Basename
 
-Split a pathname into pieces
+Parse file paths into directory, filename and suffix.
 
 =item File::CheckTree
 
@@ -780,6 +820,10 @@ Compare 8-bit scalar data according to the current locale
 =item I18N::LangTags
 
 Functions for dealing with RFC3066-style language tags
+
+=item I18N::LangTags::Detect
+
+Detect the user's language preferences
 
 =item I18N::LangTags::List
 
@@ -899,15 +943,19 @@ Arbitrary size floating point math package
 
 =item Math::BigInt
 
-Arbitrary size integer math package
+Arbitrary size integer/float math package
 
 =item Math::BigInt::Calc
 
 Pure Perl module to support Math::BigInt
 
+=item Math::BigInt::CalcEmu
+
+Emulate low-level math with BigInt code
+
 =item Math::BigRat
 
-Arbitrarily big rationals
+Arbitrary big rational numbers
 
 =item Math::Complex
 
@@ -1233,6 +1281,18 @@ Provides a simple framework for writing test scripts
 
 Backend for building test libraries
 
+=item Test::Builder::Module
+
+Base class for test modules
+
+=item Test::Builder::Tester
+
+Test testsuites that have been built with
+
+=item Test::Builder::Tester::Color
+
+Turn on colour in Test::Builder::Tester
+
 =item Test::Harness
 
 Run Perl standard test scripts with statistics
@@ -1245,9 +1305,17 @@ Simple assert
 
 Internal Test::Harness Iterator
 
+=item Test::Harness::Point
+
+Object for tracking a single test point
+
 =item Test::Harness::Straps
 
 Detailed analysis of test results
+
+=item Test::Harness::TAP
+
+Documentation for the TAP format
 
 =item Test::More
 
@@ -1380,10 +1448,6 @@ By-name interface to Perl's built-in getgr*() functions
 =item User::pwent
 
 By-name interface to Perl's built-in getpw*() functions
-
-=item Win32
-
-Interfaces to some Win32 API Functions
 
 =item XS::APItest
 

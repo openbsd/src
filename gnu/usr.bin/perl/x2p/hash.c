@@ -1,12 +1,10 @@
-/* $RCSfile: hash.c,v $$Revision: 4.1 $$Date: 92/08/07 18:29:20 $
+/*    hash.c
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1999, 2000, 2001, 2002,
  *    by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
- *
- * $Log:	hash.c,v $
  */
 
 #include <stdio.h>
@@ -92,48 +90,10 @@ hstore(register HASH *tb, char *key, STR *val)
     return FALSE;
 }
 
-#ifdef NOTUSED
-bool
-hdelete(register HASH *tb, char *key)
-{
-    register char *s;
-    register int i;
-    register int hash;
-    register HENT *entry;
-    register HENT **oentry;
-
-    if (!tb)
-	return FALSE;
-    for (s=key,		i=0,	hash = 0;
-      /* while */ *s;
-	 s++,		i++,	hash *= 5) {
-	hash += *s * coeff[i];
-    }
-
-    oentry = &(tb->tbl_array[hash & tb->tbl_max]);
-    entry = *oentry;
-    i = 1;
-    for (; entry; i=0, oentry = &entry->hent_next, entry = entry->hent_next) {
-	if (entry->hent_hash != hash)		/* strings can't be equal */
-	    continue;
-	if (strNE(entry->hent_key,key))	/* is this it? */
-	    continue;
-	safefree((char*)entry->hent_val);
-	safefree(entry->hent_key);
-	*oentry = entry->hent_next;
-	safefree((char*)entry);
-	if (i)
-	    tb->tbl_fill--;
-	return TRUE;
-    }
-    return FALSE;
-}
-#endif
-
 void
 hsplit(HASH *tb)
 {
-    int oldsize = tb->tbl_max + 1;
+    const int oldsize = tb->tbl_max + 1;
     register int newsize = oldsize * 2;
     register int i;
     register HENT **a;
@@ -180,55 +140,10 @@ hnew(void)
     return tb;
 }
 
-#ifdef NOTUSED
-hshow(register HASH *tb)
-{
-    fprintf(stderr,"%5d %4d (%2d%%)\n",
-	tb->tbl_max+1,
-	tb->tbl_fill,
-	tb->tbl_fill * 100 / (tb->tbl_max+1));
-}
-#endif
-
 int
 hiterinit(register HASH *tb)
 {
     tb->tbl_riter = -1;
     tb->tbl_eiter = Null(HENT*);
     return tb->tbl_fill;
-}
-
-HENT *
-hiternext(register HASH *tb)
-{
-    register HENT *entry;
-
-    entry = tb->tbl_eiter;
-    do {
-	if (entry)
-	    entry = entry->hent_next;
-	if (!entry) {
-	    tb->tbl_riter++;
-	    if (tb->tbl_riter > tb->tbl_max) {
-		tb->tbl_riter = -1;
-		break;
-	    }
-	    entry = tb->tbl_array[tb->tbl_riter];
-	}
-    } while (!entry);
-
-    tb->tbl_eiter = entry;
-    return entry;
-}
-
-char *
-hiterkey(register HENT *entry)
-{
-    return entry->hent_key;
-}
-
-STR *
-hiterval(register HENT *entry)
-{
-    return entry->hent_val;
 }

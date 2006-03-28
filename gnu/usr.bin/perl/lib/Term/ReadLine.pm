@@ -18,10 +18,9 @@ If no real package is found, substitutes stubs instead of basic functions.
 
 =head1 DESCRIPTION
 
-This package is just a front end to some other packages. At the moment
-this description is written, the only such package is Term-ReadLine,
-available on CPAN near you. The real target of this stub package is to
-set up a common interface to whatever Readline emerges with time.
+This package is just a front end to some other packages. It's a stub to
+set up a common interface to the various ReadLine implementations found on
+CPAN (under the C<Term::ReadLine::*> namespace).
 
 =head1 Minimal set of supported functions
 
@@ -100,7 +99,7 @@ method C<Attribs> is not dummy.
 =head1 Additional supported functions
 
 Actually C<Term::ReadLine> can use some other package, that will
-support reacher set of commands.
+support a richer set of commands.
 
 All these commands are callable via method interface and have names
 which conform to standard conventions with the leading C<rl_> stripped.
@@ -290,7 +289,7 @@ sub Features { \%features }
 
 package Term::ReadLine;		# So late to allow the above code be defined?
 
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 
 my ($which) = exists $ENV{PERL_RL} ? split /\s+/, $ENV{PERL_RL} : undef;
 if ($which) {

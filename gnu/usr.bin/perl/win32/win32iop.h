@@ -191,6 +191,9 @@ END_EXTERN_C
 #undef putc
 #undef getchar
 #undef putchar
+#endif
+
+#if defined(__MINGW32__) || defined(__BORLANDC__)
 #undef fileno
 #endif
 

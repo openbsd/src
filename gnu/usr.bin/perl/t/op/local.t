@@ -1,55 +1,83 @@
 #!./perl
 
-print "1..75\n";
+BEGIN {
+    chdir 't' if -d 't';
+    require './test.pl';
+}
+plan tests => 81;
+
+my $list_assignment_supported = 1;
+
+#mg.c says list assignment not supported on VMS, EPOC, and SYMBIAN.
+$list_assignment_supported = 0 if ($^O eq 'VMS');
+
 
 sub foo {
     local($a, $b) = @_;
     local($c, $d);
-    $c = "ok 3\n";
-    $d = "ok 4\n";
-    { local($a,$c) = ("ok 9\n", "ok 10\n"); ($x, $y) = ($a, $c); }
-    print $a, $b;
-    $c . $d;
+    $c = "c 3";
+    $d = "d 4";
+    { local($a,$c) = ("a 9", "c 10"); ($x, $y) = ($a, $c); }
+    is($a, "a 1");
+    is($b, "b 2");
+    $c, $d;
 }
 
-$a = "ok 5\n";
-$b = "ok 6\n";
-$c = "ok 7\n";
-$d = "ok 8\n";
+$a = "a 5";
+$b = "b 6";
+$c = "c 7";
+$d = "d 8";
 
-print &foo("ok 1\n","ok 2\n");
+my @res;
+@res =  &foo("a 1","b 2");
+is($res[0], "c 3");
+is($res[1], "d 4");
 
-print $a,$b,$c,$d,$x,$y;
+is($a, "a 5");
+is($b, "b 6");
+is($c, "c 7");
+is($d, "d 8");
+is($x, "a 9");
+is($y, "c 10");
 
 # same thing, only with arrays and associative arrays
 
 sub foo2 {
     local($a, @b) = @_;
     local(@c, %d);
-    @c = "ok 13\n";
-    $d{''} = "ok 14\n";
-    { local($a,@c) = ("ok 19\n", "ok 20\n"); ($x, $y) = ($a, @c); }
-    print $a, @b;
-    $c[0] . $d{''};
+    @c = "c 3";
+    $d{''} = "d 4";
+    { local($a,@c) = ("a 19", "c 20"); ($x, $y) = ($a, @c); }
+    is($a, "a 1");
+    is("@b", "b 2");
+    $c[0], $d{''};
 }
 
-$a = "ok 15\n";
-@b = "ok 16\n";
-@c = "ok 17\n";
-$d{''} = "ok 18\n";
+$a = "a 5";
+@b = "b 6";
+@c = "c 7";
+$d{''} = "d 8";
 
-print &foo2("ok 11\n","ok 12\n");
+@res = &foo2("a 1","b 2");
+is($res[0], "c 3");
+is($res[1], "d 4");
 
-print $a,@b,@c,%d,$x,$y;
+is($a, "a 5");
+is("@b", "b 6");
+is($c[0], "c 7");
+is($d{''}, "d 8");
+is($x, "a 19");
+is($y, "c 20");
+
 
 eval 'local($$e)';
-print +($@ =~ /Can't localize through a reference/) ? "" : "not ", "ok 21\n";
+like($@, qr/Can't localize through a reference/);
 
 eval '$e = []; local(@$e)';
-print +($@ =~ /Can't localize through a reference/) ? "" : "not ", "ok 22\n";
+like($@, qr/Can't localize through a reference/);
 
 eval '$e = {}; local(%$e)';
-print +($@ =~ /Can't localize through a reference/) ? "" : "not ", "ok 23\n";
+like($@, qr/Can't localize through a reference/);
 
 # Array and hash elements
 
@@ -57,38 +85,48 @@ print +($@ =~ /Can't localize through a reference/) ? "" : "not ", "ok 23\n";
 {
     local($a[1]) = 'foo';
     local($a[2]) = $a[2];
-    print +($a[1] eq 'foo') ? "" : "not ", "ok 24\n";
-    print +($a[2] eq 'c') ? "" : "not ", "ok 25\n";
+    is($a[1], 'foo');
+    is($a[2], 'c');
     undef @a;
 }
-print +($a[1] eq 'b') ? "" : "not ", "ok 26\n";
-print +($a[2] eq 'c') ? "" : "not ", "ok 27\n";
-print +(!defined $a[0]) ? "" : "not ", "ok 28\n";
+is($a[1], 'b');
+is($a[2], 'c');
+ok(!defined $a[0]);
 
 @a = ('a', 'b', 'c');
 {
     local($a[1]) = "X";
     shift @a;
 }
-print +($a[0].$a[1] eq "Xb") ? "" : "not ", "ok 29\n";
+is($a[0].$a[1], "Xb");
+{
+    my $d = "@a";
+    local @a = @a;
+    is("@a", $d);
+}
 
 %h = ('a' => 1, 'b' => 2, 'c' => 3);
 {
     local($h{'a'}) = 'foo';
     local($h{'b'}) = $h{'b'};
-    print +($h{'a'} eq 'foo') ? "" : "not ", "ok 30\n";
-    print +($h{'b'} == 2) ? "" : "not ", "ok 31\n";
+    is($h{'a'}, 'foo');
+    is($h{'b'}, 2);
     local($h{'c'});
     delete $h{'c'};
 }
-print +($h{'a'} == 1) ? "" : "not ", "ok 32\n";
-print +($h{'b'} == 2) ? "" : "not ", "ok 33\n";
-print +($h{'c'} == 3) ? "" : "not ", "ok 34\n";
+is($h{'a'}, 1);
+is($h{'b'}, 2);
+{
+    my $d = join("\n", map { "$_=>$h{$_}" } sort keys %h);
+    local %h = %h;
+    is(join("\n", map { "$_=>$h{$_}" } sort keys %h), $d);
+}
+is($h{'c'}, 3);
 
 # check for scope leakage
 $a = 'outer';
 if (1) { local $a = 'inner' }
-print +($a eq 'outer') ? "" : "not ", "ok 35\n";
+is($a, 'outer');
 
 # see if localization works when scope unwinds
 local $m = 5;
@@ -98,7 +136,7 @@ eval {
 	die "bye";
     }
 };
-print $m == 5 ? "" : "not ", "ok 36\n";
+is($m, 5);
 
 # see if localization works on tied arrays
 {
@@ -117,13 +155,18 @@ tie @a, 'TA';
 {
     local($a[1]) = 'foo';
     local($a[2]) = $a[2];
-    print +($a[1] eq 'foo') ? "" : "not ", "ok 37\n";
-    print +($a[2] eq 'c') ? "" : "not ", "ok 38\n";
+    is($a[1], 'foo');
+    is($a[2], 'c');
     @a = ();
 }
-print +($a[1] eq 'b') ? "" : "not ", "ok 39\n";
-print +($a[2] eq 'c') ? "" : "not ", "ok 40\n";
-print +(!defined $a[0]) ? "" : "not ", "ok 41\n";
+is($a[1], 'b');
+is($a[2], 'c');
+ok(!defined $a[0]);
+{
+    my $d = "@a";
+    local @a = @a;
+    is("@a", $d);
+}
 
 {
     package TH;
@@ -133,6 +176,8 @@ print +(!defined $a[0]) ? "" : "not ", "ok 41\n";
     sub EXISTS { print "# EXISTS [@_]\n"; exists $_[0]->{$_[1]}; }
     sub DELETE { print "# DELETE [@_]\n"; delete $_[0]->{$_[1]}; }
     sub CLEAR { print "# CLEAR [@_]\n"; %{$_[0]} = (); }
+    sub FIRSTKEY { print "# FIRSTKEY [@_]\n"; keys %{$_[0]}; each %{$_[0]} }
+    sub NEXTKEY { print "# NEXTKEY [@_]\n"; each %{$_[0]} }
 }
 
 # see if localization works on tied hashes
@@ -144,21 +189,30 @@ tie %h, 'TH';
     local($h{'b'}) = $h{'b'};
     local($h{'y'});
     local($h{'z'}) = 33;
-    print +($h{'a'} eq 'foo') ? "" : "not ", "ok 42\n";
-    print +($h{'b'} == 2) ? "" : "not ", "ok 43\n";
+    is($h{'a'}, 'foo');
+    is($h{'b'}, 2);
     local($h{'c'});
     delete $h{'c'};
 }
-print +($h{'a'} == 1) ? "" : "not ", "ok 44\n";
-print +($h{'b'} == 2) ? "" : "not ", "ok 45\n";
-print +($h{'c'} == 3) ? "" : "not ", "ok 46\n";
+is($h{'a'}, 1);
+is($h{'b'}, 2);
+is($h{'c'}, 3);
+# local() should preserve the existenceness of tied hash elements
+ok(! exists $h{'y'});
+ok(! exists $h{'z'});
+TODO: {
+    todo_skip("Localize entire tied hash");
+    my $d = join("\n", map { "$_=>$h{$_}" } sort keys %h);
+    local %h = %h;
+    is(join("\n", map { "$_=>$h{$_}" } sort keys %h), $d);
+}
 
 @a = ('a', 'b', 'c');
 {
     local($a[1]) = "X";
     shift @a;
 }
-print +($a[0].$a[1] eq "Xb") ? "" : "not ", "ok 47\n";
+is($a[0].$a[1], "Xb");
 
 # now try the same for %SIG
 
@@ -169,15 +223,20 @@ $SIG{__WARN__} = $SIG{INT};
     local($SIG{TERM}) = $SIG{TERM};
     local($SIG{INT}) = $SIG{INT};
     local($SIG{__WARN__}) = $SIG{__WARN__};
-    print +($SIG{TERM}		eq 'main::foo') ? "" : "not ", "ok 48\n";
-    print +($SIG{INT}		eq \&foo) ? "" : "not ", "ok 49\n";
-    print +($SIG{__WARN__}	eq \&foo) ? "" : "not ", "ok 50\n";
+    is($SIG{TERM}, 'main::foo');
+    is($SIG{INT}, \&foo);
+    is($SIG{__WARN__}, \&foo);
     local($SIG{INT});
     delete $SIG{__WARN__};
 }
-print +($SIG{TERM}	eq 'main::foo') ? "" : "not ", "ok 51\n";
-print +($SIG{INT}	eq \&foo) ? "" : "not ", "ok 52\n";
-print +($SIG{__WARN__}	eq \&foo) ? "" : "not ", "ok 53\n";
+is($SIG{TERM}, 'main::foo');
+is($SIG{INT}, \&foo);
+is($SIG{__WARN__}, \&foo);
+{
+    my $d = join("\n", map { "$_=>$SIG{$_}" } sort keys %SIG);
+    local %SIG = %SIG;
+    is(join("\n", map { "$_=>$SIG{$_}" } sort keys %SIG), $d);
+}
 
 # and for %ENV
 
@@ -189,23 +248,34 @@ $ENV{_Z_} = 'c';
     local($ENV{_B_}) = 'foo';
     local($ENV{_X_}) = 'foo';
     local($ENV{_Y_}) = $ENV{_Y_};
-    print +($ENV{_X_} eq 'foo') ? "" : "not ", "ok 54\n";
-    print +($ENV{_Y_} eq 'b') ? "" : "not ", "ok 55\n";
+    is($ENV{_X_}, 'foo');
+    is($ENV{_Y_}, 'b');
     local($ENV{_Z_});
     delete $ENV{_Z_};
 }
-print +($ENV{_X_} eq 'a') ? "" : "not ", "ok 56\n";
-print +($ENV{_Y_} eq 'b') ? "" : "not ", "ok 57\n";
-print +($ENV{_Z_} eq 'c') ? "" : "not ", "ok 58\n";
+is($ENV{_X_}, 'a');
+is($ENV{_Y_}, 'b');
+is($ENV{_Z_}, 'c');
+# local() should preserve the existenceness of %ENV elements
+ok(! exists $ENV{_A_});
+ok(! exists $ENV{_B_});
+
+SKIP: {
+    skip("Can't make list assignment to \%ENV on this system")
+	unless $list_assignment_supported;
+    my $d = join("\n", map { "$_=>$ENV{$_}" } sort keys %ENV);
+    local %ENV = %ENV;
+    is(join("\n", map { "$_=>$ENV{$_}" } sort keys %ENV), $d);
+}
 
 # does implicit localization in foreach skip magic?
 
-$_ = "ok 59,ok 60,";
+$_ = "o 0,o 1,";
 my $iter = 0;
 while (/(o.+?),/gc) {
-    print "$1\n";
+    is($1, "o $iter");
     foreach (1..1) { $iter++ }
-    if ($iter > 2) { print "not ok 60\n"; last; }
+    if ($iter > 2) { fail("endless loop"); last; }
 }
 
 {
@@ -214,7 +284,6 @@ while (/(o.+?),/gc) {
     sub FETCH { die "read  \$_ forbidden" }
     sub STORE { die "write \$_ forbidden" }
     tie $_, __PACKAGE__;
-    my $t = 61;
     my @tests = (
 	"Nesting"     => sub { print '#'; for (1..3) { print }
 			       print "\n" },			1,
@@ -229,10 +298,8 @@ while (/(o.+?),/gc) {
 	"for local"   => sub { for("#ok?\n"){ print } },	1,
     );
     while ( ($name, $code, $ok) = splice(@tests, 0, 3) ) {
-	print "# Testing $name\n";
 	eval { &$code };
-	print(($ok xor $@) ? "ok $t\n" : "not ok $t\n");
-	++$t;
+        main::ok(($ok xor $@), "Underscore '$name'");
     }
     untie $_;
 }
@@ -242,18 +309,7 @@ while (/(o.+?),/gc) {
     my %x;
     $x{a} = 1;
     { local $x{b} = 1; }
-    print "not " if exists $x{b};
-    print "ok 70\n";
+    ok(! exists $x{b});
     { local @x{c,d,e}; }
-    print "not " if exists $x{c};
-    print "ok 71\n"; 
+    ok(! exists $x{c});
 }
-
-# these tests should be physically located after tests 46 and 58,
-# but are here instead to avoid renumbering everything. 
-
-# local() should preserve the existenceness of tied hashes and %ENV
-print "not " if exists $h{'y'}; print "ok 72\n";
-print "not " if exists $h{'z'}; print "ok 73\n";
-print "not " if exists $ENV{_A_}; print "ok 74\n";
-print "not " if exists $ENV{_B_}; print "ok 75\n";

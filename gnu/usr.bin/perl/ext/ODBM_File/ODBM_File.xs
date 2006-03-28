@@ -92,7 +92,7 @@ odbm_TIEHASH(dbtype, filename, flags, mode)
 
 	    if (dbmrefcnt++)
 		croak("Old dbm can only open one database");
-	    New(0, tmpbuf, strlen(filename) + 5, char);
+	    Newx(tmpbuf, strlen(filename) + 5, char);
 	    SAVEFREEPV(tmpbuf);
 	    sprintf(tmpbuf,"%s.dir",filename);
 	    if (stat(tmpbuf, &PL_statbuf) < 0) {

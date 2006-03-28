@@ -9,18 +9,47 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
-}   
+}
 use warnings;
-# we do not load %Config since this test resides in op and needs
-# to run under the minitest target even without Config.pm working.
+use Config;
+use strict;
 
-# strictness
 my @tests = ();
 my ($i, $template, $data, $result, $comment, $w, $x, $evalData, $n, $p);
 
+my $Is_VMS_VAX = 0;
+# We use HW_MODEL since ARCH_NAME was not in VMS V5.*
+if ($^O eq 'VMS') {
+    my $hw_model;
+    chomp($hw_model = `write sys\$output f\$getsyi("HW_MODEL")`);
+    $Is_VMS_VAX = $hw_model < 1024 ? 1 : 0;
+}
+
+# No %Config.
+my $Is_Ultrix_VAX = $^O eq 'ultrix' && `uname -m` =~ /^VAX$/;
+
 while (<DATA>) {
     s/^\s*>//; s/<\s*$//;
-    push @tests, [split(/<\s*>/, $_, 4)]; 
+    ($template, $data, $result, $comment) = split(/<\s*>/, $_, 4);
+    if ($^O eq 'os390' || $^O eq 's390') { # non-IEEE (s390 is UTS)
+        $data   =~ s/([eE])96$/${1}63/;      # smaller exponents
+        $result =~ s/([eE]\+)102$/${1}69/;   #  "       "
+        $data   =~ s/([eE])\-101$/${1}-56/;  # larger exponents
+        $result =~ s/([eE])\-102$/${1}-57/;  #  "       "
+    }
+    if ($Is_VMS_VAX || $Is_Ultrix_VAX) {
+	# VAX DEC C 5.3 at least since there is no
+	# ccflags =~ /float=ieee/ on VAX.
+	# AXP is unaffected whether or not it's using ieee.
+        $data   =~ s/([eE])96$/${1}26/;      # smaller exponents
+        $result =~ s/([eE]\+)102$/${1}32/;   #  "       "
+        $data   =~ s/([eE])\-101$/${1}-24/;  # larger exponents
+        $result =~ s/([eE])\-102$/${1}-25/;  #  "       "
+    }
+
+    $evalData = eval $data;
+    $data = ref $evalData ? $evalData : [$evalData];
+    push @tests, [$template, $data, $result, $comment];
 }
 
 print '1..', scalar @tests, "\n";
@@ -35,38 +64,10 @@ $SIG{__WARN__} = sub {
     }
 };
 
-my $Is_VMS_VAX = 0;
-# We use HW_MODEL since ARCH_NAME was not in VMS V5.*
-if ($^O eq 'VMS') {
-    my $hw_model;
-    chomp($hw_model = `write sys\$output f\$getsyi("HW_MODEL")`);
-    $Is_VMS_VAX = $hw_model < 1024 ? 1 : 0;
-}
-
-# No %Config.
-my $Is_Ultrix_VAX = $^O eq 'ultrix' && `uname -m` =~ /^VAX$/;
-
 for ($i = 1; @tests; $i++) {
     ($template, $data, $result, $comment) = @{shift @tests};
-    if ($^O eq 'os390' || $^O eq 's390') { # non-IEEE (s390 is UTS)
-        $data   =~ s/([eE])96$/${1}63/;      # smaller exponents
-        $result =~ s/([eE]\+)102$/${1}69/;   #  "       "
-        $data   =~ s/([eE])\-101$/${1}-56/;  # larger exponents
-        $result =~ s/([eE])\-102$/${1}-57/;  #  "       "
-    }
-    if ($Is_VMS_VAX || $Is_Ultrix_VAX) {
-	# VAX DEC C 5.3 at least since there is no 
-	# ccflags =~ /float=ieee/ on VAX.
-	# AXP is unaffected whether or not it's using ieee.
-        $data   =~ s/([eE])96$/${1}26/;      # smaller exponents
-        $result =~ s/([eE]\+)102$/${1}32/;   #  "       "
-        $data   =~ s/([eE])\-101$/${1}-24/;  # larger exponents
-        $result =~ s/([eE])\-102$/${1}-25/;  #  "       "
-    }
-    $evalData = eval $data;
     $w = undef;
-    $x = sprintf(">$template<",
-                 defined @$evalData ? @$evalData : $evalData);
+    $x = sprintf(">$template<", @$data);
     substr($x, -1, 0) = $w if $w;
     # $x may have 3 exponent digits, not 2
     my $y = $x;
@@ -85,8 +86,29 @@ for ($i = 1; @tests; $i++) {
 	}
     }
 
+    my $skip = 0;
+    if ($comment =~ s/\s+skip:\s*(.*)//) {
+	my $os  = $1;
+	my $osv = exists $Config{osvers} ? $Config{osvers} : "0";
+	# >comment skip: all<
+	if ($os =~ /\ball\b/i) {
+	    $skip = 1;
+	# >comment skip: VMS hpux:10.20<
+	} elsif ($os =~ /\b$^O(?::(\S+))?\b/i) {
+	    my $vsn = defined $1 ? $1 : "0";
+	    # Only compare on the the first pair of digits, as numeric
+	    # compares don't like 2.6.10-3mdksmp or 2.6.8-24.10-default
+	    s/^(\d+(\.\d+)?).*/$1/ for $osv, $vsn;
+	    $skip = $vsn ? ($osv <= $vsn ? 1 : 0) : 1;
+	}
+	$skip and $comment =~ s/$/, failure expected on $^O $osv/;
+    }
+
     if ($x eq ">$result<") {
         print "ok $i\n";
+    }
+    elsif ($skip) {
+	print "ok $i # skip $comment\n";
     }
     elsif ($y eq ">$result<")	# Some C libraries always give
     {				# three-digit exponent
@@ -99,7 +121,7 @@ for ($i = 1; @tests; $i++) {
 			(length(&POSIX::DBL_MAX) - rindex(&POSIX::DBL_MAX, '+')) == 3))
 	{
 		print("ok $i # >$template< >$data< >$result<",
-			  " Suppressed: exponent out of range?\n") 
+			  " Suppressed: exponent out of range?\n");
 	}
     else {
 	$y = ($x eq $y ? "" : " => $y");
@@ -119,21 +141,24 @@ for ($i = 1; @tests; $i++) {
 # number of elements.  Even so, subterfuge is sometimes required: see
 # tests for %n and %p.
 #
+# Tests that are expected to fail on a certain OS can be marked as such
+# by trailing the comment with a skip: section. Skips are tags separated
+# bu space consisting of a $^O optionally trailed with :osvers. In the
+# latter case, all os-levels below that are expected to fail. A special
+# tag 'all' is allowed for todo tests that should fail on any system
+#
+# >%G<   >1234567e96<  >1.23457E+102<   >exponent too big skip: os390<
+# >%.0g< >-0.0<        >-0<             >No minus skip: MSWin32 VMS hpux:10.20<
+# >%d<   >4<           >1<              >4 != 1 skip: all<
+#
 # The following tests are not currently run, for the reasons stated:
 
 =pod
 
 =begin problematic
 
->%.0f<      >-0.1<        >-0<  >C library bug: no minus on VMS, HP-UX<
 >%.0f<      >1.5<         >2<   >Standard vague: no rounding rules<
 >%.0f<      >2.5<         >2<   >Standard vague: no rounding rules<
->%G<        >1234567e96<  >1.23457E+102<	>exponent too big for OS/390<
->%G<        >.1234567e-101< >1.23457E-102<	>exponent too small for OS/390<
->%e<        >1234567E96<  >1.234567e+102<	>exponent too big for OS/390<
->%e<        >.1234567E-101< >1.234567e-102<	>exponent too small for OS/390<
->%g<        >.1234567E-101< >1.23457e-102<	>exponent too small for OS/390<
->%g<        >1234567E96<  >1.23457e+102<	>exponent too big for OS/390<
 
 =end problematic
 
@@ -154,6 +179,8 @@ __END__
 >%G<        >1234567e96<  >1.23457E+102<
 >%G<        >.1234567e-101< >1.23457E-102<
 >%G<        >12345.6789<  >12345.7<
+>%G<        >1234567e96<  >1.23457E+102<	>exponent too big skip: os390<
+>%G<        >.1234567e-101< >1.23457E-102<	>exponent too small skip: os390<
 >%H<        >''<          >%H INVALID<
 >%I<        >''<          >%I INVALID<
 >%J<        >''<          >%J INVALID<
@@ -250,6 +277,8 @@ __END__
 >%+12.4e<   >1234.875<    > +1.2349e+03<
 >%+-12.4e<  >-1234.875<   >-1.2349e+03 <
 >%+12.4e<   >-1234.875<   > -1.2349e+03<
+>%e<        >1234567E96<  >1.234567e+102<	>exponent too big skip: os390<
+>%e<        >.1234567E-101< >1.234567e-102<	>exponent too small skip: os390<
 >%f<        >1234.875<    >1234.875000<
 >%+f<       >1234.875<    >+1234.875000<
 >%#f<       >1234.875<    >1234.875000<
@@ -258,6 +287,7 @@ __END__
 >%#f<       >-1234.875<   >-1234.875000<
 >%6f<       >1234.875<    >1234.875000<
 >%*f<       >[6, 1234.875]< >1234.875000<
+>%.0f<      >-0.1<        >-0<  >C library bug: no minus skip: VMS<
 >%.0f<      >1234.875<    >1235<
 >%.1f<      >1234.875<    >1234.9<
 >%-8.1f<    >1234.875<    >1234.9  <
@@ -282,6 +312,7 @@ __END__
 >%g<        >12345.6789<  >12345.7<
 >%+g<       >12345.6789<  >+12345.7<
 >%#g<       >12345.6789<  >12345.7<
+>%.0g<      >-0.0<	  >-0<		   >C99 standard mandates minus sign but C89 does not skip: MSWin32 VMS hpux:10.20 openbsd netbsd:1.5 irix<
 >%.0g<      >12345.6789<  >1e+04<
 >%#.0g<     >12345.6789<  >1.e+04<
 >%.2g<      >12345.6789<  >1.2e+04<
@@ -307,8 +338,10 @@ __END__
 >%g<        >0<           >0<
 >%13g<      >1234567.89<  >  1.23457e+06<
 >%+13g<     >1234567.89<  > +1.23457e+06<
->%013g<      >1234567.89< >001.23457e+06<
->%-13g<      >1234567.89< >1.23457e+06  <
+>%013g<     >1234567.89<  >001.23457e+06<
+>%-13g<     >1234567.89<  >1.23457e+06  <
+>%g<        >.1234567E-101< >1.23457e-102<	>exponent too small skip: os390<
+>%g<        >1234567E96<  >1.23457e+102<	>exponent too big skip: os390<
 >%h<        >''<          >%h INVALID<
 >%i<        >123456.789<  >123456<         >Synonym for %d<
 >%j<        >''<          >%j INVALID<
@@ -323,6 +356,7 @@ __END__
 >%+o<       >642<         >1202<
 >%#o<       >642<         >01202<
 >%d< >$p=sprintf('%p',$p);$p=~/^[0-9a-f]+$/< >1< >Coarse hack: hex from %p?<
+>%d< >$p=sprintf('%-8p',$p);$p=~/^[0-9a-f]+\s*$/< >1< >Coarse hack: hex from %p?<
 >%#p<       >''<          >%#p INVALID<
 >%q<        >''<          >%q INVALID<
 >%r<        >''<          >%r INVALID<
@@ -370,6 +404,7 @@ __END__
 >%1$1$d<	>12<	>%1$1$d INVALID<
 >%*2$*2$d<	>[12, 3]<	>%*2$*2$d INVALID<
 >%*2*2$d<	>[12, 3]<	>%*2*2$d INVALID<
+>%*2$1d<	>[12, 3]<	>%*2$1d INVALID<
 >%0v2.2d<	>''<	><
 >%vc,%d<	>[63, 64, 65]<	>?,64<
 >%vd,%d<	>[1, 2, 3]<	>49,2<

@@ -1,11 +1,22 @@
 case `uname -r` in
 6.1*) shellflags="-m+65536" ;;
 esac
+
 case "$optimize" in
 # If we used fastmd (the default) integer values would be limited to 46 bits.
 # --Mark P. Lutz
-'') optimize="$optimize -h nofastmd" ;;
+'') optimize="$optimize -O1 -h nofastmd" ;;
 esac
+
+# At least in the following environment
+# uname -a: snxxxx xxxx 9.0.2.2 sin.0 CRAY Y-MP
+# cc -V:    Cray Standard C Version 4.0.3  (057126) Jan 29 2006  07:27:26
+# one has to drop optimisation from perl.c or otherwise
+# the resulting miniperl executable does nothing (visible)
+# but always exits with zero (success) exit status, this
+# making it impossible to build the perl executable. --jhi
+perl_cflags='optimize="-O0"'
+
 # The default is to die in runtime on math overflows.
 # Let's not do that. --jhi
 ccflags="$ccflags -h matherror=errno" 

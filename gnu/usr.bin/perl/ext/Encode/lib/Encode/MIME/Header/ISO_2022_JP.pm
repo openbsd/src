@@ -12,7 +12,7 @@ use constant TAIL   => '?=';
 
 use Encode::CJKConstants qw(%RE);
 
-our $VERSION = do { my @r = (q$Revision: 1.1.1.1 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 1.2 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 
 # I owe the below codes totally to

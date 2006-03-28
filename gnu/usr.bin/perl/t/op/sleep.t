@@ -1,8 +1,15 @@
 #!./perl
 
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = qw(. ../lib);
+}
+
+require "test.pl";
+plan( tests => 4 );
+
 use strict;
 use warnings;
-use Test::More tests=>4;
 
 my $start = time;
 my $sleep_says = sleep 3;

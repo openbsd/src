@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq8 - System Interaction ($Revision: 1.7 $, $Date: 2004/08/09 18:10:15 $)
+perlfaq8 - System Interaction
 
 =head1 DESCRIPTION
 
@@ -35,25 +35,26 @@ How you access/control keyboards, screens, and pointing devices
 
 =item Keyboard
 
-    Term::Cap			Standard perl distribution
-    Term::ReadKey		CPAN
-    Term::ReadLine::Gnu		CPAN
-    Term::ReadLine::Perl	CPAN
-    Term::Screen		CPAN
+	Term::Cap               Standard perl distribution
+	Term::ReadKey           CPAN
+	Term::ReadLine::Gnu     CPAN
+	Term::ReadLine::Perl    CPAN
+	Term::Screen            CPAN
 
 =item Screen
 
-    Term::Cap			Standard perl distribution
-    Curses			CPAN
-    Term::ANSIColor		CPAN
+	Term::Cap               Standard perl distribution
+	Curses                  CPAN
+	Term::ANSIColor         CPAN
 
 =item Mouse
 
-    Tk				CPAN
+	Tk                      CPAN
 
 =back
 
-Some of these specific cases are shown below.
+Some of these specific cases are shown as examples in other answers
+in this section of the perlfaq.
 
 =head2 How do I print something out in color?
 
@@ -276,8 +277,8 @@ next.
 If you expect characters to get to your device when you print() them,
 you'll want to autoflush that filehandle.  You can use select()
 and the C<$|> variable to control autoflushing (see L<perlvar/$E<verbar>>
-and L<perlfunc/select>, or L<perlfaq5>, ``How do I flush/unbuffer an
-output filehandle?  Why must I do this?''):
+and L<perlfunc/select>, or L<perlfaq5>, "How do I flush/unbuffer an
+output filehandle?  Why must I do this?"):
 
     $oldh = select(DEV);
     $| = 1;
@@ -411,24 +412,24 @@ You don't actually "trap" a control character.  Instead, that character
 generates a signal which is sent to your terminal's currently
 foregrounded process group, which you then trap in your process.
 Signals are documented in L<perlipc/"Signals"> and the
-section on ``Signals'' in the Camel.
+section on "Signals" in the Camel.
 
-You can set the values of the %SIG hash to be the functions you want 
+You can set the values of the %SIG hash to be the functions you want
 to handle the signal.  After perl catches the signal, it looks in %SIG
 for a key with the same name as the signal, then calls the subroutine
 value for that key.
 
 	# as an anonymous subroutine
-	
+
 	$SIG{INT} = sub { syswrite(STDERR, "ouch\n", 5 ) };
-	
+
 	# or a reference to a function
-	
+
 	$SIG{INT} = \&ouch;
-	
+
 	# or the name of the function as a string
-	
-	$SIG{INT} = "ouch"; 
+
+	$SIG{INT} = "ouch";
 
 Perl versions before 5.8 had in its C source code signal handlers which
 would catch the signal and possibly run a Perl function that you had set
@@ -527,7 +528,7 @@ though, so if you use END blocks you should also use
 Perl's exception-handling mechanism is its eval() operator.  You can
 use eval() as setjmp and die() as longjmp.  For details of this, see
 the section on signals, especially the time-out handler for a blocking
-flock() in L<perlipc/"Signals"> or the section on ``Signals'' in
+flock() in L<perlipc/"Signals"> or the section on "Signals" in
 the Camel Book.
 
 If exception handling is all you're interested in, try the
@@ -665,8 +666,8 @@ files:
     use IPC::Open3;
     use Symbol qw(gensym);
     use IO::File;
-    local *CATCHOUT = IO::File->new_tempfile;
-    local *CATCHERR = IO::File->new_tempfile;
+    local *CATCHOUT = IO::File->new_tmpfile;
+    local *CATCHERR = IO::File->new_tmpfile;
     my $pid = open3(gensym, ">&CATCHOUT", ">&CATCHERR", "cmd");
     waitpid($pid, 0);
     seek $_, 0, 0 for \*CATCHOUT, \*CATCHERR;
@@ -679,7 +680,7 @@ should work just as well, without deadlocking:
     use IPC::Open3;
     use Symbol qw(gensym);
     use IO::File;
-    local *CATCHERR = IO::File->new_tempfile;
+    local *CATCHERR = IO::File->new_tmpfile;
     my $pid = open3(gensym, \*CATCHOUT, ">&CATCHERR", "cmd");
     while( <CATCHOUT> ) {}
     waitpid($pid, 0);
@@ -1017,7 +1018,7 @@ the current process group of your controlling terminal as follows:
 
 Use the alarm() function, probably in conjunction with a signal
 handler, as documented in L<perlipc/"Signals"> and the section on
-``Signals'' in the Camel.  You may instead use the more flexible
+"Signals" in the Camel.  You may instead use the more flexible
 Sys::AlarmCall module available from CPAN.
 
 The alarm() function is not implemented on all versions of Windows.
@@ -1095,12 +1096,12 @@ A quick and dirty fix involves a little bit of code, but this may be all
 you need to figure out the problem.
 
 	#!/usr/bin/perl -w
-	
+
 	BEGIN {
 	$SIG{__WARN__} = sub{ print STDERR "Perl: ", @_; };
 	$SIG{__DIE__}  = sub{ print STDERR "Perl: ", @_; exit 1};
 	}
-	
+
 	$a = 1 + undef;
 	$x / 0;
 	__END__
@@ -1177,8 +1178,8 @@ just need to replace step 3 (B<make>) with B<make perl> and you will
 get a new F<perl> binary with your extension linked in.
 
 See L<ExtUtils::MakeMaker> for more details on building extensions.
-See also the next question, ``What's the difference between require
-and use?''.
+See also the next question, "What's the difference between require
+and use?".
 
 =head2 What's the difference between require and use?
 
@@ -1252,8 +1253,8 @@ but other times it is not.  Modern programs C<use Socket;> instead.
 
 =head1 AUTHOR AND COPYRIGHT
 
-Copyright (c) 1997-2003 Tom Christiansen and Nathan Torkington.
-All rights reserved.
+Copyright (c) 1997-2006 Tom Christiansen, Nathan Torkington, and
+other authors as noted. All rights reserved.
 
 This documentation is free; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -36,6 +36,24 @@ my %PLATFORM;
 defined $PLATFORM || die "PLATFORM undefined, must be one of: @PLATFORM\n";
 exists $PLATFORM{$PLATFORM} || die "PLATFORM must be one of: @PLATFORM\n";
 
+if ($PLATFORM eq 'win32' or $PLATFORM eq "aix") {
+	# Add the compile-time options that miniperl was built with to %define.
+	# On Win32 these are not the same options as perl itself will be built
+	# with since miniperl is built with a canned config (one of the win32/
+	# config_H.*) and none of the BUILDOPT's that are set in the makefiles,
+	# but they do include some #define's that are hard-coded in various
+	# source files and header files and don't include any BUILDOPT's that
+	# the user might have chosen to disable because the canned configs are
+	# minimal configs that don't include any of those options.
+	my $config = `$^X -Ilib -V`;
+	my($options) = $config =~ /^  Compile-time options: (.*?)\n^  \S/ms;
+	$options =~ s/\s+/ /g;
+	print STDERR "Options: ($options)\n";
+	foreach (split /\s+/, $options) {
+		$define{$_} = 1;
+	}
+}
+
 my %exportperlmalloc =
     (
        Perl_malloc		=>	"malloc",
@@ -131,8 +149,9 @@ if ($define{USE_ITHREADS} && $PLATFORM ne 'win32' && $^O ne 'darwin') {
 
 my $sym_ord = 0;
 
+print STDERR "Defines: (" . join(' ', sort keys %define) . ")\n";
+
 if ($PLATFORM =~ /^win(?:32|ce)$/) {
-    warn join(' ',keys %define)."\n";
     ($dll = ($define{PERL_DLL} || "perl58")) =~ s/\.dll$//i;
     print "LIBRARY $dll\n";
     print "DESCRIPTION 'Perl interpreter'\n";
@@ -267,6 +286,7 @@ if ($PLATFORM eq 'win32') {
 		     Perl_getenv_len
 		     Perl_my_pclose
 		     Perl_my_popen
+		     Perl_my_sprintf
 		     )];
 }
 else {
@@ -344,6 +364,7 @@ if ($PLATFORM eq 'wince') {
 		     Perl_getenv_len
 		     Perl_my_pclose
 		     Perl_my_popen
+		     Perl_my_sprintf
 		     )];
 }
 elsif ($PLATFORM eq 'aix') {
@@ -635,6 +656,12 @@ else {
 		    )];
 }
 
+if ($define{'PERL_USE_SAFE_PUTENV'}) {
+    skip_symbols [qw(
+                   PL_use_safe_putenv
+                  )];
+}
+
 unless ($define{'USE_5005THREADS'} || $define{'USE_ITHREADS'}) {
     skip_symbols [qw(
 		    PL_thr_key
@@ -673,6 +700,8 @@ unless ($define{'USE_5005THREADS'}) {
 unless ($define{'USE_ITHREADS'}) {
     skip_symbols [qw(
 		    PL_ptr_table
+		    PL_pte_root
+		    PL_pte_arenaroot
 		    PL_op_mutex
 		    PL_regex_pad
 		    PL_regex_padav
@@ -690,6 +719,7 @@ unless ($define{'USE_ITHREADS'}) {
 		    Perl_mg_dup
 		    Perl_re_dup
 		    Perl_sv_dup
+		    Perl_rvpv_dup
 		    Perl_sys_intern_dup
 		    Perl_ptr_table_clear
 		    Perl_ptr_table_fetch
@@ -708,6 +738,7 @@ unless ($define{'USE_ITHREADS'}) {
 		    Perl_sharedsv_thrcnt_dec
 		    Perl_sharedsv_thrcnt_inc
 		    Perl_sharedsv_unlock
+		    Perl_stashpv_hvname_match
 		    )];
 }
 
@@ -752,6 +783,17 @@ unless ($define{'PL_OP_SLAB_ALLOC'}) {
 
 unless ($define{'THREADS_HAVE_PIDS'}) {
     skip_symbols [qw(PL_ppid)];
+}
+
+unless ($define{'DEBUG_LEAKING_SCALARS_FORK_DUMP'}) {
+    skip_symbols [qw(
+		    PL_dumper_fd
+		    )];
+}
+unless ($define{'PERL_DONT_CREATE_GVSV'}) {
+    skip_symbols [qw(
+		     Perl_gv_SVadd
+		    )];
 }
 
 sub readvar {
@@ -871,6 +913,7 @@ if ($define{'USE_PERLIO'}) {
     if ($define{'USE_SFIO'}) {
 	# Old legacy non-stdio "PerlIO"
 	skip_symbols \@layer_syms;
+	skip_symbols [qw(perlsio_binmode)];
 	# SFIO defines most of the PerlIO routines as macros
 	# So undo most of what $perlio_sym has just done - d'oh !
 	# Perhaps it would be better to list the ones which do exist
@@ -948,12 +991,14 @@ if ($define{'USE_PERLIO'}) {
     else {
 	# PerlIO with layers - export implementation
 	emit_symbols \@layer_syms;
+	emit_symbols [qw(perlsio_binmode)];
     }
 } else {
 	# -Uuseperlio
 	# Skip the PerlIO layer symbols - although
 	# nothing should have exported them any way
 	skip_symbols \@layer_syms;
+	skip_symbols [qw(perlsio_binmode)];
         skip_symbols [qw(PL_def_layerlist PL_known_layers PL_perlio)];
 
 	# Also do NOT add abstraction symbols from $perlio_sym
@@ -1183,6 +1228,9 @@ if ($PLATFORM =~ /^win(?:32|ce)$/) {
 			   ))
     {
 	try_symbol($symbol);
+    }
+    if ($CCTYPE eq "BORLAND") {
+	try_symbol('_matherr');
     }
 }
 elsif ($PLATFORM eq 'os2') {
@@ -1445,4 +1493,3 @@ PerlIO_sprintf
 PerlIO_sv_dup
 PerlIO_tmpfile
 PerlIO_vsprintf
-perlsio_binmode

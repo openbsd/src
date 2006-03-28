@@ -588,7 +588,7 @@ Here's a truly obscure example:
 
      bool_t
      rpcb_gettime(host,timep)
-          time_t &timep ; /* \$v{timep}=@{[$v{timep}=$arg]} */
+          time_t &timep; /* \$v{timep}=@{[$v{timep}=$arg]} */
           char *host + SvOK($v{timep}) ? SvPV($arg,PL_na) : NULL;
         OUTPUT:
           timep
@@ -904,7 +904,7 @@ However, the generated Perl function is called in very C-ish style:
 
 If one of the input arguments to the C function is the length of a string
 argument C<NAME>, one can substitute the name of the length-argument by
-C<length(NAME)> in the XSUB declaration.  This argument must be omited when
+C<length(NAME)> in the XSUB declaration.  This argument must be omitted when
 the generated Perl function is called.  E.g.,
 
   void
@@ -1833,7 +1833,7 @@ double-colons (::), and declare C<Net_Config> to be of that type:
         T_PTROBJ_SPECIAL
                 if (sv_derived_from($arg, \"${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\")) {
                         IV tmp = SvIV((SV*)SvRV($arg));
-                $var = ($type) tmp;
+                        $var = INT2PTR($type, tmp);
                 }
                 else
                         croak(\"$var is not of type ${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\")
@@ -1846,6 +1846,11 @@ double-colons (::), and declare C<Net_Config> to be of that type:
 The INPUT and OUTPUT sections substitute underscores for double-colons
 on the fly, giving the desired effect.  This example demonstrates some
 of the power and versatility of the typemap facility.
+
+The INT2PTR macro (defined in perl.h) casts an integer to a pointer, 
+of a given type, taking care of the possible different size of integers
+and pointers.  There are also PTR2IV, PTR2UV, PTR2NV macros,
+to map the other way, which may be useful in OUTPUT sections.
 
 =head2 Safely Storing Static Data in XS
 
@@ -1897,7 +1902,7 @@ Below is an example module that makes use of the macros.
           dMY_CXT;
         CODE:
           if (MY_CXT.count >= 3) {
-              warn("Already have 3 blind mice") ;
+              warn("Already have 3 blind mice");
               RETVAL = 0;
           }
           else {

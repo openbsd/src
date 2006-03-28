@@ -14,6 +14,9 @@ print "1..129\n";
     sort { while(1) {}            } @a;
     sort { while(1) { last; }     } @a;
     sort { while(0) { last; }     } @a;
+
+    # Change 26011: Re: A surprising segfault
+    map scalar(sort(+())), ('')x68;
 }
 
 sub Backwards { $a lt $b ? 1 : $a gt $b ? -1 : 0 }

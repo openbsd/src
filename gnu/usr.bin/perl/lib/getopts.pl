@@ -31,7 +31,7 @@ sub Getopts {
 				}
 				eval "
 				push(\@opt_$first, \$rest);
-				if(\$opt_$first eq '') {
+				if (!defined \$opt_$first or \$opt_$first eq '') {
 					\$opt_$first = \$rest;
 				}
 				else {

@@ -33,7 +33,7 @@ to print the name of each directory as it is created
 =item *
 
 the numeric mode to use when creating the directories
-(defaults to 0777)
+(defaults to 0777), to be modified by the current umask.
 
 =back
 
@@ -84,14 +84,20 @@ than VMS is settled.  (defaults to FALSE)
 It returns the number of files successfully deleted.  Symlinks are
 simply deleted and not followed.
 
-B<NOTE:> If the third parameter is not TRUE, C<rmtree> is B<unsecure>
-in the face of failure or interruption.  Files and directories which
-were not deleted may be left with permissions reset to allow world
-read and write access.  Note also that the occurrence of errors in
-rmtree can be determined I<only> by trapping diagnostic messages
-using C<$SIG{__WARN__}>; it is not apparent from the return value.
-Therefore, you must be extremely careful about using C<rmtree($foo,$bar,0)>
-in situations where security is an issue.
+B<NOTE:> There are race conditions internal to the implementation of
+C<rmtree> making it unsafe to use on directory trees which may be
+altered or moved while C<rmtree> is running, and in particular on any
+directory trees with any path components or subdirectories potentially
+writable by untrusted users.
+
+Additionally, if the third parameter is not TRUE and C<rmtree> is
+interrupted, it may leave files and directories with permissions altered
+to allow deletion (and older versions of this module would even set
+files and directories to world-read/writable!)
+
+Note also that the occurrence of errors in C<rmtree> can be determined I<only>
+by trapping diagnostic messages using C<$SIG{__WARN__}>; it is not apparent
+from the return value.
 
 =head1 DIAGNOSTICS
 
@@ -119,7 +125,7 @@ use Exporter ();
 use strict;
 use warnings;
 
-our $VERSION = "1.06";
+our $VERSION = "1.08";
 our @ISA = qw( Exporter );
 our @EXPORT = qw( mkpath rmtree );
 
@@ -159,7 +165,7 @@ sub mkpath {
 	unless (mkdir($path,$mode)) {
 	    my $e = $!;
 	    # allow for another process to have created it meanwhile
-	    croak "mkdir $path: $e" unless -d $path;
+	    $! = $e, croak ("mkdir $path: $e") unless -d $path;
 	}
 	push(@created, $path);
     }
@@ -192,11 +198,11 @@ sub rmtree {
 	(undef, undef, my $rp) = lstat $root or next;
 	$rp &= 07777;	# don't forget setuid, setgid, sticky bits
 	if ( -d _ ) {
-	    # notabene: 0777 is for making readable in the first place,
+	    # notabene: 0700 is for making readable in the first place,
 	    # it's also intended to change it to writable in case we have
 	    # to recurse in which case we are better than rm -rf for 
 	    # subtrees with strange permissions
-	    chmod(0777, ($Is_VMS ? VMS::Filespec::fileify($root) : $root))
+	    chmod($rp | 0700, ($Is_VMS ? VMS::Filespec::fileify($root) : $root))
 	      or carp "Can't make directory $root read+writeable: $!"
 		unless $safe;
 
@@ -230,7 +236,7 @@ sub rmtree {
 		print "skipped $root\n" if $verbose;
 		next;
 	    }
-	    chmod 0777, $root
+	    chmod $rp | 0700, $root
 	      or carp "Can't make directory $root writeable: $!"
 		if $force_writeable;
 	    print "rmdir $root\n" if $verbose;
@@ -252,7 +258,7 @@ sub rmtree {
 		print "skipped $root\n" if $verbose;
 		next;
 	    }
-	    chmod 0666, $root
+	    chmod $rp | 0600, $root
 	      or carp "Can't make file $root writeable: $!"
 		if $force_writeable;
 	    print "unlink $root\n" if $verbose;

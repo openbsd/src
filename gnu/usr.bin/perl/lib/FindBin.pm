@@ -24,9 +24,9 @@ Locates the full path to the script bin directory to allow the use
 of paths relative to the bin directory.
 
 This allows a user to setup a directory tree for some software with
-directories E<lt>rootE<gt>/bin and E<lt>rootE<gt>/lib and then the above example will allow
-the use of modules in the lib directory without knowing where the software
-tree is installed.
+directories C<< <root>/bin >> and C<< <root>/lib >>, and then the above
+example will allow the use of modules in the lib directory without knowing
+where the software tree is installed.
 
 If perl is invoked using the B<-e> option or the perl script is read from
 C<STDIN> then FindBin sets both C<$Bin> and C<$RealBin> to the current
@@ -65,9 +65,10 @@ If perl is invoked as
 
    perl filename
 
-and I<filename> does not have executable rights and a program called I<filename>
-exists in the users C<$ENV{PATH}> which satisfies both B<-x> and B<-T> then FindBin
-assumes that it was invoked via the C<$ENV{PATH}>.
+and I<filename> does not have executable rights and a program called
+I<filename> exists in the users C<$ENV{PATH}> which satisfies both B<-x>
+and B<-T> then FindBin assumes that it was invoked via the
+C<$ENV{PATH}>.
 
 Workaround is to invoke perl as
 
@@ -76,7 +77,8 @@ Workaround is to invoke perl as
 =head1 AUTHORS
 
 FindBin is supported as part of the core perl distribution. Please send bug
-reports to E<lt>F<perlbug@perl.org>E<gt> using the perlbug program included with perl.
+reports to E<lt>F<perlbug@perl.org>E<gt> using the perlbug program
+included with perl.
 
 Graham Barr E<lt>F<gbarr@pobox.com>E<gt>
 Nick Ing-Simmons E<lt>F<nik@tiuk.ti.com>E<gt>
@@ -93,7 +95,7 @@ package FindBin;
 use Carp;
 require 5.000;
 require Exporter;
-use Cwd qw(getcwd abs_path);
+use Cwd qw(getcwd cwd abs_path);
 use Config;
 use File::Basename;
 use File::Spec;
@@ -102,7 +104,15 @@ use File::Spec;
 %EXPORT_TAGS = (ALL => [qw($Bin $Script $RealBin $RealScript $Dir $RealDir)]);
 @ISA = qw(Exporter);
 
-$VERSION = "1.44";
+$VERSION = "1.47";
+
+sub cwd2 {
+   my $cwd = getcwd();
+   # getcwd might fail if it hasn't access to the current directory.
+   # try harder.
+   defined $cwd or $cwd = cwd();
+   $cwd;
+}
 
 sub init
 {
@@ -112,9 +122,8 @@ sub init
  if($0 eq '-e' || $0 eq '-')
   {
    # perl invoked with -e or script is on C<STDIN>
-
    $Script = $RealScript = $0;
-   $Bin    = $RealBin    = getcwd();
+   $Bin    = $RealBin    = cwd2();
   }
  else
   {
@@ -158,9 +167,9 @@ sub init
 
      croak("Cannot find current script '$0'") unless(-f $script);
 
-     # Ensure $script contains the complete path incase we C<chdir>
+     # Ensure $script contains the complete path in case we C<chdir>
 
-     $script = File::Spec->catfile(getcwd(), $script)
+     $script = File::Spec->catfile(cwd2(), $script)
        unless File::Spec->file_name_is_absolute($script);
 
      ($Script,$Bin) = fileparse($script);
@@ -179,7 +188,11 @@ sub init
       }
 
      # Get absolute paths to directories
-     $Bin     = abs_path($Bin)     if($Bin);
+     if ($Bin) {
+      my $BinOld = $Bin;
+      $Bin = abs_path($Bin);
+      defined $Bin or $Bin = File::Spec->canonpath($BinOld);
+     }
      $RealBin = abs_path($RealBin) if($RealBin);
     }
   }
@@ -190,4 +203,3 @@ BEGIN { init }
 *again = \&init;
 
 1; # Keep require happy
-

@@ -233,9 +233,9 @@ Add the following to the end of Mytest.xs:
 	    OUTPUT:
 		RETVAL
 
-There does not need to be white space at the start of the "C<int input>"
+There does not need to be whitespace at the start of the "C<int input>"
 line, but it is useful for improving readability.  Placing a semi-colon at
-the end of that line is also optional.  Any amount and kind of white space
+the end of that line is also optional.  Any amount and kind of whitespace
 may be placed between the "C<int>" and "C<input>".
 
 Now re-run make to rebuild our new shared library.
@@ -413,7 +413,7 @@ of round is of type "void".
 
 You specify the parameters that will be passed into the XSUB on the line(s)
 after you declare the function's return value and name.  Each input parameter
-line starts with optional white space, and may have an optional terminating
+line starts with optional whitespace, and may have an optional terminating
 semicolon.
 
 The list of output parameters occurs at the very end of the function, just

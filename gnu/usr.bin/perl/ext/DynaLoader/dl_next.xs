@@ -163,7 +163,7 @@ static void TransferError(NXStream *s)
         Safefree(dl_last_error);
     }
     NXGetMemoryBuffer(s, &buffer, &len, &maxlen);
-    New(1097, dl_last_error, len, char);
+    Newx(dl_last_error, len, char);
     strcpy(dl_last_error, buffer);
 }
 

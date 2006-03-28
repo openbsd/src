@@ -688,7 +688,3 @@ drawing heavily on advice from Alan Burlison, Nick Ing-Simmons, Tim Bunce,
 and many other Solaris users over the years.
 
 Please report any errors, updates, or suggestions to F<perlbug@perl.org>.
-
-=head1 LAST MODIFIED
-
-$Id: README.solaris,v 1.4 2003/12/03 03:02:19 millert Exp $

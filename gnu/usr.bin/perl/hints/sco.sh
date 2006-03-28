@@ -148,7 +148,7 @@ else
                 lddlflags='-G -L/usr/local/lib'
             ;;
             *)
-                ccdlflags='-Bexport -L/usr/local/lib'
+                ccdlflags='-Wl,-Bexport -L/usr/local/lib'
                 cccdlflags='-Kpic'
                 lddlflags='-G -L/usr/local/lib'
             ;;
@@ -199,6 +199,15 @@ if test -f /usr/lib/libdbm.nfs.a ; then
     shift
     libswanted="$*"
 fi
+
+###############################################################
+# At least for ORS5.0.2, prefer sprintf() over gcvt(), since gcvt()
+# used to cause a SIGFPE and a core dump when passed a NaN.
+# This may not be an issue in perl-5.8.x and later since we
+# try to trap SIGFPE.  However, preferring sprintf() should be
+# safe anyway, so let's go ahead and set it.  See the bugs database
+# item [perl #3100].   --A.D. 12/2004.
+	gconvert_preference='sprintf'
 
 ###############################################################
 # We disable ODBM_File if OSR5 because it's mostly broken

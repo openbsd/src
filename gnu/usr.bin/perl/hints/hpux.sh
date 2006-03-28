@@ -84,7 +84,7 @@ case `$cc -v 2>&1`"" in
 		[012]*) # HP-UX and gcc-2.* break UINT32_MAX :-(
 			ccflags="$ccflags -DUINT32_MAX_BROKEN"
 			;;
-               3*)     # GCC (both 32bit and 64bit) will define __STDC_EXT__
+		[34]*) # GCC (both 32bit and 64bit) will define __STDC_EXT__
                        # by default when using GCC 3.0 and newer versions of
                        # the compiler.
                        cppflags="$cc_cppflags"
@@ -94,7 +94,7 @@ case `$cc -v 2>&1`"" in
 		*64*)
 		    echo "main(){}">try.c
 		    case "$gccversion" in
-			3*)
+			[34]*)
 			    case "$archname" in
                                PA-RISC*)
                                    case "$ccflags" in
@@ -136,7 +136,28 @@ case `$cc -v 2>&1`"" in
 		esac
 	    ;;
     *)      ccisgcc=''
-	    ccversion=`which cc | xargs what | awk '/Compiler/{print $2}/Itanium/{print $6,$7}'`
+	    # What cannot be use in combination with ccache links :(
+	    cc_found=""
+	    for p in `echo $PATH | tr : ' ''` ; do
+		x="$p/cc"
+		if [ -f $x ] && [ -x $x ]; then
+		    if [ -h $x ]; then
+			l=`ls -l $x | sed 's,.*-> ,,'`
+			case $l in
+			    /*) x=$l		;;
+			    *)  x="$p/$l"	;;
+			    esac
+			fi
+		    x=`echo $x | sed 's,/\./,/,g'`
+		    case $x in
+			*ccache*) ;;
+			*) [ -z "$cc_found" ] && cc_found=$x ;;
+			esac
+		    fi
+		done
+	    [ -z "$cc_found" ] && cc_found=`which cc`
+	    what $cc_found >&4
+	    ccversion=`what $cc_found | awk '/Compiler/{print $2}/Itanium/{print $6,$7}'`
 	    case "$ccflags" in
                "-Ae "*) ;;
 		*)  ccflags="-Ae $cc_cppflags"
@@ -248,15 +269,16 @@ EOM
 		# HP-UX soon, including a user-friendly exit
 		case $gcc_64native in
 		    no) case "$gccversion" in
-			    [123]*) ccflags="$ccflags -mlp64"
-				    case "$archname" in
-					PA-RISC*)
-					    ldflags="$ldflags -Wl,+DD64"
-					    ;;
-					IA64*)
-					    ldflags="$ldflags -mlp64"
-					    ;;
-					esac
+			    [1234]*)
+				ccflags="$ccflags -mlp64"
+				case "$archname" in
+				    PA-RISC*)
+					ldflags="$ldflags -Wl,+DD64"
+					;;
+				    IA64*)
+					ldflags="$ldflags -mlp64"
+					;;
+				    esac
 				    ;;
 			    esac
 			;;
@@ -320,7 +342,7 @@ int main ()
 {
     struct rlimit rl;
     int i = getrlimit (RLIMIT_DATA, &rl);
-    printf ("%d\n", rl.rlim_cur / (1024 * 1024));
+    printf ("%d\n", (int)(rl.rlim_cur / (1024 * 1024)));
     } /* main */
 EOF
 $cc -o try $ccflags $ldflags try.c
@@ -388,15 +410,24 @@ case "$ccisgcc" in
 	    *)      opt="$optimize"
 		    ;;
 	    esac
+	case "$archname" in
+	    IA64*)
+		case "$ccversion" in
+		    B3910B*A.06.0[12345])
+			# > cc --version
+			# cc: HP aC++/ANSI C B3910B A.06.05 [Jul 25 2005]
+			# Has optimizing problems with -O2 and up for both
+			# maint (5.8.8+) and blead (5.9.3+)
+			# -O1/+O1 passed all tests (m)'05 [ 10 Jan 2005 ]
+			optimize="$opt"			;;
+		    *)  doop_cflags="optimize=\"$opt\""	;;
+		    esac
+		;;
+	    esac
 	if [ $maxdsiz -le 64 ]; then
 	    toke_cflags="$toke_cflags;optimize=\"$opt\""
 	    regexec_cflags="optimize=\"$opt\""
 	    fi
-	case "$archname" in
-	    IA64*)
-		doop_cflags="optimize=\"$opt\""
-		;;
-	    esac
 	ld=/usr/bin/ld
 	cccdlflags='+Z'
 	lddlflags='-b +vnocompatwarnings'
@@ -644,6 +675,14 @@ case "$useperlio" in
 case "$usemallocwrap" in
 '') usemallocwrap='define' ;;
 esac
+
+# ctime_r() and asctime_r() seem to have issues for versions before
+# HP-UX 11
+if [ $xxOsRevMajor -lt 11 ]; then
+    d_ctime_r="$undef"
+    d_asctime_r="$undef"
+    fi
+
 
 # fpclassify() is a macro, the library call is Fpclassify
 # Similarly with the others below.

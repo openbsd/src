@@ -56,11 +56,11 @@ libswanted="$*"
 case "$archname" in
 '')
     if test -f /usr/bin/arch; then
-        archname=`/usr/bin/arch`
-    	archname="${archname}-${osname}"
+	archname=`/usr/bin/arch`
+	archname="${archname}-${osname}"
     elif test -f /usr/ucb/arch; then
-        archname=`/usr/ucb/arch`
-    	archname="${archname}-${osname}"
+	archname=`/usr/ucb/arch`
+	archname="${archname}-${osname}"
     fi
     ;;
 esac
@@ -211,7 +211,10 @@ echo 'int main() { return 0; }' > try.c
 	# Indent to avoid propagation to config.sh
 	verbose=`${cc:-cc} -v -o try try.c 2>&1`
 
-if echo "$verbose" | grep '^Reading specs from' >/dev/null 2>&1; then
+# XXX TODO:  'specs' output changed from 'Reading specs from' in gcc-[23] to 'Using
+# built-in specs' in gcc-4.  Perhaps we should just use the same gcc test as
+# in Configure to see if we're using gcc.
+if echo "$verbose" | egrep '(Reading specs from)|(Using built-in specs)' >/dev/null 2>&1; then
 	#
 	# Using gcc.
 	#
@@ -257,9 +260,9 @@ END
 	    # (This may all depend on local configurations too.)
 
 	    # Recompute verbose with -Wl,-v to find GNU ld if present
-	    verbose=`${cc:-cc} -v -Wl,-v -o try try.c 2>&1 | grep ld 2>&1`
+	    verbose=`${cc:-cc} -Wl,-v -o try try.c 2>&1 | grep /ld 2>&1`
 
-	    myld=`echo $verbose| grep ld | awk '/\/ld/ {print $1}'`
+	    myld=`echo $verbose | awk '/\/ld/ {print $1}'`
 	    # This assumes that gcc's output will not change, and that
 	    # /full/path/to/ld will be the first word of the output.
 	    # Thus myld is something like /opt/gnu/sparc-sun-solaris2.5/bin/ld
@@ -356,12 +359,12 @@ cat > UU/usethreads.cbu <<'EOCBU'
 # after it has prompted the user for whether to use threads.
 case "$usethreads" in
 $define|true|[yY]*)
-        ccflags="-D_REENTRANT $ccflags"
+	ccflags="-D_REENTRANT $ccflags"
 
 	# -lpthread overrides some lib C functions, so put it before c.
-        set `echo X "$libswanted "| sed -e "s/ c / pthread c /"`
-        shift
-        libswanted="$*"
+	set `echo X "$libswanted "| sed -e "s/ c / pthread c /"`
+	shift
+	libswanted="$*"
 
 	# sched_yield is available in the -lrt library.  However,
 	# we can also pick up the equivalent yield() function in the
@@ -377,14 +380,14 @@ $define|true|[yY]*)
 	    libswanted="$*"
 	fi
 
-        # On Solaris 2.6 x86 there is a bug with sigsetjmp() and siglongjmp()
-        # when linked with the threads library, such that whatever positive
-        # value you pass to siglongjmp(), sigsetjmp() returns 1.
-        # Thanks to Simon Parsons <S.Parsons@ftel.co.uk> for this report.
-        # Sun BugID is 4117946, "sigsetjmp always returns 1 when called by
-        # siglongjmp in a MT program". As of 19980622, there is no patch
-        # available.
-        cat >try.c <<'EOM'
+	# On Solaris 2.6 x86 there is a bug with sigsetjmp() and siglongjmp()
+	# when linked with the threads library, such that whatever positive
+	# value you pass to siglongjmp(), sigsetjmp() returns 1.
+	# Thanks to Simon Parsons <S.Parsons@ftel.co.uk> for this report.
+	# Sun BugID is 4117946, "sigsetjmp always returns 1 when called by
+	# siglongjmp in a MT program". As of 19980622, there is no patch
+	# available.
+	cat >try.c <<'EOM'
 	/* Test for sig(set|long)jmp bug. */
 	#include <setjmp.h>
 
@@ -398,9 +401,9 @@ $define|true|[yY]*)
 	    siglongjmp(env, 2);
 	}
 EOM
-        if test "`arch`" = i86pc -a `uname -r` = 5.6 && \
-           ${cc:-cc} try.c -lpthread >/dev/null 2>&1 && ./a.out; then
- 	    d_sigsetjmp=$undef
+	if test "`arch`" = i86pc -a `uname -r` = 5.6 && \
+	   ${cc:-cc} try.c -lpthread >/dev/null 2>&1 && ./a.out; then
+	    d_sigsetjmp=$undef
 	    cat << 'EOM' >&2
 
 You will see a *** WHOA THERE!!! ***  message from Configure for
@@ -408,7 +411,7 @@ d_sigsetjmp.  Keep the recommended value.  See hints/solaris_2.sh
 for more information.
 
 EOM
-        fi
+	fi
 
 	# These prototypes should be visible since we using
 	# -D_REENTRANT, but that does not seem to work.
@@ -460,7 +463,7 @@ case "$usemorebits" in
 	;;
 esac
 
-if test `uname -p` = "sparc"; then
+if test `uname -p` = sparc -o `uname -p` = i386; then
     cat > UU/use64bitint.cbu <<'EOCBU'
 # This script UU/use64bitint.cbu will get 'called-back' by Configure
 # after it has prompted the user for whether to use 64 bit integers.
@@ -510,15 +513,18 @@ EOM
 		exit 1
 		;;
 	    esac
-	    libc='/usr/lib/sparcv9/libc.so'
-	    if test ! -f $libc; then
-		cat >&4 <<EOM
+	    processor=`uname -p`;
+	    if test "$processor" = sparc; then
+		libc='/usr/lib/sparcv9/libc.so'
+		if test ! -f $libc; then
+		    cat >&4 <<EOM
 
 I do not see the 64-bit libc, $libc.
 Cannot continue, aborting.
 
 EOM
-		exit 1
+		    exit 1
+		fi
 	    fi
 	    case "${cc:-cc} -v 2>/dev/null" in
 	    *gcc*)
@@ -537,9 +543,12 @@ EOM
 		    exit 1
 		    ;;
 		esac
-	        loclibpth="/usr/lib/sparcv9 $loclibpth"
-		ccflags="$ccflags -mcpu=v9 -m64"
-		if test X`getconf XBS5_LP64_OFF64_CFLAGS 2>/dev/null` != X; then
+		if test "$processor" = sparc; then
+		    loclibpth="/usr/lib/sparcv9 $loclibpth"
+		    ccflags="$ccflags -mcpu=v9"
+		fi 
+		ccflags="$ccflags -m64"
+		if test $processor = sparc -a X`getconf XBS5_LP64_OFF64_CFLAGS 2>/dev/null` != X; then
 		    # This adds in -Wa,-xarch=v9.  I suspect that's superfluous,
 		    # since the -m64 above should do that already.  Someone
 		    # with gcc-3.x.x, please test with gcc -v.   A.D. 20-Nov-2003
@@ -554,10 +563,13 @@ EOM
 		lddlflags="$lddlflags -G `getconf XBS5_LP64_OFF64_LDFLAGS 2>/dev/null`"
 		echo "int main() { return(0); } " > try.c
 		tryworkshopcc="${cc:-cc} try.c -o try $ccflags"
-		loclibpth="/usr/lib/sparcv9 /usr/ccs/lib/sparcv9 `$getworkshoplibs` $loclibpth"
+		if test "$processor" = sparc; then
+		    loclibpth="/usr/lib/sparcv9 /usr/ccs/lib/sparcv9 $loclibpth"
+		fi
+		loclibpth="`$getworkshoplibs` $loclibpth"
 		;;
 	    esac
-
+	    unset processor
 	    use64bitall_done=yes
 	    archname64=64
 	    ;;
@@ -599,5 +611,20 @@ EOM
 	;;
 esac
 EOCBU
+
+#
+# If unsetenv is available, use it in conjunction with PERL_USE_SAFE_PUTENV to
+# work around Sun bugid 6333830.  Both unsetenv and 6333830 only appear in
+# Solaris 10, so we don't need to probe explicitly for an OS version.  We have
+# to append this test to the end of config.over as it needs to run after
+# Configure has probed for unsetenv, and this hints file is processed before
+# that has happened.
+#
+cat >> config.over <<'EOOVER'
+if test "$d_unsetenv" = "$define" -a \
+    `expr "$ccflags" : '.*-D_PERL_USE_SAFE_PUTENV'` -eq 0; then
+        ccflags="$ccflags -DPERL_USE_SAFE_PUTENV"
+fi
+EOOVER
 
 rm -f try.c try.o try a.out

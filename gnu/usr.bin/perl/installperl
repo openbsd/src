@@ -589,7 +589,7 @@ if ($versiononly) {
 # Install pod pages.  Where? I guess in $installprivlib/pod
 # ($installprivlib/pods for cygwin).
 
-my $pod = ($Is_Cygwin || $Is_Darwin) ? 'pods' : 'pod';
+my $pod = ($Is_Cygwin || $Is_Darwin || $Is_VMS) ? 'pods' : 'pod';
 if ( !$versiononly || ($installprivlib =~ m/\Q$ver/)) {
     mkpath("${installprivlib}/$pod", $verbose, 0777);
 
@@ -845,13 +845,22 @@ sub installlib {
     return if $name =~ /^makefile$/i;
     # ignore the test extensions
     return if $dir =~ m{ext/XS/(?:APItest|Typemap)/};
+    # ignore the demo files
+    return if $dir =~ /\bdemos?\b/;
+
+    # ignore READMEs, MANIFESTs, INSTALL docs, META.ymls and change logs.
+    # Changes.e2x and README.e2x are needed by enc2xs.
+    return if $name =~ m{^(?:README(?:\.\w+)?|MANIFEST|META\.yml|INSTALL)$} && $name ne 'README.e2x';
+    return if $name =~ m{^(?:TODO|BUGS|CREDITS)$}i;
+    return if $name =~ m{^change(?:s|log)(?:\.libnet)?$}i;
 
     $name = "$dir/$name" if $dir ne '';
 
     my $installlib = $installprivlib;
     if ($dir =~ /^auto/ ||
 	  ($name =~ /^(.*)\.(?:pm|pod)$/ && $archpms{$1}) ||
-	  ($name =~ /^(.*)\.(?:h|lib)$/i && ($Is_W32 || $Is_NetWare))
+	  ($name =~ /^(.*)\.(?:h|lib)$/i && ($Is_W32 || $Is_NetWare)) ||
+	  $name eq 'Config_heavy.pl'
        ) {
 	$installlib = $installarchlib;
 	return unless $do_installarchlib;

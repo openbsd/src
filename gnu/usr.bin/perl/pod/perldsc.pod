@@ -1,4 +1,5 @@
 =head1 NAME
+X<data structure> X<complex data structure> X<struct>
 
 perldsc - Perl Data Structures Cookbook
 
@@ -68,6 +69,7 @@ But for now, let's look at general issues common to all
 these types of data structures.
 
 =head1 REFERENCES
+X<reference> X<dereference> X<dereferencing> X<pointer>
 
 The most important thing to understand about all data structures in Perl
 -- including multidimensional arrays--is that even though they might
@@ -75,6 +77,7 @@ appear otherwise, Perl C<@ARRAY>s and C<%HASH>es are all internally
 one-dimensional.  They can hold only scalar values (meaning a string,
 number, or a reference).  They cannot directly contain other arrays or
 hashes, but instead contain I<references> to other arrays or hashes.
+X<multidimensional array> X<array, multidimensional>
 
 You can't use a reference to an array or hash in quite the same way that you
 would a real array or hash.  For C or C++ programmers unused to
@@ -174,6 +177,7 @@ in memory!  In C, you'd have to remember to malloc() yourself some new
 memory.  In Perl, you'll want to use the array constructor C<[]> or the
 hash constructor C<{}> instead.   Here's the right way to do the preceding
 broken code fragments:
+X<[]> X<{}>
 
     for $i (1..10) {
 	@array = somefunc($i);
@@ -248,9 +252,11 @@ In summary:
 
 
 =head1 CAVEAT ON PRECEDENCE
+X<dereference, precedence> X<dereferencing, precedence>
 
 Speaking of things like C<@{$AoA[$i]}>, the following are actually the
 same thing:
+X<< -> >>
 
     $aref->[2][2]	# clear
     $$aref[2][2]	# confusing
@@ -298,6 +304,10 @@ variable, and it would thereby remind you to write instead:
     print $aref->[2][2]
 
 =head1 DEBUGGING
+X<data structure, debugging> X<complex data structure, debugging>
+X<AoA, debugging> X<HoA, debugging> X<AoH, debugging> X<HoH, debugging>
+X<array of arrays, debugging> X<hash of arrays, debugging>
+X<array of hashes, debugging> X<hash of hashes, debugging>
 
 Before version 5.002, the standard Perl debugger didn't do a very nice job of
 printing out complex data structures.  With 5.002 or above, the
@@ -331,6 +341,7 @@ here are short code examples illustrating access of various
 types of data structures.
 
 =head1 ARRAYS OF ARRAYS
+X<array of arrays> X<AoA>
 
 =head2 Declaration of an ARRAY OF ARRAYS
 
@@ -387,6 +398,7 @@ types of data structures.
  }
 
 =head1 HASHES OF ARRAYS
+X<hash of arrays> X<HoA>
 
 =head2 Declaration of a HASH OF ARRAYS
 
@@ -465,6 +477,7 @@ types of data structures.
  }
 
 =head1 ARRAYS OF HASHES
+X<array of hashes> X<AoH>
 
 =head2 Declaration of an ARRAY OF HASHES
 
@@ -555,6 +568,7 @@ types of data structures.
  }
 
 =head1 HASHES OF HASHES
+X<hass of hashes> X<HoH>
 
 =head2 Declaration of a HASH OF HASHES
 
@@ -673,6 +687,7 @@ types of data structures.
 
 
 =head1 MORE ELABORATE RECORDS
+X<record> X<structure> X<struct>
 
 =head2 Declaration of MORE ELABORATE RECORDS
 

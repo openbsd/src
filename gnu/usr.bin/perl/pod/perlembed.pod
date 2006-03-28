@@ -1118,8 +1118,6 @@ Oracle, Binary Evolution, ActiveState, and Ben Sugars's nsapi_perl
 have used this model for Oracle, Netscape and Internet Information
 Server Perl plugins.
 
-July 22, 1998
-
 =head1 COPYRIGHT
 
 Copyright (C) 1995, 1996, 1997, 1998 Doug MacEachern and Jon Orwant.  All

@@ -1,7 +1,7 @@
 /*    op.h
  *
  *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, 2004, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, 2005 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -97,7 +97,8 @@ Deprecated.  Use C<GIMME_V> instead.
 				/*  On pushre, re is /\s+/ imp. by split " " */
 				/*  On regcomp, "use re 'eval'" was in scope */
 				/*  On OP_READLINE, was <$filehandle> */
-				/*  On RV2[SG]V, don't create GV--in defined()*/
+				/*  On RV2[ACGHS]V, don't create GV--in
+				    defined()*/
 				/*  On OP_DBSTATE, indicates breakpoint
 				 *    (runtime property) */
 				/*  On OP_AELEMFAST, indiciates pad var */
@@ -254,7 +255,7 @@ struct pmop {
     BASEOP
     OP *	op_first;
     OP *	op_last;
-    OP *	op_pmreplroot;
+    OP *	op_pmreplroot; /* (type is really union {OP*,GV*,PADOFFSET}) */
     OP *	op_pmreplstart;
     PMOP *	op_pmnext;		/* list of all scanpats */
 #ifdef USE_ITHREADS
@@ -317,13 +318,13 @@ struct pmop {
 #  define PmopSTASHPV_set(o,pv)	(PmopSTASHPV(o) = savesharedpv(pv))
 #  define PmopSTASH(o)		(PmopSTASHPV(o) \
 				 ? gv_stashpv(PmopSTASHPV(o),GV_ADD) : Nullhv)
-#  define PmopSTASH_set(o,hv)	PmopSTASHPV_set(o, ((hv) ? HvNAME(hv) : Nullch))
+#  define PmopSTASH_set(o,hv)	PmopSTASHPV_set(o, ((hv) ? HvNAME_get(hv) : Nullch))
 #  define PmopSTASH_free(o)	PerlMemShared_free(PmopSTASHPV(o))
 
 #else
 #  define PmopSTASH(o)		((o)->op_pmstash)
 #  define PmopSTASH_set(o,hv)	((o)->op_pmstash = (hv))
-#  define PmopSTASHPV(o)	(PmopSTASH(o) ? HvNAME(PmopSTASH(o)) : Nullch)
+#  define PmopSTASHPV(o)	(PmopSTASH(o) ? HvNAME_get(PmopSTASH(o)) : Nullch)
    /* op_pmstash is not refcounted */
 #  define PmopSTASHPV_set(o,pv)	PmopSTASH_set((o), gv_stashpv(pv,GV_ADD))
 #  define PmopSTASH_free(o)    
@@ -468,8 +469,13 @@ struct loop {
 
 #ifdef USE_ITHREADS
 #  define OP_REFCNT_INIT		MUTEX_INIT(&PL_op_mutex)
-#  define OP_REFCNT_LOCK		MUTEX_LOCK(&PL_op_mutex)
-#  define OP_REFCNT_UNLOCK		MUTEX_UNLOCK(&PL_op_mutex)
+#  ifdef PERL_CORE
+#    define OP_REFCNT_LOCK		MUTEX_LOCK(&PL_op_mutex)
+#    define OP_REFCNT_UNLOCK		MUTEX_UNLOCK(&PL_op_mutex)
+#  else
+#    define OP_REFCNT_LOCK		op_refcnt_lock()
+#    define OP_REFCNT_UNLOCK		op_refcnt_unlock()
+#  endif
 #  define OP_REFCNT_TERM		MUTEX_DESTROY(&PL_op_mutex)
 #else
 #  define OP_REFCNT_INIT		NOOP
@@ -498,7 +504,7 @@ struct loop {
 	(var = (OP *) Perl_Slab_Alloc(aTHX_ m,size))
 #define FreeOp(p) Perl_Slab_Free(aTHX_ p)
 #else
-#define NewOp(m, var, c, type) Newz(m, var, c, type)
+#define NewOp(m, var, c, type) Newxz(var, c, type)
 #define NewOpSz(m, var, size)	\
 	(var = (OP*)safemalloc(size), memzero(var, size))
 #define FreeOp(p) Safefree(p)

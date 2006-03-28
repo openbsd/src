@@ -1,7 +1,7 @@
 /*    universal.c
  *
  *    Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
- *    by Larry Wall and others
+ *    2005, 2006, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -40,13 +40,16 @@ S_isa_lookup(pTHX_ HV *stash, const char *name, HV* name_stash,
     GV** gvp;
     HV* hv = Nullhv;
     SV* subgen = Nullsv;
+    const char *hvname;
 
     /* A stash/class can go by many names (ie. User == main::User), so 
        we compare the stash itself just in case */
     if (name_stash && (stash == name_stash))
         return &PL_sv_yes;
 
-    if (strEQ(HvNAME(stash), name))
+    hvname = HvNAME_get(stash);
+
+    if (strEQ(hvname, name))
 	return &PL_sv_yes;
 
     if (strEQ(name, "UNIVERSAL"))
@@ -54,7 +57,7 @@ S_isa_lookup(pTHX_ HV *stash, const char *name, HV* name_stash,
 
     if (level > 100)
 	Perl_croak(aTHX_ "Recursive inheritance detected in package '%s'",
-		   HvNAME(stash));
+		   hvname);
 
     gvp = (GV**)hv_fetch(stash, "::ISA::CACHE::", 14, FALSE);
 
@@ -66,13 +69,13 @@ S_isa_lookup(pTHX_ HV *stash, const char *name, HV* name_stash,
 	    SV** svp = (SV**)hv_fetch(hv, name, len, FALSE);
 	    if (svp && (sv = *svp) != (SV*)&PL_sv_undef) {
 	        DEBUG_o( Perl_deb(aTHX_ "Using cached ISA %s for package %s\n",
-				  name, HvNAME(stash)) );
+				  name, hvname) );
 		return sv;
 	    }
 	}
 	else {
 	    DEBUG_o( Perl_deb(aTHX_ "ISA Cache in package %s is stale\n",
-			      HvNAME(stash)) );
+			      hvname) );
 	    hv_clear(hv);
 	    sv_setiv(subgen, PL_sub_generation);
 	}
@@ -106,8 +109,8 @@ S_isa_lookup(pTHX_ HV *stash, const char *name, HV* name_stash,
 		if (!basestash) {
 		    if (ckWARN(WARN_MISC))
 			Perl_warner(aTHX_ packWARN(WARN_SYNTAX),
-		             "Can't locate package %"SVf" for @%s::ISA",
-			    sv, HvNAME(stash));
+				    "Can't locate package %"SVf" for @%s::ISA",
+				    sv, hvname);
 		    continue;
 		}
 		if (&PL_sv_yes == isa_lookup(basestash, name, name_stash, 
@@ -137,12 +140,9 @@ for class names as well as for objects.
 bool
 Perl_sv_derived_from(pTHX_ SV *sv, const char *name)
 {
-    char *type;
-    HV *stash;
+    const char *type = Nullch;
+    HV *stash = Nullhv;
     HV *name_stash;
-
-    stash = Nullhv;
-    type = Nullch;
 
     if (SvGMAGICAL(sv))
         mg_get(sv) ;
@@ -168,9 +168,9 @@ Perl_sv_derived_from(pTHX_ SV *sv, const char *name)
 
 #include "XSUB.h"
 
-void XS_UNIVERSAL_isa(pTHX_ CV *cv);
-void XS_UNIVERSAL_can(pTHX_ CV *cv);
-void XS_UNIVERSAL_VERSION(pTHX_ CV *cv);
+PERL_XS_EXPORT_C void XS_UNIVERSAL_isa(pTHX_ CV *cv);
+PERL_XS_EXPORT_C void XS_UNIVERSAL_can(pTHX_ CV *cv);
+PERL_XS_EXPORT_C void XS_UNIVERSAL_VERSION(pTHX_ CV *cv);
 XS(XS_utf8_is_utf8);
 XS(XS_utf8_valid);
 XS(XS_utf8_encode);
@@ -191,29 +191,29 @@ XS(XS_Internals_HvREHASH);
 void
 Perl_boot_core_UNIVERSAL(pTHX)
 {
-    char *file = __FILE__;
+    const char file[] = __FILE__;
 
-    newXS("UNIVERSAL::isa",             XS_UNIVERSAL_isa,         file);
-    newXS("UNIVERSAL::can",             XS_UNIVERSAL_can,         file);
-    newXS("UNIVERSAL::VERSION", 	XS_UNIVERSAL_VERSION, 	  file);
-    newXS("utf8::is_utf8", XS_utf8_is_utf8, file);
-    newXS("utf8::valid", XS_utf8_valid, file);
-    newXS("utf8::encode", XS_utf8_encode, file);
-    newXS("utf8::decode", XS_utf8_decode, file);
-    newXS("utf8::upgrade", XS_utf8_upgrade, file);
-    newXS("utf8::downgrade", XS_utf8_downgrade, file);
-    newXS("utf8::native_to_unicode", XS_utf8_native_to_unicode, file);
-    newXS("utf8::unicode_to_native", XS_utf8_unicode_to_native, file);
-    newXSproto("Internals::SvREADONLY",XS_Internals_SvREADONLY, file, "\\[$%@];$");
-    newXSproto("Internals::SvREFCNT",XS_Internals_SvREFCNT, file, "\\[$%@];$");
+    newXS("UNIVERSAL::isa",             XS_UNIVERSAL_isa,         (char *)file);
+    newXS("UNIVERSAL::can",             XS_UNIVERSAL_can,         (char *)file);
+    newXS("UNIVERSAL::VERSION", 	XS_UNIVERSAL_VERSION, 	  (char *)file);
+    newXS("utf8::is_utf8", XS_utf8_is_utf8, (char *)file);
+    newXS("utf8::valid", XS_utf8_valid, (char *)file);
+    newXS("utf8::encode", XS_utf8_encode, (char *)file);
+    newXS("utf8::decode", XS_utf8_decode, (char *)file);
+    newXS("utf8::upgrade", XS_utf8_upgrade, (char *)file);
+    newXS("utf8::downgrade", XS_utf8_downgrade, (char *)file);
+    newXS("utf8::native_to_unicode", XS_utf8_native_to_unicode, (char *)file);
+    newXS("utf8::unicode_to_native", XS_utf8_unicode_to_native, (char *)file);
+    newXSproto("Internals::SvREADONLY",XS_Internals_SvREADONLY, (char *)file, "\\[$%@];$");
+    newXSproto("Internals::SvREFCNT",XS_Internals_SvREFCNT, (char *)file, "\\[$%@];$");
     newXSproto("Internals::hv_clear_placeholders",
-               XS_Internals_hv_clear_placehold, file, "\\%");
+               XS_Internals_hv_clear_placehold, (char *)file, "\\%");
     newXSproto("PerlIO::get_layers",
-               XS_PerlIO_get_layers, file, "*;@");
-    newXS("Regexp::DESTROY", XS_Regexp_DESTROY, file);
-    newXSproto("Internals::hash_seed",XS_Internals_hash_seed, file, "");
-    newXSproto("Internals::rehash_seed",XS_Internals_rehash_seed, file, "");
-    newXSproto("Internals::HvREHASH", XS_Internals_HvREHASH, file, "\\%");
+               XS_PerlIO_get_layers, (char *)file, "*;@");
+    newXS("Regexp::DESTROY", XS_Regexp_DESTROY, (char *)file);
+    newXSproto("Internals::hash_seed",XS_Internals_hash_seed, (char *)file, "");
+    newXSproto("Internals::rehash_seed",XS_Internals_rehash_seed, (char *)file, "");
+    newXSproto("Internals::HvREHASH", XS_Internals_HvREHASH, (char *)file, "\\%");
 }
 
 
@@ -221,8 +221,7 @@ XS(XS_UNIVERSAL_isa)
 {
     dXSARGS;
     SV *sv;
-    char *name;
-    STRLEN n_a;
+    const char *name;
 
     if (items != 2)
 	Perl_croak(aTHX_ "Usage: UNIVERSAL::isa(reference, kind)");
@@ -236,7 +235,7 @@ XS(XS_UNIVERSAL_isa)
 		|| (SvGMAGICAL(sv) && SvPOKp(sv) && SvCUR(sv))))
 	XSRETURN_UNDEF;
 
-    name = (char *)SvPV(ST(1),n_a);
+    name = SvPV_nolen_const(ST(1));
 
     ST(0) = boolSV(sv_derived_from(sv, name));
     XSRETURN(1);
@@ -246,10 +245,9 @@ XS(XS_UNIVERSAL_can)
 {
     dXSARGS;
     SV   *sv;
-    char *name;
+    const char *name;
     SV   *rv;
     HV   *pkg = NULL;
-    STRLEN n_a;
 
     if (items != 2)
 	Perl_croak(aTHX_ "Usage: UNIVERSAL::can(object-ref, method)");
@@ -263,7 +261,7 @@ XS(XS_UNIVERSAL_can)
 		|| (SvGMAGICAL(sv) && SvPOKp(sv) && SvCUR(sv))))
 	XSRETURN_UNDEF;
 
-    name = (char *)SvPV(ST(1),n_a);
+    name = SvPV_nolen_const(ST(1));
     rv = &PL_sv_undef;
 
     if (SvROK(sv)) {
@@ -292,7 +290,7 @@ XS(XS_UNIVERSAL_VERSION)
     GV **gvp;
     GV *gv;
     SV *sv;
-    char *undef;
+    const char *undef;
 
     if (SvROK(ST(0))) {
         sv = (SV*)SvRV(ST(0));
@@ -306,7 +304,7 @@ XS(XS_UNIVERSAL_VERSION)
 
     gvp = pkg ? (GV**)hv_fetch(pkg,"VERSION",7,FALSE) : Null(GV**);
 
-    if (gvp && isGV(gv = *gvp) && SvOK(sv = GvSV(gv))) {
+    if (gvp && isGV(gv = *gvp) && (sv = GvSV(gv)) && SvOK(sv)) {
         SV *nsv = sv_newmortal();
         sv_setsv(nsv, sv);
         sv = nsv;
@@ -318,22 +316,22 @@ XS(XS_UNIVERSAL_VERSION)
     }
 
     if (items > 1) {
-	STRLEN len;
 	SV *req = ST(1);
 
 	if (undef) {
-	     if (pkg)
-		  Perl_croak(aTHX_
+	    if (pkg) {
+		const char *name = HvNAME_get(pkg);
+		Perl_croak(aTHX_
 			     "%s does not define $%s::VERSION--version check failed",
-			     HvNAME(pkg), HvNAME(pkg));
-	     else {
-		  char *str = SvPVx(ST(0), len);
-
-		  Perl_croak(aTHX_
-			     "%s defines neither package nor VERSION--version check failed", str);
+			     name, name);
+	    } else {
+		Perl_croak(aTHX_
+			     "%s defines neither package nor VERSION--version check failed",
+			     SvPVx_nolen_const(ST(0)) );
 	     }
 	}
 	if (!SvNIOK(sv) && SvPOK(sv)) {
+	    STRLEN len;
 	    char *str = SvPVx(sv,len);
 	    while (len) {
 		--len;
@@ -371,7 +369,7 @@ XS(XS_UNIVERSAL_VERSION)
 
 	if (SvNV(req) > SvNV(sv))
 	    Perl_croak(aTHX_ "%s version %s required--this is only version %s",
-		       HvNAME(pkg), SvPV_nolen(req), SvPV_nolen(sv));
+		       HvNAME_get(pkg), SvPV_nolen(req), SvPV_nolen(sv));
     }
 
 finish:
@@ -386,7 +384,7 @@ XS(XS_utf8_is_utf8)
      if (items != 1)
 	  Perl_croak(aTHX_ "Usage: utf8::is_utf8(sv)");
      {
-	  SV *	sv = ST(0);
+          const SV *sv = ST(0);
 	  {
 	       if (SvUTF8(sv))
 		    XSRETURN_YES;
@@ -406,7 +404,7 @@ XS(XS_utf8_valid)
 	  SV *	sv = ST(0);
 	  {
 	       STRLEN len;
-	       char *s = SvPV(sv,len);
+	       const char *s = SvPV_const(sv,len);
 	       if (!SvUTF8(sv) || is_utf8_string((U8*)s,len))
 		    XSRETURN_YES;
 	       else
@@ -436,9 +434,7 @@ XS(XS_utf8_decode)
 	Perl_croak(aTHX_ "Usage: utf8::decode(sv)");
     {
 	SV *	sv = ST(0);
-	bool	RETVAL;
-
-	RETVAL = sv_utf8_decode(sv);
+	const bool RETVAL = sv_utf8_decode(sv);
 	ST(0) = boolSV(RETVAL);
 	sv_2mortal(ST(0));
     }
@@ -468,16 +464,9 @@ XS(XS_utf8_downgrade)
 	Perl_croak(aTHX_ "Usage: utf8::downgrade(sv, failok=0)");
     {
 	SV *	sv = ST(0);
-	bool	failok;
-	bool	RETVAL;
+        const bool failok = (items < 2) ? 0 : (int)SvIV(ST(1));
+        const bool RETVAL = sv_utf8_downgrade(sv, failok);
 
-	if (items < 2)
-	    failok = 0;
-	else {
-	    failok = (int)SvIV(ST(1));
-	}
-
-	RETVAL = sv_utf8_downgrade(sv, failok);
 	ST(0) = boolSV(RETVAL);
 	sv_2mortal(ST(0));
     }
@@ -487,7 +476,7 @@ XS(XS_utf8_downgrade)
 XS(XS_utf8_native_to_unicode)
 {
  dXSARGS;
- UV uv = SvUV(ST(0));
+ const UV uv = SvUV(ST(0));
 
  if (items > 1)
      Perl_croak(aTHX_ "Usage: utf8::native_to_unicode(sv)");
@@ -499,7 +488,7 @@ XS(XS_utf8_native_to_unicode)
 XS(XS_utf8_unicode_to_native)
 {
  dXSARGS;
- UV uv = SvUV(ST(0));
+ const UV uv = SvUV(ST(0));
 
  if (items > 1)
      Perl_croak(aTHX_ "Usage: utf8::unicode_to_native(sv)");
@@ -512,6 +501,7 @@ XS(XS_Internals_SvREADONLY)	/* This is dangerous stuff. */
 {
     dXSARGS;
     SV *sv = SvRV(ST(0));
+
     if (items == 1) {
 	 if (SvREADONLY(sv))
 	     XSRETURN_YES;
@@ -536,6 +526,7 @@ XS(XS_Internals_SvREFCNT)	/* This is dangerous stuff. */
 {
     dXSARGS;
     SV *sv = SvRV(ST(0));
+
     if (items == 1)
 	 XSRETURN_IV(SvREFCNT(sv) - 1); /* Minus the ref created for us. */
     else if (items == 2) {
@@ -550,6 +541,7 @@ XS(XS_Internals_hv_clear_placehold)
 {
     dXSARGS;
     HV *hv = (HV *) SvRV(ST(0));
+
     if (items != 1)
 	Perl_croak(aTHX_ "Usage: UNIVERSAL::hv_clear_placeholders(hv)");
     hv_clear_placeholders(hv);
@@ -558,7 +550,7 @@ XS(XS_Internals_hv_clear_placehold)
 
 XS(XS_Regexp_DESTROY)
 {
-
+    PERL_UNUSED_ARG(cv);
 }
 
 XS(XS_PerlIO_get_layers)
@@ -581,7 +573,7 @@ XS(XS_PerlIO_get_layers)
 		  SV **varp = svp;
 		  SV **valp = svp + 1;
 		  STRLEN klen;
-		  char *key = SvPV(*varp, klen);
+                  const char *key = SvPV_const(*varp, klen);
 
 		  switch (*key) {
 		  case 'i':
@@ -619,7 +611,7 @@ XS(XS_PerlIO_get_layers)
 	if (!isGV(sv)) {
 	     if (SvROK(sv) && isGV(SvRV(sv)))
 		  gv = (GV*)SvRV(sv);
-	     else
+	     else if (SvPOKp(sv))
 		  gv = gv_fetchpv(SvPVX(sv), FALSE, SVt_PVIO);
 	}
 
@@ -646,10 +638,12 @@ XS(XS_PerlIO_get_layers)
 		  flgok = flgsvp && *flgsvp && SvIOK(*flgsvp);
 
 		  if (details) {
-		       XPUSHs(namok ?
-			     newSVpv(SvPVX(*namsvp), 0) : &PL_sv_undef);
-		       XPUSHs(argok ?
-			     newSVpv(SvPVX(*argsvp), 0) : &PL_sv_undef);
+		       XPUSHs(namok
+			      ? newSVpvn(SvPVX_const(*namsvp), SvCUR(*namsvp))
+			      : &PL_sv_undef);
+		       XPUSHs(argok
+			      ? newSVpvn(SvPVX_const(*argsvp), SvCUR(*argsvp))
+			      : &PL_sv_undef);
 		       if (flgok)
 			    XPUSHi(SvIVX(*flgsvp));
 		       else
@@ -690,7 +684,9 @@ XS(XS_Internals_hash_seed)
 {
     /* Using dXSARGS would also have dITEM and dSP,
      * which define 2 unused local variables.  */
-    dMARK; dAX;
+    dAXMARK;
+    PERL_UNUSED_ARG(cv);
+    PERL_UNUSED_VAR(mark);
     XSRETURN_UV(PERL_HASH_SEED);
 }
 
@@ -698,7 +694,9 @@ XS(XS_Internals_rehash_seed)
 {
     /* Using dXSARGS would also have dITEM and dSP,
      * which define 2 unused local variables.  */
-    dMARK; dAX;
+    dAXMARK;
+    PERL_UNUSED_ARG(cv);
+    PERL_UNUSED_VAR(mark);
     XSRETURN_UV(PL_rehash_seed);
 }
 
@@ -706,7 +704,7 @@ XS(XS_Internals_HvREHASH)	/* Subject to change  */
 {
     dXSARGS;
     if (SvROK(ST(0))) {
-	HV *hv = (HV *) SvRV(ST(0));
+	const HV *hv = (HV *) SvRV(ST(0));
 	if (items == 1 && SvTYPE(hv) == SVt_PVHV) {
 	    if (HvREHASH(hv))
 		XSRETURN_YES;
@@ -716,3 +714,13 @@ XS(XS_Internals_HvREHASH)	/* Subject to change  */
     }
     Perl_croak(aTHX_ "Internals::HvREHASH $hashref");
 }
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ *
+ * ex: set ts=8 sts=4 sw=4 noet:
+ */

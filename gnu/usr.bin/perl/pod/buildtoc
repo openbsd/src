@@ -541,16 +541,16 @@ sub generate_descrip_mms_1 {
   local $Text::Wrap::columns = 150;
   my $count = 0;
   my @lines = map {"pod" . $count++ . " = $_"}
-    split /\n/, wrap('', '', join " ", map "[.lib.pod]$_.pod",
+    split /\n/, wrap('', '', join " ", map "[.lib.pods]$_.pod",
 		     sort keys %Pods, keys %Readmepods);
   @lines, "pod = " . join ' ', map {"\$(pod$_)"} 0 .. $count - 1;
 }
 
 sub generate_descrip_mms_2 {
   map {sprintf <<'SNIP', $_, $_ eq 'perlvms' ? 'vms' : 'pod', $_}
-[.lib.pod]%s.pod : [.%s]%s.pod
-	@ If F$Search("[.lib]pod.dir").eqs."" Then Create/Directory [.lib.pod]
-	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pod]
+[.lib.pods]%s.pod : [.%s]%s.pod
+	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
+	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
 SNIP
    sort keys %Pods, keys %Readmepods;
 }
@@ -658,13 +658,13 @@ sub do_vms {
   die "$0: $name contains NUL bytes" if $makefile =~ /\0/;
 
 # Looking for rules like this
-# [.lib.pod]perl.pod : [.pod]perl.pod
-#	@ If F$Search("[.lib]pod.dir").eqs."" Then Create/Directory [.lib.pod]
-#	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pod]
+# [.lib.pods]perl.pod : [.pod]perl.pod
+#	@ If F$Search("[.lib]pods.dir").eqs."" Then Create/Directory [.lib.pods]
+#	Copy/NoConfirm/Log $(MMS$SOURCE) [.lib.pods]
 
-  $makefile =~ s/\n\Q[.lib.pod]\Eperl[^\n\.]*\.pod[^\n]+\n
+  $makefile =~ s/\n\Q[.lib.pods]\Eperl[^\n\.]*\.pod[^\n]+\n
 		 [^\n]+\n	# Another line
-		 [^\n]+\Q[.lib.pod]\E\n		# ends [.lib.pod]
+		 [^\n]+\Q[.lib.pods]\E\n		# ends [.lib.pods]
 		    /\0/gsx;
   $sections = () = $makefile =~ m/\0+/g;
   die "$0: $name contains no copy rules" if $sections < 1;
