@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.229 2006/03/27 20:33:38 kettenis Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.230 2006/03/28 12:56:44 robert Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -435,6 +435,10 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801GB_SATA_1, /* Intel 82801GB (ICH7) SATA */
+	  IDE_PCI_CLASS_OVERRIDE,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801GBM_SATA, /* Intel 82801GB (ICH7M) SATA */
 	  IDE_PCI_CLASS_OVERRIDE,
 	  piixsata_chip_map
 	}
