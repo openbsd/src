@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.55 2005/09/28 00:24:04 pedro Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.56 2006/03/28 09:03:46 mickey Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.55 2005/09/28 00:24:04 pedro Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.56 2006/03/28 09:03:46 mickey Exp $";
 #endif /* not lint */
 
 /*
@@ -134,7 +134,7 @@ closekre(WINDOW *w)
  */
 #define STATROW		 0	/* uses 1 row and 68 cols */
 #define STATCOL		 2
-#define MEMROW		 2	/* uses 4 rows and 31 cols */
+#define MEMROW		 2	/* uses 4 rows and 34 cols */
 #define MEMCOL		 0
 #define PAGEROW		 2	/* uses 4 rows and 26 cols */
 #define PAGECOL		37
@@ -227,8 +227,8 @@ labelkre(void)
 
 	clear();
 	mvprintw(STATROW, STATCOL + 4, "users    Load");
-	mvprintw(MEMROW, MEMCOL,     "          memory totals (in KB)");
-	mvprintw(MEMROW + 1, MEMCOL, "         real   virtual    free");
+	mvprintw(MEMROW, MEMCOL,     "            memory totals (in KB)");
+	mvprintw(MEMROW + 1, MEMCOL, "           real   virtual     free");
 	mvprintw(MEMROW + 2, MEMCOL, "Active");
 	mvprintw(MEMROW + 3, MEMCOL, "All");
 
@@ -409,15 +409,15 @@ showkre(void)
 	mvaddstr(STATROW, STATCOL + 53, buf);
 #define pgtokb(pg)	((pg) * (s.uvmexp.pagesize / 1024))
 
-	putint(pgtokb(s.uvmexp.active), MEMROW + 2, MEMCOL + 6, 7);
+	putint(pgtokb(s.uvmexp.active), MEMROW + 2, MEMCOL + 7, 8);
 	putint(pgtokb(s.uvmexp.active + s.uvmexp.swpginuse),    /* XXX */
-	    MEMROW + 2, MEMCOL + 16, 7);
-	putint(pgtokb(s.uvmexp.npages - s.uvmexp.free), MEMROW + 3, MEMCOL + 6, 7);
+	    MEMROW + 2, MEMCOL + 17, 8);
+	putint(pgtokb(s.uvmexp.npages - s.uvmexp.free), MEMROW + 3, MEMCOL + 7, 8);
 	putint(pgtokb(s.uvmexp.npages - s.uvmexp.free + s.uvmexp.swpginuse),
-	    MEMROW + 3, MEMCOL + 16, 7);
-	putint(pgtokb(s.uvmexp.free), MEMROW + 2, MEMCOL + 24, 7);
+	    MEMROW + 3, MEMCOL + 17, 8);
+	putint(pgtokb(s.uvmexp.free), MEMROW + 2, MEMCOL + 26, 8);
 	putint(pgtokb(s.uvmexp.free + s.uvmexp.swpages - s.uvmexp.swpginuse),
-	    MEMROW + 3, MEMCOL + 24, 7);
+	    MEMROW + 3, MEMCOL + 26, 8);
 	putint(total.t_rq - 1, PROCSROW + 1, PROCSCOL + 3, 3);
 
 	putint(total.t_dw, PROCSROW + 1, PROCSCOL + 6, 3);
