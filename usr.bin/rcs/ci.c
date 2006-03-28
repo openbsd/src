@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.129 2006/03/27 22:11:08 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.130 2006/03/28 12:07:10 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -768,8 +768,15 @@ checkin_attach_symbol(struct checkin_params *pb)
 	int ret;
 	if (verbose == 1)
 		printf("symbol: %s\n", pb->symbol);
-	if (pb->flags & CI_SYMFORCE)
-		rcs_sym_remove(pb->file, pb->symbol);
+	if (pb->flags & CI_SYMFORCE) {
+		if (rcs_sym_remove(pb->file, pb->symbol) < 0) {
+			if (rcs_errno != RCS_ERR_NOENT) {
+				cvs_log(LP_ERR,
+				    "problem removing symbol: %s", pb->symbol);
+				return (-1);
+			}
+		}
+	}
 	if ((ret = rcs_sym_add(pb->file, pb->symbol, pb->newrev) == -1)
 	    && (rcs_errno == RCS_ERR_DUPENT)) {
 		rcsnum_tostr(rcs_sym_getrev(pb->file, pb->symbol),
