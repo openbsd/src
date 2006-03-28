@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-lldp.c,v 1.1 2006/03/28 15:48:33 reyk Exp $	*/
+/*	$OpenBSD: print-lldp.c,v 1.2 2006/03/28 16:14:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -203,12 +203,12 @@ lldp_print(const u_char *p, u_int len)
 			break;
 
 		case LLDP_TLV_CHASSIS_ID:
-			printf(", Chassis ID: ");
+			printf(", ChassisId: ");
 			lldp_print_id(type, ptr, vlen);
 			break;
 
 		case LLDP_TLV_PORT_ID:
-			printf(", Port ID: ");
+			printf(", PortId: ");
 			lldp_print_id(type, ptr, vlen);
 			break;
 
@@ -219,22 +219,22 @@ lldp_print(const u_char *p, u_int len)
 			break;
 
 		case LLDP_TLV_PORT_DESCR:
-			printf(", Port Description: ");
+			printf(", PortDescr: ");
 			lldp_print_str(ptr, vlen);
 			break;
 
 		case LLDP_TLV_SYSTEM_NAME:
-			printf(", System Name: ");
+			printf(", SysName: ");
 			lldp_print_str(ptr, vlen);
 			break;
 
 		case LLDP_TLV_SYSTEM_DESCR:
-			printf(", System Description: ");
+			printf(", SysDescr: ");
 			lldp_print_str(ptr, vlen);
 			break;
 
 		case LLDP_TLV_SYSTEM_CAP:
-			printf(", System Capabilities:");
+			printf(", CAP:");
 			TCHECK2(*ptr, 4);
 			printb(" available", ntohs(*(u_int16_t *)ptr),
 			    LLDP_CAP_BITS);
@@ -244,7 +244,7 @@ lldp_print(const u_char *p, u_int len)
 			break;
 
 		case LLDP_TLV_MANAGEMENT_ADDR:
-			printf(", Management Address:");
+			printf(", MgmtAddr:");
 			TCHECK2(*ptr, 2);
 			alen = *ptr - sizeof(u_int8_t);
 			_ptrinc(sizeof(u_int8_t));
@@ -260,7 +260,7 @@ lldp_print(const u_char *p, u_int len)
 				if (alen != sizeof(struct in_addr))
 					goto trunc;
 				printf(" %s",
-				    inet_ntoa(*(struct in_addr*)ptr));
+				    inet_ntoa(*(struct in_addr *)ptr));
 				break;
 			}
 			_ptrinc(alen);
@@ -268,7 +268,7 @@ lldp_print(const u_char *p, u_int len)
 			break;
 
 		case LLDP_TLV_ORG:
-			printf(", Org Specific");
+			printf(", Org");
 			break;
 
 		default:
