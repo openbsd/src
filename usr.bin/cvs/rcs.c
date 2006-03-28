@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.153 2006/03/28 02:13:44 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.154 2006/03/28 07:42:56 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1789,7 +1789,10 @@ rcs_parse_delta(RCSFILE *rfp)
 	TAILQ_INIT(&(rdp->rd_snodes));
 
 	tok = rcs_gettok(rfp);
-	if (tok != RCS_TOK_NUM) {
+	if (tok == RCS_TOK_DESC) {
+		rcs_pushtok(rfp, RCS_TOKSTR(rfp), tok);
+		return (0);
+	} else if (tok != RCS_TOK_NUM) {
 		rcs_errno = RCS_ERR_PARSE;
 		cvs_log(LP_ERR, "unexpected token `%s' at start of delta",
 		    RCS_TOKSTR(rfp));
