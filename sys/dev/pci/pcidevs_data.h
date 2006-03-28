@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1044 2006/03/27 17:52:22 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1046 2006/03/28 17:06:34 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2025,6 +2025,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS482_B,
 	    "Radeon XPRESS 200M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X300,
+	    "Radeon X300",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RX480_PCIE,
@@ -4111,7 +4115,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PRO/1000CT Mobile (82547EI)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_QUAD_COPPER,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_QUAD_CPR,
 	    "PRO/1000MT QP (82546EB)",
 	},
 	{
@@ -4372,7 +4376,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80003ES2LAN_SDS_DPT,
-	    "PRO/1000 PT (80003ES2)",
+	    "PRO/1000 PF (80003ES2)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573L,
