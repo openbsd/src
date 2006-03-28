@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.34 2006/03/27 06:13:51 pat Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.35 2006/03/28 09:41:35 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -195,7 +195,7 @@ rlog_file(const char *fname, const char *fpath)
 
 	printf("total revisions: %u", file->rf_ndelta);
 
-	if ((hflag == 0) && (tflag == 0))
+	if ((file->rf_head != NULL) && (hflag == 0) && (tflag == 0))
 		printf(";\tselected revisions:"); /* XXX */
 
 	printf("\n");
