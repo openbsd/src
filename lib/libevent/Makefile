@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2006/01/23 20:18:20 brad Exp $
+#	$OpenBSD: Makefile,v 1.20 2006/03/28 15:32:13 brad Exp $
 
 LIB=	event
 WANTLINT=
@@ -24,6 +24,7 @@ MLINKS=	event.3 event_init.3 event.3 event_dispatch.3 event.3 event_loop.3 \
 	event.3 evbuffer_readline.3
 
 CFLAGS+= -I${.CURDIR} \
+	-DHAVE_CLOCK_GETTIME \
 	-DHAVE_FCNTL_H \
 	-DHAVE_POLL \
 	-DHAVE_SELECT \
