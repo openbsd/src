@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-lldp.c,v 1.2 2006/03/28 16:14:17 reyk Exp $	*/
+/*	$OpenBSD: print-lldp.c,v 1.3 2006/03/28 16:35:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -88,6 +88,10 @@ enum {
 
 static const char *afnumber[] = AFNUM_NAME_STR;
 
+void		 lldp_print_str(u_int8_t *, int);
+const char	*lldp_print_addr(int, const void *);
+void		 lldp_print_id(int, u_int8_t *, int);
+
 void
 lldp_print_str(u_int8_t *str, int len)
 {
@@ -96,6 +100,15 @@ lldp_print_str(u_int8_t *str, int len)
 	for (i = 0; i < len; i++)
 		printf("%c", isprint(str[i]) ? str[i] : '.');
 	printf("\"");
+}
+
+const char *
+lldp_print_addr(int af, const void *addr)
+{
+	static char buf[48];
+	if (inet_ntop(af, addr, buf, sizeof(buf)) == NULL)
+		return ("?");
+	return (buf);
 }
 
 void
@@ -260,7 +273,13 @@ lldp_print(const u_char *p, u_int len)
 				if (alen != sizeof(struct in_addr))
 					goto trunc;
 				printf(" %s",
-				    inet_ntoa(*(struct in_addr *)ptr));
+				    lldp_print_addr(AF_INET, ptr));
+				break;
+			case AFNUM_INET6:
+				if (alen != sizeof(struct in6_addr))
+					goto trunc;
+				printf(" %s",
+				    lldp_print_addr(AF_INET6, ptr));
 				break;
 			}
 			_ptrinc(alen);
