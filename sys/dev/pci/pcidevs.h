@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1047 2006/03/28 17:13:40 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1048 2006/03/28 19:04:25 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -871,7 +871,6 @@
 #define	PCI_PRODUCT_ATI_RADEON_RV280_SE_S	0x5964		/* Radeon 9200 SE Sec */
 #define	PCI_PRODUCT_ATI_RADEON_RS482	0x5974		/* Radeon XPRESS 200 */
 #define	PCI_PRODUCT_ATI_RADEON_RS482_B	0x5975		/* Radeon XPRESS 200M */
-#define	PCI_PRODUCT_ATI_RADEON_X300	0x5a33		/* Radeon X300 */
 #define	PCI_PRODUCT_ATI_RX480_PCIE	0x5a34		/* RX480 PCIE */
 #define	PCI_PRODUCT_ATI_RS480_PCIE_2	0x5a36		/* RS480 PCIE */
 #define	PCI_PRODUCT_ATI_RS480_PCIE_3	0x5a37		/* RS480 PCIE */
