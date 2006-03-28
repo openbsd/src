@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.130 2006/03/28 12:07:10 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.131 2006/03/28 12:48:51 xsa Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -568,9 +568,10 @@ checkin_update(struct checkin_params *pb)
 	 * If we are checking in to a non-default (ie user-specified)
 	 * revision, set head to this revision.
 	 */
-	if (pb->newrev != NULL)
-		rcs_head_set(pb->file, pb->newrev);
-	else
+	if (pb->newrev != NULL) {
+		if (rcs_head_set(pb->file, pb->newrev) < 0)
+			fatal("rcs_head_set failed");
+	} else
 		pb->newrev = pb->file->rf_head;
 
 	/* New head revision has to contain entire file; */
@@ -704,9 +705,10 @@ checkin_init(struct checkin_params *pb)
 	 * If we are checking in to a non-default (ie user-specified)
 	 * revision, set head to this revision.
 	 */
-	if (pb->newrev != NULL)
-		rcs_head_set(pb->file, pb->newrev);
-	else
+	if (pb->newrev != NULL) {
+		if (rcs_head_set(pb->file, pb->newrev) < 0)
+			fatal("rcs_head_set failed");
+	} else
 		pb->newrev = pb->file->rf_head;
 
 	/* New head revision has to contain entire file; */
