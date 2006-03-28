@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.111 2006/03/27 18:01:53 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.112 2006/03/28 05:33:03 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -45,12 +45,14 @@ int             em_display_debug_stats = 0;
  *  Driver version
  *********************************************************************/
 
-char em_driver_version[] = "3.2.18";
+char em_driver_version[] = "5.1.5";
 
 /*********************************************************************
  *  PCI Device ID Table
  *********************************************************************/
 const struct pci_matchid em_devices[] = {
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80003ES2LAN_CPR_DPT },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80003ES2LAN_SDS_DPT },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EM_LOM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EP },
@@ -242,7 +244,8 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	switch (sc->hw.mac_type) {
 		case em_82571:
 		case em_82572:
-			sc->hw.max_frame_size = 10500;
+		case em_80003es2lan:	/* Limit Jumbo Frame size */
+			sc->hw.max_frame_size = 9234;
 			break;
 		case em_82573:
 			/* 82573 does not support Jumbo frames */
@@ -331,6 +334,11 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	em_update_link_status(sc);
 
 	printf(", address %s\n", ether_sprintf(sc->interface_data.ac_enaddr));
+
+	/* Indicate SOL/IDER usage */
+	if (em_check_phy_reset_block(&sc->hw))
+		printf("%s: PHY reset is blocked due to SOL/IDER session.\n",
+		    sc->sc_dv.dv_xname);
 
 	/* Identify 82544 on PCI-X */
 	em_get_bus_info(&sc->hw);
@@ -440,6 +448,7 @@ int
 em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	int		max_frame_size, error = 0;
+	uint16_t	eeprom_data = 0;
 	struct ifreq   *ifr = (struct ifreq *) data;
 	struct ifaddr  *ifa = (struct ifaddr *)data;
 	struct em_softc *sc = ifp->if_softc;
@@ -471,13 +480,22 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFMTU:
 		IOCTL_DEBUGOUT("ioctl rcv'd: SIOCSIFMTU (Set Interface MTU)");
 		switch (sc->hw.mac_type) {
+			case em_82573:
+				/*
+				 * 82573 only supports Jumbo frames
+				 * if ASPM is disabled.
+				 */
+				em_read_eeprom(&sc->hw, EEPROM_INIT_3GIO_3,
+				    1, &eeprom_data);
+				if (eeprom_data & EEPROM_WORD1A_ASPM_MASK) {
+					max_frame_size = ETHER_MAX_LEN;
+					break;
+				}
+				/* Allow Jumbo frames - FALLTHROUGH */
 			case em_82571:
 			case em_82572:
-				max_frame_size = 10500;
-				break;
-			case em_82573:
-				/* 82573 does not support Jumbo frames */
-				max_frame_size = ETHER_MAX_LEN;
+			case em_80003es2lan:	/* Limit Jumbo Frame size */
+				max_frame_size = 9234;
 				break;
 			default:
 				max_frame_size = MAX_JUMBO_FRAME_SIZE;
@@ -613,6 +631,7 @@ em_init(void *arg)
 	    sc->tx_head_addr = pba << EM_TX_HEAD_ADDR_SHIFT;
 	    sc->tx_fifo_size = (E1000_PBA_40K - pba) << EM_PBA_BYTES_SHIFT;
 	    break;
+	case em_80003es2lan: /* 80003es2lan: Total Packet Buffer is 48K */
 	case em_82571: /* 82571: Total Packet Buffer is 48K */
 	case em_82572: /* 82572: Total Packet Buffer is 48K */
 	    pba = E1000_PBA_32K; /* 32K for Rx, 16K for Tx */
@@ -693,7 +712,7 @@ em_intr(void *arg)
 {
 	struct em_softc  *sc = arg;
 	struct ifnet	*ifp;
-	u_int32_t	reg_icr;
+	u_int32_t	reg_icr, test_icr;
 	int s, claimed = 0;
 
 	s = splnet();
@@ -701,12 +720,11 @@ em_intr(void *arg)
 	ifp = &sc->interface_data.ac_if;
 
 	for (;;) {
-		reg_icr = E1000_READ_REG(&sc->hw, ICR);
-		if (sc->hw.mac_type >= em_82571 &&
-		    (reg_icr & E1000_ICR_INT_ASSERTED) == 0)
-			break;
-		else if (reg_icr == 0)
-			break;
+		test_icr = reg_icr = E1000_READ_REG(&sc->hw, ICR);
+		if (sc->hw.mac_type >= em_82571)
+			test_icr = (reg_icr & E1000_ICR_INT_ASSERTED);
+		if (!test_icr)
+			return (0);
 
 		claimed = 1;
 
@@ -1468,7 +1486,10 @@ em_hardware_init(struct em_softc *sc)
 	sc->hw.fc_high_water = rx_buffer_size -
 	    EM_ROUNDUP(sc->hw.max_frame_size, 1024);
 	sc->hw.fc_low_water = sc->hw.fc_high_water - 1500;
-	sc->hw.fc_pause_time = 0x1000;
+	if (sc->hw.mac_type == em_80003es2lan)
+		sc->hw.fc_pause_time = 0xFFFF;
+	else
+		sc->hw.fc_pause_time = 0x1000;
 	sc->hw.fc_send_xon = TRUE;
 	sc->hw.fc = em_fc_full;
 
@@ -1729,7 +1750,7 @@ em_setup_transmit_structures(struct em_softc *sc)
 void
 em_initialize_transmit_unit(struct em_softc *sc)
 {
-	u_int32_t	reg_tctl;
+	u_int32_t	reg_tctl, tarc;
 	u_int32_t	reg_tipg = 0;
 	u_int64_t	bus_addr;
 
@@ -1758,6 +1779,10 @@ em_initialize_transmit_unit(struct em_softc *sc)
 		reg_tipg |= DEFAULT_82542_TIPG_IPGR1 << E1000_TIPG_IPGR1_SHIFT;
 		reg_tipg |= DEFAULT_82542_TIPG_IPGR2 << E1000_TIPG_IPGR2_SHIFT;
 		break;
+	case em_80003es2lan:
+		reg_tipg = DEFAULT_82543_TIPG_IPGR1;
+		reg_tipg |= DEFAULT_80003ES2LAN_TIPG_IPGR2 << E1000_TIPG_IPGR2_SHIFT;
+		break;
 	default:
 		if (sc->hw.media_type == em_media_type_fiber)
 			reg_tipg = DEFAULT_82543_TIPG_IPGT_FIBER;
@@ -1777,12 +1802,33 @@ em_initialize_transmit_unit(struct em_softc *sc)
 		   (E1000_COLLISION_THRESHOLD << E1000_CT_SHIFT);
 	if (sc->hw.mac_type >= em_82571)
 		reg_tctl |= E1000_TCTL_MULR;
-	if (sc->link_duplex == 1) {
+	if (sc->link_duplex == 1)
 		reg_tctl |= E1000_FDX_COLLISION_DISTANCE << E1000_COLD_SHIFT;
-	} else {
+	else
 		reg_tctl |= E1000_HDX_COLLISION_DISTANCE << E1000_COLD_SHIFT;
-	}
 	E1000_WRITE_REG(&sc->hw, TCTL, reg_tctl);
+
+	if (sc->hw.mac_type == em_82571 || sc->hw.mac_type == em_82572) {
+		tarc = E1000_READ_REG(&sc->hw, TARC0);
+		tarc |= ((1 << 25) | (1 << 21));
+		E1000_WRITE_REG(&sc->hw, TARC0, tarc);
+		tarc = E1000_READ_REG(&sc->hw, TARC1);
+		tarc |= (1 << 25);
+		if (reg_tctl & E1000_TCTL_MULR)
+			tarc &= ~(1 << 28);
+		else
+			tarc |= (1 << 28);
+		E1000_WRITE_REG(&sc->hw, TARC1, tarc);
+	} else if (sc->hw.mac_type == em_80003es2lan) {
+		tarc = E1000_READ_REG(&sc->hw, TARC0);
+		tarc |= 1;
+		if (sc->hw.media_type == em_media_type_internal_serdes)
+			tarc |= (1 << 20);
+		E1000_WRITE_REG(&sc->hw, TARC0, tarc);
+		tarc = E1000_READ_REG(&sc->hw, TARC1);
+		tarc |= 1;
+		E1000_WRITE_REG(&sc->hw, TARC1, tarc);
+	}
 
 	/* Setup Transmit Descriptor Settings for this adapter */   
 	sc->txd_cmd = E1000_TXD_CMD_IFCS | E1000_TXD_CMD_RS;
