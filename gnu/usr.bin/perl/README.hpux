@@ -14,14 +14,14 @@ compiled and/or runs.
 
 =head2 Using perl as shipped with HP-UX
 
-As of application release September 2001, HP-UX 11.00 is shipped with
-perl-5.6.1 in /opt/perl. The first occurrence is on CD 5012-7954 and
-can be installed using
+Application release September 2001, HP-UX 11.00 is the first to ship
+with Perl. By the time it was perl-5.6.1 in /opt/perl. The first
+occurrence is on CD 5012-7954 and can be installed using
 
   swinstall -s /cdrom perl
 
 assuming you have mounted that CD on /cdrom. In this version the
-following modules are installed:
+following modules were installed:
 
   ActivePerl::DocTools-0.04   HTML::Parser-3.19   XML::DOM-1.25
   Archive::Tar-0.072          HTML::Tagset-3.03   XML::Parser-2.27
@@ -32,11 +32,14 @@ following modules are installed:
   Font::AFM-1.18              Storable-1.011      libxml-perl-0.07
   HTML-Tree-3.11              URI-1.11            perl-ldap-0.23
 
-The build is a portable hppa-1.1 multithread build that supports large
+The build was a portable hppa-1.1 multithread build that supports large
 files compiled with gcc-2.9-hppa-991112
 
 If you perform a new installation, then Perl will be installed
 automatically.
+
+More recent (preinstalled) HP-UX systems have more recent versions of
+Perl and the updated modules.
 
 =head2 Using perl from HP's porting centre
 
@@ -47,7 +50,8 @@ Perl binaries available is obvious.
 The HP porting centres are limited in what systems they are allowed
 to port to and they usually choose the two most recent OS versions
 available. This means that at the moment of writing, there are only
-HPUX-11.00 and 11-20/22 (IA64) ports available on the porting centres.
+HP-UX 11.11 (pa-risc 2.0) and HP-UX 11.23 (Itanium 2) ports available
+on the porting centres.
 
 HP has asked the porting centre to move Open Source binaries
 from /opt to /usr/local, so binaries produced since the start
@@ -80,7 +84,8 @@ document will not attempt to address issues for compiling Perl on the
 Motorola chipset.
 
 The most recent version of PA-RISC at the time of this document's last
-update is 2.0.
+update is 2.0. HP PA-RISC systems are usually refered to with model
+description "HP 9000".
 
 A complete list of models at the time the OS was built is in the file
 /usr/sam/lib/mo/sched.models. The first column corresponds to the last
@@ -157,9 +162,9 @@ that contained the explanation is dead, so here's a short summary:
   HP 9000 L-Class servers, now renamed HP Server rp5400 series.
   HP 9000 N-Class servers, now renamed HP Server rp7400.
 
-  rp2400, rp2405, rp2430, rp2450, rp2470, rp3410, rp3440, rp4440,
-  rp5400, rp5405, rp5430, rp5450, rp5470, rp7400, rp7405, rp7410,
-  rp7420, rp8400, rp8420, Superdome
+  rp2400, rp2405, rp2430, rp2450, rp2470, rp3410, rp3440, rp4410,
+  rp4440, rp5400, rp5405, rp5430, rp5450, rp5470, rp7400, rp7405,
+  rp7410, rp7420, rp8400, rp8420, Superdome
 
 The current naming convention is:
 
@@ -183,7 +188,7 @@ The current naming convention is:
 =head2 Itanium Processor Family and HP-UX
 
 HP-UX also runs on the new Itanium processor.  This requires the use
-of a different version of HP-UX (currently 11.23 or 11i v1.6), and with
+of a different version of HP-UX (currently 11.23 or 11i v2), and with
 the exception of a few differences detailed below and in later sections,
 Perl should compile with no problems.
 
@@ -192,14 +197,17 @@ attempt to use a PA-RISC version of Perl on an Itanium system.  This is
 because shared libraries created on an Itanium system cannot be loaded
 while running a PA-RISC executable.
 
+HP Itanium 2 systems are usually refered to with model description
+"HP Integrity".
+
 =head2 Itanium & Itanium 2
 
 HP also ships servers with the 128-bit Itanium processor(s). As of the
 date of this document's last update, the following systems contain
 Itanium or Itanium 2 chips (this is very likely to be out of date):
 
-  rx1600, rx2600, rx2600hptc, rx4610, rx4640, rx5670, rx7620, rx8620,
-  rx9610
+  BL60p, rx1600, rx1620, rx2600, rx2600hptc, rx2620, rx4610, rx4640,
+  rx5670, rx7620, rx8620, rx9610
 
 To see all about your machine, type
 
@@ -344,7 +352,7 @@ on that page to rebuild gcc using itself.
 
 On PA-RISC you need a different compiler for 32-bit applications and for
 64-bit applications. On PA-RISC, 32-bit objects and 64-bit objects do
-not mix. period. There is no different behaviour for HP C-ANSI-C or GNU
+not mix. Period. There is no different behaviour for HP C-ANSI-C or GNU
 gcc. So if you require your perl binary to use 64-bit libraries, like
 Oracle-64bit, you MUST build a 64-bit perl.
 
@@ -406,8 +414,7 @@ HP-UX versions before 10.30 require a separate installation of a POSIX
 threads library package. Two examples are the HP DCE package, available
 on "HP-UX Hardware Extensions 3.0, Install and Core OS, Release 10.20,
 April 1999 (B3920-13941)" or the Freely available PTH package, available
-though worldwide HP-UX mirrors of precompiled packages
-(e.g. http://hpux.tn.tudelft.nl/hppd/hpux/)
+on H.Merijn's site (http://mirrors.develooper.com/hpux/).
 
 If you are going to use the HP DCE package, the library used for threading
 is /usr/lib/libcma.sl, but there have been multiple updates of that
@@ -433,33 +440,43 @@ reformatted output:
                                    Date: Apr  9 2001 10:01:06
   d3:/usr/lib 107 >
 
+If you choose for the PTH package, use swinstall to install pth in
+the default location (/opt/pth), and then make symbolic links to the
+libraries from /usr/lib
+
+  # cd /usr/lib
+  # ln -s /opt/pth/lib/libpth* .
+
+For building perl to support Oracle, it needs to be linked with libcl
+and libpthread. So even if your perl is an unthreaded build, these
+libraries might be required. See "Oracle on HP-UX" below.
 
 =head2 64-bit Perl on HP-UX
 
 Beginning with HP-UX 11.00, programs compiled under HP-UX can take
 advantage of the LP64 programming environment (LP64 means Longs and
-Pointers are 64 bits wide).
-
-Work is being performed on Perl to make it 64-bit compliant on all
-versions of Unix.  Once this is complete, scalar variables will be able
-to hold numbers larger than 2^32 with complete precision.
+Pointers are 64 bits wide), in which scalar variables will be able
+to hold numbers larger than 2^32 with complete precision.  Perl has
+proven to be consistent and reliable in 64bit mode since 5.8.1 on
+all HP-UX 11.xx.
 
 As of the date of this document, Perl is fully 64-bit compliant on
 HP-UX 11.00 and up for both cc- and gcc builds. If you are about to
 build a 64-bit perl with GNU gcc, please read the gcc section carefully.
 
-Should a user wish to experiment with compiling Perl in the LP64
-environment, use the -Duse64bitall flag to Configure.  This will force
-Perl to be compiled in a pure LP64 environment (with the +DD64 flag for
-HP C-ANSI-C, with no additional options for GNU gcc 64-bit on PA-RISC,
-and with -mlp64 for GNU gcc on Itanium).
+Should a user have the need for compiling Perl in the LP64 environment,
+use the -Duse64bitall flag to Configure.  This will force Perl to be
+compiled in a pure LP64 environment (with the +DD64 flag for HP C-ANSI-C,
+with no additional options for GNU gcc 64-bit on PA-RISC, and with
+-mlp64 for GNU gcc on Itanium).
 If you want to compile Perl using gcc, you will have to get a version of
 the compiler that supports 64-bit operations.)
 
 You can also use the -Duse64bitint flag to Configure.  Although there
 are some minor differences between compiling Perl with this flag versus
 the -Duse64bitall flag, they should not be noticeable from a Perl user's
-perspective.
+perspective. When configuring -Duse64bitint using a 64bit gcc on a
+pa-risc architecture, -Duse64bitint is silently promoted to -Duse64bitall.
 
 In both cases, it is strongly recommended that you use these flags when
 you run Configure.  If you do not use do this, but later answer the
@@ -563,12 +580,12 @@ the same bug also affects Solaris.
 =head1 AUTHOR
 
 Jeff Okamoto <okamoto@corp.hp.com>
-H.Merijn Brand <h.m.brand@hccnet.nl>
+H.Merijn Brand <h.m.brand@xs4all.nl>
 
 With much assistance regarding shared libraries from Marc Sabatella.
 
 =head1 DATE
 
-Version 0.7.1: 2004-10-08
+Version 0.7.6: 2005-12-20
 
 =cut

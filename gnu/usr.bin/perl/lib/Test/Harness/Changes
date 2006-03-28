@@ -1,5 +1,179 @@
 Revision history for Perl extension Test::Harness
 
+2.56 Wed Sep 28 16:04:00 CDT 2005
+    [FIXES]
+    * Incorporate bleadperl patch to fix Test::Harness on VMS.
+
+2.54 Wed Sep 28 09:52:19 CDT 2005
+    [FIXES]
+    * Test counts were wrong, so wouldn't install on Perls < 5.8.0.
+
+2.53_02 Thu Aug 25 21:37:01 CDT 2005
+    [FIXES]
+    * File order in prove is now sorted within the directory.  It's not
+      the sorting that's important as much as the deterministic results.
+      Thanks to Adam Kennedy and Casey West for pointing this out,
+      independently of each other, with 12 hours of the other.
+
+    [INTERNALS]
+    * Fix calls to podusage() to not use the DATA typeglob.  Thanks sungo.
+
+2.53_01 Sun Jul 10 10:45:27 CDT 2005
+    [FIXES]
+    * If we go over 100,000 tests, it used to print out a warning for
+      every test over 100,000.  Now, we stop after the first.  Thanks to
+      Sebastien Aperghis-Tramoni.
+
+2.52 Sun Jun 26 23:05:19 CDT 2005
+    No changes
+
+2.51_02
+    [ENHANCEMENTS]
+    * The Test::Harness timer is now off by default.  Set HARNESS_TIMER
+      true if you want it.  Added --timer flag to prove.
+
+2.50_01
+    [FIXES]
+    * Call CORE::time() to figure out if we should print when we're
+      printing once per second.  Otherwise, we're using Time::HiRes'
+      version of it.  Thanks, Nicholas Clark.
+
+2.50 Tue Jun 21 14:32:12 CDT 2005
+    [FIXES]
+    * Added some includes in t/strap-analyze.t to make Cygwin happy.
+
+2.49_02 Tue Jun 21 09:54:44 CDT 2005
+    [FIXES]
+    * Added some includes in t/test_harness.t to make Cygwin happy.
+
+2.49_01 Fri Jun 10 15:37:31 CDT 2005
+    [ENHANCEMENTS]
+    * Now shows elapsed time in 1000ths of a second if Time::HiRes
+      is available.
+
+    [FIXES]
+    * Test::Harness::Iterator didn't have a 1; at the end.  Thanks to
+      Steve Peters for finding it.
+
+2.48    Fri Apr 22 22:41:46 CDT 2005
+    Released after weeks of non-complaint.
+
+2.47_03 Wed Mar  2 16:52:55 CST 2005
+    [THINGS THAT MIGHT BREAK YOUR CODE]
+    * Test::Harness now requires Perl 5.005_03 or above.
+
+    [FIXES]
+    * Fixed incorrect "confused by tests in wrong order" error in 2.47_02.
+
+2.47_02 Tue Mar  1 23:15:47 CST 2005
+    [THINGS THAT MIGHT BREAK YOUR CODE]
+    * Test directives for skip tests used to be anything that matches
+      /^skip/i, like the word "skipped", but now it must match
+      /^skip\s+/i.
+
+    [ENHANCEMENTS]
+    * T::H now sets environment variable HARNESS_VERSION, in case a test
+      program wants to know what version of T::H it's running under.
+
+2.47_01 Mon Feb 21 01:14:13 CST 2005
+    [FIXES]
+    * Fixed a problem submitted by Craig Berry:
+
+        Several of the Test::Harness tests now fail on VMS with the
+        following warning:
+
+        Can't find string terminator "]" anywhere before EOF at -e line 1.
+
+        The problem is that when a command is piped to the shell and that
+        command has a newline character embedded in it, the part after
+        the newline is invisible to the shell. The patch below corrects
+        that by escaping the newline so it is not subject to variable
+        interpolation until it gets to the child's Perl one-liner.
+
+    [ENHANCEMENTS]
+    * Test::Harness::Straps now has diagnostic gathering without changing
+      how tests are run.  It also adds these messages by default.
+      Note that the new method, _is_diagnostic(), is for internal
+      use only.  It may change soon.  Thanks to chromatic.
+
+    [DOCUMENTATION]
+    * Expanded Test::Harness::TAP.pod, and added examples.
+
+    * Fixed a crucial documentation typo in Test::Harness::Straps.
+
+2.46    Thu Jan 20 11:50:59 CST 2005
+    Released.
+
+2.45_02 Fri Dec 31 14:57:33 CST 2004
+    [ENHANCEMENTS]
+    * Turns off buffering on both STDERR and STDOUT, so that the two
+      output handles don't get out of sync with each other.  Thanks to
+      David Wheeler.
+
+    * No longer requires, or supports, the HARNESS_OK_SLOW environment
+      variable.  Test counts are only updated once per second, which
+      used to require having HARNESS_OK_SLOW set.
+
+2.45_01 Fri Dec 17 22:39:17 CST 2004
+    [THINGS THAT MIGHT BREAK YOUR CODE]
+    * Test::Harness now requires Perl 5.004_05.
+
+    * We no longer try to print a stack if a coredump is detected.
+
+    [FIXES]
+    * Reverted Test::Harness::Iterator::next()'s use of readline, since
+      it fails under Perl 5.5.4.
+
+    * We no longer try to print a stack if a coredump is detected.
+      This means that the external problems we've had with wait.ph
+      now disappear.  This resolves a number of problems that various
+      Linux distros have, and closes a couple of RT tickets like #2729
+      and #7716.
+
+    [ENHANCEMENTS]
+    * Added Test::Harness->strap() method to access the internal strap.
+
+    [DOCUMENTATION]
+    * Obfuscated the rt.cpan.org email address.  The damage is already
+      done, but at least we'll have it hidden going forward.
+
+2.44 Tue Nov 30 18:38:17 CST 2004
+    [INTERNALS]
+    * De-anonymized the callbacks and handlers in Test::Harness, mostly
+      so I can profile better.
+
+    * Checks _is_header() only if _is_line() fails first.  No point
+      in checking every line of the input for something that can only
+      occur once.
+
+    * Inline the _detailize() function, which was getting called once
+      per line of input.  Reduced execution time about 5-7%.
+
+    * Removed unnecessary temporary variables in Test::Harness::Straps
+      and in Test::Harness::Iterator.
+
+2.43_02 Thu Nov 25 00:20:36 CST 2004
+    [ENHANCEMENTS]
+    * Added more debug output if $Test::Harness::Debug is on.
+
+    [FIXES]
+    * Test::Harness now removes default paths from the paths that it
+      sets in PERL5LIB.  This fixes RT #5649.  Thanks, Schwern.
+
+    [THINGS THAT MIGHT BREAK YOUR CODE]
+    * Test::Harness::Straps' constructor no longer will work as an
+      object method.  You can't say $strap->new any more, but that's
+      OK because you never really wanted to anyway.
+
+2.43_01
+    [FIXES]
+    * Added workaround for local $ENV{} bug on Cygwin to
+    t/prove-switches.t.  See the following RT tickets for details.
+
+    https://rt.cpan.org/Ticket/Display.html?id=6452
+    http://rt.perl.org/rt3/Ticket/Display.html?id=30952
+
+
 2.42        Wed Apr 28 22:13:11 CDT 2004
     [ENHANCEMENTS]
     * prove -v now sets TEST_VERBOSE in case your tests rely on them.

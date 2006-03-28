@@ -4,12 +4,9 @@ BEGIN {
 	    "cannot stringify a Unicode code point\n";
 	exit 0;
     }
-}
-
-BEGIN {
     if ($ENV{PERL_CORE}) {
-        chdir('t') if -d 't';
-        @INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
+	chdir('t') if -d 't';
+	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
     }
 }
 
@@ -44,7 +41,7 @@ FF21; [.0A87.0020.0008] # LATIN CAPITAL LETTER A
 00C5; [.0AC5.0020.0008] # LATIN CAPITAL LETTER A WITH RING ABOVE
 ENTRIES
 
-# Aong < A+ring < Z < fullA+ring < A-ring 
+# Aong < A+ring < Z < fullA+ring < A-ring
 
 #########################
 

@@ -1,15 +1,11 @@
 The *.txt files were copied from
 
-	http://www.unicode.org/Public/UNIDATA/
+	http://www.unicode.org/Public/4.1.0/ucd
 
-as of Unicode 4.0.0 (April 2003), updated with
+as of Unicode 4.1.0 (April 2005).
 
-	http://www.unicode.org/Public/4.0-Update1/
-
-as of Unicode 4.0.1 (March 2004)
-
-The two big files, NormalizationTest.txt (2.0MB) and Unihan.txt
-(25.7MB) were not included due to space considerations.  Also NOT
+The two big files, NormalizationTest.txt (2.1 MB) and Unihan.txt
+(26.7 MB) were not included due to space considerations.  Also NOT
 included were any *.html files and the Derived*.txt files
 
     DerivedAge.txt
@@ -20,9 +16,18 @@ To be 8.3-friendly, the lib/unicore/PropertyValueAliases.txt was
 renamed to be lib/unicore/PropValueAliases.txt, since otherwise
 it would have conflicted with lib/unicore/PropertyAliases.txt.
 
+NOTE: If you modify the input file set you should also run
+ 
+    mktables -makelist
+    
+which will recreate the mktables.lst file which is used to speed up
+the build process.    
+
 FOR PUMPKINS
 
-The *.pl files are generated from the *.txt files by the mktables script:
+The *.pl files are generated from the *.txt files by the mktables script,
+more recently done during the Perl build process, but if you want to try
+the old manual way:
 	
 	cd lib/unicore
 	cp .../UnicodeOriginal/*.txt .

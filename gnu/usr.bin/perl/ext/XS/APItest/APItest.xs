@@ -3,6 +3,61 @@
 #include "XSUB.h"
 
 
+/* A routine to test hv_delayfree_ent
+   (which itself is tested by testing on hv_free_ent  */
+
+typedef void (freeent_function)(pTHX_ HV *, register HE *);
+
+void
+test_freeent(freeent_function *f) {
+    dTHX;
+    dSP;
+    HV *test_hash = newHV();
+    HE *victim;
+    SV *test_scalar;
+    U32 results[4];
+    int i;
+
+#ifdef PURIFY
+    victim = (HE*)safemalloc(sizeof(HE));
+#else
+    /* Storing then deleting something should ensure that a hash entry is
+       available.  */
+    hv_store(test_hash, "", 0, &PL_sv_yes, 0);
+    hv_delete(test_hash, "", 0, 0);
+
+    /* We need to "inline" new_he here as it's static, and the functions we
+       test expect to be able to call del_HE on the HE  */
+    if (!PL_he_root)
+	croak("PL_he_root is 0");
+    victim = PL_he_root;
+    PL_he_root = HeNEXT(victim);
+#endif
+
+    victim->hent_hek = Perl_share_hek(aTHX_ "", 0, 0);
+
+    test_scalar = newSV(0);
+    SvREFCNT_inc(test_scalar);
+    victim->hent_val = test_scalar;
+
+    /* Need this little game else we free the temps on the return stack.  */
+    results[0] = SvREFCNT(test_scalar);
+    SAVETMPS;
+    results[1] = SvREFCNT(test_scalar);
+    f(aTHX_ test_hash, victim);
+    results[2] = SvREFCNT(test_scalar);
+    FREETMPS;
+    results[3] = SvREFCNT(test_scalar);
+
+    i = 0;
+    do {
+	mPUSHu(results[i]);
+    } while (++i < sizeof(results)/sizeof(results[0]));
+
+    /* Goodbye to our extra reference.  */
+    SvREFCNT_dec(test_scalar);
+}
+
 MODULE = XS::APItest:Hash		PACKAGE = XS::APItest::Hash
 
 #define UTF8KLEN(sv, len)   (SvUTF8(sv) ? -(I32)len : (I32)len)
@@ -106,6 +161,19 @@ fetch(hash, key_sv)
 	RETVAL = newSVsv(*result);
         OUTPUT:
         RETVAL
+
+void
+test_hv_free_ent()
+	PPCODE:
+	test_freeent(&Perl_hv_free_ent);
+	XSRETURN(4);
+
+void
+test_hv_delayfree_ent()
+	PPCODE:
+	test_freeent(&Perl_hv_delayfree_ent);
+	XSRETURN(4);
+	    
 =pod
 
 sub TIEHASH  { bless {}, $_[0] }
@@ -309,12 +377,10 @@ eval_sv(sv, flags)
 	EXTEND(SP, 1);
 	PUSHs(sv_2mortal(newSViv(i)));
 
-SV*
+void
 eval_pv(p, croak_on_error)
     const char* p
     I32 croak_on_error
-    PREINIT:
-    	I32 i;
     PPCODE:
 	PUTBACK;
 	EXTEND(SP, 1);
@@ -323,8 +389,6 @@ eval_pv(p, croak_on_error)
 void
 require_pv(pv)
     const char* pv
-    PREINIT:
-    	I32 i;
     PPCODE:
 	PUTBACK;
 	require_pv(pv);
@@ -332,3 +396,15 @@ require_pv(pv)
 
 
 
+void
+mycroak(pv)
+    const char* pv
+    CODE:
+    Perl_croak(aTHX_ "%s", pv);
+
+SV*
+strtab()
+   CODE:
+   RETVAL = newRV_inc((SV*)PL_strtab);
+   OUTPUT:
+   RETVAL

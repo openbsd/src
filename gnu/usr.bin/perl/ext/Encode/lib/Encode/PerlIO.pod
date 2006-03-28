@@ -140,7 +140,7 @@ headers.  See L<Encode::MIME::Header> for details.
 
 As of this writing, any encoding whose class belongs to Encode::XS and
 Encode::Unicode works.  The Encode module has a C<perlio_ok> method
-which you can use before appling PerlIO encoding to the filehandle.
+which you can use before applying PerlIO encoding to the filehandle.
 Here is an example:
 
   my $use_perlio = perlio_ok($enc);

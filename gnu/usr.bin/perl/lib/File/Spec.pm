@@ -3,7 +3,7 @@ package File::Spec;
 use strict;
 use vars qw(@ISA $VERSION);
 
-$VERSION = '3.01';
+$VERSION = '3.12';
 $VERSION = eval $VERSION;
 
 my %module = (MacOS   => 'Mac',
@@ -12,7 +12,8 @@ my %module = (MacOS   => 'Mac',
 	      VMS     => 'VMS',
 	      epoc    => 'Epoc',
 	      NetWare => 'Win32', # Yes, File::Spec::Win32 works on NetWare.
-              dos     => 'OS2',   # Yes, File::Spec::OS2 works on DJGPP.
+	      symbian => 'Win32', # Yes, File::Spec::Win32 works on symbian.
+	      dos     => 'OS2',   # Yes, File::Spec::OS2 works on DJGPP.
 	      cygwin  => 'Cygwin');
 
 
@@ -87,6 +88,13 @@ No physical check on the filesystem, but a logical cleanup of a
 path.
 
     $cpath = File::Spec->canonpath( $path ) ;
+
+Note that this does *not* collapse F<x/../y> sections into F<y>.  This
+is by design.  If F</foo> on your system is a symlink to F</bar/baz>,
+then F</foo/../quux> is actually F</bar/quux>, not F</quux> as a naive
+F<../>-removal would give you.  If you want to do this kind of
+processing, you probably want C<Cwd>'s C<realpath()> function to
+actually traverse the filesystem cleaning up paths like this.
 
 =item catdir
 
@@ -303,5 +311,12 @@ Thomas Wegner C<< <wegner_thomas@yahoo.com> >>.
 abs2rel() and rel2abs() written by Shigio Yamaguchi C<< <shigio@tamacom.com> >>,
 modified by Barrie Slaymaker C<< <barries@slaysys.com> >>.
 splitpath(), splitdir(), catpath() and catdir() by Barrie Slaymaker.
+
+=head1 COPYRIGHT
+
+Copyright (c) 2004 by the Perl 5 Porters.  All rights reserved.
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
 
 =cut

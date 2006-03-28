@@ -1,7 +1,11 @@
-# ArabicShaping-4.0.1.txt
+# ArabicShaping-4.1.0.txt
+# Date: 2005-03-17, 15:21:00 PST [KW]
 #
 # This file is a normative contributory data file in the
 # Unicode Character Database.
+#
+# Copyright (c) 1991-2005 Unicode, Inc.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # This file defines the shaping classes for Arabic and Syriac
 # positional shaping, repeating in machine readable form the
@@ -17,21 +21,42 @@
 #   form, of an Arabic or Syriac character.
 # Field 1: gives a short schematic name for that character,
 #   abbreviated from the normative Unicode character name.
-# Field 2: defines the joining type
-#   R right-joining,
-#   L left-joining,
-#   D dual-joining,
-#   C join-causing
-#   U non-joining
-#   T transparent
+# Field 2: defines the joining type (property name: Joining_Type)
+#   R Right_Joining
+#   L Left_Joining
+#   D Dual_Joining
+#   C Join_Causing
+#   U Non_Joining
+#   T Transparent
 #       See the Arabic block description for more information on these types.
-# Field 3: defines the joining group.
+# Field 3: defines the joining group (property name: Joining_Group)
 #
+# The values of the joining group are based schematically on character
+# names. Where a schematic character name consists of two or more parts separated
+# by spaces, the formal Joining_Group property value, as specified in
+# PropertyValueAliases.txt, consists of the same name parts joined by
+# underscores. Hence, the entry:
+#
+#   0629; TEH MARBUTA; R; TEH MARBUTA
+#
+# corresponds to [Joining_Group = Teh_Marbuta].
+#
+# Note: For historical reasons, the property value [Joining_Group = Hamza_On_Heh_Goal]
+#   is anachronistically named. It used to apply to both of the following characters
+#   in earlier versions of the standard:
+#
+#   U+06C2 ARABIC LETTER HEH GOAL WITH HAMZA ABOVE
+#   U+06C3 ARABIC LETTER TEH MARBUTA GOAL
+#
+#   However, it currently applies only to U+06C3, and *not* to U+06C2.
+#   To avoid destabilizing existing Joining_Group property aliases, the
+#   value Hamza_On_Heh_Goal has not been changed, despite the fact that it
+#   no longer applies to Hamza On Heh Goal, but only to Teh Marbuta Goal.
 #
 # Note: Code points that are not explicitly listed in this file are
-# either of type T or U:
+# either of joining type T or U:
 #
-# - Those that not explicitly listed that are of General Category Mn or Cf
+# - Those that not explicitly listed that are of General Category Mn, Me, or Cf
 #   have joining type T.
 # - All others not explicitly listed have type U.
 #
@@ -46,11 +71,12 @@
 
 # Arabic characters
 
-0600; ARABIC NUMBER SIGN; U; <no shaping>
-0601; ARABIC SIGN SANAH; U; <no shaping>
-0602; ARABIC FOOTNOTE MARKER; U; <no shaping>
-0603; ARABIC SIGN SAFHA; U; <no shaping>
-0621; HAMZA; U; <no shaping>
+0600; ARABIC NUMBER SIGN; U; No_Joining_Group
+0601; ARABIC SIGN SANAH; U; No_Joining_Group
+0602; ARABIC FOOTNOTE MARKER; U; No_Joining_Group
+0603; ARABIC SIGN SAFHA; U; No_Joining_Group
+060B; AFGHANI SIGN; U; No_Joining_Group
+0621; HAMZA; U; No_Joining_Group
 0622; MADDA ON ALEF; R; ALEF
 0623; HAMZA ON ALEF; R; ALEF
 0624; HAMZA ON WAW; R; WAW
@@ -76,7 +102,7 @@
 0638; ZAH; D; TAH
 0639; AIN; D; AIN
 063A; GHAIN; D; AIN
-0640; TATWEEL; C; <no shaping>
+0640; TATWEEL; C; No_Joining_Group
 0641; FEH; D; FEH
 0642; QAF; D; QAF
 0643; KAF; D; KAF
@@ -92,7 +118,7 @@
 0671; HAMZAT WASL ON ALEF; R; ALEF
 0672; WAVY HAMZA ON ALEF; R; ALEF
 0673; WAVY HAMZA UNDER ALEF; R; ALEF
-0674; HIGH HAMZA; U; <no shaping>
+0674; HIGH HAMZA; U; No_Joining_Group
 0675; HIGH HAMZA ALEF; R; ALEF
 0676; HIGH HAMZA WAW; R; WAW
 0677; HIGH HAMZA WAW WITH DAMMA; R; WAW
@@ -145,7 +171,7 @@
 06A6; FEH WITH 4 DOTS ABOVE; D; FEH
 06A7; QAF WITH DOT ABOVE; D; QAF
 06A8; QAF WITH 3 DOTS ABOVE; D; QAF
-06A9; OPEN KAF; D; GAF
+06A9; KEHEH; D; GAF
 06AA; SWASH KAF; D; SWASH KAF
 06AB; KAF WITH RING; D; GAF
 06AC; KAF WITH DOT ABOVE; D; KAF
@@ -170,7 +196,7 @@
 06BF; HAH WITH MIDDLE 3 DOTS DOWNWARD AND DOT ABOVE; D; HAH
 06C0; HAMZA ON HEH; R; TEH MARBUTA
 06C1; HEH GOAL; D; HEH GOAL
-06C2; HAMZA ON HEH GOAL; R; HAMZA ON HEH GOAL
+06C2; HAMZA ON HEH GOAL; D; HEH GOAL
 06C3; TEH MARBUTA GOAL; R; HAMZA ON HEH GOAL
 06C4; WAW WITH RING; R; WAW
 06C5; WAW WITH BAR; R; WAW
@@ -189,7 +215,7 @@
 06D2; YEH BARREE; R; YEH BARREE
 06D3; HAMZA ON YEH BARREE; R; YEH BARREE
 06D5; AE; R; TEH MARBUTA
-06DD; ARABIC END OF AYAH; U; <no shaping>
+06DD; ARABIC END OF AYAH; U; No_Joining_Group
 06EE; DAL WITH INVERTED V; R; DAL
 06EF; REH WITH INVERTED V; R; REH
 06FA; SEEN WITH DOT BELOW AND 3 DOTS ABOVE; D; SEEN
@@ -234,7 +260,40 @@
 074E; SOGDIAN KHAPH; D; KHAPH
 074F; SOGDIAN FE; D; FE
 
+# Arabic supplement characters
+
+0750; BEH WITH 3 DOTS HORIZONTALLY BELOW; D; BEH
+0751; BEH WITH DOT BELOW AND 3 DOTS ABOVE; D; BEH
+0752; BEH WITH 3 DOTS POINTING UPWARDS BELOW; D; BEH
+0753; BEH WITH 3 DOTS POINTING UPWARDS BELOW AND 2 DOTS ABOVE; D; BEH
+0754; BEH WITH 2 DOTS BELOW AND DOT ABOVE; D; BEH
+0755; BEH WITH INVERTED SMALL V BELOW; D; BEH
+0756; BEH WITH SMALL V; D; BEH
+0757; HAH WITH 2 DOTS ABOVE; D; HAH
+0758; HAH WITH 3 DOTS POINTING UPWARDS BELOW; D; HAH
+0759; DAL WITH 2 DOTS VERTICALLY BELOW AND SMALL TAH; R; DAL
+075A; DAL WITH INVERTED SMALL V BELOW; R; DAL
+075B; REH WITH STROKE; R; REH
+075C; SEEN WITH 4 DOTS ABOVE; D; SEEN
+075D; AIN WITH 2 DOTS ABOVE; D; AIN
+075E; AIN WITH 3 DOTS POINTING DOWNWARDS ABOVE; D; AIN
+075F; AIN WITH 2 DOTS VERTICALLY ABOVE; D; AIN
+0760; FEH WITH 2 DOTS BELOW; D; FEH
+0761; FEH WITH 3 DOTS POINTING UPWARDS BELOW; D; FEH
+0762; KEHEH WITH DOT ABOVE; D; GAF
+0763; KEHEH WITH 3 DOTS ABOVE; D; GAF
+0764; KEHEH WITH 3 DOTS POINTING UPWARDS BELOW; D; GAF
+0765; MEEM WITH DOT ABOVE; D; MEEM
+0766; MEEM WITH DOT BELOW; D; MEEM
+0767; NOON WITH 2 DOTS BELOW; D; NOON
+0768; NOON WITH SMALL TAH; D; NOON
+0769; NOON WITH SMALL V; D; NOON
+076A; LAM WITH BAR; D; LAM
+076B; REH WITH 2 DOTS VERTICALLY ABOVE; R; REH
+076C; REH WITH HAMZA ABOVE; R; REH
+076D; SEEN WITH 2 DOTS VERTICALLY ABOVE; D; SEEN
+
 # Other
 
-200D; ZERO WIDTH JOINER; C; <no shaping>
-200C; ZERO WIDTH NON-JOINER; U; <no shaping>
+200D; ZERO WIDTH JOINER; C; No_Joining_Group
+200C; ZERO WIDTH NON-JOINER; U; No_Joining_Group

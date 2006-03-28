@@ -1,12 +1,12 @@
 ################################################################################
 ##
-##  $Revision: 1.1.1.1 $
+##  $Revision: 1.1.1.2 $
 ##  $Author: millert $
-##  $Date: 2005/01/15 21:16:46 $
+##  $Date: 2006/03/28 18:47:59 $
 ##
 ################################################################################
 ##
-##  Version 3.x, Copyright (C) 2004, Marcus Holland-Moritz.
+##  Version 3.x, Copyright (C) 2004-2005, Marcus Holland-Moritz.
 ##  Version 2.x, Copyright (C) 2001, Paul Marquess.
 ##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 ##
@@ -73,14 +73,16 @@ STMT_END
 /* Replace: 0 */
 #endif
 
-#ifdef HASATTRIBUTE
-#  if (defined(__GNUC__) && defined(__cplusplus)) || defined(__INTEL_COMPILER)
-#    define PERL_UNUSED_DECL
+#ifndef PERL_UNUSED_DECL
+#  ifdef HASATTRIBUTE
+#    if (defined(__GNUC__) && defined(__cplusplus)) || defined(__INTEL_COMPILER)
+#      define PERL_UNUSED_DECL
+#    else
+#      define PERL_UNUSED_DECL __attribute__((unused))
+#    endif
 #  else
-#    define PERL_UNUSED_DECL __attribute__((unused))
+#    define PERL_UNUSED_DECL
 #  endif
-#else
-#  define PERL_UNUSED_DECL
 #endif
 
 __UNDEFINED__  NOOP          (void)0
@@ -117,7 +119,7 @@ typedef NVTYPE NV;
 #  if PTRSIZE == LONGSIZE
 #    define PTR2ul(p)     (unsigned long)(p)
 #  else
-#    define PTR2ul(p)     INT2PTR(unsigned long,p)        
+#    define PTR2ul(p)     INT2PTR(unsigned long,p)
 #  endif
 
 #endif /* !INT2PTR */
@@ -210,6 +212,26 @@ __UNDEFINED__  UNDERBAR        DEFSV
 
 __UNDEFINED__  dAX             I32 ax = MARK - PL_stack_base + 1
 __UNDEFINED__  dITEMS          I32 items = SP - MARK
+
+__UNDEFINED__  dXSTARG         SV * targ = sv_newmortal()
+
+=xsmisc
+
+XS(XS_Devel__PPPort_dXSTARG);  /* prototype */
+XS(XS_Devel__PPPort_dXSTARG)
+{
+  dXSARGS;
+  dXSTARG;
+  IV iv;
+  SP -= items;
+  iv = SvIV(ST(0)) + 1;
+  PUSHi(iv);
+  XSRETURN(1);
+}
+
+=xsboot
+
+newXS("Devel::PPPort::dXSTARG", XS_Devel__PPPort_dXSTARG, file);
 
 =xsubs
 
@@ -330,7 +352,7 @@ UNDERBAR()
 	OUTPUT:
 		RETVAL
 
-=tests plan => 31
+=tests plan => 32
 
 use vars qw($my_sv @my_av %my_hv);
 
@@ -382,4 +404,6 @@ sub my_cv { 1 };
 ok(&Devel::PPPort::get_cv('my_cv', 0));
 ok(!&Devel::PPPort::get_cv('not_my_cv', 0));
 ok(&Devel::PPPort::get_cv('not_my_cv', 1));
+
+ok(Devel::PPPort::dXSTARG(42), 43);
 

@@ -1,8 +1,13 @@
 #!perl
 
 BEGIN {
-    chdir q(t);
-    @INC = qw(../lib ../ext/B/t);
+    if ($ENV{PERL_CORE}){
+	chdir('t') if -d 't';
+	@INC = ('.', '../lib', '../ext/B/t');
+    } else {
+	unshift @INC, 't';
+	push @INC, "../../t";
+    }
     require Config;
     if (($Config::Config{'extensions'} !~ /\bB\b/) ){
         print "1..0 # Skip -- Perl configured without B module\n";
@@ -12,15 +17,23 @@ BEGIN {
         print "1..0 # Skip -- need perlio to walk the optree\n";
         exit 0;
     }
-    if ($] < 5.009) {
-        print "1..0 # Skip -- TODO - provide golden result regexps for 5.8\n";
-        exit 0;
-    }
-   require q(./test.pl);
+    # require q(test.pl); # now done by OptreeCheck
 }
 use OptreeCheck;
 plan tests => 9;
 
+
+=head1 f_map.t
+
+Code test snippets here are adapted from `perldoc -f map`
+
+Due to a bleadperl optimization (Dave Mitchell, circa may 04), the
+(map|grep)(start|while) opcodes have different flags in 5.9, their
+private flags /1, /2 are gone in blead (for the cases covered)
+
+When the optree stuff was integrated into 5.8.6, these tests failed,
+and were todo'd.  Theyre now done, by version-specific tweaking in
+mkCheckRex(), therefore the skip is removed too.
 
 =for gentest
 

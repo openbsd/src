@@ -20,8 +20,6 @@ classes.
 
 =head1 Modules and Pragmata
 
-FIXME test 12 in ext/List/Util/t/lln.t at RC1 time
-
 =over 4
 
 =item *

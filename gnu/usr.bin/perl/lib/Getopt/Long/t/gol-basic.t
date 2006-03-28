@@ -1,5 +1,7 @@
 #!./perl -w
 
+no strict;
+
 BEGIN {
     if ($ENV{PERL_CORE}) {
 	@INC = '../lib';
@@ -8,9 +10,10 @@ BEGIN {
 }
 
 use Getopt::Long qw(:config no_ignore_case);
-die("Getopt::Long version 2.23_03 required--this is only version ".
+my $want_version="2.24";
+die("Getopt::Long version $want_version required--this is only version ".
     $Getopt::Long::VERSION)
-  unless $Getopt::Long::VERSION ge "2.24";
+  unless $Getopt::Long::VERSION ge $want_version;
 
 print "1..9\n";
 

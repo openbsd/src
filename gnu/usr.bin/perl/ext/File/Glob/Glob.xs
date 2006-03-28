@@ -19,7 +19,7 @@ START_MY_CXT
 #ifdef WIN32
 #define errfunc		NULL
 #else
-int
+static int
 errfunc(const char *foo, int bar) {
   return !(bar == EACCES || bar == ENOENT || bar == ENOTDIR);
 }

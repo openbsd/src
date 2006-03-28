@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl -Tw
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {
@@ -12,20 +12,20 @@ BEGIN {
 
 use strict;
 
-use Test::More tests => 170;
+use Test::More tests => 89;
 
 BEGIN { use_ok('Test::Harness::Straps'); }
 
 my $strap = Test::Harness::Straps->new;
 isa_ok( $strap, 'Test::Harness::Straps', 'new()' );
 
-### Testing _is_comment()
+### Testing _is_diagnostic()
 
 my $comment;
-ok( !$strap->_is_comment("foo", \$comment), '_is_comment(), not a comment'  );
+ok( !$strap->_is_diagnostic("foo", \$comment), '_is_diagnostic(), not a comment'  );
 ok( !defined $comment,                      '  no comment set'              );
 
-ok( !$strap->_is_comment("f # oo", \$comment), '  not a comment with #'     );
+ok( !$strap->_is_diagnostic("f # oo", \$comment), '  not a comment with #'     );
 ok( !defined $comment,                         '  no comment set'           );
 
 my %comments = (
@@ -41,7 +41,7 @@ for my $line ( sort keys %comments ) {
     isa_ok( $strap, 'Test::Harness::Straps' );
 
     my $name = substr($line, 0, 20);
-    ok( $strap->_is_comment($line, \$comment),        "  comment '$name'"   );
+    ok( $strap->_is_diagnostic($line, \$comment),        "  comment '$name'"   );
     is( $comment, $line_comment,                      '  right comment set' );
 }
 
@@ -59,6 +59,7 @@ my @not_headers = (' 1..2',
 
 foreach my $unheader (@not_headers) {
     my $strap = Test::Harness::Straps->new;
+    isa_ok( $strap, 'Test::Harness::Straps' );
 
     ok( !$strap->_is_header($unheader),     
         "_is_header(), not a header '$unheader'" );
@@ -117,85 +118,6 @@ for my $header ( sort keys %headers ) {
         '  the right attributes are there' );
 }
 
-
-
-### Testing _is_test()
-
-my %tests = (
-             'ok'       => { 'ok' => 1 },
-             'not ok'   => { 'ok' => 0 },
-
-             'ok 1'     => { 'ok' => 1, number => 1 },
-             'not ok 1' => { 'ok' => 0, number => 1 },
-
-             'ok 2938'  => { 'ok' => 1, number => 2938 },
-
-             'ok 1066 - and all that'   => { 'ok'     => 1,
-                                             number => 1066,
-                                             name   => "- and all that" },
-             'not ok 42 - universal constant'   => 
-                                      { 'ok'     => 0,
-                                        number => 42,
-                                        name   => '- universal constant',
-                                      },
-             'not ok 23 # TODO world peace'     => { 'ok'     => 0,
-                                                     number => 23,
-                                                     type   => 'todo',
-                                                     reason => 'world peace'
-                                                   },
-             'ok 11 - have life # TODO get a life'  => 
-                                      { 'ok'     => 1,
-                                        number => 11,
-                                        name   => '- have life',
-                                        type   => 'todo',
-                                        reason => 'get a life'
-                                      },
-             'not ok # TODO'    => { 'ok'     => 0,
-                                     type   => 'todo',
-                                     reason => ''
-                                   },
-             'ok # skip'        => { 'ok'     => 1,
-                                     type   => 'skip',
-                                   },
-             'not ok 11 - this is \# all the name # skip this is not'
-                                => { 'ok'     => 0,
-                                     number => 11,
-                                     name   => '- this is \# all the name',
-                                     type   => 'skip',
-                                     reason => 'this is not'
-                                   },
-             "ok 42 - _is_header() is a header '1..192 todo 4 2 13 192 \\# Skip skip skip because"
-                                => { 'ok'   => 1,
-                                     number => 42,
-                                     name   => "- _is_header() is a header '1..192 todo 4 2 13 192 \\# Skip skip skip because",
-                                   },
-            );
-
-for my $line ( sort keys %tests ) {
-    my $expect = $tests{$line};
-    my %test;
-    ok( $strap->_is_test($line, \%test),    "_is_test() spots '$line'" );
-
-    foreach my $type (qw(ok number name type reason)) {
-        cmp_ok( $test{$type}, 'eq', $expect->{$type}, "  $type" );
-    }
-}
-
-my @untests = (
-               ' ok',
-               'not',
-               'okay 23',
-              );
-foreach my $line (@untests) {
-    my $strap = Test::Harness::Straps->new;
-    isa_ok( $strap, 'Test::Harness::Straps' );
-
-    my %test = ();
-    ok( !$strap->_is_test($line, \%test),    "_is_test() disregards '$line'" );
-
-    # is( keys %test, 0 ) won't work in 5.004 because it's undef.
-    ok( !keys %test,                         '  and produces no test info'   );
-}
 
 
 ### Test _is_bail_out()

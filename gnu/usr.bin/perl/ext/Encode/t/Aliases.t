@@ -22,7 +22,7 @@ sub init_a2c{
     %a2c = (
 	    'US-ascii' => 'ascii',
 	    'ISO-646-US' => 'ascii',
-	    'UTF-8'    => 'utf8',
+	    'UTF-8'    => 'utf-8-strict',
 	    'UCS-2'    => 'UCS-2BE',
 	    'UCS2'     => 'UCS-2BE',
 	    'iso-10646-1' => 'UCS-2BE',

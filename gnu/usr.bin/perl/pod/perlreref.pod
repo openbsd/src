@@ -78,7 +78,7 @@ These work as in normal strings.
    \n       Newline
    \r       Carriage return
    \t       Tab
-   \038     Any octal ASCII value
+   \037     Any octal ASCII value
    \x7f     Any hexadecimal ASCII value
    \x{263a} A wide hexadecimal value
    \cx      Control-x

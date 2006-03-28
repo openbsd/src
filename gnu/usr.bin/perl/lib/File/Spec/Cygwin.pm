@@ -76,11 +76,17 @@ variables are tainted, they are not used.
 my $tmpdir;
 sub tmpdir {
     return $tmpdir if defined $tmpdir;
-    my $self = shift;
-    $tmpdir = $self->_tmpdir( $ENV{TMPDIR}, "/tmp", 'C:/temp' );
+    $tmpdir = $_[0]->_tmpdir( $ENV{TMPDIR}, "/tmp", 'C:/temp' );
 }
 
 =back
+
+=head1 COPYRIGHT
+
+Copyright (c) 2004 by the Perl 5 Porters.  All rights reserved.
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
 
 =cut
 

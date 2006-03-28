@@ -15,16 +15,8 @@ BEGIN {
     }
 }
 
-BEGIN {
-    require Test::Harness;
-}
-
-if( $Test::Harness::VERSION < 1.20 ) {
-    plan skip_all => 'Need Test::Harness 1.20 or up';
-}
-
 use strict;
 use Test::Builder;
 
 plan 'no_plan';
-is(Test::Builder->has_plan, 'no_plan', 'has no_plan');
+is(Test::Builder->new->has_plan, 'no_plan', 'has no_plan');

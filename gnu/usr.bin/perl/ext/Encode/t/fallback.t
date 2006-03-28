@@ -17,17 +17,17 @@ BEGIN {
 
 use strict;
 #use Test::More qw(no_plan);
-use Test::More tests => 36;
+use Test::More tests => 44;
 use Encode q(:all);
 
 my $uo = '';
 my $nf  = '';
-my ($af, $aq, $ap, $ah, $ax, $uf, $uq, $up, $uh, $ux);
+my ($af, $aq, $ap, $ah, $ax, $uf, $uq, $up, $uh, $ux, $ac, $uc);
 for my $i (0x20..0x7e){
     $uo .= chr($i);
 }
-$af = $aq = $ap = $ah = $ax = 
-$uf = $uq = $up = $uh = $ux = 
+$af = $aq = $ap = $ah = $ax = $ac =
+$uf = $uq = $up = $uh = $ux = $uc =
 $nf = $uo;
 
 my $residue = '';
@@ -39,9 +39,11 @@ for my $i (0x80..0xff){
     $ap .= sprintf("\\x{%04x}", $i);
     $up .= sprintf("\\x%02X", $i);
     $ah .= sprintf("&#%d;", $i);
-    $uh .= sprintf("&#%d;", $i);
+    $uh .= sprintf("\\x%02X", $i);
     $ax .= sprintf("&#x%x;", $i);
-    $ux .= sprintf("&#x%x;", $i);
+    $ux .= sprintf("\\x%02X", $i);
+    $ac .= sprintf("<U+%04X>", $i);
+    $uc .= sprintf("[%02X]", $i);
 }
 
 my $ao = $uo;
@@ -124,30 +126,40 @@ is($src, $residue, "FB_QUIET residue utf8");
 
 $src = $uo;
 $dst = $ascii->encode($src, FB_PERLQQ);
-is($dst, $ap,   "FB_PERLQQ ascii");
-is($src, '', "FB_PERLQQ residue ascii");
+is($dst, $ap, "FB_PERLQQ encode");
+is($src, $uo, "FB_PERLQQ residue encode");
 
 $src = $ao;
-$dst = $utf8->decode($src, FB_PERLQQ);
-is($dst, $up,   "FB_PERLQQ utf8");
-is($src, '', "FB_PERLQQ residue utf8");
+$dst = $ascii->decode($src, FB_PERLQQ);
+is($dst, $up, "FB_PERLQQ decode");
+is($src, $ao, "FB_PERLQQ residue decode");
 
 $src = $uo;
 $dst = $ascii->encode($src, FB_HTMLCREF);
-is($dst, $ah,   "FB_HTMLCREF ascii");
-is($src, '', "FB_HTMLCREF residue ascii");
+is($dst, $ah, "FB_HTMLCREF encode");
+is($src, $uo, "FB_HTMLCREF residue encode");
 
-#$src = $ao;
-#$dst = $utf8->decode($src, FB_HTMLCREF);
-#is($dst, $uh,   "FB_HTMLCREF utf8");
-#is($src, '', "FB_HTMLCREF residue utf8");
+$src = $ao;
+$dst = $ascii->decode($src, FB_HTMLCREF);
+is($dst, $uh, "FB_HTMLCREF decode");
+is($src, $ao, "FB_HTMLCREF residue decode");
 
 $src = $uo;
 $dst = $ascii->encode($src, FB_XMLCREF);
-is($dst, $ax,   "FB_XMLCREF ascii");
-is($src, '', "FB_XMLCREF residue ascii");
+is($dst, $ax, "FB_XMLCREF encode");
+is($src, $uo, "FB_XMLCREF residue encode");
 
-#$src = $ao;
-#$dst = $utf8->decode($src, FB_XMLCREF);
-#is($dst, $ax,   "FB_XMLCREF utf8");
-#is($src, '', "FB_XMLCREF residue utf8");
+$src = $ao;
+$dst = $ascii->decode($src, FB_XMLCREF);
+is($dst, $ux, "FB_XMLCREF decode");
+is($src, $ao, "FB_XMLCREF residue decode");
+
+$src = $uo;
+$dst = $ascii->encode($src, sub{ sprintf "<U+%04X>", shift });
+is($dst, $ac, "coderef encode");
+is($src, $uo, "coderef residue encode");
+
+$src = $ao;
+$dst = $ascii->decode($src, sub{ sprintf "[%02X]", shift });
+is($dst, $uc, "coderef decode");
+is($src, $ao, "coderef residue decode");

@@ -28,7 +28,7 @@ isa_ok($mm, 'ExtUtils::MM_Any');
 sub try_oneliner {
     my($code, $switches, $expect, $name) = @_;
     my $cmd = $mm->oneliner($code, $switches);
-    $cmd =~ s{\$\(PERLRUN\)}{$^X};
+    $cmd =~ s{\$\(ABSPERLRUN\)}{$^X};
 
     # VMS likes to put newlines at the end of commands if there isn't
     # one already.

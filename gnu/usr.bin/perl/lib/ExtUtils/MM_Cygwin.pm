@@ -3,14 +3,14 @@ package ExtUtils::MM_Cygwin;
 use strict;
 use vars qw($VERSION @ISA);
 
-use Config;
+use ExtUtils::MakeMaker::Config;
 use File::Spec;
 
 require ExtUtils::MM_Any;
 require ExtUtils::MM_Unix;
 @ISA = qw( ExtUtils::MM_Any ExtUtils::MM_Unix );
 
-$VERSION = 1.06;
+$VERSION = '1.08';
 
 
 =head1 NAME
@@ -27,7 +27,7 @@ See ExtUtils::MM_Unix for a documentation of the methods provided there.
 
 =over 4
 
-=item os_flavor (o)
+=item os_flavor
 
 We're Unix and Cygwin.
 
@@ -37,7 +37,7 @@ sub os_flavor {
     return('Unix', 'Cygwin');
 }
 
-=item cflags (o)
+=item cflags
 
 if configured for dynamic loading, triggers #define EXT in EXTERN.h
 
@@ -63,7 +63,7 @@ PERLTYPE = $self->{PERLTYPE}
 }
 
 
-=item replace_manpage_separator (o)
+=item replace_manpage_separator
 
 replaces strings '::' with '.' in MAN*POD man page names
 
@@ -86,7 +86,7 @@ sub init_linker {
 
     if ($Config{useshrplib} eq 'true') {
         my $libperl = '$(PERL_INC)' .'/'. "$Config{libperl}";
-        if( $] >= 5.007 ) {
+        if( $] >= 5.006002 ) {
             $libperl =~ s/a$/dll.a/;
         }
         $self->{PERL_ARCHIVE} = $libperl;

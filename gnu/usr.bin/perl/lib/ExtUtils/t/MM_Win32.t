@@ -16,7 +16,7 @@ use Test::More;
 
 BEGIN {
 	if ($^O =~ /MSWin32/i) {
-		plan tests => 42;
+		plan tests => 41;
 	} else {
 		plan skip_all => 'This is not Win32';
 	}
@@ -84,7 +84,7 @@ delete $ENV{PATHEXT} unless $had_pathext;
 {
     my $my_perl = $1 if $^X  =~ /(.*)/; # are we in -T or -t?
     my( $perl, $path ) = fileparse( $my_perl );
-    like( $MM->find_perl( $], [ $perl ], [ $path ], 0 ), 
+    like( $MM->find_perl( $], [ $perl ], [ $path ], 0 ),
           qr/^\Q$my_perl\E$/i, 'find_perl() finds this perl' );
 }
 
@@ -163,26 +163,14 @@ delete $ENV{PATHEXT} unless $had_pathext;
 }
 
 # path()
-my $had_path = exists $ENV{PATH};
 {
-    my @path_eg = ( qw( . .. ), 'C:\\Program Files' );
-    local $ENV{PATH} = join ';', @path_eg;
-    ok( eq_array( [ $MM->path() ], [ @path_eg ] ),
+    ok( eq_array( [ $MM->path() ], [ File::Spec->path ] ),
         'path() [preset]' );
 }
-# Bug in Perl.  local $ENV{FOO} will not delete key afterwards.
-delete $ENV{PATH} unless $had_path;
 
 # static_lib() should look into that
 # dynamic_bs() should look into that
 # dynamic_lib() should look into that
-
-# clean()
-{
-    my $clean = $Config{cc} =~ /^gcc/i ? 'dll.base dll.exp' : '*.pdb';
-    like( $MM->clean(), qr/^clean ::\s+\Q-$(RM_F) $clean\E\s+$/m,
-          'clean() Makefile target' );
-}
 
 # init_linker
 {

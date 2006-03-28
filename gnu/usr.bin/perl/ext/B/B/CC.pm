@@ -7,7 +7,7 @@
 #
 package B::CC;
 
-our $VERSION = '1.00';
+our $VERSION = '1.00_01';
 
 use Config;
 use strict;
@@ -1988,7 +1988,7 @@ with standard Perl but gives a compile-time error with compiled Perl.
 
 =head2 Arithmetic
 
-Compiled Perl programs use native C arithemtic much more frequently
+Compiled Perl programs use native C arithmetic much more frequently
 than standard perl. Operations on large numbers or on boundary
 cases may produce different behaviour.
 

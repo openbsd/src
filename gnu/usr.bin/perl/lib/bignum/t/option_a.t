@@ -2,7 +2,7 @@
 
 ###############################################################################
 
-use Test;
+use Test::More;
 use strict;
 
 BEGIN
@@ -15,11 +15,17 @@ BEGIN
 
 use bignum a => '12';
 
-ok (Math::BigInt->accuracy(),12);
-ok (Math::BigFloat->accuracy(),12);
+my @C = qw/Math::BigInt Math::BigFloat/;
+
+foreach my $c (@C)
+  {
+  is ($c->accuracy(),12, "$c accuracy = 12");
+  }
 
 bignum->import( accuracy => '23');
 
-ok (Math::BigInt->accuracy(),23);
-ok (Math::BigFloat->accuracy(),23);
+foreach my $c (@C)
+  {
+  is ($c->accuracy(), 23, "$c accuracy = 23");
+  }
 

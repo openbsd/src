@@ -1,7 +1,7 @@
 package bignum;
 require 5.005;
 
-$VERSION = '0.15';
+$VERSION = '0.17';
 use Exporter;
 @EXPORT_OK 	= qw( ); 
 @EXPORT 	= qw( inf NaN ); 
@@ -63,7 +63,7 @@ sub import
   my $self = shift;
 
   # some defaults
-  my $lib = 'Calc';
+  my $lib = '';
   my $upgrade = 'Math::BigFloat';
   my $downgrade = 'Math::BigInt';
 
@@ -140,9 +140,10 @@ sub import
       }
     require Math::BigInt if $_lite == 0;	# not already loaded?
     $class = 'Math::BigInt';			# regardless of MBIL or not
-    } 
+    }
+  push @import, 'lib' => $lib if $lib ne ''; 
   # Math::BigInt::Trace or plain Math::BigInt
-  $class->import(@import, upgrade => $upgrade, lib => $lib);
+  $class->import(@import, upgrade => $upgrade);
 
   if ($trace)
     {
@@ -291,7 +292,7 @@ overloading of '..' is not yet possible in Perl (as of v5.8.0):
 
         perl -Mbignum -le 'for (1..2) { print ref($_); }'
 
-=head2 OPTIONS
+=head2 Options
 
 bignum recognizes some options that can be passed while loading it via use.
 The options can (currently) be either a single letter form, or the long form.
@@ -333,9 +334,9 @@ line. This will be hopefully fixed soon ;)
 
 This prints out the name and version of all modules used and then exits.
 
-	perl -Mbignum=v -e ''
+	perl -Mbignum=v
 
-=head2 METHODS
+=head2 Methods
 
 Beside import() and AUTOLOAD() there are only a few other methods.
 
@@ -344,13 +345,17 @@ the BigInt or BigFloat API. It is wise to use only the bxxx() notation, and not
 the fxxx() notation, though. This makes it possible that the underlying object
 might morph into a different class than BigFloat.
 
-=head2 CAVEAT
+=head2 Caveat
 
 But a warning is in order. When using the following to make a copy of a number,
 only a shallow copy will be made.
 
         $x = 9; $y = $x;
         $x = $y = 7;
+
+If you want to make a real copy, use the following:
+
+        $y = $x->copy();
 
 Using the copy or the original with overloaded math is okay, e.g. the
 following work:

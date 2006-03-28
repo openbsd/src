@@ -1,5 +1,5 @@
-# Jamo-4.0.1.txt
-# Date: 2004-03-02, 18:15 PST [KW]
+# Jamo-4.1.0.txt
+# Date: 2004-12-09, 17:48 PST [KW]
 #
 # Unicode Character Database
 # Copyright (c) 1991-2004 Unicode, Inc.

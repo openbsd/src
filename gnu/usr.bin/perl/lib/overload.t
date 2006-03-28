@@ -1097,8 +1097,6 @@ test ($a->xet('b'), 42);
 test (!defined eval { $a->{b} });
 test ($@ =~ /zap/);
 
-test (overload::StrVal(qr/a/) =~ /^Regexp=SCALAR\(0x[0-9a-f]+\)$/);
-
 {
    package t229;
    use overload '='  => sub { 42 },
@@ -1139,6 +1137,27 @@ test (overload::StrVal(qr/a/) =~ /^Regexp=SCALAR\(0x[0-9a-f]+\)$/);
     sub numify { ${$_[0]} }
 }
 
+{
+    package perl31793;
+    use overload cmp => sub { 0 };
+    package perl31793_fb;
+    use overload cmp => sub { 0 }, fallback => 1;
+    package main;
+    my $o  = bless [], 'perl31793';
+    my $of = bless [], 'perl31793_fb';
+    my $no = bless [], 'no_overload';
+    test (overload::StrVal(\"scalar") =~ /^SCALAR\(0x[0-9a-f]+\)$/);
+    test (overload::StrVal([])        =~ /^ARRAY\(0x[0-9a-f]+\)$/);
+    test (overload::StrVal({})        =~ /^HASH\(0x[0-9a-f]+\)$/);
+    test (overload::StrVal(sub{1})    =~ /^CODE\(0x[0-9a-f]+\)$/);
+    test (overload::StrVal(\*GLOB)    =~ /^GLOB\(0x[0-9a-f]+\)$/);
+    test (overload::StrVal(\$o)       =~ /^REF\(0x[0-9a-f]+\)$/);
+    test (overload::StrVal(qr/a/)     =~ /^Regexp=SCALAR\(0x[0-9a-f]+\)$/);
+    test (overload::StrVal($o)        =~ /^perl31793=ARRAY\(0x[0-9a-f]+\)$/);
+    test (overload::StrVal($of)       =~ /^perl31793_fb=ARRAY\(0x[0-9a-f]+\)$/);
+    test (overload::StrVal($no)       =~ /^no_overload=ARRAY\(0x[0-9a-f]+\)$/);
+}
+
 # These are all check that overloaded values rather than reference addressess
 # are what is getting tested.
 my ($two, $one, $un, $deux) = map {new Numify $_} 2, 1, 1, 2;
@@ -1160,4 +1179,4 @@ foreach my $op (qw(<=> == != < <= > >=)) {
     }
 }
 # Last test is:
-sub last {484}
+sub last {493}

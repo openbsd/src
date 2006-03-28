@@ -1,3 +1,4 @@
+# -#- buffer-read-only: t -#-
 #
 #      Copyright (c) 1996-1999 Malcolm Beattie
 #
@@ -234,7 +235,7 @@ A simple mapping of the op type number to its type (like 'COP' or 'BINOP').
   my $sv_name = $specialsv_name[$sv_index];
 
 Certain SV types are considered 'special'.  They're represented by
-B::SPECIAL and are refered to by a number from the specialsv_list.
+B::SPECIAL and are referred to by a number from the specialsv_list.
 This array maps that number back to the name of the SV (like 'Nullsv'
 or '&PL_sv_undef').
 
@@ -245,3 +246,5 @@ or '&PL_sv_undef').
 Malcolm Beattie, C<mbeattie@sable.ox.ac.uk>
 
 =cut
+
+# ex: set ro:

@@ -91,8 +91,8 @@ push(@files, $tempfile);
 # Test tempfile
 # ..and another with changed permissions (read-only)
 ($fh, $tempfile) = tempfile(
-			    DIR => $tempdir,
-			   );
+                           DIR => $tempdir,
+                          );
 chmod 0444, $tempfile;
 
 ok( (-f $tempfile ));

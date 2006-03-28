@@ -165,13 +165,13 @@ as requiring an automatic lock() when it is entered, you had to declare
 that with a C<use attrs> pragma in the body of the subroutine.
 That can now be accomplished with declaration syntax, like this:
 
-    sub mymethod : locked method ;
+    sub mymethod : locked method;
     ...
     sub mymethod : locked method {
 	...
     }
 
-    sub othermethod :locked :method ;
+    sub othermethod :locked :method;
     ...
     sub othermethod :locked :method {
 	...
@@ -789,6 +789,12 @@ This warns you that C<"fred@example.com"> is going to turn into
 C<fred.com> if you don't backslash the C<@>.
 See http://www.plover.com/~mjd/perl/at-error.html for more details
 about the history here.
+
+=head2 @- and @+ provide starting/ending offsets of regex matches
+
+The new magic variables @- and @+ provide the starting and ending
+offsets, respectively, of $&, $1, $2, etc.  See L<perlvar> for
+details.
 
 =head1 Modules and Pragmata
 

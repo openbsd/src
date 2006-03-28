@@ -2,7 +2,7 @@ package Encode::Alias;
 use strict;
 no warnings 'redefine';
 use Encode;
-our $VERSION = do { my @r = (q$Revision: 2.2 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 2.4 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 sub DEBUG () { 0 }
 
 use base qw(Exporter);
@@ -161,7 +161,7 @@ sub init_aliases
 			 hebrew|arabic|baltic|vietnamese)$/ix => 
 		  '"cp" . $Encode::Alias::Winlatin2cp{lc($1)}' );
 
-    # Common names for non-latin prefered MIME names
+    # Common names for non-latin preferred MIME names
     define_alias( 'ascii'    => 'US-ascii',
 		  'cyrillic' => 'iso-8859-5',
 		  'arabic'   => 'iso-8859-6',
@@ -187,7 +187,6 @@ sub init_aliases
     # define_alias( qr/\bmacRomanian$/i => '"macRumanian"');
   
     # Standardize on the dashed versions.
-    # define_alias( qr/\butf8$/i  => '"utf-8"' );
     define_alias( qr/\bkoi8[\s\-_]*([ru])$/i => '"koi8-$1"' );
 
     unless ($Encode::ON_EBCDIC){
@@ -222,7 +221,7 @@ sub init_aliases
 	define_alias( qr/\bhk(?:scs)?[-_]?big5$/i  => '"big5-hkscs"' );
     }
     # utf8 is blessed :)
-    define_alias( qr/^UTF-8$/i => '"utf8"',);
+    define_alias( qr/^UTF-8$/i => '"utf-8-strict"');
     # At last, Map white space and _ to '-'
     define_alias( qr/^(\S+)[\s_]+(.*)$/i => '"$1-$2"' );
 }
@@ -314,7 +313,7 @@ Prior to Encode 1.86 this fails because of "local $_".
 =head2 Alias overloading
 
 You can override predefined aliases by simply applying define_alias().
-The new alias is always evaluated first, and when neccessary,
+The new alias is always evaluated first, and when necessary,
 define_alias() flushes the internal cache to make the new definition
 available.
 

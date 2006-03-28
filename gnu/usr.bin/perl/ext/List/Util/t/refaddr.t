@@ -14,6 +14,8 @@ BEGIN {
 }
 
 
+use Test::More tests => 29;
+
 use Scalar::Util qw(refaddr);
 use vars qw($t $y $x *F $v $r);
 use Symbol qw(gensym);
@@ -21,21 +23,22 @@ use Symbol qw(gensym);
 # Ensure we do not trigger and tied methods
 tie *F, 'MyTie';
 
-print "1..19\n";
-
 my $i = 1;
 foreach $v (undef, 10, 'string') {
-  print "not " if defined refaddr($v);
-  print "ok ",$i++,"\n";
+  is(refaddr($v), undef, "not " . (defined($v) ? "'$v'" : "undef"));
 }
 
 foreach $r ({}, \$t, [], \*F, sub {}) {
-  my $addr = $r + 0;
-  print "not " unless refaddr($r) == $addr;
-  print "ok ",$i++,"\n";
+  my $n = "$r";
+  $n =~ /0x(\w+)/;
+  my $addr = do { local $^W; hex $1 };
+  my $before = ref($r);
+  is( refaddr($r), $addr, $n);
+  is( ref($r), $before, $n);
+
   my $obj = bless $r, 'FooBar';
-  print "not " unless refaddr($r) == $addr;
-  print "ok ",$i++,"\n";
+  is( refaddr($r), $addr, "blessed with overload $n");
+  is( ref($r), 'FooBar', $n);
 }
 
 {
@@ -48,18 +51,12 @@ foreach $r ({}, \$t, [], \*F, sub {}) {
   $x{$b} = 23;
   my $xy = $x{$y};
   my $xb = $x{$b}; 
-  print "not " unless ref($x{$y});
-  print "ok ",$i++,"\n";
-  print "not " unless ref($x{$b});
-  print "ok ",$i++,"\n";
-  print "not " unless refaddr($xy) == refaddr($y);
-  print "ok ",$i++,"\n";
-  print "not " unless refaddr($xb) == refaddr($b);
-  print "ok ",$i++,"\n";
-  print "not " unless refaddr($x{$y});
-  print "ok ",$i++,"\n";
-  print "not " unless refaddr($x{$b});
-  print "ok ",$i++,"\n";
+  ok(ref($x{$y}));
+  ok(ref($x{$b}));
+  ok(refaddr($xy) == refaddr($y));
+  ok(refaddr($xb) == refaddr($b));
+  ok(refaddr($x{$y}));
+  ok(refaddr($x{$b}));
 }
 
 package FooBar;

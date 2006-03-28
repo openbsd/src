@@ -35,11 +35,13 @@ foreach my $prog (@prgs) {
     my($raw_prog, $name) = @$prog;
 
     my $switch;
-    if ($raw_prog =~ s/^\s*(-\w.*)//){
+    if ($raw_prog =~ s/^\s*(-\w.*)\n//){
 	$switch = $1;
     }
 
     my($prog,$expected) = split(/\nEXPECT\n/, $raw_prog);
+    $prog .= "\n";
+    $expected = '' unless defined $expected;
 
     if ($prog =~ /^\# SKIP: (.+)/m) {
 	if (eval $1) {
@@ -50,7 +52,7 @@ foreach my $prog (@prgs) {
 
     $expected =~ s/\n+$//;
 
-    fresh_perl_is($prog, $expected, { switches => [$switch] }, $name);
+    fresh_perl_is($prog, $expected, { switches => [$switch || ''] }, $name);
 }
 
 __END__
@@ -383,7 +385,7 @@ EXPECT
 -w
 sub testme { my $a = "test"; { local $a = "new test"; print $a }}
 EXPECT
-Can't localize lexical variable $a at - line 2.
+Can't localize lexical variable $a at - line 1.
 ########
 package X;
 sub ascalar { my $r; bless \$r }
@@ -510,7 +512,7 @@ else {
   if ($x == 0) { print "" } else { print $x }
 }
 EXPECT
-Use of uninitialized value in numeric eq (==) at - line 4.
+Use of uninitialized value in numeric eq (==) at - line 3.
 ########
 $x = sub {};
 foo();
@@ -651,8 +653,9 @@ new_pmop "abcdef"; reset;
 close STDERR; die;
 EXPECT
 ########
+# core dump in 20000716.007
 -w
-"x" =~ /(\G?x)?/;	# core dump in 20000716.007
+"x" =~ /(\G?x)?/;
 ########
 # Bug 20010515.004
 my @h = 1 .. 10;
@@ -857,7 +860,7 @@ EXPECT
 ./"TEST"
 ######## "Segfault using HTML::Entities", Richard Jolly <richardjolly@mac.com>, <A3C7D27E-C9F4-11D8-B294-003065AE00B6@mac.com> in perl-unicode@perl.org
 -lw
-# SKIP: " $Config::Config{'extensions'} " !~ m[ Encode ] # Perl configured without Encode module
+# SKIP: use Config; $ENV{PERL_CORE_MINITEST} or " $Config::Config{'extensions'} " !~ m[ Encode ] # Perl configured without Encode module
 BEGIN {
   eval 'require Encode';
   if ($@) { exit 0 } # running minitest?
@@ -871,4 +874,4 @@ $t =~ s/([^a])//ge;
 $@ =~ s/ at .*/ at/;
 print $@
 EXPECT
-Malformed UTF-8 character (unexpected end of string) at
+Malformed UTF-8 character (unexpected end of string) in substitution (s///) at

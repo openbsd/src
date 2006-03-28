@@ -14,6 +14,10 @@ use Test::More;
 plan skip_all => "Not adapted to perl core" if $ENV{PERL_CORE};
 plan skip_all => "Not installing prove" if -e "t/SKIP-PROVE";
 
+# Work around a Cygwin bug.  Remove this if Perl bug 30952 ever gets fixed.
+# http://rt.perl.org/rt3/Ticket/Display.html?id=30952.
+plan skip_all => "Skipping because of a Cygwin bug" if ( $^O =~ /cygwin/i );
+
 plan tests => 5;
 
 my $blib = File::Spec->catfile( File::Spec->curdir, "blib" );

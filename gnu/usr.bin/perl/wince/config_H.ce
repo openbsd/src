@@ -3818,6 +3818,18 @@
  */
 /*#define HAS_STRFTIME		/**/
 
+/* HAS_STRLCAT
+ *      This symbol, if defined, indicates that the strlcat routine is
+ *      available to do string concatenation.
+ */
+/*#define HAS_STRLCAT			/**/
+
+/* HAS_STRLCPY:
+ *      This symbol, if defined, indicates that the strlcpy routine is
+ *      available to do string copying.
+ */
+/*#define HAS_STRLCPY			/**/
+
 /* HAS_SYSCALL_PROTO:
  *	This symbol, if defined, indicates that the system provides
  *	a prototype for the syscall() function.  Otherwise, it is up

@@ -1,14 +1,19 @@
 #!perl
 
 BEGIN {
-    chdir 't';
-    @INC = ('../lib', '../ext/B/t');
+    if ($ENV{PERL_CORE}){
+	chdir('t') if -d 't';
+	@INC = ('.', '../lib', '../ext/B/t');
+    } else {
+	unshift @INC, 't';
+	push @INC, "../../t";
+    }
     require Config;
     if (($Config::Config{'extensions'} !~ /\bB\b/) ){
         print "1..0 # Skip -- Perl configured without B module\n";
         exit 0;
     }
-    require './test.pl';
+    # require 'test.pl'; # now done by OptreeCheck
 }
 
 use OptreeCheck;
@@ -24,11 +29,11 @@ cmdline args in 'standard' way across all clients of OptreeCheck.
 
 =cut
 
-use Config;
-plan tests => 5 + 18 + 14 * $gOpts{selftest};	# fudged
+my $tests = 5 + 15 + 16 * $gOpts{selftest};	# pass()s + $#tests
+plan tests => $tests;
 
 SKIP: {
-    skip "no perlio in this build", 5 + 18 + 14 * $gOpts{selftest}
+    skip "no perlio in this build", $tests
     unless $Config::Config{useperlio};
 
 
@@ -49,7 +54,7 @@ checkOptree ( name	=> "found print opcode",
 	      expect_nt	=> 'leavesub');
 
 checkOptree ( name	=> 'test skip itself',
-	      skip	=> 1,
+	      skip	=> 'this is skip-reason',
 	      bcopts	=> '-exec',
 	      code	=> sub {print 1},
 	      expect	=> 'dont-care, skipping',
@@ -66,11 +71,11 @@ checkOptree ( name	=> 'test todo itself. suppressed, remove skip to test',
 	      code	=> sub {print 1},
 	      noanchors	=> 1, # unanchored match
 	      expect	=> 'print',
-	      expect_nt	=> 'print');
+	      expect_nt	=> 'print') if 0;
 
 checkOptree ( name	=> 'impossible match, remove skip to see failure',
 	      todo	=> "see! it breaks!",
-	      skip	=> 1, # but skip it 1st
+	      skip	=> 'skip the failure',
 	      code	=> sub {print 1},
 	      expect	=> 'look out ! Boy Wonder',
 	      expect_nt	=> 'holy near earth asteroid Batman !');
@@ -80,16 +85,7 @@ pass ("TEST FATAL ERRS");
 if (1) {
     # test for fatal errors. Im unsettled on fail vs die.
     # calling fail isnt good enough by itself.
-    eval {
-	
-	checkOptree ( name	=> 'empty code or prog',
-		      todo	=> "your excuse here ;-)",
-		      code	=> '',
-		      prog	=> '',
-		      );
-    };
-    like($@, 'code or prog is required', 'empty code or prog prevented');
-    
+
     $@='';
     eval {
 	checkOptree ( name	=> 'test against empty expectations',
@@ -98,7 +94,7 @@ if (1) {
 		      expect	=> '',
 		      expect_nt	=> '');
     };
-    like($@, 'no reftext found for', "empty expectations prevented");
+    like($@, /no '\w+' golden-sample found/, "empty expectations prevented");
     
     $@='';
     eval {
@@ -109,31 +105,37 @@ if (1) {
 		      expect_nt	=> "\n",
 		      expect	=> "\n");
     };
-    like($@, 'no reftext found for', "just whitespace expectations prevented");
+    like($@, /no '\w+' golden-sample found/,
+	 "just whitespace expectations prevented");
 }
-
+    
 pass ("TEST -e \$srcCode");
 
-checkOptree
-    (  name	=> '-w errors seen',
-       prog	=> 'sort our @a',
-       errs	=> 'Useless use of sort in void context at -e line 1.',
-       );
+checkOptree ( name	=> 'empty code or prog',
+	      skip	=> 'or fails',
+	      todo	=> "your excuse here ;-)",
+	      code	=> '',
+	      prog	=> '',
+	      );
     
 checkOptree
     (  name	=> "self strict, catch err",
        prog	=> 'use strict; bogus',
        errs	=> 'Bareword "bogus" not allowed while "strict subs" in use at -e line 1.',
+       expect	=> "nextstate",	# simple expectations
+       expect_nt => "nextstate",
+       noanchors => 1,		# allow them to work
        );
     
+checkOptree ( name	=> "sort lK - flag specific search",
+	      prog	=> 'our (@a,@b); @b = sort @a',
+	      noanchors	=> 1,
+	      expect	=> '<@> sort lK ',
+	      expect_nt	=> '<@> sort lK ');
+
 checkOptree ( name	=> "sort vK - flag specific search",
 	      prog	=> 'sort our @a',
-	      noanchors	=> 1,
-	      expect	=> '<@> sort vK ',
-	      expect_nt	=> '<@> sort vK ');
-
-checkOptree ( name	=> "'prog' => 'sort our \@a'",
-	      prog	=> 'sort our @a',
+	      errs	=> 'Useless use of sort in void context at -e line 1.',
 	      noanchors	=> 1,
 	      expect	=> '<@> sort vK',
 	      expect_nt	=> '<@> sort vK');
@@ -205,13 +207,8 @@ EOT_EOT
 # 5              <$> gvsv(*a) s ->6
 EONT_EONT
 
-checkOptree ( name	=> 'canonical example w -exec',
+checkOptree ( code	=> '$a=$b+42',
 	      bcopts	=> '-exec',
-	      code	=> sub{$a=$b+42},
-	      crossfail => 1,
-	      retry	=> 1,
-	      debug	=> 1,
-	      xtestfail	=> 1,
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
 # 1  <;> nextstate(main 61 optree_concise.t:139) v
 # 2  <#> gvsv[*b] s
@@ -229,9 +226,6 @@ EOT_EOT
 # 6  <2> sassign sKS/2
 # 7  <1> leavesub[1 ref] K/REFC,1
 EONT_EONT
-
-checkOptree ( name	=> 'tree reftext is messy cut-paste',
-	      skip	=> 1);
 
 } # skip
 

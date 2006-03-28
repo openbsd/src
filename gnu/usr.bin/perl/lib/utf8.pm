@@ -2,7 +2,7 @@ package utf8;
 
 $utf8::hint_bits = 0x00800000;
 
-our $VERSION = '1.04';
+our $VERSION = '1.06';
 
 sub import {
     $^H |= $utf8::hint_bits;
@@ -16,6 +16,7 @@ sub unimport {
 sub AUTOLOAD {
     require "utf8_heavy.pl";
     goto &$AUTOLOAD if defined &$AUTOLOAD;
+    require Carp;
     Carp::croak("Undefined subroutine $AUTOLOAD called");
 }
 
@@ -60,7 +61,7 @@ useful for their own purposes, but they are not really part of the
 "pragmatic" effect.
 
 Until UTF-8 becomes the default format for source text, either this
-pragma or the L</encoding> pragma should be used to recognize UTF-8
+pragma or the L<encoding> pragma should be used to recognize UTF-8
 in the source.  When UTF-8 becomes the standard source format, this
 pragma will effectively become a no-op.  For convenience in what
 follows the term I<UTF-X> is used to refer to UTF-8 on ASCII and ISO
@@ -92,7 +93,7 @@ UTF-8.  If you want to have such bytes and use utf8, you can disable
 utf8 until the end the block (or file, if at top level) by C<no utf8;>.
 
 If you want to automatically upgrade your 8-bit legacy bytes to UTF-8,
-use the L</encoding> pragma instead of this pragma.  For example, if
+use the L<encoding> pragma instead of this pragma.  For example, if
 you want to implicitly upgrade your ISO 8859-1 (Latin-1) bytes to UTF-8
 as used in e.g. C<chr()> and C<\x{...}>, try this:
 

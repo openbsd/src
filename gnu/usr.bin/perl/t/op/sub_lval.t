@@ -1,4 +1,4 @@
-print "1..67\n";
+print "1..71\n";
 
 BEGIN {
     chdir 't' if -d 't';
@@ -530,8 +530,51 @@ sub lval2 : lvalue { $ary[1]; }
 print "not " unless join(':', @ary) eq "1:2:6";
 print "ok 64\n";
 
+# check that an element of a tied hash/array can be assigned to via lvalueness
+
+package Tie_Hash;
+
+our ($key, $val);
+sub TIEHASH { bless \my $v => __PACKAGE__ }
+sub STORE   { ($key, $val) = @_[1,2] }
+
+package main;
+sub lval_tie_hash : lvalue {
+    tie my %t => 'Tie_Hash';
+    $t{key};
+}
+
+eval { lval_tie_hash() = "value"; };
+
+print "# element of tied hash: $@\nnot " if $@;
+print "ok 65\n";
+
+print "not " if "$Tie_Hash::key-$Tie_Hash::val" ne "key-value";
+print "ok 66\n";
+
+
+package Tie_Array;
+
+our @val;
+sub TIEARRAY { bless \my $v => __PACKAGE__ }
+sub STORE   { $val[ $_[1] ] = $_[2] }
+
+package main;
+sub lval_tie_array : lvalue {
+    tie my @t => 'Tie_Array';
+    $t[0];
+}
+
+eval { lval_tie_array() = "value"; };
+
+print "# element of tied array: $@\nnot " if $@;
+print "ok 67\n";
+
+print "not " if $Tie_Array::val[0] ne "value";
+print "ok 68\n";
+
 require './test.pl';
-curr_test(65);
+curr_test(69);
 
 TODO: {
     local $TODO = 'test explicit return of lval expr';

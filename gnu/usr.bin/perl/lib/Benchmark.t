@@ -8,7 +8,7 @@ BEGIN {
 use warnings;
 use strict;
 use vars qw($foo $bar $baz $ballast);
-use Test::More tests => 193;
+use Test::More tests => 194;
 
 use Benchmark qw(:all);
 
@@ -41,6 +41,11 @@ is ($foo, 5, "benchmarked code was run 5 times");
 
 isa_ok(timeit(5, '++$bar'), 'Benchmark', "timeit eval");
 is ($bar, 5, "benchmarked code was run 5 times");
+
+# is coderef called with spurious arguments?
+timeit( 1, sub { $foo = @_ });
+is ($foo, 0, "benchmarked code called without arguments");
+
 
 print "# Burning CPU to benchmark things will take time...\n";
 

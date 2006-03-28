@@ -1,11 +1,11 @@
 #!/usr/local/bin/perl
-# Time-stamp: "2000-05-13 20:03:22 MDT" -*-Perl-*-
+# Time-stamp: "2004-12-29 20:01:02 AST" -*-Perl-*-
 
 package Class::ISA;
 require 5;
 use strict;
 use vars qw($Debug $VERSION);
-$VERSION = 0.32;
+$VERSION = '0.33';
 $Debug = 0 unless defined $Debug;
 
 =head1 NAME

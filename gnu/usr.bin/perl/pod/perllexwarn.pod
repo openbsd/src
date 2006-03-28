@@ -1,4 +1,5 @@
 =head1 NAME
+X<warning, lexical> X<warnings> X<warning>
 
 perllexwarn - Perl Lexical Warnings
 
@@ -19,21 +20,21 @@ doesn't attempt to control the warnings will work unchanged.
 
 All warnings are enabled in a block by either of these:
 
-    use warnings ;
-    use warnings 'all' ;
+    use warnings;
+    use warnings 'all';
 
 Similarly all warnings are disabled in a block by either of these:
 
-    no warnings ;
-    no warnings 'all' ;
+    no warnings;
+    no warnings 'all';
 
 For example, consider the code below:
 
-    use warnings ;
-    my @a ;
+    use warnings;
+    my @a;
     {
-        no warnings ;
-	my $b = @a[0] ;
+        no warnings;
+	my $b = @a[0];
     }
     my $c = @a[0];
 
@@ -62,7 +63,7 @@ example, in the code below, an C<"isn't numeric"> warning will only
 be reported for the C<$a> variable.
 
     my $a = "2:" + 3;
-    no warnings ;
+    no warnings;
     my $b = "2:" + 3;
 
 Note that neither the B<-w> flag or the C<$^W> can be used to
@@ -82,9 +83,9 @@ fundamentally flawed. For a start, say you want to disable warnings in
 a block of code. You might expect this to be enough to do the trick:
 
      {
-         local ($^W) = 0 ;
-	 my $a =+ 2 ;
-	 my $b ; chop $b ;
+         local ($^W) = 0;
+	 my $a =+ 2;
+	 my $b; chop $b;
      }
 
 When this code is run with the B<-w> flag, a warning will be produced
@@ -95,8 +96,8 @@ disable compile-time warnings you need to rewrite the code like this:
 
      {
          BEGIN { $^W = 0 }
-	 my $a =+ 2 ;
-	 my $b ; chop $b ;
+	 my $a =+ 2;
+	 my $b; chop $b;
      }
 
 The other big problem with C<$^W> is the way you can inadvertently
@@ -107,13 +108,13 @@ the first will not.
 
     sub doit
     {
-        my $b ; chop $b ;
+        my $b; chop $b;
     }
 
-    doit() ;
+    doit();
 
     {
-        local ($^W) = 1 ;
+        local ($^W) = 1;
         doit()
     }
 
@@ -130,6 +131,7 @@ warnings are (or aren't) produced:
 =over 5
 
 =item B<-w>
+X<-w>
 
 This is  the existing flag. If the lexical warnings pragma is B<not>
 used in any of you code, or any of the modules that you use, this flag
@@ -137,6 +139,7 @@ will enable warnings everywhere. See L<Backward Compatibility> for
 details of how this flag interacts with lexical warnings.
 
 =item B<-W>
+X<-W>
 
 If the B<-W> flag is used on the command line, it will enable all warnings
 throughout the program regardless of whether warnings were disabled
@@ -145,6 +148,7 @@ included via C<use>, C<require> or C<do>.
 Think of it as the Perl equivalent of the "lint" command.
 
 =item B<-X>
+X<-X>
 
 Does the exact opposite to the B<-W> flag, i.e. it disables all warnings.
 
@@ -199,6 +203,7 @@ the C<warnings> pragma to control the warning behavior of $^W-type
 code (using a C<local $^W=0>) if it really wants to, but not vice-versa.
 
 =head2 Category Hierarchy
+X<warning, categories>
 
 A hierarchy of "categories" have been defined to allow groups of warnings
 to be enabled/disabled in isolation.
@@ -301,17 +306,17 @@ The current hierarchy is:
 
 Just like the "strict" pragma any of these categories can be combined
 
-    use warnings qw(void redefine) ;
-    no warnings qw(io syntax untie) ;
+    use warnings qw(void redefine);
+    no warnings qw(io syntax untie);
 
 Also like the "strict" pragma, if there is more than one instance of the
 C<warnings> pragma in a given scope the cumulative effect is additive. 
 
-    use warnings qw(void) ; # only "void" warnings enabled
+    use warnings qw(void); # only "void" warnings enabled
     ...
-    use warnings qw(io) ;   # only "void" & "io" warnings enabled
+    use warnings qw(io);   # only "void" & "io" warnings enabled
     ...
-    no warnings qw(void) ;  # only "io" warnings enabled
+    no warnings qw(void);  # only "io" warnings enabled
 
 To determine which category a specific warning has been assigned to see
 L<perldiag>.
@@ -322,6 +327,7 @@ in its own right.
 
 
 =head2 Fatal Warnings
+X<warning, fatal>
 
 The presence of the word "FATAL" in the category list will escalate any
 warnings detected from the categories specified in the lexical scope
@@ -329,18 +335,18 @@ into fatal errors. In the code below, the use of C<time>, C<length>
 and C<join> can all produce a C<"Useless use of xxx in void context">
 warning.
 
-    use warnings ;
+    use warnings;
 
-    time ;
+    time;
 
     {
-        use warnings FATAL => qw(void) ;
-        length "abc" ;
+        use warnings FATAL => qw(void);
+        length "abc";
     }
 
-    join "", 1,2,3 ;
+    join "", 1,2,3;
 
-    print "done\n" ;     
+    print "done\n";
 
 When run it produces this output
 
@@ -366,6 +372,7 @@ except for those in the "syntax" category.
     use warnings FATAL => 'all', NONFATAL => 'syntax';
 
 =head2 Reporting Warnings from a Module
+X<warning, reporting> X<warning, registering>
 
 The C<warnings> pragma provides a number of functions that are useful for
 module authors. These are used when you want to report a module-specific
@@ -379,7 +386,7 @@ Consider the module C<MyMod::Abc> below.
     use warnings::register;
 
     sub open {
-        my $path = shift ;
+        my $path = shift;
         if ($path !~ m#^/#) {
             warnings::warn("changing relative path to /var/abc")
                 if warnings::enabled();
@@ -387,7 +394,7 @@ Consider the module C<MyMod::Abc> below.
         }
     }
 
-    1 ;
+    1;
 
 The call to C<warnings::register> will create a new warnings category
 called "MyMod::abc", i.e. the new category name matches the current
@@ -409,13 +416,13 @@ this snippet of code:
 
     sub open {
         warnings::warnif("deprecated", 
-                         "open is deprecated, use new instead") ;
-        new(@_) ;
+                         "open is deprecated, use new instead");
+        new(@_);
     }
 
     sub new
     ...
-    1 ;
+    1;
 
 The function C<open> has been deprecated, so code has been included to
 display a warning message whenever the calling module has (at least) the
@@ -424,7 +431,7 @@ display a warning message whenever the calling module has (at least) the
     use warnings 'deprecated';
     use MyMod::Abc;
     ...
-    MyMod::Abc::open($filename) ;
+    MyMod::Abc::open($filename);
 
 Either the C<warnings::warn> or C<warnings::warnif> function should be
 used to actually display the warnings message. This is because they can
@@ -446,21 +453,21 @@ of the object as the warnings category.
 
 Consider this example:
 
-    package Original ;
+    package Original;
 
-    no warnings ;
-    use warnings::register ;
+    no warnings;
+    use warnings::register;
 
     sub new
     {
-        my $class = shift ;
-        bless [], $class ;
+        my $class = shift;
+        bless [], $class;
     }
 
     sub check
     {
-        my $self = shift ;
-        my $value = shift ;
+        my $self = shift;
+        my $value = shift;
 
         if ($value % 2 && warnings::enabled($self))
           { warnings::warn($self, "Odd numbers are unsafe") }
@@ -468,38 +475,38 @@ Consider this example:
 
     sub doit
     {
-        my $self = shift ;
-        my $value = shift ;
-        $self->check($value) ;
+        my $self = shift;
+        my $value = shift;
+        $self->check($value);
         # ...
     }
 
-    1 ;
+    1;
 
-    package Derived ;
+    package Derived;
 
-    use warnings::register ;
-    use Original ;
-    our @ISA = qw( Original ) ;
+    use warnings::register;
+    use Original;
+    our @ISA = qw( Original );
     sub new
     {
-        my $class = shift ;
-        bless [], $class ;
+        my $class = shift;
+        bless [], $class;
     }
 
 
-    1 ;
+    1;
 
 The code below makes use of both modules, but it only enables warnings from 
 C<Derived>.
 
-    use Original ;
-    use Derived ;
+    use Original;
+    use Derived;
     use warnings 'Derived';
-    my $a = new Original ;
-    $a->doit(1) ;
-    my $b = new Derived ;
-    $a->doit(1) ;
+    my $a = new Original;
+    $a->doit(1);
+    my $b = new Derived;
+    $a->doit(1);
 
 When this code is run only the C<Derived> object, C<$b>, will generate
 a warning. 

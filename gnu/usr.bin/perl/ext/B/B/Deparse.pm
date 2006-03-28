@@ -19,7 +19,7 @@ use B qw(class main_root main_start main_cv svref_2object opnumber perlstring
          CVf_METHOD CVf_LOCKED CVf_LVALUE CVf_ASSERTION
 	 PMf_KEEP PMf_GLOBAL PMf_CONTINUE PMf_EVAL PMf_ONCE PMf_SKIPWHITE
 	 PMf_MULTILINE PMf_SINGLELINE PMf_FOLD PMf_EXTENDED);
-$VERSION = 0.69;
+$VERSION = 0.71;
 use strict;
 use vars qw/$AUTOLOAD/;
 use warnings ();
@@ -1225,7 +1225,7 @@ Carp::confess() unless ref($gv) eq "B::GV";
     my $name = $gv->SAFENAME;
     if (($stash eq 'main' && $globalnames{$name})
 	or ($stash eq $self->{'curstash'} && !$globalnames{$name})
-	or $name =~ /^[^A-Za-z_]/)
+	or $name =~ /^[^A-Za-z_:]/)
     {
 	$stash = "";
     } else {
@@ -1412,10 +1412,10 @@ sub pp_nextstate {
 
 sub declare_warnings {
     my ($from, $to) = @_;
-    if (($to & WARN_MASK) eq warnings::bits("all")) {
+    if (($to & WARN_MASK) eq (warnings::bits("all") & WARN_MASK)) {
 	return "use warnings;\n";
     }
-    elsif (($to & WARN_MASK) eq "\0"x length($to)) {
+    elsif (($to & WARN_MASK) eq ("\0"x length($to) & WARN_MASK)) {
 	return "no warnings;\n";
     }
     return "BEGIN {\${^WARNING_BITS} = ".perlstring($to)."}\n";
@@ -1680,15 +1680,16 @@ sub pp_delete {
 sub pp_require {
     my $self = shift;
     my($op, $cx) = @_;
+    my $opname = $op->flags & OPf_SPECIAL ? 'CORE::require' : 'require';
     if (class($op) eq "UNOP" and $op->first->name eq "const"
 	and $op->first->private & OPpCONST_BARE)
     {
 	my $name = $self->const_sv($op->first)->PV;
 	$name =~ s[/][::]g;
 	$name =~ s/\.pm//g;
-	return "require $name";
+	return "$opname $name";
     } else {	
-	$self->unop($op, $cx, "require");
+	$self->unop($op, $cx, $opname);
     }
 }
 
@@ -2327,7 +2328,7 @@ sub indirop {
 	# give bareword warnings in that case. Therefore if context
 	# requires, we'll put parens around the outside "(sort f 1, 2,
 	# 3)". Unfortunately, we'll currently think the parens are
-	# neccessary more often that they really are, because we don't
+	# necessary more often that they really are, because we don't
 	# distinguish which side of an assignment we're on.
 	if ($cx >= 5) {
 	    return "($name2 $args)";
@@ -2366,6 +2367,8 @@ sub mapop {
 
 sub pp_mapwhile { mapop(@_, "map") }
 sub pp_grepwhile { mapop(@_, "grep") }
+sub pp_mapstart { baseop(@_, "map") }
+sub pp_grepstart { baseop(@_, "grep") }
 
 sub pp_list {
     my $self = shift;
@@ -3146,7 +3149,7 @@ sub pp_entersub {
 	no warnings 'uninitialized';
 	$declared = exists $self->{'subs_declared'}{$kid}
 	    || (
-		 defined &{ %{$self->{'curstash'}."::"}->{$kid} }
+		 defined &{ ${$self->{'curstash'}."::"}{$kid} }
 		 && !exists
 		     $self->{'subs_deparsed'}{$self->{'curstash'}."::".$kid}
 		 && defined prototype $self->{'curstash'}."::".$kid
@@ -3962,6 +3965,18 @@ sub regcomp {
     my $kid = $op->first;
     $kid = $kid->first if $kid->name eq "regcmaybe";
     $kid = $kid->first if $kid->name eq "regcreset";
+    if ($kid->name eq "null" and !null($kid->first)
+	and $kid->first->name eq 'pushmark')
+    {
+	my $str = '';
+	$kid = $kid->first->sibling;
+	while (!null($kid)) {
+	    $str .= $self->re_dq($kid, $extended);
+	    $kid = $kid->sibling;
+	}
+	return $str, 1;
+    }
+
     return ($self->re_dq($kid, $extended), 1) if $self->pure_string($kid);
     return ($self->deparse($kid, $cx), 0);
 }

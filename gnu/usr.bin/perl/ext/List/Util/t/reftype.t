@@ -13,6 +13,7 @@ BEGIN {
     }
 }
 
+use Test::More tests => 23;
 
 use Scalar::Util qw(reftype);
 use vars qw($t $y $x *F);
@@ -22,32 +23,29 @@ use Symbol qw(gensym);
 tie *F, 'MyTie';
 
 @test = (
- [ undef, 1],
- [ undef, 'A'],
- [ HASH => {} ],
- [ ARRAY => [] ],
- [ SCALAR => \$t ],
- [ REF    => \(\$t) ],
- [ GLOB   => \*F ],
- [ GLOB   => gensym ],
- [ CODE   => sub {} ],
+ [ undef, 1,		'number'	],
+ [ undef, 'A',		'string'	],
+ [ HASH   => {},	'HASH ref'	],
+ [ ARRAY  => [],	'ARRAY ref'	],
+ [ SCALAR => \$t,	'SCALAR ref'	],
+ [ REF    => \(\$t),	'REF ref'	],
+ [ GLOB   => \*F,	'tied GLOB ref'	],
+ [ GLOB   => gensym,	'GLOB ref'	],
+ [ CODE   => sub {},	'CODE ref'	],
 # [ IO => *STDIN{IO} ] the internal sv_reftype returns UNKNOWN
 );
 
-print "1..", @test*4, "\n";
-
-my $i = 1;
 foreach $test (@test) {
-  my($type,$what) = @$test;
-  my $pack;
-  foreach $pack (undef,"ABC","0",undef) {
-    print "# $what\n";
-    my $res = reftype($what);
-    printf "# %s - %s\n", map { defined($_) ? $_ : 'undef' } $type,$res;
-    print "not " if $type ? $res ne $type : defined($res);
-    bless $what, $pack if $type && defined $pack;
-    print "ok ",$i++,"\n";
-  }
+  my($type,$what, $n) = @$test;
+
+  is( reftype($what), $type, $n);
+  next unless ref($what);
+
+  bless $what, "ABC";
+  is( reftype($what), $type, $n);
+
+  bless $what, "0";
+  is( reftype($what), $type, $n);
 }
 
 package MyTie;

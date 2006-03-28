@@ -8,13 +8,13 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 47;
+plan 'no_plan';
 
 $SIG{__WARN__} = sub { die @_ };
 
-sub eval_ok ($) {
-    eval $_[0];
-    is( $@, '' );
+sub eval_ok ($;$) {
+    eval shift;
+    is( $@, '', @_);
 }
 
 eval_ok 'sub t1 ($) : locked { $_[0]++ }';
@@ -106,6 +106,11 @@ is ref($thunk), "Z";
 @attrs = eval 'attributes::get $thunk';
 is "@attrs", "locked method Z";
 
+# Test attributes on predeclared subroutines:
+eval 'package A; sub PS : lvalue';
+@attrs = eval 'attributes::get \&A::PS';
+is "@attrs", "lvalue";
+
 # Test ability to modify existing sub's (or XSUB's) attributes.
 eval 'package A; sub X { $_[0] } sub X : lvalue';
 @attrs = eval 'attributes::get \&A::X';
@@ -145,3 +150,33 @@ eval 'our ${""} : foo = 1';
 like $@, qr/Can't declare scalar dereference in our/;
 eval 'my $$foo : bar = 1';
 like $@, qr/Can't declare scalar dereference in my/;
+
+
+my @code = qw(lvalue locked method);
+unshift @code, 'assertion' if $] >= 5.009;
+my @other = qw(shared unique);
+my %valid;
+$valid{CODE} = {map {$_ => 1} @code};
+$valid{SCALAR} = {map {$_ => 1} @other};
+$valid{ARRAY} = $valid{HASH} = $valid{SCALAR};
+
+our ($scalar, @array, %hash);
+foreach my $value (\&foo, \$scalar, \@array, \%hash) {
+    my $type = ref $value;
+    foreach my $negate ('', '-') {
+	foreach my $attr (@code, @other) {
+	    my $attribute = $negate . $attr;
+	    eval "use attributes __PACKAGE__, \$value, '$attribute'";
+	    if ($valid{$type}{$attr}) {
+		if ($attribute eq '-shared') {
+		    like $@, qr/^A variable may not be unshared/;
+		} else {
+		    is( $@, '', "$type attribute $attribute");
+		}
+	    } else {
+		like $@, qr/^Invalid $type attribute: $attribute/,
+		    "Bogus $type attribute $attribute should fail";
+	    }
+	}
+    }
+}

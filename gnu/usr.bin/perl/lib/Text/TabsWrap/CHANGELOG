@@ -1,6 +1,19 @@
+= 2005/08/24
+
+Added $separator2 and tests for $separator and $separator2
+
+Aristotle Pagaltzis <pagaltzis at gmx.de> contributed a new version of
+expand() that is faster.
+
+Jarkko Hietaniemi <jhi at cc.hut.fi> sent in perl change #17917 which
+fixed a bug in wrap.
+
+Matthew Durante <matthew_durante at hotmail.com> and 
+Don Buchholz <don at truedisk.com> sent in a doc patches.
+
 = 2001/09/29
 
-Philip Newton <Philip.Newton@gmx.net> sent in a clean patch that
+Philip Newton <Philip.Newton at gmx.net> sent in a clean patch that
 added support for defining words differently; that prevents 
 Text::Wrap from untainting strings; and that fixes a documentation
 bug.
@@ -8,18 +21,18 @@ bug.
 So that fill.t can be used in the version included in the perl
 distribution, fill.t no longer uses File::Slurp.
 
-Both Sweth Chandramouli <svc@sweth.net> and Drew Degentesh 
-<ddegentesh@daed.com> both objected to the automatic unexpand
+Both Sweth Chandramouli <svc at sweth.net> and Drew Degentesh 
+<ddegentesh at daed.com> both objected to the automatic unexpand
 that Text::Wrap does on its results.  Drew sent a patch which
 has been integrated.
 
-Way back in '97, Joel Earl <jrearl@VNET.IBM.COM> asked that
+Way back in '97, Joel Earl <jrearl at VNET.IBM.COM> asked that
 it be possible to use a line separator other than \n when
 adding new lines.  There is now support for that.
 
 = 2001/01/30
 
-Bugfix by Michael G Schwern <schwern@pobox.com>: don't add extra
+Bugfix by Michael G Schwern <schwern at pobox.com>: don't add extra
 whitespace when working one an array of input (as opposed to a 
 single string).
 
@@ -27,9 +40,9 @@ Performance rewrite: use m/\G/ rather than s///.
 
 You can now specify that words that are too long to wrap can simply
 overflow the line.  Feature requested by James Hoagland 
-<hoagland@SiliconDefense.com> and by John Porter <jdporter@min.net>.
+<hoagland at SiliconDefense.com> and by John Porter <jdporter at min.net>.
 
-Documentation changes from Rich Bowen <Rich@cre8tivegroup.com>.
+Documentation changes from Rich Bowen <Rich at cre8tivegroup.com>.
 
 = 1998/11/29
 
@@ -48,15 +61,15 @@ Anyway, I have a bunch of people to thank.  I didn't
 use what any of them sent in, but I did take ideas from
 all of them.  Many sent in complete new implamentations.
 
-	Ivan Brawley <ibrawley@awadi.com.au> 
+	Ivan Brawley <ibrawley at awadi.com.au> 
 
-	Jacqui Caren <Jacqui.Caren@ig.co.uk>
+	Jacqui Caren <Jacqui.Caren at ig.co.uk>
 
-	Jeff Kowalski <jeff.kowalski@autodesk.com>
+	Jeff Kowalski <jeff.kowalski at autodesk.com>
 
-	Allen Smith <easmith@beatrice.rutgers.edu>
+	Allen Smith <easmith at beatrice.rutgers.edu>
 
-	Sullivan N. Beck <sbeck@cise.ufl.edu>
+	Sullivan N. Beck <sbeck at cise.ufl.edu>
 
 The end result is a very slight change in the API.  There
 is now an additional package variable: $Text::Wrap::huge.

@@ -23,7 +23,7 @@ BEGIN {
 }
 
 BEGIN {
-    use Test::More tests => 26;
+    use Test::More tests => 38;
     use File::Spec;
 }
 
@@ -58,7 +58,7 @@ BEGIN {
     ok( test_f(), 'testing non-existent file' );
 
     @ARGV = ( $Testfile );
-    cmp_ok( ! test_f(), '==', (-f $Testfile), 'testing non-existent file' );
+    cmp_ok( ! test_f(), '==', defined (-f $Testfile), 'testing non-existent file' );
 
     # these are destructive, have to keep setting @ARGV
     @ARGV = ( $Testfile );
@@ -66,6 +66,7 @@ BEGIN {
 
     @ARGV = ( $Testfile );
     ok( test_f(), 'now creating that file' );
+    is_deeply( \@ARGV, [$Testfile], 'test_f preserves @ARGV' );
 
     @ARGV = ( $Testfile );
     ok( -e $ARGV[0], 'created!' );
@@ -134,10 +135,51 @@ BEGIN {
 
     # change a file to read-write
     @ARGV = ( '0600', $Testfile );
+    my @orig_argv = @ARGV;
     ExtUtils::Command::chmod();
+    is_deeply( \@ARGV, \@orig_argv, 'chmod preserves @ARGV' );
 
     is( ((stat($Testfile))[2] & 07777) & 0700,
         ($^O eq 'vos' ? 0700 : 0600), 'change a file to read-write' );
+
+
+    SKIP: {
+        if ($^O eq 'amigaos' || $^O eq 'os2' || $^O eq 'MSWin32' ||
+            $^O eq 'NetWare' || $^O eq 'dos' || $^O eq 'cygwin'  ||
+            $^O eq 'MacOS'
+           ) {
+            skip( "different file permission semantics on $^O", 4);
+        }
+
+        @ARGV = ('testdir');
+        mkpath;
+        ok( -e 'testdir' );
+
+        # change a dir to execute-only
+        @ARGV = ( '0100', 'testdir' );
+        ExtUtils::Command::chmod();
+
+        is( ((stat('testdir'))[2] & 07777) & 0700,
+            0100, 'change a dir to execute-only' );
+
+        # change a dir to read-only
+        @ARGV = ( '0400', 'testdir' );
+        ExtUtils::Command::chmod();
+
+        is( ((stat('testdir'))[2] & 07777) & 0700,
+            ($^O eq 'vos' ? 0500 : 0400), 'change a dir to read-only' );
+
+        # change a dir to write-only
+        @ARGV = ( '0200', 'testdir' );
+        ExtUtils::Command::chmod();
+
+        is( ((stat('testdir'))[2] & 07777) & 0700,
+            ($^O eq 'vos' ? 0700 : 0200), 'change a dir to write-only' );
+
+        @ARGV = ('testdir');
+        rm_rf;
+    }
+
 
     # mkpath
     @ARGV = ( File::Spec->join( 'ecmddir', 'temp2' ) );
@@ -148,7 +190,9 @@ BEGIN {
 
     # copy a file to a nested subdirectory
     unshift @ARGV, $Testfile;
+    @orig_argv = @ARGV;
     cp();
+    is_deeply( \@ARGV, \@orig_argv, 'cp preserves @ARGV' );
 
     ok( -e File::Spec->join( 'ecmddir', 'temp2', $Testfile ), 'copied okay' );
 
@@ -160,7 +204,9 @@ BEGIN {
 
     # move a file to a subdirectory
     @ARGV = ( $Testfile, 'ecmddir' );
-    mv();
+    @orig_argv = @ARGV;
+    ok( mv() );
+    is_deeply( \@ARGV, \@orig_argv, 'mv preserves @ARGV' );
 
     ok( ! -e $Testfile, 'moved file away' );
     ok( -e File::Spec->join( 'ecmddir', $Testfile ), 'file in new location' );
@@ -208,7 +254,35 @@ BEGIN {
     ok( ! -e $dir, "removed $dir successfully" );
 }
 
+{
+    { local @ARGV = 'd2utest'; mkpath; }
+    open(FILE, '>d2utest/foo');
+    print FILE "stuff\015\012and thing\015\012";
+    close FILE;
+
+    open(FILE, '>d2utest/bar');
+    binmode(FILE);
+    my $bin = "\c@\c@\c@\c@\c@\c@\cA\c@\c@\c@\015\012".
+              "\@\c@\cA\c@\c@\c@8__LIN\015\012";
+    print FILE $bin;
+    close FILE;
+
+    local @ARGV = 'd2utest';
+    ExtUtils::Command::dos2unix();
+
+    open(FILE, 'd2utest/foo');
+    is( join('', <FILE>), "stuff\012and thing\012", 'dos2unix' );
+    close FILE;
+
+    open(FILE, 'd2utest/bar');
+    binmode(FILE);
+    ok( -B 'd2utest/bar' );
+    is( join('', <FILE>), $bin, 'dos2unix preserves binaries');
+    close FILE;
+}
+
 END {
     1 while unlink $Testfile, 'newfile';
     File::Path::rmtree( 'ecmddir' );
+    File::Path::rmtree( 'd2utest' );
 }

@@ -1,20 +1,32 @@
-#!./perl
+#!./perl -w
 
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require "./test.pl";
+
+    plan ('no_plan');
+
+    use_ok('Config');
 }
 
-plan 'no_plan';
-
-use_ok('Config');
+use strict;
 
 # Some (safe?) bets.
 
 ok(keys %Config > 500, "Config has more than 500 entries");
 
-ok(each %Config);
+my ($first) = Config::config_sh() =~ /^(\S+)=/m;
+die "Can't find first entry in Config::config_sh()" unless defined $first;
+print "# First entry is '$first'\n";
+
+# It happens that the we know what the first key should be. This is somewhat
+# cheating, but there was briefly a bug where the key got a bonus newline.
+my ($first_each) = each %Config;
+is($first_each, $first, "First key from each is correct");
+ok(exists($Config{$first_each}), "First key exists");
+ok(!exists($Config{"\n$first"}),
+   "Check that first key with prepended newline isn't falsely existing");
 
 is($Config{PERL_REVISION}, 5, "PERL_REVISION is 5");
 
@@ -38,13 +50,16 @@ ok( exists $Config{d_fork},  "has d_fork");
 
 ok(!exists $Config{d_bork},  "has no d_bork");
 
-like($Config{ivsize},     qr/^(4|8)$/, "ivsize is 4 or 8 (it is $Config{ivsize})");
+like($Config{ivsize}, qr/^(4|8)$/, "ivsize is 4 or 8 (it is $Config{ivsize})");
 
 # byteorder is virtual, but it has rules.
 
-like($Config{byteorder}, qr/^(1234|4321|12345678|87654321)$/, "byteorder is 1234 or 4321 or 12345678 or 87654321 (it is $Config{byteorder})");
+like($Config{byteorder}, qr/^(1234|4321|12345678|87654321)$/,
+     "byteorder is 1234 or 4321 or 12345678 or 87654321 "
+     . "(it is $Config{byteorder})");
 
-is(length $Config{byteorder}, $Config{ivsize}, "byteorder is as long as ivsize (which is $Config{ivsize})");
+is(length $Config{byteorder}, $Config{ivsize},
+   "byteorder is as long as ivsize (which is $Config{ivsize})");
 
 # ccflags_nolargefiles is virtual, too.
 
@@ -100,7 +115,8 @@ Config::config_vars('PERL_API_REVISION.*:'); # regex, tagged
 my $out7 = $$out;
 $out->clear;
 
-Config::config_vars(':PERL_API_REVISION.*'); # regex, non-tagged multi-line answer
+# regex, non-tagged multi-line answer
+Config::config_vars(':PERL_API_REVISION.*');
 my $out8 = $$out;
 $out->clear;
 
@@ -112,27 +128,30 @@ Config::config_vars('?flags');	# bogus regex, no explicit warning !
 my $out10 = $$out;
 $out->clear;
 
+undef $out;
 untie *STDOUT;
 
 like($out1, qr/^cc='\Q$Config{cc}\E';/, "found config_var cc");
 like($out2, qr/^d_bork='UNKNOWN';/, "config_var d_bork is UNKNOWN");
 
 # test for leading, trailing colon effects
-is(scalar split(/;\n/, $out3), 3, "3 lines found");
-is(scalar split(/;\n/, $out6), 3, "3 lines found");
+# Split in scalar context it deprecated, and will warn.
+my @tmp;
+is(scalar (@tmp = split(/;\n/, $out3)), 3, "3 lines found");
+is(scalar (@tmp = split(/;\n/, $out6)), 3, "3 lines found");
 
 is($out4 =~ /(;\n)/s, '', "trailing colon gives 1-line response: $out4");
 is($out5 =~ /(;\n)/s, '', "trailing colon gives 1-line response: $out5");
 
-is(scalar split(/=/, $out3), 4, "found 'tag='");
-is(scalar split(/=/, $out4), 4, "found 'tag='");
+is(scalar (@tmp = split(/=/, $out3)), 4, "found 'tag='");
+is(scalar (@tmp = split(/=/, $out4)), 4, "found 'tag='");
 
 my @api;
 
 my @rev = @Config{qw(PERL_API_REVISION PERL_API_VERSION PERL_API_SUBVERSION)};
 
 print ("# test tagged responses, multi-line and single-line\n");
-foreach $api ($out3, $out4) {
+foreach my $api ($out3, $out4) {
     @api = $api =~ /PERL_API_(\w+)=(.*?)(?:;\n|\s)/mg;
     is($api[0], "REVISION", "REVISION tag");
     is($api[4], "VERSION",  "VERSION tag");
@@ -143,7 +162,7 @@ foreach $api ($out3, $out4) {
 }
 
 print("# test non-tagged responses, multi-line and single-line\n");
-foreach $api ($out5, $out6) {
+foreach my $api ($out5, $out6) {
     @api = split /(?: |;\n)/, $api;
     is($api[0], "'$rev[0]'", "revision is $rev[0]");
     is($api[2], "'$rev[1]'", "version is $rev[1]");
@@ -201,10 +220,53 @@ is($Config{sig_num_init}  =~ tr/,/,/, $Config{sig_size}, "sig_num_init size");
 is($Config{sig_name_init} =~ tr/,/,/, $Config{sig_size}, "sig_name_init size");
 
 # Test the troublesome virtual stuff
-foreach my $pain (qw(byteorder)) {
-  # No config var is named with anything that is a regexp metachar"
-  my @result = Config::config_re($pain);
+my @virtual = qw(byteorder ccflags_nolargefiles ldflags_nolargefiles
+		 libs_nolargefiles libswanted_nolargefiles);
+
+# Also test that the first entry in config.sh is found correctly. There was
+# special casing code for this
+
+foreach my $pain ($first, @virtual) {
+  # No config var is named with anything that is a regexp metachar
+  ok(exists $Config{$pain}, "\$config('$pain') exists");
+
+  my @result = $Config{$pain};
+  is (scalar @result, 1, "single result for \$config('$pain')");
+
+  @result = Config::config_re($pain);
   is (scalar @result, 1, "single result for config_re('$pain')");
-  like ($result[0], qr/^$pain=(['"])$Config{$pain}\1$/, # grr '
-				"which is the expected result for $pain");
+  like ($result[0], qr/^$pain=(['"])\Q$Config{$pain}\E\1$/, # grr '
+	"which is the expected result for $pain");
 }
+
+# Check that config entries appear correctly in @INC
+# TestInit.pm has probably already messed with our @INC
+# This little bit of evil is to avoid a @ in the program, in case it confuses
+# shell 1 liners. Perl 1 rules.
+my ($path, $ver, @orig_inc)
+  = split /\n/,
+    runperl (nolib=>1,
+	     prog=>'print qq{$^X\n$]\n}; print qq{$_\n} while $_ = shift INC');
+
+die "This perl is $] at $^X; other perl is $ver (at $path) "
+  . '- failed to find this perl' unless $] eq $ver;
+
+my %orig_inc;
+@orig_inc{@orig_inc} = ();
+
+my $failed;
+# This is the order that directories are pushed onto @INC in perl.c:
+foreach my $lib (qw(applibexp archlibexp privlibexp sitearchexp sitelibexp
+		     vendorarchexp vendorlibexp vendorlib_stem)) {
+  my $dir = $Config{$lib};
+  SKIP: {
+    skip "lib $lib not in \@INC on Win32" if $^O eq 'MSWin32';
+    skip "lib $lib not defined" unless defined $dir;
+    skip "lib $lib not set" unless length $dir;
+    # So we expect to find it in @INC
+
+    ok (exists $orig_inc{$dir}, "Expect $lib '$dir' to be in \@INC")
+      or $failed++;
+  }
+}
+_diag ('@INC is:', @orig_inc) if $failed;

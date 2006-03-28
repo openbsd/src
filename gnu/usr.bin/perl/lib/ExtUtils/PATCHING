@@ -69,25 +69,26 @@ Code formatting
   backwacking lots of dollar signs because you have one interpolated
   perl variable, like this:
 
-    return <<'EOT'
-
+    return <<EOT;
 subdirs ::
 	\$(NOECHO)cd $subdir && \$(MAKE) -f \$(FIRST_MAKEFILE) all \$(PASTHRU)
+
 EOT
 
   or are switching quoting contexts:
 
-    return <<q{
+    return q{
 subdirs ::
 	$(NOECHO)cd }.$subdir.q{ && $(MAKE) -f $(FIRST_MAKEFILE) all $(PASTHRU)
+
 };
 
   consider using sprintf instead.
 
     return sprintf <<'EOT', $subdir;
-
 subdirs ::
 	$(NOECHO)cd %s && $(MAKE) -f $(FIRST_MAKEFILE) all $(PASTHRU)
+
 EOT
 
 
@@ -98,29 +99,47 @@ Refactoring and Cleanup
 
 Backwards Compatibility
 
-- MakeMaker must be backwards compatible to 5.5.3 (5.005_03).  Avoid any
+- MakeMaker must be backwards compatible to 5.5.4 (5.005_04).  Avoid any
   obvious 5.6-isms (threads, warnings.pm, Unicode, our, v1.2.3, attributes
   open my $fh, lvalue subroutines, any new core modules, etc...).
 
 - MakeMaker should avoid having module dependencies.  Avoid using modules
-  which didn't come with 5.5.3 and avoid using features from newer 
+  which didn't come with 5.5.4 and avoid using features from newer 
   versions.  Sometimes this is unavoidable.
 
 
 Cross-Platform Compatibility
 
-- MakeMaker must work on all architectures Perl works on (see perlport.pod)
-  and with many different versions of make.  This means all Unixen 
-  (including Cygwin and MacOS X), Windows (including DOS), MacOS Classic 
-  and VMS.  
+- With the exception of MacOS Classic, MakeMaker must work on all 
+  architectures Perl works on (see perlport.pod).  This means all Unixen 
+  (including Cygwin and MacOS X), Windows (including Win9x and DOS), and VMS.
+
+- Use the available macros rather than shell commands $(MV), $(CP),
+  $(TOUCH), etc...
+
+- MakeMaker must work on many makes.  GNU, BSD, Solaris, nmake, dmake, MMS
+  and MMK to name the most common.  Keep your make code as simple as 
+  possible.  
+
+- Avoid special variables (even $@).  
+
+- Format targets as "target : dependency", the spacing is important.  
+
+- Use $(NOECHO) instead of @.
+
+- Always put a space between $(NOECHO) and the command.
+
+- Always put a space between - (ignore) and the command.
+
+- Always put $(NOECHO) and - together, no space between them.
 
 - Often when you patch ExtUtils::MM_Unix, similar patches must be done
   to the other MM_* modules.  If you can, please do this extra work
   otherwise I have to.  If you can't, that's ok.  We can help.
 
 - If possible, please test your patch on two Very Different architectures.
-  Unix, Windows, MacOS Classic and VMS being Very Different.  Note: Cygwin
-  and OS X are Unixen for our purposes.
+  Unix, Windows and VMS being Very Different.  Note: Cygwin and OS X are 
+  Unixen for our purposes.
 
 - If nothing else, at least try it on two different Unixen or Windows
   machines (ie. Linux and IRIX or WinNT and Win95).
@@ -163,7 +182,7 @@ Documentation
 
     =begin private
 
-    =item _foo_bar
+    =head3 _foo_bar
 
        $mm->_foo_bar
 

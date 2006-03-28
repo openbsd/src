@@ -67,7 +67,7 @@ if ($^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'VMS') {
 # Known haves that have problems running this test
 # (for example because they do not support sparse files, like UNICOS)
 if ($^O eq 'unicos') {
-    print "1..0 # Skip: no sparse files in $^0, unable to test large files\n";
+    print "1..0 # Skip: no sparse files in $^O, unable to test large files\n";
     bye();
 }
 

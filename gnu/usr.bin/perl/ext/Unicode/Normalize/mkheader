@@ -1,13 +1,22 @@
 #!perl
 #
-# This script generates "unfcan.h", "unfcpt.h", "unfcmb.h",
-# "unfcmp.h", and "unfexc.h"
-# from CombiningClass.pl, Decomposition.pl, CompositionExclusions.txt
-# in lib/unicore or unicode directory
-# for Unicode::Normalize.xs. (cf. Makefile.PL)
+# This auxiliary script makes five header files
+# used for building XSUB of Unicode::Normalize.
 #
-#  Usage: <perl mkheader> in command line
-#      or <do 'mkheader'> in perl
+# Usage:
+#    <do 'mkheader'> in perl, or <perl mkheader> in command line
+#
+# Input files:
+#    unicore/CombiningClass.pl (or unicode/CombiningClass.pl)
+#    unicore/Decomposition.pl (or unicode/Decomposition.pl)
+#    unicore/CompositionExclusions.txt (or unicode/CompExcl.txt)
+#
+# Output files:
+#    unfcan.h
+#    unfcpt.h
+#    unfcmb.h
+#    unfcmp.h
+#    unfexc.h
 #
 use 5.006;
 use strict;
@@ -197,7 +206,7 @@ foreach my $key (keys %Canon) {
 }
 
 # exhaustive decomposition
-foreach my $key (keys %Compat) { 
+foreach my $key (keys %Compat) {
     $Compat{$key} = [ getCompatList($key) ];
 }
 
@@ -387,4 +396,5 @@ EOF
     close FH;
 }
 
+1;
 __END__

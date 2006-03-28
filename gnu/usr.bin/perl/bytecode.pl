@@ -22,7 +22,8 @@ while (($from, $tos) = each %alias_to) {
 }
 
 my $c_header = <<'EOT';
-/*
+/* -*- buffer-read-only: t -*-
+ *
  *      Copyright (c) 1996-1999 Malcolm Beattie
  *
  *      You may distribute under the terms of either the GNU General Public
@@ -43,6 +44,7 @@ safer_unlink "ext/ByteLoader/byterun.c", "ext/ByteLoader/byterun.h", "ext/B/B/As
 # Start with boilerplate for Asmdata.pm
 #
 open(ASMDATA_PM, ">ext/B/B/Asmdata.pm") or die "ext/B/B/Asmdata.pm: $!";
+binmode ASMDATA_PM;
 print ASMDATA_PM $perl_header, <<'EOT';
 package B::Asmdata;
 
@@ -67,6 +69,7 @@ EOT
 # Boilerplate for byterun.c
 #
 open(BYTERUN_C, ">ext/ByteLoader/byterun.c") or die "ext/ByteLoader/byterun.c: $!";
+binmode BYTERUN_C;
 print BYTERUN_C $c_header, <<'EOT';
 
 #define PERL_NO_GET_CONTEXT
@@ -108,7 +111,7 @@ byterun(pTHX_ register struct byteloader_state *bstate)
     SV *specialsv_list[6];
 
     BYTECODE_HEADER_CHECK;	/* croak if incorrect platform */
-    New(666, bstate->bs_obj_list, 32, void*); /* set op objlist */
+    Newx(bstate->bs_obj_list, 32, void*); /* set op objlist */
     bstate->bs_obj_list_fill = 31;
     bstate->bs_obj_list[0] = NULL; /* first is always Null */
     bstate->bs_ix = 1;
@@ -192,12 +195,15 @@ print BYTERUN_C <<'EOT';
     }
     return 0;
 }
+
+/* ex: set ro: */
 EOT
 
 #
 # Write the instruction and optype enum constants into byterun.h
 #
 open(BYTERUN_H, ">ext/ByteLoader/byterun.h") or die "ext/ByteLoader/byterun.h: $!";
+binmode BYTERUN_H;
 print BYTERUN_H $c_header, <<'EOT';
 struct byteloader_fdata {
     SV	*datasv;
@@ -246,6 +252,8 @@ for ($i = 0; $i < @optype - 1; $i++) {
     printf BYTERUN_H "    OPt_%s,\t\t/* %d */\n", $optype[$i], $i;
 }
 printf BYTERUN_H "    OPt_%s\t\t/* %d */\n};\n\n", $optype[$i], $i;
+
+print BYTERUN_H "/* ex: set ro: */\n";
 
 #
 # Finish off insn_data and create array initialisers in Asmdata.pm
@@ -311,7 +319,7 @@ A simple mapping of the op type number to its type (like 'COP' or 'BINOP').
   my $sv_name = $specialsv_name[$sv_index];
 
 Certain SV types are considered 'special'.  They're represented by
-B::SPECIAL and are refered to by a number from the specialsv_list.
+B::SPECIAL and are referred to by a number from the specialsv_list.
 This array maps that number back to the name of the SV (like 'Nullsv'
 or '&PL_sv_undef').
 
@@ -322,6 +330,8 @@ or '&PL_sv_undef').
 Malcolm Beattie, C<mbeattie@sable.ox.ac.uk>
 
 =cut
+
+# ex: set ro:
 EOT
 
 
@@ -365,12 +375,12 @@ sv_upgrade	bstate->bs_sv				U8		x
 sv_refcnt	SvREFCNT(bstate->bs_sv)			U32
 sv_refcnt_add	SvREFCNT(bstate->bs_sv)			I32		x
 sv_flags	SvFLAGS(bstate->bs_sv)			U32
-xrv		SvRV(bstate->bs_sv)			svindex
+xrv		bstate->bs_sv				svindex		x
 xpv		bstate->bs_sv				none		x
-xpv_cur		SvCUR(bstate->bs_sv)			STRLEN
-xpv_len		SvLEN(bstate->bs_sv)			STRLEN
-xiv		SvIVX(bstate->bs_sv)			IV
-xnv		SvNVX(bstate->bs_sv)			NV
+xpv_cur		bstate->bs_sv	 			STRLEN		x
+xpv_len		bstate->bs_sv				STRLEN		x
+xiv		bstate->bs_sv				IV		x
+xnv		bstate->bs_sv				NV		x
 xlv_targoff	LvTARGOFF(bstate->bs_sv)		STRLEN
 xlv_targlen	LvTARGLEN(bstate->bs_sv)		STRLEN
 xlv_targ	LvTARG(bstate->bs_sv)			svindex
@@ -410,7 +420,7 @@ xav_fill	AvFILLp(bstate->bs_sv)			SSize_t
 xav_max		AvMAX(bstate->bs_sv)			SSize_t
 xav_flags	AvFLAGS(bstate->bs_sv)			U8
 xhv_riter	HvRITER(bstate->bs_sv)			I32
-xhv_name	HvNAME(bstate->bs_sv)			pvindex
+xhv_name	bstate->bs_sv				pvindex		x
 xhv_pmroot	*(OP**)&HvPMROOT(bstate->bs_sv)		opindex
 hv_store	bstate->bs_sv				svindex		x
 sv_magic	bstate->bs_sv				char		x
@@ -419,7 +429,7 @@ mg_private	SvMAGIC(bstate->bs_sv)->mg_private	U16
 mg_flags	SvMAGIC(bstate->bs_sv)->mg_flags	U8
 mg_name		SvMAGIC(bstate->bs_sv)			pvcontents	x
 mg_namex	SvMAGIC(bstate->bs_sv)			svindex		x
-xmg_stash	*(SV**)&SvSTASH(bstate->bs_sv)		svindex
+xmg_stash	bstate->bs_sv				svindex		x
 gv_fetchpv	bstate->bs_sv				strconst	x
 gv_fetchpvx	bstate->bs_sv				strconst	x
 gv_stashpv	bstate->bs_sv				strconst	x

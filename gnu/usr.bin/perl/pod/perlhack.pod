@@ -34,13 +34,12 @@ words, it's your usual mix of technical people.
 
 Over this group of porters presides Larry Wall.  He has the final word
 in what does and does not change in the Perl language.  Various
-releases of Perl are shepherded by a ``pumpking'', a porter
-responsible for gathering patches, deciding on a patch-by-patch
+releases of Perl are shepherded by a "pumpking", a porter
+responsible for gathering patches, deciding on a patch-by-patch,
 feature-by-feature basis what will and will not go into the release.
 For instance, Gurusamy Sarathy was the pumpking for the 5.6 release of
 Perl, and Jarkko Hietaniemi was the pumpking for the 5.8 release, and
-Hugo van der Sanden and Rafael Garcia-Suarez share the pumpking for
-the 5.10 release.
+Rafael Garcia-Suarez holds the pumpking crown for the 5.10 release.
 
 In addition, various people are pumpkings for different things.  For
 instance, Andy Dougherty and Jarkko Hietaniemi did a grand job as the
@@ -130,7 +129,7 @@ Is this something that only the submitter wants added to the language,
 or would it be broadly useful?  Sometimes, instead of adding a feature
 with a tight focus, the porters might decide to wait until someone
 implements the more generalized feature.  For instance, instead of
-implementing a ``delayed evaluation'' feature, the porters are waiting
+implementing a "delayed evaluation" feature, the porters are waiting
 for a macro system that would permit delayed evaluation and much more.
 
 =item Does it potentially introduce new bugs?
@@ -179,8 +178,8 @@ always a good idea.
 
 =item Is there another way to do it?
 
-Larry said ``Although the Perl Slogan is I<There's More Than One Way
-to Do It>, I hesitate to make 10 ways to do something''.  This is a
+Larry said "Although the Perl Slogan is I<There's More Than One Way
+to Do It>, I hesitate to make 10 ways to do something".  This is a
 tricky heuristic to navigate, though--one man's essential addition is
 another man's pointless cruft.
 
@@ -194,16 +193,16 @@ authors, ...  Perl is supposed to be easy.
 Working code is always preferred to pie-in-the-sky ideas.  A patch to
 add a feature stands a much higher chance of making it to the language
 than does a random feature request, no matter how fervently argued the
-request might be.  This ties into ``Will it be useful?'', as the fact
+request might be.  This ties into "Will it be useful?", as the fact
 that someone took the time to make the patch demonstrates a strong
 desire for the feature.
 
 =back
 
-If you're on the list, you might hear the word ``core'' bandied
-around.  It refers to the standard distribution.  ``Hacking on the
-core'' means you're changing the C source code to the Perl
-interpreter.  ``A core module'' is one that ships with Perl.
+If you're on the list, you might hear the word "core" bandied
+around.  It refers to the standard distribution.  "Hacking on the
+core" means you're changing the C source code to the Perl
+interpreter.  "A core module" is one that ships with Perl.
 
 =head2 Keeping in sync
 
@@ -217,8 +216,8 @@ changed.  The current state of the main trunk of repository, and patches
 that describe the individual changes that have happened since the last
 public release are available at this location:
 
-    http://public.activestate.com/gsar/APC/
-    ftp://ftp.linux.activestate.com/pub/staff/gsar/APC/
+    http://public.activestate.com/pub/apc/
+    ftp://public.activestate.com/pub/apc/
 
 If you're looking for a particular change, or a change that affected
 a particular set of files, you may find the B<Perl Repository Browser>
@@ -254,10 +253,10 @@ to doing so:
 =item rsync'ing the source tree
 
 Presuming you are in the directory where your perl source resides
-and you have rsync installed and available, you can `upgrade' to
+and you have rsync installed and available, you can "upgrade" to
 the bleadperl using:
 
- # rsync -avz rsync://ftp.linux.activestate.com/perl-current/ .
+ # rsync -avz rsync://public.activestate.com/perl-current/ .
 
 This takes care of updating every single item in the source tree to
 the latest applied patch level, creating files that are new (to your
@@ -268,7 +267,7 @@ Note that this will not delete any files that were in '.' before
 the rsync. Once you are sure that the rsync is running correctly,
 run it with the --delete and the --dry-run options like this:
 
- # rsync -avz --delete --dry-run rsync://ftp.linux.activestate.com/perl-current/ .
+ # rsync -avz --delete --dry-run rsync://public.activestate.com/perl-current/ .
 
 This will I<simulate> an rsync run that also deletes files not
 present in the bleadperl master copy. Observe the results from
@@ -355,7 +354,7 @@ yourself to the source files.
 Presuming you are in a directory where your patches reside, you can
 get them in sync with
 
- # rsync -avz rsync://ftp.linux.activestate.com/perl-current-diffs/ .
+ # rsync -avz rsync://public.activestate.com/perl-current-diffs/ .
 
 This makes sure the latest available patch is downloaded to your
 patch directory.
@@ -363,7 +362,7 @@ patch directory.
 It's then up to you to apply these patches, using something like
 
  # last=`ls -t *.gz | sed q`
- # rsync -avz rsync://ftp.linux.activestate.com/perl-current-diffs/ .
+ # rsync -avz rsync://public.activestate.com/perl-current-diffs/ .
  # find . -name '*.gz' -newer $last -exec gzcat {} \; >blead.patch
  # cd ../perl-current
  # patch -p1 -N <../perl-current-diffs/blead.patch
@@ -805,7 +804,7 @@ there's three things going on here.
 C<yyparse>, the parser, lives in F<perly.c>, although you're better off
 reading the original YACC input in F<perly.y>. (Yes, Virginia, there
 B<is> a YACC grammar for Perl!) The job of the parser is to take your
-code and `understand' it, splitting it into sentences, deciding which
+code and "understand" it, splitting it into sentences, deciding which
 operands go with which operators and so on.
 
 The parser is nobly assisted by the lexer, which chunks up your input
@@ -859,12 +858,163 @@ The C<PERL_ASYNC_CHECK> makes sure that things like signals interrupt
 execution if required.
 
 The actual functions called are known as PP code, and they're spread
-between four files: F<pp_hot.c> contains the `hot' code, which is most
+between four files: F<pp_hot.c> contains the "hot" code, which is most
 often used and highly optimized, F<pp_sys.c> contains all the
 system-specific functions, F<pp_ctl.c> contains the functions which
 implement control structures (C<if>, C<while> and the like) and F<pp.c>
 contains everything else. These are, if you like, the C code for Perl's
 built-in functions and operators.
+
+Note that each C<pp_> function is expected to return a pointer to the next
+op. Calls to perl subs (and eval blocks) are handled within the same
+runops loop, and do not consume extra space on the C stack. For example,
+C<pp_entersub> and C<pp_entertry> just push a C<CxSUB> or C<CxEVAL> block
+struct onto the context stack which contain the address of the op
+following the sub call or eval. They then return the first op of that sub
+or eval block, and so execution continues of that sub or block.  Later, a
+C<pp_leavesub> or C<pp_leavetry> op pops the C<CxSUB> or C<CxEVAL>,
+retrieves the return op from it, and returns it.
+
+=item Exception handing
+
+Perl's exception handing (i.e. C<die> etc) is built on top of the low-level
+C<setjmp()>/C<longjmp()> C-library functions. These basically provide a
+way to capture the current PC and SP registers and later restore them; i.e.
+a C<longjmp()> continues at the point in code where a previous C<setjmp()>
+was done, with anything further up on the C stack being lost. This is why
+code should always save values using C<SAVE_FOO> rather than in auto
+variables.
+
+The perl core wraps C<setjmp()> etc in the macros C<JMPENV_PUSH> and
+C<JMPENV_JUMP>. The basic rule of perl exceptions is that C<exit>, and
+C<die> (in the absence of C<eval>) perform a C<JMPENV_JUMP(2)>, while
+C<die> within C<eval> does a C<JMPENV_JUMP(3)>.
+
+At entry points to perl, such as C<perl_parse()>, C<perl_run()> and
+C<call_sv(cv, G_EVAL)> each does a C<JMPENV_PUSH>, then enter a runops
+loop or whatever, and handle possible exception returns. For a 2 return,
+final cleanup is performed, such as popping stacks and calling C<CHECK> or
+C<END> blocks. Amongst other things, this is how scope cleanup still
+occurs during an C<exit>.
+
+If a C<die> can find a C<CxEVAL> block on the context stack, then the
+stack is popped to that level and the return op in that block is assigned
+to C<PL_restartop>; then a C<JMPENV_JUMP(3)> is performed.  This normally
+passes control back to the guard. In the case of C<perl_run> and
+C<call_sv>, a non-null C<PL_restartop> triggers re-entry to the runops
+loop. The is the normal way that C<die> or C<croak> is handled within an
+C<eval>.
+
+Sometimes ops are executed within an inner runops loop, such as tie, sort
+or overload code. In this case, something like
+
+    sub FETCH { eval { die } }
+
+would cause a longjmp right back to the guard in C<perl_run>, popping both
+runops loops, which is clearly incorrect. One way to avoid this is for the
+tie code to do a C<JMPENV_PUSH> before executing C<FETCH> in the inner
+runops loop, but for efficiency reasons, perl in fact just sets a flag,
+using C<CATCH_SET(TRUE)>. The C<pp_require>, C<pp_entereval> and
+C<pp_entertry> ops check this flag, and if true, they call C<docatch>,
+which does a C<JMPENV_PUSH> and starts a new runops level to execute the
+code, rather than doing it on the current loop.
+
+As a further optimisation, on exit from the eval block in the C<FETCH>,
+execution of the code following the block is still carried on in the inner
+loop.  When an exception is raised, C<docatch> compares the C<JMPENV>
+level of the C<CxEVAL> with C<PL_top_env> and if they differ, just
+re-throws the exception. In this way any inner loops get popped.
+
+Here's an example.
+
+    1: eval { tie @a, 'A' };
+    2: sub A::TIEARRAY {
+    3:     eval { die };
+    4:     die;
+    5: }
+
+To run this code, C<perl_run> is called, which does a C<JMPENV_PUSH> then
+enters a runops loop. This loop executes the eval and tie ops on line 1,
+with the eval pushing a C<CxEVAL> onto the context stack.
+
+The C<pp_tie> does a C<CATCH_SET(TRUE)>, then starts a second runops loop
+to execute the body of C<TIEARRAY>. When it executes the entertry op on
+line 3, C<CATCH_GET> is true, so C<pp_entertry> calls C<docatch> which
+does a C<JMPENV_PUSH> and starts a third runops loop, which then executes
+the die op. At this point the C call stack looks like this:
+
+    Perl_pp_die
+    Perl_runops      # third loop
+    S_docatch_body
+    S_docatch
+    Perl_pp_entertry
+    Perl_runops      # second loop
+    S_call_body
+    Perl_call_sv
+    Perl_pp_tie
+    Perl_runops      # first loop
+    S_run_body
+    perl_run
+    main
+
+and the context and data stacks, as shown by C<-Dstv>, look like:
+
+    STACK 0: MAIN
+      CX 0: BLOCK  =>
+      CX 1: EVAL   => AV()  PV("A"\0)
+      retop=leave
+    STACK 1: MAGIC
+      CX 0: SUB    =>
+      retop=(null)
+      CX 1: EVAL   => *
+    retop=nextstate
+
+The die pops the first C<CxEVAL> off the context stack, sets
+C<PL_restartop> from it, does a C<JMPENV_JUMP(3)>, and control returns to
+the top C<docatch>. This then starts another third-level runops level,
+which executes the nextstate, pushmark and die ops on line 4. At the point
+that the second C<pp_die> is called, the C call stack looks exactly like
+that above, even though we are no longer within an inner eval; this is
+because of the optimization mentioned earlier. However, the context stack
+now looks like this, ie with the top CxEVAL popped:
+
+    STACK 0: MAIN
+      CX 0: BLOCK  =>
+      CX 1: EVAL   => AV()  PV("A"\0)
+      retop=leave
+    STACK 1: MAGIC
+      CX 0: SUB    =>
+      retop=(null)
+
+The die on line 4 pops the context stack back down to the CxEVAL, leaving
+it as:
+
+    STACK 0: MAIN
+      CX 0: BLOCK  =>
+
+As usual, C<PL_restartop> is extracted from the C<CxEVAL>, and a
+C<JMPENV_JUMP(3)> done, which pops the C stack back to the docatch:
+
+    S_docatch
+    Perl_pp_entertry
+    Perl_runops      # second loop
+    S_call_body
+    Perl_call_sv
+    Perl_pp_tie
+    Perl_runops      # first loop
+    S_run_body
+    perl_run
+    main
+
+In  this case, because the C<JMPENV> level recorded in the C<CxEVAL>
+differs from the current one, C<docatch> just does a C<JMPENV_JUMP(3)>
+and the C stack unwinds to:
+
+    perl_run
+    main
+
+Because C<PL_restartop> is non-null, C<run_body> starts a new runops loop
+and execution continues.
 
 =back
 
@@ -1103,10 +1253,10 @@ If you're not used to reading BNF grammars, this is how it works: You're
 fed certain things by the tokeniser, which generally end up in upper
 case. Here, C<ADDOP>, is provided when the tokeniser sees C<+> in your
 code. C<ASSIGNOP> is provided when C<=> is used for assigning. These are
-`terminal symbols', because you can't get any simpler than them.
+"terminal symbols", because you can't get any simpler than them.
 
 The grammar, lines one and three of the snippet above, tells you how to
-build up more complex forms. These complex forms, `non-terminal symbols'
+build up more complex forms. These complex forms, "non-terminal symbols"
 are generally placed in lower case. C<term> here is a non-terminal
 symbol, representing a single expression.
 
@@ -1135,8 +1285,8 @@ call C<newBINOP> to create a new binary operator. The first parameter to
 C<newBINOP>, a function in F<op.c>, is the op type. It's an addition
 operator, so we want the type to be C<ADDOP>. We could specify this
 directly, but it's right there as the second token in the input, so we
-use C<$2>. The second parameter is the op's flags: 0 means `nothing
-special'. Then the things to add: the left and right hand side of our
+use C<$2>. The second parameter is the op's flags: 0 means "nothing
+special". Then the things to add: the left and right hand side of our
 expression, in scalar context.
 
 =head2 Stacks
@@ -1184,14 +1334,14 @@ description of the macros used in stack manipulation.
 
 =item Mark stack
 
-I say `your portion of the stack' above because PP code doesn't
+I say "your portion of the stack" above because PP code doesn't
 necessarily get the whole stack to itself: if your function calls
 another function, you'll only want to expose the arguments aimed for the
 called function, and not (necessarily) let it get at your own data. The
-way we do this is to have a `virtual' bottom-of-stack, exposed to each
+way we do this is to have a "virtual" bottom-of-stack, exposed to each
 function. The mark stack keeps bookmarks to locations in the argument
 stack usable by each function. For instance, when dealing with a tied
-variable, (internally, something with `P' magic) Perl has to call
+variable, (internally, something with "P" magic) Perl has to call
 methods for accesses to the tied variables. However, we need to separate
 the arguments exposed to the method to the argument exposed to the
 original function - the store or fetch or whatever it may be. Here's how
@@ -1708,6 +1858,9 @@ the module maintainer (with a copy to p5p).  This will help the module
 maintainer keep the CPAN version in sync with the core version without
 constantly scanning p5p.
 
+The list of maintainers of core modules is usefully documented in
+F<Porting/Maintainers.pl>.
+
 =head2 Adding a new function to the core
 
 If, as part of a patch to fix a bug, or just because you have an
@@ -1876,9 +2029,10 @@ also use the full suite of core modules in the tests.
 =back
 
 When you say "make test" Perl uses the F<t/TEST> program to run the
-test suite.  All tests are run from the F<t/> directory, B<not> the
-directory which contains the test.  This causes some problems with the
-tests in F<lib/>, so here's some opportunity for some patching.
+test suite (except under Win32 where it uses F<t/harness> instead.)  
+All tests are run from the F<t/> directory, B<not> the directory 
+which contains the test.  This causes some problems with the tests 
+in F<lib/>, so here's some opportunity for some patching.
 
 You must be triply conscious of cross-platform concerns.  This usually
 boils down to using File::Spec and avoiding things like C<fork()> and
@@ -1889,7 +2043,8 @@ C<system()> unless absolutely necessary.
 There are various special make targets that can be used to test Perl
 slightly differently than the standard "test" target.  Not all them
 are expected to give a 100% success rate.  Many of them have several
-aliases.
+aliases, and many of them are not available on certain operating
+systems.
 
 =over 4
 
@@ -1897,14 +2052,20 @@ aliases.
 
 Run F<perl> on all core tests (F<t/*> and F<lib/[a-z]*> pragma tests).
 
+(Not available on Win32)
+
 =item test.deparse
 
 Run all the tests through B::Deparse.  Not all tests will succeed.
+
+(Not available on Win32)
 
 =item test.taintwarn
 
 Run all tests with the B<-t> command-line switch.  Not all tests
 are expected to succeed (until they're specifically fixed, of course).
+
+(Not available on Win32)
 
 =item minitest
 
@@ -1921,7 +2082,7 @@ F<testname.valgrind>.
 
 (Only in Tru64)  Run all the tests using the memory leak + naughty
 memory access tool "Third Degree".  The log files will be named
-F<perl3.log.testname>.
+F<perl.3log.testname>.
 
 =item test.torture torturetest
 
@@ -1935,6 +2096,8 @@ C<-torture> argument to F<t/harness>.
 
 Run all the tests with -Mutf8.  Not all tests will succeed.
 
+(Not available on Win32)
+
 =item minitest.utf16 test.utf16
 
 Runs the tests with UTF-16 encoded scripts, encoded with different
@@ -1942,6 +2105,8 @@ versions of this encoding.
 
 C<make utest.utf16> runs the test suite with a combination of C<-utf8> and
 C<-utf16> arguments to F<t/TEST>.
+
+(Not available on Win32)
 
 =item test_harness
 
@@ -1951,6 +2116,20 @@ L<Test::Harness> module, thus using this test target supposes that perl
 mostly works. The main advantage for our purposes is that it prints a
 detailed summary of failed tests at the end. Also, unlike F<t/TEST>, it
 doesn't redirect stderr to stdout.
+
+Note that under Win32 F<t/harness> is always used instead of F<t/TEST>, so
+there is no special "test_harness" target.
+
+Under Win32's "test" target you may use the TEST_SWITCHES and TEST_FILES
+environment variables to control the behaviour of F<t/harness>.  This means
+you can say
+
+    nmake test TEST_FILES="op/*.t"
+    nmake test TEST_SWITCHES="-torture" TEST_FILES="op/*.t"
+
+=item test-notty test_notty
+
+Sets PERL_SKIP_TTY_TEST to true before running normal test.
 
 =back
 
@@ -1966,6 +2145,45 @@ or
     ./perl -I../lib harness list-of-.t-files
 
 (if you don't specify test scripts, the whole test suite will be run.)
+
+=head3 Using t/harness for testing
+
+If you use C<harness> for testing you have several command line options
+available to you. The arguments are as follows, and are in the order
+that they must appear if used together.
+
+    harness -v -torture -re=pattern LIST OF FILES TO TEST
+    harness -v -torture -re LIST OF PATTERNS TO MATCH
+
+If C<LIST OF FILES TO TEST> is omitted the file list is obtained from
+the manifest. The file list may include shell wildcards which will be 
+expanded out.
+
+=over 4
+
+=item -v
+
+Run the tests under verbose mode so you can see what tests were run, 
+and debug outbut.
+
+=item -torture
+
+Run the torture tests as well as the normal set.
+
+=item -re=PATTERN
+
+Filter the file list so that all the test files run match PATTERN.
+Note that this form is distinct from the B<-re LIST OF PATTERNS> form below
+in that it allows the file list to be provided as well.
+
+=item -re LIST OF PATTERNS
+
+Filter the file list so that all the test files run match 
+/(LIST|OF|PATTERNS)/. Note that with this form the patterns
+are joined by '|' and you cannot supply a list of files, instead
+the test files are obtained from the MANIFEST.
+
+=back
 
 You can run an individual test by a command similar to
 

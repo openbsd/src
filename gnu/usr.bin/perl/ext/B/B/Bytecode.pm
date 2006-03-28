@@ -7,7 +7,7 @@
 
 package B::Bytecode;
 
-our $VERSION = '1.01';
+our $VERSION = '1.01_01';
 
 use strict;
 use Config;
@@ -172,7 +172,9 @@ sub B::HV::ix {
 	    asm "ldsv", $varix = $ix unless $ix == $varix;
 	    ($i = not $i) ? asm ("newpv", pvstring $_) : asm("hv_store", $_)
 		for @array;
-	    asm "xnv", $hv->NVX;
+	    if (VERSION < 5.009) {
+		asm "xnv", $hv->NVX;
+	    }
 	    asm "xmg_stash", $stashix;
 	    asm "xhv_riter", $hv->RITER;
 	}
@@ -234,6 +236,11 @@ sub B::PVIV::bsave {
     $sv->ROK ?
 	$sv->B::RV::bsave($ix):
 	$sv->B::NULL::bsave($ix);
+    if (VERSION >= 5.009) {
+	# See note below in B::PVNV::bsave
+	return if $sv->isa('B::AV');
+	return if $sv->isa('B::HV');
+    }
     asm "xiv", !ITHREADS && $sv->FLAGS & (SVf_FAKE|SVf_READONLY) ?
 	"0 but true" : $sv->IVX;
 }
@@ -241,6 +248,15 @@ sub B::PVIV::bsave {
 sub B::PVNV::bsave {
     my ($sv,$ix) = @_;
     $sv->B::PVIV::bsave($ix);
+    if (VERSION >= 5.009) {
+	# Magical AVs end up here, but AVs now don't have an NV slot actually
+	# allocated. Hence don't write out assembly to store the NV slot if
+	# we're actually an array.
+	return if $sv->isa('B::AV');
+	# Likewise HVs have no NV slot actually allocated.
+	# I don't think that they can get here, but better safe than sorry
+	return if $sv->isa('B::HV');
+    }
     asm "xnv", sprintf "%.40g", $sv->NVX;
 }
 
@@ -361,7 +377,9 @@ sub B::AV::bsave {
     asm "av_extend", $av->MAX if $av->MAX >= 0;
     asm "av_pushx", $_ for @array;
     asm "sv_refcnt", $av->REFCNT;
-    asm "xav_flags", $av->AvFLAGS;
+    if (VERSION < 5.009) {
+	asm "xav_flags", $av->AvFLAGS;
+    }
     asm "xmg_stash", $stashix;
 }
 

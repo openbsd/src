@@ -56,7 +56,7 @@ use XSLoader ();
     ) ],
 );
 
-$VERSION = '1.03';
+$VERSION = '1.05';
 
 sub import {
     require Exporter;
@@ -195,8 +195,10 @@ File::Glob - Perl extension for BSD glob routine
 =head1 SYNOPSIS
 
   use File::Glob ':glob';
+
   @list = bsd_glob('*.[ch]');
   $homedir = bsd_glob('~gnat', GLOB_TILDE | GLOB_ERR);
+
   if (GLOB_ERROR) {
     # an error occurred reading $homedir
   }
@@ -204,17 +206,25 @@ File::Glob - Perl extension for BSD glob routine
   ## override the core glob (CORE::glob() does this automatically
   ## by default anyway, since v5.6.0)
   use File::Glob ':globally';
-  my @sources = <*.{c,h,y}>
+  my @sources = <*.{c,h,y}>;
 
   ## override the core glob, forcing case sensitivity
   use File::Glob qw(:globally :case);
-  my @sources = <*.{c,h,y}>
+  my @sources = <*.{c,h,y}>;
 
   ## override the core glob forcing case insensitivity
   use File::Glob qw(:globally :nocase);
-  my @sources = <*.{c,h,y}>
+  my @sources = <*.{c,h,y}>;
+
+  ## glob on all files in home directory
+  use File::Glob ':globally';
+  my @sources = <~gnat/*>;
 
 =head1 DESCRIPTION
+
+The glob angle-bracket operator C<< <> >> is a pathname generator that
+implements the rules for file name pattern matching used by Unix-like shells
+such as the Bourne shell or C shell.
 
 File::Glob::bsd_glob() implements the FreeBSD glob(3) routine, which is
 a superset of the POSIX glob() (described in IEEE Std 1003.2 "POSIX.2").
@@ -228,6 +238,22 @@ Note that they don't share the same prototype--CORE::glob() only accepts
 a single argument.  Due to historical reasons, CORE::glob() will also
 split its argument on whitespace, treating it as multiple patterns,
 whereas bsd_glob() considers them as one pattern.
+
+=head2 META CHARACTERS
+
+  \       Quote the next metacharacter
+  []      Character class
+  {}      Multiple pattern
+  *       Match any string of characters
+  ?       Match any single character
+  ~       User name home directory
+
+The metanotation C<a{b,c,d}e> is a shorthand for C<abe ace ade>.  Left to
+right order is preserved, with results of matches being sorted separately
+at a low level to preserve this order. As a special case C<{>, C<}>, and
+C<{}> are passed undisturbed.
+
+=head2 POSIX FLAGS
 
 The POSIX defined flags for bsd_glob() are:
 
@@ -358,8 +384,8 @@ Be aware that all filenames returned from File::Glob are tainted.
 
 =item *
 
-If you want to use multiple patterns, e.g. C<bsd_glob "a* b*">, you should
-probably throw them in a set as in C<bsd_glob "{a*,b*}">.  This is because
+If you want to use multiple patterns, e.g. C<bsd_glob("a* b*")>, you should
+probably throw them in a set as in C<bsd_glob("{a*,b*}")>.  This is because
 the argument to bsd_glob() isn't subjected to parsing by the C shell.
 Remember that you can use a backslash to escape things.
 
@@ -422,6 +448,10 @@ both a leading and a trailing colon will be added, when the directory name in
 question doesn't contain any colons (e.g. 'lib' becomes ':lib:').
 
 =back
+
+=head1 SEE ALSO
+
+L<perlfunc/glob>, glob(3)
 
 =head1 AUTHOR
 

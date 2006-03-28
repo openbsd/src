@@ -1,22 +1,27 @@
-# Blocks-4.0.1.txt
-# Date: 2004-03-01, 15:52 [KW]
+# Blocks-4.1.0.txt
+# Date: 2005-1-31, 16:50 [KW]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2004 Unicode, Inc.
+# Copyright (c) 1991-2005 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see UCD.html
 #
+# Note:   The casing of block names is not normative.
+#         For example, "Basic Latin" and "BASIC LATIN" are equivalent.
+#
+# Format:
+# Start Code..End Code; Block Name
+
+# ================================================
+
 # Note:   When comparing block names, casing, whitespace, hyphens,
 #         and underbars are ignored.
 #         For example, "Latin Extended-A" and "latin extended a" are equivalent.
 #         For more information on the comparison of property values, 
 #            see UCD.html.
 #
-# Code points not explicitly listed in this file are given the value No_Block.
-# Format:
-# Start Code..End Code; Block Name
-
-# ================================================
+#  All code points not explicitly listed for Block
+#  have the value No_Block.
 
 # Property:	Block
 
@@ -34,6 +39,7 @@
 0590..05FF; Hebrew
 0600..06FF; Arabic
 0700..074F; Syriac
+0750..077F; Arabic Supplement
 0780..07BF; Thaana
 0900..097F; Devanagari
 0980..09FF; Bengali
@@ -52,6 +58,7 @@
 10A0..10FF; Georgian
 1100..11FF; Hangul Jamo
 1200..137F; Ethiopic
+1380..139F; Ethiopic Supplement
 13A0..13FF; Cherokee
 1400..167F; Unified Canadian Aboriginal Syllabics
 1680..169F; Ogham
@@ -64,8 +71,12 @@
 1800..18AF; Mongolian
 1900..194F; Limbu
 1950..197F; Tai Le
+1980..19DF; New Tai Lue
 19E0..19FF; Khmer Symbols
+1A00..1A1F; Buginese
 1D00..1D7F; Phonetic Extensions
+1D80..1DBF; Phonetic Extensions Supplement
+1DC0..1DFF; Combining Diacritical Marks Supplement
 1E00..1EFF; Latin Extended Additional
 1F00..1FFF; Greek Extended
 2000..206F; General Punctuation
@@ -92,6 +103,12 @@
 2980..29FF; Miscellaneous Mathematical Symbols-B
 2A00..2AFF; Supplemental Mathematical Operators
 2B00..2BFF; Miscellaneous Symbols and Arrows
+2C00..2C5F; Glagolitic
+2C80..2CFF; Coptic
+2D00..2D2F; Georgian Supplement
+2D30..2D7F; Tifinagh
+2D80..2DDF; Ethiopic Extended
+2E00..2E7F; Supplemental Punctuation
 2E80..2EFF; CJK Radicals Supplement
 2F00..2FDF; Kangxi Radicals
 2FF0..2FFF; Ideographic Description Characters
@@ -102,6 +119,7 @@
 3130..318F; Hangul Compatibility Jamo
 3190..319F; Kanbun
 31A0..31BF; Bopomofo Extended
+31C0..31EF; CJK Strokes
 31F0..31FF; Katakana Phonetic Extensions
 3200..32FF; Enclosed CJK Letters and Months
 3300..33FF; CJK Compatibility
@@ -110,6 +128,8 @@
 4E00..9FFF; CJK Unified Ideographs
 A000..A48F; Yi Syllables
 A490..A4CF; Yi Radicals
+A700..A71F; Modifier Tone Letters
+A800..A82F; Syloti Nagri
 AC00..D7AF; Hangul Syllables
 D800..DB7F; High Surrogates
 DB80..DBFF; High Private Use Surrogates
@@ -119,6 +139,7 @@ F900..FAFF; CJK Compatibility Ideographs
 FB00..FB4F; Alphabetic Presentation Forms
 FB50..FDFF; Arabic Presentation Forms-A
 FE00..FE0F; Variation Selectors
+FE10..FE1F; Vertical Forms
 FE20..FE2F; Combining Half Marks
 FE30..FE4F; CJK Compatibility Forms
 FE50..FE6F; Small Form Variants
@@ -128,15 +149,19 @@ FFF0..FFFF; Specials
 10000..1007F; Linear B Syllabary
 10080..100FF; Linear B Ideograms
 10100..1013F; Aegean Numbers
+10140..1018F; Ancient Greek Numbers
 10300..1032F; Old Italic
 10330..1034F; Gothic
 10380..1039F; Ugaritic
+103A0..103DF; Old Persian
 10400..1044F; Deseret
 10450..1047F; Shavian
 10480..104AF; Osmanya
 10800..1083F; Cypriot Syllabary
+10A00..10A5F; Kharoshthi
 1D000..1D0FF; Byzantine Musical Symbols
 1D100..1D1FF; Musical Symbols
+1D200..1D24F; Ancient Greek Musical Notation
 1D300..1D35F; Tai Xuan Jing Symbols
 1D400..1D7FF; Mathematical Alphanumeric Symbols
 20000..2A6DF; CJK Unified Ideographs Extension B

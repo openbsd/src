@@ -5,7 +5,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-@tests = (split(/\nEND\n/s, <<DONE));
+@tests = (split(/\nEND\n/s, <<'DONE'));
 TEST1
 This 
 is
@@ -117,6 +117,17 @@ END
  Lines
 
 END
+TEST13 break=\d
+I saw 3 ships come sailing in
+END
+   I saw 3 ships come sailing in
+END
+TEST14 break=\d
+the.quick.brown.fox.jumps.over.the.9.lazy.dogs.for.no.good.reason.whatsoever.apparently
+END
+   the.quick.brown.fox.jumps.over.the.
+ .lazy.dogs.for.no.good.reason.whatsoever.apparently
+END
 DONE
 
 
@@ -135,7 +146,9 @@ while (@st) {
 	my $in = shift(@st);
 	my $out = shift(@st);
 
-	$in =~ s/^TEST(\d+)?\n//;
+	$in =~ s/^TEST(\d+)( break=(.*))?\n//
+	    or die "bad TEST header line: $in\n";
+	local $Text::Wrap::break = $3 if defined $3;
 
 	my $back = wrap('   ', ' ', $in);
 
@@ -169,7 +182,10 @@ while(@st) {
 	my $in = shift(@st);
 	my $out = shift(@st);
 
-	$in =~ s/^TEST(\d+)?\n//;
+	$in =~ s/^TEST(\d+)( break=(.*))?\n//
+	    or die "bad TEST header line: $in\n";
+	local $Text::Wrap::break = $3 if defined $3;
+
 
 	my @in = split("\n", $in, -1);
 	@in = ((map { "$_\n" } @in[0..$#in-1]), $in[-1]);

@@ -1,6 +1,6 @@
 package ExtUtils::Constant;
-use vars qw (@ISA $VERSION %XS_Constant %XS_TypeSet @EXPORT_OK %EXPORT_TAGS);
-$VERSION = 0.14_01;
+use vars qw (@ISA $VERSION @EXPORT_OK %EXPORT_TAGS);
+$VERSION = 0.17;
 
 =head1 NAME
 
@@ -94,15 +94,11 @@ if ($] >= 5.006) {
   eval "use warnings; 1" or die $@;
 }
 use strict;
-use vars '$is_perl56';
-use Carp;
-
-$is_perl56 = ($] < 5.007 && $] > 5.005_50);
+use Carp qw(croak cluck);
 
 use Exporter;
-use Text::Wrap;
-$Text::Wrap::huge = 'overflow';
-$Text::Wrap::columns = 80;
+use ExtUtils::Constant::Utils qw(C_stringify);
+use ExtUtils::Constant::XS qw(%XS_Constant %XS_TypeSet);
 
 @ISA = 'Exporter';
 
@@ -113,117 +109,6 @@ $Text::Wrap::columns = 80;
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-# '' is used as a flag to indicate non-ascii macro names, and hence the need
-# to pass in the utf8 on/off flag.
-%XS_Constant = (
-		''    => '',
-		IV    => 'PUSHi(iv)',
-		UV    => 'PUSHu((UV)iv)',
-		NV    => 'PUSHn(nv)',
-		PV    => 'PUSHp(pv, strlen(pv))',
-		PVN   => 'PUSHp(pv, iv)',
-		SV    => 'PUSHs(sv)',
-		YES   => 'PUSHs(&PL_sv_yes)',
-		NO    => 'PUSHs(&PL_sv_no)',
-		UNDEF => '',	# implicit undef
-);
-
-%XS_TypeSet = (
-		IV    => '*iv_return =',
-		UV    => '*iv_return = (IV)',
-		NV    => '*nv_return =',
-		PV    => '*pv_return =',
-		PVN   => ['*pv_return =', '*iv_return = (IV)'],
-		SV    => '*sv_return = ',
-		YES   => undef,
-		NO    => undef,
-		UNDEF => undef,
-);
-
-
-=item C_stringify NAME
-
-A function which returns a 7 bit ASCII correctly \ escaped version of the
-string passed suitable for C's "" or ''. It will die if passed Unicode
-characters.
-
-=cut
-
-# Hopefully make a happy C identifier.
-sub C_stringify {
-  local $_ = shift;
-  return unless defined $_;
-  # grr 5.6.1
-  confess "Wide character in '$_' intended as a C identifier"
-    if tr/\0-\377// != length;
-  # grr 5.6.1 moreso because its regexps will break on data that happens to
-  # be utf8, which includes my 8 bit test cases.
-  $_ = pack 'C*', unpack 'U*', $_ . pack 'U*' if $is_perl56;
-  s/\\/\\\\/g;
-  s/([\"\'])/\\$1/g;	# Grr. fix perl mode.
-  s/\n/\\n/g;		# Ensure newlines don't end up in octal
-  s/\r/\\r/g;
-  s/\t/\\t/g;
-  s/\f/\\f/g;
-  s/\a/\\a/g;
-  s/([^\0-\177])/sprintf "\\%03o", ord $1/ge;
-  unless ($] < 5.006) {
-    # This will elicit a warning on 5.005_03 about [: :] being reserved unless
-    # I cheat
-    my $cheat = '([[:^print:]])';
-    s/$cheat/sprintf "\\%03o", ord $1/ge;
-  } else {
-    require POSIX;
-    s/([^A-Za-z0-9_])/POSIX::isprint($1) ? $1 : sprintf "\\%03o", ord $1/ge;
-  }
-  $_;
-}
-
-=item perl_stringify NAME
-
-A function which returns a 7 bit ASCII correctly \ escaped version of the
-string passed suitable for a perl "" string.
-
-=cut
-
-# Hopefully make a happy perl identifier.
-sub perl_stringify {
-  local $_ = shift;
-  return unless defined $_;
-  s/\\/\\\\/g;
-  s/([\"\'])/\\$1/g;	# Grr. fix perl mode.
-  s/\n/\\n/g;		# Ensure newlines don't end up in octal
-  s/\r/\\r/g;
-  s/\t/\\t/g;
-  s/\f/\\f/g;
-  s/\a/\\a/g;
-  unless ($] < 5.006) {
-    if ($] > 5.007) {
-      s/([^\0-\177])/sprintf "\\x{%X}", ord $1/ge;
-    } else {
-      # Grr 5.6.1. And I don't think I can use utf8; to force the regexp
-      # because 5.005_03 will fail.
-      # This is grim, but I also can't split on //
-      my $copy;
-      foreach my $index (0 .. length ($_) - 1) {
-        my $char = substr ($_, $index, 1);
-        $copy .= ($char le "\177") ? $char : sprintf "\\x{%X}", ord $char;
-      }
-      $_ = $copy;
-    }
-    # This will elicit a warning on 5.005_03 about [: :] being reserved unless
-    # I cheat
-    my $cheat = '([[:^print:]])';
-    s/$cheat/sprintf "\\%03o", ord $1/ge;
-  } else {
-    # Turns out "\x{}" notation only arrived with 5.6
-    s/([^\0-\177])/sprintf "\\x%02X", ord $1/ge;
-    require POSIX;
-    s/([^A-Za-z0-9_])/POSIX::isprint($1) ? $1 : sprintf "\\%03o", ord $1/ge;
-  }
-  $_;
-}
-
 =item constant_types
 
 A function returning a single scalar with C<#define> definitions for the
@@ -231,863 +116,37 @@ constants used internally between the generated C and XS functions.
 
 =cut
 
-sub constant_types () {
-  my $start = 1;
-  my @lines;
-  push @lines, "#define PERL_constant_NOTFOUND\t$start\n"; $start++;
-  push @lines, "#define PERL_constant_NOTDEF\t$start\n"; $start++;
-  foreach (sort keys %XS_Constant) {
-    next if $_ eq '';
-    push @lines, "#define PERL_constant_IS$_\t$start\n"; $start++;
-  }
-  push @lines, << 'EOT';
-
-#ifndef NVTYPE
-typedef double NV; /* 5.6 and later define NVTYPE, and typedef NV to it.  */
-#endif
-#ifndef aTHX_
-#define aTHX_ /* 5.6 or later define this for threading support.  */
-#endif
-#ifndef pTHX_
-#define pTHX_ /* 5.6 or later define this for threading support.  */
-#endif
-EOT
-
-  return join '', @lines;
+sub constant_types {
+  ExtUtils::Constant::XS->header();
 }
-
-=item memEQ_clause NAME, CHECKED_AT, INDENT
-
-A function to return a suitable C C<if> statement to check whether I<NAME>
-is equal to the C variable C<name>. If I<CHECKED_AT> is defined, then it
-is used to avoid C<memEQ> for short names, or to generate a comment to
-highlight the position of the character in the C<switch> statement.
-
-If I<CHECKED_AT> is a reference to a scalar, then instead it gives
-the characters pre-checked at the beginning, (and the number of chars by
-which the C variable name has been advanced. These need to be chopped from
-the front of I<NAME>).
-
-=cut
 
 sub memEQ_clause {
-#    if (memEQ(name, "thingy", 6)) {
-  # Which could actually be a character comparison or even ""
-  my ($name, $checked_at, $indent) = @_;
-  $indent = ' ' x ($indent || 4);
-  my $front_chop;
-  if (ref $checked_at) {
-    # regexp won't work on 5.6.1 without use utf8; in turn that won't work
-    # on 5.005_03.
-    substr ($name, 0, length $$checked_at,) = '';
-    $front_chop = C_stringify ($$checked_at);
-    undef $checked_at;
-  }
-  my $len = length $name;
-
-  if ($len < 2) {
-    return $indent . "{\n" if (defined $checked_at and $checked_at == 0);
-    # We didn't switch, drop through to the code for the 2 character string
-    $checked_at = 1;
-  }
-  if ($len < 3 and defined $checked_at) {
-    my $check;
-    if ($checked_at == 1) {
-      $check = 0;
-    } elsif ($checked_at == 0) {
-      $check = 1;
-    }
-    if (defined $check) {
-      my $char = C_stringify (substr $name, $check, 1);
-      return $indent . "if (name[$check] == '$char') {\n";
-    }
-  }
-  if (($len == 2 and !defined $checked_at)
-     or ($len == 3 and defined ($checked_at) and $checked_at == 2)) {
-    my $char1 = C_stringify (substr $name, 0, 1);
-    my $char2 = C_stringify (substr $name, 1, 1);
-    return $indent . "if (name[0] == '$char1' && name[1] == '$char2') {\n";
-  }
-  if (($len == 3 and defined ($checked_at) and $checked_at == 1)) {
-    my $char1 = C_stringify (substr $name, 0, 1);
-    my $char2 = C_stringify (substr $name, 2, 1);
-    return $indent . "if (name[0] == '$char1' && name[2] == '$char2') {\n";
-  }
-
-  my $pointer = '^';
-  my $have_checked_last = defined ($checked_at) && $len == $checked_at + 1;
-  if ($have_checked_last) {
-    # Checked at the last character, so no need to memEQ it.
-    $pointer = C_stringify (chop $name);
-    $len--;
-  }
-
-  $name = C_stringify ($name);
-  my $body = $indent . "if (memEQ(name, \"$name\", $len)) {\n";
-  # Put a little ^ under the letter we checked at
-  # Screws up for non printable and non-7 bit stuff, but that's too hard to
-  # get right.
-  if (defined $checked_at) {
-    $body .= $indent . "/*               ". (' ' x $checked_at) . $pointer
-      . (' ' x ($len - $checked_at + length $len)) . "    */\n";
-  } elsif (defined $front_chop) {
-    $body .= $indent . "/*              $front_chop"
-      . (' ' x ($len + 1 + length $len)) . "    */\n";
-  }
-  return $body;
+  cluck "ExtUtils::Constant::memEQ_clause is deprecated";
+  ExtUtils::Constant::XS->memEQ_clause({name=>$_[0], checked_at=>$_[1],
+					indent=>$_[2]});
 }
-
-=item assign INDENT, TYPE, PRE, POST, VALUE...
-
-A function to return a suitable assignment clause. If I<TYPE> is aggregate
-(eg I<PVN> expects both pointer and length) then there should be multiple
-I<VALUE>s for the components. I<PRE> and I<POST> if defined give snippets
-of C code to proceed and follow the assignment. I<PRE> will be at the start
-of a block, so variables may be defined in it.
-
-=cut
-
-# Hmm. value undef to to NOTDEF? value () to do NOTFOUND?
-
-sub assign {
-  my $indent = shift;
-  my $type = shift;
-  my $pre = shift;
-  my $post = shift || '';
-  my $clause;
-  my $close;
-  if ($pre) {
-    chomp $pre;
-    $clause = $indent . "{\n$pre";
-    $clause .= ";" unless $pre =~ /;$/;
-    $clause .= "\n";
-    $close = "$indent}\n";
-    $indent .= "  ";
-  }
-  confess "undef \$type" unless defined $type;
-  confess "Can't generate code for type $type" unless exists $XS_TypeSet{$type};
-  my $typeset = $XS_TypeSet{$type};
-  if (ref $typeset) {
-    die "Type $type is aggregate, but only single value given"
-      if @_ == 1;
-    foreach (0 .. $#$typeset) {
-      $clause .= $indent . "$typeset->[$_] $_[$_];\n";
-    }
-  } elsif (defined $typeset) {
-    die "Aggregate value given for type $type"
-      if @_ > 1;
-    $clause .= $indent . "$typeset $_[0];\n";
-  }
-  chomp $post;
-  if (length $post) {
-    $clause .= "$post";
-    $clause .= ";" unless $post =~ /;$/;
-    $clause .= "\n";
-  }
-  $clause .= "${indent}return PERL_constant_IS$type;\n";
-  $clause .= $close if $close;
-  return $clause;
-}
-
-=item return_clause
-
-return_clause ITEM, INDENT
-
-A function to return a suitable C<#ifdef> clause. I<ITEM> is a hashref
-(as passed to C<C_constant> and C<match_clause>. I<INDENT> is the number
-of spaces to indent, defaulting to 6.
-
-=cut
 
 sub return_clause ($$) {
-##ifdef thingy
-#      *iv_return = thingy;
-#      return PERL_constant_ISIV;
-##else
-#      return PERL_constant_NOTDEF;
-##endif
-  my ($item, $indent) = @_;
-
-  my ($name, $value, $macro, $default, $pre, $post, $def_pre, $def_post, $type)
-    = @$item{qw (name value macro default pre post def_pre def_post type)};
-  $value = $name unless defined $value;
-  $macro = $name unless defined $macro;
-
-  $macro = $value unless defined $macro;
-  $indent = ' ' x ($indent || 6);
-  unless ($type) {
-    # use Data::Dumper; print STDERR Dumper ($item);
-    confess "undef \$type";
-  }
-
-  my $clause;
-
-  ##ifdef thingy
-  if (ref $macro) {
-    $clause = $macro->[0];
-  } elsif ($macro ne "1") {
-    $clause = "#ifdef $macro\n";
-  }
-
-  #      *iv_return = thingy;
-  #      return PERL_constant_ISIV;
-  $clause .= assign ($indent, $type, $pre, $post,
-                     ref $value ? @$value : $value);
-
-  if (ref $macro or $macro ne "1") {
-    ##else
-    $clause .= "#else\n";
-
-    #      return PERL_constant_NOTDEF;
-    if (!defined $default) {
-      $clause .= "${indent}return PERL_constant_NOTDEF;\n";
-    } else {
-      my @default = ref $default ? @$default : $default;
-      $type = shift @default;
-      $clause .= assign ($indent, $type, $def_pre, $def_post, @default);
-    }
-
-    ##endif
-    if (ref $macro) {
-      $clause .= $macro->[1];
-    } else {
-      $clause .= "#endif\n";
-    }
-  }
-  return $clause;
+  cluck "ExtUtils::Constant::return_clause is deprecated";
+  my $indent = shift;
+  ExtUtils::Constant::XS->return_clause({indent=>$indent}, @_);
 }
-
-=pod
-
-XXX document me
-
-=cut
-
-sub match_clause {
-  # $offset defined if we have checked an offset.
-  my ($item, $offset, $indent) = @_;
-  $indent = ' ' x ($indent || 4);
-  my $body = '';
-  my ($no, $yes, $either, $name, $inner_indent);
-  if (ref $item eq 'ARRAY') {
-    ($yes, $no) = @$item;
-    $either = $yes || $no;
-    confess "$item is $either expecting hashref in [0] || [1]"
-      unless ref $either eq 'HASH';
-    $name = $either->{name};
-  } else {
-    confess "$item->{name} has utf8 flag '$item->{utf8}', should be false"
-      if $item->{utf8};
-    $name = $item->{name};
-    $inner_indent = $indent;
-  }
-
-  $body .= memEQ_clause ($name, $offset, length $indent);
-  if ($yes) {
-    $body .= $indent . "  if (utf8) {\n";
-  } elsif ($no) {
-    $body .= $indent . "  if (!utf8) {\n";
-  }
-  if ($either) {
-    $body .= return_clause ($either, 4 + length $indent);
-    if ($yes and $no) {
-      $body .= $indent . "  } else {\n";
-      $body .= return_clause ($no, 4 + length $indent); 
-    }
-    $body .= $indent . "  }\n";
-  } else {
-    $body .= return_clause ($item, 2 + length $indent);
-  }
-  $body .= $indent . "}\n";
-}
-
-=item switch_clause INDENT, NAMELEN, ITEMHASH, ITEM...
-
-An internal function to generate a suitable C<switch> clause, called by
-C<C_constant> I<ITEM>s are in the hash ref format as given in the description
-of C<C_constant>, and must all have the names of the same length, given by
-I<NAMELEN> (This is not checked).  I<ITEMHASH> is a reference to a hash,
-keyed by name, values being the hashrefs in the I<ITEM> list.
-(No parameters are modified, and there can be keys in the I<ITEMHASH> that
-are not in the list of I<ITEM>s without causing problems).
-
-=cut
 
 sub switch_clause {
-  my ($indent, $comment, $namelen, $items, @items) = @_;
-  $indent = ' ' x ($indent || 2);
-
-  my @names = sort map {$_->{name}} @items;
-  my $leader = $indent . '/* ';
-  my $follower = ' ' x length $leader;
-  my $body = $indent . "/* Names all of length $namelen.  */\n";
-  if ($comment) {
-    $body = wrap ($leader, $follower, $comment) . "\n";
-    $leader = $follower;
-  }
-  my @safe_names = @names;
-  foreach (@safe_names) {
-    confess sprintf "Name '$_' is length %d, not $namelen", length
-      unless length == $namelen;
-    # Argh. 5.6.1
-    # next unless tr/A-Za-z0-9_//c;
-    next if tr/A-Za-z0-9_// == length;
-    $_ = '"' . perl_stringify ($_) . '"';
-    # Ensure that the enclosing C comment doesn't end
-    # by turning */  into *" . "/
-    s!\*\/!\*"."/!gs;
-    # gcc -Wall doesn't like finding /* inside a comment
-    s!\/\*!/"."\*!gs;
-  }
-  $body .= wrap ($leader, $follower, join (" ", @safe_names) . " */") . "\n";
-  # Figure out what to switch on.
-  # (RMS, Spread of jump table, Position, Hashref)
-  my @best = (1e38, ~0);
-  # Prefer the last character over the others. (As it lets us shortern the
-  # memEQ clause at no cost).
-  foreach my $i ($namelen - 1, 0 .. ($namelen - 2)) {
-    my ($min, $max) = (~0, 0);
-    my %spread;
-    if ($is_perl56) {
-      # Need proper Unicode preserving hash keys for bytes in range 128-255
-      # here too, for some reason. grr 5.6.1 yet again.
-      tie %spread, 'ExtUtils::Constant::Aaargh56Hash';
-    }
-    foreach (@names) {
-      my $char = substr $_, $i, 1;
-      my $ord = ord $char;
-      confess "char $ord is out of range" if $ord > 255;
-      $max = $ord if $ord > $max;
-      $min = $ord if $ord < $min;
-      push @{$spread{$char}}, $_;
-      # warn "$_ $char";
-    }
-    # I'm going to pick the character to split on that minimises the root
-    # mean square of the number of names in each case. Normally this should
-    # be the one with the most keys, but it may pick a 7 where the 8 has
-    # one long linear search. I'm not sure if RMS or just sum of squares is
-    # actually better.
-    # $max and $min are for the tie-breaker if the root mean squares match.
-    # Assuming that the compiler may be building a jump table for the
-    # switch() then try to minimise the size of that jump table.
-    # Finally use < not <= so that if it still ties the earliest part of
-    # the string wins. Because if that passes but the memEQ fails, it may
-    # only need the start of the string to bin the choice.
-    # I think. But I'm micro-optimising. :-)
-    # OK. Trump that. Now favour the last character of the string, before the
-    # rest.
-    my $ss;
-    $ss += @$_ * @$_ foreach values %spread;
-    my $rms = sqrt ($ss / keys %spread);
-    if ($rms < $best[0] || ($rms == $best[0] && ($max - $min) < $best[1])) {
-      @best = ($rms, $max - $min, $i, \%spread);
-    }
-  }
-  confess "Internal error. Failed to pick a switch point for @names"
-    unless defined $best[2];
-  # use Data::Dumper; print Dumper (@best);
-  my ($offset, $best) = @best[2,3];
-  $body .= $indent . "/* Offset $offset gives the best switch position.  */\n";
-
-  my $do_front_chop = $offset == 0 && $namelen > 2;
-  if ($do_front_chop) {
-    $body .= $indent . "switch (*name++) {\n";
-  } else {
-    $body .= $indent . "switch (name[$offset]) {\n";
-  }
-  foreach my $char (sort keys %$best) {
-    confess sprintf "'$char' is %d bytes long, not 1", length $char
-      if length ($char) != 1;
-    confess sprintf "char %#X is out of range", ord $char if ord ($char) > 255;
-    $body .= $indent . "case '" . C_stringify ($char) . "':\n";
-    foreach my $name (sort @{$best->{$char}}) {
-      my $thisone = $items->{$name};
-      # warn "You are here";
-      if ($do_front_chop) {
-        $body .= match_clause ($thisone, \$char, 2 + length $indent);
-      } else {
-        $body .= match_clause ($thisone, $offset, 2 + length $indent);
-      }
-    }
-    $body .= $indent . "  break;\n";
-  }
-  $body .= $indent . "}\n";
-  return $body;
+  cluck "ExtUtils::Constant::switch_clause is deprecated";
+  my $indent = shift;
+  my $comment = shift;
+  ExtUtils::Constant::XS->switch_clause({indent=>$indent, comment=>$comment},
+					@_);
 }
-
-=item params WHAT
-
-An internal function. I<WHAT> should be a hashref of types the constant
-function will return. I<params> returns a hashref keyed IV NV PV SV to show
-which combination of pointers will be needed in the C argument list.
-
-=cut
-
-sub params {
-  my $what = shift;
-  foreach (sort keys %$what) {
-    warn "ExtUtils::Constant doesn't know how to handle values of type $_" unless defined $XS_Constant{$_};
-  }
-  my $params = {};
-  $params->{''} = 1 if $what->{''};
-  $params->{IV} = 1 if $what->{IV} || $what->{UV} || $what->{PVN};
-  $params->{NV} = 1 if $what->{NV};
-  $params->{PV} = 1 if $what->{PV} || $what->{PVN};
-  $params->{SV} = 1 if $what->{SV};
-  return $params;
-}
-
-=item dump_names
-
-dump_names DEFAULT_TYPE, TYPES, INDENT, OPTIONS, ITEM...
-
-An internal function to generate the embedded perl code that will regenerate
-the constant subroutines.  I<DEFAULT_TYPE>, I<TYPES> and I<ITEM>s are the
-same as for C_constant.  I<INDENT> is treated as number of spaces to indent
-by.  I<OPTIONS> is a hashref of options. Currently only C<declare_types> is
-recognised.  If the value is true a C<$types> is always declared in the perl
-code generated, if defined and false never declared, and if undefined C<$types>
-is only declared if the values in I<TYPES> as passed in cannot be inferred from
-I<DEFAULT_TYPES> and the I<ITEM>s.
-
-=cut
-
-sub dump_names {
-  my ($default_type, $what, $indent, $options, @items) = @_;
-  my $declare_types = $options->{declare_types};
-  $indent = ' ' x ($indent || 0);
-
-  my $result;
-  my (@simple, @complex, %used_types);
-  foreach (@items) {
-    my $type;
-    if (ref $_) {
-      $type = $_->{type} || $default_type;
-      if ($_->{utf8}) {
-        # For simplicity always skip the bytes case, and reconstitute this entry
-        # from its utf8 twin.
-        next if $_->{utf8} eq 'no';
-        # Copy the hashref, as we don't want to mess with the caller's hashref.
-        $_ = {%$_};
-        unless ($is_perl56) {
-          utf8::decode ($_->{name});
-        } else {
-          $_->{name} = pack 'U*', unpack 'U0U*', $_->{name};
-        }
-        delete $_->{utf8};
-      }
-    } else {
-      $_ = {name=>$_};
-      $type = $default_type;
-    }
-    $used_types{$type}++;
-    if ($type eq $default_type
-        # grr 5.6.1
-        and length $_->{name} == ($_->{name} =~ tr/A-Za-z0-9_//)
-        and !defined ($_->{macro}) and !defined ($_->{value})
-        and !defined ($_->{default}) and !defined ($_->{pre})
-        and !defined ($_->{post}) and !defined ($_->{def_pre})
-        and !defined ($_->{def_post})) {
-      # It's the default type, and the name consists only of A-Za-z0-9_
-      push @simple, $_->{name};
-    } else {
-      push @complex, $_;
-    }
-  }
-
-  if (!defined $declare_types) {
-    # Do they pass in any types we weren't already using?
-    foreach (keys %$what) {
-      next if $used_types{$_};
-      $declare_types++; # Found one in $what that wasn't used.
-      last; # And one is enough to terminate this loop
-    }
-  }
-  if ($declare_types) {
-    $result = $indent . 'my $types = {map {($_, 1)} qw('
-      . join (" ", sort keys %$what) . ")};\n";
-  }
-  $result .= wrap ($indent . "my \@names = (qw(",
-		   $indent . "               ", join (" ", sort @simple) . ")");
-  if (@complex) {
-    foreach my $item (sort {$a->{name} cmp $b->{name}} @complex) {
-      my $name = perl_stringify $item->{name};
-      my $line = ",\n$indent            {name=>\"$name\"";
-      $line .= ", type=>\"$item->{type}\"" if defined $item->{type};
-      foreach my $thing (qw (macro value default pre post def_pre def_post)) {
-        my $value = $item->{$thing};
-        if (defined $value) {
-          if (ref $value) {
-            $line .= ", $thing=>[\""
-              . join ('", "', map {perl_stringify $_} @$value) . '"]';
-          } else {
-            $line .= ", $thing=>\"" . perl_stringify($value) . "\"";
-          }
-        }
-      }
-      $line .= "}";
-      # Ensure that the enclosing C comment doesn't end
-      # by turning */  into *" . "/
-      $line =~ s!\*\/!\*" . "/!gs;
-      # gcc -Wall doesn't like finding /* inside a comment
-      $line =~ s!\/\*!/" . "\*!gs;
-      $result .= $line;
-    }
-  }
-  $result .= ");\n";
-
-  $result;
-}
-
-
-=item dogfood
-
-dogfood PACKAGE, SUBNAME, DEFAULT_TYPE, TYPES, INDENT, BREAKOUT, ITEM...
-
-An internal function to generate the embedded perl code that will regenerate
-the constant subroutines.  Parameters are the same as for C_constant.
-
-=cut
-
-sub dogfood {
-  my ($package, $subname, $default_type, $what, $indent, $breakout, @items)
-    = @_;
-  my $result = <<"EOT";
-  /* When generated this function returned values for the list of names given
-     in this section of perl code.  Rather than manually editing these functions
-     to add or remove constants, which would result in this comment and section
-     of code becoming inaccurate, we recommend that you edit this section of
-     code, and use it to regenerate a new set of constant functions which you
-     then use to replace the originals.
-
-     Regenerate these constant functions by feeding this entire source file to
-     perl -x
-
-#!$^X -w
-use ExtUtils::Constant qw (constant_types C_constant XS_constant);
-
-EOT
-  $result .= dump_names ($default_type, $what, 0, {declare_types=>1}, @items);
-  $result .= <<'EOT';
-
-print constant_types(); # macro defs
-EOT
-  $package = perl_stringify($package);
-  $result .=
-    "foreach (C_constant (\"$package\", '$subname', '$default_type', \$types, ";
-  # The form of the indent parameter isn't defined. (Yet)
-  if (defined $indent) {
-    require Data::Dumper;
-    $Data::Dumper::Terse=1;
-    $Data::Dumper::Terse=1; # Not used once. :-)
-    chomp ($indent = Data::Dumper::Dumper ($indent));
-    $result .= $indent;
-  } else {
-    $result .= 'undef';
-  }
-  $result .= ", $breakout" . ', @names) ) {
-    print $_, "\n"; # C constant subs
-}
-print "#### XS Section:\n";
-print XS_constant ("' . $package . '", $types);
-__END__
-   */
-
-';
-
-  $result;
-}
-
-=item C_constant
-
-C_constant PACKAGE, SUBNAME, DEFAULT_TYPE, TYPES, INDENT, BREAKOUT, ITEM...
-
-A function that returns a B<list> of C subroutine definitions that return
-the value and type of constants when passed the name by the XS wrapper.
-I<ITEM...> gives a list of constant names. Each can either be a string,
-which is taken as a C macro name, or a reference to a hash with the following
-keys
-
-=over 8
-
-=item name
-
-The name of the constant, as seen by the perl code.
-
-=item type
-
-The type of the constant (I<IV>, I<NV> etc)
-
-=item value
-
-A C expression for the value of the constant, or a list of C expressions if
-the type is aggregate. This defaults to the I<name> if not given.
-
-=item macro
-
-The C pre-processor macro to use in the C<#ifdef>. This defaults to the
-I<name>, and is mainly used if I<value> is an C<enum>. If a reference an
-array is passed then the first element is used in place of the C<#ifdef>
-line, and the second element in place of the C<#endif>. This allows
-pre-processor constructions such as
-
-    #if defined (foo)
-    #if !defined (bar)
-    ...
-    #endif
-    #endif
-
-to be used to determine if a constant is to be defined.
-
-A "macro" 1 signals that the constant is always defined, so the C<#if>/C<#endif>
-test is omitted.
-
-=item default
-
-Default value to use (instead of C<croak>ing with "your vendor has not
-defined...") to return if the macro isn't defined. Specify a reference to
-an array with type followed by value(s).
-
-=item pre
-
-C code to use before the assignment of the value of the constant. This allows
-you to use temporary variables to extract a value from part of a C<struct>
-and return this as I<value>. This C code is places at the start of a block,
-so you can declare variables in it.
-
-=item post
-
-C code to place between the assignment of value (to a temporary) and the
-return from the function. This allows you to clear up anything in I<pre>.
-Rarely needed.
-
-=item def_pre
-=item def_post
-
-Equivalents of I<pre> and I<post> for the default value.
-
-=item utf8
-
-Generated internally. Is zero or undefined if name is 7 bit ASCII,
-"no" if the name is 8 bit (and so should only match if SvUTF8() is false),
-"yes" if the name is utf8 encoded.
-
-The internals automatically clone any name with characters 128-255 but none
-256+ (ie one that could be either in bytes or utf8) into a second entry
-which is utf8 encoded.
-
-=back
-
-I<PACKAGE> is the name of the package, and is only used in comments inside the
-generated C code.
-
-The next 5 arguments can safely be given as C<undef>, and are mainly used
-for recursion. I<SUBNAME> defaults to C<constant> if undefined.
-
-I<DEFAULT_TYPE> is the type returned by C<ITEM>s that don't specify their
-type. In turn it defaults to I<IV>. I<TYPES> should be given either as a comma
-separated list of types that the C subroutine C<constant> will generate or as
-a reference to a hash. I<DEFAULT_TYPE> will be added to the list if not
-present, as will any types given in the list of I<ITEM>s. The resultant list
-should be the same list of types that C<XS_constant> is given. [Otherwise
-C<XS_constant> and C<C_constant> may differ in the number of parameters to the
-constant function. I<INDENT> is currently unused and ignored. In future it may
-be used to pass in information used to change the C indentation style used.]
-The best way to maintain consistency is to pass in a hash reference and let
-this function update it.
-
-I<BREAKOUT> governs when child functions of I<SUBNAME> are generated.  If there
-are I<BREAKOUT> or more I<ITEM>s with the same length of name, then the code
-to switch between them is placed into a function named I<SUBNAME>_I<LEN>, for
-example C<constant_5> for names 5 characters long.  The default I<BREAKOUT> is
-3.  A single C<ITEM> is always inlined.
-
-=cut
-
-# The parameter now BREAKOUT was previously documented as:
-#
-# I<NAMELEN> if defined signals that all the I<name>s of the I<ITEM>s are of
-# this length, and that the constant name passed in by perl is checked and
-# also of this length. It is used during recursion, and should be C<undef>
-# unless the caller has checked all the lengths during code generation, and
-# the generated subroutine is only to be called with a name of this length.
-#
-# As you can see it now performs this function during recursion by being a
-# scalar reference.
 
 sub C_constant {
   my ($package, $subname, $default_type, $what, $indent, $breakout, @items)
     = @_;
-  $package ||= 'Foo';
-  $subname ||= 'constant';
-  # I'm not using this. But a hashref could be used for full formatting without
-  # breaking this API
-  # $indent ||= 0;
-
-  my ($namelen, $items);
-  if (ref $breakout) {
-    # We are called recursively. We trust @items to be normalised, $what to
-    # be a hashref, and pinch %$items from our parent to save recalculation.
-    ($namelen, $items) = @$breakout;
-  } else {
-    if ($is_perl56) {
-      # Need proper Unicode preserving hash keys.
-      $items = {};
-      tie %$items, 'ExtUtils::Constant::Aaargh56Hash';
-    }
-    $breakout ||= 3;
-    $default_type ||= 'IV';
-    if (!ref $what) {
-      # Convert line of the form IV,UV,NV to hash
-      $what = {map {$_ => 1} split /,\s*/, ($what || '')};
-      # Figure out what types we're dealing with, and assign all unknowns to the
-      # default type
-    }
-    my @new_items;
-    foreach my $orig (@items) {
-      my ($name, $item);
-      if (ref $orig) {
-        # Make a copy which is a normalised version of the ref passed in.
-        $name = $orig->{name};
-        my ($type, $macro, $value) = @$orig{qw (type macro value)};
-        $type ||= $default_type;
-        $what->{$type} = 1;
-        $item = {name=>$name, type=>$type};
-
-        undef $macro if defined $macro and $macro eq $name;
-        $item->{macro} = $macro if defined $macro;
-        undef $value if defined $value and $value eq $name;
-        $item->{value} = $value if defined $value;
-        foreach my $key (qw(default pre post def_pre def_post)) {
-          my $value = $orig->{$key};
-          $item->{$key} = $value if defined $value;
-          # warn "$key $value";
-        }
-      } else {
-        $name = $orig;
-        $item = {name=>$name, type=>$default_type};
-        $what->{$default_type} = 1;
-      }
-      warn "ExtUtils::Constant doesn't know how to handle values of type $_ used in macro $name" unless defined $XS_Constant{$item->{type}};
-      # tr///c is broken on 5.6.1 for utf8, so my original tr/\0-\177//c
-      # doesn't work. Upgrade to 5.8
-      # if ($name !~ tr/\0-\177//c || $] < 5.005_50) {
-      if ($name =~ tr/\0-\177// == length $name || $] < 5.005_50) {
-        # No characters outside 7 bit ASCII.
-        if (exists $items->{$name}) {
-          die "Multiple definitions for macro $name";
-        }
-        $items->{$name} = $item;
-      } else {
-        # No characters outside 8 bit. This is hardest.
-        if (exists $items->{$name} and ref $items->{$name} ne 'ARRAY') {
-          confess "Unexpected ASCII definition for macro $name";
-        }
-        # Again, 5.6.1 tr broken, so s/5\.6.*/5\.8\.0/;
-        # if ($name !~ tr/\0-\377//c) {
-        if ($name =~ tr/\0-\377// == length $name) {
-#          if ($] < 5.007) {
-#            $name = pack "C*", unpack "U*", $name;
-#          }
-          $item->{utf8} = 'no';
-          $items->{$name}[1] = $item;
-          push @new_items, $item;
-          # Copy item, to create the utf8 variant.
-          $item = {%$item};
-        }
-        # Encode the name as utf8 bytes.
-        unless ($is_perl56) {
-          utf8::encode($name);
-        } else {
-#          warn "Was >$name< " . length ${name};
-          $name = pack 'C*', unpack 'C*', $name . pack 'U*';
-#          warn "Now '${name}' " . length ${name};
-        }
-        if ($items->{$name}[0]) {
-          die "Multiple definitions for macro $name";
-        }
-        $item->{utf8} = 'yes';
-        $item->{name} = $name;
-        $items->{$name}[0] = $item;
-        # We have need for the utf8 flag.
-        $what->{''} = 1;
-      }
-      push @new_items, $item;
-    }
-    @items = @new_items;
-    # use Data::Dumper; print Dumper @items;
-  }
-  my $params = params ($what);
-
-  my ($body, @subs) = "static int\n$subname (pTHX_ const char *name";
-  $body .= ", STRLEN len" unless defined $namelen;
-  $body .= ", int utf8" if $params->{''};
-  $body .= ", IV *iv_return" if $params->{IV};
-  $body .= ", NV *nv_return" if $params->{NV};
-  $body .= ", const char **pv_return" if $params->{PV};
-  $body .= ", SV **sv_return" if $params->{SV};
-  $body .= ") {\n";
-
-  if (defined $namelen) {
-    # We are a child subroutine. Print the simple description
-    my $comment = 'When generated this function returned values for the list'
-      . ' of names given here.  However, subsequent manual editing may have'
-        . ' added or removed some.';
-    $body .= switch_clause (2, $comment, $namelen, $items, @items);
-  } else {
-    # We are the top level.
-    $body .= "  /* Initially switch on the length of the name.  */\n";
-    $body .= dogfood ($package, $subname, $default_type, $what, $indent,
-                      $breakout, @items);
-    $body .= "  switch (len) {\n";
-    # Need to group names of the same length
-    my @by_length;
-    foreach (@items) {
-      push @{$by_length[length $_->{name}]}, $_;
-    }
-    foreach my $i (0 .. $#by_length) {
-      next unless $by_length[$i];	# None of this length
-      $body .= "  case $i:\n";
-      if (@{$by_length[$i]} == 1) {
-        my $only_thing = $by_length[$i]->[0];
-        if ($only_thing->{utf8}) {
-          if ($only_thing->{utf8} eq 'yes') {
-            # With utf8 on flag item is passed in element 0
-            $body .= match_clause ([$only_thing]);
-          } else {
-            # With utf8 off flag item is passed in element 1
-            $body .= match_clause ([undef, $only_thing]);
-          }
-        } else {
-          $body .= match_clause ($only_thing);
-        }
-      } elsif (@{$by_length[$i]} < $breakout) {
-        $body .= switch_clause (4, '', $i, $items, @{$by_length[$i]});
-      } else {
-        # Only use the minimal set of parameters actually needed by the types
-        # of the names of this length.
-        my $what = {};
-        foreach (@{$by_length[$i]}) {
-          $what->{$_->{type}} = 1;
-          $what->{''} = 1 if $_->{utf8};
-        }
-        $params = params ($what);
-        push @subs, C_constant ($package, "${subname}_$i", $default_type, $what,
-                                $indent, [$i, $items], @{$by_length[$i]});
-        $body .= "    return ${subname}_$i (aTHX_ name";
-        $body .= ", utf8" if $params->{''};
-        $body .= ", iv_return" if $params->{IV};
-        $body .= ", nv_return" if $params->{NV};
-        $body .= ", pv_return" if $params->{PV};
-        $body .= ", sv_return" if $params->{SV};
-        $body .= ");\n";
-      }
-      $body .= "    break;\n";
-    }
-    $body .= "  }\n";
-  }
-  $body .= "  return PERL_constant_NOTFOUND;\n}\n";
-  return (@subs, $body);
+  ExtUtils::Constant::XS->C_constant({package => $package, subname => $subname,
+				      default_type => $default_type,
+				      types => $what, indent => $indent,
+				      breakout => $breakout}, @items);
 }
 
 =item XS_constant PACKAGE, TYPES, SUBNAME, C_SUBNAME
@@ -1122,7 +181,7 @@ sub XS_constant {
     # Convert line of the form IV,UV,NV to hash
     $what = {map {$_ => 1} split /,\s*/, ($what)};
   }
-  my $params = params ($what);
+  my $params = ExtUtils::Constant::XS->params ($what);
   my $type;
 
   my $xs = <<"EOT";
@@ -1339,9 +398,10 @@ EOT
 EOT
 
   $result =~ s/^/' 'x$indent/gem;
-  return dump_names ($args{DEFAULT_TYPE}, undef, $indent, undef,
-                           @{$args{NAMES}})
-          . $result;
+  return ExtUtils::Constant::XS->dump_names({default_type=>$args{DEFAULT_TYPE},
+					     indent=>$indent,},
+					    @{$args{NAMES}})
+    . $result;
 }
 
 =item WriteConstants ATTRIBUTE =E<gt> VALUE [, ...]
@@ -1414,8 +474,18 @@ sub WriteConstants {
 
   croak "Module name not specified" unless length $ARGS{NAME};
 
-  open my $c_fh, ">$ARGS{C_FILE}" or die "Can't open $ARGS{C_FILE}: $!";
-  open my $xs_fh, ">$ARGS{XS_FILE}" or die "Can't open $ARGS{XS_FILE}: $!";
+  my ($c_fh, $xs_fh);
+  if ($] <= 5.008) {
+      # We need these little games, rather than doing things unconditionally,
+      # because we're used in core Makefile.PLs before IO is available (needed
+      # by filehandle), but also we want to work on older perls where undefined
+      # scalars do not automatically turn into anonymous file handles.
+      require FileHandle;
+      $c_fh = FileHandle->new();
+      $xs_fh = FileHandle->new();
+  }
+  open $c_fh, ">$ARGS{C_FILE}" or die "Can't open $ARGS{C_FILE}: $!";
+  open $xs_fh, ">$ARGS{XS_FILE}" or die "Can't open $ARGS{XS_FILE}: $!";
 
   # As this subroutine is intended to make code that isn't edited, there's no
   # need for the user to specify any types that aren't found in the list of
@@ -1426,8 +496,13 @@ sub WriteConstants {
   print $c_fh "\n";
 
   # indent is still undef. Until anyone implements indent style rules with it.
-  foreach (C_constant ($ARGS{NAME}, $ARGS{C_SUBNAME}, $ARGS{DEFAULT_TYPE},
-                       $types, undef, $ARGS{BREAKOUT_AT}, @{$ARGS{NAMES}})) {
+  foreach (ExtUtils::Constant::XS->C_constant({package => $ARGS{NAME},
+					       subname => $ARGS{C_SUBNAME},
+					       default_type =>
+					       $ARGS{DEFAULT_TYPE},
+					       types => $types,
+					       breakout => $ARGS{BREAKOUT_AT}},
+					       @{$ARGS{NAMES}})) {
     print $c_fh $_, "\n"; # C constant subs
   }
   print $xs_fh XS_constant ($ARGS{NAME}, $types, $ARGS{XS_SUBNAME},
@@ -1437,28 +512,6 @@ sub WriteConstants {
   close $xs_fh or warn "Error closing $ARGS{XS_FILE}: $!";
 }
 
-package ExtUtils::Constant::Aaargh56Hash;
-# A support module (hack) to provide sane Unicode hash keys on 5.6.x perl
-use strict;
-require Tie::Hash if $ExtUtils::Constant::is_perl56;
-use vars '@ISA';
-@ISA = 'Tie::StdHash';
-
-#my $a;
-# Storing the values as concatenated BER encoded numbers is actually going to
-# be terser than using UTF8 :-)
-# And the tests are slightly faster. Ops are bad, m'kay
-sub to_key {pack "w*", unpack "U*", ($_[0] . pack "U*")};
-sub from_key {defined $_[0] ? pack "U*", unpack 'w*', $_[0] : undef};
-
-sub STORE    { $_[0]->{to_key($_[1])} = $_[2] }
-sub FETCH    { $_[0]->{to_key($_[1])} }
-sub FIRSTKEY { my $a = scalar keys %{$_[0]}; from_key (each %{$_[0]}) }
-sub NEXTKEY  { from_key (each %{$_[0]}) }
-sub EXISTS   { exists $_[0]->{to_key($_[1])} }
-sub DELETE   { delete $_[0]->{to_key($_[1])} }
-
-#END {warn "$a accesses";}
 1;
 __END__
 

@@ -1,4 +1,6 @@
-For more recent changes, see the Perl Changes* file(s).
+IO 1.22 -- Mon Sep  5 10:29:35 CDT 2005
+
+ * Update with changes made in perl core distribution
 
 Change 173 on 1998/07/14 by <gbarr@pobox.com> (Graham Barr)
 

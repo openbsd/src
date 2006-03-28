@@ -3,26 +3,44 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
-    push @INC, "::lib:$MacPerl::Architecture" if $^O eq 'MacOS';
 }
 
-$| = 1;
+use Test::More;
 
-my @pass = (0,1);
-my $tests = $^O eq 'MacOS' ? 17 : 14;
-printf "1..%d\n", $tests * scalar(@pass);
+my $TB = Test::More->builder;
+
+plan tests => 60;
+
+# We're going to override rename() later on but Perl has to see an override
+# at compile time to honor it.
+BEGIN { *CORE::GLOBAL::rename = sub { CORE::rename($_[0], $_[1]) }; }
+
 
 use File::Copy;
 use Config;
 
-for my $pass (@pass) {
 
-  my $loopconst = $pass*$tests;
+foreach my $code ("copy()", "copy('arg')", "copy('arg', 'arg', 'arg', 'arg')",
+                  "move()", "move('arg')", "move('arg', 'arg', 'arg')"
+                 )
+{
+    eval $code;
+    like $@, qr/^Usage: /;
+}
+
+
+for my $cross_partition_test (0..1) {
+  {
+    # Simulate a cross-partition copy/move by forcing rename to
+    # fail.
+    no warnings 'redefine';
+    *CORE::GLOBAL::rename = sub { 0 } if $cross_partition_test;
+  }
 
   # First we create a file
   open(F, ">file-$$") or die;
   binmode F; # for DOSISH platforms, because test 3 copies to stdout
-  printf F "ok %d\n", 3 + $loopconst;
+  printf F "ok\n";
   close F;
 
   copy "file-$$", "copy-$$";
@@ -31,28 +49,27 @@ for my $pass (@pass) {
   $foo = <F>;
   close(F);
 
-  print "not " if -s "file-$$" != -s "copy-$$";
-  printf "ok %d\n", 1 + $loopconst;
+  is -s "file-$$", -s "copy-$$";
 
-  print "not " unless $foo eq sprintf "ok %d\n", 3+$loopconst;
-  printf "ok %d\n", 2+$loopconst;
+  is $foo, "ok\n";
 
   binmode STDOUT unless $^O eq 'VMS'; # Copy::copy works in binary mode
+  # This outputs "ok" so its a test.
   copy "copy-$$", \*STDOUT;
+  $TB->current_test($TB->current_test + 1);
   unlink "copy-$$" or die "unlink: $!";
 
   open(F,"file-$$");
   copy(*F, "copy-$$");
   open(R, "copy-$$") or die "open copy-$$: $!"; $foo = <R>; close(R);
-  print "not " unless $foo eq sprintf "ok %d\n", 3+$loopconst;
-  printf "ok %d\n", 4+$loopconst;
+  is $foo, "ok\n";
   unlink "copy-$$" or die "unlink: $!";
+
   open(F,"file-$$");
   copy(\*F, "copy-$$");
   close(F) or die "close: $!";
   open(R, "copy-$$") or die; $foo = <R>; close(R) or die "close: $!";
-  print "not " unless $foo eq sprintf "ok %d\n", 3+$loopconst;
-  printf "ok %d\n", 5+$loopconst;
+  is $foo, "ok\n";
   unlink "copy-$$" or die "unlink: $!";
 
   require IO::File;
@@ -61,134 +78,114 @@ for my $pass (@pass) {
   copy("file-$$",$fh);
   $fh->close or die "close: $!";
   open(R, "copy-$$") or die; $foo = <R>; close(R);
-  print "# foo=`$foo'\nnot " unless $foo eq sprintf "ok %d\n", 3+$loopconst;
-  printf "ok %d\n", 6+$loopconst;
+  is $foo, "ok\n";
   unlink "copy-$$" or die "unlink: $!";
+
   require FileHandle;
   my $fh = FileHandle->new(">copy-$$") or die "Cannot open copy-$$:$!";
   binmode $fh or die;
   copy("file-$$",$fh);
   $fh->close;
   open(R, "copy-$$") or die; $foo = <R>; close(R);
-  print "not " unless $foo eq sprintf "ok %d\n", 3+$loopconst;
-  printf "ok %d\n", 7+$loopconst;
+  is $foo, "ok\n";
   unlink "file-$$" or die "unlink: $!";
 
-  print "# moved missing file.\nnot " if move("file-$$", "copy-$$");
-  print "# target disappeared.\nnot " if not -e "copy-$$";
-  printf "ok %d\n", 8+$loopconst;
+  ok !move("file-$$", "copy-$$"), "move on missing file";
+  ok -e "copy-$$",                '  target still there';
 
-  move "copy-$$", "file-$$" or print "# move did not succeed.\n";
-  print "# not moved: $!\nnot " unless -e "file-$$" and not -e "copy-$$";
+  # Doesn't really matter what time it is as long as its not now.
+  my $time = 1000000000;
+  utime( $time, $time, "copy-$$" );
+
+  # Recheck the mtime rather than rely on utime in case we're on a
+  # system where utime doesn't work or there's no mtime at all.
+  # The destination file will reflect the same difficulties.
+  my $mtime = (stat("copy-$$"))[9];
+
+  ok move("copy-$$", "file-$$"), 'move';
+  ok -e "file-$$",              '  destination exists';
+  ok !-e "copy-$$",              '  source does not';
   open(R, "file-$$") or die; $foo = <R>; close(R);
-  print "# foo=`$foo'\nnot " unless $foo eq sprintf "ok %d\n", 3+$loopconst;
-  printf "ok %d\n", 9+$loopconst;
+  is $foo, "ok\n";
 
-  my $test_i;
-  if ($^O eq 'MacOS') {
-	
-    copy "file-$$", "lib";	
-    open(R, ":lib:file-$$") or die; $foo = <R>; close(R);
-    print "not " unless $foo eq sprintf "ok %d\n", 3+$loopconst;
-    printf "ok %d\n", 10+$loopconst;
-    unlink ":lib:file-$$" or die "unlink: $!";
-	
-    copy "file-$$", ":lib";	
-    open(R, ":lib:file-$$") or die; $foo = <R>; close(R);
-    print "not " unless $foo eq sprintf "ok %d\n", 3+$loopconst;
-    printf "ok %d\n", 11+$loopconst;
-    unlink ":lib:file-$$" or die "unlink: $!";
-	
-    copy "file-$$", ":lib:";	
-    open(R, ":lib:file-$$") or die; $foo = <R>; close(R);
-    print "not " unless $foo eq sprintf "ok %d\n", 3+$loopconst;
-    printf "ok %d\n", 12+$loopconst;
-    unlink ":lib:file-$$" or die "unlink: $!";
-	
-    unless (-e 'lib:') { # make sure there's no volume called 'lib'
-	undef $@;
-	eval { (copy "file-$$", "lib:") || die "'lib:' is not a volume name"; };
-	print "# Died: $@";
-	print "not " unless ( $@ =~ m|'lib:' is not a volume name| );
-    }
-    printf "ok %d\n", 13+$loopconst;
+  TODO: {
+    local $TODO = 'mtime only preserved on ODS-5 with POSIX dates and DECC$EFS_FILE_TIMESTAMPS enabled' if $^O eq 'VMS';
 
-    move "file-$$", ":lib:";
-    open(R, ":lib:file-$$") or die "open :lib:file-$$: $!"; $foo = <R>; close(R);
-    print "not " unless $foo eq sprintf("ok %d\n", 3+$loopconst)
-        and not -e "file-$$";;
-    printf "ok %d\n", 14+$loopconst;
-
-    eval { copy("copy-$$", "copy-$$") };
-    printf "ok %d\n", 15+$loopconst
-	unless $@ =~ /are identical/ && -s "copy-$$";
-
-    unlink ":lib:file-$$" or die "unlink: $!";
-
-    $test_i = 15;
-  } else {
-    
-    copy "file-$$", "lib";
-    open(R, "lib/file-$$") or die; $foo = <R>; close(R);
-    print "not " unless $foo eq sprintf "ok %d\n", 3+$loopconst;
-    printf "ok %d\n", 10+$loopconst;
-    unlink "lib/file-$$" or die "unlink: $!";
-
-    move "file-$$", "lib";
-    open(R, "lib/file-$$") or die "open lib/file-$$: $!"; $foo = <R>; close(R);
-    print "not " unless $foo eq sprintf("ok %d\n", 3+$loopconst)
-        and not -e "file-$$";;
-    printf "ok %d\n", 11+$loopconst;
-
-    eval { copy("copy-$$", "copy-$$") };
-    printf "ok %d\n", 12+$loopconst
-	unless $@ =~ /are identical/ && -s "copy-$$";
-
-    unlink "lib/file-$$" or die "unlink: $!";
-
-    $test_i = 12;
+    my $dest_mtime = (stat("file-$$"))[9];
+    is $dest_mtime, $mtime,
+      "mtime preserved by copy()". 
+      ($cross_partition_test ? " while testing cross-partition" : "");
   }
 
-  if ($Config{d_symlink}) {
+  copy "file-$$", "lib";
+  open(R, "lib/file-$$") or die; $foo = <R>; close(R);
+  is $foo, "ok\n";
+  unlink "lib/file-$$" or die "unlink: $!";
+
+  # Do it twice to ensure copying over the same file works.
+  copy "file-$$", "lib";
+  open(R, "lib/file-$$") or die; $foo = <R>; close(R);
+  is $foo, "ok\n";
+  unlink "lib/file-$$" or die "unlink: $!";
+
+  { 
+    my $warnings = '';
+    local $SIG{__WARN__} = sub { $warnings .= join '', @_ };
+    ok copy("file-$$", "file-$$");
+
+    like $warnings, qr/are identical/;
+    ok -s "file-$$";
+  }
+
+  move "file-$$", "lib";
+  open(R, "lib/file-$$") or die "open lib/file-$$: $!"; $foo = <R>; close(R);
+  is $foo, "ok\n";
+  ok !-e "file-$$";
+  unlink "lib/file-$$" or die "unlink: $!";
+
+  SKIP: {
+    skip "Testing symlinks", 3 unless $Config{d_symlink};
+
     open(F, ">file-$$") or die $!;
     print F "dummy content\n";
     close F;
     symlink("file-$$", "symlink-$$") or die $!;
-    eval { copy("file-$$", "symlink-$$") };
-    print "not " if $@ !~ /are identical/ || -z "file-$$";
-    printf "ok %d\n", (++$test_i)+$loopconst;
+
+    my $warnings = '';
+    local $SIG{__WARN__} = sub { $warnings .= join '', @_ };
+    ok !copy("file-$$", "symlink-$$");
+
+    like $warnings, qr/are identical/;
+    ok !-z "file-$$", 
+      'rt.perl.org 5196: copying to itself would truncate the file';
+
     unlink "symlink-$$";
     unlink "file-$$";
-  } else {
-    printf "ok %d # Skipped: no symlinks on this platform\n", (++$test_i)+$loopconst;
   }
 
-  if ($Config{d_link}) {
-    if ($^O ne 'MSWin32') {
-      open(F, ">file-$$") or die $!;
-      print F "dummy content\n";
-      close F;
-      link("file-$$", "hardlink-$$") or die $!;
-      eval { copy("file-$$", "hardlink-$$") };
-      print "not " if $@ !~ /are identical/ || -z "file-$$";
-      printf "ok %d\n", (++$test_i)+$loopconst;
-      unlink "hardlink-$$";
-      unlink "file-$$";
-    } else {
-      printf "ok %d # Skipped: can't test hardlinks on MSWin32\n", (++$test_i)+$loopconst;
-    }
-  } else {
-    printf "ok %d # Skipped: no hardlinks on this platform\n", (++$test_i)+$loopconst;
-  }
+  SKIP: {
+    skip "Testing hard links", 3 if !$Config{d_link} or $^O eq 'MSWin32';
 
+    open(F, ">file-$$") or die $!;
+    print F "dummy content\n";
+    close F;
+    link("file-$$", "hardlink-$$") or die $!;
+
+    my $warnings = '';
+    local $SIG{__WARN__} = sub { $warnings .= join '', @_ };
+    ok !copy("file-$$", "hardlink-$$");
+
+    like $warnings, qr/are identical/;
+    ok ! -z "file-$$",
+      'rt.perl.org 5196: copying to itself would truncate the file';
+
+    unlink "hardlink-$$";
+    unlink "file-$$";
+  }
 }
 
 
 END {
     1 while unlink "file-$$";
-    if ($^O eq 'MacOS') {
-        1 while unlink ":lib:file-$$";
-    } else {
-        1 while unlink "lib/file-$$";
-    }
+    1 while unlink "lib/file-$$";
 }

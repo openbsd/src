@@ -1,3 +1,10 @@
+#!/usr/bin/perl
+#
+# In general we trust %Config, but for nanosleep() this trust
+# may be misplaced (it may be linkable but not really functional).
+# Use $ENV{FORCE_NANOSLEEP_SCAN} to force rescanning whether there
+# really is hope.
+
 require 5.002;
 
 use Config;
@@ -7,7 +14,8 @@ use strict;
 my $VERBOSE = $ENV{VERBOSE};
 my $DEFINE;
 my $LIBS = [];
-my $XSOPT;
+my $XSOPT = '';
+my $SYSCALL_H;
 
 use vars qw($self); # Used in 'sourcing' the hints.
 
@@ -134,17 +142,36 @@ sub try_compile_and_link {
 	    my $tmp_exe = "$tmp$ld_exeext";
 	    printf "cccmd = $cccmd\n" if $VERBOSE;
 	    my $res = system($cccmd);
-	    $ok = defined($res) && $res==0 && -s $tmp_exe && -x _;
+	    $ok = defined($res) && $res == 0 && -s $tmp_exe && -x _;
+
+	    if ( $ok && exists $args{run} && $args{run}) {
+		my $tmp_exe =
+		    File::Spec->catfile(File::Spec->curdir, $tmp_exe);
+		printf "Running $tmp_exe..." if $VERBOSE;
+		if (system($tmp_exe) == 0) {
+		    $ok = 1;
+		} else {
+		    $ok = 0;
+		    my $errno = $? >> 8;
+		    local $! = $errno;
+		    printf <<EOF;
+
+*** The test run of '$tmp_exe' failed: status $?
+*** (the status means: errno = $errno or '$!')
+*** DO NOT PANIC: this just means that *some* functionality will be missing.
+EOF
+		}
+	    }
 	    unlink("$tmp.c", $tmp_exe);
         }
     }
 
-    $ok;
+    return $ok;
 }
 
 sub has_gettimeofday {
     # confusing but true (if condition true ==> -DHAS_GETTIMEOFDAY already)
-    return 0 if $Config{d_gettimeod} eq 'define';
+    return 0 if $Config{d_gettimeod};
     return 1 if try_compile_and_link(<<EOM);
 #include "EXTERN.h"
 #include "perl.h"
@@ -202,6 +229,32 @@ EOM
     return 0;
 }
 
+sub has_nanosleep {
+    print "testing... ";
+    return 1 if
+    try_compile_and_link(<<EOM, run => 1);
+#include <time.h>
+#include <sys/time.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+
+/* int nanosleep(const struct timespec *rqtp, struct timespec *rmtp); */
+
+int main() {
+    struct timespec ts1, ts2;
+    int ret;
+    ts1.tv_sec  = 0;
+    ts1.tv_nsec = 750000000;
+    ts2.tv_sec  = 0;
+    ts2.tv_nsec = 0;
+    errno = 0;
+    ret = nanosleep(&ts1, &ts2); /* E.g. in AIX nanosleep() fails and sets errno to ENOSYS. */
+    ret == 0 ? exit(0) : exit(errno ? errno : -1);
+}
+EOM
+}
+
 sub has_include {
     my ($inc) = @_;
     return 1 if
@@ -219,6 +272,77 @@ EOM
     return 0;
 }
 
+sub has_clock_xxx_syscall {
+    my $x = shift;
+    return 0 unless defined $SYSCALL_H;
+    return 1 if
+    try_compile_and_link(<<EOM, run => 1);
+#include "EXTERN.h"
+#include "perl.h"
+#include "XSUB.h"
+#include <$SYSCALL_H>
+int main _((int argc, char** argv, char** env))
+{
+    struct timespec ts;
+    /* Many Linuxes get ENOSYS even though the syscall exists. */
+    /* All implementations are supposed to support CLOCK_REALTIME. */
+    int ret = syscall(SYS_clock_$x, CLOCK_REALTIME, &ts);
+    ret == 0 ? exit(0) : exit(errno ? errno : -1);
+}
+EOM
+}
+
+sub has_clock_xxx {
+    my $xxx = shift;
+    return 1 if
+    try_compile_and_link(<<EOM, run => 1);
+#include "EXTERN.h"
+#include "perl.h"
+#include "XSUB.h"
+int main _((int argc, char** argv, char** env))
+{
+    struct timespec ts;
+    int ret = clock_$xxx(CLOCK_REALTIME, &ts); /* Many Linuxes get ENOSYS. */
+    /* All implementations are supposed to support CLOCK_REALTIME. */
+    ret == 0 ? exit(0) : exit(errno ? errno : -1);
+}
+EOM
+}
+
+sub has_clock {
+    return 1 if
+    try_compile_and_link(<<EOM, run => 1);
+#include "EXTERN.h"
+#include "perl.h"
+#include "XSUB.h"
+int main _((int argc, char** argv, char** env))
+{
+    clock_t tictoc;
+    clock_t ret = clock();
+    ret == (clock_t)-1 ? exit(errno ? errno : -1) : exit(0);
+}
+EOM
+}
+
+sub has_clock_nanosleep {
+    return 1 if
+    try_compile_and_link(<<EOM, run => 1);
+#include "EXTERN.h"
+#include "perl.h"
+#include "XSUB.h"
+int main _((int argc, char** argv, char** env))
+{
+    int ret;
+    struct timerspec ts1;
+    struct timerspec ts2;
+    ts1.tv_sec  = 0;
+    ts1.tv_nsec = 750000000;;
+    ret = clock_nanosleep(CLOCK_MONOTONIC, 0, &ts1, &ts2);
+    ret == 0 ? exit(0) : exit(errno ? errno : -1);
+}
+EOM
+}
+
 sub init {
     my $hints = File::Spec->catfile("hints", "$^O.pl");
     if (-f $hints) {
@@ -232,6 +356,25 @@ sub init {
     }
 
     $DEFINE = '';
+
+    if ($Config{d_syscall}) {
+	print "Have syscall()... looking for syscall.h... ";
+	if (has_include('syscall.h')) {
+	    $SYSCALL_H = 'syscall.h';
+	} elsif (has_include('sys/syscall.h')) {
+	    $SYSCALL_H = 'sys/syscall.h';
+	}
+    } else {
+	print "No syscall()...\n";
+    }
+
+    if ($Config{d_syscall}) {
+	if (defined $SYSCALL_H) {
+	    print "found <$SYSCALL_H>.\n";
+	} else {
+	    print "NOT found.\n";
+	}
+    }
 
     print "Looking for gettimeofday()... ";
     my $has_gettimeofday;
@@ -327,7 +470,7 @@ EOD
     } else {
 	print "NOT found.\n";
         print "Let's see if you have select()... ";
-        if ($Config{'d_select'} eq 'define') {
+        if ($Config{'d_select'}) {
 	    print "found.\n";
 	    print "We can make a Time::HiRes::usleep().\n";
 	} else {
@@ -338,15 +481,27 @@ EOD
 
     print "Looking for nanosleep()... ";
     my $has_nanosleep;
-    if (exists $Config{d_nanosleep}) {
+    if ($ENV{FORCE_NANOSLEEP_SCAN}) {
+	print "forced scan... ";
+	if (has_nanosleep()) {
+	    $has_nanosleep++;
+	    $DEFINE .= ' -DTIME_HIRES_NANOSLEEP';
+	}
+    }
+    elsif (exists $Config{d_nanosleep}) {
+	print "believing \$Config{d_nanosleep}... ";
 	if ($Config{d_nanosleep}) {
 	    $has_nanosleep++;
 	    $DEFINE .= ' -DTIME_HIRES_NANOSLEEP';
 	}
-    } elsif ($^O ne 'mpeix' && # MPE/iX falsely finds nanosleep.
-             has_x ("nanosleep (NULL, NULL)")) {
-	$has_nanosleep++;
-	$DEFINE .= ' -DTIME_HIRES_NANOSLEEP';
+    } elsif ($^O =~ /^(mpeix)$/) {
+	# MPE/iX falsely finds nanosleep from its libc equivalent.
+	print "skipping because in $^O... ";
+    } else {
+	if (has_nanosleep()) {
+	    $has_nanosleep++;
+	    $DEFINE .= ' -DTIME_HIRES_NANOSLEEP';
+	}
     }
 
     if ($has_nanosleep) {
@@ -360,7 +515,82 @@ EOD
         print "(It would not be portable anyway.)\n";
     }
 
+    print "Looking for clock_gettime()... ";
+    my $has_clock_gettime;
+    if (exists $Config{d_clock_gettime}) {
+        $has_clock_gettime++ if $Config{d_clock_gettime}; # Unlikely...
+    } elsif (has_clock_xxx('gettime')) {
+        $has_clock_gettime++;
+	$DEFINE .= ' -DTIME_HIRES_CLOCK_GETTIME';
+    } elsif (defined $SYSCALL_H && has_clock_xxx_syscall('gettime')) {
+        $has_clock_gettime++;
+	$DEFINE .= ' -DTIME_HIRES_CLOCK_GETTIME -DTIME_HIRES_CLOCK_GETTIME_SYSCALL';
+    }
+
+    if ($has_clock_gettime) {
+        if ($DEFINE =~ /-DTIME_HIRES_CLOCK_GETTIME_SYSCALL/) {
+	    print "found (via syscall).\n";
+	} else {
+	    print "found.\n";
+	}
+    } else {
+	print "NOT found.\n";
+    }
+
+    print "Looking for clock_getres()... ";
+    my $has_clock_getres;
+    if (exists $Config{d_clock_getres}) {
+        $has_clock_getres++ if $Config{d_clock_getres}; # Unlikely...
+    } elsif (has_clock_xxx('getres')) {
+        $has_clock_getres++;
+	$DEFINE .= ' -DTIME_HIRES_CLOCK_GETRES';
+    } elsif (defined $SYSCALL_H && has_clock_xxx_syscall('getres')) {
+        $has_clock_getres++;
+	$DEFINE .= ' -DTIME_HIRES_CLOCK_GETRES -DTIME_HIRES_CLOCK_GETRES_SYSCALL';
+    }
+
+    if ($has_clock_getres) {
+        if ($DEFINE =~ /-DTIME_HIRES_CLOCK_GETRES_SYSCALL/) {
+	    print "found (via syscall).\n";
+	} else {
+	    print "found.\n";
+	}
+    } else {
+	print "NOT found.\n";
+    }
+
+    print "Looking for clock_nanosleep()... ";
+    my $has_clock_nanosleep;
+    if (exists $Config{d_clock_nanosleep}) {
+        $has_clock_nanosleep++ if $Config{d_clock_nanosleep}; # Unlikely...
+    } elsif (has_clock_nanosleep()) {
+        $has_clock_nanosleep++;
+	$DEFINE .= ' -DTIME_HIRES_CLOCK_NANOSLEEP';
+    }
+
+    if ($has_clock_nanosleep) {
+        print "found.\n";
+    } else {
+	print "NOT found.\n";
+    }
+
+    print "Looking for clock()... ";
+    my $has_clock;
+    if (exists $Config{d_clock}) {
+        $has_clock++ if $Config{d_clock}; # Unlikely...
+    } elsif (has_clock()) {
+        $has_clock++;
+	$DEFINE .= ' -DTIME_HIRES_CLOCK';
+    }
+
+    if ($has_clock) {
+        print "found.\n";
+    } else {
+	print "NOT found.\n";
+    }
+
     my $has_w32api_windows_h;
+
     if ($^O eq 'cygwin') {
         print "Looking for <w32api/windows.h>... ";
         if (has_include('w32api/windows.h')) {
@@ -400,9 +630,10 @@ sub doMakefile {
 	'LIBS'	=> $LIBS,   # e.g., '-lm'
 	'DEFINE'	=> $DEFINE,     # e.g., '-DHAS_SOMETHING'
 	'XSOPT'	=> $XSOPT,
-    # do not even think about 'INC' => '-I/usr/ucbinclude', Solaris will avenge.
+	  # Do not even think about 'INC' => '-I/usr/ucbinclude',
+	  # Solaris will avenge.
 	'INC'	=> '',     # e.g., '-I/usr/include/other'
-	'INSTALLDIRS' => 'perl',
+	'INSTALLDIRS' => ($] >= 5.008 ? 'perl' : 'site'),
 	'dist'      => {
 	    'CI'       => 'ci -l',
 	    'COMPRESS' => 'gzip -9f',
@@ -421,15 +652,24 @@ sub doMakefile {
 
 sub doConstants {
     if (eval {require ExtUtils::Constant; 1}) {
-	my @names = (qw(ITIMER_REAL ITIMER_VIRTUAL ITIMER_PROF
-			ITIMER_REALPROF));
+	my @names = (qw(CLOCK_HIGHRES CLOCK_MONOTONIC
+			CLOCK_PROCESS_CPUTIME_ID
+			CLOCK_REALTIME
+			CLOCK_SOFTTIME
+			CLOCK_THREAD_CPUTIME_ID
+			CLOCK_TIMEOFDAY
+			CLOCKS_PER_SEC
+			ITIMER_REAL ITIMER_VIRTUAL ITIMER_PROF
+			ITIMER_REALPROF
+			TIMER_ABSTIME));
 	foreach (qw (d_usleep d_ualarm d_gettimeofday d_getitimer d_setitimer
-		     d_nanosleep)) {
+		     d_nanosleep d_clock_gettime d_clock_getres
+		     d_clock d_clock_nanosleep)) {
 	    my $macro = $_;
-	    if ($macro eq 'd_nanosleep') {
-		$macro =~ s/d_(.*)/TIME_HIRES_\U$1/;
+	    if ($macro =~ /^(d_nanosleep|d_clock_gettime|d_clock_getres|d_clock|d_clock_nanosleep)$/) {
+		$macro =~ s/^d_(.+)/TIME_HIRES_\U$1/;
 	    } else {
-		$macro =~ s/d_(.*)/HAS_\U$1/;
+		$macro =~ s/^d_(.+)/HAS_\U$1/;
 	    }
 	    push @names, {name => $_, macro => $macro, value => 1,
 			  default => ["IV", "0"]};
@@ -461,6 +701,7 @@ sub main {
     if ($^O =~ /Win32/i) {
       $DEFINE = '-DSELECT_IS_BROKEN';
       $LIBS = [];
+      print "System is $^O, skipping full configure...\n";
     } else {
       init();
     }
@@ -475,7 +716,7 @@ EOM
            (exists $ENV{LC_CTYPE} && $ENV{LC_CTYPE} =~ /utf-?8/i) ||
            (exists $ENV{LANG}     && $ENV{LANG}     =~ /utf-?8/i)) {
             print  <<EOM;
-NOTE: if you get an error like this (the line number may vary):
+NOTE: if you get an error like this (the Makefile line number may vary):
 Makefile:91: *** missing separator
 then set the environment variable LC_ALL to "C" and retry
 from scratch (re-run perl "Makefile.PL").

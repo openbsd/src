@@ -154,10 +154,9 @@ podchecker:	podchecker.PL ../lib/Config.pm
 podselect:	podselect.PL ../lib/Config.pm
 	$(PERL) -I ../lib podselect.PL
 
-perlmodlib.pod:	$(PERL) perlmodlib.PL ../mv-if-diff ../MANIFEST
-	rm -f perlmodlib.tmp
+perlmodlib.pod:	$(PERL) perlmodlib.PL ../MANIFEST
+	rm -f perlmodlib.pod
 	$(PERL) -I ../lib perlmodlib.PL
-	sh ../mv-if-diff perlmodlib.tmp perlmodlib.pod
 
 compile: all
 	$(REALPERL) -I../lib ../utils/perlcc -I .. -L .. -o pod2latex.exe pod2latex -log ../compilelog

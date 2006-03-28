@@ -13,12 +13,3 @@ perl Makefile.PL
 make
 make test
 make install
-
-* Copyright
-
-Copyright 2001 by Michael G Schwern <schwern@pobox.com>.
-
-All rights reserved.  You can redistribute and/or modify
-this bundle under the same terms as Perl itself.
-
-See <http://www.perl.com/perl/misc/Artistic.html>.

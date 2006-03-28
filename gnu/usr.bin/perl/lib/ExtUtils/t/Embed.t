@@ -153,10 +153,24 @@ __END__
 
 static char *cmds[] = { "perl","-e", "$|=1; print qq[ok 5\\n]", NULL };
 
+#ifdef PERL_GLOBAL_STRUCT_PRIVATE
+static struct perl_vars *my_plvarsp;
+struct perl_vars* Perl_GetVarsPrivate(void) { return my_plvarsp; }
+#endif
+
 int main(int argc, char **argv, char **env)
 {
     PerlInterpreter *my_perl;
+#ifdef PERL_GLOBAL_STRUCT
+    dVAR;
+    struct perl_vars *plvarsp = init_global_struct();
+#  ifdef PERL_GLOBAL_STRUCT_PRIVATE
+    my_vars = my_plvarsp = plvarsp;
+#  endif
+#endif /* PERL_GLOBAL_STRUCT */
 
+    (void)argc; /* PERL_SYS_INIT3 may #define away their use */
+    (void)argv;
     PERL_SYS_INIT3(&argc,&argv,&env);
 
     my_perl = perl_alloc();
@@ -182,6 +196,10 @@ int main(int argc, char **argv, char **env)
     my_puts("ok 7");
 
     perl_free(my_perl);
+
+#ifdef PERL_GLOBAL_STRUCT
+    free_global_struct(plvarsp);
+#endif /* PERL_GLOBAL_STRUCT */
 
     my_puts("ok 8");
 

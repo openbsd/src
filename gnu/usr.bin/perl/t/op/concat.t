@@ -18,7 +18,7 @@ sub ok {
     return $ok;
 }
 
-print "1..28\n";
+print "1..29\n";
 
 ($a, $b, $c) = qw(foo bar);
 
@@ -145,4 +145,10 @@ sub beq { use bytes; $_[0] eq $_[1]; }
     ok(beq($y1, $y2), "perl #26905, right, .= vs = . in bytes");
     ok(($x1 eq $x2),  "perl #26905, left,  .= vs = . in chars");
     ok(($y1 eq $y2),  "perl #26905, right, .= vs = . in chars");
+}
+
+{
+    # Concatenation needs to preserve UTF8ness of left oper.
+    my $x = eval"qr/\x{fff}/";
+    ok( ord chop($x .= "\303\277") == 191, "UTF8ness preserved" );
 }

@@ -1,6 +1,7 @@
 /*    thread.h
  *
- *    Copyright (C) 1999, 2000, 2001, 2002, 2004, by Larry Wall and others
+ *    Copyright (C) 1999, 2000, 2001, 2002, 2004, 2005
+ *    by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -334,8 +335,7 @@
     STMT_START {						\
 	int _eC_;						\
 	if ((_eC_ = pthread_key_create(&PL_thr_key, 0))) {	\
-	    PerlIO_printf(PerlIO_stderr(), "panic: pthread_key_create (%d) [%s:%d]",	\
-				 _eC_, __FILE__, __LINE__);	\
+            write(2, "panic: pthread_key_create failed\n", 33); \
 	    exit(1);						\
 	}							\
     } STMT_END

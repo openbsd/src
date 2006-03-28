@@ -522,7 +522,9 @@ EOM
     ok(86, $x eq "abc\ndef\nghi\njkl\n") ;
 
     # $# sets array to same length
-    ok(87, $self = tie @h, 'DB_File', $Dfile, O_RDWR, 0640, $DB_RECNO ) ;
+    $self = tie @h, 'DB_File', $Dfile, O_RDWR, 0640, $DB_RECNO ;
+    ok(87, $self) 
+        or warn "# $DB_File::Error\n";
     if ($FA)
       { $#h = 3 }
     else 

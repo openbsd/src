@@ -99,6 +99,8 @@ foreach (@tests) {
   foreach ($args{Name}, $args{Require}, $args{Extra}) {
     chomp $_ if defined $_;
   }
+  $args{Get} ||= '';
+
   my @extra_args = !defined $args{Extra} ? () : split /,/, $args{Extra};
   my ($output, $body);
   if ($args{File}) {
@@ -120,7 +122,7 @@ foreach (@tests) {
   }
 
   # test n+1
-  cmp_ok ($output, 'eq', $args{Get}, "Output from autosplit()ing $args{Name}");
+  is($output, $args{Get}, "Output from autosplit()ing $args{Name}");
 
   if ($args{Files}) {
     $args{Files} =~ s!/!:!gs if $^O eq 'MacOS';

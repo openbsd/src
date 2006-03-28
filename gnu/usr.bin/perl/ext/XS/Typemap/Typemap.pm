@@ -36,7 +36,7 @@ use base qw/ DynaLoader Exporter /;
 
 use vars qw/ $VERSION @EXPORT /;
 
-$VERSION = '0.01';
+$VERSION = '0.02';
 
 @EXPORT = (qw/
 	   T_SV

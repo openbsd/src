@@ -1,14 +1,19 @@
 #!./perl -w
 
 BEGIN {
-    chdir 't' if -d 't';
-    @INC = qw(../lib);
+    if ($ENV{PERL_CORE}){
+	chdir('t') if -d 't';
+	@INC = ('.', '../lib');
+    } else {
+	unshift @INC, 't';
+	push @INC, "../../t";
+    }
     require Config;
     if (($Config::Config{'extensions'} !~ /\bB\b/) ){
         print "1..0 # Skip -- Perl configured without B module\n";
         exit 0;
     }
-    require './test.pl';
+    require 'test.pl';
 }
 
 plan tests => 15; # adjust also number of skipped tests !

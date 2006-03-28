@@ -8,7 +8,7 @@
 
 package B::C;
 
-our $VERSION = '1.04';
+our $VERSION = '1.04_01';
 
 package B::C::Section;
 
@@ -169,7 +169,7 @@ our %REGEXP;
 use B qw(minus_c sv_undef walkoptree walksymtable main_root main_start peekop
 	 class cstring cchar svref_2object compile_stats comppadlist hash
 	 threadsv_names main_cv init_av end_av regex_padav opnumber amagic_generation
-	 AVf_REAL HEf_SVKEY SVf_POK SVf_ROK CVf_CONST);
+	 HEf_SVKEY SVf_POK SVf_ROK CVf_CONST);
 use B::Asmdata qw(@specialsv_name);
 
 use FileHandle;
@@ -659,7 +659,7 @@ sub savepvn {
     # work with byte offsets/lengths
     my $pv = pack "a*", $pv;
     if (defined $max_string_len && length($pv) > $max_string_len) {
-	push @res, sprintf("New(0,%s,%u,char);", $dest, length($pv)+1);
+	push @res, sprintf("Newx(%s,%u,char);", $dest, length($pv)+1);
 	my $offset = 0;
 	while (length $pv) {
 	    my $str = substr $pv, 0, $max_string_len, '';
@@ -1182,16 +1182,19 @@ sub B::AV::save {
     my ($av) = @_;
     my $sym = objsym($av);
     return $sym if defined $sym;
-    my $avflags = $av->AvFLAGS;
-    $xpvavsect->add(sprintf("0, -1, -1, 0, 0.0, 0, Nullhv, 0, 0, 0x%x",
-			    $avflags));
+    my $line = "0, -1, -1, 0, 0.0, 0, Nullhv, 0, 0";
+    $line .= sprintf(", 0x%x", $av->AvFLAGS) if $] < 5.009;
+    $xpvavsect->add($line);
     $svsect->add(sprintf("&xpvav_list[%d], %lu, 0x%x",
 			 $xpvavsect->index, $av->REFCNT  , $av->FLAGS));
     my $sv_list_index = $svsect->index;
     my $fill = $av->FILL;
     $av->save_magic;
-    warn sprintf("saving AV 0x%x FILL=$fill AvFLAGS=0x%x", $$av, $avflags)
-	if $debug_av;
+    if ($debug_av) {
+	$line = sprintf("saving AV 0x%x FILL=$fill", $$av);
+	$line .= sprintf(" AvFLAGS=0x%x", $av->AvFLAGS) if $] < 5.009;
+	warn $line;
+    }
     # XXX AVf_REAL is wrong test: need to save comppadlist but not stack
     #if ($fill > -1 && ($avflags & AVf_REAL)) {
     if ($fill > -1) {
@@ -1582,7 +1585,7 @@ EOT
 #else
 #define EXTRA_OPTIONS 4
 #endif /* ALLOW_PERL_OPTIONS */
-    New(666, fakeargv, argc + EXTRA_OPTIONS + 1, char *);
+    Newx(fakeargv, argc + EXTRA_OPTIONS + 1, char *);
 
     fakeargv[0] = argv[0];
     fakeargv[1] = "-e";

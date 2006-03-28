@@ -13,12 +13,13 @@ use warnings;
 use strict;
 use threads;
 use threads::shared;
+use Hash::Util 'lock_keys';
 
 # Note that we can't use  Test::More here, as we would need to
 # call is() from within the DESTROY() function at global destruction time,
 # and parts of Test::* may have already been freed by then
 
-print "1..10\n";
+print "1..14\n";
 
 my $test : shared = 1;
 
@@ -26,7 +27,7 @@ sub is($$$) {
     my ($got, $want, $desc) = @_;
     unless ($got eq $want) {
 	print "# EXPECTED: $want\n";
-	print "# GOT:      got\n";
+	print "# GOT:      $got\n";
 	print "not ";
     }
     print "ok $test - $desc\n";
@@ -81,14 +82,18 @@ our @unique_array : unique;
 our %unique_hash : unique;
 threads->new(
     sub {
+	my $TODO = ":unique needs to be re-implemented in a non-broken way";
 	eval { $unique_scalar = 1 };
-	print $@ =~ /read-only/  ? '' : 'not ', "ok $test - unique_scalar\n";
+	print $@ =~ /read-only/
+	  ? '' : 'not ', "ok $test # TODO $TODO unique_scalar\n";
 	$test++;
 	eval { $unique_array[0] = 1 };
-	print $@ =~ /read-only/  ? '' : 'not ', "ok $test - unique_array\n";
+	print $@ =~ /read-only/
+	  ? '' : 'not ', "ok $test # TODO $TODO - unique_array\n";
 	$test++;
 	eval { $unique_hash{abc} = 1 };
-	print $@ =~ /disallowed/  ? '' : 'not ', "ok $test - unique_hash\n";
+	print $@ =~ /disallowed/
+	  ? '' : 'not ', "ok $test # TODO $TODO - unique_hash\n";
 	$test++;
     }
 )->join;
@@ -119,5 +124,21 @@ for my $decl ('my $x : unique', 'sub foo : unique') {
 # my $string = threads->new(\&f)->join->();
 # print $string eq 'foobar' ?  '' : 'not ', "ok $test - returning closure\n";
 # $test++;
+
+# Nothing is checking that total keys gets cloned correctly.
+
+my %h = (1,2,3,4);
+is (keys %h, 2, "keys correct in parent");
+
+my $child = threads->new(sub { return scalar keys %h })->join;
+is ($child, 2, "keys correct in child");
+
+lock_keys (%h);
+delete $h{1};
+
+is (keys %h, 1, "keys correct in parent with restricted hash");
+
+$child = threads->new(sub { return scalar keys %h })->join;
+is ($child, 1, "keys correct in child with restricted hash");
 
 1;

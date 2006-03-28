@@ -7,8 +7,13 @@ BEGIN {
        print "1..0 # skip - Bytecode/ByteLoader doesn't work on VMS\n";
        exit 0;
     }
-    chdir 't' if -d 't';
-    @INC = qw(../lib);
+    if ($ENV{PERL_CORE}){
+	chdir('t') if -d 't';
+	@INC = ('.', '../lib');
+    } else {
+	unshift @INC, 't';
+	push @INC, "../../t";
+    }
     use Config;
     if (($Config{'extensions'} !~ /\bB\b/) ){
         print "1..0 # Skip -- Perl configured without B module\n";
@@ -18,7 +23,7 @@ BEGIN {
 	print "1..0 # skip - no COW for now\n";
 	exit 0;
     }
-    require './test.pl'; # for run_perl()
+    require 'test.pl'; # for run_perl()
 }
 use strict;
 
@@ -63,9 +68,10 @@ EOT
 	}
     }
     print <<"EOT";
+not ok $cnt
 --------- SCRIPT
 $script
---------- $?
+--------- \$\? = $?
 $got
 EOT
 } continue {
@@ -114,6 +120,9 @@ my $l = 3; $x = sub { print $l }; &$x
 my $i = 1;
 my $foo = sub {$i = shift if @_};
 &$foo(3);
+print 'ok';
+>>>>
+ok
 ############################################################
 $x="Cannot use"; print index $x, "Can"
 >>>>
@@ -127,7 +136,10 @@ BEGIN { %h=(1=>2,3=>4) } print $h{3}
 >>>>
 4
 ############################################################
-open our $T,"a"
+open our $T,"a";
+print 'ok';
+>>>>
+ok
 ############################################################
 print <DATA>
 __DATA__

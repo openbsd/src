@@ -2,7 +2,7 @@
 
 $ENV{LC_ALL} = 'C';
 
-open (OUT, ">perlmodlib.tmp") or die $!;
+open (OUT, ">perlmodlib.pod") or die $!;
 my (@pragma, @mod, @MANIFEST);
 
 open (MANIFEST, "../MANIFEST") or die $!;
@@ -1461,5 +1461,5 @@ you're redefining the world and willing to take the consequences.
 EOF
 
 close MANIFEST or warn "$0: failed to close MANIFEST (../MANIFEST): $!";
-close OUT      or warn "$0: failed to close OUT (perlmodlib.tmp): $!";
+close OUT      or warn "$0: failed to close OUT (perlmodlib.pod): $!";
 

@@ -661,6 +661,7 @@ if ( $symlink_exists ) {
 	use warnings;
 
         %Expect_File = (File::Spec->curdir => 1,
+	                file_path('dangling_file_sl') => 1,
 			file_path('fa_ord') => 1,
                         file_path('fsl') => 1,
                         file_path('fb_ord') => 1,
@@ -684,7 +685,7 @@ if ( $symlink_exists ) {
                            topdir('dangling_dir_sl'), topdir('fa') );
 
         Check( scalar(keys %Expect_File) == 0 );
-        Check( $warn_msg =~ m|dangling_dir_sl is a dangling symbolic link| );  
+        Check( $warn_msg =~ m|dangling_file_sl is a dangling symbolic link| );  
         unlink file_path('fa', 'dangling_file_sl'),
                          file_path('dangling_dir_sl');
 
@@ -750,10 +751,7 @@ if ( $symlink_exists ) {
     File::Find::finddepth( {wanted => \&wanted_File_Dir, follow => 1,
                            follow_skip => 1, no_chdir => 1},
                            topdir('fa') );
-
-    Check( scalar(keys %Expect_File) == 1 );
-    # Only the file and its symlink have value 2;<
-    Check( (values %Expect_File)[0] == 2);
+    Check( scalar(keys %Expect_File) == 0 );
     unlink file_path('fa', 'fa_ord_sl');
 
 
@@ -814,13 +812,10 @@ if ( $symlink_exists ) {
     # If we encountered the symlink first, then the entries corresponding to
     # the real name remain, if the real name first then the symlink
     my @names = sort keys %Expect_File;
-    Check( @names == 2 );
-    # In sorted order the directory name comes first
-    Check ($names[1] =~ /^$names[0]/);
+    Check( @names == 1 );
     # Normalise both to the original name
     s/_sl// foreach @names;
-    Check ($names[0] eq file_path_name('fa', 'faa'));
-    Check ($names[1] eq file_path_name('fa', 'faa', 'faa_ord'));
+    Check ($names[0] eq file_path_name('fa', 'faa', 'faa_ord'));
     unlink file_path('fa', 'faa_sl');
 
 }

@@ -10,19 +10,19 @@ README.hurd - Perl version 5 on Hurd
 
 If you want to use Perl on the Hurd, I recommend using the Debian
 GNU/Hurd distribution ( see http://www.debian.org/ ), even if an
-official, stable release has not yet been made.  The old `gnu-0.2'
+official, stable release has not yet been made.  The old "gnu-0.2"
 binary distribution will most certainly have additional problems.
 
 =head2 Known Problems with Perl on Hurd 
 
 The Perl test suite may still report some errors on the Hurd.  The
-`lib/anydbm' and `pragma/warnings' tests will almost certainly fail.
+"lib/anydbm" and "pragma/warnings" tests will almost certainly fail.
 Both failures are not really specific to the Hurd, as indicated by the
 test suite output.
 
 The socket tests may fail if the network is not configured.  You have
-to make `/hurd/pfinet' the translator for `/servers/socket/2', giving
-it the right arguments.  Try `/hurd/pfinet --help' for more
+to make "/hurd/pfinet" the translator for "/servers/socket/2", giving
+it the right arguments.  Try "/hurd/pfinet --help" for more
 information.
 
 Here are the statistics for Perl 5.005_62 on my system:
@@ -39,8 +39,8 @@ There are quite a few systems out there that do worse!
 
 However, since I am running a very recent Hurd snapshot, in which a lot of
 bugs that were exposed by the Perl test suite have been fixed, you may
-encounter more failures.  Likely candidates are: `op/stat', `lib/io_pipe',
-`lib/io_sock', `lib/io_udp' and `lib/time'.
+encounter more failures.  Likely candidates are: "op/stat", "lib/io_pipe",
+"lib/io_sock", "lib/io_udp" and "lib/time".
 
 In any way, if you're seeing failures beyond those mentioned in this
 document, please consider upgrading to the latest Hurd before reporting

@@ -39,12 +39,8 @@ not_here(char *s)
 static void
 output_datum(pTHX_ SV *arg, char *str, int size)
 {
-#if (!defined(MYMALLOC) || (defined(MYMALLOC) && defined(PERL_POLLUTE_MALLOC)))
-	sv_usepvn(arg, str, size);
-#else
 	sv_setpvn(arg, str, size);
-	safesysfree(str);
-#endif
+	free(str);
 }
 
 /* Versions of gdbm prior to 1.7x might not have the gdbm_sync,

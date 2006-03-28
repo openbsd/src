@@ -1,4 +1,4 @@
-package ExportTest;
+package Filter::Simple::ExportTest;
 
 use Filter::Simple;
 use base Exporter;

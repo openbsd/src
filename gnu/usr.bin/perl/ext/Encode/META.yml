@@ -1,7 +1,7 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         Encode
-version:      2.08
+version:      2.12
 version_from: Encode.pm
 installdirs:  perl
 requires:

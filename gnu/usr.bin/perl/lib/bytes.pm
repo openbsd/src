@@ -1,6 +1,6 @@
 package bytes;
 
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 
 $bytes::hint_bits = 0x00000008;
 
@@ -14,7 +14,9 @@ sub unimport {
 
 sub AUTOLOAD {
     require "bytes_heavy.pl";
-    goto &$AUTOLOAD;
+    goto &$AUTOLOAD if defined &$AUTOLOAD;
+    require Carp;
+    Carp::croak("Undefined subroutine $AUTOLOAD called");
 }
 
 sub length ($);

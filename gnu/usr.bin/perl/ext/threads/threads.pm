@@ -50,7 +50,7 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw(
 async	
 );
-our $VERSION = '1.05';
+our $VERSION = '1.07';
 
 
 # || 0 to ensure compatibility with previous versions
@@ -148,7 +148,7 @@ This will wait for the corresponding thread to join. When the thread
 finishes, join() will return the return values of the entry point
 function. If the thread has been detached, an error will be thrown.
 
-The context (scalar or list) of the thread creation is also the
+The context (void, scalar or list) of the thread creation is also the
 context for join().  This means that if you intend to return an array
 from a thread, you must use C<my ($thread) = threads->new(...)>, and
 that if you intend to return a scalar, you must use C<my $thread = ...>.
@@ -241,7 +241,7 @@ On some platforms it might not be possible to destroy "parent"
 threads while there are still existing child "threads".
 
 This will possibly be fixed in later versions of perl.
-  
+
 =item tid is I32
 
 The thread id is a 32 bit integer, it can potentially overflow.

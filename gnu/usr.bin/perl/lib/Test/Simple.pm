@@ -3,21 +3,15 @@ package Test::Simple;
 use 5.004;
 
 use strict 'vars';
-use vars qw($VERSION);
-$VERSION = '0.47';
+use vars qw($VERSION @ISA @EXPORT);
+$VERSION = '0.62';
+$VERSION = eval $VERSION;    # make the alpha version come out as a number
 
+use Test::Builder::Module;
+@ISA    = qw(Test::Builder::Module);
+@EXPORT = qw(ok);
 
-use Test::Builder;
-my $Test = Test::Builder->new;
-
-sub import {
-    my $self = shift;
-    my $caller = caller;
-    *{$caller.'::ok'} = \&ok;
-
-    $Test->exported_to($caller);
-    $Test->plan(@_);
-}
+my $CLASS = __PACKAGE__;
 
 
 =head1 NAME
@@ -84,7 +78,7 @@ will do what you mean (fail if stuff is empty)
 =cut
 
 sub ok ($;$) {
-    $Test->ok(@_);
+    $CLASS->builder->ok(@_);
 }
 
 
@@ -106,7 +100,7 @@ considered a failure and will exit with 255.
 So the exit codes are...
 
     0                   all tests successful
-    255                 test died
+    255                 test died or all passed but wrong # of tests run
     any other number    how many failed (including missing or extras)
 
 If you fail more than 254 tests, it will be reported as 254.
@@ -129,7 +123,7 @@ Here's an example of a simple .t file for the fictional Film module.
                              Rating   => 'R',
                              NumExplodingSheep => 1
                            });
-    ok( defined($btaste) and ref $btaste eq 'Film',     'new() works' );
+    ok( defined($btaste) && ref $btaste eq 'Film,     'new() works' );
 
     ok( $btaste->Title      eq 'Bad Taste',     'Title() get'    );
     ok( $btaste->Director   eq 'Peter Jackson', 'Director() get' );
@@ -143,7 +137,8 @@ It will produce output like this:
     ok 2 - Title() get
     ok 3 - Director() get
     not ok 4 - Rating() get
-    #    Failed test (t/film.t at line 14)
+    #   Failed test 'Rating() get'
+    #   in t/film.t at line 14.
     ok 5 - NumExplodingSheep() get
     # Looks like you failed 1 tests of 5
 
@@ -223,7 +218,7 @@ E<lt>schwern@pobox.comE<gt>, wardrobe by Calvin Klein.
 
 =head1 COPYRIGHT
 
-Copyright 2001 by Michael G Schwern E<lt>schwern@pobox.comE<gt>.
+Copyright 2001, 2002, 2004 by Michael G Schwern E<lt>schwern@pobox.comE<gt>.
 
 This program is free software; you can redistribute it and/or 
 modify it under the same terms as Perl itself.

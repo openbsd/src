@@ -1,8 +1,8 @@
 package bigrat;
 require 5.005;
 
-$VERSION = '0.06';
-use Exporter;
+$VERSION = '0.08';
+require Exporter;
 @ISA		= qw( Exporter );
 @EXPORT_OK	= qw( ); 
 @EXPORT		= qw( inf NaN ); 
@@ -66,7 +66,7 @@ sub import
   # see also bignum->import() for additional comments
 
   # some defaults
-  my $lib = 'Calc'; my $upgrade = 'Math::BigFloat';
+  my $lib = ''; my $upgrade = 'Math::BigFloat';
 
   my @import = ( ':constant' );				# drive it w/ constant
   my @a = @_; my $l = scalar @_; my $j = 0;
@@ -86,7 +86,19 @@ sub import
       # this causes a different low lib to take care...
       $lib = $_[$i+1] || '';
       my $s = 2; $s = 1 if @a-$j < 2;	# avoid "can not modify non-existant..."
-      splice @a, $j, $s; $j -= $s;
+      splice @a, $j, $s; $j -= $s; $i++;
+      }
+    elsif ($_[$i] =~ /^(a|accuracy)$/)
+      {
+      $a = $_[$i+1];
+      my $s = 2; $s = 1 if @a-$j < 2;   # avoid "can not modify non-existant..."
+      splice @a, $j, $s; $j -= $s; $i++;
+      }
+    elsif ($_[$i] =~ /^(p|precision)$/)
+      {
+      $p = $_[$i+1];
+      my $s = 2; $s = 1 if @a-$j < 2;   # avoid "can not modify non-existant..."
+      splice @a, $j, $s; $j -= $s; $i++;
       }
     elsif ($_[$i] =~ /^(v|version)$/)
       {
@@ -126,12 +138,16 @@ sub import
     require Math::BigInt if $_lite == 0;        # not already loaded?
     $class = 'Math::BigInt';                    # regardless of MBIL or not
     }
+  push @import, 'lib' => $lib if $lib ne '';
   # Math::BigInt::Trace or plain Math::BigInt
-  $class->import(@import, upgrade => $upgrade, lib => $lib);
+  $class->import(@import, upgrade => $upgrade);
 
   require Math::BigFloat;
   Math::BigFloat->import( upgrade => 'Math::BigRat', ':constant' );
   require Math::BigRat;
+
+  bigrat->accuracy($a) if defined $a;
+  bigrat->precision($p) if defined $p;
   if ($ver)
     {
     print "bigrat\t\t\t v$VERSION\n";
@@ -173,7 +189,7 @@ respectively.
 Other than L<bignum>, this module upgrades to Math::BigRat, meaning that
 instead of 2.5 you will get 2+1/2 as output.
 
-=head2 MODULES USED
+=head2 Modules Used
 
 C<bigrat> is just a thin wrapper around various modules of the Math::BigInt
 family. Think of it as the head of the family, who runs the shop, and orders
@@ -186,7 +202,7 @@ The following modules are currently used by bignum:
         Math::BigFloat
         Math::BigRat
 
-=head2 MATH LIBRARY
+=head2 Math Library
 
 Math with the numbers is done (by default) by a module called
 Math::BigInt::Calc. This is equivalent to saying:
@@ -204,29 +220,33 @@ Math::BigInt::Bar, and when this also fails, revert to Math::BigInt::Calc:
 
 Please see respective module documentation for further details.
 
-=head2 SIGN
+=head2 Sign
 
-The sign is either '+', '-', 'NaN', '+inf' or '-inf' and stored seperately.
+The sign is either '+', '-', 'NaN', '+inf' or '-inf'.
 
 A sign of 'NaN' is used to represent the result when input arguments are not
 numbers or as a result of 0/0. '+inf' and '-inf' represent plus respectively
 minus infinity. You will get '+inf' when dividing a positive number by 0, and
 '-inf' when dividing any negative number by 0.
 
-=head2 METHODS
+=head2 Methods
 
 Since all numbers are not objects, you can use all functions that are part of
 the BigInt or BigFloat API. It is wise to use only the bxxx() notation, and not
 the fxxx() notation, though. This makes you independed on the fact that the
 underlying object might morph into a different class than BigFloat.
 
-=head2 CAVEAT
+=head2 Cavaet
 
 But a warning is in order. When using the following to make a copy of a number,
 only a shallow copy will be made.
 
         $x = 9; $y = $x;
         $x = $y = 7;
+
+If you want to make a real copy, use the following:
+
+	$y = $x->copy();
 
 Using the copy or the original with overloaded math is okay, e.g. the
 following work:
@@ -254,6 +274,50 @@ Using methods that do not modify, but testthe contents works:
 See the documentation about the copy constructor and C<=> in overload, as
 well as the documentation in BigInt for further details.
 
+=head2 Options
+
+bignum recognizes some options that can be passed while loading it via use.
+The options can (currently) be either a single letter form, or the long form.
+The following options exist:
+
+=over 2
+
+=item a or accuracy
+
+This sets the accuracy for all math operations. The argument must be greater
+than or equal to zero. See Math::BigInt's bround() function for details.
+
+	perl -Mbigrat=a,50 -le 'print sqrt(20)'
+
+=item p or precision
+
+This sets the precision for all math operations. The argument can be any
+integer. Negative values mean a fixed number of digits after the dot, while
+a positive value rounds to this digit left from the dot. 0 or 1 mean round to
+integer. See Math::BigInt's bfround() function for details.
+
+	perl -Mbigrat=p,-50 -le 'print sqrt(20)'
+
+=item t or trace
+
+This enables a trace mode and is primarily for debugging bignum or
+Math::BigInt/Math::BigFloat.
+
+=item l or lib
+
+Load a different math lib, see L<MATH LIBRARY>.
+
+	perl -Mbigrat=l,GMP -e 'print 2 ** 512'
+
+Currently there is no way to specify more than one library on the command
+line. This will be hopefully fixed soon ;)
+
+=item v or version
+
+This prints out the name and version of all modules used and then exits.
+
+	perl -Mbigrat=v
+
 =head1 EXAMPLES
  
 	perl -Mbigrat -le 'print sqrt(33)'
@@ -276,6 +340,6 @@ as L<Math::BigInt::BitVect>, L<Math::BigInt::Pari> and  L<Math::BigInt::GMP>.
 
 =head1 AUTHORS
 
-(C) by Tels L<http://bloodgate.com/> in early 2002.
+(C) by Tels L<http://bloodgate.com/> in early 2002 - 2005.
 
 =cut

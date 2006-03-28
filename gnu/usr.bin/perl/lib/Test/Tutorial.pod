@@ -174,7 +174,7 @@ run that and you get:
     # Looks like you failed 1 tests of 8.
 
 Whoops, a failure! [4] Test::Simple helpfully lets us know on what line
-the failure occured, but not much else.  We were supposed to get 17,
+the failure occurred, but not much else.  We were supposed to get 17,
 but we didn't.  What did we get??  Dunno.  We'll have to re-run the
 test in the debugger or throw in some print statements to find out.
 
@@ -502,7 +502,7 @@ C<local $TODO> and turn it into a real test.
 =head2 Testing with taint mode.
 
 Taint mode is a funny thing.  It's the globalest of all global
-features.  Once you turn it on it effects I<all> code in your program
+features.  Once you turn it on, it affects I<all> code in your program
 and I<all> modules used (and all the modules they use).  If a single
 piece of code isn't taint clean, the whole thing explodes.  With that
 in mind, it's very important to ensure your module works under taint
@@ -513,8 +513,6 @@ a C<-T> into the C<#!> line.  Test::Harness will read the switches
 in C<#!> and use them to run your tests.
 
     #!/usr/bin/perl -Tw
-
-    use Test::More 'no_plan';
 
     ...test normally here...
 

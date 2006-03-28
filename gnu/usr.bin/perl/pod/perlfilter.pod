@@ -89,10 +89,10 @@ Below is an example program, C<cpp_test>, which makes use of this filter.
 Line numbers have been added to allow specific lines to be referenced
 easily.
 
-    1: use Filter::cpp ;
+    1: use Filter::cpp;
     2: #define TRUE 1
-    3: $a = TRUE ;
-    4: print "a = $a\n" ;
+    3: $a = TRUE;
+    4: print "a = $a\n";
 
 When you execute this script, Perl creates a source stream for the
 file. Before the parser processes any of the lines from the file, the
@@ -122,18 +122,18 @@ inserted back into the source stream by the filter.
 
 The parser then sees the following code:
 
-    use Filter::cpp ;
-    $a = 1 ;
-    print "a = $a\n" ;
+    use Filter::cpp;
+    $a = 1;
+    print "a = $a\n";
 
 Let's consider what happens when the filtered code includes another
 module with use:
 
-    1: use Filter::cpp ;
+    1: use Filter::cpp;
     2: #define TRUE 1
-    3: use Fred ;
-    4: $a = TRUE ;
-    5: print "a = $a\n" ;
+    3: use Fred;
+    4: $a = TRUE;
+    5: print "a = $a\n";
 
 The C<cpp> filter does not apply to the text of the Fred module, only
 to the text of the file that used it (C<cpp_test>). Although the use
@@ -160,7 +160,7 @@ For example, if you have a uuencoded and compressed source file, it is
 possible to stack a uudecode filter and an uncompression filter like
 this:
 
-    use Filter::uudecode ; use Filter::uncompress ;
+    use Filter::uudecode; use Filter::uncompress;
     M'XL(".H<US4''V9I;F%L')Q;>7/;1I;_>_I3=&E=%:F*I"T?22Q/
     M6]9*<IQCO*XFT"0[PL%%'Y+IG?WN^ZYN-$'J.[.JE$,20/?K=_[>
     ...
@@ -245,9 +245,9 @@ redirection facilities.
 
 Here is an example script that uses C<Filter::sh>:
 
-    use Filter::sh 'tr XYZ PQR' ;
-    $a = 1 ;
-    print "XYZ a = $a\n" ;
+    use Filter::sh 'tr XYZ PQR';
+    $a = 1;
+    print "XYZ a = $a\n";
 
 The output you'll get when the script is executed:
 
@@ -274,23 +274,23 @@ forward thirteen places, so that A becomes N, B becomes O, and Z
 becomes M.)
 
 
-   package Rot13 ;
+   package Rot13;
 
-   use Filter::Util::Call ;
+   use Filter::Util::Call;
 
    sub import {
-      my ($type) = @_ ;
-      my ($ref) = [] ;
-      filter_add(bless $ref) ;
+      my ($type) = @_;
+      my ($ref) = [];
+      filter_add(bless $ref);
    }
 
    sub filter {
-      my ($self) = @_ ;
-      my ($status) ;
+      my ($self) = @_;
+      my ($status);
 
       tr/n-za-mN-ZA-M/a-zA-Z/
-         if ($status = filter_read()) > 0 ;
-      $status ;
+         if ($status = filter_read()) > 0;
+      $status;
    }
 
    1;
@@ -339,16 +339,16 @@ In order to make use of the rot13 filter we need some way of encoding
 the source file in rot13 format. The script below, C<mkrot13>, does
 just that.
 
-    die "usage mkrot13 filename\n" unless @ARGV ;
-    my $in = $ARGV[0] ;
-    my $out = "$in.tmp" ;
+    die "usage mkrot13 filename\n" unless @ARGV;
+    my $in = $ARGV[0];
+    my $out = "$in.tmp";
     open(IN, "<$in") or die "Cannot open file $in: $!\n";
     open(OUT, ">$out") or die "Cannot open file $out: $!\n";
 
-    print OUT "use Rot13;\n" ;
+    print OUT "use Rot13;\n";
     while (<IN>) {
-       tr/a-zA-Z/n-za-mN-ZA-M/ ;
-       print OUT ;
+       tr/a-zA-Z/n-za-mN-ZA-M/;
+       print OUT;
     }
 
     close IN;
@@ -358,12 +358,12 @@ just that.
 
 If we encrypt this with C<mkrot13>:
 
-    print " hello fred \n" ;
+    print " hello fred \n";
 
 the result will be this:
 
     use Rot13;
-    cevag "uryyb serq\a" ;
+    cevag "uryyb serq\a";
 
 Running it produces this output:
 
@@ -385,7 +385,7 @@ Two special marker lines will bracket debugging code, like this:
 
     ## DEBUG_BEGIN
     if ($year > 1999) {
-       warn "Debug: millennium bug in year $year\n" ;
+       warn "Debug: millennium bug in year $year\n";
     }
     ## DEBUG_END
 
@@ -400,7 +400,7 @@ between the two markers into comments:
 
     ## DEBUG_BEGIN
     #if ($year > 1999) {
-    #     warn "Debug: millennium bug in year $year\n" ;
+    #     warn "Debug: millennium bug in year $year\n";
     #}
     ## DEBUG_END
 
@@ -410,62 +410,62 @@ Here is the complete Debug filter:
 
     use strict;
     use warnings;
-    use Filter::Util::Call ;
+    use Filter::Util::Call;
 
-    use constant TRUE => 1 ;
-    use constant FALSE => 0 ;
+    use constant TRUE => 1;
+    use constant FALSE => 0;
 
     sub import {
-       my ($type) = @_ ;
+       my ($type) = @_;
        my (%context) = (
          Enabled => defined $ENV{DEBUG},
          InTraceBlock => FALSE,
          Filename => (caller)[1],
          LineNo => 0,
          LastBegin => 0,
-       ) ;
-       filter_add(bless \%context) ;
+       );
+       filter_add(bless \%context);
     }
 
     sub Die {
-       my ($self) = shift ;
-       my ($message) = shift ;
-       my ($line_no) = shift || $self->{LastBegin} ;
+       my ($self) = shift;
+       my ($message) = shift;
+       my ($line_no) = shift || $self->{LastBegin};
        die "$message at $self->{Filename} line $line_no.\n"
     }
 
     sub filter {
-       my ($self) = @_ ;
-       my ($status) ;
-       $status = filter_read() ;
-       ++ $self->{LineNo} ;
+       my ($self) = @_;
+       my ($status);
+       $status = filter_read();
+       ++ $self->{LineNo};
 
        # deal with EOF/error first
        if ($status <= 0) {
            $self->Die("DEBUG_BEGIN has no DEBUG_END")
-               if $self->{InTraceBlock} ;
-           return $status ;
+               if $self->{InTraceBlock};
+           return $status;
        }
 
        if ($self->{InTraceBlock}) {
           if (/^\s*##\s*DEBUG_BEGIN/ ) {
               $self->Die("Nested DEBUG_BEGIN", $self->{LineNo})
           } elsif (/^\s*##\s*DEBUG_END/) {
-              $self->{InTraceBlock} = FALSE ;
+              $self->{InTraceBlock} = FALSE;
           }
 
           # comment out the debug lines when the filter is disabled
-          s/^/#/ if ! $self->{Enabled} ;
+          s/^/#/ if ! $self->{Enabled};
        } elsif ( /^\s*##\s*DEBUG_BEGIN/ ) {
-          $self->{InTraceBlock} = TRUE ;
-          $self->{LastBegin} = $self->{LineNo} ;
+          $self->{InTraceBlock} = TRUE;
+          $self->{LastBegin} = $self->{LineNo};
        } elsif ( /^\s*##\s*DEBUG_END/ ) {
           $self->Die("DEBUG_END has no DEBUG_BEGIN", $self->{LineNo});
        }
-       return $status ;
+       return $status;
     }
 
-    1 ;
+    1;
 
 The big difference between this filter and the previous example is the
 use of context data in the filter object. The filter object is based on
@@ -481,23 +481,23 @@ If you ignore all the error checking that most of the code does, the
 essence of the filter is as follows:
 
     sub filter {
-       my ($self) = @_ ;
-       my ($status) ;
-       $status = filter_read() ;
+       my ($self) = @_;
+       my ($status);
+       $status = filter_read();
 
        # deal with EOF/error first
-       return $status if $status <= 0 ;
+       return $status if $status <= 0;
        if ($self->{InTraceBlock}) {
           if (/^\s*##\s*DEBUG_END/) {
              $self->{InTraceBlock} = FALSE
           }
 
           # comment out debug lines when the filter is disabled
-          s/^/#/ if ! $self->{Enabled} ;
+          s/^/#/ if ! $self->{Enabled};
        } elsif ( /^\s*##\s*DEBUG_BEGIN/ ) {
-          $self->{InTraceBlock} = TRUE ;
+          $self->{InTraceBlock} = TRUE;
        }
-       return $status ;
+       return $status;
     }
 
 Be warned: just as the C-preprocessor doesn't know C, the Debug filter
@@ -539,9 +539,9 @@ parameter list. Such a filter would turn this:
 into this:
 
     sub MySub($$@) {
-       my ($first) = shift ;
-       my ($second) = shift ;
-       my (@rest) = @_ ;
+       my ($first) = shift;
+       my ($second) = shift;
+       my (@rest) = @_;
        ...
     }
 

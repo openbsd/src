@@ -304,7 +304,7 @@ Perl_sharedsv_associate(pTHX_ SV **psv, SV *ssv, shared_sv *data)
 		ssv = newSV(0);
 		SvREFCNT(ssv) = 0;
 	    }
-	    data = PerlMemShared_malloc(sizeof(shared_sv));
+	    data = (shared_sv *) PerlMemShared_malloc(sizeof(shared_sv));
 	    Zero(data,1,shared_sv);
 	    SHAREDSvPTR(data) = ssv;
 	    /* Tag shared side SV with data pointer */
@@ -361,7 +361,7 @@ Perl_sharedsv_associate(pTHX_ SV **psv, SV *ssv, shared_sv *data)
 		  char* stash_ptr = SvPV((SV*) SvSTASH(ssv), len);
 		  HV* stash = gv_stashpvn(stash_ptr, len, TRUE);
 		  SvOBJECT_on(sv);
-		  SvSTASH(sv) = (HV*)SvREFCNT_inc(stash);
+		  SvSTASH_set(sv, (HV*)SvREFCNT_inc(stash));
 		}
 	    }
 	    break;
@@ -378,6 +378,13 @@ Perl_sharedsv_associate(pTHX_ SV **psv, SV *ssv, shared_sv *data)
 				&sharedsv_scalar_vtbl, (char *)data, 0);
 		mg->mg_flags |= (MGf_COPY|MGf_DUP);
 		SvREFCNT_inc(ssv);
+		if(SvOBJECT(ssv)) {
+		  STRLEN len;
+		  char* stash_ptr = SvPV((SV*) SvSTASH(ssv), len);
+		  HV* stash = gv_stashpvn(stash_ptr, len, TRUE);
+		  SvOBJECT_on(sv);
+		  SvSTASH_set(sv, (HV*)SvREFCNT_inc(stash));
+		}
 	    }
 	    break;
 	}
@@ -503,7 +510,7 @@ sharedsv_scalar_mg_get(pTHX_ SV *sv, MAGIC *mg)
 	    SV *obj = Nullsv;
 	    Perl_sharedsv_associate(aTHX_ &obj, SvRV(SHAREDSvPTR(shared)), NULL);
 	    sv_setsv_nomg(sv, &PL_sv_undef);
-	    SvRV(sv) = obj;
+	    SvRV_set(sv, obj);
 	    SvROK_on(sv);
 	    
 	}
@@ -529,9 +536,9 @@ sharedsv_scalar_store(pTHX_ SV *sv, shared_sv *shared)
 	    sv_setsv_nomg(SHAREDSvPTR(shared), tmp);
 	    SvREFCNT_dec(tmp);
 	    if(SvOBJECT(SvRV(sv))) {
-	      SV* fake_stash = newSVpv(HvNAME(SvSTASH(SvRV(sv))),0);
+	      SV* fake_stash = newSVpv(HvNAME_get(SvSTASH(SvRV(sv))),0);
 	      SvOBJECT_on(SHAREDSvPTR(target));
-	      SvSTASH(SHAREDSvPTR(target)) = (HV*)fake_stash;
+	      SvSTASH_set(SHAREDSvPTR(target), (HV*)fake_stash);
 	    }
 	    CALLER_CONTEXT;
 	}
@@ -544,9 +551,9 @@ sharedsv_scalar_store(pTHX_ SV *sv, shared_sv *shared)
 	SHARED_CONTEXT;
 	sv_setsv_nomg(SHAREDSvPTR(shared), sv);
 	if(SvOBJECT(sv)) {
-	  SV* fake_stash = newSVpv(HvNAME(SvSTASH(sv)),0);
+	  SV* fake_stash = newSVpv(HvNAME_get(SvSTASH(sv)),0);
 	  SvOBJECT_on(SHAREDSvPTR(shared));
-	  SvSTASH(SHAREDSvPTR(shared)) = (HV*)fake_stash;
+	  SvSTASH_set(SHAREDSvPTR(shared), (HV*)fake_stash);
 	}
 	CALLER_CONTEXT;
     }
@@ -643,7 +650,7 @@ sharedsv_elem_mg_FETCH(pTHX_ SV *sv, MAGIC *mg)
 	    SV *obj = Nullsv;
 	    Perl_sharedsv_associate(aTHX_ &obj, SvRV(*svp), NULL);
 	    sv_setsv_nomg(sv, &PL_sv_undef);
-	    SvRV(sv) = obj;
+	    SvRV_set(sv, obj);
 	    SvROK_on(sv);
 	    SvSETMAGIC(sv);
 	}
@@ -1237,11 +1244,11 @@ cond_signal_enabled(SV *ref)
 	if(SvROK(ref))
 	    ref = SvRV(ref);
 	shared = Perl_sharedsv_find(aTHX_ ref);
+	if(!shared)
+	    croak("cond_signal can only be used on shared values");
 	if (ckWARN(WARN_THREADS) && shared->lock.owner != aTHX)
 	    Perl_warner(aTHX_ packWARN(WARN_THREADS),
 			    "cond_signal() called on unlocked variable");
-	if(!shared)
-	    croak("cond_signal can only be used on shared values");
 	COND_SIGNAL(&shared->user_cond);
 
 void
@@ -1294,7 +1301,7 @@ bless(SV* ref, ...);
 	    ENTER_LOCK;
 	    SHARED_CONTEXT;
 	    {
-	      SV* fake_stash = newSVpv(HvNAME(stash),0);
+	      SV* fake_stash = newSVpv(HvNAME_get(stash),0);
 	      (void)sv_bless(SHAREDSvPTR(shared),(HV*)fake_stash);
 	    }
 	    CALLER_CONTEXT;

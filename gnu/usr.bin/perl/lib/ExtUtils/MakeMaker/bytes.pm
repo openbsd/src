@@ -19,7 +19,7 @@ sub import {
 
 =head1 NAME
 
-ExtUtils::MakeMaker::bytes - Version agnostic bytes.pm
+ExtUtils::MakeMaker::bytes - Version-agnostic bytes.pm
 
 =head1 SYNOPSIS
 

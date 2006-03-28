@@ -4,7 +4,7 @@ use strict;
 use vars qw($VERSION);
 use Carp;
 
-$VERSION = '2.10';
+$VERSION = '2.10_01';
 
 
 # LOAD FILTERING MODULE...
@@ -681,7 +681,7 @@ Fall-though (trying another case after one has already succeeded)
 is usually a Bad Idea in a switch statement. However, this
 is Perl, not a police state, so there I<is> a way to do it, if you must.
 
-If a C<case> block executes an untargetted C<next>, control is
+If a C<case> block executes an untargeted C<next>, control is
 immediately transferred to the statement I<after> the C<case> statement
 (i.e. usually another case), rather than out of the surrounding
 C<switch> block.
@@ -713,7 +713,7 @@ For example:
                 case /\d/   { handle_dig_any(); }
         }
 
-If an untargetted C<last> statement is executed in a case block, this
+If an untargeted C<last> statement is executed in a case block, this
 immediately transfers control out of the enclosing C<switch> block
 (in other words, there is an implicit C<last> at the end of each
 normal C<case> block). Thus the previous example could also have been

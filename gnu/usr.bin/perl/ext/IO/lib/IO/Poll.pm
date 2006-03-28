@@ -13,7 +13,7 @@ use Exporter ();
 our(@ISA, @EXPORT_OK, @EXPORT, $VERSION);
 
 @ISA = qw(Exporter);
-$VERSION = "0.06";
+$VERSION = "0.07";
 
 @EXPORT = qw( POLLIN
 	      POLLOUT
@@ -175,7 +175,7 @@ happen, or -1 on error.
 
 =item events ( IO )
 
-Returns the event mask which represents the events that happend on IO
+Returns the event mask which represents the events that happened on IO
 during the last call to C<poll>.
 
 =item remove ( IO )

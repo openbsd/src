@@ -522,7 +522,7 @@ a "-".  This was so that this:
 
 would parse as equivalent to this:
 
-    C<$foo-E<lt>bar>
+    C<$foo-E<gt>bar>
 
 instead of as equivalent to a "C" formatting code containing 
 only "$foo-", and then a "bar>" outside the "C" formatting code.  This

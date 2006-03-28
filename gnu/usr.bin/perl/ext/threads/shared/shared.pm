@@ -7,7 +7,7 @@ BEGIN {
     require Exporter;
     our @ISA = qw(Exporter);
     our @EXPORT = qw(share cond_wait cond_timedwait cond_broadcast cond_signal);
-    our $VERSION = '0.92';
+    our $VERSION = '0.94';
 
     if ($threads::threads) {
 	*cond_wait = \&cond_wait_enabled;
@@ -53,6 +53,10 @@ threads::shared - Perl extension for sharing data structures between threads
   use threads::shared;
 
   my $var : shared;
+  $var = $scalar_value;
+  $var = $shared_ref_value;
+  $var = &share($simple_unshared_ref_value);
+  $var = &share(new Foo);
 
   my($scalar, @array, %hash);
   share($scalar);
@@ -101,6 +105,9 @@ the shared rvalue but always as a reference.
 
 C<share> will traverse up references exactly I<one> level.
 C<share(\$a)> is equivalent to C<share($a)>, while C<share(\\$a)> is not.
+This means that you must create nested shared data structures by first
+creating individual shared leaf notes, then adding them to a shared hash
+or array.
 
 A variable can also be marked as shared at compile time by using the
 C<shared> attribute: C<my $var : shared>.
@@ -108,6 +115,20 @@ C<shared> attribute: C<my $var : shared>.
 If you want to share a newly created reference unfortunately you
 need to use C<&share([])> and C<&share({})> syntax due to problems
 with Perl's prototyping.
+
+The only values that can be assigned to a shared scalar are other scalar
+values, or shared refs, eg
+
+    my $var : shared;
+    $var = 1;              # ok
+    $var = &share([]);     # ok
+    $var = [];             # error
+    $var = A->new;         # error
+    $var = &share(A->new); # ok as long as the A object is not nested
+
+Note that it is often not wise to share an object unless the class itself
+has been written to support sharing; for example, an object's destructor
+may get called multiple times, one for each thread's scope exit.
 
 =item lock VARIABLE
 

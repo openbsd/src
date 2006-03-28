@@ -5,12 +5,9 @@ BEGIN {
 	    "cannot stringify a Unicode code point\n";
 	exit 0;
     }
-}
-
-BEGIN {
     if ($ENV{PERL_CORE}) {
-        chdir('t') if -d 't';
-        @INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
+	chdir('t') if -d 't';
+	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
     }
 }
 
@@ -339,10 +336,10 @@ $ret = $Collator->gsubst($str, "perl", \&strreverse);
 ok($ret, 2);
 ok($str, "lr\cB\x{300}e\cBP and LREP.");
 
-$str = "Camel ass came\x{301}l CAMEL horse cAm\0E\0L...";
+$str = "Camel donkey zebra came\x{301}l CAMEL horse cAm\0E\0L...";
 $Collator->gsubst($str, "camel", sub { "<b>$_[0]</b>" });
-ok($str,
-"<b>Camel</b> ass <b>came\x{301}l</b> <b>CAMEL</b> horse <b>cAm\0E\0L</b>...");
+ok($str, "<b>Camel</b> donkey zebra <b>came\x{301}l</b> "
+	. "<b>CAMEL</b> horse <b>cAm\0E\0L</b>...");
 
 $Collator->change(level => 3);
 
@@ -401,3 +398,4 @@ $Collator->change(alternate => 'Non-ignorable');
 
 ($ret) = $Collator->match("A?\x{300}!\x{301}B\x{315}", "?!");
 ok($ret, undef);
+

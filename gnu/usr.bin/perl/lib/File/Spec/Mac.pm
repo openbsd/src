@@ -53,7 +53,7 @@ done in MacPerl's environment and helps to distinguish a file path from a
 directory path.
 
 B<IMPORTANT NOTE:> Beginning with version 1.3 of this module, the resulting
-path is relative by default and I<not> absolute. This descision was made due
+path is relative by default and I<not> absolute. This decision was made due
 to portability reasons. Since C<File::Spec-E<gt>catdir()> returns relative paths
 on all other operating systems, it will now also follow this convention on Mac
 OS. Note that this may break some existing scripts.
@@ -272,7 +272,7 @@ by default, but can be forced to be absolute (but avoid this).
 
 B<IMPORTANT NOTE:> Beginning with version 1.3 of this module, the
 resulting path is relative by default and I<not> absolute. This
-descision was made due to portability reasons. Since
+decision was made due to portability reasons. Since
 C<File::Spec-E<gt>catfile()> returns relative paths on all other
 operating systems, it will now also follow this convention on Mac OS.
 Note that this may break some existing scripts.
@@ -373,8 +373,7 @@ directory on your startup volume.
 my $tmpdir;
 sub tmpdir {
     return $tmpdir if defined $tmpdir;
-    my $self = shift;
-    $tmpdir = $self->_tmpdir( $ENV{TMPDIR} );
+    $tmpdir = $_[0]->_tmpdir( $ENV{TMPDIR} );
 }
 
 =item updir
@@ -763,6 +762,13 @@ sub rel2abs {
 
 See the authors list in I<File::Spec>. Mac OS support by Paul Schinder
 <schinder@pobox.com> and Thomas Wegner <wegner_thomas@yahoo.com>.
+
+=head1 COPYRIGHT
+
+Copyright (c) 2004 by the Perl 5 Porters.  All rights reserved.
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 

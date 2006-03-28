@@ -1,8 +1,8 @@
-# PropertyAliases-4.0.1.txt
-# Date: 2004-03-02, 19:47:55 GMT [MD]
+# PropertyAliases-4.1.0.txt
+# Date: 2005-02-26, 11:13:41 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2004 Unicode, Inc.
+# Copyright (c) 1991-2005 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see UCD.html
 # This file contains aliases for properties used in the UCD.
@@ -90,6 +90,7 @@ ccc       ; Canonical_Combining_Class
 dt        ; Decomposition_Type
 ea        ; East_Asian_Width
 gc        ; General_Category
+GCB       ; Grapheme_Cluster_Break
 hst       ; Hangul_Syllable_Type
 jg        ; Joining_Group
 jt        ; Joining_Type
@@ -99,6 +100,8 @@ NFD_QC    ; NFD_Quick_Check
 NFKC_QC   ; NFKC_Quick_Check
 NFKD_QC   ; NFKD_Quick_Check
 nt        ; Numeric_Type
+SB        ; Sentence_Break
+WB        ; Word_Break
 
 # ================================================
 # Binary Properties
@@ -132,10 +135,13 @@ NChar     ; Noncharacter_Code_Point
 OAlpha    ; Other_Alphabetic
 ODI       ; Other_Default_Ignorable_Code_Point
 OGr_Ext   ; Other_Grapheme_Extend
+OIDC      ; Other_ID_Continue
 OIDS      ; Other_ID_Start
 OLower    ; Other_Lowercase
 OMath     ; Other_Math
 OUpper    ; Other_Uppercase
+Pat_Syn   ; Pattern_Syntax
+Pat_WS    ; Pattern_White_Space
 QMark     ; Quotation_Mark
 Radical   ; Radical
 SD        ; Soft_Dotted
@@ -144,7 +150,7 @@ Term      ; Terminal_Punctuation
 UIdeo     ; Unified_Ideograph
 Upper     ; Uppercase
 VS        ; Variation_Selector
-WSpace    ; White_Space
+WSpace    ; White_Space                 ; space
 XIDC      ; XID_Continue
 XIDS      ; XID_Start
 XO_NFC    ; Expands_On_NFC
@@ -153,5 +159,5 @@ XO_NFKC   ; Expands_On_NFKC
 XO_NFKD   ; Expands_On_NFKD
 
 # ================================================
-# Total:    82
+# Total:    88
 

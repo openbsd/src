@@ -4,110 +4,106 @@ designed to be readable as is.
 
 =head1 NAME
 
-README.beos - Perl version 5 on BeOS
+README.beos - Perl version 5.8+ on BeOS
 
 =head1 DESCRIPTION
 
-Notes for building Perl under BeOS.
+This file contains instructions how to build Perl under BeOS and lists
+known problems.
 
-=head2 General Issues with Perl on BeOS
+=head1 BUILD AND INSTALL
 
-To compile perl under BeOS R4 x86:
+=head2 Requirements
 
-	./Configure -d
+I have built and tested Perl 5.8.6 and 5.9.1 under BeOS R5 x86 net server.
+I can't say anything with regard to PPC. Since Perl 5.8.0 had been released
+for BeOS BONE, I suspect, there is a good chance, that it still compiles on
+a BONE system. The only change I've made, that affects BONE systems is the
+recognition of whether it is a BONE system or not in C<hints/beos.sh>. Now
+network socket support should remain enabled on BONE systems. This might
+as well break the build, though.
 
-and hit ^C when it asks you if you want to make changes to config.sh;
-edit config.sh and do the following:
-change d_socket='define' to ='undef';
-remove SDBM, Errno, and Socket from dynamic_ext= and nonxs_ext=;
-add '#define bool short' to x2p/a2p.h;
+As more recent versions of autoconf require flock() support, I wrote a flock()
+emulation (flock_server) and released it on BeBits:
 
-	../Configure -S; make; make install
+	http://www.bebits.com/app/4030
 
-	cd ~/config/lib; ln -s 5.00502/BeOS-BePC/CORE/libperl.so .
+If you want to build a Perl with flock() support, you have to install this
+package first.
 
-(substitute 5.00502 with the appropriate filename)
+=head2 Configure
 
-=head2 BeOS Release-specific Notes
+With flock() support:
+
+	CFLAGS=-I/path/to/flock/server/headers ./configure.gnu \
+		--prefix=/boot/home/config
+
+Replace C</path/to/flock/server/headers> with the path to the directory
+containing the C<flock.h> header.
+
+Without flock() support:
+
+	./configure.gnu --prefix=/boot/home/config
+
+=head2 Build
+
+With flock() support:
+
+	make LDLOADLIBS="-lnet -lflock"
+
+Without flock() support:
+
+	make LDLOADLIBS="-lnet"
+
+C<-lnet> is needed on net server systems only and if the compiler doesn't
+add it automatically (Be's R5 gcc does, Oliver Tappe's gcc 2.95.3 does not).
+
+=head2 Install
+
+Install all perl files:
+
+	make install
+
+Create a symlink for libperl:
+
+	cd ~/config/lib; ln -s perl5/5.8.6/BePC-beos/CORE/libperl.so .
+
+Replace C<5.8.6> with your respective version of Perl.
+
+=head1 KNOWN PROBLEMS
 
 =over 4
 
-=item R4 x86
+=item *
 
-Dynamic loading finally works! Yay! This means you can compile your
-own modules into perl. However, Sockets and Errno still don't work.
-(Hopefully, sockets will at least work by R5, if not sooner.)
+Network socket support is disabled for BeOS R5 net server. I didn't dare yet
+to try enabling it and see what problems occur.
 
-=item R4 PPC
+=item *
 
-I have not tested this. I rather severely doubt that dynamic loading
-will work. (My BeBox is in pieces right now, following a nasty disk
-crash.) You may have to disable dynamic loading to get the thing to
-compile at all. (use `./Configure` without -d, and say 'no' to 'Build
-a shared libperl.so'.)
+The LFS (large file support) tests (C<t/op/lfs> and C<xt/Fcntl/t/syslfs>) are
+disabled as seeking beyond 2 GB is broken according to jhi@iki.fi who was the
+last one checking the BeOS port and updating this file before me. Haven't
+checked this myself.
+
+=item *
+
+The C<t/io/fflush> test fails at #6. As far as I can tell, this is caused by
+a bug in the BeOS pipes implementation that occurs when starting other child
+processes. In the particular test case a C<system("perl -e 0")> flushes the
+stdout pipe of another child process.
+
+=item *
+
+The C<ext/POSIX/t/waitpid> test fails at #1. After all child processes are
+gone BeOS' waitpid(-1,...) returns 0 instead of -1 (as it should). No idea
+how to fix this.
 
 =back
 
-=head2 Contact Information
+=head1 CONTACT
 
-If you have comments, problem reports, or even patches or bugfixes (gasp!)
-please email me.
+For BeOS specifics problems feel free to mail to:
+Ingo Weinhold <bonefish@cs.tu-berlin.de>
 
-28 Jan 1999
-Tom Spindler
-dogcow@isi.net
-
-=head2 Update 2002-05-30
-
-The following tests fail on 5.8.0 Perl in BeOS Personal 5.03:
-
- t/op/lfs............................FAILED at test 17
- t/op/magic..........................FAILED at test 24
- ext/Fcntl/t/syslfs..................FAILED at test 17
- ext/File/Glob/t/basic...............FAILED at test 3
- ext/POSIX/t/sigaction...............FAILED at test 13
- ext/POSIX/t/waitpid.................FAILED at test 1
-
-The reasons for the failures are as follows: 
-
-=over 4
-
-=item *
-
-The t/op/lfs and ext/Fcntl/t/syslfs failures indicate that the
-LFS (large file support, files larger than 2 gigabytes) doesn't
-work from Perl (BeFS itself is well capable of supporting large
-files).  What fails is that trying to position the file pointer
-past 2 gigabytes doesn't work right, the position gets truncated
-to its lower 32 bits.
-
-=item *
-
-The op/magic failures look like something funny going on with $0 and
-$^X that I can't now figure out: none of the generated pathnames are
-wrong as such, they just seem to accumulate "./" prefixes and infixes
-in ways that define logic.
-
-=item *
-
-The Glob/t/basic indicates a bug in the getpw*() functions:
-they do not always return the correct user db entries.
-
-=item *
-
-The sigaction #13 means that signal mask doesn't get properly restored
-if sigaction returns early.
-
-=item *
-
-The waitpid failure means that after there are no more child
-processes, waitpid is supposed to start returning -1 (and set
-errno to ECHILD).  In BeOS, it doesn't seem to.
-
-=back
-
-Disclaimer: I just installed BeOS Personal Edition 5.0 and the
-Developer Tools, that is the whole extent of my BeOS expertise,
-so please don't ask me for further help in BeOS Perl problems.
-
-jhi@iki.fi
+Last update: 2004-12-16

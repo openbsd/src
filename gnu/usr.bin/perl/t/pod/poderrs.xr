@@ -17,7 +17,7 @@
 *** ERROR: =end without =begin at line 77 in file t/pod/poderrs.t
 *** ERROR: No argument for =begin at line 83 in file t/pod/poderrs.t
 *** ERROR: =for without formatter specification at line 89 in file t/pod/poderrs.t
-*** ERROR: nested commands C<...C<...>...> at line 95 in file t/pod/poderrs.t
+*** WARNING: nested commands C<...C<...>...> at line 95 in file t/pod/poderrs.t
 *** ERROR: garbled entity E<alea iacta est> at line 99 in file t/pod/poderrs.t
 *** ERROR: garbled entity E<C<auml>> at line 100 in file t/pod/poderrs.t
 *** ERROR: garbled entity E<abcI<bla>> at line 101 in file t/pod/poderrs.t
@@ -45,4 +45,3 @@
 *** ERROR: unresolved internal link 'OoPs' at line 110 in file t/pod/poderrs.t
 *** ERROR: unresolved internal link 'abc def' at line 114 in file t/pod/poderrs.t
 *** ERROR: unresolved internal link 'I/O Operators' at line 202 in file t/pod/poderrs.t
-*** WARNING: multiple occurrence of link target 'Misc' at line - in file t/pod/poderrs.t

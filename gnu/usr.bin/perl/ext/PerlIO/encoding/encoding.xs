@@ -308,8 +308,8 @@ PerlIOEncode_fill(pTHX_ PerlIO * f)
 	}
 	else {
 	    /* Create a "dummy" SV to represent the available data from layer below */
-	    if (SvLEN(e->dataSV) && SvPVX(e->dataSV)) {
-		Safefree(SvPVX(e->dataSV));
+	    if (SvLEN(e->dataSV) && SvPVX_const(e->dataSV)) {
+		Safefree(SvPVX_mutable(e->dataSV));
 	    }
 	    if (use > (SSize_t)e->base.bufsiz) {
 		if (e->flags & NEEDS_LINES) {
@@ -321,8 +321,8 @@ PerlIOEncode_fill(pTHX_ PerlIO * f)
 	       use = e->base.bufsiz;
 	    }
 	    }
-	    SvPVX(e->dataSV) = (char *) ptr;
-	    SvLEN(e->dataSV) = 0;  /* Hands off sv.c - it isn't yours */
+	    SvPV_set(e->dataSV, (char *) ptr);
+	    SvLEN_set(e->dataSV, 0);  /* Hands off sv.c - it isn't yours */
 	    SvCUR_set(e->dataSV,use);
 	    SvPOK_only(e->dataSV);
 	}
@@ -462,8 +462,8 @@ PerlIOEncode_flush(pTHX_ PerlIO * f)
 		SAVETMPS;
 		str = sv_newmortal();
 		sv_upgrade(str, SVt_PV);
-		SvPVX(str) = (char*)e->base.ptr;
-		SvLEN(str) = 0;
+		SvPV_set(str, (char*)e->base.ptr);
+		SvLEN_set(str, 0);
 		SvCUR_set(str, e->base.end - e->base.ptr);
 		SvPOK_only(str);
 		SvUTF8_on(str);

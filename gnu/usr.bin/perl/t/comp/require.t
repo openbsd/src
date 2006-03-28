@@ -11,8 +11,8 @@ $i = 1;
 
 my $Is_EBCDIC = (ord('A') == 193) ? 1 : 0;
 my $Is_UTF8   = (${^OPEN} || "") =~ /:utf8/;
-my $total_tests = 30;
-if ($Is_EBCDIC || $Is_UTF8) { $total_tests = 27; }
+my $total_tests = 31;
+if ($Is_EBCDIC || $Is_UTF8) { $total_tests -= 3; }
 print "1..$total_tests\n";
 
 sub do_require {
@@ -146,6 +146,21 @@ $foo = eval q{require bleah}; delete $INC{"bleah.pm"}; ++$::i;
 $foo = eval  {require bleah}; delete $INC{"bleah.pm"}; ++$::i;
 @foo = eval  {require bleah}; delete $INC{"bleah.pm"}; ++$::i;
        eval  {require bleah};
+
+# Test for fix of RT #24404 : "require $scalar" may load a directory
+my $r = "threads";
+eval { require $r };
+$i++;
+if($@ =~ /Directory .*threads not allowed in require/) {
+    print "ok $i\n";
+} else {
+    print "not ok $i\n";
+}
+
+##########################################
+# What follows are UTF-8 specific tests. #
+# Add generic tests before this point.   #
+##########################################
 
 # UTF-encoded things - skipped on EBCDIC machines and on UTF-8 input
 

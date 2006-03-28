@@ -1,4 +1,4 @@
-#!./perl
+#!./perl -w
 
 BEGIN {
     unless(grep /blib/, @INC) {
@@ -119,15 +119,20 @@ print "ok 21\n";
 # check warnings
 $SIG{__WARN__} = sub { 
     ++ $w 
-      if $_[0] =~ /^Call to deprecated method 'has_error', use 'has_exception'/ 
+      if $_[0] =~ /^Call to deprecated method 'has_error', use 'has_exception'/ ;
     } ;
 $w = 0 ;
+{
+no warnings 'IO::Select' ;
 IO::Select::has_error();
+}
 print "not " unless $w == 0 ;
 $w = 0 ;
 print "ok 22\n" ;
+{
 use warnings 'IO::Select' ;
 IO::Select::has_error();
+}
 print "not " unless $w == 1 ;
 $w = 0 ;
 print "ok 23\n" ;

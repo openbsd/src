@@ -13,63 +13,47 @@ BEGIN {
     }
 }
 
-BEGIN {
-  require Scalar::Util;
+use Scalar::Util ();
+use Test::More  (grep { /set_prototype/ } @Scalar::Util::EXPORT_FAIL)
+			? (skip_all => 'set_prototype requires XS version')
+			: (tests => 13);
 
-  if (grep { /set_prototype/ } @Scalar::Util::EXPORT_FAIL) {
-    print "1..0\n";
-    $skip=1;
-  }
-}
-
-eval <<'EOT' unless $skip;
-use Scalar::Util qw(set_prototype);
-
-print "1..13\n";
-$test = 0;
-
-sub proto_is ($$) {
-    $proto = prototype shift;
-    $expected = shift;
-    if (defined $expected) {
-	print "# Got $proto, expected $expected\nnot " if $expected ne $proto;
-    }
-    else {
-	print "# Got $proto, expected undef\nnot " if defined $proto;
-    }
-    print "ok ", ++$test, "\n";
-}
+Scalar::Util->import('set_prototype');
 
 sub f { }
-proto_is 'f' => undef;
+is( prototype('f'),	undef,	'no prototype');
+
 $r = set_prototype(\&f,'$');
-proto_is 'f' => '$';
-print "not " unless ref $r eq "CODE" and $r == \&f;
-print "ok ", ++$test, " - return value\n";
+is( prototype('f'),	'$',	'set prototype');
+is( $r,			\&f,	'return value');
+
 set_prototype(\&f,undef);
-proto_is 'f' => undef;
+is( prototype('f'),	undef,	'remove prototype');
+
 set_prototype(\&f,'');
-proto_is 'f' => '';
+is( prototype('f'),	'',	'empty prototype');
 
 sub g (@) { }
-proto_is 'g' => '@';
+is( prototype('g'),	'@',	'@ prototype');
+
 set_prototype(\&g,undef);
-proto_is 'g' => undef;
+is( prototype('g'),	undef,	'remove prototype');
 
-sub non_existent;
-proto_is 'non_existent' => undef;
-set_prototype(\&non_existent,'$$$');
-proto_is 'non_existent' => '$$$';
+sub stub;
+is( prototype('stub'),	undef,	'non existing sub');
 
-sub forward_decl ($$$$);
-proto_is 'forward_decl' => '$$$$';
-set_prototype(\&forward_decl,'\%');
-proto_is 'forward_decl' => '\%';
+set_prototype(\&stub,'$$$');
+is( prototype('stub'),	'$$$',	'change non existing sub');
+
+sub f_decl ($$$$);
+is( prototype('f_decl'),	'$$$$',	'forward declaration');
+
+set_prototype(\&f_decl,'\%');
+is( prototype('f_decl'),	'\%',	'change forward declaration');
 
 eval { &set_prototype( 'f', '' ); };
-print "not " unless $@ =~ /^set_prototype: not a reference/;
-print "ok ", ++$test, " - error msg\n";
+print "not " unless 
+ok($@ =~ /^set_prototype: not a reference/,	'not a reference');
+
 eval { &set_prototype( \'f', '' ); };
-print "not " unless $@ =~ /^set_prototype: not a subroutine reference/;
-print "ok ", ++$test, " - error msg\n";
-EOT
+ok($@ =~ /^set_prototype: not a subroutine reference/,	'not a sub reference');

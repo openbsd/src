@@ -4,13 +4,13 @@
 #
 ################################################################################
 #
-#  $Revision: 1.1.1.1 $
+#  $Revision: 1.1.1.2 $
 #  $Author: millert $
-#  $Date: 2005/01/15 21:16:45 $
+#  $Date: 2006/03/28 18:47:57 $
 #
 ################################################################################
 #
-#  Version 3.x, Copyright (C) 2004, Marcus Holland-Moritz.
+#  Version 3.x, Copyright (C) 2004-2005, Marcus Holland-Moritz.
 #  Version 2.x, Copyright (C) 2001, Paul Marquess.
 #  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 #
@@ -44,7 +44,7 @@ for $file (glob 'parts/inc/*') {
     $tmpl =~ s/__SOURCE__/$file/mg;
     $tmpl =~ s/__PLAN__/$spec->{OPTIONS}{tests}{plan}/mg;
     $tmpl =~ s/^__TESTS__$/$spec->{tests}/mg;
-    
+
     open FH, ">$testfile" or die "$testfile: $!\n";
     print FH $tmpl;
     close FH;

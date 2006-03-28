@@ -8,14 +8,14 @@
 
 all:	config.alpha.h config.ga.h
 
-config.alpha.h:	config.alpha.def ../config_h.SH ../mv-if-diff
+config.alpha.h:	config.alpha.def ../config_h.SH mv-if-diff
 	cp config.alpha.def config.def
 	perl config.pl
-	sh ../mv-if-diff config.h.new config.alpha.h
+	sh mv-if-diff config.h.new config.alpha.h
 	rm -f config.def config.h.new
 
-config.ga.h:	config.ga.def ../config_h.SH ../mv-if-diff
+config.ga.h:	config.ga.def ../config_h.SH mv-if-diff
 	cp config.ga.def config.def
 	perl config.pl
-	sh ../mv-if-diff config.h.new config.ga.h
+	sh mv-if-diff config.h.new config.ga.h
 	rm -f config.def config.h.new

@@ -13,13 +13,14 @@ chdir 't';
 
 use strict;
 
-# these files help the test run
-use Test::More tests => 41;
+use Test::More tests => 49;
 use Cwd;
 
-# these files are needed for the module itself
 use File::Spec;
 use File::Path;
+use File::Find;
+
+my $Is_VMS = $^O eq 'VMS';
 
 # We're going to be chdir'ing and modules are sometimes loaded on the
 # fly in this test, so we need an absolute @INC.
@@ -38,20 +39,20 @@ sub add_file {
 }
 
 sub read_manifest {
-	open( M, 'MANIFEST' ) or return;
-	chomp( my @files = <M> );
+    open( M, 'MANIFEST' ) or return;
+    chomp( my @files = <M> );
     close M;
-	return @files;
+    return @files;
 }
 
 sub catch_warning {
-	my $warn;
-	local $SIG{__WARN__} = sub { $warn .= $_[0] };
-	return join('', $_[0]->() ), $warn;
+    my $warn;
+    local $SIG{__WARN__} = sub { $warn .= $_[0] };
+    return join('', $_[0]->() ), $warn;
 }
 
 sub remove_dir {
-	ok( rmdir( $_ ), "remove $_ directory" ) for @_;
+    ok( rmdir( $_ ), "remove $_ directory" ) for @_;
 }
 
 # use module, import functions
@@ -99,7 +100,7 @@ is( $res, 'bar', 'bar reported as new' );
 ($res, $warn) = do { local $ExtUtils::Manifest::Quiet = 1; 
                      catch_warning( \&skipcheck ) 
                 };
-cmp_ok( $warn, 'eq', '', 'disabled warnings' );
+ok( ! defined $warn, 'disabled warnings' );
 
 # add a skip file with a rule to skip itself (and the nonexistent glob '*baz*')
 add_file( 'MANIFEST.SKIP', "baz\n.SKIP" );
@@ -134,13 +135,33 @@ is( join(' ', sort { lc($a) cmp lc($b) } keys %$files), 'foo MANIFEST',
                                         'both files found' );
 is( $_, 'foo', q{maniread() doesn't clobber $_} );
 
+ok( mkdir( 'copy', 0777 ), 'made copy directory' );
+
+# Check that manicopy copies files.
+manicopy( $files, 'copy', 'cp' );
+my @copies = ();
+find( sub { push @copies, $_ if -f }, 'copy' );
+@copies = map { s/\.$//; $_ } @copies if $Is_VMS;  # VMS likes to put dots on
+                                                   # the end of files.
+# Have to compare insensitively for non-case preserving VMS
+is_deeply( [sort map { lc } @copies], [sort map { lc } keys %$files] );
+
+# cp would leave files readonly, so check permissions.
+foreach my $orig (@copies) {
+    my $copy = "copy/$orig";
+    ok( -r $copy,               "$copy: must be readable" );
+    is( -w $copy, -w $orig,     "       writable if original was" );
+    is( -x $copy, -x $orig,     "       executable if original was" );
+}
+rmtree('copy');
+
+
 # poison the manifest, and add a comment that should be reported
 add_file( 'MANIFEST', 'none #none' );
 is( ExtUtils::Manifest::maniread()->{none}, '#none', 
                                         'maniread found comment' );
 
 ok( mkdir( 'copy', 0777 ), 'made copy directory' );
-
 $files = maniread();
 eval { (undef, $warn) = catch_warning( sub {
  		manicopy( $files, 'copy', 'cp' ) }) 
@@ -220,7 +241,7 @@ SKIP: {
 
     chmod( 0600, 'MANIFEST' );
 }
-    
+
 
 END {
 	is( unlink( keys %Files ), keys %Files, 'remove all added files' );

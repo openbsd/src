@@ -1,12 +1,12 @@
 ################################################################################
 ##
-##  $Revision: 1.1.1.1 $
+##  $Revision: 1.1.1.2 $
 ##  $Author: millert $
-##  $Date: 2005/01/15 21:16:46 $
+##  $Date: 2006/03/28 18:47:59 $
 ##
 ################################################################################
 ##
-##  Version 3.x, Copyright (C) 2004, Marcus Holland-Moritz.
+##  Version 3.x, Copyright (C) 2004-2005, Marcus Holland-Moritz.
 ##  Version 2.x, Copyright (C) 2001, Paul Marquess.
 ##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 ##
@@ -33,7 +33,9 @@ ppport.h - Perl/Pollution/Portability version __VERSION__
 
 =head1 SYNOPSIS
 
-  perl ppport.h [options] [files]
+  perl ppport.h [options] [source files]
+
+  Searches current directory for files if no [source files] are given
 
   --help                      show short help
 
@@ -48,9 +50,11 @@ ppport.h - Perl/Pollution/Portability version __VERSION__
   --nodiag                    don't show diagnostics
   --nohints                   don't show hints
   --nochanges                 don't suggest changes
+  --nofilter                  don't filter input files
 
   --list-provided             list provided API
   --list-unsupported          list unsupported API
+  --api-info=name             show Perl API portability information
 
 =head1 COMPATIBILITY
 
@@ -119,6 +123,11 @@ notes.
 Don't suggest any changes. Only give diagnostic output and hints
 unless these are also deactivated.
 
+=head2 --nofilter
+
+Don't filter the list of input files. By default, files not looking
+like source code (i.e. not *.xs, *.c, *.cc, *.cpp or *.h) are skipped.
+
 =head2 --list-provided
 
 Lists the API elements for which compatibility is provided by
@@ -130,6 +139,12 @@ if it has dependencies, and if there are hints for it.
 Lists the API elements that are known not to be supported by
 F<ppport.h> and below which version of Perl they probably
 won't be available or work.
+
+=head2 --api-info=I<name>
+
+Show portability information for API elements matching I<name>.
+If I<name> is surrounded by slashes, it is interpreted as a regular
+expression.
 
 =head1 DESCRIPTION
 
@@ -229,6 +244,22 @@ the C<--diff> option:
 
 This would output context diffs with 10 lines of context.
 
+To display portability information for the C<newSVpvn> function,
+use:
+
+    perl ppport.h --api-info=newSVpvn
+
+Since the argument to C<--api-info> can be a regular expression,
+you can use
+
+    perl ppport.h --api-info=/_nomg$/
+
+to display portability information for all C<_nomg> functions or
+
+    perl ppport.h --api-info=/./
+
+to display information for all known API elements.
+
 =head1 BUGS
 
 If this version of F<ppport.h> is causing failure during
@@ -271,7 +302,7 @@ module from CPAN.
 
 =head1 COPYRIGHT
 
-Version 3.x, Copyright (c) 2004, Marcus Holland-Moritz.
+Version 3.x, Copyright (c) 2004-2005, Marcus Holland-Moritz.
 
 Version 2.x, Copyright (C) 2001, Paul Marquess.
 

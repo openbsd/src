@@ -31,7 +31,7 @@ you will find xlC.C for AIX-5.0 as package
 
     xlC.aix50.rte   5.0.2.0 or 6.0.0.3
 
-subversions are not the same `latest' on all OS versions. For example,
+subversions are not the same "latest" on all OS versions. For example,
 the latest xlC-5 on aix41 is 5.0.2.9, while on aix43, it is 5.0.2.7.
 
 Perl can be compiled with either IBM's ANSI C compiler or with gcc.
@@ -106,7 +106,7 @@ level.  Of course this is subject to changes.  You can only upgrade
 versions from ftp-available updates if the first three digit groups
 are the same (in where you can skip intermediate unlike the patches
 in the developer snapshots of perl), or to one version up where the
-`base' is available.  In other words, the AIX compiler patches are
+"base" is available.  In other words, the AIX compiler patches are
 cumulative.
 
  vac.C.4.4.0.1 => vac.C.4.4.0.3  is OK     (vac.C.4.4.0.2 not needed)
@@ -261,7 +261,7 @@ therefore in AIX 4.2 Perl is not linked against the libC_r.
 
 =head1 AUTHOR
 
-H.Merijn Brand <h.m.brand@hccnet.nl>
+H.Merijn Brand <h.m.brand@xs4all.nl>
 
 =head1 DATE
 

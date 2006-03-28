@@ -4,13 +4,13 @@ no warnings 'redefine';
 
 unless(defined(&SQUARE)) {
     sub SQUARE {
-	local($x) = @_;
+	my($x) = @_;
 	eval q((($x)*($x)));
     }
 }
 unless(defined(&ERROR)) {
     eval 'sub ERROR {
-        local($x) = @_;
+        my($x) = @_;
 	    eval q( &fprintf( &stderr, \\"%s\\\\n\\", $x->[2][3][0]));
     }' unless defined(&ERROR);
 }
@@ -19,12 +19,12 @@ unless(defined(&_H2PH_H_)) {
     # "$Revision h2ph.h,v 1.0 98/05/04 20:42:14 billy $"
     undef(&MAX) if defined(&MAX);
     eval 'sub MAX {
-        local($a,$b) = @_;
+        my($a,$b) = @_;
 	    eval q((($a) > ($b) ? ($a) : ($b)));
     }' unless defined(&MAX);
     if(defined(&__SOME_UNIMPORTANT_PROPERTY)) {
 	eval 'sub MIN {
-	    local($a,$b) = @_;
+	    my($a,$b) = @_;
     	    eval q((($a) < ($b) ? ($a) : ($b)));
 	}' unless defined(&MIN);
     }

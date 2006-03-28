@@ -18,7 +18,7 @@ use strict;
 use Unicode::UCD;
 use Test::More;
 
-BEGIN { plan tests => 179 };
+BEGIN { plan tests => 188 };
 
 use Unicode::UCD 'charinfo';
 
@@ -238,7 +238,7 @@ ok( charinrange($ranges, "13a0"));
 ok( charinrange($ranges, "13f4"));
 ok(!charinrange($ranges, "13f5"));
 
-is(Unicode::UCD::UnicodeVersion, '4.0.1', 'UnicodeVersion');
+is(Unicode::UCD::UnicodeVersion, '4.1.0', 'UnicodeVersion');
 
 use Unicode::UCD qw(compexcl);
 
@@ -309,7 +309,7 @@ is(Unicode::UCD::_getcode('U+123x'),  undef, "_getcode(x123)");
 {
     my $r1 = charscript('Latin');
     my $n1 = @$r1;
-    is($n1, 26, "26 ranges in Latin script (Unicode 4.0.0)");
+    is($n1, 29, "29 ranges in Latin script (Unicode 4.1.0)");
     shift @$r1 while @$r1;
     my $r2 = charscript('Latin');
     is(@$r2, $n1, "modifying results should not mess up internal caches");
@@ -318,3 +318,19 @@ is(Unicode::UCD::_getcode('U+123x'),  undef, "_getcode(x123)");
 {
 	is(charinfo(0xdeadbeef), undef, "[perl #23273] warnings in Unicode::UCD");
 }
+
+use Unicode::UCD qw(namedseq);
+
+is(namedseq("KATAKANA LETTER AINU P"), "\x{31F7}\x{309A}", "namedseq");
+is(namedseq("KATAKANA LETTER AINU Q"), undef);
+is(namedseq(), undef);
+is(namedseq(qw(foo bar)), undef);
+my @ns = namedseq("KATAKANA LETTER AINU P");
+is(scalar @ns, 2);
+is($ns[0], 0x31F7);
+is($ns[1], 0x309A);
+my %ns = namedseq();
+is($ns{"KATAKANA LETTER AINU P"}, "\x{31F7}\x{309A}");
+@ns = namedseq(42);
+is(@ns, 0);
+

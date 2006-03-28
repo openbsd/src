@@ -9,41 +9,50 @@
 
 package Data::Dumper;
 
-$VERSION = '2.121_02';
+$VERSION = '2.121_08';
 
 #$| = 1;
 
 use 5.006_001;
 require Exporter;
-use XSLoader ();
 require overload;
 
 use Carp;
 
-@ISA = qw(Exporter);
-@EXPORT = qw(Dumper);
-@EXPORT_OK = qw(DumperX);
+BEGIN {
+    @ISA = qw(Exporter);
+    @EXPORT = qw(Dumper);
+    @EXPORT_OK = qw(DumperX);
 
-XSLoader::load 'Data::Dumper';
+    # if run under miniperl, or otherwise lacking dynamic loading,
+    # XSLoader should be attempted to load, or the pure perl flag
+    # toggled on load failure.
+    eval {
+	require XSLoader;
+    };
+    $Useperl = 1 if $@;
+}
+
+XSLoader::load( 'Data::Dumper' ) unless $Useperl;
 
 # module vars and their defaults
-$Indent = 2 unless defined $Indent;
-$Purity = 0 unless defined $Purity;
-$Pad = "" unless defined $Pad;
-$Varname = "VAR" unless defined $Varname;
-$Useqq = 0 unless defined $Useqq;
-$Terse = 0 unless defined $Terse;
-$Freezer = "" unless defined $Freezer;
-$Toaster = "" unless defined $Toaster;
-$Deepcopy = 0 unless defined $Deepcopy;
-$Quotekeys = 1 unless defined $Quotekeys;
-$Bless = "bless" unless defined $Bless;
-#$Expdepth = 0 unless defined $Expdepth;
-$Maxdepth = 0 unless defined $Maxdepth;
-$Pair = ' => ' unless defined $Pair;
-$Useperl = 0 unless defined $Useperl;
-$Sortkeys = 0 unless defined $Sortkeys;
-$Deparse = 0 unless defined $Deparse;
+$Indent     = 2         unless defined $Indent;
+$Purity     = 0         unless defined $Purity;
+$Pad        = ""        unless defined $Pad;
+$Varname    = "VAR"     unless defined $Varname;
+$Useqq      = 0         unless defined $Useqq;
+$Terse      = 0         unless defined $Terse;
+$Freezer    = ""        unless defined $Freezer;
+$Toaster    = ""        unless defined $Toaster;
+$Deepcopy   = 0         unless defined $Deepcopy;
+$Quotekeys  = 1         unless defined $Quotekeys;
+$Bless      = "bless"   unless defined $Bless;
+#$Expdepth   = 0         unless defined $Expdepth;
+$Maxdepth   = 0         unless defined $Maxdepth;
+$Pair       = ' => '    unless defined $Pair;
+$Useperl    = 0         unless defined $Useperl;
+$Sortkeys   = 0         unless defined $Sortkeys;
+$Deparse    = 0         unless defined $Deparse;
 
 #
 # expects an arrayref of values to be dumped.
@@ -92,6 +101,18 @@ sub new {
   return bless($s, $c);
 }
 
+sub init_refaddr_format {
+  require Config;
+  my $f = $Config::Config{uvxformat};
+  $f =~ tr/"//d;
+  our $refaddr_format = "0x%" . $f;
+}
+
+sub format_refaddr {
+  require Scalar::Util;
+  sprintf our $refaddr_format, Scalar::Util::refaddr(shift);
+}
+
 #
 # add-to or query the table of already seen references
 #
@@ -101,7 +122,7 @@ sub Seen {
     my($k, $v, $id);
     while (($k, $v) = each %$g) {
       if (defined $v and ref $v) {
-	($id) = (overload::StrVal($v) =~ /\((.*)\)$/);
+	$id = format_refaddr($v);
 	if ($k =~ /^[*](.*)$/) {
 	  $k = (ref $v eq 'ARRAY') ? ( "\\\@" . $1 ) :
 	       (ref $v eq 'HASH')  ? ( "\\\%" . $1 ) :
@@ -171,6 +192,7 @@ sub Dumpperl {
   my(@out, $val, $name);
   my($i) = 0;
   local(@post);
+  init_refaddr_format();
 
   $s = $s->new(@_) unless ref $s;
 
@@ -231,13 +253,19 @@ sub _dump {
 
   if ($type) {
 
-    # prep it, if it looks like an object
-    if (my $freezer = $s->{freezer}) {
-      $val->$freezer() if UNIVERSAL::can($val, $freezer);
+    # Call the freezer method if it's specified and the object has the
+    # method.  Trap errors and warn() instead of die()ing, like the XS
+    # implementation.
+    my $freezer = $s->{freezer};
+    if ($freezer and UNIVERSAL::can($val, $freezer)) {
+      eval { $val->$freezer() };
+      warn "WARNING(Freezer method call failed): $@" if $@;
     }
 
-    ($realpack, $realtype, $id) =
-      (overload::StrVal($val) =~ /^(?:(.*)\=)?([^=]*)\(([^\(]*)\)$/);
+    require Scalar::Util;
+    $realpack = Scalar::Util::blessed($val);
+    $realtype = $realpack ? Scalar::Util::reftype($val) : ref $val;
+    $id = format_refaddr($val);
 
     # if it has a name, we need to either look it up, or keep a tab
     # on it so we know when we hit it later
@@ -406,7 +434,7 @@ sub _dump {
     my $ref = \$_[1];
     # first, catalog the scalar
     if ($name ne '') {
-      ($id) = ("$ref" =~ /\(([^\(]*)\)$/);
+      $id = format_refaddr($ref);
       if (exists $s->{seen}{$id}) {
         if ($s->{seen}{$id}[2]) {
 	  $out = $s->{seen}{$id}[0];
@@ -887,6 +915,10 @@ method can be called via the object, and that the object ends up containing
 only perl data types after the method has been called.  Defaults to an empty
 string.
 
+If an object does not support the method specified (determined using
+UNIVERSAL::can()) then the call will be skipped.  If the method dies a
+warning will be generated.
+
 =item *
 
 $Data::Dumper::Toaster  I<or>  $I<OBJ>->Toaster(I<[NEWVAL]>)
@@ -1190,7 +1222,7 @@ Someday, perl will have a switch to cache-on-demand the string
 representation of a compiled piece of code, I hope.  If you have prior
 knowledge of all the code refs that your data structures are likely
 to have, you can use the C<Seen> method to pre-seed the internal reference
-table and make the dumped output point to them, instead.  See L<EXAMPLES>
+table and make the dumped output point to them, instead.  See L</EXAMPLES>
 above.
 
 The C<Useqq> and C<Deparse> flags makes Dump() run slower, since the

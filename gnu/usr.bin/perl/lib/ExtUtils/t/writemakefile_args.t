@@ -14,16 +14,23 @@ BEGIN {
 }
 
 use strict;
-use Test::More tests => 13;
+use Test::More tests => 16;
 
 use TieOut;
 use MakeMaker::Test::Utils;
+use MakeMaker::Test::Setup::BFD;
 
 use ExtUtils::MakeMaker;
 
 chdir 't';
 
 perl_lib();
+
+ok( setup_recurs(), 'setup' );
+END {
+    ok( chdir File::Spec->updir );
+    ok( teardown_recurs(), 'teardown' );
+}
 
 ok( chdir 'Big-Dummy', "chdir'd to Big-Dummy" ) ||
   diag("chdir failed: $!");

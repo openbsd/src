@@ -12,7 +12,7 @@ BEGIN {
 
 use ExtUtils::testlib;
 use strict;
-BEGIN { $| = 1; print "1..26\n" };
+BEGIN { $| = 1; print "1..31\n" };
 use threads;
 use threads::shared;
 
@@ -159,4 +159,114 @@ run_perl(prog =>
     'use threads; sub a{threads->new(shift)} $t = a sub{}; $t->tid; $t->join; $t->tid');
 is($?, 0, 'coredump in global destruction');
 
+# test CLONE_SKIP() functionality
+
+{
+    my %c : shared;
+    my %d : shared;
+
+    # ---
+
+    package A;
+    sub CLONE_SKIP { $c{"A-$_[0]"}++; 1; }
+    sub DESTROY    { $d{"A-". ref $_[0]}++ }
+
+    package A1;
+    our @ISA = qw(A);
+    sub CLONE_SKIP { $c{"A1-$_[0]"}++; 1; }
+    sub DESTROY    { $d{"A1-". ref $_[0]}++ }
+
+    package A2;
+    our @ISA = qw(A1);
+
+    # ---
+
+    package B;
+    sub CLONE_SKIP { $c{"B-$_[0]"}++; 0; }
+    sub DESTROY    { $d{"B-" . ref $_[0]}++ }
+
+    package B1;
+    our @ISA = qw(B);
+    sub CLONE_SKIP { $c{"B1-$_[0]"}++; 1; }
+    sub DESTROY    { $d{"B1-" . ref $_[0]}++ }
+
+    package B2;
+    our @ISA = qw(B1);
+
+    # ---
+
+    package C;
+    sub CLONE_SKIP { $c{"C-$_[0]"}++; 1; }
+    sub DESTROY    { $d{"C-" . ref $_[0]}++ }
+
+    package C1;
+    our @ISA = qw(C);
+    sub CLONE_SKIP { $c{"C1-$_[0]"}++; 0; }
+    sub DESTROY    { $d{"C1-" . ref $_[0]}++ }
+
+    package C2;
+    our @ISA = qw(C1);
+
+    # ---
+
+    package D;
+    sub DESTROY    { $d{"D-" . ref $_[0]}++ }
+
+    package D1;
+    our @ISA = qw(D);
+
+    package main;
+
+    {
+	my @objs;
+	for my $class (qw(A A1 A2 B B1 B2 C C1 C2 D D1)) {
+	    push @objs, bless [], $class;
+	}
+
+	sub f {
+	    my $depth = shift;
+	    my $cloned = ""; # XXX due to recursion, doesn't get initialized
+	    $cloned .= "$_" =~ /ARRAY/ ? '1' : '0' for @objs;
+	    is($cloned, ($depth ? '00010001111' : '11111111111'),
+		"objs clone skip at depth $depth");
+	    threads->new( \&f, $depth+1)->join if $depth < 2;
+	    @objs = ();
+	}
+	f(0);
+    }
+
+    curr_test(curr_test()+2);
+    ok(eq_hash(\%c,
+	{
+	    qw(
+		A-A	2
+		A1-A1	2
+		A1-A2	2
+		B-B	2
+		B1-B1	2
+		B1-B2	2
+		C-C	2
+		C1-C1	2
+		C1-C2	2
+	    )
+	}),
+	"counts of calls to CLONE_SKIP");
+    ok(eq_hash(\%d,
+	{
+	    qw(
+		A-A	1
+		A1-A1	1
+		A1-A2	1
+		B-B	3
+		B1-B1	1
+		B1-B2	1
+		C-C	1
+		C1-C1	3
+		C1-C2	3
+		D-D	3
+		D-D1	3
+	    )
+	}),
+	"counts of calls to DESTROY");
+}
 

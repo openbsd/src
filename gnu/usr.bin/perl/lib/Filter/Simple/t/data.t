@@ -1,11 +1,15 @@
 BEGIN {
-    if ($ENV{PERL_CORE}) {
-        chdir('t') if -d 't';
-	@INC = qw(lib/Filter/Simple ../lib);
+    if( $ENV{PERL_CORE} ) {
+        chdir 't';
+        @INC = ('../lib', 'lib');
+    }
+    else {
+        unshift @INC, 't/lib/';
     }
 }
+chdir 't';
 
-use FilterOnlyTest qr/ok/ => "not ok", "bad" => "ok";
+use Filter::Simple::FilterOnlyTest qr/ok/ => "not ok", "bad" => "ok";
 print "1..6\n";
 
 print "bad 1\n";

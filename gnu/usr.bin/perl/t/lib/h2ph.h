@@ -56,6 +56,11 @@
 #    define WHATEVER 1000
 #endif
 
+/* Test passing through the alien constructs (perlbug #34493) */
+#ifdef __LANGUAGE_PASCAL__
+function Tru64_Pascal(n: Integer): Integer;
+#endif
+
 /* 
  * Test #include, #import and #include_next
  * #include_next is difficult to test, it really depends on the actual

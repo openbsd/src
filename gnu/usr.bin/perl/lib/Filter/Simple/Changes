@@ -79,3 +79,29 @@ Revision history for Perl extension Filter::Simple
 	- added prereq for Text::Balanced in Makefile.PL
 
 	- Added note about use of /m flag when using ^ or $ in filter regexes
+
+0.79    Sat Sep 20 21:56:24 2003
+
+        - Fixed tests to use t/lib modules so F::S is testable without
+          a previous version of F::S installed. (schwern)
+
+0.80    Sun May 29 23:19:54 2005
+
+    - Added Sarathy's patch for \r\n newlinery (thanks Jarkko)
+
+    - Added recognition of comments as whitespace (thanks Jeff)
+    
+    - Added @components variable (thanks Dean)
+
+    - Fixed handling of vars in FILTER_ONLY code=>... (thanks Lasse)
+
+    - Fixed spurious extra filter at end of file (thanks Dean)
+
+    - Added INSTALLDIRS=>core to Makefile.PL
+
+    
+0.82    Mon Jun 27 02:31:06 GMT 2005
+    
+    - Fixed INSTALLDIRS=>perl in Makefile.PL (thanks all)
+
+    - Fixed other problems caused by de-schwernification

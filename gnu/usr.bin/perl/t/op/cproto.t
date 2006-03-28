@@ -197,7 +197,7 @@ send (*$$;$)
 setgrent ()
 sethostent ($)
 setnetent ($)
-setpgrp undef
+setpgrp (;$$)
 setpriority ($$$)
 setprotoent ($)
 setpwent ()

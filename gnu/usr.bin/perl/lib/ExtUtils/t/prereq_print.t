@@ -13,8 +13,17 @@ BEGIN {
 use strict;
 use Config;
 
-use Test::More tests => 8;
+use Test::More;
+
+unless( eval { require Data::Dumper } ) {
+    plan skip_all => 'Data::Dumper not available';
+}
+
+plan tests => 11;
+
+
 use MakeMaker::Test::Utils;
+use MakeMaker::Test::Setup::BFD;
 
 # 'make disttest' sets a bunch of environment variables which interfere
 # with our testing.
@@ -24,10 +33,16 @@ my $Perl = which_perl();
 my $Makefile = makefile_name();
 my $Is_VMS = $^O eq 'VMS';
 
-chdir($Is_VMS ? 'BFD_TEST_ROOT:[t]' : 't');
+chdir 't';
 perl_lib;
 
 $| = 1;
+
+ok( setup_recurs(), 'setup' );
+END {
+    ok( chdir File::Spec->updir );
+    ok( teardown_recurs(), 'teardown' );
+}
 
 ok( chdir('Big-Dummy'), "chdir'd to Big-Dummy" ) ||
   diag("chdir failed: $!");

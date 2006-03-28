@@ -20,6 +20,7 @@ print "1..1\n";
      for my $path ( @files ){
 	 cacheout $path;
 	 print $path "$path 1\n";
+	 close $path;
      }
      print "not " unless scalar map({ -f } @files) == scalar @files;
      print "ok 1\n";

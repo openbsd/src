@@ -1,18 +1,18 @@
 package MIME::Base64;
 
-# $Id: Base64.pm,v 3.5 2004/09/20 09:23:23 gisle Exp $
+# $Id: Base64.pm,v 3.11 2005/11/29 20:59:55 gisle Exp $
 
 use strict;
 use vars qw(@ISA @EXPORT $VERSION);
 
 require Exporter;
-require DynaLoader;
-@ISA = qw(Exporter DynaLoader);
+@ISA = qw(Exporter);
 @EXPORT = qw(encode_base64 decode_base64);
 
-$VERSION = '3.05';
+$VERSION = '3.07';
 
-MIME::Base64->bootstrap($VERSION);
+require XSLoader;
+XSLoader::load('MIME::Base64', $VERSION);
 
 *encode = \&encode_base64;
 *decode = \&decode_base64;
@@ -91,13 +91,26 @@ C<-w> switch:
 
 The number of characters to decode is not a multiple of 4.  Legal
 base64 data should be padded with one or two "=" characters to make
-its length a multiple of 4.  The decoded result will anyway be as if
-the padding was there.
+its length a multiple of 4.  The decoded result will be the same
+whether the padding is present or not.
 
 =item Premature padding of base64 data
 
 The '=' padding character occurs as the first or second character
 in a base64 quartet.
+
+=back
+
+The following exception can be raised:
+
+=over 4
+
+=item Wide character in subroutine entry
+
+The string passed to encode_base64() contains characters with code
+above 255.  The base64 encoding is only defined for single-byte
+characters.  Use the Encode module to select the byte encoding you
+want.
 
 =back
 
@@ -129,6 +142,18 @@ Decoding does not need slurp mode if every line contains a multiple
 of four base64 chars:
 
    perl -MMIME::Base64 -ne 'print decode_base64($_)' <file
+
+Perl v5.8 and better allow extended Unicode characters in strings.
+Such strings cannot be encoded directly, as the base64
+encoding is only defined for single-byte characters.  The solution is
+to use the Encode module to select the byte encoding you want.  For
+example:
+
+    use MIME::Base64 qw(encode_base64);
+    use Encode qw(encode);
+
+    $encoded = encode_base64(encode("UTF-8", "\x{FFFF}\n"));
+    print $encoded;
 
 =head1 COPYRIGHT
 

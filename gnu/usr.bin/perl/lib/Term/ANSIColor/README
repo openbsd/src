@@ -1,16 +1,14 @@
-                       Term::ANSIColor version 1.08
+                       Term::ANSIColor version 1.10
               (A simple ANSI text attribute control module)
 
-  Copyright 1996, 1997, 1998, 2000, 2001, 2002
-  Russ Allbery <rra@stanford.edu> and Zenin <zenin@bawdycaste.org>.  This
-  program is free software; you may redistribute it and/or modify it under
-  the same terms as Perl itself.
+  Copyright 1996, 1997, 1998, 2000, 2001, 2002, 2005 Russ Allbery
+  <rra@stanford.edu> and Zenin.  This program is free software; you may
+  redistribute it and/or modify it under the same terms as Perl itself.
 
   I welcome bug reports and patches for this package at rra@stanford.edu.
   However, please be aware that I tend to be extremely busy and to get a
   lot of mail.  I'll save your mail and get to it as soon as I can, but
   depending on how busy I am it may take me a couple of months.
-
 
 INTRODUCTION
 
@@ -46,7 +44,6 @@ INTRODUCTION
   Perl 5.6.0.  You only need to install this module if you want a newer
   version than came with Perl or if you have an old version of Perl.
 
-
 INSTALLATION
 
   Follow the standard installation procedure for Perl modules, which is to
@@ -64,7 +61,6 @@ INSTALLATION
   Note that make install, for Perl 5.6.0 or later, will replace the
   Term::ANSIColor that came with Perl.  You may wan to save a backup copy
   of the standard version first.
-
 
 THANKS
 
@@ -89,5 +85,17 @@ THANKS
 
   To Richard Maus for pointing out DARK was missing from the exported
   constants list and CYAN and WHITE were missing from the documentation.
+
+  To Autrijus Tang for noticing a problem with string comparisons in the
+  test suite.
+
+  To Daniel Lindsley for the information about what Mac OS X Terminal
+  supports.
+
+  To Joe Smith for the test files that exercise a wide variety of VT100
+  escape sequences including the ECMA-48 color control codes.
+
+  To James Bowlin for catching a bug in colored when $EACHLINE is set that
+  caused it to not color lines consisting solely of 0.
 
   To Larry Wall, as always, for Perl.

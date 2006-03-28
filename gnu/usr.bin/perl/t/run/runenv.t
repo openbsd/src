@@ -20,7 +20,7 @@ plan tests => 17;
 
 my $STDOUT = './results-0';
 my $STDERR = './results-1';
-my $PERL = './perl';
+my $PERL = $ENV{PERL} || './perl';
 my $FAILURE_CODE = 119;
 
 delete $ENV{PERLLIB};

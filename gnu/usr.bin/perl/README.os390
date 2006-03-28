@@ -90,7 +90,7 @@ and be sure to also set the environment variable _C89_CCMODE=1 (exporting
 _C89_CCMODE=1 is also a good idea for users of GNU make).
 
 You might also want to have GNU groff for OS/390 installed before
-running the `make install` step for Perl.
+running the "make install" step for Perl.
 
 There is a syntax error in the /usr/include/sys/socket.h header file
 that IBM supplies with USS V2R7, V2R8, and possibly V2R9.  The problem with
@@ -220,9 +220,9 @@ header /usr/include/sys/socket.h.
 
 =head2 Testing Anomalies with Perl on OS/390
 
-The `make test` step runs a Perl Verification Procedure, usually before
+The "make test" step runs a Perl Verification Procedure, usually before
 installation.  You might encounter STDERR messages even during a successful
-run of `make test`.  Here is a guide to some of the more commonly seen
+run of "make test".  Here is a guide to some of the more commonly seen
 anomalies:
 
 =over 4

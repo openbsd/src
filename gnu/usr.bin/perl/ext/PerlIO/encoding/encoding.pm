@@ -1,6 +1,7 @@
 package PerlIO::encoding;
+
 use strict;
-our $VERSION = '0.07';
+our $VERSION = '0.09';
 our $DEBUG = 0;
 $DEBUG and warn __PACKAGE__, " called by ", join(", ", caller), "\n";
 
@@ -12,7 +13,8 @@ $DEBUG and warn __PACKAGE__, " called by ", join(", ", caller), "\n";
 use XSLoader ();
 XSLoader::load(__PACKAGE__, $VERSION);
 
-our $fallback = Encode::PERLQQ()|Encode::WARN_ON_ERR();
+our $fallback =
+    Encode::PERLQQ()|Encode::WARN_ON_ERR()|Encode::STOP_AT_PARTIAL();
 
 1;
 __END__
@@ -39,12 +41,11 @@ Perl's internal Unicode encoding, UTF-8).  On output, convert
 Perl string data into the specified character set and encoding.
 
 When the layer is pushed the current value of C<$PerlIO::encoding::fallback>
-is saved and used as the check argument when calling the Encodings
-encode and decode.
+is saved and used as the CHECK argument when calling the Encode methods encode()
+and decode().
 
 =head1 SEE ALSO
 
 L<open>, L<Encode>, L<perlfunc/binmode>, L<perluniintro>
 
 =cut
-

@@ -1,14 +1,19 @@
 #!perl
 
 BEGIN {
-    chdir 't';
-    @INC = ('../lib', '../ext/B/t');
+    if ($ENV{PERL_CORE}){
+	chdir('t') if -d 't';
+	@INC = ('.', '../lib', '../ext/B/t');
+    } else {
+	unshift @INC, 't';
+	push @INC, "../../t";
+    }
     require Config;
     if (($Config::Config{'extensions'} !~ /\bB\b/) ){
         print "1..0 # Skip -- Perl configured without B module\n";
         exit 0;
     }
-    require './test.pl';
+    # require 'test.pl'; # now done by OptreeCheck
 }
 use OptreeCheck;
 use Config;
@@ -38,10 +43,13 @@ EOT_EOT
 # 6  <1> leavesub[1 ref] K/REFC,1
 EONT_EONT
 
-checkOptree ( name	=> 'sort @a',
-	      prog	=> 'sort @a',
-	      bcopts	=> '-exec',
-	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
+checkOptree ( name => 'sort @a',
+	      prog => 'sort @a',
+	      errs => [ 'Useless use of sort in void context at -e line 1.',
+			'Name "main::a" used only once: possible typo at -e line 1.',
+			],
+	      bcopts => '-exec',
+	      expect => <<'EOT_EOT', expect_nt => <<'EONT_EONT');
 1  <0> enter 
 2  <;> nextstate(main 1 -e:1) v
 3  <0> pushmark s
@@ -72,7 +80,7 @@ checkOptree ( name	=> 'sub {@a = sort @a}',
 7  <0> pushmark s
 8  <#> gv[*a] s
 9  <1> rv2av[t2] lKRM*/1
-a  <2> aassign[t\d+] KS/COMMON
+a  <2> aassign[t5] KS/COMMON
 b  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
 # 1  <;> nextstate(main 65 optree.t:311) v
@@ -144,6 +152,7 @@ EONT_EONT
 
 checkOptree ( name	=> '@a = sort @a; reverse @a',
 	      prog	=> '@a = sort @a; reverse @a',
+	      errs      => ['Useless use of reverse in void context at -e line 1.'],
 	      bcopts	=> '-exec',
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
 1  <0> enter 
@@ -188,7 +197,7 @@ checkOptree ( name	=> 'sub {my @a; @a = sort @a}',
 7  <@> sort lK
 8  <0> pushmark s
 9  <0> padav[@a:-437,-436] lRM*
-a  <2> aassign[t\d+] KS/COMMON
+a  <2> aassign[t2] KS/COMMON
 b  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
 # 1  <;> nextstate(main 427 optree_sort.t:172) v

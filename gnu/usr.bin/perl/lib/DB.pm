@@ -41,7 +41,7 @@ BEGIN {
   $DB::subname = '';    # currently executing sub (fullly qualified name)
   $DB::lineno = '';     # current line number
 
-  $DB::VERSION = $DB::VERSION = '1.0';
+  $DB::VERSION = $DB::VERSION = '1.01';
 
   # initialize private globals to avoid warnings
 
@@ -63,8 +63,7 @@ sub sub {
   push(@stack, $DB::single);
   $DB::single &= 1;
   $DB::single |= 4 if $#stack == $deep;
-#  print $DB::sub, "\n";
-  if ($DB::sub =~ /(?:^|::)DESTROY$/ or not defined wantarray) {
+  if ($DB::sub eq 'DESTROY' or substr($DB::sub, -9) eq '::DESTROY' or not defined wantarray) {
     &$DB::sub;
     $DB::single |= pop(@stack);
     $DB::ret = undef;

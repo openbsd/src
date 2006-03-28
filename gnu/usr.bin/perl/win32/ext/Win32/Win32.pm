@@ -8,7 +8,7 @@ BEGIN {
     require DynaLoader;
 
     @ISA = qw|Exporter DynaLoader|;
-    $VERSION = '0.23';
+    $VERSION = '0.2601';
 
     @EXPORT = qw(
 	NULL
@@ -195,9 +195,9 @@ sub GetOSName {
 		    90 => "Me"
 		},
 		2 => {
-		    0  => "2000",
+		    0  => "NT4",
 		    1  => "XP/.Net",
-                    2  => "2003",
+		    2  => "2003",
 		    51 => "NT3.51"
 		}
 	    }->{$id}->{$minor};
@@ -212,9 +212,9 @@ sub GetOSName {
 
         my $tag = "";
 
-        # But distinguising W2k from NT4 requires looking at the major version
-        if ($os eq "2000" && $major != 5) {
-            $os = "NT4";
+        # But distinguising W2k and Vista from NT4 requires looking at the major version
+        if ($os eq "NT4") {
+	    $os = {5 => "2000", 6 => "Vista"}->{$major} || "NT4";
         }
 
         # For the rest we take a look at the build numbers and try to deduce
@@ -368,6 +368,13 @@ $ENV{PROCESSOR_ARCHITECTURE}.  This might not work on Win9X.
 does not return a UNC path, since the functionality required for such
 a feature is not available under Windows 95.
 
+=item Win32::GetFileVersion(FILENAME)
+
+[EXT] Returns the file version number from the VERSIONINFO resource of
+the executable file or DLL.  This is a tuple of four 16 bit numbers.
+In list context these four numbers will be returned.  In scalar context
+they are concatenated into a string, separated by dots.
+
 =item Win32::GetFolderPath(FOLDER [, CREATE])
 
 [EXT] Returns the full pathname of one of the Windows special folders.
@@ -476,6 +483,7 @@ Currently known values for ID MAJOR and MINOR are as follows:
     Windows 2000           2      5       0
     Windows XP             2      5       1
     Windows Server 2003    2      5       2
+    Windows Vista          2      6       0
 
 On Windows NT 4 SP6 and later this function returns the following
 additional values: SPMAJOR, SPMINOR, SUITEMASK, PRODUCTTYPE.
@@ -537,9 +545,11 @@ different major/minor version number than Windows XP.
 
 =item Win32::GetShortPathName(PATHNAME)
 
-[CORE] Returns a representation of PATHNAME composed only of
-short (8.3) path components.  The result may not necessarily be
-shorter than PATHNAME.  Compare with Win32::GetFullPathName and
+[CORE] Returns a representation of PATHNAME that is composed of short
+(8.3) path components where available.  For path components where the
+file system has not generated the short form the returned path will
+use the long form, so this function might still for instance return a
+path containing spaces.  Compare with Win32::GetFullPathName and
 Win32::GetLongPathName.
 
 =item Win32::GetProcAddress(INSTANCE, PROCNAME)
@@ -555,6 +565,19 @@ function.
 system boot.  Resolution is limited to system timer ticks (about 10ms
 on WinNT and 55ms on Win9X).
 
+=item Win32::GuidGen()
+
+[EXT] Creates a globally unique 128 bit integer that can be used as a
+persistent identifier in a distributed setting. To a very high degree
+of certainty this function returns a unique value. No other
+invocation, on the same or any other system (networked or not), should
+return the same value.
+
+The return value is formatted according to OLE conventions, as groups
+of hex digits with surrounding braces.  For example:
+
+    {09531CF1-D0C7-4860-840C-1C8C8735E2AD}
+ 
 =item Win32::InitiateSystemShutdown
 
 (MACHINE, MESSAGE, TIMEOUT, FORCECLOSE, REBOOT)

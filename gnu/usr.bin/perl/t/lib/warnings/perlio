@@ -44,7 +44,7 @@ EXPECT
 Argument list not closed for PerlIO layer "aa(" at - line 6.
 ########
 
---FILE-- PerlIO/xyz.pm
+--FILE-- PerlIO_test_dir/xyz.pm
 1;
 --FILE--
 # perlio [PerlIO_parse_layers]

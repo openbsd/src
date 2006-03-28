@@ -400,7 +400,7 @@ to apply as possible.  Keep that in mind.  8-)
 =head1 Last Modified
 
 Last modified 22 August 2002
-H.Merijn Brand <h.m.brand@hccnet.nl>
+H.Merijn Brand <h.m.brand@xs4all.nl>
 Prev modified 21 January 1999 
 Daniel Grisinger <dgris@dimensional.com>
 

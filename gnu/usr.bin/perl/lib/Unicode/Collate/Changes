@@ -1,5 +1,25 @@
 Revision history for Perl module Unicode::Collate.
 
+0.52  Thu Oct 13 21:51:09 2005
+    - The Unicode::Collate->new method does not destroy user's $_ any longer.
+      (thanks to Jon Warbrick for bug report)
+
+0.51  Sun May 29 20:21:19 2005
+    - Added the latest DUCET (for Unicode 4.1.0) as Collate/allkeys.txt,
+      which is not required to test this module.
+      Please notice that allkeys.txt will be overwritten if you have had
+      other allkeys.txt already.
+    - Added INSTALL section in POD.
+
+0.50  Sun May  8 20:26:39 2005
+    - Now UCA Revision 14 (based on Unicode 4.1.0).
+    - Some tests are modified.
+    - Added cjkrange.t, ignor.t, override.t.
+    - Added META.yml.
+
+0.40  Sat Apr 24 06:54:40 2004
+    - Now a table file is searched in @INC.
+
 0.33  Sat Dec 13 14:07:27 2003
     - documentation improvement: in "entry", "overrideHangul", etc.
 
@@ -7,7 +27,8 @@ Revision history for Perl module Unicode::Collate.
     - A matching part from index(), match() etc. will include illegal
       code points (as well as ignorable characters) following a grapheme.
     - Contraction with illegal code point will be invalid.
-    - Added some tests in illegal.t; added view.t.
+    - Added view.t.
+    - Added some tests in illegal.t.
     - Some tests are separated from test.t into altern.t and rearrang.t.
     - modified XSUB internals.
 

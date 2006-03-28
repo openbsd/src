@@ -45,11 +45,10 @@ bl_read(struct byteloader_fdata *data, char *buf, size_t size, size_t n)
       len -= data->next_out;
       if (len) {
 	memmove (start, start + data->next_out, len + 1);
-	SvCUR_set (data->datasv, len);
       } else {
 	*start = '\0';	/* Avoid call to memmove. */
-	SvCUR_set (data->datasv, 0);
       }
+      SvCUR_set(data->datasv, len);
       data->next_out = 0;
 
       /* Attempt to read more data. */
@@ -81,6 +80,8 @@ byteloader_filter(pTHX_ int idx, SV *buf_sv, int maxlen)
     struct byteloader_state bstate;
     struct byteloader_fdata data;
     int len;
+    (void)buf_sv;
+    (void)maxlen;
 
     data.next_out = 0;
     data.datasv = FILTER_DATA(idx);

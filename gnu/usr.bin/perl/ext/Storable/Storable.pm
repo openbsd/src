@@ -21,14 +21,17 @@ package Storable; @ISA = qw(Exporter DynaLoader);
 use AutoLoader;
 use vars qw($canonical $forgive_me $VERSION);
 
-$VERSION = '2.13';
+$VERSION = '2.15';
 *AUTOLOAD = \&AutoLoader::AUTOLOAD;		# Grrr...
 
 #
 # Use of Log::Agent is optional
 #
 
-eval "use Log::Agent";
+{
+    local $SIG{__DIE__};
+    eval "use Log::Agent";
+}
 
 require Carp;
 
@@ -694,6 +697,40 @@ warned you.
 It is up to you to use this information to populate I<obj> the way you want.
 
 Returned value: none.
+
+=item C<STORABLE_attach> I<class>, I<cloning>, I<serialized>
+
+While C<STORABLE_freeze> and C<STORABLE_thaw> are useful for classes where
+each instance is independant, this mechanism has difficulty (or is
+incompatible) with objects that exist as common process-level or
+system-level resources, such as singleton objects, database pools, caches
+or memoized objects.
+
+The alternative C<STORABLE_attach> method provides a solution for these
+shared objects. Instead of C<STORABLE_freeze> --E<GT> C<STORABLE_thaw>,
+you implement C<STORABLE_freeze> --E<GT> C<STORABLE_attach> instead.
+
+Arguments: I<class> is the class we are attaching to, I<cloning> is a flag
+indicating whether we're in a dclone() or a regular de-serialization via
+thaw(), and I<serialized> is the stored string for the resource object.
+
+Because these resource objects are considered to be owned by the entire
+process/system, and not the "property" of whatever is being serialized,
+no references underneath the object should be included in the serialized
+string. Thus, in any class that implements C<STORABLE_attach>, the
+C<STORABLE_freeze> method cannot return any references, and C<Storable>
+will throw an error if C<STORABLE_freeze> tries to return references.
+
+All information required to "attach" back to the shared resource object
+B<must> be contained B<only> in the C<STORABLE_freeze> return string.
+Otherwise, C<STORABLE_freeze> behaves as normal for C<STORABLE_attach>
+classes.
+
+Because C<STORABLE_attach> is passed the class (rather than an object),
+it also returns the object directly, rather than modifying the passed
+object.
+
+Returned value: object of type C<class>
 
 =back
 

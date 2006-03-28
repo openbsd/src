@@ -10,7 +10,7 @@
 package Pod::ParseUtils;
 
 use vars qw($VERSION);
-$VERSION = 1.20;   ## Current version of this package
+$VERSION = 1.33;   ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 =head1 NAME
@@ -357,7 +357,7 @@ sub parse {
         $type = 'item';
     }
     # non-standard: Hyperlink
-    elsif(m!^((?:http|ftp|mailto|news):.+)$!i) {
+    elsif(m!^(\w+:[^:\s]\S*)$!i) {
         $node = $1;
         $type = 'hyperlink';
     }
@@ -371,7 +371,7 @@ sub parse {
         ($alttext, $node) = ($1,$2);
     }
     # nonstandard: alttext and hyperlink
-    elsif(m!^(.*?)\s*[|]\s*((?:http|ftp|mailto|news):.+)$!) {
+    elsif(m!^(.*?)\s*[|]\s*(\w+:[^:\s]\S*)$!) {
         ($alttext, $node) = ($1,$2);
         $type = 'hyperlink';
     }

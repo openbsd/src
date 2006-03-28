@@ -2,7 +2,9 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
+    # We need '../../lib' as well as '../lib' because parts of Config are
+    # delay-loaded, after we've chdir()'ed into $testdir.
+    @INC = ('../lib', '../../lib');
     # XXX this could be further munged to enable some parts on other
     # platforms
     unless ($^O =~ /^MSWin/) {

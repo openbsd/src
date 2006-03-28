@@ -1,9 +1,9 @@
 #
-# $Id: Encode.pm,v 2.8 2004/10/24 12:32:06 dankogai Exp $
+# $Id: Encode.pm,v 2.12 2005/09/08 14:17:17 dankogai Exp dankogai $
 #
 package Encode;
 use strict;
-our $VERSION = do { my @r = (q$Revision: 2.8 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = sprintf "%d.%02d", q$Revision: 2.12 $ =~ /(\d+)/g;
 sub DEBUG () { 0 }
 use XSLoader ();
 XSLoader::load(__PACKAGE__, $VERSION);
@@ -19,7 +19,7 @@ our @EXPORT = qw(
 );
 
 our @FB_FLAGS  = qw(DIE_ON_ERR WARN_ON_ERR RETURN_ON_ERR LEAVE_SRC
-		    PERLQQ HTMLCREF XMLCREF);
+		    PERLQQ HTMLCREF XMLCREF STOP_AT_PARTIAL);
 our @FB_CONSTS = qw(FB_DEFAULT FB_CROAK FB_QUIET FB_WARN
 		    FB_PERLQQ FB_HTMLCREF FB_XMLCREF);
 
@@ -140,7 +140,7 @@ sub encode($$;$)
 {
     my ($name, $string, $check) = @_;
     return undef unless defined $string;
-    return undef if ref $string;
+    $string .= '' if ref $string; # stringify;
     $check ||=0;
     my $enc = find_encoding($name);
     unless(defined $enc){
@@ -148,7 +148,7 @@ sub encode($$;$)
 	Carp::croak("Unknown encoding '$name'");
     }
     my $octets = $enc->encode($string,$check);
-    $_[1] = $string if $check;
+    $_[1] = $string if $check and !($check & LEAVE_SRC());
     return $octets;
 }
 
@@ -156,7 +156,7 @@ sub decode($$;$)
 {
     my ($name,$octets,$check) = @_;
     return undef unless defined $octets;
-    return undef if ref $octets;
+    $octets .= '' if ref $octets;
     $check ||=0;
     my $enc = find_encoding($name);
     unless(defined $enc){
@@ -164,7 +164,7 @@ sub decode($$;$)
 	Carp::croak("Unknown encoding '$name'");
     }
     my $string = $enc->decode($octets,$check);
-    $_[1] = $octets if $check;
+    $_[1] = $octets if $check and !($check & LEAVE_SRC());
     return $string;
 }
 
@@ -203,7 +203,7 @@ sub decode_utf8($;$)
     if ($check){
 	return decode("utf8", $str, $check);
     }else{
-	return undef unless utf8::decode($str);
+	return decode("utf8", $str);
 	return $str;
     }
 }
@@ -300,6 +300,8 @@ sub predefine_encodings{
 	};
 	$Encode::Encoding{utf8} =
 	    bless {Name => "utf8"} => "Encode::utf8";
+	$Encode::Encoding{"utf-8-strict"} =
+	    bless {Name => "utf-8-strict", strict_utf8 => 1 } => "Encode::utf8";
     }
 }
 
@@ -401,9 +403,7 @@ for $octets is B<always> off.  When you encode anything, utf8 flag of
 the result is always off, even when it contains completely valid utf8
 string. See L</"The UTF-8 flag"> below.
 
-encode($valid_encoding, undef) is harmless but warns you for 
-C<Use of uninitialized value in subroutine entry>. 
-encode($valid_encoding, '') is harmless and warnless.
+If the $string is C<undef> then C<undef> is returned.
 
 =item $string = decode(ENCODING, $octets [, CHECK])
 
@@ -423,9 +423,7 @@ the utf8 flag for $string is on unless $octets entirely consists of
 ASCII data (or EBCDIC on EBCDIC machines).  See L</"The UTF-8 flag">
 below.
 
-decode($valid_encoding, undef) is harmless but warns you for 
-C<Use of uninitialized value in subroutine entry>. 
-decode($valid_encoding, '') is harmless and warnless.
+If the $string is C<undef> then C<undef> is returned.
 
 =item [$length =] from_to($octets, FROM_ENC, TO_ENC [, CHECK])
 
@@ -559,12 +557,15 @@ L<Encode::Encoding> and L<Encode::PerlIO>.
 
 =head1 Handling Malformed Data
 
-The optional I<CHECK> argument is used as follows.  When you omit it,
-Encode::FB_DEFAULT ( == 0 ) is assumed.
+The optional I<CHECK> argument tells Encode what to do when it
+encounters malformed data.  Without CHECK, Encode::FB_DEFAULT ( == 0 )
+is assumed.
+
+As of version 2.12 Encode supports coderef values for CHECK.  See below.
 
 =over 2
 
-=item B<NOTE:> Not all encoding suppport this feature
+=item B<NOTE:> Not all encoding support this feature
 
 Some encodings ignore I<CHECK> argument.  For example,
 L<Encode::Unicode> ignores I<CHECK> and it always croaks on error.
@@ -578,10 +579,10 @@ Now here is the list of I<CHECK> values available
 =item I<CHECK> = Encode::FB_DEFAULT ( == 0)
 
 If I<CHECK> is 0, (en|de)code will put a I<substitution character> in
-place of a malformed character.  When you encode to UCM-based encodings,
-E<lt>subcharE<gt> will be used.  When you decode from UCM-based
-encodings, the code point C<0xFFFD> is used.  If the data is supposed
-to be UTF-8, an optional lexical warning (category utf8) is given.
+place of a malformed character.  When you encode, E<lt>subcharE<gt>
+will be used.  When you decode the code point C<0xFFFD> is used.  If
+the data is supposed to be UTF-8, an optional lexical warning
+(category utf8) is given.
 
 =item I<CHECK> = Encode::FB_CROAK ( == 1)
 
@@ -600,12 +601,10 @@ source data may contain partial multi-byte character sequences,
 (i.e. you are reading with a fixed-width buffer). Here is a sample
 code that does exactly this:
 
-  my $data = ''; my $utf8 = '';
-  while(defined(read $fh, $buffer, 256)){
-    # buffer may end in a partial character so we append
-    $data .= $buffer;
-    $utf8 .= decode($encoding, $data, Encode::FB_QUIET);
-    # $data now contains the unprocessed partial character
+  my $buffer = ''; my $string = '';
+  while(read $fh, $buffer, 256, length($buffer)){
+    $string .= decode($encoding, $buffer, Encode::FB_QUIET);
+    # $buffer now contains the unprocessed partial character
   }
 
 =item I<CHECK> = Encode::FB_WARN
@@ -629,8 +628,10 @@ where I<HHHH> is the Unicode ID of the character that cannot be found
 in the character repertoire of the encoding.
 
 HTML/XML character reference modes are about the same, in place of
-C<\x{I<HHHH>}>, HTML uses C<&#I<NNNN>;> where I<NNNN> is a decimal digit and
-XML uses C<&#xI<HHHH>;> where I<HHHH> is the hexadecimal digit.
+C<\x{I<HHHH>}>, HTML uses C<&#I<NNN>;> where I<NNN> is a decimal number and
+XML uses C<&#xI<HHHH>;> where I<HHHH> is the hexadecimal number.
+
+In Encode 2.10 or later, C<LEAVE_SRC> is also implied.
 
 =item The bitmask
 
@@ -643,19 +644,23 @@ constants via C<use Encode qw(:fallback_all)>.
  DIE_ON_ERR    0x0001             X
  WARN_ON_ERR   0x0002                               X
  RETURN_ON_ERR 0x0004                      X        X
- LEAVE_SRC     0x0008
+ LEAVE_SRC     0x0008                                        X
  PERLQQ        0x0100                                        X
  HTMLCREF      0x0200
  XMLCREF       0x0400
 
 =back
 
-=head2 Unimplemented fallback schemes
+=head2 coderef for CHECK
 
-In the future, you will be able to use a code reference to a callback
-function for the value of I<CHECK> but its API is still undecided.
+As of Encode 2.12 CHECK can also be a code reference which takes the
+ord value of unmapped caharacter as an argument and returns a string
+that represents the fallback character.  For instance,
 
-The fallback scheme does not work on EBCDIC platforms.
+  $ascii = encode("ascii", $utf8, sub{ sprintf "<U+%04X>", shift });
+
+Acts like FB_PERLQQ but E<lt>U+I<XXXX>E<gt> is used instead of
+\x{I<XXXX>}.
 
 =head1 Defining Encodings
 
@@ -733,7 +738,7 @@ After C<$utf8 = decode('foo', $octet);>,
   In any other Encoding                      ON
   ---------------------------------------------
 
-As you see, there is one exception, In ASCII.  That way you can assue
+As you see, there is one exception, In ASCII.  That way you can assume
 Goal #1.  And with Encode Goal #2 is assumed but you still have to be
 careful in such cases mentioned in B<CAVEAT> paragraphs.
 
@@ -775,6 +780,54 @@ return value as indicating success or failure), or C<undef> if STRING is
 not a string.
 
 =back
+
+=head1 UTF-8 vs. utf8
+
+  ....We now view strings not as sequences of bytes, but as sequences
+  of numbers in the range 0 .. 2**32-1 (or in the case of 64-bit
+  computers, 0 .. 2**64-1) -- Programming Perl, 3rd ed.
+
+That has been the perl's notion of UTF-8 but official UTF-8 is more
+strict; Its ranges is much narrower (0 .. 10FFFF), some sequences are
+not allowed (i.e. Those used in the surrogate pair, 0xFFFE, et al).
+
+Now that is overruled by Larry Wall himself.
+
+  From: Larry Wall <larry@wall.org>
+  Date: December 04, 2004 11:51:58 JST
+  To: perl-unicode@perl.org
+  Subject: Re: Make Encode.pm support the real UTF-8
+  Message-Id: <20041204025158.GA28754@wall.org>
+  
+  On Fri, Dec 03, 2004 at 10:12:12PM +0000, Tim Bunce wrote:
+  : I've no problem with 'utf8' being perl's unrestricted uft8 encoding,
+  : but "UTF-8" is the name of the standard and should give the
+  : corresponding behaviour.
+  
+  For what it's worth, that's how I've always kept them straight in my
+  head.
+  
+  Also for what it's worth, Perl 6 will mostly default to strict but
+  make it easy to switch back to lax.
+  
+  Larry
+
+Do you copy?  As of Perl 5.8.7, B<UTF-8> means strict, official UTF-8
+while B<utf8> means liberal, lax, version thereof.  And Encode version
+2.10 or later thus groks the difference between C<UTF-8> and C"utf8".
+
+  encode("utf8",  "\x{FFFF_FFFF}", 1); # okay
+  encode("UTF-8", "\x{FFFF_FFFF}", 1); # croaks
+
+C<UTF-8> in Encode is actually a canonical name for C<utf-8-strict>.
+Yes, the hyphen between "UTF" and "8" is important.  Without it Encode
+goes "liberal"
+
+  find_encoding("UTF-8")->name # is 'utf-8-strict'
+  find_encoding("utf-8")->name # ditto. names are case insensitive
+  find_encoding("utf8")->name  # ditto. "_" are treated as "-"
+  find_encoding("UTF8")->name  # is 'utf8'.
+
 
 =head1 SEE ALSO
 

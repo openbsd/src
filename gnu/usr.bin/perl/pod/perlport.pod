@@ -67,9 +67,9 @@ The important thing is to decide where the code will run and to be
 deliberate in your decision.
 
 The material below is separated into three main sections: main issues of
-portability (L<"ISSUES">, platform-specific issues (L<"PLATFORMS">, and
+portability (L<"ISSUES">), platform-specific issues (L<"PLATFORMS">), and
 built-in perl functions that behave differently on various ports
-(L<"FUNCTION IMPLEMENTATIONS">.
+(L<"FUNCTION IMPLEMENTATIONS">).
 
 This information should not be considered complete; it includes possibly
 transient information about idiosyncrasies of some of the ports, almost
@@ -107,8 +107,8 @@ newlines:
 You can get away with this on Unix and Mac OS (they have a single
 character end-of-line), but the same program will break under DOSish
 perls because you're only chop()ing half the end-of-line.  Instead,
-chomp() should be used to trim newlines.  The Dunce::Files module can
-help audit your code for misuses of chop().
+chomp() should be used to trim newlines.  The L<Dunce::Files> module 
+can help audit your code for misuses of chop().
 
 When dealing with binary files (or text files in binary mode) be sure
 to explicitly set $/ to the appropriate value for your file format
@@ -223,6 +223,10 @@ Digital/Compaq used/uses them in little-endian mode; SGI/Cray uses
 them in big-endian mode.  To avoid this problem in network (socket)
 connections use the C<pack> and C<unpack> formats C<n> and C<N>, the
 "network" orders.  These are guaranteed to be portable.
+
+As of perl 5.8.5, you can also use the C<E<gt>> and C<E<lt>> modifiers
+to force big- or little-endian byte-order.  This is useful if you want
+to store signed integers or 64-bit integers, for example.
 
 You can explore the endianness of your platform by unpacking a
 data structure packed in native format such as:
@@ -476,12 +480,14 @@ file name.
 
 To convert $^X to a file pathname, taking account of the requirements
 of the various operating system possibilities, say:
+
   use Config;
   $thisperl = $^X;
   if ($^O ne 'VMS')
      {$thisperl .= $Config{_exe} unless $thisperl =~ m/$Config{_exe}$/i;}
 
 To convert $Config{perlpath} to a file pathname, say:
+
   use Config;
   $thisperl = $Config{perlpath};
   if ($^O ne 'VMS')
@@ -513,7 +519,7 @@ Don't assume that you can ping hosts and get replies.
 
 Don't assume that any particular port (service) will respond.
 
-Don't assume that Sys::Hostname() (or any other API or command)
+Don't assume that Sys::Hostname (or any other API or command)
 returns either a fully qualified hostname or a non-qualified hostname:
 it all depends on how the system had been configured.  Also remember
 things like DHCP and NAT-- the hostname you get back might not be very
@@ -652,9 +658,9 @@ Do not assume that the alphabetic characters are encoded contiguously
 
 Do not assume anything about the ordering of the characters.
 The lowercase letters may come before or after the uppercase letters;
-the lowercase and uppercase may be interlaced so that both `a' and `A'
-come before `b'; the accented and other international characters may
-be interlaced so that E<auml> comes before `b'.
+the lowercase and uppercase may be interlaced so that both "a" and "A"
+come before "b"; the accented and other international characters may
+be interlaced so that E<auml> comes before "b".
 
 =head2 Internationalisation
 
@@ -766,11 +772,17 @@ problems in their code that crop up because of lack of testing on other
 platforms; two, to provide users with information about whether
 a given module works on a given platform.
 
+Also see: 
+
 =over 4
 
-=item Mailing list: cpan-testers@perl.org
+=item *
 
-=item Testing results: http://testers.cpan.org/
+Mailing list: cpan-testers@perl.org
+
+=item *
+
+Testing results: http://testers.cpan.org/
 
 =back
 
@@ -893,10 +905,11 @@ DOSish perls are as follows:
      Windows NT    MSWin32    MSWin32-x86       2      4 xx
      Windows NT    MSWin32    MSWin32-ALPHA     2      4 xx
      Windows NT    MSWin32    MSWin32-ppc       2      4 xx
-     Windows 2000  MSWin32    MSWin32-x86       2      5 xx
-     Windows XP    MSWin32    MSWin32-x86       2      ?
+     Windows 2000  MSWin32    MSWin32-x86       2      5 00
+     Windows XP    MSWin32    MSWin32-x86       2      5 01
+     Windows 2003  MSWin32    MSWin32-x86       2      5 02
      Windows CE    MSWin32    ?                 3           
-     Cygwin        cygwin     ?                 
+     Cygwin        cygwin     cygwin
 
 The various MSWin32 Perl's can distinguish the OS they are running on
 via the value of the fifth element of the list returned from 
@@ -1034,6 +1047,10 @@ The MacPerl Pages, http://www.macperl.com/ .
 =item *
 
 The MacPerl mailing lists, http://lists.perl.org/ .
+
+=item *
+
+MPW, ftp://ftp.apple.com/developer/Tool_Chest/Core_Mac_OS_Tools/
 
 =back
 
@@ -1304,8 +1321,6 @@ Also see:
 
 =item *
 
-*
-
 L<perlos390>, F<README.os390>, F<perlbs2000>, F<README.vmesa>,
 L<perlebcdic>.
 
@@ -1315,7 +1330,7 @@ The perl-mvs@perl.org list is for discussion of porting issues as well as
 general usage issues for all EBCDIC Perls.  Send a message body of
 "subscribe perl-mvs" to majordomo@perl.org.
 
-=item  *
+=item *
 
 AS/400 Perl information at
 http://as400.rochester.ibm.com/
@@ -1503,10 +1518,6 @@ L<Config> for a full description of available variables.
 
 =over 8
 
-=item -X FILEHANDLE
-
-=item -X EXPR
-
 =item -X
 
 C<-r>, C<-w>, and C<-x> have a limited meaning only; directories
@@ -1545,7 +1556,29 @@ suffixes.  C<-S> is meaningless.  (Win32)
 C<-x> (or C<-X>) determine if a file has an executable file type.
 (S<RISC OS>)
 
-=item binmode FILEHANDLE
+=item atan2 Y,X
+
+Due to issues with various CPUs, math libraries, compilers, and standards,
+results for C<atan2()> may vary depending on any combination of the above.
+Perl attempts to conform to the Open Group/IEEE standards for the results
+returned from C<atan2()>, but cannot force the issue if the system Perl is
+run on does not allow it.  (Tru64, HP-UX 10.20) 
+
+The current version of the standards for C<atan2()> is available at 
+L<http://www.opengroup.org/onlinepubs/009695399/functions/atan2.html>.
+
+=item atan2
+
+Due to issues with various CPUs, math libraries, compilers, and standards,
+results for C<atan2()> may vary depending on any combination of the above.
+Perl attempts to conform to the Open Group/IEEE standards for the results
+returned from C<atan2()>, but cannot force the issue if the system Perl is
+run on does not allow it.  (Tru64, HP-UX 10.20) 
+
+The current version of the standards for C<atan2()> is available at 
+L<http://www.opengroup.org/onlinepubs/009695399/functions/atan2.html>.
+
+=item binmode
 
 Meaningless.  (S<Mac OS>, S<RISC OS>)
 
@@ -1556,7 +1589,7 @@ filehandle may be closed, or pointer may be in a different position.
 The value returned by C<tell> may be affected after the call, and
 the filehandle may be flushed. (Win32)
 
-=item chmod LIST
+=item chmod
 
 Only limited meaning.  Disabling/enabling write permission is mapped to
 locking/unlocking the file. (S<Mac OS>)
@@ -1571,34 +1604,32 @@ Access permissions are mapped onto VOS access-control list changes. (VOS)
 The actual permissions set depend on the value of the C<CYGWIN>
 in the SYSTEM environment settings.  (Cygwin)
 
-=item chown LIST
+=item chown
 
 Not implemented. (S<Mac OS>, Win32, S<Plan 9>, S<RISC OS>, VOS)
 
 Does nothing, but won't fail. (Win32)
 
-=item chroot FILENAME
-
 =item chroot
 
 Not implemented. (S<Mac OS>, Win32, VMS, S<Plan 9>, S<RISC OS>, VOS, VM/ESA)
 
-=item crypt PLAINTEXT,SALT
+=item crypt
 
 May not be available if library or source was not provided when building
 perl. (Win32)
 
 Not implemented. (VOS)
 
-=item dbmclose HASH
+=item dbmclose
 
 Not implemented. (VMS, S<Plan 9>, VOS)
 
-=item dbmopen HASH,DBNAME,MODE
+=item dbmopen
 
 Not implemented. (VMS, S<Plan 9>, VOS)
 
-=item dump LABEL
+=item dump
 
 Not useful. (S<Mac OS>, S<RISC OS>)
 
@@ -1606,7 +1637,7 @@ Not implemented. (Win32)
 
 Invokes VMS debugger. (VMS)
 
-=item exec LIST
+=item exec
 
 Not implemented. (S<Mac OS>)
 
@@ -1614,8 +1645,6 @@ Implemented via Spawn. (VM/ESA)
 
 Does not automatically flush output handles on some platforms.
 (SunOS, Solaris, HP-UX)
-
-=item exit EXPR
 
 =item exit
 
@@ -1626,11 +1655,11 @@ function, C<exit 0> is also mapped to an exit status of SS$_NORMAL
 (C<1>); this mapping cannot be overridden.  Any other argument to exit()
 is used directly as Perl's exit status. (VMS)
 
-=item fcntl FILEHANDLE,FUNCTION,SCALAR
+=item fcntl
 
 Not implemented. (Win32, VMS)
 
-=item flock FILEHANDLE,OPERATION
+=item flock
 
 Not implemented (S<Mac OS>, VMS, S<RISC OS>, VOS).
 
@@ -1649,7 +1678,7 @@ Does not automatically flush output handles on some platforms.
 
 Not implemented. (S<Mac OS>, S<RISC OS>)
 
-=item getpgrp PID
+=item getpgrp
 
 Not implemented. (S<Mac OS>, Win32, VMS, S<RISC OS>, VOS)
 
@@ -1657,43 +1686,43 @@ Not implemented. (S<Mac OS>, Win32, VMS, S<RISC OS>, VOS)
 
 Not implemented. (S<Mac OS>, Win32, S<RISC OS>)
 
-=item getpriority WHICH,WHO
+=item getpriority
 
 Not implemented. (S<Mac OS>, Win32, VMS, S<RISC OS>, VOS, VM/ESA)
 
-=item getpwnam NAME
+=item getpwnam
 
 Not implemented. (S<Mac OS>, Win32)
 
 Not useful. (S<RISC OS>)
 
-=item getgrnam NAME
+=item getgrnam
 
 Not implemented. (S<Mac OS>, Win32, VMS, S<RISC OS>)
 
-=item getnetbyname NAME
+=item getnetbyname
 
 Not implemented. (S<Mac OS>, Win32, S<Plan 9>)
 
-=item getpwuid UID
+=item getpwuid
 
 Not implemented. (S<Mac OS>, Win32)
 
 Not useful. (S<RISC OS>)
 
-=item getgrgid GID
+=item getgrgid
 
 Not implemented. (S<Mac OS>, Win32, VMS, S<RISC OS>)
 
-=item getnetbyaddr ADDR,ADDRTYPE
+=item getnetbyaddr
 
 Not implemented. (S<Mac OS>, Win32, S<Plan 9>)
 
-=item getprotobynumber NUMBER
+=item getprotobynumber
 
 Not implemented. (S<Mac OS>)
 
-=item getservbyport PORT,PROTO
+=item getservbyport
 
 Not implemented. (S<Mac OS>)
 
@@ -1726,19 +1755,19 @@ Not implemented. (S<Mac OS>, Win32, S<Plan 9>)
 
 Not implemented. (Win32, S<Plan 9>)
 
-=item sethostent STAYOPEN
+=item sethostent
 
 Not implemented. (S<Mac OS>, Win32, S<Plan 9>, S<RISC OS>)
 
-=item setnetent STAYOPEN
+=item setnetent
 
 Not implemented. (S<Mac OS>, Win32, S<Plan 9>, S<RISC OS>)
 
-=item setprotoent STAYOPEN
+=item setprotoent
 
 Not implemented. (S<Mac OS>, Win32, S<Plan 9>, S<RISC OS>)
 
-=item setservent STAYOPEN
+=item setservent
 
 Not implemented. (S<Plan 9>, Win32, S<RISC OS>)
 
@@ -1770,12 +1799,14 @@ Not implemented. (S<Plan 9>, Win32)
 
 Not implemented. (S<Plan 9>)
 
-=item glob EXPR
-
 =item glob
 
 This operator is implemented via the File::Glob extension on most
 platforms.  See L<File::Glob> for portability information.
+
+=item gmtime
+
+Same portability caveats as L<localtime>.
 
 =item ioctl FILEHANDLE,FUNCTION,SCALAR
 
@@ -1786,7 +1817,7 @@ in the Winsock API does. (Win32)
 
 Available only for socket handles. (S<RISC OS>)
 
-=item kill SIGNAL, LIST
+=item kill
 
 C<kill(0, LIST)> is implemented for the sake of taint checking;
 use with other signals is unimplemented. (S<Mac OS>)
@@ -1800,7 +1831,7 @@ and makes it exit immediately with exit status $sig.  As in Unix, if
 $sig is 0 and the specified process exists, it returns true without
 actually terminating it. (Win32)
 
-=item link OLDFILE,NEWFILE
+=item link
 
 Not implemented. (S<Mac OS>, MPE/iX, VMS, S<RISC OS>)
 
@@ -1810,9 +1841,12 @@ Link count not updated because hard links are not quite that hard
 Hard links are implemented on Win32 (Windows NT and Windows 2000)
 under NTFS only.
 
-=item lstat FILEHANDLE
+=item localtime
 
-=item lstat EXPR
+Because Perl currently relies on the native standard C localtime()
+function, it is only safe to use times between 0 and (2**31)-1.  Times
+outside this range may result in unexpected behavior depending on your
+operating system's implementation of localtime().
 
 =item lstat
 
@@ -1820,19 +1854,17 @@ Not implemented. (VMS, S<RISC OS>)
 
 Return values (especially for device and inode) may be bogus. (Win32)
 
-=item msgctl ID,CMD,ARG
+=item msgctl
 
-=item msgget KEY,FLAGS
+=item msgget
 
-=item msgsnd ID,MSG,FLAGS
+=item msgsnd
 
-=item msgrcv ID,VAR,SIZE,TYPE,FLAGS
+=item msgrcv
 
 Not implemented. (S<Mac OS>, Win32, VMS, S<Plan 9>, S<RISC OS>, VOS)
 
-=item open FILEHANDLE,EXPR
-
-=item open FILEHANDLE
+=item open
 
 The C<|> variants are supported only if ToolServer is installed.
 (S<Mac OS>)
@@ -1842,17 +1874,19 @@ open to C<|-> and C<-|> are unsupported. (S<Mac OS>, Win32, S<RISC OS>)
 Opening a process does not automatically flush output handles on some
 platforms.  (SunOS, Solaris, HP-UX)
 
-=item pipe READHANDLE,WRITEHANDLE
+=item pipe
 
 Very limited functionality. (MiNT)
-
-=item readlink EXPR
 
 =item readlink
 
 Not implemented. (Win32, VMS, S<RISC OS>)
 
-=item select RBITS,WBITS,EBITS,TIMEOUT
+=item rename
+
+Can't move directories between directories on different logical volumes. (Win32)
+
+=item select
 
 Only implemented on sockets. (Win32, VMS)
 
@@ -1860,11 +1894,11 @@ Only reliable on sockets. (S<RISC OS>)
 
 Note that the C<select FILEHANDLE> form is generally portable.
 
-=item semctl ID,SEMNUM,CMD,ARG
+=item semctl
 
-=item semget KEY,NSEMS,FLAGS
+=item semget
 
-=item semop KEY,OPSTRING
+=item semop
 
 Not implemented. (S<Mac OS>, Win32, VMS, S<RISC OS>, VOS)
 
@@ -1872,11 +1906,11 @@ Not implemented. (S<Mac OS>, Win32, VMS, S<RISC OS>, VOS)
 
 Not implemented. (S<Mac OS>, MPE/iX, VMS, Win32, S<RISC OS>)
 
-=item setpgrp PID,PGRP
+=item setpgrp
 
 Not implemented. (S<Mac OS>, Win32, VMS, S<RISC OS>, VOS)
 
-=item setpriority WHICH,WHO,PRIORITY
+=item setpriority
 
 Not implemented. (S<Mac OS>, Win32, VMS, S<RISC OS>, VOS)
 
@@ -1884,32 +1918,28 @@ Not implemented. (S<Mac OS>, Win32, VMS, S<RISC OS>, VOS)
 
 Not implemented. (S<Mac OS>, MPE/iX, Win32, S<RISC OS>)
 
-=item setsockopt SOCKET,LEVEL,OPTNAME,OPTVAL
+=item setsockopt
 
 Not implemented. (S<Plan 9>)
 
-=item shmctl ID,CMD,ARG
+=item shmctl
 
-=item shmget KEY,SIZE,FLAGS
+=item shmget
 
-=item shmread ID,VAR,POS,SIZE
+=item shmread
 
-=item shmwrite ID,STRING,POS,SIZE
+=item shmwrite
 
 Not implemented. (S<Mac OS>, Win32, VMS, S<RISC OS>, VOS)
 
-=item sockatmark SOCKET
+=item sockatmark
 
 A relatively recent addition to socket functions, may not
 be implemented even in UNIX platforms.
 
-=item socketpair SOCKET1,SOCKET2,DOMAIN,TYPE,PROTOCOL
+=item socketpair
 
 Not implemented. (Win32, VMS, S<RISC OS>, VOS, VM/ESA)
-
-=item stat FILEHANDLE
-
-=item stat EXPR
 
 =item stat
 
@@ -1937,22 +1967,22 @@ meaningful and will differ between stat calls on the same file.  (os2)
 some versions of cygwin when doing a stat("foo") and if not finding it
 may then attempt to stat("foo.exe") (Cygwin)
 
-=item symlink OLDFILE,NEWFILE
+=item symlink
 
 Not implemented. (Win32, VMS, S<RISC OS>)
 
-=item syscall LIST
+=item syscall
 
 Not implemented. (S<Mac OS>, Win32, VMS, S<RISC OS>, VOS, VM/ESA)
 
-=item sysopen FILEHANDLE,FILENAME,MODE,PERMS
+=item sysopen
 
 The traditional "0", "1", and "2" MODEs are implemented with different
 numeric values on some systems.  The flags exported by C<Fcntl>
 (O_RDONLY, O_WRONLY, O_RDWR) should work everywhere though.  (S<Mac
 OS>, OS/390, VM/ESA)
 
-=item system LIST
+=item system
 
 In general, do not assume the UNIX/POSIX semantics that you can shift
 C<$?> right by eight to get the exit value, or that C<$? & 127>
@@ -2009,9 +2039,7 @@ library. (Win32)
 
 Not useful. (S<RISC OS>)
 
-=item truncate FILEHANDLE,LENGTH
-
-=item truncate EXPR,LENGTH
+=item truncate
 
 Not implemented. (Older versions of VMS)
 
@@ -2022,8 +2050,6 @@ mode (i.e., use C<<< open(FH, '>>filename') >>>
 or C<sysopen(FH,...,O_APPEND|O_RDWR)>.  If a filename is supplied, it
 should not be held open elsewhere. (Win32)
 
-=item umask EXPR
-
 =item umask
 
 Returns undef where unavailable, as of version 5.005.
@@ -2031,7 +2057,7 @@ Returns undef where unavailable, as of version 5.005.
 C<umask> works but the correct permissions are set only when the file
 is finally closed. (AmigaOS)
 
-=item utime LIST
+=item utime
 
 Only the modification time is updated. (S<BeOS>, S<Mac OS>, VMS, S<RISC OS>)
 
@@ -2043,7 +2069,7 @@ two seconds. (Win32)
 
 =item wait
 
-=item waitpid PID,FLAGS
+=item waitpid
 
 Not implemented. (S<Mac OS>, VOS)
 
@@ -2054,94 +2080,6 @@ Not useful. (S<RISC OS>)
 
 =back
 
-=head1 CHANGES
-
-=over 4
-
-=item v1.48, 02 February 2001
-
-Various updates from perl5-porters over the past year, supported
-platforms update from Jarkko Hietaniemi.
-
-=item v1.47, 22 March 2000
-
-Various cleanups from Tom Christiansen, including migration of 
-long platform listings from L<perl>.
-
-=item v1.46, 12 February 2000
-
-Updates for VOS and MPE/iX. (Peter Prymmer)  Other small changes.
-
-=item v1.45, 20 December 1999
-
-Small changes from 5.005_63 distribution, more changes to EBCDIC info.
-
-=item v1.44, 19 July 1999
-
-A bunch of updates from Peter Prymmer for C<$^O> values,
-endianness, File::Spec, VMS, BS2000, OS/400.
-
-=item v1.43, 24 May 1999
-
-Added a lot of cleaning up from Tom Christiansen.
-
-=item v1.42, 22 May 1999
-
-Added notes about tests, sprintf/printf, and epoch offsets.
-
-=item v1.41, 19 May 1999
-
-Lots more little changes to formatting and content.
-
-Added a bunch of C<$^O> and related values
-for various platforms; fixed mail and web addresses, and added
-and changed miscellaneous notes.  (Peter Prymmer)
-
-=item v1.40, 11 April 1999
-
-Miscellaneous changes.
-
-=item v1.39, 11 February 1999
-
-Changes from Jarkko and EMX URL fixes Michael Schwern.  Additional
-note about newlines added.
-
-=item v1.38, 31 December 1998
-
-More changes from Jarkko.
-
-=item v1.37, 19 December 1998
-
-More minor changes.  Merge two separate version 1.35 documents.
-
-=item v1.36, 9 September 1998
-
-Updated for Stratus VOS.  Also known as version 1.35.
-
-=item v1.35, 13 August 1998
-
-Integrate more minor changes, plus addition of new sections under
-L<"ISSUES">: L<"Numbers endianness and Width">,
-L<"Character sets and character encoding">,
-L<"Internationalisation">.
-
-=item v1.33, 06 August 1998
-
-Integrate more minor changes.
-
-=item v1.32, 05 August 1998
-
-Integrate more minor changes.
-
-=item v1.30, 03 August 1998
-
-Major update for RISC OS, other minor changes.
-
-=item v1.23, 10 July 1998
-
-First public release with perl5.005.
-
-=back
 
 =head1 Supported Platforms
 

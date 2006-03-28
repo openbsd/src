@@ -13,7 +13,7 @@ BEGIN
 
 # test whether Math::BigInt->config() and Math::BigFloat->config() works
 
-use Math::BigInt;
+use Math::BigInt lib => 'Calc';
 use Math::BigFloat;
 
 my $mbi = 'Math::BigInt'; my $mbf = 'Math::BigFloat';
@@ -105,16 +105,16 @@ foreach my $key (keys %$test)
 ##############################################################################
 # test setting illegal keys (should croak)
   
-my $never_reached = 0;
+$@ = ""; my $never_reached = 0;
 eval ("$mbi\->config( 'some_garbage' => 1 ); $never_reached = 1;");
 ok ($never_reached,0);
 
-$never_reached = 0;
+$@ = ""; $never_reached = 0;
 eval ("$mbf\->config( 'some_garbage' => 1 ); $never_reached = 1;");
 ok ($never_reached,0);
 
 # this does not work. Why?
-#ok (@!, "Illegal keys 'some_garbage' passed to Math::BigInt->config() at ./config.t line 104");
+#ok ($@ eq "Illegal keys 'some_garbage' passed to Math::BigInt->config() at ./config.t line 104", 1);
 
 # all tests done
 

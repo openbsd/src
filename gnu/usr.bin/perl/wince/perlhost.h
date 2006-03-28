@@ -2228,7 +2228,7 @@ CPerlHost::GetChildDir(void)
     dTHX;
     int length;
     char* ptr;
-    New(0, ptr, MAX_PATH+1, char);
+    Newx(ptr, MAX_PATH+1, char);
     if(ptr) {
 	m_pvDir->GetCurrentDirectoryA(MAX_PATH+1, ptr);
 	length = strlen(ptr);
@@ -2275,7 +2275,7 @@ CPerlHost::CreateLocalEnvironmentStrings(VDir &vDir)
     // add the additional space used by changes made to the environment
     dwSize += CalculateEnvironmentSpace();
 
-    New(1, lpStr, dwSize, char);
+    Newx(lpStr, dwSize, char);
     lpPtr = lpStr;
     if(lpStr != NULL) {
 	// build the local environment

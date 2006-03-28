@@ -14,7 +14,7 @@ BEGIN {
 
 use ExtUtils::testlib;
 use strict;
-BEGIN { print "1..12\n" };
+BEGIN { print "1..14\n" };
 use threads;
 use threads::shared;
 
@@ -24,6 +24,8 @@ use Devel::Peek qw(Dump);
 
 sub ok {
     my ($ok, $name) = @_;
+
+    lock $test_id; # make print and increment atomic
 
     # You have to do it this way or VMS will get confused.
     print $ok ? "ok $test_id - $name\n" : "not ok $test_id - $name\n";
@@ -144,4 +146,11 @@ if ($^O eq 'linux') {
     ok($ok, "Double join works");
 }
 
-
+{
+    # The "use IO" is not actually used for anything; its only purpose is to
+    # incite a lot of calls to newCONSTSUB.  See the p5p archives for
+    # the thread "maint@20974 or before broke mp2 ithreads test".
+    use IO;
+    # this coredumped between #20930 and #21000
+    $_->join for map threads->new(sub{ok($_, "stress newCONSTSUB")}), 1..2;
+}

@@ -93,7 +93,17 @@ The following functions are exported only by request.
 
 All the functions may be imported using the C<:ALL> tag.
 
+=head1 COPYRIGHT
+
+Copyright (c) 2004 by the Perl 5 Porters.  All rights reserved.
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
 =head1 SEE ALSO
 
 File::Spec, File::Spec::Unix, File::Spec::Mac, File::Spec::OS2,
 File::Spec::Win32, File::Spec::VMS, ExtUtils::MakeMaker
+
+=cut
+

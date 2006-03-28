@@ -1,4 +1,4 @@
-/* $Id: MD5.xs,v 1.42 2003/12/06 22:35:16 gisle Exp $ */
+/* $Id: MD5.xs,v 1.45 2005/11/26 11:06:20 gisle Exp $ */
 
 /* 
  * This library is free software; you can redistribute it and/or
@@ -153,7 +153,7 @@ typedef struct {
  * padding is also the reason the buffer in MD5_CTX have to be
  * 128 bytes.
  */
-static unsigned char PADDING[64] = {
+static const unsigned char PADDING[64] = {
   0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -484,7 +484,7 @@ static MD5_CTX* get_md5_ctx(pTHX_ SV* sv)
 
 static char* hex_16(const unsigned char* from, char* to)
 {
-    static char *hexdigits = "0123456789abcdef";
+    static const char hexdigits[] = "0123456789abcdef";
     const unsigned char *end = from + 16;
     char *d = to;
 
@@ -499,7 +499,7 @@ static char* hex_16(const unsigned char* from, char* to)
 
 static char* base64_16(const unsigned char* from, char* to)
 {
-    static char* base64 =
+    static const char base64[] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     const unsigned char *end = from + 16;
     unsigned char c1, c2, c3;
@@ -590,7 +590,6 @@ clone(self)
 	char *myname = sv_reftype(SvRV(self),TRUE);
 	MD5_CTX* context;
     PPCODE:
-	STRLEN my_na;
 	New(55, context, 1, MD5_CTX);
 	ST(0) = sv_newmortal();
 	sv_setref_pv(ST(0), myname , (void*)context);
@@ -626,10 +625,18 @@ addfile(self, fh)
     PREINIT:
 	MD5_CTX* context = get_md5_ctx(aTHX_ self);
 	STRLEN fill = context->bytes_low & 0x3F;
+#ifdef USE_HEAP_INSTEAD_OF_STACK
+	unsigned char* buffer;
+#else
 	unsigned char buffer[4096];
+#endif
 	int  n;
     CODE:
 	if (fh) {
+#ifdef USE_HEAP_INSTEAD_OF_STACK
+	    New(0, buffer, 4096, unsigned char);
+	    assert(buffer);
+#endif
             if (fill) {
 	        /* The MD5Update() function is faster if it can work with
 	         * complete blocks.  This will fill up any buffered block
@@ -646,7 +653,9 @@ addfile(self, fh)
             while ( (n = PerlIO_read(fh, buffer, sizeof(buffer))) > 0) {
 	        MD5Update(context, buffer, n);
 	    }
-
+#ifdef USE_HEAP_INSTEAD_OF_STACK
+	    Safefree(buffer);
+#endif
 	    if (PerlIO_error(fh)) {
 		croak("Reading from filehandle failed");
 	    }

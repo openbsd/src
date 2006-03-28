@@ -8,7 +8,7 @@ BEGIN
   $| = 1;
   chdir 't' if -d 't';
   unshift @INC, '../lib'; # for running manually
-  plan tests => 180;
+  plan tests => 185;
   }
 
 # basic testing of Math::BigRat
@@ -92,6 +92,14 @@ ok ($cr->new('-NaN'),'NaN');
 ok ($cr->new('NaN'),'NaN');
 ok ($cr->new('+inf'),'inf');
 ok ($cr->new('-inf'),'-inf');
+
+##############################################################################
+# two Bigints
+
+ok ($cr->new($mbi->new(3),$mbi->new(7))->badd(1),'10/7');
+ok ($cr->new($mbi->new(-13),$mbi->new(7)),'-13/7');
+ok ($cr->new($mbi->new(13),$mbi->new(-7)),'-13/7');
+ok ($cr->new($mbi->new(-13),$mbi->new(-7)),'13/7');
 
 ##############################################################################
 # mixed arguments
@@ -231,6 +239,7 @@ $x = $cr->new('16/8'); ok ($array[$x],3);
 $x = $cr->new('17/8'); ok ($array[$x],3);
 $x = $cr->new('33/8'); ok ($array[$x],5);
 $x = $cr->new('-33/8'); ok ($array[$x],6);
+$x = $cr->new('-8/1'); ok ($array[$x],2);	# -8 => 2
 
 $x = $cr->new('33/8'); ok ($x->numify() * 1000, 4125);
 $x = $cr->new('-33/8'); ok ($x->numify() * 1000, -4125);

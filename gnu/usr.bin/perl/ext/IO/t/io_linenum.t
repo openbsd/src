@@ -5,16 +5,14 @@
 
 my $File;
 
-BEGIN
-{
-  $File = __FILE__;
-  if (-d 't')
-  {
-    chdir 't';
-    $File =~ s/^t\W+//;                                 # Remove first directory
-  }
-  @INC = '../lib';
-  require strict; import strict;
+BEGIN {
+    $File = __FILE__;
+    unless(grep /blib/, @INC) {
+	chdir 't' if -d 't';
+	$File =~ s/^t\W+//;                                 # Remove first directory
+	@INC = '../lib';
+    }
+    require strict; import strict;
 }
 
 use Test;

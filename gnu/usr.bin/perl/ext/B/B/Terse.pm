@@ -1,6 +1,6 @@
 package B::Terse;
 
-our $VERSION = '1.02';
+our $VERSION = '1.03_01';
 
 use strict;
 use B qw(class);
@@ -51,14 +51,14 @@ sub B::SV::terse {
 }
 
 sub B::NULL::terse {
-    my ($sv, $level) = @_;
+    my ($sv, $level) = (@_, 0);
     my $s = indent($level) . sprintf "%s (0x%lx)", class($sv), $$sv;
     print "$s\n" unless defined wantarray;
     $s;
 }
 
 sub B::SPECIAL::terse {
-    my ($sv, $level) = @_;
+    my ($sv, $level) = (@_, 0);
     my $s = indent($level)
 	. sprintf( "%s #%d %s", class($sv), $$sv, $specialsv_name[$$sv]);
     print "$s\n" unless defined wantarray;
@@ -83,7 +83,7 @@ This version of B::Terse is really just a wrapper that calls B::Concise
 with the B<-terse> option. It is provided for compatibility with old scripts
 (and habits) but using B::Concise directly is now recommended instead.
 
-For compatiblilty with the old B::Terse, this module also adds a
+For compatibility with the old B::Terse, this module also adds a
 method named C<terse> to B::OP and B::SV objects. The B::SV method is
 largely compatible with the old one, though authors of new software
 might be advised to choose a more user-friendly output format. The

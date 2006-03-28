@@ -45,10 +45,16 @@ my $make = $Config{make};
 $make = $ENV{MAKE} if exists $ENV{MAKE};
 if ($^O eq 'MSWin32' && $make eq 'nmake') { $make .= " -nologo"; }
 
+# VMS may be using something other than MMS/MMK
+my $mms_or_mmk = 0;
+if ($^O eq 'VMS') {
+   $mms_or_mmk = 1 if (($make eq 'MMK') || ($make eq 'MMS'));
+}
+
 # Renamed by make clean
-my $makefile = ($^O eq 'VMS' ? 'descrip' : 'Makefile');
-my $makefile_ext = ($^O eq 'VMS' ? '.mms' : '');
-my $makefile_rename = $makefile . ($^O eq 'VMS' ? '.mms' : '.old');
+my $makefile = ($mms_or_mmk ? 'descrip' : 'Makefile');
+my $makefile_ext = ($mms_or_mmk ? '.mms' : '');
+my $makefile_rename = $makefile . ($mms_or_mmk ? '.mms_old' : '.old');
 
 my $output = "output";
 my $package = "ExtTest";
@@ -124,6 +130,33 @@ sub build_and_run {
   my @makeout;
 
   if ($^O eq 'VMS') { $make .= ' all'; }
+
+  # Sometimes it seems that timestamps can get confused
+
+  # make failed: 256
+  # Makefile out-of-date with respect to Makefile.PL
+  # Cleaning current config before rebuilding Makefile...
+  # make -f Makefile.old clean > /dev/null 2>&1 || /bin/sh -c true
+  # ../../perl "-I../../../lib" "-I../../../lib" Makefile.PL "PERL_CORE=1"
+  # Checking if your kit is complete...                         
+  # Looks good
+  # Writing Makefile for ExtTest
+  # ==> Your Makefile has been rebuilt. <==
+  # ==> Please rerun the make command.  <==
+  # false
+
+  my $timewarp = (-M "Makefile.PL") - (-M "$makefile$makefile_ext");
+  # Convert from days to seconds
+  $timewarp *= 86400;
+  print "# Makefile.PL is $timewarp second(s) older than $makefile$makefile_ext\n";
+  if ($timewarp < 0) {
+      # Sleep for a while to catch up.
+      $timewarp = -$timewarp;
+      $timewarp+=2;
+      $timewarp = 10 if $timewarp > 10;
+      print "# Sleeping for $timewarp second(s) to try to resolve this\n";
+      sleep $timewarp;
+  }
 
   print "# make = '$make'\n";
   @makeout = `$make`;
@@ -223,8 +256,8 @@ sub build_and_run {
 
   check_for_bonus_files ('.', @$files, $output, $makefile_rename, '.', '..');
 
-  rename $makefile_rename, $makefile
-    or die "Can't rename '$makefile_rename' to '$makefile': $!";
+  rename $makefile_rename, $makefile . $makefile_ext
+    or die "Can't rename '$makefile_rename' to '$makefile$makefile_ext': $!";
 
   unlink $output or warn "Can't unlink '$output': $!";
 
@@ -481,7 +514,7 @@ EOT
                {name=>"RFC1149", type=>"SV", value=>"sv_2mortal(temp_sv)",
                 pre=>"SV *temp_sv = newSVpv(RFC1149, 0); "
                 . "(void) SvUPGRADE(temp_sv,SVt_PVIV); SvIOK_on(temp_sv); "
-                . "SvIVX(temp_sv) = 1149;"},
+                . "SvIV_set(temp_sv, 1149);"},
               );
 
   push @items, $_ foreach keys %compass;

@@ -48,10 +48,10 @@ if ($args !~ /\-o (\S+)/) {
   if ($dllname =~ /\./) { $libname =$`; } else { $libname =$dllname; };
   my $v_e_r_s = '@VERSION@';
   $v_e_r_s =~ tr/./_/;
-  if ( $dllname =~ /libperl.*/) { 
+  if ( $dllname =~ /libperl.*/) {
     $dllname ="cygperl$v_e_r_s.dll";
   } else {
-  $dllname ="$libname.dll";
+    $dllname ="$libname.dll";
   }
   $libname ="lib$libname" unless ($libname =~ /^lib/);
   print DEBUGFILE "dll name: $dllname\nimport library: $libname\npath: $path\n" if $DEBUG;
@@ -77,9 +77,9 @@ if ($args !~ /\-o (\S+)/) {
 close DEBUGFILE if $DEBUG;
 
 #---------------------------------------------------------------------------
-sub shellexec{
-  my $command =shift;
-  print $command;
+sub shellexec {
+  my $command = shift;
+  print STDERR $command;
   print DEBUGFILE $command if $DEBUG;
   system($command) == 0
     or die "perlld: *** system() failed to execute\n$command\n";

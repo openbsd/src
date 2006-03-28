@@ -13,24 +13,24 @@ BEGIN {
     }
 }
 
-
+use strict;
+use Test::More tests => 5;
 use List::Util qw(max);
 
-print "1..5\n";
+my $v;
 
-print "not " unless defined &max;
-print "ok 1\n";
+ok(defined &max, 'defined');
 
-print "not " unless max(1) == 1;
-print "ok 2\n";
+$v = max(1);
+is($v, 1, 'single arg');
 
-print "not " unless max(1,2) == 2;
-print "ok 3\n";
+$v = max (1,2);
+is($v, 2, '2-arg ordered');
 
-print "not " unless max(2,1) == 2;
-print "ok 4\n";
+$v = max(2,1);
+is($v, 2, '2-arg reverse ordered');
 
 my @a = map { rand() } 1 .. 20;
 my @b = sort { $a <=> $b } @a;
-print "not " unless max(@a) == $b[-1];
-print "ok 5\n";
+$v = max(@a);
+is($v, $b[-1], '20-arg random order');

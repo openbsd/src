@@ -5,13 +5,13 @@
 #
 ################################################################################
 #
-#  $Revision: 1.1.1.1 $
+#  $Revision: 1.1.1.2 $
 #  $Author: millert $
-#  $Date: 2005/01/15 21:16:45 $
+#  $Date: 2006/03/28 18:47:58 $
 #
 ################################################################################
 #
-#  Version 3.x, Copyright (C) 2004, Marcus Holland-Moritz.
+#  Version 3.x, Copyright (C) 2004-2005, Marcus Holland-Moritz.
 #  Version 2.x, Copyright (C) 2001, Paul Marquess.
 #  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 #
@@ -85,18 +85,22 @@ my %ignorerv = (
 );
 
 my %stack = (
-  ORIGMARK  => ['dORIGMARK;'],
-  POPpx     => ['STRLEN n_a;'],
-  POPpbytex => ['STRLEN n_a;'],
-  PUSHp     => ['dTARG;'],
-  PUSHn     => ['dTARG;'],
-  PUSHi     => ['dTARG;'],
-  PUSHu     => ['dTARG;'],
-  XPUSHp    => ['dTARG;'],
-  XPUSHn    => ['dTARG;'],
-  XPUSHi    => ['dTARG;'],
-  XPUSHu    => ['dTARG;'],
-  UNDERBAR  => ['dUNDERBAR;'],
+  ORIGMARK       => ['dORIGMARK;'],
+  POPpx          => ['STRLEN n_a;'],
+  POPpbytex      => ['STRLEN n_a;'],
+  PUSHp          => ['dTARG;'],
+  PUSHn          => ['dTARG;'],
+  PUSHi          => ['dTARG;'],
+  PUSHu          => ['dTARG;'],
+  XPUSHp         => ['dTARG;'],
+  XPUSHn         => ['dTARG;'],
+  XPUSHi         => ['dTARG;'],
+  XPUSHu         => ['dTARG;'],
+  UNDERBAR       => ['dUNDERBAR;'],
+  XCPT_TRY_START => ['dXCPT;'],
+  XCPT_TRY_END   => ['dXCPT;'],
+  XCPT_CATCH     => ['dXCPT;'],
+  XCPT_RETHROW   => ['dXCPT;'],
 );
 
 my %postcode = (
@@ -136,6 +140,8 @@ print OUT <<HEAD;
 
 #include "EXTERN.h"
 #include "perl.h"
+
+#define NO_XSLOCKS
 #include "XSUB.h"
 
 #ifndef DPPP_APICHECK_NO_PPPORT_H
@@ -192,7 +198,11 @@ for $f (@f) {
       push @arg, qw(VARarg1 VARarg2 VARarg3);
       last;
     }
-    my($n, $p, $d) = $a =~ /^(\w+(?:\s+\w+)*)\s*(\**)((?:\[[^\]]*\])*)$/ or die;
+    my($n, $p, $d) = $a =~ /^ (\w+(?:\s+\w+)*)\s*  # type name  => $n
+                              (\**)                # pointer    => $p
+                              ((?:\[[^\]]*\])*)    # dimension  => $d
+                            $/x
+                     or die "$0 - cannot parse argument: [$a]\n";
     if (exists $amap{$n}) {
       push @arg, $amap{$n};
       next;

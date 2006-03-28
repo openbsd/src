@@ -1,5 +1,10 @@
-# SpecialCasing-4.0.1.txt
-# Date: 2003-10-06, 17:30:00 PST [KW]
+# SpecialCasing-4.1.0.txt
+# Date: 2005-03-26, 00:35:45 GMT [MD]
+#
+# Unicode Character Database
+# Copyright (c) 1991-2005 Unicode, Inc.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
+# For documentation, see UCD.html
 #
 # Special Casing Properties
 #
@@ -18,25 +23,24 @@
 #
 # <code>; <lower> ; <title> ; <upper> ; (<condition_list> ;)? # <comment>
 #
-# <code>, <lower>, <title>, and <upper> provide character values in hex. If there is more than
-# one character, they are separated by spaces. Other than as used to separate elements,
-# spaces are to be ignored.
+# <code>, <lower>, <title>, and <upper> provide character values in hex. If there is more
+# than one character, they are separated by spaces. Other than as used to separate 
+# elements, spaces are to be ignored.
 #
-# The <condition_list> is optional. Where present, it consists of one or more locales or contexts,
-# separated by spaces. In these conditions:
+# The <condition_list> is optional. Where present, it consists of one or more locale IDs
+# or contexts, separated by spaces. In these conditions:
 # - A condition list overrides the normal behavior if all of the listed conditions are true.
 # - The context is always the context of the characters in the original string,
 #   NOT in the resulting string.
 # - Case distinctions in the condition list are not significant.
 # - Conditions preceded by "Not_" represent the negation of the condition.
 #
-# A locale is defined as:
-# <locale> := <ISO_639_code> ( "_" <ISO_3166_code> ( "_" <variant> )? )?
-# <ISO_3166_code> := 2-letter ISO country code,
-# <ISO_639_code> :=  2-letter ISO language code
+# A locale ID is defined by taking any language tag as defined by
+# RFC 3066 (or its successor), and replacing '-' by '_'.
 #
-# A context is one of the following, as defined in the Unicode Standard:
-#   Final_Sigma, After_Soft_Dotted, More_Above, Before_Dot, Not_Before_Dot, After_I
+# A context for a character C is defined by Section 3.13 Default Case Operations,
+# on p. 89-90 of The Unicode Standard, Version 4.0, as amended by Unicode 4.1.0,
+# as specified in http://www.unicode.org/versions/Unicode4.1.0/
 #
 # Parsers of this file must be prepared to deal with future additions to this format:
 #  * Additional contexts

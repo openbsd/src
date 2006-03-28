@@ -1089,7 +1089,10 @@ for a significant performance improvement:
 	if (my $coderef = $self->can($parent . "::CData1")) {
 	    $self->$coderef($newvalue);
 	}
-    } 
+    }
+
+If you override C<UNIVERSAL::can> in your own classes, be sure to return the
+reference appropriately.
 
 =head2 Locking the Door and Throwing Away the Key
 

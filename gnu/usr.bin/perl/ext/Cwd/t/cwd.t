@@ -1,28 +1,34 @@
-#!./perl
+#!./perl -w
 
 BEGIN {
-    chdir 't' if -d 't';
     if ($ENV{PERL_CORE}) {
+        chdir 't';
         @INC = '../lib';
     }
 }
 use Cwd;
+chdir 't';
 
-use Config;
 use strict;
-use warnings;
+use Config;
 use File::Spec;
 use File::Path;
 
+use lib File::Spec->catdir('t', 'lib');
 use Test::More;
+require VMS::Filespec if $^O eq 'VMS';
 
-my $tests = 24;
-my $EXTRA_ABSPATH_TESTS = $ENV{PERL_CORE} || $ENV{TEST_PERL_CWD_CODE};
+my $tests = 29;
 # _perl_abs_path() currently only works when the directory separator
 # is '/', so don't test it when it won't work.
-$EXTRA_ABSPATH_TESTS &&= $Config{prefix} =~ m/\//;
-$tests += 3 if $EXTRA_ABSPATH_TESTS;
+my $EXTRA_ABSPATH_TESTS = ($Config{prefix} =~ m/\//) && $^O ne 'cygwin';
+$tests += 4 if $EXTRA_ABSPATH_TESTS;
 plan tests => $tests;
+
+SKIP: {
+  skip "no need to check for blib/ in the core", 1 if $ENV{PERL_CORE};
+  like $INC{'Cwd.pm'}, qr{blib}i, "Cwd should be loaded from blib/ during testing";
+}
 
 my $IsVMS = $^O eq 'VMS';
 my $IsMacOS = $^O eq 'MacOS';
@@ -33,6 +39,13 @@ ok( !defined(&chdir),           'chdir() not exported by default' );
 ok( !defined(&abs_path),        '  nor abs_path()' );
 ok( !defined(&fast_abs_path),   '  nor fast_abs_path()');
 
+{
+  my @fields = qw(PATH IFS CDPATH ENV BASH_ENV);
+  my $before = grep exists $ENV{$_}, @fields;
+  cwd();
+  my $after = grep exists $ENV{$_}, @fields;
+  is($before, $after, "cwd() shouldn't create spurious entries in %ENV");
+}
 
 # XXX force Cwd to bootsrap its XSUBs since we have set @INC = "../lib"
 # XXX and subsequent chdir()s can make them impossible to find
@@ -136,6 +149,15 @@ rmtree($test_dirs[0], 0, 0);
   like($ENV{PWD}, $check);
 }
 
+{
+  # Make sure abs_path() doesn't trample $ENV{PWD}
+  my $start_pwd = $ENV{PWD};
+  mkpath([$Test_Dir], 0, 0777);
+  Cwd::abs_path($Test_Dir);
+  is $ENV{PWD}, $start_pwd;
+  rmtree($test_dirs[0], 0, 0);
+}
+
 SKIP: {
     skip "no symlinks on this platform", 2+$EXTRA_ABSPATH_TESTS unless $Config{d_symlink};
 
@@ -171,6 +193,26 @@ path_ends_with(Cwd::abs_path($path), 'cwd.t', 'abs_path() can be invoked on a fi
 path_ends_with(Cwd::fast_abs_path($path), 'cwd.t', 'fast_abs_path() can be invoked on a file');
 path_ends_with(Cwd::_perl_abs_path($path), 'cwd.t', '_perl_abs_path() can be invoked on a file')
   if $EXTRA_ABSPATH_TESTS;
+
+
+  
+SKIP: {
+  my $file;
+  {
+    my $root = Cwd::abs_path(File::Spec->rootdir);	# Add drive letter?
+    local *FH;
+    opendir FH, $root or skip("Can't opendir($root): $!", 2+$EXTRA_ABSPATH_TESTS);
+    ($file) = grep {-f $_ and not -l $_} map File::Spec->catfile($root, $_), readdir FH;
+    closedir FH;
+  }
+  skip "No plain file in root directory to test with", 2+$EXTRA_ABSPATH_TESTS unless $file;
+  
+  $file = VMS::Filespec::rmsexpand($file) if $^O eq 'VMS';
+  is Cwd::abs_path($file), $file, 'abs_path() works on files in the root directory';
+  is Cwd::fast_abs_path($file), $file, 'fast_abs_path() works on files in the root directory';
+  is Cwd::_perl_abs_path($file), $file, '_perl_abs_path() works on files in the root directory'
+    if $EXTRA_ABSPATH_TESTS;
+}
 
 
 #############################################

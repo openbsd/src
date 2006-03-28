@@ -11,7 +11,7 @@ BEGIN {
 }
 
 use strict;
-use Test::More tests => 10;
+use Test::More tests => 13;
 
 use Test::Builder;
 my $Test = Test::Builder->new;
@@ -47,4 +47,12 @@ SKIP: {
 	ok(defined $r, 'non-regex detected');
 	ok(('f00' =~ m/$r/), '"//" good match');
 	ok(('b4r' !~ m/$r/), '"//" bad match');
+};
+
+
+{
+	my $r = $Test->maybe_regex('m,foo,i');
+	ok(defined $r, 'm,, detected');
+	ok(('fOO' =~ m/$r/), '"//" good match');
+	ok(('bar' !~ m/$r/), '"//" bad match');
 };

@@ -99,8 +99,8 @@ There is no equivalent to C<fgets>; one should use C<sv_gets> instead:
 
     Instead Of:                 	Use:
 
-    t* p = malloc(n)            	New(id, p, n, t)
-    t* p = calloc(n, s)         	Newz(id, p, n, t)
+    t* p = malloc(n)            	Newx(id, p, n, t)
+    t* p = calloc(n, s)         	Newxz(id, p, n, t)
     p = realloc(p, n)           	Renew(p, n, t)
     memcpy(dst, src, n)         	Copy(src, dst, n, t)
     memmove(dst, src, n)        	Move(src, dst, n, t)
@@ -132,7 +132,7 @@ instead of raw C<char *> strings:
 Note also the existence of C<sv_catpvf> and C<sv_vcatpvfn>, combining
 concatenation with formatting.
 
-Sometimes instead of zeroing the allocated heap by using Newz() you
+Sometimes instead of zeroing the allocated heap by using Newxz() you
 should consider "poisoning" the data.  This means writing a bit
 pattern into it that should be illegal as pointers (and floating point
 numbers), and also hopefully surprising enough as integers, so that

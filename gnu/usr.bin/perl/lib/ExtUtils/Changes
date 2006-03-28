@@ -1,3 +1,265 @@
+6.30  Fri May 20 16:05:38 PDT 2005
+    * PL_FILES behavior tweak again to restore old behavior.  Sometimes its 
+      supposed to run before pm_to_blib, sometimes after.
+    - Some tests shipped with 'no_plan' which will break on older 
+      Test::Harness.
+
+6.29  Thu May 19 14:15:21 PDT 2005
+    * The behavior of PL_FILES is restored to its pre-6.26 behavior as several
+      CPAN modules depend on this.  PL programs run via PL_FILES have 
+      INST_LIB and INST_ARCH in their @INC and so can load any just built 
+      modules.
+    - Now honors PERL_CORE environment variable.
+    - Testing to ensure FIRST_MAKEFILE is honored.
+
+6.28  Tue Apr 12 16:17:07 PDT 2005
+    - Fix realclean so it cleans up files installed from ext/ in the core
+    - Fix dir_target() so it doesn't warn should any of the INST_* paths
+      be the same (as with the ext/ modules in the core)
+    - Fix MANIFEST.SKIP so it skips not just _darcs/ but everything inside
+      it and any which happen to be in subdirs.
+    - MM_AIX forgot to import neatvalue() from E::MakeMaker. 
+      (bleadperl@24185)
+    - Fixed a minor C<<>> POD nit (Scott Lanning)
+
+6.27  Mon Apr  4 16:36:14 PDT 2005
+    * Added _darcs to the list of revision control administrative 
+      directories skipped both in libscan and in MANIFEST.SKIP.
+
+6.26_01 Mon Mar 28 21:34:39 PST 2005
+    * PL_FILES was broken in the last release.  The .PL files were not being
+      passed the file they were to generate.
+    * How PL_FILES runs the programs and what it does with the value is 
+      now documented.
+    * The default behavior of PL_FILES is now documented.
+
+6.26  Mon Mar 21 20:36:22 PST 2005
+
+6.25_12 Fri Mar 18 16:15:35 PST 2005
+    - Use the generic dmake search.cpan.org URL in the README so the newest
+      version is found.
+    - Fixed pm_to_blib trouble on VMS introduced in 6.25_10.
+
+6.25_11 Tue Mar 15 02:00:20 PST 2005
+    - Fixed minor parent class dependency loop in ExtUtils::MM_Any.
+    - Fixed a circular dependency on processed PL files introduced as part
+      of RT 6460 in 6.25_02.
+
+6.25_10 Sun Mar 13 16:14:04 PST 2005
+    - pm_to_blib.ts is gone, back to pm_to_blib (except on VMS).  I 
+      couldn't make it work and still retain backwards compatibility.
+      This fixes the recompilation problems that plagued _09 and various
+      previous alpha releases.
+
+6.25_09  Sat Mar 12 10:10:34 PST 2005
+    - Stubbing out PASTHRU on VMS.  $(MMSQUALIFIERS) should do the equivalent
+      and better.
+    - Added test to check for the existence of a compiler so XS tests are
+      now possible.
+
+6.25_08  Tue Feb  8 09:04:36 EST 2005
+    - Fixing xsubpp on VMS.  Had a foo/bar path in it.
+    - Turning XSUBPP into a runable command by the addition of PERLRUN
+      made it unusable as a dependency.  Added XSUBPPRUN for that and left
+      XSUBPP alone.
+    - Removed DESTDIR from PASTHRU as install is not recursive and it can
+      make commands too long on VMS.
+    - Older versions of MMS cannot handle directory targets at all.  Using
+      .exists files everywhere.
+    - Restore missing *.Opt clean on VMS.
+    - Fix .exists files accidentally getting caught in static builds.
+    - Older versions of MMS cannot handle directory targets at all.
+    - Add Interix support (bleadperl@33892)
+    - distsign target changed to distsignature to avoid clash with
+      Module::Install
+
+6.25_07  Fri Dec 31 03:47:20 EST 2004
+    - perllocal on VMS was inserting executables twice.
+    - No longer using $(IGNORE) macro.  Turns out MMS/K was not honoring
+      it.  Using "-$(NOECHO) command" which seems to make everybody happy.
+    - Executables with no extension weren't getting installed on VMS due to 
+      a bug in rename().  Broken sometime in this series of alphas.
+
+6.25_06  Sun Dec 26 17:21:37 EST 2004
+    - Forgot to define BOOTDEP macro.
+    - .exists files are back.  Directories cannot be used directly as 
+      targets as their mod time changes too frequently.
+    * Added INSTALLBASE as an alternative to PREFIX but haven't documented
+      it yet.  I'll do that next release.
+
+6.25_05  Wed Dec 22 07:59:02 EST 2004
+    - One of the 6.25 alphas broke BSD make.  It doesn't like "- @ command".
+      Fixed by adding an $(IGNORE) macro.
+    - 6.25 alphas caused a Makefile to be added to the dist.  Fixed.
+    - The new cd() code needed to be dependent on dmake or nmake for
+      Windows.  Not Win9x vs WinNT/XP.
+
+6.25_04  Tue Dec 21 00:53:06 EST 2004
+    - 6.25_03 was always rebuilding XS modules.
+
+6.25_03  Mon Dec 20 23:04:22 EST 2004
+    - dir_target() is back.  Now each directory to be created has its own 
+      target like before, but no more .exists or blibdirs.ts files.  This
+      ensures that each blib directory is created as necessary and fixes
+      things like SVN's perl bindings.
+
+6.25_02  Mon Dec 20 03:31:49 EST 2004
+    - Set PM_FILTER as late as possible so it can see all the earlier
+      macro definitions.  Necessary for challenged make implementations
+      like nmake.  Should fix Mail::SpamAssassin installs on Win32.
+      [rt.cpan.org 4545]
+    - clean and realclean are now more careful about accidentally deleting
+      directories instead of files.  [rt.cpan.org 6851]
+    - small fix for parallel builds, make sure pm_to_blib has run before
+      we try to use stuff in blib. [rt.cpan.org 6460]
+    - MAKEFILE=foo appears to have been broken for recursive builds and
+      several other things.  I think this was broken by 6.18.
+
+6.25_01  Fri Dec 17 21:29:04 EST 2004
+    * *.bak added to the default MANIFEST.SKIP.
+    * META.yml will no longer be generated in the build directory.  It will
+      only appear in the distdir.  This should make it easier on developers,
+      they don't have to worry about checking the file in all the time.
+    * Similarly, the SIGNATURE file will not be updated in the build 
+      directory.  It will only be generated in the distdir.
+    - A bunch of redundant Win9x and VMS code removed.
+    - 'make test' on Windows no longer pre-expands its list of test files.
+      This caused problems on large distributions like bioperl.  Thanks to
+      Tim Bunce for suggesting the obvious fix.
+
+6.25  Wed Dec 15 06:59:46 EST 2004
+    - Build.PL was being considered like Module_pm.PL.  Build.PL is now 
+      ignored.  [radek@karnet.pl] [rt.cpan.org 8809]
+    - Devel::Cover cover_db/ directory now ignored by MANIFEST.SKIP
+
+6.24_01 Thu Dec  9 00:44:48 EST 2004
+    - Docs encouraged possibly insecure use of /tmp [CAN-2004-0976 via Debian]
+    - Remove empty rpath from .so files [bleadperl@23183]
+    - At long last the core man page title has its apostrophe.
+    - BeOS tests fixed [Ingo Weinhold] [perlbug #32717]
+    - Putting a pm_to_blib target back (alias of pm_to_blib.ts) in case
+      anyone was depending on it being there (mod_perl was).
+
+6.24 Tue Nov 30 15:35:13 EST 2004
+    - dir_target() was accidentally named dir_targets() causing problems
+      installing some Tk modules.
+
+6.23 Fri Nov 26 16:01:50 EST 2004
+    - MM_MacOS lost its $VERSION causing some CPAN indexing problems.  Enough
+      people noticed this to warrant a quick release.
+
+6.22 Tue Nov 23 22:22:22 EST 2004
+    - Minor glitch in Command.t test on Win32 [thanks Steve Hay]
+    * Fixed MANIFEST.SKIP so it avoids all the new *.ts files.
+    - Don't spuriously define pasthru arguments
+
+6.21_03 Sat Apr 3 2004
+    - pm_to_blib and blibdirs stamp files now pm_to_blib.ts and blibdirs.ts
+      everywhere because some filesystems insist you have a dot in the 
+      filename.  This eliminates a bunch of special case code.
+    - Minor potential glitch in the version check logic.
+    - Making Makefile rebuild logic more resistant to inconsequential
+      errors when cleaning up things that are going to be rebuilt anyway.
+    - Adding SCCS to the list of directories in MANIFEST.SKIP.
+    * Fixing blibdirs so it doesn't rebuild every make run.
+    * Using a more conservative MAX_EXEC_LEN for Win98 to allow building
+      large modules like Encode. [Greg Matheson]
+    * test target mangled by dmake.  Doesn't seem to like q{}.
+      [Greg Matheson]
+    - instmodsh now using Archive::Tar to create archives if available.
+      [Slaven Rezic]
+    - instmodsh now using more portable tar flags to create archives.
+      [Slaven Rezic]
+    - Added FAQ entry for "How do I use a module without installing it?"
+      and "How do I keep from installing man pages?" [Joe Cromie]
+    - Fixed finding the default MANIFEST.SKIP if its on a different volume
+      [Ilya Zakharevich]
+    - When building Perl, we had a chance of picking up the old installed
+      xsubpp from @INC [Andreas Koenig]
+    - makeaperl() now a bit more intellegent about ignoring perl libraries
+      not called libperl.  [Ilya Zakharevich bleadperl@22032]
+    * MacOS Classic (MacPerl) is no longer supported.  Please use
+      Module::Build instead.
+    * Restored pm_to_blib.ts so pm_to_blib generation will be quiessent on
+      VMS. [rt 4675]
+    - For simplicity, dir_target() is now a no-op.  Should not effect any
+      existing uses.
+    - Converted utility commands from using $(PERLRUN) to $(ABSPERLRUN).
+      This allows distclean to work with SDBM_File. [rt 5616]
+    - realclean was using "rm -f" instead of "rm -rf" meaning directories
+      wouldn't be properly cleaned.  Caused by bleadperl@7952. [rt 5208]
+    - fixpath() could undo wraplist() on VMS [rt 4955]
+    - ensure ExtUtils::Command::rm_f deletes all versions of a file on VMS
+      [rt 4687]
+    - hint.t generating improperly named hint files on OS's where $^O
+      contains a '.'.  They should be converted to underscores.  Test
+      mistake, not a bug.  [rt 5365]
+    - Fixed ExtUtils::Command::chmod() so it will work on directories on
+      VMS. [rt 4676]
+    - parse_version.t was using no_plan causing trouble on older T::Hs.
+      [rt 5633]
+
+6.21 Tue Nov 11 00:12:56 PST 2003
+    - NetBSD was looking in INSTALLARCHLIB/CORE for libperl instead of 
+      PERL_ARCHLIB/CORE.  Would cause problems if INSTALLARCHLIB was changed
+      (ie. LIB or PREFIX used). [Jochen Eisinger]
+    - Turns out a handful of modules use dir_target().  Restored a version
+      for backwards compatibility.
+    - Moved blibdirs target from top_targets() to its own section.  Lots of
+      modules rewrite top_targets() so blibdirs wouldn't be written.
+
+6.20 Thu Nov  6 02:25:58 PST 2003
+    - Fixing dos2unix on Cygwin.  In-place editing doesn't work 100% so we
+      take a more conservative approach.
+    - Small postamble.t test temp file cleanup fix for Cygwin and Windows.
+    - Small Command.t test fix for 5.5.3.  No real bug [rt 4290]
+    - Small Liblist fix for Cygwin and import libraries [Gerrit P. Haase]
+    - metafile error message slightly mangled.  Bare $! mistake confusing 
+      nmake [rt 4285 4301]
+
+6.19 Mon Nov  3 22:53:56 PST 2003
+    - Removed 00setup_dummy.t and zz_cleanup_dummy.t.  Tests now setup and
+      teardown the dummy modules as needed.
+    - Little test glitch on systems without $Config{usevendorprefix} set
+    - INSTALL(SITE|VENDOR)MAN*DIR now fall back to $(INSTALLMAN*DIR)
+      instead of copying its value.  This lets "perl Makefile.PL 
+      INSTALLMAN1DIR=/some/man/man1" work like expected.
+
+6.18 Mon Nov  3 20:09:51 PST 2003
+    - parse_version() was blowing over $_ (Ilya Zakharevich)
+    - 5.6.2 has the same Cygwin shared lib name fix as 5.7.0. (Gerrit Haase)
+    * When $Config{install(site|vendor)man*dir} aren't set it will now
+      fall back to $Config{installman*dir}.  Similar for 
+      $Config{install(site|vendor)bin}.  This preserves behavior for older
+      Perls.
+    * Eliminated the dependency on perl.h for pure-perl builds.
+    * Eliminated .exists files.  Added blibdirs target using MKPATH instead.
+    - Removed now unused dir_target() method.
+    - Added a little documentation to instmodsh.
+    * Made sure PREFIX always has something in it.  Module authors like to use
+      it when extending MakeMaker.  Currently using one of 
+      PERL/SITE/VENDORPREFIX based on the value of INSTALLDIRS.
+    * Added SIGN to generate module signatures with cpansign (Autrijus Tang)
+    - Slight tweaks to MAKEFILE_OLD and MAKE_APERL_FILE restoring a mistake
+      made around 6.06 to fix static builds on OS/2
+    - Added ExtUtils::Command::dos2unix()
+    * manicopy() would make the copied files read-only if 'cp' was used.
+    * Fixed prereq check for modules which are also keywords like if.pm and
+      open.pm (Autrijus Tang)
+    - Made ExtUtils::Command mv and cp return whether or not they succeeded.
+    * metafile_addtomanifest now mentions what its doing.
+    * metafile will not die if it can't write to META.yml, just emit a 
+      warning.  This lets 'make dist' continue with a read-only META.yml
+    - Small fix to identify UWIN on NT (Randy Sims)
+    * metafile will not touch the META.yml if it does not need to be changed
+      (Thanks to Tim Bunce for this idea)
+    * Fixed 'make uninstall' which looks like its been broken since last
+      November and nobody noticed.
+    - Fixing minor bug in VMS prefixification logic when PREFIX was not set
+      by the user.
+    - Fixing potential bug in prefixification for relative directories
+    * Documented UNINST=1
+
 6.17 Sun Sep 14 20:52:45 PDT 2003
     - Fixing LD so it can be set properly on Win32. (Orton Yves)
     * Fixing the init_PERL() "tack $Config{exe_ext} onto $^X" logic so 

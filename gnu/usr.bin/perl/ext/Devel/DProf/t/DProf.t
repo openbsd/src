@@ -48,7 +48,7 @@ sub profile {
 	my $opt_d = '-d:DProf';
 
 	my $t_start = new Benchmark;
-        open( R, "$perl \"$opt_d\" $test |" ) || warn "$0: Can't run. $!\n";
+	open( R, "$perl -f \"$opt_d\" $test |" ) || warn "$0: Can't run. $!\n";
 	@results = <R>;
 	close R or warn "Could not close: $!";
 	my $t_total = timediff( new Benchmark, $t_start );
@@ -76,7 +76,7 @@ $| = 1;
 print "1..20\n";
 while( @tests ){
 	$test = shift @tests;
-        $test =~ s/\.$// if $^O eq 'VMS';
+	$test =~ s/\.$// if $^O eq 'VMS';
 	if( $test =~ /_t$/i ){
 		print "# $test" . '.' x (20 - length $test);
 		profile $test;

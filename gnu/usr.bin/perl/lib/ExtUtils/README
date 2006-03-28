@@ -6,17 +6,18 @@ If you do not have a make program, several can be found...
 Most Unixen: The make utility which comes with your operating system
 should work fine.  If you don't have one, GNU make is recommended,
 most others (Sun, BSD, etc...) will work fine as well.
+http://www.gnu.org/software/make/make.html                GNU make
 
 Windows: nmake or dmake will work.  GNU make will *not*.
-ftp://ftp.microsoft.com/Softlib/MSLFILES/nmake15.exe
-http://search.cpan.org/author/GSAR/dmake-4.1pl1-win32/
+ftp://ftp.microsoft.com/Softlib/MSLFILES/nmake15.exe      nmake
+http://search.cpan.org/dist/dmake/                        dmake
 
 VMS: MMS or the free MadGoat MaKe utility (MMK) will work.
-http://www.madgoat.com/mmk.html
+http://www.madgoat.com/mmk.html                           MMK
 
 If all else fails there is a pure Perl version of make available on
 CPAN which should work on most Unixen.
-http://search.cpan.org/author/NI-S/Make-1.00/
+http://search.cpan.org/author/NI-S/Make-1.00/             pmake
 
 
 PLEASE NOTE: This distribution does not include the xsubpp or typemap
@@ -48,8 +49,6 @@ prefix with a space in the name.
 
 Using the MMS utility on VMS causes lots of extra newlines.  Unknown
 why this is so, might be a bug in MMS.  Problem not seen with MMK.
-
-MacOS Classic is likely broken.
 
 
 See TODO for details.

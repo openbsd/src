@@ -33,24 +33,22 @@ Here's how it really works.
                     .                       |
         MY (created by ExtUtils::MY)        |
         |                                   |
-    ExtUtils::MY         MM (created by ExtUtils::MM)
-              |          |              |
-              ExtUtils::MM              ExtUtils::MM_{Current OS}
-               |         |                              .
-               |         |                              
-    ExtUtils::Liblist    ExtUtils::MakeMaker            .
-          |                                             
-    ExtUtils::Liblist::Kid                              .
-
-                                                (variable subclass)
-
-                                                        .
-
-    ExtUtils::MM_{NonUnix}. . . . . . . . . . . . . . . .
-            |
-    ExtUtils::MM_Unix . . . . . . . . . . . . . . . . . .
-            |
-    ExtUtils::MM_Any
+        ExtUtils::MY         MM (created by ExtUtils::MM)
+                   |          |
+                   ExtUtils::MM
+                    |     |   |-----------------------
+                    |     |                          |   
+    ExtUtils::Liblist     ExtUtils::MakeMaker        |
+          |                                          |
+    ExtUtils::Liblist::Kid                           |
+                                                     |
+                                                     |
+                                                     |
+                                    ExtUtils::MM_{Current OS} (if necessary)
+                                            |
+                                    ExtUtils::MM_Unix
+                                            |
+                                    ExtUtils::MM_Any
 
 
 NOTE: Yes, this is a mess.  See
@@ -62,15 +60,11 @@ amongst the ExtUtils::MM_* modules based on the current operating
 system.
 
 NOTE: ExtUtils::MM_{Current OS} represents one of the ExtUtils::MM_*
-modules except ExtUtils::MM_Any.
-
-NOTE: ExtUtils::MM_{NonUnix} represents all of the ExtUtils::MM_*
-modules except ExtUtils::MM_Any and ExtUtils::MM_Unix.
+modules except ExtUtils::MM_Any chosen based on your operating system.
 
 NOTE: The main object used by MakeMaker is a PACK### object, *not*
 ExtUtils::MakeMaker.  It is, effectively, a subclass of MY,
-ExtUtils::Makemaker, ExtUtils::Liblist and an ExtUtils::MM_* class
-appropriate for your operating system.
+ExtUtils::Makemaker, ExtUtils::Liblist and ExtUtils::MM_{Current OS}
 
 NOTE: The methods in MY are simply copied into PACK### rather than
 MY being a superclass of PACK###.  I don't remember the rationale.
@@ -86,9 +80,9 @@ The MM_* hierarchy
 
                                MM_Win95   MM_NW5
                                     \      /
-MM_BeOS  MM_Cygwin  MM_OS2  MM_VMS  MM_Win32  MM_DOS  MM_MacOS  MM_UWIN
-      \        |      |         |        /      /       /       /
-       ---------------------------------------------------------
+MM_BeOS  MM_Cygwin  MM_OS2  MM_VMS  MM_Win32  MM_DOS  MM_UWIN
+      \        |      |         |        /      /      /
+       ------------------------------------------------
                            |       |
                         MM_Unix    |
                               |    |

@@ -1,4 +1,4 @@
-Unicode/Collate version 0.33
+Unicode/Collate version 0.52
 ===============================
 
 NAME
@@ -20,21 +20,31 @@ SYNOPSIS
   $result = $Collator->eq($a, $b);  # returns true/false
     (similarly ->ne, ->lt, ->le, ->gt, ->ge)
 
-INSTALLATION
+INSTALL
 
-Perl 5.6.1 or later
-(recommended: Perl 5.8.0 or later)
+Perl 5.6.1 or later is required.
+Perl 5.8.1 or later is recommended.
 
-To use this module, it is recommended to install a table file
-in the UCA format, by copying it into the directory
-where F<Unicode/Collate.pm> is installed;
-e.g. into F<perl/lib/Unicode/Collate/> directory
-if you have F<perl/lib/Unicode/Collate.pm>.
+Though this module can be used without any C<table> file,
+to use this module easily, it is recommended to install a table file
+in the UCA format, by copying it under the directory
+<a place in @INC>/Unicode/Collate.
 
-The most preferable one is "The Default Unicode Collation Element Table",
-available from the Unicode consortium's website:
+You can install such a table file by adding it
+to "Collate" directory (where "keys.txt" is placed) in this distribution
+before executing Makefile.PL.
 
-  http://www.unicode.org/Public/UCA/latest/allkeys.txt (latest version)
+The most preferable one is "The Default Unicode Collation Element Table"
+(aka DUCET), available from the Unicode Consortium's website:
+
+   http://www.unicode.org/Public/UCA/
+
+   http://www.unicode.org/Public/UCA/latest/allkeys.txt (latest version)
+
+If DUCET is not installed, it is recommended to copy the file
+from http://www.unicode.org/Public/UCA/latest/allkeys.txt
+to <a place in @INC>/Unicode/Collate/allkeys.txt
+manually.
 
 Though this distribution contains a subset of allkeys.txt, named "keys.txt",
 this one is intended only for doing a test of this module
@@ -72,14 +82,16 @@ DEPENDENCIES
   The conformant collation requires Unicode::Normalize (v 0.10 or later)
   although Unicode::Collate can be used without Unicode::Normalize.
 
-COPYRIGHT AND LICENCE
+AUTHOR, COPYRIGHT AND LICENSE
 
-SADAHIRO Tomoyuki <SADAHIRO@cpan.org>
+The Unicode::Collate module for perl was written by SADAHIRO Tomoyuki,
+<SADAHIRO@cpan.org>. This module is Copyright(C) 2001-2005,
+SADAHIRO Tomoyuki. Japan. All rights reserved.
 
-  http://homepage1.nifty.com/nomenclator/perl/
+This module is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
 
-  Copyright(C) 2001-2003, SADAHIRO Tomoyuki. Japan. All rights reserved.
-
-  This library is free software; you can redistribute it
-  and/or modify it under the same terms as Perl itself.
-
+The file Unicode/Collate/allkeys.txt was copied directly
+from http://www.unicode.org/Public/UCA/4.1.0/allkeys.txt
+This file is Copyright (c) 1991-2005 Unicode, Inc. All rights reserved.
+Distributed under the Terms of Use in http://www.unicode.org/copyright.html

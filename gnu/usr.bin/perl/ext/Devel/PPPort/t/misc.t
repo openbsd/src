@@ -24,10 +24,10 @@ BEGIN {
   eval "use Test";
   if ($@) {
     require 'testutil.pl';
-    print "1..31\n";
+    print "1..32\n";
   }
   else {
-    plan(tests => 31);
+    plan(tests => 32);
   }
 }
 
@@ -85,4 +85,6 @@ sub my_cv { 1 };
 ok(&Devel::PPPort::get_cv('my_cv', 0));
 ok(!&Devel::PPPort::get_cv('not_my_cv', 0));
 ok(&Devel::PPPort::get_cv('not_my_cv', 1));
+
+ok(Devel::PPPort::dXSTARG(42), 43);
 

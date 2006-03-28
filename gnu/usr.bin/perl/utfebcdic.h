@@ -337,7 +337,7 @@ EXTCONST unsigned char PL_a2e[];
 
 END_EXTERN_C
 
-#define UTF8SKIP(s) PL_utf8skip[*(U8*)s]
+#define UTF8SKIP(s) PL_utf8skip[*(const U8*)s]
 
 /* EBCDIC-happy ways of converting native code to UTF-8 */
 
@@ -363,10 +363,10 @@ END_EXTERN_C
 
 #define isIDFIRST_lazy_if(p,c) ((IN_BYTES || (!c || UTF8_IS_INVARIANT(*p))) \
 				? isIDFIRST(*(p)) \
-				: isIDFIRST_utf8((U8*)p))
+				: isIDFIRST_utf8((const U8*)p))
 #define isALNUM_lazy_if(p,c)   ((IN_BYTES || (!c || UTF8_IS_INVARIANT(*p))) \
 				? isALNUM(*(p)) \
-				: isALNUM_utf8((U8*)p))
+				: isALNUM_utf8((const U8*)p))
 
 /*
   The following table is adapted from tr16, it shows UTF-8-mod encoding of Unicode code points.

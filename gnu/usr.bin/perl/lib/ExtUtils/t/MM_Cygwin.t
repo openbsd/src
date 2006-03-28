@@ -85,7 +85,7 @@ like( $res, qr/pure_all.*foo.*foo.1/s, '... should add MAN3PODS targets' );
 # init_linker
 {
     my $libperl = $Config{libperl} || 'libperl.a';
-    $libperl =~ s/\.a/.dll.a/ if $] >= 5.007;
+    $libperl =~ s/\.a/.dll.a/ if $] >= 5.006002;
     $libperl = "\$(PERL_INC)/$libperl";
 
     my $export  = '';

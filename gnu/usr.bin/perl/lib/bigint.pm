@@ -1,7 +1,7 @@
 package bigint;
 require 5.005;
 
-$VERSION = '0.05';
+$VERSION = '0.07';
 use Exporter;
 @ISA		= qw( Exporter );
 @EXPORT_OK	= qw( ); 
@@ -102,7 +102,7 @@ sub import
   my $self = shift;
 
   # some defaults
-  my $lib = 'Calc';
+  my $lib = '';
 
   my @import = ( ':constant' );				# drive it w/ constant
   my @a = @_; my $l = scalar @_; my $j = 0;
@@ -162,9 +162,10 @@ sub import
       }
     require Math::BigInt if $_lite == 0;	# not already loaded?
     $class = 'Math::BigInt';			# regardless of MBIL or not
-    } 
+    }
+  push @import, 'lib' => $lib if $lib ne '';
   # Math::BigInt::Trace or plain Math::BigInt
-  $class->import(@import, lib => $lib);
+  $class->import(@import);
 
   bigint->accuracy($a) if defined $a;
   bigint->precision($p) if defined $p;
@@ -212,7 +213,7 @@ constants are created as proper BigInts.
 Floating point constants are truncated to integer. All results are also
 truncated.
 
-=head2 OPTIONS
+=head2 Options
 
 bigint recognizes some options that can be passed while loading it via use.
 The options can (currently) be either a single letter form, or the long form.
@@ -257,9 +258,9 @@ line. This will be hopefully fixed soon ;)
 
 This prints out the name and version of all modules used and then exits.
 
-	perl -Mbigint=v -e ''
+	perl -Mbigint=v
 
-=head2 MATH LIBRARY
+=head2 Math Library
 
 Math with the numbers is done (by default) by a module called
 Math::BigInt::Calc. This is equivalent to saying:
@@ -277,7 +278,7 @@ Math::BigInt::Bar, and when this also fails, revert to Math::BigInt::Calc:
 
 Please see respective module documentation for further details.
 
-=head2 INTERNAL FORMAT
+=head2 Internal Format
 
 The numbers are stored as objects, and their internals might change at anytime,
 especially between math operations. The objects also might belong to different
@@ -289,9 +290,9 @@ accessor methods. E.g. looking at $x->{sign} is not a good idea since there
 is no guaranty that the object in question has such a hash key, nor is a hash
 underneath at all.
 
-=head2 SIGN
+=head2 Sign
 
-The sign is either '+', '-', 'NaN', '+inf' or '-inf' and stored seperately.
+The sign is either '+', '-', 'NaN', '+inf' or '-inf'.
 You can access it with the sign() method.
 
 A sign of 'NaN' is used to represent the result when input arguments are not
@@ -299,13 +300,13 @@ numbers or as a result of 0/0. '+inf' and '-inf' represent plus respectively
 minus infinity. You will get '+inf' when dividing a positive number by 0, and
 '-inf' when dividing any negative number by 0.
 
-=head2 METHODS
+=head2 Methods
 
 Since all numbers are now objects, you can use all functions that are part of
 the BigInt API. You can only use the bxxx() notation, and not the fxxx()
 notation, though. 
 
-=head2 CAVEAT
+=head2 Caveat
 
 But a warning is in order. When using the following to make a copy of a number,
 only a shallow copy will be made.
@@ -379,6 +380,6 @@ as L<Math::BigInt::BitVect>, L<Math::BigInt::Pari> and  L<Math::BigInt::GMP>.
 
 =head1 AUTHORS
 
-(C) by Tels L<http://bloodgate.com/> in early 2002, 2003.
+(C) by Tels L<http://bloodgate.com/> in early 2002 - 2005.
 
 =cut

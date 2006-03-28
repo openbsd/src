@@ -1,6 +1,6 @@
 /*    utf8.h
  *
- *    Copyright (C) 2000, 2001, 2002, by Larry Wall and others
+ *    Copyright (C) 2000, 2001, 2002, 2005 by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -42,7 +42,7 @@ EXTCONST unsigned char PL_utf8skip[];
 #endif
 
 END_EXTERN_C
-#define UTF8SKIP(s) PL_utf8skip[*(U8*)s]
+#define UTF8SKIP(s) PL_utf8skip[*(const U8*)s]
 
 /* Native character to iso-8859-1 */
 #define NATIVE_TO_ASCII(ch)      (ch)
@@ -147,10 +147,10 @@ encoded character.
  * (that is, the two high bits are set).  Otherwise we risk loading in the
  * heavy-duty SWASHINIT and SWASHGET routines unnecessarily.
  */
-#define isIDFIRST_lazy_if(p,c) ((IN_BYTES || (!c || (*((U8*)p) < 0xc0))) \
+#define isIDFIRST_lazy_if(p,c) ((IN_BYTES || (!c || (*((const U8*)p) < 0xc0))) \
 				? isIDFIRST(*(p)) \
 				: isIDFIRST_utf8((U8*)p))
-#define isALNUM_lazy_if(p,c)   ((IN_BYTES || (!c || (*((U8*)p) < 0xc0))) \
+#define isALNUM_lazy_if(p,c)   ((IN_BYTES || (!c || (*((const U8*)p) < 0xc0))) \
 				? isALNUM(*(p)) \
 				: isALNUM_utf8((U8*)p))
 
@@ -162,14 +162,26 @@ encoded character.
 #define isIDFIRST_lazy(p)	isIDFIRST_lazy_if(p,1)
 #define isALNUM_lazy(p)		isALNUM_lazy_if(p,1)
 
-/* how wide can a single UTF-8 encoded character become */
-#define UTF8_MAXLEN 13
-/* how wide a character can become when upper/lowercased */
-#define UTF8_MAXLEN_UCLC_MULT 3
-#define UTF8_MAXLEN_UCLC (UTF8_MAXLEN*UTF8_MAXLEN_UCLC_MULT)
-/* how wide a character can become when casefolded */
-#define UTF8_MAXLEN_FOLD_MULT 3
-#define UTF8_MAXLEN_FOLD (UTF8_MAXLEN*UTF8_MAXLEN_FOLD_MULT)
+#define UTF8_MAXBYTES 13
+/* How wide can a single UTF-8 encoded character become in bytes.
+ * NOTE: Strictly speaking Perl's UTF-8 should not be called UTF-8
+ * since UTF-8 is an encoding of Unicode and given Unicode's current
+ * upper limit only four bytes is possible.  Perl thinks of UTF-8
+ * as a way to encode non-negative integers in a binary format. */
+#define UTF8_MAXLEN UTF8_MAXBYTES
+
+#define UTF8_MAXLEN_UCLC 3		/* Obsolete, do not use. */
+#define UTF8_MAXLEN_UCLC_MULT 39	/* Obsolete, do not use. */
+#define UTF8_MAXLEN_FOLD 3		/* Obsolete, do not use. */
+#define UTF8_MAXLEN_FOLD_MULT 39	/* Obsolete, do not use. */
+
+/* The maximum number of UTF-8 bytes a single Unicode character can
+ * uppercase/lowercase/fold into; this number depends on the Unicode
+ * version.  An example of maximal expansion is the U+03B0 which
+ * uppercases to U+03C5 U+0308 U+0301.  The Unicode databases that
+ * tell these things are UnicodeDatabase.txt, CaseFolding.txt, and
+ * SpecialCasing.txt. */
+#define UTF8_MAXBYTES_CASE	6
 
 #define IN_BYTES (PL_curcop->op_private & HINT_BYTES)
 #define DO_UTF8(sv) (SvUTF8(sv) && !IN_BYTES)
@@ -183,8 +195,7 @@ encoded character.
 #define UTF8_ALLOW_FFFF			0x0040 /* Allows also FFFE. */
 #define UTF8_ALLOW_LONG			0x0080
 #define UTF8_ALLOW_ANYUV		(UTF8_ALLOW_EMPTY|UTF8_ALLOW_FE_FF|\
-					 UTF8_ALLOW_SURROGATE|\
-					 UTF8_ALLOW_FFFF|UTF8_ALLOW_LONG)
+					 UTF8_ALLOW_SURROGATE|UTF8_ALLOW_FFFF)
 #define UTF8_ALLOW_ANY			0x00FF
 #define UTF8_CHECK_ONLY			0x0200
 
@@ -246,3 +257,79 @@ encoded character.
 	 toLOWER((input)[1]) == 's')
 #endif
 #define SHARP_S_SKIP 2
+
+#ifdef EBCDIC
+/* IS_UTF8_CHAR() is not ported to EBCDIC */
+#else
+#define IS_UTF8_CHAR_1(p)	\
+	((p)[0] <= 0x7F)
+#define IS_UTF8_CHAR_2(p)	\
+	((p)[0] >= 0xC2 && (p)[0] <= 0xDF && \
+	 (p)[1] >= 0x80 && (p)[1] <= 0xBF)
+#define IS_UTF8_CHAR_3a(p)	\
+	((p)[0] == 0xE0 && \
+	 (p)[1] >= 0xA0 && (p)[1] <= 0xBF && \
+	 (p)[2] >= 0x80 && (p)[2] <= 0xBF)
+#define IS_UTF8_CHAR_3b(p)	\
+	((p)[0] >= 0xE1 && (p)[0] <= 0xEC && \
+	 (p)[1] >= 0x80 && (p)[1] <= 0xBF && \
+	 (p)[2] >= 0x80 && (p)[2] <= 0xBF)
+#define IS_UTF8_CHAR_3c(p)	\
+	((p)[0] == 0xED && \
+	 (p)[1] >= 0x80 && (p)[1] <= 0xBF && \
+	 (p)[2] >= 0x80 && (p)[2] <= 0xBF)
+/* In IS_UTF8_CHAR_3c(p) one could use
+ * (p)[1] >= 0x80 && (p)[1] <= 0x9F
+ * if one wanted to exclude surrogates. */
+#define IS_UTF8_CHAR_3d(p)	\
+	((p)[0] >= 0xEE && (p)[0] <= 0xEF && \
+	 (p)[1] >= 0x80 && (p)[1] <= 0xBF && \
+	 (p)[2] >= 0x80 && (p)[2] <= 0xBF)
+#define IS_UTF8_CHAR_4a(p)	\
+	((p)[0] == 0xF0 && \
+	 (p)[1] >= 0x90 && (p)[1] <= 0xBF && \
+	 (p)[2] >= 0x80 && (p)[2] <= 0xBF && \
+	 (p)[3] >= 0x80 && (p)[3] <= 0xBF)
+#define IS_UTF8_CHAR_4b(p)	\
+	((p)[0] >= 0xF1 && (p)[0] <= 0xF3 && \
+	 (p)[1] >= 0x80 && (p)[1] <= 0xBF && \
+	 (p)[2] >= 0x80 && (p)[2] <= 0xBF && \
+	 (p)[3] >= 0x80 && (p)[3] <= 0xBF)
+/* In IS_UTF8_CHAR_4c(p) one could use
+ * (p)[0] == 0xF4
+ * if one wanted to stop at the Unicode limit U+10FFFF.
+ * The 0xF7 allows us to go to 0x1fffff (0x200000 would
+ * require five bytes).  Not doing any further code points
+ * since that is not needed (and that would not be strict
+ * UTF-8, anyway).  The "slow path" in Perl_is_utf8_char()
+ * will take care of the "extended UTF-8". */
+#define IS_UTF8_CHAR_4c(p)	\
+	((p)[0] == 0xF4 && (p)[0] <= 0xF7 && \
+	 (p)[1] >= 0x80 && (p)[1] <= 0xBF && \
+	 (p)[2] >= 0x80 && (p)[2] <= 0xBF && \
+	 (p)[3] >= 0x80 && (p)[3] <= 0xBF)
+
+#define IS_UTF8_CHAR_3(p)	\
+	(IS_UTF8_CHAR_3a(p) || \
+	 IS_UTF8_CHAR_3b(p) || \
+	 IS_UTF8_CHAR_3c(p) || \
+	 IS_UTF8_CHAR_3d(p))
+#define IS_UTF8_CHAR_4(p)	\
+	(IS_UTF8_CHAR_4a(p) || \
+	 IS_UTF8_CHAR_4b(p) || \
+	 IS_UTF8_CHAR_4c(p))
+
+/* IS_UTF8_CHAR(p) is strictly speaking wrong (not UTF-8) because it
+ * (1) allows UTF-8 encoded UTF-16 surrogates
+ * (2) it allows code points past U+10FFFF.
+ * The Perl_is_utf8_char() full "slow" code will handle the Perl
+ * "extended UTF-8". */
+#define IS_UTF8_CHAR(p, n)	\
+	((n) == 1 ? IS_UTF8_CHAR_1(p) : \
+ 	 (n) == 2 ? IS_UTF8_CHAR_2(p) : \
+	 (n) == 3 ? IS_UTF8_CHAR_3(p) : \
+	 (n) == 4 ? IS_UTF8_CHAR_4(p) : 0)
+
+#define IS_UTF8_CHAR_FAST(n) ((n) <= 4)
+
+#endif /* IS_UTF8_CHAR() for UTF-8 */

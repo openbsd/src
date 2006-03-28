@@ -13,21 +13,17 @@ BEGIN {
     }
 }
 
-
+use strict;
+use vars qw(*CLOSED);
+use Test::More tests => 4;
 use Scalar::Util qw(openhandle);
 
-print "1..4\n";
-
-print "not " unless defined &openhandle;
-print "ok 1\n";
+ok(defined &openhandle, 'defined');
 
 my $fh = \*STDERR;
-print "not " unless openhandle($fh) == $fh;
-print "ok 2\n";
+is(openhandle($fh), $fh, 'STDERR');
 
-print "not " unless fileno(openhandle(*STDERR)) == fileno(STDERR);
-print "ok 3\n";
+is(fileno(openhandle(*STDERR)), fileno(STDERR), 'fileno(STDERR)');
 
-print "not " if openhandle(CLOSED);
-print "ok 4\n";
+is(openhandle(*CLOSED), undef, 'closed');
 

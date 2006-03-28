@@ -9,7 +9,6 @@
 #   _n   : numeraotr (value = _n/_d)
 #   _a   : accuracy
 #   _p   : precision
-#   _f   : flags, used by MBR to flag parts of a rational as untouchable
 # You should not look at the innards of a BigRat - use the methods for this.
 
 package Math::BigRat;
@@ -17,14 +16,13 @@ package Math::BigRat;
 require 5.005_03;
 use strict;
 
-require Exporter;
 use Math::BigFloat;
 use vars qw($VERSION @ISA $upgrade $downgrade
             $accuracy $precision $round_mode $div_scale $_trap_nan $_trap_inf);
 
-@ISA = qw(Exporter Math::BigFloat);
+@ISA = qw(Math::BigFloat);
 
-$VERSION = '0.13';
+$VERSION = '0.15';
 
 use overload;			# inherit overload from Math::BigFloat
 
@@ -37,6 +35,9 @@ BEGIN
   # Math::BigInt::config->('lib'); (there is always only one library loaded)
   *_e_add = \&Math::BigFloat::_e_add;
   *_e_sub = \&Math::BigFloat::_e_sub;
+  *as_int = \&as_number;
+  *is_pos = \&is_positive;
+  *is_neg = \&is_negative;
   }
 
 ##############################################################################
@@ -59,7 +60,6 @@ my $MBI = 'Math::BigInt::Calc';
 
 my $nan = 'NaN';
 my $class = 'Math::BigRat';
-my $IMPORT = 0;
 
 sub isa
   {
@@ -101,12 +101,11 @@ sub new
   # create a Math::BigRat
   my $class = shift;
 
-  my ($n,$d) = shift;
+  my ($n,$d) = @_;
 
   my $self = { }; bless $self,$class;
  
-  # input like (BigInt,BigInt) or (BigFloat,BigFloat) not handled yet
-
+  # input like (BigInt) or (BigFloat):
   if ((!defined $d) && (ref $n) && (!$n->isa('Math::BigRat')))
     {
     if ($n->isa('Math::BigFloat'))
@@ -116,7 +115,7 @@ sub new
     if ($n->isa('Math::BigInt'))
       {
       # TODO: trap NaN, inf
-      $self->{_n} = $MBI->_copy($n->{value});		# "mantissa" = $n
+      $self->{_n} = $MBI->_copy($n->{value});		# "mantissa" = N
       $self->{_d} = $MBI->_one();			# d => 1
       $self->{sign} = $n->{sign};
       }
@@ -124,8 +123,53 @@ sub new
       {
       # TODO: trap NaN, inf
       $self->{sign} = '+'; $self->{sign} = '-' if $$n < 0;
-      $self->{_n} = $MBI->_new(abs($$n));		# "mantissa" = $n
+      $self->{_n} = $MBI->_new(abs($$n));		# "mantissa" = N
       $self->{_d} = $MBI->_one();			# d => 1
+      }
+    return $self->bnorm();				# normalize (120/1 => 12/10)
+    }
+
+  # input like (BigInt,BigInt) or (BigLite,BigLite):
+  if (ref($d) && ref($n))
+    {
+    # do N first (for $self->{sign}):
+    if ($n->isa('Math::BigInt'))
+      {
+      # TODO: trap NaN, inf
+      $self->{_n} = $MBI->_copy($n->{value});		# "mantissa" = N
+      $self->{sign} = $n->{sign};
+      }
+    elsif ($n->isa('Math::BigInt::Lite'))
+      {
+      # TODO: trap NaN, inf
+      $self->{sign} = '+'; $self->{sign} = '-' if $$n < 0;
+      $self->{_n} = $MBI->_new(abs($$n));		# "mantissa" = $n
+      }
+    else
+      {
+      require Carp;
+      Carp::croak(ref($n) . " is not a recognized object format for Math::BigRat->new");
+      }
+    # now D:
+    if ($d->isa('Math::BigInt'))
+      {
+      # TODO: trap NaN, inf
+      $self->{_d} = $MBI->_copy($d->{value});		# "mantissa" = D
+      # +/+ or -/- => +, +/- or -/+ => -
+      $self->{sign} = $d->{sign} ne $self->{sign} ? '-' : '+';
+      }
+    elsif ($d->isa('Math::BigInt::Lite'))
+      {
+      # TODO: trap NaN, inf
+      $self->{_d} = $MBI->_new(abs($$d));		# "mantissa" = D
+      my $ds = '+'; $ds = '-' if $$d < 0;
+      # +/+ or -/- => +, +/- or -/+ => -
+      $self->{sign} = $ds ne $self->{sign} ? '-' : '+';
+      }
+    else
+      {
+      require Carp;
+      Carp::croak(ref($d) . " is not a recognized object format for Math::BigRat->new");
       }
     return $self->bnorm();				# normalize (120/1 => 12/10)
     }
@@ -155,6 +199,7 @@ sub new
       my $nf = Math::BigFloat->new($n,undef,undef);
       $self->{sign} = '+';
       return $self->bnan() if $nf->is_nan();
+
       $self->{_n} = $MBI->_copy( $nf->{_m} );	# get mantissa
 
       # now correct $self->{_n} due to $n
@@ -199,7 +244,7 @@ sub new
 	{
         $d = Math::BigInt->new($d,undef,undef) unless ref $d;
         $n = Math::BigInt->new($n,undef,undef) unless ref $n;
-	
+
         if ($n->{sign} =~ /^[+-]$/ && $d->{sign} =~ /^[+-]$/)
 	  { 
 	  # both parts are ok as integers (wierd things like ' 1e0'
@@ -266,15 +311,12 @@ sub new
 
 sub copy
   {
-  my ($c,$x);
-  if (@_ > 1)
+  # if two arguments, the first one is the class to "swallow" subclasses
+  my ($c,$x) = @_;
+
+  if (scalar @_ == 1)
     {
-    # if two arguments, the first one is the class to "swallow" subclasses
-    ($c,$x) = @_;
-    }
-  else
-    {
-    $x = shift;
+    $x = $_[0];
     $c = ref($x);
     }
   return unless ref($x); # only for objects
@@ -294,7 +336,7 @@ sub copy
 sub config
   {
   # return (later set?) configuration data as hash ref
-  my $class = shift || 'Math::BigFloat';
+  my $class = shift || 'Math::BigRat';
 
   my $cfg = $class->SUPER::config(@_);
 
@@ -324,7 +366,7 @@ sub bstr
 
 sub bsstr
   {
-  my ($self,$x) = ref($_[0]) ? (ref($_[0]),$_[0]) : objectify(1,@_);
+  my ($self,$x) = ref($_[0]) ? (undef,$_[0]) : objectify(1,@_);
 
   if ($x->{sign} !~ /^[+-]$/)		# inf, NaN etc
     {
@@ -339,7 +381,7 @@ sub bsstr
 sub bnorm
   {
   # reduce the number to the shortest form
-  my ($self,$x) = ref($_[0]) ? (ref($_[0]),$_[0]) : objectify(1,@_);
+  my ($self,$x) = ref($_[0]) ? (undef,$_[0]) : objectify(1,@_);
 
   # Both parts must be objects of whatever we are using today.
   # Second check because Calc.pm has ARRAY res as unblessed objects.
@@ -378,6 +420,22 @@ sub bnorm
   }
 
 ##############################################################################
+# sign manipulation
+
+sub bneg
+  {
+  # (BRAT or num_str) return BRAT
+  # negate number or make a negated number from string
+  my ($self,$x) = ref($_[0]) ? (undef,$_[0]) : objectify(1,@_);
+
+  return $x if $x->modify('bneg');
+
+  # for +0 dont negate (to have always normalized +0). Does nothing for 'NaN'
+  $x->{sign} =~ tr/+-/-+/ unless ($x->{sign} eq '+' && $MBI->_is_zero($x->{_n}));
+  $x;
+  }
+
+##############################################################################
 # special values
 
 sub _bnan
@@ -389,6 +447,10 @@ sub _bnan
     {
     require Carp;
     my $class = ref($self);
+    # "$self" below will stringify the object, this blows up if $self is a
+    # partial object (happens under trap_nan), so fix it beforehand
+    $self->{_d} = $MBI->_zero() unless defined $self->{_d};
+    $self->{_n} = $MBI->_zero() unless defined $self->{_n};
     Carp::croak ("Tried to set $self to NaN in $class\::_bnan()");
     }
   $self->{_n} = $MBI->_zero();
@@ -404,6 +466,10 @@ sub _binf
     {
     require Carp;
     my $class = ref($self);
+    # "$self" below will stringify the object, this blows up if $self is a
+    # partial object (happens under trap_nan), so fix it beforehand
+    $self->{_d} = $MBI->_zero() unless defined $self->{_d};
+    $self->{_n} = $MBI->_zero() unless defined $self->{_n};
     Carp::croak ("Tried to set $self to inf in $class\::_binf()");
     }
   $self->{_n} = $MBI->_zero();
@@ -453,21 +519,25 @@ sub badd
   #  4   3                      4*3       12
 
   # we do not compute the gcd() here, but simple do:
-  #  5   7    5*3 + 7*4   41
+  #  5   7    5*3 + 7*4   43
   #  - + -  = --------- = --                 
   #  4   3       4*3      12
  
   # and bnorm() will then take care of the rest
 
+  # 5 * 3
   $x->{_n} = $MBI->_mul( $x->{_n}, $y->{_d});
 
+  # 7 * 4
   my $m = $MBI->_mul( $MBI->_copy( $y->{_n} ), $x->{_d} );
 
+  # 5 * 3 + 7 * 4
   ($x->{_n}, $x->{sign}) = _e_add( $x->{_n}, $m, $x->{sign}, $y->{sign});
 
+  # 4 * 3
   $x->{_d} = $MBI->_mul( $x->{_d}, $y->{_d});
 
-  # normalize and round
+  # normalize result, and possible round
   $x->bnorm()->round(@r);
   }
 
@@ -1195,16 +1265,15 @@ sub bacmp
 sub numify
   {
   # convert 17/8 => float (aka 2.125)
-  my ($self,$x) = ref($_[0]) ? (ref($_[0]),$_[0]) : objectify(1,@_);
+  my ($self,$x) = ref($_[0]) ? (undef,$_[0]) : objectify(1,@_);
  
   return $x->bstr() if $x->{sign} !~ /^[+-]$/;	# inf, NaN, etc
 
   # N/1 => N
-  return $MBI->_num($x->{_n}) if $MBI->_is_one($x->{_d});
+  my $neg = ''; $neg = '-' if $x->{sign} eq '-';
+  return $neg . $MBI->_num($x->{_n}) if $MBI->_is_one($x->{_d});
 
-  # N/D
-  my $neg = 1; $neg = -1 if $x->{sign} ne '+';
-  $neg * $MBI->_num($x->{_n}) / $MBI->_num($x->{_d});	# return sign * N/D
+  $x->_as_float()->numify() + 0.0;
   }
 
 sub as_number
@@ -1239,42 +1308,43 @@ sub as_hex
   $s . $MBI->_as_hex($x->{_n});
   }
 
+##############################################################################
+# import
+
 sub import
   {
   my $self = shift;
   my $l = scalar @_;
   my $lib = ''; my @a;
-  $IMPORT++;
 
   for ( my $i = 0; $i < $l ; $i++)
     {
-#    print "at $_[$i] (",$_[$i+1]||'undef',")\n";
     if ( $_[$i] eq ':constant' )
       {
       # this rest causes overlord er load to step in
-      # print "overload @_\n";
       overload::constant float => sub { $self->new(shift); };
       }
 #    elsif ($_[$i] eq 'upgrade')
 #      {
 #     # this causes upgrading
-#      $upgrade = $_[$i+1];              # or undef to disable
+#      $upgrade = $_[$i+1];		# or undef to disable
 #      $i++;
 #      }
     elsif ($_[$i] eq 'downgrade')
       {
       # this causes downgrading
-      $downgrade = $_[$i+1];            # or undef to disable
+      $downgrade = $_[$i+1];		# or undef to disable
       $i++;
       }
     elsif ($_[$i] eq 'lib')
       {
-      $lib = $_[$i+1] || '';            # default Calc
+      $lib = $_[$i+1] || '';		# default Calc
       $i++;
       }
     elsif ($_[$i] eq 'with')
       {
-      $MBI = $_[$i+1] || 'Math::BigInt';        # default Math::BigInt
+      # this argument is no longer used
+      #$MBI = $_[$i+1] || 'Math::BigInt::Calc';	# default Math::BigInt::Calc
       $i++;
       }
     else
@@ -1282,42 +1352,31 @@ sub import
       push @a, $_[$i];
       }
     }
-  # let use Math::BigInt lib => 'GMP'; use Math::BigRat; still work
-  my $mbilib = eval { Math::BigInt->config()->{lib} };
-  if ((defined $mbilib) && ($MBI eq 'Math::BigInt'))
-    {
-    # MBI already loaded
-    $MBI->import('lib',"$lib,$mbilib", 'objectify');
-    }
-  else
-    {
-    # MBI not loaded, or not with "Math::BigInt"
-    $lib .= ",$mbilib" if defined $mbilib;
+  require Math::BigInt;
 
-    if ($] < 5.006)
-      {
-      # Perl < 5.6.0 dies with "out of memory!" when eval() and ':constant' is
-      # used in the same script, or eval inside import().
-      my @parts = split /::/, $MBI;             # Math::BigInt => Math BigInt
-      my $file = pop @parts; $file .= '.pm';    # BigInt => BigInt.pm
-      $file = File::Spec->catfile (@parts, $file);
-      eval { require $file; $MBI->import( lib => '$lib', 'objectify' ); }
-      }
-    else
-      {
-      my $rc = "use $MBI lib => '$lib', 'objectify';";
-      eval $rc;
-      }
-    }
-  if ($@)
+  # let use Math::BigInt lib => 'GMP'; use Math::BigRat; still have GMP
+  if ($lib ne '')
     {
-    require Carp; Carp::croak ("Couldn't load $MBI: $! $@");
+    my @c = split /\s*,\s*/, $lib;
+    foreach (@c)
+      {
+      $_ =~ tr/a-zA-Z0-9://cd;                    # limit to sane characters
+      }
+    $lib = join(",", @c);
     }
+  my @import = ('objectify');
+  push @import, lib => $lib if $lib ne '';
+
+  # MBI already loaded, so feed it our lib arguments
+  Math::BigInt->import( @import );
 
   $MBI = Math::BigFloat->config()->{lib};
+
+  # register us with MBI to get notified of future lib changes
+  Math::BigInt::_register_callback( $self, sub { $MBI = $_[0]; } );
   
-  # any non :constant stuff is handled by our parent, Exporter
-  # even if @_ is empty, to give it a chance
+  # any non :constant stuff is handled by our parent, Exporter (loaded
+  # by Math::BigFloat, even if @_ is empty, to give it a chance
   $self->SUPER::import(@a);             # for subclasses
   $self->export_to_level(1,$self,@a);   # need this, too
   }
@@ -1328,7 +1387,7 @@ __END__
 
 =head1 NAME
 
-Math::BigRat - arbitrarily big rational numbers
+Math::BigRat - Arbitrary big rational numbers
 
 =head1 SYNOPSIS
 
@@ -1347,7 +1406,7 @@ Math::BigRat - arbitrarily big rational numbers
 =head1 DESCRIPTION
 
 Math::BigRat complements Math::BigInt and Math::BigFloat by providing support
-for arbitrarily big rational numbers.
+for arbitrary big rational numbers.
 
 =head2 MATH LIBRARY
 
@@ -1401,6 +1460,12 @@ Create a new Math::BigRat object. Input can come in various forms:
 	$x = Math::BigRat->new(Math::BigFloat->new('3.1'));	# BigFloat
 	$x = Math::BigRat->new(Math::BigInt::Lite->new('2'));	# BigLite
 
+	# You can also give D and N as different objects:
+	$x = Math::BigRat->new(
+		Math::BigInt->new(-123),
+		Math::BigInt->new(7),
+		);			# => -123/7
+
 =head2 numerator()
 
 	$n = $x->numerator();
@@ -1420,12 +1485,28 @@ Returns a copy of the denominator (the part under the line) as positive BigInt.
 Return a list consisting of (signed) numerator and (unsigned) denominator as
 BigInts.
 
-=head2 as_number()
+=head2 as_int()
 
 	$x = Math::BigRat->new('13/7');
-	print $x->as_number(),"\n";		# '1'
+	print $x->as_int(),"\n";		# '1'
 
-Returns a copy of the object as BigInt trunced it to integer.
+Returns a copy of the object as BigInt, truncated to an integer.
+
+C<as_number()> is an alias for C<as_int()>.
+
+=head2 as_hex()
+
+	$x = Math::BigRat->new('13');
+	print $x->as_hex(),"\n";		# '0xd'
+
+Returns the BigRat as hexadecimal string. Works only for integers. 
+
+=head2 as_bin()
+
+	$x = Math::BigRat->new('13');
+	print $x->as_bin(),"\n";		# '0x1101'
+
+Returns the BigRat as binary string. Works only for integers. 
 
 =head2 bfac()
 
@@ -1467,19 +1548,23 @@ Return true if $x is exactly one, otherwise false.
 
 Return true if $x is exactly zero, otherwise false.
 
-=head2 is_positive()
+=head2 is_pos()
 
 	print "$x is >= 0\n" if $x->is_positive();
 
 Return true if $x is positive (greater than or equal to zero), otherwise
 false. Please note that '+inf' is also positive, while 'NaN' and '-inf' aren't.
 
-=head2 is_negative()
+C<is_positive()> is an alias for C<is_pos()>.
+
+=head2 is_neg()
 
 	print "$x is < 0\n" if $x->is_negative();
 
 Return true if $x is negative (smaller than zero), otherwise false. Please
 note that '-inf' is also negative, while 'NaN' and '+inf' aren't.
+
+C<is_negative()> is an alias for C<is_neg()>.
 
 =head2 is_int()
 
@@ -1598,6 +1683,6 @@ may contain more documentation and examples as well as testcases.
 
 =head1 AUTHORS
 
-(C) by Tels L<http://bloodgate.com/> 2001, 2002, 2003, 2004.
+(C) by Tels L<http://bloodgate.com/> 2001 - 2005.
 
 =cut

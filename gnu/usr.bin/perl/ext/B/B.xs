@@ -101,7 +101,7 @@ START_MY_CXT
 #define specialsv_list		(MY_CXT.x_specialsv_list)
 
 static opclass
-cc_opclass(pTHX_ OP *o)
+cc_opclass(pTHX_ const OP *o)
 {
     if (!o)
 	return OPc_NULL;
@@ -209,7 +209,7 @@ cc_opclass(pTHX_ OP *o)
 }
 
 static char *
-cc_opclassname(pTHX_ OP *o)
+cc_opclassname(pTHX_ const OP *o)
 {
     return opclassnames[cc_opclass(aTHX_ o)];
 }
@@ -246,32 +246,28 @@ static SV *
 cstring(pTHX_ SV *sv, bool perlstyle)
 {
     SV *sstr = newSVpvn("", 0);
-    STRLEN len;
-    char *s;
-    char escbuff[5]; /* to fit backslash, 3 octals + trailing \0 */
 
     if (!SvOK(sv))
 	sv_setpvn(sstr, "0", 1);
-    else if (perlstyle && SvUTF8(sv))
-    {
+    else if (perlstyle && SvUTF8(sv)) {
 	SV *tmpsv = sv_newmortal(); /* Temporary SV to feed sv_uni_display */
-	len = SvCUR(sv);
-	s = sv_uni_display(tmpsv, sv, 8*len, UNI_DISPLAY_QQ);
-	sv_setpv(sstr,"\"");
+	const STRLEN len = SvCUR(sv);
+	const char *s = sv_uni_display(tmpsv, sv, 8*len, UNI_DISPLAY_QQ);
+	sv_setpvn(sstr,"\"",1);
 	while (*s)
 	{
 	    if (*s == '"')
-		sv_catpv(sstr, "\\\"");
+		sv_catpvn(sstr, "\\\"", 2);
 	    else if (*s == '$')
-		sv_catpv(sstr, "\\$");
+		sv_catpvn(sstr, "\\$", 2);
 	    else if (*s == '@')
-		sv_catpv(sstr, "\\@");
+		sv_catpvn(sstr, "\\@", 2);
 	    else if (*s == '\\')
 	    {
 		if (strchr("nrftax\\",*(s+1)))
 		    sv_catpvn(sstr, s++, 2);
 		else
-		    sv_catpv(sstr, "\\\\");
+		    sv_catpvn(sstr, "\\\\", 2);
 	    }
 	    else /* should always be printable */
 		sv_catpvn(sstr, s, 1);
@@ -283,7 +279,8 @@ cstring(pTHX_ SV *sv, bool perlstyle)
     else
     {
 	/* XXX Optimise? */
-	s = SvPV(sv, len);
+	STRLEN len;
+	const char *s = SvPV(sv, len);
 	sv_catpv(sstr, "\"");
 	for (; len; len--, s++)
 	{
@@ -293,8 +290,8 @@ cstring(pTHX_ SV *sv, bool perlstyle)
 	    else if (*s == '\\')
 		sv_catpv(sstr, "\\\\");
             /* trigraphs - bleagh */
-            else if (!perlstyle && *s == '?' && len>=3 && s[1] == '?')
-            {
+            else if (!perlstyle && *s == '?' && len>=3 && s[1] == '?') {
+		char escbuff[5]; /* to fit backslash, 3 octals + trailing \0 */
                 sprintf(escbuff, "\\%03o", '?');
                 sv_catpv(sstr, escbuff);
             }
@@ -325,7 +322,8 @@ cstring(pTHX_ SV *sv, bool perlstyle)
 	    else
 	    {
 		/* Don't want promotion of a signed -1 char in sprintf args */
-		unsigned char c = (unsigned char) *s;
+		char escbuff[5]; /* to fit backslash, 3 octals + trailing \0 */
+		const unsigned char c = (unsigned char) *s;
 		sprintf(escbuff, "\\%03o", c);
 		sv_catpv(sstr, escbuff);
 	    }
@@ -340,13 +338,12 @@ static SV *
 cchar(pTHX_ SV *sv)
 {
     SV *sstr = newSVpvn("'", 1);
-    STRLEN n_a;
-    char *s = SvPV(sv, n_a);
+    const char *s = SvPV_nolen(sv);
 
     if (*s == '\'')
-	sv_catpv(sstr, "\\'");
+	sv_catpvn(sstr, "\\'", 2);
     else if (*s == '\\')
-	sv_catpv(sstr, "\\\\");
+	sv_catpvn(sstr, "\\\\", 2);
 #ifdef EBCDIC
     else if (isPRINT(*s))
 #else
@@ -354,19 +351,19 @@ cchar(pTHX_ SV *sv)
 #endif /* EBCDIC */
 	sv_catpvn(sstr, s, 1);
     else if (*s == '\n')
-	sv_catpv(sstr, "\\n");
+	sv_catpvn(sstr, "\\n", 2);
     else if (*s == '\r')
-	sv_catpv(sstr, "\\r");
+	sv_catpvn(sstr, "\\r", 2);
     else if (*s == '\t')
-	sv_catpv(sstr, "\\t");
+	sv_catpvn(sstr, "\\t", 2);
     else if (*s == '\a')
-	sv_catpv(sstr, "\\a");
+	sv_catpvn(sstr, "\\a", 2);
     else if (*s == '\b')
-	sv_catpv(sstr, "\\b");
+	sv_catpvn(sstr, "\\b", 2);
     else if (*s == '\f')
-	sv_catpv(sstr, "\\f");
+	sv_catpvn(sstr, "\\f", 2);
     else if (*s == '\v')
-	sv_catpv(sstr, "\\v");
+	sv_catpvn(sstr, "\\v", 2);
     else
     {
 	/* no trigraph support */
@@ -376,12 +373,12 @@ cchar(pTHX_ SV *sv)
 	sprintf(escbuff, "\\%03o", c);
 	sv_catpv(sstr, escbuff);
     }
-    sv_catpv(sstr, "'");
+    sv_catpvn(sstr, "'", 1);
     return sstr;
 }
 
-void
-walkoptree(pTHX_ SV *opsv, char *method)
+static void
+walkoptree(pTHX_ SV *opsv, const char *method)
 {
     dSP;
     OP *o, *kid;
@@ -408,15 +405,15 @@ walkoptree(pTHX_ SV *opsv, char *method)
 	    walkoptree(aTHX_ opsv, method);
 	}
     }
-    if (o && (cc_opclass(aTHX_ o) == OPc_PMOP)
+    if (o && (cc_opclass(aTHX_ o) == OPc_PMOP) && o->op_type != OP_PUSHRE
 	    && (kid = cPMOPo->op_pmreplroot))
     {
-	sv_setiv(newSVrv(opsv, opclassnames[OPc_PMOP]), PTR2IV(kid));
+	sv_setiv(newSVrv(opsv, cc_opclassname(aTHX_ kid)), PTR2IV(kid));
 	walkoptree(aTHX_ opsv, method);
     }
 }
 
-SV **
+static SV **
 oplist(pTHX_ OP *o, SV **SP)
 {
     for(; o; o = o->op_next) {
@@ -605,7 +602,7 @@ MODULE = B	PACKAGE = B
 void
 walkoptree(opsv, method)
 	SV *	opsv
-	char *	method
+	const char *	method
     CODE:
 	walkoptree(aTHX_ opsv, method);
 
@@ -637,7 +634,7 @@ svref_2object(sv)
 
 void
 opnumber(name)
-char *	name
+const char *	name
 CODE:
 {
  int i; 
@@ -670,11 +667,10 @@ void
 hash(sv)
 	SV *	sv
     CODE:
-	char *s;
 	STRLEN len;
 	U32 hash = 0;
 	char hexhash[19]; /* must fit "0xffffffffffffffff" plus trailing \0 */
-	s = SvPV(sv, len);
+	const char *s = SvPV(sv, len);
 	PERL_HASH(hash, s, len);
 	sprintf(hexhash, "0x%"UVxf, (UV)hash);
 	ST(0) = sv_2mortal(newSVpv(hexhash, 0));
@@ -724,7 +720,7 @@ threadsv_names()
 #if PERL_VERSION <= 8
 # ifdef USE_5005THREADS
 	int i;
-	STRLEN len = strlen(PL_threadsv_names);
+	const STRLEN len = strlen(PL_threadsv_names);
 
 	EXTEND(sp, len);
 	for (i = 0; i < len; i++)
@@ -1011,8 +1007,8 @@ PVOP_pv(o)
 		(o->op_private & OPpTRANS_COMPLEMENT) &&
 		!(o->op_private & OPpTRANS_DELETE))
 	{
-	    short* tbl = (short*)o->op_pv;
-	    short entries = 257 + tbl[256];
+	    const short* const tbl = (short*)o->op_pv;
+	    const short entries = 257 + tbl[256];
 	    ST(0) = sv_2mortal(newSVpv(o->op_pv, entries * sizeof(short)));
 	}
 	else if (o->op_type == OP_TRANS) {
@@ -1158,7 +1154,7 @@ packiv(sv)
     CODE:
 	if (sizeof(IV) == 8) {
 	    U32 wp[2];
-	    IV iv = SvIVX(sv);
+	    const IV iv = SvIVX(sv);
 	    /*
 	     * The following way of spelling 32 is to stop compilers on
 	     * 32-bit architectures from moaning about the shift count
@@ -1218,8 +1214,16 @@ SvPV(sv)
 	B::PV	sv
     CODE:
         ST(0) = sv_newmortal();
-        if( SvPOK(sv) ) { 
-            sv_setpvn(ST(0), SvPVX(sv), SvCUR(sv));
+        if( SvPOK(sv) ) {
+	    /* FIXME - we need a better way for B to identify PVs that are
+	       in the pads as variable names.  */
+	    if((SvLEN(sv) && SvCUR(sv) >= SvLEN(sv))) {
+		/* It claims to be longer than the space allocated for it -
+		   presuambly it's a variable name in the pad  */
+		sv_setpv(ST(0), SvPV_nolen_const(sv));
+	    } else {
+		sv_setpvn(ST(0), SvPVX_const(sv), SvCUR(sv));
+	    }
             SvFLAGS(ST(0)) |= SvUTF8(sv);
         }
         else {
@@ -1233,7 +1237,7 @@ SvPVBM(sv)
 	B::PV	sv
     CODE:
         ST(0) = sv_newmortal();
-	sv_setpvn(ST(0), SvPVX(sv),
+	sv_setpvn(ST(0), SvPVX_const(sv),
 	    SvCUR(sv) + (SvTYPE(sv) == SVt_PVBM ? 257 : 0));
 
 
@@ -1519,7 +1523,7 @@ IoSUBPROCESS(io)
 bool
 IsSTD(io,name)
 	B::IO	io
-	char*	name
+	const char*	name
     PREINIT:
 	PerlIO* handle = 0;
     CODE:
@@ -1653,7 +1657,7 @@ CvXSUBANY(cv)
 	B::CV	cv
     CODE:
 	ST(0) = CvCONST(cv) ?
-	    make_sv_object(aTHX_ sv_newmortal(),CvXSUBANY(cv).any_ptr) :
+	    make_sv_object(aTHX_ sv_newmortal(),(SV *)CvXSUBANY(cv).any_ptr) :
 	    sv_2mortal(newSViv(CvXSUBANY(cv).any_iv));
 
 MODULE = B    PACKAGE = B::CV

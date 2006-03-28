@@ -38,15 +38,14 @@ home site C<http://www.cs.hut.fi/ssh> which mentions ftp sites from
 which it's available. You only need to build the client parts (ssh
 and ssh-keygen should suffice).
 
-If you're on Windows then you might like to obtain MSYS (Minimal System)
-from:
+If you're on Windows then you might like to obtain Cygwin from:
 
-    http://www.mingw.org/download.shtml
+    http://cygwin.com/
 
-which contains an ssh client.  If you use this outside of the MSYS
-environment then you'll need to ensure the HOME environment variable
-is set to a suitable directory: ssh.exe will want to access files in
-a F<.ssh> sub-directory of %HOME%.
+which contains an ssh client.  (MSYS also contains an ssh client
+but it seems to time-out and disconnect from the server and doesn't
+understand the ServerAliveInterval setting described later that can
+be used to stop Cygwin's ssh client from doing this.)
 
 Alternatively, the "plink" program, part of PuTTY:
 
@@ -104,6 +103,14 @@ level of security than protocol 1.  This is not required for access to
 the Perl repository -- ssh is used for authentication rather than
 encryption (the Perl sources are open anyway) -- but either protocol
 is supported by the server.
+
+B<IMPORTANT NOTE FOR CYGWIN USERS:>  In order to make the private key
+files only readable by you you must include the string "ntea" in the
+"CYGWIN" environment variable in the shell used to run C<chmod(1)>,
+and in the shell used to run the ssh client itself later.  If "CYGWIN"
+doesn't contain "ntea" then it will appear to the ssh client that the
+file permissions are not set correctly, in which case the files will be
+ignored and you won't be able to connect.
 
 =head1 Notifying the Repository Keeper
 
@@ -241,6 +248,21 @@ problems.  The flag can be specified multiple times to increase
 verbosity.  Note that specifying the "-q" flag as well might override
 your request for verbose output, so drop the "-q" flag when trying this.
 
+If you're using the Cygwin ssh client on Windows then you will probably
+find that the connection times out after a short period of inactivity.
+You will have to keep re-entering your passphrase to reconnect, which
+gets annoying after a while.  In order to prevent these time-outs from
+happening place the following two lines in the file F<~/.ssh/config>:
+
+	Host sickle.activestate.com
+	ServerAliveInterval 120
+
+This causes the ssh client to send a message to the server every 120
+seconds to check that the server is still alive.  The client will not
+disconnect unless "ServerAliveCountMax" many of these messages go
+unanswered.  Run C<man ssh_config> for more details.  Note also that
+this option applies to protocol version 2 only.
+
 =head1 Using the Perforce Client
 
 Remember to read the documentation for Perforce. You need
@@ -359,7 +381,7 @@ Here is (part of) the current structure of the repository:
     /----+-----perl                  - Mainline development (bleadperl)
          +-----perlio                - PerlIO Pumpkin's Perl
          +-----vmsperl               - VMS Pumpkin's Perl
-         +-----maint-5.004------perl - Maintainance branches
+         +-----maint-5.004------perl - Maintenance branches
          +-----maint-5.005------perl
          +-----maint-5.6--------perl
          +-----maint-5.8--------perl
@@ -486,6 +508,7 @@ More updates by Jarkko Hietaniemi, E<lt>jhi@iki.fiE<gt>, 28 June 2001.
 
 Perforce clarifications by Randall Gellens, E<lt>rcg@users.sourceforge.netE<gt>, 12 July 2001.
 
-Windows-related updates by Steve Hay E<lt>shay@cpan.orgE<gt>, 23 July 2004.
+Windows-related updates by Steve Hay E<lt>shay@cpan.orgE<gt>, 23 July 2004
+and 08 Aug 2005.
 
 =cut

@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..14\n";
+print "1..15\n";
 
 $SIG{__DIE__} = sub { print ref($_[0]) ? ("ok ",$_[0]->[0]++,"\n") : @_ } ;
 
@@ -60,4 +60,15 @@ print "ok 10\n";
     eval qq/ use strict; \$\x{3b1} /;
     print "not " unless $@ =~ /Global symbol "\$\x{3b1}"/;
     print "ok 14\n";
+}
+
+# [perl #36470] got uninit warning if $@ was undef
+
+{
+    my $ok = 1;
+    local $SIG{__DIE__};
+    local $SIG{__WARN__} = sub { $ok = 0 };
+    eval { undef $@; die };
+    print "not " unless $ok;
+    print "ok 15\n";
 }

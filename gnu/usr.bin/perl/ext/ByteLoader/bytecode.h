@@ -31,7 +31,7 @@ typedef char *pvindex;
 #define BGET_PV(arg)	STMT_START {					\
 	BGET_U32(arg);							\
 	if (arg) {							\
-	    New(666, bstate->bs_pv.xpv_pv, arg, char);			\
+	    Newx(bstate->bs_pv.xpv_pv, arg, char);			\
 	    bl_read(bstate->bs_fdata, bstate->bs_pv.xpv_pv, arg, 1);	\
 	    bstate->bs_pv.xpv_len = arg;				\
 	    bstate->bs_pv.xpv_cur = arg - 1;				\
@@ -63,7 +63,7 @@ typedef char *pvindex;
 #define BGET_op_tr_array(arg) do {			\
 	unsigned short *ary, len;			\
 	BGET_U16(len);					\
-	New(666, ary, len, unsigned short);		\
+	Newx(ary, len, unsigned short);		\
 	BGET_FREAD(ary, sizeof(unsigned short), len);	\
 	arg = (char *) ary;				\
     } while (0)
@@ -126,12 +126,19 @@ typedef char *pvindex;
 #define BSET_mg_namex(mg, arg)			\
 	(mg->mg_ptr = (char*)SvREFCNT_inc((SV*)arg),	\
 	 mg->mg_len = HEf_SVKEY)
+#define BSET_xmg_stash(sv, arg) *(SV**)&(((XPVMG*)SvANY(sv))->xmg_stash) = (arg)
 #define BSET_sv_upgrade(sv, arg)	(void)SvUPGRADE(sv, arg)
+#define BSET_xrv(sv, arg) SvRV_set(sv, arg)
 #define BSET_xpv(sv)	do {	\
 	SvPV_set(sv, bstate->bs_pv.xpv_pv);	\
 	SvCUR_set(sv, bstate->bs_pv.xpv_cur);	\
 	SvLEN_set(sv, bstate->bs_pv.xpv_len);	\
     } while (0)
+#define BSET_xpv_cur(sv, arg) SvCUR_set(sv, arg)
+#define BSET_xpv_len(sv, arg) SvLEN_set(sv, arg)
+#define BSET_xiv(sv, arg) SvIV_set(sv, arg)
+#define BSET_xnv(sv, arg) SvNV_set(sv, arg)
+
 #define BSET_av_extend(sv, arg)	av_extend((AV*)sv, arg)
 
 #define BSET_av_push(sv, arg)	av_push((AV*)sv, arg)
@@ -339,6 +346,8 @@ typedef char *pvindex;
 #define BSET_signal(cv, name)						\
 	mg_set(*hv_store(GvHV(gv_fetchpv("SIG", TRUE, SVt_PVHV)),	\
 		name, strlen(name), cv, 0))
+
+#define BSET_xhv_name(hv, name)	hv_name_set((HV*)hv, name, strlen(name), 0)
 
 /* NOTE: the bytecode header only sanity-checks the bytecode. If a script cares about
  * what version of Perl it's being called under, it should do a 'use 5.006_001' or

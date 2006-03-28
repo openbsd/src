@@ -115,7 +115,7 @@ Pod::LATEX.
 =item B<-M> I<module-name>
 
 This specifies the module that you want to try using for formatting the
-pod.  The class must must at least provide a C<parse_from_file> method.
+pod.  The class must at least provide a C<parse_from_file> method.
 For example: C<perldoc -MPod::Perldoc::ToChecker>.
 
 You can specify several classes to try by joining them with commas

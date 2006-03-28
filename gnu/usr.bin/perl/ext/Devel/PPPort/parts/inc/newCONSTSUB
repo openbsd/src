@@ -1,12 +1,12 @@
 ################################################################################
 ##
-##  $Revision: 1.1.1.1 $
+##  $Revision: 1.1.1.2 $
 ##  $Author: millert $
-##  $Date: 2005/01/15 21:16:46 $
+##  $Date: 2006/03/28 18:47:59 $
 ##
 ################################################################################
 ##
-##  Version 3.x, Copyright (C) 2004, Marcus Holland-Moritz.
+##  Version 3.x, Copyright (C) 2004-2005, Marcus Holland-Moritz.
 ##  Version 2.x, Copyright (C) 2001, Paul Marquess.
 ##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 ##
@@ -96,12 +96,12 @@ call_newCONSTSUB_3()
 
 =tests plan => 3
 
-&Devel::PPPort::call_newCONSTSUB_1(); 
+&Devel::PPPort::call_newCONSTSUB_1();
 ok(&Devel::PPPort::test_value_1(), 1);
 
-&Devel::PPPort::call_newCONSTSUB_2(); 
+&Devel::PPPort::call_newCONSTSUB_2();
 ok(&Devel::PPPort::test_value_2(), 2);
 
-&Devel::PPPort::call_newCONSTSUB_3(); 
+&Devel::PPPort::call_newCONSTSUB_3();
 ok(&Devel::PPPort::test_value_3(), 3);
 

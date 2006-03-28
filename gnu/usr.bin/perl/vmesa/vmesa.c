@@ -121,7 +121,7 @@ do_aspawn(SV* really, SV **mark, SV **sp)
     status = FAIL;
     if (sp > mark)
     {
-       New(401,PL_Argv, sp - mark + 1, char*);
+       Newx(PL_Argv, sp - mark + 1, char*);
        a = PL_Argv;
        while (++mark <= sp)
        {
@@ -260,7 +260,7 @@ do_spawn(char *cmd, int execf)
        }
     }
 
-    New(402,PL_Argv, (s - cmd) / 2 + 2, char*);
+    Newx(PL_Argv, (s - cmd) / 2 + 2, char*);
     PL_Cmd = savepvn(cmd, s-cmd);
     a = PL_Argv;
     for (s = PL_Cmd; *s;)

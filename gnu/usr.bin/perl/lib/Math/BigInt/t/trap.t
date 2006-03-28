@@ -3,14 +3,14 @@
 # test that config ( trap_nan => 1, trap_inf => 1) really works/dies
 
 use strict;
-use Test;
+use Test::More;
 
 BEGIN
   {
   $| = 1;
   chdir 't' if -d 't';
   unshift @INC, '../lib'; # for running manually
-  plan tests => 35;
+  plan tests => 43;
   } 
 
 use Math::BigInt;
@@ -22,42 +22,54 @@ my ($cfg,$x);
 foreach my $class ($mbi, $mbf)
   {
   # can do and defaults are okay?
-  ok ($class->can('config'));
-  ok ($class->config()->{trap_nan}, 0);
-  ok ($class->config()->{trap_inf}, 0);
+  ok ($class->can('config'), 'can config()');
+  is ($class->config()->{trap_nan}, 0, 'trap_nan defaults to 0');
+  is ($class->config()->{trap_inf}, 0, 'trap_inf defaults to 0');
 
   # can set?
-  $cfg = $class->config( trap_nan => 1 ); ok ($cfg->{trap_nan},1);
+  $cfg = $class->config( trap_nan => 1 );
+  is ($cfg->{trap_nan},1, 'trap_nan now true');
 
   # also test that new() still works normally
   eval ("\$x = \$class->new('42'); \$x->bnan();");
-  ok ($@ =~/^Tried to set/, 1);
-  ok ($x,42); 				# after new() never modified
+  like ($@, qr/^Tried to set/, 'died');
+  is ($x,42,'$x after new() never modified');
 
   # can reset?
-  $cfg = $class->config( trap_nan => 0 ); ok ($cfg->{trap_nan},0);
+  $cfg = $class->config( trap_nan => 0 );
+  is ($cfg->{trap_nan}, 0, 'trap_nan disabled');
   
   # can set?
-  $cfg = $class->config( trap_inf => 1 ); ok ($cfg->{trap_inf},1);
+  $cfg = $class->config( trap_inf => 1 );
+  is ($cfg->{trap_inf}, 1, 'trap_inf enabled');
+
   eval ("\$x = \$class->new('4711'); \$x->binf();");
-  ok ($@ =~/^Tried to set/, 1);
-  ok ($x,4711);				# after new() never modified
+  like ($@, qr/^Tried to set/, 'died');
+  is ($x,4711,'$x after new() never modified');
+
+  eval ("\$x = \$class->new('inf');");
+  like ($@, qr/^Tried to set/, 'died');
+  is ($x,4711,'$x after new() never modified');
+  
+  eval ("\$x = \$class->new('-inf');");
+  like ($@, qr/^Tried to set/, 'died');
+  is ($x,4711,'$x after new() never modified');
   
   # +$x/0 => +inf
   eval ("\$x = \$class->new('4711'); \$x->bdiv(0);");
-  ok ($@ =~/^Tried to set/, 1);
-  ok ($x,4711);				# after new() never modified
+  like ($@, qr/^Tried to set/, 'died');
+  is ($x,4711,'$x after new() never modified');
   
   # -$x/0 => -inf
   eval ("\$x = \$class->new('-0815'); \$x->bdiv(0);");
-  ok ($@ =~/^Tried to set/, 1);
-  ok ($x,-815);				# after new() never modified
+  like ($@, qr/^Tried to set/, 'died');
+  is ($x,'-815', '$x after new not modified');
   
   $cfg = $class->config( trap_nan => 1 );
   # 0/0 => NaN
   eval ("\$x = \$class->new('0'); \$x->bdiv(0);");
-  ok ($@ =~/^Tried to set/, 1);
-  ok ($x,0);				# after new() never modified
+  like ($@, qr/^Tried to set/, 'died');
+  is ($x,'0', '$x after new not modified');
   }
 
 ##############################################################################
@@ -65,17 +77,16 @@ foreach my $class ($mbi, $mbf)
 
 $x = Math::BigInt->new(2);
 eval ("\$x = \$mbi->new('0.1');");
-ok ($x,2);				# never modified since it dies
+is ($x,2,'never modified since it dies');
 eval ("\$x = \$mbi->new('0a.1');");
-ok ($x,2);				# never modified since it dies
-
+is ($x,2,'never modified since it dies');
 
 ##############################################################################
 # BigFloat
 
 $x = Math::BigFloat->new(2);
 eval ("\$x = \$mbf->new('0.1a');");
-ok ($x,2);				# never modified since it dies
+is ($x,2,'never modified since it dies');
 
 # all tests done
 

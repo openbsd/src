@@ -36,5 +36,5 @@ use strict;
 $^W = 1;
 
 ok(&Devel::PPPort::SvPVbyte("mhx"), 3);
-ok(&Devel::PPPort::SvPVbyte("mhx"), 3);
+ok(&Devel::PPPort::SvPV_nolen("mhx"), 42);
 

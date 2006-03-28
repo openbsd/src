@@ -19,7 +19,7 @@ use File::stat;
 use File::Spec;
 
 @ISA = qw(Tie::Hash Exporter);
-$VERSION = "1.04";
+$VERSION = "1.05";
 $VERSION = eval $VERSION;
 @EXPORT_OK = qw(DIR_UNLINK);
 
@@ -178,7 +178,7 @@ directory reading routines.
 
 =item new ( [ DIRNAME ] )
 
-C<new> is the constuctor for C<IO::Dir> objects. It accepts one optional
+C<new> is the constructor for C<IO::Dir> objects. It accepts one optional
 argument which,  if given, C<new> will pass to C<open>
 
 =back

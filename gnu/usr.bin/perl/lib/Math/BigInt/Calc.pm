@@ -6,7 +6,7 @@ use strict;
 
 use vars qw/$VERSION/;
 
-$VERSION = '0.43';
+$VERSION = '0.47';
 
 # Package to store unsigned big integers in decimal and do math with them
 
@@ -15,7 +15,7 @@ $VERSION = '0.43';
 # automatically at loading time to be the maximum possible value
 
 # todo:
-# - fully remove funky $# stuff (maybe)
+# - fully remove funky $# stuff in div() (maybe - that code scares me...)
 
 # USE_MUL: due to problems on certain os (os390, posix-bc) "* 1e-5" is used
 # instead of "/ 1e5" at some places, (marked with USE_MUL). Other platforms
@@ -36,8 +36,7 @@ $VERSION = '0.43';
 sub api_version () { 1; }
  
 # constants for easier life
-my $nan = 'NaN';
-my ($MBASE,$BASE,$RBASE,$BASE_LEN,$MAX_VAL,$BASE_LEN_SMALL);
+my ($BASE,$BASE_LEN,$MBASE,$RBASE,$MAX_VAL,$BASE_LEN_SMALL);
 my ($AND_BITS,$XOR_BITS,$OR_BITS);
 my ($AND_MASK,$XOR_MASK,$OR_MASK);
 
@@ -71,7 +70,9 @@ sub _base_len
     $MBASE = int("1e".$BASE_LEN_SMALL);
     $RBASE = abs('1e-'.$BASE_LEN_SMALL);		# see USE_MUL
     $MAX_VAL = $MBASE-1;
-    
+   
+    # avoid redefinitions
+ 
     undef &_mul;
     undef &_div;
 
@@ -93,7 +94,7 @@ sub _base_len
       }
     }
   return $BASE_LEN unless wantarray;
-  return ($BASE_LEN, $AND_BITS, $XOR_BITS, $OR_BITS, $BASE_LEN_SMALL, $MAX_VAL);
+  return ($BASE_LEN, $AND_BITS, $XOR_BITS, $OR_BITS, $BASE_LEN_SMALL, $MAX_VAL, $BASE);
   }
 
 sub _new
@@ -132,13 +133,9 @@ BEGIN
   $e = 7 if $e > 7;		# cap, for VMS, OS/390 and other 64 bit systems
 				# 8 fails inside random testsuite, so take 7
 
-  # determine how many digits fit into an integer and can be safely added 
-  # together plus carry w/o causing an overflow
-
-  use integer;
-
   __PACKAGE__->_base_len($e);	# set and store
 
+  use integer;
   # find out how many bits _and, _or and _xor can take (old default = 16)
   # I don't think anybody has yet 128 bit scalars, so let's play safe.
   local $^W = 0;	# don't warn about 'nonportable number'
@@ -221,11 +218,15 @@ sub _str
   # Convert number from internal base 100000 format to string format.
   # internal format is always normalized (no leading zeros, "-0" => "+0")
   my $ar = $_[1];
+
+  my $l = scalar @$ar;				# number of parts
+  if ($l < 1)					# should not happen
+    {
+    require Carp;
+    Carp::croak("$_[1] has no elements");
+    }
+
   my $ret = "";
-
-  my $l = scalar @$ar;		# number of parts
-  return $nan if $l < 1;	# should not happen
-
   # handle first one different to strip leading zeros from it (there are no
   # leading zero parts in internal representation)
   $l --; $ret .= int($ar->[$l]); $l--;
@@ -572,8 +573,8 @@ sub _div_use_mul
     # now calculate $x / $yorg
     if (length(int($yorg->[-1])) == length(int($x->[-1])))
       {
-      # same length, so make full compare, and if equal, return 1
-      # hm, same lengths, but same contents? So we need to check all parts:
+      # same length, so make full compare
+
       my $a = 0; my $j = scalar @$x - 1;
       # manual way (abort if unequal, good for early ne)
       while ($j >= 0)
@@ -581,25 +582,18 @@ sub _div_use_mul
         last if ($a = $x->[$j] - $yorg->[$j]); $j--;
         }
       # $a contains the result of the compare between X and Y
-      # a < 0: x < y, a == 0 => x == y, a > 0: x > y
+      # a < 0: x < y, a == 0: x == y, a > 0: x > y
       if ($a <= 0)
         {
-        if (wantarray)
-	  {
-          $rem = [ 0 ];			# a = 0 => x == y => rem 1
-          $rem = [@$x] if $a != 0;	# a < 0 => x < y => rem = x
-	  }
-        splice(@$x,1);			# keep single element
-        $x->[0] = 0;			# if $a < 0
-        if ($a == 0)
-          {
-          # $x == $y
-          $x->[0] = 1;
-          }
+        $rem = [ 0 ];                   # a = 0 => x == y => rem 0
+        $rem = [@$x] if $a != 0;        # a < 0 => x < y => rem = x
+        splice(@$x,1);                  # keep single element
+        $x->[0] = 0;                    # if $a < 0
+        $x->[0] = 1 if $a == 0;         # $x == $y
         return ($x,$rem) if wantarray;
         return $x;
         }
-      # $x >= $y, proceed normally
+      # $x >= $y, so proceed normally
       }
     }
 
@@ -766,8 +760,8 @@ sub _div_use_div
 
     if (length(int($yorg->[-1])) == length(int($x->[-1])))
       {
-      # same length, so make full compare, and if equal, return 1
-      # hm, same lengths, but same contents? So we need to check all parts:
+      # same length, so make full compare
+
       my $a = 0; my $j = scalar @$x - 1;
       # manual way (abort if unequal, good for early ne)
       while ($j >= 0)
@@ -775,25 +769,19 @@ sub _div_use_div
         last if ($a = $x->[$j] - $yorg->[$j]); $j--;
         }
       # $a contains the result of the compare between X and Y
-      # a < 0: x < y, a == 0 => x == y, a > 0: x > y
+      # a < 0: x < y, a == 0: x == y, a > 0: x > y
       if ($a <= 0)
         {
-        if (wantarray)
-	  {
-          $rem = [ 0 ];			# a = 0 => x == y => rem 1
-          $rem = [@$x] if $a != 0;	# a < 0 => x < y => rem = x
-	  }
+        $rem = [ 0 ];			# a = 0 => x == y => rem 0
+        $rem = [@$x] if $a != 0;	# a < 0 => x < y => rem = x
         splice(@$x,1);			# keep single element
         $x->[0] = 0;			# if $a < 0
-        if ($a == 0)
-          {
-          # $x == $y
-          $x->[0] = 1;
-          }
-        return ($x,$rem) if wantarray;
+        $x->[0] = 1 if $a == 0; 	# $x == $y
+        return ($x,$rem) if wantarray;	# including remainder?
         return $x;
         }
       # $x >= $y, so proceed normally
+
       }
     }
 
@@ -942,7 +930,7 @@ sub _digit
   
   my $elem = int($n / $BASE_LEN);	# which array element
   my $digit = $n % $BASE_LEN;		# which digit in this element
-  $elem = '0000000'.@$x[$elem];		# get element padded with 0's
+  $elem = '0' x $BASE_LEN . @$x[$elem];	# get element padded with 0's
   substr($elem,-$digit-1,1);
   }
 
@@ -1928,7 +1916,7 @@ sub _gcd
   # greatest common divisor
   my ($c,$x,$y) = @_;
 
-  while (! _is_zero($c,$y))
+  while ( (scalar @$y != 1) || ($y->[0] != 0) )		# while ($y != 0)
     {
     my $t = _copy($c,$y);
     $y = _mod($c, $x, $y);
@@ -2103,8 +2091,8 @@ the same terms as Perl itself.
 Original math code by Mark Biggar, rewritten by Tels L<http://bloodgate.com/>
 in late 2000.
 Seperated from BigInt and shaped API with the help of John Peacock.
-Fixed, sped-up and enhanced by Tels http://bloodgate.com 2001-2003.
-Further streamlining (api_version 1) by Tels 2004.
+
+Fixed, speed-up, streamlined and enhanced by Tels 2001 - 2005.
 
 =head1 SEE ALSO
 

@@ -1,14 +1,102 @@
 # Revision history for Perl extension Encode.
 #
-# $Id: Changes,v 2.8 2004/10/24 13:00:29 dankogai Exp dankogai $
+# $Id: Changes,v 2.12 2005/09/08 14:17:17 dankogai Exp dankogai $
 #
-$Revision: 2.8 $ $Date: 2004/10/24 13:00:29 $
+$Revision: 2.12 $ $Date: 2005/09/08 14:17:17 $
+! Encode.xs Encode.pm t/fallback.t
+  Now accepts coderef for CHECK!
+! ucm/8859-7.ucm
+  Updated to newer version at unicode.org
+  http://rt.cpan.org/NoAuth/Bug.html?id=14222
+! lib/Encode/Supported.pod
+  More POD typo fixed.
+  <42F5E243.80500@gmail.com>
+! encoding.pm
+  More POD typo leftover fixed.
+  Message-Id: <b77c1dce05080615487f95314@mail.gmail.com>
+
+2.11  2005/08/05 10:58:25
+! AUTHORS CHANGES
+  To reflect changes below
+! Encode.pm encoding.pm 
+  lib/Encode/Alias.pm lib/Encode/PerlIO.pod lib/Encode/Supported.pod
+  Typo fixed by Piotr Fusik in Change 25261 & 25266
+  Message-ID: <001401c595bd$dccb5d80$0bd34dd5@piec>
+! Encode.xs
+  Addresses "BUG REPORT: panic in Encode.xs".
+  Message-Id: <42EDDA97.2010608@hyper.to>
++ lib/Encode/MIME/Header/ISO_2022_JP.pm mime_header_iso2022jp.t
+! lib/Encode/MIME/Header.pm lib/Encode/Config.pm
+  Encoding 'MIME-Header-ISO_2022_JP' is introduced by Makamaka
+  Message-Id: <200507311557.j6VFvE2K034605@www231.sakura.ne.jp>
+! Encode/encode.h Encode.pm Encode.xs
+  PerlIO's "encoding(utf-8-strict)" got a problem w/ partial character.
+  Found and addressed by KONNO Hiroharu <hiroharu.konno@bowneglobal.co.jp>
+  See also ext/PerlIO/encoding/encoding.pm   
+  Message-Id: <E1DineE-00068X-TB@yok-gs-workman.asia.bgsinternal.com>
+
+2.10 2005/05/16 18:46:36
+! Encode.pm
+  fixed decode_utf8() accordingly to RT#8872
+  http://rt.cpan.org/NoAuth/Bug.html?id=8872
+! Encode.xs AUTHORS
+  s/SvIVX/SvIV_set/ by Steve Peters.
+  Message-Id: <2297.67.96.185.36.1114626315.squirrel@webmail3.pair.com>
+! AUTHORS
+  GAAS was missing!
+! Encode.pm
+  New Pod section: "UTF-8 vs utf8"; explains utf-8-strict
++ t/utf8strict.t
+  Tests utf-8-strict, accordingly to 
+  UTF-8 decoder capability and stress test" by Markus Kuhn
+  http://smontagu.damowmow.com/utf8test.html
+  Note that malformed and overlong sequences are not test here
+  because perl already does that for you, utf-8-strict or not.
+! Encode.pm Encode/encode.h t/fallback.t
+  Addressed "encode(..., Encode::LEAVE_SRC) does not work".
+  Now FB_(PERLQQ|HTMLCREF|XMLCREF) implies LEAVE_SRC so
+  you can (en|de)code constant strings with these fallbacks.
+  http://rt.cpan.org/NoAuth/Bug.html?id=8736  
+! Encode.pm Encode.xs lib/Encode/Alias.pm t/Aliases.t
+  Make Encode.pm support the real UTF-8, by GAAS
+  Message-Id: <lrfz2mcngd.fsf@caliper.activestate.com>
+  Message-Id: <lr4qizbvvm.fsf@caliper.activestate.com>
+! Encode.pm Encode.xs
+  post-2.09 comment patches from GAAS applied.
+  Message-Id: <lroehacz6q.fsf@caliper.activestate.com>
+  Message-Id: <lrk6rycymu.fsf@caliper.activestate.com>
+
+2.09 2004/12/03 19:16:53 
+! Encode.pm Encode.xs
+  Addressed " :encoding(utf8) broken in perl-5.8.6".
+  Message-Id: <lrllcfeank.fsf_-_@caliper.activestate.com>
+! Encode.pm
+  Addressed "(de|en)code($valid_encoding, undef) does not warn".
+  http://rt.cpan.org/NoAuth/Bug.html?id=8723
+! Encode.pm t/Encode.t
+  Addressed "Can't encode URI".  When a reference is fed to (en|de)code,
+  Encode now stringifies instead of returning undef.
+  http://rt.cpan.org/NoAuth/Bug.html?id=8725
+! Encode.xs t/fallback.t
+  Addressed "FB_HTMLCREF and FB_XMLCREF for the UTF-8 decoder".
+  http://rt.cpan.org/NoAuth/Bug.html?id=8694
+! Encode.pm
+  Addressed "s/digit/number/".
+  http://rt.cpan.org/NoAuth/Bug.html?id=8695
+! Encode.pm
+  Addressed "while (defined(read )) { ... } is an infinite loop".
+  http://rt.cpan.org/NoAuth/Bug.html?id=8696
+! Encode.pm
+  Addressed "What the heck is UCM?".
+  Document fixed so that it no longer contains "UCM-Based Encodings".
+  http://rt.cpan.org/NoAuth/Bug.html?id=8697
+
+2.08 2004/10/24 13:00:29
 ! Encode.xs lib/Encode/Encoding.pm  Unicode/Unicode.{pm,xs}
-  Resolved the issue that was raised by the Encode::utf8 fallbacks vs.
-  PerlIO::encoding issue that was introduced in 2.07.  This is done by
-  making use of ->renew() method that used to be used only by
-  Encode::Unicode.  ->renewed() method was also introduced to fetch
-  the value thereof.
+  Resolved the issue that was raised by 2.07 --  Encode::utf8 fallbacks
+  that was introduce messed up  PerlIO::encoding.
+  * To do so, ->renew() is renewed and ->renewed() was introduced to
+  tell whether the caller is PerlIO or not.
   Message-Id: <94B2EB12-25B7-11D9-9E6A-000A95DBB50A@dan.co.jp>
 
 2.07 2004/10/22 19:35:52

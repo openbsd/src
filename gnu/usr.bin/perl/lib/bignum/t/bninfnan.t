@@ -8,7 +8,7 @@ use strict;
 BEGIN
   {
   $| = 1;
-  my $location = $0; $location =~ s/biinfnan.t//i;
+  my $location = $0; $location =~ s/bninfnan.t//i;
   if ($ENV{PERL_CORE})
     {
     @INC = qw(../lib ../lib/bignum/t); # testing with the core distribution

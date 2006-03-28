@@ -6,7 +6,7 @@ Devel::DProf - a Perl code profiler
 
 =head1 SYNOPSIS
 
-	perl5 -d:DProf test.pl
+	perl -d:DProf test.pl
 
 =head1 DESCRIPTION
 
@@ -21,7 +21,7 @@ To profile a Perl script run the perl interpreter with the B<-d> debugging
 switch.  The profiler uses the debugging hooks.  So to profile script
 F<test.pl> the following command should be used:
 
-	perl5 -d:DProf test.pl
+	perl -d:DProf test.pl
 
 When the script terminates (or when the output buffer is filled) the
 profiler will dump the profile information to a file called
@@ -205,7 +205,7 @@ sub DB {
 
 use XSLoader ();
 
-$Devel::DProf::VERSION = '20030813.00';  # this version not authorized by
+$Devel::DProf::VERSION = '20050603.00';  # this version not authorized by
 				         # Dean Roehrich. See "Changes" file.
 
 XSLoader::load 'Devel::DProf', $Devel::DProf::VERSION;

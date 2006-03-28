@@ -26,10 +26,10 @@ BEGIN
     }
   print "# INC = @INC\n";
 
-  plan tests => 659;
+  plan tests => 686;
   }
 
-use Math::BigRat;
+use Math::BigRat lib => 'Calc';
 
 use vars qw ($class $try $x $y $f @args $ans $ans1 $ans1_str $setup $CL);
 $class = "Math::BigRat";

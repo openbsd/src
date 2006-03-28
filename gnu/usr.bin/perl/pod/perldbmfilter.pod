@@ -6,10 +6,10 @@ perldbmfilter - Perl DBM Filters
 
     $db = tie %hash, 'DBM', ...
 
-    $old_filter = $db->filter_store_key  ( sub { ... } ) ;
-    $old_filter = $db->filter_store_value( sub { ... } ) ;
-    $old_filter = $db->filter_fetch_key  ( sub { ... } ) ;
-    $old_filter = $db->filter_fetch_value( sub { ... } ) ;
+    $old_filter = $db->filter_store_key  ( sub { ... } );
+    $old_filter = $db->filter_store_value( sub { ... } );
+    $old_filter = $db->filter_fetch_key  ( sub { ... } );
+    $old_filter = $db->filter_fetch_value( sub { ... } );
 
 =head1 DESCRIPTION
 
@@ -73,7 +73,7 @@ when Perl writes to DBM databases it doesn't use NULL termination, so
 your Perl application will have to manage NULL termination itself. When
 you write to the database you will have to use something like this:
 
-    $hash{"$key\0"} = "$value\0" ;
+    $hash{"$key\0"} = "$value\0";
 
 Similarly the NULL needs to be taken into account when you are considering
 the length of existing keys/values.
@@ -85,30 +85,30 @@ the database and have them removed when you read from the database. As I'm
 sure you have already guessed, this is a problem that DBM Filters can
 fix very easily.
 
-    use strict ;
-    use warnings ;
-    use SDBM_File ;
-    use Fcntl ;
+    use strict;
+    use warnings;
+    use SDBM_File;
+    use Fcntl;
 
-    my %hash ;
-    my $filename = "filt" ;
-    unlink $filename ;
+    my %hash;
+    my $filename = "filt";
+    unlink $filename;
 
     my $db = tie(%hash, 'SDBM_File', $filename, O_RDWR|O_CREAT, 0640)
-      or die "Cannot open $filename: $!\n" ;
+      or die "Cannot open $filename: $!\n";
 
     # Install DBM Filters
-    $db->filter_fetch_key  ( sub { s/\0$//    } ) ;
-    $db->filter_store_key  ( sub { $_ .= "\0" } ) ;
+    $db->filter_fetch_key  ( sub { s/\0$//    } );
+    $db->filter_store_key  ( sub { $_ .= "\0" } );
     $db->filter_fetch_value( 
-        sub { no warnings 'uninitialized' ;s/\0$// } ) ;
-    $db->filter_store_value( sub { $_ .= "\0" } ) ;
+        sub { no warnings 'uninitialized'; s/\0$// } );
+    $db->filter_store_value( sub { $_ .= "\0" } );
 
-    $hash{"abc"} = "def" ;
-    my $a = $hash{"ABC"} ;
+    $hash{"abc"} = "def";
+    my $a = $hash{"ABC"};
     # ...
-    undef $db ;
-    untie %hash ;
+    undef $db;
+    untie %hash;
 
 The code above uses SDBM_File, but it will work with any of the DBM
 modules.
@@ -124,7 +124,7 @@ Here is another real-life example. By default, whenever Perl writes to
 a DBM database it always writes the key and value as strings. So when
 you use this:
 
-    $hash{12345} = "something" ;
+    $hash{12345} = "something";
 
 the key 12345 will get stored in the DBM database as the 5 byte string
 "12345". If you actually want the key to be stored in the DBM database
@@ -133,23 +133,23 @@ when reading.
 
 Here is a DBM Filter that does it:
 
-    use strict ;
-    use warnings ;
-    use DB_File ;
-    my %hash ;
-    my $filename = "filt" ;
-    unlink $filename ;
+    use strict;
+    use warnings;
+    use DB_File;
+    my %hash;
+    my $filename = "filt";
+    unlink $filename;
 
 
     my $db = tie %hash, 'DB_File', $filename, O_CREAT|O_RDWR, 0666, $DB_HASH 
-      or die "Cannot open $filename: $!\n" ;
+      or die "Cannot open $filename: $!\n";
 
-    $db->filter_fetch_key  ( sub { $_ = unpack("i", $_) } ) ;
-    $db->filter_store_key  ( sub { $_ = pack ("i", $_) } ) ;
-    $hash{123} = "def" ;
+    $db->filter_fetch_key  ( sub { $_ = unpack("i", $_) } );
+    $db->filter_store_key  ( sub { $_ = pack ("i", $_) } );
+    $hash{123} = "def";
     # ...
-    undef $db ;
-    untie %hash ;
+    undef $db;
+    untie %hash;
 
 The code above uses DB_File, but again it will work with any of the
 DBM modules.

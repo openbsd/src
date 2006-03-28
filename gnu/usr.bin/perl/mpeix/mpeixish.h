@@ -138,6 +138,14 @@ extern key_t ftok (char *pathname, char id);
 extern char *gcvt (double value, int ndigit, char *buf);
 extern int isnan (double value);
 extern void srand48(long int seedval);
+extern double drand48(void);
+extern double erand48(unsigned short xsubi[3]);
+extern long jrand48(unsigned short xsubi[3]);
+extern void lcong48(unsigned short param[7]);
+extern long lrand48(void);
+extern long mrand48(void);
+extern long nrand48(unsigned short xsubi[3]);
+extern unsigned short *seed48(unsigned short seed16v[3]);
 
 /* various missing constants -- define 'em */
 
@@ -146,10 +154,40 @@ extern void srand48(long int seedval);
 /* declarations for wrappers in mpeix.c */
 
 #include <time.h>
-#include <sys/time.h>
+#include <sys/wait.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
 
 extern int ftruncate(int fd, long wantsize);
 extern int gettimeofday( struct timeval *tp, struct timezone *tpz );
 extern int truncate(const char *pathname, off_t length);
 
+extern int mpe_read(int filedes, void *buffer, size_t len);
+extern int mpe_write(int filedes, const void *buffer, size_t len);
+extern int mpe_send(int socket, const void *buffer, size_t len, int flags);
+extern int mpe_sendto(int socket, const void *buffer, size_t len,
+       int flags, const struct sockaddr *dest_addr,
+       size_t dest_len);
+extern int mpe_recv(int socket, void *buffer, size_t length, int flags);
+extern int mpe_recvfrom(int socket, void *buffer, size_t length,
+           int flags, struct sockaddr *address,
+           size_t *address_len) ;
+extern int mpe_bind(int socket, const struct sockaddr *address,
+   size_t address_len);
+extern int mpe_getsockname(int socket, struct sockaddr *address,
+  size_t *address_len);
+extern int mpe_getpeername(int socket, struct sockaddr *address, 
+  size_t *address_len);
+
+/* Replacements to fix various socket problems -- see mpeix.c */
 #define fcntl mpe_fcntl
+#define read mpe_read
+#define write mpe_write
+#define send mpe_send
+#define sendto mpe_sendto
+#define recv mpe_recv
+#define recvfrom mpe_recvfrom
+#define bind mpe_bind
+#define getsockname mpe_getsockname
+#define getpeername mpe_getpeername

@@ -6,7 +6,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 99;
+plan tests => 100;
 
 my $Is_EBCDIC = (ord('i') == 0x89 & ord('J') == 0xd1);
 
@@ -295,18 +295,15 @@ is($a, "X");
 # (i-j, r-s, I-J, R-S), [\x89-\x91] [\xc9-\xd1] has to match them,
 # from Karsten Sperling.
 
-# Not working in EBCDIC as of 12674.
 $c = ($a = "\x89\x8a\x8b\x8c\x8d\x8f\x90\x91") =~ tr/\x89-\x91/X/;
 is($c, 8);
 is($a, "XXXXXXXX");
-   
-# Not working in EBCDIC as of 12674.
+
 $c = ($a = "\xc9\xca\xcb\xcc\xcd\xcf\xd0\xd1") =~ tr/\xc9-\xd1/X/;
 is($c, 8);
 is($a, "XXXXXXXX");
 
-
-SKIP: {   
+SKIP: {
     skip "not EBCDIC", 4 unless $Is_EBCDIC;
 
     $c = ($a = "\x89\x8a\x8b\x8c\x8d\x8f\x90\x91") =~ tr/i-j/X/;
@@ -383,3 +380,7 @@ is( scalar keys %foo, 0,   "    doesn't extend the hash");
 $x = \"foo";
 is( $x =~ tr/A/A/, 2, 'non-modifying tr/// on a scalar ref' );
 is( ref $x, 'SCALAR', "    doesn't stringify its argument" );
+
+# rt.perl.org 36622.  Perl didn't like a y/// at end of file.  No trailing
+# newline allowed.
+fresh_perl_is(q[$_ = "foo"; y/A-Z/a-z/], '');

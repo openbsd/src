@@ -43,11 +43,10 @@ sub caller_info {
 # Transform an argument to a function into a string.
 sub format_arg {
   my $arg = shift;
-  if (not defined($arg)) {
-    $arg = 'undef';
-  }
-  elsif (ref($arg)) {
+  if (ref($arg)) {
       $arg = defined($overload::VERSION) ? overload::StrVal($arg) : "$arg";
+  }elsif (not defined($arg)) {
+    $arg = 'undef';
   }
   $arg =~ s/'/\\'/g;
   $arg = str_len_trim($arg, $MaxArgLen);
@@ -56,9 +55,10 @@ sub format_arg {
   $arg = "'$arg'" unless $arg =~ /^-?[\d.]+\z/;
 
   # The following handling of "control chars" is direct from
-  # the original code - I think it is broken on Unicode though.
+  # the original code - it is broken on Unicode though.
   # Suggestions?
-  $arg =~ s/([[:cntrl:]]|[[:^ascii:]])/sprintf("\\x{%x}",ord($1))/eg;
+  utf8::is_utf8($arg)
+    or $arg =~ s/([[:cntrl:]]|[[:^ascii:]])/sprintf("\\x{%x}",ord($1))/eg;
   return $arg;
 }
 

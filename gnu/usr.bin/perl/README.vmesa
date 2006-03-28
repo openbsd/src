@@ -21,7 +21,7 @@ other versions, but that's the one we've tested it on.
 
 If you've downloaded the binary distribution, it needs to be
 installed below /usr/local.  Source code distributions have an
-automated `make install` step that means you do not need to extract
+automated "make install" step that means you do not need to extract
 the source code below /usr/local (though that is where it will be
 installed by default).  You may need to worry about the networking
 configuration files discussed in the last bullet below.
@@ -81,10 +81,10 @@ statements in the preprocessor output (.i) file.
 
 =head2 Testing Anomalies of Perl on VM/ESA
 
-The `make test` step runs a Perl Verification Procedure, usually before
+The "make test" step runs a Perl Verification Procedure, usually before
 installation.  As the 5.6.1 kit was being assembled
 the following "failures" were known to appear on some machines
-during `make test` (mostly due to ASCII vs. EBCDIC conflicts),
+during "make test" (mostly due to ASCII vs. EBCDIC conflicts),
 your results may differ:
 
 [the list of failures being compiled]

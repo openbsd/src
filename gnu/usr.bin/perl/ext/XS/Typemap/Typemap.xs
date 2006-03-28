@@ -48,7 +48,7 @@ static intOpq xst_anintopq;
 /* T_ARRAY - allocate some memory */
 intArray * intArrayPtr( int nelem ) {
     intArray * array;
-    New(0, array, nelem, intArray);
+    Newx(array, nelem, intArray);
     return array;
 }
 

@@ -10,7 +10,7 @@
 package Pod::Checker;
 
 use vars qw($VERSION);
-$VERSION = 1.42;  ## Current version of this package
+$VERSION = 1.43;  ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 use Pod::ParseUtils; ## for hyperlinks and lists
@@ -57,7 +57,7 @@ Curious/ambitious users are welcome to propose additional features they wish
 to see in B<Pod::Checker> and B<podchecker> and verify that the checks are
 consistent with L<perlpod>.
 
-The following checks are currently preformed:
+The following checks are currently performed:
 
 =over 4
 
@@ -204,6 +204,7 @@ These may not necessarily cause trouble, but indicate mediocre style.
 
 The POD file has some C<=item> and/or C<=head> commands that have
 the same text. Potential hyperlinks to such a text cannot be unique then.
+This warning is printed only with warning level greater than one.
 
 =item * line containing nothing but whitespace in paragraph
 
@@ -622,9 +623,11 @@ sub poderror {
         if(!%opts || ($opts{-severity} && $opts{-severity} eq 'ERROR'));
     ++($self->{_NUM_WARNINGS})
         if(!%opts || ($opts{-severity} && $opts{-severity} eq 'WARNING'));
-    my $out_fh = $self->output_handle() || \*STDERR;
-    print $out_fh ($severity, $msg, $line, $file, "\n")
-      if($self->{-warnings} || !%opts || $opts{-severity} ne 'WARNING');
+    unless($self->{-quiet}) {
+      my $out_fh = $self->output_handle() || \*STDERR;
+      print $out_fh ($severity, $msg, $line, $file, "\n")
+        if($self->{-warnings} || !%opts || $opts{-severity} ne 'WARNING');
+    }
 }
 
 ##################################
@@ -786,11 +789,13 @@ sub end_pod {
 
     # check the internal nodes for uniqueness. This pertains to
     # =headX, =item and X<...>
-    foreach(grep($self->{_unique_nodes}->{$_} > 1,
-      keys %{$self->{_unique_nodes}})) {
-        $self->poderror({ -line => '-', -file => $infile,
+    if($self->{-warnings} && $self->{-warnings}>1) {
+      foreach(grep($self->{_unique_nodes}->{$_} > 1,
+        keys %{$self->{_unique_nodes}})) {
+          $self->poderror({ -line => '-', -file => $infile,
             -severity => 'WARNING',
             -msg => "multiple occurrence of link target '$_'"});
+      }
     }
 
     # no POD found here
@@ -1098,7 +1103,7 @@ sub _check_ptree {
         }
         if($nestlist =~ /$cmd/) {
             $self->poderror({ -line => $line, -file => $file,
-                 -severity => 'ERROR', 
+                 -severity => 'WARNING', 
                  -msg => "nested commands $cmd<...$cmd<...>...>"});
             # _TODO_ should we add the contents anyway?
             # expand it anyway, see below

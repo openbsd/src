@@ -26,7 +26,7 @@ BEGIN
     }
   print "# INC = @INC\n"; 
   
-  plan tests => 1924
+  plan tests => 2012
     + 6;	# + our own tests
   }
 
@@ -34,7 +34,7 @@ use Math::BigFloat::Subclass;
 
 use vars qw ($class $try $x $y $f @args $ans $ans1 $ans1_str $setup $CL);
 $class = "Math::BigFloat::Subclass";
-$CL = "Math::BigInt::Calc";
+$CL = Math::BigFloat->config()->{lib}; # "Math::BigInt::Calc"; or FastCalc
 
 require 'bigfltpm.inc';	# perform same tests as bigfltpm
 

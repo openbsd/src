@@ -2,7 +2,7 @@
 # of high enough version.
 BEGIN { 
     if( $] < 5.005 ) {
-        print "1..0\n";
+        print "1..0 # Skipped Test requires qr//\n";
         exit(0);
     }
 }
@@ -22,27 +22,20 @@ BEGIN {
 
 use strict;
 
-require Test::Simple::Catch;
-my($out, $err) = Test::Simple::Catch::caught();
-
 
 # Can't use Test.pm, that's a 5.005 thing.
 package My::Test;
 
-print "1..2\n";
+# This has to be a require or else the END block below runs before
+# Test::Builder's own and the ending diagnostics don't come out right.
+require Test::Builder;
+my $TB = Test::Builder->create;
+$TB->plan(tests => 2);
 
-my $test_num = 1;
-# Utility testing functions.
-sub ok ($;$) {
-    my($test, $name) = @_;
-    my $ok = '';
-    $ok .= "not " unless $test;
-    $ok .= "ok $test_num";
-    $ok .= " - $name" if defined $name;
-    $ok .= "\n";
-    print $ok;
-    $test_num++;
-}
+
+require Test::Simple::Catch;
+my($out, $err) = Test::Simple::Catch::caught();
+local $ENV{HARNESS_ACTIVE} = 0;
 
 
 package main;
@@ -54,20 +47,21 @@ eval q{ like( "foo", qr/that/, 'is foo like that' ); };
 
 
 END {
-    My::Test::ok($$out eq <<OUT, 'failing output');
+    $TB->is_eq($$out, <<OUT, 'failing output');
 1..1
 not ok 1 - is foo like that
 OUT
 
     my $err_re = <<ERR;
-#     Failed test \\(.*\\)
+#   Failed test 'is foo like that'
+#   in .* at line 1\.
 #                   'foo'
 #     doesn't match '\\(\\?-xism:that\\)'
-# Looks like you failed 1 tests of 1\\.
+# Looks like you failed 1 test of 1\\.
 ERR
 
 
-    My::Test::ok($$err =~ /^$err_re$/, 'failing errors');
+    $TB->like($$err, qr/^$err_re$/, 'failing errors');
 
     exit(0);
 }

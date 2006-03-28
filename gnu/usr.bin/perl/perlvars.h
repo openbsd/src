@@ -53,7 +53,7 @@ PERLVAR(Gdollarzero_mutex, perl_mutex)	/* Modifying $0 */
 #endif
 
 /* This is constant on most architectures, a global on OS/2 */
-PERLVARI(Gsh_path,	char *,	SH_PATH)/* full path of shell */
+PERLVARI(Gsh_path,	const char *,	SH_PATH)/* full path of shell */
 
 #ifndef PERL_MICRO
 /* If Perl has to ignore SIGPFE, this is its saved state.
@@ -66,7 +66,7 @@ PERLVAR(Gsigfpe_saved,	Sighandler_t)
 PERLVAR(Gsv_placeholder, SV)
 
 #ifndef PERL_MICRO
-PERLVARI(Gcsighandlerp,	Sighandler_t, &Perl_csighandler)	/* Pointer to C-level sighandler */
+PERLVARI(Gcsighandlerp,	Sighandler_t, Perl_csighandler)	/* Pointer to C-level sighandler */
 #endif
 
 #ifndef PERL_USE_SAFE_PUTENV

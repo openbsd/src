@@ -33,6 +33,6 @@ There is a bug in perl5.6.0 with UV's that are >= 1<<31. This will
 show up as tests 8 and 9 of dualvar.t failing
 
 
-Copyright (c) 1997-2004 Graham Barr <gbarr@pobox.com>. All rights reserved.
+Copyright (c) 1997-2005 Graham Barr <gbarr@pobox.com>. All rights reserved.
 This library is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

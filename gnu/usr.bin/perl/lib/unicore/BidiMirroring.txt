@@ -1,10 +1,18 @@
-# BidiMirroring-4.0.0.txt
+# BidiMirroring-4.1.0.txt
+# Date: 2005-03-17, 15:21:00 PST [KW]
+#
+# Bidi_Mirroring_Glyph Property
 # 
-# This file is an informative supplement to the UnicodeData file. It
-# lists characters that have the mirrored property
+# This file is an informative contributory data file in the
+# Unicode Character Database.
+#
+# Copyright (c) 1991-2005 Unicode, Inc.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
+#
+# This data file lists characters that have the mirrored property
 # where there is another Unicode character that typically has a glyph
 # that is the mirror image of the original character's glyph.
-# The repertoire covered by the file is Unicode 4.0.0.
+# The repertoire covered by the file is Unicode 4.1.0.
 # 
 # The file contains a list of lines with mappings from one code point
 # to another one for character-based mirroring.
@@ -24,7 +32,7 @@
 # at http://www.unicode.org/unicode/reports/tr9/
 # 
 # This file was originally created by Markus Scherer.
-# Extended for Unicode 3.2 and 4.0 by Ken Whistler.
+# Extended for Unicode 3.2, 4.0, and 4.1 by Ken Whistler.
 # 
 # ############################################################
 
@@ -180,6 +188,10 @@
 2773; 2772 # LIGHT RIGHT TORTOISE SHELL BRACKET
 2774; 2775 # MEDIUM LEFT CURLY BRACKET ORNAMENT
 2775; 2774 # MEDIUM RIGHT CURLY BRACKET ORNAMENT
+27C3; 27C4 # OPEN SUBSET
+27C4; 27C3 # OPEN SUPERSET
+27C5; 27C6 # LEFT S-SHAPED BAG DELIMITER
+27C6; 27C5 # RIGHT S-SHAPED BAG DELIMITER
 27D5; 27D6 # LEFT OUTER JOIN
 27D6; 27D5 # RIGHT OUTER JOIN
 27DD; 27DE # LONG RIGHT TACK
@@ -238,7 +250,7 @@
 29FD; 29FC # RIGHT-POINTING CURVED ANGLE BRACKET
 2A2B; 2A2C # MINUS SIGN WITH FALLING DOTS
 2A2C; 2A2B # MINUS SIGN WITH RISING DOTS
-2A2D; 2A2C # PLUS SIGN IN LEFT HALF CIRCLE
+2A2D; 2A2E # PLUS SIGN IN LEFT HALF CIRCLE
 2A2E; 2A2D # PLUS SIGN IN RIGHT HALF CIRCLE
 2A34; 2A35 # MULTIPLICATION SIGN IN LEFT HALF CIRCLE
 2A35; 2A34 # MULTIPLICATION SIGN IN RIGHT HALF CIRCLE
@@ -316,6 +328,16 @@
 2AF8; 2AF7 # TRIPLE NESTED GREATER-THAN
 2AF9; 2AFA # DOUBLE-LINE SLANTED LESS-THAN OR EQUAL TO
 2AFA; 2AF9 # DOUBLE-LINE SLANTED GREATER-THAN OR EQUAL TO
+2E02; 2E03 # LEFT SUBSTITUTION BRACKET
+2E03; 2E02 # RIGHT SUBSTITUTION BRACKET
+2E04; 2E05 # LEFT DOTTED SUBSTITUTION BRACKET
+2E05; 2E04 # RIGHT DOTTED SUBSTITUTION BRACKET
+2E09; 2E0A # LEFT TRANSPOSITION BRACKET
+2E0A; 2E09 # RIGHT TRANSPOSITION BRACKET
+2E0C; 2E0D # LEFT RAISED OMISSION BRACKET
+2E0D; 2E0C # RIGHT RAISED OMISSION BRACKET
+2E1C; 2E1D # LEFT LOW PARAPHRASE BRACKET
+2E1D; 2E1C # RIGHT LOW PARAPHRASE BRACKET
 3008; 3009 # LEFT ANGLE BRACKET
 3009; 3008 # RIGHT ANGLE BRACKET
 300A; 300B # LEFT DOUBLE ANGLE BRACKET
@@ -347,7 +369,9 @@ FF60; FF5F # FULLWIDTH RIGHT WHITE PARENTHESIS
 FF62; FF63 # [BEST FIT] HALFWIDTH LEFT CORNER BRACKET
 FF63; FF62 # [BEST FIT] HALFWIDTH RIGHT CORNER BRACKET
 
-# The following characters have no appropriate mirroring character
+# The following characters have no appropriate mirroring character.
+# For these characters it is up to the rendering system
+#   to provide mirrored glyphs.
 
 # 2140; DOUBLE-STRUCK N-ARY SUMMATION
 # 2201; COMPLEMENT
@@ -410,6 +434,7 @@ FF63; FF62 # [BEST FIT] HALFWIDTH RIGHT CORNER BRACKET
 # 22FF; Z NOTATION BAG MEMBERSHIP
 # 2320; TOP HALF INTEGRAL
 # 2321; BOTTOM HALF INTEGRAL
+# 27C0; THREE DIMENSIONAL ANGLE
 # 27D3; LOWER RIGHT CORNER WITH DOT
 # 27D4; UPPER LEFT CORNER WITH DOT
 # 27DC; LEFT MULTIMAP

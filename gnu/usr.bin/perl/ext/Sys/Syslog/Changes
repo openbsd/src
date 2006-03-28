@@ -1,0 +1,50 @@
+Revision history for Sys-Syslog
+
+0.13    2006.01.11
+        [CODE] Merged blead@26768: If getservbyname fails tell what service 
+        the lookup attempt tried to use.
+        [CODE] Merged blead@26769: suppress Sys::Hostname usage and directly 
+        use INADDR_LOOPBACK.
+        [CODE] Merged blead@26772: $host needs to stay in case the user sets it.
+        [CODE] Merged blead@26773: check that $syslog_path is a socket.
+        [TESTS] RT#16980 (Alan Burlison): Sys::Syslog blows up rather 
+        spectacularly on Solaris. Corrected by previous patches. 
+        [TESTS] Applied Gisle Aas patch for a better handling of error messages,
+        then optimized it. 
+        [TESTS] RT#16974: Failed test in t/podspell. This test is now skipped.
+
+0.12    2006.01.07
+        [CODE] Merged some modifications from bleadperl.
+        [DOC] Added a link to an article about Sys::Syslog.
+        [TESTS] Removed optional dependency on Test::Exception.
+        [TESTS] Improved t/constant.t
+        [TESTS] Rewrote t/constants.t because future versions of 
+        ExtUtils::Constant will prevent the constant() function from 
+        being directly called.
+
+0.11    2005.12.28
+        [BUGFIX] setlogmask() now behaves like its C counterpart.
+        [CODE] Can now export and use the macros. 
+        [CODE] Support for three Exporter tags.
+        [CODE] XSLoader is now optional.
+        [CODE] No longer "use"s Sys::Hostname as it was "require"d where needed.
+        [CODE] RT#16604: Use local timestamp.
+        [DIST] Merged change from blead@26343
+        [DOC] Improved documentation.
+        [TESTS] Added more tests to t/syslog.t in order to increase code coverage.
+
+0.10    2005.12.08
+        [DOC] Improved documentation.
+        [TESTS] Added -T to t/syslog.t
+        [TESTS] Added t/constants.t to check the macros.
+        [TESTS] Added t/distchk.t, t/podspell.t, t/podcover.t, t/portfs.t
+
+0.09    2005.12.06
+        [CODE] Now setlogsock() really croak(), as documented.
+        [DIST] CPANized from blead@26281.
+        [DIST] Modified Makefile.PL so that ExtUtils::Constant is conditionaly 
+        used, with a fallback in the case it's not available.
+        [DIST] Bumped version to 0.09
+        [DOC] Added support and license information.
+        [TESTS] Rewrote and ported t/syslog.t to Test::More
+

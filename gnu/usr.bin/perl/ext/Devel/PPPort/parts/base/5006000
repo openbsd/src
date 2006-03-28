@@ -7,6 +7,7 @@ SvIOK_notUV                    # U
 SvIOK_only_UV                  # U
 SvNV                           # E
 SvNVX                          # E
+SvNV_set                       # E
 SvNVx                          # E
 SvPOK_only_UTF8                # U
 SvPV_nolen                     # E
@@ -108,14 +109,12 @@ gv_autoload4                   # E (Perl_gv_autoload4)
 gv_check                       # E (Perl_gv_check)
 gv_dump                        # E
 gv_efullname                   # E (Perl_gv_efullname)
-gv_efullname3                  # E (Perl_gv_efullname3)
 gv_fetchfile                   # E (Perl_gv_fetchfile)
 gv_fetchmeth                   # E (Perl_gv_fetchmeth)
 gv_fetchmethod                 # E (Perl_gv_fetchmethod)
 gv_fetchmethod_autoload        # E (Perl_gv_fetchmethod_autoload)
 gv_fetchpv                     # E (Perl_gv_fetchpv)
 gv_fullname                    # E (Perl_gv_fullname)
-gv_fullname3                   # E (Perl_gv_fullname3)
 gv_init                        # E (Perl_gv_init)
 gv_stashpv                     # E (Perl_gv_stashpv)
 gv_stashpvn                    # E (Perl_gv_stashpvn)
@@ -265,7 +264,6 @@ newSVrv                        # E (Perl_newSVrv)
 newSVsv                        # E (Perl_newSVsv)
 newSVuv                        # E
 newUNOP                        # E (Perl_newUNOP)
-newWHILEOP                     # E (Perl_newWHILEOP)
 newXS                          # E (Perl_newXS)
 newXSproto                     # E
 new_collate                    # E (perl_new_collate)
@@ -483,6 +481,8 @@ NVTYPE                         # added by devel/scanprov
 PERL_REVISION                  # added by devel/scanprov
 PERL_SUBVERSION                # added by devel/scanprov
 PERL_VERSION                   # added by devel/scanprov
+PL_no_modify                   # added by devel/scanprov
+PL_ppaddr                      # added by devel/scanprov
 PTR2IV                         # added by devel/scanprov
 PTR2NV                         # added by devel/scanprov
 PTR2UV                         # added by devel/scanprov
@@ -498,7 +498,6 @@ dNOOP                          # added by devel/scanprov
 dTHX                           # added by devel/scanprov
 dTHXa                          # added by devel/scanprov
 dTHXoa                         # added by devel/scanprov
+dXSTARG                        # added by devel/scanprov
 pTHX                           # added by devel/scanprov
 pTHX_                          # added by devel/scanprov
-PL_no_modify                   # added by devel/scanprov
-PL_ppaddr                      # added by devel/scanprov

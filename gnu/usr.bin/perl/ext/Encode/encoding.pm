@@ -1,6 +1,6 @@
-# $Id: encoding.pm,v 2.1 2004/10/19 04:55:01 dankogai Exp $
+# $Id: encoding.pm,v 2.2 2005/09/08 14:17:17 dankogai Exp dankogai $
 package encoding;
-our $VERSION = do { my @r = (q$Revision: 2.1 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 2.2 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 use Encode;
 use strict;
@@ -402,7 +402,7 @@ B<use encoding> can appear as many times as you want in a given script.
 The multiple use of this pragma is discouraged.
 
 By the same reason, the use this pragma inside modules is also
-discouraged (though not as strongly discouranged as the case above.  
+discouraged (though not as strongly discouraged as the case above.  
 See below).
 
 If you still have to write a module with this pragma, be very careful

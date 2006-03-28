@@ -94,6 +94,8 @@ h Reference Manual
 
   perlfilter		Perl source filters
 
+  perlglossary		Perl Glossary
+
 h Internals and C Language Interface
 
   perlembed		Perl ways to embed perl in your C or C++ application
@@ -120,7 +122,9 @@ h Miscellaneous
 
   perlhist		Perl history records
 d perldelta		Perl changes since previous version
-D perl586delta		Perl changes in version 5.8.6
+D perl588delta		Perl changes in version 5.8.8
+  perl587delta		Perl changes in version 5.8.7
+  perl586delta		Perl changes in version 5.8.6
   perl585delta		Perl changes in version 5.8.5
   perl584delta		Perl changes in version 5.8.4
   perl583delta		Perl changes in version 5.8.3
@@ -162,12 +166,14 @@ r perlfreebsd		Perl notes for FreeBSD
 r perlhpux		Perl notes for HP-UX
 r perlhurd		Perl notes for Hurd
 r perlirix		Perl notes for Irix
+r perllinux		Perl notes for Linux
 r perlmachten		Perl notes for Power MachTen
 r perlmacos		Perl notes for Mac OS (Classic)
 r perlmacosx		Perl notes for Mac OS X
 r perlmint		Perl notes for MiNT
 r perlmpeix		Perl notes for MPE/iX
 r perlnetware		Perl notes for NetWare
+r perlopenbsd		Perl notes for OpenBSD
 r perlos2		Perl notes for OS/2
 r perlos390		Perl notes for OS/390
 r perlos400		Perl notes for OS/400

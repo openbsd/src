@@ -91,12 +91,16 @@ if ($^O eq 'MacOS') {
 [ "Unix->catdir('','d1','d2','d3')",    '/d1/d2/d3' ],
 [ "Unix->catdir('d1','d2','d3')",       'd1/d2/d3'  ],
 
-[ "Unix->canonpath('')",                                      ''          ],
 [ "Unix->canonpath('///../../..//./././a//b/.././c/././')",   '/a/b/../c' ],
-[ "Unix->canonpath('/.')",                                    '/'         ],
-[ "Unix->canonpath('/./')",                                   '/'         ],
-[ "Unix->canonpath('/a/./')",                                 '/a'        ],
-[ "Unix->canonpath('/a/.')",                                  '/a'        ],
+[ "Unix->canonpath('')",                       ''               ],
+# rt.perl.org 27052
+[ "Unix->canonpath('a/../../b/c')",            'a/../../b/c'    ],
+[ "Unix->canonpath('/.')",                     '/'              ],
+[ "Unix->canonpath('/./')",                    '/'              ],
+[ "Unix->canonpath('/a/./')",                  '/a'             ],
+[ "Unix->canonpath('/a/.')",                   '/a'             ],
+[ "Unix->canonpath('/../../')",                '/'              ],
+[ "Unix->canonpath('/../..')",                 '/'              ],
 
 [  "Unix->abs2rel('/t1/t2/t3','/t1/t2/t3')",          ''                   ],
 [  "Unix->abs2rel('/t1/t2/t4','/t1/t2/t3')",          '../t4'              ],
@@ -118,6 +122,7 @@ if ($^O eq 'MacOS') {
 [ "Unix->rel2abs('/t1','/t1/t2/t3')",            '/t1'             ],
 
 [ "Win32->case_tolerant()",         '1'  ],
+[ "Win32->rootdir()",               '\\'  ],
 
 [ "Win32->splitpath('file')",                            ',,file'                            ],
 [ "Win32->splitpath('\\d1/d2\\d3/')",                    ',\\d1/d2\\d3/,'                    ],
@@ -208,6 +213,8 @@ if ($^O eq 'MacOS') {
 [ "Win32->canonpath('a:')",             'A:'                  ],
 [ "Win32->canonpath('A:f')",            'A:f'                 ],
 [ "Win32->canonpath('A:/')",            'A:\\'                ],
+# rt.perl.org 27052
+[ "Win32->canonpath('a\\..\\..\\b\\c')", '..\\b\\c'           ],
 [ "Win32->canonpath('//a\\b//c')",      '\\\\a\\b\\c'         ],
 [ "Win32->canonpath('/a/..../c')",      '\\a\\....\\c'        ],
 [ "Win32->canonpath('//a/b\\c')",       '\\\\a\\b\\c'         ],
@@ -322,6 +329,7 @@ if ($^O eq 'MacOS') {
 [ "VMS->canonpath('[d1.000000.][000000.][d3.--.000000]file.txt')", 	'[d1.000000]file.txt' ],
 [ "VMS->canonpath('volume:[d1.000000.][000000.][-.-.000000]file.txt')",	'volume:[000000]file.txt' ],
 [ "VMS->canonpath('[d1.000000.][000000.][--.-.000000]file.txt')", 	'[-.000000]file.txt' ],
+[ "VMS->canonpath('[d1.d2.--]file')",                                   '[000000]file'       ],
 
 [ "VMS->splitdir('')",            ''          ],
 [ "VMS->splitdir('[]')",          ''          ],
@@ -607,7 +615,7 @@ plan tests => scalar @tests;
 
     # Some funky stuff to override Cwd::getdcwd() for testing purposes,
     # in the limited scope of the rel2abs() method.
-    if ($Cwd::VERSION gt '2.17') {
+    if ($Cwd::VERSION && $Cwd::VERSION gt '2.17') {  # Avoid a 'used only once' warning
 	local $^W;
 	*rel2abs = sub {
 	    my $self = shift;

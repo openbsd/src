@@ -1,12 +1,12 @@
---- perly.c.orig	Tue Dec 30 14:54:16 2003
-+++ perly.c	Tue Dec 30 14:54:16 2003
+--- perly.c.orig	Thu Apr  7 10:51:31 2005
++++ perly.c	Thu Apr  7 10:54:13 2005
 @@ -1,5 +1,5 @@
  #ifndef lint
 -static char yysccsid[] = "@(#)yaccpar 1.8 (Berkeley) 01/20/91";
 +/* static char yysccsid[] = "@(#)yaccpar 1.8 (Berkeley) 01/20/91"; */
  #endif
  #define YYBYACC 1
- #line 16 "perly.y"
+ #line 25 "perly.y"
 @@ -9,7 +9,7 @@
  #ifdef EBCDIC
  #undef YYDEBUG
@@ -194,7 +194,7 @@
 -short yyss[YYSTACKSIZE];
 -YYSTYPE yyvs[YYSTACKSIZE];
 -#define yystacksize YYSTACKSIZE
- #line 794 "perly.y"
+ #line 804 "perly.y"
   /* PROGRAM */
  
 @@ -1477,7 +1405,7 @@
@@ -371,16 +371,7 @@
                  yystate, yyn, yyrule[yyn]);
  #endif
      yym = yylen[yyn];
-@@ -2474,7 +2456,7 @@
- #line 791 "perly.y"
- { yyval.opval = yyvsp[0].opval; }
- break;
--#line 2478 "y.tab.c"
-+#line 2460 "perly.c"
-     }
-     yyssp -= yym;
-     yystate = *yyssp;
-@@ -2484,7 +2466,7 @@
+@@ -2485,7 +2467,7 @@
      {
  #if YYDEBUG
          if (yydebug)
@@ -389,7 +380,7 @@
   state %d\n", YYFINAL);
  #endif
          yystate = YYFINAL;
-@@ -2499,7 +2481,7 @@
+@@ -2500,7 +2482,7 @@
                  yys = 0;
                  if (yychar <= YYMAXTOKEN) yys = yyname[yychar];
                  if (!yys) yys = "illegal-symbol";
@@ -398,7 +389,7 @@
                          YYFINAL, yychar, yys);
              }
  #endif
-@@ -2514,20 +2496,50 @@
+@@ -2515,20 +2497,50 @@
          yystate = yydgoto[yym];
  #if YYDEBUG
      if (yydebug)

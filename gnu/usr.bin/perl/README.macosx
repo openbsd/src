@@ -13,14 +13,14 @@ This document briefly describes perl under Mac OS X.
 
 =head1 DESCRIPTION
 
-The latest Perl (5.8.1-RC3 as of this writing) builds without changes
-under Mac OS X. Under the 10.3 "Panther" release, all self-tests pass,
-and all standard features are supported.
+The latest Perl release (5.8.8 as of this writing) builds without changes
+under Mac OS X. Under 10.3 "Panther" and newer OS versions, all self-tests
+pass, and all standard features are supported.
 
-Earlier Mac OS X releases did not include a completely thread-safe libc,
-so threading is not fully supported. Also, earlier releases included a
-somewhat buggy libdb, so some of the DB_File tests are known to fail on
-those releases.
+Earlier Mac OS X releases (10.2 "Jaguar" and older) did not include a
+completely thread-safe libc, so threading is not fully supported. Also,
+earlier releases included a buggy libdb, so some of the DB_File tests
+are known to fail on those releases.
 
 
 =head2 Installation Prefix
@@ -38,6 +38,43 @@ that mirrors that of Apple's default Perl, with core modules stored in
 on a file server and used by many Macs.
 
 
+=head2 SDK support
+
+First, export the path to the SDK into the build environment:
+
+    export SDK=/Developer/SDKs/MacOSX10.3.9.sdk
+
+Use an SDK by exporting some additions to Perl's 'ccflags' and '..flags'
+config variables:
+
+    ./Configure -Accflags="-nostdinc -B$SDK/usr/include/gcc \
+                           -B$SDK/usr/lib/gcc -isystem$SDK/usr/include \
+                           -F$SDK/System/Library/Frameworks" \
+                -Aldflags="-Wl,-syslibroot,$SDK" \
+                -de
+
+=head2 Universal Binary support
+
+To compile perl as a universal binary (built for both ppc and intel), export
+the SDK variable as above, selecting the 10.4u SDK:
+
+    export SDK=/Developer/SDKs/MacOSX10.4u.sdk
+
+In addition to the compiler flags used to select the SDK, also add the flags
+for creating a universal binary:
+
+    ./Configure -Accflags="-arch i686 -arch ppc -nostdinc -B$SDK/usr/include/gcc \
+                           -B$SDK/usr/lib/gcc -isystem$SDK/usr/include \
+                           -F$SDK/System/Library/Frameworks" \
+                -Aldflags="-arch i686 -arch ppc -Wl,-syslibroot,$SDK" \
+                -de
+
+Keep in mind that these compiler and linker settings will also be used when
+building CPAN modules. For XS modules to be compiled as a universal binary, any
+libraries it links to must also be universal binaries. The system libraries that
+Apple includes with the 10.4u SDK are all universal, but user-installed libraries
+may need to be re-installed as universal binaries.
+
 =head2 libperl and Prebinding
 
 Mac OS X ships with a dynamically-loaded libperl, but the default for
@@ -51,38 +88,30 @@ need to go to a great deal of effort to obtain the information needed
 for pre-binding.
 
 You can override the default and build a shared libperl if you wish
-(S<Configure ... -Duseshrlib>), but the load time will be
-significantly greater than either the static library, or Apple's
+(S<Configure ... -Duseshrlib>), but the load time on pre-10.4 OS
+releases will be greater than either the static library, or Apple's
 pre-bound dynamic library.
 
+With 10.4 "Tiger" and newer, Apple has all but eliminated the performance
+penalty for non-prebound libraries.
 
-=head2 Updating Panther
 
-As of this writing, the latest Perl release that has been tested and
-approved for inclusion in the 10.3 "Panther" release of Mac OS X is
-5.8.1 RC3. It is currently unknown whether the final 5.8.1 release will
-be made in time to be tested and included with Panther.
+=head2 Updating Apple's Perl
 
-If the final release of Perl 5.8.1 is not made in time to be included
-with Panther, it is recommended that you wait for an official Apple
-update to the OS, rather than attempting to update it yourself. In most
-cases, if you need a newer Perl, it is preferable to install it in some
-other location, such as /usr/local or /opt, rather than overwriting the
-system Perl.  The default location (no -Dprefix=... specified when running
-Configure) is /usr/local.
+In a word - don't, at least without a *very* good reason. Your scripts
+can just as easily begin with "#!/usr/local/bin/perl" as with
+"#!/usr/bin/perl". Scripts supplied by Apple and other third parties as
+part of installation packages and such have generally only been tested
+with the /usr/bin/perl that's installed by Apple.
 
-If you find that you do need to update the system Perl, there is one
-potential issue. If you upgrade using the default static libperl, you
-will find that the dynamic libperl supplied by Apple will not be
-deleted. If both libraries are present when an application that links
-against libperl is built, ld will link against the dynamic library by
-default. So, if you need to replace Apple's dynamic libperl with a
-static libperl, you need to be sure to delete the older dynamic library
-after you've installed the update.
-
-Note that this is only an issue when updating from an older build of the
-same Perl version. If you're updating from (for example) 5.8.1 to 5.8.2,
-this issue won't affect you.
+If you find that you do need to update the system Perl, one issue worth
+keeping in mind is the question of static vs. dynamic libraries. If you
+upgrade using the default static libperl, you will find that the dynamic
+libperl supplied by Apple will not be deleted. If both libraries are
+present when an application that links against libperl is built, ld will
+link against the dynamic library by default. So, if you need to replace
+Apple's dynamic libperl with a static libperl, you need to be sure to
+delete the older dynamic library after you've installed the update.
 
 
 =head2 Known problems
@@ -111,6 +140,11 @@ applications like Tk: in that case consider building shared Perl
 but remember that there's a startup cost to pay in that case (see above
 "libperl and Prebinding").
 
+Starting with Tiger (Mac OS X 10.4), Apple shipped broken locale files for
+the eu_ES locale (Basque-Spain).  In previous releases of Perl, this resulted in
+failures in the C<lib/locale> test. These failures have been supressed
+in the current release of Perl by making the test ignore the broken locale.
+If you need to use the eu_ES locale, you should contact Apple support.
 
 =head2 MacPerl
 
@@ -175,20 +209,25 @@ You can find them for example by
 
     # find /System/Library/Perl /Library/Perl -name '*.bundle' -print
 
-After this you can either copy Perl from your operating system CDs
+After this you can either copy Perl from your operating system media
 (you will need at least the /System/Library/Perl and /usr/bin/perl),
 or rebuild Perl from the source code with C<Configure -Dprefix=/usr
 -Dusershrplib> NOTE: the C<-Dprefix=/usr> to replace the system Perl
 works much better with Perl 5.8.1 and later, in Perl 5.8.0 the
 settings were not quite right.
 
+"Pacifist" from CharlesSoft (L<http://www.charlessoft.com/>) is a nice
+way to extract the Perl binaries from the OS media, without having to
+reinstall the entire OS.
+
 
 =head1 AUTHOR
 
-This README was written by Sherm Pendley E<lt>sherm@dot-app.orgE<gt>.
+This README was written by Sherm Pendley E<lt>sherm@dot-app.orgE<gt>,
+and subsequently updated by Dominic Dunlop E<lt>domo@computer.orgE<gt>.
 The "Starting From Scratch" recipe was contributed by John Montbriand
 E<lt>montbriand@apple.comE<gt>.
 
 =head1 DATE
 
-Last modified 2003-09-08.
+Last modified 2005-11-07.

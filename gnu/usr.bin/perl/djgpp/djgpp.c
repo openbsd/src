@@ -193,7 +193,7 @@ doshell:
             return convretcode (system (cmd),cmd,execf);
 	}
 
-    New (1303,PL_Argv,(s-cmd)/2+2,char*);
+    Newx (PL_Argv,(s-cmd)/2+2,char*);
     PL_Cmd=savepvn (cmd,s-cmd);
     a=PL_Argv;
     for (s=PL_Cmd; *s;) {

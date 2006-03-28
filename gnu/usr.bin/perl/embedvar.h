@@ -1,7 +1,9 @@
-/*
+/*  -*- buffer-read-only: t -*-
+ *
  *    embedvar.h
  *
- *    Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, by Larry Wall and others
+ *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+ *    2000, 2001, 2002, 2003, 2004, 2005, 2006, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -247,6 +249,7 @@
 #define PL_doextract		(PERL_GET_INTERP->Idoextract)
 #define PL_doswitches		(PERL_GET_INTERP->Idoswitches)
 #define PL_dowarn		(PERL_GET_INTERP->Idowarn)
+#define PL_dumper_fd		(PERL_GET_INTERP->Idumper_fd)
 #define PL_e_script		(PERL_GET_INTERP->Ie_script)
 #define PL_egid			(PERL_GET_INTERP->Iegid)
 #define PL_encoding		(PERL_GET_INTERP->Iencoding)
@@ -386,6 +389,8 @@
 #define PL_psig_name		(PERL_GET_INTERP->Ipsig_name)
 #define PL_psig_pend		(PERL_GET_INTERP->Ipsig_pend)
 #define PL_psig_ptr		(PERL_GET_INTERP->Ipsig_ptr)
+#define PL_pte_arenaroot	(PERL_GET_INTERP->Ipte_arenaroot)
+#define PL_pte_root		(PERL_GET_INTERP->Ipte_root)
 #define PL_ptr_table		(PERL_GET_INTERP->Iptr_table)
 #define PL_reentrant_buffer	(PERL_GET_INTERP->Ireentrant_buffer)
 #define PL_reentrant_retint	(PERL_GET_INTERP->Ireentrant_retint)
@@ -569,6 +574,7 @@
 #define PL_doextract		(vTHX->Idoextract)
 #define PL_doswitches		(vTHX->Idoswitches)
 #define PL_dowarn		(vTHX->Idowarn)
+#define PL_dumper_fd		(vTHX->Idumper_fd)
 #define PL_e_script		(vTHX->Ie_script)
 #define PL_egid			(vTHX->Iegid)
 #define PL_encoding		(vTHX->Iencoding)
@@ -708,6 +714,8 @@
 #define PL_psig_name		(vTHX->Ipsig_name)
 #define PL_psig_pend		(vTHX->Ipsig_pend)
 #define PL_psig_ptr		(vTHX->Ipsig_ptr)
+#define PL_pte_arenaroot	(vTHX->Ipte_arenaroot)
+#define PL_pte_root		(vTHX->Ipte_root)
 #define PL_ptr_table		(vTHX->Iptr_table)
 #define PL_reentrant_buffer	(vTHX->Ireentrant_buffer)
 #define PL_reentrant_retint	(vTHX->Ireentrant_retint)
@@ -894,6 +902,7 @@
 #define PL_Idoextract		PL_doextract
 #define PL_Idoswitches		PL_doswitches
 #define PL_Idowarn		PL_dowarn
+#define PL_Idumper_fd		PL_dumper_fd
 #define PL_Ie_script		PL_e_script
 #define PL_Iegid		PL_egid
 #define PL_Iencoding		PL_encoding
@@ -1033,6 +1042,8 @@
 #define PL_Ipsig_name		PL_psig_name
 #define PL_Ipsig_pend		PL_psig_pend
 #define PL_Ipsig_ptr		PL_psig_ptr
+#define PL_Ipte_arenaroot	PL_pte_arenaroot
+#define PL_Ipte_root		PL_pte_root
 #define PL_Iptr_table		PL_ptr_table
 #define PL_Ireentrant_buffer	PL_reentrant_buffer
 #define PL_Ireentrant_retint	PL_reentrant_retint
@@ -1498,3 +1509,5 @@
 #define tainting		PL_tainting
 
 #endif /* PERL_POLLUTE */
+
+/* ex: set ro: */

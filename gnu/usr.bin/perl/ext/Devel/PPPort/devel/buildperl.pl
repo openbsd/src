@@ -5,13 +5,13 @@
 #
 ################################################################################
 #
-#  $Revision: 1.1.1.1 $
+#  $Revision: 1.1.1.2 $
 #  $Author: millert $
-#  $Date: 2005/01/15 21:16:45 $
+#  $Date: 2006/03/28 18:47:58 $
 #
 ################################################################################
 #
-#  Version 3.x, Copyright (C) 2004, Marcus Holland-Moritz.
+#  Version 3.x, Copyright (C) 2004-2005, Marcus Holland-Moritz.
 #  Version 2.x, Copyright (C) 2001, Paul Marquess.
 #  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 #
@@ -37,18 +37,18 @@ my %opt = (
 );
 
 my %config = (
-  default     => { 
+  default     => {
 	           config_args => '-des',
                  },
-  thread      => { 
+  thread      => {
 	           config_args     => '-des -Dusethreads',
 	           masked_versions => [ qr/^perl5\.00[01234]/ ],
                  },
-  thread5005  => { 
+  thread5005  => {
 	           config_args     => '-des -Duse5005threads',
 	           masked_versions => [ qr/^perl5\.00[012345]|^perl-5.(9|\d\d)/ ],
                  },
-  debug       => { 
+  debug       => {
 	           config_args => '-des -Doptimize=-g',
                  },
 );
@@ -173,7 +173,7 @@ sub expand
 sub is
 {
   my($s1, $s2) = @_;
-  
+
   defined $s1 != defined $s2 and return 0;
 
   ref $s2 and ($s1, $s2) = ($s2, $s1);
@@ -270,7 +270,7 @@ sub patch_doio
 @@ -75,6 +75,16 @@
  #  endif
  #endif
- 
+
 +#if _SEM_SEMUN_UNDEFINED
 +union semun
 +{

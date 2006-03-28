@@ -11,6 +11,7 @@
 ^pm_to_blib
 ^backup
 ^parts/todo-
+^parts/base-
 ^ppport\.h$
 ^PPPort\.c$
 Devel-PPPort.*\.tar\.gz$

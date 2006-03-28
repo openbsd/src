@@ -23,7 +23,8 @@ chdir File::Spec->updir;
 my $manifest = File::Spec->catfile('MANIFEST');
 open(MANIFEST, $manifest) or die "Can't open $manifest: $!";
 my @modules = map { m{^lib/(\S+)}; $1 } 
-              grep { m{^lib/ExtUtils/\S*\.pm}  } <MANIFEST>;
+              grep { m{^lib/ExtUtils/\S*\.pm} } 
+              grep { !m{/t/} } <MANIFEST>;
 chomp @modules;
 close MANIFEST;
 

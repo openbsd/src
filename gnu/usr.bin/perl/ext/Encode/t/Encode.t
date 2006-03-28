@@ -143,6 +143,9 @@ chop $a;
 ok(  is_utf8($a)); # weird but true: an empty UTF-8 string
 
 # non-string arguments
-ok(decode(latin1 => bless {}, "x"), undef);
-ok(encode(utf8   => bless {}, "x"), undef);
-
+package Encode::Dummy;
+use overload q("") => sub { $_[0]->[0] };
+sub new { my $class = shift; bless [ @_  ] => $class }
+package main;
+ok(decode(latin1 => Encode::Dummy->new("foobar")), "foobar");
+ok(encode(utf8   => Encode::Dummy->new("foobar")), "foobar");

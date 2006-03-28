@@ -22,7 +22,7 @@ sub import {
 
 =head1 NAME
 
-ExtUtils::MakeMaker::vmsish - Platform agnostic vmsish.pm
+ExtUtils::MakeMaker::vmsish - Platform-agnostic vmsish.pm
 
 =head1 SYNOPSIS
 

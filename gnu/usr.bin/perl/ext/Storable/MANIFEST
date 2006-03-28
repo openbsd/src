@@ -6,10 +6,14 @@ Storable.xs		    The C side of Storable
 ChangeLog		    Changes since baseline
 hints/linux.pl		    Hint file to drop gcc to -O2
 # ppport.h		    Compatibility header
+t/HAS_ATTACH.pm		    For auto-requiring of modules for STORABLE_attach
 t/HAS_HOOK.pm		    For auto-requiring of modules for STORABLE_thaw
 t/HAS_OVERLOAD.pm	    For auto-requiring of mdoules for overload
+t/attach_errors.t	    Trigger and test STORABLE_attach errors
+t/attach_singleton.t	    Test STORABLE_attach for the Singleton pattern
 t/blessed.t		    See if Storable works
 t/canonical.t		    See if Storable works
+t/circular_hook.t	    Test thaw hook called depth-first for circular refs
 t/code.t		    Test (de)serialization of code references
 t/compat06.t		    See if Storable works
 t/croak.t		    See if Storable works
@@ -21,6 +25,7 @@ t/integer.t		    For "use integer" testing
 t/interwork56.t		    Test combatibility kludge for 64bit data under 5.6.x
 t/just_plain_nasty.t	    Corner case corner.
 t/lock.t		    See if Storable works
+t/sig_die.t		    See if Storable works
 t/make_56_interwork.pl	    Make test data for interwork56.t
 t/make_downgrade.pl	    Make test data for downgrade.t
 t/malice.t		    See if Storable copes with corrupt files
@@ -30,12 +35,14 @@ t/restrict.t		    See if Storable works
 t/retrieve.t		    See if Storable works
 t/st-dump.pl		    helper routines for tests
 t/store.t		    See if Storable works
+t/testlib.pl		    more helper routines for tests
 t/tied.t		    See if Storable works
 t/tied_hook.t		    See if Storable works
 t/tied_items.t		    See if Storable works
 t/threads.t                 See if Storable works under ithreads
 t/utf8.t		    See if Storable works
 t/utf8hash.t		    See if Storable works
+t/weak.t		    Can Storable store weakrefs
 # t/Test/Builder.pm	    For testing the CPAN release on pre 5.6.2
 # t/Test/More.pm		    For testing the CPAN release on pre 5.6.2
 # t/Test/Simple.pm	    For testing the CPAN release on pre 5.6.2

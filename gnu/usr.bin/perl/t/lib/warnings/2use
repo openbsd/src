@@ -72,6 +72,12 @@ my $a =+ 1 ;
 EXPECT
 Reversed += operator at - line 3.
 ########
+-w
+no warnings 'reserved' ;
+foo.bar;
+EXPECT
+Useless use of concatenation (.) or string in void context at - line 3.
+########
 
 --FILE-- abc
 my $a =+ 1 ;

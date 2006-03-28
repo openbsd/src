@@ -85,11 +85,13 @@ Am|NV|SvNVX|SV* sv
 Amn|(whatever)|RETVAL
 Amn|(whatever)|THIS
 Ams||dAX
+Ams||dAXMARK
 Ams||dITEMS
 Ams||dMARK
 Ams||dORIGMARK
 Ams||dSP
 Ams||dUNDERBAR
+Ams||dXCPT
 Ams||dXSARGS
 Ams||dXSI32
 Ams||ENTER
@@ -112,6 +114,7 @@ Am|SV*|ST|int ix
 Am|SV*|SvREFCNT_inc|SV* sv
 Am|SV*|SvRV|SV* sv
 Am|svtype|SvTYPE|SV* sv
+Ams||XCPT_RETHROW
 Ams||XSRETURN_EMPTY
 Ams||XSRETURN_NO
 Ams||XSRETURN_UNDEF
@@ -129,7 +132,7 @@ AmU||HEf_SVKEY
 AmU||MARK
 AmU||newXSproto|char* name|XSUBADDR_t f|char* filename|const char *proto
 AmU||Nullav
-AmU||Nullch 
+AmU||Nullch
 AmU||Nullcv
 AmU||Nullhv
 AmU||Nullsv
@@ -148,6 +151,9 @@ Am|UV|SvUV_nomg|SV* sv
 Am|UV|SvUV|SV* sv
 Am|UV|SvUVx|SV* sv
 Am|UV|SvUVX|SV* sv
+AmU||XCPT_CATCH
+AmU||XCPT_TRY_END
+AmU||XCPT_TRY_START
 AmU||XS
 AmU||XS_VERSION
 Am|void *|CopyD|void* src|void* dest|int nitems|type
@@ -187,18 +193,24 @@ Am|void|SvIOK_off|SV* sv
 Am|void|SvIOK_only|SV* sv
 Am|void|SvIOK_only_UV|SV* sv
 Am|void|SvIOK_on|SV* sv
+Am|void|SvIV_set|SV* sv|IV val
+Am|void|SvLEN_set|SV* sv|STRLEN len
 Am|void|SvLOCK|SV* sv
+Am|void|SvMAGIC_set|SV* sv|MAGIC* val
 Am|void|SvNIOK_off|SV* sv
 Am|void|SvNOK_off|SV* sv
 Am|void|SvNOK_only|SV* sv
 Am|void|SvNOK_on|SV* sv
+Am|void|SvNV_set|SV* sv|NV val
 Am|void|SvPOK_off|SV* sv
 Am|void|SvPOK_only|SV* sv
 Am|void|SvPOK_only_UTF8|SV* sv
 Am|void|SvPOK_on|SV* sv
+Am|void|SvPV_set|SV* sv|char* val
 Am|void|SvREFCNT_dec|SV* sv
 Am|void|SvROK_off|SV* sv
 Am|void|SvROK_on|SV* sv
+Am|void|SvRV_set|SV* sv|SV* val
 Am|void|SvSetMagicSV_nosteal|SV* dsv|SV* ssv
 Am|void|SvSETMAGIC|SV* sv
 Am|void|SvSetMagicSV|SV* dsb|SV* ssv
@@ -206,6 +218,7 @@ Am|void|sv_setsv_nomg|SV* dsv|SV* ssv
 Am|void|SvSetSV_nosteal|SV* dsv|SV* ssv
 Am|void|SvSetSV|SV* dsb|SV* ssv
 Am|void|SvSHARE|SV* sv
+Am|void|SvSTASH_set|SV* sv|STASH* val
 Am|void|SvTAINTED_off|SV* sv
 Am|void|SvTAINTED_on|SV* sv
 Am|void|SvTAINT|SV* sv
@@ -214,6 +227,7 @@ Am|void|SvUOK|SV* sv
 Am|void|SvUPGRADE|SV* sv|svtype type
 Am|void|SvUTF8_off|SV *sv
 Am|void|SvUTF8_on|SV *sv
+Am|void|SvUV_set|SV* sv|UV val
 Am|void|XPUSHi|IV iv
 Am|void|XPUSHmortal
 Am|void|XPUSHn|NV nv
@@ -247,6 +261,7 @@ mn|SV*|PL_ofs_sv
 mn|SV*|PL_rs
 ms||djSP
 m|STRLEN|PAD_COMPNAME_GEN|PADOFFSET po
+m|STRLEN|PAD_COMPNAME_GEN_set|PADOFFSET po|int gen
 m|SV *|CX_CURPAD_SV|struct context|PADOFFSET po
 m|SV *|PAD_BASE_SV	|PADLIST padlist|PADOFFSET po
 m|SV *|PAD_SETSV	|PADOFFSET po|SV* sv

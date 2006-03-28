@@ -1,9 +1,10 @@
 #!/usr/bin/perl -w
 
-BEGIN
-{
+BEGIN {
+    unless(grep /blib/, @INC) {
 	chdir 't' if -d 't';
 	@INC = '../lib';
+    }
 	require Config;
 	if ($Config::Config{'extensions'} !~ /\bSocket\b/) {
 		print "1..0 # Skip: Socket not built - IO.pm uses Socket";
@@ -14,14 +15,15 @@ BEGIN
 use strict;
 use File::Path;
 use File::Spec;
-use Test::More tests => 18;
+require($ENV{PERL_CORE} ? "./test.pl" : "./t/test.pl");
+plan(tests => 18);
 
 {
-	local $INC{'XSLoader.pm'} = 1;
-	local *XSLoader::load;
+	require XSLoader;
 
 	my @load;
-	*XSLoader::load = sub {
+	local $^W;
+	local *XSLoader::load = sub {
 		push @load, \@_;
 	};
 

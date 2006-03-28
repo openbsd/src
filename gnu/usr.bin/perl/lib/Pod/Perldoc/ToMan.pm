@@ -72,10 +72,14 @@ sub parse_from_file {
     $command .= ' -rLL=' . (int $c) . 'n' if $cols > 80;
   }
 
+  if(Pod::Perldoc::IS_Cygwin) {
+    $command .= ' -c';
+  }
+
   # I hear persistent reports that adding a -c switch to $render
   # solves many people's problems.  But I also hear that some mans
-  # don't have a -c switch, so that adding it here would presumably
-  # be a Bad Thing   -- sburke@cpan.org
+  # don't have a -c switch, so that unconditionally adding it here
+  # would presumably be a Bad Thing   -- sburke@cpan.org
 
   $command .= " | col -x" if Pod::Perldoc::IS_HPUX;
   

@@ -11,28 +11,24 @@ BEGIN {
 	    exit 0;
 	}
     }
+    elsif(!grep {/blib/} @INC) {
+      unshift(@INC, qw(./inc ./blib/arch ./blib/lib));
+    }
 }
 
-use lib qw(blib/lib blib/arch);
+use Test::More tests => 4;
+
 use Scalar::Util qw(tainted);
-use Config;
 
-print "1..4\n";
-
-print "not " if tainted(1);
-print "ok 1\n";
+ok( !tainted(1), 'constant number');
 
 my $var = 2;
 
-print "not " if tainted($var);
-print "ok 2\n";
+ok( !tainted($var), 'known variable');
 
 my $key = (keys %ENV)[0];
 
+ok( tainted($ENV{$key}),	'environment variable');
+
 $var = $ENV{$key};
-
-print "not " unless tainted($var);
-print "ok 3\n";
-
-print "not " unless tainted($ENV{$key});
-print "ok 4\n";
+ok( tainted($var),	'copy of environment variable');

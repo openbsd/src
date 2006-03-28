@@ -1,12 +1,12 @@
 ################################################################################
 ##
-##  $Revision: 1.1.1.1 $
+##  $Revision: 1.1.1.2 $
 ##  $Author: millert $
-##  $Date: 2005/01/15 21:16:46 $
+##  $Date: 2006/03/28 18:47:59 $
 ##
 ################################################################################
 ##
-##  Version 3.x, Copyright (C) 2004, Marcus Holland-Moritz.
+##  Version 3.x, Copyright (C) 2004-2005, Marcus Holland-Moritz.
 ##  Version 2.x, Copyright (C) 2001, Paul Marquess.
 ##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 ##
@@ -139,13 +139,13 @@ _aMY_CXT
 =xsmisc
 
 #define MY_CXT_KEY "Devel::PPPort::_guts" XS_VERSION
- 
+
 typedef struct {
   /* Put Global Data in here */
-  int dummy;          
+  int dummy;
 } my_cxt_t;
- 
-START_MY_CXT     
+
+START_MY_CXT
 
 =xsboot
 

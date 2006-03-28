@@ -4,9 +4,11 @@ BEGIN {
 	require './test.pl';
 }
 
+my $Is_VMS = $^O eq 'VMS';
+
 use Carp qw(carp cluck croak confess);
 
-plan tests => 19;
+plan tests => 21;
 
 ok 1;
 
@@ -154,4 +156,20 @@ sub w { cluck @_ }
         package Z;
         main::w(1);
     }
+}
+
+
+{
+    local $TODO = "VMS exit status semantics don't work this way" if $Is_VMS;
+
+    # Check that croak() and confess() don't clobber $!
+    runperl(prog => 'use Carp; $@=q{Phooey}; $!=42; croak(q{Dead})', 
+	    stderr => 1);
+
+    is($?>>8, 42, 'croak() doesn\'t clobber $!');
+
+    runperl(prog => 'use Carp; $@=q{Phooey}; $!=42; confess(q{Dead})', 
+	    stderr => 1);
+
+    is($?>>8, 42, 'confess() doesn\'t clobber $!');
 }

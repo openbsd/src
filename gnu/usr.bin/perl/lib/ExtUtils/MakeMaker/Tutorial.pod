@@ -1,7 +1,7 @@
 package ExtUtils::MakeMaker::Tutorial;
 
 use vars qw($VERSION);
-$VERSION = 0.01;
+$VERSION = 0.02;
 
 
 =head1 NAME
@@ -60,9 +60,9 @@ want:
 =item Makefile.PL
 
 When you run Makefile.PL, it makes a Makefile.  That's the whole point of
-MakeMaker.  The Makefile.PL is a simple module which loads
-ExtUtils::MakeMaker and runs the WriteMakefile() function with a few
-simple arguments.
+MakeMaker.  The Makefile.PL is a simple program which loads
+ExtUtils::MakeMaker and runs the WriteMakefile() function to generate a
+Makefile.
 
 Here's an example of what you need for a simple module:
 
@@ -86,23 +86,25 @@ A simple listing of all the files in your distribution.
         MANIFEST
         lib/Your/Module.pm
 
-Filepaths in a MANIFEST always use Unix conventions (ie. /) even if you're
+File paths in a MANIFEST always use Unix conventions (ie. /) even if you're
 not on Unix.
 
 You can write this by hand or generate it with 'make manifest'.
+
+See L<ExtUtils::Manifest> for more details.
 
 
 =item lib/
 
 This is the directory where your .pm and .pod files you wish to have
 installed go.  They are layed out according to namespace.  So Foo::Bar
-is lib/Foo/Bar.pm.
+is F<lib/Foo/Bar.pm>.
 
 
 =item t/
 
 Tests for your modules go here.  Each test filename ends with a .t.
-So t/foo.t.  'make test' will run these tests.  The directory is flat,
+So F<t/foo.t>/  'make test' will run these tests.  The directory is flat,
 you cannot, for example, have t/foo/bar.t run by 'make test'.
 
 Tests are run from the top level of your distribution.  So inside a test
@@ -144,7 +146,7 @@ Suggested information to include here:
 
 A file full of regular expressions to exclude when using 'make
 manifest' to generate the MANIFEST.  These regular expressions
-are checked against each filepath found in the distribution (so
+are checked against each file path found in the distribution (so
 you're matching against "t/foo.t" not "foo.t").
 
 Here's a sample:

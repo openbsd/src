@@ -17,11 +17,14 @@
 #    define PERL_SUBVERSION	SUBVERSION
 #endif
 
+#if PERL_VERSION >= 6
+#  include "multicall.h"
+#endif
+
 #ifndef aTHX
 #  define aTHX
 #  define pTHX
 #endif
-
 /* Some platforms have strict exports. And before 5.7.3 cxinc (or Perl_cxinc)
    was not exported. Therefore platforms like win32, VMS etc have problems
    so we redefine it here -- GMB
@@ -101,6 +104,34 @@ sv_tainted(SV *sv)
 
 #ifndef PTR2UV
 #  define PTR2UV(ptr) (UV)(ptr)
+#endif
+
+#ifndef SvUV_set
+#  define SvUV_set(sv, val) (((XPVUV*)SvANY(sv))->xuv_uv = (val))
+#endif
+
+#ifndef PERL_UNUSED_DECL
+#  ifdef HASATTRIBUTE
+#    if (defined(__GNUC__) && defined(__cplusplus)) || defined(__INTEL_COMPILER)
+#      define PERL_UNUSED_DECL
+#    else
+#      define PERL_UNUSED_DECL __attribute__((unused))
+#    endif
+#  else
+#    define PERL_UNUSED_DECL
+#  endif
+#endif
+
+#ifndef dNOOP
+#define dNOOP extern int Perl___notused PERL_UNUSED_DECL
+#endif
+
+#ifndef dVAR
+#define dVAR dNOOP
+#endif
+
+#ifndef GvSVn
+#  define GvSVn GvSV
 #endif
 
 MODULE=List::Util	PACKAGE=List::Util
@@ -200,57 +231,41 @@ CODE:
 
 
 
+#ifdef dMULTICALL
+
 void
 reduce(block,...)
     SV * block
 PROTOTYPE: &@
 CODE:
 {
+    dVAR; dMULTICALL;
     SV *ret = sv_newmortal();
     int index;
     GV *agv,*bgv,*gv;
     HV *stash;
-    CV *cv;
-    OP *reducecop;
-    PERL_CONTEXT *cx;
-    SV** newsp;
     I32 gimme = G_SCALAR;
-    U8 hasargs = 0;
-    bool oldcatch = CATCH_GET;
+    SV **args = &PL_stack_base[ax];
+    CV *cv;
 
     if(items <= 1) {
 	XSRETURN_UNDEF;
     }
+    cv = sv_2cv(block, &stash, &gv, 0);
+    PUSH_MULTICALL(cv);
     agv = gv_fetchpv("a", TRUE, SVt_PV);
     bgv = gv_fetchpv("b", TRUE, SVt_PV);
     SAVESPTR(GvSV(agv));
     SAVESPTR(GvSV(bgv));
     GvSV(agv) = ret;
-    cv = sv_2cv(block, &stash, &gv, 0);
-    reducecop = CvSTART(cv);
-    SAVESPTR(CvROOT(cv)->op_ppaddr);
-    CvROOT(cv)->op_ppaddr = PL_ppaddr[OP_NULL];
-#ifdef PAD_SET_CUR
-    PAD_SET_CUR(CvPADLIST(cv),1);
-#else
-    SAVESPTR(PL_curpad);
-    PL_curpad = AvARRAY((AV*)AvARRAY(CvPADLIST(cv))[1]);
-#endif
-    SAVETMPS;
-    SAVESPTR(PL_op);
-    SvSetSV(ret, ST(1));
-    CATCH_SET(TRUE);
-    PUSHBLOCK(cx, CXt_SUB, SP);
-    PUSHSUB(cx);
+    SvSetSV(ret, args[1]);
     for(index = 2 ; index < items ; index++) {
-	GvSV(bgv) = ST(index);
-	PL_op = reducecop;
-	CALLRUNOPS(aTHX);
+	GvSV(bgv) = args[index];
+	MULTICALL;
 	SvSetSV(ret, *PL_stack_sp);
     }
+    POP_MULTICALL;
     ST(0) = ret;
-    POPBLOCK(cx,PL_curpm);
-    CATCH_SET(oldcatch);
     XSRETURN(1);
 }
 
@@ -260,61 +275,44 @@ first(block,...)
 PROTOTYPE: &@
 CODE:
 {
+    dVAR; dMULTICALL;
     int index;
     GV *gv;
     HV *stash;
-    CV *cv;
-    OP *reducecop;
-    PERL_CONTEXT *cx;
-    SV** newsp;
     I32 gimme = G_SCALAR;
-    U8 hasargs = 0;
-    bool oldcatch = CATCH_GET;
+    SV **args = &PL_stack_base[ax];
+    CV *cv;
 
     if(items <= 1) {
 	XSRETURN_UNDEF;
     }
-    SAVESPTR(GvSV(PL_defgv));
     cv = sv_2cv(block, &stash, &gv, 0);
-    reducecop = CvSTART(cv);
-    SAVESPTR(CvROOT(cv)->op_ppaddr);
-    CvROOT(cv)->op_ppaddr = PL_ppaddr[OP_NULL];
-#ifdef PAD_SET_CUR
-    PAD_SET_CUR(CvPADLIST(cv),1);
-#else
-    SAVESPTR(PL_curpad);
-    PL_curpad = AvARRAY((AV*)AvARRAY(CvPADLIST(cv))[1]);
-#endif
-    SAVETMPS;
-    SAVESPTR(PL_op);
-    CATCH_SET(TRUE);
-    PUSHBLOCK(cx, CXt_SUB, SP);
-    PUSHSUB(cx);
-    if (!CvDEPTH(cv))
-        (void)SvREFCNT_inc(cv);
+    PUSH_MULTICALL(cv);
+    SAVESPTR(GvSV(PL_defgv));
 
     for(index = 1 ; index < items ; index++) {
-	GvSV(PL_defgv) = ST(index);
-	PL_op = reducecop;
-	CALLRUNOPS(aTHX);
+	GvSV(PL_defgv) = args[index];
+	MULTICALL;
 	if (SvTRUE(*PL_stack_sp)) {
+	  POP_MULTICALL;
 	  ST(0) = ST(index);
-	  POPBLOCK(cx,PL_curpm);
-	  CATCH_SET(oldcatch);
 	  XSRETURN(1);
 	}
     }
-    POPBLOCK(cx,PL_curpm);
-    CATCH_SET(oldcatch);
+    POP_MULTICALL;
     XSRETURN_UNDEF;
 }
+
+#endif
 
 void
 shuffle(...)
 PROTOTYPE: @
 CODE:
 {
+    dVAR;
     int index;
+#if (PERL_VERSION < 8) || (PERL_VERSION == 8 && PERL_SUBVERSION <1)
     struct op dmy_op;
     struct op *old_op = PL_op;
 
@@ -327,6 +325,16 @@ CODE:
     PL_op = &dmy_op;
     (void)*(PL_ppaddr[OP_RAND])(aTHX);
     PL_op = old_op;
+#else
+    /* Initialize Drand01 if rand() or srand() has
+       not already been called
+    */
+    if (!PL_srand_called) {
+        (void)seedDrand01((Rand_seed_t)Perl_seed(aTHX));
+        PL_srand_called = TRUE;
+    }
+#endif
+
     for (index = items ; index > 1 ; ) {
 	int swap = (int)(Drand01() * (double)(index--));
 	SV *tmp = ST(swap);
@@ -352,18 +360,18 @@ CODE:
     (void)SvUPGRADE(ST(0),SVt_PVNV);
     sv_setpvn(ST(0),ptr,len);
     if(SvNOK(num) || SvPOK(num) || SvMAGICAL(num)) {
-	SvNVX(ST(0)) = SvNV(num);
+	SvNV_set(ST(0), SvNV(num));
 	SvNOK_on(ST(0));
     }
 #ifdef SVf_IVisUV
     else if (SvUOK(num)) {
-	SvUVX(ST(0)) = SvUV(num);
+	SvUV_set(ST(0), SvUV(num));
 	SvIOK_on(ST(0));
 	SvIsUV_on(ST(0));
     }
 #endif
     else {
-	SvIVX(ST(0)) = SvIV(num);
+	SvIV_set(ST(0), SvIV(num));
 	SvIOK_on(ST(0));
     }
     if(PL_tainting && (SvTAINTED(num) || SvTAINTED(str)))
@@ -477,7 +485,16 @@ looks_like_number(sv)
 	SV *sv
 PROTOTYPE: $
 CODE:
+#if (PERL_VERSION < 8) || (PERL_VERSION == 8 && PERL_SUBVERSION <5)
+  if (SvPOK(sv) || SvPOKp(sv)) {
+    RETVAL = looks_like_number(sv);
+  }
+  else {
+    RETVAL = SvFLAGS(sv) & (SVf_NOK|SVp_NOK|SVf_IOK|SVp_IOK);
+  }
+#else
   RETVAL = looks_like_number(sv);
+#endif
 OUTPUT:
   RETVAL
 
@@ -513,19 +530,30 @@ CODE:
 
 BOOT:
 {
+    HV *lu_stash = gv_stashpvn("List::Util", 10, TRUE);
+    GV *rmcgv = *(GV**)hv_fetch(lu_stash, "REAL_MULTICALL", 14, TRUE);
+    SV *rmcsv;
 #if !defined(SvWEAKREF) || !defined(SvVOK)
-    HV *stash = gv_stashpvn("Scalar::Util", 12, TRUE);
-    GV *vargv = *(GV**)hv_fetch(stash, "EXPORT_FAIL", 11, TRUE);
+    HV *su_stash = gv_stashpvn("Scalar::Util", 12, TRUE);
+    GV *vargv = *(GV**)hv_fetch(su_stash, "EXPORT_FAIL", 11, TRUE);
     AV *varav;
     if (SvTYPE(vargv) != SVt_PVGV)
-	gv_init(vargv, stash, "Scalar::Util", 12, TRUE);
+	gv_init(vargv, su_stash, "Scalar::Util", 12, TRUE);
     varav = GvAVn(vargv);
 #endif
+    if (SvTYPE(rmcgv) != SVt_PVGV)
+	gv_init(rmcgv, lu_stash, "List::Util", 12, TRUE);
+    rmcsv = GvSVn(rmcgv);
 #ifndef SvWEAKREF
     av_push(varav, newSVpv("weaken",6));
     av_push(varav, newSVpv("isweak",6));
 #endif
 #ifndef SvVOK
     av_push(varav, newSVpv("isvstring",9));
+#endif
+#ifdef REAL_MULTICALL
+    sv_setsv(rmcsv, &PL_sv_yes);
+#else
+    sv_setsv(rmcsv, &PL_sv_no);
 #endif
 }

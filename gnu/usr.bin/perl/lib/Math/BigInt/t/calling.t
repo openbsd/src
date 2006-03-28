@@ -55,11 +55,11 @@ use overload;
 
 package main;
 
-use Math::BigInt;
+use Math::BigInt lib => 'Calc';
 use Math::BigFloat;
 
 my ($x,$y,$z,$u);
-my $version = '1.61';	# adjust manually to match latest release
+my $version = '1.76';	# adjust manually to match latest release
 
 ###############################################################################
 # check whether op's accept normal strings, even when inherited by subclasses
@@ -106,7 +106,7 @@ $class = 'Math::BigInt';
 $try = "use $class ($version,'lib','foo, bar , ');";
 $try .= "$class\->config()->{lib};";
 $ans = eval $try;
-ok ( $ans, "Math::BigInt::Calc");
+ok ( $ans =~ /^Math::BigInt::(Fast)?Calc\z/, 1);
 
 # test whether constant works or not, also test for qw($version)
 # bgcd() is present in subclass, too
@@ -124,17 +124,6 @@ $try .= ' $x = 2**10; $x = "$x";';
 $ans = eval $try; ok ( $ans, "1024");
 
 # all done
-
-###############################################################################
-# Perl 5.005 does not like ok ($x,undef)
-
-sub ok_undef
-  {
-  my $x = shift;
-
-  ok (1,1) and return if !defined $x;
-  ok ($x,'undef');
-  }
 
 __END__
 &is_zero

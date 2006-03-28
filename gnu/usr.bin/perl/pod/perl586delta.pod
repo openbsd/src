@@ -1,6 +1,6 @@
 =head1 NAME
 
-perldelta - what is new for perl v5.8.6
+perl586delta - what is new for perl v5.8.6
 
 =head1 DESCRIPTION
 
@@ -117,7 +117,7 @@ C<read> into a UTF8-encoded buffer with an offset off the end of the buffer
 no longer mis-calculates buffer lengths.
 
 Although Perl has promised since version 5.8 that C<sort()> would be
-stable, the two cases C<sort {$b cmp $a}> and C<<sort {$b <=> $a}>> could
+stable, the two cases C<sort {$b cmp $a}> and C<< sort {$b <=> $a} >> could
 produce non-stable sorts.   This is corrected in perl5.8.6.
 
 Localising C<$^D> no longer generates a diagnostic message about valid -D

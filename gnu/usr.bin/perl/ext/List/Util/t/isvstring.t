@@ -14,29 +14,20 @@ BEGIN {
 }
 
 $|=1;
-require Scalar::Util;
-if (grep { /isvstring/ } @Scalar::Util::EXPORT_FAIL) {
-    print("1..0\n");
-    exit 0;
-}
+use Scalar::Util ();
+use Test::More  (grep { /isvstring/ } @Scalar::Util::EXPORT_FAIL)
+			? (skip_all => 'isvstring requires XS version')
+			: (tests => 3);
 
 Scalar::Util->import(qw[isvstring]);
 
-print "1..4\n";
-
-print "ok 1\n";
-
 $vs = ord("A") == 193 ? 241.75.240 : 49.46.48;
 
-print "not " unless $vs == "1.0";
-print "ok 2\n";
-
-print "not " unless isvstring($vs);
-print "ok 3\n";
+ok( $vs == "1.0",	'dotted num');
+ok( isvstring($vs),	'isvstring');
 
 $sv = "1.0";
-print "not " if isvstring($sv);
-print "ok 4\n";
+ok( !isvstring($sv),	'not isvstring');
 
 
 

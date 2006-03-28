@@ -1,8 +1,8 @@
-# PropList-4.0.1.txt
-# Date: 2004-03-02, 02:42:40 GMT [MD]
+# PropList-4.1.0.txt
+# Date: 2005-03-26, 00:34:40 GMT [MD]
 #
 # Unicode Character Database
-# Copyright (c) 1991-2004 Unicode, Inc.
+# Copyright (c) 1991-2005 Unicode, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see UCD.html
 
@@ -46,14 +46,16 @@
 207B          ; Dash # Sm       SUPERSCRIPT MINUS
 208B          ; Dash # Sm       SUBSCRIPT MINUS
 2212          ; Dash # Sm       MINUS SIGN
+2E17          ; Dash # Pd       DOUBLE OBLIQUE HYPHEN
 301C          ; Dash # Pd       WAVE DASH
 3030          ; Dash # Pd       WAVY DASH
+30A0          ; Dash # Pd       KATAKANA-HIRAGANA DOUBLE HYPHEN
 FE31..FE32    ; Dash # Pd   [2] PRESENTATION FORM FOR VERTICAL EM DASH..PRESENTATION FORM FOR VERTICAL EN DASH
 FE58          ; Dash # Pd       SMALL EM DASH
 FE63          ; Dash # Pd       SMALL HYPHEN-MINUS
 FF0D          ; Dash # Pd       FULLWIDTH HYPHEN-MINUS
 
-# Total code points: 20
+# Total code points: 22
 
 # ================================================
 
@@ -62,12 +64,13 @@ FF0D          ; Dash # Pd       FULLWIDTH HYPHEN-MINUS
 058A          ; Hyphen # Pd       ARMENIAN HYPHEN
 1806          ; Hyphen # Pd       MONGOLIAN TODO SOFT HYPHEN
 2010..2011    ; Hyphen # Pd   [2] HYPHEN..NON-BREAKING HYPHEN
-30FB          ; Hyphen # Pc       KATAKANA MIDDLE DOT
+2E17          ; Hyphen # Pd       DOUBLE OBLIQUE HYPHEN
+30FB          ; Hyphen # Po       KATAKANA MIDDLE DOT
 FE63          ; Hyphen # Pd       SMALL HYPHEN-MINUS
 FF0D          ; Hyphen # Pd       FULLWIDTH HYPHEN-MINUS
-FF65          ; Hyphen # Pc       HALFWIDTH KATAKANA MIDDLE DOT
+FF65          ; Hyphen # Po       HALFWIDTH KATAKANA MIDDLE DOT
 
-# Total code points: 10
+# Total code points: 11
 
 # ================================================
 
@@ -175,10 +178,12 @@ FF64          ; Terminal_Punctuation # Po       HALFWIDTH IDEOGRAPHIC COMMA
 212F..2131    ; Other_Math # L&   [3] SCRIPT SMALL E..SCRIPT CAPITAL F
 2133..2134    ; Other_Math # L&   [2] SCRIPT CAPITAL M..SCRIPT SMALL O
 2135..2138    ; Other_Math # Lo   [4] ALEF SYMBOL..DALET SYMBOL
-213D..213F    ; Other_Math # L&   [3] DOUBLE-STRUCK SMALL GAMMA..DOUBLE-STRUCK CAPITAL PI
+213C..213F    ; Other_Math # L&   [4] DOUBLE-STRUCK SMALL PI..DOUBLE-STRUCK CAPITAL PI
 2145..2149    ; Other_Math # L&   [5] DOUBLE-STRUCK ITALIC CAPITAL D..DOUBLE-STRUCK ITALIC SMALL J
 23B7          ; Other_Math # So       RADICAL SYMBOL BOTTOM
 23D0          ; Other_Math # So       VERTICAL LINE EXTENSION
+27C5          ; Other_Math # Ps       LEFT S-SHAPED BAG DELIMITER
+27C6          ; Other_Math # Pe       RIGHT S-SHAPED BAG DELIMITER
 27E6          ; Other_Math # Ps       MATHEMATICAL LEFT WHITE SQUARE BRACKET
 27E7          ; Other_Math # Pe       MATHEMATICAL RIGHT WHITE SQUARE BRACKET
 27E8          ; Other_Math # Ps       MATHEMATICAL LEFT ANGLE BRACKET
@@ -250,7 +255,7 @@ FF3E          ; Other_Math # Sk       FULLWIDTH CIRCUMFLEX ACCENT
 1D7C4..1D7C9  ; Other_Math # L&   [6] MATHEMATICAL SANS-SERIF BOLD ITALIC EPSILON SYMBOL..MATHEMATICAL SANS-SERIF BOLD ITALIC PI SYMBOL
 1D7CE..1D7FF  ; Other_Math # Nd  [50] MATHEMATICAL BOLD DIGIT ZERO..MATHEMATICAL MONOSPACE DIGIT NINE
 
-# Total code points: 1099
+# Total code points: 1102
 
 # ================================================
 
@@ -278,9 +283,11 @@ FF41..FF46    ; Hex_Digit # L&   [6] FULLWIDTH LATIN SMALL LETTER A..FULLWIDTH L
 05BB..05BD    ; Other_Alphabetic # Mn   [3] HEBREW POINT QUBUTS..HEBREW POINT METEG
 05BF          ; Other_Alphabetic # Mn       HEBREW POINT RAFE
 05C1..05C2    ; Other_Alphabetic # Mn   [2] HEBREW POINT SHIN DOT..HEBREW POINT SIN DOT
-05C4          ; Other_Alphabetic # Mn       HEBREW MARK UPPER DOT
+05C4..05C5    ; Other_Alphabetic # Mn   [2] HEBREW MARK UPPER DOT..HEBREW MARK LOWER DOT
+05C7          ; Other_Alphabetic # Mn       HEBREW POINT QAMATS QATAN
 0610..0615    ; Other_Alphabetic # Mn   [6] ARABIC SIGN SALLALLAHOU ALAYHE WASSALLAM..ARABIC SMALL HIGH TAH
 064B..0657    ; Other_Alphabetic # Mn  [13] ARABIC FATHATAN..ARABIC INVERTED DAMMA
+0659..065E    ; Other_Alphabetic # Mn   [6] ARABIC ZWARAKAY..ARABIC FATHA WITH TWO DOTS
 0670          ; Other_Alphabetic # Mn       ARABIC LETTER SUPERSCRIPT ALEF
 06D6..06DC    ; Other_Alphabetic # Mn   [7] ARABIC SMALL HIGH LIGATURE SAD WITH LAM WITH ALEF MAKSURA..ARABIC SMALL HIGH SEEN
 06E1..06E4    ; Other_Alphabetic # Mn   [4] ARABIC SMALL HIGH DOTLESS HEAD OF KHAH..ARABIC SMALL HIGH MADDA
@@ -382,7 +389,7 @@ FF41..FF46    ; Hex_Digit # L&   [6] FULLWIDTH LATIN SMALL LETTER A..FULLWIDTH L
 1038          ; Other_Alphabetic # Mc       MYANMAR SIGN VISARGA
 1056..1057    ; Other_Alphabetic # Mc   [2] MYANMAR VOWEL SIGN VOCALIC R..MYANMAR VOWEL SIGN VOCALIC RR
 1058..1059    ; Other_Alphabetic # Mn   [2] MYANMAR VOWEL SIGN VOCALIC L..MYANMAR VOWEL SIGN VOCALIC LL
-16EE..16F0    ; Other_Alphabetic # Nl   [3] RUNIC ARLAUG SYMBOL..RUNIC BELGTHOR SYMBOL
+135F          ; Other_Alphabetic # Mn       ETHIOPIC COMBINING GEMINATION MARK
 1712..1713    ; Other_Alphabetic # Mn   [2] TAGALOG VOWEL SIGN I..TAGALOG VOWEL SIGN U
 1732..1733    ; Other_Alphabetic # Mn   [2] HANUNOO VOWEL SIGN I..HANUNOO VOWEL SIGN U
 1752..1753    ; Other_Alphabetic # Mn   [2] BUHID VOWEL SIGN I..BUHID VOWEL SIGN U
@@ -400,11 +407,20 @@ FF41..FF46    ; Hex_Digit # L&   [6] FULLWIDTH LATIN SMALL LETTER A..FULLWIDTH L
 1930..1931    ; Other_Alphabetic # Mc   [2] LIMBU SMALL LETTER KA..LIMBU SMALL LETTER NGA
 1932          ; Other_Alphabetic # Mn       LIMBU SMALL LETTER ANUSVARA
 1933..1938    ; Other_Alphabetic # Mc   [6] LIMBU SMALL LETTER TA..LIMBU SMALL LETTER LA
-2160..2183    ; Other_Alphabetic # Nl  [36] ROMAN NUMERAL ONE..ROMAN NUMERAL REVERSED ONE HUNDRED
+19B0..19C0    ; Other_Alphabetic # Mc  [17] NEW TAI LUE VOWEL SIGN VOWEL SHORTENER..NEW TAI LUE VOWEL SIGN IY
+19C8..19C9    ; Other_Alphabetic # Mc   [2] NEW TAI LUE TONE MARK-1..NEW TAI LUE TONE MARK-2
+1A17..1A18    ; Other_Alphabetic # Mn   [2] BUGINESE VOWEL SIGN I..BUGINESE VOWEL SIGN U
+1A19..1A1B    ; Other_Alphabetic # Mc   [3] BUGINESE VOWEL SIGN E..BUGINESE VOWEL SIGN AE
+24B6..24E9    ; Other_Alphabetic # So  [52] CIRCLED LATIN CAPITAL LETTER A..CIRCLED LATIN SMALL LETTER Z
+A823..A824    ; Other_Alphabetic # Mc   [2] SYLOTI NAGRI VOWEL SIGN A..SYLOTI NAGRI VOWEL SIGN I
+A825..A826    ; Other_Alphabetic # Mn   [2] SYLOTI NAGRI VOWEL SIGN U..SYLOTI NAGRI VOWEL SIGN E
+A827          ; Other_Alphabetic # Mc       SYLOTI NAGRI VOWEL SIGN OO
 FB1E          ; Other_Alphabetic # Mn       HEBREW POINT JUDEO-SPANISH VARIKA
-1034A         ; Other_Alphabetic # Nl       GOTHIC LETTER NINE HUNDRED
+10A01..10A03  ; Other_Alphabetic # Mn   [3] KHAROSHTHI VOWEL SIGN I..KHAROSHTHI VOWEL SIGN VOCALIC R
+10A05..10A06  ; Other_Alphabetic # Mn   [2] KHAROSHTHI VOWEL SIGN E..KHAROSHTHI VOWEL SIGN O
+10A0C..10A0F  ; Other_Alphabetic # Mn   [4] KHAROSHTHI VOWEL LENGTH MARK..KHAROSHTHI SIGN VISARGA
 
-# Total code points: 429
+# Total code points: 488
 
 # ================================================
 
@@ -413,12 +429,13 @@ FB1E          ; Other_Alphabetic # Mn       HEBREW POINT JUDEO-SPANISH VARIKA
 3021..3029    ; Ideographic # Nl   [9] HANGZHOU NUMERAL ONE..HANGZHOU NUMERAL NINE
 3038..303A    ; Ideographic # Nl   [3] HANGZHOU NUMERAL TEN..HANGZHOU NUMERAL THIRTY
 3400..4DB5    ; Ideographic # Lo [6582] CJK UNIFIED IDEOGRAPH-3400..CJK UNIFIED IDEOGRAPH-4DB5
-4E00..9FA5    ; Ideographic # Lo [20902] CJK UNIFIED IDEOGRAPH-4E00..CJK UNIFIED IDEOGRAPH-9FA5
+4E00..9FBB    ; Ideographic # Lo [20924] CJK UNIFIED IDEOGRAPH-4E00..CJK UNIFIED IDEOGRAPH-9FBB
 F900..FA2D    ; Ideographic # Lo [302] CJK COMPATIBILITY IDEOGRAPH-F900..CJK COMPATIBILITY IDEOGRAPH-FA2D
+FA70..FAD9    ; Ideographic # Lo [106] CJK COMPATIBILITY IDEOGRAPH-FA70..CJK COMPATIBILITY IDEOGRAPH-FAD9
 20000..2A6D6  ; Ideographic # Lo [42711] CJK UNIFIED IDEOGRAPH-20000..CJK UNIFIED IDEOGRAPH-2A6D6
 2F800..2FA1D  ; Ideographic # Lo [542] CJK COMPATIBILITY IDEOGRAPH-2F800..CJK COMPATIBILITY IDEOGRAPH-2FA1D
 
-# Total code points: 71053
+# Total code points: 71181
 
 # ================================================
 
@@ -530,9 +547,10 @@ FFE3          ; Diacritic # Sk       FULLWIDTH MACRON
 3031..3035    ; Extender # Lm   [5] VERTICAL KANA REPEAT MARK..VERTICAL KANA REPEAT MARK LOWER HALF
 309D..309E    ; Extender # Lm   [2] HIRAGANA ITERATION MARK..HIRAGANA VOICED ITERATION MARK
 30FC..30FE    ; Extender # Lm   [3] KATAKANA-HIRAGANA PROLONGED SOUND MARK..KATAKANA VOICED ITERATION MARK
+A015          ; Extender # Lm       YI SYLLABLE WU
 FF70          ; Extender # Lm       HALFWIDTH KATAKANA-HIRAGANA PROLONGED SOUND MARK
 
-# Total code points: 19
+# Total code points: 20
 
 # ================================================
 
@@ -542,10 +560,13 @@ FF70          ; Extender # Lm       HALFWIDTH KATAKANA-HIRAGANA PROLONGED SOUND 
 0345          ; Other_Lowercase # Mn       COMBINING GREEK YPOGEGRAMMENI
 037A          ; Other_Lowercase # Lm       GREEK YPOGEGRAMMENI
 1D2C..1D61    ; Other_Lowercase # Lm  [54] MODIFIER LETTER CAPITAL A..MODIFIER LETTER SMALL CHI
+1D78          ; Other_Lowercase # Lm       MODIFIER LETTER CYRILLIC EN
+1D9B..1DBF    ; Other_Lowercase # Lm  [37] MODIFIER LETTER SMALL TURNED ALPHA..MODIFIER LETTER SMALL THETA
+2090..2094    ; Other_Lowercase # Lm   [5] LATIN SUBSCRIPT SMALL LETTER A..LATIN SUBSCRIPT SMALL LETTER SCHWA
 2170..217F    ; Other_Lowercase # Nl  [16] SMALL ROMAN NUMERAL ONE..SMALL ROMAN NUMERAL ONE THOUSAND
 24D0..24E9    ; Other_Lowercase # So  [26] CIRCLED LATIN SMALL LETTER A..CIRCLED LATIN SMALL LETTER Z
 
-# Total code points: 114
+# Total code points: 157
 
 # ================================================
 
@@ -593,9 +614,9 @@ FFFFE..FFFFF  ; Noncharacter_Code_Point # Cn   [2] <noncharacter-FFFFE>..<noncha
 0DDF          ; Other_Grapheme_Extend # Mc       SINHALA VOWEL SIGN GAYANUKITTA
 200C..200D    ; Other_Grapheme_Extend # Cf   [2] ZERO WIDTH NON-JOINER..ZERO WIDTH JOINER
 1D165         ; Other_Grapheme_Extend # Mc       MUSICAL SYMBOL COMBINING STEM
-1D16E..1D16F  ; Other_Grapheme_Extend # Mc   [2] MUSICAL SYMBOL COMBINING FLAG-1..MUSICAL SYMBOL COMBINING FLAG-2
+1D16E..1D172  ; Other_Grapheme_Extend # Mc   [5] MUSICAL SYMBOL COMBINING FLAG-1..MUSICAL SYMBOL COMBINING FLAG-5
 
-# Total code points: 18
+# Total code points: 21
 
 # ================================================
 
@@ -613,8 +634,10 @@ FFFFE..FFFFF  ; Noncharacter_Code_Point # Cn   [2] <noncharacter-FFFFE>..<noncha
 0E3A          ; Grapheme_Link # Mn       THAI CHARACTER PHINTHU
 1039          ; Grapheme_Link # Mn       MYANMAR SIGN VIRAMA
 17D2          ; Grapheme_Link # Mn       KHMER SIGN COENG
+A806          ; Grapheme_Link # Mn       SYLOTI NAGRI SIGN HASANTA
+10A3F         ; Grapheme_Link # Mn       KHAROSHTHI VIRAMA
 
-# Total code points: 14
+# Total code points: 16
 
 # ================================================
 
@@ -640,7 +663,7 @@ FFFFE..FFFFF  ; Noncharacter_Code_Point # Cn   [2] <noncharacter-FFFFE>..<noncha
 # ================================================
 
 3400..4DB5    ; Unified_Ideograph # Lo [6582] CJK UNIFIED IDEOGRAPH-3400..CJK UNIFIED IDEOGRAPH-4DB5
-4E00..9FA5    ; Unified_Ideograph # Lo [20902] CJK UNIFIED IDEOGRAPH-4E00..CJK UNIFIED IDEOGRAPH-9FA5
+4E00..9FBB    ; Unified_Ideograph # Lo [20924] CJK UNIFIED IDEOGRAPH-4E00..CJK UNIFIED IDEOGRAPH-9FBB
 FA0E..FA0F    ; Unified_Ideograph # Lo   [2] CJK COMPATIBILITY IDEOGRAPH-FA0E..CJK COMPATIBILITY IDEOGRAPH-FA0F
 FA11          ; Unified_Ideograph # Lo       CJK COMPATIBILITY IDEOGRAPH-FA11
 FA13..FA14    ; Unified_Ideograph # Lo   [2] CJK COMPATIBILITY IDEOGRAPH-FA13..CJK COMPATIBILITY IDEOGRAPH-FA14
@@ -650,13 +673,12 @@ FA23..FA24    ; Unified_Ideograph # Lo   [2] CJK COMPATIBILITY IDEOGRAPH-FA23..C
 FA27..FA29    ; Unified_Ideograph # Lo   [3] CJK COMPATIBILITY IDEOGRAPH-FA27..CJK COMPATIBILITY IDEOGRAPH-FA29
 20000..2A6D6  ; Unified_Ideograph # Lo [42711] CJK UNIFIED IDEOGRAPH-20000..CJK UNIFIED IDEOGRAPH-2A6D6
 
-# Total code points: 70207
+# Total code points: 70229
 
 # ================================================
 
 034F          ; Other_Default_Ignorable_Code_Point # Mn       COMBINING GRAPHEME JOINER
 115F..1160    ; Other_Default_Ignorable_Code_Point # Lo   [2] HANGUL CHOSEONG FILLER..HANGUL JUNGSEONG FILLER
-200B          ; Other_Default_Ignorable_Code_Point # Cf       ZERO WIDTH SPACE
 2064..2069    ; Other_Default_Ignorable_Code_Point # Cn   [6] <reserved-2064>..<reserved-2069>
 3164          ; Other_Default_Ignorable_Code_Point # Lo       HANGUL FILLER
 FFA0          ; Other_Default_Ignorable_Code_Point # Lo       HALFWIDTH HANGUL FILLER
@@ -666,7 +688,7 @@ E0002..E001F  ; Other_Default_Ignorable_Code_Point # Cn  [30] <reserved-E0002>..
 E0080..E00FF  ; Other_Default_Ignorable_Code_Point # Cn [128] <reserved-E0080>..<reserved-E00FF>
 E01F0..E0FFF  ; Other_Default_Ignorable_Code_Point # Cn [3600] <reserved-E01F0>..<reserved-E0FFF>
 
-# Total code points: 3780
+# Total code points: 3779
 
 # ================================================
 
@@ -688,6 +710,9 @@ E01F0..E0FFF  ; Other_Default_Ignorable_Code_Point # Cn [3600] <reserved-E01F0>.
 0456          ; Soft_Dotted # L&       CYRILLIC SMALL LETTER BYELORUSSIAN-UKRAINIAN I
 0458          ; Soft_Dotted # L&       CYRILLIC SMALL LETTER JE
 1D62          ; Soft_Dotted # L&       LATIN SUBSCRIPT SMALL LETTER I
+1D96          ; Soft_Dotted # L&       LATIN SMALL LETTER I WITH RETROFLEX HOOK
+1DA4          ; Soft_Dotted # Lm       MODIFIER LETTER SMALL I WITH STROKE
+1DA8          ; Soft_Dotted # Lm       MODIFIER LETTER SMALL J WITH CROSSED-TAIL
 1E2D          ; Soft_Dotted # L&       LATIN SMALL LETTER I WITH TILDE BELOW
 1ECB          ; Soft_Dotted # L&       LATIN SMALL LETTER I WITH DOT BELOW
 2071          ; Soft_Dotted # L&       SUPERSCRIPT LATIN SMALL LETTER I
@@ -706,7 +731,7 @@ E01F0..E0FFF  ; Other_Default_Ignorable_Code_Point # Cn [3600] <reserved-E01F0>.
 1D65E..1D65F  ; Soft_Dotted # L&   [2] MATHEMATICAL SANS-SERIF BOLD ITALIC SMALL I..MATHEMATICAL SANS-SERIF BOLD ITALIC SMALL J
 1D692..1D693  ; Soft_Dotted # L&   [2] MATHEMATICAL MONOSPACE SMALL I..MATHEMATICAL MONOSPACE SMALL J
 
-# Total code points: 41
+# Total code points: 44
 
 # ================================================
 
@@ -722,6 +747,12 @@ E01F0..E0FFF  ; Other_Default_Ignorable_Code_Point # Cn [3600] <reserved-E01F0>.
 309B..309C    ; Other_ID_Start # Sk   [2] KATAKANA-HIRAGANA VOICED SOUND MARK..KATAKANA-HIRAGANA SEMI-VOICED SOUND MARK
 
 # Total code points: 4
+
+# ================================================
+
+1369..1371    ; Other_ID_Continue # No   [9] ETHIOPIC DIGIT ONE..ETHIOPIC DIGIT NINE
+
+# Total code points: 9
 
 # ================================================
 
@@ -761,3 +792,258 @@ FE00..FE0F    ; Variation_Selector # Mn  [16] VARIATION SELECTOR-1..VARIATION SE
 E0100..E01EF  ; Variation_Selector # Mn [240] VARIATION SELECTOR-17..VARIATION SELECTOR-256
 
 # Total code points: 259
+
+# ================================================
+
+0009..000D    ; Pattern_White_Space # Cc   [5] <control-0009>..<control-000D>
+0020          ; Pattern_White_Space # Zs       SPACE
+0085          ; Pattern_White_Space # Cc       <control-0085>
+200E..200F    ; Pattern_White_Space # Cf   [2] LEFT-TO-RIGHT MARK..RIGHT-TO-LEFT MARK
+2028          ; Pattern_White_Space # Zl       LINE SEPARATOR
+2029          ; Pattern_White_Space # Zp       PARAGRAPH SEPARATOR
+
+# Total code points: 11
+
+# ================================================
+
+0021..0023    ; Pattern_Syntax # Po   [3] EXCLAMATION MARK..NUMBER SIGN
+0024          ; Pattern_Syntax # Sc       DOLLAR SIGN
+0025..0027    ; Pattern_Syntax # Po   [3] PERCENT SIGN..APOSTROPHE
+0028          ; Pattern_Syntax # Ps       LEFT PARENTHESIS
+0029          ; Pattern_Syntax # Pe       RIGHT PARENTHESIS
+002A          ; Pattern_Syntax # Po       ASTERISK
+002B          ; Pattern_Syntax # Sm       PLUS SIGN
+002C          ; Pattern_Syntax # Po       COMMA
+002D          ; Pattern_Syntax # Pd       HYPHEN-MINUS
+002E..002F    ; Pattern_Syntax # Po   [2] FULL STOP..SOLIDUS
+003A..003B    ; Pattern_Syntax # Po   [2] COLON..SEMICOLON
+003C..003E    ; Pattern_Syntax # Sm   [3] LESS-THAN SIGN..GREATER-THAN SIGN
+003F..0040    ; Pattern_Syntax # Po   [2] QUESTION MARK..COMMERCIAL AT
+005B          ; Pattern_Syntax # Ps       LEFT SQUARE BRACKET
+005C          ; Pattern_Syntax # Po       REVERSE SOLIDUS
+005D          ; Pattern_Syntax # Pe       RIGHT SQUARE BRACKET
+005E          ; Pattern_Syntax # Sk       CIRCUMFLEX ACCENT
+0060          ; Pattern_Syntax # Sk       GRAVE ACCENT
+007B          ; Pattern_Syntax # Ps       LEFT CURLY BRACKET
+007C          ; Pattern_Syntax # Sm       VERTICAL LINE
+007D          ; Pattern_Syntax # Pe       RIGHT CURLY BRACKET
+007E          ; Pattern_Syntax # Sm       TILDE
+00A1          ; Pattern_Syntax # Po       INVERTED EXCLAMATION MARK
+00A2..00A5    ; Pattern_Syntax # Sc   [4] CENT SIGN..YEN SIGN
+00A6..00A7    ; Pattern_Syntax # So   [2] BROKEN BAR..SECTION SIGN
+00A9          ; Pattern_Syntax # So       COPYRIGHT SIGN
+00AB          ; Pattern_Syntax # Pi       LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+00AC          ; Pattern_Syntax # Sm       NOT SIGN
+00AE          ; Pattern_Syntax # So       REGISTERED SIGN
+00B0          ; Pattern_Syntax # So       DEGREE SIGN
+00B1          ; Pattern_Syntax # Sm       PLUS-MINUS SIGN
+00B6          ; Pattern_Syntax # So       PILCROW SIGN
+00BB          ; Pattern_Syntax # Pf       RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+00BF          ; Pattern_Syntax # Po       INVERTED QUESTION MARK
+00D7          ; Pattern_Syntax # Sm       MULTIPLICATION SIGN
+00F7          ; Pattern_Syntax # Sm       DIVISION SIGN
+2010..2015    ; Pattern_Syntax # Pd   [6] HYPHEN..HORIZONTAL BAR
+2016..2017    ; Pattern_Syntax # Po   [2] DOUBLE VERTICAL LINE..DOUBLE LOW LINE
+2018          ; Pattern_Syntax # Pi       LEFT SINGLE QUOTATION MARK
+2019          ; Pattern_Syntax # Pf       RIGHT SINGLE QUOTATION MARK
+201A          ; Pattern_Syntax # Ps       SINGLE LOW-9 QUOTATION MARK
+201B..201C    ; Pattern_Syntax # Pi   [2] SINGLE HIGH-REVERSED-9 QUOTATION MARK..LEFT DOUBLE QUOTATION MARK
+201D          ; Pattern_Syntax # Pf       RIGHT DOUBLE QUOTATION MARK
+201E          ; Pattern_Syntax # Ps       DOUBLE LOW-9 QUOTATION MARK
+201F          ; Pattern_Syntax # Pi       DOUBLE HIGH-REVERSED-9 QUOTATION MARK
+2020..2027    ; Pattern_Syntax # Po   [8] DAGGER..HYPHENATION POINT
+2030..2038    ; Pattern_Syntax # Po   [9] PER MILLE SIGN..CARET
+2039          ; Pattern_Syntax # Pi       SINGLE LEFT-POINTING ANGLE QUOTATION MARK
+203A          ; Pattern_Syntax # Pf       SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
+203B..203E    ; Pattern_Syntax # Po   [4] REFERENCE MARK..OVERLINE
+2041..2043    ; Pattern_Syntax # Po   [3] CARET INSERTION POINT..HYPHEN BULLET
+2044          ; Pattern_Syntax # Sm       FRACTION SLASH
+2045          ; Pattern_Syntax # Ps       LEFT SQUARE BRACKET WITH QUILL
+2046          ; Pattern_Syntax # Pe       RIGHT SQUARE BRACKET WITH QUILL
+2047..2051    ; Pattern_Syntax # Po  [11] DOUBLE QUESTION MARK..TWO ASTERISKS ALIGNED VERTICALLY
+2052          ; Pattern_Syntax # Sm       COMMERCIAL MINUS SIGN
+2053          ; Pattern_Syntax # Po       SWUNG DASH
+2055..205E    ; Pattern_Syntax # Po  [10] FLOWER PUNCTUATION MARK..VERTICAL FOUR DOTS
+2190..2194    ; Pattern_Syntax # Sm   [5] LEFTWARDS ARROW..LEFT RIGHT ARROW
+2195..2199    ; Pattern_Syntax # So   [5] UP DOWN ARROW..SOUTH WEST ARROW
+219A..219B    ; Pattern_Syntax # Sm   [2] LEFTWARDS ARROW WITH STROKE..RIGHTWARDS ARROW WITH STROKE
+219C..219F    ; Pattern_Syntax # So   [4] LEFTWARDS WAVE ARROW..UPWARDS TWO HEADED ARROW
+21A0          ; Pattern_Syntax # Sm       RIGHTWARDS TWO HEADED ARROW
+21A1..21A2    ; Pattern_Syntax # So   [2] DOWNWARDS TWO HEADED ARROW..LEFTWARDS ARROW WITH TAIL
+21A3          ; Pattern_Syntax # Sm       RIGHTWARDS ARROW WITH TAIL
+21A4..21A5    ; Pattern_Syntax # So   [2] LEFTWARDS ARROW FROM BAR..UPWARDS ARROW FROM BAR
+21A6          ; Pattern_Syntax # Sm       RIGHTWARDS ARROW FROM BAR
+21A7..21AD    ; Pattern_Syntax # So   [7] DOWNWARDS ARROW FROM BAR..LEFT RIGHT WAVE ARROW
+21AE          ; Pattern_Syntax # Sm       LEFT RIGHT ARROW WITH STROKE
+21AF..21CD    ; Pattern_Syntax # So  [31] DOWNWARDS ZIGZAG ARROW..LEFTWARDS DOUBLE ARROW WITH STROKE
+21CE..21CF    ; Pattern_Syntax # Sm   [2] LEFT RIGHT DOUBLE ARROW WITH STROKE..RIGHTWARDS DOUBLE ARROW WITH STROKE
+21D0..21D1    ; Pattern_Syntax # So   [2] LEFTWARDS DOUBLE ARROW..UPWARDS DOUBLE ARROW
+21D2          ; Pattern_Syntax # Sm       RIGHTWARDS DOUBLE ARROW
+21D3          ; Pattern_Syntax # So       DOWNWARDS DOUBLE ARROW
+21D4          ; Pattern_Syntax # Sm       LEFT RIGHT DOUBLE ARROW
+21D5..21F3    ; Pattern_Syntax # So  [31] UP DOWN DOUBLE ARROW..UP DOWN WHITE ARROW
+21F4..22FF    ; Pattern_Syntax # Sm [268] RIGHT ARROW WITH SMALL CIRCLE..Z NOTATION BAG MEMBERSHIP
+2300..2307    ; Pattern_Syntax # So   [8] DIAMETER SIGN..WAVY LINE
+2308..230B    ; Pattern_Syntax # Sm   [4] LEFT CEILING..RIGHT FLOOR
+230C..231F    ; Pattern_Syntax # So  [20] BOTTOM RIGHT CROP..BOTTOM RIGHT CORNER
+2320..2321    ; Pattern_Syntax # Sm   [2] TOP HALF INTEGRAL..BOTTOM HALF INTEGRAL
+2322..2328    ; Pattern_Syntax # So   [7] FROWN..KEYBOARD
+2329          ; Pattern_Syntax # Ps       LEFT-POINTING ANGLE BRACKET
+232A          ; Pattern_Syntax # Pe       RIGHT-POINTING ANGLE BRACKET
+232B..237B    ; Pattern_Syntax # So  [81] ERASE TO THE LEFT..NOT CHECK MARK
+237C          ; Pattern_Syntax # Sm       RIGHT ANGLE WITH DOWNWARDS ZIGZAG ARROW
+237D..239A    ; Pattern_Syntax # So  [30] SHOULDERED OPEN BOX..CLEAR SCREEN SYMBOL
+239B..23B3    ; Pattern_Syntax # Sm  [25] LEFT PARENTHESIS UPPER HOOK..SUMMATION BOTTOM
+23B4          ; Pattern_Syntax # Ps       TOP SQUARE BRACKET
+23B5          ; Pattern_Syntax # Pe       BOTTOM SQUARE BRACKET
+23B6          ; Pattern_Syntax # Po       BOTTOM SQUARE BRACKET OVER TOP SQUARE BRACKET
+23B7..23DB    ; Pattern_Syntax # So  [37] RADICAL SYMBOL BOTTOM..FUSE
+23DC..23FF    ; Pattern_Syntax # Cn  [36] <reserved-23DC>..<reserved-23FF>
+2400..2426    ; Pattern_Syntax # So  [39] SYMBOL FOR NULL..SYMBOL FOR SUBSTITUTE FORM TWO
+2427..243F    ; Pattern_Syntax # Cn  [25] <reserved-2427>..<reserved-243F>
+2440..244A    ; Pattern_Syntax # So  [11] OCR HOOK..OCR DOUBLE BACKSLASH
+244B..245F    ; Pattern_Syntax # Cn  [21] <reserved-244B>..<reserved-245F>
+2500..25B6    ; Pattern_Syntax # So [183] BOX DRAWINGS LIGHT HORIZONTAL..BLACK RIGHT-POINTING TRIANGLE
+25B7          ; Pattern_Syntax # Sm       WHITE RIGHT-POINTING TRIANGLE
+25B8..25C0    ; Pattern_Syntax # So   [9] BLACK RIGHT-POINTING SMALL TRIANGLE..BLACK LEFT-POINTING TRIANGLE
+25C1          ; Pattern_Syntax # Sm       WHITE LEFT-POINTING TRIANGLE
+25C2..25F7    ; Pattern_Syntax # So  [54] BLACK LEFT-POINTING SMALL TRIANGLE..WHITE CIRCLE WITH UPPER RIGHT QUADRANT
+25F8..25FF    ; Pattern_Syntax # Sm   [8] UPPER LEFT TRIANGLE..LOWER RIGHT TRIANGLE
+2600..266E    ; Pattern_Syntax # So [111] BLACK SUN WITH RAYS..MUSIC NATURAL SIGN
+266F          ; Pattern_Syntax # Sm       MUSIC SHARP SIGN
+2670..269C    ; Pattern_Syntax # So  [45] WEST SYRIAC CROSS..FLEUR-DE-LIS
+269D..269F    ; Pattern_Syntax # Cn   [3] <reserved-269D>..<reserved-269F>
+26A0..26B1    ; Pattern_Syntax # So  [18] WARNING SIGN..FUNERAL URN
+26B2..2700    ; Pattern_Syntax # Cn  [79] <reserved-26B2>..<reserved-2700>
+2701..2704    ; Pattern_Syntax # So   [4] UPPER BLADE SCISSORS..WHITE SCISSORS
+2705          ; Pattern_Syntax # Cn       <reserved-2705>
+2706..2709    ; Pattern_Syntax # So   [4] TELEPHONE LOCATION SIGN..ENVELOPE
+270A..270B    ; Pattern_Syntax # Cn   [2] <reserved-270A>..<reserved-270B>
+270C..2727    ; Pattern_Syntax # So  [28] VICTORY HAND..WHITE FOUR POINTED STAR
+2728          ; Pattern_Syntax # Cn       <reserved-2728>
+2729..274B    ; Pattern_Syntax # So  [35] STRESS OUTLINED WHITE STAR..HEAVY EIGHT TEARDROP-SPOKED PROPELLER ASTERISK
+274C          ; Pattern_Syntax # Cn       <reserved-274C>
+274D          ; Pattern_Syntax # So       SHADOWED WHITE CIRCLE
+274E          ; Pattern_Syntax # Cn       <reserved-274E>
+274F..2752    ; Pattern_Syntax # So   [4] LOWER RIGHT DROP-SHADOWED WHITE SQUARE..UPPER RIGHT SHADOWED WHITE SQUARE
+2753..2755    ; Pattern_Syntax # Cn   [3] <reserved-2753>..<reserved-2755>
+2756          ; Pattern_Syntax # So       BLACK DIAMOND MINUS WHITE X
+2757          ; Pattern_Syntax # Cn       <reserved-2757>
+2758..275E    ; Pattern_Syntax # So   [7] LIGHT VERTICAL BAR..HEAVY DOUBLE COMMA QUOTATION MARK ORNAMENT
+275F..2760    ; Pattern_Syntax # Cn   [2] <reserved-275F>..<reserved-2760>
+2761..2767    ; Pattern_Syntax # So   [7] CURVED STEM PARAGRAPH SIGN ORNAMENT..ROTATED FLORAL HEART BULLET
+2768          ; Pattern_Syntax # Ps       MEDIUM LEFT PARENTHESIS ORNAMENT
+2769          ; Pattern_Syntax # Pe       MEDIUM RIGHT PARENTHESIS ORNAMENT
+276A          ; Pattern_Syntax # Ps       MEDIUM FLATTENED LEFT PARENTHESIS ORNAMENT
+276B          ; Pattern_Syntax # Pe       MEDIUM FLATTENED RIGHT PARENTHESIS ORNAMENT
+276C          ; Pattern_Syntax # Ps       MEDIUM LEFT-POINTING ANGLE BRACKET ORNAMENT
+276D          ; Pattern_Syntax # Pe       MEDIUM RIGHT-POINTING ANGLE BRACKET ORNAMENT
+276E          ; Pattern_Syntax # Ps       HEAVY LEFT-POINTING ANGLE QUOTATION MARK ORNAMENT
+276F          ; Pattern_Syntax # Pe       HEAVY RIGHT-POINTING ANGLE QUOTATION MARK ORNAMENT
+2770          ; Pattern_Syntax # Ps       HEAVY LEFT-POINTING ANGLE BRACKET ORNAMENT
+2771          ; Pattern_Syntax # Pe       HEAVY RIGHT-POINTING ANGLE BRACKET ORNAMENT
+2772          ; Pattern_Syntax # Ps       LIGHT LEFT TORTOISE SHELL BRACKET ORNAMENT
+2773          ; Pattern_Syntax # Pe       LIGHT RIGHT TORTOISE SHELL BRACKET ORNAMENT
+2774          ; Pattern_Syntax # Ps       MEDIUM LEFT CURLY BRACKET ORNAMENT
+2775          ; Pattern_Syntax # Pe       MEDIUM RIGHT CURLY BRACKET ORNAMENT
+2794          ; Pattern_Syntax # So       HEAVY WIDE-HEADED RIGHTWARDS ARROW
+2795..2797    ; Pattern_Syntax # Cn   [3] <reserved-2795>..<reserved-2797>
+2798..27AF    ; Pattern_Syntax # So  [24] HEAVY SOUTH EAST ARROW..NOTCHED LOWER RIGHT-SHADOWED WHITE RIGHTWARDS ARROW
+27B0          ; Pattern_Syntax # Cn       <reserved-27B0>
+27B1..27BE    ; Pattern_Syntax # So  [14] NOTCHED UPPER RIGHT-SHADOWED WHITE RIGHTWARDS ARROW..OPEN-OUTLINED RIGHTWARDS ARROW
+27BF          ; Pattern_Syntax # Cn       <reserved-27BF>
+27C0..27C4    ; Pattern_Syntax # Sm   [5] THREE DIMENSIONAL ANGLE..OPEN SUPERSET
+27C5          ; Pattern_Syntax # Ps       LEFT S-SHAPED BAG DELIMITER
+27C6          ; Pattern_Syntax # Pe       RIGHT S-SHAPED BAG DELIMITER
+27C7..27CF    ; Pattern_Syntax # Cn   [9] <reserved-27C7>..<reserved-27CF>
+27D0..27E5    ; Pattern_Syntax # Sm  [22] WHITE DIAMOND WITH CENTRED DOT..WHITE SQUARE WITH RIGHTWARDS TICK
+27E6          ; Pattern_Syntax # Ps       MATHEMATICAL LEFT WHITE SQUARE BRACKET
+27E7          ; Pattern_Syntax # Pe       MATHEMATICAL RIGHT WHITE SQUARE BRACKET
+27E8          ; Pattern_Syntax # Ps       MATHEMATICAL LEFT ANGLE BRACKET
+27E9          ; Pattern_Syntax # Pe       MATHEMATICAL RIGHT ANGLE BRACKET
+27EA          ; Pattern_Syntax # Ps       MATHEMATICAL LEFT DOUBLE ANGLE BRACKET
+27EB          ; Pattern_Syntax # Pe       MATHEMATICAL RIGHT DOUBLE ANGLE BRACKET
+27EC..27EF    ; Pattern_Syntax # Cn   [4] <reserved-27EC>..<reserved-27EF>
+27F0..27FF    ; Pattern_Syntax # Sm  [16] UPWARDS QUADRUPLE ARROW..LONG RIGHTWARDS SQUIGGLE ARROW
+2800..28FF    ; Pattern_Syntax # So [256] BRAILLE PATTERN BLANK..BRAILLE PATTERN DOTS-12345678
+2900..2982    ; Pattern_Syntax # Sm [131] RIGHTWARDS TWO-HEADED ARROW WITH VERTICAL STROKE..Z NOTATION TYPE COLON
+2983          ; Pattern_Syntax # Ps       LEFT WHITE CURLY BRACKET
+2984          ; Pattern_Syntax # Pe       RIGHT WHITE CURLY BRACKET
+2985          ; Pattern_Syntax # Ps       LEFT WHITE PARENTHESIS
+2986          ; Pattern_Syntax # Pe       RIGHT WHITE PARENTHESIS
+2987          ; Pattern_Syntax # Ps       Z NOTATION LEFT IMAGE BRACKET
+2988          ; Pattern_Syntax # Pe       Z NOTATION RIGHT IMAGE BRACKET
+2989          ; Pattern_Syntax # Ps       Z NOTATION LEFT BINDING BRACKET
+298A          ; Pattern_Syntax # Pe       Z NOTATION RIGHT BINDING BRACKET
+298B          ; Pattern_Syntax # Ps       LEFT SQUARE BRACKET WITH UNDERBAR
+298C          ; Pattern_Syntax # Pe       RIGHT SQUARE BRACKET WITH UNDERBAR
+298D          ; Pattern_Syntax # Ps       LEFT SQUARE BRACKET WITH TICK IN TOP CORNER
+298E          ; Pattern_Syntax # Pe       RIGHT SQUARE BRACKET WITH TICK IN BOTTOM CORNER
+298F          ; Pattern_Syntax # Ps       LEFT SQUARE BRACKET WITH TICK IN BOTTOM CORNER
+2990          ; Pattern_Syntax # Pe       RIGHT SQUARE BRACKET WITH TICK IN TOP CORNER
+2991          ; Pattern_Syntax # Ps       LEFT ANGLE BRACKET WITH DOT
+2992          ; Pattern_Syntax # Pe       RIGHT ANGLE BRACKET WITH DOT
+2993          ; Pattern_Syntax # Ps       LEFT ARC LESS-THAN BRACKET
+2994          ; Pattern_Syntax # Pe       RIGHT ARC GREATER-THAN BRACKET
+2995          ; Pattern_Syntax # Ps       DOUBLE LEFT ARC GREATER-THAN BRACKET
+2996          ; Pattern_Syntax # Pe       DOUBLE RIGHT ARC LESS-THAN BRACKET
+2997          ; Pattern_Syntax # Ps       LEFT BLACK TORTOISE SHELL BRACKET
+2998          ; Pattern_Syntax # Pe       RIGHT BLACK TORTOISE SHELL BRACKET
+2999..29D7    ; Pattern_Syntax # Sm  [63] DOTTED FENCE..BLACK HOURGLASS
+29D8          ; Pattern_Syntax # Ps       LEFT WIGGLY FENCE
+29D9          ; Pattern_Syntax # Pe       RIGHT WIGGLY FENCE
+29DA          ; Pattern_Syntax # Ps       LEFT DOUBLE WIGGLY FENCE
+29DB          ; Pattern_Syntax # Pe       RIGHT DOUBLE WIGGLY FENCE
+29DC..29FB    ; Pattern_Syntax # Sm  [32] INCOMPLETE INFINITY..TRIPLE PLUS
+29FC          ; Pattern_Syntax # Ps       LEFT-POINTING CURVED ANGLE BRACKET
+29FD          ; Pattern_Syntax # Pe       RIGHT-POINTING CURVED ANGLE BRACKET
+29FE..2AFF    ; Pattern_Syntax # Sm [258] TINY..N-ARY WHITE VERTICAL BAR
+2B00..2B13    ; Pattern_Syntax # So  [20] NORTH EAST WHITE ARROW..SQUARE WITH BOTTOM HALF BLACK
+2B14..2BFF    ; Pattern_Syntax # Cn [236] <reserved-2B14>..<reserved-2BFF>
+2E00..2E01    ; Pattern_Syntax # Po   [2] RIGHT ANGLE SUBSTITUTION MARKER..RIGHT ANGLE DOTTED SUBSTITUTION MARKER
+2E02          ; Pattern_Syntax # Pi       LEFT SUBSTITUTION BRACKET
+2E03          ; Pattern_Syntax # Pf       RIGHT SUBSTITUTION BRACKET
+2E04          ; Pattern_Syntax # Pi       LEFT DOTTED SUBSTITUTION BRACKET
+2E05          ; Pattern_Syntax # Pf       RIGHT DOTTED SUBSTITUTION BRACKET
+2E06..2E08    ; Pattern_Syntax # Po   [3] RAISED INTERPOLATION MARKER..DOTTED TRANSPOSITION MARKER
+2E09          ; Pattern_Syntax # Pi       LEFT TRANSPOSITION BRACKET
+2E0A          ; Pattern_Syntax # Pf       RIGHT TRANSPOSITION BRACKET
+2E0B          ; Pattern_Syntax # Po       RAISED SQUARE
+2E0C          ; Pattern_Syntax # Pi       LEFT RAISED OMISSION BRACKET
+2E0D          ; Pattern_Syntax # Pf       RIGHT RAISED OMISSION BRACKET
+2E0E..2E16    ; Pattern_Syntax # Po   [9] EDITORIAL CORONIS..DOTTED RIGHT-POINTING ANGLE
+2E17          ; Pattern_Syntax # Pd       DOUBLE OBLIQUE HYPHEN
+2E18..2E1B    ; Pattern_Syntax # Cn   [4] <reserved-2E18>..<reserved-2E1B>
+2E1C          ; Pattern_Syntax # Pi       LEFT LOW PARAPHRASE BRACKET
+2E1D          ; Pattern_Syntax # Pf       RIGHT LOW PARAPHRASE BRACKET
+2E1E..2E7F    ; Pattern_Syntax # Cn  [98] <reserved-2E1E>..<reserved-2E7F>
+3001..3003    ; Pattern_Syntax # Po   [3] IDEOGRAPHIC COMMA..DITTO MARK
+3008          ; Pattern_Syntax # Ps       LEFT ANGLE BRACKET
+3009          ; Pattern_Syntax # Pe       RIGHT ANGLE BRACKET
+300A          ; Pattern_Syntax # Ps       LEFT DOUBLE ANGLE BRACKET
+300B          ; Pattern_Syntax # Pe       RIGHT DOUBLE ANGLE BRACKET
+300C          ; Pattern_Syntax # Ps       LEFT CORNER BRACKET
+300D          ; Pattern_Syntax # Pe       RIGHT CORNER BRACKET
+300E          ; Pattern_Syntax # Ps       LEFT WHITE CORNER BRACKET
+300F          ; Pattern_Syntax # Pe       RIGHT WHITE CORNER BRACKET
+3010          ; Pattern_Syntax # Ps       LEFT BLACK LENTICULAR BRACKET
+3011          ; Pattern_Syntax # Pe       RIGHT BLACK LENTICULAR BRACKET
+3012..3013    ; Pattern_Syntax # So   [2] POSTAL MARK..GETA MARK
+3014          ; Pattern_Syntax # Ps       LEFT TORTOISE SHELL BRACKET
+3015          ; Pattern_Syntax # Pe       RIGHT TORTOISE SHELL BRACKET
+3016          ; Pattern_Syntax # Ps       LEFT WHITE LENTICULAR BRACKET
+3017          ; Pattern_Syntax # Pe       RIGHT WHITE LENTICULAR BRACKET
+3018          ; Pattern_Syntax # Ps       LEFT WHITE TORTOISE SHELL BRACKET
+3019          ; Pattern_Syntax # Pe       RIGHT WHITE TORTOISE SHELL BRACKET
+301A          ; Pattern_Syntax # Ps       LEFT WHITE SQUARE BRACKET
+301B          ; Pattern_Syntax # Pe       RIGHT WHITE SQUARE BRACKET
+301C          ; Pattern_Syntax # Pd       WAVE DASH
+301D          ; Pattern_Syntax # Ps       REVERSED DOUBLE PRIME QUOTATION MARK
+301E..301F    ; Pattern_Syntax # Pe   [2] DOUBLE PRIME QUOTATION MARK..LOW DOUBLE PRIME QUOTATION MARK
+3020          ; Pattern_Syntax # So       POSTAL MARK FACE
+3030          ; Pattern_Syntax # Pd       WAVY DASH
+FD3E          ; Pattern_Syntax # Ps       ORNATE LEFT PARENTHESIS
+FD3F          ; Pattern_Syntax # Pe       ORNATE RIGHT PARENTHESIS
+FE45..FE46    ; Pattern_Syntax # Po   [2] SESAME DOT..WHITE SESAME DOT
+
+# Total code points: 2760

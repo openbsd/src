@@ -20,7 +20,7 @@ and
   perl comp.pl --do cecopy pc:..\lib\Exporter.pm ce:[p]\lib
 
 --copy copies file to CE device
-  here also [p] will be expanded to corrent PerlCE path, and additionally
+  here also [p] will be expanded to current PerlCE path, and additionally
   when --copy=compact specified then, if filename looks like perl module,
   then POD will be stripped away from that file
   modules

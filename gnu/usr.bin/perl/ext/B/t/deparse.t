@@ -1,12 +1,16 @@
 #!./perl
 
 BEGIN {
-    chdir 't' if -d 't';
-    if ($^O eq 'MacOS') {
-	@INC = qw(: ::lib ::macos:lib);
+    if ($ENV{PERL_CORE}){
+	chdir('t') if -d 't';
+	if ($^O eq 'MacOS') {
+	    @INC = qw(: ::lib ::macos:lib);
+	} else {
+	    @INC = '.';
+	    push @INC, '../lib';
+	}
     } else {
-	@INC = '.';
-	push @INC, '../lib';
+	unshift @INC, 't';
     }
     require Config;
     if (($Config::Config{'extensions'} !~ /\bB\b/) ){
@@ -20,7 +24,7 @@ use warnings;
 use strict;
 use Config;
 
-print "1..37\n";
+print "1..39\n";
 
 use B::Deparse;
 my $deparse = B::Deparse->new() or print "not ";
@@ -125,6 +129,37 @@ $b =~ s/(LINE:)/sub BEGIN {
 $1/ if $Is_MacOS;
 print "# [$a]\n\# vs expected\n# [$b]\nnot " if $a ne $b;
 print "ok " . $i++ . "\n";
+
+#Re: perlbug #35857, patch #24505
+#handle warnings::register-ed packages properly.
+package B::Deparse::Wrapper;
+use strict;
+use warnings;
+use warnings::register;
+sub getcode {
+   my $deparser = B::Deparse->new();
+   return $deparser->coderef2text(shift);
+}
+
+package main;
+use strict;
+use warnings;
+sub test {
+   my $val = shift;
+   my $res = B::Deparse::Wrapper::getcode($val);
+   print $res =~ /use warnings/ ? '' : 'not ', 'ok ', $i++, "\n";
+}
+my ($q,$p);
+my $x=sub { ++$q,++$p };
+test($x);
+eval <<EOFCODE and test($x);
+   package bar;
+   use strict;
+   use warnings;
+   use warnings::register;
+   package main;
+   1
+EOFCODE
 
 __DATA__
 # 2
@@ -282,6 +317,6 @@ print((reverse sort {$b <=> $a} @x));
 our @a;
 print $_ foreach (reverse @a);
 ####
-# 32
+# 33
 our @a;
 print $_ foreach (reverse 1, 2..5);

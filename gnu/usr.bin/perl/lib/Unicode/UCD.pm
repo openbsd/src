@@ -3,7 +3,7 @@ package Unicode::UCD;
 use strict;
 use warnings;
 
-our $VERSION = '0.22';
+our $VERSION = '0.24';
 
 use Storable qw(dclone);
 
@@ -16,7 +16,8 @@ our @EXPORT_OK = qw(charinfo
 		    charblocks charscripts
 		    charinrange
 		    compexcl
-		    casefold casespec);
+		    casefold casespec
+		    namedseq);
 
 use Carp;
 
@@ -48,6 +49,9 @@ Unicode::UCD - Unicode character database
     use Unicode::UCD 'compexcl';
     my $compexcl = compexcl($codepoint);
 
+    use Unicode::UCD 'namedseq';
+    my $namedseq = namedseq($named_sequence_name);
+
     my $unicode_version = Unicode::UCD::UnicodeVersion();
 
 =head1 DESCRIPTION
@@ -64,6 +68,7 @@ my $VERSIONFH;
 my $COMPEXCLFH;
 my $CASEFOLDFH;
 my $CASESPECFH;
+my $NAMEDSEQFH;
 
 sub openunicode {
     my ($rfh, @path) = @_;
@@ -287,9 +292,9 @@ See also L</Blocks versus Scripts>.
 If supplied with an argument that can't be a code point, charblock() tries
 to do the opposite and interpret the argument as a character block. The
 return value is a I<range>: an anonymous list of lists that contain
-I<start-of-range>, I<end-of-range> code point pairs. You can test whether a
-code point is in a range using the L</charinrange> function. If the
-argument is not a known charater block, C<undef> is returned.
+I<start-of-range>, I<end-of-range> code point pairs. You can test whether
+a code point is in a range using the L</charinrange> function. If the
+argument is not a known character block, C<undef> is returned.
 
 =cut
 
@@ -351,7 +356,7 @@ to do the opposite and interpret the argument as a character script. The
 return value is a I<range>: an anonymous list of lists that contain
 I<start-of-range>, I<end-of-range> code point pairs. You can test whether a
 code point is in a range using the L</charinrange> function. If the
-argument is not a known charater script, C<undef> is returned.
+argument is not a known character script, C<undef> is returned.
 
 =cut
 
@@ -714,6 +719,63 @@ sub casespec {
     _casespec() unless %CASESPEC;
 
     return ref $CASESPEC{$code} ? dclone $CASESPEC{$code} : $CASESPEC{$code};
+}
+
+=head2 namedseq()
+
+    use Unicode::UCD 'namedseq';
+
+    my $namedseq = namedseq("KATAKANA LETTER AINU P");
+    my @namedseq = namedseq("KATAKANA LETTER AINU P");
+    my %namedseq = namedseq();
+
+If used with a single argument in a scalar context, returns the string
+consisting of the code points of the named sequence, or C<undef> if no
+named sequence by that name exists.  If used with a single argument in
+a list context, returns list of the code points.  If used with no
+arguments in a list context, returns a hash with the names of the
+named sequences as the keys and the named sequences as strings as
+the values.  Otherwise, returns C<undef> or empty list depending
+on the context.
+
+(New from Unicode 4.1.0)
+
+=cut
+
+my %NAMEDSEQ;
+
+sub _namedseq {
+    unless (%NAMEDSEQ) {
+	if (openunicode(\$NAMEDSEQFH, "NamedSequences.txt")) {
+	    local $_;
+	    while (<$NAMEDSEQFH>) {
+		if (/^(.+)\s*;\s*([0-9A-F]+(?: [0-9A-F]+)*)$/) {
+		    my ($n, $s) = ($1, $2);
+		    my @s = map { chr(hex($_)) } split(' ', $s);
+		    $NAMEDSEQ{$n} = join("", @s);
+		}
+	    }
+	    close($NAMEDSEQFH);
+	}
+    }
+}
+
+sub namedseq {
+    _namedseq() unless %NAMEDSEQ;
+    my $wantarray = wantarray();
+    if (defined $wantarray) {
+	if ($wantarray) {
+	    if (@_ == 0) {
+		return %NAMEDSEQ;
+	    } elsif (@_ == 1) {
+		my $s = $NAMEDSEQ{ $_[0] };
+		return defined $s ? map { ord($_) } split('', $s) : ();
+	    }
+	} elsif (@_ == 1) {
+	    return $NAMEDSEQ{ $_[0] };
+	}
+    }
+    return;
 }
 
 =head2 Unicode::UCD::UnicodeVersion

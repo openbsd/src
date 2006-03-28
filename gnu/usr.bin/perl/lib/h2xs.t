@@ -57,6 +57,9 @@ my $name = 'h2xst';
 my $header = "$name.h";
 my $thisversion = sprintf "%vd", $^V;
 
+# If this test has failed previously a copy may be left.
+rmtree($name);
+
 my @tests = (
 "-f -n $name", $], <<"EOXSFILES",
 Defaulting to backwards compatibility with perl $thisversion

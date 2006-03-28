@@ -5,6 +5,7 @@ BEGIN {
     @INC = '../lib';
     $ENV{PERL5LIB} = '../lib';
     require Config; import Config;
+    require './test.pl';
 }
 
 use File::Path;
@@ -12,12 +13,8 @@ use File::Spec::Functions;
 
 $| = 1;
 
-my $Is_VMS     = $^O eq 'VMS';
-my $Is_MSWin32 = $^O eq 'MSWin32';
-my $Is_NetWare = $^O eq 'NetWare';
 my $Is_MacOS   = $^O eq 'MacOS';
 my $tmpfile = "tmp0000";
-my $i = 0 ;
 1 while -e ++$tmpfile;
 END {  if ($tmpfile) { 1 while unlink $tmpfile} }
 
@@ -59,7 +56,8 @@ foreach my $file (@w_files) {
 
 undef $/;
 
-print "1.." . (scalar(@prgs)-$files) . "\n";
+plan tests => (scalar(@prgs)-$files);
+
 
 
 for (@prgs){
@@ -73,13 +71,14 @@ for (@prgs){
     my @temp_path = () ;
     if (s/^\s*-\w+//){
         $switch = $&;
-        $switch =~ s/(-\S*[A-Z]\S*)/"$1"/ if $Is_VMS; # protect uc switches
     }
     my($prog,$expected) = split(/\nEXPECT\n/, $_);
+    my ($todo, $todo_reason);
+    $todo = $prog =~ s/^#\s*TODO(.*)\n//m and $todo_reason = $1;
     if ( $prog =~ /--FILE--/) {
         my(@files) = split(/\n--FILE--\s*([^\s\n]*)\s*\n/, $prog) ;
 	shift @files ;
-	die "Internal error test $i didn't split into pairs, got " .
+	die "Internal error test $test didn't split into pairs, got " .
 		scalar(@files) . "[" . join("%%%%", @files) ."]\n"
 	    if @files % 2 ;
 	while (@files > 2) {
@@ -114,15 +113,7 @@ for (@prgs){
     print TEST "\n#line 1\n";  # So the line numbers don't get messed up.
     print TEST $prog,"\n";
     close TEST or die "Cannot close $tmpfile: $!";
-    my $results = $Is_VMS ?
-	              `./perl "-I../lib" $switch $tmpfile` :
-		  $Is_MSWin32 ?
-		      `.\\perl -I../lib $switch $tmpfile` :
-		  $Is_NetWare ?
-		      `perl -I../lib $switch $tmpfile` :
-		  $Is_MacOS ?
-		      `$^X -I::lib $switch -MMac::err=unix $tmpfile` :
-                  `./perl -I../lib $switch $tmpfile`;
+    my $results = runperl( switches => [$switch], stderr => 1, progfile => $tmpfile );
     my $status = $?;
     $results =~ s/\n+$//;
     # allow expected output to be written as if $prog is on STDIN
@@ -166,23 +157,34 @@ for (@prgs){
     }
     die "$0: can't have OPTION regex and random\n"
         if $option_regex + option_random > 1;
+    my $ok = 1;
     if ( $results =~ s/^SKIPPED\n//) {
 	print "$results\n" ;
     }
     elsif ($option_random)
     {
-        print "not " if !randomMatch($results, $expected);
+        $ok = randomMatch($results, $expected);
     }
     elsif (($prefix  && (( $option_regex && $results !~ /^$expected/) ||
 			 (!$option_regex && $results !~ /^\Q$expected/))) or
 	   (!$prefix && (( $option_regex && $results !~ /^$expected/) ||
 			 (!$option_regex && $results ne $expected)))) {
-        print STDERR "PROG: $switch\n$prog\n";
-        print STDERR "EXPECTED:\n$expected\n";
-        print STDERR "GOT:\n$results\n";
-        print "not ";
+        my $err_line = "PROG: $switch\n$prog\n" .
+                       "EXPECTED:\n$expected\n" .
+                       "GOT:\n$results\n";
+        if ($todo) {
+            $err_line =~ s/^/# /mg;
+            print $err_line;  # Harness can't filter it out from STDERR.
+        }
+        else {
+            print STDERR $err_line;
+        }
+        $ok = 0;
     }
-    print "ok " . ++$i . "\n";
+
+    $TODO = $todo ? $todo_reason : 0;
+    ok($ok);
+
     foreach (@temps)
 	{ unlink $_ if $_ }
     foreach (@temp_path)

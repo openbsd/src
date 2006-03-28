@@ -1,7 +1,7 @@
 5.005000
 PL_modglobal                   # E
 cx_dump                        # U
-debop                          # U
+debop                          # E
 debprofdump                    # U
 fbm_compile                    # E (Perl_fbm_compile)
 fbm_instr                      # E (Perl_fbm_instr)

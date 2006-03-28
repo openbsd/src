@@ -232,7 +232,6 @@ XS(w32_LookupAccountSID)
     char Domain[256];
     DWORD DomLen = sizeof(Domain);
     SID_NAME_USE snu;
-    long retval;
     STRLEN n_a;
     BOOL bResult;
 
@@ -242,7 +241,6 @@ XS(w32_LookupAccountSID)
     sid = SvPV(ST(1), n_a);
     if (IsValidSid(sid)) {
 	if (USING_WIDE()) {
-	    WCHAR wSID[sizeof(SID)];
 	    WCHAR wDomain[sizeof(Domain)];
 	    WCHAR wSystem[MAX_PATH+1];
 	    WCHAR wAccount[sizeof(Account)];
@@ -572,14 +570,14 @@ XS(w32_GuidGen)
 
     if (SUCCEEDED(hr)) {
 	LPOLESTR pStr = NULL;
-	StringFromCLSID(&guid, &pStr);
-	WideCharToMultiByte(CP_ACP, 0, pStr, wcslen(pStr), szGUID,
-			    sizeof(szGUID), NULL, NULL);
-
-	XSRETURN_PV(szGUID);
+	if (SUCCEEDED(StringFromCLSID(&guid, &pStr))) {
+            WideCharToMultiByte(CP_ACP, 0, pStr, wcslen(pStr), szGUID,
+                                sizeof(szGUID), NULL, NULL);
+            CoTaskMemFree(pStr);
+            XSRETURN_PV(szGUID);
+        }
     }
-    else
-	XSRETURN_UNDEF;
+    XSRETURN_UNDEF;
 }
 
 XS(w32_GetFolderPath)
@@ -626,6 +624,57 @@ XS(w32_GetFolderPath)
     XSRETURN_UNDEF;
 }
 
+XS(w32_GetFileVersion)
+{
+    dXSARGS;
+    DWORD size;
+    DWORD handle;
+    char *filename;
+    char *data;
+
+    if (items != 1)
+	croak("usage: Win32::GetFileVersion($filename)\n");
+
+    filename = SvPV_nolen(ST(0));
+    size = GetFileVersionInfoSize(filename, &handle);
+    if (!size)
+        XSRETURN_UNDEF;
+
+    New(0, data, size, char);
+    if (!data)
+        XSRETURN_UNDEF;
+
+    if (GetFileVersionInfo(filename, handle, size, data)) {
+        VS_FIXEDFILEINFO *info;
+        UINT len;
+        if (VerQueryValue(data, "\\", (void**)&info, &len)) {
+            int dwValueMS1 = (info->dwFileVersionMS>>16);
+            int dwValueMS2 = (info->dwFileVersionMS&0xffff);
+            int dwValueLS1 = (info->dwFileVersionLS>>16);
+            int dwValueLS2 = (info->dwFileVersionLS&0xffff);
+
+            if (GIMME_V == G_ARRAY) {
+                EXTEND(SP, 4);
+                XST_mIV(0, dwValueMS1);
+                XST_mIV(1, dwValueMS2);
+                XST_mIV(2, dwValueLS1);
+                XST_mIV(3, dwValueLS2);
+                items = 4;
+            }
+            else {
+                char version[50];
+                sprintf(version, "%d.%d.%d.%d", dwValueMS1, dwValueMS2, dwValueLS1, dwValueLS2);
+                XST_mPV(0, version);
+            }
+        }
+    }
+    else
+        items = 0;
+
+    Safefree(data);
+    XSRETURN(items);
+}
+
 XS(boot_Win32)
 {
     dXSARGS;
@@ -647,6 +696,7 @@ XS(boot_Win32)
     newXS("Win32::GuidGen", w32_GuidGen, file);
     newXS("Win32::GetFolderPath", w32_GetFolderPath, file);
     newXS("Win32::IsAdminUser", w32_IsAdminUser, file);
+    newXS("Win32::GetFileVersion", w32_GetFileVersion, file);
 
     XSRETURN_YES;
 }

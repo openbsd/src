@@ -19,7 +19,7 @@ BEGIN {
 use Test;
 use strict;
 use warnings;
-BEGIN { plan tests => 18 };
+BEGIN { plan tests => 29 };
 use Unicode::Normalize qw(normalize);
 ok(1); # If we made it this far, we're ok.
 
@@ -57,3 +57,19 @@ ok(hexNFD("0061 05AE 05C4 0300 0315 0062"), "0061 05AE 05C4 0300 0315 0062");
 ok(hexNFC("0000 0041 0000 0000"), "0000 0041 0000 0000");
 ok(hexNFD("0000 0041 0000 0000"), "0000 0041 0000 0000");
 
+ok(hexNFC("AC00 11A7"), "AC00 11A7");
+ok(hexNFC("AC00 11A8"), "AC01");
+ok(hexNFC("AC00 11A9"), "AC02");
+ok(hexNFC("AC00 11C2"), "AC1B");
+ok(hexNFC("AC00 11C3"), "AC00 11C3");
+
+# Test Cases from Public Review Issue #29: Normalization Issue
+# cf. http://www.unicode.org/review/pr-29.html
+ok(hexNFC("0B47 0300 0B3E"), "0B47 0300 0B3E");
+ok(hexNFC("1100 0300 1161"), "1100 0300 1161");
+
+ok(hexNFC("0B47 0B3E 0300"), "0B4B 0300");
+ok(hexNFC("1100 1161 0300"), "AC00 0300");
+
+ok(hexNFC("0B47 0300 0B3E 0327"), "0B47 0300 0B3E 0327");
+ok(hexNFC("1100 0300 1161 0327"), "1100 0300 1161 0327");

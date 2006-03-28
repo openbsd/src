@@ -53,3 +53,13 @@ Perl_printf_nocontext(const char *format, ...)
 }
 
 #include "perlapi.h"		/* bring in PL_force_link_funcs */
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ *
+ * ex: set ts=8 sts=4 sw=4 noet:
+ */

@@ -1,7 +1,7 @@
 package Encode::MIME::Header;
 use strict;
 # use warnings;
-our $VERSION = do { my @r = (q$Revision: 2.0 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 2.1 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 use Encode qw(find_encoding encode_utf8 decode_utf8);
 use MIME::Base64;
 use Carp;
@@ -215,6 +215,10 @@ It would be nice to support encoding to non-UTF8, such as =?ISO-2022-JP?
 and =?ISO-8859-1?= but that makes the implementation too complicated.
 These days major mail agents all support =?UTF-8? so I think it is
 just good enough.
+
+Due to popular demand, 'MIME-Header-ISO_2022_JP' was introduced by
+Makamaka.  Thre are still too many MUAs especially cellular phone
+handsets which does not grok UTF-8.
 
 =head1 SEE ALSO
 

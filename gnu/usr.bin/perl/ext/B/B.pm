@@ -7,7 +7,7 @@
 #
 package B;
 
-our $VERSION = '1.07';
+our $VERSION = '1.09_01';
 
 use XSLoader ();
 require Exporter;
@@ -31,12 +31,12 @@ use strict;
 @B::NULL::ISA = 'B::SV';
 @B::PV::ISA = 'B::SV';
 @B::IV::ISA = 'B::SV';
-@B::NV::ISA = 'B::IV';
+@B::NV::ISA = 'B::SV';
 @B::RV::ISA = 'B::SV';
 @B::PVIV::ISA = qw(B::PV B::IV);
-@B::PVNV::ISA = qw(B::PV B::NV);
+@B::PVNV::ISA = qw(B::PVIV B::NV);
 @B::PVMG::ISA = 'B::PVNV';
-# Change in the inheritance hierarchy post 5.8
+# Change in the inheritance hierarchy post 5.9.0
 @B::PVLV::ISA = $] > 5.009 ? 'B::GV' : 'B::PVMG';
 @B::BM::ISA = 'B::PVMG';
 @B::AV::ISA = 'B::PVMG';
@@ -128,7 +128,7 @@ sub walkoptree_slow {
 	}
 	shift @parents;
     }
-    if (class($op) eq 'PMOP' && $op->pmreplroot && ${$op->pmreplroot}) {
+    if (class($op) eq 'PMOP' && ref($op->pmreplroot) && ${$op->pmreplroot}) {
 	unshift(@parents, $op);
 	walkoptree_slow($op->pmreplroot, $method, $level + 1);
 	shift @parents;
@@ -368,6 +368,10 @@ class. Apart from functions such as C<main_root>, this is the primary
 way to get an initial "handle" on an internal perl data structure
 which can then be followed with the other access methods.
 
+The returned object will only be valid as long as the underlying OPs
+and SVs continue to exist. Do not attempt to use the object after the
+underlying structures are freed.
+
 =item amagic_generation
 
 Returns the SV object corresponding to the C variable C<amagic_generation>.
@@ -523,42 +527,46 @@ The bulk of the C<B> module is the methods for accessing fields of
 these structures.
 
 Note that all access is read-only.  You cannot modify the internals by
-using this module.
+using this module. Also, note that the B::OP and B::SV objects created
+by this module are only valid for as long as the underlying objects
+exist; their creation doesn't increase the reference counts of the
+underlying objects. Trying to access the fields of a freed object will
+give incomprehensible results, or worse.
 
 =head2 SV-RELATED CLASSES
 
 B::IV, B::NV, B::RV, B::PV, B::PVIV, B::PVNV, B::PVMG, B::BM, B::PVLV,
 B::AV, B::HV, B::CV, B::GV, B::FM, B::IO. These classes correspond in
 the obvious way to the underlying C structures of similar names. The
-inheritance hierarchy mimics the underlying C "inheritance". For 5.9 and
-later this is:
+inheritance hierarchy mimics the underlying C "inheritance". For 5.9.1
+and later this is:
 
                              B::SV
                                |
-                +--------------+----------------------+
-                |              |                      |
-              B::PV          B::IV                  B::RV
-                |  \        /     \
-                |   \      /       \
-                |   B::PVIV         B::NV
-                 \                 /
-                  \____         __/
-                       \       /
-                        B::PVNV
-                           |
-                           |
-                        B::PVMG
-                           |
-                +-----+----+------+-----+-----+
-                |     |    |      |     |     |
-              B::BM B::AV B::GV B::HV B::CV B::IO
-                           |            |
-                        B::PVLV         |
-                                      B::FM
+                +--------------+----------+------------+
+                |              |          |            |
+              B::PV          B::IV      B::NV        B::RV
+                   \         /          /
+                    \       /          /
+                     B::PVIV          /
+                         \           /
+                          \         /
+                           \       /
+                            B::PVNV
+                               |
+                               |
+                            B::PVMG
+                               |
+                    +-----+----+------+-----+-----+
+                    |     |    |      |     |     |
+                  B::BM B::AV B::GV B::HV B::CV B::IO
+                               |            |
+                            B::PVLV         |
+                                          B::FM
 
 
-For 5.8 and earlier, PVLV is a direct subclass of PVMG, so the base of this
-diagram is
+For 5.9.0 and earlier, PVLV is a direct subclass of PVMG, so the base
+of this diagram is
 
                            |
                         B::PVMG

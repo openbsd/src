@@ -5,7 +5,7 @@ use strict;
 # use warnings;	# dont use warnings for older Perls
 use vars qw/$VERSION/;
 
-$VERSION = '0.04';
+$VERSION = '0.05';
 
 package Math::BigInt;
 
@@ -16,6 +16,8 @@ my $CALC_EMU;
 BEGIN
   {
   $CALC_EMU = Math::BigInt->config()->{'lib'};
+  # register us with MBI to get notified of future lib changes
+  Math::BigInt::_register_callback( __PACKAGE__, sub { $CALC_EMU = $_[0]; } );
   }
 
 sub __emu_band
@@ -288,18 +290,26 @@ Math::BigInt::CalcEmu - Emulate low-level math with BigInt code
 
 =head1 SYNOPSIS
 
-Contains routines that emulate low-level math functions in BigInt, e.g.
-optional routines the low-level math package does not provide on it's own.
-
-Will be loaded on demand and automatically by BigInt.
-
-Stuff here is really low-priority to optimize,
-since it is far better to implement the operation in the low-level math
-libary directly, possible even using a call to the native lib.
+	use Math::BigInt::CalcEmu;
 
 =head1 DESCRIPTION
 
+Contains routines that emulate low-level math functions in BigInt, e.g.
+optional routines the low-level math package does not provide on it's own.
+
+Will be loaded on demand and called automatically by BigInt.
+
+Stuff here is really low-priority to optimize, since it is far better to
+implement the operation in the low-level math libary directly, possible even
+using a call to the native lib.
+
 =head1 METHODS
+
+=head2 __emu_bxor
+
+=head2 __emu_band
+
+=head2 __emu_bior
 
 =head1 LICENSE
  

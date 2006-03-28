@@ -13,24 +13,24 @@ BEGIN {
     }
 }
 
-
+use strict;
+use Test::More tests => 5;
 use List::Util qw(min);
 
-print "1..5\n";
+my $v;
 
-print "not " unless defined &min;
-print "ok 1\n";
+ok(defined &min, 'defined');
 
-print "not " unless min(9) == 9;
-print "ok 2\n";
+$v = min(9);
+is($v, 9, 'single arg');
 
-print "not " unless min(1,2) == 1;
-print "ok 3\n";
+$v = min (1,2);
+is($v, 1, '2-arg ordered');
 
-print "not " unless min(2,1) == 1;
-print "ok 4\n";
+$v = min(2,1);
+is($v, 1, '2-arg reverse ordered');
 
 my @a = map { rand() } 1 .. 20;
 my @b = sort { $a <=> $b } @a;
-print "not " unless min(@a) == $b[0];
-print "ok 5\n";
+$v = min(@a);
+is($v, $b[0], '20-arg random order');

@@ -1,14 +1,25 @@
 #!./perl
 
 BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
+    chdir 't' and @INC = '../lib' if -f 't/TEST';
 }
 
-use Test::More tests => 6;
+my $t = 1;
+print "1..5\n";
+sub ok {
+  print "not " unless shift;
+  print "ok $t # ", shift, "\n";
+  $t++;
+}
 
 my $v_plus = $] + 1;
 my $v_minus = $] - 1;
+
+unless (eval 'use open ":std"; 1') {
+  # pretend that open.pm is present
+  $INC{'open.pm'} = 'open.pm';
+  eval 'sub open::foo{}';		# Just in case...
+}
 
 
 ok( eval "use if ($v_minus > \$]), strict => 'subs'; \${'f'} = 12" eq 12,
@@ -24,8 +35,7 @@ ok( (not defined eval "use if ($v_plus > \$]), strict => 'refs'; \${'f'} = 12"
      and $@ =~ /while "strict refs" in use/),
     '"use if" with a true condition and a pragma');
 
-ok( eval "use if 1, Cwd; cwd() || 1;",
-    '"use if" with a true condition, module, no arguments, exports');
-
-ok( eval "use if qw/ 1 if 1 strict subs /; \${'f'} = 12" eq 12,
-    '"use if" with a module named after keyword');
+# Old version had problems with the module name `open', which is a keyword too
+# Use 'open' =>, since pre-5.6.0 could interpret differently
+ok( (eval "use if ($v_plus > \$]), 'open' => IN => ':crlf'; 12" || 0) eq 12,
+    '"use if" with open');

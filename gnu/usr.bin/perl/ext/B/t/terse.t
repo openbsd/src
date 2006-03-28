@@ -1,8 +1,12 @@
 #!./perl
 
 BEGIN {
-	chdir 't' if -d 't';
-	@INC = '../lib';
+        if ($ENV{PERL_CORE}){
+	        chdir('t') if -d 't';
+	        @INC = ('.', '../lib');
+        } else {
+	        unshift @INC, 't';
+        }
 	require Config;
 	if (($Config::Config{'extensions'} !~ /\bB\b/) ){
 		print "1..0 # Skip -- Perl configured without B module\n";
@@ -50,8 +54,8 @@ foreach (@lines) {
 		my $op = $1;
 		next unless exists $ops{$op};
 		like( $_, $ops{$op}, "$op " );
-		delete $ops{$op};
 		s/$ops{$op}//;
+		delete $ops{$op};
 		redo if $_;
 	}
 }
@@ -76,7 +80,7 @@ sub bar {
 	$a = 1.234;
 
 	# this is awful, but it gives a PMOP
-	my $boo = split('', $foo);
+	our @ary = split('', $foo);
 
 	# PVOP, LOOP
 	LOOP: for (1 .. 10) {

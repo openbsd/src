@@ -49,6 +49,7 @@ lib/Encode/JP/H2Z.pm		Encode extension
 lib/Encode/JP/JIS7.pm	Encode extension
 lib/Encode/KR/2022_KR.pm	 Encode extension
 lib/Encode/MIME/Header.pm	Encode extension
+lib/Encode/MIME/Header/ISO_2022_JP.pm  Encode extension
 lib/Encode/PerlIO.pod	Documents for Encode & PerlIO
 lib/Encode/Supported.pod	Documents for supported encodings
 lib/Encode/Unicode/UTF7.pm Encode Extension
@@ -86,9 +87,11 @@ t/jperl.t	test script
 t/ksc5601.enc	test data
 t/ksc5601.utf	test data
 t/mime-header.t	test script
+t/mime_header_iso2022jp.t  test script
 t/perlio.t	test script
 t/rt.pl		even more test script
 t/unibench.pl	benchmark script
+t/utf8strict.t	test script
 ucm/8859-1.ucm	Unicode Character Map
 ucm/8859-10.ucm	Unicode Character Map
 ucm/8859-11.ucm	Unicode Character Map

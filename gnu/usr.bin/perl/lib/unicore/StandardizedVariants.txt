@@ -1,14 +1,22 @@
-# StandardizedVariants-4.0.0.txt
+# StandardizedVariants-4.1.0.txt
+# Date: 2005-03-17, 15:21:00 PST [KW]
 #
-# The following file specifies the variant sequences that are defined in the
+# Specification of the variant sequences that are defined in the
 # Unicode Standard.
+#
+# This file is a normative contributory data file in the
+# Unicode Character Database.
+#
+# Copyright (c) 1991-2005 Unicode, Inc.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # Warning: Only the variation sequences specifically defined in this file
 # are sanctioned for standard use. In all other cases the variation selector
 # cannot change the visual appearance of the preceding base character from 
 # what it would have had in the absence of the variation selector.
 #
-# For more information, see Section 15.6 Variation Selectors in The Unicode Standard.
+# For more information, see Section 15.6, Variation Selectors, 
+# in The Unicode Standard, Version 4.0.
 #
 # Format:
 #   Field 0: the variation sequence

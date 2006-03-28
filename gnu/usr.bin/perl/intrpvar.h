@@ -30,7 +30,7 @@ PERLVAR(Iwarnhook,	SV *)
 PERLVAR(Iminus_c,	bool)
 PERLVAR(Ipatchlevel,	SV *)
 PERLVAR(Ilocalpatches,	char **)
-PERLVARI(Isplitstr,	char *,	" ")
+PERLVARI(Isplitstr,	const char *, " ")
 PERLVAR(Ipreprocess,	bool)
 PERLVAR(Iminus_n,	bool)
 PERLVAR(Iminus_p,	bool)
@@ -250,7 +250,7 @@ PERLVARI(Imaxo,	int,	MAXO)		/* maximum number of ops */
 PERLVAR(Iosname,	char *)		/* operating system */
 
 /* For binary compatibility with older versions only */
-PERLVARI(Ish_path_compat,	char *,	SH_PATH)/* full path of shell */
+PERLVARI(Ish_path_compat,	const char *,	SH_PATH)/* full path of shell */
 
 PERLVAR(Isighandlerp,	Sighandler_t)
 
@@ -295,7 +295,7 @@ PERLVAR(Isv_no,		SV)
 PERLVAR(Isv_yes,	SV)
 
 #ifdef CSH
-PERLVARI(Icshname,	char *,	CSH)
+PERLVARI(Icshname,	const char *,	CSH)
 PERLVARI(Icshlen,	I32,	0)
 #endif
 
@@ -569,6 +569,12 @@ PERLVARI(Irehash_seed_set, bool, FALSE)	/* 582 hash initialized? */
    taken out of blead soon, and relevant prototypes changed.  */
 PERLVARI(Ifdscript, int, -1)	/* fd for script */
 PERLVARI(Isuidscript, int, -1)	/* fd for suid script */
+
+#if defined(USE_ITHREADS)
+PERLVAR(Ipte_root,	struct ptr_tbl_ent *)	/* free ptr_tbl_ent list */
+PERLVAR(Ipte_arenaroot,	XPV*)		/* list of allocated pte areas */
+#endif
+
 /* New variables must be added to the very end, before this comment,
  * for binary compatibility (the offsets of the old members must not change).
  * (Don't forget to add your variable also to perl_clone()!)
@@ -576,3 +582,7 @@ PERLVARI(Isuidscript, int, -1)	/* fd for suid script */
  * irrelevant, but not all code may be expected to #include XSUB.h.
  */
 
+#ifdef DEBUG_LEAKING_SCALARS_FORK_DUMP
+/* File descriptor to talk to the child which dumps scalars.  */
+PERLVARI(Idumper_fd, int, -1)
+#endif

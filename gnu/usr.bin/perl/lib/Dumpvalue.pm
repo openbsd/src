@@ -1,7 +1,7 @@
 use 5.006_001;			# for (defined ref) and $#$v and our
 package Dumpvalue;
 use strict;
-our $VERSION = '1.11';
+our $VERSION = '1.12';
 our(%address, $stab, @stab, %stab, %subs);
 
 # documentation nits, handle complex data structures better by chromatic
@@ -616,7 +616,7 @@ given quote char.  Possible values are C<auto>, C<'> and C<">.
 
 =item set_unctrl
 
-  $d->set_unctrl('"');
+  $d->set_unctrl('unctrl');
 
 Sets C<unctrl> option with checking for an invalid argument.
 Possible values are C<unctrl> and C<quote>.

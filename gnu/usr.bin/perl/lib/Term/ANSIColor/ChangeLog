@@ -1,3 +1,28 @@
+2005-08-21  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 1.10 released.
+
+	* ANSIColor.pm (colored): Fix the $EACHLINE support to work
+	properly with a line consisting solely of "0".  Remove Zenin's
+	now-defunct e-mail address from the documentation.
+	* test.pl: Test 0 and the empty string in combination with
+	$EACHLINE.
+
+	* tests/ansicolor: Add terminal test file from Joe Smith.
+	* tests/vt100-torture: Likewise.
+	* tests/README: Add an explanation of the test files.
+
+2004-12-03  Russ Allbery  <rra@stanford.edu>
+
+	* ANSIColor.pm: Version 1.09 released.
+
+	* ANSIColor.pm: Add compatibility information for Mac OS X
+	Terminal from Daniel Lindsley.
+
+2004-02-20  Russ Allbery  <rra@stanford.edu>
+
+	* test.pl: Always use eq, not ==, for string comparisons.
+
 2004-02-19  Russ Allbery  <rra@stanford.edu>
 
 	* ANSIColor.pm: Version 1.08 released.

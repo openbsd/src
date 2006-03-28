@@ -9,9 +9,10 @@ use vars qw($VERSION @ISA @EXPORT);
 
 @EXPORT  = qw(test_harness pod2man perllocal_install uninstall 
               warn_if_old_packlist);
-$VERSION = '0.03';
+$VERSION = '0.05';
 
 my $Is_VMS = $^O eq 'VMS';
+
 
 =head1 NAME
 
@@ -50,9 +51,14 @@ sub test_harness {
 
     $Test::Harness::verbose = shift;
 
+    # Because Windows doesn't do this for us and listing all the *.t files
+    # out on the command line can blow over its exec limit.
+    require ExtUtils::Command;
+    my @argv = ExtUtils::Command::expand_wildcards(@ARGV);
+
     local @INC = @INC;
     unshift @INC, map { File::Spec->rel2abs($_) } @_;
-    Test::Harness::runtests(sort { lc $a cmp lc $b } @ARGV);
+    Test::Harness::runtests(sort { lc $a cmp lc $b } @argv);
 }
 
 
@@ -104,7 +110,7 @@ sub pod2man {
 
     # Official sets --center, but don't override things explicitly set.
     if ($options{official} && !defined $options{center}) {
-        $options{center} = 'Perl Programmers Reference Guide';
+        $options{center} = q[Perl Programmer's Reference Guide];
     }
 
     # This isn't a valid Pod::Man option and is only accepted for backwards
@@ -162,9 +168,9 @@ PACKLIST_WARNING
     perl "-MExtUtils::Command::MM" -e perllocal_install 
         <type> <module name> <key> <value> ...
 
-    # VMS only, key/value pairs come on STDIN
+    # VMS only, key|value pairs come on STDIN
     perl "-MExtUtils::Command::MM" -e perllocal_install
-        <type> <module name> < <key> <value> ...
+        <type> <module name> < <key>|<value> ...
 
 Prints a fragment of POD suitable for appending to perllocal.pod.
 Arguments are read from @ARGV.
@@ -228,7 +234,7 @@ uninstallation.
 =cut
 
 sub uninstall {
-    my($packlist) = shift;
+    my($packlist) = shift @ARGV;
 
     require ExtUtils::Install;
 

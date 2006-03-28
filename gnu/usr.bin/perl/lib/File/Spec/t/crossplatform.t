@@ -1,8 +1,9 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More;
 use File::Spec;
+use lib File::Spec->catfile('t', 'lib');
+use Test::More;
 local $|=1;
 
 my @platforms = qw(Cygwin Epoc Mac OS2 Unix VMS Win32);

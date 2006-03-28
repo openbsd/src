@@ -28,6 +28,8 @@ sub do_test {
 	    local $/;
 	    $pattern =~ s/\$ADDR/0x[[:xdigit:]]+/g;
 	    $pattern =~ s/\$FLOAT/(?:\\d*\\.\\d+(?:e[-+]\\d+)?|\\d+)/g;
+	    # handle DEBUG_LEAKING_SCALARS prefix
+	    $pattern =~ s/^(\s*)(SV =.* at )/(?:$1ALLOCATED at .*?\n)?$1$2/mg;
 	    print $pattern, "\n" if $DEBUG;
 	    my $dump = <IN>;
 	    print $dump, "\n"    if $DEBUG;
@@ -408,7 +410,7 @@ do_test(20,
   NV = 0
   PV = $ADDR ""\\\0
   CUR = 0
-  LEN = 1
+  LEN = \d+
   MAGIC = $ADDR
     MG_VIRTUAL = &PL_vtbl_mglob
     MG_TYPE = PERL_MAGIC_regex_global\\(g\\)
@@ -419,6 +421,8 @@ do_test(20,
 # TAINTEDDIR is not set on: OS2, AMIGAOS, WIN32, MSDOS
 # environment variables may be invisibly case-forced, hence the (?i:PATH)
 # C<scalar(@ARGV)> is turned into an IV on VMS hence the (?:IV)?
+# VMS is setting FAKE and READONLY flags.  What VMS uses for storing
+# ENV hashes is also not always null terminated.
 #
 do_test(21,
         $ENV{PATH}=@ARGV,  # scalar(@ARGV) is a handy known tainted value
@@ -439,9 +443,9 @@ do_test(21,
     MG_PTR = $ADDR (?:"(?i:PATH)"|=> HEf_SVKEY
     SV = PV(?:IV)?\\($ADDR\\) at $ADDR
       REFCNT = \d+
-      FLAGS = \\(TEMP,POK,pPOK\\)
+      FLAGS = \\(TEMP,POK,(?:FAKE,READONLY,)?pPOK\\)
 (?:      IV = 0
-)?      PV = $ADDR "(?i:PATH)"\\\0
+)?      PV = $ADDR "(?i:PATH)"(?:\\\0)?
       CUR = \d+
       LEN = \d+)
   MAGIC = $ADDR

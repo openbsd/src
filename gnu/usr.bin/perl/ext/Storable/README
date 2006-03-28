@@ -1,4 +1,4 @@
-                         Storable 2.13
+                         Storable 2.14
                Copyright (c) 1995-2000, Raphael Manfredi
                Copyright (c) 2001-2004, Larry Wall
 
@@ -89,7 +89,7 @@ bring you this Storable release:
     Dan Kogai <dankogai@dan.co.jp>
     Doug MacEachern <dougm@covalent.net>
     Gurusamy Sarathy <gsar@ActiveState.com>
-    H.Merijn Brand <h.m.brand@hccnet.nl>
+    H.Merijn Brand <h.m.brand@xs4all.nl>
     Jarkko Hietaniemi <jhi@iki.fi>
     Mark Bixby
     Michael Stevens <michael@etla.org>

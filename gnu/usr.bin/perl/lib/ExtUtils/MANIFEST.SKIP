@@ -1,17 +1,30 @@
-\.ppd$
+# Avoid version control files.
+\bRCS\b
 \bCVS\b
+\bSCCS\b
+,v$
+\B\.svn\b
+\b_darcs\b
+
+# Avoid Makemaker generated and utility files.
+\bMANIFEST\.bak
+\bMakefile$
+\bblib/
+\bMakeMaker-\d
+\bpm_to_blib\.ts$
+\bpm_to_blib$
+\bblibdirs\.ts$         # 6.18 through 6.25 generated this
+
+# Avoid Module::Build generated and utility files.
+\bBuild$
+\b_build/
+
+# Avoid temp and backup files.
 ~$
-t/lib/File/
-t/Big-Dummy
-t/Problem-Module
-.gz$
-.bak$
-Makefile$
-MANIFEST.perl$
 \.old$
-merge_bleadperl$
-^blib/
-^pm_to_blib
-.DS_Store
-\#
-^bleadperl\.patch$
+\#$
+\b\.#
+\.bak$
+
+# Avoid Devel::Cover files.
+\bcover_db\b

@@ -3,7 +3,6 @@ package Test::More;
 use 5.004;
 
 use strict;
-use Test::Builder;
 
 
 # Can't use Carp because it might cause use_ok() to accidentally succeed
@@ -16,10 +15,12 @@ sub _carp {
 
 
 
-require Exporter;
 use vars qw($VERSION @ISA @EXPORT %EXPORT_TAGS $TODO);
-$VERSION = '0.47';
-@ISA    = qw(Exporter);
+$VERSION = '0.62';
+$VERSION = eval $VERSION;    # make the alpha version come out as a number
+
+use Test::Builder::Module;
+@ISA    = qw(Test::Builder::Module);
 @EXPORT = qw(ok use_ok require_ok
              is isnt like unlike is_deeply
              cmp_ok
@@ -30,20 +31,8 @@ $VERSION = '0.47';
              plan
              can_ok  isa_ok
              diag
+	     BAIL_OUT
             );
-
-my $Test = Test::Builder->new;
-
-
-# 5.004's Exporter doesn't have export_to_level.
-sub _export_to_level
-{
-      my $pkg = shift;
-      my $level = shift;
-      (undef) = shift;                  # redundant arg
-      my $callpkg = caller($level);
-      $pkg->export($callpkg, @_);
-}
 
 
 =head1 NAME
@@ -97,16 +86,10 @@ Test::More - yet another framework for writing test scripts
   pass($test_name);
   fail($test_name);
 
-  # Utility comparison functions.
-  eq_array(\@this, \@that);
-  eq_hash(\%this, \%that);
-  eq_set(\@this, \@that);
+  BAIL_OUT($why);
 
   # UNIMPLEMENTED!!!
   my @status = Test::More::status;
-
-  # UNIMPLEMENTED!!!
-  BAIL_OUT($why);
 
 
 =head1 DESCRIPTION
@@ -137,6 +120,9 @@ your script is going to run.  In this case, you can declare that you
 have no plan.  (Try to avoid using this as it weakens your test.)
 
   use Test::More qw(no_plan);
+
+B<NOTE>: using no_plan requires a Test::Harness upgrade else it will
+think everything has failed.  See L<CAVEATS and NOTES>).
 
 In some cases, you'll want to completely skip an entire testing script.
 
@@ -171,29 +157,34 @@ or for deciding between running the tests at all:
 =cut
 
 sub plan {
-    my(@plan) = @_;
+    my $tb = Test::More->builder;
 
-    my $caller = caller;
-
-    $Test->exported_to($caller);
-
-    my @imports = ();
-    foreach my $idx (0..$#plan) {
-        if( $plan[$idx] eq 'import' ) {
-            my($tag, $imports) = splice @plan, $idx, 2;
-            @imports = @$imports;
-            last;
-        }
-    }
-
-    $Test->plan(@plan);
-
-    __PACKAGE__->_export_to_level(1, __PACKAGE__, @imports);
+    $tb->plan(@_);
 }
 
-sub import {
-    my($class) = shift;
-    goto &plan;
+
+# This implements "use Test::More 'no_diag'" but the behavior is
+# deprecated.
+sub import_extra {
+    my $class = shift;
+    my $list  = shift;
+
+    my @other = ();
+    my $idx = 0;
+    while( $idx <= $#{$list} ) {
+        my $item = $list->[$idx];
+
+        if( defined $item and $item eq 'no_diag' ) {
+            $class->builder->no_diag(1);
+        }
+        else {
+            push @other, $item;
+        }
+
+        $idx++;
+    }
+
+    @$list = @other;
 }
 
 
@@ -258,7 +249,8 @@ but we B<very> strongly encourage its use.
 Should an ok() fail, it will produce some diagnostics:
 
     not ok 18 - sufficient mucus
-    #     Failed test 18 (foo.t at line 42)
+    #   Failed test 'sufficient mucus'
+    #   in foo.t at line 42.
 
 This is actually Test::Simple's ok() routine.
 
@@ -266,7 +258,9 @@ This is actually Test::Simple's ok() routine.
 
 sub ok ($;$) {
     my($test, $name) = @_;
-    $Test->ok($test, $name);
+    my $tb = Test::More->builder;
+
+    $tb->ok($test, $name);
 }
 
 =item B<is>
@@ -304,7 +298,8 @@ test:
 Will produce something like this:
 
     not ok 17 - Is foo the same as bar?
-    #     Failed test (foo.t at line 139)
+    #   Failed test 'Is foo the same as bar?'
+    #   in foo.t at line 139.
     #          got: 'waffle'
     #     expected: 'yarblokos'
 
@@ -314,14 +309,14 @@ You are encouraged to use is() and isnt() over ok() where possible,
 however do not be tempted to use them to find out if something is
 true or false!
 
-  # XXX BAD!  $pope->isa('Catholic') eq 1
-  is( $pope->isa('Catholic'), 1,        'Is the Pope Catholic?' );
+  # XXX BAD!
+  is( exists $brooklyn{tree}, 1, 'A tree grows in Brooklyn' );
 
-This does not check if C<$pope->isa('Catholic')> is true, it checks if
+This does not check if C<exists $brooklyn{tree}> is true, it checks if
 it returns 1.  Very different.  Similar caveats exist for false and 0.
 In these cases, use ok().
 
-  ok( $pope->isa('Catholic') ),         'Is the Pope Catholic?' );
+  ok( exists $brooklyn{tree},    'A tree grows in Brooklyn' );
 
 For those grammatical pedants out there, there's an C<isn't()>
 function which is an alias of isnt().
@@ -329,11 +324,15 @@ function which is an alias of isnt().
 =cut
 
 sub is ($$;$) {
-    $Test->is_eq(@_);
+    my $tb = Test::More->builder;
+
+    $tb->is_eq(@_);
 }
 
 sub isnt ($$;$) {
-    $Test->isnt_eq(@_);
+    my $tb = Test::More->builder;
+
+    $tb->isnt_eq(@_);
 }
 
 *isn't = \&isnt;
@@ -370,7 +369,9 @@ diagnostics on failure.
 =cut
 
 sub like ($$;$) {
-    $Test->like(@_);
+    my $tb = Test::More->builder;
+
+    $tb->like(@_);
 }
 
 
@@ -383,8 +384,10 @@ given pattern.
 
 =cut
 
-sub unlike {
-    $Test->unlike(@_);
+sub unlike ($$;$) {
+    my $tb = Test::More->builder;
+
+    $tb->unlike(@_);
 }
 
 
@@ -402,14 +405,14 @@ compare two arguments using any binary perl operator.
     cmp_ok( $this, '==', $that, 'this == that' );
 
     # ok( $this && $that );
-    cmp_ok( $this, '&&', $that, 'this || that' );
+    cmp_ok( $this, '&&', $that, 'this && that' );
     ...etc...
 
 Its advantage over ok() is when the test fails you'll know what $this
 and $that were:
 
     not ok 1
-    #     Failed test (foo.t at line 12)
+    #   Failed test in foo.t at line 12.
     #     '23'
     #         &&
     #     undef
@@ -422,7 +425,9 @@ is()'s use of C<eq> will interfere:
 =cut
 
 sub cmp_ok($$$;$) {
-    $Test->cmp_ok(@_);
+    my $tb = Test::More->builder;
+
+    $tb->cmp_ok(@_);
 }
 
 
@@ -458,10 +463,11 @@ as one test.  If you desire otherwise, use:
 sub can_ok ($@) {
     my($proto, @methods) = @_;
     my $class = ref $proto || $proto;
+    my $tb = Test::More->builder;
 
     unless( @methods ) {
-        my $ok = $Test->ok( 0, "$class->can(...)" );
-        $Test->diag('    can_ok() called with no methods');
+        my $ok = $tb->ok( 0, "$class->can(...)" );
+        $tb->diag('    can_ok() called with no methods');
         return $ok;
     }
 
@@ -476,9 +482,9 @@ sub can_ok ($@) {
     $name = @methods == 1 ? "$class->can('$methods[0]')" 
                           : "$class->can(...)";
     
-    my $ok = $Test->ok( !@nok, $name );
+    my $ok = $tb->ok( !@nok, $name );
 
-    $Test->diag(map "    $class->can('$_') failed\n", @nok);
+    $tb->diag(map "    $class->can('$_') failed\n", @nok);
 
     return $ok;
 }
@@ -488,7 +494,7 @@ sub can_ok ($@) {
   isa_ok($object, $class, $object_name);
   isa_ok($ref,    $type,  $ref_name);
 
-Checks to see if the given $object->isa($class).  Also checks to make
+Checks to see if the given C<< $object->isa($class) >>.  Also checks to make
 sure the object was defined in the first place.  Handy for this sort
 of thing:
 
@@ -514,6 +520,7 @@ you'd like them to be more specific, you can supply an $object_name
 
 sub isa_ok ($$;$) {
     my($object, $class, $obj_name) = @_;
+    my $tb = Test::More->builder;
 
     my $diag;
     $obj_name = 'The object' unless defined $obj_name;
@@ -553,11 +560,11 @@ WHOA
 
     my $ok;
     if( $diag ) {
-        $ok = $Test->ok( 0, $name );
-        $Test->diag("    $diag\n");
+        $ok = $tb->ok( 0, $name );
+        $tb->diag("    $diag\n");
     }
     else {
-        $ok = $Test->ok( 1, $name );
+        $ok = $tb->ok( 1, $name );
     }
 
     return $ok;
@@ -582,55 +589,17 @@ Use these very, very, very sparingly.
 =cut
 
 sub pass (;$) {
-    $Test->ok(1, @_);
+    my $tb = Test::More->builder;
+    $tb->ok(1, @_);
 }
 
 sub fail (;$) {
-    $Test->ok(0, @_);
+    my $tb = Test::More->builder;
+    $tb->ok(0, @_);
 }
 
 =back
 
-=head2 Diagnostics
-
-If you pick the right test function, you'll usually get a good idea of
-what went wrong when it failed.  But sometimes it doesn't work out
-that way.  So here we have ways for you to write your own diagnostic
-messages which are safer than just C<print STDERR>.
-
-=over 4
-
-=item B<diag>
-
-  diag(@diagnostic_message);
-
-Prints a diagnostic message which is guaranteed not to interfere with
-test output.  Handy for this sort of thing:
-
-    ok( grep(/foo/, @users), "There's a foo user" ) or
-        diag("Since there's no foo, check that /etc/bar is set up right");
-
-which would produce:
-
-    not ok 42 - There's a foo user
-    #     Failed test (foo.t at line 52)
-    # Since there's no foo, check that /etc/bar is set up right.
-
-You might remember C<ok() or diag()> with the mnemonic C<open() or
-die()>.
-
-B<NOTE> The exact formatting of the diagnostic output is still
-changing, but it is guaranteed that whatever you throw at it it won't
-interfere with the test.
-
-=cut
-
-sub diag {
-    $Test->diag(@_);
-}
-
-
-=back
 
 =head2 Module tests
 
@@ -658,7 +627,12 @@ is like doing this:
 
    use Some::Module qw(foo bar);
 
-don't try to do this:
+Version numbers can be checked like so:
+
+   # Just like "use Some::Module 1.02"
+   BEGIN { use_ok('Some::Module', 1.02) }
+
+Don't try to do this:
 
    BEGIN {
        use_ok('Some::Module');
@@ -667,7 +641,7 @@ don't try to do this:
        ...happening at compile time...
    }
 
-instead, you want:
+because the notion of "compile-time" is relative.  Instead, you want:
 
   BEGIN { use_ok('Some::Module') }
   BEGIN { ...some code that depends on the use... }
@@ -678,21 +652,34 @@ instead, you want:
 sub use_ok ($;@) {
     my($module, @imports) = @_;
     @imports = () unless @imports;
+    my $tb = Test::More->builder;
 
-    my $pack = caller;
+    my($pack,$filename,$line) = caller;
 
     local($@,$!);   # eval sometimes interferes with $!
-    eval <<USE;
-package $pack;
-require $module;
-'$module'->import(\@imports);
-USE
 
-    my $ok = $Test->ok( !$@, "use $module;" );
+    if( @imports == 1 and $imports[0] =~ /^\d+(?:\.\d+)?$/ ) {
+        # probably a version check.  Perl needs to see the bare number
+        # for it to work with non-Exporter based modules.
+        eval <<USE;
+package $pack;
+use $module $imports[0];
+USE
+    }
+    else {
+        eval <<USE;
+package $pack;
+use $module \@imports;
+USE
+    }
+
+    my $ok = $tb->ok( !$@, "use $module;" );
 
     unless( $ok ) {
         chomp $@;
-        $Test->diag(<<DIAGNOSTIC);
+        $@ =~ s{^BEGIN failed--compilation aborted at .*$}
+                {BEGIN failed--compilation aborted at $filename line $line.}m;
+        $tb->diag(<<DIAGNOSTIC);
     Tried to use '$module'.
     Error:  $@
 DIAGNOSTIC
@@ -705,15 +692,21 @@ DIAGNOSTIC
 =item B<require_ok>
 
    require_ok($module);
+   require_ok($file);
 
-Like use_ok(), except it requires the $module.
+Like use_ok(), except it requires the $module or $file.
 
 =cut
 
 sub require_ok ($) {
     my($module) = shift;
+    my $tb = Test::More->builder;
 
     my $pack = caller;
+
+    # Try to deterine if we've been given a module name or file.
+    # Module names must be barewords, files not.
+    $module = qq['$module'] unless _is_module_name($module);
 
     local($!, $@); # eval sometimes interferes with $!
     eval <<REQUIRE;
@@ -721,11 +714,11 @@ package $pack;
 require $module;
 REQUIRE
 
-    my $ok = $Test->ok( !$@, "require $module;" );
+    my $ok = $tb->ok( !$@, "require $module;" );
 
     unless( $ok ) {
         chomp $@;
-        $Test->diag(<<DIAGNOSTIC);
+        $tb->diag(<<DIAGNOSTIC);
     Tried to require '$module'.
     Error:  $@
 DIAGNOSTIC
@@ -735,7 +728,201 @@ DIAGNOSTIC
     return $ok;
 }
 
+
+sub _is_module_name {
+    my $module = shift;
+
+    # Module names start with a letter.
+    # End with an alphanumeric.
+    # The rest is an alphanumeric or ::
+    $module =~ s/\b::\b//g;
+    $module =~ /^[a-zA-Z]\w*$/;
+}
+
 =back
+
+
+=head2 Complex data structures
+
+Not everything is a simple eq check or regex.  There are times you
+need to see if two data structures are equivalent.  For these
+instances Test::More provides a handful of useful functions.
+
+B<NOTE> I'm not quite sure what will happen with filehandles.
+
+=over 4
+
+=item B<is_deeply>
+
+  is_deeply( $this, $that, $test_name );
+
+Similar to is(), except that if $this and $that are references, it
+does a deep comparison walking each data structure to see if they are
+equivalent.  If the two structures are different, it will display the
+place where they start differing.
+
+is_deeply() compares the dereferenced values of references, the
+references themselves (except for their type) are ignored.  This means
+aspects such as blessing and ties are not considered "different".
+
+is_deeply() current has very limited handling of function reference
+and globs.  It merely checks if they have the same referent.  This may
+improve in the future.
+
+Test::Differences and Test::Deep provide more in-depth functionality
+along these lines.
+
+=cut
+
+use vars qw(@Data_Stack %Refs_Seen);
+my $DNE = bless [], 'Does::Not::Exist';
+sub is_deeply {
+    my $tb = Test::More->builder;
+
+    unless( @_ == 2 or @_ == 3 ) {
+        my $msg = <<WARNING;
+is_deeply() takes two or three args, you gave %d.
+This usually means you passed an array or hash instead 
+of a reference to it
+WARNING
+        chop $msg;   # clip off newline so carp() will put in line/file
+
+        _carp sprintf $msg, scalar @_;
+
+	return $tb->ok(0);
+    }
+
+    my($this, $that, $name) = @_;
+
+    $tb->_unoverload_str(\$that, \$this);
+
+    my $ok;
+    if( !ref $this and !ref $that ) {  		# neither is a reference
+        $ok = $tb->is_eq($this, $that, $name);
+    }
+    elsif( !ref $this xor !ref $that ) {  	# one's a reference, one isn't
+        $ok = $tb->ok(0, $name);
+	$tb->diag( _format_stack({ vals => [ $this, $that ] }) );
+    }
+    else {			       		# both references
+        local @Data_Stack = ();
+        if( _deep_check($this, $that) ) {
+            $ok = $tb->ok(1, $name);
+        }
+        else {
+            $ok = $tb->ok(0, $name);
+            $tb->diag(_format_stack(@Data_Stack));
+        }
+    }
+
+    return $ok;
+}
+
+sub _format_stack {
+    my(@Stack) = @_;
+
+    my $var = '$FOO';
+    my $did_arrow = 0;
+    foreach my $entry (@Stack) {
+        my $type = $entry->{type} || '';
+        my $idx  = $entry->{'idx'};
+        if( $type eq 'HASH' ) {
+            $var .= "->" unless $did_arrow++;
+            $var .= "{$idx}";
+        }
+        elsif( $type eq 'ARRAY' ) {
+            $var .= "->" unless $did_arrow++;
+            $var .= "[$idx]";
+        }
+        elsif( $type eq 'REF' ) {
+            $var = "\${$var}";
+        }
+    }
+
+    my @vals = @{$Stack[-1]{vals}}[0,1];
+    my @vars = ();
+    ($vars[0] = $var) =~ s/\$FOO/     \$got/;
+    ($vars[1] = $var) =~ s/\$FOO/\$expected/;
+
+    my $out = "Structures begin differing at:\n";
+    foreach my $idx (0..$#vals) {
+        my $val = $vals[$idx];
+        $vals[$idx] = !defined $val ? 'undef'          :
+                      $val eq $DNE  ? "Does not exist" :
+	              ref $val      ? "$val"           :
+                                      "'$val'";
+    }
+
+    $out .= "$vars[0] = $vals[0]\n";
+    $out .= "$vars[1] = $vals[1]\n";
+
+    $out =~ s/^/    /msg;
+    return $out;
+}
+
+
+sub _type {
+    my $thing = shift;
+
+    return '' if !ref $thing;
+
+    for my $type (qw(ARRAY HASH REF SCALAR GLOB CODE Regexp)) {
+        return $type if UNIVERSAL::isa($thing, $type);
+    }
+
+    return '';
+}
+
+=back
+
+
+=head2 Diagnostics
+
+If you pick the right test function, you'll usually get a good idea of
+what went wrong when it failed.  But sometimes it doesn't work out
+that way.  So here we have ways for you to write your own diagnostic
+messages which are safer than just C<print STDERR>.
+
+=over 4
+
+=item B<diag>
+
+  diag(@diagnostic_message);
+
+Prints a diagnostic message which is guaranteed not to interfere with
+test output.  Like C<print> @diagnostic_message is simply concatenated
+together.
+
+Handy for this sort of thing:
+
+    ok( grep(/foo/, @users), "There's a foo user" ) or
+        diag("Since there's no foo, check that /etc/bar is set up right");
+
+which would produce:
+
+    not ok 42 - There's a foo user
+    #   Failed test 'There's a foo user'
+    #   in foo.t at line 52.
+    # Since there's no foo, check that /etc/bar is set up right.
+
+You might remember C<ok() or diag()> with the mnemonic C<open() or
+die()>.
+
+B<NOTE> The exact formatting of the diagnostic output is still
+changing, but it is guaranteed that whatever you throw at it it won't
+interfere with the test.
+
+=cut
+
+sub diag {
+    my $tb = Test::More->builder;
+
+    $tb->diag(@_);
+}
+
+
+=back
+
 
 =head2 Conditional tests
 
@@ -782,8 +969,10 @@ the easiest way to illustrate:
 If the user does not have HTML::Lint installed, the whole block of
 code I<won't be run at all>.  Test::More will output special ok's
 which Test::Harness interprets as skipped, but passing, tests.
+
 It's important that $how_many accurately reflects the number of tests
 in the SKIP block so the # of tests run will match up with your plan.
+If your plan is C<no_plan> $how_many is optional and will default to 1.
 
 It's perfectly safe to nest SKIP blocks.  Each SKIP block must have
 the label C<SKIP>, or Test::More can't work its magic.
@@ -797,16 +986,17 @@ use TODO.  Read on.
 #'#
 sub skip {
     my($why, $how_many) = @_;
+    my $tb = Test::More->builder;
 
     unless( defined $how_many ) {
         # $how_many can only be avoided when no_plan is in use.
         _carp "skip() needs to know \$how_many tests are in the block"
-          unless $Test::Builder::No_Plan;
+          unless $tb->has_plan eq 'no_plan';
         $how_many = 1;
     }
 
     for( 1..$how_many ) {
-        $Test->skip($why);
+        $tb->skip($why);
     }
 
     local $^W = 0;
@@ -851,6 +1041,9 @@ and you'll know immediately when they're fixed.
 Once a todo test starts succeeding, simply move it outside the block.
 When the block is empty, delete it.
 
+B<NOTE>: TODO tests require a Test::Harness upgrade else it will
+treat it as a normal failure.  See L<CAVEATS and NOTES>).
+
 
 =item B<todo_skip>
 
@@ -874,16 +1067,17 @@ interpret them as passing.
 
 sub todo_skip {
     my($why, $how_many) = @_;
+    my $tb = Test::More->builder;
 
     unless( defined $how_many ) {
         # $how_many can only be avoided when no_plan is in use.
         _carp "todo_skip() needs to know \$how_many tests are in the block"
-          unless $Test::Builder::No_Plan;
+          unless $tb->has_plan eq 'no_plan';
         $how_many = 1;
     }
 
     for( 1..$how_many ) {
-        $Test->todo_skip($why);
+        $tb->todo_skip($why);
     }
 
     local $^W = 0;
@@ -904,101 +1098,59 @@ but want to put tests in your testing script (always a good idea).
 
 =back
 
-=head2 Comparison functions
 
-Not everything is a simple eq check or regex.  There are times you
-need to see if two arrays are equivalent, for instance.  For these
-instances, Test::More provides a handful of useful functions.
-
-B<NOTE> These are NOT well-tested on circular references.  Nor am I
-quite sure what will happen with filehandles.
+=head2 Test control
 
 =over 4
 
-=item B<is_deeply>
+=item B<BAIL_OUT>
 
-  is_deeply( $this, $that, $test_name );
+    BAIL_OUT($reason);
 
-Similar to is(), except that if $this and $that are hash or array
-references, it does a deep comparison walking each data structure to
-see if they are equivalent.  If the two structures are different, it
-will display the place where they start differing.
+Incidates to the harness that things are going so badly all testing
+should terminate.  This includes the running any additional test scripts.
 
-Barrie Slaymaker's Test::Differences module provides more in-depth
-functionality along these lines, and it plays well with Test::More.
+This is typically used when testing cannot continue such as a critical
+module failing to compile or a necessary external utility not being
+available such as a database connection failing.
 
-B<NOTE> Display of scalar refs is not quite 100%
+The test will exit with 255.
 
 =cut
 
-use vars qw(@Data_Stack);
-my $DNE = bless [], 'Does::Not::Exist';
-sub is_deeply {
-    my($this, $that, $name) = @_;
+sub BAIL_OUT {
+    my $reason = shift;
+    my $tb = Test::More->builder;
 
-    my $ok;
-    if( !ref $this || !ref $that ) {
-        $ok = $Test->is_eq($this, $that, $name);
-    }
-    else {
-        local @Data_Stack = ();
-        if( _deep_check($this, $that) ) {
-            $ok = $Test->ok(1, $name);
-        }
-        else {
-            $ok = $Test->ok(0, $name);
-            $ok = $Test->diag(_format_stack(@Data_Stack));
-        }
-    }
-
-    return $ok;
+    $tb->BAIL_OUT($reason);
 }
 
-sub _format_stack {
-    my(@Stack) = @_;
+=back
 
-    my $var = '$FOO';
-    my $did_arrow = 0;
-    foreach my $entry (@Stack) {
-        my $type = $entry->{type} || '';
-        my $idx  = $entry->{'idx'};
-        if( $type eq 'HASH' ) {
-            $var .= "->" unless $did_arrow++;
-            $var .= "{$idx}";
-        }
-        elsif( $type eq 'ARRAY' ) {
-            $var .= "->" unless $did_arrow++;
-            $var .= "[$idx]";
-        }
-        elsif( $type eq 'REF' ) {
-            $var = "\${$var}";
-        }
-    }
 
-    my @vals = @{$Stack[-1]{vals}}[0,1];
-    my @vars = ();
-    ($vars[0] = $var) =~ s/\$FOO/     \$got/;
-    ($vars[1] = $var) =~ s/\$FOO/\$expected/;
+=head2 Discouraged comparison functions
 
-    my $out = "Structures begin differing at:\n";
-    foreach my $idx (0..$#vals) {
-        my $val = $vals[$idx];
-        $vals[$idx] = !defined $val ? 'undef' : 
-                      $val eq $DNE  ? "Does not exist"
-                                    : "'$val'";
-    }
+The use of the following functions is discouraged as they are not
+actually testing functions and produce no diagnostics to help figure
+out what went wrong.  They were written before is_deeply() existed
+because I couldn't figure out how to display a useful diff of two
+arbitrary data structures.
 
-    $out .= "$vars[0] = $vals[0]\n";
-    $out .= "$vars[1] = $vals[1]\n";
+These functions are usually used inside an ok().
 
-    $out =~ s/^/    /msg;
-    return $out;
-}
+    ok( eq_array(\@this, \@that) );
 
+C<is_deeply()> can do that better and with diagnostics.  
+
+    is_deeply( \@this, \@that );
+
+They may be deprecated in future versions.
+
+=over 4
 
 =item B<eq_array>
 
-  eq_array(\@this, \@that);
+  my $is_eq = eq_array(\@this, \@that);
 
 Checks if two arrays are equivalent.  This is a deep check, so
 multi-level structures are handled correctly.
@@ -1006,8 +1158,19 @@ multi-level structures are handled correctly.
 =cut
 
 #'#
-sub eq_array  {
+sub eq_array {
+    local @Data_Stack;
+    _deep_check(@_);
+}
+
+sub _eq_array  {
     my($a1, $a2) = @_;
+
+    if( grep !_type($_) eq 'ARRAY', $a1, $a2 ) {
+        warn "eq_array passed a non-array ref";
+        return 0;
+    }
+
     return 1 if $a1 eq $a2;
 
     my $ok = 1;
@@ -1022,49 +1185,82 @@ sub eq_array  {
 
         last unless $ok;
     }
+
     return $ok;
 }
 
 sub _deep_check {
     my($e1, $e2) = @_;
+    my $tb = Test::More->builder;
+
     my $ok = 0;
 
-    my $eq;
+    # Effectively turn %Refs_Seen into a stack.  This avoids picking up
+    # the same referenced used twice (such as [\$a, \$a]) to be considered
+    # circular.
+    local %Refs_Seen = %Refs_Seen;
+
     {
         # Quiet uninitialized value warnings when comparing undefs.
         local $^W = 0; 
 
-        if( $e1 eq $e2 ) {
+        $tb->_unoverload_str(\$e1, \$e2);
+
+        # Either they're both references or both not.
+        my $same_ref = !(!ref $e1 xor !ref $e2);
+	my $not_ref  = (!ref $e1 and !ref $e2);
+
+        if( defined $e1 xor defined $e2 ) {
+            $ok = 0;
+        }
+        elsif ( $e1 == $DNE xor $e2 == $DNE ) {
+            $ok = 0;
+        }
+        elsif ( $same_ref and ($e1 eq $e2) ) {
             $ok = 1;
         }
+	elsif ( $not_ref ) {
+	    push @Data_Stack, { type => '', vals => [$e1, $e2] };
+	    $ok = 0;
+	}
         else {
-            if( UNIVERSAL::isa($e1, 'ARRAY') and
-                UNIVERSAL::isa($e2, 'ARRAY') )
-            {
-                $ok = eq_array($e1, $e2);
+            if( $Refs_Seen{$e1} ) {
+                return $Refs_Seen{$e1} eq $e2;
             }
-            elsif( UNIVERSAL::isa($e1, 'HASH') and
-                   UNIVERSAL::isa($e2, 'HASH') )
-            {
-                $ok = eq_hash($e1, $e2);
+            else {
+                $Refs_Seen{$e1} = "$e2";
             }
-            elsif( UNIVERSAL::isa($e1, 'REF') and
-                   UNIVERSAL::isa($e2, 'REF') )
-            {
+
+            my $type = _type($e1);
+            $type = 'DIFFERENT' unless _type($e2) eq $type;
+
+            if( $type eq 'DIFFERENT' ) {
+                push @Data_Stack, { type => $type, vals => [$e1, $e2] };
+                $ok = 0;
+            }
+            elsif( $type eq 'ARRAY' ) {
+                $ok = _eq_array($e1, $e2);
+            }
+            elsif( $type eq 'HASH' ) {
+                $ok = _eq_hash($e1, $e2);
+            }
+            elsif( $type eq 'REF' ) {
+                push @Data_Stack, { type => $type, vals => [$e1, $e2] };
+                $ok = _deep_check($$e1, $$e2);
+                pop @Data_Stack if $ok;
+            }
+            elsif( $type eq 'SCALAR' ) {
                 push @Data_Stack, { type => 'REF', vals => [$e1, $e2] };
                 $ok = _deep_check($$e1, $$e2);
                 pop @Data_Stack if $ok;
             }
-            elsif( UNIVERSAL::isa($e1, 'SCALAR') and
-                   UNIVERSAL::isa($e2, 'SCALAR') )
-            {
-                push @Data_Stack, { type => 'REF', vals => [$e1, $e2] };
-                $ok = _deep_check($$e1, $$e2);
-            }
-            else {
-                push @Data_Stack, { vals => [$e1, $e2] };
+            elsif( $type ) {
+                push @Data_Stack, { type => $type, vals => [$e1, $e2] };
                 $ok = 0;
             }
+	    else {
+		_whoa(1, "No type in _deep_check");
+	    }
         }
     }
 
@@ -1072,9 +1268,20 @@ sub _deep_check {
 }
 
 
+sub _whoa {
+    my($check, $desc) = @_;
+    if( $check ) {
+        die <<WHOA;
+WHOA!  $desc
+This should never happen!  Please contact the author immediately!
+WHOA
+    }
+}
+
+
 =item B<eq_hash>
 
-  eq_hash(\%this, \%that);
+  my $is_eq = eq_hash(\%this, \%that);
 
 Determines if the two hashes contain the same keys and values.  This
 is a deep check.
@@ -1082,7 +1289,18 @@ is a deep check.
 =cut
 
 sub eq_hash {
+    local @Data_Stack;
+    return _deep_check(@_);
+}
+
+sub _eq_hash {
     my($a1, $a2) = @_;
+
+    if( grep !_type($_) eq 'HASH', $a1, $a2 ) {
+        warn "eq_hash passed a non-hash ref";
+        return 0;
+    }
+
     return 1 if $a1 eq $a2;
 
     my $ok = 1;
@@ -1103,28 +1321,52 @@ sub eq_hash {
 
 =item B<eq_set>
 
-  eq_set(\@this, \@that);
+  my $is_eq = eq_set(\@this, \@that);
 
 Similar to eq_array(), except the order of the elements is B<not>
 important.  This is a deep check, but the irrelevancy of order only
 applies to the top level.
 
-B<NOTE> By historical accident, this is not a true set comparision.
+    ok( eq_set(\@this, \@that) );
+
+Is better written:
+
+    is_deeply( [sort @this], [sort @that] );
+
+B<NOTE> By historical accident, this is not a true set comparison.
 While the order of elements does not matter, duplicate elements do.
 
-=cut
+B<NOTE> eq_set() does not know how to deal with references at the top
+level.  The following is an example of a comparison which might not work:
 
-# We must make sure that references are treated neutrally.  It really
-# doesn't matter how we sort them, as long as both arrays are sorted
-# with the same algorithm.
-sub _bogus_sort { local $^W = 0;  ref $a ? 0 : $a cmp $b }
+    eq_set([\1, \2], [\2, \1]);
+
+Test::Deep contains much better set comparison functions.
+
+=cut
 
 sub eq_set  {
     my($a1, $a2) = @_;
     return 0 unless @$a1 == @$a2;
 
     # There's faster ways to do this, but this is easiest.
-    return eq_array( [sort _bogus_sort @$a1], [sort _bogus_sort @$a2] );
+    local $^W = 0;
+
+    # It really doesn't matter how we sort them, as long as both arrays are 
+    # sorted with the same algorithm.
+    #
+    # Ensure that references are not accidentally treated the same as a
+    # string containing the reference.
+    #
+    # Have to inline the sort routine due to a threading/sort bug.
+    # See [rt.cpan.org 6782]
+    #
+    # I don't know how references would be sorted so we just don't sort
+    # them.  This means eq_set doesn't really work with refs.
+    return eq_array(
+           [grep(ref, @$a1), sort( grep(!ref, @$a1) )],
+           [grep(ref, @$a2), sort( grep(!ref, @$a2) )],
+    );
 }
 
 =back
@@ -1150,33 +1392,70 @@ you can access the underlying Test::Builder object like so:
 Returns the Test::Builder object underlying Test::More for you to play
 with.
 
-=cut
-
-sub builder {
-    return Test::Builder->new;
-}
 
 =back
 
 
-=head1 NOTES
+=head1 EXIT CODES
 
-Test::More is B<explicitly> tested all the way back to perl 5.004.
+If all your tests passed, Test::Builder will exit with zero (which is
+normal).  If anything failed it will exit with how many failed.  If
+you run less (or more) tests than you planned, the missing (or extras)
+will be considered failures.  If no tests were ever run Test::Builder
+will throw a warning and exit with 255.  If the test died, even after
+having successfully completed all its tests, it will still be
+considered a failure and will exit with 255.
 
-Test::More is thread-safe for perl 5.8.0 and up.
+So the exit codes are...
 
-=head1 BUGS and CAVEATS
+    0                   all tests successful
+    255                 test died or all passed but wrong # of tests run
+    any other number    how many failed (including missing or extras)
+
+If you fail more than 254 tests, it will be reported as 254.
+
+B<NOTE>  This behavior may go away in future versions.
+
+
+=head1 CAVEATS and NOTES
 
 =over 4
 
-=item Making your own ok()
+=item Backwards compatibility
 
-If you are trying to extend Test::More, don't.  Use Test::Builder
-instead.
+Test::More works with Perls as old as 5.004_05.
 
-=item The eq_* family has some caveats.
 
-=item Test::Harness upgrades
+=item Overloaded objects
+
+String overloaded objects are compared B<as strings> (or in cmp_ok()'s
+case, strings or numbers as appropriate to the comparison op).  This
+prevents Test::More from piercing an object's interface allowing
+better blackbox testing.  So if a function starts returning overloaded
+objects instead of bare strings your tests won't notice the
+difference.  This is good.
+
+However, it does mean that functions like is_deeply() cannot be used to
+test the internals of string overloaded objects.  In this case I would
+suggest Test::Deep which contains more flexible testing functions for
+complex data structures.
+
+
+=item Threads
+
+Test::More will only be aware of threads if "use threads" has been done
+I<before> Test::More is loaded.  This is ok:
+
+    use threads;
+    use Test::More;
+
+This may cause problems:
+
+    use Test::More
+    use threads;
+
+
+=item Test::Harness upgrade
 
 no_plan and todo depend on new Test::Harness features and fixes.  If
 you're going to distribute tests that use no_plan or todo your
@@ -1184,8 +1463,7 @@ end-users will have to upgrade Test::Harness to the latest one on
 CPAN.  If you avoid no_plan and TODO tests, the stock Test::Harness
 will work fine.
 
-If you simply depend on Test::More, it's own dependencies will cause a
-Test::Harness upgrade.
+Installing Test::More should also upgrade Test::Harness.
 
 =back
 
@@ -1211,32 +1489,42 @@ L<Test::Simple> if all this confuses you and you just want to write
 some tests.  You can upgrade to Test::More later (it's forward
 compatible).
 
-L<Test::Differences> for more ways to test complex data structures.
-And it plays well with Test::More.
-
 L<Test> is the old testing module.  Its main benefit is that it has
 been distributed with Perl since 5.004_05.
 
 L<Test::Harness> for details on how your test results are interpreted
 by Perl.
 
-L<Test::Unit> describes a very featureful unit testing interface.
+L<Test::Differences> for more ways to test complex data structures.
+And it plays well with Test::More.
+
+L<Test::Class> is like XUnit but more perlish.
+
+L<Test::Deep> gives you more powerful complex data structure testing.
+
+L<Test::Unit> is XUnit style testing.
 
 L<Test::Inline> shows the idea of embedded testing.
 
-L<SelfTest> is another approach to embedded testing.
+L<Bundle::Test> installs a whole bunch of useful test modules.
 
 
 =head1 AUTHORS
 
 Michael G Schwern E<lt>schwern@pobox.comE<gt> with much inspiration
 from Joshua Pritikin's Test module and lots of help from Barrie
-Slaymaker, Tony Bowden, chromatic and the perl-qa gang.
+Slaymaker, Tony Bowden, blackstar.co.uk, chromatic, Fergal Daly and
+the perl-qa gang.
+
+
+=head1 BUGS
+
+See F<http://rt.cpan.org> to report and view bugs.
 
 
 =head1 COPYRIGHT
 
-Copyright 2001 by Michael G Schwern E<lt>schwern@pobox.comE<gt>.
+Copyright 2001, 2002, 2004 by Michael G Schwern E<lt>schwern@pobox.comE<gt>.
 
 This program is free software; you can redistribute it and/or 
 modify it under the same terms as Perl itself.

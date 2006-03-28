@@ -6,7 +6,7 @@ BEGIN {
         chdir 't';
     }
 }
-use Test::More tests => 173;
+use Test::More tests => 179;
 use strict;
 
 my @Exported_Funcs;
@@ -322,4 +322,23 @@ ok($hash_seed >= 0, "hash_seed $hash_seed");
 	%hash = ();
 	is ($counter, 0, "0 objects after clear $state");
     }
+}
+
+{
+    my %hash = map {$_,$_} qw(fwiffffff foosht teeoo);
+    lock_keys(%hash);
+    delete $hash{fwiffffff};
+    is (scalar keys %hash, 2);
+    unlock_keys(%hash);
+    is (scalar keys %hash, 2);
+
+    my ($first, $value) = each %hash;
+    is ($hash{$first}, $value, "Key has the expected value before the lock");
+    lock_keys(%hash);
+    is ($hash{$first}, $value, "Key has the expected value after the lock");
+
+    my ($second, $v2) = each %hash;
+
+    is ($hash{$first}, $value, "Still correct after iterator advances");
+    is ($hash{$second}, $v2, "Other key has the expected value");
 }

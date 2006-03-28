@@ -1,6 +1,6 @@
 /*    pad.h
  *
- *    Copyright (C) 2002, by Larry Wall and others
+ *    Copyright (C) 2002, 2003, 2005, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -77,7 +77,7 @@ Save a pad slot (used to restore after an iteration)
 
 XXX DAPM it would make more sense to make the arg a PADOFFSET
 =for apidoc m|void|SAVECLEARSV	|SV **svp
-Clear the pointed to pad value on scope exit. (ie the runtime action of 'my')
+Clear the pointed to pad value on scope exit. (i.e. the runtime action of 'my')
 
 =for apidoc m|void|SAVECOMPPAD
 save PL_comppad and PL_curpad
@@ -103,7 +103,12 @@ Get the value from slot C<po> in the base (DEPTH=1) pad of a padlist
 
 =for apidoc m|void|PAD_SET_CUR	|PADLIST padlist|I32 n
 Set the current pad to be pad C<n> in the padlist, saving
-the previous current pad.
+the previous current pad. NB currently this macro expands to a string too
+long for some compilers, so it's best to replace it with
+
+    SAVECOMPPAD();
+    PAD_SET_CUR_NOSAVE(padlist,n);
+
 
 =for apidoc m|void|PAD_SET_CUR_NOSAVE	|PADLIST padlist|I32 n
 like PAD_SET_CUR, but without the save
@@ -205,23 +210,25 @@ Assumes the slot entry is a valid C<our> lexical.
 The generation number of the name at offset C<po> in the current
 compiling pad (lvalue). Note that C<SvCUR> is hijacked for this purpose.
 
+=for apidoc m|STRLEN|PAD_COMPNAME_GEN_set|PADOFFSET po|int gen
+Sets the generation number of the name at offset C<po> in the current
+ling pad (lvalue) to C<gen>.  Note that C<SvCUR_set> is hijacked for this purpose.
+
 =cut
+
 */
 
 #define PAD_COMPNAME_FLAGS(po) SvFLAGS(*av_fetch(PL_comppad_name, (po), FALSE))
 #define PAD_COMPNAME_PV(po) SvPV_nolen(*av_fetch(PL_comppad_name, (po), FALSE))
 
-/* XXX DAPM yuk - using av_fetch twice. Is there a better way? */
-#define PAD_COMPNAME_TYPE(po) \
-    ((SvFLAGS(*av_fetch(PL_comppad_name, (po), FALSE)) & SVpad_TYPED) \
-    ? (SvSTASH(*av_fetch(PL_comppad_name, (po), FALSE))) :  Nullhv)
+#define PAD_COMPNAME_TYPE(po) pad_compname_type(po)
 
 #define PAD_COMPNAME_OURSTASH(po) \
     (GvSTASH(*av_fetch(PL_comppad_name, (po), FALSE)))
 
 #define PAD_COMPNAME_GEN(po) SvCUR(AvARRAY(PL_comppad_name)[po])
 
-
+#define PAD_COMPNAME_GEN_set(po, gen) SvCUR_set(AvARRAY(PL_comppad_name)[po], gen)
 
 
 /*

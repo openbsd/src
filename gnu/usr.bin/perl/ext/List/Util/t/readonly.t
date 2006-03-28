@@ -14,39 +14,25 @@ BEGIN {
 }
 
 use Scalar::Util qw(readonly);
+use Test::More tests => 9;
 
-
-print "1..9\n";
-
-print "not " unless readonly(1);
-print "ok 1\n";
+ok( readonly(1),	'number constant');
 
 my $var = 2;
 
-print "not " if readonly($var);
-print "ok 2\n";
+ok( !readonly($var),	'number variable');
+is( $var,	2,	'no change to number variable');
 
-print "not " unless $var == 2;
-print "ok 3\n";
-
-print "not " unless readonly("fred");
-print "ok 4\n";
+ok( readonly("fred"),	'string constant');
 
 $var = "fred";
 
-print "not " if readonly($var);
-print "ok 5\n";
-
-print "not " unless $var eq "fred";
-print "ok 6\n";
+ok( !readonly($var),	'string variable');
+is( $var,	'fred',	'no change to string variable');
 
 $var = \2;
 
-print "not " if readonly($var);
-print "ok 7\n";
+ok( !readonly($var),	'reference to constant');
+ok( readonly($$var),	'de-reference to constant');
 
-print "not " unless readonly($$var);
-print "ok 8\n";
-
-print "not " if readonly(*STDOUT);
-print "ok 9\n";
+ok( !readonly(*STDOUT),	'glob');

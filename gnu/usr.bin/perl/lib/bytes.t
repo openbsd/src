@@ -4,7 +4,7 @@ BEGIN {
     require './test.pl';
 }
 
-plan tests => 19;
+plan tests => 20;
 
 my $a = chr(0x100);
 
@@ -45,4 +45,10 @@ my $c = chr(0x100);
     is(bytes::substr($c, 0, 1), "\xc4", "bytes::substr under use bytes looks at bytes");
     is(bytes::index($c, "\x80"), 1, "bytes::index under use bytes looks at bytes");
     is(bytes::rindex($c, "\xc4"), 0, "bytes::rindex under use bytes looks at bytes");
+}
+
+{
+    fresh_perl_like ('use bytes; bytes::moo()',
+		     qr/Undefined subroutine bytes::moo/, {stderr=>1},
+		    "Check Carp is loaded for AUTOLOADing errors")
 }

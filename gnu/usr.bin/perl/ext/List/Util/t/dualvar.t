@@ -13,66 +13,43 @@ BEGIN {
     }
 }
 
-use vars qw($skip);
+use Scalar::Util ();
+use Test::More  (grep { /dualvar/ } @Scalar::Util::EXPORT_FAIL)
+			? (skip_all => 'dualvar requires XS version')
+			: (tests => 11);
 
-BEGIN {
-  require Scalar::Util;
+Scalar::Util->import('dualvar');
 
-  if (grep { /dualvar/ } @Scalar::Util::EXPORT_FAIL) {
-    print "1..0\n";
-    $skip=1;
-  }
-}
+$var = dualvar( 2.2,"string");
 
-eval <<'EOT' unless $skip;
-use Scalar::Util qw(dualvar);
-
-print "1..11\n";
-
-$var = dualvar 2.2,"string";
-
-print "not " unless $var == 2.2;
-print "ok 1\n";
-
-print "not " unless $var eq "string";
-print "ok 2\n";
+ok( $var == 2.2,	'Numeric value');
+ok( $var eq "string",	'String value');
 
 $var2 = $var;
 
+ok( $var2 == 2.2,	'copy Numeric value');
+ok( $var2 eq "string",	'copy String value');
+
 $var++;
 
-print "not " unless $var == 3.2;
-print "ok 3\n";
-
-print "not " unless $var ne "string";
-print "ok 4\n";
-
-print "not " unless $var2 == 2.2;
-print "ok 5\n";
-
-print "not " unless $var2 eq "string";
-print "ok 6\n";
+ok( $var == 3.2,	'inc Numeric value');
+ok( $var ne "string",	'inc String value');
 
 my $numstr = "10.2";
-my $numtmp = sprintf("%d", $numstr);
-$var = dualvar $numstr, "";
-print "not " unless $var == $numstr;
-print "ok 7\n";
+my $numtmp = int($numstr); # use $numstr as an int
 
-$var = dualvar 1<<31, "";
-print "not " unless $var == 1<<31;
-print "ok 8\n";
-print "not " unless $var > 0;
-print "ok 9\n";
+$var = dualvar($numstr, "");
+
+ok( $var == $numstr,	'NV');
+
+$var = dualvar(1<<31, "");
+ok( $var == (1<<31),	'UV 1');
+ok( $var > 0,		'UV 2');
 
 tie my $tied, 'Tied';
-$var = dualvar $tied, "ok";
-print "not " unless $var == 7.5;
-print "ok 10\n";
-print "not " unless $var eq "ok";
-print "ok 11\n";
-
-EOT
+$var = dualvar($tied, "ok");
+ok($var == 7.5,		'Tied num');
+ok($var eq 'ok',	'Tied str');
 
 package Tied;
 

@@ -18,17 +18,17 @@ the semantics.
 
 =cut 
 
-use Config;
+use ExtUtils::MakeMaker::Config;
 use File::Spec;
 require ExtUtils::MM_Any;
 require ExtUtils::MM_Unix;
 
 use vars qw(@ISA $VERSION);
 @ISA = qw( ExtUtils::MM_Any ExtUtils::MM_Unix );
-$VERSION = 1.04;
+$VERSION = '1.05';
 
 
-=item os_flavor (o)
+=item os_flavor
 
 BeOS is BeOS.
 

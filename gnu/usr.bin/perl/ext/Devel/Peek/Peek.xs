@@ -3,11 +3,11 @@
 #include "perl.h"
 #include "XSUB.h"
 
-bool
+static bool
 _runops_debug(int flag)
 {
     dTHX;
-    bool d = PL_runops == MEMBER_TO_FPTR(Perl_runops_debug);
+    const bool d = PL_runops == MEMBER_TO_FPTR(Perl_runops_debug);
 
     if (flag >= 0)
 	PL_runops 
@@ -15,7 +15,7 @@ _runops_debug(int flag)
     return d;
 }
 
-SV *
+static SV *
 DeadCode(pTHX)
 {
 #ifdef PURIFY
@@ -147,7 +147,7 @@ struct mstats_buffer
     UV buf[_NBUCKETS*4];
 };
 
-void
+static void
 _fill_mstats(struct mstats_buffer *b, int level)
 {
     dTHX;
@@ -159,7 +159,7 @@ _fill_mstats(struct mstats_buffer *b, int level)
     get_mstats(&(b->buffer), _NBUCKETS, level);
 }
 
-void
+static void
 fill_mstats(SV *sv, int level)
 {
     dTHX;
@@ -173,8 +173,8 @@ fill_mstats(SV *sv, int level)
     SvPOK_only(sv);
 }
 
-void
-_mstats_to_hv(HV *hv, struct mstats_buffer *b, int level)
+static void
+_mstats_to_hv(HV *hv, const struct mstats_buffer *b, int level)
 {
     dTHX;
     SV **svp;
@@ -240,7 +240,7 @@ _mstats_to_hv(HV *hv, struct mstats_buffer *b, int level)
 	if (!SvOK(*svp)) {
 	    av = newAV();
 	    (void)SvUPGRADE(*svp, SVt_RV);
-	    SvRV(*svp) = (SV*)av;
+	    SvRV_set(*svp, (SV*)av);
 	    SvROK_on(*svp);
 	} else
 	    av = (AV*)SvRV(*svp);
@@ -271,7 +271,8 @@ _mstats_to_hv(HV *hv, struct mstats_buffer *b, int level)
 	}
     }
 }
-void
+
+static void
 mstats_fillhash(SV *sv, int level)
 {
     struct mstats_buffer buf;
@@ -281,7 +282,8 @@ mstats_fillhash(SV *sv, int level)
     _fill_mstats(&buf, level);
     _mstats_to_hv((HV *)SvRV(sv), &buf, level);
 }
-void
+
+static void
 mstats2hash(SV *sv, SV *rv, int level)
 {
     if (!(SvROK(rv) && SvTYPE(SvRV(rv)) == SVt_PVHV))
@@ -293,17 +295,19 @@ mstats2hash(SV *sv, SV *rv, int level)
     _mstats_to_hv((HV *)SvRV(rv), (struct mstats_buffer*)SvPVX(sv), level);
 }
 #else	/* !( defined(PERL_DEBUGGING_MSTATS) || defined(DEBUGGING_MSTATS) \ ) */ 
-void
+static void
 fill_mstats(SV *sv, int level)
 {
     croak("Cannot report mstats without Perl malloc");
 }
-void
+
+static void
 mstats_fillhash(SV *sv, int level)
 {
     croak("Cannot report mstats without Perl malloc");
 }
-void
+
+static void
 mstats2hash(SV *sv, SV *rv, int level)
 {
     croak("Cannot report mstats without Perl malloc");
@@ -338,9 +342,9 @@ I32	lim
 PPCODE:
 {
     SV *pv_lim_sv = perl_get_sv("Devel::Peek::pv_limit", FALSE);
-    STRLEN pv_lim = pv_lim_sv ? SvIV(pv_lim_sv) : 0;
+    const STRLEN pv_lim = pv_lim_sv ? SvIV(pv_lim_sv) : 0;
     SV *dumpop = perl_get_sv("Devel::Peek::dump_ops", FALSE);
-    I32 save_dumpindent = PL_dumpindent;
+    const I32 save_dumpindent = PL_dumpindent;
     PL_dumpindent = 2;
     do_sv_dump(0, Perl_debug_log, sv, 0, lim,
 	       (bool)(dumpop && SvTRUE(dumpop)), pv_lim);
@@ -354,9 +358,9 @@ PPCODE:
 {
     long i;
     SV *pv_lim_sv = perl_get_sv("Devel::Peek::pv_limit", FALSE);
-    STRLEN pv_lim = pv_lim_sv ? SvIV(pv_lim_sv) : 0;
+    const STRLEN pv_lim = pv_lim_sv ? SvIV(pv_lim_sv) : 0;
     SV *dumpop = perl_get_sv("Devel::Peek::dump_ops", FALSE);
-    I32 save_dumpindent = PL_dumpindent;
+    const I32 save_dumpindent = PL_dumpindent;
     PL_dumpindent = 2;
 
     for (i=1; i<items; i++) {

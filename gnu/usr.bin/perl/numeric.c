@@ -1,7 +1,7 @@
 /*    numeric.c
  *
  *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
- *    2000, 2001, 2002, 2003, by Larry Wall and others
+ *    2000, 2001, 2002, 2003, 2004, 2005, 2006, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -129,7 +129,7 @@ invalid character will also trigger a warning.
 On return I<*len> is set to the length of the scanned string,
 and I<*flags> gives output flags.
 
-If the value is <= UV_MAX it is returned as a UV, the output flags are clear,
+If the value is <= C<UV_MAX> it is returned as a UV, the output flags are clear,
 and nothing is written to I<*result>. If the value is > UV_MAX C<grok_bin>
 returns UV_MAX, sets C<PERL_SCAN_GREATER_THAN_UV_MAX> in the output flags,
 and writes the value to I<*result> (or the value is discarded if I<result>
@@ -151,8 +151,9 @@ Perl_grok_bin(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result) {
     NV value_nv = 0;
 
     const UV max_div_2 = UV_MAX / 2;
-    bool allow_underscores = *flags & PERL_SCAN_ALLOW_UNDERSCORES;
+    const bool allow_underscores = (bool)(*flags & PERL_SCAN_ALLOW_UNDERSCORES);
     bool overflowed = FALSE;
+    char bit;
 
     if (!(*flags & PERL_SCAN_DISALLOW_PREFIX)) {
         /* strip off leading b or 0b.
@@ -170,8 +171,7 @@ Perl_grok_bin(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result) {
         }
     }
 
-    for (; len-- && *s; s++) {
-        char bit = *s;
+    for (; len-- && (bit = *s); s++) {
         if (bit == '0' || bit == '1') {
             /* Write it in this wonky order with a goto to attempt to get the
                compiler to make the common case integer-only loop pretty tight.
@@ -267,9 +267,8 @@ Perl_grok_hex(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result) {
     NV value_nv = 0;
 
     const UV max_div_16 = UV_MAX / 16;
-    bool allow_underscores = *flags & PERL_SCAN_ALLOW_UNDERSCORES;
+    const bool allow_underscores = (bool)(*flags & PERL_SCAN_ALLOW_UNDERSCORES);
     bool overflowed = FALSE;
-    const char *hexdigit;
 
     if (!(*flags & PERL_SCAN_DISALLOW_PREFIX)) {
         /* strip off leading x or 0x.
@@ -288,7 +287,7 @@ Perl_grok_hex(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result) {
     }
 
     for (; len-- && *s; s++) {
-	hexdigit = strchr((char *) PL_hexdigit, *s);
+	const char *hexdigit = strchr(PL_hexdigit, *s);
         if (hexdigit) {
             /* Write it in this wonky order with a goto to attempt to get the
                compiler to make the common case integer-only loop pretty tight.
@@ -317,7 +316,7 @@ Perl_grok_hex(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result) {
             continue;
         }
         if (*s == '_' && len && allow_underscores && s[1]
-		&& (hexdigit = strchr((char *) PL_hexdigit, s[1])))
+		&& (hexdigit = strchr(PL_hexdigit, s[1])))
 	    {
 		--len;
 		++s;
@@ -382,7 +381,7 @@ Perl_grok_oct(pTHX_ char *start, STRLEN *len_p, I32 *flags, NV *result) {
     NV value_nv = 0;
 
     const UV max_div_8 = UV_MAX / 8;
-    bool allow_underscores = *flags & PERL_SCAN_ALLOW_UNDERSCORES;
+    const bool allow_underscores = (bool)(*flags & PERL_SCAN_ALLOW_UNDERSCORES);
     bool overflowed = FALSE;
 
     for (; len-- && *s; s++) {
@@ -475,7 +474,7 @@ Perl_scan_bin(pTHX_ char *start, STRLEN len, STRLEN *retlen)
 {
     NV rnv;
     I32 flags = *retlen ? PERL_SCAN_ALLOW_UNDERSCORES : 0;
-    UV ruv = grok_bin (start, &len, &flags, &rnv);
+    const UV ruv = grok_bin (start, &len, &flags, &rnv);
 
     *retlen = len;
     return (flags & PERL_SCAN_GREATER_THAN_UV_MAX) ? rnv : (NV)ruv;
@@ -486,7 +485,7 @@ Perl_scan_oct(pTHX_ char *start, STRLEN len, STRLEN *retlen)
 {
     NV rnv;
     I32 flags = *retlen ? PERL_SCAN_ALLOW_UNDERSCORES : 0;
-    UV ruv = grok_oct (start, &len, &flags, &rnv);
+    const UV ruv = grok_oct (start, &len, &flags, &rnv);
 
     *retlen = len;
     return (flags & PERL_SCAN_GREATER_THAN_UV_MAX) ? rnv : (NV)ruv;
@@ -497,7 +496,7 @@ Perl_scan_hex(pTHX_ char *start, STRLEN len, STRLEN *retlen)
 {
     NV rnv;
     I32 flags = *retlen ? PERL_SCAN_ALLOW_UNDERSCORES : 0;
-    UV ruv = grok_hex (start, &len, &flags, &rnv);
+    const UV ruv = grok_hex (start, &len, &flags, &rnv);
 
     *retlen = len;
     return (flags & PERL_SCAN_GREATER_THAN_UV_MAX) ? rnv : (NV)ruv;
@@ -516,7 +515,7 @@ Perl_grok_numeric_radix(pTHX_ const char **sp, const char *send)
 #ifdef USE_LOCALE_NUMERIC
     if (PL_numeric_radix_sv && IN_LOCALE) { 
         STRLEN len;
-        char* radix = SvPV(PL_numeric_radix_sv, len);
+        const char* radix = SvPV(PL_numeric_radix_sv, len);
         if (*sp + len <= send && memEQ(*sp, radix, len)) {
             *sp += len;
             return TRUE; 
@@ -757,7 +756,7 @@ S_mulexp10(NV value, I32 exponent)
     if (exponent == 0)
 	return value;
     if (value == 0)
-	return 0;
+	return (NV)0;
 
     /* On OpenVMS VAX we by default use the D_FLOAT double format,
      * and that format does not have *easy* capabilities [1] for
@@ -843,11 +842,11 @@ char*
 Perl_my_atof2(pTHX_ const char* orig, NV* value)
 {
     NV result[3] = {0.0, 0.0, 0.0};
-    char* s = (char*)orig;
+    const char* s = orig;
 #ifdef USE_PERL_ATOF
     UV accumulator[2] = {0,0};	/* before/after dp */
     bool negative = 0;
-    char* send = s + strlen(orig) - 1;
+    const char* send = s + strlen(orig) - 1;
     bool seen_digit = 0;
     I32 exp_adjust[2] = {0,0};
     I32 exp_acc[2] = {-1, -1};
@@ -892,6 +891,21 @@ Perl_my_atof2(pTHX_ const char* orig, NV* value)
 	case '+':
 	    ++s;
     }
+
+    /* punt to strtod for NaN/Inf; if no support for it there, tough luck */
+
+#ifdef HAS_STRTOD
+    if (*s == 'n' || *s == 'N' || *s == 'i' || *s == 'I') {
+        const char *p = negative ? s - 1 : s;
+        char *endp;
+        NV rslt;
+        rslt = strtod(p, &endp);
+        if (endp != p) {
+            *value = rslt;
+            return (char *)endp;
+        }
+    }
+#endif
 
     /* we accumulate digits into an integer; when this becomes too
      * large, we add the total to NV and start again */
@@ -945,7 +959,7 @@ Perl_my_atof2(pTHX_ const char* orig, NV* value)
 		++exp_acc[seen_dp];
 	    }
 	}
-	else if (!seen_dp && GROK_NUMERIC_RADIX((const char **)&s, send)) {
+	else if (!seen_dp && GROK_NUMERIC_RADIX(&s, send)) {
 	    seen_dp = 1;
 	    if (sig_digits > MAX_SIG_DIGITS) {
 		++s;
@@ -998,7 +1012,7 @@ Perl_my_atof2(pTHX_ const char* orig, NV* value)
 	result[2] = -result[2];
 #endif /* USE_PERL_ATOF */
     *value = result[2];
-    return s;
+    return (char *)s;
 }
 
 #if ! defined(HAS_MODFL) && defined(HAS_AINTL) && defined(HAS_COPYSIGNL)
@@ -1017,3 +1031,13 @@ Perl_my_frexpl(long double x, int *e) {
 	return (scalbnl(x, -*e));
 }
 #endif
+
+/*
+ * Local variables:
+ * c-indentation-style: bsd
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * End:
+ *
+ * ex: set ts=8 sts=4 sw=4 noet:
+ */

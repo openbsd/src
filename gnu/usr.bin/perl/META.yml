@@ -1,5 +1,5 @@
 name: perl
-version: 5.008006
+version: 5.008008
 abstract: Practical Extraction and Reporting Language
 author: perl5-porters@perl.org
 license: perl
@@ -13,6 +13,7 @@ private:
     - ext/Digest/MD5
     - ext/Encode
     - ext/Filter/Util/Call
+    - ext/IO
     - ext/List/Util
     - ext/MIME/Base64
     - ext/Safe
@@ -20,6 +21,7 @@ private:
     - ext/Time/HiRes
     - ext/Unicode/Normalize
     - lib/Attribute/Handlers
+    - lib/base
     - lib/bignum
     - lib/CGI
     - lib/Class/ISA
@@ -57,8 +59,15 @@ private:
     - t/lib/Test/Simple
 
   file:
+    - ext/Compress/Zlib
+    - ext/DynaLoader/t/XSLoader.t
+    - ext/DynaLoader/XSLoader_pm.PL
     - ext/Filter/t/call.t
+    - ext/Math/BigInt/FastCalc
+    - lib/Archive/Tar
+    - lib/Archive/Tar.pm
     - lib/Attribute/Handlers.pm
+    - lib/base.pm
     - lib/bigint.pm
     - lib/bignum.pm
     - lib/bigrat.pm
@@ -67,6 +76,10 @@ private:
     - lib/CPAN.pm
     - lib/Cwd.pm
     - lib/Digest.pm
+    - lib/encoding/warnings
+    - lib/encoding/warnings.pm
+    - lib/ExtUtils/CBuilder
+    - lib/ExtUtils/CBuilder.pm
     - lib/ExtUtils/Command
     - lib/ExtUtils/Command.pm
     - lib/ExtUtils/Install.pm
@@ -76,9 +89,11 @@ private:
     - lib/ExtUtils/MakeMaker
     - lib/ExtUtils/MakeMaker.pm
     - lib/ExtUtils/Manifest.pm
+    - lib/ExtUtils/MANIFEST.SKIP
     - lib/ExtUtils/Mkbootstrap.pm
     - lib/ExtUtils/Mksymlists.pm
     - lib/ExtUtils/MM.pm
+    - lib/ExtUtils/MM_AIX.pm
     - lib/ExtUtils/MM_Any.pm
     - lib/ExtUtils/MM_BeOS.pm
     - lib/ExtUtils/MM_Cygwin.pm
@@ -86,14 +101,19 @@ private:
     - lib/ExtUtils/MM_MacOS.pm
     - lib/ExtUtils/MM_NW5.pm
     - lib/ExtUtils/MM_OS2.pm
+    - lib/ExtUtils/MM_QNX.pm
     - lib/ExtUtils/MM_Unix.pm
     - lib/ExtUtils/MM_UWIN.pm
     - lib/ExtUtils/MM_VMS.pm
+    - lib/ExtUtils/MM_VOS.pm
     - lib/ExtUtils/MM_Win32.pm
     - lib/ExtUtils/MM_Win95.pm
     - lib/ExtUtils/MY.pm
     - lib/ExtUtils/Packlist.pm
+    - lib/ExtUtils/ParseXS
+    - lib/ExtUtils/ParseXS.pm
     - lib/ExtUtils/testlib.pm
+    - lib/fields.pm
     - lib/File/Spec.pm
     - lib/File/Temp.pm
     - lib/Filter/Simple.pm
@@ -101,6 +121,8 @@ private:
     - lib/I18N/LangTags.pm
     - lib/if.pm
     - lib/if.t
+    - lib/IO/Zlib
+    - lib/IO/Zlib.pm
     - lib/Locale/Codes
     - lib/Locale/Constants.pm
     - lib/Locale/Constants.pod
@@ -117,6 +139,8 @@ private:
     - lib/Math/BigInt.pm
     - lib/Math/BigRat.pm
     - lib/Memoize.pm
+    - lib/Module/CoreList
+    - lib/Module/CoreList.pm
     - lib/Net/ChangeLog.libnet
     - lib/Net/Cmd.pm
     - lib/Net/Config.eg
@@ -136,8 +160,9 @@ private:
     - lib/PerlIO/via/QuotedPrint.pm
     - lib/PerlIO/via/t/QuotedPrint.t
     - lib/Pod/Checker.pm
+    - lib/Pod/Escapes
+    - lib/Pod/Escapes.pm
     - lib/Pod/Find.pm
-    - lib/Pod/Html.pm
     - lib/Pod/InputObjects.pm
     - lib/Pod/LaTeX.pm
     - lib/Pod/Man.pm
@@ -147,6 +172,9 @@ private:
     - lib/Pod/Perldoc.pm
     - lib/Pod/PlainText.pm
     - lib/Pod/Select.pm
+    - lib/Pod/Simple
+    - lib/Pod/Simple.pm
+    - lib/Pod/Simple.pod
     - lib/Pod/t/basic.cap
     - lib/Pod/t/basic.clr
     - lib/Pod/t/basic.man
@@ -189,6 +217,7 @@ private:
     - t/lib/filter-util.pl
     - t/lib/TieIn.pm
     - t/lib/TieOut.pm
+    - t/lib/ZlibTestUtils.pm
     - t/pod/emptycmd.t
     - t/pod/emptycmd.xr
     - t/pod/find.t

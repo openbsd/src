@@ -15,7 +15,7 @@ use Test::More;
 
 BEGIN {
 	if ($^O =~ /beos/i) {
-		plan tests => 2;
+		plan tests => 4;
 	} else {
 		plan skip_all => 'This is not BeOS';
 	}
@@ -40,6 +40,7 @@ use File::Basename;
 
 require_ok( 'ExtUtils::MM_BeOS' );
 
+my $MM = bless { NAME => "Foo" }, 'MM';
 
 # init_linker
 {

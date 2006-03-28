@@ -194,10 +194,19 @@ void __perl_mpe_move_fast(int len,                 // %r26 == byte length
  *
  */
 
+#ifndef _POSIX_SOURCE
+#  define _POSIX_SOURCE
+#endif
+#ifndef _SOCKET_SOURCE
+#  define _SOCKET_SOURCE
+#endif
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <limits.h>
 #include <mpe.h>
 
 extern void FCONTROL(short, short, longpointer);
@@ -205,23 +214,28 @@ extern void PRINTFILEINFO(int);
 
 int ftruncate(int fd, long wantsize);
 
-int ftruncate(int fd, long wantsize) {
+int
+ftruncate(int fd, long wantsize)
+{
+  int ccode_return,dummy=0;
 
-int ccode_return,dummy=0;
+  if (lseek(fd, wantsize, SEEK_SET) < 0)
+  {
+      return (-1);
+  }
 
-if (lseek(fd, wantsize, SEEK_SET) < 0) {
-        return (-1);
-}
+  FCONTROL(_mpe_fileno(fd),6,__perl_mpe_longaddr(&dummy)); /* Write new EOF */
+  if ((ccode_return=ccode()) != CCE)
+  {
+          fprintf(stderr,
+              "MPE ftruncate failed, ccode=%d, wantsize=%ld\n",
+              ccode_return, wantsize);
+          PRINTFILEINFO(_mpe_fileno(fd));
+          errno = ESYSERR;
+          return (-1);
+  }
 
-FCONTROL(_mpe_fileno(fd),6,__perl_mpe_longaddr(&dummy)); /* Write new EOF */
-if ((ccode_return=ccode()) != CCE) {
-        fprintf(stderr,"MPE ftruncate failed, ccode=%d, wantsize=%ld\n",ccode_return,wantsize);
-        PRINTFILEINFO(_mpe_fileno(fd));
-	errno = ESYSERR;
-	return (-1);
-}
-
-return (0);
+  return (0);
 }
 
 /*
@@ -268,74 +282,71 @@ return (0);
       PRINT_ERROR - make this function print an error message to stderr
 */
 
-#ifndef _POSIX_SOURCE
-# define _POSIX_SOURCE
-#endif
 
-#include <sys/types.h>	/* off_t, required by open() */
-#include <sys/stat.h>	/* required by open() */
-#include <fcntl.h>	/* open() */
-#include <unistd.h>	/* close() */
-#include <stdio.h>	/* perror(), sprintf() */
+#include <sys/types.h>  /* off_t, required by open() */
+#include <sys/stat.h>   /* required by open() */
+#include <fcntl.h>      /* open() */
+#include <unistd.h>     /* close() */
+#include <stdio.h>      /* perror(), sprintf() */
 
 
 
 int
 truncate(const char *pathname, off_t length)
 {
-	int fd;
+        int fd;
 #ifdef PRINT_ERROR
-	char error_msg[80+1];
+        char error_msg[80+1];
 #endif
 
-	if (length == 0)
-	{
-		if ( (fd = open(pathname, O_WRONLY | O_TRUNC)) < 0)
-		{
-			/* errno already set */
+        if (length == 0)
+        {
+                if ( (fd = open(pathname, O_WRONLY | O_TRUNC)) < 0)
+                {
+                        /* errno already set */
 #ifdef PRINT_ERROR
-			sprintf(error_msg,
-			        "truncate(): open(%s, O_WRONLY | OTRUNC)\0",
-			        pathname);
-			perror(error_msg);
+                        sprintf(error_msg,
+                                "truncate(): open(%s, O_WRONLY | OTRUNC)\0",
+                                pathname);
+                        perror(error_msg);
 #endif
-			return -1;
-		}
-	}
-	else
-	{
-		if ( (fd = open(pathname, O_WRONLY)) < 0)
-		{
-			/* errno already set */
+                        return -1;
+                }
+        }
+        else
+        {
+                if ( (fd = open(pathname, O_WRONLY)) < 0)
+                {
+                        /* errno already set */
 #ifdef PRINT_ERROR
-			sprintf(error_msg,
-			        "truncate(): open(%s, O_WRONLY)\0",
-			        pathname);
-			perror(error_msg);
+                        sprintf(error_msg,
+                                "truncate(): open(%s, O_WRONLY)\0",
+                                pathname);
+                        perror(error_msg);
 #endif
-			return -1;
-		}
+                        return -1;
+                }
 
-		if (ftruncate(fd, length) < 0)
-		{
-			/* errno already set */
+                if (ftruncate(fd, length) < 0)
+                {
+                        /* errno already set */
 #ifdef PRINT_ERROR
-			perror("truncate(): ftruncate()");
+                        perror("truncate(): ftruncate()");
 #endif
-			return -1;
-		}
-	}
+                        return -1;
+                }
+        }
 
-	if (close(fd) < 0)
-	{
-		/* errno already set */
+        if (close(fd) < 0)
+        {
+                /* errno already set */
 #ifdef PRINT_ERROR
-		perror("truncate(): close()");
+                perror("truncate(): close()");
 #endif
-		return -1;
-	}
+                return -1;
+        }
 
-	return 0;
+        return 0;
 } /* truncate() */
 
 /* 
@@ -378,9 +389,8 @@ truncate(const char *pathname, off_t length)
 # define _SOCKET_SOURCE
 #endif
 
-#include <time.h>	/* structs timeval & timezone,
-				difftime(), localtime(), mktime(), time() */
-#include <sys/time.h>	/* gettimeofday() */
+#include <time.h>       /* structs timeval & timezone,
+                                difftime(), localtime(), mktime(), time() */
 
 extern int TIMER();
 
@@ -455,15 +465,15 @@ struct timezone *tpz;
 /*
 **  MPE_FCNTL -- shadow function for fcntl()
 **
-**	MPE requires sfcntl() for sockets, and fcntl() for everything 
-**	else.  This shadow routine determines the descriptor type and
-**	makes the appropriate call.
+**      MPE requires sfcntl() for sockets, and fcntl() for everything 
+**      else.  This shadow routine determines the descriptor type and
+**      makes the appropriate call.
 **
-**	Parameters:
-**		same as fcntl().
+**      Parameters:
+**              same as fcntl().
 **
-**	Returns:
-**		same as fcntl().
+**      Returns:
+**              same as fcntl().
 */
 
 #include <stdarg.h>
@@ -472,35 +482,321 @@ struct timezone *tpz;
 int
 mpe_fcntl(int fildes, int cmd, ...)
 {
-	int len, result;
-	struct sockaddr sa;
-	
-	void *arg;
-	va_list ap;
-	
-	va_start(ap, cmd);
-	arg = va_arg(ap, void *);
-	va_end(ap);
-	
-	len = sizeof sa;
-	if (getsockname(fildes, &sa, &len) == -1)
-	{
-	        if (errno == EAFNOSUPPORT)
-			/* AF_UNIX socket */
-	                return sfcntl(fildes, cmd, arg);
+        int len, result;
+        struct sockaddr sa;
+        
+        void *arg;
+        va_list ap;
+        
+        va_start(ap, cmd);
+        arg = va_arg(ap, void *);
+        va_end(ap);
+        
+        len = sizeof sa;
+        if (getsockname(fildes, &sa, &len) == -1)
+        {
+                if (errno == EAFNOSUPPORT)
+                        /* AF_UNIX socket */
+                        return sfcntl(fildes, cmd, arg);
 
-	        if (errno == ENOTSOCK) 
-			/* file or pipe */
-	                return fcntl(fildes, cmd, arg);
+                if (errno == ENOTSOCK) 
+                        /* file or pipe */
+                        return fcntl(fildes, cmd, arg);
 
-		/* unknown getsockname() failure */
-	        return (-1); 
-	}
-	else
-	{
-		/* AF_INET socket */
-		if ((result = sfcntl(fildes, cmd, arg)) != -1 && cmd == F_GETFL)
-			result |= O_RDWR;  /* fill in some missing flags */
-	        return result;
-	}
+                /* unknown getsockname() failure */
+                return (-1); 
+        }
+        else
+        {
+                /* AF_INET socket */
+                if ((result = sfcntl(fildes, cmd, arg)) != -1 && cmd == F_GETFL)
+                        result |= O_RDWR;  /* fill in some missing flags */
+                return result;
+        }
+}
+
+
+
+/* 
+ * Stuff from here on down is written by Ken Hirsch
+ * and you may use it for any purpose.
+ * No warranty, express or implied.
+ */
+
+#include <stddef.h>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+
+#ifndef _SOCKLEN_T
+typedef unsigned int socklen_t;
+#define _SOCKLEN_T
+#endif
+
+static int max_io_size(int filedes);
+
+ssize_t
+mpe_read(int filedes, void *buffer, size_t len)
+{
+  int maxio;
+  if (len > 4096 && (len > (maxio = max_io_size(filedes))))
+    len = maxio;
+
+  return read(filedes, buffer, len);
+}
+
+ssize_t
+mpe_write(int filedes, const void *buffer, size_t len)
+{
+  int written = 0;
+  int orig_len = len;
+  int maxio = (len>4096)?max_io_size(filedes):INT_MAX;
+  const char *buf = (const char *)buffer;
+
+  do {
+    written = write(filedes, buf, len>maxio?maxio:len);
+    if (written < 0)
+      break;
+    len -= written;
+    buf += written;
+  } while (len > 0);
+
+  if (written < 0 && len == orig_len)
+    return -1;
+  else
+    return orig_len - len;
+}
+
+
+ssize_t
+mpe_send(int socket, const void *buffer, size_t len, int flags)
+{
+  int written = 0;
+  int orig_len = len;
+  int maxio = (len>4096)?max_io_size(socket):INT_MAX;
+  const char *buf = (const char *)buffer;
+
+  do {
+    written = send(socket, buf, len>maxio?maxio:len, flags);
+    if (written < 0)
+      break;
+    len -= written;
+    buf += written;
+  } while (len > 0);
+
+  if (written < 0 && len == orig_len)
+    return -1;
+  else
+    return orig_len - len;
+}
+
+ssize_t
+mpe_sendto(int socket, const void *buffer, size_t len,
+       int flags, const struct sockaddr *dest_addr,
+       socklen_t dest_len)
+{
+  int written = 0;
+  int orig_len = len;
+  int maxio = (len>4096)?max_io_size(socket):INT_MAX;
+  const char *buf = (const char *)buffer;
+
+  do {
+    written = 
+       sendto(socket, buf, len>maxio?maxio:len, flags, dest_addr, dest_len);
+    if (written < 0)
+      break;
+    len -= written;
+    buf += written;
+  } while (len > 0);
+
+  if (written < 0 && len == orig_len)
+    return -1;
+  else
+    return orig_len - len;
+}
+
+
+ssize_t
+mpe_recv(int socket, void *buffer, size_t len, int flags)
+{
+  int maxio;
+  if (len > 4096 && (len > (maxio = max_io_size(socket))))
+    len = maxio;
+  return recv(socket, buffer, len, flags);
+}
+
+ssize_t
+mpe_recvfrom(int socket, void *buffer, size_t len,
+           int flags, struct sockaddr *address,
+           socklen_t *address_len) 
+{
+  int maxio;
+  if (len > 4096 && (len > (maxio = max_io_size(socket))))
+    len = maxio;
+  return recvfrom(socket, buffer, len, flags, address, address_len);
+}
+
+/*
+   I didn't do thse two:
+ssize_t mpe_recvmsg(int, struct msghdr *, int);
+ssize_t mpe_sendmsg(int, const struct msghdr *, int);
+*/
+
+/* 
+ * On MPE/iX (at least version 6.0), a getsockname()
+ * performed on a socket that is listening
+ * will return INADDR_ANY, even if you used
+ * bind to bind it to a particular IP address.
+ *
+ * (In fact, it appears that the socket always acts as
+ *  if you used INADDR_ANY.)
+ *
+ * Here I save the IP address used in bind
+ * So I can get it in getsockname()
+ *
+ */
+
+/* I just save 40.  Usually one or two should be enough
+ */
+
+int
+mpe_connect(int socket, 
+    const struct sockaddr *address,
+    socklen_t address_len)
+{
+  int ret = connect(socket, address, address_len);
+  if (ret < 0 && errno == EINPROGRESS)
+  {
+    /* Need to call getsockopt to clear socket error */
+    int socket_error;
+    socklen_t err_size = sizeof(socket_error);
+    (void)getsockopt(socket, SOL_SOCKET, SO_ERROR,
+                          &socket_error, &err_size);
+    errno = EINPROGRESS;
+  }
+  return ret;
+}
+
+static struct {
+  int fd;
+  struct in_addr holdaddr;
+} holdbind[40];
+#define HOLDBINDLAST ((sizeof(holdbind))/(sizeof(holdbind[0])))
+static int nextbind;
+
+/*
+ * Fix peculiarities of bind() on MPE
+ * 1. call GETPRIVMODE to bind to ports < 1024
+ * 2. save IP address for future calls to getsockname
+ * 3. set IP address to 0 (INADDR_ANY)
+ */
+
+int
+mpe_bind(int socket, const struct sockaddr *address, socklen_t address_len)
+{
+   int i;
+   int result;
+   int mpeprivmode=0;
+   extern void GETPRIVMODE(void);
+   extern void GETUSERMODE(void);
+
+   for (i = 0; i<HOLDBINDLAST; i++) {
+     if (holdbind[i].fd == socket)
+       break;
+   }
+   /* If we didn't find previously used slot, use next */
+   if (i == HOLDBINDLAST)
+     i = nextbind;
+
+   holdbind[i].fd = socket;
+
+   memset(&holdbind[i].holdaddr, '\0', sizeof(holdbind[i].holdaddr));
+   if (address->sa_family == AF_INET
+      && address_len >= offsetof(struct sockaddr_in, sin_addr)
+                        +sizeof(struct in_addr)) {
+      holdbind[i].holdaddr = ((struct sockaddr_in *)address)->sin_addr;
+   }
+   if (i == nextbind)
+   {
+     if (++nextbind >= HOLDBINDLAST)
+       nextbind = 0;
+   }
+
+   if (address->sa_family == AF_INET)
+   {
+        /* The address *MUST* stupidly be zero. */
+        ((struct sockaddr_in *)address)->sin_addr.s_addr = INADDR_ANY;
+        /* PRIV mode is required to bind() to ports < 1024. */
+        if (((struct sockaddr_in *)address)->sin_port < 1024 &&
+            ((struct sockaddr_in *)address)->sin_port > 0) {
+            GETPRIVMODE(); /* If this fails, we are aborted by MPE/iX. */
+            mpeprivmode = 1;
+        }
+    }
+    result = bind(socket, address, address_len);
+    if (mpeprivmode)
+    {
+      GETUSERMODE();
+    }
+    return result;
+
+}
+
+int 
+mpe_getsockname(int socket, struct sockaddr *address, socklen_t *address_len)
+{
+  int ret;
+  ret = getsockname(socket, address, address_len);
+  if (ret == 0 
+      && address->sa_family == AF_INET
+      && *address_len >= offsetof(struct sockaddr_in, sin_addr)
+                        +sizeof(struct in_addr)
+      && ((struct sockaddr_in *)address)->sin_addr.s_addr == INADDR_ANY) {
+    int i;
+    for (i=0; i<HOLDBINDLAST; i++) {
+      if (holdbind[i].fd == socket)
+      {
+        ((struct sockaddr_in *)address)->sin_addr.s_addr 
+            = holdbind[i].holdaddr.s_addr;
+        break;
+      }
+    }
+  }
+  return ret;
+}
+
+int 
+mpe_getpeername(int socket, struct sockaddr *address, socklen_t *address_len)
+{
+  int ret;
+  ret = getpeername(socket, address, address_len);
+  if (ret == 0)
+  {
+    /* Try a zero-length write to see if socket really connected */
+    int written = write(socket, "", 0);
+    if (written < 0)
+      ret = -1;
+  }
+  return ret;
+}
+
+
+static int
+max_io_size(int filedes)
+{
+  int save_errno;
+  struct sockaddr sa;
+  int len;
+  int result = INT_MAX; /* all other files */
+
+  save_errno = errno;
+  len = sizeof sa;
+  if (getsockname(filedes, &sa, &len) == -1)
+  {
+     if (errno == EAFNOSUPPORT) /* AF_UNIX socket */
+       result = 4096;
+     errno = save_errno;
+  } else {
+    result = 30000; /* AF_INET sock max */
+  }
+  return result;
 }

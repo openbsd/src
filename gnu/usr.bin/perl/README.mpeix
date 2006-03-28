@@ -11,7 +11,8 @@ README.mpeix - Perl/iX for HP e3000 MPE
    http://www.bixby.org/mark/perlix.html
    http://jazz.external.hp.com/src/hp_freeware/perl/
    Perl language for MPE
-   Last updated July 29, 2003 @ 2100 UTC
+   Last updated January 12, 2006 @ 2100 UTC
+
 
 =head1 NOTE
 
@@ -30,6 +31,58 @@ Use which ever one is more recent.
 
 
 =head1 What's New in Perl for MPE/iX
+
+January 12, 2006
+
+=over 4
+
+=item *
+
+Updated for perl-5.8.8 and perl-5.9.3 by Ken Hirsch.
+
+Simplified the build process by using the MPEAUTOCONF
+functionality in Mark Klein's ld.
+
+If you build this from scratch, make sure you have a version
+of ld which supports it.  In the shell, type
+
+  ld --help
+    and look for AUTOCONF or MPEAUTOCONF near the bottom
+
+  or do this:
+  ld --help 2>&1 | grep AUTOCONF
+
+If you see don't see AUTOCONF or MPEAUTOCONF, make sure you get a new
+version.
+
+You also do not have to use mpeix/relink after building, so the
+recommend sequence is:
+
+  ./Configure -de
+
+      # or ./Configure -de -Dusedevel 
+      # if you're building a development version
+
+  make
+  make test
+     # if you run this in a job, do "make test_notty"
+
+  make install
+
+Be prepared for a wait. These take much longer on MPE/iX than on a Unix
+system, because of a slow forking, mostly.  On a lightly-loaded HP3000
+Series 979 running MPE/iX 7.5:
+
+    Configure: 1 hour
+    make:      1 hour 15 minutes
+    make test  1 hour 45 minutes
+
+Various socket problems were fixed in mpeix.c.
+
+Mark Klein provided a fixed sigsetjmp (that works with dynamic
+libraries) in mpeix_setjmp.c
+
+=item *
 
 June 1, 2000
 

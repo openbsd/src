@@ -31,10 +31,10 @@ do_pmop_dump                   # U
 do_sv_dump                     # U
 dump_all                       # U
 dump_eval                      # U
-dump_form                      # U
+dump_form                      # E
 dump_indent                    # U
-dump_packsubs                  # U
-dump_sub                       # U
+dump_packsubs                  # E
+dump_sub                       # E
 dump_vindent                   # U
 get_context                    # E
 get_ppaddr                     # E

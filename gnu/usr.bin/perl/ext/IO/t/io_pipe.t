@@ -1,9 +1,15 @@
 #!./perl
 
+my $perl;
+
 BEGIN {
     unless(grep /blib/, @INC) {
+	$perl = './perl';
 	chdir 't' if -d 't';
 	@INC = '../lib';
+    }
+    else {
+	$perl = $^X;
     }
 }
 
@@ -27,7 +33,6 @@ BEGIN {
 
 use IO::Pipe;
 
-my $perl = './perl';
 
 $| = 1;
 print "1..10\n";

@@ -101,7 +101,7 @@ sdbm_FIRSTKEY(db)
 datum_key
 sdbm_NEXTKEY(db, key)
 	SDBM_File	db
-	datum_key	key = key; /* never used -  silence picky compilers. */
+	datum_key	key;
 
 int
 sdbm_error(db)

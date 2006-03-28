@@ -13,24 +13,24 @@ BEGIN {
     }
 }
 
-
+use strict;
+use Test::More tests => 5;
 use List::Util qw(minstr);
 
-print "1..5\n";
+my $v;
 
-print "not " unless defined &minstr;
-print "ok 1\n";
+ok(defined &minstr, 'defined');
 
-print "not " unless minstr('a') eq 'a';
-print "ok 2\n";
+$v = minstr('a');
+is($v, 'a', 'single arg');
 
-print "not " unless minstr('a','b') eq 'a';
-print "ok 3\n";
+$v = minstr('a','b');
+is($v, 'a', '2-arg ordered');
 
-print "not " unless minstr('B','A') eq 'A';
-print "ok 4\n";
+$v = minstr('B','A');
+is($v, 'A', '2-arg reverse ordered');
 
 my @a = map { pack("u", pack("C*",map { int(rand(256))} (0..int(rand(10) + 2)))) } 0 .. 20;
 my @b = sort { $a cmp $b } @a;
-print "not " unless minstr(@a) eq $b[0];
-print "ok 5\n";
+$v = minstr(@a);
+is($v, $b[0], 'random ordered');

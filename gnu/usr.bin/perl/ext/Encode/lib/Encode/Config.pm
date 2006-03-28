@@ -2,7 +2,7 @@
 # Demand-load module list
 #
 package Encode::Config;
-our $VERSION = do { my @r = (q$Revision: 2.0 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION = do { my @r = (q$Revision: 2.1 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 use strict;
 
@@ -145,6 +145,7 @@ unless (ord("A") == 193){
 	 'MIME-B'             => 'Encode::MIME::Header',
 	 'MIME-Q'             => 'Encode::MIME::Header',
 
+	 'MIME-Header-ISO_2022_JP' => 'Encode::MIME::Header::ISO_2022_JP',
 	);
 }
 

@@ -1,10 +1,34 @@
 
 
+1.814 11 November 2005
+
+   * Fix from Dominic Dunlop to tidy up an OS-X specific warning in
+     db-btree.t.
+
+   * Silenced a warning about $DB_File::Error only being used once.
+     Issue spotted by Dominic Dunlop.
+
+1.813 31st October 2005
+
+   * Updates for Berkeley DB 4.4
+
+1.812 9th October 2005
+
+   * Added libscan to Makefile.PL
+
+   * Fixed test failing under windows
+
+1.811 12th March 2005
+
+   * Fixed DBM filter bug in seq
+
 1.810 7th August 2004
 
    * Fixed db-hash.t for Cygwin
 
    * Added substr tests to db-hast.t
+
+   * Documented AIX build problem in README.
 
 1.809 20th June 2004
 

@@ -64,8 +64,8 @@ Configure will B<not> prompt you to install I<man> pages.
 
 On WinNT with either the I<ntea> or I<ntsec> C<CYGWIN> settings, directory
 and file permissions may not be set correctly.  Since the build process
-creates directories and files, to be safe you may want to run a `C<chmod
--R +w *>' on the entire Perl source tree.
+creates directories and files, to be safe you may want to run a
+C<chmod -R +w *> on the entire Perl source tree.
 
 Also, it is a well known WinNT "feature" that files created by a login
 that is a member of the I<Administrators> group will be owned by the
@@ -231,7 +231,7 @@ You may see some messages during Configure that seem suspicious.
 =item * I<dlsym()>
 
 I<ld2> is needed to build dynamic libraries, but it does not exist
-when C<dlsym()> checking occurs (it is not created until `C<make>' runs).
+when C<dlsym()> checking occurs (it is not created until C<make> runs).
 You will see the following message:
 
   Checking whether your C<dlsym()> needs a leading underscore ...
@@ -287,13 +287,13 @@ Errors like these are normal:
 
 =head2 ld2 on Cygwin
 
-During `C<make>', I<ld2> will be created and installed in your $installbin
+During C<make>, I<ld2> will be created and installed in your $installbin
 directory (where you said to put public executables).  It does not
-wait until the `C<make install>' process to install the I<ld2> script,
-this is because the remainder of the `C<make>' refers to I<ld2> without
+wait until the C<make install> process to install the I<ld2> script,
+this is because the remainder of the C<make> refers to I<ld2> without
 fully specifying its path and does this from multiple subdirectories.
 The assumption is that $installbin is in your current C<PATH>.  If this
-is not the case `C<make>' will fail at some point.  If this happens,
+is not the case C<make> will fail at some point.  If this happens,
 just manually copy I<ld2> from the source directory to somewhere in
 your C<PATH>.
 
@@ -306,7 +306,7 @@ There are two steps to running the test suite:
   cd t;./perl harness 2>&1 | tee ../log.harness
 
 The same tests are run both times, but more information is provided when
-running as `C<./perl harness>'.
+running as C<./perl harness>.
 
 Test results vary depending on your host system and your Cygwin
 configuration.  If a test can pass in some Cygwin setup, it is always
@@ -368,6 +368,8 @@ A C<fork()> failure may result in the following tests failing:
   ext/IO/lib/IO/t/io_unix.t
 
 See comment on fork in L<Miscellaneous> below.
+
+=head1 Specific features of the Cygwin port
 
 =head2 Script Portability on Cygwin
 
@@ -436,6 +438,15 @@ However, when accessing an executable as a normal file (e.g., I<cp>
 in a makefile) the F<.exe> is not transparent.  The I<install> included
 with Cygwin automatically appends a F<.exe> when necessary.
 
+=item * cygwin vs. windows process ids
+
+Cygwin processes have their own pid, which is different from the
+underlying windows pid.  Most posix compliant Proc functions expect
+the cygwin pid, but several Win32::Process functions expect the
+winpid. E.g. C<$$> is the cygwin pid of F</usr/bin/perl>, which is not
+the winpid.  Use C<Cygwin::winpid_to_pid()> and C<Cygwin::winpid_to_pid()> 
+to translate between them.
+
 =item * C<chown()>
 
 On WinNT C<chown()> can change a file's user and group IDs.  On Win9x C<chown()>
@@ -470,16 +481,35 @@ F<http://www.cygwin.com/setup.exe> to install it and run rebaseall.
 
 =back
 
+=head2 Prebuilt methods:
+
+=over 4
+
+=item C<Cwd::cwd>
+
+Returns current working directory.
+
+=item C<Cygwin::pid_to_winpid>
+
+Translates a cygwin pid to the corresponding Windows pid (which may or
+may not be the same).
+
+=item C<Cygwin::winpid_to_pid>
+
+Translates a Windows pid to the corresponding cygwin pid (if any).
+
+=back
+
 =head1 INSTALL PERL ON CYGWIN
 
 This will install Perl, including I<man> pages.
 
   make install 2>&1 | tee log.make-install
 
-NOTE: If C<STDERR> is redirected `C<make install>' will B<not> prompt
+NOTE: If C<STDERR> is redirected C<make install> will B<not> prompt
 you to install I<perl> into F</usr/bin>.
 
-You may need to be I<Administrator> to run `C<make install>'.  If you
+You may need to be I<Administrator> to run C<make install>.  If you
 are not, you must have write access to the directories in question.
 
 Information on installing the Perl documentation in HTML format can be
@@ -528,12 +558,14 @@ be kept as clean as possible (listing not updated yet).
   t/op/stat.t           - no /dev, skip Win32 ftCreationTime quirk
                           (cache manager sometimes preserves ctime of file
                           previously created and deleted), no -u (setuid)
+  t/lib/cygwin.t	- builtin cygwin function tests
 
 =item Compiled Perl Source
 
   EXTERN.h              - __declspec(dllimport)
   XSUB.h                - __declspec(dllexport)
-  cygwin/cygwin.c       - os_extras (getcwd, spawn)
+  cygwin/cygwin.c       - os_extras (getcwd, spawn, Cygwin::winpid_to_pid, 
+                          Cygwin::pid_to_winpid)
   perl.c                - os_extras
   perl.h                - binmode
   doio.c                - win9x can not rename a file when it is open
@@ -582,4 +614,4 @@ Gerrit P. Haase <gp@familiehaase.de>.
 
 =head1 HISTORY
 
-Last updated: 2003-08-12
+Last updated: 2005-02-11

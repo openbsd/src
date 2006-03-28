@@ -47,7 +47,7 @@ for my $dist (sort keys %Modules) {
     next unless $Modules{$dist}{CPAN};
     print "Module $dist...\n";
     for my $file (get_module_files($dist)) {
-	next if $file !~ /\.pm\z/ or $file =~ m{^t/};
+	next if $file !~ /\.pm\z/ or $file =~ m{^t/} or $file =~ m{/t/};
 	my $vcore = MM->parse_version($file) // 'undef';
 	my $module = $file;
 	$module =~ s/\.pm\z//;

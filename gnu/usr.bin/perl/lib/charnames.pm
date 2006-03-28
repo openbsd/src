@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Carp;
 use File::Spec;
-our $VERSION = '1.04';
+our $VERSION = '1.05';
 
 use bytes ();		# for $bytes::hint_bits
 $charnames::hint_bits = 0x20000; # HINT_LOCALIZE_HH
@@ -238,42 +238,31 @@ sub import
   }
 } # import
 
-# this comes actually from Unicode::UCD, but it avoids the
-# overhead of loading it
-sub _getcode {
-    my $arg = shift;
-
-    if ($arg =~ /^[1-9]\d*$/) {
-	return $arg;
-    } elsif ($arg =~ /^(?:[Uu]\+|0[xX])?([[:xdigit:]]+)$/) {
-	return hex($1);
-    }
-
-    return;
-}
-
 my %viacode;
 
 sub viacode
 {
   if (@_ != 1) {
     carp "charnames::viacode() expects one argument";
-    return ()
+    return;
   }
 
   my $arg = shift;
-  my $code = _getcode($arg);
 
+  # this comes actually from Unicode::UCD, where it is the named
+  # function _getcode (), but it avoids the overhead of loading it
   my $hex;
-
-  if (defined $code) {
+  if ($arg =~ /^[1-9]\d*$/) {
     $hex = sprintf "%04X", $arg;
+  } elsif ($arg =~ /^(?:[Uu]\+|0[xX])?([[:xdigit:]]+)$/) {
+    $hex = $1;
   } else {
     carp("unexpected arg \"$arg\" to charnames::viacode()");
     return;
   }
 
-  if ($code > 0x10FFFF) {
+  # checking the length first is slightly faster
+  if (length($hex) > 5 && hex($hex) > 0x10FFFF) {
     carp sprintf "Unicode characters only allocated up to U+10FFFF (you asked for U+%X)", $hex;
     return;
   }
@@ -282,11 +271,9 @@ sub viacode
 
   $txt = do "unicore/Name.pl" unless $txt;
 
-  if ($txt =~ m/^$hex\t\t(.+)/m) {
-    return $viacode{$hex} = $1;
-  } else {
-    return;
-  }
+  return unless $txt =~ m/^$hex\t\t(.+)/m;
+
+  $viacode{$hex} = $1;
 } # viacode
 
 my %vianame;

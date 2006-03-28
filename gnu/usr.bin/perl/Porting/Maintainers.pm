@@ -72,6 +72,7 @@ $0: Usage: $0 [[--maintainer M --module M --files --check]|file ...]
 --module M	list all modules matching M
 --files		list all files
 --check		check consistency of Maintainers.pl
+--opened	list all modules of files opened by perforce
 Matching is case-ignoring regexp, author matching is both by
 the short id and by the full name and email.  A "module" may
 not be just a module, it may be a file or files or a subdirectory.
@@ -84,6 +85,7 @@ my $Maintainer;
 my $Module;
 my $Files;
 my $Check;
+my $Opened;
 
 sub process_options {
     usage()
@@ -93,9 +95,18 @@ sub process_options {
 		       'module=s'	=> \$Module,
 		       'files'		=> \$Files,
 		       'check'		=> \$Check,
+		       'opened'		=> \$Opened,
 		      );
 
-    my @Files = @ARGV;
+    my @Files;
+   
+    if ($Opened) {
+	my @raw = `p4 opened`;
+	die if $?;
+	@Files =  map {s!#.*!!s; s!^//depot/.*?/perl/!!; $_} @raw;
+    } else {
+	@Files = @ARGV;
+    }
 
     usage() if @Files && ($Maintainer || $Module || $Files);
 

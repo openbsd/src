@@ -21,6 +21,8 @@ SvUV                           # U
 SvUVX                          # U
 SvUVx                          # U
 XPUSHu                         # U
+gv_efullname3                  # U
+gv_fullname3                   # U
 my_memcmp                      # U
 newRV_inc                      # E
 sv_2uv                         # U

@@ -3,10 +3,11 @@ package Digest;
 use strict;
 use vars qw($VERSION %MMAP $AUTOLOAD);
 
-$VERSION = "1.08";
+$VERSION = "1.14";
 
 %MMAP = (
   "SHA-1"      => ["Digest::SHA1", ["Digest::SHA", 1], ["Digest::SHA2", 1]],
+  "SHA-224"    => [["Digest::SHA", 224]],
   "SHA-256"    => [["Digest::SHA", 256], ["Digest::SHA2", 256]],
   "SHA-384"    => [["Digest::SHA", 384], ["Digest::SHA2", 384]],
   "SHA-512"    => [["Digest::SHA", 512], ["Digest::SHA2", 512]],
@@ -79,10 +80,17 @@ bytes or bits.
 
 An important property of the digest algorithms is that the digest is
 I<likely> to change if the message change in some way.  Another
-property is that digest functions are one-way functions, i.e. it
+property is that digest functions are one-way functions, that is it
 should be I<hard> to find a message that correspond to some given
 digest.  Algorithms differ in how "likely" and how "hard", as well as
 how efficient they are to compute.
+
+Note that the properties of the algorithms change over time, as the
+algorithms are analyzed and machines grow faster.  If your application
+for instance depends on it being "impossible" to generate the same
+digest for a different message it is wise to make it easy to plug in
+stronger algorithms as the one used grow weaker.  Using the interface
+documented here should make it easy to change algorithms later.
 
 All C<Digest::> modules provide the same programming interface.  A
 functional interface for simple use, as well as an object oriented
@@ -181,7 +189,7 @@ The two argument form of add_bits() will add the first $nbits bits
 from data.  For the last potentially partial byte only the high order
 C<< $nbits % 8 >> bits are used.  If $nbits is greater than C<<
 length($data) * 8 >>, then this method would do the same as C<<
-$ctx->add($data) >>, i.e. $nbits is silently ignored.
+$ctx->add($data) >>, that is $nbits is silently ignored.
 
 The one argument form of add_bits() takes a $bitstring of "1" and "0"
 chars as argument.  It's a shorthand for C<< $ctx->add_bits(pack("B*",

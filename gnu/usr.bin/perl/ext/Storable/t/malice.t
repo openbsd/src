@@ -16,7 +16,7 @@
 sub BEGIN {
     if ($ENV{PERL_CORE}){
 	chdir('t') if -d 't';
-	@INC = ('.', '../lib');
+	@INC = ('.', '../lib', '../ext/Storable/t');
     } else {
 	# This lets us distribute Test::More in t/
 	unshift @INC, 't';
@@ -38,8 +38,8 @@ $file_magic_str = 'pst0';
 $other_magic = 7 + length $byteorder;
 $network_magic = 2;
 $major = 2;
-$minor = 6;
-$minor_write = $] > 5.007 ? 6 : 4;
+$minor = 7;
+$minor_write = $] > 5.005_50 ? 7 : 4;
 
 use Test::More;
 
@@ -54,11 +54,8 @@ $fancy = ($] > 5.007 ? 2 : 0);
 plan tests => 368 + length ($byteorder) * 4 + $fancy * 8 + 1;
 
 use Storable qw (store retrieve freeze thaw nstore nfreeze);
-
-my $file = "malice.$$";
-die "Temporary file 'malice.$$' already exists" if -e $file;
-
-END { while (-f $file) {unlink $file or die "Can't unlink '$file': $!" }}
+require 'testlib.pl';
+use vars '$file';
 
 # The chr 256 is a hack to force the hash to always have the utf8 keys flag
 # set on 5.7.3 and later. Otherwise the test fails if run with -Mutf8 because
@@ -95,22 +92,6 @@ sub test_header {
     is ($header->{nvsize}, $Config{nvsize} || $Config{doublesize} || 8,
         "nv size"); # 5.00405 doesn't even have doublesize in config.
   }
-}
-
-sub store_and_retrieve {
-  my $data = shift;
-  unlink $file or die "Can't unlink '$file': $!";
-  open FH, ">$file" or die "Can't open '$file': $!";
-  binmode FH;
-  print FH $data or die "Can't print to '$file': $!";
-  close FH or die "Can't close '$file': $!";
-
-  return  eval {retrieve $file};
-}
-
-sub freeze_and_thaw {
-  my $data = shift;
-  return eval {thaw $data};
 }
 
 sub test_truncated {
@@ -229,7 +210,7 @@ sub test_things {
     $where = $file_magic + $network_magic;
   }
 
-  # Just the header and a tag 255. As 26 is currently the highest tag, this
+  # Just the header and a tag 255. As 28 is currently the highest tag, this
   # is "unexpected"
   $copy = substr ($contents, 0, $where) . chr 255;
 
@@ -249,7 +230,7 @@ sub test_things {
   # local $Storable::DEBUGME = 1;
   # This is the delayed croak
   test_corrupt ($copy, $sub,
-                "/^Storable binary image v$header->{major}.$minor4 contains data of type 255. This Storable is v$header->{major}.$minor and can only handle data types up to 26/",
+                "/^Storable binary image v$header->{major}.$minor4 contains data of type 255. This Storable is v$header->{major}.$minor and can only handle data types up to 28/",
                 "bogus tag, minor plus 4");
   # And check again that this croak is not delayed:
   {
@@ -260,17 +241,6 @@ sub test_things {
                   "higher minor");
   }
 }
-
-sub slurp {
-  my $file = shift;
-  local (*FH, $/);
-  open FH, "<$file" or die "Can't open '$file': $!";
-  binmode FH;
-  my $contents = <FH>;
-  die "Can't read $file: $!" unless defined $contents;
-  return $contents;
-}
-
 
 ok (defined store(\%hash, $file));
 
@@ -284,7 +254,7 @@ die "Expected file to be $expected bytes (sizeof long is $Config{longsize}) but 
   unless $length == $expected;
 
 # Read the contents into memory:
-my $contents = slurp $file;
+my $contents = slurp ($file);
 
 # Test the original direct from disk
 my $clone = retrieve $file;
@@ -312,7 +282,7 @@ die "Expected file to be $expected bytes (sizeof long is $Config{longsize}) but 
   unless $length == $expected;
 
 # Read the contents into memory:
-$contents = slurp $file;
+$contents = slurp ($file);
 
 # Test the original direct from disk
 $clone = retrieve $file;

@@ -29,7 +29,6 @@ If '--dynamic' specified, only dynamic extensions will be built.
 
 =cut
 
-use File::Basename;
 use Cwd;
 use FindExt;
 use Config;
@@ -46,11 +45,8 @@ if ("$static,$dynamic" eq "0,0") {
   ($static,$dynamic) = (1,1);
 }
 if ($opts{'list-static-libs'} || $opts{'create-perllibst-h'}) {
-  my @statics = grep{!/^DynaLoader$/} split /\s+/, $Config{static_ext};
+  my @statics = split /\s+/, $Config{static_ext};
   if ($opts{'create-perllibst-h'}) {
-    # at moment of creation of perllibst.h no luck consulting Config.pm,
-    # so list of static extensions passed with @ARGV
-    @statics = grep{!/^DynaLoader$/} @ARGV;
     open my $fh, ">perllibst.h";
     my @statics1 = map {local $_=$_;s/\//__/g;$_} @statics;
     my @statics2 = map {local $_=$_;s/\//::/g;$_} @statics;
@@ -65,7 +61,7 @@ if ($opts{'list-static-libs'} || $opts{'create-perllibst-h'}) {
       open my $fh, "<..\\lib\\auto\\$_\\extralibs.ld" or die "can't open <..\\lib\\auto\\$_\\extralibs.ld: $!";
       $extralibs{$_}++ for grep {/\S/} split /\s+/, join '', <$fh>;
     }
-    print map {/([^\/]+)$/;"..\\lib\\auto\\$_/$1.lib "} @statics;
+    print map {s|/|\\|g;m|([^\\]+)$|;"..\\lib\\auto\\$_\\$1$Config{_a} "} @statics;
     print map {"$_ "} sort keys %extralibs;
   }
   exit;
@@ -98,12 +94,11 @@ my $targ  = shift;
 (my $ext = getcwd()) =~ s,/,\\,g;
 my $code;
 FindExt::scan_ext($ext);
+FindExt::set_static_extensions(split ' ', $Config{static_ext}) if $ext ne "ext";
 
-my @ext = FindExt::extensions();
-my %static_exts = map {$_=>1} split /\s+/, $Config{static_ext};
-
-if ("$static$dynamic" eq "01") {@ext = grep {!exists $static_exts{$_}} @ext}
-elsif ("$static$dynamic" eq "10") {@ext = grep {exists $static_exts{$_}} @ext}
+my @ext;
+push @ext, FindExt::static_ext() if $static;
+push @ext, FindExt::dynamic_ext(), FindExt::nonxs_ext() if $dynamic;
 
 foreach $dir (sort @ext)
  {
@@ -119,7 +114,8 @@ foreach $dir (sort @ext)
       print "\nRunning Makefile.PL in $dir\n";
       my @perl = ($perl, "-I$here\\..\\lib", 'Makefile.PL',
                   'INSTALLDIRS=perl', 'PERL_CORE=1',
-		  ($static_exts{$dir}?('LINKTYPE=static'):()), # if ext is static
+		  (FindExt::is_static($dir)
+                   ? ('LINKTYPE=static') : ()), # if ext is static
 		);
       if (defined $::Cross::platform) {
 	@perl = (@perl[0,1],"-MCross=$::Cross::platform",@perl[2..$#perl]);

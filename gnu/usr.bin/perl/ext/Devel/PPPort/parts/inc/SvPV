@@ -1,12 +1,12 @@
 ################################################################################
 ##
-##  $Revision: 1.1.1.1 $
+##  $Revision: 1.1.1.2 $
 ##  $Author: millert $
-##  $Date: 2005/01/15 21:16:46 $
+##  $Date: 2006/03/28 18:48:00 $
 ##
 ################################################################################
 ##
-##  Version 3.x, Copyright (C) 2004, Marcus Holland-Moritz.
+##  Version 3.x, Copyright (C) 2004-2005, Marcus Holland-Moritz.
 ##  Version 2.x, Copyright (C) 2001, Paul Marquess.
 ##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 ##
@@ -32,7 +32,7 @@ sv_pvn_force
 
 char *
 sv_2pv_nolen(pTHX_ register SV *sv)
-{   
+{
   STRLEN n_a;
   return sv_2pv(sv, &n_a);
 }
@@ -63,7 +63,7 @@ sv_2pv_nolen(pTHX_ register SV *sv)
 
 char *
 sv_2pvbyte(pTHX_ register SV *sv, STRLEN *lp)
-{   
+{
   sv_utf8_downgrade(sv,0);
   return SvPV(sv,*lp);
 }
@@ -98,7 +98,7 @@ __UNDEFINED__  sv_2pvbyte_nolen  sv_2pv_nolen
  */
 __UNDEFINED__  sv_pvn(sv, len)         SvPV(sv, len)
 
-/* Hint: sv_pvn
+/* Hint: sv_pvn_force
  * Always use the SvPV_force() macro instead of sv_pvn_force().
  */
 __UNDEFINED__  sv_pvn_force(sv, len)   SvPV_force(sv, len)
@@ -129,12 +129,12 @@ SvPV_nolen(sv)
 		const char *str;
 	CODE:
 		str = SvPV_nolen(sv);
-		RETVAL = strEQ(str, "mhx") ? 3 : 0;
+		RETVAL = strEQ(str, "mhx") ? 42 : 0;
 	OUTPUT:
 		RETVAL
 
 =tests plan => 2
 
 ok(&Devel::PPPort::SvPVbyte("mhx"), 3);
-ok(&Devel::PPPort::SvPVbyte("mhx"), 3);
+ok(&Devel::PPPort::SvPV_nolen("mhx"), 42);
 

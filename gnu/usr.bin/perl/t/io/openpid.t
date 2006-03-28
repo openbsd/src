@@ -23,6 +23,7 @@ plan tests => 10;
 use Config;
 $| = 1;
 $SIG{PIPE} = 'IGNORE';
+$SIG{HUP} = 'IGNORE' if $^O eq 'interix';
 
 my $perl = which_perl();
 $perl .= qq[ "-I../lib"];

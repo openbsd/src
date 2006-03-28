@@ -235,11 +235,11 @@ truncate$0,-1+-s$0;exec$0;}}//rekcaH_lreP_rehtona_tsuJ
     --
     chomp @programs;
 
-    if ($^O eq 'VMS') {
+    if ($^O eq 'VMS' or $^O eq 'MSWin32') {
         # VMS needs extensions for files to be executable,
         # but the Japhs above rely on $0 being exactly the
         # filename of the program.
-        skip "VMS", 2 * @programs;
+        skip $^O, 2 * @programs;
         last
     }
 
@@ -418,7 +418,7 @@ EXPECT:   6
 SWITCHES
 -Mstrict='}); print "Just another Perl Hacker"; ({'
 -l
-SKIP_OS: VMS
+SKIP: No longer works in 5.8.2 and beyond.
 MSWin32
 NetWare
 
@@ -481,6 +481,7 @@ SKIP: Abuses a fixed bug.
 
 #######  Prototype fun 3
 sub _ "Just another Perl Hacker"; print prototype \&_
+SKIP: Abuses a fixed bug.
 
 #######  Split 1
                split // => '"';

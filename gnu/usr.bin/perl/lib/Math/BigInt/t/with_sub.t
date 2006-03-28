@@ -28,11 +28,11 @@ BEGIN
     }
   print "# INC = @INC\n";
 
-  plan tests => 1924
+  plan tests => 2012
 	+ 1;
   }
 
-use Math::BigFloat with => 'Math::BigInt::Subclass';
+use Math::BigFloat with => 'Math::BigInt::Subclass', lib => 'Calc';
 
 use vars qw ($class $try $x $y $f @args $ans $ans1 $ans1_str $setup $CL);
 $class = "Math::BigFloat";

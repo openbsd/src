@@ -726,7 +726,13 @@ struct IPerlLIOInfo
 #define PerlLIO_access(file, mode)	access((file), (mode))
 #define PerlLIO_chmod(file, mode)	chmod((file), (mode))
 #define PerlLIO_chown(file, owner, grp)	chown((file), (owner), (grp))
-#define PerlLIO_chsize(fd, size)	chsize((fd), (size))
+#if defined(HAS_TRUNCATE)
+#  define PerlLIO_chsize(fd, size)	ftruncate((fd), (size))
+#elif defined(HAS_CHSIZE)
+#  define PerlLIO_chsize(fd, size)	chsize((fd), (size))
+#else
+#  define PerlLIO_chsize(fd, size)	my_chsize((fd), (size))
+#endif
 #define PerlLIO_close(fd)		close((fd))
 #define PerlLIO_dup(fd)			dup((fd))
 #define PerlLIO_dup2(fd1, fd2)		dup2((fd1), (fd2))
@@ -909,8 +915,10 @@ struct IPerlProcInfo;
 typedef void		(*LPProcAbort)(struct IPerlProc*);
 typedef char*		(*LPProcCrypt)(struct IPerlProc*, const char*,
 			    const char*);
-typedef void		(*LPProcExit)(struct IPerlProc*, int);
-typedef void		(*LPProc_Exit)(struct IPerlProc*, int);
+typedef void		(*LPProcExit)(struct IPerlProc*, int)
+			    __attribute__noreturn__;
+typedef void		(*LPProc_Exit)(struct IPerlProc*, int)
+			    __attribute__noreturn__;
 typedef int		(*LPProcExecl)(struct IPerlProc*, const char*,
 			    const char*, const char*, const char*,
 			    const char*);

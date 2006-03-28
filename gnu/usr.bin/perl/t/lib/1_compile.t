@@ -40,6 +40,10 @@ if (@Core_Modules) {
 } else {
   print $message;
 }
+print <<'EOREWARD';
+# http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2001-04/msg01223.html
+# 20010421230349.P2946@blackrider.blackstar.co.uk
+EOREWARD
 
 my $test_num = 2;
 

@@ -922,8 +922,8 @@ do_aspawn(void *vreally, void **vmark, void **vsp)
 	return -1;
 
 	nw_perlshell_items = 0;	// No Shell
-//    New(1306, argv, (sp - mark) + nw_perlshell_items + 3, char*);	// In the old code of 5.6.1
-    New(1306, argv, (sp - mark) + nw_perlshell_items + 2, char*);
+//    Newx(argv, (sp - mark) + nw_perlshell_items + 3, char*);	// In the old code of 5.6.1
+    Newx(argv, (sp - mark) + nw_perlshell_items + 2, char*);
 
     if (SvNIOKp(*(mark+1)) && !SvPOKp(*(mark+1))) {
 	++mark;
@@ -987,8 +987,8 @@ do_spawn2(char *cmd, int exectype)
     /* Save an extra exec if possible. See if there are shell
      * metacharacters in it */
     if (!has_shell_metachars(cmd)) {
-	New(1301,argv, strlen(cmd) / 2 + 2, char*);
-	New(1302,cmd2, strlen(cmd) + 1, char);
+	Newx(argv, strlen(cmd) / 2 + 2, char*);
+	Newx(cmd2, strlen(cmd) + 1, char);
 	strcpy(cmd2, cmd);
 	a = argv;
 	for (s = cmd2; *s;) {
@@ -1027,7 +1027,7 @@ do_spawn2(char *cmd, int exectype)
 	char **argv = NULL;
 	int i = -1;
 
-	New(1306, argv, nw_perlshell_items + 2, char*);
+	Newx(argv, nw_perlshell_items + 2, char*);
 	while (++i < nw_perlshell_items)
 	    argv[i] = nw_perlshell_vec[i];
 	argv[i++] = cmd;

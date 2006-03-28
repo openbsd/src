@@ -101,31 +101,19 @@ else {
 }
 
 # Search for a documentation pod rather than a module
-my $searchpod = $ENV{PERL_CORE} ? 'Stuff' : 'perlfunc';
+my $searchpod = 'Stuff';
 print "### searching for $searchpod.pod\n";
-$result = pod_where($ENV{PERL_CORE} ?
-  { -dirs => [ File::Spec->catdir('pod', 'testpods', 'lib', 'Pod') ],
-    -verbose => $VERBOSE }
-  : { -inc => 1, -verbose => $VERBOSE }, $searchpod)
+$result = pod_where(
+  { -dirs => [ File::Spec->catdir(
+    $ENV{PERL_CORE} ? () : qw(t), 'pod', 'testpods', 'lib', 'Pod') ],
+    -verbose => $VERBOSE }, $searchpod)
   || "undef - $searchpod.pod not found!";
 print "### found $result\n";
 
-if($ENV{PERL_CORE}) {
-    $compare = File::Spec->catfile('pod', 'testpods', 'lib', 'Pod' ,'Stuff.pm');
-    ok(_canon($result),_canon($compare));
-}
-elsif ($^O eq 'VMS') { # privlib is perl_root:[lib] unfortunately
-    $compare = "/lib/pod/perlfunc.pod";
-    $result = VMS::Filespec::unixify($result);
-    $result =~ s/perl_root\///i;
-    $result =~ s/^\.\.//;  # needed under `mms test`
-    ok($result,$compare);
-}
-else {
-    $compare = File::Spec->catfile($Config::Config{privlib},
-      ($^O =~ /macos|darwin|cygwin/i ? 'pods' : 'pod'),"perlfunc.pod");
-    ok(_canon($result),_canon($compare));
-}
+$compare = File::Spec->catfile(
+    $ENV{PERL_CORE} ? () : qw(t),
+    'pod', 'testpods', 'lib', 'Pod' ,'Stuff.pm');
+ok(_canon($result),_canon($compare));
 
 # make the path as generic as possible
 sub _canon

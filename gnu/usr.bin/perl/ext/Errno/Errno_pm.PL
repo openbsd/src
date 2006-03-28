@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 use Config;
 use strict;
 
-our $VERSION = "1.09_00";
+our $VERSION = "1.09_01";
 
 my %err = ();
 my %wsa = ();
@@ -11,14 +11,38 @@ unlink "Errno.pm" if -f "Errno.pm";
 open OUT, ">Errno.pm" or die "Cannot open Errno.pm: $!";
 select OUT;
 my $file;
-foreach $file (get_files()) {
-    process_file($file);
+my @files = get_files();
+if ($Config{gccversion} ne '' && $^O eq 'MSWin32') {
+    # MinGW complains "warning: #pragma system_header ignored outside include
+    # file" if the header files are processed individually, so include them
+    # all in .c file and process that instead.
+    open INCS, '>includes.c' or
+	die "Cannot open includes.c";
+    foreach $file (@files) {
+	next if $file eq 'errno.c';
+	next unless -f $file;
+	print INCS qq[#include "$file"\n];
+    }
+    close INCS;
+    process_file('includes.c');
+    unlink 'includes.c';
+}
+else {
+    foreach $file (@files) {
+	process_file($file);
+    }
 }
 write_errno_pm();
 unlink "errno.c" if -f "errno.c";
 
 sub process_file {
     my($file) = @_;
+
+    # for win32 perl under cygwin, we need to get a windows pathname
+    if ($^O eq 'MSWin32' && $Config{cc} =~ /\B-mno-cygwin\b/ &&
+        defined($file) && !-f $file) {
+        chomp($file = `cygpath -w "$file"`);
+    }
 
     return unless defined $file and -f $file;
 #   warn "Processing $file\n";
@@ -208,7 +232,7 @@ sub write_errno_pm {
 
     close(CPPI);
 
-    unless ($^O eq 'MacOS') {	# trust what we have
+    unless ($^O eq 'MacOS' || $^O eq 'beos') {	# trust what we have / get later
     # invoke CPP and read the output
 
 	if ($^O eq 'VMS') {
@@ -231,7 +255,7 @@ sub write_errno_pm {
 	    my($name,$expr);
 	    next unless ($name, $expr) = /"(.*?)"\s*\[\s*\[\s*(.*?)\s*\]\s*\]/;
 	    next if $name eq $expr;
-	    $expr =~ s/\(?\(\w+\)([^\)]*)\)?/$1/; # ((type)0xcafebabe) at alia
+	    $expr =~ s/\(?\([a-z_]\w*\)([^\)]*)\)?/$1/i; # ((type)0xcafebabe) at alia
 	    $expr =~ s/((?:0x)?[0-9a-fA-F]+)[LU]+\b/$1/g; # 2147483647L et alia
 	    next if $expr =~ m/^[a-zA-Z]+$/; # skip some Win32 functions
 	    if($expr =~ m/^0[xX]/) {
@@ -248,17 +272,19 @@ sub write_errno_pm {
     # Many of the E constants (including ENOENT, which is being
     # used in the Perl test suite a lot), are available only as
     # enums in BeOS, so compiling and executing some code is about
-    # only way to find out what the numeric Evalues are.
+    # only way to find out what the numeric Evalues are. In fact above, we
+    # didn't even bother to get the values of the ones that have numeric
+    # values, since we can get all of them here, anyway.
 
     if ($^O eq 'beos') {
 	if (open(C, ">errno.c")) {
-	    my @zero = grep { !$err{$_} } keys %err;
+	    my @allerrs = keys %err;
 	    print C <<EOF;
 #include <errno.h>
 #include <stdio.h>
 int main() {
 EOF
-            for (@zero) {
+            for (@allerrs) {
 		print C qq[printf("$_ %d\n", $_);]
 	    }
             print C "}\n";

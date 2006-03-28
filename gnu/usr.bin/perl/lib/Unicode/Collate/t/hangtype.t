@@ -4,17 +4,14 @@ BEGIN {
 	    "cannot stringify a Unicode code point\n";
 	exit 0;
     }
-}
-
-BEGIN {
     if ($ENV{PERL_CORE}) {
-        chdir('t') if -d 't';
-        @INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
+	chdir('t') if -d 't';
+	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
     }
 }
 
 use Test;
-BEGIN { plan tests => 30 };
+BEGIN { plan tests => 33 };
 
 use strict;
 use warnings;
@@ -48,9 +45,12 @@ ok(Unicode::Collate::getHST(0x11FA), '');
 ok(Unicode::Collate::getHST(0x11FF), '');
 ok(Unicode::Collate::getHST(0x3011), '');
 ok(Unicode::Collate::getHST(0x11A7), '');
+ok(Unicode::Collate::getHST(0xABFF), '');
 ok(Unicode::Collate::getHST(0xAC00), 'LV');
 ok(Unicode::Collate::getHST(0xAC01), 'LVT');
 ok(Unicode::Collate::getHST(0xAC1B), 'LVT');
 ok(Unicode::Collate::getHST(0xAC1C), 'LV');
 ok(Unicode::Collate::getHST(0xD7A3), 'LVT');
+ok(Unicode::Collate::getHST(0xD7A4), '');
+ok(Unicode::Collate::getHST(0xFFFF), '');
 

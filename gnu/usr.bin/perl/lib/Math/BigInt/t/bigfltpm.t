@@ -26,11 +26,11 @@ BEGIN
     }
   print "# INC = @INC\n";
 
-  plan tests => 1924
+  plan tests => 2012
 	+ 2;		# own tests
   }
 
-use Math::BigInt;
+use Math::BigInt lib => 'Calc';
 use Math::BigFloat;
 
 use vars qw ($class $try $x $y $f @args $ans $ans1 $ans1_str $setup $CL);

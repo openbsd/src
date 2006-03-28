@@ -1,8 +1,18 @@
 Revision history for Perl extension Unicode::Normalize.
 
+0.32  Tue Apr  5 22:47:09 2005
+    - Some literal and grammatical errors in POD are fixed.
+
+0.31  Tue Apr  5 21:43:20 2005
+    - CAVEATS in POD is added.
+    - Some test cases from Unicode Public Review Issue #29
+      (Normalization Issue) are added to norm.t and test.t.
+    - do 'mkheader' returns true so that Makefile.PL will catch error.
+    - META.yml is added.
+
 0.30  Sun May  2 14:35:00 2004
-    - XSUB: (perl 5.8.1 or later) improved utf8 upgrade of non-POK (private POK)
-      values like tied scalars, overloaded objects, etc.
+    - XSUB: (perl 5.8.1 or later) improved utf8 upgrade of non-POK
+      (private POK) values like tied scalars, overloaded objects, etc.
 
 0.28  Sat Nov 22 23:46:24 2003
     - XSUB: even if string contains a malformed, "short" Unicode character,

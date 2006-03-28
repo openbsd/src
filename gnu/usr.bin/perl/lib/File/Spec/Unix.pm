@@ -30,6 +30,13 @@ path. On UNIX eliminates successive slashes and successive "/.".
 
     $cpath = File::Spec->canonpath( $path ) ;
 
+Note that this does *not* collapse F<x/../y> sections into F<y>.  This
+is by design.  If F</foo> on your system is a symlink to F</bar/baz>,
+then F</foo/../quux> is actually F</bar/quux>, not F</quux> as a naive
+F<../>-removal would give you.  If you want to do this kind of
+processing, you probably want C<Cwd>'s C<realpath()> function to
+actually traverse the filesystem cleaning up paths like this.
+
 =cut
 
 sub canonpath {
@@ -52,7 +59,8 @@ sub canonpath {
     $path =~ s|/+|/|g;                             # xx////xx  -> xx/xx
     $path =~ s@(/\.)+(/|\Z(?!\n))@/@g;             # xx/././xx -> xx/xx
     $path =~ s|^(\./)+||s unless $path eq "./";    # ./xx      -> xx
-    $path =~ s|^/(\.\./)+|/|s;                     # /../../xx -> xx
+    $path =~ s|^/(\.\./)+|/|;                      # /../../xx -> xx
+    $path =~ s|^/\.\.$|/|;                         # /..       -> /
     $path =~ s|/\Z(?!\n)|| unless $path eq "/";          # xx/       -> xx
     return "$node$path";
 }
@@ -151,8 +159,7 @@ sub _tmpdir {
 
 sub tmpdir {
     return $tmpdir if defined $tmpdir;
-    my $self = shift;
-    $tmpdir = $self->_tmpdir( $ENV{TMPDIR}, "/tmp" );
+    $tmpdir = $_[0]->_tmpdir( $ENV{TMPDIR}, "/tmp" );
 }
 
 =item updir
@@ -445,6 +452,13 @@ sub rel2abs {
 
 =back
 
+=head1 COPYRIGHT
+
+Copyright (c) 2004 by the Perl 5 Porters.  All rights reserved.
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
 =head1 SEE ALSO
 
 L<File::Spec>
@@ -458,5 +472,39 @@ sub _cwd {
     require Cwd;
     Cwd::cwd();
 }
+
+
+# Internal method to reduce xx\..\yy -> yy
+sub _collapse {
+    my($fs, $path) = @_;
+
+    my $updir  = $fs->updir;
+    my $curdir = $fs->curdir;
+
+    my($vol, $dirs, $file) = $fs->splitpath($path);
+    my @dirs = $fs->splitdir($dirs);
+
+    my @collapsed;
+    foreach my $dir (@dirs) {
+        if( $dir eq $updir              and   # if we have an updir
+            @collapsed                  and   # and something to collapse
+            length $collapsed[-1]       and   # and its not the rootdir
+            $collapsed[-1] ne $updir    and   # nor another updir
+            $collapsed[-1] ne $curdir         # nor the curdir
+          ) 
+        {                                     # then
+            pop @collapsed;                   # collapse
+        }
+        else {                                # else
+            push @collapsed, $dir;            # just hang onto it
+        }
+    }
+
+    return $fs->catpath($vol,
+                        $fs->catdir(@collapsed),
+                        $file
+                       );
+}
+
 
 1;

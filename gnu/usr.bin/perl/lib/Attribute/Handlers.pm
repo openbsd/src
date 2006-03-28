@@ -2,7 +2,7 @@ package Attribute::Handlers;
 use 5.006;
 use Carp;
 use warnings;
-$VERSION = '0.78_01';
+$VERSION = '0.78_02';
 # $DB::single=1;
 
 my %symcache;
@@ -599,7 +599,7 @@ current package. Otherwise it is installed in the qualifier's package:
 
 Autoties are most commonly used in the module to which they actually tie, 
 and need to export their attributes to any module that calls them. To
-facilitiate this, Attribute::Handlers recognizes a special "pseudo-class" --
+facilitate this, Attribute::Handlers recognizes a special "pseudo-class" --
 C<__CALLER__>, which may be specified as the qualifier of an attribute:
 
         package Tie::Me::Kangaroo:Down::Sport;

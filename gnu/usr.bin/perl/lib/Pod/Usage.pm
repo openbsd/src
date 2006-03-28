@@ -10,7 +10,7 @@
 package Pod::Usage;
 
 use vars qw($VERSION);
-$VERSION = 1.16;  ## Current version of this package
+$VERSION = 1.33;  ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 =head1 NAME
@@ -39,6 +39,9 @@ Pod::Usage, pod2usage() - print a usage message from embedded pod documentation
                -exitval => $exit_status  ,  
                -verbose => $verbose_level,  
                -output  => $filehandle   );
+
+  pod2usage(   -verbose => 2,
+               -noperldoc => 1  )
 
 =head1 ARGUMENTS
 
@@ -93,6 +96,15 @@ is 1, then the "SYNOPSIS" section, along with any section entitled
 "OPTIONS", "ARGUMENTS", or "OPTIONS AND ARGUMENTS" is printed.  If the
 corresponding value is 2 or more then the entire manpage is printed.
 
+The special verbosity level 99 requires to also specify the -section
+parameter; then these sections are extracted (see L<Pod::Select>)
+and printed.
+
+=item C<-section>
+
+A string representing a selection list for sections to be printed
+when -verbose is set to 99, e.g. C<"NAME|SYNOPSIS|DESCRIPTION|VERSION">.
+
 =item C<-output>
 
 A reference to a filehandle, or the pathname of a file to which the
@@ -114,6 +126,14 @@ implied by C<$ENV{PATH}>. The list may be specified either by a reference
 to an array, or by a string of directory paths which use the same path
 separator as C<$ENV{PATH}> on your system (e.g., C<:> for Unix, C<;> for
 MSWin32 and DOS).
+
+=item C<-noperldoc>
+
+By default, Pod::Usage will call L<perldoc> when -verbose >= 2 is
+specified. This does not work well e.g. if the script was packed
+with L<PAR>. The -noperldoc option suppresses the external call to
+L<perldoc> and uses the simple text formatter (L<Pod::Text>) to 
+output the POD.
 
 =back
 
@@ -379,6 +399,11 @@ similar to the following:
 
     pod2usage(-exitval => 2, -input => "/path/to/your/pod/docs");
 
+In the pathological case that a script is called via a relative path
+I<and> the script itself changes the current working directory
+(see L<perlfunc/chdir>) I<before> calling pod2usage, Pod::Usage will
+fail even on robust platforms. Don't do that.
+
 =head1 AUTHOR
 
 Please report bugs using L<http://rt.cpan.org>.
@@ -425,13 +450,16 @@ BEGIN {
 ##---------------------------------
 
 sub pod2usage {
-    local($_) = shift || "";
+    local($_) = shift;
     my %opts;
     ## Collect arguments
     if (@_ > 0) {
         ## Too many arguments - assume that this is a hash and
         ## the user forgot to pass a reference to it.
         %opts = ($_, @_);
+    }
+    elsif (!defined $_) {
+      $_ = "";
     }
     elsif (ref $_) {
         ## User passed a ref to a hash
@@ -467,7 +495,8 @@ sub pod2usage {
         $opts{"-exitval"} = ($opts{"-verbose"} > 0) ? 1 : 2;
     }
     elsif (! defined $opts{"-verbose"}) {
-        $opts{"-verbose"} = ($opts{"-exitval"} < 2);
+        $opts{"-verbose"} = (lc($opts{"-exitval"}) eq "noexit" ||
+                             $opts{"-exitval"} < 2);
     }
 
     ## Default the output file
@@ -494,7 +523,7 @@ sub pod2usage {
     ## Now create a pod reader and constrain it to the desired sections.
     my $parser = new Pod::Usage(USAGE_OPTIONS => \%opts);
     if ($opts{"-verbose"} == 0) {
-        $parser->select("SYNOPSIS");
+        $parser->select('SYNOPSIS\s*');
     }
     elsif ($opts{"-verbose"} == 1) {
         my $opt_re = '(?i)' .
@@ -502,9 +531,14 @@ sub pod2usage {
                      '(?:\s*(?:AND|\/)\s*(?:OPTIONS|ARGUMENTS))?';
         $parser->select( 'SYNOPSIS', $opt_re, "DESCRIPTION/$opt_re" );
     }
+    elsif ($opts{"-verbose"} == 99) {
+        $parser->select( $opts{"-sections"} );
+        $opts{"-verbose"} = 1;
+    }
 
     ## Now translate the pod document and then exit with the desired status
-    if ( $opts{"-verbose"} >= 2 
+    if ( !$opts{"-noperldoc"}
+             and  $opts{"-verbose"} >= 2 
              and  !ref($opts{"-input"})
              and  $opts{"-output"} == \*STDOUT )
     {
@@ -531,8 +565,70 @@ sub new {
     my %params = @_;
     my $self = {%params};
     bless $self, $class;
-    $self->initialize();
+    if ($self->can('initialize')) {
+        $self->initialize();
+    } else {
+        $self = $self->SUPER::new();
+        %$self = (%$self, %params);
+    }
     return $self;
+}
+
+sub select {
+    my ($self, @res) = @_;
+    if ($ISA[0]->can('select')) {
+        $self->SUPER::select(@_);
+    } else {
+        $self->{USAGE_SELECT} = \@res;
+    }
+}
+
+# Override Pod::Text->seq_i to return just "arg", not "*arg*".
+sub seq_i { return $_[1] }
+
+# This overrides the Pod::Text method to do something very akin to what
+# Pod::Select did as well as the work done below by preprocess_paragraph.
+# Note that the below is very, very specific to Pod::Text.
+sub _handle_element_end {
+    my ($self, $element) = @_;
+    if ($element eq 'head1') {
+        $$self{USAGE_HEAD1} = $$self{PENDING}[-1][1];
+        $$self{PENDING}[-1][1] =~ s/^\s*SYNOPSIS\s*$/USAGE/;
+    } elsif ($element eq 'head2') {
+        $$self{USAGE_HEAD2} = $$self{PENDING}[-1][1];
+    }
+    if ($element eq 'head1' || $element eq 'head2') {
+        $$self{USAGE_SKIPPING} = 1;
+        my $heading = $$self{USAGE_HEAD1};
+        $heading .= '/' . $$self{USAGE_HEAD2} if defined $$self{USAGE_HEAD2};
+        for (@{ $$self{USAGE_SELECT} }) {
+            if ($heading =~ /^$_\s*$/) {
+                $$self{USAGE_SKIPPING} = 0;
+                last;
+            }
+        }
+
+        # Try to do some lowercasing instead of all-caps in headings, and use
+        # a colon to end all headings.
+        local $_ = $$self{PENDING}[-1][1];
+        s{([A-Z])([A-Z]+)}{((length($2) > 2) ? $1 : lc($1)) . lc($2)}ge;
+        s/\s*$/:/  unless (/:\s*$/);
+        $_ .= "\n";
+        $$self{PENDING}[-1][1] = $_;
+    }
+    if ($$self{USAGE_SKIPPING}) {
+        pop @{ $$self{PENDING} };
+    } else {
+        $self->SUPER::_handle_element_end($element);
+    }
+}
+
+sub start_document {
+    my $self = shift;
+    $self->SUPER::start_document();
+    my $msg = $self->{USAGE_OPTIONS}->{-message}  or  return 1;
+    my $out_fh = $self->output_fh();
+    print $out_fh "$msg\n";
 }
 
 sub begin_pod {

@@ -1,3 +1,38 @@
+3.06_01 - 2005-06-25
+
+    * fix --compat-version argument checking
+    * filter files passed on the command line by default
+      to make sure 'perl ppport.h *' does something useful
+    * add --nofilter option to override the filtering
+    * testsuite now hopefully supports MacOS Classic
+    * check definedness of PERL_UNUSED_DECL
+    * update API info
+
+3.06 - 2005-02-02
+
+    * fix cpan #11327: make fails with syntax error
+    * fix XCPT_* macros
+
+3.05 - 2005-01-31
+
+    * fix a test for SvPV_nolen
+    * add more examples to tht documentation
+    * improve wording baseline information
+    * added support for the following API
+        dXCPT
+        dXSTARG
+        XCPT_CATCH
+        XCPT_RETHROW
+        XCPT_TRY_END
+        XCPT_TRY_START
+
+3.04 - 2004-12-29
+
+    * fix a hint for sv_pvn_force
+    * fix VMS problem with unquoted command line arguments
+      not preserving case (perl change #23367)
+    * add --api-info switch for ppport.h
+
 3.03 - 2004-09-08
 
     * MY_CXT_CLONE was broken

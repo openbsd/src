@@ -1,0 +1,1216 @@
+  Version 3.15 Wed Dec  7 15:13:22 EST 2005
+   1. Remove extraneous "?" from self_url() when URI contains a ? but no query string.
+
+  Version 3.14 Tue Dec  6 17:12:03 EST 2005
+   1. Fixed broken scrolling_list() select attribute.
+	
+  Version 3.13
+    1. Removed extraneous empty "?" from end of self_url().
+
+  Version 3.12
+    1. Fixed virtual_port so that it works properly with https protocol.
+    2. Fixed documentation for upload_hook().
+    3. Added POSTDATA documentation.
+    4. Made upload_hook() work in function-oriented mode.
+    5. Fixed POST_MAX behavior so that it doesn't cause client to hang.
+    6. Disabled automatic tab indexes and added new -tabindex pragma to
+	turn automatic indexes back on.
+    7. The url() and self_url() methods now work better in the context of Apache
+       mod_rewrite. Be advised that path_info() may give you confusing results
+       when mod_rewrite is active because Apache calculates the path info *after*
+       rewriting. This is mostly worked around in url() and self_url(), but you
+       may notice some anomalies.
+    8. Removed empty (and non-validating) <div> from code emitted by end_form().
+    9. Fixed CGI::Carp to work correctly with Mod_perl 1.29 in an Apache 2 environment.
+   10. Setting $CGI::TMPDIRECTORY should now be effective.
+
+  Version 3.11
+    1. Killed warning in CGI::Cookie about MOD_PERL_API_VERSION
+    2. Fixed append() so that it works in function mode.
+    3. Workaround for a bug that appears in Apache2 versions through 2.0.54 
+       in which SCRIPT_NAME and PATH_INFO are incorrect if the additional path_info
+       contains a double slash. This workaround will handle the common case of
+       http://mysite.com/cgi-bin/log.cgi/http://www.some.other.site/args, but will
+       not handle the uncommon case of a ScriptAlias directive that adds additional
+       path information to the end of the translated URI.
+
+  Version 3.10
+    1. Added Apache2::RequestIO, which is necessary for mp2 interoperability.
+
+  Version 3.09
+    1. Fixed tabindex="0" when using CGI to create forms without a prior start_html
+    2. Removed warning about non-numeric MOD_PERL_API_VERSION.
+
+  Version 3.08
+    1. update support for mod_perl 2.0.  versions prior to
+       mod_perl 1.999_22 (2.0.0-RC5) are no longer supported.
+
+  Version 3.07
+    1. Fixed typo in mod_perl detection.
+
+  Version 3.06
+
+    1. Fixed bare call to script() in start_html
+    2. Moved Fh::DESTROY out of autoloaded functions so as to avoid
+       clobbering $@ when CGI functions are executed in an eval{}
+       context.
+    3. mod_perl 2.0 version detection patch in CGI::Cookie provided by
+       Allen Day.
+    4. autoEscape() flag is now respected when generating extra
+       attributes.
+    5. Tests for *tag start/end generation from Shlomi Fish.
+    6. Support for can() method provided by Ron Savage.
+    7. Fix for lang='' when outputting XHTML.
+    8. Added support for chunked transfer encoding, as suggested by 
+	Hakan Ardo
+    9. Fixed clobbering of row and column headers in tableized radio
+	and checkbox groups, as reported by Nicolas Thierry-Mieg.
+   10. <Label> tags are now associated with form elements, as suggested
+	by accessibility guidelines.
+   11. The <?xml> directive produced by start_html is now turned off by
+        default and the charset is specified in a <meta> directive.  Apparently
+        IE6 (and maybe some versions of Opera) were getting confused by this.
+   12. Support for tab indexes.
+   13. Retired the HTML docs.  The POD docs are now primary documentation.
+   14. CGI::Carp now correctly detects and handles Apache::Dispatch.
+   15. CGI::Util::utf8_chr now correctly sets the UTF8 flag on 5.006 or
+	higher perls (fix courtesy Slaven Rezic).
+
+
+  Version 3.05
+
+    1. Fixed uninitialized variable warning on start_form() when running
+       from command line.
+    2. Fixed CGI::_set_attributes so that attributes with a - are handled
+       correctly.
+    3. Fixed CGI::Carp::die() so as to avoid problems from _longmess()
+       clobbering @_.
+    4. If HTTP_X_FORWARDED_HOST is defined (i.e. running under a proxy),
+       the various functions that return HOST will use that instead.
+    5. Fix for undefined utf8() call in CGI::Util.
+    6. Changed the call to warningsToBrowser() in
+       CGI::Carp::fatalsToBrowser to call only after HTTP header is sent
+       (thanks to Didier Lebrun for noticing).
+    7. Patches from Dan Harkless to make CGI.pm validatable against HTML
+       3.2.
+    8. Fixed an extraneous "foo=bar" appearing when extra style
+       parameters passed to start_html;
+    9. Fixed cross-site scripting bug in startform() pointed out by Dan
+       Harkless.
+   10. Fixed documentation to discuss list context behavior of
+       form-element generators explicitly.
+   11. Fixed incorrect results from end_form() when called in OO manner.
+   12. Fixed query string stripping in order to handle URLs containing
+       escaped newlines.
+   13. During server push, set NPH to 0 rather than 1. This is supposed
+       to fix problems with Apache.
+   14. Fixed incorrect processing of multipart form fields that contain
+       embedded quotes. There's still the issue of how to handle ones
+       that contain embedded semicolons, but no one has complained (yet).
+   15. Fixed documentation bug in -style argument to start_html()
+   16. Added -status argument to redirect().
+
+  Version 3.04
+
+    1. Fixed the problem with mod_perl crashing when "defaults" button
+       pressed.
+
+  Version 3.03
+
+    1. Fix upload hook functionality
+    2. Workaround for CGI->unescape_html()
+    3. Bumped version numbers in CGI::Fast and CGI::Util for 5.8.3-tobe
+
+  Version 3.02
+
+    1. Bring in Apache::Response just in case.
+    2. File upload on EBCDIC systems now works.
+
+  Version 3.01
+
+    1. No fix yet for upload failures when running on EBCDIC server.
+    2. Fixed uninitialized glob warnings that appeared when file
+       uploading under perl 5.8.2.
+    3. Added patch from Schlomi Fish to allow debugging of PATH_INFO from
+       command line.
+    4. Added patch from Steve Hay to correctly unlink tmp files under
+       mod_perl/windows
+    5. Added upload_hook functionality from Jamie LeTaul
+    6. Workarounds for mod_perl 2 IO issues. Check that file upload and
+       state saving still working.
+    7. Added code for underreads.
+    8. Fixed misleading description of redirect() and relative URLs in
+       the POD docs.
+    9. Workaround for weird interaction of CGI::Carp with Safe module
+       reported by William McKee.
+   10. Added patches from Ilmari Karonen to improve behavior of
+       CGI::Carp.
+   11. Fixed documentation error in -style argument.
+   12. Added virtual_port() method for finding out what port server is
+       listening on in a virtual-host aware fashion.
+
+  Version 3.00
+
+    1. Patch from Randal Schwartz to fix bug introduced by cross-site
+       scripting vulnerability "fix."
+    2. Patch from JFreeman to replace UTF-8 escape constant of 0xfe with
+       0xfc. Hope this is right!
+
+  Version 2.99
+
+    1. Patch from Steve Hay to fix extra Content-type: appearing on
+       browser screen when FatalsToBrowser invoked.
+    2. Patch from Ewann Corvellec to fix cross-site scripting
+       vulnerability.
+    3. Fixed tmpdir routine for file uploading to solve problem that
+       occurs under mod_perl when tmpdir is writable at startup time, but
+       not at session time.
+
+  Version 2.98
+
+    1. Fixed crash in Dump() function.
+
+  Version 2.97
+
+    1. Sigh. Uploaded wrong 2.96 to CPAN.
+
+  Version 2.96
+
+    1. More bugfixes to the -style argument.
+
+  Version 2.95
+
+    1. Fixed bugs in start_html(-style=>...) support introduced in 2.94.
+
+  Version 2.94
+
+    1. Removed warning from reset() method.
+    2. Moved
+
+   and tags into the :html3 group. Hope this removes undefined CGI::Area
+   errors.
+
+     Changed CGI::Carp to play with mod_perl2 and to (hopefully) restore
+   reporting of compile-time errors.
+
+     Fixed potential deadlock between web server and CGI.pm when aborting
+   a read due to POST_MAX (reported by Antti Lankila).
+
+     Fixed issue with tag-generating function not incorporating content
+   when first variable undef.
+
+     Fixed cross-site scripting bug reported by obscure.
+
+     Fixed Dump() function to return correctly formed XHTML - bug
+   reported by Ralph Siemsen.
+
+  Version 2.93
+
+    1. Fixed embarassing bug in mp1 support.
+
+  Version 2.92
+
+    1. Fix to be P3P compliant submitted from MPREWITT.
+    2. Added CGI->r() API for mod_perl1/mod_perl2.
+    3. Fixed bug in redirect() that was corrupting cookies.
+    4. Minor fix to behavior of reset() button to make it consistent with
+       submit() button (first time this has been changed in 9 years).
+    5. Patch from Dan Kogai to handle UTF-8 correctly in 5.8 and higher.
+    6. Patch from Steve Hay to make CGI::Carp's error messages appear on
+       MSIE browsers.
+    7. Added Yair Lenga's patch for non-urlencoded postings.
+    8. Added Stas Bekman's patches for mod_perl 2 compatibility.
+    9. Fixed uninitialized escape behavior submitted by William Campbell.
+   10. Fixed tied behavior so that you can pass arguments to tie()
+   11. Fixed incorrect generation of URLs when the path_info contains +
+       and other odd characters.
+   12. Fixed redirect(-cookies=>$cookie) problem.
+   13. Fixed tag generation bug that affects -javascript passed to
+       start_html().
+
+  Version 2.91
+
+    1. Attribute generation now correctly respects the value of
+       autoEscape().
+    2. Fixed endofrm() syntax error introduced by Ben Edgington's patch.
+
+  Version 2.90
+
+    1. Fixed bug in redirect header handling.
+    2. Added P3P option to header().
+    3. Patches from Alexey Mahotkin to make CGI::Carp work correctly with
+       object-oriented exceptions.
+    4. Removed inaccurate description of how to set multiple cookies from
+       CGI::Cookie pod file.
+    5. Patch from Kevin Mahony to prevent running out of filehandles when
+       uploading lots of files.
+    6. Documentation enhancement from Mark Fisher to note that the
+       import_names() method transforms the parameter names into valid
+       Perl names.
+    7. Patch from Dan Harkless to suppress lang attribute in <html> tag
+       if specified as a null string.
+    8. Patch from Ben Edgington to fix broken XHTML-transitional 1.0
+       validation on endform().
+    9. Custom html header fix from Steffen Beyer (first letter correctly
+       upcased now)
+   10. Added a -verbatim option to stylesheet generation from Michael
+       Dickson
+   11. Faster delete() method from Neelam Gupta
+   12. Fixed broken Cygwin support.
+   13. Added empty charset support from Bradley Baetz
+   14. Patches from Doug Perham and Kevin Mahoney to fix file upload
+       failures when uploaded file is a multiple of 4096.
+
+  Version 2.89
+
+    1. Fixed behavior of ACTION tag when POSTING to a URL that has a
+       query string.
+    2. Added Patch from Michael Rommel to handle multipart/mixed uploads
+       from Opera
+
+  Version 2.88
+
+    1. Fixed problem with uploads being refused under Perl 5.8 when under
+       Taint mode.
+    2. Fixed uninitialized variable warnings under Perl 5.8.
+    3. Fixed CGI::Pretty regression test failures.
+
+  Version 2.87
+
+    1. Security hole patched: when processing multipart/form-data
+       postings, most arguments were being untainted silently. Returned
+       arguments are now tainted correctly. This may cause some scripts
+       to fail that used to work (thanks to Nick Cleaton for pointing
+       this out and persisting until it was fixed).
+    2. Update for mod_perl 2.0.
+    3. Pragmas such as -no_xhtml are now respected in mod_perl
+       environment.
+
+  Version 2.86
+
+    1. Fixes for broken CGI::Cookie expiration dates introduced in 2.84.
+
+  Version 2.85
+
+    1. Fix for broken autoEscape function introduced in 2.84.
+
+  Version 2.84
+
+    1. Fix for failed file uploads on Cygwin platforms.
+    2. HTML escaping code now replaced 0x8b and 0x9b with unicode
+       references < and *#8250;
+
+  Version 2.83
+
+    1. Fixed autoEscape() documentation inconsistencies.
+    2. Patch from Ville Skyttä to fix a number of XHTML inconsistencies.
+    3. Added Max-Age to list of CGI::Cookie headers.
+
+  Version 2.82
+
+    1. Patch from Rudolf Troller to add attribute setting and option
+       groups to form fields.
+    2. Patch from Simon Perreault for silent crashes when using CGI::Carp
+       under mod_perl.
+    3. Patch from Scott Gifford allows you to set the program name for
+       CGI::Carp.
+
+  Version 2.81
+
+    1. Removed extraneous slash from end of stylesheet tags generated by
+       start_html in non-XHTML mode.
+    2. Changed behavior of CGI::Carp with respect to eval{} contexts so
+       that output behaves properly in mod_perl environments.
+    3. Fixed default DTD so that it validates with W3C validator.
+
+  Version 2.80
+
+    1. Fixed broken messages in CGI::Carp.
+    2. Changed checked="1" to checked="checked" for real XHTML
+       compatibility.
+    3. Resurrected REQUEST_URI code so that url() works correctly with
+       multiviews.
+
+  Version 2.79
+
+    1. Changes to CGI::Carp to avoid "subroutine redefined" error
+       messages.
+    2. Default DTD is now XHTML 1.0 Transitional
+    3. Patches to support all HTML4 tags.
+
+  Version 2.78
+
+    1. Added ability to change encoding in <?xml> assertion.
+    2. Fixed the old escapeHTML('CGI') ne "CGI" bug
+    3. In accordance with XHTML requirements, there are no longer any
+       minimized attributes, such as "checked".
+    4. Patched bug which caused file uploads of exactly 4096 bytes to be
+       truncated to 4094 (thanks to Kevin Mahony)
+    5. New tests and fixes to CGI::Pretty (thanks to Michael Schwern).
+
+  Version 2.77
+
+    1. No new features, but released in order to fix an apparent CPAN
+       bug.
+
+  Version 2.76
+
+    1. New esc.t regression test for EBCDIC translations courtesy Peter
+       Prymmer.
+    2. Patches from James Jurach to make compatible with FCGI-ProcManager
+    3. Additional fields passed to header() (like -Content_disposition)
+       now honor initial capitalization.
+    4. Patch from Andrew McNaughton to handle utf-8 escapes (%uXXXX
+       codes) in URLs.
+
+  Version 2.752
+
+    1. Syntax error in the autoloaded Fh::new() subroutine.
+    2. Better error reporting in autoloaded functions.
+
+  Version 2.751
+
+    1. Tiny tweak to filename regular expression function on line 3355.
+
+  Version 2.75
+
+    1. Fixed bug in server push boundary strings (CGI.pm and CGI::Push).
+    2. Fixed bug that occurs when uploading files with funny characters
+       in the name
+    3. Fixed non-XHTML-compliant attributes produced by textfield()
+    4. Added EPOC support, courtesy Olaf Flebbe
+    5. Fixed minor XHTML bugs.
+    6. Made escape() and unescape() symmetric with respect to EBCDIC,
+       courtesy Roca, Ignasi <ignasi.roca@fujitsu.siemens.es>
+    7. Removed uninitialized variable warning from CGI::Cookie, provided
+       by Atipat Rojnuckarin <rojnuca@yahoo.com>
+    8. Fixed bug in CGI::Pretty that causes it to print partial end tags
+       when the $INDENT global is changed.
+    9. Single quotes are changed to character entity ' for compatibility
+       with URLs.
+
+  Version 2.74
+
+   September 13, 2000
+    1. Quashed one-character bug that caused CGI.pm to fail on file
+       uploads.
+
+  Version 2.73
+
+   September 12, 2000
+    1. Added -base to the list of arguments accepted by url().
+    2. Fixes to XHTML support.
+    3. POST parameters no longer show up in the Location box.
+
+  Version 2.72
+
+   August 19, 2000
+    1. Fixed the defaults button so that it works again
+    2. Charset is now correctly saved and restored when saving to files
+    3. url() now works correctly when given scripts with %20 and other
+       escapes in the additional path info. This undoes a patch
+       introduced in version 2.47 that I no longer understand the
+       rationale for.
+
+  Version 2.71
+
+   August 13, 2000
+    1. Newlines in the value attributes of hidden fields and other form
+       elements are now escaped when using ISO-Latin.
+    2. Inline script and style sections are now protected as CDATA
+       sections when XHTML mode is on (the default).
+
+  Version 2.70
+
+   August 4, 2000
+    1. Fixed bug in scrolling_list() which omitted a space in front of
+       the "multiple" attribute.
+    2. Squashed the "useless use of string in void context" message from
+       redirects.
+
+  Version 2.69
+
+    1. startform() now creates default ACTION for POSTs as well as GETs.
+       This may break some browsers, but it no longer violates the HTML
+       spec.
+    2. CGI.pm now emits XHTML by default. Disable with -no_xhtml.
+    3. We no longer interpret &#ddd sequences in non-latin character
+       sets.
+
+  Version 2.68
+
+    1. No longer attempts to escape characters when dealing with non
+       ISO-8861 character sets.
+    2. checkbox() function now defaults to using -value as its label,
+       rather than -name. The current behavior is what has been
+       documented from the beginning.
+    3. -style accepts array reference to incorporate multiple stylesheets
+       into document.
+
+    1. Fixed two bugs that caused the -compile pragma to fail with a
+       syntax error.
+
+  Version 2.67
+
+    1. Added XHTML support (incomplete; tags need to be lowercased).
+    2. Fixed CGI/Carp when running under mod_perl. Probably broke in
+       other contexts.
+    3. Fixed problems when passing multiple cookies.
+    4. Suppress warnings from _tableize() that were appearing when using
+       -w switch with radio_group() and checkbox_group().
+    5. Support for the header() -attachment argument, which can give
+       pages a default file name when saving to disk.
+
+  Version 2.66
+
+    1. 2.65 changes in make_attributes() broke HTTP header functions
+       (including redirect), so made it context sensitive.
+
+  Version 2.65
+
+    1. Fixed regression tests to skip tests that require implicit fork on
+       machines without fork().
+    2. Changed make_attributes() to automatically escape any HTML
+       reserved characters.
+    3. Minor documentation fix in javascript example.
+
+  Version 2.64
+
+    1. Changes introduced in 2.63 broke param() when retrieving parameter
+       lists containing only a single argument. This is now fixed.
+    2. self_url() now defaults to returning parameters delimited with
+       semicolon. Use the pragma -oldstyle_urls to get the old "&"
+       delimiter.
+
+  Version 2.63
+
+    1. Fixed CGI::Push to pull out parameters correctly.
+    2. Fixed redirect() so that it works with default character set
+    3. Changed param() so as to returned empty string '' when referring
+       to variables passed in query strings like 'name1=&name2'
+
+  Version 2.62
+
+    1. Fixed broken ReadParse() function, and added regression tests
+    2. Fixed broken CGI::Pretty, and added regression tests
+
+  Version 2.61
+
+    1. Moved more functions from CGI.pm proper into CGI/Util.pm.
+       CGI/Cookie should now be standalone.
+    2. Disabled per-user temporary directories, which were causing grief.
+
+  Version 2.60
+
+    1. Fixed junk appearing in autogenerated HTML functions when using
+       object-oriented mode.
+
+  Version 2.59
+
+    1. autoescape functionality breaks too much existing code, removed
+       it.
+    2. use escapeHTML() manually
+
+  Version 2.58
+
+   This is the release version of 2.57.
+
+  Version 2.57
+
+    1. Added -debug pragma and turned off auto reading of STDIN.
+    2. Default DTD updated to HTML 4.01 transitional.
+    3. Added charset() method and the -charset argument to header().
+    4. Fixed behavior of escapeHTML() to respect charset() and to escape
+       nasty Windows characters (thanks to Tom Christiansen).
+    5. Handle REDIRECT_QUERY_STRING correctly.
+    6. Removed use_named_parameters() because of dependency problems and
+       general lameness.
+    7. Fixed problems with bad HREF links generated by url(-relative=>1)
+       when the url is like /people/.
+    8. Silenced a warning on upload (patch provided by Jonas Liljegren)
+    9. Fixed race condition in CGI::Carp when errors occur during parsing
+       (patch provided by Maurice Aubrey).
+   10. Fixed failure of url(-path_info=>1) when path contains % signs.
+   11. Fixed warning from CGI::Cookie when receiving foreign cookies that
+       don't use name=value format.
+   12. Fixed incompatibilities with file uploading on VMS systems.
+
+  Version 2.56
+
+    1. Fixed bugs in file upload introduced in version 2.55
+    2. Fixed long-standing bug that prevented two files with identical
+       names from being uploaded.
+
+  Version 2.55
+
+    1. Fixed cookie regression test so as not to produce an error.
+    2. Fixed path_info() and self_url() to work correctly together when
+       path_info() modified.
+    3. Removed manify warnings from CGI::{Switch,Apache}.
+
+  Version 2.54
+
+    1. This will be the last release of the monolithic CGI.pm module.
+       Later versions will be modularized and optimized.
+    2. DOMAIN tag no longer added to cookies by default. This will break
+       some versions of Internet Explorer, but will avoid breaking
+       networks which use host tables without fully qualified domain
+       names. For compatibility, please always add the -domain tag when
+       creating cookies.
+    3. Fixed escape() method so that +'s are treated correctly.
+    4. Updated CGI::Pretty module.
+
+  Version 2.53
+
+    1. Forgot to upgrade regression tests before releasing 2.52. NOTHING
+       ELSE HAS CHANGED IN LIBRARY
+
+  Version 2.52
+
+    1. Spurious newline in checkbox() routine removed. (courtesy John
+       Essen)
+    2. TEXTAREA linebreaks now respected in dump() routine. (courtesy
+       John Essen)
+    3. Patches for DOS ports (courtesy Robert Davies)
+    4. Patches for VMS
+    5. More fixes for cookie problems
+    6. Fix CGI::Carp so that it doesn't affect eval{} blocks (courtesy
+       Byron Brummer)
+
+  Version 2.51
+
+    1. Fixed problems with cookies not being remembered when sent to IE
+       5.0 (and Netscape 5.0 too?)
+    2. Numerous HTML compliance problems in cgi_docs.html; fixed thanks
+       to Michael Leahy
+
+  Version 2.50
+
+    1. Added a new Vars() method to retrieve all parameters as a tied
+       hash.
+    2. Untainted tainted tempfile name so that script doesn't fail on
+       terminal unlink.
+    3. Made picking of upload tempfile name more intelligent so that
+       doesn't fail in case of name collision.
+    4. Fixed handling of expire times when passed an absolute timestamp.
+    5. Changed dump() to Dump() to avoid name clashes.
+
+  Version 2.49
+
+    1. Fixes for FastCGI (globals not getting reset)
+    2. Fixed url() to correctly handle query string and path under
+       MOD_PERL
+
+  Version 2.48
+
+    1. Reverted detection of MOD_PERL to avoid breaking PerlEX.
+
+  Version 2.47
+
+    1. Patch to fix file upload bug appearing in IE 3.01 for
+       Macintosh/PowerPC.
+    2. Replaced use of $ENV{SCRIPT_NAME} with $ENV{REQUEST_URI} when
+       running under Apache, to fix self-referencing URIs.
+    3. Fixed bug in escapeHTML() which caused certain constructs, such as
+       CGI->image_button(), to fail.
+    4. Fixed bug which caused strong('CGI') to fail. Be careful to use
+       CGI::strong('CGI') and not CGI->strong('CGI'). The latter will
+       produce confusing results.
+    5. Added upload() function, as a preferred replacement for the
+       "filehandle as string" feature.
+    6. Added cgi_error() function.
+    7. Rewrote file upload handling to return undef rather than dieing
+       when an error is encountered. Be sure to call cgi_error() to find
+       out what went wrong.
+
+  Version 2.46
+
+    1. Fix for failure of the "include" tests under mod_perl
+    2. Added end_multipart_form to prevent failures during qw(-compile
+       :all)
+
+  Version 2.45
+
+    1. Multiple small documentation fixes
+    2. CGI::Pretty didn't get into 2.44. Fixed now.
+
+  Version 2.44
+
+    1. Fixed file descriptor leak in upload function.
+    2. Fixed bug in header() that prevented fields from containing double
+       quotes.
+    3. Added Brian Paulsen's CGI::Pretty package for pretty-printing
+       output HTML.
+    4. Removed CGI::Apache and CGI::Switch from the distribution.
+    5. Generated start_* shortcuts so that start_table(), end_table(),
+       start_ol(), end_ol(), and so forth now work (see the docs on how
+       to enable this feature).
+    6. Changed accept() to Accept(), sub() to Sub(). There's still a
+       conflict with reset(), but this will break too many existing
+       scripts!
+
+  Version 2.43
+
+    1. Fixed problem with "use strict" and file uploads (thanks to Peter
+       Haworth)
+    2. Fixed problem with not MSIE 3.01 for the power_mac not doing file
+       uploads right.
+    3. Fixed problem with file upload on IIS 4.0 when authorization in
+       use.
+    4. -content_type and '-content-type' can now be provided to header()
+       as synonyms for -type.
+    5. CGI::Carp now escapes the ampersand BEFORE escaping the > and <
+       signs.
+    6. Fixed "not an array reference" error when passing a hash reference
+       to radio_group().
+    7. Fixed non-removal of uploaded TMP files on NT platforms which
+       occurs when server runs on non-C drive (thanks to Steve Kilbane
+       for finding this one).
+
+  Version 2.42
+
+    1. Too many screams of anguish at changed behavior of url(). Is now
+       back to its old behavior by default, with options to generate all
+       the variants.
+    2. Added regression tests. "make test" now works.
+    3. Documentation fixes.
+    4. Fixes for Macintosh uploads, but uploads STILL do not work pending
+       changes to MacPerl.
+
+  Version 2.41
+
+    1. url() method now includes the path info. Use script_name() to get
+       it without path info().
+    2. Changed handling of empty attributes in HTML tag generation. Be
+       warned! Use table({-border=>undef}) rather than
+       table({-border=>''}).
+    3. Changes to allow uploaded filenames to be compared to other
+       strings with "eq", "cmp" and "ne".
+    4. Changes to allow CGI.pm to coexist more peacefully with
+       ActiveState PerlEX.
+    5. Changes to prevent exported variables from clashing when importing
+       ":all" set in combination with cookies.
+
+  Version 2.40
+
+    1. CGI::Carp patched to work better with mod_perl (thanks to Chris
+       Dean).
+    2. Uploads of files whose names begin with numbers or the Windows
+       \\UNC\shared\file nomenclature should no longer fail.
+    3. The <STYLE> tag (for cascading style sheets) now generates the
+       required TYPE attribute.
+    4. Server push primitives added, thanks to Ed Jordan.
+    5. Table and other HTML3 functions are now part of the :standard set.
+    6. Small documentation fixes.
+
+   TO DO:
+    1. Do something about the DTD mess. The module should generate
+       correct DTDs, or at least offer the programmer a way to specify
+       the correct one.
+    2. Split CGI.pm into CGI processing and HTML-generating modules.
+    3. More robust file upload (?still not working on the Macintosh?).
+    4. Bring in all the HTML4 functionality, particular the accessibility
+       features.
+
+  Version 2.39
+
+    1. file uploads failing because of VMS patch; fixed.
+    2. -dtd parameter was not being properly processed.
+
+  Version 2.38
+
+   I finally got tired of all the 2.37 betas and released 2.38. The main
+   difference between this version and the last 2.37 beta (2.37b30) are
+   some fixes for VMS. This should allow file upload to work properly on
+   all VMS Web servers.
+
+  Version 2.37, various beta versions
+
+    1. Added a CGI::Cookie::parse() method for lucky mod_perl users.
+    2. No longer need separate -values and -labels arguments for
+       multi-valued form elements.
+    3. Added better interface to raw cookies (fix courtesy Ken Fox,
+       kfox@ford.com)
+    4. Added param_fetch() function for direct access to parameter list.
+    5. Fix to checkbox() to allow for multi-valued single checkboxes
+       (weird problem).
+    6. Added a compile() method for those who want to compile without
+       importing.
+    7. Documented the import pragmas a little better.
+    8. Added a -compile switch to the use clause for the long-suffering
+       mod_perl and Perl compiler users.
+    9. Fixed initialization routines so that FileHandle and type globs
+       work correctly (and hash initialization doesn't fail!).
+   10. Better deletion of temporary files on NT systems.
+   11. Added documentation on escape(), unescape(), unescapeHTML() and
+       unescapeHTML() subroutines.
+   12. Added documentation on creating subclasses.
+   13. Fixed problem when calling $self->SUPER::foo() from inheriting
+       subclasses.
+   14. Fixed problem using filehandles from within subroutines.
+   15. Fixed inability to use the string "CGI" as a parameter.
+   16. Fixed exponentially growing $FILLUNIT bug
+   17. Check for undef filehandle in read_from_client()
+   18. Now requires the UNIVERSAL.pm module, present in Perl 5.003_7 or
+       higher.
+   19. Fixed problem with uppercase-only parameters being ignored.
+   20. Fixed vanishing cookie problem.
+   21. Fixed warning in initialize_globals() under mod_perl.
+   22. File uploads from Macintosh versions of MSIE should now work.
+   23. Pragmas now preceded by dashes (-nph) rather than colons (:nph).
+       Old style is supported for backward compatability.
+   24. Can now pass arguments to all functions using {} brackets,
+       resolving historical inconsistencies.
+   25. Removed autoloader warnings about absent MultipartBuffer::DESTROY.
+   26. Fixed non-sticky checkbox() when -name used without -value.
+   27. Hack to fix path_info() in IIS 2.0. Doesn't help with IIS 3.0.
+   28. Parameter syntax for debugging from command line now more
+       straightforward.
+   29. Added $DISABLE_UPLOAD to disable file uploads.
+   30. Added $POST_MAX to error out if POSTings exceed some ceiling.
+   31. Fixed url_param(), which wasn't working at all.
+   32. Fixed variable suicide problem in s///e expressions, where the
+       autoloader was needed during evaluation.
+   33. Removed excess spaces between elements of checkbox and radio
+       groups
+   34. Can now create "valueless" submit buttons
+   35. Can now set path_info as well as read it.
+   36. ReadParse() now returns a useful function result.
+   37. import_names() now allows you to optionally clear out the
+       namespace before importing (for mod_perl users)
+   38. Made it possible to have a popup menu or radio button with a value
+       of "0".
+   39. link() changed to Link() to avoid overriding native link function.
+   40. Takes advantage of mod_perl's register_cleanup() function to clear
+       globals.
+   41. <LAYER> and <ILAYER> added to :html3 functions.
+   42. Fixed problems with private tempfiles and NT/IIS systems.
+   43. No longer prints the DTD by default (I bet no one will complain).
+   44. Allow underscores to replace internal hyphens in parameter names.
+   45. CGI::Push supports heterogeneous MIME types and adjustable delays
+       between pages.
+   46. url_param() method added for retrieving URL parameters even when a
+       fill-out form is POSTed.
+   47. Got rid of warnings when radio_group() is called.
+   48. Cookies now moved to their very own module.
+   49. Fixed documentation bug in CGI::Fast.
+   50. Added a :no_debug pragma to the import list.
+
+  Version 2.36
+
+    1. Expanded JavaScript functionality
+    2. Preliminary support for cascading stylesheets
+    3. Security fixes for file uploads:
+          + Module will bail out if its temporary file already exists
+          + Temporary files can now be made completely private to avoid
+            peeking by other users or CGI scripts.
+    4. use CGI qw/:nph/ wasn't working correctly. Now it is.
+    5. Cookie and HTTP date formats didn't meet spec. Thanks to Mark
+       Fisher (fisherm@indy.tce.com) for catching and fixing this.
+
+   p
+
+  Version 2.35
+
+    1. Robustified multipart file upload against incorrect syntax in
+       POST.
+    2. Fixed more problems with mod_perl.
+    3. Added -noScript parameter to start_html().
+    4. Documentation fixes.
+
+  Version 2.34
+
+    1. Stupid typo fix
+
+  Version 2.33
+
+    1. Fixed a warning about an undefined environment variable.
+    2. Doug's patch for redirect() under mod_perl
+    3. Partial fix for busted inheritence from CGI::Apache
+    4. Documentation fixes.
+
+  Version 2.32
+
+    1. Improved support for Apache's mod_perl.
+    2. Changes to better support inheritance.
+    3. Support for OS/2.
+
+  Version 2.31
+
+    1. New uploadInfo() method to obtain header information from uploaded
+       files.
+    2. cookie() without any arguments returns all the cookies passed to a
+       script.
+    3. Removed annoying warnings about $ENV{NPH} when running with the -w
+       switch.
+    4. Removed operator overloading throughout to make compatible with
+       new versions of perl.
+    5. -expires now implies the -date header, to avoid clock skew.
+    6. WebSite passes cookies in $ENV{COOKIE} rather than
+       $ENV{HTTP_COOKIE}. We now handle this, even though it's O'Reilly's
+       fault.
+    7. Tested successfully against new sfio I/O layer.
+    8. Documentation fixes.
+
+  Version 2.30
+
+    1. Automatic detection of operating system at load time.
+    2. Changed select() function to Select() in order to avoid conflict
+       with Perl built-in.
+    3. Added Tr() as an alternative to TR(); some people think it looks
+       better that way.
+    4. Fixed problem with autoloading of MultipartBuffer::DESTROY code.
+    5. Added the following methods:
+          + virtual_host()
+          + server_software()
+    6. Automatic NPH mode when running under Microsoft IIS server.
+
+  Version 2.29
+
+    1. Fixed cookie bugs
+    2. Fixed problems that cropped up when useNamedParameters was set to
+       1.
+    3. Prevent CGI::Carp::fatalsToBrowser() from crapping out when
+       encountering a die() within an eval().
+    4. Fixed problems with filehandle initializers.
+
+  Version 2.28
+
+    1. Added support for NPH scripts; also fixes problems with Microsoft
+       IIS.
+    2. Fixed a problem with checkbox() values not being correctly saved
+       and restored.
+    3. Fixed a bug in which CGI objects created with empty string
+       initializers took on default values from earlier CGI objects.
+    4. Documentation fixes.
+
+  Version 2.27
+
+    1. Small but important bug fix: the automatic capitalization of tag
+       attributes was accidentally capitalizing the VALUES as well as the
+       ATTRIBUTE names (oops).
+
+  Version 2.26
+
+    1. Changed behavior of scrolling_list(), checkbox() and
+       checkbox_group() methods so that defaults are honored correctly.
+       The "fix" causes endform() to generate additional <INPUT
+       TYPE="HIDDEN"> tags -- don't be surpised.
+    2. Fixed bug involving the detection of the SSL protocol.
+    3. Fixed documentation error in position of the -meta argument in
+       start_html().
+    4. HTML shortcuts now generate tags in ALL UPPERCASE.
+    5. start_html() now generates correct SGML header:
+      <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+      
+    6. CGI::Carp no longer fails "use strict refs" pragma.
+
+  Version 2.25
+
+    1. Fixed bug that caused bad redirection on destination URLs with
+       arguments.
+    2. Fixed bug involving use_named_parameters() followed by
+       start_multipart_form()
+    3. Fixed bug that caused incorrect determination of binmode for
+       Macintosh.
+    4. Spelling fixes on documentation.
+
+  Version 2.24
+
+    1. Fixed bug that caused generation of lousy HTML for some form
+       elements
+    2. Fixed uploading bug in Windows NT
+    3. Some code cleanup (not enough)
+
+  Version 2.23
+
+    1. Fixed an obscure bug that caused scripts to fail mysteriously.
+    2. Fixed auto-caching bug.
+    3. Fixed bug that prevented HTML shortcuts from passing taint checks.
+    4. Fixed some -w warning problems.
+
+  Version 2.22
+
+    1. New CGI::Fast module for use with FastCGI protocol. See pod
+       documentation for details.
+    2. Fixed problems with inheritance and autoloading.
+    3. Added TR() (<tr>) and PARAM() (<param>) methods to list of
+       exported HTML tag-generating functions.
+    4. Moved all CGI-related I/O to a bottleneck method so that this can
+       be overridden more easily in mod_perl (thanks to Doug MacEachern).
+    5. put() method as substitute for print() for use in mod_perl.
+    6. Fixed crash in tmpFileName() method.
+    7. Added tmpFileName(), startform() and endform() to export list.
+    8. Fixed problems with attributes in HTML shortcuts.
+    9. Functions that don't actually need access to the CGI object now no
+       longer generate a default one. May speed things up slightly.
+   10. Aesthetic improvements in generated HTML.
+   11. New examples.
+
+  Version 2.21
+
+    1. Added the -meta argument to start_html().
+    2. Fixed hidden fields (again).
+    3. Radio_group() and checkbox_group() now return an appropriate
+       scalar value when called in a scalar context, rather than
+       returning a numeric value!
+    4. Cleaned up the formatting of form elements to avoid unesthetic
+       extra spaces within the attributes.
+    5. HTML elements now correctly include the closing tag when
+       parameters are present but null: em('')
+    6. Added password_field() to the export list.
+
+  Version 2.20
+
+    1. Dumped the SelfLoader because of problems with running with taint
+       checks and rolled my own. Performance is now significantly
+       improved.
+    2. Added HTML shortcuts.
+    3. import() now adheres to the Perl module conventions, allowing
+       CGI.pm to import any or all method names into the user's name
+       space.
+    4. Added the ability to initialize CGI objects from strings and
+       associative arrays.
+    5. Made it possible to initialize CGI objects with filehandle
+       references rather than filehandle strings.
+    6. Added the delete_all() and append() methods.
+    7. CGI objects correctly initialize from filehandles on NT/95 systems
+       now.
+    8. Fixed the problem with binary file uploads on NT/95 systems.
+    9. Fixed bug in redirect().
+   10. Added '-Window-target' parameter to redirect().
+   11. Fixed import_names() so that parameter names containing funny
+       characters work.
+   12. Broke the unfortunate connection between cookie and CGI parameter
+       name space.
+   13. Fixed problems with hidden fields whose values are 0.
+   14. Cleaned up the documentation somewhat.
+
+  Version 2.19
+
+    1. Added cookie() support routines.
+    2. Added -expires parameter to header().
+    3. Added cgi-lib.pl compatability mode.
+    4. Made the module more configurable for different operating systems.
+    5. Fixed a dumb bug in JavaScript button() method.
+
+  Version 2.18
+
+    1. Fixed a bug that corrects a hang that occurs on some platforms
+       when processing file uploads. Unfortunately this disables the
+       check for bad Netscape uploads.
+    2. Fixed bizarre problem involving the inability to process uploaded
+       files that begin with a non alphabetic character in the file name.
+    3. Fixed a bug in the hidden fields involving the -override directive
+       being ignored when scalar defaults were passed.
+    4. Added documentation on how to disable the SelfLoader features.
+
+  Version 2.17
+
+    1. Added support for the SelfLoader module.
+    2. Added oodles of JavaScript support routines.
+    3. Fixed bad bug in query_string() method that caused some parameters
+       to be silently dropped.
+    4. Robustified file upload code to handle premature termination by
+       the client.
+    5. Exported temporary file names on file upload.
+    6. Removed spurious "uninitialized variable" warnings that appeared
+       when running under 5.002.
+    7. Added the Carp.pm library to the standard distribution.
+    8. Fixed a number of errors in this documentation, and probably added
+       a few more.
+    9. Checkbox_group() and radio_group() now return the buttons as
+       arrays, so that you can incorporate the individual buttons into
+       specialized tables.
+   10. Added the '-nolabels' option to checkbox_group() and
+       radio_group(). Probably should be added to all the other
+       HTML-generating routines.
+   11. Added the url() method to recover the URL without the entire query
+       string appended.
+   12. Added request_method() to list of environment variables available.
+   13. Would you believe it? Fixed hidden fields again!
+
+  Version 2.16
+
+    1. Fixed hidden fields yet again.
+    2. Fixed subtle problems in the file upload method that caused
+       intermittent failures (thanks to Keven Hendrick for this one).
+    3. Made file upload more robust in the face of bizarre behavior by
+       the Macintosh and Windows Netscape clients.
+    4. Moved the POD documentation to the bottom of the module at the
+       request of Stephen Dahmen.
+    5. Added the -xbase parameter to the start_html() method, also at the
+       request of Stephen Dahmen.
+    6. Added JavaScript form buttons at Stephen's request. I'm not sure
+       how to use this Netscape extension correctly, however, so for now
+       the form() method is in the module as an undocumented feature. Use
+       at your own risk!
+
+  Version 2.15
+
+    1. Added the -override parameter to all field-generating methods.
+    2. Documented the user_name() and remote_user() methods.
+    3. Fixed bugs that prevented empty strings from being recognized as
+       valid textfield contents.
+    4. Documented the use of framesets and added a frameset example.
+
+  Version 2.14
+
+   This was an internal experimental version that was never released.
+
+  Version 2.13
+
+    1. Fixed a bug that interfered with the value "0" being entered into
+       text fields.
+
+  Version 2.01
+
+    1. Added -rows and -columns to the radio and checkbox groups. No
+       doubt this will cause much grief because it seems to promise a
+       level of meta-organization that it doesn't actually provide.
+    2. Fixed a bug in the redirect() method -- it was not truly HTTP/1.0
+       compliant.
+
+  Version 2.0
+
+   The changes seemed to touch every line of code, so I decided to bump
+   up the major version number.
+    1. Support for named parameter style method calls. This turns out
+       to be a big win for extending CGI.pm when Netscape adds new HTML
+       "features".
+    2. Changed behavior of hidden fields back to the correct "sticky"
+       behavior. This is going to break some programs, but it is for
+       the best in the long run.
+    3. Netscape 2.0b2 broke the file upload feature. CGI.pm now handles
+       both 2.0b1 and 2.0b2-style uploading. It will probably break again
+       in 2.0b3.
+    4. There were still problems with library being unable to distinguish
+       between a form being loaded for the first time, and a subsequent
+       loading with all fields blank. We now forcibly create a default
+       name for the Submit button (if not provided) so that there's
+       always at least one parameter.
+    5. More workarounds to prevent annoying spurious warning messages
+       when run under the -w switch. -w is seriously broken in perl
+       5.001!
+
+  Version 1.57
+
+    1. Support for the Netscape 2.0 "File upload" field.
+    2. The handling of defaults for selected items in scrolling lists and
+       multiple checkboxes is now consistent.
+
+  Version 1.56
+
+    1. Created true "pod" documentation for the module.
+    2. Cleaned up the code to avoid many of the spurious "use of
+       uninitialized variable" warnings when running with the -w switch.
+    3. Added the autoEscape() method. v
+    4. Added string interpolation of the CGI object.
+    5. Added the ability to pass additional parameters to the <BODY> tag.
+    6. Added the ability to specify the status code in the HTTP header.
+
+  Bug fixes in version 1.55
+
+    1. Every time self_url() was called, the parameter list would grow.
+       This was a bad "feature".
+    2. Documented the fact that you can pass "-" to radio_group() in
+       order to prevent any button from being highlighted by default.
+
+  Bug fixes in version 1.54
+
+    1. The user_agent() method is now documented;
+    2. A potential security hole in import() is now plugged.
+    3. Changed name of import() to import_names() for compatability with
+       CGI:: modules.
+
+  Bug fixes in version 1.53
+
+    1. Fixed several typos in the code that were causing the following
+       subroutines to fail in some circumstances
+         1. checkbox()
+         2. hidden()
+    2. No features added
+
+  New features added in version 1.52
+
+    1. Added backslashing, quotation marks, and other shell-style escape
+       sequences to the parameters passed in during debugging off-line.
+    2. Changed the way that the hidden() method works so that the default
+       value always overrides the current one.
+    3. Improved the handling of sticky values in forms. It's now less
+       likely that sticky values will get stuck.
+    4. If you call server_name(), script_name() and several other methods
+       when running offline, the methods now create "dummy" values to
+       work with.
+
+  Bugs fixed in version 1.51
+
+    1. param() when called without arguments was returning an array of
+       length 1 even when there were no parameters to be had. Bad bug!
+       Bad!
+    2. The HTML code generated would break if input fields contained the
+       forbidden characters ">< or &. You can now use these characters
+       freely.
+
+  New features added in version 1.50
+
+    1. import() method allows all the parameters to be imported into a
+       namespace in one fell swoop.
+    2. Parameters are now returned in the same order in which they were
+       defined.
+
+  Bugs fixed in version 1.45
+
+    1. delete() method didn't work correctly. This is now fixed.
+    2. reset() method didn't allow you to set the name of the button.
+       Fixed.
+
+  Bugs fixed in version 1.44
+
+    1. self_url() didn't include the path information. This is now fixed.
+
+  New features added in version 1.43
+
+    1. Added the delete() method.
+
+  New features added in version 1.42
+
+    1. The image_button() method to create clickable images.
+    2. A few bug fixes involving forms embedded in <PRE> blocks.
+
+  New features added in version 1.4
+
+    1. New header shortcut methods
+          + redirect() to create HTTP redirection messages.
+          + start_html() to create the HTML title, complete with the
+            recommended <LINK> tag that no one ever remembers to include.
+          + end_html() for completeness' sake.
+    2. A new save() method that allows you to write out the state of an
+       script to a file or pipe.
+    3. An improved version of the new() method that allows you to restore
+       the state of a script from a file or pipe. With (2) this gives you
+       dump and restore capabilities! (Wow, you can put a "121,931
+       customers served" banner at the bottom of your pages!)
+    4. A self_url() method that allows you to create state-maintaining
+       hypertext links. In addition to allowing you to maintain the state
+       of your scripts between invocations, this lets you work around a
+       problem that some browsers have when jumping to internal links in
+       a document that contains a form -- the form information gets lost.
+    5. The user-visible labels in checkboxes, radio buttons, popup menus
+       and scrolling lists have now been decoupled from the values sent
+       to your CGI script. Your script can know a checkbox by the name of
+       "cb1" while the user knows it by a more descriptive name. I've
+       also added some parameters that were missing from the text fields,
+       such as MAXLENGTH.
+    6. A whole bunch of methods have been added to get at environment
+       variables involved in user verification and other obscure
+       features.
+
+  Bug fixes
+
+    1. The problems with the hidden fields have (I hope at last) been
+       fixed.
+    2. You can create multiple query objects and they will all be
+       initialized correctly. This simplifies the creation of multiple
+       forms on one page.
+    3. The URL unescaping code works correctly now.

@@ -1,6 +1,5 @@
 #!./perl
 
-# $RCSfile: complex.t,v $
 #
 # Regression tests for the Math::Complex pacakge
 # -- Raphael Manfredi	since Sep 1996
@@ -8,8 +7,10 @@
 # -- Daniel S. Lewart	since Sep 1997
 
 BEGIN {
-    chdir 't' if -d 't';
-    @INC = '../lib';
+    if ($ENV{PERL_CORE}) {
+	chdir 't' if -d 't';
+	@INC = '../lib';
+    }
 }
 
 use Math::Complex;
@@ -23,7 +24,7 @@ my ($args, $op, $target, $test, $test_set, $try, $val, $zvalue, @set, @val);
 $test = 0;
 $| = 1;
 my @script = (
-    'my ($res, $s0,$s1,$s2,$s3,$s4,$s5,$s6,$s7,$s8,$s9,$s10, $z0,$z1,$z2);' .
+    'my ($res, $s0,$s1,$s2,$s3,$s4,$s5,$s6,$s7,$s8,$s9,$s10,$z0,$z1,$z2);' .
 	"\n\n"
 );
 my $eps = 1e-13;
@@ -114,7 +115,9 @@ my $i    = cplx(0,  1);
 my $pi   = cplx(pi, 0);
 my $pii  = cplx(0, pi);
 my $pip2 = cplx(pi/2, 0);
+my $pip4 = cplx(pi/4, 0);
 my $zero = cplx(0, 0);
+my $inf  = 9**9**9;
 ';
 
 push(@script, $constants);
@@ -168,6 +171,7 @@ test_dbz(
 	 'coth(0)',
 	 'csc(0)',
 	 'csch(0)',
+	 'atan(cplx(0, 1), cplx(1, 0))',
 	);
 
 test_loz(
@@ -307,39 +311,152 @@ sub test_remake {
     $test++;
     push @script, <<EOS;
     print "# remake 2+3i\n";
-    my \$z = cplx('2+3i');
+    \$z = cplx('2+3i');
     print "not " unless \$z == Math::Complex->make(2,3);
     print "ok $test\n";
 EOS
 
     $test++;
     push @script, <<EOS;
-    print "# remake 3i\n";
-    my \$z = Math::Complex->make('3i');
+    print "# make 3i\n";
+    \$z = Math::Complex->make('3i');
     print "not " unless \$z == cplx(0,3);
     print "ok $test\n";
 EOS
 
     $test++;
     push @script, <<EOS;
-    print "# remake [2,3]\n";
-    my \$z = cplxe('[2,3]');
-    print "not " unless \$z == Math::Complex->emake(2,3);
+    print "# emake [2,3]\n";
+    \$z = Math::Complex->emake('[2,3]');
+    print "not " unless \$z == cplxe(2,3);
     print "ok $test\n";
 EOS
 
     $test++;
     push @script, <<EOS;
-    print "# remake [2]\n";
-    my \$z = Math::Complex->emake('[2]');
+    print "# make (2,3)\n";
+    \$z = Math::Complex->make('(2,3)');
+    print "not " unless \$z == cplx(2,3);
+    print "ok $test\n";
+EOS
+
+    $test++;
+    push @script, <<EOS;
+    print "# emake [2,3pi/8]\n";
+    \$z = Math::Complex->emake('[2,3pi/8]');
+    print "not " unless \$z == cplxe(2,3*\$pi/8);
+    print "ok $test\n";
+EOS
+
+    $test++;
+    push @script, <<EOS;
+    print "# emake [2]\n";
+    \$z = Math::Complex->emake('[2]');
     print "not " unless \$z == cplxe(2);
     print "ok $test\n";
 EOS
 }
 
+sub test_no_args {
+    push @script, <<'EOS';
+{
+    print "# cplx, cplxe, make, emake without arguments\n";
+EOS
+
+    $test++;
+    push @script, <<EOS;
+    my \$z0 = cplx();
+    print ((\$z0->Re()  == 0) ? "ok $test\n" : "not ok $test\n");
+EOS
+
+    $test++;
+    push @script, <<EOS;
+    print ((\$z0->Im()  == 0) ? "ok $test\n" : "not ok $test\n");
+EOS
+
+    $test++;
+    push @script, <<EOS;
+    my \$z1 = cplxe();
+    print ((\$z1->rho()   == 0) ? "ok $test\n" : "not ok $test\n");
+EOS
+
+    $test++;
+    push @script, <<EOS;
+    print ((\$z1->theta() == 0) ? "ok $test\n" : "not ok $test\n");
+EOS
+
+    $test++;
+    push @script, <<EOS;
+    my \$z2 = Math::Complex->make();
+    print ((\$z2->Re()  == 0) ? "ok $test\n" : "not ok $test\n");
+EOS
+
+    $test++;
+    push @script, <<EOS;
+    print ((\$z2->Im()  == 0) ? "ok $test\n" : "not ok $test\n");
+EOS
+
+    $test++;
+    push @script, <<EOS;
+    my \$z3 = Math::Complex->emake();
+    print ((\$z3->rho()   == 0) ? "ok $test\n" : "not ok $test\n");
+EOS
+
+    $test++;
+    push @script, <<EOS;
+    print ((\$z3->theta() == 0) ? "ok $test\n" : "not ok $test\n");
+}
+EOS
+}
+
+sub test_atan2 {
+    push @script, <<'EOS';
+print "# atan2() with some real arguments\n";
+EOS
+    my @real = (-1, 0, 1);
+    for my $x (@real) {
+	for my $y (@real) {
+	    next if $x == 0 && $y == 0;
+	    $test++;
+	    push @script, <<EOS;
+print ((Math::Complex::atan2($y, $x) == CORE::atan2($y, $x)) ? "ok $test\n" : "not ok $test\n");
+EOS
+        }
+    }
+    push @script, <<'EOS';
+    print "# atan2() with some complex arguments\n";
+EOS
+    $test++;
+    push @script, <<EOS;
+    print (abs(atan2(0, cplx(0, 1))) < $eps ? "ok $test\n" : "not ok $test\n");
+EOS
+    $test++;
+    push @script, <<EOS;
+    print (abs(atan2(cplx(0, 1), 0) - \$pip2) < $eps ? "ok $test\n" : "not ok $test\n");
+EOS
+    $test++;
+    push @script, <<EOS;
+    print (abs(atan2(cplx(0, 1), cplx(0, 1)) - \$pip4) < $eps ? "ok $test\n" : "not ok $test\n");
+EOS
+    $test++;
+    push @script, <<EOS;
+    print (abs(atan2(cplx(0, 1), cplx(1, 1)) - cplx(0.553574358897045, 0.402359478108525)) < $eps ? "ok $test\n" : "not ok $test\n");
+EOS
+}
+
+sub test_decplx {
+}
+
 test_remake();
 
+test_no_args();
+
+test_atan2();
+
+test_decplx();
+
 print "1..$test\n";
+#print @script, "\n";
 eval join '', @script;
 die $@ if $@;
 
@@ -449,6 +566,8 @@ sub check {
 	if ("$got" eq "$expected"
 	    ||
 	    ($expected =~ /^-?\d/ && $got == $expected)
+	    ||
+	    (abs(Math::Complex->make($got) - Math::Complex->make($expected)) < $eps)
 	    ||
 	    (abs($got - $expected) < $eps)
 	    ) {
@@ -591,6 +710,8 @@ __END__
 |'(root(z, 4))[1] ** 4':'z'
 |'(root(z, 5))[3] ** 5':'z'
 |'(root(z, 8))[7] ** 8':'z'
+|'(root(z, 8, 0)) ** 8':'z'
+|'(root(z, 8, 7)) ** 8':'z'
 |'abs(z)':'r'
 |'acot(z)':'acotan(z)'
 |'acsc(z)':'acosec(z)'

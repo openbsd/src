@@ -23,7 +23,7 @@
 /* UTF8_ALLOW_BOM is used before Perl 5.8.0 */
 #ifdef UTF8_ALLOW_BOM
 #define AllowAnyUTF (UTF8_ALLOW_SURROGATE|UTF8_ALLOW_BOM|UTF8_ALLOW_FFFF)
-#else 
+#else
 #define AllowAnyUTF (UTF8_ALLOW_SURROGATE|UTF8_ALLOW_FFFF)
 #endif
 

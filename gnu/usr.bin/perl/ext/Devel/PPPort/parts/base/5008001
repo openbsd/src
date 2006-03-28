@@ -13,8 +13,8 @@ sv_setpviv                     # U
 sv_setpviv_mg                  # U
 unpackstring                   # U
 IN_PERL_COMPILETIME            # added by devel/scanprov
+PERL_GCC_BRACE_GROUPS_FORBIDDEN # added by devel/scanprov
 PERL_MAGIC_utf8                # added by devel/scanprov
 PERL_MAGIC_vstring             # added by devel/scanprov
 PERL_SCAN_SILENT_ILLDIGIT      # added by devel/scanprov
 XST_mUV                        # added by devel/scanprov
-PERL_GCC_BRACE_GROUPS_FORBIDDEN # added by devel/scanprov

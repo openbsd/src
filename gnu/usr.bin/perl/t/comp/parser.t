@@ -9,7 +9,7 @@ BEGIN {
 }
 
 require "./test.pl";
-plan( tests => 46 );
+plan( tests => 53 );
 
 eval '%@x=0;';
 like( $@, qr/^Can't modify hash dereference in repeat \(x\)/, '%@x=0' );
@@ -161,4 +161,26 @@ EOF
 
     eval q{ sub _ __FILE__ {} };
     like($@, qr/Illegal declaration of subroutine main::_/, "__FILE__ as prototype");
+}
+
+# [perl #36313] perl -e "1for$[=0" crash
+{
+    my $x;
+    $x = 1 for ($[) = 0;
+    pass('optimized assignment to $[ used to segfault in list context');
+    if ($[ = 0) { $x = 1 }
+    pass('optimized assignment to $[ used to segfault in scalar context');
+    $x = ($[=2.4);
+    is($x, 2, 'scalar assignment to $[ behaves like other variables');
+    $x = (($[) = 0);
+    is($x, 1, 'list assignment to $[ behaves like other variables');
+    $x = eval q{ ($[, $x) = (0) };
+    like($@, qr/That use of \$\[ is unsupported/,
+             'cannot assign to $[ in a list');
+    eval q{ ($[) = (0, 1) };
+    like($@, qr/That use of \$\[ is unsupported/,
+             'cannot assign list of >1 elements to $[');
+    eval q{ ($[) = () };
+    like($@, qr/That use of \$\[ is unsupported/,
+             'cannot assign list of <1 elements to $[');
 }

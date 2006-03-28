@@ -1,4 +1,5 @@
-/*
+/* -*- buffer-read-only: t -*-
+ *
  *      Copyright (c) 1996-1999 Malcolm Beattie
  *
  *      You may distribute under the terms of either the GNU General Public
@@ -197,3 +198,4 @@ enum {
     OPt_COP		/* 10 */
 };
 
+/* ex: set ro: */

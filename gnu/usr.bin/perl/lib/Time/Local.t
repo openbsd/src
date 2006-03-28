@@ -23,6 +23,7 @@ my @time =
    [1999, 12, 31, 23, 59, 59],
    [2000,  1,  1, 00, 00, 00],
    [2010, 10, 12, 14, 13, 12],
+   # leap day
    [2020,  2, 29, 12, 59, 59],
    [2030,  7,  4, 17, 07, 06],
 # The following test fails on a surprising number of systems
@@ -31,49 +32,97 @@ my @time =
 #  [2038,  1, 17, 23, 59, 59],     # last full day in any tz
   );
 
-# use vmsish 'time' makes for oddness around the Unix epoch
-if ($^O eq 'VMS') { $time[0][2]++ }
+my @bad_time =
+    (
+     # month too large
+     [1995, 13, 01, 01, 01, 01],
+     # day too large
+     [1995, 02, 30, 01, 01, 01],
+     # hour too large
+     [1995, 02, 10, 25, 01, 01],
+     # minute too large
+     [1995, 02, 10, 01, 60, 01],
+     # second too large
+     [1995, 02, 10, 01, 01, 60],
+    );
 
-my $tests = (@time * 12) + 6;
+my @neg_time =
+    (
+     # test negative epochs for systems that handle it
+     [ 1969, 12, 31, 16, 59, 59 ],
+     [ 1950, 04, 12, 9, 30, 31 ],
+    );
+
+# Use 3 days before the start of the epoch because with Borland on
+# Win32 it will work for -3600 _if_ your time zone is +01:00 (or
+# greater).
+my $neg_epoch_ok = defined ((localtime(-259200))[0]) ? 1 : 0;
+
+# use vmsish 'time' makes for oddness around the Unix epoch
+if ($^O eq 'VMS') { 
+    $time[0][2]++;
+    $neg_epoch_ok = 0; # time_t is unsigned
+}
+
+my $tests = (@time * 12);
+$tests += @neg_time * 12;
+$tests += @bad_time;
+$tests += 8;
 $tests += 2 if $ENV{PERL_CORE};
 $tests += 5 if $ENV{MAINTAINER};
 
 plan tests => $tests;
 
-for (@time) {
+for (@time, @neg_time) {
     my($year, $mon, $mday, $hour, $min, $sec) = @$_;
     $year -= 1900;
     $mon--;
 
     if ($^O eq 'vos' && $year == 70) {
         skip(1, "skipping 1970 test on VOS.\n") for 1..6;
+    } elsif ($year < 70 && ! $neg_epoch_ok) {
+        skip(1, "skipping negative epoch.\n") for 1..6;
     } else {
-        my $time = timelocal($sec,$min,$hour,$mday,$mon,$year);
+        my $year_in = $year < 70 ? $year + 1900 : $year;
+        my $time = timelocal($sec,$min,$hour,$mday,$mon,$year_in);
 
         my($s,$m,$h,$D,$M,$Y) = localtime($time);
 
-        ok($s, $sec, 'second');
-        ok($m, $min, 'minute');
-        ok($h, $hour, 'hour');
-        ok($D, $mday, 'day');
-        ok($M, $mon, 'month');
-        ok($Y, $year, 'year');
+        ok($s, $sec, 'timelocal second');
+        ok($m, $min, 'timelocal minute');
+        ok($h, $hour, 'timelocal hour');
+        ok($D, $mday, 'timelocal day');
+        ok($M, $mon, 'timelocal month');
+        ok($Y, $year, 'timelocal year');
     }
 
     if ($^O eq 'vos' && $year == 70) {
         skip(1, "skipping 1970 test on VOS.\n") for 1..6;
+    } elsif ($year < 70 && ! $neg_epoch_ok) {
+        skip(1, "skipping negative epoch.\n") for 1..6;
     } else {
-        my $time = timegm($sec,$min,$hour,$mday,$mon,$year);
+        my $year_in = $year < 70 ? $year + 1900 : $year;
+        my $time = timegm($sec,$min,$hour,$mday,$mon,$year_in);
 
         my($s,$m,$h,$D,$M,$Y) = gmtime($time);
 
-        ok($s, $sec, 'second');
-        ok($m, $min, 'minute');
-        ok($h, $hour, 'hour');
-        ok($D, $mday, 'day');
-        ok($M, $mon, 'month');
-        ok($Y, $year, 'year');
+        ok($s, $sec, 'timegm second');
+        ok($m, $min, 'timegm minute');
+        ok($h, $hour, 'timegm hour');
+        ok($D, $mday, 'timegm day');
+        ok($M, $mon, 'timegm month');
+        ok($Y, $year, 'timegm year');
     }
+}
+
+for (@bad_time) {
+    my($year, $mon, $mday, $hour, $min, $sec) = @$_;
+    $year -= 1900;
+    $mon--;
+
+    eval { timegm($sec,$min,$hour,$mday,$mon,$year) };
+
+    ok($@, qr/.*out of range.*/, 'invalid time caused an error');
 }
 
 ok(timelocal(0,0,1,1,0,90) - timelocal(0,0,0,1,0,90), 3600,
@@ -96,6 +145,16 @@ ok(timegm(0,0,0, 1, 2, 80) - timegm(0,0,0, 1, 0, 80), 60 * 24 * 3600,
     # testers in US/Pacific should get 3,
     # other testers should get 2
     ok($hour == 2 || $hour == 3, 1, 'hour should be 2 or 3');
+}
+
+if ($neg_epoch_ok) {
+    eval { timegm(0,0,0,29,1,1900) };
+    ok($@, qr/Day '29' out of range 1\.\.28/);
+
+    eval { timegm(0,0,0,29,1,1904) };
+    ok($@, '');
+} else {
+    skip(1, "skipping negative epoch.\n") for 1..2;
 }
 
 # round trip was broken for edge cases

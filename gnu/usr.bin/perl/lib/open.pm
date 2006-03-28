@@ -3,7 +3,7 @@ use warnings;
 use Carp;
 $open::hint_bits = 0x20000; # HINT_LOCALIZE_HH
 
-our $VERSION = '1.04';
+our $VERSION = '1.05';
 
 require 5.008001; # for PerlIO::get_layers()
 
@@ -168,9 +168,8 @@ The C<open> pragma serves as one of the interfaces to declare default
 "layers" (also known as "disciplines") for all I/O. Any two-argument
 open(), readpipe() (aka qx//) and similar operators found within the
 lexical scope of this pragma will use the declared defaults.
-Three-argument opens are not affected by this pragma since there you
-(can) explicitly specify the layers and are supposed to know what you
-are doing.
+Even three-argument opens may be affected by this pragma
+when they don't specify IO layers in MODE.
 
 With the C<IN> subpragma you can declare the default layers
 of input streams, and with the C<OUT> subpragma you can declare
@@ -179,7 +178,7 @@ you can control both input and output streams simultaneously.
 
 If you have a legacy encoding, you can use the C<:encoding(...)> tag.
 
-if you want to set your encoding layers based on your
+If you want to set your encoding layers based on your
 locale environment variables, you can use the C<:locale> tag.
 For example:
 
@@ -215,8 +214,8 @@ details and the list of supported locales.
 Note that C<:utf8> PerlIO layer must always be specified exactly like
 that, it is not subject to the loose matching of encoding names.
 
-When open() is given an explicit list of layers they are appended to
-the list declared using this pragma.
+When open() is given an explicit list of layers (with the three-arg
+syntax), they override the list declared using this pragma.
 
 The C<:std> subpragma on its own has no effect, but if combined with
 the C<:utf8> or C<:encoding> subpragmas, it converts the standard
@@ -228,7 +227,7 @@ chosen to be in C<< :encoding(koi8r) >>, a C<:std> will cause only the
 STDOUT and STDERR to be in C<koi8r>.  The C<:locale> subpragma
 implicitly turns on C<:std>.
 
-The logic of C<:locale> is described in full in L</encoding>,
+The logic of C<:locale> is described in full in L<encoding>,
 but in short it is first trying nl_langinfo(CODESET) and then
 guessing from the LC_ALL and LANG locale environment variables.
 

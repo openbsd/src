@@ -1,4 +1,4 @@
-
+#!perl
 # Test that Pod::LaTeX works
 # This test relies on the DATA filehandle
 # DATA contains the latex that is used for comparison
@@ -11,7 +11,7 @@
 use Test;
 use strict;
 
-BEGIN { plan tests => 172 }
+BEGIN { plan tests => 177 }
 
 use Pod::LaTeX;
 
@@ -168,7 +168,7 @@ Test description list with long lines
 
 \begin{description}
 
-\item[Some short text] \mbox{}
+\item[{Some short text}] \mbox{}
 
 Some additional para.
 
@@ -185,19 +185,24 @@ Second item
 
 \end{itemize}
 
-\item[some longer text than that] \mbox{}
+\item[{some longer text than that}] \mbox{}
 
 and again.
 
 
-\item[this text is even longer and greater than] \textbf{40 characters}
+\item[{this text is even longer and greater than}] \textbf{40 characters}
 
 Some more content for the item.
 
 
-\item[this is some text with \textit{something across}] \textbf{the 40 char boundary}
+\item[{this is some text with \textit{something across}}] \textbf{the 40 char boundary}
 
 This is item content.
+
+
+\item[{square [ bracket in item}] \mbox{}
+
+Square bracket content
 
 \end{description}
 
@@ -339,6 +344,10 @@ Some more content for the item.
 =item this is some text with I<something across> the 40 char boundary
 
 This is item content.
+
+=item square [ bracket in item
+
+Square bracket content
 
 =back
 

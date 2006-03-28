@@ -1,5 +1,5 @@
 /*
- $Id: Unicode.xs,v 2.1 2004/10/24 13:00:29 dankogai Exp dankogai $
+ $Id: Unicode.xs,v 2.1 2004/10/24 13:00:29 dankogai Exp $
  */
 
 #define PERL_NO_GET_CONTEXT

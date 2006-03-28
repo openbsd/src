@@ -36,9 +36,9 @@ if (eval {require File::Spec::Functions}) {
 }
 $tmpdir = $ENV{TMP} || $ENV{TMPDIR} ||  '/tmp';  
 $file = catfile($tmpdir, "md$$");
-1 while unlink $file, "$file.dir", "$file.pag";
+1 while unlink $file, "$file.dir", "$file.pag", "$file.db";
 tryout('Memoize::NDBM_File', $file, 1);  # Test 1..4
-1 while unlink $file, "$file.dir", "$file.pag";
+1 while unlink $file, "$file.dir", "$file.pag", "$file.db";
 
 sub tryout {
   my ($tiepack, $file, $testno) = @_;

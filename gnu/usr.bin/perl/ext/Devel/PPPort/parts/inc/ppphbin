@@ -1,12 +1,12 @@
 ################################################################################
 ##
-##  $Revision: 1.1.1.1 $
+##  $Revision: 1.1.1.2 $
 ##  $Author: millert $
-##  $Date: 2005/01/15 21:16:46 $
+##  $Date: 2006/03/28 18:47:59 $
 ##
 ################################################################################
 ##
-##  Version 3.x, Copyright (C) 2004, Marcus Holland-Moritz.
+##  Version 3.x, Copyright (C) 2004-2005, Marcus Holland-Moritz.
 ##  Version 2.x, Copyright (C) 2001, Paul Marquess.
 ##  Version 1.x, Copyright (C) 1999, Kenneth Albanowski.
 ##
@@ -29,6 +29,7 @@ my %opt = (
   hints     => 1,
   changes   => 1,
   cplusplus => 0,
+  filter    => 1,
 );
 
 my($ppport) = $0 =~ /([\w.]+)$/;
@@ -38,9 +39,9 @@ my $HS = "[ \t]";             # horizontal whitespace
 eval {
   require Getopt::Long;
   Getopt::Long::GetOptions(\%opt, qw(
-    help quiet diag! hints! changes! cplusplus
+    help quiet diag! filter! hints! changes! cplusplus
     patch=s copy=s diff=s compat-version=s
-    list-provided list-unsupported
+    list-provided list-unsupported api-info=s
   )) or usage();
 };
 
@@ -57,7 +58,7 @@ if (exists $opt{'compat-version'}) {
     die "Invalid version number format: '$opt{'compat-version'}'\n";
   }
   die "Only Perl 5 is supported\n" if $r != 5;
-  die "Invalid version number: $opt{'compat-version'}\n" if $v >= 1000 || $v >= 1000;
+  die "Invalid version number: $opt{'compat-version'}\n" if $v >= 1000 || $s >= 1000;
   $opt{'compat-version'} = sprintf "%d.%03d%03d", $r, $v, $s;
 }
 else {
@@ -70,32 +71,8 @@ my $cce  = '*'.'/';
 my $rccs = quotemeta $ccs;
 my $rcce = quotemeta $cce;
 
-my @files;
-
-if (@ARGV) {
-  @files = map { glob $_ } @ARGV;
-}
-else {
-  eval {
-    require File::Find;
-    File::Find::find(sub {
-      $File::Find::name =~ /\.(xs|c|h|cc)$/i
-          and push @files, $File::Find::name;
-    }, '.');
-  };
-  if ($@) {
-    @files = map { glob $_ } qw(*.xs *.c *.h *.cc);
-  }
-  my %filter = map { /(.*)\.xs$/ ? ("$1.c" => 1) : () } @files;
-  @files = grep { !/\b\Q$ppport\E$/i && !exists $filter{$_} } @files;
-}
-
-unless (@files) {
-  die "No input files given!\n";
-}
-
 my %API = map { /^(\w+)\|([^|]*)\|([^|]*)\|(\w*)$/
-                ? ( $1 => { 
+                ? ( $1 => {
                       ($2                  ? ( base     => $2 ) : ()),
                       ($3                  ? ( todo     => $3 ) : ()),
                       (index($4, 'v') >= 0 ? ( varargs  => 1  ) : ()),
@@ -145,6 +122,41 @@ while (<DATA>) {
   $need{$1} = 1 if m{^#if\s+defined\(NEED_(\w+)(?:_GLOBAL)?\)};
 }
 
+if (exists $opt{'api-info'}) {
+  my $f;
+  my $count = 0;
+  my $match = $opt{'api-info'} =~ m!^/(.*)/$! ? $1 : "^\Q$opt{'api-info'}\E\$";
+  for $f (sort { lc $a cmp lc $b } keys %API) {
+    next unless $f =~ /$match/;
+    print "\n=== $f ===\n\n";
+    my $info = 0;
+    if ($API{$f}{base} || $API{$f}{todo}) {
+      my $base = format_version($API{$f}{base} || $API{$f}{todo});
+      print "Supported at least starting from perl-$base.\n";
+      $info++;
+    }
+    if ($API{$f}{provided}) {
+      my $todo = $API{$f}{todo} ? format_version($API{$f}{todo}) : "__MIN_PERL__";
+      print "Support by $ppport provided back to perl-$todo.\n";
+      print "Support needs to be explicitly requested by NEED_$f.\n" if exists $need{$f};
+      print "Depends on: ", join(', ', @{$depends{$f}}), ".\n" if exists $depends{$f};
+      print "$hints{$f}" if exists $hints{$f};
+      $info++;
+    }
+    unless ($info) {
+      print "No portability information available.\n";
+    }
+    $count++;
+  }
+  if ($count > 0) {
+    print "\n";
+  }
+  else {
+    print "Found no API matching '$opt{'api-info'}'.\n";
+  }
+  exit 0;
+}
+
 if (exists $opt{'list-provided'}) {
   my $f;
   for $f (sort { lc $a cmp lc $b } keys %API) {
@@ -157,6 +169,44 @@ if (exists $opt{'list-provided'}) {
     print "$f$flags\n";
   }
   exit 0;
+}
+
+my @files;
+my @srcext = qw( xs c h cc cpp );
+my $srcext = join '|', @srcext;
+
+if (@ARGV) {
+  my %seen;
+  @files = grep { -f && !exists $seen{$_} } map { glob $_ } @ARGV;
+}
+else {
+  eval {
+    require File::Find;
+    File::Find::find(sub {
+      $File::Find::name =~ /\.($srcext)$/i
+          and push @files, $File::Find::name;
+    }, '.');
+  };
+  if ($@) {
+    @files = map { glob "*.$_" } @srcext;
+  }
+}
+
+if (!@ARGV || $opt{filter}) {
+  my(@in, @out);
+  my %xsc = map { /(.*)\.xs$/ ? ("$1.c" => 1, "$1.cc" => 1) : () } @files;
+  for (@files) {
+    my $out = exists $xsc{$_} || /\b\Q$ppport\E$/i || !/\.($srcext)$/i;
+    push @{ $out ? \@out : \@in }, $_;
+  }
+  if (@ARGV && @out) {
+    warning("Skipping the following files (use --nofilter to avoid this):\n| ", join "\n| ", @out);
+  }
+  @files = @in;
+}
+
+unless (@files) {
+  die "No input files given!\n";
 }
 
 my(%files, %global, %revreplace);

@@ -2,48 +2,13 @@
 ;#
 ;# Usage:
 ;#	require 'shellwords.pl';
-;#	@words = &shellwords($line);
+;#	@words = shellwords($line);
 ;#	or
-;#	@words = &shellwords(@lines);
+;#	@words = shellwords(@lines);
 ;#	or
-;#	@words = &shellwords;		# defaults to $_ (and clobbers it)
+;#	@words = shellwords();		# defaults to $_ (and clobbers it)
 
-sub shellwords {
-    package shellwords;
-    local($_) = join('', @_) if @_;
-    local(@words,$snippet,$field);
+require Text::ParseWords;
+*shellwords = \&Text::ParseWords::old_shellwords;
 
-    s/^\s+//;
-    while ($_ ne '') {
-	$field = '';
-	for (;;) {
-	    use re 'taint'; # leave strings tainted
-	    if (s/^"(([^"\\]|\\.)*)"//) {
-		($snippet = $1) =~ s#\\(.)#$1#g;
-	    }
-	    elsif (/^"/) {
-		die "Unmatched double quote: $_\n";
-	    }
-	    elsif (s/^'(([^'\\]|\\.)*)'//) {
-		($snippet = $1) =~ s#\\(.)#$1#g;
-	    }
-	    elsif (/^'/) {
-		die "Unmatched single quote: $_\n";
-	    }
-	    elsif (s/^\\(.)//) {
-		$snippet = $1;
-	    }
-	    elsif (s/^([^\s\\'"]+)//) {
-		$snippet = $1;
-	    }
-	    else {
-		s/^\s+//;
-		last;
-	    }
-	    $field .= $snippet;
-	}
-	push(@words, $field);
-    }
-    @words;
-}
 1;

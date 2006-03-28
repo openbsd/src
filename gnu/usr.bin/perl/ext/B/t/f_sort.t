@@ -1,8 +1,13 @@
 #!perl
 
 BEGIN {
-    chdir q(t);
-    @INC = qw(../lib ../ext/B/t);
+    if ($ENV{PERL_CORE}){
+	chdir('t') if -d 't';
+	@INC = ('.', '../lib', '../ext/B/t');
+    } else {
+	unshift @INC, 't';
+	push @INC, "../../t";
+    }
     require Config;
     if (($Config::Config{'extensions'} !~ /\bB\b/) ){
         print "1..0 # Skip -- Perl configured without B module\n";
@@ -12,15 +17,22 @@ BEGIN {
         print "1..0 # Skip -- need perlio to walk the optree\n";
         exit 0;
     }
-    if ($] < 5.009) {
-        print "1..0 # Skip -- TODO - provide golden result regexps for 5.8\n";
-        exit 0;
-    }
-    require q(./test.pl);
+    # require q(test.pl); # now done by OptreeCheck;
 }
 use OptreeCheck;
 plan tests => 20;
 
+=head1 f_sort.t
+
+Code test snippets here are adapted from `perldoc -f map`
+
+Due to a bleadperl optimization (Dave Mitchell, circa apr 04), the
+(map|grep)(start|while) opcodes have different flags in 5.9, their
+private flags /1, /2 are gone in blead (for the cases covered)
+
+When the optree stuff was integrated into 5.8.6, these tests failed,
+and were todo'd.  Theyre now done, by version-specific tweaking in
+mkCheckRex(), therefore the skip is removed too.
 
 =head1 Test Notes
 
@@ -92,7 +104,7 @@ checkOptree(note   => q{},
 # 7  <0> pushmark s
 # 8  <#> gv[*articles] s
 # 9  <1> rv2av[t2] lKRM*/1
-# a  <2> aassign[t5] KS
+# a  <2> aassign[t3] KS
 # b  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
 # 1  <;> nextstate(main 546 (eval 15):1) v
@@ -166,7 +178,7 @@ checkOptree(note   => q{},
 # 7  <0> pushmark s
 # 8  <#> gv[*articles] s
 # 9  <1> rv2av[t2] lKRM*/1
-# a  <2> aassign[t5] KS
+# a  <2> aassign[t3] KS
 # b  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
 # 1  <;> nextstate(main 546 (eval 15):1) v
@@ -203,7 +215,7 @@ checkOptree(note   => q{},
 # 7  <0> pushmark s
 # 8  <#> gv[*articles] s
 # 9  <1> rv2av[t2] lKRM*/1
-# a  <2> aassign[t5] KS
+# a  <2> aassign[t3] KS
 # b  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
 # 1  <;> nextstate(main 546 (eval 15):1) v
@@ -240,7 +252,7 @@ checkOptree(note   => q{},
 # 7  <0> pushmark s
 # 8  <#> gv[*articles] s
 # 9  <1> rv2av[t2] lKRM*/1
-# a  <2> aassign[t5] KS
+# a  <2> aassign[t3] KS
 # b  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
 # 1  <;> nextstate(main 546 (eval 15):1) v
@@ -787,7 +799,7 @@ checkOptree(note   => q{},
 # d  <0> pushmark s
 # e  <#> gv[*result] s
 # f  <1> rv2av[t2] lKRM*/1
-# g  <2> aassign[t5] KS/COMMON
+# g  <2> aassign[t3] KS/COMMON
 # h  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
 # 1  <;> nextstate(main 547 (eval 15):1) v

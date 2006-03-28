@@ -1,19 +1,24 @@
-2004 March 30
+2005 March 30
 
-This directory contains the updated data
-files for Version 4.0.1 of the Unicode Standard.
+Welcome to the Unicode Character Database
 
-Detailed documentation of the files constituting the
-Unicode Character Database (contributory data files for
-the standard itself) can be found in UCD.html.
+This directory contains contributory data files
+for the Unicode Character Database of the Unicode Standard. 
 
-See:
+Copyright (c) 1991-2005 Unicode, Inc.
+For terms of use, see http://www.unicode.org/terms_of_use.html
 
-http://www.unicode.org/versions/enumeratedversions.html
+For an overview of how to access a specific version of 
+the Unicode Character Database (UCD) and other information, see:
 
-for exact details of the definition of Version 4.0.1
-of the Unicode Standard. That listing details which
-contributory files are new in this version and which
-are retained unchanged from prior versions of the standard.
+http://www.unicode.org/ucd/
 
+If you accessed this file via the URL:
 
+http://www.unicode.org/Public/UNIDATA/ReadMe.txt
+
+then you are looking at the most current version of the UCD. 
+Otherwise the version number of the UCD is part of the path name. 
+
+The file UCD.html in this directory, as well as any file 
+headers, where present, also identify the version of the UCD.

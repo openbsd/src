@@ -44,7 +44,8 @@ print "ok 2\n";
 
 # look up the user's home directory
 # should return a list with one item, and not set ERROR
-if ($^O ne 'MSWin32' && $^O ne 'NetWare' && $^O ne 'VMS' && $^O ne 'os2') {
+if ($^O ne 'MSWin32' && $^O ne 'NetWare' && $^O ne 'VMS' && $^O ne 'os2'
+    && $^O ne 'beos') {
   eval {
     ($name, $home) = (getpwuid($>))[0,7];
     1;

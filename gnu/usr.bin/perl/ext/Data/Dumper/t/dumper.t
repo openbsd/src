@@ -115,11 +115,11 @@ $WANT = <<'EOT';
 #       $a->[1]{'c'}
 #     ];
 #$b = $a->[1];
-#$c = $a->[1]{'c'};
+#$6 = $a->[1]{'c'};
 EOT
 
-TEST q(Data::Dumper->Dump([$a,$b,$c], [qw(a b c)]));
-TEST q(Data::Dumper->Dumpxs([$a,$b,$c], [qw(a b c)])) if $XS;
+TEST q(Data::Dumper->Dump([$a,$b,$c], [qw(a b), 6]));
+TEST q(Data::Dumper->Dumpxs([$a,$b,$c], [qw(a b), 6])) if $XS;
 
 
 ############# 7

@@ -1,3 +1,26 @@
+2005-11-30   Gisle Aas <gisle@ActiveState.com>
+
+   Release 3.07
+
+   Use a Makefile.PL that is also suitable for core perl.
+
+
+
+2005-11-26   Gisle Aas <gisle@ActiveState.com>
+
+   Release 3.06
+
+   Documentation tweaks.
+
+   use XSLoader; perl-5.6 now required.
+
+   Some consting from bleadperl.
+
+   Unbundled the {en,de}code-{base64,qp} utility scripts.
+   These are now found in the MIME-Base64-Scripts package.
+
+
+
 2004-09-20   Gisle Aas <gisle@ActiveState.com>
 
    Release 3.05

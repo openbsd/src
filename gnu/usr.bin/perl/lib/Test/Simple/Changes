@@ -1,4 +1,184 @@
-Revision history for Perl extension Test::Simple
+0.62  Sat Oct  8 01:25:03 PDT 2005
+    * Aborbed Test::Builder::Tester.  The last release broke it because its
+      screen scraping Test::More and the failure output changed.  By
+      distributing them together we ensure TBT won't break again.
+    * Test::Builder->BAILOUT() was missing.
+    - is_deeply() can now handle function and code refs in a very limited
+      way.  It simply looks to see if they have the same referent.
+      [rt.cpan.org 14746]
+
+0.61  Fri Sep 23 23:26:05 PDT 2005
+    - create.t was trying to read from a file before it had been closed
+      (and thus the changes may not have yet been written).
+    * is_deeply() would call stringification methods on non-object strings
+      which happened to be the name of a string overloaded class.
+      [rt.cpan.org 14675]
+
+0.60_02  Tue Aug  9 00:27:41 PDT 2005
+    * Added Test::Builder::Module.
+    - Changed Test::More and Test::Simple to use Test::Builder::Module
+    - Minor Win32 testing nit in fail-more.t
+    * Added no_diag() method to Test::Builder and changed Test::More's
+      no_diag internals to use that. [rt.cpan.org 8655]
+    * Deprecated no_diag() as an option to "use Test::More".  Call the
+      Test::Builder method instead.
+
+0.60_01  Sun Jul  3 18:11:58 PDT 2005
+    - Moved the docs around a little to better group all the testing
+      functions together. [rt.cpan.org 8388]
+    * Added a BAIL_OUT() function to Test::More [rt.cpan.org 8381]
+    - Changed Test::Builder->BAILOUT to BAIL_OUT to match other method's
+      naming conventions.  BAILOUT remains but is deprecated.
+    * Changed the standard failure diagnostics to include the test name.
+      [rt.cpan.org 12490]
+    - is_deeply() was broken for overloaded objects in the top level in
+      0.59_01.  [rt.cpan.org 13506]
+    - String overloaded objects without an 'eq' or '==' method are now
+      handled in cmp_ok() and is().
+    - cmp_ok() will now treat overloaded objects as numbers if the comparison
+      operator is numeric. [rt.cpan.org 13156]
+    - cmp_ok(), like() and unlike will now throw uninit warnings if their
+      arguments are undefined. [rt.cpan.org 13155]
+    - cmp_ok() will now throw warnings as if the comparison were run 
+      normally, for example cmp_ok(2, '==', 'foo') will warn about 'foo' 
+      not being numeric.  Previously all warnings in the comparison were
+      supressed. [rt.cpan.org 13155]
+    - Tests will now report *both* the number of tests failed and if the
+      wrong number of tests were run.  Previously if tests failed and the
+      wrong number were run it would only report the latter. 
+      [rt.cpan.org 13494]
+    - Missing or extra tests are not considered failures for the purposes
+      of calculating the exit code.  Should there be no failures but the
+      wrong number of tests the exit code will be 254.
+    - Avoiding an unbalanced sort in eq_set() [bugs.perl.org 36354]
+    - Documenting that eq_set() doesn't deal well with refs.
+    - Clarified how is_deeply() compares a bit.
+    * Once again working on 5.4.5.
+
+0.60  Tue May  3 14:20:34 PDT 2005
+
+0.59_01  Tue Apr 26 21:51:12 PDT 2005
+    * Test::Builder now has a create() method which allows you to create
+      a brand spanking new Test::Builder object.
+    * require_ok() was not working for single letter module names.
+    * is_deeply() and eq_* now work with circular scalar references
+      (Thanks Fergal)
+    * Use of eq_* now officially discouraged.
+    - Removed eq_* from the SYNOPSIS.
+    - is_deeply(undef, $not_undef); now works. [rt.cpan.org 9441]
+    - is_deeply() was mistakenly interpeting the same reference used twice
+      in a data structure as being circular causing failures.
+      [rt.cpan.org 11623]
+    - Loading Test::Builder but not using it would interfere with the
+      exit code if the code exited. [rt.cpan.org 12310]
+    - is_deeply() diagnostics now disambiguate between stringified references
+      and references. [rt.cpan.org 8865]
+    - Files opened by the output methods are now autoflushed.
+    - todo() now honors $Level when looking for $TODO.
+
+0.54  Wed Dec 15 04:18:43 EST 2004
+    * $how_many is optional for skip() and todo_skip().  Thanks to 
+      Devel::Cover for pointing this out.
+    - Removed a user defined function called err() in the tests to placate
+      users of older versions of the dor patch before err() was weakend.
+      [rt.cpan.org 8734]
+
+0.53_01  Sat Dec 11 19:02:18 EST 2004
+    - current_test() can now be set backward.
+    - *output() methods now handle tied handles and *FOO{IO} properly.
+    - maybe_regex() now handles undef gracefully.
+    - maybe_regex() now handles 'm,foo,' style regexes.
+    - sort_bug.t wasn't checking for threads properly.  Would fail on
+      5.6 that had ithreads compiled in. [rt.cpan.org 8765]
+
+0.53  Mon Nov 29 04:43:24 EST 2004
+    - Apparently its possible to have Module::Signature installed without
+      it being functional.  Fixed the signature test to account for this.
+      (not a real bug)
+
+0.52  Sun Nov 28 21:41:03 EST 2004
+    - plan() now better checks that the given plan is valid. 
+      [rt.cpan.org 2597]
+
+0.51_02  Sat Nov 27 01:25:25 EST 2004
+    * is_deeply() and all the eq_* functions now handle circular data
+      structures.  [rt.cpan.org 7289]
+    * require_ok() now handles filepaths in addition to modules.
+    - Clarifying Test::More's position on overloaded objects 
+    - Fixed a bug introduced in 0.51_01 causing is_deeply() to pierce
+      overloaded objects.
+    - Mentioning rt.cpan.org for reporting bugs.
+
+0.51_01  Fri Nov 26 02:59:30 EST 2004
+    - plan() was accidentally exporting functions [rt.cpan.org 8385]
+    * diag @msgs would insert # between arguments. [rt.cpan.org 8392]
+    * eq_set() could cause problems under threads due to a weird sort bug
+      [rt.cpan.org 6782]
+    * undef no longer equals '' in is_deeply() [rt.cpan.org 6837]
+    * is_deeply() would sometimes compare references as strings.
+      [rt.cpan.org 7031]
+    - eq_array() and eq_hash() could hold onto references if they failed
+      keeping them in memory and preventing DESTROY.  [rt.cpan.org 7032]
+    * is_deeply() could confuse [] with a non-existing value
+      [rt.cpan.org 7030]
+    - is_deeply() diagnostics a little off when scalar refs were inside
+      an array or hash ref [rt.cpan.org 7033]
+    - Thanks to Fergal Daly for ferretting out all these long standing 
+      is_deeply and eq_* bugs.
+
+0.51  Tue Nov 23 04:51:12 EST 2004
+    - Fixed bug in fail_one.t on Windows (not a real bug).
+    - TODO reasons as overloaded objects now won't blow up under threads.
+      [Autrijus Tang]
+    - skip() in 0.50 tickled yet another bug in threads::shared.  Hacked
+      around it.
+
+0.50  Sat Nov 20 00:28:44 EST 2004
+    - Fixed bug in fail-more test on Windows (not a real bug).
+      [rt.cpan.org 8022]
+    - Change from CVS to SVK.  Hopefully this is the last time I move
+      version control systems.
+    - Again removing File::Spec dependency (came back in 0.48_02)
+    - Change from Aegis back to CVS
+
+0.49  Thu Oct 14 21:58:50 EDT 2004
+    - t/harness_active.t would fail for frivolous reasons with older
+      MakeMakers (test bug) [thanks Bill Moseley for noticing]
+
+0.48_02  Mon Jul 19 02:07:23 EDT 2004
+    * Overloaded objects as names now won't blow up under threads
+      [rt.cpan.org 4218 and 4232]
+    * Overloaded objects which stringify to undef used as test names
+      now won't cause internal uninit warnings. [rt.cpan.org 4232]
+    * Failure diagnostics now come out on their own line when run in 
+      Test::Harness.
+    - eq_set() sometimes wasn't giving the right results if nested refs 
+      were involved [rt.cpan.org 3747]
+    - isnt() giving wrong diagnostics and warning if given any undefs.
+    * Give unlike() the right prototype [rt.cpan.org 4944]
+    - Change from CVS to Aegis
+    - is_deeply() will now do some basic argument checks to guard against
+      accidentally passing in a whole array instead of its reference.
+    - Mentioning Test::Differences, Test::Deep and Bundle::Test.
+    - Removed dependency on File::Spec.
+    - Fixing the grammar of diagnostic outputs when only a single test
+      is run or failed (ie. "Looks like you failed 1 tests").
+      [Darren Chamberlain]
+
+0.48_01  Mon Nov 11 02:36:43 EST 2002
+    - Mention Test::Class in Test::More's SEE ALSO
+    * use_ok() now DWIM for version checks
+    - More problems with ithreads fixed.
+    * Test::Harness upgrade no longer optional.  It was causing too
+      many problems when the T::H upgrade didn't work.
+    * Drew Taylor added a 'no_diag' option to Test::More to switch
+      off all diag() statements.
+    * Test::Builder/More no longer automatically loads threads.pm
+      when threads are enabled.  The user must now do this manually.
+    * Alex Francis added reset() reset the state of Test::Builder in 
+      persistent environments.
+    - David Hand noted that Test::Builder/More exit code behavior was
+      not documented.  Only Test::Simple.
 
 0.47  Mon Aug 26 03:54:22 PDT 2002 
     * Tatsuhiko Miyagawa noticed Test::Builder was accidentally storing 

@@ -12,11 +12,18 @@ BEGIN {
 chdir 't';
 
 use strict;
-use Test::More tests => 3;
+use Test::More tests => 6;
 use ExtUtils::MM;
+use MakeMaker::Test::Setup::Problem;
 use TieOut;
 
 my $MM = bless { DIR => ['subdir'] }, 'MM';
+
+ok( setup_recurs(), 'setup' );
+END {
+    ok( chdir File::Spec->updir );
+    ok( teardown_recurs(), 'teardown' );
+}
 
 ok( chdir 'Problem-Module', "chdir'd to Problem-Module" ) ||
   diag("chdir failed: $!");

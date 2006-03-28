@@ -1,4 +1,4 @@
-/* $Id: Base64.xs,v 3.4 2004/08/24 16:29:35 gisle Exp $
+/* $Id: Base64.xs,v 3.5 2005/11/26 10:44:14 gisle Exp $
 
 Copyright 1997-2004 Gisle Aas
 
@@ -56,14 +56,14 @@ extern "C" {
 
 #define MAX_LINE  76 /* size of encoded lines */
 
-static char basis_64[] =
+static const char basis_64[] =
    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 #define XX      255	/* illegal base64 char */
 #define EQ      254	/* padding */
 #define INVALID XX
 
-static unsigned char index_64[256] = {
+static const unsigned char index_64[256] = {
     XX,XX,XX,XX, XX,XX,XX,XX, XX,XX,XX,XX, XX,XX,XX,XX,
     XX,XX,XX,XX, XX,XX,XX,XX, XX,XX,XX,XX, XX,XX,XX,XX,
     XX,XX,XX,XX, XX,XX,XX,XX, XX,XX,XX,62, XX,XX,XX,63,

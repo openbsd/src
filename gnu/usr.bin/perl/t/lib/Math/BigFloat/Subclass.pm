@@ -1,5 +1,7 @@
 #!/usr/bin/perl -w
 
+# for testing subclassing Math::BigFloat
+
 package Math::BigFloat::Subclass;
 
 require 5.005_02;
@@ -12,7 +14,7 @@ use vars qw($VERSION @ISA $PACKAGE
 
 @ISA = qw(Exporter Math::BigFloat);
 
-$VERSION = 0.04;
+$VERSION = 0.05;
 
 use overload; 		# inherit overload from BigInt
 
@@ -39,6 +41,9 @@ sub new
 BEGIN
   {
   *objectify = \&Math::BigInt::objectify;
+  # to allow Math::BigFloat::Subclass::bgcd( ... ) style calls
+  *bgcd = \&Math::BigFloat::bgcd;
+  *blcm = \&Math::BigFloat::blcm;
   }
 
 1;

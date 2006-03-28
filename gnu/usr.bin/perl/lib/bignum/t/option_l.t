@@ -1,8 +1,6 @@
 #!/usr/bin/perl -w
 
-###############################################################################
-
-use Test;
+use Test::More;
 use strict;
 
 BEGIN
@@ -16,18 +14,18 @@ BEGIN
 use bignum;
 
 my $rc = eval ('bignum->import( "l" => "foo" );');
-ok ($@,'');						# shouldn't die
+is ($@,'');						# shouldn't die
 $rc = eval ('bignum->import( "lib" => "foo" );');
-ok ($@,'');						# ditto
+is ($@,'');						# ditto
 
 $rc = eval ('bignum->import( "foo" => "bar" );');
-ok ($@ =~ /^Unknown option foo/i,1);			# should die
+like ($@, qr/^Unknown option foo/i, 'died');			# should die
 
 # test that options are only lowercase (don't see a reason why allow UPPER)
 
 foreach (qw/L LIB Lib T Trace TRACE V Version VERSION/)
   {
   $rc = eval ('bignum->import( "$_" => "bar" );');
-  ok ($@ =~ /^Unknown option $_/i,1);			# should die
+  like ($@, qr/^Unknown option $_/i, 'died');			# should die
   }
 

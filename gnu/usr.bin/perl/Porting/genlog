@@ -69,6 +69,7 @@ if ($?) {
     die "$0: `p4 -p $p4port describe -s @changes` failed, status[$?]\n";
 }
 else {
+    tr/\r/\n/ foreach @desc;
     chomp @desc;
     while (@desc) {
 	my ($change,$who,$date,$time,@log,$branch,$file,$type,%files);

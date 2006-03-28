@@ -24,7 +24,7 @@ db_get_cv(pTHX_ SV *sv)
 	    cv = INT2PTR(CV*,SvIVX(sv));
 	} else {
 	    if (SvPOK(sv)) {
-		cv = get_cv(SvPVX(sv), TRUE);
+		cv = get_cv(SvPVX_const(sv), TRUE);
 	    } else if (SvROK(sv)) {
 		cv = (CV*)SvRV(sv);
 	    } else {
@@ -42,8 +42,8 @@ dprof_dbg_sub_notify(pTHX_ SV *Sub) {
     GV   *gv = cv ? CvGV(cv) : NULL;
     if (cv && gv) {
 	warn("XS DBsub(%s::%s)\n",
-	     ((GvSTASH(gv) && HvNAME(GvSTASH(gv))) ?
-	      HvNAME(GvSTASH(gv)) : "(null)"),
+	     ((GvSTASH(gv) && HvNAME_get(GvSTASH(gv))) ?
+	      HvNAME_get(GvSTASH(gv)) : "(null)"),
 	     GvNAME(gv));
     } else {
 	warn("XS DBsub(unknown) at %x", Sub);
@@ -136,9 +136,7 @@ typedef struct {
     long long	start_cnt;
 #endif
 #ifdef PERL_IMPLICIT_CONTEXT
-#  define register
-    pTHX;
-#  undef register
+    PerlInterpreter *my_perl;
 #endif
 } prof_state_t;
 
@@ -170,7 +168,7 @@ prof_state_t g_prof_state;
 #define g_default_perldb	g_prof_state.default_perldb
 #define g_depth			g_prof_state.depth
 #ifdef PERL_IMPLICIT_CONTEXT
-#  define g_THX			g_prof_state.aTHX
+#  define g_THX			g_prof_state.my_perl
 #endif
 #ifdef OS2
 #  define g_frequ		g_prof_state.frequ
@@ -183,7 +181,6 @@ dprof_times(pTHX_ struct tms *t)
 #ifdef OS2
     ULONG rc;
     QWORD cnt;
-    STRLEN n_a;
     
     if (!g_frequ) {
 	if (CheckOSError(DosTmrQueryFreq(&g_frequ)))
@@ -192,7 +189,7 @@ dprof_times(pTHX_ struct tms *t)
 	    g_frequ = g_frequ/DPROF_HZ;	/* count per tick */
 	if (CheckOSError(DosTmrQueryTime(&cnt)))
 	    croak("DosTmrQueryTime: %s",
-		  SvPV(perl_get_sv("!",TRUE), n_a));
+		  SvPV_nolen_const(perl_get_sv("!",TRUE)));
 	g_start_cnt = toLongLong(cnt);
     }
 
@@ -371,13 +368,12 @@ prof_mark(pTHX_ opcode ptype)
 
 	cv = db_get_cv(aTHX_ Sub);
 	gv = CvGV(cv);
-	pname = ((GvSTASH(gv) && HvNAME(GvSTASH(gv))) 
-		 ? HvNAME(GvSTASH(gv)) 
-		 : "(null)");
+	pname = GvSTASH(gv) ? HvNAME_get(GvSTASH(gv)) : 0;
+	pname = pname ? pname : (char *) "(null)";
 	gname = GvNAME(gv);
 
 	set_cv_key(aTHX_ cv, pname, gname);
-	svp = hv_fetch(g_cv_hash, SvPVX(g_key_hash), SvCUR(g_key_hash), TRUE);
+	svp = hv_fetch(g_cv_hash, SvPVX_const(g_key_hash), SvCUR(g_key_hash), TRUE);
 	if (!SvOK(*svp)) {
 	    sv_setiv(*svp, id = ++g_lastid);
 	    if (CvXSUB(cv) == XS_Devel__DProf_END)
@@ -739,7 +735,7 @@ BOOT:
 	g_key_hash = newSV(256);
         g_prof_pid = (int)getpid();
 
-	New(0, g_profstack, g_profstack_max, PROFANY);
+	Newx(g_profstack, g_profstack_max, PROFANY);
         prof_recordheader(aTHX);
         DBG_TIMER_NOTIFY("Profiler timer is on.\n");
 	g_orealtime = g_rprof_start = Times(&g_prof_start);

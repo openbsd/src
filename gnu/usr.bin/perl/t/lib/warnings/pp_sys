@@ -103,6 +103,8 @@
 
   getc() on closed filehandle			[pp_getc]
 
+  Non-string passed as bitmask			[pp_sselect]
+
 __END__
 # pp_sys.c [pp_untie]
 use warnings 'untie' ;
@@ -446,3 +448,12 @@ EXPECT
 getc() on unopened filehandle FOO at - line 3.
 getc() on closed filehandle STDIN at - line 5.
 getc() on closed filehandle FH2 at - line 12.
+########
+# pp_sys.c [pp_sselect]
+use warnings 'misc';
+$x = 1;
+select $x, undef, undef, undef;
+no warnings 'misc';
+select $x, undef, undef, undef;
+EXPECT
+Non-string passed as bitmask at - line 4.

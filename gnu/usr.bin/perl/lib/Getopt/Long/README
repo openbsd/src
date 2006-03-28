@@ -69,6 +69,7 @@ By default, single-letter option names are case sensitive.
     "nodebug" will switch it off.    
   - options can set values, but also add values producing an array
     of values instead of a single scalar value, or set values in a hash.
+  - options can have multiple values, e.g., "--position 25 624".
 
 * Options linkage
 
@@ -162,8 +163,15 @@ to reverse the effect:
   - prefix_pattern
 
 	A Perl pattern that identifies the strings that introduce
-	options. Default is (--|-|\+) unless environment variable
-	POSIXLY_CORRECT has been set, in which case it is (--|-).
+	options. Default is --|-|\+ unless environment variable
+	POSIXLY_CORRECT has been set, in which case it is --|-.
+
+  - long_prefix_pattern
+
+        A perl pattern that is used to identify which prefixes
+        should be treated as long style. Any prefixes that don't
+        match this pattern will have short option semantics.
+        Defaults to --.
 
   - debug
 
@@ -192,7 +200,7 @@ Or use the CPAN search engine:
 COPYRIGHT AND DISCLAIMER
 ========================
 
-Module Getopt::Long is Copyright 2003,1990 by Johan Vromans.
+Module Getopt::Long is Copyright 2005,1990 by Johan Vromans.
 This program is free software; you can redistribute it and/or
 modify it under the terms of the Perl Artistic License or the
 GNU General Public License as published by the Free Software
@@ -201,6 +209,6 @@ later version.
 
 -------------------------------------------------------------------
 Johan Vromans                                  jvromans@squirrel.nl
-Squirrel Consultancy                       Haarlem, the Netherlands
+Squirrel Consultancy                         Exloo, the Netherlands
 http://www.squirrel.nl       http://www.squirrel.nl/people/jvromans
 ------------------ "Arms are made for hugging" --------------------

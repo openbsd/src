@@ -15,62 +15,128 @@ BEGIN {
 
 
 use List::Util qw(reduce min);
+use Test::More;
+plan tests => ($::PERL_ONLY ? 21 : 23);
 
-print "1..13\n";
+my $v = reduce {};
 
-print "not " if defined reduce {};
-print "ok 1\n";
+is( $v,	undef,	'no args');
 
-print "not " unless 9 == reduce { $a / $b } 756,3,7,4;
-print "ok 2\n";
+$v = reduce { $a / $b } 756,3,7,4;
+is( $v,	9,	'4-arg divide');
 
-print "not " unless 9 == reduce { $a / $b } 9;
-print "ok 3\n";
+$v = reduce { $a / $b } 6;
+is( $v,	6,	'one arg');
 
 @a = map { rand } 0 .. 20;
-print "not " unless min(@a) == reduce { $a < $b ? $a : $b } @a;
-print "ok 4\n";
+$v = reduce { $a < $b ? $a : $b } @a;
+is( $v,	min(@a),	'min');
 
 @a = map { pack("C", int(rand(256))) } 0 .. 20;
-print "not " unless join("",@a) eq reduce { $a . $b } @a;
-print "ok 5\n";
+$v = reduce { $a . $b } @a;
+is( $v,	join("",@a),	'concat');
 
 sub add {
   my($aa, $bb) = @_;
   return $aa + $bb;
 }
 
-my $sum = reduce { my $t="$a $b\n"; 0+add($a, $b) } 3, 2, 1;
-print "not " unless $sum == 6;
-print "ok 6\n";
+$v = reduce { my $t="$a $b\n"; 0+add($a, $b) } 3, 2, 1;
+is( $v,	6,	'call sub');
 
 # Check that eval{} inside the block works correctly
-print "not " unless 10 == reduce { eval { die }; $a + $b } 0,1,2,3,4;
-print "ok 7\n";
+$v = reduce { eval { die }; $a + $b } 0,1,2,3,4;
+is( $v,	10,	'use eval{}');
 
-print "not " if defined eval { reduce { die if $b > 2; $a + $b } 0,1,2,3,4 };
-print "ok 8\n";
+$v = !defined eval { reduce { die if $b > 2; $a + $b } 0,1,2,3,4 };
+ok($v, 'die');
 
-($x) = foobar();
-print "${x}ok 9\n";
-
-sub foobar { reduce { (defined(wantarray) && !wantarray) ? '' : 'not ' } 0,1,2,3 }
+sub foobar { reduce { (defined(wantarray) && !wantarray) ? $a+1 : 0 } 0,1,2,3 }
+($v) = foobar();
+is( $v,	3,	'scalar context');
 
 sub add2 { $a + $b }
 
-print "not " unless 6 == reduce \&add2, 1,2,3;
-print "ok 10\n";
+$v = reduce \&add2, 1,2,3;
+is( $v,	6,	'sub reference');
 
-print "not " unless 6 == reduce { add2() } 1,2,3;
-print "ok 11\n";
-
-
-print "not " unless 6 == reduce { eval "$a + $b" } 1,2,3;
-print "ok 12\n";
-
-$a = $b = 9;
-reduce { $a * $b } 1,2,3;
-print "not " unless $a == 9 and $b == 9;
-print "ok 13\n";
+$v = reduce { add2() } 3,4,5;
+is( $v, 12,	'call sub');
 
 
+$v = reduce { eval "$a + $b" } 1,2,3;
+is( $v, 6, 'eval string');
+
+$a = 8; $b = 9;
+$v = reduce { $a * $b } 1,2,3;
+is( $a, 8, 'restore $a');
+is( $b, 9, 'restore $b');
+
+# Can we leave the sub with 'return'?
+$v = reduce {return $a+$b} 2,4,6;
+is($v, 12, 'return');
+
+# ... even in a loop?
+$v = reduce {while(1) {return $a+$b} } 2,4,6;
+is($v, 12, 'return from loop');
+
+# Does it work from another package?
+{ package Foo;
+  $a = $b;
+  ::is((List::Util::reduce {$a*$b} (1..4)), 24, 'other package');
+}
+
+# Can we undefine a reduce sub while it's running?
+sub self_immolate {undef &self_immolate; 1}
+eval { $v = reduce \&self_immolate, 1,2; };
+like($@, qr/^Can't undef active subroutine/, "undef active sub");
+
+# Redefining an active sub should not fail, but whether the
+# redefinition takes effect immediately depends on whether we're
+# running the Perl or XS implementation.
+
+sub self_updating { local $^W; *self_updating = sub{1} ;1 }
+eval { $v = reduce \&self_updating, 1,2; };
+is($@, '', 'redefine self');
+
+{ my $failed = 0;
+
+    sub rec { my $n = shift;
+        if (!defined($n)) {  # No arg means we're being called by reduce()
+            return 1; }
+        if ($n<5) { rec($n+1); }
+        else { $v = reduce \&rec, 1,2; }
+        $failed = 1 if !defined $n;
+    }
+
+    rec(1);
+    ok(!$failed, 'from active sub');
+}
+
+# Calling a sub from reduce should leave its refcount unchanged.
+SKIP: {
+    skip("No Internals::SvREFCNT", 1) if !defined &Internals::SvREFCNT;
+    sub mult {$a*$b}
+    my $refcnt = &Internals::SvREFCNT(\&mult);
+    $v = reduce \&mult, 1..6;
+    is(&Internals::SvREFCNT(\&mult), $refcnt, "Refcount unchanged");
+}
+
+# The remainder of the tests are only relevant for the XS
+# implementation. The Perl-only implementation behaves differently
+# (and more flexibly) in a way that we can't emulate from XS.
+if (!$::PERL_ONLY) { SKIP: {
+
+    $List::Util::REAL_MULTICALL ||= 0; # Avoid use only once
+    skip("Poor man's MULTICALL can't cope", 2)
+      if !$List::Util::REAL_MULTICALL;
+
+    # Can we goto a label from the reduction sub?
+    eval {()=reduce{goto foo} 1,2; foo: 1};
+    like($@, qr/^Can't "goto" out of a pseudo block/, "goto label");
+
+    # Can we goto a subroutine?
+    eval {()=reduce{goto sub{}} 1,2;};
+    like($@, qr/^Can't goto subroutine from a sort sub/, "goto sub");
+
+} }

@@ -15,7 +15,7 @@ BEGIN {
 }
 
 $| = 1;
-print "1..26\n";
+print "1..27\n";
 
 my $fh;
 my $var = "ok 2\n";
@@ -149,3 +149,17 @@ $data = undef;
 open(MEM, '<', \$data) or die "Fail: $!\n";
 my $x = join '', <MEM>;
 print $x eq '' ? "ok 26\n" : "not ok 26\n";
+
+{
+    # [perl #35929] verify that works with $/ (i.e. test PerlIOScalar_unread)
+    my $s = <<'EOF';
+line A
+line B
+a third line
+EOF
+    open(F, '<', \$s) or die "Could not open string as a file";
+    local $/ = "";
+    my $ln = <F>;
+    close F;
+    print $ln eq $s ? "ok 27\n" : "not ok 27\n";
+}

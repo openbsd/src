@@ -1,4 +1,5 @@
-/*
+/* -*- buffer-read-only: t -*-
+ *
  *      Copyright (c) 1996-1999 Malcolm Beattie
  *
  *      You may distribute under the terms of either the GNU General Public
@@ -52,7 +53,7 @@ byterun(pTHX_ register struct byteloader_state *bstate)
     SV *specialsv_list[6];
 
     BYTECODE_HEADER_CHECK;	/* croak if incorrect platform */
-    New(666, bstate->bs_obj_list, 32, void*); /* set op objlist */
+    Newx(bstate->bs_obj_list, 32, void*); /* set op objlist */
     bstate->bs_obj_list_fill = 31;
     bstate->bs_obj_list[0] = NULL; /* first is always Null */
     bstate->bs_ix = 1;
@@ -216,7 +217,7 @@ byterun(pTHX_ register struct byteloader_state *bstate)
 	    {
 		svindex arg;
 		BGET_svindex(arg);
-		SvRV(bstate->bs_sv) = arg;
+		BSET_xrv(bstate->bs_sv, arg);
 		break;
 	    }
 	  case INSN_XPV:		/* 22 */
@@ -228,28 +229,28 @@ byterun(pTHX_ register struct byteloader_state *bstate)
 	    {
 		STRLEN arg;
 		BGET_PADOFFSET(arg);
-		SvCUR(bstate->bs_sv) = arg;
+		BSET_xpv_cur(bstate->bs_sv, arg);
 		break;
 	    }
 	  case INSN_XPV_LEN:		/* 24 */
 	    {
 		STRLEN arg;
 		BGET_PADOFFSET(arg);
-		SvLEN(bstate->bs_sv) = arg;
+		BSET_xpv_len(bstate->bs_sv, arg);
 		break;
 	    }
 	  case INSN_XIV:		/* 25 */
 	    {
 		IV arg;
 		BGET_IV(arg);
-		SvIVX(bstate->bs_sv) = arg;
+		BSET_xiv(bstate->bs_sv, arg);
 		break;
 	    }
 	  case INSN_XNV:		/* 26 */
 	    {
 		NV arg;
 		BGET_NV(arg);
-		SvNVX(bstate->bs_sv) = arg;
+		BSET_xnv(bstate->bs_sv, arg);
 		break;
 	    }
 	  case INSN_XLV_TARGOFF:		/* 27 */
@@ -529,7 +530,7 @@ byterun(pTHX_ register struct byteloader_state *bstate)
 	    {
 		pvindex arg;
 		BGET_pvindex(arg);
-		HvNAME(bstate->bs_sv) = arg;
+		BSET_xhv_name(bstate->bs_sv, arg);
 		break;
 	    }
 	  case INSN_XHV_PMROOT:		/* 68 */
@@ -592,7 +593,7 @@ byterun(pTHX_ register struct byteloader_state *bstate)
 	    {
 		svindex arg;
 		BGET_svindex(arg);
-		*(SV**)&SvSTASH(bstate->bs_sv) = arg;
+		BSET_xmg_stash(bstate->bs_sv, arg);
 		break;
 	    }
 	  case INSN_GV_FETCHPV:		/* 77 */
@@ -1128,3 +1129,5 @@ byterun(pTHX_ register struct byteloader_state *bstate)
     }
     return 0;
 }
+
+/* ex: set ro: */

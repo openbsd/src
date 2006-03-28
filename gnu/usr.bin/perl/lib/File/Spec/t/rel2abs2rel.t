@@ -3,6 +3,9 @@
 # Here we make sure File::Spec can properly deal with executables.
 # VMS has some trouble with these.
 
+use File::Spec;
+use lib File::Spec->catdir('t', 'lib');
+
 use Test::More (-x $^X
 		? (tests => 5)
 		: (skip_all => "Can't find an executable file")
@@ -22,7 +25,6 @@ END {
 
 use Config;
 
-use File::Spec;
 
 # Change 'perl' to './perl' so the shell doesn't go looking through PATH.
 sub safe_rel {

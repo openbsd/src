@@ -7,7 +7,7 @@ BEGIN {
     }
 }
 
-use Test::More tests => 41;
+use Test::More tests => 51;
 
 # Make sure we don't mess with $@ or $!.  Test at bottom.
 my $Err   = "this should not be touched";
@@ -32,6 +32,9 @@ like("/usr/local/pr0n/", '/^\/usr\/local/',   'regexes with slashes in like' );
 unlike("fbar", '/^bar/',    'unlike bar');
 unlike("FooBle", '/foo/',   'foo is unlike FooBle');
 unlike("/var/local/pr0n/", '/^\/usr\/local/','regexes with slashes in unlike' );
+
+my @foo = qw(foo bar baz);
+unlike(@foo, '/foo/');
 
 can_ok('Test::More', qw(require_ok use_ok ok is isnt like skip can_ok
                         pass fail eq_array eq_hash eq_set));
@@ -64,10 +67,15 @@ pass('pass() passed');
 
 ok( eq_array([qw(this that whatever)], [qw(this that whatever)]),
     'eq_array with simple arrays' );
+is @Test::More::Data_Stack, 0, '@Data_Stack not holding onto things';
+
 ok( eq_hash({ foo => 42, bar => 23 }, {bar => 23, foo => 42}),
     'eq_hash with simple hashes' );
+is @Test::More::Data_Stack, 0;
+
 ok( eq_set([qw(this that whatever)], [qw(that whatever this)]),
     'eq_set with simple sets' );
+is @Test::More::Data_Stack, 0;
 
 my @complex_array1 = (
                       [qw(this that whatever)],
@@ -97,8 +105,11 @@ my @array2 = (qw(this that whatever),
 
 ok( !eq_array(\@array1, \@array2),
     'eq_array with slightly different complicated arrays' );
+is @Test::More::Data_Stack, 0;
+
 ok( !eq_set(\@array1, \@array2),
     'eq_set with slightly different complicated arrays' );
+is @Test::More::Data_Stack, 0;
 
 my %hash1 = ( foo => 23,
               bar => [qw(this that whatever)],
@@ -123,6 +134,7 @@ ok( eq_hash(\%hash1, \%hash2),  'eq_hash with complicated hashes');
 
 ok( !eq_hash(\%hash1, \%hash2),
     'eq_hash with slightly different complicated hashes' );
+is @Test::More::Data_Stack, 0;
 
 is( Test::Builder->new, Test::More->builder,    'builder()' );
 
@@ -144,6 +156,16 @@ cmp_ok(0, '||', 1,          '       ||');
 }
 isa_ok( Wibble->new, 'Wibblemeister' );
 
+my $sub = sub {};
+is_deeply( $sub, $sub, 'the same function ref' );
+
+use Symbol;
+my $glob = gensym;
+is_deeply( $glob, $glob, 'the same glob' );
+
+is_deeply( { foo => $sub, bar => [1, $glob] },
+           { foo => $sub, bar => [1, $glob] }
+         );
 
 # These two tests must remain at the end.
 is( $@, $Err,               '$@ untouched' );

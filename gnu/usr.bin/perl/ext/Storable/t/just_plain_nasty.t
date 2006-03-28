@@ -27,8 +27,7 @@ BEGIN {
         use 5.006;
         1;
     }) {
-        print "1..0 # skip: tests only work with B::Deparse 0.61 and at least pe
-rl 5.6.0\n";
+        print "1..0 # skip: tests only work with B::Deparse 0.61 and at least perl 5.6.0\n";
         exit;
     }
     require File::Spec;

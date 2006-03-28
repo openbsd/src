@@ -2,7 +2,7 @@
 #include <perl.h>
 #include <XSUB.h>
 
-int
+static int
 my_runops(pTHX)
 {
     HV* regexp_hv = get_hv( "B::C::REGEXP", 0 );
@@ -16,7 +16,7 @@ my_runops(pTHX)
             REGEXP* rx = PM_GETRE( (PMOP*)PL_op );
             SV* rv = newSViv( 0 );
 
-            New( 671, op, 1, PMOP );
+            Newx( op, 1, PMOP );
             Copy( PL_op, op, 1, PMOP );
             /* we need just the flags */
             op->op_next = NULL;

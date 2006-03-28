@@ -78,7 +78,7 @@ for cc1's stack.  A setting of 1 would reserve the entire
 memory for cc1, 3 would reserve three fourths.  You will have
 to find out the value that suits to your system yourself.
 
-To find out the location of the program `cc1' simply type
+To find out the location of the program "cc1" simply type
 `gcc --print-prog-name cc1' at your shell prompt.
 
 Now run make (maybe "make -k").  If you get a fatal signal 10 

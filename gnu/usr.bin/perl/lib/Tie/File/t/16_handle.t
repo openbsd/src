@@ -79,7 +79,7 @@ undef $o;
 untie @a;
 
 # (39) Does it correctly detect a non-seekable handle?
-{  if ($^O =~ /^(MSWin32|dos|BeOS)$/) {
+{  if ($^O =~ /^(MSWin32|dos|beos)$/) {
      print "ok $N # skipped ($^O has broken pipe semantics)\n";
      last;
    }

@@ -9,10 +9,12 @@ use vars qw($VERSION @ISA @EXPORT);
 require Exporter;
 @ISA = qw(Exporter);
 
-$VERSION = 0.02;
+$VERSION = 0.03;
 
 @EXPORT = qw(which_perl perl_lib makefile_name makefile_backup
              make make_run run make_macro calibrate_mtime
+             setup_mm_test_root
+	     have_compiler
             );
 
 my $Is_VMS   = $^O eq 'VMS';
@@ -40,6 +42,9 @@ MakeMaker::Test::Utils - Utility routines for testing MakeMaker
   my $mtime         = calibrate_mtime;
 
   my $out           = run($cmd);
+
+  my $have_compiler = have_compiler();
+
 
 =head1 DESCRIPTION
 
@@ -144,7 +149,7 @@ Makefile.
 
 sub makefile_backup {
     my $makefile = makefile_name;
-    return $Is_VMS ? $makefile : "$makefile.old";
+    return $Is_VMS ? "$makefile".'_old' : "$makefile.old";
 }
 
 =item B<make>
@@ -258,7 +263,64 @@ sub run {
     else {
         return `$cmd`;
     }
-}    
+}
+
+=item B<setup_mm_test_root>
+
+Creates a rooted logical to avoid the 8-level limit on older VMS systems.  
+No action taken on non-VMS systems.
+
+=cut
+
+sub setup_mm_test_root {
+    if( $Is_VMS ) {
+        # On older systems we might exceed the 8-level directory depth limit
+        # imposed by RMS.  We get around this with a rooted logical, but we
+        # can't create logical names with attributes in Perl, so we do it
+        # in a DCL subprocess and put it in the job table so the parent sees it.
+        open( MMTMP, '>mmtesttmp.com' ) || 
+          die "Error creating command file; $!";
+        print MMTMP <<'COMMAND';
+$ MM_TEST_ROOT = F$PARSE("SYS$DISK:[-]",,,,"NO_CONCEAL")-".][000000"-"]["-"].;"+".]"
+$ DEFINE/JOB/NOLOG/TRANSLATION=CONCEALED MM_TEST_ROOT 'MM_TEST_ROOT'
+COMMAND
+        close MMTMP;
+
+        system '@mmtesttmp.com';
+        1 while unlink 'mmtesttmp.com';
+    }
+}
+
+=item have_compiler
+
+  $have_compiler = have_compiler;
+
+Returns true if there is a compiler available for XS builds.
+
+=cut
+
+sub have_compiler {
+    my $have_compiler = 0;
+
+    # ExtUtils::CBuilder prints its compilation lines to the screen.
+    # Shut it up.
+    require TieOut;
+    local *STDOUT = *STDOUT;
+    local *STDERR = *STDERR;
+
+    tie *STDOUT, 'TieOut';
+    tie *STDERR, 'TieOut';
+
+    eval {
+	require ExtUtils::CBuilder;
+	my $cb = ExtUtils::CBuilder->new;
+
+	$have_compiler = $cb->have_compiler;
+    };
+
+    return $have_compiler;
+}
+
 
 =back
 

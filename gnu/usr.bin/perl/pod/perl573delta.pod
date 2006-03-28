@@ -149,7 +149,7 @@ unpack("Z*Z*", pack("Z*Z*", ..)) was broken
 
 =item 12243
 
-Devel::Peek: display UTF-8 SVs also also as \x{...}
+Devel::Peek: display UTF-8 SVs also as \x{...}
 
 =item 12288
 

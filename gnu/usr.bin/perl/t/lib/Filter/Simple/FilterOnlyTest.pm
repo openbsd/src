@@ -1,4 +1,4 @@
-package FilterOnlyTest;
+package Filter::Simple::FilterOnlyTest;
 
 use Filter::Simple;
 

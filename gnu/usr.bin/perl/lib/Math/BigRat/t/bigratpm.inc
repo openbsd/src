@@ -60,10 +60,10 @@ while (<DATA>)
       } elsif ($f =~ /^f(nan|sstr|neg|floor|ceil|abs)$/) {
         $try .= "\$x->b$1();";
       # some is_xxx test function	
-      } elsif ($f =~ /^is_(zero|one|negative|positive|odd|even|nan|int)$/) {
+      } elsif ($f =~ /^is_(zero|one|pos|neg|negative|positive|odd|even|nan|int)\z/) {
         $try .= "\$x->$f();";
-      } elsif ($f eq "as_number") {
-        $try .= '$x->as_number();';
+      } elsif ($f =~ /^(as_number|as_int)\z/){
+        $try .= "\$x->$1();";
       } elsif ($f eq "finc") {
         $try .= '++$x;';
       } elsif ($f eq "fdec") {
@@ -218,6 +218,17 @@ inf:5:NaN
 5:-inf:NaN
 &as_number
 144/7:20
+12/1:12
+-12/1:-12
+-12/3:-4
+NaN:NaN
++inf:inf
+-inf:-inf
+&as_int
+144/7:20
+12/1:12
+-12/1:-12
+-12/3:-4
 NaN:NaN
 +inf:inf
 -inf:-inf
@@ -408,6 +419,9 @@ fnegNaN:NaN
 -123456789:123456789
 +123.456789:-123456789/1000000
 -123456.789:123456789/1000
+123/7:-123/7
+-123/7:123/7
+123/-7:123/7
 &fabs
 fabsNaN:NaN
 +inf:inf
@@ -687,14 +701,30 @@ abc:0
 120:1
 1200:1
 -1200:1
-&is_positive
-0:1
+&is_pos
+0:0
 1:1
 -1:0
 -123:0
 NaN:0
 -inf:0
 +inf:1
+&is_positive
+0:0
+1:1
+-1:0
+-123:0
+NaN:0
+-inf:0
++inf:1
+&is_neg
+0:0
+1:0
+-1:1
+-123:1
+NaN:0
+-inf:1
++inf:0
 &is_negative
 0:0
 1:0

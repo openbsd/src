@@ -111,8 +111,8 @@ is("\u\x{587}" , "\x{535}\x{582}", "ligature titlecase");
 is("\U\x{587}" , "\x{535}\x{552}", "ligature uppercase");
 
 # mktables had problems where many-to-one case mappings didn't work right.
-# The lib/unifold.t should give the fourth folding, "casefolding", a good
-# workout. 
+# The lib/uni/fold.t should give the fourth folding, "casefolding", a good
+# workout (one cannot directly get that from Perl). 
 # \x{01C4} is LATIN CAPITAL LETTER DZ WITH CARON
 # \x{01C5} is LATIN CAPITAL LETTER D WITH SMALL LETTER Z WITH CARON
 # \x{01C6} is LATIN SMALL LETTER DZ WITH CARON
@@ -146,7 +146,7 @@ is($c , "\x{3c3}FOO.bAR", "Using s///e to change case.");
 is($c , "\x{3a3}foo.Bar", "Using s///e to change case.");
 
 # #18931: perl5.8.0 bug in \U..\E processing
-# Test case from Nick Clark.
+# Test case from Nicholas Clark.
 for my $a (0,1) {
     $_ = 'abcdefgh';
     $_ .= chr 256;
@@ -161,6 +161,5 @@ for my $a (0,1) {
 	chop $a;
 	$a =~ s/^(\s*)(\w*)/$1\u$2/;
 	is($a, v10, "[perl #18857]");
-	$test++;
     } 
 }

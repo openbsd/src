@@ -39,12 +39,14 @@ parts/base/5008002
 parts/base/5008003
 parts/base/5008004
 parts/base/5008005
+parts/base/5008006
 parts/base/5009000
 parts/base/5009001
 parts/base/5009002
 parts/embed.fnc
 parts/inc/call
 parts/inc/cop
+parts/inc/exception
 parts/inc/format
 parts/inc/grok
 parts/inc/limits
@@ -87,6 +89,7 @@ parts/todo/5008002
 parts/todo/5008003
 parts/todo/5008004
 parts/todo/5008005
+parts/todo/5008006
 parts/todo/5009000
 parts/todo/5009001
 parts/todo/5009002
@@ -99,6 +102,7 @@ README
 soak
 t/call.t
 t/cop.t
+t/exception.t
 t/grok.t
 t/limits.t
 t/magic.t

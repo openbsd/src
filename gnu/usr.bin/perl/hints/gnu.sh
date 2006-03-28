@@ -18,6 +18,9 @@ lddlflags='-shared'
 # Flags needed by programs that use dynamic linking.
 ccdlflags='-Wl,-E'
 
+# Debian bug #258618
+ccflags='-D_GNU_SOURCE'
+
 # The following routines are only available as stubs in GNU libc.
 # XXX remove this once metaconf detects the GNU libc stubs.
 d_msgctl='undef'

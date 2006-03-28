@@ -1,7 +1,11 @@
-# NormalizationCorrections-4.0.0.txt
+# NormalizationCorrections-4.1.0.txt
+# Date: 2005-03-17, 15:21:00 PST [KW]
 #
 # This file is a normative contributory data file in the
 # Unicode Character Database.
+#
+# Copyright (c) 1991-2005 Unicode, Inc.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # The normalization stabilization policy of the Unicode
 # Consortium ordinarily precludes any change to the decomposition
@@ -34,6 +38,7 @@
 #   Comment: Indicates the Unicode Corrigendum which documents 
 #            the correction
 #
+# For more information, see UAX #15, Unicode Normalization Forms.
 #
 F951;96FB;964B;3.2.0 # Corrigendum 3
 2F868;2136A;36FC;4.0.0 # Corrigendum 4

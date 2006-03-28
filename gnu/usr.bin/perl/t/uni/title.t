@@ -4,5 +4,5 @@ BEGIN {
     require "case.pl";
 }
 
-casetest("Title", \%utf8::ToSpecTitle, sub { ucfirst $_[0] });
-
+casetest("Title", \%utf8::ToSpecTitle, sub { ucfirst $_[0] },
+	 sub { my $a = ""; ucfirst ($_[0] . $a) });

@@ -7,6 +7,7 @@ require Exporter;
 use strict;
 use File::Path;
 use File::Basename;
+use MakeMaker::Test::Utils;
 
 my %Files = (
              'Recurs/Makefile.PL'          => <<'END',
@@ -29,6 +30,9 @@ END
             );
 
 sub setup_recurs {
+    setup_mm_test_root();
+    chdir 'MM_TEST_ROOT:[t]' if $^O eq 'VMS';
+
     while(my($file, $text) = each %Files) {
         # Convert to a relative, native file path.
         $file = File::Spec->catfile(File::Spec->curdir, split m{\/}, $file);
@@ -52,3 +56,6 @@ sub teardown_recurs {
     }
     return 1;
 }
+
+
+1;

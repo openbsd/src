@@ -13,7 +13,7 @@
 package Pod::Find;
 
 use vars qw($VERSION);
-$VERSION = 0.24_01;   ## Current version of this package
+$VERSION = 1.34;   ## Current version of this package
 require  5.005;   ## requires this Perl version or later
 use Carp;
 
@@ -42,6 +42,9 @@ no function is exported by default to avoid pollution of your namespace,
 so be sure to specify them in the B<use> statement if you need them:
 
   use Pod::Find qw(pod_find);
+
+From this version on the typical SCM (software configuration management)
+files/directories like RCS, CVS, SCCS, .svn are ignored.
 
 =cut
 
@@ -248,7 +251,7 @@ sub _check_and_extract_name {
 
     # check extension or executable flag
     # this involves testing the .bat extension on Win32!
-    unless(-f $file && -T _ && ($file =~ /\.(pod|pm|plx?)\z/i || -x _ )) {
+    unless(-f $file && -T $file && ($file =~ /\.(pod|pm|plx?)\z/i || -x $file )) {
       return undef;
     }
 
@@ -491,7 +494,7 @@ sub contains_pod {
   local $/ = undef;
   my $pod = <POD>;
   close(POD) || die "Error closing $file: $!\n";
-  unless($pod =~ /\n=(head\d|pod|over|item)\b/s) {
+  unless($pod =~ /^=(head\d|pod|over|item)\b/m) {
     warn "No POD in $file, skipping.\n"
       if($verbose);
     return 0;

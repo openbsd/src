@@ -1,5 +1,7 @@
 #!./perl -w
 
+no strict;
+
 BEGIN {
     if ($ENV{PERL_CORE}) {
 	@INC = '../lib';

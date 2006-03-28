@@ -1,7 +1,9 @@
-/*
+/*  -*- buffer-read-only: t -*-
+ *
  *    perlapi.h
  *
- *    Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, by Larry Wall and others
+ *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+ *    2000, 2001, 2002, 2003, 2004, 2005, 2006, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -67,9 +69,26 @@ EXT void *PL_force_link_funcs[] = {
 #define PERLVARI(v,t,i)	PERLVAR(v,t)
 #define PERLVARIC(v,t,i) PERLVAR(v,t)
 
+/* In Tru64 (__DEC && __osf__) the cc option -std1 causes that one
+ * cannot cast between void pointers and function pointers without
+ * info level warnings.  The PL_force_link_funcs[] would cause a few
+ * hundred of those warnings.  In code one can circumnavigate this by using
+ * unions that overlay the different pointers, but in declarations one
+ * cannot use this trick.  Therefore we just disable the warning here
+ * for the duration of the PL_force_link_funcs[] declaration. */
+
+#if defined(__DECC) && defined(__osf__)
+#pragma message save
+#pragma message disable (nonstandcast)
+#endif
+
 #include "thrdvar.h"
 #include "intrpvar.h"
 #include "perlvars.h"
+
+#if defined(__DECC) && defined(__osf__)
+#pragma message restore
+#endif
 
 #undef PERLVAR
 #undef PERLVARA
@@ -218,6 +237,8 @@ END_EXTERN_C
 #define PL_doswitches		(*Perl_Idoswitches_ptr(aTHX))
 #undef  PL_dowarn
 #define PL_dowarn		(*Perl_Idowarn_ptr(aTHX))
+#undef  PL_dumper_fd
+#define PL_dumper_fd		(*Perl_Idumper_fd_ptr(aTHX))
 #undef  PL_e_script
 #define PL_e_script		(*Perl_Ie_script_ptr(aTHX))
 #undef  PL_egid
@@ -496,6 +517,10 @@ END_EXTERN_C
 #define PL_psig_pend		(*Perl_Ipsig_pend_ptr(aTHX))
 #undef  PL_psig_ptr
 #define PL_psig_ptr		(*Perl_Ipsig_ptr_ptr(aTHX))
+#undef  PL_pte_arenaroot
+#define PL_pte_arenaroot	(*Perl_Ipte_arenaroot_ptr(aTHX))
+#undef  PL_pte_root
+#define PL_pte_root		(*Perl_Ipte_root_ptr(aTHX))
 #undef  PL_ptr_table
 #define PL_ptr_table		(*Perl_Iptr_table_ptr(aTHX))
 #undef  PL_reentrant_buffer
@@ -1028,3 +1053,4 @@ END_EXTERN_C
 
 #endif /* __perlapi_h__ */
 
+/* ex: set ro: */

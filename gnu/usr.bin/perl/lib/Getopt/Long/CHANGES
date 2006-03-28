@@ -1,3 +1,41 @@
+Changes in version 2.35
+-----------------------
+
+* long_prefix_pattern configuration variable.
+
+  prefix_pattern has now been complemented by a new configuration
+  option 'long_prefix_pattern' that allows the user to specify what
+  prefix patterns should have long option style sematics applied.
+  This will enable people to do things like
+
+    foo.pl /option=value
+
+  instead of forcing people to use the short option style
+
+    foo.pl /option value
+
+  This enhancement was suggested and implemented by Yves Orton.
+
+* Bugfix for Ticket #11377 (bug found and fixed by Ryan).
+* Bugfix for Ticket #12380.
+
+**************** WARNING -- EXPERIMENTAL CODE AHEAD ****************
+
+* [Experimental] Options can take multiple values at once. E.g.,
+
+    --coordinates 52.2 16.4 --rgbcolor 255 255 149
+
+  To handle the above command line, the following call to GetOptions
+  can be used:
+
+    GetOptions('coordinates=f{2}' => \@coor, 'rgbcolor=i{3}' => \@color);
+
+  You can specify the minimum and maximum number of values desired.
+  The syntax for this is similar to that of regular expression
+  patterns: { min , max }. 
+
+**************** END EXPERIMENTAL CODE ****************
+
 Changes in version 2.34
 -----------------------
 
@@ -22,8 +60,6 @@ Changes in version 2.34
 
 Changes in version 2.33
 -----------------------
-
-**************** WARNING -- EXPERIMENTAL CODE AHEAD ****************
 
 The following new features are marked experimental. This means that if
 you are going to use them you _must_ watch out for the next release of
@@ -66,8 +102,6 @@ Getopt::Long to see if the API has changed.
 
     use Getopt::Long 2.33 qw(GetOptions HelpMessage);
     GetOptions(...) or HelpMessage(2);
-
-**************** END EXPERIMENTAL CODE ****************
 
 * Subroutine Configure can now be exported on demand.
 

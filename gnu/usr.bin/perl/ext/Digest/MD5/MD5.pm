@@ -3,14 +3,11 @@ package Digest::MD5;
 use strict;
 use vars qw($VERSION @ISA @EXPORT_OK);
 
-$VERSION = '2.33';  # $Date: 2003/12/07 08:40:18 $
+$VERSION = '2.36';  # $Date: 2005/11/30 13:46:47 $
 
 require Exporter;
 *import = \&Exporter::import;
 @EXPORT_OK = qw(md5 md5_hex md5_base64);
-
-require DynaLoader;
-@ISA=qw(DynaLoader);
 
 eval {
     require Digest::base;
@@ -23,7 +20,8 @@ if ($@) {
 
 
 eval {
-    Digest::MD5->bootstrap($VERSION);
+    require XSLoader;
+    XSLoader::load('Digest::MD5', $VERSION);
 };
 if ($@) {
     my $olderr = $@;
@@ -77,6 +75,13 @@ The C<Digest::MD5> module allows you to use the RSA Data Security
 Inc. MD5 Message Digest algorithm from within Perl programs.  The
 algorithm takes as input a message of arbitrary length and produces as
 output a 128-bit "fingerprint" or "message digest" of the input.
+
+Note that the MD5 algorithm is not as strong as it used to be.  It has
+since 2005 been easy to generate different messages that produce the
+same MD5 digest.  It still seems hard to generate messages that
+produce a given digest, but it is probably wise to move to stronger
+algorithms for applications that depend on the digest to uniquely identify
+a message.
 
 The C<Digest::MD5> module provide a procedural interface for simple
 use, as well as an object oriented interface that can handle messages
@@ -202,7 +207,7 @@ Note that the C<digest> operation is effectively a destructive,
 read-once operation. Once it has been performed, the C<Digest::MD5>
 object is automatically C<reset> and can be used to calculate another
 digest value.  Call $md5->clone->digest if you want to calculate the
-digest without reseting the digest state.
+digest without resetting the digest state.
 
 =item $md5->hexdigest
 
@@ -311,6 +316,11 @@ L<Digest::HMAC>
 L<md5sum(1)>
 
 RFC 1321
+
+http://en.wikipedia.org/wiki/MD5
+
+The paper "How to Break MD5 and Other Hash Functions" by Xiaoyun Wang
+and Hongbo Yu.
 
 =head1 COPYRIGHT
 

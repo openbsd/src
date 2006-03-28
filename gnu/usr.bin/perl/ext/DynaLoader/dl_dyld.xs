@@ -54,8 +54,7 @@ static char *dlerror()
     return dl_last_error;
 }
 
-static int dlclose(handle) /* stub only */
-void *handle;
+static int dlclose(void *handle) /* stub only */
 {
     return 0;
 }
@@ -98,8 +97,7 @@ static void TranslateError
 		     path, number, type);
 	break;
     }
-    safefree(dl_last_error);
-    dl_last_error = savepv(error);
+    sv_setpv(MY_CXT.x_dl_last_error, error);
 }
 
 static char *dlopen(char *path, int mode /* mode is ignored */)
@@ -113,7 +111,7 @@ static char *dlopen(char *path, int mode /* mode is ignored */)
 	TranslateError(path, OFImage, dyld_result);
     else
     {
-    	// NSLinkModule will cause the run to abort on any link error's
+    	// NSLinkModule will cause the run to abort on any link errors
 	// not very friendly but the error recovery functionality is limited.
 	handle = NSLinkModule(ofile, path, TRUE);
 	NSDestroyObjectFileImage(ofile);
@@ -123,9 +121,7 @@ static char *dlopen(char *path, int mode /* mode is ignored */)
 }
 
 static void *
-dlsym(handle, symbol)
-void *handle;
-char *symbol;
+dlsym(void *handle, char *symbol)
 {
     void *addr;
 

@@ -16,7 +16,7 @@ BEGIN {
     }
 }
 
-print "1..14\n";
+print "1..15\n";
 
 my $grk = "grk$$";
 my $utf = "utf$$";
@@ -149,6 +149,17 @@ my $dstr = <F>;
 close(F);
 print "not " unless ($dstr eq $str);
 print "ok 14\n";
+
+# Try decoding some bad stuff
+open(F,'>:raw',$threebyte) || die "Cannot open $threebyte:$!";
+print F "foo\xF0\x80\x80\x80bar\n\x80foo\n";
+close(F);
+
+open(F,'<:encoding(utf-8)',$threebyte) || die "Cannot open $threebyte:$!";
+$dstr = join(":", <F>);
+close(F);
+print "not " unless $dstr eq "foo\\xF0\\x80\\x80\\x80bar\n:\\x80foo\n";
+print "ok 15\n";
 
 END {
     1 while unlink($grk, $utf, $fail1, $fail2, $russki, $threebyte);

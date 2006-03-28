@@ -1,17 +1,19 @@
 # Scalar::Util.pm
 #
-# Copyright (c) 1997-2004 Graham Barr <gbarr@pobox.com>. All rights reserved.
+# Copyright (c) 1997-2005 Graham Barr <gbarr@pobox.com>. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 
 package Scalar::Util;
 
+use strict;
+use vars qw(@ISA @EXPORT_OK $VERSION);
 require Exporter;
 require List::Util; # List::Util loads the XS
 
 @ISA       = qw(Exporter);
 @EXPORT_OK = qw(blessed dualvar reftype weaken isweak tainted readonly openhandle refaddr isvstring looks_like_number set_prototype);
-$VERSION    = "1.14";
+$VERSION    = "1.18";
 $VERSION   = eval $VERSION;
 
 sub export_fail {
@@ -51,6 +53,7 @@ sub openhandle ($) {
 
 eval <<'ESQ' unless defined &dualvar;
 
+use vars qw(@EXPORT_FAIL);
 push @EXPORT_FAIL, qw(weaken isweak dualvar isvstring set_prototype);
 
 # The code beyond here is only used if the XS is not installed
@@ -67,9 +70,15 @@ sub blessed ($) {
 
 sub refaddr($) {
   my $pkg = ref($_[0]) or return undef;
-  bless $_[0], 'Scalar::Util::Fake';
-  my $i = int($_[0]);
-  bless $_[0], $pkg;
+  if (blessed($_[0])) {
+    bless $_[0], 'Scalar::Util::Fake';
+  }
+  else {
+    $pkg = undef;
+  }
+  "$_[0]" =~ /0x(\w+)/;
+  my $i = do { local $^W; hex $1 };
+  bless $_[0], $pkg if defined $pkg;
   $i;
 }
 
@@ -122,7 +131,7 @@ sub looks_like_number {
   local $_ = shift;
 
   # checks from perlfaq4
-  return $] < 5.009002 unless defined;
+  return 0 if !defined($_) or ref($_);
   return 1 if (/^[+-]?\d+$/); # is a +/- integer
   return 1 if (/^([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?$/); # a C float
   return 1 if ($] >= 5.008 and /^(Inf(inity)?|NaN)$/i) or ($] >= 5.006001 and /^Inf$/i);
@@ -142,7 +151,8 @@ Scalar::Util - A selection of general-utility scalar subroutines
 
 =head1 SYNOPSIS
 
-    use Scalar::Util qw(blessed dualvar isweak readonly refaddr reftype tainted weaken isvstring looks_like_number set_prototype);
+    use Scalar::Util qw(blessed dualvar isweak readonly refaddr reftype tainted
+                        weaken isvstring looks_like_number set_prototype);
 
 =head1 DESCRIPTION
 
@@ -195,6 +205,11 @@ If EXPR is a scalar which is a weak reference the result is true.
     $weak = isweak($ref);               # false
     weaken($ref);
     $weak = isweak($ref);               # true
+
+B<NOTE>: Copying a weak reference creates a normal, strong, reference.
+
+    $copy = $ref;
+    $weak = isweak($ref);               # false
 
 =item looks_like_number EXPR
 
@@ -274,6 +289,25 @@ prevent the object being DESTROY-ed at its usual time.
     }
     # $ref is now undef
 
+Note that if you take a copy of a scalar with a weakened reference,
+the copy will be a strong reference.
+
+    my $var;
+    my $foo = \$var;
+    weaken($foo);                       # Make $foo a weak reference
+    my $bar = $foo;                     # $bar is now a strong reference
+
+This may be less obvious in other situations, such as C<grep()>, for instance
+when grepping through a list of weakened references to objects that may have
+been destroyed already:
+
+    @object = grep { defined } @object;
+
+This will indeed remove all references to destroyed objects, but the remaining
+references to objects will be strong, causing the remaining objects to never
+be destroyed because there is now always a strong reference to them in the
+@object array.
+
 =back
 
 =head1 KNOWN BUGS
@@ -283,7 +317,7 @@ show up as tests 8 and 9 of dualvar.t failing
 
 =head1 COPYRIGHT
 
-Copyright (c) 1997-2004 Graham Barr <gbarr@pobox.com>. All rights reserved.
+Copyright (c) 1997-2005 Graham Barr <gbarr@pobox.com>. All rights reserved.
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
 
