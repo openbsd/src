@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.89 2006/03/27 21:56:32 niallo Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.90 2006/03/28 09:51:09 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -749,7 +749,8 @@ rcs_set_description(RCSFILE *file, const char *in)
 	} else {
 		bp = cvs_buf_alloc(64, BUF_AUTOEXT);
 
-		printf(DESC_PROMPT);
+		if (isatty(STDIN_FILENO))
+			(void)fprintf(stderr, "%s", DESC_PROMPT);
 		for (;;) {
 			/* XXX - fgetln() may be more elegant. */
 			fgets(buf, sizeof(buf), stdin);
@@ -758,7 +759,8 @@ rcs_set_description(RCSFILE *file, const char *in)
 			    strcmp(buf, ".") == 0)
 				break;
 			cvs_buf_append(bp, buf, strlen(buf));
-			printf(">> ");
+			if (isatty(STDIN_FILENO))
+				(void)fprintf(stderr, ">> ");
 		}
 	}
 
