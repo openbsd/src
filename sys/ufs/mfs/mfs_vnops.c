@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.25 2005/03/06 16:30:53 pedro Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.26 2006/03/28 13:18:17 pedro Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -102,8 +102,7 @@ struct vnodeopv_desc mfs_vnodeop_opv_desc =
  */
 /* ARGSUSED */
 int
-mfs_open(v)
-	void *v;
+mfs_open(void *v)
 {
 #ifdef DIAGNOSTIC
 	struct vop_open_args /* {
@@ -126,8 +125,7 @@ mfs_open(v)
  */
 /* ARGSUSED */
 int
-mfs_ioctl(v)
-	void *v;
+mfs_ioctl(void *v)
 {
 #if 0
 	struct vop_ioctl_args /* {
@@ -147,8 +145,7 @@ mfs_ioctl(v)
  * Pass I/O requests to the memory filesystem process.
  */
 int
-mfs_strategy(v)
-	void *v;
+mfs_strategy(void *v)
 {
 	struct vop_strategy_args /* {
 		struct buf *a_bp;
@@ -156,7 +153,7 @@ mfs_strategy(v)
 	struct buf *bp = ap->a_bp;
 	struct mfsnode *mfsp;
 	struct vnode *vp;
-	struct proc *p = curproc;		/* XXX */
+	struct proc *p = curproc;
 	int s;
 
 	if (!vfinddev(bp->b_dev, VBLK, &vp) || vp->v_usecount == 0)
@@ -188,12 +185,10 @@ mfs_strategy(v)
 /*
  * Memory file system I/O.
  *
- * Trivial on the HP since buffer has already been mapping into KVA space.
+ * Trivial on the HP since buffer has already been mapped into KVA space.
  */
 void
-mfs_doio(bp, base)
-	struct buf *bp;
-	caddr_t base;
+mfs_doio(struct buf *bp, caddr_t base)
 {
 	int s;
 
@@ -215,8 +210,7 @@ mfs_doio(bp, base)
  * This is a noop, simply returning what one has been given.
  */
 int
-mfs_bmap(v)
-	void *v;
+mfs_bmap(void *v)
 {
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
@@ -241,8 +235,7 @@ mfs_bmap(v)
  */
 /* ARGSUSED */
 int
-mfs_close(v)
-	void *v;
+mfs_close(void *v)
 {
 	struct vop_close_args /* {
 		struct vnode *a_vp;
@@ -250,9 +243,9 @@ mfs_close(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct mfsnode *mfsp = VTOMFS(vp);
-	register struct buf *bp;
+	struct vnode *vp = ap->a_vp;
+	struct mfsnode *mfsp = VTOMFS(vp);
+	struct buf *bp;
 	int error;
 
 	/*
@@ -295,15 +288,14 @@ mfs_close(v)
  */
 /* ARGSUSED */
 int
-mfs_inactive(v)
-	void *v;
+mfs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
 		struct proc *a_p;
 	} */ *ap = v;
 #ifdef DIAGNOSTIC
-	register struct mfsnode *mfsp = VTOMFS(ap->a_vp);
+	struct mfsnode *mfsp = VTOMFS(ap->a_vp);
 
 	if (mfsp->mfs_buflist && mfsp->mfs_buflist != (struct buf *)(-1))
 		panic("mfs_inactive: not inactive (mfs_buflist %p)",
@@ -317,8 +309,7 @@ mfs_inactive(v)
  * Reclaim a memory filesystem devvp so that it can be reused.
  */
 int
-mfs_reclaim(v)
-	void *v;
+mfs_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
@@ -334,13 +325,12 @@ mfs_reclaim(v)
  * Print out the contents of an mfsnode.
  */
 int
-mfs_print(v)
-	void *v;
+mfs_print(void *v)
 {
 	struct vop_print_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-	register struct mfsnode *mfsp = VTOMFS(ap->a_vp);
+	struct mfsnode *mfsp = VTOMFS(ap->a_vp);
 
 	printf("tag VT_MFS, pid %d, base %p, size %ld\n", mfsp->mfs_pid,
 	    mfsp->mfs_baseoff, mfsp->mfs_size);
@@ -351,10 +341,8 @@ mfs_print(v)
  * Block device bad operation
  */
 int
-mfs_badop(v)
-	void *v;
+mfs_badop(void *v)
 {
-
 	panic("mfs_badop called");
 	/* NOTREACHED */
 }

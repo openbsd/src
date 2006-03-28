@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.29 2005/11/30 10:35:08 pedro Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.30 2006/03/28 13:18:17 pedro Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -86,11 +86,11 @@ const struct vfsops mfs_vfsops = {
  */
 
 int
-mfs_mountroot()
+mfs_mountroot(void)
 {
-	register struct fs *fs;
+	struct fs *fs;
 	struct mount *mp;
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc;
 	struct ufsmount *ump;
 	struct mfsnode *mfsp;
 	int error;
@@ -135,8 +135,7 @@ mfs_mountroot()
  * of the mini-root.
  */
 int
-mfs_initminiroot(base)
-	caddr_t base;
+mfs_initminiroot(caddr_t base)
 {
 	struct fs *fs = (struct fs *)(base + SBOFF);
 	extern int (*mountroot)(void);
@@ -160,18 +159,14 @@ mfs_initminiroot(base)
  */
 /* ARGSUSED */
 int
-mfs_mount(mp, path, data, ndp, p)
-	register struct mount *mp;
-	const char *path;
-	void *data;
-	struct nameidata *ndp;
-	struct proc *p;
+mfs_mount(struct mount *mp, const char *path, void *data,
+    struct nameidata *ndp, struct proc *p)
 {
 	struct vnode *devvp;
 	struct mfs_args args;
 	struct ufsmount *ump;
-	register struct fs *fs;
-	register struct mfsnode *mfsp;
+	struct fs *fs;
+	struct mfsnode *mfsp;
 	size_t size;
 	int flags, error;
 
@@ -246,10 +241,7 @@ int	mfs_pri = PWAIT | PCATCH;		/* XXX prob. temp */
  */
 /* ARGSUSED */
 int
-mfs_start(mp, flags, p)
-	struct mount *mp;
-	int flags;
-	struct proc *p;
+mfs_start(struct mount *mp, int flags, struct proc *p)
 {
 	struct vnode *vp = VFSTOUFS(mp)->um_devvp;
 	struct mfsnode *mfsp = VTOMFS(vp);
@@ -286,10 +278,7 @@ mfs_start(mp, flags, p)
  * Get file system statistics.
  */
 int
-mfs_statfs(mp, sbp, p)
-	struct mount *mp;
-	struct statfs *sbp;
-	struct proc *p;
+mfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 {
 	int error;
 
@@ -306,11 +295,8 @@ mfs_statfs(mp, sbp, p)
  */
 /* ARGUSED */
 int
-mfs_checkexp(mp, nam, exflagsp, credanonp)
-	register struct mount *mp;
-	struct mbuf *nam;
-	int *exflagsp;
-	struct ucred **credanonp;
+mfs_checkexp(struct mount *mp, struct mbuf *nam, int *exflagsp,
+    struct ucred **credanonp)
 {
 	return (EOPNOTSUPP);
 }
@@ -319,8 +305,7 @@ mfs_checkexp(mp, nam, exflagsp, credanonp)
  * Memory based filesystem initialization.
  */
 int
-mfs_init(vfsp)
-	struct vfsconf *vfsp;
+mfs_init(struct vfsconf *vfsp)
 {
 	return (ffs_init(vfsp));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_extern.h,v 1.11 2003/06/02 23:28:23 millert Exp $	*/
+/*	$OpenBSD: mfs_extern.h,v 1.12 2006/03/28 13:18:17 pedro Exp $	*/
 /*	$NetBSD: mfs_extern.h,v 1.4 1996/02/09 22:31:27 christos Exp $	*/
 
 /*-
@@ -44,28 +44,26 @@ struct mbuf;
 
 __BEGIN_DECLS
 /* mfs_vfsops.c */
-int	mfs_mountroot(void);
-int	mfs_initminiroot(caddr_t);
-int	mfs_mount(struct mount *, const char *, void *,
-			     struct nameidata *, struct proc *);
-int	mfs_start(struct mount *, int, struct proc *);
-int	mfs_statfs(struct mount *, struct statfs *, struct proc *);
-
-int	mfs_init(struct vfsconf *);
-int	mfs_checkexp(struct mount *mp, struct mbuf *nam,
-			     int *extflagsp, struct ucred **credanonp);
+int mfs_mountroot(void);
+int mfs_initminiroot(caddr_t);
+int mfs_mount(struct mount *, const char *, void *, struct nameidata *,
+    struct proc *);
+int mfs_start(struct mount *, int, struct proc *);
+int mfs_statfs(struct mount *, struct statfs *, struct proc *);
+int mfs_init(struct vfsconf *);
+int mfs_checkexp(struct mount *, struct mbuf *, int *, struct ucred **);
 
 /* mfs_vnops.c */
-int	mfs_open(void *);
-int	mfs_ioctl(void *);
-int	mfs_strategy(void *);
-void	mfs_doio(struct buf *, caddr_t);
-int	mfs_bmap(void *);
-int	mfs_close(void *);
-int	mfs_inactive(void *);
-int	mfs_reclaim(void *);
-int	mfs_print(void *);
+int mfs_open(void *);
+int mfs_ioctl(void *);
+int mfs_strategy(void *);
+void mfs_doio(struct buf *, caddr_t);
+int mfs_bmap(void *);
+int mfs_close(void *);
+int mfs_inactive(void *);
+int mfs_reclaim(void *);
+int mfs_print(void *);
 #define	mfs_revoke vop_generic_revoke
-int	mfs_badop(void *);
+int mfs_badop(void *);
 
 __END_DECLS
