@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.152 2006/03/27 21:56:32 niallo Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.153 2006/03/28 02:13:44 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2432,7 +2432,7 @@ rcs_growbuf(RCSFILE *rf)
 	void *tmp;
 	struct rcs_pdata *pdp = (struct rcs_pdata *)rf->rf_pdata;
 
-	tmp = xrealloc(pdp->rp_buf, pdp->rp_blen + RCS_BUFEXTSIZE);
+	tmp = xrealloc(pdp->rp_buf, 1, pdp->rp_blen + RCS_BUFEXTSIZE);
 	pdp->rp_buf = (char *)tmp;
 	pdp->rp_blen += RCS_BUFEXTSIZE;
 	pdp->rp_bufend = pdp->rp_buf + pdp->rp_blen - 1;
@@ -2641,7 +2641,7 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 			/* only realloc if we have to */
 			if (sizdiff > 0) {
 				len += sizdiff;
-				data = xrealloc(data, len);
+				data = xrealloc(data, 1, len);
 				/*
 				 * ensure string pointers are not invalidated
 				 * after realloc()

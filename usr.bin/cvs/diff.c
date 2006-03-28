@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.83 2006/03/25 21:29:59 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.84 2006/03/28 02:13:44 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -713,12 +713,12 @@ cvs_diffreg(const char *file1, const char *file2, BUF *out)
 
 	member = (int *)file[1];
 	equiv(sfile[0], slen[0], sfile[1], slen[1], member);
-	tmp = xrealloc(member, (slen[1] + 2) * sizeof(int));
+	tmp = xrealloc(member, slen[1] + 2, sizeof(int));
 	member = (int *)tmp;
 
 	class = (int *)file[0];
 	unsort(sfile[0], slen[0], class);
-	tmp = xrealloc(class, (slen[0] + 2) * sizeof(int));
+	tmp = xrealloc(class, slen[0] + 2, sizeof(int));
 	class = (int *)tmp;
 
 	klist = xmalloc((slen[0] + 2) * sizeof(int));
@@ -732,16 +732,16 @@ cvs_diffreg(const char *file1, const char *file2, BUF *out)
 	xfree(member);
 	xfree(class);
 
-	tmp = xrealloc(J, (diff_len[0] + 2) * sizeof(int));
+	tmp = xrealloc(J, diff_len[0] + 2, sizeof(int));
 	J = (int *)tmp;
 	unravel(klist[i]);
 	xfree(clist);
 	xfree(klist);
 
-	tmp = xrealloc(ixold, (diff_len[0] + 2) * sizeof(long));
+	tmp = xrealloc(ixold, diff_len[0] + 2, sizeof(long));
 	ixold = (long *)tmp;
 
-	tmp = xrealloc(ixnew, (diff_len[1] + 2) * sizeof(long));
+	tmp = xrealloc(ixnew, diff_len[1] + 2, sizeof(long));
 	ixnew = (long *)tmp;
 	check(f1, f2);
 	output(f1, f2);
@@ -805,7 +805,7 @@ prepare(int i, FILE *fd, off_t filesize)
 	for (j = 0; (h = readhash(fd));) {
 		if (j == (int)sz) {
 			sz = sz * 3 / 2;
-			tmp = xrealloc(p, (sz + 3) * sizeof(struct line));
+			tmp = xrealloc(p, sz + 3, sizeof(struct line));
 			p = (struct line *)tmp;
 		}
 		p[++j].value = h;
@@ -945,7 +945,7 @@ newcand(int x, int y, int pred)
 
 	if (clen == clistlen) {
 		newclistlen = clistlen * 11 / 10;
-		tmp = xrealloc(clist, newclistlen * sizeof(cand));
+		tmp = xrealloc(clist, newclistlen, sizeof(cand));
 		clist = tmp;
 		clistlen = newclistlen;
 	}
@@ -1286,7 +1286,7 @@ proceed:
 			struct context_vec *tmp;
 			ptrdiff_t offset = context_vec_ptr - context_vec_start;
 			max_context <<= 1;
-			tmp = xrealloc(context_vec_start, max_context *
+			tmp = xrealloc(context_vec_start, max_context,
 			    sizeof(struct context_vec));
 			context_vec_start = tmp;
 			context_vec_end = context_vec_start + max_context;

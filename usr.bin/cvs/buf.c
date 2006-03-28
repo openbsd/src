@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.40 2006/03/25 21:29:58 ray Exp $	*/
+/*	$OpenBSD: buf.c,v 1.41 2006/03/28 02:13:44 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -435,7 +435,7 @@ cvs_buf_grow(BUF *b, size_t len)
 	if (b->cb_size == 0)
 		tmp = xmalloc(len);
 	else
-		tmp = xrealloc(b->cb_buf, b->cb_size + len);
+		tmp = xrealloc(b->cb_buf, 1, b->cb_size + len);
 	b->cb_buf = (u_char *)tmp;
 	b->cb_size += len;
 

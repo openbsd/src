@@ -1,9 +1,9 @@
-/*	$OpenBSD: xmalloc.c,v 1.5 2006/01/02 08:11:56 xsa Exp $ */
+/* $OpenBSD: xmalloc.c,v 1.6 2006/03/28 02:13:44 ray Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
- * Versions of xmalloc and friends that check their results, and never return
+ * Versions of malloc and friends that check their results, and never return
  * failure (they call fatal if they encounter an error).
  *
  * As far as I am concerned, the code I have written for this software
@@ -27,20 +27,38 @@ xmalloc(size_t size)
 		fatal("xmalloc: zero size");
 	ptr = malloc(size);
 	if (ptr == NULL)
-		fatal("xmalloc: out of memory (allocating %lu bytes)",
-		    (u_long) size);
+		fatal("xmalloc: out of memory (allocating %lu bytes)", (u_long) size);
 	return ptr;
 }
 
 void *
-xrealloc(void *ptr, size_t new_size)
+xcalloc(size_t nmemb, size_t size)
+{
+	void *ptr;
+
+	if (size == 0 || nmemb == 0)
+		fatal("xcalloc: zero size");
+	if (SIZE_T_MAX / nmemb < size)
+		fatal("xcalloc: nmemb * size > SIZE_T_MAX");
+	ptr = calloc(nmemb, size);
+	if (ptr == NULL)
+		fatal("xcalloc: out of memory (allocating %lu bytes)",
+		    (u_long)(size * nmemb));
+	return ptr;
+}
+
+void *
+xrealloc(void *ptr, size_t nmemb, size_t size)
 {
 	void *new_ptr;
+	size_t new_size = nmemb * size;
 
 	if (new_size == 0)
 		fatal("xrealloc: zero size");
+	if (SIZE_T_MAX / nmemb < size)
+		fatal("xrealloc: nmemb * size > SIZE_T_MAX");
 	if (ptr == NULL)
-		new_ptr = xmalloc(new_size);
+		new_ptr = malloc(new_size);
 	else
 		new_ptr = realloc(ptr, new_size);
 	if (new_ptr == NULL)
@@ -67,4 +85,20 @@ xstrdup(const char *str)
 	cp = xmalloc(len);
 	strlcpy(cp, str, len);
 	return cp;
+}
+
+int
+xasprintf(char **ret, const char *fmt, ...)
+{
+	va_list ap;
+	int i;
+
+	va_start(ap, fmt);
+	i = vasprintf(ret, fmt, ap);
+	va_end(ap);
+
+	if (i < 0 || *ret == NULL)
+		fatal("xasprintf: could not allocate memory");
+
+	return (i);
 }
