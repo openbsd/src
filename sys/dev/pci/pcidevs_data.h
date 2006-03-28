@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1046 2006/03/28 17:06:34 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1047 2006/03/28 17:13:40 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -625,6 +625,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M524D,
 	    "M524D PCIE",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5261,
+	    "M5261 LAN",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5263,

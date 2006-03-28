@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1046 2006/03/28 17:06:34 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1047 2006/03/28 17:13:40 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -481,6 +481,7 @@
 #define	PCI_PRODUCT_ALI_M524B	0x524b		/* M524B PCIE */
 #define	PCI_PRODUCT_ALI_M524C	0x524c		/* M524C PCIE */
 #define	PCI_PRODUCT_ALI_M524D	0x524d		/* M524D PCIE */
+#define	PCI_PRODUCT_ALI_M5261	0x5261		/* M5261 LAN */
 #define	PCI_PRODUCT_ALI_M5263	0x5263		/* M5263 LAN */
 #define	PCI_PRODUCT_ALI_M5281	0x5281		/* M5281 SATA */
 #define	PCI_PRODUCT_ALI_M5287	0x5287		/* M5287 SATA */
