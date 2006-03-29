@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.57 2006/02/01 09:19:07 otto Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.58 2006/03/29 15:54:55 grunk Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.57 2006/02/01 09:19:07 otto Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.58 2006/03/29 15:54:55 grunk Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -58,6 +58,7 @@ static char rcsid[] = "$OpenBSD: fetch.c,v 1.57 2006/02/01 09:19:07 otto Exp $";
 #include <ctype.h>
 #include <err.h>
 #include <libgen.h>
+#include <limits.h>
 #include <netdb.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -100,7 +101,7 @@ static int	redirect_loop;
 static int
 url_get(const char *origline, const char *proxyenv, const char *outfile)
 {
-	char pbuf[NI_MAXSERV], hbuf[NI_MAXHOST], *cp, *ep, *portnum, *path;
+	char pbuf[NI_MAXSERV], hbuf[NI_MAXHOST], *cp, *portnum, *path;
 	char *hosttail, *cause = "unknown", *line, *host, *port, *buf = NULL;
 	int error, i, isftpurl = 0, isfileurl = 0, isredirect = 0, rval = -1;
 	struct addrinfo hints, *res0, *res;
@@ -111,6 +112,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 	FILE *fin = NULL;
 	off_t hashbytes;
 	size_t len;
+	const char *errstr;
 
 	line = strdup(origline);
 	if (line == NULL)
@@ -436,8 +438,8 @@ again:
 #define CONTENTLEN "Content-Length: "
 		if (strncasecmp(cp, CONTENTLEN, sizeof(CONTENTLEN) - 1) == 0) {
 			cp += sizeof(CONTENTLEN) - 1;
-			filesize = strtol(cp, &ep, 10);
-			if (filesize < 1 || *ep != '\0')
+			filesize = strtonum(cp, 0, LLONG_MAX, &errstr);
+			if (errstr != NULL)
 				goto improper;
 #define LOCATION "Location: "
 		} else if (isredirect &&
