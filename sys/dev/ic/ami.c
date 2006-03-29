@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.136 2006/03/29 13:31:15 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.137 2006/03/29 13:38:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -134,14 +134,14 @@ void		ami_runqueue(void *);
 
 int 		ami_start_xs(struct ami_softc *sc, struct ami_ccb *,
 		    struct scsi_xfer *);
-int		ami_done_xs(struct ami_softc *, struct ami_ccb *);
-int		ami_done_pt(struct ami_softc *, struct ami_ccb *);
-int		ami_done_flush(struct ami_softc *, struct ami_ccb *);
-int		ami_done_sysflush(struct ami_softc *, struct ami_ccb *);
+void		ami_done_xs(struct ami_softc *, struct ami_ccb *);
+void		ami_done_pt(struct ami_softc *, struct ami_ccb *);
+void		ami_done_flush(struct ami_softc *, struct ami_ccb *);
+void		ami_done_sysflush(struct ami_softc *, struct ami_ccb *);
 void		ami_stimeout(void *);
 
-int		ami_done_ioctl(struct ami_softc *, struct ami_ccb *);
-int		ami_done_ccb(struct ami_softc *, struct ami_ccb *);
+void		ami_done_ioctl(struct ami_softc *, struct ami_ccb *);
+void		ami_done_ccb(struct ami_softc *, struct ami_ccb *);
 
 void		ami_copy_internal_data(struct scsi_xfer *, void *, size_t);
 int		ami_inquire(struct ami_softc *, u_int8_t);
@@ -1098,7 +1098,7 @@ ami_done(struct ami_softc *sc, int idx)
 	return (0);
 }
 
-int
+void
 ami_done_pt(struct ami_softc *sc, struct ami_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->ccb_xs;
@@ -1140,11 +1140,9 @@ ami_done_pt(struct ami_softc *sc, struct ami_ccb *ccb)
 	splx(s);
 
 	scsi_done(xs);
-
-	return (0);
 }
 
-int
+void
 ami_done_xs(struct ami_softc *sc, struct ami_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->ccb_xs;
@@ -1175,11 +1173,9 @@ ami_done_xs(struct ami_softc *sc, struct ami_ccb *ccb)
 	splx(s);
 
 	scsi_done(xs);
-
-	return (0);
 }
 
-int
+void
 ami_done_flush(struct ami_softc *sc, struct ami_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->ccb_xs;
@@ -1197,7 +1193,6 @@ ami_done_flush(struct ami_softc *sc, struct ami_ccb *ccb)
 		splx(s);
 
 		scsi_done(xs);
-		return (0);
 	}
 
 	/* reuse the ccb for the sysflush command */
@@ -1205,10 +1200,9 @@ ami_done_flush(struct ami_softc *sc, struct ami_ccb *ccb)
 	cmd->acc_cmd = AMI_SYSFLUSH;
 
 	ami_start_xs(sc, ccb, xs);
-	return (0);
 }
 
-int
+void
 ami_done_sysflush(struct ami_softc *sc, struct ami_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->ccb_xs;
@@ -1225,18 +1219,15 @@ ami_done_sysflush(struct ami_softc *sc, struct ami_ccb *ccb)
 	splx(s);
 
 	scsi_done(xs);
-
-	return (0);
 }
 
-int
+void
 ami_done_ioctl(struct ami_softc *sc, struct ami_ccb *ccb)
 {
 	wakeup(ccb);
-	return (0);
 }
 
-int
+void
 ami_done_ccb(struct ami_softc *sc, struct ami_ccb *ccb)
 {
 	int s;
@@ -1244,8 +1235,6 @@ ami_done_ccb(struct ami_softc *sc, struct ami_ccb *ccb)
 	s = splbio();
 	ami_put_ccb(ccb);
 	splx(s);
-
-	return (0);
 }
 
 void

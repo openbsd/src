@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.43 2006/03/20 10:49:53 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.44 2006/03/29 13:38:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -57,7 +57,7 @@ struct ami_ccb {
 	bus_dmamap_t		ccb_dmamap;
 
 	struct scsi_xfer	*ccb_xs;
-	int			(*ccb_done)(struct ami_softc *sc,
+	void			(*ccb_done)(struct ami_softc *sc,
 				    struct ami_ccb *ccb);
 
 	volatile enum {
