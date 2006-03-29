@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.37 2006/03/27 16:33:52 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.38 2006/03/29 13:39:37 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -118,7 +118,6 @@
 03/30	Francisco Jose de Goya born, 1746
 03/30	Sean O'Casey born, 1880
 03/30	Vincent Van Gogh born, 1853
-03/30	Adolph Hitler committed suicide, 1945
 03/30	Queen Elizabeth, the Queen Mother, died at the age of 101, 2002
 03/31	Rene Descartes born, 1596, mathematician & philosopher
 03/31	Nikolay Vasilyevich Gogol born, 1809
@@ -150,6 +149,7 @@
 04/29	Jules Henri Poincare born, 1854, founder of topology
 04/29	William Randolph Hearst born in San Francisco, 1863
 04/30	Karl Friedrich Gauss born, 1777, mathematician & astronomer
+04/30	Adolph Hitler committed suicide, 1945
 05/01	Little Walter (Marion Walter Jacobs) is born in Alexandria,
 		Louisiana, 1930
 05/02	Dr. Benjamin Spock born, 1903
