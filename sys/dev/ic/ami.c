@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.135 2006/03/20 10:52:34 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.136 2006/03/29 13:31:15 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -136,6 +136,8 @@ int 		ami_start_xs(struct ami_softc *sc, struct ami_ccb *,
 		    struct scsi_xfer *);
 int		ami_done_xs(struct ami_softc *, struct ami_ccb *);
 int		ami_done_pt(struct ami_softc *, struct ami_ccb *);
+int		ami_done_flush(struct ami_softc *, struct ami_ccb *);
+int		ami_done_sysflush(struct ami_softc *, struct ami_ccb *);
 void		ami_stimeout(void *);
 
 int		ami_done_ioctl(struct ami_softc *, struct ami_ccb *);
@@ -1178,6 +1180,56 @@ ami_done_xs(struct ami_softc *sc, struct ami_ccb *ccb)
 }
 
 int
+ami_done_flush(struct ami_softc *sc, struct ami_ccb *ccb)
+{
+	struct scsi_xfer *xs = ccb->ccb_xs;
+	struct ami_iocmd *cmd = &ccb->ccb_cmd;
+	int s;
+
+	if (ccb->ccb_flags & AMI_CCB_F_ERR) {
+		timeout_del(&xs->stimeout);
+		xs->error = XS_DRIVER_STUFFUP;
+		xs->resid = 0;
+		xs->flags |= ITSDONE;
+
+		s = splbio();
+		ami_put_ccb(ccb);
+		splx(s);
+
+		scsi_done(xs);
+		return (0);
+	}
+
+	/* reuse the ccb for the sysflush command */
+	ccb->ccb_done = ami_done_sysflush;
+	cmd->acc_cmd = AMI_SYSFLUSH;
+
+	ami_start_xs(sc, ccb, xs);
+	return (0);
+}
+
+int
+ami_done_sysflush(struct ami_softc *sc, struct ami_ccb *ccb)
+{
+	struct scsi_xfer *xs = ccb->ccb_xs;
+	int s;
+
+	timeout_del(&xs->stimeout);
+	xs->resid = 0;
+	xs->flags |= ITSDONE;
+	if (ccb->ccb_flags & AMI_CCB_F_ERR)
+		xs->error = XS_DRIVER_STUFFUP;
+
+	s = splbio();
+	ami_put_ccb(ccb);
+	splx(s);
+
+	scsi_done(xs);
+
+	return (0);
+}
+
+int
 ami_done_ioctl(struct ami_softc *sc, struct ami_ccb *ccb)
 {
 	wakeup(ccb);
@@ -1390,21 +1442,14 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		}
 
 		ccb->ccb_xs = xs;
-		ccb->ccb_done = ami_done_ccb;
+		ccb->ccb_done = ami_done_flush;
 		if (xs->timeout < 30000)
 			xs->timeout = 30000;	/* at least 30sec */
 
 		cmd = &ccb->ccb_cmd;
 		cmd->acc_cmd = AMI_FLUSH;
 
-		s = splbio();
-		error = ami_poll(sc, ccb);
-		splx(s);
-		if (error)
-			xs->error = XS_DRIVER_STUFFUP;
-
-		scsi_done(xs);
-		return (COMPLETE);
+		return (ami_start_xs(sc, ccb, xs));
 
 	case TEST_UNIT_READY:
 		/* save off sd? after autoconf */
