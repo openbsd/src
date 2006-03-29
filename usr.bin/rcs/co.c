@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.67 2006/03/27 21:56:32 niallo Exp $	*/
+/*	$OpenBSD: co.c,v 1.68 2006/03/29 08:44:08 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -361,14 +361,19 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	}
 
 	if ((pipeout == 0) && (stat(dst, &st) == 0) && !(flags & FORCE)) {
-		if (verbose == 0) {
-			cvs_log(LP_ERR,
-			    "writable %s exists; checkout aborted",
-			    dst);
-			return (-1);
-		}
-
-		if (st.st_mode & S_IWUSR)
+		/*
+		 * XXX - Not sure what is "right".  If we go according
+		 * to GNU's behavior, an existing file with no writable
+		 * bits is overwritten without prompting the user.
+		 *
+		 * This is dangerous, so we always prompt.
+		 * Unfortunately this interferes with an unlocked
+		 * checkout followed by a locked checkout, which should
+		 * not prompt.  One (unimplemented) solution is to check
+		 * if the existing file is the same as the checked out
+		 * revision, and prompt if there are differences.
+		 */
+		if (st.st_mode & (S_IWUSR|S_IWGRP|S_IWOTH))
 			printf("writable ");
 		printf("%s exists%s; ", dst,
 		    (getuid() == st.st_uid) ? "" :
@@ -376,7 +381,12 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		printf("remove it? [ny](n): ");
 		/* default is n */
 		if (cvs_yesno() == -1) {
-			cvs_log(LP_ERR, "checkout aborted");
+			if ((verbose == 1) && isatty(STDIN_FILENO))
+				cvs_log(LP_ERR,
+				    "writable %s exists; checkout aborted",
+				    dst);
+			else
+				cvs_log(LP_ERR, "checkout aborted");
 			return (-1);
 		}
 	}
