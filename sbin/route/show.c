@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.45 2006/03/23 13:38:27 mcbride Exp $	*/
+/*	$OpenBSD: show.c,v 1.46 2006/03/29 20:21:45 hshoexer Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#include <net/pfkeyv2.h>
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netipx/ipx.h>
@@ -67,6 +68,8 @@ extern int nflag;
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
+
+#define PFKEYV2_CHUNK sizeof(u_int64_t)
 
 /*
  * Definitions for showing gateway flags.
@@ -99,12 +102,18 @@ static const struct bits bits[] = {
 
 void	 pr_rthdr(int, int);
 void	 p_rtentry(struct rt_msghdr *, int);
+void	 p_pfkentry(struct sadb_msg *);
 void	 pr_family(int);
+void	 p_encap(struct sockaddr *, struct sockaddr *, int);
+void	 p_protocol(struct sadb_protocol *, struct sockaddr *, struct
+	     sadb_protocol *, int);
 void	 p_sockaddr(struct sockaddr *, struct sockaddr *, int, int);
 void	 p_flags(int, char *);
 char	*routename4(in_addr_t);
 char	*routename6(struct sockaddr_in6 *);
 char	*any_ntoa(const struct sockaddr *);
+void	 index_pfk(struct sadb_msg *, void **);
+
 
 /*
  * Print routing tables.
@@ -113,6 +122,7 @@ void
 p_rttables(int af, int Aflag)
 {
 	struct rt_msghdr *rtm;
+	struct sadb_msg *msg;
 	char *buf = NULL, *next, *lim = NULL;
 	size_t needed;
 	int mib[6];
@@ -145,6 +155,37 @@ p_rttables(int af, int Aflag)
 			p_rtentry(rtm, Aflag);
 		}
 		free(buf);
+		buf = NULL;
+	}
+
+	printf("\nEncap:\n");
+
+	mib[0] = CTL_NET;
+	mib[1] = PF_KEY;
+	mib[2] = PF_KEY_V2;
+	mib[3] = NET_KEY_SPD_DUMP;
+	mib[4] = mib[5] = 0;
+
+	if (sysctl(mib, 4, NULL, &needed, NULL, 0) == -1)
+		err(1, "spd-sysctl-estimate");
+	if (needed > 0) {
+		if ((buf = malloc(needed)) == 0)
+			err(1, NULL);
+		if (sysctl(mib, 4, buf, &needed, NULL, 0) == -1)
+			err(1,"sysctl of spd");
+		lim = buf + needed;
+	}
+
+	if (buf) {
+		for (next = buf; next < lim; next += msg->sadb_msg_len *
+		    PFKEYV2_CHUNK) {
+			msg = (struct sadb_msg *)next;
+			if (msg->sadb_msg_len == 0)
+				break;
+			p_pfkentry(msg);
+		}
+		free(buf);
+		buf = NULL;
 	}
 }
 
@@ -201,6 +242,8 @@ p_rtentry(struct rt_msghdr *rtm, int Aflag)
 	struct sockaddr	*mask, *rti_info[RTAX_MAX];
 	char		 ifbuf[IF_NAMESIZE];
 
+	if (sa->sa_family == AF_KEY)
+		return;
 
 	if (old_af != sa->sa_family) {
 		old_af = sa->sa_family;
@@ -224,6 +267,48 @@ p_rtentry(struct rt_msghdr *rtm, int Aflag)
 	putchar((rtm->rtm_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
 	printf(" %.16s", if_indextoname(rtm->rtm_index, ifbuf));
 	putchar('\n');
+}
+
+/*
+ * Print a pfkey/encap entry.
+ */
+void
+p_pfkentry(struct sadb_msg *msg)
+{
+	static int	 	 old = 0;
+	struct sadb_ext		*ext;
+	struct sadb_address	*saddr;
+	struct sadb_protocol	*sap, *saft;
+	struct sockaddr		*sa, *mask;
+	void			*headers[SADB_EXT_MAX + 1];
+
+	if (!old) {
+		pr_rthdr(PF_KEY, 0);
+		old++;
+	}
+
+	bzero(headers, sizeof(headers));
+	index_pfk(msg, headers);
+
+	saddr = headers[SADB_X_EXT_SRC_FLOW];
+	sa = (struct sockaddr *)(saddr + 1);
+	saddr = headers[SADB_X_EXT_SRC_MASK];
+	mask = (struct sockaddr *)(saddr + 1);
+	p_encap(sa, mask, WID_DST(sa->sa_family));
+
+	saddr = headers[SADB_X_EXT_DST_FLOW];
+	sa = (struct sockaddr *)(saddr + 1);
+	saddr = headers[SADB_X_EXT_DST_MASK];
+	mask = (struct sockaddr *)(saddr + 1);
+	p_encap(sa, mask, WID_DST(sa->sa_family));
+
+	sap = headers[SADB_X_EXT_PROTOCOL];
+	saft = headers[SADB_X_EXT_FLOW_TYPE];
+	saddr = headers[SADB_EXT_ADDRESS_DST];
+	sa = (struct sockaddr *)(saddr + 1);
+	p_protocol(sap, sa, saft, msg->sadb_msg_satype);
+
+	printf("\n");
 }
 
 /*
@@ -258,6 +343,87 @@ pr_family(int af)
 		printf("\n%s:\n", afname);
 	else
 		printf("\nProtocol Family %d:\n", af);
+}
+
+void
+p_encap(struct sockaddr *sa, struct sockaddr *mask, int width)
+{
+	char 		*cp;
+	unsigned short	 port;
+
+	switch (sa->sa_family) {
+	case AF_INET6: {
+		break;
+	}
+	default:
+		if (mask)
+			cp = netname(sa, mask);
+		else
+			cp = routename(sa);
+		port = ntohs(((struct sockaddr_in *)sa)->sin_port);
+		break;
+	}
+	if (width < 0)
+		printf("%s", cp);
+	else {
+		if (nflag)
+			printf("%-*s %-5u ", width, cp, port);
+		else
+			printf("%-*.*s %-5u ", width, width, cp, port);
+	}
+}
+
+void
+p_protocol(struct sadb_protocol *sap, struct sockaddr *sa, struct sadb_protocol
+    *saft, int proto)
+{
+	printf("%-5u", sap->sadb_protocol_proto);
+	p_sockaddr(sa, NULL, 0, -1);
+
+	switch (proto) {
+	case SADB_SATYPE_ESP:
+		printf("/esp");
+		break;
+	case SADB_SATYPE_AH:
+		printf("/ah");
+		break;
+	case SADB_X_SATYPE_IPCOMP:
+		printf("/ipcomp");
+		break;
+	case SADB_X_SATYPE_IPIP:
+		printf("/ipip");
+		break;
+	default:
+		printf("/<unknown>");
+	}
+
+	switch(saft->sadb_protocol_proto) {
+	case SADB_X_FLOW_TYPE_USE:
+		printf("/use");
+		break;
+	case SADB_X_FLOW_TYPE_REQUIRE:
+		printf("/require");
+		break;
+	case SADB_X_FLOW_TYPE_DENY:
+		printf("/deny");
+		break;
+	case SADB_X_FLOW_TYPE_BYPASS:
+		printf("/bypass");
+		break;
+	default:
+		printf("/<unknown type>");
+	}
+
+	switch(saft->sadb_protocol_direction) {
+	case IPSP_DIRECTION_IN:
+		printf("/in");
+		break;
+	case IPSP_DIRECTION_OUT:
+		printf("/out");
+		break;
+	default:
+		printf("/<unknown>");
+	}
 }
 
 void
@@ -296,7 +462,7 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *mask, int flags, int width)
 		break;
 	}
 	if (width < 0)
-		printf("%s ", cp);
+		printf("%s", cp);
 	else {
 		if (nflag)
 			printf("%-*s ", width, cp);
@@ -684,4 +850,45 @@ link_print(struct sockaddr *sa)
 			return (ether_ntoa((struct ether_addr *)lla));
 		}
 	return (link_ntoa(sdl));
+}
+
+void
+index_pfk(struct sadb_msg *msg, void **headers)
+{
+	struct sadb_ext	*ext;
+
+	for (ext = (struct sadb_ext *)(msg + 1);
+	    (size_t)((u_int8_t *)ext - (u_int8_t *)msg) <
+	    msg->sadb_msg_len * PFKEYV2_CHUNK && ext->sadb_ext_len > 0;
+	    ext = (struct sadb_ext *)((u_int8_t *)ext +
+	    ext->sadb_ext_len * PFKEYV2_CHUNK)) {
+		switch (ext->sadb_ext_type) {
+		case SADB_EXT_ADDRESS_SRC:
+			headers[SADB_EXT_ADDRESS_SRC] = (void *)ext;
+			break;
+		case SADB_EXT_ADDRESS_DST:
+			headers[SADB_EXT_ADDRESS_DST] = (void *)ext;
+			break;
+		case SADB_X_EXT_PROTOCOL:
+			headers[SADB_X_EXT_PROTOCOL] = (void *)ext;
+			break;
+		case SADB_X_EXT_SRC_FLOW:
+			headers[SADB_X_EXT_SRC_FLOW] = (void *)ext;
+			break;
+		case SADB_X_EXT_DST_FLOW:
+			headers[SADB_X_EXT_DST_FLOW] = (void *)ext;
+			break;
+		case SADB_X_EXT_SRC_MASK:
+			headers[SADB_X_EXT_SRC_MASK] = (void *)ext;
+			break;
+		case SADB_X_EXT_DST_MASK:
+			headers[SADB_X_EXT_DST_MASK] = (void *)ext;
+			break;
+		case SADB_X_EXT_FLOW_TYPE:
+			headers[SADB_X_EXT_FLOW_TYPE] = (void *)ext;
+		default:
+			/* Ignore. */
+			break;
+		}
+	}
 }
