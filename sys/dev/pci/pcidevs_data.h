@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1048 2006/03/28 19:04:25 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1049 2006/03/29 05:10:41 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2075,6 +2075,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon X600 (RV370)",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X550,
+	    "Radeon X550",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_RV370,
 	    "FireGL V3100",
 	},
@@ -2085,6 +2089,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X600_RV370_S,
 	    "Radeon X600 (RV370) Sec",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X550_S,
+	    "Radeon X550 Sec",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_RV370_S,
@@ -5796,7 +5804,23 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB360,
-	    "JMB360 SATA II",
+	    "JMB360 SATA",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB361,
+	    "JMB361 IDE/SATA",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB363,
+	    "JMB363 IDE/SATA",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB365,
+	    "JMB365 IDE/SATA",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB366,
+	    "JMB366 IDE/SATA",
 	},
 	{
 	    PCI_VENDOR_KTI, PCI_PRODUCT_KTI_KTIE,
@@ -8527,8 +8551,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "5C552 Firewire",
 	},
 	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_R5C592,
+	    "5C592 Memory Stick",
+	},
+	{
 	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_R5C822,
 	    "5C822 SD/MMC",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_R5C852,
+	    "5C852 xD",
 	},
 	{
 	    PCI_VENDOR_ROCKWELL, PCI_PRODUCT_ROCKWELL_RS56SP_PCI11P1,
@@ -8705,6 +8737,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SAMSUNG, PCI_PRODUCT_SAMSUNG_SWL2210P,
 	    "MagicLAN SWL-2210P",
+	},
+	{
+	    PCI_VENDOR_SANGOMA, PCI_PRODUCT_SANGOMA_A10X,
+	    "A10x",
 	},
 	{
 	    PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO4,
@@ -10291,8 +10327,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "VT8377 PCI",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8M400,
-	    "K8M400 Host",
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8M800,
+	    "K8M800 Host",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8378,
