@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.138 2006/03/25 22:41:44 djm Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.139 2006/03/29 02:23:25 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2869,11 +2869,6 @@ bge_init(void *xsc)
 
 	ifp = &sc->arpcom.ac_if;
 
-	if (ifp->if_flags & IFF_RUNNING) {
-		splx(s);
-		return;
-	}
-
 	/* Cancel pending I/O and flush buffers. */
 	bge_stop(sc);
 	bge_reset(sc);
@@ -3085,16 +3080,12 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		bge_init(sc);
-		switch (ifa->ifa_addr->sa_family) {
+		if ((ifp->if_flags & IFF_RUNNING) == 0)
+			bge_init(sc);
 #ifdef INET
-		case AF_INET:
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->arpcom, ifa);
-			break;
-#endif /* INET */
-		default:
-			break;
-		}
+#endif
 		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN ||
@@ -3129,10 +3120,12 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 				    BGE_RXMODE_RX_PROMISC);
 				bge_setmulti(sc);
 			} else if (ifp->if_flags & IFF_RUNNING &&
-			    (ifp->if_flags ^ sc->bge_if_flags) & IFF_ALLMULTI)
+			    (ifp->if_flags ^ sc->bge_if_flags) & IFF_ALLMULTI) {
 				bge_setmulti(sc);
-			else
-				bge_init(sc);
+			} else {
+				if ((ifp->if_flags & IFF_RUNNING) == 0)
+					bge_init(sc);
+			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				bge_stop(sc);
@@ -3181,7 +3174,6 @@ bge_watchdog(struct ifnet *ifp)
 
 	printf("%s: watchdog timeout -- resetting\n", sc->bge_dev.dv_xname);
 
-	ifp->if_flags &= ~IFF_RUNNING;
 	bge_init(sc);
 
 	ifp->if_oerrors++;
