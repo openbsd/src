@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.119 2006/03/24 10:39:07 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.120 2006/03/29 01:49:52 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -397,6 +397,7 @@ auvia*	at pci?				# VIA VT82C686A
 #esa*	at pci?				# ESS Maestro3 PCI
 yds*	at pci? flags 0x0000		# Yamaha YMF Audio
 emu*	at pci?				# SB Live!
+mpu*	at isa? port 0x330
 
 # OPL[23] FM synthesizers
 #opl*	at eso?
@@ -407,6 +408,7 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 #midi*	at opl?			# OPL FM synth
 #midi*	at autri?
 midi*	at eap?
+midi*	at mpu?
 
 spkr0	at pcppi?		# PC speaker
 
