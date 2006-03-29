@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.154 2006/03/28 07:42:56 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.155 2006/03/29 09:16:53 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -251,7 +251,7 @@ static void	rcs_freepdata(struct rcs_pdata *);
 static int	rcs_gettok(RCSFILE *);
 static int	rcs_pushtok(RCSFILE *, const char *, int);
 static void	rcs_growbuf(RCSFILE *);
-static int	rcs_strprint(const u_char *, size_t, FILE *);
+static void	rcs_strprint(const u_char *, size_t, FILE *);
 
 static char*   rcs_expand_keywords(char *, struct rcs_delta *, char *,
                     size_t, int);
@@ -412,7 +412,7 @@ rcs_write(RCSFILE *rfp)
 	struct rcs_branch *brp;
 	struct rcs_delta *rdp;
 	struct rcs_lock *lkp;
-	ssize_t nread;
+	ssize_t nread, nwritten;
 	size_t len;
 	int fd, from_fd, to_fd;
 
@@ -569,8 +569,13 @@ rcs_write(RCSFILE *rfp)
 			}
 
 			bp = xmalloc(MAXBSIZE);
-			while ((nread = read(from_fd, bp, MAXBSIZE)) > 0) {
-				if (write(to_fd, bp, nread) != nread)
+			for (;;) {
+				if ((nread = read(from_fd, bp, MAXBSIZE)) == 0)
+					break;
+				if (nread == -1)
+					goto err;
+				nwritten = write(to_fd, bp, (size_t)nread);
+				if (nwritten == -1 || nwritten != nread)
 					goto err;
 			}
 
@@ -1366,7 +1371,7 @@ rcs_findrev(RCSFILE *rfp, RCSNUM *rev)
 	 */
 	enddelta = TAILQ_LAST(&(rfp->rf_delta), rcs_dlist);
 	if ((enddelta == NULL)
-	    || (rcsnum_cmp(enddelta->rd_num, rev, -1) == -1)) {
+	    || (rcsnum_cmp(enddelta->rd_num, rev, 0) == -1)) {
 		rcs_parse_deltas(rfp, rev);
 	}
 
@@ -1529,7 +1534,7 @@ rcs_parse_deltas(RCSFILE *rfp, RCSNUM *rev)
 		ret = rcs_parse_delta(rfp);
 		if (rev != NULL) {
 			enddelta = TAILQ_LAST(&(rfp->rf_delta), rcs_dlist);
-			if (rcsnum_cmp(enddelta->rd_num, rev, -1) == 0)
+			if (rcsnum_cmp(enddelta->rd_num, rev, 0) == 0)
 				break;
 		}
 		if (ret == 0) {
@@ -2448,14 +2453,13 @@ rcs_growbuf(RCSFILE *rf)
  * '@' characters are escaped.  Otherwise, the string can contain arbitrary
  * binary data.
  */
-static int
+static void
 rcs_strprint(const u_char *str, size_t slen, FILE *stream)
 {
 	const u_char *ap, *ep, *sp;
-	size_t ret;
 
 	if (slen == 0)
-		return (0);
+		return;
 
 	ep = str + slen - 1;
 
@@ -2463,14 +2467,12 @@ rcs_strprint(const u_char *str, size_t slen, FILE *stream)
 		ap = memchr(sp, '@', ep - sp);
 		if (ap == NULL)
 			ap = ep;
-		ret = fwrite(sp, sizeof(u_char), ap - sp + 1, stream);
+		(void)fwrite(sp, sizeof(u_char), ap - sp + 1, stream);
 
 		if (*ap == '@')
 			putc('@', stream);
 		sp = ap + 1;
 	}
-
-	return (0);
 }
 
 /*
@@ -2484,9 +2486,10 @@ static char *
 rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
     size_t len, int mode)
 {
+	ptrdiff_t c_offset, sizdiff, start_offset;
 	size_t i;
-	int kwtype, sizdiff;
-	u_int j, found, start_offset, c_offset;
+	int kwtype;
+	u_int j, found;
 	char *c, *kwstr, *start, *end, *tbuf;
 	char expbuf[256], buf[256];
 	struct tm *tb;
@@ -2685,9 +2688,9 @@ rcs_deltatext_set(RCSFILE *rfp, RCSNUM *rev, const char *dtext)
 
 	len = strlen(dtext);
 	if (len != 0) {
-		rdp->rd_text = (u_char *)xmalloc(len);
-		rdp->rd_tlen = len - 1;
-		strlcpy(rdp->rd_text, dtext, len);
+		rdp->rd_text = (u_char *)xmalloc(len + 1);
+		rdp->rd_tlen = len;
+		(void)memcpy(rdp->rd_text, dtext, len + 1);
 	} else {
 		rdp->rd_text = NULL;
 		rdp->rd_tlen = 0;
