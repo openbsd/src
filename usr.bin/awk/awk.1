@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.23 2005/05/12 09:18:24 jmc Exp $
+.\"	$OpenBSD: awk.1,v 1.24 2006/03/29 15:29:55 jmc Exp $
 .\" EX/EE is a Bd
 .\"
 .\" Copyright (C) Lucent Technologies 1997
@@ -610,9 +610,14 @@ As long as the stream remains open, subsequent calls
 will read subsequent records from the stream.
 The stream remains open until explicitly closed with a call to
 .Fn close .
-.It Fn fflush expr
-Flushes any buffered output for the file or pipe
-.Fa expr .
+.Ic getline
+returns 1 for a successful input, 0 for end of file, and \-1 for an error.
+.It Fn fflush [expr]
+Flushes any buffered output for the file, pipe
+.Fa expr ,
+or all open files or pipes if
+.Fa expr
+is omitted.
 .Fa expr
 should match the string that was used to open the file or pipe.
 .It Ic getline
