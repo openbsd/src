@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489var.h,v 1.2 2004/06/13 21:49:16 niklas Exp $	*/
+/*	$OpenBSD: i82489var.h,v 1.3 2006/03/29 15:02:27 mickey Exp $	*/
 /*	$NetBSD: i82489var.h,v 1.1.2.2 2000/02/21 18:46:14 sommerfeld Exp $	*/
 
 /*-
@@ -62,6 +62,14 @@ i82489_writereg(reg, val)
 {
 	*((volatile u_int32_t *)(((volatile u_int8_t *)local_apic) + reg)) =
 	    val;
+	/*
+	 * intel xeon errata p53:
+	 *   write to a lapic register sometimes may appear to have not occured
+	 * workaround:
+	 *   follow write with a read [from id register]
+	 */
+	val = *((volatile u_int32_t *)(((volatile u_int8_t *)local_apic) +
+	    LAPIC_ID));
 }
 
 /*
