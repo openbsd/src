@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.14 2005/10/28 18:27:17 jmc Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.15 2006/03/30 12:46:47 claudio Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -81,11 +81,19 @@ The only settings that can be set globally and not overruled are listed below.
 .Pq Ic yes Ns \&| Ns Ic no
 .Xc
 If set to
-.Ic no ,
+.Ic \&no ,
 do not update the Forward Information Base, a.k.a. the kernel
 routing table.
 The default is
 .Ic yes .
+Setting
+.Ic fib-update
+to
+.Ic \&no
+may result in routing loops and could cause major routing issues in the
+complete OSPF cloud.
+Only routers with just one link to the OSPF cloud may safely set it to
+.Ic \&no .
 .It Xo
 .Ic redistribute
 .Sm off
