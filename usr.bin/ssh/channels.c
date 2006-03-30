@@ -1,4 +1,4 @@
-/* $OpenBSD: channels.c,v 1.248 2006/03/28 01:52:28 deraadt Exp $ */
+/* $OpenBSD: channels.c,v 1.249 2006/03/30 09:41:25 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1939,6 +1939,8 @@ channel_output_poll(void)
 
 
 /* -- protocol input */
+
+/* ARGSUSED */
 void
 channel_input_data(int type, u_int32_t seq, void *ctxt)
 {
@@ -1998,6 +2000,7 @@ channel_input_data(int type, u_int32_t seq, void *ctxt)
 	xfree(data);
 }
 
+/* ARGSUSED */
 void
 channel_input_extended_data(int type, u_int32_t seq, void *ctxt)
 {
@@ -2044,6 +2047,7 @@ channel_input_extended_data(int type, u_int32_t seq, void *ctxt)
 	xfree(data);
 }
 
+/* ARGSUSED */
 void
 channel_input_ieof(int type, u_int32_t seq, void *ctxt)
 {
@@ -2067,6 +2071,7 @@ channel_input_ieof(int type, u_int32_t seq, void *ctxt)
 
 }
 
+/* ARGSUSED */
 void
 channel_input_close(int type, u_int32_t seq, void *ctxt)
 {
@@ -2105,6 +2110,7 @@ channel_input_close(int type, u_int32_t seq, void *ctxt)
 }
 
 /* proto version 1.5 overloads CLOSE_CONFIRMATION with OCLOSE */
+/* ARGSUSED */
 void
 channel_input_oclose(int type, u_int32_t seq, void *ctxt)
 {
@@ -2117,6 +2123,7 @@ channel_input_oclose(int type, u_int32_t seq, void *ctxt)
 	chan_rcvd_oclose(c);
 }
 
+/* ARGSUSED */
 void
 channel_input_close_confirmation(int type, u_int32_t seq, void *ctxt)
 {
@@ -2133,6 +2140,7 @@ channel_input_close_confirmation(int type, u_int32_t seq, void *ctxt)
 	channel_free(c);
 }
 
+/* ARGSUSED */
 void
 channel_input_open_confirmation(int type, u_int32_t seq, void *ctxt)
 {
@@ -2180,6 +2188,7 @@ reason2txt(int reason)
 	return "unknown reason";
 }
 
+/* ARGSUSED */
 void
 channel_input_open_failure(int type, u_int32_t seq, void *ctxt)
 {
@@ -2211,6 +2220,7 @@ channel_input_open_failure(int type, u_int32_t seq, void *ctxt)
 	channel_free(c);
 }
 
+/* ARGSUSED */
 void
 channel_input_window_adjust(int type, u_int32_t seq, void *ctxt)
 {
@@ -2235,6 +2245,7 @@ channel_input_window_adjust(int type, u_int32_t seq, void *ctxt)
 	c->remote_window += adjust;
 }
 
+/* ARGSUSED */
 void
 channel_input_port_open(int type, u_int32_t seq, void *ctxt)
 {
