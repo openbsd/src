@@ -1,4 +1,4 @@
-/*	$OpenBSD: pty.c,v 1.14 2005/08/02 21:46:23 espie Exp $	*/
+/*	$OpenBSD: pty.c,v 1.15 2006/03/30 20:44:19 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -87,13 +87,13 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
 	if (termp)
 		(void) tcsetattr(slave, TCSAFLUSH, termp);
 	if (winp)
-		(void) ioctl(slave, TIOCSWINSZ, (char *)winp);
+		(void) ioctl(slave, TIOCSWINSZ, winp);
 	return (0);
  walkit:
 	if ((gr = getgrnam("tty")) != NULL)
 		ttygid = gr->gr_gid;
 	else
-		ttygid = -1;
+		ttygid = (gid_t)-1;
 
 	for (cp1 = TTY_LETTERS; *cp1; cp1++) {
 		line[8] = *cp1;
@@ -123,7 +123,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
 						    TCSAFLUSH, termp);
 					if (winp)
 						(void) ioctl(slave, TIOCSWINSZ,
-						    (char *)winp);
+						    winp);
 					return (0);
 				}
 				(void) close(master);
