@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.30 2006/03/30 06:07:35 ray Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.31 2006/03/30 23:06:25 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -302,6 +302,7 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 		nump->rn_id[nump->rn_len + 1] = 0;
 		nump->rn_len++;
 	}
+
 	nump->rn_len++;
 	return (nump->rn_len);
 

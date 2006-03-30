@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.56 2006/03/30 06:11:03 ray Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.57 2006/03/30 23:06:25 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -100,7 +100,7 @@ struct rcs_kw {
 #define RCSNUM_MAXLEN	64
 
 #define RCSNUM_ISBRANCH(n)	((n)->rn_len % 2)
-
+#define RCSNUM_ISBRANCHREV(n)	(!((n)->rn_len % 2) && ((n)->rn_len >= 4))
 
 /* file flags */
 #define RCS_READ	  (1<<0)
@@ -183,7 +183,6 @@ struct rcs_delta {
 	u_char		*rd_text;
 	size_t		 rd_tlen;
 
-	struct rcs_dlist		rd_snodes;
 	TAILQ_HEAD(, rcs_branch)	rd_branches;
 	TAILQ_ENTRY(rcs_delta)		rd_list;
 };

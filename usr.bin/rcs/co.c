@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.68 2006/03/29 08:44:08 ray Exp $	*/
+/*	$OpenBSD: co.c,v 1.69 2006/03/30 23:06:25 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -154,6 +154,7 @@ checkout_main(int argc, char **argv)
 	}
 
 	for (i = 0; i < argc; i++) {
+		frev = NULL;
 		if (rcs_statfile(argv[i], fpath, sizeof(fpath)) < 0)
 			continue;
 
@@ -195,7 +196,7 @@ checkout_main(int argc, char **argv)
 			rcs_set_mtime(fpath, rcs_mtime);
 	}
 
-	if (rev != RCS_HEAD_REV)
+	if ((rev != RCS_HEAD_REV) && (frev != NULL))
 		rcsnum_free(frev);
 
 	return (status);
@@ -224,6 +225,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
     const char *date)
 {
 	BUF *bp;
+	u_int i;
 	int lcount;
 	char buf[16];
 	mode_t mode = 0444;
@@ -232,14 +234,21 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	struct rcs_lock *lkp;
 	char *content, msg[128], *fdate;
 	time_t rcsdate, givendate;
+	RCSNUM *rev;
 
 	rcsdate = givendate = -1;
 	if (date != NULL)
 		givendate = cvs_date_parse(date);
 
-	/* Check out the latest revision if <frev> is greater than HEAD */
-	if (rcsnum_cmp(frev, file->rf_head, 0) == -1)
-		frev = file->rf_head;
+	/* XXX rcsnum_cmp()
+	 * Check out the latest revision if <frev> is greater than HEAD
+	 */
+	for (i = 0; i < file->rf_head->rn_len; i++) {
+		if (file->rf_head->rn_id[i] < frev->rn_id[i]) {
+			frev = file->rf_head;
+			break;
+		}
+	}
 
 	lcount = 0;
 	TAILQ_FOREACH(lkp, &(file->rf_locks), rl_list) {
@@ -290,7 +299,8 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		return (-1);
 	}
 
-	rcsnum_tostr(frev, buf, sizeof(buf));
+	rev = rdp->rd_num;
+	rcsnum_tostr(rev, buf, sizeof(buf));
 
 	if (rdp->rd_locker != NULL) {
 		if (strcmp(lockname, rdp->rd_locker)) {
@@ -307,14 +317,15 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		printf("revision %s", buf);
 
 
-	if ((bp = rcs_getrev(file, frev)) == NULL) {
+	if ((bp = rcs_getrev(file, rev)) == NULL) {
 		cvs_log(LP_ERR, "cannot find revision `%s'", buf);
 		return (-1);
 	}
+
 	/*
 	 * Do keyword expansion if required.
 	 */
-	bp = rcs_kwexp_buf(bp, file, frev);
+	bp = rcs_kwexp_buf(bp, file, rev);
 
 	/*
 	 * File inherits permissions from its ,v file
@@ -326,7 +337,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 
 	if (flags & CO_LOCK) {
 		if ((lockname != NULL)
-		    && (rcs_lock_add(file, lockname, frev) < 0)) {
+		    && (rcs_lock_add(file, lockname, rev) < 0)) {
 			if (rcs_errno != RCS_ERR_DUPENT)
 				return (-1);
 		}
@@ -338,7 +349,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		if ((verbose == 1) && !(flags & NEWFILE))
 			printf(" (locked)");
 	} else if (flags & CO_UNLOCK) {
-		if (rcs_lock_remove(file, lockname, frev) < 0) {
+		if (rcs_lock_remove(file, lockname, rev) < 0) {
 			if (rcs_errno != RCS_ERR_NOENT)
 				return (-1);
 		}
@@ -406,7 +417,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		if (flags & CO_REVDATE) {
 			struct timeval tv[2];
 			memset(&tv, 0, sizeof(tv));
-			tv[0].tv_sec = (long)rcs_rev_getdate(file, frev);
+			tv[0].tv_sec = (long)rcs_rev_getdate(file, rev);
 			tv[1].tv_sec = tv[0].tv_sec;
 			if (utimes(dst, (const struct timeval *)&tv) < 0)
 				cvs_log(LP_ERRNO, "error setting utimes");

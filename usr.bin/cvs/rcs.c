@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.155 2006/03/29 09:16:53 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.156 2006/03/30 23:06:25 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1169,12 +1169,14 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 BUF*
 rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 {
-	int res;
+	u_int i, numlen;
+	int isbranch, lookonbranch;
 	size_t len;
 	void *bp;
-	RCSNUM *crev, *rev;
+	RCSNUM *crev, *rev, *brev;
 	BUF *rbuf;
 	struct rcs_delta *rdp = NULL;
+	struct rcs_branch *rb;
 
 	if (rfp->rf_head == NULL)
 		return (NULL);
@@ -1184,10 +1186,12 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 	else
 		rev = frev;
 
-	res = rcsnum_cmp(rfp->rf_head, rev, 0);
-	if (res == 1) {
-		rcs_errno = RCS_ERR_NOENT;
-		return (NULL);
+	/* XXX rcsnum_cmp() */
+	for (i = 0; i < rfp->rf_head->rn_len; i++) {
+		if (rfp->rf_head->rn_id[i] < rev->rn_id[i]) {
+			rcs_errno = RCS_ERR_NOENT;
+			return (NULL);
+		}
 	}
 
 	/* No matter what, we're going to need up the the description parsed */
@@ -1198,8 +1202,10 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 		cvs_log(LP_ERR, "failed to get RCS HEAD revision");
 		return (NULL);
 	}
+
 	if (rdp->rd_tlen == 0)
 		rcs_parse_deltatexts(rfp, rfp->rf_head);
+
 	len = rdp->rd_tlen;
 	if (len == 0) {
 		rbuf = cvs_buf_alloc(1, 0);
@@ -1210,33 +1216,86 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 	rbuf = cvs_buf_alloc(len, BUF_AUTOEXT);
 	cvs_buf_append(rbuf, rdp->rd_text, len);
 
-	if (res != 0) {
-		/* Apply patches backwards to get the right version.
-		 * This will need some rework to support sub branches.
-		 */
-		do {
-			crev = rdp->rd_next;
-			rdp = rcs_findrev(rfp, crev);
-			if (rdp == NULL) {
-				cvs_buf_free(rbuf);
-				return (NULL);
-			}
-			cvs_buf_putc(rbuf, '\0');
-			/* check if we have parsed this rev's deltatext */
-			if (rdp->rd_tlen == 0)
-				rcs_parse_deltatexts(rfp, rdp->rd_num);
+	isbranch = 0;
+	brev = NULL;
 
-			bp = cvs_buf_release(rbuf);
-			rbuf = cvs_patchfile((char *)bp, (char *)rdp->rd_text,
-			    rcs_patch_lines);
-			xfree(bp);
-			if (rbuf == NULL)
-				break;
-		} while (rcsnum_cmp(crev, rev, 0) != 0);
+	/*
+	 * If a branch was passed, get the latest revision on it.
+	 */ 
+	if (RCSNUM_ISBRANCH(rev)) {
+		brev = rev;
+		rdp = rcs_findrev(rfp, rev);
+		if (rdp == NULL)
+			fatal("failed to translate branch to latest revision");
+
+		rev = rdp->rd_num;
+	} else {
+		if (RCSNUM_ISBRANCHREV(rev)) {
+			brev = rcsnum_revtobr(rev);
+			isbranch = 1;
+		}
 	}
+
+	lookonbranch = 0;
+	crev = NULL;
+
+	/* Apply patches backwards to get the right version.
+	 */
+	do {
+		if (rcsnum_cmp(rfp->rf_head, rev, 0) == 0)
+			break;
+
+		if ((isbranch == 1) && (rdp->rd_num->rn_len < rev->rn_len) &&
+		    (!TAILQ_EMPTY(&(rdp->rd_branches))))
+			lookonbranch = 1;
+
+		if (isbranch && lookonbranch == 1) {
+			lookonbranch = 0;
+			TAILQ_FOREACH(rb, &(rdp->rd_branches), rb_list) {
+				/* XXX rcsnum_cmp() is totally broken for
+				 * this purpose.
+				 */
+				numlen = MIN(brev->rn_len, rb->rb_num->rn_len);
+				for (i = 0; i < numlen; i++) {
+					if (rb->rb_num->rn_id[i] !=
+					    brev->rn_id[i])
+						break;
+				}
+
+				if (i == numlen) {
+					crev = rb->rb_num;
+					break;
+				}
+			}
+		} else {
+			crev = rdp->rd_next;
+		}
+
+		rdp = rcs_findrev(rfp, crev);
+		if (rdp == NULL) {
+			cvs_buf_free(rbuf);
+			return (NULL);
+		}
+
+		cvs_buf_putc(rbuf, '\0');
+
+		/* check if we have parsed this rev's deltatext */
+		if (rdp->rd_tlen == 0)
+			rcs_parse_deltatexts(rfp, rdp->rd_num);
+
+		bp = cvs_buf_release(rbuf);
+		rbuf = cvs_patchfile((char *)bp, (char *)rdp->rd_text,
+		    rcs_patch_lines);
+		xfree(bp);
+
+		if (rbuf == NULL)
+			break;
+	} while (rcsnum_cmp(crev, rev, 0) != 0);
+
 	if (cvs_buf_getc(rbuf, cvs_buf_len(rbuf)-1) != '\n'
 	    && rbuf != NULL)
 		cvs_buf_putc(rbuf, '\n');
+
 	return (rbuf);
 }
 
@@ -1284,7 +1343,6 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 	memset(rdp, 0, sizeof(*rdp));
 
 	TAILQ_INIT(&(rdp->rd_branches));
-	TAILQ_INIT(&(rdp->rd_snodes));
 
 	rdp->rd_num = rcsnum_alloc();
 	rcsnum_cpy(rev, rdp->rd_num, 0);
@@ -1355,43 +1413,56 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
  *
  * Find a specific revision's delta entry in the tree of the RCS file <rfp>.
  * The revision number is given in <rev>.
+ *
+ * If the given revision is a branch number, we translate it into the latest
+ * revision on the branch.
+ *
  * Returns a pointer to the delta on success, or NULL on failure.
  */
 struct rcs_delta *
 rcs_findrev(RCSFILE *rfp, RCSNUM *rev)
 {
 	u_int cmplen;
-	struct rcs_delta *rdp, *enddelta;
-	struct rcs_dlist *hp;
-	int found;
+	struct rcs_delta *rdp;
+	RCSNUM *brev, *frev;
 
 	/*
 	 * We need to do more parsing if the last revision in the linked list
 	 * is greater than the requested revision.
 	 */
-	enddelta = TAILQ_LAST(&(rfp->rf_delta), rcs_dlist);
-	if ((enddelta == NULL)
-	    || (rcsnum_cmp(enddelta->rd_num, rev, 0) == -1)) {
+	rdp = TAILQ_LAST(&(rfp->rf_delta), rcs_dlist);
+	if ((rdp == NULL)
+	    || (rcsnum_cmp(rdp->rd_num, rev, 0) == -1)) {
 		rcs_parse_deltas(rfp, rev);
 	}
 
-	cmplen = 2;
-	hp = &(rfp->rf_delta);
+	/*
+	 * Translate a branch into the latest revision on the branch itself.
+	 */
+	if (RCSNUM_ISBRANCH(rev)) {
+		brev = rcsnum_brtorev(rev);
+		frev = brev;
+		for (;;) {
+			rdp = rcs_findrev(rfp, frev);
+			if (rdp == NULL)
+				fatal("failed to translate branch to last revision");
 
-	do {
-		found = 0;
-		TAILQ_FOREACH(rdp, hp, rd_list) {
-			if (rcsnum_cmp(rdp->rd_num, rev, cmplen) == 0) {
-				if (cmplen == rev->rn_len)
-					return (rdp);
-
-				hp = &(rdp->rd_snodes);
-				cmplen += 2;
-				found = 1;
+			if (rdp->rd_next->rn_len == 0)
 				break;
-			}
+
+			frev = rdp->rd_next;
 		}
-	} while (found && cmplen < rev->rn_len);
+
+		rcsnum_free(brev);
+		return (rdp);
+	}
+
+	cmplen = rev->rn_len;
+
+	TAILQ_FOREACH(rdp, &(rfp->rf_delta), rd_list) {
+		if (rcsnum_cmp(rdp->rd_num, rev, cmplen) == 0)
+			return (rdp);
+	}
 
 	return (NULL);
 }
@@ -1791,7 +1862,6 @@ rcs_parse_delta(RCSFILE *rfp)
 	rdp->rd_next = rcsnum_alloc();
 
 	TAILQ_INIT(&(rdp->rd_branches));
-	TAILQ_INIT(&(rdp->rd_snodes));
 
 	tok = rcs_gettok(rfp);
 	if (tok == RCS_TOK_DESC) {
@@ -2263,11 +2333,6 @@ rcs_freedelta(struct rcs_delta *rdp)
 		TAILQ_REMOVE(&(rdp->rd_branches), rb, rb_list);
 		rcsnum_free(rb->rb_num);
 		xfree(rb);
-	}
-
-	while ((crdp = TAILQ_FIRST(&(rdp->rd_snodes))) != NULL) {
-		TAILQ_REMOVE(&(rdp->rd_snodes), crdp, rd_list);
-		rcs_freedelta(crdp);
 	}
 
 	xfree(rdp);
