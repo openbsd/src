@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.35 2006/03/28 09:41:35 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.36 2006/03/30 06:11:03 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -32,15 +32,18 @@
 
 static void	rlog_file(const char *, const char *);
 static void	rlog_rev_print(struct rcs_delta *);
+static u_int	rlog_rev_select(void);
 
+#define RLOG_OPTSTRING	"hLl::NqRr::s:TtVw::x::z:"
 #define REVSEP		"----------------------------"
 #define REVEND \
  "============================================================================="
 
-static int hflag, Lflag, lflag, tflag, Nflag, wflag;
+static int hflag, Lflag, lflag, rflag, tflag, Nflag, wflag;
 static char *llist = NULL;
 static char *slist = NULL;
 static char *wlist = NULL;
+static char *revisions = NULL;
 static RCSFILE *file;
 
 void
@@ -59,8 +62,8 @@ rlog_main(int argc, char **argv)
 	int i, ch;
 	char fpath[MAXPATHLEN];
 
-	hflag = Rflag = 0;
-	while ((ch = rcs_getopt(argc, argv, "hLl::NqRs:TtVw::x::z:")) != -1) {
+	hflag = Rflag = rflag = 0;
+	while ((ch = rcs_getopt(argc, argv, RLOG_OPTSTRING)) != -1) {
 		switch (ch) {
 		case 'h':
 			hflag = 1;
@@ -77,6 +80,10 @@ rlog_main(int argc, char **argv)
 			break;
 		case 'q':
 			verbose = 0;
+			break;
+		case 'r':
+			rflag = 1;
+			revisions = rcs_optarg;
 			break;
 		case 'R':
 			Rflag = 1;
@@ -157,10 +164,16 @@ static void
 rlog_file(const char *fname, const char *fpath)
 {
 	char numb[64];
+	u_int nrev;
 	struct rcs_sym *sym;
 	struct rcs_access *acp;
 	struct rcs_delta *rdp;
 	struct rcs_lock *lkp;
+
+	if (rflag == 1)
+		nrev = rlog_rev_select();
+	else
+		nrev = file->rf_ndelta;
 
 	printf("\nRCS file: %s", fpath);
 	printf("\nWorking file: %s", fname);
@@ -196,7 +209,7 @@ rlog_file(const char *fname, const char *fpath)
 	printf("total revisions: %u", file->rf_ndelta);
 
 	if ((file->rf_head != NULL) && (hflag == 0) && (tflag == 0))
-		printf(";\tselected revisions:"); /* XXX */
+		printf(";\tselected revisions: %u", nrev);
 
 	printf("\n");
 
@@ -205,8 +218,14 @@ rlog_file(const char *fname, const char *fpath)
 		printf("description:\n%s", file->rf_desc);
 
 	if ((hflag == 0) && (tflag == 0)) {
-		TAILQ_FOREACH(rdp, &(file->rf_delta), rd_list)
-			rlog_rev_print(rdp);
+		TAILQ_FOREACH(rdp, &(file->rf_delta), rd_list) {
+			/*
+			 * if selections are enabled verify that entry is
+			 * selected. 
+			 */
+			if ((rflag == 0) || (rdp->rd_flags & RCS_RD_SELECT))
+				rlog_rev_print(rdp);
+		}
 	}
 
 	printf("%s\n", REVEND);
@@ -304,4 +323,80 @@ rlog_rev_print(struct rcs_delta *rdp)
 	    rdp->rd_date.tm_min, rdp->rd_date.tm_sec,
 	    rdp->rd_author, rdp->rd_state);
 	printf("%s", rdp->rd_log);
+}
+
+static u_int
+rlog_rev_select(void)
+{
+	int i;
+	u_int nrev;
+	char *ep;
+	char *lstr, *rstr;
+	struct rcs_delta *rdp;
+	struct cvs_argvector *revargv, *revrange;
+	RCSNUM lnum, rnum;
+
+	nrev = 0;
+	(void)memset(&lnum, 0, sizeof(lnum));
+	(void)memset(&rnum, 0, sizeof(rnum));
+
+	if (revisions == NULL) {
+		TAILQ_FOREACH(rdp, &file->rf_delta, rd_list)
+			if (rcsnum_cmp(rdp->rd_num, file->rf_head, 0) == 0) {
+				rdp->rd_flags |= RCS_RD_SELECT;
+				return (1);
+			}
+		return (0);
+	}
+
+	revargv = cvs_strsplit(revisions, ",");
+	for (i = 0; revargv->argv[i] != NULL; i++) {
+		revrange = cvs_strsplit(revargv->argv[i], ":");
+		if (revrange->argv[0] == NULL)
+			/* should not happen */
+			fatal("invalid revision range: %s", revargv->argv[i]);
+		else if (revrange->argv[1] == NULL) {
+			lstr = rstr = revrange->argv[0];
+		} else {
+			if (revrange->argv[2] != NULL)
+				fatal("invalid revision range: %s", 
+					revargv->argv[i]);
+			lstr = revrange->argv[0];
+			rstr = revrange->argv[1];
+			if (strcmp(lstr, "") == 0) {
+				lstr = NULL;
+			}
+			if (strcmp(rstr, "") == 0) {
+				rstr = NULL;
+			}
+		}
+
+		if (lstr == NULL)
+			lstr = RCS_HEAD_INIT;
+		if (rcsnum_aton(lstr, &ep, &lnum) == 0 || (*ep != '\0'))
+			fatal("invalid revision: %s", lstr);
+
+		if (rstr != NULL) {
+			if (rcsnum_aton(rstr, &ep, &rnum) == 0 || (*ep != '\0'))
+				fatal("invalid revision: %s", rstr);
+		} else
+			(void)rcsnum_cpy(file->rf_head, &rnum, 0);
+		cvs_argv_destroy(revrange);
+
+		TAILQ_FOREACH(rdp, &file->rf_delta, rd_list)
+			if ((rcsnum_cmp(rdp->rd_num, &lnum, 0) <= 0) &&
+			    (rcsnum_cmp(rdp->rd_num, &rnum, 0) >= 0) &&
+			    !(rdp->rd_flags & RCS_RD_SELECT)) {
+				rdp->rd_flags |= RCS_RD_SELECT;
+				nrev++;
+			}
+	}
+	cvs_argv_destroy(revargv);	
+
+	if (lnum.rn_id != NULL)
+		xfree(lnum.rn_id);
+	if (rnum.rn_id != NULL)
+		xfree(rnum.rn_id);
+
+	return (nrev);
 }

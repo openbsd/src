@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.55 2006/03/30 06:07:35 ray Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.56 2006/03/30 06:11:03 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -121,6 +121,7 @@ struct rcs_kw {
 
 /* delta flags */
 #define RCS_RD_DEAD	0x01	/* dead */
+#define RCS_RD_SELECT	0x02	/* select for operation */
 
 /* RCS error codes */
 #define RCS_ERR_NOERR	0
