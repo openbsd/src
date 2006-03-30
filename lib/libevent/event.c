@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.12 2006/03/28 15:32:13 brad Exp $	*/
+/*	$OpenBSD: event.c,v 1.13 2006/03/30 06:32:36 brad Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -196,6 +196,33 @@ event_init(void)
 	event_base_priority_init(current_base, 1);
 
 	return (current_base);
+}
+
+void
+event_base_free(struct event_base *base)
+{
+	int i;
+
+	if (base == NULL && current_base)
+		base = current_base;
+	if (base == current_base)
+		current_base = NULL;
+
+	assert(base);
+	assert(TAILQ_EMPTY(&base->eventqueue));
+	for (i=0; i < base->nactivequeues; ++i)
+		assert(TAILQ_EMPTY(base->activequeues[i]));
+
+	assert(RB_EMPTY(&base->timetree));
+
+	for (i = 0; i < base->nactivequeues; ++i)
+		free(base->activequeues[i]);
+	free(base->activequeues);
+
+	if (base->evsel->dealloc != NULL)
+		base->evsel->dealloc(base->evbase);
+
+	free(base);
 }
 
 int
@@ -539,6 +566,7 @@ event_pending(struct event *ev, short event, struct timeval *tv)
 	if (tv != NULL && (flags & event & EV_TIMEOUT)) {
 		gettime(&now);
 		timersub(&ev->ev_timeout, &now, &res);
+		/* correctly remap to real time */
 		gettimeofday(&now, NULL);
 		timeradd(&now, &res, tv);
 	}

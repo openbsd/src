@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.14 2006/01/25 05:25:34 brad Exp $	*/
+/*	$OpenBSD: event.h,v 1.15 2006/03/30 06:32:36 brad Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -125,6 +125,7 @@ struct eventop {
 	int (*del)(void *, struct event *);
 	int (*recalc)(struct event_base *, void *, int);
 	int (*dispatch)(struct event_base *, void *, struct timeval *);
+	void (*dealloc)(void *);
 };
 
 #define TIMEOUT_DEFAULT	{5, 0}
@@ -132,6 +133,7 @@ struct eventop {
 void *event_init(void);
 int event_dispatch(void);
 int event_base_dispatch(struct event_base *);
+void event_base_free(struct event_base *);
 
 #define _EVENT_LOG_DEBUG 0
 #define _EVENT_LOG_MSG   1

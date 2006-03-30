@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll.c,v 1.11 2005/12/02 04:41:30 deraadt Exp $	*/
+/*	$OpenBSD: poll.c,v 1.12 2006/03/30 06:32:36 brad Exp $	*/
 
 /*
  * Copyright 2000-2003 Niels Provos <provos@citi.umich.edu>
@@ -74,6 +74,7 @@ int poll_add		(void *, struct event *);
 int poll_del		(void *, struct event *);
 int poll_recalc		(struct event_base *, void *, int);
 int poll_dispatch	(struct event_base *, void *, struct timeval *);
+void poll_dealloc	(void *);
 
 const struct eventop pollops = {
 	"poll",
@@ -81,7 +82,8 @@ const struct eventop pollops = {
 	poll_add,
 	poll_del,
 	poll_recalc,
-	poll_dispatch
+	poll_dispatch,
+	poll_dealloc
 };
 
 void *
@@ -355,4 +357,22 @@ poll_del(void *arg, struct event *ev)
 
 	poll_check_ok(pop);
 	return (0);
+}
+
+void
+poll_dealloc(void *arg)
+{
+	struct pollop *pop = arg;
+
+	if (pop->event_set)
+		free(pop->event_set);
+	if (pop->event_r_back)
+		free(pop->event_r_back);
+	if (pop->event_w_back)
+		free(pop->event_w_back);
+	if (pop->idxplus1_by_fd)
+		free(pop->idxplus1_by_fd);
+
+	memset(pop, 0, sizeof(struct pollop));
+	free(pop);
 }
