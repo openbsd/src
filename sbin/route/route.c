@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.92 2005/12/11 12:33:43 aaron Exp $	*/
+/*	$OpenBSD: route.c,v 1.93 2006/03/30 09:56:06 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -304,34 +304,18 @@ set_metric(char *value, int key)
 		valp = &rt_metrics.rmx_mtu;
 		flag = RTV_MTU;
 		break;
-	case K_HOPCOUNT:
-		valp = &rt_metrics.rmx_hopcount;
-		flag = RTV_HOPCOUNT;
-		break;
 	case K_EXPIRE:
 		valp = &rt_metrics.rmx_expire;
 		flag = RTV_EXPIRE;
 		break;
+	case K_HOPCOUNT:
 	case K_RECVPIPE:
-		valp = &rt_metrics.rmx_recvpipe;
-		flag = RTV_RPIPE;
-		break;
 	case K_SENDPIPE:
-		valp = &rt_metrics.rmx_sendpipe;
-		flag = RTV_SPIPE;
-		break;
 	case K_SSTHRESH:
-		valp = &rt_metrics.rmx_ssthresh;
-		flag = RTV_SSTHRESH;
-		break;
 	case K_RTT:
-		valp = &rt_metrics.rmx_rtt;
-		flag = RTV_RTT;
-		break;
 	case K_RTTVAR:
-		valp = &rt_metrics.rmx_rttvar;
-		flag = RTV_RTTVAR;
-		break;
+		/* no longer used, only for compatibility */
+		return;
 	default:
 		errx(1, "king bula sez: set_metric with invalid key");
 	}
