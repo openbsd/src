@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.46 2006/03/29 20:21:45 hshoexer Exp $	*/
+/*	$OpenBSD: show.c,v 1.47 2006/03/30 09:57:35 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -111,9 +111,7 @@ void	 p_sockaddr(struct sockaddr *, struct sockaddr *, int, int);
 void	 p_flags(int, char *);
 char	*routename4(in_addr_t);
 char	*routename6(struct sockaddr_in6 *);
-char	*any_ntoa(const struct sockaddr *);
 void	 index_pfk(struct sadb_msg *, void **);
-
 
 /*
  * Print routing tables.
@@ -257,9 +255,11 @@ p_rtentry(struct rt_msghdr *rtm, int Aflag)
 		return;
 
 	p_sockaddr(sa, mask, rtm->rtm_flags, WID_DST(sa->sa_family));
-	p_sockaddr(rti_info[RTAX_GATEWAY], NULL, RTF_HOST, WID_GW(sa->sa_family));
+	p_sockaddr(rti_info[RTAX_GATEWAY], NULL, RTF_HOST,
+	    WID_GW(sa->sa_family));
 	p_flags(rtm->rtm_flags, "%-6.6s ");
-	printf("%6d %8ld ", 0, rtm->rtm_rmx.rmx_pksent);
+	printf("%6d %8ld ", (int)rtm->rtm_rmx.rmx_refcnt,
+	    rtm->rtm_rmx.rmx_pksent);
 	if (rtm->rtm_rmx.rmx_mtu)
 		printf("%6ld ", rtm->rtm_rmx.rmx_mtu);
 	else
@@ -584,9 +584,8 @@ routename4(in_addr_t in)
 char *
 routename6(struct sockaddr_in6 *sin6)
 {
-	int	 niflags;
+	int	 niflags = 0;
 
-	niflags = 0;
 	if (nflag)
 		niflags |= NI_NUMERICHOST;
 	else
@@ -647,10 +646,9 @@ netname6(struct sockaddr_in6 *sa6, struct sockaddr_in6 *mask)
 	int i, lim, flag, error;
 	char hbuf[NI_MAXHOST];
 
-	flag = 0;
-
 	sin6 = *sa6;
 
+	flag = 0;
 	masklen = 0;
 	if (mask) {
 		lim = mask->sin6_len - offsetof(struct sockaddr_in6, sin6_addr);
@@ -843,13 +841,14 @@ link_print(struct sockaddr *sa)
 	    sdl->sdl_slen == 0) {
 		snprintf(line, sizeof(line), "link#%d", sdl->sdl_index);
 		return (line);
-	} else
-		switch (sdl->sdl_type) {
-		case IFT_ETHER:
-		case IFT_CARP:
-			return (ether_ntoa((struct ether_addr *)lla));
-		}
-	return (link_ntoa(sdl));
+	}
+	switch (sdl->sdl_type) {
+	case IFT_ETHER:
+	case IFT_CARP:
+		return (ether_ntoa((struct ether_addr *)lla));
+	default:
+		return (link_ntoa(sdl));
+	}
 }
 
 void
