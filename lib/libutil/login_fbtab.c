@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_fbtab.c,v 1.12 2004/09/18 19:22:42 deraadt Exp $	*/
+/*	$OpenBSD: login_fbtab.c,v 1.13 2006/03/30 20:44:45 deraadt Exp $	*/
 
 /************************************************************************
 * Copyright 1995 by Wietse Venema.  All rights reserved.  Some individual
@@ -73,7 +73,7 @@
 
 #define _PATH_FBTAB	"/etc/fbtab"
 
-static void login_protect(const char *, int, uid_t, gid_t);
+static void login_protect(const char *, mode_t, uid_t, gid_t);
 
 #define	WSPACE		" \t\n"
 
@@ -85,7 +85,7 @@ login_fbtab(const char *tty, uid_t uid, gid_t gid)
 {
 	FILE	*fp;
 	char	*buf, *toklast, *tbuf, *devnam, *cp;
-	int	prot;
+	mode_t	prot;
 	size_t	len;
 
 	if ((fp = fopen(_PATH_FBTAB, "r")) == NULL)
@@ -133,7 +133,7 @@ login_fbtab(const char *tty, uid_t uid, gid_t gid)
  * login_protect - protect one device entry
  */
 static void
-login_protect(const char *path, int mask, uid_t uid, gid_t gid)
+login_protect(const char *path, mode_t mask, uid_t uid, gid_t gid)
 {
 	char	buf[PATH_MAX];
 	size_t	pathlen = strlen(path);
