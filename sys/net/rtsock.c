@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.54 2006/03/22 14:37:44 henning Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.55 2006/03/30 08:28:16 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -300,7 +300,7 @@ route_output(struct mbuf *m, ...)
 		 * For host routes only a longest prefix match is returned
 		 * so it is necessary to compare the existence of the netmaks.
 		 * If both have a netmask rn_lookup() did a perfect match and
-		 * if non of them have a netmask both are host routes which is
+		 * if none of them have a netmask both are host routes which is
 		 * also a perfect match.
 		 */
 		if (rtm->rtm_type != RTM_GET && !rt_mask(rt) != !netmask) {
