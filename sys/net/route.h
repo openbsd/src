@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.37 2006/03/22 14:37:44 henning Exp $	*/
+/*	$OpenBSD: route.h,v 1.38 2006/03/30 09:53:43 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -75,11 +75,13 @@ struct rt_metrics {
 	u_long	rmx_expire;	/* lifetime for route, e.g. redirect */
 	u_long	rmx_recvpipe;	/* inbound delay-bandwidth product */
 	u_long	rmx_sendpipe;	/* outbound delay-bandwidth product */
-	u_long	rmx_ssthresh;	/* outbound gateway buffer limit */
-	u_long	rmx_rtt;	/* estimated round trip time */
-	u_long	rmx_rttvar;	/* estimated rtt variance */
+	u_long	rmx_ssthresh;	/* outbound gateway buffer limit (deprecated) */
+	u_long	rmx_rtt;	/* estimated round trip time (deprecated) */
+	u_long	rmx_rttvar;	/* estimated rtt variance (deprecated) */
 	u_long	rmx_pksent;	/* packets sent using this route */
 };
+/* XXX overloading rttvar as that value is no longer used. */
+#define rmx_refcnt rmx_rttvar	/* # held references only used by sysctl */
 
 /*
  * rmx_rtt and rmx_rttvar are stored as microseconds;
@@ -157,7 +159,7 @@ struct rtentry {
 struct	rtstat {
 	u_int32_t rts_badredirect;	/* bogus redirect calls */
 	u_int32_t rts_dynamic;		/* routes created by redirects */
-	u_int32_t rts_newgateway;		/* routes modified by redirects */
+	u_int32_t rts_newgateway;	/* routes modified by redirects */
 	u_int32_t rts_unreach;		/* lookups which failed */
 	u_int32_t rts_wildcard;		/* lookups satisfied by a wildcard */
 };

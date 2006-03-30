@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.55 2006/03/30 08:28:16 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.56 2006/03/30 09:53:43 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -811,6 +811,7 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		rtm->rtm_flags = rt->rt_flags;
 		rtm->rtm_use = 0;
 		rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
+		rtm->rtm_rmx.rmx_refcnt = (u_long)rt->rt_refcnt;
 		rtm->rtm_index = rt->rt_ifp->if_index;
 		rtm->rtm_errno = rtm->rtm_pid = rtm->rtm_seq = 0;
 		rtm->rtm_addrs = info.rti_addrs;
