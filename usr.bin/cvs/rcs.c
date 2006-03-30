@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.157 2006/03/30 23:09:01 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.158 2006/03/30 23:12:52 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1226,7 +1226,7 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 		brev = rev;
 		rdp = rcs_findrev(rfp, rev);
 		if (rdp == NULL)
-			fatal("failed to translate branch to latest revision");
+			return (NULL);
 
 		rev = rdp->rd_num;
 	} else {
@@ -1445,7 +1445,7 @@ rcs_findrev(RCSFILE *rfp, RCSNUM *rev)
 		for (;;) {
 			rdp = rcs_findrev(rfp, frev);
 			if (rdp == NULL)
-				fatal("failed to translate branch to last revision");
+				return (NULL);
 
 			if (rdp->rd_next->rn_len == 0)
 				break;
