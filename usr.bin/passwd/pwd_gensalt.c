@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_gensalt.c,v 1.22 2004/12/20 15:05:59 moritz Exp $ */
+/*	$OpenBSD: pwd_gensalt.c,v 1.23 2006/03/30 21:06:29 deraadt Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -97,7 +97,7 @@ pwd_gensalt(char *salt, int saltlen, login_cap_t *lc, char type)
 		else if (rounds > 0xffffff)
 			rounds = 0xffffff;
 		salt[0] = _PASSWORD_EFMT1;
-		to64(&salt[1], (u_int32_t) rounds, 4);
+		to64(&salt[1], (u_int32_t)rounds, 4);
 		to64(&salt[5], arc4random(), 4);
 		salt[9] = '\0';
 	} else if (!strcmp(now, "md5")) {
@@ -137,6 +137,6 @@ to64(char *s, int32_t v, int n)
 {
 	while (--n >= 0) {
 		*s++ = itoa64[v&0x3f];
-		v >>= 6;
+		(unsigned)v >>= 6;
 	}
 }

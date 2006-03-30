@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.28 2004/07/13 21:09:48 millert Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.29 2006/03/30 21:06:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.28 2004/07/13 21:09:48 millert Exp $";
+static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.29 2006/03/30 21:06:29 deraadt Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -314,14 +314,13 @@ ypgetpwnam(char *nam, int secure)
 	char *val;
 
 	reason = yp_match(domain,
-			  secure ? "master.passwd.byname" : "passwd.byname",
-			  nam, strlen(nam), &val, &vallen);
+	    secure ? "master.passwd.byname" : "passwd.byname",
+	    nam, strlen(nam), &val, &vallen);
 	switch (reason) {
 	case 0:
 		break;
 	default:
 		return (NULL);
-		break;
 	}
 	val[vallen] = '\0';
 	if (__yplin)
