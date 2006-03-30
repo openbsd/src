@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.8,v 1.9 2005/10/25 20:38:14 stevesk Exp $
+.\"	$OpenBSD: ospfd.8,v 1.10 2006/03/30 12:49:15 claudio Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
 .\"
@@ -76,3 +76,9 @@ The
 .Nm
 program first appeared in
 .Ox 3.7 .
+.Sh CAVEATS
+For correct operation,
+.Nm
+setups with more than one configured interface require that 
+.Va net.inet.ip.forwarding
+is set to 1.
