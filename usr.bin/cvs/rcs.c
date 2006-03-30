@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.156 2006/03/30 23:06:25 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.157 2006/03/30 23:09:01 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2311,7 +2311,6 @@ static void
 rcs_freedelta(struct rcs_delta *rdp)
 {
 	struct rcs_branch *rb;
-	struct rcs_delta *crdp;
 
 	if (rdp->rd_num != NULL)
 		rcsnum_free(rdp->rd_num);
