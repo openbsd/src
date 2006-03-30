@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.24 2006/03/22 20:24:32 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.25 2006/03/30 01:16:31 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: utilities.c,v 1.24 2006/03/22 20:24:32 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: utilities.c,v 1.25 2006/03/30 01:16:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,10 +102,14 @@ reply(char *question)
 		printf("%s? yes\n\n", question);
 		return (1);
 	}
-	do	{
-		printf("%s? [yn] ", question);
+	do {
+		printf("%s? [Fyn?] ", question);
 		(void) fflush(stdout);
 		c = getc(stdin);
+		if (c == 'F') {
+			yflag = 1;
+			return (1);
+		}
 		while (c != '\n' && getc(stdin) != '\n') {
 			if (feof(stdin)) {
 				resolved = 0;
