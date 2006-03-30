@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.h,v 1.12 2005/01/14 14:51:28 mcbride Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.13 2006/03/30 14:28:28 norby Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.23 2004/04/21 17:49:46 itojun Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
@@ -65,7 +65,7 @@ typedef u_int16_t vifi_t;		/* type of a vif index */
  */
 struct vifctl {
 	vifi_t	  vifc_vifi;	    	/* the index of the vif to be added */
-	u_int8_t  vifc_flags;     	/* VIFF_ flags defined below */
+	u_int8_t  vifc_flags;     	/* VIFF_ flags defined above */
 	u_int8_t  vifc_threshold; 	/* min ttl required to forward on vif */
 	u_int32_t vifc_rate_limit;	/* max rate */
 	struct	  in_addr vifc_lcl_addr;/* local interface address */
