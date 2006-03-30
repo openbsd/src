@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.12 2005/12/13 00:35:24 millert Exp $	*/
+/*	$OpenBSD: wait.h,v 1.13 2006/03/30 20:43:41 deraadt Exp $	*/
 /*	$NetBSD: wait.h,v 1.11 1996/04/09 20:55:51 cgd Exp $	*/
 
 /*
@@ -56,11 +56,11 @@
 #define	_WSTOPPED	0177		/* _WSTATUS if process is stopped */
 #define	_WCONTINUED	0177777		/* process has continued */
 #define WIFSTOPPED(x)	((_W_INT(x) & 0xff) == _WSTOPPED)
-#define WSTOPSIG(x)	((_W_INT(x) >> 8) & 0xff)
+#define WSTOPSIG(x)	(int)(((unsigned)_W_INT(x) >> 8) & 0xff)
 #define WIFSIGNALED(x)	(_WSTATUS(x) != _WSTOPPED && _WSTATUS(x) != 0)
 #define WTERMSIG(x)	(_WSTATUS(x))
 #define WIFEXITED(x)	(_WSTATUS(x) == 0)
-#define WEXITSTATUS(x)	((_W_INT(x) >> 8) & 0xff)
+#define WEXITSTATUS(x)	(int)(((unsigned)_W_INT(x) >> 8) & 0xff)
 #define WIFCONTINUED(x)	((_W_INT(x) & _WCONTINUED) == _WCONTINUED)
 #if __XPG_VISIBLE
 #define	WCOREFLAG	0200
