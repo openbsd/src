@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.93 2006/03/30 09:56:06 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.94 2006/03/30 12:11:37 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -584,6 +584,9 @@ show(int argc, char *argv[])
 				break;
 			case K_LINK:
 				af = AF_LINK;
+				break;
+			case K_ENCAP:
+				af = PF_KEY;
 				break;
 			default:
 				usage(*argv);
