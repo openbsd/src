@@ -1,16 +1,17 @@
-/*	$OpenBSD: extend.c,v 1.44 2005/12/20 06:17:36 kjell Exp $	*/
+/*	$OpenBSD: extend.c,v 1.45 2006/03/30 18:32:07 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
  */
+#include <sys/types.h>
+#include <ctype.h>
+
 #include "chrdef.h"
 #include "def.h"
 #include "kbd.h"
 #include "funmap.h"
-
-#include <ctype.h>
 
 #ifndef NO_MACRO
 #include "macro.h"
@@ -115,7 +116,7 @@ remap(KEYMAP *curmap,		/* pointer to the map being changed */
 			n2 = HUGE;
 		if (n1 <= MAPELEDEF && n1 <= n2) {
 			ele--;
-			if ((pfp = (PF *)malloc((c - ele->k_base + 1) *
+			if ((pfp = calloc(c - ele->k_base + 1,
 			    sizeof(PF))) == NULL) {
 				ewprintf("Out of memory");
 				return (FALSE);
@@ -129,7 +130,7 @@ remap(KEYMAP *curmap,		/* pointer to the map being changed */
 			ele->k_num = c;
 			ele->k_funcp = pfp;
 		} else if (n2 <= MAPELEDEF) {
-			if ((pfp = (PF *)malloc((ele->k_num - c + 1) *
+			if ((pfp = calloc(ele->k_num - c + 1,
 			    sizeof(PF))) == NULL) {
 				ewprintf("Out of memory");
 				return (FALSE);
@@ -170,7 +171,7 @@ remap(KEYMAP *curmap,		/* pointer to the map being changed */
 			if (pref_map != NULL)
 				ele->k_prefmap = pref_map;
 			else {
-				if ((mp = (KEYMAP *)malloc(sizeof(KEYMAP) +
+				if ((mp = malloc(sizeof(KEYMAP) +
 				    (MAPINIT - 1) * sizeof(struct map_element))) == NULL) {
 					ewprintf("Out of memory");
 					ele->k_funcp[c - ele->k_base] =
@@ -224,7 +225,7 @@ remap(KEYMAP *curmap,		/* pointer to the map being changed */
 			if (curmap->map_num >= curmap->map_max &&
 			    (curmap = reallocmap(curmap)) == NULL)
 				return (FALSE);
-			if ((pfp = malloc((ele->k_num - c + !n2) *
+			if ((pfp = calloc(ele->k_num - c + !n2,
 			    sizeof(PF))) == NULL) {
 				ewprintf("Out of memory");
 				return (FALSE);
@@ -274,9 +275,12 @@ reallocmap(KEYMAP *curmap)
 	KEYMAP	*mp;
 	int	 i;
 
-	if ((mp = (KEYMAP *)malloc((unsigned)(sizeof(KEYMAP) +
-	    (curmap->map_max + (MAPGROW - 1)) *
-	    sizeof(struct map_element)))) == NULL) {
+	if (curmap->map_max > SHRT_MAX - MAPGROW) {
+		ewprintf("keymap too large");
+		return (NULL);
+	}
+	if ((mp = malloc(sizeof(KEYMAP) + (curmap->map_max + (MAPGROW - 1)) *
+	    sizeof(struct map_element))) == NULL) {
 		ewprintf("Out of memory");
 		return (NULL);
 	}
