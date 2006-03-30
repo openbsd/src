@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.29 2006/03/28 02:13:44 ray Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.30 2006/03/30 06:07:35 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -38,8 +38,7 @@ static char	*rcsnum_itoa(u_int16_t, char *, size_t);
 /*
  * rcsnum_alloc()
  *
- * Allocate an RCS number structure and return a pointer to it on success,
- * or NULL on failure.
+ * Allocate an RCS number structure and return a pointer to it.
  */
 RCSNUM *
 rcsnum_alloc(void)
@@ -141,26 +140,23 @@ rcsnum_itoa(u_int16_t num, char *buf, size_t len)
  * rcsnum_cpy()
  *
  * Copy the number stored in <nsrc> in the destination <ndst> up to <depth>
- * numbers deep.
- * Returns 0 on success, or -1 on failure.
+ * numbers deep.  If <depth> is 0, there is no depth limit.
  */
-int
+void
 rcsnum_cpy(const RCSNUM *nsrc, RCSNUM *ndst, u_int depth)
 {
 	u_int len;
-	size_t sz;
 	void *tmp;
 
 	len = nsrc->rn_len;
 	if ((depth != 0) && (len > depth))
 		len = depth;
-	sz = len * sizeof(u_int16_t);
 
-	tmp = xrealloc(ndst->rn_id, 1, sz);
+	tmp = xrealloc(ndst->rn_id, len, sizeof(len));
 	ndst->rn_id = (u_int16_t *)tmp;
 	ndst->rn_len = len;
-	memcpy(ndst->rn_id, nsrc->rn_id, sz);
-	return (0);
+	/* Overflow checked in xrealloc(). */
+	memcpy(ndst->rn_id, nsrc->rn_id, len * sizeof(len));
 }
 
 /*
