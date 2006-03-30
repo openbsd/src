@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.41 2006/03/24 05:14:48 ray Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.42 2006/03/30 23:19:20 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -209,9 +209,10 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 
 	strlcpy(path1, rcs_tmpdir, sizeof(path1));
 	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));
-	cvs_buf_write_stmp(b1, path1, 0600);
 
 	cvs_worklist_add(path1, &rcs_temp_files);
+	cvs_buf_write_stmp(b1, path1, 0600);
+
 	cvs_buf_free(b1);
 	b1 = NULL;
 
@@ -220,9 +221,10 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 
 	strlcpy(path2, rcs_tmpdir, sizeof(path2));
 	strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2));
-	cvs_buf_write_stmp(b2, path2, 0600);
 
 	cvs_worklist_add(path2, &rcs_temp_files);
+	cvs_buf_write_stmp(b2, path2, 0600);
+
 	cvs_buf_free(b2);
 	b2 = NULL;
 
@@ -288,9 +290,10 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 
 	strlcpy(path1, rcs_tmpdir, sizeof(path1));
 	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));
-	cvs_buf_write_stmp(b1, path1, 0600);
 
 	cvs_worklist_add(path1, &rcs_temp_files);
+	cvs_buf_write_stmp(b1, path1, 0600);
+
 	cvs_buf_free(b1);
 	b1 = NULL;
 
@@ -299,9 +302,10 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 
 	strlcpy(path2, rcs_tmpdir, sizeof(path2));
 	strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2));
-	cvs_buf_write_stmp(b2, path2, 0600);
 
 	cvs_worklist_add(path2, &rcs_temp_files);
+	cvs_buf_write_stmp(b2, path2, 0600);
+
 	cvs_buf_free(b2);
 	b2 = NULL;
 
