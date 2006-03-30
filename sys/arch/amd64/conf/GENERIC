@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.121 2006/03/29 14:10:51 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.122 2006/03/30 21:12:50 wilfried Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -453,9 +453,9 @@ safe*	at pci?			# SafeNet SafeXcel 1141/1741
 #ises*	at pci?			# Pijnenburg PCC-ISES
 
 # I2O
-#iop*	at pci?			# I2O
-#ioprbs*	at iop?		# Random block storage
-#scsibus* at ioprbs?
+iop*	at pci?			# I2O
+ioprbs*	at iop?			# Random block storage
+scsibus* at ioprbs?
 
 pseudo-device	sequencer	1
 #pseudo-device	raid		4	# RAIDframe disk driver
