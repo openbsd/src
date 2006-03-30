@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.33 2006/03/07 00:30:28 reyk Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.34 2006/03/30 12:44:20 markus Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -43,7 +43,8 @@ static u_int32_t sadb_msg_seq = 1;
 
 static int	pfkey_flow(int, u_int8_t, u_int8_t, u_int8_t,
 		    struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
-		    struct ipsec_addr_wrap *, struct ipsec_auth *, u_int8_t);
+		    struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
+		    struct ipsec_auth *, u_int8_t);
 static int	pfkey_sa(int, u_int8_t, u_int8_t, u_int32_t,
 		    struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
 		    struct ipsec_transforms *, struct ipsec_key *,
@@ -57,13 +58,15 @@ int		pfkey_init(void);
 static int
 pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
     struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
-    struct ipsec_addr_wrap *peer, struct ipsec_auth *auth, u_int8_t flowtype)
+    struct ipsec_addr_wrap *local, struct ipsec_addr_wrap *peer,
+    struct ipsec_auth *auth, u_int8_t flowtype)
 {
 	struct sadb_msg		 smsg;
-	struct sadb_address	 sa_src, sa_dst, sa_peer, sa_smask, sa_dmask;
+	struct sadb_address	 sa_src, sa_dst, sa_local, sa_peer, sa_smask,
+				 sa_dmask;
 	struct sadb_protocol	 sa_flowtype, sa_protocol;
 	struct sadb_ident	*sa_srcid, *sa_dstid;
-	struct sockaddr_storage	 ssrc, sdst, speer, smask, dmask;
+	struct sockaddr_storage	 ssrc, sdst, slocal, speer, smask, dmask;
 	struct iovec		 iov[IOV_CNT];
 	ssize_t			 n;
 	int			 iov_cnt, len, ret = 0;
@@ -104,6 +107,22 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 	dmask.ss_family = sdst.ss_family;
 	dmask.ss_len = sdst.ss_len;
 
+	bzero(&slocal, sizeof(slocal));
+	if (local) {
+		switch (local->af) {
+		case AF_INET:
+			((struct sockaddr_in *)&slocal)->sin_addr =
+			    local->address.v4;
+			slocal.ss_len = sizeof(struct sockaddr_in);
+			slocal.ss_family = AF_INET;
+			break;
+		case AF_INET6:
+		default:
+			warnx("unsupported address family %d", local->af);
+			return -1;
+		}
+	}
+
 	bzero(&speer, sizeof(speer));
 	if (peer) {
 		switch (peer->af) {
@@ -116,7 +135,7 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 		case AF_INET6:
 		default:
 			warnx("unsupported address family %d", peer->af);
-		return -1;
+			return -1;
 		}
 	}
 
@@ -175,10 +194,18 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 	sa_dmask.sadb_address_len =
 	    (sizeof(sa_dmask) + ROUNDUP(dmask.ss_len)) / 8;
 
-	bzero(&sa_peer, sizeof(sa_peer));
-	sa_peer.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
-	sa_peer.sadb_address_len =
-	    (sizeof(sa_peer) + ROUNDUP(speer.ss_len)) / 8;
+	if (local) {
+		bzero(&sa_local, sizeof(sa_local));
+		sa_local.sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
+		sa_local.sadb_address_len =
+		    (sizeof(sa_local) + ROUNDUP(slocal.ss_len)) / 8;
+	}
+	if (peer) {
+		bzero(&sa_peer, sizeof(sa_peer));
+		sa_peer.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
+		sa_peer.sadb_address_len =
+		    (sizeof(sa_peer) + ROUNDUP(speer.ss_len)) / 8;
+	}
 
 	if (auth && auth->srcid) {
 		len = ROUNDUP(strlen(auth->srcid) + 1) + sizeof(*sa_srcid);
@@ -221,6 +248,17 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 	iov[iov_cnt].iov_len = sizeof(sa_flowtype);
 	smsg.sadb_msg_len += sa_flowtype.sadb_protocol_len;
 	iov_cnt++;
+
+	/* local ip */
+	if (local) {
+		iov[iov_cnt].iov_base = &sa_local;
+		iov[iov_cnt].iov_len = sizeof(sa_local);
+		iov_cnt++;
+		iov[iov_cnt].iov_base = &slocal;
+		iov[iov_cnt].iov_len = ROUNDUP(slocal.ss_len);
+		smsg.sadb_msg_len += sa_local.sadb_address_len;
+		iov_cnt++;
+	}
 
 	/* remote peer */
 	if (peer) {
@@ -599,7 +637,6 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 	    ext->sadb_ext_len * PFKEYV2_CHUNK)) {
 		switch (ext->sadb_ext_type) {
 		case SADB_EXT_ADDRESS_SRC:
-#ifdef notyet
 			saddr = (struct sadb_address *)ext;
 			sa = (struct sockaddr *)(saddr + 1);
 
@@ -618,7 +655,6 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 			default:
 				return (1);
 			}
-#endif
 			break;
 
 
@@ -865,12 +901,12 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 		switch (action) {
 		case ACTION_ADD:
 			ret = pfkey_flow(fd, satype, SADB_X_ADDFLOW, direction,
-			    r->src, r->dst, r->peer, r->auth, r->flowtype);
+			    r->src, r->dst, r->local, r->peer, r->auth, r->flowtype);
 			break;
 		case ACTION_DELETE:
 			/* No peer for flow deletion. */
 			ret = pfkey_flow(fd, satype, SADB_X_DELFLOW, direction,
-			    r->src, r->dst, NULL, NULL, r->flowtype);
+			    r->src, r->dst, NULL, NULL, NULL, r->flowtype);
 			break;
 		default:
 			return -1;

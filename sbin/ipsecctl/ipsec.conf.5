@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.33 2006/03/22 16:01:23 reyk Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.34 2006/03/30 12:44:20 markus Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -112,6 +112,8 @@ Thus packets in both directions will be matched.
 .Aq Ar src
 .Ar to
 .Aq Ar dst
+.Ar local
+.Aq Ar localip
 .Ar peer
 .Aq Ar remote
 .Xc
@@ -124,8 +126,12 @@ The keyword
 .Ar any
 will match any address (i.e. 0.0.0.0/0).
 The
+.Ar local
+parameter specifies the address of the local endpoint of this particular
+flow and can be usually left out.
+The
 .Ar peer
-parameter specifies the address of the remote endpoint of this particular
+parameter specifies the address of the remote endpoint of this
 flow.
 For host-to-host connections where
 .Aq Ar dst
@@ -525,6 +531,10 @@ flow esp from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
 # Same as above, but explicitly specifying "in" and "out" rules
 flow esp out from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
 flow esp in  from 192.168.8.0/24 to 192.168.7.0/24 peer 192.168.3.12
+
+# Same as above, but explicitly specifying the local gateway ip
+flow esp from 192.168.7.0/24 to 192.168.8.0/24 \e
+	local 192.168.1.1 peer 192.168.3.12
 
 # Set up IPsec SAs for flows between 192.168.3.14 and 192.168.3.12
 esp from 192.168.3.14 to 192.168.3.12 spi 0xdeadbeef:0xbeefdead \e

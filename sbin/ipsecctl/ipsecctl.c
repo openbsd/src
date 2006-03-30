@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.43 2006/03/22 16:01:23 reyk Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.44 2006/03/30 12:44:20 markus Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -167,6 +167,10 @@ ipsecctl_commit(int action, struct ipsecctl *ipsec)
 		free(rp->dst->name);
 		free(rp->dst);
 
+		if (rp->local) {
+			free(rp->local->name);
+			free(rp->local);
+		}
 		if (rp->peer) {
 			free(rp->peer->name);
 			free(rp->peer);
@@ -249,6 +253,10 @@ ipsecctl_print_flow(struct ipsec_rule *r, int opts)
 	ipsecctl_print_addr(r->src);
 	printf(" to ");
 	ipsecctl_print_addr(r->dst);
+	if (r->local) {
+		printf(" local ");
+		ipsecctl_print_addr(r->local);
+	}
 	if (r->peer) {
 		printf(" peer ");
 		ipsecctl_print_addr(r->peer);
@@ -423,6 +431,10 @@ ipsecctl_show_flows(int opts)
 		free(rp->src);
 		free(rp->dst->name);
 		free(rp->dst);
+		if (rp->local) {
+			free(rp->local->name);
+			free(rp->local);
+		}
 		if (rp->peer) {
 			free(rp->peer->name);
 			free(rp->peer);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.53 2006/03/22 16:01:23 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.54 2006/03/30 12:44:20 markus Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -132,8 +132,9 @@ struct ipsec_rule	*create_sa(u_int8_t, u_int8_t, struct ipsec_addr_wrap *,
 struct ipsec_rule	*reverse_sa(struct ipsec_rule *, u_int32_t,
 			     struct ipsec_key *, struct ipsec_key *);
 struct ipsec_rule	*create_flow(u_int8_t, struct ipsec_addr_wrap *, struct
-			     ipsec_addr_wrap *, struct ipsec_addr_wrap *,
-			     u_int8_t, char *, char *, u_int8_t);
+			     ipsec_addr_wrap *, struct ipsec_addr_wrap *, struct
+			     ipsec_addr_wrap *, u_int8_t, char *, char *,
+			     u_int8_t);
 struct ipsec_rule	*reverse_rule(struct ipsec_rule *);
 struct ipsec_rule	*create_ike(struct ipsec_addr_wrap *, struct
 			     ipsec_addr_wrap *, struct ipsec_addr_wrap *,
@@ -155,6 +156,7 @@ typedef struct {
 			struct ipsec_addr_wrap *src;
 			struct ipsec_addr_wrap *dst;
 		} hosts;
+		struct ipsec_addr_wrap *local;
 		struct ipsec_addr_wrap *peer;
 		struct ipsec_addr_wrap *host;
 		struct {
@@ -192,7 +194,7 @@ typedef struct {
 %token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI
 %token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK PASSIVE
 %token	ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT DYNAMIC
-%token	TYPE DENY BYPASS
+%token	TYPE DENY BYPASS LOCAL
 %token	<v.string>		STRING
 %type	<v.string>		string
 %type	<v.dir>			dir
@@ -200,6 +202,7 @@ typedef struct {
 %type	<v.tmode>		tmode
 %type	<v.number>		number
 %type	<v.hosts>		hosts
+%type	<v.local>		local
 %type	<v.peer>		peer
 %type	<v.host>		host
 %type	<v.ids>			ids
@@ -297,11 +300,11 @@ sarule		: protocol tmode hosts spispec transforms authkeyspec
 		}
 		;
 
-flowrule	: FLOW protocol dir hosts peer ids type {
+flowrule	: FLOW protocol dir hosts local peer ids type {
 			struct ipsec_rule	*r;
 
-			r = create_flow($3, $4.src, $4.dst, $5, $2, $6.srcid,
-			    $6.dstid, $7);
+			r = create_flow($3, $4.src, $4.dst, $5, $6, $2,
+			    $7.srcid, $7.dstid, $8);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
@@ -310,7 +313,7 @@ flowrule	: FLOW protocol dir hosts peer ids type {
 				errx(1, "flowrule: ipsecctl_add_rule");
 
 			/* Create and add reverse flow rule. */
-			if ($7 == TYPE_UNKNOWN && $3 == IPSEC_INOUT) {
+			if ($8 == TYPE_UNKNOWN && $3 == IPSEC_INOUT) {
 				r = reverse_rule(r);
 				r->nr = ipsec->rule_nr++;
 
@@ -363,6 +366,17 @@ hosts		: FROM host TO host		{
 
 peer		: /* empty */			{ $$ = NULL; }
 		| PEER STRING			{
+			if (($$ = host($2)) == NULL) {
+				free($2);
+				yyerror("could not parse host specification");
+				YYERROR;
+			}
+			free($2);
+		}
+		;
+
+local		: /* empty */			{ $$ = NULL; }
+		| LOCAL STRING			{
 			if (($$ = host($2)) == NULL) {
 				free($2);
 				yyerror("could not parse host specification");
@@ -684,6 +698,7 @@ lookup(char *s)
 		{ "in",			IN },
 		{ "ipcomp",		IPCOMP },
 		{ "ipip",		IPIP },
+		{ "local",		LOCAL },
 		{ "main",		MAIN },
 		{ "out",		OUT },
 		{ "passive",		PASSIVE },
@@ -1506,8 +1521,8 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
 
 struct ipsec_rule *
 create_flow(u_int8_t dir, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
-    *dst, struct ipsec_addr_wrap *peer, u_int8_t proto, char *srcid, char
-    *dstid, u_int8_t type)
+    *dst, struct ipsec_addr_wrap *local, struct ipsec_addr_wrap *peer,
+    u_int8_t proto, char *srcid, char *dstid, u_int8_t type)
 {
 	struct ipsec_rule *r;
 
@@ -1536,6 +1551,7 @@ create_flow(u_int8_t dir, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
 	else
 		r->flowtype = TYPE_REQUIRE;
 
+	r->local = local;
 	if (peer == NULL) {
 		/* Set peer to remote host.  Must be a host address. */
 		if (r->direction == IPSEC_IN) {
@@ -1596,6 +1612,8 @@ reverse_rule(struct ipsec_rule *rule)
 
 	reverse->src = copyhost(rule->dst);
 	reverse->dst = copyhost(rule->src);
+	if (rule->local)
+		reverse->local = copyhost(rule->local);
 	reverse->peer = copyhost(rule->peer);
 	reverse->proto = (u_int8_t)rule->proto;
 
