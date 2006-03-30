@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.48 2006/03/30 12:11:37 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.49 2006/03/30 13:58:30 hshoexer Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -159,8 +159,6 @@ p_rttables(int af, int Aflag)
 	if (af != 0 && af != PF_KEY)
 		return;
 
-	printf("\nEncap:\n");
-
 	mib[0] = CTL_NET;
 	mib[1] = PF_KEY;
 	mib[2] = PF_KEY_V2;
@@ -178,6 +176,8 @@ p_rttables(int af, int Aflag)
 	}
 
 	if (buf) {
+		printf("\nEncap:\n");
+
 		for (next = buf; next < lim; next += msg->sadb_msg_len *
 		    PFKEYV2_CHUNK) {
 			msg = (struct sadb_msg *)next;
@@ -380,7 +380,7 @@ void
 p_protocol(struct sadb_protocol *sap, struct sockaddr *sa, struct sadb_protocol
     *saft, int proto)
 {
-	printf("%-5u", sap->sadb_protocol_proto);
+	printf("%-6u", sap->sadb_protocol_proto);
 	p_sockaddr(sa, NULL, 0, -1);
 
 	switch (proto) {
