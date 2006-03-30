@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck.8,v 1.27 2005/11/21 14:27:55 millert Exp $
+.\"	$OpenBSD: fsck.8,v 1.28 2006/03/30 01:27:03 pedro Exp $
 .\"	$NetBSD: fsck.8,v 1.14 1996/10/03 20:08:29 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -150,6 +150,17 @@ to assume
 .Dq yes
 as the answer to all operator questions.
 .El
+.Pp
+If neither of the
+.Fl y
+or
+.Fl n
+options are specified, the user may force
+.Nm
+to assume an answer of
+.Dq yes
+to all the remaining questions by replying to a question with a value of
+.Dq F .
 .Sh FILES
 .Bl -tag -width /etc/fstab -compact
 .It Pa /etc/fstab
