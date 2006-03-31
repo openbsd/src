@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.132 2006/03/30 23:19:20 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.133 2006/03/31 01:39:36 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -687,6 +687,7 @@ checkin_init(struct checkin_params *pb)
 		pb->rcs_msg = checkin_getlogmsg(pb->frev, pb->newrev);
 		rcsnum_free(pb->frev);
 	}
+
 	/*
 	 * Set the date of the revision to be the last modification
 	 * time of the working file if -d has no argument.
@@ -703,6 +704,7 @@ checkin_init(struct checkin_params *pb)
 		cvs_log(LP_ERR, "failed to add new revision");
 		goto fail;
 	}
+
 	/*
 	 * If we are checking in to a non-default (ie user-specified)
 	 * revision, set head to this revision.
@@ -718,6 +720,7 @@ checkin_init(struct checkin_params *pb)
 		cvs_log(LP_ERR, "failed to set new head revision");
 		goto fail;
 	}
+
 	/* Attach a symbolic name to this revision if specified. */
 	if (pb->symbol != NULL
 	    && (checkin_attach_symbol(pb) < 0))
