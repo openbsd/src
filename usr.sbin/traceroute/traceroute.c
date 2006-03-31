@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.64 2005/11/02 11:35:54 jmc Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.65 2006/03/31 03:05:57 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.64 2005/11/02 11:35:54 jmc Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.65 2006/03/31 03:05:57 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -499,7 +499,7 @@ main(int argc, char *argv[])
 
 	datalen += headerlen;
 
-	outpacket = (u_char *)malloc(datalen);
+	outpacket = malloc(datalen);
 	if (outpacket == 0)
 		err(1, "malloc");
 	(void) memset(outpacket, 0, datalen);
