@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.83 2006/03/31 08:13:07 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.84 2006/03/31 12:19:42 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1422,6 +1422,10 @@ ffs_init(struct vfsconf *vfsp)
 	    &pool_allocator_nointr);
 	pool_init(&ffs_dinode1_pool, sizeof(struct ufs1_dinode), 0, 0, 0,
 	    "dino1pl", &pool_allocator_nointr);
+#ifdef FFS2
+	pool_init(&ffs_dinode2_pool, sizeof(struct ufs2_dinode), 0, 0, 0,
+	    "dino2pl", &pool_allocator_nointr);
+#endif
 
 	softdep_initialize();
 
