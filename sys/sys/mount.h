@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.67 2005/12/13 00:35:23 millert Exp $	*/
+/*	$OpenBSD: mount.h,v 1.68 2006/03/31 13:05:23 pedro Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -341,6 +341,7 @@ struct ostatfs {
  * File system types.
  */
 #define	MOUNT_FFS	"ffs"		/* UNIX "Fast" Filesystem */
+#define	MOUNT_FFS2	"ffs2"		/* UNIX "Fast" Filesystem, version 2 */
 #define	MOUNT_UFS	MOUNT_FFS	/* for compatibility */
 #define	MOUNT_NFS	"nfs"		/* Network Filesystem */
 #define	MOUNT_MFS	"mfs"		/* Memory Filesystem */
