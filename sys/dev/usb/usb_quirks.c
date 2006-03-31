@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.20 2006/02/10 23:29:02 djm Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.21 2006/03/31 04:35:39 drahn Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -100,6 +100,8 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_SUNTAC, USB_PRODUCT_SUNTAC_AS64LX,
 	0x100, { UQ_ASSUME_CM_OVER_DATA }},
  { USB_VENDOR_CMOTECH, USB_PRODUCT_CMOTECH_CM5100P,
+	ANY, { UQ_ASSUME_CM_OVER_DATA }},
+ { USB_VENDOR_SIEMENS2, USB_PRODUCT_SIEMENS2_ES75,
 	ANY, { UQ_ASSUME_CM_OVER_DATA }},
 
  { USB_VENDOR_TI, USB_PRODUCT_TI_UTUSB41,	    0x110, { UQ_POWER_CLAIM }},
