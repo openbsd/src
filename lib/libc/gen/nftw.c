@@ -1,4 +1,4 @@
-/*	$OpenBSD: nftw.c,v 1.5 2005/08/08 08:05:34 espie Exp $	*/
+/*	$OpenBSD: nftw.c,v 1.6 2006/03/31 19:37:32 millert Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -38,7 +38,7 @@ nftw(const char *path, int (*fn)(const char *, const struct stat *, int,
 	int error = 0, ftsflags, fnflag, postorder, sverrno;
 
 	/* XXX - nfds is currently unused */
-	if (nfds < 1 || nfds > OPEN_MAX) {
+	if (nfds < 1) {
 		errno = EINVAL;
 		return (-1);
 	}

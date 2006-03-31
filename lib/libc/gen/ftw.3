@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftw.3,v 1.6 2005/07/22 03:16:58 jaredy Exp $
+.\"	$OpenBSD: ftw.3,v 1.7 2006/03/31 19:37:32 millert Exp $
 .\"
 .\" Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -184,7 +184,9 @@ as follows:
 .It Bq Er EINVAL
 The
 .Fa maxfds
-argument is less than 1 or greater than
+argument is less than 1 or, in the case of
+.Nm ftw
+only, greater than
 .Dv OPEN_MAX .
 .El
 .Sh SEE ALSO
