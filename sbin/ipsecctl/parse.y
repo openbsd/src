@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.56 2006/03/31 13:13:51 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.57 2006/03/31 14:02:08 markus Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -137,7 +137,7 @@ struct ipsec_rule	*create_flow(u_int8_t, u_int8_t, struct ipsec_addr_wrap *,
 			     struct ipsec_addr_wrap *, u_int8_t, char *, char *,
 			     u_int8_t);
 struct ipsec_rule	*reverse_rule(struct ipsec_rule *);
-struct ipsec_rule	*create_ike(struct ipsec_addr_wrap *, struct
+struct ipsec_rule	*create_ike(u_int8_t, struct ipsec_addr_wrap *, struct
 			     ipsec_addr_wrap *, struct ipsec_addr_wrap *,
 			     struct ipsec_transforms *, struct
 			     ipsec_transforms *, u_int8_t, u_int8_t, char *,
@@ -326,11 +326,11 @@ flowrule	: FLOW satype dir proto hosts local peer ids type {
 		}
 		;
 
-ikerule		: IKE ikemode satype hosts peer mmxfs qmxfs ids ikeauth {
+ikerule		: IKE ikemode satype proto hosts peer mmxfs qmxfs ids ikeauth {
 			struct ipsec_rule	*r;
 
-			r = create_ike($4.src, $4.dst, $5, $6, $7, $3, $2,
-			    $8.srcid, $8.dstid, &$9);
+			r = create_ike($4, $5.src, $5.dst, $6, $7, $8, $3, $2,
+			    $9.srcid, $9.dstid, &$10);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
@@ -1660,8 +1660,8 @@ reverse_rule(struct ipsec_rule *rule)
 }
 
 struct ipsec_rule *
-create_ike(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst, struct
-    ipsec_addr_wrap * peer, struct ipsec_transforms *mmxfs, struct
+create_ike(u_int8_t proto, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
+    *dst, struct ipsec_addr_wrap * peer, struct ipsec_transforms *mmxfs, struct
     ipsec_transforms *qmxfs, u_int8_t satype, u_int8_t mode, char *srcid, char
     *dstid, struct ike_auth *authtype)
 {
@@ -1673,6 +1673,7 @@ create_ike(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst, struct
 
 	r->type = RULE_IKE;
 
+	r->proto = proto;
 	r->src = src;
 	r->dst = dst;
 

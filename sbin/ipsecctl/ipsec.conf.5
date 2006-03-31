@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.36 2006/03/31 13:13:51 markus Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.37 2006/03/31 14:02:08 markus Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -353,6 +353,19 @@ warriors or dialup hosts.
 If omitted,
 .Ar active
 mode will be used.
+.It Ar proto Aq Ar protocol
+The optional
+.Ar proto
+parameter restricts the flow to a specific IP protocol.
+Common protocols are
+.Xr icmp 4 ,
+.Xr tcp 4 ,
+and
+.Xr udp 4 .
+For a list of all the protocol name to number mappings used by
+.Xr ipsecctl 8 ,
+see the file
+.Em /etc/protocols .
 .It Xo
 .Ar from
 .Aq Ar src
@@ -575,6 +588,9 @@ tcpmd5 from 192.168.3.14 to 192.168.3.27 spi 0x1000:0x1001 \e
 
 ike esp from 10.1.1.0/24 to 10.1.2.0/24 peer 192.168.3.2
 ike esp from 192.168.3.1 to 192.168.3.2
+
+# Protect remote bridges (IP over ethernet)
+ike esp proto etherip from 192.168.100.1 to 192.168.200.1
 
 # Use bypass flow to exclude local subnets from larger VPNs
 flow in from 192.168.62.0/24 to 192.168.62.0/24 type bypass

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.21 2006/03/31 13:13:51 markus Exp $	*/
+/*	$OpenBSD: ike.c,v 1.22 2006/03/31 14:02:08 markus Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -43,7 +43,7 @@ static int	ike_section_qm(struct ipsec_addr_wrap *, struct
 		    FILE *);
 static int	ike_section_mm(struct ipsec_addr_wrap *, struct
 		    ipsec_transforms *, FILE *, struct ike_auth *);
-static void	ike_section_qmids(struct ipsec_addr_wrap *, struct
+static void	ike_section_qmids(u_int8_t, struct ipsec_addr_wrap *, struct
 		    ipsec_addr_wrap *, FILE *);
 static int	ike_connect(u_int8_t, struct ipsec_addr_wrap *, struct
 		    ipsec_addr_wrap *, FILE *);
@@ -261,8 +261,8 @@ ike_section_mm(struct ipsec_addr_wrap *peer, struct ipsec_transforms *mmxfs,
 }
 
 static void
-ike_section_qmids(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
-    FILE *fd)
+ike_section_qmids(u_int8_t proto, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
+    *dst, FILE *fd)
 {
 	char *mask, *network, *p;
 
@@ -306,6 +306,10 @@ ike_section_qmids(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 		fprintf(fd, SET "[rid-%s]:Address=%s force\n", dst->name,
 		    dst->name);
 	}
+	if (proto) {
+		fprintf(fd, SET "[lid-%s]:Protocol=%d force\n", src->name, proto);
+		fprintf(fd, SET "[rid-%s]:Protocol=%d force\n", dst->name, proto);
+	}
 }
 
 static int
@@ -339,7 +343,7 @@ ike_gen_config(struct ipsec_rule *r, FILE *fd)
 	ike_section_ipsec(r->src, r->dst, r->peer, fd);
 	if (ike_section_qm(r->src, r->dst, r->satype, r->qmxfs, fd) == -1)
 		return (-1);
-	ike_section_qmids(r->src, r->dst, fd);
+	ike_section_qmids(r->proto, r->src, r->dst, fd);
 
 	if (ike_connect(r->ikemode, r->src, r->dst, fd) == -1)
 		return (-1);
