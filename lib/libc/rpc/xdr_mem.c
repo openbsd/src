@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_mem.c,v 1.12 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: xdr_mem.c,v 1.13 2006/03/31 18:28:55 deraadt Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -94,6 +94,7 @@ xdrmem_create(XDR *xdrs, caddr_t addr, u_int size, enum xdr_op op)
 	xdrs->x_handy = size;
 }
 
+/*ARGSUSED*/
 static void
 xdrmem_destroy(XDR *xdrs)
 {
