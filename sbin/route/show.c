@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.49 2006/03/30 13:58:30 hshoexer Exp $	*/
+/*	$OpenBSD: show.c,v 1.50 2006/03/31 15:56:25 hshoexer Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -293,22 +293,28 @@ p_pfkentry(struct sadb_msg *msg)
 	bzero(headers, sizeof(headers));
 	index_pfk(msg, headers);
 
+	/* These are always set */
 	saddr = headers[SADB_X_EXT_SRC_FLOW];
 	sa = (struct sockaddr *)(saddr + 1);
 	saddr = headers[SADB_X_EXT_SRC_MASK];
 	mask = (struct sockaddr *)(saddr + 1);
 	p_encap(sa, mask, WID_DST(sa->sa_family));
 
+	/* These are always set, too. */
 	saddr = headers[SADB_X_EXT_DST_FLOW];
 	sa = (struct sockaddr *)(saddr + 1);
 	saddr = headers[SADB_X_EXT_DST_MASK];
 	mask = (struct sockaddr *)(saddr + 1);
 	p_encap(sa, mask, WID_DST(sa->sa_family));
 
+	/* Bypass and deny flows do not set SADB_EXT_ADDRESS_DST! */
 	sap = headers[SADB_X_EXT_PROTOCOL];
 	saft = headers[SADB_X_EXT_FLOW_TYPE];
 	saddr = headers[SADB_EXT_ADDRESS_DST];
-	sa = (struct sockaddr *)(saddr + 1);
+	if (saddr)
+		sa = (struct sockaddr *)(saddr + 1);
+	else
+		sa = NULL;
 	p_protocol(sap, sa, saft, msg->sadb_msg_satype);
 
 	printf("\n");
@@ -381,7 +387,10 @@ p_protocol(struct sadb_protocol *sap, struct sockaddr *sa, struct sadb_protocol
     *saft, int proto)
 {
 	printf("%-6u", sap->sadb_protocol_proto);
-	p_sockaddr(sa, NULL, 0, -1);
+	if (sa)
+		p_sockaddr(sa, NULL, 0, -1);
+	else
+		printf("none");
 
 	switch (proto) {
 	case SADB_SATYPE_ESP:
@@ -407,11 +416,17 @@ p_protocol(struct sadb_protocol *sap, struct sockaddr *sa, struct sadb_protocol
 	case SADB_X_FLOW_TYPE_REQUIRE:
 		printf("/require");
 		break;
+	case SADB_X_FLOW_TYPE_ACQUIRE:
+		printf("/acquire");
+		break;
 	case SADB_X_FLOW_TYPE_DENY:
 		printf("/deny");
 		break;
 	case SADB_X_FLOW_TYPE_BYPASS:
 		printf("/bypass");
+		break;
+	case SADB_X_FLOW_TYPE_DONTACQ:
+		printf("/dontacq");
 		break;
 	default:
 		printf("/<unknown type>");
