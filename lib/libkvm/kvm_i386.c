@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_i386.c,v 1.15 2006/03/20 15:11:48 mickey Exp $ */
+/*	$OpenBSD: kvm_i386.c,v 1.16 2006/03/31 03:58:21 deraadt Exp $ */
 /*	$NetBSD: kvm_i386.c,v 1.9 1996/03/18 22:33:38 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.15 2006/03/20 15:11:48 mickey Exp $";
+static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.16 2006/03/31 03:58:21 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -86,7 +86,7 @@ _kvm_freevtop(kvm_t *kd)
 int
 _kvm_initvtop(kvm_t *kd)
 {
-	struct nlist nlist[2];
+	struct nlist nl[2];
 	struct vmstate *vm;
 	u_long pa;
 
@@ -97,16 +97,16 @@ _kvm_initvtop(kvm_t *kd)
 
 	vm->PTD = NULL;
 
-	nlist[0].n_name = "_PTDpaddr";
-	nlist[1].n_name = NULL;
+	nl[0].n_name = "_PTDpaddr";
+	nl[1].n_name = NULL;
 
-	if (kvm_nlist(kd, nlist) != 0) {
+	if (kvm_nlist(kd, nl) != 0) {
 		_kvm_err(kd, kd->program, "bad namelist");
 		return (-1);
 	}
 
 	if (_kvm_pread(kd, kd->pmfd, &pa, sizeof pa,
-	    (off_t)_kvm_pa2off(kd, nlist[0].n_value - KERNBASE)) != sizeof pa)
+	    (off_t)_kvm_pa2off(kd, nl[0].n_value - KERNBASE)) != sizeof pa)
 		goto invalid;
 
 	vm->PTD = (pd_entry_t *)_kvm_malloc(kd, NBPG);
@@ -154,7 +154,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 	 */
 	if (vm->PTD == NULL) {
 		*pa = va;
-		return (NBPG - offset);
+		return (NBPG - (int)offset);
 	}
 	if ((vm->PTD[pdei(va)] & PG_V) == 0)
 		goto invalid;
@@ -168,7 +168,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 		goto invalid;
 
 	*pa = (pte & PG_FRAME) + offset;
-	return (NBPG - offset);
+	return (NBPG - (int)offset);
 
 invalid:
 	_kvm_err(kd, 0, "invalid address (%lx)", va);
