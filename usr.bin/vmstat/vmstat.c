@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.102 2006/03/31 04:06:13 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.103 2006/03/31 18:19:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.102 2006/03/31 04:06:13 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.103 2006/03/31 18:19:38 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -271,7 +271,7 @@ main(int argc, char *argv[])
 		interval = (u_int)strtonum(*argv, 0, 1000, &errstr);
 		if (errstr)
 			err(1, "-w %s: %s\n", optarg, errstr);
-		
+
 		if (*++argv)
 			reps = atoi(*argv);
 	}
@@ -512,7 +512,7 @@ dotimes(void)
 	    uvmexp.pageins, pgintime / 10);
 	if (uvmexp.pageins != 0)
 		(void)printf("average: %8.1f msec / page in\n",
-	    	    pgintime / (uvmexp.pageins * 10.0));
+		    pgintime / (uvmexp.pageins * 10.0));
 }
 
 int
@@ -868,7 +868,7 @@ domem(void)
 			mib[3] = i;
 			siz = sizeof(struct kmemstats);
 
-			/* 
+			/*
 			 * Skip errors -- these are presumed to be unallocated
 			 * entries.
 			 */
@@ -1003,7 +1003,7 @@ print_pool(struct pool *pp, char *name)
 	PRWORD(ovflw, " %*d", 6, 1, pp->pr_hiwat);
 	PRWORD(ovflw, " %*d", 6, 1, pp->pr_minpages);
 	PRWORD(ovflw, " %*s", 6, 1, maxp);
-	PRWORD(ovflw, " %*lu\n", 5, 1, pp->pr_nidle);	
+	PRWORD(ovflw, " %*lu\n", 5, 1, pp->pr_nidle);
 }
 
 static void dopool_kvm(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.5 2006/03/31 04:10:59 deraadt Exp $ */
+/*	$OpenBSD: if.c,v 1.6 2006/03/31 18:19:44 deraadt Exp $ */
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
  *
@@ -193,7 +193,7 @@ labelifstat(void)
 }
 
 #define FMT "%-10.10s %10lu %10lu %6lu   %10lu %10lu %6lu   %6lu "
-	
+
 void
 showifstat(void)
 {

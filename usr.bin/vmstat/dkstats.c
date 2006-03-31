@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.29 2006/03/31 04:06:13 deraadt Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.30 2006/03/31 18:19:38 deraadt Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ static struct nlist namelist[] = {
 }
 
 /*
- * Dereference the namelist pointer `v' and fill in the local copy 
+ * Dereference the namelist pointer `v' and fill in the local copy
  * 'p' which is of size 's'.
  */
 #define deref_nl(v, p, s) deref_kptr((void *)namelist[(v)].n_value, (p), (s));
@@ -98,7 +98,7 @@ static struct disk	*dk_drivehead = NULL;
 #endif
 
 /* Backward compatibility references. */
-int	  	dk_ndrive = 0;
+int		dk_ndrive = 0;
 int		*dk_select;
 char		**dr_name;
 
@@ -156,7 +156,7 @@ dkswap(void)
 }
 
 /*
- * Read the disk statistics for each disk in the disk list. 
+ * Read the disk statistics for each disk in the disk list.
  * Also collect statistics for tty i/o and cpu ticks.
  */
 void
@@ -351,7 +351,7 @@ dkreadstats(void)
 		}
 		free(q);
 
-	 	size = sizeof(cur.cp_time);
+		size = sizeof(cur.cp_time);
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_CPTIME;
 		if (sysctl(mib, 2, cur.cp_time, &size, NULL, 0) < 0) {
@@ -490,7 +490,7 @@ dkinit(int sel)
 	last.dk_wbytes = calloc((size_t)cur.dk_ndrive, sizeof(u_int64_t));
 	cur.dk_select = calloc((size_t)cur.dk_ndrive, sizeof(int));
 	cur.dk_name = calloc((size_t)cur.dk_ndrive, sizeof(char *));
-	
+
 	if (!cur.dk_time || !cur.dk_rxfer || !cur.dk_wxfer || !cur.dk_seek ||
 	    !cur.dk_rbytes || !cur.dk_wbytes || !last.dk_time ||
 	    !last.dk_rxfer || !last.dk_wxfer || !last.dk_seek ||
@@ -544,7 +544,7 @@ dkinit(int sel)
 
 #if !defined(NOKVM)
 /*
- * Dereference the kernel pointer `kptr' and fill in the local copy 
+ * Dereference the kernel pointer `kptr' and fill in the local copy
  * pointed to by `ptr'.  The storage space must be pre-allocated,
  * and the size of the copy passed in `len'.
  */
