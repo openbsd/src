@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.12 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.13 2006/03/31 04:10:59 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.4 1996/05/10 23:16:32 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.12 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.13 2006/03/31 04:10:59 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -77,15 +77,17 @@ command(char *cmd)
 		goto done;
 	}
 	if (strcmp(cmd, "help") == 0) {
-		int col, len;
+		size_t len;
+		int column = 0;
 
-		move(CMDLINE, col = 0);
+		move(CMDLINE, column);
 		for (p = cmdtab; p->c_name; p++) {
 			len = strlen(p->c_name);
-			if (col + len > COLS)
+			if (column + len > COLS)
 				break;
-			addstr(p->c_name); col += len;
-			if (col + 1 < COLS)
+			addstr(p->c_name);
+			column += len;
+			if (column + 1 < COLS)
 				addch(' ');
 		}
 		clrtoeol();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.4 2006/01/10 23:29:41 dlg Exp $ */
+/*	$OpenBSD: if.c,v 1.5 2006/03/31 04:10:59 deraadt Exp $ */
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
  *
@@ -23,6 +23,7 @@
 #include <net/route.h>
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "systat.h"
 #include "extern.h"
@@ -47,7 +48,7 @@ struct ifstat {
 } *ifstats;
 
 static	int nifs = 0;
-extern	int naptime;
+extern	u_int naptime;
 
 WINDOW *
 openifstat(void)
@@ -109,7 +110,7 @@ fetchifstat(void)
 	struct sockaddr *info[RTAX_MAX];
 	struct sockaddr_dl *sdl;
 	char *buf, *next, *lim;
-	int mib[6], i;
+	int mib[6];
 	size_t need;
 
 	mib[0] = CTL_NET;
@@ -178,7 +179,8 @@ void
 labelifstat(void)
 {
 
-	wmove(wnd, 0, 0); wclrtobot(wnd);
+	wmove(wnd, 0, 0);
+	wclrtobot(wnd);
 
 	mvwaddstr(wnd, 1, INSET, "Interfaces");
 	mvwaddstr(wnd, 1, INSET+15, "Ibytes");
@@ -199,7 +201,8 @@ showifstat(void)
 	struct ifstat *ifs;
 
 	row = 2;
-	wmove(wnd, 0, 0); wclrtoeol(wnd);
+	wmove(wnd, 0, 0);
+	wclrtoeol(wnd);
 	for (ifs = ifstats; ifs < ifstats + nifs; ifs++) {
 		if (ifs->ifs_name[0] == '\0')
 			continue;

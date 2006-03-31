@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.28 2005/10/17 19:04:20 otto Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.29 2006/03/31 04:10:59 deraadt Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netstat.c,v 1.28 2005/10/17 19:04:20 otto Exp $";
+static char rcsid[] = "$OpenBSD: netstat.c,v 1.29 2006/03/31 04:10:59 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -317,7 +317,8 @@ labelnetstat(void)
 {
 	if (namelist[X_TCBTABLE].n_type == 0)
 		return;
-	wmove(wnd, 0, 0); wclrtobot(wnd);
+	wmove(wnd, 0, 0);
+	wclrtobot(wnd);
 	mvwaddstr(wnd, 0, LADDR, "Local Address");
 	mvwaddstr(wnd, 0, FADDR, "Foreign Address");
 	mvwaddstr(wnd, 0, PROTO, "Proto");
@@ -342,7 +343,8 @@ shownetstat(void)
 			p = p->nif_forw;
 			continue;
 		}
-		wmove(wnd, p->nif_line, 0); wdeleteln(wnd);
+		wmove(wnd, p->nif_line, 0);
+		wdeleteln(wnd);
 		q = netcb.nif_forw;
 		for (; q != (struct netinfo *)&netcb; q = q->nif_forw)
 			if (q != p && q->nif_line > p->nif_line) {
@@ -375,11 +377,11 @@ shownetstat(void)
 			switch (p->nif_family) {
 			case AF_INET:
 				inetprint(&p->nif_laddr, p->nif_lport,
-					p->nif_proto);
+				    p->nif_proto);
 				break;
 			case AF_INET6:
 				inet6print(&p->nif_laddr6, p->nif_lport,
-					p->nif_proto);
+				    p->nif_proto);
 				break;
 			}
 			p->nif_flags &= ~NIF_LACHG;
@@ -389,11 +391,11 @@ shownetstat(void)
 			switch (p->nif_family) {
 			case AF_INET:
 				inetprint(&p->nif_faddr, p->nif_fport,
-					p->nif_proto);
+				    p->nif_proto);
 				break;
 			case AF_INET6:
 				inet6print(&p->nif_faddr6, p->nif_fport,
-					p->nif_proto);
+				    p->nif_proto);
 				break;
 			}
 			p->nif_flags &= ~NIF_FACHG;
@@ -414,8 +416,10 @@ shownetstat(void)
 		wclrtoeol(wnd);
 	}
 	if (lastrow < YMAX(wnd)) {
-		wmove(wnd, lastrow, 0); wclrtobot(wnd);
-		wmove(wnd, YMAX(wnd), 0); wdeleteln(wnd);	/* XXX */
+		wmove(wnd, lastrow, 0);
+		wclrtobot(wnd);
+		wmove(wnd, YMAX(wnd), 0);
+		wdeleteln(wnd);	/* XXX */
 	}
 }
 
@@ -494,7 +498,7 @@ inetname(struct in_addr in)
 				cp = np->n_name;
 		}
 		if (cp == 0) {
-			hp = gethostbyaddr((char *)&in, sizeof (in), AF_INET);
+			hp = gethostbyaddr(&in, sizeof (in), AF_INET);
 			if (hp)
 				cp = hp->h_name;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.56 2006/03/28 09:03:46 mickey Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.57 2006/03/31 04:10:59 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.56 2006/03/28 09:03:46 mickey Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.57 2006/03/31 04:10:59 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -89,7 +89,7 @@ static void allocinfo(struct Info *);
 static void copyinfo(struct Info *, struct Info *);
 static float cputime(int);
 static void dinfo(int, int);
-static void getinfo(struct Info *, enum state);
+static void getinfo(struct Info *);
 static void putint(int, int, int, int);
 static void putuint64(u_int64_t, int, int, int);
 static void putfloat(double, int, int, int, int, int);
@@ -160,7 +160,7 @@ int ncpu = 1;
 int
 initkre(void)
 {
-	int mib[4], i, ret;
+	int mib[4], i;
 	size_t size;
 
 	mib[0] = CTL_HW;
@@ -205,7 +205,7 @@ initkre(void)
 	allocinfo(&s2);
 	allocinfo(&z);
 
-	getinfo(&s2, RUN);
+	getinfo(&s2);
 	copyinfo(&s2, &s1);
 	return(1);
 }
@@ -217,7 +217,7 @@ fetchkre(void)
 
 	time(&now);
 	strlcpy(buf, ctime(&now), sizeof buf);
-	getinfo(&s, state);
+	getinfo(&s);
 }
 
 void
@@ -508,7 +508,7 @@ cmdkre(char *cmd, char *args)
 	}
 	if (prefix(cmd, "zero")) {
 		if (state == RUN)
-			getinfo(&s1, RUN);
+			getinfo(&s1);
 		return (1);
 	}
 	return (dkcmd(cmd, args));
@@ -605,7 +605,7 @@ putfloat(double f, int l, int c, int w, int d, int nz)
 }
 
 static void
-getinfo(struct Info *s, enum state st)
+getinfo(struct Info *s)
 {
 	static int cp_time_mib[] = { CTL_KERN, KERN_CPTIME };
 	static int nchstats_mib[2] = { CTL_KERN, KERN_NCHSTATS };

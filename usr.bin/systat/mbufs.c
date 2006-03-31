@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.15 2004/07/09 16:33:15 deraadt Exp $	*/
+/*	$OpenBSD: mbufs.c,v 1.16 2006/03/31 04:10:59 deraadt Exp $	*/
 /*	$NetBSD: mbufs.c,v 1.2 1995/01/20 08:52:02 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mbufs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: mbufs.c,v 1.15 2004/07/09 16:33:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mbufs.c,v 1.16 2006/03/31 04:10:59 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,7 +89,8 @@ closembufs(WINDOW *w)
 void
 labelmbufs(void)
 {
-	wmove(wnd, 0, 0); wclrtoeol(wnd);
+	wmove(wnd, 0, 0);
+	wclrtoeol(wnd);
 	mvwaddstr(wnd, 0, 10,
 	    "/0   /5   /10  /15  /20  /25  /30  /35  /40  /45  /50  /55  /60");
 }
@@ -97,22 +98,22 @@ labelmbufs(void)
 void
 showmbufs(void)
 {
-	int i, j, max, index;
+	int i, j, max, ind;
 	char buf[13];
 
 	for (j = 0; j < wnd->_maxy; j++) {
-		max = 0, index = -1;
+		max = 0, ind = -1;
 		for (i = 0; i < wnd->_maxy; i++)
 			if (mb.m_mtypes[i] > max) {
 				max = mb.m_mtypes[i];
-				index = i;
+				ind = i;
 			}
 		if (max == 0)
 			break;
 		if (j > NNAMES)
-			mvwprintw(wnd, 1+j, 0, "%10d", index);
+			mvwprintw(wnd, 1+j, 0, "%10d", ind);
 		else
-			mvwprintw(wnd, 1+j, 0, "%-10.10s", mtnames[index]);
+			mvwprintw(wnd, 1+j, 0, "%-10.10s", mtnames[ind]);
 		wmove(wnd, 1 + j, 10);
 		if (max > 60) {
 			snprintf(buf, sizeof buf, " %d", max);
@@ -125,9 +126,10 @@ showmbufs(void)
 				waddch(wnd, 'X');
 			wclrtoeol(wnd);
 		}
-		mb.m_mtypes[index] = 0;
+		mb.m_mtypes[ind] = 0;
 	}
-	wmove(wnd, 1+j, 0); wclrtobot(wnd);
+	wmove(wnd, 1+j, 0);
+	wclrtobot(wnd);
 }
 
 

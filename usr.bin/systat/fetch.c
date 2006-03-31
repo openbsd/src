@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.7 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.8 2006/03/31 04:10:59 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.2 1995/01/20 08:51:56 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fetch.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.7 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.8 2006/03/31 04:10:59 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -43,7 +43,7 @@ static char rcsid[] = "$OpenBSD: fetch.c,v 1.7 2003/06/03 02:56:17 millert Exp $
 #include "extern.h"
 
 int
-kvm_ckread(void *a, void *b, int l)
+kvm_ckread(void *a, void *b, size_t l)
 {
 	if (kvm_read(kd, (u_long)a, b, l) != l) {
 		if (verbose)

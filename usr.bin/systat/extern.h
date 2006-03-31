@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.14 2004/11/16 09:52:33 markus Exp $	*/
+/*	$OpenBSD: extern.h,v 1.15 2006/03/31 04:10:59 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/05/10 23:16:34 thorpej Exp $	*/
 
 /*-
@@ -41,16 +41,16 @@ extern struct	cmdtab cmdtab[];
 extern struct	text *xtext;
 extern WINDOW	*wnd;
 extern char	**dr_name;
-extern char	c, *namp, hostname[];
+extern char	hostname[];
 extern double	avenrun[3];
 extern float	*dk_mspw;
 extern kvm_t	*kd;
 extern long	ntext, textp;
 extern int	*dk_select;
-extern long	CMDLINE;
+extern int	CMDLINE;
 extern int	dk_ndrive;
 extern int	hz, stathz;
-extern int	naptime, col;
+extern u_int	naptime;
 extern int	nhosts;
 extern int	nports;
 extern int	protos;
@@ -97,7 +97,7 @@ int	 initnetstat(void);
 int	 initpigs(void);
 int	 initswap(void);
 void	 keyboard(void);
-int	 kvm_ckread(void *, void *, int);
+int	 kvm_ckread(void *, void *, size_t);
 void	 labelifstat(void);
 void	 labeliostat(void);
 void	 labelkre(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.23 2004/02/15 22:56:12 tedu Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.24 2006/03/31 04:10:59 deraadt Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: iostat.c,v 1.23 2004/02/15 22:56:12 tedu Exp $";
+static char rcsid[] = "$OpenBSD: iostat.c,v 1.24 2006/03/31 04:10:59 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -308,16 +308,16 @@ static void
 stat1(int row, int o)
 {
 	int i;
-	double time;
+	double tim;
 
-	time = 0;
+	tim = 0;
 	for (i = 0; i < CPUSTATES; i++)
-		time += cur.cp_time[i];
-	if (time == 0.0)
-		time = 1.0;
+		tim += cur.cp_time[i];
+	if (tim == 0.0)
+		tim = 1.0;
 	wmove(wnd, row, INSET);
 #define CPUSCALE	0.5
-	histogram(100.0 * cur.cp_time[o] / time, 50, CPUSCALE);
+	histogram(100.0 * cur.cp_time[o] / tim, 50, CPUSCALE);
 }
 
 static void

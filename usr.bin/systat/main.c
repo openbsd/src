@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.31 2005/07/04 01:54:10 djm Exp $	*/
+/*	$OpenBSD: main.c,v 1.32 2006/03/31 04:10:59 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.31 2005/07/04 01:54:10 djm Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.32 2006/03/31 04:10:59 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -65,18 +65,14 @@ double	dellave;
 kvm_t	*kd;
 char	*nlistf = NULL;
 char	*memf = NULL;
-sig_t	sigtstpdfl;
 double	avenrun[3];
-int	col;
-int	naptime = 5;
+u_int	naptime = 5;
 int	verbose = 1;		/* to report kvm read errs */
 int	nflag = 0;
 int	hz, stathz;
-char    c;
-char    *namp;
 char    hostname[MAXHOSTNAMELEN];
 WINDOW  *wnd;
-long	CMDLINE;
+int	CMDLINE;
 
 WINDOW *wload;			/* one line window for load average */
 
@@ -87,6 +83,7 @@ main(int argc, char *argv[])
 {
 	int ch;
 	char errbuf[_POSIX2_LINE_MAX];
+	const char *errstr;
 	gid_t gid;
 
 	kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf);
@@ -105,8 +102,9 @@ main(int argc, char *argv[])
 			nflag = 1;
 			break;
 		case 'w':
-			if ((naptime = atoi(optarg)) <= 0)
-				errx(1, "interval <= 0.");
+			naptime = (u_int)strtonum(optarg, 0, 1000, &errstr);
+			if (errstr)
+				errx(1, "interval <= 0: %s", errstr);
 			break;
 		default:
 			usage();
@@ -116,8 +114,8 @@ main(int argc, char *argv[])
 
 	while (argc > 0) {
 		if (isdigit(argv[0][0])) {
-			naptime = atoi(argv[0]);
-			if (naptime <= 0)
+			naptime = (u_int)strtonum(argv[0], 0, 1000, &errstr);
+			if (errstr)
 				naptime = 5;
 		} else {
 			struct cmdtab *p;
@@ -221,9 +219,9 @@ labels(void)
 	refresh();
 }
 
+/*ARGSUSED*/
 void
-sigdisplay(signo)
-	int signo;
+sigdisplay(int signo)
 {
 	gotdisplay = 1;
 }
@@ -232,6 +230,7 @@ void
 display(void)
 {
 	int i, j;
+	chtype c;
 
 	/* Get the load average over the last minute. */
 	(void) getloadavg(avenrun, sizeof(avenrun) / sizeof(avenrun[0]));
@@ -259,7 +258,7 @@ display(void)
 	if (curcmd->c_flags & CF_LOADAV)
 		wrefresh(wload);
 	wrefresh(wnd);
-	move(CMDLINE, col);
+	move(CMDLINE, 0);
 	refresh();
 	alarm(naptime);
 }
@@ -279,12 +278,14 @@ volatile sig_atomic_t gotdisplay;
 volatile sig_atomic_t gotwinch;
 volatile sig_atomic_t gottstp;
 
+/*ARGSUSED*/
 void
 sigdie(int signo)
 {
 	gotdie = 1;
 }
 
+/*ARGSUSED*/
 void
 sigtstp(int signo)
 {
@@ -303,6 +304,7 @@ die(void)
 	exit(0);
 }
 
+/*ARGSUSED*/
 void
 sigwinch(int signo)
 {

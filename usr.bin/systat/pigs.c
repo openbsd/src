@@ -1,4 +1,4 @@
-/*	$OpenBSD: pigs.c,v 1.17 2006/02/01 19:05:25 otto Exp $	*/
+/*	$OpenBSD: pigs.c,v 1.18 2006/03/31 04:10:59 deraadt Exp $	*/
 /*	$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-static char rcsid[] = "$OpenBSD: pigs.c,v 1.17 2006/02/01 19:05:25 otto Exp $";
+static char rcsid[] = "$OpenBSD: pigs.c,v 1.18 2006/03/31 04:10:59 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -229,6 +229,6 @@ labelpigs(void)
 int
 compar(const void *a, const void *b)
 {
-	return (((struct p_times *) a)->pt_pctcpu >
-	    ((struct p_times *) b)->pt_pctcpu)? -1: 1;
+	return (((struct p_times *)a)->pt_pctcpu >
+	    ((struct p_times *)b)->pt_pctcpu) ? -1 : 1;
 }
