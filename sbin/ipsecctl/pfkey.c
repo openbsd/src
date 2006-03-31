@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.34 2006/03/30 12:44:20 markus Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.35 2006/03/31 13:13:51 markus Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -41,7 +41,7 @@
 static int	fd;
 static u_int32_t sadb_msg_seq = 1;
 
-static int	pfkey_flow(int, u_int8_t, u_int8_t, u_int8_t,
+static int	pfkey_flow(int, u_int8_t, u_int8_t, u_int8_t, u_int8_t,
 		    struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
 		    struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
 		    struct ipsec_auth *, u_int8_t);
@@ -57,7 +57,7 @@ int		pfkey_init(void);
 
 static int
 pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
-    struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
+    u_int8_t proto, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
     struct ipsec_addr_wrap *local, struct ipsec_addr_wrap *peer,
     struct ipsec_auth *auth, u_int8_t flowtype)
 {
@@ -174,7 +174,7 @@ pfkey_flow(int sd, u_int8_t satype, u_int8_t action, u_int8_t direction,
 	sa_protocol.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
 	sa_protocol.sadb_protocol_len = sizeof(sa_protocol) / 8;
 	sa_protocol.sadb_protocol_direction = 0;
-	sa_protocol.sadb_protocol_proto = IPPROTO_IP;
+	sa_protocol.sadb_protocol_proto = proto;
 
 	bzero(&sa_src, sizeof(sa_src));
 	sa_src.sadb_address_exttype = SADB_X_EXT_SRC_FLOW;
@@ -615,16 +615,16 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 
 	switch (msg->sadb_msg_satype) {
 	case SADB_SATYPE_ESP:
-		rule->proto = IPSEC_ESP;
+		rule->satype = IPSEC_ESP;
 		break;
 	case SADB_SATYPE_AH:
-		rule->proto = IPSEC_AH;
+		rule->satype = IPSEC_AH;
 		break;
 	case SADB_X_SATYPE_IPCOMP:
-		rule->proto = IPSEC_IPCOMP;
+		rule->satype = IPSEC_IPCOMP;
 		break;
 	case SADB_X_SATYPE_IPIP:
-		rule->proto = IPSEC_IPIP;
+		rule->satype = IPSEC_IPIP;
 		break;
 	default:
 		return (1);
@@ -718,7 +718,9 @@ pfkey_parse(struct sadb_msg *msg, struct ipsec_rule *rule)
 			break;
 
 		case SADB_X_EXT_PROTOCOL:
-			/* XXX nothing yet? */
+			sproto = (struct sadb_protocol *)ext;
+			if (sproto->sadb_protocol_direction == 0)
+				rule->proto = sproto->sadb_protocol_proto;
 			break;
 
 		case SADB_X_EXT_FLOW_TYPE:
@@ -870,7 +872,7 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 	u_int8_t	satype, direction;
 
 	if (r->type == RULE_FLOW) {
-		switch (r->proto) {
+		switch (r->satype) {
 		case IPSEC_ESP:
 			satype = SADB_SATYPE_ESP;
 			break;
@@ -901,18 +903,20 @@ pfkey_ipsec_establish(int action, struct ipsec_rule *r)
 		switch (action) {
 		case ACTION_ADD:
 			ret = pfkey_flow(fd, satype, SADB_X_ADDFLOW, direction,
-			    r->src, r->dst, r->local, r->peer, r->auth, r->flowtype);
+			    r->proto, r->src, r->dst, r->local, r->peer, r->auth,
+			    r->flowtype);
 			break;
 		case ACTION_DELETE:
 			/* No peer for flow deletion. */
 			ret = pfkey_flow(fd, satype, SADB_X_DELFLOW, direction,
-			    r->src, r->dst, NULL, NULL, NULL, r->flowtype);
+			    r->proto, r->src, r->dst, NULL, NULL, NULL,
+			    r->flowtype);
 			break;
 		default:
 			return -1;
 		}
 	} else if (r->type == RULE_SA) {
-		switch (r->proto) {
+		switch (r->satype) {
 		case IPSEC_AH:
 			satype = SADB_SATYPE_AH;
 			break;

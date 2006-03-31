@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.35 2006/03/31 09:15:18 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.36 2006/03/31 13:13:51 markus Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -107,6 +107,19 @@ for this rule and will construct a proper
 .Ar in
 rule.
 Thus packets in both directions will be matched.
+.It Ar proto Aq Ar protocol
+The optional
+.Ar proto
+parameter restricts the flow to a specific IP protocol.
+Common protocols are
+.Xr icmp 4 ,
+.Xr tcp 4 ,
+and
+.Xr udp 4 .
+For a list of all the protocol name to number mappings used by
+.Xr ipsecctl 8 ,
+see the file
+.Em /etc/protocols .
 .It Xo
 .Ar from
 .Aq Ar src
@@ -535,6 +548,9 @@ flow esp in  from 192.168.8.0/24 to 192.168.7.0/24 peer 192.168.3.12
 # Same as above, but explicitly specifying the local gateway IP
 flow esp from 192.168.7.0/24 to 192.168.8.0/24 \e
 	local 192.168.1.1 peer 192.168.3.12
+
+# Protect remote bridges (IP over ethernet)
+flow esp proto etherip from 192.168.100.1 to 192.168.200.1
 
 # Set up IPsec SAs for flows between 192.168.3.14 and 192.168.3.12
 esp from 192.168.3.14 to 192.168.3.12 spi 0xdeadbeef:0xbeefdead \e

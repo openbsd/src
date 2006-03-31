@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.44 2006/03/30 12:44:20 markus Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.45 2006/03/31 13:13:51 markus Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <netdb.h>
 
 #include "ipsecctl.h"
 #include "pfkey.h"
@@ -44,6 +45,7 @@ FILE		*ipsecctl_fopen(const char *, const char *);
 int		 ipsecctl_commit(int, struct ipsecctl *);
 int		 ipsecctl_add_rule(struct ipsecctl *, struct ipsec_rule *);
 void		 ipsecctl_print_addr(struct ipsec_addr_wrap *);
+void		 ipsecctl_print_proto(u_int8_t);
 void		 ipsecctl_print_key(struct ipsec_key *);
 void		 ipsecctl_print_flow(struct ipsec_rule *, int);
 void		 ipsecctl_print_sa(struct ipsec_rule *, int);
@@ -69,7 +71,7 @@ static const char *showopt_list[] = {
 static const char *direction[] = {"?", "in", "out"};
 static const char *flowtype[] = {"?", "use", "acquire", "require", "deny",
     "bypass", "dontacq"};
-static const char *proto[] = {"?", "esp", "ah", "ipcomp", "tcpmd5", "ipip"};
+static const char *satype[] = {"?", "esp", "ah", "ipcomp", "tcpmd5", "ipip"};
 static const char *tmode[] = {"?", "transport", "tunnel"};
 static const char *auth[] = {"?", "psk", "rsa"};
 
@@ -236,6 +238,17 @@ ipsecctl_print_addr(struct ipsec_addr_wrap *ipa)
 }
 
 void
+ipsecctl_print_proto(u_int8_t proto)
+{
+	struct protoent *p;
+
+	if ((p = getprotobynumber(proto)) != NULL)
+		printf("%s", p->p_name);
+	else
+		printf("%u", proto);
+}
+
+void
 ipsecctl_print_key(struct ipsec_key *key)
 {
 	int	i;
@@ -247,8 +260,12 @@ ipsecctl_print_key(struct ipsec_key *key)
 void
 ipsecctl_print_flow(struct ipsec_rule *r, int opts)
 {
-	printf("flow %s %s", proto[r->proto], direction[r->direction]);
+	printf("flow %s %s", satype[r->satype], direction[r->direction]);
 
+	if (r->proto) {
+		printf(" proto ");
+		ipsecctl_print_proto(r->proto);
+	}
 	printf(" from ");
 	ipsecctl_print_addr(r->src);
 	printf(" to ");
@@ -280,9 +297,9 @@ ipsecctl_print_flow(struct ipsec_rule *r, int opts)
 void
 ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 {
-	printf("%s ", proto[r->proto]);
+	printf("%s ", satype[r->satype]);
 	/* tunnel/transport is only meaningful esp/ah/ipcomp */
-	if (r->proto != IPSEC_TCPMD5 && r->proto != IPSEC_IPIP)
+	if (r->satype != IPSEC_TCPMD5 && r->satype != IPSEC_IPIP)
 		printf("%s ", tmode[r->tmode]);
 	printf("from ");
 	ipsecctl_print_addr(r->src);
@@ -290,7 +307,7 @@ ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 	ipsecctl_print_addr(r->dst);
 	printf(" spi 0x%08x", r->spi);
 
-	if (r->proto != IPSEC_TCPMD5) {
+	if (r->satype != IPSEC_TCPMD5) {
 		if (r->xfs && r->xfs->authxf)
 			printf(" auth %s", r->xfs->authxf->name);
 		if (r->xfs && r->xfs->encxf)
@@ -299,7 +316,7 @@ ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 			printf(" comp %s", r->xfs->compxf->name);
 	}
 	if (r->authkey) {
-		if (r->proto == IPSEC_TCPMD5)
+		if (r->satype == IPSEC_TCPMD5)
 			printf(" ");
 		else
 			printf("\n\t");
@@ -307,7 +324,7 @@ ipsecctl_print_sa(struct ipsec_rule *r, int opts)
 		ipsecctl_print_key(r->authkey);
 	}
 	if (r->enckey) {
-		if (r->proto == IPSEC_TCPMD5)
+		if (r->satype == IPSEC_TCPMD5)
 			printf(" ");
 		else
 			printf("\n\t");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.20 2006/03/20 17:09:38 hshoexer Exp $	*/
+/*	$OpenBSD: ike.c,v 1.21 2006/03/31 13:13:51 markus Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -132,18 +132,18 @@ ike_section_ipsec(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
 
 static int
 ike_section_qm(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst,
-    u_int8_t proto, struct ipsec_transforms *qmxfs, FILE *fd)
+    u_int8_t satype, struct ipsec_transforms *qmxfs, FILE *fd)
 {
 	fprintf(fd, SET "[qm-%s-%s]:EXCHANGE_TYPE=QUICK_MODE force\n",
 	    src->name, dst->name);
 	fprintf(fd, SET "[qm-%s-%s]:Suites=QM-", src->name, dst->name);
 
-	switch (proto) {
+	switch (satype) {
 	case IPSEC_ESP:
 		fprintf(fd, "ESP");
 		break;
 	default:
-		warnx("illegal protocol %d", proto);
+		warnx("illegal satype %d", satype);
 		return (-1);
 	};
 	fprintf(fd, "-");
@@ -337,7 +337,7 @@ ike_gen_config(struct ipsec_rule *r, FILE *fd)
 		return (-1);
 	ike_section_ids(r->peer, r->auth, fd, r->ikemode);
 	ike_section_ipsec(r->src, r->dst, r->peer, fd);
-	if (ike_section_qm(r->src, r->dst, r->proto, r->qmxfs, fd) == -1)
+	if (ike_section_qm(r->src, r->dst, r->satype, r->qmxfs, fd) == -1)
 		return (-1);
 	ike_section_qmids(r->src, r->dst, fd);
 

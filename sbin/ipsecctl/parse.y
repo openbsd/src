@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.55 2006/03/30 15:30:18 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.56 2006/03/31 13:13:51 markus Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -42,6 +42,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <netdb.h>
 
 #include "ipsecctl.h"
 
@@ -131,9 +132,9 @@ struct ipsec_rule	*create_sa(u_int8_t, u_int8_t, struct ipsec_addr_wrap *,
 			     struct ipsec_key *);
 struct ipsec_rule	*reverse_sa(struct ipsec_rule *, u_int32_t,
 			     struct ipsec_key *, struct ipsec_key *);
-struct ipsec_rule	*create_flow(u_int8_t, struct ipsec_addr_wrap *, struct
-			     ipsec_addr_wrap *, struct ipsec_addr_wrap *, struct
-			     ipsec_addr_wrap *, u_int8_t, char *, char *,
+struct ipsec_rule	*create_flow(u_int8_t, u_int8_t, struct ipsec_addr_wrap *,
+			     struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
+			     struct ipsec_addr_wrap *, u_int8_t, char *, char *,
 			     u_int8_t);
 struct ipsec_rule	*reverse_rule(struct ipsec_rule *);
 struct ipsec_rule	*create_ike(struct ipsec_addr_wrap *, struct
@@ -149,7 +150,8 @@ typedef struct {
 		u_int32_t	 number;
 		u_int8_t	 ikemode;
 		u_int8_t	 dir;
-		u_int8_t	 protocol;
+		u_int8_t	 satype;	/* encapsulating prococol */
+		u_int8_t	 proto;		/* encapsulated protocol */
 		u_int8_t	 tmode;
 		char		*string;
 		struct {
@@ -194,11 +196,12 @@ typedef struct {
 %token	FLOW FROM ESP AH IN PEER ON OUT TO SRCID DSTID RSA PSK TCPMD5 SPI
 %token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK PASSIVE
 %token	ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT DYNAMIC
-%token	TYPE DENY BYPASS LOCAL
+%token	TYPE DENY BYPASS LOCAL PROTO
 %token	<v.string>		STRING
 %type	<v.string>		string
 %type	<v.dir>			dir
-%type	<v.protocol>		protocol
+%type	<v.satype>		satype
+%type	<v.proto>		proto
 %type	<v.tmode>		tmode
 %type	<v.number>		number
 %type	<v.hosts>		hosts
@@ -273,7 +276,7 @@ tcpmd5rule	: TCPMD5 hosts spispec authkeyspec	{
 		}
 		;
 
-sarule		: protocol tmode hosts spispec transforms authkeyspec
+sarule		: satype tmode hosts spispec transforms authkeyspec
 		    enckeyspec {
 			struct ipsec_rule	*r;
 
@@ -300,11 +303,11 @@ sarule		: protocol tmode hosts spispec transforms authkeyspec
 		}
 		;
 
-flowrule	: FLOW protocol dir hosts local peer ids type {
+flowrule	: FLOW satype dir proto hosts local peer ids type {
 			struct ipsec_rule	*r;
 
-			r = create_flow($3, $4.src, $4.dst, $5, $6, $2,
-			    $7.srcid, $7.dstid, $8);
+			r = create_flow($3, $4, $5.src, $5.dst, $6, $7, $2,
+			    $8.srcid, $8.dstid, $9);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
@@ -313,7 +316,7 @@ flowrule	: FLOW protocol dir hosts local peer ids type {
 				errx(1, "flowrule: ipsecctl_add_rule");
 
 			/* Create and add reverse flow rule. */
-			if ($8 == TYPE_UNKNOWN && $3 == IPSEC_INOUT) {
+			if ($9 == TYPE_UNKNOWN && $3 == IPSEC_INOUT) {
 				r = reverse_rule(r);
 				r->nr = ipsec->rule_nr++;
 
@@ -323,7 +326,7 @@ flowrule	: FLOW protocol dir hosts local peer ids type {
 		}
 		;
 
-ikerule		: IKE ikemode protocol hosts peer mmxfs qmxfs ids ikeauth {
+ikerule		: IKE ikemode satype hosts peer mmxfs qmxfs ids ikeauth {
 			struct ipsec_rule	*r;
 
 			r = create_ike($4.src, $4.dst, $5, $6, $7, $3, $2,
@@ -337,11 +340,30 @@ ikerule		: IKE ikemode protocol hosts peer mmxfs qmxfs ids ikeauth {
 		}
 		;
 
-protocol	: /* empty */			{ $$ = IPSEC_ESP; }
+satype		: /* empty */			{ $$ = IPSEC_ESP; }
 		| ESP				{ $$ = IPSEC_ESP; }
 		| AH				{ $$ = IPSEC_AH; }
 		| IPCOMP			{ $$ = IPSEC_IPCOMP; }
 		| IPIP				{ $$ = IPSEC_IPIP; }
+		;
+
+proto		: /* empty */			{ $$ = 0; }
+		| PROTO STRING			{
+			struct protoent *p;
+			const char *errstr;
+			int proto;
+
+			if ((p = getprotobyname($2)) != NULL) {
+				$$ = p->p_proto;
+			} else {
+				errstr = NULL;
+				proto = strtonum($2, 1, 255, &errstr);
+				if (errstr)
+					errx(1, "unknown protocol: %s", $2);
+				$$ = proto;
+			}
+
+		}
 		;
 
 tmode		: /* empty */			{ $$ = IPSEC_TUNNEL; }
@@ -703,6 +725,7 @@ lookup(char *s)
 		{ "out",		OUT },
 		{ "passive",		PASSIVE },
 		{ "peer",		PEER },
+		{ "proto",		PROTO },
 		{ "psk",		PSK },
 		{ "quick",		QUICK },
 		{ "rsa",		RSA },
@@ -1367,7 +1390,7 @@ copytransforms(const struct ipsec_transforms *xfs)
 }
 
 int
-validate_sa(u_int32_t spi, u_int8_t protocol, struct ipsec_transforms *xfs,
+validate_sa(u_int32_t spi, u_int8_t satype, struct ipsec_transforms *xfs,
     struct ipsec_key *authkey, struct ipsec_key *enckey, u_int8_t tmode)
 {
 	/* Sanity checks */
@@ -1375,7 +1398,7 @@ validate_sa(u_int32_t spi, u_int8_t protocol, struct ipsec_transforms *xfs,
 		yyerror("no SPI specified");
 		return (0);
 	}
-	if (protocol == IPSEC_AH) {
+	if (satype == IPSEC_AH) {
 		if (!xfs) {
 			yyerror("no transforms specified");
 			return (0);
@@ -1391,7 +1414,7 @@ validate_sa(u_int32_t spi, u_int8_t protocol, struct ipsec_transforms *xfs,
 			return (0);
 		}
 	}
-	if (protocol == IPSEC_ESP) {
+	if (satype == IPSEC_ESP) {
 		if (!xfs) {
 			yyerror("no transforms specified");
 			return (0);
@@ -1405,7 +1428,7 @@ validate_sa(u_int32_t spi, u_int8_t protocol, struct ipsec_transforms *xfs,
 		if (!xfs->encxf)
 			xfs->encxf = &encxfs[ENCXF_AESCTR];
 	}
-	if (protocol == IPSEC_IPCOMP) {
+	if (satype == IPSEC_IPCOMP) {
 		if (!xfs) {
 			yyerror("no transform specified");
 			return (0);
@@ -1417,7 +1440,7 @@ validate_sa(u_int32_t spi, u_int8_t protocol, struct ipsec_transforms *xfs,
 		if (!xfs->compxf)
 			xfs->compxf = &compxfs[COMPXF_DEFLATE];
 	}
-	if (protocol == IPSEC_IPIP) {
+	if (satype == IPSEC_IPIP) {
 		if (!xfs) {
 			yyerror("no transform specified");
 			return (0);
@@ -1428,7 +1451,7 @@ validate_sa(u_int32_t spi, u_int8_t protocol, struct ipsec_transforms *xfs,
 			return (0);
 		}
 	}
-	if (protocol == IPSEC_TCPMD5 && authkey == NULL && tmode !=
+	if (satype == IPSEC_TCPMD5 && authkey == NULL && tmode !=
 	    IPSEC_TRANSPORT) {
 		yyerror("authentication key needed for tcpmd5");
 		return (0);
@@ -1467,13 +1490,13 @@ validate_sa(u_int32_t spi, u_int8_t protocol, struct ipsec_transforms *xfs,
 }
 
 struct ipsec_rule *
-create_sa(u_int8_t protocol, u_int8_t tmode, struct ipsec_addr_wrap *src, struct
+create_sa(u_int8_t satype, u_int8_t tmode, struct ipsec_addr_wrap *src, struct
     ipsec_addr_wrap *dst, u_int32_t spi, struct ipsec_transforms *xfs,
     struct ipsec_key *authkey, struct ipsec_key *enckey)
 {
 	struct ipsec_rule *r;
 
-	if (validate_sa(spi, protocol, xfs, authkey, enckey, tmode) == 0)
+	if (validate_sa(spi, satype, xfs, authkey, enckey, tmode) == 0)
 		return (NULL);
 
 	r = calloc(1, sizeof(struct ipsec_rule));
@@ -1481,7 +1504,7 @@ create_sa(u_int8_t protocol, u_int8_t tmode, struct ipsec_addr_wrap *src, struct
 		err(1, "create_sa: calloc");
 
 	r->type |= RULE_SA;
-	r->proto = protocol;
+	r->satype = satype;
 	r->tmode = tmode;
 	r->src = src;
 	r->dst = dst;
@@ -1499,7 +1522,7 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
 {
 	struct ipsec_rule *reverse;
 
-	if (validate_sa(spi, rule->proto, rule->xfs, authkey, enckey,
+	if (validate_sa(spi, rule->satype, rule->xfs, authkey, enckey,
 	    rule->tmode) == 0)
 		return (NULL);
 
@@ -1508,7 +1531,7 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
 		err(1, "reverse_sa: calloc");
 
 	reverse->type |= RULE_SA;
-	reverse->proto = rule->proto;
+	reverse->satype = rule->satype;
 	reverse->tmode = rule->tmode;
 	reverse->src = copyhost(rule->dst);
 	reverse->dst = copyhost(rule->src);
@@ -1521,9 +1544,10 @@ reverse_sa(struct ipsec_rule *rule, u_int32_t spi, struct ipsec_key *authkey,
 }
 
 struct ipsec_rule *
-create_flow(u_int8_t dir, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
-    *dst, struct ipsec_addr_wrap *local, struct ipsec_addr_wrap *peer,
-    u_int8_t proto, char *srcid, char *dstid, u_int8_t type)
+create_flow(u_int8_t dir, u_int8_t proto, struct ipsec_addr_wrap *src,
+    struct ipsec_addr_wrap *dst, struct ipsec_addr_wrap *local,
+    struct ipsec_addr_wrap *peer, u_int8_t satype, char *srcid, char *dstid,
+    u_int8_t type)
 {
 	struct ipsec_rule *r;
 
@@ -1538,6 +1562,7 @@ create_flow(u_int8_t dir, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
 	else
 		r->direction = dir;
 
+	r->satype = satype;
 	r->proto = proto;
 	r->src = src;
 	r->dst = dst;
@@ -1616,7 +1641,8 @@ reverse_rule(struct ipsec_rule *rule)
 	if (rule->local)
 		reverse->local = copyhost(rule->local);
 	reverse->peer = copyhost(rule->peer);
-	reverse->proto = (u_int8_t)rule->proto;
+	reverse->satype = rule->satype;
+	reverse->proto = rule->proto;
 
 	reverse->auth = calloc(1, sizeof(struct ipsec_auth));
 	if (reverse->auth == NULL)
@@ -1636,7 +1662,7 @@ reverse_rule(struct ipsec_rule *rule)
 struct ipsec_rule *
 create_ike(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst, struct
     ipsec_addr_wrap * peer, struct ipsec_transforms *mmxfs, struct
-    ipsec_transforms *qmxfs, u_int8_t proto, u_int8_t mode, char *srcid, char
+    ipsec_transforms *qmxfs, u_int8_t satype, u_int8_t mode, char *srcid, char
     *dstid, struct ike_auth *authtype)
 {
 	struct ipsec_rule *r;
@@ -1668,7 +1694,7 @@ create_ike(struct ipsec_addr_wrap *src, struct ipsec_addr_wrap *dst, struct
 	} else
 		r->peer = peer;
 
-	r->proto = proto;
+	r->satype = satype;
 	r->ikemode = mode;
 	r->mmxfs = mmxfs;
 	r->qmxfs = qmxfs;
