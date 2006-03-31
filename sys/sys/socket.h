@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.52 2005/05/27 04:55:28 mcbride Exp $	*/
+/*	$OpenBSD: socket.h,v 1.53 2006/03/31 17:30:39 claudio Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -297,13 +297,15 @@ struct sockcred {
 #define NET_RT_DUMP	1		/* dump; may limit to a.f. */
 #define NET_RT_FLAGS	2		/* by flags, e.g. RESOLVING */
 #define NET_RT_IFLIST	3		/* survey interface list */
-#define	NET_RT_MAXID	4
+#define	NET_RT_STATS	4		/* routing table statistics */
+#define	NET_RT_MAXID	5
 
 #define CTL_NET_RT_NAMES { \
 	{ 0, 0 }, \
 	{ "dump", CTLTYPE_STRUCT }, \
 	{ "flags", CTLTYPE_STRUCT }, \
 	{ "iflist", CTLTYPE_STRUCT }, \
+	{ "stats", CTLTYPE_STRUCT }, \
 }
 
 /*

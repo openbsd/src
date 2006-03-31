@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.56 2006/03/30 09:53:43 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.57 2006/03/31 17:30:39 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -916,6 +916,13 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 
 	case NET_RT_IFLIST:
 		error = sysctl_iflist(af, &w);
+		break;
+
+	case NET_RT_STATS:
+		error = sysctl_rdstruct(where, given, new,
+		    &rtstat, sizeof(rtstat));
+		splx(s);
+		return (error);
 	}
 	splx(s);
 	if (w.w_tmem)
