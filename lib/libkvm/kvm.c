@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.44 2006/03/31 03:09:17 deraadt Exp $ */
+/*	$OpenBSD: kvm.c,v 1.45 2006/03/31 03:59:40 deraadt Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.44 2006/03/31 03:09:17 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.45 2006/03/31 03:59:40 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -74,7 +74,7 @@ extern int __fdnlist(int, struct nlist *);
 static int	kvm_dbopen(kvm_t *, const char *);
 static int	_kvm_get_header(kvm_t *);
 static kvm_t	*_kvm_open(kvm_t *, const char *, const char *, const char *,
-		    int, char *);
+		     int, char *);
 static int	clear_gap(kvm_t *, FILE *, int);
 static int	kvm_setfd(kvm_t *);
 
@@ -105,7 +105,7 @@ _kvm_pread(kvm_t *kd, int fd, void *buf, size_t nbytes, off_t offset)
  * Wrapper around pwrite.
  */
 ssize_t
-_kvm_pwrite(kvm_t *kd, int fd, void *buf, size_t nbytes, off_t offset)
+_kvm_pwrite(kvm_t *kd, int fd, const void *buf, size_t nbytes, off_t offset)
 {
 	ssize_t rval;
 
@@ -135,7 +135,7 @@ _kvm_err(kvm_t *kd, const char *program, const char *fmt, ...)
 		(void)fputc('\n', stderr);
 	} else
 		(void)vsnprintf(kd->errbuf,
-		    sizeof(kd->errbuf), (char *)fmt, ap);
+		    sizeof(kd->errbuf), fmt, ap);
 
 	va_end(ap);
 }
@@ -144,7 +144,7 @@ void
 _kvm_syserr(kvm_t *kd, const char *program, const char *fmt, ...)
 {
 	va_list ap;
-	int n;
+	size_t n;
 
 	va_start(ap, fmt);
 	if (program != NULL) {
@@ -154,7 +154,7 @@ _kvm_syserr(kvm_t *kd, const char *program, const char *fmt, ...)
 	} else {
 		char *cp = kd->errbuf;
 
-		(void)vsnprintf(cp, sizeof(kd->errbuf), (char *)fmt, ap);
+		(void)vsnprintf(cp, sizeof(kd->errbuf), fmt, ap);
 		n = strlen(cp);
 		(void)snprintf(&cp[n], sizeof(kd->errbuf) - n, ": %s",
 		    strerror(errno));
@@ -371,12 +371,13 @@ _kvm_get_header(kvm_t *kd)
 	 * Read the CPU segment DATA.
 	 */
 	kd->cpu_dsize = cpu_hdr.c_size;
-	kd->cpu_data = _kvm_malloc(kd, cpu_hdr.c_size);
+	kd->cpu_data = _kvm_malloc(kd, (size_t)cpu_hdr.c_size);
 	if (kd->cpu_data == NULL)
 		goto fail;
 
-	sz = _kvm_pread(kd, kd->pmfd, kd->cpu_data, cpu_hdr.c_size, (off_t)offset);
-	if (sz != cpu_hdr.c_size) {
+	sz = _kvm_pread(kd, kd->pmfd, kd->cpu_data, (size_t)cpu_hdr.c_size,
+	    (off_t)offset);
+	if (sz != (size_t)cpu_hdr.c_size) {
 		goto fail;
 	}
 
@@ -424,7 +425,8 @@ int
 kvm_dump_mkheader(kvm_t *kd, off_t dump_off)
 {
 	kcore_seg_t	cpu_hdr;
-	int	hdr_size, sz;
+	int	hdr_size;
+	ssize_t sz;
 
 	if (kd->kcore_hdr != NULL) {
 	    _kvm_err(kd, kd->program, "already has a dump header");
@@ -457,9 +459,9 @@ kvm_dump_mkheader(kvm_t *kd, off_t dump_off)
 	if (kd->cpu_data == NULL)
 		goto fail;
 
-	sz = _kvm_pread(kd, kd->pmfd, kd->cpu_data, cpu_hdr.c_size,
+	sz = _kvm_pread(kd, kd->pmfd, kd->cpu_data, (size_t)cpu_hdr.c_size,
 	    (off_t)dump_off+hdr_size);
-	if (sz != cpu_hdr.c_size) {
+	if (sz != (ssize_t)cpu_hdr.c_size) {
 		_kvm_err(kd, 0, "invalid size in cpu_hdr");
 		goto fail;
 	}
@@ -541,7 +543,7 @@ kvm_dump_wrtheader(kvm_t *kd, FILE *fp, int dumpsize)
 	 * Write the generic header
 	 */
 	offset = 0;
-	if (fwrite((void*)kd->kcore_hdr, sizeof(kcore_hdr_t), 1, fp) <= 0) {
+	if (fwrite(kd->kcore_hdr, sizeof(kcore_hdr_t), 1, fp) < 1) {
 		_kvm_syserr(kd, kd->program, "kvm_dump_wrtheader");
 		return (-1);
 	}
@@ -554,8 +556,8 @@ kvm_dump_wrtheader(kvm_t *kd, FILE *fp, int dumpsize)
 	 * Write the cpu header
 	 */
 	CORE_SETMAGIC(seghdr, KCORESEG_MAGIC, 0, CORE_CPU);
-	seghdr.c_size = ALIGN(kd->cpu_dsize);
-	if (fwrite((void*)&seghdr, sizeof(seghdr), 1, fp) <= 0) {
+	seghdr.c_size = (u_long)ALIGN(kd->cpu_dsize);
+	if (fwrite(&seghdr, sizeof(seghdr), 1, fp) < 1) {
 		_kvm_syserr(kd, kd->program, "kvm_dump_wrtheader");
 		return (-1);
 	}
@@ -564,7 +566,7 @@ kvm_dump_wrtheader(kvm_t *kd, FILE *fp, int dumpsize)
 	if (clear_gap(kd, fp, gap) == -1)
 		return (-1);
 
-	if (fwrite((void*)kd->cpu_data, kd->cpu_dsize, 1, fp) <= 0) {
+	if (fwrite(kd->cpu_data, kd->cpu_dsize, 1, fp) < 1) {
 		_kvm_syserr(kd, kd->program, "kvm_dump_wrtheader");
 		return (-1);
 	}
@@ -578,7 +580,7 @@ kvm_dump_wrtheader(kvm_t *kd, FILE *fp, int dumpsize)
 	 */
 	CORE_SETMAGIC(seghdr, KCORESEG_MAGIC, 0, CORE_DATA);
 	seghdr.c_size = dumpsize;
-	if (fwrite((void*)&seghdr, sizeof(seghdr), 1, fp) <= 0) {
+	if (fwrite(&seghdr, sizeof(seghdr), 1, fp) < 1) {
 		_kvm_syserr(kd, kd->program, "kvm_dump_wrtheader");
 		return (-1);
 	}
@@ -670,10 +672,10 @@ kvm_dbopen(kvm_t *kd, const char *uf)
 	char dbversion[_POSIX2_LINE_MAX], kversion[_POSIX2_LINE_MAX];
 	char dbname[MAXPATHLEN];
 	struct nlist nitem;
-	int dbversionlen;
+	size_t dbversionlen;
 	DBT rec;
 
-	uf = basename((char *)uf);
+	uf = basename(uf);
 
 	(void)snprintf(dbname, sizeof(dbname), "%skvm_%s.db", _PATH_VARDB, uf);
 	kd->db = dbopen(dbname, O_RDONLY, 0, DB_HASH, NULL);
@@ -709,6 +711,7 @@ kvm_dbopen(kvm_t *kd, const char *uf)
 
 	bcopy(rec.data, dbversion, rec.size);
 	dbversionlen = rec.size;
+
 	/*
 	 * Read version string from kernel memory.
 	 * Since we are dealing with a live kernel, we can call kvm_read()
@@ -720,7 +723,7 @@ kvm_dbopen(kvm_t *kd, const char *uf)
 		goto close;
 	if (rec.data == 0 || rec.size != sizeof(struct nlist))
 		goto close;
-	bcopy((char *)rec.data, (char *)&nitem, sizeof(nitem));
+	bcopy(rec.data, &nitem, sizeof(nitem));
 	if (kvm_read(kd, (u_long)nitem.n_value, kversion, dbversionlen) !=
 	    dbversionlen)
 		goto close;
@@ -760,7 +763,7 @@ kvm_nlist(kvm_t *kd, struct nlist *nl)
 	 */
 	nvalid = 0;
 	for (p = nl; p->n_name && p->n_name[0]; ++p) {
-		int len;
+		size_t len;
 		DBT rec;
 
 		if ((len = strlen(p->n_name)) > 4096) {
@@ -784,10 +787,10 @@ kvm_nlist(kvm_t *kd, struct nlist *nl)
 		/*
 		 * Avoid alignment issues.
 		 */
-		bcopy((char *)&((struct nlist *)rec.data)->n_type,
-		    (char *)&p->n_type, sizeof(p->n_type));
-		bcopy((char *)&((struct nlist *)rec.data)->n_value,
-		    (char *)&p->n_value, sizeof(p->n_value));
+		bcopy(&((struct nlist *)rec.data)->n_type,
+		    &p->n_type, sizeof(p->n_type));
+		bcopy(&((struct nlist *)rec.data)->n_value,
+		    &p->n_value, sizeof(p->n_value));
 	}
 	/*
 	 * Return the number of entries that weren't found.
@@ -798,7 +801,7 @@ kvm_nlist(kvm_t *kd, struct nlist *nl)
 int
 kvm_dump_inval(kvm_t *kd)
 {
-	struct nlist	nlist[2];
+	struct nlist	nl[2];
 	u_long		x;
 	paddr_t		pa;
 
@@ -806,20 +809,20 @@ kvm_dump_inval(kvm_t *kd)
 		_kvm_err(kd, kd->program, "clearing dump on live kernel");
 		return (-1);
 	}
-	nlist[0].n_name = "_dumpmag";
-	nlist[1].n_name = NULL;
+	nl[0].n_name = "_dumpmag";
+	nl[1].n_name = NULL;
 
-	if (kvm_nlist(kd, nlist) == -1) {
+	if (kvm_nlist(kd, nl) == -1) {
 		_kvm_err(kd, 0, "bad namelist");
 		return (-1);
 	}
 
-	if (nlist[0].n_value == 0) {
-		_kvm_err(kd, nlist[0].n_name, "not in name list");
+	if (nl[0].n_value == 0) {
+		_kvm_err(kd, nl[0].n_name, "not in name list");
 		return (-1);
 	}
 
-	if (_kvm_kvatop(kd, (u_long)nlist[0].n_value, &pa) == 0)
+	if (_kvm_kvatop(kd, (u_long)nl[0].n_value, &pa) == 0)
 		return (-1);
 
 	x = 0;
@@ -834,7 +837,7 @@ kvm_dump_inval(kvm_t *kd)
 ssize_t
 kvm_read(kvm_t *kd, u_long kva, void *buf, size_t len)
 {
-	int cc;
+	ssize_t cc;
 	void *cp;
 
 	if (ISALIVE(kd)) {
@@ -864,7 +867,7 @@ kvm_read(kvm_t *kd, u_long kva, void *buf, size_t len)
 				return (-1);
 			if (cc > len)
 				cc = len;
-			cc = _kvm_pread(kd, kd->pmfd, cp, cc,
+			cc = _kvm_pread(kd, kd->pmfd, cp, (size_t)cc,
 			    (off_t)_kvm_pa2off(kd, pa));
 			if (cc == -1) {
 				_kvm_syserr(kd, 0, _PATH_MEM);
@@ -896,7 +899,7 @@ kvm_write(kvm_t *kd, u_long kva, const void *buf, size_t len)
 		/*
 		 * Just like kvm_read, only we write.
 		 */
-		cc = _kvm_pwrite(kd, kd->vmfd, (void*)buf, (size_t)len, (off_t)kva);
+		cc = _kvm_pwrite(kd, kd->vmfd, buf, len, (off_t)kva);
 		if (cc == -1) {
 			_kvm_err(kd, 0, "invalid address (%lx)", kva);
 			return (-1);

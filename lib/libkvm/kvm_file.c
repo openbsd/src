@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file.c,v 1.13 2005/10/12 07:24:28 otto Exp $ */
+/*	$OpenBSD: kvm_file.c,v 1.14 2006/03/31 03:59:40 deraadt Exp $ */
 /*	$NetBSD: kvm_file.c,v 1.5 1996/03/18 22:33:18 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_file.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_file.c,v 1.13 2005/10/12 07:24:28 otto Exp $";
+static char *rcsid = "$OpenBSD: kvm_file.c,v 1.14 2006/03/31 03:59:40 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,29 +76,29 @@ static int kvm_deadfiles(kvm_t *kd, int op, int arg, long filehead_o,
  * Get file structures.
  */
 static int
-kvm_deadfiles(kvm_t *kd, int op, int arg, long filehead_o, int nfiles)
+kvm_deadfiles(kvm_t *kd, int op, int arg, long filehead_o, int kvm_nfiles)
 {
 	int buflen = kd->arglen, n = 0;
 	char *where = kd->argspc;
 	struct file *fp;
-	struct filelist filehead;
+	struct filelist kvm_filehead;
 
 	/*
 	 * first copyout filehead
 	 */
-	if (buflen > sizeof (filehead)) {
-		if (KREAD(kd, filehead_o, &filehead)) {
+	if (buflen > sizeof (kvm_filehead)) {
+		if (KREAD(kd, filehead_o, &kvm_filehead)) {
 			_kvm_err(kd, kd->program, "can't read filehead");
 			return (0);
 		}
-		buflen -= sizeof (filehead);
-		where += sizeof (filehead);
-		*(struct filelist *)kd->argspc = filehead;
+		buflen -= sizeof(kvm_filehead);
+		where += sizeof(kvm_filehead);
+		*(struct filelist *)kd->argspc = kvm_filehead;
 	}
 	/*
 	 * followed by an array of file structures
 	 */
-	LIST_FOREACH(fp, &filehead, f_list) {
+	LIST_FOREACH(fp, &kvm_filehead, f_list) {
 		if (buflen > sizeof (struct file)) {
 			if (KREAD(kd, (long)fp, ((struct file *)where))) {
 				_kvm_err(kd, kd->program, "can't read kfp");
@@ -110,19 +110,19 @@ kvm_deadfiles(kvm_t *kd, int op, int arg, long filehead_o, int nfiles)
 			n++;
 		}
 	}
-	if (n != nfiles) {
+	if (n != kvm_nfiles) {
 		_kvm_err(kd, kd->program, "inconsistent nfiles");
 		return (0);
 	}
-	return (nfiles);
+	return (kvm_nfiles);
 }
 
 char *
 kvm_getfiles(kvm_t *kd, int op, int arg, int *cnt)
 {
-	struct filelist filehead;
+	struct filelist kvm_filehead;
 	struct file *fp, *fplim;
-	int mib[2], st, nfiles;
+	int mib[2], st, kvm_nfiles;
 	size_t size;
 
 	if (ISALIVE(kd)) {
@@ -142,16 +142,16 @@ kvm_getfiles(kvm_t *kd, int op, int arg, int *cnt)
 			return (0);
 		kd->arglen = size;
 		st = sysctl(mib, 2, kd->argspc, &size, NULL, 0);
-		if (st == -1 || size < sizeof(filehead)) {
+		if (st == -1 || size < sizeof(kvm_filehead)) {
 			_kvm_syserr(kd, kd->program, "kvm_getfiles");
 			return (0);
 		}
-		filehead = *(struct filelist *)kd->argspc;
-		fp = (struct file *)(kd->argspc + sizeof (filehead));
+		kvm_filehead = *(struct filelist *)kd->argspc;
+		fp = (struct file *)(kd->argspc + sizeof(kvm_filehead));
 		fplim = (struct file *)(kd->argspc + size);
-		for (nfiles = 0; LIST_FIRST(&filehead) && (fp < fplim);
-		    nfiles++, fp++)
-			LIST_FIRST(&filehead) = LIST_NEXT(fp, f_list);
+		for (kvm_nfiles = 0; LIST_FIRST(&kvm_filehead) && (fp < fplim);
+		    kvm_nfiles++, fp++)
+			LIST_FIRST(&kvm_filehead) = LIST_NEXT(fp, f_list);
 	} else {
 		struct nlist nl[3], *p;
 
@@ -166,11 +166,11 @@ kvm_getfiles(kvm_t *kd, int op, int arg, int *cnt)
 				 "%s: no such symbol", p->n_name);
 			return (0);
 		}
-		if (KREAD(kd, nl[0].n_value, &nfiles)) {
+		if (KREAD(kd, nl[0].n_value, &kvm_nfiles)) {
 			_kvm_err(kd, kd->program, "can't read nfiles");
 			return (0);
 		}
-		size = sizeof(filehead) + (nfiles + 10) * sizeof(struct file);
+		size = sizeof(kvm_filehead) + (kvm_nfiles + 10) * sizeof(struct file);
 		if (kd->argspc == 0)
 			kd->argspc = (char *)_kvm_malloc(kd, size);
 		else if (kd->arglen < size)
@@ -178,10 +178,10 @@ kvm_getfiles(kvm_t *kd, int op, int arg, int *cnt)
 		if (kd->argspc == 0)
 			return (0);
 		kd->arglen = size;
-		nfiles = kvm_deadfiles(kd, op, arg, nl[1].n_value, nfiles);
-		if (nfiles == 0)
+		kvm_nfiles = kvm_deadfiles(kd, op, arg, nl[1].n_value, kvm_nfiles);
+		if (kvm_nfiles == 0)
 			return (0);
 	}
-	*cnt = nfiles;
+	*cnt = kvm_nfiles;
 	return (kd->argspc);
 }

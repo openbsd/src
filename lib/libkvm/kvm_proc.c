@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.27 2005/10/12 07:24:28 otto Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.28 2006/03/31 03:59:40 deraadt Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.27 2005/10/12 07:24:28 otto Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.28 2006/03/31 03:59:40 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -179,7 +179,7 @@ _kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long va, u_long *cnt)
 	struct vm_page pg;
 
 	if (kd->swapspc == 0) {
-		kd->swapspc = (char *)_kvm_malloc(kd, kd->nbpg);
+		kd->swapspc = _kvm_malloc(kd, kd->nbpg);
 		if (kd->swapspc == 0)
 			return (0);
 	}
@@ -420,7 +420,7 @@ kvm_getproc2(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 	struct user user;
 	size_t size;
 
-	if (esize < 0)
+	if ((ssize_t)esize < 0)
 		return (NULL);
 
 	if (kd->procbase2 != NULL) {
@@ -447,7 +447,7 @@ kvm_getproc2(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 		}
 
 		mib[5] = size / esize;
-		kd->procbase2 = (struct kinfo_proc2 *)_kvm_malloc(kd, size);
+		kd->procbase2 = _kvm_malloc(kd, size);
 		if (kd->procbase2 == 0)
 			return (NULL);
 		st = sysctl(mib, 6, kd->procbase2, &size, NULL, 0);
@@ -636,7 +636,7 @@ kvm_getprocs(kvm_t *kd, int op, int arg, int *cnt)
 			_kvm_syserr(kd, kd->program, "kvm_getprocs");
 			return (0);
 		}
-		kd->procbase = (struct kinfo_proc *)_kvm_malloc(kd, size);
+		kd->procbase = _kvm_malloc(kd, size);
 		if (kd->procbase == 0)
 			return (0);
 		st = sysctl(mib, 4, kd->procbase, &size, NULL, 0);
@@ -672,7 +672,7 @@ kvm_getprocs(kvm_t *kd, int op, int arg, int *cnt)
 			return (0);
 		}
 		size = nprocs * sizeof(struct kinfo_proc);
-		kd->procbase = (struct kinfo_proc *)_kvm_malloc(kd, size);
+		kd->procbase = _kvm_malloc(kd, size);
 		if (kd->procbase == 0)
 			return (0);
 
@@ -732,7 +732,7 @@ kvm_argv(kvm_t *kd, const struct miniproc *p, u_long addr, int narg,
 		 * Try to avoid reallocs.
 		 */
 		kd->argc = MAX(narg + 1, 32);
-		kd->argv = (char **)_kvm_malloc(kd, kd->argc *
+		kd->argv = _kvm_malloc(kd, kd->argc *
 		    sizeof(*kd->argv));
 		if (kd->argv == 0)
 			return (0);
@@ -744,13 +744,13 @@ kvm_argv(kvm_t *kd, const struct miniproc *p, u_long addr, int narg,
 			return (0);
 	}
 	if (kd->argspc == 0) {
-		kd->argspc = (char *)_kvm_malloc(kd, kd->nbpg);
+		kd->argspc = _kvm_malloc(kd, kd->nbpg);
 		if (kd->argspc == 0)
 			return (0);
 		kd->arglen = kd->nbpg;
 	}
 	if (kd->argbuf == 0) {
-		kd->argbuf = (char *)_kvm_malloc(kd, kd->nbpg);
+		kd->argbuf = _kvm_malloc(kd, kd->nbpg);
 		if (kd->argbuf == 0)
 			return (0);
 	}
