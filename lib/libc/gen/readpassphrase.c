@@ -1,4 +1,4 @@
-/*	$OpenBSD: readpassphrase.c,v 1.18 2005/08/08 08:05:34 espie Exp $	*/
+/*	$OpenBSD: readpassphrase.c,v 1.19 2006/03/31 05:33:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -109,9 +109,9 @@ restart:
 				ch &= 0x7f;
 			if (isalpha(ch)) {
 				if ((flags & RPP_FORCELOWER))
-					ch = tolower(ch);
+					ch = (char)tolower(ch);
 				if ((flags & RPP_FORCEUPPER))
-					ch = toupper(ch);
+					ch = (char)toupper(ch);
 			}
 			*p++ = ch;
 		}

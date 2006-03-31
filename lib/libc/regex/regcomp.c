@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.15 2005/08/05 13:03:00 espie Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.16 2006/03/31 05:36:36 deraadt Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -856,9 +856,9 @@ othercase(int ch)
 	ch = (uch)ch;
 	assert(isalpha(ch));
 	if (isupper(ch))
-		return(tolower(ch));
+		return ((uch)tolower(ch));
 	else if (islower(ch))
-		return(toupper(ch));
+		return ((uch)toupper(ch));
 	else			/* peculiar, but could happen */
 		return(ch);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsap_addr.c,v 1.6 2005/08/06 20:30:03 espie Exp $	*/
+/*	$OpenBSD: nsap_addr.c,v 1.7 2006/03/31 05:35:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -25,7 +25,7 @@
 #include <ctype.h>
 #include <resolv.h>
 
-static char
+static u_char
 xtob(int c)
 {
 	return (c - (((c >= '0') && (c <= '9')) ? '0' : '7'));
@@ -43,11 +43,11 @@ inet_nsap_addr(const char *ascii, u_char *binary, int maxlen)
 		if (!isascii(c))
 			return (0);
 		if (islower(c))
-			c = toupper(c);
+			c = (u_char)toupper(c);
 		if (isxdigit(c)) {
 			nib = xtob(c);
 			if ((c = *ascii++)) {
-				c = toupper(c);
+				c = (u_char)toupper(c);
 				if (isxdigit(c)) {
 					*binary++ = (nib << 4) | xtob(c);
 					len++;
