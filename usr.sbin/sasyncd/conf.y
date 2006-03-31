@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.7 2005/07/09 07:53:26 jmc Exp $	*/
+/*	$OpenBSD: conf.y,v 1.8 2006/03/31 17:38:18 pat Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -140,6 +140,7 @@ setting		: CARP INTERFACE STRING interval
 				if (!peer) {
 					log_err("config: calloc(1, %lu) "
 					    "failed", sizeof *peer);
+					free($2);
 					YYERROR;
 				}
 				peer->name = $2;
