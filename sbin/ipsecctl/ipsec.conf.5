@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.34 2006/03/30 12:44:20 markus Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.35 2006/03/31 09:15:18 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -532,7 +532,7 @@ flow esp from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
 flow esp out from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
 flow esp in  from 192.168.8.0/24 to 192.168.7.0/24 peer 192.168.3.12
 
-# Same as above, but explicitly specifying the local gateway ip
+# Same as above, but explicitly specifying the local gateway IP
 flow esp from 192.168.7.0/24 to 192.168.8.0/24 \e
 	local 192.168.1.1 peer 192.168.3.12
 
