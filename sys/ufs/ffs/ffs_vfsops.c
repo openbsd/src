@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.86 2006/03/31 12:55:04 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.87 2006/03/31 13:16:58 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1068,7 +1068,14 @@ ffs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 		bcopy(&mp->mnt_stat.mount_info.ufs_args,
 		    &sbp->mount_info.ufs_args, sizeof(struct ufs_args));
 	}
-	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
+
+#ifdef FFS2
+	if (fs->fs_magic == FS_UFS2_MAGIC)
+		strncpy(sbp->f_fstypename, MOUNT_FFS2, MFSNAMELEN);
+	else
+#endif
+		strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
+
 	return (0);
 }
 
