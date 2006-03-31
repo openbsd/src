@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.36 2005/12/17 13:56:01 pedro Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.37 2006/03/31 12:33:33 pedro Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -295,8 +295,14 @@ ffs_reclaim(void *v)
 	if ((error = ufs_reclaim(vp, ap->a_p)) != 0)
 		return (error);
 
-	if (ip->i_din1 != NULL)
-		pool_put(&ffs_dinode1_pool, ip->i_din1);
+	if (ip->i_din1 != NULL) {
+#ifdef FFS2
+		if (ip->i_ump->um_fstype == UM_UFS2)
+			pool_put(&ffs_dinode2_pool, ip->i_din2);
+		else
+#endif
+			pool_put(&ffs_dinode1_pool, ip->i_din1);
+	}
 
 	pool_put(&ffs_ino_pool, ip);
 
