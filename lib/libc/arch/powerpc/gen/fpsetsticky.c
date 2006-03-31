@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetsticky.c,v 1.1 1999/07/23 03:16:27 rahnds Exp $	*/
+/*	$OpenBSD: fpsetsticky.c,v 1.2 2006/03/31 04:23:36 drahn Exp $	*/
 /*	$NetBSD: fpsetsticky.c,v 1.1 1999/07/07 01:55:08 danw Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ fpsetsticky(mask)
 
 	__asm__ __volatile("mffs %0" : "=f"(fpscr));
 	old = (fpscr >> 25) & 0x1f;
-	fpscr = (fpscr & 0xc1ffffff) | (mask << 25);
+	fpscr = (fpscr & 0xc1ffffffULL) | (mask << 25);
 	__asm__ __volatile("mtfsf 0xff,%0" :: "f"(fpscr));
 	return (old);
 }

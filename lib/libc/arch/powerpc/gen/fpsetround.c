@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetround.c,v 1.1 1999/07/23 03:16:27 rahnds Exp $	*/
+/*	$OpenBSD: fpsetround.c,v 1.2 2006/03/31 04:23:36 drahn Exp $	*/
 /*	$NetBSD: fpsetround.c,v 1.1 1999/07/07 01:55:08 danw Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ fpsetround(rnd_dir)
 
 	__asm__ __volatile("mffs %0" : "=f"(fpscr));
 	old = fpscr & 0x3;
-	fpscr = (fpscr & 0xfffffffc) | rnd_dir;
+	fpscr = (fpscr & 0xfffffffcULL) | rnd_dir;
 	__asm__ __volatile("mtfsf 0xff,%0" :: "f"(fpscr));
 	return (old);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetmask.c,v 1.1 1999/07/23 03:16:27 rahnds Exp $	*/
+/*	$OpenBSD: fpsetmask.c,v 1.2 2006/03/31 04:23:36 drahn Exp $	*/
 /*	$NetBSD: fpsetmask.c,v 1.1 1999/07/07 01:55:08 danw Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ fpsetmask(mask)
 
 	__asm__ __volatile("mffs %0" : "=f"(fpscr));
 	old = (fpscr >> 3) & 0x1f;
-	fpscr = (fpscr & 0xffffff07) | (mask << 3);
+	fpscr = (fpscr & 0xffffff07ULL) | (mask << 3);
 	__asm__ __volatile("mtfsf 0xff,%0" :: "f"(fpscr));
 	return (old);
 }
