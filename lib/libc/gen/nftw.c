@@ -1,4 +1,4 @@
-/*	$OpenBSD: nftw.c,v 1.6 2006/03/31 19:37:32 millert Exp $	*/
+/*	$OpenBSD: nftw.c,v 1.7 2006/03/31 19:41:44 millert Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -25,7 +25,6 @@
 #include <errno.h>
 #include <fts.h>
 #include <ftw.h>
-#include <limits.h>
 
 int
 nftw(const char *path, int (*fn)(const char *, const struct stat *, int,
