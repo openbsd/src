@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.87 2006/03/31 13:16:58 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.88 2006/03/31 16:24:58 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -104,6 +104,9 @@ extern u_long nextgennumber;
 
 struct pool ffs_ino_pool;
 struct pool ffs_dinode1_pool;
+#ifdef FFS2
+struct pool ffs_dinode2_pool;
+#endif
 
 int
 ffs_mountroot(void)
