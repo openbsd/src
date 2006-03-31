@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.28 2005/11/24 12:08:16 pedro Exp $	*/
+/*	$OpenBSD: locore.S,v 1.29 2006/03/31 05:23:14 drahn Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -982,12 +982,17 @@ s_dsitrap:
 	mtsprg	2,%r30
 	mflr	%r30			/* save trap type */
 	mfctr	%r31			/* & CTR */
-	mfdar	%r3
+	mfdar	%r7
 	mfsrr1	%r4
 	mfdsisr	%r5
 	li	%r6, 0
 s_pte_spill:
+	andi.	%r0,%r4,PSL_PR 
+	li	%r3,0
+	bne	1f
+	mr	%r3,%r7
 	bl	_C_LABEL(pte_spill_r)	/* try a spill */
+1:
 	cmpwi	0,%r3,0
 	mtctr	%r31			/* restore CTR */
 	mtlr	%r30			/* and trap type */
@@ -1037,7 +1042,7 @@ s_isitrap:
 	mtsprg	2,%r30
 	mflr	%r30			/* save trap type */
 	mfctr	%r31			/* & ctr */
-	mfsrr0	%r3
+	mfsrr0	%r7
 	mfsrr1	%r4
 	li	%r5, 0
 	li	%r6, 1
