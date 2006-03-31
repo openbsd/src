@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.28 2006/03/13 19:29:26 otto Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.29 2006/03/31 04:06:13 deraadt Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -143,7 +143,11 @@ dkswap(void)
 		timerset(&tmp_timer, &(last.dk_time[i]));
 	}
 	for (i = 0; i < CPUSTATES; i++) {
-		SWAP(cp_time[i]);
+		long ltmp;
+
+		ltmp = cur.cp_time[i];
+		cur.cp_time[i] -= last.cp_time[i];
+		last.cp_time[i] = ltmp;
 	}
 	SWAP(tk_nin);
 	SWAP(tk_nout);
@@ -180,7 +184,7 @@ dkreadstats(void)
 
 		if (cur.dk_ndrive != dk_ndrive) {
 			/* Re-read the disk names. */
-			dk_name = calloc(dk_ndrive, sizeof(char *));
+			dk_name = calloc((size_t)dk_ndrive, sizeof(char *));
 			if (dk_name == NULL)
 				err(1, NULL);
 			mib[0] = CTL_HW;
@@ -472,20 +476,20 @@ dkinit(int sel)
 	}
 
 	/* allocate space for the statistics */
-	cur.dk_time = calloc(cur.dk_ndrive, sizeof(struct timeval));
-	cur.dk_rxfer = calloc(cur.dk_ndrive, sizeof(u_int64_t));
-	cur.dk_wxfer = calloc(cur.dk_ndrive, sizeof(u_int64_t));
-	cur.dk_seek = calloc(cur.dk_ndrive, sizeof(u_int64_t));
-	cur.dk_rbytes = calloc(cur.dk_ndrive, sizeof(u_int64_t));
-	cur.dk_wbytes = calloc(cur.dk_ndrive, sizeof(u_int64_t));
-	last.dk_time = calloc(cur.dk_ndrive, sizeof(struct timeval));
-	last.dk_rxfer = calloc(cur.dk_ndrive, sizeof(u_int64_t));
-	last.dk_wxfer = calloc(cur.dk_ndrive, sizeof(u_int64_t));
-	last.dk_seek = calloc(cur.dk_ndrive, sizeof(u_int64_t));
-	last.dk_rbytes = calloc(cur.dk_ndrive, sizeof(u_int64_t));
-	last.dk_wbytes = calloc(cur.dk_ndrive, sizeof(u_int64_t));
-	cur.dk_select = calloc(cur.dk_ndrive, sizeof(int));
-	cur.dk_name = calloc(cur.dk_ndrive, sizeof(char *));
+	cur.dk_time = calloc((size_t)cur.dk_ndrive, sizeof(struct timeval));
+	cur.dk_rxfer = calloc((size_t)cur.dk_ndrive, sizeof(u_int64_t));
+	cur.dk_wxfer = calloc((size_t)cur.dk_ndrive, sizeof(u_int64_t));
+	cur.dk_seek = calloc((size_t)cur.dk_ndrive, sizeof(u_int64_t));
+	cur.dk_rbytes = calloc((size_t)cur.dk_ndrive, sizeof(u_int64_t));
+	cur.dk_wbytes = calloc((size_t)cur.dk_ndrive, sizeof(u_int64_t));
+	last.dk_time = calloc((size_t)cur.dk_ndrive, sizeof(struct timeval));
+	last.dk_rxfer = calloc((size_t)cur.dk_ndrive, sizeof(u_int64_t));
+	last.dk_wxfer = calloc((size_t)cur.dk_ndrive, sizeof(u_int64_t));
+	last.dk_seek = calloc((size_t)cur.dk_ndrive, sizeof(u_int64_t));
+	last.dk_rbytes = calloc((size_t)cur.dk_ndrive, sizeof(u_int64_t));
+	last.dk_wbytes = calloc((size_t)cur.dk_ndrive, sizeof(u_int64_t));
+	cur.dk_select = calloc((size_t)cur.dk_ndrive, sizeof(int));
+	cur.dk_name = calloc((size_t)cur.dk_ndrive, sizeof(char *));
 	
 	if (!cur.dk_time || !cur.dk_rxfer || !cur.dk_wxfer || !cur.dk_seek ||
 	    !cur.dk_rbytes || !cur.dk_wbytes || !last.dk_time ||
