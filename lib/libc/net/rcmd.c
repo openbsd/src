@@ -119,7 +119,7 @@ rcmd_af(char **ahost, int porta, const char *locuser, const char *remuser,
 	refused = 0;
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGURG);
-	oldmask = sigprocmask(SIG_BLOCK, &mask, &oldmask);
+	sigprocmask(SIG_BLOCK, &mask, &oldmask);
 	for (timo = 1, lport = IPPORT_RESERVED - 1;;) {
 		s = rresvport_af(&lport, r->ai_family);
 		if (s < 0) {
