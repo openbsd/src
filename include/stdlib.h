@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.37 2006/01/13 17:58:09 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.38 2006/03/31 00:41:21 deraadt Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -229,7 +229,7 @@ int	 cgetstr(char *, const char *, char **);
 int	 cgetustr(char *, const char *, char **);
 
 int	 daemon(int, int);
-char	*devname(int, int);
+char	*devname(int, mode_t);
 int	 getloadavg(double [], int);
 
 void	 cfree(void *);
