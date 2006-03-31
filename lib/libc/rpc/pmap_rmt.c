@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_rmt.c,v 1.25 2005/08/08 08:05:35 espie Exp $ */
+/*	$OpenBSD: pmap_rmt.c,v 1.26 2006/03/31 17:31:59 deraadt Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -150,10 +150,8 @@ xdr_rmtcallres(XDR *xdrs, struct rmtcallres *crp)
  * Someday a large, complicated system will replace these trivial 
  * routines which only support udp/ip .
  */
-
 static int
-newgetbroadcastnets(struct in_addr **addrsp,
-	int sock)	/* any valid socket will do */
+newgetbroadcastnets(struct in_addr **addrsp)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct sockaddr_in *sin;
@@ -248,7 +246,7 @@ clnt_broadcast(u_long prog,	/* program number */
 	pfd[0].fd = sock;
 	pfd[0].events = POLLIN;
 
-	nets = newgetbroadcastnets(&addrs, sock);
+	nets = newgetbroadcastnets(&addrs);
 	if (nets == 0) {
 		stat = RPC_CANTSEND;
 		goto done_broad;
