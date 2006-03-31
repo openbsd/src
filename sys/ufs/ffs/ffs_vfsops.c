@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.84 2006/03/31 12:19:42 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.85 2006/03/31 12:45:01 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1181,6 +1181,9 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	register struct fs *fs;
 	register struct inode *ip;
 	struct ufs1_dinode *dp1;
+#ifdef FFS2
+	struct ufs2_dinode *dp2;
+#endif
 	struct ufsmount *ump;
 	struct buf *bp;
 	struct vnode *vp;
@@ -1252,9 +1255,18 @@ retry:
 		return (error);
 	}
 
-	ip->i_din1 = pool_get(&ffs_dinode1_pool, PR_WAITOK);
-	dp1 = (struct ufs1_dinode *) bp->b_data + ino_to_fsbo(fs, ino);
-	*ip->i_din1 = *dp1;
+#ifdef FFS2
+	if (ip->i_ump->um_fstype == UM_UFS2) {
+		ip->i_din2 = pool_get(&ffs_dinode2_pool, PR_WAITOK);
+		dp2 = (struct ufs2_dinode *) bp->b_data + ino_to_fsbo(fs, ino);
+		*ip->i_din2 = *dp2;
+	} else
+#endif
+	{
+		ip->i_din1 = pool_get(&ffs_dinode1_pool, PR_WAITOK);
+		dp1 = (struct ufs1_dinode *) bp->b_data + ino_to_fsbo(fs, ino);
+		*ip->i_din1 = *dp1;
+	}
 
 	brelse(bp);
 
