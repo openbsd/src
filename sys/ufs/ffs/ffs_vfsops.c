@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.85 2006/03/31 12:45:01 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.86 2006/03/31 12:55:04 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1045,8 +1045,15 @@ ffs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
+
+#ifdef FFS2
+	if (fs->fs_magic != FS_MAGIC && fs->fs_magic != FS_UFS2_MAGIC)
+		panic("ffs_statfs");
+#else
 	if (fs->fs_magic != FS_MAGIC)
 		panic("ffs_statfs");
+#endif /* FFS2 */
+
 	sbp->f_bsize = fs->fs_fsize;
 	sbp->f_iosize = fs->fs_bsize;
 	sbp->f_blocks = fs->fs_dsize;
