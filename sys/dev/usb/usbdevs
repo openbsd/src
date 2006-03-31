@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.189 2006/03/26 18:57:00 grange Exp $
+$OpenBSD: usbdevs,v 1.190 2006/03/31 04:32:30 drahn Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1700,6 +1700,7 @@ product SHUTTLE SCM		0x1010	SCM Micro
 
 /* Siemens products */
 product SIEMENS2 WLL013		0x001b	WLL013
+product SIEMENS2 ES75		0x0034  GSM module MC35
 product SIEMENS SPEEDSTREAM	0x1001	SpeedStream
 product SIEMENS SPEEDSTREAM22	0x1022	SpeedStream 1022
 
