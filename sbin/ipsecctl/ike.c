@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.22 2006/03/31 14:02:08 markus Exp $	*/
+/*	$OpenBSD: ike.c,v 1.23 2006/03/31 14:11:39 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -356,6 +356,7 @@ ike_delete_config(struct ipsec_rule *r, FILE *fd)
 {
 	switch (r->ikemode) {
 	case IKE_ACTIVE:
+	case IKE_DYNAMIC:
 		fprintf(fd, "t IPsec-%s-%s\n", r->src->name, r->dst->name);
 		break;
 	case IKE_PASSIVE:
