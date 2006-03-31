@@ -172,6 +172,8 @@ parse_keys(hdb_entry *ent, char *str)
 	memset(key, 0, sizeof(*key));
 	if(sscanf(p, "%d", &tmp) == 1) {
 	    key->mkvno = malloc(sizeof(*key->mkvno));
+	    if (key->mkvno == NULL)
+		krb5_errx (context, 1, "malloc: out of memory");
 	    *key->mkvno = tmp;
 	} else
 	    key->mkvno = NULL;
@@ -293,6 +295,8 @@ parse_generation(char *str, GENERATION **gen)
 	return 0;
     }
     *gen = calloc(1, sizeof(**gen));
+	if (*gen == NULL)
+	    krb5_errx (context, 1, "calloc: out of memory");
 
     p = strsep(&str, ":");
     if(parse_time_string(&(*gen)->time, p) != 1)
