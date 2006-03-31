@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.h,v 1.12 2004/09/14 22:39:56 deraadt Exp $	*/
+/*	$OpenBSD: kvm.h,v 1.13 2006/03/31 03:09:16 deraadt Exp $	*/
 /*	$NetBSD: kvm.h,v 1.7 1996/04/19 12:02:50 leo Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ struct kinfo_proc2 *
 int	  kvm_nlist(kvm_t *, struct nlist *);
 kvm_t	 *kvm_open(const char *, const char *, const char *, int, const char *);
 kvm_t	 *kvm_openfiles(const char *, const char *, const char *,
-	        unsigned int, char *);
+	        int, char *);
 ssize_t	  kvm_read(kvm_t *, unsigned long, void *, size_t)
 		__attribute__((__bounded__(__buffer__,3,4)));
 ssize_t	  kvm_write(kvm_t *, unsigned long, const void *, size_t)
