@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.90 2006/03/28 09:51:09 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.91 2006/04/01 05:58:17 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -39,12 +39,8 @@ const char rcs_version[] = "OpenCVS RCS version 3.6";
 int verbose = 1;
 int pipeout = 0;
 
-#define RCSPROG_EFLAG	(1<<0)
-#define RCSPROG_NFLAG	(1<<1)
-#define RCSPROG_TFLAG	(1<<2)
-static int rcsflags = 0;
-
 int	 flags;
+int	 rcsflags;
 int	 rcs_optind;
 char	*rcs_optarg;
 char	*rcs_suffixes;
