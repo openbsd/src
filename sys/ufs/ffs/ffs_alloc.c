@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.62 2006/03/11 22:52:56 pedro Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.63 2006/04/01 12:13:51 pedro Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -1402,8 +1402,7 @@ gotit:
 	fs->fs_cstotal.cs_nbfree--;
 	fs->fs_cs(fs, cgp->cg_cgx).cs_nbfree--;
 
-	if ((fs->fs_magic == FS_UFS1_MAGIC) /* && */
-	/*  ((fs->fs_flags & FS_FLAGS_UPDATED) == 0)*/) {
+	if (fs->fs_magic != FS_UFS2_MAGIC) {
 		cylno = cbtocylno(fs, bno);
 		cg_blks(fs, cgp, cylno)[cbtorpos(fs, bno)]--;
 		cg_blktot(cgp)[cylno]--;
@@ -1702,9 +1701,13 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 		cgp->cg_cs.cs_nbfree++;
 		fs->fs_cstotal.cs_nbfree++;
 		fs->fs_cs(fs, cg).cs_nbfree++;
-		i = cbtocylno(fs, bno);
-		cg_blks(fs, cgp, i)[cbtorpos(fs, bno)]++;
-		cg_blktot(cgp)[i]++;
+
+		if (fs->fs_magic != FS_UFS2_MAGIC) {
+			i = cbtocylno(fs, bno);
+			cg_blks(fs, cgp, i)[cbtorpos(fs, bno)]++;
+			cg_blktot(cgp)[i]++;
+		}
+
 	} else {
 		bbase = bno - fragnum(fs, bno);
 		/*
@@ -1744,9 +1747,12 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 			cgp->cg_cs.cs_nbfree++;
 			fs->fs_cstotal.cs_nbfree++;
 			fs->fs_cs(fs, cg).cs_nbfree++;
-			i = cbtocylno(fs, bbase);
-			cg_blks(fs, cgp, i)[cbtorpos(fs, bbase)]++;
-			cg_blktot(cgp)[i]++;
+
+			if (fs->fs_magic != FS_UFS2_MAGIC) {
+				i = cbtocylno(fs, bbase);
+				cg_blks(fs, cgp, i)[cbtorpos(fs, bbase)]++;
+				cg_blktot(cgp)[i]++;
+			}
 		}
 	}
 	fs->fs_fmod = 1;
