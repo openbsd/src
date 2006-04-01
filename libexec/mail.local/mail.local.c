@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.local.c,v 1.28 2006/01/02 16:22:46 millert Exp $	*/
+/*	$OpenBSD: mail.local.c,v 1.29 2006/04/01 22:48:57 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -41,7 +41,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";
 #else
-static char rcsid[] = "$OpenBSD: mail.local.c,v 1.28 2006/01/02 16:22:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: mail.local.c,v 1.29 2006/04/01 22:48:57 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -120,14 +120,14 @@ main(int argc, char *argv[])
 	    !(pw = getpwnam(from)) || pw->pw_uid != uid))
 		from = (pw = getpwuid(uid)) ? pw->pw_name : "???";
 
-	fd = store(from);
+	fd = storemail(from);
 	for (eval = 0; *argv; ++argv)
 		eval |= deliver(fd, *argv, lockfile);
 	exit(eval);
 }
 
 int
-store(char *from)
+storemail(char *from)
 {
 	FILE *fp = NULL;
 	time_t tval;
@@ -185,9 +185,11 @@ deliver(int fd, char *name, int lockfile)
 {
 	struct stat sb, fsb;
 	struct passwd *pw;
-	int mbfd=-1, nr, nw, off, rval=1, lfd=-1;
+	int mbfd=-1, rval=1, lfd=-1;
 	char biffmsg[100], buf[8*1024], path[MAXPATHLEN];
 	off_t curoff;
+	size_t off;
+	ssize_t nr, nw;
 
 	/*
 	 * Disallow delivery to unknown names -- special mailboxes can be
@@ -305,7 +307,7 @@ notifybiff(char *msg)
 	static int f = -1;
 	struct hostent *hp;
 	struct servent *sp;
-	int len;
+	size_t len;
 
 	if (!addr.sin_family) {
 		/* Be silent if biff service not available. */
@@ -318,7 +320,7 @@ notifybiff(char *msg)
 		addr.sin_len = sizeof(struct sockaddr_in);
 		addr.sin_family = hp->h_addrtype;
 		addr.sin_port = sp->s_port;
-		bcopy(hp->h_addr, &addr.sin_addr, hp->h_length);
+		bcopy(hp->h_addr, &addr.sin_addr, (size_t)hp->h_length);
 	}
 	if (f < 0 && (f = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
 		merr(NOTFATAL, "socket: %s", strerror(errno));
