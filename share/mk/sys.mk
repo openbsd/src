@@ -1,4 +1,4 @@
-#	$OpenBSD: sys.mk,v 1.47 2006/01/19 03:30:04 deraadt Exp $
+#	$OpenBSD: sys.mk,v 1.48 2006/04/01 05:53:39 deraadt Exp $
 #	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
@@ -66,7 +66,7 @@ LD?=		ld
 LDFLAGS+=	${DEBUG}
 
 LINT?=		lint
-LINTFLAGS?=	-chapbx
+LINTFLAGS?=	-chabx
 
 MAKE?=		make
 
