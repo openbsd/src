@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.158 2006/03/30 23:12:52 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.159 2006/04/01 18:02:55 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -271,7 +271,7 @@ static char*   rcs_expand_keywords(char *, struct rcs_delta *, char *,
 RCSFILE *
 rcs_open(const char *path, int flags, ...)
 {
-	int ret;
+	int ret, mode;
 	mode_t fmode;
 	RCSFILE *rfp;
 	struct stat st;
@@ -285,8 +285,9 @@ rcs_open(const char *path, int flags, ...)
 	if (((ret = stat(path, &st)) == -1) && (errno == ENOENT)) {
 		if (flags & RCS_CREATE) {
 			va_start(vap, flags);
-			fmode = va_arg(vap, mode_t);
+			mode = va_arg(vap, int);
 			va_end(vap);
+			fmode = (mode_t)mode;
 		} else {
 			/* XXX, make this command dependant? */
 #if 0
