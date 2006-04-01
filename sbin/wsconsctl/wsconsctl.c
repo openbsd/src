@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.c,v 1.16 2004/08/09 18:39:22 deraadt Exp $	*/
+/*	$OpenBSD: wsconsctl.c,v 1.17 2006/04/01 23:13:53 miod Exp $	*/
 /*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
 
 /*-
@@ -166,6 +166,8 @@ main(int argc, char *argv[])
 				}
 				f->flags |= FLG_GET;
 				(*sw->getval)(sw->name, sw->fd);
+				if (f->flags & FLG_DEAD)
+					continue;
 				pr_field(sw->name, f, sep);
 				continue;
 			}
