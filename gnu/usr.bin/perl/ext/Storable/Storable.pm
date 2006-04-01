@@ -707,8 +707,8 @@ system-level resources, such as singleton objects, database pools, caches
 or memoized objects.
 
 The alternative C<STORABLE_attach> method provides a solution for these
-shared objects. Instead of C<STORABLE_freeze> --E<GT> C<STORABLE_thaw>,
-you implement C<STORABLE_freeze> --E<GT> C<STORABLE_attach> instead.
+shared objects. Instead of C<STORABLE_freeze> --E<gt> C<STORABLE_thaw>,
+you implement C<STORABLE_freeze> --E<gt> C<STORABLE_attach> instead.
 
 Arguments: I<class> is the class we are attaching to, I<cloning> is a flag
 indicating whether we're in a dclone() or a regular de-serialization via
