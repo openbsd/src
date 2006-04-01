@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwivar.h,v 1.16 2006/04/01 01:04:40 pedro Exp $	*/
+/*	$OpenBSD: if_iwivar.h,v 1.17 2006/04/01 15:36:01 mickey Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -74,8 +74,8 @@ struct iwi_tx_data {
 struct iwi_tx_ring {
 	bus_dmamap_t		map;
 	bus_dma_segment_t	seg;
-	bus_addr_t		csr_ridx;
-	bus_addr_t		csr_widx;
+	bus_size_t		csr_ridx;
+	bus_size_t		csr_widx;
 	struct iwi_tx_desc	*desc;
 	struct iwi_tx_data	data[IWI_TX_RING_COUNT];
 	int			queued;

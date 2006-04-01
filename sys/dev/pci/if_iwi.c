@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.64 2006/04/01 01:04:40 pedro Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.65 2006/04/01 15:36:01 mickey Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -101,7 +101,7 @@ int		iwi_alloc_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
 void		iwi_reset_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
 void		iwi_free_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *);
 int		iwi_alloc_tx_ring(struct iwi_softc *, struct iwi_tx_ring *,
-		    bus_addr_t, bus_addr_t);
+		    bus_size_t, bus_size_t);
 void		iwi_reset_tx_ring(struct iwi_softc *, struct iwi_tx_ring *);
 void		iwi_free_tx_ring(struct iwi_softc *, struct iwi_tx_ring *);
 int		iwi_alloc_rx_ring(struct iwi_softc *, struct iwi_rx_ring *);
@@ -185,7 +185,6 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
-	bus_addr_t base;
 	pci_intr_handle_t ih;
 	pcireg_t data;
 	uint16_t val;
@@ -201,7 +200,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* map the register window */
 	error = pci_mapreg_map(pa, IWI_PCI_BAR0, PCI_MAPREG_TYPE_MEM |
-	    PCI_MAPREG_MEM_TYPE_32BIT, 0, &memt, &memh, &base, &sc->sc_sz, 0);
+	    PCI_MAPREG_MEM_TYPE_32BIT, 0, &memt, &memh, NULL, &sc->sc_sz, 0);
 	if (error != 0) {
 		printf(": could not map memory space\n");
 		return;
@@ -504,7 +503,7 @@ iwi_free_cmd_ring(struct iwi_softc *sc, struct iwi_cmd_ring *ring)
 
 int
 iwi_alloc_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring,
-    bus_addr_t csr_ridx, bus_addr_t csr_widx)
+    bus_size_t csr_ridx, bus_size_t csr_widx)
 {
 	struct iwi_tx_data *data;
 	int i, nsegs, error;
