@@ -1,7 +1,10 @@
-/*	$OpenBSD: closedir.c,v 1.7 2006/04/01 18:06:59 otto Exp $ */
+/*	$OpenBSD: telldir.h,v 1.1 2006/04/01 18:06:59 otto Exp $	*/
 /*
  * Copyright (c) 1983, 1993
- *	Regents of the University of California.  All rights reserved.
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * Copyright (c) 2000
+ * 	Daniel Eischen.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,33 +29,34 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * $FreeBSD: src/lib/libc/gen/telldir.h,v 1.2 2001/01/24 12:59:24 deischen Exp $
  */
 
-#include <sys/types.h>
-#include <dirent.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include "thread_private.h"
-#include "telldir.h"
+#ifndef _TELLDIR_H_
+#define	_TELLDIR_H_
 
 /*
- * close a directory.
+ * One of these structures is malloced to describe the current directory
+ * position each time telldir is called. It records the current magic
+ * cookie returned by getdirentries and the offset within the buffer
+ * associated with that return value.
  */
-int
-closedir(DIR *dirp)
-{
-	int fd;
-	int ret;
+struct ddloc {
+	long	loc_seek;	/* magic cookie returned by getdirentries */
+	long	loc_loc;	/* offset of entry in buffer */
+};
 
-	if ((ret = _FD_LOCK(dirp->dd_fd, FD_READ, NULL)) != 0)
-		return (ret);
-	fd = dirp->dd_fd;
-	dirp->dd_fd = -1;
-	dirp->dd_loc = 0;
-	free(dirp->dd_td->td_locs);
-	free(dirp->dd_buf);
-	free(dirp);
-	ret = close(fd);
-	_FD_UNLOCK(fd, FD_READ);
-	return (ret);
-}
+/*
+ * One of these structures is malloced for each DIR to record telldir
+ * positions.
+ */
+struct _telldir {
+	struct ddloc *td_locs;	/* locations */
+	size_t	td_sz;		/* size of locations */
+	long	td_loccnt;	/* index of entry for sequential readdir's */
+};
+
+void 		__seekdir(DIR *, long);
+
+#endif

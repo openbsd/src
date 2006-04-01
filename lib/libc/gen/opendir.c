@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendir.c,v 1.15 2005/10/10 17:37:43 espie Exp $ */
+/*	$OpenBSD: opendir.c,v 1.16 2006/04/01 18:06:59 otto Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,6 +40,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "telldir.h"
+
 /*
  * Open a directory.
  */
@@ -67,10 +69,16 @@ __opendir2(const char *name, int flags)
 		return (NULL);
 	}
 	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1 ||
-	    (dirp = (DIR *)malloc(sizeof(DIR))) == NULL) {
+	    (dirp = malloc(sizeof(DIR) + sizeof(struct _telldir))) == NULL) {
 		close(fd);
 		return (NULL);
 	}
+
+	dirp->dd_td = (struct _telldir *)((char *)dirp + sizeof(DIR));
+	dirp->dd_td->td_locs = NULL;
+	dirp->dd_td->td_sz = 0;
+	dirp->dd_td->td_loccnt = 0;
+
 
 	/*
 	 * If the machine's page size is an exact multiple of DIRBLKSIZ,

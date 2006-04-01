@@ -1,4 +1,4 @@
-/*	$OpenBSD: telldir.c,v 1.7 2005/08/08 08:05:34 espie Exp $ */
+/*	$OpenBSD: telldir.c,v 1.8 2006/04/01 18:06:59 otto Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,56 +29,43 @@
  */
 
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <dirent.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-/*
- * The option SINGLEUSE may be defined to say that a telldir
- * cookie may be used only once before it is freed. This option
- * is used to avoid having memory usage grow without bound.
- */
-#define SINGLEUSE
-
-/*
- * One of these structures is malloced to describe the current directory
- * position each time telldir is called. It records the current magic 
- * cookie returned by getdirentries and the offset within the buffer
- * associated with that return value.
- */
-struct ddloc {
-	struct	ddloc *loc_next;/* next structure in list */
-	long	loc_index;	/* key associated with structure */
-	long	loc_seek;	/* magic cookie returned by getdirentries */
-	long	loc_loc;	/* offset of entry in buffer */
-};
-
-#define	NDIRHASH	32	/* Num of hash lists, must be a power of 2 */
-#define	LOCHASH(i)	((i)&(NDIRHASH-1))
-
-static long	dd_loccnt;	/* Index of entry for sequential readdir's */
-static struct	ddloc *dd_hash[NDIRHASH];   /* Hash list heads for ddlocs */
-
-void __seekdir(DIR *, long);
+#include "telldir.h"
 
 /*
  * return a pointer into a directory
  */
 long
-telldir(const DIR *dirp)
+telldir(DIR *dirp)
 {
-	int index;
-	struct ddloc *lp;
+	long i = 0;
+	struct ddloc *lp = dirp->dd_td->td_locs;
 
-	if ((lp = (struct ddloc *)malloc(sizeof(struct ddloc))) == NULL)
-		return (-1);
-	index = dd_loccnt++;
-	lp->loc_index = index;
+	/* return previous telldir, if there */
+	for (; i < dirp->dd_td->td_loccnt; i++, lp++) {
+		if (lp->loc_seek == dirp->dd_seek && 
+		    lp->loc_loc == dirp->dd_loc)
+			return (i);
+	}
+
+	if (dirp->dd_td->td_loccnt == dirp->dd_td->td_sz) {
+		size_t newsz = dirp->dd_td->td_sz * 2 + 1;
+		struct ddloc *p;
+		p = realloc(dirp->dd_td->td_locs, newsz * sizeof(*p));
+		if (p == NULL)
+			return (-1);
+		dirp->dd_td->td_sz = newsz;
+		dirp->dd_td->td_locs = p;
+		lp = &dirp->dd_td->td_locs[i];
+	}
+	dirp->dd_td->td_loccnt++;
 	lp->loc_seek = dirp->dd_seek;
 	lp->loc_loc = dirp->dd_loc;
-	lp->loc_next = dd_hash[LOCHASH(index)];
-	dd_hash[LOCHASH(index)] = lp;
-	return (index);
+	return (i);
 }
 
 /*
@@ -89,21 +76,13 @@ void
 __seekdir(DIR *dirp, long loc)
 {
 	struct ddloc *lp;
-	struct ddloc **prevlp;
 	struct dirent *dp;
 
-	prevlp = &dd_hash[LOCHASH(loc)];
-	lp = *prevlp;
-	while (lp != NULL) {
-		if (lp->loc_index == loc)
-			break;
-		prevlp = &lp->loc_next;
-		lp = lp->loc_next;
-	}
-	if (lp == NULL)
+	if (loc < 0 || loc >= dirp->dd_td->td_loccnt)
 		return;
+	lp = &dirp->dd_td->td_locs[loc];
 	if (lp->loc_loc == dirp->dd_loc && lp->loc_seek == dirp->dd_seek)
-		goto found;
+		return;
 	(void) lseek(dirp->dd_fd, (off_t)lp->loc_seek, SEEK_SET);
 	dirp->dd_seek = lp->loc_seek;
 	dirp->dd_loc = 0;
@@ -112,9 +91,4 @@ __seekdir(DIR *dirp, long loc)
 		if (dp == NULL)
 			break;
 	}
-found:
-#ifdef SINGLEUSE
-	*prevlp = lp->loc_next;
-	free((caddr_t)lp);
-#endif
 }

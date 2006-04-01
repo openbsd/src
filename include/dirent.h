@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirent.h,v 1.15 2005/12/13 00:35:22 millert Exp $	*/
+/*	$OpenBSD: dirent.h,v 1.16 2006/04/01 18:06:59 otto Exp $	*/
 /*	$NetBSD: dirent.h,v 1.9 1995/03/26 20:13:37 jtc Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@
 /* definitions for library routines operating on directories. */
 #define	DIRBLKSIZ	1024
 
+struct _telldir;
 /* structure describing an open directory. */
 typedef struct _dirdesc {
 	int	dd_fd;		/* file descriptor associated with directory */
@@ -69,6 +70,7 @@ typedef struct _dirdesc {
 	long	dd_seek;	/* magic cookie returned by getdirentries */
 	long	dd_rewind;	/* magic cookie for rewinding */
 	int	dd_flags;	/* flags for readdir */
+	struct _telldir *dd_td; /* telldir position recording */
 } DIR;
 
 #define	dirfd(dirp)	((dirp)->dd_fd)
@@ -106,7 +108,7 @@ int getdirentries(int, char *, int, long *)
 		__attribute__ ((__bounded__(__string__,2,3)));
 #endif /* __BSD_VISIBLE */
 #if __XPG_VISIBLE
-long telldir(const DIR *);
+long telldir(DIR *);
 void seekdir(DIR *, long);
 #endif
 #if __POSIX_VISIBLE >= 199506 || __XPG_VISIBLE >= 500
