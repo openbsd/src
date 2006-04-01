@@ -1,4 +1,4 @@
-/*	$OpenBSD: telldir.c,v 1.1 2006/03/25 20:27:11 otto Exp $	*/
+/*	$OpenBSD: telldir.c,v 1.2 2006/04/01 18:24:53 otto Exp $	*/
 
 /*	Written by Otto Moerbeek, 2006,  Public domain.	*/
 
@@ -98,7 +98,7 @@ main(void)
 		err(1, "opendir");
 
 	for (i = 0; i < NFILES; i++)
-		loop(dp, (i + 500) % NFILES);
+		loop(dp, (i + NFILES/2) % NFILES);
 
 	closedir(dp);
 	delfiles();
