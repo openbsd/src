@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.91 2006/03/15 18:24:50 deraadt Exp $	*/
+/*	$OpenBSD: proto.c,v 1.92 2006/04/01 01:20:21 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -52,7 +52,7 @@
 #define CVS_REQF_RESP	0x01
 
 
-static int	cvs_initlog(void);
+static void	cvs_initlog(void);
 
 struct cvs_req cvs_requests[] = {
 	{ CVS_REQ_DIRECTORY,     "Directory",         0             },
@@ -915,7 +915,7 @@ cvs_sendentry(struct cvsroot *root, const CVSFILE *file)
  * output.
  * Returns 0 on success, or -1 on failure.
  */
-static int
+static void 
 cvs_initlog(void)
 {
 	int l;
@@ -928,11 +928,11 @@ cvs_initlog(void)
 
 	/* avoid doing it more than once */
 	if (cvs_server_logon)
-		return (0);
+		return;
 
 	env = getenv("CVS_CLIENT_LOG");
 	if (env == NULL)
-		return (0);
+		return;
 
 	envdup = xstrdup(env);
 	if ((s = strchr(envdup, '%')) != NULL)
@@ -976,57 +976,43 @@ cvs_initlog(void)
 
 	for (i = 0; i < UINT_MAX; i++) {
 		l = snprintf(fpath, sizeof(fpath), "%s-%d.in", rpath, i);
-		if (l == -1 || l >= (int)sizeof(fpath)) {
-			errno = ENAMETOOLONG;
-			cvs_log(LP_ERRNO, "%s", fpath);
-			return (-1);
-		}
+		if (l == -1 || l >= (int)sizeof(fpath))
+			fatal("overflow in cvs_initlog()");
 
 		if (stat(fpath, &st) != -1)
 			continue;
 
 		if (errno != ENOENT)
-			return (-1);
+			fatal("cvs_initlog() stat failed '%s'", strerror(errno));
 
 		break;
 	}
 
 	cvs_server_inlog = fopen(fpath, "w");
-	if (cvs_server_inlog == NULL) {
-		cvs_log(LP_ERRNO, "failed to open server input log `%s'",
-		    fpath);
-		return (-1);
-	}
+	if (cvs_server_inlog == NULL)
+		fatal("failed to open server input log `%s'", fpath);
 
 	for (i = 0; i < UINT_MAX; i++) {
 		l = snprintf(fpath, sizeof(fpath), "%s-%d.out", rpath, i);
-		if (l == -1 || l >= (int)sizeof(fpath)) {
-			errno = ENAMETOOLONG;
-			cvs_log(LP_ERRNO, "%s", fpath);
-			return (-1);
-		}
+		if (l == -1 || l >= (int)sizeof(fpath))
+			fatal("overflow in cvs_initlog()");
 
 		if (stat(fpath, &st) != -1)
 			continue;
 
 		if (errno != ENOENT)
-			return (-1);
+			fatal("cvs_initlog() stat failed '%s'", strerror(errno));
 
 		break;
 	}
 
 	cvs_server_outlog = fopen(fpath, "w");
-	if (cvs_server_outlog == NULL) {
-		cvs_log(LP_ERRNO, "failed to open server output log `%s'",
-		    fpath);
-		return (-1);
-	}
+	if (cvs_server_outlog == NULL)
+		fatal("failed to open server output log `%s'", fpath);
 
 	/* make the streams line-buffered */
 	setvbuf(cvs_server_inlog, NULL, _IOLBF, (size_t)0);
 	setvbuf(cvs_server_outlog, NULL, _IOLBF, (size_t)0);
 
 	cvs_server_logon = 1;
-
-	return (0);
 }
