@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.102 2006/03/15 19:59:36 niallo Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.103 2006/04/01 20:11:25 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -153,8 +153,8 @@
 
 
 struct cvs_cmd {
-	int	 cmd_op;
-	int	 cmd_req;
+	u_int	 cmd_op;
+	u_int	 cmd_req;
 	char	 cmd_name[CVS_CMD_MAXNAMELEN];
 	char	 cmd_alias[CVS_CMD_MAXALIAS][CVS_CMD_MAXNAMELEN];
 	char	 cmd_descr[CVS_CMD_MAXDESCRLEN];
@@ -315,8 +315,6 @@ typedef struct cvs_histfile {
 
 } CVSHIST;
 
-
-extern char *cvs_req_modulename;
 extern char *cvs_repo_base;
 extern char *cvs_command;
 extern char *cvs_editor;
