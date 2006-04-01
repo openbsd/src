@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.40 2006/04/01 05:58:17 ray Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.41 2006/04/01 06:19:29 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -52,14 +52,16 @@
 
 /* flags specific to rcsprog.c */
 #define RCSPROG_EFLAG	(1<<10)
-#define RCSPROG_NFLAG	(1<<11)
-#define RCSPROG_TFLAG	(1<<12)
+#define RCSPROG_LFLAG	(1<<11)
+#define RCSPROG_NFLAG	(1<<12)
+#define RCSPROG_TFLAG	(1<<13)
+#define RCSPROG_UFLAG	(1<<14)
 
 /* shared flags  */
-#define FORCE		(1<<13)
-#define INTERACTIVE	(1<<14)
-#define NEWFILE		(1<<15)
-#define PRESERVETIME	(1<<16)
+#define FORCE		(1<<15)
+#define INTERACTIVE	(1<<16)
+#define NEWFILE		(1<<17)
+#define PRESERVETIME	(1<<18)
 
 extern char	*__progname;
 extern const char	rcs_version[];

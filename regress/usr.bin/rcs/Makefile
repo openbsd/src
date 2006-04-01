@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2006/03/28 09:43:54 xsa Exp $
+#	$OpenBSD: Makefile,v 1.15 2006/04/01 06:19:29 ray Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -50,6 +50,7 @@ LTESTS= ci-initial \
 	rcs-tflag-stdin3 \
 	rcs-tflag-inline \
 	rcs-tflag-file \
+	rcs-lock-unlock \
 	co-lock-filemodes \
 	co-unlock-filemodes \
 	ci-filemodes
@@ -287,6 +288,37 @@ test-rcs-tflag-file: clean
 	@echo 'This is a description.' > description
 	@${RCS} -q -i -tdescription file
 	@fgrep -q 'This is a description.' file,v
+
+test-rcs-lock-unlock: clean
+	@touch file
+	@mkdir -p RCS
+	@echo . | ${CI} -q -l file
+	@echo sometext > file
+	@echo . | ${CI} -q file
+
+	@${RCS} -q -l file
+	@${RLOG} file | fgrep -x -A 1 'locks: strict' | head -n 2 | fgrep -q 1.2
+	@${RCS} -q -u file
+	@${RLOG} file | fgrep -x -A 1 'locks: strict' | head -n 2 | fgrep -q 1.2 || \
+	    case "$$?" in 1) exit 0;; esac && exit 1
+
+	@${RCS} -q -l1.1 file
+	@${RLOG} file | fgrep -x -A 1 'locks: strict' | head -n 2 | fgrep -q 1.1
+	@${RCS} -q -u1.1 file
+	@${RLOG} file | fgrep -x -A 1 'locks: strict' | head -n 2 | fgrep -q 1.1 || \
+	    case "$$?" in 1) exit 0;; esac && exit 1
+
+	@${RCS} -q -l1.2 file
+	@${RLOG} file | fgrep -x -A 1 'locks: strict' | head -n 2 | fgrep -q 1.2
+	@${RCS} -q -u1.2 file
+	@${RLOG} file | fgrep -x -A 1 'locks: strict' | head -n 2 | fgrep -q 1.2 || \
+	    case "$$?" in 1) exit 0;; esac && exit 1
+
+	@${RCS} -q -u file || case "$$?" in 1) exit 0;; esac && exit 1
+	@${RCS} -q -l file
+	@${RCS} -q -l file || case "$$?" in 1) exit 0;; esac && exit 1
+	@${RCS} -q -l1.3 file || case "$$?" in 1) exit 0;; esac && exit 1
+	@${RCS} -q -u1.3 file || case "$$?" in 1) exit 0;; esac && exit 1
 
 # Testing 'co -l blah.c' for permissions inheritance
 test-co-lock-filemodes:

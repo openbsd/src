@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.23 2006/03/08 11:25:58 xsa Exp $
+.\"	$OpenBSD: rcs.1,v 1.24 2006/04/01 06:19:29 ray Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -39,6 +39,7 @@
 .Op Fl c Ns Ar string
 .Op Fl e Ns Op Ar users
 .Op Fl k Ns Ar mode
+.Op Fl l Ns Op Ar rev
 .Oo Fl m Ns Ar rev Ns :
 .Ar msg Oc
 .Op Fl o Ns Ar rev
@@ -46,6 +47,7 @@
 .Op : Ns Ar rev Oc
 .Oo Fl t Ns Ar file Ns \*(Ba
 .Ar str Oc
+.Op Fl u Ns Op Ar rev
 .Op Fl x Ns Ar suffixes
 .Ar file ...
 .Sh DESCRIPTION
@@ -110,6 +112,13 @@ Files created this way contain no revision.
 Specify the keyword substitution mode.
 .It Fl L
 Enable strict locking on the RCS files.
+.It Fl l Ns Op Ar rev
+Lock revision
+.Ar rev
+on the RCS files.
+If
+.Ar rev
+is not given, the head revision is locked.
 .It Fl M
 Disable mail warnings when breaking a user's lock.
 Normally,
@@ -185,6 +194,13 @@ terminated by end-of-file or by a line containing the
 character by itself.
 .It Fl U
 Disable strict locking on the RCS files.
+.It Fl u Ns Op Ar rev
+Unlock revision
+.Ar rev
+on the RCS files.
+If
+.Ar rev
+is not given, the head revision is unlocked.
 .It Fl V
 Print the program's version string and exit.
 .It Fl x Ns Ar suffixes

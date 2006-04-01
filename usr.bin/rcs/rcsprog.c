@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.91 2006/04/01 05:58:17 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.92 2006/04/01 06:19:29 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -29,7 +29,7 @@
 #include "rcsprog.h"
 
 #define RCS_CMD_MAXARG	128
-#define RCSPROG_OPTSTRING	"A:a:b::c:e::hik:Lm:Mn:N:qt::TUVx::z:"
+#define RCSPROG_OPTSTRING	"A:a:b::c:e::hik:Ll::m:Mn:N:qt::TUu::Vx::z:"
 
 #define DESC_PROMPT	"enter description, terminated with single '.' "      \
 			"or end of file:\nNOTE: This is NOT the log message!" \
@@ -421,8 +421,8 @@ rcs_usage(void)
 {
 	fprintf(stderr,
 	    "usage: rcs [-ehIiLMqTUV] [-Aoldfile] [-ausers] [-b[rev]]\n"
-	    "           [-cstring] [-e[users]] [-kmode] [-mrev:msg]\n"
-	    "           [-orev] [-sstate[:rev]] [-tfile|str]\n"
+	    "           [-cstring] [-e[users]] [-kmode] [-l[rev]] [-mrev:msg]\n"
+	    "           [-orev] [-sstate[:rev]] [-tfile|str] [-u[rev]]\n"
 	    "           [-xsuffixes] file ...\n");
 }
 
@@ -438,7 +438,7 @@ rcs_main(int argc, char **argv)
 	int i, j, ch, kflag, lkmode;
 	char fpath[MAXPATHLEN], ofpath[MAXPATHLEN];
 	char *logstr, *logmsg, *nflag, *descfile;
-	char *alist, *comment, *elist;
+	char *alist, *comment, *elist, *lrev, *urev;
 	mode_t fmode;
 	RCSFILE *file, *oldfile;
 	RCSNUM *logrev;
@@ -448,7 +448,7 @@ rcs_main(int argc, char **argv)
 	kflag = lkmode = -1;
 	fmode =  S_IRUSR|S_IRGRP|S_IROTH;
 	flags = RCS_RDWR|RCS_PARSE_FULLY;
-	descfile = nflag = NULL;
+	lrev = urev = descfile = nflag = NULL;
 	logstr = alist = comment = elist = NULL;
 
 	while ((ch = rcs_getopt(argc, argv, RCSPROG_OPTSTRING)) != -1) {
@@ -489,6 +489,11 @@ rcs_main(int argc, char **argv)
 				cvs_log(LP_WARN, "-U overriden by -L");
 			lkmode = RCS_LOCK_STRICT;
 			break;
+		case 'l':
+			/* XXX - Check with -u flag. */
+			lrev = rcs_optarg;
+			rcsflags |= RCSPROG_LFLAG;
+			break;
 		case 'm':
 			logstr = xstrdup(rcs_optarg);
 			break;
@@ -516,6 +521,11 @@ rcs_main(int argc, char **argv)
 			if (lkmode == RCS_LOCK_STRICT)
 				cvs_log(LP_WARN, "-L overriden by -U");
 			lkmode = RCS_LOCK_LOOSE;
+			break;
+		case 'u':
+			/* XXX - Check with -l flag. */
+			urev = rcs_optarg;
+			rcsflags |= RCSPROG_UFLAG;
 			break;
 		case 'V':
 			printf("%s\n", rcs_version);
@@ -646,6 +656,54 @@ rcs_main(int argc, char **argv)
 
 		if (lkmode != -1)
 			(void)rcs_lock_setmode(file, lkmode);
+
+		if (rcsflags & RCSPROG_LFLAG) {
+			RCSNUM *rev;
+			const char *username;
+
+			if ((username = getlogin()) == NULL)
+				fatal("could not get username");
+			if (lrev == NULL) {
+				rev = rcsnum_alloc();
+				rcsnum_cpy(file->rf_head, rev, 0);
+			} else if ((rev = rcsnum_parse(lrev)) == NULL) {
+				cvs_log(LP_ERR, "unable to unlock file");
+				rcs_close(file);
+				continue;
+			}
+			/* Make sure revision exists. */
+			if (rcs_findrev(file, rev) == NULL)
+				fatal("revision does not exist");
+			if (rcs_lock_add(file, username, rev) == -1) {
+				rcs_close(file);
+				fatal("unable to lock file");
+			}
+			rcsnum_free(rev);
+		}
+
+		if (rcsflags & RCSPROG_UFLAG) {
+			RCSNUM *rev;
+			const char *username;
+
+			if ((username = getlogin()) == NULL)
+				fatal("could not get username");
+			if (urev == NULL) {
+				rev = rcsnum_alloc();
+				rcsnum_cpy(file->rf_head, rev, 0);
+			} else if ((rev = rcsnum_parse(urev)) == NULL) {
+				cvs_log(LP_ERR, "unable to unlock file");
+				rcs_close(file);
+				continue;
+			}
+			/* Make sure revision exists. */
+			if (rcs_findrev(file, rev) == NULL)
+				fatal("revision does not exist");
+			if (rcs_lock_remove(file, username, rev) == -1) {
+				rcs_close(file);
+				fatal("unable to unlock file");
+			}
+			rcsnum_free(rev);
+		}
 
 		rcs_close(file);
 
