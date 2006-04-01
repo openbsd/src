@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.88 2006/03/31 16:24:58 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.89 2006/04/01 11:24:47 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -751,9 +751,14 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	bzero(ump, sizeof *ump);
 	ump->um_fs = malloc((u_long)fs->fs_sbsize, M_UFSMNT,
 	    M_WAITOK);
-	if (fs->fs_magic == FS_UFS1_MAGIC) {
+
+	if (fs->fs_magic == FS_UFS1_MAGIC)
 		ump->um_fstype = UM_UFS1;
-	}
+#ifdef FFS2
+	else
+		ump->um_fstype = UM_UFS2;
+#endif
+
 	bcopy(bp->b_data, ump->um_fs, (u_int)fs->fs_sbsize);
 	if (fs->fs_sbsize < SBSIZE)
 		bp->b_flags |= B_INVAL;
