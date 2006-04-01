@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.40 2006/03/27 15:26:11 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.41 2006/04/01 00:56:54 joris Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -131,7 +131,7 @@ cvs_import_pre_exec(struct cvsroot *root)
 		    sizeof(repodir)) >= sizeof(repodir))
 			fatal("cvs_import_pre_exec: cvs_path_cat overflow");
 
-		if (mkdir(repodir, 0700) == -1)
+		if (mkdir(repodir, 0775) == -1)
 			fatal("cvs_import_pre_exec: mkdir `%s': %s",
 			    repodir, strerror(errno));
 	} else {
@@ -224,8 +224,10 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	struct stat fst;
 	struct timeval ts[2];
 	struct cvsroot *root;
+	struct rcs_delta *rdp;
+	struct rcs_branch *brp;
 	RCSFILE *rf;
-	RCSNUM *rev;
+	RCSNUM *rev, *brev;
 	BUF *bp;
 
 	root = CVS_DIR_ROOT(cf);
@@ -245,7 +247,7 @@ cvs_import_local(CVSFILE *cf, void *arg)
 				fatal("cvs_import_local: cvs_path_cat overflow");
 
 			cvs_printf("Importing %s\n", rpath);
-			if (mkdir(rpath, 0700) == -1) {
+			if (mkdir(rpath, 0755) == -1) {
 				cvs_log(LP_ERRNO, "failed to create %s",
 				    rpath);
 			}
@@ -280,7 +282,7 @@ cvs_import_local(CVSFILE *cf, void *arg)
 
 	cvs_printf("N %s\n", fpath);
 
-	if ((rf = rcs_open(rpath, RCS_RDWR|RCS_CREATE)) == NULL)
+	if ((rf = rcs_open(rpath, RCS_RDWR|RCS_CREATE, 0444)) == NULL)
 		fatal("cvs_import_local: rcs_open: `%s': %s", rpath,
 		    rcs_errstr(rcs_errno));
 
@@ -288,19 +290,20 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	if (comment != NULL)
 		rcs_comment_set(rf, comment);
 
-	rev = rcsnum_brtorev(imp_brnum);
-	if (rcs_rev_add(rf, rev, cvs_msg, stamp, NULL) < 0) {
+	brev = rcsnum_brtorev(imp_brnum);
+	if (rcs_rev_add(rf, brev, cvs_msg, stamp, NULL) < 0) {
 		(void)unlink(rpath);
 		fatal("cvs_import_local: rcs_rev_add failed: %s",
 		    rcs_errstr(rcs_errno));
 	}
 
-	if (rcs_sym_add(rf, release, rev) < 0) {
+	if (rcs_sym_add(rf, release, brev) < 0) {
 		(void)unlink(rpath);
 		fatal("cvs_import_local: rcs_sym_add failed: %s",
 		    rcs_errstr(rcs_errno));
 	}
 
+	rev = rcsnum_alloc();
 	rcsnum_cpy(imp_brnum, rev, 2);
 	if (rcs_rev_add(rf, rev, cvs_msg, stamp, NULL) < 0) {
 		(void)unlink(rpath);
@@ -325,6 +328,15 @@ cvs_import_local(CVSFILE *cf, void *arg)
 		fatal("cvs_import_local: rcs_sym_add failed: %s",
 		    rcs_errstr(rcs_errno));
 	}
+
+	/*
+	 * Put the branch revision on the branches list for the first revision.
+	 */
+	rdp = rcs_findrev(rf, rev);
+	brp = (struct rcs_branch *)xmalloc(sizeof(*brp));
+	brp->rb_num = rcsnum_alloc();
+	rcsnum_cpy(brev, brp->rb_num, 0);
+	TAILQ_INSERT_TAIL(&(rdp->rd_branches), brp, rb_list);
 
 	if ((bp = cvs_buf_load(fpath, BUF_AUTOEXT)) == NULL) {
 		(void)unlink(rpath);
