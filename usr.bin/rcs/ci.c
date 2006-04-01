@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.133 2006/03/31 01:39:36 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.134 2006/04/01 13:57:48 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -109,7 +109,7 @@ checkin_main(int argc, char **argv)
 	pb.date = DATE_NOW;
 	pb.file = NULL;
 	pb.rcs_msg = pb.username = pb.author = pb.state = NULL;
-	pb.symbol = pb.description = NULL;
+	pb.symbol = pb.description = pb.deltatext = NULL;
 	pb.newrev =  NULL;
 	pb.flags = status = 0;
 	pb.fmode = S_IRUSR|S_IRGRP|S_IROTH;
@@ -618,6 +618,8 @@ checkin_update(struct checkin_params *pb)
 
 fail:
 	xfree(filec);
+	if (pb->deltatext != NULL)
+		xfree(pb->deltatext);
 	return (-1);
 }
 
