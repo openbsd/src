@@ -161,7 +161,7 @@ X<?> X<*?> X<+?> X<??> X<{n}?> X<{n,}?> X<{n,m}?>
 
 Because patterns are processed as double quoted strings, the following
 also work:
-X<\t> X<\n> X<\r> X<\f> X<\a> X<\l> X<\u> X<\L> X<\U> X<\E> X<\Q>
+X<\t> X<\r> X<\f> X<\a> X<\l> X<\u> X<\L> X<\U> X<\E> X<\Q>
 X<\0> X<\c> X<\N> X<\x>
 
     \t		tab                   (HT, TAB)

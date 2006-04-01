@@ -899,7 +899,7 @@ from the next line.  This allows you to write:
 
 The following escape sequences are available in constructs that interpolate
 and in transliterations.
-X<\t> X<\n> X<\r> X<\f> X<\b> X<\a> X<\e> X<\x> X<\0> X<\c> X<\N>
+X<\t> X<\r> X<\f> X<\b> X<\a> X<\e> X<\x> X<\0> X<\c> X<\N>
 
     \t		tab             (HT, TAB)
     \n		newline         (NL)
@@ -949,7 +949,7 @@ and although they often accept just C<"\012">, they seldom tolerate just
 C<"\015">.  If you get in the habit of using C<"\n"> for networking,
 you may be burned some day.
 X<newline> X<line terminator> X<eol> X<end of line>
-X<\n> X<\r> X<\r\n>
+X<\r>
 
 For constructs that do interpolate, variables beginning with "C<$>"
 or "C<@>" are interpolated.  Subscripted variables such as C<$a[3]> or
