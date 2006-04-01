@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.21 2006/03/20 15:19:03 dhill Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.22 2006/04/01 20:09:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 		if (sysctl(mib, 3, &sensor, &len, NULL, 0) == -1) {
 			if (errno != ENOENT)
 				warn("sysctl");
-			break;
+			continue;
 		}
 		if (sensor.flags & SENSOR_FINVALID)
 			continue;
