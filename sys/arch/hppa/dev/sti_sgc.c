@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.30 2006/03/15 20:04:36 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.31 2006/04/01 22:50:29 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -121,7 +121,7 @@ sti_sgc_probe(parent, match, aux)
 	int rv = 0, romunmapped = 0;
 
 	/* due to the graphic nature of this program do probe only one */
-	if (sti_cd.cd_ndevs != 0)
+	if (cf->cf_unit > sti_cd.cd_ndevs)
 		return (0);
 
 	if (ca->ca_type.iodc_type != HPPA_TYPE_FIO)
