@@ -1,4 +1,4 @@
-/*	$OpenBSD: isagpio.c,v 1.2 2006/03/27 07:16:04 grange Exp $	*/
+/*	$OpenBSD: isagpio.c,v 1.3 2006/04/01 08:32:52 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Oleg Safiullin <form@pdp-11.org.ru>
@@ -74,7 +74,8 @@ isagpio_match(struct device *parent, void *match, void *aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
 
-	if (bus_space_map(ia->ia_iot, ia->ia_iobase, ISAGPIO_IOSIZE, 0, &ioh))
+	if (ia->ia_iobase == -1 || bus_space_map(ia->ia_iot, ia->ia_iobase,
+	    ISAGPIO_IOSIZE, 0, &ioh) != 0)
 		return (0);
 
 	bus_space_unmap(ia->ia_iot, ioh, ISAGPIO_IOSIZE);
@@ -109,7 +110,7 @@ isagpio_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < ISAGPIO_NPINS; i++) {
 		sc->sc_gpio_pins[i].pin_num = i;
 		sc->sc_gpio_pins[i].pin_caps = GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
-		sc->sc_gpio_pins[i].pin_state = 0;
+		sc->sc_gpio_pins[i].pin_state = GPIO_PIN_LOW;
 	}
 
 	sc->sc_gpio_gc.gp_cookie = sc;
