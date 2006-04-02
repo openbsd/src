@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrawpartition.c,v 1.5 2005/08/02 21:46:23 espie Exp $	*/
+/*	$OpenBSD: getrawpartition.c,v 1.6 2006/04/02 02:10:35 deraadt Exp $	*/
 /*	$NetBSD: getrawpartition.c,v 1.1 1996/05/16 07:03:33 thorpej Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@ getrawpartition(void)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_RAWPARTITION;
 	varlen = sizeof(rawpart);
-	if (sysctl(mib, 2, &rawpart, &varlen, NULL, 0) < 0)
+	if (sysctl(mib, 2, &rawpart, &varlen, NULL, (size_t)0) < 0)
 		return (-1);
 
 	return (rawpart);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.46 2005/08/02 21:46:23 espie Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.47 2006/04/02 02:10:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -312,7 +312,7 @@ pw_copy(int ffd, int tfd, const struct passwd *pw, const struct passwd *opw)
 	if (!(to = fdopen(tfd, "w")))
 		pw_error(pw_lck ? pw_lck : NULL, pw_lck ? 1 : 0, 1);
 
-	for (done = 0; fgets(buf, sizeof(buf), from);) {
+	for (done = 0; fgets(buf, (int)sizeof(buf), from);) {
 		if ((ep = strchr(buf, '\n')) == NULL) {
 			warnx("%s: line too long", master);
 			pw_error(NULL, 0, 1);
