@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2006/03/09 10:56:33 xsa Exp $
+#	$OpenBSD: Makefile,v 1.21 2006/04/02 02:42:33 ray Exp $
 
 PROG=	cvs
 MAN=	cvs.1 cvsignore.5 cvsrc.5 cvswrappers.5 cvsintro.7
@@ -11,12 +11,12 @@ SRCS=	cvs.c add.c admin.c annotate.c buf.c checkout.c cmd.c commit.c \
 	server.c status.c tag.c update.c util.c version.c watch.c \
 	worklist.c xmalloc.c
 
-CFLAGS= -g -ggdb
-CFLAGS+= -Wall
-CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
-CFLAGS+= -Wmissing-declarations
-CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
-CFLAGS+= -Wsign-compare
+CFLAGS+=-Wall
+CFLAGS+=-Wstrict-prototypes -Wmissing-prototypes
+CFLAGS+=-Wmissing-declarations
+CFLAGS+=-Wshadow -Wpointer-arith -Wcast-qual
+CFLAGS+=-Wsign-compare
+DEBUG=	-g -ggdb
 YFLAGS=
 
 DPADD+= ${LIBZ}

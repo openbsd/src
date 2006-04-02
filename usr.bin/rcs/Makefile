@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2006/03/09 14:31:34 xsa Exp $
+#	$OpenBSD: Makefile,v 1.30 2006/04/02 02:42:33 ray Exp $
 
 .PATH:	${.CURDIR}/../cvs
 
@@ -16,11 +16,12 @@ LINKS=	${BINDIR}/rcs ${BINDIR}/ci ${BINDIR}/rcs ${BINDIR}/co \
 	${BINDIR}/rcs ${BINDIR}/rcsmerge ${BINDIR}/rcs ${BINDIR}/rlog \
 	${BINDIR}/rcs ${BINDIR}/ident
 
-CFLAGS+= -Wall
-CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
-CFLAGS+= -Wmissing-declarations
-CFLAGS+= -Wshadow -Wpointer-arith -Wcast-qual
-CFLAGS+= -Wsign-compare
+CFLAGS+=-Wall
+CFLAGS+=-Wstrict-prototypes -Wmissing-prototypes
+CFLAGS+=-Wmissing-declarations
+CFLAGS+=-Wshadow -Wpointer-arith -Wcast-qual
+CFLAGS+=-Wsign-compare
+DEBUG=	-g -ggdb
 YFLAGS=
 
 .include <bsd.prog.mk>
