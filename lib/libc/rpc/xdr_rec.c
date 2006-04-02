@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_rec.c,v 1.11 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: xdr_rec.c,v 1.12 2006/04/02 02:04:05 deraadt Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -285,10 +285,10 @@ static u_int
 xdrrec_getpos(XDR *xdrs)
 {
 	RECSTREAM *rstrm = (RECSTREAM *)xdrs->x_private;
-	long pos;
+	off_t pos;
 
-	pos = lseek((int)(long)rstrm->tcp_handle, (off_t)0, 1);
-	if (pos != -1)
+	pos = lseek((int)(long)rstrm->tcp_handle, (off_t)0, SEEK_CUR);
+	if (pos != (off_t)-1)
 		switch (xdrs->x_op) {
 
 		case XDR_ENCODE:
