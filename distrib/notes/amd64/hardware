@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.70 2006/03/05 05:41:48 brad Exp $
+dnl	$OpenBSD: hardware,v 1.71 2006/04/02 05:17:48 brad Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -356,7 +356,7 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    Accton MPX 5030/5038
 		    Allied Telesyn AT2550
 		    D-Link DFE530TX+, DFE538TX
-		    Encore ENL832-TX 10/100 M PCI
+		    Encore ENL832-TX-RENT 10/100 M PCI
 		    Genius GF100TXR
 		    KTX-9130TX 10/100 Fast Ethernet
 		    Longshine LCS-8038TX-R

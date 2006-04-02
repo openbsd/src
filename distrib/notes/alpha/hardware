@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.76 2006/03/22 08:44:06 martin Exp $
+dnl	$OpenBSD: hardware,v 1.77 2006/04/02 05:17:48 brad Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -269,7 +269,7 @@ Supported Peripherals:
 			Allied Telesyn AT2550
 			D-Link DFE530TX+
 			D-Link DFE538TX
-			Encore ENL832-TX 10/100 M PCI
+			Encore ENL832-TX-RENT 10/100 M PCI
 			Genius GF100TXR
 			KTX-9130TX 10/100 Fast Ethernet
 			Longshine LCS-8038TX-R

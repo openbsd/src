@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.232 2006/03/05 05:41:48 brad Exp $
+dnl	$OpenBSD: hardware,v 1.233 2006/04/02 05:17:49 brad Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -455,7 +455,7 @@ Supported hardware {:-include-:}:
 		    Accton MPX 5030/5038
 		    Allied Telesyn AT2550
 		    D-Link DFE530TX+, DFE538TX
-		    Encore ENL832-TX 10/100 M PCI
+		    Encore ENL832-TX-RENT 10/100 M PCI
 		    Genius GF100TXR
 		    KTX-9130TX 10/100 Fast Ethernet
 		    Longshine LCS-8038TX-R
