@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppasswdd_mkpw.c,v 1.27 2004/04/20 23:21:23 millert Exp $	*/
+/*	$OpenBSD: yppasswdd_mkpw.c,v 1.28 2006/04/02 01:29:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$OpenBSD: yppasswdd_mkpw.c,v 1.27 2004/04/20 23:21:23 millert Exp $";
+#ifndef lint
+static char rcsid[] = "$OpenBSD: yppasswdd_mkpw.c,v 1.28 2006/04/02 01:29:29 deraadt Exp $";
 #endif
 
 #include <sys/param.h>

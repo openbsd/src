@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.52 2004/02/20 11:57:17 henning Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.53 2006/04/02 01:29:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.52 2004/02/20 11:57:17 henning Exp $";
+#ifndef lint
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.53 2006/04/02 01:29:51 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -123,6 +123,7 @@ u_int32_t unique_xid(struct _dom_binding *ypdb);
  * declare sun's interface insufficient and roll our own.
  */
 
+/*ARGSUSED*/
 static void *
 ypbindproc_null_2x(SVCXPRT *transp, void *argp, CLIENT *clnt)
 {
@@ -132,6 +133,7 @@ ypbindproc_null_2x(SVCXPRT *transp, void *argp, CLIENT *clnt)
 	return (void *)&res;
 }
 
+/*ARGSUSED*/
 static struct ypbind_resp *
 ypbindproc_domain_2x(SVCXPRT *transp, domainname *argp, CLIENT *clnt)
 {
@@ -214,6 +216,7 @@ ypbindproc_domain_2x(SVCXPRT *transp, domainname *argp, CLIENT *clnt)
 	return &res;
 }
 
+/*ARGSUSED*/
 static bool_t *
 ypbindproc_setdom_2x(SVCXPRT *transp, struct ypbind_setdom *argp, CLIENT *clnt)
 {
@@ -429,7 +432,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 		(void)setsockopt(lsock, SOL_SOCKET, SO_REUSEADDR, &one,
-		    sizeof one);
+		    (socklen_t)sizeof one);
 		len = sizeof(sin);
 		if (getsockname(udptransp->xp_sock, (struct sockaddr *)&sin,
 		    &len) == -1) {
@@ -453,7 +456,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 		(void)setsockopt(lsock, SOL_SOCKET, SO_REUSEADDR, &one,
-		    sizeof one);
+		    (socklen_t)sizeof one);
 		len = sizeof(sin);
 		if (getsockname(tcptransp->xp_sock, (struct sockaddr *)&sin,
 		    &len) == -1) {
@@ -494,7 +497,8 @@ main(int argc, char *argv[])
 
 	fcntl(rpcsock, F_SETFL, fcntl(rpcsock, F_GETFL, 0) | FNDELAY);
 	fcntl(pingsock, F_SETFL, fcntl(pingsock, F_GETFL, 0) | FNDELAY);
-	setsockopt(rpcsock, SOL_SOCKET, SO_BROADCAST, &one, sizeof(one));
+	setsockopt(rpcsock, SOL_SOCKET, SO_BROADCAST, &one,
+	    (socklen_t)sizeof(one));
 	rmtca.prog = YPPROG;
 	rmtca.vers = YPVERS;
 	rmtca.proc = YPPROC_DOMAIN_NONACK;
@@ -663,7 +667,7 @@ ping(struct _dom_binding *ypdb)
 	ypdb->dom_alive = 2;
 	if (sendto(pingsock, buf, outlen, 0,
 	    (struct sockaddr *)&ypdb->dom_server_addr,
-	    sizeof ypdb->dom_server_addr) < 0)
+	    (socklen_t)sizeof ypdb->dom_server_addr) < 0)
 		perror("sendto");
 	return 0;
 
@@ -742,7 +746,7 @@ pings(struct _dom_binding *ypdb)
 		bindsin.sin_port = htons(PMAPPORT);
 		bindsin.sin_addr = ypdb->dom_server_addr.sin_addr;
 		if (sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bindsin,
-		    sizeof bindsin) < 0)
+		    (socklen_t)sizeof bindsin) < 0)
 			perror("sendto");
 	}
 	if (ypdb->dom_servlistfp)
@@ -789,7 +793,7 @@ broadcast(struct _dom_binding *ypdb, char *buf, int outlen)
 
 		bindsin.sin_addr = in;
 		if (sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bindsin,
-		    bindsin.sin_len) < 0)
+		    (socklen_t)bindsin.sin_len) < 0)
 			perror("sendto");
 	}
 	freeifaddrs(ifap);
@@ -845,7 +849,8 @@ direct(struct _dom_binding *ypdb, char *buf, int outlen)
 			memmove(&bindsin.sin_addr, hp->h_addr_list[0],
 			    hp->h_length);
 			if (sendto(rpcsock, buf, outlen, 0,
-			    (struct sockaddr *)&bindsin, sizeof bindsin) < 0) {
+			    (struct sockaddr *)&bindsin,
+			    (socklen_t)sizeof bindsin) < 0) {
 				perror("sendto");
 				continue;
 			}
