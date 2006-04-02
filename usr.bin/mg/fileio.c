@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.68 2005/12/20 06:17:36 kjell Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.69 2006/04/02 20:21:19 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -442,8 +442,8 @@ make_file_list(char *buf)
 	if (buf[0] && buf[strlen(buf) - 1] != '/') {
 		file = strrchr(dir, '/');
 		if (file) {
-			*file = 0;
-			if (*dir == 0)
+			*file = '\0';
+			if (*dir == '\0')
 				dir = "/";
 		} else
 			return (NULL);
