@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1049 2006/03/29 05:10:41 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1050 2006/04/02 05:12:02 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3023,7 +3023,8 @@
 #define	PCI_PRODUCT_SUN_CASSINI	0xabba		/* Cassini */
 
 /* Sundance products */
-#define	PCI_PRODUCT_SUNDANCE_ST201	0x0201		/* ST201 */
+#define	PCI_PRODUCT_SUNDANCE_ST201_1	0x0200		/* ST201 */
+#define	PCI_PRODUCT_SUNDANCE_ST201_2	0x0201		/* ST201 */
 #define	PCI_PRODUCT_SUNDANCE_ST1023	0x1023		/* ST1023 */
 #define	PCI_PRODUCT_SUNDANCE_ST2021	0x2021		/* ST2021 */
 
