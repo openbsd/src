@@ -1,4 +1,4 @@
-/*	$OpenBSD: a.out.c,v 1.4 2002/12/11 18:28:22 deraadt Exp $	*/
+/*	$OpenBSD: a.out.c,v 1.5 2006/04/02 00:48:35 deraadt Exp $	*/
 /*	$NetBSD: a.out.c,v 1.1 1999/06/13 12:54:40 mrg Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ a_out_mod_load(int fd)
 	/*
 	 * Seek to the text offset to start loading...
 	 */
-	if (lseek(fd, N_TXTOFF(sinfo_buf), 0) == -1)
+	if (lseek(fd, N_TXTOFF(sinfo_buf), SEEK_SET) == -1)
 		err(12, "lseek");
 
 	/*

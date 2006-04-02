@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.15 2003/08/25 23:28:15 tedu Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.16 2006/04/02 00:48:35 deraadt Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
 #else
-static const char rcsid[] = "$OpenBSD: traverse.c,v 1.15 2003/08/25 23:28:15 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: traverse.c,v 1.16 2006/04/02 00:48:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -606,7 +606,7 @@ bread(daddr_t blkno, char *buf, int size)
 	int cnt, i;
 
 loop:
-	if (lseek(diskfd, ((off_t)blkno << dev_bshift), 0) < 0)
+	if (lseek(diskfd, ((off_t)blkno << dev_bshift), SEEK_SET) < 0)
 		msg("bread: lseek fails\n");
 	if ((cnt = read(diskfd, buf, size)) == size)
 		return;
@@ -646,7 +646,7 @@ loop:
 	 */
 	memset(buf, 0, size);
 	for (i = 0; i < size; i += dev_bsize, buf += dev_bsize, blkno++) {
-		if (lseek(diskfd, ((off_t)blkno << dev_bshift), 0) < 0)
+		if (lseek(diskfd, ((off_t)blkno << dev_bshift), SEEK_SET) < 0)
 			msg("bread: lseek2 fails!\n");
 		if ((cnt = read(diskfd, buf, (int)dev_bsize)) == dev_bsize)
 			continue;

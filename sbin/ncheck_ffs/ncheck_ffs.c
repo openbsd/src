@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.25 2005/11/12 15:26:23 deraadt Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.26 2006/04/02 00:48:35 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -26,7 +26,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.25 2005/11/12 15:26:23 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.26 2006/04/02 00:48:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -217,7 +217,7 @@ bread(daddr_t blkno, char *buf, int size)
 	int cnt, i;
 
 loop:
-	if (lseek(diskfd, ((off_t)blkno << dev_bshift), 0) < 0)
+	if (lseek(diskfd, ((off_t)blkno << dev_bshift), SEEK_SET) < 0)
 		warnx("bread: lseek fails");
 	if ((cnt = read(diskfd, buf, size)) == size)
 		return;
@@ -248,7 +248,7 @@ loop:
 	 */
 	memset(buf, 0, size);
 	for (i = 0; i < size; i += dev_bsize, buf += dev_bsize, blkno++) {
-		if (lseek(diskfd, ((off_t)blkno << dev_bshift), 0) < 0)
+		if (lseek(diskfd, ((off_t)blkno << dev_bshift), SEEK_SET) < 0)
 			warnx("bread: lseek2 fails!");
 		if ((cnt = read(diskfd, buf, (int)dev_bsize)) == dev_bsize)
 			continue;

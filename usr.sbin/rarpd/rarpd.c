@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.46 2006/01/23 17:29:22 millert Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.47 2006/04/02 00:50:42 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.46 2006/01/23 17:29:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.47 2006/04/02 00:50:42 deraadt Exp $";
 #endif
 
 
@@ -451,7 +451,7 @@ rarp_loop(void)
 			if (cc < 0) {
 				if (errno == EINVAL &&
 				    (lseek(fd, (off_t)0, SEEK_CUR) + bufsize) < 0) {
-					(void) lseek(fd, (off_t)0, 0);
+					(void) lseek(fd, (off_t)0, SEEK_SET);
 					goto again;
 				}
 				error(FATAL, "read: %s", strerror(errno));

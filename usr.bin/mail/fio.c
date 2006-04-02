@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.25 2004/05/10 15:25:51 deraadt Exp $	*/
+/*	$OpenBSD: fio.c,v 1.26 2006/04/02 00:51:37 deraadt Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: fio.c,v 1.25 2004/05/10 15:25:51 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: fio.c,v 1.26 2006/04/02 00:51:37 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -292,7 +292,7 @@ makemessage(FILE *f, int omsgCount)
 	message = nmessage;
 	size -= (omsgCount + 1) * sizeof(struct message);
 	fflush(f);
-	(void)lseek(fileno(f), (off_t)sizeof(*message), 0);
+	(void)lseek(fileno(f), (off_t)sizeof(*message), SEEK_SET);
 	if (myread(fileno(f), (void *) &message[omsgCount], size) != size)
 		errx(1, "Message temporary file corrupted");
 	message[msgCount].m_size = 0;

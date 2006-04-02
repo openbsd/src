@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.14 2003/08/25 23:28:16 tedu Exp $	*/
+/*	$OpenBSD: quot.c,v 1.15 2006/04/02 00:50:42 deraadt Exp $	*/
 /*	$NetBSD: quot.c,v 1.7.4.1 1996/05/31 18:06:36 jtc Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: quot.c,v 1.14 2003/08/25 23:28:16 tedu Exp $";
+static char rcsid[] = "$Id: quot.c,v 1.15 2006/04/02 00:50:42 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -100,7 +100,7 @@ get_inode(int fd, struct fs *super, ino_t ino)
 		last = (ino / INOCNT(super)) * INOCNT(super);
 		if (lseek(fd,
 			  (off_t)ino_to_fsba(super, last) << super->fs_fshift,
-			  0) < 0
+			  SEEK_SET) < 0
 		    || read(fd, ip, INOSZ(super)) != INOSZ(super)) {
 			err(1, "read inodes");
 		}
@@ -523,7 +523,7 @@ quot(char *name, char *mp)
 		warn("%s", name);
 		return;
 	}
-	if (lseek(fd, SBOFF, 0) != SBOFF
+	if (lseek(fd, SBOFF, SEEK_SET) != SBOFF
 	    || read(fd, superblock, SBSIZE) != SBSIZE
 	    || ((struct fs *)superblock)->fs_magic != FS_MAGIC
 	    || ((struct fs *)superblock)->fs_bsize > MAXBSIZE

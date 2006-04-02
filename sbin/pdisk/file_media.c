@@ -179,7 +179,7 @@ compute_block_size(int fd)
 	    if (size == 0) {
 		break;
 	    }
-	    if ((x = llseek(fd, (loff_t)0, 0)) < 0) {
+	    if ((x = llseek(fd, (loff_t)0, SEEK_SET)) < 0) {
 		error(errno, "Can't seek on file");
 		break;
 	    }
@@ -214,7 +214,7 @@ open_file_as_media(char *file, int oflag)
 	if (a != 0) {
 	    a->m.kind = file_info.kind;
 	    a->m.grain = compute_block_size(fd);
-	    off = llseek(fd, (loff_t)0, 2);	/* seek to end of media */
+	    off = llseek(fd, (loff_t)0, SEEK_END);	/* seek to end of media */
 #if !defined(__linux__) && !defined(__unix__)
 	    if (off <= 0) {
 		off = 1; /* XXX not right? */
@@ -274,7 +274,7 @@ read_file_media(MEDIA m, long long offset, unsigned long count, void *address)
     } else {
 	/* do the read */
 	off = offset;
-	if ((off = llseek(a->fd, off, 0)) >= 0) {
+	if ((off = llseek(a->fd, off, SEEK_SET)) >= 0) {
 	    if ((t = read(a->fd, address, count)) == count) {
 		rtn_value = 1;
 	    } else {
@@ -311,7 +311,7 @@ write_file_media(MEDIA m, long long offset, unsigned long count, void *address)
     } else {
 	/* do the write  */
 	off = offset;
-	if ((off = llseek(a->fd, off, 0)) >= 0) {
+	if ((off = llseek(a->fd, off, SEEK_SET)) >= 0) {
 	    if ((t = write(a->fd, address, count)) == count) {
 		if (off + count > a->m.size_in_bytes) {
 			a->m.size_in_bytes = off + count;

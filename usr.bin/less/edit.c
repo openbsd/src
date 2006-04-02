@@ -724,7 +724,7 @@ loop:
 		 * Append: open the file and seek to the end.
 		 */
 		logfile = open(filename, OPEN_APPEND);
-		if (lseek(logfile, (off_t)0, 2) == BAD_LSEEK)
+		if (lseek(logfile, (off_t)0, SEEK_END) == BAD_LSEEK)
 		{
 			close(logfile);
 			logfile = -1;

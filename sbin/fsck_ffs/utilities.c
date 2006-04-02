@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.25 2006/03/30 01:16:31 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.26 2006/04/02 00:48:35 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: utilities.c,v 1.25 2006/03/30 01:16:31 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: utilities.c,v 1.26 2006/04/02 00:48:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -305,19 +305,19 @@ bread(int fd, char *buf, daddr_t blk, long size)
 
 	offset = blk;
 	offset *= dev_bsize;
-	if (lseek(fd, offset, 0) < 0)
+	if (lseek(fd, offset, SEEK_SET) < 0)
 		rwerror("SEEK", blk);
 	else if (read(fd, buf, (int)size) == size)
 		return (0);
 	rwerror("READ", blk);
-	if (lseek(fd, offset, 0) < 0)
+	if (lseek(fd, offset, SEEK_SET) < 0)
 		rwerror("SEEK", blk);
 	errs = 0;
 	memset(buf, 0, (size_t)size);
 	printf("THE FOLLOWING DISK SECTORS COULD NOT BE READ:");
 	for (cp = buf, i = 0; i < size; i += secsize, cp += secsize) {
 		if (read(fd, cp, (int)secsize) != secsize) {
-			(void)lseek(fd, offset + i + secsize, 0);
+			(void)lseek(fd, offset + i + secsize, SEEK_SET);
 			if (secsize != dev_bsize && dev_bsize != 1)
 				printf(" %ld (%ld),",
 				    (blk * dev_bsize + i) / secsize,
@@ -342,19 +342,19 @@ bwrite(int fd, char *buf, daddr_t blk, long size)
 		return;
 	offset = blk;
 	offset *= dev_bsize;
-	if (lseek(fd, offset, 0) < 0)
+	if (lseek(fd, offset, SEEK_SET) < 0)
 		rwerror("SEEK", blk);
 	else if (write(fd, buf, (int)size) == size) {
 		fsmodified = 1;
 		return;
 	}
 	rwerror("WRITE", blk);
-	if (lseek(fd, offset, 0) < 0)
+	if (lseek(fd, offset, SEEK_SET) < 0)
 		rwerror("SEEK", blk);
 	printf("THE FOLLOWING SECTORS COULD NOT BE WRITTEN:");
 	for (cp = buf, i = 0; i < size; i += dev_bsize, cp += dev_bsize)
 		if (write(fd, cp, (int)dev_bsize) != dev_bsize) {
-			(void)lseek(fd, offset + i + dev_bsize, 0);
+			(void)lseek(fd, offset + i + dev_bsize, SEEK_SET);
 			printf(" %ld,", blk + i / dev_bsize);
 		}
 	printf("\n");

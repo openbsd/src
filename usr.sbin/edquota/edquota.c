@@ -38,7 +38,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.43 2005/11/12 15:26:23 deraadt Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.44 2006/04/02 00:50:40 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -333,7 +333,7 @@ putprivs(long id, int quotatype, struct quotause *quplist)
 		if ((fd = open(qup->qfname, O_WRONLY)) < 0) {
 			perror(qup->qfname);
 		} else {
-			lseek(fd, (off_t)(id * sizeof (struct dqblk)), 0);
+			lseek(fd, (off_t)(id * sizeof (struct dqblk)), SEEK_SET);
 			if (write(fd, &qup->dqblk, sizeof (struct dqblk)) !=
 			    sizeof (struct dqblk))
 				warn("%s", qup->qfname);

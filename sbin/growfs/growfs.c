@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.15 2006/03/31 08:13:07 pedro Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.16 2006/04/02 00:48:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -46,7 +46,7 @@ static const char copyright[] =
 Copyright (c) 1980, 1989, 1993 The Regents of the University of California.\n\
 All rights reserved.\n";
 
-static const char rcsid[] = "$OpenBSD: growfs.c,v 1.15 2006/03/31 08:13:07 pedro Exp $";
+static const char rcsid[] = "$OpenBSD: growfs.c,v 1.16 2006/04/02 00:48:35 deraadt Exp $";
 #endif /* not lint */
 
 /* ********************************************************** INCLUDES ***** */
@@ -1497,7 +1497,7 @@ rdfs(daddr_t bno, size_t size, void *bf, int fsi)
 
 	DBG_ENTER;
 
-	if (lseek(fsi, (off_t)bno * DEV_BSIZE, 0) < 0) {
+	if (lseek(fsi, (off_t)bno * DEV_BSIZE, SEEK_SET) < 0) {
 		err(33, "rdfs: seek error: %ld", (long)bno);
 	}
 	n = read(fsi, bf, size);

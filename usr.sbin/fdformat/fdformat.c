@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdformat.c,v 1.13 2006/03/12 02:45:45 deraadt Exp $	*/
+/*	$OpenBSD: fdformat.c,v 1.14 2006/04/02 00:50:42 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1992-1994 by Joerg Wunsch, Dresden
@@ -118,7 +118,7 @@ verify_track(int fd, int track, int tracksize)
 		fprintf (stderr, "\nfdformat: out of memory\n");
 		exit (2);
 	}
-	if (lseek (fd, (off_t) track*tracksize, 0) < 0)
+	if (lseek (fd, (off_t) track*tracksize, SEEK_SET) < 0)
 		rv = -1;
 	/* try twice reading it, without using the normal retrier */
 	else if (read (fd, buf, tracksize) != tracksize

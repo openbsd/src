@@ -190,7 +190,7 @@ fch_get()
 		 */
 		if (!(ch_flags & CH_CANSEEK))
 			return ('?');
-		if (lseek(ch_file, (off_t)pos, 0) == BAD_LSEEK)
+		if (lseek(ch_file, (off_t)pos, SEEK_SET) == BAD_LSEEK)
 		{
  			error("seek error", NULL_PARG);
 			clear_eol();
@@ -620,7 +620,7 @@ ch_flush()
 	}
 #endif
 
-	if (lseek(ch_file, (off_t)0, 0) == BAD_LSEEK)
+	if (lseek(ch_file, (off_t)0, SEEK_SET) == BAD_LSEEK)
 	{
 		/*
 		 * Warning only; even if the seek fails for some reason,
@@ -709,7 +709,7 @@ seekable(f)
 		return (0);
 	}
 #endif
-	return (lseek(f, (off_t)1, 0) != BAD_LSEEK);
+	return (lseek(f, (off_t)1, SEEK_SET) != BAD_LSEEK);
 }
 
 /*

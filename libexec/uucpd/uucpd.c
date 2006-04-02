@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucpd.c,v 1.30 2005/04/13 02:33:09 deraadt Exp $	*/
+/*	$OpenBSD: uucpd.c,v 1.31 2006/04/02 00:48:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: uucpd.c,v 1.30 2005/04/13 02:33:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: uucpd.c,v 1.31 2006/04/02 00:48:55 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -298,7 +298,7 @@ dologin(struct passwd *pw, struct sockaddr *sa)
 		struct lastlog ll;
 
 		time(&ll.ll_time);
-		lseek(f, pw->pw_uid * sizeof(struct lastlog), 0);
+		lseek(f, pw->pw_uid * sizeof(struct lastlog), SEEK_SET);
 		SCPYN(ll.ll_line, hbuf);
 		SCPYN(ll.ll_host, hbuf);
 		(void) write(f, (char *) &ll, sizeof ll);
