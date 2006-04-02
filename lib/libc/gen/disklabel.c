@@ -37,10 +37,11 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include <unistd.h>
 
-static int	gettype(char *, char **);
+static u_int	gettype(char *, char **);
 
 struct disklabel *
 getdiskbyname(const char *name)
@@ -92,7 +93,7 @@ getdiskbyname(const char *name)
 	getnum(dp->d_ncylinders, "nc");
 
 	if (cgetstr(buf, "dt", &cq) > 0)
-		dp->d_type = gettype(cq, dktypenames);
+		dp->d_type = (u_short)gettype(cq, dktypenames);
 	else
 		getnumdflt(dp->d_type, "dt", 0);
 	getnumdflt(dp->d_secpercyl, "sc", dp->d_nsectors * dp->d_ntracks);
@@ -132,7 +133,7 @@ getdiskbyname(const char *name)
 			}
 			getnumdflt(pp->p_fstype, ptype, 0);
 			if (pp->p_fstype == 0 && cgetstr(buf, ptype, &cq) > 0)
-				pp->p_fstype = gettype(cq, fstypenames);
+				pp->p_fstype = (u_char)gettype(cq, fstypenames);
 			max = p;
 		}
 	}
@@ -149,7 +150,7 @@ getdiskbyname(const char *name)
 	return (dp);
 }
 
-static int
+static u_int
 gettype(char *t, char **names)
 {
 	char **nm;
@@ -158,6 +159,6 @@ gettype(char *t, char **names)
 		if (strcasecmp(t, *nm) == 0)
 			return (nm - names);
 	if (isdigit((u_char)*t))
-		return (atoi(t));
+		return ((u_int)strtonum(t, 0, USHRT_MAX, NULL));
 	return (0);
 }
