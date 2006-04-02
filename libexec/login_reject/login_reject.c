@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_reject.c,v 1.7 2006/03/09 19:14:10 millert Exp $	*/
+/*	$OpenBSD: login_reject.c,v 1.8 2006/04/02 04:14:49 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -51,6 +51,8 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+
+extern int	pwd_gensalt(char *, int, login_cap_t *, char);
 
 int
 main(int argc, char *argv[])
@@ -111,7 +113,7 @@ main(int argc, char *argv[])
 	if (mode == 2) {
 		mode = 0;
 		c = -1;
-		while (read(3, passbuf, 1) == 1) {
+		while (read(3, passbuf, (size_t)1) == 1) {
 			if (passbuf[0] == '\0' && ++mode == 2)
 				break;
 		}
