@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_spec.c,v 1.7 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_spec.c,v 1.8 2006/04/02 21:38:57 djm Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -134,11 +134,7 @@ _thread_cleanupspecific(void)
 static inline const void **
 pthread_key_allocate_data(void)
 {
-	const void    **new_data;
-	if ((new_data = (const void **) malloc(sizeof(void *) * PTHREAD_KEYS_MAX)) != NULL) {
-		memset((void *) new_data, 0, sizeof(void *) * PTHREAD_KEYS_MAX);
-	}
-	return (new_data);
+	return calloc(PTHREAD_KEYS_MAX, sizeof(void *));
 }
 
 int 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.133 2005/11/30 15:46:32 dlg Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.134 2006/04/02 21:38:56 djm Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.133 2005/11/30 15:46:32 dlg Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.134 2006/04/02 21:38:56 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -1146,20 +1146,17 @@ vfsinit(void)
 	if (sysctl(mib, 3, &maxtypenum, &buflen, (void *)0, (size_t)0) < 0)
 		return;
 	maxtypenum++;	/* + generic */
-	if ((vfs_typenums = malloc(maxtypenum * sizeof(int))) == NULL)
+	if ((vfs_typenums = calloc(maxtypenum, sizeof(int))) == NULL)
 		return;
-	memset(vfs_typenums, 0, maxtypenum * sizeof(int));
-	if ((vfsvars = malloc(maxtypenum * sizeof(*vfsvars))) == NULL) {
+	if ((vfsvars = calloc(maxtypenum, sizeof(*vfsvars))) == NULL) {
 		free(vfs_typenums);
 		return;
 	}
-	memset(vfsvars, 0, maxtypenum * sizeof(*vfsvars));
-	if ((vfsname = malloc(maxtypenum * sizeof(*vfsname))) == NULL) {
+	if ((vfsname = calloc(maxtypenum, sizeof(*vfsname))) == NULL) {
 		free(vfs_typenums);
 		free(vfsvars);
 		return;
 	}
-	memset(vfsname, 0, maxtypenum * sizeof(*vfsname));
 	mib[2] = VFS_CONF;
 	buflen = sizeof vfc;
 	for (loc = lastused, cnt = 1; cnt < maxtypenum; cnt++) {

@@ -183,10 +183,9 @@ create_new_entries (unsigned n)
     VolCacheEntry *entries;
     int i;
 
-    entries = (VolCacheEntry *)malloc (n * sizeof(VolCacheEntry));
+    entries = calloc (n, sizeof(VolCacheEntry));
     if (entries == NULL)
-	arla_errx (1, ADEBERROR, "volcache: malloc failed");
-    memset(entries, 0, n * sizeof(VolCacheEntry));
+	arla_errx (1, ADEBERROR, "volcache: calloc failed");
 
     for (i = 0; i < n; ++i) {
 	entries[i].cell = -1;

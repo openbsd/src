@@ -1,4 +1,4 @@
-/*	$OpenBSD: whatis.c,v 1.10 2005/10/17 19:04:20 otto Exp $	*/
+/*	$OpenBSD: whatis.c,v 1.11 2006/04/02 21:38:56 djm Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -93,9 +93,8 @@ main(int argc, char *argv[])
 	if (argc < 1)
 		usage();
 
-	if ((found = malloc((u_int)argc * sizeof(int))) == NULL)
+	if ((found = calloc(argc, sizeof(int))) == NULL)
 		err(1, NULL);
-	memset(found, 0, argc * sizeof(int));
 
 	for (p = argv; *p; ++p)			/* trim full paths */
 		if ((beg = strrchr(*p, '/')))

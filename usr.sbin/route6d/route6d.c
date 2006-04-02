@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.43 2006/02/06 17:51:30 jmc Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.44 2006/04/02 21:38:55 djm Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.43 2006/02/06 17:51:30 jmc Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.44 2006/04/02 21:38:55 djm Exp $";
 #endif
 
 #include <stdio.h>
@@ -3409,13 +3409,11 @@ setindex2ifc(int idx, struct ifc *ifcp)
 
 	if (!index2ifc) {
 		nindex2ifc = 5;	/*initial guess*/
-		index2ifc = (struct ifc **)
-			malloc(sizeof(*index2ifc) * nindex2ifc);
+		index2ifc = calloc(nindex2ifc, sizeof(*index2ifc));
 		if (index2ifc == NULL) {
-			fatal("malloc");
+			fatal("calloc");
 			/*NOTREACHED*/
 		}
-		memset(index2ifc, 0, sizeof(*index2ifc) * nindex2ifc);
 	}
 	n = nindex2ifc;
 	while (nindex2ifc <= idx)

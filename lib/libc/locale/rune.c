@@ -1,4 +1,4 @@
-/*	$OpenBSD: rune.c,v 1.1 2005/08/07 10:16:23 espie Exp $ */
+/*	$OpenBSD: rune.c,v 1.2 2006/04/02 21:38:57 djm Exp $ */
 /*	$NetBSD: rune.c,v 1.26 2004/05/09 11:26:33 kleink Exp $	*/
 
 /*-
@@ -124,12 +124,11 @@ readentry(_RuneRange *rr, FILE *fp)
 		}
 
 		l = re[i].re_max - re[i].re_min + 1;
-		re[i].re_rune_types = malloc(l * sizeof(_RuneType));
+		re[i].re_rune_types = calloc(l, sizeof(_RuneType));
 		if (!re[i].re_rune_types) {
 			error = ENOMEM;
 			goto fail;
 		}
-		memset(re[i].re_rune_types, 0, l * sizeof(_RuneType));
 
 		if (fread(re[i].re_rune_types, sizeof(_RuneType), l, fp) != l)
 			goto fail2;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: optimize.c,v 1.11 2005/11/19 01:51:11 aaron Exp $	*/
+/*	$OpenBSD: optimize.c,v 1.12 2006/04/02 21:38:57 djm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -1922,7 +1922,7 @@ convert_code_r(p)
 
 	/* generate offset[] for convenience  */
 	if (slen) {
-		offset = (struct slist **)calloc(slen, sizeof(struct slist *));
+		offset = calloc(slen, sizeof(struct slist *));
 		if (!offset) {
 			bpf_error("not enough core");
 			/*NOTREACHED*/
@@ -2069,11 +2069,10 @@ icode_to_fcode(root, lenp)
 	    unMarkAll();
 	    n = *lenp = count_stmts(root);
     
-	    fp = (struct bpf_insn *)malloc(sizeof(*fp) * n);
+	    fp = calloc(n, sizeof(*fp));
 	    if (fp == NULL)
-		    bpf_error("malloc");
+		    bpf_error("calloc");
 
-	    memset((char *)fp, 0, sizeof(*fp) * n);
 	    fstart = fp;
 	    ftail = fp + n;
     

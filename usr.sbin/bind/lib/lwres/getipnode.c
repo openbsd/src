@@ -753,10 +753,9 @@ copyandmerge(struct hostent *he1, struct hostent *he2, int af, int *error_num)
 	if (he == NULL)
 		goto no_recovery;
 
-	he->h_addr_list = malloc(sizeof(char *) * (addresses));
+	he->h_addr_list = calloc(addresses, sizeof(char *));
 	if (he->h_addr_list == NULL)
 		goto cleanup0;
-	memset(he->h_addr_list, 0, sizeof(char *) * (addresses));
 
 	/*
 	 * Copy addresses.

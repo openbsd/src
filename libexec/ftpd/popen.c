@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.20 2003/12/10 22:57:12 deraadt Exp $	*/
+/*	$OpenBSD: popen.c,v 1.21 2006/04/02 21:38:56 djm Exp $	*/
 /*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static const char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: popen.c,v 1.20 2003/12/10 22:57:12 deraadt Exp $";
+    "$OpenBSD: popen.c,v 1.21 2006/04/02 21:38:56 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,9 +84,8 @@ ftpd_popen(char *program, char *type)
 	if (!pids) {
 		if ((fds = getdtablesize()) <= 0)
 			return (NULL);
-		if ((pids = (pid_t *)malloc((u_int)(fds * sizeof(pid_t)))) == NULL)
+		if ((pids = calloc(fds, sizeof(pid_t))) == NULL)
 			return (NULL);
-		memset(pids, 0, fds * sizeof(pid_t));
 	}
 	if (pipe(pdes) < 0)
 		return (NULL);

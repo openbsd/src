@@ -2895,11 +2895,9 @@ vioc_new_cell(int fd, struct nnpfs_message_pioctl *h, u_int size)
     for (count = 0; *hp != 0; ++hp)
 	++count;
 
-    dbs = malloc (count * sizeof(*dbs));
+    dbs = calloc (count, sizeof(*dbs));
     if (dbs == NULL)
 	return nnpfs_send_message_wakeup (fd, h->header.sequence_num, ENOMEM);
-	
-    memset(dbs, 0, count * sizeof(*dbs));
 
     hp = (uint32_t *)h->msg;
     for (i = 0; i < count; ++i) {

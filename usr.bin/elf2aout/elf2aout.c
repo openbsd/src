@@ -1,4 +1,4 @@
-/* $OpenBSD: elf2aout.c,v 1.5 2004/03/16 01:11:09 tedu Exp $	 */
+/* $OpenBSD: elf2aout.c,v 1.6 2006/04/02 21:38:56 djm Exp $	 */
 
 /*
  * Copyright (c) 1995
@@ -129,12 +129,11 @@ usage:
 	 * Find space for a table matching ELF section indices to a.out
 	 * symbol types.
 	 */
-	symTypeTable = (int *) malloc(ex.e_shnum * sizeof(int));
+	symTypeTable = calloc(ex.e_shnum, sizeof(int));
 	if (!symTypeTable) {
 		fprintf(stderr, "symTypeTable: can't allocate.\n");
 		exit(1);
 	}
-	memset(symTypeTable, 0, ex.e_shnum * sizeof(int));
 
 	/*
 	 * Look for the symbol table and string table... Also map section

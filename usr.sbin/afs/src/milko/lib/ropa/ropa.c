@@ -391,10 +391,9 @@ create_clients (unsigned n)
     struct ropa_client *c;
     unsigned long i;
 
-    c = malloc (n * sizeof (*c));
+    c = calloc (n, sizeof (*c));
     if (c == NULL)
-	err (1, "create_clients: malloc");
-    memset (c, 0, n * sizeof (*c));
+	err (1, "create_clients: calloc");
 
     for (i = 0 ; i < n; i++) {
 #ifdef DIAGNOSTIC

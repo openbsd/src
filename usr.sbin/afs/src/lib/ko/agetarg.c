@@ -454,10 +454,9 @@ agetarg(struct agetargs *args,
     for(i = 0 ; args[i].type != aarg_end; i++)
 	num_args++;
     
-    usedargs = malloc (num_args * sizeof(char));
+    usedargs = calloc (num_args, sizeof(char));
     if (usedargs == NULL)
 	return ENOMEM;
-    memset (usedargs, 0, num_args *sizeof(char));
 
     srand (time(NULL));
     (*optind)++;

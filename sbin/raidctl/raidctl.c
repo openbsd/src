@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.24 2005/11/14 17:17:11 deraadt Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.25 2006/04/02 21:38:56 djm Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
 
 /*-
@@ -964,8 +964,9 @@ do_meter(fdidpair *fds, int nfd, u_long option)
 	start_value = 0;
 	last_eta = 0;
 	progress_total = progress_completed = 0;
-	progressInfo = malloc(nfd * sizeof(RF_ProgressInfo_t));
-	memset(&progressInfo[0], 0, nfd * sizeof(RF_ProgressInfo_t));
+	progressInfo = calloc(nfd, sizeof(RF_ProgressInfo_t));
+	if (!progressInfo)
+		err(1, "calloc");
 
 	if (gettimeofday(&start_time, NULL))
 		err(1, "gettimeofday");
