@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.230 2006/03/28 12:56:44 robert Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.231 2006/04/02 01:36:07 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2159,6 +2159,7 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	int channel;
 	bus_size_t cmdsize, ctlsize;
+	u_int8_t reg;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -2188,6 +2189,53 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
 	    WDC_CAPABILITY_MODE | WDC_CAPABILITY_SATA;
 	sc->sc_wdcdev.set_modes = sata_setup_channel;
+
+	/*
+	 * Put the SATA portion of controllers that don't operate in combined
+	 * mode into native PCI modes so the maximum number of devices can be
+	 * used.  Intel calls this "enhanced mode"
+	 */
+	switch(sc->sc_pp->ide_product) {
+	/* ICH 5 */
+	case PCI_PRODUCT_INTEL_82801EB_SATA:
+	case PCI_PRODUCT_INTEL_82801ER_SATA:
+	case PCI_PRODUCT_INTEL_6300ESB_SATA:
+	case PCI_PRODUCT_INTEL_6300ESB_SATA2:
+		reg = pciide_pci_read(sc->sc_pc, sc->sc_tag, ICH5_SATA_MAP);
+		if ((reg & ICH5_SATA_MAP_COMBINED) == 0) {
+			reg = pciide_pci_read(pa->pa_pc, pa->pa_tag,
+			    ICH5_SATA_PI);
+			reg |= ICH5_SATA_PI_PRI_NATIVE |
+			    ICH5_SATA_PI_SEC_NATIVE;
+			pciide_pci_write(pa->pa_pc, pa->pa_tag,
+			    ICH5_SATA_PI, reg);
+			interface |= PCIIDE_INTERFACE_PCI(0) |
+			    PCIIDE_INTERFACE_PCI(1);
+		}
+		break;
+	/* ICH 6 */
+	case PCI_PRODUCT_INTEL_82801FB_SATA:
+	case PCI_PRODUCT_INTEL_82801FR_SATA:
+	case PCI_PRODUCT_INTEL_82801FBM_SATA:
+	/* ICH 7 */
+	case PCI_PRODUCT_INTEL_82801GB_SATA_1:
+	case PCI_PRODUCT_INTEL_82801GB_SATA_3:
+	case PCI_PRODUCT_INTEL_82801GBM_SATA:
+		reg = pciide_pci_read(sc->sc_pc, sc->sc_tag, ICH5_SATA_MAP) &
+		    ICH6_SATA_MAP_CMB_MASK;
+		if (reg != ICH6_SATA_MAP_CMB_PRI &&
+		    reg != ICH6_SATA_MAP_CMB_SEC) {
+			reg = pciide_pci_read(pa->pa_pc, pa->pa_tag,
+			    ICH5_SATA_PI);
+			reg |= ICH5_SATA_PI_PRI_NATIVE |
+			    ICH5_SATA_PI_SEC_NATIVE;
+			pciide_pci_write(pa->pa_pc, pa->pa_tag,
+			    ICH5_SATA_PI, reg);
+			interface |= PCIIDE_INTERFACE_PCI(0) |
+			    PCIIDE_INTERFACE_PCI(1);
+		}
+		break;
+	}
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
