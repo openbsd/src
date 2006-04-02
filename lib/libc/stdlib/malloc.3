@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.43 2006/03/26 19:56:08 ray Exp $
+.\"	$OpenBSD: malloc.3,v 1.44 2006/04/02 18:22:14 otto Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -100,7 +100,7 @@ If
 .Fn malloc
 must be used, be sure to test for overflow:
 .Bd -literal -offset indent
-if (num && size && SIZE_T_MAX / num < size) {
+if (num && SIZE_MAX / num < size) {
 	errno = ENOMEM;
 	err(1, "overflow");
 }
