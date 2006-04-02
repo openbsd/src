@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.39 2005/06/18 18:09:43 millert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.40 2006/04/02 18:35:11 otto Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -233,6 +233,7 @@ nfsrv_setattr(nfsd, slp, procp, mrq)
 	nfsm_srvmtofh(fhp);
 	VATTR_NULL(&va);
 	if (v3) {
+		va.va_vaflags |= VA_UTIMES_NULL;
 		nfsm_srvsattr(&va);
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 		gcheck = fxdr_unsigned(int, *tl);
