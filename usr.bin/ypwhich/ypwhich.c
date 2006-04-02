@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypwhich.c,v 1.17 2006/04/02 01:49:19 deraadt Exp $	*/
+/*	$OpenBSD: ypwhich.c,v 1.18 2006/04/02 23:37:21 deraadt Exp $	*/
 /*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ypwhich.c,v 1.17 2006/04/02 01:49:19 deraadt Exp $";
+static char rcsid[] = "$Id: ypwhich.c,v 1.18 2006/04/02 23:37:21 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -138,13 +138,11 @@ int
 main(int argc, char *argv[])
 {
 	char *domain, *master, *map = NULL, *host = NULL;
-	int notrans, mode, getmap, c, r, i;
+	int notrans = 0, mode = 0, c, r, i;
 	struct ypmaplist *ypml, *y;
 	struct sockaddr_in sin;
 	struct hostent *hent;
 	CLIENT *client = NULL;
-
-	getmap = notrans = mode = 0;
 
 	yp_get_default_domain(&domain);
 	if (domain == NULL)
@@ -195,8 +193,8 @@ main(int argc, char *argv[])
 					    argv[0]);
 					exit(1);
 				}
-				bcopy((char *)hent->h_addr,
-				    (char *)&sin.sin_addr, sizeof sin.sin_addr);
+				bcopy(hent->h_addr, &sin.sin_addr,
+				    sizeof sin.sin_addr);
 			}
 			if (bind_host(domain, &sin))
 				exit(1);
