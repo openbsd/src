@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.65 2006/04/02 17:16:12 pedro Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.66 2006/04/02 22:16:29 pedro Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <sys/mount.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/stdint.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1633,19 +1634,32 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 gotit:
 
 #ifdef FFS2
-	/* Check to see if we need to initialize more inodes */
+	/*
+	 * For FFS2, check if all inodes in this cylinder group have been used
+	 * at least once. If they haven't, and we are allocating an inode past
+	 * the last allocated block of inodes, read in a block and initialize
+	 * all inodes in it.
+	 */
 	if (fs->fs_magic == FS_UFS2_MAGIC &&
+	    /* Inode is beyond last initialized block of inodes? */
 	    ipref + INOPB(fs) > cgp->cg_initediblk &&
+	    /* Has any inode not been used at least once? */
 	    cgp->cg_initediblk < cgp->cg_ffs2_niblk) {
+
                 ibp = getblk(ip->i_devvp, fsbtodb(fs,
                     ino_to_fsba(fs, cg * fs->fs_ipg + cgp->cg_initediblk)),
                     (int)fs->fs_bsize, 0, 0);
+
                 bzero(ibp->b_data, (int)fs->fs_bsize);
                 dp2 = (struct ufs2_dinode *)(ibp->b_data);
+
+		/* Give each inode a positive generation number */
                 for (i = 0; i < INOPB(fs); i++) {
-                        dp2->di_gen = arc4random() / 2 + 1;
+                        dp2->di_gen = (arc4random() & INT32_MAX) / 2 + 1;
                         dp2++;
                 }
+
+		/* Update the counter of initialized inodes */
                 cgp->cg_initediblk += INOPB(fs);
         }
 #endif /* FFS2 */
