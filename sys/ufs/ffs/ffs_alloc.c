@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.63 2006/04/01 12:13:51 pedro Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.64 2006/04/02 17:08:14 pedro Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -1232,7 +1232,9 @@ ffs_fragextend(struct inode *ip, int cg, long bprev, int osize, int nsize)
 		brelse(bp);
 		return (0);
 	}
-	cgp->cg_time = time_second;
+
+	cgp->cg_ffs2_time = cgp->cg_time = time_second;
+
 	bno = dtogd(fs, bprev);
 	for (i = numfrags(fs, osize); i < frags; i++)
 		if (isclr(cg_blksfree(cgp), bno + i)) {
@@ -1295,7 +1297,9 @@ ffs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 		brelse(bp);
 		return (0);
 	}
-	cgp->cg_time = time_second;
+
+	cgp->cg_ffs2_time = cgp->cg_time = time_second;
+
 	if (size == fs->fs_bsize) {
 		bno = ffs_alloccgblk(ip, bp, bpref);
 		bdwrite(bp);
@@ -1562,7 +1566,7 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 	 * We are committed to the allocation from now on, so update the time
 	 * on the cylinder group.
 	 */
-	cgp->cg_time = time_second;
+	cgp->cg_ffs2_time = cgp->cg_time = time_second;
 
 	/*
 	 * If there was a preferred location for the new inode, try to find it.
@@ -1687,7 +1691,9 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 		brelse(bp);
 		return;
 	}
-	cgp->cg_time = time_second;
+
+	cgp->cg_ffs2_time = cgp->cg_time = time_second;
+
 	bno = dtogd(fs, bno);
 	if (size == fs->fs_bsize) {
 		blkno = fragstoblks(fs, bno);
@@ -1800,7 +1806,9 @@ ffs_freefile(struct inode *pip, ino_t ino, mode_t mode)
 		brelse(bp);
 		return (0);
 	}
-	cgp->cg_time = time_second;
+
+	cgp->cg_ffs2_time = cgp->cg_time = time_second;
+
 	ino %= fs->fs_ipg;
 	if (isclr(cg_inosused(cgp), ino)) {
 		printf("dev = 0x%x, ino = %u, fs = %s\n",
