@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.64 2006/04/02 17:08:14 pedro Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.65 2006/04/02 17:16:12 pedro Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -1539,6 +1539,10 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 	struct cg *cgp;
 	struct buf *bp;
 	int error, start, len, loc, map, i;
+#ifdef FFS2
+	struct buf *ibp = NULL;
+	struct ufs2_dinode *dp2;
+#endif
 
 	/*
 	 * For efficiency, before looking at the bitmaps for free inodes,
@@ -1627,6 +1631,25 @@ ffs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 	/* NOTREACHED */
 
 gotit:
+
+#ifdef FFS2
+	/* Check to see if we need to initialize more inodes */
+	if (fs->fs_magic == FS_UFS2_MAGIC &&
+	    ipref + INOPB(fs) > cgp->cg_initediblk &&
+	    cgp->cg_initediblk < cgp->cg_ffs2_niblk) {
+                ibp = getblk(ip->i_devvp, fsbtodb(fs,
+                    ino_to_fsba(fs, cg * fs->fs_ipg + cgp->cg_initediblk)),
+                    (int)fs->fs_bsize, 0, 0);
+                bzero(ibp->b_data, (int)fs->fs_bsize);
+                dp2 = (struct ufs2_dinode *)(ibp->b_data);
+                for (i = 0; i < INOPB(fs); i++) {
+                        dp2->di_gen = arc4random() / 2 + 1;
+                        dp2++;
+                }
+                cgp->cg_initediblk += INOPB(fs);
+        }
+#endif /* FFS2 */
+
 	if (DOINGSOFTDEP(ITOV(ip)))
 		softdep_setup_inomapdep(bp, ip, cg * fs->fs_ipg + ipref);
 
@@ -1646,6 +1669,11 @@ gotit:
 	}
 
 	bdwrite(bp);
+
+#ifdef FFS2
+	if (ibp != NULL)
+		bawrite(ibp);
+#endif
 
 	/* Return the allocated inode number */
 	return (cg * fs->fs_ipg + ipref);
