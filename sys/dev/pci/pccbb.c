@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.43 2006/03/11 09:58:34 brad Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.44 2006/04/02 23:29:05 brad Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -405,6 +405,10 @@ pccbbattach(parent, self, aux)
 	bus_addr_t sockbase;
 	int flags;
 
+#ifdef __HAVE_PCCBB_ATTACH_HOOK
+	pccbb_attach_hook(parent, self, pa);
+#endif
+
 	sc->sc_chipset = cb_chipset(pa->pa_id, &flags);
 
 #ifdef CBB_DEBUG
@@ -419,7 +423,7 @@ pccbbattach(parent, self, aux)
 	sc->sc_rbus_memt = rbus_pccbb_parent_mem(self, pa);
 #endif /* rbus */
 
-	sc->sc_base_memh = 0;
+	sc->sc_flags &= ~CBB_MEMHMAPPED;
 
 	/*
 	 * MAP socket registers and ExCA registers on memory-space
@@ -447,12 +451,13 @@ pccbbattach(parent, self, aux)
 				    " 0x%lx: io mode\n", sc->sc_dev.dv_xname,
 				    sockbase);
 				/* give up... allocate reg space via rbus. */
-				sc->sc_base_memh = 0;
 				pci_conf_write(pc, pa->pa_tag, PCI_SOCKBASE, 0);
-			}
+			} else
+				sc->sc_flags |= CBB_MEMHMAPPED;
 		} else {
 			DPRINTF(("%s: socket base address 0x%lx\n",
 			    sc->sc_dev.dv_xname, sockbase));
+			sc->sc_flags |= CBB_MEMHMAPPED;
 		}
 	}
 
@@ -551,9 +556,6 @@ pccbbattach(parent, self, aux)
 	config_defer(self, pccbb_pci_callback);
 }
 
-
-
-
 /*
  * void pccbb_pci_callback(struct device *self)
  *
@@ -581,7 +583,7 @@ pccbb_pci_callback(self)
 	struct cardslot_attach_args caa;
 	struct cardslot_softc *csc;
 
-	if (0 == sc->sc_base_memh) {
+	if (!(sc->sc_flags & CBB_MEMHMAPPED)) {
 		/* The socket registers aren't mapped correctly. */
 #if rbus
 		if (rbus_space_alloc(sc->sc_rbus_memt, 0, 0x1000, 0x0fff,
@@ -610,6 +612,7 @@ pccbb_pci_callback(self)
 		    sc->sc_dev.dv_xname, sock_base, pci_conf_read(pc,
 		    sc->sc_tag, PCI_SOCKBASE)));
 #endif
+		sc->sc_flags |= CBB_MEMHMAPPED;
 	}
 
 	/* bus bridge initialization */
@@ -694,10 +697,6 @@ pccbb_pci_callback(self)
 
 	return;
 }
-
-
-
-
 
 /*
  * void pccbb_chipinit(struct pccbb_softc *sc)
@@ -2891,7 +2890,7 @@ pccbb_pcmcia_intr_establish(pch, pf, ipl, func, arg, xname)
 		 */
 	}
 
-	return pccbb_intr_establish(sc, IST_LEVEL, ipl, func, arg);
+	return pccbb_intr_establish(sc, -1, ipl, func, arg);
 }
 
 /*
@@ -3119,7 +3118,7 @@ pccbb_winlist_delete(head, bsh, size)
 
 	for (chainp = TAILQ_FIRST(head); chainp != NULL;
 	     chainp = TAILQ_NEXT(chainp, wc_list)) {
-		if (chainp->wc_handle != bsh)
+		if (memcmp(&chainp->wc_handle, &bsh, sizeof(bsh)))
 			continue;
 		if ((chainp->wc_end - chainp->wc_start) != (size - 1)) {
 			printf("pccbb_winlist_delete: window 0x%lx size "
