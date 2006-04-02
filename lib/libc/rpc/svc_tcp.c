@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_tcp.c,v 1.27 2005/10/10 12:00:52 espie Exp $ */
+/*	$OpenBSD: svc_tcp.c,v 1.28 2006/04/02 00:36:05 deraadt Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -258,7 +258,8 @@ rendezvous_request(SVCXPRT *xprt, struct rpc_msg *ignored)
 #ifdef IP_OPTIONS
 	{
 		struct ipoption opts;
-		int optsize = sizeof(opts), i;
+		socklen_t optsize = sizeof(opts);
+		int i;
 
 		if (!getsockopt(sock, IPPROTO_IP, IP_OPTIONS, (char *)&opts,
 		    &optsize) && optsize != 0) {
