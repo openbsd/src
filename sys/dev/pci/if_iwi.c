@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.65 2006/04/01 15:36:01 mickey Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.66 2006/04/02 20:30:19 dim Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -2131,15 +2131,25 @@ iwi_init(struct ifnet *ifp)
 	if (size < sizeof (struct iwi_firmware_hdr)) {
 		printf("%s: firmware image too short: %zu bytes\n",
 		    sc->sc_dev.dv_xname, size);
+		error = EINVAL;
 		goto fail2;
 	}
 
 	hdr = (struct iwi_firmware_hdr *)data;
 
+	if (hdr->vermaj < 3 || hdr->bootsz == 0 || hdr->ucodesz == 0 ||
+	    hdr->mainsz == 0) {
+		printf("%s: firmware image too old (need at least 3.0)\n",
+		    sc->sc_dev.dv_xname);
+		error = EINVAL;
+		goto fail2;
+	}
+
 	if (size < sizeof (struct iwi_firmware_hdr) + letoh32(hdr->bootsz) +
 	    letoh32(hdr->ucodesz) + letoh32(hdr->mainsz)) {
 		printf("%s: firmware image too short: %zu bytes\n",
 		    sc->sc_dev.dv_xname, size);
+		error = EINVAL;
 		goto fail2;
 	}
 
