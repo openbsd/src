@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.35 2006/03/25 22:41:45 djm Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.36 2006/04/02 05:12:02 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -829,8 +829,9 @@ void ste_stats_update(xsc)
 }
 
 const struct pci_matchid ste_devices[] = {
-	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201 },
-	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_550TX },
+	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201_1 },
+	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201_2 },
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_550TX }
 };
 
 /*
