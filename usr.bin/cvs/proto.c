@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.92 2006/04/01 01:20:21 joris Exp $	*/
+/*	$OpenBSD: proto.c,v 1.93 2006/04/02 02:01:40 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -938,8 +938,12 @@ cvs_initlog(void)
 	if ((s = strchr(envdup, '%')) != NULL)
 		*s = '\0';
 
-	strlcpy(buf, env, sizeof(buf));
-	strlcpy(rpath, envdup, sizeof(rpath));
+	if (strlcpy(buf, env, sizeof(buf)) >= sizeof(buf))
+		fatal("string truncation in cvs_initlog");
+
+	if (strlcpy(rpath, envdup, sizeof(rpath)) >= sizeof(rpath))
+		fatal("string truncation in cvs_initlog");
+
 	xfree(envdup);
 
 	s = buf;
@@ -947,20 +951,27 @@ cvs_initlog(void)
 		s++;
 		switch (*s) {
 		case 'c':
-			strlcpy(fpath, cvs_command, sizeof(fpath));
+			if (strlcpy(fpath, cvs_command, sizeof(fpath)) >=
+			    sizeof(fpath))
+				fatal("string truncation in cvs_initlog");
 			break;
 		case 'd':
 			time(&now);
-			strlcpy(fpath, ctime(&now), sizeof(fpath));
+			if (strlcpy(fpath, ctime(&now), sizeof(fpath)) >=
+			    sizeof(fpath))
+				fatal("string truncation in cvs_initlog");
 			break;
 		case 'p':
 			snprintf(fpath, sizeof(fpath), "%d", getpid());
 			break;
 		case 'u':
-			if ((pwd = getpwuid(getuid())) != NULL)
-				strlcpy(fpath, pwd->pw_name, sizeof(fpath));
-			else
+			if ((pwd = getpwuid(getuid())) != NULL) {
+				if (strlcpy(fpath, pwd->pw_name,
+				    sizeof(fpath)) >= sizeof(fpath))
+					fatal("truncation in cvs_initlog");
+			} else {
 				fpath[0] = '\0';
+			}
 			endpwent();
 			break;
 		default:
@@ -969,8 +980,12 @@ cvs_initlog(void)
 		}
 
 		if (fpath[0] != '\0') {
-			strlcat(rpath, "-", sizeof(rpath));
-			strlcat(rpath, fpath, sizeof(rpath));
+			if (strlcat(rpath, "-", sizeof(rpath)) >= sizeof(rpath))
+				fatal("string truncation cvs_initlog");
+
+			if (strlcat(rpath, fpath, sizeof(rpath))
+			    >= sizeof(rpath))
+				fatal("string truncation in cvs_initlog");
 		}
 	}
 
@@ -983,7 +998,8 @@ cvs_initlog(void)
 			continue;
 
 		if (errno != ENOENT)
-			fatal("cvs_initlog() stat failed '%s'", strerror(errno));
+			fatal("cvs_initlog() stat failed '%s'",
+			    strerror(errno));
 
 		break;
 	}
@@ -1001,7 +1017,8 @@ cvs_initlog(void)
 			continue;
 
 		if (errno != ENOENT)
-			fatal("cvs_initlog() stat failed '%s'", strerror(errno));
+			fatal("cvs_initlog() stat failed '%s'",
+			    strerror(errno));
 
 		break;
 	}
