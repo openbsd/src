@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_gensalt.c,v 1.24 2006/04/02 01:00:18 deraadt Exp $ */
+/*	$OpenBSD: pwd_gensalt.c,v 1.25 2006/04/02 04:13:08 deraadt Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -41,9 +41,9 @@
 #include <time.h>
 #include <login_cap.h>
 
-static void	to64(char *, u_int32_t, int n);
-char		*bcrypt_gensalt(u_int8_t);
-int		pwd_gensalt(char *, int, login_cap_t *, char);
+void	to64(char *, u_int32_t, int n);
+char	*bcrypt_gensalt(u_int8_t);
+int	pwd_gensalt(char *, int, login_cap_t *, char);
 
 #define	YPCIPHER_DEF		"old"
 #define	LOCALCIPHER_DEF		"blowfish,6"
@@ -132,7 +132,7 @@ pwd_gensalt(char *salt, int saltlen, login_cap_t *lc, char type)
 static unsigned char itoa64[] =	 /* 0 ... 63 => ascii - 64 */
 	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-static void
+void
 to64(char *s, u_int32_t v, int n)
 {
 	while (--n >= 0) {
