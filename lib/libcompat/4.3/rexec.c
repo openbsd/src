@@ -72,7 +72,7 @@ retry:
 	sin.sin_family = hp->h_addrtype;
 	sin.sin_len = sizeof(sin);
 	sin.sin_port = rport;
-	bcopy(hp->h_addr, (char *)&sin.sin_addr, (size_t)hp->h_length);
+	bcopy(hp->h_addr, &sin.sin_addr, (size_t)hp->h_length);
 	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
 		if (errno == ECONNREFUSED && timo <= 16) {
 			(void) close(s);
@@ -85,7 +85,7 @@ retry:
 	}
 	port = 0;
 	if (fd2p == 0) {
-		(void) write(s, "", 1);
+		(void) write(s, "", (size_t)1);
 	} else {
 		char num[8];
 		int s2, sin2len;
@@ -98,7 +98,7 @@ retry:
 		listen(s2, 1);
 		sin2len = sizeof (sin2);
 		if (getsockname(s2, (struct sockaddr *)&sin2, &sin2len) < 0 ||
-		  sin2len != sizeof (sin2)) {
+		    sin2len != sizeof (sin2)) {
 			perror("getsockname");
 			(void) close(s2);
 			goto bad;
@@ -106,14 +106,16 @@ retry:
 		port = ntohs((u_short)sin2.sin_port);
 		(void) snprintf(num, sizeof num, "%u", port);
 		(void) write(s, num, strlen(num)+1);
-		{ int len = sizeof (from);
-		  s3 = accept(s2, (struct sockaddr *)&from, &len);
-		  close(s2);
-		  if (s3 < 0) {
-			perror("accept");
-			port = 0;
-			goto bad;
-		  }
+		{
+			int len = sizeof (from);
+
+			s3 = accept(s2, (struct sockaddr *)&from, &len);
+			close(s2);
+			if (s3 < 0) {
+				perror("accept");
+				port = 0;
+				goto bad;
+			}
 		}
 		*fd2p = s3;
 	}
@@ -121,13 +123,13 @@ retry:
 	/* should public key encypt the password here */
 	(void) write(s, pass, strlen(pass) + 1);
 	(void) write(s, cmd, strlen(cmd) + 1);
-	if (read(s, &c, 1) != 1) {
+	if (read(s, &c, (size_t)1) != 1) {
 		perror(*ahost);
 		goto bad;
 	}
 	if (c != 0) {
-		while (read(s, &c, 1) == 1) {
-			(void) write(2, &c, 1);
+		while (read(s, &c, (size_t)1) == 1) {
+			(void) write(2, &c, (size_t)1);
 			if (c == '\n')
 				break;
 		}
