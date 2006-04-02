@@ -1,4 +1,4 @@
-/*	$OpenBSD: fs.h,v 1.22 2006/04/02 16:58:52 pedro Exp $	*/
+/*	$OpenBSD: fs.h,v 1.23 2006/04/02 22:28:32 pedro Exp $	*/
 /*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /*
@@ -224,7 +224,7 @@ struct fs {
 	int32_t	 fs_csmask;		/* csum block offset (now unused) */
 	int32_t	 fs_csshift;		/* csum block number (now unused) */
 	int32_t	 fs_nindir;		/* value of NINDIR */
-	int32_t	 fs_inopb;		/* value of INOPB */
+	int32_t	 fs_inopb;		/* inodes per file system block */
 	int32_t	 fs_nspf;		/* value of NSPF */
 /* yet another configuration parameter */
 	int32_t	 fs_optim;		/* optimization preference, see below */
@@ -580,10 +580,9 @@ struct ocg {
 #define	NSPB(fs)	((fs)->fs_nspf << (fs)->fs_fragshift)
 #define	NSPF(fs)	((fs)->fs_nspf)
 
-/*
- * Number of inodes in a secondary storage block/fragment.
- */
+/* Number of inodes per file system block (fs->fs_bsize) */
 #define	INOPB(fs)	((fs)->fs_inopb)
+/* Number of inodes per file system fragment (fs->fs_fsize) */
 #define	INOPF(fs)	((fs)->fs_inopb >> (fs)->fs_fragshift)
 
 /*
