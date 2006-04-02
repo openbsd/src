@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.159 2006/04/01 18:02:55 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.160 2006/04/02 20:57:53 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2398,7 +2398,8 @@ rcs_gettok(RCSFILE *rfp)
 		*(bp++) = ch;
 		for (;;) {
 			ch = getc(pdp->rp_file);
-			if (!isalnum(ch) && ch != '_' && ch != '-') {
+			if (!isalnum(ch) && ch != '_' && ch != '-' &&
+			    ch != '/') {
 				ungetc(ch, pdp->rp_file);
 				break;
 			}
