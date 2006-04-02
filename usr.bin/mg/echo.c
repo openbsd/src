@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.45 2006/03/30 18:32:07 kjell Exp $	*/
+/*	$OpenBSD: echo.c,v 1.46 2006/04/02 17:18:58 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -420,6 +420,7 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 					ttputc('\b');
 					--ttcol;
 				}
+				epos--;
 			}
 			while ((cpos > 0) && ISWORD(buf[cpos - 1])) {
 				ttputc('\b');
@@ -432,6 +433,7 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 					ttputc('\b');
 					--ttcol;
 				}
+				epos--;
 			}
 			ttflush();
 			break;
