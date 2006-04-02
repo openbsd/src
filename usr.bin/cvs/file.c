@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.134 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: file.c,v 1.135 2006/04/02 02:02:27 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -34,14 +34,12 @@
 
 #define CVS_CHAR_ISMETA(c)	((c == '*') || (c == '?') || (c == '['))
 
-
 /* ignore pattern */
 struct cvs_ignpat {
 	char				ip_pat[MAXNAMLEN];
 	int				ip_flags;
 	TAILQ_ENTRY(cvs_ignpat)		ip_list;
 };
-
 
 /*
  * Standard patterns to ignore.
@@ -82,13 +80,11 @@ static const char *cvs_ign_std[] = {
 #endif
 };
 
-
 /*
  * Entries in the CVS/Entries file with a revision of '0' have only been
  * added.  Compare against this revision to see if this is the case
  */
 static RCSNUM *cvs_addedrev;
-
 
 TAILQ_HEAD(, cvs_ignpat)	cvs_ign_pats;
 
@@ -102,7 +98,6 @@ static int	 cvs_file_cmpname(const char *, const char *);
 static CVSFILE	*cvs_file_alloc(const char *, u_int);
 static CVSFILE	*cvs_file_lget(const char *, int, CVSFILE *, CVSENTRIES *,
 		    struct cvs_ent *);
-
 
 /*
  * cvs_file_init()
@@ -155,7 +150,6 @@ cvs_file_init(void)
 	return (0);
 }
 
-
 /*
  * cvs_file_ignore()
  *
@@ -185,7 +179,6 @@ cvs_file_ignore(const char *pat)
 	return (0);
 }
 
-
 /*
  * cvs_file_chkign()
  *
@@ -212,7 +205,6 @@ cvs_file_chkign(const char *file)
 
 	return (0);
 }
-
 
 /*
  * cvs_file_create()
