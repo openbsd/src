@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_bigkey.c,v 1.16 2005/08/05 13:03:00 espie Exp $	*/
+/*	$OpenBSD: hash_bigkey.c,v 1.17 2006/04/03 19:56:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -420,7 +420,7 @@ __big_return(HTAB *hashp, BUFHEAD *bufp, int ndx, DBT *val, int set_current)
 			return (0);
 		}
 
-	val->size = collect_data(hashp, bufp, (int)len, set_current);
+	val->size = (size_t)collect_data(hashp, bufp, (int)len, set_current);
 	if (val->size == (size_t)-1)
 		return (-1);
 	if (save_p->addr != save_addr) {
@@ -492,7 +492,7 @@ collect_data(HTAB *hashp, BUFHEAD *bufp, int len, int set)
 int
 __big_keydata(HTAB *hashp, BUFHEAD *bufp, DBT *key, DBT *val, int set)
 {
-	key->size = collect_key(hashp, bufp, 0, val, set);
+	key->size = (size_t)collect_key(hashp, bufp, 0, val, set);
 	if (key->size == (size_t)-1)
 		return (-1);
 	key->data = (u_char *)hashp->tmp_key;
