@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.137 2006/03/29 13:38:05 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.138 2006/04/03 01:35:06 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -634,13 +634,6 @@ ami_quartz_init(struct ami_softc *sc)
 int
 ami_quartz_exec(struct ami_softc *sc, struct ami_iocmd *cmd)
 {
-	u_int32_t i;
-
-	i = 0;
-	while (sc->sc_mbox->acc_busy && (i < AMI_MAX_BUSYWAIT)) {
-		delay(1);
-		i++;
-	}
 	if (sc->sc_mbox->acc_busy) {
 		AMI_DPRINTF(AMI_D_CMD, ("mbox_busy "));
 		return (EBUSY);
@@ -1014,7 +1007,7 @@ ami_runqueue(void *arg)
 	s = splbio();
 	while ((ccb = TAILQ_FIRST(&sc->sc_ccb_preq)) != NULL) {
 		if (sc->sc_exec(sc, &ccb->ccb_cmd) != 0) {
-			timeout_add(&sc->sc_run_tmo, hz/500);
+			timeout_add(&sc->sc_run_tmo, 1);
 			break;
 		}
 
