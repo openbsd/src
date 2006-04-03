@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.9 2004/09/15 22:12:19 deraadt Exp $	*/
+/*	$OpenBSD: str.c,v 1.10 2006/04/03 01:31:11 djm Exp $	*/
 /*	$NetBSD: str.c,v 1.7 1995/08/31 22:13:47 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: str.c,v 1.9 2004/09/15 22:12:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.10 2006/04/03 01:31:11 djm Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -183,9 +183,8 @@ genclass(s)
 	    sizeof(CLASS), sizeof(CLASS), c_class)) == NULL)
 		errx(1, "unknown class %s", s->str);
 
-	if ((cp->set = p = malloc((NCHARS + 1) * sizeof(int))) == NULL)
+	if ((cp->set = p = calloc(NCHARS + 1, sizeof(int))) == NULL)
 		errx(1, "no memory for a class");
-	bzero(p, (NCHARS + 1) * sizeof(int));
 	for (cnt = 0, func = cp->func; cnt < NCHARS; ++cnt)
 		if ((func)(cnt))
 			*p++ = cnt;
