@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.138 2006/04/03 01:35:06 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.139 2006/04/03 01:40:00 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1606,6 +1606,11 @@ ami_intr(void *v)
 	}
 
 	splx(s);
+
+	if (rv)
+		ami_runqueue(sc);
+
+	
 	AMI_DPRINTF(AMI_D_INTR, ("exit "));
 	return (rv);
 }
