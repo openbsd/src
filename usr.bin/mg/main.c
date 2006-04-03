@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.49 2006/02/25 14:40:16 otto Exp $	*/
+/*	$OpenBSD: main.c,v 1.50 2006/04/03 02:43:22 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -135,10 +135,10 @@ notnum:
 	/* fake last flags */
 	thisflag = 0;
 	for (;;) {
-#ifndef NO_DPROMPT
-		if (epresf == KPROMPT)
+		if (epresf == KCLEAR)
 			eerase();
-#endif	/* !NO_DPROMPT */
+		if (epresf == TRUE)
+			epresf = KCLEAR;
 		if (winch_flag) {
 			do_redraw(0, 0, TRUE);
 			winch_flag = 0;
