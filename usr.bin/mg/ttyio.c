@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyio.c,v 1.30 2006/04/03 00:40:56 deraadt Exp $	*/
+/*	$OpenBSD: ttyio.c,v 1.31 2006/04/03 05:03:34 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -26,7 +26,7 @@
 
 int	ttstarted;
 char	obuf[NOBUF];			/* Output buffer. */
-int	nobuf;				/* Buffer count. */
+size_t	nobuf;				/* Buffer count. */
 struct	termios	oldtty;			/* POSIX tty settings. */
 struct	termios	newtty;
 int	nrow;				/* Terminal size, rows. */

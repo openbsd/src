@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.51 2006/04/03 00:40:56 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.52 2006/04/03 05:03:34 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -181,9 +181,10 @@ poptofile(int f, int n)
 struct buffer *
 findbuffer(char *fn)
 {
-	struct buffer		*bp;
-	char		 bname[NBUFN], fname[NBUFN];
-	unsigned int	 count, remain, i;
+	struct buffer	*bp;
+	char		bname[NBUFN], fname[NBUFN];
+	unsigned int	count;
+	size_t		i, remain;
 
 	if (strlcpy(fname, fn, sizeof(fname)) >= sizeof(fname)) {
 		ewprintf("filename too long");
