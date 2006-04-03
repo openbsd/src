@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.26 2005/12/13 07:20:13 kjell Exp $	*/
+/*	$OpenBSD: grep.c,v 1.27 2006/04/03 00:19:32 kjell Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.
  * Copyright (c) 2005 Kjell Wooding <kjell@openbsd.org>.
@@ -183,6 +183,7 @@ compile(int f, int n)
 		return (FALSE);
 	curbp = bp;
 	compile_win = curwp = wp;
+	gotoline(FFARG, 0);
 	return (TRUE);
 }
 
@@ -362,7 +363,7 @@ compile_goto_error(int f, int n)
 		return (FALSE);
 	curbp = bp;
 	curwp = wp;
-	if (bp->b_fname[0] == 0)
+	if (bp->b_fname[0] == '\0')
 		readin(adjf);
 	gotoline(FFARG, lineno);
 	return (TRUE);
