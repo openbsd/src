@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypset.c,v 1.14 2006/04/02 01:49:18 deraadt Exp $ */
+/*	$OpenBSD: ypset.c,v 1.15 2006/04/03 20:11:22 deraadt Exp $ */
 /*	$NetBSD: ypset.c,v 1.8 1996/05/13 02:46:33 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ypset.c,v 1.14 2006/04/02 01:49:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypset.c,v 1.15 2006/04/03 20:11:22 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -63,10 +63,12 @@ bind_tohost(struct sockaddr_in *sin, char *dom, char *server)
 	CLIENT *client;
 	int sock, port, r;
 
-	if ((port=htons(getrpcport(server, YPPROG, YPPROC_NULL, IPPROTO_UDP))) == 0) {
+	port = getrpcport(server, YPPROG, YPPROC_NULL, IPPROTO_UDP);
+	if (port == 0) {
 		fprintf(stderr, "%s not running ypserv.\n", server);
 		exit(1);
 	}
+	port = htons(port);
 
 	memset(&ypsd, 0, sizeof ypsd);
 
@@ -97,7 +99,7 @@ bind_tohost(struct sockaddr_in *sin, char *dom, char *server)
 	client->cl_auth = authunix_create_default();
 
 	r = clnt_call(client, YPBINDPROC_SETDOM,
-		xdr_ypbind_setdom, &ypsd, xdr_void, NULL, tv);
+	    xdr_ypbind_setdom, &ypsd, xdr_void, NULL, tv);
 	if (r) {
 		fprintf(stderr, "Sorry, cannot ypset for domain %s on host.\n", dom);
 		clnt_destroy(client);
@@ -123,7 +125,7 @@ main(int argc, char *argv[])
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
-	while ((c=getopt(argc, argv, "h:d:")) != -1)
+	while ((c = getopt(argc, argv, "h:d:")) != -1)
 		switch(c) {
 		case 'd':
 			domainname = optarg;
