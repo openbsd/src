@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: ac.c,v 1.17 2004/03/18 01:28:40 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: ac.c,v 1.18 2006/04/03 21:32:38 dhill Exp $";
 #endif
 
 #include <sys/types.h>
@@ -52,7 +52,7 @@ struct user_list {
 struct tty_list {
 	struct tty_list *next;
 	char	name[UT_LINESIZE+3];
-	int	len;
+	size_t	len;
 	int	ret;
 };
 
@@ -68,8 +68,6 @@ static int	Flags = 0;
 static struct user_list *Users = NULL;
 static struct tty_list *Ttys = NULL;
 
-#define NEW(type) (type *)malloc(sizeof (type))
-
 #define	AC_W	1				/* not _PATH_WTMP */
 #define	AC_D	2				/* daily totals (ignore -p) */
 #define	AC_P	4				/* per-user totals */
@@ -82,7 +80,7 @@ static int Debug = 0;
 
 int			main(int, char **);
 int			ac(FILE *);
-struct tty_list		*add_tty(char *);
+void			add_tty(char *);
 int			do_tty(char *);
 FILE			*file(char *);
 struct utmp_list	*log_in(struct utmp_list *, struct utmp *);
@@ -113,7 +111,7 @@ file(char *name)
 	return fp;
 }
 
-struct tty_list *
+void
 add_tty(char *name)
 {
 	struct tty_list *tp;
@@ -121,7 +119,7 @@ add_tty(char *name)
 
 	Flags |= AC_T;
 
-	if ((tp = NEW(struct tty_list)) == NULL)
+	if ((tp = malloc(sizeof(struct tty_list))) == NULL)
 		err(1, "malloc");
 	tp->len = 0;				/* full match */
 	tp->ret = 1;				/* do if match */
@@ -136,7 +134,6 @@ add_tty(char *name)
 	}
 	tp->next = Ttys;
 	Ttys = tp;
-	return Ttys;
 }
 
 /*
@@ -201,7 +198,7 @@ update_user(struct user_list *head, char *name, time_t secs)
 	if (Flags & AC_U)
 		return head;
 
-	if ((up = NEW(struct user_list)) == NULL)
+	if ((up = malloc(sizeof(struct user_list))) == NULL)
 		err(1, "malloc");
 	up->next = head;
 	strlcpy(up->name, name, sizeof (up->name));
@@ -415,7 +412,7 @@ log_in(struct utmp_list *head, struct utmp *up)
 	/*
 	 * go ahead and log them in
 	 */
-	if ((lp = NEW(struct utmp_list)) == NULL)
+	if ((lp = malloc(sizeof(struct utmp_list))) == NULL)
 		err(1, "malloc");
 	lp->next = head;
 	head = lp;
