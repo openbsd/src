@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.139 2006/04/03 01:40:00 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.140 2006/04/03 01:53:04 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1130,9 +1130,8 @@ ami_done_pt(struct ami_softc *sc, struct ami_ccb *ccb)
 
 	s = splbio();
 	ami_put_ccb(ccb);
-	splx(s);
-
 	scsi_done(xs);
+	splx(s);
 }
 
 void
@@ -1163,9 +1162,8 @@ ami_done_xs(struct ami_softc *sc, struct ami_ccb *ccb)
 
 	s = splbio();
 	ami_put_ccb(ccb);
-	splx(s);
-
 	scsi_done(xs);
+	splx(s);
 }
 
 void
@@ -1183,9 +1181,8 @@ ami_done_flush(struct ami_softc *sc, struct ami_ccb *ccb)
 
 		s = splbio();
 		ami_put_ccb(ccb);
-		splx(s);
-
 		scsi_done(xs);
+		splx(s);
 	}
 
 	/* reuse the ccb for the sysflush command */
@@ -1209,9 +1206,8 @@ ami_done_sysflush(struct ami_softc *sc, struct ami_ccb *ccb)
 
 	s = splbio();
 	ami_put_ccb(ccb);
-	splx(s);
-
 	scsi_done(xs);
+	splx(s);
 }
 
 void
