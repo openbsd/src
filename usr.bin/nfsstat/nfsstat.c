@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.28 2005/08/01 22:28:19 millert Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.29 2006/04/03 06:40:14 deraadt Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.28 2005/08/01 22:28:19 millert Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.29 2006/04/03 06:40:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,12 +91,11 @@ void catchalarm(int);
 int
 main(int argc, char *argv[])
 {
+	u_int interval, display = SHOW_ALL;
 	extern int optind;
 	extern char *optarg;
-	char *p;
-	u_int interval;
-	u_int display = SHOW_ALL;
 	char *memf, *nlistf;
+	const char *errstr;
 	int ch;
 
 	interval = 0;
@@ -110,9 +109,10 @@ main(int argc, char *argv[])
 			nlistf = optarg;
 			break;
 		case 'w':
-			interval = (u_int)strtol(optarg, &p, 0);
-			if (*optarg == '\0' || *p != '\0')
-				errx(1, "invalid interval");
+			interval = (u_int)strtonum(optarg, 0, 1000, &errstr);
+			if (errstr)
+				errx(1, "invalid interval %s: %s",
+				    optarg, errstr);
 			break;
 		case 's':
 			display = SHOW_SERVER;
@@ -130,7 +130,9 @@ main(int argc, char *argv[])
 #define	BACKWARD_COMPATIBILITY
 #ifdef	BACKWARD_COMPATIBILITY
 	if (*argv) {
-		interval = atoi(*argv);
+		interval = (u_int)strtonum(*argv, 0, 1000, &errstr);
+		if (errstr)
+			errx(1, "invalid interval %s: %s", *argv, errstr);
 		if (*++argv) {
 			nlistf = *argv;
 			if (*++argv)
@@ -356,7 +358,7 @@ sidewaysintpr(u_int interval, u_int display)
 	(void)signal(SIGALRM, catchalarm);
 	signalled = 0;
 	(void)alarm(interval);
-	bzero((caddr_t)&lastst, sizeof(lastst));
+	bzero(&lastst, sizeof(lastst));
 
 	for (hdrcnt = 1;;) {
 		if (!--hdrcnt) {
