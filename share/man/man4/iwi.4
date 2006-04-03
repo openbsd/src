@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwi.4,v 1.21 2005/09/19 19:59:07 damien Exp $
+.\" $OpenBSD: iwi.4,v 1.22 2006/04/03 09:39:53 dim Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -181,18 +181,14 @@ Disable WEP encryption.
 This is the default mode of operation.
 .El
 .Sh FILES
-The driver needs some firmware files,
+The driver needs at least version 3.0 of the following firmware files,
 which are loaded on demand when the device is attached:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It Pa /etc/firmware/iwi-license
-.It Pa /etc/firmware/iwi-boot
 .It Pa /etc/firmware/iwi-bss
 .It Pa /etc/firmware/iwi-ibss
 .It Pa /etc/firmware/iwi-monitor
-.It Pa /etc/firmware/iwi-ucode-bss
-.It Pa /etc/firmware/iwi-ucode-ibss
-.It Pa /etc/firmware/iwi-ucode-monitor
 .El
 .Pp
 These firmware files are not free because Intel refuses to grant
@@ -200,9 +196,15 @@ distribution rights without contractual obligations.
 As a result, even though
 .Ox
 includes the driver, the firmware files cannot be included and
-users have to find these files on their own.
+users have to download these files on their own.
 The official person to state your views to about this issue is
 peter.engelbrecht@intel.com at (858) 391 1857.
+.Pp
+A prepackaged version of the firmware, designed to be used with
+.Xr pkg_add 1 ,
+can be found at:
+.Pp
+.Pa http://damien.bergamini.free.fr/iwifw/OpenBSD/iwi-firmware-3.0.tgz
 .Sh EXAMPLES
 The following
 .Xr hostname.if 5
@@ -238,6 +240,7 @@ The driver will reset the hardware.
 This should not happen.
 .El
 .Sh SEE ALSO
+.Xr pkg_add 1 ,
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
