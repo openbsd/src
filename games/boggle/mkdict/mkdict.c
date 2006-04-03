@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdict.c,v 1.6 2004/07/10 07:26:22 deraadt Exp $	*/
+/*	$OpenBSD: mkdict.c,v 1.7 2006/04/03 08:31:24 jmc Exp $	*/
 /*	$NetBSD: mkdict.c,v 1.2 1995/03/21 12:14:49 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdict.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: mkdict.c,v 1.6 2004/07/10 07:26:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkdict.c,v 1.7 2006/04/03 08:31:24 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ static char rcsid[] = "$OpenBSD: mkdict.c,v 1.6 2004/07/10 07:26:22 deraadt Exp 
  * Filter out words that:
  *	1) Are not completely made up of lower case letters
  *	2) Contain a 'q' not immediately followed by a 'u'
- *	3) Are less that 3 characters long
+ *	3) Are less than 3 characters long
  *	4) Are greater than MAXWORDLEN characters long
  */
 
