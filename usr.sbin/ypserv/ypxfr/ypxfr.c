@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.33 2005/05/14 02:32:33 deraadt Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.34 2006/04/03 05:01:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef LINT
-static const char rcsid[] = "$OpenBSD: ypxfr.c,v 1.33 2005/05/14 02:32:33 deraadt Exp $";
+#ifndef lint
+static const char rcsid[] = "$OpenBSD: ypxfr.c,v 1.34 2006/04/03 05:01:24 deraadt Exp $";
 #endif
 
 #include <sys/types.h>

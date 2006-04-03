@@ -1,4 +1,4 @@
-/* $OpenBSD: hash.c,v 1.5 2006/03/18 23:17:36 deraadt Exp $ */
+/* $OpenBSD: hash.c,v 1.6 2006/04/03 05:01:23 deraadt Exp $ */
 /*
  * Copyright (c) 1995
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -40,7 +40,7 @@
 #include "hash.h"
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: hash.c,v 1.5 2006/03/18 23:17:36 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: hash.c,v 1.6 2006/04/03 05:01:23 deraadt Exp $";
 #endif
 
 /*
@@ -108,7 +108,7 @@ hashkey(char *key)
 
 	if (key == NULL)
 		return (-1);
-	return(hash((void *)key, strlen(key)) & HASH_MASK);
+	return(hash(key, strlen(key)) & HASH_MASK);
 }
 
 /* Find an entry in the hash table (may be hanging off a linked list). */
@@ -146,14 +146,14 @@ lookup(struct group_entry *table[], char *key)
  * That's a lot of comment for such a small piece of code, isn't it.
  */
 void
-store(struct group_entry *table[], char *key, char *data)
+ngstore(struct group_entry *table[], char *key, char *data)
 {
 	struct group_entry *new;
 	u_int32_t i;
 
 	i = hashkey(key);
 
-	new = (struct group_entry *)malloc(sizeof(struct group_entry));
+	new = malloc(sizeof(struct group_entry));
 	new->key = strdup(key);
 	new->data = strdup(data);
 	new->next = table[i];
@@ -182,7 +182,7 @@ mstore(struct member_entry *table[], char *key, char *data, char *domain)
 	i = hashkey(key);
 	cur = table[i];
 
-	tmp = (struct grouplist *)malloc(sizeof(struct grouplist));
+	tmp = malloc(sizeof(struct grouplist));
 	tmp->groupname = strdup(data);
 	tmp->next = NULL;
 
@@ -206,7 +206,7 @@ mstore(struct member_entry *table[], char *key, char *data, char *domain)
 	}
 
 	/* Didn't find a match -- add the whole mess to the table. */
-	new = (struct member_entry *)malloc(sizeof(struct member_entry));
+	new = malloc(sizeof(struct member_entry));
 	new->key = strdup(key);
 	new->domain = strdup(domain);
 	new->groups = tmp;

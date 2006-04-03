@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdhosts.c,v 1.14 2005/05/14 02:32:33 deraadt Exp $ */
+/*	$OpenBSD: stdhosts.c,v 1.15 2006/04/03 05:01:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef LINT
-static const char rcsid[] = "$OpenBSD: stdhosts.c,v 1.14 2005/05/14 02:32:33 deraadt Exp $";
+#ifndef lint
+static const char rcsid[] = "$OpenBSD: stdhosts.c,v 1.15 2006/04/03 05:01:23 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -126,7 +126,7 @@ main(int argc, char *argv[])
 			p++;
 
 		if (inet_aton(k, &host_addr))
-			printf("%s %s\n", inet_ntoa(host_addr),v);
+			printf("%s %s\n", inet_ntoa(host_addr), v);
 	}
 	return(0);
 }

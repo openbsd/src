@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknetid.c,v 1.13 2005/05/14 02:32:32 deraadt Exp $ */
+/*	$OpenBSD: mknetid.c,v 1.14 2006/04/03 05:01:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef LINT
-static const char rcsid[] = "$OpenBSD: mknetid.c,v 1.13 2005/05/14 02:32:32 deraadt Exp $";
+#ifndef lint
+static const char rcsid[] = "$OpenBSD: mknetid.c,v 1.14 2006/04/03 05:01:23 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -136,7 +136,7 @@ add_user(char *username, char *uid, char *gid)
 	struct user *u;
 	int idx;
 
-	u = (struct user *) malloc(sizeof(struct user));
+	u = malloc(sizeof(struct user));
 	if (u == NULL)
 		err(1, "malloc");
 	bzero(u, sizeof(struct user));
@@ -211,7 +211,7 @@ read_passwd(FILE *pfile, char *fname)
 			line[len-1] = '\0';
 		}
 
-		p = (char *) &line;
+		p = (char *)&line;
 
 		k = p; colon = 0;
 		while (*k != '\0') {
@@ -298,7 +298,7 @@ read_group(FILE *gfile, char *fname)
 			line[len-1] = '\0';
 		}
 
-		p = (char *) &line;
+		p = (char *)&line;
 
 		k = p; colon = 0;
 		while (*k != '\0') {
@@ -392,7 +392,7 @@ print_passwd_group(int qflag, char *domain)
 static void
 print_hosts(FILE *pfile, char *fname, char *domain)
 {
-	char  line[1024], *p, *k, *u;
+	char  line[1024], *p, *u;
 	int   line_no = 0, len;
 
 	while (read_line(pfile, line, sizeof(line))) {
@@ -414,9 +414,8 @@ print_hosts(FILE *pfile, char *fname, char *domain)
 			line[len-1] = '\0';
 		}
 
-		p = (char *) &line;
+		p = (char *)&line;
 
-		k = p;				/* save start of key  */
 		while (!isspace(*p))
 			p++;			/* find first "space" */
 		while (isspace(*p))
@@ -465,7 +464,7 @@ print_netid(FILE *mfile, char *fname)
 			line[len-1] = '\0';
 		}
 
-		p = (char *) &line;
+		p = (char *)&line;
 
 		k = p;				/* save start of key  */
 		while (!isspace(*p))

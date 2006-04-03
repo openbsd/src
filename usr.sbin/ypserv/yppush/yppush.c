@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.23 2005/09/16 23:53:08 deraadt Exp $ */
+/*	$OpenBSD: yppush.c,v 1.24 2006/04/03 05:01:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: yppush.c,v 1.23 2005/09/16 23:53:08 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: yppush.c,v 1.24 2006/04/03 05:01:23 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -154,12 +154,12 @@ push(int inlen, char *indata)
 	pid_t pid;
 	struct rusage res;
 
-	snprintf(host, sizeof host, "%*.*s" ,inlen ,inlen, indata);
+	snprintf(host, sizeof host, "%*.*s", inlen, inlen, indata);
 
 	client = clnt_create(host, YPPROG, YPVERS, "tcp");
 	if (client == NULL) {
 		if (Verbose)
-			fprintf(stderr, "Target Host: %s\n",host);
+			fprintf(stderr, "Target Host: %s\n", host);
 		clnt_pcreateerror("yppush: Cannot create client");
 		return;
 	}

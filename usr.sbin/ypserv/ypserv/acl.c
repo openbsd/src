@@ -1,4 +1,4 @@
-/*	$OpenBSD: acl.c,v 1.12 2003/11/08 19:17:30 jmc Exp $ */
+/*	$OpenBSD: acl.c,v 1.13 2006/04/03 05:01:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef LINT
-static const char rcsid[] = "$OpenBSD: acl.c,v 1.12 2003/11/08 19:17:30 jmc Exp $";
+#ifndef lint
+static const char rcsid[] = "$OpenBSD: acl.c,v 1.13 2006/04/03 05:01:23 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -108,7 +108,7 @@ acl_add_net(int	allow, struct in_addr *addr, struct in_addr *mask)
 {
 	struct aclent *acl, *p;
 
-	acl = (struct aclent *) malloc(sizeof(struct aclent));
+	acl = malloc(sizeof(struct aclent));
 	acl->next	 = NULL;
 	acl->allow	= allow;
 	acl->s_addr = addr->s_addr;
@@ -163,7 +163,7 @@ acl_init(char *file)
 
 		k = p;			/* save start of verb */
 		i = 0;
-		while (*p != '\0' && !isspace(*p = tolower(*p))) {
+		while (*p != '\0' && !isspace(*p = (char)tolower(*p))) {
 			p++;
 			i++;
 		}
@@ -191,7 +191,7 @@ acl_init(char *file)
 		    (state == ACLS_ALLOW || state == ACLS_DENY)) {
 			k = p;			/* save start of verb */
 			i = 0;
-			while (*p != '\0' && !isspace(*p = tolower(*p))) {
+			while (*p != '\0' && !isspace(*p = (char)tolower(*p))) {
 				p++;
 				i++;
 			}
@@ -231,7 +231,7 @@ acl_init(char *file)
 
 			k = p;			/* save start of verb */
 			i = 0;
-			while (*p != '\0' && !isspace(*p = tolower(*p))) {
+			while (*p != '\0' && !isspace(*p = (char)tolower(*p))) {
 				p++;
 				i++;
 			}
@@ -301,7 +301,7 @@ acl_init(char *file)
 
 			k = p;			/* save start of verb */
 			i = 0;
-			while (*p != '\0' && !isspace(*p = tolower(*p))) {
+			while (*p != '\0' && !isspace(*p = (char)tolower(*p))) {
 				p++;
 				i++;
 			}
@@ -323,7 +323,7 @@ acl_init(char *file)
 
 			k = p;		/* save start of verb */
 			i = 0;
-			while (*p != '\0' && !isspace(*p = tolower(*p))) {
+			while (*p != '\0' && !isspace(*p = (char)tolower(*p))) {
 				p++;
 				i++;
 			}
@@ -396,7 +396,8 @@ acl_init(char *file)
 			break;
 		default:
 			error_cnt++;
-			fprintf(stderr, "acl: unexpected state %d %s\n",state,k);
+			fprintf(stderr, "acl: unexpected state %d %s\n",
+			    state, k);
 		}
 
 	}
@@ -447,7 +448,7 @@ acl_securenet(char *file)
 
 		k = p;				/* save start of verb */
 		i = 0;
-		while (*p != '\0' && !isspace(*p = tolower(*p))) {
+		while (*p != '\0' && !isspace(*p = (char)tolower(*p))) {
 			p++;
 			i++;
 		}
@@ -476,7 +477,7 @@ acl_securenet(char *file)
 
 			k = p;				/* save start of verb */
 			i = 0;
-			while (*p != '\0' && !isspace(*p = tolower(*p))) {
+			while (*p != '\0' && !isspace(*p = (char)tolower(*p))) {
 				p++;
 				i++;
 			}

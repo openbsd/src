@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_proc.c,v 1.24 2005/05/14 02:32:33 deraadt Exp $ */
+/*	$OpenBSD: ypserv_proc.c,v 1.25 2006/04/03 05:01:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef LINT
-static const char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.24 2005/05/14 02:32:33 deraadt Exp $";
+#ifndef lint
+static const char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.25 2006/04/03 05:01:24 deraadt Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -61,6 +61,7 @@ static char *True = "true";
 static char *False = "FALSE";
 #define TORF(N) ((N) ? True : False)
 
+/*ARGSUSED*/
 void *
 ypproc_null_2_svc(void *argp, struct svc_req *rqstp)
 {
@@ -244,7 +245,7 @@ ypproc_xfr_2_svc(ypreq_xfr *argp, struct svc_req *rqstp)
 	char	tid[11], prog[11], port[11];
 	char	ypxfr_proc[] = YPXFR_PROC, *ipadd;
 
-	bzero((char *)&res, sizeof(res));
+	bzero(&res, sizeof(res));
 
 	YPLOG("xfr_2: caller=[%s].%d, auth_ok=%s, domain=%s, tid=%d, prog=%d",
 	    inet_ntoa(caller->sin_addr), ntohs(caller->sin_port), TORF(ok),
@@ -271,7 +272,7 @@ ypproc_xfr_2_svc(ypreq_xfr *argp, struct svc_req *rqstp)
 	}
 	if (pid == 0) {
 		execl(ypxfr_proc, "ypxfr", "-d", argp->map_parms.domain,
-		    "-C",tid, prog, ipadd, port, argp->map_parms.map, (char *)NULL);
+		    "-C", tid, prog, ipadd, port, argp->map_parms.map, (char *)NULL);
 		_exit(1);
 	}
 	/*
@@ -280,6 +281,7 @@ ypproc_xfr_2_svc(ypreq_xfr *argp, struct svc_req *rqstp)
 	return (&res);
 }
 
+/*ARGSUSED*/
 void *
 ypproc_clear_2_svc(void *argp, struct svc_req *rqstp)
 {
@@ -332,7 +334,7 @@ bail:
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return(NULL);
 	}
-	bzero((char *)&res, sizeof(res));
+	bzero(&res, sizeof(res));
 
 	if (secure && (ntohs(caller->sin_port) >= IPPORT_RESERVED)) {
 		res.ypresp_all_u.val.stat = YP_YPERR;
@@ -348,7 +350,7 @@ bail:
 	}
 	/* CHILD: send result, then exit */
 
-	if (!svc_sendreply(rqstp->rq_xprt, ypdb_xdr_get_all, (char *) argp)) {
+	if (!svc_sendreply(rqstp->rq_xprt, ypdb_xdr_get_all, (char *)argp)) {
 		svcerr_systemerr(rqstp->rq_xprt);
 	}
 	exit(0);
@@ -463,8 +465,8 @@ bail:
 		return(NULL);
 	}
 
-	bzero((char *)&res, sizeof(res));
-	snprintf(domain_path,MAXPATHLEN, "%s/%s",YP_DB_PATH,*argp);
+	bzero(&res, sizeof(res));
+	snprintf(domain_path, sizeof domain_path, "%s/%s", YP_DB_PATH, *argp);
 
 	status = YP_TRUE;
 	res.maps = NULL;
@@ -486,14 +488,12 @@ bail:
 				continue;
 			suffix = (char *) &dp->d_name[dp->d_namlen-3];
 			if (strcmp(suffix, ".db") == 0) {
-				if ((m = (struct ypmaplist *)malloc((unsigned)
-				    sizeof(struct ypmaplist))) == NULL) {
+				if ((m = malloc(sizeof(struct ypmaplist))) == NULL) {
 					status = YP_YPERR;
 					break;
 				}
 
-				if ((map_name = (char *)malloc((unsigned)
-				    dp->d_namlen - 2)) == NULL) {
+				if ((map_name = malloc(dp->d_namlen - 2)) == NULL) {
 					status = YP_YPERR;
 					break;
 				}
@@ -516,6 +516,7 @@ bail:
 	return (&res);
 }
 
+/*ARGSUSED*/
 void *
 ypoldproc_null_1_svc(void *argp, struct svc_req *rqstp)
 {

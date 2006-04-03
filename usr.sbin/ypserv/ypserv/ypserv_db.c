@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_db.c,v 1.22 2005/12/21 01:40:25 millert Exp $ */
+/*	$OpenBSD: ypserv_db.c,v 1.23 2006/04/03 05:01:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,8 +33,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef LINT
-static const char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.22 2005/12/21 01:40:25 millert Exp $";
+#ifndef lint
+static const char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.23 2006/04/03 05:01:24 deraadt Exp $";
 #endif
 
 /*
@@ -73,7 +73,7 @@ CIRCLEQ_HEAD(mapq, opt_map);		/* CIRCLEQ of maps (LRU) */
 
 struct opt_map {
 	mapname map;			/* map name (malloc'd) */
-	DBM     *db;                    /* database */
+	DBM	*db;			/* database */
 	struct opt_domain *dom;         /* back ptr to our domain */
 	int     host_lookup;            /* host lookup */
 	int     secure;                 /* secure map? */
@@ -304,7 +304,7 @@ ypdb_open_db(domainname domain, mapname map, ypstat *status,
 	 */
 
 	if (d == NULL) {		/* allocate new domain? */
-		d = (struct opt_domain *) malloc(sizeof(*d));
+		d = malloc(sizeof(*d));
 		if (d)
 			d->domain = strdup(domain);
 		if (d == NULL || d->domain == NULL) {
@@ -325,7 +325,7 @@ ypdb_open_db(domainname domain, mapname map, ypstat *status,
 	 * m must be NULL since we couldn't find a map.  allocate new one
 	 */
 
-	m = (struct opt_map *) malloc(sizeof(*m));
+	m = malloc(sizeof(*m));
 	if (m)
 		m->map = strdup(map);
 	if (m == NULL || m->map == NULL) {
@@ -409,7 +409,7 @@ lookup_host(int nametable, int host_lookup, DBM *db, char *keystr,
 	}
 
 	inet_aton(keystr, &addr_addr);
-	host = gethostbyaddr((char *) &addr_addr, sizeof(addr_addr), AF_INET);
+	host = gethostbyaddr((char *)&addr_addr, sizeof(addr_addr), AF_INET);
 	if (host == NULL) return(YP_NOKEY);
 
 	strncpy((char *)hostname, host->h_name, sizeof(hostname) - 1);
@@ -454,7 +454,7 @@ ypdb_get_record(domainname domain, mapname map, keydat key, int ypprivate)
 	int	host_lookup = 0, hn;
 	struct opt_map *map_info = NULL;
 
-	bzero((char *)&res, sizeof(res));
+	bzero(&res, sizeof(res));
 
 	db = ypdb_open_db(domain, map, &res.stat, &map_info);
 	if (!db || res.stat < 0)
@@ -499,7 +499,7 @@ ypdb_get_first(domainname domain, mapname map, int ypprivate)
 	DBM	*db;
 	datum	k, v;
 
-	bzero((char *)&res, sizeof(res));
+	bzero(&res, sizeof(res));
 
 	db = ypdb_open_db(domain, map, &res.stat, NULL);
 
@@ -534,7 +534,7 @@ ypdb_get_next(domainname domain, mapname map, keydat key, int ypprivate)
 	DBM	*db;
 	datum	k, v, n;
 
-	bzero((char *)&res, sizeof(res));
+	bzero(&res, sizeof(res));
 	db = ypdb_open_db(domain, map, &res.stat, NULL);
 
 	if (res.stat >= 0) {
@@ -584,7 +584,7 @@ ypdb_get_order(domainname domain, mapname map)
 	DBM	*db;
 	datum	k, v;
 
-	bzero((char *)&res, sizeof(res));
+	bzero(&res, sizeof(res));
 	db = ypdb_open_db(domain, map, &res.stat, NULL);
 
 	if (res.stat >= 0) {
@@ -613,7 +613,7 @@ ypdb_get_master(domainname domain, mapname map)
 	DBM	*db;
 	datum	k, v;
 
-	bzero((char *)&res, sizeof(res));
+	bzero(&res, sizeof(res));
 	db = ypdb_open_db(domain, map, &res.stat, NULL);
 
 	if (res.stat >= 0) {
@@ -640,7 +640,7 @@ ypdb_xdr_get_all(XDR *xdrs, ypreq_nokey *req)
 	DBM	*db;
 	datum	k, v;
 
-	bzero((char *)&resp, sizeof(resp));
+	bzero(&resp, sizeof(resp));
 
 	/*
 	 * open db, and advance past any private keys we may see
@@ -681,7 +681,7 @@ ypdb_xdr_get_all(XDR *xdrs, ypreq_nokey *req)
 			k = ypdb_nextkey(db);
 	}
 
-	bzero((char *)&resp, sizeof(resp));
+	bzero(&resp, sizeof(resp));
 	resp.ypresp_all_u.val.stat = YP_NOKEY;
 	resp.more = FALSE;
 
@@ -703,7 +703,7 @@ ypdb_secure(domainname domain, mapname map)
 	int	secure;
 	struct opt_map *map_info = NULL;
 
-	bzero((char *)&res, sizeof(res));
+	bzero(&res, sizeof(res));
 	secure = FALSE;
 
 	db = ypdb_open_db(domain, map, &res.stat, &map_info);

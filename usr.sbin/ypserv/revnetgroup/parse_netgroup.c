@@ -1,4 +1,4 @@
-/* $OpenBSD: parse_netgroup.c,v 1.9 2003/07/15 06:10:46 deraadt Exp $ */
+/* $OpenBSD: parse_netgroup.c,v 1.10 2006/04/03 05:01:23 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@
 #include "hash.h"
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: parse_netgroup.c,v 1.9 2003/07/15 06:10:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: parse_netgroup.c,v 1.10 2006/04/03 05:01:23 deraadt Exp $";
 #endif
 
 /*
@@ -73,14 +73,14 @@ struct netgrp {
 #define NG_USER		1	/* User name */
 #define NG_DOM		2	/* and Domain name */
 
-static struct linelist	*linehead = (struct linelist *)0;
-static struct netgrp	*nextgrp = (struct netgrp *)0;
+static struct linelist	*linehead = NULL;
+static struct netgrp	*nextgrp = NULL;
 static struct {
 	struct netgrp	*gr;
 	char		*grname;
 } grouphead = {
-	(struct netgrp *)0,
-	(char *)0,
+	NULL,
+	NULL,
 };
 
 static int parse_netgrp(char *);
@@ -103,17 +103,12 @@ __setnetgrent(char *group)
 	if (group == NULL || !strlen(group))
 		return;
 
-	if (grouphead.gr == (struct netgrp *)0 ||
-		strcmp(group, grouphead.grname)) {
+	if (grouphead.gr == NULL || strcmp(group, grouphead.grname)) {
 		__endnetgrent();
 		if (parse_netgrp(group))
 			__endnetgrent();
-		else {
-			int len = strlen(group) + 1;
-
-			grouphead.grname = malloc(len);
-			strlcpy(grouphead.grname, group, len);
-		}
+		else
+			grouphead.grname = strdup(group);
 	}
 	nextgrp = grouphead.gr;
 }
@@ -149,12 +144,12 @@ __endnetgrent(void)
 		lp = lp->l_next;
 		free(olp->l_groupname);
 		free(olp->l_line);
-		free((char *)olp);
+		free(olp);
 	}
-	linehead = (struct linelist *)0;
+	linehead = NULL;
 	if (grouphead.grname) {
 		free(grouphead.grname);
-		grouphead.grname = (char *)0;
+		grouphead.grname = NULL;
 	}
 	gp = grouphead.gr;
 	while (gp) {
@@ -166,9 +161,9 @@ __endnetgrent(void)
 			free(ogp->ng_str[NG_USER]);
 		if (ogp->ng_str[NG_DOM])
 			free(ogp->ng_str[NG_DOM]);
-		free((char *)ogp);
+		free(ogp);
 	}
-	grouphead.gr = (struct netgrp *)0;
+	grouphead.gr = NULL;
 }
 
 /*
@@ -194,8 +189,7 @@ parse_netgrp(char *group)
 			break;
 		lp = lp->l_next;
 	}
-	if (lp == (struct linelist *)0 &&
-	    (lp = read_for_group(group)) == (struct linelist *)0)
+	if (lp == NULL && (lp = read_for_group(group)) == NULL)
 		return (1);
 	if (lp->l_parsed) {
 #ifdef DEBUG
@@ -214,8 +208,8 @@ parse_netgrp(char *group)
 	/* Watch for null pointer dereferences, dammit! */
 	while (pos != NULL && *pos != '\0') {
 		if (*pos == '(') {
-			grp = (struct netgrp *)malloc(sizeof (struct netgrp));
-			bzero((char *)grp, sizeof (struct netgrp));
+			grp = malloc(sizeof(struct netgrp));
+			bzero(grp, sizeof(struct netgrp));
 			grp->ng_next = grouphead.gr;
 			grouphead.gr = grp;
 			pos++;
@@ -236,10 +230,9 @@ parse_netgrp(char *group)
 					} else
 						len = strlen(spos);
 					if (len > 0) {
-						grp->ng_str[strpos] =  (char *)
-							malloc(len + 1);
+						grp->ng_str[strpos] = malloc(len + 1);
 						bcopy(spos, grp->ng_str[strpos],
-							len + 1);
+						    len + 1);
 					}
 				} else {
 					/*
@@ -311,9 +304,9 @@ read_for_group(char *group)
 	while (*pos == ' ' || *pos == '\t')
 		pos++;
 	if (*pos != '\n' && *pos != '\0') {
-		lp = (struct linelist *)malloc(sizeof (*lp));
+		lp = malloc(sizeof(*lp));
 		lp->l_parsed = 0;
-		lp->l_groupname = (char *)malloc(len + 1);
+		lp->l_groupname = malloc(len + 1);
 		bcopy(spos, lp->l_groupname, len);
 		*(lp->l_groupname + len) = '\0';
 		len = strlen(pos);
@@ -330,7 +323,7 @@ read_for_group(char *group)
 				} else
 					cont = 0;
 				if (len > 0) {
-					linep = (char *)malloc(olen + len + 1);
+					linep = malloc(olen + len + 1);
 					if (olen > 0) {
 						bcopy(olinep, linep, olen);
 						free(olinep);
@@ -361,5 +354,5 @@ read_for_group(char *group)
 #endif
 			return (lp);
 	}
-	return ((struct linelist *)0);
+	return (NULL);
 }

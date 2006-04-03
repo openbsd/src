@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush_svc.c,v 1.11 2003/07/15 06:10:46 deraadt Exp $ */
+/*	$OpenBSD: yppush_svc.c,v 1.12 2006/04/03 05:01:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: yppush_svc.c,v 1.11 2003/07/15 06:10:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: yppush_svc.c,v 1.12 2006/04/03 05:01:23 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -97,8 +97,8 @@ yppush_xfrrespprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 		exit(1);
 		return;
 	}
-	(void) memset((char *)&argument, 0, sizeof (argument));
-	if (!svc_getargs(transp, xdr_argument, (caddr_t) &argument)) {
+	(void) memset(&argument, 0, sizeof(argument));
+	if (!svc_getargs(transp, xdr_argument, (caddr_t)&argument)) {
 		svcerr_decode(transp);
 		_rpcsvcdirty = 0;
 		exit(1);
@@ -108,7 +108,7 @@ yppush_xfrrespprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 	if (result != NULL && !svc_sendreply(transp, xdr_result, result)) {
 		svcerr_systemerr(transp);
 	}
-	if (!svc_freeargs(transp, xdr_argument, (caddr_t) &argument)) {
+	if (!svc_freeargs(transp, xdr_argument, (caddr_t)&argument)) {
 		_msgout("unable to free arguments");
 		exit(1);
 	}

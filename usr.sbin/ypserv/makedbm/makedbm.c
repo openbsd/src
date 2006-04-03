@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.25 2005/12/21 01:40:24 millert Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.26 2006/04/03 05:01:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef LINT
-static const char rcsid[] = "$OpenBSD: makedbm.c,v 1.25 2005/12/21 01:40:24 millert Exp $";
+#ifndef lint
+static const char rcsid[] = "$OpenBSD: makedbm.c,v 1.26 2006/04/03 05:01:22 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -90,7 +90,7 @@ add_record(DBM *db, char *str1, char *str2, int check)
 	key.dsize = strlen(str1);
 
 	if (check) {
-		val = ypdb_fetch(db,key);
+		val = ypdb_fetch(db, key);
 
 		if (val.dptr != NULL)
 			return;		/* already there */
@@ -101,7 +101,8 @@ add_record(DBM *db, char *str1, char *str2, int check)
 	status = ypdb_store(db, key, val, YPDB_INSERT);
 
 	if (status != 0) {
-		printf("%s: problem storing %s %s\n",__progname,str1,str2);
+		printf("%s: problem storing %s %s\n",
+		    __progname, str1, str2);
 		exit(1);
 	}
 }
@@ -147,7 +148,7 @@ list_database(char *database, int Uflag)
 	key = ypdb_firstkey(db);
 
 	while (key.dptr != NULL) {
-		val = ypdb_fetch(db,key);
+		val = ypdb_fetch(db, key);
 		printf("%*.*s %*.*s\n",
 		    key.dsize, key.dsize, key.dptr,
 		    val.dsize, val.dsize, val.dptr);
@@ -176,7 +177,7 @@ create_database(char *infile, char *database, char *yp_input_file,
 	} else {
 		data_file = fopen(infile, "r");
 		if (errno != 0) {
-			(void)fprintf(stderr,"%s: ",__progname);
+			(void)fprintf(stderr,"%s: ", __progname);
 			perror(infile);
 			exit(1);
 		}
@@ -217,7 +218,7 @@ create_database(char *infile, char *database, char *yp_input_file,
 		exit(1);
 	}
 
-	while (read_line(data_file,data_line,sizeof(data_line))) {
+	while (read_line(data_file, data_line, sizeof(data_line))) {
 		line_no++;
 		len =  strlen(data_line);
 
@@ -235,7 +236,7 @@ create_database(char *infile, char *database, char *yp_input_file,
 		k = p;				    /* save start of key */
 		while (!isspace(*p)) {		    /* find first "space" */
 			if (lflag && isupper(*p))   /* if force lower case */
-				*p = tolower(*p);   /* fix it */
+				*p = (char)tolower(*p);   /* fix it */
 			p++;
 		}
 		while (isspace(*p)) {		/* replace space with <NUL> */

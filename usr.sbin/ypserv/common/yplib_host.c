@@ -1,4 +1,4 @@
-/*	$OpenBSD: yplib_host.c,v 1.14 2003/07/15 06:10:46 deraadt Exp $ */
+/*	$OpenBSD: yplib_host.c,v 1.15 2006/04/03 05:01:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef LINT
-static const char rcsid[] = "$OpenBSD: yplib_host.c,v 1.14 2003/07/15 06:10:46 deraadt Exp $";
+#ifndef lint
+static const char rcsid[] = "$OpenBSD: yplib_host.c,v 1.15 2006/04/03 05:01:20 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -157,9 +157,9 @@ yp_match_host(CLIENT *client, char *indomain, char *inmap, const char *inkey,
 	    xdr_ypreq_key, &yprk, xdr_ypresp_val, &yprv, tv);
 	if (r != RPC_SUCCESS)
 		clnt_perror(client, "yp_match_host: clnt_call");
-	if ( !(r=ypprot_err(yprv.stat)) ) {
+	if ( !(r = ypprot_err(yprv.stat)) ) {
 		*outvallen = yprv.val.valdat_len;
-		*outval = (char *)malloc(*outvallen+1);
+		*outval = malloc(*outvallen+1);
 		memcpy(*outval, yprv.val.valdat_val, *outvallen);
 		(*outval)[*outvallen] = '\0';
 	}
@@ -190,13 +190,13 @@ yp_first_host(CLIENT *client, char *indomain, char *inmap, char **outkey,
 	    xdr_ypreq_nokey, &yprnk, xdr_ypresp_key_val, &yprkv, tv);
 	if (r != RPC_SUCCESS)
 		clnt_perror(client, "yp_first_host: clnt_call");
-	if ( !(r=ypprot_err(yprkv.stat)) ) {
+	if ( !(r = ypprot_err(yprkv.stat)) ) {
 		*outkeylen = yprkv.key.keydat_len;
-		*outkey = (char *)malloc(*outkeylen+1);
+		*outkey = malloc(*outkeylen+1);
 		memcpy(*outkey, yprkv.key.keydat_val, *outkeylen);
 		(*outkey)[*outkeylen] = '\0';
 		*outvallen = yprkv.val.valdat_len;
-		*outval = (char *)malloc(*outvallen+1);
+		*outval = malloc(*outvallen+1);
 		memcpy(*outval, yprkv.val.valdat_val, *outvallen);
 		(*outval)[*outvallen] = '\0';
 	}
@@ -229,13 +229,13 @@ yp_next_host(CLIENT *client, char *indomain, char *inmap, char *inkey,
 	    xdr_ypreq_key, &yprk, xdr_ypresp_key_val, &yprkv, tv);
 	if (r != RPC_SUCCESS)
 		clnt_perror(client, "yp_next_host: clnt_call");
-	if ( !(r=ypprot_err(yprkv.stat)) ) {
+	if ( !(r = ypprot_err(yprkv.stat)) ) {
 		*outkeylen = yprkv.key.keydat_len;
-		*outkey = (char *)malloc(*outkeylen+1);
+		*outkey = malloc(*outkeylen+1);
 		memcpy(*outkey, yprkv.key.keydat_val, *outkeylen);
 		(*outkey)[*outkeylen] = '\0';
 		*outvallen = yprkv.val.valdat_len;
-		*outval = (char *)malloc(*outvallen+1);
+		*outval = malloc(*outvallen+1);
 		memcpy(*outval, yprkv.val.valdat_val, *outvallen);
 		(*outval)[*outvallen] = '\0';
 	}
@@ -311,7 +311,7 @@ yp_master_host(CLIENT *client, char *indomain, char *inmap, char **outname)
 	if (r != RPC_SUCCESS)
 		clnt_perror(client, "yp_master: clnt_call");
 	if (!(r = ypprot_err(yprm.stat)))
-		*outname = (char *)strdup(yprm.peer);
+		*outname = strdup(yprm.peer);
 	xdr_free(xdr_ypresp_master, (char *)&yprm);
 	return r;
 }

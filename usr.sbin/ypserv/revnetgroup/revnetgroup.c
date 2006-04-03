@@ -1,4 +1,4 @@
-/* $OpenBSD: revnetgroup.c,v 1.5 2003/07/15 06:10:46 deraadt Exp $ */
+/* $OpenBSD: revnetgroup.c,v 1.6 2006/04/03 05:01:23 deraadt Exp $ */
 /*
  * Copyright (c) 1995
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -47,7 +47,7 @@
 #include "hash.h"
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: revnetgroup.c,v 1.5 2003/07/15 06:10:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: revnetgroup.c,v 1.6 2006/04/03 05:01:23 deraadt Exp $";
 #endif
 
 /* Default location of netgroup file. */
@@ -135,7 +135,7 @@ main(int argc, char *argv[])
 			continue;
 		key = (char *)&readbuf;
 		*(data - 1) = '\0';
-		store(gtable, key, data);
+		ngstore(gtable, key, data);
 	}
 
 	fclose(fp);

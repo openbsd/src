@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdethers.c,v 1.13 2005/05/14 02:32:33 deraadt Exp $ */
+/*	$OpenBSD: stdethers.c,v 1.14 2006/04/03 05:01:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef LINT
-static const char rcsid[] = "$OpenBSD: stdethers.c,v 1.13 2005/05/14 02:32:33 deraadt Exp $";
+#ifndef lint
+static const char rcsid[] = "$OpenBSD: stdethers.c,v 1.14 2006/04/03 05:01:23 deraadt Exp $";
 #endif
 
 #include <sys/types.h>

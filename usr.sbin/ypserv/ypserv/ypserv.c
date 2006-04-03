@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.33 2005/09/16 23:55:04 deraadt Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.34 2006/04/03 05:01:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef LINT
-static const char rcsid[] = "$OpenBSD: ypserv.c,v 1.33 2005/09/16 23:55:04 deraadt Exp $";
+#ifndef lint
+static const char rcsid[] = "$OpenBSD: ypserv.c,v 1.34 2006/04/03 05:01:24 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -191,8 +191,8 @@ ypprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 		_rpcsvcdirty = 0;
 		return;
 	}
-	(void) memset((char *)&argument, 0, sizeof (argument));
-	if (!svc_getargs(transp, xdr_argument, (caddr_t) &argument)) {
+	(void) memset(&argument, 0, sizeof(argument));
+	if (!svc_getargs(transp, xdr_argument, (caddr_t)&argument)) {
 		svcerr_decode(transp);
 		_rpcsvcdirty = 0;
 		return;
@@ -201,7 +201,7 @@ ypprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 	if (result != NULL && !svc_sendreply(transp, xdr_result, result)) {
 		svcerr_systemerr(transp);
 	}
-	if (!svc_freeargs(transp, xdr_argument, (caddr_t) &argument)) {
+	if (!svc_freeargs(transp, xdr_argument, (caddr_t)&argument)) {
 		_msgout("unable to free arguments");
 		exit(1);
 	}
@@ -306,8 +306,8 @@ ypprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 		_rpcsvcdirty = 0;
 		return;
 	}
-	(void) memset((char *)&argument, 0, sizeof (argument));
-	if (!svc_getargs(transp, xdr_argument, (caddr_t) &argument)) {
+	(void) memset(&argument, 0, sizeof(argument));
+	if (!svc_getargs(transp, xdr_argument, (caddr_t)&argument)) {
 		svcerr_decode(transp);
 		_rpcsvcdirty = 0;
 		return;
@@ -316,7 +316,7 @@ ypprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 	if (result != NULL && !svc_sendreply(transp, xdr_result, result)) {
 		svcerr_systemerr(transp);
 	}
-	if (!svc_freeargs(transp, xdr_argument, (caddr_t) &argument)) {
+	if (!svc_freeargs(transp, xdr_argument, (caddr_t)&argument)) {
 		_msgout("unable to free arguments");
 		exit(1);
 	}
@@ -391,7 +391,7 @@ main(int argc, char *argv[])
 {
 	int xflag = 0, allowv1 = 0, ch, sock, proto;
 	struct sockaddr_in saddr;
-	socklen_t asize = sizeof (saddr);
+	socklen_t asize = sizeof(saddr);
 	extern char *optarg;
 	SVCXPRT *transp;
 
@@ -428,12 +428,12 @@ main(int argc, char *argv[])
 		exit(1);
 
 	if (getsockname(0, (struct sockaddr *)&saddr, &asize) == 0) {
-		socklen_t ssize = sizeof (int);
+		socklen_t ssize = sizeof(int);
 
 		if (saddr.sin_family != AF_INET)
 			exit(1);
 		if (getsockopt(0, SOL_SOCKET, SO_TYPE,
-		    (char *)&_rpcfdtype, &ssize) == -1)
+		    &_rpcfdtype, &ssize) == -1)
 			exit(1);
 		sock = 0;
 		_rpcpmstart = 1;
@@ -441,7 +441,7 @@ main(int argc, char *argv[])
 		openlog("ypserv", LOG_PID, LOG_DAEMON);
 	} else {
 #ifndef RPC_SVC_FG
-		int size, i;
+		int i;
 		pid_t pid;
 
 		pid = fork();
@@ -457,7 +457,7 @@ main(int argc, char *argv[])
 		(void) dup2(i, 2);
 		i = open("/dev/tty", 2);
 		if (i >= 0) {
-			(void) ioctl(i, TIOCNOTTY, (char *)NULL);
+			(void) ioctl(i, TIOCNOTTY, NULL);
 			(void) close(i);
 		}
 		openlog("ypserv", LOG_PID, LOG_DAEMON);
@@ -527,7 +527,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (transp == (SVCXPRT *)NULL) {
+	if (transp == NULL) {
 		_msgout("could not create a handle");
 		exit(1);
 	}
@@ -547,7 +547,7 @@ sig_child(int signo)
 {
 	int save_errno = errno;
 
-	while (wait3((int *)NULL, WNOHANG, (struct rusage *)NULL) > 0)
+	while (wait3(NULL, WNOHANG, NULL) > 0)
 		;
 	errno = save_errno;
 }
