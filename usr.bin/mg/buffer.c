@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.54 2005/12/20 06:17:35 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.55 2006/04/03 00:40:56 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -47,7 +47,7 @@ usebuffer(int f, int n)
 		bufp = eread("Switch to buffer: ", bufn, NBUFN, EFNEW | EFBUF);
 	else
 		bufp = eread("Switch to buffer: (default %s) ", bufn, NBUFN,
-			  EFNUL | EFNEW | EFBUF, curbp->b_altb->b_bname);
+		    EFNUL | EFNEW | EFBUF, curbp->b_altb->b_bname);
 
 	if (bufp == NULL)
 		return (ABORT);
@@ -76,10 +76,10 @@ poptobuffer(int f, int n)
 	if ((curbp->b_altb == NULL) &&
 	    ((curbp->b_altb = bfind("*scratch*", TRUE)) == NULL))
 		bufp = eread("Switch to buffer in other window: ", bufn, NBUFN,
-			  EFNEW | EFBUF);
+		    EFNEW | EFBUF);
 	else
 		bufp = eread("Switch to buffer in other window: (default %s) ",
-			bufn, NBUFN, EFNUL | EFNEW | EFBUF, curbp->b_altb->b_bname);
+		    bufn, NBUFN, EFNUL | EFNEW | EFBUF, curbp->b_altb->b_bname);
 	if (bufp == NULL)
 		return (ABORT);
 	if (bufp[0] == '\0' && curbp->b_altb != NULL)

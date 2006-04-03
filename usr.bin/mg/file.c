@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.50 2005/12/20 06:17:36 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.51 2006/04/03 00:40:56 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -381,7 +381,7 @@ doneread:
 
 				newsize = linesize * 2;
 				if (newsize < 0 ||
-				    (cp = malloc((unsigned)newsize)) == NULL) {
+				    (cp = malloc(newsize)) == NULL) {
 					ewprintf("Could not allocate %d bytes",
 					    newsize);
 						s = FIOERR;

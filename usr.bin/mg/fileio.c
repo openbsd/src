@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.69 2006/04/02 20:21:19 kjell Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.70 2006/04/03 00:40:56 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -204,7 +204,7 @@ fbackupfile(const char *fn)
 		return (FALSE);
 	}
 	while ((nread = read(from, buf, sizeof(buf))) > 0) {
-		if (write(to, buf, nread) != nread) {
+		if (write(to, buf, (size_t)nread) != nread) {
 			nread = -1;
 			break;
 		}
@@ -351,10 +351,11 @@ nohome:
 int
 copy(char *frname, char *toname)
 {
-	int	ifd, ofd, n;
+	int	ifd, ofd;
 	char	buf[BUFSIZ];
 	mode_t	fmode = DEFFILEMODE;	/* XXX?? */
 	struct	stat orig;
+	ssize_t	sr;
 
 	if ((ifd = open(frname, O_RDONLY)) == -1)
 		return (FALSE);
@@ -368,8 +369,8 @@ copy(char *frname, char *toname)
 		close(ifd);
 		return (FALSE);
 	}
-	while ((n = read(ifd, buf, sizeof(buf))) > 0) {
-		if (write(ofd, buf, n) != n) {
+	while ((sr = read(ifd, buf, sizeof(buf))) > 0) {
+		if (write(ofd, buf, (size_t)sr) != sr) {
 			ewprintf("write error : %s", strerror(errno));
 			break;
 		}
@@ -377,7 +378,7 @@ copy(char *frname, char *toname)
 	if (fchmod(ofd, orig.st_mode) == -1)
 		ewprintf("Cannot set original mode : %s", strerror(errno));
 
-	if (n == -1) {
+	if (sr == -1) {
 		ewprintf("Read error : %s", strerror(errno));
 		close(ifd);
 		close(ofd);

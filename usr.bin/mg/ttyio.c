@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyio.c,v 1.29 2005/12/13 06:01:27 kjell Exp $	*/
+/*	$OpenBSD: ttyio.c,v 1.30 2006/04/03 00:40:56 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -161,7 +161,7 @@ int
 ttgetc(void)
 {
 	char	c;
-	int	ret;
+	ssize_t	ret;
 
 	do {
 		ret = read(STDIN_FILENO, &c, 1);
@@ -184,7 +184,7 @@ charswaiting(void)
 {
 	int	x;
 
-	return ((ioctl(0, FIONREAD, (char *) &x) < 0) ? 0 : x);
+	return ((ioctl(0, FIONREAD, &x) < 0) ? 0 : x);
 }
 
 /*
