@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.58 2006/03/16 21:38:35 miod Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.59 2006/04/04 21:10:29 miod Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -237,7 +237,7 @@ sys_mincore(p, v, retval)
 	vm_map_entry_t entry;
 	vaddr_t start, end, lim;
 	vm_map_t map;
-	vsize_t len;
+	vsize_t len, npgs;
 	int error = 0;
 
 	map = &p->p_vmspace->vm_map;
@@ -253,11 +253,13 @@ sys_mincore(p, v, retval)
 	if (end <= start)
 		return (EINVAL);
 
+	npgs = len >> PAGE_SHIFT;
+
 	/*
 	 * Lock down vec, so our returned status isn't outdated by
 	 * storing the status byte for a page.
 	 */
-	if ((error = uvm_vslock(p, vec, len, VM_PROT_WRITE)) != 0)
+	if ((error = uvm_vslock(p, vec, npgs, VM_PROT_WRITE)) != 0)
 		return (error);
 
 	vm_map_lock_read(map);
@@ -347,7 +349,7 @@ sys_mincore(p, v, retval)
 
  out:
 	vm_map_unlock_read(map);
-	uvm_vsunlock(p, SCARG(uap, vec), len);
+	uvm_vsunlock(p, SCARG(uap, vec), npgs);
 	return (error);
 }
 
