@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.21 2006/04/04 21:18:43 brad Exp $	*/
+/*	$OpenBSD: bus.h,v 1.22 2006/04/04 21:20:40 brad Exp $	*/
 /*	$NetBSD: bus.h,v 1.10 1996/12/02 22:19:32 cgd Exp $	*/
 
 /*
@@ -529,6 +529,16 @@ struct alpha_bus_dma_tag {
 	 * windows also get a pointer to their SGMAP state.
 	 */
 	struct alpha_sgmap *_sgmap;
+
+	/*
+	 * The SGMAP MMU implements a prefetch FIFO to keep data
+	 * moving down the pipe, when doing host->bus DMA writes.
+	 * The threshold (distance until the next page) used to
+	 * trigger the prefetch is differnet on different chipsets,
+	 * and we need to know what it is in order to know whether
+	 * or not to allocate a spill page.
+	 */
+	bus_size_t _pfthresh;
 
 	/*
 	 * Internal-use only utility methods.  NOT TO BE USED BY

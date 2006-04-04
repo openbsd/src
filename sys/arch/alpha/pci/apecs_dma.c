@@ -1,4 +1,4 @@
-/* $OpenBSD: apecs_dma.c,v 1.4 2006/03/20 01:00:58 martin Exp $ */
+/* $OpenBSD: apecs_dma.c,v 1.5 2006/04/04 21:20:40 brad Exp $ */
 /* $NetBSD: apecs_dma.c,v 1.13 2000/06/29 08:58:45 mrg Exp $ */
 
 /*-
@@ -87,6 +87,9 @@ void	apecs_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
 #define	APECS_SGMAP_MAPPED_BASE	(8*1024*1024)
 #define	APECS_SGMAP_MAPPED_SIZE	(8*1024*1024)
 
+/* APECS has a 256-byte out-bound DMA prefetch threshold. */
+#define	APECS_SGMAP_PFTHRESH	256
+
 /*
  * Macro to flush APECS scatter/gather TLB.
  */
@@ -140,6 +143,7 @@ apecs_dma_init(acp)
 	t->_next_window = NULL;
 	t->_boundary = 0;
 	t->_sgmap = &acp->ac_sgmap;
+	t->_pfthresh = APECS_SGMAP_PFTHRESH;
 	t->_get_tag = apecs_dma_get_tag;
 	t->_dmamap_create = alpha_sgmap_dmamap_create;
 	t->_dmamap_destroy = alpha_sgmap_dmamap_destroy;
