@@ -1,4 +1,4 @@
-/*	$OpenBSD: apprentice.c,v 1.21 2006/04/04 10:53:40 pedro Exp $ */
+/*	$OpenBSD: apprentice.c,v 1.22 2006/04/04 14:17:01 pedro Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -46,7 +46,7 @@
 #endif
 
 #ifndef	lint
-FILE_RCSID("@(#)$Id: apprentice.c,v 1.21 2006/04/04 10:53:40 pedro Exp $")
+FILE_RCSID("@(#)$Id: apprentice.c,v 1.22 2006/04/04 14:17:01 pedro Exp $")
 #endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \
@@ -382,7 +382,6 @@ private int
 parse(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp, char *l,
     int action)
 {
-	int i = 0;
 	struct magic *m;
 	char *t;
 	private const char *fops = FILE_OPS;
