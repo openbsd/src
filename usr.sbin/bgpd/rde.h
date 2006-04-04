@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.90 2006/03/22 10:18:49 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.91 2006/04/04 12:03:26 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -150,9 +150,10 @@ LIST_HEAD(prefix_head, prefix);
 #define	F_NEXTHOP_REJECT	0x0200
 #define	F_NEXTHOP_BLACKHOLE	0x0400
 #define	F_NEXTHOP_NOMODIFY	0x0800
-#define	F_ATTR_LINKED		0x1000
-#define	F_LOCAL			0x2000	/* Local-RIB */
-#define	F_ORIGINAL		0x4000	/* Adj-RIB-In */
+#define	F_NEXTHOP_SELF		0x1000
+#define	F_ATTR_LINKED		0x2000
+#define	F_LOCAL			0x4000	/* Local-RIB */
+#define	F_ORIGINAL		0x8000	/* Adj-RIB-In */
 
 
 #define ORIGIN_IGP		0

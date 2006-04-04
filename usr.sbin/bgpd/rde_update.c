@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.49 2006/01/13 13:04:33 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.50 2006/04/04 12:03:26 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -513,7 +513,9 @@ up_get_nexthop(struct rde_peer *peer, struct rde_aspath *a)
 			return (peer->local_v4_addr.v4.s_addr);
 		else
 			return (a->nexthop->exit_nexthop.v4.s_addr);
-	} else if (!peer->conf.ebgp) {
+	} else if (a->flags & F_NEXTHOP_SELF)
+		return (peer->local_v4_addr.v4.s_addr);
+	else if (!peer->conf.ebgp) {
 		/*
 		 * If directly connected use peer->local_v4_addr
 		 * this is only true for announced networks.

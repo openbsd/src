@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.184 2006/03/22 13:30:35 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.185 2006/04/04 12:03:26 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -159,7 +159,7 @@ typedef struct {
 %token	FROM TO ANY
 %token	CONNECTED STATIC
 %token	PREFIX PREFIXLEN SOURCEAS TRANSITAS COMMUNITY DELETE
-%token	SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE NOMODIFY
+%token	SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE NOMODIFY SELF
 %token	PREPEND_SELF PREPEND_PEER PFTABLE WEIGHT RTLABEL
 %token	ERROR
 %token	IPSEC ESP AH SPI IKE
@@ -1386,6 +1386,11 @@ filter_set_opt	: LOCALPREF number		{
 				fatal(NULL);
 			$$->type = ACTION_SET_NEXTHOP_NOMODIFY;
 		}
+		| NEXTHOP SELF		{
+			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			$$->type = ACTION_SET_NEXTHOP_SELF;
+		}
 		| PREPEND_SELF number		{
 			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
@@ -1599,6 +1604,7 @@ lookup(char *s)
 		{ "route-reflector",	REFLECTOR},
 		{ "router-id",		ROUTERID},
 		{ "rtlabel",		RTLABEL},
+		{ "self",		SELF},
 		{ "set",		SET},
 		{ "softreconfig",	SOFTRECONFIG},
 		{ "source-as",		SOURCEAS},
@@ -2505,6 +2511,7 @@ get_rule(enum action_types type)
 	switch (type) {
 	case ACTION_SET_PREPEND_SELF:
 	case ACTION_SET_NEXTHOP_NOMODIFY:
+	case ACTION_SET_NEXTHOP_SELF:
 		out = 1;
 		break;
 	default:

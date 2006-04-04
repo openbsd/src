@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.46 2006/02/09 21:05:09 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.47 2006/04/04 12:03:26 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -160,6 +160,7 @@ rde_apply_set(struct rde_aspath *asp, struct filter_set_head *sh,
 		case ACTION_SET_NEXTHOP_REJECT:
 		case ACTION_SET_NEXTHOP_BLACKHOLE:
 		case ACTION_SET_NEXTHOP_NOMODIFY:
+		case ACTION_SET_NEXTHOP_SELF:
 			nexthop_modify(asp, &set->action.nexthop, set->type,
 			    af);
 			break;
@@ -512,6 +513,7 @@ filterset_equal(struct filter_set_head *ah, struct filter_set_head *bh)
 		case ACTION_SET_NEXTHOP_BLACKHOLE:
 		case ACTION_SET_NEXTHOP_REJECT:
 		case ACTION_SET_NEXTHOP_NOMODIFY:
+		case ACTION_SET_NEXTHOP_SELF:
 			if (a->type == b->type)
 				continue;
 			break;

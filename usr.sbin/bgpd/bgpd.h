@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.195 2006/03/22 13:30:35 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.196 2006/04/04 12:03:26 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -598,6 +598,7 @@ enum action_types {
 	ACTION_SET_NEXTHOP_REJECT,
 	ACTION_SET_NEXTHOP_BLACKHOLE,
 	ACTION_SET_NEXTHOP_NOMODIFY,
+	ACTION_SET_NEXTHOP_SELF,
 	ACTION_SET_COMMUNITY,
 	ACTION_DEL_COMMUNITY,
 	ACTION_PFTABLE,
