@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmapvar.h,v 1.3 2006/03/20 01:00:58 martin Exp $ */
+/* $OpenBSD: sgmapvar.h,v 1.4 2006/04/04 21:18:43 brad Exp $ */
 /* $NetBSD: sgmapvar.h,v 1.10 1998/08/14 16:50:02 thorpej Exp $ */
 
 /*-
@@ -68,30 +68,12 @@ struct alpha_sgmap {
 	bus_addr_t aps_wbase;		/* base of the dma window */
 };
 
-/*
- * Log entry, used for debugging SGMAPs.
- */
-struct sgmap_log_entry {
-	int	sl_op;			/* op; 1 = load, 0 = unload */
-	struct alpha_sgmap *sl_sgmap;	/* sgmap for entry */
-	void	*sl_origbuf;		/* original buffer */
-	u_long	sl_pgoffset;		/* page offset of buffer start */
-	u_long	sl_origlen;		/* length of transfer */
-	u_long	sl_sgva;		/* sgva of transfer */
-	u_long	sl_dmaaddr;		/* dma address */
-	int	sl_ptecnt;		/* pte count */
-};
-
 extern	vaddr_t alpha_sgmap_prefetch_spill_page_va;
 extern	bus_addr_t alpha_sgmap_prefetch_spill_page_pa;
 
 void	alpha_sgmap_init(bus_dma_tag_t, struct alpha_sgmap *,
 	    const char *, bus_addr_t, bus_addr_t, bus_size_t, size_t, void *,
 	    bus_size_t);
-
-int	alpha_sgmap_alloc(bus_dmamap_t, bus_size_t,
-	    struct alpha_sgmap *, int);
-void	alpha_sgmap_free(bus_dmamap_t, struct alpha_sgmap *);
 
 int	alpha_sgmap_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *);

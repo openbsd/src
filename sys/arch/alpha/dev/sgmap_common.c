@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmap_common.c,v 1.7 2006/03/20 01:00:58 martin Exp $ */
+/* $OpenBSD: sgmap_common.c,v 1.8 2006/04/04 21:18:43 brad Exp $ */
 /* $NetBSD: sgmap_common.c,v 1.13 2000/06/29 09:02:57 mrg Exp $ */
 
 /*-
@@ -149,89 +149,6 @@ alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva,
 }
 
 int
-alpha_sgmap_alloc(map, origlen, sgmap, flags)
-	bus_dmamap_t map;
-	bus_size_t origlen;
-	struct alpha_sgmap *sgmap;
-	int flags;
-{
-	int error;
-	bus_size_t len = origlen, boundary, alignment;
-	int s;
-
-#ifdef DIAGNOSTIC
-	if (map->_dm_flags & DMAMAP_HAS_SGMAP)
-		panic("alpha_sgmap_alloc: already have sgva space");
-#endif
-	/*
-	 * Add a range for spill page.
-	 */
-	len += NBPG;
-
-	/*
-	 * And add an additional amount in case of ALLOCNOW.
-	 */
-	if (flags & BUS_DMA_ALLOCNOW)
-		len += NBPG;
-
-	map->_dm_sgvalen = round_page(len);
-
-	/*
-	 * ARGH! If the addition of spill pages bumped us over our
-	 * boundary, we have to 2x the boundary limit.
-	 */
-	boundary = map->_dm_boundary;
-	if (boundary && boundary < map->_dm_sgvalen) {
-		alignment = boundary;
-		do {
-			boundary <<= 1;
-		} while (boundary < map->_dm_sgvalen);
-	} else
-		alignment = NBPG;
-#if 0
-	printf("len %x -> %x, _dm_sgvalen %x _dm_boundary %x boundary %x -> ",
-	    origlen, len, map->_dm_sgvalen, map->_dm_boundary, boundary);
-#endif
-
-	s = splvm();
-	error = extent_alloc(sgmap->aps_ex, map->_dm_sgvalen, alignment, 0,
-	    boundary, (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT : EX_WAITOK,
-	    &map->_dm_sgva);
-	splx(s);
-#if 0
-	printf("error %d _dm_sgva %x\n", error, map->_dm_sgva);
-#endif
-
-	if (error == 0)
-		map->_dm_flags |= DMAMAP_HAS_SGMAP;
-	else
-		map->_dm_flags &= ~DMAMAP_HAS_SGMAP;
-	
-	return (error);
-}
-
-void
-alpha_sgmap_free(map, sgmap)
-	bus_dmamap_t map;
-	struct alpha_sgmap *sgmap;
-{
-	int s;
-
-#ifdef DIAGNOSTIC
-	if ((map->_dm_flags & DMAMAP_HAS_SGMAP) == 0)
-		panic("alpha_sgmap_free: no sgva space to free");
-#endif
-
-	s = splvm();
-	if (extent_free(sgmap->aps_ex, map->_dm_sgva, map->_dm_sgvalen,
-	    EX_NOWAIT))
-		panic("alpha_sgmap_free");
-	splx(s);
-
-	map->_dm_flags &= ~DMAMAP_HAS_SGMAP;
-}
-
-int
 alpha_sgmap_dmamap_create(t, size, nsegments, maxsegsz, boundary,
     flags, dmamp)
 	bus_dma_tag_t t;
@@ -252,14 +169,9 @@ alpha_sgmap_dmamap_create(t, size, nsegments, maxsegsz, boundary,
 
 	map = *dmamp;
 
-	if (flags & BUS_DMA_ALLOCNOW) {
-		error = alpha_sgmap_alloc(map, round_page(size),
-		    t->_sgmap, flags);
-		if (error)
-			alpha_sgmap_dmamap_destroy(t, map);
-}
+	/* XXX BUS_DMA_ALLOCNOW */
 
- return (error);
+	return (error);
 }
 
 void
@@ -267,9 +179,7 @@ alpha_sgmap_dmamap_destroy(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-
-	if (map->_dm_flags & DMAMAP_HAS_SGMAP)
-	alpha_sgmap_free(map, t->_sgmap);
+	KASSERT(map->dm_mapsize == 0);
 
 	_bus_dmamap_destroy(t, map);
 }

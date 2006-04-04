@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.20 2005/05/25 18:29:58 jason Exp $	*/
+/*	$OpenBSD: bus.h,v 1.21 2006/04/04 21:18:43 brad Exp $	*/
 /*	$NetBSD: bus.h,v 1.10 1996/12/02 22:19:32 cgd Exp $	*/
 
 /*
@@ -442,7 +442,6 @@ struct alpha_bus_space {
  */
 #define	DMAMAP_NO_COALESCE	0x40000000	/* don't coalesce adjacent
 						   segments */
-#define	DMAMAP_HAS_SGMAP	0x80000000	/* sgva/len are valid */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
@@ -613,15 +612,6 @@ struct alpha_bus_dmamap {
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
-
-	/*
-	 * This is used only for SGMAP-mapped DMA, but we keep it
-	 * here to avoid pointless indirection.
-	 */
-	int		_dm_pteidx;	/* PTE index */
-	int		_dm_ptecnt;	/* PTE count */
-	u_long		_dm_sgva;	/* allocated sgva */
-	bus_size_t	_dm_sgvalen;	/* svga length */
 
 	/*
 	 * Private cookie to be used by the DMA back-end.
