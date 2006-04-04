@@ -1,4 +1,4 @@
-/*	$OpenBSD: ap_config.h,v 1.20 2005/02/09 12:13:09 henning Exp $ */
+/*	$OpenBSD: ap_config.h,v 1.21 2006/04/04 11:39:28 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -193,11 +193,7 @@ extern "C" {
 #include <errno.h>
 #include <memory.h>
 
-#if defined(USE_HSREGEX)
-#include "hsregex.h"
-#else
 #include <regex.h>
-#endif
 
 #include <sys/resource.h>
 #include <sys/mman.h>

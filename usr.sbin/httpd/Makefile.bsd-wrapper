@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.58 2006/04/04 08:51:28 henning Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.59 2006/04/04 11:39:27 henning Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -183,7 +183,6 @@ INCFILES= \
 	src/include/explain.h \
 	src/include/fnmatch.h \
 	src/include/fdcache.h \
-	src/include/hsregex.h \
 	src/include/http_conf_globals.h \
 	src/include/http_config.h \
 	src/include/http_core.h \
