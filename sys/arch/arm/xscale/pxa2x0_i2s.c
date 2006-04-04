@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_i2s.c,v 1.6 2006/04/04 09:16:15 pascoe Exp $	*/
+/*	$OpenBSD: pxa2x0_i2s.c,v 1.7 2006/04/04 11:45:40 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -312,6 +312,34 @@ pxa2x0_i2s_start_output(struct pxa2x0_i2s_softc *sc, void *block, int bsize,
 
 	/* Start DMA */
 	pxa2x0_dma_to_fifo(3, 1, 0x40400080, 4, 32,
+	    p->map->dm_segs[0].ds_addr + offset, bsize, intr, intrarg);
+
+	return 0;
+}
+
+int
+pxa2x0_i2s_start_input(struct pxa2x0_i2s_softc *sc, void *block, int bsize,
+    void (*intr)(void *), void *intrarg)
+{
+	struct pxa2x0_i2s_dma *p;
+	int offset;
+
+	/* Find mapping which contains block completely */
+	for (p = sc->sc_dmas; p && (((caddr_t)block < p->addr) ||
+	    ((caddr_t)block + bsize > p->addr + p->size)); p = p->next)
+		;	/* Nothing */
+
+	if (!p) {
+		printf("pxa2x0_i2s_start_input: request with bad start "
+		    "address: %p, size: %d)\n", block, bsize);
+		return ENXIO;
+	}
+
+	/* Offset into block to use in mapped block */
+	offset = (caddr_t)block - p->addr;
+
+	/* Start DMA */
+	pxa2x0_dma_from_fifo(2, 2, 0x40400080, 4, 32,
 	    p->map->dm_segs[0].ds_addr + offset, bsize, intr, intrarg);
 
 	return 0;
