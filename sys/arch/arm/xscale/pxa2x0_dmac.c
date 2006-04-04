@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_dmac.c,v 1.1 2005/04/14 23:40:34 pascoe Exp $	*/
+/*	$OpenBSD: pxa2x0_dmac.c,v 1.2 2006/04/04 11:33:40 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -169,13 +169,13 @@ pxa2x0_dma_to_fifo(int periph, int chan, bus_addr_t fifo_addr, int width,
 		return EINVAL;
 	}
 
-	/* Save handler for interrupt-on-completion. */
-	sc->sc_intrhandlers[chan] = intr;
-	sc->sc_intrargs[chan] = intrarg;
-
 	/* XXX: abort anything already in progress, hopefully nothing. */
 	bus_space_write_4(sc->sc_bust, sc->sc_bush, DMAC_DCSR(chan),
 	    DCSR_NODESCFETCH);
+
+	/* Save handler for interrupt-on-completion. */
+	sc->sc_intrhandlers[chan] = intr;
+	sc->sc_intrargs[chan] = intrarg;
 
 	/* Map peripheral to channel for flow control setup. */
 	bus_space_write_4(sc->sc_bust, sc->sc_bush, DMAC_DRCMR(periph),
