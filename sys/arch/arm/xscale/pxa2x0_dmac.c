@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_dmac.c,v 1.2 2006/04/04 11:33:40 pascoe Exp $	*/
+/*	$OpenBSD: pxa2x0_dmac.c,v 1.3 2006/04/04 11:37:05 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -188,6 +188,89 @@ pxa2x0_dma_to_fifo(int periph, int chan, bus_addr_t fifo_addr, int width,
 	    src_addr);
 	bus_space_write_4(sc->sc_bust, sc->sc_bush, DMAC_DTADR(chan),
 	    fifo_addr);
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, DMAC_DCMD(chan),
+	    cmd);
+
+	/* Start the transfer. */
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, DMAC_DCSR(chan),
+	    DCSR_RUN | DCSR_NODESCFETCH);
+
+	return 0;
+}
+
+/* Perform non-descriptor based DMA from a FIFO */
+int
+pxa2x0_dma_from_fifo(int periph, int chan, bus_addr_t fifo_addr, int width,
+    int burstsize, bus_addr_t trg_addr, int length, void (*intr)(void *),
+    void *intrarg)
+{
+	struct pxadmac_softc *sc = pxadmac_softc;
+	uint32_t cmd;
+
+	if (periph < 0 || periph > 63 || periph == 23) {
+		printf("pxa2x0_dma_from_fifo: bogus peripheral %d", periph);
+		return EINVAL;
+	}
+
+	if (chan < 0 || chan >= sc->sc_nchan) {
+		printf("pxa2x0_dma_from_fifo: bogus dma channel %d", chan);
+		return EINVAL;
+	}
+
+	if (length < 0 || length > DCMD_LENGTH_MASK) {
+		printf("pxa2x0_dma_from_fifo: bogus length %d", length);
+		return EINVAL;
+	}
+
+	cmd = (length & DCMD_LENGTH_MASK) | DCMD_INCTRGADDR | DCMD_FLOWSRC
+	    | DCMD_ENDIRQEN;
+
+	switch (width) {
+	case 1:
+		cmd |= DCMD_WIDTH_1;
+		break;
+	case 4:
+		cmd |= DCMD_WIDTH_4;
+		break;
+	default:
+		printf("pxa2x0_dma_from_fifo: bogus width %d", width);
+		return EINVAL;
+	}
+
+	switch (burstsize) {
+	case 8:
+		cmd |= DCMD_SIZE_8;
+		break;
+	case 16:
+		cmd |= DCMD_SIZE_16;
+		break;
+	case 32:
+		cmd |= DCMD_SIZE_32;
+		break;
+	default:
+		printf("pxa2x0_dma_from_fifo: bogus burstsize %d", burstsize);
+		return EINVAL;
+	}
+
+	/* XXX: abort anything already in progress, hopefully nothing. */
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, DMAC_DCSR(chan),
+	    DCSR_NODESCFETCH);
+
+	/* Save handler for interrupt-on-completion. */
+	sc->sc_intrhandlers[chan] = intr;
+	sc->sc_intrargs[chan] = intrarg;
+
+	/* Map peripheral to channel for flow control setup. */
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, DMAC_DRCMR(periph),
+	    chan | DRCMR_MAPVLD);
+
+	/* Setup transfer addresses. */
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, DMAC_DDADR(chan),
+	    DDADR_STOP);
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, DMAC_DSADR(chan),
+	    fifo_addr);
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, DMAC_DTADR(chan),
+	    trg_addr);
 	bus_space_write_4(sc->sc_bust, sc->sc_bush, DMAC_DCMD(chan),
 	    cmd);
 
