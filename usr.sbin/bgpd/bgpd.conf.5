@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.68 2006/03/23 20:26:44 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.69 2006/04/04 12:39:19 henning Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -619,9 +619,10 @@ See also the
 .Sx ATTRIBUTE SET
 section.
 Set parameters are applied to the received prefixes; the only exceptions are
-.Ic prepend-self
+.Ic prepend-self ,
+.Ic nexthop no-modify
 and
-.Ic nexthop no-modify .
+.Ic nexthop self .
 These sets are rewritten into filter rules and can be viewed with
 .Dq bgpd -nv .
 .Pp
@@ -966,18 +967,29 @@ otherwise it will be set to
 .Po Ar address \*(Ba
 .Ic blackhole \*(Ba
 .Ic reject \*(Ba
+.Ic self \*(Ba
 .Ic no-modify Pc
 .Sm on
 .Xc
 Set the
 .Em NEXTHOP
 AS path attribute
-to a different nexthop address, use blackhole or reject routes,
-or do not modify it.
+to a different nexthop address or use blackhole or reject routes.
+If set to
+.Em no-modify ,
+the nexthop attribute is not modified.
+Unless set to
+.Em self ,
+the nexthop is left unmodified for IBGP
+sessions.
+.Em self
+forces the nexthop to be set to the local interface address.
 .Bd -literal -offset indent
 set nexthop 192.168.0.1
 set nexthop blackhole
 set nexthop reject
+set nexthop no-modify
+set nexthop self
 .Ed
 .Pp
 .It Ic pftable Ar table
