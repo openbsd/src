@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: postinst,v 1.5 2005/07/18 00:15:59 uwe Exp $
+#	$OpenBSD: postinst,v 1.6 2006/04/04 00:25:58 uwe Exp $
 #
 # Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
 #
@@ -22,13 +22,28 @@ rmmod zbsdmod 2>/dev/null
 
 mount -o remount,rw /
 
-# The C3100 has a 32M root filesystem, but it's full.
-rootsz=`df -k / | awk 'NR==2{print $2}'` || exit $?
+# The C3100/C3200 models have a 32M root filesystem in NAND flash,
+# but it is completely full. Move things around to make some room.
+rootsz=`df -k / | awk 'NR==2{print $2}'`
 if [ ${rootsz:-0} -ge 32768 ]; then
-	# Make some room by moving this large dictionary.
 	if [ -f /usr/QtPalmtop.rom/etc/kanwadict ]; then
+		# C3100
 		rm -f /home/QtPalmtop/etc/kanwadict
 		mv /usr/QtPalmtop.rom/etc/kanwadict /home/QtPalmtop/etc/kanwadict
+	else
+		# C3200
+		if [ -L /home/QtPalmtop/etc/speech -a \
+		     -d /usr/QtPalmtop.rom/etc/speech ]; then
+			rm -f /home/QtPalmtop/etc/speech
+			mv /usr/QtPalmtop.rom/etc/speech /home/QtPalmtop/etc
+			ln -s /home/QtPalmtop/etc/speech /usr/QtPalmtop.rom/etc
+		fi
+		# Copying bsd.rd onto a disk partition significantly
+		# increases the chance that zbsdmod.o can boot it.
+		hddsz=`df -k /hdd2 | awk 'NR==2{print $4}'`
+		if [ ${hddsz:-0} -ge 5120 ]; then
+			cp /usr/local/OpenBSD/bsd.rd /hdd2
+		fi
 	fi
 fi
 
