@@ -1,4 +1,4 @@
-.\" $OpenBSD: tsearch.3,v 1.14 2006/04/04 11:21:50 moritz Exp $
+.\" $OpenBSD: tsearch.3,v 1.15 2006/04/04 19:07:23 otto Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -117,3 +117,11 @@ function returns no value.
 .Sh STANDARDS
 These functions conform to
 .St -p1003.1-2004 .
+.Sh CAVEATS
+The
+.St -p1003.1-2004
+standard does not specify what value should be returned when deleting the
+root node.
+Since implementations vary, the user of the
+.Fn tdelete
+function should not rely on a specific behaviour.
