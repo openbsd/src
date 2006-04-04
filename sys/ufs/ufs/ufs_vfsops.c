@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vfsops.c,v 1.14 2005/12/28 20:48:18 pedro Exp $	*/
+/*	$OpenBSD: ufs_vfsops.c,v 1.15 2006/04/04 11:21:40 pedro Exp $	*/
 /*	$NetBSD: ufs_vfsops.c,v 1.4 1996/02/09 22:36:12 christos Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ ufs_check_export(struct mount *mp, struct mbuf *nam, int *exflagsp,
 }
 
 /*
- * Initial UFS filesystems, done only once.
+ * Initialize UFS file systems, done only once.
  */
 int
 ufs_init(struct vfsconf *vfsp)
