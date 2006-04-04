@@ -1,7 +1,7 @@
-dnl	$OpenBSD: hardware,v 1.20 2006/01/08 00:32:56 jolan Exp $
+dnl	$OpenBSD: hardware,v 1.21 2006/04/04 00:26:33 uwe Exp $
 dnl When more than one model is supported, turn this into a list...
-OpenBSD/MACHINE runs on the Sharp Zaurus C3000 and C3100 only, at
-the moment. Support for the C760 and C860 is under development.
+OpenBSD/MACHINE runs on the Sharp Zaurus SL-C3000, SL-C3100 and
+SL-C3200 models at the moment.
 
 Supported devices {:-include-:}:
 	Ethernet Adapters
