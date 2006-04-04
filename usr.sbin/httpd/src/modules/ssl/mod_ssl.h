@@ -283,18 +283,6 @@ union ssl_ipc_semun {
  */
 #define SSL_DBM_FILE_MODE ( S_IRUSR|S_IWUSR )
 
-#ifdef SSL_USE_SDBM
-#include "ssl_util_sdbm.h"
-#define ssl_dbm_open     sdbm_open
-#define ssl_dbm_close    sdbm_close
-#define ssl_dbm_store    sdbm_store
-#define ssl_dbm_fetch    sdbm_fetch
-#define ssl_dbm_delete   sdbm_delete
-#define ssl_dbm_firstkey sdbm_firstkey
-#define ssl_dbm_nextkey  sdbm_nextkey
-#define SSL_DBM_FILE_SUFFIX_DIR ".dir"
-#define SSL_DBM_FILE_SUFFIX_PAG ".pag"
-#else /* !SSL_USE_SDBM */
 #include <ndbm.h>
 #define ssl_dbm_open     dbm_open
 #define ssl_dbm_close    dbm_close
@@ -315,7 +303,6 @@ union ssl_ipc_semun {
 #define SSL_DBM_FILE_SUFFIX_PAG ".pag"
 #endif
 #endif
-#endif /* !SSL_USE_SDBM */
 
 /*
  * Check for OpenSSL version 

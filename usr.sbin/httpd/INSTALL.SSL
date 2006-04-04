@@ -204,7 +204,6 @@
               --prefix=/path/to/apache \                                   ALL
              [--enable-shared=ssl] \                                  OPTIONAL
              [--disable-rule=SSL_COMPAT] \                            OPTIONAL
-             [--enable-rule=SSL_SDBM] \                               OPTIONAL
              [--enable-rule=SSL_EXPERIMENTAL] \                       OPTIONAL
              [--enable-rule=SSL_VENDOR] \                             OPTIONAL
              [...more APACI options...]                               OPTIONAL
@@ -238,13 +237,6 @@
         NOTE: The --disable-rule=SSL_COMPAT option disables the building of
               SSL compatibility code for older mod_ssl versions and other
               Apache SSL solutions like Apache-SSL, Sioux, Stronghold, etc.
-
-        NOTE: The --enable-rule=SSL_SDBM option enabled the use of the
-              built-in SDBM library instead of a custom defined or vendor
-              supplied DBM library. This can be useful when the vendor DBM
-              library is buggy or restricts the data size too dramatically
-              (for SSL sessions to be cacheable the DBM library should allow
-              more than 1KB of data to be stored under a particular key).
 
         NOTE: The --enable-rule=SSL_EXPERIMENTAL and --enable-rule=SSL_VENDOR
               options enable various experimental and vendor extension code.
@@ -284,7 +276,6 @@
               --prefix=/path/to/apache \                                   ALL
              [--enable-shared=ssl] \                                  OPTIONAL
              [--disable-rule=SSL_COMPAT] \                            OPTIONAL
-             [--enable-rule=SSL_SDBM] \                               OPTIONAL
              [--enable-rule=SSL_EXPERIMENTAL] \                       OPTIONAL
              [--enable-rule=SSL_VENDOR] \                             OPTIONAL
              [...more APACI options...]                               OPTIONAL
@@ -316,13 +307,6 @@
         NOTE: The --disable-rule=SSL_COMPAT option disables the building of
               SSL compatibility code for older mod_ssl versions and other
               Apache SSL solutions like Apache-SSL, Sioux, Stronghold, etc.
-
-        NOTE: The --enable-rule=SSL_SDBM option enabled the use of the
-              built-in SDBM library instead of a custom defined or vendor
-              supplied DBM library. This can be useful when the vendor DBM
-              library is buggy or restricts the data size too dramatically
-              (for SSL sessions to be cacheable the DBM library should allow
-              more than 1KB of data to be stored under a particular key).
 
         NOTE: The --enable-rule=SSL_EXPERIMENTAL and --enable-rule=SSL_VENDOR
               options enable various experimental and vendor extension code.

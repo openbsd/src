@@ -148,13 +148,8 @@ BOOL ssl_scache_dbm_store(server_rec *s, UCHAR *id, int idlen, time_t expiry, SS
     i2d_SSL_SESSION(sess, &ucp);
 
     /* be careful: do not try to store too much bytes in a DBM file! */
-#ifdef SSL_USE_SDBM
-    if ((idlen + nData) >= PAIRMAX)
-        return FALSE;
-#else
     if ((idlen + nData) >= 950 /* at least less than approx. 1KB */)
         return FALSE;
-#endif
 
     /* create DBM key */
     dbmkey.dptr  = (char *)id;

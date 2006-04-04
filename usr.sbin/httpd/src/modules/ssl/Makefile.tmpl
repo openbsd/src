@@ -91,7 +91,6 @@ OBJS=\
  ssl_expr_eval.o\
  ssl_util.o\
  ssl_util_ssl.o\
- ssl_util_sdbm.o\
  ssl_util_table.o\
  $(SSL_VENDOR_OBJS)
 
@@ -120,7 +119,6 @@ OBJS_PIC=\
  ssl_expr_eval.lo\
  ssl_util.lo\
  ssl_util_ssl.lo\
- ssl_util_sdbm.lo\
  ssl_util_table.lo\
  $(SSL_VENDOR_OBJS_PIC)
 
@@ -491,18 +489,6 @@ ssl_scache_shmht.o ssl_scache_shmht.lo: ssl_scache_shmht.c mod_ssl.h \
  $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
  $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
 ssl_util.o ssl_util.lo: ssl_util.c mod_ssl.h $(INCDIR)/ap_config.h \
- $(INCDIR)/ap_mmn.h $(INCDIR)/ap_config_auto.h \
- $(OSDIR)/os.h $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
- $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
- $(INCDIR)/ap_hook.h $(INCDIR)/ap_ctx.h $(INCDIR)/buff.h \
- $(INCDIR)/ap.h $(INCDIR)/util_uri.h \
- $(INCDIR)/http_config.h $(INCDIR)/http_conf_globals.h \
- $(INCDIR)/http_protocol.h $(INCDIR)/http_request.h \
- $(INCDIR)/http_main.h $(INCDIR)/http_core.h \
- $(INCDIR)/http_log.h $(INCDIR)/scoreboard.h \
- $(INCDIR)/util_md5.h $(INCDIR)/ap_md5.h \
- $(INCDIR)/fnmatch.h ssl_expr.h ssl_util_ssl.h ssl_util_table.h
-ssl_util_sdbm.o ssl_util_sdbm.lo: ssl_util_sdbm.c mod_ssl.h $(INCDIR)/ap_config.h \
  $(INCDIR)/ap_mmn.h $(INCDIR)/ap_config_auto.h \
  $(OSDIR)/os.h $(OSDIR)/os-inline.c $(INCDIR)/ap_ctype.h \
  $(INCDIR)/httpd.h $(INCDIR)/ap_mm.h $(INCDIR)/ap_alloc.h \
