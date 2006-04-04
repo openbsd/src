@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: rc.zboot,v 1.2 2005/07/12 06:31:53 uwe Exp $
+#	$OpenBSD: rc.zboot,v 1.3 2006/04/04 00:30:46 uwe Exp $
 #
 # Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
 #
@@ -15,8 +15,17 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
-/bin/busybox sleep 2
 /bin/busybox clear
+
+# Wait until the card in socket 1 appears.
+i=0
+while [ $i -lt 100 ]; do
+	if grep '^1' /var/lib/pcmcia/stab > /dev/null; then
+		break
+	fi
+	/bin/busybox sleep .5
+	i=`expr $i + 1`
+done
 
 /sbin/insmod /root/etc/rc.d/zbsdmod.o &&
 echo /bin/true > /proc/sys/kernel/modprobe &&
