@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.43 2006/03/10 21:39:01 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.44 2006/04/05 01:47:38 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2378,6 +2378,8 @@ struct bge_softc {
 	int			bge_link;	/* link state */
 	int			bge_link_evt;	/* pending link event */
 	struct timeout		bge_timeout;
+	void			*sc_powerhook;
+	void			*sc_shutdownhook;
 	u_long			bge_rx_discards;
 	u_long			bge_tx_discards;
 	u_long			bge_tx_collisions;

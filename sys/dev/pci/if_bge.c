@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.139 2006/03/29 02:23:25 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.140 2006/04/05 01:47:38 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -141,6 +141,7 @@ int bge_intr(void *);
 void bge_start(struct ifnet *);
 int bge_ioctl(struct ifnet *, u_long, caddr_t);
 void bge_init(void *);
+void bge_power(int, void *);
 void bge_stop_block(struct bge_softc *, bus_size_t, u_int32_t);
 void bge_stop(struct bge_softc *);
 void bge_watchdog(struct ifnet *);
@@ -2019,8 +2020,9 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	shutdownhook_establish(bge_shutdown, sc);
-
+	sc->sc_shutdownhook = shutdownhook_establish(bge_shutdown, sc);
+	sc->sc_powerhook = powerhook_establish(bge_power, sc);	
+	
 	timeout_set(&sc->bge_timeout, bge_tick, sc);
 	return;
 
@@ -3411,4 +3413,20 @@ bge_link_upd(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_MAC_STS, BGE_MACSTAT_SYNC_CHANGED|
 	    BGE_MACSTAT_CFG_CHANGED|BGE_MACSTAT_MI_COMPLETE|
 	    BGE_MACSTAT_LINK_CHANGED);
+}
+
+void
+bge_power(int why, void *xcs)
+{
+	struct bge_softc *sc = (struct bge_softc *)xcs;
+	struct ifnet *ifp;
+
+	if (why == PWR_RESUME) {
+		ifp = &sc->arpcom.ac_if;
+		if (ifp->if_flags & IFF_UP) {
+			bge_init(xcs);
+			if (ifp->if_flags & IFF_RUNNING)
+				bge_start(ifp);
+		}
+	}
 }
