@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplugd.c,v 1.4 2006/04/05 08:10:29 grange Exp $	*/
+/*	$OpenBSD: hotplugd.c,v 1.5 2006/04/05 08:22:21 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -40,6 +40,9 @@
 #define _PATH_ETC_HOTPLUG		"/etc/hotplug"
 #define _PATH_ETC_HOTPLUG_ATTACH	_PATH_ETC_HOTPLUG "/attach"
 #define _PATH_ETC_HOTPLUG_DETACH	_PATH_ETC_HOTPLUG "/detach"
+#define _LOG_TAG			"hotplugd"
+#define _LOG_FACILITY			LOG_DAEMON
+#define _LOG_OPT			(LOG_NDELAY | LOG_PID)
 
 volatile sig_atomic_t quit = 0;
 char *device = _PATH_DEV_HOTPLUG;
@@ -47,6 +50,7 @@ int devfd = -1;
 
 void exec_script(const char *, int, char *);
 
+void sigchild(int);
 void sigquit(int);
 __dead void usage(void);
 
@@ -80,8 +84,10 @@ main(int argc, char *argv[])
 	sigaction(SIGTERM, &sact, NULL);
 	sact.sa_handler = SIG_IGN;
 	sigaction(SIGHUP, &sact, NULL);
+	sact.sa_handler = sigchild;
+	sigaction(SIGCHLD, &sact, NULL);
 
-	openlog("hotplugd", LOG_NDELAY | LOG_PID, LOG_DAEMON);
+	openlog(_LOG_TAG, _LOG_OPT, _LOG_FACILITY);
 	if (daemon(0, 0) == -1)
 		err(1, "daemon");
 
@@ -127,7 +133,6 @@ exec_script(const char *file, int class, char *name)
 {
 	char strclass[8];
 	pid_t pid;
-	int status;
 
 	snprintf(strclass, sizeof(strclass), "%d", class);
 
@@ -145,20 +150,40 @@ exec_script(const char *file, int class, char *name)
 		syslog(LOG_ERR, "execl %s: %m", file);
 		_exit(1);
 		/* NOTREACHED */
-	} else {
-		/* parent process */
-		if (waitpid(pid, &status, 0) == -1) {
-			syslog(LOG_ERR, "waitpid: %m");
-			return;
-		}
-		if (WIFEXITED(status)) {
-			if (WEXITSTATUS(status) != 0)
-				syslog(LOG_NOTICE, "%s: exit status %d", file,
-				    WEXITSTATUS(status));
-		} else {
-			syslog(LOG_NOTICE, "%s: terminated abnormally", file);
-		}
 	}
+}
+
+/* ARGSUSED */
+void
+sigchild(int signum)
+{
+	struct syslog_data sdata = SYSLOG_DATA_INIT;
+	int saved_errno, status;
+	pid_t pid;
+
+	saved_errno = errno;
+
+	sdata.log_tag = _LOG_TAG;
+	sdata.log_fac = _LOG_FACILITY;
+	sdata.log_stat = _LOG_OPT;
+
+	pid = waitpid(WAIT_ANY, &status, 0);
+	if (pid != -1) {
+		if (WIFEXITED(status)) {
+			if (WEXITSTATUS(status) != 0) {
+				syslog_r(LOG_NOTICE, &sdata,
+				    "child exit status: %d",
+				    WEXITSTATUS(status));
+			}
+		} else {
+			syslog_r(LOG_NOTICE, &sdata,
+			    "child is terminated abnormally");
+		}
+	} else {
+		syslog_r(LOG_ERR, &sdata, "waitpid: %m");
+	}
+
+	errno = saved_errno;
 }
 
 /* ARGSUSED */
