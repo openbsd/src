@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.93 2006/04/02 02:01:40 joris Exp $	*/
+/*	$OpenBSD: proto.c,v 1.94 2006/04/05 01:38:55 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -404,7 +404,7 @@ cvs_req_getvalid(void)
 	cvs_buf_putc(buf, '\0');
 
 	len = cvs_buf_len(buf);
-	vrstr = (char *)xmalloc(len);
+	vrstr = xmalloc(len);
 	cvs_buf_copy(buf, (size_t)0, vrstr, len);
 	cvs_buf_free(buf);
 
@@ -474,7 +474,7 @@ cvs_resp_getvalid(void)
 	cvs_buf_putc(buf, '\0');
 
 	len = cvs_buf_len(buf);
-	vrstr = (char *)xmalloc(len);
+	vrstr = xmalloc(len);
 	cvs_buf_copy(buf, (size_t)0, vrstr, len);
 	cvs_buf_free(buf);
 

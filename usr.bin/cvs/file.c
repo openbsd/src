@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.135 2006/04/02 02:02:27 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.136 2006/04/05 01:38:55 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -162,7 +162,7 @@ cvs_file_ignore(const char *pat)
 	char *cp;
 	struct cvs_ignpat *ip;
 
-	ip = (struct cvs_ignpat *)xmalloc(sizeof(*ip));
+	ip = xmalloc(sizeof(*ip));
 	strlcpy(ip->ip_pat, pat, sizeof(ip->ip_pat));
 
 	/* check if we will need globbing for that pattern */
@@ -1043,11 +1043,7 @@ cvs_file_sort(struct cvs_flist *flp, u_int nfiles)
 	size_t nb;
 	CVSFILE *cf, **cfvec;
 
-	cfvec = (CVSFILE **)calloc((size_t)nfiles, sizeof(CVSFILE *));
-	if (cfvec == NULL) {
-		cvs_log(LP_ERRNO, "failed to allocate sorting vector");
-		return (-1);
-	}
+	cfvec = xcalloc((size_t)nfiles, sizeof(*cfvec));
 
 	i = 0;
 	SIMPLEQ_FOREACH(cf, flp, cf_list) {
@@ -1103,8 +1099,7 @@ cvs_file_alloc(const char *path, u_int type)
 	CVSFILE *cfp;
 	char *p;
 
-	cfp = (CVSFILE *)xmalloc(sizeof(*cfp));
-	memset(cfp, 0, sizeof(*cfp));
+	cfp = xcalloc(1, sizeof(*cfp));
 
 	cfp->cf_type = type;
 	cfp->cf_cvstat = CVS_FST_UNKNOWN;

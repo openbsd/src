@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.21 2006/03/28 02:13:44 ray Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.22 2006/04/05 01:38:55 ray Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.21 2006/03/28 02:13:44 ray Exp $";
+    "$OpenBSD: diff3.c,v 1.22 2006/04/05 01:38:55 ray Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -485,10 +485,12 @@ getline(FILE *b, size_t *n)
 	if (cp[len - 1] != '\n')
 		len++;
 	if (len + 1 > bufsize) {
+		char *newbuf;
 		do {
 			bufsize += 1024;
 		} while (len + 1 > bufsize);
-		buf = xrealloc(buf, 1, bufsize);
+		newbuf = xrealloc(buf, 1, bufsize);
+		buf = newbuf;
 	}
 	memcpy(buf, cp, len - 1);
 	buf[len - 1] = '\n';
@@ -788,17 +790,17 @@ increase(void)
 	newsz = szchanges == 0 ? 64 : 2 * szchanges;
 	incr = newsz - szchanges;
 
-	p = xrealloc(d13, newsz, sizeof(struct diff));
-	memset(p + szchanges, 0, incr * sizeof(struct diff));
+	p = xrealloc(d13, newsz, sizeof(*d13));
+	memset(p + szchanges, 0, incr * sizeof(*d13));
 	d13 = p;
-	p = xrealloc(d23, newsz, sizeof(struct diff));
-	memset(p + szchanges, 0, incr * sizeof(struct diff));
+	p = xrealloc(d23, newsz, sizeof(*d23));
+	memset(p + szchanges, 0, incr * sizeof(*d23));
 	d23 = p;
-	p = xrealloc(de, newsz, sizeof(struct diff));
-	memset(p + szchanges, 0, incr * sizeof(struct diff));
+	p = xrealloc(de, newsz, sizeof(*de));
+	memset(p + szchanges, 0, incr * sizeof(*de));
 	de = p;
-	q = xrealloc(overlap, newsz, sizeof(char));
-	memset(q + szchanges, 0, incr * sizeof(char));
+	q = xrealloc(overlap, newsz, sizeof(*overlap));
+	memset(q + szchanges, 0, incr * sizeof(*overlap));
 	overlap = q;
 	szchanges = newsz;
 }

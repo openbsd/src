@@ -1,4 +1,4 @@
-/*	$OpenBSD: worklist.c,v 1.4 2006/03/15 13:32:41 niallo Exp $	*/
+/*	$OpenBSD: worklist.c,v 1.5 2006/04/05 01:38:56 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -40,8 +40,7 @@ cvs_worklist_add(const char *path, struct cvs_wklhead *worklist)
 	struct cvs_worklist *wkl;
 	sigset_t old, new;
 
-	wkl = (struct cvs_worklist *)xmalloc(sizeof(*wkl));
-	memset(wkl, 0, sizeof(*wkl));
+	wkl = xcalloc(1, sizeof(*wkl));
 
 	len = strlcpy(wkl->wkl_path, path, sizeof(wkl->wkl_path));
 	if (len >= sizeof(wkl->wkl_path))

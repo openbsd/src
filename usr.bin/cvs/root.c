@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.30 2006/01/25 13:31:45 xsa Exp $	*/
+/*	$OpenBSD: root.c,v 1.31 2006/04/05 01:38:56 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -90,8 +90,7 @@ cvsroot_parse(const char *str)
 		}
 	}
 
-	root = (struct cvsroot *)xmalloc(sizeof(*root));
-	memset(root, 0, sizeof(*root));
+	root = xcalloc(1, sizeof(*root));
 	root->cr_ref = 1;
 	root->cr_method = CVS_METHOD_NONE;
 	CVS_RSTVR(root);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.76 2006/03/29 09:16:53 ray Exp $	*/
+/*	$OpenBSD: util.c,v 1.77 2006/04/05 01:38:56 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -380,15 +380,12 @@ cvs_makeargv(const char *line, int *argc)
 {
 	int i, ret;
 	char *argv[1024], **copy;
-	size_t size;
 
 	ret = cvs_getargv(line, argv, 1024);
 	if (ret == -1)
 		return (NULL);
 
-	size = (ret + 1) * sizeof(char *);
-	copy = (char **)xmalloc(size);
-	memset(copy, 0, size);
+	copy = xcalloc(ret + 1, sizeof(char *));
 
 	for (i = 0; i < ret; i++)
 		copy[i] = argv[i];
@@ -945,18 +942,18 @@ cvs_splitlines(const char *fcont)
 	struct cvs_lines *lines;
 	struct cvs_line *lp;
 
-	lines = (struct cvs_lines *)xmalloc(sizeof(*lines));
+	lines = xmalloc(sizeof(*lines));
 	TAILQ_INIT(&(lines->l_lines));
 	lines->l_nblines = 0;
 	lines->l_data = xstrdup(fcont);
 
-	lp = (struct cvs_line *)xmalloc(sizeof(*lp));
+	lp = xmalloc(sizeof(*lp));
 	lp->l_line = NULL;
 	lp->l_lineno = 0;
 	TAILQ_INSERT_TAIL(&(lines->l_lines), lp, l_list);
 
 	for (dcp = lines->l_data; *dcp != '\0';) {
-		lp = (struct cvs_line *)xmalloc(sizeof(*lp));
+		lp = xmalloc(sizeof(*lp));
 		lp->l_line = dcp;
 		lp->l_lineno = ++(lines->l_nblines);
 		TAILQ_INSERT_TAIL(&(lines->l_lines), lp, l_list);
@@ -1061,14 +1058,14 @@ cvs_strsplit(char *str, const char *sep)
 	char *cp, *p;
 
 	cp = xstrdup(str);
-	av = xmalloc(sizeof(struct cvs_argvector));
+	av = xmalloc(sizeof(*av));
 	av->str = cp;
-	av->argv = (char **)xcalloc(i + 1, sizeof(char *));
+	av->argv = xcalloc(i + 1, sizeof(*(av->argv)));
 
 	while ((p = strsep(&cp, sep)) != NULL) {
 		av->argv[i++] = p;
-		nargv = (char **)xrealloc((void *)av->argv,
-		    i + 1, sizeof(char *));
+		nargv = xrealloc(av->argv,
+		    i + 1, sizeof(*(av->argv)));
 		av->argv = nargv;
 	}
 	av->argv[i] = NULL;

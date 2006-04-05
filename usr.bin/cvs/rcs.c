@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.160 2006/04/02 20:57:53 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.161 2006/04/05 01:38:55 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -301,8 +301,7 @@ rcs_open(const char *path, int flags, ...)
 		return (NULL);
 	}
 
-	rfp = (RCSFILE *)xmalloc(sizeof(*rfp));
-	memset(rfp, 0, sizeof(*rfp));
+	rfp = xcalloc(1, sizeof(*rfp));
 
 	rfp->rf_path = xstrdup(path);
 	rfp->rf_flags = flags | RCS_SLOCK | RCS_SYNCED;
@@ -701,7 +700,7 @@ rcs_access_add(RCSFILE *file, const char *login)
 		}
 	}
 
-	ap = (struct rcs_access *)xmalloc(sizeof(*ap));
+	ap = xmalloc(sizeof(*ap));
 	ap->ra_name = xstrdup(login);
 	TAILQ_INSERT_TAIL(&(file->rf_access), ap, ra_list);
 
@@ -765,7 +764,7 @@ rcs_sym_add(RCSFILE *rfp, const char *sym, RCSNUM *snum)
 		}
 	}
 
-	symp = (struct rcs_sym *)xmalloc(sizeof(*symp));
+	symp = xmalloc(sizeof(*symp));
 	symp->rs_name = xstrdup(sym);
 	symp->rs_num = rcsnum_alloc();
 	rcsnum_cpy(snum, symp->rs_num, 0);
@@ -929,7 +928,7 @@ rcs_lock_add(RCSFILE *file, const char *user, RCSNUM *rev)
 		}
 	}
 
-	lkp = (struct rcs_lock *)xmalloc(sizeof(*lkp));
+	lkp = xmalloc(sizeof(*lkp));
 	lkp->rl_name = xstrdup(user);
 	lkp->rl_num = rcsnum_alloc();
 	rcsnum_cpy(rev, lkp->rl_num, 0);
@@ -1340,8 +1339,7 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 	if ((pw = getpwuid(getuid())) == NULL)
 		fatal("getpwuid failed");
 
-	rdp = (struct rcs_delta *)xmalloc(sizeof(*rdp));
-	memset(rdp, 0, sizeof(*rdp));
+	rdp = xcalloc(1, sizeof(*rdp));
 
 	TAILQ_INIT(&(rdp->rd_branches));
 
@@ -1698,8 +1696,7 @@ rcs_parse_init(RCSFILE *rfp)
 	if (rfp->rf_flags & RCS_PARSED)
 		return (0);
 
-	pdp = (struct rcs_pdata *)xmalloc(sizeof(*pdp));
-	memset(pdp, 0, sizeof(*pdp));
+	pdp = xcalloc(1, sizeof(*pdp));
 
 	pdp->rp_lines = 0;
 	pdp->rp_pttype = RCS_TOK_ERR;
@@ -1707,7 +1704,7 @@ rcs_parse_init(RCSFILE *rfp)
 	if ((pdp->rp_file = fopen(rfp->rf_path, "r")) == NULL)
 		fatal("fopen: `%s': %s", rfp->rf_path, strerror(errno));
 
-	pdp->rp_buf = (char *)xmalloc((size_t)RCS_BUFSIZE);
+	pdp->rp_buf = xmalloc((size_t)RCS_BUFSIZE);
 	pdp->rp_blen = RCS_BUFSIZE;
 	pdp->rp_bufend = pdp->rp_buf + pdp->rp_blen - 1;
 
@@ -1856,8 +1853,7 @@ rcs_parse_delta(RCSFILE *rfp)
 	struct rcs_delta *rdp;
 	struct rcs_key *rk;
 
-	rdp = (struct rcs_delta *)xmalloc(sizeof(*rdp));
-	memset(rdp, 0, sizeof(*rdp));
+	rdp = xcalloc(1, sizeof(*rdp));
 
 	rdp->rd_num = rcsnum_alloc();
 	rdp->rd_next = rcsnum_alloc();
@@ -2086,7 +2082,7 @@ rcs_parse_deltatext(RCSFILE *rfp)
 		return (-1);
 	}
 
-	rdp->rd_text = (u_char *)xmalloc(RCS_TOKLEN(rfp) + 1);
+	rdp->rd_text = xmalloc(RCS_TOKLEN(rfp) + 1);
 	strlcpy(rdp->rd_text, RCS_TOKSTR(rfp), (RCS_TOKLEN(rfp) + 1));
 	rdp->rd_tlen = RCS_TOKLEN(rfp);
 
@@ -2143,7 +2139,7 @@ rcs_parse_symbols(RCSFILE *rfp)
 			return (-1);
 		}
 
-		symp = (struct rcs_sym *)xmalloc(sizeof(*symp));
+		symp = xmalloc(sizeof(*symp));
 		symp->rs_name = xstrdup(RCS_TOKSTR(rfp));
 		symp->rs_num = rcsnum_alloc();
 
@@ -2208,7 +2204,7 @@ rcs_parse_locks(RCSFILE *rfp)
 			return (-1);
 		}
 
-		lkp = (struct rcs_lock *)xmalloc(sizeof(*lkp));
+		lkp = xmalloc(sizeof(*lkp));
 		lkp->rl_name = xstrdup(RCS_TOKSTR(rfp));
 		lkp->rl_num = rcsnum_alloc();
 
@@ -2290,7 +2286,7 @@ rcs_parse_branches(RCSFILE *rfp, struct rcs_delta *rdp)
 			return (-1);
 		}
 
-		brp = (struct rcs_branch *)xmalloc(sizeof(*brp));
+		brp = xmalloc(sizeof(*brp));
 		brp->rb_num = rcsnum_parse(RCS_TOKSTR(rfp));
 		if (brp->rb_num == NULL) {
 			xfree(brp);
@@ -2507,7 +2503,7 @@ rcs_growbuf(RCSFILE *rf)
 	struct rcs_pdata *pdp = (struct rcs_pdata *)rf->rf_pdata;
 
 	tmp = xrealloc(pdp->rp_buf, 1, pdp->rp_blen + RCS_BUFEXTSIZE);
-	pdp->rp_buf = (char *)tmp;
+	pdp->rp_buf = tmp;
 	pdp->rp_blen += RCS_BUFEXTSIZE;
 	pdp->rp_bufend = pdp->rp_buf + pdp->rp_blen - 1;
 }
@@ -2708,12 +2704,14 @@ rcs_expand_keywords(char *rcsfile, struct rcs_delta *rdp, char *data,
 				strlcat(expbuf, "$", sizeof(expbuf));
 
 			sizdiff = strlen(expbuf) - (end - start);
-			tbuf = xmalloc(strlen(end) + 1);
-			strlcpy(tbuf, end, strlen(end) + 1);
+			tbuf = xstrdup(end);
 			/* only realloc if we have to */
 			if (sizdiff > 0) {
+				char *newdata;
+
 				len += sizdiff;
-				data = xrealloc(data, 1, len);
+				newdata = xrealloc(data, 1, len);
+				data = newdata;
 				/*
 				 * ensure string pointers are not invalidated
 				 * after realloc()
@@ -2754,7 +2752,8 @@ rcs_deltatext_set(RCSFILE *rfp, RCSNUM *rev, const char *dtext)
 
 	len = strlen(dtext);
 	if (len != 0) {
-		rdp->rd_text = (u_char *)xmalloc(len + 1);
+		/* XXX - use xstrdup() if rd_text changes to char *. */
+		rdp->rd_text = xmalloc(len + 1);
 		rdp->rd_tlen = len;
 		(void)memcpy(rdp->rd_text, dtext, len + 1);
 	} else {

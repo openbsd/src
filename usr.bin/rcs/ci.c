@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.134 2006/04/01 13:57:48 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.135 2006/04/05 01:38:56 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -1014,12 +1014,8 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 			if ((*rev = rcsnum_parse(tokens[2])) == NULL)
 				fatal("could not parse rcsnum");
 		}
-		len = strlen(tokens[5]) + 1;
-		*author = xmalloc(len);
-		strlcpy(*author, tokens[5], len);
-		len = strlen(tokens[6]) + 1;
-		*state = xmalloc(len);
-		strlcpy(*state, tokens[6], len);
+		*author = xstrdup(tokens[5]);
+		*author = xstrdup(tokens[6]);
 		len = strlen(tokens[3]) + strlen(tokens[4]) + 2;
 		datestring = xmalloc(len);
 		strlcpy(datestring, tokens[3], len);
@@ -1037,9 +1033,7 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		}
 		if (*author != NULL)
 			xfree(*author);
-		len = strlen(tokens[1]) + 1;
-		*author = xmalloc(len);
-		strlcpy(*author, tokens[1], len);
+		*author = xstrdup(tokens[1]);
 		break;
 	case KW_TYPE_DATE:
 		for ((p = strtok(keystring, " ")); p;
@@ -1064,9 +1058,7 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 		}
 		if (*state != NULL)
 			xfree(*state);
-		len = strlen(tokens[1]) + 1;
-		*state = xmalloc(len);
-		strlcpy(*state, tokens[1], len);
+		*state = xstrdup(tokens[1]);
 		break;
 	case KW_TYPE_REVISION:
 		/* only parse revision if one is not already set */

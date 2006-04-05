@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.54 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: entries.c,v 1.55 2006/04/05 01:38:55 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -105,8 +105,7 @@ cvs_ent_open(const char *dir, int flags)
 		return (NULL);
 	}
 
-	ep = (CVSENTRIES *)xmalloc(sizeof(CVSENTRIES));
-	memset(ep, 0, sizeof(*ep));
+	ep = xcalloc(1, sizeof(*ep));
 
 	ep->cef_path = xstrdup(entpath);
 	ep->cef_bpath = xstrdup(bpath);
@@ -380,8 +379,7 @@ cvs_ent_parse(const char *entry)
 		return (NULL);
 	}
 
-	ent = (struct cvs_ent *)xmalloc(sizeof(*ent));
-	memset(ent, 0, sizeof(*ent));
+	ent = xcalloc(1, sizeof(*ent));
 	ent->ce_buf = buf;
 
 	if (*fields[0] == '\0')

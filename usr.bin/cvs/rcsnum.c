@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.31 2006/03/30 23:06:25 joris Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.32 2006/04/05 01:38:56 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -45,7 +45,7 @@ rcsnum_alloc(void)
 {
 	RCSNUM *rnp;
 
-	rnp = (RCSNUM *)xmalloc(sizeof(*rnp));
+	rnp = xmalloc(sizeof(*rnp));
 	rnp->rn_len = 0;
 	rnp->rn_id = NULL;
 
@@ -153,10 +153,10 @@ rcsnum_cpy(const RCSNUM *nsrc, RCSNUM *ndst, u_int depth)
 		len = depth;
 
 	tmp = xrealloc(ndst->rn_id, len, sizeof(len));
-	ndst->rn_id = (u_int16_t *)tmp;
+	ndst->rn_id = tmp;
 	ndst->rn_len = len;
 	/* Overflow checked in xrealloc(). */
-	memcpy(ndst->rn_id, nsrc->rn_id, len * sizeof(len));
+	(void)memcpy(ndst->rn_id, nsrc->rn_id, len * sizeof(len));
 }
 
 /*
@@ -213,7 +213,7 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 	char *s;
 
 	if (nump->rn_id == NULL)
-		nump->rn_id = (u_int16_t *)xmalloc(sizeof(u_int16_t));
+		nump->rn_id = xmalloc(sizeof(*(nump->rn_id)));
 
 	nump->rn_len = 0;
 	nump->rn_id[0] = 0;
@@ -230,8 +230,8 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 
 			nump->rn_len++;
 			tmp = xrealloc(nump->rn_id,
-			    nump->rn_len + 1, sizeof(u_int16_t));
-			nump->rn_id = (u_int16_t *)tmp;
+			    nump->rn_len + 1, sizeof(*(nump->rn_id)));
+			nump->rn_id = tmp;
 			nump->rn_id[nump->rn_len] = 0;
 			continue;
 		}
@@ -297,8 +297,8 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 	/* We can't have a single-digit rcs number. */
 	if (nump->rn_len == 0) {
 		tmp = xrealloc(nump->rn_id,
-		    nump->rn_len + 1, sizeof(u_int16_t));
-		nump->rn_id = (u_int16_t *)tmp;
+		    nump->rn_len + 1, sizeof(*(nump->rn_id)));
+		nump->rn_id = tmp;
 		nump->rn_id[nump->rn_len + 1] = 0;
 		nump->rn_len++;
 	}
@@ -401,8 +401,8 @@ rcsnum_setsize(RCSNUM *num, u_int len)
 {
 	void *tmp;
 
-	tmp = xrealloc(num->rn_id, len, sizeof(u_int16_t));
-	num->rn_id = (u_int16_t *)tmp;
+	tmp = xrealloc(num->rn_id, len, sizeof(*(num->rn_id)));
+	num->rn_id = tmp;
 	num->rn_len = len;
 	return (0);
 }

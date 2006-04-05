@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.95 2006/03/15 18:24:50 deraadt Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.96 2006/04/05 01:38:55 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -447,8 +447,7 @@ cvs_var_set(const char *var, const char *val)
 
 	valcp = xstrdup(val);
 	if (vp == NULL) {
-		vp = (struct cvs_var *)xmalloc(sizeof(*vp));
-		memset(vp, 0, sizeof(*vp));
+		vp = xcalloc(1, sizeof(*vp));
 
 		vp->cv_name = xstrdup(var);
 		TAILQ_INSERT_TAIL(&cvs_variables, vp, cv_link);
