@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.42 2005/12/28 20:48:17 pedro Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.43 2006/04/05 12:55:53 pedro Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -156,9 +156,9 @@ int
 ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 {
 	struct vnode *ovp;
-	daddr_t lastblock;
-	daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
-	daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
+	ufs2_daddr_t lastblock;
+	ufs2_daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
+	ufs2_daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
 	struct fs *fs;
 	struct buf *bp;
 	int offset, size, level;
@@ -314,20 +314,19 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	 * will be returned to the free list.  lastiblock values are also
 	 * normalized to -1 for calls to ffs_indirtrunc below.
 	 */
-
-	if (fs->fs_magic == FS_UFS2_MAGIC)
-		bcopy(&oip->i_ffs2_db[0], oldblks, sizeof(oldblks));
-	else
-		bcopy(&oip->i_ffs1_db[0], oldblks, sizeof(oldblks));
-
-	for (level = TRIPLE; level >= SINGLE; level--)
+	for (level = TRIPLE; level >= SINGLE; level--) {
+		oldblks[NDADDR + level] = DIP(oip, ib[level]);
 		if (lastiblock[level] < 0) {
 			DIP_ASSIGN(oip, ib[level], 0);
 			lastiblock[level] = -1;
 		}
+	}
 
-	for (i = NDADDR - 1; i > lastblock; i--)
-		DIP_ASSIGN(oip, db[i], 0);
+	for (i = 0; i < NDADDR; i++) {
+		oldblks[i] = DIP(oip, db[i]);
+		if (i > lastblock)
+			DIP_ASSIGN(oip, db[i], 0);
+	}
 
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if ((error = UFS_UPDATE(oip, MNT_WAIT)) != 0)
@@ -339,13 +338,14 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	 * Note that we save the new block configuration so we can check it
 	 * when we are done.
 	 */
+	for (i = 0; i < NDADDR; i++) {
+		newblks[i] = DIP(oip, db[i]);
+		DIP_ASSIGN(oip, db[i], oldblks[i]);
+	}
 
-	if (fs->fs_magic == FS_UFS2_MAGIC) {
-		bcopy(&oip->i_ffs2_db[0], newblks, sizeof(newblks));
-		bcopy(oldblks, &oip->i_ffs2_db[0], sizeof(oldblks));
-	} else {
-		bcopy(&oip->i_ffs1_db[0], newblks, sizeof(newblks));
-		bcopy(oldblks, &oip->i_ffs1_db[0], sizeof(oldblks));
+	for (i = 0; i < NIADDR; i++) {
+		newblks[NDADDR + i] = DIP(oip, ib[i]);
+		DIP_ASSIGN(oip, ib[i], oldblks[NDADDR + i]);
 	}
 
 	DIP_ASSIGN(oip, size, osize);
