@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.140 2006/04/03 01:53:04 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.141 2006/04/05 14:07:24 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -129,6 +129,7 @@ void		ami_freemem(struct ami_softc *, struct ami_mem *);
 
 int		ami_poll(struct ami_softc *, struct ami_ccb *);
 void		ami_start(struct ami_softc *, struct ami_ccb *);
+void		ami_complete(struct ami_softc *, struct ami_ccb *, int);
 int		ami_done(struct ami_softc *, int);
 void		ami_runqueue(void *);
 
@@ -971,14 +972,14 @@ ami_schwartz_poll(struct ami_softc *sc, struct ami_iocmd *mbox)
 int
 ami_start_xs(struct ami_softc *sc, struct ami_ccb *ccb, struct scsi_xfer *xs)
 {
-	if (xs->flags & SCSI_POLL) {
-		ami_poll(sc, ccb);
-		return (COMPLETE);
-	} 
-
 	timeout_set(&xs->stimeout, ami_stimeout, ccb);
-	timeout_add(&xs->stimeout, (xs->timeout * hz) / 1000);
 
+	if (xs->flags & SCSI_POLL) {
+		ami_complete(sc, ccb, xs->timeout);
+		return (COMPLETE);
+	}
+ 
+	timeout_add(&xs->stimeout, (xs->timeout * hz) / 1000);
 	ami_start(sc, ccb);
 
 	return (SUCCESSFULLY_QUEUED);
@@ -1033,6 +1034,67 @@ ami_poll(struct ami_softc *sc, struct ami_ccb *ccb)
 	ccb->ccb_done(sc, ccb);
 
 	return (error);
+}
+
+void
+ami_complete(struct ami_softc *sc, struct ami_ccb *ccb, int timeout)
+{
+	struct ami_iocmd mbox;
+	int i = 0, done = 0;
+	int s;
+
+	s = splbio();
+
+	/*
+	 * since exec will return if the mbox is busy we have to busy wait
+	 * ourselves. once its in, jam it into the runq.
+	 */
+	while (i < AMI_MAX_BUSYWAIT) {
+		if (sc->sc_exec(sc, &ccb->ccb_cmd) == 0) {
+			ccb->ccb_state = AMI_CCB_QUEUED;
+			TAILQ_INSERT_TAIL(&sc->sc_ccb_runq, ccb, ccb_link);
+			break;
+		}
+		
+		DELAY(1000);
+		i++;
+	}
+	if (ccb->ccb_state != AMI_CCB_QUEUED)
+		goto err;
+
+	i = 0;
+	while (i < timeout) {
+		if (sc->sc_done(sc, &mbox) != 0) {
+			for (i = 0; i < mbox.acc_nstat; i++) {
+				int ready = mbox.acc_cmplidl[i];
+				ami_done(sc, ready);
+				if (ready == ccb->ccb_cmd.acc_id)
+					done = 1;
+			}
+			if (done)
+				break;
+		}
+
+		DELAY(1000);
+		i++;
+	}
+	if (!done) {
+		printf("%s: timeout ccb %d\n", DEVNAME(sc),
+		    ccb->ccb_cmd.acc_id);
+		TAILQ_REMOVE(&sc->sc_ccb_runq, ccb, ccb_link);
+		goto err;
+	}
+	splx(s);
+
+	/* start the runqueue again */
+	ami_runqueue(sc);
+	return;
+
+err:
+	splx(s);
+	ccb->ccb_flags |= AMI_CCB_F_ERR;
+	ccb->ccb_state = AMI_CCB_READY;
+	ccb->ccb_done(sc, ccb);
 }
 
 void
@@ -1606,7 +1668,6 @@ ami_intr(void *v)
 	if (rv)
 		ami_runqueue(sc);
 
-	
 	AMI_DPRINTF(AMI_D_INTR, ("exit "));
 	return (rv);
 }
