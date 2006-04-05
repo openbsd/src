@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.43 2006/04/05 12:55:53 pedro Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.44 2006/04/05 12:59:20 pedro Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -134,8 +134,15 @@ ffs_update(struct inode *ip, struct timespec *atime,
 	else if (ip->i_effnlink != DIP(ip, nlink))
 		panic("ffs_update: bad link cnt");
 
-	*((struct ufs1_dinode *)bp->b_data +
-	    ino_to_fsbo(fs, ip->i_number)) = *ip->i_din1;
+#ifdef FFS2
+	if (ip->i_ump->um_fstype == UM_UFS2)
+		*((struct ufs2_dinode *)bp->b_data +
+		    ino_to_fsbo(fs, ip->i_number)) = *ip->i_din2;
+	else
+#endif
+		*((struct ufs1_dinode *)bp->b_data +
+		    ino_to_fsbo(fs, ip->i_number)) = *ip->i_din1;
+
 	if (waitfor && !DOINGASYNC(vp)) {
 		return (bwrite(bp));
 	} else {
