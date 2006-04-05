@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: dighost.c,v 1.221.2.19.2.20 2004/11/22 23:30:31 marka Exp $ */
+/* $ISC: dighost.c,v 1.221.2.19.2.31 2005/10/14 01:38:40 marka Exp $ */
 
 /*
  * Notice to programmers:  Do not use this code as an example of how to
@@ -37,7 +37,6 @@
 #include <dns/dnssec.h>
 #include <dns/ds.h>
 #include <dns/nsec.h>
-#include <isc/file.h>
 #include <isc/random.h>
 #include <ctype.h>
 #endif
@@ -58,6 +57,7 @@
 #include <isc/app.h>
 #include <isc/base64.h>
 #include <isc/entropy.h>
+#include <isc/file.h>
 #include <isc/lang.h>
 #include <isc/netaddr.h>
 #ifdef DIG_SIGCHASE
@@ -90,9 +90,9 @@
 static lwres_context_t *lwctx = NULL;
 static lwres_conf_t *lwconf;
 
-ISC_LIST(dig_lookup_t) lookup_list;
+dig_lookuplist_t lookup_list;
 dig_serverlist_t server_list;
-ISC_LIST(dig_searchlist_t) search_list;
+dig_searchlistlist_t search_list;
 
 isc_boolean_t
 	have_ipv4 = ISC_FALSE,
@@ -146,7 +146,7 @@ dig_lookup_t *current_lookup = NULL;
 
 #ifdef DIG_SIGCHASE
 
-isc_result_t      get_trusted_key(isc_mem_t *mctx);
+isc_result_t	  get_trusted_key(isc_mem_t *mctx);
 dns_rdataset_t *  sigchase_scanname(dns_rdatatype_t type,
 				    dns_rdatatype_t covers,
 				    isc_boolean_t *lookedup,
@@ -156,103 +156,104 @@ dns_rdataset_t *  chase_scanname_section(dns_message_t *msg,
 					 dns_rdatatype_t type,
 					 dns_rdatatype_t covers,
 					 int section);
-isc_result_t      advanced_rrsearch(dns_rdataset_t **rdataset,
+isc_result_t	  advanced_rrsearch(dns_rdataset_t **rdataset,
 				    dns_name_t *name,
 				    dns_rdatatype_t type,
 				    dns_rdatatype_t covers,
 				    isc_boolean_t *lookedup);
-isc_result_t      sigchase_verify_sig_key(dns_name_t *name,
+isc_result_t	  sigchase_verify_sig_key(dns_name_t *name,
 					  dns_rdataset_t *rdataset,
 					  dst_key_t* dnsseckey,
 					  dns_rdataset_t *sigrdataset,
 					  isc_mem_t *mctx);
-isc_result_t      sigchase_verify_sig(dns_name_t *name,
+isc_result_t	  sigchase_verify_sig(dns_name_t *name,
 				      dns_rdataset_t *rdataset,
 				      dns_rdataset_t *keyrdataset,
 				      dns_rdataset_t *sigrdataset,
 				      isc_mem_t *mctx);
-isc_result_t      sigchase_verify_ds(dns_name_t *name,
+isc_result_t	  sigchase_verify_ds(dns_name_t *name,
 				     dns_rdataset_t *keyrdataset,
 				     dns_rdataset_t *dsrdataset,
 				     isc_mem_t *mctx);
-void              sigchase(dns_message_t *msg);
-void              print_rdata(dns_rdata_t *rdata, isc_mem_t *mctx);
-void              print_rdataset(dns_name_t *name,
+void		  sigchase(dns_message_t *msg);
+void		  print_rdata(dns_rdata_t *rdata, isc_mem_t *mctx);
+void		  print_rdataset(dns_name_t *name,
 				 dns_rdataset_t *rdataset, isc_mem_t *mctx);
-void              dup_name(dns_name_t *source, dns_name_t* target,
+void		  dup_name(dns_name_t *source, dns_name_t* target,
 			   isc_mem_t *mctx);
-void              dump_database(void);
-void              dump_database_section(dns_message_t *msg, int section);
+void		  free_name(dns_name_t *name, isc_mem_t *mctx);
+void		  dump_database(void);
+void		  dump_database_section(dns_message_t *msg, int section);
 dns_rdataset_t *  search_type(dns_name_t *name, dns_rdatatype_t type,
 			      dns_rdatatype_t covers);
-isc_result_t      contains_trusted_key(dns_name_t *name,
+isc_result_t	  contains_trusted_key(dns_name_t *name,
 				       dns_rdataset_t *rdataset,
 				       dns_rdataset_t *sigrdataset,
 				       isc_mem_t *mctx);
-void              print_type(dns_rdatatype_t type);
-isc_result_t      prove_nx_domain(dns_message_t * msg,
+void		  print_type(dns_rdatatype_t type);
+isc_result_t	  prove_nx_domain(dns_message_t * msg,
 				  dns_name_t * name,
 				  dns_name_t * rdata_name,
 				  dns_rdataset_t ** rdataset,
 				  dns_rdataset_t ** sigrdataset);
-isc_result_t      prove_nx_type(dns_message_t * msg, dns_name_t *name,
+isc_result_t	  prove_nx_type(dns_message_t * msg, dns_name_t *name,
 				dns_rdataset_t *nsec,
 				dns_rdataclass_t class,
 				dns_rdatatype_t type,
 				dns_name_t * rdata_name,
 				dns_rdataset_t ** rdataset,
 				dns_rdataset_t ** sigrdataset);
-isc_result_t      prove_nx(dns_message_t * msg, dns_name_t * name,
+isc_result_t	  prove_nx(dns_message_t * msg, dns_name_t * name,
 			   dns_rdataclass_t class,
 			   dns_rdatatype_t type,
 			   dns_name_t * rdata_name,
 			   dns_rdataset_t ** rdataset,
 			   dns_rdataset_t ** sigrdataset);
 static void	  nameFromString(const char *str, dns_name_t *p_ret);
-int               inf_name(dns_name_t * name1, dns_name_t * name2);
-isc_result_t      opentmpkey(isc_mem_t *mctx, const char *file,
+int		  inf_name(dns_name_t * name1, dns_name_t * name2);
+isc_result_t	  opentmpkey(isc_mem_t *mctx, const char *file,
 			     char **tempp, FILE **fp);
-isc_result_t      removetmpkey(isc_mem_t *mctx, const char *file);
-void              clean_trustedkey(void );
-void              insert_trustedkey(dst_key_t  * key);
+isc_result_t	  removetmpkey(isc_mem_t *mctx, const char *file);
+void		  clean_trustedkey(void);
+void		  insert_trustedkey(dst_key_t  * key);
 #if DIG_SIGCHASE_BU
-isc_result_t      getneededrr(dns_message_t *msg);
-void              sigchase_bottom_up(dns_message_t *msg);
-void              sigchase_bu(dns_message_t *msg);
+isc_result_t	  getneededrr(dns_message_t *msg);
+void		  sigchase_bottom_up(dns_message_t *msg);
+void		  sigchase_bu(dns_message_t *msg);
 #endif
 #if DIG_SIGCHASE_TD
-isc_result_t      initialization(dns_name_t *name);
-isc_result_t      prepare_lookup(dns_name_t *name);
-isc_result_t      grandfather_pb_test(dns_name_t * zone_name,
+isc_result_t	  initialization(dns_name_t *name);
+isc_result_t	  prepare_lookup(dns_name_t *name);
+isc_result_t	  grandfather_pb_test(dns_name_t * zone_name,
 				      dns_rdataset_t *sigrdataset);
-isc_result_t      child_of_zone(dns_name_t *name,
+isc_result_t	  child_of_zone(dns_name_t *name,
 				dns_name_t *zone_name,
 				dns_name_t *child_name);
-void              sigchase_td(dns_message_t *msg);
+void		  sigchase_td(dns_message_t *msg);
 #endif
 char trustedkey[MXNAME] = "";
 
-dns_rdataset_t * chase_rdataset = NULL;
-dns_rdataset_t * chase_sigrdataset = NULL;
-dns_rdataset_t * chase_dsrdataset = NULL;
-dns_rdataset_t * chase_sigdsrdataset = NULL;
-dns_rdataset_t * chase_keyrdataset = NULL;
-dns_rdataset_t * chase_sigkeyrdataset = NULL;
-dns_rdataset_t * chase_nsrdataset = NULL;
+dns_rdataset_t *chase_rdataset = NULL;
+dns_rdataset_t *chase_sigrdataset = NULL;
+dns_rdataset_t *chase_dsrdataset = NULL;
+dns_rdataset_t *chase_sigdsrdataset = NULL;
+dns_rdataset_t *chase_keyrdataset = NULL;
+dns_rdataset_t *chase_sigkeyrdataset = NULL;
+dns_rdataset_t *chase_nsrdataset = NULL;
 
-dns_name_t  chase_name; /* the query name */
+dns_name_t chase_name; /* the query name */
 #if DIG_SIGCHASE_TD
 /*
  * the current name is the parent name when we follow delegation
  */
-dns_name_t  chase_current_name; 
+dns_name_t chase_current_name;
 /*
  * the child name is used for delegation (NS DS responses in AUTHORITY section)
  */
-dns_name_t  chase_authority_name;
+dns_name_t chase_authority_name;
 #endif
 #if DIG_SIGCHASE_BU
-dns_name_t  chase_signame;
+dns_name_t chase_signame;
 #endif
 
 
@@ -274,7 +275,7 @@ dns_message_t * error_message = NULL;
 #endif
 
 isc_boolean_t dsvalidating = ISC_FALSE;
-isc_boolean_t chase_name_dup  = ISC_FALSE;
+isc_boolean_t chase_name_dup = ISC_FALSE;
 
 ISC_LIST(dig_message_t) chase_message_list;
 ISC_LIST(dig_message_t) chase_message_list2;
@@ -282,11 +283,11 @@ ISC_LIST(dig_message_t) chase_message_list2;
 
 #define MAX_TRUSTED_KEY 5
 typedef struct struct_trusted_key_list {
-  dst_key_t * key[MAX_TRUSTED_KEY];
-  int nb_tk;
+	dst_key_t * key[MAX_TRUSTED_KEY];
+	int nb_tk;
 } struct_tk_list;
 
-struct_tk_list  tk_list = { {NULL, NULL, NULL, NULL, NULL}, 0};
+struct_tk_list tk_list = { {NULL, NULL, NULL, NULL, NULL}, 0};
 
 #endif
 
@@ -579,7 +580,7 @@ set_nameserver(char *opt) {
 		return;
 
 	result = bind9_getaddresses(opt, 0, sockaddrs,
-				    DIG_MAX_ADDRESSES, &count); 
+				    DIG_MAX_ADDRESSES, &count);
 	if (result != ISC_R_SUCCESS)
 		fatal("couldn't get address for '%s': %s",
 		      opt, isc_result_totext(result));
@@ -688,13 +689,13 @@ make_empty_lookup(void) {
 #ifdef DIG_SIGCHASE
 	looknew->sigchase = ISC_FALSE;
 #if DIG_SIGCHASE_TD
-	looknew->do_topdown =  ISC_FALSE;
+	looknew->do_topdown = ISC_FALSE;
 	looknew->trace_root_sigchase = ISC_FALSE;
 	looknew->rdtype_sigchaseset = ISC_FALSE;
 	looknew->rdtype_sigchase = dns_rdatatype_any;
 	looknew->qrdtype_sigchase = dns_rdatatype_any;
 	looknew->rdclass_sigchase = dns_rdataclass_in;
-	looknew->rdclass_sigchaseset  = ISC_FALSE;
+	looknew->rdclass_sigchaseset = ISC_FALSE;
 #endif
 #endif
 	looknew->udpsize = 0;
@@ -763,9 +764,9 @@ clone_lookup(dig_lookup_t *lookold, isc_boolean_t servers) {
 #ifdef DIG_SIGCHASE
 	looknew->sigchase = lookold->sigchase;
 #if DIG_SIGCHASE_TD
-	looknew->do_topdown =  lookold->do_topdown;
+	looknew->do_topdown = lookold->do_topdown;
 	looknew->trace_root_sigchase = lookold->trace_root_sigchase;
-	looknew->rdtype_sigchaseset =  lookold->rdtype_sigchaseset;
+	looknew->rdtype_sigchaseset = lookold->rdtype_sigchaseset;
 	looknew->rdtype_sigchase = lookold->rdtype_sigchase;
 	looknew->qrdtype_sigchase = lookold->qrdtype_sigchase;
 	looknew->rdclass_sigchase = lookold->rdclass_sigchase;
@@ -940,14 +941,17 @@ setup_system(void) {
 	if (lwresult != LWRES_R_SUCCESS)
 		fatal("lwres_context_create failed");
 
-	(void)lwres_conf_parse(lwctx, RESOLV_CONF);
+	if (isc_file_exists(RESOLV_CONF))
+		lwresult = lwres_conf_parse(lwctx, RESOLV_CONF);
+	if (lwresult != LWRES_R_SUCCESS)
+		fatal("parse of %s failed", RESOLV_CONF);
+
 	lwconf = lwres_conf_get(lwctx);
 
 	/* Make the search list */
 	if (lwconf->searchnxt > 0)
 		create_search_list(lwconf);
-	else {
-		/* No search list. Use the domain name if any */
+	else { /* No search list. Use the domain name if any */
 		if (lwconf->domainname != NULL) {
 			domain = make_searchlist_entry(lwconf->domainname);
 			ISC_LIST_INITANDAPPEND(search_list, domain, link);
@@ -955,8 +959,10 @@ setup_system(void) {
 		}
 	}
 			
-	ndots = lwconf->ndots;
-	debug("ndots is %d.", ndots);
+	if (ndots == -1) {
+		ndots = lwconf->ndots;
+		debug("ndots is %d.", ndots);
+	}
 
 	/* If we don't find a nameserver fall back to localhost */
 	if (lwconf->nsnext == 0) {
@@ -981,15 +987,15 @@ setup_system(void) {
 		setup_text_key();
 #ifdef DIG_SIGCHASE
 	/* Setup the list of messages for +sigchase */
-        ISC_LIST_INIT(chase_message_list);
-        ISC_LIST_INIT(chase_message_list2);
+	ISC_LIST_INIT(chase_message_list);
+	ISC_LIST_INIT(chase_message_list2);
 	dns_name_init(&chase_name, NULL);
 #if DIG_SIGCHASE_TD
 	dns_name_init(&chase_current_name, NULL);
 	dns_name_init(&chase_authority_name, NULL);
 #endif
 #if DIG_SIGCHASE_BU
-  	dns_name_init(&chase_signame, NULL);
+	dns_name_init(&chase_signame, NULL);
 #endif
 
 #endif
@@ -1206,8 +1212,7 @@ try_clear_lookup(dig_lookup_t *lookup) {
 		if (debugging) {
 			q = ISC_LIST_HEAD(lookup->q);
 			while (q != NULL) {
-				debug("query to %s still pending",
-				       q->servname);
+				debug("query to %s still pending", q->servname);
 				q = ISC_LIST_NEXT(q, link);
 			}
 			return (ISC_FALSE);
@@ -1220,8 +1225,7 @@ try_clear_lookup(dig_lookup_t *lookup) {
 	debug("cleared");
 	s = ISC_LIST_HEAD(lookup->my_server_list);
 	while (s != NULL) {
-		debug("freeing server %p belonging to %p",
-		      s, lookup);
+		debug("freeing server %p belonging to %p", s, lookup);
 		ptr = s;
 		s = ISC_LIST_NEXT(s, link);
 		ISC_LIST_DEQUEUE(lookup->my_server_list,
@@ -1274,12 +1278,12 @@ start_lookup(void) {
 #if DIG_SIGCHASE_TD
 		if (current_lookup->do_topdown &&
 		    !current_lookup->rdtype_sigchaseset) {
-			dst_key_t * trustedkey = NULL;
+			dst_key_t *trustedkey = NULL;
 			isc_buffer_t *b = NULL;
 			isc_region_t r;
 			isc_result_t result;
 			dns_name_t query_name;
-			dns_name_t * key_name;
+			dns_name_t *key_name;
 			int i;
 
 			result = get_trusted_key(mctx);
@@ -1292,9 +1296,9 @@ start_lookup(void) {
 			dns_name_init(&query_name, NULL);
 			nameFromString(current_lookup->textname, &query_name);
 
-			for (i = 0; i< tk_list.nb_tk; i++) {
+			for (i = 0; i < tk_list.nb_tk; i++) {
 				key_name = dst_key_name(tk_list.key[i]);
-		      
+
 				if (dns_name_issubdomain(&query_name,
 							 key_name) == ISC_TRUE)
 					trustedkey = tk_list.key[i];
@@ -1309,35 +1313,32 @@ start_lookup(void) {
 				printf(" isn't a subdomain of any Trusted Keys"
 				       ": +sigchase option is disable\n");
 				current_lookup->sigchase = ISC_FALSE;
-				dns_name_free(&query_name, mctx);
+				free_name(&query_name, mctx);
 				goto novalidation;
 			}
-			dns_name_free(&query_name, mctx);
+			free_name(&query_name, mctx);
 
-		    
 			current_lookup->rdtype_sigchase
-			  	= current_lookup->rdtype;
+				= current_lookup->rdtype;
 			current_lookup->rdtype_sigchaseset
-			  	= current_lookup->rdtypeset;
+				= current_lookup->rdtypeset;
 			current_lookup->rdtype = dns_rdatatype_ns;
-		      
-		 
+
 			current_lookup->qrdtype_sigchase
 				= current_lookup->qrdtype;
 			current_lookup->qrdtype = dns_rdatatype_ns;
-		   
+		
 			current_lookup->rdclass_sigchase
 				= current_lookup->rdclass;
 			current_lookup->rdclass_sigchaseset
 				= current_lookup->rdclassset;
 			current_lookup->rdclass = dns_rdataclass_in;
-		
 
 			strlcpy(current_lookup->textnamesigchase,
 				current_lookup->textname, MXNAME);
 
 			current_lookup->trace_root_sigchase = ISC_TRUE;
-		    
+
 			result = isc_buffer_allocate(mctx, &b, BUFSIZE);
 			check_result(result, "isc_buffer_allocate");
 			result = dns_name_totext(dst_key_name(trustedkey),
@@ -1462,6 +1463,8 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section)
 				lookup->ns_search_only =
 					query->lookup->ns_search_only;
 				lookup->trace_root = ISC_FALSE;
+				if (lookup->ns_search_only)
+					lookup->recurse = ISC_FALSE;
 			}
 			srv = make_server(namestr, namestr);
 			debug("adding server %s", srv->servername);
@@ -1632,9 +1635,9 @@ setup_lookup(dig_lookup_t *lookup) {
 	/* XXX New search here? */
 	if ((count_dots(lookup->textname) >= ndots) || !usesearch)
 		lookup->origin = NULL; /* Force abs lookup */
-	else if (lookup->origin == NULL && lookup->new_search && usesearch) {
+	else if (lookup->origin == NULL && lookup->new_search && usesearch)
 		lookup->origin = ISC_LIST_HEAD(search_list);
-	}
+
 	if (lookup->origin != NULL) {
 		debug("trying origin %s", lookup->origin->origin);
 		result = dns_message_gettempname(lookup->sendmsg,
@@ -1918,21 +1921,17 @@ bringup_timer(dig_query_t *query, unsigned int default_timeout) {
 	if (ISC_LIST_NEXT(query, link) != NULL)
 		local_timeout = SERVER_TIMEOUT;
 	else {
-		if (timeout == 0) {
+		if (timeout == 0)
 			local_timeout = default_timeout;
-		} else
+		else
 			local_timeout = timeout;
 	}
 	debug("have local timeout of %d", local_timeout);
 	isc_interval_set(&l->interval, local_timeout, 0);
 	if (l->timer != NULL)
 		isc_timer_detach(&l->timer);
-	result = isc_timer_create(timermgr,
-				  isc_timertype_once,
-				  NULL,
-				  &l->interval,
-				  global_task,
-				  connect_timeout,
+	result = isc_timer_create(timermgr, isc_timertype_once, NULL,
+				  &l->interval, global_task, connect_timeout,
 				  l, &l->timer);
 	check_result(result, "isc_timer_create");
 }	
@@ -2025,8 +2024,7 @@ send_udp(dig_query_t *query) {
 	l = query->lookup;
 	bringup_timer(query, UDP_TIMEOUT);
 	l->current_query = query;
-	debug("working on lookup %p, query %p",
-	      query->lookup, query);
+	debug("working on lookup %p, query %p", query->lookup, query);
 	if (!query->recv_made) {
 		/* XXX Check the sense of this, need assertion? */
 		query->waiting_connect = ISC_FALSE;
@@ -2052,12 +2050,9 @@ send_udp(dig_query_t *query) {
 		ISC_LIST_ENQUEUE(query->recvlist, &query->recvbuf,
 				 link);
 		debug("recving with lookup=%p, query=%p, sock=%p",
-		      query->lookup, query,
-		      query->sock);
-		result = isc_socket_recvv(query->sock,
-					  &query->recvlist, 1,
-					  global_task, recv_done,
-					  query);
+		      query->lookup, query, query->sock);
+		result = isc_socket_recvv(query->sock, &query->recvlist, 1,
+					  global_task, recv_done, query);
 		check_result(result, "isc_socket_recvv");
 		recvcount++;
 		debug("recvcount=%d", recvcount);
@@ -2093,7 +2088,7 @@ send_udp(dig_query_t *query) {
  */
 static void
 connect_timeout(isc_task_t *task, isc_event_t *event) {
-	dig_lookup_t *l = NULL, *n;
+	dig_lookup_t *l = NULL;
 	dig_query_t *query = NULL, *cq;
 
 	UNUSED(task);
@@ -2129,7 +2124,7 @@ connect_timeout(isc_task_t *task, isc_event_t *event) {
 			debug("making new TCP request, %d tries left",
 			      l->retries);
 			l->retries--;
-			n = requeue_lookup(l, ISC_TRUE);
+			requeue_lookup(l, ISC_TRUE);
 			cancel_lookup(l);
 			check_next_lookup(l);
 		}
@@ -2216,8 +2211,7 @@ tcp_length_done(isc_task_t *task, isc_event_t *event) {
 	ENSURE(ISC_LIST_EMPTY(query->recvlist));
 	ISC_LINK_INIT(&query->recvbuf, link);
 	ISC_LIST_ENQUEUE(query->recvlist, &query->recvbuf, link);
-	debug("recving with lookup=%p, query=%p",
-	       query->lookup, query);
+	debug("recving with lookup=%p, query=%p", query->lookup, query);
 	result = isc_socket_recvv(query->sock, &query->recvlist, length, task,
 				  recv_done, query);
 	check_result(result, "isc_socket_recvv");
@@ -2335,8 +2329,7 @@ connect_done(isc_task_t *task, isc_event_t *event) {
 
 		debug("unsuccessful connection: %s",
 		      isc_result_totext(sevent->result));
-		isc_sockaddr_format(&query->sockaddr, sockstr,
-				    sizeof(sockstr));
+		isc_sockaddr_format(&query->sockaddr, sockstr, sizeof(sockstr));
 		if (sevent->result != ISC_R_CANCELED)
 			printf(";; Connection to %s(%s) for %s failed: "
 			       "%s.\n", sockstr,
@@ -2426,8 +2419,7 @@ check_for_more_data(dig_query_t *query, dns_message_t *msg,
 				if ((!query->first_soa_rcvd) &&
 				    (rdata.type != dns_rdatatype_soa)) {
 					puts("; Transfer failed.  "
-					     "Didn't start with "
-					     "SOA answer.");
+					     "Didn't start with SOA answer.");
 					return (ISC_TRUE);
 				}
 				if ((!query->second_rr_rcvd) &&
@@ -2604,7 +2596,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		char buf2[ISC_SOCKADDR_FORMATSIZE];
 		isc_sockaddr_t any;
 
-		if (isc_sockaddr_pf(&query->sockaddr) == AF_INET) 
+		if (isc_sockaddr_pf(&query->sockaddr) == AF_INET)
 			isc_sockaddr_any(&any);
 		else
 			isc_sockaddr_any6(&any);
@@ -2625,7 +2617,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		else
 #endif
 		/*
-		 * We don't expect a match above when the packet is 
+		 * We don't expect a match above when the packet is
 		 * sent to 0.0.0.0, :: or to a multicast addresses.
 		 * XXXMPA broadcast needs to be handled here as well.
 		 */
@@ -2839,9 +2831,6 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 	}
 
 	if (!l->doing_xfr || l->xfr_q == query) {
-#ifdef DIG_SIGCHASE
-		int count = 0;
-#endif
 		if (msg->rcode != dns_rcode_noerror && l->origin != NULL) {
 			if (!next_origin(msg, query)) {
 				printmessage(query, msg, ISC_TRUE);
@@ -2854,11 +2843,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 				printmessage(query, msg, ISC_TRUE);
 		} else if (l->trace) {
 			int n = 0;
-#ifdef DIG_SIGCHASE
-			count = msg->counts[DNS_SECTION_ANSWER];
-#else
 			int count = msg->counts[DNS_SECTION_ANSWER];
-#endif
 
 			debug("in TRACE code");
 			if (!l->ns_search_only)
@@ -2881,7 +2866,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 
 			if (l->trace_root) {
 				/*
-				 * This is the initial NS query. 
+				 * This is the initial NS query.
 				 */
 				int n;
 
@@ -2896,9 +2881,9 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 				if (!do_sigchase)
 #endif
 				printmessage(query, msg, ISC_TRUE);
-		} 
+		}
 #ifdef DIG_SIGCHASE
-		if ( do_sigchase) {	     
+		if (do_sigchase) {
 			chase_msg = isc_mem_allocate(mctx,
 						     sizeof(dig_message_t));
 			if (chase_msg == NULL) {
@@ -2912,16 +2897,16 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 				fatal("dns_message_create in %s:%d",
 				      __FILE__, __LINE__);
 			}
-	 
+
 			isc_buffer_usedregion(b, &r);
 			result = isc_buffer_allocate(mctx, &buf, r.length);
-	   
+	
 			check_result(result, "isc_buffer_allocate");
 			result =  isc_buffer_copyregion(buf, &r);
 			check_result(result, "isc_buffer_copyregion");
-	   
+	
 			result =  dns_message_parse(msg_temp, buf, 0);
- 
+
 			isc_buffer_free(&buf);
 			chase_msg->msg = msg_temp;
 
@@ -2938,9 +2923,9 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 #endif
 	
 	}
-       
+
 #ifdef DIG_SIGCHASE
-	if (l->sigchase && ISC_LIST_EMPTY(lookup_list) ) {   
+	if (l->sigchase && ISC_LIST_EMPTY(lookup_list)) {
 		sigchase(msg_temp);
 	}
 #endif
@@ -3097,7 +3082,7 @@ cancel_all(void) {
  */
 void
 destroy_libs(void) {
-#ifdef DIG_SIGCHASE 
+#ifdef DIG_SIGCHASE
 	void * ptr;
 	dig_message_t *chase_msg;
 #endif
@@ -3167,7 +3152,7 @@ destroy_libs(void) {
 
 	debug("Destroy the messages kept for sigchase");
 	/* Destroy the messages kept for sigchase */
-       	chase_msg = ISC_LIST_HEAD(chase_message_list);
+	chase_msg = ISC_LIST_HEAD(chase_message_list);
 
 	while (chase_msg != NULL) {
 		INSIST(chase_msg->msg != NULL);
@@ -3187,16 +3172,16 @@ destroy_libs(void) {
 		isc_mem_free(mctx, ptr);
 	}
 	if (dns_name_dynamic(&chase_name))
-		dns_name_free(&chase_name, mctx);
+		free_name(&chase_name, mctx);
 #if DIG_SIGCHASE_TD
 	if (dns_name_dynamic(&chase_current_name))
-		dns_name_free(&chase_current_name, mctx);
+		free_name(&chase_current_name, mctx);
 	if (dns_name_dynamic(&chase_authority_name))
-		dns_name_free(&chase_authority_name, mctx);
+		free_name(&chase_authority_name, mctx);
 #endif
 #if DIG_SIGCHASE_BU
 	if (dns_name_dynamic(&chase_signame))
-		dns_name_free(&chase_signame, mctx);
+		free_name(&chase_signame, mctx);
 #endif
 
 	debug("Destroy memory");
@@ -3208,7 +3193,7 @@ destroy_libs(void) {
 		isc_mem_destroy(&mctx);
 }
 
- 
+
 
 
 #ifdef DIG_SIGCHASE
@@ -3218,32 +3203,31 @@ print_type(dns_rdatatype_t type)
 	isc_buffer_t * b = NULL;
 	isc_result_t result;
 	isc_region_t r;
-  
+
 	result = isc_buffer_allocate(mctx, &b, 4000);
 	check_result(result, "isc_buffer_allocate");
 
 	result = dns_rdatatype_totext(type, b);
 	check_result(result, "print_type");
-  
+
 	isc_buffer_usedregion(b, &r);
 	r.base[r.length] = '\0';
-  
+
 	printf("%s", r.base);
 
 	isc_buffer_free(&b);
 }
 
-
 void
-dump_database_section( dns_message_t *msg, int section)
+dump_database_section(dns_message_t *msg, int section)
 {
 	dns_name_t *msg_name=NULL;
- 
+
 	dns_rdataset_t *rdataset;
 
 	do {
 		dns_message_currentname(msg, section, &msg_name);
-    
+
 		for (rdataset = ISC_LIST_HEAD(msg_name->list); rdataset != NULL;
 		     rdataset = ISC_LIST_NEXT(rdataset, link)) {	
 			dns_name_print(msg_name, stdout);
@@ -3252,35 +3236,32 @@ dump_database_section( dns_message_t *msg, int section)
 			printf("end\n");
 		}
 		msg_name = NULL;
-	} while ( dns_message_nextname(msg, section) == ISC_R_SUCCESS);
+	} while (dns_message_nextname(msg, section) == ISC_R_SUCCESS);
 }
 
-
-void dump_database(void)
-{
+void
+dump_database(void) {
 	dig_message_t * msg;
 
 	for (msg = ISC_LIST_HEAD(chase_message_list);  msg != NULL;
 	     msg = ISC_LIST_NEXT(msg, link)) {
 		if (dns_message_firstname(msg->msg, DNS_SECTION_ANSWER)
-		    == ISC_R_SUCCESS) 
+		    == ISC_R_SUCCESS)
 			dump_database_section(msg->msg, DNS_SECTION_ANSWER);
-       
+
 		if (dns_message_firstname(msg->msg, DNS_SECTION_AUTHORITY)
-		    == ISC_R_SUCCESS) 
+		    == ISC_R_SUCCESS)
 			dump_database_section(msg->msg, DNS_SECTION_AUTHORITY);
 	
 		if (dns_message_firstname(msg->msg, DNS_SECTION_ADDITIONAL)
-		    == ISC_R_SUCCESS) 
+		    == ISC_R_SUCCESS)
 			dump_database_section(msg->msg, DNS_SECTION_ADDITIONAL);
 	}
 }
 
 
-dns_rdataset_t *  search_type(dns_name_t *name,
-			      dns_rdatatype_t type,
-			      dns_rdatatype_t covers)
-{
+dns_rdataset_t *
+search_type(dns_name_t *name, dns_rdatatype_t type, dns_rdatatype_t covers) {
 	dns_rdataset_t *rdataset;
 	dns_rdata_sig_t siginfo;
 	dns_rdata_t sigrdata;
@@ -3290,10 +3271,9 @@ dns_rdataset_t *  search_type(dns_name_t *name,
 	     rdataset = ISC_LIST_NEXT(rdataset, link)) {
 		if (type == dns_rdatatype_any) {
 			if (rdataset->type != dns_rdatatype_rrsig)
-				return rdataset;
-		} 
-		else if ((type == dns_rdatatype_rrsig) &&
-			 (rdataset->type == dns_rdatatype_rrsig)) {
+				return (rdataset);
+		} else if ((type == dns_rdatatype_rrsig) &&
+			   (rdataset->type == dns_rdatatype_rrsig)) {
 			dns_rdata_init(&sigrdata);
 			result = dns_rdataset_first(rdataset);
 			check_result(result, "empty rdataset");
@@ -3305,38 +3285,35 @@ dns_rdataset_t *  search_type(dns_name_t *name,
 			    (covers == dns_rdatatype_any)) {
 				dns_rdata_reset(&sigrdata);
 				dns_rdata_freestruct(&siginfo);	
-				return rdataset;
+				return (rdataset);
 			}
 			dns_rdata_reset(&sigrdata);
 			dns_rdata_freestruct(&siginfo);
-		} 
-		else if (rdataset->type == type)
-			return rdataset;
+		} else if (rdataset->type == type)
+			return (rdataset);
 	}
-	return NULL;
+	return (NULL);
 }
 
 dns_rdataset_t *
-chase_scanname_section(dns_message_t *msg,
-		       dns_name_t *name,
-		       dns_rdatatype_t type,
-		       dns_rdatatype_t covers,
+chase_scanname_section(dns_message_t *msg, dns_name_t *name,
+		       dns_rdatatype_t type, dns_rdatatype_t covers,
 		       int section)
 {
 	dns_rdataset_t *rdataset;
 	dns_name_t *msg_name = NULL;
-  
+
 	do {
 		dns_message_currentname(msg, section, &msg_name);
 		if (dns_name_compare(msg_name, name) == 0) {
 			rdataset = search_type(msg_name, type, covers);
-			if ( rdataset != NULL)
-				return rdataset;
+			if (rdataset != NULL)
+				return (rdataset);
 		}
 		msg_name = NULL;
-	} while ( dns_message_nextname(msg, section) == ISC_R_SUCCESS);
-  
-	return(NULL);
+	} while (dns_message_nextname(msg, section) == ISC_R_SUCCESS);
+
+	return (NULL);
 }
 
 
@@ -3345,7 +3322,7 @@ chase_scanname(dns_name_t *name, dns_rdatatype_t type, dns_rdatatype_t covers)
 {
 	dns_rdataset_t *rdataset = NULL;
 	dig_message_t * msg;
- 
+
 	for (msg = ISC_LIST_HEAD(chase_message_list2);  msg != NULL;
 	     msg = ISC_LIST_NEXT(msg, link)) {
 		if (dns_message_firstname(msg->msg, DNS_SECTION_ANSWER)
@@ -3354,7 +3331,7 @@ chase_scanname(dns_name_t *name, dns_rdatatype_t type, dns_rdatatype_t covers)
 							  type, covers,
 							  DNS_SECTION_ANSWER);
 			if (rdataset != NULL)
-				return rdataset;
+				return (rdataset);
 		if (dns_message_firstname(msg->msg, DNS_SECTION_AUTHORITY)
 		    == ISC_R_SUCCESS)
 			rdataset =
@@ -3362,7 +3339,7 @@ chase_scanname(dns_name_t *name, dns_rdatatype_t type, dns_rdatatype_t covers)
 						       type, covers,
 						       DNS_SECTION_AUTHORITY);
 			if (rdataset != NULL)
-				return rdataset;
+				return (rdataset);
 		if (dns_message_firstname(msg->msg, DNS_SECTION_ADDITIONAL)
 		    == ISC_R_SUCCESS)
 			rdataset =
@@ -3370,16 +3347,15 @@ chase_scanname(dns_name_t *name, dns_rdatatype_t type, dns_rdatatype_t covers)
 						       covers,
 						       DNS_SECTION_ADDITIONAL);
 			if (rdataset != NULL)
-				return rdataset;
+				return (rdataset);
 	}
 
-	return NULL;
+	return (NULL);
 }
 
 dns_rdataset_t *
 sigchase_scanname(dns_rdatatype_t type, dns_rdatatype_t covers,
-		  isc_boolean_t * lookedup,
-		  dns_name_t *rdata_name )
+		  isc_boolean_t * lookedup, dns_name_t *rdata_name)
 {
 	dig_lookup_t *lookup;
 	isc_buffer_t *b = NULL;
@@ -3388,18 +3364,17 @@ sigchase_scanname(dns_rdatatype_t type, dns_rdatatype_t covers,
 	dns_rdataset_t * temp;
 	dns_rdatatype_t querytype;
 
-	if ((temp=chase_scanname(rdata_name, type, covers))!=NULL) {
-		return(temp);
-	}
+	temp = chase_scanname(rdata_name, type, covers);
+	if (temp != NULL)
+		return (temp);
 
-	if (*lookedup == ISC_TRUE) {
-		return(NULL);
-	}
+	if (*lookedup == ISC_TRUE)
+		return (NULL);
 
 	lookup = clone_lookup(current_lookup, ISC_TRUE);
 	lookup->trace_root = ISC_FALSE;
 	lookup->new_search = ISC_TRUE;
-  
+
 	result = isc_buffer_allocate(mctx, &b, BUFSIZE);
 	check_result(result, "isc_buffer_allocate");
 	result = dns_name_totext(rdata_name, ISC_FALSE, b);
@@ -3413,9 +3388,10 @@ sigchase_scanname(dns_rdatatype_t type, dns_rdatatype_t covers,
 		querytype = covers;
 	else
 		querytype = type;
+
 	if (querytype == 0 || querytype == 255) {
 		printf("Error in the queried type: %d\n", querytype);
-		return(NULL);
+		return (NULL);
 	}
 
 	lookup->rdtype = querytype;
@@ -3427,11 +3403,11 @@ sigchase_scanname(dns_rdatatype_t type, dns_rdatatype_t covers,
 	printf("\n\nLaunch a query to find a RRset of type ");
 	print_type(type);
 	printf(" for zone: %s\n", lookup->textname);
-	return(NULL);
+	return (NULL);
 }
 
 void
-insert_trustedkey(dst_key_t  * key)
+insert_trustedkey(dst_key_t * key)
 {
 	if (key == NULL)
 		return;
@@ -3439,7 +3415,7 @@ insert_trustedkey(dst_key_t  * key)
 		return;
 
 	tk_list.key[tk_list.nb_tk++] = key;
-	return;   
+	return;
 }
 
 void
@@ -3451,8 +3427,7 @@ clean_trustedkey()
 		if (tk_list.key[i] != NULL) {
 			dst_key_free(&tk_list.key[i]);
 			tk_list.key[i] = NULL;
-		}
-		else
+		} else
 			break;
 	}
 	tk_list.nb_tk = 0;
@@ -3463,14 +3438,14 @@ char alphnum[] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 isc_result_t
-removetmpkey(isc_mem_t *mctx, const char *file) 
+removetmpkey(isc_mem_t *mctx, const char *file)
 {
 	char *tempnamekey = NULL;
 	int tempnamekeylen;
 	isc_result_t result;
-  
+
 	tempnamekeylen = strlen(file)+10;
-  
+
 	tempnamekey = isc_mem_allocate(mctx, tempnamekeylen);
 	if (tempnamekey == NULL)
 		return (ISC_R_NOMEMORY);
@@ -3479,20 +3454,21 @@ removetmpkey(isc_mem_t *mctx, const char *file)
  
 	strlcat(tempnamekey, file, tempnamekeylen);
 	strlcat(tempnamekey,".key", tempnamekeylen);
+
 	isc_file_remove(tempnamekey);
 
 	result = isc_file_remove(tempnamekey);
 	isc_mem_free(mctx, tempnamekey);
-	return(result);
+	return (result);
 }
 
 isc_result_t
 opentmpkey(isc_mem_t *mctx, const char *file, char **tempp, FILE **fp) {
-        FILE *f = NULL;
-        isc_result_t result;
-        char *tempname = NULL;
+	FILE *f = NULL;
+	isc_result_t result;
+	char *tempname = NULL;
 	char *tempnamekey = NULL;
-        int tempnamelen;
+	int tempnamelen;
 	int tempnamekeylen;
 	char *x;
 	char *cp;
@@ -3516,14 +3492,14 @@ opentmpkey(isc_mem_t *mctx, const char *file, char **tempp, FILE **fp) {
 			isc_mem_free(mctx, tempname);
 			return (ISC_R_FAILURE);
 		}
-	    
+	
 		x = cp--;
 		while (cp >= tempname && *cp == 'X') {
 			isc_random_get(&which);
 			*cp = alphnum[which % (sizeof(alphnum) - 1)];
 			x = cp--;
 		}
- 
+
 		tempnamekeylen = tempnamelen+5;
 		tempnamekey = isc_mem_allocate(mctx, tempnamekeylen);
 		if (tempnamekey == NULL)
@@ -3533,7 +3509,7 @@ opentmpkey(isc_mem_t *mctx, const char *file, char **tempp, FILE **fp) {
 		strlcpy(tempnamekey, tempname, tempnamelen);
 		strlcat(tempnamekey ,".key", tempnamelen);
 
-	   
+	
 		if (isc_file_exists(tempnamekey)) {
 			isc_mem_free(mctx, tempnamekey);
 			isc_mem_free(mctx, tempname);
@@ -3543,19 +3519,19 @@ opentmpkey(isc_mem_t *mctx, const char *file, char **tempp, FILE **fp) {
 		if ((f = fopen(tempnamekey, "w")) == NULL) {
 			printf("get_trusted_key(): trusted key not found %s\n",
 			       tempnamekey);
-			return ISC_R_FAILURE;
+			return (ISC_R_FAILURE);
 		}
 		break;
 	}
 	isc_mem_free(mctx, tempnamekey);
-        *tempp = tempname;
-        *fp = f;
-        return (ISC_R_SUCCESS);
+	*tempp = tempname;
+	*fp = f;
+	return (ISC_R_SUCCESS);
 
  cleanup:
-        isc_mem_free(mctx, tempname);
+	isc_mem_free(mctx, tempname);
 	
-        return (result);
+	return (result);
 }
 
 
@@ -3563,57 +3539,55 @@ isc_result_t
 get_trusted_key(isc_mem_t *mctx)
 {
 	isc_result_t result;
-	const char * filename = NULL;
-	char * filetemp =NULL;
+	const char *filename = NULL;
+	char *filetemp = NULL;
 	char buf[1500];
-	FILE *fp , *fptemp;
-	dst_key_t  * key = NULL;
- 
-	result  = isc_file_exists(trustedkey);
+	FILE *fp, *fptemp;
+	dst_key_t *key = NULL;
+
+	result = isc_file_exists(trustedkey);
 	if (result !=  ISC_TRUE) {
-		result  = isc_file_exists("/etc/trusted-key.key");
+		result = isc_file_exists("/etc/trusted-key.key");
 		if (result !=  ISC_TRUE) {
-			result  = isc_file_exists("./trusted-key.key");
+			result = isc_file_exists("./trusted-key.key");
 			if (result !=  ISC_TRUE)
-				return ISC_R_FAILURE;
+				return (ISC_R_FAILURE);
 			else
 				filename = "./trusted-key.key";
-		}
-		else
+		} else
 			filename = "/etc/trusted-key.key";
-	}
-	else
+	} else
 		filename = trustedkey;
 
 	if (filename == NULL) {
 		printf("No trusted key\n");
-		return ISC_R_FAILURE;
+		return (ISC_R_FAILURE);
 	}
 
 	if ((fp = fopen(filename, "r")) == NULL) {
 		printf("get_trusted_key(): trusted key not found %s\n",
 		       filename);
-		return ISC_R_FAILURE;
+		return (ISC_R_FAILURE);
 	}
 	while (fgets(buf, 1500, fp) != NULL) {
 		result = opentmpkey(mctx,"tmp_file", &filetemp, &fptemp);
 		if (result != ISC_R_SUCCESS) {
 			fclose(fp);
-			return ISC_R_FAILURE;
+			return (ISC_R_FAILURE);
 		}
-		if (fputs(buf, fptemp)<0) {
+		if (fputs(buf, fptemp) < 0) {
 			fclose(fp);
 			fclose(fptemp);
-			return ISC_R_FAILURE;
+			return (ISC_R_FAILURE);
 		}
 		fclose(fptemp);
 		result = dst_key_fromnamedfile(filetemp, DST_TYPE_PUBLIC,
 					       mctx, &key);
 		removetmpkey(mctx, filetemp);
 		isc_mem_free(mctx, filetemp);
-		if (result !=  ISC_R_SUCCESS ) {
+		if (result !=  ISC_R_SUCCESS) {
 			fclose(fp);
-			return ISC_R_FAILURE;
+			return (ISC_R_FAILURE);
 		}
 		insert_trustedkey(key);
 #if 0
@@ -3621,7 +3595,7 @@ get_trusted_key(isc_mem_t *mctx)
 #endif
 		key = NULL;
 	}
-	return ISC_R_SUCCESS;
+	return (ISC_R_SUCCESS);
 }
 
 
@@ -3644,19 +3618,19 @@ nameFromString(const char *str, dns_name_t *p_ret) {
 	check_result(result, "nameFromString");
 
 	if (dns_name_dynamic(p_ret))
-		dns_name_free(p_ret, mctx);
-  
+		free_name(p_ret, mctx);
+
 	result = dns_name_dup(dns_fixedname_name(&fixedname), mctx, p_ret);
 	check_result(result, "nameFromString");
-} 
+}
 
 
 #if DIG_SIGCHASE_TD
-isc_result_t 
+isc_result_t
 prepare_lookup(dns_name_t *name)
 {
-	isc_result_t    result;
-	dig_lookup_t  * lookup = NULL;
+	isc_result_t result;
+	dig_lookup_t *lookup = NULL;
 	dig_server_t *s;
 	void *ptr;
 
@@ -3670,7 +3644,7 @@ prepare_lookup(dns_name_t *name)
 	lookup->rdtype = lookup->rdtype_sigchase;
 	lookup->rdtypeset = ISC_TRUE;
 	lookup->qrdtype = lookup->qrdtype_sigchase;
-   
+
 	s = ISC_LIST_HEAD(lookup->my_server_list);
 	while (s != NULL) {
 		debug("freeing server %p belonging to %p",
@@ -3681,7 +3655,7 @@ prepare_lookup(dns_name_t *name)
 				 (dig_server_t *)ptr, link);
 		isc_mem_free(mctx, ptr);
 	}
-  
+
 
 	for (result = dns_rdataset_first(chase_nsrdataset);
 	     result == ISC_R_SUCCESS;
@@ -3690,13 +3664,13 @@ prepare_lookup(dns_name_t *name)
 		dns_rdata_ns_t ns;
 		dns_rdata_t rdata = DNS_RDATA_INIT;
 		dig_server_t * srv = NULL;
-#define  __FOLLOW_GLUE__
+#define __FOLLOW_GLUE__
 #ifdef __FOLLOW_GLUE__
-		isc_buffer_t * b = NULL;
+		isc_buffer_t *b = NULL;
 		isc_result_t result;
 		isc_region_t r;
-		dns_rdataset_t * rdataset =NULL;
-		isc_boolean_t   true = ISC_TRUE;
+		dns_rdataset_t *rdataset = NULL;
+		isc_boolean_t true = ISC_TRUE;
 #endif
 
 		memset(namestr, 0, DNS_NAME_FORMATSIZE);
@@ -3704,11 +3678,11 @@ prepare_lookup(dns_name_t *name)
 		dns_rdataset_current(chase_nsrdataset, &rdata);
 
 		(void)dns_rdata_tostruct(&rdata, &ns, NULL);
-      
-     
-      
+
+
+
 #ifdef __FOLLOW_GLUE__
-      
+
 		result = advanced_rrsearch(&rdataset, &ns.name,
 					   dns_rdatatype_aaaa,
 					   dns_rdatatype_any, &true);
@@ -3732,12 +3706,12 @@ prepare_lookup(dns_name_t *name)
 
 
 				srv = make_server(namestr, namestr);
-	     
+	
 				ISC_LIST_APPEND(lookup->my_server_list,
 						srv, link);
 			}
 		}
-      
+
 		rdataset = NULL;
 		result = advanced_rrsearch(&rdataset, &ns.name, dns_rdatatype_a,
 					   dns_rdatatype_any, &true);
@@ -3759,28 +3733,28 @@ prepare_lookup(dns_name_t *name)
 				isc_buffer_free(&b);
 				dns_rdata_reset(&a);
 				printf("ns name: %s\n", namestr);
-      
+
 
 				srv = make_server(namestr, namestr);
-	     
+	
 				ISC_LIST_APPEND(lookup->my_server_list,
 						srv, link);
 			}
 		}
 #else
-       
+
 		dns_name_format(&ns.name, namestr, sizeof(namestr));
 		printf("ns name: ");
 		dns_name_print(&ns.name, stdout);
 		printf("\n");
 		srv = make_server(namestr, namestr);
-	     
+	
 		ISC_LIST_APPEND(lookup->my_server_list, srv, link);
 
-#endif 
+#endif
 		dns_rdata_freestruct(&ns);
 		dns_rdata_reset(&rdata);
-      
+
 	}
 
 	ISC_LIST_APPEND(lookup_list, lookup, link);
@@ -3790,7 +3764,7 @@ prepare_lookup(dns_name_t *name)
 	printf(" with nameservers:");
 	printf("\n");
 	print_rdataset(name, chase_nsrdataset, mctx);
-	return ISC_R_SUCCESS;
+	return (ISC_R_SUCCESS);
 }
 
 
@@ -3803,15 +3777,14 @@ child_of_zone(dns_name_t * name, dns_name_t * zone_name,
 	unsigned int nlabelsp;
 
 	name_reln = dns_name_fullcompare(name, zone_name, &orderp, &nlabelsp);
-	if ( (name_reln != dns_namereln_subdomain) ||
-	     (dns_name_countlabels(name) <=
-	      dns_name_countlabels(zone_name) +1)) {
+	if (name_reln != dns_namereln_subdomain ||
+	    dns_name_countlabels(name) <= dns_name_countlabels(zone_name) + 1) {
 		printf("\n;; ERROR : ");
 		dns_name_print(name, stdout);
 		printf(" is not a subdomain of: ");
 		dns_name_print(zone_name, stdout);
 		printf(" FAILED\n\n");
-		return ISC_R_FAILURE;
+		return (ISC_R_FAILURE);
 	}
 
 	dns_name_getlabelsequence(name,
@@ -3819,11 +3792,11 @@ child_of_zone(dns_name_t * name, dns_name_t * zone_name,
 				  dns_name_countlabels(zone_name) -1,
 				  dns_name_countlabels(zone_name) +1,
 				  child_name);
-	return ISC_R_SUCCESS;
+	return (ISC_R_SUCCESS);
 }
 
 isc_result_t
-grandfather_pb_test(dns_name_t * zone_name, dns_rdataset_t  * sigrdataset)
+grandfather_pb_test(dns_name_t *zone_name, dns_rdataset_t  *sigrdataset)
 {
 	isc_result_t result;
 	dns_rdata_t sigrdata;
@@ -3832,31 +3805,31 @@ grandfather_pb_test(dns_name_t * zone_name, dns_rdataset_t  * sigrdataset)
 	result = dns_rdataset_first(sigrdataset);
 	check_result(result, "empty RRSIG dataset");
 	dns_rdata_init(&sigrdata);
-  
+
 	do {
 		dns_rdataset_current(sigrdataset, &sigrdata);
-    
+
 		result = dns_rdata_tostruct(&sigrdata, &siginfo, NULL);
 		check_result(result, "sigrdata tostruct siginfo");
- 
+
 		if (dns_name_compare(&siginfo.signer, zone_name) == 0) {
 			dns_rdata_freestruct(&siginfo);
 			dns_rdata_reset(&sigrdata);
-			return ISC_R_SUCCESS;
+			return (ISC_R_SUCCESS);
 		}
 
 		dns_rdata_freestruct(&siginfo);
- 
+
 	} while (dns_rdataset_next(chase_sigkeyrdataset) == ISC_R_SUCCESS);
 
 	dns_rdata_reset(&sigrdata);
 
-	return ISC_R_FAILURE;
+	return (ISC_R_FAILURE);
 }
 
 
 isc_result_t
-initialization(dns_name_t * name)
+initialization(dns_name_t *name)
 {
 	isc_result_t   result;
 	isc_boolean_t  true = ISC_TRUE;
@@ -3867,21 +3840,21 @@ initialization(dns_name_t * name)
 	if (result != ISC_R_SUCCESS) {
 		printf("\n;; NS RRset is missing to continue validation:"
 		       " FAILED\n\n");
-		return ISC_R_FAILURE;
+		return (ISC_R_FAILURE);
 	}
 	INSIST(chase_nsrdataset != NULL);
 	prepare_lookup(name);
 
 	dup_name(name, &chase_current_name, mctx);
 
-	return ISC_R_SUCCESS;
+	return (ISC_R_SUCCESS);
 }
-#endif 
+#endif
 
 void
-print_rdataset(dns_name_t * name, dns_rdataset_t *rdataset, isc_mem_t *mctx)
+print_rdataset(dns_name_t *name, dns_rdataset_t *rdataset, isc_mem_t *mctx)
 {
-	isc_buffer_t * b = NULL;
+	isc_buffer_t *b = NULL;
 	isc_result_t result;
 	isc_region_t r;
 
@@ -3900,14 +3873,20 @@ print_rdataset(dns_name_t * name, dns_rdataset_t *rdataset, isc_mem_t *mctx)
 }
 
 
-void 
+void
 dup_name(dns_name_t *source, dns_name_t *target, isc_mem_t *mctx) {
-	isc_result_t result; 
- 
+	isc_result_t result;
+
 	if (dns_name_dynamic(target))
-		dns_name_free(target, mctx);
+		free_name(target, mctx);
 	result = dns_name_dup(source, mctx, target);
 	check_result(result, "dns_name_dup");
+}
+
+void
+free_name(dns_name_t *name, isc_mem_t *mctx) {
+	dns_name_free(name, mctx);
+	dns_name_init(name, NULL);
 }
 
 /*
@@ -3927,13 +3906,12 @@ contains_trusted_key(dns_name_t *name, dns_rdataset_t *rdataset,
 {
 	isc_result_t result;
 	dns_rdata_t rdata;
-	dst_key_t * trustedKey = NULL;
-	dst_key_t * dnsseckey = NULL;
+	dst_key_t *trustedKey = NULL;
+	dst_key_t *dnsseckey = NULL;
 	int i;
-  
-	if (name == NULL || rdataset == NULL) {
-		return ISC_R_FAILURE;
-	}
+
+	if (name == NULL || rdataset == NULL)
+		return (ISC_R_FAILURE);
 
 	result = dns_rdataset_first(rdataset);
 	check_result(result, "empty rdataset");
@@ -3942,13 +3920,13 @@ contains_trusted_key(dns_name_t *name, dns_rdataset_t *rdataset,
 	do {
 		dns_rdataset_current(rdataset, &rdata);
 		INSIST(rdata.type == dns_rdatatype_dnskey);
-  	  
+  	
 		result = dns_dnssec_keyfromrdata(name, &rdata,
 						 mctx, &dnsseckey);
 		check_result(result, "dns_dnssec_keyfromrdata");
 
-    
-		for (i = 0; i< tk_list.nb_tk; i++) {
+
+		for (i = 0; i < tk_list.nb_tk; i++) {
 			if (dst_key_compare(tk_list.key[i], dnsseckey)
 			    == ISC_TRUE) {
 				dns_rdata_reset(&rdata);
@@ -3963,11 +3941,11 @@ contains_trusted_key(dns_name_t *name, dns_rdataset_t *rdataset,
 				    == ISC_R_SUCCESS) {
 					dst_key_free(&dnsseckey);
 					dnsseckey = NULL;
-					return  ISC_R_SUCCESS;
+					return (ISC_R_SUCCESS);
 				}
 			}
 		}
- 
+
 		dns_rdata_reset(&rdata);
 		if (dnsseckey != NULL)
 			dst_key_free(&dnsseckey);
@@ -3976,8 +3954,8 @@ contains_trusted_key(dns_name_t *name, dns_rdataset_t *rdataset,
 	if (trustedKey != NULL)
 		dst_key_free(&trustedKey);
 	trustedKey = NULL;
-  
-	return ISC_R_NOTFOUND;
+
+	return (ISC_R_NOTFOUND);
 }
 
 isc_result_t
@@ -3988,7 +3966,7 @@ sigchase_verify_sig(dns_name_t *name, dns_rdataset_t *rdataset,
 {
 	isc_result_t result;
 	dns_rdata_t keyrdata;
-	dst_key_t * dnsseckey = NULL;
+	dst_key_t *dnsseckey = NULL;
 
 	result = dns_rdataset_first(keyrdataset);
 	check_result(result, "empty DNSKEY dataset");
@@ -3997,7 +3975,7 @@ sigchase_verify_sig(dns_name_t *name, dns_rdataset_t *rdataset,
 	do {
 		dns_rdataset_current(keyrdataset, &keyrdata);
 		INSIST(keyrdata.type == dns_rdatatype_dnskey);
-  	  
+  	
 		result = dns_dnssec_keyfromrdata(name, &keyrdata,
 						 mctx, &dnsseckey);
 		check_result(result, "dns_dnssec_keyfromrdata");
@@ -4007,20 +3985,20 @@ sigchase_verify_sig(dns_name_t *name, dns_rdataset_t *rdataset,
 		if (result == ISC_R_SUCCESS) {
 			dns_rdata_reset(&keyrdata);
 			dst_key_free(&dnsseckey);
-			return(ISC_R_SUCCESS);
+			return (ISC_R_SUCCESS);
 		}
 		dst_key_free(&dnsseckey);
 	} while (dns_rdataset_next(chase_keyrdataset) == ISC_R_SUCCESS);
-  
+
 	dns_rdata_reset(&keyrdata);
-  
-	return ISC_R_NOTFOUND;
+
+	return (ISC_R_NOTFOUND);
 }
 
 isc_result_t
 sigchase_verify_sig_key(dns_name_t *name, dns_rdataset_t *rdataset,
-			dst_key_t* dnsseckey,
-			dns_rdataset_t *sigrdataset, isc_mem_t *mctx)
+			dst_key_t *dnsseckey, dns_rdataset_t *sigrdataset,
+			isc_mem_t *mctx)
 {
 	isc_result_t result;
 	dns_rdata_t sigrdata;
@@ -4029,22 +4007,22 @@ sigchase_verify_sig_key(dns_name_t *name, dns_rdataset_t *rdataset,
 	result = dns_rdataset_first(sigrdataset);
 	check_result(result, "empty RRSIG dataset");
 	dns_rdata_init(&sigrdata);
-    
+
 	do {
 		dns_rdataset_current(sigrdataset, &sigrdata);
 
 		result = dns_rdata_tostruct(&sigrdata, &siginfo, NULL);
 		check_result(result, "sigrdata tostruct siginfo");
- 
+
 		/*
 		 * Test if the id of the DNSKEY is
 		 * the id of the DNSKEY signer's
 		 */
 		if (siginfo.keyid == dst_key_id(dnsseckey)) {
-    
+
 			result = dns_rdataset_first(rdataset);
 			check_result(result, "empty DS dataset");
-    
+
 			result = dns_dnssec_verify(name, rdataset, dnsseckey,
 						   ISC_FALSE, mctx, &sigrdata);
 
@@ -4054,19 +4032,19 @@ sigchase_verify_sig_key(dns_name_t *name, dns_rdataset_t *rdataset,
 			dns_name_print(name, stdout);
 			printf(" with DNSKEY:%d: %s\n", dst_key_id(dnsseckey),
 			       isc_result_totext(result));
-	 
+
 			if (result == ISC_R_SUCCESS) {
 				dns_rdata_reset(&sigrdata);
-				return result;
+				return (result);
 			}
 		}
 		dns_rdata_freestruct(&siginfo);
- 
+
 	} while (dns_rdataset_next(chase_sigkeyrdataset) == ISC_R_SUCCESS);
 
 	dns_rdata_reset(&sigrdata);
 
-	return ISC_R_NOTFOUND;
+	return (ISC_R_NOTFOUND);
 }
 
 
@@ -4079,7 +4057,7 @@ sigchase_verify_ds(dns_name_t *name, dns_rdataset_t *keyrdataset,
 	dns_rdata_t newdsrdata;
 	dns_rdata_t dsrdata;
 	dns_rdata_ds_t dsinfo;
-	dst_key_t* dnsseckey = NULL;
+	dst_key_t *dnsseckey = NULL;
 	unsigned char dsbuf[DNS_DS_BUFFERSIZE];
 
 	result = dns_rdataset_first(dsrdataset);
@@ -4087,18 +4065,18 @@ sigchase_verify_ds(dns_name_t *name, dns_rdataset_t *keyrdataset,
 	dns_rdata_init(&dsrdata);
 	do {
 		dns_rdataset_current(dsrdataset, &dsrdata);
-    
+
 		result = dns_rdata_tostruct(&dsrdata, &dsinfo, NULL);
 		check_result(result, "dns_rdata_tostruct  for DS");
-    
+
 		result = dns_rdataset_first(keyrdataset);
 		check_result(result, "empty KEY dataset");
-		dns_rdata_init(&keyrdata);	  
+		dns_rdata_init(&keyrdata);	
 
 		do {
 			dns_rdataset_current(keyrdataset, &keyrdata);
 			INSIST(keyrdata.type == dns_rdatatype_dnskey);
-  	  
+  	
 			result = dns_dnssec_keyfromrdata(name, &keyrdata,
 							 mctx, &dnsseckey);
 			check_result(result, "dns_dnssec_keyfromrdata");
@@ -4113,17 +4091,17 @@ sigchase_verify_ds(dns_name_t *name, dns_rdataset_t *keyrdataset,
 				result = dns_ds_buildrdata(name, &keyrdata,
 							   dsinfo.digest_type,
 							   dsbuf, &newdsrdata);
-				dns_rdata_freestruct(&dsinfo);  
+				dns_rdata_freestruct(&dsinfo);
 
 				if (result != ISC_R_SUCCESS) {
 					dns_rdata_reset(&keyrdata);
 					dns_rdata_reset(&newdsrdata);
 					dns_rdata_reset(&dsrdata);
 					dst_key_free(&dnsseckey);
-					dns_rdata_freestruct(&dsinfo);  
+					dns_rdata_freestruct(&dsinfo);
 					printf("Oops: impossible to build"
 					       " new DS rdata\n");
-					return result;
+					return (result);
 				}
 	
 	
@@ -4134,7 +4112,7 @@ sigchase_verify_ds(dns_name_t *name, dns_rdataset_t *keyrdataset,
 					printf(";; Now verify that this"
 					       " DNSKEY validates the "
 					       "DNSKEY RRset\n");
-	       
+	
 					result = sigchase_verify_sig_key(name,
 							 keyrdataset,
 							 dnsseckey,
@@ -4145,11 +4123,10 @@ sigchase_verify_ds(dns_name_t *name, dns_rdataset_t *keyrdataset,
 						dns_rdata_reset(&newdsrdata);
 						dns_rdata_reset(&dsrdata);
 						dst_key_free(&dnsseckey);
-		 
-						return result;
+		
+						return (result);
 					}
-				} 
-				else {
+				} else {
 					printf(";; This DS is NOT the DS for"
 					       " the chasing KEY: FAILED\n");
 				}
@@ -4160,13 +4137,13 @@ sigchase_verify_ds(dns_name_t *name, dns_rdataset_t *keyrdataset,
 			dnsseckey = NULL;
 		} while (dns_rdataset_next(chase_keyrdataset) == ISC_R_SUCCESS);
 		dns_rdata_reset(&keyrdata);
- 
+
 	} while (dns_rdataset_next(chase_dsrdataset) == ISC_R_SUCCESS);
 #if 0
 	dns_rdata_reset(&dsrdata); WARNING
 #endif
- 
-	return ISC_R_NOTFOUND;
+
+	return (ISC_R_NOTFOUND);
 }
 
 /*
@@ -4178,20 +4155,19 @@ sigchase_verify_ds(dns_name_t *name, dns_rdataset_t *keyrdataset,
  * ISC_R_SUCCESS: if we found the rrset
  * ISC_R_NOTFOUND: we do not found the rrset in cache
  * and we do a query on the net
- * ISC_R_FAILURE: rrset not found 
+ * ISC_R_FAILURE: rrset not found
  */
 isc_result_t
-advanced_rrsearch(dns_rdataset_t **rdataset, dns_name_t * name,
-		  dns_rdatatype_t type,
-		  dns_rdatatype_t covers,
+advanced_rrsearch(dns_rdataset_t **rdataset, dns_name_t *name,
+		  dns_rdatatype_t type, dns_rdatatype_t covers,
 		  isc_boolean_t *lookedup)
-{ 
+{
 	isc_boolean_t  tmplookedup;
 
 	INSIST(rdataset != NULL);
 
 	if (*rdataset != NULL)
-		return(ISC_R_SUCCESS);
+		return (ISC_R_SUCCESS);
 
 	tmplookedup = *lookedup;
 	if ((*rdataset = sigchase_scanname(type, covers,
@@ -4201,20 +4177,19 @@ advanced_rrsearch(dns_rdataset_t **rdataset, dns_name_t * name,
 		return (ISC_R_NOTFOUND);
 	}
 	*lookedup = ISC_FALSE;
-	return(ISC_R_SUCCESS);
+	return (ISC_R_SUCCESS);
 }
 
 
 
 #if DIG_SIGCHASE_TD
 void
-sigchase_td(dns_message_t * msg)
+sigchase_td(dns_message_t *msg)
 {
-	isc_result_t    result;
-	dns_name_t    * name = NULL;
-	isc_boolean_t   have_answer = ISC_FALSE;
- 
-	isc_boolean_t   true = ISC_TRUE;
+	isc_result_t result;
+	dns_name_t *name = NULL;
+	isc_boolean_t have_answer = ISC_FALSE;
+	isc_boolean_t true = ISC_TRUE;
 
 	if ((result = dns_message_firstname(msg, DNS_SECTION_ANSWER))
 	    == ISC_R_SUCCESS) {
@@ -4224,8 +4199,7 @@ sigchase_td(dns_message_t * msg)
 			return;
 		}
 		have_answer = true;
-	}
-	else {
+	} else {
 		if (!current_lookup->trace_root_sigchase) {
 			result = dns_message_firstname(msg,
 						       DNS_SECTION_AUTHORITY);
@@ -4245,8 +4219,7 @@ sigchase_td(dns_message_t * msg)
 				       " in authority section:");
 				dns_name_print(name, stdout);
 				printf("\n");
-			}
-			else {
+			} else {
 				printf("no response and no delegation in "
 				       "authority section but a reference"
 				       " to: ");
@@ -4254,17 +4227,16 @@ sigchase_td(dns_message_t * msg)
 				printf("\n");
 				error_message = msg;
 			}
-		}
-		else {
+		} else {
 			printf(";; NO ANSWERS: %s\n",
 			       isc_result_totext(result));
-			dns_name_free(&chase_name, mctx);
+			free_name(&chase_name, mctx);
 			clean_trustedkey();
 			return;
 		}
 	}
 
-   
+
 	if (have_answer) {
 		chase_rdataset
 			= chase_scanname_section(msg, &chase_name,
@@ -4316,8 +4288,7 @@ sigchase_td(dns_message_t * msg)
 						      chase_keyrdataset,
 						      chase_sigkeyrdataset,
 						      mctx);
-		} 
-		else {
+		} else {
 			INSIST(chase_dsrdataset != NULL);
 			INSIST(chase_sigdsrdataset != NULL);
 			result = sigchase_verify_ds(&chase_current_name,
@@ -4325,13 +4296,12 @@ sigchase_td(dns_message_t * msg)
 						    chase_dsrdataset,
 						    mctx);
 		}
-      
+
 		if (result != ISC_R_SUCCESS) {
 			printf("\n;; chain of trust can't be validated:"
 			       " FAILED\n\n");
 			goto cleanandgo;
-		}
-		else {
+		} else {
 			chase_dsrdataset = NULL;
 			chase_sigdsrdataset = NULL;
 		}
@@ -4353,9 +4323,8 @@ sigchase_td(dns_message_t * msg)
 				       " FAILED\n\n");
 				goto cleanandgo;
 			}
-	 
-		}
-		else {
+
+		} else {
 			result = advanced_rrsearch(&chase_sigrdataset,
 						   &chase_authority_name,
 						   dns_rdatatype_rrsig,
@@ -4379,20 +4348,19 @@ sigchase_td(dns_message_t * msg)
 			chase_sigrdataset = NULL;
 			have_response = ISC_FALSE;
 			have_delegation_ns = ISC_FALSE;
-	  
+	
 			dns_name_init(&tmp_name, NULL);
 			result = child_of_zone(&chase_name, &chase_current_name,
 					       &tmp_name);
 			if (dns_name_dynamic(&chase_authority_name))
-				dns_name_free( &chase_authority_name, mctx);
+				free_name(&chase_authority_name, mctx);
 			dup_name(&tmp_name, &chase_authority_name, mctx);
 			printf(";; and we try to continue chain of trust"
 			       " validation of the zone: ");
 			dns_name_print(&chase_authority_name, stdout);
 			printf("\n");
 			have_delegation_ns = ISC_TRUE;
-		}
-		else {
+		} else {
 			if (have_response)
 				goto finalstep;
 			else
@@ -4416,7 +4384,7 @@ sigchase_td(dns_message_t * msg)
 			return;
 		}
 		INSIST(chase_nsrdataset != NULL);
-  
+
 		result = advanced_rrsearch(&chase_dsrdataset,
 					   &chase_authority_name,
 					   dns_rdatatype_ds,
@@ -4459,8 +4427,8 @@ sigchase_td(dns_message_t * msg)
 		}
 		chase_keyrdataset = NULL;
 		chase_sigkeyrdataset = NULL;
-    
- 
+
+
 		prepare_lookup(&chase_authority_name);
 	
 		have_response = ISC_FALSE;
@@ -4468,24 +4436,24 @@ sigchase_td(dns_message_t * msg)
 		delegation_follow = ISC_TRUE;
 		error_message = NULL;
 		dup_name(&chase_authority_name, &chase_current_name, mctx);
-		dns_name_free(&chase_authority_name, mctx);
+		free_name(&chase_authority_name, mctx);
 		return;
 	}
 
-  
+
 	if (error_message != NULL) {
-		dns_rdataset_t * rdataset;
-		dns_rdataset_t * sigrdataset;
-		dns_name_t       rdata_name;
-		isc_result_t     ret = ISC_R_FAILURE;
+		dns_rdataset_t *rdataset;
+		dns_rdataset_t *sigrdataset;
+		dns_name_t rdata_name;
+		isc_result_t ret = ISC_R_FAILURE;
 
 		dns_name_init(&rdata_name, NULL);
 		result = prove_nx(error_message, &chase_name,
 				  current_lookup->rdclass_sigchase,
 				  current_lookup->rdtype_sigchase, &rdata_name,
 				  &rdataset, &sigrdataset);
-		if (&rdata_name == NULL || rdataset == NULL ||
-		    sigrdataset == NULL) {
+		if (rdataset == NULL || sigrdataset == NULL ||
+		    dns_name_countlabels(&rdata_name) == 0) {
 			printf("\n;; Impossible to verify the non-existence,"
 			       " the NSEC RRset can't be validated:"
 			       " FAILED\n\n");
@@ -4495,18 +4463,17 @@ sigchase_td(dns_message_t * msg)
 					  chase_keyrdataset,
 					  sigrdataset, mctx);
 		if (ret != ISC_R_SUCCESS) {
-			dns_name_free(&rdata_name, mctx);
+			free_name(&rdata_name, mctx);
 			printf("\n;; Impossible to verify the NSEC RR to prove"
 			       " the non-existence : FAILED\n\n");
 			goto cleanandgo;
 		}
-		dns_name_free(&rdata_name, mctx);
+		free_name(&rdata_name, mctx);
 		if (result != ISC_R_SUCCESS) {
 			printf("\n;; Impossible to verify the non-existence:"
 			       " FAILED\n\n");
 			goto cleanandgo;
-		}
-		else {
+		} else {
 			printf("\n;; OK the query doesn't have response but"
 			       " we have validate this fact : SUCCESS\n\n");
 			goto cleanandgo;
@@ -4516,9 +4483,9 @@ sigchase_td(dns_message_t * msg)
  cleanandgo:
 	printf(";; cleanandgo \n");
 	if (dns_name_dynamic(&chase_current_name))
-		dns_name_free(&chase_current_name, mctx);
+		free_name(&chase_current_name, mctx);
 	if (dns_name_dynamic(&chase_authority_name))
-		dns_name_free(&chase_authority_name, mctx);
+		free_name(&chase_authority_name, mctx);
 	clean_trustedkey();
 	return;
 
@@ -4547,8 +4514,7 @@ sigchase_td(dns_message_t * msg)
 		  printf("\n");
 		*/
 		goto cleanandgo;
-	}
-	else {
+	} else {
 		printf("\n;; The Answer:\n");
 		print_rdataset(&chase_name , chase_rdataset, mctx);
 
@@ -4558,7 +4524,7 @@ sigchase_td(dns_message_t * msg)
 	}
 }
 
-#endif 
+#endif
 
 
 #if DIG_SIGCHASE_BU
@@ -4575,12 +4541,10 @@ getneededrr(dns_message_t *msg)
 	if ((result = dns_message_firstname(msg, DNS_SECTION_ANSWER))
 	    != ISC_R_SUCCESS) {
 		printf(";; NO ANSWERS: %s\n", isc_result_totext(result));
-    
-		if (chase_name.ndata == NULL) {
-			return ISC_R_ADDRNOTAVAIL;
-		}
-	}
-	else {
+
+		if (chase_name.ndata == NULL)
+			return (ISC_R_ADDRNOTAVAIL);
+	} else {
 		dns_message_currentname(msg, DNS_SECTION_ANSWER, &name);
 	}
 
@@ -4591,7 +4555,7 @@ getneededrr(dns_message_t *msg)
 					   dns_rdatatype_any, &true);
 		if (result != ISC_R_SUCCESS) {
 			printf("\n;; No Answers: Validation FAILED\n\n");
-			return ISC_R_NOTFOUND;
+			return (ISC_R_NOTFOUND);
 		}
 		dup_name(name, &chase_name, mctx);
 		printf(";; RRset to chase:\n");
@@ -4609,18 +4573,18 @@ getneededrr(dns_message_t *msg)
 			printf("\n;; RRSIG is missing for continue validation:"
 			       " FAILED\n\n");
 			if (dns_name_dynamic(&chase_name))
-				dns_name_free(&chase_name, mctx);
-			return ISC_R_NOTFOUND;
+				free_name(&chase_name, mctx);
+			return (ISC_R_NOTFOUND);
 		}
 		if (result == ISC_R_NOTFOUND) {
-			return(ISC_R_NOTFOUND);
+			return (ISC_R_NOTFOUND);
 		}
 		printf("\n;; RRSIG of the RRset to chase:\n");
 		print_rdataset(&chase_name, chase_sigrdataset, mctx);
 	}
 	INSIST(chase_sigrdataset != NULL);
 
- 
+
 	/* first find the DNSKEY name */
 	result = dns_rdataset_first(chase_sigrdataset);
 	check_result(result, "empty RRSIG dataset");
@@ -4631,7 +4595,7 @@ getneededrr(dns_message_t *msg)
 	dup_name(&siginfo.signer, &chase_signame, mctx);
 	dns_rdata_freestruct(&siginfo);
 	dns_rdata_reset(&sigrdata);
- 
+
 	/* Do we have a key?  */
 	if (chase_keyrdataset == NULL) {
 		result = advanced_rrsearch(&chase_keyrdataset,
@@ -4642,14 +4606,14 @@ getneededrr(dns_message_t *msg)
 		if (result == ISC_R_FAILURE) {
 			printf("\n;; DNSKEY is missing to continue validation:"
 			       " FAILED\n\n");
-			dns_name_free(&chase_signame, mctx);
+			free_name(&chase_signame, mctx);
 			if (dns_name_dynamic(&chase_name))
-				dns_name_free(&chase_name, mctx);
-			return ISC_R_NOTFOUND;
+				free_name(&chase_name, mctx);
+			return (ISC_R_NOTFOUND);
 		}
 		if (result == ISC_R_NOTFOUND) {
-			dns_name_free(&chase_signame, mctx);
-			return(ISC_R_NOTFOUND);
+			free_name(&chase_signame, mctx);
+			return (ISC_R_NOTFOUND);
 		}
 		printf("\n;; DNSKEYset that signs the RRset to chase:\n");
 		print_rdataset(&chase_signame, chase_keyrdataset, mctx);
@@ -4665,14 +4629,14 @@ getneededrr(dns_message_t *msg)
 		if (result == ISC_R_FAILURE) {
 			printf("\n;; RRSIG for DNSKEY  is missing  to continue"
 			       " validation : FAILED\n\n");
-			dns_name_free(&chase_signame, mctx);
+			free_name(&chase_signame, mctx);
 			if (dns_name_dynamic(&chase_name))
-				dns_name_free(&chase_name, mctx);
-			return ISC_R_NOTFOUND;
+				free_name(&chase_name, mctx);
+			return (ISC_R_NOTFOUND);
 		}
 		if (result == ISC_R_NOTFOUND) {
-			dns_name_free(&chase_signame, mctx);
-			return(ISC_R_NOTFOUND);
+			free_name(&chase_signame, mctx);
+			return (ISC_R_NOTFOUND);
 		}
 		printf("\n;; RRSIG of the DNSKEYset that signs the "
 		       "RRset to chase:\n");
@@ -4692,15 +4656,15 @@ getneededrr(dns_message_t *msg)
 			printf("\n");
 		}
 		if (result == ISC_R_NOTFOUND) {
-			dns_name_free(&chase_signame, mctx);
-			return(ISC_R_NOTFOUND);
+			free_name(&chase_signame, mctx);
+			return (ISC_R_NOTFOUND);
 		}
 		if (chase_dsrdataset != NULL) {
 			printf("\n;; DSset of the DNSKEYset\n");
 			print_rdataset(&chase_signame, chase_dsrdataset, mctx);
 		}
 	}
- 
+
 	if (chase_dsrdataset != NULL) {
 		/*
 		 * if there is no RRSIG of DS,
@@ -4718,14 +4682,13 @@ getneededrr(dns_message_t *msg)
 			 * because the DNSKEY could be a Trusted Key.
 			 */
 			chase_dsrdataset = NULL;
-		}
-		else {
+		} else {
 			printf("\n;; RRSIG of the DSset of the DNSKEYset\n");
 			print_rdataset(&chase_signame, chase_sigdsrdataset,
 				       mctx);
 		}
 	}
-	return(1);
+	return (1);
 }
 
 
@@ -4744,28 +4707,29 @@ sigchase_bu(dns_message_t *msg)
 		}
 	}
 
-  
+
 	ret = getneededrr(msg);
 	if (ret == ISC_R_NOTFOUND)
 		return;
 
 	if (ret == ISC_R_ADDRNOTAVAIL) {
 		/* We have no response */
-		dns_rdataset_t * rdataset;
-		dns_rdataset_t * sigrdataset;
-		dns_name_t       rdata_name;
-		dns_name_t       query_name;
+		dns_rdataset_t *rdataset;
+		dns_rdataset_t *sigrdataset;
+		dns_name_t rdata_name;
+		dns_name_t query_name;
 
 
 		dns_name_init(&query_name, NULL);
+		dns_name_init(&rdata_name, NULL);
 		nameFromString(current_lookup->textname, &query_name);
-   
+
 		result = prove_nx(msg, &query_name, current_lookup->rdclass,
 				  current_lookup->rdtype, &rdata_name,
 				  &rdataset, &sigrdataset);
-		dns_name_free(&query_name, mctx);
-		if (&rdata_name == NULL || rdataset == NULL ||
-		    sigrdataset == NULL) {
+		free_name(&query_name, mctx);
+		if (rdataset == NULL || sigrdataset == NULL ||
+		    dns_name_countlabels(&rdata_name) == 0) {
 			printf("\n;; Impossible to verify the Non-existence,"
 			       " the NSEC RRset can't be validated: "
 			       "FAILED\n\n");
@@ -4783,7 +4747,7 @@ sigchase_bu(dns_message_t *msg)
 		       " Now we want validate this NSEC\n");
 	
 		dup_name(&rdata_name, &chase_name, mctx);
-		dns_name_free(&rdata_name, mctx);
+		free_name(&rdata_name, mctx);
 		chase_rdataset =  rdataset;
 		chase_sigrdataset = sigrdataset;
 		chase_keyrdataset = NULL;
@@ -4798,7 +4762,7 @@ sigchase_bu(dns_message_t *msg)
 		clean_trustedkey();
 		return;
 	}
-  
+
 
 	printf("\n\n\n;; WE HAVE MATERIAL, WE NOW DO VALIDATION\n");
 
@@ -4806,8 +4770,8 @@ sigchase_bu(dns_message_t *msg)
 				     chase_keyrdataset,
 				     chase_sigrdataset, mctx);
 	if (result != ISC_R_SUCCESS) {
-		dns_name_free(&chase_name, mctx);
-		dns_name_free(&chase_signame, mctx);
+		free_name(&chase_name, mctx);
+		free_name(&chase_signame, mctx);
 		printf(";; No DNSKEY is valid to check the RRSIG"
 		       " of the RRset: FAILED\n");
 		clean_trustedkey();
@@ -4818,8 +4782,8 @@ sigchase_bu(dns_message_t *msg)
 	result = contains_trusted_key(&chase_signame, chase_keyrdataset,
 				      chase_sigkeyrdataset, mctx);
 	if (result ==  ISC_R_SUCCESS) {
-		dns_name_free(&chase_name, mctx);
-		dns_name_free(&chase_signame, mctx);
+		free_name(&chase_name, mctx);
+		free_name(&chase_signame, mctx);
 		printf("\n;; Ok this DNSKEY is a Trusted Key,"
 		       " DNSSEC validation is ok: SUCCESS\n\n");
 		clean_trustedkey();
@@ -4829,8 +4793,8 @@ sigchase_bu(dns_message_t *msg)
 	printf(";; Now, we are going to validate this DNSKEY by the DS\n");
 
 	if (chase_dsrdataset == NULL) {
-		dns_name_free(&chase_name, mctx);
-		dns_name_free(&chase_signame, mctx);
+		free_name(&chase_name, mctx);
+		free_name(&chase_signame, mctx);
 		printf(";; the DNSKEY isn't trusted-key and there isn't"
 		       " DS to validate the DNSKEY: FAILED\n");
 		clean_trustedkey();
@@ -4840,21 +4804,20 @@ sigchase_bu(dns_message_t *msg)
 	result =  sigchase_verify_ds(&chase_signame, chase_keyrdataset,
 				     chase_dsrdataset, mctx);
 	if (result !=  ISC_R_SUCCESS) {
-		dns_name_free(&chase_signame, mctx);
-		dns_name_free(&chase_name, mctx);
+		free_name(&chase_signame, mctx);
+		free_name(&chase_name, mctx);
 		printf(";; ERROR no DS validates a DNSKEY in the"
 		       " DNSKEY RRset: FAILED\n");
 		clean_trustedkey();
 		return;
-	} 
-	else
+	} else
 		printf(";; OK this DNSKEY (validated by the DS) validates"
 		       " the RRset of the DNSKEYs, thus the DNSKEY validates"
 		       " the RRset\n");
 	INSIST(chase_sigdsrdataset != NULL);
 
 	dup_name(&chase_signame, &chase_name, mctx);
-	dns_name_free(&chase_signame, mctx);
+	free_name(&chase_signame, mctx);
 	chase_rdataset = chase_dsrdataset;
 	chase_sigrdataset = chase_sigdsrdataset;
 	chase_keyrdataset = NULL;
@@ -4863,7 +4826,7 @@ sigchase_bu(dns_message_t *msg)
 	chase_sigdsrdataset = NULL;
 	chase_siglookedup = chase_keylookedup = ISC_FALSE;
 	chase_dslookedup = chase_sigdslookedup = ISC_FALSE;
- 
+
 	printf(";; Now, we want to validate the DS :  recursive call\n");
 	sigchase(msg);
 	return;
@@ -4871,8 +4834,7 @@ sigchase_bu(dns_message_t *msg)
 #endif
 
 void
-sigchase(dns_message_t * msg)
-{
+sigchase(dns_message_t *msg) {
 #if DIG_SIGCHASE_TD
 	if (current_lookup->do_topdown) {
 		sigchase_td(msg);
@@ -4888,12 +4850,12 @@ sigchase(dns_message_t * msg)
 
 /*
  * return 1  if name1  <  name2
- *        0  if name1  == name2
- *        -1 if name1  >  name2
+ *	  0  if name1  == name2
+ *	  -1 if name1  >  name2
  *    and -2 if problem
  */
 int
-inf_name(dns_name_t * name1, dns_name_t * name2)
+inf_name(dns_name_t *name1, dns_name_t *name2)
 {
 	dns_label_t  label1;
 	dns_label_t  label2;
@@ -4916,19 +4878,19 @@ inf_name(dns_name_t * name1, dns_name_t * name2)
 		dns_name_getlabel(name1, nblabel1 -1  - i, &label1);
 		dns_name_getlabel(name2, nblabel2 -1  - i, &label2);
 		if ((ret = isc_region_compare(&label1, &label2)) != 0) {
-			if (ret <0 )
-				return -1;
-			else if (ret >0 )
-				return 1;
+			if (ret < 0)
+				return (-1);
+			else if (ret > 0)
+				return (1);
 		}
 	}
 	if (nblabel1 == nblabel2)
-		return 0;
+		return (0);
 
 	if (nblabel1 < nblabel2)
-		return -1;
+		return (-1);
 	else
-		return 1;
+		return (1);
 }
 
 /**
@@ -4940,24 +4902,24 @@ isc_result_t
 prove_nx_domain(dns_message_t *msg,
 		dns_name_t *name,
 		dns_name_t *rdata_name,
-		dns_rdataset_t ** rdataset,
+		dns_rdataset_t **rdataset,
 		dns_rdataset_t **sigrdataset)
 {
-	isc_result_t      ret = ISC_R_FAILURE;
-	isc_result_t      result = ISC_R_NOTFOUND;
-	dns_rdataset_t  * nsecset = NULL;
-	dns_rdataset_t  * signsecset = NULL ;
-	dns_rdata_t       nsec = DNS_RDATA_INIT;
-	dns_name_t      * nsecname;
-	dns_rdata_nsec_t  nsecstruct;
-  
+	isc_result_t ret = ISC_R_FAILURE;
+	isc_result_t result = ISC_R_NOTFOUND;
+	dns_rdataset_t *nsecset = NULL;
+	dns_rdataset_t *signsecset = NULL ;
+	dns_rdata_t nsec = DNS_RDATA_INIT;
+	dns_name_t *nsecname;
+	dns_rdata_nsec_t nsecstruct;
+
 	if ((result = dns_message_firstname(msg, DNS_SECTION_AUTHORITY))
 	    != ISC_R_SUCCESS) {
 		printf(";; nothing in authority section : impossible to"
 		       " validate the non-existence : FAILED\n");
-		return(ISC_R_FAILURE);
+		return (ISC_R_FAILURE);
 	}
- 
+
 	do {
 		nsecname = NULL;
 		dns_message_currentname(msg, DNS_SECTION_AUTHORITY, &nsecname);
@@ -4985,7 +4947,7 @@ prove_nx_domain(dns_message_t *msg,
 				printf(";; no RRSIG NSEC in authority section:"
 				       " impossible to validate the "
 				       "non-existence: FAILED\n");
-				return(ISC_R_FAILURE);
+				return (ISC_R_FAILURE);
 			}
 
 			ret = dns_rdata_tostruct(&nsec, &nsecstruct, NULL);
@@ -4999,8 +4961,8 @@ prove_nx_domain(dns_message_t *msg,
 				*rdataset = nsecset;
 				*sigrdataset = signsecset;
 				dup_name(nsecname, rdata_name, mctx);
-		
-				return ISC_R_SUCCESS;
+
+				return (ISC_R_SUCCESS);
 			}
 
 			dns_rdata_freestruct(&nsecstruct);
@@ -5011,7 +4973,7 @@ prove_nx_domain(dns_message_t *msg,
 	*rdataset = NULL;
 	*sigrdataset =  NULL;
 	rdata_name = NULL;
-	return(ISC_R_FAILURE);
+	return (ISC_R_FAILURE);
 }
 
 /**
@@ -5022,27 +4984,22 @@ prove_nx_domain(dns_message_t *msg,
  *
  */
 isc_result_t
-prove_nx_type(dns_message_t * msg,
-	      dns_name_t *name,
-	      dns_rdataset_t *nsecset,
-	      dns_rdataclass_t class,
-	      dns_rdatatype_t type,
-	      dns_name_t * rdata_name,
-	      dns_rdataset_t ** rdataset,
-	      dns_rdataset_t ** sigrdataset)
+prove_nx_type(dns_message_t *msg, dns_name_t *name, dns_rdataset_t *nsecset,
+	      dns_rdataclass_t class, dns_rdatatype_t type,
+	      dns_name_t *rdata_name, dns_rdataset_t **rdataset,
+	      dns_rdataset_t **sigrdataset)
 {
-	isc_result_t       ret;
-	dns_rdataset_t   * signsecset;
-	dns_rdata_t        nsec = DNS_RDATA_INIT;
+	isc_result_t ret;
+	dns_rdataset_t *signsecset;
+	dns_rdata_t nsec = DNS_RDATA_INIT;
 
 	UNUSED(class);
-	UNUSED(rdata_name);
-  
+
 	ret = dns_rdataset_first(nsecset);
 	check_result(ret,"dns_rdataset_first");
 	
 	dns_rdataset_current(nsecset, &nsec);
-  
+
 	ret = dns_nsec_typepresent(&nsec, type);
 	if (ret == ISC_R_SUCCESS)
 		printf("OK the NSEC said that the type doesn't exist \n");
@@ -5053,8 +5010,9 @@ prove_nx_type(dns_message_t * msg,
 					    DNS_SECTION_AUTHORITY);
 	if (signsecset == NULL) {
 		printf("There isn't RRSIG NSEC for the zone \n");
-		return ISC_R_FAILURE;
+		return (ISC_R_FAILURE);
 	}
+	dup_name(name, rdata_name, mctx);
 	*rdataset = nsecset;
 	*sigrdataset = signsecset;
 
@@ -5068,17 +5026,12 @@ prove_nx_type(dns_message_t * msg,
  *
  */
 isc_result_t
-prove_nx(dns_message_t * msg,
-	 dns_name_t * name,
-	 dns_rdataclass_t class,
-	 dns_rdatatype_t type,
-	 dns_name_t * rdata_name,
-	 dns_rdataset_t ** rdataset,
-	 dns_rdataset_t ** sigrdataset)
+prove_nx(dns_message_t *msg, dns_name_t *name, dns_rdataclass_t class,
+	 dns_rdatatype_t type, dns_name_t *rdata_name,
+	 dns_rdataset_t **rdataset, dns_rdataset_t **sigrdataset)
 {
 	isc_result_t ret;
-	dns_rdataset_t * nsecset = NULL;
-  
+	dns_rdataset_t *nsecset = NULL;
 
 	printf("We want to prove the non-existance of a type of rdata %d"
 	       " or of the zone: \n", type);
@@ -5087,7 +5040,7 @@ prove_nx(dns_message_t * msg,
 	    != ISC_R_SUCCESS) {
 		printf(";; nothing in authority section : impossible to"
 		       " validate the non-existence : FAILED\n");
-		return(ISC_R_FAILURE);
+		return (ISC_R_FAILURE);
 	}
 
 	nsecset = chase_scanname_section(msg, name, dns_rdatatype_nsec,
@@ -5100,18 +5053,17 @@ prove_nx(dns_message_t * msg,
 				    sigrdataset);
 		if (ret != ISC_R_SUCCESS) {
 			printf("prove_nx: ERROR type exist\n");
-			return(ret);
+			return (ret);
 		} else {
 			printf("prove_nx: OK type does not exist\n");
-			return(ISC_R_SUCCESS);
+			return (ISC_R_SUCCESS);
 		}
 	} else {
 		printf("there is no NSEC for this zone: validating "
 		       "that the zone doesn't exist\n");
 		ret = prove_nx_domain(msg, name, rdata_name,
 				      rdataset, sigrdataset);
-		return(ret);
+		return (ret);
 	}
-	/* Never get here */ 
 }
 #endif

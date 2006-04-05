@@ -52,8 +52,3 @@ install:: isc-config.sh installdirs
 tags:
 	rm -f TAGS
 	find lib bin -name "*.[ch]" -print | @ETAGS@ -
-
-check: test
-
-test:
-	(cd bin/tests && ${MAKE} ${MAKEDEFS} test)
