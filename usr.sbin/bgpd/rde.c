@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.202 2006/03/22 10:18:49 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.203 2006/04/05 13:24:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1432,17 +1432,22 @@ rde_reflector(struct rde_peer *peer, struct rde_aspath *asp)
 {
 	struct attr	*a;
 	u_int16_t	 len;
+	u_int32_t	 id;
 
 	/* check for originator id if eq router_id drop */
 	if ((a = attr_optget(asp, ATTR_ORIGINATOR_ID)) != NULL) {
 		if (memcmp(&conf->bgpid, a->data, sizeof(conf->bgpid)) == 0)
 			/* this is coming from myself */
 			return (0);
-	} else if ((conf->flags & BGPD_FLAG_REFLECTOR) &&
-	    attr_optadd(asp, ATTR_OPTIONAL, ATTR_ORIGINATOR_ID,
-	    peer->conf.ebgp == 0 ? &peer->remote_bgpid : &conf->bgpid,
-	    sizeof(u_int32_t)) == -1)
-		fatalx("attr_optadd failed but impossible");
+	} else if (conf->flags & BGPD_FLAG_REFLECTOR) {
+		if (peer->conf.ebgp == 0)
+			id = htonl(peer->remote_bgpid);
+		else
+			id = conf->bgpid;
+		if (attr_optadd(asp, ATTR_OPTIONAL, ATTR_ORIGINATOR_ID,
+		    &id, sizeof(u_int32_t)) == -1)
+			fatalx("attr_optadd failed but impossible");
+	}
 
 	/* check for own id in the cluster list */
 	if (conf->flags & BGPD_FLAG_REFLECTOR) {
@@ -2281,14 +2286,14 @@ network_init(struct network_head *net_l)
 	reloadtime = time(NULL);
 	bzero(&peerself, sizeof(peerself));
 	peerself.state = PEER_UP;
-	peerself.remote_bgpid = conf->bgpid;
+	peerself.remote_bgpid = ntohl(conf->bgpid);
 	id.s_addr = conf->bgpid;
 	peerself.conf.remote_as = conf->as;
 	snprintf(peerself.conf.descr, sizeof(peerself.conf.descr),
 	    "LOCAL: ID %s", inet_ntoa(id));
 	bzero(&peerdynamic, sizeof(peerdynamic));
 	peerdynamic.state = PEER_UP;
-	peerdynamic.remote_bgpid = conf->bgpid;
+	peerdynamic.remote_bgpid = ntohl(conf->bgpid);
 	peerdynamic.conf.remote_as = conf->as;
 	snprintf(peerdynamic.conf.descr, sizeof(peerdynamic.conf.descr),
 	    "LOCAL: ID %s", inet_ntoa(id));

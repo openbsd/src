@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.91 2006/04/04 12:03:26 henning Exp $ */
+/*	$OpenBSD: rde.h,v 1.92 2006/04/05 13:24:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -63,7 +63,7 @@ struct rde_peer {
 	struct capabilities		 capa_received;
 	u_int32_t			 prefix_cnt; /* # of prefixes */
 	u_int32_t			 adjrib_cnt; /* # of p. in Adj-RIB-In */
-	u_int32_t			 remote_bgpid;
+	u_int32_t			 remote_bgpid; /* host byte order! */
 	u_int32_t			 up_pcnt;
 	u_int32_t			 up_acnt;
 	u_int32_t			 up_nlricnt;
