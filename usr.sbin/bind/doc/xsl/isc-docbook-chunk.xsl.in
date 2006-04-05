@@ -1,0 +1,65 @@
+<!--
+ - Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<!-- $ISC: isc-docbook-chunk.xsl.in,v 1.3.4.2 2005/05/13 01:22:35 marka Exp $ -->
+
+<!-- ISC customizations for Docbook-XSL chunked HTML generator --> 
+
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+
+  <!-- Import the Docbook HTML stuff -->
+  <xsl:import href="@XSLT_DOCBOOK_CHUNK_HTML@"/>
+
+  <!-- Readable HTML output, please -->
+  <xsl:output indent="yes"/>
+  <xsl:param name="chunker.output.indent" select="'yes'"/>
+
+  <!-- Chunk at section level, please -->
+  <xsl:param name="chunk.section.depth" select="0"/>
+
+  <!-- Generate chunk filenames from id attribute values -->
+  <xsl:param name="use.id.as.filename" select="1"/>
+
+  <!-- ANSI C function prototypes, please -->
+  <xsl:param name="funcsynopsis.style">ansi</xsl:param>
+
+  <!-- Use ranges when constructing copyrights -->
+  <xsl:param name="make.year.ranges" select="1"/>
+
+  <!-- Include our copyright generator -->
+  <xsl:include href="copyright.xsl"/>
+
+  <!-- Set comment convention for this output format -->
+  <xsl:param name="isc.copyright.leader"> - </xsl:param>
+
+  <!-- Override Docbook template to insert copyright -->
+  <xsl:template name="user.preroot">
+    <xsl:comment>
+      <xsl:text>&#10;</xsl:text>
+      <xsl:value-of select="$isc.copyright"/>
+    </xsl:comment>
+    <xsl:text>&#10;</xsl:text>
+    <xsl:comment> &#36;Id&#36; </xsl:comment>
+    <xsl:text>&#10;</xsl:text>
+  </xsl:template>
+
+</xsl:stylesheet>
+
+<!-- 
+  - Local variables:
+  - mode: sgml
+  - End:
+ -->
