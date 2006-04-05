@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplugd.c,v 1.3 2004/05/30 16:35:22 grange Exp $	*/
+/*	$OpenBSD: hotplugd.c,v 1.4 2006/04/05 08:10:29 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -161,6 +161,7 @@ exec_script(const char *file, int class, char *name)
 	}
 }
 
+/* ARGSUSED */
 void
 sigquit(int signum)
 {
