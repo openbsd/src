@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1050 2006/04/02 05:12:02 brad Exp 
+ *	OpenBSD: pcidevs,v 1.1051 2006/04/06 16:49:29 marco Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1271,6 +1271,7 @@
 #define	PCI_PRODUCT_DELL_PERC_3DI_3_SUB	0x0106		/* PERC 3/Di */
 #define	PCI_PRODUCT_DELL_PERC_3DI_3_SUB2	0x011b		/* PERC 3/Di */
 #define	PCI_PRODUCT_DELL_PERC_3DI_3_SUB3	0x0121		/* PERC 3/Di */
+#define	PCI_PRODUCT_DELL_PERC5I	0x0015		/* PERC 5/i */
 
 /* Delta Electronics products */
 #define	PCI_PRODUCT_DELTA_RHINEII	0x1320		/* RhineII */
@@ -2356,6 +2357,7 @@
 #define	PCI_PRODUCT_SYMBIOS_61C102	0x0901		/* 61C102 */
 #define	PCI_PRODUCT_SYMBIOS_63C815	0x1000		/* 63C815 */
 #define	PCI_PRODUCT_SYMBIOS_MEGARAID	0x1960		/* MegaRAID */
+#define	PCI_PRODUCT_SYMBIOS_MSAS	0x0411		/* MegaRAID SAS 1064R */
 
 /* Packet Engines products */
 #define	PCI_PRODUCT_SYMBIOS_PE_GNIC	0x0702		/* Packet Engines G-NIC */
