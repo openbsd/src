@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.141 2006/04/05 14:07:24 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.142 2006/04/06 04:16:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1040,7 +1040,7 @@ void
 ami_complete(struct ami_softc *sc, struct ami_ccb *ccb, int timeout)
 {
 	struct ami_iocmd mbox;
-	int i = 0, done = 0;
+	int i = 0, j, done = 0;
 	int s;
 
 	s = splbio();
@@ -1065,8 +1065,8 @@ ami_complete(struct ami_softc *sc, struct ami_ccb *ccb, int timeout)
 	i = 0;
 	while (i < timeout) {
 		if (sc->sc_done(sc, &mbox) != 0) {
-			for (i = 0; i < mbox.acc_nstat; i++) {
-				int ready = mbox.acc_cmplidl[i];
+			for (j = 0; j < mbox.acc_nstat; j++) {
+				int ready = mbox.acc_cmplidl[j];
 				ami_done(sc, ready);
 				if (ready == ccb->ccb_cmd.acc_id)
 					done = 1;
