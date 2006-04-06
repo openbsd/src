@@ -360,6 +360,10 @@ struct cpp_options {
 
   char put_out_comments;
 
+  /* Nonzero means pass comments inside macros */
+
+  char pass_through_comments;
+
   /* Nonzero means process the ANSI trigraph sequences.  */
 
   char trigraphs;

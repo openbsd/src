@@ -430,20 +430,34 @@ collect_expansion (pfile, buf, limit, nargs, arglist)
 		/* No comments inside strings.  */
 		break;
 	      if (*p == '*')
-		{
-		  /* If we find a comment that wasn't removed by
-		     handle_directive, this must be -traditional.
-		     So replace the comment with nothing at all.  */
-		  exp_p--;
-		  p += 1;
-		  while (p < limit && !(p[-2] == '*' && p[-1] == '/'))
-		    p++;
+	        if (CPP_OPTIONS(pfile)->pass_through_comments)
+		  {
+		    /* If we find a comment that wasn't removed by
+		       handle_directive, this must be -traditional.
+		       So replace the comment with nothing at all.  */
+		    *exp_p++ = *p++;
+		    while (p < limit && !(p[-2] == '*' && p[-1] == '/'))
+		      *exp_p++ = *p++;
 #if 0
-		  /* Mark this as a concatenation-point,
-		     as if it had been ##.  */
-		  concat = p;
+		    /* Mark this as a concatenation-point,
+		       as if it had been ##.  */
+		    concat = p;
 #endif
-		}
+		  }
+		else
+		  {
+		    /* If we find a comment that wasn't removed by
+		       handle_directive, this must be -traditional.
+		       So replace the comment with nothing at all.  */
+		    exp_p--;
+		    while (p < limit && !(p[-2] == '*' && p[-1] == '/'))
+		      p++;
+#if 0
+		    /* Mark this as a concatenation-point,
+		       as if it had been ##.  */
+		    concat = p;
+#endif
+		  }
 	      break;
 	    }
 	}
@@ -775,7 +789,9 @@ macarg (pfile, rest_args)
   int paren = 0;
   enum cpp_token token;
   char save_put_out_comments = CPP_OPTIONS (pfile)->put_out_comments;
+  char save_pass_through_comments = CPP_OPTIONS (pfile)->pass_through_comments;
   CPP_OPTIONS (pfile)->put_out_comments = 0;
+  CPP_OPTIONS (pfile)->pass_through_comments = 0;
 
   /* Try to parse as much of the argument as exists at this
      input stack level.  */
@@ -817,6 +833,7 @@ macarg (pfile, rest_args)
     }
 
 done:
+  CPP_OPTIONS (pfile)->pass_through_comments = save_pass_through_comments;
   CPP_OPTIONS (pfile)->put_out_comments = save_put_out_comments;
   CPP_OPTIONS (pfile)->no_line_commands--;
   pfile->no_macro_expand--;

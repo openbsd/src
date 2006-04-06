@@ -1630,6 +1630,8 @@ cpp_handle_option (pfile, argc, argv)
       
       case 'C':
 	opts->put_out_comments = 1;
+	if (argv[i][2] == 'C')
+	  opts->pass_through_comments = 1;
 	break;
       
       case 'E':			/* -E comes from cc -E; ignore it.  */
