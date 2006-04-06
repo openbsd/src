@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.59 2006/02/20 19:39:11 miod Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.60 2006/04/06 21:43:28 mickey Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -338,14 +338,14 @@ exit1(struct proc *p, int rv, int flags)
 	limfree(p->p_limit);
 	p->p_limit = NULL;
 
-	/* This process no longer needs to hold the kernel lock. */
-	KERNEL_PROC_UNLOCK(p);
-
 	/*
 	 * If emulation has process exit hook, call it now.
 	 */
 	if (p->p_emul->e_proc_exit)
 		(*p->p_emul->e_proc_exit)(p);
+
+	/* This process no longer needs to hold the kernel lock. */
+	KERNEL_PROC_UNLOCK(p);
 
 	/*
 	 * Finally, call machine-dependent code to switch to a new
