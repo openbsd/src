@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1050 2006/04/02 05:12:02 brad Exp $
+$OpenBSD: pcidevs,v 1.1051 2006/04/06 16:49:29 marco Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1266,6 +1266,7 @@ product DELL PERC_3DI_SUB3	0x00d9	PERC 3/Di
 product DELL PERC_3DI_3_SUB	0x0106	PERC 3/Di
 product DELL PERC_3DI_3_SUB2	0x011b	PERC 3/Di
 product DELL PERC_3DI_3_SUB3	0x0121	PERC 3/Di
+product DELL PERC5I		0x0015	PERC 5/i
 
 /* Delta Electronics products */
 product DELTA RHINEII		0x1320	RhineII
@@ -2351,6 +2352,7 @@ product SYMBIOS YELLOWFIN_2	0x0702	Yellowfin
 product SYMBIOS 61C102		0x0901	61C102
 product SYMBIOS 63C815		0x1000	63C815
 product SYMBIOS MEGARAID	0x1960	MegaRAID
+product SYMBIOS MSAS		0x0411	MegaRAID SAS 1064R
 
 /* Packet Engines products */
 product SYMBIOS PE_GNIC		0x0702	Packet Engines G-NIC
