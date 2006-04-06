@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.36 2006/03/30 06:11:03 ray Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.37 2006/04/06 10:04:40 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -81,12 +81,12 @@ rlog_main(int argc, char **argv)
 		case 'q':
 			verbose = 0;
 			break;
+		case 'R':
+			Rflag = 1;
+			break;
 		case 'r':
 			rflag = 1;
 			revisions = rcs_optarg;
-			break;
-		case 'R':
-			Rflag = 1;
 			break;
 		case 's':
 			slist = rcs_optarg;
@@ -355,20 +355,18 @@ rlog_rev_select(void)
 		if (revrange->argv[0] == NULL)
 			/* should not happen */
 			fatal("invalid revision range: %s", revargv->argv[i]);
-		else if (revrange->argv[1] == NULL) {
+		else if (revrange->argv[1] == NULL)
 			lstr = rstr = revrange->argv[0];
-		} else {
+		else {
 			if (revrange->argv[2] != NULL)
 				fatal("invalid revision range: %s", 
 					revargv->argv[i]);
 			lstr = revrange->argv[0];
 			rstr = revrange->argv[1];
-			if (strcmp(lstr, "") == 0) {
+			if (strcmp(lstr, "") == 0)
 				lstr = NULL;
-			}
-			if (strcmp(rstr, "") == 0) {
+			if (strcmp(rstr, "") == 0)
 				rstr = NULL;
-			}
 		}
 
 		if (lstr == NULL)
@@ -380,7 +378,8 @@ rlog_rev_select(void)
 			if (rcsnum_aton(rstr, &ep, &rnum) == 0 || (*ep != '\0'))
 				fatal("invalid revision: %s", rstr);
 		} else
-			(void)rcsnum_cpy(file->rf_head, &rnum, 0);
+			rcsnum_cpy(file->rf_head, &rnum, 0);
+
 		cvs_argv_destroy(revrange);
 
 		TAILQ_FOREACH(rdp, &file->rf_delta, rd_list)
