@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.32 2006/04/05 01:38:56 ray Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.33 2006/04/06 12:12:07 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include "rcs.h"
 
 
-static int	 rcsnum_setsize(RCSNUM *, u_int);
+static void	 rcsnum_setsize(RCSNUM *, u_int);
 static char	*rcsnum_itoa(u_int16_t, char *, size_t);
 
 
@@ -385,18 +385,14 @@ rcsnum_brtorev(const RCSNUM *brnum)
 	}
 
 	num = rcsnum_alloc();
-	if (rcsnum_setsize(num, brnum->rn_len + 1) < 0) {
-		rcsnum_free(num);
-		return (NULL);
-	}
-
+	rcsnum_setsize(num, brnum->rn_len + 1);
 	rcsnum_cpy(brnum, num, brnum->rn_len);
 	num->rn_id[num->rn_len++] = 1;
 
 	return (num);
 }
 
-static int
+static void
 rcsnum_setsize(RCSNUM *num, u_int len)
 {
 	void *tmp;
@@ -404,5 +400,4 @@ rcsnum_setsize(RCSNUM *num, u_int len)
 	tmp = xrealloc(num->rn_id, len, sizeof(*(num->rn_id)));
 	num->rn_id = tmp;
 	num->rn_len = len;
-	return (0);
 }
