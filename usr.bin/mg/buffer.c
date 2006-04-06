@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.55 2006/04/03 00:40:56 deraadt Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.56 2006/04/06 05:28:17 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -6,9 +6,11 @@
  *		Buffer handling.
  */
 
+#include <libgen.h>
+#include <stdarg.h>
+
 #include "def.h"
 #include "kbd.h"		/* needed for modes */
-#include <stdarg.h>
 
 static struct buffer  *makelist(void);
 
@@ -588,6 +590,31 @@ showbuffer(struct buffer *bp, struct mgwin *wp, int flags)
 				break;
 			}
 	wp->w_flag |= WFMODE | flags;
+	return (TRUE);
+}
+
+/*
+ * Augment a buffer name with a number, if necessary
+ *
+ * If more than one file of the same basename() is open,
+ * the additional buffers are named "file<2>", "file<3>", and
+ * so forth.  This function adjusts a buffer name to
+ * include the number, if necessary.
+ */
+int
+baugname(char *bn, const char *fn, size_t bs)
+{
+	int 	 count;
+	size_t	 remain, len;
+
+	len = strlcpy(bn, basename(fn), bs);
+	if (len >= bs)
+		return (FALSE);
+
+	remain = bs - len;
+	for (count = 2; bfind(bn, FALSE) != NULL; count++)
+		snprintf(bn + len, remain, "<%d>", count);
+
 	return (TRUE);
 }
 

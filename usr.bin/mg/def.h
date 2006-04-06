@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.84 2006/04/03 02:43:22 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.85 2006/04/06 05:28:17 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -386,6 +386,7 @@ int		 addlinef(struct buffer *, char *, ...);
 int		 anycb(int);
 int		 bclear(struct buffer *);
 int		 showbuffer(struct buffer *, struct mgwin *, int);
+int		 baugname(char *, const char *, size_t);
 struct mgwin   *popbuf(struct buffer *);
 int		 bufferinsert(int, int);
 int		 usebuffer(int, int);

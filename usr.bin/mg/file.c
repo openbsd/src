@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.52 2006/04/03 05:03:34 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.53 2006/04/06 05:28:17 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -183,8 +183,6 @@ findbuffer(char *fn)
 {
 	struct buffer	*bp;
 	char		bname[NBUFN], fname[NBUFN];
-	unsigned int	count;
-	size_t		i, remain;
 
 	if (strlcpy(fname, fn, sizeof(fname)) >= sizeof(fname)) {
 		ewprintf("filename too long");
@@ -195,14 +193,12 @@ findbuffer(char *fn)
 		if (strcmp(bp->b_fname, fname) == 0)
 			return (bp);
 	}
-	i = strlcpy(bname, basename(fname), sizeof(bname));
-	if (i >= sizeof(bname))
+	/* Not found. Create a new one, adjusting name first */
+	if (baugname(bname, fname, sizeof(bname)) == FALSE)
 		return (NULL);
-	remain = sizeof(bname) - i;
-	for (count = 2; bfind(bname, FALSE) != NULL; count++)
-		snprintf(&bname[i], remain, "<%d>", count);
 
-	return (bfind(bname, TRUE));
+	bp = bfind(bname, TRUE);
+	return (bp);
 }
 
 /*
@@ -475,8 +471,8 @@ int
 filewrite(int f, int n)
 {
 	int	 s;
-	char	 fname[NFILEN];
-	char	*adjfname, *p, *bufp;
+	char	 fname[NFILEN], bn[NBUFN];
+	char	*adjfname, *bufp;
 
 	if ((bufp = eread("Write file: ", fname, NFILEN,
 	    EFNEW | EFCR | EFFILE)) == NULL)
@@ -490,14 +486,13 @@ filewrite(int f, int n)
 	/* old attributes are no longer current */
 	bzero(&curbp->b_fi, sizeof(curbp->b_fi));
 	if ((s = writeout(curbp, adjfname)) == TRUE) {
-		(void)strlcpy(curbp->b_fname, adjfname, sizeof curbp->b_fname);
-		p = strrchr(curbp->b_fname, '/');
-		if (p)
-			p++;
-		else
-			p = curbp->b_fname;
+		(void)strlcpy(curbp->b_fname, adjfname, sizeof(curbp->b_fname));
 		free(curbp->b_bname);
-		curbp->b_bname = strdup(p);
+		if (baugname(bn, basename(curbp->b_fname), sizeof(bn))
+		    == FALSE)
+			return (FALSE);
+		if ((curbp->b_bname = strdup(bn)) == NULL)
+			return (FALSE);
 		curbp->b_flag &= ~(BFBAK | BFCHG);
 		upmodes(curbp);
 	}
