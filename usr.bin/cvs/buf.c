@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.42 2006/04/05 01:38:55 ray Exp $	*/
+/*	$OpenBSD: buf.c,v 1.43 2006/04/06 16:48:34 xsa Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -164,27 +164,6 @@ cvs_buf_empty(BUF *b)
 }
 
 /*
- * cvs_buf_copy()
- *
- * Copy the first <len> bytes of data in the buffer <b> starting at offset
- * <off> in the destination buffer <dst>, which can accept up to <len> bytes.
- * Returns the number of bytes successfully copied, or -1 on failure.
- */
-ssize_t
-cvs_buf_copy(BUF *b, size_t off, void *dst, size_t len)
-{
-	size_t rc;
-
-	if (off > b->cb_len)
-		fatal("cvs_buf_copy failed");
-
-	rc = MIN(len, (b->cb_len - off));
-	memcpy(dst, b->cb_buf + off, rc);
-
-	return (ssize_t)rc;
-}
-
-/*
  * cvs_buf_set()
  *
  * Set the contents of the buffer <b> at offset <off> to the first <len>
@@ -321,20 +300,6 @@ cvs_buf_len(BUF *b)
 }
 
 /*
- * cvs_buf_peek()
- *
- * Peek at the contents of the buffer <b> at offset <off>.
- */
-const void *
-cvs_buf_peek(BUF *b, size_t off)
-{
-	if (off >= b->cb_len)
-		return (NULL);
-
-	return (b->cb_buf + off);
-}
-
-/*
  * cvs_buf_write_fd()
  *
  * Write the contents of the buffer <b> to the specified <fd>
@@ -444,3 +409,40 @@ cvs_buf_grow(BUF *b, size_t len)
 
 	return (ssize_t)b->cb_size;
 }
+
+#if !defined(RCSPROG)
+/*
+ * cvs_buf_copy()
+ *
+ * Copy the first <len> bytes of data in the buffer <b> starting at offset
+ * <off> in the destination buffer <dst>, which can accept up to <len> bytes.
+ * Returns the number of bytes successfully copied, or -1 on failure.
+ */
+ssize_t
+cvs_buf_copy(BUF *b, size_t off, void *dst, size_t len)
+{
+	size_t rc;
+
+	if (off > b->cb_len)
+		fatal("cvs_buf_copy failed");
+
+	rc = MIN(len, (b->cb_len - off));
+	memcpy(dst, b->cb_buf + off, rc);
+
+	return (ssize_t)rc;
+}
+
+/*
+ * cvs_buf_peek()
+ *
+ * Peek at the contents of the buffer <b> at offset <off>.
+ */
+const void *
+cvs_buf_peek(BUF *b, size_t off)
+{
+	if (off >= b->cb_len)
+		return (NULL);
+
+	return (b->cb_buf + off);
+}
+#endif	/* RCSPROG */

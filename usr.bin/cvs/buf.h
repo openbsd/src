@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.13 2006/03/25 21:29:59 ray Exp $	*/
+/*	$OpenBSD: buf.h,v 1.14 2006/04/06 16:48:34 xsa Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -51,17 +51,19 @@ void		 cvs_buf_free(BUF *);
 void		*cvs_buf_release(BUF *);
 u_char		 cvs_buf_getc(BUF *, size_t);
 void		 cvs_buf_empty(BUF *);
-ssize_t		 cvs_buf_copy(BUF *, size_t, void *, size_t);
 ssize_t		 cvs_buf_set(BUF *, const void *, size_t, size_t);
 ssize_t		 cvs_buf_append(BUF *, const void *, size_t);
 ssize_t		 cvs_buf_fappend(BUF *, const char *, ...)
 		     __attribute__((format(printf, 2, 3)));
 void		 cvs_buf_putc(BUF *, int);
 size_t		 cvs_buf_len(BUF *);
-const void	*cvs_buf_peek(BUF *, size_t);
 int		 cvs_buf_write_fd(BUF *, int);
 int		 cvs_buf_write(BUF *, const char *, mode_t);
 void		 cvs_buf_write_stmp(BUF *, char *, mode_t);
+#if !defined(RCSPROG)
+ssize_t		 cvs_buf_copy(BUF *, size_t, void *, size_t);
+const void	*cvs_buf_peek(BUF *, size_t);
+#endif	/* RCSPROG */
 
 #define cvs_buf_get(b)	cvs_buf_peek(b, 0)
 
