@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.26 2004/07/09 18:49:57 deraadt Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.27 2006/04/06 21:36:17 henning Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: reboot.c,v 1.26 2004/07/09 18:49:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: reboot.c,v 1.27 2006/04/06 21:36:17 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -172,7 +172,7 @@ main(int argc, char *argv[])
 	if (access(_PATH_RC, R_OK) != -1) {
 		pid_t pid;
 		struct termios t;
-		int fd;
+		int fd, status;
 
 		switch ((pid = fork())) {
 		case -1:
@@ -199,7 +199,10 @@ main(int argc, char *argv[])
 			execl(_PATH_BSHELL, "sh", _PATH_RC, "shutdown", (char *)NULL);
 			_exit(1);
 		default:
-			waitpid(pid, NULL, 0);
+			/* rc exits 2 if powerdown=YES in rc.shutdown */
+			waitpid(pid, &status, 0);
+			if (WIFEXITED(status) && WEXITSTATUS(status) == 2)
+				howto |= RB_POWERDOWN;
 		}
 	}
 
