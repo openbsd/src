@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.1 2006/04/06 20:22:53 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.2 2006/04/06 22:44:24 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -56,6 +56,64 @@ struct scsi_device mfi_dev = {
 	NULL, NULL, NULL, NULL
 };
 
+int	mfi_transition_firmware(struct mfi_softc *);
+
+int
+mfi_transition_firmware(struct mfi_softc *sc)
+{
+#if 0
+	int32_t fw_state, cur_state;
+	int max_wait, i;
+
+	/* fw_state = MFI_READ4(sc, MFI_OMSG0) & MFI_STATE_MASK; */
+	while (fw_state != MFI_STATE_READY) {
+#ifdef MFI_DEBUG
+		printf("Waiting for firmware to become ready\n");
+#endif /* MFI_DEBUG */
+		cur_state = fw_state;
+		switch (fw_state) {
+		case MFI_STATE_FAULT:
+			device_printf(sc->mfi_dev, "Firmware fault\n");
+			return (ENXIO);
+		case MFI_STATE_WAIT_HANDSHAKE:
+			MFI_WRITE4(sc, MFI_IDB, MFI_INIT_CLEAR_HANDSHAKE);
+			max_wait = 2;
+			break;
+		case MFI_STATE_OPERATIONAL:
+			MFI_WRITE4(sc, MFI_IDB, MFI_INIT_READY);
+			max_wait = 10;
+			break;
+		case MFI_STATE_UNDEFINED:
+		case MFI_STATE_BB_INIT:
+			max_wait = 2;
+			break;
+		case MFI_STATE_FW_INIT:
+		case MFI_STATE_DEVICE_SCAN:
+		case MFI_STATE_FLUSH_CACHE:
+			max_wait = 20;
+			break;
+		default:
+			device_printf(sc->mfi_dev,"Unknown firmware state %d\n",
+			    fw_state);
+			return (ENXIO);
+		}
+		for (i = 0; i < (max_wait * 10); i++) {
+			fw_state = MFI_READ4(sc, MFI_OMSG0) & MFI_STATE_MASK;
+			if (fw_state == cur_state)
+				DELAY(100000);
+			else
+				break;
+		}
+		if (fw_state == cur_state) {
+			device_printf(sc->mfi_dev, "firmware stuck in state "
+			    "%#x\n", fw_state);
+			return (ENXIO);
+		}
+	}
+#endif
+	return (0);
+}
+
 void
 mfiminphys(struct buf *bp)
 {
@@ -68,6 +126,9 @@ mfiminphys(struct buf *bp)
 int
 mfi_attach(struct mfi_softc *sc)
 {
+	if (mfi_transition_firmware(sc))
+		return (1);
+
 	return (1);
 }
 
