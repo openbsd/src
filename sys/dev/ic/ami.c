@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.142 2006/04/06 04:16:35 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.143 2006/04/06 10:16:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1235,8 +1235,8 @@ ami_done_flush(struct ami_softc *sc, struct ami_ccb *ccb)
 	struct ami_iocmd *cmd = &ccb->ccb_cmd;
 	int s;
 
+	timeout_del(&xs->stimeout);
 	if (ccb->ccb_flags & AMI_CCB_F_ERR) {
-		timeout_del(&xs->stimeout);
 		xs->error = XS_DRIVER_STUFFUP;
 		xs->resid = 0;
 		xs->flags |= ITSDONE;
