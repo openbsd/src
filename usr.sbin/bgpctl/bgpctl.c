@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.102 2006/03/22 10:25:49 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.103 2006/04/06 12:33:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1129,6 +1129,7 @@ show_rib_detail_msg(struct imsg *imsg, int nodescr)
 			show_community(data, alen);
 			printf("\n");
 		}
+		break;
 	case IMSG_CTL_END:
 		printf("\n");
 		return (1);
