@@ -1,4 +1,4 @@
-/*	 $OpenBSD: uthread_machdep.c,v 1.4 2004/02/21 22:55:20 deraadt Exp $	*/
+/*	 $OpenBSD: uthread_machdep.c,v 1.5 2006/04/06 15:27:08 kurt Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain. */
 
 /*
@@ -66,7 +66,7 @@ _thread_machdep_init(struct _machdep_state* statep, void *base, int len,
 	struct frame *f;
 
 	/* Locate the initial frame, aligned at the top of the stack */
-	f = (struct frame *)(((int)base + len - sizeof *f) & ~ALIGNBYTES);
+	f = (struct frame *)(((int)base + len - sizeof *f) & ~15);
 
 	/* Set up initial frame */
 	f->fr_esp = (int)&f->fr_edi;
@@ -81,6 +81,15 @@ _thread_machdep_init(struct _machdep_state* statep, void *base, int len,
 	statep->esp = (int)f;
 
 	_thread_machdep_save_float_state(statep);
+	/*
+	 * The current thread float state is saved into the new thread stack.
+	 * Later pthread_create calls _thread_kern_sched which saves the current
+	 * thread float state again into its own stack. However all float state
+	 * saves must be balanced with a restore on i386 due to the fninit().
+	 * Restore the current thread float state here so that the next save
+	 * gets the correct state. 
+	 */
+	_thread_machdep_restore_float_state(statep);
 }
 
 /*
@@ -101,6 +110,7 @@ _thread_machdep_save_float_state(struct _machdep_state *ms)
 	union savefpu *addr = &ms->fpreg;
 
 	if (_thread_machdep_osfxsr()) {
+		fwait();
 		fxsave(&addr->sv_xmm);
 		fninit();
 	} else
@@ -113,9 +123,10 @@ _thread_machdep_restore_float_state(struct _machdep_state *ms)
 {
 	union savefpu *addr = &ms->fpreg;
 
-	if (_thread_machdep_osfxsr())
+	if (_thread_machdep_osfxsr()) {
 		fxrstor(&addr->sv_xmm);
-	else
+		fwait();
+	} else
 		frstor(&addr->sv_87);
-		
+
 }
