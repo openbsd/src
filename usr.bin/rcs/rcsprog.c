@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.92 2006/04/01 06:19:29 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.93 2006/04/06 10:13:00 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -29,7 +29,7 @@
 #include "rcsprog.h"
 
 #define RCS_CMD_MAXARG	128
-#define RCSPROG_OPTSTRING	"A:a:b::c:e::hik:Ll::m:Mn:N:qt::TUu::Vx::z:"
+#define RCSPROG_OPTSTRING	"A:a:b::c:e::hik:Ll::m:Mn:N:qt::TUu::Vx::z::"
 
 #define DESC_PROMPT	"enter description, terminated with single '.' "      \
 			"or end of file:\nNOTE: This is NOT the log message!" \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.69 2006/03/30 23:06:25 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.70 2006/04/06 10:13:00 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -28,7 +28,7 @@
 
 #include "rcsprog.h"
 
-#define CO_OPTSTRING	"d:f::I::k:l::M::p::q::r::s:Tu::Vw::x::z:"
+#define CO_OPTSTRING	"d:f::I::k:l::M::p::q::r::s:Tu::Vw::x::z::"
 
 static void	checkout_err_nobranch(RCSFILE *, const char *, const char *,
     const char *, int);

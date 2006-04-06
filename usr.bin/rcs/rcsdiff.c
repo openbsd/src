@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.42 2006/03/30 23:19:20 joris Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.43 2006/04/06 10:13:00 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -48,7 +48,7 @@ rcsdiff_main(int argc, char **argv)
 
 	strlcpy(diffargs, "diff", sizeof(diffargs));
 
-	while ((ch = rcs_getopt(argc, argv, "ck:nqr:TuVx::z:")) != -1) {
+	while ((ch = rcs_getopt(argc, argv, "ck:nqr:TuVx::z::")) != -1) {
 		switch (ch) {
 		case 'c':
 			strlcat(diffargs, " -c", sizeof(diffargs));

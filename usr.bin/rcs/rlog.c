@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.37 2006/04/06 10:04:40 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.38 2006/04/06 10:13:00 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -34,7 +34,7 @@ static void	rlog_file(const char *, const char *);
 static void	rlog_rev_print(struct rcs_delta *);
 static u_int	rlog_rev_select(void);
 
-#define RLOG_OPTSTRING	"hLl::NqRr::s:TtVw::x::z:"
+#define RLOG_OPTSTRING	"hLl::NqRr::s:TtVw::x::z::"
 #define REVSEP		"----------------------------"
 #define REVEND \
  "============================================================================="
