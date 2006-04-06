@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.495 2006/03/14 11:09:43 djm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.496 2006/04/06 21:54:56 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2214,8 +2214,8 @@ ipspec		: ANY				{ $$ = NULL; }
 		| '{' host_list '}'		{ $$ = $2; }
 		;
 
-host_list	: xhost				{ $$ = $1; }
-		| host_list comma xhost		{
+host_list	: ipspec			{ $$ = $1; }
+		| host_list comma ipspec	{
 			if ($3 == NULL)
 				$$ = $1;
 			else if ($1 == NULL)
