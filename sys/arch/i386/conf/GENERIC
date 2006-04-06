@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.479 2006/03/29 14:10:52 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.480 2006/04/06 20:25:13 marco Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -59,7 +59,7 @@ isa0	at gscpcib?
 eisa0	at mainbus0
 pci*	at mainbus0
 
-option		ACPIVERBOSE
+#option		ACPIVERBOSE
 #option		ACPI_ENABLE
 
 #acpi0		at mainbus?
@@ -335,6 +335,8 @@ scsibus* at twe?
 #scsibus* at aac?
 ami*	at pci?			# AMI MegaRAID controllers
 scsibus* at ami?
+#mfi*	at pci?			# LSI MegaRAID SAS controllers
+#scsibus* at mfi?
 cac*	at pci?			# Compaq Smart ARRAY [234]* RAID controllers
 cac*	at eisa?
 scsibus* at cac?

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.201 2006/03/16 21:32:34 matthieu Exp $
+#	$OpenBSD: files.pci,v 1.202 2006/04/06 20:25:14 marco Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -77,6 +77,10 @@ file	dev/pci/twe_pci.c		twe_pci
 # AMI MegaRAID Express x00/Elite 1500/Express 1x00 RAID Controllers
 attach	ami at pci with ami_pci
 file	dev/pci/ami_pci.c		ami_pci
+
+# LSI MegaRAID SAS RAID controllers
+attach	mfi at pci with mfi_pci
+file	dev/pci/mfi_pci.c		mfi_pci
 
 # I2O
 attach	iop at pci with iop_pci

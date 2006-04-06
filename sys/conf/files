@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.368 2006/03/21 18:40:54 reyk Exp $
+#	$OpenBSD: files,v 1.369 2006/04/06 20:25:14 marco Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -171,6 +171,10 @@ file	dev/ic/ciss.c			ciss
 # AMI MegaRAID controllers
 device	ami: scsi
 file	dev/ic/ami.c			ami
+
+# LSI MegaRAID SAS controllers
+device	mfi: scsi
+file	dev/ic/mfi.c			mfi
 
 # Qlogic ISP 10x0 SCSI Controllers
 device	isp: scsi
