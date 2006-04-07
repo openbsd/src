@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.14 2006/04/07 01:04:49 brad Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.15 2006/04/07 01:07:41 brad Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -61,7 +61,15 @@ obsd_pci_io_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 	pcireg_t address, mask;
 	int s;
 
-	if (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))
+	if (reg < PCI_MAPREG_START ||
+#if 0
+	    /*
+	     * Can't do this check; some devices have mapping registers
+	     * way out in left field.
+	     */
+	    reg >= PCI_MAPREG_END ||
+#endif
+	    (reg & 3))
 		panic("pci_io_find: bad request");
 
 	/*
@@ -115,7 +123,15 @@ obsd_pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 
 	is64bit = (PCI_MAPREG_MEM_TYPE(type) == PCI_MAPREG_MEM_TYPE_64BIT);
 
-	if (reg < PCI_MAPREG_START || reg >= PCI_MAPREG_END || (reg & 3))
+	if (reg < PCI_MAPREG_START ||
+#if 0
+	    /*
+	     * Can't do this check; some devices have mapping registers
+	     * way out in left field.
+	     */
+	    reg >= PCI_MAPREG_END ||
+#endif
+	    (reg & 3))
 		panic("pci_mem_find: bad request");
 
 	if (is64bit && (reg + 4) >= PCI_MAPREG_END)
