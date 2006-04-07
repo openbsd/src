@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.89 2006/04/01 11:24:47 pedro Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.90 2006/04/07 11:11:38 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -67,6 +67,7 @@
 int ffs_sbupdate(struct ufsmount *, int);
 int ffs_reload_vnode(struct vnode *, void *);
 int ffs_sync_vnode(struct vnode *, void *);
+int ffs_validate(struct fs *);
 
 void ffs1_compat_read(struct fs *, struct ufsmount *, ufs2_daddr_t);
 void ffs1_compat_write(struct fs *, struct ufsmount *);
@@ -612,6 +613,32 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 }
 
 /*
+ * Checks if a super block is sane enough to be mounted.
+ */
+int
+ffs_validate(struct fs *fsp)
+{
+#ifdef FFS2
+	if (fsp->fs_magic != FS_UFS2_MAGIC && fsp->fs_magic != FS_UFS1_MAGIC)
+		return (0); /* Invalid magic */
+#else
+	if (fsp->fs_magic != FS_UFS1_MAGIC)
+		return (0); /* Invalid magic */
+#endif /* FFS2 */
+
+	if ((u_int)fsp->fs_bsize > MAXBSIZE)
+		return (0); /* Invalid block size */
+
+	if ((u_int)fsp->fs_bsize < sizeof(struct fs))
+		return (0); /* Invalid block size */
+
+	if ((u_int)fsp->fs_sbsize > SBSIZE)
+		return (0); /* Invalid super block size */
+
+	return (1); /* Super block is okay */
+}
+
+/*
  * Possible locations for the super-block.
  */
 const int sbtry[] = SBLOCKSEARCH;
@@ -696,11 +723,8 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		if (fs->fs_magic == FS_UFS1_MAGIC && sbloc == SBLOCK_UFS2)
 			continue;
 
-		if ((fs->fs_magic == FS_UFS1_MAGIC) &&
-		    ((u_int)fs->fs_bsize <= MAXBSIZE) &&
-		    ((u_int)fs->fs_bsize >= sizeof(struct fs)) &&
-		    ((u_int)fs->fs_sbsize <= SBSIZE))
-			break; /* Validate super-block */
+		if (ffs_validate(fs))
+			break; /* Super block validated */
 	}
 
 	if (sbtry[i] == -1) {
