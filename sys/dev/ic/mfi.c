@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.5 2006/04/07 17:02:15 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.6 2006/04/07 20:05:31 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -66,7 +66,63 @@ struct scsi_device mfi_dev = {
 	NULL, NULL, NULL, NULL
 };
 
-int	mfi_transition_firmware(struct mfi_softc *);
+struct mfi_mem	*mfi_allocmem(struct mfi_softc *, size_t);
+void		mfi_freemem(struct mfi_softc *, struct mfi_mem *);
+int		mfi_transition_firmware(struct mfi_softc *);
+
+struct mfi_mem *
+mfi_allocmem(struct mfi_softc *sc, size_t size)
+{
+	struct mfi_mem		*mm;
+	int			nsegs;
+
+	mm = malloc(sizeof(struct mfi_mem), M_DEVBUF, M_NOWAIT);
+	if (mm == NULL)
+		return (NULL);
+
+	memset(mm, 0, sizeof(struct mfi_mem));
+	mm->am_size = size;
+
+	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &mm->am_map) != 0)
+		goto amfree; 
+
+	if (bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &mm->am_seg, 1,
+	    &nsegs, BUS_DMA_NOWAIT) != 0)
+		goto destroy;
+
+	if (bus_dmamem_map(sc->sc_dmat, &mm->am_seg, nsegs, size, &mm->am_kva,
+	    BUS_DMA_NOWAIT) != 0)
+		goto free;
+
+	if (bus_dmamap_load(sc->sc_dmat, mm->am_map, mm->am_kva, size, NULL,
+	    BUS_DMA_NOWAIT) != 0)
+		goto unmap;
+
+	memset(mm->am_kva, 0, size);
+	return (mm);
+
+unmap:
+	bus_dmamem_unmap(sc->sc_dmat, mm->am_kva, size);
+free:
+	bus_dmamem_free(sc->sc_dmat, &mm->am_seg, 1);
+destroy:
+	bus_dmamap_destroy(sc->sc_dmat, mm->am_map);
+amfree:
+	free(mm, M_DEVBUF);
+
+	return (NULL);
+}
+
+void
+mfi_freemem(struct mfi_softc *sc, struct mfi_mem *mm)
+{
+	bus_dmamap_unload(sc->sc_dmat, mm->am_map);
+	bus_dmamem_unmap(sc->sc_dmat, mm->am_kva, mm->am_size);
+	bus_dmamem_free(sc->sc_dmat, &mm->am_seg, 1);
+	bus_dmamap_destroy(sc->sc_dmat, mm->am_map);
+	free(mm, M_DEVBUF);
+}
 
 int
 mfi_transition_firmware(struct mfi_softc *sc)
@@ -143,8 +199,29 @@ mfiminphys(struct buf *bp)
 int
 mfi_attach(struct mfi_softc *sc)
 {
+	uint32_t	status;
+
 	if (mfi_transition_firmware(sc))
 		return (1);
+
+	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MFI_OMSG0);
+	/* XXX add barrier */
+	sc->sc_max_cmds = status & MFI_STATE_MAXCMD_MASK;
+	sc->sc_max_sgl = (status & MFI_STATE_MAXSGL_MASK) >> 16;
+	DNPRINTF(MFI_D_MISC, "%s: max commands: %u, max sgl: %u\n",
+	    DEVNAME(sc), sc->sc_max_cmds, sc->sc_max_sgl);
+
+	/* reply queue memory */
+	sc->sc_reply_q = mfi_allocmem(sc,
+	    sizeof(uint32_t) * (sc->sc_max_cmds + 1));
+	if (sc->sc_reply_q == NULL) {
+		printf("%s: unable to allocate reply queue memory\n",
+		    DEVNAME(sc));
+		return (1);
+	}
+
+	/* enable interrupts */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MFI_OMSK, 0x01);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.3 2006/04/07 16:28:07 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.4 2006/04/07 20:05:31 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -32,6 +32,17 @@ extern uint32_t			mfi_debug;
 #define DNPRINTF(n,x...)
 #endif
 
+struct mfi_mem {
+	bus_dmamap_t		am_map;
+	bus_dma_segment_t	am_seg;
+	size_t			am_size;
+	caddr_t			am_kva;
+};
+
+#define MFIMEM_MAP(_am)		((_am)->am_map)
+#define MFIMEM_DVA(_am)		((_am)->am_map->dm_segs[0].ds_addr)
+#define MFIMEM_KVA(_am)		((void *)(_am)->am_kva)
+
 struct mfi_softc {
 	struct device		sc_dev;
 	void			*sc_ih;
@@ -42,6 +53,13 @@ struct mfi_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
+
+	/* firmware determined max and totals */
+	uint32_t		sc_max_cmds;
+	uint32_t		sc_max_sgl;
+
+	/* reply queue */
+	struct mfi_mem		*sc_reply_q;
 };
 
 int	mfi_attach(struct mfi_softc *sc);
