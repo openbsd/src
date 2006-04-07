@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.1 2006/04/06 20:22:53 marco Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.2 2006/04/07 17:00:42 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -63,9 +63,7 @@ mfi_pci_find_device(void *aux) {
 	for (i = 0; mfi_pci_devices[i].mpd_vendor; i++) {
 		if (mfi_pci_devices[i].mpd_vendor == PCI_VENDOR(pa->pa_id) &&
 		    mfi_pci_devices[i].mpd_product == PCI_PRODUCT(pa->pa_id)) {
-#ifdef MFI_DEBUG
-		    	printf("mfi_pci_find_device: %i\n", i);
-#endif /* MFI_DEBUG */
+		    	DNPRINTF(MFI_D_MISC, "mfi_pci_find_device: %i\n", i);
 			return (i);
 		}
 	}
@@ -79,11 +77,10 @@ mfi_pci_match(struct device *parent, void *match, void *aux)
 	int			i;
 
 	if ((i = mfi_pci_find_device(aux)) != -1) {
-#ifdef MFI_DEBUG
-		printf("mfi_pci_match: vendor: %04x  product: %04x\n",
+		DNPRINTF(MFI_D_MISC,
+		    "mfi_pci_match: vendor: %04x  product: %04x\n",
 		    mfi_pci_devices[i].mpd_vendor,
 		    mfi_pci_devices[i].mpd_product);
-#endif /* MFI_DEBUG */
 
 		return (1);
 	}
@@ -131,6 +128,7 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s\n", intrstr);
 
 	if (mfi_attach(sc)) {
+		printf("%s: can't attach", DEVNAME(sc));
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 		sc->sc_ih = NULL;
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
