@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.1 2006/04/06 20:22:53 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.2 2006/04/07 16:10:34 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#define DEVNAME(_s)     ((_s)->sc_dev.dv_xname)
 
 struct mfi_softc {
 	struct device		sc_dev;
