@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.4 2006/04/07 16:28:07 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.5 2006/04/07 17:02:15 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -74,10 +74,12 @@ mfi_transition_firmware(struct mfi_softc *sc)
 	int32_t fw_state, cur_state;
 	int max_wait, i;
 
-	DNPRINTF(MFI_D_CMD, "%s: mfi_transition_mfi\n", DEVNAME(sc));
-
 	fw_state = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MFI_OMSG0) &
 	    MFI_STATE_MASK;
+
+	DNPRINTF(MFI_D_CMD, "%s: mfi_transition_mfi: %#x\n", DEVNAME(sc),
+	    fw_state);
+
 	while (fw_state != MFI_STATE_READY) {
 		DNPRINTF(MFI_D_MISC,
 		    "%s: waiting for firmware to become ready\n",
@@ -86,7 +88,7 @@ mfi_transition_firmware(struct mfi_softc *sc)
 		switch (fw_state) {
 		case MFI_STATE_FAULT:
 			printf("%s: firmware fault\n", DEVNAME(sc));
-			return (ENXIO);
+			return (1);
 		case MFI_STATE_WAIT_HANDSHAKE:
 			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			    MFI_IDB, MFI_INIT_CLEAR_HANDSHAKE);
@@ -109,7 +111,7 @@ mfi_transition_firmware(struct mfi_softc *sc)
 		default:
 			printf("%s: unknown firmware state %d\n",
 			    DEVNAME(sc), fw_state);
-			return (ENXIO);
+			return (1);
 		}
 		for (i = 0; i < (max_wait * 10); i++) {
 			fw_state = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
@@ -122,7 +124,7 @@ mfi_transition_firmware(struct mfi_softc *sc)
 		if (fw_state == cur_state) {
 			printf("%s: firmware stuck in state %#x\n", fw_state,
 			    DEVNAME(sc));
-			return (ENXIO);
+			return (1);
 		}
 	}
 
@@ -144,7 +146,7 @@ mfi_attach(struct mfi_softc *sc)
 	if (mfi_transition_firmware(sc))
 		return (1);
 
-	return (1);
+	return (0);
 }
 
 int
