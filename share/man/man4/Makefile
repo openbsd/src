@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.348 2006/03/26 20:19:54 grange Exp $
+#	$OpenBSD: Makefile,v 1.349 2006/04/07 22:53:21 jsg Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 acpi.4 acpihpet.4 acpitimer.4 \
 	adc.4 addcom.4 admcts.4 admlc.4 admtemp.4 \
@@ -33,8 +33,8 @@ MAN=	aac.4 ac97.4 acphy.4 acpi.4 acpihpet.4 acpitimer.4 \
 	pms.4 ppb.4 ppp.4 pppoe.4 pty.4 puc.4 qsphy.4 radio.4 raid.4 ral.4 \
 	random.4 ray.4 rd.4 re.4 rgephy.4 rl.4 rln.4 rlphy.4 route.4 rt.4 \
 	rtfps.4 rtii.4 rtw.4 safe.4 safte.4 san.4 sbus.4 scsi.4 sd.4 ses.4 \
-	sf.4 sf2r.4 sfr.4 siop.4 sis.4 sk.4 sl.4 sm.4 speaker.4 sppp.4 \
-	sqphy.4 ss.4 st.4 ste.4 stge.4 sti.4 stp.4 sv.4 \
+	sequencer.4 sf.4 sf2r.4 sfr.4 siop.4 sis.4 sk.4 sl.4 sm.4 \
+	speaker.4 sppp.4 sqphy.4 ss.4 st.4 ste.4 stge.4 sti.4 stp.4 sv.4 \
 	systrace.4 tb.4 tcic.4 tcp.4 termios.4 ti.4 tl.4 \
 	tlphy.4 tqphy.4 trm.4 trunk.4 tsl.4 tty.4 tun.4 twe.4 txp.4 \
 	txphy.4 uaudio.4 ubsa.4 ubsec.4 ubt.4 ucom.4 udav.4 udp.4 udsbr.4 \
@@ -66,6 +66,7 @@ MLINKS+=random.4 arandom.4
 MLINKS+=random.4 srandom.4 random.4 urandom.4 random.4 prandom.4
 MLINKS+=scsi.4 scsibus.4
 MLINKS+=sk.4 skc.4
+MLINKS+=sequencer.4 music.4
 MLINKS+=speaker.4 spkr.4
 MLINKS+=tty.4 cua.4
 MLINKS+=usb.4 uhub.4
