@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.93 2006/04/06 10:13:00 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.94 2006/04/07 12:54:40 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -113,25 +113,20 @@ rcs_get_mtime(const char *filename)
  * rcs_set_mtime()
  *
  * Set <filename> last modified time to <mtime> if it's not set to -1.
- * Returns 0 on success, or -1 on failure.
  */
-int
+void
 rcs_set_mtime(const char *filename, time_t mtime)
 {
 	static struct timeval tv[2];
 
 	if (mtime == -1)
-		return (0);
+		return;
 
 	tv[0].tv_sec = mtime;
 	tv[1].tv_sec = tv[0].tv_sec;
 
-	if (utimes(filename, tv) == -1) {
-		cvs_log(LP_ERRNO, "error setting utimes");
-		return (-1);
-	}
-
-	return (0);
+	if (utimes(filename, tv) == -1)
+		fatal("error setting utimes: %s", strerror(errno));
 }
 
 int
