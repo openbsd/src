@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.6 2006/04/07 20:05:31 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.7 2006/04/07 20:27:51 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -47,6 +47,7 @@ uint32_t	mfi_debug = 0
 		    | MFI_D_MISC
 /*		    | MFI_D_DMA */
 /*		    | MFI_D_IOCTL */
+/*		    | MFI_D_RW */
 		;
 #endif
 
@@ -66,9 +67,34 @@ struct scsi_device mfi_dev = {
 	NULL, NULL, NULL, NULL
 };
 
+u_int32_t	mfi_read(struct mfi_softc *, bus_size_t);
+void		mfi_write(struct mfi_softc *, bus_size_t, u_int32_t);
 struct mfi_mem	*mfi_allocmem(struct mfi_softc *, size_t);
 void		mfi_freemem(struct mfi_softc *, struct mfi_mem *);
 int		mfi_transition_firmware(struct mfi_softc *);
+
+u_int32_t
+mfi_read(struct mfi_softc *sc, bus_size_t r)
+{
+	u_int32_t rv;
+
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
+	    BUS_SPACE_BARRIER_READ);
+	rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, r);
+
+	DNPRINTF(MFI_D_RW, "ar 0x%x 0x08%x ", r, rv);
+	return (rv);
+}
+
+void
+mfi_write(struct mfi_softc *sc, bus_size_t r, u_int32_t v)
+{
+	DNPRINTF(MFI_D_RW, "mw 0x%x 0x%08x", r, v);
+
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, r, v);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+}
 
 struct mfi_mem *
 mfi_allocmem(struct mfi_softc *sc, size_t size)
@@ -130,8 +156,7 @@ mfi_transition_firmware(struct mfi_softc *sc)
 	int32_t fw_state, cur_state;
 	int max_wait, i;
 
-	fw_state = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MFI_OMSG0) &
-	    MFI_STATE_MASK;
+	fw_state = mfi_read(sc, MFI_OMSG0) & MFI_STATE_MASK;
 
 	DNPRINTF(MFI_D_CMD, "%s: mfi_transition_mfi: %#x\n", DEVNAME(sc),
 	    fw_state);
@@ -146,13 +171,11 @@ mfi_transition_firmware(struct mfi_softc *sc)
 			printf("%s: firmware fault\n", DEVNAME(sc));
 			return (1);
 		case MFI_STATE_WAIT_HANDSHAKE:
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			    MFI_IDB, MFI_INIT_CLEAR_HANDSHAKE);
+			mfi_write(sc, MFI_IDB, MFI_INIT_CLEAR_HANDSHAKE);
 			max_wait = 2;
 			break;
 		case MFI_STATE_OPERATIONAL:
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			    MFI_IDB, MFI_INIT_READY);
+			mfi_write(sc, MFI_IDB, MFI_INIT_READY);
 			max_wait = 10;
 			break;
 		case MFI_STATE_UNDEFINED:
@@ -170,8 +193,7 @@ mfi_transition_firmware(struct mfi_softc *sc)
 			return (1);
 		}
 		for (i = 0; i < (max_wait * 10); i++) {
-			fw_state = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			    MFI_OMSG0) & MFI_STATE_MASK;
+			fw_state = mfi_read(sc, MFI_OMSG0) & MFI_STATE_MASK;
 			if (fw_state == cur_state)
 				DELAY(100000);
 			else
@@ -204,8 +226,7 @@ mfi_attach(struct mfi_softc *sc)
 	if (mfi_transition_firmware(sc))
 		return (1);
 
-	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MFI_OMSG0);
-	/* XXX add barrier */
+	status = mfi_read(sc, MFI_OMSG0);
 	sc->sc_max_cmds = status & MFI_STATE_MAXCMD_MASK;
 	sc->sc_max_sgl = (status & MFI_STATE_MAXSGL_MASK) >> 16;
 	DNPRINTF(MFI_D_MISC, "%s: max commands: %u, max sgl: %u\n",
@@ -221,7 +242,7 @@ mfi_attach(struct mfi_softc *sc)
 	}
 
 	/* enable interrupts */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MFI_OMSK, 0x01);
+	mfi_write(sc, MFI_OMSK, 0x01);
 
 	return (0);
 }
