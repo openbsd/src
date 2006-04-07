@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.26 2006/04/02 00:48:35 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.27 2006/04/07 11:25:37 pedro Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: utilities.c,v 1.26 2006/04/02 00:48:35 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: utilities.c,v 1.27 2006/04/07 11:25:37 pedro Exp $";
 #endif
 #endif /* not lint */
 
@@ -256,6 +256,7 @@ ckfini(int markclean)
 		(void)close(fsreadfd);
 		return;
 	}
+	sblock.fs_flags &= ~FS_FLAGS_UPDATED; /* Force update on next mount */
 	flush(fswritefd, &sblk);
 	if (havesb && sblk.b_bno != SBOFF / dev_bsize &&
 	    !preen && reply("UPDATE STANDARD SUPERBLOCK")) {
