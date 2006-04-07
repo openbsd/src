@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.3 2006/04/07 16:11:21 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.4 2006/04/07 16:28:07 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -40,7 +40,15 @@
 #include <dev/biovar.h>
 #endif
 
-#define MFI_DEBUG
+#ifdef MFI_DEBUG
+uint32_t	mfi_debug = 0
+		    | MFI_D_CMD
+		    | MFI_D_INTR
+		    | MFI_D_MISC
+/*		    | MFI_D_DMA */
+/*		    | MFI_D_IOCTL */
+		;
+#endif
 
 struct cfdriver mfi_cd = {
 	NULL, "mfi", DV_DULL
@@ -66,17 +74,14 @@ mfi_transition_firmware(struct mfi_softc *sc)
 	int32_t fw_state, cur_state;
 	int max_wait, i;
 
-#ifdef MFI_DEBUG
-		printf("%s: mfi_transition_mfi\n", DEVNAME(sc));
-#endif /* MFI_DEBUG */
+	DNPRINTF(MFI_D_CMD, "%s: mfi_transition_mfi\n", DEVNAME(sc));
 
 	fw_state = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MFI_OMSG0) &
 	    MFI_STATE_MASK;
 	while (fw_state != MFI_STATE_READY) {
-#ifdef MFI_DEBUG
-		printf("%s: waiting for firmware to become ready\n",
+		DNPRINTF(MFI_D_MISC,
+		    "%s: waiting for firmware to become ready\n",
 		    DEVNAME(sc));
-#endif /* MFI_DEBUG */
 		cur_state = fw_state;
 		switch (fw_state) {
 		case MFI_STATE_FAULT:

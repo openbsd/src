@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.2 2006/04/07 16:10:34 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.3 2006/04/07 16:28:07 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -16,6 +16,21 @@
  */
 
 #define DEVNAME(_s)     ((_s)->sc_dev.dv_xname)
+
+#define MFI_DEBUG
+#ifdef MFI_DEBUG
+extern uint32_t			mfi_debug;
+#define DPRINTF(x...)		do { if (mfi_debug) printf(x); } while(0)
+#define DNPRINTF(n,x...)	do { if (mfi_debug & n) printf(x); } while(0)
+#define	MFI_D_CMD		0x0001
+#define	MFI_D_INTR		0x0002
+#define	MFI_D_MISC		0x0004
+#define	MFI_D_DMA		0x0008
+#define	MFI_D_IOCTL		0x0010
+#else
+#define DPRINTF(x...)
+#define DNPRINTF(n,x...)
+#endif
 
 struct mfi_softc {
 	struct device		sc_dev;
