@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.47 2006/03/22 00:36:03 jsg Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.48 2006/04/07 01:04:49 brad Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -182,6 +182,7 @@ struct pci_softc {
  * Configuration space access and utility functions.  (Note that most,
  * e.g. make_tag, conf_read, conf_write are declared by pci_machdep.h.)
  */
+int	pci_mapreg_probe(pci_chipset_tag_t, pcitag_t, int, pcireg_t *);
 pcireg_t pci_mapreg_type(pci_chipset_tag_t, pcitag_t, int);
 int	pci_mapreg_info(pci_chipset_tag_t, pcitag_t, int, pcireg_t,
 	    bus_addr_t *, bus_size_t *, int *);

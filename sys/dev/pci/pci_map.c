@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.13 2006/03/19 22:28:40 brad Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.14 2006/04/07 01:04:49 brad Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -236,17 +236,36 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t pcitag, int reg,
 				  cacheablep));
 }
 
+#define _PCI_MAPREG_TYPEBITS(reg) \
+	(PCI_MAPREG_TYPE(reg) == PCI_MAPREG_TYPE_IO ? \
+	reg & PCI_MAPREG_TYPE_MASK : \
+	reg & (PCI_MAPREG_TYPE_MASK|PCI_MAPREG_MEM_TYPE_MASK))
+
 pcireg_t
 pci_mapreg_type(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
-	pcireg_t rv;
+	return (_PCI_MAPREG_TYPEBITS(pci_conf_read(pc, tag, reg)));
+}
 
-	rv = pci_conf_read(pc, tag, reg);
-	if (PCI_MAPREG_TYPE(rv) == PCI_MAPREG_TYPE_IO)
-		rv &= PCI_MAPREG_TYPE_MASK;
-	else
-		rv &= PCI_MAPREG_TYPE_MASK|PCI_MAPREG_MEM_TYPE_MASK;
-	return (rv);
+int
+pci_mapreg_probe(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t *typep)
+{
+	pcireg_t address, mask;
+	int s;
+	
+	s = splhigh();
+	address = pci_conf_read(pc, tag, reg);
+	pci_conf_write(pc, tag, reg, 0xffffffff);
+	mask = pci_conf_read(pc, tag, reg);
+	pci_conf_write(pc, tag, reg, address);
+	splx(s);
+
+	if (mask == 0) /* unimplemented mapping register */
+		return (0);
+
+	if (typep)
+		*typep = _PCI_MAPREG_TYPEBITS(address);
+	return (1);
 }
 
 int
