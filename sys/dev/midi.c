@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.12 2004/09/22 22:17:44 deraadt Exp $	*/
+/*	$OpenBSD: midi.c,v 1.13 2006/04/07 22:41:32 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -47,6 +47,7 @@
 #include <dev/midi_if.h>
 #include <dev/audio_if.h>
 #include <dev/midivar.h>
+
 
 int     midiopen(dev_t, int, int, struct proc *);
 int     midiclose(dev_t, int, int, struct proc *);
@@ -223,34 +224,53 @@ midi_out_do(struct midi_softc *sc)
 {
 	struct midi_buffer *mb = &sc->outbuf;
 	unsigned 	    i, max;
-	unsigned	    data;
 	int		    error;
 	
 	/*
 	 * If output interrupts are not supported then we write MIDI_MAXWRITE
 	 * bytes instead of 1, and then we wait sc->wait
-	 */	
-	 	
+	 */
+
 	max = sc->props & MIDI_PROP_OUT_INTR ? 1 : MIDI_MAXWRITE;
 	for (i = max; i != 0;) {
 		if (mb->used == 0)
 			break;
-
-		MIDIBUF_READ(mb, data);
-		error = sc->hw_if->output(sc->hw_hdl, data);
+		error = sc->hw_if->output(sc->hw_hdl, mb->data[mb->start]);
 		/*
-		 * EINPROGRESS means that data has been handled,
-		 * but will not be sent immediately and thus will
-		 * not generate interrupt, in this case we can
-		 * send another byte
+		 * 0 means that data is being sent, an interrupt will 
+		 * be generated when the interface becomes ready again
+		 *
+		 * EINPROGRESS means that data has been queued, but 
+		 * will not be sent immediately and thus will not 
+		 * generate interrupt, in this case we can send 
+		 * another byte. The flush() method can be called
+		 * to force the tranfer.
+		 *
+		 * EAGAIN means that data cannot be queued or sent;
+		 * because the interface isn't ready. An interrupt 
+		 * will be generated once the interface is ready again
+		 *
+		 * any other (fatal) error code means that data couldn't 
+		 * be sent and was lost, interrupt will not be generated
 		 */
 		if (error == EINPROGRESS) {
+			MIDIBUF_REMOVE(mb, 1);
 			if (MIDIBUF_ISEMPTY(mb)) {
+				if (sc->hw_if->flush != NULL)
+					sc->hw_if->flush(sc->hw_hdl);
 				midi_out_stop(sc);
 				return;
 			}
-		} else
+		} else if (error == 0) {
+			MIDIBUF_REMOVE(mb, 1);
 			i--;
+		} else if (error == EAGAIN) {
+			break;
+		} else {
+			MIDIBUF_INIT(mb);
+			midi_out_stop(sc);
+			return;
+		}
 	}
 	
 	if (!(sc->props & MIDI_PROP_OUT_INTR)) {

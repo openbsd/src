@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidivar.h,v 1.9 2005/09/07 06:57:09 jsg Exp $ */
+/*	$OpenBSD: umidivar.h,v 1.10 2006/04/07 22:41:33 jsg Exp $ */
 /*	$NetBSD: umidivar.h,v 1.5 2002/09/12 21:00:42 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,9 +40,7 @@
 struct umidi_packet {
 	unsigned	status;
 	unsigned	index;
-	unsigned char	buffer_rt[UMIDI_PACKET_SIZE];	/* real time packet */
-	unsigned char	buffer_com[UMIDI_PACKET_SIZE];	/* common/voice packet */
-	unsigned char  *buffer;
+	unsigned char	buf[UMIDI_PACKET_SIZE];		/* common/voice packet */
 };
 
 /*
@@ -76,13 +74,16 @@ struct umidi_jack {
 	void			*arg;
 	int			binded;
 	int			opened;
+	SIMPLEQ_ENTRY(umidi_jack) intrq_entry;	
+#ifdef DIAGNOSTIC
+	unsigned 		wait;
+#endif
 	union {
 		struct {
-			void			(*intr)(void *);
-			TAILQ_ENTRY(umidi_jack)	queue_entry;
+			void				(*intr)(void *);
 		} out;
 		struct {
-			void			(*intr)(void *, int);
+			void				(*intr)(void *, int);
 		} in;
 	} u;
 };
@@ -100,7 +101,10 @@ struct umidi_endpoint {
 	int			num_open;
 	int			num_jacks;
 	struct umidi_jack	*jacks[UMIDI_MAX_EPJACKS];
-	TAILQ_HEAD(, umidi_jack) queue_head;
+	unsigned		used;
+	unsigned		busy;
+	unsigned 		pending;
+	SIMPLEQ_HEAD(, umidi_jack) intrq;
 };
 
 /* software context */

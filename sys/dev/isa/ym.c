@@ -1,4 +1,4 @@
-/* $OpenBSD: ym.c,v 1.12 2003/04/27 11:22:53 ho Exp $ */
+/* $OpenBSD: ym.c,v 1.13 2006/04/07 22:41:33 jsg Exp $ */
 
 
 /*
@@ -121,6 +121,7 @@ struct midi_hw_if ym_mpu401_hw_if = {
 	ym_mpu401_open,
 	ym_mpu401_close,
 	ym_mpu401_output,
+	0,		/* flush */
 	ym_mpu401_getinfo,
 	0,		/* ioctl */
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.14 2005/11/21 18:16:44 millert Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.15 2006/04/07 22:41:33 jsg Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ static int umidi_open(void *, int,
 		      void (*)(void *, int), void (*)(void *), void *);
 static void umidi_close(void *);
 static int umidi_output(void *, int);
+static void umidi_flush(void *);
 static void umidi_getinfo(void *, struct midi_info *);
 
 static usbd_status alloc_pipe(struct umidi_endpoint *);
@@ -121,15 +122,17 @@ static void init_packet(struct umidi_packet *);
 static usbd_status start_input_transfer(struct umidi_endpoint *);
 static usbd_status start_output_transfer(struct umidi_endpoint *);
 static int out_jack_output(struct umidi_jack *, int);
+static void out_jack_flush(struct umidi_jack *);
 static void in_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 static void out_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
-static int out_build_packet(int, struct umidi_packet *, uByte);
+static int out_build_packet(int, struct umidi_packet *, uByte, u_char *);
 
 
 struct midi_hw_if umidi_hw_if = {
 	umidi_open,
 	umidi_close,
 	umidi_output,
+	umidi_flush,		/* flush */
 	umidi_getinfo,
 	0,		/* ioctl */
 };
@@ -323,6 +326,17 @@ umidi_output(void *addr, int d)
 }
 
 void
+umidi_flush(void *addr)
+{
+	struct umidi_mididev *mididev = addr;
+
+	if (!mididev->out_jack || !mididev->opened)
+		return;
+
+	return out_jack_flush(mididev->out_jack);
+}
+
+void
 umidi_getinfo(void *addr, struct midi_info *mi)
 {
 	struct umidi_mididev *mididev = addr;
@@ -346,7 +360,10 @@ alloc_pipe(struct umidi_endpoint *ep)
 	usbd_status err;
 
 	DPRINTF(("%s: alloc_pipe %p\n", USBDEVNAME(sc->sc_dev), ep));
-	TAILQ_INIT(&ep->queue_head);
+	SIMPLEQ_INIT(&ep->intrq);
+	ep->pending = 0;
+	ep->busy = 0;
+	ep->used = 0;
 	ep->xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (ep->xfer == NULL) {
 		return USBD_NOMEM;
@@ -477,7 +494,6 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 		sc->sc_out_num_jacks += fp->out_ep[i].num_jacks;
 		ep->num_open = 0;
 		memset(ep->jacks, 0, sizeof(ep->jacks));
-		TAILQ_INIT(&ep->queue_head);
 		ep++;
 	}
 	ep = &sc->sc_in_ep[0];
@@ -594,7 +610,7 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 		sc->sc_out_ep = sc->sc_endpoints;
 		sc->sc_out_ep->sc = sc;
 		sc->sc_out_ep->addr = out_addr;
-		sc->sc_out_ep->packetsize = UMIDI_PACKET_SIZE;
+		sc->sc_out_ep->packetsize = UGETW(epd->wMaxPacketSize);
 		sc->sc_out_ep->num_jacks = sc->sc_out_num_jacks;
 		sc->sc_out_ep->num_open = 0;
 		memset(sc->sc_out_ep->jacks, 0, sizeof(sc->sc_out_ep->jacks));
@@ -736,6 +752,9 @@ alloc_all_jacks(struct umidi_softc *sc)
 		jack->binded = 0;
 		jack->arg = NULL;
 		jack->u.out.intr = NULL;
+#ifdef DIAGNOSTIC
+		jack->wait = 0;
+#endif
 		jack->cable_number = i;
 		jack++;
 	}
@@ -897,11 +916,6 @@ static void
 close_out_jack(struct umidi_jack *jack)
 {
 	if (jack->opened) {
-#ifdef UMIDI_DEBUG
-		if (!TAILQ_EMPTY(&jack->endpoint->queue_head)) {
-			printf("close_out_jack: queue_head still not empty\n");
-		}
-#endif
 		jack->opened = 0;
 		jack->endpoint->num_open--;
 	}
@@ -1125,7 +1139,7 @@ start_output_transfer(struct umidi_endpoint *ep)
 	usbd_status err;
 	usbd_setup_xfer(ep->xfer, ep->pipe,
 			(usbd_private_handle)ep,
-			ep->buffer, UMIDI_PACKET_SIZE,
+			ep->buffer, ep->used,
 			USBD_NO_COPY, USBD_NO_TIMEOUT, out_intr);
 	err = usbd_transfer(ep->xfer);
 	if (err != USBD_NORMAL_COMPLETION && err != USBD_IN_PROGRESS) {
@@ -1133,8 +1147,10 @@ start_output_transfer(struct umidi_endpoint *ep)
 			USBDEVNAME(ep->sc->sc_dev), usbd_errstr(err)));
 		return err;
 	}
+	ep->used = ep->packetsize;
 	return USBD_NORMAL_COMPLETION;
 }
+
 
 #ifdef UMIDI_DEBUG
 #define DPR_PACKET(dir, sc, p)						\
@@ -1150,38 +1166,82 @@ start_output_transfer(struct umidi_endpoint *ep)
 #endif
 
 static int
-out_jack_output(struct umidi_jack *out_jack, int d)
+out_jack_output(struct umidi_jack *j, int d)
 {
-	struct umidi_endpoint *ep = out_jack->endpoint;
+	struct umidi_endpoint *ep = j->endpoint;
 	struct umidi_softc *sc = ep->sc;
 	int s;
 
 	if (sc->sc_dying)
 		return EIO;
-
-	if (!out_jack->opened) {
+	if (!j->opened)
 		return ENODEV;
-	}
-
-	if (out_build_packet(out_jack->cable_number, &out_jack->packet, d)) {
-		DPR_PACKET(out, sc, &out_jack->packet);
-		s = splusb();
-		if (TAILQ_EMPTY(&ep->queue_head)) {
-			memcpy(ep->buffer,
-			       out_jack->packet.buffer,
-			       UMIDI_PACKET_SIZE);
-			TAILQ_INSERT_TAIL(&ep->queue_head,
-					 out_jack, u.out.queue_entry);
-			start_output_transfer(ep);
+		
+	s = splusb();
+	if (ep->used == ep->packetsize) {
+#ifdef DIAGNOSTIC
+		if (j->wait == 0) {
+			j->wait = 1;
+#endif
+			SIMPLEQ_INSERT_TAIL(&ep->intrq, j, intrq_entry);
+			ep->pending++;
+#ifdef DIAGNOSTIC
 		} else {
-			DPRINTF(("%s: out_jack_output: packet ignored\n", USBDEVNAME(sc->sc_dev)));
+			printf("umidi: (again) %d: already on intrq\n", 
+			    j->cable_number);
 		}
+#endif
 		splx(s);
-		return 0;
+		return EAGAIN;
 	}
 	
-	return EINPROGRESS;
+	if (!out_build_packet(j->cable_number, &j->packet, d, 
+	    ep->buffer + ep->used)) {
+		splx(s);
+		return EINPROGRESS;
+	}
+	ep->used += UMIDI_PACKET_SIZE;
+	if (ep->used < ep->packetsize) {
+		splx(s);
+		return EINPROGRESS;
+	}
+#ifdef DIAGNOSTIC
+	if (j->wait == 0) {
+		j->wait = 1;		
+#endif
+		SIMPLEQ_INSERT_TAIL(&ep->intrq, j, intrq_entry);
+		ep->pending++;
+#ifdef DIAGNOSTIC
+	} else {
+		printf("umidi: (ok) %d: already on intrq\n", 
+		    j->cable_number);
+	}
+#endif
+	if (!ep->busy) {
+		ep->busy = 1;
+		start_output_transfer(ep);
+	}
+	splx(s);
+	return 0;
 }
+
+static void
+out_jack_flush(struct umidi_jack *j)
+{
+	struct umidi_endpoint *ep = j->endpoint;
+	int s;
+
+	if (ep->sc->sc_dying || !j->opened)
+		return;
+		
+	s = splusb();	
+	if (ep->used != 0 && !ep->busy) {
+		ep->busy = 1;
+		start_output_transfer(ep);
+	}
+	splx(s);
+}
+
 
 static void
 in_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
@@ -1196,9 +1256,9 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &remain, NULL);
 	if (status != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("umidi: in_intr: abnormal status: %s\n", usbd_errstr(status)));
-		goto quit;
-	}	
+		DPRINTF(("in_intr: abnormal status: %s\n", usbd_errstr(status)));
+		return;
+	}
 	buf = ep->buffer;
 	while (remain >= UMIDI_PACKET_SIZE) {
 		cn = GET_CN(buf[0]);
@@ -1207,21 +1267,10 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		    	evlen = packet_length[GET_CIN(buf[0])];
 			for (i=0; i<evlen; i++)
 				(*jack->u.in.intr)(jack->arg, buf[i+1]);
-		} else
-			DPRINTFN(10, ("in_intr: unused packet %02x %02x %02x %02x\n",
-				buf[0], buf[1], buf[2], buf[3]));
-
+		}
 		buf += UMIDI_PACKET_SIZE;
 		remain -= UMIDI_PACKET_SIZE;
 	}
-
-#ifdef UMIDI_DEBUG
-	if (remain != 0) {
-		DPRINTF(("umidi: in_intr: remain != 0\n"));
-	}
-#endif
-	
-quit:
 	(void)start_input_transfer(ep);
 }
 
@@ -1230,26 +1279,35 @@ out_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct umidi_endpoint *ep = (struct umidi_endpoint *)priv;
 	struct umidi_softc *sc = ep->sc;
-	struct umidi_jack *jack;
-	int s;
+	struct umidi_jack *j;
+	unsigned pending;
 	
 	if (sc->sc_dying)
 		return;
 
-	s = splusb();
-	jack = TAILQ_FIRST(&ep->queue_head);
-	if (jack) {
-		TAILQ_REMOVE(&ep->queue_head, jack, u.out.queue_entry);
-		if (!TAILQ_EMPTY(&ep->queue_head)) {
-			memcpy(ep->buffer,
-			       TAILQ_FIRST(&ep->queue_head)->packet.buffer,
-			       UMIDI_PACKET_SIZE);
-			(void)start_output_transfer(ep);
+	ep->used = 0;
+	for (pending = ep->pending; pending > 0; pending--) {
+		j = SIMPLEQ_FIRST(&ep->intrq);
+#ifdef DIAGNOSTIC
+		if (j == NULL) {
+			printf("umidi: missing intr entry\n");
+			break;
 		}
-		if (jack->opened && jack->u.out.intr)
-			(*jack->u.out.intr)(jack->arg);
+#endif
+		SIMPLEQ_REMOVE_HEAD(&ep->intrq, intrq_entry);
+		ep->pending--;
+#ifdef DIAGNOSTIC
+		j->wait = 0;
+#endif
+		if (j->opened && j->u.out.intr)
+			(*j->u.out.intr)(j->arg);
 	}
-	splx(s);
+
+	if (ep->used == 0) {
+		ep->busy = 0;
+	} else {
+		start_output_transfer(ep);
+	}
 }
 
 #define UMIDI_VOICELEN(status) 	(umidi_evlen[((status) >> 4) & 7])
@@ -1263,20 +1321,20 @@ unsigned umidi_evlen[] = { 4, 4, 4, 4, 3, 3, 4 };
 #define EV_SYSEX_STOP	0xf7
 
 static int
-out_build_packet(int cable_number, struct umidi_packet *packet, uByte data)
+out_build_packet(int cable_number, struct umidi_packet *packet, 
+    uByte data, u_char *obuf)
 {
 	if (data >= 0xf8) {		/* is it a realtime message ? */
-		packet->buffer_rt[0] = data >> 4 | cable_number << 4;
-		packet->buffer_rt[1] = data;
-		packet->buffer_rt[2] = 0;
-		packet->buffer_rt[3] = 0;
-		packet->buffer = packet->buffer_rt;
+		obuf[0] = data >> 4 | cable_number << 4;
+		obuf[1] = data;
+		obuf[2] = 0;
+		obuf[3] = 0;
 		return 1;
 	}
 	if (data >= 0xf0) {		/* is it a common message ? */
 		switch(data) {
 		case EV_SYSEX:
-			packet->buffer_com[1] = packet->status = data;
+			packet->buf[1] = packet->status = data;
 			packet->index = 2;
 			break;
 		case EV_SYSEX_STOP:
@@ -1284,12 +1342,12 @@ out_build_packet(int cable_number, struct umidi_packet *packet, uByte data)
 			if (packet->index == 0)
 				packet->index = 1; 
 			packet->status = data;
-			packet->buffer_com[packet->index++] = data;
-			packet->buffer_com[0] = (0x4 - 1 + packet->index) | cable_number << 4;
+			packet->buf[packet->index++] = data;
+			packet->buf[0] = (0x4 - 1 + packet->index) | cable_number << 4;
 			goto packetready;
 		case EV_TUNE_REQ: 
 			packet->status = data;
-			packet->buffer_com[0] = 0x5 | cable_number << 4;
+			packet->buf[0] = 0x5 | cable_number << 4;
 			packet->index = 1;
 			goto packetready;
 		default:
@@ -1311,27 +1369,27 @@ out_build_packet(int cable_number, struct umidi_packet *packet, uByte data)
 			if (packet->index == 0)
 				packet->index = 1; 
 
-			packet->buffer_com[packet->index++] = data;
+			packet->buf[packet->index++] = data;
 			if (packet->index >= UMIDI_PACKET_SIZE) {
-				packet->buffer_com[0] = 0x4 | cable_number << 4;
+				packet->buf[0] = 0x4 | cable_number << 4;
 				goto packetready;
 			}
 			break;
 		case EV_MTC:		/* messages with 1 data byte */
 		case EV_SONGSEL:	
-			packet->buffer_com[0] = 0x2 | cable_number << 4;
-			packet->buffer_com[1] = packet->status;
-			packet->buffer_com[2] = data;
+			packet->buf[0] = 0x2 | cable_number << 4;
+			packet->buf[1] = packet->status;
+			packet->buf[2] = data;
 			packet->index = 3;
 			goto packetready;
 		case EV_SPP:		/* messages with 2 data bytes */
 			if (packet->index == 0) {
-				packet->buffer_com[0] = 0x3 | cable_number << 4;
+				packet->buf[0] = 0x3 | cable_number << 4;
 				packet->index = 1;
 			}
-			packet->buffer_com[packet->index++] = data;
+			packet->buf[packet->index++] = data;
 			if (packet->index >= UMIDI_PACKET_SIZE) {
-				packet->buffer_com[1] = packet->status;
+				packet->buf[1] = packet->status;
 				goto packetready;
 			}
 			break;
@@ -1342,11 +1400,11 @@ out_build_packet(int cable_number, struct umidi_packet *packet, uByte data)
 	}
 	if (packet->status >= 0x80) {	/* is it a voice message ? */
 		if (packet->index == 0) {
-			packet->buffer_com[0] = packet->status >> 4 | cable_number << 4;
-			packet->buffer_com[1] = packet->status;
+			packet->buf[0] = packet->status >> 4 | cable_number << 4;
+			packet->buf[1] = packet->status;
 			packet->index = 2;
 		}
-		packet->buffer_com[packet->index++] = data;
+		packet->buf[packet->index++] = data;
 		if (packet->index >= UMIDI_VOICELEN(packet->status))
 			goto packetready;
 	}
@@ -1355,9 +1413,8 @@ out_build_packet(int cable_number, struct umidi_packet *packet, uByte data)
 	
 packetready:
 	while (packet->index < UMIDI_PACKET_SIZE)
-		packet->buffer_com[packet->index++] = 0;
-		
+		packet->buf[packet->index++] = 0;
 	packet->index = 0;
-	packet->buffer = packet->buffer_com;
+	memcpy(obuf, packet->buf, UMIDI_PACKET_SIZE);
 	return 1;
 }

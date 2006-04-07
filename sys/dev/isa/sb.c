@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb.c,v 1.23 2003/04/27 11:22:53 ho Exp $	*/
+/*	$OpenBSD: sb.c,v 1.24 2006/04/07 22:41:33 jsg Exp $	*/
 /*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
 
 /*
@@ -75,6 +75,7 @@ struct midi_hw_if sb_midi_hw_if = {
 	sbdsp_midi_open,
 	sbdsp_midi_close,
 	sbdsp_midi_output,
+	0,			/* flush */
 	sbdsp_midi_getinfo,
 	0,			/* ioctl */
 };
@@ -83,6 +84,7 @@ struct midi_hw_if sb_mpu401_hw_if = {
 	sb_mpu401_open,
 	sb_mpu401_close,
 	sb_mpu401_output,
+	0,			/* flush */
 	sb_mpu401_getinfo,
 	0,			/* ioctl */
 };
