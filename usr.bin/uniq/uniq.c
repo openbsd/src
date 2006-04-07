@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.14 2003/06/03 02:56:21 millert Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.15 2006/04/07 05:10:02 ray Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -43,16 +43,17 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: uniq.c,v 1.14 2003/06/03 02:56:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: uniq.c,v 1.15 2006/04/07 05:10:02 ray Exp $";
 #endif /* not lint */
 
-#include <errno.h>
-#include <stdio.h>
 #include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <err.h>
 
 #define	MAXLINELEN	(8 * 1024)
 
@@ -63,7 +64,7 @@ FILE	*file(char *, char *);
 void	 show(FILE *, char *);
 char	*skip(char *);
 void	 obsolete(char *[]);
-void	 usage(void);
+__dead void	usage(void);
 
 int
 main(int argc, char *argv[])
@@ -71,10 +72,12 @@ main(int argc, char *argv[])
 	char *t1, *t2;
 	FILE *ifp = NULL, *ofp = NULL;
 	int ch;
-	char *prevline, *thisline, *p;
+	char *prevline, *thisline;
 
 	obsolete(argv);
-	while ((ch = getopt(argc, argv, "cdf:s:u")) != -1)
+	while ((ch = getopt(argc, argv, "cdf:s:u")) != -1) {
+		const char *errstr;
+
 		switch (ch) {
 		case 'c':
 			cflag = 1;
@@ -83,25 +86,30 @@ main(int argc, char *argv[])
 			dflag = 1;
 			break;
 		case 'f':
-			numfields = strtol(optarg, &p, 10);
-			if (numfields < 0 || *p)
-				errx(1, "illegal field skip value: %s", optarg);
+			numfields = (int)strtonum(optarg, 0, INT_MAX,
+			    &errstr);
+			if (errstr)
+				errx(1, "field skip value is %s: %s",
+				    errstr, optarg);
 			break;
 		case 's':
-			numchars = strtol(optarg, &p, 10);
-			if (numchars < 0 || *p)
-				errx(1, "illegal character skip value: %s", optarg);
+			numchars = (int)strtonum(optarg, 0, INT_MAX,
+			    &errstr);
+			if (errstr)
+				errx(1,
+				    "character skip value is %s: %s",
+				    errstr, optarg);
 			break;
 		case 'u':
 			uflag = 1;
 			break;
-		case '?':
 		default:
 			usage();
+		}
 	}
 
 	argc -= optind;
-	argv +=optind;
+	argv += optind;
 
 	/* If no flags are set, default is -d -u. */
 	if (cflag) {
@@ -170,7 +178,7 @@ show(FILE *ofp, char *str)
 
 	if (cflag && *str)
 		(void)fprintf(ofp, "%4d %s", repeats + 1, str);
-	if (dflag && repeats || uflag && !repeats)
+	if ((dflag && repeats) || (uflag && !repeats))
 		(void)fprintf(ofp, "%s", str);
 }
 
@@ -187,8 +195,9 @@ skip(char *str)
 			}
 		} else if (!infield)
 			infield = 1;
-	for (nchars = numchars; nchars-- && *str; ++str);
-	return(str);
+	for (nchars = numchars; nchars-- && *str; ++str)
+		;
+	return (str);
 }
 
 FILE *
@@ -200,13 +209,13 @@ file(char *name, char *mode)
 		return(*mode == 'r' ? stdin : stdout);
 	if ((fp = fopen(name, mode)) == NULL)
 		err(1, "%s", name);
-	return(fp);
+	return (fp);
 }
 
 void
 obsolete(char *argv[])
 {
-	int len;
+	size_t len;
 	char *ap, *p, *start;
 
 	while ((ap = *++argv)) {
@@ -232,10 +241,13 @@ obsolete(char *argv[])
 	}
 }
 
-void
+__dead void
 usage(void)
 {
+	extern char *__progname;
+	
 	(void)fprintf(stderr,
-	    "usage: uniq [-c | -du] [-f fields] [-s chars] [input [output]]\n");
+	    "usage: %s [-c | -d | -u] [-f fields] [-s chars] [input_file [output_file]]\n",
+	    __progname);
 	exit(1);
 }
