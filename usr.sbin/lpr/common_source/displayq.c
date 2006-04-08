@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.26 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.27 2006/04/08 02:16:06 ray Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: displayq.c,v 1.26 2003/06/02 23:36:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: displayq.c,v 1.27 2006/04/08 02:16:06 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -237,8 +237,8 @@ displayq(int format)
 				inform(q->q_name, rank++);
 			free(q);
 		}
-		free(queue);
 	}
+	free(queue);
 	if (!remote) {
 		if (nitems == 0)
 			puts("no entries");
