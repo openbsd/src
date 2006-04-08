@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.66 2006/01/09 12:43:17 pedro Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.67 2006/04/08 11:30:16 pedro Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -37,11 +37,8 @@
 #include <sys/lock.h>
 #include <sys/selinfo.h>
 
-/* XXX: clean up includes later */
-#include <uvm/uvm_pglist.h>	/* XXX */
-#include <sys/lock.h>		/* XXX */
-#include <uvm/uvm.h>		/* XXX */
-#include <uvm/uvm_vnode.h>	/* XXX */
+#include <uvm/uvm.h>
+#include <uvm/uvm_vnode.h>
 
 /*
  * The vnode is the focus of all file activity in UNIX.  There is a
