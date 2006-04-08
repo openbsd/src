@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.shutdown.8,v 1.6 2003/10/24 08:15:43 jmc Exp $
+.\"	$OpenBSD: rc.shutdown.8,v 1.7 2006/04/08 08:53:07 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Aaron Campbell
 .\" All rights reserved.
@@ -35,18 +35,31 @@ When the system is administratively shut down using either the
 .Xr reboot 8
 or
 .Xr halt 8
-command, either of these programs checks for the existence of a
+command,
+.Xr rc 8
+is invoked with the argument
+.Dq shutdown ,
+which checks for the existence of a
 .Pa /etc/rc.shutdown
 script to run before halting the system.
-It will also be executed by
-.Xr init 8
-if a keyboard-requested halt is issued (for architectures that support this).
+This script, like
+.Xr rc.local 8 ,
+is entirely for commands added by the system administrator.
 .Pp
 The
 .Nm
-script, like
-.Xr rc.local 8 ,
-is entirely for commands added by the system administrator.
+script is also executed by
+.Xr init 8
+if a keyboard-requested halt is issued (for architectures that support this).
+.Pp
+If
+.Nm
+sets the variable
+.Va powerdown
+to
+.Dq YES ,
+.Xr halt 8
+will attempt to power down the machine after it has halted.
 .Sh SEE ALSO
 .Xr halt 8 ,
 .Xr init 8 ,

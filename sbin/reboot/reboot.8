@@ -1,4 +1,4 @@
-.\"	$OpenBSD: reboot.8,v 1.34 2005/12/09 16:42:11 jmc Exp $
+.\"	$OpenBSD: reboot.8,v 1.35 2006/04/08 08:53:08 jmc Exp $
 .\"	$NetBSD: reboot.8,v 1.3 1995/10/05 05:36:21 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -72,6 +72,10 @@ Causes the system to power down, if it is being halted, and the
 hardware supports automatic power down.
 (Currently supported on some i386, luna88k, mac68k, macppc,
 sparc, sparc64 and zaurus platforms.)
+.Pp
+See also the description of
+.Va powerdown ,
+below.
 .It Fl q
 Quick.
 The system is halted or restarted quickly and ungracefully, and only
@@ -86,7 +90,13 @@ users advance warning of their impending doom.
 .Sh FILES
 .Bl -tag -width /etc/rc.shutdown -compact
 .It Pa /etc/rc.shutdown
-script which is run at shutdown time
+Script which is run at shutdown time.
+If it sets the variable
+.Va powerdown
+to
+.Dq YES ,
+.Nm halt
+will attempt to power down the machine after it has halted.
 .El
 .Sh SEE ALSO
 .Xr reboot 2 ,
