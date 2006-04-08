@@ -1,4 +1,4 @@
-.\" $OpenBSD: sequencer.4,v 1.1 2006/04/07 22:53:21 jsg Exp $
+.\" $OpenBSD: sequencer.4,v 1.2 2006/04/08 08:48:10 jmc Exp $
 .\" $NetBSD: midi.4,v 1.4 1998/08/22 14:45:35 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 .Dt SEQUENCER 4
 .Os
 .Sh NAME
-.Nm sequencer 
+.Nm sequencer
 .Nd OSS-compatible MIDI sequencer device
 .Sh SYNOPSIS
 .Cd "pseudo-device sequencer" Op Ar count
@@ -46,28 +46,28 @@
 .Sh DESCRIPTION
 The
 .Nm
-device provides event-orientated interface simultaneously 
+device provides an event-orientated interface simultaneously
 to all MIDI ports.
 Events sent to or received from this device not only contain the
 actual MIDI events, but also timing information.
-The kernel will make sure that data is sent to the physical 
+The kernel will make sure that data is sent to the physical
 device at the indicated time.
-The 
+The
 .Nm
 device uses the
 .Xr midi 4
-devices internally and they are unavailable when used by the 
+devices internally and they are unavailable when used by the
 .Nm
 device.
 .Pp
-The API for the 
+The API for the
 .Nm
 device is binary compatible with the OSS sequencer
 interface.
 .Sh FILES
 .Bl -tag -width /dev/sequencer -compact
 .It Pa /dev/music
-new 
+new
 .Nm
 device using 8-byte events
 .It Pa /dev/sequencer
