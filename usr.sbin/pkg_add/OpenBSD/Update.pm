@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.63 2006/03/07 11:10:49 espie Exp $
+# $OpenBSD: Update.pm,v 1.64 2006/04/08 23:24:06 bernd Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -23,6 +23,7 @@ use OpenBSD::Interactive;
 use OpenBSD::PackageInfo;
 use OpenBSD::PackageLocator;
 use OpenBSD::PackageName;
+use OpenBSD::Error;
 
 
 sub find
