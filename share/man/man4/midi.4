@@ -1,4 +1,4 @@
-.\" $OpenBSD: midi.4,v 1.21 2006/04/08 08:35:16 jmc Exp $
+.\" $OpenBSD: midi.4,v 1.22 2006/04/08 13:15:48 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -228,6 +228,19 @@ The device is already open by another process.
 .Xr sequencer 4 ,
 .Xr umidi 4 ,
 .Xr ym 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 2.5 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was originally written by
+.An Lennart Augustsson
+and later largely rewritten by
+.An Alexandre Ratchov .
 .Sh CAVEATS
 MIDI hardware was designed for real time performance and software
 using such hardware must be able to process MIDI events without
