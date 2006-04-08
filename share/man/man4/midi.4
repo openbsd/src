@@ -1,4 +1,4 @@
-.\" $OpenBSD: midi.4,v 1.20 2006/04/07 22:53:21 jsg Exp $
+.\" $OpenBSD: midi.4,v 1.21 2006/04/08 08:35:16 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -30,10 +30,10 @@
 .Cd "midi* at umidi?"
 .Cd "midi* at ym?"
 .Sh DESCRIPTION
-The 
+The
 .Nm
 driver makes MIDI ports available to user applications.
-A 
+A
 .Nm
 device corresponds to 2 MIDI ports: one input port and one
 output port.
@@ -42,7 +42,7 @@ to the user program as-is.
 Similarly, data issued by the user program is sent as-is to the
 output port.
 .Pp
-Only one process may hold open a 
+Only one process may hold open a
 .Nm
 device at a given time, although file descriptors may be shared
 between processes once the first open completes.
@@ -56,25 +56,25 @@ Data is queued and the system call returns immediately; the data
 is sent as fast as possible to the output MIDI port.
 However, if the in-kernel buffer is full or the requested amount
 is too large, then
-.Xr write 2 
+.Xr write 2
 may block.
 The current size of the in-kernel buffer is 1024 bytes, which
-ensures that 
+ensures that
 .Xr write 2
 isn't blocking in most situations.
 .Ss Reading from the device
 Data received from the input MIDI port is stored into the
 in-kernel buffer.
 A process can retrieve its contents by using
-the 
+the
 .Xr read 2
 system call.
 If there is less data than the amount requested for reading, then
 a shorter amount is returned.
 If no data is available, then the
 .Xr read 2
-system call will block until data is received, then it will
-returned immediately.
+system call will block until data is received,
+and then return immediately.
 .Pp
 The MIDI protocol has been designed for real-time performance and
 doesn't support flow control.
@@ -83,7 +83,7 @@ An application must be able to read the incoming data fast enough
 The kernel can buffer up to 1024 bytes; once the buffer is full
 input will be silently discarded.
 .Ss Polling the device
-A process can use the 
+A process can use the
 .Xr poll 2
 system call to poll for the following events:
 .Bl -tag -width POLLOUT
@@ -92,42 +92,48 @@ The in-kernel input buffer isn't empty, i.e. at least one byte is
 available for reading.
 A subsequent call to
 .Xr read 2
-will not be blocking
+will not be blocking.
 .It Dv POLLOUT
-The in-kernel output buffer is empty, thus a subsequent call to 
+The in-kernel output buffer is empty, thus a subsequent call to
 .Xr write 2
 will not be blocking if a reasonable amount of data is written
-(currently less that 1024 bytes)
+(currently less that 1024 bytes).
 .El
 .Pp
-Using the 
+Using the
 .Xr poll 2
-system call is the recommended way to handle multiple 
+system call is the recommended way to handle multiple
 .Nm
 devices in a real-time MIDI application.
 .Ss Non-blocking I/O
-If the 
+If the
 .Nm
 device is opened with the O_NONBLOCK flag (see
-.Xr open 2 
-manual page), then subsequent calls to 
+.Xr open 2 ) ,
+then subsequent calls to
 .Xr read 2
-or 
+or
 .Xr write 2
 will never block.
 The
 .Xr write 2
 system call may write less bytes than requested, or may return
 EAGAIN if no data could be sent or queued.
-Similarly, the 
+Similarly, the
 .Xr read 2
 system call may return EAGAIN if no input is available.
 .Pp
 Note that even if non-blocking I/O is not selected,
 .Xr read 2
-and 
+and
 .Xr write 2
 system calls are non-blocking when the kernel buffers permit it.
+.Sh FILES
+.Bl -tag -width /dev/rmidim -compact
+.It Pa /dev/rmidi*
+.Nm
+devices
+.El
 .Sh EXAMPLES
 The following command could record the memory dump of a
 synthesizer in a file:
@@ -145,7 +151,7 @@ command:
 .Dl $ cat -u <>/dev/rmidi1 >&0
 .Pp
 The following example reads MIDI timing events from an input
-device, MIDI common and voice events from another input device and
+device, MIDI common and voice events from another input device, and
 sends the result to a third (output) device.
 .Bd -literal -offset indent
 #define BUFSIZE		0x100
@@ -166,7 +172,7 @@ for (;;) {
 		if ((iused = read(ifd[0].fd, ibuf, BUFSIZE)) < 0)
 			errx(1, "read");
 		for (i = 0; i < iused; i++)
-			if (ISTIMING(ibuf[i])) 
+			if (ISTIMING(ibuf[i]))
 				obuf[oused++] = ibuf[i];
 	}
 	if (ifd[1].revents & POLLIN) {
@@ -183,40 +189,34 @@ for (;;) {
 .Pp
 In the above example, unless kernel buffers are full, processing
 is done in real-time without any noticeable latency; as expected,
-the only blocking system call is 
+the only blocking system call is
 .Xr poll 2 .
-.Sh FILES
-.Bl -tag -width /dev/rmidim -compact
-.It Pa /dev/rmidi*
-.Nm
-devices
-.El
 .Sh ERRORS
-If 
+If
 .Xr open 2 ,
 .Xr read 2 ,
-.Xr write 2 
+.Xr write 2 ,
 or
 .Xr poll 2
-fail then 
+fail then
 .Xr errno 2
-may be set to on of:
+may be set to one of:
 .Bl -tag -width Er
 .It Bq Er ENXIO
-the device is opened read-only (write-only) but
+The device is opened read-only (write-only) but
 .Xr write 2
 .Pf ( Xr read 2 )
-was called
+was called.
 .It Bq Er EIO
-the device is being detached while a process has been trying to
-read or write (for instance an 
+The device is being detached while a process has been trying to
+read or write (for instance an
 .Xr umidi 4
-device has been unplugged)
+device has been unplugged).
 .It Bq Er EAGAIN
 Non-blocking I/O was selected and the output buffer is full (on
 writing) or the input buffer is empty (on reading).
 .It Bq Er EBUSY
-Device is already open by another process
+The device is already open by another process.
 .El
 .Sh SEE ALSO
 .Xr autri 4 ,
@@ -249,14 +249,14 @@ Processes cannot be preempted while running in kernel mode.
 If there are too much processes running concurrently (especially
 if they are running a lot of expensive system calls) then the
 scheduling of a real-time MIDI application may be delayed.
-Even on low-end machines this delay hardly reaches few
+Even on low-end machines this delay hardly reaches a few
 milliseconds provided that the system load is reasonable.
 .Pp
 A real-time MIDI application can avoid being swapped by locking
-its memory (see 
-.Xr mlock 2 ,
-.Xr mlockall 2
-manual pages).
+its memory (see
+.Xr mlock 2
+and
+.Xr mlockall 2 ) .
 .Sh BUGS
 For a given device, even if the physical MIDI input and output
 ports are independent, there is no way for one process to use the
