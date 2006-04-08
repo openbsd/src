@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.17 2005/12/05 04:32:21 drahn Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.18 2006/04/08 02:22:54 krw Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -122,9 +122,6 @@ mkmakefile(void)
 		    "config: error reading %s (at line %d): %s\n",
 		    ifname, lineno, strerror(errno));
 		goto bad;
-		/* (void)unlink("Makefile"); */
-		free(ifname);
-		return (1);
 	}
 	if (fclose(ofp)) {
 		ofp = NULL;

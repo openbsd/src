@@ -328,6 +328,4 @@ vos_backupsys(int argc, char **argv)
 			      NULL,NULL,
 			      arlalib_getauthflag (noauth, localauth, 0, 0),
 			      backup_volume_wrap, NULL);
-    return 0;    
-
 }

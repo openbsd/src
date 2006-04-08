@@ -152,8 +152,6 @@ dump_cmd (int argc, char **argv)
     }
     free_db_server_context(&conn_context);
     return error;
-
-    return 0;
 }
 
 static int
