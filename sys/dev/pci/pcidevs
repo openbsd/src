@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1051 2006/04/06 16:49:29 marco Exp $
+$OpenBSD: pcidevs,v 1.1052 2006/04/09 00:51:57 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2688,6 +2688,7 @@ product RCC K2_SATA		0x0240	K2 SATA
 product RCC FRODO4_SATA		0x0241	Frodo4 SATA
 product RCC FRODO8_SATA		0x0242	Frodo8 SATA
 product RCC HT_1000_SATA	0x024a	HT-1000 SATA
+product RCC SATA		0x024b	SATA
 
 /* Rendition products */
 product RENDITION V1000		0x0001	Verite 1000
