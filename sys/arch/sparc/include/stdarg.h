@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.12 2006/01/06 18:53:05 millert Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.13 2006/04/09 03:07:53 deraadt Exp $	*/
 /*	$NetBSD: stdarg.h,v 1.10 1996/12/27 20:55:28 pk Exp $ */
 
 /*
@@ -56,13 +56,12 @@ typedef __va_list	va_list;
 #define	__va_size(type) \
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
-#if __GNUC__ > 2 || __GNUC_MINOR__ >= 6
-#define	va_start(ap, last) \
-	(__builtin_next_arg(last), (ap) = (va_list)__builtin_saveregs())
+#ifdef lint
+#define	va_start(ap,lastarg)	((ap) = (ap))
 #else
 #define	va_start(ap, last) \
-	(__builtin_next_arg(), (ap) = (va_list)__builtin_saveregs())
-#endif
+	(__builtin_next_arg(last), (ap) = (va_list)__builtin_saveregs())
+#endif /* lint */
 
 /*
  * va_arg picks up the next argument of type `type'.  Appending an

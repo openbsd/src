@@ -1,4 +1,4 @@
-/*	$OpenBSD: va-m88k.h,v 1.8 2006/01/06 18:53:05 millert Exp $	*/
+/*	$OpenBSD: va-m88k.h,v 1.9 2006/04/09 03:07:53 deraadt Exp $	*/
 
 /* Define __gnuc_va_list.  */
 
@@ -29,12 +29,21 @@ __extension__ ({							\
 
 /* Calling __builtin_next_arg gives the proper error message if LASTARG is
    not indeed the last argument.  */
+#ifdef lint
+#define va_start(AP,LASGARG) ((AP) = (AP))
+#else
 #define va_start(AP,LASTARG) \
   (__builtin_next_arg (LASTARG), __va_start_common (AP, 0))
+#endif /* lint */
 
 #else /* varargs.h support */
 
+#ifdef lint
+#define va_start(AP) ((AP) = (AP))
+#else
 #define va_start(AP) __va_start_common (AP, 1)
+#endif /* lint */
+
 #define va_alist __va_1st_arg
 #define va_dcl register int va_alist; ...
 

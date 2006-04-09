@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.5 2006/01/06 18:53:05 millert Exp $ */
+/*	$OpenBSD: stdarg.h,v 1.6 2006/04/09 03:07:52 deraadt Exp $ */
 /*	$NetBSD: stdarg.h,v 1.7 2003/08/07 16:26:53 agc Exp $	*/
 
 /*
@@ -48,6 +48,7 @@ typedef __va_list	va_list;
 #endif
 
 #define	va_start(ap, last)	__builtin_stdarg_start((ap), (last))
+
 #define	va_arg			__builtin_va_arg
 #define	va_end			__builtin_va_end
 #define	__va_copy(dest, src)	__builtin_va_copy((dest), (src))

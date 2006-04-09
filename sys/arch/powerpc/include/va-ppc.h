@@ -1,4 +1,4 @@
-/*	$OpenBSD: va-ppc.h,v 1.12 2006/01/06 18:53:05 millert Exp $	*/
+/*	$OpenBSD: va-ppc.h,v 1.13 2006/04/09 03:07:53 deraadt Exp $	*/
 /* GNU C varargs support for the PowerPC with either the V.4 or Windows NT calling sequences */
 
 #include <sys/cdefs.h>
@@ -77,8 +77,12 @@ __extension__ ({							\
 
 /* Calling __builtin_next_arg gives the proper error message if LASTARG is
    not indeed the last argument.  */
+#ifdef lint
+#define va_start(AP,LASTARG)	((AP) = (AP))
+#else
 #define va_start(AP,LASTARG) \
   (__builtin_next_arg (LASTARG), __va_start_common (AP, 0))
+#endif /* lint */
 
 #else /* varargs.h support */
 
@@ -196,7 +200,7 @@ __extension__ (*({							   \
   __ptr;								   \
 }))
 
-#define va_end(AP)	((void)0)
+#define va_end(AP)	
 
 /* Copy __gnuc_va_list into another variable of this type.  */
 #define __va_copy(dest, src) \
@@ -261,7 +265,7 @@ typedef char *__gnuc_va_list;
 			    + __va_rounded_size(TYPE)))			\
 	    - __va_rounded_size(TYPE)))
 
-#define va_end(AP)	((void)0)
+#define va_end(AP)	
 
 /* Copy __gnuc_va_list into another variable of this type.  */
 #define __va_copy(dest, src) (dest) = (src)

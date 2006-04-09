@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.4 2006/01/06 18:53:05 millert Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.5 2006/04/09 03:07:52 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,11 +39,11 @@
 
 typedef __va_list va_list;
 
-#ifdef __GNUC__
-#define	va_start(ap,lastarg)	((ap) = (va_list)__builtin_saveregs())
+#ifdef lint
+#define	va_start(ap,lastarg)	((ap) = (ap))
 #else
-#define	va_start(ap,lastarg)	__builtin_va_start(ap, &lastarg)
-#endif
+#define	va_start(ap,lastarg)	((ap) = (va_list)__builtin_saveregs())
+#endif /* lint */
 
 #define va_arg(ap,type)							\
 	(sizeof(type) > 8 ?						\
