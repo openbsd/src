@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.42 2005/07/17 17:13:38 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.43 2006/04/09 12:22:56 matthieu Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -109,6 +109,12 @@ struct cfdriver vgafb_cd = {
 	NULL, "vgafb", DV_DULL
 };
 
+int defective_fb_node;
+
+#ifdef APERTURE
+extern int allowaperture;
+#endif
+
 int
 vgafbmatch(parent, vcf, aux)
 	struct device *parent;
@@ -146,10 +152,18 @@ vgafbattach(parent, self, aux)
 
 	printf("\n");
 
-	if (vgafb_mapregs(sc, pa))
-		return;
-
 	sc->sc_console = vgafb_is_console(sc->sc_node);
+
+	if (vgafb_mapregs(sc, pa)) {
+		/*
+		 * If we are the console device, but can't attach,
+		 * we'll let the next video device hijack the console
+		 * even if it is not, from the PROMs point of view.
+		 */
+		if (sc->sc_console)
+			defective_fb_node = sc->sc_node;
+		return;
+	}
 
 	fb_setsize(&sc->sc_sunfb, 8, 1152, 900, sc->sc_node, 0);
 	if (sc->sc_sunfb.sf_depth == 24) {
@@ -372,6 +386,10 @@ vgafb_mmap(v, off, prot)
 
 	switch (sc->sc_mode) {
 	case WSDISPLAYIO_MODE_MAPPED:
+#ifdef APERTURE
+		if (allowaperture == 0)
+			return (-1);
+#endif
 		if (off >= sc->sc_mem_addr &&
 		    off < (sc->sc_mem_addr + sc->sc_mem_size))
 			return (bus_space_mmap(sc->sc_mem_t,
@@ -401,7 +419,7 @@ vgafb_is_console(node)
 {
 	extern int fbnode;
 
-	return (fbnode == node);
+	return (fbnode == node || defective_fb_node != 0);
 }
 
 int

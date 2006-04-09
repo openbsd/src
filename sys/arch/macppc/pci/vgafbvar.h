@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafbvar.h,v 1.10 2003/11/12 20:08:31 miod Exp $	*/
+/*	$OpenBSD: vgafbvar.h,v 1.11 2006/04/09 12:22:56 matthieu Exp $	*/
 /*	$NetBSD: vgavar.h,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
 
 /*
@@ -65,6 +65,7 @@ struct vgafb_config {
 
 	int vc_backlight_on;
 	int nscreens;
+	u_int vc_mode;
 };
 
 int	vgafb_common_probe(bus_space_tag_t, bus_space_tag_t,

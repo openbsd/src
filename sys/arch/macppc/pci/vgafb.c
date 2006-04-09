@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.27 2006/01/01 11:59:39 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.28 2006/04/09 12:22:56 matthieu Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -99,6 +99,10 @@ int	vgafb_putcmap(struct vgafb_config *vc, struct wsdisplay_cmap *cm);
 
 #define FONT_WIDTH 8
 #define FONT_HEIGHT 16
+
+#ifdef APERTURE
+extern int allowaperture;
+#endif
 
 /*
  * The following functions implement back-end configuration grabbing
@@ -258,6 +262,7 @@ vgafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return vgafb_putcmap(vc, (struct wsdisplay_cmap *)data);
 
 	case WSDISPLAYIO_SMODE:
+		vc->vc_mode = *(u_int *)data;
 		/* track the state of the display,
 		 * if returning to WSDISPLAYIO_MODE_EMUL
 		 * restore the last palette, workaround for 
@@ -338,34 +343,47 @@ vgafb_mmap(void *v, off_t offset, int prot)
 	struct vgafb_config *vc = v;
 	bus_space_handle_t h;
 
-	/* memsize... */
-	if (offset >= 0x00000 && offset < vc->memsize)
-		h = vc->vc_paddr + offset;
-	/* XXX the following are probably wrong. we want physical addresses 
-	   here, not virtual ones */
-	else if (offset >= 0x10000000 && offset < 0x10040000 )
-		/* 256KB of iohb */
-		h = vc->vc_ioh_b;
-	else if (offset >= 0x10040000 && offset < 0x10080000)
-		/* 256KB of iohc */
-		h = vc->vc_ioh_c;
-	else if (offset >= 0x18880000 && offset < 0x100c0000)
-		/* 256KB of iohd */
-		h = vc->vc_ioh_d;
-	else if (offset >= 0x20000000 && offset < 0x20000000+vc->mmiosize)
-		/* mmiosize... */
-		h = vc->vc_mmioh + (offset - 0x20000000);
-	else if (offset >= vc->membase && (offset < vc->membase+vc->memsize)) {
+	switch (vc->vc_mode) {
+	case WSDISPLAYIO_MODE_MAPPED:
+#ifdef APERTURE
+		if (allowaperture == 0) {
+			h = -1;
+			break;
+		}
+#endif	
+		/* XXX the following are probably wrong. 
+		   we want physical addresses here, not virtual ones */
+		if (offset >= 0x10000000 && offset < 0x10040000 )
+			/* 256KB of iohb */
+			h = vc->vc_ioh_b;
+		else if (offset >= 0x10040000 && offset < 0x10080000)
+			/* 256KB of iohc */
+			h = vc->vc_ioh_c;
+		else if (offset >= 0x18880000 && offset < 0x100c0000)
+			/* 256KB of iohd */
+			h = vc->vc_ioh_d;
+		else if (offset >= 0x20000000 && offset < 0x20000000+vc->mmiosize)
+			/* mmiosize... */
+			h = vc->vc_mmioh + (offset - 0x20000000);
+		else if (offset >= vc->membase && (offset < vc->membase+vc->memsize)) {
 		/* allow mmapping of memory */
-		h = offset;
-	} else if (offset >= vc->mmiobase &&
-	    (offset < vc->mmiobase+vc->mmiosize)) {
-		/* allow mmapping of mmio space */
-		h = offset;
-	} else {
-		h = -1;
-	}
+			h = offset;
+		} else if (offset >= vc->mmiobase &&
+		    (offset < vc->mmiobase+vc->mmiosize)) {
+			/* allow mmapping of mmio space */
+			h = offset;
+			
+		} else {
+			h = -1;
+		}
+		break;
 
+	case WSDISPLAYIO_MODE_DUMBFB:
+		if (offset >= 0x00000 && offset < vc->memsize)
+			h = vc->vc_paddr + offset;
+		break;
+
+	}
 	return h;
 }
 
