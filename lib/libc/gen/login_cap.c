@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.25 2005/10/04 20:36:40 otto Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.26 2006/04/09 04:40:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -546,22 +546,22 @@ gsetrl(login_cap_t *lc, int what, char *name, int type)
 
 	switch (type) {
 	case CTIME:
-		RCUR = login_getcaptime(lc, name, RCUR, RCUR);
-		RMAX = login_getcaptime(lc, name, RMAX, RMAX);
-		rl.rlim_cur = login_getcaptime(lc, name_cur, RCUR, RCUR);
-		rl.rlim_max = login_getcaptime(lc, name_max, RMAX, RMAX);
+		RCUR = (rlim_t)login_getcaptime(lc, name, RCUR, RCUR);
+		RMAX = (rlim_t)login_getcaptime(lc, name, RMAX, RMAX);
+		rl.rlim_cur = (rlim_t)login_getcaptime(lc, name_cur, RCUR, RCUR);
+		rl.rlim_max = (rlim_t)login_getcaptime(lc, name_max, RMAX, RMAX);
 		break;
 	case CSIZE:
-		RCUR = login_getcapsize(lc, name, RCUR, RCUR);
-		RMAX = login_getcapsize(lc, name, RMAX, RMAX);
-		rl.rlim_cur = login_getcapsize(lc, name_cur, RCUR, RCUR);
-		rl.rlim_max = login_getcapsize(lc, name_max, RMAX, RMAX);
+		RCUR = (rlim_t)login_getcapsize(lc, name, RCUR, RCUR);
+		RMAX = (rlim_t)login_getcapsize(lc, name, RMAX, RMAX);
+		rl.rlim_cur = (rlim_t)login_getcapsize(lc, name_cur, RCUR, RCUR);
+		rl.rlim_max = (rlim_t)login_getcapsize(lc, name_max, RMAX, RMAX);
 		break;
 	case CNUMB:
-		RCUR = login_getcapnum(lc, name, RCUR, RCUR);
-		RMAX = login_getcapnum(lc, name, RMAX, RMAX);
-		rl.rlim_cur = login_getcapnum(lc, name_cur, RCUR, RCUR);
-		rl.rlim_max = login_getcapnum(lc, name_max, RMAX, RMAX);
+		RCUR = (rlim_t)login_getcapnum(lc, name, RCUR, RCUR);
+		RMAX = (rlim_t)login_getcapnum(lc, name, RMAX, RMAX);
+		rl.rlim_cur = (rlim_t)login_getcapnum(lc, name_cur, RCUR, RCUR);
+		rl.rlim_max = (rlim_t)login_getcapnum(lc, name_max, RMAX, RMAX);
 		break;
 	default:
 		return (-1);
