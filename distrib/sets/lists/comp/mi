@@ -1564,7 +1564,6 @@
 ./usr/lib/apache/include/explain.h
 ./usr/lib/apache/include/fdcache.h
 ./usr/lib/apache/include/fnmatch.h
-./usr/lib/apache/include/hsregex.h
 ./usr/lib/apache/include/http_conf_globals.h
 ./usr/lib/apache/include/http_config.h
 ./usr/lib/apache/include/http_core.h
@@ -1581,7 +1580,6 @@
 ./usr/lib/apache/include/rfc1413.h
 ./usr/lib/apache/include/scoreboard.h
 ./usr/lib/apache/include/ssl_expr.h
-./usr/lib/apache/include/ssl_util_sdbm.h
 ./usr/lib/apache/include/ssl_util_ssl.h
 ./usr/lib/apache/include/ssl_util_table.h
 ./usr/lib/apache/include/util_date.h
