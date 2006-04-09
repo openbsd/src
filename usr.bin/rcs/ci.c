@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.136 2006/04/06 10:13:00 xsa Exp $	*/
+/*	$OpenBSD: ci.c,v 1.137 2006/04/09 19:22:23 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -819,6 +819,7 @@ checkin_revert(struct checkin_params *pb)
 	cvs_log(LP_WARN,
 	    "file is unchanged; reverting to previous revision %s",
 	    rbuf);
+	pb->flags |= CO_REVERT;
 	(void)unlink(pb->filename);
 	if ((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
 		checkout_rev(pb->file, pb->frev, pb->filename,

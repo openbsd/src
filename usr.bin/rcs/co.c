@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.70 2006/04/06 10:13:00 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.71 2006/04/09 19:22:23 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -313,8 +313,11 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		}
 	}
 
-	if ((verbose == 1) && !(flags & NEWFILE))
+	if ((verbose == 1) && !(flags & NEWFILE) && !(flags & CO_REVERT))
 		printf("revision %s", buf);
+	
+	if ((verbose == 1) && (flags & CO_REVERT))
+		printf("done");
 
 
 	if ((bp = rcs_getrev(file, rev)) == NULL) {
@@ -346,7 +349,8 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		mode = st.st_mode &
 		    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
 		mode |= S_IWUSR;
-		if ((verbose == 1) && !(flags & NEWFILE))
+		if ((verbose == 1) && !(flags & NEWFILE)
+		    && !(flags & CO_REVERT))
 			printf(" (locked)");
 	} else if (flags & CO_UNLOCK) {
 		if (rcs_lock_remove(file, lockname, rev) < 0) {
@@ -357,7 +361,8 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		/* Strip all write bits from mode */
 		mode = st.st_mode &
 		    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
-		if ((verbose == 1) && !(flags & NEWFILE))
+		if ((verbose == 1) && !(flags & NEWFILE)
+		    && !(flags & CO_REVERT))
 			printf(" (unlocked)");
 	}
 
@@ -365,8 +370,9 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		printf("\n");
 
 	if (flags & CO_LOCK) {
-		lcount++;
-		if ((verbose == 1) && (lcount > 1))
+		if (rcs_errno != RCS_ERR_DUPENT)
+			lcount++;
+		if ((verbose == 1) && (lcount > 1) && !(flags & CO_REVERT))
 			cvs_log(LP_WARN, "%s: warning: You now have %d locks.",
 			    file->rf_path, lcount);
 	}

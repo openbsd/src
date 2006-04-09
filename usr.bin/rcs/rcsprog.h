@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.42 2006/04/07 12:54:40 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.43 2006/04/09 19:22:23 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -47,21 +47,22 @@
 #define CO_AUTHOR	(1<<5)
 #define CO_LOCK		(1<<6)
 #define CO_REVDATE	(1<<7)
-#define CO_STATE	(1<<8)
-#define CO_UNLOCK	(1<<9)
+#define CO_REVERT	(1<<8)
+#define CO_STATE	(1<<9)
+#define CO_UNLOCK	(1<<10)
 
 /* flags specific to rcsprog.c */
-#define RCSPROG_EFLAG	(1<<10)
-#define RCSPROG_LFLAG	(1<<11)
-#define RCSPROG_NFLAG	(1<<12)
-#define RCSPROG_TFLAG	(1<<13)
-#define RCSPROG_UFLAG	(1<<14)
+#define RCSPROG_EFLAG	(1<<11)
+#define RCSPROG_LFLAG	(1<<12)
+#define RCSPROG_NFLAG	(1<<13)
+#define RCSPROG_TFLAG	(1<<14)
+#define RCSPROG_UFLAG	(1<<15)
 
 /* shared flags  */
-#define FORCE		(1<<15)
-#define INTERACTIVE	(1<<16)
-#define NEWFILE		(1<<17)
-#define PRESERVETIME	(1<<18)
+#define FORCE		(1<<16)
+#define INTERACTIVE	(1<<17)
+#define NEWFILE		(1<<18)
+#define PRESERVETIME	(1<<19)
 
 extern char	*__progname;
 extern const char	rcs_version[];
