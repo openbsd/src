@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1051 2006/04/06 16:49:29 marco Exp 
+ *	OpenBSD: pcidevs,v 1.1052 2006/04/09 00:51:57 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8221,6 +8221,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_HT_1000_SATA,
 	    "HT-1000 SATA",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_SATA,
+	    "SATA",
 	},
 	{
 	    PCI_VENDOR_RENDITION, PCI_PRODUCT_RENDITION_V1000,

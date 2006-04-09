@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1051 2006/04/06 16:49:29 marco Exp 
+ *	OpenBSD: pcidevs,v 1.1052 2006/04/09 00:51:57 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2693,6 +2693,7 @@
 #define	PCI_PRODUCT_RCC_FRODO4_SATA	0x0241		/* Frodo4 SATA */
 #define	PCI_PRODUCT_RCC_FRODO8_SATA	0x0242		/* Frodo8 SATA */
 #define	PCI_PRODUCT_RCC_HT_1000_SATA	0x024a		/* HT-1000 SATA */
+#define	PCI_PRODUCT_RCC_SATA	0x024b		/* SATA */
 
 /* Rendition products */
 #define	PCI_PRODUCT_RENDITION_V1000	0x0001		/* Verite 1000 */
