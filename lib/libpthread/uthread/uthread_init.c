@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.34 2006/03/06 18:37:53 otto Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.35 2006/04/09 02:57:41 krw Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -274,7 +274,7 @@ _thread_init(void)
 	_thread_initial->last_active = (long) _sched_ticks;
 
 	/* Give it a useful name */
-	pthread_set_name_np(_thread_initial, (char *)"main");
+	pthread_set_name_np(_thread_initial, "main");
 
 	/* Initialise the rest of the fields: */
 	_thread_initial->poll_data.nfds = 0;
