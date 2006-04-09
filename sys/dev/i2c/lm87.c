@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm87.c,v 1.15 2006/01/19 17:08:39 grange Exp $	*/
+/*	$OpenBSD: lm87.c,v 1.16 2006/04/09 21:06:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -198,13 +198,13 @@ lmenv_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensor[LMENV_VCCP2].desc));
 
 	sc->sc_sensor[LMENV_EXT_TEMP].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[LMENV_EXT_TEMP].desc, "Ext. Temp.",
+	strlcpy(sc->sc_sensor[LMENV_EXT_TEMP].desc, "External Temp",
 	    sizeof(sc->sc_sensor[LMENV_EXT_TEMP].desc));
 	if (sc->sc_family == 81)
 		sc->sc_sensor[LMENV_EXT_TEMP].flags |= SENSOR_FINVALID;
 
 	sc->sc_sensor[LMENV_INT_TEMP].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[LMENV_INT_TEMP].desc, "Int. Temp.",
+	strlcpy(sc->sc_sensor[LMENV_INT_TEMP].desc, "Internal Temp",
 	    sizeof(sc->sc_sensor[LMENV_INT_TEMP].desc));
 
 	if (channel & LM87_CHANNEL_AIN1) {

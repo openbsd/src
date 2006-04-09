@@ -1,4 +1,4 @@
-/*	$OpenBSD: adt7460.c,v 1.8 2006/03/12 11:21:09 kettenis Exp $	*/
+/*	$OpenBSD: adt7460.c,v 1.9 2006/04/09 21:06:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -147,15 +147,15 @@ adt_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensor[ADT_VCCP1].desc));
 
 	sc->sc_sensor[ADT_REM1_TEMP].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADT_REM1_TEMP].desc, "Rem1 Temp.",
+	strlcpy(sc->sc_sensor[ADT_REM1_TEMP].desc, "Remote1 Temp",
 	    sizeof(sc->sc_sensor[ADT_REM1_TEMP].desc));
 
 	sc->sc_sensor[ADT_LOCAL_TEMP].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADT_LOCAL_TEMP].desc, "Int. Temp.",
+	strlcpy(sc->sc_sensor[ADT_LOCAL_TEMP].desc, "Internal Temp",
 	    sizeof(sc->sc_sensor[ADT_LOCAL_TEMP].desc));
 
 	sc->sc_sensor[ADT_REM2_TEMP].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADT_REM2_TEMP].desc, "Rem2 Temp.",
+	strlcpy(sc->sc_sensor[ADT_REM2_TEMP].desc, "Remote2 Temp",
 	    sizeof(sc->sc_sensor[ADT_REM2_TEMP].desc));
 
 	sc->sc_sensor[ADT_TACH1].type = SENSOR_FANRPM;
