@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.5,v 1.14 2006/04/09 16:00:43 jmc Exp $
+.\" $OpenBSD: keynote.5,v 1.15 2006/04/09 16:02:59 jmc Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -65,13 +65,15 @@ KeyNote-Version, Licensees, Local-Constants, Signature.
 All field names are case-insensitive.
 The
 .Qq KeyNote-Version
-field, if present, appears first. The
+field, if present, appears first.
+The
 .Qq Signature
 field, if present, appears last.
 Otherwise, fields may appear in any order.
 Each field may appear at most once in any assertion.
 .Pp
-Blank lines are not permitted in assertions. Multiple assertions
+Blank lines are not permitted in assertions.
+Multiple assertions
 stored in a file (e.g., in application policy configurations),
 therefore, can be separated from one another unambiguously by the use
 of blank lines between them.
@@ -94,8 +96,8 @@ nonprintable characters.
 Strings may be given as literals, computed from complex expressions,
 or dereferenced from attribute names.
 .Sh STRING LITERALS
-A string literal directly represents the value of a string. String
-literals must be quoted by preceding and following them with the
+A string literal directly represents the value of a string.
+String literals must be quoted by preceding and following them with the
 double-quote character (ASCII 34 decimal).
 .Pp
 A printable character may be
@@ -366,8 +368,8 @@ to be interpreted.
 Assertions written to conform with this document should be identified with the
 version string
 .Qq 2
-(or the integer 2). The
-KeyNote-Version field, if included, should appear first.
+(or the integer 2).
+The KeyNote-Version field, if included, should appear first.
 .Sh LOCAL-CONSTANTS FIELD
 This field adds or overrides action attributes in the current
 assertion only.
