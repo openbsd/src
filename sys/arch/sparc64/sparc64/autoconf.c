@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.45 2006/03/15 20:20:41 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.46 2006/04/09 12:02:23 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1369,10 +1369,10 @@ static struct {
 };
 
 /*
- * A list of PROM device names that differ from our NetBSD
+ * A list of PROM device names that differ from our OpenBSD
  * device names.
  */
-static struct {
+static const struct dev_compat_tab {
 	char	*bpname;
 	int	class;
 	char	*cfname;
@@ -1390,6 +1390,8 @@ static struct {
 	{ "cmdk",	BUSCLASS_NONE,		"wd" },
 	{ "pci108e,1101.1", BUSCLASS_NONE,	"gem" },
 	{ "dc",		BUSCLASS_NONE,		"dc" },
+	/* ``network'' might be either gem or hme */
+	{ "network",	BUSCLASS_NONE,		"gem" },
 	{ "network",	BUSCLASS_NONE,		"hme" },
 	{ "ethernet",	BUSCLASS_NONE,		"dc" },
 	{ "SUNW,fas",	BUSCLASS_NONE,		"esp" },
@@ -1399,6 +1401,7 @@ static struct {
 	{ "SUNW,glm",	BUSCLASS_PCI,		"siop" },
 	{ "sd",		BUSCLASS_NONE,		"sd" },
 	{ "ide-disk",	BUSCLASS_NONE,		"wd" },
+	{ NULL }
 };
 
 char *
@@ -1406,19 +1409,41 @@ bus_compatible(bp, dev)
 	struct bootpath *bp;
 	struct device *dev;
 {
-	int i, class = bus_class(dev);
+	const struct dev_compat_tab *lore, *sub;
+	int class = bus_class(dev);
+	const char *dvname = dev->dv_cfdata->cf_driver->cd_name;
 
-	for (i = sizeof(dev_compat_tab)/sizeof(dev_compat_tab[0]); i-- > 0;) {
-		if (strcmp(bp->compatible, dev_compat_tab[i].bpname) == 0 &&
-		    (dev_compat_tab[i].class == BUSCLASS_NONE ||
-		     dev_compat_tab[i].class == class))
-			return (dev_compat_tab[i].cfname);
+	/*
+	 * First try matching the ``compatible'' property.
+	 * However, since more than one device can share the same
+	 * ``compatible'' property, we have to take this into account
+	 * and favor the entry matching our current device name, if
+	 * there is one.
+	 */
+	for (lore = dev_compat_tab; lore->bpname != NULL; lore++) {
+		if (strcmp(bp->compatible, lore->bpname) != 0)
+			continue;
+		if (lore->class != BUSCLASS_NONE &&
+		    lore->class != class)
+			continue;
+		for (sub = lore + 1; sub->bpname != NULL; sub++) {
+			if (strcmp(lore->bpname, sub->bpname) != 0)
+				break;
+			if (strcmp(sub->cfname, dvname) == 0)
+				return (sub->cfname);
+		}
+		return (lore->cfname);
 	}
-	for (i = sizeof(dev_compat_tab)/sizeof(dev_compat_tab[0]); i-- > 0;) {
-		if (strcmp(bp->name, dev_compat_tab[i].bpname) == 0 &&
-		    (dev_compat_tab[i].class == BUSCLASS_NONE ||
-		     dev_compat_tab[i].class == class))
-			return (dev_compat_tab[i].cfname);
+
+	/*
+	 * If it has not been found, match on the ``name'' property;
+	 * there can only be one instance in the table.
+	 */
+	for (lore = dev_compat_tab; lore->bpname != NULL; lore++) {
+		if (strcmp(bp->name, lore->bpname) == 0 &&
+		    (lore->class == BUSCLASS_NONE ||
+		     lore->class == class))
+			return (lore->cfname);
 	}
 
 	return (bp->name);
