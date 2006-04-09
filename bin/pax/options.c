@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.63 2005/06/02 19:11:06 jaredy Exp $	*/
+/*	$OpenBSD: options.c,v 1.64 2006/04/09 03:35:34 jaredy Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: options.c,v 1.63 2005/06/02 19:11:06 jaredy Exp $";
+static const char rcsid[] = "$OpenBSD: options.c,v 1.64 2006/04/09 03:35:34 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -1256,7 +1256,7 @@ cpio_options(int argc, char **argv)
 			 */
 			maxflt = 0;
 			while ((str = getline(stdin)) != NULL) {
-				ftree_add(str, NULL);
+				ftree_add(str, 0);
 			}
 			if (getline_error) {
 				paxwarn(1, "Problem while reading stdin");
