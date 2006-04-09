@@ -1435,6 +1435,7 @@
 ./usr/share/man/cat4/mtdphy.0
 ./usr/share/man/cat4/mtio.0
 ./usr/share/man/cat4/multicast.0
+./usr/share/man/cat4/music.0
 ./usr/share/man/cat4/musycc.0
 ./usr/share/man/cat4/mvme68k
 ./usr/share/man/cat4/mvme68k/autoconf.0
@@ -1533,6 +1534,7 @@
 ./usr/share/man/cat4/scsi.0
 ./usr/share/man/cat4/scsibus.0
 ./usr/share/man/cat4/sd.0
+./usr/share/man/cat4/sequencer.0
 ./usr/share/man/cat4/ses.0
 ./usr/share/man/cat4/sf.0
 ./usr/share/man/cat4/sf2r.0

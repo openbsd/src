@@ -284,6 +284,8 @@
 ./usr/include/dev/ic/mc146818reg.h
 ./usr/include/dev/ic/mc6845.h
 ./usr/include/dev/ic/mc6845reg.h
+./usr/include/dev/ic/mfireg.h
+./usr/include/dev/ic/mfivar.h
 ./usr/include/dev/ic/midwayreg.h
 ./usr/include/dev/ic/midwayvar.h
 ./usr/include/dev/ic/mk48txxreg.h

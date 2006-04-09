@@ -770,6 +770,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/mc146818reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/mc6845.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/mc6845reg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/mfireg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/mfivar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/midwayreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/midwayvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/mk48txxreg.ph

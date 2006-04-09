@@ -93,7 +93,7 @@
 ./usr/lib/libpanel.so.3.0
 ./usr/lib/libpcap.so.5.0
 ./usr/lib/libperl.so.10.1
-./usr/lib/libpthread.so.6.2
+./usr/lib/libpthread.so.6.3
 ./usr/lib/libreadline.so.3.0
 ./usr/lib/librpcsvc.so.1.0
 ./usr/lib/libsectok.so.6.0
@@ -969,6 +969,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mc146818reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mc6845.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mc6845reg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mfireg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mfivar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/midwayreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/midwayvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mk48txxreg.ph
