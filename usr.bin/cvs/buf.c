@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.44 2006/04/10 19:03:10 niallo Exp $	*/
+/*	$OpenBSD: buf.c,v 1.45 2006/04/10 19:49:44 joris Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -29,6 +29,7 @@
 #include "buf.h"
 #include "log.h"
 #include "xmalloc.h"
+#include "worklist.h"
 
 #define BUF_INCR	128
 
@@ -375,10 +376,15 @@ cvs_buf_write_stmp(BUF *b, char *template, mode_t mode)
 	if ((fd = mkstemp(template)) == -1)
 		fatal("mkstemp: `%s': %s", template, strerror(errno));
 
+#if defined(RCSPROG)
+	cvs_worklist_add(template, &rcs_temp_files);
+#endif
+	
 	if (cvs_buf_write_fd(b, fd) == -1) {
 		(void)unlink(template);
 		fatal("cvs_buf_write_stmp: cvs_buf_write_fd: `%s'", template);
 	}
+
 	if (fchmod(fd, mode) < 0)
 		cvs_log(LP_ERRNO, "permissions not set on temporary file %s",
 		    template);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: worklist.h,v 1.3 2006/03/15 18:24:43 deraadt Exp $	*/
+/*	$OpenBSD: worklist.h,v 1.4 2006/04/10 19:49:44 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -39,5 +39,9 @@ void cvs_worklist_run(struct cvs_wklhead *, void (*cb)(struct cvs_worklist *));
 void cvs_worklist_clean(struct cvs_wklhead *, void (*cb)(struct cvs_worklist *));
 
 void cvs_worklist_unlink(struct cvs_worklist *);
+
+#if defined(RCSPROG)
+extern struct cvs_wklhead rcs_temp_files;
+#endif
 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.137 2006/04/09 19:22:23 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.138 2006/04/10 19:49:44 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -327,8 +327,6 @@ checkin_diff_file(struct checkin_params *pb)
 
 	strlcpy(path1, rcs_tmpdir, sizeof(path1));
 	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));
-
-	cvs_worklist_add(path1, &rcs_temp_files);
 	cvs_buf_write_stmp(b1, path1, 0600);
 
 	cvs_buf_free(b1);
@@ -336,8 +334,6 @@ checkin_diff_file(struct checkin_params *pb)
 
 	strlcpy(path2, rcs_tmpdir, sizeof(path2));
 	strlcat(path2, "/diff2.XXXXXXXXXX", sizeof(path2));
-
-	cvs_worklist_add(path2, &rcs_temp_files);
 	cvs_buf_write_stmp(b2, path2, 0600);
 
 	cvs_buf_free(b2);
