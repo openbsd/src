@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.8 2006/03/14 15:59:06 xsa Exp $	*/
+/*	$OpenBSD: diff.h,v 1.9 2006/04/10 09:57:32 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -79,7 +79,7 @@
 #define	D_RCSDIFF	5       /* Reverse editor output: RCS format */
 
 /*
- * Status values for print_status() and diffreg() return values
+ * Status values for cvs_diffreg() return values
  */
 #define	D_SAME		0	/* Files are the same */
 #define	D_DIFFER	1	/* Files are different */
