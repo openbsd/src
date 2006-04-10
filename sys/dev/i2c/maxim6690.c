@@ -1,4 +1,4 @@
-/*	$OpenBSD: maxim6690.c,v 1.6 2006/01/19 17:08:39 grange Exp $	*/
+/*	$OpenBSD: maxim6690.c,v 1.7 2006/04/10 00:57:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -113,11 +113,11 @@ maxtmp_attach(struct device *parent, struct device *self, void *aux)
 		    sizeof(sc->sc_sensor[i].device));
 
 	sc->sc_sensor[MAXTMP_INT].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[MAXTMP_INT].desc, "Internal",
+	strlcpy(sc->sc_sensor[MAXTMP_INT].desc, "Internal Temp",
 	    sizeof(sc->sc_sensor[MAXTMP_INT].desc));
 
 	sc->sc_sensor[MAXTMP_EXT].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[MAXTMP_EXT].desc, "External",
+	strlcpy(sc->sc_sensor[MAXTMP_EXT].desc, "External Temp",
 	    sizeof(sc->sc_sensor[MAXTMP_EXT].desc));
 
 	if (sensor_task_register(sc, maxtmp_refresh, 5)) {

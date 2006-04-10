@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm75.c,v 1.11 2006/01/19 17:08:39 grange Exp $	*/
+/*	$OpenBSD: lm75.c,v 1.12 2006/04/10 00:57:23 deraadt Exp $	*/
 /*	$NetBSD: lm75.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 /*
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -177,7 +177,7 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensor.device, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensor.device));
 	sc->sc_sensor.type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor.desc, "TEMP", sizeof(sc->sc_sensor.desc));
+	strlcpy(sc->sc_sensor.desc, "Temp", sizeof(sc->sc_sensor.desc));
 
 	/* Hook into the hw.sensors sysctl */
 	sensor_add(&sc->sc_sensor);

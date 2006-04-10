@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1031.c,v 1.4 2006/01/19 17:08:39 grange Exp $	*/
+/*	$OpenBSD: adm1031.c,v 1.5 2006/04/10 00:57:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -97,15 +97,15 @@ admtt_attach(struct device *parent, struct device *self, void *aux)
 		    sizeof(sc->sc_sensor[i].device));
 
 	sc->sc_sensor[ADMTT_INT].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMTT_INT].desc, "Internal",
+	strlcpy(sc->sc_sensor[ADMTT_INT].desc, "Internal Temp",
 	    sizeof(sc->sc_sensor[ADMTT_INT].desc));
 
 	sc->sc_sensor[ADMTT_EXT].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMTT_EXT].desc, "External1",
+	strlcpy(sc->sc_sensor[ADMTT_EXT].desc, "External1 Temp",
 	    sizeof(sc->sc_sensor[ADMTT_EXT].desc));
 
 	sc->sc_sensor[ADMTT_EXT2].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMTT_EXT2].desc, "External2",
+	strlcpy(sc->sc_sensor[ADMTT_EXT2].desc, "External2 Temp",
 	    sizeof(sc->sc_sensor[ADMTT_EXT2].desc));
 
 	sc->sc_sensor[ADMTT_FAN].type = SENSOR_FANRPM;

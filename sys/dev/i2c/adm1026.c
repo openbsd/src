@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1026.c,v 1.6 2006/01/19 17:08:39 grange Exp $	*/
+/*	$OpenBSD: adm1026.c,v 1.7 2006/04/10 00:57:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -166,7 +166,7 @@ admcts_attach(struct device *parent, struct device *self, void *aux)
 		    sizeof(sc->sc_sensor[i].device));
 
 	sc->sc_sensor[ADMCTS_TEMP].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMCTS_TEMP].desc, "Internal",
+	strlcpy(sc->sc_sensor[ADMCTS_TEMP].desc, "Internal Temp",
 	    sizeof(sc->sc_sensor[ADMCTS_TEMP].desc));
 
 	sc->sc_sensor[ADMCTS_Vbat].type = SENSOR_VOLTS_DC;
@@ -174,11 +174,11 @@ admcts_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensor[ADMCTS_Vbat].desc));
 
 	sc->sc_sensor[ADMCTS_EXT1].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMCTS_EXT1].desc, "External1",
+	strlcpy(sc->sc_sensor[ADMCTS_EXT1].desc, "External1 Temp",
 	    sizeof(sc->sc_sensor[ADMCTS_EXT1].desc));
 
 	sc->sc_sensor[ADMCTS_EXT2].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMCTS_EXT2].desc, "External2",
+	strlcpy(sc->sc_sensor[ADMCTS_EXT2].desc, "External2 Temp",
 	    sizeof(sc->sc_sensor[ADMCTS_EXT2].desc));
 
 	sc->sc_sensor[ADMCTS_V3_3stby].type = SENSOR_VOLTS_DC;

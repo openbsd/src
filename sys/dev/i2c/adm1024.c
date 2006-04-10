@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1024.c,v 1.10 2006/01/19 17:08:39 grange Exp $	*/
+/*	$OpenBSD: adm1024.c,v 1.11 2006/04/10 00:57:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -135,11 +135,11 @@ admlc_attach(struct device *parent, struct device *self, void *aux)
 		    sizeof(sc->sc_sensor[i].device));
 
 	sc->sc_sensor[ADMLC_INT].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMLC_INT].desc, "Internal",
+	strlcpy(sc->sc_sensor[ADMLC_INT].desc, "Internal Temp",
 	    sizeof(sc->sc_sensor[ADMLC_INT].desc));
 
 	sc->sc_sensor[ADMLC_EXT].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMLC_EXT].desc, "External",
+	strlcpy(sc->sc_sensor[ADMLC_EXT].desc, "External Temp",
 	    sizeof(sc->sc_sensor[ADMLC_EXT].desc));
 
 	sc->sc_sensor[ADMLC_V2_5].type = SENSOR_VOLTS_DC;

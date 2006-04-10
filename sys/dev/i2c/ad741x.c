@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad741x.c,v 1.7 2006/01/19 17:08:39 grange Exp $	*/
+/*	$OpenBSD: ad741x.c,v 1.8 2006/04/10 00:57:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -124,7 +124,7 @@ adc_attach(struct device *parent, struct device *self, void *aux)
 		    sizeof(sc->sc_sensor[i].device));
 
 	sc->sc_sensor[ADC_TEMP].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADC_TEMP].desc, "Internal",
+	strlcpy(sc->sc_sensor[ADC_TEMP].desc, "Internal Temp",
 	    sizeof(sc->sc_sensor[ADC_TEMP].desc));
 	nsens = 1;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1021.c,v 1.21 2006/01/19 17:08:39 grange Exp $	*/
+/*	$OpenBSD: adm1021.c,v 1.22 2006/04/10 00:57:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -139,12 +139,12 @@ admtemp_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_sensor[ADMTEMP_EXT].type = SENSOR_TEMP;
 	strlcpy(sc->sc_sensor[ADMTEMP_EXT].desc,
-	    xeon ? "Xeon" : "External",
+	    xeon ? "Xeon Temp" : "External Temp",
 	    sizeof(sc->sc_sensor[ADMTEMP_EXT].desc));
 
 	sc->sc_sensor[ADMTEMP_INT].type = SENSOR_TEMP;
 	strlcpy(sc->sc_sensor[ADMTEMP_INT].desc,
-	    xeon ? "Xeon" : "Internal",
+	    xeon ? "Xeon Temp" : "Internal Temp",
 	    sizeof(sc->sc_sensor[ADMTEMP_INT].desc));
 
 	if (sensor_task_register(sc, admtemp_refresh, 5)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1025.c,v 1.21 2006/01/19 17:08:39 grange Exp $	*/
+/*	$OpenBSD: adm1025.c,v 1.22 2006/04/10 00:57:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -136,11 +136,11 @@ admtm_attach(struct device *parent, struct device *self, void *aux)
 		    sizeof(sc->sc_sensor[i].device));
 
 	sc->sc_sensor[ADMTM_INT].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMTM_INT].desc, "Internal",
+	strlcpy(sc->sc_sensor[ADMTM_INT].desc, "Internal Temp",
 	    sizeof(sc->sc_sensor[ADMTM_INT].desc));
 
 	sc->sc_sensor[ADMTM_EXT].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[ADMTM_EXT].desc, "External",
+	strlcpy(sc->sc_sensor[ADMTM_EXT].desc, "External Temp",
 	    sizeof(sc->sc_sensor[ADMTM_EXT].desc));
 
 	sc->sc_sensor[ADMTM_V2_5].type = SENSOR_VOLTS_DC;
@@ -176,7 +176,7 @@ admtm_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensor[SMSC_V1_8].desc));
 
 	sc->sc_sensor[SMSC_TEMP2].type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor[SMSC_TEMP2].desc, "External2",
+	strlcpy(sc->sc_sensor[SMSC_TEMP2].desc, "External2 Temp",
 	    sizeof(sc->sc_sensor[SMSC_TEMP2].desc));
 
 	if (sensor_task_register(sc, admtm_refresh, 5)) {

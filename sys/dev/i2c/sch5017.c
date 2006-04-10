@@ -1,30 +1,6 @@
-Return-Path: roman.hunt@comcast.net
-Delivery-Date: Sun Apr  9 18:44:07 2006
-Received: from shear.ucar.edu (shear.ucar.edu [192.43.244.163])
-	by cvs.openbsd.org (8.13.6/8.12.1) with ESMTP id k3A0i6Jq004360
-	(version=TLSv1/SSLv3 cipher=DHE-DSS-AES256-SHA bits=256 verify=FAIL)
-	for <deraadt@cvs.openbsd.org>; Sun, 9 Apr 2006 18:44:07 -0600 (MDT)
-Received: from sccrmhc12.comcast.net (sccrmhc12.comcast.net [63.240.77.82])
-	by shear.ucar.edu (8.13.6/8.13.6) with ESMTP id k3A0gkf0023684
-	for <deraadt@openbsd.org>; Sun, 9 Apr 2006 18:42:46 -0600 (MDT)
-Message-Id: <200604100042.k3A0gkf0023684@shear.ucar.edu>
-Date: Mon, 10 Apr 2006 00:42:44 +0000 (GMT)
-X-Comment: Sending client does not conform to RFC822 minimum requirements
-X-Comment: Date has been added by Maillennium
-Received: from murugan.hunt.net (c-68-32-116-27.hsd1.md.comcast.net[68.32.116.27])
-          by comcast.net (sccrmhc12) with ESMTP
-          id <2006041000424301200htfrse>; Mon, 10 Apr 2006 00:42:43 +0000
-From: Roman Hunt <roman.hunt@comcast.net>
-To: deraadt@openbsd.org, roman.hunt@comcast.net
-Subject: Here is sch5017.c the driver for the SCH5017 I2C chip
-
-Sorry for the delay in sending this. I will send the patches to GENERIC
-and files.i2c seperately.
-
-/usr/src/sys/dev/i2c/sch5017.c:
 /*
  * Copyright (c) 2006 Roman Hunt
- * 
+ *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
@@ -57,19 +33,19 @@ and files.i2c seperately.
 #define SCH5017_RTEMP2		0x27
 #define SCH5017_FAN1_LSB	0x28
 #define SCH5017_FAN1_MSB	0x29
-#define SCH5017_FAN2_LSB	0x2A
-#define SCH5017_FAN2_MSB	0x2B
-#define SCH5017_FAN3_LSB	0x2C
-#define SCH5017_FAN3_MSB	0x2D
-#define SCH5017_FAN4_LSB	0x2E
-#define SCH5017_FAN4_MSB	0x2F
-#define SCH5017_VERSION		0x3F
+#define SCH5017_FAN2_LSB	0x2a
+#define SCH5017_FAN2_MSB	0x2b
+#define SCH5017_FAN3_LSB	0x2c
+#define SCH5017_FAN3_MSB	0x2d
+#define SCH5017_FAN4_LSB	0x2e
+#define SCH5017_FAN4_MSB	0x2f
+#define SCH5017_VERSION		0x3f
 
 /*
  * Sensors
  */
 #define SCHENV_VCCP		0
-#define SCHENV_VCC		1 
+#define SCHENV_VCC		1
 #define SCHENV_5V		2
 #define SCHENV_12V		3
 #define SCHENV_RTEMP1		4
@@ -108,9 +84,8 @@ schenv_match(struct device *parent, void *match, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	if (strcmp(ia->ia_name, "sch5017") == 0)
-	    return (1);
-	else
-	    return (0);
+		return (1);
+	return (0);
 }
 
 void
@@ -231,13 +206,13 @@ schenv_refresh(void *arg)
 			sc->sc_sensor[sensor].value = 16000000 / 256 * data;
 			break;
 		case SCHENV_RTEMP1:
-		/* FALLTHROUGH */
+			/* FALLTHROUGH */
 		case SCHENV_ITEMP:
-		/* FALLTHROUGH */
+			/* FALLTHROUGH */
 		case SCHENV_RTEMP2:
 			if (data == 0x80) {
-			    sc->sc_sensor[sensor].flags |= SENSOR_FINVALID;
-			    break;
+				sc->sc_sensor[sensor].flags |= SENSOR_FINVALID;
+				break;
 			}
 
 			sc->sc_sensor[sensor].value =
@@ -246,7 +221,7 @@ schenv_refresh(void *arg)
 			break;
 		case SCHENV_FAN1:
 			cmd = SCH5017_FAN1_LSB;
-			if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, 
+			if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 			    sc->sc_addr, &cmd, sizeof cmd, &data,
 			    sizeof data, 0)) {
 				sc->sc_sensor[sensor].flags |=
@@ -255,8 +230,8 @@ schenv_refresh(void *arg)
 			}
 
 			cmd = SCH5017_FAN1_MSB;
-			if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, 
-			    sc->sc_addr, &cmd, sizeof cmd, &data2, 
+			if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+			    sc->sc_addr, &cmd, sizeof cmd, &data2,
 			    sizeof data2, 0)) {
 				sc->sc_sensor[sensor].flags |=
 				    SENSOR_FINVALID;
@@ -266,14 +241,14 @@ schenv_refresh(void *arg)
 			fanword = fanword << 8;
 			fanword |= data;
 			if (fanword == 0xFFFF) {
-	    		    sc->sc_sensor[sensor].flags |= SENSOR_FINVALID;
-			    break;
+				sc->sc_sensor[sensor].flags |= SENSOR_FINVALID;
+				break;
 			}
 			sc->sc_sensor[sensor].value = fanword;
 			break;
 		case SCHENV_FAN2:
 			cmd = SCH5017_FAN2_LSB;
-			if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, 
+			if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 			    sc->sc_addr, &cmd, sizeof cmd, &data,
 			    sizeof data, 0)) {
 				sc->sc_sensor[sensor].flags |=
@@ -282,8 +257,8 @@ schenv_refresh(void *arg)
 			}
 
 			cmd = SCH5017_FAN2_MSB;
-			if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, 
-			    sc->sc_addr, &cmd, sizeof cmd, &data2, 
+			if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+			    sc->sc_addr, &cmd, sizeof cmd, &data2,
 			    sizeof data2, 0)) {
 				sc->sc_sensor[sensor].flags |=
 				    SENSOR_FINVALID;
@@ -293,14 +268,14 @@ schenv_refresh(void *arg)
 			fanword = fanword << 8;
 			fanword |= data;
 			if (fanword == 0xFFFF) {
-	    		    sc->sc_sensor[sensor].flags |= SENSOR_FINVALID;
-			    break;
+				sc->sc_sensor[sensor].flags |= SENSOR_FINVALID;
+				break;
 			}
 			sc->sc_sensor[sensor].value = fanword;
 			break;
 		case SCHENV_FAN3:
 			cmd = SCH5017_FAN3_LSB;
-			if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, 
+			if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 			    sc->sc_addr, &cmd, sizeof cmd, &data,
 			    sizeof data, 0)) {
 				sc->sc_sensor[sensor].flags |=
@@ -309,8 +284,8 @@ schenv_refresh(void *arg)
 			}
 
 			cmd = SCH5017_FAN3_MSB;
-			if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, 
-			    sc->sc_addr, &cmd, sizeof cmd, &data2, 
+			if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+			    sc->sc_addr, &cmd, sizeof cmd, &data2,
 			    sizeof data2, 0)) {
 				sc->sc_sensor[sensor].flags |=
 				    SENSOR_FINVALID;
@@ -320,14 +295,14 @@ schenv_refresh(void *arg)
 			fanword = fanword << 8;
 			fanword |= data;
 			if (fanword == 0xFFFF) {
-	    		    sc->sc_sensor[sensor].flags |= SENSOR_FINVALID;
-			    break;
+				sc->sc_sensor[sensor].flags |= SENSOR_FINVALID;
+				break;
 			}
 			sc->sc_sensor[sensor].value = fanword;
 			break;
 		case SCHENV_FAN4:
 			cmd = SCH5017_FAN4_LSB;
-			if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, 
+			if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 			    sc->sc_addr, &cmd, sizeof cmd, &data,
 			    sizeof data, 0)) {
 				sc->sc_sensor[sensor].flags |=
@@ -336,8 +311,8 @@ schenv_refresh(void *arg)
 			}
 
 			cmd = SCH5017_FAN4_MSB;
-			if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, 
-			    sc->sc_addr, &cmd, sizeof cmd, &data2, 
+			if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+			    sc->sc_addr, &cmd, sizeof cmd, &data2,
 			    sizeof data2, 0)) {
 				sc->sc_sensor[sensor].flags |=
 				    SENSOR_FINVALID;
@@ -347,8 +322,8 @@ schenv_refresh(void *arg)
 			fanword = fanword << 8;
 			fanword |= data;
 			if (fanword == 0xFFFF) {
-	    		    sc->sc_sensor[sensor].flags |= SENSOR_FINVALID;
-			    break;
+				sc->sc_sensor[sensor].flags |= SENSOR_FINVALID;
+				break;
 			}
 			sc->sc_sensor[sensor].value = fanword;
 			break;
@@ -359,5 +334,3 @@ schenv_refresh(void *arg)
 	}
 	iic_release_bus(sc->sc_tag, 0);
 }
-
-
