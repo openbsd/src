@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.43 2006/04/06 16:48:34 xsa Exp $	*/
+/*	$OpenBSD: buf.c,v 1.44 2006/04/10 19:03:10 niallo Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -351,10 +351,11 @@ cvs_buf_write(BUF *b, const char *path, mode_t mode)
 		(void)unlink(path);
 		fatal("cvs_buf_write: cvs_buf_write_fd: `%s'", path);
 	}
-	(void)close(fd);
 
-	if (chmod(path, mode) < 0)
-		fatal("cvs_buf_write: chmod failed: %s", strerror(errno));
+	if (fchmod(fd, mode) < 0)
+		cvs_log(LP_ERRNO, "permissions not set on file %s", path);
+
+	(void)close(fd);
 
 	return (0);
 }
@@ -378,7 +379,10 @@ cvs_buf_write_stmp(BUF *b, char *template, mode_t mode)
 		(void)unlink(template);
 		fatal("cvs_buf_write_stmp: cvs_buf_write_fd: `%s'", template);
 	}
-	(void)fchmod(fd, mode);
+	if (fchmod(fd, mode) < 0)
+		cvs_log(LP_ERRNO, "permissions not set on temporary file %s",
+		    template);
+
 	(void)close(fd);
 }
 
