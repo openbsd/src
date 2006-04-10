@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.75 2006/03/23 03:30:49 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.76 2006/04/10 08:05:13 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: ping.c,v 1.75 2006/03/23 03:30:49 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ping.c,v 1.76 2006/04/10 08:05:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -356,7 +356,7 @@ main(int argc, char *argv[])
 	if (datalen >= sizeof(struct tvi))	/* can we time transfer */
 		timing = 1;
 	packlen = datalen + MAXIPLEN + MAXICMPLEN;
-	if (!(packet = (u_char *)malloc((u_int)packlen)))
+	if (!(packet = malloc((size_t)packlen)))
 		err(1, "malloc");
 	if (!(options & F_PINGFILLED))
 		for (i = sizeof(struct tvi); i < datalen; ++i)
@@ -515,7 +515,7 @@ main(int argc, char *argv[])
 				continue;
 		}
 		fromlen = sizeof(from);
-		if ((cc = recvfrom(s, (char *)packet, packlen, 0,
+		if ((cc = recvfrom(s, packet, packlen, 0,
 		    (struct sockaddr *)&from, &fromlen)) < 0) {
 			if (errno == EINTR)
 				continue;
@@ -616,7 +616,7 @@ pinger(void)
 		(void)gettimeofday(&tv, (struct timezone *)NULL);
 		tvi.tv_sec = htonl(tv.tv_sec);
 		tvi.tv_usec = htonl(tv.tv_usec);
-		memcpy((u_int *)&outpack[8], &tvi, sizeof tvi);
+		memcpy(&outpack[8], &tvi, sizeof tvi);
 	}
 
 	cc = datalen + 8;			/* skips ICMP portion */
@@ -633,7 +633,7 @@ pinger(void)
 		ip->ip_sum = in_cksum((u_short *)outpackhdr, cc);
 	}
 
-	i = sendto(s, (char *)packet, cc, 0, (struct sockaddr *)&whereto,
+	i = sendto(s, packet, cc, 0, (struct sockaddr *)&whereto,
 	    sizeof(whereto));
 
 	if (i < 0 || i != cc)  {
@@ -760,7 +760,7 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 		/* We've got something other than an ECHOREPLY */
 		if (!(options & F_VERBOSE))
 			return;
-		ip2 = (struct ip *) (buf + hlen + sizeof (struct icmp));
+		ip2 = (struct ip *)(buf + hlen + sizeof (struct icmp));
 		hlen2 = ip2->ip_hl << 2;
 		if (cc >= hlen2 + 8 && check_icmph((struct ip *)(icp +
 		    sizeof (struct icmp))) != 1)

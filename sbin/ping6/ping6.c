@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.63 2006/03/17 16:11:06 otto Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.64 2006/04/10 08:05:14 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -214,7 +214,6 @@ char *hostname;
 int ident;			/* process id to identify our packets */
 u_int8_t nonce[8];		/* nonce field for node information */
 int hoplimit = -1;		/* hoplimit */
-int pathmtu = 0;		/* path MTU for the destination.  0 = unspec. */
 
 /* counters */
 long npackets;			/* max packets to transmit */
@@ -271,7 +270,9 @@ int	 pr_bitrange(u_int32_t, int, int);
 void	 pr_retip(struct ip6_hdr *, u_char *);
 void	 summary(void);
 void	 tvsub(struct timeval *, struct timeval *);
+#ifdef IPSEC_POLICY_IPSEC
 int	 setpolicy(int, char *);
+#endif
 char	*nigroup(char *);
 void	 usage(void);
 
@@ -612,7 +613,7 @@ main(int argc, char *argv[])
 	if (!res->ai_addr)
 		errx(1, "getaddrinfo failed");
 
-	(void)memcpy(&dst, res->ai_addr, res->ai_addrlen);
+	memcpy(&dst, res->ai_addr, res->ai_addrlen);
 
 	if ((s = socket(res->ai_family, res->ai_socktype,
 	    res->ai_protocol)) < 0)
@@ -643,7 +644,7 @@ main(int argc, char *argv[])
 			warnx("gateway resolves to multiple addresses");
 
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_NEXTHOP,
-			       gres->ai_addr, gres->ai_addrlen)) {
+		    gres->ai_addr, gres->ai_addrlen)) {
 			err(1, "setsockopt(IPV6_NEXTHOP)");
 		}
 
@@ -659,20 +660,20 @@ main(int argc, char *argv[])
 
 #ifdef IPV6_RECVHOPOPTS
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVHOPOPTS, &opton,
-		    sizeof(opton)))
+		    (socklen_t)sizeof(opton)))
 			err(1, "setsockopt(IPV6_RECVHOPOPTS)");
 #else  /* old adv. API */
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_HOPOPTS, &opton,
-		    sizeof(opton)))
+		    (socklen_t)sizeof(opton)))
 			err(1, "setsockopt(IPV6_HOPOPTS)");
 #endif
 #ifdef IPV6_RECVDSTOPTS
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVDSTOPTS, &opton,
-		    sizeof(opton)))
+		    (socklen_t)sizeof(opton)))
 			err(1, "setsockopt(IPV6_RECVDSTOPTS)");
 #else  /* old adv. API */
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_DSTOPTS, &opton,
-		    sizeof(opton)))
+		    (socklen_t)sizeof(opton)))
 			err(1, "setsockopt(IPV6_DSTOPTS)");
 #endif
 #ifdef IPV6_RECVRTHDRDSTOPTS
@@ -708,7 +709,7 @@ main(int argc, char *argv[])
 		packlen = 2048 + IP6LEN + ICMP6ECHOLEN + EXTRA;
 	}
 
-	if (!(packet = (u_char *)malloc((u_int)packlen)))
+	if (!(packet = malloc(packlen)))
 		err(1, "Unable to allocate packet");
 	if (!(options & F_PINGFILLED))
 		for (i = ICMP6ECHOLEN; i < packlen; ++i)
@@ -722,19 +723,19 @@ main(int argc, char *argv[])
 	hold = 1;
 
 	if (options & F_SO_DEBUG)
-		(void)setsockopt(s, SOL_SOCKET, SO_DEBUG, (char *)&hold,
-		    sizeof(hold));
+		(void)setsockopt(s, SOL_SOCKET, SO_DEBUG, &hold,
+		    (socklen_t)sizeof(hold));
 	optval = IPV6_DEFHLIM;
 	if (IN6_IS_ADDR_MULTICAST(&dst.sin6_addr))
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
-		    &optval, sizeof(optval)) == -1)
+		    &optval, (socklen_t)sizeof(optval)) == -1)
 			err(1, "IPV6_MULTICAST_HOPS");
 #ifdef IPV6_USE_MIN_MTU
 	if (mflag != 1) {
 		optval = mflag > 1 ? 0 : 1;
 
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_USE_MIN_MTU,
-		    &optval, sizeof(optval)) == -1)
+		    &optval, (socklen_t)sizeof(optval)) == -1)
 			err(1, "setsockopt(IPV6_USE_MIN_MTU)");
 	}
 #ifdef IPV6_RECVPATHMTU
@@ -791,7 +792,7 @@ main(int argc, char *argv[])
 		ICMP6_FILTER_SETPASSALL(&filt);
 	}
 	if (setsockopt(s, IPPROTO_ICMPV6, ICMP6_FILTER, &filt,
-	    sizeof(filt)) < 0)
+	    (socklen_t)sizeof(filt)) < 0)
 		err(1, "setsockopt(ICMP6_FILTER)");
     }
 #endif /*ICMP6_FILTER*/
@@ -806,7 +807,7 @@ main(int argc, char *argv[])
 			err(1, "setsockopt(IPV6_RECVRTHDR)");
 #else  /* old adv. API */
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_RTHDR, &opton,
-		    sizeof(opton)))
+		    (socklen_t)sizeof(opton)))
 			err(1, "setsockopt(IPV6_RTHDR)");
 #endif
 	}
@@ -833,7 +834,7 @@ main(int argc, char *argv[])
 
 	/* set IP6 packet options */
 	if (ip6optlen) {
-		if ((scmsg = (char *)malloc(ip6optlen)) == 0)
+		if ((scmsg = malloc(ip6optlen)) == 0)
 			errx(1, "can't allocate enough memory");
 		smsghdr.msg_control = (caddr_t)scmsg;
 		smsghdr.msg_controllen = ip6optlen;
@@ -987,13 +988,12 @@ main(int argc, char *argv[])
 		if (datalen > sockbufsize)
 			warnx("you need -b to increase socket buffer size");
 		if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &sockbufsize,
-		    sizeof(sockbufsize)) < 0)
+		    (socklen_t)sizeof(sockbufsize)) < 0)
 			err(1, "setsockopt(SO_SNDBUF)");
 		if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &sockbufsize,
-		    sizeof(sockbufsize)) < 0)
+		    (socklen_t)sizeof(sockbufsize)) < 0)
 			err(1, "setsockopt(SO_RCVBUF)");
-	}
-	else {
+	} else {
 		if (datalen > 8 * 1024)	/*XXX*/
 			warnx("you need -b to increase socket buffer size");
 		/*
@@ -1003,8 +1003,8 @@ main(int argc, char *argv[])
 		 * to get some stuff for /etc/ethers.
 		 */
 		hold = 48 * 1024;
-		setsockopt(s, SOL_SOCKET, SO_RCVBUF, (char *)&hold,
-		    sizeof(hold));
+		setsockopt(s, SOL_SOCKET, SO_RCVBUF, &hold,
+		    (socklen_t)sizeof(hold));
 	}
 #endif
 
@@ -1012,21 +1012,21 @@ main(int argc, char *argv[])
 #ifndef USE_SIN6_SCOPE_ID
 #ifdef IPV6_RECVPKTINFO
 	if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVPKTINFO, &optval,
-	    sizeof(optval)) < 0)
+	    (socklen_t)sizeof(optval)) < 0)
 		warn("setsockopt(IPV6_RECVPKTINFO)"); /* XXX err? */
 #else  /* old adv. API */
 	if (setsockopt(s, IPPROTO_IPV6, IPV6_PKTINFO, &optval,
-	    sizeof(optval)) < 0)
+	    (socklen_t)sizeof(optval)) < 0)
 		warn("setsockopt(IPV6_PKTINFO)"); /* XXX err? */
 #endif
 #endif /* USE_SIN6_SCOPE_ID */
 #ifdef IPV6_RECVHOPLIMIT
 	if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &optval,
-	    sizeof(optval)) < 0)
+	    (socklen_t)sizeof(optval)) < 0)
 		warn("setsockopt(IPV6_RECVHOPLIMIT)"); /* XXX err? */
 #else  /* old adv. API */
 	if (setsockopt(s, IPPROTO_IPV6, IPV6_HOPLIMIT, &optval,
-	    sizeof(optval)) < 0)
+	    (socklen_t)sizeof(optval)) < 0)
 		warn("setsockopt(IPV6_HOPLIMIT)"); /* XXX err? */
 #endif
 
@@ -1125,7 +1125,7 @@ main(int argc, char *argv[])
 		} else if (cc == 0)
 			continue;
 
-		m.msg_name = (caddr_t)&from;
+		m.msg_name = &from;
 		m.msg_namelen = sizeof(from);
 		memset(&iov, 0, sizeof(iov));
 		iov[0].iov_base = (caddr_t)packet;
@@ -1342,7 +1342,7 @@ pinger(void)
 		errx(1, "internal error; length mismatch");
 #endif
 
-	smsghdr.msg_name = (caddr_t)&dst;
+	smsghdr.msg_name = &dst;
 	smsghdr.msg_namelen = sizeof(dst);
 	memset(&iov, 0, sizeof(iov));
 	iov[0].iov_base = (caddr_t)outpack;
@@ -1666,7 +1666,8 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 					putchar(')');
 					goto fqdnend;
 				}
-				ttl = (int32_t)ntohl(*(u_long *)&buf[off+ICMP6ECHOLEN+8]);
+				ttl = (int32_t)ntohl(*(u_long *)
+				    &buf[off+ICMP6ECHOLEN+8]);
 				if (comma)
 					printf(",");
 				if (!(ni->ni_flags & NI_FQDN_FLAG_VALIDTTL)) {
