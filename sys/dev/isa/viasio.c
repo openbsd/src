@@ -1,4 +1,4 @@
-/*	$OpenBSD: viasio.c,v 1.5 2006/01/19 17:08:40 grange Exp $	*/
+/*	$OpenBSD: viasio.c,v 1.6 2006/04/10 00:57:54 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -282,7 +282,7 @@ viasio_hm_init(struct viasio_softc *sc)
 
 	/* Temperature reading 1 */
 	sc->sc_hm_sensors[VT1211_HMS_TEMP1].type = SENSOR_TEMP;
-	strlcpy(sc->sc_hm_sensors[VT1211_HMS_TEMP1].desc, "TEMP1",
+	strlcpy(sc->sc_hm_sensors[VT1211_HMS_TEMP1].desc, "Temp",
 	    sizeof(sc->sc_hm_sensors[VT1211_HMS_TEMP1].desc));
 
 	/* Universal channels (UCH) 1-5 */

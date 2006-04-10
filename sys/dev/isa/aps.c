@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.6 2006/01/19 17:08:40 grange Exp $	*/
+/*	$OpenBSD: aps.c,v 1.7 2006/04/10 00:57:54 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  *
@@ -160,11 +160,11 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sensors[APS_SENSOR_TEMP1].type = SENSOR_TEMP;
 	snprintf(sc->sensors[APS_SENSOR_TEMP1].desc,
-	    sizeof(sc->sensors[APS_SENSOR_TEMP1].desc), "Temp1");
+	    sizeof(sc->sensors[APS_SENSOR_TEMP1].desc), "Temp 1");
 
 	sc->sensors[APS_SENSOR_TEMP2].type = SENSOR_TEMP;
 	snprintf(sc->sensors[APS_SENSOR_TEMP2].desc,
-	    sizeof(sc->sensors[APS_SENSOR_TEMP2].desc), "Temp2");
+	    sizeof(sc->sensors[APS_SENSOR_TEMP2].desc), "Temp 2");
 
 	sc->sensors[APS_SENSOR_XVAR].type = SENSOR_INTEGER;
 	snprintf(sc->sensors[APS_SENSOR_XVAR].desc,
@@ -183,17 +183,17 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sensors[APS_SENSOR_KBACT].type = SENSOR_INTEGER;
 	snprintf(sc->sensors[APS_SENSOR_KBACT].desc,
-	    sizeof(sc->sensors[APS_SENSOR_KBACT].desc), "KBD_ACT");
+	    sizeof(sc->sensors[APS_SENSOR_KBACT].desc), "Keyboard Active");
 	sc->sensors[APS_SENSOR_KBACT].rfact = 1;
 
 	sc->sensors[APS_SENSOR_MSACT].type = SENSOR_INTEGER;
 	snprintf(sc->sensors[APS_SENSOR_MSACT].desc,
-	    sizeof(sc->sensors[APS_SENSOR_MSACT].desc), "MS_ACT");
+	    sizeof(sc->sensors[APS_SENSOR_MSACT].desc), "Mouse Active");
 	sc->sensors[APS_SENSOR_MSACT].rfact = 1;
 
 	sc->sensors[APS_SENSOR_LIDOPEN].type = SENSOR_INTEGER;
 	snprintf(sc->sensors[APS_SENSOR_LIDOPEN].desc,
-	    sizeof(sc->sensors[APS_SENSOR_LIDOPEN].desc), "LID_OPEN");
+	    sizeof(sc->sensors[APS_SENSOR_LIDOPEN].desc), "Lid Open");
 	sc->sensors[APS_SENSOR_LIDOPEN].rfact = 1;
 
 	/* stop hiding and report to the authorities */

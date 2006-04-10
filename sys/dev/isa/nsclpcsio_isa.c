@@ -1,4 +1,4 @@
-/* $OpenBSD: nsclpcsio_isa.c,v 1.7 2006/01/19 17:08:40 grange Exp $ */
+/* $OpenBSD: nsclpcsio_isa.c,v 1.8 2006/04/10 00:57:54 deraadt Exp $ */
 /* $NetBSD: nsclpcsio_isa.c,v 1.5 2002/10/22 16:18:26 drochner Exp $ */
 
 /*
@@ -384,9 +384,9 @@ nsclpcsio_tms_init(struct nsclpcsio_softc *sc)
 		sc->sensors[i].type = SENSOR_TEMP;
 	}
 
-	strlcpy(sc->sensors[0].desc, "TSENS1", sizeof(sc->sensors[0].desc));
-	strlcpy(sc->sensors[1].desc, "TSENS2", sizeof(sc->sensors[0].desc));
-	strlcpy(sc->sensors[2].desc, "TNSC", sizeof(sc->sensors[0].desc));
+	strlcpy(sc->sensors[0].desc, "Remote Temp 1", sizeof(sc->sensors[0].desc));
+	strlcpy(sc->sensors[1].desc, "Remote Temp 2", sizeof(sc->sensors[0].desc));
+	strlcpy(sc->sensors[2].desc, "Local Temp", sizeof(sc->sensors[0].desc));
 
 	nsclpcsio_tms_update(sc);
 }
