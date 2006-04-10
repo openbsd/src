@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdict.c,v 1.7 2006/04/03 08:31:24 jmc Exp $	*/
+/*	$OpenBSD: mkdict.c,v 1.8 2006/04/10 17:32:17 deraadt Exp $	*/
 /*	$NetBSD: mkdict.c,v 1.2 1995/03/21 12:14:49 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdict.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: mkdict.c,v 1.7 2006/04/03 08:31:24 jmc Exp $";
+static char rcsid[] = "$OpenBSD: mkdict.c,v 1.8 2006/04/10 17:32:17 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ static char rcsid[] = "$OpenBSD: mkdict.c,v 1.7 2006/04/03 08:31:24 jmc Exp $";
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 
 #include "bog.h"
@@ -67,6 +68,7 @@ int
 main(int argc, char *argv[])
 {
 	char *p, *q;
+	const char *errstr;
 	int ch, common, n, nwords;
 	int current, len, prev, qcount;
 	char buf[2][MAXWORDLEN + 1];
@@ -74,8 +76,13 @@ main(int argc, char *argv[])
 	prev = 0;
 	current = 1;
 	buf[prev][0] = '\0';
-	if (argc == 2)
-		n = atoi(argv[1]);
+	if (argc == 2) {
+		n = strtonum(argv[1], 1, INT_MAX, NULL);
+		if (errstr)
+			errx(1, "%s: %s", argv[1], errstr);
+		if (n == 0)
+			errx(1, "%s: invalid value", argv[1]);
+	}
 
 	for (nwords = 1;
 	    fgets(buf[current], MAXWORDLEN + 1, stdin) != NULL; ++nwords) {
