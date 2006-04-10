@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.127 2006/03/25 22:41:43 djm Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.128 2006/04/10 00:58:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -127,7 +127,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.127 2006/03/25 22:41:43 djm Exp $";
+	"$OpenBSD: if_wi.c,v 1.128 2006/04/10 00:58:52 deraadt Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -2407,6 +2407,12 @@ wi_mgmt_xmit(struct wi_softc *sc, caddr_t data, int len)
 	if (wi_cmd(sc, WI_CMD_TX|WI_RECLAIM, id, 0, 0)) {
 		printf(WI_PRT_FMT ": wi_mgmt_xmit: xmit failed\n",
 		    WI_PRT_ARG(sc));
+		/*
+		 * Hostile stations or corrupt frames may crash the card
+		 * and cause the kernel to get stuck printing complaints.
+		 * Reset the card and hope the problem goes away.
+		 */
+		wi_reset(sc);
 		return(EIO);
 	}
 
