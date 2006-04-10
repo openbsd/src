@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.13 2006/04/10 07:17:57 brad Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.14 2006/04/10 07:22:42 brad Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -281,7 +281,8 @@ do {									\
 } while (0)
 
 #define GEM_IS_APPLE(sc)	\
-    ((sc)->sc_variant >= GEM_APPLE_K2_GMAC && (sc)->sc_variant <= GEM_APPLE_UNINORTH2GMAC)
+    ((sc)->sc_variant >= GEM_APPLE_INTREPID2_GMAC &&	\
+    (sc)->sc_variant <= GEM_APPLE_UNINORTH2GMAC)
 
 #ifdef _KERNEL
 void	gem_attach(struct gem_softc *, const u_int8_t *);
