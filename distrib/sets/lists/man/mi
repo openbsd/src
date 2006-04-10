@@ -347,7 +347,6 @@
 ./usr/share/man/cat1/make.0
 ./usr/share/man/cat1/makeinfo.0
 ./usr/share/man/cat1/md5.0
-./usr/share/man/cat1/merge.0
 ./usr/share/man/cat1/mesg.0
 ./usr/share/man/cat1/mg.0
 ./usr/share/man/cat1/midiplay.0
@@ -543,8 +542,6 @@
 ./usr/share/man/cat1/rcs2log.0
 ./usr/share/man/cat1/rcsclean.0
 ./usr/share/man/cat1/rcsdiff.0
-./usr/share/man/cat1/rcsfreeze.0
-./usr/share/man/cat1/rcsintro.0
 ./usr/share/man/cat1/rcsmerge.0
 ./usr/share/man/cat1/rdist.0
 ./usr/share/man/cat1/rdistd.0
@@ -1916,7 +1913,6 @@
 ./usr/share/man/cat5/printcap.0
 ./usr/share/man/cat5/protocols.0
 ./usr/share/man/cat5/ranlib.0
-./usr/share/man/cat5/rcsfile.0
 ./usr/share/man/cat5/remote.0
 ./usr/share/man/cat5/resolv.conf.0
 ./usr/share/man/cat5/resolv.conf.tail.0

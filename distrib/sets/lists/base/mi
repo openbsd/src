@@ -319,7 +319,6 @@
 ./usr/bin/make
 ./usr/bin/makeinfo
 ./usr/bin/man
-./usr/bin/merge
 ./usr/bin/mesg
 ./usr/bin/mg
 ./usr/bin/midiplay
@@ -389,7 +388,6 @@
 ./usr/bin/rcsclean
 ./usr/bin/rcsdiff
 ./usr/bin/rcsfreeze
-./usr/bin/rcsmerge
 ./usr/bin/rdist
 ./usr/bin/rdistd
 ./usr/bin/readlink
