@@ -1,4 +1,4 @@
-/*	$OpenBSD: kauaiata.c,v 1.6 2005/10/22 21:25:02 kettenis Exp $ */
+/*	$OpenBSD: kauaiata.c,v 1.7 2006/04/10 08:10:49 brad Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -79,6 +79,7 @@ kauaiatamatch(struct device *parent, void *match, void *aux)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_APPLE_UNINORTH_ATA:
 		case PCI_PRODUCT_APPLE_INTREPID_ATA:
+		case PCI_PRODUCT_APPLE_INTREPID2_ATA:
 		case PCI_PRODUCT_APPLE_K2_ATA:
 		case PCI_PRODUCT_APPLE_SHASTA_ATA:
 			return (1);
