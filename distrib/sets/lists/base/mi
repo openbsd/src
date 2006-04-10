@@ -387,7 +387,7 @@
 ./usr/bin/rcs2log
 ./usr/bin/rcsclean
 ./usr/bin/rcsdiff
-./usr/bin/rcsfreeze
+./usr/bin/rcsmerge
 ./usr/bin/rdist
 ./usr/bin/rdistd
 ./usr/bin/readlink
