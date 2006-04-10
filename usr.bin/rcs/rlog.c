@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.38 2006/04/06 10:13:00 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.39 2006/04/10 15:32:26 niallo Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -221,7 +221,7 @@ rlog_file(const char *fname, const char *fpath)
 		TAILQ_FOREACH(rdp, &(file->rf_delta), rd_list) {
 			/*
 			 * if selections are enabled verify that entry is
-			 * selected. 
+			 * selected.
 			 */
 			if ((rflag == 0) || (rdp->rd_flags & RCS_RD_SELECT))
 				rlog_rev_print(rdp);
@@ -263,7 +263,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 				}
 				found = 0;
 			}
-			cvs_argv_destroy(largv);	
+			cvs_argv_destroy(largv);
 		}
 	}
 	/* -sstates */
@@ -276,7 +276,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 			}
 			found = 0;
 		}
-		cvs_argv_destroy(sargv);	
+		cvs_argv_destroy(sargv);
 	}
 	/* -w[logins] */
 	if (wflag == 1) {
@@ -290,7 +290,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 				}
 				found = 0;
 			}
-			cvs_argv_destroy(wargv);	
+			cvs_argv_destroy(wargv);
 		} else {
 			if ((author = getlogin()) == NULL)
 				fatal("getlogin failed");
@@ -359,7 +359,7 @@ rlog_rev_select(void)
 			lstr = rstr = revrange->argv[0];
 		else {
 			if (revrange->argv[2] != NULL)
-				fatal("invalid revision range: %s", 
+				fatal("invalid revision range: %s",
 					revargv->argv[i]);
 			lstr = revrange->argv[0];
 			rstr = revrange->argv[1];
@@ -390,7 +390,7 @@ rlog_rev_select(void)
 				nrev++;
 			}
 	}
-	cvs_argv_destroy(revargv);	
+	cvs_argv_destroy(revargv);
 
 	if (lnum.rn_id != NULL)
 		xfree(lnum.rn_id);
