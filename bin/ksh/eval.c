@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.29 2006/03/17 16:30:13 millert Exp $	*/
+/*	$OpenBSD: eval.c,v 1.30 2006/04/10 14:38:59 jaredy Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -344,7 +344,7 @@ expand(char *cp,	/* input word */
 					case '?':
 						f &= ~DOBLANK;
 						f |= DOTEMP_;
-						/* fall through */
+						/* FALLTHROUGH */
 					default:
 						/* Enable tilde expansion */
 						tilde_ok = 1;

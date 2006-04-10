@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.40 2005/12/11 20:31:21 otto Exp $	*/
+/*	$OpenBSD: main.c,v 1.41 2006/04/10 14:38:59 jaredy Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -431,15 +431,15 @@ include(const char *name, int argc, char **argv, int intr_ok)
 			 */
 			if (intr_ok && (exstat - 128) != SIGTERM)
 				return 1;
-			/* fall through... */
+			/* FALLTHROUGH */
 		case LEXIT:
 		case LLEAVE:
 		case LSHELL:
 			unwind(i);
-			/*NOREACHED*/
+			/* NOTREACHED */
 		default:
 			internal_errorf(1, "include: %d", i);
-			/*NOREACHED*/
+			/* NOTREACHED */
 		}
 	}
 	if (argv) {
@@ -509,19 +509,19 @@ shell(Source *volatile s, volatile int toplevel)
 				s->start = s->str = null;
 				break;
 			}
-			/* fall through... */
+			/* FALLTHROUGH */
 		case LEXIT:
 		case LLEAVE:
 		case LRETURN:
 			source = old_source;
 			quitenv(NULL);
 			unwind(i);	/* keep on going */
-			/*NOREACHED*/
+			/* NOTREACHED */
 		default:
 			source = old_source;
 			quitenv(NULL);
 			internal_errorf(1, "shell: %d", i);
-			/*NOREACHED*/
+			/* NOTREACHED */
 		}
 	}
 
@@ -597,12 +597,12 @@ unwind(int i)
 		case E_LOOP:
 		case E_ERRH:
 			siglongjmp(e->jbuf, i);
-			/*NOTREACHED*/
+			/* NOTREACHED */
 
 		case E_NONE:
 			if (i == LINTR)
 				e->flags |= EF_FAKE_SIGDIE;
-			/* Fall through... */
+			/* FALLTHROUGH */
 
 		default:
 			quitenv(NULL);

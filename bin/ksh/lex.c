@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.38 2005/12/11 20:31:21 otto Exp $	*/
+/*	$OpenBSD: lex.c,v 1.39 2006/04/10 14:38:59 jaredy Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -249,7 +249,7 @@ yylex(int cf)
 				*wp++ = c;
 				break;
 			}
-			/* fall through.. */
+			/* FALLTHROUGH */
 		  Sbase1:	/* includes *(...|...) pattern (*+?@!) */
 			if (c == '*' || c == '@' || c == '+' || c == '?' ||
 			    c == '!') {
@@ -262,7 +262,7 @@ yylex(int cf)
 				}
 				ungetsc(c2);
 			}
-			/* fall through.. */
+			/* FALLTHROUGH */
 		  Sbase2:	/* doesn't include *(...|...) pattern (*+?@!) */
 			switch (c) {
 			case '\\':
@@ -568,7 +568,7 @@ yylex(int cf)
 						*wp++ = c;
 						break;
 					}
-					/* fall through.. */
+					/* FALLTHROUGH */
 				default:
 					if (c) { /* trailing \ is lost */
 						*wp++ = '\\';
@@ -1449,7 +1449,7 @@ get_brace_var(XString *wsp, char *wp)
 				state = PS_SAW_HASH;
 				break;
 			}
-			/* fall through.. */
+			/* FALLTHROUGH */
 		case PS_SAW_HASH:
 			if (letter(c))
 				state = PS_IDENT;

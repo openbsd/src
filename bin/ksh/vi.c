@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.22 2005/12/11 20:31:21 otto Exp $	*/
+/*	$OpenBSD: vi.c,v 1.23 2006/04/10 14:38:59 jaredy Exp $	*/
 
 /*
  *	vi command editing
@@ -853,7 +853,7 @@ vi_cmd(int argcnt, const char *cmd)
 		case 'g':
 			if (!argcnt)
 				argcnt = hlast;
-			/* fall through */
+			/* FALLTHROUGH */
 		case 'G':
 			if (!argcnt)
 				argcnt = 1;
@@ -996,7 +996,7 @@ vi_cmd(int argcnt, const char *cmd)
 			c3 = 1;
 			srchlen = 0;
 			lastsearch = *cmd;
-			/* fall through */
+			/* FALLTHROUGH */
 		case 'n':
 		case 'N':
 			if (lastsearch == ' ')

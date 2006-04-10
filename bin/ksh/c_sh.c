@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.34 2006/03/21 09:00:23 otto Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.35 2006/04/10 14:38:59 jaredy Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -547,7 +547,7 @@ c_exitreturn(char **wp)
 
 	quitenv(NULL);	/* get rid of any i/o redirections */
 	unwind(how);
-	/*NOTREACHED*/
+	/* NOTREACHED */
 	return 0;
 }
 
@@ -601,7 +601,7 @@ c_brkcont(char **wp)
 	}
 
 	unwind(*wp[0] == 'b' ? LBREAK : LCONTIN);
-	/*NOTREACHED*/
+	/* NOTREACHED */
 }
 
 int

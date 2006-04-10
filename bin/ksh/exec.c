@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.45 2006/03/17 16:30:13 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.46 2006/04/10 14:38:59 jaredy Exp $	*/
 
 /*
  * execute command tree
@@ -167,7 +167,7 @@ execute(struct op *volatile t,
 			sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
 			quitenv(NULL);
 			unwind(i);
-			/*NOTREACHED*/
+			/* NOTREACHED */
 		}
 		/* Already have a (live) co-process? */
 		if (coproc.job && coproc.write >= 0)
@@ -614,7 +614,7 @@ comexec(struct op *t, struct tbl *volatile tp, char **ap, volatile int flags)
 		case LSHELL:
 			quitenv(NULL);
 			unwind(i);
-			/*NOTREACHED*/
+			/* NOTREACHED */
 		default:
 			quitenv(NULL);
 			internal_errorf(1, "CFUNC %d", i);
