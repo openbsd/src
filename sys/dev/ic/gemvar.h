@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemvar.h,v 1.12 2006/02/05 00:25:06 brad Exp $	*/
+/*	$OpenBSD: gemvar.h,v 1.13 2006/04/10 07:17:57 brad Exp $	*/
 /*	$NetBSD: gemvar.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -148,14 +148,15 @@ struct gem_softc {
 
 	int		sc_pci;		/* XXXXX -- PCI buses are LE. */
 	u_int		sc_variant;	/* which GEM are we dealing with? */
-#define GEM_UNKNOWN		0	/* don't know */
-#define GEM_SUN_GEM		1	/* Sun GEM variant */
-#define GEM_SUN_ERI		2	/* Sun ERI variant */
-#define GEM_APPLE_K2_GMAC	3	/* Apple K2 GMAC variant */
-#define GEM_APPLE_PANGEA_GMAC	4	/* Apple Pangea GMAC variant */
-#define GEM_APPLE_SHASTA_GMAC	5	/* Apple Shasta GMAC variant */
-#define GEM_APPLE_UNINORTHGMAC	6	/* Apple UniNorth GMAC variant */
-#define GEM_APPLE_UNINORTH2GMAC	7	/* Apple UniNorth 2 GMAC variant */
+#define GEM_UNKNOWN			0	/* don't know */
+#define GEM_SUN_GEM			1	/* Sun GEM */
+#define GEM_SUN_ERI			2	/* Sun ERI */
+#define GEM_APPLE_INTREPID2_GMAC	3	/* Apple Intrepid 2 GMAC */
+#define GEM_APPLE_K2_GMAC		4	/* Apple K2 GMAC */
+#define GEM_APPLE_PANGEA_GMAC		5	/* Apple Pangea GMAC */
+#define GEM_APPLE_SHASTA_GMAC		6	/* Apple Shasta GMAC */
+#define GEM_APPLE_UNINORTHGMAC		7	/* Apple UniNorth GMAC */
+#define GEM_APPLE_UNINORTH2GMAC		8	/* Apple UniNorth 2 GMAC */
 
 	u_int		sc_flags;	/* */
 #define	GEM_GIGABIT		0x0001	/* has a gigabit PHY */

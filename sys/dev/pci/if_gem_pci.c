@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.21 2005/11/02 02:07:11 brad Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.22 2006/04/10 07:17:57 brad Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -96,6 +96,7 @@ struct cfattach gem_pci_ca = {
 const struct pci_matchid gem_pci_devices[] = {
 	{ PCI_VENDOR_SUN, PCI_PRODUCT_SUN_ERINETWORK },
 	{ PCI_VENDOR_SUN, PCI_PRODUCT_SUN_GEMNETWORK },
+	{ PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_GMAC },
 	{ PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_GMAC },
 	{ PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_GMAC },
 	{ PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA_GMAC },
@@ -146,6 +147,8 @@ gem_attach_pci(parent, self, aux)
 		sc->sc_variant = GEM_SUN_GEM;
 	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_ERINETWORK)
 		sc->sc_variant = GEM_SUN_ERI;
+	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_INTREPID2_GMAC)
+		sc->sc_variant = GEM_APPLE_INTREPID2_GMAC;
 	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_K2_GMAC)
 		sc->sc_variant = GEM_APPLE_K2_GMAC;
 	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_PANGEA_GMAC)
