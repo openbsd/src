@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.28 2006/03/24 15:57:29 xsa Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.29 2006/04/10 08:08:00 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -151,8 +151,7 @@ rcsclean_file(char *fname, RCSNUM *rev)
 	if (flags & PRESERVETIME)
 		rcs_mtime = rcs_get_mtime(file->rf_path);
 
-	if (!RCS_KWEXP_INVAL(kflag))
-		rcs_kwexp_set(file, kflag);
+	rcs_kwexp_set(file, kflag);
 
 	if (rev == RCS_HEAD_REV)
 		frev = file->rf_head;

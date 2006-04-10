@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.56 2006/03/16 09:06:19 xsa Exp $	*/
+/*	$OpenBSD: update.c,v 1.57 2006/04/10 08:08:00 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -257,8 +257,7 @@ cvs_update_local(CVSFILE *cf, void *arg)
 
 	/* set keyword expansion */
 	/* XXX look at cf->cf_opts as well for this */
-	if (rcs_kwexp_set(rf, kflag) < 0)
-		fatal("cvs_update_local: rcs_kwexp_set failed");
+	rcs_kwexp_set(rf, kflag);
 
 	/* fill in the correct revision */
 	if (rev != NULL) {

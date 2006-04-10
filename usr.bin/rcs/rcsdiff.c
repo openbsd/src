@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.43 2006/04/06 10:13:00 xsa Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.44 2006/04/10 08:08:00 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -121,8 +121,7 @@ rcsdiff_main(int argc, char **argv)
 		if ((file = rcs_open(fpath, RCS_READ|RCS_PARSE_FULLY)) == NULL)
 			continue;
 
-		if (kflag != RCS_KWEXP_ERR)
-			rcs_kwexp_set(file, kflag);
+		rcs_kwexp_set(file, kflag);
 
 		if (rev == RCS_HEAD_REV)
 			frev = file->rf_head;

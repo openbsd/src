@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.71 2006/04/09 19:22:23 niallo Exp $	*/
+/*	$OpenBSD: co.c,v 1.72 2006/04/10 08:08:00 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -173,8 +173,7 @@ checkout_main(int argc, char **argv)
 		if (flags & PRESERVETIME)
 			rcs_mtime = rcs_get_mtime(file->rf_path);
 
-		if (kflag != RCS_KWEXP_ERR)
-			rcs_kwexp_set(file, kflag);
+		rcs_kwexp_set(file, kflag);
 
 		if (rev == RCS_HEAD_REV)
 			frev = file->rf_head;
