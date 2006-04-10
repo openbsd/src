@@ -9,7 +9,7 @@
  *
  * S/Key misc routines.
  *
- * $OpenBSD: skeysubr.c,v 1.28 2004/07/28 19:37:09 millert Exp $
+ * $OpenBSD: skeysubr.c,v 1.29 2006/04/10 08:06:08 deraadt Exp $
  */
 
 #include <stdio.h>
@@ -86,7 +86,7 @@ keycrunch_md4(char *result, char *seed, char *passwd)
 	 */
 	if (seed && passwd) {
 		buflen = strlen(seed) + strlen(passwd);
-		if ((buf = (char *)malloc(buflen + 1)) == NULL)
+		if ((buf = malloc(buflen + 1)) == NULL)
 			return(-1);
 		(void)strlcpy(buf, seed, buflen + 1);
 		lowcase(buf);
@@ -128,7 +128,7 @@ keycrunch_md5(char *result, char *seed, char *passwd)
 	 */
 	if (seed && passwd) {
 		buflen = strlen(seed) + strlen(passwd);
-		if ((buf = (char *)malloc(buflen + 1)) == NULL)
+		if ((buf = malloc(buflen + 1)) == NULL)
 			return(-1);
 		(void)strlcpy(buf, seed, buflen + 1);
 		lowcase(buf);
@@ -170,7 +170,7 @@ keycrunch_sha1(char *result, char *seed, char *passwd)
 	 */
 	if (seed && passwd) {
 		buflen = strlen(seed) + strlen(passwd);
-		if ((buf = (char *)malloc(buflen + 1)) == NULL)
+		if ((buf = malloc(buflen + 1)) == NULL)
 			return(-1);
 		(void)strlcpy(buf, seed, buflen + 1);
 		lowcase(buf);
@@ -223,7 +223,7 @@ keycrunch_rmd160(char *result, char *seed, char *passwd)
 	 */
 	if (seed && passwd) {
 		buflen = strlen(seed) + strlen(passwd);
-		if ((buf = (char *)malloc(buflen + 1)) == NULL)
+		if ((buf = malloc(buflen + 1)) == NULL)
 			return(-1);
 		(void)strlcpy(buf, seed, buflen + 1);
 		lowcase(buf);
@@ -313,6 +313,7 @@ readskey(char *buf, int n)
 }
 
 /* Signal handler for trapping ^C */
+/*ARGSUSED*/
 static void
 trapped(int sig)
 {
@@ -321,7 +322,7 @@ trapped(int sig)
 	/* Turn on echo if necessary */
 	skey_echo(1);
 
-	_exit(-1);
+	_exit(1);
 }
 
 /*
@@ -479,6 +480,6 @@ lowcase(char *s)
 
 	for (p = s; *p; p++) {
 		if (isupper(*p))
-			*p = tolower(*p);
+			*p = (char)tolower(*p);
 	}
 }

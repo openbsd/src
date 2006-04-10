@@ -10,7 +10,7 @@
  *
  * S/Key verification check, lookups, and authentication.
  *
- * $OpenBSD: skeylogin.c,v 1.52 2004/08/05 13:31:36 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.53 2006/04/10 08:06:08 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -59,8 +59,8 @@ skeychallenge2(int fd, struct skey *mp, char *name, char *ss)
 	case 0:		/* Lookup succeeded, return challenge */
 		(void)snprintf(ss, SKEY_MAX_CHALLENGE,
 		    "otp-%.*s %d %.*s", SKEY_MAX_HASHNAME_LEN,
-			      skey_get_algorithm(), mp->n - 1,
-			      SKEY_MAX_SEED_LEN, mp->seed);
+		    skey_get_algorithm(), mp->n - 1,
+		    SKEY_MAX_SEED_LEN, mp->seed);
 		return (0);
 
 	case 1:		/* User not found */
@@ -93,9 +93,9 @@ skeychallenge(struct skey *mp, char *name, char *ss)
 static int
 skeygetent(int fd, struct skey *mp, const char *name)
 {
+	char *cp, filename[PATH_MAX], *last;
 	struct stat statbuf;
 	size_t nread;
-	char *cp, filename[PATH_MAX], *last;
 	FILE *keyfile;
 
 	/* Check to see that /etc/skey has not been disabled. */
@@ -245,11 +245,9 @@ skeygetnext(struct skey *mp)
 int
 skeyverify(struct skey *mp, char *response)
 {
-	char key[SKEY_BINKEY_SIZE];
-	char fkey[SKEY_BINKEY_SIZE];
-	char filekey[SKEY_BINKEY_SIZE];
+	char key[SKEY_BINKEY_SIZE], fkey[SKEY_BINKEY_SIZE];
+	char filekey[SKEY_BINKEY_SIZE], *cp, *last;
 	size_t nread;
-	char *cp, *last;
 
 	if (response == NULL)
 		goto verify_failure;
@@ -346,9 +344,9 @@ skey_haskey(char *username)
 char *
 skey_keyinfo(char *username)
 {
-	int i;
 	static char str[SKEY_MAX_CHALLENGE];
 	struct skey skey;
+	int i;
 
 	i = skeychallenge(&skey, username, str);
 	if (i == -1)
@@ -373,8 +371,8 @@ skey_keyinfo(char *username)
 int
 skey_passcheck(char *username, char *passwd)
 {
-	int i;
 	struct skey skey;
+	int i;
 
 	i = skeylookup(&skey, username);
 	if (i == -1 || i == 1)
@@ -399,7 +397,7 @@ hash_collapse(u_char *s)
 	u_int32_t i;
 
 	if ((strlen(s) % sizeof(u_int32_t)) == 0)
-  		target = strlen(s);    /* Multiple of 4 */
+		target = strlen(s);    /* Multiple of 4 */
 	else
 		target = strlen(s) - (strlen(s) % sizeof(u_int32_t));
 
@@ -418,13 +416,12 @@ hash_collapse(u_char *s)
 static void
 skey_fakeprompt(char *username, char *skeyprompt)
 {
-	int i;
-	u_int ptr;
-	u_char hseed[SKEY_MAX_SEED_LEN], flg = 1, *up;
-	char *secret, pbuf[SKEY_MAX_PW_LEN+1];
-	char *p, *u;
+	char hseed[SKEY_MAX_SEED_LEN], *secret, pbuf[SKEY_MAX_PW_LEN+1], *p, *u;
+	u_char flg = 1, *up;
 	size_t secretlen;
 	SHA1_CTX ctx;
+	u_int ptr;
+	int i;
 
 	/*
 	 * Base first 4 chars of seed on hostname.
@@ -435,7 +432,7 @@ skey_fakeprompt(char *username, char *skeyprompt)
 	else
 		for (p = pbuf; *p && isalnum(*p); p++)
 			if (isalpha(*p) && isupper(*p))
-				*p = tolower(*p);
+				*p = (char)tolower(*p);
 	if (*p && pbuf - p < 4)
 		(void)strncpy(p, "asjd", 4 - (pbuf - p));
 	pbuf[4] = '\0';
@@ -451,8 +448,8 @@ skey_fakeprompt(char *username, char *skeyprompt)
 		memset(up, 0, strlen(up));
 
 		/* See if the random file's there, else use ctime */
-		if ((fd = open(_SKEY_RAND_FILE_PATH_, O_RDONLY)) != -1
-		    && fstat(fd, &sb) == 0 &&
+		if ((fd = open(_SKEY_RAND_FILE_PATH_, O_RDONLY)) != -1 &&
+		    fstat(fd, &sb) == 0 &&
 		    sb.st_size > (off_t)SKEY_MAX_SEED_LEN &&
 		    lseek(fd, ptr % (sb.st_size - SKEY_MAX_SEED_LEN),
 		    SEEK_SET) != -1 && read(fd, hseed,
@@ -540,9 +537,9 @@ skey_fakeprompt(char *username, char *skeyprompt)
 int
 skey_authenticate(char *username)
 {
-	int i;
 	char pbuf[SKEY_MAX_PW_LEN+1], skeyprompt[SKEY_MAX_CHALLENGE+1];
 	struct skey skey;
+	int i;
 
 	/* Get the S/Key challenge (may be fake) */
 	i = skeychallenge(&skey, username, skeyprompt);
@@ -591,6 +588,7 @@ tgetline(int fd, char *buf, size_t bufsiz, int timeout)
 	struct pollfd pfd[1];
 	size_t left;
 	char c, *cp;
+	ssize_t ss;
 	int n;
 
 	if (bufsiz == 0)
@@ -617,14 +615,14 @@ tgetline(int fd, char *buf, size_t bufsiz, int timeout)
 				break;		/* timeout or error */
 
 			/* Read a character, exit loop on error, EOF or EOL */
-			n = read(fd, &c, 1);
-			if (n != 1 || c == '\n' || c == '\r')
+			ss = read(fd, &c, 1);
+			if (ss != 1 || c == '\n' || c == '\r')
 				break;
 			*cp++ = c;
 		}
 	} else {
 		/* Keep reading until out of space, EOF, error, or newline */
-		while (--left && (n = read(fd, &c, 1)) == 1 && c != '\n' && c != '\r')
+		while (--left && read(fd, &c, 1) == 1 && c != '\n' && c != '\r')
 			*cp++ = c;
 	}
 	*cp = '\0';
