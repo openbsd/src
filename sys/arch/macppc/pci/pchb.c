@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.9 2006/04/10 08:34:22 brad Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.10 2006/04/10 22:14:12 deraadt Exp $	*/
 /*	$NetBSD: pchb.c,v 1.4 2000/01/25 07:19:11 tsubai Exp $	*/
 
 /*-
@@ -88,7 +88,7 @@ pchbmatch(struct device *parent, void *cf, void *aux)
 		case PCI_PRODUCT_APPLE_K2_AGP:
 		case PCI_PRODUCT_APPLE_INTREPID2_AGP:
 		case PCI_PRODUCT_APPLE_INTREPID2_PCI1:
-		case PCI_PRODUCT_APPLE_INTREPID2_PCI1:
+		case PCI_PRODUCT_APPLE_INTREPID2_PCI2:
 			return (1);
 		}
 		break;
