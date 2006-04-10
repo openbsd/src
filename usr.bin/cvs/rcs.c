@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.162 2006/04/10 08:08:00 xsa Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.163 2006/04/10 12:15:21 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1570,19 +1570,6 @@ rcs_errstr(int code)
 	return (esp);
 }
 
-void
-rcs_kflag_usage(void)
-{
-	fprintf(stderr, "Valid expansion modes include:\n"
-	    "\t-kkv\tGenerate keywords using the default form.\n"
-	    "\t-kkvl\tLike -kkv, except locker's name inserted.\n"
-	    "\t-kk\tGenerate only keyword names in keyword strings.\n"
-	    "\t-kv\tGenerate only keyword values in keyword strings.\n"
-	    "\t-ko\tGenerate old keyword string "
-	    "(no changes from checked in file).\n"
-	    "\t-kb\tGenerate binary file unmodified (merges not allowed).\n");
-}
-
 /* rcs_parse_deltas()
  *
  * Parse deltas. If <rev> is not NULL, parse only as far as that
@@ -2915,6 +2902,19 @@ static char *month_tab[] = {
 	"Dec"
 };
 
+void
+rcs_kflag_usage(void)
+{
+	(void)fprintf(stderr, "Valid expansion modes include:\n"
+	    "\t-kkv\tGenerate keywords using the default form.\n"
+	    "\t-kkvl\tLike -kkv, except locker's name inserted.\n"
+	    "\t-kk\tGenerate only keyword names in keyword strings.\n"
+	    "\t-kv\tGenerate only keyword values in keyword strings.\n"
+	    "\t-ko\tGenerate old keyword string "
+	    "(no changes from checked in file).\n"
+	    "\t-kb\tGenerate binary file unmodified (merges not allowed).\n");
+}
+
 /*
  * Checkout a certain revision <rev> of RCS file <rf> to either standard
  * output when running in server mode, or to <fpath> when running in local mode.
@@ -3128,4 +3128,4 @@ out:
 	return (ret);
 }
 
-#endif
+#endif	/* !RCSPROG */
