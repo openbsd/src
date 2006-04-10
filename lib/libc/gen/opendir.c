@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendir.c,v 1.16 2006/04/01 18:06:59 otto Exp $ */
+/*	$OpenBSD: opendir.c,v 1.17 2006/04/10 12:04:20 otto Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -78,7 +78,7 @@ __opendir2(const char *name, int flags)
 	dirp->dd_td->td_locs = NULL;
 	dirp->dd_td->td_sz = 0;
 	dirp->dd_td->td_loccnt = 0;
-
+	dirp->dd_td->td_last = 0;
 
 	/*
 	 * If the machine's page size is an exact multiple of DIRBLKSIZ,

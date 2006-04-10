@@ -1,4 +1,4 @@
-/*	$OpenBSD: telldir.h,v 1.1 2006/04/01 18:06:59 otto Exp $	*/
+/*	$OpenBSD: telldir.h,v 1.2 2006/04/10 12:04:20 otto Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -55,6 +55,7 @@ struct _telldir {
 	struct ddloc *td_locs;	/* locations */
 	size_t	td_sz;		/* size of locations */
 	long	td_loccnt;	/* index of entry for sequential readdir's */
+	long	td_last;	/* last tell/seekdir */
 };
 
 void 		__seekdir(DIR *, long);
