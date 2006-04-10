@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_tis.c,v 1.4 2005/12/18 16:06:09 millert Exp $	*/
+/*	$OpenBSD: login_tis.c,v 1.5 2006/04/10 20:50:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -418,7 +418,6 @@ tis_open(struct tis_connection *tc, const char *server, char *ebuf)
 	error = getaddrinfo(server, tc->port, &hints, &res0);
 	if (error) {
 		strlcpy(ebuf, gai_strerror(error), TIS_BUFSIZ);
-		freeaddrinfo(res0);
 		return (-1);
 	}
 
