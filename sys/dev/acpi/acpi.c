@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.47 2006/04/11 02:35:35 gwk Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.48 2006/04/11 02:36:49 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -44,8 +44,8 @@ int acpi_debug = 11;
 
 #define ACPIEN_RETRIES 15
 
-void acpi_isr_thread(void *);
-void acpi_create_thread(void *);
+void	acpi_isr_thread(void *);
+void	acpi_create_thread(void *);
 
 int	acpi_match(struct device *, void *, void *);
 void	acpi_attach(struct device *, struct device *, void *);
