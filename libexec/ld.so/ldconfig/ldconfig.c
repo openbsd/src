@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.17 2005/12/31 15:08:22 jmc Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.18 2006/04/11 15:21:40 ray Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -294,7 +294,7 @@ hinthash(char *cp, int vmajor, int vminor)
 int
 buildhints(void)
 {
-	int strtab_sz = 0, nhints = 0, fd, i, n, str_index = 0;
+	int strtab_sz = 0, nhints = 0, fd, i, n, ret = -1, str_index = 0;
 	struct hints_bucket *blist;
 	struct hints_header hdr;
 	struct shlib_list *shp;
@@ -347,7 +347,7 @@ buildhints(void)
 			}
 			if (i == hdr.hh_nbucket) {
 				warnx("Bummer!");
-				return -1;
+				goto out;
 			}
 			while (bp->hi_next != -1)
 				bp = &blist[bp->hi_next];
@@ -381,41 +381,45 @@ buildhints(void)
 	tmpfile = concat(_PATH_LD_HINTS, ".XXXXXXXXXX", "");
 	if ((fd = mkstemp(tmpfile)) == -1) {
 		warn("%s", tmpfile);
-		return -1;
+		goto out;
 	}
 	fchmod(fd, 0444);
 
 	if (write(fd, &hdr, sizeof(struct hints_header)) !=
 	    sizeof(struct hints_header)) {
 		warn("%s", _PATH_LD_HINTS);
-		return -1;
+		goto out;
 	}
 	if (write(fd, blist, hdr.hh_nbucket * sizeof(struct hints_bucket)) !=
 	    hdr.hh_nbucket * sizeof(struct hints_bucket)) {
 		warn("%s", _PATH_LD_HINTS);
-		return -1;
+		goto out;
 	}
 	if (write(fd, strtab, strtab_sz) != strtab_sz) {
 		warn("%s", _PATH_LD_HINTS);
-		return -1;
+		goto out;
 	}
 	if (close(fd) != 0) {
 		warn("%s", _PATH_LD_HINTS);
-		return -1;
+		goto out;
 	}
 
 	/* Install it */
 	if (unlink(_PATH_LD_HINTS) != 0 && errno != ENOENT) {
 		warn("%s", _PATH_LD_HINTS);
-		return -1;
+		goto out;
 	}
 
 	if (rename(tmpfile, _PATH_LD_HINTS) != 0) {
 		warn("%s", _PATH_LD_HINTS);
-		return -1;
+		goto out;
 	}
 
-	return 0;
+	ret = 0;
+out:
+	free(blist);
+	free(strtab);
+	return (ret);
 }
 
 static int
