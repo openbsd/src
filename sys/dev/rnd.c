@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.79 2005/07/31 05:13:08 djm Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.80 2006/04/11 14:31:52 djm Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -525,7 +525,7 @@ arc4_stir(void)
 	register int n, s;
 	int len;
 
-	microtime((struct timeval *) buf);
+	nanotime((struct timespec *) buf);
 	len = random_state.entropy_count / 8; /* XXX maybe a half? */
 	if (len > sizeof(buf) - sizeof(struct timeval))
 		len = sizeof(buf) - sizeof(struct timeval);
@@ -721,7 +721,7 @@ enqueue_randomness(state, val)
 {
 	register struct timer_rand_state *p;
 	register struct rand_event *rep;
-	struct timeval	tv;
+	struct timespec	tv;
 	u_int	time, nbits;
 	int s;
 
@@ -737,8 +737,8 @@ enqueue_randomness(state, val)
 	p = &rnd_states[state];
 	val += state << 13;
 
-	microtime(&tv);
-	time = tv.tv_usec + (tv.tv_sec << 20);
+	nanotime(&tv);
+	time = (tv.tv_nsec >> 10) + (tv.tv_sec << 20);
 	nbits = 0;
 
 	/*
@@ -809,7 +809,7 @@ enqueue_randomness(state, val)
 
 	rep->re_state = p;
 	rep->re_nbits = nbits;
-	rep->re_time = time;
+	rep->re_time = tv.tv_nsec ^ (tv.tv_sec << 20);
 	rep->re_val = val;
 
 	rndstats.rnd_enqs++;
