@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.11 2005/04/27 14:12:27 miod Exp $
+.\" $OpenBSD: gcc-local.1,v 1.12 2006/04/11 10:36:23 espie Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -167,6 +167,11 @@ Stand-alone programs not linked against libc must either provide their own
 support bits, or use the
 .Fl fno-stack-protector
 option.
+There is also a
+.Fl fstack-protector-all
+option, that turns stack protection code on for all functions,
+and disables any heuristic that flags some functions as safe.
+This extended checking has a moderate runtime cost, though.
 .It
 .Nm gcc
 recognizes a new flag,
@@ -210,6 +215,16 @@ On
 .Nm gcc
 does not warn for cast expressions used as lvalues outside of
 .Fl pedantic .
+.It
+Even in 2.95.3,
+.Nm gcc
+recognizes the preprocessor flag
+.Fl CC
+that lets comments in macros pass through to the output (except in
+.Fl traditional
+mode).
+This is used to allow annotations in macros for
+.Xr lint 1 .
 .El
 .Sh ATTRIBUTES
 The
