@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.94 2006/04/05 01:38:55 ray Exp $	*/
+/*	$OpenBSD: proto.c,v 1.95 2006/04/11 07:52:34 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -520,10 +520,8 @@ cvs_sendfile(struct cvsroot *root, const char *path)
 	cvs_sendln(root, buf);
 
 	while ((ret = read(fd, buf, sizeof(buf))) != 0) {
-		if (ret == -1) {
-			(void)close(fd);
+		if (ret == -1)
 			fatal("cvs_sendfile: read error on '%s'", path);
-		}
 
 		cvs_sendraw(root, buf, (size_t)ret);
 	}
