@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdict.c,v 1.9 2006/04/11 08:58:14 deraadt Exp $	*/
+/*	$OpenBSD: mkdict.c,v 1.10 2006/04/11 09:17:55 deraadt Exp $	*/
 /*	$NetBSD: mkdict.c,v 1.2 1995/03/21 12:14:49 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdict.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: mkdict.c,v 1.9 2006/04/11 08:58:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkdict.c,v 1.10 2006/04/11 09:17:55 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,8 +80,6 @@ main(int argc, char *argv[])
 		n = strtonum(argv[1], 1, INT_MAX, &errstr);
 		if (errstr)
 			errx(1, "%s: %s", argv[1], errstr);
-		if (n == 0)
-			errx(1, "%s: invalid value", argv[1]);
 	}
 
 	for (nwords = 1;
