@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.45 2006/02/26 04:39:09 marco Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.46 2006/04/11 02:28:10 gwk Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -67,6 +67,7 @@ void	acpi_load_dsdt(paddr_t, struct acpi_q **);
 
 void	acpi_init_states(struct acpi_softc *);
 void	acpi_init_gpes(struct acpi_softc *);
+void	acpi_init_pm(struct acpi_softc *);
 
 void	acpi_filtdetach(struct knote *);
 int	acpi_filtread(struct knote *, long);
@@ -650,6 +651,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* Initialize GPE handlers */
 	acpi_init_gpes(sc);
 
+	/* Find available sleep/resume related methods. */
+	acpi_init_pm(sc);
+	
 	/*
 	 * Set up a pointer to the firmware control structure
 	 */
@@ -1005,9 +1009,20 @@ acpi_init_states(struct acpi_softc *sc)
 }
 
 void
+acpi_init_pm(struct acpi_softc *sc)
+{
+	sc->sc_tts = aml_searchname(aml_root.child, "_TTS");
+	sc->sc_pts = aml_searchname(aml_root.child, "_PTS");
+	sc->sc_wak = aml_searchname(aml_root.child, "_WAK");
+	sc->sc_bfs = aml_searchname(aml_root.child, "_BFS");
+	sc->sc_gts = aml_searchname(aml_root.child, "_GTS");
+}
+
+void
 acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 {
 #ifdef ACPI_ENABLE
+	struct aml_value res, env;
 	u_int16_t rega, regb;
 	int retries;
 
@@ -1020,6 +1035,44 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 		return;
 	}
 
+	env.type = AML_OBJTYPE_INTEGER;
+	env.v_integer = state;
+	/* _TTS(state) */
+	if (sc->sc_tts) {
+		if (aml_eval_object(sc, sc->sc_tts, &res, 1, &env)) {
+			dnprintf(10, "%s evaluating method _TTS failed.\n",
+			    DEVNAME(sc));
+			return;
+		}
+	}
+	switch (state) {
+	case ACPI_STATE_S1:
+	case ACPI_STATE_S2:
+		resettodr();
+		dopowerhooks(PWR_SUSPEND);
+		break;
+	case ACPI_STATE_S3:
+		resettodr();
+		dopowerhooks(PWR_STANDBY);
+		break;
+	}
+	/* _PTS(state) */
+	if (sc->sc_pts) {
+		if (aml_eval_object(sc, sc->sc_pts, &res, 1, &env)) {
+			dnprintf(10, "%s evaluating method _PTS failed.\n",
+			    DEVNAME(sc));
+			return;
+		}
+	}
+	sc->sc_state = state;
+	/* _GTS(state) */
+	if (sc->sc_gts) {
+		if (aml_eval_object(sc, sc->sc_gts, &res, 1, &env)) {
+			dnprintf(10, "%s evaluating method _GTS failed.\n",
+			    DEVNAME(sc));
+			return;
+		}
+	}
 	disable_intr();
 
 	/* Clear WAK_STS bit */
