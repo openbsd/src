@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi.c,v 1.46 2006/04/11 02:28:10 gwk Exp $	*/
+/*	$OpenBSD: acpi.c,v 1.47 2006/04/11 02:35:35 gwk Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1106,6 +1106,38 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 
 	enable_intr();
 #endif
+}
+
+void
+acpi_resume(struct acpi_softc *sc)
+{
+	struct aml_value res, env;
+	
+	env.type = AML_OBJTYPE_INTEGER;
+	env.v_integer = sc->sc_state;
+	
+	if (sc->sc_bfs) {
+		if (aml_eval_object(sc, sc->sc_pts, &res, 1, &env)) {
+			dnprintf(10, "%s evaluating method _BFS failed.\n",
+			    DEVNAME(sc));
+		}
+	}
+	dopowerhooks(PWR_RESUME);
+	inittodr(0);
+	if (sc->sc_wak) {
+		if (aml_eval_object(sc, sc->sc_wak, &res, 1, &env)) {
+			dnprintf(10, "%s evaluating method _WAK failed.\n",
+			    DEVNAME(sc));
+		}
+	}
+	sc->sc_state = ACPI_STATE_S0;
+	if (sc->sc_tts) {
+		env.v_integer = sc->sc_state;
+		if (aml_eval_object(sc, sc->sc_wak, &res, 1, &env)) {
+			dnprintf(10, "%s evaluating method _TTS failed.\n",
+			    DEVNAME(sc));
+		}
+	}
 }
 
 void
