@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.45 2006/04/10 19:49:44 joris Exp $	*/
+/*	$OpenBSD: buf.c,v 1.46 2006/04/11 00:49:49 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -48,7 +48,7 @@ struct cvs_buf {
 #define SIZE_LEFT(b)	(b->cb_size - (size_t)(b->cb_cur - b->cb_buf) \
 			    - b->cb_len)
 
-static ssize_t	cvs_buf_grow(BUF *, size_t);
+static void	cvs_buf_grow(BUF *, size_t);
 
 /*
  * cvs_buf_alloc()
@@ -177,9 +177,8 @@ cvs_buf_set(BUF *b, const void *src, size_t len, size_t off)
 	size_t rlen = 0;
 
 	if (b->cb_size < (len + off)) {
-		if ((b->cb_flags & BUF_AUTOEXT) &&
-		    (cvs_buf_grow(b, len + off - b->cb_size) < 0))
-			fatal("cvs_buf_set failed");
+		if ((b->cb_flags & BUF_AUTOEXT))
+			cvs_buf_grow(b, len + off - b->cb_size);
 		else
 			rlen = b->cb_size - off;
 	} else
@@ -208,8 +207,9 @@ cvs_buf_putc(BUF *b, int c)
 	bp = b->cb_cur + b->cb_len;
 	if (bp == (b->cb_buf + b->cb_size)) {
 		/* extend */
-		if (!(b->cb_flags & BUF_AUTOEXT) ||
-		    (cvs_buf_grow(b, (size_t)BUF_INCR) < 0))
+		if (b->cb_flags & BUF_AUTOEXT)
+			cvs_buf_grow(b, (size_t)BUF_INCR);
+		else
 			fatal("cvs_buf_putc failed");
 
 		/* the buffer might have been moved */
@@ -253,8 +253,7 @@ cvs_buf_append(BUF *b, const void *data, size_t len)
 
 	if (left < len) {
 		if (b->cb_flags & BUF_AUTOEXT) {
-			if (cvs_buf_grow(b, len - left) < 0)
-				fatal("cvs_buf_append failed");
+			cvs_buf_grow(b, len - left);
 			bp = b->cb_cur + b->cb_len;
 		} else
 			rlen = bep - bp;
@@ -397,27 +396,20 @@ cvs_buf_write_stmp(BUF *b, char *template, mode_t mode)
  *
  * Grow the buffer <b> by <len> bytes.  The contents are unchanged by this
  * operation regardless of the result.
- * Returns the new size on success, or -1 on failure.
  */
-static ssize_t
+static void
 cvs_buf_grow(BUF *b, size_t len)
 {
 	void *tmp;
 	size_t diff;
 
 	diff = b->cb_cur - b->cb_buf;
-	/* Buffer not allocated yet */
-	if (b->cb_size == 0)
-		tmp = xmalloc(len);
-	else
-		tmp = xrealloc(b->cb_buf, 1, b->cb_size + len);
-	b->cb_buf = (u_char *)tmp;
+	tmp = xrealloc(b->cb_buf, 1, b->cb_size + len);
+	b->cb_buf = tmp;
 	b->cb_size += len;
 
 	/* readjust pointers in case the buffer moved in memory */
 	b->cb_cur = b->cb_buf + diff;
-
-	return (ssize_t)b->cb_size;
 }
 
 #if !defined(RCSPROG)
