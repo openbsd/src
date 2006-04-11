@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.95 2006/04/10 08:08:00 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.96 2006/04/11 08:07:35 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -669,10 +669,8 @@ rcs_main(int argc, char **argv)
 			/* Make sure revision exists. */
 			if (rcs_findrev(file, rev) == NULL)
 				fatal("revision does not exist");
-			if (rcs_lock_add(file, username, rev) == -1) {
-				rcs_close(file);
+			if (rcs_lock_add(file, username, rev) == -1)
 				fatal("unable to lock file");
-			}
 			rcsnum_free(rev);
 		}
 
@@ -693,10 +691,8 @@ rcs_main(int argc, char **argv)
 			/* Make sure revision exists. */
 			if (rcs_findrev(file, rev) == NULL)
 				fatal("revision does not exist");
-			if (rcs_lock_remove(file, username, rev) == -1) {
-				rcs_close(file);
+			if (rcs_lock_remove(file, username, rev) == -1)
 				fatal("unable to unlock file");
-			}
 			rcsnum_free(rev);
 		}
 
