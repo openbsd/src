@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.c,v 1.2 2006/04/05 01:38:55 ray Exp $	*/
+/*	$OpenBSD: compress.c,v 1.3 2006/04/12 13:42:51 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -104,7 +104,8 @@ cvs_zlib_inflate(CVSZCTX *ctx, BUF *dst, u_char *src, size_t slen)
 
 	bytes = 0;
 	cvs_buf_empty(dst);
-	inflateReset(&(ctx->z_instrm));
+	if (inflateReset(&(ctx->z_instrm)) == Z_STREAM_ERROR)
+		fatal("inflate error: %s", ctx->z_instrm.msg);
 
 	ctx->z_instrm.next_in = src;
 	ctx->z_instrm.avail_in = slen;
@@ -141,7 +142,8 @@ cvs_zlib_deflate(CVSZCTX *ctx, BUF *dst, u_char *src, size_t slen)
 
 	bytes = 0;
 	cvs_buf_empty(dst);
-	deflateReset(&(ctx->z_destrm));
+	if (deflateReset(&(ctx->z_destrm)) == Z_STREAM_ERROR)
+		fatal("deflate error: %s", ctx->z_destrm.msg);
 
 	ctx->z_destrm.next_in = src;
 	ctx->z_destrm.avail_in = slen;
