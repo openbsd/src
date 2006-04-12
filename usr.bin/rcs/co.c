@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.73 2006/04/12 08:23:30 ray Exp $	*/
+/*	$OpenBSD: co.c,v 1.74 2006/04/12 08:27:31 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -319,7 +319,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 
 	if ((verbose == 1) && !(flags & NEWFILE) && !(flags & CO_REVERT))
 		printf("revision %s", buf);
-	
+
 	if ((verbose == 1) && (flags & CO_REVERT))
 		printf("done");
 

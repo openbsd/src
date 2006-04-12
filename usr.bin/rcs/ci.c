@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.139 2006/04/12 08:23:30 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.140 2006/04/12 08:27:31 deraadt Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -599,7 +599,7 @@ checkin_update(struct checkin_params *pb)
 	xfree(pb->deltatext);
 	xfree(filec);
 	(void)unlink(pb->filename);
-	
+
 	/* Write out RCSFILE before calling checkout_rev() */
 	rcs_write(pb->file);
 
