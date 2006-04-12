@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.112 2006/03/28 05:33:03 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.113 2006/04/12 07:11:28 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -724,7 +724,7 @@ em_intr(void *arg)
 		if (sc->hw.mac_type >= em_82571)
 			test_icr = (reg_icr & E1000_ICR_INT_ASSERTED);
 		if (!test_icr)
-			return (0);
+			break;
 
 		claimed = 1;
 
