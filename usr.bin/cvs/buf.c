@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.46 2006/04/11 00:49:49 ray Exp $	*/
+/*	$OpenBSD: buf.c,v 1.47 2006/04/12 07:56:58 ray Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -64,10 +64,9 @@ cvs_buf_alloc(size_t len, u_int flags)
 
 	b = xmalloc(sizeof(*b));
 	/* Postpone creation of zero-sized buffers */
-	if (len > 0) {
-		b->cb_buf = xmalloc(len);
-		memset(b->cb_buf, 0, len);
-	} else
+	if (len > 0)
+		b->cb_buf = xcalloc(1, len);
+	else
 		b->cb_buf = NULL;
 
 	b->cb_flags = flags;
