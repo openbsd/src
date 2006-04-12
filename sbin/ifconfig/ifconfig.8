@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.118 2006/02/21 17:07:14 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.119 2006/04/12 14:15:03 aanriot Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -394,6 +394,12 @@ This action automatically disables routes using the interface.
 Assign the interface to a
 .Dq group .
 Any interface can be in multiple groups.
+.Pp
+For instance, such a group could be used to create a hardware
+independent
+.Xr pf 4
+ruleset (i.e. not one based on the names of NICs) using
+existing (egress, carp, etc.) or user-defined groups.
 .Pp
 Cloned interfaces are members of their interface family group by default.
 For example, a PPP interface such as
