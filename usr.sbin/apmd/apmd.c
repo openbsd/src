@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.43 2006/03/15 20:30:28 sturm Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.44 2006/04/12 19:40:18 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -307,7 +307,7 @@ handle_client(int sock_fd, int ctl_fd)
 	struct apm_command cmd;
 	struct apm_reply reply;
 	int cpuspeed_mib[] = {CTL_HW, HW_CPUSPEED};
-	int cpuspeed;
+	int cpuspeed = 0;
 	size_t cpuspeed_sz = sizeof(cpuspeed);
 
 	fromlen = sizeof(from);
