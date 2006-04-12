@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.64 2006/03/15 11:26:45 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.65 2006/04/12 14:05:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -28,8 +28,6 @@
 
 #include "bgpd.h"
 #include "rde.h"
-
-void	attr_free(struct rde_aspath *, struct attr *);
 
 int
 attr_write(void *p, u_int16_t p_len, u_int8_t flags, u_int8_t type,

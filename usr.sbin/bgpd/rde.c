@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.203 2006/04/05 13:24:28 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.204 2006/04/12 14:05:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1431,6 +1431,7 @@ int
 rde_reflector(struct rde_peer *peer, struct rde_aspath *asp)
 {
 	struct attr	*a;
+	u_int8_t	*p;
 	u_int16_t	 len;
 	u_int32_t	 id;
 
@@ -1459,15 +1460,19 @@ rde_reflector(struct rde_peer *peer, struct rde_aspath *asp)
 				    sizeof(conf->clusterid)) == 0)
 					return (0);
 
-			/* prepend own clusterid */
-			if ((a->data = realloc(a->data, a->len +
-			    sizeof(conf->clusterid))) == NULL)
+			/* prepend own clusterid by replacing attribute */
+			len = a->len + sizeof(conf->clusterid);
+			if (len < a->len)
+				fatalx("rde_reflector: cluster-list overflow");
+			if ((p = malloc(len)) == NULL)
 				fatal("rde_reflector");
-			memmove(a->data + sizeof(conf->clusterid),
-			    a->data, a->len);
-			a->len += sizeof(conf->clusterid);
-			memcpy(a->data, &conf->clusterid,
-			    sizeof(conf->clusterid));
+			memcpy(p, &conf->clusterid, sizeof(conf->clusterid));
+			memcpy(p + sizeof(conf->clusterid), a->data, a->len);
+			attr_free(asp, a);
+			if (attr_optadd(asp, ATTR_OPTIONAL, ATTR_CLUSTER_LIST,
+			    p, len) == -1)
+				fatalx("attr_optadd failed but impossible");
+			free(p);
 		} else if (attr_optadd(asp, ATTR_OPTIONAL, ATTR_CLUSTER_LIST,
 		    &conf->clusterid, sizeof(conf->clusterid)) == -1)
 			fatalx("attr_optadd failed but impossible");
