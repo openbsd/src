@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2006/04/01 06:19:29 ray Exp $
+#	$OpenBSD: Makefile,v 1.16 2006/04/12 22:54:23 ray Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -314,9 +314,9 @@ test-rcs-lock-unlock: clean
 	@${RLOG} file | fgrep -x -A 1 'locks: strict' | head -n 2 | fgrep -q 1.2 || \
 	    case "$$?" in 1) exit 0;; esac && exit 1
 
-	@${RCS} -q -u file || case "$$?" in 1) exit 0;; esac && exit 1
+	@${RCS} -q -u file
 	@${RCS} -q -l file
-	@${RCS} -q -l file || case "$$?" in 1) exit 0;; esac && exit 1
+	@${RCS} -q -l file
 	@${RCS} -q -l1.3 file || case "$$?" in 1) exit 0;; esac && exit 1
 	@${RCS} -q -u1.3 file || case "$$?" in 1) exit 0;; esac && exit 1
 

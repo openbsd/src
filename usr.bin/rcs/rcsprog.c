@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.97 2006/04/12 08:23:30 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.98 2006/04/12 22:54:23 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -682,6 +682,7 @@ rcs_main(int argc, char **argv)
 		if (rcsflags & RCSPROG_LFLAG) {
 			RCSNUM *rev;
 			const char *username;
+			char rev_str[16];
 
 			if ((username = getlogin()) == NULL)
 				fatal("could not get username");
@@ -693,17 +694,21 @@ rcs_main(int argc, char **argv)
 				rcs_close(file);
 				continue;
 			}
+			rcsnum_tostr(rev, rev_str, sizeof(rev_str));
 			/* Make sure revision exists. */
 			if (rcs_findrev(file, rev) == NULL)
-				fatal("revision does not exist");
-			if (rcs_lock_add(file, username, rev) == -1)
-				fatal("unable to lock file");
+				fatal("%s: can't lock nonexisting revision %s",
+				    fpath, rev_str);
+			if (rcs_lock_add(file, username, rev) != -1 &&
+			    verbose == 1)
+				printf("%s locked\n", rev_str);
 			rcsnum_free(rev);
 		}
 
 		if (rcsflags & RCSPROG_UFLAG) {
 			RCSNUM *rev;
 			const char *username;
+			char rev_str[16];
 
 			if ((username = getlogin()) == NULL)
 				fatal("could not get username");
@@ -715,11 +720,15 @@ rcs_main(int argc, char **argv)
 				rcs_close(file);
 				continue;
 			}
+			rcsnum_tostr(rev, rev_str, sizeof(rev_str));
 			/* Make sure revision exists. */
 			if (rcs_findrev(file, rev) == NULL)
-				fatal("revision does not exist");
-			if (rcs_lock_remove(file, username, rev) == -1)
-				fatal("unable to unlock file");
+				fatal("%s: can't unlock nonexisting revision %s",
+				    fpath, rev_str);
+			if (rcs_lock_remove(file, username, rev) == -1 &&
+			    verbose == 1)
+				cvs_log(LP_ERR,
+				    "%s: warning: No locks are set.", fpath);
 			rcsnum_free(rev);
 		}
 
