@@ -1,0 +1,52 @@
+esp transport from 1.1.1.1 to 2.2.2.2 spi 0x1eadbeef auth hmac-sha2-256 enc aesctr
+	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+esp transport from 2.2.2.2 to 1.1.1.1 spi 0xbeef1ead auth hmac-sha2-256 enc aesctr
+	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+esp transport from 1.1.1.2 to 2.2.2.2 spi 0x2eadbeef auth hmac-sha1 enc 3des-cbc
+	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+esp transport from 2.2.2.2 to 1.1.1.2 spi 0xbeef2ead auth hmac-sha1 enc 3des-cbc
+	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+esp transport from 1.1.1.3 to 2.2.2.2 spi 0x3eadbeef auth hmac-sha1 enc des-cbc
+	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	enckey 0xeeeeeeeeeeeeeeee
+esp transport from 2.2.2.2 to 1.1.1.3 spi 0xbeef3ead auth hmac-sha1 enc des-cbc
+	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	enckey 0xeeeeeeeeeeeeeeee
+esp transport from 1.1.1.4 to 2.2.2.2 spi 0x4eadbeef auth hmac-sha1 enc aes
+	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+esp transport from 2.2.2.2 to 1.1.1.4 spi 0xbeef4ead auth hmac-sha1 enc aes
+	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+esp transport from 1.1.1.5 to 2.2.2.2 spi 0x5eadbeef auth hmac-sha1 enc aesctr
+	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+esp transport from 2.2.2.2 to 1.1.1.5 spi 0xbeef5ead auth hmac-sha1 enc aesctr
+	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+esp transport from 1.1.1.6 to 2.2.2.2 spi 0x6eadbeef auth hmac-sha1 enc blowfish
+	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+esp transport from 2.2.2.2 to 1.1.1.6 spi 0xbeef6ead auth hmac-sha1 enc blowfish
+	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+esp transport from 1.1.1.7 to 2.2.2.2 spi 0x7eadbeef auth hmac-sha1 enc cast128
+	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+esp transport from 2.2.2.2 to 1.1.1.7 spi 0xbeef7ead auth hmac-sha1 enc cast128
+	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	enckey 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+esp transport from 1.1.1.8 to 2.2.2.2 spi 0x8eadbeef auth hmac-sha1 enc null
+	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+esp transport from 2.2.2.2 to 1.1.1.8 spi 0xbeef8ead auth hmac-sha1 enc null
+	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+esp transport from 1.1.1.9 to 2.2.2.2 spi 0x9eadbeef auth hmac-sha1 enc skipjack
+	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	enckey 0xeeeeeeeeeeeeeeeeeeee
+esp transport from 2.2.2.2 to 1.1.1.9 spi 0xbeef9ead auth hmac-sha1 enc skipjack
+	authkey 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	enckey 0xeeeeeeeeeeeeeeeeeeee
