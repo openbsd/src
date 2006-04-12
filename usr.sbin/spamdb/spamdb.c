@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.15 2006/03/15 01:32:08 dhill Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.16 2006/04/12 12:53:04 dhill Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -114,7 +114,7 @@ dbupdate(const char *dbname, char *ip, int add, int type)
 				/* ensure address is lower case*/
 				for (i = 0; ip[i] != '\0'; i++)
 					if (isupper(ip[i]))
-						ip[i] = tolower(ip[i]);
+						ip[i] = (char)tolower(ip[i]);
 				break;
 			default:
 				errx(-1, "unknown type %d", type);
@@ -261,6 +261,7 @@ usage(void)
 {
 	fprintf(stderr, "usage: %s [-Tt] [-a key] [-d key]\n", __progname);
 	exit(1);
+	/* NOTREACHED */
 }
 
 int
@@ -301,6 +302,6 @@ main(int argc, char **argv)
 	default:
 		errx(-1, "bad action");
 	}
-	/* NOT REACHED */
+	/* NOTREACHED */
 	return (0);
 }
