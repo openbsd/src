@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.54 2006/01/30 17:58:47 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.55 2006/04/12 14:31:05 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -144,6 +144,7 @@ cvs_status_remote(CVSFILE *cfp, void *arg)
 	case CVS_FST_MODIFIED:
 		cvs_sendreq(root, CVS_REQ_MODIFIED, cfp->cf_name);
 		cvs_sendfile(root, fpath);
+		break;
 	default:
 		break;
 	}
