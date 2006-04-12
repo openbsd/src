@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.70 2005/06/08 04:47:04 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.71 2006/04/12 09:24:44 hshoexer Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.70 2005/06/08 04:47:04 henning Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.71 2006/04/12 09:24:44 hshoexer Exp $";
 #endif
 #endif /* not lint */
 
@@ -1017,7 +1017,7 @@ encap_print(struct rtentry *rt)
 			printf("/dontacq");
 			break;
 		case IPSP_PERMIT:
-			printf("/permit");
+			printf("/bypass");
 			break;
 		case IPSP_DENY:
 			printf("/deny");
