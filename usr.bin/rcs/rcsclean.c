@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.29 2006/04/10 08:08:00 xsa Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.30 2006/04/12 08:23:30 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -41,11 +41,13 @@ int
 rcsclean_main(int argc, char **argv)
 {
 	int i, ch;
+	char *rev_str;
 	RCSNUM *rev;
 	DIR *dirp;
 	struct dirent *dp;
 
 	rev = RCS_HEAD_REV;
+	rev_str = NULL;
 
 	while ((ch = rcs_getopt(argc, argv, "k:n::q::r:Tu::Vx::")) != -1) {
 		switch (ch) {
@@ -59,21 +61,21 @@ rcsclean_main(int argc, char **argv)
 			}
 			break;
 		case 'n':
-			rcs_set_rev(rcs_optarg, &rev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			nflag = 1;
 			break;
 		case 'q':
-			rcs_set_rev(rcs_optarg, &rev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			verbose = 0;
 			break;
 		case 'r':
-			rcs_set_rev(rcs_optarg, &rev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			break;
 		case 'T':
 			flags |= PRESERVETIME;
 			break;
 		case 'u':
-			rcs_set_rev(rcs_optarg, &rev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			uflag = 1;
 			break;
 		case 'V':
@@ -105,14 +107,18 @@ rcsclean_main(int argc, char **argv)
 		while ((dp = readdir(dirp)) != NULL) {
 			if (dp->d_type == DT_DIR)
 				continue;
+			rcs_set_rev(rev_str, &rev);
 			rcsclean_file(dp->d_name, rev);
+			rcsnum_free(rev);
 		}
 
 		closedir(dirp);
-	} else {
-		for (i = 0; i < argc; i++)
+	} else
+		for (i = 0; i < argc; i++) {
+			rcs_set_rev(rev_str, &rev);
 			rcsclean_file(argv[i], rev);
-	}
+			rcsnum_free(rev);
+		}
 
 	return (0);
 }

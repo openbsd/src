@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.138 2006/04/10 19:49:44 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.139 2006/04/12 08:23:30 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -92,8 +92,6 @@ checkin_usage(void)
 	    "	  [-u[rev]] [-wusername] [-xsuffixes] [-ztz] file ...\n");
 }
 
-
-
 /*
  * checkin_main()
  *
@@ -104,6 +102,7 @@ int
 checkin_main(int argc, char **argv)
 {
 	int i, ch, status;
+	char *rev_str;
 	struct checkin_params pb;
 
 	pb.date = DATE_NOW;
@@ -113,9 +112,9 @@ checkin_main(int argc, char **argv)
 	pb.newrev =  NULL;
 	pb.flags = status = 0;
 	pb.fmode = S_IRUSR|S_IRGRP|S_IROTH;
-
 	pb.flags = INTERACTIVE;
 	pb.openflags = RCS_RDWR|RCS_CREATE|RCS_PARSE_FULLY;
+	rev_str = NULL;
 
 	while ((ch = rcs_getopt(argc, argv, CI_OPTSTRING)) != -1) {
 		switch (ch) {
@@ -126,7 +125,7 @@ checkin_main(int argc, char **argv)
 				fatal("invalid date");
 			break;
 		case 'f':
-			rcs_set_rev(rcs_optarg, &pb.newrev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			pb.flags |= FORCE;
 			break;
 		case 'h':
@@ -134,29 +133,29 @@ checkin_main(int argc, char **argv)
 			exit(0);
 			/* NOTREACHED */
 		case 'I':
-			rcs_set_rev(rcs_optarg, &pb.newrev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			pb.flags |= INTERACTIVE;
 			break;
 		case 'i':
-			rcs_set_rev(rcs_optarg, &pb.newrev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			pb.openflags |= RCS_CREATE;
 			pb.flags |= CI_INIT;
 			break;
 		case 'j':
-			rcs_set_rev(rcs_optarg, &pb.newrev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			pb.openflags &= ~RCS_CREATE;
 			pb.flags &= ~CI_INIT;
 			break;
 		case 'k':
-			rcs_set_rev(rcs_optarg, &pb.newrev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			pb.flags |= CI_KEYWORDSCAN;
 			break;
 		case 'l':
-			rcs_set_rev(rcs_optarg, &pb.newrev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			pb.flags |= CO_LOCK;
 			break;
 		case 'M':
-			rcs_set_rev(rcs_optarg, &pb.newrev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			pb.flags |= CO_REVDATE;
 			break;
 		case 'm':
@@ -180,7 +179,7 @@ checkin_main(int argc, char **argv)
 			verbose = 0;
 			break;
 		case 'r':
-			rcs_set_rev(rcs_optarg, &pb.newrev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			pb.flags |= CI_DEFAULT;
 			break;
 		case 's':
@@ -195,7 +194,7 @@ checkin_main(int argc, char **argv)
 			pb.description = xstrdup(rcs_optarg);
 			break;
 		case 'u':
-			rcs_set_rev(rcs_optarg, &pb.newrev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			pb.flags |= CO_UNLOCK;
 			break;
 		case 'V':
@@ -275,6 +274,10 @@ checkin_main(int argc, char **argv)
 
 		if (verbose == 1)
 			printf("%s  <--  %s\n", pb.fpath, pb.filename);
+
+		/* XXX - Should we rcsnum_free(pb.newrev)? */
+		if (rev_str != NULL)
+			rcs_set_rev(rev_str, &pb.newrev);
 
 		if (pb.flags & NEWFILE)
 			status = checkin_init(&pb);

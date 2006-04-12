@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsmerge.c,v 1.23 2006/03/24 05:14:48 ray Exp $	*/
+/*	$OpenBSD: rcsmerge.c,v 1.24 2006/04/12 08:23:30 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -35,12 +35,13 @@ int
 rcsmerge_main(int argc, char **argv)
 {
 	int i, ch;
-	char *fcont, fpath[MAXPATHLEN], r1[16], r2[16];
+	char *fcont, fpath[MAXPATHLEN], r1[16], r2[16], *rev_str1, *rev_str2;
 	RCSFILE *file;
-	RCSNUM *baserev, *rev2, *frev;
+	RCSNUM *rev1, *rev2;
 	BUF *bp;
 
-	baserev = rev2 = RCS_HEAD_REV;
+	rev1 = rev2 = NULL;
+	rev_str1 = rev_str2 = NULL;
 
 	while ((ch = rcs_getopt(argc, argv, "AEek:p::q::r:TVx::z:")) != -1) {
 		switch (ch) {
@@ -56,20 +57,15 @@ rcsmerge_main(int argc, char **argv)
 			}
 			break;
 		case 'p':
-			rcs_set_rev(rcs_optarg, &baserev);
+			rcs_setrevstr2(&rev_str1, &rev_str2, rcs_optarg);
 			pipeout = 1;
 			break;
 		case 'q':
-			rcs_set_rev(rcs_optarg, &baserev);
+			rcs_setrevstr2(&rev_str1, &rev_str2, rcs_optarg);
 			verbose = 0;
 			break;
 		case 'r':
-			if (baserev == RCS_HEAD_REV)
-				rcs_set_rev(rcs_optarg, &baserev);
-			else if (rev2 == RCS_HEAD_REV)
-				rcs_set_rev(rcs_optarg, &rev2);
-			else
-				fatal("too many revision numbers");
+			rcs_setrevstr2(&rev_str1, &rev_str2, rcs_optarg);
 			break;
 		case 'T':
 			/*
@@ -101,7 +97,7 @@ rcsmerge_main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (baserev == RCS_HEAD_REV) {
+	if (rev_str1 == NULL) {
 		cvs_log(LP_ERR, "no base revision number given");
 		(usage)();
 		exit(1);
@@ -117,26 +113,39 @@ rcsmerge_main(int argc, char **argv)
 		if (verbose == 1)
 			fprintf(stderr, "RCS file: %s\n", fpath);
 
-		if (rev2 == RCS_HEAD_REV)
-			frev = file->rf_head;
-		else
-			frev = rev2;
+		if (rev1 != NULL) {
+			rcsnum_free(rev1);
+			rev1 = NULL;
+		}
+		if (rev2 != NULL) {
+			rcsnum_free(rev2);
+			rev2 = NULL;
+		}
 
-		if (rcsnum_cmp(baserev, frev, 0) == 0) {
+		rcs_set_rev(rev_str1, &rev1);
+		if (rev_str2 != NULL)
+			rcs_set_rev(rev_str2, &rev2);
+		else {
+			rev2 = rcsnum_alloc();
+			rcsnum_cpy(file->rf_head, rev2, 0);
+		}
+
+		if (rcsnum_cmp(rev1, rev2, 0) == 0) {
 			rcs_close(file);
 			continue;
 		}
 
-		rcsnum_tostr(baserev, r1, sizeof(r1));
-		rcsnum_tostr(frev, r2, sizeof(r2));
+		if (verbose == 1) {
+			(void)rcsnum_tostr(rev1, r1, sizeof(r1));
+			(void)rcsnum_tostr(rev2, r2, sizeof(r2));
 
-		if (verbose == 1)
 			fprintf(stderr, "Merging differences between %s and "
 			    "%s into %s%s\n", r1, r2, argv[i],
 			    (pipeout == 1) ? "; result to stdout":"");
+		}
 
-		if ((bp = cvs_diff3(file, argv[i], baserev,
-		    frev, verbose)) == NULL) {
+		if ((bp = cvs_diff3(file, argv[i], rev1, rev2,
+		    verbose)) == NULL) {
 			cvs_log(LP_ERR, "failed to merge");
 			rcs_close(file);
 			continue;

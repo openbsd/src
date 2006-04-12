@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.43 2006/04/09 19:22:23 niallo Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.44 2006/04/12 08:23:30 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -113,6 +113,8 @@ char 	*rcs_choosefile(const char *);
 int	rcs_statfile(char *, char *, size_t);
 time_t	rcs_get_mtime(const char *);
 void	rcs_set_rev(const char *, RCSNUM **);
+void	rcs_setrevstr(char **, char *);
+void	rcs_setrevstr2(char **, char **, char *);
 void	rcs_usage(void);
 void	(*usage)(void);
 

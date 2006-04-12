@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.72 2006/04/10 08:08:00 xsa Exp $	*/
+/*	$OpenBSD: co.c,v 1.73 2006/04/12 08:23:30 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -40,7 +40,7 @@ checkout_main(int argc, char **argv)
 	RCSNUM *frev, *rev;
 	RCSFILE *file;
 	char fpath[MAXPATHLEN];
-	char *author, *username, *date;
+	char *author, *date, *rev_str, *username;
 	const char *state;
 	time_t rcs_mtime = -1;
 
@@ -48,6 +48,7 @@ checkout_main(int argc, char **argv)
 	kflag = RCS_KWEXP_ERR;
 	rev = RCS_HEAD_REV;
 	frev = NULL;
+	rev_str = NULL;
 	state = NULL;
 	author = NULL;
 	date = NULL;
@@ -58,11 +59,11 @@ checkout_main(int argc, char **argv)
 			date = xstrdup(rcs_optarg);
 			break;
 		case 'f':
-			rcs_set_rev(rcs_optarg, &rev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			flags |= FORCE;
 			break;
 		case 'I':
-			rcs_set_rev(rcs_optarg, &rev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			flags |= INTERACTIVE;
 			break;
 
@@ -76,27 +77,27 @@ checkout_main(int argc, char **argv)
 			}
 			break;
 		case 'l':
-			rcs_set_rev(rcs_optarg, &rev);
 			if (flags & CO_UNLOCK) {
 				cvs_log(LP_ERR, "warning: -u overridden by -l");
 				flags &= ~CO_UNLOCK;
 			}
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			flags |= CO_LOCK;
 			break;
 		case 'M':
-			rcs_set_rev(rcs_optarg, &rev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			flags |= CO_REVDATE;
 			break;
 		case 'p':
-			rcs_set_rev(rcs_optarg, &rev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			pipeout = 1;
 			break;
 		case 'q':
-			rcs_set_rev(rcs_optarg, &rev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			verbose = 0;
 			break;
 		case 'r':
-			rcs_set_rev(rcs_optarg, &rev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			break;
 		case 's':
 			state = xstrdup(rcs_optarg);
@@ -106,7 +107,7 @@ checkout_main(int argc, char **argv)
 			flags |= PRESERVETIME;
 			break;
 		case 'u':
-			rcs_set_rev(rcs_optarg, &rev);
+			rcs_setrevstr(&rev_str, rcs_optarg);
 			if (flags & CO_LOCK) {
 				cvs_log(LP_ERR, "warning: -l overridden by -u");
 				flags &= ~CO_LOCK;
@@ -175,21 +176,25 @@ checkout_main(int argc, char **argv)
 
 		rcs_kwexp_set(file, kflag);
 
-		if (rev == RCS_HEAD_REV)
-			frev = file->rf_head;
-		else
-			frev = rev;
+		if (rev_str != NULL)
+			rcs_set_rev(rev_str, &rev);
+		else {
+			rev = rcsnum_alloc();
+			rcsnum_cpy(file->rf_head, rev, 0);
+		}
 
-		if ((status = checkout_rev(file, frev, argv[i], flags,
+		if ((status = checkout_rev(file, rev, argv[i], flags,
 		    username, author, state, date)) < 0) {
-				rcs_close(file);
-				continue;
+			rcs_close(file);
+			rcsnum_free(rev);
+			continue;
 		}
 
 		if (verbose == 1)
 			printf("done\n");
 
 		rcs_close(file);
+		rcsnum_free(rev);
 
 		if (flags & PRESERVETIME)
 			rcs_set_mtime(fpath, rcs_mtime);

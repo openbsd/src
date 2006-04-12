@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.96 2006/04/11 08:07:35 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.97 2006/04/12 08:23:30 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -75,16 +75,13 @@ sighdlr(int sig)
 	_exit(1);
 }
 
+/*
+ * Allocate an RCSNUM and store in <rev>.
+ */
 void
 rcs_set_rev(const char *str, RCSNUM **rev)
 {
-	if (str == NULL)
-		return;
-
-	if ((*rev != NULL) && (*rev != RCS_HEAD_REV))
-		cvs_log(LP_WARN, "redefinition of revision number");
-
-	if ((*rev = rcsnum_parse(str)) == NULL)
+	if (str == NULL || (*rev = rcsnum_parse(str)) == NULL)
 		fatal("bad revision number '%s'", str);
 }
 
@@ -359,6 +356,36 @@ rcs_statfile(char *fname, char *out, size_t len)
 	xfree(rcspath);
 
 	return (0);
+}
+
+/*
+ * Set <str> to <new_str>.  Print warning if <str> is redefined.
+ */
+void
+rcs_setrevstr(char **str, char *new_str)
+{
+	if (new_str == NULL)
+		return;
+	if (*str != NULL)
+		cvs_log(LP_WARN, "redefinition of revision number");
+	*str = new_str;
+}
+
+/*
+ * Set <str1> or <str2> to <new_str>, depending on which is not set.
+ * If both are set, error out.
+ */
+void
+rcs_setrevstr2(char **str1, char **str2, char *new_str)
+{
+	if (new_str == NULL)
+		return;
+	if (*str1 == NULL)
+		*str1 = new_str;
+	else if (*str2 == NULL)
+		*str2 = new_str;
+	else
+		fatal("too many revision numbers");
 }
 
 int

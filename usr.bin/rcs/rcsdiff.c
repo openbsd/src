@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.45 2006/04/10 19:49:45 joris Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.46 2006/04/12 08:23:30 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -38,12 +38,12 @@ int
 rcsdiff_main(int argc, char **argv)
 {
 	int i, ch, status;
-	RCSNUM *rev, *rev2, *frev;
+	RCSNUM *rev1, *rev2;
 	RCSFILE *file;
-	char fpath[MAXPATHLEN];
+	char fpath[MAXPATHLEN], *rev_str1, *rev_str2;
 
-	rev = RCS_HEAD_REV;
-	rev2 = NULL;
+	rev1 = rev2 = NULL;
+	rev_str1 = rev_str2 = NULL;
 	status = 0;
 
 	strlcpy(diffargs, "diff", sizeof(diffargs));
@@ -75,13 +75,7 @@ rcsdiff_main(int argc, char **argv)
 			diff_format = D_UNIFIED;
 			break;
 		case 'r':
-			if (rev == RCS_HEAD_REV) {
-				if ((rev = rcsnum_parse(rcs_optarg)) == NULL)
-					fatal("bad revision number");
-			} else {
-				if ((rev2 = rcsnum_parse(rcs_optarg)) == NULL)
-					fatal("bad revision number");
-			}
+			rcs_setrevstr2(&rev_str1, &rev_str2, rcs_optarg);
 			break;
 		case 'T':
 			/*
@@ -123,10 +117,14 @@ rcsdiff_main(int argc, char **argv)
 
 		rcs_kwexp_set(file, kflag);
 
-		if (rev == RCS_HEAD_REV)
-			frev = file->rf_head;
-		else
-			frev = rev;
+		if (rev_str1 != NULL) {
+			if ((rev1 = rcsnum_parse(rev_str1)) == NULL)
+				fatal("bad revision number");
+		}
+		if (rev_str2 != NULL) {
+			if ((rev2 = rcsnum_parse(rev_str2)) == NULL)
+				fatal("bad revision number");
+		}
 
 		if (verbose == 1) {
 			fprintf(stderr, "%s\n", RCS_DIFF_DIV);
@@ -135,21 +133,30 @@ rcsdiff_main(int argc, char **argv)
 
 		diff_file = argv[i];
 
-		if (rev2 == NULL) {
-			if (rcsdiff_file(file, frev, argv[i]) < 0) {
-				rcs_close(file);
+		/* No revisions given. */
+		if (rev_str1 == NULL) {
+			if (rcsdiff_file(file, file->rf_head, argv[i]) < 0)
 				status = 2;
-				continue;
-			}
+		/* One revision given. */
+		} else if (rev_str2 == NULL) {
+			if (rcsdiff_file(file, rev1, argv[i]) < 0)
+				status = 2;
+		/* Two revisions given. */
 		} else {
-			if (rcsdiff_rev(file, rev, rev2) < 0) {
-				rcs_close(file);
+			if (rcsdiff_rev(file, rev1, rev2) < 0)
 				status = 2;
-				continue;
-			}
 		}
 
 		rcs_close(file);
+
+		if (rev1 != NULL) {
+			rcsnum_free(rev1);
+			rev1 = NULL;
+		}
+		if (rev2 != NULL) {
+			rcsnum_free(rev2);
+			rev2 = NULL;
+		}
 	}
 
 	return (status);
