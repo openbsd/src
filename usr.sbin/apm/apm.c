@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.20 2006/03/15 20:30:27 sturm Exp $	*/
+/*	$OpenBSD: apm.c,v 1.21 2006/04/12 19:41:08 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -29,6 +29,12 @@
  * 
  */
 
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <sys/ioctl.h>
+#include <machine/apmvar.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -36,11 +42,6 @@
 #include <errno.h>
 #include <err.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/ioctl.h>
-#include <machine/apmvar.h>
 #include "pathnames.h"
 #include "apm-proto.h"
 
@@ -147,6 +148,8 @@ main(int argc, char *argv[])
 	enum apm_action action = NONE;
 	struct apm_command command;
 	struct apm_reply reply;
+	int cpuspeed_mib[] = { CTL_HW, HW_CPUSPEED }, cpuspeed;
+	size_t cpuspeed_sz = sizeof(cpuspeed);
 
 	while ((ch = getopt(argc, argv, "ACHLlmbvaPSzf:")) != -1) {
 		switch (ch) {
@@ -226,7 +229,24 @@ main(int argc, char *argv[])
 	if (!strcmp(__progname, "zzz"))
 		return (do_zzz(fd, action));
 
+	bzero(&reply, sizeof reply);
+	reply.batterystate.battery_state = APM_BATT_UNKNOWN;
+	reply.batterystate.ac_state = APM_AC_UNKNOWN;
+	reply.perfmode = PERF_MANUAL;
+	if (sysctl(cpuspeed_mib, 2, &cpuspeed, &cpuspeed_sz, NULL, 0) < 0)
+		reply.cpuspeed = 0;
+	else
+		reply.cpuspeed = cpuspeed;
+
 	switch (action) {
+	case SETPERF_LOW:
+	case SETPERF_HIGH:
+	case SETPERF_AUTO:
+	case SETPERF_COOL:
+		if (fd == -1)
+			errx(1, "apmd not running; "
+			    "cannot change performance adjustment mode");
+		goto balony;
 	case NONE:
 		action = GETSTATUS;
 		verbose = doac = dopct = dobstate = domin = doperf = TRUE;
@@ -240,19 +260,16 @@ main(int argc, char *argv[])
 				goto printval;
 		}
 		/* FALLTHROUGH */
+balony:
 	case SUSPEND:
 	case STANDBY:
-	case SETPERF_LOW:
-	case SETPERF_HIGH:
-	case SETPERF_AUTO:
-	case SETPERF_COOL:
 		command.action = action;
 		break;
 	default:
 		usage();
 	}
 
-	if ((rval = send_command(fd, &command, &reply)) != 0)
+	if (fd != -1 && (rval = send_command(fd, &command, &reply)) != 0)
 		errx(rval, "cannot get reply from APM daemon");
 
 	switch (action) {
