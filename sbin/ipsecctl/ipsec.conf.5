@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.38 2006/03/31 16:30:47 jmc Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.39 2006/04/12 14:48:12 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -187,6 +187,24 @@ Enter an IPIP pseudo SA.
 Parameters specify the peers, Security Parameter Index (SPI),
 cryptographic transforms, and key material to be used.
 .Bl -tag -width xxxx
+.It Xo
+.Aq Ar mode
+.Xc
+For
+.Ar esp ,
+.Ar ah
+and
+.Ar ipcomp
+the encapsulation mode to be used can be specified.
+Possible modes are
+.Ar tunnel
+and
+.Ar transport .
+When left out,
+.Ar tunnel
+is chosen.
+For details on modes see
+.Xr ipsec 4 .
 .It Xo
 .Ar from
 .Aq Ar src
