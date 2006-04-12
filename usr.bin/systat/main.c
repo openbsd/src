@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.32 2006/03/31 04:10:59 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.33 2006/04/12 05:07:52 ray Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.32 2006/03/31 04:10:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.33 2006/04/12 05:07:52 ray Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -104,7 +104,7 @@ main(int argc, char *argv[])
 		case 'w':
 			naptime = (u_int)strtonum(optarg, 0, 1000, &errstr);
 			if (errstr)
-				errx(1, "interval <= 0: %s", errstr);
+				errx(1, "interval %s: %s", errstr, optarg);
 			break;
 		default:
 			usage();
