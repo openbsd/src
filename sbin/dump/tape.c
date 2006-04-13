@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.24 2005/03/13 19:10:49 cloder Exp $	*/
+/*	$OpenBSD: tape.c,v 1.25 2006/04/13 00:48:48 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static const char rcsid[] = "$OpenBSD: tape.c,v 1.24 2005/03/13 19:10:49 cloder Exp $";
+static const char rcsid[] = "$OpenBSD: tape.c,v 1.25 2006/04/13 00:48:48 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -272,8 +272,8 @@ statussig(int signo)
 	deltat = tstart_writing - tnow + (1.0 * (tnow - tstart_writing))
 		/ blockswritten * tapesize;
 	(void)snprintf(msgbuf, sizeof(msgbuf),
-	    "%3.2f%% done at %d KB/s, finished in %d:%02d\n",
-	    (blockswritten * 100.0) / tapesize,
+	    "dump: %s %3.2f%% done at %d KB/s, finished in %d:%02d\n",
+	    tape, (blockswritten * 100.0) / tapesize,
 	    (spcl.c_tapea - tapea_volume) / (tnow - tstart_volume),
 	    (int)(deltat / 3600), (int)((deltat % 3600) / 60));
 	write(STDERR_FILENO, msgbuf, strlen(msgbuf));
