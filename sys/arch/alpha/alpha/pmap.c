@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.46 2006/03/04 19:33:19 miod Exp $ */
+/* $OpenBSD: pmap.c,v 1.47 2006/04/13 14:41:08 brad Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -115,10 +115,6 @@
  *	support for dynamically adding additional kernel page
  *	table pages may be added.  User page table pages are
  *	dynamically allocated and freed.
- *
- *	This pmap implementation only supports NBPG == PAGE_SIZE.
- *	In practice, this is not a problem since PAGE_SIZE is
- *	initialized to the hardware page size in alpha_init().
  *
  * Bugs/misfeatures:
  *
@@ -808,7 +804,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 * Figure out how many PTE's are necessary to map the kernel.
 	 */
 	lev3mapsize = (VM_PHYS_SIZE +
-		nbuf * MAXBSIZE + 16 * NCARGS + PAGER_MAP_SIZE) / NBPG +
+		nbuf * MAXBSIZE + 16 * NCARGS + PAGER_MAP_SIZE) / PAGE_SIZE +
 		(maxproc * UPAGES) + nkmempages;
 
 #ifdef SYSVSHM
@@ -819,7 +815,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	/*
 	 * Allocate a level 1 PTE table for the kernel.
 	 * This is always one page long.
-	 * IF THIS IS NOT A MULTIPLE OF NBPG, ALL WILL GO TO HELL.
+	 * IF THIS IS NOT A MULTIPLE OF PAGE_SIZE, ALL WILL GO TO HELL.
 	 */
 	kernel_lev1map = (pt_entry_t *)
 	    pmap_steal_memory(sizeof(pt_entry_t) * NPTEPG, NULL, NULL);
@@ -827,7 +823,7 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	/*
 	 * Allocate a level 2 PTE table for the kernel.
 	 * These must map all of the level3 PTEs.
-	 * IF THIS IS NOT A MULTIPLE OF NBPG, ALL WILL GO TO HELL.
+	 * IF THIS IS NOT A MULTIPLE OF PAGE_SIZE, ALL WILL GO TO HELL.
 	 */
 	lev2mapsize = roundup(howmany(lev3mapsize, NPTEPG), NPTEPG);
 	lev2map = (pt_entry_t *)

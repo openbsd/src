@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmap_common.c,v 1.8 2006/04/04 21:18:43 brad Exp $ */
+/* $OpenBSD: sgmap_common.c,v 1.9 2006/04/13 14:41:08 brad Exp $ */
 /* $NetBSD: sgmap_common.c,v 1.13 2000/06/29 09:02:57 mrg Exp $ */
 
 /*-
@@ -99,7 +99,7 @@ alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva,
 		 * this must be aligned to the page table size.  However,
 		 * some platforms have more strict alignment requirements.
 		 */
-		ptsize = (sgvasize / NBPG) * ptesize;
+		ptsize = (sgvasize / PAGE_SIZE) * ptesize;
 		if (minptalign != 0) {
 			if (minptalign < ptsize)
 				minptalign = ptsize;
@@ -131,7 +131,7 @@ alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva,
 	 * Allocate a spill page if that hasn't already been done.
 	 */
 	if (alpha_sgmap_prefetch_spill_page_va == 0) {
-		if (bus_dmamem_alloc(t, NBPG, 0, 0, &seg, 1, &rseg,
+		if (bus_dmamem_alloc(t, PAGE_SIZE, 0, 0, &seg, 1, &rseg,
 		    BUS_DMA_NOWAIT)) {
 			printf("unable to allocate spill page for sgmap `%s'\n",
 			    name);
@@ -140,7 +140,7 @@ alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva,
 		alpha_sgmap_prefetch_spill_page_pa = seg.ds_addr;
 		alpha_sgmap_prefetch_spill_page_va =
 		    ALPHA_PHYS_TO_K0SEG(alpha_sgmap_prefetch_spill_page_pa);
-		bzero((caddr_t)alpha_sgmap_prefetch_spill_page_va, NBPG);
+		bzero((caddr_t)alpha_sgmap_prefetch_spill_page_va, PAGE_SIZE);
 	}
 	
 	return;

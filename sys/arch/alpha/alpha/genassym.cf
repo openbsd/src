@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.7 2005/10/30 20:55:49 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.8 2006/04/13 14:41:08 brad Exp $
 
 # Copyright (c) 1994, 1995 Gordon W. Ross
 # Copyright (c) 1993 Adam Glass
@@ -50,8 +50,6 @@ endif
 include <uvm/uvm_extern.h>
 
 # general constants
-export	NBPG
-export	PGSHIFT
 export	VM_MAX_ADDRESS
 
 # Register offsets, for stack frames.

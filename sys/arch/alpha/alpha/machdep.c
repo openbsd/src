@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.98 2006/03/18 12:03:33 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.99 2006/04/13 14:41:08 brad Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -930,7 +930,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -971,7 +971,7 @@ cpu_startup()
 	}
 #endif
 	printf("using %ld buffers containing %ld bytes (%ldK) of memory\n",
-	    (long)nbuf, (long)bufpages * NBPG, (long)bufpages * (NBPG / 1024));
+	    (long)nbuf, (long)bufpages * PAGE_SIZE, (long)bufpages * (PAGE_SIZE / 1024));
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -1249,7 +1249,7 @@ cpu_dump()
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first NBPG of disk space
+ * Dumps always skip the first PAGE_SIZE of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -1295,7 +1295,7 @@ bad:
 /*
  * Dump the kernel's image to the swap partition.
  */
-#define	BYTES_PER_DUMP	NBPG
+#define	BYTES_PER_DUMP	PAGE_SIZE
 
 void
 dumpsys()
