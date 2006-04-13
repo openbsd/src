@@ -1,4 +1,4 @@
-/* $OpenBSD: debug.s,v 1.2 2000/11/08 19:16:58 ericj Exp $ */
+/* $OpenBSD: debug.s,v 1.3 2006/04/13 14:37:26 brad Exp $ */
 /* $NetBSD: debug.s,v 1.5 1999/06/18 18:11:56 thorpej Exp $ */
 
 /*-
@@ -48,8 +48,9 @@ inc6:	.stabs	__FILE__,132,0,0,inc6; .loc	1 __LINE__
 /*
  * Debugger stack.
  */
-BSS(debug_stack_bottom, NBPG)
-ABS(debug_stack_top, debug_stack_bottom + NBPG)
+#define	DEBUG_STACK_SIZE	8192
+BSS(debug_stack_bottom, DEBUG_STACK_SIZE)
+ABS(debug_stack_top, debug_stack_bottom + DEBUG_STACK_SIZE)
 
 /*
  * alpha_debug:
