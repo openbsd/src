@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcstime.c,v 1.2 2006/03/09 16:53:56 joris Exp $	*/
+/*	$OpenBSD: rcstime.c,v 1.3 2006/04/13 19:16:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -29,46 +29,53 @@
 #include "log.h"
 #include "rcs.h"
 
-
-struct tm *
-rcs_set_tz(char *tz, struct rcs_delta *rdp)
+void
+rcs_set_tz(char *tz, struct rcs_delta *rdp, struct tm *tb)
 {
 	int tzone;
+	int neg, pos;
 	char *h, *m;
-	struct tm *tb, ltb;
+	struct tm *ltb;
 	time_t now;
-
-	tb = &rdp->rd_date;
 
 	if (!strcmp(tz, "LT")) {
 		now = mktime(&rdp->rd_date);
-		tb = localtime(&now);
-		tb->tm_hour += ((int)tb->tm_gmtoff/3600);
+		ltb = localtime(&now);
+		ltb->tm_hour += ((int)ltb->tm_gmtoff/3600);
+		memcpy(tb, ltb, sizeof(struct tm));
 	} else {
+		neg = pos = 0;
 		switch (*tz) {
 		case '-':
-		case '+':
+			neg = 1;
+			break;
+		case '+': 
+			pos = 1;
 			break;
 		default:
 			fatal("%s: not a known time zone", tz);
 		}
 
-		h = tz;
+		h = (tz + 1);
 		if ((m = strrchr(tz, ':')) != NULL)
 			*(m++) = '\0';
 
-		ltb = rdp->rd_date;
-		tb = &ltb;
+		memcpy(tb, &rdp->rd_date, sizeof(struct tm));
 
 		tzone = atoi(h);
 		if ((tzone >= 24) && (tzone <= -24))
 			fatal("%s: not a known time zone", tz);
 
-		tb->tm_hour += tzone;
-		if ((tb->tm_hour >= 24) && (tb->tm_hour <= -24))
-			tb->tm_hour = 0;
+		if (pos) {
+			tb->tm_hour += tzone;
+			tb->tm_gmtoff += (tzone * 3600);
+		} else {
+			tb->tm_hour -= tzone;
+			tb->tm_gmtoff -= (tzone * 3600);
+		}
 
-		tb->tm_gmtoff += (tzone*3600);
+		if ((tb->tm_hour >= 24) || (tb->tm_hour <= -24))
+			tb->tm_hour = 0;
 
 		if (m != NULL) {
 			tzone = atoi(m);
@@ -77,13 +84,11 @@ rcs_set_tz(char *tz, struct rcs_delta *rdp)
 
 			if ((tb->tm_min + tzone) >= 60) {
 				tb->tm_hour++;
-				tb->tm_min -= tzone;
+				tb->tm_min -= (60 - tzone);
 			} else
 				tb->tm_min += tzone;
 
 			tb->tm_gmtoff += (tzone*60);
 		}
 	}
-
-	return (tb);
 }

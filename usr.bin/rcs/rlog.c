@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.39 2006/04/10 15:32:26 niallo Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.40 2006/04/13 19:16:15 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -235,7 +235,8 @@ static void
 rlog_rev_print(struct rcs_delta *rdp)
 {
 	int i, found;
-	char *author, numb[64];
+	struct tm t;
+	char *author, numb[64], *fmt, timeb[64];
 	struct cvs_argvector *largv, *sargv, *wargv;
 
 	i = found = 0;
@@ -266,6 +267,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 			cvs_argv_destroy(largv);
 		}
 	}
+
 	/* -sstates */
 	if (slist != NULL) {
 		sargv = cvs_strsplit(slist, ",");
@@ -278,6 +280,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 		}
 		cvs_argv_destroy(sargv);
 	}
+
 	/* -w[logins] */
 	if (wflag == 1) {
 		if (wlist != NULL) {
@@ -315,13 +318,20 @@ rlog_rev_print(struct rcs_delta *rdp)
 	printf("revision %s", numb);
 	if (rdp->rd_locker != NULL)
 		printf("\tlocked by: %s;", rdp->rd_locker);
-	printf("\ndate: %d/%02d/%02d %02d:%02d:%02d;"
-	    "  author: %s;  state: %s;\n",
-	    rdp->rd_date.tm_year + 1900,
-	    rdp->rd_date.tm_mon + 1,
-	    rdp->rd_date.tm_mday, rdp->rd_date.tm_hour,
-	    rdp->rd_date.tm_min, rdp->rd_date.tm_sec,
-	    rdp->rd_author, rdp->rd_state);
+
+	if (timezone_flag != NULL) {
+		rcs_set_tz(timezone_flag, rdp, &t);
+		fmt = "%Y/%m/%d %H:%M:%S%z";
+	} else {
+		t = rdp->rd_date;
+		fmt = "%Y/%m/%d %H:%M:%S";
+	}
+
+	strftime(timeb, sizeof(timeb), fmt, &t);
+
+	printf("\ndate: %s;  author: %s;  state: %s;\n", timeb, rdp->rd_author,
+	    rdp->rd_state); 
+
 	printf("%s", rdp->rd_log);
 }
 
