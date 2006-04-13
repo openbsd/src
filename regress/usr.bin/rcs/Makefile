@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2006/04/13 04:01:19 ray Exp $
+#	$OpenBSD: Makefile,v 1.18 2006/04/13 04:21:05 ray Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -57,7 +57,8 @@ LTESTS= ci-initial \
 	rcs-lock-unlock \
 	co-lock-filemodes \
 	co-unlock-filemodes \
-	ci-filemodes
+	ci-filemodes \
+	rcs-iflag \
 
 .for t in ${LTESTS}
 REGRESS_TARGETS+=test-${t}
@@ -454,6 +455,20 @@ test-ci-filemodes: test-co-unlock-filemodes
 	@chmod 606 blah.c
 	@echo "blah" | ${CI} -q blah.c
 	@eval 'test `stat -f%p RCS/blah.c,v` = 100404'
+
+# Test various operations on a file with no revisions.
+test-rcs-iflag: clean
+	@mkdir -p RCS
+	@echo . | ${RCS} -i -q file
+	@test -f RCS/file,v
+	@${CO} -q file
+	@test -f file
+	@test ! -s file
+	@rm -f file
+	@${CO} -l file
+	@echo text >> file
+	@${CI} -q file
+	@fgrep -q 1.1 RCS/file,v
 
 clean:
 	@rm -rf ${CLEANFILES}
