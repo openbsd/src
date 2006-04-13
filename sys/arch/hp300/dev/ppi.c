@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppi.c,v 1.15 2006/01/19 23:54:41 miod Exp $	*/
+/*	$OpenBSD: ppi.c,v 1.16 2006/04/13 20:08:12 miod Exp $	*/
 /*	$NetBSD: ppi.c,v 1.13 1997/04/02 22:37:33 scottr Exp $	*/
 
 /*
@@ -92,7 +92,6 @@ int	ppirw(dev_t, struct uio *);
 int	ppihztoms(int);
 int	ppimstohz(int);
 
-bdev_decl(ppi);
 cdev_decl(ppi);
 
 #define UNIT(x)		minor(x)
@@ -154,7 +153,7 @@ ppiattach(parent, self, aux)
 
 	/* Initialize timeout structures */
 	timeout_set(&sc->sc_to, ppitimo, sc);
-	timeout_set(&sc->sc_to, ppistart, sc);
+	timeout_set(&sc->sc_start_to, ppistart, sc);
 }
 
 void
