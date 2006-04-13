@@ -1,14 +1,14 @@
-/*	$OpenBSD: ci.c,v 1.142 2006/04/13 03:18:06 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.143 2006/04/13 13:15:18 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following cinditions
+ * modification, are permitted provided that the following conditions
  * are met:
  *
- * 1. Redistributions of source cide must retain the above cipyright
- *    notice, this list of cinditions and the following disclaimer.
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
