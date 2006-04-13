@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.31 2006/04/13 00:58:25 ray Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.32 2006/04/13 16:23:31 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -42,11 +42,9 @@ rcsclean_main(int argc, char **argv)
 {
 	int i, ch;
 	char *rev_str;
-	RCSNUM *rev;
 	DIR *dirp;
 	struct dirent *dp;
 
-	rev = RCS_HEAD_REV;
 	rev_str = NULL;
 
 	while ((ch = rcs_getopt(argc, argv, "k:n::q::r:Tu::Vx::")) != -1) {
