@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.44 2006/04/05 01:47:38 brad Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.45 2006/04/13 23:35:19 brad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1202,7 +1202,7 @@
 #define BGE_HCCMODE_ENABLE		0x00000002
 #define BGE_HCCMODE_ATTN		0x00000004
 #define BGE_HCCMODE_COAL_NOW		0x00000008
-#define BGE_HCCMODE_MSI_BITS		0x0x000070
+#define BGE_HCCMODE_MSI_BITS		0x00000070
 #define BGE_HCCMODE_STATBLK_SIZE	0x00000180
 
 #define BGE_STATBLKSZ_FULL		0x00000000
