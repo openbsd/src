@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.134 2006/04/02 21:38:56 djm Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.135 2006/04/13 01:05:59 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.134 2006/04/02 21:38:56 djm Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.135 2006/04/13 01:05:59 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -2123,50 +2123,35 @@ print_sensor(struct sensor *s)
 	const char *name;
 
 	printf("%s, %s, ", s->device, s->desc);
-	switch (s->status) {
-	case SENSOR_S_OK:
-		printf("OK, ");
-		break;
-	case SENSOR_S_WARN:
-		printf("WARNING, ");
-		break;
-	case SENSOR_S_CRIT:
-		printf("CRITICAL, ");
-		break;
-	case SENSOR_S_UNKNOWN:
-		printf("UNKNOWN, ");
-		break;
-	}
 
 	if (s->flags & SENSOR_FUNKNOWN)
 		printf("unknown");
 	else {
 		switch (s->type) {
 		case SENSOR_TEMP:
-			printf("temp, %.2f degC / %.2f degF",
-			    (s->value - 273150000) / 1000000.0,
-			    (s->value - 273150000) / 1000000.0 * 9 / 5 + 32);
+			printf("%.2f degC",
+			    (s->value - 273150000) / 1000000.0);
 			break;
 		case SENSOR_FANRPM:
-			printf("fanrpm, %lld RPM", s->value);
+			printf("%lld RPM", s->value);
 			break;
 		case SENSOR_VOLTS_DC:
-			printf("volts_dc, %.2f V", s->value / 1000000.0);
+			printf("%.2f V DC", s->value / 1000000.0);
 			break;
 		case SENSOR_AMPS:
-			printf("amps, %.2f A", s->value / 1000000.0);
+			printf("%.2f A", s->value / 1000000.0);
 			break;
 		case SENSOR_INDICATOR:
-			printf("indicator, %s", s->value ? "On" : "Off");
+			printf("%s", s->value ? "On" : "Off");
 			break;
 		case SENSOR_INTEGER:
-			printf("raw, %lld", s->value);
+			printf("%lld raw", s->value);
 			break;
 		case SENSOR_PERCENT:
-			printf("percent, %.2f%%", (float)s->value / 1000.0);
+			printf("%.2f%%", s->value / 1000.0);
 			break;
 		case SENSOR_LUX:
-			printf("lux, %.2f lx", s->value / 1000000.0);
+			printf("%.2f lx", s->value / 1000000.0);
 			break;
 		case SENSOR_DRIVE:
 			switch (s->value) {
@@ -2204,12 +2189,27 @@ print_sensor(struct sensor *s)
 				name = "unknown";
 				break;
 			}
-			printf("drive, %s", name);
+			printf("drive %s", name);
 			break;
 
 		default:
 			printf("unknown");
 		}
+	}
+
+	switch (s->status) {
+	case SENSOR_S_OK:
+		printf(", OK");
+		break;
+	case SENSOR_S_WARN:
+		printf(", WARNING");
+		break;
+	case SENSOR_S_CRIT:
+		printf(", CRITICAL");
+		break;
+	case SENSOR_S_UNKNOWN:
+		printf(", UNKNOWN");
+		break;
 	}
 }
 
