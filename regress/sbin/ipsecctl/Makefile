@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.18 2006/04/12 14:07:11 hshoexer Exp $
+# $OpenBSD: Makefile,v 1.19 2006/04/13 12:04:34 hshoexer Exp $
 
 # TARGETS
 # ipsec: feed ipsecNN.in through ipsecctl and check wether the output matches
@@ -11,7 +11,7 @@ IPSECTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
 TCPMD5TESTS=1 2 3
 SATESTS=1 2 3 4 5 6 7 8 9 10 11 12
 SAFAIL=1
-IKETESTS=1 2 3 4 5 6 7 8 9 10
+IKETESTS=1 2 3 4 5 6 7 8 9 10 11
 
 SHELL=/bin/sh
 
