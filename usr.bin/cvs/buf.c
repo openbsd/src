@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.47 2006/04/12 07:56:58 ray Exp $	*/
+/*	$OpenBSD: buf.c,v 1.48 2006/04/13 19:11:30 joris Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -176,13 +176,17 @@ cvs_buf_set(BUF *b, const void *src, size_t len, size_t off)
 	size_t rlen = 0;
 
 	if (b->cb_size < (len + off)) {
-		if ((b->cb_flags & BUF_AUTOEXT))
+		if ((b->cb_flags & BUF_AUTOEXT)) {
 			cvs_buf_grow(b, len + off - b->cb_size);
-		else
+			rlen = len + off;
+		} else {
 			rlen = b->cb_size - off;
-	} else
+		}
+	} else {
 		rlen = len;
+	}
 
+	b->cb_len = rlen;
 	memcpy((b->cb_buf + off), src, rlen);
 
 	if (b->cb_len == 0) {
