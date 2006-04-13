@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.47 2006/03/25 22:41:46 djm Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.48 2006/04/13 15:27:49 jolan Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -567,6 +567,7 @@ USB_ATTACH(axe)
 	if (err) {
 		printf("axe%d: getting interface handle failed\n",
 		    sc->axe_unit);
+		usbd_devinfo_free(devinfop);
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -579,7 +580,8 @@ USB_ATTACH(axe)
 	err = usbd_device2interface_handle(dev, AXE_IFACE_IDX, &sc->axe_iface);
 	if (err) {
 		printf("axe%d: getting interface handle failed\n",
-			       sc->axe_unit);
+		    sc->axe_unit);
+		usbd_devinfo_free(devinfop);
 		USB_ATTACH_ERROR_RETURN;
 	}
 
