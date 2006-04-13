@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.140 2006/04/12 08:27:31 deraadt Exp $	*/
+/*	$OpenBSD: ci.c,v 1.141 2006/04/13 00:58:25 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -277,7 +277,9 @@ checkin_main(int argc, char **argv)
 
 		/* XXX - Should we rcsnum_free(pb.newrev)? */
 		if (rev_str != NULL)
-			rcs_set_rev(rev_str, &pb.newrev);
+			if ((pb.newrev = rcs_getrevnum(rev_str, pb.file)) ==
+			    NULL)
+				fatal("invalid revision: %s", rev_str);
 
 		if (pb.flags & NEWFILE)
 			status = checkin_init(&pb);

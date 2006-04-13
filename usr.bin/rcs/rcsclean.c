@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.30 2006/04/12 08:23:30 ray Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.31 2006/04/13 00:58:25 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -29,7 +29,7 @@
 #include "rcsprog.h"
 #include "diff.h"
 
-static void	rcsclean_file(char *, RCSNUM *);
+static void	rcsclean_file(char *, const char *);
 
 static int nflag = 0;
 static int kflag = RCS_KWEXP_ERR;
@@ -107,18 +107,13 @@ rcsclean_main(int argc, char **argv)
 		while ((dp = readdir(dirp)) != NULL) {
 			if (dp->d_type == DT_DIR)
 				continue;
-			rcs_set_rev(rev_str, &rev);
-			rcsclean_file(dp->d_name, rev);
-			rcsnum_free(rev);
+			rcsclean_file(dp->d_name, rev_str);
 		}
 
 		closedir(dirp);
 	} else
-		for (i = 0; i < argc; i++) {
-			rcs_set_rev(rev_str, &rev);
-			rcsclean_file(argv[i], rev);
-			rcsnum_free(rev);
-		}
+		for (i = 0; i < argc; i++)
+			rcsclean_file(argv[i], rev_str);
 
 	return (0);
 }
@@ -132,14 +127,14 @@ rcsclean_usage(void)
 }
 
 static void
-rcsclean_file(char *fname, RCSNUM *rev)
+rcsclean_file(char *fname, const char *rev_str)
 {
 	int match;
 	RCSFILE *file;
 	char fpath[MAXPATHLEN], numb[64];
-	RCSNUM *frev;
+	RCSNUM *rev;
 	BUF *b1, *b2;
-	char *s1, *s2, *c1, *c2;
+	char *c1, *c2;
 	struct stat st;
 	time_t rcs_mtime = -1;
 
@@ -159,12 +154,16 @@ rcsclean_file(char *fname, RCSNUM *rev)
 
 	rcs_kwexp_set(file, kflag);
 
-	if (rev == RCS_HEAD_REV)
-		frev = file->rf_head;
-	else
-		frev = rev;
+	if (rev_str == NULL)
+		rev = file->rf_head;
+	else if ((rev = rcs_getrevnum(rev_str, file)) == NULL) {
+		cvs_log(LP_ERR, "%s: Symbolic name `%s' is undefined.",
+		    fpath, rev_str);
+		rcs_close(file);
+		return;
+	}
 
-	if ((b1 = rcs_getrev(file, frev)) == NULL) {
+	if ((b1 = rcs_getrev(file, rev)) == NULL) {
 		cvs_log(LP_ERR, "failed to get needed revision");
 		rcs_close(file);
 		return;
@@ -182,12 +181,9 @@ rcsclean_file(char *fname, RCSNUM *rev)
 	c1 = cvs_buf_release(b1);
 	c2 = cvs_buf_release(b2);
 
-	for (s1 = c1, s2 = c2; *s1 && *s2; s1++, s2++) {
-		if (*s1 != *s2) {
-			match = 0;
-			break;
-		}
-	}
+	/* XXX - Compare using cvs_buf_len() first. */
+	if (strcmp(c1, c2) != 0)
+		match = 0;
 
 	xfree(c1);
 	xfree(c2);
@@ -196,10 +192,10 @@ rcsclean_file(char *fname, RCSNUM *rev)
 		if ((uflag == 1) && (!TAILQ_EMPTY(&(file->rf_locks)))) {
 			if ((verbose == 1) && (nflag == 0)) {
 				printf("rcs -u%s %s\n",
-				    rcsnum_tostr(frev, numb, sizeof(numb)),
+				    rcsnum_tostr(rev, numb, sizeof(numb)),
 				    fpath);
 			}
-			(void)rcs_lock_remove(file, locker, frev);
+			(void)rcs_lock_remove(file, locker, rev);
 		}
 
 		if (TAILQ_EMPTY(&(file->rf_locks))) {

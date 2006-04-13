@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.98 2006/04/12 22:54:23 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.99 2006/04/13 00:58:25 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -386,6 +386,25 @@ rcs_setrevstr2(char **str1, char **str2, char *new_str)
 		*str2 = new_str;
 	else
 		fatal("too many revision numbers");
+}
+
+/*
+ * Get revision from file.  The revision can be specified as a symbol or
+ * a revision number.
+ */
+RCSNUM *
+rcs_getrevnum(const char *rev_str, RCSFILE *file)
+{
+	RCSNUM *rev;
+
+	/* Search for symbol. */
+	rev = rcs_sym_getrev(file, rev_str);
+
+	/* Search for revision number. */
+	if (rev == NULL)
+		rev = rcsnum_parse(rev_str);
+
+	return (rev);
 }
 
 int

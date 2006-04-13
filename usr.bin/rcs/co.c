@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.74 2006/04/12 08:27:31 deraadt Exp $	*/
+/*	$OpenBSD: co.c,v 1.75 2006/04/13 00:58:25 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -176,9 +176,10 @@ checkout_main(int argc, char **argv)
 
 		rcs_kwexp_set(file, kflag);
 
-		if (rev_str != NULL)
-			rcs_set_rev(rev_str, &rev);
-		else {
+		if (rev_str != NULL) {
+			if ((rev = rcs_getrevnum(rev_str, file)) == NULL)
+				fatal("invalid revision: %s", rev_str);
+		} else {
 			rev = rcsnum_alloc();
 			rcsnum_cpy(file->rf_head, rev, 0);
 		}
