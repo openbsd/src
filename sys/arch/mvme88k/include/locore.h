@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.h,v 1.30 2005/12/03 16:52:16 miod Exp $	*/
+/*	$OpenBSD: locore.h,v 1.31 2006/04/13 21:16:15 miod Exp $	*/
 
 #ifndef _MACHINE_LOCORE_H_
 #define _MACHINE_LOCORE_H_
@@ -19,8 +19,6 @@ unsigned getipl(void);
 int intr_findvec(int, int, int);
 void myetheraddr(u_char *);
 void set_cpu_number(cpuid_t);
-
-extern volatile u_int8_t *ivec[];
 
 /* eh.S */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.20 2004/10/01 19:00:51 miod Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.21 2006/04/13 21:16:15 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -90,6 +90,17 @@
 #define CLRSWI_REG	0xfff84084	/* CLRSWI register addr */
 #define ISTATE_REG	0xfff84088
 #define CLRINT_REG	0xfff8408C
+
+#define MVME188_VIRQLV	0xFFF85000
+#define	MVME188_VIACK1V	0xFFF85004
+#define	MVME188_VIACK2V	0xFFF85008
+#define	MVME188_VIACK3V	0xFFF8500C
+#define	MVME188_VIACK4V	0xFFF85010
+#define	MVME188_VIACK5V	0xFFF85014
+#define	MVME188_VIACK6V	0xFFF85018
+#define	MVME188_VIACK7V	0xFFF8501C
+#define	MVME188_VIRQV	0xFFF85020
+#define M188_IVEC		0x40	/* vector returned upon MVME188 int */
 
 #define MVME188_GCSR	0xFFF86000	/* 188 global control and status reg */
 #define MVME188_UCSR	0xFFF87000	/* 188 utility control and status reg */
@@ -362,8 +373,5 @@
 #define VME_CMMU_D1	0xfff5f000
 #define VME_CMMU_D2	0xfff3f000
 #define VME_CMMU_D3	0xfff7f000
-
-#define M188_IACK		0xFFF85000
-#define M188_IVEC		0x40	/* vector returned upon MVME188 int */
 
 #endif	/* __MACHINE_MVME188_H__ */

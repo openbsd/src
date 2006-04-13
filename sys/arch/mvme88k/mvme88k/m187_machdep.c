@@ -1,4 +1,4 @@
-/*	$OpenBSD: m187_machdep.c,v 1.7 2005/04/30 16:42:37 miod Exp $	*/
+/*	$OpenBSD: m187_machdep.c,v 1.8 2006/04/13 21:16:17 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -68,7 +68,6 @@ u_int	m187_getipl(void);
 vaddr_t	m187_memsize(void);
 u_int	m187_raiseipl(u_int);
 u_int	m187_setipl(u_int);
-void	m187_setupiackvectors(void);
 void	m187_startup(void);
 
 vaddr_t obiova;
@@ -131,21 +130,6 @@ m187_startup()
 		panic("obiova %lx: OBIO not free", obiova);
 }
 
-void
-m187_setupiackvectors()
-{
-	u_int8_t *vaddr = (u_int8_t *)M187_IACK;
-
-	ivec[0] = vaddr + 0x03;	/* We dont use level 0 */
-	ivec[1] = vaddr + 0x07;
-	ivec[2] = vaddr + 0x0b;
-	ivec[3] = vaddr + 0x0f;
-	ivec[4] = vaddr + 0x13;
-	ivec[5] = vaddr + 0x17;
-	ivec[6] = vaddr + 0x1b;
-	ivec[7] = vaddr + 0x1f;
-}
-
 /*
  * Device interrupt handler for MVME187
  */
@@ -157,12 +141,15 @@ m187_ext_int(u_int v, struct trapframe *eframe)
 	struct intrhand *intr;
 	intrhand_t *list;
 	int ret;
+	vaddr_t ivec;
 	u_int8_t vec;
 
 	mask = *(u_int8_t *)M187_IMASK & 0x07;
 	level = *(u_int8_t *)M187_ILEVEL & 0x07;
+
 	/* generate IACK and get the vector */
-	vec = *ivec[level];
+	ivec = M187_IACK + (level << 2) + 0x03;
+	vec = *(volatile u_int8_t *)ivec;
 
 	uvmexp.intrs++;
 

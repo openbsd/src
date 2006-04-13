@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.12 2005/12/04 14:58:43 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.13 2006/04/13 21:16:17 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -72,7 +72,6 @@ u_int	m188_getipl(void);
 vaddr_t	m188_memsize(void);
 u_int	m188_raiseipl(u_int);
 u_int	m188_setipl(u_int);
-void	m188_setupiackvectors(void);
 void	m188_startup(void);
 
 /*
@@ -161,6 +160,9 @@ m188_bootstrap()
 	*(volatile u_int32_t *)IEN1_REG = 0;
 	*(volatile u_int32_t *)IEN2_REG = 0;
 	*(volatile u_int32_t *)IEN3_REG = 0;
+
+	/* supply a vector base for m188ih */
+	*(volatile u_int8_t *)MVME188_VIRQV = M188_IVEC;
 }
 
 void
@@ -188,26 +190,6 @@ m188_reset()
 	*(volatile u_int32_t *)UCSR_REG |= 0x2000;	/* clear SYSFAIL */
 
 	printf("reset failed\n");
-}
-
-/*
- * fill up ivec array with interrupt response vector addresses.
- */
-void
-m188_setupiackvectors()
-{
-	u_int8_t *vaddr = (u_int8_t *)M188_IACK;
-
-	ivec[0] = vaddr;	/* We dont use level 0 */
-	ivec[1] = vaddr + 0x04;
-	ivec[2] = vaddr + 0x08;
-	ivec[3] = vaddr + 0x0c;
-	ivec[4] = vaddr + 0x10;
-	ivec[5] = vaddr + 0x14;
-	ivec[6] = vaddr + 0x18;
-	ivec[7] = vaddr + 0x1c;
-	ivec[8] = vaddr + 0x20;	/* for self inflicted interrupts */
-	*ivec[8] = M188_IVEC;	/* supply a vector base for m188ih */
 }
 
 /*
@@ -298,6 +280,7 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 	struct intrhand *intr;
 	intrhand_t *list;
 	int ret, intbit;
+	vaddr_t ivec;
 	u_int vec;
 	int unmasked = 0;
 
@@ -388,7 +371,8 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 			}
 			vec += SYSCON_VECT;
 		} else if (VME_INTERRUPT_MASK & (1 << intbit)) {
-			vec = *(u_int32_t *)ivec[level] & VME_VECTOR_MASK;
+			ivec = MVME188_VIRQLV + (level << 2);
+			vec = *(volatile u_int32_t *)ivec & VME_VECTOR_MASK;
 			if (vec & VME_BERR_MASK) {
 				printf("VME vec timeout, vec = %x, mask = 0x%b\n",
 				    vec, 1 << intbit, IST_STRING);

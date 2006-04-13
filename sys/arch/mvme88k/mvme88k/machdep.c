@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.176 2005/12/11 21:45:31 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.177 2006/04/13 21:16:18 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -102,7 +102,6 @@ void	mvme_bootstrap(void);
 void	savectx(struct pcb *);
 void	secondary_main(void);
 void	secondary_pre_main(void);
-void	setupiackvectors(void);
 void	vector_init(m88k_exception_vector_area *, unsigned *);
 void	_doboot(void);
 
@@ -110,15 +109,12 @@ extern void setlevel(unsigned int);
 
 extern void m187_bootstrap(void);
 extern vaddr_t m187_memsize(void);
-extern void m187_setupiackvectors(void);
 extern void m187_startup(void);
 extern void m188_bootstrap(void);
 extern vaddr_t m188_memsize(void);
-extern void m188_setupiackvectors(void);
 extern void m188_startup(void);
 extern void m197_bootstrap(void);
 extern vaddr_t m197_memsize(void);
-extern void m197_setupiackvectors(void);
 extern void m197_startup(void);
 
 intrhand_t intr_handlers[NVMEINTR];
@@ -129,12 +125,6 @@ void (*md_init_clocks)(void);
 u_int (*md_getipl)(void);
 u_int (*md_setipl)(u_int);
 u_int (*md_raiseipl)(u_int);
-
-#ifdef MVME188
-volatile u_int8_t *ivec[8 + 1];
-#else
-volatile u_int8_t *ivec[8];
-#endif
 
 int physmem;	  /* available physical memory, in pages */
 
@@ -489,7 +479,6 @@ cpu_startup()
 	 */
 	for (i = 0; i < NVMEINTR; i++)
 		SLIST_INIT(&intr_handlers[i]);
-	setupiackvectors();
 
 	/*
 	 * Configure the system.
@@ -780,32 +769,6 @@ abort:
 	default:
 		printf("error %d\n", error);
 		break;
-	}
-}
-
-/*
- * fill up ivec array with interrupt response vector addresses.
- */
-void
-setupiackvectors()
-{
-	switch (brdtyp) {
-#ifdef MVME187
-	case BRD_187:
-	case BRD_8120:
-		m187_setupiackvectors();
-		break;
-#endif
-#ifdef MVME188
-	case BRD_188:
-		m188_setupiackvectors();
-		break;
-#endif
-#ifdef MVME197
-	case BRD_197:
-		m197_setupiackvectors();
-		break;
-#endif
 	}
 }
 
