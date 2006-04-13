@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2006/04/12 22:54:23 ray Exp $
+#	$OpenBSD: Makefile,v 1.17 2006/04/13 04:01:19 ray Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -6,6 +6,7 @@
 CI?=		ci
 CO?=		co
 RCS?=		rcs
+RCSCLEAN?=	rcsclean
 RCSDIFF?=	rcsdiff
 RCSMERGE?=	rcsmerge
 RLOG?=		rlog
@@ -37,8 +38,11 @@ LTESTS= ci-initial \
 	ci-Nflag \
 	ci-sflag \
 	co-lflag2 \
+	rcsclean \
 	rcsdiff \
+	rcsdiff-symbols \
 	rcsmerge \
+	rcsmerge-symbols \
 	ci-dflag \
 	ci-xflag \
 	comma \
@@ -190,6 +194,35 @@ test-co-lflag2:
 	@${CO} -q -l test
 	@test -e test
 
+test-rcsclean: clean
+	@touch file
+	@${RCSCLEAN} -q file
+	@${RCSCLEAN} -q1.1 file
+	@${RCSCLEAN} -qsym file
+	@test -f file
+
+	@echo . | ${CI} -q -nsym file
+	@${CO} -q file
+	@${RCSCLEAN} -q file
+	@test ! -f file
+	@${CO} -q file
+	@${RCSCLEAN} -q1.1 file
+	@test ! -f file
+	@${CO} -q file
+	@${RCSCLEAN} -qsym file
+	@test ! -f file
+
+	@${CO} -q -l file
+	@${RCSCLEAN} -q file
+	@test -f file
+	@${RCSCLEAN} -q -u file
+	@test ! -f file
+	@${CO} -q -l file
+	@echo change >> file
+	@${RCSCLEAN} -q file
+	@${RCSCLEAN} -q -u file
+	@test -f file
+
 test-rcsmerge:
 	@cp -f ${.CURDIR}/rev1 blah.c
 	@echo "descr" | ${CI} -q -l -m"first rev" blah.c
@@ -199,6 +232,18 @@ test-rcsmerge:
 	@${CI} -q -l -m"third rev" blah.c
 
 	@${RCSMERGE} -q -r1.1 -r1.3 -p blah.c |				\
+	    diff -u ${.CURDIR}/rcsmerge.out -
+
+test-rcsmerge-symbols: clean
+	@mkdir RCS
+	@cp -f ${.CURDIR}/rev1 blah.c
+	@echo "descr" | ${CI} -q -l -nsym1 -m"first rev" blah.c
+	@cp -f ${.CURDIR}/rev2 blah.c
+	@${CI} -q -l -nsym2 -m"second rev" blah.c
+	@cp -f ${.CURDIR}/rev3 blah.c
+	@${CI} -q -l -nsym3 -m"third rev" blah.c
+
+	@${RCSMERGE} -q -rsym1 -rsym3 -p blah.c |		\
 	    diff -u ${.CURDIR}/rcsmerge.out -
 
 test-rcsdiff:
@@ -214,10 +259,22 @@ test-rcsdiff:
 	@${RCSDIFF} -q -r1.1 -r1.3 -u blah.c | tail -n +3 |		\
 	    diff -u ${.CURDIR}/rcsdiff.out -
 
+test-rcsdiff-symbols: clean
+	@mkdir RCS
+	@cp -f ${.CURDIR}/rev1 blah.c
+	@echo "descr" | ${CI} -q -l -nsym1 -m"first rev" blah.c
+	@cp -f ${.CURDIR}/rev2 blah.c
+	@${CI} -q -l -nsym2 -m"second rev" blah.c
+	@cp -f ${.CURDIR}/rev3 blah.c
+	@${CI} -q -l -nsym3 -m"third rev" blah.c
+
+	@${RCSDIFF} -q -rsym1 -rsym3 -u blah.c | tail -n +3 |		\
+	    diff -u ${.CURDIR}/rcsdiff.out -
+
 # Testing 'ci -d'2037-01-12 04:00:00+00' -l test
-test-ci-dflag:
+test-ci-dflag: clean
 	@echo "some text for date test" >> test
-	@${CI} -q -d'2037-01-12 04:00:00+00' -m'dated revision' -l test
+	@echo . | ${CI} -q -d'2037-01-12 04:00:00+00' -m'dated revision' -l test
 	@grep -q 'dated revision' test,v
 
 test-ci-xflag:
