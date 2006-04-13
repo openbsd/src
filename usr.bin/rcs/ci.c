@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.141 2006/04/13 00:58:25 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.142 2006/04/13 03:18:06 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -280,6 +280,12 @@ checkin_main(int argc, char **argv)
 			if ((pb.newrev = rcs_getrevnum(rev_str, pb.file)) ==
 			    NULL)
 				fatal("invalid revision: %s", rev_str);
+
+		/* XXX - support for commiting to a file without revisions */
+		if (pb.file->rf_ndelta == 0) {
+			pb.flags |= NEWFILE;
+			pb.file->rf_flags |= RCS_CREATE;
+		}
 
 		if (pb.flags & NEWFILE)
 			status = checkin_init(&pb);
@@ -661,6 +667,9 @@ checkin_init(struct checkin_params *pb)
 		checkin_keywordscan(filec, &pb->newrev, &pb->date, &pb->state,
 		    &pb->author);
 
+	if (pb->file->rf_ndelta == 0)
+		goto skipdesc;
+
 	/* Get description from user */
 	if (pb->description == NULL)
 		rcs_desc = (const char *)checkin_getdesc();
@@ -681,6 +690,8 @@ checkin_init(struct checkin_params *pb)
 		}
 	}
 	rcs_desc_set(pb->file, rcs_desc);
+
+skipdesc:
 
 	/*
 	 * If the user had specified a zero-ending revision number e.g. 4
