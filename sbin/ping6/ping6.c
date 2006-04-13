@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.64 2006/04/10 08:05:14 deraadt Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.65 2006/04/13 00:49:15 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -268,7 +268,7 @@ void	 pr_ip6opt(void *);
 void	 pr_rthdr(void *);
 int	 pr_bitrange(u_int32_t, int, int);
 void	 pr_retip(struct ip6_hdr *, u_char *);
-void	 summary(void);
+void	 summary(int);
 void	 tvsub(struct timeval *, struct timeval *);
 #ifdef IPSEC_POLICY_IPSEC
 int	 setpolicy(int, char *);
@@ -1081,7 +1081,7 @@ main(int argc, char *argv[])
 		}
 #ifdef SIGINFO
 		if (seeninfo) {
-			summary();
+			summary(0);
 			seeninfo = 0;
 			continue;
 		}
@@ -1166,7 +1166,7 @@ main(int argc, char *argv[])
 		if (npackets && nreceived >= npackets)
 			break;
 	}
-	summary();
+	summary(0);
 	exit(nreceived == 0);
 }
 
@@ -2154,17 +2154,18 @@ tvsub(struct timeval *out, struct timeval *in)
  * onint --
  *	SIGINT handler.
  */
-/* ARGSUSED */
 void
-onint(int notused)
+onint(int signo)
 {
-	summary();			/* XXX signal race */
+	summary(signo);
 
 	(void)signal(SIGINT, SIG_DFL);
 	(void)kill(getpid(), SIGINT);
 
-	/* NOTREACHED */
-	exit(1);			/* XXX signal race */
+	if (signo)
+		_exit(nreceived ? 0 : 1);
+	else
+		exit(nreceived ? 0 : 1);
 }
 
 /*
@@ -2172,34 +2173,50 @@ onint(int notused)
  *	Print out statistics.
  */
 void
-summary(void)
+summary(int signo)
 {
+	char buf[8192], buft[8192];
 
-	(void)printf("\n--- %s ping6 statistics ---\n", hostname);
-	(void)printf("%ld packets transmitted, ", ntransmitted);
-	(void)printf("%ld packets received, ", nreceived);
-	if (nrepeats)
-		(void)printf("+%ld duplicates, ", nrepeats);
+	buf[0] = '\0';
+
+	snprintf(buft, sizeof buft, "\n--- %s ping6 statistics ---\n",
+	    hostname);
+	strlcat(buf, buft, sizeof buf);
+	snprintf(buft, sizeof buft, "%ld packets transmitted, ",
+	    ntransmitted);
+	strlcat(buf, buft, sizeof buf);
+	snprintf(buft, sizeof buft, "%ld packets received, ",
+	    nreceived);
+	strlcat(buf, buft, sizeof buf);
+	if (nrepeats) {
+		snprintf(buft, sizeof buft, "+%ld duplicates, ",
+		    nrepeats);
+		strlcat(buf, buft, sizeof buf);
+	}
 	if (ntransmitted) {
 		if (nreceived > ntransmitted)
-			(void)printf("-- somebody's duplicating packets!");
+			snprintf(buft, sizeof buft,
+			    "-- somebody's duplicating packets!");
 		else
-			(void)printf("%.1lf%% packet loss",
+			snprintf(buft, sizeof buft, "%.1lf%% packet loss",
 			    ((((double)ntransmitted - nreceived) * 100) /
 			    ntransmitted));
+		strlcat(buf, buft, sizeof buf);
 	}
-	(void)putchar('\n');
+	strlcat(buf, "\n", sizeof buf);
 	if (nreceived && timing) {
 		/* Only display average to microseconds */
 		double num = nreceived + nrepeats;
 		double avg = tsum / num;
 		double dev = sqrt(tsumsq / num - avg * avg);
-		(void)printf(
+		snprintf(buft, sizeof buft,
 		    "round-trip min/avg/max/std-dev = %.3f/%.3f/%.3f/%.3f ms\n",
 		    tmin, avg, tmax, dev);
-		(void)fflush(stdout);
+		strlcat(buf, buft, sizeof buf);
 	}
-	(void)fflush(stdout);
+	write(STDOUT_FILENO, buf, strlen(buf));
+	if (signo == 0)
+		(void)fflush(stdout);
 }
 
 /*subject type*/

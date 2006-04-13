@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.76 2006/04/10 08:05:13 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.77 2006/04/13 00:49:15 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: ping.c,v 1.76 2006/04/10 08:05:13 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ping.c,v 1.77 2006/04/13 00:49:15 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -572,7 +572,6 @@ catcher(int signo)
 
 /*
  * Print statistics when SIGINFO is received.
- * XXX not race safe
  */
 /* ARGSUSED */
 void
@@ -907,13 +906,13 @@ in_cksum(u_short *addr, int len)
 }
 
 void
-summary(int header, int sig)
+summary(int header, int insig)
 {
 	char buf[8192], buft[8192];
 
 	buf[0] = '\0';
 
-	if (!sig) {
+	if (!insig) {
 		(void)putchar('\r');
 		(void)fflush(stdout);
 	} else
@@ -988,7 +987,7 @@ finish(int signo)
 {
 	(void)signal(SIGINT, SIG_IGN);
 
-	summary(1, 0);
+	summary(1, signo);
 	if (signo)
 		_exit(nreceived ? 0 : 1);
 	else
