@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.99 2006/04/13 00:58:25 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.100 2006/04/13 16:10:29 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -451,6 +451,9 @@ main(int argc, char **argv)
 			ret = programs[i].prog_hdlr(cmd_argc, cmd_argv);
 			break;
 		}
+
+	/* clean up temporary files */
+	cvs_worklist_run(&rcs_temp_files, cvs_worklist_unlink);
 
 	exit(ret);
 	/* NOTREACHED */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.47 2006/04/13 00:58:25 ray Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.48 2006/04/13 16:10:29 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -237,8 +237,6 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	ret = 0;
 
 out:
-	cvs_worklist_run(&rcs_temp_files, cvs_worklist_unlink);
-
 	if (b1 != NULL)
 		cvs_buf_free(b1);
 	if (b2 != NULL)
@@ -314,8 +312,6 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 	ret = 0;
 
 out:
-	cvs_worklist_run(&rcs_temp_files, cvs_worklist_unlink);
-
 	if (b1 != NULL)
 		cvs_buf_free(b1);
 	if (b2 != NULL)
