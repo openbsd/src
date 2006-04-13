@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.166 2006/04/13 19:55:41 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.167 2006/04/13 23:41:13 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -234,7 +234,7 @@ static const char *rcs_errstrs[] = {
 int rcs_errno = RCS_ERR_NOERR;
 char *timezone_flag = NULL;
 
-static int	rcs_parse_init(RCSFILE *);
+static void	rcs_parse_init(RCSFILE *);
 static int	rcs_parse_admin(RCSFILE *);
 static int	rcs_parse_delta(RCSFILE *);
 static void	rcs_parse_deltas(RCSFILE *, RCSNUM *);
@@ -312,11 +312,8 @@ rcs_open(const char *path, int flags, ...)
 	TAILQ_INIT(&(rfp->rf_symbols));
 	TAILQ_INIT(&(rfp->rf_locks));
 
-	if (!(rfp->rf_flags & RCS_CREATE)
-	    && (rcs_parse_init(rfp) < 0)) {
-		rcs_close(rfp);
-		return (NULL);
-	}
+	if (!(rfp->rf_flags & RCS_CREATE))
+		rcs_parse_init(rfp);
 
 	/* fill in rd_locker */
 	TAILQ_FOREACH(lkr, &(rfp->rf_locks), rl_list) {
@@ -637,9 +634,7 @@ rcs_head_get(RCSFILE *file)
 int
 rcs_head_set(RCSFILE *file, RCSNUM *rev)
 {
-	struct rcs_delta *rd;
-
-	if ((rd = rcs_findrev(file, rev)) == NULL)
+	if (rcs_findrev(file, rev) == NULL)
 		return (-1);
 
 	if (file->rf_head == NULL)
@@ -1752,18 +1747,15 @@ rcs_parse_desc(RCSFILE *rfp, RCSNUM *rev)
  * rcs_parse_init()
  *
  * Initial parsing of file <path>, which are in the RCS format.
- * Just does admin section
- * Returns 0 on success, or -1 on failure.
+ * Just does admin section.
  */
-static int
+static void
 rcs_parse_init(RCSFILE *rfp)
 {
-	int ret, count;
 	struct rcs_pdata *pdp;
 
-	count = 0;
 	if (rfp->rf_flags & RCS_PARSED)
-		return (0);
+		return;
 
 	pdp = xcalloc(1, sizeof(*pdp));
 
@@ -1781,7 +1773,7 @@ rcs_parse_init(RCSFILE *rfp)
 	rfp->rf_flags &= ~RCS_SLOCK;
 	rfp->rf_pdata = pdp;
 
-	if ((ret = rcs_parse_admin(rfp)) < 0) {
+	if (rcs_parse_admin(rfp) < 0) {
 		rcs_freepdata(pdp);
 		fatal("could not parse admin data");
 	}
@@ -1790,7 +1782,6 @@ rcs_parse_init(RCSFILE *rfp)
 		rcs_parse_deltatexts(rfp, NULL);
 
 	rfp->rf_flags |= RCS_SYNCED;
-	return (0);
 }
 
 /*
