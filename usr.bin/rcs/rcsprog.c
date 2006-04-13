@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.100 2006/04/13 16:10:29 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.101 2006/04/13 19:55:41 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -29,7 +29,7 @@
 #include "rcsprog.h"
 
 #define RCS_CMD_MAXARG	128
-#define RCSPROG_OPTSTRING	"A:a:b::c:e::hik:Ll::m:Mn:N:qt::TUu::Vx::z::"
+#define RCSPROG_OPTSTRING	"A:a:b::c:e::hik:Ll::m:Mn:N:o:qt::TUu::Vx::z::"
 
 #define DESC_PROMPT	"enter description, terminated with single '.' "      \
 			"or end of file:\nNOTE: This is NOT the log message!" \
@@ -64,8 +64,9 @@ struct rcs_prog {
 struct cvs_wklhead rcs_temp_files;
 
 void sighdlr(int);
-static void rcs_set_description(RCSFILE *, const char *);
-static void rcs_attach_symbol(RCSFILE *, const char *);
+static void  rcs_set_description(RCSFILE *, const char *);
+static void  rcs_attach_symbol(RCSFILE *, const char *);
+static u_int rcs_rev_select(RCSFILE *, char *);
 
 /* ARGSUSED */
 void
@@ -466,7 +467,7 @@ rcs_usage(void)
 	fprintf(stderr,
 	    "usage: rcs [-ehIiLMqTUV] [-Aoldfile] [-ausers] [-b[rev]]\n"
 	    "           [-cstring] [-e[users]] [-kmode] [-l[rev]] [-mrev:msg]\n"
-	    "           [-orev] [-sstate[:rev]] [-tfile|str] [-u[rev]]\n"
+	    "           [-orange] [-sstate[:rev]] [-tfile|str] [-u[rev]]\n"
 	    "           [-xsuffixes] file ...\n");
 }
 
@@ -482,7 +483,7 @@ rcs_main(int argc, char **argv)
 	int i, j, ch, kflag, lkmode;
 	char fpath[MAXPATHLEN], ofpath[MAXPATHLEN];
 	char *logstr, *logmsg, *nflag, *descfile;
-	char *alist, *comment, *elist, *lrev, *urev;
+	char *alist, *comment, *elist, *lrev, *urev, *orange;
 	mode_t fmode;
 	RCSFILE *file, *oldfile;
 	RCSNUM *logrev;
@@ -494,7 +495,7 @@ rcs_main(int argc, char **argv)
 	fmode =  S_IRUSR|S_IRGRP|S_IROTH;
 	flags = RCS_RDWR|RCS_PARSE_FULLY;
 	lrev = urev = descfile = nflag = NULL;
-	logstr = alist = comment = elist = NULL;
+	logstr = alist = comment = elist = orange = NULL;
 
 	while ((ch = rcs_getopt(argc, argv, RCSPROG_OPTSTRING)) != -1) {
 		switch (ch) {
@@ -551,6 +552,9 @@ rcs_main(int argc, char **argv)
 		case 'N':
 			nflag = xstrdup(rcs_optarg);
 			rcsflags |= RCSPROG_NFLAG;
+			break;
+		case 'o':
+			orange = xstrdup(rcs_optarg);
 			break;
 		case 'q':
 			verbose = 0;
@@ -754,6 +758,23 @@ rcs_main(int argc, char **argv)
 			rcsnum_free(rev);
 		}
 
+		if (orange != NULL) {
+			struct rcs_delta *rdp;
+			char b[16];
+
+			rcs_rev_select(file, orange);
+			TAILQ_FOREACH(rdp, &(file->rf_delta), rd_list) {
+				/*
+				 * Delete selected revisions.
+				 */
+				if (rdp->rd_flags & RCS_RD_SELECT) {
+					rcsnum_tostr(rdp->rd_num, b, sizeof(b));
+					printf("deleting revision %s\n", b);
+					(void)rcs_rev_remove(file, rdp->rd_num);
+				}
+			}
+		}
+
 		rcs_close(file);
 
 		if (rcsflags & PRESERVETIME)
@@ -872,4 +893,79 @@ rcs_set_description(RCSFILE *file, const char *in)
 
 	rcs_desc_set(file, content);
 	xfree(content);
+}
+
+static u_int
+rcs_rev_select(RCSFILE *file, char *range)
+{
+	int i;
+	u_int nrev;
+	char *ep;
+	char *lstr, *rstr;
+	struct rcs_delta *rdp;
+	struct cvs_argvector *revargv, *revrange;
+	RCSNUM lnum, rnum;
+
+	nrev = 0;
+	(void)memset(&lnum, 0, sizeof(lnum));
+	(void)memset(&rnum, 0, sizeof(rnum));
+
+	if (range == NULL) {
+		TAILQ_FOREACH(rdp, &file->rf_delta, rd_list)
+			if (rcsnum_cmp(rdp->rd_num, file->rf_head, 0) == 0) {
+				rdp->rd_flags |= RCS_RD_SELECT;
+				return (1);
+			}
+		return (0);
+	}
+
+	revargv = cvs_strsplit(range, ",");
+	for (i = 0; revargv->argv[i] != NULL; i++) {
+		revrange = cvs_strsplit(revargv->argv[i], ":");
+		if (revrange->argv[0] == NULL)
+			/* should not happen */
+			fatal("invalid revision range: %s", revargv->argv[i]);
+		else if (revrange->argv[1] == NULL)
+			lstr = rstr = revrange->argv[0];
+		else {
+			if (revrange->argv[2] != NULL)
+				fatal("invalid revision range: %s",
+					revargv->argv[i]);
+			lstr = revrange->argv[0];
+			rstr = revrange->argv[1];
+			if (strcmp(lstr, "") == 0)
+				lstr = NULL;
+			if (strcmp(rstr, "") == 0)
+				rstr = NULL;
+		}
+
+		if (lstr == NULL)
+			lstr = RCS_HEAD_INIT;
+		if (rcsnum_aton(lstr, &ep, &lnum) == 0 || (*ep != '\0'))
+			fatal("invalid revision: %s", lstr);
+
+		if (rstr != NULL) {
+			if (rcsnum_aton(rstr, &ep, &rnum) == 0 || (*ep != '\0'))
+				fatal("invalid revision: %s", rstr);
+		} else
+			rcsnum_cpy(file->rf_head, &rnum, 0);
+
+		cvs_argv_destroy(revrange);
+
+		TAILQ_FOREACH(rdp, &file->rf_delta, rd_list)
+			if ((rcsnum_cmp(rdp->rd_num, &lnum, 0) <= 0) &&
+			    (rcsnum_cmp(rdp->rd_num, &rnum, 0) >= 0) &&
+			    !(rdp->rd_flags & RCS_RD_SELECT)) {
+				rdp->rd_flags |= RCS_RD_SELECT;
+				nrev++;
+			}
+	}
+	cvs_argv_destroy(revargv);
+
+	if (lnum.rn_id != NULL)
+		xfree(lnum.rn_id);
+	if (rnum.rn_id != NULL)
+		xfree(rnum.rn_id);
+
+	return (nrev);
 }

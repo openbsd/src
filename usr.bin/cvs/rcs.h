@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.59 2006/04/13 19:16:15 joris Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.60 2006/04/13 19:55:41 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -273,5 +273,9 @@ int	 rcsnum_cmp(const RCSNUM *, const RCSNUM *, u_int);
 void	 rcs_set_tz(char *, struct rcs_delta *, struct tm *);
 
 extern char *timezone_flag;
+
+#if defined(RCSPROG)
+extern char *rcs_tmpdir;
+#endif
 
 #endif	/* RCS_H */

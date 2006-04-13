@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.165 2006/04/13 19:16:15 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.166 2006/04/13 19:55:41 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1383,26 +1383,113 @@ rcs_rev_add(RCSFILE *rf, RCSNUM *rev, const char *msg, time_t date,
 int
 rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 {
-	int ret;
-	struct rcs_delta *rdp;
+	size_t len;
+	char *tmpdir;
+	char *newdeltatext, path_tmp1[MAXPATHLEN], path_tmp2[MAXPATHLEN];
+	struct rcs_delta *rdp, *prevrdp, *nextrdp;
+	BUF *nextbuf, *prevbuf, *newdiff;
 
-	ret = 0;
+#if defined(RCSPROG)
+	tmpdir = rcs_tmpdir;
+#else
+	tmpdir = cvs_tmpdir;
+#endif
+
 	if (rev == RCS_HEAD_REV)
 		rev = rf->rf_head;
 
 	/* do we actually have that revision? */
 	if ((rdp = rcs_findrev(rf, rev)) == NULL) {
 		rcs_errno = RCS_ERR_NOENT;
-		ret = -1;
-	} else {
-		/* XXX assumes it's not a sub node */
-		TAILQ_REMOVE(&(rf->rf_delta), rdp, rd_list);
-		rf->rf_ndelta--;
-		rf->rf_flags &= ~RCS_SYNCED;
+		return (-1);
 	}
 
-	return (ret);
+	/*
+	 * This is confusing, the previous delta is next in the TAILQ list.
+	 * the next delta is the previous one in the TAILQ list.
+	 *
+	 * When the HEAD revision got specified, nextrdp will be NULL.
+	 * When the first revision got specified, prevrdp will be NULL.
+	 */
+	prevrdp = (struct rcs_delta *)TAILQ_NEXT(rdp, rd_list);
+	nextrdp = (struct rcs_delta *)TAILQ_PREV(rdp, cvs_tqh, rd_list);
 
+	newdeltatext = NULL;
+	prevbuf = nextbuf = NULL;
+
+	if (prevrdp != NULL) {
+		if ((prevbuf = rcs_getrev(rf, prevrdp->rd_num)) == NULL)
+			fatal("error getting revision");
+	}
+
+	if ((prevrdp != NULL) && (nextrdp != NULL)) {
+		if ((nextbuf = rcs_getrev(rf, nextrdp->rd_num)) == NULL)
+			fatal("error getting revision");
+
+		newdiff = cvs_buf_alloc(64, BUF_AUTOEXT);
+
+		/* calculate new diff */
+		len = strlcpy(path_tmp1, tmpdir, sizeof(path_tmp1));
+		if (len >= sizeof(path_tmp1))
+			fatal("path truncation in rcs_rev_remove");
+
+		len = strlcat(path_tmp1, "/diff1.XXXXXXXXXX",
+		    sizeof(path_tmp1));
+		if (len >= sizeof(path_tmp1))
+			fatal("path truncation in rcs_rev_remove");
+
+		cvs_buf_write_stmp(nextbuf, path_tmp1, 0600);
+		cvs_buf_free(nextbuf);
+
+		len = strlcpy(path_tmp2, tmpdir, sizeof(path_tmp2));
+		if (len >= sizeof(path_tmp2))
+			fatal("path truncation in rcs_rev_remove");
+
+		len = strlcat(path_tmp2, "/diff2.XXXXXXXXXX",
+		    sizeof(path_tmp2));
+		if (len >= sizeof(path_tmp2))
+			fatal("path truncation in rcs_rev_remove");
+
+		cvs_buf_write_stmp(prevbuf, path_tmp2, 0600);
+		cvs_buf_free(prevbuf);
+
+		diff_format = D_RCSDIFF;
+		cvs_diffreg(path_tmp1, path_tmp2, newdiff);
+
+		newdeltatext = cvs_buf_release(newdiff);
+	} else if ((nextrdp == NULL) && (prevrdp != NULL)) {
+		newdeltatext = cvs_buf_release(prevbuf);
+	}
+
+	if (newdeltatext != NULL) {
+		if (rcs_deltatext_set(rf, prevrdp->rd_num, newdeltatext) < 0)
+			fatal("error setting new deltatext");
+	}
+
+	TAILQ_REMOVE(&(rf->rf_delta), rdp, rd_list);
+
+	/* update pointers */
+	if ((prevrdp != NULL) && (nextrdp != NULL)) {
+		rcsnum_cpy(prevrdp->rd_num, nextrdp->rd_next, 0);
+	} else if (prevrdp != NULL) {
+		rcs_head_set(rf, prevrdp->rd_num);
+	} else if (nextrdp != NULL) {
+		rcsnum_free(nextrdp->rd_next);
+		nextrdp->rd_next = rcsnum_alloc();
+	} else {
+		rcsnum_free(rf->rf_head);
+		rf->rf_head = NULL;
+	}
+
+	rf->rf_ndelta--;
+	rf->rf_flags &= ~RCS_SYNCED;
+
+	rcs_freedelta(rdp);
+
+	if (newdeltatext != NULL)
+		xfree(newdeltatext);
+
+	return (0);
 }
 
 /*
