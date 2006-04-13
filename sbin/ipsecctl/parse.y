@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.57 2006/03/31 14:02:08 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.58 2006/04/13 11:55:07 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -132,13 +132,14 @@ struct ipsec_rule	*create_sa(u_int8_t, u_int8_t, struct ipsec_addr_wrap *,
 			     struct ipsec_key *);
 struct ipsec_rule	*reverse_sa(struct ipsec_rule *, u_int32_t,
 			     struct ipsec_key *, struct ipsec_key *);
-struct ipsec_rule	*create_flow(u_int8_t, u_int8_t, struct ipsec_addr_wrap *,
+struct ipsec_rule	*create_flow(u_int8_t, u_int8_t, struct
+			     ipsec_addr_wrap *, struct ipsec_addr_wrap *,
 			     struct ipsec_addr_wrap *, struct ipsec_addr_wrap *,
-			     struct ipsec_addr_wrap *, u_int8_t, char *, char *,
-			     u_int8_t);
+			     u_int8_t, char *, char *, u_int8_t);
 struct ipsec_rule	*reverse_rule(struct ipsec_rule *);
 struct ipsec_rule	*create_ike(u_int8_t, struct ipsec_addr_wrap *, struct
 			     ipsec_addr_wrap *, struct ipsec_addr_wrap *,
+			     struct ipsec_addr_wrap *,
 			     struct ipsec_transforms *, struct
 			     ipsec_transforms *, u_int8_t, u_int8_t, char *,
 			     char *, struct ike_auth *);
@@ -158,8 +159,11 @@ typedef struct {
 			struct ipsec_addr_wrap *src;
 			struct ipsec_addr_wrap *dst;
 		} hosts;
-		struct ipsec_addr_wrap *local;
-		struct ipsec_addr_wrap *peer;
+		struct {
+			struct ipsec_addr_wrap *peer;
+			struct ipsec_addr_wrap *local;
+		} peers;
+		struct ipsec_addr_wrap *singlehost;
 		struct ipsec_addr_wrap *host;
 		struct {
 			char *srcid;
@@ -205,8 +209,8 @@ typedef struct {
 %type	<v.tmode>		tmode
 %type	<v.number>		number
 %type	<v.hosts>		hosts
-%type	<v.local>		local
-%type	<v.peer>		peer
+%type	<v.peers>		peers
+%type	<v.singlehost>		singlehost
 %type	<v.host>		host
 %type	<v.ids>			ids
 %type	<v.id>			id
@@ -303,11 +307,11 @@ sarule		: satype tmode hosts spispec transforms authkeyspec
 		}
 		;
 
-flowrule	: FLOW satype dir proto hosts local peer ids type {
+flowrule	: FLOW satype dir proto hosts peers ids type {
 			struct ipsec_rule	*r;
 
-			r = create_flow($3, $4, $5.src, $5.dst, $6, $7, $2,
-			    $8.srcid, $8.dstid, $9);
+			r = create_flow($3, $4, $5.src, $5.dst, $6.local,
+			    $6.peer, $2, $7.srcid, $7.dstid, $8);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
@@ -316,7 +320,7 @@ flowrule	: FLOW satype dir proto hosts local peer ids type {
 				errx(1, "flowrule: ipsecctl_add_rule");
 
 			/* Create and add reverse flow rule. */
-			if ($9 == TYPE_UNKNOWN && $3 == IPSEC_INOUT) {
+			if ($8 == TYPE_UNKNOWN && $3 == IPSEC_INOUT) {
 				r = reverse_rule(r);
 				r->nr = ipsec->rule_nr++;
 
@@ -326,11 +330,11 @@ flowrule	: FLOW satype dir proto hosts local peer ids type {
 		}
 		;
 
-ikerule		: IKE ikemode satype proto hosts peer mmxfs qmxfs ids ikeauth {
+ikerule		: IKE ikemode satype proto hosts peers mmxfs qmxfs ids ikeauth {
 			struct ipsec_rule	*r;
 
-			r = create_ike($4, $5.src, $5.dst, $6, $7, $8, $3, $2,
-			    $9.srcid, $9.dstid, &$10);
+			r = create_ike($4, $5.src, $5.dst, $6.local, $6.peer,
+			    $7, $8, $3, $2, $9.srcid, $9.dstid, &$10);
 			if (r == NULL)
 				YYERROR;
 			r->nr = ipsec->rule_nr++;
@@ -386,25 +390,36 @@ hosts		: FROM host TO host		{
 		}
 		;
 
-peer		: /* empty */			{ $$ = NULL; }
-		| PEER STRING			{
-			if (($$ = host($2)) == NULL) {
-				free($2);
-				yyerror("could not parse host specification");
-				YYERROR;
-			}
-			free($2);
+peers		: /* empty */				{
+			$$.peer = NULL;
+			$$.local = NULL;
+		}
+		| PEER singlehost LOCAL singlehost	{
+			$$.peer = $2;
+			$$.local = $4;
+		}
+		| LOCAL singlehost PEER singlehost	{
+			$$.peer = $4;
+			$$.local = $2;
+		}
+		| PEER singlehost			{
+			$$.peer = $2;
+			$$.local = NULL;
+		}
+		| LOCAL singlehost			{
+			$$.peer = NULL;
+			$$.local = $2;
 		}
 		;
 
-local		: /* empty */			{ $$ = NULL; }
-		| LOCAL STRING			{
-			if (($$ = host($2)) == NULL) {
-				free($2);
+singlehost	: /* empty */			{ $$ = NULL; }
+		| STRING			{
+			if (($$ = host($1)) == NULL) {
+				free($1);
 				yyerror("could not parse host specification");
 				YYERROR;
 			}
-			free($2);
+			free($1);
 		}
 		;
 
@@ -507,7 +522,8 @@ transforms	:					{
 			    sizeof(struct ipsec_transforms))) == NULL)
 				err(1, "transforms: calloc");
 		}
-		    transforms_l			{ $$ = ipsec_transforms; }
+		    transforms_l			
+			{ $$ = ipsec_transforms; }
 		| /* empty */				{
 			if (($$ = calloc(1,
 			    sizeof(struct ipsec_transforms))) == NULL)
@@ -1661,9 +1677,10 @@ reverse_rule(struct ipsec_rule *rule)
 
 struct ipsec_rule *
 create_ike(u_int8_t proto, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
-    *dst, struct ipsec_addr_wrap * peer, struct ipsec_transforms *mmxfs, struct
-    ipsec_transforms *qmxfs, u_int8_t satype, u_int8_t mode, char *srcid, char
-    *dstid, struct ike_auth *authtype)
+    *dst, struct ipsec_addr_wrap *local, struct ipsec_addr_wrap *peer,
+    struct ipsec_transforms *mmxfs, struct ipsec_transforms *qmxfs,
+    u_int8_t satype, u_int8_t mode, char *srcid, char *dstid,
+    struct ike_auth *authtype)
 {
 	struct ipsec_rule *r;
 
@@ -1694,6 +1711,9 @@ create_ike(u_int8_t proto, struct ipsec_addr_wrap *src, struct ipsec_addr_wrap
 		}
 	} else
 		r->peer = peer;
+
+	if (local)
+		r->local = local;
 
 	r->satype = satype;
 	r->ikemode = mode;
