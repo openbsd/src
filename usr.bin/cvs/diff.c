@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.87 2006/04/05 01:38:55 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.88 2006/04/13 16:55:09 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -1720,14 +1720,17 @@ void
 diff_output(const char *fmt, ...)
 {
 	va_list vap;
+	int i;
 	char *str;
 
 	va_start(vap, fmt);
-	vasprintf(&str, fmt, vap);
+	i = vasprintf(&str, fmt, vap);
+	va_end(vap);
+	if (i == -1)
+		fatal("diff_output: %s", strerror(errno));
 	if (diffbuf != NULL)
 		cvs_buf_append(diffbuf, str, strlen(str));
 	else
 		cvs_printf("%s", str);
 	xfree(str);
-	va_end(vap);
 }

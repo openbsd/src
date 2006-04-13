@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.31 2006/03/15 21:34:59 niallo Exp $	*/
+/*	$OpenBSD: log.c,v 1.32 2006/04/13 16:55:09 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -306,31 +306,30 @@ cvs_printf(const char *fmt, ...)
 #if !defined(RCSPROG)
 	if (cvs_cmdop == CVS_OP_SERVER) {
 		ret = vasprintf(&nstr, fmt, vap);
-		if (ret != -1) {
-			for (dp = nstr; *dp != '\0';) {
-				sp = strchr(dp, '\n');
-				if (sp == NULL)
-					for (sp = dp; *sp != '\0'; sp++)
-						;
+		if (ret == -1)
+			fatal("cvs_printf: %s", strerror(errno));
+		for (dp = nstr; *dp != '\0';) {
+			sp = strchr(dp, '\n');
+			if (sp == NULL)
+				for (sp = dp; *sp != '\0'; sp++)
+					;
 
-				if (send_m) {
-					send_m = 0;
-					putc('M', stdout);
-					putc(' ', stdout);
-				}
-
-				fwrite(dp, sizeof(char), (size_t)(sp - dp),
-				    stdout);
-
-				if (*sp != '\n')
-					break;
-
-				putc('\n', stdout);
-				send_m = 1;
-				dp = sp + 1;
+			if (send_m) {
+				send_m = 0;
+				putc('M', stdout);
+				putc(' ', stdout);
 			}
-			xfree(nstr);
+
+			fwrite(dp, sizeof(char), (size_t)(sp - dp), stdout);
+
+			if (*sp != '\n')
+				break;
+
+			putc('\n', stdout);
+			send_m = 1;
+			dp = sp + 1;
 		}
+		xfree(nstr);
 	} else
 #endif
 		ret = vprintf(fmt, vap);
