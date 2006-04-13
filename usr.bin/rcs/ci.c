@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.144 2006/04/13 16:10:29 joris Exp $	*/
+/*	$OpenBSD: ci.c,v 1.145 2006/04/13 16:20:28 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -29,7 +29,7 @@
 #include "rcsprog.h"
 #include "diff.h"
 
-#define CI_OPTSTRING	"d::f::I::i::j::k::l::m:M::N:n:qr::s:Tt:u::Vw:x::z::"
+#define CI_OPTSTRING	"d::f::I::i::j::k::l::M::m::N:n:qr::s:Tt:u::Vw:x::z::"
 #define DATE_NOW	-1
 #define DATE_MTIME	-2
 
