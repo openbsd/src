@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.4 2006/01/25 23:53:35 brad Exp $ */
+/* $OpenBSD: auixp.c,v 1.5 2006/04/13 15:48:45 brad Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -792,6 +792,7 @@ auixp_allocate_dma_chain(struct auixp_softc *sc, struct auixp_dma **dmap)
 	if (error) {
 		printf("%s: can't malloc dma descriptor chain\n",
 		    sc->sc_dev.dv_xname);
+		free(dma, M_DEVBUF);
 		return ENOMEM;
 	}
 
