@@ -230,14 +230,18 @@ SSL_SESSION *ssl_scache_dbm_retrieve(server_rec *s, UCHAR *id, int idlen)
     ssl_mutex_off(s);
 
     /* immediately return if not found */
-    if (dbmval.dptr == NULL || dbmval.dsize <= sizeof(time_t))
+    if (dbmval.dptr == NULL || dbmval.dsize <= sizeof(time_t)) {
+	ssl_dbm_close(dbm);
         return NULL;
+    }
 
     /* parse resulting data */
     nData = dbmval.dsize-sizeof(time_t);
     ucpData = (UCHAR *)malloc(nData);
-    if (ucpData == NULL) 
+    if (ucpData == NULL) {
+	ssl_dbm_close(dbm);
         return NULL;
+    }
     memcpy(ucpData, (char *)dbmval.dptr+sizeof(time_t), nData);
     memcpy(&expiry, dbmval.dptr, sizeof(time_t));
 
