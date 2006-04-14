@@ -1,4 +1,4 @@
-/*	$OpenBSD: macfb.c,v 1.15 2006/03/13 22:35:17 miod Exp $	*/
+/*	$OpenBSD: macfb.c,v 1.16 2006/04/14 09:36:49 martin Exp $	*/
 /* $NetBSD: macfb.c,v 1.11 2005/01/15 16:00:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -235,7 +235,7 @@ macfb_color_setup(struct macfb_devconfig *dc)
 		/*
 		 * Tweak colormap
 		 *
-		 * Due to the way rasops cursor work, we need to provide 
+		 * Due to the way rasops cursor work, we need to provide
 		 * inverted copies of the 8 basic colors as the other 8
 		 * in 4bpp mode.
 		 */

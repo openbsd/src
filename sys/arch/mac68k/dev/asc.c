@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.23 2006/03/15 20:03:06 miod Exp $	*/
+/*	$OpenBSD: asc.c,v 1.24 2006/04/14 09:36:49 martin Exp $	*/
 /*	$NetBSD: asc.c,v 1.20 1997/02/24 05:47:33 scottr Exp $	*/
 
 /*
@@ -294,7 +294,7 @@ ascmmap(dev, off, prot)
 	return (-1);
 }
 
-static int 
+static int
 asc_ring_bell(arg, freq, length, volume)
 	void *arg;
 	int freq, length, volume;
@@ -345,7 +345,7 @@ asc_ring_bell(arg, freq, length, volume)
 	return (0);
 }
 
-static void 
+static void
 asc_stop_bell(arg)
 	void *arg;
 {

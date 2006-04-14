@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.26 2006/02/06 17:19:31 jmc Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.27 2006/04/14 09:36:49 martin Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ extern __inline__ void finish_req(SC_REQ *reqp)
 	/*
 	 * If we bounced, free the bounce buffer
 	 */
-	if (reqp->dr_flag & DRIVER_BOUNCING) 
+	if (reqp->dr_flag & DRIVER_BOUNCING)
 		free_bounceb(reqp->bounceb);
 #endif /* REAL_DMA */
 #ifdef DBG_REQ
@@ -462,7 +462,7 @@ struct ncr_softc *sc;
 				/*
 				 * Found one, remove it from the issue queue
 				 */
-				if (prev == NULL) 
+				if (prev == NULL)
 					issue_q = req->next;
 				else prev->next = req->next;
 				req->next = NULL;
@@ -483,7 +483,7 @@ struct ncr_softc *sc;
 		if ((GET_5380_REG(NCR5380_IDSTAT) & (SC_S_SEL|SC_S_IO))
 						== (SC_S_SEL|SC_S_IO)){
 			if (req != NULL) {
-				req->next = issue_q; 
+				req->next = issue_q;
 				issue_q = req;
 			}
 			splx(sps);
@@ -518,7 +518,7 @@ struct ncr_softc *sc;
 		 */
 		if (scsi_select(req, 0)) {
 			sps = splbio();
-			req->next = issue_q; 
+			req->next = issue_q;
 			issue_q = req;
 			splx(sps);
 #ifdef DBG_REQ
@@ -717,7 +717,7 @@ int	code;
 	 */
 	SET_5380_REG(NCR5380_DATA, SC_HOST_ID);
 	SET_5380_REG(NCR5380_MODE, SC_ARBIT);
- 
+
 	splx(sps);
 
 	cnt = 10;
@@ -867,7 +867,7 @@ int	code;
 	 * Since we followed the SCSI-spec and raised ATN while SEL was true
 	 * but before BSY was false during the selection, a 'MESSAGE OUT'
 	 * phase should follow.  Unfortunately, this does not happen on
-	 * all targets (Asante ethernet devices, for example), so we must 
+	 * all targets (Asante ethernet devices, for example), so we must
 	 * check the actual mode if the message transfer fails--if the
 	 * new phase is PH_CMD and has never been successfully selected
 	 * w/ATN in the past, then we assume that it is an old device
@@ -1195,7 +1195,7 @@ u_int	msg;
 			nack_message(reqp, MSG_MESSAGE_REJECT);
 			PID("hmessage9");
 			return (-1);
-		default: 
+		default:
 			if ((msg & 0x80) && !(msg & 0x18)) {	/* IDENTIFY */
 				PID("hmessage10");
 				ack_message();

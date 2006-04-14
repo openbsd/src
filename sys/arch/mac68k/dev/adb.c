@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.22 2006/02/12 17:03:25 miod Exp $	*/
+/*	$OpenBSD: adb.c,v 1.23 2006/04/14 09:36:49 martin Exp $	*/
 /*	$NetBSD: adb.c,v 1.47 2005/06/16 22:43:36 jmc Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.51 2005/06/16 22:43:36 jmc Exp $	*/
 
@@ -67,25 +67,25 @@
  * to clean it up as much as I would like.
  * But it works, so I'm happy. :-) jpw
  */
- 
+
 /*
  * TO DO:
  *  - We could reduce the time spent in the adb_intr_* routines
- *    by having them save the incoming and outgoing data directly 
+ *    by having them save the incoming and outgoing data directly
  *    in the adbInbound and adbOutbound queues, as it would reduce
  *    the number of times we need to copy the data around. It
  *    would also make the code more readable and easier to follow.
- *  - (Related to above) Use the header part of adbCommand to 
+ *  - (Related to above) Use the header part of adbCommand to
  *    reduce the number of copies we have to do of the data.
  *  - (Related to above) Actually implement the adbOutbound queue.
  *    This is fairly easy once you switch all the intr routines
  *    over to using adbCommand structs directly.
  *  - There is a bug in the state machine of adb_intr_cuda
  *    code that causes hangs, especially on 030 machines, probably
- *    because of some timing issues. Because I have been unable to 
- *    determine the exact cause of this bug, I used the timeout function 
- *    to check for and recover from this condition. If anyone finds 
- *    the actual cause of this bug, the calls to timeout and the 
+ *    because of some timing issues. Because I have been unable to
+ *    determine the exact cause of this bug, I used the timeout function
+ *    to check for and recover from this condition. If anyone finds
+ *    the actual cause of this bug, the calls to timeout and the
  *    adb_cuda_tickle routine can be removed.
  */
 
@@ -213,7 +213,7 @@ struct adbCmdHoldEntry {
 };
 
 /*
- * Eventually used for two separate queues, the queue between 
+ * Eventually used for two separate queues, the queue between
  * the upper and lower halves, and the outgoing packet queue.
  * TO DO: adbCommand can replace all of adbCmdHoldEntry eventually
  */
@@ -980,7 +980,7 @@ switch_start:
 			packet.ack_only = 1;
 			adb_pass_up(&packet);
 
-			/* reset "waiting" vars, just in case */ 
+			/* reset "waiting" vars, just in case */
 			adbBuffer = (long)0;
 			adbCompRout = (long)0;
 			adbCompData = (long)0;
@@ -1514,7 +1514,7 @@ send_adb_IIsi(u_char *in, u_char *buffer, void *compRout, void *data, int
 	 return 0;
 }				/* send_adb_IIsi */
 
-/* 
+/*
  * adb_pass_up is called by the interrupt-time routines.
  * It takes the raw packet data that was received from the
  * device and puts it into the queue that the upper half
@@ -1522,7 +1522,7 @@ send_adb_IIsi(u_char *in, u_char *buffer, void *compRout, void *data, int
  * will eventually call the upper half routine (adb_soft_intr).
  *
  * If in->unsol is 0, then this is either the notification
- * that the packet was sent (on a LISTEN, for example), or the 
+ * that the packet was sent (on a LISTEN, for example), or the
  * response from the device (on a TALK). The completion routine
  * is called only if the user specified one.
  *
@@ -1628,14 +1628,14 @@ adb_pass_up(struct adbCommand *in)
 	}
 
 #ifdef ADB_DEBUG
-	if (adb_debug && in->data[1] == 2) 
+	if (adb_debug && in->data[1] == 2)
 		printf_intr("adb: caught error\n");
 #endif
 
 	/* copy the packet data over */
 	/*
 	 * TO DO: If the *_intr routines fed their incoming data
-	 * directly into an adbCommand struct, which is passed to 
+	 * directly into an adbCommand struct, which is passed to
 	 * this routine, then we could eliminate this copy.
 	 */
 	memcpy(adbInbound[adbInTail].data + 1, in->data + start + 1, len);
@@ -2030,7 +2030,7 @@ adb_reinit(struct device *self)
 	 * responds at that address. Then move the last device that was moved
 	 * back to the original address. Do this for the remaining addresses
 	 * that we determined were in use.
-	 * 
+	 *
 	 * When finished, do this entire process over again with the updated
 	 * list of in use addresses. Do this until no new devices have been
 	 * found in 20 passes though the in use address list. (This probably
@@ -2267,7 +2267,7 @@ adb_cmd_result(u_char *in)
 	}
 }
 
-void 
+void
 adb_setup_hw_type(void)
 {
 	/*
@@ -2389,7 +2389,7 @@ adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
 	int result;
 	volatile int flag = 0;
 
-	result = adb_op(buffer, (void *)adb_op_comprout, (Ptr)&flag, 
+	result = adb_op(buffer, (void *)adb_op_comprout, (Ptr)&flag,
 	    command);	/* send command */
 	if (result == 0) {		/* send ok? */
 		/*
@@ -2426,13 +2426,13 @@ adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
  * This function is used by the adb_op_sync routine so it knows when the
  * function is done.
  */
-void 
+void
 adb_op_comprout(caddr_t buffer, caddr_t data_area, int adb_command)
 {
 	*(u_short *)data_area = 0x01;		/* update flag value */
 }
 	
-int 
+int
 count_adbs(void)
 {
 	int i;
@@ -2447,7 +2447,7 @@ count_adbs(void)
 	return found;
 }
 
-int 
+int
 get_ind_adb_info(ADBDataBlock *info, int index)
 {
 	if ((index < 1) || (index > 15))	/* check range 1-15 */
@@ -2469,7 +2469,7 @@ get_ind_adb_info(ADBDataBlock *info, int index)
 	return (ADBDevTable[index].currentAddr);
 }
 
-int 
+int
 get_adb_info(ADBDataBlock *info, int adbAddr)
 {
 	int i;
@@ -2489,7 +2489,7 @@ get_adb_info(ADBDataBlock *info, int adbAddr)
 	return (-1);		/* not found */
 }
 
-int 
+int
 set_adb_info(ADBSetInfoBlock *info, int adbAddr)
 {
 	int i;
@@ -2511,7 +2511,7 @@ set_adb_info(ADBSetInfoBlock *info, int adbAddr)
 
 /* caller should really use machine-independant version: getPramTime */
 /* this version does pseudo-adb access only */
-int 
+int
 adb_read_date_time(unsigned long *time)
 {
 	u_char output[ADB_MAX_MSG_LENGTH];
@@ -2564,7 +2564,7 @@ adb_read_date_time(unsigned long *time)
 
 /* caller should really use machine-independant version: setPramTime */
 /* this version does pseudo-adb access only */
-int 
+int
 adb_set_date_time(unsigned long time)
 {
 	u_char output[ADB_MAX_MSG_LENGTH];
@@ -2622,7 +2622,7 @@ adb_set_date_time(unsigned long time)
 }
 
 
-int 
+int
 adb_poweroff(void)
 {
 	u_char output[ADB_MAX_MSG_LENGTH];
@@ -2671,7 +2671,7 @@ adb_poweroff(void)
 	}
 }
 
-int 
+int
 adb_prog_switch_enable(void)
 {
 	u_char output[ADB_MAX_MSG_LENGTH];
@@ -2707,7 +2707,7 @@ adb_prog_switch_enable(void)
 }
 
 #if 0
-int 
+int
 adb_prog_switch_disable(void)
 {
 	u_char output[ADB_MAX_MSG_LENGTH];

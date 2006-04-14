@@ -47,7 +47,7 @@
 
 #define NUBUS_CATEGORY_BOARD	0x0001
 #define  NUBUS_TYPE_BOARD	0x0000	/* We want these for minimal board */
-#define   NUBUS_DRSW_BOARD	0x0000	/* ROMs that come with nothing but */  
+#define   NUBUS_DRSW_BOARD	0x0000	/* ROMs that come with nothing but */
 #define    NUBUS_DRHW_BOARD	0x0000	/* a board resource (old NI_GPIB) */
 
 #define NUBUS_CATEGORY_DISPLAY	0x0003
@@ -243,8 +243,8 @@ typedef struct _nubus_rsrc {
 } nubus_rsrc;
 
 /*
- * On a NuBus master, an sMemory resource (this is a second-level 
- * resource list) holds a list of address ranges for onboard 
+ * On a NuBus master, an sMemory resource (this is a second-level
+ * resource list) holds a list of address ranges for onboard
  * RAM, ROM and IO resources.
  */
 typedef struct _nubus_smem_range {	
@@ -254,11 +254,11 @@ typedef struct _nubus_smem_range {
 
 /*
  * XXX This is mapped on the range list we get back out of the sMemory
- * resources. I would have liked the range[] array to be of undefined 
+ * resources. I would have liked the range[] array to be of undefined
  * size but the compiler does not let me.
- * Maybe it's just too much grief, and we should work with an array 
+ * Maybe it's just too much grief, and we should work with an array
  * of u_int32_t.
- */ 
+ */
 typedef struct _nubus_smem_rangelist {	
 	u_int32_t		length;
 	nubus_smem_range	range[1];

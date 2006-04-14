@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.c,v 1.31 2005/05/01 17:04:52 martin Exp $	*/
+/*	$OpenBSD: nubus.c,v 1.32 2006/04/14 09:36:49 martin Exp $	*/
 /*	$NetBSD: nubus.c,v 1.53 2002/04/13 17:49:41 briggs Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ notfound:
 			bus_space_unmap(bst, bsh, NBMEMSIZE);
 			continue;
 		}
-  
+
 		rsrcid = 0x80;
 		lanes = fmtblock.bytelanes;
 

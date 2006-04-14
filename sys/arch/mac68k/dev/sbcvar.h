@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbcvar.h,v 1.6 2005/07/23 23:28:58 martin Exp $	*/
+/*	$OpenBSD: sbcvar.h,v 1.7 2006/04/14 09:36:49 martin Exp $	*/
 /*	$NetBSD: sbcvar.h,v 1.1 1997/03/01 20:19:00 scottr Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ struct sbc_softc {
  *
  * The options code is based on the sparc 'si' driver's version of
  * the same.
- */     
+ */
 #define	SBC_PDMA	0x01	/* Use PDMA for polled transfers */
 #define	SBC_INTR	0x02	/* Allow SCSI IRQ/DRQ interrupts */
 #define	SBC_RESELECT	0x04	/* Allow disconnect/reselect */

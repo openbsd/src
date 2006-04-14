@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn.c,v 1.42 2006/03/25 22:41:41 djm Exp $        */
+/*    $OpenBSD: if_sn.c,v 1.43 2006/04/14 09:36:49 martin Exp $        */
 /*    $NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $        */
 
 /*
@@ -405,7 +405,7 @@ snreset(struct sn_softc *sc)
 	sninit(sc);
 }
 
-static int 
+static int
 sninit(struct sn_softc *sc)
 {
 	u_long	s_rcr;
@@ -475,7 +475,7 @@ sninit(struct sn_softc *sc)
  * Called on final close of device, or if sninit() fails
  * part way through.
  */
-static int 
+static int
 snstop(struct sn_softc *sc)
 {
 	struct mtd *mtd;
@@ -529,7 +529,7 @@ snwatchdog(struct ifnet *ifp)
 /*
  * stuff packet into sonic (at splnet)
  */
-static __inline__ int 
+static __inline__ int
 sonicput(struct sn_softc *sc, struct mbuf *m0, int mtd_next)
 {
 	struct mtd *mtdp;
@@ -612,7 +612,7 @@ sonicput(struct sn_softc *sc, struct mbuf *m0, int mtd_next)
 /*
  * CAM support
  */
-static void 
+static void
 caminitialise(struct sn_softc *sc)
 {
 	void	*p_cda = sc->p_cda;
@@ -630,7 +630,7 @@ caminitialise(struct sn_softc *sc)
 	SWO(bitmode, p_cda, CDA_ENABLE, 0);
 }
 
-static void 
+static void
 camentry(struct sn_softc *sc, int entry, u_char *ea)
 {
 	void	*p_cda = sc->p_cda;
@@ -641,11 +641,11 @@ camentry(struct sn_softc *sc, int entry, u_char *ea)
 	SWO(bitmode, p_cda, camoffset + CDA_CAMAP2, (ea[5] << 8) | ea[4]);
 	SWO(bitmode, p_cda, camoffset + CDA_CAMAP1, (ea[3] << 8) | ea[2]);
 	SWO(bitmode, p_cda, camoffset + CDA_CAMAP0, (ea[1] << 8) | ea[0]);
-	SWO(bitmode, p_cda, CDA_ENABLE, 
+	SWO(bitmode, p_cda, CDA_ENABLE,
 	    (SRO(bitmode, p_cda, CDA_ENABLE) | (1 << entry)));
 }
 
-static void 
+static void
 camprogram(struct sn_softc *sc)
 {
 	struct ether_multistep step;
@@ -717,7 +717,7 @@ camprogram(struct sn_softc *sc)
 }
 
 #ifdef SNDEBUG
-static void 
+static void
 camdump(struct sn_softc *sc)
 {
 	int	i;
@@ -742,7 +742,7 @@ camdump(struct sn_softc *sc)
 }
 #endif
 
-static void 
+static void
 initialise_tda(struct sn_softc *sc)
 {
 	struct mtd *mtd;
@@ -890,7 +890,7 @@ snintr(void *arg)
 /*
  * Transmit interrupt routine
  */
-static void 
+static void
 sonictxint(struct sn_softc *sc)
 {
 	struct mtd	*mtd;
@@ -962,7 +962,7 @@ sonictxint(struct sn_softc *sc)
 /*
  * Receive interrupt routine
  */
-static void 
+static void
 sonicrxint(struct sn_softc *sc)
 {
 	caddr_t	rda;
@@ -1051,7 +1051,7 @@ sonicrxint(struct sn_softc *sc)
  * sonic_read -- pull packet off interface and forward to
  * appropriate protocol handler
  */
-static __inline__ int 
+static __inline__ int
 sonic_read(struct sn_softc *sc, caddr_t pkt, int len)
 {
 	struct ifnet *ifp = &sc->sc_if;
@@ -1084,8 +1084,8 @@ sonic_read(struct sn_softc *sc, caddr_t pkt, int len)
 		return (0);
 #if NBPFILTER > 0
 	/* Pass this up to any BPF listeners. */
-	if (ifp->if_bpf) 
-		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN); 
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 	ether_input_mbuf(ifp, m);
 	return (1);

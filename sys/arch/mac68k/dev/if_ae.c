@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae.c,v 1.29 2006/03/25 22:41:41 djm Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.30 2006/04/14 09:36:49 martin Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.62 1997/04/24 16:52:05 scottr Exp $	*/
 
 /*
@@ -62,11 +62,11 @@ static inline int ae_ring_copy( struct ae_softc *, int, caddr_t, int);
 #define NIC_PUT(sc, reg, val)	(bus_space_write_1((sc)->sc_regt,	\
 				    (sc)->sc_regh,			\
 				    ((sc)->sc_reg_map[reg]), (val)))
-  
+
 struct cfdriver ae_cd = {
 	NULL, "ae", DV_IFNET
 };
-  
+
 int
 ae_size_card_memory(bst, bsh, ofs)
 	bus_space_tag_t bst;

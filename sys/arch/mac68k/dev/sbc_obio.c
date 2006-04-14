@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbc_obio.c,v 1.12 2005/07/23 23:28:58 martin Exp $	*/
+/*	$OpenBSD: sbc_obio.c,v 1.13 2006/04/14 09:36:49 martin Exp $	*/
 /*	$NetBSD: sbc_obio.c,v 1.1 1997/03/01 20:18:59 scottr Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ sbc_obio_attach(parent, self, args)
 	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *) sc;
 	extern vaddr_t SCSIBase;
 
-	/* Pull in the options flags. */ 
+	/* Pull in the options flags. */
 	sc->sc_options = ((ncr_sc->sc_dev.dv_cfdata->cf_flags | sbc_options)
 	    & SBC_OPTIONS_MASK);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.16 2004/11/25 18:32:10 miod Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.17 2006/04/14 09:36:49 martin Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.14 1996/12/17 20:42:43 gwr Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ static void	zsoverrun(struct zstty_softc *, long *, char *);
 /*
  * zstty_match: how is this zs channel configured?
  */
-int 
+int
 zstty_match(parent, match, aux)
 	struct device *parent;
 	void   *match, *aux;
@@ -195,7 +195,7 @@ zstty_match(parent, match, aux)
 	return 0;
 }
 
-void 
+void
 zstty_attach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
@@ -1144,7 +1144,7 @@ zstty_stint(cs)
 	cs->cs_rr0_delta |= delta;
 	cs->cs_rr0 = rr0;
 	
-	/* 
+	/*
 	 * Need to handle CTS output flow control here.
 	 * Output remains stopped as long as either the
 	 * zst_tx_stopped or TS_TTSTOP flag is set.
