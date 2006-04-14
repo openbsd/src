@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.145 2006/04/13 16:20:28 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.146 2006/04/14 00:22:46 pat Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -1026,7 +1026,7 @@ checkin_parsekeyword(char *keystring,  RCSNUM **rev, time_t *date,
 				fatal("could not parse rcsnum");
 		}
 		*author = xstrdup(tokens[5]);
-		*author = xstrdup(tokens[6]);
+		*state = xstrdup(tokens[6]);
 		len = strlen(tokens[3]) + strlen(tokens[4]) + 2;
 		datestring = xmalloc(len);
 		strlcpy(datestring, tokens[3], len);
