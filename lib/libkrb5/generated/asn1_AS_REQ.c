@@ -1,4 +1,4 @@
-/* Generated from /usr/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
+/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
 /* Do not edit */
 
 #include <stdio.h>
@@ -23,7 +23,7 @@ int i, e;
 i = 0;
 e = encode_KDC_REQ(p, len, data, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, APPL, CONS, 10, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_APPL, CONS, 10, &l);
 BACK;
 *size = ret;
 return 0;
@@ -40,7 +40,7 @@ int e;
 
 memset(data, 0, sizeof(*data));
 reallen = 0;
-e = der_match_tag_and_length (p, len, APPL, CONS, 10, &reallen, &l);
+e = der_match_tag_and_length (p, len, ASN1_C_APPL, CONS, 10, &reallen, &l);
 FORW;
 {
 int dce_fix;

@@ -1,4 +1,4 @@
-/* Generated from /usr/src/lib/libkrb5/../../kerberosV/src/lib/hdb/hdb.asn1 */
+/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/hdb/hdb.asn1 */
 /* Do not edit */
 
 #include <stdio.h>
@@ -50,7 +50,7 @@ len -= 2;
 ret += 2;
 }
 
-e = der_put_length_and_tag (p, len, ret, UNIV, PRIM,UT_BitString, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_UNIV, PRIM,UT_BitString, &l);
 BACK;
 *size = ret;
 return 0;
@@ -67,7 +67,7 @@ int e;
 
 memset(data, 0, sizeof(*data));
 reallen = 0;
-e = der_match_tag_and_length (p, len, UNIV, PRIM, UT_BitString,&reallen, &l);
+e = der_match_tag_and_length (p, len, ASN1_C_UNIV, PRIM, UT_BitString,&reallen, &l);
 FORW;
 if(len < reallen)
 return ASN1_OVERRUN;
@@ -159,7 +159,7 @@ HDBFlags int2HDBFlags(unsigned n)
 	return flags;
 }
 
-struct units HDBFlags_units[] = {
+static struct units HDBFlags_units[] = {
 	{"immutable",	1U << 13},
 	{"user_to_user",	1U << 12},
 	{"ok_as_delegate",	1U << 11},
@@ -176,4 +176,8 @@ struct units HDBFlags_units[] = {
 	{"initial",	1U << 0},
 	{NULL,	0}
 };
+
+const struct units * asn1_HDBFlags_units(void){
+return HDBFlags_units;
+}
 

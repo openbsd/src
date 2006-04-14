@@ -1,4 +1,4 @@
-/* Generated from /usr/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
+/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
 /* Do not edit */
 
 #include <stdio.h>
@@ -26,7 +26,7 @@ int oldret = ret;
 ret = 0;
 e = encode_EncryptedData(p, len, &(data)->enc_part, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 3, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 3, &l);
 BACK;
 ret += oldret;
 }
@@ -40,9 +40,9 @@ e = encode_Ticket(p, len, &(&(data)->tickets)->val[i], &l);
 BACK;
 ret += oldret;
 }
-e = der_put_length_and_tag (p, len, ret, UNIV, CONS, UT_Sequence, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_UNIV, CONS, UT_Sequence, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 2, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 2, &l);
 BACK;
 ret += oldret;
 }
@@ -51,7 +51,7 @@ int oldret = ret;
 ret = 0;
 e = encode_MESSAGE_TYPE(p, len, &(data)->msg_type, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 1, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 1, &l);
 BACK;
 ret += oldret;
 }
@@ -60,13 +60,13 @@ int oldret = ret;
 ret = 0;
 e = encode_integer(p, len, &(data)->pvno, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 0, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 0, &l);
 BACK;
 ret += oldret;
 }
-e = der_put_length_and_tag (p, len, ret, UNIV, CONS, UT_Sequence, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_UNIV, CONS, UT_Sequence, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, APPL, CONS, 22, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_APPL, CONS, 22, &l);
 BACK;
 *size = ret;
 return 0;
@@ -83,13 +83,13 @@ int e;
 
 memset(data, 0, sizeof(*data));
 reallen = 0;
-e = der_match_tag_and_length (p, len, APPL, CONS, 22, &reallen, &l);
+e = der_match_tag_and_length (p, len, ASN1_C_APPL, CONS, 22, &reallen, &l);
 FORW;
 {
 int dce_fix;
 if((dce_fix = fix_dce(reallen, &len)) < 0)
 return ASN1_BAD_FORMAT;
-e = der_match_tag_and_length (p, len, UNIV, CONS, UT_Sequence,&reallen, &l);
+e = der_match_tag_and_length (p, len, ASN1_C_UNIV, CONS, UT_Sequence,&reallen, &l);
 FORW;
 {
 int dce_fix;
@@ -98,7 +98,7 @@ return ASN1_BAD_FORMAT;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 0, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 0, &l);
 if (e)
 return e;
 else {
@@ -124,7 +124,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 1, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 1, &l);
 if (e)
 return e;
 else {
@@ -150,7 +150,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 2, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 2, &l);
 if (e)
 return e;
 else {
@@ -163,7 +163,7 @@ FORW;
 int dce_fix;
 oldlen = len;
 if((dce_fix = fix_dce(newlen, &len)) < 0)return ASN1_BAD_FORMAT;
-e = der_match_tag_and_length (p, len, UNIV, CONS, UT_Sequence,&reallen, &l);
+e = der_match_tag_and_length (p, len, ASN1_C_UNIV, CONS, UT_Sequence,&reallen, &l);
 FORW;
 if(len < reallen)
 return ASN1_OVERRUN;
@@ -194,7 +194,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 3, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 3, &l);
 if (e)
 return e;
 else {
@@ -243,6 +243,7 @@ free_Ticket(&(&(data)->tickets)->val[(&(data)->tickets)->len-1]);
 (&(data)->tickets)->len--;
 }
 free((&(data)->tickets)->val);
+(&(data)->tickets)->val = NULL;
 free_EncryptedData(&(data)->enc_part);
 }
 
@@ -270,7 +271,10 @@ int oldret = ret;
 int i;
 ret = 0;
 for(i = (&(data)->tickets)->len - 1; i >= 0; --i){
+int oldret = ret;
+ret = 0;
 ret += length_Ticket(&(&(data)->tickets)->val[i]);
+ret += oldret;
 }
 ret += 1 + length_len(ret) + oldret;
 }

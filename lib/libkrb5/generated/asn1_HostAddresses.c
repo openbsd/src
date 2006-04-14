@@ -1,4 +1,4 @@
-/* Generated from /usr/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
+/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
 /* Do not edit */
 
 #include <stdio.h>
@@ -28,7 +28,7 @@ e = encode_HostAddress(p, len, &(data)->val[i], &l);
 BACK;
 ret += oldret;
 }
-e = der_put_length_and_tag (p, len, ret, UNIV, CONS, UT_Sequence, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_UNIV, CONS, UT_Sequence, &l);
 BACK;
 *size = ret;
 return 0;
@@ -45,7 +45,7 @@ int e;
 
 memset(data, 0, sizeof(*data));
 reallen = 0;
-e = der_match_tag_and_length (p, len, UNIV, CONS, UT_Sequence,&reallen, &l);
+e = der_match_tag_and_length (p, len, ASN1_C_UNIV, CONS, UT_Sequence,&reallen, &l);
 FORW;
 if(len < reallen)
 return ASN1_OVERRUN;
@@ -80,6 +80,7 @@ free_HostAddress(&(data)->val[(data)->len-1]);
 (data)->len--;
 }
 free((data)->val);
+(data)->val = NULL;
 }
 
 size_t
@@ -91,7 +92,10 @@ int oldret = ret;
 int i;
 ret = 0;
 for(i = (data)->len - 1; i >= 0; --i){
+int oldret = ret;
+ret = 0;
 ret += length_HostAddress(&(data)->val[i]);
+ret += oldret;
 }
 ret += 1 + length_len(ret) + oldret;
 }

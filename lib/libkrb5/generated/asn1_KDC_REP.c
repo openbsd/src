@@ -1,4 +1,4 @@
-/* Generated from /usr/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
+/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
 /* Do not edit */
 
 #include <stdio.h>
@@ -26,7 +26,7 @@ int oldret = ret;
 ret = 0;
 e = encode_EncryptedData(p, len, &(data)->enc_part, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 6, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 6, &l);
 BACK;
 ret += oldret;
 }
@@ -35,7 +35,7 @@ int oldret = ret;
 ret = 0;
 e = encode_Ticket(p, len, &(data)->ticket, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 5, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 5, &l);
 BACK;
 ret += oldret;
 }
@@ -44,7 +44,7 @@ int oldret = ret;
 ret = 0;
 e = encode_PrincipalName(p, len, &(data)->cname, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 4, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 4, &l);
 BACK;
 ret += oldret;
 }
@@ -53,7 +53,7 @@ int oldret = ret;
 ret = 0;
 e = encode_Realm(p, len, &(data)->crealm, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 3, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 3, &l);
 BACK;
 ret += oldret;
 }
@@ -63,7 +63,7 @@ int oldret = ret;
 ret = 0;
 e = encode_METHOD_DATA(p, len, (data)->padata, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 2, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 2, &l);
 BACK;
 ret += oldret;
 }
@@ -72,7 +72,7 @@ int oldret = ret;
 ret = 0;
 e = encode_MESSAGE_TYPE(p, len, &(data)->msg_type, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 1, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 1, &l);
 BACK;
 ret += oldret;
 }
@@ -81,11 +81,11 @@ int oldret = ret;
 ret = 0;
 e = encode_integer(p, len, &(data)->pvno, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 0, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 0, &l);
 BACK;
 ret += oldret;
 }
-e = der_put_length_and_tag (p, len, ret, UNIV, CONS, UT_Sequence, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_UNIV, CONS, UT_Sequence, &l);
 BACK;
 *size = ret;
 return 0;
@@ -102,7 +102,7 @@ int e;
 
 memset(data, 0, sizeof(*data));
 reallen = 0;
-e = der_match_tag_and_length (p, len, UNIV, CONS, UT_Sequence,&reallen, &l);
+e = der_match_tag_and_length (p, len, ASN1_C_UNIV, CONS, UT_Sequence,&reallen, &l);
 FORW;
 {
 int dce_fix;
@@ -111,7 +111,7 @@ return ASN1_BAD_FORMAT;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 0, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 0, &l);
 if (e)
 return e;
 else {
@@ -137,7 +137,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 1, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 1, &l);
 if (e)
 return e;
 else {
@@ -163,7 +163,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 2, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 2, &l);
 if (e)
 (data)->padata = NULL;
 else {
@@ -191,7 +191,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 3, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 3, &l);
 if (e)
 return e;
 else {
@@ -217,7 +217,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 4, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 4, &l);
 if (e)
 return e;
 else {
@@ -243,7 +243,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 5, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 5, &l);
 if (e)
 return e;
 else {
@@ -269,7 +269,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 6, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 6, &l);
 if (e)
 return e;
 else {
@@ -311,6 +311,7 @@ free_MESSAGE_TYPE(&(data)->msg_type);
 if((data)->padata) {
 free_METHOD_DATA((data)->padata);
 free((data)->padata);
+(data)->padata = NULL;
 }
 free_Realm(&(data)->crealm);
 free_PrincipalName(&(data)->cname);

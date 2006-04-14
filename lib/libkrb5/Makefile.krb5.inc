@@ -1,10 +1,16 @@
-# $OpenBSD: Makefile.krb5.inc,v 1.13 2005/05/21 20:26:16 biorn Exp $
+# $OpenBSD: Makefile.krb5.inc,v 1.14 2006/04/14 08:24:41 biorn Exp $
 
 DIR_KRB5INC=	${.CURDIR}/../../kerberosV/include
 DIR_KRB5LIB=	${KRB5SRC}/lib/krb5
 HDR_KRB5INC=	krb5-types.h
 HDR_KRB5LIB=	krb5.h krb5-protos.h krb5-private.h
 HDR_GEN+=	krb5_err.h heim_err.h k524_err.h
+
+MAN+=	krb524_convert_creds_kdc.3
+MLINKS+=krb524_convert_creds_kdc.3 krb524_convert_creds_kdc_ccache.3
+
+MAN+=	krb5_acl_match_file.3
+MLINKS+=krb5_acl_match_file.3 krb5_acl_match_string.3
 
 MAN+=	krb5.conf.5
 
@@ -14,6 +20,23 @@ MAN+=	krb5.3
 
 MAN+=	krb5_init_context.3
 MLINKS+=krb5_init_context.3 krb5_free_context.3
+MLINKS+=krb5_init_context.3 krb5_init_ets.3
+MLINKS+=krb5_init_context.3 krb5_add_et_list.3
+MLINKS+=krb5_init_context.3 krb5_add_extra_addresses.3
+MLINKS+=krb5_init_context.3 krb5_add_ignore_addresses.3
+MLINKS+=krb5_init_context.3 krb5_get_extra_addresses.3
+MLINKS+=krb5_init_context.3 krb5_get_ignore_addresses.3
+MLINKS+=krb5_init_context.3 krb5_set_extra_addresses.3
+MLINKS+=krb5_init_context.3 krb5_set_ignore_addresses.3
+MLINKS+=krb5_init_context.3 krb5_set_fcache_version.3
+MLINKS+=krb5_init_context.3 krb5_get_fcache_version.3
+MLINKS+=krb5_init_context.3 krb5_set_config_files.3
+MLINKS+=krb5_init_context.3 krb5_prepend_config_files.3
+MLINKS+=krb5_init_context.3 krb5_prepend_config_files_default.3
+MLINKS+=krb5_init_context.3 krb5_get_default_config_files.3
+MLINKS+=krb5_init_context.3 krb5_free_config_files.3
+MLINKS+=krb5_init_context.3 krb5_set_use_admin_kdc.3
+MLINKS+=krb5_init_context.3 krb5_get_use_admin_kdc.3
 
 MAN+=	krb5_warn.3
 MLINKS+=krb5_warn.3 krb5_warnx.3
@@ -241,6 +264,32 @@ MLINKS+=krb5_set_default_realm.3 krb5_get_host_realm.3
 MAN+=	krb5_timeofday.3
 MLINKS+=krb5_timeofday.3 krb5_us_timeofday.3
 
+MAN+=	krb5_get_init_creds.3
+MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_keytab.3
+MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt.3
+MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_alloc.3
+MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_free.3
+MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_init.3
+MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_address_list.3
+MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_anonymous.3
+MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_default_flags.3
+MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_etype_list.3
+MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_forwardable.3
+MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_pa_password.3
+MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_paq_request.3
+MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_preauth_list.3
+MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_proxiable.3
+MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_rewew_life.3
+MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_salt.3
+MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_opt_set_tkt_life.3
+MLINKS+=krb5_get_init_creds.3 krb5_get_init_creds_password.3
+MLINKS+=krb5_get_init_creds.3 krb5_prompt.3
+MLINKS+=krb5_get_init_creds.3 krb5_prompter_posix.3
+
+MAN+=	krb5_verify_init_creds.3
+MLINKS+=krb5_verify_init_creds.3 krb5_verify_init_creds_opt_init.3
+MLINKS+=krb5_verify_init_creds.3 krb5_verify_init_creds_opt_set_ap_req_nofail.3
+
 .PATH:	${DIR_KRB5LIB}
 
 gen_files_krb5= \
@@ -251,7 +300,9 @@ gen_files_krb5= \
 	k524_err.c \
 	krb5_err.c
 
-SRCS+=	add_et_list.c \
+SRCS+=	acache.c \
+	acl.c \
+	add_et_list.c \
 	addr_families.c \
 	aname_to_localname.c \
 	appdefault.c \
@@ -260,20 +311,22 @@ SRCS+=	add_et_list.c \
 	build_ap_req.c \
 	build_auth.c \
 	cache.c \
+	context.c \
 	changepw.c \
 	codec.c \
 	config_file.c \
-	convert_creds.c \
+	config_file_netinfo.c \
 	constants.c \
 	context.c \
+	convert_creds.c \
 	copy_host_realm.c \
 	crc.c \
 	creds.c \
 	crypto.c \
 	data.c \
-	expand_hostname.c \
 	eai_to_heim_errno.c \
 	error_string.c \
+	expand_hostname.c \
 	fcache.c \
 	free.c \
 	free_host_realm.c \
@@ -292,17 +345,20 @@ SRCS+=	add_et_list.c \
 	get_port.c \
 	init_creds.c \
 	init_creds_pw.c \
+	kcm.c \
 	keyblock.c \
 	krb5_keytab.c \
 	keytab_any.c \
 	keytab_file.c \
-	keytab_memory.c \
-	keytab_krb4.c \
 	keytab_keyfile.c \
+	keytab_krb4.c \
+	keytab_memory.c \
 	krbhst.c \
 	kuserok.c \
 	log.c \
 	mcache.c \
+	misc.c \
+	mit_glue.c \
 	mk_error.c \
 	mk_priv.c \
 	mk_rep.c \
@@ -313,6 +369,7 @@ SRCS+=	add_et_list.c \
 	krb5_net_write.c \
 	n-fold.c \
 	padata.c \
+	pkinit.c \
 	principal.c \
 	prog_setup.c \
 	prompter_posix.c \
@@ -336,6 +393,7 @@ SRCS+=	add_et_list.c \
 	ticket.c \
 	time.c \
 	transited.c \
+	v4_glue.c \
 	verify_init.c \
 	verify_user.c \
 	version.c \

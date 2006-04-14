@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2005/11/24 20:49:18 deraadt Exp $
+# $OpenBSD: Makefile,v 1.3 2006/04/14 08:24:42 biorn Exp $
 
 KRB5DIR	= ${.CURDIR}/../../kerberosV
 .include <${.CURDIR}/../libkrb5/Makefile.common.inc>
@@ -10,7 +10,8 @@ INCLUDE_FILES=	${KRB5SRC}/lib/kadm5/{admin.h,private.h} kadm5_err.h
 
 includes:	kadm5_err.h
 
-SRCS=	admin.h         \
+SRCS=	ad.c		\
+	admin.h         \
 	chpass_c.c      \
 	common_glue.c   \
 	client_glue.c	\
@@ -36,8 +37,7 @@ SRCS=	admin.h         \
 
 .PATH:	${KRB5SRC}/lib/kadm5
 
-CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/asn1 -I../asn1 -I../krb5 \
-	-I${KRB5SRC}/lib/hdb -I../hdb -I.
+CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/asn1 -I${KRB5SRC}/lib/hdb
 
 CLEANFILES+=kadm5_err.[ch]
 

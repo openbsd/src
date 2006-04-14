@@ -1,11 +1,11 @@
-/* Generated from /usr/src/lib/libkrb5/../../kerberosV/src/lib/hdb/hdb_err.et */
+/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/hdb/hdb_err.et */
 /* $KTH: hdb_err.et,v 1.5 2001/01/28 23:05:52 assar Exp $ */
 
 #include <stddef.h>
 #include <com_err.h>
 #include "hdb_err.h"
 
-static const char *text[] = {
+static const char *hdb_error_strings[] = {
 	/* 000 */ "Reserved hdb error (0)",
 	/* 001 */ "Database store error",
 	/* 002 */ "Database read error",
@@ -22,12 +22,14 @@ static const char *text[] = {
 	NULL
 };
 
+#define num_errors 13
+
 void initialize_hdb_error_table_r(struct et_list **list)
 {
-    initialize_error_table_r(list, text, hdb_num_errors, ERROR_TABLE_BASE_hdb);
+    initialize_error_table_r(list, hdb_error_strings, num_errors, ERROR_TABLE_BASE_hdb);
 }
 
 void initialize_hdb_error_table(void)
 {
-    init_error_table(text, ERROR_TABLE_BASE_hdb, hdb_num_errors);
+    init_error_table(hdb_error_strings, ERROR_TABLE_BASE_hdb, num_errors);
 }

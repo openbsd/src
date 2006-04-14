@@ -1,11 +1,11 @@
-/* Generated from /usr/src/lib/libkrb5/../../kerberosV/src/lib/krb5/heim_err.et */
-/* $KTH: heim_err.et,v 1.12 2001/06/21 03:51:36 assar Exp $ */
+/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/krb5/heim_err.et */
+/* $KTH: heim_err.et,v 1.13 2004/02/13 16:23:40 lha Exp $ */
 
 #include <stddef.h>
 #include <com_err.h>
 #include "heim_err.h"
 
-static const char *text[] = {
+static const char *heim_error_strings[] = {
 	/* 000 */ "Error parsing log destination",
 	/* 001 */ "Failed to convert v4 principal",
 	/* 002 */ "Salt type is not supported by enctype",
@@ -70,11 +70,11 @@ static const char *text[] = {
 	/* 061 */ "Reserved heim error (61)",
 	/* 062 */ "Reserved heim error (62)",
 	/* 063 */ "Reserved heim error (63)",
-	/* 064 */ "Reserved heim error (64)",
-	/* 065 */ "Reserved heim error (65)",
-	/* 066 */ "Reserved heim error (66)",
-	/* 067 */ "Reserved heim error (67)",
-	/* 068 */ "Reserved heim error (68)",
+	/* 064 */ "Certificate missing",
+	/* 065 */ "Private key missing",
+	/* 066 */ "No valid certificate authority",
+	/* 067 */ "Certificate invalid",
+	/* 068 */ "Private key invalid",
 	/* 069 */ "Reserved heim error (69)",
 	/* 070 */ "Reserved heim error (70)",
 	/* 071 */ "Reserved heim error (71)",
@@ -149,12 +149,14 @@ static const char *text[] = {
 	NULL
 };
 
+#define num_errors 140
+
 void initialize_heim_error_table_r(struct et_list **list)
 {
-    initialize_error_table_r(list, text, heim_num_errors, ERROR_TABLE_BASE_heim);
+    initialize_error_table_r(list, heim_error_strings, num_errors, ERROR_TABLE_BASE_heim);
 }
 
 void initialize_heim_error_table(void)
 {
-    init_error_table(text, ERROR_TABLE_BASE_heim, heim_num_errors);
+    init_error_table(heim_error_strings, ERROR_TABLE_BASE_heim, num_errors);
 }

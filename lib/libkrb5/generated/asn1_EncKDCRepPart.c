@@ -1,4 +1,4 @@
-/* Generated from /usr/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
+/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
 /* Do not edit */
 
 #include <stdio.h>
@@ -27,7 +27,7 @@ int oldret = ret;
 ret = 0;
 e = encode_HostAddresses(p, len, (data)->caddr, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 11, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 11, &l);
 BACK;
 ret += oldret;
 }
@@ -36,7 +36,7 @@ int oldret = ret;
 ret = 0;
 e = encode_PrincipalName(p, len, &(data)->sname, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 10, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 10, &l);
 BACK;
 ret += oldret;
 }
@@ -45,7 +45,7 @@ int oldret = ret;
 ret = 0;
 e = encode_Realm(p, len, &(data)->srealm, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 9, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 9, &l);
 BACK;
 ret += oldret;
 }
@@ -55,7 +55,7 @@ int oldret = ret;
 ret = 0;
 e = encode_KerberosTime(p, len, (data)->renew_till, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 8, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 8, &l);
 BACK;
 ret += oldret;
 }
@@ -64,7 +64,7 @@ int oldret = ret;
 ret = 0;
 e = encode_KerberosTime(p, len, &(data)->endtime, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 7, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 7, &l);
 BACK;
 ret += oldret;
 }
@@ -74,7 +74,7 @@ int oldret = ret;
 ret = 0;
 e = encode_KerberosTime(p, len, (data)->starttime, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 6, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 6, &l);
 BACK;
 ret += oldret;
 }
@@ -83,7 +83,7 @@ int oldret = ret;
 ret = 0;
 e = encode_KerberosTime(p, len, &(data)->authtime, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 5, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 5, &l);
 BACK;
 ret += oldret;
 }
@@ -92,7 +92,7 @@ int oldret = ret;
 ret = 0;
 e = encode_TicketFlags(p, len, &(data)->flags, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 4, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 4, &l);
 BACK;
 ret += oldret;
 }
@@ -102,7 +102,7 @@ int oldret = ret;
 ret = 0;
 e = encode_KerberosTime(p, len, (data)->key_expiration, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 3, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 3, &l);
 BACK;
 ret += oldret;
 }
@@ -111,7 +111,7 @@ int oldret = ret;
 ret = 0;
 e = encode_integer(p, len, &(data)->nonce, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 2, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 2, &l);
 BACK;
 ret += oldret;
 }
@@ -120,7 +120,7 @@ int oldret = ret;
 ret = 0;
 e = encode_LastReq(p, len, &(data)->last_req, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 1, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 1, &l);
 BACK;
 ret += oldret;
 }
@@ -129,11 +129,11 @@ int oldret = ret;
 ret = 0;
 e = encode_EncryptionKey(p, len, &(data)->key, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 0, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 0, &l);
 BACK;
 ret += oldret;
 }
-e = der_put_length_and_tag (p, len, ret, UNIV, CONS, UT_Sequence, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_UNIV, CONS, UT_Sequence, &l);
 BACK;
 *size = ret;
 return 0;
@@ -150,7 +150,7 @@ int e;
 
 memset(data, 0, sizeof(*data));
 reallen = 0;
-e = der_match_tag_and_length (p, len, UNIV, CONS, UT_Sequence,&reallen, &l);
+e = der_match_tag_and_length (p, len, ASN1_C_UNIV, CONS, UT_Sequence,&reallen, &l);
 FORW;
 {
 int dce_fix;
@@ -159,7 +159,7 @@ return ASN1_BAD_FORMAT;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 0, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 0, &l);
 if (e)
 return e;
 else {
@@ -185,7 +185,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 1, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 1, &l);
 if (e)
 return e;
 else {
@@ -211,7 +211,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 2, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 2, &l);
 if (e)
 return e;
 else {
@@ -237,7 +237,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 3, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 3, &l);
 if (e)
 (data)->key_expiration = NULL;
 else {
@@ -265,7 +265,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 4, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 4, &l);
 if (e)
 return e;
 else {
@@ -291,7 +291,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 5, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 5, &l);
 if (e)
 return e;
 else {
@@ -317,7 +317,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 6, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 6, &l);
 if (e)
 (data)->starttime = NULL;
 else {
@@ -345,7 +345,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 7, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 7, &l);
 if (e)
 return e;
 else {
@@ -371,7 +371,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 8, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 8, &l);
 if (e)
 (data)->renew_till = NULL;
 else {
@@ -399,7 +399,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 9, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 9, &l);
 if (e)
 return e;
 else {
@@ -425,7 +425,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 10, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 10, &l);
 if (e)
 return e;
 else {
@@ -451,7 +451,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 11, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 11, &l);
 if (e)
 (data)->caddr = NULL;
 else {
@@ -496,23 +496,27 @@ free_LastReq(&(data)->last_req);
 if((data)->key_expiration) {
 free_KerberosTime((data)->key_expiration);
 free((data)->key_expiration);
+(data)->key_expiration = NULL;
 }
 free_TicketFlags(&(data)->flags);
 free_KerberosTime(&(data)->authtime);
 if((data)->starttime) {
 free_KerberosTime((data)->starttime);
 free((data)->starttime);
+(data)->starttime = NULL;
 }
 free_KerberosTime(&(data)->endtime);
 if((data)->renew_till) {
 free_KerberosTime((data)->renew_till);
 free((data)->renew_till);
+(data)->renew_till = NULL;
 }
 free_Realm(&(data)->srealm);
 free_PrincipalName(&(data)->sname);
 if((data)->caddr) {
 free_HostAddresses((data)->caddr);
 free((data)->caddr);
+(data)->caddr = NULL;
 }
 }
 

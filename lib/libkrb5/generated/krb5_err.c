@@ -1,11 +1,11 @@
-/* Generated from /usr/src/lib/libkrb5/../../kerberosV/src/lib/krb5/krb5_err.et */
-/* $KTH: krb5_err.et,v 1.9 2000/04/06 00:41:37 assar Exp $ */
+/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/krb5/krb5_err.et */
+/* $KTH: krb5_err.et,v 1.12 2004/10/14 15:30:29 lha Exp $ */
 
 #include <stddef.h>
 #include <com_err.h>
 #include "krb5_err.h"
 
-static const char *text[] = {
+static const char *krb5_error_strings[] = {
 	/* 000 */ "No error",
 	/* 001 */ "Client's entry in database has expired",
 	/* 002 */ "Server's entry in database has expired",
@@ -71,23 +71,23 @@ static const char *text[] = {
 	/* 062 */ "Client not trusted",
 	/* 063 */ "KDC not trusted",
 	/* 064 */ "Invalid signature",
-	/* 065 */ "Key too weak",
+	/* 065 */ "Key size too small/key too weak",
 	/* 066 */ "Certificate mismatch",
 	/* 067 */ "User to user required",
-	/* 068 */ "Cannot verify certificate",
-	/* 069 */ "Invalid certificate",
-	/* 070 */ "Revoked certificate",
-	/* 071 */ "Revocation status unknown",
-	/* 072 */ "Revocation status unavailable",
-	/* 073 */ "Client name mismatch",
-	/* 074 */ "KDC name mismatch",
-	/* 075 */ "Reserved krb5 error (75)",
-	/* 076 */ "Reserved krb5 error (76)",
+	/* 068 */ "Reserved krb5 error (68)",
+	/* 069 */ "Reserved krb5 error (69)",
+	/* 070 */ "Cannot verify certificate",
+	/* 071 */ "Invalid certificate",
+	/* 072 */ "Revoked certificate",
+	/* 073 */ "Revocation status unknown",
+	/* 074 */ "Revocation status unknown",
+	/* 075 */ "Client name mismatch",
+	/* 075 */ "KDC name mismatch",
 	/* 077 */ "Reserved krb5 error (77)",
 	/* 078 */ "Reserved krb5 error (78)",
 	/* 079 */ "Reserved krb5 error (79)",
-	/* 080 */ "Reserved krb5 error (80)",
-	/* 081 */ "Reserved krb5 error (81)",
+	/* 080 */ "IAKERB proxy could not find a KDC",
+	/* 081 */ "IAKERB proxy never reeived a response from a KDC",
 	/* 082 */ "Reserved krb5 error (82)",
 	/* 083 */ "Reserved krb5 error (83)",
 	/* 084 */ "Reserved krb5 error (84)",
@@ -134,7 +134,7 @@ static const char *text[] = {
 	/* 125 */ "Reserved krb5 error (125)",
 	/* 126 */ "Reserved krb5 error (126)",
 	/* 127 */ "Reserved krb5 error (127)",
-	/* 128 */ "$KTH: krb5_err.et,v 1.9 2000/04/06 00:41:37 assar Exp $",
+	/* 128 */ "$KTH: krb5_err.et,v 1.12 2004/10/14 15:30:29 lha Exp $",
 	/* 129 */ "Invalid flag for file lock mode",
 	/* 130 */ "Cannot read password",
 	/* 131 */ "Password mismatch",
@@ -206,41 +206,66 @@ static const char *text[] = {
 	/* 197 */ "Error writing to credentials cache file",
 	/* 198 */ "No more memory to allocate (in credentials cache code)",
 	/* 199 */ "Bad format in credentials cache",
-	/* 200 */ "Invalid KDC option combination (library internal error)",
-	/* 201 */ "Request missing second ticket",
-	/* 202 */ "No credentials supplied to library routine",
-	/* 203 */ "Bad sendauth version was sent",
-	/* 204 */ "Bad application version was sent (via sendauth)",
-	/* 205 */ "Bad response (during sendauth exchange)",
-	/* 206 */ "Server rejected authentication (during sendauth exchange)",
-	/* 207 */ "Unsupported preauthentication type",
-	/* 208 */ "Required preauthentication key not supplied",
-	/* 209 */ "Generic preauthentication failure",
-	/* 210 */ "Unsupported replay cache format version number",
-	/* 211 */ "Unsupported credentials cache format version number",
-	/* 212 */ "Unsupported key table format version number",
-	/* 213 */ "Program lacks support for address type",
-	/* 214 */ "Message replay detection requires rcache parameter",
-	/* 215 */ "Hostname cannot be canonicalized",
-	/* 216 */ "Cannot determine realm for host",
-	/* 217 */ "Conversion to service principal undefined for name type",
-	/* 218 */ "Initial Ticket response appears to be Version 4",
-	/* 219 */ "Cannot resolve KDC for requested realm",
-	/* 220 */ "Requesting ticket can't get forwardable tickets",
-	/* 221 */ "Bad principal name while trying to forward credentials",
-	/* 222 */ "Looping detected inside krb5_get_in_tkt",
-	/* 223 */ "Configuration file does not specify default realm",
-	/* 224 */ "Bad SAM flags in obtain_sam_padata",
-	/* 225 */ "Keytab name too long",
+	/* 200 */ "No credentials found with supported encryption types",
+	/* 201 */ "Invalid KDC option combination (library internal error)",
+	/* 202 */ "Request missing second ticket",
+	/* 203 */ "No credentials supplied to library routine",
+	/* 204 */ "Bad sendauth version was sent",
+	/* 205 */ "Bad application version was sent (via sendauth)",
+	/* 206 */ "Bad response (during sendauth exchange)",
+	/* 207 */ "Server rejected authentication (during sendauth exchange)",
+	/* 208 */ "Unsupported preauthentication type",
+	/* 209 */ "Required preauthentication key not supplied",
+	/* 210 */ "Generic preauthentication failure",
+	/* 211 */ "Unsupported replay cache format version number",
+	/* 212 */ "Unsupported credentials cache format version number",
+	/* 213 */ "Unsupported key table format version number",
+	/* 214 */ "Program lacks support for address type",
+	/* 215 */ "Message replay detection requires rcache parameter",
+	/* 216 */ "Hostname cannot be canonicalized",
+	/* 217 */ "Cannot determine realm for host",
+	/* 218 */ "Conversion to service principal undefined for name type",
+	/* 219 */ "Initial Ticket response appears to be Version 4",
+	/* 220 */ "Cannot resolve KDC for requested realm",
+	/* 221 */ "Requesting ticket can't get forwardable tickets",
+	/* 222 */ "Bad principal name while trying to forward credentials",
+	/* 223 */ "Looping detected inside krb5_get_in_tkt",
+	/* 224 */ "Configuration file does not specify default realm",
+	/* 225 */ "Bad SAM flags in obtain_sam_padata",
+	/* 226 */ "Invalid encryption type in SAM challenge",
+	/* 227 */ "Missing checksum in SAM challenge",
+	/* 228 */ "Bad checksum in SAM challenge",
+	/* 229 */ "Reserved krb5 error (229)",
+	/* 230 */ "Reserved krb5 error (230)",
+	/* 231 */ "Reserved krb5 error (231)",
+	/* 232 */ "Reserved krb5 error (232)",
+	/* 233 */ "Reserved krb5 error (233)",
+	/* 234 */ "Reserved krb5 error (234)",
+	/* 235 */ "Reserved krb5 error (235)",
+	/* 236 */ "Reserved krb5 error (236)",
+	/* 237 */ "Reserved krb5 error (237)",
+	/* 238 */ "Program called an obsolete, deleted function",
+	/* 239 */ "Reserved krb5 error (239)",
+	/* 240 */ "Reserved krb5 error (240)",
+	/* 241 */ "Reserved krb5 error (241)",
+	/* 242 */ "Reserved krb5 error (242)",
+	/* 243 */ "Reserved krb5 error (243)",
+	/* 244 */ "Reserved krb5 error (244)",
+	/* 245 */ "Invalid key generation parameters from KDC",
+	/* 246 */ "Service not available",
+	/* 247 */ "Credential cache function not supported",
+	/* 248 */ "Invalid format of Kerberos lifetime or clock skew string",
 	NULL
 };
 
+#define num_errors 249
+
 void initialize_krb5_error_table_r(struct et_list **list)
 {
-    initialize_error_table_r(list, text, krb5_num_errors, ERROR_TABLE_BASE_krb5);
+    initialize_error_table_r(list, krb5_error_strings, num_errors, ERROR_TABLE_BASE_krb5);
 }
 
 void initialize_krb5_error_table(void)
 {
-    init_error_table(text, ERROR_TABLE_BASE_krb5, krb5_num_errors);
+    init_error_table(krb5_error_strings, ERROR_TABLE_BASE_krb5, num_errors);
 }

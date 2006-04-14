@@ -1,10 +1,10 @@
-/* Generated from /usr/src/lib/libkrb5/../../kerberosV/src/lib/hdb/hdb_err.et */
+/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/hdb/hdb_err.et */
 /* $KTH: hdb_err.et,v 1.5 2001/01/28 23:05:52 assar Exp $ */
 
 #ifndef __hdb_err_h__
 #define __hdb_err_h__
 
-#include <com_err.h>
+struct et_list;
 
 void initialize_hdb_error_table_r(struct et_list **);
 
@@ -12,8 +12,6 @@ void initialize_hdb_error_table(void);
 #define init_hdb_err_tbl initialize_hdb_error_table
 
 typedef enum hdb_error_number{
-	ERROR_TABLE_BASE_hdb = 36150272,
-	hdb_err_base = 36150272,
 	HDB_ERR_UK_SERROR = 36150273,
 	HDB_ERR_UK_RERROR = 36150274,
 	HDB_ERR_NOENTRY = 36150275,
@@ -25,8 +23,9 @@ typedef enum hdb_error_number{
 	HDB_ERR_CANT_LOCK_DB = 36150281,
 	HDB_ERR_EXISTS = 36150282,
 	HDB_ERR_BADVERSION = 36150283,
-	HDB_ERR_NO_MKEY = 36150284,
-	hdb_num_errors = 13
+	HDB_ERR_NO_MKEY = 36150284
 } hdb_error_number;
+
+#define ERROR_TABLE_BASE_hdb 36150272
 
 #endif /* __hdb_err_h__ */

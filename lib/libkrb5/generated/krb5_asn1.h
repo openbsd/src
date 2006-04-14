@@ -1,4 +1,4 @@
-/* Generated from /usr/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
+/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
 /* Do not edit */
 
 #ifndef __krb5_asn1_h__
@@ -12,17 +12,19 @@ time_t timegm (struct tm*);
 #ifndef __asn1_common_definitions__
 #define __asn1_common_definitions__
 
-typedef struct octet_string {
+typedef struct heim_octet_string {
   size_t length;
   void *data;
-} octet_string;
+} heim_octet_string;
 
-typedef char *general_string;
+typedef char *heim_general_string;
 
-typedef struct oid {
+typedef char *heim_utf8_string;
+
+typedef struct heim_oid {
   size_t length;
   unsigned *components;
-} oid;
+} heim_oid;
 
 #define ASN1_MALLOC_ENCODE(T, B, BL, S, L, R)                  \
   do {                                                         \
@@ -53,7 +55,8 @@ typedef enum NAME_TYPE {
   KRB5_NT_SRV_HST = 3,
   KRB5_NT_SRV_XHST = 4,
   KRB5_NT_UID = 5,
-  KRB5_NT_X500_PRINCIPAL = 6
+  KRB5_NT_X500_PRINCIPAL = 6,
+  KRB5_NT_ENTERPRISE = 10
 } NAME_TYPE;
 
 int    encode_NAME_TYPE(unsigned char *, size_t, const NAME_TYPE *, size_t *);
@@ -106,16 +109,24 @@ typedef enum PADATA_TYPE {
   KRB5_PADATA_ETYPE_INFO = 11,
   KRB5_PADATA_SAM_CHALLENGE = 12,
   KRB5_PADATA_SAM_RESPONSE = 13,
-  KRB5_PADATA_PK_AS_REQ = 14,
-  KRB5_PADATA_PK_AS_REP = 15,
-  KRB5_PADATA_PK_AS_SIGN = 16,
-  KRB5_PADATA_PK_KEY_REQ = 17,
-  KRB5_PADATA_PK_KEY_REP = 18,
+  KRB5_PADATA_PK_AS_REQ_19 = 14,
+  KRB5_PADATA_PK_AS_REP_19 = 15,
+  KRB5_PADATA_PK_AS_REQ = 16,
+  KRB5_PADATA_PK_AS_REP = 17,
   KRB5_PADATA_ETYPE_INFO2 = 19,
   KRB5_PADATA_USE_SPECIFIED_KVNO = 20,
   KRB5_PADATA_SAM_REDIRECT = 21,
   KRB5_PADATA_GET_FROM_TYPED_DATA = 22,
-  KRB5_PADATA_SAM_ETYPE_INFO = 23
+  KRB5_PADATA_SAM_ETYPE_INFO = 23,
+  KRB5_PADATA_SERVER_REFERRAL = 25,
+  KRB5_PADATA_TD_KRB_PRINCIPAL = 102,
+  KRB5_PADATA_TD_KRB_REALM = 103,
+  KRB5_PADATA_PK_TD_TRUSTED_CERTIFIERS = 104,
+  KRB5_PADATA_PK_TD_CERTIFICATE_INDEX = 105,
+  KRB5_PADATA_TD_APP_DEFINED_ERROR = 106,
+  KRB5_PADATA_TD_REQ_NONCE = 107,
+  KRB5_PADATA_TD_REQ_SEQ = 108,
+  KRB5_PADATA_PA_PAC_REQUEST = 128
 } PADATA_TYPE;
 
 int    encode_PADATA_TYPE(unsigned char *, size_t, const PADATA_TYPE *, size_t *);
@@ -123,6 +134,33 @@ int    decode_PADATA_TYPE(const unsigned char *, size_t, PADATA_TYPE *, size_t *
 void   free_PADATA_TYPE  (PADATA_TYPE *);
 size_t length_PADATA_TYPE(const PADATA_TYPE *);
 int    copy_PADATA_TYPE  (const PADATA_TYPE *, PADATA_TYPE *);
+
+
+/*
+AUTHDATA-TYPE ::= INTEGER
+*/
+
+typedef enum AUTHDATA_TYPE {
+  KRB5_AUTHDATA_IF_RELEVANT = 1,
+  KRB5_AUTHDATA_INTENDED_FOR_SERVER = 2,
+  KRB5_AUTHDATA_INTENDED_FOR_APPLICATION_CLASS = 3,
+  KRB5_AUTHDATA_KDC_ISSUED = 4,
+  KRB5_AUTHDATA_AND_OR = 5,
+  KRB5_AUTHDATA_MANDATORY_TICKET_EXTENSIONS = 6,
+  KRB5_AUTHDATA_IN_TICKET_EXTENSIONS = 7,
+  KRB5_AUTHDATA_MANDATORY_FOR_KDC = 8,
+  KRB5_AUTHDATA_OSF_DCE = 64,
+  KRB5_AUTHDATA_SESAME = 65,
+  KRB5_AUTHDATA_OSF_DCE_PKI_CERTID = 66,
+  KRB5_AUTHDATA_WIN2K_PAC = 128,
+  KRB5_AUTHDATA_GSS_API_ETYPE_NEGOTIATION = 129
+} AUTHDATA_TYPE;
+
+int    encode_AUTHDATA_TYPE(unsigned char *, size_t, const AUTHDATA_TYPE *, size_t *);
+int    decode_AUTHDATA_TYPE(const unsigned char *, size_t, AUTHDATA_TYPE *, size_t *);
+void   free_AUTHDATA_TYPE  (AUTHDATA_TYPE *);
+size_t length_AUTHDATA_TYPE(const AUTHDATA_TYPE *);
+int    copy_AUTHDATA_TYPE  (const AUTHDATA_TYPE *, AUTHDATA_TYPE *);
 
 
 /*
@@ -140,10 +178,11 @@ typedef enum CKSUMTYPE {
   CKSUMTYPE_RSA_MD5 = 7,
   CKSUMTYPE_RSA_MD5_DES = 8,
   CKSUMTYPE_RSA_MD5_DES3 = 9,
-  CKSUMTYPE_HMAC_SHA1_96_AES_128 = 10,
-  CKSUMTYPE_HMAC_SHA1_96_AES_256 = 11,
+  CKSUMTYPE_SHA1_OTHER = 10,
   CKSUMTYPE_HMAC_SHA1_DES3 = 12,
-  CKSUMTYPE_SHA1 = 1000,
+  CKSUMTYPE_SHA1 = 14,
+  CKSUMTYPE_HMAC_SHA1_96_AES_128 = 15,
+  CKSUMTYPE_HMAC_SHA1_96_AES_256 = 16,
   CKSUMTYPE_GSSAPI = 32771,
   CKSUMTYPE_HMAC_MD5 = -138,
   CKSUMTYPE_HMAC_MD5_ENC = -1138
@@ -179,7 +218,14 @@ typedef enum ENCTYPE {
   ETYPE_DES_CBC_NONE = -4096,
   ETYPE_DES3_CBC_NONE = -4097,
   ETYPE_DES_CFB64_NONE = -4098,
-  ETYPE_DES_PCBC_NONE = -4099
+  ETYPE_DES_PCBC_NONE = -4099,
+  ETYPE_DIGEST_MD5_NONE = -4100,
+  ETYPE_CRAM_MD5_NONE = -4101,
+  ETYPE_RC2_CBC_NONE = -4102,
+  ETYPE_AES128_CBC_NONE = -4103,
+  ETYPE_AES192_CBC_NONE = -4104,
+  ETYPE_AES256_CBC_NONE = -4105,
+  ETYPE_DES3_CBC_NONE_CMS = -4106
 } ENCTYPE;
 
 int    encode_ENCTYPE(unsigned char *, size_t, const ENCTYPE *, size_t *);
@@ -203,10 +249,23 @@ int    copy_UNSIGNED  (const UNSIGNED *, UNSIGNED *);
 
 
 /*
+KerberosString ::= GeneralString
+*/
+
+typedef heim_general_string KerberosString;
+
+int    encode_KerberosString(unsigned char *, size_t, const KerberosString *, size_t *);
+int    decode_KerberosString(const unsigned char *, size_t, KerberosString *, size_t *);
+void   free_KerberosString  (KerberosString *);
+size_t length_KerberosString(const KerberosString *);
+int    copy_KerberosString  (const KerberosString *, KerberosString *);
+
+
+/*
 Realm ::= GeneralString
 */
 
-typedef general_string Realm;
+typedef heim_general_string Realm;
 
 int    encode_Realm(unsigned char *, size_t, const Realm *, size_t *);
 int    decode_Realm(const unsigned char *, size_t, Realm *, size_t *);
@@ -226,7 +285,7 @@ typedef struct PrincipalName {
   NAME_TYPE name_type;
   struct  {
     unsigned int len;
-    general_string *val;
+    heim_general_string *val;
   } name_string;
 } PrincipalName;
 
@@ -265,7 +324,7 @@ HostAddress ::= SEQUENCE {
 
 typedef struct HostAddress {
   int addr_type;
-  octet_string address;
+  heim_octet_string address;
 } HostAddress;
 
 int    encode_HostAddress(unsigned char *, size_t, const HostAddress *, size_t *);
@@ -315,7 +374,7 @@ typedef struct AuthorizationData {
   unsigned int len;
   struct  {
     int ad_type;
-    octet_string ad_data;
+    heim_octet_string ad_data;
   } *val;
 } AuthorizationData;
 
@@ -348,7 +407,7 @@ size_t length_APOptions(const APOptions *);
 int    copy_APOptions  (const APOptions *, APOptions *);
 unsigned APOptions2int(APOptions);
 APOptions int2APOptions(unsigned);
-extern struct units APOptions_units[];
+const struct units * asn1_APOptions_units(void);
 
 /*
 TicketFlags ::= BIT STRING {
@@ -396,7 +455,7 @@ size_t length_TicketFlags(const TicketFlags *);
 int    copy_TicketFlags  (const TicketFlags *, TicketFlags *);
 unsigned TicketFlags2int(TicketFlags);
 TicketFlags int2TicketFlags(unsigned);
-extern struct units TicketFlags_units[];
+const struct units * asn1_TicketFlags_units(void);
 
 /*
 KDCOptions ::= BIT STRING {
@@ -452,7 +511,7 @@ size_t length_KDCOptions(const KDCOptions *);
 int    copy_KDCOptions  (const KDCOptions *, KDCOptions *);
 unsigned KDCOptions2int(KDCOptions);
 KDCOptions int2KDCOptions(unsigned);
-extern struct units KDCOptions_units[];
+const struct units * asn1_KDCOptions_units(void);
 
 /*
 LR-TYPE ::= INTEGER
@@ -509,7 +568,7 @@ EncryptedData ::= SEQUENCE {
 typedef struct EncryptedData {
   ENCTYPE etype;
   int *kvno;
-  octet_string cipher;
+  heim_octet_string cipher;
 } EncryptedData;
 
 int    encode_EncryptedData(unsigned char *, size_t, const EncryptedData *, size_t *);
@@ -528,7 +587,7 @@ EncryptionKey ::= SEQUENCE {
 
 typedef struct EncryptionKey {
   int keytype;
-  octet_string keyvalue;
+  heim_octet_string keyvalue;
 } EncryptionKey;
 
 int    encode_EncryptionKey(unsigned char *, size_t, const EncryptionKey *, size_t *);
@@ -547,7 +606,7 @@ TransitedEncoding ::= SEQUENCE {
 
 typedef struct TransitedEncoding {
   int tr_type;
-  octet_string contents;
+  heim_octet_string contents;
 } TransitedEncoding;
 
 int    encode_TransitedEncoding(unsigned char *, size_t, const TransitedEncoding *, size_t *);
@@ -626,7 +685,7 @@ Checksum ::= SEQUENCE {
 
 typedef struct Checksum {
   CKSUMTYPE cksumtype;
-  octet_string checksum;
+  heim_octet_string checksum;
 } Checksum;
 
 int    encode_Checksum(unsigned char *, size_t, const Checksum *, size_t *);
@@ -678,7 +737,7 @@ PA-DATA ::= SEQUENCE {
 
 typedef struct PA_DATA {
   PADATA_TYPE padata_type;
-  octet_string padata_value;
+  heim_octet_string padata_value;
 } PA_DATA;
 
 int    encode_PA_DATA(unsigned char *, size_t, const PA_DATA *, size_t *);
@@ -698,7 +757,7 @@ ETYPE-INFO-ENTRY ::= SEQUENCE {
 
 typedef struct ETYPE_INFO_ENTRY {
   ENCTYPE etype;
-  octet_string *salt;
+  heim_octet_string *salt;
   int *salttype;
 } ETYPE_INFO_ENTRY;
 
@@ -723,6 +782,43 @@ int    decode_ETYPE_INFO(const unsigned char *, size_t, ETYPE_INFO *, size_t *);
 void   free_ETYPE_INFO  (ETYPE_INFO *);
 size_t length_ETYPE_INFO(const ETYPE_INFO *);
 int    copy_ETYPE_INFO  (const ETYPE_INFO *, ETYPE_INFO *);
+
+
+/*
+ETYPE-INFO2-ENTRY ::= SEQUENCE {
+  etype[0]        ENCTYPE,
+  salt[1]         KerberosString OPTIONAL,
+  s2kparams[2]    OCTET STRING OPTIONAL
+}
+*/
+
+typedef struct ETYPE_INFO2_ENTRY {
+  ENCTYPE etype;
+  KerberosString *salt;
+  heim_octet_string *s2kparams;
+} ETYPE_INFO2_ENTRY;
+
+int    encode_ETYPE_INFO2_ENTRY(unsigned char *, size_t, const ETYPE_INFO2_ENTRY *, size_t *);
+int    decode_ETYPE_INFO2_ENTRY(const unsigned char *, size_t, ETYPE_INFO2_ENTRY *, size_t *);
+void   free_ETYPE_INFO2_ENTRY  (ETYPE_INFO2_ENTRY *);
+size_t length_ETYPE_INFO2_ENTRY(const ETYPE_INFO2_ENTRY *);
+int    copy_ETYPE_INFO2_ENTRY  (const ETYPE_INFO2_ENTRY *, ETYPE_INFO2_ENTRY *);
+
+
+/*
+ETYPE-INFO2 ::= SEQUENCE OF ETYPE-INFO2-ENTRY
+*/
+
+typedef struct ETYPE_INFO2 {
+  unsigned int len;
+  ETYPE_INFO2_ENTRY *val;
+} ETYPE_INFO2;
+
+int    encode_ETYPE_INFO2(unsigned char *, size_t, const ETYPE_INFO2 *, size_t *);
+int    decode_ETYPE_INFO2(const unsigned char *, size_t, ETYPE_INFO2 *, size_t *);
+void   free_ETYPE_INFO2  (ETYPE_INFO2 *);
+size_t length_ETYPE_INFO2(const ETYPE_INFO2 *);
+int    copy_ETYPE_INFO2  (const ETYPE_INFO2 *, ETYPE_INFO2 *);
 
 
 /*
@@ -852,6 +948,23 @@ int    decode_PA_ENC_TS_ENC(const unsigned char *, size_t, PA_ENC_TS_ENC *, size
 void   free_PA_ENC_TS_ENC  (PA_ENC_TS_ENC *);
 size_t length_PA_ENC_TS_ENC(const PA_ENC_TS_ENC *);
 int    copy_PA_ENC_TS_ENC  (const PA_ENC_TS_ENC *, PA_ENC_TS_ENC *);
+
+
+/*
+PA-PAC-REQUEST ::= SEQUENCE {
+  include-pac[0]  BOOLEAN
+}
+*/
+
+typedef struct PA_PAC_REQUEST {
+  int include_pac;
+} PA_PAC_REQUEST;
+
+int    encode_PA_PAC_REQUEST(unsigned char *, size_t, const PA_PAC_REQUEST *, size_t *);
+int    decode_PA_PAC_REQUEST(const unsigned char *, size_t, PA_PAC_REQUEST *, size_t *);
+void   free_PA_PAC_REQUEST  (PA_PAC_REQUEST *);
+size_t length_PA_PAC_REQUEST(const PA_PAC_REQUEST *);
+int    copy_PA_PAC_REQUEST  (const PA_PAC_REQUEST *, PA_PAC_REQUEST *);
 
 
 /*
@@ -1055,7 +1168,7 @@ KRB-SAFE-BODY ::= SEQUENCE {
 */
 
 typedef struct KRB_SAFE_BODY {
-  octet_string user_data;
+  heim_octet_string user_data;
   KerberosTime *timestamp;
   int *usec;
   UNSIGNED *seq_number;
@@ -1126,7 +1239,7 @@ EncKrbPrivPart ::= [APPLICATION 28] SEQUENCE {
 */
 
 typedef struct  {
-  octet_string user_data;
+  heim_octet_string user_data;
   KerberosTime *timestamp;
   int *usec;
   UNSIGNED *seq_number;
@@ -1264,8 +1377,8 @@ typedef struct  {
   PrincipalName *cname;
   Realm realm;
   PrincipalName sname;
-  general_string *e_text;
-  octet_string *e_data;
+  heim_general_string *e_text;
+  heim_octet_string *e_data;
 } KRB_ERROR;
 
 int    encode_KRB_ERROR(unsigned char *, size_t, const KRB_ERROR *, size_t *);
@@ -1284,7 +1397,7 @@ ChangePasswdDataMS ::= SEQUENCE {
 */
 
 typedef struct ChangePasswdDataMS {
-  octet_string newpasswd;
+  heim_octet_string newpasswd;
   PrincipalName *targname;
   Realm *targrealm;
 } ChangePasswdDataMS;
@@ -1296,8 +1409,282 @@ size_t length_ChangePasswdDataMS(const ChangePasswdDataMS *);
 int    copy_ChangePasswdDataMS  (const ChangePasswdDataMS *, ChangePasswdDataMS *);
 
 
+/*
+EtypeList ::= SEQUENCE OF INTEGER
+*/
+
+typedef struct EtypeList {
+  unsigned int len;
+  int *val;
+} EtypeList;
+
+int    encode_EtypeList(unsigned char *, size_t, const EtypeList *, size_t *);
+int    decode_EtypeList(const unsigned char *, size_t, EtypeList *, size_t *);
+void   free_EtypeList  (EtypeList *);
+size_t length_EtypeList(const EtypeList *);
+int    copy_EtypeList  (const EtypeList *, EtypeList *);
+
+
 enum { pvno = 5 };
 
 enum { DOMAIN_X500_COMPRESS = 1 };
+
+/*
+AD-IF-RELEVANT ::= AuthorizationData
+*/
+
+typedef AuthorizationData AD_IF_RELEVANT;
+
+int    encode_AD_IF_RELEVANT(unsigned char *, size_t, const AD_IF_RELEVANT *, size_t *);
+int    decode_AD_IF_RELEVANT(const unsigned char *, size_t, AD_IF_RELEVANT *, size_t *);
+void   free_AD_IF_RELEVANT  (AD_IF_RELEVANT *);
+size_t length_AD_IF_RELEVANT(const AD_IF_RELEVANT *);
+int    copy_AD_IF_RELEVANT  (const AD_IF_RELEVANT *, AD_IF_RELEVANT *);
+
+
+/*
+AD-KDCIssued ::= SEQUENCE {
+  ad-checksum[0]  Checksum,
+  i-realm[1]      Realm OPTIONAL,
+  i-sname[2]      PrincipalName OPTIONAL,
+  elements[3]     AuthorizationData
+}
+*/
+
+typedef struct AD_KDCIssued {
+  Checksum ad_checksum;
+  Realm *i_realm;
+  PrincipalName *i_sname;
+  AuthorizationData elements;
+} AD_KDCIssued;
+
+int    encode_AD_KDCIssued(unsigned char *, size_t, const AD_KDCIssued *, size_t *);
+int    decode_AD_KDCIssued(const unsigned char *, size_t, AD_KDCIssued *, size_t *);
+void   free_AD_KDCIssued  (AD_KDCIssued *);
+size_t length_AD_KDCIssued(const AD_KDCIssued *);
+int    copy_AD_KDCIssued  (const AD_KDCIssued *, AD_KDCIssued *);
+
+
+/*
+AD-AND-OR ::= SEQUENCE {
+  condition-count[0]  INTEGER,
+  elements[1]         AuthorizationData
+}
+*/
+
+typedef struct AD_AND_OR {
+  int condition_count;
+  AuthorizationData elements;
+} AD_AND_OR;
+
+int    encode_AD_AND_OR(unsigned char *, size_t, const AD_AND_OR *, size_t *);
+int    decode_AD_AND_OR(const unsigned char *, size_t, AD_AND_OR *, size_t *);
+void   free_AD_AND_OR  (AD_AND_OR *);
+size_t length_AD_AND_OR(const AD_AND_OR *);
+int    copy_AD_AND_OR  (const AD_AND_OR *, AD_AND_OR *);
+
+
+/*
+AD-MANDATORY-FOR-KDC ::= AuthorizationData
+*/
+
+typedef AuthorizationData AD_MANDATORY_FOR_KDC;
+
+int    encode_AD_MANDATORY_FOR_KDC(unsigned char *, size_t, const AD_MANDATORY_FOR_KDC *, size_t *);
+int    decode_AD_MANDATORY_FOR_KDC(const unsigned char *, size_t, AD_MANDATORY_FOR_KDC *, size_t *);
+void   free_AD_MANDATORY_FOR_KDC  (AD_MANDATORY_FOR_KDC *);
+size_t length_AD_MANDATORY_FOR_KDC(const AD_MANDATORY_FOR_KDC *);
+int    copy_AD_MANDATORY_FOR_KDC  (const AD_MANDATORY_FOR_KDC *, AD_MANDATORY_FOR_KDC *);
+
+
+/*
+PA-SAM-TYPE ::= INTEGER
+*/
+
+typedef enum PA_SAM_TYPE {
+  PA_SAM_TYPE_ENIGMA = 1,
+  PA_SAM_TYPE_DIGI_PATH = 2,
+  PA_SAM_TYPE_SKEY_K0 = 3,
+  PA_SAM_TYPE_SKEY = 4,
+  PA_SAM_TYPE_SECURID = 5,
+  PA_SAM_TYPE_CRYPTOCARD = 6
+} PA_SAM_TYPE;
+
+int    encode_PA_SAM_TYPE(unsigned char *, size_t, const PA_SAM_TYPE *, size_t *);
+int    decode_PA_SAM_TYPE(const unsigned char *, size_t, PA_SAM_TYPE *, size_t *);
+void   free_PA_SAM_TYPE  (PA_SAM_TYPE *);
+size_t length_PA_SAM_TYPE(const PA_SAM_TYPE *);
+int    copy_PA_SAM_TYPE  (const PA_SAM_TYPE *, PA_SAM_TYPE *);
+
+
+/*
+PA-SAM-REDIRECT ::= HostAddresses
+*/
+
+typedef HostAddresses PA_SAM_REDIRECT;
+
+int    encode_PA_SAM_REDIRECT(unsigned char *, size_t, const PA_SAM_REDIRECT *, size_t *);
+int    decode_PA_SAM_REDIRECT(const unsigned char *, size_t, PA_SAM_REDIRECT *, size_t *);
+void   free_PA_SAM_REDIRECT  (PA_SAM_REDIRECT *);
+size_t length_PA_SAM_REDIRECT(const PA_SAM_REDIRECT *);
+int    copy_PA_SAM_REDIRECT  (const PA_SAM_REDIRECT *, PA_SAM_REDIRECT *);
+
+
+/*
+SAMFlags ::= BIT STRING {
+  use-sad-as-key(0),
+  send-encrypted-sad(1),
+  must-pk-encrypt-sad(2)
+}
+*/
+
+typedef struct SAMFlags {
+  unsigned int use_sad_as_key:1;
+  unsigned int send_encrypted_sad:1;
+  unsigned int must_pk_encrypt_sad:1;
+} SAMFlags;
+
+
+int    encode_SAMFlags(unsigned char *, size_t, const SAMFlags *, size_t *);
+int    decode_SAMFlags(const unsigned char *, size_t, SAMFlags *, size_t *);
+void   free_SAMFlags  (SAMFlags *);
+size_t length_SAMFlags(const SAMFlags *);
+int    copy_SAMFlags  (const SAMFlags *, SAMFlags *);
+unsigned SAMFlags2int(SAMFlags);
+SAMFlags int2SAMFlags(unsigned);
+const struct units * asn1_SAMFlags_units(void);
+
+/*
+PA-SAM-CHALLENGE-2-BODY ::= SEQUENCE {
+  sam-type[0]             INTEGER,
+  sam-flags[1]            SAMFlags,
+  sam-type-name[2]        GeneralString OPTIONAL,
+  sam-track-id[3]         GeneralString OPTIONAL,
+  sam-challenge-label[4]  GeneralString OPTIONAL,
+  sam-challenge[5]        GeneralString OPTIONAL,
+  sam-response-prompt[6]  GeneralString OPTIONAL,
+  sam-pk-for-sad[7]       EncryptionKey OPTIONAL,
+  sam-nonce[8]            INTEGER,
+  sam-etype[9]            INTEGER
+}
+*/
+
+typedef struct PA_SAM_CHALLENGE_2_BODY {
+  int sam_type;
+  SAMFlags sam_flags;
+  heim_general_string *sam_type_name;
+  heim_general_string *sam_track_id;
+  heim_general_string *sam_challenge_label;
+  heim_general_string *sam_challenge;
+  heim_general_string *sam_response_prompt;
+  EncryptionKey *sam_pk_for_sad;
+  int sam_nonce;
+  int sam_etype;
+} PA_SAM_CHALLENGE_2_BODY;
+
+int    encode_PA_SAM_CHALLENGE_2_BODY(unsigned char *, size_t, const PA_SAM_CHALLENGE_2_BODY *, size_t *);
+int    decode_PA_SAM_CHALLENGE_2_BODY(const unsigned char *, size_t, PA_SAM_CHALLENGE_2_BODY *, size_t *);
+void   free_PA_SAM_CHALLENGE_2_BODY  (PA_SAM_CHALLENGE_2_BODY *);
+size_t length_PA_SAM_CHALLENGE_2_BODY(const PA_SAM_CHALLENGE_2_BODY *);
+int    copy_PA_SAM_CHALLENGE_2_BODY  (const PA_SAM_CHALLENGE_2_BODY *, PA_SAM_CHALLENGE_2_BODY *);
+
+
+/*
+PA-SAM-CHALLENGE-2 ::= SEQUENCE {
+  sam-body[0]     PA-SAM-CHALLENGE-2-BODY,
+  sam-cksum[1]    SEQUENCE OF Checksum
+}
+*/
+
+typedef struct PA_SAM_CHALLENGE_2 {
+  PA_SAM_CHALLENGE_2_BODY sam_body;
+  struct  {
+    unsigned int len;
+    Checksum *val;
+  } sam_cksum;
+} PA_SAM_CHALLENGE_2;
+
+int    encode_PA_SAM_CHALLENGE_2(unsigned char *, size_t, const PA_SAM_CHALLENGE_2 *, size_t *);
+int    decode_PA_SAM_CHALLENGE_2(const unsigned char *, size_t, PA_SAM_CHALLENGE_2 *, size_t *);
+void   free_PA_SAM_CHALLENGE_2  (PA_SAM_CHALLENGE_2 *);
+size_t length_PA_SAM_CHALLENGE_2(const PA_SAM_CHALLENGE_2 *);
+int    copy_PA_SAM_CHALLENGE_2  (const PA_SAM_CHALLENGE_2 *, PA_SAM_CHALLENGE_2 *);
+
+
+/*
+PA-SAM-RESPONSE-2 ::= SEQUENCE {
+  sam-type[0]              INTEGER,
+  sam-flags[1]             SAMFlags,
+  sam-track-id[2]          GeneralString OPTIONAL,
+  sam-enc-nonce-or-sad[3]  EncryptedData,
+  sam-nonce[4]             INTEGER
+}
+*/
+
+typedef struct PA_SAM_RESPONSE_2 {
+  int sam_type;
+  SAMFlags sam_flags;
+  heim_general_string *sam_track_id;
+  EncryptedData sam_enc_nonce_or_sad;
+  int sam_nonce;
+} PA_SAM_RESPONSE_2;
+
+int    encode_PA_SAM_RESPONSE_2(unsigned char *, size_t, const PA_SAM_RESPONSE_2 *, size_t *);
+int    decode_PA_SAM_RESPONSE_2(const unsigned char *, size_t, PA_SAM_RESPONSE_2 *, size_t *);
+void   free_PA_SAM_RESPONSE_2  (PA_SAM_RESPONSE_2 *);
+size_t length_PA_SAM_RESPONSE_2(const PA_SAM_RESPONSE_2 *);
+int    copy_PA_SAM_RESPONSE_2  (const PA_SAM_RESPONSE_2 *, PA_SAM_RESPONSE_2 *);
+
+
+/*
+PA-ENC-SAM-RESPONSE-ENC ::= SEQUENCE {
+  sam-nonce[0]    INTEGER,
+  sam-sad[1]      GeneralString OPTIONAL
+}
+*/
+
+typedef struct PA_ENC_SAM_RESPONSE_ENC {
+  int sam_nonce;
+  heim_general_string *sam_sad;
+} PA_ENC_SAM_RESPONSE_ENC;
+
+int    encode_PA_ENC_SAM_RESPONSE_ENC(unsigned char *, size_t, const PA_ENC_SAM_RESPONSE_ENC *, size_t *);
+int    decode_PA_ENC_SAM_RESPONSE_ENC(const unsigned char *, size_t, PA_ENC_SAM_RESPONSE_ENC *, size_t *);
+void   free_PA_ENC_SAM_RESPONSE_ENC  (PA_ENC_SAM_RESPONSE_ENC *);
+size_t length_PA_ENC_SAM_RESPONSE_ENC(const PA_ENC_SAM_RESPONSE_ENC *);
+int    copy_PA_ENC_SAM_RESPONSE_ENC  (const PA_ENC_SAM_RESPONSE_ENC *, PA_ENC_SAM_RESPONSE_ENC *);
+
+
+/*
+RC2CBCParameter ::= SEQUENCE {
+  rc2ParameterVersion[0]  INTEGER,
+  iv[1]                   OCTET STRING
+}
+*/
+
+typedef struct RC2CBCParameter {
+  int rc2ParameterVersion;
+  heim_octet_string iv;
+} RC2CBCParameter;
+
+int    encode_RC2CBCParameter(unsigned char *, size_t, const RC2CBCParameter *, size_t *);
+int    decode_RC2CBCParameter(const unsigned char *, size_t, RC2CBCParameter *, size_t *);
+void   free_RC2CBCParameter  (RC2CBCParameter *);
+size_t length_RC2CBCParameter(const RC2CBCParameter *);
+int    copy_RC2CBCParameter  (const RC2CBCParameter *, RC2CBCParameter *);
+
+
+/*
+CBCParameter ::= OCTET STRING
+*/
+
+typedef heim_octet_string CBCParameter;
+
+int    encode_CBCParameter(unsigned char *, size_t, const CBCParameter *, size_t *);
+int    decode_CBCParameter(const unsigned char *, size_t, CBCParameter *, size_t *);
+void   free_CBCParameter  (CBCParameter *);
+size_t length_CBCParameter(const CBCParameter *);
+int    copy_CBCParameter  (const CBCParameter *, CBCParameter *);
+
 
 #endif /* __krb5_asn1_h__ */

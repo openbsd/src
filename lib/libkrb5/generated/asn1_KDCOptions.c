@@ -1,4 +1,4 @@
-/* Generated from /usr/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
+/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
 /* Do not edit */
 
 #include <stdio.h>
@@ -54,7 +54,7 @@ len -= 2;
 ret += 2;
 }
 
-e = der_put_length_and_tag (p, len, ret, UNIV, PRIM,UT_BitString, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_UNIV, PRIM,UT_BitString, &l);
 BACK;
 *size = ret;
 return 0;
@@ -71,7 +71,7 @@ int e;
 
 memset(data, 0, sizeof(*data));
 reallen = 0;
-e = der_match_tag_and_length (p, len, UNIV, PRIM, UT_BitString,&reallen, &l);
+e = der_match_tag_and_length (p, len, ASN1_C_UNIV, PRIM, UT_BitString,&reallen, &l);
 FORW;
 if(len < reallen)
 return ASN1_OVERRUN;
@@ -180,7 +180,7 @@ KDCOptions int2KDCOptions(unsigned n)
 	return flags;
 }
 
-struct units KDCOptions_units[] = {
+static struct units KDCOptions_units[] = {
 	{"validate",	1U << 31},
 	{"renew",	1U << 30},
 	{"enc_tkt_in_skey",	1U << 28},
@@ -202,4 +202,8 @@ struct units KDCOptions_units[] = {
 	{"reserved",	1U << 0},
 	{NULL,	0}
 };
+
+const struct units * asn1_KDCOptions_units(void){
+return KDCOptions_units;
+}
 

@@ -1,4 +1,4 @@
-/* Generated from /usr/src/lib/libkrb5/../../kerberosV/src/lib/hdb/hdb.asn1 */
+/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/hdb/hdb.asn1 */
 /* Do not edit */
 
 #include <stdio.h>
@@ -28,7 +28,7 @@ int oldret = ret;
 ret = 0;
 e = encode_GENERATION(p, len, (data)->generation, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 12, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 12, &l);
 BACK;
 ret += oldret;
 }
@@ -39,13 +39,13 @@ ret = 0;
 for(i = ((data)->etypes)->len - 1; i >= 0; --i) {
 int oldret = ret;
 ret = 0;
-e = encode_integer(p, len, &((data)->etypes)->val[i], &l);
+e = encode_unsigned(p, len, &((data)->etypes)->val[i], &l);
 BACK;
 ret += oldret;
 }
-e = der_put_length_and_tag (p, len, ret, UNIV, CONS, UT_Sequence, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_UNIV, CONS, UT_Sequence, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 11, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 11, &l);
 BACK;
 ret += oldret;
 }
@@ -54,7 +54,7 @@ int oldret = ret;
 ret = 0;
 e = encode_HDBFlags(p, len, &(data)->flags, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 10, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 10, &l);
 BACK;
 ret += oldret;
 }
@@ -62,9 +62,9 @@ if((data)->max_renew)
 {
 int oldret = ret;
 ret = 0;
-e = encode_integer(p, len, (data)->max_renew, &l);
+e = encode_unsigned(p, len, (data)->max_renew, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 9, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 9, &l);
 BACK;
 ret += oldret;
 }
@@ -72,9 +72,9 @@ if((data)->max_life)
 {
 int oldret = ret;
 ret = 0;
-e = encode_integer(p, len, (data)->max_life, &l);
+e = encode_unsigned(p, len, (data)->max_life, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 8, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 8, &l);
 BACK;
 ret += oldret;
 }
@@ -84,7 +84,7 @@ int oldret = ret;
 ret = 0;
 e = encode_KerberosTime(p, len, (data)->pw_end, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 7, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 7, &l);
 BACK;
 ret += oldret;
 }
@@ -94,7 +94,7 @@ int oldret = ret;
 ret = 0;
 e = encode_KerberosTime(p, len, (data)->valid_end, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 6, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 6, &l);
 BACK;
 ret += oldret;
 }
@@ -104,7 +104,7 @@ int oldret = ret;
 ret = 0;
 e = encode_KerberosTime(p, len, (data)->valid_start, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 5, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 5, &l);
 BACK;
 ret += oldret;
 }
@@ -114,7 +114,7 @@ int oldret = ret;
 ret = 0;
 e = encode_Event(p, len, (data)->modified_by, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 4, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 4, &l);
 BACK;
 ret += oldret;
 }
@@ -123,7 +123,7 @@ int oldret = ret;
 ret = 0;
 e = encode_Event(p, len, &(data)->created_by, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 3, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 3, &l);
 BACK;
 ret += oldret;
 }
@@ -137,18 +137,18 @@ e = encode_Key(p, len, &(&(data)->keys)->val[i], &l);
 BACK;
 ret += oldret;
 }
-e = der_put_length_and_tag (p, len, ret, UNIV, CONS, UT_Sequence, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_UNIV, CONS, UT_Sequence, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 2, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 2, &l);
 BACK;
 ret += oldret;
 }
 {
 int oldret = ret;
 ret = 0;
-e = encode_integer(p, len, &(data)->kvno, &l);
+e = encode_unsigned(p, len, &(data)->kvno, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 1, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 1, &l);
 BACK;
 ret += oldret;
 }
@@ -158,11 +158,11 @@ int oldret = ret;
 ret = 0;
 e = encode_Principal(p, len, (data)->principal, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 0, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 0, &l);
 BACK;
 ret += oldret;
 }
-e = der_put_length_and_tag (p, len, ret, UNIV, CONS, UT_Sequence, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_UNIV, CONS, UT_Sequence, &l);
 BACK;
 *size = ret;
 return 0;
@@ -179,7 +179,7 @@ int e;
 
 memset(data, 0, sizeof(*data));
 reallen = 0;
-e = der_match_tag_and_length (p, len, UNIV, CONS, UT_Sequence,&reallen, &l);
+e = der_match_tag_and_length (p, len, ASN1_C_UNIV, CONS, UT_Sequence,&reallen, &l);
 FORW;
 {
 int dce_fix;
@@ -188,7 +188,7 @@ return ASN1_BAD_FORMAT;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 0, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 0, &l);
 if (e)
 (data)->principal = NULL;
 else {
@@ -216,7 +216,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 1, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 1, &l);
 if (e)
 return e;
 else {
@@ -229,7 +229,7 @@ FORW;
 int dce_fix;
 oldlen = len;
 if((dce_fix = fix_dce(newlen, &len)) < 0)return ASN1_BAD_FORMAT;
-e = decode_integer(p, len, &(data)->kvno, &l);
+e = decode_unsigned(p, len, &(data)->kvno, &l);
 FORW;
 if(dce_fix){
 e = der_match_tag_and_length (p, len, (Der_class)0, (Der_type)0, 0, &reallen, &l);
@@ -242,7 +242,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 2, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 2, &l);
 if (e)
 return e;
 else {
@@ -255,7 +255,7 @@ FORW;
 int dce_fix;
 oldlen = len;
 if((dce_fix = fix_dce(newlen, &len)) < 0)return ASN1_BAD_FORMAT;
-e = der_match_tag_and_length (p, len, UNIV, CONS, UT_Sequence,&reallen, &l);
+e = der_match_tag_and_length (p, len, ASN1_C_UNIV, CONS, UT_Sequence,&reallen, &l);
 FORW;
 if(len < reallen)
 return ASN1_OVERRUN;
@@ -286,7 +286,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 3, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 3, &l);
 if (e)
 return e;
 else {
@@ -312,7 +312,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 4, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 4, &l);
 if (e)
 (data)->modified_by = NULL;
 else {
@@ -340,7 +340,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 5, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 5, &l);
 if (e)
 (data)->valid_start = NULL;
 else {
@@ -368,7 +368,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 6, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 6, &l);
 if (e)
 (data)->valid_end = NULL;
 else {
@@ -396,7 +396,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 7, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 7, &l);
 if (e)
 (data)->pw_end = NULL;
 else {
@@ -424,7 +424,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 8, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 8, &l);
 if (e)
 (data)->max_life = NULL;
 else {
@@ -439,7 +439,7 @@ oldlen = len;
 if((dce_fix = fix_dce(newlen, &len)) < 0)return ASN1_BAD_FORMAT;
 (data)->max_life = malloc(sizeof(*(data)->max_life));
 if((data)->max_life == NULL) return ENOMEM;
-e = decode_integer(p, len, (data)->max_life, &l);
+e = decode_unsigned(p, len, (data)->max_life, &l);
 FORW;
 if(dce_fix){
 e = der_match_tag_and_length (p, len, (Der_class)0, (Der_type)0, 0, &reallen, &l);
@@ -452,7 +452,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 9, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 9, &l);
 if (e)
 (data)->max_renew = NULL;
 else {
@@ -467,7 +467,7 @@ oldlen = len;
 if((dce_fix = fix_dce(newlen, &len)) < 0)return ASN1_BAD_FORMAT;
 (data)->max_renew = malloc(sizeof(*(data)->max_renew));
 if((data)->max_renew == NULL) return ENOMEM;
-e = decode_integer(p, len, (data)->max_renew, &l);
+e = decode_unsigned(p, len, (data)->max_renew, &l);
 FORW;
 if(dce_fix){
 e = der_match_tag_and_length (p, len, (Der_class)0, (Der_type)0, 0, &reallen, &l);
@@ -480,7 +480,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 10, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 10, &l);
 if (e)
 return e;
 else {
@@ -506,7 +506,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 11, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 11, &l);
 if (e)
 (data)->etypes = NULL;
 else {
@@ -521,7 +521,7 @@ oldlen = len;
 if((dce_fix = fix_dce(newlen, &len)) < 0)return ASN1_BAD_FORMAT;
 (data)->etypes = malloc(sizeof(*(data)->etypes));
 if((data)->etypes == NULL) return ENOMEM;
-e = der_match_tag_and_length (p, len, UNIV, CONS, UT_Sequence,&reallen, &l);
+e = der_match_tag_and_length (p, len, ASN1_C_UNIV, CONS, UT_Sequence,&reallen, &l);
 FORW;
 if(len < reallen)
 return ASN1_OVERRUN;
@@ -535,7 +535,7 @@ ret = 0;
 while(ret < origlen) {
 ((data)->etypes)->len++;
 ((data)->etypes)->val = realloc(((data)->etypes)->val, sizeof(*(((data)->etypes)->val)) * ((data)->etypes)->len);
-e = decode_integer(p, len, &((data)->etypes)->val[((data)->etypes)->len-1], &l);
+e = decode_unsigned(p, len, &((data)->etypes)->val[((data)->etypes)->len-1], &l);
 FORW;
 len = origlen - ret;
 }
@@ -552,7 +552,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 12, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 12, &l);
 if (e)
 (data)->generation = NULL;
 else {
@@ -595,34 +595,42 @@ free_hdb_entry(hdb_entry *data)
 if((data)->principal) {
 free_Principal((data)->principal);
 free((data)->principal);
+(data)->principal = NULL;
 }
 while((&(data)->keys)->len){
 free_Key(&(&(data)->keys)->val[(&(data)->keys)->len-1]);
 (&(data)->keys)->len--;
 }
 free((&(data)->keys)->val);
+(&(data)->keys)->val = NULL;
 free_Event(&(data)->created_by);
 if((data)->modified_by) {
 free_Event((data)->modified_by);
 free((data)->modified_by);
+(data)->modified_by = NULL;
 }
 if((data)->valid_start) {
 free_KerberosTime((data)->valid_start);
 free((data)->valid_start);
+(data)->valid_start = NULL;
 }
 if((data)->valid_end) {
 free_KerberosTime((data)->valid_end);
 free((data)->valid_end);
+(data)->valid_end = NULL;
 }
 if((data)->pw_end) {
 free_KerberosTime((data)->pw_end);
 free((data)->pw_end);
+(data)->pw_end = NULL;
 }
 if((data)->max_life) {
 free((data)->max_life);
+(data)->max_life = NULL;
 }
 if((data)->max_renew) {
 free((data)->max_renew);
+(data)->max_renew = NULL;
 }
 free_HDBFlags(&(data)->flags);
 if((data)->etypes) {
@@ -630,11 +638,14 @@ while(((data)->etypes)->len){
 ((data)->etypes)->len--;
 }
 free(((data)->etypes)->val);
+((data)->etypes)->val = NULL;
 free((data)->etypes);
+(data)->etypes = NULL;
 }
 if((data)->generation) {
 free_GENERATION((data)->generation);
 free((data)->generation);
+(data)->generation = NULL;
 }
 }
 
@@ -651,7 +662,7 @@ ret += 1 + length_len(ret) + oldret;
 {
 int oldret = ret;
 ret = 0;
-ret += length_integer(&(data)->kvno);
+ret += length_unsigned(&(data)->kvno);
 ret += 1 + length_len(ret) + oldret;
 }
 {
@@ -662,7 +673,10 @@ int oldret = ret;
 int i;
 ret = 0;
 for(i = (&(data)->keys)->len - 1; i >= 0; --i){
+int oldret = ret;
+ret = 0;
 ret += length_Key(&(&(data)->keys)->val[i]);
+ret += oldret;
 }
 ret += 1 + length_len(ret) + oldret;
 }
@@ -701,13 +715,13 @@ ret += 1 + length_len(ret) + oldret;
 if((data)->max_life){
 int oldret = ret;
 ret = 0;
-ret += length_integer((data)->max_life);
+ret += length_unsigned((data)->max_life);
 ret += 1 + length_len(ret) + oldret;
 }
 if((data)->max_renew){
 int oldret = ret;
 ret = 0;
-ret += length_integer((data)->max_renew);
+ret += length_unsigned((data)->max_renew);
 ret += 1 + length_len(ret) + oldret;
 }
 {
@@ -724,7 +738,10 @@ int oldret = ret;
 int i;
 ret = 0;
 for(i = ((data)->etypes)->len - 1; i >= 0; --i){
-ret += length_integer(&((data)->etypes)->val[i]);
+int oldret = ret;
+ret = 0;
+ret += length_unsigned(&((data)->etypes)->val[i]);
+ret += oldret;
 }
 ret += 1 + length_len(ret) + oldret;
 }

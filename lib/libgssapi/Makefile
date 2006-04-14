@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2005/11/24 20:49:18 deraadt Exp $
+# $OpenBSD: Makefile,v 1.9 2006/04/14 08:24:42 biorn Exp $
 
 KRB5DIR	= ${.CURDIR}/../../kerberosV
 .include <${.CURDIR}/../libkrb5/Makefile.common.inc>
@@ -7,9 +7,23 @@ LIB=	gssapi
 WANTLINT=
 
 DIR_GSSAPI=	${KRB5SRC}/lib/gssapi
+GENDIR=		${.CURDIR}/generated
 HDR_GSSAPI=	gssapi.h
+HDR_GEN=	${GENDIR}/spnego_asn1.h
 
-includes:
+.PATH:  ${GENDIR}
+
+#${HDR_GEN}: ${DIR_GSSAPI}/spnego.asn1
+#	asn1_compile $(DIR_GSSAPI)/spnego.asn1 spnego_asn1
+
+includes: ${HDR_GEN}
+	for i in ${HDR_GEN}; do\
+		echo -n " $$i"; \
+		cmp -s $$i ${DESTDIR}/usr/include/kerberosV/spnego_asn1.h || \
+		${INSTALL} ${INSTALL_COPY} -m 444 \
+		-o ${BINOWN} -g $(BINGRP) $$i \
+		${DESTDIR}/usr/include/kerberosV; done; \
+
 	@echo -n ${DIR_GSSAPI}:; \
 	cd ${DIR_GSSAPI}; for i in ${HDR_GSSAPI}; do \
 		echo -n " $$i"; \
@@ -24,8 +38,11 @@ SRCS=	8003.c			\
 	acquire_cred.c		\
 	add_cred.c		\
 	add_oid_set_member.c	\
+        address_to_krb5addr.c	\
 	arcfour.c		\
 	canonicalize_name.c	\
+	ccache_name.c		\
+	cfx.c			\
 	compare_name.c		\
 	compat.c		\
 	context_time.c		\
@@ -37,8 +54,8 @@ SRCS=	8003.c			\
 	display_status.c	\
 	duplicate_name.c	\
 	encapsulate.c		\
-	export_sec_context.c	\
 	export_name.c		\
+	export_sec_context.c	\
 	external.c		\
 	get_mic.c		\
 	gssapi.h		\
@@ -53,17 +70,28 @@ SRCS=	8003.c			\
 	inquire_cred_by_mech.c	\
 	inquire_mechs_for_name.c \
 	inquire_names_for_mech.c \
+	process_context_token.c \
 	release_buffer.c	\
 	release_cred.c		\
 	release_name.c		\
 	release_oid_set.c	\
-	process_context_token.c \
+	sequence.c		\
 	test_oid_set_member.c	\
+	ticket_flags.c		\
 	unwrap.c		\
 	v1.c			\
 	verify_mic.c		\
-        wrap.c                  \
-        address_to_krb5addr.c
+        wrap.c
+
+gen_files= \
+	asn1_ContextFlags.c	\
+	asn1_MechType.c		\
+	asn1_MechTypeList.c	\
+	asn1_NegTokenInit.c	\
+	asn1_NegTokenTarg.c	\
+	asn1_NegotiationToken.c
+
+SRCS+=${gen_files}
 
 MAN+=	gssapi.3
 
@@ -91,8 +119,10 @@ MLINKS+=gss_acquire_cred.3 gss_accept_sec_context.3 \
 	gss_acquire_cred.3 gss_inquire_cred_by_mech.3 \
 	gss_acquire_cred.3 gss_inquire_mechs_for_name.3 \
 	gss_acquire_cred.3 gss_inquire_names_for_mech.3 \
+	gss_acquire_cred.3 gss_krb5_ccache_name.3 \
 	gss_acquire_cred.3 gss_krb5_copy_ccache.3 \
 	gss_acquire_cred.3 gss_krb5_compat_des3_mic.3 \
+	gss_acquire_cred.3 gss_krb5_get_tkt_flags.3 \
 	gss_acquire_cred.3 gss_process_context_token.3 \
 	gss_acquire_cred.3 gss_release_buffer.3 \
 	gss_acquire_cred.3 gss_release_cred.3 \
@@ -112,5 +142,9 @@ MLINKS+=gss_acquire_cred.3 gss_accept_sec_context.3 \
 CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/ \
 	-I${KRB5SRC}/lib/asn1 -I. \
 	-DSHA1_CTX=SHA_CTX
+
+regen:
+	cd ${GENDIR}; asn1_compile $(DIR_GSSAPI)/spnego.asn1 spnego_asn1; \
+		for f in *.x; do mv $$f `echo $$f | sed s,.x$$,.c,g`; done
 
 .include <bsd.lib.mk>

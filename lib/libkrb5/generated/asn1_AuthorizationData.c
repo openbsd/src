@@ -1,4 +1,4 @@
-/* Generated from /usr/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
+/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/asn1/k5.asn1 */
 /* Do not edit */
 
 #include <stdio.h>
@@ -29,7 +29,7 @@ int oldret = ret;
 ret = 0;
 e = encode_octet_string(p, len, &(&(data)->val[i])->ad_data, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 1, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 1, &l);
 BACK;
 ret += oldret;
 }
@@ -38,15 +38,15 @@ int oldret = ret;
 ret = 0;
 e = encode_integer(p, len, &(&(data)->val[i])->ad_type, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 0, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 0, &l);
 BACK;
 ret += oldret;
 }
-e = der_put_length_and_tag (p, len, ret, UNIV, CONS, UT_Sequence, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_UNIV, CONS, UT_Sequence, &l);
 BACK;
 ret += oldret;
 }
-e = der_put_length_and_tag (p, len, ret, UNIV, CONS, UT_Sequence, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_UNIV, CONS, UT_Sequence, &l);
 BACK;
 *size = ret;
 return 0;
@@ -63,7 +63,7 @@ int e;
 
 memset(data, 0, sizeof(*data));
 reallen = 0;
-e = der_match_tag_and_length (p, len, UNIV, CONS, UT_Sequence,&reallen, &l);
+e = der_match_tag_and_length (p, len, ASN1_C_UNIV, CONS, UT_Sequence,&reallen, &l);
 FORW;
 if(len < reallen)
 return ASN1_OVERRUN;
@@ -77,7 +77,7 @@ ret = 0;
 while(ret < origlen) {
 (data)->len++;
 (data)->val = realloc((data)->val, sizeof(*((data)->val)) * (data)->len);
-e = der_match_tag_and_length (p, len, UNIV, CONS, UT_Sequence,&reallen, &l);
+e = der_match_tag_and_length (p, len, ASN1_C_UNIV, CONS, UT_Sequence,&reallen, &l);
 FORW;
 {
 int dce_fix;
@@ -86,7 +86,7 @@ return ASN1_BAD_FORMAT;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 0, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 0, &l);
 if (e)
 return e;
 else {
@@ -112,7 +112,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 1, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 1, &l);
 if (e)
 return e;
 else {
@@ -159,6 +159,7 @@ free_octet_string(&(&(data)->val[(data)->len-1])->ad_data);
 (data)->len--;
 }
 free((data)->val);
+(data)->val = NULL;
 }
 
 size_t
@@ -170,6 +171,8 @@ int oldret = ret;
 int i;
 ret = 0;
 for(i = (data)->len - 1; i >= 0; --i){
+int oldret = ret;
+ret = 0;
 {
 int oldret = ret;
 ret = 0;
@@ -183,6 +186,7 @@ ret += length_octet_string(&(&(data)->val[i])->ad_data);
 ret += 1 + length_len(ret) + oldret;
 }
 ret += 1 + length_len(ret);
+ret += oldret;
 }
 ret += 1 + length_len(ret) + oldret;
 }

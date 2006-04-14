@@ -1,4 +1,4 @@
-/* Generated from /usr/src/lib/libkrb5/../../kerberosV/src/lib/hdb/hdb.asn1 */
+/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/hdb/hdb.asn1 */
 /* Do not edit */
 
 #include <stdio.h>
@@ -28,7 +28,7 @@ int oldret = ret;
 ret = 0;
 e = encode_Salt(p, len, (data)->salt, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 2, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 2, &l);
 BACK;
 ret += oldret;
 }
@@ -37,7 +37,7 @@ int oldret = ret;
 ret = 0;
 e = encode_EncryptionKey(p, len, &(data)->key, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 1, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 1, &l);
 BACK;
 ret += oldret;
 }
@@ -45,13 +45,13 @@ if((data)->mkvno)
 {
 int oldret = ret;
 ret = 0;
-e = encode_integer(p, len, (data)->mkvno, &l);
+e = encode_unsigned(p, len, (data)->mkvno, &l);
 BACK;
-e = der_put_length_and_tag (p, len, ret, CONTEXT, CONS, 0, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_CONTEXT, CONS, 0, &l);
 BACK;
 ret += oldret;
 }
-e = der_put_length_and_tag (p, len, ret, UNIV, CONS, UT_Sequence, &l);
+e = der_put_length_and_tag (p, len, ret, ASN1_C_UNIV, CONS, UT_Sequence, &l);
 BACK;
 *size = ret;
 return 0;
@@ -68,7 +68,7 @@ int e;
 
 memset(data, 0, sizeof(*data));
 reallen = 0;
-e = der_match_tag_and_length (p, len, UNIV, CONS, UT_Sequence,&reallen, &l);
+e = der_match_tag_and_length (p, len, ASN1_C_UNIV, CONS, UT_Sequence,&reallen, &l);
 FORW;
 {
 int dce_fix;
@@ -77,7 +77,7 @@ return ASN1_BAD_FORMAT;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 0, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 0, &l);
 if (e)
 (data)->mkvno = NULL;
 else {
@@ -92,7 +92,7 @@ oldlen = len;
 if((dce_fix = fix_dce(newlen, &len)) < 0)return ASN1_BAD_FORMAT;
 (data)->mkvno = malloc(sizeof(*(data)->mkvno));
 if((data)->mkvno == NULL) return ENOMEM;
-e = decode_integer(p, len, (data)->mkvno, &l);
+e = decode_unsigned(p, len, (data)->mkvno, &l);
 FORW;
 if(dce_fix){
 e = der_match_tag_and_length (p, len, (Der_class)0, (Der_type)0, 0, &reallen, &l);
@@ -105,7 +105,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 1, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 1, &l);
 if (e)
 return e;
 else {
@@ -131,7 +131,7 @@ len = oldlen - newlen;
 {
 size_t newlen, oldlen;
 
-e = der_match_tag (p, len, CONTEXT, CONS, 2, &l);
+e = der_match_tag (p, len, ASN1_C_CONTEXT, CONS, 2, &l);
 if (e)
 (data)->salt = NULL;
 else {
@@ -173,11 +173,13 @@ free_Key(Key *data)
 {
 if((data)->mkvno) {
 free((data)->mkvno);
+(data)->mkvno = NULL;
 }
 free_EncryptionKey(&(data)->key);
 if((data)->salt) {
 free_Salt((data)->salt);
 free((data)->salt);
+(data)->salt = NULL;
 }
 }
 
@@ -188,7 +190,7 @@ size_t ret = 0;
 if((data)->mkvno){
 int oldret = ret;
 ret = 0;
-ret += length_integer((data)->mkvno);
+ret += length_unsigned((data)->mkvno);
 ret += 1 + length_len(ret) + oldret;
 }
 {

@@ -1,4 +1,4 @@
-/* Generated from /usr/src/lib/libkrb5/../../kerberosV/src/lib/hdb/hdb.asn1 */
+/* Generated from /home/biorn/src/lib/libkrb5/../../kerberosV/src/lib/hdb/hdb.asn1 */
 /* Do not edit */
 
 #ifndef __hdb_asn1_h__
@@ -12,17 +12,19 @@ time_t timegm (struct tm*);
 #ifndef __asn1_common_definitions__
 #define __asn1_common_definitions__
 
-typedef struct octet_string {
+typedef struct heim_octet_string {
   size_t length;
   void *data;
-} octet_string;
+} heim_octet_string;
 
-typedef char *general_string;
+typedef char *heim_general_string;
 
-typedef struct oid {
+typedef char *heim_utf8_string;
+
+typedef struct heim_oid {
   size_t length;
   unsigned *components;
-} oid;
+} heim_oid;
 
 #define ASN1_MALLOC_ENCODE(T, B, BL, S, L, R)                  \
   do {                                                         \
@@ -50,14 +52,14 @@ enum { hdb_afs3_salt = 10 };
 
 /*
 Salt ::= SEQUENCE {
-  type[0]         INTEGER,
+  type[0]         UNSIGNED INTEGER,
   salt[1]         OCTET STRING
 }
 */
 
 typedef struct Salt {
-  int type;
-  octet_string salt;
+  unsigned int type;
+  heim_octet_string salt;
 } Salt;
 
 int    encode_Salt(unsigned char *, size_t, const Salt *, size_t *);
@@ -69,14 +71,14 @@ int    copy_Salt  (const Salt *, Salt *);
 
 /*
 Key ::= SEQUENCE {
-  mkvno[0]        INTEGER OPTIONAL,
+  mkvno[0]        UNSIGNED INTEGER OPTIONAL,
   key[1]          EncryptionKey,
   salt[2]         Salt OPTIONAL
 }
 */
 
 typedef struct Key {
-  int *mkvno;
+  unsigned int *mkvno;
   EncryptionKey key;
   Salt *salt;
 } Key;
@@ -151,20 +153,20 @@ size_t length_HDBFlags(const HDBFlags *);
 int    copy_HDBFlags  (const HDBFlags *, HDBFlags *);
 unsigned HDBFlags2int(HDBFlags);
 HDBFlags int2HDBFlags(unsigned);
-extern struct units HDBFlags_units[];
+const struct units * asn1_HDBFlags_units(void);
 
 /*
 GENERATION ::= SEQUENCE {
   time[0]         KerberosTime,
-  usec[1]         INTEGER,
-  gen[2]          INTEGER
+  usec[1]         UNSIGNED INTEGER,
+  gen[2]          UNSIGNED INTEGER
 }
 */
 
 typedef struct GENERATION {
   KerberosTime time;
-  int usec;
-  int gen;
+  unsigned int usec;
+  unsigned int gen;
 } GENERATION;
 
 int    encode_GENERATION(unsigned char *, size_t, const GENERATION *, size_t *);
@@ -177,24 +179,24 @@ int    copy_GENERATION  (const GENERATION *, GENERATION *);
 /*
 hdb_entry ::= SEQUENCE {
   principal[0]    Principal OPTIONAL,
-  kvno[1]         INTEGER,
+  kvno[1]         UNSIGNED INTEGER,
   keys[2]         SEQUENCE OF Key,
   created-by[3]   Event,
   modified-by[4]  Event OPTIONAL,
   valid-start[5]  KerberosTime OPTIONAL,
   valid-end[6]    KerberosTime OPTIONAL,
   pw-end[7]       KerberosTime OPTIONAL,
-  max-life[8]     INTEGER OPTIONAL,
-  max-renew[9]    INTEGER OPTIONAL,
+  max-life[8]     UNSIGNED INTEGER OPTIONAL,
+  max-renew[9]    UNSIGNED INTEGER OPTIONAL,
   flags[10]       HDBFlags,
-  etypes[11]      SEQUENCE OF INTEGER OPTIONAL,
+  etypes[11]      SEQUENCE OF UNSIGNED INTEGER OPTIONAL,
   generation[12]  GENERATION OPTIONAL
 }
 */
 
 typedef struct hdb_entry {
   Principal *principal;
-  int kvno;
+  unsigned int kvno;
   struct  {
     unsigned int len;
     Key *val;
@@ -204,12 +206,12 @@ typedef struct hdb_entry {
   KerberosTime *valid_start;
   KerberosTime *valid_end;
   KerberosTime *pw_end;
-  int *max_life;
-  int *max_renew;
+  unsigned int *max_life;
+  unsigned int *max_renew;
   HDBFlags flags;
   struct  {
     unsigned int len;
-    int *val;
+    unsigned int *val;
   } *etypes;
   GENERATION *generation;
 } hdb_entry;
