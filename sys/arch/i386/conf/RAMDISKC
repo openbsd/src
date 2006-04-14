@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.65 2006/03/12 17:29:49 martin Exp $
+#	$OpenBSD: RAMDISKC,v 1.66 2006/04/14 21:52:47 weingart Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -13,8 +13,6 @@ option		I686_CPU
 
 option		SMALL_KERNEL
 option		NO_PROPOLICE
-
-#option		DUMMY_NOPS	# speed hack; recommended
 
 maxusers	4		# estimated number of users
 option		TIMEZONE=0	# time zone to adjust RTC time by

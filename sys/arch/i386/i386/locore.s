@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.97 2006/03/14 12:25:20 mickey Exp $	*/
+/*	$OpenBSD: locore.s,v 1.98 2006/04/14 21:52:47 weingart Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -78,16 +78,6 @@
 #define	SUPERALIGN_TEXT	.align  16,0x90	/* 16-byte boundaries better for 486 */
 #define _ALIGN_TEXT	ALIGN_TEXT
 #include <machine/asm.h>
-
-/* NB: NOP now preserves registers so NOPs can be inserted anywhere */
-/* XXX: NOP and FASTER_NOP are misleadingly named */
-#ifdef DUMMY_NOPS	/* this will break some older machines */
-#define	FASTER_NOP
-#define	NOP
-#else
-#define	FASTER_NOP	pushl %eax ; inb $0x84,%al ; popl %eax
-#define	NOP	pushl %eax ; inb $0x84,%al ; inb $0x84,%al ; popl %eax
-#endif
 
 #define CPL _C_LABEL(lapic_tpr)
 
