@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2006/04/13 04:21:05 ray Exp $
+#	$OpenBSD: Makefile,v 1.19 2006/04/14 15:01:23 ray Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -59,6 +59,7 @@ LTESTS= ci-initial \
 	co-unlock-filemodes \
 	ci-filemodes \
 	rcs-iflag \
+	rlog-lflag \
 
 .for t in ${LTESTS}
 REGRESS_TARGETS+=test-${t}
@@ -469,6 +470,16 @@ test-rcs-iflag: clean
 	@echo text >> file
 	@${CI} -q file
 	@fgrep -q 1.1 RCS/file,v
+
+test-rlog-lflag: clean
+	@mkdir RCS
+	@touch file
+	@echo rev1 | ${CI} -q -l file
+	@${RLOG} -l file | fgrep -q 'revision 1.1'
+	@echo line >> file
+	@echo rev2 | ${CI} -q file
+	@${RLOG} -l file | fgrep -q 'revision 1.2' ||	\
+	    case "$$?" in 1) exit 0;; esac && exit 1
 
 clean:
 	@rm -rf ${CLEANFILES}
