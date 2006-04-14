@@ -1,4 +1,4 @@
-/*	$OpenBSD: adt7460.c,v 1.11 2006/04/13 05:30:24 deraadt Exp $	*/
+/*	$OpenBSD: adt7460.c,v 1.12 2006/04/14 15:48:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -283,7 +283,7 @@ adt_refresh(void *arg)
 		case ADT_VCCP:
 		case ADT_V5:
 		case ADT_V12:
-			sc->sc_sensor[i].value = ratio * 1000 * data / 192;
+			sc->sc_sensor[i].value = ratio * 1000 * (u_int)data / 192;
 			break;
 		case ADT_LOCAL_TEMP:
 		case ADT_REM1_TEMP:
