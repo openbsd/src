@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.5 2005/04/22 00:42:16 miod Exp $	*/
+/*	$OpenBSD: ite.c,v 1.6 2006/04/14 21:05:44 miod Exp $	*/
 /*	$NetBSD: ite.c,v 1.12 1997/01/30 10:32:55 thorpej Exp $	*/
 
 /*
@@ -89,6 +89,10 @@ struct itesw itesw[] = {
 
 	{ GID_HYPERION,
 	hyper_init,	ite_deinit_noop, hyper_clear,	hyper_putc,
+	hyper_cursor,	hyper_scroll,	ite_readbyte,	ite_writeglyph },
+
+	{ GID_TIGER,
+	tvrx_init,	ite_deinit_noop, hyper_clear,	hyper_putc,
 	hyper_cursor,	hyper_scroll,	ite_readbyte,	ite_writeglyph },
 };
 int	nitesw = sizeof(itesw) / sizeof(itesw[0]);

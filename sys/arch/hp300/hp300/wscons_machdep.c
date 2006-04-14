@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_machdep.c,v 1.6 2006/01/01 11:59:39 miod Exp $	*/
+/*	$OpenBSD: wscons_machdep.c,v 1.7 2006/04/14 21:05:44 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -79,7 +79,8 @@
 #include "hyper.h"
 #include "rbox.h"
 #include "topcat.h"
-#if NDVBOX > 0 || NGBOX > 0 || NHYPER > 0 || NRBOX > 0 || NTOPCAT > 0
+#include "tvrx.h"
+#if NDVBOX > 0 || NGBOX > 0 || NHYPER > 0 || NRBOX > 0 || NTOPCAT > 0 || NTVRX > 0
 #include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diofbreg.h>
@@ -105,7 +106,7 @@ cons_decl(ws);
 
 void (*wsfbcninit)(void) = NULL;
 
-#if NDVBOX > 0 || NGBOX > 0 || NHYPER > 0 || NRBOX > 0 || NTOPCAT > 0
+#if NDVBOX > 0 || NGBOX > 0 || NHYPER > 0 || NRBOX > 0 || NTOPCAT > 0 || NTVRX > 0
 int	dio_fbidentify(struct diofbreg *);
 
 /*
@@ -144,6 +145,11 @@ dio_fbidentify(struct diofbreg *fbr)
 			wsfbcninit = topcatcninit;
 			return (1);
 #endif
+#if NTVRX > 0
+		case GID_TIGER:
+			wsfbcninit = tvrxcninit;
+			return (1);
+#endif
 		default:
 			break;
 		}
@@ -167,7 +173,7 @@ wscnprobe(struct consdev *cp)
 	int maj, tmpconscode;
 	vsize_t mapsize;
 	vaddr_t va;
-#if NDVBOX > 0 || NGBOX > 0 || NHYPER > 0 || NRBOX > 0 || NTOPCAT > 0
+#if NDVBOX > 0 || NGBOX > 0 || NHYPER > 0 || NRBOX > 0 || NTOPCAT > 0 || NTVRX > 0
 	paddr_t pa;
 	u_int scode, sctop;
 	struct diofbreg *fbr;
@@ -196,7 +202,7 @@ wscnprobe(struct consdev *cp)
 	}
 #endif
 
-#if NDVBOX > 0 || NGBOX > 0 || NHYPER > 0 || NRBOX > 0 || NTOPCAT > 0
+#if NDVBOX > 0 || NGBOX > 0 || NHYPER > 0 || NRBOX > 0 || NTOPCAT > 0 || NTVRX > 0
 	/*
 	 * Scan the DIO bus.
 	 */

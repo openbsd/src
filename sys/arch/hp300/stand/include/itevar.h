@@ -1,4 +1,4 @@
-/*	$OpenBSD: itevar.h,v 1.3 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: itevar.h,v 1.4 2006/04/14 21:05:44 miod Exp $	*/
 /*	$NetBSD: itevar.h,v 1.1 1996/03/03 04:23:42 thorpej Exp $	*/
 
 /*
@@ -226,3 +226,5 @@ void	hyper_clear(struct ite_data *, int, int, int, int);
 void	hyper_putc(struct ite_data *, int, int, int, int);
 void	hyper_cursor(struct ite_data *, int);
 void	hyper_scroll(struct ite_data *, int, int, int, int);
+
+void	tvrx_init(struct ite_data *);

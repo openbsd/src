@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.30 2005/12/31 19:30:14 miod Exp $
+#	$OpenBSD: files.hp300,v 1.31 2006/04/14 21:05:43 miod Exp $
 #	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
@@ -70,7 +70,9 @@ file	arch/hp300/hp300/wscons_machdep.c	wsdisplay
 # Frame buffer devices
 #
 define	diofb
-file	arch/hp300/dev/diofb.c			diofb
+define	diofb_mono
+file	arch/hp300/dev/diofb.c			diofb | diofb_mono
+file	arch/hp300/dev/diofb_mono.c		diofb_mono
 
 device	dvbox: wsemuldisplaydev, diofb, rasops8
 attach	dvbox at intio with dvbox_intio
@@ -82,7 +84,7 @@ attach	gbox at intio with gbox_intio
 attach	gbox at dio with gbox_dio
 file	arch/hp300/dev/gbox.c			gbox	needs-flag
 
-device	hyper: wsemuldisplaydev, diofb, rasops1
+device	hyper: wsemuldisplaydev, diofb_mono, rasops1
 attach	hyper at dio
 file	arch/hp300/dev/hyper.c			hyper	needs-flag
 
@@ -95,6 +97,10 @@ device	topcat: wsemuldisplaydev, diofb, rasops8
 attach	topcat at intio with topcat_intio
 attach	topcat at dio with topcat_dio
 file	arch/hp300/dev/topcat.c			topcat	needs-flag
+
+device	tvrx: wsemuldisplaydev, diofb_mono, rasops1
+attach	tvrx at dio
+file	arch/hp300/dev/tvrx.c			tvrx	needs-flag
 
 #
 # Other devices on the DIO bus

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofbvar.h,v 1.7 2006/03/12 22:52:59 miod Exp $	*/
+/*	$OpenBSD: diofbvar.h,v 1.8 2006/04/14 21:05:43 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -123,12 +123,16 @@ paddr_t	diofb_mmap(void *, off_t, int);
 int	diofb_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
 
+void	diofb_mono_windowmove(struct diofb *, u_int16_t, u_int16_t,
+	    u_int16_t, u_int16_t, u_int16_t, u_int16_t, int);
+
 /* Console support */
 void	dvboxcninit(void);
 void	gboxcninit(void);
 void	hypercninit(void);
 void	rboxcninit(void);
 void	topcatcninit(void);
+void	tvrxcninit(void);
 extern	struct diofb diofb_cn;		/* struct diofb for console device */
 
 #endif
