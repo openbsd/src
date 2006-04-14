@@ -1,5 +1,5 @@
-/*	$OpenBSD: pcscp.c,v 1.10 2005/08/09 04:10:13 mickey Exp $	*/
-/*	$NetBSD: pcscp.c,v 1.11 2000/11/14 18:42:58 thorpej Exp $	*/
+/*	$OpenBSD: pcscp.c,v 1.11 2006/04/14 09:31:52 martin Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.26 2003/10/19 10:25:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  * written by Izumi Tsutsui <tsutsui@ceres.dti.ne.jp>
  *
  * Technical manual available at
- * http://www.amd.com/products/npd/techdocs/techdocs.html
+ * http://www.amd.com/files/connectivitysolutions/networking/archivednetworking/19113.pdf
  */
 
 #include <sys/param.h>
@@ -69,7 +69,6 @@
 #include <dev/pci/pcscpreg.h>
 
 #define IO_MAP_REG	0x10
-#define MEM_MAP_REG	0x14
 
 struct pcscp_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
@@ -160,9 +159,6 @@ pcscp_match(parent, match, aux)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_AMD_PCSCSI_PCI:
-#if 0
-	case PCI_PRODUCT_AMD_PCNETS_PCI:
-#endif
 		return 1;
 	}
 	return 0;
@@ -179,39 +175,23 @@ pcscp_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	struct pcscp_softc *esc = (void *)self;
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
-	bus_space_tag_t st, iot, memt;
-	bus_space_handle_t sh, ioh, memh;
-	int ioh_valid, memh_valid;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	bus_dma_segment_t seg;
 	int error, rseg;
 
-	ioh_valid = (pci_mapreg_map(pa, IO_MAP_REG, PCI_MAPREG_TYPE_IO, 0,
-	    &iot, &ioh, NULL, NULL, 0) == 0);
-#if 0	/* XXX cannot use memory map? */
-	memh_valid = (pci_mapreg_map(pa, MEM_MAP_REG,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &memt, &memh, NULL, NULL, 0) == 0);
-#else
-	memh_valid = 0;
-#endif
-
-	if (memh_valid) {
-		st = memt;
-		sh = memh;
-	} else if (ioh_valid) {
-		st = iot;
-		sh = ioh;
-	} else {
-		printf(": unable to map registers\n");
+	if (pci_mapreg_map(pa, IO_MAP_REG, PCI_MAPREG_TYPE_IO, 0,
+	     &iot, &ioh, NULL, NULL, NULL)) {
+		printf("%s: unable to map registers\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
 	sc->sc_glue = &pcscp_glue;
 
-	esc->sc_st = st;
-	esc->sc_sh = sh;
+	esc->sc_st = iot;
+	esc->sc_sh = ioh;
 	esc->sc_dmat = pa->pa_dmat;
 
 	/*
@@ -288,8 +268,8 @@ pcscp_attach(parent, self, aux)
 #define MDL_SEG_OFFSET	0x0FFF
 #define MDL_SIZE	(MAXPHYS / MDL_SEG_SIZE + 1) /* no hardware limit? */
 
-	if (bus_dmamap_create(esc->sc_dmat, MAXPHYS, MDL_SIZE, MAXPHYS, 0,
-	    BUS_DMA_NOWAIT, &esc->sc_xfermap)) {
+	if (bus_dmamap_create(esc->sc_dmat, MAXPHYS, MDL_SIZE, MDL_SEG_SIZE,
+	    MDL_SEG_SIZE, BUS_DMA_NOWAIT, &esc->sc_xfermap)) {
 		printf("%s: can't create dma maps\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -540,7 +520,6 @@ pcscp_dma_setup(sc, addr, len, datain, dmasize)
 	u_int32_t *mdl;
 	int error, nseg, seg;
 	bus_addr_t s_offset, s_addr;
-	long rest, count;
 
 	WRITE_DMAREG(esc, DMA_CMD, DMACMD_IDLE | (datain ? DMACMD_DIR : 0));
 
@@ -563,8 +542,10 @@ pcscp_dma_setup(sc, addr, len, datain, dmasize)
 
 	error = bus_dmamap_load(esc->sc_dmat, dmap, *esc->sc_dmaaddr,
 	    *esc->sc_dmalen, NULL,
-	    sc->sc_nexus->xs->flags & SCSI_NOSLEEP ?
-	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+	    ((sc->sc_nexus->xs->flags & SCSI_NOSLEEP) ?
+	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
+	    ((sc->sc_nexus->xs->flags & SCSI_DATA_IN) ?
+	     BUS_DMA_READ : BUS_DMA_WRITE));
 	if (error) {
 		printf("%s: unable to load dmamap, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -579,40 +560,17 @@ pcscp_dma_setup(sc, addr, len, datain, dmasize)
 	nseg = dmap->dm_nsegs;
 
 	/* the first segment is possibly not aligned with 4k MDL boundary */
-	count = dmap->dm_segs[0].ds_len;
 	s_addr = dmap->dm_segs[0].ds_addr;
 	s_offset = s_addr & MDL_SEG_OFFSET;
 	s_addr -= s_offset;
-	rest = MDL_SEG_SIZE - s_offset;
 
 	/* set the first MDL and offset */
 	WRITE_DMAREG(esc, DMA_SPA, s_offset); 
 	*mdl++ = htole32(s_addr);
-	count -= rest;
-	
-	/* rests of the first dmamap segment */
-	while (count > 0) {
-		s_addr += MDL_SEG_SIZE;
-		*mdl++ = htole32(s_addr);
-		count -= MDL_SEG_SIZE;
-	}
 
 	/* the rest dmamap segments are aligned with 4k boundary */
-	for (seg = 1; seg < nseg; seg++) {
-		count = dmap->dm_segs[seg].ds_len;
-		s_addr = dmap->dm_segs[seg].ds_addr;
-
-		/* first 4kbyte of each dmamap segment */
-		*mdl++ = htole32(s_addr);
-		count -= MDL_SEG_SIZE;
-
-		/* trailing contiguous 4k frames of each dmamap segments */
-		while (count > 0) {
-			s_addr += MDL_SEG_SIZE;
-			*mdl++ = htole32(s_addr);
-			count -= MDL_SEG_SIZE;
-		}
-	}
+	for (seg = 1; seg < nseg; seg++)
+		*mdl++ = htole32(dmap->dm_segs[seg].ds_addr);
 
 	return 0;
 }
