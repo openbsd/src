@@ -21,7 +21,7 @@
 #if 0
 static char sccsid[] = "@(#) socket.c 1.15 97/03/21 19:27:24";
 #else
-static char rcsid[] = "$OpenBSD: socket.c,v 1.7 2003/12/27 22:58:35 henning Exp $";
+static char rcsid[] = "$OpenBSD: socket.c,v 1.8 2006/04/14 18:27:49 dhill Exp $";
 #endif
 #endif
 
@@ -81,9 +81,9 @@ struct request_info *request;
 {
     static struct sockaddr_storage client;
     static struct sockaddr_storage server;
-    int     len;
-    char    buf[BUFSIZ];
-    int     fd = request->fd;
+    socklen_t   len;
+    char        buf[BUFSIZ];
+    int         fd = request->fd;
 
     sock_methods(request);
 
@@ -273,9 +273,9 @@ struct host_info *host;
 static void sock_sink(fd)
 int     fd;
 {
-    char    buf[BUFSIZ];
+    char    	buf[BUFSIZ];
     struct sockaddr_storage ss;
-    int     size = sizeof(ss);
+    socklen_t	size = sizeof(ss);
 
     /*
      * Eat up the not-yet received datagram. Some systems insist on a
