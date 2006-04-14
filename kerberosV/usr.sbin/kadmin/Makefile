@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2004/06/04 23:45:19 biorn Exp $
+# $OpenBSD: Makefile,v 1.15 2006/04/14 08:28:55 biorn Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -15,13 +15,17 @@ SRCS=	ank.c \
 	get.c \
 	init.c \
 	kadmin.c \
+	kadmin-commands.c \
+	kadmin-commands.h \
+	kadmin_locl.h \
 	load.c \
 	mod.c \
-	rename.c \
-	util.c \
+	pw_quality.c \
 	random_password.c \
-	kadmin_locl.h \
-	sl.c
+	rename.c \
+	sl.c \
+	stash.c \
+	util.c
 SRCS+=	${PRINTVER}
 SRCS+=	tm2time.c
 
@@ -29,7 +33,15 @@ SRCS+=	tm2time.c
 .PATH:	${KRB5SRC}/lib/sl
 .PATH:	${ROKENSRC}
 
-CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/kadm5
+slc:	slc-gram.o slc-lex.o ${PRINTVER}
+	$(CC) -o slc $> -lkrb5 -lcrypto
+
+SLC=	slc
+
+kadmin:	kadmin-commands.h
+kadmin-commands.c kadmin-commands.h:	kadmin-commands.in $(SLC)
+	./$(SLC) $(KRB5SRC)/kadmin/kadmin-commands.in
+CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/kadm5 -I.
 
 DPADD+= ${LIBREADLINE} ${LIBCURSES} ${LIBKADM5SRV} ${LIBKADM5CLNT} \
 	${LIBKRB5} ${LIBCRYPTO} ${LIBDES}

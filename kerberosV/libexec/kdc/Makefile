@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2003/07/14 16:14:44 mho Exp $
+# $OpenBSD: Makefile,v 1.12 2006/04/14 08:28:55 biorn Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -9,6 +9,7 @@ MAN=	${PROG}.8
 SRCS=	524.c \
 	config.c \
 	connect.c \
+	kaserver.c \
 	kdc_locl.h \
 	kerberos5.c \
 	kerberos4.c \

@@ -32,13 +32,13 @@
  */
 
 #if 0
-RCSID("$Id: print_version.c,v 1.2 2004/10/29 16:25:46 biorn Exp $");
+RCSID("$Id: print_version.c,v 1.3 2006/04/14 08:28:55 biorn Exp $");
 #endif
 
 #include <stdio.h>
 
 
-#define VERSIONLIST 		{ "heimdal-0.6.3/OpenBSD", }
+#define VERSIONLIST 		{ "heimdal-0.7.2/OpenBSD", }
 #define PACKAGE_BUGREPORT	"bugs@openbsd.org"
 
 char *__progname;
