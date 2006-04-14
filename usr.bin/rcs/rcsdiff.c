@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.49 2006/04/14 23:29:01 joris Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.50 2006/04/14 23:32:01 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -221,7 +221,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 	t = mktime(tb);
 
 	tv2[0].tv_sec = t;
-	tv2[1].tv_sec = t; 
+	tv2[1].tv_sec = t;
 
 	strlcpy(path1, rcs_tmpdir, sizeof(path1));
 	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));
