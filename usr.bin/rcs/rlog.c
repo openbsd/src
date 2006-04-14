@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.41 2006/04/14 01:11:07 deraadt Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.42 2006/04/14 15:02:15 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -217,7 +217,8 @@ rlog_file(const char *fname, const char *fpath)
 	if (hflag == 0 || tflag == 1)
 		printf("description:\n%s", file->rf_desc);
 
-	if (hflag == 0 && tflag == 0) {
+	if (hflag == 0 && tflag == 0 &&
+	    !(lflag == 1 && TAILQ_EMPTY(&file->rf_locks))) {
 		TAILQ_FOREACH(rdp, &(file->rf_delta), rd_list) {
 			/*
 			 * if selections are enabled verify that entry is
@@ -244,12 +245,8 @@ rlog_rev_print(struct rcs_delta *rdp)
 
 	/* -l[lockers] */
 	if (lflag == 1) {
-		/* if no locks at all, abort. */
-		if (TAILQ_EMPTY(&(file->rf_locks)))
-			return;
-		else
-			if (rdp->rd_locker != NULL)
-				found++;
+		if (rdp->rd_locker != NULL)
+			found++;
 
 		if (llist != NULL) {
 			/* if locker is empty, no need to go further. */
