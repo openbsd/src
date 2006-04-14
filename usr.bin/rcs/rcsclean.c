@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.34 2006/04/14 16:16:02 ray Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.35 2006/04/14 16:28:24 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -85,7 +85,8 @@ rcsclean_main(int argc, char **argv)
 			rcs_suffixes = rcs_optarg ? rcs_optarg : "";
 			break;
 		default:
-			break;
+			(usage)();
+			exit(1);
 		}
 	}
 
