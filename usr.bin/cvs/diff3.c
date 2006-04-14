@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3.c,v 1.22 2006/04/05 01:38:55 ray Exp $	*/
+/*	$OpenBSD: diff3.c,v 1.23 2006/04/14 02:49:41 deraadt Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -72,7 +72,7 @@ static const char copyright[] =
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: diff3.c,v 1.22 2006/04/05 01:38:55 ray Exp $";
+    "$OpenBSD: diff3.c,v 1.23 2006/04/14 02:49:41 deraadt Exp $";
 #endif /* not lint */
 
 #include "includes.h"
@@ -238,7 +238,7 @@ cvs_diff3(RCSFILE *rf, char *workfile, RCSNUM *rev1, RCSNUM *rev2, int verbose)
 	if ((diffb = cvs_patchfile(data, patch, ed_patch_lines)) == NULL)
 		goto out;
 
-	if ((verbose ==1) && (diff3_conflicts != 0)) {
+	if (verbose == 1 && diff3_conflicts != 0) {
 		cvs_log(LP_WARN, "%d conflict%s found during merge, "
 		    "please correct.", diff3_conflicts,
 		    (diff3_conflicts > 1) ? "s" : "");
@@ -317,18 +317,18 @@ ed_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 		op = lp->l_line[strlen(lp->l_line) - 1];
 		start = (int)strtol(lp->l_line, &ep, 10);
 		if (op == 'a') {
-			if ((start > dlines->l_nblines) ||
-			    (start < 0) || (*ep != 'a'))
+			if (start > dlines->l_nblines ||
+			    start < 0 || *ep != 'a')
 				fatal("ed_patch_lines");
 		} else if (op == 'c') {
-			if ((start > dlines->l_nblines) ||
-			    (start < 0) || ((*ep != ',') && (*ep != 'c')))
+			if (start > dlines->l_nblines ||
+			    start < 0 || (*ep != ',' && *ep != 'c'))
 				fatal("ed_patch_lines");
 
 			if (*ep == ',') {
 				ep++;
 				end = (int)strtol(ep, &ep, 10);
-				if ((end < 0) || (*ep != 'c'))
+				if (end < 0 || *ep != 'c')
 					fatal("ed_patch_lines");
 			} else {
 				end = start;
