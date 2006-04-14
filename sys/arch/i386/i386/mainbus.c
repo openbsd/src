@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.25 2006/03/13 20:10:49 brad Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.26 2006/04/14 21:26:18 marco Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -125,24 +125,19 @@ int     isa_has_been_seen;
  * Probe for the mainbus; always succeeds.
  */
 int
-mainbus_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+mainbus_match(struct device *parent, void *match, void *aux)
 {
-
-	return 1;
+	return (1);
 }
 
 /*
  * Attach the mainbus.
  */
 void
-mainbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	union mainbus_attach_args mba;
-	extern int cpu_id, cpu_feature;
+	union mainbus_attach_args	mba;
+	extern int			cpu_id, cpu_feature;
 
 	printf("\n");
 
@@ -264,15 +259,14 @@ mainbus_attach(parent, self, aux)
 }
 
 int
-mainbus_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+mainbus_print(void *aux, const char *pnp)
 {
-	union mainbus_attach_args *mba = aux;
+	union mainbus_attach_args	*mba = aux;
 
 	if (pnp)
 		printf("%s at %s", mba->mba_busname, pnp);
 	if (!strcmp(mba->mba_busname, "pci"))
 		printf(" bus %d", mba->mba_pba.pba_bus);
+
 	return (UNCONF);
 }
