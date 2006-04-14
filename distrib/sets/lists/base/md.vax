@@ -969,6 +969,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/krb5.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/krb5_asn1.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/krb5_err.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/spnego_asn1.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/keynote.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kvm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/langinfo.ph

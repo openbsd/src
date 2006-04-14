@@ -25,9 +25,9 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.9/2.95.3/cpp0
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.9/2.95.3/include
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.9/2.95.3/specs
-./usr/lib/libasn1.so.15.0
+./usr/lib/libasn1.so.16.0
 ./usr/lib/libc.so.39.0
-./usr/lib/libcom_err.so.15.0
+./usr/lib/libcom_err.so.16.0
 ./usr/lib/libcrypto.so.12.0
 ./usr/lib/libcurses.so.10.0
 ./usr/lib/libdes.so.9.0
@@ -35,10 +35,10 @@
 ./usr/lib/libevent.so.1.3
 ./usr/lib/libform.so.3.0
 ./usr/lib/libg2c.so.8.0
-./usr/lib/libgssapi.so.4.0
+./usr/lib/libgssapi.so.5.0
 ./usr/lib/libiberty.so.8.0
-./usr/lib/libkafs.so.15.0
-./usr/lib/libkrb5.so.15.0
+./usr/lib/libkafs.so.16.0
+./usr/lib/libkrb5.so.16.0
 ./usr/lib/libkvm.so.8.0
 ./usr/lib/libm.so.2.2
 ./usr/lib/libmenu.so.3.0
@@ -1535,6 +1535,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/kerberosV/krb5.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/kerberosV/krb5_asn1.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/kerberosV/krb5_err.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/kerberosV/spnego_asn1.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/keynote.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/kvm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/langinfo.ph

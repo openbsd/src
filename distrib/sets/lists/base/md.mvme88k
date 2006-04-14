@@ -1476,6 +1476,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/kerberosV/krb5.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/kerberosV/krb5_asn1.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/kerberosV/krb5_err.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/kerberosV/spnego_asn1.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/keynote.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/kvm.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/langinfo.ph
