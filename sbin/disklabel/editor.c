@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.101 2005/12/05 21:30:40 miod Exp $	*/
+/*	$OpenBSD: editor.c,v 1.102 2006/04/14 16:38:42 pedro Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.101 2005/12/05 21:30:40 miod Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.102 2006/04/14 16:38:42 pedro Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -496,8 +496,6 @@ editor_add(struct disklabel *lp, char **mp, u_int32_t *freep, char *p)
 
 	/* Set defaults */
 	pp = &lp->d_partitions[partno];
-	if (partno >= lp->d_npartitions)
-		lp->d_npartitions = partno + 1;
 	memset(pp, 0, sizeof(*pp));
 	pp->p_size = *freep;
 	pp->p_offset = next_offset(lp, &pp->p_size);
