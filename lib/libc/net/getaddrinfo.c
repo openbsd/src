@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.54 2006/03/22 13:29:26 ray Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.55 2006/04/14 03:16:02 ray Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -91,6 +91,7 @@
 #include <netdb.h>
 #include <resolv.h>
 #include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <ctype.h>
@@ -197,7 +198,6 @@ struct res_target {
 	int n;			/* result length */
 };
 
-static int str2number(const char *);
 static int explore_fqdn(const struct addrinfo *, const char *,
 	const char *, struct addrinfo **);
 static int explore_null(const struct addrinfo *,
@@ -277,23 +277,6 @@ do { \
 	((x) == (y) || (/*CONSTCOND*/(w) && ((x) == PF_UNSPEC || (y) == PF_UNSPEC)))
 #define MATCH(x, y, w) \
 	((x) == (y) || (/*CONSTCOND*/(w) && ((x) == ANY || (y) == ANY)))
-
-static int
-str2number(const char *p)
-{
-	char *ep;
-	unsigned long v;
-
-	if (*p == '\0')
-		return -1;
-	ep = NULL;
-	errno = 0;
-	v = strtoul(p, &ep, 10);
-	if (errno == 0 && ep && *ep == '\0' && v <= UINT_MAX)
-		return v;
-	else
-		return -1;
-}
 
 int
 getaddrinfo(const char *hostname, const char *servname,
@@ -842,7 +825,7 @@ get_portmatch(const struct addrinfo *ai, const char *servname)
 static int
 get_port(struct addrinfo *ai, const char *servname, int matchonly)
 {
-	const char *proto;
+	const char *errstr, *proto;
 	struct servent *sp;
 	int port;
 	int allownumeric;
@@ -875,14 +858,14 @@ get_port(struct addrinfo *ai, const char *servname, int matchonly)
 		return EAI_SOCKTYPE;
 	}
 
-	port = str2number(servname);
-	if (port >= 0) {
+	port = (int)strtonum(servname, 0, USHRT_MAX, &errstr);
+	if (!errstr) {
 		if (!allownumeric)
-			return EAI_SERVICE;
-		if (port < 0 || port > 65535)
 			return EAI_SERVICE;
 		port = htons(port);
 	} else {
+		if (errno == ERANGE)
+			return EAI_SERVICE;
 		if (ai->ai_flags & AI_NUMERICSERV)
 			return EAI_NONAME;
 
@@ -943,9 +926,8 @@ find_afd(int af)
 static int
 ip6_str2scopeid(char *scope, struct sockaddr_in6 *sin6, u_int32_t *scopeid)
 {
-	u_long lscopeid;
 	struct in6_addr *a6 = &sin6->sin6_addr;
-	char *ep;
+	const char *errstr;
 
 	/* empty scopeid portion is invalid */
 	if (*scope == '\0')
@@ -973,13 +955,10 @@ ip6_str2scopeid(char *scope, struct sockaddr_in6 *sin6, u_int32_t *scopeid)
 
 	/* try to convert to a numeric id as a last resort */
   trynumeric:
-	errno = 0;
-	lscopeid = strtoul(scope, &ep, 10);
-	*scopeid = (u_int32_t)(lscopeid & 0xffffffffUL);
-	if (errno == 0 && ep && *ep == '\0' && *scopeid == lscopeid)
-		return 0;
-	else
-		return -1;
+	*scopeid = (u_int32_t)strtonum(scope, 0, UINT32_MAX, &errstr);
+	if (errstr)
+		return (-1);
+	return (0);
 }
 #endif
 
@@ -1766,7 +1745,7 @@ res_querydomainN(const char *name, const char *domain,
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	char nbuf[MAXDNAME];
 	const char *longname = nbuf;
-	size_t n, d;
+	size_t n;
 
 	if (_res_init(0) == -1) {
 		h_errno = NETDB_INTERNAL;
@@ -1782,23 +1761,20 @@ res_querydomainN(const char *name, const char *domain,
 		 * Check for trailing '.';
 		 * copy without '.' if present.
 		 */
-		n = strlen(name);
-		if (n >= MAXDNAME) {
+		if ((n = strlcpy(nbuf, name, sizeof(nbuf))) >= sizeof(nbuf)) {
 			h_errno = NO_RECOVERY;
 			return (-1);
 		}
-		if (n > 0 && name[--n] == '.') {
-			strlcpy(nbuf, name, n + 1);
-		} else
-			longname = name;
+		if (n > 0 && nbuf[n - 1] == '.')
+			nbuf[n - 1] = '\0';
 	} else {
-		n = strlen(name);
-		d = strlen(domain);
-		if (n + d + 1 >= MAXDNAME) {
+		int i;
+
+		i = snprintf(nbuf, sizeof(nbuf), "%s.%s", name, domain);
+		if (i < 0 || i >= sizeof(nbuf)) {
 			h_errno = NO_RECOVERY;
 			return (-1);
 		}
-		snprintf(nbuf, sizeof(nbuf), "%s.%s", name, domain);
 	}
 	return (res_queryN(longname, target));
 }
