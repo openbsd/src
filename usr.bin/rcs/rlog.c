@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.43 2006/04/14 15:04:36 ray Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.44 2006/04/14 15:15:20 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -30,9 +30,9 @@
 #include "rcsprog.h"
 #include "diff.h"
 
-static void	rlog_file(const char *);
+static void	rlog_file(const char *, RCSFILE *);
 static void	rlog_rev_print(struct rcs_delta *);
-static u_int	rlog_rev_select(void);
+static u_int	rlog_rev_select(RCSFILE *);
 
 #define RLOG_OPTSTRING	"hLl::NqRr::s:TtVw::x::z::"
 #define REVSEP		"----------------------------"
@@ -44,7 +44,6 @@ static char *llist = NULL;
 static char *slist = NULL;
 static char *wlist = NULL;
 static char *revisions = NULL;
-static RCSFILE *file;
 
 void
 rlog_usage(void)
@@ -58,6 +57,7 @@ rlog_usage(void)
 int
 rlog_main(int argc, char **argv)
 {
+	RCSFILE *file;
 	int Rflag;
 	int i, ch;
 	char fpath[MAXPATHLEN];
@@ -152,7 +152,7 @@ rlog_main(int argc, char **argv)
 			continue;
 		}
 
-		rlog_file(argv[i]);
+		rlog_file(argv[i], file);
 
 		rcs_close(file);
 	}
@@ -161,7 +161,7 @@ rlog_main(int argc, char **argv)
 }
 
 static void
-rlog_file(const char *fname)
+rlog_file(const char *fname, RCSFILE *file)
 {
 	char numb[64];
 	u_int nrev;
@@ -171,7 +171,7 @@ rlog_file(const char *fname)
 	struct rcs_lock *lkp;
 
 	if (rflag == 1)
-		nrev = rlog_rev_select();
+		nrev = rlog_rev_select(file);
 	else
 		nrev = file->rf_ndelta;
 
@@ -333,7 +333,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 }
 
 static u_int
-rlog_rev_select(void)
+rlog_rev_select(RCSFILE *file)
 {
 	int i;
 	u_int nrev;
