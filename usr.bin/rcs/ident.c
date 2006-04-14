@@ -1,4 +1,4 @@
-/*	$OpenBSD: ident.c,v 1.14 2006/03/22 17:04:52 xsa Exp $	*/
+/*	$OpenBSD: ident.c,v 1.15 2006/04/14 01:11:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -88,14 +88,14 @@ ident_file(const char *filename, FILE *fp)
 	else
 		filename = "standard output";
 
-	for (c = 0; c != EOF; (c = getc(fp))) {
-		if ((feof(fp)) || (ferror(fp)))
+	for (c = 0; c != EOF; c = getc(fp)) {
+		if (feof(fp) || ferror(fp))
 			break;
 		if (c == KEYDELIM)
 			ident_line(fp);
 	}
 
-	if ((found == 0) && (verbose == 1))
+	if (found == 0 && verbose == 1)
 		fprintf(stderr, "ident warning: no id keywords in %s\n",
 		    filename);
 
@@ -111,7 +111,7 @@ ident_line(FILE *fp)
 	p = linebuf;
 
 	while ((c = getc(fp)) != VALDELIM) {
-		if ((c == EOF) && (feof(fp) | ferror(fp)))
+		if (c == EOF && (feof(fp) | ferror(fp)))
 			return;
 
 		if (isalpha(c))
@@ -123,7 +123,7 @@ ident_line(FILE *fp)
 	*(p++) = VALDELIM;
 
 	while ((c = getc(fp)) != KEYDELIM) {
-		if ((c == EOF) && (feof(fp) | ferror(fp)))
+		if (c == EOF && (feof(fp) | ferror(fp)))
 			return;
 
 		if (c == '\n')

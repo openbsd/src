@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.146 2006/04/14 00:22:46 pat Exp $	*/
+/*	$OpenBSD: ci.c,v 1.147 2006/04/14 01:11:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -298,7 +298,7 @@ checkin_main(int argc, char **argv)
 		rcs_close(pb.file);
 	}
 
-	if ((verbose == 1) && (status == 0))
+	if (verbose == 1 && status == 0)
 		printf("done\n");
 
 	return (status);
@@ -484,7 +484,7 @@ checkin_update(struct checkin_params *pb)
 	filec = (char *)cvs_buf_release(bp);
 
 	/* If this is a zero-ending RCSNUM eg 4.0, increment it (eg to 4.1) */
-	if ((pb->newrev != NULL) && (RCSNUM_ZERO_ENDING(pb->newrev)))
+	if (pb->newrev != NULL && RCSNUM_ZERO_ENDING(pb->newrev))
 		pb->newrev = rcsnum_inc(pb->newrev);
 
 	if (checkin_checklock(pb) < 0)
@@ -494,8 +494,8 @@ checkin_update(struct checkin_params *pb)
 	 * XXX only applies to ci -r1.2 foo for example if HEAD is > 1.2 and
 	 * there is no lock set for the user.
 	 */
-	if ((pb->newrev != NULL)
-	    && (rcsnum_cmp(pb->newrev, pb->frev, 0) > 0)) {
+	if (pb->newrev != NULL &&
+	    rcsnum_cmp(pb->newrev, pb->frev, 0) > 0) {
 		cvs_log(LP_ERR,
 		    "%s: revision %s too low; must be higher than %s",
 		    pb->file->rf_path,
@@ -508,8 +508,8 @@ checkin_update(struct checkin_params *pb)
 	 * Set the date of the revision to be the last modification
 	 * time of the working file if -d has no argument.
 	 */
-	if (pb->date == DATE_MTIME
-	    && (checkin_mtimedate(pb) < 0))
+	if (pb->date == DATE_MTIME &&
+	    (checkin_mtimedate(pb) < 0))
 		goto fail;
 
 	/* Date from argv/mtime must be more recent than HEAD */
@@ -586,8 +586,8 @@ checkin_update(struct checkin_params *pb)
 		fatal("failed to set new head revision");
 
 	/* Attach a symbolic name to this revision if specified. */
-	if (pb->symbol != NULL
-	    && (checkin_attach_symbol(pb) < 0))
+	if (pb->symbol != NULL &&
+	    (checkin_attach_symbol(pb) < 0))
 		goto fail;
 
 	/* Set the state of this revision if specified. */
@@ -610,8 +610,8 @@ checkin_update(struct checkin_params *pb)
 	rcs_write(pb->file);
 
 	/* Do checkout if -u or -l are specified. */
-	if (((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
-	    && !(pb->flags & CI_DEFAULT))
+	if (((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK)) &&
+	    !(pb->flags & CI_DEFAULT))
 		checkout_rev(pb->file, pb->newrev, pb->filename, pb->flags,
 		    pb->username, pb->author, NULL, NULL);
 
@@ -644,7 +644,7 @@ checkin_init(struct checkin_params *pb)
 	struct stat st;
 
 	/* If this is a zero-ending RCSNUM eg 4.0, increment it (eg to 4.1) */
-	if ((pb->newrev != NULL) && (RCSNUM_ZERO_ENDING(pb->newrev))) {
+	if (pb->newrev != NULL && RCSNUM_ZERO_ENDING(pb->newrev)) {
 		pb->frev = rcsnum_alloc();
 		rcsnum_cpy(pb->newrev, pb->frev, 0);
 		pb->newrev = rcsnum_inc(pb->newrev);
@@ -704,8 +704,8 @@ skipdesc:
 	 * Set the date of the revision to be the last modification
 	 * time of the working file if -d has no argument.
 	 */
-	if (pb->date == DATE_MTIME
-	    && (checkin_mtimedate(pb) < 0))
+	if (pb->date == DATE_MTIME &&
+	    (checkin_mtimedate(pb) < 0))
 		goto fail;
 
 	/* Now add our new revision */
@@ -734,8 +734,8 @@ skipdesc:
 	}
 
 	/* Attach a symbolic name to this revision if specified. */
-	if (pb->symbol != NULL
-	    && (checkin_attach_symbol(pb) < 0))
+	if (pb->symbol != NULL &&
+	    (checkin_attach_symbol(pb) < 0))
 		goto fail;
 
 	/* Set the state of this revision if specified. */
@@ -756,8 +756,8 @@ skipdesc:
 	rcs_write(pb->file);
 
 	/* Do checkout if -u or -l are specified. */
-	if (((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK))
-	    && !(pb->flags & CI_DEFAULT)) {
+	if (((pb->flags & CO_LOCK) || (pb->flags & CO_UNLOCK)) &&
+	    !(pb->flags & CI_DEFAULT)) {
 		checkout_rev(pb->file, pb->newrev, pb->filename, pb->flags,
 		    pb->username, pb->author, NULL, NULL);
 	}
@@ -796,8 +796,8 @@ checkin_attach_symbol(struct checkin_params *pb)
 			}
 		}
 	}
-	if ((ret = rcs_sym_add(pb->file, pb->symbol, pb->newrev) == -1)
-	    && (rcs_errno == RCS_ERR_DUPENT)) {
+	if ((ret = rcs_sym_add(pb->file, pb->symbol, pb->newrev) == -1) &&
+	    (rcs_errno == RCS_ERR_DUPENT)) {
 		rcsnum_tostr(rcs_sym_getrev(pb->file, pb->symbol),
 		    rbuf, sizeof(rbuf));
 		cvs_log(LP_ERR,
@@ -851,8 +851,8 @@ checkin_checklock(struct checkin_params *pb)
 	struct rcs_lock *lkp;
 
 	TAILQ_FOREACH(lkp, &(pb->file->rf_locks), rl_list) {
-		if ((!strcmp(lkp->rl_name, pb->username)) &&
-		    (!rcsnum_cmp(lkp->rl_num, pb->frev, 0)))
+		if (!strcmp(lkp->rl_name, pb->username) &&
+		    !rcsnum_cmp(lkp->rl_num, pb->frev, 0))
 			return (0);
 	}
 

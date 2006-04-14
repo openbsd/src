@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.32 2006/04/13 16:23:31 ray Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.33 2006/04/14 01:11:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -187,8 +187,8 @@ rcsclean_file(char *fname, const char *rev_str)
 	xfree(c2);
 
 	if (match == 1) {
-		if ((uflag == 1) && (!TAILQ_EMPTY(&(file->rf_locks)))) {
-			if ((verbose == 1) && (nflag == 0)) {
+		if (uflag == 1 && !TAILQ_EMPTY(&(file->rf_locks))) {
+			if (verbose == 1 && nflag == 0) {
 				printf("rcs -u%s %s\n",
 				    rcsnum_tostr(rev, numb, sizeof(numb)),
 				    fpath);

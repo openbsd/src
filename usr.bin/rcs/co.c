@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.76 2006/04/13 03:18:06 joris Exp $	*/
+/*	$OpenBSD: co.c,v 1.77 2006/04/14 01:11:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -208,7 +208,7 @@ checkout_main(int argc, char **argv)
 			rcs_set_mtime(fpath, rcs_mtime);
 	}
 
-	if ((rev != RCS_HEAD_REV) && (frev != NULL))
+	if (rev != RCS_HEAD_REV && frev != NULL)
 		rcsnum_free(frev);
 
 	return (status);
@@ -280,7 +280,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 	 * If we cannot find one, we return an error.
 	 */
 	rdp = NULL;
-	if ((file->rf_ndelta != 0) && (frev == file->rf_head)) {
+	if (file->rf_ndelta != 0 && frev == file->rf_head) {
 		if (lcount > 1) {
 			cvs_log(LP_WARN,
 			    "multiple revisions locked by %s; "
@@ -296,12 +296,12 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 					continue;
 			}
 
-			if ((author != NULL) &&
-			    (strcmp(rdp->rd_author, author)))
+			if (author != NULL &&
+			    strcmp(rdp->rd_author, author))
 				continue;
 
-			if ((state != NULL) &&
-			    (strcmp(rdp->rd_state, state)))
+			if (state != NULL &&
+			    strcmp(rdp->rd_state, state))
 				continue;
 
 			frev = rdp->rd_num;
@@ -311,7 +311,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		rdp = rcs_findrev(file, frev);
 	}
 
-	if ((file->rf_ndelta != 0) && (rdp == NULL)) {
+	if (file->rf_ndelta != 0 && rdp == NULL) {
 		checkout_err_nobranch(file, author, date, state, flags);
 		return (-1);
 	}
@@ -323,7 +323,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 
 	rcsnum_tostr(rev, buf, sizeof(buf));
 
-	if ((file->rf_ndelta != 0) && (rdp->rd_locker != NULL)) {
+	if (file->rf_ndelta != 0 && rdp->rd_locker != NULL) {
 		if (strcmp(lockname, rdp->rd_locker)) {
 			strlcpy(msg, "Revision %s is already locked by %s; ",
 			    sizeof(msg));
@@ -338,11 +338,11 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		}
 	}
 
-	if ((verbose == 1) && !(flags & NEWFILE) &&
-	    !(flags & CO_REVERT) && (file->rf_ndelta != 0))
+	if (verbose == 1 && !(flags & NEWFILE) &&
+	    !(flags & CO_REVERT) && file->rf_ndelta != 0)
 		printf("revision %s", buf);
 
-	if ((verbose == 1) && (flags & CO_REVERT))
+	if (verbose == 1 && (flags & CO_REVERT))
 		printf("done");
 
 	if (file->rf_ndelta != 0) {
@@ -370,8 +370,8 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 
 	if (flags & CO_LOCK) {
 		if (file->rf_ndelta != 0) {
-			if ((lockname != NULL)
-		   	 && (rcs_lock_add(file, lockname, rev) < 0)) {
+			if (lockname != NULL &&
+			    rcs_lock_add(file, lockname, rev) < 0) {
 				if (rcs_errno != RCS_ERR_DUPENT)
 					return (-1);
 			}
@@ -383,8 +383,8 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		mode |= S_IWUSR;
 
 		if (file->rf_ndelta != 0) {
-			if ((verbose == 1) && !(flags & NEWFILE)
-		   	    && !(flags & CO_REVERT))
+			if (verbose == 1 && !(flags & NEWFILE) &&
+			    !(flags & CO_REVERT))
 				printf(" (locked)");
 		}
 	} else if (flags & CO_UNLOCK) {
@@ -400,30 +400,30 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		    (S_IXUSR|S_IXGRP|S_IXOTH|S_IRUSR|S_IRGRP|S_IROTH);
 
 		if (file->rf_ndelta != 0) {
-			if ((verbose == 1) && !(flags & NEWFILE)
-		    	    && !(flags & CO_REVERT))
+			if (verbose == 1 && !(flags & NEWFILE) &&
+			    !(flags & CO_REVERT))
 				printf(" (unlocked)");
 		}
 	}
 
-	if ((file->rf_ndelta == 0) &&
+	if (file->rf_ndelta == 0 &&
 	    ((flags & CO_LOCK) || (flags & CO_UNLOCK))) {
 		cvs_log(LP_WARN, "no revisions, so nothing can be %s",
 		    (flags & CO_LOCK) ? "locked" : "unlocked");
 	} else if (file->rf_ndelta != 0) {
-		if ((verbose == 1) && !(flags & NEWFILE))
+		if (verbose == 1 && !(flags & NEWFILE))
 			printf("\n");
 	}
 
 	if (flags & CO_LOCK) {
 		if (rcs_errno != RCS_ERR_DUPENT)
 			lcount++;
-		if ((verbose == 1) && (lcount > 1) && !(flags & CO_REVERT))
+		if (verbose == 1 && lcount > 1 && !(flags & CO_REVERT))
 			cvs_log(LP_WARN, "%s: warning: You now have %d locks.",
 			    file->rf_path, lcount);
 	}
 
-	if ((pipeout == 0) && (stat(dst, &st) == 0) && !(flags & FORCE)) {
+	if (pipeout == 0 && stat(dst, &st) == 0 && !(flags & FORCE)) {
 		/*
 		 * XXX - Not sure what is "right".  If we go according
 		 * to GNU's behavior, an existing file with no writable
@@ -444,7 +444,7 @@ checkout_rev(RCSFILE *file, RCSNUM *frev, const char *dst, int flags,
 		printf("remove it? [ny](n): ");
 		/* default is n */
 		if (cvs_yesno() == -1) {
-			if ((verbose == 1) && isatty(STDIN_FILENO))
+			if (verbose == 1 && isatty(STDIN_FILENO))
 				cvs_log(LP_ERR,
 				    "writable %s exists; checkout aborted",
 				    dst);

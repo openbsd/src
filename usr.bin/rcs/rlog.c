@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.40 2006/04/13 19:16:15 joris Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.41 2006/04/14 01:11:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -129,7 +129,7 @@ rlog_main(int argc, char **argv)
 		exit(1);
 	}
 
-	if ((hflag == 1) && (tflag == 1)) {
+	if (hflag == 1 && tflag == 1) {
 		cvs_log(LP_WARN, "warning: -t overrides -h.");
 		hflag = 0;
 	}
@@ -141,7 +141,7 @@ rlog_main(int argc, char **argv)
 		if ((file = rcs_open(fpath, RCS_READ|RCS_PARSE_FULLY)) == NULL)
 			continue;
 
-		if ((Lflag == 1) && (TAILQ_EMPTY(&(file->rf_locks)))) {
+		if (Lflag == 1 && TAILQ_EMPTY(&(file->rf_locks))) {
 			rcs_close(file);
 			continue;
 		}
@@ -208,22 +208,22 @@ rlog_file(const char *fname, const char *fpath)
 
 	printf("total revisions: %u", file->rf_ndelta);
 
-	if ((file->rf_head != NULL) && (hflag == 0) && (tflag == 0))
+	if (file->rf_head != NULL && hflag == 0 && tflag == 0)
 		printf(";\tselected revisions: %u", nrev);
 
 	printf("\n");
 
 
-	if ((hflag == 0) || (tflag == 1))
+	if (hflag == 0 || tflag == 1)
 		printf("description:\n%s", file->rf_desc);
 
-	if ((hflag == 0) && (tflag == 0)) {
+	if (hflag == 0 && tflag == 0) {
 		TAILQ_FOREACH(rdp, &(file->rf_delta), rd_list) {
 			/*
 			 * if selections are enabled verify that entry is
 			 * selected.
 			 */
-			if ((rflag == 0) || (rdp->rd_flags & RCS_RD_SELECT))
+			if (rflag == 0 || (rdp->rd_flags & RCS_RD_SELECT))
 				rlog_rev_print(rdp);
 		}
 	}
@@ -304,11 +304,11 @@ rlog_rev_print(struct rcs_delta *rdp)
 	}
 
 	/* XXX dirty... */
-	if (((((slist != NULL) && (wflag == 1)) ||
-	    ((slist != NULL) && (lflag == 1)) ||
-	    ((lflag == 1) && (wflag == 1))) && (found < 2)) ||
-	    ((((slist != NULL) && (lflag == 1) && (wflag == 1)) ||
-	    ((slist != NULL) || (lflag == 1) || (wflag == 1))) && (found == 0)))
+	if ((((slist != NULL && wflag == 1) ||
+	    (slist != NULL && lflag == 1) ||
+	    (lflag == 1 && wflag == 1)) && found < 2) ||
+	    (((slist != NULL && lflag == 1 && wflag == 1) ||
+	    (slist != NULL || lflag == 1 || wflag == 1)) && found == 0))
 		return;
 
 	printf("%s\n", REVSEP);
@@ -330,7 +330,7 @@ rlog_rev_print(struct rcs_delta *rdp)
 	strftime(timeb, sizeof(timeb), fmt, &t);
 
 	printf("\ndate: %s;  author: %s;  state: %s;\n", timeb, rdp->rd_author,
-	    rdp->rd_state); 
+	    rdp->rd_state);
 
 	printf("%s", rdp->rd_log);
 }
@@ -393,8 +393,8 @@ rlog_rev_select(void)
 		cvs_argv_destroy(revrange);
 
 		TAILQ_FOREACH(rdp, &file->rf_delta, rd_list)
-			if ((rcsnum_cmp(rdp->rd_num, &lnum, 0) <= 0) &&
-			    (rcsnum_cmp(rdp->rd_num, &rnum, 0) >= 0) &&
+			if (rcsnum_cmp(rdp->rd_num, &lnum, 0) <= 0 &&
+			    rcsnum_cmp(rdp->rd_num, &rnum, 0) >= 0 &&
 			    !(rdp->rd_flags & RCS_RD_SELECT)) {
 				rdp->rd_flags |= RCS_RD_SELECT;
 				nrev++;

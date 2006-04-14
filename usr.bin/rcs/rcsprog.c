@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.101 2006/04/13 19:55:41 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.102 2006/04/14 01:11:07 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -256,7 +256,7 @@ rcs_choosefile(const char *filename)
 	if (strlcpy(rcsdir, rcspath, sizeof(rcsdir)) >= sizeof(rcsdir) ||
 	    strlcat(rcsdir, RCSDIR, sizeof(rcsdir)) >= sizeof(rcsdir))
 		return (NULL);
-	if ((stat(rcsdir, &sb) == 0) && (sb.st_mode & S_IFDIR))
+	if (stat(rcsdir, &sb) == 0 && (sb.st_mode & S_IFDIR))
 		if (strlcpy(rcspath, rcsdir, sizeof(rcspath)) >= sizeof(rcspath) ||
 		    strlcat(rcspath, "/", sizeof(rcspath)) >= sizeof(rcspath))
 			return (NULL);
@@ -344,8 +344,8 @@ rcs_statfile(char *fname, char *out, size_t len)
 
 	/* Error out if file not found and we are not creating one. */
 	if (stat(rcspath, &st) == -1 && !(flags & RCS_CREATE)) {
-		if ((strcmp(__progname, "rcsclean") != 0)
-		    && (strcmp(__progname, "ci") != 0))
+		if (strcmp(__progname, "rcsclean") != 0 &&
+		    strcmp(__progname, "ci") != 0)
 			cvs_log(LP_ERRNO, "%s", rcspath);
 		xfree(rcspath);
 		return (-1);
@@ -821,7 +821,7 @@ rcs_attach_symbol(RCSFILE *file, const char *symname)
 
 	if (rm == 1) {
 		if (rcs_sym_remove(file, symname) < 0) {
-			if ((rcs_errno == RCS_ERR_NOENT) &&
+			if (rcs_errno == RCS_ERR_NOENT &&
 			    !(rcsflags & RCSPROG_NFLAG))
 				cvs_log(LP_WARN,
 				    "can't delete nonexisting symbol %s", symname);
@@ -832,8 +832,8 @@ rcs_attach_symbol(RCSFILE *file, const char *symname)
 	}
 
 	if (rm == 0) {
-		if ((rcs_sym_add(file, symname, rev) < 0) &&
-		    (rcs_errno == RCS_ERR_DUPENT)) {
+		if (rcs_sym_add(file, symname, rev) < 0 &&
+		    rcs_errno == RCS_ERR_DUPENT) {
 			rcsnum_tostr(rcs_sym_getrev(file, symname),
 			    rbuf, sizeof(rbuf));
 			fatal("symbolic name %s already bound to %s",
@@ -953,8 +953,8 @@ rcs_rev_select(RCSFILE *file, char *range)
 		cvs_argv_destroy(revrange);
 
 		TAILQ_FOREACH(rdp, &file->rf_delta, rd_list)
-			if ((rcsnum_cmp(rdp->rd_num, &lnum, 0) <= 0) &&
-			    (rcsnum_cmp(rdp->rd_num, &rnum, 0) >= 0) &&
+			if (rcsnum_cmp(rdp->rd_num, &lnum, 0) <= 0 &&
+			    rcsnum_cmp(rdp->rd_num, &rnum, 0) >= 0 &&
 			    !(rdp->rd_flags & RCS_RD_SELECT)) {
 				rdp->rd_flags |= RCS_RD_SELECT;
 				nrev++;
