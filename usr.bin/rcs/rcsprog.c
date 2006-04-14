@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.102 2006/04/14 01:11:07 deraadt Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.103 2006/04/14 23:29:01 joris Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -232,7 +232,7 @@ char *
 rcs_choosefile(const char *filename)
 {
 	struct stat sb;
-	char *ext, name[MAXPATHLEN], *next, *ptr, rcsdir[MAXPATHLEN],
+	char *p, *ext, name[MAXPATHLEN], *next, *ptr, rcsdir[MAXPATHLEN],
 	    *ret, *suffixes, rcspath[MAXPATHLEN];
 
 	/* If -x flag was not given, use default. */
@@ -294,6 +294,17 @@ rcs_choosefile(const char *filename)
 	for (ret = NULL, next = suffixes; (ext = strsep(&next, "/")) != NULL;) {
 		char fpath[MAXPATHLEN];
 
+		if ((p = strrchr(rcspath, ',')) != NULL) {
+			if (!strcmp(p, ext)) {
+				if (stat(rcspath, &sb) == 0) {
+					ret = xstrdup(rcspath);
+					goto out;
+				}
+			}
+
+			continue;
+		}
+
 		/* Construct RCS file path. */
 		if (strlcpy(fpath, rcspath, sizeof(fpath)) >= sizeof(fpath) ||
 		    strlcat(fpath, ext, sizeof(fpath)) >= sizeof(fpath))
@@ -338,7 +349,6 @@ rcs_statfile(char *fname, char *out, size_t len)
 	struct stat st;
 	char *rcspath;
 
-	/* XXX - do this in rcs_choosefile? */
 	if ((rcspath = rcs_choosefile(fname)) == NULL)
 		fatal("rcs_statfile: path truncation");
 

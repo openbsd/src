@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.44 2006/04/14 15:15:20 ray Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.45 2006/04/14 23:29:01 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -62,6 +62,7 @@ rlog_main(int argc, char **argv)
 	int i, ch;
 	char fpath[MAXPATHLEN];
 
+	rcsnum_flags |= RCSNUM_NO_MAGIC;
 	hflag = Rflag = rflag = 0;
 	while ((ch = rcs_getopt(argc, argv, RLOG_OPTSTRING)) != -1) {
 		switch (ch) {
@@ -169,14 +170,24 @@ rlog_file(const char *fname, RCSFILE *file)
 	struct rcs_access *acp;
 	struct rcs_delta *rdp;
 	struct rcs_lock *lkp;
+	char *workfile, *p;
 
 	if (rflag == 1)
 		nrev = rlog_rev_select(file);
 	else
 		nrev = file->rf_ndelta;
 
+	if ((workfile = basename(fname)) == NULL)
+		fatal("failed to get basename of '%s'", fname);
+
+	/*
+	 * In case they specified 'foo,v' as argument.
+	 */
+	if ((p = strrchr(workfile, ',')) != NULL)
+		*p = '\0';
+
 	printf("\nRCS file: %s", file->rf_path);
-	printf("\nWorking file: %s", fname);
+	printf("\nWorking file: %s", workfile);
 	printf("\nhead:");
 	if (file->rf_head != NULL)
 		printf(" %s", rcsnum_tostr(file->rf_head, numb, sizeof(numb)));

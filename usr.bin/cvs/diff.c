@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.89 2006/04/14 02:45:35 deraadt Exp $	*/
+/*	$OpenBSD: diff.c,v 1.90 2006/04/14 23:29:01 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -208,6 +208,8 @@ static int aflag, bflag, dflag, iflag, pflag, tflag, Tflag, wflag;
 static int context = 3;
 int diff_format = D_NORMAL;
 char *diff_file = NULL;
+RCSNUM *diff_rev1 = NULL;
+RCSNUM *diff_rev2 = NULL;
 char diffargs[128];
 static struct stat stb1, stb2;
 static char *ifdefname, *ignore_pats;
@@ -1249,8 +1251,10 @@ ignoreline(char *line)
 static void
 change(FILE *f1, FILE *f2, int a, int b, int c, int d)
 {
-	static size_t max_context = 64;
 	int i;
+	static size_t max_context = 64;
+	char buf[64];
+	struct tm *t;
 
 	if (diff_format != D_IFDEF && a > b && c > d)
 		return;
@@ -1298,12 +1302,35 @@ proceed:
 			/*
 			 * Print the context/unidiff header first time through.
 			 */
+			t = localtime(&stb1.st_mtime); 
+			(void)strftime(buf, sizeof(buf),
+			    "%Y/%m/%d %H:%M:%S", t);
+
 			diff_output("%s %s	%s",
 			    diff_format == D_CONTEXT ? "***" : "---", diff_file,
-			    ctime(&stb1.st_mtime));
+			    buf);
+
+			if (diff_rev1 != NULL) {
+				rcsnum_tostr(diff_rev1, buf, sizeof(buf));
+				diff_output("\t%s", buf);
+			}
+
+			printf("\n");
+
+			t = localtime(&stb2.st_mtime);
+			(void)strftime(buf, sizeof(buf),
+			    "%Y/%m/%d %H:%M:%S", t);
+
 			diff_output("%s %s	%s",
 			    diff_format == D_CONTEXT ? "---" : "+++", diff_file,
-			    ctime(&stb2.st_mtime));
+			    buf);
+
+			if (diff_rev2 != NULL) {
+				rcsnum_tostr(diff_rev2, buf, sizeof(buf));
+				diff_output("\t%s", buf);
+			}
+
+			printf("\n");
 			anychange = 1;
 		} else if (a > context_vec_ptr->b + (2 * context) + 1 &&
 		    c > context_vec_ptr->d + (2 * context) + 1) {

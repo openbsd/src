@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.9 2006/04/10 09:57:32 xsa Exp $	*/
+/*	$OpenBSD: diff.h,v 1.10 2006/04/14 23:29:01 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -107,5 +107,7 @@ extern int	 diff3_conflicts;
 extern char	*diff_file;
 extern char	 diffargs[128];
 extern BUF	*diffbuf;
+extern RCSNUM	*diff_rev1;
+extern RCSNUM	*diff_rev2;
 
 #endif

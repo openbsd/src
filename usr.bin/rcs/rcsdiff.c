@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.48 2006/04/13 16:10:29 joris Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.49 2006/04/14 23:29:01 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -174,16 +174,22 @@ static int
 rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 {
 	int ret;
+	time_t t;
 	char path1[MAXPATHLEN], path2[MAXPATHLEN];
 	BUF *b1, *b2;
 	char rbuf[64];
+	struct tm *tb;
 	struct stat st;
 	struct timeval tv[2], tv2[2];
+
 	memset(&tv, 0, sizeof(tv));
 	memset(&tv2, 0, sizeof(tv2));
 
 	ret = -1;
 	b1 = b2 = NULL;
+
+	diff_rev1 = rev;
+	diff_rev2 = NULL;
 
 	if (stat(filename, &st) == -1) {
 		cvs_log(LP_ERRNO, "%s", filename);
@@ -210,8 +216,12 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename)
 		goto out;
 	}
 
-	tv2[0].tv_sec = st.st_mtime;
-	tv2[1].tv_sec = st.st_mtime;
+	/* XXX - GNU uses GMT */
+	tb = gmtime(&st.st_mtime);
+	t = mktime(tb);
+
+	tv2[0].tv_sec = t;
+	tv2[1].tv_sec = t; 
 
 	strlcpy(path1, rcs_tmpdir, sizeof(path1));
 	strlcat(path1, "/diff1.XXXXXXXXXX", sizeof(path1));
@@ -259,9 +269,12 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2)
 	memset(&tv, 0, sizeof(tv));
 	memset(&tv2, 0, sizeof(tv2));
 
+	diff_rev1 = rev1;
+	diff_rev2 = rev2;
+
 	rcsnum_tostr(rev1, rbuf1, sizeof(rbuf1));
 	if (verbose == 1)
-		printf("retrieving revision %s\n", rbuf1);
+		fprintf(stderr, "retrieving revision %s\n", rbuf1);
 
 	if ((b1 = rcs_getrev(file, rev1)) == NULL) {
 		cvs_log(LP_ERR, "failed to retrieve revision %s", rbuf1);
