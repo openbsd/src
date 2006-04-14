@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 2000 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "kpasswd_locl.h"
 
-RCSID("$KTH: kpasswd-generator.c,v 1.5 2001/07/31 02:44:42 assar Exp $");
+RCSID("$KTH: kpasswd-generator.c,v 1.8 2004/04/25 19:25:32 joda Exp $");
 
 static unsigned
 read_words (const char *filename, char ***ret_w)
@@ -88,17 +88,17 @@ generate_requests (const char *filename, unsigned nreq)
 
     for (i = 0; i < nreq; ++i) {
 	char *name = words[rand() % nwords];
-	krb5_get_init_creds_opt opt;
+	krb5_get_init_creds_opt *opt;
 	krb5_creds cred;
 	krb5_principal principal;
 	int result_code;
 	krb5_data result_code_string, result_string;
 	char *old_pwd, *new_pwd;
 
-	krb5_get_init_creds_opt_init (&opt);
-	krb5_get_init_creds_opt_set_tkt_life (&opt, 300);
-	krb5_get_init_creds_opt_set_forwardable (&opt, FALSE);
-	krb5_get_init_creds_opt_set_proxiable (&opt, FALSE);
+	krb5_get_init_creds_opt_alloc (context, &opt);
+	krb5_get_init_creds_opt_set_tkt_life (opt, 300);
+	krb5_get_init_creds_opt_set_forwardable (opt, FALSE);
+	krb5_get_init_creds_opt_set_proxiable (opt, FALSE);
 
 	ret = krb5_parse_name (context, name, &principal);
 	if (ret)
@@ -115,7 +115,7 @@ generate_requests (const char *filename, unsigned nreq)
 					    NULL,
 					    0,
 					    "kadmin/changepw",
-					    &opt);
+					    opt);
 	if( ret == KRB5KRB_AP_ERR_BAD_INTEGRITY
 	    || ret == KRB5KRB_AP_ERR_MODIFIED) {
 	    char *tmp;
@@ -132,7 +132,7 @@ generate_requests (const char *filename, unsigned nreq)
 						NULL,
 						0,
 						"kadmin/changepw",
-						&opt);
+						opt);
 	}
 	if (ret)
 	    krb5_err (context, 1, ret, "krb5_get_init_creds_password");
@@ -148,7 +148,8 @@ generate_requests (const char *filename, unsigned nreq)
 
 	free (old_pwd);
 	free (new_pwd);
-	krb5_free_creds_contents (context, &cred);
+	krb5_free_cred_contents (context, &cred);
+	krb5_get_init_creds_opt_free(opt);
     }
 }
 

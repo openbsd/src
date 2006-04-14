@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: write_pid.c,v 1.6 2001/09/02 23:58:15 assar Exp $");
+RCSID("$KTH: write_pid.c,v 1.7 2005/04/12 11:29:17 lha Exp $");
 #endif
 
 #include <stdio.h>
@@ -43,7 +43,7 @@ RCSID("$KTH: write_pid.c,v 1.6 2001/09/02 23:58:15 assar Exp $");
 
 #include "roken.h"
 
-char *
+char * ROKEN_LIB_FUNCTION
 pid_file_write (const char *progname)
 {
     FILE *fp;
@@ -62,7 +62,7 @@ pid_file_write (const char *progname)
     return ret;
 }
 
-void
+void ROKEN_LIB_FUNCTION
 pid_file_delete (char **filename)
 {
     if (*filename != NULL) {

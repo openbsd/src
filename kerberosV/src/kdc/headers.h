@@ -32,7 +32,7 @@
  */
 
 /* 
- * $KTH: headers.h,v 1.15 2002/09/10 20:04:46 joda Exp $ 
+ * $KTH: headers.h,v 1.16 2005/04/24 13:49:00 lha Exp $ 
  */
 
 #ifndef __HEADERS_H__
@@ -91,13 +91,6 @@
 #include <hdb.h>
 #include <hdb_err.h>
 #include <der.h> /* copy_octet_string */
-
-#ifdef KRB4
-#include <krb.h>
-#include <prot.h>
-#define Principal Principal4
-#include <krb_db.h>
-#endif
 
 #undef ALLOC
 #define ALLOC(X) ((X) = malloc(sizeof(*(X))))

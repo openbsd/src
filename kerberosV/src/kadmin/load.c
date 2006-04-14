@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,9 +32,10 @@
  */
 
 #include "kadmin_locl.h"
+#include "kadmin-commands.h"
 #include <kadm5/private.h>
 
-RCSID("$KTH: load.c,v 1.44 2002/09/04 20:44:35 joda Exp $");
+RCSID("$KTH: load.c,v 1.52 2005/04/04 18:01:35 lha Exp $");
 
 struct entry {
     char *principal;
@@ -116,7 +117,7 @@ parse_time_string_alloc (time_t **t, const char *s)
  */
 
 static int
-parse_integer(unsigned *u, const char *s)
+parse_integer(unsigned int *u, const char *s)
 {
     if(strcmp(s, "-") == 0)
 	return 0;
@@ -126,9 +127,9 @@ parse_integer(unsigned *u, const char *s)
 }
 
 static int
-parse_integer_alloc (int **u, const char *s)
+parse_integer_alloc (unsigned int **u, const char *s)
 {
-    unsigned tmp;
+    unsigned int tmp;
     int ret;
 
     *u = NULL;
@@ -276,7 +277,7 @@ static int
 parse_hdbflags2int(HDBFlags *f, const char *s)
 {
     int ret;
-    unsigned tmp;
+    unsigned int tmp;
 
     ret = parse_integer (&tmp, s);
     if (ret == 1)
@@ -345,7 +346,7 @@ doit(const char *filename, int merge)
 
     if(!merge)
 	flags |= O_CREAT | O_TRUNC;
-    ret = db->open(context, db, flags, 0600);
+    ret = db->hdb_open(context, db, flags, 0600);
     if(ret){
 	krb5_warn(context, ret, "hdb_open");
 	fclose(f);
@@ -474,71 +475,41 @@ doit(const char *filename, int merge)
 	    continue;
 	}
 
-	ret = db->store(context, db, HDB_F_REPLACE, &ent);
+	ret = db->hdb_store(context, db, HDB_F_REPLACE, &ent);
 	hdb_free_entry (context, &ent);
 	if (ret) {
 	    krb5_warn(context, ret, "db_store");
 	    break;
 	}
     }
-    db->close(context, db);
+    db->hdb_close(context, db);
     fclose(f);
     return ret != 0;
 }
 
 
-static struct getargs args[] = {
-    { "help", 'h', arg_flag, NULL }
-};
+extern int local_flag;
 
-static int num_args = sizeof(args) / sizeof(args[0]);
-
-static void
-usage(const char *name)
+static int
+loadit(int merge, const char *name, int argc, char **argv)
 {
-    arg_printusage (args, num_args, name, "file");
-}
-
-
-
-int
-load(int argc, char **argv)
-{
-    int optind = 0;
-    int help_flag = 0;
-
-    args[0].value = &help_flag;
-
-    if(getarg(args, num_args, argc, argv, &optind)) {
-	usage ("load");
-	return 0;
-    }
-    if(argc - optind != 1 || help_flag) {
-	usage ("load");
+    if(!local_flag) {
+	krb5_warnx(context, "%s is only available in local (-l) mode", name);
 	return 0;
     }
 
-    doit(argv[optind], 0);
+    doit(argv[0], merge);
     return 0;
 }
-
+ 
 int
-merge(int argc, char **argv)
+load(void *opt, int argc, char **argv)
 {
-    int optind = 0;
-    int help_flag = 0;
-
-    args[0].value = &help_flag;
-
-    if(getarg(args, num_args, argc, argv, &optind)) {
-	usage ("merge");
-	return 0;
-    }
-    if(argc - optind != 1 || help_flag) {
-	usage ("merge");
-	return 0;
-    }
-
-    doit(argv[optind], 1);
-    return 0;
+    return loadit(0, "load", argc, argv);
+}
+ 
+int
+merge(void *opt, int argc, char **argv)
+{
+    return loadit(1, "merge", argc, argv);
 }

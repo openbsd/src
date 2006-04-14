@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -36,19 +36,17 @@
 #include <util.h>
 #endif
 
-RCSID("$KTH: main.c,v 1.27 2002/08/28 21:27:16 joda Exp $");
+RCSID("$KTH: main.c,v 1.31 2005/06/14 00:13:11 lha Exp $");
 
 volatile sig_atomic_t exit_flag = 0;
 krb5_context context;
 
-#ifdef HAVE_DAEMON
 extern int detach_from_console;
-#endif
 
 static RETSIGTYPE
 sigterm(int sig)
 {
-    exit_flag = 1;
+    exit_flag = sig;
 }
 
 int
@@ -57,7 +55,9 @@ main(int argc, char **argv)
     krb5_error_code ret;
     
     ret = krb5_init_context(&context);
-    if (ret)
+    if (ret == KRB5_CONFIG_BADFORMAT)
+	errx (1, "krb5_init_context failed to parse configuration file");
+    else if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);
 
     configure(argc, argv);
@@ -97,15 +97,19 @@ main(int argc, char **argv)
 
 	sigaction(SIGINT, &sa, NULL);
 	sigaction(SIGTERM, &sa, NULL);
+	sigaction(SIGXCPU, &sa, NULL);
+
+	sa.sa_handler = SIG_IGN;
+	sigaction(SIGPIPE, &sa, NULL);
     }
 #else
     signal(SIGINT, sigterm);
     signal(SIGTERM, sigterm);
+    signal(SIGXCPU, sigterm);
+    signal(SIGPIPE, SIG_IGN);
 #endif
-#ifdef HAVE_DAEMON
     if (detach_from_console)
 	daemon(0, 0);
-#endif
     pidfile(NULL);
     loop();
     krb5_free_context(context);

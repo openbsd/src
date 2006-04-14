@@ -31,8 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "krb5_locl.h"
+#include <err.h>
 
-RCSID("$KTH: name-45-test.c,v 1.3.2.1 2003/05/06 16:49:14 joda Exp $");
+RCSID("$KTH: name-45-test.c,v 1.7 2005/05/29 18:22:59 lha Exp $");
 
 enum { MAX_COMPONENTS = 3 };
 
@@ -152,7 +153,14 @@ main(int argc, char **argv)
     struct testcase *t;
     krb5_context context;
     krb5_error_code ret;
+    char hostname[1024];
     int val = 0;
+
+    setprogname(argv[0]);
+
+    gethostname(hostname, sizeof(hostname));
+    if (!(strstr(hostname, "kth.se") != NULL || strstr(hostname, "su.se") != NULL))
+	return 0;
 
     for (t = tests; t->v4_name; ++t) {
 	krb5_principal princ;

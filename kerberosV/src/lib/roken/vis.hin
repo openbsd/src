@@ -1,5 +1,5 @@
 /*	$NetBSD: vis.h,v 1.11 1999/11/25 16:55:50 wennmach Exp $	*/
-/*	$KTH: vis.hin,v 1.1 2000/12/06 21:35:47 joda Exp $	*/
+/*	$KTH: vis.hin,v 1.3 2005/04/12 11:29:15 lha Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,6 +34,14 @@
 
 #ifndef _VIS_H_
 #define	_VIS_H_
+
+#ifndef ROKEN_LIB_FUNCTION
+#ifdef _WIN32
+#define ROKEN_LIB_FUNCTION _stdcall
+#else
+#define ROKEN_LIB_FUNCTION
+#endif
+#endif
 
 /*
  * to select alternate encoding format
@@ -70,13 +78,21 @@
  */
 #define	UNVIS_END	1	/* no more characters */
 
-char	*vis (char *, int, int, int);
-char	*svis (char *, int, int, int, const char *);
-int	strvis (char *, const char *, int);
-int	strsvis (char *, const char *, int, const char *);
-int	strvisx (char *, const char *, size_t, int);
-int	strsvisx (char *, const char *, size_t, int, const char *);
-int	strunvis (char *, const char *);
-int	unvis (char *, int, int *, int);
+char ROKEN_LIB_FUNCTION
+	*vis (char *, int, int, int);
+char ROKEN_LIB_FUNCTION
+	*svis (char *, int, int, int, const char *);
+int ROKEN_LIB_FUNCTION
+	strvis (char *, const char *, int);
+int ROKEN_LIB_FUNCTION
+	strsvis (char *, const char *, int, const char *);
+int ROKEN_LIB_FUNCTION
+	strvisx (char *, const char *, size_t, int);
+int ROKEN_LIB_FUNCTION
+	strsvisx (char *, const char *, size_t, int, const char *);
+int ROKEN_LIB_FUNCTION
+	strunvis (char *, const char *);
+int ROKEN_LIB_FUNCTION
+	unvis (char *, int, int *, int);
 
 #endif /* !_VIS_H_ */

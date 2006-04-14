@@ -52,7 +52,7 @@ static char rcsid[] = "$NetBSD: fnmatch.c,v 1.11 1995/02/27 03:43:06 cgd Exp $";
 
 static const char *rangematch (const char *, int, int);
 
-int
+int ROKEN_LIB_FUNCTION
 fnmatch(const char *pattern, const char *string, int flags)
 {
 	const char *stringstart;

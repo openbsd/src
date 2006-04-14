@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: print_version.c,v 1.6.2.1 2004/02/12 18:31:33 joda Exp $");
+RCSID("$KTH: print_version.c,v 1.9 2005/01/01 14:27:47 lha Exp $");
 #endif
 #include "roken.h"
 
@@ -52,6 +52,6 @@ print_version(const char *progname)
     if(*package_list == '\0')
 	package_list = "no version information";
     fprintf(stderr, "%s (%s)\n", progname, package_list);
-    fprintf(stderr, "Copyright 1999-2004 Kungliga Tekniska Högskolan\n");
+    fprintf(stderr, "Copyright 1999-2005 Kungliga Tekniska Högskolan\n");
     fprintf(stderr, "Send bug-reports to %s\n", PACKAGE_BUGREPORT);
 }

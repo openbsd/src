@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: hdb_locl.h,v 1.18.4.1 2003/09/10 22:04:39 lha Exp $ */
+/* $KTH: hdb_locl.h,v 1.19 2003/09/10 21:54:58 lha Exp $ */
 
 #ifndef __HDB_LOCL_H__
 #define __HDB_LOCL_H__

@@ -29,7 +29,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: iruserok.c,v 1.23 1999/12/05 13:27:05 assar Exp $");
+RCSID("$KTH: iruserok.c,v 1.25 2005/04/12 11:28:54 lha Exp $");
 #endif
 
 #include <stdio.h>
@@ -217,7 +217,7 @@ __ivaliduser(FILE *hostf, unsigned raddr, const char *luser,
  *
  * Returns 0 if ok, -1 if not ok.
  */
-int
+int ROKEN_LIB_FUNCTION
 iruserok(unsigned raddr, int superuser, const char *ruser, const char *luser)
 {
 	char *cp;

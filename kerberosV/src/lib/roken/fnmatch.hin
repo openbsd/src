@@ -34,12 +34,21 @@
 #ifndef	_FNMATCH_H_
 #define	_FNMATCH_H_
 
+#ifndef ROKEN_LIB_FUNCTION
+#ifdef _WIN32
+#define ROKEN_LIB_FUNCTION _stdcall
+#else
+#define ROKEN_LIB_FUNCTION
+#endif
+#endif
+
 #define	FNM_NOMATCH	1	/* Match failed. */
 
 #define	FNM_NOESCAPE	0x01	/* Disable backslash escaping. */
 #define	FNM_PATHNAME	0x02	/* Slash must be matched by slash. */
 #define	FNM_PERIOD	0x04	/* Period must be matched by period. */
 
-int	 fnmatch (const char *, const char *, int);
+int ROKEN_LIB_FUNCTION
+fnmatch (const char *, const char *, int);
 
 #endif /* !_FNMATCH_H_ */

@@ -1,4 +1,4 @@
-.\" Copyright (c) 2003 Kungliga Tekniska Högskolan
+.\" Copyright (c) 2003 - 2004 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden). 
 .\" All rights reserved. 
 .\"
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
 .\" SUCH DAMAGE. 
 .\"
-.\" $KTH: kdc.8,v 1.23.2.1 2003/10/21 20:06:01 lha Exp $
+.\" $KTH: kdc.8,v 1.29 2004/12/17 18:36:19 lha Exp $
 .\"
-.Dd October 21, 2003
+.Dd December 17, 2004
 .Dt KDC 8
 .Os HEIMDAL
 .Sh NAME
@@ -60,6 +60,7 @@
 .Xc
 .Oc
 .Op Fl -detach
+.Op Fl -disable-DES
 .Op Fl -addresses= Ns Ar list of addresses
 .Ek
 .Sh DESCRIPTION
@@ -155,6 +156,10 @@ By default, the kdc will listen on all the locally configured
 addresses.
 If only a subset is desired, or the automatic detection fails, this
 option might be used.
+.It Fl -detach
+detach from pty and run as a daemon.
+.It Fl -disable-DES
+disable add des encryption types, makes the kdc not use them.
 .El
 .Pp
 All activities are logged to one or more destinations, see
@@ -187,7 +192,7 @@ command-line equivalents:
 .Bl -tag -width "xxx" -offset indent
 .It Li check-ticket-addresses = Va boolean
 Check the addresses in the ticket when processing TGS requests.
-The default is FALSE.
+The default is TRUE.
 .It Li allow-null-ticket-addresses = Va boolean
 Permit tickets with no addresses.
 This option is only relevant when check-ticket-addresses is TRUE.
@@ -234,7 +239,6 @@ An example of a config file:
 [kdc]
 	require-preauth = no
 	v4-realm = FOO.SE
-	key-file = /key-file
 .Ed
 .Sh BUGS
 If the machine running the KDC has new addresses added to it, the KDC

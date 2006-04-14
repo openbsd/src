@@ -35,6 +35,18 @@
 #ifndef _GLOB_H_
 #define	_GLOB_H_
 
+#ifndef ROKEN_LIB_FUNCTION
+#ifdef _WIN32
+#define ROKEN_LIB_FUNCTION _stdcall
+#else
+#define ROKEN_LIB_FUNCTION
+#endif
+#endif
+
+#define glob_t rk_glob_t
+#define	glob rk_glob
+#define	globfree rk_globfree
+
 struct stat;
 typedef struct {
 	int gl_pathc;		/* Count of total paths so far. */
@@ -75,7 +87,10 @@ typedef struct {
 #define	GLOB_NOSPACE	(-1)	/* Malloc call failed. */
 #define	GLOB_ABEND	(-2)	/* Unignored error. */
 
-int	glob (const char *, int, int (*)(const char *, int), glob_t *);
-void	globfree (glob_t *);
+int ROKEN_LIB_FUNCTION
+glob (const char *, int, int (*)(const char *, int), glob_t *);
+
+void ROKEN_LIB_FUNCTION
+globfree (glob_t *);
 
 #endif /* !_GLOB_H_ */

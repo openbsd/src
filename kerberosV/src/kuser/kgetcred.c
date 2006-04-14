@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,15 +33,22 @@
 
 #include "kuser_locl.h"
 
-RCSID("$KTH: kgetcred.c,v 1.5 2001/02/20 01:44:51 assar Exp $");
+RCSID("$KTH: kgetcred.c,v 1.9 2004/08/05 18:49:25 lha Exp $");
 
+static char *cache_str;
 static char *etype_str;
 static int version_flag;
 static int help_flag;
+static int transit_check = 1;
+static int canonicalize = 0;
 
 struct getargs args[] = {
+    { "cache",		'c', arg_string, &cache_str,
+      "credential cache to use", "cache"},
     { "enctype",	'e', arg_string, &etype_str,
       "encryption type to use", "enctype"},
+    { "transit-check",	0,   arg_negative_flag, &transit_check },
+    { "canonicalize",	0,   arg_flag, &canonicalize },
     { "version", 	0,   arg_flag, &version_flag },
     { "help",		0,   arg_flag, &help_flag }
 };
@@ -63,7 +70,10 @@ main(int argc, char **argv)
     krb5_context context;
     krb5_ccache cache;
     krb5_creds in, *out;
+    krb5_kdc_flags flags;
     int optind = 0;
+
+    flags.i = 0;
 
     ret = krb5_init_context (&context);
     if (ret)
@@ -90,6 +100,16 @@ main(int argc, char **argv)
     if (ret)
 	krb5_err (context, 1, ret, "krb5_cc_default");
 
+    if(cache_str) {
+	ret = krb5_cc_resolve(context, cache_str, &cache);
+	if (ret)
+	    krb5_err (context, 1, ret, "%s", cache_str);
+    } else {
+	ret = krb5_cc_default (context, &cache);
+	if (ret)
+	    krb5_err (context, 1, ret, "krb5_cc_resolve");
+    }
+
     memset(&in, 0, sizeof(in));
 
     if (etype_str) {
@@ -109,11 +129,17 @@ main(int argc, char **argv)
     if (ret)
 	krb5_err (context, 1, ret, "krb5_parse_name %s", argv[0]);
 
+    if (!transit_check)
+	flags.b.disable_transited_check = 1;
+    if (canonicalize)
+	flags.b.canonicalize = 1;
+
+
     in.times.endtime = 0;
-    ret = krb5_get_credentials(context, 0, cache, &in, &out);
+    ret = krb5_get_credentials_with_flags(context, 0, flags, cache, &in, &out);
     if (ret)
 	krb5_err (context, 1, ret, "krb5_get_credentials");
 
-    krb5_free_creds_contents(context, out);
+    krb5_free_cred_contents(context, out);
     return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -35,7 +35,7 @@
 #include <getarg.h>
 #include <parse_bytes.h>
 
-RCSID("$KTH: config.c,v 1.46.2.2 2003/10/27 11:06:52 joda Exp $");
+RCSID("$KTH: config.c,v 1.59 2005/05/23 17:34:12 lha Exp $");
 
 static const char *config_file;	/* location of kdc config file */
 
@@ -53,10 +53,8 @@ int num_db;
 
 const char *port_str;
 
-#ifdef HAVE_DAEMON
 int detach_from_console = -1;
 #define DETACH_IS_DEFAULT FALSE
-#endif
 
 int enable_http = -1;
 krb5_boolean encode_as_rep_as_tgs_rep; /* bug compatibility */
@@ -70,15 +68,16 @@ static const char *trpolicy_str;
 static struct getarg_strings addresses_str;	/* addresses to listen on */
 krb5_addresses explicit_addresses;
 
-#ifdef KRB4
+static int disable_des = -1;
+
 char *v4_realm;
 int enable_v4 = -1;
 int enable_kaserver = -1;
-#endif
 
 int enable_524 = -1;
 int enable_v4_cross_realm = -1;
 
+static int builtin_hdb_flag;
 static int help_flag;
 static int version_flag;
 
@@ -105,7 +104,6 @@ static struct getargs args[] = {
     {	"524",		0, 	arg_negative_flag, &enable_524,
 	"don't respond to 524 requests" 
     },
-#ifdef KRB4
     {
 	"kaserver", 'K', arg_flag,   &enable_kaserver,
 	"enable kaserver support"
@@ -117,7 +115,6 @@ static struct getargs args[] = {
 	"v4-realm",	'r',	arg_string, &v4_realm, 
 	"realm to serve v4-requests for"
     },
-#endif
     {	"kerberos4-cross-realm",	0, 	arg_flag,
 	&enable_v4_cross_realm,
 	"respond to kerberos 4 requests from foreign realms" 
@@ -125,7 +122,6 @@ static struct getargs args[] = {
     {	"ports",	'P', 	arg_string, &port_str,
 	"ports to listen to", "portspec"
     },
-#ifdef HAVE_DAEMON
 #if DETACH_IS_DEFAULT
     {
 	"detach",       'D',      arg_negative_flag, &detach_from_console, 
@@ -137,9 +133,12 @@ static struct getargs args[] = {
 	"detach from console"
     },
 #endif
-#endif
     {	"addresses",	0,	arg_strings, &addresses_str,
 	"addresses to listen on", "list of addresses" },
+    {	"disable-des",	0,	arg_flag, &disable_des,
+	"disable DES" },
+    {	"builtin-hdb",	0,	arg_flag,   &builtin_hdb_flag,
+	"list builtin hdb backends"},
     {	"help",		'h',	arg_flag,   &help_flag },
     {	"version",	'v',	arg_flag,   &version_flag }
 };
@@ -251,11 +250,11 @@ add_one_address (const char *str, int first)
 void
 configure(int argc, char **argv)
 {
+    krb5_error_code ret;
     int optind = 0;
-    int e;
     const char *p;
     
-    while((e = getarg(args, num_args, argc, argv, &optind)))
+    while(getarg(args, num_args, argc, argv, &optind))
 	warnx("error at argument `%s'", argv[optind]);
 
     if(help_flag)
@@ -266,6 +265,16 @@ configure(int argc, char **argv)
 	exit(0);
     }
 
+    if (builtin_hdb_flag) {
+	char *list;
+	ret = hdb_list_builtin(context, &list);
+	if (ret)
+	    krb5_err(context, 1, ret, "listing builtin hdb backends");
+	printf("builtin hdb backends: %s\n", list);
+	free(list);
+	exit(0);
+    }
+
     argc -= optind;
     argv += optind;
 
@@ -273,20 +282,15 @@ configure(int argc, char **argv)
 	usage(1);
     
     {
-	krb5_error_code ret;
 	char **files;
-	char *tmp;
+
 	if(config_file == NULL)
 	    config_file = _PATH_KDC_CONF;
-	asprintf(&tmp, "%s:%s", config_file, krb5_config_file);
-	if(tmp == NULL)
-	    krb5_errx(context, 1, "out of memory");
-	    
-	krb5_config_file = tmp;
 
-	ret = krb5_get_default_config_files(&files);
-	if(ret) 
-	    krb5_err(context, 1, ret, "reading configuration files");
+	ret = krb5_prepend_config_files_default(config_file, &files);
+	if (ret)
+	    krb5_err(context, 1, ret, "getting configuration files");
+	    
 	ret = krb5_set_config_files(context, files);
 	krb5_free_config_files(files);
 	if(ret) 
@@ -337,13 +341,9 @@ configure(int argc, char **argv)
 	}
     }
 
-#ifdef KRB4
     if(enable_v4 == -1)
 	enable_v4 = krb5_config_get_bool_default(context, NULL, FALSE, "kdc", 
-					 "enable-kerberos4", NULL);
-#else
-#define enable_v4 0
-#endif
+						 "enable-kerberos4", NULL);
     if(enable_v4_cross_realm == -1)
 	enable_v4_cross_realm =
 	    krb5_config_get_bool_default(context, NULL,
@@ -382,9 +382,11 @@ configure(int argc, char **argv)
 	trpolicy = TRPOLICY_ALWAYS_CHECK;
     }
 	
-	krb5_config_get_bool_default(context, NULL, TRUE, "kdc", 
-				     "enforce-transited-policy", NULL);
-#ifdef KRB4
+    if (krb5_config_get_string(context, NULL, "kdc", 
+			       "enforce-transited-policy", NULL))
+	krb5_errx(context, 1, "enforce-transited-policy deprecated, "
+		  "use [kdc]transited-policy instead");
+
     if(v4_realm == NULL){
 	p = krb5_config_get_string (context, NULL, 
 				    "kdc",
@@ -401,7 +403,6 @@ configure(int argc, char **argv)
 						       "kdc",
 						       "enable-kaserver",
 						       NULL);
-#endif
 
     encode_as_rep_as_tgs_rep = krb5_config_get_bool(context, NULL, "kdc", 
 						    "encode_as_rep_as_tgs_rep", 
@@ -412,13 +413,11 @@ configure(int argc, char **argv)
 					      "kdc_warn_pwexpire",
 					      NULL);
 
-#ifdef HAVE_DAEMON
     if(detach_from_console == -1) 
 	detach_from_console = krb5_config_get_bool_default(context, NULL, 
 							   DETACH_IS_DEFAULT,
 							   "kdc",
 							   "detach", NULL);
-#endif
     kdc_openlog();
     if(max_request == 0)
 	max_request = 64 * 1024;
@@ -426,12 +425,67 @@ configure(int argc, char **argv)
 	require_preauth = 1;
     if (port_str == NULL)
 	port_str = "+";
+
+#ifdef PKINIT
+    enable_pkinit = krb5_config_get_bool_default(context, NULL, FALSE,
+						 "kdc",
+						 "enable-pkinit",
+						 NULL);
+    if (enable_pkinit) {
+	const char *user_id, *x509_anchors;
+
+	user_id = krb5_config_get_string(context, NULL,
+					  "kdc",
+					  "pki-identity",
+					  NULL);
+	if (user_id == NULL)
+	    krb5_errx(context, 1, "pkinit enabled but no identity");
+
+	x509_anchors = krb5_config_get_string(context, NULL,
+					      "kdc",
+					      "pki-anchors",
+					      NULL);
+	if (x509_anchors == NULL)
+	    krb5_errx(context, 1, "pkinit enabled but no X509 anchors");
+
+	pk_initialize(user_id, x509_anchors);
+
+	enable_pkinit_princ_in_cert = 
+	    krb5_config_get_bool_default(context, 
+					 NULL, TRUE,
+					 "kdc",
+					 "pkinit-principal-in-certificate",
+					 NULL);
+    }
+#endif
+
+    if(v4_realm == NULL && (enable_kaserver || enable_v4)){
 #ifdef KRB4
-    if(v4_realm == NULL){
 	v4_realm = malloc(40); /* REALM_SZ */
 	if (v4_realm == NULL)
 	    krb5_errx(context, 1, "out of memory");
 	krb_get_lrealm(v4_realm, 1);
-    }
+#else
+	krb5_errx(context, 1, "No Kerberos 4 realm configured");
 #endif
+    }
+    if(disable_des == -1)
+	disable_des = krb5_config_get_bool_default(context, NULL, 
+						   0,
+						   "kdc",
+						   "disable-des", NULL);
+    if(disable_des) {
+	krb5_enctype_disable(context, ETYPE_DES_CBC_CRC);
+	krb5_enctype_disable(context, ETYPE_DES_CBC_MD4);
+	krb5_enctype_disable(context, ETYPE_DES_CBC_MD5);
+	krb5_enctype_disable(context, ETYPE_DES_CBC_NONE);
+	krb5_enctype_disable(context, ETYPE_DES_CFB64_NONE);
+	krb5_enctype_disable(context, ETYPE_DES_PCBC_NONE);
+
+	kdc_log(0, "DES was disabled, turned off Kerberos V4, 524 "
+		"and kaserver");
+	enable_v4 = 0;
+	enable_524 = 0;
+	enable_kaserver = 0;
+    }
 }

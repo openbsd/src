@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "kuser_locl.h"
 
-RCSID("$KTH: kverify.c,v 1.6 2001/08/24 01:08:13 assar Exp $");
+RCSID("$KTH: kverify.c,v 1.9 2004/04/25 19:25:33 joda Exp $");
 
 static int help_flag = 0;
 static int version_flag = 0;
@@ -60,7 +60,7 @@ main(int argc, char **argv)
     krb5_error_code ret;
     krb5_creds cred;
     krb5_preauthtype pre_auth_types[] = {KRB5_PADATA_ENC_TIMESTAMP};
-    krb5_get_init_creds_opt get_options;
+    krb5_get_init_creds_opt *get_options;
     krb5_verify_init_creds_opt verify_options;
     int optind = 0;
 
@@ -79,9 +79,11 @@ main(int argc, char **argv)
     if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);
 
-    krb5_get_init_creds_opt_init (&get_options);
+    ret = krb5_get_init_creds_opt_alloc (context, &get_options);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_get_init_creds_opt_alloc");
 
-    krb5_get_init_creds_opt_set_preauth_list (&get_options,
+    krb5_get_init_creds_opt_set_preauth_list (get_options,
 					      pre_auth_types,
 					      1);
 
@@ -95,7 +97,7 @@ main(int argc, char **argv)
 					NULL,
 					0,
 					NULL,
-					&get_options);
+					get_options);
     if (ret)
 	errx (1, "krb5_get_init_creds: %s", krb5_get_err_text(context, ret));
 
@@ -108,7 +110,7 @@ main(int argc, char **argv)
     if (ret)
 	errx (1, "krb5_verify_init_creds: %s",
 	      krb5_get_err_text(context, ret));
-    krb5_free_creds_contents (context, &cred);
+    krb5_free_cred_contents (context, &cred);
     krb5_free_context (context);
     return 0;
 }

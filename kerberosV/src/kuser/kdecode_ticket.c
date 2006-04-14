@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "kuser_locl.h"
 
-RCSID("$KTH: kdecode_ticket.c,v 1.5 2001/02/20 01:44:51 assar Exp $");
+RCSID("$KTH: kdecode_ticket.c,v 1.6 2004/04/25 19:25:33 joda Exp $");
 
 static char *etype_str;
 static int version_flag;
@@ -155,6 +155,6 @@ main(int argc, char **argv)
     print_and_decode_tkt (context, &out->ticket, out->server,
 			  out->session.keytype);
 
-    krb5_free_creds_contents(context, out);
+    krb5_free_cred_contents(context, out);
     return 0;
 }

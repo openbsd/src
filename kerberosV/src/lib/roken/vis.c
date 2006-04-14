@@ -1,7 +1,6 @@
-/*	$NetBSD: vis.c,v 1.19 2000/01/22 22:42:45 mycroft Exp $	*/
+/*	$NetBSD: vis.c,v 1.4 2003/08/07 09:15:32 agc Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -30,11 +29,43 @@
  * SUCH DAMAGE.
  */
 
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
 
 #if 1
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: vis.c,v 1.5 2001/09/03 05:37:23 assar Exp $");
+RCSID("$KTH: vis.c,v 1.9 2005/04/12 11:29:15 lha Exp $");
 #endif
 #include <roken.h>
 #ifndef _DIAGASSERT
@@ -43,7 +74,7 @@ RCSID("$KTH: vis.c,v 1.5 2001/09/03 05:37:23 assar Exp $");
 #else
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.19 2000/01/22 22:42:45 mycroft Exp $");
+__RCSID("$NetBSD: vis.c,v 1.4 2003/08/07 09:15:32 agc Exp $");
 #endif /* not lint */
 #endif
 
@@ -178,7 +209,7 @@ do {									   \
  * 	  pointed to by `extra'
  */
 #ifndef HAVE_SVIS
-char *
+char * ROKEN_LIB_FUNCTION
 svis(char *dst, int c, int flag, int nextc, const char *extra)
 {
 	_DIAGASSERT(dst != NULL);
@@ -207,7 +238,7 @@ svis(char *dst, int c, int flag, int nextc, const char *extra)
  *	This is useful for encoding a block of data.
  */
 #ifndef HAVE_STRSVIS
-int
+int ROKEN_LIB_FUNCTION
 strsvis(char *dst, const char *src, int flag, const char *extra)
 {
 	char c;
@@ -226,7 +257,7 @@ strsvis(char *dst, const char *src, int flag, const char *extra)
 
 
 #ifndef HAVE_STRVISX
-int
+int ROKEN_LIB_FUNCTION
 strsvisx(char *dst, const char *src, size_t len, int flag, const char *extra)
 {
 	char c;
@@ -250,7 +281,7 @@ strsvisx(char *dst, const char *src, size_t len, int flag, const char *extra)
  * vis - visually encode characters
  */
 #ifndef HAVE_VIS
-char *
+char * ROKEN_LIB_FUNCTION
 vis(char *dst, int c, int flag, int nextc)
 {
 	char extra[MAXEXTRAS];
@@ -276,7 +307,7 @@ vis(char *dst, int c, int flag, int nextc)
  *	This is useful for encoding a block of data.
  */
 #ifndef HAVE_STRVIS
-int
+int ROKEN_LIB_FUNCTION
 strvis(char *dst, const char *src, int flag)
 {
 	char extra[MAXEXTRAS];
@@ -288,7 +319,7 @@ strvis(char *dst, const char *src, int flag)
 
 
 #ifndef HAVE_STRVISX
-int
+int ROKEN_LIB_FUNCTION
 strvisx(char *dst, const char *src, size_t len, int flag)
 {
 	char extra[MAXEXTRAS];

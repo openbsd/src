@@ -38,7 +38,7 @@
 #include <getarg.h>
 #include <err.h>
 
-RCSID("$KTH: asn1_print.c,v 1.11 2002/08/29 20:45:35 assar Exp $");
+RCSID("$KTH: asn1_print.c,v 1.16 2005/05/29 14:23:00 lha Exp $");
 
 const char *class_names[] = {
     "UNIV",			/* 0 */
@@ -63,7 +63,7 @@ const char *tag_names[] = {
     NULL,			/* 7 */
     NULL,			/* 8 */
     NULL,			/* 9 */
-    NULL,			/* 10 */
+    "Enumerated",		/* 10 */
     NULL,			/* 11 */
     NULL,			/* 12 */
     NULL,			/* 13 */
@@ -116,10 +116,10 @@ loop (unsigned char *buf, size_t len, int indent)
 	buf += sz;
 	len -= sz;
 
-	if (class == CONTEXT) {
+	if (class == ASN1_C_CONTEXT) {
 	    printf ("[%d]\n", tag);
 	    loop (buf, length, indent);
-	} else if (class == UNIV) {
+	} else if (class == ASN1_C_UNIV) {
 	    switch (tag) {
 	    case UT_Sequence :
 		printf ("{\n");
@@ -138,24 +138,30 @@ loop (unsigned char *buf, size_t len, int indent)
 		break;
 	    }
 	    case UT_OctetString : {
-		octet_string str;
+		heim_octet_string str;
 		int i;
 		unsigned char *uc;
 
 		ret = der_get_octet_string (buf, length, &str, NULL);
 		if (ret)
 		    errx (1, "der_get_octet_string: %s", error_message (ret));
-		printf ("(length %lu), ", (unsigned long)length);
+		printf ("(length %lu)%s", (unsigned long)str.length,
+			str.length > 0 ? ", " : "");
 		uc = (unsigned char *)str.data;
-		for (i = 0; i < 16; ++i)
+		length = str.length;
+		if (length > 16)
+		    length = 16;
+		for (i = 0; i < length; ++i)
 		    printf ("%02x", uc[i]);
 		printf ("\n");
 		free (str.data);
 		break;
 	    }
 	    case UT_GeneralizedTime :
+	    case UT_IA5String:
+	    case UT_UTF8String :
 	    case UT_GeneralString : {
-		general_string str;
+		heim_general_string str;
 
 		ret = der_get_general_string (buf, length, &str, NULL);
 		if (ret)
@@ -166,7 +172,7 @@ loop (unsigned char *buf, size_t len, int indent)
 		break;
 	    }
 	    case UT_OID: {
-		oid o;
+		heim_oid o;
 		int i;
 
 		ret = der_get_oid(buf, length, &o, NULL);
@@ -178,6 +184,16 @@ loop (unsigned char *buf, size_t len, int indent)
 			   i < o.length - 1 ? "." : "");
 		printf("\n");
 		free_oid(&o);
+		break;
+	    }
+	    case UT_Enumerated: {
+		unsigned num;
+
+		ret = der_get_int (buf, length, &num, NULL);
+		if (ret)
+		    errx (1, "der_get_enum: %s", error_message (ret));
+		
+		printf("%u\n", num);
 		break;
 	    }
 	    default :

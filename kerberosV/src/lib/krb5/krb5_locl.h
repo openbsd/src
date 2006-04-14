@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: krb5_locl.h,v 1.71 2002/09/10 20:10:45 joda Exp $ */
+/* $KTH: krb5_locl.h,v 1.81 2005/05/29 14:28:39 lha Exp $ */
 
 #ifndef __KRB5_LOCL_H__
 #define __KRB5_LOCL_H__
@@ -50,6 +50,9 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -61,6 +64,9 @@
 #include <sys/ioctl.h>
 #endif
 #ifdef HAVE_PWD_H
+#undef _POSIX_PTHREAD_SEMANTICS
+/* This gets us the 5-arg getpwnam_r on Solaris 9.  */
+#define _POSIX_PTHREAD_SEMANTICS
 #include <pwd.h>
 #endif
 
@@ -109,19 +115,44 @@ struct sockaddr_dl;
 #ifdef HAVE_SYS_FILE_H
 #include <sys/file.h>
 #endif
+
+#ifdef HAVE_CRYPT_H
+#undef des_encrypt
+#define des_encrypt wingless_pigs_mostly_fail_to_fly
+#include <crypt.h>
+#undef des_encrypt
+#endif
+
+#ifdef HAVE_DOOR_CREATE
+#include <door.h>
+#endif
+
 #include <roken.h>
 #include <parse_time.h>
 #include <base64.h>
 
 #include "crypto-headers.h"
 
+
 #include <krb5_asn1.h>
+
+/* XXX glue for pkinit */
+struct krb5_pk_identity;
+struct krb5_pk_cert;
+struct ContentInfo;
+typedef struct krb5_pk_init_ctx_data *krb5_pk_init_ctx;
+
+/* v4 glue */
+struct _krb5_krb_auth_data;
+
 #include <der.h>
 
 #include <krb5.h>
 #include <krb5_err.h>
 #include <asn1_err.h>
 #include <krb5-private.h>
+
+#include "heim_threads.h"
 
 #define ALLOC(X, N) (X) = calloc((N), sizeof(*(X)))
 #define ALLOC_SEQ(X, N) do { (X)->len = (N); ALLOC((X)->val, (N)); } while(0)
@@ -134,5 +165,25 @@ struct sockaddr_dl;
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif
+
+#define KRB5_BUFSIZ 1024
+
+typedef enum {
+    KRB5_PA_PAC_DONT_CARE = 0, 
+    KRB5_PA_PAC_REQ_TRUE,
+    KRB5_PA_PAC_REQ_FALSE
+} krb5_get_init_creds_req_pac;
+
+struct _krb5_get_init_creds_opt_private {
+    int refcount;
+    /* ENC_TIMESTAMP */
+    const char *password;
+    krb5_s2k_proc key_proc;
+    /* PA_PAC_REQUEST */
+    krb5_get_init_creds_req_pac req_pac;
+    /* PKINIT */
+    krb5_pk_init_ctx pk_init_ctx;
+    int canonicalize;
+};
 
 #endif /* __KRB5_LOCL_H__ */

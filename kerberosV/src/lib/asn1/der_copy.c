@@ -33,10 +33,10 @@
 
 #include "der_locl.h"
 
-RCSID("$KTH: der_copy.c,v 1.10 2003/04/17 07:13:08 lha Exp $");
+RCSID("$KTH: der_copy.c,v 1.12 2003/11/07 07:39:43 lha Exp $");
 
 int
-copy_general_string (const general_string *from, general_string *to)
+copy_general_string (const heim_general_string *from, heim_general_string *to)
 {
     *to = strdup(*from);
     if(*to == NULL)
@@ -45,7 +45,7 @@ copy_general_string (const general_string *from, general_string *to)
 }
 
 int
-copy_octet_string (const octet_string *from, octet_string *to)
+copy_octet_string (const heim_octet_string *from, heim_octet_string *to)
 {
     to->length = from->length;
     to->data   = malloc(to->length);
@@ -56,12 +56,13 @@ copy_octet_string (const octet_string *from, octet_string *to)
 }
 
 int
-copy_oid (const oid *from, oid *to)
+copy_oid (const heim_oid *from, heim_oid *to)
 {
     to->length     = from->length;
     to->components = malloc(to->length * sizeof(*to->components));
     if (to->length != 0 && to->components == NULL)
 	return ENOMEM;
-    memcpy(to->components, from->components, to->length * sizeof(*to->components));
+    memcpy(to->components, from->components,
+	   to->length * sizeof(*to->components));
     return 0;
 }

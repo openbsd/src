@@ -34,7 +34,7 @@
 #include "headers.h"
 #include <getarg.h>
 
-RCSID("$KTH: string2key.c,v 1.20 2003/03/25 12:28:52 joda Exp $");
+RCSID("$KTH: string2key.c,v 1.22 2003/09/03 09:34:15 lha Exp $");
 
 int version5;
 int version4;
@@ -122,6 +122,7 @@ main(int argc, char **argv)
 	krb5_keytype keytype;
 	int *etypes;
 	unsigned num;
+	char *str;
 	ret = krb5_string_to_keytype(context, keytype_str, &keytype);
 	if(ret)
 	    krb5_err(context, 1, ret, "%s", keytype_str);
@@ -131,7 +132,8 @@ main(int argc, char **argv)
 	if(num == 0)
 	    krb5_errx(context, 1, "there are no encryption types for that keytype");
 	etype = etypes[0];
-	krb5_enctype_to_string(context, etype, (char **) &keytype_str);
+	krb5_enctype_to_string(context, etype, &str);
+	keytype_str = str;
 	if(num > 1 && version5)
 	    krb5_warnx(context, "ambiguous keytype, using %s", keytype_str);
     }
@@ -167,7 +169,7 @@ main(int argc, char **argv)
     if(argv[0])
 	password = argv[0];
     if(password == NULL){
-	if(des_read_pw_string(buf, sizeof(buf), "Password: ", 0))
+	if(UI_UTIL_read_pw_string(buf, sizeof(buf), "Password: ", 0))
 	    return 1;
 	password = buf;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 2000 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -36,7 +36,7 @@
 #include <sys/wait.h>
 #endif
 
-RCSID("$KTH: kadm_conn.c,v 1.14 2002/10/21 13:21:24 joda Exp $");
+RCSID("$KTH: kadm_conn.c,v 1.15 2004/05/13 17:46:20 joda Exp $");
 
 struct kadm_port {
     char *port;
@@ -62,16 +62,10 @@ add_kadm_port(krb5_context context, const char *service, unsigned int port)
     kadm_ports = p;
 }
 
-extern int do_kerberos4;
-
 static void
 add_standard_ports (krb5_context context)
 {
     add_kadm_port(context, "kerberos-adm", 749);
-#ifdef KRB4
-    if(do_kerberos4)
-	add_kadm_port(context, "kerberos-master", 751);
-#endif
 }
 
 /*

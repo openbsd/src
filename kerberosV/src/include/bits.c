@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: bits.c,v 1.22 2002/08/28 16:08:44 joda Exp $");
+RCSID("$KTH: bits.c,v 1.23 2005/01/05 15:22:02 lha Exp $");
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
 {
     FILE *f;
     int flag;
-    char *fn, *hb;
+    const char *fn, *hb;
     
     if(argc < 2){
 	fn = "bits.h";
@@ -121,8 +121,9 @@ int main(int argc, char **argv)
     } else {
 	char *p;
 	fn = argv[1];
-	asprintf(&hb, "__%s__", fn);
-	for(p = hb; *p; p++){
+	asprintf(&p, "__%s__", fn);
+	hb = p;
+	for(; *p; p++){
 	    if(!isalnum((unsigned char)*p))
 		*p = '_';
 	}
@@ -130,7 +131,7 @@ int main(int argc, char **argv)
     }
     fprintf(f, "/* %s -- this file was generated for %s by\n", fn, HOST);
     fprintf(f, "   %*s    %s */\n\n", (int)strlen(fn), "", 
-	    "$KTH: bits.c,v 1.22 2002/08/28 16:08:44 joda Exp $");
+	    "$KTH: bits.c,v 1.23 2005/01/05 15:22:02 lha Exp $");
     fprintf(f, "#ifndef %s\n", hb);
     fprintf(f, "#define %s\n", hb);
     fprintf(f, "\n");

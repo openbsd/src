@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "kadmin_locl.h"
 #include <parse_units.h>
 
-RCSID("$KTH: util.c,v 1.39 2003/04/14 11:55:27 lha Exp $");
+RCSID("$KTH: util.c,v 1.44 2005/05/30 20:47:04 lha Exp $");
 
 /*
  * util.c - functions for parsing, unparsing, and editing different
@@ -49,6 +49,7 @@ get_response(const char *prompt, const char *def, char *buf, size_t len);
  */
 
 struct units kdb_attrs[] = {
+    { "ok-as-delegate",		KRB5_KDB_OK_AS_DELEGATE },
     { "new-princ",		KRB5_KDB_NEW_PRINC },
     { "support-desmd5",		KRB5_KDB_SUPPORT_DESMD5 },
     { "pwchange-service",	KRB5_KDB_PWCHANGE_SERVICE },
@@ -114,7 +115,7 @@ parse_attributes (const char *resp, krb5_flags *attr, int *mask, int bit)
     } else if(*resp == '?') {
 	print_flags_table (kdb_attrs, stderr);
     } else {
-	fprintf (stderr, "Unable to parse '%s'\n", resp);
+	fprintf (stderr, "Unable to parse \"%s\"\n", resp);
     }
     return -1;
 }
@@ -194,15 +195,18 @@ str2time_t (const char *str, time_t *t)
     if (p == NULL)
 	return -1;
 
-    /* Do it on the end of the day */
-    tm2.tm_hour = 23;
-    tm2.tm_min  = 59;
-    tm2.tm_sec  = 59;
 
+    /* XXX this is really a bit optimistic, we should really complain
+       if there was a problem parsing the time */
     if(strptime (p, "%t%H:%M:%S", &tm2) != NULL) {
 	tm.tm_hour = tm2.tm_hour;
 	tm.tm_min  = tm2.tm_min;
 	tm.tm_sec  = tm2.tm_sec;
+    } else {
+	/* Do it on the end of the day */
+	tm.tm_hour = 23;
+	tm.tm_min  = 59;
+	tm.tm_sec  = 59;
     }
 
     *t = tm2time (tm, 0);
@@ -223,11 +227,10 @@ parse_timet (const char *resp, krb5_timestamp *value, int *mask, int bit)
 	if(mask)
 	    *mask |= bit;
 	return 0;
-    } else if(*resp == '?') {
-	printf ("Print date on format YYYY-mm-dd [hh:mm:ss]\n");
-    } else {
-	fprintf (stderr, "Unable to parse time '%s'\n", resp);
-    }
+    } 
+    if(*resp != '?')
+	fprintf (stderr, "Unable to parse time \"%s\"\n", resp);
+    fprintf (stderr, "Print date on format YYYY-mm-dd [hh:mm:ss]\n");
     return -1;
 }
 
@@ -313,7 +316,7 @@ parse_deltat (const char *resp, krb5_deltat *value, int *mask, int bit)
     } else if(*resp == '?') {
 	print_time_table (stderr);
     } else {
-	fprintf (stderr, "Unable to parse time '%s'\n", resp);
+	fprintf (stderr, "Unable to parse time \"%s\"\n", resp);
     }
     return -1;
 }
@@ -492,7 +495,7 @@ foreach_principal(const char *exp,
     char **princs;
     int num_princs;
     int i;
-    krb5_error_code ret;
+    krb5_error_code ret = 0;
     krb5_principal princ_ent;
     int is_expr;
 
@@ -556,11 +559,11 @@ get_response(const char *prompt, const char *def, char *buf, size_t len)
     osig = signal(SIGINT, interrupt);
     if(setjmp(jmpbuf)) {
 	signal(SIGINT, osig);
-	printf("\n");
+	fprintf(stderr, "\n");
 	return 1;
     }
 
-    printf("%s [%s]:", prompt, def);
+    fprintf(stderr, "%s [%s]:", prompt, def);
     if(fgets(buf, len, stdin) == NULL) {
 	int save_errno = errno;
 	if(ferror(stdin))

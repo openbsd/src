@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: log.c,v 1.31 2002/09/05 14:59:14 joda Exp $");
+RCSID("$KTH: log.c,v 1.34 2005/06/11 00:14:28 lha Exp $");
 
 struct facility {
     int min;
@@ -47,10 +47,10 @@ static struct facility*
 log_realloc(krb5_log_facility *f)
 {
     struct facility *fp;
-    f->len++;
-    fp = realloc(f->val, f->len * sizeof(*f->val));
+    fp = realloc(f->val, (f->len + 1) * sizeof(*f->val));
     if(fp == NULL)
 	return NULL;
+    f->len++;
     f->val = fp;
     fp += f->len - 1;
     return fp;
@@ -114,7 +114,7 @@ find_value(const char *s, struct s2i *table)
     return table->val;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_initlog(krb5_context context,
 	     const char *program,
 	     krb5_log_facility **fac)
@@ -134,7 +134,7 @@ krb5_initlog(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_addlog_func(krb5_context context,
 		 krb5_log_facility *fac,
 		 int min,
@@ -254,7 +254,7 @@ open_file(krb5_context context, krb5_log_facility *fac, int min, int max,
 
 
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
 {
     krb5_error_code ret = 0;
@@ -337,7 +337,7 @@ krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
 }
 
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_openlog(krb5_context context,
 	     const char *program,
 	     krb5_log_facility **fac)
@@ -361,20 +361,26 @@ krb5_openlog(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_closelog(krb5_context context,
 	      krb5_log_facility *fac)
 {
     int i;
     for(i = 0; i < fac->len; i++)
 	(*fac->val[i].close)(fac->val[i].data);
+    free(fac->val);
+    free(fac->program);
+    fac->val = NULL;
+    fac->len = 0;
+    fac->program = NULL;
+    free(fac);
     return 0;
 }
 
 #undef __attribute__
 #define __attribute__(X)
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_vlog_msg(krb5_context context,
 	      krb5_log_facility *fac,
 	      char **reply,
@@ -413,7 +419,7 @@ krb5_vlog_msg(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_vlog(krb5_context context,
 	  krb5_log_facility *fac,
 	  int level,
@@ -424,7 +430,7 @@ krb5_vlog(krb5_context context,
     return krb5_vlog_msg(context, fac, NULL, level, fmt, ap);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_log_msg(krb5_context context,
 	     krb5_log_facility *fac,
 	     int level,
@@ -443,7 +449,7 @@ krb5_log_msg(krb5_context context,
 }
 
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_log(krb5_context context,
 	 krb5_log_facility *fac,
 	 int level,

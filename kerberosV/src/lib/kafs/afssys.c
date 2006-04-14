@@ -33,7 +33,7 @@
 
 #include "kafs_locl.h"
 
-RCSID("$KTH: afssys.c,v 1.69.2.2 2004/06/22 14:29:48 lha Exp $");
+RCSID("$KTH: afssys.c,v 1.73 2005/06/02 07:25:58 lha Exp $");
 
 struct procdata {
     unsigned long param4;
@@ -112,6 +112,8 @@ try_aix(void)
  * there's a /etc/name_to_sysnum file.  
  */
 
+#if defined(AFS_SYSCALL) || defined(AFS_SYSCALL2) || defined(AFS_SYSCALL3)
+
 #define _PATH_ETC_NAME_TO_SYSNUM "/etc/name_to_sysnum"
 
 static int
@@ -143,6 +145,7 @@ map_syscall_name_to_number (const char *str, int *res)
     fclose (f);
     return -1;
 }
+#endif
 
 static int 
 try_proc(const char *path)

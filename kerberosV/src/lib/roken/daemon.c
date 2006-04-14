@@ -35,7 +35,7 @@ static char sccsid[] = "@(#)daemon.c	8.1 (Berkeley) 6/4/93";
 #include <config.h>
 #endif
 
-RCSID("$KTH: daemon.c,v 1.3 1997/10/04 21:55:48 joda Exp $");
+RCSID("$KTH: daemon.c,v 1.5 2005/04/12 11:28:36 lha Exp $");
 
 #ifndef HAVE_DAEMON
 
@@ -51,7 +51,7 @@ RCSID("$KTH: daemon.c,v 1.3 1997/10/04 21:55:48 joda Exp $");
 
 #include "roken.h"
 
-int
+int ROKEN_LIB_FUNCTION
 daemon(int nochdir, int noclose)
 {
     int fd;

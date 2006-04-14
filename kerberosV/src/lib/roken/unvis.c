@@ -32,7 +32,7 @@
 #if 1
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: unvis.c,v 1.2 2000/12/06 21:41:46 joda Exp $");
+RCSID("$KTH: unvis.c,v 1.5 2005/04/18 08:28:35 lha Exp $");
 #endif
 #include <roken.h>
 #ifndef _DIAGASSERT
@@ -86,7 +86,7 @@ __warn_references(unvis,
  * unvis - decode characters previously encoded by vis
  */
 #ifndef HAVE_UNVIS
-int
+int ROKEN_LIB_FUNCTION
 unvis(char *cp, int c, int *astate, int flag)
 {
 
@@ -250,7 +250,7 @@ unvis(char *cp, int c, int *astate, int flag)
  */
 
 #ifndef HAVE_STRUNVIS
-int
+int ROKEN_LIB_FUNCTION
 strunvis(char *dst, const char *src)
 {
 	char c;
@@ -262,7 +262,7 @@ strunvis(char *dst, const char *src)
 
 	while ((c = *src++) != '\0') {
 	again:
-		switch (unvis(dst, c, &state, 0)) {
+		switch (unvis(dst, (unsigned char)c, &state, 0)) {
 		case UNVIS_VALID:
 			dst++;
 			break;
@@ -276,7 +276,7 @@ strunvis(char *dst, const char *src)
 			return (-1);
 		}
 	}
-	if (unvis(dst, c, &state, UNVIS_END) == UNVIS_VALID)
+	if (unvis(dst, (unsigned char)c, &state, UNVIS_END) == UNVIS_VALID)
 		dst++;
 	*dst = '\0';
 	return (dst - start);

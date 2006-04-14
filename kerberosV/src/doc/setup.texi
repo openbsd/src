@@ -1,23 +1,26 @@
-@c $KTH: setup.texi,v 1.27.2.2 2003/10/21 21:37:56 lha Exp $
+@c $KTH: setup.texi,v 1.55 2005/06/07 00:54:51 lha Exp $
 
-@node Setting up a realm, Things in search for a better place, Building and Installing, Top
+@node Setting up a realm, Applications, Building and Installing, Top
 
 @chapter Setting up a realm
 
 @menu
-* Configuration file::          
-* Creating the database::       
-* keytabs::                     
+* Configuration file::
+* Creating the database::
+* Modifying the database::
+* keytabs::
 * Serving Kerberos 4/524/kaserver::
-* Remote administration::       
-* Password changing::           
-* Testing clients and servers::  
-* Slave Servers::               
-* Incremental propagation::     
+* Remote administration::
+* Password changing::
+* Testing clients and servers::
+* Slave Servers::
+* Incremental propagation::
 * Salting::
 * Cross realm::
 * Transit policy::
 * Setting up DNS::
+* Using LDAP to store the database::
+* Providing Kerberos credentials to servers and programs::
 @end menu
 
 A
@@ -40,9 +43,9 @@ There is a sample @file{krb5.conf} supplied in
 The configuration file is a hierarchical structure consisting of
 sections, each containing a list of bindings (either variable
 assignments or subsections). A section starts with
-@samp{[section-name]}.  A binding consists of a left hand side, an equal
+@samp{[@samp{section-name}]}.  A binding consists of a left hand side, an equal
 (@samp{=}) and a right hand side (the left hand side tag must be
-separated from the equal with some whitespace.) Subsections has a
+separated from the equal with some whitespace). Subsections has a
 @samp{@{} as the first non-whitespace character after the equal. All
 other bindings are treated as variable assignments. The value of a
 variable extends to the end of the line.
@@ -72,7 +75,7 @@ are briefly described here.
 The @samp{libdefaults} section contains a list of library configuration
 parameters, such as the default realm and the timeout for KDC
 responses. The @samp{realms} section contains information about specific
-realms, such as where they hide their KDC. This section serves the same
+realms, such as where they hide their KDC@. This section serves the same
 purpose as the Kerberos 4 @file{krb.conf} file, but can contain more
 information. Finally the @samp{domain_realm} section contains a list of
 mappings from domains to realms, equivalent to the Kerberos 4
@@ -95,16 +98,16 @@ with contents similar to the following.
 @end example
 
 If you use a realm name equal to your domain name, you can omit the
-@samp{libdefaults}, and @samp{domain_realm}, sections. If you have a
-SRV-record for your realm, or your Kerberos server has CNAME called
+@samp{libdefaults}, and @samp{domain_realm}, sections. If you have a DNS
+SRV-record for your realm, or your Kerberos server has DNS CNAME
 @samp{kerberos.my.realm}, you can omit the @samp{realms} section too.
 
-@node Creating the database, keytabs, Configuration file, Setting up a realm
+@node Creating the database, Modifying the database, Configuration file, Setting up a realm
 @section Creating the database
 
 The database library will look for the database in the directory
 @file{/var/heimdal}, so you should probably create that directory.
-Make sure the directory have restrictive permissions.
+Make sure the directory has restrictive permissions.
 
 @example
 # mkdir /var/heimdal
@@ -122,18 +125,25 @@ Master key:
 Verifying password - Master key: 
 @end example
 
-To initialise the database use the @code{kadmin} program, with the
+If you want to generate a random master key you can use the
+--random-key to kstash. This will make sure you have a good key
+on which attackers can't do a dictionary attack.
+
+If you have a master key, make sure you make a backup of your master
+key file; without it backups of the database are of no use.
+
+To initialise the database use the @command{kadmin} program, with the
 @samp{-l} option (to enable local database mode). First issue a
 @kbd{init MY.REALM} command. This will create the database and insert
 default principals for that realm. You can have more than one realm in
 one database, so @samp{init} does not destroy any old database.
 
 Before creating the database, @samp{init} will ask you some questions
-about max ticket lifetimes.
+about maximum ticket lifetimes.
 
 After creating the database you should probably add yourself to it. You
 do this with the @samp{add} command. It takes as argument the name of a
-principal. The principal should contain a realm, so if you haven't setup
+principal. The principal should contain a realm, so if you haven't set up
 a default realm, you will need to explicitly include the realm.
 
 @example
@@ -179,10 +189,72 @@ krbtgt/MY.REALM@@MY.REALM 1:0:1:52b53b61c875ce16:-:0:7:c8943be ...
 kadmin/changepw@@MY.REALM 1:0:1:f48c8af2b340e9fb:-:0:7:e3e6088 ...
 @end smallexample
 
-@node keytabs, Serving Kerberos 4/524/kaserver, Creating the database, Setting up a realm
+@node Modifying the database, keytabs, Creating the database, Setting up a realm
+@section Modifying the database
+
+All modifications of principals are done with with kadmin.
+
+A principal have several attributes and lifetimes associated with it.
+
+Principals are added, renamed, modified, and deleted with the kadmin
+commands @samp{add}, @samp{rename}, @samp{modify}, @samp{delete}.
+Both interactive editing and command switches can be used (use --help
+to list the available options).
+
+There are different kind of types for the fields in the database,
+attributes, absolute time times and relative times.
+
+@subsection Attributes
+
+When doing interactive editing, attributes are listed with @samp{?}.
+
+The attributes are given in a comma (@samp{,}) separated list.
+Attributes are removed from the list by prefixing them with @samp{-}.
+
+@smallexample
+kadmin> modify me
+Max ticket life [1 day]:
+Max renewable life [1 week]:
+Principal expiration time [never]:
+Password expiration time [never]:
+Attributes [disallow-renewable]: requires-pre-auth,-disallow-renewable
+kadmin> get me
+            Principal: me@@MY.REALM
+[...]
+           Attributes: requires-pre-auth
+@end smallexample
+
+@subsection Absolute times
+
+The format for absolute times are any of the following
+
+@smallexample
+never
+now
+YYYY-mm-dd
+YYYY-mm-dd HH:MM:SS
+@end smallexample
+
+
+@subsection Relative times
+
+The format for relative times are any of the following combined
+
+@smallexample
+N year
+M month
+O day
+P hour
+Q minute
+R second
+@end smallexample
+
+@c Describe more of kadmin commands here...
+
+@node keytabs, Serving Kerberos 4/524/kaserver, Modifying the database, Setting up a realm
 @section keytabs
 
-To extract a service ticket from the database and put it in a keytab you
+To extract a service ticket from the database and put it in a keytab, you
 need to first create the principal in the database with @samp{ank}
 (using the @kbd{--random-key} flag to get a random key) and then
 extract it with @samp{ext_keytab}.
@@ -193,6 +265,7 @@ Max ticket life [unlimited]:
 Max renewable life [unlimited]:
 Attributes []:
 kadmin> ext host/my.host.name
+kadmin> exit
 # ktutil list
 Version  Type             Principal
      1   des-cbc-md5      host/my.host.name@@MY.REALM
@@ -209,8 +282,8 @@ Support for Kerberos 4 has been removed in OpenBSD.
 @node Remote administration, Password changing, Serving Kerberos 4/524/kaserver, Setting up a realm
 @section Remote administration
 
-The admin, @file{kadmin} is started automatically at boot by enabling it in
-@file{/etc/rc.conf}.
+The administration server, @command{kadmind}, can be started automatically
+at boot by enabling it in @file{/etc/rc.conf}.
 
 For testing purposes, you can start it manually by running:
 
@@ -218,26 +291,26 @@ For testing purposes, you can start it manually by running:
 # /usr/libexec/kadmind &
 @end smallexample
 
-Access to the administration server is controlled by an acl-file, (default
-@file{/var/heimdal/kadmind.acl}.) The lines in the access file, has the
+Access to the administration server is controlled by an ACL file, (default
+@file{/var/heimdal/kadmind.acl}.) The lines in the access file, have the
 following syntax:
 @smallexample
 principal       [priv1,priv2,...]       [glob-pattern]
 @end smallexample
 
-The matching is from top to bottom for matching principal (and if given,
-glob-pattern).  When there is a match, the rights of that lines are
+The matching is from top to bottom for matching principals (and if given,
+glob-pattern).  When there is a match, the access rights of that line are
 used.
 
 The privileges you can assign to a principal are: @samp{add},
 @samp{change-password} (or @samp{cpw} for short), @samp{delete},
 @samp{get}, @samp{list}, and @samp{modify}, or the special privilege
 @samp{all}. All of these roughly corresponds to the different commands
-in @samp{kadmin}.
+in @command{kadmin}.
 
-If a @var{glob-pattern} is given on a line, it restricts the right for
+If a @var{glob-pattern} is given on a line, it restricts the access rights for
 the principal to only apply for the subjects that match the pattern.
-The patters are of the same type as those used in shell globbing, see
+The patterns are of the same type as those used in shell globbing, see
 @url{none,,fnmatch(3)}.
 
 In the example below @samp{lha/admin} can change every principal in the
@@ -263,31 +336,72 @@ automatically at boot if the master KDC is enabled in @file{/etc/rc.conf}.
 @subsection Password quality assurance
 
 It is important that users have good passwords, both to make it harder
-to guess them and to avoid off-line attacks (pre-authentication provides
-some defense against off-line attacks).  To ensure that the users choose
-good passwords, you can enable password quality controls in
-@samp{kpasswdd}.  The controls themselves are done in a shared library
-that is used by @samp{kpasswdd}.  To configure in these controls, add
-lines similar to the following to your @file{/etc/kerberosV/krb5.conf}:
+to guess them and to avoid off-line attacks (although
+pre-authentication provides some defense against off-line attacks).
+To ensure that the users choose good passwords, you can enable
+password quality controls in @command{kpasswdd} and @command{kadmind}.
+The controls themselves are done in a shared library or an external
+program that is used by @command{kpasswdd}.  To configure in these
+controls, add lines similar to the following to your
+@file{/etc/krb5.conf}:
 
 @example
 [password_quality]
-        check_library = @var{library}
-        check_function = @var{function}
+	policies = external-check builtin:minimum-length module:policyname
+	external_program = /bin/false
+	policy_libraries = @var{library1.so} @var{library2.so}
 @end example
 
-The function @var{function} in the shared library @var{library} will be
-called for proposed new passwords.  The function should be declared as:
+In @samp{[password_quality]policies} the module name is optional if
+the policy name is unique in all modules (members of
+@samp{policy_libraries}).
 
+The builtin polices are
+
+@itemize @bullet
+
+@item external-check
+
+Executes the program specified by @samp{[password_quality]external_program}. 
+
+A number of key/value pairs is passed as input to the program, one per
+line, ending with the string @samp{end}.  The key/value lines are of
+the form
 @example
-const char *
-function(krb5_context context, krb5_principal principal, krb5_data *pwd);
+principal: @var{principal}
+new-password: @var{password}
 @end example
+where @var{password} is the password to check for the previous
+@var{principal}.
 
-The function should verify that @var{pwd} is a good password for
-@var{principal} and if so return @code{NULL}.  If it is deemed to be of
-low quality, it should return a string explaining why that password
-should not be used.
+If the external application approves the password, it should return
+@samp{APPROVED} on standard out and exit with exit code 0.  If it
+doesn't approve the password, a one line error message explaining the
+problem should be returned on standard error and the application
+should exit with exit code 0.  In case of a fatal error, the
+application should, if possible, print an error message on standard
+error and exit with a non-zero error code.
+
+@item minimum-length
+
+The minimum length password quality check reads the configuration file
+stanza @samp{[password_quality]min_length} and requires the password
+to be at least this length.
+
+@item character-class
+
+The character-class password quality check reads the configuration
+file stanza @samp{[password_quality]min_classes}. The policy requires
+the password to have characters from at least that many characters
+classes. Default value if not given is 3.
+
+The four diffrent characters classes are, uppercase, lowercase,
+number, special characters.
+
+@end itemize
+
+If you want to write you own shared object that checks password
+policies, see the manual page @manpage{kadm5_pwcheck,3}.
 
 Code for a password quality checking function that uses the cracklib
 library can be found in @file{lib/kadm5/sample_password_check.c} in the
@@ -295,8 +409,17 @@ source code distribution.  It requires the cracklib library built with
 the patch available at
 @url{ftp://ftp.pdc.kth.se/pub/krb/src/cracklib.patch}.
 
+A sample policy external program is included in
+@file{lib/kadm5/check-cracklib.pl}.
+
 If no password quality checking function is configured, it is only
-verified that it is at least six characters of length.
+verified that it is at least six characters long.
+
+The program @command{test_pw_quality}, which is built in
+@file{lib/kadm5}, but not installed, can be used to check password
+policy settings.  It may be convenient to set the environment variable
+@samp{KRB5_CONFIG} to point to a test version of @file{krb5.conf}
+while you're testing the @samp{[password_quality]} stanza that way.
 
 @node Testing clients and servers, Slave Servers, Password changing, Setting up a realm
 @section Testing clients and servers
@@ -311,21 +434,21 @@ It is desirable to have at least one backup (slave) server in case the
 master server fails. It is possible to have any number of such slave
 servers but more than three usually doesn't buy much more redundancy.
 
-All Kerberos servers for a realm shall have the same database so that
+All Kerberos servers for a realm must have the same database so that
 they present the same service to all the users.  The
 @pindex hprop
-@code{hprop} program, running on the master, will propagate the database
+@command{hprop} program, running on the master, will propagate the database
 to the slaves, running
 @pindex hpropd
-@code{hpropd} processes.
+@command{hpropd} processes.
 
 Every slave needs a database directory, the master key (if it was used
 for the database) and a keytab with the principal
 @samp{hprop/@var{hostname}}.  Add the principal with the
 @pindex ktutil
-@code{ktutil} command and start
+@command{ktutil} command and start
 @pindex hpropd
-@code{hpropd}, as follows:
+@command{hpropd}, as follows:
 
 @example
 slave# ktutil get -p foo/admin hprop/`hostname`
@@ -346,39 +469,40 @@ Then run
 master# hprop slave
 @end example
 
-This was just an on-hands example to make sure that everything was
-working properly.  Doing it manually is of course the wrong way and to
+This was just an hands-on example to make sure that everything was
+working properly.  Doing it manually is of course the wrong way, and to
 automate this you will want to start
 @pindex hpropd
-@code{hpropd} from @code{inetd} on the slave(s) and regularly run
+@command{hpropd} from @command{inetd} on the slave(s) and regularly run
 @pindex hprop
-@code{hprop} on the master to regularly propagate the database.
-Starting the propagation once an hour from @code{cron} is probably a
+@command{hprop} on the master to regularly propagate the database.
+Starting the propagation once an hour from @command{cron} is probably a
 good idea.
 
 f@node Incremental propagation, Salting , Slave Servers, Setting up a realm
 @section Incremental propagation
 
-There is also a newer and still somewhat experimental mechanism for
+There is also a newer, and still somewhat experimental, mechanism for
 doing incremental propagation in Heimdal.  Instead of sending the whole
 database regularly, it sends the changes as they happen on the master to
-the slaves.  The master keeps track of all the changes by assigned a
+the slaves.  The master keeps track of all the changes by assigning a
 version number to every change to the database.  The slaves know which
 was the latest version they saw and in this way it can be determined if
-they are in sync or not.  A log of all the changes is kept on the master
-and when a slave is at an older versioner than the oldest one in the
+they are in sync or not.  A log of all the changes is kept on the master,
+and when a slave is at an older version than the oldest one in the
 log, the whole database has to be sent.
 
-Protocol-wise, all the slaves connects to the master and as a greeting
+Protocol-wise, all the slaves connect to the master and as a greeting
 tell it the latest version that they have (@samp{IHAVE} message).  The
 master then responds by sending all the changes between that version and
 the current version at the master (a series of @samp{FORYOU} messages)
-or the whole database in a @samp{TELLYOUEVERYTHING} message.
+or the whole database in a @samp{TELLYOUEVERYTHING} message.  There is
+also a keep-alive protocol that makes sure all slaves are up and running.
 
 @subsection Configuring incremental propagation
 
-The program that runs on the master is @code{ipropd-master} and all
-clients run @code{ipropd-slave}.
+The program that runs on the master is @command{ipropd-master} and all
+clients run @command{ipropd-slave}.
 
 Create the file @file{/var/heimdal/slaves} on the master containing all
 the slaves that the database should be propagated to.  Each line contains
@@ -390,7 +514,7 @@ You should already have @samp{iprop/tcp} defined as 2121, in your
 for some peculiar reason, you can use the @kbd{--port} option.  This is
 useful when you have multiple realms to distribute from one server.
 
-Then you need to create these principals that you added in the
+Then you need to create those principals that you added in the
 configuration file.  Create one @samp{iprop/hostname} for the master and
 for every slave.
 
@@ -399,13 +523,13 @@ for every slave.
 master# /usr/heimdal/sbin/ktutil get iprop/`hostname`
 @end example
 
-The next step is to start the @code{ipropd-master} process on the master
-server.  The @code{ipropd-master} listens on the UNIX-socket
+The next step is to start the @command{ipropd-master} process on the master
+server.  The @command{ipropd-master} listens on the UNIX domain socket
 @file{/var/heimdal/signal} to know when changes have been made to the
 database so they can be propagated to the slaves.  There is also a
 safety feature of testing the version number regularly (every 30
 seconds) to see if it has been modified by some means that do not raise
-this signal.  Then, start @code{ipropd-slave} on all the slaves:
+this signal.  Then, start @command{ipropd-slave} on all the slaves:
 
 @example
 master# /usr/heimdal/libexec/ipropd-master &
@@ -420,7 +544,7 @@ Salting is used to make it harder to precalculate all possible
 keys. Using a salt increases the search space to make it almost
 impossible to precalculate all keys. Salting is the process of mixing a
 public string (the salt) with the password, then sending it through an
-encryption-type specific string-to-key function that will output the
+encryption type specific string-to-key function that will output the
 fixed size encryption key.
 
 In Kerberos 5 the salt is determined by the encryption-type, except
@@ -428,7 +552,7 @@ in some special cases.
 
 In @code{des} there is the Kerberos 4 salt
 (none at all) or the afs-salt (using the cell (realm in
-afs-lingo)).
+AFS lingo)).
 
 In @code{arcfour} (the encryption type that Microsoft Windows 2000 uses)
 there is no salt. This is to be compatible with NTLM keys in Windows
@@ -444,23 +568,25 @@ or afs3-salt), and the salt-string is the string that will be used as
 salt (remember that if the salt is appended/prepended, the empty salt ""
 is the same thing as no salt at all).
 
-Common types of salting includes
+Common types of salting include
 
 @itemize @bullet
 @item @code{v4} (or @code{des:pw-salt:})
 
-The Kerberos 4 salting is using no salt att all. Reason there is colon
-that the end or the salt string is that it makes the salt the empty
+The Kerberos 4 salting is using no salt at all. Reason there is colon
+at the end of the salt string is that it makes the salt the empty
 string (same as no salt).
 
 @item @code{v5} (or @code{pw-salt})
 
-@code{pw-salt} means all regular encryption-types that is regular 
+@code{pw-salt} uses the default salt for each encryption type is
+specified for. If the encryption type @samp{etype} isn't given, all
+default encryption will be used.
 
 @item @code{afs3-salt}
 
-@code{afs3-salt} is the salting that is used with Transarc kaserver. Its
-the cell appended to the password.
+@code{afs3-salt} is the salt that is used with Transarc kaserver. Its
+the cell name appended to the password.
 
 @end itemize
 
@@ -468,14 +594,14 @@ the cell appended to the password.
 @section Cross realm
 @cindex Cross realm
 
-Suppose you are residing in the realm @samp{MY.REALM}, how do you
+Suppose you reside in the realm @samp{MY.REALM}, how do you
 authenticate to a server in @samp{OTHER.REALM}? Having valid tickets in
-@samp{MY.REALM} allows you to communicate with kerberised services in that
+@samp{MY.REALM} allows you to communicate with Kerberised services in that
 realm. However, the computer in the other realm does not have a secret
 key shared with the Kerberos server in your realm.
 
-It is possible to add a share keys between two realms that trust each
-other. When a client program, such as @code{telnet} or @code{ssh},
+It is possible to share keys between two realms that trust each
+other. When a client program, such as @command{telnet} or @command{ssh},
 finds that the other computer is in a different realm, it will try to
 get a ticket granting ticket for that other realm, but from the local
 Kerberos server. With that ticket granting ticket, it will then obtain
@@ -488,7 +614,7 @@ add the following principals to each realm. The principals should be
 @samp{krbtgt/MY.REALM@@OTHER.REALM} and
 @samp{krbtgt/OTHER.REALM@@MY.REALM}in @samp{OTHER.REALM}.
 
-In Kerberos 5 the trust can be one configured to be one way. So that
+In Kerberos 5 the trust can be configured to be one way. So that
 users from @samp{MY.REALM} can authenticate to services in
 @samp{OTHER.REALM}, but not the opposite. In the example above, the
 @samp{krbtgt/MY.REALM@@OTHER.REALM} then should be removed.
@@ -534,13 +660,13 @@ May  3 14:10:54  May  3 23:55:54  host/hummel.it.su.se@@SU.SE
 @cindex Transit policy
 
 If you want to use cross realm authentication through an intermediate
-realm it must be explicitly allowed by either the KDCs or the server
+realm, it must be explicitly allowed by either the KDCs or the server
 receiving the request. This is done in @file{krb5.conf} in the
 @code{[capaths]} section.
 
 When the ticket transits through a realm to another realm, the
 destination realm adds its peer to the "transited-realms" field in the
-ticket. The field is unordered, this is since there is no way to know if
+ticket. The field is unordered, since there is no way to know if
 know if one of the transited-realms changed the order of the list.
 
 The syntax for @code{[capaths]} section:
@@ -555,7 +681,7 @@ The syntax for @code{[capaths]} section:
 @end example
 
 The realm @code{STACKEN.KTH.SE} allows clients from @code{SU.SE} and
-@code{DSV.SU.SE} to cross in. Since @code{STACKEN.KTH.SE} only have
+@code{DSV.SU.SE} to cross it. Since @code{STACKEN.KTH.SE} only have
 direct cross realm with @code{KTH.SE}, and @code{DSV.SU.SE} only have direct cross
 realm with @code{SU.SE} they need to use both @code{SU.SE} and
 @code{KTH.SE} as transit realms.
@@ -573,20 +699,31 @@ realm with @code{SU.SE} they need to use both @code{SU.SE} and
 @end cartouche
 @end example
 
+The order of the @code{PERMITTED-CROSS-REALMS} is not important when
+doing transit cross realm verification.
+
+However the order is important when the @code{[capaths]} section is used
+to figure out the intermediate realm to go to when doing multi-realm
+transit. When figuring out the next realm, the first realm of the list
+of @code{PERMITTED-CROSS-REALMS} is chosen. This is done in both the
+client kerberos library and the KDC.
+
 @c To test the cross realm configuration, use:
 @c    kmumble transit-check client server transit-realms ...
 
-@node Setting up DNS, , Transit policy, Setting up a realm
+@node Setting up DNS, Using LDAP to store the database, Transit policy, Setting up a realm
 @section Setting up DNS
 @cindex Setting up DNS
 
+@subsection Using DNS to find KDC
+
 If there is information about where to find the KDC or kadmind for a
 realm in the @file{krb5.conf} for a realm, that information will be
-preferred and DNS will not be queried.
+preferred, and DNS will not be queried.
 
 Heimdal will try to use DNS to find the KDCs for a realm. First it
-will try to find @code{SRV} resource record (RR) for the realm. If no
-SRV RRs are found, it will fall back to looking for a @code{A} RR for
+will try to find a @code{SRV} resource record (RR) for the realm. If no
+SRV RRs are found, it will fall back to looking for an @code{A} RR for
 a machine named kerberos.REALM, and then kerberos-1.REALM, etc
 
 Adding this information to DNS makes the client have less
@@ -594,12 +731,12 @@ configuration (in the common case, no configuration) and allows the
 system administrator to change the number of KDCs and on what machines
 they are running without caring about clients.
 
-The backside of using DNS that the client might be fooled to use the
+The down side of using DNS that the client might be fooled to use the
 wrong server if someone fakes DNS replies/data, but storing the IP
 addresses of the KDC on all the clients makes it very hard to change
 the infrastructure.
 
-Example of the configuration for the realm @code{EXAMPLE.COM},
+An example of the configuration for the realm @code{EXAMPLE.COM},
 
 @example
 
@@ -615,4 +752,238 @@ _kerberos-adm._tcp	SRV	10 1 749 kerberos.example.com.
 
 More information about DNS SRV resource records can be found in
 RFC-2782 (A DNS RR for specifying the location of services (DNS SRV)).
+
+@subsection Using DNS to map hostname to Kerberos realm
+
+Heimdal also supports a way to lookup a realm from a hostname. This to
+minimize configuration needed on clients. Using this has the drawback
+that clients can be redirected by an attacker to realms within the
+same cross realm trust and made to believe they are talking to the
+right server (since Kerberos authentication will succeed).
+
+An example configuration that informs clients that for the realms
+it.example.com and srv.example.com, they should use the realm
+EXAMPLE.COM:
+
+@example
+
+$ORIGIN example.com.
+_kerberos.it		TXT     "EXAMPLE.COM"
+_kerberos.srv		TXT     "EXAMPLE.COM"
+
+@end example
+
+@node Using LDAP to store the database, Providing Kerberos credentials to servers and programs, Setting up DNS, Setting up a realm
+@section Using LDAP to store the database
+@cindex Using the LDAP backend
+
+This document describes how to install the LDAP backend for
+Heimdal. Note that before attempting to configure such an
+installation, you should be aware of the implications of storing
+private information (such as users' keys) in a directory service
+primarily designed for public information. Nonetheless, with a
+suitable authorization policy, it is possible to set this up in a
+secure fashion. A knowledge of LDAP, Kerberos, and C is necessary to
+install this backend. The HDB schema was devised by Leif Johansson.
+
+Requirements:
+
+@itemize @bullet
+
+@item
+A current release of Heimdal, configured with
+@code{--with-openldap=/usr/local} (adjust according to where you have
+installed OpenLDAP).
+
+You can verify that you manage to configure LDAP support by running
+@file{kdc --builtin-hdb}, and checking that @samp{ldap:} is one entry
+in the list.
+
+Its also possible to configure the ldap backend as a shared module,
+see option --hdb-openldap-module to configure.
+
+@item
+OpenLDAP 2.0.x. Configure OpenLDAP with @kbd{--enable-local} to enable the
+local transport. (A patch to support SASL EXTERNAL authentication is
+necessary in order to use OpenLDAP 2.1.x.)
+
+@item
+Add the hdb schema to the LDAP server, its included in the source-tree
+in @file{lib/hdb/hdb.schema}. Example from slapd.conf:
+
+@example
+include /usr/local/etc/openldap/schema/hdb.schema
+@end example
+
+@item
+Configure the LDAP server ACLs to accept writes from clients over the
+local transport. For example:
+
+@example
+access to *
+        by dn.exact="uid=heimdal,dc=services,dc=example,dc=com" write
+        ...
+
+sasl-regexp "uidNumber=0\\\+gidNumber=.*,cn=peercred,cn=external,cn=auth"
+	"uid=heimdal,dc=services,dc=example,dc=com"
+
+@end example
+
+The sasl-regexp is for mapping between the SASL/EXTERNAL and a user in
+a tree.  The user that the key is mapped to should be have a
+krb5Principal aux object with krb5PrincipalName set so that the
+``creator'' and ``modifier'' is right in @file{kadmin}.
+
+Another option is to create an admins group and add the dn to that
+group.
+
+Since Heimdal talkes to the LDAP server over a UNIX domain socket, and
+uses external sasl authentication, its not possible to require
+security layer quality (ssf in cyrus-sasl lingo). So that requirement
+has to be turned off in OpenLDAP @command{slapd} configuration file
+@file{slapd.conf}.
+
+@example
+sasl-secprops minssf=0
+@end example
+
+@item
+
+Start @command{slapd} with the local listener (as well as the default TCP/IP
+listener on port 389) as follows:
+
+@example
+    slapd -h "ldapi:/// ldap:///"
+@end example
+
+Note: These is a bug in @command{slapd} where it appears to corrupt the krb5Key
+binary attribute on shutdown. This may be related to our use of the V3
+schema definition syntax instead of the old UMich-style, V2 syntax.
+
+@item
+You should specify the distinguished name under which your
+principals will be stored in @file{krb5.conf}:
+
+@example
+[kdc]
+        database = @{
+                dbname = ldap:ou=KerberosPrincipals,dc=example,dc=com
+                mkey_file = /path/to/mkey
+        @}
+@end example
+
+@samp{mkey_file} can be excluded if you feel that you trust your ldap
+directory to have the raw keys inside it.
+
+
+@item
+Once you have built Heimdal and started the LDAP server, run kadmin
+(as usual) to initialize the database. Note that the instructions for
+stashing a master key are as per any Heimdal installation.
+
+@example
+kdc# kadmin -l
+kadmin> init EXAMPLE.COM
+Realm max ticket life [unlimited]:
+Realm max renewable ticket life [unlimited]:
+kadmin> ank lukeh
+Max ticket life [1 day]:
+Max renewable life [1 week]:
+Principal expiration time [never]:
+Password expiration time [never]:
+Attributes []:
+lukeh@@EXAMPLE.COM's Password:
+Verifying password - lukeh@@EXAMPLE.COM's Password:
+kadmin> exit
+@end example
+
+Verify that the principal database has indeed been stored in the
+directory with the following command:
+
+@example
+kdc# ldapsearch -L -h localhost -D cn=manager \
+ -w secret -b ou=KerberosPrincipals,dc=example,dc=com \
+ 'objectclass=krb5KDCEntry' 
+@end example
+
+@item
+Now consider adding indexes to the database to speed up the access, at
+least theses should be added to slapd.conf.
+
+@example
+index	objectClass		eq
+index	cn			eq,sub,pres
+index	uid			eq,sub,pres
+index	displayName		eq,sub,pres
+index	krb5PrincipalName	eq
+@end example
+
+@end itemize
+
+@subsection Troubleshooting guide
+
+@url{https://sec.miljovern.no/bin/view/Info/TroubleshootingGuide}
+
+
+@subsection Using Samba LDAP password database
+@cindex Samba
+
+@c @node Using Samba LDAP password database, Providing Kerberos credentials to servers and programs, Using LDAP to store the database, Setting up a realm
+@c @section Using Samba LDAP password database
+
+Samba domain and the Kerberos realm can have diffrent names since
+arcfour's string to key function principal/realm independent.  So now
+will be your first and only chance name your Kerberos without needing
+to deal with old configuration files.
+
+First you should set up Samba and get that working with LDAP backend.
+
+Now you can proceed as in @xref{Using LDAP to store the database},
+Heimdal will pick up the Samba LDAP entries if they are in the same
+search space as the Kerberos entries.
+
+@node Providing Kerberos credentials to servers and programs, , Using LDAP to store the database, Setting up a realm
+@section Providing Kerberos credentials to servers and programs
+
+Some service require Kerberos credentials when they start to make
+connections to other services or use them when they have started.
+
+The easiest way to get ticket for the a service is to store the key in
+a keytab. Both ktutil get and kadmin ext can be used to get a
+keytab. ktutil get is better in that way it changes the key/password
+for the user. This the problem with the ktutil. It ktutil is used for
+the same service principal on several hosts, they keytab will only
+useful on the last host. In that case, run the command on host and
+copy the keytab around to all other hosts that needs it.
+
+@example
+host# ktutil -k /etc/krb5-service.keytab \
+      get -p lha/admin@@EXAMPLE.ORG service-principal@@EXAMPLE.ORG
+lha/admin@@EXAMPLE.ORG's Password: 
+@end example
+
+To get a Kerberos credential file for the service, use kinit in the
+--keytab mode, this will not ask for a password but rather that the
+key from the keytab.
+
+@example
+service@@host$ kinit --cache=/var/run/service_krb5_cache \
+               --keytab=/etc/krb5-service.keytab \
+       service-principal@@EXAMPLE.ORG
+@end example
+
+Long running services might need credentials longer then the
+expiration time of the tickets. kinit can run in a mode that refreshes
+the tickets before they expire. This is useful for services that write
+into AFS and other distributed file systems using Kerberos. To run the
+long running script, just append the program and arguments (if any)
+after the principal. kinit will stop refreshing credentials and remove
+the credentials when the script-to-start-service exits.
+
+@example
+service@@host$ kinit --cache=/var/run/service_krb5_cache \
+       --keytab=/etc/krb5-service.keytab \
+       service-principal@@EXAMPLE.ORG \
+       script-to-start-service argument1 argument2
+@end example
 

@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: fcache.c,v 1.34.6.6 2004/03/10 13:30:59 lha Exp $");
+RCSID("$KTH: fcache.c,v 1.48 2005/05/31 22:06:15 lha Exp $");
 
 typedef struct krb5_fcache{
     char *filename;
@@ -105,18 +105,33 @@ _krb5_xlock(krb5_context context, int fd, krb5_boolean exclusive,
 }
 
 int
-_krb5_xunlock(int fd)
+_krb5_xunlock(krb5_context context, int fd)
 {
+    int ret;
 #ifdef HAVE_FCNTL_LOCK
     struct flock l;
     l.l_start = 0;
     l.l_len = 0;
     l.l_type = F_UNLCK;
     l.l_whence = SEEK_SET;
-    return fcntl(fd, F_SETLKW, &l);
+    ret = fcntl(fd, F_SETLKW, &l);
 #else
-    return flock(fd, LOCK_UN);
+    ret = flock(fd, LOCK_UN);
 #endif
+    if (ret < 0)
+	ret = errno;
+    switch (ret) {
+    case 0:
+	break;
+    case EINVAL: /* filesystem doesn't support locking, let the user have it */
+	ret = 0; 
+	break;
+    default:
+	krb5_set_error_string(context, 
+			      "Failed to unlock file: %s", strerror(ret));
+	break;
+    }
+    return ret;
 }
 
 static krb5_error_code
@@ -129,7 +144,7 @@ fcc_lock(krb5_context context, krb5_ccache id,
 static krb5_error_code
 fcc_unlock(krb5_context context, int fd)
 {
-    return _krb5_xunlock(fd);
+    return _krb5_xunlock(context, fd);
 }
 
 static krb5_error_code
@@ -405,13 +420,12 @@ fcc_store_cred(krb5_context context,
 	sp = krb5_storage_from_fd(fd);
 	krb5_storage_set_eof_code(sp, KRB5_CC_END);
 	storage_set_flags(context, sp, FCACHE(id)->version);
-	if (krb5_config_get_bool_default(context, NULL, FALSE,
-					 "libdefaults",
-					 "fcc-mit-ticketflags",
-					 NULL))
-	    ret = _krb5_store_creds_heimdal_0_7(sp, creds);
-	else
-	    ret = _krb5_store_creds_heimdal_pre_0_7(sp, creds);
+	if (!krb5_config_get_bool_default(context, NULL, TRUE,
+					  "libdefaults",
+					  "fcc-mit-ticketflags",
+					  NULL))
+	    krb5_storage_set_flags(sp, KRB5_STORAGE_CREDS_FLAGS_WRONG_BITORDER);
+	ret = krb5_store_creds(sp, creds);
 	krb5_storage_free(sp);
     }
     fcc_unlock(context, fd);
@@ -436,12 +450,12 @@ init_fcc (krb5_context context,
     krb5_error_code ret;
 
     ret = fcc_open(context, id, &fd, O_RDONLY | O_BINARY, 0);
-
     if(ret)
 	return ret;
     
     sp = krb5_storage_from_fd(fd);
     if(sp == NULL) {
+	krb5_clear_error_string(context);
 	ret = ENOMEM;
 	goto out;
     }
@@ -450,14 +464,18 @@ init_fcc (krb5_context context,
     if(ret != 0) {
 	if(ret == KRB5_CC_END)
 	    ret = ENOENT; /* empty file */
+	krb5_clear_error_string(context);
 	goto out;
     }
     if(pvno != 5) {
+	krb5_set_error_string(context, "Bad version number in credential "
+			      "cache file: %s", FILENAME(id));
 	ret = KRB5_CCACHE_BADVNO;
 	goto out;
     }
     ret = krb5_ret_int8(sp, &tag); /* should not be host byte order */
     if(ret != 0) {
+	krb5_clear_error_string(context);
 	ret = KRB5_CC_FORMAT;
 	goto out;
     }
@@ -470,6 +488,7 @@ init_fcc (krb5_context context,
 	ret = krb5_ret_int16 (sp, &length);
 	if(ret) {
 	    ret = KRB5_CC_FORMAT;
+	    krb5_clear_error_string(context);
 	    goto out;
 	}
 	while(length > 0) {
@@ -479,11 +498,13 @@ init_fcc (krb5_context context,
 
 	    ret = krb5_ret_int16 (sp, &tag);
 	    if(ret) {
+		krb5_clear_error_string(context);
 		ret = KRB5_CC_FORMAT;
 		goto out;
 	    }
 	    ret = krb5_ret_int16 (sp, &data_len);
 	    if(ret) {
+		krb5_clear_error_string(context);
 		ret = KRB5_CC_FORMAT;
 		goto out;
 	    }
@@ -491,11 +512,13 @@ init_fcc (krb5_context context,
 	    case FCC_TAG_DELTATIME :
 		ret = krb5_ret_int32 (sp, &context->kdc_sec_offset);
 		if(ret) {
+		    krb5_clear_error_string(context);
 		    ret = KRB5_CC_FORMAT;
 		    goto out;
 		}
 		ret = krb5_ret_int32 (sp, &context->kdc_usec_offset);
 		if(ret) {
+		    krb5_clear_error_string(context);
 		    ret = KRB5_CC_FORMAT;
 		    goto out;
 		}
@@ -504,6 +527,7 @@ init_fcc (krb5_context context,
 		for (i = 0; i < data_len; ++i) {
 		    ret = krb5_ret_int8 (sp, &dummy);
 		    if(ret) {
+			krb5_clear_error_string(context);
 			ret = KRB5_CC_FORMAT;
 			goto out;
 		    }
@@ -520,6 +544,9 @@ init_fcc (krb5_context context,
 	break;
     default :
 	ret = KRB5_CCACHE_BADVNO;
+	krb5_set_error_string(context, "Unknown version number (%d) in "
+			      "credential cache file: %s",
+			      (int)tag, FILENAME(id));
 	goto out;
     }
     *ret_sp = sp;
@@ -547,6 +574,8 @@ fcc_get_principal(krb5_context context,
     if (ret)
 	return ret;
     ret = krb5_ret_principal(sp, principal);
+    if (ret)
+	krb5_clear_error_string(context);
     krb5_storage_free(sp);
     fcc_unlock(context, fd);
     close(fd);
@@ -567,15 +596,22 @@ fcc_get_first (krb5_context context,
     krb5_principal principal;
 
     *cursor = malloc(sizeof(struct fcc_cursor));
+    if (*cursor == NULL) {
+        krb5_set_error_string (context, "malloc: out of memory");
+	return ENOMEM;
+    }
+    memset(*cursor, 0, sizeof(struct fcc_cursor));
 
     ret = init_fcc (context, id, &FCC_CURSOR(*cursor)->sp, 
 		    &FCC_CURSOR(*cursor)->fd);
     if (ret) {
 	free(*cursor);
+	*cursor = NULL;
 	return ret;
     }
     ret = krb5_ret_principal (FCC_CURSOR(*cursor)->sp, &principal);
     if(ret) {
+	krb5_clear_error_string(context);
 	fcc_end_get(context, id, cursor);
 	return ret;
     }
@@ -595,6 +631,8 @@ fcc_get_next (krb5_context context,
 	return ret;
 
     ret = krb5_ret_creds(FCC_CURSOR(*cursor)->sp, creds);
+    if (ret)
+	krb5_clear_error_string(context);
 
     fcc_unlock(context, FCC_CURSOR(*cursor)->fd);
     return ret;
@@ -618,7 +656,31 @@ fcc_remove_cred(krb5_context context,
 		 krb5_flags which,
 		 krb5_creds *cred)
 {
-    return 0; /* XXX */
+    krb5_error_code ret;
+    krb5_ccache copy;
+
+    ret = krb5_cc_gen_new(context, &krb5_mcc_ops, &copy);
+    if (ret)
+	return ret;
+
+    ret = krb5_cc_copy_cache(context, id, copy);
+    if (ret) {
+	krb5_cc_destroy(context, copy);
+	return ret;
+    }
+
+    ret = krb5_cc_remove_cred(context, copy, which, cred);
+    if (ret) {
+	krb5_cc_destroy(context, copy);
+	return ret;
+    }
+
+    fcc_destroy(context, id);
+
+    ret = krb5_cc_copy_cache(context, copy, id);
+    krb5_cc_destroy(context, copy);
+
+    return ret;
 }
 
 static krb5_error_code

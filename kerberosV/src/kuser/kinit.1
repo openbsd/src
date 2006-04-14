@@ -1,4 +1,4 @@
-.\" Copyright (c) 1998 - 2002 Kungliga Tekniska Högskolan
+.\" Copyright (c) 1998 - 2003 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden). 
 .\" All rights reserved. 
 .\"
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
 .\" SUCH DAMAGE. 
 .\" 
-.\" $KTH: kinit.1,v 1.23 2003/04/06 17:49:05 lha Exp $
+.\" $KTH: kinit.1,v 1.25 2003/06/23 11:39:49 joda Exp $
 .\"
 .Dd May 29, 1998
 .Dt KINIT 1
@@ -82,7 +82,7 @@
 .Xc
 .Oc
 .Op Fl -fcache-version= Ns Ar integer
-.Op Fl -no-addresses
+.Op Fl A | Fl -no-addresses
 .Op Fl -anonymous
 .Op Fl -version
 .Op Fl -help
@@ -125,8 +125,9 @@ keytab.
 .Fl l Ar time ,
 .Fl -lifetime= Ns Ar time
 .Xc
-Specifies the lifetime of the ticket. The argument can either be in
-seconds, or a more human readable string like
+Specifies the lifetime of the ticket.
+The argument can either be in seconds, or a more human readable string
+like
 .Sq 1h .
 .It Xo
 .Fl p ,
@@ -137,7 +138,8 @@ Request tickets with the proxiable flag set.
 .Fl R ,
 .Fl -renew
 .Xc
-Try to renew ticket. The ticket must have the
+Try to renew ticket.
+The ticket must have the
 .Sq renewable
 flag set, and must not be expired.
 .It Fl -renewable
@@ -191,13 +193,16 @@ Create a credentials cache of version
 .Fl -extra-addresses= Ns Ar enctypes
 .Xc
 Adds a set of addresses that will, in addition to the systems local
-addresses, be put in the ticket. This can be useful if all addresses a
-client can use can't be automatically figured out. One such example is
-if the client is behind a firewall. Also settable via
+addresses, be put in the ticket.
+This can be useful if all addresses a client can use can't be
+automatically figured out.
+One such example is if the client is behind a firewall.
+Also settable via
 .Li libdefaults/extra_addresses
 in
 .Xr krb5.conf 5 .
 .It Xo
+.Fl A ,
 .Fl -no-addresses
 .Xc
 Request a ticket with no addresses.
@@ -218,8 +223,8 @@ has been compiled with support for Kerberos 4.
 .Fl -524init
 .Xc
 Try to convert the obtained Kerberos 5 krbtgt to a version 4
-compatible ticket. It will store this ticket in the default Kerberos 4
-ticket file.
+compatible ticket.
+It will store this ticket in the default Kerberos 4 ticket file.
 .It Xo
 .Fl 9 ,
 .Fl -524convert
@@ -227,7 +232,8 @@ ticket file.
 only convert ticket to version 4
 .It Fl -afslog
 Gets AFS tickets, converts them to version 4 format, and stores them
-in the kernel. Only useful if you have AFS.
+in the kernel.
+Only useful if you have AFS.
 .El
 .Pp
 The
@@ -245,16 +251,17 @@ If  a
 .Ar command
 is given,
 .Nm kinit
-will setup new credentials caches, and AFS PAG, and then run the given
-command. When it finishes the credentials will be removed.
+will set up new credentials caches, and AFS PAG, and then run the given
+command.
+When it finishes the credentials will be removed.
 .Sh ENVIRONMENT
 .Bl -tag -width Ds
 .It Ev KRB5CCNAME
 Specifies the default credentials cache.
 .It Ev KRB5_CONFIG
 The file name of
-.Pa krb5.conf
-, the default being
+.Pa krb5.conf ,
+the default being
 .Pa /etc/kerberosV/krb5.conf .
 .It Ev KRBTKFILE
 Specifies the Kerberos 4 ticket file to store version 4 tickets in.

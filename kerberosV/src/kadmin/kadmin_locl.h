@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,7 +32,7 @@
  */
 
 /* 
- * $KTH: kadmin_locl.h,v 1.41 2002/09/10 20:04:45 joda Exp $
+ * $KTH: kadmin_locl.h,v 1.45 2004/06/27 15:04:07 joda Exp $
  */
 
 #ifndef __ADMIN_LOCL_H__
@@ -96,28 +96,8 @@
 #include <parse_time.h>
 #include <getarg.h>
 
-
 extern krb5_context context;
 extern void * kadm_handle;
-
-#define DECL(X) int X(int, char **)
-
-DECL(add_new_key);
-DECL(cpw_entry);
-DECL(del_entry);
-DECL(del_enctype);
-DECL(exit_kadmin);
-DECL(ext_keytab);
-DECL(get_entry);
-DECL(get_privs);
-DECL(help);
-DECL(list_princs);
-DECL(mod_entry);
-DECL(rename_entry);
-DECL(init);
-DECL(dump);
-DECL(load);
-DECL(merge);
 
 #undef ALLOC
 #define ALLOC(X) ((X) = malloc(sizeof(*(X))))
@@ -166,11 +146,6 @@ int parse_des_key (const char *key_string,
 
 krb5_error_code
 kadmind_loop (krb5_context, krb5_auth_context, krb5_keytab, int);
-
-/* version4.c */
-
-void
-handle_v4(krb5_context context, krb5_keytab keytab, int len, int fd);
 
 /* random_password.c */
 

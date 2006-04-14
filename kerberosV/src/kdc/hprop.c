@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,14 @@
 
 #include "hprop.h"
 
-RCSID("$KTH: hprop.c,v 1.70 2002/09/04 18:19:41 joda Exp $");
+#ifdef KRB4
+#include <krb.h>
+#include <prot.h>
+#define Principal Principal4
+#include <krb_db.h>
+#endif
+
+RCSID("$KTH: hprop.c,v 1.76 2005/04/24 13:48:37 lha Exp $");
 
 static int version_flag;
 static int help_flag;
@@ -236,7 +243,7 @@ v4_prop(void *arg, struct v4_principal *p)
     ent.keys.val[0].salt = calloc(1, sizeof(*ent.keys.val[0].salt));
     ent.keys.val[0].salt->type = KRB5_PADATA_PW_SALT;
     ent.keys.val[0].key.keytype = ETYPE_DES_CBC_MD5;
-    krb5_data_alloc(&ent.keys.val[0].key.keyvalue, sizeof(des_cblock));
+    krb5_data_alloc(&ent.keys.val[0].key.keyvalue, DES_KEY_SZ);
     memcpy(ent.keys.val[0].key.keyvalue.data, p->key, 8);
 
     copy_Key(&ent.keys.val[0], &ent.keys.val[1]);
@@ -384,7 +391,7 @@ ka_convert(struct prop_data *pd, int fd, struct ka_entry *ent)
     ALLOC(hdb.max_life);
     *hdb.max_life = ntohl(ent->max_life);
 
-    if(ntohl(ent->valid_end) != NEVERDATE && ntohl(ent->valid_end) != -1){
+    if(ntohl(ent->valid_end) != NEVERDATE && ntohl(ent->valid_end) != 0xffffffff) {
 	ALLOC(hdb.valid_end);
 	*hdb.valid_end = ntohl(ent->valid_end);
     }
@@ -503,7 +510,7 @@ get_creds(krb5_context context, krb5_ccache *cache)
     krb5_keytab keytab;
     krb5_principal client;
     krb5_error_code ret;
-    krb5_get_init_creds_opt init_opts;
+    krb5_get_init_creds_opt *init_opts;
     krb5_preauthtype preauth = KRB5_PADATA_ENC_TIMESTAMP;
     krb5_creds creds;
     
@@ -517,11 +524,14 @@ get_creds(krb5_context context, krb5_ccache *cache)
 			      "kadmin", HPROP_NAME, NULL);
     if(ret) krb5_err(context, 1, ret, "krb5_make_principal");
 
-    krb5_get_init_creds_opt_init(&init_opts);
-    krb5_get_init_creds_opt_set_preauth_list(&init_opts, &preauth, 1);
+    ret = krb5_get_init_creds_opt_alloc(context, &init_opts);
+    if(ret) krb5_err(context, 1, ret, "krb5_get_init_creds_opt_alloc");
+    krb5_get_init_creds_opt_set_preauth_list(init_opts, &preauth, 1);
 
-    ret = krb5_get_init_creds_keytab(context, &creds, client, keytab, 0, NULL, &init_opts);
+    ret = krb5_get_init_creds_keytab(context, &creds, client, keytab, 0, NULL, init_opts);
     if(ret) krb5_err(context, 1, ret, "krb5_get_init_creds");
+
+    krb5_get_init_creds_opt_free(init_opts);
     
     ret = krb5_kt_close(context, keytab);
     if(ret) krb5_err(context, 1, ret, "krb5_kt_close");
@@ -537,7 +547,7 @@ get_creds(krb5_context context, krb5_ccache *cache)
     ret = krb5_cc_store_cred(context, *cache, &creds);
     if(ret) krb5_err(context, 1, ret, "krb5_cc_store_cred");
 
-    krb5_free_creds_contents(context, &creds);
+    krb5_free_cred_contents(context, &creds);
 }
 
 enum hprop_source {
@@ -840,9 +850,9 @@ main(int argc, char **argv)
 	ret = hdb_create (context, &db, database);
 	if(ret)
 	    krb5_err(context, 1, ret, "hdb_create: %s", database);
-	ret = db->open(context, db, O_RDONLY, 0);
+	ret = db->hdb_open(context, db, O_RDONLY, 0);
 	if(ret)
-	    krb5_err(context, 1, ret, "db->open");
+	    krb5_err(context, 1, ret, "db->hdb_open");
 	break;
     default:
 	krb5_errx(context, 1, "unknown dump type `%d'", type);
@@ -859,7 +869,7 @@ main(int argc, char **argv)
 	krb5_cc_destroy(context, ccache);
 	
     if(db != NULL)
-	(*db->destroy)(context, db);
+	(*db->hdb_destroy)(context, db);
 
     krb5_free_context(context);
     return 0;

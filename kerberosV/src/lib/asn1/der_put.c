@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "der_locl.h"
 
-RCSID("$KTH: der_put.c,v 1.28 2003/04/17 07:12:24 lha Exp $");
+RCSID("$KTH: der_put.c,v 1.32 2005/05/29 14:23:01 lha Exp $");
 
 /*
  * All encoding functions take a pointer `p' to first position in
@@ -133,8 +133,21 @@ der_put_length (unsigned char *p, size_t len, size_t val, size_t *size)
 }
 
 int
+der_put_boolean(unsigned char *p, size_t len, const int *data, size_t *size)
+{
+    if(len < 1)
+	return ASN1_OVERFLOW;
+    if(*data != 0)
+	*p = 0xff;
+    else
+	*p = 0;
+    *size = 1;
+    return 0;
+}
+
+int
 der_put_general_string (unsigned char *p, size_t len, 
-			const general_string *str, size_t *size)
+			const heim_general_string *str, size_t *size)
 {
     size_t slen = strlen(*str);
 
@@ -149,7 +162,7 @@ der_put_general_string (unsigned char *p, size_t len,
 
 int
 der_put_octet_string (unsigned char *p, size_t len, 
-		      const octet_string *data, size_t *size)
+		      const heim_octet_string *data, size_t *size)
 {
     if (len < data->length)
 	return ASN1_OVERFLOW;
@@ -162,7 +175,7 @@ der_put_octet_string (unsigned char *p, size_t len,
 
 int
 der_put_oid (unsigned char *p, size_t len,
-	     const oid *data, size_t *size)
+	     const heim_oid *data, size_t *size)
 {
     unsigned char *base = p;
     int n;
@@ -226,6 +239,30 @@ der_put_length_and_tag (unsigned char *p, size_t len, size_t len_val,
 }
 
 int
+encode_boolean (unsigned char *p, size_t len, const int *data,
+		size_t *size)
+{
+    size_t ret = 0;
+    size_t l;
+    int e;
+    
+    e = der_put_boolean (p, len, data, &l);
+    if(e)
+	return e;
+    p -= l;
+    len -= l;
+    ret += l;
+    e = der_put_length_and_tag (p, len, l, ASN1_C_UNIV, PRIM, UT_Boolean, &l);
+    if (e)
+	return e;
+    p -= l;
+    len -= l;
+    ret += l;
+    *size = ret;
+    return 0;
+}
+
+int
 encode_integer (unsigned char *p, size_t len, const int *data, size_t *size)
 {
     int num = *data;
@@ -239,7 +276,7 @@ encode_integer (unsigned char *p, size_t len, const int *data, size_t *size)
     p -= l;
     len -= l;
     ret += l;
-    e = der_put_length_and_tag (p, len, l, UNIV, PRIM, UT_Integer, &l);
+    e = der_put_length_and_tag (p, len, l, ASN1_C_UNIV, PRIM, UT_Integer, &l);
     if (e)
 	return e;
     p -= l;
@@ -264,7 +301,16 @@ encode_unsigned (unsigned char *p, size_t len, const unsigned *data,
     p -= l;
     len -= l;
     ret += l;
-    e = der_put_length_and_tag (p, len, l, UNIV, PRIM, UT_Integer, &l);
+    /* if first octet has msb set, we need to pad with a zero byte */
+    if(p[1] >= 128) {
+	if(len == 0)
+	    return ASN1_OVERFLOW;
+	*p-- = 0;
+	len--;
+	ret++;
+	l++;
+    }
+    e = der_put_length_and_tag (p, len, l, ASN1_C_UNIV, PRIM, UT_Integer, &l);
     if (e)
 	return e;
     p -= l;
@@ -289,7 +335,7 @@ encode_enumerated (unsigned char *p, size_t len, const unsigned *data,
     p -= l;
     len -= l;
     ret += l;
-    e = der_put_length_and_tag (p, len, l, UNIV, PRIM, UT_Enumerated, &l);
+    e = der_put_length_and_tag (p, len, l, ASN1_C_UNIV, PRIM, UT_Enumerated, &l);
     if (e)
 	return e;
     p -= l;
@@ -301,7 +347,7 @@ encode_enumerated (unsigned char *p, size_t len, const unsigned *data,
 
 int
 encode_general_string (unsigned char *p, size_t len, 
-		       const general_string *data, size_t *size)
+		       const heim_general_string *data, size_t *size)
 {
     size_t ret = 0;
     size_t l;
@@ -313,7 +359,7 @@ encode_general_string (unsigned char *p, size_t len,
     p -= l;
     len -= l;
     ret += l;
-    e = der_put_length_and_tag (p, len, l, UNIV, PRIM, UT_GeneralString, &l);
+    e = der_put_length_and_tag (p, len, l, ASN1_C_UNIV, PRIM, UT_GeneralString, &l);
     if (e)
 	return e;
     p -= l;
@@ -325,7 +371,7 @@ encode_general_string (unsigned char *p, size_t len,
 
 int
 encode_octet_string (unsigned char *p, size_t len, 
-		     const octet_string *k, size_t *size)
+		     const heim_octet_string *k, size_t *size)
 {
     size_t ret = 0;
     size_t l;
@@ -337,7 +383,7 @@ encode_octet_string (unsigned char *p, size_t len,
     p -= l;
     len -= l;
     ret += l;
-    e = der_put_length_and_tag (p, len, l, UNIV, PRIM, UT_OctetString, &l);
+    e = der_put_length_and_tag (p, len, l, ASN1_C_UNIV, PRIM, UT_OctetString, &l);
     if (e)
 	return e;
     p -= l;
@@ -349,7 +395,7 @@ encode_octet_string (unsigned char *p, size_t len,
 
 int
 encode_oid(unsigned char *p, size_t len,
-	   const oid *k, size_t *size)
+	   const heim_oid *k, size_t *size)
 {
     size_t ret = 0;
     size_t l;
@@ -361,7 +407,7 @@ encode_oid(unsigned char *p, size_t len,
     p -= l;
     len -= l;
     ret += l;
-    e = der_put_length_and_tag (p, len, l, UNIV, PRIM, UT_OID, &l);
+    e = der_put_length_and_tag (p, len, l, ASN1_C_UNIV, PRIM, UT_OID, &l);
     if (e)
 	return e;
     p -= l;
@@ -372,7 +418,7 @@ encode_oid(unsigned char *p, size_t len,
 }
 
 int
-time2generalizedtime (time_t t, octet_string *s)
+time2generalizedtime (time_t t, heim_octet_string *s)
 {
      struct tm *tm;
      size_t len;
@@ -397,7 +443,7 @@ encode_generalized_time (unsigned char *p, size_t len,
 {
     size_t ret = 0;
     size_t l;
-    octet_string k;
+    heim_octet_string k;
     int e;
 
     e = time2generalizedtime (*t, &k);
@@ -410,7 +456,7 @@ encode_generalized_time (unsigned char *p, size_t len,
     p -= l;
     len -= l;
     ret += l;
-    e = der_put_length_and_tag (p, len, k.length, UNIV, PRIM, 
+    e = der_put_length_and_tag (p, len, k.length, ASN1_C_UNIV, PRIM, 
 				UT_GeneralizedTime, &l);
     if (e)
 	return e;

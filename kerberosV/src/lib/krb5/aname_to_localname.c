@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 1999, 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 1999, 2002 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,9 +33,9 @@
 
 #include <krb5_locl.h>
 
-RCSID("$KTH: aname_to_localname.c,v 1.6 2003/04/16 16:01:06 lha Exp $");
+RCSID("$KTH: aname_to_localname.c,v 1.8 2004/05/25 21:16:49 lha Exp $");
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_aname_to_localname (krb5_context context,
 			 krb5_const_principal aname,
 			 size_t lnsize,

@@ -1,4 +1,4 @@
-.\" Copyright (c) 2000 - 2002 Kungliga Tekniska Högskolan
+.\" Copyright (c) 2000 - 2004 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden). 
 .\" All rights reserved. 
 .\"
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
 .\" SUCH DAMAGE. 
 .\" 
-.\" $KTH: klist.1,v 1.12 2003/02/16 21:10:26 lha Exp $
+.\" $KTH: klist.1,v 1.14 2004/12/08 17:40:10 lha Exp $
 .\"
-.Dd July 8, 2000
+.Dd December  8, 2004
 .Dt KLIST 1
 .Os HEIMDAL
 .Sh NAME
@@ -39,6 +39,7 @@
 .Nd list Kerberos credentials
 .Sh SYNOPSIS
 .Nm
+.Bk -words
 .Oo Fl c Ar cache \*(Ba Xo
 .Fl -cache= Ns Ar cache
 .Xc
@@ -51,6 +52,7 @@
 .Op Fl f
 .Op Fl -version
 .Op Fl -help
+.Ek
 .Sh DESCRIPTION
 .Nm
 reads and displays the current tickets in the credential cache (also

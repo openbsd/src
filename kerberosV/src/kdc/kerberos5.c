@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$KTH: kerberos5.c,v 1.145.2.4 2004/08/13 19:28:26 lha Exp $");
+RCSID("$KTH: kerberos5.c,v 1.173.2.2 2005/06/15 11:33:33 lha Exp $");
 
 #define MAX_TIME ((time_t)((1U << 31) - 1))
 
@@ -47,16 +47,26 @@ fix_time(time_t **t)
     if(**t == 0) **t = MAX_TIME; /* fix for old clients */
 }
 
+static int
+realloc_method_data(METHOD_DATA *md)
+{
+    PA_DATA *pa;
+    pa = realloc(md->val, (md->len + 1) * sizeof(*md->val));
+    if(pa == NULL)
+	return ENOMEM;
+    md->val = pa;
+    md->len++;
+    return 0;
+}
+
 static void
-set_salt_padata (METHOD_DATA **m, Salt *salt)
+set_salt_padata (METHOD_DATA *md, Salt *salt)
 {
     if (salt) {
-	ALLOC(*m);
-	(*m)->len = 1;
-	ALLOC((*m)->val);
-	(*m)->val->padata_type = salt->type;
+	realloc_method_data(md);
+	md->val[md->len - 1].padata_type = salt->type;
 	copy_octet_string(&salt->salt,
-			  &(*m)->val->padata_value);
+			  &md->val[md->len - 1].padata_value);
     }
 }
 
@@ -87,6 +97,9 @@ find_etype(hdb_entry *princ, krb5_enctype *etypes, unsigned len,
     for(i = 0; ret != 0 && i < len ; i++) {
 	Key *key = NULL;
 
+	if (krb5_enctype_valid(context, etypes[i]) != 0)
+	    continue;
+
 	while (hdb_next_enctype2key(context, princ, etypes[i], &key) == 0) {
 	    if (key->key.keyvalue.length == 0) {
 		ret = KRB5KDC_ERR_NULL_KEY;
@@ -112,13 +125,19 @@ find_keys(hdb_entry *client,
 	  krb5_enctype *etypes,
 	  unsigned num_etypes)
 {
+    char unparse_name[] = "krb5_unparse_name failed";
     krb5_error_code ret;
+    char *name;
 
     if(client){
 	/* find client key */
 	ret = find_etype(client, etypes, num_etypes, ckey, cetype);
 	if (ret) {
-	    kdc_log(0, "Client has no support for etypes");
+	    if (krb5_unparse_name(context, client->principal, &name) != 0)
+		name = unparse_name;
+	    kdc_log(0, "Client (%s) has no support for etypes", name);
+	    if (name != unparse_name)
+		free(name);
 	    return ret;
 	}
     }
@@ -127,7 +146,11 @@ find_keys(hdb_entry *client,
 	/* find server key */
 	ret = find_etype(server, etypes, num_etypes, skey, setype);
 	if (ret) {
-	    kdc_log(0, "Server has no support for etypes");
+	    if (krb5_unparse_name(context, server->principal, &name) != 0)
+		name = unparse_name;
+	    kdc_log(0, "Server (%s) has no support for etypes", name);
+	    if (name != unparse_name)
+		free(name);
 	    return ret;
 	}
     }
@@ -261,18 +284,6 @@ encode_reply(KDC_REP *rep, EncTicketPart *et, EncKDCRepPart *ek,
     return 0;
 }
 
-static int
-realloc_method_data(METHOD_DATA *md)
-{
-    PA_DATA *pa;
-    pa = realloc(md->val, (md->len + 1) * sizeof(*md->val));
-    if(pa == NULL)
-	return ENOMEM;
-    md->val = pa;
-    md->len++;
-    return 0;
-}
-
 static krb5_error_code
 make_etype_info_entry(ETYPE_INFO_ENTRY *ent, Key *key)
 {
@@ -329,18 +340,22 @@ get_pa_etype_info(METHOD_DATA *md, hdb_entry *client,
     pa.val = malloc(pa.len * sizeof(*pa.val));
     if(pa.val == NULL)
 	return ENOMEM;
+    memset(pa.val, 0, pa.len * sizeof(*pa.val));
 
     for(j = 0; j < etypes_len; j++) {
 	for (i = 0; i < n; i++)
 	    if (pa.val[i].etype == etypes[j])
 		goto skip1;
 	for(i = 0; i < client->keys.len; i++) {
-	    if(client->keys.val[i].key.keytype == etypes[j])
+	    if(client->keys.val[i].key.keytype == etypes[j]) {
+ 		if (krb5_enctype_valid(context, etypes[j]) != 0)
+ 		    continue;
 		if((ret = make_etype_info_entry(&pa.val[n++], 
 						&client->keys.val[i])) != 0) {
 		    free_ETYPE_INFO(&pa);
 		    return ret;
 		}
+	    }
 	}
     skip1:;
     }
@@ -349,21 +364,26 @@ get_pa_etype_info(METHOD_DATA *md, hdb_entry *client,
 	    if(client->keys.val[i].key.keytype == etypes[j])
 		goto skip2;
 	}
+	if (krb5_enctype_valid(context, client->keys.val[i].key.keytype) != 0)
+	    continue;
 	if((ret = make_etype_info_entry(&pa.val[n++], 
 					&client->keys.val[i])) != 0) {
 	    free_ETYPE_INFO(&pa);
 	    return ret;
 	}
-      skip2:;
+    skip2:;
     }
     
     if(n != pa.len) {
 	char *name;
-	krb5_unparse_name(context, client->principal, &name);
+	ret = krb5_unparse_name(context, client->principal, &name);
+	if (ret)
+	    name = "<unparse_name failed>";
 	kdc_log(0, "internal error in get_pa_etype_info(%s): %d != %d", 
 		name, n, pa.len);
-	free(name);
-	pa.len = n;
+	if (ret == 0)
+	    free(name);
+ 	pa.len = n;
     }
 
     ASN1_MALLOC_ENCODE(ETYPE_INFO, buf, len, &pa, &len, ret);
@@ -376,6 +396,164 @@ get_pa_etype_info(METHOD_DATA *md, hdb_entry *client,
 	return ret;
     }
     md->val[md->len - 1].padata_type = KRB5_PADATA_ETYPE_INFO;
+    md->val[md->len - 1].padata_value.length = len;
+    md->val[md->len - 1].padata_value.data = buf;
+    return 0;
+}
+
+/*
+ *
+ */
+
+extern int _krb5_AES_string_to_default_iterator;
+
+static krb5_error_code
+make_etype_info2_entry(ETYPE_INFO2_ENTRY *ent, Key *key)
+{
+    ent->etype = key->key.keytype;
+    if(key->salt) {
+	ALLOC(ent->salt);
+	if (ent->salt == NULL)
+	    return ENOMEM;
+	*ent->salt = malloc(key->salt->salt.length + 1);
+	if (*ent->salt == NULL) {
+	    free(ent->salt);
+	    ent->salt = NULL;
+	    return ENOMEM;
+	}
+	memcpy(*ent->salt, key->salt->salt.data, key->salt->salt.length);
+	(*ent->salt)[key->salt->salt.length] = '\0';
+    } else
+	ent->salt = NULL;
+
+    ent->s2kparams = NULL;
+
+    switch (key->key.keytype) {
+    case KEYTYPE_AES128:
+    case KEYTYPE_AES256:
+	ALLOC(ent->s2kparams);
+	if (ent->s2kparams == NULL)
+	    return ENOMEM;
+	ent->s2kparams->length = 4;
+	ent->s2kparams->data = malloc(ent->s2kparams->length);
+	if (ent->s2kparams->data == NULL) {
+	    free(ent->s2kparams);
+	    ent->s2kparams = NULL;
+	    return ENOMEM;
+	}
+	_krb5_put_int(ent->s2kparams->data, 
+		      _krb5_AES_string_to_default_iterator, 
+		      ent->s2kparams->length);
+	break;
+    default:
+	break;
+    }
+    return 0;
+}
+
+/*
+ * Return 1 if the client have only older enctypes, this is for
+ * determining if the server should send ETYPE_INFO2 or not.
+ */
+
+static int
+only_older_enctype_p(const KDC_REQ *req)
+{
+    int i;
+
+    for(i = 0; i < req->req_body.etype.len; i++) {
+	switch (req->req_body.etype.val[i]) {
+	case ETYPE_DES_CBC_CRC:
+	case ETYPE_DES_CBC_MD4:
+	case ETYPE_DES_CBC_MD5:
+	case ETYPE_DES3_CBC_SHA1:
+	case ETYPE_ARCFOUR_HMAC_MD5:
+	case ETYPE_ARCFOUR_HMAC_MD5_56:
+	    break;
+	default:
+	    return 0;
+	}
+    }
+    return 1;
+}
+
+/*
+ *
+ */
+
+static krb5_error_code
+get_pa_etype_info2(METHOD_DATA *md, hdb_entry *client, 
+		   ENCTYPE *etypes, unsigned int etypes_len)
+{
+    krb5_error_code ret = 0;
+    int i, j;
+    unsigned int n = 0;
+    ETYPE_INFO2 pa;
+    unsigned char *buf;
+    size_t len;
+
+    pa.len = client->keys.len;
+    if(pa.len > UINT_MAX/sizeof(*pa.val))
+	return ERANGE;
+    pa.val = malloc(pa.len * sizeof(*pa.val));
+    if(pa.val == NULL)
+	return ENOMEM;
+    memset(pa.val, 0, pa.len * sizeof(*pa.val));
+
+    for(j = 0; j < etypes_len; j++) {
+	for (i = 0; i < n; i++)
+	    if (pa.val[i].etype == etypes[j])
+		goto skip1;
+	for(i = 0; i < client->keys.len; i++) {
+	    if(client->keys.val[i].key.keytype == etypes[j]) {
+		if (krb5_enctype_valid(context, etypes[j]) != 0)
+		    continue;
+		if((ret = make_etype_info2_entry(&pa.val[n++], 
+						 &client->keys.val[i])) != 0) {
+		    free_ETYPE_INFO2(&pa);
+		    return ret;
+		}
+	    }
+	}
+    skip1:;
+    }
+    for(i = 0; i < client->keys.len; i++) {
+	for(j = 0; j < etypes_len; j++) {
+	    if(client->keys.val[i].key.keytype == etypes[j])
+		goto skip2;
+	}
+	if (krb5_enctype_valid(context, client->keys.val[i].key.keytype) != 0)
+	    continue;
+	if((ret = make_etype_info2_entry(&pa.val[n++],
+					 &client->keys.val[i])) != 0) {
+	    free_ETYPE_INFO2(&pa);
+	    return ret;
+	}
+      skip2:;
+    }
+    
+    if(n != pa.len) {
+	char *name;
+	ret = krb5_unparse_name(context, client->principal, &name);
+	if (ret)
+	    name = "<unparse_name failed>";
+	kdc_log(0, "internal error in get_pa_etype_info2(%s): %d != %d", 
+		name, n, pa.len);
+	if (ret == 0)
+	    free(name);
+ 	pa.len = n;
+    }
+
+    ASN1_MALLOC_ENCODE(ETYPE_INFO2, buf, len, &pa, &len, ret);
+    free_ETYPE_INFO2(&pa);
+    if(ret)
+	return ret;
+    ret = realloc_method_data(md);
+    if(ret) {
+	free(buf);
+	return ret;
+    }
+    md->val[md->len - 1].padata_type = KRB5_PADATA_ETYPE_INFO2;
     md->val[md->len - 1].padata_value.length = len;
     md->val[md->len - 1].padata_value.data = buf;
     return 0;
@@ -506,6 +684,10 @@ as_rep(KDC_REQ *req,
     const char *e_text = NULL;
     krb5_crypto crypto;
     Key *ckey, *skey;
+    EncryptionKey *reply_key;
+#ifdef PKINIT
+    pk_client_params *pkp = NULL;
+#endif
 
     memset(&rep, 0, sizeof(rep));
 
@@ -513,8 +695,9 @@ as_rep(KDC_REQ *req,
 	ret = KRB5KRB_ERR_GENERIC;
 	e_text = "No server in request";
     } else{
-	principalname2krb5_principal (&server_princ, *(b->sname), b->realm);
-	krb5_unparse_name(context, server_princ, &server_name);
+	_krb5_principalname2krb5_principal (&server_princ,
+					    *(b->sname), b->realm);
+	ret = krb5_unparse_name(context, server_princ, &server_name);
     }
     if (ret) {
 	kdc_log(0, "AS-REQ malformed server name from %s", from);
@@ -525,15 +708,17 @@ as_rep(KDC_REQ *req,
 	ret = KRB5KRB_ERR_GENERIC;
 	e_text = "No client in request";
     } else {
-	principalname2krb5_principal (&client_princ, *(b->cname), b->realm);
-	krb5_unparse_name(context, client_princ, &client_name);
+	_krb5_principalname2krb5_principal (&client_princ,
+					    *(b->cname), b->realm);
+	ret = krb5_unparse_name(context, client_princ, &client_name);
     }
     if (ret) {
 	kdc_log(0, "AS-REQ malformed client name from %s", from);
 	goto out;
     }
 
-    kdc_log(0, "AS-REQ %s from %s for %s", client_name, from, server_name);
+    kdc_log(0, "AS-REQ %s from %s for %s", 
+	    client_name, from, server_name);
 
     ret = db_fetch(client_princ, &client);
     if(ret){
@@ -562,11 +747,67 @@ as_rep(KDC_REQ *req,
 	int i = 0;
 	PA_DATA *pa;
 	int found_pa = 0;
-	kdc_log(5, "Looking for pa-data -- %s", client_name);
+
+#ifdef PKINIT
+	kdc_log(5, "Looking for PKINIT pa-data -- %s", client_name);
+
+	e_text = "No PKINIT PA found";
+
+	i = 0;
+	if ((pa = find_padata(req, &i, KRB5_PADATA_PK_AS_REQ)))
+	    ;
+	if (pa == NULL) {
+	    i = 0;
+	    if((pa = find_padata(req, &i, KRB5_PADATA_PK_AS_REQ_19)))
+		;
+	}
+	if (pa == NULL) {
+	    i = 0;
+	    if((pa = find_padata(req, &i, KRB5_PADATA_PK_AS_REQ_WIN)))
+		;
+	}
+	if (pa) {
+	    char *client_cert = NULL;
+
+	    ret = pk_rd_padata(context, req, pa, &pkp);
+	    if (ret) {
+		ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
+		kdc_log(5, "Failed to decode PKINIT PA-DATA -- %s", 
+			client_name);
+		goto ts_enc;
+	    }
+	    if (ret == 0 && pkp == NULL)
+		goto ts_enc;
+
+	    ret = pk_check_client(context, 
+				  client_princ, 
+				  client,
+				  pkp,
+				  &client_cert);
+	    if (ret) {
+		e_text = "PKINIT certificate not allowed to "
+		    "impersonate principal";
+		pk_free_client_param(context, pkp);
+		pkp = NULL;
+		goto ts_enc;
+	    }
+	    found_pa = 1;
+	    et.flags.pre_authent = 1;
+	    kdc_log(2, "PKINIT pre-authentication succeeded -- %s using %s", 
+		    client_name, client_cert);
+	    free(client_cert);
+	    if (pkp)
+		goto preauth_done;
+	}
+    ts_enc:
+#endif
+	kdc_log(5, "Looking for ENC-TS pa-data -- %s", client_name);
+
+	i = 0;
+	e_text = "No ENC-TS found";
 	while((pa = find_padata(req, &i, KRB5_PADATA_ENC_TIMESTAMP))){
 	    krb5_data ts_data;
 	    PA_ENC_TS_ENC p;
-	    time_t patime;
 	    size_t len;
 	    EncryptedData enc_data;
 	    Key *pa_key;
@@ -642,7 +883,6 @@ as_rep(KDC_REQ *req,
 			 client_name);
 		continue;
 	    }
-	    patime = p.patimestamp;
 	    free_PA_ENC_TS_ENC(&p);
 	    if (abs(kdc_time - p.patimestamp) > context->max_skew) {
 		ret = KRB5KDC_ERR_PREAUTH_FAILED;
@@ -651,9 +891,13 @@ as_rep(KDC_REQ *req,
 		goto out;
 	    }
 	    et.flags.pre_authent = 1;
-	    kdc_log(2, "Pre-authentication succeded -- %s", client_name);
+	    kdc_log(2, "ENC-TS Pre-authentication succeeded -- %s", 
+		    client_name);
 	    break;
 	}
+#ifdef PKINIT
+    preauth_done:
+#endif
 	if(found_pa == 0 && require_preauth)
 	    goto use_pa;
 	/* We come here if we found a pa-enc-timestamp, but if there
@@ -682,8 +926,28 @@ as_rep(KDC_REQ *req,
 	pa->padata_value.length	= 0;
 	pa->padata_value.data	= NULL;
 
-	ret = get_pa_etype_info(&method_data, client, 
-				b->etype.val, b->etype.len); /* XXX check ret */
+#ifdef PKINIT
+	ret = realloc_method_data(&method_data);
+	pa = &method_data.val[method_data.len-1];
+	pa->padata_type		= KRB5_PADATA_PK_AS_REQ;
+	pa->padata_value.length	= 0;
+	pa->padata_value.data	= NULL;
+
+	ret = realloc_method_data(&method_data);
+	pa = &method_data.val[method_data.len-1];
+	pa->padata_type		= KRB5_PADATA_PK_AS_REQ_19;
+	pa->padata_value.length	= 0;
+	pa->padata_value.data	= NULL;
+#endif
+
+	/* XXX check ret */
+	if (only_older_enctype_p(req))
+	    ret = get_pa_etype_info(&method_data, client, 
+				    b->etype.val, b->etype.len); 
+	/* XXX check ret */
+	ret = get_pa_etype_info2(&method_data, client, 
+				 b->etype.val, b->etype.len);
+
 	
 	ASN1_MALLOC_ENCODE(METHOD_DATA, buf, len, &method_data, &len, ret);
 	free_METHOD_DATA(&method_data);
@@ -693,7 +957,7 @@ as_rep(KDC_REQ *req,
 	ret = KRB5KDC_ERR_PREAUTH_REQUIRED;
 	krb5_mk_error(context,
 		      ret,
-		      "Need to use PA-ENC-TIMESTAMP",
+		      "Need to use PA-ENC-TIMESTAMP/PA-PK-AS-REQ",
 		      &foo_data,
 		      client_princ,
 		      server_princ,
@@ -701,7 +965,8 @@ as_rep(KDC_REQ *req,
 		      NULL,
 		      reply);
 	free(buf);
-	kdc_log(0, "No PA-ENC-TIMESTAMP -- %s", client_name);
+	kdc_log(0, "No preauth found, returning PREAUTH-REQUIRED -- %s",
+		client_name);
 	ret = 0;
 	goto out2;
     }
@@ -732,7 +997,8 @@ as_rep(KDC_REQ *req,
     
     {
 	char str[128];
-	unparse_flags(KDCOptions2int(f), KDCOptions_units, str, sizeof(str));
+	unparse_flags(KDCOptions2int(f), asn1_KDCOptions_units(), 
+		      str, sizeof(str));
 	if(*str)
 	    kdc_log(2, "Requested flags: %s", str);
     }
@@ -912,9 +1178,29 @@ as_rep(KDC_REQ *req,
 	copy_HostAddresses(et.caddr, ek.caddr);
     }
 
-    set_salt_padata (&rep.padata, ckey->salt);
+    ALLOC(rep.padata);
+    rep.padata->len = 0;
+    rep.padata->val = NULL;
+
+    reply_key = &ckey->key;
+#if PKINIT
+    if (pkp) {
+	ret = pk_mk_pa_reply(context, pkp, client, req,
+			     &reply_key, rep.padata);
+	if (ret)
+	    goto out;
+    }
+#endif
+
+    set_salt_padata (rep.padata, ckey->salt);
+
+    if (rep.padata->len == 0) {
+	free(rep.padata);
+	rep.padata = NULL;
+    }
+
     ret = encode_reply(&rep, &et, &ek, setype, server->kvno, &skey->key,
-		       client->kvno, &ckey->key, &e_text, reply);
+		       client->kvno, reply_key, &e_text, reply);
     free_EncTicketPart(&et);
     free_EncKDCRepPart(&ek);
   out:
@@ -932,6 +1218,10 @@ as_rep(KDC_REQ *req,
 	ret = 0;
     }
   out2:
+#ifdef PKINIT
+    if (pkp)
+	pk_free_client_param(context, pkp);
+#endif
     if (client_princ)
 	krb5_free_principal(context, client_princ);
     free(client_name);
@@ -1241,7 +1531,7 @@ tgs_make_reply(KDC_REQ_BODY *b,
 
     copy_Realm(krb5_princ_realm(context, server->principal), 
 	       &rep.ticket.realm);
-    krb5_principal2principalname(&rep.ticket.sname, server->principal);
+    _krb5_principal2principalname(&rep.ticket.sname, server->principal);
     copy_Realm(&tgt->crealm, &rep.crealm);
     if (f.request_anonymous)
 	make_anonymous_principalname (&tgt->cname);
@@ -1299,6 +1589,7 @@ tgs_make_reply(KDC_REQ_BODY *b,
     et.flags.pre_authent = tgt->flags.pre_authent;
     et.flags.hw_authent  = tgt->flags.hw_authent;
     et.flags.anonymous   = tgt->flags.anonymous;
+    et.flags.ok_as_delegate = server->flags.ok_as_delegate;
 	    
     /* XXX Check enc-authorization-data */
     et.authorization_data = auth_data;
@@ -1453,8 +1744,8 @@ need_referral(krb5_principal server, krb5_realm **realms)
        server->name.name_string.len != 2)
 	return FALSE;
  
-    return krb5_get_host_realm_int(context, server->name.name_string.val[1],
-				   FALSE, realms) == 0;
+    return _krb5_get_host_realm_int(context, server->name.name_string.val[1],
+				    FALSE, realms) == 0;
 }
 
 static krb5_error_code
@@ -1502,19 +1793,22 @@ tgs_rep2(KDC_REQ_BODY *b,
 	goto out2;
     }
     
-    principalname2krb5_principal(&princ,
-				 ap_req.ticket.sname,
-				 ap_req.ticket.realm);
+    _krb5_principalname2krb5_principal(&princ,
+				       ap_req.ticket.sname,
+				       ap_req.ticket.realm);
     
     ret = db_fetch(princ, &krbtgt);
 
     if(ret) {
 	char *p;
-	krb5_unparse_name(context, princ, &p);
+	ret = krb5_unparse_name(context, princ, &p);
+	if (ret != 0)
+	    p = "<unparse_name failed>";
 	krb5_free_principal(context, princ);
 	kdc_log(0, "Ticket-granting ticket not found in database: %s: %s",
 		p, krb5_get_err_text(context, ret));
-	free(p);
+	if (ret == 0)
+	    free(p);
 	ret = KRB5KRB_AP_ERR_NOT_US;
 	goto out2;
     }
@@ -1523,13 +1817,16 @@ tgs_rep2(KDC_REQ_BODY *b,
        *ap_req.ticket.enc_part.kvno != krbtgt->kvno){
 	char *p;
 
-	krb5_unparse_name (context, princ, &p);
+	ret = krb5_unparse_name (context, princ, &p);
 	krb5_free_principal(context, princ);
+	if (ret != 0)
+	    p = "<unparse_name failed>";
 	kdc_log(0, "Ticket kvno = %d, DB kvno = %d (%s)", 
 		*ap_req.ticket.enc_part.kvno,
 		krbtgt->kvno,
 		p);
-	free (p);
+	if (ret == 0)
+	    free (p);
 	ret = KRB5KRB_AP_ERR_BADKEYVER;
 	goto out2;
     }
@@ -1691,7 +1988,7 @@ tgs_rep2(KDC_REQ_BODY *b,
 		ret = KRB5KDC_ERR_POLICY;
 		goto out2;
 	    }
-	    principalname2krb5_principal(&p, t->sname, t->realm);
+	    _krb5_principalname2krb5_principal(&p, t->sname, t->realm);
 	    ret = db_fetch(p, &uu);
 	    krb5_free_principal(context, p);
 	    if(ret){
@@ -1712,11 +2009,16 @@ tgs_rep2(KDC_REQ_BODY *b,
 	    r = adtkt.crealm;
 	}
 
-	principalname2krb5_principal(&sp, *s, r);
-	krb5_unparse_name(context, sp, &spn);	
-	principalname2krb5_principal(&cp, tgt->cname, tgt->crealm);
-	krb5_unparse_name(context, cp, &cpn);
-	unparse_flags (KDCOptions2int(b->kdc_options), KDCOptions_units,
+	_krb5_principalname2krb5_principal(&sp, *s, r);
+	ret = krb5_unparse_name(context, sp, &spn);	
+	if (ret)
+	    goto out;
+	_krb5_principalname2krb5_principal(&cp, tgt->cname, tgt->crealm);
+	ret = krb5_unparse_name(context, cp, &cpn);
+	if (ret)
+	    goto out;
+	unparse_flags (KDCOptions2int(b->kdc_options),
+		       asn1_KDCOptions_units(),
 		       opt_str, sizeof(opt_str));
 	if(*opt_str)
 	    kdc_log(0, "TGS-REQ %s from %s for %s [%s]", 
@@ -1740,7 +2042,9 @@ tgs_rep2(KDC_REQ_BODY *b,
 			free(spn);
 			krb5_make_principal(context, &sp, r, 
 					    KRB5_TGS_NAME, new_rlm, NULL);
-			krb5_unparse_name(context, sp, &spn);	
+			ret = krb5_unparse_name(context, sp, &spn);	
+			if (ret)
+			    goto out;
 			goto server_lookup;
 		    }
 		}
@@ -1753,7 +2057,9 @@ tgs_rep2(KDC_REQ_BODY *b,
 		    free(spn);
 		    krb5_make_principal(context, &sp, r, KRB5_TGS_NAME,
 					realms[0], NULL);
-		    krb5_unparse_name(context, sp, &spn);
+		    ret = krb5_unparse_name(context, sp, &spn);
+		    if (ret)
+			goto out;
 		    krb5_free_host_realm(context, realms);
 		    goto server_lookup;
 		}
@@ -1852,10 +2158,8 @@ out2:
     }
     krb5_free_principal(context, cp);
     krb5_free_principal(context, sp);
-    if (ticket) {
+    if (ticket)
 	krb5_free_ticket(context, ticket);
-	free(ticket);
-    }
     free_AP_REQ(&ap_req);
     if(auth_data){
 	free_AuthorizationData(auth_data);

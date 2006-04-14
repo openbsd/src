@@ -32,15 +32,18 @@
  */
 
 #include "kuser_locl.h"
-RCSID("$KTH: kdestroy.c,v 1.14.2.1 2003/05/08 18:59:17 lha Exp $");
+RCSID("$KTH: kdestroy.c,v 1.16 2004/04/17 17:00:06 lha Exp $");
 
 static const char *cache;
+static const char *credential;
 static int help_flag;
 static int version_flag;
 static int unlog_flag = 1;
 static int dest_tkt_flag = 1;
 
 struct getargs args[] = {
+    { "credential",	0,   arg_string, &credential,
+      "remove one credential", "principal" },
     { "cache",		'c', arg_string, &cache, "cache to destroy", "cache" },
     { "unlog",		0,   arg_negative_flag, &unlog_flag,
       "do not destroy tokens", NULL },
@@ -97,11 +100,30 @@ main (int argc, char **argv)
 	}
     }
 
-    ret =  krb5_cc_resolve(context, 
+    ret =  krb5_cc_resolve(context,
 			   cache, 
 			   &ccache);
 
     if (ret == 0) {
+	if (credential) {
+	    krb5_creds mcred;
+	    
+	    krb5_cc_clear_mcred(&mcred);
+
+	    ret = krb5_parse_name(context, credential, &mcred.server);
+	    if (ret)
+		krb5_err(context, 1, ret,
+			 "Can't parse principal %s", credential);
+
+	    ret = krb5_cc_remove_cred(context, ccache, 0, &mcred);
+	    if (ret)
+		krb5_err(context, 1, ret, 
+			 "Failed to remove principal %s", credential);
+
+	    krb5_free_context(context);
+	    return 0;
+	}
+
 	ret = krb5_cc_destroy (context, ccache);
 	if (ret) {
 	    warnx ("krb5_cc_destroy: %s", krb5_get_err_text(context, ret));

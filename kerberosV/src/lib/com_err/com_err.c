@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: com_err.c,v 1.18 2002/03/10 23:07:01 assar Exp $");
+RCSID("$KTH: com_err.c,v 1.19 2005/04/24 19:42:39 lha Exp $");
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,15 +51,14 @@ error_message (long code)
     const char *p = com_right(_et_list, code);
     if (p == NULL) {
 	if (code < 0)
-	    snprintf(msg, sizeof (msg), "Unknown error %ld", code);
+	    snprintf(msg, sizeof(msg), "Unknown error %ld", code);
 	else
 	    p = strerror(code);
     }
     if (p != NULL && *p != '\0') {
-	strncpy(msg, p, sizeof(msg) - 1);
-	msg[sizeof(msg) - 1] = 0;
+	strlcpy(msg, p, sizeof(msg));
     } else 
-	snprintf(msg, sizeof (msg), "Unknown error %ld", code);
+	snprintf(msg, sizeof(msg), "Unknown error %ld", code);
     return msg;
 }
 

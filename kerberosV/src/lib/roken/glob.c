@@ -166,7 +166,7 @@ static int	 match (Char *, Char *, Char *);
 static void	 qprintf (const char *, Char *);
 #endif
 
-int
+int ROKEN_LIB_FUNCTION
 glob(const char *pattern, 
      int flags, 
      int (*errfunc)(const char *, int), 
@@ -741,7 +741,7 @@ match(Char *name, Char *pat, Char *patend)
 }
 
 /* Free allocated data belonging to a glob_t structure. */
-void
+void ROKEN_LIB_FUNCTION
 globfree(glob_t *pglob)
 {
 	int i;

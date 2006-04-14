@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: getarg.c,v 1.46 2002/08/20 16:23:07 joda Exp $");
+RCSID("$KTH: getarg.c,v 1.48 2005/04/12 11:28:43 lha Exp $");
 #endif
 
 #include <stdio.h>
@@ -200,7 +200,7 @@ check_column(FILE *f, int col, int len, int columns)
     return col;
 }
 
-void
+void ROKEN_LIB_FUNCTION
 arg_printusage (struct getargs *args,
 		size_t num_args,
 		const char *progname,
@@ -309,12 +309,22 @@ arg_printusage (struct getargs *args,
     }
 }
 
-static void
+static int
 add_string(getarg_strings *s, char *value)
 {
-    s->strings = realloc(s->strings, (s->num_strings + 1) * sizeof(*s->strings));
+    char **strings;
+
+    strings = realloc(s->strings, (s->num_strings + 1) * sizeof(*s->strings));
+    if (strings == NULL) {
+	free(s->strings);
+	s->strings = NULL;
+	s->num_strings = 0;
+	return ENOMEM;
+    }
+    s->strings = strings;
     s->strings[s->num_strings] = value;
     s->num_strings++;
+    return 0;
 }
 
 static int
@@ -392,8 +402,7 @@ arg_match_long(struct getargs *args, size_t num_args,
     }
     case arg_strings:
     {
-	add_string((getarg_strings*)current->value, goptarg + 1);
-	return 0;
+	return add_string((getarg_strings*)current->value, goptarg + 1);
     }
     case arg_flag:
     case arg_negative_flag:
@@ -499,8 +508,7 @@ arg_match_short (struct getargs *args, size_t num_args,
 		    *(char**)args[k].value = goptarg;
 		    return 0;
 		} else if(args[k].type == arg_strings) {
-		    add_string((getarg_strings*)args[k].value, goptarg);
-		    return 0;
+		    return add_string((getarg_strings*)args[k].value, goptarg);
 		} else if(args[k].type == arg_double) {
 		    double tmp;
 		    if(sscanf(goptarg, "%lf", &tmp) != 1)
@@ -517,7 +525,7 @@ arg_match_short (struct getargs *args, size_t num_args,
     return 0;
 }
 
-int
+int ROKEN_LIB_FUNCTION
 getarg(struct getargs *args, size_t num_args, 
        int argc, char **argv, int *goptind)
 {
@@ -553,7 +561,7 @@ getarg(struct getargs *args, size_t num_args,
     return ret;
 }
 
-void
+void ROKEN_LIB_FUNCTION
 free_getarg_strings (getarg_strings *s)
 {
     free (s->strings);

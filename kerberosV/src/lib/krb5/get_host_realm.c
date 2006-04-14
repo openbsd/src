@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "krb5_locl.h"
 #include <resolve.h>
 
-RCSID("$KTH: get_host_realm.c,v 1.29 2002/08/28 13:36:57 nectar Exp $");
+RCSID("$KTH: get_host_realm.c,v 1.34 2005/04/19 18:52:51 lha Exp $");
 
 /* To automagically find the correct realm of a host (without
  * [domain_realm] in krb5.conf) add a text record for your domain with
@@ -98,7 +98,7 @@ dns_find_realm(krb5_context context,
     char dom[MAXHOSTNAMELEN];
     struct dns_reply *r;
     char **labels;
-    int i, j, ret;
+    int i, ret;
     
     labels = krb5_config_get_strings(context, NULL, "libdefaults",
 	"dns_lookup_realm_labels", NULL);
@@ -107,8 +107,8 @@ dns_find_realm(krb5_context context,
     if(*domain == '.')
 	domain++;
     for (i = 0; labels[i] != NULL; i++) {
-	j = snprintf(dom, sizeof(dom), "%s.%s.", labels[i], domain);
-	if (j >= sizeof(dom) || j < 0) /* fucking solaris assholes */
+	ret = snprintf(dom, sizeof(dom), "%s.%s.", labels[i], domain);
+	if(ret < 0 || ret >= sizeof(dom))
 	    return -1;
     	r = dns_lookup(dom, "TXT");
     	if(r != NULL) {
@@ -149,11 +149,11 @@ config_find_realm(krb5_context context,
  * fall back to guessing
  */
 
-krb5_error_code
-krb5_get_host_realm_int (krb5_context context,
-			 const char *host,
-			 krb5_boolean use_dns,
-			 krb5_realm **realms)
+krb5_error_code KRB5_LIB_FUNCTION
+_krb5_get_host_realm_int (krb5_context context,
+			  const char *host,
+			  krb5_boolean use_dns,
+			  krb5_realm **realms)
 {
     const char *p, *q;
     krb5_boolean dns_locate_enable;
@@ -203,7 +203,7 @@ krb5_get_host_realm_int (krb5_context context,
  * Return the realm(s) of `host' as a NULL-terminated list in `realms'.
  */
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_get_host_realm(krb5_context context,
 		    const char *host,
 		    krb5_realm **realms)
@@ -216,5 +216,5 @@ krb5_get_host_realm(krb5_context context,
 	host = hostname;
     }
 
-    return krb5_get_host_realm_int (context, host, 1, realms);
+    return _krb5_get_host_realm_int (context, host, 1, realms);
 }

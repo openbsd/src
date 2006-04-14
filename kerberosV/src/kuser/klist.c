@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,13 +34,13 @@
 #include "kuser_locl.h"
 #include "rtbl.h"
 
-RCSID("$KTH: klist.c,v 1.68.2.2 2003/10/13 15:13:39 joda Exp $");
+RCSID("$KTH: klist.c,v 1.76 2005/04/24 19:47:44 lha Exp $");
 
 static char*
 printable_time(time_t t)
 {
     static char s[128];
-    strlcpy(s, ctime(&t)+ 4, sizeof s);
+    strlcpy(s, ctime(&t)+ 4, sizeof(s));
     s[15] = 0;
     return s;
 }
@@ -49,7 +49,7 @@ static char*
 printable_time_long(time_t t)
 {
     static char s[128];
-    strlcpy(s, ctime(&t)+ 4, sizeof s);
+    strlcpy(s, ctime(&t)+ 4, sizeof(s));
     s[20] = 0;
     return s;
 }
@@ -150,10 +150,7 @@ print_cred_verbose(krb5_context context, krb5_creds *cred)
 	    printf(", kvno %d", *t.enc_part.kvno);
 	printf("\n");
 	if(cred->session.keytype != t.enc_part.etype) {
-	    ret = krb5_keytype_to_string(context, cred->session.keytype, &str);
-	    if(ret == KRB5_PROG_KEYTYPE_NOSUPP)
-		ret = krb5_enctype_to_string(context, cred->session.keytype, 
-					     &str);
+	    ret = krb5_enctype_to_string(context, cred->session.keytype, &str);
 	    if(ret)
 		krb5_warn(context, ret, "session keytype");
 	    else {
@@ -270,8 +267,7 @@ print_tickets (krb5_context context,
 	if(do_flags)
 	    rtbl_add_column(ct, COL_FLAGS, 0);
 	rtbl_add_column(ct, COL_PRINCIPAL, 0);
-	rtbl_set_prefix(ct, "  ");
-	rtbl_set_column_prefix(ct, COL_ISSUED, "");
+	rtbl_set_separator(ct, "  ");
     }
     while ((ret = krb5_cc_next_cred (context,
 				     ccache,
@@ -282,7 +278,7 @@ print_tickets (krb5_context context,
 	}else{
 	    print_cred(context, &creds, ct, do_flags);
 	}
-	krb5_free_creds_contents (context, &creds);
+	krb5_free_cred_contents (context, &creds);
     }
     if(ret != KRB5_CC_END)
 	krb5_err(context, 1, ret, "krb5_cc_get_next");
@@ -311,6 +307,8 @@ check_for_tgt (krb5_context context,
     krb5_realm *client_realm;
     int expired;
 
+    krb5_cc_clear_mcred(&pattern);
+
     client_realm = krb5_princ_realm (context, principal);
 
     ret = krb5_make_principal (context, &pattern.server,
@@ -318,11 +316,12 @@ check_for_tgt (krb5_context context,
 			       NULL);
     if (ret)
 	krb5_err (context, 1, ret, "krb5_make_principal");
+    pattern.client = principal;
 
     ret = krb5_cc_retrieve_cred (context, ccache, 0, &pattern, &creds);
     expired = time(NULL) > creds.times.endtime;
     krb5_free_principal (context, pattern.server);
-    krb5_free_creds_contents (context, &creds);
+    krb5_free_cred_contents (context, &creds);
     if (ret) {
 	if (ret == KRB5_CC_END)
 	    return 1;

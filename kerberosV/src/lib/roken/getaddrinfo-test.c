@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: getaddrinfo-test.c,v 1.4 2001/02/20 01:44:54 assar Exp $");
+RCSID("$KTH: getaddrinfo-test.c,v 1.5 2005/03/02 22:51:36 lha Exp $");
 #endif
 
 #include "roken.h"
@@ -96,7 +96,7 @@ doit (const char *nodename, const char *servname)
 	    printf ("\tbad address?\n");
 	    continue;
 	} 
-	printf ("\t(family = %d, socktype = %d, protocol = %d, "
+	printf ("\tfamily = %d, socktype = %d, protocol = %d, "
 		"address = \"%s\", port = %d",
 		r->ai_family, r->ai_socktype, r->ai_protocol,
 		addrstr,

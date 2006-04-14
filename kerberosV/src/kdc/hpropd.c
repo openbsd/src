@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,9 +33,14 @@
 
 #include "hprop.h"
 
-RCSID("$KTH: hpropd.c,v 1.36 2003/04/16 15:46:32 lha Exp $");
+RCSID("$KTH: hpropd.c,v 1.40 2005/04/24 13:48:08 lha Exp $");
 
 #ifdef KRB4
+#include <krb.h>
+#include <prot.h>
+#define Principal Principal4
+#include <krb_db.h>
+
 static des_cblock mkey4;
 static des_key_schedule msched4;
 
@@ -65,9 +70,11 @@ dump_krb4(krb5_context context, hdb_entry *ent, int fd)
     ret = krb5_524_conv_principal(context, ent->principal,
 				  name, instance, realm);
     if (ret) {
-	krb5_unparse_name(context, ent->principal, &princ_name);
-	krb5_warn(context, ret, "%s", princ_name);
-	free(princ_name);
+	ret = krb5_unparse_name(context, ent->principal, &princ_name);
+	if (ret == 0) {
+	    krb5_warn(context, ret, "%s", princ_name);
+	    free(princ_name);
+	}
 	return -1;
     }
 
@@ -141,9 +148,11 @@ dump_krb4(krb5_context context, hdb_entry *ent, int fd)
     ret = krb5_524_conv_principal(context, modifier->principal,
 				  name, instance, realm);
     if (ret) { 
-	krb5_unparse_name(context, modifier->principal, &princ_name);
-	krb5_warn(context, ret, "%s", princ_name);
-	free(princ_name);
+	ret = krb5_unparse_name(context, modifier->principal, &princ_name);
+	if (ret == 0) {
+	    krb5_warn(context, ret, "%s", princ_name);
+	    free(princ_name);
+	}
 	return -1;
     } 
     asprintf(&p, "%s %s %s\n", time2str(modifier->time), 
@@ -317,10 +326,13 @@ main(int argc, char **argv)
 	ret = krb5_make_principal(context, &c1, NULL, "kadmin", "hprop", NULL);
 	if(ret)
 	    krb5_err(context, 1, ret, "krb5_make_principal");
-	principalname2krb5_principal(&c2, authent->cname, authent->crealm);
+	_krb5_principalname2krb5_principal(&c2, 
+					   authent->cname, authent->crealm);
 	if(!krb5_principal_compare(context, c1, c2)) {
 	    char *s;
-	    krb5_unparse_name(context, c2, &s);
+	    ret = krb5_unparse_name(context, c2, &s);
+	    if (ret)
+		s = "unparseable name";
 	    krb5_errx(context, 1, "Unauthorized connection from %s", s);
 	}
 	krb5_free_principal(context, c1);
@@ -345,7 +357,7 @@ main(int argc, char **argv)
 	    ret = hdb_create(context, &db, tmp_db);
 	    if(ret)
 		krb5_err(context, 1, ret, "hdb_create(%s)", tmp_db);
-	    ret = db->open(context, db, O_RDWR | O_CREAT | O_TRUNC, 0600);
+	    ret = db->hdb_open(context, db, O_RDWR | O_CREAT | O_TRUNC, 0600);
 	    if(ret)
 		krb5_err(context, 1, ret, "hdb_open(%s)", tmp_db);
 	}
@@ -393,10 +405,10 @@ main(int argc, char **argv)
 		} else
 #endif /* KRB4 */
 		{
-		    ret = db->rename(context, db, database);
+		    ret = db->hdb_rename(context, db, database);
 		    if(ret)
 			krb5_err(context, 1, ret, "db_rename");
-		    ret = db->close(context, db);
+		    ret = db->hdb_close(context, db);
 		    if(ret)
 			krb5_err(context, 1, ret, "db_close");
 		}
@@ -417,10 +429,12 @@ main(int argc, char **argv)
 	    else
 #endif /* KRB4 */
 	    {
-		ret = db->store(context, db, 0, &entry);
+		ret = db->hdb_store(context, db, 0, &entry);
 		if(ret == HDB_ERR_EXISTS) {
 		    char *s;
-		    krb5_unparse_name(context, entry.principal, &s);
+		    ret = krb5_unparse_name(context, entry.principal, &s);
+		    if (ret)
+			s = strdup("unparseable name");
 		    krb5_warnx(context, "Entry exists: %s", s);
 		    free(s);
 		} else if(ret) 

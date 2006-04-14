@@ -1,4 +1,4 @@
-.\" $KTH: kpasswdd.8,v 1.8 2003/02/04 21:48:01 lha Exp $
+.\" $KTH: kpasswdd.8,v 1.11 2005/01/05 18:07:44 lha Exp $
 .\"
 .Dd April 19, 1999
 .Dt KPASSWDD 8
@@ -9,6 +9,7 @@
 .Sh SYNOPSIS
 .Nm kpasswdd
 .Bk -words
+.Op Fl -addresses= Ns Ar address
 .Op Fl -check-library= Ns Ar library
 .Op Fl -check-function= Ns Ar function
 .Oo Fl k Ar kspec \*(Ba Xo
@@ -34,6 +35,11 @@ the database directly and should thus only run on the master KDC.
 .Pp
 Supported options:
 .Bl -tag -width Ds
+.It Xo
+.Fl -addresses= Ns Ar address
+.Xc
+For each till the argument is given, add the address to what kpasswdd
+should listen too.
 .It Xo
 .Fl -check-library= Ns Ar library
 .Xc

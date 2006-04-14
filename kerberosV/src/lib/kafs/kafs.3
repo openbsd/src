@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
 .\" SUCH DAMAGE. 
 .\" 
-.\"	$KTH: kafs.3,v 1.16 2003/04/16 13:58:27 lha Exp $
+.\"	$KTH: kafs.3,v 1.17 2003/11/07 23:18:02 lha Exp $
 .\"
 .Dd March 17, 2003
 .Os HEIMDAL
@@ -151,7 +151,7 @@ and
 .Pp
 .Fn krb5_afslog ,
 .Fn kafs_settoken5
-can be configured to behave differently via a
+can be configured to behave differently via a 
 .Nm krb5_appdefault
 option
 .Li afs-use-524
@@ -186,7 +186,7 @@ as application name when running the
 .Nm krb5_appdefault
 function call.
 .Pp
-The (uppercased) cellname is used as the realm to the
+The (uppercased) cell name is used as the realm to the
 .Nm krb5_appdefault function.
 .Pp
 .\" The extra arguments are the ubiquitous context, and the cache id where
@@ -208,7 +208,7 @@ characters is put in
 .Fn k_pioctl
 does a
 .Fn pioctl
-syscall with the specified arguments. This function is equivalent to
+system call with the specified arguments. This function is equivalent to
 .Fn lpioctl .
 .Pp
 .Fn k_setpag

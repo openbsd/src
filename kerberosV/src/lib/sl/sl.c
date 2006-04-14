@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: sl.c,v 1.29 2001/02/20 01:44:55 assar Exp $");
+RCSID("$KTH: sl.c,v 1.31 2005/05/09 15:31:43 lha Exp $");
 #endif
 
 #include "sl_locl.h"
@@ -131,7 +131,7 @@ mandoc_template(SL_cmd *cmds,
     printf(".\\\".Sh BUGS\n");
 }
 
-static SL_cmd *
+SL_cmd *
 sl_match (SL_cmd *cmds, char *cmd, int exactp)
 {
     SL_cmd *c, *current = NULL, *partial_cmd = NULL;
@@ -295,7 +295,11 @@ static char *sl_readline(const char *prompt)
     return s;
 }
 
-/* return values: 0 on success, -1 on fatal error, or return value of command */
+/* return values: 
+ * 0 on success,
+ * -1 on fatal error,
+ * -2 if EOF, or
+ * return value of command */
 int
 sl_command_loop(SL_cmd *cmds, const char *prompt, void **data)
 {
@@ -307,7 +311,7 @@ sl_command_loop(SL_cmd *cmds, const char *prompt, void **data)
     ret = 0;
     buf = sl_readline(prompt);
     if(buf == NULL)
-	return 1;
+	return -2;
 
     if(*buf)
 	add_history(buf);
@@ -334,7 +338,7 @@ sl_loop(SL_cmd *cmds, const char *prompt)
 {
     void *data = NULL;
     int ret;
-    while((ret = sl_command_loop(cmds, prompt, &data)) == 0)
+    while((ret = sl_command_loop(cmds, prompt, &data)) >= 0)
 	;
     return ret;
 }

@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: print_version.c,v 1.8 2001/02/20 01:44:55 assar Exp $");
+RCSID("$KTH: print_version.c,v 1.9 2005/04/12 11:29:00 lha Exp $");
 #endif
 #include "roken.h"
 
@@ -41,7 +41,7 @@ RCSID("$KTH: print_version.c,v 1.8 2001/02/20 01:44:55 assar Exp $");
 
 extern char *__progname;
 
-void
+void ROKEN_LIB_FUNCTION
 print_version(const char *progname)
 {
     const char *arg[] = VERSIONLIST;

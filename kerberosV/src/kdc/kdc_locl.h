@@ -32,7 +32,7 @@
  */
 
 /* 
- * $KTH: kdc_locl.h,v 1.58.2.2 2003/10/27 11:07:16 joda Exp $ 
+ * $KTH: kdc_locl.h,v 1.66 2005/04/23 19:52:51 lha Exp $ 
  */
 
 #ifndef __KDC_LOCL_H__
@@ -69,12 +69,9 @@ extern int trpolicy;
 extern int enable_524;
 extern int enable_v4_cross_realm;
 
-#ifdef KRB4
-extern char *v4_realm;
-extern int enable_v4;
-extern int enable_524;
-extern int enable_v4_cross_realm;
-extern krb5_boolean enable_kaserver;
+#ifdef PKINIT
+extern int enable_pkinit;
+extern int enable_pkinit_princ_in_cert;
 #endif
 
 #define _PATH_KDC_CONF		HDB_DB_DIR "/kdc.conf"
@@ -108,20 +105,43 @@ krb5_error_code encode_v4_ticket (void*, size_t, const EncTicketPart*,
 				  const PrincipalName*, size_t*);
 krb5_error_code do_524 (const Ticket*, krb5_data*, const char*, struct sockaddr*);
 
-#ifdef KRB4
+#ifdef HAVE_OPENSSL
+#define des_new_random_key des_random_key
+#endif
+
+#ifdef PKINIT
+typedef struct pk_client_params pk_client_params;
+krb5_error_code pk_initialize(const char *, const char *);
+krb5_error_code pk_rd_padata(krb5_context, KDC_REQ *,
+			     PA_DATA *, pk_client_params **);
+krb5_error_code	pk_mk_pa_reply(krb5_context,
+			       pk_client_params *,
+			       const hdb_entry *,
+			       const KDC_REQ *,
+			       krb5_keyblock **,
+			       METHOD_DATA *);
+krb5_error_code pk_check_client(krb5_context, krb5_principal,
+				const hdb_entry *, 
+				pk_client_params *, char **);
+void pk_free_client_param(krb5_context, pk_client_params *);
+#endif
+
+/*
+ * Kerberos 4
+ */
+
+extern char *v4_realm;
+extern int enable_v4;
+extern krb5_boolean enable_kaserver;
+
 krb5_error_code db_fetch4 (const char*, const char*, const char*, hdb_entry**);
 krb5_error_code do_version4 (unsigned char*, size_t, krb5_data*, const char*, 
 			     struct sockaddr_in*);
 int maybe_version4 (unsigned char*, int);
-#endif
 
-#ifdef KRB4
 krb5_error_code do_kaserver (unsigned char*, size_t, krb5_data*, const char*, 
 			     struct sockaddr_in*);
-#endif
 
-#ifdef HAVE_OPENSSL
-#define des_new_random_key des_random_key
-#endif
+
 
 #endif /* __KDC_LOCL_H__ */

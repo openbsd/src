@@ -33,7 +33,7 @@
 
 #include "gen_locl.h"
 
-RCSID("$KTH: gen.c,v 1.50 2003/04/17 07:09:18 lha Exp $");
+RCSID("$KTH: gen.c,v 1.58 2005/03/31 00:08:58 lha Exp $");
 
 FILE *headerfile, *codefile, *logfile;
 
@@ -41,7 +41,7 @@ FILE *headerfile, *codefile, *logfile;
 
 static const char *orig_filename;
 static char *header;
-static char *headerbase = STEM;
+static char *headerbase;
 
 /*
  * list of all IMPORTs
@@ -76,6 +76,8 @@ init_generate (const char *filename, const char *base)
     orig_filename = filename;
     if(base)
 	asprintf(&headerbase, "%s", base);
+    else
+	headerbase = strdup(STEM);
     asprintf(&header, "%s.h", headerbase);
     headerfile = fopen (header, "w");
     if (headerfile == NULL)
@@ -97,18 +99,21 @@ init_generate (const char *filename, const char *base)
 	     "#ifndef __asn1_common_definitions__\n"
 	     "#define __asn1_common_definitions__\n\n");
     fprintf (headerfile,
-	     "typedef struct octet_string {\n"
+	     "typedef struct heim_octet_string {\n"
 	     "  size_t length;\n"
 	     "  void *data;\n"
-	     "} octet_string;\n\n");
+	     "} heim_octet_string;\n\n");
     fprintf (headerfile,
-	     "typedef char *general_string;\n\n"
+	     "typedef char *heim_general_string;\n\n"
 	     );
     fprintf (headerfile,
-	     "typedef struct oid {\n"
+	     "typedef char *heim_utf8_string;\n\n"
+	     );
+    fprintf (headerfile,
+	     "typedef struct heim_oid {\n"
 	     "  size_t length;\n"
 	     "  unsigned *components;\n"
-	     "} oid;\n\n");
+	     "} heim_oid;\n\n");
     fputs("#define ASN1_MALLOC_ENCODE(T, B, BL, S, L, R)                  \\\n"
 	  "  do {                                                         \\\n"
 	  "    (BL) = length_##T((S));                                    \\\n"
@@ -267,13 +272,25 @@ define_asn1 (int level, Type *t)
 	fprintf (headerfile, "[APPLICATION %d] ", t->application);
 	define_asn1 (level, t->subtype);
 	break;
+    case TBoolean:
+	space(level);
+	fprintf (headerfile, "BOOLEAN");
+	break;
+    case TUTF8String:
+	space(level);
+	fprintf (headerfile, "UTF8String");
+	break;
+    case TNull:
+	space(level);
+	fprintf (headerfile, "NULL");
+	break;
     default:
 	abort ();
     }
 }
 
 static void
-define_type (int level, char *name, Type *t, int typedefp)
+define_type (int level, const char *name, Type *t, int typedefp)
 {
     switch (t->type) {
     case TType:
@@ -304,11 +321,11 @@ define_type (int level, char *name, Type *t, int typedefp)
 	break;
     case TOctetString:
 	space(level);
-	fprintf (headerfile, "octet_string %s;\n", name);
+	fprintf (headerfile, "heim_octet_string %s;\n", name);
 	break;
     case TOID :
 	space(level);
-	fprintf (headerfile, "oid %s;\n", name);
+	fprintf (headerfile, "heim_oid %s;\n", name);
 	break;
     case TBitString: {
 	Member *m;
@@ -390,7 +407,19 @@ define_type (int level, char *name, Type *t, int typedefp)
 	break;
     case TGeneralString:
 	space(level);
-	fprintf (headerfile, "general_string %s;\n", name);
+	fprintf (headerfile, "heim_general_string %s;\n", name);
+	break;
+    case TUTF8String:
+	space(level);
+	fprintf (headerfile, "heim_utf8_string %s;\n", name);
+	break;
+    case TBoolean:
+	space(level);
+	fprintf (headerfile, "int %s;\n", name);
+	break;
+    case TNull:
+	space(level);
+	fprintf (headerfile, "NULL %s;\n", name);
 	break;
     case TApplication:
 	define_type (level, name, t->subtype, FALSE);
@@ -448,13 +477,20 @@ generate_type (const Symbol *s)
 	     "#include <asn1_err.h>\n"
 	     "#include <der.h>\n"
 	     "#include <parse_units.h>\n\n");
-    generate_type_header (s);
-    generate_type_encode (s);
-    generate_type_decode (s);
-    generate_type_free (s);
-    generate_type_length (s);
-    generate_type_copy (s);
-    generate_glue (s);
+
+    if (s->stype == Stype && s->type->type == TChoice) {
+	fprintf(codefile,
+		"/* CHOICE */\n"
+		"int asn1_%s_dummy_holder = 1;\n", s->gen_name);
+    } else {
+	generate_type_header (s);
+	generate_type_encode (s);
+	generate_type_decode (s);
+	generate_type_free (s);
+	generate_type_length (s);
+	generate_type_copy (s);
+	generate_glue (s);
+    }
     fprintf(headerfile, "\n\n");
     fclose(codefile);
 }
