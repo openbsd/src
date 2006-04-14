@@ -1,3 +1,11 @@
+2005-01-01  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* print_version.c: Happy New Year
+
+2004-01-05  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* print_version.c: add year 2004
+	
 2003-01-02  Johan Danielsson  <joda@pdc.kth.se>
 
 	* print_version.c: considerable clean up

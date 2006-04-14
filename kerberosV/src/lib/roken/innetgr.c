@@ -37,9 +37,9 @@
 
 #ifndef HAVE_INNETGR
 
-RCSID("$KTH: innetgr.c,v 1.1 1999/03/11 14:04:01 joda Exp $");
+RCSID("$KTH: innetgr.c,v 1.2 2005/04/12 11:28:53 lha Exp $");
 
-int
+int ROKEN_LIB_FUNCTION
 innetgr(const char *netgroup, const char *machine, 
 	const char *user, const char *domain)
 {

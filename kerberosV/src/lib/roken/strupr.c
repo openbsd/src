@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: strupr.c,v 1.5 2003/04/14 11:46:41 lha Exp $");
+RCSID("$KTH: strupr.c,v 1.6 2005/04/12 11:29:11 lha Exp $");
 #endif
 #include <string.h>
 #include <ctype.h>
@@ -41,7 +41,7 @@ RCSID("$KTH: strupr.c,v 1.5 2003/04/14 11:46:41 lha Exp $");
 #include <roken.h>
 
 #ifndef HAVE_STRUPR
-char *
+char * ROKEN_LIB_FUNCTION
 strupr(char *str)
 {
   char *s;

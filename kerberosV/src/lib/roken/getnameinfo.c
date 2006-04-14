@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: getnameinfo.c,v 1.4 2001/07/09 15:14:19 assar Exp $");
+RCSID("$KTH: getnameinfo.c,v 1.5 2005/04/12 11:28:47 lha Exp $");
 #endif
 
 #include "roken.h"
@@ -94,7 +94,7 @@ doit (int af,
  *
  */
 
-int
+int ROKEN_LIB_FUNCTION
 getnameinfo(const struct sockaddr *sa, socklen_t salen,
 	    char *host, size_t hostlen,
 	    char *serv, size_t servlen,

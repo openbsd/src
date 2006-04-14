@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,18 +33,18 @@
 
 #include "der_locl.h"
 
-RCSID("$KTH: der_length.c,v 1.12.6.2 2004/02/12 18:45:51 joda Exp $");
+RCSID("$KTH: der_length.c,v 1.16 2004/02/07 14:27:59 lha Exp $");
 
 size_t
 _heim_len_unsigned (unsigned val)
 {
-  size_t ret = 0;
+    size_t ret = 0;
 
-  do {
-    ++ret;
-    val /= 256;
-  } while (val);
-  return ret;
+    do {
+	++ret;
+	val /= 256;
+    } while (val);
+    return ret;
 }
 
 size_t
@@ -75,7 +75,7 @@ _heim_len_int (int val)
 }
 
 static size_t
-len_oid (const oid *oid)
+len_oid (const heim_oid *oid)
 {
     size_t ret = 1;
     int n;
@@ -103,19 +103,33 @@ length_len (size_t len)
 }
 
 size_t
+length_boolean (const int *data)
+{
+  return 1 + length_len(1) + 1;
+}
+
+size_t
 length_integer (const int *data)
 {
     size_t len = _heim_len_int (*data);
 
-  return 1 + length_len(len) + len;
+    return 1 + length_len(len) + len;
 }
 
 size_t
 length_unsigned (const unsigned *data)
 {
-  size_t len = _heim_len_unsigned (*data);
-
-  return 1 + length_len(len) + len;
+    unsigned val = *data;
+    size_t len = 0;
+ 
+    while (val > 255) {
+	++len;
+	val /= 256;
+    }
+    len++;
+    if (val >= 128)
+	len++;
+    return 1 + length_len(len) + len;
 }
 
 size_t
@@ -123,39 +137,39 @@ length_enumerated (const unsigned *data)
 {
     size_t len = _heim_len_int (*data);
 
-  return 1 + length_len(len) + len;
+    return 1 + length_len(len) + len;
 }
 
 size_t
-length_general_string (const general_string *data)
+length_general_string (const heim_general_string *data)
 {
-  char *str = *data;
-  size_t len = strlen(str);
-  return 1 + length_len(len) + len;
+    char *str = *data;
+    size_t len = strlen(str);
+    return 1 + length_len(len) + len;
 }
 
 size_t
-length_octet_string (const octet_string *k)
+length_octet_string (const heim_octet_string *k)
 {
-  return 1 + length_len(k->length) + k->length;
+    return 1 + length_len(k->length) + k->length;
 }
 
 size_t
-length_oid (const oid *k)
+length_oid (const heim_oid *k)
 {
-  size_t len = len_oid (k);
+    size_t len = len_oid (k);
 
-  return 1 + length_len(len) + len;
+    return 1 + length_len(len) + len;
 }
 
 size_t
 length_generalized_time (const time_t *t)
 {
-  octet_string k;
-  size_t ret;
+    heim_octet_string k;
+    size_t ret;
 
-  time2generalizedtime (*t, &k);
-  ret = 1 + length_len(k.length) + k.length;
-  free (k.data);
-  return ret;
+    time2generalizedtime (*t, &k);
+    ret = 1 + length_len(k.length) + k.length;
+    free (k.data);
+    return ret;
 }

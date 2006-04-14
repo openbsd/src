@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: signal.c,v 1.12 2000/07/08 12:39:06 assar Exp $");
+RCSID("$KTH: signal.c,v 1.13 2005/04/12 11:29:05 lha Exp $");
 #endif
 
 #include <signal.h>
@@ -50,7 +50,7 @@ RCSID("$KTH: signal.c,v 1.12 2000/07/08 12:39:06 assar Exp $");
  * Do we need any extra hacks for SIGCLD and/or SIGCHLD?
  */
 
-SigAction
+SigAction ROKEN_LIB_FUNCTION
 signal(int iSig, SigAction pAction)
 {
     struct sigaction saNew, saOld;

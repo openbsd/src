@@ -33,9 +33,9 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: read_message.c,v 1.8 2001/05/14 06:14:51 assar Exp $");
+RCSID("$KTH: read_message.c,v 1.9 2004/05/25 21:40:33 lha Exp $");
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_read_message (krb5_context context,
 		   krb5_pointer p_fd,
 		   krb5_data *data)
@@ -67,7 +67,7 @@ krb5_read_message (krb5_context context,
     return 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_read_priv_message(krb5_context context,
 		       krb5_auth_context ac,
 		       krb5_pointer p_fd,
@@ -84,7 +84,7 @@ krb5_read_priv_message(krb5_context context,
     return ret;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_read_safe_message(krb5_context context,
 		       krb5_auth_context ac,
 		       krb5_pointer p_fd,

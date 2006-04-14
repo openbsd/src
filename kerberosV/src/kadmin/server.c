@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "kadmin_locl.h"
 #include <krb5-private.h>
 
-RCSID("$KTH: server.c,v 1.38 2003/01/29 12:33:05 lha Exp $");
+RCSID("$KTH: server.c,v 1.39 2004/05/13 17:46:20 joda Exp $");
 
 static kadm5_ret_t
 kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
@@ -542,8 +542,6 @@ handle_v5(krb5_context context,
     v5_loop (context, ac, initial, kadm_handle, fd);
 }
 
-extern int do_kerberos4;
-
 krb5_error_code
 kadmind_loop(krb5_context context,
 	     krb5_auth_context ac,
@@ -560,16 +558,15 @@ kadmind_loop(krb5_context context,
     if(n < 0)
 	krb5_err(context, 1, errno, "read");
     _krb5_get_int(tmp, &len, 4);
+    /* this v4 test could probably also go away */
     if(len > 0xffff && (len & 0xffff) == ('K' << 8) + 'A') {
-	len >>= 16;
-#ifdef KRB4
-	if(do_kerberos4)
-	    handle_v4(context, keytab, len, fd);
-	else
-	    krb5_errx(context, 1, "version 4 kadmin is disabled");
-#else
+	unsigned char v4reply[] = { 
+	    0x00, 0x0c, 
+	    'K', 'Y', 'O', 'U', 'L', 'O', 'S', 'E', 
+	    0x95, 0xb7, 0xa7, 0x08 /* KADM_BAD_VER */
+	};
+	krb5_net_write(context, &fd, v4reply, sizeof(v4reply));
 	krb5_errx(context, 1, "packet appears to be version 4");
-#endif
     } else {
 	handle_v5(context, ac, keytab, len, fd);
     }

@@ -18,6 +18,17 @@ _kadm5_bump_pw_expire (
 	kadm5_server_context */*context*/,
 	hdb_entry */*ent*/);
 
+krb5_error_code
+_kadm5_c_get_cred_cache (
+	krb5_context /*context*/,
+	const char */*client_name*/,
+	const char */*server_name*/,
+	const char */*password*/,
+	krb5_prompter_fct /*prompter*/,
+	const char */*keytab*/,
+	krb5_ccache /*ccache*/,
+	krb5_ccache */*ret_cache*/);
+
 kadm5_ret_t
 _kadm5_c_init_context (
 	kadm5_client_context **/*ctx*/,
@@ -49,7 +60,7 @@ _kadm5_error_code (kadm5_ret_t /*code*/);
 
 void
 _kadm5_free_keys (
-	kadm5_server_context */*context*/,
+	krb5_context /*context*/,
 	int /*len*/,
 	Key */*keys*/);
 

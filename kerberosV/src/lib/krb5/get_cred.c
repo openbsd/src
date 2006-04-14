@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$KTH: get_cred.c,v 1.91.4.3 2004/01/09 00:47:17 lha Exp $");
+RCSID("$KTH: get_cred.c,v 1.106.2.1 2005/07/13 20:52:43 lha Exp $");
 
 /*
  * Take the `body' and encode it into `padata' using the credentials
@@ -62,12 +62,12 @@ make_pa_tgs_req(krb5_context context,
 
     in_data.length = len;
     in_data.data   = buf;
-    ret = krb5_mk_req_internal(context, &ac, 0, &in_data, creds,
-			       &padata->padata_value,
-			       KRB5_KU_TGS_REQ_AUTH_CKSUM,
-			       usage
-			       /* KRB5_KU_TGS_REQ_AUTH */);
-out:
+    ret = _krb5_mk_req_internal(context, &ac, 0, &in_data, creds,
+				&padata->padata_value,
+				KRB5_KU_TGS_REQ_AUTH_CKSUM,
+				usage
+				/* KRB5_KU_TGS_REQ_AUTH */);
+ out:
     free (buf);
     if(ret)
 	return ret;
@@ -86,14 +86,17 @@ set_auth_data (krb5_context context,
 	       krb5_keyblock *key)
 {
     if(authdata->len) {
-	size_t len;
+	size_t len, buf_size;
 	unsigned char *buf;
 	krb5_crypto crypto;
 	krb5_error_code ret;
 
-	ASN1_MALLOC_ENCODE(AuthorizationData, buf, len, authdata, &len, ret);
+	ASN1_MALLOC_ENCODE(AuthorizationData, buf, buf_size, authdata,
+			   &len, ret);
 	if (ret)
 	    return ret;
+	if (buf_size != len)
+	    krb5_abortx(context, "internal error in ASN.1 encoder");
 
 	ALLOC(req_body->enc_authorization_data, 1);
 	if (req_body->enc_authorization_data == NULL) {
@@ -105,6 +108,7 @@ set_auth_data (krb5_context context,
 	if (ret) {
 	    free (buf);
 	    free (req_body->enc_authorization_data);
+	    req_body->enc_authorization_data = NULL;
 	    return ret;
 	}
 	krb5_encrypt_EncryptedData(context, 
@@ -252,7 +256,8 @@ init_tgs_req (krb5_context context,
 	    }
 	}
 
-	ret = set_auth_data (context, &t->req_body, &in_creds->authdata, key);
+	ret = set_auth_data (context, &t->req_body, &in_creds->authdata,
+			     key ? key : &krbtgt->session);
 	if (ret) {
 	    if (key)
 		krb5_free_keyblock (context, key);
@@ -391,11 +396,13 @@ get_cred_kdc_usage(krb5_context context,
     krb5_error_code ret;
     unsigned nonce;
     krb5_keyblock *subkey = NULL;
-    u_char *buf = NULL;
-    size_t buf_size;
     size_t len;
     Ticket second_ticket;
+    int send_to_kdc_flags = 0;
     
+    krb5_data_zero(&resp);
+    krb5_data_zero(&enc);
+
     krb5_generate_random_block(&nonce, sizeof(nonce));
     nonce &= 0xffffffff;
     
@@ -423,26 +430,24 @@ get_cred_kdc_usage(krb5_context context,
     if (ret)
 	goto out;
 
-    ASN1_MALLOC_ENCODE(TGS_REQ, buf, buf_size, &req, &enc.length, ret);
+    ASN1_MALLOC_ENCODE(TGS_REQ, enc.data, enc.length, &req, &len, ret);
     if (ret) 
 	goto out;
-    if(enc.length != buf_size)
+    if(enc.length != len)
 	krb5_abortx(context, "internal error in ASN.1 encoder");
 
     /* don't free addresses */
     req.req_body.addresses = NULL;
     free_TGS_REQ(&req);
 
-    enc.data = buf + buf_size - enc.length;
-    if (ret)
-	goto out;
-    
     /*
      * Send and receive
      */
-
-    ret = krb5_sendto_kdc (context, &enc, 
-			   &krbtgt->server->name.name_string.val[1], &resp);
+again:
+    ret = krb5_sendto_kdc_flags (context, &enc, 
+				 &krbtgt->server->name.name_string.val[1],
+				 &resp,
+				 send_to_kdc_flags);
     if(ret)
 	goto out;
 
@@ -474,11 +479,15 @@ get_cred_kdc_usage(krb5_context context,
 				   decrypt_tkt_with_subkey,
 				   subkey);
 	krb5_free_kdc_rep(context, &rep);
-	if (ret)
-	    goto out;
     } else if(krb5_rd_error(context, &resp, &error) == 0) {
 	ret = krb5_error_from_rd_error(context, &error, in_creds);
 	krb5_free_error_contents(context, &error);
+
+	if (ret == KRB5KRB_ERR_RESPONSE_TOO_BIG && !(send_to_kdc_flags & KRB5_KRBHST_FLAGS_LARGE_MSG)) {
+	    send_to_kdc_flags |= KRB5_KRBHST_FLAGS_LARGE_MSG;
+	    krb5_data_free(&resp);
+	    goto again;
+	}
     } else if(resp.data && ((char*)resp.data)[0] == 4) {
 	ret = KRB5KRB_AP_ERR_V4_REPLY;
 	krb5_clear_error_string(context);
@@ -486,14 +495,14 @@ get_cred_kdc_usage(krb5_context context,
 	ret = KRB5KRB_AP_ERR_MSG_TYPE;
 	krb5_clear_error_string(context);
     }
+
+out:
     krb5_data_free(&resp);
- out:
+    krb5_data_free(&enc);
     if(subkey){
 	krb5_free_keyblock_contents(context, subkey);
 	free(subkey);
     }
-    if (buf)
-	free (buf);
     return ret;
     
 }
@@ -539,7 +548,7 @@ get_cred_kdc_la(krb5_context context, krb5_ccache id, krb5_kdc_flags flags,
     return ret;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_get_kdc_cred(krb5_context context,
 		  krb5_ccache id,
 		  krb5_kdc_flags flags,
@@ -583,6 +592,8 @@ find_cred(krb5_context context,
 {
     krb5_error_code ret;
     krb5_creds mcreds;
+
+    krb5_cc_clear_mcred(&mcreds);
     mcreds.server = server;
     ret = krb5_cc_retrieve_cred(context, id, KRB5_TC_DONT_MATCH_REALM, 
 				&mcreds, out_creds);
@@ -648,8 +659,8 @@ get_cred_from_kdc_flags(krb5_context context,
 
     *out_creds = NULL;
 
-    client_realm = *krb5_princ_realm(context, in_creds->client);
-    server_realm = *krb5_princ_realm(context, in_creds->server);
+    client_realm = krb5_principal_get_realm(context, in_creds->client);
+    server_realm = krb5_principal_get_realm(context, in_creds->server);
     memset(&tmp_creds, 0, sizeof(tmp_creds));
     ret = krb5_copy_principal(context, in_creds->client, &tmp_creds.client);
     if(ret)
@@ -705,7 +716,7 @@ get_cred_from_kdc_flags(krb5_context context,
 		    *out_creds = NULL;
 		}
 	    }
-	    krb5_free_creds_contents(context, &tgts);
+	    krb5_free_cred_contents(context, &tgts);
 	    krb5_free_principal(context, tmp_creds.server);
 	    krb5_free_principal(context, tmp_creds.client);
 	    return ret;
@@ -717,7 +728,7 @@ get_cred_from_kdc_flags(krb5_context context,
     }
     /* XXX this can loop forever */
     while(1){
-	general_string tgt_inst;
+	heim_general_string tgt_inst;
 
 	ret = get_cred_from_kdc_flags(context, flags, ccache, &tmp_creds, 
 				      &tgt, ret_tgts);
@@ -777,7 +788,7 @@ get_cred_from_kdc_flags(krb5_context context,
     return ret;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_get_cred_from_kdc_opt(krb5_context context,
 			   krb5_ccache ccache,
 			   krb5_creds *in_creds,
@@ -791,7 +802,7 @@ krb5_get_cred_from_kdc_opt(krb5_context context,
 				   in_creds, out_creds, ret_tgts);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_get_cred_from_kdc(krb5_context context,
 		       krb5_ccache ccache,
 		       krb5_creds *in_creds,
@@ -803,7 +814,7 @@ krb5_get_cred_from_kdc(krb5_context context,
 }
      
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_get_credentials_with_flags(krb5_context context,
 				krb5_flags options,
 				krb5_kdc_flags flags,
@@ -823,21 +834,47 @@ krb5_get_credentials_with_flags(krb5_context context,
 	return ENOMEM;
     }
 
+    if (in_creds->session.keytype)
+	options |= KRB5_TC_MATCH_KEYTYPE;
+
+    /* 
+     * If we got a credential, check if credential is expired before
+     * returning it.
+     */
     ret = krb5_cc_retrieve_cred(context,
-				ccache,
-				in_creds->session.keytype ?
-				KRB5_TC_MATCH_KEYTYPE : 0,
-				in_creds, res_creds);
-    if(ret == 0) {
-	*out_creds = res_creds;
-	return 0;
+                                ccache,
+                                in_creds->session.keytype ?
+                                KRB5_TC_MATCH_KEYTYPE : 0,
+                                in_creds, res_creds);
+    /* 
+     * If we got a credential, check if credential is expired before
+     * returning it, but only if KRB5_GC_EXPIRED_OK is not set.
+     */
+    if (ret == 0) {
+	krb5_timestamp timeret;
+
+	/* If expired ok, don't bother checking */
+        if(options & KRB5_GC_EXPIRED_OK) {
+            *out_creds = res_creds;
+            return 0;
+        }
+	    
+	krb5_timeofday(context, &timeret);
+	if(res_creds->times.endtime > timeret) {
+	    *out_creds = res_creds;
+	    return 0;
+	}
+	if(options & KRB5_GC_CACHED)
+	    krb5_cc_remove_cred(context, ccache, 0, res_creds);
+
+    } else if(ret != KRB5_CC_END) {
+        free(res_creds);
+        return ret;
     }
     free(res_creds);
-    if(ret != KRB5_CC_END)
-	return ret;
     if(options & KRB5_GC_CACHED) {
-	krb5_clear_error_string (context);
-	return KRB5_CC_NOTFOUND;
+        krb5_clear_error_string (context);        
+        return KRB5_CC_NOTFOUND;
     }
     if(options & KRB5_GC_USER_USER)
 	flags.b.enc_tkt_in_skey = 1;
@@ -854,7 +891,7 @@ krb5_get_credentials_with_flags(krb5_context context,
     return ret;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_get_credentials(krb5_context context,
 		     krb5_flags options,
 		     krb5_ccache ccache,

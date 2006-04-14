@@ -34,7 +34,7 @@
 #include "krb5_locl.h"
 #include "store-int.h"
 
-RCSID("$KTH: store_mem.c,v 1.11 2002/04/18 14:00:44 joda Exp $");
+RCSID("$KTH: store_mem.c,v 1.12 2004/05/25 21:44:17 lha Exp $");
 
 typedef struct mem_storage{
     unsigned char *base;
@@ -87,7 +87,7 @@ mem_seek(krb5_storage *sp, off_t offset, int whence)
     return s->ptr - s->base;
 }
 
-krb5_storage *
+krb5_storage * KRB5_LIB_FUNCTION
 krb5_storage_from_mem(void *buf, size_t len)
 {
     krb5_storage *sp = malloc(sizeof(krb5_storage));
@@ -112,7 +112,7 @@ krb5_storage_from_mem(void *buf, size_t len)
     return sp;
 }
 
-krb5_storage *
+krb5_storage * KRB5_LIB_FUNCTION
 krb5_storage_from_data(krb5_data *data)
 {
 	return krb5_storage_from_mem(data->data, data->length);

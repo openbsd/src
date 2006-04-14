@@ -1,5 +1,5 @@
-This is Info file heimdal.info, produced by Makeinfo version 1.68 from
-the input file heimdal.texi.
+This is heimdal.info, produced by makeinfo version 4.0 from
+heimdal.texi.
 
 INFO-DIR-SECTION Heimdal
 START-INFO-DIR-ENTRY
@@ -8,47 +8,58 @@ END-INFO-DIR-ENTRY
 
 
 Indirect:
-heimdal.info-1: 236
-heimdal.info-2: 48957
+heimdal.info-1: 210
+heimdal.info-2: 49488
 
 Tag Table:
 (Indirect)
-Node: Top236
-Node: Introduction591
-Node: What is Kerberos?3469
-Node: Building and Installing8542
-Node: Setting up a realm12154
-Node: Configuration file12905
-Node: Creating the database15662
-Node: keytabs18261
-Node: Serving Kerberos 4/524/kaserver19105
-Node: Remote administration20553
-Node: Password changing22489
-Node: Testing clients and servers24298
-Node: Slave Servers24618
-Node: Incremental propagation26366
-Node: Salting28894
-Node: Cross realm30628
-Node: Transit policy33178
-Node: Setting up DNS34421
-Node: Things in search for a better place36071
-Node: Kerberos 4 issues41083
-Node: Principal conversion issues41585
-Node: Converting a version 4 database43929
-Node: kaserver48957
-Node: Windows 2000 compatability50696
-Node: Configuring Windows 2000 to use a Heimdal KDC51882
-Node: Inter-Realm keys (trust) between Windows 2000 and a Heimdal KDC53634
-Node: Create account mappings56082
-Node: Encryption types56672
-Node: Authorization data57413
-Node: Quirks of Windows 2000 KDC58557
-Node: Useful links when reading about the Windows 200059799
-Node: Programming with Kerberos61871
-Node: Kerberos 5 API Overview62285
-Node: Walkthru a sample Kerberos 5 client63839
-Node: Validating a password in a server application71655
-Node: Migration71936
-Node: Acknowledgments73189
+Node: Top210
+Node: Introduction582
+Node: What is Kerberos?3460
+Node: Building and Installing8533
+Node: Setting up a realm12151
+Node: Configuration file13002
+Node: Creating the database15761
+Node: Modifying the database18682
+Node: keytabs20216
+Node: Serving Kerberos 4/524/kaserver21080
+Node: Remote administration22532
+Node: Password changing24486
+Node: Testing clients and servers28102
+Node: Slave Servers28422
+Node: Incremental propagation30171
+Node: Salting32791
+Node: Cross realm34629
+Node: Transit policy37163
+Node: Setting up DNS38814
+Node: Using LDAP to store the database41235
+Node: Providing Kerberos credentials to servers and programs46689
+Node: Applications48707
+Node: Authentication modules48903
+Node: Digital SIA49488
+Node: IRIX53865
+Node: AFS55145
+Node: Things in search for a better place57706
+Node: Kerberos 4 issues60423
+Node: Principal conversion issues60925
+Ref: Principal conversion issues-Footnote-163148
+Ref: Principal conversion issues-Footnote-263216
+Node: Converting a version 4 database63269
+Node: kaserver68297
+Node: Windows 2000 compatability70036
+Node: Configuring Windows 2000 to use a Heimdal KDC71232
+Node: Inter-Realm keys (trust) between Windows 2000 and a Heimdal KDC73210
+Node: Create account mappings76225
+Node: Encryption types76979
+Node: Authorization data77576
+Node: Quirks of Windows 2000 KDC78720
+Node: Useful links when reading about the Windows 200080016
+Node: Programming with Kerberos81820
+Node: Kerberos 5 API Overview82268
+Node: Walkthru a sample Kerberos 5 client84059
+Node: Validating a password in a server application91875
+Node: API diffrences to MIT Kerberos92195
+Node: Migration93597
+Node: Acknowledgments94851
 
 End Tag Table

@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: net_read.c,v 1.3 1999/12/02 16:58:51 joda Exp $");
+RCSID("$KTH: net_read.c,v 1.4 2005/04/12 11:28:57 lha Exp $");
 #endif
 
 #include <sys/types.h>
@@ -46,7 +46,7 @@ RCSID("$KTH: net_read.c,v 1.3 1999/12/02 16:58:51 joda Exp $");
  * Like read but never return partial data.
  */
 
-ssize_t
+ssize_t ROKEN_LIB_FUNCTION
 net_read (int fd, void *buf, size_t nbytes)
 {
     char *cbuf = (char *)buf;

@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: getipnodebyname.c,v 1.3 1999/12/02 16:58:46 joda Exp $");
+RCSID("$KTH: getipnodebyname.c,v 1.4 2005/04/12 11:28:47 lha Exp $");
 #endif
 
 #include "roken.h"
@@ -47,7 +47,7 @@ static int h_errno = NO_RECOVERY;
  * to a malloced struct hostent or NULL.
  */
 
-struct hostent *
+struct hostent * ROKEN_LIB_FUNCTION
 getipnodebyname (const char *name, int af, int flags, int *error_num)
 {
     struct hostent *tmp;

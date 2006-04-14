@@ -37,19 +37,19 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: asn1_glue.c,v 1.7 1999/12/02 17:05:07 joda Exp $");
+RCSID("$KTH: asn1_glue.c,v 1.9 2004/12/29 18:54:15 lha Exp $");
 
-krb5_error_code
-krb5_principal2principalname (PrincipalName *p,
-			      const krb5_principal from)
+krb5_error_code KRB5_LIB_FUNCTION
+_krb5_principal2principalname (PrincipalName *p,
+			       const krb5_principal from)
 {
     return copy_PrincipalName(&from->name, p);
 }
 
-krb5_error_code
-principalname2krb5_principal (krb5_principal *principal,
-			      const PrincipalName from,
-			      const Realm realm)
+krb5_error_code KRB5_LIB_FUNCTION
+_krb5_principalname2krb5_principal (krb5_principal *principal,
+				    const PrincipalName from,
+				    const Realm realm)
 {
     krb5_principal p = malloc(sizeof(*p));
     copy_PrincipalName(&from, &p->name);

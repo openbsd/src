@@ -1,5 +1,5 @@
 #!/bin/sh
-# $KTH: krb5-config.in,v 1.9 2002/09/09 22:29:06 joda Exp $
+# $KTH: krb5-config.in,v 1.10.2.1 2006/02/03 15:01:28 lha Exp $
 
 do_libs=no
 do_cflags=no
@@ -21,7 +21,7 @@ for i in $*; do
     ;;
   --version)
     echo "@PACKAGE@ @VERSION@"
-    echo '$KTH: krb5-config.in,v 1.9 2002/09/09 22:29:06 joda Exp $'
+    echo '$KTH: krb5-config.in,v 1.10.2.1 2006/02/03 15:01:28 lha Exp $'
     exit 0
     ;;
   --prefix=*)
@@ -99,8 +99,8 @@ if test "$do_libs" = "yes"; then
 	lib_flags="$lib_flags -lkadm5srv"
 	;;
     esac
-    lib_flags="$lib_flags -lkrb5 -lasn1 @LIB_des_appl@ -lroken"
-    lib_flags="$lib_flags @LIB_crypt@ @LIB_dbopen@ @LIBS@"
+    lib_flags="$lib_flags -lkrb5 -lasn1 -lcom_err @LIB_des_appl@ -lroken"
+    lib_flags="$lib_flags @LIB_crypt@ @LIB_dbopen@ @LIB_dlopen@ @LIBS@"
     echo $lib_flags
 fi
 if test "$do_cflags" = "yes"; then

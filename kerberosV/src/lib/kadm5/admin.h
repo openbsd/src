@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE. 
  */
-/* $KTH: admin.h,v 1.18 2000/08/04 11:26:21 joda Exp $ */
+/* $KTH: admin.h,v 1.19 2005/05/30 20:32:58 lha Exp $ */
 
 #ifndef __KADM5_ADMIN_H__
 #define __KADM5_ADMIN_H__
@@ -64,6 +64,7 @@
 #define KRB5_KDB_PWCHANGE_SERVICE	0x00002000
 #define KRB5_KDB_SUPPORT_DESMD5		0x00004000
 #define KRB5_KDB_NEW_PRINC		0x00008000
+#define KRB5_KDB_OK_AS_DELEGATE		0x00010000
 
 #define KADM5_PRINCIPAL		0x000001
 #define KADM5_PRINC_EXPIRE_TIME	0x000002
@@ -114,6 +115,13 @@ typedef struct _krb5_tl_data {
     int16_t tl_data_length;       
     void*   tl_data_contents;     
 } krb5_tl_data;
+
+#define KRB5_TL_LAST_PWD_CHANGE		0x0001
+#define KRB5_TL_MOD_PRINC		0x0002
+#define KRB5_TL_KADM_DATA		0x0003
+#define KRB5_TL_KADM5_E_DATA		0x0004
+#define KRB5_TL_RB1_CHALLENGE		0x0005
+#define KRB5_TL_SECURID_STATE           0x0006
 
 typedef struct _kadm5_principal_ent_t {
     krb5_principal principal;

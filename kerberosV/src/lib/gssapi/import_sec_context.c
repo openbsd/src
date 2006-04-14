@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$KTH: import_sec_context.c,v 1.7 2003/03/16 18:01:32 lha Exp $");
+RCSID("$KTH: import_sec_context.c,v 1.12 2005/04/27 17:48:48 lha Exp $");
 
 OM_uint32
 gss_import_sec_context (
@@ -54,6 +54,7 @@ gss_import_sec_context (
     int32_t tmp;
     int32_t flags;
     OM_uint32 minor;
+    int is_cfx = 0;
 
     GSSAPI_KRB5_INIT ();
 
@@ -73,6 +74,7 @@ gss_import_sec_context (
 	return GSS_S_FAILURE;
     }
     memset (*context_handle, 0, sizeof(**context_handle));
+    HEIMDAL_MUTEX_init(&(*context_handle)->ctx_id_mutex);
 
     kret = krb5_auth_con_init (gssapi_krb5_context,
 			       &(*context_handle)->auth_context);
@@ -193,6 +195,16 @@ gss_import_sec_context (
     else
 	(*context_handle)->lifetime = GSS_C_INDEFINITE;
 
+    gsskrb5_is_cfx(*context_handle, &is_cfx);
+
+    ret = _gssapi_msg_order_create(minor_status,
+				   &(*context_handle)->order,
+				   _gssapi_msg_order_f((*context_handle)->flags),
+				   0, 0, is_cfx);
+    if (ret)
+	goto failure;
+
+    krb5_storage_free (sp);
     return GSS_S_COMPLETE;
 
 failure:
@@ -206,6 +218,10 @@ failure:
 	krb5_free_address (gssapi_krb5_context, localp);
     if (remotep)
 	krb5_free_address (gssapi_krb5_context, remotep);
+    if((*context_handle)->order)
+	_gssapi_msg_order_destroy(&(*context_handle)->order);
+    HEIMDAL_MUTEX_destroy(&(*context_handle)->ctx_id_mutex);
+    krb5_storage_free (sp);
     free (*context_handle);
     *context_handle = GSS_C_NO_CONTEXT;
     return ret;

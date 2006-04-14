@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$KTH: ent_setup.c,v 1.12 2000/03/23 23:02:35 assar Exp $");
+RCSID("$KTH: ent_setup.c,v 1.13 2005/05/30 20:44:54 lha Exp $");
 
 #define set_value(X, V) do { if((X) == NULL) (X) = malloc(sizeof(*(X))); *(X) = V; } while(0)
 #define set_null(X)     do { if((X) != NULL) free((X)); (X) = NULL; } while (0)
@@ -53,6 +53,7 @@ attr_to_flags(unsigned attr, HDBFlags *flags)
     flags->server =		!(attr & KRB5_KDB_DISALLOW_SVR);
     flags->change_pw = 	       !!(attr & KRB5_KDB_PWCHANGE_SERVICE);
     flags->client =	        1; /* XXX */
+    flags->ok_as_delegate =    !!(attr & KRB5_KDB_OK_AS_DELEGATE);
 }
 
 /*

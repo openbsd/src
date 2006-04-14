@@ -32,7 +32,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: dump_config.c,v 1.2 1999/10/28 23:22:41 assar Exp $");
+RCSID("$KTH: dump_config.c,v 1.3 2004/05/25 21:23:14 lha Exp $");
 
 /* print contents of krb5.conf */
 
@@ -58,7 +58,7 @@ print_tree(struct krb5_config_binding *b, int level)
 	print_tree(b->next, level);
 }
 
-int
+int KRB5_LIB_FUNCTION
 main(int argc, char **argv)
 {
     krb5_context context;

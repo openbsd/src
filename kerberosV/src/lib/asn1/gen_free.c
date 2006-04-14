@@ -33,7 +33,7 @@
 
 #include "gen_locl.h"
 
-RCSID("$KTH: gen_free.c,v 1.9.6.1 2003/08/20 16:25:01 joda Exp $");
+RCSID("$KTH: gen_free.c,v 1.12 2003/10/03 00:28:08 lha Exp $");
 
 static void
 free_primitive (const char *typename, const char *name)
@@ -53,6 +53,7 @@ free_type (const char *name, const Type *t)
       break;
   case TInteger:
   case TUInteger:
+  case TBoolean:
   case TEnumerated :
       break;
   case TOctetString:
@@ -110,6 +111,11 @@ free_type (const char *name, const Type *t)
       break;
   case TGeneralString:
       free_primitive ("general_string", name);
+      break;
+  case TUTF8String:
+      free_primitive ("utf8string", name);
+      break;
+  case TNull:
       break;
   case TApplication:
       free_type (name, t->subtype);

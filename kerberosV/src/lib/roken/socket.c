@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: socket.c,v 1.8 2003/04/15 03:26:51 lha Exp $");
+RCSID("$KTH: socket.c,v 1.9 2005/04/12 11:29:06 lha Exp $");
 #endif
 
 #include <roken.h>
@@ -43,7 +43,7 @@ RCSID("$KTH: socket.c,v 1.8 2003/04/15 03:26:51 lha Exp $");
  * Set `sa' to the unitialized address of address family `af'
  */
 
-void
+void ROKEN_LIB_FUNCTION
 socket_set_any (struct sockaddr *sa, int af)
 {
     switch (af) {
@@ -77,7 +77,7 @@ socket_set_any (struct sockaddr *sa, int af)
  * set `sa' to (`ptr', `port')
  */
 
-void
+void ROKEN_LIB_FUNCTION
 socket_set_address_and_port (struct sockaddr *sa, const void *ptr, int port)
 {
     switch (sa->sa_family) {
@@ -111,7 +111,7 @@ socket_set_address_and_port (struct sockaddr *sa, const void *ptr, int port)
  * Return the size of an address of the type in `sa'
  */
 
-size_t
+size_t ROKEN_LIB_FUNCTION
 socket_addr_size (const struct sockaddr *sa)
 {
     switch (sa->sa_family) {
@@ -131,7 +131,7 @@ socket_addr_size (const struct sockaddr *sa)
  * Return the size of a `struct sockaddr' in `sa'.
  */
 
-size_t
+size_t ROKEN_LIB_FUNCTION
 socket_sockaddr_size (const struct sockaddr *sa)
 {
     switch (sa->sa_family) {
@@ -151,7 +151,7 @@ socket_sockaddr_size (const struct sockaddr *sa)
  * Return the binary address of `sa'.
  */
 
-void *
+void * ROKEN_LIB_FUNCTION
 socket_get_address (struct sockaddr *sa)
 {
     switch (sa->sa_family) {
@@ -175,7 +175,7 @@ socket_get_address (struct sockaddr *sa)
  * Return the port number from `sa'.
  */
 
-int
+int ROKEN_LIB_FUNCTION
 socket_get_port (const struct sockaddr *sa)
 {
     switch (sa->sa_family) {
@@ -199,7 +199,7 @@ socket_get_port (const struct sockaddr *sa)
  * Set the port in `sa' to `port'.
  */
 
-void
+void ROKEN_LIB_FUNCTION
 socket_set_port (struct sockaddr *sa, int port)
 {
     switch (sa->sa_family) {
@@ -224,7 +224,7 @@ socket_set_port (struct sockaddr *sa, int port)
 /*
  * Set the range of ports to use when binding with port = 0.
  */
-void
+void ROKEN_LIB_FUNCTION
 socket_set_portrange (int sock, int restr, int af)
 {
 #if defined(IP_PORTRANGE)
@@ -250,7 +250,7 @@ socket_set_portrange (int sock, int restr, int af)
  * Enable debug on `sock'.
  */
 
-void
+void ROKEN_LIB_FUNCTION
 socket_set_debug (int sock)
 {
 #if defined(SO_DEBUG) && defined(HAVE_SETSOCKOPT)
@@ -265,7 +265,7 @@ socket_set_debug (int sock)
  * Set the type-of-service of `sock' to `tos'.
  */
 
-void
+void ROKEN_LIB_FUNCTION
 socket_set_tos (int sock, int tos)
 {
 #if defined(IP_TOS) && defined(HAVE_SETSOCKOPT)
@@ -279,7 +279,7 @@ socket_set_tos (int sock, int tos)
  * set the reuse of addresses on `sock' to `val'.
  */
 
-void
+void ROKEN_LIB_FUNCTION
 socket_set_reuseaddr (int sock, int val)
 {
 #if defined(SO_REUSEADDR) && defined(HAVE_SETSOCKOPT)

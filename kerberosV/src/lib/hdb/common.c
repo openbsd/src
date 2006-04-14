@@ -33,7 +33,7 @@
 
 #include "hdb_locl.h"
 
-RCSID("$KTH: common.c,v 1.12 2003/01/14 06:54:32 lha Exp $");
+RCSID("$KTH: common.c,v 1.13 2003/09/19 00:17:20 lha Exp $");
 
 int
 hdb_principal2key(krb5_context context, krb5_principal p, krb5_data *key)
@@ -81,7 +81,7 @@ _hdb_fetch(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
     int code;
 
     hdb_principal2key(context, entry->principal, &key);
-    code = db->_get(context, db, key, &value);
+    code = db->hdb__get(context, db, key, &value);
     krb5_data_free(&key);
     if(code)
 	return code;
@@ -89,7 +89,7 @@ _hdb_fetch(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
     krb5_data_free(&value);
     if (code)
 	return code;
-    if (db->master_key_set && (flags & HDB_F_DECRYPT)) {
+    if (db->hdb_master_key_set && (flags & HDB_F_DECRYPT)) {
 	code = hdb_unseal_keys (context, db, entry);
 	if (code)
 	    hdb_free_entry(context, entry);
@@ -123,7 +123,7 @@ _hdb_store(krb5_context context, HDB *db, unsigned flags, hdb_entry *entry)
 	return code;
     }
     hdb_entry2value(context, entry, &value);
-    code = db->_put(context, db, flags & HDB_F_REPLACE, key, value);
+    code = db->hdb__put(context, db, flags & HDB_F_REPLACE, key, value);
     krb5_data_free(&value);
     krb5_data_free(&key);
     return code;
@@ -136,7 +136,7 @@ _hdb_remove(krb5_context context, HDB *db, hdb_entry *entry)
     int code;
 
     hdb_principal2key(context, entry->principal, &key);
-    code = db->_del(context, db, key);
+    code = db->hdb__del(context, db, key);
     krb5_data_free(&key);
     return code;
 }

@@ -33,13 +33,13 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: verr.c,v 1.10 2001/01/25 12:41:39 assar Exp $");
+RCSID("$KTH: verr.c,v 1.11 2005/04/12 11:29:14 lha Exp $");
 #endif
 
 #include "roken.h"
 #include <err.h>
 
-void
+void ROKEN_LIB_FUNCTION
 verr(int eval, const char *fmt, va_list ap)
 {
     warnerr(1, fmt, ap);

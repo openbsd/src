@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: ecalloc.c,v 1.1 2001/06/17 12:09:37 assar Exp $");
+RCSID("$KTH: ecalloc.c,v 1.2 2005/04/12 11:28:36 lha Exp $");
 #endif
 
 #include <stdlib.h>
@@ -45,7 +45,7 @@ RCSID("$KTH: ecalloc.c,v 1.1 2001/06/17 12:09:37 assar Exp $");
  * Like calloc but never fails.
  */
 
-void *
+void * ROKEN_LIB_FUNCTION
 ecalloc (size_t number, size_t size)
 {
     void *tmp = calloc (number, size);

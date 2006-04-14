@@ -33,47 +33,14 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$KTH: decapsulate.c,v 1.7.6.1 2003/09/18 22:00:41 lha Exp $");
+RCSID("$KTH: decapsulate.c,v 1.11 2003/09/09 02:09:03 lha Exp $");
 
-OM_uint32
-gssapi_krb5_verify_header(u_char **str,
-			  size_t total_len,
-			  char *type)
-{
-    size_t len, len_len, mech_len, foo;
-    int e;
-    u_char *p = *str;
+/*
+ * return the length of the mechanism in token or -1
+ * (which implies that the token was bad - GSS_S_DEFECTIVE_TOKEN
+ */
 
-    if (total_len < 1)
-	return GSS_S_DEFECTIVE_TOKEN;
-    if (*p++ != 0x60)
-	return GSS_S_DEFECTIVE_TOKEN;
-    e = der_get_length (p, total_len - 1, &len, &len_len);
-    if (e || 1 + len_len + len != total_len)
-	return GSS_S_DEFECTIVE_TOKEN;
-    p += len_len;
-    if (*p++ != 0x06)
-	return GSS_S_DEFECTIVE_TOKEN;
-    e = der_get_length (p, total_len - 1 - len_len - 1,
-			&mech_len, &foo);
-    if (e)
-	return GSS_S_DEFECTIVE_TOKEN;
-    p += foo;
-    if (mech_len != GSS_KRB5_MECHANISM->length)
-	return GSS_S_BAD_MECH;
-    if (memcmp(p,
-	       GSS_KRB5_MECHANISM->elements,
-	       GSS_KRB5_MECHANISM->length) != 0)
-	return GSS_S_BAD_MECH;
-    p += mech_len;
-    if (memcmp (p, type, 2) != 0)
-	return GSS_S_DEFECTIVE_TOKEN;
-    p += 2;
-    *str = p;
-    return GSS_S_COMPLETE;
-}
-
-static ssize_t
+ssize_t
 gssapi_krb5_get_mech (const u_char *ptr,
 		      size_t total_len,
 		      const u_char **mech_ret)
@@ -103,7 +70,8 @@ gssapi_krb5_get_mech (const u_char *ptr,
 
 OM_uint32
 _gssapi_verify_mech_header(u_char **str,
-			   size_t total_len)
+			   size_t total_len,
+			   gss_OID mech)
 {
     const u_char *p;
     ssize_t mech_len;
@@ -112,14 +80,71 @@ _gssapi_verify_mech_header(u_char **str,
     if (mech_len < 0)
 	return GSS_S_DEFECTIVE_TOKEN;
 
-    if (mech_len != GSS_KRB5_MECHANISM->length)
+    if (mech_len != mech->length)
 	return GSS_S_BAD_MECH;
     if (memcmp(p,
-	       GSS_KRB5_MECHANISM->elements,
-	       GSS_KRB5_MECHANISM->length) != 0)
+	       mech->elements,
+	       mech->length) != 0)
 	return GSS_S_BAD_MECH;
     p += mech_len;
     *str = (char *)p;
+    return GSS_S_COMPLETE;
+}
+
+OM_uint32
+gssapi_krb5_verify_header(u_char **str,
+			  size_t total_len,
+			  u_char *type,
+			  gss_OID oid)
+{
+    OM_uint32 ret;
+    size_t len;
+    u_char *p = *str;
+
+    ret = _gssapi_verify_mech_header(str, total_len, oid);
+    if (ret)
+	return ret;
+
+    len = total_len - (*str - p);
+
+    if (len < 2)
+	return GSS_S_DEFECTIVE_TOKEN;
+
+    if (memcmp (*str, type, 2) != 0)
+	return GSS_S_DEFECTIVE_TOKEN;
+    *str += 2;
+
+    return 0;
+}
+
+/*
+ * Remove the GSS-API wrapping from `in_token' giving `out_data.
+ * Does not copy data, so just free `in_token'.
+ */
+
+OM_uint32
+_gssapi_decapsulate(
+    OM_uint32 *minor_status,
+    gss_buffer_t input_token_buffer,
+    krb5_data *out_data,
+    const gss_OID mech
+)
+{
+    u_char *p;
+    OM_uint32 ret;
+
+    p = input_token_buffer->value;
+    ret = _gssapi_verify_mech_header(&p,
+				    input_token_buffer->length,
+				    mech);
+    if (ret) {
+	*minor_status = 0;
+	return ret;
+    }
+
+    out_data->length = input_token_buffer->length -
+	(p - (u_char *)input_token_buffer->value);
+    out_data->data   = p;
     return GSS_S_COMPLETE;
 }
 
@@ -129,12 +154,11 @@ _gssapi_verify_mech_header(u_char **str,
  */
 
 OM_uint32
-gssapi_krb5_decapsulate(
-			OM_uint32 *minor_status,    
+gssapi_krb5_decapsulate(OM_uint32 *minor_status,    
 			gss_buffer_t input_token_buffer,
 			krb5_data *out_data,
-			char *type
-)
+			char *type,
+			gss_OID oid)
 {
     u_char *p;
     OM_uint32 ret;
@@ -142,7 +166,8 @@ gssapi_krb5_decapsulate(
     p = input_token_buffer->value;
     ret = gssapi_krb5_verify_header(&p,
 				    input_token_buffer->length,
-				    type);
+				    type,
+				    oid);
     if (ret) {
 	*minor_status = 0;
 	return ret;

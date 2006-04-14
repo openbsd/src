@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: erealloc.c,v 1.5 2001/06/17 12:08:05 assar Exp $");
+RCSID("$KTH: erealloc.c,v 1.6 2005/04/12 11:28:37 lha Exp $");
 #endif
 
 #include <stdlib.h>
@@ -45,7 +45,7 @@ RCSID("$KTH: erealloc.c,v 1.5 2001/06/17 12:08:05 assar Exp $");
  * Like realloc but never fails.
  */
 
-void *
+void * ROKEN_LIB_FUNCTION
 erealloc (void *ptr, size_t sz)
 {
     void *tmp = realloc (ptr, sz);

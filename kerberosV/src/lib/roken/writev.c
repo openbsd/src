@@ -33,12 +33,12 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: writev.c,v 1.3 1999/12/02 16:58:54 joda Exp $");
+RCSID("$KTH: writev.c,v 1.4 2005/04/12 11:29:18 lha Exp $");
 #endif
 
 #include "roken.h"
 
-ssize_t
+ssize_t ROKEN_LIB_FUNCTION
 writev(int d, const struct iovec *iov, int iovcnt)
 {
     ssize_t ret;

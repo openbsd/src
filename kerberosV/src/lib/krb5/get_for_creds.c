@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$KTH: get_for_creds.c,v 1.34.4.1 2004/01/09 00:51:55 lha Exp $");
+RCSID("$KTH: get_for_creds.c,v 1.44 2005/05/17 08:12:29 lha Exp $");
 
 static krb5_error_code
 add_addrs(krb5_context context,
@@ -90,7 +90,7 @@ fail:
  * If hostname == NULL, pick it from `server'
  */
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_fwd_tgt_creds (krb5_context	context,
 		    krb5_auth_context	auth_context,
 		    const char		*hostname,
@@ -151,7 +151,7 @@ krb5_fwd_tgt_creds (krb5_context	context,
  *
  */
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_get_forwarded_creds (krb5_context	    context,
 			  krb5_auth_context auth_context,
 			  krb5_ccache       ccache,
@@ -173,7 +173,6 @@ krb5_get_forwarded_creds (krb5_context	    context,
     krb5_crypto crypto;
     struct addrinfo *ai;
     int save_errno;
-    krb5_keyblock *key;
     krb5_creds *ticket;
     char *realm;
 
@@ -216,7 +215,7 @@ krb5_get_forwarded_creds (krb5_context	    context,
 	    return ret;
     }
     
-    kdc_flags.i = flags;
+    kdc_flags.b = int2KDCOptions(flags);
 
     ret = krb5_get_kdc_cred (context,
 			     ccache,
@@ -254,7 +253,8 @@ krb5_get_forwarded_creds (krb5_context	    context,
     }
     
     if (auth_context->flags & KRB5_AUTH_CONTEXT_DO_TIME) {
-	int32_t sec, usec;
+	krb5_timestamp sec;
+	int32_t usec;
 	
 	krb5_us_timeofday (context, &sec, &usec);
 	
@@ -282,7 +282,7 @@ krb5_get_forwarded_creds (krb5_context	    context,
 	krb5_const_realm realm;
 
 	realm = krb5_principal_get_realm(context, out_creds->server);
-	krb5_appdefault_boolean(context, NULL, realm, "no-addresses", FALSE,
+	krb5_appdefault_boolean(context, NULL, realm, "no-addresses", paddrs == NULL,
 				&noaddr);
 	if (!noaddr) {
 	    ret = krb5_make_addrport (context,
@@ -300,6 +300,11 @@ krb5_get_forwarded_creds (krb5_context	    context,
 	    krb5_const_realm realm;
 
 	    realm = krb5_principal_get_realm(context, out_creds->server);
+	    /* Is this correct, and should we use the paddrs == NULL
+               trick here as well? Having an address-less ticket may
+               indicate that we don't know our own global address, but
+               it does not necessary mean that we don't know the
+               server's. */
 	    krb5_appdefault_boolean(context, NULL, realm, "no-addresses",
 				    FALSE, &noaddr);
 	    if (!noaddr) {
@@ -367,31 +372,40 @@ krb5_get_forwarded_creds (krb5_context	    context,
     if(buf_size != len)
 	krb5_abortx(context, "internal error in ASN.1 encoder");
 
-    if (auth_context->local_subkey)
-	key = auth_context->local_subkey;
-    else if (auth_context->remote_subkey)
-	key = auth_context->remote_subkey;
-    else
-	key = auth_context->keyblock;
+    if (auth_context->flags & KRB5_AUTH_CONTEXT_CLEAR_FORWARDED_CRED) {
+	cred.enc_part.etype = ENCTYPE_NULL;
+	cred.enc_part.kvno = NULL;
+	cred.enc_part.cipher.data = buf;
+	cred.enc_part.cipher.length = buf_size;
+    } else {
+	krb5_keyblock *key;
 
-    ret = krb5_crypto_init(context, key, 0, &crypto);
-    if (ret) {
+	if (auth_context->local_subkey)
+	    key = auth_context->local_subkey;
+	else if (auth_context->remote_subkey)
+	    key = auth_context->remote_subkey;
+	else
+	    key = auth_context->keyblock;
+	
+	ret = krb5_crypto_init(context, key, 0, &crypto);
+	if (ret) {
+	    free(buf);
+	    free_KRB_CRED(&cred);
+	    return ret;
+	}
+	ret = krb5_encrypt_EncryptedData (context,
+					  crypto,
+					  KRB5_KU_KRB_CRED,
+					  buf,
+					  len,
+					  0,
+					  &cred.enc_part);
 	free(buf);
-	free_KRB_CRED(&cred);
-	return ret;
-    }
-    ret = krb5_encrypt_EncryptedData (context,
-				      crypto,
-				      KRB5_KU_KRB_CRED,
-				      buf,
-				      len,
-				      0,
-				      &cred.enc_part);
-    free(buf);
-    krb5_crypto_destroy(context, crypto);
-    if (ret) {
-	free_KRB_CRED(&cred);
-	return ret;
+	krb5_crypto_destroy(context, crypto);
+	if (ret) {
+	    free_KRB_CRED(&cred);
+	    return ret;
+	}
     }
 
     ASN1_MALLOC_ENCODE(KRB_CRED, buf, buf_size, &cred, &len, ret);

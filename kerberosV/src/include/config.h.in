@@ -1,5 +1,27 @@
 /* include/config.h.in.  Generated from configure.in by autoheader.  */
 
+#ifdef BUILD_KRB5_LIB
+#ifndef KRB5_LIB_FUNCTION
+#ifdef _WIN32_
+#define KRB5_LIB_FUNCTION _export _stdcall
+#else
+#define KRB5_LIB_FUNCTION
+#endif
+#endif
+#endif
+
+
+#ifdef BUILD_ROKEN_LIB
+#ifndef ROKEN_LIB_FUNCTION
+#ifdef _WIN32_
+#define ROKEN_LIB_FUNCTION _export _stdcall
+#else
+#define ROKEN_LIB_FUNCTION
+#endif
+#endif
+#endif
+
+
 #ifndef RCSID
 #define RCSID(msg) \
 static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
@@ -29,6 +51,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define this to enable diagnostics in telnet. */
 #undef DIAGNOSTICS
 
+/* Define if you want have a thread safe libraries */
+#undef ENABLE_PTHREAD_SUPPORT
+
 /* Define if you want encryption support in telnet. */
 #undef ENCRYPTION
 
@@ -56,9 +81,6 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define if you have the `altzone' variable. */
 #undef HAVE_ALTZONE
-
-/* define if your system declares altzone */
-#undef HAVE_ALTZONE_DECLARATION
 
 /* Define to 1 if you have the <arpa/ftp.h> header file. */
 #undef HAVE_ARPA_FTP_H
@@ -104,6 +126,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define if you have the function `chown'. */
 #undef HAVE_CHOWN
+
+/* Define if you have the function `closefrom'. */
+#undef HAVE_CLOSEFROM
 
 /* Define to 1 if you have the <config.h> header file. */
 #undef HAVE_CONFIG_H
@@ -156,6 +181,54 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* define if you have ndbm compat in db */
 #undef HAVE_DB_NDBM
 
+/* Define to 1 if you have the declaration of `altzone', and to 0 if you
+   don't. */
+#undef HAVE_DECL_ALTZONE
+
+/* Define to 1 if you have the declaration of `environ', and to 0 if you
+   don't. */
+#undef HAVE_DECL_ENVIRON
+
+/* Define to 1 if you have the declaration of `h_errlist', and to 0 if you
+   don't. */
+#undef HAVE_DECL_H_ERRLIST
+
+/* Define to 1 if you have the declaration of `h_errno', and to 0 if you
+   don't. */
+#undef HAVE_DECL_H_ERRNO
+
+/* Define to 1 if you have the declaration of `h_nerr', and to 0 if you don't.
+   */
+#undef HAVE_DECL_H_NERR
+
+/* Define to 1 if you have the declaration of `optarg', and to 0 if you don't.
+   */
+#undef HAVE_DECL_OPTARG
+
+/* Define to 1 if you have the declaration of `opterr', and to 0 if you don't.
+   */
+#undef HAVE_DECL_OPTERR
+
+/* Define to 1 if you have the declaration of `optind', and to 0 if you don't.
+   */
+#undef HAVE_DECL_OPTIND
+
+/* Define to 1 if you have the declaration of `optopt', and to 0 if you don't.
+   */
+#undef HAVE_DECL_OPTOPT
+
+/* Define to 1 if you have the declaration of `timezone', and to 0 if you
+   don't. */
+#undef HAVE_DECL_TIMEZONE
+
+/* Define to 1 if you have the declaration of `_res', and to 0 if you don't.
+   */
+#undef HAVE_DECL__RES
+
+/* Define to 1 if you have the declaration of `__progname', and to 0 if you
+   don't. */
+#undef HAVE_DECL___PROGNAME
+
 /* Define to 1 if you have the <dirent.h> header file. */
 #undef HAVE_DIRENT_H
 
@@ -168,6 +241,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the `dn_expand' function. */
 #undef HAVE_DN_EXPAND
 
+/* Define to 1 if you have the `door_create' function. */
+#undef HAVE_DOOR_CREATE
+
 /* Define if you have the function `ecalloc'. */
 #undef HAVE_ECALLOC
 
@@ -176,9 +252,6 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define if you have the function `emalloc'. */
 #undef HAVE_EMALLOC
-
-/* define if your system declares environ */
-#undef HAVE_ENVIRON_DECLARATION
 
 /* Define if you have the function `erealloc'. */
 #undef HAVE_EREALLOC
@@ -288,6 +361,12 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the `getpagesize' function. */
 #undef HAVE_GETPAGESIZE
 
+/* Define to 1 if you have the `getpeereid' function. */
+#undef HAVE_GETPEEREID
+
+/* Define to 1 if you have the `getpeerucred' function. */
+#undef HAVE_GETPEERUCRED
+
 /* Define to 1 if you have the `getprogname' function. */
 #undef HAVE_GETPROGNAME
 
@@ -331,20 +410,11 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if you have the `h_errlist' variable. */
 #undef HAVE_H_ERRLIST
 
-/* define if your system declares h_errlist */
-#undef HAVE_H_ERRLIST_DECLARATION
-
 /* Define if you have the `h_errno' variable. */
 #undef HAVE_H_ERRNO
 
-/* define if your system declares h_errno */
-#undef HAVE_H_ERRNO_DECLARATION
-
 /* Define if you have the `h_nerr' variable. */
 #undef HAVE_H_NERR
-
-/* define if your system declares h_nerr */
-#undef HAVE_H_NERR_DECLARATION
 
 /* Define to 1 if you have the <ifaddrs.h> header file. */
 #undef HAVE_IFADDRS_H
@@ -396,6 +466,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define to 1 if you have the `issetugid' function. */
 #undef HAVE_ISSETUGID
+
+/* Define if you want to use the Kerberos Credentials Manager. */
+#undef HAVE_KCM
 
 /* Define to 1 if you have the `krb_disable_debug' function. */
 #undef HAVE_KRB_DISABLE_DEBUG
@@ -514,18 +587,6 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* define to use openssl's libcrypto */
 #undef HAVE_OPENSSL
 
-/* define if your system declares optarg */
-#undef HAVE_OPTARG_DECLARATION
-
-/* define if your system declares opterr */
-#undef HAVE_OPTERR_DECLARATION
-
-/* define if your system declares optind */
-#undef HAVE_OPTIND_DECLARATION
-
-/* define if your system declares optopt */
-#undef HAVE_OPTOPT_DECLARATION
-
 /* Define to enable basic OSF C2 support. */
 #undef HAVE_OSFC2
 
@@ -534,6 +595,12 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define to 1 if you have the `pidfile' function. */
 #undef HAVE_PIDFILE
+
+/* Define to 1 if you have the `poll' function. */
+#undef HAVE_POLL
+
+/* Define to 1 if you have the <poll.h> header file. */
+#undef HAVE_POLL_H
 
 /* Define to 1 if you have the <pthread.h> header file. */
 #undef HAVE_PTHREAD_H
@@ -928,6 +995,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
+/* Define to 1 if you have the <sys/ucred.h> header file. */
+#undef HAVE_SYS_UCRED_H
+
 /* Define to 1 if you have the <sys/uio.h> header file. */
 #undef HAVE_SYS_UIO_H
 
@@ -960,9 +1030,6 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define if you have the `timezone' variable. */
 #undef HAVE_TIMEZONE
-
-/* define if your system declares timezone */
-#undef HAVE_TIMEZONE_DECLARATION
 
 /* Define to 1 if you have the <time.h> header file. */
 #undef HAVE_TIME_H
@@ -1102,9 +1169,6 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if you have the `_res' variable. */
 #undef HAVE__RES
 
-/* define if your system declares _res */
-#undef HAVE__RES_DECLARATION
-
 /* Define to 1 if you have the `_scrsize' function. */
 #undef HAVE__SCRSIZE
 
@@ -1113,9 +1177,6 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define if you have the `__progname' variable. */
 #undef HAVE___PROGNAME
-
-/* define if your system declares __progname */
-#undef HAVE___PROGNAME_DECLARATION
 
 /* Define if you have the hesiod package. */
 #undef HESIOD
@@ -1161,6 +1222,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* define if the system is missing a prototype for crypt() */
 #undef NEED_CRYPT_PROTO
+
+/* define if the system is missing a prototype for daemon() */
+#undef NEED_DAEMON_PROTO
 
 /* define if the system is missing a prototype for gethostname() */
 #undef NEED_GETHOSTNAME_PROTO
@@ -1237,6 +1301,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if you have the openldap package. */
 #undef OPENLDAP
 
+/* Define if you want support for hdb ldap module */
+#undef OPENLDAP_MODULE
+
 /* define if prototype of openlog is compatible with void openlog(const char
    *, int, int) */
 #undef OPENLOG_PROTO_COMPATIBLE
@@ -1261,6 +1328,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
+
+/* Define to enable PKINIT. */
+#undef PKINIT
 
 /* Define if getlogin has POSIX flavour (and not BSD). */
 #undef POSIX_GETLOGIN
@@ -1396,8 +1466,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #endif
 
 #ifdef BROKEN_REALLOC
-#define realloc(X, Y) isoc_realloc((X), (Y))
-#define isoc_realloc(X, Y) ((X) ? realloc((X), (Y)) : malloc(Y))
+#define realloc(X, Y) rk_realloc((X), (Y))
 #endif
 
 

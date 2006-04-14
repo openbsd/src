@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: k_getpwuid.c,v 1.9 1999/12/02 16:58:47 joda Exp $");
+RCSID("$KTH: k_getpwuid.c,v 1.10 2005/04/12 11:28:55 lha Exp $");
 #endif /* HAVE_CONFIG_H */
 
 #include "roken.h"
@@ -41,7 +41,7 @@ RCSID("$KTH: k_getpwuid.c,v 1.9 1999/12/02 16:58:47 joda Exp $");
 #include <shadow.h>
 #endif
 
-struct passwd *
+struct passwd * ROKEN_LIB_FUNCTION
 k_getpwuid (uid_t uid)
 {
      struct passwd *p;

@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: gssapi.h,v 1.26.2.2 2003/05/07 11:12:21 lha Exp $ */
+/* $KTH: gssapi.h,v 1.37 2005/02/21 08:48:15 lukeh Exp $ */
 
 #ifndef GSSAPI_H_
 #define GSSAPI_H_
@@ -63,17 +63,8 @@ struct Principal;
 
 typedef struct Principal *gss_name_t;
 
-typedef struct gss_ctx_id_t_desc_struct {
-  struct krb5_auth_context_data *auth_context;
-  gss_name_t source, target;
-  OM_uint32 flags;
-  enum { LOCAL = 1, OPEN = 2, 
-	 COMPAT_OLD_DES3 = 4, COMPAT_OLD_DES3_SELECTED = 8 } more_flags;
-  struct krb5_ticket *ticket;
-  time_t lifetime;
-} gss_ctx_id_t_desc;
-
-typedef gss_ctx_id_t_desc *gss_ctx_id_t;
+struct gss_ctx_id_t_desc_struct;
+typedef struct gss_ctx_id_t_desc_struct *gss_ctx_id_t;
 
 typedef struct gss_OID_desc_struct {
       OM_uint32 length;
@@ -91,16 +82,8 @@ struct krb5_ccache_data;
 
 typedef int gss_cred_usage_t;
 
-typedef struct gss_cred_id_t_desc_struct {
-  gss_name_t principal;
-  struct krb5_keytab_data *keytab;
-  OM_uint32 lifetime;
-  gss_cred_usage_t usage;
-  gss_OID_set mechanisms;
-  struct krb5_ccache_data *ccache;
-} gss_cred_id_t_desc;
-
-typedef gss_cred_id_t_desc *gss_cred_id_t;
+struct gss_cred_id_t_desc_struct;
+typedef struct gss_cred_id_t_desc_struct *gss_cred_id_t;
 
 typedef struct gss_buffer_desc_struct {
       size_t length;
@@ -313,6 +296,14 @@ extern gss_OID GSS_C_NT_ANONYMOUS;
 extern gss_OID GSS_C_NT_EXPORT_NAME;
 
 /*
+ * RFC2478, SPNEGO:
+ *  The security mechanism of the initial
+ *  negotiation token is identified by the Object Identifier
+ *  iso.org.dod.internet.security.mechanism.snego (1.3.6.1.5.5.2).
+ */
+extern gss_OID GSS_SPNEGO_MECHANISM;
+
+/*
  * This if for kerberos5 names.
  */
 
@@ -326,6 +317,7 @@ extern gss_OID GSS_KRB5_MECHANISM;
 /* for compatibility with MIT api */
 
 #define gss_mech_krb5 GSS_KRB5_MECHANISM
+#define gss_krb5_nt_general_name GSS_KRB5_NT_PRINCIPAL_NAME
 
 /* Major status codes */
 
@@ -768,6 +760,11 @@ OM_uint32 gss_unseal
  * kerberos mechanism specific functions
  */
 
+OM_uint32
+gss_krb5_ccache_name(OM_uint32 * /*minor_status*/, 
+		     const char * /*name */,
+		     const char ** /*out_name */);
+
 OM_uint32 gsskrb5_register_acceptor_identity
         (const char */*identity*/);
 
@@ -775,6 +772,18 @@ OM_uint32 gss_krb5_copy_ccache
 	(OM_uint32 */*minor*/,
 	 gss_cred_id_t /*cred*/,
 	 struct krb5_ccache_data */*out*/);
+
+OM_uint32 gss_krb5_get_tkt_flags
+	(OM_uint32 */*minor*/,
+	 gss_ctx_id_t /*context_handle*/,
+	 OM_uint32 */*tkt_flags*/);
+
+OM_uint32
+gsskrb5_extract_authz_data_from_sec_context
+	(OM_uint32 * /*minor_status*/,
+	 gss_ctx_id_t /*context_handle*/,
+	 int /*ad_type*/,
+	 gss_buffer_t /*ad_data*/);
 
 #define GSS_C_KRB5_COMPAT_DES3_MIC 1
 

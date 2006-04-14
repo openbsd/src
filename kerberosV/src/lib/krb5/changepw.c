@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$KTH: changepw.c,v 1.38.2.1 2004/06/21 08:38:10 lha Exp $");
+RCSID("$KTH: changepw.c,v 1.53 2005/05/25 05:30:42 lha Exp $");
 
 static void
 str2data (krb5_data *d,
@@ -319,7 +319,7 @@ process_reply (krb5_context context,
 
     if (len < 6) {
 	str2data (result_string, "server %s sent to too short message "
-		  "(%d bytes)", host, len);
+		  "(%ld bytes)", host, (long)len);
 	*result_code = KRB5_KPASSWD_MALFORMED;
 	return 0;
     }
@@ -467,7 +467,7 @@ typedef krb5_error_code (*kpwd_process_reply) (krb5_context,
 					       krb5_data *,
 					       const char *);
 
-struct kpwd_proc {
+static struct kpwd_proc {
     const char *name;
     int flags;
 #define SUPPORT_TCP	1
@@ -643,10 +643,12 @@ change_password_loop (krb5_context	context,
     if (done)
 	return 0;
     else {
-	if (ret == KRB5_KDC_UNREACH)
+	if (ret == KRB5_KDC_UNREACH) {
 	    krb5_set_error_string(context,
 				  "unable to reach any changepw server "
 				  " in realm %s", realm);
+	    *result_code = KRB5_KPASSWD_HARDERROR;
+	}
 	return ret;
     }
 }
@@ -658,7 +660,7 @@ change_password_loop (krb5_context	context,
  * the operation in `result_*' and an error code or 0.
  */
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_change_password (krb5_context	context,
 		      krb5_creds	*creds,
 		      char		*newpw,
@@ -684,7 +686,7 @@ krb5_change_password (krb5_context	context,
  *
  */
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_set_password(krb5_context context,
 		  krb5_creds *creds,
 		  char *newpw,
@@ -727,7 +729,7 @@ krb5_set_password(krb5_context context,
  *
  */
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_set_password_using_ccache(krb5_context context,
 			       krb5_ccache ccache,
 			       char *newpw,
@@ -792,7 +794,7 @@ krb5_set_password_using_ccache(krb5_context context,
  *
  */
 
-const char*
+const char* KRB5_LIB_FUNCTION
 krb5_passwd_result_to_string (krb5_context context,
 			      int result)
 {

@@ -33,19 +33,20 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: ticket.c,v 1.5.8.1 2003/09/18 21:01:57 lha Exp $");
+RCSID("$KTH: ticket.c,v 1.12 2004/05/25 21:44:47 lha Exp $");
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_free_ticket(krb5_context context,
 		 krb5_ticket *ticket)
 {
     free_EncTicketPart(&ticket->ticket);
     krb5_free_principal(context, ticket->client);
     krb5_free_principal(context, ticket->server);
+    free(ticket);
     return 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_copy_ticket(krb5_context context,
 		 const krb5_ticket *from,
 		 krb5_ticket **to)
@@ -78,4 +79,47 @@ krb5_copy_ticket(krb5_context context,
     }
     *to = tmp;
     return 0;
+}
+
+krb5_error_code KRB5_LIB_FUNCTION
+krb5_ticket_get_client(krb5_context context,
+		       const krb5_ticket *ticket,
+		       krb5_principal *client)
+{
+    return krb5_copy_principal(context, ticket->client, client);
+}
+
+krb5_error_code KRB5_LIB_FUNCTION
+krb5_ticket_get_server(krb5_context context,
+		       const krb5_ticket *ticket,
+		       krb5_principal *server)
+{
+    return krb5_copy_principal(context, ticket->server, server);
+}
+
+krb5_error_code KRB5_LIB_FUNCTION
+krb5_ticket_get_authorization_data_type(krb5_context context,
+					krb5_ticket *ticket,
+					int type,
+					krb5_data *data)
+{
+    AuthorizationData *ad;
+    int i;
+
+    data->length = 0;
+    data->data = NULL;
+
+    ad = ticket->ticket.authorization_data;
+    if (ad == NULL) {
+	krb5_set_error_string(context, "Ticket have not authorization data");
+	return ENOENT; /* XXX */
+    }
+
+    for (i = 0; i < ad->len; i++) {
+	if (ad->val[i].ad_type == type)
+	    return copy_octet_string(&ad->val[i].ad_data, data);
+    }
+    krb5_set_error_string(context, "Ticket have not authorization "
+			  "data of type %d", type);
+    return ENOENT; /* XXX */
 }

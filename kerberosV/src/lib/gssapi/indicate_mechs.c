@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$KTH: indicate_mechs.c,v 1.5 2003/03/16 17:38:20 lha Exp $");
+RCSID("$KTH: indicate_mechs.c,v 1.7 2003/09/12 21:15:42 lha Exp $");
 
 OM_uint32 gss_indicate_mechs
            (OM_uint32 * minor_status,
@@ -47,8 +47,16 @@ OM_uint32 gss_indicate_mechs
       return ret;
 
   ret = gss_add_oid_set_member(minor_status, GSS_KRB5_MECHANISM, mech_set);
-  if (ret)
+  if (ret) {
+      gss_release_oid_set(NULL, mech_set);
       return ret;
+  }
+
+  ret = gss_add_oid_set_member(minor_status, GSS_SPNEGO_MECHANISM, mech_set);
+  if (ret) {
+      gss_release_oid_set(NULL, mech_set);
+      return ret;
+  }
 
   *minor_status = 0;
   return GSS_S_COMPLETE;

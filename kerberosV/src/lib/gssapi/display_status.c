@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 - 2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,9 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$KTH: display_status.c,v 1.9 2003/03/16 17:45:36 lha Exp $");
-
-static char *krb5_error_string;
+RCSID("$KTH: display_status.c,v 1.12 2005/03/16 13:15:03 lha Exp $");
 
 static char *
 calling_error(OM_uint32 v)
@@ -116,14 +114,37 @@ supplementary_error(OM_uint32 v)
 void
 gssapi_krb5_set_error_string (void)
 {
-    krb5_error_string = krb5_get_error_string(gssapi_krb5_context);
+    struct gssapi_thr_context *ctx = gssapi_get_thread_context(1);
+    char *e;
+
+    if (ctx == NULL)
+	return;
+    HEIMDAL_MUTEX_lock(&ctx->mutex);
+    if (ctx->error_string)
+	free(ctx->error_string);
+    e = krb5_get_error_string(gssapi_krb5_context);
+    if (e == NULL)
+	ctx->error_string = NULL;
+    else {
+	/* ignore failures, will use status code instead */
+	ctx->error_string = strdup(e); 
+	krb5_free_error_string(gssapi_krb5_context, e);
+    }
+    HEIMDAL_MUTEX_unlock(&ctx->mutex);
 }
 
 char *
 gssapi_krb5_get_error_string (void)
 {
-    char *ret = krb5_error_string;
-    krb5_error_string = NULL;
+    struct gssapi_thr_context *ctx = gssapi_get_thread_context(0);
+    char *ret;
+
+    if (ctx == NULL)
+	return NULL;
+    HEIMDAL_MUTEX_lock(&ctx->mutex);
+    ret = ctx->error_string;
+    ctx->error_string = NULL;
+    HEIMDAL_MUTEX_unlock(&ctx->mutex);
     return ret;
 }
 

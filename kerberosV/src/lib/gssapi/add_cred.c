@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$KTH: add_cred.c,v 1.2.2.1 2003/10/21 21:00:47 lha Exp $");
+RCSID("$KTH: add_cred.c,v 1.4 2003/10/07 04:08:57 lha Exp $");
 
 OM_uint32 gss_add_cred (
      OM_uint32           *minor_status,
@@ -65,16 +65,21 @@ OM_uint32 gss_add_cred (
     }
 
     /* check if requested output usage is compatible with output usage */ 
-    if (output_cred_handle != NULL &&
-	(cred->usage != cred_usage && cred->usage != GSS_C_BOTH)) {
-	*minor_status = GSS_KRB5_S_G_BAD_USAGE;
-	return(GSS_S_FAILURE);
+    if (output_cred_handle != NULL) {
+	HEIMDAL_MUTEX_lock(&cred->cred_id_mutex);
+	if (cred->usage != cred_usage && cred->usage != GSS_C_BOTH) {
+	    HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
+	    *minor_status = GSS_KRB5_S_G_BAD_USAGE;
+	    return(GSS_S_FAILURE);
+	}
     }
 	
     /* check that we have the same name */
     if (desired_name != GSS_C_NO_NAME &&
 	krb5_principal_compare(gssapi_krb5_context, desired_name,
 			       cred->principal) != FALSE) {
+	if (output_cred_handle)
+	    HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
 	*minor_status = 0;
 	return GSS_S_BAD_NAME;
     }
@@ -84,6 +89,7 @@ OM_uint32 gss_add_cred (
 
 	handle = (gss_cred_id_t)malloc(sizeof(*handle));
 	if (handle == GSS_C_NO_CREDENTIAL) {
+	    HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
 	    *minor_status = ENOMEM;
 	    return (GSS_S_FAILURE);
 	}
@@ -96,12 +102,14 @@ OM_uint32 gss_add_cred (
 	handle->keytab = NULL;
 	handle->ccache = NULL;
 	handle->mechanisms = NULL;
+	HEIMDAL_MUTEX_init(&handle->cred_id_mutex);
 	
 	ret = GSS_S_FAILURE;
 
 	ret = gss_duplicate_name(minor_status, cred->principal,
 				 &handle->principal);
 	if (ret) {
+	    HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
 	    free(handle);
 	    *minor_status = ENOMEM;
 	    return GSS_S_FAILURE;
@@ -168,7 +176,6 @@ OM_uint32 gss_add_cred (
 		}
 
 	    } else {
-
 		name = krb5_cc_get_name(gssapi_krb5_context, cred->ccache);
 		if (name == NULL) {
 		    *minor_status = ENOMEM;
@@ -190,7 +197,6 @@ OM_uint32 gss_add_cred (
 		}	    
 	    }
 	}
-
 	ret = gss_create_empty_oid_set(minor_status, &handle->mechanisms);
 	if (ret)
 	    goto failure;
@@ -211,8 +217,10 @@ OM_uint32 gss_add_cred (
     if (acceptor_time_rec)
 	*acceptor_time_rec = lifetime;
 
-    if (output_cred_handle)
+    if (output_cred_handle) {
 	*output_cred_handle = handle;
+	HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
+    }
 
     *minor_status = 0;
     return ret;
@@ -230,5 +238,7 @@ OM_uint32 gss_add_cred (
 	    gss_release_oid_set(NULL, &handle->mechanisms);
 	free(handle);
     }
+    if (output_cred_handle)
+	HEIMDAL_MUTEX_unlock(&cred->cred_id_mutex);
     return ret;
 }

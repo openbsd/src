@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$KTH: release_cred.c,v 1.8.2.1 2003/10/07 01:08:21 lha Exp $");
+RCSID("$KTH: release_cred.c,v 1.10 2003/10/07 00:51:46 lha Exp $");
 
 OM_uint32 gss_release_cred
            (OM_uint32 * minor_status,
@@ -48,6 +48,8 @@ OM_uint32 gss_release_cred
 
     GSSAPI_KRB5_INIT ();
 
+    HEIMDAL_MUTEX_lock(&(*cred_handle)->cred_id_mutex);
+
     if ((*cred_handle)->principal != NULL)
         krb5_free_principal(gssapi_krb5_context, (*cred_handle)->principal);
     if ((*cred_handle)->keytab != NULL)
@@ -61,6 +63,9 @@ OM_uint32 gss_release_cred
 	    krb5_cc_close(gssapi_krb5_context, (*cred_handle)->ccache);
     }
     gss_release_oid_set(NULL, &(*cred_handle)->mechanisms);
+    HEIMDAL_MUTEX_unlock(&(*cred_handle)->cred_id_mutex);
+    HEIMDAL_MUTEX_destroy(&(*cred_handle)->cred_id_mutex);
+    memset(*cred_handle, 0, sizeof(**cred_handle));
     free(*cred_handle);
     *cred_handle = GSS_C_NO_CREDENTIAL;
     return GSS_S_COMPLETE;

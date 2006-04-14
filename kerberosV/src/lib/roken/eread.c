@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: eread.c,v 1.2 1999/12/02 16:58:45 joda Exp $");
+RCSID("$KTH: eread.c,v 1.3 2005/04/12 11:28:37 lha Exp $");
 #endif
 
 #include <unistd.h>
@@ -45,7 +45,7 @@ RCSID("$KTH: eread.c,v 1.2 1999/12/02 16:58:45 joda Exp $");
  * Like read but never fails (and never returns partial data).
  */
 
-ssize_t
+ssize_t ROKEN_LIB_FUNCTION
 eread (int fd, void *buf, size_t nbytes)
 {
     ssize_t ret;

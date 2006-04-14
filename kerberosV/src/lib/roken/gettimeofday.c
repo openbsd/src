@@ -37,12 +37,12 @@
 #include "roken.h"
 #ifndef HAVE_GETTIMEOFDAY
 
-RCSID("$KTH: gettimeofday.c,v 1.8 1999/12/02 16:58:46 joda Exp $");
+RCSID("$KTH: gettimeofday.c,v 1.9 2005/04/12 11:28:49 lha Exp $");
 
 /*
  * Simple gettimeofday that only returns seconds.
  */
-int
+int ROKEN_LIB_FUNCTION
 gettimeofday (struct timeval *tp, void *ignore)
 {
      time_t t;

@@ -4,6 +4,10 @@
 
 #include <stdarg.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 krb5_error_code
 hdb_add_master_key (
 	krb5_context /*context*/,
@@ -68,9 +72,31 @@ void
 hdb_free_key (Key */*key*/);
 
 void
+hdb_free_keys (
+	krb5_context /*context*/,
+	int /*len*/,
+	Key */*keys*/);
+
+void
 hdb_free_master_key (
 	krb5_context /*context*/,
 	hdb_master_key /*mkey*/);
+
+krb5_error_code
+hdb_generate_key_set (
+	krb5_context /*context*/,
+	krb5_principal /*principal*/,
+	Key **/*ret_key_set*/,
+	size_t */*nkeyset*/,
+	int /*no_salt*/);
+
+krb5_error_code
+hdb_generate_key_set_password (
+	krb5_context /*context*/,
+	krb5_principal /*principal*/,
+	const char */*password*/,
+	Key **/*keys*/,
+	size_t */*num_keys*/);
 
 krb5_error_code
 hdb_init_db (
@@ -88,6 +114,11 @@ hdb_ldap_create (
 	krb5_context /*context*/,
 	HDB ** /*db*/,
 	const char */*arg*/);
+
+krb5_error_code
+hdb_list_builtin (
+	krb5_context /*context*/,
+	char **/*list*/);
 
 krb5_error_code
 hdb_lock (
@@ -135,6 +166,18 @@ hdb_read_master_key (
 	hdb_master_key */*mkey*/);
 
 krb5_error_code
+hdb_seal_key (
+	krb5_context /*context*/,
+	HDB */*db*/,
+	Key */*k*/);
+
+krb5_error_code
+hdb_seal_key_mkey (
+	krb5_context /*context*/,
+	Key */*k*/,
+	hdb_master_key /*mkey*/);
+
+krb5_error_code
 hdb_seal_keys (
 	krb5_context /*context*/,
 	HDB */*db*/,
@@ -162,6 +205,18 @@ krb5_error_code
 hdb_unlock (int /*fd*/);
 
 krb5_error_code
+hdb_unseal_key (
+	krb5_context /*context*/,
+	HDB */*db*/,
+	Key */*k*/);
+
+krb5_error_code
+hdb_unseal_key_mkey (
+	krb5_context /*context*/,
+	Key */*k*/,
+	hdb_master_key /*mkey*/);
+
+krb5_error_code
 hdb_unseal_keys (
 	krb5_context /*context*/,
 	HDB */*db*/,
@@ -184,5 +239,9 @@ hdb_write_master_key (
 	krb5_context /*context*/,
 	const char */*filename*/,
 	hdb_master_key /*mkey*/);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __hdb_protos_h__ */

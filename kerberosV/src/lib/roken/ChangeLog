@@ -1,21 +1,351 @@
-2004-01-15  Love  <lha@stacken.kth.se>
+2005-05-29  Love Hörnquist Åstrand  <lha@it.su.se>
 
-	* roken-common.h: 1.52: use EAI_NONAME instead of EAI_ADDRFAMILY
-	  to check for if we need EAI_ macros
-	
-	* gai_strerror.c: 1.4: correct ifdef for EAI_ADDRFAMILY
-	1.3: EAI_ADDRFAMILY and EAI_NODATA is deprecated
-	
-2003-08-29  Love  <lha@stacken.kth.se>
+	* parse_reply-test.c: avoid signedness warnings
 
-	* ndbm_wrap.c: 1.1->1.2: patch for working with DB4 on
-	heimdal-discuss From: Luke Howard <lukeh@PADL.COM>
+	* test-mem.c: avoid signedness warnings
+
+2005-05-27  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* hex.c: include "roken.h" to avoid undefined size_t/ssize_t
+
+2005-05-24  Dave Love  <fx@gnu.org>
+
+	* Makefile.am (snprintf_test_SOURCES): Add snprintf-test.h.
+
+2005-05-20  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* environment.c (rk_read_env_file): move assignment to later to
+	make pre c99 compiler happy
+
+2005-05-18  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* strptime.c: use english spelling of March
+
+2005-05-17  Johan Danielsson  <joda@pdc.kth.se>
+
+	* Makefile.am: only link with dblib if we need it
+	
+	* Makefile.am: add test_readenv
+	
+	* test-readenv.c: test for read_environment()
+	
+	* environment.c: eliminate duplicates
+	
+2005-05-13  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* issuid.c (issuid): change the #ifdef order to avoid unreachable
+	code warning.
+
+2005-05-10  Dave Love  <fx@gnu.org>
+
+	* roken.h.in: Get daemon declared on Solaris (it's in unistd.h but
+	masked by a feature test), just to avoid a warning, since it has
+	int args. Include err.h unconditionally, since it's always
+	supplied.
+
+2005-05-04  Dave Love  <fx@gnu.org>
+
+	* snprintf-test.c: Include snprintf-test.h earlier.
+
+2005-05-03  Dave Love  <fx@gnu.org>
+
+	* snprintf.c: Include snprintf-test.h earlier.
+	
+	* test-mem.c: Add member fd to map.
+	(rk_test_mem_alloc, rk_test_mem_free): Use it.
+
+2005-04-30  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* getifaddrs.c: add break on default: statements, from Douglas
+	E. Engert
+
+	* snprintf.c (vsnprintf): don't write the NUL into the string if
+	the length was 0
+
+	* snprintf-test.c: add check that snprintf doesn't write the NUL
+	into the last byte when its a zero length input string
+
+	* parse_time-test.c: Include <err.h>.
+	
+2005-04-27  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* parse_time-test.c: improve testing
+	
+	* roken-common.h: add rk_realloc
+
+	* Makefile.am: add realloc
+
+	* realloc.c: add rk_realloc, unbroken version of realloc
+
+2005-04-26  Dave Love  <fx@gnu.org>
+
+	* getusershell.c: Include roken.h
+
+2005-04-18  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* unvis.c: cast to unsigned char to make sure its not negative
+	when passing it to is* functions
+
+	* strptime.c: cast to unsigned char to make sure its not negative
+	when passing it to to* functions
+
+2005-04-13  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* simple_exec.c: don't close stderr, close all fd that is num 3
+	and larger
+
+	* simple_exec.c (pipe_execv): use closefrom
+
+	* add closefrom
+
+2005-04-12  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* add ROKEN_LIB_FUNCTION to all exported functions
+
+2005-04-10  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* resolve-test.c: print DS
+
+2005-04-07  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* parse_time-test.c: remove unused variable
+	
+2005-04-04  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* strpftime-test.c: print size_t by casting to unsigned long
+	
+	* base64-test.c: print size_t by casting to unsigned long
+	
+	* hex-test.c: print size_t by casting to unsigned long
+	
+	* resolve-test.c: print size_t by casting to unsigned long
+	
+2005-04-01  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* snprintf-test.c (try): reset va_list argument between reuse,
+	from Peter Kruty <xkruty@fi.muni.cz>
+
+2005-03-30  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* roken_gethostby.c (roken_gethostby): s/sin/addr/ to avoid
+	shadowing
+
+	* resolve.c (dns_lookup_int): s/stat/state/ to avoid shadowing
+
+	* parse_units.c: avoid shadowing div
+
+2005-03-26  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* snprintf.c: use defined(TEST_SNPRINTF) like on all other places
+	in the same file
+
+2005-03-21  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* hex.c: check for overflows
+
+2005-03-18  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* vis.c: use RCSID instead of __RCSID
+
+2005-03-06  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* Makefile.am: check_PROGRAMS += hex-test
+	
+	* hex-test.c: hex encoding/decoding test
+	
+	* hex.c: fix decodeing, it processed to much data and thus
+	returned the wrong length
+
+2005-03-04  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* Makefile.am: add hex.[ch]
+
+	* hex.c: add hex encoder/decoder
+
+2005-03-02  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* daemon.c fnmatch.c fnmatch.hin getcap.c getopt.c getusershell.c
+	glob.c glob.hin iruserok.c unvis.c vis.hin:
+	
+	In 1997, the University of California, Berkeley issued a statement
+	retroactively relicensing all code held under their copyright from
+	a 4-clause 'traditional' BSD license to a new 3-clause 'revised'
+	BSD license, which removed the advertising clause.
+
+	From NetBSD, via Joel Baker, and Alistair G. Crooks
+	
+	* getaddrinfo-test.c: remove stray ( in output
+	
+	* vis.c: Update new revision from NetBSD (copyright update)
+
+2005-02-24  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* Makefile.am: bump version to 17:0:1
+
+2005-01-19  Dave Love  <d.love@dl.ac.uk>
+
+	* getusershell.c: Include ctype.h, cast argument to isspace to
+	unsigned char.
+
+2004-10-31  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* parse_time.3, parse_units.c: Change the behavior of the
+	parse_unit code to return the number of bytes needed to print the
+	whole string (minus the trailing '\0'), just like snprintf.  Idea
+	from bugreport from Gabriel Kihlman <gk@stacken.kth.se>.
+
+	* parse_time-test.c Makefile.am test-mem.c test-mem.h: test parse_time
+
+2004-10-16  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* resolve.c: put dns_type_to_string and dns_string_to_type in the
+	abi
+
+	* resolve.c: add ds_record
+	
+	* resolve.h: add ds_record
+	
+2004-10-06  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* ndbm_wrap.c: undefine open so this works on solaris with large
+	file support From netbsd's pkgsrc via Gavan Fantom
+	
+2004-09-13  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* resolve-test.c: add --version/--help
+	
+2004-09-12  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* Makefile.am: make resolve-test a noinst program
+	
+2004-09-11  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* resolve-test.c: test program for libroken resolve from resolve.c
+	
+	* Makefile.am: add resolve-test
+	
+	* resolve.h: add constant for max DNS protocol packet size
+	
+	* resolve.c (dns_lookup_int): grow the answer buffer to the size
+	the server send to us if the answer buffer was too small (limited
+	to the dns protocol max packet size)
+	
+2004-08-26  Johan Danielsson  <joda@pdc.kth.se>
+
+	* err.hin: no need to declare __progname here
+
+	* Makefile.am: always clean generated headers
+
+2004-06-26  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* rtbl.3: use .In for header, remove trailing space
+	
+2004-06-23  Johan Danielsson  <joda@pdc.kth.se>
+
+	* rtbl.h: add protos and macros
+	
+	* rtbl.c: implement a bunch of stuff:
+	  - column separator (instead of global column prefix)
+	  - per column suffix
+	  - indexing columns by id-number instead of column header
+	  - optional header supression (via settable flags)
+	  - ability to end a row
+	  - don't extend last column to full width
+	
+2004-06-20  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* resolve.[ch]: add and use and bind9 version of rr type
+	(rk_ns_t_XXX) instead of the old bind4 version (T_XXX)
+
+2004-05-25  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* resolve.c (stot): add AAAA
+	
+2004-02-17  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* getarg.c (add_string): catch error from realloc
+	
+2004-02-12  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* roken-common.h: add simple_execve_timed
+	
+	* roken-common.h: add timed simple_exec
+	
+	* simple_exec.c: add timed simple_exec
+	
+2004-01-05  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* gai_strerror.c: correct ifdef for EAI_ADDRFAMILY
+
+2003-12-14  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* resolve.c: parse dns header, add support for SSHFP
+	
+	* resolve.h: add cpp rewrite for sshfp_record
+	
+	* resolve.h: add SSHFP, clean up the the dns_header
+	
+2003-12-14  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* resolve.h: remove HEADER (only used for crays)
+	
+	* resolve.c: number-of fields no longer stored in network order
+	
+2003-12-13  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* resolve.c: remove depency on c99 types in resolv.h
+	
+	* resolve.h: remove depency on c99 types
+	
+2003-12-06  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* resolv.h: add more T_ types and inline the dns headers, all this
+	for bind9 resolvers
+
+2003-12-02  Love Hörnquist Åstrand  <lha@it.su.se>
+	
+	* gai_strerror.c: EAI_ADDRFAMILY and EAI_NODATA is deprecated
+	
+	* roken-common.h: use EAI_NONAME instead of EAI_ADDRFAMILY to
+	check for if we need EAI_ macros
+
+2003-10-04   Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* strptime.c: let t and n match zero or more whitespaces
+	
+2003-08-29  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* ndbm_wrap.c: patch for working with DB4 on heimdal-discuss
+	From: Luke Howard <lukeh@PADL.COM>
+	
+2003-08-27  Johan Danielsson  <joda@pdc.kth.se>
+
+	* Makefile.am: don't include discovered files in EXTRA_SOURCES;
+	don't depend on all header files, just the built ones
+
+2003-08-15  Johan Danielsson  <joda@pdc.kth.se>
+
+	* emalloc.3: manpage
+	
+2003-07-11  Love  <lha@stacken.kth.se>
+
+	* resolve.c: AIX have broken res_nsearch() in 5.1 (5.0 also ?)  so
+	just don't use res_nsearch on AIX
+
+2003-06-29  Johan Danielsson  <joda@pdc.kth.se>
+
+	* snprintf.c: * don't ever print sign for unsigned conversions *
+	don't break when right justifying a number past the end of the
+	buffer * handle zero precision and the value zero more correctly
+
+2003-06-14  Love  <lha@stacken.kth.se>
+
+	* glob.hin: prefix glob symbols with rk_
 	
 2003-04-22  Love  <lha@stacken.kth.se>
-	
-	* resolve.c: 1.38->1.39: copy NUL too, from janj@wenf.org via
-	openbsd
 
+	* resolve.c: copy NUL too, from janj@wenf.org via openbsd
+	
 2003-04-16  Love  <lha@stacken.kth.se>
 
 	* parse_units.h: remove typedef for units to avoid problems with
@@ -1388,7 +1718,7 @@ Thu Mar 19 20:41:25 1998  Johan Danielsson  <joda@emma.pdc.kth.se>
 
 Fri Mar  6 00:21:53 1998  Johan Danielsson  <joda@emma.pdc.kth.se>
 
-	* roken_gethostby.c: Make `roken_gethostby_setup' take url-like
+	* roken_gethostby.c: Make `roken_gethostby_setup' take URL-like
  	specification instead of split up versions. Makes it easier for
  	calling applications.
 

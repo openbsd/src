@@ -32,7 +32,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: n-fold.c,v 1.6 1999/08/27 09:03:41 joda Exp $");
+RCSID("$KTH: n-fold.c,v 1.7 2004/05/25 21:35:31 lha Exp $");
 
 static void
 rr13(unsigned char *buf, size_t len)
@@ -95,7 +95,7 @@ add1(unsigned char *a, unsigned char *b, size_t len)
     }
 }
 
-void
+void KRB5_LIB_FUNCTION
 _krb5_n_fold(const void *str, size_t len, void *key, size_t size)
 {
     /* if len < size we need at most N * len bytes, ie < 2 * size;

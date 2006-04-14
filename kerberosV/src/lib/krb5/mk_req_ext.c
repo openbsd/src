@@ -33,17 +33,17 @@
 
 #include <krb5_locl.h>
 
-RCSID("$KTH: mk_req_ext.c,v 1.26.4.1 2003/09/18 20:34:30 lha Exp $");
+RCSID("$KTH: mk_req_ext.c,v 1.30 2005/01/05 06:31:01 lukeh Exp $");
 
 krb5_error_code
-krb5_mk_req_internal(krb5_context context,
-		     krb5_auth_context *auth_context,
-		     const krb5_flags ap_req_options,
-		     krb5_data *in_data,
-		     krb5_creds *in_creds,
-		     krb5_data *outbuf,
-		     krb5_key_usage checksum_usage,
-		     krb5_key_usage encrypt_usage)
+_krb5_mk_req_internal(krb5_context context,
+		      krb5_auth_context *auth_context,
+		      const krb5_flags ap_req_options,
+		      krb5_data *in_data,
+		      krb5_creds *in_creds,
+		      krb5_data *outbuf,
+		      krb5_key_usage checksum_usage,
+		      krb5_key_usage encrypt_usage)
 {
   krb5_error_code ret;
   krb5_data authenticator;
@@ -110,7 +110,8 @@ krb5_mk_req_internal(krb5_context context,
 				     in_data->data,
 				     in_data->length,
 				     &c);
-      } else if(ac->keyblock->keytype == ETYPE_ARCFOUR_HMAC_MD5) {
+      } else if(ac->keyblock->keytype == ETYPE_ARCFOUR_HMAC_MD5 ||
+		ac->keyblock->keytype == ETYPE_ARCFOUR_HMAC_MD5_56) {
 	  /* this is to make MS kdc happy */ 
 	  ret = krb5_create_checksum(context, 
 				     NULL,
@@ -160,7 +161,7 @@ krb5_mk_req_internal(krb5_context context,
   return ret;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_mk_req_extended(krb5_context context,
 		     krb5_auth_context *auth_context,
 		     const krb5_flags ap_req_options,
@@ -168,7 +169,7 @@ krb5_mk_req_extended(krb5_context context,
 		     krb5_creds *in_creds,
 		     krb5_data *outbuf)
 {
-    return krb5_mk_req_internal (context,
+    return _krb5_mk_req_internal (context,
 				 auth_context,
 				 ap_req_options,
 				 in_data,

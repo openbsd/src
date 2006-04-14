@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: strtok_r.c,v 1.5 1999/12/02 16:58:53 joda Exp $");
+RCSID("$KTH: strtok_r.c,v 1.6 2005/04/12 11:29:11 lha Exp $");
 #endif
 
 #include <string.h>
@@ -42,7 +42,7 @@ RCSID("$KTH: strtok_r.c,v 1.5 1999/12/02 16:58:53 joda Exp $");
 
 #ifndef HAVE_STRTOK_R
 
-char *
+char * ROKEN_LIB_FUNCTION
 strtok_r(char *s1, const char *s2, char **lasts)
 {
   char *ret;

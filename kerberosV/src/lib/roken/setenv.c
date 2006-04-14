@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: setenv.c,v 1.9 1999/12/02 16:58:52 joda Exp $");
+RCSID("$KTH: setenv.c,v 1.10 2005/04/12 11:29:04 lha Exp $");
 #endif
 
 #include "roken.h"
@@ -47,7 +47,7 @@ RCSID("$KTH: setenv.c,v 1.9 1999/12/02 16:58:52 joda Exp $");
  * anyway.
  */
 
-int
+int ROKEN_LIB_FUNCTION
 setenv(const char *var, const char *val, int rewrite)
 {
     char *t;

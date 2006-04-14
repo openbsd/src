@@ -31,14 +31,19 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: der.h,v 1.22 2001/09/27 16:20:35 assar Exp $ */
+/* $KTH: der.h,v 1.28 2005/05/29 14:23:00 lha Exp $ */
 
 #ifndef __DER_H__
 #define __DER_H__
 
 #include <time.h>
 
-typedef enum {UNIV = 0, APPL = 1, CONTEXT = 2 , PRIVATE = 3} Der_class;
+typedef enum {
+    ASN1_C_UNIV = 0,
+    ASN1_C_APPL = 1,
+    ASN1_C_CONTEXT = 2 ,
+    ASN1_C_PRIVATE = 3
+} Der_class;
 
 typedef enum {PRIM = 0, CONS = 1} Der_type;
 
@@ -52,6 +57,7 @@ enum {
      UT_Null		= 5,
      UT_OID		= 6,
      UT_Enumerated	= 10,
+     UT_UTF8String	= 12,
      UT_Sequence	= 16,
      UT_Set		= 17,
      UT_PrintableString	= 19,
@@ -68,17 +74,19 @@ enum {
 time_t timegm (struct tm *);
 #endif
 
-int time2generalizedtime (time_t t, octet_string *s);
+int time2generalizedtime (time_t t, heim_octet_string *s);
 
 int der_get_int (const unsigned char *p, size_t len, int *ret, size_t *size);
 int der_get_length (const unsigned char *p, size_t len,
 		    size_t *val, size_t *size);
+int der_get_boolean (const unsigned char *p, size_t len,
+		     int *data, size_t *size);
 int der_get_general_string (const unsigned char *p, size_t len, 
-			    general_string *str, size_t *size);
+			    heim_general_string *str, size_t *size);
 int der_get_octet_string (const unsigned char *p, size_t len, 
-			  octet_string *data, size_t *size);
+			  heim_octet_string *data, size_t *size);
 int der_get_oid (const unsigned char *p, size_t len,
-		 oid *data, size_t *size);
+		 heim_oid *data, size_t *size);
 int der_get_tag (const unsigned char *p, size_t len, 
 		 Der_class *class, Der_type *type,
 		 int *tag, size_t *size);
@@ -90,29 +98,37 @@ int der_match_tag_and_length (const unsigned char *p, size_t len,
 			      Der_class class, Der_type type, int tag,
 			      size_t *length_ret, size_t *size);
 
+int decode_boolean (const unsigned char*, size_t, int*, size_t*);
 int decode_integer (const unsigned char*, size_t, int*, size_t*);
 int decode_unsigned (const unsigned char*, size_t, unsigned*, size_t*);
 int decode_enumerated (const unsigned char*, size_t, unsigned*, size_t*);
 int decode_general_string (const unsigned char*, size_t,
-			   general_string*, size_t*);
+			   heim_general_string*, size_t*);
 int decode_oid (const unsigned char *p, size_t len, 
-		oid *k, size_t *size);
-int decode_octet_string (const unsigned char*, size_t, octet_string*, size_t*);
+		heim_oid *k, size_t *size);
+int decode_octet_string (const unsigned char*, size_t, 
+			 heim_octet_string*, size_t*);
 int decode_generalized_time (const unsigned char*, size_t, time_t*, size_t*);
+int decode_nulltype (const unsigned char*, size_t, size_t*);
+int decode_utf8string (const unsigned char*, size_t, 
+		       heim_utf8_string*, size_t*);
 
 int der_put_int (unsigned char *p, size_t len, int val, size_t*);
 int der_put_length (unsigned char *p, size_t len, size_t val, size_t*);
+int der_put_boolean (unsigned char *p, size_t len, const int *data, size_t*);
 int der_put_general_string (unsigned char *p, size_t len,
-			    const general_string *str, size_t*);
+			    const heim_general_string *str, size_t*);
 int der_put_octet_string (unsigned char *p, size_t len,
-			  const octet_string *data, size_t*);
+			  const heim_octet_string *data, size_t*);
 int der_put_oid (unsigned char *p, size_t len,
-		 const oid *data, size_t *size);
+		 const heim_oid *data, size_t *size);
 int der_put_tag (unsigned char *p, size_t len, Der_class class, Der_type type,
 		 int tag, size_t*);
 int der_put_length_and_tag (unsigned char*, size_t, size_t, 
 			    Der_class, Der_type, int, size_t*);
 
+int encode_boolean (unsigned char *p, size_t len,
+		    const int *data, size_t*);
 int encode_integer (unsigned char *p, size_t len,
 		    const int *data, size_t*);
 int encode_unsigned (unsigned char *p, size_t len,
@@ -120,32 +136,44 @@ int encode_unsigned (unsigned char *p, size_t len,
 int encode_enumerated (unsigned char *p, size_t len,
 		       const unsigned *data, size_t*);
 int encode_general_string (unsigned char *p, size_t len, 
-			   const general_string *data, size_t*);
+			   const heim_general_string *data, size_t*);
 int encode_octet_string (unsigned char *p, size_t len,
-			 const octet_string *k, size_t*);
+			 const heim_octet_string *k, size_t*);
 int encode_oid (unsigned char *p, size_t len,
-		const oid *k, size_t*);
+		const heim_oid *k, size_t*);
 int encode_generalized_time (unsigned char *p, size_t len,
 			     const time_t *t, size_t*);
+int encode_nulltype (unsigned char*, size_t, size_t*);
+int encode_utf8string (unsigned char*, size_t, 
+		       const heim_utf8_string*, size_t*);
 
 void free_integer (int *num);
-void free_general_string (general_string *str);
-void free_octet_string (octet_string *k);
-void free_oid (oid *k);
+void free_general_string (heim_general_string *str);
+void free_octet_string (heim_octet_string *k);
+void free_oid (heim_oid *k);
 void free_generalized_time (time_t *t);
+void free_utf8string (heim_utf8_string*);
 
 size_t length_len (size_t len);
+size_t length_boolean (const int *data);
 size_t length_integer (const int *data);
 size_t length_unsigned (const unsigned *data);
 size_t length_enumerated (const unsigned *data);
-size_t length_general_string (const general_string *data);
-size_t length_octet_string (const octet_string *k);
-size_t length_oid (const oid *k);
+size_t length_general_string (const heim_general_string *data);
+size_t length_octet_string (const heim_octet_string *k);
+size_t length_oid (const heim_oid *k);
 size_t length_generalized_time (const time_t *t);
+size_t length_nulltype (void);
+size_t length_utf8string (const heim_utf8_string*);
 
-int copy_general_string (const general_string *from, general_string *to);
-int copy_octet_string (const octet_string *from, octet_string *to);
-int copy_oid (const oid *from, oid *to);
+int copy_general_string (const heim_general_string *, heim_general_string *);
+int copy_octet_string (const heim_octet_string *, heim_octet_string *);
+int copy_oid (const heim_oid *from, heim_oid *to);
+int copy_nulltype (void *, void *);
+int copy_utf8string (const heim_utf8_string*, heim_utf8_string*);
+
+int heim_oid_cmp(const heim_oid *, const heim_oid *);
+int heim_octet_string_cmp(const heim_octet_string *,const heim_octet_string *);
 
 int fix_dce(size_t reallen, size_t *len);
 

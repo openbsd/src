@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001, 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,12 +33,79 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$KTH: init.c,v 1.6 2001/08/13 13:14:07 joda Exp $");
+RCSID("$KTH: init.c,v 1.7 2003/07/22 19:50:11 lha Exp $");
+
+static HEIMDAL_MUTEX gssapi_krb5_context_mutex = HEIMDAL_MUTEX_INITIALIZER;
+static int created_key;
+static HEIMDAL_thread_key gssapi_context_key;
+
+static void
+gssapi_destroy_thread_context(void *ptr)
+{
+    struct gssapi_thr_context *ctx = ptr;
+
+    if (ctx == NULL)
+	return;
+    if (ctx->error_string)
+	free(ctx->error_string);
+    HEIMDAL_MUTEX_destroy(&ctx->mutex);
+    free(ctx);
+}
+
+
+struct gssapi_thr_context *
+gssapi_get_thread_context(int createp)
+{
+    struct gssapi_thr_context *ctx;
+    int ret;
+
+    HEIMDAL_MUTEX_lock(&gssapi_krb5_context_mutex);
+
+    if (!created_key)
+	abort();
+    ctx = HEIMDAL_getspecific(gssapi_context_key);
+    if (ctx == NULL) {
+	if (!createp)
+	    goto fail;
+	ctx = malloc(sizeof(*ctx));
+	if (ctx == NULL)
+	    goto fail;
+	ctx->error_string = NULL;
+	HEIMDAL_MUTEX_init(&ctx->mutex);
+	HEIMDAL_setspecific(gssapi_context_key, ctx, ret);
+	if (ret)
+	    goto fail;
+    }
+    HEIMDAL_MUTEX_unlock(&gssapi_krb5_context_mutex);
+    return ctx;
+ fail:
+    HEIMDAL_MUTEX_unlock(&gssapi_krb5_context_mutex);
+    if (ctx)
+	free(ctx);
+    return NULL;
+}
 
 krb5_error_code
 gssapi_krb5_init (void)
 {
+    krb5_error_code ret = 0;
+
+    HEIMDAL_MUTEX_lock(&gssapi_krb5_context_mutex);
+
     if(gssapi_krb5_context == NULL)
-	return krb5_init_context (&gssapi_krb5_context);
-    return 0;
+	ret = krb5_init_context (&gssapi_krb5_context);
+    if (ret == 0 && !created_key) {
+	HEIMDAL_key_create(&gssapi_context_key, 
+			   gssapi_destroy_thread_context,
+			   ret);
+	if (ret) {
+	    krb5_free_context(gssapi_krb5_context);
+	    gssapi_krb5_context = NULL;
+	} else
+	    created_key = 1;
+    }
+
+    HEIMDAL_MUTEX_unlock(&gssapi_krb5_context_mutex);
+
+    return ret;
 }

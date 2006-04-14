@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: keytab_memory.c,v 1.5 2001/05/14 06:14:49 assar Exp $");
+RCSID("$KTH: keytab_memory.c,v 1.6.2.1 2006/02/03 14:35:42 lha Exp $");
 
 /* memory operations -------------------------------------------- */
 
@@ -133,7 +133,13 @@ mkt_remove_entry(krb5_context context,
 {
     struct mkt_data *d = id->data;
     krb5_keytab_entry *e, *end;
+    int found = 0;
     
+    if (d->num_entries == 0) {
+	krb5_clear_error_string(context);
+        return KRB5_KT_NOTFOUND;
+    }
+
     /* do this backwards to minimize copying */
     for(end = d->entries + d->num_entries, e = end - 1; e >= d->entries; e--) {
 	if(krb5_kt_compare(context, e, entry->principal, 
@@ -143,10 +149,15 @@ mkt_remove_entry(krb5_context context,
 	    memset(end - 1, 0, sizeof(*end));
 	    d->num_entries--;
 	    end--;
+	    found = 1;
 	}
     }
+    if (!found) {
+	krb5_clear_error_string (context);
+	return KRB5_KT_NOTFOUND;
+    }
     e = realloc(d->entries, d->num_entries * sizeof(*d->entries));
-    if(e != NULL)
+    if(e != NULL || d->num_entries == 0)
 	d->entries = e;
     return 0;
 }

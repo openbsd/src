@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: net_write.c,v 1.4 1999/12/02 16:58:51 joda Exp $");
+RCSID("$KTH: net_write.c,v 1.5 2005/04/12 11:28:58 lha Exp $");
 #endif
 
 #include <sys/types.h>
@@ -46,7 +46,7 @@ RCSID("$KTH: net_write.c,v 1.4 1999/12/02 16:58:51 joda Exp $");
  * Like write but never return partial data.
  */
 
-ssize_t
+ssize_t ROKEN_LIB_FUNCTION
 net_write (int fd, const void *buf, size_t nbytes)
 {
     const char *cbuf = (const char *)buf;

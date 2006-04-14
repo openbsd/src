@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: expand_hostname.c,v 1.11 2001/09/18 09:35:47 joda Exp $");
+RCSID("$KTH: expand_hostname.c,v 1.12 2004/05/25 21:24:14 lha Exp $");
 
 static krb5_error_code
 copy_hostname(krb5_context context,
@@ -54,7 +54,7 @@ copy_hostname(krb5_context context,
  * allocated space returned in `new_hostname'.
  */
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_expand_hostname (krb5_context context,
 		      const char *orig_hostname,
 		      char **new_hostname)
@@ -114,7 +114,7 @@ vanilla_hostname (krb5_context context,
  * allocated space in `host' and return realms in `realms'.
  */
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_expand_hostname_realms (krb5_context context,
 			     const char *orig_hostname,
 			     char **new_hostname,

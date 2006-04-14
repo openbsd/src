@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: gssapi_locl.h,v 1.24.2.5 2003/09/18 22:01:52 lha Exp $ */
+/* $KTH: gssapi_locl.h,v 1.39 2005/05/30 20:53:46 lha Exp $ */
 
 #ifndef GSSAPI_LOCL_H
 #define GSSAPI_LOCL_H
@@ -44,11 +44,59 @@
 #include <gssapi.h>
 #include <assert.h>
 
+#include "cfx.h"
 #include "arcfour.h"
+
+#include "spnego_asn1.h"
+
+/*
+ *
+ */
+
+struct gss_msg_order;
+
+typedef struct gss_ctx_id_t_desc_struct {
+  struct krb5_auth_context_data *auth_context;
+  gss_name_t source, target;
+  OM_uint32 flags;
+  enum { LOCAL = 1, OPEN = 2, 
+	 COMPAT_OLD_DES3 = 4,
+         COMPAT_OLD_DES3_SELECTED = 8,
+	 ACCEPTOR_SUBKEY = 16
+  } more_flags;
+  struct krb5_ticket *ticket;
+  OM_uint32 lifetime;
+  HEIMDAL_MUTEX ctx_id_mutex;
+  struct gss_msg_order *order;
+} gss_ctx_id_t_desc;
+
+typedef struct gss_cred_id_t_desc_struct {
+  gss_name_t principal;
+  struct krb5_keytab_data *keytab;
+  OM_uint32 lifetime;
+  gss_cred_usage_t usage;
+  gss_OID_set mechanisms;
+  struct krb5_ccache_data *ccache;
+  HEIMDAL_MUTEX cred_id_mutex;
+} gss_cred_id_t_desc;
+
+/*
+ *
+ */
 
 extern krb5_context gssapi_krb5_context;
 
 extern krb5_keytab gssapi_krb5_keytab;
+extern HEIMDAL_MUTEX gssapi_keytab_mutex;
+
+struct gssapi_thr_context {
+    HEIMDAL_MUTEX mutex;
+    char *error_string;
+};
+
+/*
+ * Prototypes
+ */
 
 krb5_error_code gssapi_krb5_init (void);
 
@@ -59,6 +107,12 @@ krb5_error_code gssapi_krb5_init (void);
 	return GSS_S_FAILURE;					\
     }								\
 } while (0)
+
+struct gssapi_thr_context *
+gssapi_get_thread_context(int);
+
+void
+gsskrb5_is_cfx(gss_ctx_id_t, int *);
 
 OM_uint32
 gssapi_krb5_create_8003_checksum (
@@ -76,43 +130,72 @@ gssapi_krb5_verify_8003_checksum (
 		      OM_uint32 *flags,
                       krb5_data *fwd_data);
 
-OM_uint32
-gssapi_krb5_encapsulate(
-			OM_uint32 *minor_status,
-			const krb5_data *in_data,
-			gss_buffer_t output_token,
-			u_char *type);
-
-u_char *
-_gssapi_make_mech_header(u_char *p,
-			 size_t len);
-
-OM_uint32
-gssapi_krb5_decapsulate(
-			OM_uint32 *minor_status,
-			gss_buffer_t input_token_buffer,
-			krb5_data *out_data,
-			char *type);
+void
+_gssapi_encap_length (size_t data_len,
+		      size_t *len,
+		      size_t *total_len,
+		      const gss_OID mech);
 
 void
 gssapi_krb5_encap_length (size_t data_len,
 			  size_t *len,
-			  size_t *total_len);
+			  size_t *total_len,
+			  const gss_OID mech);
+
+
+
+OM_uint32
+_gssapi_encapsulate(OM_uint32 *minor_status,
+		    const krb5_data *in_data,
+		    gss_buffer_t output_token,
+		    const gss_OID mech);
+
+
+OM_uint32
+gssapi_krb5_encapsulate(OM_uint32 *minor_status,    
+			const krb5_data *in_data,
+			gss_buffer_t output_token,
+			const u_char *type,
+			const gss_OID mech);
+
+OM_uint32
+gssapi_krb5_decapsulate(OM_uint32 *minor_status,
+			gss_buffer_t input_token_buffer,
+			krb5_data *out_data,
+			char *type,
+			gss_OID oid);
 
 u_char *
 gssapi_krb5_make_header (u_char *p,
 			 size_t len,
-			 u_char *type);
+			 const u_char *type,
+			 const gss_OID mech);
+
+u_char *
+_gssapi_make_mech_header(u_char *p,
+			 size_t len,
+			 const gss_OID mech);
+
+OM_uint32
+_gssapi_verify_mech_header(u_char **str,
+			   size_t total_len,
+			   gss_OID oid);
 
 OM_uint32
 gssapi_krb5_verify_header(u_char **str,
 			  size_t total_len,
-			  char *type);
-
+			  u_char *type,
+			  gss_OID oid);
 
 OM_uint32
-_gssapi_verify_mech_header(u_char **str,
-			   size_t total_len);
+_gssapi_decapsulate(OM_uint32 *minor_status,
+		    gss_buffer_t input_token_buffer,
+		    krb5_data *out_data,
+		    const gss_OID mech);
+
+
+ssize_t
+gssapi_krb5_get_mech (const u_char *, size_t, const u_char **);
 
 OM_uint32
 _gssapi_verify_pad(gss_buffer_t, size_t, size_t *);
@@ -126,12 +209,8 @@ gss_verify_mic_internal(OM_uint32 * minor_status,
 			char * type);
 
 OM_uint32
-gss_krb5_get_remotekey(const gss_ctx_id_t context_handle,
-		       krb5_keyblock **key);
-
-OM_uint32
-gss_krb5_get_localkey(const gss_ctx_id_t context_handle,
-		      krb5_keyblock **key);
+gss_krb5_get_subkey(const gss_ctx_id_t context_handle,
+		    krb5_keyblock **key);
 
 krb5_error_code
 gss_address_to_krb5addr(OM_uint32 gss_addr_type,
@@ -157,10 +236,31 @@ char *
 gssapi_krb5_get_error_string (void);
 
 OM_uint32
-_gss_DES3_get_mic_compat(OM_uint32 *minor_status, gss_ctx_id_t ctx);
+_gss_DES3_get_mic_compat(OM_uint32 *, gss_ctx_id_t);
+
+OM_uint32
+_gss_spnego_require_mechlist_mic(OM_uint32 *, gss_ctx_id_t, krb5_boolean *);
+
+krb5_error_code
+_gss_check_compat(OM_uint32 *, gss_name_t, const char *,
+		  krb5_boolean *, krb5_boolean);
 
 OM_uint32
 gssapi_lifetime_left(OM_uint32 *, OM_uint32, OM_uint32 *);
+
+/* sequence */
+
+OM_uint32
+_gssapi_msg_order_create(OM_uint32 *, struct gss_msg_order **, 
+			 OM_uint32, OM_uint32, OM_uint32, int);
+OM_uint32
+_gssapi_msg_order_destroy(struct gss_msg_order **);
+
+OM_uint32
+_gssapi_msg_order_check(struct gss_msg_order *, OM_uint32);
+
+OM_uint32
+_gssapi_msg_order_f(OM_uint32);
 
 /* 8003 */
 

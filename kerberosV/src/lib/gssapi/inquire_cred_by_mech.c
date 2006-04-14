@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$KTH: inquire_cred_by_mech.c,v 1.1 2003/03/16 18:11:16 lha Exp $");
+RCSID("$KTH: inquire_cred_by_mech.c,v 1.2 2003/05/21 14:52:14 lha Exp $");
 
 OM_uint32 gss_inquire_cred_by_mech (
             OM_uint32 * minor_status,
@@ -64,7 +64,9 @@ OM_uint32 gss_inquire_cred_by_mech (
     if (ret == 0 && cred_handle != GSS_C_NO_CREDENTIAL) {
 	gss_cred_usage_t usage;
 
+	HEIMDAL_MUTEX_lock(&cred_handle->cred_id_mutex);
 	usage = cred_handle->usage;
+	HEIMDAL_MUTEX_unlock(&cred_handle->cred_id_mutex);
 
 	if (initiator_lifetime) {
 	    if (usage == GSS_C_INITIATE || usage == GSS_C_BOTH)

@@ -37,7 +37,7 @@
 
 #include "gen_locl.h"
 
-RCSID("$KTH: hash.c,v 1.8 1999/12/02 17:05:02 joda Exp $");
+RCSID("$KTH: hash.c,v 1.9 2005/01/08 22:55:26 lha Exp $");
 
 static Hashentry *_search(Hashtab * htab,	/* The hash table */
 			  void *ptr);	/* And key */
@@ -183,7 +183,7 @@ hashcaseadd(const char *s)
     assert(s);
 
     for (i = 0; *s; ++s)
-	i += toupper(*s);
+	i += toupper((unsigned char)*s);
     return i;
 }
 

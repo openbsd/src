@@ -1,5 +1,5 @@
-This is Info file heimdal.info, produced by Makeinfo version 1.68 from
-the input file heimdal.texi.
+This is heimdal.info, produced by makeinfo version 4.0 from
+heimdal.texi.
 
 INFO-DIR-SECTION Heimdal
 START-INFO-DIR-ENTRY
@@ -18,6 +18,7 @@ Heimdal
 * What is Kerberos?::
 * Building and Installing::
 * Setting up a realm::
+* Applications::
 * Things in search for a better place::
 * Kerberos 4 issues::
 * Windows 2000 compatability::
@@ -123,7 +124,7 @@ Heimdal source code, binaries and the manual
 
 The source code for heimdal, links to binaries and the manual (this
 document) can be found on our web-page at
-`http://www.pdc.kth.se/heimdal/'.
+<http://www.pdc.kth.se/heimdal/>.
 
 
 File: heimdal.info,  Node: What is Kerberos?,  Next: Building and Installing,  Prev: Introduction,  Up: Top
@@ -153,7 +154,7 @@ services can authenticate each other.
 Basic mechanism
 ===============
 
-     *Note:* This discussion is about Kerberos version 4, but version 5
+     *Note* This discussion is about Kerberos version 4, but version 5
      works similarly.
 
 In Kerberos, principals use "tickets" to prove that they are who they
@@ -177,6 +178,7 @@ The reply to A consists of the ticket (T<AB>), B's name, the current
 time, the lifetime of the ticket, and the session key, all encrypted in
 A's secret key ({B, T<ISSUE>, LIFE, K<AB>, T<AB>}K<A>). A decrypts the
 reply and retains it for later use.
+
 
 Before sending a message to B, A creates an authenticator consisting of
 A's name, A's address, the current time, and a "checksum" chosen by A,
@@ -241,7 +243,7 @@ Authentication System: a Dialogue in Four Scenes' by Bill Bryant, also
 from 1988.
 
 These documents can be found on our web-page at
-`http://www.pdc.kth.se/kth-krb/'.
+<http://www.pdc.kth.se/kth-krb/>.
 
 
 File: heimdal.info,  Node: Building and Installing,  Next: Setting up a realm,  Prev: What is Kerberos?,  Up: Top
@@ -324,8 +326,8 @@ following options:
 
 `--with-openldap'
      Compile Heimdal with support for storing the database in LDAP.
-     Requires OpenLDAP `http://www.openldap.org'.  See
-     `http://www.padl.com/~lukeh/heimdal/' for more information.
+     Requires OpenLDAP <http://www.openldap.org>.  See
+     <http://www.padl.com/Research/Heimdal.html> for more information.
 
 `--enable-bigendian'
 
@@ -346,7 +348,7 @@ following options:
      try this option if it fails to work anyhow.
 
 
-File: heimdal.info,  Node: Setting up a realm,  Next: Things in search for a better place,  Prev: Building and Installing,  Up: Top
+File: heimdal.info,  Node: Setting up a realm,  Next: Applications,  Prev: Building and Installing,  Up: Top
 
 Setting up a realm
 ******************
@@ -355,6 +357,7 @@ Setting up a realm
 
 * Configuration file::
 * Creating the database::
+* Modifying the database::
 * keytabs::
 * Serving Kerberos 4/524/kaserver::
 * Remote administration::
@@ -366,6 +369,8 @@ Setting up a realm
 * Cross realm::
 * Transit policy::
 * Setting up DNS::
+* Using LDAP to store the database::
+* Providing Kerberos credentials to servers and programs::
 
 A realm is an administrative domain.  The name of a Kerberos realm is
 usually the Internet domain name in uppercase.  Call your realm the same
@@ -386,10 +391,10 @@ There is a sample `krb5.conf' supplied with the distribution.
 
 The configuration file is a hierarchical structure consisting of
 sections, each containing a list of bindings (either variable
-assignments or subsections). A section starts with `[section-name]'.  A
-binding consists of a left hand side, an equal (`=') and a right hand
+assignments or subsections). A section starts with `[`section-name']'.
+A binding consists of a left hand side, an equal (`=') and a right hand
 side (the left hand side tag must be separated from the equal with some
-whitespace.) Subsections has a `{' as the first non-whitespace
+whitespace). Subsections has a `{' as the first non-whitespace
 character after the equal. All other bindings are treated as variable
 assignments. The value of a variable extends to the end of the line.
 
@@ -436,19 +441,19 @@ configuration file, with contents similar to the following.
              .my.domain = MY.REALM
 
 If you use a realm name equal to your domain name, you can omit the
-`libdefaults', and `domain_realm', sections. If you have a SRV-record
-for your realm, or your Kerberos server has CNAME called
+`libdefaults', and `domain_realm', sections. If you have a DNS
+SRV-record for your realm, or your Kerberos server has DNS CNAME
 `kerberos.my.realm', you can omit the `realms' section too.
 
 
-File: heimdal.info,  Node: Creating the database,  Next: keytabs,  Prev: Configuration file,  Up: Setting up a realm
+File: heimdal.info,  Node: Creating the database,  Next: Modifying the database,  Prev: Configuration file,  Up: Setting up a realm
 
 Creating the database
 =====================
 
 The database library will look for the database in the directory
 `/var/heimdal', so you should probably create that directory.  Make
-sure the directory have restrictive permissions.
+sure the directory has restrictive permissions.
 
      # mkdir /var/heimdal
 
@@ -462,6 +467,13 @@ master key, run `kstash' to create this master key:
      Master key:
      Verifying password - Master key:
 
+If you want to generate a random master key you can use the -random-key
+to kstash. This will make sure you have a good key on which attackers
+can't do a dictionary attack.
+
+If you have a master key, make sure you make a backup of your master
+key file; without it backups of the database are of no use.
+
 To initialise the database use the `kadmin' program, with the `-l'
 option (to enable local database mode). First issue a `init MY.REALM'
 command. This will create the database and insert default principals
@@ -469,12 +481,12 @@ for that realm. You can have more than one realm in one database, so
 `init' does not destroy any old database.
 
 Before creating the database, `init' will ask you some questions about
-max ticket lifetimes.
+maximum ticket lifetimes.
 
 After creating the database you should probably add yourself to it. You
 do this with the `add' command. It takes as argument the name of a
-principal. The principal should contain a realm, so if you haven't setup
-a default realm, you will need to explicitly include the realm.
+principal. The principal should contain a realm, so if you haven't set
+up a default realm, you will need to explicitly include the realm.
 
      # kadmin -l
      kadmin> init MY.REALM
@@ -511,21 +523,81 @@ typographical reasons):
      kadmin/changepw@MY.REALM 1:0:1:f48c8af2b340e9fb:-:0:7:e3e6088 ...
 
 
-File: heimdal.info,  Node: keytabs,  Next: Serving Kerberos 4/524/kaserver,  Prev: Creating the database,  Up: Setting up a realm
+File: heimdal.info,  Node: Modifying the database,  Next: keytabs,  Prev: Creating the database,  Up: Setting up a realm
+
+Modifying the database
+======================
+
+All modifications of principals are done with with kadmin.
+
+A principal have several attributes and lifetimes associated with it.
+
+Principals are added, renamed, modified, and deleted with the kadmin
+commands `add', `rename', `modify', `delete'.  Both interactive editing
+and command switches can be used (use -help to list the available
+options).
+
+There are different kind of types for the fields in the database,
+attributes, absolute time times and relative times.
+
+Attributes
+----------
+
+When doing interactive editing, attributes are listed with `?'.
+
+The attributes are given in a comma (`,') separated list.  Attributes
+are removed from the list by prefixing them with `-'.
+
+     kadmin> modify me
+     Max ticket life [1 day]:
+     Max renewable life [1 week]:
+     Principal expiration time [never]:
+     Password expiration time [never]:
+     Attributes [disallow-renewable]: requires-pre-auth,-disallow-renewable
+     kadmin> get me
+                 Principal: me@MY.REALM
+     [...]
+                Attributes: requires-pre-auth
+
+Absolute times
+--------------
+
+The format for absolute times are any of the following
+
+     never
+     now
+     YYYY-mm-dd
+     YYYY-mm-dd HH:MM:SS
+
+Relative times
+--------------
+
+The format for relative times are any of the following combined
+
+     N year
+     M month
+     O day
+     P hour
+     Q minute
+     R second
+
+
+File: heimdal.info,  Node: keytabs,  Next: Serving Kerberos 4/524/kaserver,  Prev: Modifying the database,  Up: Setting up a realm
 
 keytabs
 =======
 
-To extract a service ticket from the database and put it in a keytab you
-need to first create the principal in the database with `ank' (using
-the `--random-key' flag to get a random key) and then extract it with
-`ext_keytab'.
+To extract a service ticket from the database and put it in a keytab,
+you need to first create the principal in the database with `ank'
+(using the `--random-key' flag to get a random key) and then extract it
+with `ext_keytab'.
 
      kadmin> add --random-key host/my.host.name
      Max ticket life [unlimited]:
      Max renewable life [unlimited]:
      Attributes []:
      kadmin> ext host/my.host.name
+     kadmin> exit
      # ktutil list
      Version  Type             Principal
           1   des-cbc-md5      host/my.host.name@MY.REALM
@@ -540,8 +612,8 @@ Serving Kerberos 4/524/kaserver
 ===============================
 
 Heimdal can be configured to support 524, Kerberos 4 or kaserver. All
-theses services are default turned off. Kerberos 4 support also depends
-on if Kerberos 4 support is compiled in with Heimdal.
+these services turned off by default. Kerberos 4 support also depends
+on if Kerberos 4 support being compiled in with Heimdal.
 
 524
 ---
@@ -558,7 +630,7 @@ with AFS in *Note Things in search for a better place::.
 Kerberos 4
 ----------
 
-Kerberos 4 is the predecessor to to Kerberos 5. It only support single
+Kerberos 4 is the predecessor to to Kerberos 5. It only supports single
 DES. You should only enable Kerberos 4 support if you have a need for
 for compatibility with an installed base of Kerberos 4 clients/servers.
 
@@ -570,11 +642,11 @@ Kerberos 4 can be turned on by adding this to the configuration file
 kaserver
 --------
 
-Kaserver is a Kerberos 4 that is used in AFS, the protocol have some
-features over plain Kerberos 4, but like Kerberos 4 only use single DES
-too.
+Kaserver is a Kerberos 4 that is used in AFS.  The protocol have some
+extra features over plain Kerberos 4, but like Kerberos 4, only use
+single DES.
 
-You should only enable Kerberos 4 support if you have a need for for
+You should only enable Kaserver support if you have a need for for
 compatibility with an installed base of AFS machines.
 
 Kaserver can be turned on by adding this to the configuration file
@@ -595,26 +667,27 @@ from `inetd' you should add a line similar to the one below to your
 
      kerberos-adm stream     tcp     nowait  root /usr/heimdal/libexec/kadmind kadmind
 
-You might need to add `kerberos-adm' to your `/etc/services' as 749/tcp.
+You might need to add `kerberos-adm' to your `/etc/services' as
+`749/tcp'.
 
-Access to the administration server is controlled by an acl-file,
-(default `/var/heimdal/kadmind.acl'.) The lines in the access file, has
-the following syntax:
+Access to the administration server is controlled by an ACL file,
+(default `/var/heimdal/kadmind.acl'.) The lines in the access file,
+have the following syntax:
      principal       [priv1,priv2,...]       [glob-pattern]
 
-The matching is from top to bottom for matching principal (and if given,
-glob-pattern).  When there is a match, the rights of that lines are
-used.
+The matching is from top to bottom for matching principals (and if
+given, glob-pattern).  When there is a match, the access rights of that
+line are used.
 
 The privileges you can assign to a principal are: `add',
 `change-password' (or `cpw' for short), `delete', `get', `list', and
 `modify', or the special privilege `all'. All of these roughly
 corresponds to the different commands in `kadmin'.
 
-If a GLOB-PATTERN is given on a line, it restricts the right for the
-principal to only apply for the subjects that match the pattern.  The
-patters are of the same type as those used in shell globbing, see
-`none,,fnmatch(3)'.
+If a GLOB-PATTERN is given on a line, it restricts the access rights for
+the principal to only apply for the subjects that match the pattern.
+The patterns are of the same type as those used in shell globbing, see
+<none,,fnmatch(3)>.
 
 In the example below `lha/admin' can change every principal in the
 database. `jimmy/admin' can only modify principals that belong to the
@@ -637,41 +710,87 @@ Password changing
 To allow users to change their passwords, you should run `kpasswdd'.
 It is not run from `inetd'.
 
-You might need to add `kpasswd' to your `/etc/services' as 464/udp.
+You might need to add `kpasswd' to your `/etc/services' as `464/udp'.
 
 Password quality assurance
 --------------------------
 
 It is important that users have good passwords, both to make it harder
-to guess them and to avoid off-line attacks (pre-authentication provides
-some defense against off-line attacks).  To ensure that the users choose
-good passwords, you can enable password quality controls in `kpasswdd'.
-The controls themselves are done in a shared library that is used by
+to guess them and to avoid off-line attacks (although
+pre-authentication provides some defense against off-line attacks).  To
+ensure that the users choose good passwords, you can enable password
+quality controls in `kpasswdd' and `kadmind'.  The controls themselves
+are done in a shared library or an external program that is used by
 `kpasswdd'.  To configure in these controls, add lines similar to the
 following to your `/etc/krb5.conf':
 
      [password_quality]
-             check_library = LIBRARY
-             check_function = FUNCTION
+     	policies = external-check builtin:minimum-length module:policyname
+     	external_program = /bin/false
+     	policy_libraries = LIBRARY1.SO LIBRARY2.SO
 
-The function FUNCTION in the shared library LIBRARY will be called for
-proposed new passwords.  The function should be declared as:
+In `[password_quality]policies' the module name is optional if the
+policy name is unique in all modules (members of `policy_libraries').
 
-     const char *
-     function(krb5_context context, krb5_principal principal, krb5_data *pwd);
+The builtin polices are
 
-The function should verify that PWD is a good password for PRINCIPAL
-and if so return `NULL'.  If it is deemed to be of low quality, it
-should return a string explaining why that password should not be used.
+   * external-check
+
+     Executes the program specified by
+     `[password_quality]external_program'.
+
+     A number of key/value pairs is passed as input to the program, one
+     per line, ending with the string `end'.  The key/value lines are of
+     the form
+          principal: PRINCIPAL
+          new-password: PASSWORD
+     where PASSWORD is the password to check for the previous PRINCIPAL.
+
+     If the external application approves the password, it should return
+     `APPROVED' on standard out and exit with exit code 0.  If it
+     doesn't approve the password, a one line error message explaining
+     the problem should be returned on standard error and the
+     application should exit with exit code 0.  In case of a fatal
+     error, the application should, if possible, print an error message
+     on standard error and exit with a non-zero error code.
+
+   * minimum-length
+
+     The minimum length password quality check reads the configuration
+     file stanza `[password_quality]min_length' and requires the
+     password to be at least this length.
+
+   * character-class
+
+     The character-class password quality check reads the configuration
+     file stanza `[password_quality]min_classes'. The policy requires
+     the password to have characters from at least that many characters
+     classes. Default value if not given is 3.
+
+     The four diffrent characters classes are, uppercase, lowercase,
+     number, special characters.
+
+
+If you want to write you own shared object that checks password
+policies, see the manual page `kadm5_pwcheck(3)'.
 
 Code for a password quality checking function that uses the cracklib
 library can be found in `lib/kadm5/sample_password_check.c' in the
 source code distribution.  It requires the cracklib library built with
 the patch available at
-`ftp://ftp.pdc.kth.se/pub/krb/src/cracklib.patch'.
+<ftp://ftp.pdc.kth.se/pub/krb/src/cracklib.patch>.
+
+A sample policy external program is included in
+`lib/kadm5/check-cracklib.pl'.
 
 If no password quality checking function is configured, it is only
-verified that it is at least six characters of length.
+verified that it is at least six characters long.
+
+The program `test_pw_quality', which is built in `lib/kadm5', but not
+installed, can be used to check password policy settings.  It may be
+convenient to set the environment variable `KRB5_CONFIG' to point to a
+test version of `krb5.conf' while you're testing the
+`[password_quality]' stanza that way.
 
 
 File: heimdal.info,  Node: Testing clients and servers,  Next: Slave Servers,  Prev: Password changing,  Up: Setting up a realm
@@ -692,14 +811,14 @@ It is desirable to have at least one backup (slave) server in case the
 master server fails. It is possible to have any number of such slave
 servers but more than three usually doesn't buy much more redundancy.
 
-All Kerberos servers for a realm shall have the same database so that
+All Kerberos servers for a realm must have the same database so that
 they present the same service to all the users.  The `hprop' program,
 running on the master, will propagate the database to the slaves,
 running `hpropd' processes.
 
 Every slave needs a database directory, the master key (if it was used
 for the database) and a keytab with the principal `hprop/HOSTNAME'.
-Add the principal with the `ktutil' command and start `propd', as
+Add the principal with the `ktutil' command and start `hpropd', as
 follows:
 
      slave# ktutil get -p foo/admin hprop/`hostname`
@@ -715,8 +834,8 @@ Then run `hprop' on the master:
 
      master# hprop slave
 
-This was just an on-hands example to make sure that everything was
-working properly.  Doing it manually is of course the wrong way and to
+This was just an hands-on example to make sure that everything was
+working properly.  Doing it manually is of course the wrong way, and to
 automate this you will want to start `hpropd' from `inetd' on the
 slave(s) and regularly run `hprop' on the master to regularly propagate
 the database.  Starting the propagation once an hour from `cron' is
@@ -728,21 +847,22 @@ File: heimdal.info,  Node: Incremental propagation,  Next: Salting,  Prev: Slave
 Incremental propagation
 =======================
 
-There is also a newer and still somewhat experimental mechanism for
+There is also a newer, and still somewhat experimental, mechanism for
 doing incremental propagation in Heimdal.  Instead of sending the whole
 database regularly, it sends the changes as they happen on the master to
-the slaves.  The master keeps track of all the changes by assigned a
+the slaves.  The master keeps track of all the changes by assigning a
 version number to every change to the database.  The slaves know which
 was the latest version they saw and in this way it can be determined if
-they are in sync or not.  A log of all the changes is kept on the master
-and when a slave is at an older versioner than the oldest one in the
-log, the whole database has to be sent.
+they are in sync or not.  A log of all the changes is kept on the
+master, and when a slave is at an older version than the oldest one in
+the log, the whole database has to be sent.
 
-Protocol-wise, all the slaves connects to the master and as a greeting
+Protocol-wise, all the slaves connect to the master and as a greeting
 tell it the latest version that they have (`IHAVE' message).  The
 master then responds by sending all the changes between that version and
 the current version at the master (a series of `FORYOU' messages) or
-the whole database in a `TELLYOUEVERYTHING' message.
+the whole database in a `TELLYOUEVERYTHING' message.  There is also a
+keep-alive protocol that makes sure all slaves are up and running.
 
 Configuring incremental propagation
 -----------------------------------
@@ -760,14 +880,14 @@ You should already have `iprop/tcp' defined as 2121, in your
 some peculiar reason, you can use the `--port' option.  This is useful
 when you have multiple realms to distribute from one server.
 
-Then you need to create these principals that you added in the
+Then you need to create those principals that you added in the
 configuration file.  Create one `iprop/hostname' for the master and for
 every slave.
 
      master# /usr/heimdal/sbin/ktutil get iprop/`hostname`
 
 The next step is to start the `ipropd-master' process on the master
-server.  The `ipropd-master' listens on the UNIX-socket
+server.  The `ipropd-master' listens on the UNIX domain socket
 `/var/heimdal/signal' to know when changes have been made to the
 database so they can be propagated to the slaves.  There is also a
 safety feature of testing the version number regularly (every 30
@@ -786,15 +906,15 @@ Salting
 Salting is used to make it harder to precalculate all possible keys.
 Using a salt increases the search space to make it almost impossible to
 precalculate all keys. Salting is the process of mixing a public string
-(the salt) with the password, then sending it through an
-encryption-type specific string-to-key function that will output the
-fixed size encryption key.
+(the salt) with the password, then sending it through an encryption
+type specific string-to-key function that will output the fixed size
+encryption key.
 
 In Kerberos 5 the salt is determined by the encryption-type, except in
 some special cases.
 
 In `des' there is the Kerberos 4 salt (none at all) or the afs-salt
-(using the cell (realm in afs-lingo)).
+(using the cell (realm in AFS lingo)).
 
 In `arcfour' (the encryption type that Microsoft Windows 2000 uses)
 there is no salt. This is to be compatible with NTLM keys in Windows NT
@@ -809,22 +929,25 @@ and the salt-string is the string that will be used as salt (remember
 that if the salt is appended/prepended, the empty salt "" is the same
 thing as no salt at all).
 
-Common types of salting includes
+Common types of salting include
 
    * `v4' (or `des:pw-salt:')
 
-     The Kerberos 4 salting is using no salt att all. Reason there is
-     colon that the end or the salt string is that it makes the salt
-     the empty string (same as no salt).
+     The Kerberos 4 salting is using no salt at all. Reason there is
+     colon at the end of the salt string is that it makes the salt the
+     empty string (same as no salt).
 
    * `v5' (or `pw-salt')
 
-     `pw-salt' means all regular encryption-types that is regular
+     `pw-salt' uses the default salt for each encryption type is
+     specified for. If the encryption type `etype' isn't given, all
+     default encryption will be used.
 
    * `afs3-salt'
 
-     `afs3-salt' is the salting that is used with Transarc kaserver. Its
-     the cell appended to the password.
+     `afs3-salt' is the salt that is used with Transarc kaserver. Its
+     the cell name appended to the password.
+
 
 
 File: heimdal.info,  Node: Cross realm,  Next: Transit policy,  Prev: Salting,  Up: Setting up a realm
@@ -832,18 +955,18 @@ File: heimdal.info,  Node: Cross realm,  Next: Transit policy,  Prev: Salting,  
 Cross realm
 ===========
 
-Suppose you are residing in the realm `MY.REALM', how do you
-authenticate to a server in `OTHER.REALM'? Having valid tickets in
-`MY.REALM' allows you to communicate with kerberised services in that
-realm. However, the computer in the other realm does not have a secret
-key shared with the Kerberos server in your realm.
+Suppose you reside in the realm `MY.REALM', how do you authenticate to
+a server in `OTHER.REALM'? Having valid tickets in `MY.REALM' allows
+you to communicate with Kerberised services in that realm. However, the
+computer in the other realm does not have a secret key shared with the
+Kerberos server in your realm.
 
-It is possible to add a share keys between two realms that trust each
-other. When a client program, such as `telnet' or `ssh', finds that the
-other computer is in a different realm, it will try to get a ticket
-granting ticket for that other realm, but from the local Kerberos
-server. With that ticket granting ticket, it will then obtain service
-tickets from the Kerberos server in the other realm.
+It is possible to share keys between two realms that trust each other.
+When a client program, such as `telnet' or `ssh', finds that the other
+computer is in a different realm, it will try to get a ticket granting
+ticket for that other realm, but from the local Kerberos server. With
+that ticket granting ticket, it will then obtain service tickets from
+the Kerberos server in the other realm.
 
 For a two way trust between `MY.REALM' and `OTHER.REALM' add the
 following principals to each realm. The principals should be
@@ -851,10 +974,10 @@ following principals to each realm. The principals should be
 `MY.REALM', and `krbtgt/MY.REALM@OTHER.REALM' and
 `krbtgt/OTHER.REALM@MY.REALM'in `OTHER.REALM'.
 
-In Kerberos 5 the trust can be one configured to be one way. So that
-users from `MY.REALM' can authenticate to services in `OTHER.REALM',
-but not the opposite. In the example above, the
-`krbtgt/MY.REALM@OTHER.REALM' then should be removed.
+In Kerberos 5 the trust can be configured to be one way. So that users
+from `MY.REALM' can authenticate to services in `OTHER.REALM', but not
+the opposite. In the example above, the `krbtgt/MY.REALM@OTHER.REALM'
+then should be removed.
 
 The two principals must have the same key, key version number, and the
 same set of encryption types. Remember to transfer the two keys in a
@@ -894,14 +1017,14 @@ Transit policy
 ==============
 
 If you want to use cross realm authentication through an intermediate
-realm it must be explicitly allowed by either the KDCs or the server
+realm, it must be explicitly allowed by either the KDCs or the server
 receiving the request. This is done in `krb5.conf' in the `[capaths]'
 section.
 
 When the ticket transits through a realm to another realm, the
 destination realm adds its peer to the "transited-realms" field in the
-ticket. The field is unordered, this is since there is no way to know if
-know if one of the transited-realms changed the order of the list.
+ticket. The field is unordered, since there is no way to know if know
+if one of the transited-realms changed the order of the list.
 
 The syntax for `[capaths]' section:
 
@@ -911,7 +1034,7 @@ The syntax for `[capaths]' section:
              }
 
 The realm `STACKEN.KTH.SE' allows clients from `SU.SE' and `DSV.SU.SE'
-to cross in. Since `STACKEN.KTH.SE' only have direct cross realm with
+to cross it. Since `STACKEN.KTH.SE' only have direct cross realm with
 `KTH.SE', and `DSV.SU.SE' only have direct cross realm with `SU.SE'
 they need to use both `SU.SE' and `KTH.SE' as transit realms.
 
@@ -923,32 +1046,44 @@ they need to use both `SU.SE' and `KTH.SE' as transit realms.
                          STACKEN.KTH.SE = SU.SE KTH.SE
      	}
 
+The order of the `PERMITTED-CROSS-REALMS' is not important when doing
+transit cross realm verification.
+
+However the order is important when the `[capaths]' section is used to
+figure out the intermediate realm to go to when doing multi-realm
+transit. When figuring out the next realm, the first realm of the list
+of `PERMITTED-CROSS-REALMS' is chosen. This is done in both the client
+kerberos library and the KDC.
+
 
-File: heimdal.info,  Node: Setting up DNS,  Prev: Transit policy,  Up: Setting up a realm
+File: heimdal.info,  Node: Setting up DNS,  Next: Using LDAP to store the database,  Prev: Transit policy,  Up: Setting up a realm
 
 Setting up DNS
 ==============
 
+Using DNS to find KDC
+---------------------
+
 If there is information about where to find the KDC or kadmind for a
 realm in the `krb5.conf' for a realm, that information will be
-preferred and DNS will not be queried.
+preferred, and DNS will not be queried.
 
 Heimdal will try to use DNS to find the KDCs for a realm. First it will
-try to find `SRV' resource record (RR) for the realm. If no SRV RRs are
-found, it will fall back to looking for a `A' RR for a machine named
-kerberos.REALM, and then kerberos-1.REALM, etc
+try to find a `SRV' resource record (RR) for the realm. If no SRV RRs
+are found, it will fall back to looking for an `A' RR for a machine
+named kerberos.REALM, and then kerberos-1.REALM, etc
 
 Adding this information to DNS makes the client have less configuration
 (in the common case, no configuration) and allows the system
 administrator to change the number of KDCs and on what machines they
 are running without caring about clients.
 
-The backside of using DNS that the client might be fooled to use the
+The down side of using DNS that the client might be fooled to use the
 wrong server if someone fakes DNS replies/data, but storing the IP
 addresses of the KDC on all the clients makes it very hard to change
 the infrastructure.
 
-Example of the configuration for the realm `EXAMPLE.COM',
+An example of the configuration for the realm `EXAMPLE.COM',
 
 
      $ORIGIN example.com.
@@ -962,329 +1097,231 @@ Example of the configuration for the realm `EXAMPLE.COM',
 More information about DNS SRV resource records can be found in
 RFC-2782 (A DNS RR for specifying the location of services (DNS SRV)).
 
-
-File: heimdal.info,  Node: Things in search for a better place,  Next: Kerberos 4 issues,  Prev: Setting up a realm,  Up: Top
+Using DNS to map hostname to Kerberos realm
+-------------------------------------------
 
-Things in search for a better place
-***********************************
+Heimdal also supports a way to lookup a realm from a hostname. This to
+minimize configuration needed on clients. Using this has the drawback
+that clients can be redirected by an attacker to realms within the same
+cross realm trust and made to believe they are talking to the right
+server (since Kerberos authentication will succeed).
 
-Making things work on Ciscos
-============================
+An example configuration that informs clients that for the realms
+it.example.com and srv.example.com, they should use the realm
+EXAMPLE.COM:
 
-Modern versions of Cisco IOS has some support for authenticating via
-Kerberos 5. This can be used both by having the router get a ticket when
-you login (boring), and by using Kerberos authenticated telnet to access
-your router (less boring). The following has been tested on IOS
-11.2(12), things might be different with other versions. Old versions
-are known to have bugs.
 
-To make this work, you will first have to configure your router to use
-Kerberos (this is explained in the documentation). A sample
-configuration looks like the following:
-
-     aaa new-model
-     aaa authentication login default krb5-telnet krb5 enable
-     aaa authorization exec krb5-instance
-     kerberos local-realm FOO.SE
-     kerberos srvtab entry host/router.foo.se 0 891725446 4 1 8 012345678901234567
-     kerberos server FOO.SE 10.0.0.1
-     kerberos instance map admin 15
-
-This tells you (among other things) that when logging in, the router
-should try to authenticate with kerberised telnet, and if that fails try
-to verify a plain text password via a Kerberos ticket exchange (as
-opposed to a local database, RADIUS or something similar), and if that
-fails try the local enable password. If you're not careful when you
-specify the `login default' authentication mechanism, you might not be
-able to login at all. The `instance map' and `authorization exec' lines
-says that people with `admin' instances should be given `enabled' shells
-when logging in.
-
-The numbers after the principal on the `srvtab' line are principal type,
-time stamp (in seconds since 1970), key version number (4), keytype (1
-== des), key length (always 8 with des), and then the key.
-
-To make the Heimdal KDC produce tickets that the Cisco can decode you
-might have to turn on the `encode_as_rep_as_tgs_rep' flag in the KDC.
-You will also have to specify that the router can't handle anything but
-`des-cbc-crc'. This can be done with the `del_enctype' command of
-`kadmin'.
-
-This all fine and so, but unless you have an IOS version with encryption
-(available only in the U.S) it doesn't really solve any problems. Sure
-you don't have to send your password over the wire, but since the telnet
-connection isn't protected it's still possible for someone to steal your
-session. This won't be fixed until someone adds integrity to the telnet
-protocol.
-
-A working solution would be to hook up a machine with a real operating
-system to the console of the Cisco and then use it as a backwards
-terminal server.
-
-Making things work on Transarc/OpenAFS AFS
-==========================================
-
-How to get a KeyFile
---------------------
-
-`ktutil -k AFSKEYFILE:KeyFile get afs@MY.REALM'
-
-or you can extract it with kadmin
-
-     kadmin> ext -k AFSKEYFILE:/usr/afs/etc/KeyFile afs@My.CELL.NAME
-
-You have to make sure you have a `des-cbc-md5' encryption type since
-that is the key that will be converted.
-
-How to convert a srvtab to a KeyFile
-------------------------------------
-
-You need a `/usr/vice/etc/ThisCell' containing the cellname of you
-AFS-cell.
-
-`ktutil copy krb4:/root/afs-srvtab AFSKEYFILE:/usr/afs/etc/KeyFile'.
-
-If keyfile already exists, this will add the new key in afs-srvtab to
-KeyFile.
-
-Using 2b tokens with AFS
-========================
-
-What is 2b ?
-------------
-
-2b is the name of the proposal that was implemented to give basic
-Kerberos 5 support to AFS in rxkad. Its not real Kerberos 5 support
-since it still uses fcrypt for data encryption and not Kerberos
-encryption types.
-
-Its only possible (in all cases) to do this for DES encryption types
-because only then the token (the AFS equivalent of a ticket) will be be
-smaller than the maximum size that can fit in the token cache in
-OpenAFS/Transarc client. Its so tight fit that some extra wrapping on
-the ASN1/DER encoding is removed from the Kerberos ticket.
-
-2b uses a Kerberos 5 EncTicketPart instead of a Kerberos 4 ditto for
-the part of the ticket that is encrypted with the service's key. The
-client doesn't know what's inside the encrypted data so to the client
-it doesn't matter.
-
-To  differentiate between Kerberos 4 tickets and Kerberos 5 tickets 2b
-uses a special kvno, 213 for 2b tokens and 255 for Kerberos 5 tokens.
-
-Its a requirement that all AFS servers that support 2b also support
-native Kerberos 5 in rxkad.
-
-Configuring Heimdal to use 2b tokens
-------------------------------------
-
-Support for 2b tokens are turned on for specific principals by adding
-them to the string list option `[kdc]use_2b' in the kdc's `krb5.conf'
-file.
-
-     [kdc]
-     	use_2b = {
-     		afs@SU.SE = yes
-     		afs/it.su.se@SU.SE = yes
-     	}
-
-Configuring AFS clients
------------------------
-
-There is no need to configure AFS clients. The only software that needs
-to be installed/upgrade is a Kerberos 5 enabled `afslog'.
+     $ORIGIN example.com.
+     _kerberos.it		TXT     "EXAMPLE.COM"
+     _kerberos.srv		TXT     "EXAMPLE.COM"
 
 
-File: heimdal.info,  Node: Kerberos 4 issues,  Next: Windows 2000 compatability,  Prev: Things in search for a better place,  Up: Top
+File: heimdal.info,  Node: Using LDAP to store the database,  Next: Providing Kerberos credentials to servers and programs,  Prev: Setting up DNS,  Up: Setting up a realm
 
-Kerberos 4 issues
-*****************
+Using LDAP to store the database
+================================
 
-If compiled with version 4 support, the KDC can serve requests from a
-Kerberos 4 client. There are a few things you must do for this to work.
+This document describes how to install the LDAP backend for Heimdal.
+Note that before attempting to configure such an installation, you
+should be aware of the implications of storing private information
+(such as users' keys) in a directory service primarily designed for
+public information. Nonetheless, with a suitable authorization policy,
+it is possible to set this up in a secure fashion. A knowledge of LDAP,
+Kerberos, and C is necessary to install this backend. The HDB schema
+was devised by Leif Johansson.
 
-The KDC will also have kaserver emulation and be able to handle
-AFS-clients that use `klog'.
+Requirements:
+
+   * A current release of Heimdal, configured with
+     `--with-openldap=/usr/local' (adjust according to where you have
+     installed OpenLDAP).
+
+     You can verify that you manage to configure LDAP support by running
+     `kdc --builtin-hdb', and checking that `ldap:' is one entry in the
+     list.
+
+     Its also possible to configure the ldap backend as a shared module,
+     see option -hdb-openldap-module to configure.
+
+   * OpenLDAP 2.0.x. Configure OpenLDAP with `--enable-local' to enable
+     the local transport. (A patch to support SASL EXTERNAL
+     authentication is necessary in order to use OpenLDAP 2.1.x.)
+
+   * Add the hdb schema to the LDAP server, its included in the
+     source-tree in `lib/hdb/hdb.schema'. Example from slapd.conf:
+
+          include /usr/local/etc/openldap/schema/hdb.schema
+
+   * Configure the LDAP server ACLs to accept writes from clients over
+     the local transport. For example:
+
+          access to *
+                  by dn.exact="uid=heimdal,dc=services,dc=example,dc=com" write
+                  ...
+          
+          sasl-regexp "uidNumber=0\\\+gidNumber=.*,cn=peercred,cn=external,cn=auth"
+          	"uid=heimdal,dc=services,dc=example,dc=com"
+
+     The sasl-regexp is for mapping between the SASL/EXTERNAL and a
+     user in a tree.  The user that the key is mapped to should be have
+     a krb5Principal aux object with krb5PrincipalName set so that the
+     "creator" and "modifier" is right in `kadmin'.
+
+     Another option is to create an admins group and add the dn to that
+     group.
+
+     Since Heimdal talkes to the LDAP server over a UNIX domain socket,
+     and uses external sasl authentication, its not possible to require
+     security layer quality (ssf in cyrus-sasl lingo). So that
+     requirement has to be turned off in OpenLDAP `slapd' configuration
+     file `slapd.conf'.
+
+          sasl-secprops minssf=0
+
+   *  Start `slapd' with the local listener (as well as the default
+     TCP/IP listener on port 389) as follows:
+
+              slapd -h "ldapi:/// ldap:///"
+
+     Note: These is a bug in `slapd' where it appears to corrupt the
+     krb5Key binary attribute on shutdown. This may be related to our
+     use of the V3 schema definition syntax instead of the old
+     UMich-style, V2 syntax.
+
+   * You should specify the distinguished name under which your
+     principals will be stored in `krb5.conf':
+
+          [kdc]
+                  database = {
+                          dbname = ldap:ou=KerberosPrincipals,dc=example,dc=com
+                          mkey_file = /path/to/mkey
+                  }
+
+     `mkey_file' can be excluded if you feel that you trust your ldap
+     directory to have the raw keys inside it.
+
+   * Once you have built Heimdal and started the LDAP server, run kadmin
+     (as usual) to initialize the database. Note that the instructions
+     for stashing a master key are as per any Heimdal installation.
+
+          kdc# kadmin -l
+          kadmin> init EXAMPLE.COM
+          Realm max ticket life [unlimited]:
+          Realm max renewable ticket life [unlimited]:
+          kadmin> ank lukeh
+          Max ticket life [1 day]:
+          Max renewable life [1 week]:
+          Principal expiration time [never]:
+          Password expiration time [never]:
+          Attributes []:
+          lukeh@EXAMPLE.COM's Password:
+          Verifying password - lukeh@EXAMPLE.COM's Password:
+          kadmin> exit
+
+     Verify that the principal database has indeed been stored in the
+     directory with the following command:
+
+          kdc# ldapsearch -L -h localhost -D cn=manager \
+           -w secret -b ou=KerberosPrincipals,dc=example,dc=com \
+           'objectclass=krb5KDCEntry'
+
+   * Now consider adding indexes to the database to speed up the
+     access, at least theses should be added to slapd.conf.
+
+          index	objectClass		eq
+          index	cn			eq,sub,pres
+          index	uid			eq,sub,pres
+          index	displayName		eq,sub,pres
+          index	krb5PrincipalName	eq
+
+
+Troubleshooting guide
+---------------------
+
+<https://sec.miljovern.no/bin/view/Info/TroubleshootingGuide>
+
+Using Samba LDAP password database
+----------------------------------
+
+Samba domain and the Kerberos realm can have diffrent names since
+arcfour's string to key function principal/realm independent.  So now
+will be your first and only chance name your Kerberos without needing
+to deal with old configuration files.
+
+First you should set up Samba and get that working with LDAP backend.
+
+Now you can proceed as in *Note Using LDAP to store the database::,
+Heimdal will pick up the Samba LDAP entries if they are in the same
+search space as the Kerberos entries.
+
+
+File: heimdal.info,  Node: Providing Kerberos credentials to servers and programs,  Prev: Using LDAP to store the database,  Up: Setting up a realm
+
+Providing Kerberos credentials to servers and programs
+======================================================
+
+Some service require Kerberos credentials when they start to make
+connections to other services or use them when they have started.
+
+The easiest way to get ticket for the a service is to store the key in
+a keytab. Both ktutil get and kadmin ext can be used to get a keytab.
+ktutil get is better in that way it changes the key/password for the
+user. This the problem with the ktutil. It ktutil is used for the same
+service principal on several hosts, they keytab will only useful on the
+last host. In that case, run the command on host and copy the keytab
+around to all other hosts that needs it.
+
+     host# ktutil -k /etc/krb5-service.keytab \
+           get -p lha/admin@EXAMPLE.ORG service-principal@EXAMPLE.ORG
+     lha/admin@EXAMPLE.ORG's Password:
+
+To get a Kerberos credential file for the service, use kinit in the
+-keytab mode, this will not ask for a password but rather that the key
+from the keytab.
+
+     service@host$ kinit --cache=/var/run/service_krb5_cache \
+                    --keytab=/etc/krb5-service.keytab \
+            service-principal@EXAMPLE.ORG
+
+Long running services might need credentials longer then the expiration
+time of the tickets. kinit can run in a mode that refreshes the tickets
+before they expire. This is useful for services that write into AFS and
+other distributed file systems using Kerberos. To run the long running
+script, just append the program and arguments (if any) after the
+principal. kinit will stop refreshing credentials and remove the
+credentials when the script-to-start-service exits.
+
+     service@host$ kinit --cache=/var/run/service_krb5_cache \
+            --keytab=/etc/krb5-service.keytab \
+            service-principal@EXAMPLE.ORG \
+            script-to-start-service argument1 argument2
+
+
+File: heimdal.info,  Node: Applications,  Next: Things in search for a better place,  Prev: Setting up a realm,  Up: Top
+
+Applications
+************
 
 * Menu:
 
-* Principal conversion issues::
-* Converting a version 4 database::
-* kaserver::
+* Authentication modules::
+* AFS::
 
 
-File: heimdal.info,  Node: Principal conversion issues,  Next: Converting a version 4 database,  Prev: Kerberos 4 issues,  Up: Kerberos 4 issues
+File: heimdal.info,  Node: Authentication modules,  Next: AFS,  Prev: Applications,  Up: Applications
 
-Principal conversion issues
-===========================
+Authentication modules
+======================
 
-First, Kerberos 4 and Kerberos 5 principals are different. A version 4
-principal consists of a name, an instance, and a realm. A version 5
-principal has one or more components, and a realm (the terms "name" and
-"instance" are still used, for the first and second component,
-respectively).    Also, in some cases the name of a version 4 principal
-differs from the first component of the corresponding version 5
-principal. One notable example is the "host" type principals, where the
-version 4 name is `rcmd' (for "remote command"), and the version 5 name
-is `host'. For the class of principals that has a hostname as instance,
-there is an other major difference, Kerberos 4 uses only the first
-component of the hostname, whereas Kerberos 5 uses the fully qualified
-hostname.
+The problem of having different authentication mechanisms has been
+recognised by several vendors, and several solutions has appeared. In
+most cases these solutions involve some kind of shared modules that are
+loaded at run-time.  Modules for some of these systems can be found in
+`lib/auth'.  Presently there are modules for Digital's SIA, and IRIX'
+`login' and `xdm' (in `lib/auth/afskauthlib').
 
-Because of this it can be hard or impossible to correctly convert a
-version 4 principal to a version 5 principal (1). The biggest problem is
-to know if the conversion resulted in a valid principal. To give an
-example, suppose you want to convert the principal `rcmd.foo'.
+* Menu:
 
-The `rcmd' name suggests that the instance is a hostname (even if there
-are exceptions to this rule). To correctly convert the instance `foo'
-to a hostname, you have to know which host it is referring to. You can
-to this by either guessing (from the realm) which domain name to
-append, or you have to have a list of possible hostnames. In the
-simplest cases you can cover most principals with the first rule. If you
-have several domains sharing a single realm this will not usually work.
-If the exceptions are few you can probably come by with a lookup table
-for the exceptions.
-
-In a complex scenario you will need some kind of host lookup mechanism.
-Using DNS for this is tempting, but DNS is error prone, slow and unsafe
-(2).
-
-Fortunately, the KDC has a trump on hand: it can easily tell if a
-principal exists in the database. The KDC will use
-`krb5_425_conv_principal_ext' to convert principals when handling to
-version 4 requests.
-
----------- Footnotes ----------
-
-(1) the other way is not always trivial either, but usually easier
-
-(2) at least until secure DNS is commonly available
-
-
-File: heimdal.info,  Node: Converting a version 4 database,  Next: kaserver,  Prev: Principal conversion issues,  Up: Kerberos 4 issues
-
-Converting a version 4 database
-===============================
-
-If you want to convert an existing version 4 database, the principal
-conversion issue arises too.
-
-If you decide to convert your database once and for all, you will only
-have to do this conversion once. It is also possible to run a version 5
-KDC as a slave to a version 4 KDC. In this case this conversion will
-happen every time the database is propagated.  When doing this
-conversion, there are a few things to look out for. If you have stale
-entries in the database, these entries will not be converted. This might
-be because these principals are not used anymore, or it might be just
-because the principal couldn't be converted.
-
-You might also see problems with a many-to-one mapping of principals.
-For instance, if you are using DNS lookups and you have two principals
-`rcmd.foo' and `rcmd.bar', where `foo' is a CNAME for `bar', the
-resulting principals will be the same. Since the conversion function
-can't tell which is correct, these conflicts will have to be resolved
-manually.
-
-Conversion example
-------------------
-
-Given the following set of hosts and services:
-
-     foo.se          rcmd
-     mail.foo.se     rcmd, pop
-     ftp.bar.se      rcmd, ftp
-
-you have a database that consists of the following principals:
-
-`rcmd.foo', `rcmd.mail', `pop.mail', `rcmd.ftp', and `ftp.ftp'.
-
-lets say you also got these extra principals: `rcmd.gone',
-`rcmd.old-mail', where `gone.foo.se' was a machine that has now passed
-away, and `old-mail.foo.se' was an old mail machine that is now a CNAME
-for `mail.foo.se'.
-
-When you convert this database you want the following conversions to be
-done:
-     rcmd.foo         host/foo.se
-     rcmd.mail        host/mail.foo.se
-     pop.mail         pop/mail.foo.se
-     rcmd.ftp         host/ftp.bar.se
-     ftp.ftp          ftp/ftp.bar.se
-     rcmd.gone        removed
-     rcmd.old-mail    removed
-
-A `krb5.conf' that does this looks like:
-
-     [realms]
-             FOO.SE = {
-                     v4_name_convert = {
-                             host = {
-                                     ftp = ftp
-                                     pop = pop
-                                     rcmd = host
-                             }
-                     }
-                     v4_instance_convert = {
-                             foo = foo.se
-                             ftp = ftp.bar.se
-                     }
-                     default_domain = foo.se
-             }
-
-The `v4_name_convert' section says which names should be considered
-having an instance consisting of a hostname, and it also says how the
-names should be converted (for instance `rcmd' should be converted to
-`host'). The `v4_instance_convert' section says how a hostname should
-be qualified (this is just a hosts-file in disguise). Host-instances
-that aren't covered by `v4_instance_convert' are qualified by appending
-the contents of the `default_domain'.
-
-Actually, this example doesn't work. Or rather, it works to well. Since
-it has no way of knowing which hostnames are valid and which are not, it
-will happily convert `rcmd.gone' to `host/gone.foo.se'. This isn't a
-big problem, but if you have run your kerberos realm for a few years,
-chances are big that you have quite a few `junk' principals.
-
-If you don't want this you can remove the `default_domain' statement,
-but then you will have to add entries for *all* your hosts in the
-`v4_instance_convert' section.
-
-Instead of doing this you can use DNS to convert instances. This is not
-a solution without problems, but it is probably easier than adding lots
-of static host entries.
-
-To enable DNS lookup you should turn on `v4_instance_resolve' in the
-`[libdefaults]' section.
-
-Converting a database
----------------------
-
-The database conversion is done with `hprop'. You can run this command
-to propagate the database to the machine called `slave-server' (which
-should be running a `hpropd').
-
-     hprop --source=krb4-db --master-key=/.m slave-server
-
-This command can also be to use for converting the v4 database on the
-server:
-
-     hprop -n --source=krb4-db -d /var/kerberos/principal --master-key=/.m | hpropd -n
-
-Version 4 Kadmin
-================
-
-`kadmind' can act as a version 4 kadmind, and you can do most
-operations, but with some restrictions (since the version 4 kadmin
-protocol is, lets say, very ad hoc.) One example is that it only passes
-des keys when creating principals and changing passwords (modern kpasswd
-clients do send the password, so it's possible to to password quality
-checks). Because of this you can only create principals with des keys,
-and you can't set any flags or do any other fancy stuff.
-
-To get this to work, you have to add another entry to inetd (since
-version 4 uses port 751, not 749).
-
-*And then there are a many more things you can do; more on this in a
-later version of this manual. Until then, UTSL.*
+* Digital SIA::
+* IRIX::
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,30 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$KTH: unwrap.c,v 1.22.2.1 2003/09/18 22:05:22 lha Exp $");
-
-OM_uint32
-gss_krb5_get_remotekey(const gss_ctx_id_t context_handle,
-		       krb5_keyblock **key)
-{
-    krb5_keyblock *skey;
-
-    krb5_auth_con_getremotesubkey(gssapi_krb5_context,
-				  context_handle->auth_context, 
-				  &skey);
-    if(skey == NULL)
-	krb5_auth_con_getlocalsubkey(gssapi_krb5_context,
-				     context_handle->auth_context, 
-				     &skey);
-    if(skey == NULL)
-	krb5_auth_con_getkey(gssapi_krb5_context,
-			     context_handle->auth_context, 
-			     &skey);
-    if(skey == NULL)
-	return GSS_KRB5_S_KG_NO_SUBKEY; /* XXX */
-    *key = skey;
-    return 0;
-}
+RCSID("$KTH: unwrap.c,v 1.34 2005/04/27 17:50:40 lha Exp $");
 
 static OM_uint32
 unwrap_des
@@ -69,23 +46,25 @@ unwrap_des
 	    krb5_keyblock *key
            )
 {
-  u_char *p, *pad;
+  u_char *p, *seq;
   size_t len;
   MD5_CTX md5;
-  u_char hash[16], seq_data[8];
-  des_key_schedule schedule;
-  des_cblock deskey;
-  des_cblock zero;
+  u_char hash[16];
+  DES_key_schedule schedule;
+  DES_cblock deskey;
+  DES_cblock zero;
   int i;
   int32_t seq_number;
   size_t padlength;
   OM_uint32 ret;
   int cstate;
+  int cmp;
 
   p = input_message_buffer->value;
   ret = gssapi_krb5_verify_header (&p,
 				   input_message_buffer->length,
-				   "\x02\x01");
+				   "\x02\x01",
+				   GSS_KRB5_MECHANISM);
   if (ret)
       return ret;
 
@@ -114,27 +93,24 @@ unwrap_des
 
       for (i = 0; i < sizeof(deskey); ++i)
 	  deskey[i] ^= 0xf0;
-      des_set_key (&deskey, schedule);
+      DES_set_key (&deskey, &schedule);
       memset (&zero, 0, sizeof(zero));
-      des_cbc_encrypt ((void *)p,
+      DES_cbc_encrypt ((void *)p,
 		       (void *)p,
 		       input_message_buffer->length - len,
-		       schedule,
+		       &schedule,
 		       &zero,
 		       DES_DECRYPT);
       
       memset (deskey, 0, sizeof(deskey));
-      memset (schedule, 0, sizeof(schedule));
+      memset (&schedule, 0, sizeof(schedule));
   }
   /* check pad */
-
-  pad = (u_char *)input_message_buffer->value + input_message_buffer->length - 1;
-  padlength = *pad;
-
-  for (i = padlength; i > 0 && *pad == padlength; i--, pad--)
-    ;
-  if (i != 0)
-    return GSS_S_BAD_MIC;
+  ret = _gssapi_verify_pad(input_message_buffer, 
+			   input_message_buffer->length - len,
+			   &padlength);
+  if (ret)
+      return ret;
 
   MD5_Init (&md5);
   MD5_Update (&md5, p - 24, 8);
@@ -143,40 +119,44 @@ unwrap_des
 
   memset (&zero, 0, sizeof(zero));
   memcpy (&deskey, key->keyvalue.data, sizeof(deskey));
-  des_set_key (&deskey, schedule);
-  des_cbc_cksum ((void *)hash, (void *)hash, sizeof(hash),
-		 schedule, &zero);
+  DES_set_key (&deskey, &schedule);
+  DES_cbc_cksum ((void *)hash, (void *)hash, sizeof(hash),
+		 &schedule, &zero);
   if (memcmp (p - 8, hash, 8) != 0)
     return GSS_S_BAD_MIC;
 
   /* verify sequence number */
   
-  krb5_auth_getremoteseqnumber (gssapi_krb5_context,
-				context_handle->auth_context,
-				&seq_number);
-  seq_data[0] = (seq_number >> 0)  & 0xFF;
-  seq_data[1] = (seq_number >> 8)  & 0xFF;
-  seq_data[2] = (seq_number >> 16) & 0xFF;
-  seq_data[3] = (seq_number >> 24) & 0xFF;
-  memset (seq_data + 4,
-	  (context_handle->more_flags & LOCAL) ? 0xFF : 0,
-	  4);
+  HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
 
   p -= 16;
-  des_set_key (&deskey, schedule);
-  des_cbc_encrypt ((void *)p, (void *)p, 8,
-		   schedule, (des_cblock *)hash, DES_DECRYPT);
+  DES_set_key (&deskey, &schedule);
+  DES_cbc_encrypt ((void *)p, (void *)p, 8,
+		   &schedule, (DES_cblock *)hash, DES_DECRYPT);
 
   memset (deskey, 0, sizeof(deskey));
-  memset (schedule, 0, sizeof(schedule));
+  memset (&schedule, 0, sizeof(schedule));
 
-  if (memcmp (p, seq_data, 8) != 0) {
+  seq = p;
+  gssapi_decode_om_uint32(seq, &seq_number);
+
+  if (context_handle->more_flags & LOCAL)
+      cmp = memcmp(&seq[4], "\xff\xff\xff\xff", 4);
+  else
+      cmp = memcmp(&seq[4], "\x00\x00\x00\x00", 4);
+
+  if (cmp != 0) {
+    HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
     return GSS_S_BAD_MIC;
   }
 
-  krb5_auth_con_setremoteseqnumber (gssapi_krb5_context,
-				context_handle->auth_context,
-				++seq_number);
+  ret = _gssapi_msg_order_check(context_handle->order, seq_number);
+  if (ret) {
+    HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+    return ret;
+  }
+
+  HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
 
   /* copy out data */
 
@@ -202,12 +182,11 @@ unwrap_des3
 	    krb5_keyblock *key
            )
 {
-  u_char *p, *pad;
+  u_char *p;
   size_t len;
-  u_char seq[8];
+  u_char *seq;
   krb5_data seq_data;
   u_char cksum[20];
-  int i;
   int32_t seq_number;
   size_t padlength;
   OM_uint32 ret;
@@ -219,7 +198,8 @@ unwrap_des3
   p = input_message_buffer->value;
   ret = gssapi_krb5_verify_header (&p,
 				   input_message_buffer->length,
-				   "\x02\x01");
+				   "\x02\x01",
+				   GSS_KRB5_MECHANISM);
   if (ret)
       return ret;
 
@@ -267,27 +247,15 @@ unwrap_des3
       krb5_data_free(&tmp);
   }
   /* check pad */
-
-  pad = (u_char *)input_message_buffer->value + input_message_buffer->length - 1;
-  padlength = *pad;
-
-  for (i = padlength; i > 0 && *pad == padlength; i--, pad--)
-    ;
-  if (i != 0)
-    return GSS_S_BAD_MIC;
+  ret = _gssapi_verify_pad(input_message_buffer, 
+			   input_message_buffer->length - len,
+			   &padlength);
+  if (ret)
+      return ret;
 
   /* verify sequence number */
   
-  krb5_auth_getremoteseqnumber (gssapi_krb5_context,
-				context_handle->auth_context,
-				&seq_number);
-  seq[0] = (seq_number >> 0)  & 0xFF;
-  seq[1] = (seq_number >> 8)  & 0xFF;
-  seq[2] = (seq_number >> 16) & 0xFF;
-  seq[3] = (seq_number >> 24) & 0xFF;
-  memset (seq + 4,
-	  (context_handle->more_flags & LOCAL) ? 0xFF : 0,
-	  4);
+  HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
 
   p -= 28;
 
@@ -296,10 +264,11 @@ unwrap_des3
   if (ret) {
       gssapi_krb5_set_error_string ();
       *minor_status = ret;
+      HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
       return GSS_S_FAILURE;
   }
   {
-      des_cblock ivec;
+      DES_cblock ivec;
 
       memcpy(&ivec, p + 8, 8);
       ret = krb5_decrypt_ivec (gssapi_krb5_context,
@@ -312,22 +281,39 @@ unwrap_des3
   if (ret) {
       gssapi_krb5_set_error_string ();
       *minor_status = ret;
+      HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
       return GSS_S_FAILURE;
   }
   if (seq_data.length != 8) {
       krb5_data_free (&seq_data);
+      *minor_status = 0;
+      HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
       return GSS_S_BAD_MIC;
   }
 
-  cmp = memcmp (seq, seq_data.data, seq_data.length);
+  seq = seq_data.data;
+  gssapi_decode_om_uint32(seq, &seq_number);
+
+  if (context_handle->more_flags & LOCAL)
+      cmp = memcmp(&seq[4], "\xff\xff\xff\xff", 4);
+  else
+      cmp = memcmp(&seq[4], "\x00\x00\x00\x00", 4);
+  
   krb5_data_free (&seq_data);
   if (cmp != 0) {
+      *minor_status = 0;
+      HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
       return GSS_S_BAD_MIC;
   }
 
-  krb5_auth_con_setremoteseqnumber (gssapi_krb5_context,
-				context_handle->auth_context,
-				++seq_number);
+  ret = _gssapi_msg_order_check(context_handle->order, seq_number);
+  if (ret) {
+      *minor_status = 0;
+      HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+      return ret;
+  }
+
+  HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
 
   /* verify checksum */
 
@@ -384,9 +370,12 @@ OM_uint32 gss_unwrap
   OM_uint32 ret;
   krb5_keytype keytype;
 
+  output_message_buffer->value = NULL;
+  output_message_buffer->length = 0;
+
   if (qop_state != NULL)
       *qop_state = GSS_C_QOP_DEFAULT;
-  ret = gss_krb5_get_remotekey(context_handle, &key);
+  ret = gss_krb5_get_subkey(context_handle, &key);
   if (ret) {
       gssapi_krb5_set_error_string ();
       *minor_status = ret;
@@ -408,13 +397,15 @@ OM_uint32 gss_unwrap
 			 conf_state, qop_state, key);
       break;
   case KEYTYPE_ARCFOUR:
+  case KEYTYPE_ARCFOUR_56:
       ret = _gssapi_unwrap_arcfour (minor_status, context_handle,
 				    input_message_buffer, output_message_buffer,
 				    conf_state, qop_state, key);
       break;
   default :
-      *minor_status = KRB5_PROG_ETYPE_NOSUPP;
-      ret = GSS_S_FAILURE;
+      ret = _gssapi_unwrap_cfx (minor_status, context_handle,
+				input_message_buffer, output_message_buffer,
+				conf_state, qop_state, key);
       break;
   }
   krb5_free_keyblock (gssapi_krb5_context, key);

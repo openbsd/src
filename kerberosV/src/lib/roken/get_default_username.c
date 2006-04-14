@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: get_default_username.c,v 1.3 1999/12/02 16:58:46 joda Exp $");
+RCSID("$KTH: get_default_username.c,v 1.4 2005/04/12 11:28:42 lha Exp $");
 #endif /* HAVE_CONFIG_H */
 
 #include "roken.h"
@@ -43,7 +43,7 @@ RCSID("$KTH: get_default_username.c,v 1.3 1999/12/02 16:58:46 joda Exp $");
  * NULL if we can't guess at all.
  */
 
-const char *
+const char * ROKEN_LIB_FUNCTION
 get_default_username (void)
 {
     const char *user;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 - 2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -46,7 +46,7 @@
 
 #include "check-common.h"
 
-RCSID("$KTH: check-gen.c,v 1.2.2.1 2003/05/06 16:49:57 joda Exp $");
+RCSID("$KTH: check-gen.c,v 1.4 2004/02/03 22:15:42 lha Exp $");
 
 static char *lha_princ[] = { "lha" };
 static char *lharoot_princ[] = { "lha", "root" };
@@ -181,6 +181,110 @@ test_authenticator (void)
 			 cmp_authenticator);
 }
 
+static int
+cmp_AuthorizationData (void *a, void *b)
+{
+    AuthorizationData *aa = a;
+    AuthorizationData *ab = b;
+
+    COMPARE_INTEGER(aa,ab,len);
+
+    return 0;
+}
+
+static char static_buf512[512];
+
+static int
+test_AuthorizationData (void)
+{
+    struct test_case tests[] = {
+	{ NULL, 14, 
+	  (unsigned char*)
+	  "\x30\x0c\x30\x0a\xa0\x03\x02\x01\x01\xa1\x03\x04\x01\x00"
+	},
+	{ NULL, 142, 
+	  (unsigned char*)
+	  "\x30\x81\x8b\x30\x81\x88\xa0\x03\x02\x01\x01\xa1\x81\x80\x04\x7e"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	},
+	{ NULL, 132, 
+	  (unsigned char*)
+	  "\x30\x81\x81\x30\x73\xa0\x03\x02\x01\x01\xa1\x6c\x04\x6a\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x30\x0a\xa0\x03\x02\x01\x01\xa1"
+	  "\x03\x04\x01\x00"
+	},
+	{ NULL, 134, 
+	  (unsigned char*)
+	  "\x30\x81\x83\x30\x74\xa0\x03\x02\x01\x01\xa1\x6d\x04\x6b\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+	  "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x30\x0b\xa0\x03\x02\x01\x01"
+	  "\xa1\x04\x04\x02\x00\x00"
+	}
+    };
+
+    AuthorizationData values[] = {
+	{ 1, NULL },
+	{ 1, NULL },
+	{ 2, NULL },
+	{ 2, NULL }
+    };
+    int i;
+    int ntests = sizeof(tests) / sizeof(*tests);
+
+    for (i = 0; i < ntests; ++i) {
+	tests[i].val = &values[i];
+	asprintf (&tests[i].name, "AuthorizationData %d", i);
+	values[i].val = emalloc(values[i].len * sizeof(values[i].val[0]));
+    }
+    values[0].val[0].ad_type = 1;
+    values[0].val[0].ad_data.length = 1;
+    values[0].val[0].ad_data.data = static_buf512;
+
+    values[1].val[0].ad_type = 1;
+    values[1].val[0].ad_data.length = 126;
+    values[1].val[0].ad_data.data = static_buf512;
+
+    values[2].val[0].ad_type = 1;
+    values[2].val[0].ad_data.length = 106;
+    values[2].val[0].ad_data.data = static_buf512;
+
+    values[2].val[1].ad_type = 1;
+    values[2].val[1].ad_data.length = 1;
+    values[2].val[1].ad_data.data = static_buf512;
+
+    values[3].val[0].ad_type = 1;
+    values[3].val[0].ad_data.length = 107;
+    values[3].val[0].ad_data.data = static_buf512;
+
+    values[3].val[1].ad_type = 1;
+    values[3].val[1].ad_data.length = 2;
+    values[3].val[1].ad_data.data = static_buf512;
+
+    return generic_test (tests, ntests, sizeof(AuthorizationData),
+			 (generic_encode)encode_AuthorizationData,
+			 (generic_length)length_AuthorizationData,
+			 (generic_decode)decode_AuthorizationData,
+			 cmp_AuthorizationData);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -188,6 +292,7 @@ main(int argc, char **argv)
 
     ret += test_principal ();
     ret += test_authenticator();
+    ret += test_AuthorizationData();
 
     return ret;
 }

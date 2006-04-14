@@ -1,4 +1,4 @@
-/* $KTH: asn1-common.h,v 1.2 2001/09/25 13:39:25 assar Exp $ */
+/* $KTH: asn1-common.h,v 1.4 2003/07/15 13:57:31 lha Exp $ */
 
 #include <stddef.h>
 #include <time.h>
@@ -6,16 +6,17 @@
 #ifndef __asn1_common_definitions__
 #define __asn1_common_definitions__
 
-typedef struct octet_string {
+typedef struct heim_octet_string {
     size_t length;
     void *data;
-} octet_string;
+} heim_octet_string;
 
-typedef char *general_string;
+typedef char *heim_general_string;
+typedef char *heim_utf8_string;
 
-typedef struct oid {
+typedef struct heim_oid {
     size_t length;
     unsigned *components;
-} oid;
+} heim_oid;
 
 #endif

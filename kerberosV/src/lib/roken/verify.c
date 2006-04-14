@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: verify.c,v 1.13 1999/12/02 16:58:53 joda Exp $");
+RCSID("$KTH: verify.c,v 1.14 2005/04/12 11:29:14 lha Exp $");
 #endif
 
 #include <stdio.h>
@@ -45,7 +45,7 @@ RCSID("$KTH: verify.c,v 1.13 1999/12/02 16:58:53 joda Exp $");
 #endif
 #include "roken.h"
 
-int
+int ROKEN_LIB_FUNCTION
 unix_verify_user(char *user, char *password)
 {
     struct passwd *pw;

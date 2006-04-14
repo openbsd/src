@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: hprop.h,v 1.13 2001/01/26 15:54:19 joda Exp $ */
+/* $KTH: hprop.h,v 1.14 2003/09/03 11:46:51 lha Exp $ */
 
 #ifndef __HPROP_H__
 #define __HPROP_H__
@@ -59,7 +59,7 @@ int mit_prop_dump(void*, const char*);
 struct v4_principal {
     char name[64];
     char instance[64];
-    des_cblock key;
+    DES_cblock key;
     int kvno;
     int mkvno;
     time_t exp_date;

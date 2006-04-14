@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$KTH: external.c,v 1.5 2000/07/22 03:45:28 assar Exp $");
+RCSID("$KTH: external.c,v 1.6 2003/09/08 15:34:19 lha Exp $");
 
 /*
  * The implementation must reserve static storage for a
@@ -227,6 +227,41 @@ static gss_OID_desc gss_krb5_mechanism_oid_desc =
 {9, (void *)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x02"};
 
 gss_OID GSS_KRB5_MECHANISM = &gss_krb5_mechanism_oid_desc;
+
+/*
+ * RFC2478, SPNEGO:
+ *  The security mechanism of the initial
+ *  negotiation token is identified by the Object Identifier
+ *  iso.org.dod.internet.security.mechanism.snego (1.3.6.1.5.5.2).
+ */
+
+static gss_OID_desc gss_spnego_mechanism_oid_desc =
+{6, (void *)"\x2b\x06\x01\x05\x05\x02"};
+
+gss_OID GSS_SPNEGO_MECHANISM = &gss_spnego_mechanism_oid_desc;
+
+/*
+ * draft-ietf-cat-iakerb-09, IAKERB:
+ *   The mechanism ID for IAKERB proxy GSS-API Kerberos, in accordance
+ *   with the mechanism proposed by SPNEGO [7] for negotiating protocol
+ *   variations, is:  {iso(1) org(3) dod(6) internet(1) security(5)
+ *   mechanisms(5) iakerb(10) iakerbProxyProtocol(1)}.  The proposed
+ *   mechanism ID for IAKERB minimum messages GSS-API Kerberos, in
+ *   accordance with the mechanism proposed by SPNEGO for negotiating
+ *   protocol variations, is: {iso(1) org(3) dod(6) internet(1)
+ *   security(5) mechanisms(5) iakerb(10)
+ *   iakerbMinimumMessagesProtocol(2)}.
+ */
+
+static gss_OID_desc gss_iakerb_proxy_mechanism_oid_desc =
+{7, (void *)"\x2b\x06\x01\x05\x05\x0a\x01"};
+
+gss_OID GSS_IAKERB_PROXY_MECHANISM = &gss_iakerb_proxy_mechanism_oid_desc;
+
+static gss_OID_desc gss_iakerb_min_msg_mechanism_oid_desc =
+{7, (void *)"\x2b\x06\x01\x05\x05\x0a\x02"};
+
+gss_OID GSS_IAKERB_MIN_MSG_MECHANISM = &gss_iakerb_min_msg_mechanism_oid_desc;
 
 /*
  * Context for krb5 calls.

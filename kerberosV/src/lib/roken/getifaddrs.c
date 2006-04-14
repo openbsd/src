@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: getifaddrs.c,v 1.9 2002/09/05 03:36:23 assar Exp $");
+RCSID("$KTH: getifaddrs.c,v 1.11 2005/04/30 15:45:47 lha Exp $");
 #endif
 #include "roken.h"
 
@@ -172,6 +172,7 @@ ifa_sa_len(sa_family_t family, int len)
     size = (size_t)(((struct sockaddr *)NULL)->sa_data) + len;
     if (size < sizeof(struct sockaddr))
       size = sizeof(struct sockaddr);
+    break;
   }
   return size;
 }
@@ -466,7 +467,8 @@ nl_open(void)
 }
 
 /* ====================================================================== */
-int getifaddrs(struct ifaddrs **ifap)
+int ROKEN_LIB_FUNCTION
+getifaddrs(struct ifaddrs **ifap)
 {
   int sd;
   struct nlmsg_list *nlmsg_list, *nlmsg_end, *nlm;
@@ -669,6 +671,7 @@ int getifaddrs(struct ifaddrs **ifap)
 	    case IFLA_QDISC:
 	      break;
 	    default:
+	      break;
 	    }
 	    break;
 	  case RTM_NEWADDR:
@@ -709,6 +712,7 @@ int getifaddrs(struct ifaddrs **ifap)
 	    case IFA_CACHEINFO:
 	      break;
 	    default:
+	      break;
 	    }
 	  }
 	}
@@ -819,7 +823,7 @@ int getifaddrs(struct ifaddrs **ifap)
 }
 
 /* ---------------------------------------------------------------------- */
-void 
+void ROKEN_LIB_FUNCTION
 freeifaddrs(struct ifaddrs *ifa)
 {
   free(ifa);
@@ -1082,7 +1086,7 @@ getlifaddrs2(struct ifaddrs **ifap,
 }
 #endif /* defined(HAVE_IPV6) && defined(SIOCGLIFCONF) && defined(SIOCGLIFFLAGS) */
 
-int
+int ROKEN_LIB_FUNCTION
 getifaddrs(struct ifaddrs **ifap) 
 {
     int ret = -1;
@@ -1110,7 +1114,7 @@ getifaddrs(struct ifaddrs **ifap)
     return ret;
 }
 
-void
+void ROKEN_LIB_FUNCTION
 freeifaddrs(struct ifaddrs *ifp)
 {
     struct ifaddrs *p, *q;

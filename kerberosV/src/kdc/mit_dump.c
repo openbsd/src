@@ -33,7 +33,7 @@
 
 #include "hprop.h"
 
-RCSID("$KTH: mit_dump.c,v 1.3 2000/08/09 09:57:37 joda Exp $");
+RCSID("$KTH: mit_dump.c,v 1.5 2005/06/02 09:55:43 lha Exp $");
 
 /*
 can have any number of princ stanzas.
@@ -310,14 +310,14 @@ mit_prop_dump(void *arg, const char *file)
 	    tl_type = getint(&p); /* data type */
 	    tl_length = getint(&p); /* data length */
 
-#define KRB5_TL_LAST_PWD_CHANGE	1
-#define KRB5_TL_MOD_PRINC	2
+#define mit_KRB5_TL_LAST_PWD_CHANGE	1
+#define mit_KRB5_TL_MOD_PRINC		2
 	    switch(tl_type) {
-	    case KRB5_TL_MOD_PRINC:
+	    case mit_KRB5_TL_MOD_PRINC:
 		buf = malloc(tl_length);
 		getdata(&p, buf, tl_length); /* data itself */
 		val = buf[0] | (buf[1] << 8) | (buf[2] << 16) | (buf[3] << 24);
-		ret = krb5_parse_name(pd->context, buf + 4, &princ);
+		ret = krb5_parse_name(pd->context, (char *)buf + 4, &princ);
 		free(buf);
 		ALLOC(ent.modified_by);
 		ent.modified_by->time = val;

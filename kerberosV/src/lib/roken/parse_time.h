@@ -31,10 +31,18 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: parse_time.h,v 1.4 1999/12/02 16:58:51 joda Exp $ */
+/* $KTH: parse_time.h,v 1.5 2005/04/12 11:28:59 lha Exp $ */
 
 #ifndef __PARSE_TIME_H__
 #define __PARSE_TIME_H__
+
+#ifndef ROKEN_LIB_FUNCTION
+#ifdef _WIN32
+#define ROKEN_LIB_FUNCTION _stdcall
+#else
+#define ROKEN_LIB_FUNCTION
+#endif
+#endif
 
 int
 parse_time (const char *s, const char *def_unit);

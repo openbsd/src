@@ -32,7 +32,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: n-fold-test.c,v 1.4 2001/03/12 07:42:30 assar Exp $");
+RCSID("$KTH: n-fold-test.c,v 1.5 2004/05/25 21:35:12 lha Exp $");
 
 enum { MAXSIZE = 24 };
 
@@ -92,7 +92,7 @@ static struct testcase {
     {NULL, 0}
 };
 
-int
+int KRB5_LIB_FUNCTION
 main(int argc, char **argv)
 {
     unsigned char data[MAXSIZE];

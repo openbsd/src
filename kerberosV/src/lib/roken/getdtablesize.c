@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: getdtablesize.c,v 1.11 2001/06/20 00:00:38 joda Exp $");
+RCSID("$KTH: getdtablesize.c,v 1.12 2005/04/12 11:28:45 lha Exp $");
 #endif
 
 #include "roken.h"
@@ -64,7 +64,8 @@ RCSID("$KTH: getdtablesize.c,v 1.11 2001/06/20 00:00:38 joda Exp $");
 #include <sys/sysctl.h>
 #endif
 
-int getdtablesize(void)
+int ROKEN_LIB_FUNCTION
+getdtablesize(void)
 {
   int files = -1;
 #if defined(HAVE_SYSCONF) && defined(_SC_OPEN_MAX)

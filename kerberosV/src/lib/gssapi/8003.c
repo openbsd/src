@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$KTH: 8003.c,v 1.12.2.2 2003/09/18 21:30:57 lha Exp $");
+RCSID("$KTH: 8003.c,v 1.17 2005/04/01 08:55:36 lha Exp $");
 
 krb5_error_code
 gssapi_encode_om_uint32(OM_uint32 n, u_char *p)
@@ -122,7 +122,7 @@ gssapi_krb5_create_8003_checksum (
     /* 
      * see rfc1964 (section 1.1.1 (Initial Token), and the checksum value 
      * field's format) */
-    result->cksumtype = 0x8003;
+    result->cksumtype = CKSUMTYPE_GSSAPI;
     if (fwd_data->length > 0 && (flags & GSS_C_DELEG_FLAG))
 	result->checksum.length = 24 + 4 + fwd_data->length;
     else 
@@ -146,17 +146,7 @@ gssapi_krb5_create_8003_checksum (
     p += 4;
 
     if (fwd_data->length > 0 && (flags & GSS_C_DELEG_FLAG)) {
-#if 0
-	u_char *tmp;
 
-	result->checksum.length = 28 + fwd_data->length;
-	tmp = realloc(result->checksum.data, result->checksum.length);
-	if (tmp == NULL)
-	    return ENOMEM;
-	result->checksum.data = tmp;
-
-	p = (u_char*)result->checksum.data + 24;  
-#endif
 	*p++ = (1 >> 0) & 0xFF;                   /* DlgOpt */ /* == 1 */
 	*p++ = (1 >> 8) & 0xFF;                   /* DlgOpt */ /* == 0 */
 	*p++ = (fwd_data->length >> 0) & 0xFF;    /* Dlgth  */
@@ -188,8 +178,13 @@ gssapi_krb5_verify_8003_checksum(
     int DlgOpt;
     static unsigned char zeros[16];
 
+    if (cksum == NULL) {
+	*minor_status = 0;
+	return GSS_S_BAD_BINDINGS;
+    }
+
     /* XXX should handle checksums > 24 bytes */
-    if(cksum->cksumtype != 0x8003 || cksum->checksum.length < 24) {
+    if(cksum->cksumtype != CKSUMTYPE_GSSAPI || cksum->checksum.length < 24) {
 	*minor_status = 0;
 	return GSS_S_BAD_BINDINGS;
     }

@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: gai_strerror.c,v 1.2.20.1 2004/01/15 18:14:17 lha Exp $");
+RCSID("$KTH: gai_strerror.c,v 1.5 2005/04/12 11:28:42 lha Exp $");
 #endif
 
 #include "roken.h"
@@ -65,7 +65,7 @@ static struct gai_error {
  *
  */
 
-char *
+char * ROKEN_LIB_FUNCTION
 gai_strerror(int ecode)
 {
     struct gai_error *g;

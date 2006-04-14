@@ -33,9 +33,9 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: sock_principal.c,v 1.16 2001/07/26 09:05:30 assar Exp $");
+RCSID("$KTH: sock_principal.c,v 1.17 2004/05/25 21:42:47 lha Exp $");
 			
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_sock_to_principal (krb5_context context,
 			int sock,
 			const char *sname,

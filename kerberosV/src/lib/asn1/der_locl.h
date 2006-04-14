@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: der_locl.h,v 1.4.6.1 2004/02/09 17:54:05 lha Exp $ */
+/* $KTH: der_locl.h,v 1.5 2004/02/07 14:16:53 lha Exp $ */
 
 #ifndef __DER_LOCL_H__
 #define __DER_LOCL_H__

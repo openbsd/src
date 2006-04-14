@@ -33,9 +33,9 @@
 
 #include <krb5_locl.h>
 
-RCSID("$KTH: generate_seq_number.c,v 1.8 2001/05/08 14:05:37 assar Exp $");
+RCSID("$KTH: generate_seq_number.c,v 1.9 2004/05/25 21:25:22 lha Exp $");
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_generate_seq_number(krb5_context context,
 			 const krb5_keyblock *key,
 			 u_int32_t *seqno)

@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: copyhostent.c,v 1.2 1999/12/02 16:58:45 joda Exp $");
+RCSID("$KTH: copyhostent.c,v 1.3 2005/04/12 11:28:36 lha Exp $");
 #endif
 
 #include "roken.h"
@@ -42,7 +42,7 @@ RCSID("$KTH: copyhostent.c,v 1.2 1999/12/02 16:58:45 joda Exp $");
  * return a malloced copy of `h'
  */
 
-struct hostent *
+struct hostent * ROKEN_LIB_FUNCTION
 copyhostent (const struct hostent *h)
 {
     struct hostent *res;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -37,7 +37,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-RCSID("$KTH: init_c.c,v 1.45.2.1 2003/12/21 22:48:13 lha Exp $");
+RCSID("$KTH: init_c.c,v 1.51 2005/05/13 10:57:13 lha Exp $");
 
 static void
 set_funcs(kadm5_client_context *c)
@@ -99,9 +99,9 @@ _kadm5_c_init_context(kadm5_client_context **ctx,
     }
 
     if ((*ctx)->admin_server == NULL) {
-	return ENOMEM;
 	free((*ctx)->realm);
 	free(*ctx);
+	return ENOMEM;
     }
     colon = strchr ((*ctx)->admin_server, ':');
     if (colon != NULL)
@@ -154,19 +154,21 @@ get_new_cache(krb5_context context,
 {
     krb5_error_code ret;
     krb5_creds cred;
-    krb5_get_init_creds_opt opt;
+    krb5_get_init_creds_opt *opt;
     krb5_ccache id;
     
-    krb5_get_init_creds_opt_init (&opt);
+    ret = krb5_get_init_creds_opt_alloc (context, &opt);
+    if (ret)
+	return ret;
 
     krb5_get_init_creds_opt_set_default_flags(context, "kadmin", 
 					      krb5_principal_get_realm(context, 
 								       client), 
-					      &opt);
+					      opt);
 
 
-    krb5_get_init_creds_opt_set_forwardable (&opt, FALSE);
-    krb5_get_init_creds_opt_set_proxiable (&opt, FALSE);
+    krb5_get_init_creds_opt_set_forwardable (opt, FALSE);
+    krb5_get_init_creds_opt_set_proxiable (opt, FALSE);
 
     if(password == NULL && prompter == NULL) {
 	krb5_keytab kt;
@@ -174,15 +176,17 @@ get_new_cache(krb5_context context,
 	    ret = krb5_kt_default(context, &kt);
 	else
 	    ret = krb5_kt_resolve(context, keytab, &kt);
-	if(ret) 
+	if(ret) {
+	    krb5_get_init_creds_opt_free(opt);
 	    return ret;
+	}
 	ret = krb5_get_init_creds_keytab (context,
 					  &cred,
 					  client,
 					  kt,
 					  0,
 					  server_name,
-					  &opt);
+					  opt);
 	krb5_kt_close(context, kt);
     } else {
 	ret = krb5_get_init_creds_password (context,
@@ -193,8 +197,9 @@ get_new_cache(krb5_context context,
 					    NULL,
 					    0,
 					    server_name,
-					    &opt);
+					    opt);
     }
+    krb5_get_init_creds_opt_free(opt);
     switch(ret){
     case 0:
 	break;
@@ -214,20 +219,20 @@ get_new_cache(krb5_context context,
     ret = krb5_cc_store_cred (context, id, &cred);
     if (ret)
 	return ret;
-    krb5_free_creds_contents (context, &cred);
+    krb5_free_cred_contents (context, &cred);
     *ret_cache = id;
     return 0;
 }
 
-static krb5_error_code
-get_cred_cache(krb5_context context,
-	       const char *client_name,
-	       const char *server_name,
-	       const char *password,
-	       krb5_prompter_fct prompter,
-	       const char *keytab,
-	       krb5_ccache ccache,
-	       krb5_ccache *ret_cache)
+krb5_error_code
+_kadm5_c_get_cred_cache(krb5_context context,
+			const char *client_name,
+			const char *server_name,
+			const char *password,
+			krb5_prompter_fct prompter,
+			const char *keytab,
+			krb5_ccache ccache,
+			krb5_ccache *ret_cache)
 {
     krb5_error_code ret;
     krb5_ccache id = NULL;
@@ -382,9 +387,11 @@ kadm_connect(kadm5_client_context *ctx)
 	krb5_warnx (context, "failed to contact %s", hostname);
 	return KADM5_FAILURE;
     }
-    ret = get_cred_cache(context, ctx->client_name, ctx->service_name, 
-			 NULL, ctx->prompter, ctx->keytab, 
-			 ctx->ccache, &cc);
+    ret = _kadm5_c_get_cred_cache(context,
+				  ctx->client_name, 
+				  ctx->service_name, 
+				  NULL, ctx->prompter, ctx->keytab, 
+				  ctx->ccache, &cc);
     
     if(ret) {
 	freeaddrinfo (ai);
@@ -504,8 +511,10 @@ kadm5_c_init_with_context(krb5_context context,
 	return ret;
 
     if(password != NULL && *password != '\0') {
-	ret = get_cred_cache(context, client_name, service_name, 
-			     password, prompter, keytab, ccache, &cc);
+	ret = _kadm5_c_get_cred_cache(context, 
+				      client_name,
+				      service_name, 
+				      password, prompter, keytab, ccache, &cc);
 	if(ret)
 	    return ret; /* XXX */
 	ccache = cc;

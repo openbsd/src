@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: vsyslog.c,v 1.6 2000/05/22 22:09:25 assar Exp $");
+RCSID("$KTH: vsyslog.c,v 1.7 2005/04/12 11:29:16 lha Exp $");
 #endif
 
 #ifndef HAVE_VSYSLOG
@@ -61,7 +61,7 @@ simple_vsyslog(int pri, const char *fmt, va_list ap)
  * do like syslog but with a `va_list'
  */
 
-void
+void ROKEN_LIB_FUNCTION
 vsyslog(int pri, const char *fmt, va_list ap)
 {
     char *fmt2;

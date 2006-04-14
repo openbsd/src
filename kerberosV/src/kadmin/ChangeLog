@@ -1,9 +1,205 @@
+2005-06-07  David Love  <fx@gnu.org>
+
+	* dump-format.txt: Clarify, spelling and add examples.
+	
+2005-05-30  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* util.c (kdb_attrs): add ok-as-delegate
+
+	* get.c (getit): init data.mask to 0.  Problem found by Andrew
+	Bartlett <abartlet@samba.org>
+
+2005-05-09  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* kadmin.c (main): catch -2 as EOF
+
+2005-05-03  Dave Love  <d.love@dl.ac.uk>
+
+	* init.c (init): Don't disable forwardable for kadmin/changepw.
+
+2005-05-02  Dave Love  <d.love@dl.ac.uk>
+
+	* kadmin.c (help): Don't use non-constant initializer for `fake'.
+
+2005-04-20  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* util.c (foreach_principal): initialize ret to make sure it have
+	a value
+
+2005-04-04  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* kadmind.c: add verifier libraries with
+	kadm5_add_passwd_quality_verifier
+
+	* kadmin.c: add verifier libraries with
+	kadm5_add_passwd_quality_verifier
+
+	* load.c: max-life and max-renew is of unsigned int in asn1
+	compiler, use that for the parser too
+
+2005-03-26  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* kadmin.8: List of attributes, from James F.  Hranicky
+	<jfh@cise.ufl.edu>
+
+2005-01-19  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* dump.c (dump): handle errors
+
+2005-01-08 Love Hörquist Åstrand <lha@it.su.se>
+
+	* dump-format.txt: text dump format
+
+2004-12-08  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* kadmind.8: use keeps around options, from OpenBSD
+	
+	* kadmin.8: use keeps around options, "improve" spelling, from
+	openbsd
+
+2004-11-01  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* get.c (getit): always free columns
+	
+	* ank.c (add_one_principal): catch error from
+	UI_UTIL_read_pw_string
+
+2004-10-31  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* del_enctype.c (del_enctype): fix off-by-one error in del_enctype
+	From: <ragge@ludd.luth.se>
+	
+2004-08-13  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* get.c: print keytypes on long format
+	
+2004-07-06  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* get.c (format_field): allow mod_name to be optional
+	
+	* ext.c (do_ext_keytab): if there isn't any keydata, try using
+	kadm5_randkey_principal
+
+2004-07-02  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* load.c: make merge/load work again
+	
+	* del.c: fix usage string
+	
+	* ank.c: fix slc lossage
+	
+2004-06-28  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* kadmin.c: use kadm5_ad_init_with_password_ctx
+	
+2004-06-27  Johan Danielsson  <joda@pdc.kth.se>
+
+	* kadmin.8: document get -o and stash
+	
+	* get.c: implement output column selection, similar to ps -o
+	
+	* kadmin-commands.in: make get -l the default again, and add
+	column selection flag; sync list with get
+	
+2004-06-24  Johan Danielsson  <joda@pdc.kth.se>
+
+	* kadmin-commands.in: mod needs default kvno of -1
+	
+2004-06-21  Johan Danielsson  <joda@pdc.kth.se>
+	
+	* kadmin: convert to use slc; also add stash subcommand
+
+2004-06-15  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* kadmin.c (main): keytab mode requires principal name
+	
+2004-06-12  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* kadmind.c: drop keyfile, not used, found by
+	Elrond <elrond@samba-tng.org>
+	
+	* kadmin.c: if keyfile is set, pass in to libkadm5 bug pointed out
+	by Elrond <elrond@samba-tng.org>
+	
+2004-05-31  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* kadmin.c: add --ad flag, XXX rewrite the init kadm5 interface
+	
+2004-05-13  Johan Danielsson  <joda@pdc.kth.se>
+
+	* nuke kerberos 4 kadmin goo
+
+2004-05-07  Johan Danielsson  <joda@pdc.kth.se>
+
+	* util.c (str2time_t): fix end-of-day logic, from Duncan
+	McEwan/Mark Davies.
+
 2004-04-29  Love Hörquist Åstrand  <lha@it.su.se>
 
-	* version4.c: 1.30: (handle_v4): make sure length is longer then
-	2, Pointed out by Evgeny Demidov <demidov@gleg.net>
+	* version4.c (handle_v4): make sure length is longer then 2,
+	Pointed out by Evgeny Demidov <demidov@gleg.net>
 	
-	* kadmind.c: 1.31: make kerberos4 support default turned off
+	* kadmind.c: make kerberos4 support default turned off
+	
+2004-03-24  Johan Danielsson  <joda@pdc.kth.se>
+
+	* kadmin.8: update manpage
+	
+	* mod.c: allow wildcarding principals, and make parameters a work
+	same as if prompted
+	
+2004-03-08  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* kadmin.8: document password-quality
+	
+	* kadmin_locl.h: add prototype for password_quality
+	
+	* kadmin.c: add password-quality/pwq command
+	
+	* Makefile.am: kadmin_SOURCES += pw_quality.c
+	
+	* pw_quality.c: test run the password quality function
+	
+2004-03-07  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* ank.c (add_one_principal): even though the principal is disabled
+	(creation of random key/keydata), create it with a random password
+	
+2003-12-07  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* init.c (create_random_entry): print error message on failure
+	
+	* ank.c (add_one_principal): pass right argument to
+	kadm5_free_principal_ent From Panasas, Inc
+	
+2003-11-18  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* kadmind.c (main): move opening the logfile to after reading
+	kdc.conf move the loading of hdb keytab ops closer to where its
+	used From: Jeffrey Hutzelman <jhutz@cmu.edu>
+	
+2003-10-04  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* util.c (str2time_t): allow whitespace between date and time
+	From: Bob Beck <beck@cvs.openbsd.org> and adharw@yahoo.com
+	
+2003-09-03  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* ank.c: s/des_read_pw_string/UI_UTIL_read_pw_string/
+	
+	* cpw.c: s/des_read_pw_string/UI_UTIL_read_pw_string/
+	
+2003-08-21  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* get.c (print_entry_terse): handle error when unparsing name
+	
+2003-08-18  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* kadmind.c (main): use krb5_prepend_config_files_default, now all
+	options in kdc.conf is parsed, not just [kdc]key-file=
+	
+	* kadmin.c (main): use krb5_prepend_config_files_default, now all
+	options in kdc.conf is parsed, not just [kdc]key-file=
 	
 2003-04-14  Love Hörquist Åstrand  <lha@it.su.se>
 
@@ -35,6 +231,25 @@
 	user's own password kadm_chpass_with_key: disallow the user to
 	change it own password to a key, since that password might violate
 	the password quality check.
+
+2002-12-03  Johan Danielsson  <joda@pdc.kth.se>
+
+	* util.c (get_response): print a newline if interrupted
+
+	* mod.c (mod_entry): check return value from edit_entry
+
+	* ank.c (add_one_principal): check return value from edit_entry
+
+	* ank.c (add_one_principal): don't continue if create_principal
+	fails
+
+	* init.c: check return value from edit_deltat
+
+	* init.c: add --help
+
+2002-10-29  Johan Danielsson  <joda@pdc.kth.se>
+
+	* version4.c: speling (from Tomas Olsson)
 
 2002-10-23  Assar Westerlund  <assar@kth.se>
 

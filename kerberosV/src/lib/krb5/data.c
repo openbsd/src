@@ -33,30 +33,30 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: data.c,v 1.17 2003/03/25 22:07:17 lha Exp $");
+RCSID("$KTH: data.c,v 1.19 2004/05/25 21:22:23 lha Exp $");
 
-void
+void KRB5_LIB_FUNCTION
 krb5_data_zero(krb5_data *p)
 {
     p->length = 0;
     p->data   = NULL;
 }
 
-void
+void KRB5_LIB_FUNCTION
 krb5_data_free(krb5_data *p)
 {
     if(p->data != NULL)
 	free(p->data);
-    p->length = 0;
+    krb5_data_zero(p);
 }
 
-void 
+void KRB5_LIB_FUNCTION 
 krb5_free_data_contents(krb5_context context, krb5_data *data)
 {
     krb5_data_free(data);
 }
 
-void
+void KRB5_LIB_FUNCTION
 krb5_free_data(krb5_context context,
 	       krb5_data *p)
 {
@@ -64,7 +64,7 @@ krb5_free_data(krb5_context context,
     free(p);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_data_alloc(krb5_data *p, int len)
 {
     p->data = malloc(len);
@@ -74,7 +74,7 @@ krb5_data_alloc(krb5_data *p, int len)
     return 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_data_realloc(krb5_data *p, int len)
 {
     void *tmp;
@@ -86,7 +86,7 @@ krb5_data_realloc(krb5_data *p, int len)
     return 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_data_copy(krb5_data *p, const void *data, size_t len)
 {
     if (len) {
@@ -99,7 +99,7 @@ krb5_data_copy(krb5_data *p, const void *data, size_t len)
     return 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_copy_data(krb5_context context, 
 	       const krb5_data *indata, 
 	       krb5_data **outdata)

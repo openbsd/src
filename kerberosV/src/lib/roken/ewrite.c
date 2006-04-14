@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: ewrite.c,v 1.2 1999/12/02 16:58:45 joda Exp $");
+RCSID("$KTH: ewrite.c,v 1.3 2005/04/12 11:28:39 lha Exp $");
 #endif
 
 #include <unistd.h>
@@ -45,7 +45,7 @@ RCSID("$KTH: ewrite.c,v 1.2 1999/12/02 16:58:45 joda Exp $");
  * Like write but never fails (and never returns partial data).
  */
 
-ssize_t
+ssize_t ROKEN_LIB_FUNCTION
 ewrite (int fd, const void *buf, size_t nbytes)
 {
     ssize_t ret;

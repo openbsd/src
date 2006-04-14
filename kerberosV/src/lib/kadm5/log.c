@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$KTH: log.c,v 1.20 2003/04/16 17:56:55 lha Exp $");
+RCSID("$KTH: log.c,v 1.21 2003/09/19 00:24:05 lha Exp $");
 
 /*
  * A log record consists of:
@@ -276,7 +276,7 @@ kadm5_log_replay_create (kadm5_server_context *context,
     krb5_data_free(&data);
     if (ret)
 	return ret;
-    ret = context->db->store(context->context, context->db, 0, &ent);
+    ret = context->db->hdb_store(context->context, context->db, 0, &ent);
     hdb_free_entry (context->context, &ent);
     return ret;
 }
@@ -341,7 +341,7 @@ kadm5_log_replay_delete (kadm5_server_context *context,
 
     krb5_ret_principal (sp, &ent.principal);
 
-    ret = context->db->remove(context->context, context->db, &ent);
+    ret = context->db->hdb_remove(context->context, context->db, &ent);
     krb5_free_principal (context->context, ent.principal);
     return ret;
 }
@@ -435,14 +435,15 @@ kadm5_log_replay_rename (kadm5_server_context *context,
 	krb5_free_principal (context->context, source);
 	return ret;
     }
-    ret = context->db->store (context->context, context->db, 0, &target_ent);
+    ret = context->db->hdb_store (context->context, context->db, 
+				  0, &target_ent);
     hdb_free_entry (context->context, &target_ent);
     if (ret) {
 	krb5_free_principal (context->context, source);
 	return ret;
     }
     source_ent.principal = source;
-    ret = context->db->remove (context->context, context->db, &source_ent);
+    ret = context->db->hdb_remove (context->context, context->db, &source_ent);
     krb5_free_principal (context->context, source);
     return ret;
 }
@@ -525,8 +526,8 @@ kadm5_log_replay_modify (kadm5_server_context *context,
 	return ret;
     ent.principal = log_ent.principal;
     log_ent.principal = NULL;
-    ret = context->db->fetch(context->context, context->db, 
-			     HDB_F_DECRYPT, &ent);
+    ret = context->db->hdb_fetch(context->context, context->db, 
+				 HDB_F_DECRYPT, &ent);
     if (ret)
 	return ret;
     if (mask & KADM5_PRINC_EXPIRE_TIME) {
@@ -618,8 +619,8 @@ kadm5_log_replay_modify (kadm5_server_context *context,
 	    copy_Key(&log_ent.keys.val[i],
 		     &ent.keys.val[i]);
     }
-    ret = context->db->store(context->context, context->db, 
-			     HDB_F_REPLACE, &ent);
+    ret = context->db->hdb_store(context->context, context->db, 
+				 HDB_F_REPLACE, &ent);
     hdb_free_entry (context->context, &ent);
     hdb_free_entry (context->context, &log_ent);
     return ret;

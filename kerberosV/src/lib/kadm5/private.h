@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: private.h,v 1.15 2002/08/16 20:57:44 joda Exp $ */
+/* $KTH: private.h,v 1.16 2004/05/26 16:55:25 lha Exp $ */
 
 #ifndef __kadm5_privatex_h__
 #define __kadm5_privatex_h__
@@ -107,6 +107,20 @@ typedef struct kadm5_client_context {
     krb5_ccache ccache;
     kadm5_config_params *realm_params;
 }kadm5_client_context;
+
+typedef struct kadm5_ad_context {
+    krb5_context context;
+    krb5_boolean my_context;
+    struct kadm_func funcs;
+    /* */
+    kadm5_config_params config;
+    krb5_principal caller;
+    krb5_ccache ccache;
+    char *client_name;
+    char *realm;
+    void *ldap_conn;
+    char *base_dn;
+} kadm5_ad_context;
 
 enum kadm_ops {
     kadm_get,

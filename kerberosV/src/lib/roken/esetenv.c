@@ -33,14 +33,14 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: esetenv.c,v 1.3 2001/01/27 05:28:38 assar Exp $");
+RCSID("$KTH: esetenv.c,v 1.4 2005/04/12 11:28:39 lha Exp $");
 #endif
 
 #include "roken.h"
 
 #include <err.h>
 
-void
+void ROKEN_LIB_FUNCTION
 esetenv(const char *var, const char *val, int rewrite)
 {
     if (setenv ((char *)var, (char *)val, rewrite))

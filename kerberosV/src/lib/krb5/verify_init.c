@@ -33,15 +33,15 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: verify_init.c,v 1.17 2002/08/20 14:47:59 joda Exp $");
+RCSID("$KTH: verify_init.c,v 1.18 2004/05/25 21:45:47 lha Exp $");
 
-void
+void KRB5_LIB_FUNCTION
 krb5_verify_init_creds_opt_init(krb5_verify_init_creds_opt *options)
 {
     memset (options, 0, sizeof(*options));
 }
 
-void
+void KRB5_LIB_FUNCTION
 krb5_verify_init_creds_opt_set_ap_req_nofail(krb5_verify_init_creds_opt *options,
 					     int ap_req_nofail)
 {
@@ -69,7 +69,7 @@ fail_verify_is_ok (krb5_context context,
 	return TRUE;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_verify_init_creds(krb5_context context,
 		       krb5_creds *creds,
 		       krb5_principal ap_req_server,

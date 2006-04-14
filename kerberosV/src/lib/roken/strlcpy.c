@@ -36,11 +36,11 @@
 #endif
 #include "roken.h"
 
-RCSID("$KTH: strlcpy.c,v 1.6 2002/08/20 09:42:08 joda Exp $");
+RCSID("$KTH: strlcpy.c,v 1.7 2005/04/12 11:29:09 lha Exp $");
 
 #ifndef HAVE_STRLCPY
 
-size_t
+size_t ROKEN_LIB_FUNCTION
 strlcpy (char *dst, const char *src, size_t dst_sz)
 {
     size_t n;

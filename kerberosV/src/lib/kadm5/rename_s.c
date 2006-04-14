@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$KTH: rename_s.c,v 1.11 2001/01/30 01:24:29 assar Exp $");
+RCSID("$KTH: rename_s.c,v 1.13 2003/12/08 14:29:22 lha Exp $");
 
 kadm5_ret_t
 kadm5_s_rename_principal(void *server_handle, 
@@ -46,14 +46,12 @@ kadm5_s_rename_principal(void *server_handle,
     ent.principal = source;
     if(krb5_principal_compare(context->context, source, target))
 	return KADM5_DUP; /* XXX is this right? */
-    if(!krb5_realm_compare(context->context, source, target))
-	return KADM5_FAILURE; /* XXX better code */
-    ret = context->db->open(context->context, context->db, O_RDWR, 0);
+    ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
     if(ret)
 	return ret;
-    ret = context->db->fetch(context->context, context->db, 0, &ent);
+    ret = context->db->hdb_fetch(context->context, context->db, 0, &ent);
     if(ret){
-	context->db->close(context->context, context->db);
+	context->db->hdb_close(context->context, context->db);
 	goto out;
     }
     ret = _kadm5_set_modifier(context, &ent);
@@ -92,15 +90,15 @@ kadm5_s_rename_principal(void *server_handle,
 		      source,
 		      &ent);
 
-    ret = context->db->store(context->context, context->db, 0, &ent);
+    ret = context->db->hdb_store(context->context, context->db, 0, &ent);
     if(ret){
 	ent.principal = ent2.principal;
 	goto out2;
     }
-    ret = context->db->remove(context->context, context->db, &ent2);
+    ret = context->db->hdb_remove(context->context, context->db, &ent2);
     ent.principal = ent2.principal;
 out2:
-    context->db->close(context->context, context->db);
+    context->db->hdb_close(context->context, context->db);
     hdb_free_entry(context->context, &ent);
 out:
     return _kadm5_error_code(ret);

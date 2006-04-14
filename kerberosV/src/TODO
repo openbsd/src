@@ -1,6 +1,6 @@
 -*- indented-text -*-
 
-$KTH: TODO,v 1.67 2003/03/20 20:00:53 lha Exp $
+$KTH: TODO,v 1.70 2004/01/05 13:32:01 lha Exp $
 
 * configure
 
@@ -32,6 +32,11 @@ figure out what's the deal with do_sequence and the MIT client
 
 prepend a prefix on all generated symbols
 
+implicit optional CONS types
+
+untag optional
+
+
 ** lib/auth
 
 ** lib/auth/sia
@@ -50,7 +55,14 @@ make everything work with openssl and make prototypes compatible
 
 anonymous credentials not implemented
 
-add rc4
+gss_acquire_cred(GSS_C_BOTH) with a keytab only, gss_add_cred,
+gss_release_cred renders the output_cred_handle broken.
+
+cache delegation credentials to avoid hitting the kdc ?  require time
+stampless tickets, and was supported in the recv'ing end with 0.6.1.
+
+flag to look at ok-to-delegate even if GSS_C_DELEG_FLAG was set
+(limited to some target domains).
 
 ** lib/hdb
 
@@ -62,12 +74,13 @@ fix to use rpc?
 
 ** lib/krb5
 
+iv for aes
+
 the replay cache is, in its current state, not very useful
 
 OTP?
 
-make checksum/encryption type configuration more realm-specific.  make
-some simple way of handling the w2k situtation
+make checksum/encryption type configuration more realm-specific.
 
 crypto: allow scatter/gather creation of checksums
 

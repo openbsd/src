@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 2000,2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -30,9 +30,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+/* $KTH: rtbl.h,v 1.5 2005/04/12 11:29:03 lha Exp $ */
 
 #ifndef __rtbl_h__
 #define __rtbl_h__
+
+#ifndef ROKEN_LIB_FUNCTION
+#ifdef _WIN32
+#define ROKEN_LIB_FUNCTION _stdcall
+#else
+#define ROKEN_LIB_FUNCTION
+#endif
+#endif
 
 struct rtbl_data;
 typedef struct rtbl_data *rtbl_t;
@@ -40,18 +49,49 @@ typedef struct rtbl_data *rtbl_t;
 #define RTBL_ALIGN_LEFT		0
 #define RTBL_ALIGN_RIGHT	1
 
-rtbl_t rtbl_create (void);
+/* flags */
+#define RTBL_HEADER_STYLE_NONE	1
 
-void rtbl_destroy (rtbl_t);
+int ROKEN_LIB_FUNCTION
+rtbl_add_column (rtbl_t, const char*, unsigned int);
 
-int rtbl_set_prefix (rtbl_t, const char*);
+int ROKEN_LIB_FUNCTION
+rtbl_add_column_by_id (rtbl_t, unsigned int, const char*, unsigned int);
 
-int rtbl_set_column_prefix (rtbl_t, const char*, const char*);
+int ROKEN_LIB_FUNCTION
+rtbl_add_column_entry (rtbl_t, const char*, const char*);
 
-int rtbl_add_column (rtbl_t, const char*, unsigned int);
+int ROKEN_LIB_FUNCTION
+rtbl_add_column_entry_by_id (rtbl_t, unsigned int, const char*);
 
-int rtbl_add_column_entry (rtbl_t, const char*, const char*);
+rtbl_t ROKEN_LIB_FUNCTION
+rtbl_create (void);
 
-int rtbl_format (rtbl_t, FILE*);
+void ROKEN_LIB_FUNCTION
+rtbl_destroy (rtbl_t);
+
+int ROKEN_LIB_FUNCTION
+rtbl_format (rtbl_t, FILE*);
+
+unsigned int ROKEN_LIB_FUNCTION
+rtbl_get_flags (rtbl_t);
+
+int ROKEN_LIB_FUNCTION
+rtbl_new_row (rtbl_t);
+
+int ROKEN_LIB_FUNCTION
+rtbl_set_column_affix_by_id (rtbl_t, unsigned int, const char*, const char*);
+
+int ROKEN_LIB_FUNCTION
+rtbl_set_column_prefix (rtbl_t, const char*, const char*);
+
+void ROKEN_LIB_FUNCTION
+rtbl_set_flags (rtbl_t, unsigned int);
+
+int ROKEN_LIB_FUNCTION
+rtbl_set_prefix (rtbl_t, const char*);
+
+int ROKEN_LIB_FUNCTION
+rtbl_set_separator (rtbl_t, const char*);
 
 #endif /* __rtbl_h__ */

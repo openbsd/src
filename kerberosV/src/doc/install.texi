@@ -1,4 +1,4 @@
-@c $KTH: install.texi,v 1.18 2002/09/04 03:18:48 assar Exp $
+@c $KTH: install.texi,v 1.19 2003/07/18 08:04:58 lha Exp $
 
 @node Building and Installing, Setting up a realm, What is Kerberos?, Top
 @comment  node-name,  next,  previous,  up
@@ -84,7 +84,7 @@ Disable the IPv6 support.
 @item @kbd{--with-openldap}
 Compile Heimdal with support for storing the database in LDAP.  Requires
 OpenLDAP @url{http://www.openldap.org}.  See
-@url{http://www.padl.com/~lukeh/heimdal/} for more information.
+@url{http://www.padl.com/Research/Heimdal.html} for more information.
 
 @item @kbd{--enable-bigendian}
 @item @kbd{--enable-littleendian}

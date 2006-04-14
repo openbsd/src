@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$KTH: delete_sec_context.c,v 1.11 2003/03/16 17:46:40 lha Exp $");
+RCSID("$KTH: delete_sec_context.c,v 1.15 2005/04/27 17:48:17 lha Exp $");
 
 OM_uint32 gss_delete_sec_context
            (OM_uint32 * minor_status,
@@ -48,6 +48,8 @@ OM_uint32 gss_delete_sec_context
 	output_token->value  = NULL;
     }
 
+    HEIMDAL_MUTEX_lock(&(*context_handle)->ctx_id_mutex);
+
     krb5_auth_con_free (gssapi_krb5_context,
 			(*context_handle)->auth_context);
     if((*context_handle)->source)
@@ -56,12 +58,15 @@ OM_uint32 gss_delete_sec_context
     if((*context_handle)->target)
 	krb5_free_principal (gssapi_krb5_context,
 			     (*context_handle)->target);
-    if ((*context_handle)->ticket) {
+    if ((*context_handle)->ticket)
 	krb5_free_ticket (gssapi_krb5_context,
 			  (*context_handle)->ticket);
-	free((*context_handle)->ticket);
-    }
+    if((*context_handle)->order)
+	_gssapi_msg_order_destroy(&(*context_handle)->order);
 
+    HEIMDAL_MUTEX_unlock(&(*context_handle)->ctx_id_mutex);
+    HEIMDAL_MUTEX_destroy(&(*context_handle)->ctx_id_mutex);
+    memset(*context_handle, 0, sizeof(**context_handle));
     free (*context_handle);
     *context_handle = GSS_C_NO_CONTEXT;
     *minor_status = 0;

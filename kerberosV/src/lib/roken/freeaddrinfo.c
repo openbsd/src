@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: freeaddrinfo.c,v 1.4 2001/05/11 09:10:32 joda Exp $");
+RCSID("$KTH: freeaddrinfo.c,v 1.5 2005/04/12 11:28:41 lha Exp $");
 #endif
 
 #include "roken.h"
@@ -42,7 +42,7 @@ RCSID("$KTH: freeaddrinfo.c,v 1.4 2001/05/11 09:10:32 joda Exp $");
  * free the list of `struct addrinfo' starting at `ai'
  */
 
-void
+void ROKEN_LIB_FUNCTION
 freeaddrinfo(struct addrinfo *ai)
 {
     struct addrinfo *tofree;

@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: recvauth.c,v 1.16 2002/04/18 09:41:33 joda Exp $");
+RCSID("$KTH: recvauth.c,v 1.17 2004/05/25 21:40:56 lha Exp $");
 
 /*
  * See `sendauth.c' for the format.
@@ -45,7 +45,7 @@ match_exact(const void *data, const char *appl_version)
     return strcmp(data, appl_version) == 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_recvauth(krb5_context context,
 	      krb5_auth_context *auth_context,
 	      krb5_pointer p_fd,
@@ -61,7 +61,7 @@ krb5_recvauth(krb5_context context,
 				       keytab, ticket);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_recvauth_match_version(krb5_context context,
 			    krb5_auth_context *auth_context,
 			    krb5_pointer p_fd,

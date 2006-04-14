@@ -33,7 +33,7 @@
 
 #include "gen_locl.h"
 
-RCSID("$KTH: gen_length.c,v 1.11.6.1 2004/01/26 09:26:10 lha Exp $");
+RCSID("$KTH: gen_length.c,v 1.14 2004/01/19 17:54:33 lha Exp $");
 
 static void
 length_primitive (const char *typename,
@@ -146,9 +146,18 @@ length_type (const char *name, const Type *t, const char *variable)
     case TGeneralString:
 	length_primitive ("general_string", name, variable);
 	break;
+    case TUTF8String:
+	length_primitive ("utf8string", name, variable);
+	break;
+    case TNull:
+	fprintf (codefile, "%s += length_nulltype();\n", variable);
+	break;
     case TApplication:
 	length_type (name, t->subtype, variable);
 	fprintf (codefile, "ret += 1 + length_len (ret);\n");
+	break;
+    case TBoolean:
+	length_primitive ("boolean", name, variable);
 	break;
     default :
 	abort ();

@@ -1,4 +1,4 @@
-@c $KTH: whatis.texi,v 1.5 2001/01/28 22:11:23 assar Exp $
+@c $KTH: whatis.texi,v 1.8 2005/04/24 21:48:45 lha Exp $
 
 @node What is Kerberos?, Building and Installing, Introduction, Top
 @chapter What is Kerberos?
@@ -46,8 +46,16 @@ services can authenticate each other.
 @end macro
 @end ifhtml
 
+@c ifdocbook
+@c macro sub{arg}
+@c docbook
+@c <subscript>\arg\</subscript>
+@c end docbook
+@c end macro
+@c end ifdocbook
+
 @quotation
-@strong{Note:} This discussion is about Kerberos version 4, but version
+@strong{Note} This discussion is about Kerberos version 4, but version
 5 works similarly.
 @end quotation
 

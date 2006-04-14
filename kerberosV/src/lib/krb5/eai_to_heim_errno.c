@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$KTH: eai_to_heim_errno.c,v 1.3.8.1 2004/02/13 16:15:16 lha Exp $");
+RCSID("$KTH: eai_to_heim_errno.c,v 1.5 2004/05/25 21:23:35 lha Exp $");
 
 /*
  * convert the getaddrinfo error code in `eai_errno' into a
@@ -41,7 +41,7 @@ RCSID("$KTH: eai_to_heim_errno.c,v 1.3.8.1 2004/02/13 16:15:16 lha Exp $");
  * after the failed call.
  */
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_eai_to_heim_errno(int eai_errno, int system_error)
 {
     switch(eai_errno) {
@@ -78,7 +78,7 @@ krb5_eai_to_heim_errno(int eai_errno, int system_error)
     }
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_h_errno_to_heim_errno(int eai_errno)
 {
     switch(eai_errno) {

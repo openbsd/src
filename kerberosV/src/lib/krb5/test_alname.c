@@ -34,10 +34,10 @@
 #include <getarg.h>
 #include <err.h>
 
-RCSID("$KTH: test_alname.c,v 1.4 2003/04/17 05:46:45 lha Exp $");
+RCSID("$KTH: test_alname.c,v 1.5 2005/03/31 00:44:37 lha Exp $");
 
 static void
-test_alname(krb5_context context, krb5_realm realm,
+test_alname(krb5_context context, krb5_const_realm realm,
 	    const char *user, const char *inst, 
 	    const char *localuser, int ok)
 {

@@ -1,3 +1,60 @@
+Changes in release 0.7.2
+
+* Fix security problem in rshd that enable an attacker to overwrite
+  and change ownership of any file that root could write.
+
+* Fix a DOS in telnetd. The attacker could force the server to crash
+  in a NULL de-reference before the user logged in, resulting in inetd
+  turning telnetd off because it forked too fast.
+
+* Make gss_acquire_cred(GSS_C_ACCEPT) check that the requested name
+  exists in the keytab before returning success. This allows servers
+  to check if its even possible to use GSSAPI.
+
+* Fix receiving end of token delegation for GSS-API. It still wrongly
+  uses subkey for sending for compatibility reasons, this will change
+  in 0.8.
+
+* telnetd, login and rshd are now more verbose in logging failed and
+  successful logins.
+
+* Bug fixes
+
+Changes in release 0.7.1
+
+* Bug fixes
+
+Changes in release 0.7
+
+ * Support for KCM, a process based credential cache
+
+ * Support CCAPI credential cache
+
+ * SPNEGO support
+
+ * AES (and the gssapi conterpart, CFX) support
+
+ * Adding new and improve old documentation
+
+ * Bug fixes
+
+Changes in release 0.6.5
+
+ * fix vulnerabilities in telnetd
+
+ * unbreak Kerberos 4 and kaserver
+
+Changes in release 0.6.4
+
+ * fix vulnerabilities in telnet
+
+ * rshd: encryption without a separate error socket should now work
+
+ * telnet now uses appdefaults for the encrypt and forward/forwardable
+   settings
+
+ * bug fixes
+
 Changes in release 0.6.3
 
  * fix vulnerabilities in ftpd

@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: getaddrinfo.c,v 1.12 2001/08/17 13:06:57 joda Exp $");
+RCSID("$KTH: getaddrinfo.c,v 1.13 2005/04/12 11:28:43 lha Exp $");
 #endif
 
 #include "roken.h"
@@ -368,7 +368,7 @@ get_nodes (const char *nodename,
  * };
  */
 
-int
+int ROKEN_LIB_FUNCTION
 getaddrinfo(const char *nodename,
 	    const char *servname,
 	    const struct addrinfo *hints,

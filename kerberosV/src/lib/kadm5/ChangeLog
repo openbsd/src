@@ -1,35 +1,345 @@
-2003-12-30  Love Hörnquist Åstrand <lha@it.su.se>
+2006-02-02  Love Hörnquist Åstrand  <lha@it.su.se>
 
-	* chpass_s.c: from 1.14->1.15:
-	(change): fix same-password-again by decrypting keys and setting
-	an error code. From: Buck Huppmann <buckh@pobox.com>
+	* kadm5_err.et: 1.7: (PASS_REUSE): Spelling, from Václav H?la
+	<ax@natur.cuni.cz>
 	
-2003-12-21  Love Hörnquist Åstrand <lha@it.su.se>
+2005-05-30  Love Hörnquist Åstrand  <lha@it.su.se>
 
-	* init_c.c: 1.47->1.48: (_kadm5_c_init_context): catch errors from
-	strdup and other krb5_ functions
+	* ent_setup.c (attr_to_flags): check for KRB5_KDB_OK_AS_DELEGATE
 	
-2003-08-15  Love Hörnquist Åstrand <lha@it.su.se>
+	* get_s.c (kadm5_s_get_principal): set KRB5_KDB_OK_AS_DELEGATE
 
-	* ipropd_slave.c: 1.27->1.28: (receive_everything): switch close
-	and rename From: Alf Wachsmann <alfw@SLAC.Stanford.EDU>
+	* admin.h: add KRB5_KDB_OK_AS_DELEGATE, sync KRB5_TL_ flags
+
+2005-05-25  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* kadm5_pwcheck.3: please mdoclint
+
+2005-05-25  Dave Love  <fx@gnu.org>
+
+	* kadm5_pwcheck.3: document kadm5_add_passwd_quality_verifier,
+	improve text
+
+2005-05-24  Dave Love  <fx@gnu.org>
+
+	* iprop.8: Added some info about defaults, fixed some markup.
 	
-2003-04-16  Love Hörnquist Åstrand <lha@it.su.se>
+2005-05-23  Dave Love  <fx@gnu.org>
+
+	* ipropd_slave.c: Don't test HAVE_DAEMON since roken supplies it.
+
+	* ipropd_master.c: Don't test HAVE_DAEMON since roken supplies it.
+
+2005-05-13  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* init_c.c (_kadm5_c_init_context): fix memory leak in case of
+	failure
+
+2005-05-09  Dave Love  <fx@gnu.org>
+
+	* password_quality.c (find_func): Fix off-by-one and logic error.
+	(external_passwd_quality): Improve messages.
+
+	* test_pw_quality.c (main): Call kadm5_setup_passwd_quality_check
+	and kadm5_add_passwd_quality_verifier.
+
+2005-04-30  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* default_keys.c: #include <err.h>, only print salt it its longer
+	then 0, use krb5_err instead of errx where appropriate
+	
+2005-04-25  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* ipropd_slave.c: add the documented option --port
+
+	* ipropd_master.c: add the documented option --port
+	
+	* dump_log.c: use the newly generated units function
+
+2005-04-24  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* dump_log.c: use strlcpy
+	
+	* password_quality.c: don't use sizeof(pointer)
+	
+2005-04-15  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* check-cracklib.pl: external password verifier sample
+
+	* password_quality.c (kadm5_add_passwd_quality_verifier): if NULL
+	is passed in, load defaults
+
+2005-04-14  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* password_quality.c: add an end tag to the external password
+	quality check protocol
+
+2005-04-13  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* password_quality.c: add external passsword quality check builtin
+	module
+	
+	[password_quality]
+		policies = external-check
+		external-program = /bin/false
+	
+	To approve password a, make the test program return APPROVED on
+	stderr and fail with exit code 0.
+	
+2004-10-12  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* Makefile.am: bump version to 7:7:0 and 6:5:2
+	
+	* default_keys.c (parse_file): use hdb_generate_key_set
+	
+	* keys.c,set_keys.c: Move keyset parsing and password based keyset
+	generation into hdb.  Requested by Andrew Bartlett <abartlet@samba.org>
+	for hdb-ldb backend.
+	
+2004-09-23  Johan Danielsson  <joda@pdc.kth.se>
+
+	* ipropd_master.c: add help strings to some options
+	
+2004-09-12  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* chpass_s.c: deal with changed prototype for _kadm5_free_keys
+	
+	* keys.c (_kadm5_free_keys): change prototype, make it use
+	krb5_context instead of a kadm5_server_context
+	
+	* set_keys.c (parse_key_set): do way with static returning
+	(function) static variable and returned allocated memory
+	(_kadm5_generate_key_set): free enctypes returned by parse_key_set
+
+2004-09-06  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* set_keys.c: Fix memory leak, don't return stack variables From
+	Andrew Bartlett
+	
+	* set_keys.c: make all_etypes const and move outside function to
+	avoid returning data on stack
+	
+2004-08-26  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* acl.c (fetch_acl): use " \t\n" instead of just "\n" for the
+	delim of the third element, this is so we can match
+	"foo@REALM<SPC>all<SPC><SPC>*@REALM", before it just matched
+	"foo@REALM<SPC>all<SPC>*@REALM", but that is kind of lucky since
+	what really happen was that the last <SPC> was stamped out, and
+	the it never strtok_r never needed to parse over it.
+	
+2004-08-25  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* set_keys.c (_kadm5_generate_key_set): since arcfour-hmac-md5 is
+	without salting, some people tries to add the string
+	"arcfour-hmac-md5" when they really should have used
+	"arcfour-hmac-md5:pw-salt", help them and add glue for that
+	
+2004-08-18  Johan Danielsson  <joda@pdc.kth.se>
+
+	* ipropd_slave.c: add --detach
+
+2004-07-06  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* ad.c: use new tsasl interface remove debug printf add upn to
+	computer-accounts
+	
+2004-06-28  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* ad.c: implement kadm5_ad_init_with_password_ctx set more error
+	strings
+	
+2004-06-21  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* Makefile.am: man_MANS = kadm5_pwcheck.3
+	
+	* kadm5_pwcheck.3: document new password quality api
+	
+	* password_quality.c: new password check interface (old still
+	supported)
+	
+	* kadm5-pwcheck.h: new password check interface
+	
+2004-06-08  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* ipropd_master.c (main): process all slaves, not just up to the
+	last slave sending data
+	(bug report from Björn Sandell <biorn@dce.chalmers.se>)
+	(*): only send one ARE_YOU_THERE
+
+2004-06-02  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* ad.c: use krb5_set_password_using_ccache
+	
+2004-06-01  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* ad.c: try handle spn's better
+	
+2004-05-31  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* ad.c: add expiration time
+	
+	* ad.c: add modify operations
+	
+	* ad.c: handle create and delete
+	
+2004-05-27  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* ad.c: more code for get, handle attributes
+	
+	* ad.c: more code for get, handle time stamps and bad password
+	counter
+
+	* ad.c: more code for get, only fetches kvno for now
+	
+2004-05-26  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* ad.c: add support for tsasl
+	
+	* private.h: add kadm5_ad_context
+	
+	* ipropd_master.c (prop_one): store the opcode in the begining of
+	the blob, not the end
+	
+	* ad.c: try all ldap servers in dns, generate a random password,
+	base64(random_block(64)), XXX must make it support other then
+	ARCFOUR
+	
+	* ad.c: framework for windows AD backend
+	
+2004-03-07  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* create_s.c (kadm5_s_create_principal): remove old XXX command
+	and related code, _kadm5_set_keys will do all this now
+	
+2004-02-29  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* set_keys.c (_kadm5_set_keys_randomly): make sure enctype to copy
+	enctype for des keys From: Andrew Bartlett <abartlet@samba.org>
+	
+	* create_s.c (kadm5_s_create_principal_with_key): don't call
+	_kadm5_set_keys2, create_principal will do that for us. Set kvno
+	to 1.
+
+	* chpass_s.c (change): bump kvno
+	(kadm5_s_chpass_principal_with_key): bump kvno
+
+	* randkey_s.c (kadm5_s_randkey_principal): bump kvno
+	
+	* set_keys.c (_kadm5_set_*): don't change the kvno, let the callee
+	to that
+
+2003-12-30  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* chpass_s.c (change): fix same-password-again by decrypting keys
+	and setting an error code From: Buck Huppmann <buckh@pobox.com>
+	
+2003-12-21  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* init_c.c (_kadm5_c_init_context): catch errors from strdup and
+	other krb5_ functions
+
+2003-12-08  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* rename_s.c (kadm5_s_rename_principal): allow principal to change
+	realm From Panasas Inc
+	
+2003-12-07  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* destroy_c.c (kadm5_c_destroy): fix memory leaks, From Panasas,
+	Inc
+
+2003-11-23  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* iprop.h: don't include <krb5-private.h>
+	
+	* ipropd_slave.c: stop using krb5 lib private byte-frobbing
+	functions and replace them with with krb5_storage
+	
+	* ipropd_master.c: stop using krb5 lib private byte-frobbing
+	functions and replace them with with krb5_storage
+	
+2003-11-19  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* ipropd_slave.c (receive_loop): when seeking over the entries we
+	already have, skip over the trailer.  From: Jeffrey Hutzelman
+	<jhutz@cmu.edu>
+
+	* dump_log.c,ipropd_master.c,ipropd_slave.c,
+	replay_log.c,truncate_log.c: parse kdc.conf
+	From: Jeffrey Hutzelman <jhutz@cmu.edu>
+
+2003-10-10  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* Makefile.am: += test_pw_quality
+	
+	* test_pw_quality.c: test program for verifying password quality
+	function
+
+2003-09-03  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* Makefile.am: add and enable check program default_keys
+	
+	* default_keys.c: test program for _kadm5_generate_key_set
+	
+	* init_c.c: use
+	krb5_get_init_creds_opt_alloc/krb5_get_init_creds_opt_free
+
+2003-08-17  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* set_keys.c (_kadm5_set_keys_randomly): remove dup return
+	
+	* ipropd_master.c (main): make sure current_version is initialized
+	
+2003-08-15  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* set_keys.c: use default_keys for the both random keys and
+	password derived keys if its defined
+	
+2003-07-24  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* ipropd_slave.c (receive_everything): switch close and rename
+	From: Alf Wachsmann <alfw@SLAC.Stanford.EDU>
+	
+2003-07-03  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* iprop.h, ipropd_master.c, ipropd_slave.c:
+	Add probing from the server that the client is still there, also
+	make the client check that the server is probing.
+
+2003-07-02  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* truncate_log.c (main): add missing ``if (ret)''
+	
+2003-06-26  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* set_keys.c (make_keys): add AES support
+	
+	* set_keys.c: fix off by one in the aes case, pointed out by Ken
+	Raeburn
+
+2003-04-30  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* set_keys.c (_kadm5_set_keys_randomly): add
+	ETYPE_AES256_CTS_HMAC_SHA1_96 key when configuried with aes
+	support
+
+2003-04-16  Love Hörnquist Åstrand  <lha@it.su.se>
 
 	* send_recv.c: check return values from krb5_data_alloc
 	* log.c: check return values from krb5_data_alloc
 	
-2003-04-16  Love Hörnquist Åstrand <lha@it.su.se>
+2003-04-16  Love Hörnquist Åstrand  <lha@it.su.se>
 
 	* dump_log.c (print_entry): check return values from
 	krb5_data_alloc
 
-2003-04-01  Love Hörnquist Åstrand <lha@it.su.se>
+2003-04-01  Love Hörnquist Åstrand  <lha@it.su.se>
 
 	* init_c.c (kadm_connect): if a context realm was passed in, use
 	that to form the kadmin/admin principal
 	
-2003-03-19  Love Hörnquist Åstrand <lha@it.su.se>
+2003-03-19  Love Hörnquist Åstrand  <lha@it.su.se>
 
 	* ipropd_master.c (main): make sure we don't consider dead slave
 	for select processing

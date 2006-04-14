@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: inet_aton.c,v 1.13 1999/12/05 13:26:20 assar Exp $");
+RCSID("$KTH: inet_aton.c,v 1.14 2005/04/12 11:28:52 lha Exp $");
 #endif
 
 #include "roken.h"
@@ -41,7 +41,7 @@ RCSID("$KTH: inet_aton.c,v 1.13 1999/12/05 13:26:20 assar Exp $");
 /* Minimal implementation of inet_aton.
  * Cannot distinguish between failure and a local broadcast address. */
 
-int
+int ROKEN_LIB_FUNCTION
 inet_aton(const char *cp, struct in_addr *addr)
 {
   addr->s_addr = inet_addr(cp);

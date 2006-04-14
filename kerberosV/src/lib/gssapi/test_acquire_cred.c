@@ -28,12 +28,13 @@
  * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include "gssapi_locl.h"
 #include <err.h>
 
-RCSID("$KTH: test_acquire_cred.c,v 1.2 2003/04/06 00:20:37 lha Exp $");
+RCSID("$KTH: test_acquire_cred.c,v 1.5 2004/03/14 13:44:47 lha Exp $");
 
 static void
 print_time(OM_uint32 time_rec)
@@ -41,31 +42,17 @@ print_time(OM_uint32 time_rec)
     if (time_rec == GSS_C_INDEFINITE) {
 	printf("cred never expire\n");
     } else {
-	time_t t = time_rec;
+	time_t t = time_rec + time(NULL);
 	printf("expiration time: %s", ctime(&t));
     }
 }
 
-int
-main(int argc, char **argv)
+static void
+test_add(gss_cred_id_t cred_handle)
 {
     OM_uint32 major_status, minor_status;
-    gss_cred_id_t cred_handle, copy_cred;
+    gss_cred_id_t copy_cred;
     OM_uint32 time_rec;
-
-    major_status = gss_acquire_cred(&minor_status, 
-				    GSS_C_NO_NAME,
-				    0,
-				    NULL,
-				    GSS_C_INITIATE,
-				    &cred_handle,
-				    NULL,
-				    &time_rec);
-    if (GSS_ERROR(major_status))
-	errx(1, "acquire_cred failed");
-	
-
-    print_time(time_rec);
 
     major_status = gss_add_cred (&minor_status,
 				 cred_handle,
@@ -85,12 +72,37 @@ main(int argc, char **argv)
     print_time(time_rec);
 
     major_status = gss_release_cred(&minor_status,
-				    &cred_handle);
+				    &copy_cred);
     if (GSS_ERROR(major_status))
 	errx(1, "release_cred failed");
+}
+
+int
+main(int argc, char **argv)
+{
+    OM_uint32 major_status, minor_status;
+    gss_cred_id_t cred_handle;
+    OM_uint32 time_rec;
+
+    major_status = gss_acquire_cred(&minor_status, 
+				    GSS_C_NO_NAME,
+				    0,
+				    NULL,
+				    GSS_C_INITIATE,
+				    &cred_handle,
+				    NULL,
+				    &time_rec);
+    if (GSS_ERROR(major_status))
+	errx(1, "acquire_cred failed");
+	
+    print_time(time_rec);
+
+    test_add(cred_handle);
+    test_add(cred_handle);
+    test_add(cred_handle);
 
     major_status = gss_release_cred(&minor_status,
-				    &copy_cred);
+				    &cred_handle);
     if (GSS_ERROR(major_status))
 	errx(1, "release_cred failed");
 

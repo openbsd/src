@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$KTH: inquire_context.c,v 1.5 2003/03/16 17:43:30 lha Exp $");
+RCSID("$KTH: inquire_context.c,v 1.6 2003/05/21 14:52:13 lha Exp $");
 
 OM_uint32 gss_inquire_context (
             OM_uint32 * minor_status,
@@ -49,12 +49,14 @@ OM_uint32 gss_inquire_context (
 {
   OM_uint32 ret;
 
+  HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
+
   if (src_name) {
     ret = gss_duplicate_name (minor_status,
 			      context_handle->source,
 			      src_name);
     if (ret)
-      return ret;
+      goto failed;
   }
 
   if (targ_name) {
@@ -62,11 +64,16 @@ OM_uint32 gss_inquire_context (
 			      context_handle->target,
 			      targ_name);
     if (ret)
-      return ret;
+	goto failed;
   }
 
-  if (lifetime_rec)
-    *lifetime_rec = context_handle->lifetime;
+  if (lifetime_rec) {
+      ret = gssapi_lifetime_left(minor_status, 
+				 context_handle->lifetime,
+				 lifetime_rec);
+      if (ret)
+	  goto failed;
+  }
 
   if (mech_type)
     *mech_type = GSS_KRB5_MECHANISM;
@@ -81,5 +88,10 @@ OM_uint32 gss_inquire_context (
     *open_context = context_handle->more_flags & OPEN;
 
   *minor_status = 0;
-  return GSS_S_COMPLETE;
+  ret = GSS_S_COMPLETE;
+
+ failed:
+
+  HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
+  return ret;
 }

@@ -1,3 +1,48 @@
+2005-05-10  Dave Love  <fx@gnu.org>
+
+	* slc-lex.l: Include <stdlib.h>.
+
+2005-05-09  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* sl.c (sl_command_loop): new return code -2 for EOF
+	(sl_loop): treat all return value from sl_command_loop >= 0 as ok, and
+	continue.
+
+2005-04-29  Dave Love  <fx@gnu.org>
+
+	* Makefile.am (LDADD): Add libsl.la.
+
+2005-04-19  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* slc-gram.y: include <config.h> since defines _GNU_SOURCE if
+	needed, avoid asprintf warning
+
+2005-01-21  Dave Love  <d.love@dl.ac.uk>
+
+	* slc-gram.y: include <roken.h>
+
+2005-01-09  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* slc-gram.y: cast argument to isalnum to unsigned char
+
+2004-09-22  Johan Danielsson  <joda@pdc.kth.se>
+
+	* slc-gram.y: add support for "strings" and "negative-flag" types,
+	plus some usability tweaks and bug fixes
+	
+2004-07-05  Johan Danielsson  <joda@pdc.kth.se>
+
+	* slc-gram.y: add min_args/max_args checking
+	
+2004-06-21  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* slc-gram.y: pull in <stdlib.h> and <vers.h> to avoid warnings
+	
+2004-03-02  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* sl.h: make it possible to use libsl from c++
+	From: Mattias Amnefelt <mattiasa@kth.se>
+	
 2002-05-19  Johan Danielsson  <joda@pdc.kth.se>
 
 	* Makefile.am: just link mk_cmds against libsl; avoids libtool

@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$KTH: randkey_s.c,v 1.13 2001/01/30 01:24:28 assar Exp $");
+RCSID("$KTH: randkey_s.c,v 1.15 2004/02/29 05:59:22 lha Exp $");
 
 /*
  * Set the keys of `princ' to random values, returning the random keys
@@ -51,10 +51,10 @@ kadm5_s_randkey_principal(void *server_handle,
     kadm5_ret_t ret;
 
     ent.principal = princ;
-    ret = context->db->open(context->context, context->db, O_RDWR, 0);
+    ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
     if(ret)
 	return ret;
-    ret = context->db->fetch(context->context, context->db, 0, &ent);
+    ret = context->db->hdb_fetch(context->context, context->db, 0, &ent);
     if(ret)
 	goto out;
 
@@ -64,6 +64,7 @@ kadm5_s_randkey_principal(void *server_handle,
 				    n_keys);
     if (ret)
 	goto out2;
+    ent.kvno++;
 
     ret = _kadm5_set_modifier(context, &ent);
     if(ret)
@@ -81,8 +82,8 @@ kadm5_s_randkey_principal(void *server_handle,
 		      KADM5_PRINCIPAL | KADM5_MOD_NAME | KADM5_MOD_TIME |
 		      KADM5_KEY_DATA | KADM5_KVNO | KADM5_PW_EXPIRATION);
 
-    ret = context->db->store(context->context, context->db, 
-			     HDB_F_REPLACE, &ent);
+    ret = context->db->hdb_store(context->context, context->db, 
+				 HDB_F_REPLACE, &ent);
 out3:
     if (ret) {
 	int i;
@@ -96,6 +97,6 @@ out3:
 out2:
     hdb_free_entry(context->context, &ent);
 out:
-    context->db->close(context->context, context->db);
+    context->db->hdb_close(context->context, context->db);
     return _kadm5_error_code(ret);
 }

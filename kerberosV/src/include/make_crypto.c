@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 - 2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 2002 - 2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: make_crypto.c,v 1.4.2.1 2003/05/05 20:10:27 joda Exp $");
+RCSID("$KTH: make_crypto.c,v 1.12 2005/04/18 07:56:41 lha Exp $");
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -55,26 +55,35 @@ main(int argc, char **argv)
 	exit(1);
     }
     for(p = argv[1]; *p; p++)
-	if(!isalnum((int)*p))
+	if(!isalnum((unsigned char)*p))
 	    *p = '_';
     fprintf(f, "#ifndef __%s__\n", argv[1]);
     fprintf(f, "#define __%s__\n", argv[1]);
 #ifdef HAVE_OPENSSL
+    fputs("#ifndef OPENSSL_DES_LIBDES_COMPATIBILITY\n", f);
     fputs("#define OPENSSL_DES_LIBDES_COMPATIBILITY\n", f);
+    fputs("#endif\n", f);
     fputs("#include <openssl/des.h>\n", f);
     fputs("#include <openssl/rc4.h>\n", f);
+    fputs("#include <openssl/rc2.h>\n", f);
     fputs("#include <openssl/md4.h>\n", f);
     fputs("#include <openssl/md5.h>\n", f);
     fputs("#include <openssl/sha.h>\n", f);
-#if ENABLE_AES
     fputs("#include <openssl/aes.h>\n", f);
-#endif    
+    fputs("#include <openssl/ui.h>\n", f);
 #else
+    fputs("#ifdef KRB5\n", f);
+    fputs("#include <krb5-types.h>\n", f);
+    fputs("#elif defined(KRB4)\n", f);
+    fputs("#include <ktypes.h>\n", f);
+    fputs("#endif\n", f);
     fputs("#include <des.h>\n", f);
     fputs("#include <md4.h>\n", f);
     fputs("#include <md5.h>\n", f);
     fputs("#include <sha.h>\n", f);
     fputs("#include <rc4.h>\n", f);
+    fputs("#include <rc2.h>\n", f);
+    fputs("#include <aes.h>\n", f);
 #ifdef HAVE_OLD_HASH_NAMES
     fputs("\n", f);
     fputs("    typedef struct md4 MD4_CTX;\n", f);

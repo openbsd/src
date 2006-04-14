@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: hstrerror.c,v 1.24 2001/08/08 03:47:23 assar Exp $");
+RCSID("$KTH: hstrerror.c,v 1.26 2005/04/12 11:28:51 lha Exp $");
 #endif
 
 #ifndef HAVE_HSTRERROR
@@ -60,14 +60,14 @@ const
 int h_nerr = { sizeof h_errlist / sizeof h_errlist[0] };
 #else
 
-#ifndef HAVE_H_ERRLIST_DECLARATION
+#if !HAVE_DECL_H_ERRLIST
 extern const char *h_errlist[];
 extern int h_nerr;
 #endif
 
 #endif
 
-const char *
+const char * ROKEN_LIB_FUNCTION
 hstrerror(int herr)
 {
     if (0 <= herr && herr < h_nerr)

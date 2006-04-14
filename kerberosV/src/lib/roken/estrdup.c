@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: estrdup.c,v 1.3 2001/06/17 12:07:56 assar Exp $");
+RCSID("$KTH: estrdup.c,v 1.4 2005/04/12 11:28:39 lha Exp $");
 #endif
 
 #include <stdlib.h>
@@ -45,7 +45,7 @@ RCSID("$KTH: estrdup.c,v 1.3 2001/06/17 12:07:56 assar Exp $");
  * Like strdup but never fails.
  */
 
-char *
+char * ROKEN_LIB_FUNCTION
 estrdup (const char *str)
 {
     char *tmp = strdup (str);

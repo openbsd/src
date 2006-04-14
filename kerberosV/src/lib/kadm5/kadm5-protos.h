@@ -4,6 +4,36 @@
 
 #include <stdarg.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+kadm5_ret_t
+kadm5_ad_init_with_password (
+	const char */*client_name*/,
+	const char */*password*/,
+	const char */*service_name*/,
+	kadm5_config_params */*realm_params*/,
+	unsigned long /*struct_version*/,
+	unsigned long /*api_version*/,
+	void **/*server_handle*/);
+
+kadm5_ret_t
+kadm5_ad_init_with_password_ctx (
+	krb5_context /*context*/,
+	const char */*client_name*/,
+	const char */*password*/,
+	const char */*service_name*/,
+	kadm5_config_params */*realm_params*/,
+	unsigned long /*struct_version*/,
+	unsigned long /*api_version*/,
+	void **/*server_handle*/);
+
+krb5_error_code
+kadm5_add_passwd_quality_verifier (
+	krb5_context /*context*/,
+	const char */*check_library*/);
+
 const char *
 kadm5_check_password_quality (
 	krb5_context /*context*/,
@@ -206,5 +236,9 @@ kadm5_ret_t
 kadm5_store_tl_data (
 	krb5_storage */*sp*/,
 	krb5_tl_data */*tl*/);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __kadm5_protos_h__ */

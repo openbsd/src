@@ -1,10 +1,9 @@
-$KTH: TODO-1.0,v 1.3 2001/09/27 16:27:30 assar Exp $
+$KTH: TODO-1.0,v 1.4 2003/09/20 18:49:01 lha Exp $
 
 - sort out hprop:ing
 - figure out hostname case sensitive issues
 - verify_user: handle non-secure verification failing because of
   host->realm mapping
-- gssapi rc4 mechanism
 - PAM?
 - kadmin: make it happy with reading and parsing kdc.conf
 - handle readline hiding in readline/readline.h

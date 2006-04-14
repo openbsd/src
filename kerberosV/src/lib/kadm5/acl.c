@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$KTH: acl.c,v 1.13 2001/08/24 04:01:42 assar Exp $");
+RCSID("$KTH: acl.c,v 1.14 2004/08/26 07:48:46 lha Exp $");
 
 static struct units acl_units[] = {
     { "all",		KADM5_PRIV_ALL },
@@ -115,7 +115,7 @@ fetch_acl (kadm5_server_context *context,
 	ret = _kadm5_string_to_privs(p, &flags);
 	if (ret)
 	    break;
-	p = strtok_r(NULL, "\n", &foo);
+	p = strtok_r(NULL, " \t\n", &foo);
 	if (p == NULL) {
 	    *ret_flags = flags;
 	    break;

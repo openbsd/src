@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: roken_gethostby.c,v 1.5 1999/12/05 13:16:44 assar Exp $");
+RCSID("$KTH: roken_gethostby.c,v 1.7 2005/04/12 11:29:03 lha Exp $");
 #endif
 
 #include <roken.h>
@@ -107,7 +107,7 @@ split_spec(const char *spec, char **host, int *port, char **path, int def_port)
 }
 
 
-int
+int ROKEN_LIB_FUNCTION
 roken_gethostby_setup(const char *proxy_spec, const char *dns_spec)
 {
     char *proxy_host = NULL;
@@ -137,7 +137,7 @@ static struct hostent*
 roken_gethostby(const char *hostname)
 {
     int s;
-    struct sockaddr_in sin;
+    struct sockaddr_in addr;
     char *request;
     char buf[1024];
     int offset = 0;
@@ -146,7 +146,7 @@ roken_gethostby(const char *hostname)
     
     if(dns_addr.sin_family == 0)
 	return NULL; /* no configured host */
-    sin = dns_addr;
+    addr = dns_addr;
     asprintf(&request, "GET %s?%s HTTP/1.0\r\n\r\n", dns_req, hostname);
     if(request == NULL)
 	return NULL;
@@ -155,7 +155,7 @@ roken_gethostby(const char *hostname)
 	free(request);
 	return NULL;
     }
-    if(connect(s, (struct sockaddr*)&sin, sizeof(sin)) < 0) {
+    if(connect(s, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
 	close(s);
 	free(request);
 	return NULL;
@@ -220,7 +220,7 @@ roken_gethostbyname(const char *hostname)
     return roken_gethostby(hostname);
 }
 
-struct hostent*
+struct hostent* ROKEN_LIB_FUNCTION
 roken_gethostbyaddr(const void *addr, size_t len, int type)
 {
     struct in_addr a;

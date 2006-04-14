@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: send_to_kdc.c,v 1.48 2002/03/27 09:32:50 joda Exp $");
+RCSID("$KTH: send_to_kdc.c,v 1.55 2005/02/02 20:05:30 lha Exp $");
 
 /*
  * send the data in `req' on the socket `fd' (which is datagram iff udp)
@@ -155,6 +155,15 @@ send_and_recv_tcp(int fd,
 	return -1;
     }
     return 0;
+}
+
+int
+_krb5_send_and_recv_tcp(int fd,
+			time_t tmout,
+			const krb5_data *req,
+			krb5_data *rep)
+{
+    return send_and_recv_tcp(fd, tmout, req, rep);
 }
 
 /*
@@ -304,7 +313,7 @@ send_via_proxy (krb5_context context,
  * in `receive'.
  */
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_sendto (krb5_context context,
 	     const krb5_data *send_data,
 	     krb5_krbhst_handle handle,	     
@@ -367,23 +376,35 @@ out:
      return ret;
 }
 
-krb5_error_code
-krb5_sendto_kdc2(krb5_context context,
-		 const krb5_data *send_data,
-		 const krb5_realm *realm,
-		 krb5_data *receive,
-		 krb5_boolean master)
+krb5_error_code KRB5_LIB_FUNCTION
+krb5_sendto_kdc(krb5_context context,
+		const krb5_data *send_data,
+		const krb5_realm *realm,
+		krb5_data *receive)
+{
+    return krb5_sendto_kdc_flags(context, send_data, realm, receive, 0);
+}
+
+krb5_error_code KRB5_LIB_FUNCTION
+krb5_sendto_kdc_flags(krb5_context context,
+		      const krb5_data *send_data,
+		      const krb5_realm *realm,
+		      krb5_data *receive,
+		      int flags)
 {
     krb5_error_code ret;
     krb5_krbhst_handle handle;
     int type;
 
-    if (master || context->use_admin_kdc)
+    if ((flags & KRB5_KRBHST_FLAGS_MASTER) || context->use_admin_kdc)
 	type = KRB5_KRBHST_ADMIN;
     else
 	type = KRB5_KRBHST_KDC;
 
-    ret = krb5_krbhst_init(context, *realm, type, &handle);
+    if (send_data->length > context->large_msg_size)
+	flags |= KRB5_KRBHST_FLAGS_LARGE_MSG;
+
+    ret = krb5_krbhst_init_flags(context, *realm, type, flags, &handle);
     if (ret)
 	return ret;
 
@@ -393,13 +414,4 @@ krb5_sendto_kdc2(krb5_context context,
 	krb5_set_error_string(context,
 			      "unable to reach any KDC in realm %s", *realm);
     return ret;
-}
-
-krb5_error_code
-krb5_sendto_kdc(krb5_context context,
-		const krb5_data *send_data,
-		const krb5_realm *realm,
-		krb5_data *receive)
-{
-    return krb5_sendto_kdc2(context, send_data, realm, receive, FALSE);
 }

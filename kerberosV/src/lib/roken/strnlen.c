@@ -33,12 +33,12 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: strnlen.c,v 1.7 1999/12/02 16:58:53 joda Exp $");
+RCSID("$KTH: strnlen.c,v 1.8 2005/04/12 11:29:10 lha Exp $");
 #endif
 
 #include "roken.h"
 
-size_t
+size_t ROKEN_LIB_FUNCTION
 strnlen(const char *s, size_t len)
 {
     size_t i;

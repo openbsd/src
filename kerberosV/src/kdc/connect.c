@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$KTH: connect.c,v 1.90.2.2 2004/04/02 20:50:53 lha Exp $");
+RCSID("$KTH: connect.c,v 1.104 2005/05/30 20:56:18 joda Exp $");
 
 /*
  * a tuple describing on what to listen
@@ -135,14 +135,12 @@ add_standard_ports (int family)
 	add_port_service(family, "krb524", 4444, "udp");
 	add_port_service(family, "krb524", 4444, "tcp");
     }
-#ifdef KRB4
     if(enable_v4) {
 	add_port_service(family, "kerberos-iv", 750, "udp");
 	add_port_service(family, "kerberos-iv", 750, "tcp");
     }
     if (enable_kaserver)
 	add_port_service(family, "afs3-kaserver", 7004, "udp");
-#endif
 }
 
 /*
@@ -195,6 +193,7 @@ parse_ports(const char *str)
 struct descr {
     int s;
     int type;
+    int port;
     unsigned char *buf;
     size_t size;
     size_t len;
@@ -236,7 +235,7 @@ init_socket(struct descr *d, krb5_address *a, int family, int type, int port)
     krb5_error_code ret;
     struct sockaddr_storage __ss;
     struct sockaddr *sa = (struct sockaddr *)&__ss;
-    int sa_size = sizeof(__ss);
+    krb5_socklen_t sa_size = sizeof(__ss);
 
     init_descr (d);
 
@@ -264,6 +263,7 @@ init_socket(struct descr *d, krb5_address *a, int family, int type, int port)
     }
 #endif
     d->type = type;
+    d->port = port;
 
     if(bind(d->s, sa, sa_size) < 0){
 	char a_str[256];
@@ -345,6 +345,20 @@ init_sockets(struct descr **desc)
 }
 
 /*
+ *
+ */
+
+static const char *
+descr_type(struct descr *d)
+{
+    if (d->type == SOCK_DGRAM)
+	return "udp";
+    else if (d->type == SOCK_STREAM)
+	return "tcp";
+    return "unknown";
+}
+
+/*
  * handle the request in `buf, len', from `addr' (or `from' as a string),
  * sending a reply in `reply'.
  */
@@ -353,7 +367,7 @@ static int
 process_request(unsigned char *buf, 
 		size_t len, 
 		krb5_data *reply,
-		int *sendlength,
+		krb5_boolean *prependlength,
 		const char *from,
 		struct sockaddr *addr)
 {
@@ -375,15 +389,13 @@ process_request(unsigned char *buf,
 	ret = do_524(&ticket, reply, from, addr);
 	free_Ticket(&ticket);
 	return ret;
-#ifdef KRB4
     } else if(maybe_version4(buf, len)){
-	*sendlength = 0; /* elbitapmoc sdrawkcab XXX */
+	*prependlength = FALSE; /* elbitapmoc sdrawkcab XXX */
 	do_version4(buf, len, reply, from, (struct sockaddr_in*)addr);
 	return 0;
     } else if (enable_kaserver) {
 	ret = do_kaserver (buf, len, reply, from, (struct sockaddr_in*)addr);
 	return ret;
-#endif
     }
 			  
     return -1;
@@ -408,19 +420,19 @@ addr_to_string(struct sockaddr *addr, size_t addr_len, char *str, size_t len)
  */
 
 static void
-do_request(void *buf, size_t len, int sendlength,
+do_request(void *buf, size_t len, krb5_boolean prependlength,
 	   struct descr *d)
 {
     krb5_error_code ret;
     krb5_data reply;
     
     reply.length = 0;
-    ret = process_request(buf, len, &reply, &sendlength,
+    ret = process_request(buf, len, &reply, &prependlength,
 			  d->addr_string, d->sa);
     if(reply.length){
 	kdc_log(5, "sending %lu bytes to %s", (unsigned long)reply.length,
 		d->addr_string);
-	if(sendlength){
+	if(prependlength){
 	    unsigned char len[4];
 	    len[0] = (reply.length >> 24) & 0xff;
 	    len[1] = (reply.length >> 16) & 0xff;
@@ -467,7 +479,7 @@ handle_udp(struct descr *d)
     else {
 	addr_to_string (d->sa, d->sock_len,
 			d->addr_string, sizeof(d->addr_string));
-	do_request(buf, n, 0, d);
+	do_request(buf, n, FALSE, d);
     }
     free (buf);
 }
@@ -488,8 +500,8 @@ clear_descr(struct descr *d)
 static int
 de_http(char *buf)
 {
-    char *p, *q;
-    for(p = q = buf; *p; p++, q++) {
+    unsigned char *p, *q;
+    for(p = q = (unsigned char *)buf; *p; p++, q++) {
 	if(*p == '%' && isxdigit(p[1]) && isxdigit(p[2])) {
 	    unsigned int x;
 	    if(sscanf(p + 1, "%2x", &x) != 1)
@@ -637,7 +649,7 @@ handle_http_tcp (struct descr *d)
 	t++;
     if(de_http(t) != 0) {
 	kdc_log(0, "Malformed HTTP request from %s", d->addr_string);
-	kdc_log(5, "Request: %s", t);
+	kdc_log(5, "HTTP request: %s", t);
 	free(data);
 	return -1;
     }
@@ -660,11 +672,19 @@ handle_http_tcp (struct descr *d)
 	    "<H1>404 Not found</H1>\r\n"
 	    "That page doesn't exist, maybe you are looking for "
 	    "<A HREF=\"http://www.pdc.kth.se/heimdal/\">Heimdal</A>?\r\n";
-	write(d->s, proto, strlen(proto));
-	write(d->s, msg, strlen(msg));
 	kdc_log(0, "HTTP request from %s is non KDC request", d->addr_string);
-	kdc_log(5, "Request: %s", t);
+	kdc_log(5, "HTTP request: %s", t);
 	free(data);
+	if (write(d->s, proto, strlen(proto)) < 0) {
+	    kdc_log(0, "HTTP write failed: %s: %s", 
+		    d->addr_string, strerror(errno));
+	    return -1;
+	}
+	if (write(d->s, msg, strlen(msg)) < 0) {
+	    kdc_log(0, "HTTP write failed: %s: %s", 
+		    d->addr_string, strerror(errno));
+	    return -1;
+	}
 	return -1;
     }
     {
@@ -675,8 +695,16 @@ handle_http_tcp (struct descr *d)
 	    "Pragma: no-cache\r\n"
 	    "Content-type: application/octet-stream\r\n"
 	    "Content-transfer-encoding: binary\r\n\r\n";
-	write(d->s, proto, strlen(proto));
-	write(d->s, msg, strlen(msg));
+	if (write(d->s, proto, strlen(proto)) < 0) {
+	    kdc_log(0, "HTTP write failed: %s: %s", 
+		    d->addr_string, strerror(errno));
+	    return -1;
+	}
+	if (write(d->s, msg, strlen(msg)) < 0) {
+	    kdc_log(0, "HTTP write failed: %s: %s", 
+		    d->addr_string, strerror(errno));
+	    return -1;
+	}
     }
     memcpy(d->buf, data, len);
     d->len = len;
@@ -702,12 +730,15 @@ handle_tcp(struct descr *d, int index, int min_free)
 
     n = recvfrom(d[index].s, buf, sizeof(buf), 0, NULL, NULL);
     if(n < 0){
-	krb5_warn(context, errno, "recvfrom");
+	krb5_warn(context, errno, "recvfrom failed from %s to %s/%d",
+		  d[index].addr_string, descr_type(d + index), 
+		  ntohs(d[index].port));
 	return;
     } else if (n == 0) {
 	krb5_warnx(context, "connection closed before end of data after %lu "
-		   "bytes from %s",
-		   (unsigned long)d[index].len, d[index].addr_string);
+		   "bytes from %s to %s/%d", (unsigned long)d[index].len, 
+		   d[index].addr_string, descr_type(d + index), 
+		   ntohs(d[index].port));
 	clear_descr (d + index);
 	return;
     }
@@ -726,13 +757,16 @@ handle_tcp(struct descr *d, int index, int min_free)
 	if (ret < 0)
 	    clear_descr (d + index);
     } else if (d[index].len > 4) {
-	kdc_log (0, "TCP data of strange type from %s", d[index].addr_string);
+	kdc_log (0, "TCP data of strange type from %s to %s/%d",
+		 d[index].addr_string, descr_type(d + index), 
+		 ntohs(d[index].port));
+	clear_descr(d + index);
 	return;
     }
     if (ret < 0)
 	return;
     else if (ret == 1) {
-	do_request(d[index].buf, d[index].len, 1, &d[index]);
+	do_request(d[index].buf, d[index].len, TRUE, &d[index]);
 	clear_descr(d + index);
     }
 }
@@ -806,5 +840,11 @@ loop(void)
 		}
 	}
     }
+    if(exit_flag == SIGXCPU)
+	kdc_log(0, "CPU time limit exceeded");
+    else if(exit_flag == SIGINT || exit_flag == SIGTERM)
+	kdc_log(0, "Terminated");
+    else
+	kdc_log(0, "Unexpected exit reason: %d", exit_flag);
     free (d);
 }

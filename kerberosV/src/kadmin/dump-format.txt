@@ -1,0 +1,106 @@
+Format of the Heimdal text dump file as of Heimdal 0.6.3:
+
+$KTH: dump-format.txt,v 1.2 2005/06/07 00:43:31 lha Exp $
+
+Each line in the dump file is one entry in the database.
+
+Each field of a line is separated by one or more spaces, with the
+exception of fields consisting of principals containing spaces, where
+space can be quoted with \ and \ is quoted by \.
+
+Fields and their types are:
+
+	Quoted princial (quote character is \) [string]
+	Keys [keys]
+	Modification [event]
+	Valid start time [event optional]
+	Valid end time [time optional]
+	Password end valid time [time optional]
+	Max lifetime of ticket [time optional]
+	Max renew of ticket [integer optional]
+	Flags [hdb flags]
+	Generation number [generation optional]
+
+	Fields following these silently are ignored.
+
+All optional fields will be skipped if they fail to parse (or comprise
+the optional field marker of "-", w/o quotes).
+
+Example:
+
+fred@EXAMPLE.COM 27:1:16:e8b4c8fc7e60b9e641dcf4cff3f08a701d982a2f89ba373733d26ca59ba6c789666f6b8bfcf169412bb1e5dceb9b33cda29f3412:-:1:3:4498a933881178c744f4232172dcd774c64e81fa6d05ecdf643a7e390624a0ebf3c7407a:-:1:2:b01934b13eb795d76f3a80717d469639b4da0cfb644161340ef44fdeb375e54d684dbb85:-:1:1:ea8e16d8078bf60c781da90f508d4deccba70595258b9d31888d33987cd31af0c9cced2e:- 20020415130120:admin@EXAMPLE.COM 20041221112428:fred@EXAMPLE.COM - - - 86400 604800 126 20020415130120:793707:28
+
+Encoding of types are as follows:
+
+keys:
+
+	kvno:[masterkvno:keytype:keydata:salt]{zero or more separated by :}
+
+	kvno is the key version number.
+
+	keydata is hex-encoded
+
+	masterkvno is the kvno of the database master key.  If this
+	field is empty, the kadmin load and merge operations will
+	encrypt the key data with the master key if there is one.
+	Otherwise the key data will be imported asis.
+
+	salt is encoded as "-" (no/default salt) or
+
+	salt-type /
+	salt-type / "string"
+	salt-type / hex-encoded-data
+
+	keytype is the protocol enctype number; see enum ENCTYPE in
+	include/krb5_asn1.h for values.
+
+	Example:
+		27:1:16:e8b4c8fc7e60b9e641dcf4cff3f08a701d982a2f89ba373733d26ca59ba6c789666f6b8bfcf169412bb1e5dceb9b33cda29f3412:-:1:3:4498a933881178c744f4232172dcd774c64e81fa6d05ecdf643a7e390624a0ebf3c7407a:-:1:2:b01934b13eb795d76f3a80717d469639b4da0cfb644161340ef44fdeb375e54d684dbb85:-:1:1:ea8e16d8078bf60c781da90f508d4deccba70595258b9d31888d33987cd31af0c9cced2e:-
+
+		kvno=27,{key: masterkvno=1,keytype=des3-cbc-sha1,keydata=...,
+		         default salt}...
+
+
+time:
+	
+	Format of the time is: YYYYmmddHHMMSS, corresponding to
+	strftime format "%Y%m%d%k%M%S".
+
+	Time is expressed in UTC.
+
+	Time can be optional (using -), when the time 0 is used.
+
+	Example:
+		20041221112428
+
+event:
+	time:principal
+
+	time is as given in format time
+
+	principal is a string.  Not quoting it may not work in earlier
+	versions of Heimdal.
+
+	Example:
+		20041221112428:bloggs@EXAMPLE.COM
+
+hdb flags:
+
+	Integer encoding of HDB flags, see HDBFlags in
+	lib/hdb/hdb.asn1. Each bit in the integer is the same as the bit
+	in the specification.
+
+	Example:
+		XXX
+
+generation:
+
+	time:usec:gen
+
+	usec is a the microsecond, integer.
+	gen is generation number, integer.
+
+	The generation can be defaulted (using '-') or the empty string
+
+	Example:
+		XXX

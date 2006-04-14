@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$KTH: context_time.c,v 1.7.2.1 2003/08/15 14:25:50 lha Exp $");
+RCSID("$KTH: context_time.c,v 1.10 2003/06/03 15:08:00 lha Exp $");
 
 OM_uint32
 gssapi_lifetime_left(OM_uint32 *minor_status, 
@@ -70,7 +70,9 @@ OM_uint32 gss_context_time
 
     GSSAPI_KRB5_INIT ();
 
+    HEIMDAL_MUTEX_lock(&context_handle->ctx_id_mutex);
     lifetime = context_handle->lifetime;
+    HEIMDAL_MUTEX_unlock(&context_handle->ctx_id_mutex);
 
     major_status = gssapi_lifetime_left(minor_status, lifetime, time_rec);
     if (major_status != GSS_S_COMPLETE)

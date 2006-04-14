@@ -35,7 +35,7 @@
 #endif
 #include "roken.h"
 
-RCSID("$KTH: strpftime-test.c,v 1.2 1999/11/12 15:29:55 assar Exp $");
+RCSID("$KTH: strpftime-test.c,v 1.3 2005/04/04 19:31:56 lha Exp $");
 
 enum { MAXSIZE = 26 };
 
@@ -246,8 +246,8 @@ main(int argc, char **argv)
 
 	    len = strftime (buf, sizeof(buf), tests[i].vals[j].format, tm);
 	    if (len != strlen (buf)) {
-		printf ("length of strftime(\"%s\") = %d (\"%s\")\n",
-			tests[i].vals[j].format, len,
+		printf ("length of strftime(\"%s\") = %lu (\"%s\")\n",
+			tests[i].vals[j].format, (unsigned long)len,
 			buf);
 		++ret;
 		continue;

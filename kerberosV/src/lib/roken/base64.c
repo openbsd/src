@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: base64.c,v 1.5 2001/05/28 17:33:41 joda Exp $");
+RCSID("$KTH: base64.c,v 1.6 2005/04/12 11:28:34 lha Exp $");
 #endif
 #include <stdlib.h>
 #include <string.h>
@@ -52,7 +52,7 @@ pos(char c)
     return -1;
 }
 
-int 
+int ROKEN_LIB_FUNCTION
 base64_encode(const void *data, int size, char **str)
 {
     char *s, *p;
@@ -114,7 +114,7 @@ token_decode(const char *token)
     return (marker << 24) | val;
 }
 
-int
+int ROKEN_LIB_FUNCTION
 base64_decode(const char *str, void *data)
 {
     const char *p;

@@ -33,7 +33,7 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$KTH: get_s.c,v 1.13 2000/06/19 16:11:31 joda Exp $");
+RCSID("$KTH: get_s.c,v 1.15 2005/05/30 20:43:14 lha Exp $");
 
 kadm5_ret_t
 kadm5_s_get_principal(void *server_handle, 
@@ -46,12 +46,12 @@ kadm5_s_get_principal(void *server_handle,
     hdb_entry ent;
     
     ent.principal = princ;
-    ret = context->db->open(context->context, context->db, O_RDONLY, 0);
+    ret = context->db->hdb_open(context->context, context->db, O_RDONLY, 0);
     if(ret)
 	return ret;
-    ret = context->db->fetch(context->context, context->db, 
-			     HDB_F_DECRYPT, &ent);
-    context->db->close(context->context, context->db);
+    ret = context->db->hdb_fetch(context->context, context->db, 
+				 HDB_F_DECRYPT, &ent);
+    context->db->hdb_close(context->context, context->db);
     if(ret)
 	return _kadm5_error_code(ret);
 
@@ -77,6 +77,7 @@ kadm5_s_get_principal(void *server_handle,
 	out->attributes |= ent.flags.require_preauth ? KRB5_KDB_REQUIRES_PRE_AUTH : 0;
 	out->attributes |= ent.flags.server ? 0 : KRB5_KDB_DISALLOW_SVR;
 	out->attributes |= ent.flags.change_pw ? KRB5_KDB_PWCHANGE_SERVICE : 0;
+	out->attributes |= ent.flags.ok_as_delegate ? KRB5_KDB_OK_AS_DELEGATE : 0;
     }
     if(mask & KADM5_MAX_LIFE) {
 	if(ent.max_life)

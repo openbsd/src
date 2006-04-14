@@ -1,4 +1,4 @@
--- $KTH: k5.asn1,v 1.28.2.1 2004/06/21 08:25:45 lha Exp $
+-- $KTH: k5.asn1,v 1.42 2005/04/08 10:32:44 lha Exp $
 
 KERBEROS5 DEFINITIONS ::=
 BEGIN
@@ -10,7 +10,8 @@ NAME-TYPE ::= INTEGER {
 	KRB5_NT_SRV_HST(3),	-- Service with host name as instance
 	KRB5_NT_SRV_XHST(4),	-- Service with host as remaining components
 	KRB5_NT_UID(5),		-- Unique ID
-	KRB5_NT_X500_PRINCIPAL(6) -- PKINIT
+	KRB5_NT_X500_PRINCIPAL(6), -- PKINIT
+	KRB5_NT_ENTERPRISE(10)	-- May be mapped to principal name
 }
 
 -- message types
@@ -46,16 +47,40 @@ PADATA-TYPE ::= INTEGER {
 	KRB5-PADATA-ETYPE-INFO(11),
 	KRB5-PADATA-SAM-CHALLENGE(12), -- (sam/otp)
 	KRB5-PADATA-SAM-RESPONSE(13), -- (sam/otp)
-	KRB5-PADATA-PK-AS-REQ(14), -- (PKINIT)
-	KRB5-PADATA-PK-AS-REP(15), -- (PKINIT)
-	KRB5-PADATA-PK-AS-SIGN(16), -- (PKINIT)
-	KRB5-PADATA-PK-KEY-REQ(17), -- (PKINIT)
-	KRB5-PADATA-PK-KEY-REP(18), -- (PKINIT)
+	KRB5-PADATA-PK-AS-REQ-19(14), -- (PKINIT-19)
+	KRB5-PADATA-PK-AS-REP-19(15), -- (PKINIT-19)
+	KRB5-PADATA-PK-AS-REQ(16), -- (PKINIT-25)
+	KRB5-PADATA-PK-AS-REP(17), -- (PKINIT-25)
 	KRB5-PADATA-ETYPE-INFO2(19),
 	KRB5-PADATA-USE-SPECIFIED-KVNO(20),
 	KRB5-PADATA-SAM-REDIRECT(21), -- (sam/otp)
 	KRB5-PADATA-GET-FROM-TYPED-DATA(22),
-	KRB5-PADATA-SAM-ETYPE-INFO(23)
+	KRB5-PADATA-SAM-ETYPE-INFO(23),
+	KRB5-PADATA-SERVER-REFERRAL(25),
+	KRB5-PADATA-TD-KRB-PRINCIPAL(102),	-- PrincipalName
+	KRB5-PADATA-TD-KRB-REALM(103),		-- Realm
+	KRB5-PADATA-PK-TD-TRUSTED-CERTIFIERS(104), -- PKINIT
+	KRB5-PADATA-PK-TD-CERTIFICATE-INDEX(105), -- PKINIT
+	KRB5-PADATA-TD-APP-DEFINED-ERROR(106),	-- application specific
+	KRB5-PADATA-TD-REQ-NONCE(107),		-- INTEGER
+	KRB5-PADATA-TD-REQ-SEQ(108),		-- INTEGER
+	KRB5-PADATA-PA-PAC-REQUEST(128)		-- jbrezak@exchange.microsoft.com
+}
+
+AUTHDATA-TYPE ::= INTEGER {
+	KRB5-AUTHDATA-IF-RELEVANT(1),
+	KRB5-AUTHDATA-INTENDED-FOR_SERVER(2),
+	KRB5-AUTHDATA-INTENDED-FOR-APPLICATION-CLASS(3),
+	KRB5-AUTHDATA-KDC-ISSUED(4),
+	KRB5-AUTHDATA-AND-OR(5),
+	KRB5-AUTHDATA-MANDATORY-TICKET-EXTENSIONS(6),
+	KRB5-AUTHDATA-IN-TICKET-EXTENSIONS(7),
+	KRB5-AUTHDATA-MANDATORY-FOR-KDC(8),
+	KRB5-AUTHDATA-OSF-DCE(64),
+	KRB5-AUTHDATA-SESAME(65),
+	KRB5-AUTHDATA-OSF-DCE-PKI-CERTID(66),
+	KRB5-AUTHDATA-WIN2K-PAC(128),
+	KRB5-AUTHDATA-GSS-API-ETYPE-NEGOTIATION(129) -- Authenticator only
 }
 
 -- checksumtypes
@@ -71,10 +96,11 @@ CKSUMTYPE ::= INTEGER {
 	CKSUMTYPE_RSA_MD5(7),
 	CKSUMTYPE_RSA_MD5_DES(8),
 	CKSUMTYPE_RSA_MD5_DES3(9),
-	CKSUMTYPE_HMAC_SHA1_96_AES_128(10),
-	CKSUMTYPE_HMAC_SHA1_96_AES_256(11),
+	CKSUMTYPE_SHA1_OTHER(10),
 	CKSUMTYPE_HMAC_SHA1_DES3(12),
-	CKSUMTYPE_SHA1(1000),		-- correct value? 10 (9 also)
+	CKSUMTYPE_SHA1(14),
+	CKSUMTYPE_HMAC_SHA1_96_AES_128(15),
+	CKSUMTYPE_HMAC_SHA1_96_AES_256(16),
 	CKSUMTYPE_GSSAPI(0x8003),
 	CKSUMTYPE_HMAC_MD5(-138),	-- unofficial microsoft number
 	CKSUMTYPE_HMAC_MD5_ENC(-1138)	-- even more unofficial
@@ -101,12 +127,21 @@ ENCTYPE ::= INTEGER {
 	ETYPE_DES_CBC_NONE(-0x1000),
 	ETYPE_DES3_CBC_NONE(-0x1001),
 	ETYPE_DES_CFB64_NONE(-0x1002),
-	ETYPE_DES_PCBC_NONE(-0x1003)
+	ETYPE_DES_PCBC_NONE(-0x1003),
+	ETYPE_DIGEST_MD5_NONE(-0x1004),		-- private use, lukeh@padl.com
+	ETYPE_CRAM_MD5_NONE(-0x1005),		-- private use, lukeh@padl.com
+	ETYPE_RC2_CBC_NONE(-0x1006),
+	ETYPE_AES128_CBC_NONE(-0x1007),
+	ETYPE_AES192_CBC_NONE(-0x1008),
+	ETYPE_AES256_CBC_NONE(-0x1009),
+	ETYPE_DES3_CBC_NONE_CMS(-0x100a)
 }
 
 -- this is sugar to make something ASN1 does not have: unsigned
 
 UNSIGNED ::= INTEGER (0..4294967295)
+
+KerberosString  ::= GeneralString
 
 Realm ::= GeneralString
 PrincipalName ::= SEQUENCE {
@@ -275,6 +310,14 @@ ETYPE-INFO-ENTRY ::= SEQUENCE {
 
 ETYPE-INFO ::= SEQUENCE OF ETYPE-INFO-ENTRY
 
+ETYPE-INFO2-ENTRY ::= SEQUENCE {
+	etype[0]		ENCTYPE,
+	salt[1]			KerberosString OPTIONAL,
+	s2kparams[2]		OCTET STRING OPTIONAL
+}
+
+ETYPE-INFO2 ::= SEQUENCE OF ETYPE-INFO2-ENTRY
+
 METHOD-DATA ::= SEQUENCE OF PA-DATA
 
 KDC-REQ-BODY ::= SEQUENCE {
@@ -311,6 +354,12 @@ TGS-REQ ::= [APPLICATION 12] KDC-REQ
 PA-ENC-TS-ENC ::= SEQUENCE {
 	patimestamp[0]		KerberosTime, -- client's time
 	pausec[1]		INTEGER OPTIONAL
+}
+
+-- draft-brezak-win2k-krb-authz-01
+PA-PAC-REQUEST ::= SEQUENCE {
+	include-pac[0]		BOOLEAN -- Indicates whether a PAC 
+					-- should be included or not
 }
 
 KDC-REP ::= SEQUENCE {
@@ -447,11 +496,94 @@ ChangePasswdDataMS ::= SEQUENCE {
 	targrealm[2]		Realm OPTIONAL
 }
 
+EtypeList ::= SEQUENCE OF INTEGER
+	-- the client's proposed enctype list in
+	-- decreasing preference order, favorite choice first
+
 pvno INTEGER ::= 5 -- current Kerberos protocol version number
 
 -- transited encodings
 
 DOMAIN-X500-COMPRESS	INTEGER ::= 1
+
+-- authorization data primitives
+
+AD-IF-RELEVANT ::= AuthorizationData
+
+AD-KDCIssued ::= SEQUENCE {
+	ad-checksum[0]		Checksum,
+	i-realm[1]		Realm OPTIONAL,
+	i-sname[2]		PrincipalName OPTIONAL,
+	elements[3]		AuthorizationData
+}
+
+AD-AND-OR ::= SEQUENCE {
+	condition-count[0]	INTEGER,
+	elements[1]		AuthorizationData
+}
+
+AD-MANDATORY-FOR-KDC ::= AuthorizationData
+
+-- PA-SAM-RESPONSE-2/PA-SAM-RESPONSE-2
+
+PA-SAM-TYPE ::= INTEGER {
+	PA_SAM_TYPE_ENIGMA(1),		-- Enigma Logic
+	PA_SAM_TYPE_DIGI_PATH(2),	-- Digital Pathways
+	PA_SAM_TYPE_SKEY_K0(3),		-- S/key where  KDC has key 0
+	PA_SAM_TYPE_SKEY(4),		-- Traditional S/Key
+	PA_SAM_TYPE_SECURID(5),		-- Security Dynamics
+	PA_SAM_TYPE_CRYPTOCARD(6)	-- CRYPTOCard
+}
+
+PA-SAM-REDIRECT ::= HostAddresses
+
+SAMFlags ::= BIT STRING {
+	use-sad-as-key(0),
+	send-encrypted-sad(1),
+	must-pk-encrypt-sad(2)
+}
+
+PA-SAM-CHALLENGE-2-BODY ::= SEQUENCE {
+	sam-type[0]		INTEGER,
+	sam-flags[1]		SAMFlags,
+	sam-type-name[2]	GeneralString OPTIONAL,
+	sam-track-id[3]		GeneralString OPTIONAL,
+	sam-challenge-label[4]	GeneralString OPTIONAL,
+	sam-challenge[5]	GeneralString OPTIONAL,
+	sam-response-prompt[6]	GeneralString OPTIONAL,
+	sam-pk-for-sad[7]	EncryptionKey OPTIONAL,
+	sam-nonce[8]		INTEGER,
+	sam-etype[9]		INTEGER,
+	...
+}
+
+PA-SAM-CHALLENGE-2 ::= SEQUENCE {
+	sam-body[0]		PA-SAM-CHALLENGE-2-BODY,
+	sam-cksum[1]		SEQUENCE OF Checksum, -- (1..MAX)
+	...
+}
+
+PA-SAM-RESPONSE-2 ::= SEQUENCE {
+	sam-type[0]		INTEGER,
+	sam-flags[1]		SAMFlags,
+	sam-track-id[2]		GeneralString OPTIONAL,
+	sam-enc-nonce-or-sad[3]	EncryptedData, -- PA-ENC-SAM-RESPONSE-ENC
+	sam-nonce[4]		INTEGER,
+	...
+}
+
+PA-ENC-SAM-RESPONSE-ENC ::= SEQUENCE {
+	sam-nonce[0]		INTEGER,
+	sam-sad[1]		GeneralString OPTIONAL,
+	...
+}
+
+RC2CBCParameter ::= SEQUENCE {
+	rc2ParameterVersion	[0] INTEGER,
+	iv			[1] OCTET STRING -- exactly 8 octets
+}
+
+CBCParameter ::= OCTET STRING
 
 END
 

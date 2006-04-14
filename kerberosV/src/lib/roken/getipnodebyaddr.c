@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: getipnodebyaddr.c,v 1.2 1999/12/02 16:58:46 joda Exp $");
+RCSID("$KTH: getipnodebyaddr.c,v 1.3 2005/04/12 11:28:47 lha Exp $");
 #endif
 
 #include "roken.h"
@@ -43,7 +43,7 @@ RCSID("$KTH: getipnodebyaddr.c,v 1.2 1999/12/02 16:58:46 joda Exp $");
  * to a malloced struct hostent or NULL.
  */
 
-struct hostent *
+struct hostent * ROKEN_LIB_FUNCTION
 getipnodebyaddr (const void *src, size_t len, int af, int *error_num)
 {
     struct hostent *tmp;

@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: localtime_r.c,v 1.2 2002/08/20 13:00:35 joda Exp $");
+RCSID("$KTH: localtime_r.c,v 1.3 2005/04/12 11:28:55 lha Exp $");
 #endif
 
 #include <stdio.h>
@@ -42,7 +42,7 @@ RCSID("$KTH: localtime_r.c,v 1.2 2002/08/20 13:00:35 joda Exp $");
 
 #ifndef HAVE_LOCALTIME_R
 
-struct tm *
+struct tm * ROKEN_LIB_FUNCTION
 localtime_r(const time_t *timer, struct tm *result)
 {
     struct tm *tm;

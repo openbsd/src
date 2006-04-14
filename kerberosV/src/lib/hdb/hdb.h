@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: hdb.h,v 1.31 2000/07/08 16:03:37 joda Exp $ */
+/* $KTH: hdb.h,v 1.33 2003/09/19 00:19:36 lha Exp $ */
 
 #ifndef __HDB_H__
 #define __HDB_H__
@@ -52,31 +52,39 @@ enum hdb_lockop{ HDB_RLOCK, HDB_WLOCK };
 typedef struct hdb_master_key_data *hdb_master_key;
 
 typedef struct HDB{
-    void *db;
-    void *dbc;
-    char *name;
-    int master_key_set;
-    hdb_master_key master_key;
-    int openp;
+    void *hdb_db;
+    void *hdb_dbc;
+    char *hdb_name;
+    int hdb_master_key_set;
+    hdb_master_key hdb_master_key;
+    int hdb_openp;
 
-    krb5_error_code (*open)(krb5_context, struct HDB*, int, mode_t);
-    krb5_error_code (*close)(krb5_context, struct HDB*);
-    krb5_error_code (*fetch)(krb5_context, struct HDB*, unsigned, hdb_entry*);
-    krb5_error_code (*store)(krb5_context, struct HDB*, unsigned, hdb_entry*);
-    krb5_error_code (*remove)(krb5_context, struct HDB*, hdb_entry*);
-    krb5_error_code (*firstkey)(krb5_context, struct HDB*, 
+    krb5_error_code (*hdb_open)(krb5_context, struct HDB*, int, mode_t);
+    krb5_error_code (*hdb_close)(krb5_context, struct HDB*);
+    krb5_error_code (*hdb_fetch)(krb5_context,struct HDB*,unsigned,hdb_entry*);
+    krb5_error_code (*hdb_store)(krb5_context,struct HDB*,unsigned,hdb_entry*);
+    krb5_error_code (*hdb_remove)(krb5_context, struct HDB*, hdb_entry*);
+    krb5_error_code (*hdb_firstkey)(krb5_context, struct HDB*, 
 				unsigned, hdb_entry*);
-    krb5_error_code (*nextkey)(krb5_context, struct HDB*, 
+    krb5_error_code (*hdb_nextkey)(krb5_context, struct HDB*, 
 			       unsigned, hdb_entry*);
-    krb5_error_code (*lock)(krb5_context, struct HDB*, int operation);
-    krb5_error_code (*unlock)(krb5_context, struct HDB*);
-    krb5_error_code (*rename)(krb5_context, struct HDB*, const char*);
-    krb5_error_code (*_get)(krb5_context, struct HDB*, krb5_data, krb5_data*);
-    krb5_error_code (*_put)(krb5_context, struct HDB*, int, 
+    krb5_error_code (*hdb_lock)(krb5_context, struct HDB*, int operation);
+    krb5_error_code (*hdb_unlock)(krb5_context, struct HDB*);
+    krb5_error_code (*hdb_rename)(krb5_context, struct HDB*, const char*);
+    krb5_error_code (*hdb__get)(krb5_context,struct HDB*,krb5_data,krb5_data*);
+    krb5_error_code (*hdb__put)(krb5_context, struct HDB*, int, 
 			    krb5_data, krb5_data);
-    krb5_error_code (*_del)(krb5_context, struct HDB*, krb5_data);
-    krb5_error_code (*destroy)(krb5_context, struct HDB*);
+    krb5_error_code (*hdb__del)(krb5_context, struct HDB*, krb5_data);
+    krb5_error_code (*hdb_destroy)(krb5_context, struct HDB*);
 }HDB;
+
+#define HDB_INTERFACE_VERSION	1
+
+struct hdb_so_method {
+    int version;
+    const char *prefix;
+    krb5_error_code (*create)(krb5_context, HDB **, const char *filename);
+};
 
 #define HDB_DB_DIR "/var/heimdal"
 #define HDB_DEFAULT_DB HDB_DB_DIR "/heimdal"

@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$KTH: misc.c,v 1.22 2001/01/30 03:54:21 assar Exp $");
+RCSID("$KTH: misc.c,v 1.23 2003/09/19 00:16:57 lha Exp $");
 
 struct timeval now;
 
@@ -50,14 +50,14 @@ db_fetch(krb5_principal principal, hdb_entry **h)
     ent->principal = principal;
 
     for(i = 0; i < num_db; i++) {
-	ret = db[i]->open(context, db[i], O_RDONLY, 0);
+	ret = db[i]->hdb_open(context, db[i], O_RDONLY, 0);
 	if (ret) {
 	    kdc_log(0, "Failed to open database: %s", 
 		    krb5_get_err_text(context, ret));
 	    continue;
 	}
-	ret = db[i]->fetch(context, db[i], HDB_F_DECRYPT, ent);
-	db[i]->close(context, db[i]);
+	ret = db[i]->hdb_fetch(context, db[i], HDB_F_DECRYPT, ent);
+	db[i]->hdb_close(context, db[i]);
 	if(ret == 0) {
 	    *h = ent;
 	    return 0;
