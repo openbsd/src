@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.43 2006/03/28 07:17:17 ray Exp $	*/
+/*	$OpenBSD: req.c,v 1.44 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -500,7 +500,7 @@ cvs_req_argument(int reqid, char *line)
 static int
 cvs_req_globalopt(int reqid, char *line)
 {
-	if ((*line != '-') || (*(line + 2) != '\0'))
+	if (*line != '-' || *(line + 2) != '\0')
 		fatal("invalid `Global_option' request format");
 
 	switch (*(line + 1)) {
@@ -546,9 +546,9 @@ cvs_req_gzipstream(int reqid, char *line)
 	long val;
 
 	val = strtol(line, &ep, 10);
-	if ((line[0] == '\0') || (*ep != '\0'))
+	if (line[0] == '\0' || *ep != '\0')
 		fatal("invalid Gzip-stream level `%s'", line);
-	else if ((errno == ERANGE) && ((val < 0) || (val > 9)))
+	else if (errno == ERANGE && (val < 0 || val > 9))
 		fatal("Gzip-stream level %ld out of range", val);
 
 	cvs_compress = (int)val;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.51 2006/03/24 13:34:27 ray Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.52 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -155,7 +155,7 @@ cvs_checkout_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 	co_mods = argv;
 	co_nmod = argc;
 
-	if ((statmod == 0) && (argc == 0))
+	if (statmod == 0 && argc == 0)
 		fatal("must specify at least one module or directory");
 
 	if (statmod && (argc > 0))
@@ -163,11 +163,11 @@ cvs_checkout_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 
 	/* `export' command exceptions */
 	if (cvs_cmdop == CVS_OP_EXPORT) {
-		if ((tag == NULL) && (date == NULL))
+		if (tag == NULL && date == NULL)
 			fatal("must specify a tag or date");
 
 		/* we don't want numerical revisions here */
-		if ((tag != NULL) && (rcsnum_parse(tag) != NULL))
+		if (tag != NULL && rcsnum_parse(tag) != NULL)
 			fatal("tag `%s' must be a symbolic tag", tag);
 	}
 
@@ -190,7 +190,7 @@ cvs_checkout_pre_exec(struct cvsroot *root)
 		if ((sp = strchr(co_mods[i], '/')) != NULL)
 			*sp = '\0';
 
-		if ((mkdir(co_mods[i], 0755) == -1) && (errno != EEXIST))
+		if (mkdir(co_mods[i], 0755) == -1 && errno != EEXIST)
 			fatal("cvs_checkout_pre_exec: mkdir `%s': %s",
 			    co_mods[i], strerror(errno));
 
@@ -283,7 +283,7 @@ cvs_checkout_local(CVSFILE *cf, void *arg)
 	static int inattic = 0;
 
 	/* we don't want these */
-	if ((cf->cf_type == DT_DIR) && !strcmp(cf->cf_name, "Attic")) {
+	if (cf->cf_type == DT_DIR && !strcmp(cf->cf_name, "Attic")) {
 		inattic = 1;
 		return (CVS_EX_OK);
 	}

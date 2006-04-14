@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.136 2006/04/05 01:38:55 ray Exp $	*/
+/*	$OpenBSD: file.c,v 1.137 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -253,9 +253,9 @@ cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 		}
 
 		cfp->cf_repo = xstrdup(repo);
-		if (((mkdir(path, mode) == -1) && (errno != EEXIST)) ||
-		    (cvs_mkadmin(path, cfp->cf_root->cr_str, cfp->cf_repo,
-		    NULL, NULL, 0) < 0)) {
+		if ((mkdir(path, mode) == -1 && errno != EEXIST) ||
+		    cvs_mkadmin(path, cfp->cf_root->cr_str, cfp->cf_repo,
+		    NULL, NULL, 0) < 0) {
 			cvs_file_free(cfp);
 			return (NULL);
 		}
@@ -575,10 +575,10 @@ cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
 	if (cb == NULL)
 		callit = 0;
 
-	if ((cvs_cmdop == CVS_OP_SERVER) && (type != DT_DIR))
+	if (cvs_cmdop == CVS_OP_SERVER && type != DT_DIR)
 		callit = 0;
 
-	if ((root->cr_method == CVS_METHOD_LOCAL) && (type != DT_DIR))
+	if (root->cr_method == CVS_METHOD_LOCAL && type != DT_DIR)
 		callit = 0;
 
 	if (!(base->cf_flags & CVS_FILE_ONDISK))
@@ -593,7 +593,7 @@ cvs_file_loadinfo(char *path, int flags, int (*cb)(CVSFILE *, void *),
 	 * If we have a normal file, pass it as well.
 	 */
 	if (type != DT_DIR) {
-		if ((cb != NULL) && ((cvs_error = cb(cf, arg)) != CVS_EX_OK))
+		if (cb != NULL && (cvs_error = cb(cf, arg)) != CVS_EX_OK)
 			goto fail;
 	} else {
 		/*
@@ -645,7 +645,7 @@ cvs_file_find(CVSFILE *hier, const char *path)
 
 		/* special case */
 		if (*pp == '.') {
-			if ((*(pp + 1) == '.') && (*(pp + 2) == '\0')) {
+			if (*(pp + 1) == '.' && *(pp + 2) == '\0') {
 				/* request to go back to parent */
 				if (cf->cf_parent == NULL) {
 					cvs_log(LP_NOTICE,
@@ -747,7 +747,7 @@ cvs_load_dirinfo(CVSFILE *cf, int flags)
 		return (-1);
 	}
 
-	if ((stat(pbuf, &st) == 0) && S_ISDIR(st.st_mode)) {
+	if (stat(pbuf, &st) == 0 && S_ISDIR(st.st_mode)) {
 		if (cvs_readrepo(fpath, pbuf, sizeof(pbuf)) == 0)
 			cf->cf_repo = xstrdup(pbuf);
 	} else {
@@ -790,7 +790,7 @@ cvs_file_getdir(CVSFILE *cf, int flags, int (*cb)(CVSFILE *, void *),
 	struct cvs_flist dirs;
 	int nfiles, ndirs;
 
-	if ((flags & CF_KNOWN) && (cf->cf_cvstat == CVS_FST_UNKNOWN))
+	if ((flags & CF_KNOWN) && cf->cf_cvstat == CVS_FST_UNKNOWN)
 		return (0);
 
 	/*
@@ -847,7 +847,7 @@ cvs_file_getdir(CVSFILE *cf, int flags, int (*cb)(CVSFILE *, void *),
 			continue;
 		}
 
-		if ((de->d_type != DT_DIR) && (flags & CF_NOFILES))
+		if (de->d_type != DT_DIR && (flags & CF_NOFILES))
 			continue;
 
 		cfp = cvs_file_lget(pbuf, flags, cf, entf, ent);
@@ -860,7 +860,7 @@ cvs_file_getdir(CVSFILE *cf, int flags, int (*cb)(CVSFILE *, void *),
 		 * A file is linked to the parent <cf>, a directory
 		 * is added to the dirs SIMPLEQ list for later use.
 		 */
-		if ((cfp->cf_type != DT_DIR) && !freecf) {
+		if (cfp->cf_type != DT_DIR && !freecf) {
 			SIMPLEQ_INSERT_TAIL(&(cf->cf_files), cfp, cf_list);
 			nfiles++;
 		} else if (cfp->cf_type == DT_DIR) {
@@ -886,7 +886,7 @@ cvs_file_getdir(CVSFILE *cf, int flags, int (*cb)(CVSFILE *, void *),
 		/*
 		 * If we don't want to keep it, free it
 		 */
-		if ((cfp->cf_type != DT_DIR) && freecf)
+		if (cfp->cf_type != DT_DIR && freecf)
 			cvs_file_free(cfp);
 	}
 
@@ -899,12 +899,12 @@ cvs_file_getdir(CVSFILE *cf, int flags, int (*cb)(CVSFILE *, void *),
 	 *
 	 * (Follows the same procedure as above ... can we merge them?)
 	 */
-	while ((entf != NULL) && ((ent = cvs_ent_next(entf)) != NULL)) {
+	while (entf != NULL && (ent = cvs_ent_next(entf)) != NULL) {
 		if (ent->processed == 1)
 			continue;
-		if (!(flags & CF_RECURSE) && (ent->ce_type == CVS_ENT_DIR))
+		if (!(flags & CF_RECURSE) && ent->ce_type == CVS_ENT_DIR)
 			continue;
-		if ((flags & CF_NOFILES) && (ent->ce_type != CVS_ENT_DIR))
+		if ((flags & CF_NOFILES) && ent->ce_type != CVS_ENT_DIR)
 			continue;
 
 		len = cvs_path_cat(fpath, ent->ce_name, pbuf, sizeof(pbuf));
@@ -917,7 +917,7 @@ cvs_file_getdir(CVSFILE *cf, int flags, int (*cb)(CVSFILE *, void *),
 			goto done;
 		}
 
-		if ((cfp->cf_type != DT_DIR) && !freecf) {
+		if (cfp->cf_type != DT_DIR && !freecf) {
 			SIMPLEQ_INSERT_TAIL(&(cf->cf_files), cfp, cf_list);
 			nfiles++;
 		} else if (cfp->cf_type == DT_DIR) {
@@ -930,7 +930,7 @@ cvs_file_getdir(CVSFILE *cf, int flags, int (*cb)(CVSFILE *, void *),
 				goto done;
 		}
 
-		if ((cfp->cf_type != DT_DIR) && freecf)
+		if (cfp->cf_type != DT_DIR && freecf)
 			cvs_file_free(cfp);
 	}
 
@@ -962,7 +962,7 @@ cvs_file_getdir(CVSFILE *cf, int flags, int (*cb)(CVSFILE *, void *),
 		}
 
 		if ((cfp->cf_flags & CVS_FILE_ONDISK) &&
-		    (cvs_file_getdir(cfp, flags, cb, arg, freecf) < 0))
+		    cvs_file_getdir(cfp, flags, cb, arg, freecf) < 0)
 			goto done;
 
 		if (freecf)
@@ -972,7 +972,7 @@ cvs_file_getdir(CVSFILE *cf, int flags, int (*cb)(CVSFILE *, void *),
 	ret = 0;
 	cfp = NULL;
 done:
-	if ((cfp != NULL) && freecf)
+	if (cfp != NULL && freecf)
 		cvs_file_free(cfp);
 
 	while (!SIMPLEQ_EMPTY(&dirs)) {
@@ -1146,7 +1146,7 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, CVSENTRIES *pent,
 	if (ret == 0)
 		type = IFTODT(st.st_mode);
 
-	if ((flags & CF_REPO) && (type != DT_DIR)) {
+	if ((flags & CF_REPO) && type != DT_DIR) {
 		if ((c = strrchr(path, ',')) == NULL)
 			return (NULL);
 		*c = '\0';
@@ -1157,7 +1157,7 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, CVSENTRIES *pent,
 	cfp->cf_parent = parent;
 	cfp->cf_entry = pent;
 
-	if ((cfp->cf_type == DT_DIR) && (cfp->cf_parent == NULL))
+	if (cfp->cf_type == DT_DIR && cfp->cf_parent == NULL)
 		cfp->cf_flags |= CVS_DIRF_BASE;
 
 	if (ret == 0) {
@@ -1265,7 +1265,7 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, CVSENTRIES *pent,
 		xfree(c);
 	}
 
-	if ((cfp->cf_repo != NULL) && (cfp->cf_type == DT_DIR) &&
+	if (cfp->cf_repo != NULL && cfp->cf_type == DT_DIR &&
 	    !strcmp(cfp->cf_repo, path))
 		cfp->cf_cvstat = CVS_FST_UPTODATE;
 

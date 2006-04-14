@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.55 2006/04/12 14:31:05 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.56 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -205,7 +205,7 @@ cvs_status_local(CVSFILE *cf, void *arg)
 
 			ctime_r(&(cf->cf_etime), timebuf);
 			n = strlen(timebuf);
-			if ((n > 0) && (timebuf[n - 1] == '\n'))
+			if (n > 0 && timebuf[n - 1] == '\n')
 				timebuf[--n] = '\0';
 
 			strlcat(buf, timebuf, sizeof(buf));

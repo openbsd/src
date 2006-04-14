@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.88 2006/04/13 16:55:09 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.89 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -386,10 +386,10 @@ cvs_diff_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 			pflag = 1;
 			break;
 		case 'r':
-			if ((dap->rev1 == NULL) && (dap->date1 == NULL)) {
+			if (dap->rev1 == NULL && dap->date1 == NULL) {
 				dap->rev1 = optarg;
-			} else if ((dap->rev2 == NULL) &&
-			    (dap->date2 == NULL)) {
+			} else if (dap->rev2 == NULL &&
+			    dap->date2 == NULL) {
 				dap->rev2 = optarg;
 			} else {
 				cvs_log(LP_ERR,
@@ -481,7 +481,7 @@ cvs_diff_remote(struct cvs_file *cfp, void *arg)
 		} else {
 			root = cfp->cf_root;
 #if 0
-			if ((cfp->cf_parent == NULL) ||
+			if (cfp->cf_parent == NULL ||
 			    (root != cfp->cf_parent->cf_root)) {
 				cvs_connect(root);
 				cvs_diff_pre_exec(root);
@@ -705,8 +705,8 @@ cvs_diffreg(const char *file1, const char *file2, BUF *out)
 		rval = D_BINARY;
 		goto closem;
 	}
-	if ((prepare(0, f1, stb1.st_size) < 0) ||
-	    (prepare(1, f2, stb2.st_size) < 0)) {
+	if (prepare(0, f1, stb1.st_size) < 0 ||
+	    prepare(1, f2, stb2.st_size) < 0) {
 		goto closem;
 	}
 	prune();
@@ -779,7 +779,7 @@ files_differ(FILE *f1, FILE *f2)
 		j = fread(buf2, (size_t)1, sizeof(buf2), f2);
 		if (i != j)
 			return (1);
-		if ((i == 0) && (j == 0)) {
+		if (i == 0 && j == 0) {
 			if (ferror(f1) || ferror(f2))
 				return (1);
 			return (0);
@@ -883,7 +883,7 @@ isqrt(int n)
 		x = n / x;
 		x += y;
 		x /= 2;
-	} while ((x - y) > 1 || (x - y) < -1);
+	} while (x - y > 1 || x - y < -1);
 
 	return (x);
 }
@@ -1022,7 +1022,7 @@ check(FILE *f1, FILE *f2)
 			ixnew[j] = ctnew += skipline(f2);
 			j++;
 		}
-		if ((bflag == 1)|| (wflag == 1) || (iflag == 1)) {
+		if (bflag == 1 || wflag == 1 || iflag == 1) {
 			for (;;) {
 				c = getc(f1);
 				d = getc(f2);
@@ -1030,14 +1030,14 @@ check(FILE *f1, FILE *f2)
 				 * GNU diff ignores a missing newline
 				 * in one file if bflag || wflag.
 				 */
-				if (((bflag == 1) || (wflag == 1)) &&
+				if ((bflag == 1 || wflag == 1) &&
 				    ((c == EOF && d == '\n') ||
 				    (c == '\n' && d == EOF))) {
 					break;
 				}
 				ctold++;
 				ctnew++;
-				if ((bflag == 1) && isspace(c) && isspace(d)) {
+				if (bflag == 1 && isspace(c) && isspace(d)) {
 					do {
 						if (c == '\n')
 							break;
@@ -1061,13 +1061,13 @@ check(FILE *f1, FILE *f2)
 				if (chrtran[c] != chrtran[d]) {
 					jackpot++;
 					J[i] = 0;
-					if ((c != '\n') && (c != EOF))
+					if (c != '\n' && c != EOF)
 						ctold += skipline(f1);
-					if ((d != '\n') && (c != EOF))
+					if (d != '\n' && c != EOF)
 						ctnew += skipline(f2);
 					break;
 				}
-				if ((c == '\n') || (c == EOF))
+				if (c == '\n' || c == EOF)
 					break;
 			}
 		} else {
@@ -1077,13 +1077,13 @@ check(FILE *f1, FILE *f2)
 				if ((c = getc(f1)) != (d = getc(f2))) {
 					/* jackpot++; */
 					J[i] = 0;
-					if ((c != '\n') && (c != EOF))
+					if (c != '\n' && c != EOF)
 						ctold += skipline(f1);
-					if ((d != '\n') && (c != EOF))
+					if (d != '\n' && c != EOF)
 						ctnew += skipline(f2);
 					break;
 				}
-				if ((c == '\n') || (c == EOF))
+				if (c == '\n' || c == EOF)
 					break;
 			}
 		}
@@ -1269,7 +1269,7 @@ change(FILE *f1, FILE *f2, int a, int b, int c, int d)
 					goto proceed;
 			}
 		}
-		if ((a > b) || (c <= d)) {	/* Changes and inserts. */
+		if (a > b || c <= d) {	/* Changes and inserts. */
 			for (i = c; i <= d; i++) {
 				line = preadline(fileno(f2),
 				    ixnew[i] - ixnew[i - 1], ixnew[i - 1]);
@@ -1394,7 +1394,7 @@ fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile)
 		nc = f[i] - f[i - 1];
 		if (diff_format != D_IFDEF && ch != '\0') {
 			diff_output("%c", ch);
-			if ((Tflag == 1 ) && (diff_format == D_NORMAL ||
+			if (Tflag == 1 && (diff_format == D_NORMAL ||
 			    diff_format == D_CONTEXT ||
 			    diff_format == D_UNIFIED))
 				diff_output("\t");
@@ -1412,7 +1412,7 @@ fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile)
 					    "file");
 				return;
 			}
-			if ((c == '\t') && (tflag == 1)) {
+			if (c == '\t' && tflag == 1) {
 				do {
 					diff_output(" ");
 				} while (++col & 7);
@@ -1435,7 +1435,7 @@ readhash(FILE *f)
 
 	sum = 1;
 	space = 0;
-	if ((bflag != 1) && (wflag != 1)) {
+	if (bflag != 1 && wflag != 1) {
 		if (iflag == 1)
 			for (i = 0; (t = getc(f)) != '\n'; i++) {
 				if (t == EOF) {
@@ -1462,7 +1462,7 @@ readhash(FILE *f)
 				space++;
 				continue;
 			default:
-				if ((space != 0) && (wflag != 1)) {
+				if (space != 0 && wflag != 1) {
 					i++;
 					space = 0;
 				}
@@ -1492,7 +1492,7 @@ asciifile(FILE *f)
 	char buf[BUFSIZ];
 	size_t i, cnt;
 
-	if ((aflag == 1) || (f == NULL))
+	if (aflag == 1 || f == NULL)
 		return (1);
 
 	rewind(f);

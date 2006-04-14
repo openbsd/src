@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.53 2006/04/01 20:11:25 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.54 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -92,7 +92,7 @@ cvs_commit_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 		}
 	}
 
-	if ((cvs_msg != NULL) && (mfile != NULL)) {
+	if (cvs_msg != NULL && mfile != NULL) {
 		cvs_log(LP_ERR, "the -F and -m flags are mutually exclusive");
 		return (CVS_EX_USAGE);
 	}
@@ -201,7 +201,7 @@ cvs_commit_prepare(CVSFILE *cf, void *arg)
 	CVSFILE *copy;
 	struct cvs_flist *clp = (struct cvs_flist *)arg;
 
-	if ((cf->cf_type == DT_REG) && (cf->cf_cvstat == wantedstatus)) {
+	if (cf->cf_type == DT_REG && cf->cf_cvstat == wantedstatus) {
 		copy = cvs_file_copy(cf);
 		if (copy == NULL)
 			return (CVS_EX_DATA);
@@ -234,9 +234,9 @@ cvs_commit_remote(CVSFILE *cf, void *arg)
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
-	if ((cf->cf_cvstat == CVS_FST_ADDED) ||
-	    (cf->cf_cvstat == CVS_FST_MODIFIED) ||
-	    (cf->cf_cvstat == CVS_FST_REMOVED)) {
+	if (cf->cf_cvstat == CVS_FST_ADDED ||
+	    cf->cf_cvstat == CVS_FST_MODIFIED ||
+	    cf->cf_cvstat == CVS_FST_REMOVED) {
 		cvs_sendentry(root, cf);
 
 		/* if it's removed, don't bother sending a

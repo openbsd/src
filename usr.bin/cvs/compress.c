@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.c,v 1.3 2006/04/12 13:42:51 xsa Exp $	*/
+/*	$OpenBSD: compress.c,v 1.4 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -51,7 +51,7 @@ cvs_zlib_newctx(int level)
 {
 	CVSZCTX *ctx;
 
-	if ((level < 0) || (level > 9))
+	if (level < 0 || level > 9)
 		fatal("invalid compression level %d (must be between 0 and 9)",
 		    level);
 
@@ -66,8 +66,8 @@ cvs_zlib_newctx(int level)
 	ctx->z_destrm.zfree = Z_NULL;
 	ctx->z_destrm.opaque = Z_NULL;
 
-	if ((inflateInit(&(ctx->z_instrm)) != Z_OK) ||
-	    (deflateInit(&(ctx->z_destrm), level) != Z_OK))
+	if (inflateInit(&(ctx->z_instrm)) != Z_OK ||
+	    deflateInit(&(ctx->z_destrm), level) != Z_OK)
 		fatal("failed to initialize zlib streams");
 
 	return (ctx);
@@ -115,8 +115,8 @@ cvs_zlib_inflate(CVSZCTX *ctx, BUF *dst, u_char *src, size_t slen)
 		ctx->z_instrm.avail_out = sizeof(buf);
 
 		ret = inflate(&(ctx->z_instrm), Z_FINISH);
-		if ((ret == Z_MEM_ERROR) || (ret == Z_BUF_ERROR) ||
-		    (ret == Z_STREAM_ERROR) || (ret == Z_DATA_ERROR))
+		if (ret == Z_MEM_ERROR || ret == Z_BUF_ERROR ||
+		    ret == Z_STREAM_ERROR || ret == Z_DATA_ERROR)
 			fatal("inflate error: %s", ctx->z_instrm.msg);
 
 		cvs_buf_append(dst, buf, ctx->z_instrm.avail_out);
@@ -152,7 +152,7 @@ cvs_zlib_deflate(CVSZCTX *ctx, BUF *dst, u_char *src, size_t slen)
 		ctx->z_destrm.next_out = buf;
 		ctx->z_destrm.avail_out = sizeof(buf);
 		ret = deflate(&(ctx->z_destrm), Z_FINISH);
-		if ((ret == Z_STREAM_ERROR) || (ret == Z_BUF_ERROR))
+		if (ret == Z_STREAM_ERROR || ret == Z_BUF_ERROR)
 			fatal("deflate error: %s", ctx->z_destrm.msg);
 
 		if (cvs_buf_append(dst, buf,

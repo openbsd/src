@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.57 2006/04/10 08:08:00 xsa Exp $	*/
+/*	$OpenBSD: update.c,v 1.58 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -324,7 +324,7 @@ cvs_update_local(CVSFILE *cf, void *arg)
 		break;
 	}
 
-	if ((frev != NULL) && (frev != rf->rf_head))
+	if (frev != NULL && frev != rf->rf_head)
 		rcsnum_free(frev);
 	rcs_close(rf);
 

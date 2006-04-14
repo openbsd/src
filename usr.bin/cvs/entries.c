@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.55 2006/04/05 01:38:55 ray Exp $	*/
+/*	$OpenBSD: entries.c,v 1.56 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -68,7 +68,7 @@ cvs_ent_open(const char *dir, int flags)
 	if (len >= sizeof(cdpath))
 		return (NULL);
 
-	if ((stat(cdpath, &st) == 0) && S_ISDIR(st.st_mode))
+	if (stat(cdpath, &st) == 0 && S_ISDIR(st.st_mode))
 		nodir = 0;	/* the CVS/ directory does exist */
 
 	len = cvs_path_cat(dir, CVS_PATH_BACKUPENTRIES, bpath, sizeof(bpath));
@@ -114,9 +114,9 @@ cvs_ent_open(const char *dir, int flags)
 
 	while (fgets(ebuf, (int)sizeof(ebuf), fp) != NULL) {
 		len = strlen(ebuf);
-		if ((len > 0) && (ebuf[len - 1] == '\n'))
+		if (len > 0 && ebuf[len - 1] == '\n')
 			ebuf[--len] = '\0';
-		if ((ebuf[0] == 'D') && (ebuf[1] == '\0'))
+		if (ebuf[0] == 'D' && ebuf[1] == '\0')
 			break;
 		ent = cvs_ent_parse(ebuf);
 		if (ent == NULL)
@@ -152,7 +152,7 @@ cvs_ent_open(const char *dir, int flags)
 	if (fp != NULL) {
 		while (fgets(ebuf, (int)sizeof(ebuf), fp) != NULL) {
 			len = strlen(ebuf);
-			if ((len > 0) && (ebuf[len - 1] == '\n'))
+			if (len > 0 && ebuf[len - 1] == '\n')
 				ebuf[--len] = '\0';
 
 			p = &ebuf[2];
@@ -191,7 +191,7 @@ cvs_ent_close(CVSENTRIES *ep)
 {
 	struct cvs_ent *ent;
 
-	if ((cvs_noexec == 0) && (ep->cef_flags & CVS_ENTF_WR) &&
+	if (cvs_noexec == 0 && (ep->cef_flags & CVS_ENTF_WR) &&
 	    !(ep->cef_flags & CVS_ENTF_SYNC)) {
 		/* implicit sync with disk */
 		(void)cvs_ent_write(ep);
@@ -372,7 +372,7 @@ cvs_ent_parse(const char *entry)
 			*(dp++) = '\0';
 		fields[i++] = sp;
 		sp = dp;
-	} while ((dp != NULL) && (i < CVS_ENTRIES_NFIELDS));
+	} while (dp != NULL && i < CVS_ENTRIES_NFIELDS);
 
 	if (i < CVS_ENTRIES_NFIELDS) {
 		cvs_log(LP_ERR, "missing fields in entry line `%s'", entry);
@@ -399,7 +399,7 @@ cvs_ent_parse(const char *entry)
 			sp = fields[2] + 1;
 		} else {
 			sp = fields[2];
-			if ((fields[2][0] == '0') && (fields[2][1] == '\0'))
+			if (fields[2][0] == '0' && fields[2][1] == '\0')
 				ent->ce_status = CVS_ENT_ADDED;
 		}
 
@@ -412,8 +412,8 @@ cvs_ent_parse(const char *entry)
 			if (!strcmp(fields[3], "up to date"))
 				ent->ce_status = CVS_ENT_UPTODATE;
 		} else {
-			if ((strcmp(fields[3], CVS_DATE_DUMMY) == 0) ||
-			    (strncmp(fields[3], "Initial ", 8) == 0))
+			if (strcmp(fields[3], CVS_DATE_DUMMY) == 0 ||
+			    strncmp(fields[3], "Initial ", 8) == 0)
 				ent->ce_mtime = CVS_DATE_DMSEC;
 			else
 				ent->ce_mtime = cvs_date_parse(fields[3]);
@@ -469,8 +469,8 @@ cvs_ent_write(CVSENTRIES *ef)
 			revbuf[0] = '\0';
 		} else {
 			rcsnum_tostr(ent->ce_rev, revbuf, sizeof(revbuf));
-			if ((ent->ce_mtime == CVS_DATE_DMSEC) &&
-			    (ent->ce_status != CVS_ENT_ADDED))
+			if (ent->ce_mtime == CVS_DATE_DMSEC &&
+			    ent->ce_status != CVS_ENT_ADDED)
 				strlcpy(timebuf, CVS_DATE_DUMMY,
 				    sizeof(timebuf));
 			else if (ent->ce_status == CVS_ENT_ADDED) {
@@ -479,7 +479,7 @@ cvs_ent_write(CVSENTRIES *ef)
 			} else {
 				ctime_r(&(ent->ce_mtime), timebuf);
 				len = strlen(timebuf);
-				if ((len > 0) && (timebuf[len - 1] == '\n'))
+				if (len > 0 && timebuf[len - 1] == '\n')
 					timebuf[--len] = '\0';
 			}
 		}

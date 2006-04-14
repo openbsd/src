@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.40 2006/01/27 12:56:28 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.41 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -137,9 +137,9 @@ cvs_add_local(CVSFILE *cf, void *arg)
 	added = 0;
 
 	/* dont use `cvs add *' */
-	if ((strcmp(cf->cf_name, ".") == 0) ||
-	    (strcmp(cf->cf_name, "..") == 0) ||
-	    (strcmp(cf->cf_name, CVS_PATH_CVSDIR) == 0)) {
+	if (strcmp(cf->cf_name, ".") == 0 ||
+	    strcmp(cf->cf_name, "..") == 0 ||
+	    strcmp(cf->cf_name, CVS_PATH_CVSDIR) == 0) {
 		if (verbosity > 1)
 			fatal("cannot add special file `%s'.", cf->cf_name);
 	}
@@ -148,8 +148,8 @@ cvs_add_local(CVSFILE *cf, void *arg)
 		return cvs_add_directory(cf);
 
 	if ((!(cf->cf_flags & CVS_FILE_ONDISK)) &&
-	    (cf->cf_cvstat != CVS_FST_LOST) &&
-	    (cf->cf_cvstat != CVS_FST_REMOVED)) {
+	    cf->cf_cvstat != CVS_FST_LOST &&
+	    cf->cf_cvstat != CVS_FST_REMOVED) {
 		if (verbosity > 1)
 			cvs_log(LP_WARN, "nothing known about `%s'",
 			    cf->cf_name);
@@ -170,10 +170,10 @@ cvs_add_local(CVSFILE *cf, void *arg)
 		    cf->cf_name, numbuf);
 
 		return (0);
-	} else if ((cf->cf_cvstat == CVS_FST_CONFLICT) ||
-	    (cf->cf_cvstat == CVS_FST_LOST) ||
-	    (cf->cf_cvstat == CVS_FST_MODIFIED) ||
-	    (cf->cf_cvstat == CVS_FST_UPTODATE)) {
+	} else if (cf->cf_cvstat == CVS_FST_CONFLICT ||
+	    cf->cf_cvstat == CVS_FST_LOST ||
+	    cf->cf_cvstat == CVS_FST_MODIFIED ||
+	    cf->cf_cvstat == CVS_FST_UPTODATE) {
 		if (verbosity > 1) {
 			rcsnum_tostr(cf->cf_lrev, numbuf, sizeof(numbuf));
 			cvs_log(LP_WARN,
@@ -244,7 +244,7 @@ cvs_add_directory(CVSFILE *cf)
 	    strlcat(rcsdir, repo, sizeof(rcsdir)) >= sizeof(rcsdir))
 		fatal("cvs_add_directory: path truncation");
 
-	if ((stat(rcsdir, &st) == 0) && !(S_ISDIR(st.st_mode)))
+	if (stat(rcsdir, &st) == 0 && !(S_ISDIR(st.st_mode)))
 		fatal("%s is not a directory; %s not added: %s", rcsdir, fpath,
 		    strerror(errno));
 

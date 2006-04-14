@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.19 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: version.c,v 1.20 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -53,11 +53,11 @@ struct cvs_cmd cvs_cmd_version = {
 static int
 cvs_version_pre_exec(struct cvsroot *root)
 {
-	if ((root != NULL) && (root->cr_method != CVS_METHOD_LOCAL))
+	if (root != NULL && root->cr_method != CVS_METHOD_LOCAL)
 		printf("Client: ");
 	cvs_printf("%s\n", CVS_VERSION);
 
-	if ((root != NULL) && (root->cr_method != CVS_METHOD_LOCAL)) {
+	if (root != NULL && root->cr_method != CVS_METHOD_LOCAL) {
 		cvs_printf("Server: %s\n", root->cr_version == NULL ?
 		    "(unknown)" : root->cr_version);
 	}

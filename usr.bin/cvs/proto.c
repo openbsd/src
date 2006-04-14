@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.95 2006/04/11 07:52:34 ray Exp $	*/
+/*	$OpenBSD: proto.c,v 1.96 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -184,10 +184,10 @@ cvs_connect(struct cvsroot *root)
 
 	if (root->cr_method == CVS_METHOD_PSERVER)
 		fatal("no pserver support due to security issues");
-	else if ((root->cr_method == CVS_METHOD_KSERVER) ||
-	    (root->cr_method == CVS_METHOD_GSERVER) ||
-	    (root->cr_method == CVS_METHOD_EXT) ||
-	    (root->cr_method == CVS_METHOD_FORK))
+	else if (root->cr_method == CVS_METHOD_KSERVER ||
+	    root->cr_method == CVS_METHOD_GSERVER ||
+	    root->cr_method == CVS_METHOD_EXT ||
+	    root->cr_method == CVS_METHOD_FORK)
 		fatal("connection method not supported yet");
 
 	if (root->cr_flags & CVS_ROOT_CONNECTED) {
@@ -208,8 +208,8 @@ cvs_connect(struct cvsroot *root)
 	if (cvs_subproc_pid == -1) {
 		fatal("failed to fork for cvs server connection");
 	} else if (cvs_subproc_pid == 0) {
-		if ((dup2(infd[0], STDIN_FILENO) == -1) ||
-		    (dup2(outfd[1], STDOUT_FILENO) == -1))
+		if (dup2(infd[0], STDIN_FILENO) == -1 ||
+		    dup2(outfd[1], STDOUT_FILENO) == -1)
 			fatal("failed to setup standard streams "
 			    "for cvs server");
 
@@ -696,7 +696,7 @@ cvs_getln(struct cvsroot *root, char *lbuf, size_t len)
 		fputs(lbuf, cvs_server_outlog);
 
 	rlen = strlen(lbuf);
-	if ((rlen > 0) && (lbuf[rlen - 1] == '\n'))
+	if (rlen > 0 && lbuf[rlen - 1] == '\n')
 		lbuf[--rlen] = '\0';
 }
 
@@ -750,7 +750,7 @@ cvs_sendln(struct cvsroot *root, const char *line)
 	nl = 0;
 	len = strlen(line);
 
-	if ((len > 0) && (line[len - 1] != '\n'))
+	if (len > 0 && line[len - 1] != '\n')
 		nl = 1;
 
 	if (cvs_server_inlog != NULL) {
@@ -867,8 +867,8 @@ cvs_senddir(struct cvsroot *root, CVSFILE *dir)
 void
 cvs_sendarg(struct cvsroot *root, const char *arg, int append)
 {
-	cvs_sendreq(root, ((append == 0) ? CVS_REQ_ARGUMENT :
-	    CVS_REQ_ARGUMENTX), arg);
+	cvs_sendreq(root, append == 0 ? CVS_REQ_ARGUMENT :
+	    CVS_REQ_ARGUMENTX, arg);
 }
 
 

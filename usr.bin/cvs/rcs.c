@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.167 2006/04/13 23:41:13 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.168 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -282,7 +282,7 @@ rcs_open(const char *path, int flags, ...)
 	fmode = S_IRUSR|S_IRGRP|S_IROTH;
 	flags &= 0xffff;	/* ditch any internal flags */
 
-	if (((ret = stat(path, &st)) == -1) && (errno == ENOENT)) {
+	if (((ret = stat(path, &st)) == -1) && errno == ENOENT) {
 		if (flags & RCS_CREATE) {
 			va_start(vap, flags);
 			mode = va_arg(vap, int);
@@ -296,7 +296,7 @@ rcs_open(const char *path, int flags, ...)
 			rcs_errno = RCS_ERR_NOENT;
 			return (NULL);
 		}
-	} else if ((ret == 0) && (flags & RCS_CREATE)) {
+	} else if (ret == 0 && (flags & RCS_CREATE)) {
 		cvs_log(LP_ERR, "RCS file `%s' exists", path);
 		return (NULL);
 	}
@@ -546,8 +546,8 @@ rcs_write(RCSFILE *rfp)
 	if (rename(fn, rfp->rf_path) == -1) {
 		if (errno == EXDEV) {
 			/* rename() not supported so we have to copy. */
-			if ((chmod(rfp->rf_path, S_IWUSR) == -1)
-			    && !(rfp->rf_flags & RCS_CREATE)) {
+			if (chmod(rfp->rf_path, S_IWUSR) == -1 &&
+			    !(rfp->rf_flags & RCS_CREATE)) {
 				fatal("chmod(%s, 0%o) failed",
 				    rfp->rf_path, S_IWUSR);
 			}
@@ -603,7 +603,7 @@ err:				if (unlink(rfp->rf_path) == -1)
 		}
 	}
 
-	if ((chmod(rfp->rf_path, rfp->rf_mode) == -1)) {
+	if (chmod(rfp->rf_path, rfp->rf_mode) == -1) {
 		cvs_log(LP_ERRNO, "failed to chmod `%s'",
 		    rfp->rf_path);
 		return (-1);
@@ -916,8 +916,8 @@ rcs_lock_add(RCSFILE *file, const char *user, RCSNUM *rev)
 
 	/* first look for duplication */
 	TAILQ_FOREACH(lkp, &(file->rf_locks), rl_list) {
-		if ((strcmp(lkp->rl_name, user) == 0) &&
-		    (rcsnum_cmp(rev, lkp->rl_num, 0) == 0)) {
+		if (strcmp(lkp->rl_name, user) == 0 &&
+		    rcsnum_cmp(rev, lkp->rl_num, 0) == 0) {
 			rcs_errno = RCS_ERR_DUPENT;
 			return (-1);
 		}
@@ -948,8 +948,8 @@ rcs_lock_remove(RCSFILE *file, const char *user, RCSNUM *rev)
 	struct rcs_lock *lkp;
 
 	TAILQ_FOREACH(lkp, &(file->rf_locks), rl_list) {
-		if ((strcmp(lkp->rl_name, user) == 0) &&
-		    (rcsnum_cmp(lkp->rl_num, rev, 0) == 0))
+		if (strcmp(lkp->rl_name, user) == 0 &&
+		    rcsnum_cmp(lkp->rl_num, rev, 0) == 0)
 			break;
 	}
 
@@ -1081,12 +1081,12 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 	    lp = TAILQ_NEXT(lp, l_list)) {
 		op = *(lp->l_line);
 		lineno = (int)strtol((lp->l_line + 1), &ep, 10);
-		if ((lineno > dlines->l_nblines) || (lineno < 0) ||
-		    (*ep != ' '))
+		if (lineno > dlines->l_nblines || lineno < 0 ||
+		    *ep != ' ')
 			fatal("invalid line specification in RCS patch");
 		ep++;
 		nbln = (int)strtol(ep, &ep, 10);
-		if ((nbln < 0) || (*ep != '\0'))
+		if (nbln < 0 || *ep != '\0')
 			fatal("invalid line number specification in RCS patch");
 
 		/* find the appropriate line */
@@ -1099,7 +1099,7 @@ rcs_patch_lines(struct cvs_lines *dlines, struct cvs_lines *plines)
 				dlp = TAILQ_PREV(dlp, cvs_tqh, l_list);
 			} else if (dlp->l_lineno < lineno) {
 				if (((ndlp = TAILQ_NEXT(dlp, l_list)) == NULL) ||
-				    (ndlp->l_lineno > lineno))
+				    ndlp->l_lineno > lineno)
 					break;
 				dlp = ndlp;
 			}
@@ -1238,8 +1238,8 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 		if (rcsnum_cmp(rfp->rf_head, rev, 0) == 0)
 			break;
 
-		if ((isbranch == 1) && (rdp->rd_num->rn_len < rev->rn_len) &&
-		    (!TAILQ_EMPTY(&(rdp->rd_branches))))
+		if (isbranch == 1 && rdp->rd_num->rn_len < rev->rn_len &&
+		    !TAILQ_EMPTY(&(rdp->rd_branches)))
 			lookonbranch = 1;
 
 		if (isbranch && lookonbranch == 1) {
@@ -1285,8 +1285,8 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 			break;
 	} while (rcsnum_cmp(crev, rev, 0) != 0);
 
-	if (cvs_buf_getc(rbuf, cvs_buf_len(rbuf)-1) != '\n'
-	    && rbuf != NULL)
+	if (cvs_buf_getc(rbuf, cvs_buf_len(rbuf)-1) != '\n' &&
+	    rbuf != NULL)
 		cvs_buf_putc(rbuf, '\n');
 
 	return (rbuf);
@@ -1417,7 +1417,7 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 			fatal("error getting revision");
 	}
 
-	if ((prevrdp != NULL) && (nextrdp != NULL)) {
+	if (prevrdp != NULL && nextrdp != NULL) {
 		if ((nextbuf = rcs_getrev(rf, nextrdp->rd_num)) == NULL)
 			fatal("error getting revision");
 
@@ -1452,7 +1452,7 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 		cvs_diffreg(path_tmp1, path_tmp2, newdiff);
 
 		newdeltatext = cvs_buf_release(newdiff);
-	} else if ((nextrdp == NULL) && (prevrdp != NULL)) {
+	} else if (nextrdp == NULL && prevrdp != NULL) {
 		newdeltatext = cvs_buf_release(prevbuf);
 	}
 
@@ -1464,7 +1464,7 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 	TAILQ_REMOVE(&(rf->rf_delta), rdp, rd_list);
 
 	/* update pointers */
-	if ((prevrdp != NULL) && (nextrdp != NULL)) {
+	if (prevrdp != NULL && nextrdp != NULL) {
 		rcsnum_cpy(prevrdp->rd_num, nextrdp->rd_next, 0);
 	} else if (prevrdp != NULL) {
 		rcs_head_set(rf, prevrdp->rd_num);
@@ -1510,8 +1510,8 @@ rcs_findrev(RCSFILE *rfp, RCSNUM *rev)
 	 * is greater than the requested revision.
 	 */
 	rdp = TAILQ_LAST(&(rfp->rf_delta), rcs_dlist);
-	if ((rdp == NULL)
-	    || (rcsnum_cmp(rdp->rd_num, rev, 0) == -1)) {
+	if (rdp == NULL ||
+	    rcsnum_cmp(rdp->rd_num, rev, 0) == -1) {
 		rcs_parse_deltas(rfp, rev);
 	}
 
@@ -1641,7 +1641,7 @@ rcs_errstr(int code)
 {
 	const char *esp;
 
-	if ((code < 0) || ((code >= (int)RCS_NERR) && (code != RCS_ERR_ERRNO)))
+	if (code < 0 || (code >= (int)RCS_NERR && code != RCS_ERR_ERRNO))
 		esp = NULL;
 	else if (code == RCS_ERR_ERRNO)
 		esp = strerror(errno);
@@ -1691,8 +1691,8 @@ rcs_parse_deltatexts(RCSFILE *rfp, RCSNUM *rev)
 	int ret;
 	struct rcs_delta *rdp;
 
-	if ((rfp->rf_flags & PARSED_DELTATEXTS)
-	    || (rfp->rf_flags & RCS_CREATE))
+	if ((rfp->rf_flags & PARSED_DELTATEXTS) ||
+	    (rfp->rf_flags & RCS_CREATE))
 		return;
 
 	if (!(rfp->rf_flags & PARSED_DESC))
@@ -1806,7 +1806,7 @@ rcs_parse_admin(RCSFILE *rfp)
 			rcs_errno = RCS_ERR_PARSE;
 			cvs_log(LP_ERR, "parse error in RCS admin section");
 			goto fail;
-		} else if ((tok == RCS_TOK_NUM) || (tok == RCS_TOK_DESC)) {
+		} else if (tok == RCS_TOK_NUM || tok == RCS_TOK_DESC) {
 			/*
 			 * Assume this is the start of the first delta or
 			 * that we are dealing with an empty RCS file and
@@ -3022,7 +3022,7 @@ cvs_checkout_rev(RCSFILE *rf, RCSNUM *rev, CVSFILE *cf, char *fpath,
 	content = NULL;
 	oldrev = NULL;
 
-	if ((type != CHECKOUT_REV_MERGED) && (type != CHECKOUT_REV_REMOVED)) {
+	if (type != CHECKOUT_REV_MERGED && type != CHECKOUT_REV_REMOVED) {
 		/* fetch the contents of the revision */
 		if ((bp = rcs_getrev(rf, rev)) == NULL) {
 			cvs_log(LP_ERR, "revision '%s' not found in file '%s'",
@@ -3050,7 +3050,7 @@ cvs_checkout_rev(RCSFILE *rf, RCSNUM *rev, CVSFILE *cf, char *fpath,
 	    type == CHECKOUT_REV_UPDATED) {
 		ctime_r(&rcstime, timebuf);
 		l = strlen(timebuf);
-		if ((l > 0) && (timebuf[l - 1] == '\n'))
+		if (l > 0 && timebuf[l - 1] == '\n')
 			timebuf[--l] = '\0';
 
 		l = snprintf(entry, sizeof(entry), "/%s/%s/%s/%s/", cf->cf_name,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.32 2006/04/13 16:55:09 ray Exp $	*/
+/*	$OpenBSD: log.c,v 1.33 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -137,7 +137,7 @@ cvs_log_filter(u_int how, u_int level)
 {
 	u_int i;
 
-	if ((level > LP_MAX) && (level != LP_ALL)) {
+	if (level > LP_MAX && level != LP_ALL) {
 		cvs_log(LP_ERR, "invalid log level for filter");
 		return (-1);
 	}
@@ -239,7 +239,7 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 #endif
 		strlcpy(prefix, __progname, sizeof(prefix));
 
-	if ((cvs_log_flags & LF_PID) && (level != LP_TRACE)) {
+	if ((cvs_log_flags & LF_PID) && level != LP_TRACE) {
 		snprintf(buf, sizeof(buf), "[%d]", (int)getpid());
 		strlcat(prefix, buf, sizeof(prefix));
 	}

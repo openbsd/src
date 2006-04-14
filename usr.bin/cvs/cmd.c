@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.42 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.43 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -175,28 +175,28 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	 * these files.
 	 */
 	error = 0;
-	if ((cmd->cmd_op != CVS_OP_CHECKOUT) &&
-	    (cmd->cmd_op != CVS_OP_EXPORT) &&
-	    (cmd->cmd_op != CVS_OP_IMPORT) &&
-	    (cmd->cmd_op != CVS_OP_INIT) &&
-	    (cmd->cmd_op != CVS_OP_RELEASE) &&
-	    (cmd->cmd_op != CVS_OP_VERSION)) {
+	if (cmd->cmd_op != CVS_OP_CHECKOUT &&
+	    cmd->cmd_op != CVS_OP_EXPORT &&
+	    cmd->cmd_op != CVS_OP_IMPORT &&
+	    cmd->cmd_op != CVS_OP_INIT &&
+	    cmd->cmd_op != CVS_OP_RELEASE &&
+	    cmd->cmd_op != CVS_OP_VERSION) {
 		/* check for the CVS directory */
 		ret = stat(CVS_PATH_CVSDIR, &st);
-		if (((ret == -1) && (errno == ENOENT)) || ((ret != -1) &&
-		    !(S_ISDIR(st.st_mode))))
+		if ((ret == -1 && errno == ENOENT) ||
+		    (ret != -1 && !(S_ISDIR(st.st_mode))))
 			error |= MISSING_CVS_DIR;
 
 		/* check if the CVS/Entries file exists */
 		ret = stat(CVS_PATH_ENTRIES, &st);
-		if (((ret == -1) && (errno == ENOENT)) || ((ret != -1) &&
-		    !(S_ISREG(st.st_mode))))
+		if ((ret == -1 && errno == ENOENT) ||
+		    (ret != -1 && !(S_ISREG(st.st_mode))))
 			error |= MISSING_CVS_ENTRIES;
 
 		/* check if the CVS/Repository file exists */
 		ret = stat(CVS_PATH_REPOSITORY, &st);
-		if (((ret == -1) && (errno == ENOENT)) || ((ret != -1) &&
-		    !(S_ISREG(st.st_mode))))
+		if ((ret == -1 && errno == ENOENT) ||
+		    (ret != -1 && !(S_ISREG(st.st_mode))))
 			error |= MISSING_CVS_REPO;
 	}
 

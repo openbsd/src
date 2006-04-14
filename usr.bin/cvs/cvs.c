@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.96 2006/04/05 01:38:55 ray Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.97 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -427,7 +427,7 @@ cvs_var_set(const char *var, const char *val)
 	const char *cp;
 	struct cvs_var *vp;
 
-	if ((var == NULL) || (*var == '\0')) {
+	if (var == NULL || *var == '\0') {
 		cvs_log(LP_ERR, "no variable name");
 		return (-1);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.77 2006/04/05 01:38:56 ray Exp $	*/
+/*	$OpenBSD: util.c,v 1.78 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -100,7 +100,7 @@ cvs_readrepo(const char *dir, char *dst, size_t len)
 		return (-1);
 	}
 	dlen = strlen(dst);
-	if ((dlen > 0) && (dst[dlen - 1] == '\n'))
+	if (dlen > 0 && dst[dlen - 1] == '\n')
 		dst[--dlen] = '\0';
 
 	(void)fclose(fp);
@@ -145,8 +145,8 @@ cvs_strtomode(const char *str, mode_t *mode)
 			continue;
 		}
 
-		if ((type <= 'a') || (type >= 'z') ||
-		    (cvs_modetypes[type - 'a'] == -1)) {
+		if (type <= 'a' || type >= 'z' ||
+		    cvs_modetypes[type - 'a'] == -1) {
 			cvs_log(LP_WARN,
 			    "invalid mode type `%c'"
 			    " (`u', `g' or `o' expected), ignoring", type);
@@ -157,8 +157,8 @@ cvs_strtomode(const char *str, mode_t *mode)
 		type = cvs_modetypes[type - 'a'];
 
 		for (sp = ms; *sp != '\0'; sp++) {
-			if ((*sp <= 'a') || (*sp >= 'z') ||
-			    (cvs_modes[(int)type][*sp - 'a'] == 0)) {
+			if (*sp <= 'a' || *sp >= 'z' ||
+			    cvs_modes[(int)type][*sp - 'a'] == 0) {
 				cvs_log(LP_WARN,
 				    "invalid permission bit `%c'", *sp);
 			} else
@@ -270,7 +270,7 @@ cvs_splitpath(const char *path, char *base, size_t blen, char **file)
 	if ((rlen = strlcpy(base, path, blen)) >= blen)
 		fatal("cvs_splitpath: path truncation");
 
-	while ((rlen > 0) && (base[rlen - 1] == '/'))
+	while (rlen > 0 && base[rlen - 1] == '/')
 		base[--rlen] = '\0';
 
 	sp = strrchr(base, '/');
@@ -436,7 +436,7 @@ cvs_mkadmin(const char *dpath, const char *rootpath, const char *repopath,
 	if (l >= sizeof(path))
 		fatal("cvs_mkadmin: path truncation");
 
-	if ((mkdir(path, 0755) == -1) && (errno != EEXIST))
+	if (mkdir(path, 0755) == -1 && errno != EEXIST)
 		fatal("cvs_mkadmin: mkdir: `%s': %s", path, strerror(errno));
 
 	/* just create an empty Entries file */
@@ -448,7 +448,7 @@ cvs_mkadmin(const char *dpath, const char *rootpath, const char *repopath,
 	if (l >= sizeof(path))
 		fatal("cvs_mkadmin: path truncation");
 
-	if ((stat(path, &st) == -1) && (errno == ENOENT)) {
+	if (stat(path, &st) == -1 && errno == ENOENT) {
 		if ((fp = fopen(path, "w")) == NULL)
 			fatal("cvs_mkadmin: fopen: `%s': %s",
 			    path, strerror(errno));
@@ -462,7 +462,7 @@ cvs_mkadmin(const char *dpath, const char *rootpath, const char *repopath,
 	if (l >= sizeof(path))
 		fatal("cvs_mkadmin: path truncation");
 
-	if ((stat(path, &st) == -1) && (errno == ENOENT)) {
+	if (stat(path, &st) == -1 && errno == ENOENT) {
 		if ((fp = fopen(path, "w")) == NULL)
 			fatal("cvs_mkadmin: fopen: `%s': %s",
 			    path, strerror(errno));
@@ -560,7 +560,7 @@ cvs_unlink(const char *path)
 	if (cvs_noexec == 1)
 		return (0);
 
-	if ((unlink(path) == -1) && (errno != ENOENT)) {
+	if (unlink(path) == -1 && errno != ENOENT) {
 		cvs_log(LP_ERRNO, "cannot remove `%s'", path);
 		return (-1);
 	}
@@ -605,12 +605,12 @@ cvs_rmdir(const char *path)
 		if (ent->d_type == DT_DIR) {
 			if (cvs_rmdir(fpath) == -1)
 				goto done;
-		} else if ((cvs_unlink(fpath) == -1) && (errno != ENOENT))
+		} else if (cvs_unlink(fpath) == -1 && errno != ENOENT)
 			goto done;
 	}
 
 
-	if ((rmdir(path) == -1) && (errno != ENOENT)) {
+	if (rmdir(path) == -1 && errno != ENOENT) {
 		cvs_log(LP_ERRNO, "failed to remove '%s'", path);
 		goto done;
 	}
@@ -635,7 +635,7 @@ cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
 	CVSENTRIES *entf;
 	struct cvs_ent *ent;
 
-	if ((create_adm == 1) && (root == NULL))
+	if (create_adm == 1 && root == NULL)
 		fatal("cvs_create_dir failed");
 
 	s = xstrdup(path);
@@ -654,8 +654,8 @@ cvs_create_dir(const char *path, int create_adm, char *root, char *repo)
 	while (d != NULL) {
 		if (stat(d, &sb)) {
 			/* try to create the directory */
-			if ((errno != ENOENT) || (mkdir(d, 0755) &&
-			    errno != EEXIST)) {
+			if (errno != ENOENT ||
+			    (mkdir(d, 0755) && errno != EEXIST)) {
 				cvs_log(LP_ERRNO, "failed to create `%s'", d);
 				goto done;
 			}
@@ -799,7 +799,7 @@ cvs_write_tagfile(char *tag, char *date, int nb)
 	if (strlcpy(tagpath, CVS_PATH_TAG, sizeof(tagpath)) >= sizeof(tagpath))
 		return;
 
-	if ((tag != NULL) || (date != NULL)) {
+	if (tag != NULL || date != NULL) {
 		fp = fopen(tagpath, "w+");
 		if (fp == NULL) {
 			if (errno != ENOENT)

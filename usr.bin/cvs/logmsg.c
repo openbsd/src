@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.27 2006/01/02 08:11:56 xsa Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.28 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -77,8 +77,8 @@ cvs_logmsg_open(const char *path)
 				fatal("cvs_logmsg_open: fgets failed");
 
 			len = strlen(lbuf);
-			if ((len == 0) || (len > 2) ||
-			    ((lbuf[0] != 'y') && (lbuf[0] != 'n'))) {
+			if (len == 0 || len > 2 ||
+			    (lbuf[0] != 'y' && lbuf[0] != 'n')) {
 				fprintf(stderr, "invalid input\n");
 				continue;
 			} else if (lbuf[0] == 'y')
@@ -105,8 +105,8 @@ cvs_logmsg_open(const char *path)
 		len = strlen(lbuf);
 		if (len == 0)
 			continue;
-		else if ((lcont == 0) && (strncmp(lbuf, CVS_LOGMSG_PREFIX,
-		    strlen(CVS_LOGMSG_PREFIX)) == 0))
+		else if (lcont == 0 &&
+		    strncmp(lbuf, CVS_LOGMSG_PREFIX, strlen(CVS_LOGMSG_PREFIX)) == 0)
 			/* skip lines starting with the prefix */
 			continue;
 
@@ -245,13 +245,13 @@ cvs_logmsg_get(const char *dir, struct cvs_flist *added,
 		}
 
 		len = strlen(buf);
-		if ((len == 0) || (len > 2)) {
+		if (len == 0 || len > 2) {
 			fprintf(stderr, "invalid input\n");
 			continue;
 		} else if (buf[0] == 'a') {
 			cvs_log(LP_ABORT, "aborted by user");
 			break;
-		} else if ((buf[0] == '\n') || (buf[0] == 'c')) {
+		} else if (buf[0] == '\n' || buf[0] == 'c') {
 			/* empty message */
 			msg = xstrdup("");
 			break;

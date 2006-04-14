@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.48 2006/04/13 19:11:30 joris Exp $	*/
+/*	$OpenBSD: buf.c,v 1.49 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -344,7 +344,7 @@ cvs_buf_write(BUF *b, const char *path, mode_t mode)
 	int fd;
  open:
 	if ((fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, mode)) == -1) {
-		if ((errno == EACCES) && (unlink(path) != -1))
+		if (errno == EACCES && unlink(path) != -1)
 			goto open;
 		else
 			fatal("open: `%s': %s", path, strerror(errno));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.72 2006/03/16 08:43:43 xsa Exp $	*/
+/*	$OpenBSD: resp.c,v 1.73 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -303,7 +303,7 @@ cvs_resp_error(struct cvsroot *root, int type, char *line)
 	 * at the end of the diff command, even for successfull
 	 * diff.
 	 */
-	if ((strlen(line) == 1) && (*line == ' '))
+	if (strlen(line) == 1 && *line == ' ')
 		return (1);
 
 	fprintf(stderr, "%s\n", line);
@@ -342,8 +342,8 @@ cvs_resp_statdir(struct cvsroot *root, int type, char *line)
 	}
 
 	if (cvs_noexec == 0) {
-		if ((type == CVS_RESP_CLRSTATDIR) &&
-		    (cvs_unlink(statpath) == -1)) {
+		if (type == CVS_RESP_CLRSTATDIR &&
+		    cvs_unlink(statpath) == -1) {
 			return (-1);
 		} else if (type == CVS_RESP_SETSTATDIR) {
 			fd = open(statpath, O_CREAT|O_TRUNC|O_WRONLY, 0644);
@@ -642,10 +642,10 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 	} else
 		ent->ce_mtime = time(&(ent->ce_mtime));
 
-	if ((type == CVS_RESP_UPDEXIST) || (type == CVS_RESP_UPDATED) ||
-	    (type == CVS_RESP_MERGED) || (type == CVS_RESP_CREATED)) {
-		if ((cvs_ent_remove(cvs_resp_lastent, ent->ce_name, 0) < 0) &&
-		    (type != CVS_RESP_CREATED)) {
+	if (type == CVS_RESP_UPDEXIST || type == CVS_RESP_UPDATED ||
+	    type == CVS_RESP_MERGED || type == CVS_RESP_CREATED) {
+		if (cvs_ent_remove(cvs_resp_lastent, ent->ce_name, 0) < 0 &&
+		    type != CVS_RESP_CREATED) {
 			cvs_log(LP_WARN, "failed to remove entry for '%s`",
 			    ent->ce_name);
 		}
@@ -714,8 +714,8 @@ cvs_resp_removed(struct cvsroot *root, int type, char *line)
 		return (-1);
 
 	(void)cvs_ent_remove(cvs_resp_lastent, file, 0);
-	if ((type == CVS_RESP_REMOVED) && ((unlink(fpath) == -1) &&
-	    errno != ENOENT)) {
+	if (type == CVS_RESP_REMOVED &&
+	    (unlink(fpath) == -1 && errno != ENOENT)) {
 		cvs_log(LP_ERRNO, "failed to unlink `%s'", file);
 		return (-1);
 	}

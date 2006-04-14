@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.42 2006/04/05 01:38:55 ray Exp $	*/
+/*	$OpenBSD: import.c,v 1.43 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -105,8 +105,8 @@ cvs_import_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 	if (argc != 3)
 		return (CVS_EX_USAGE);
 
-	if ((imp_brnum == NULL) &&
-	    ((imp_brnum = rcsnum_parse(CVS_IMPORT_DEFBRANCH)) == NULL))
+	if (imp_brnum == NULL &&
+	    (imp_brnum = rcsnum_parse(CVS_IMPORT_DEFBRANCH)) == NULL)
 		fatal("cvs_import_init: rcsnum_parse failed");
 
 	module = argv[0];
@@ -203,7 +203,7 @@ cvs_import_remote(CVSFILE *cf, void *arg)
 	if (dflag == 1) {
 		ctime_r(&(cf->cf_mtime), date);
 		sz = strlen(date);
-		if ((sz > 0) && (date[sz - 1] == '\n'))
+		if (sz > 0 && date[sz - 1] == '\n')
 			date[--sz] = '\0';
 		cvs_sendreq(root, CVS_REQ_CHECKINTIME, date);
 	}
@@ -355,7 +355,7 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	/* add the vendor tag and release tag as symbols */
 	rcs_close(rf);
 
-	if ((dflag ==1) && (utimes(rpath, ts) == -1))
+	if (dflag ==1 && utimes(rpath, ts) == -1)
 		cvs_log(LP_ERRNO, "failed to timestamp RCS file");
 
 	return (0);

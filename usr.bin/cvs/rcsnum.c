@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.33 2006/04/06 12:12:07 xsa Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.34 2006/04/14 02:45:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -64,7 +64,7 @@ rcsnum_parse(const char *str)
 	RCSNUM *num;
 
 	num = rcsnum_alloc();
-	if ((rcsnum_aton(str, &ep, num) < 0) || (*ep != '\0')) {
+	if (rcsnum_aton(str, &ep, num) < 0 || *ep != '\0') {
 		rcsnum_free(num);
 		num = NULL;
 		if (*ep != '\0')
@@ -102,7 +102,7 @@ rcsnum_tostr(const RCSNUM *nump, char *buf, size_t blen)
 	u_int i;
 	char tmp[8];
 
-	if ((nump == NULL) || (nump->rn_len == 0)) {
+	if (nump == NULL || nump->rn_len == 0) {
 		buf[0] = '\0';
 		return (buf);
 	}
@@ -149,7 +149,7 @@ rcsnum_cpy(const RCSNUM *nsrc, RCSNUM *ndst, u_int depth)
 	void *tmp;
 
 	len = nsrc->rn_len;
-	if ((depth != 0) && (len > depth))
+	if (depth != 0 && len > depth)
 		len = depth;
 
 	tmp = xrealloc(ndst->rn_id, len, sizeof(len));
@@ -176,7 +176,7 @@ rcsnum_cmp(const RCSNUM *n1, const RCSNUM *n2, u_int depth)
 	size_t slen;
 
 	slen = MIN(n1->rn_len, n2->rn_len);
-	if ((depth != 0) && (slen > depth))
+	if (depth != 0 && slen > depth)
 		slen = depth;
 
 	for (i = 0; i < slen; i++) {
@@ -268,10 +268,10 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 	 *
 	 */
 #if !defined(RCSPROG)
-	if ((nump->rn_len > 2) && (nump->rn_id[nump->rn_len - 1] == 0)
-	    && (cvs_cmdop != CVS_OP_LOG)) {
+	if (nump->rn_len > 2 && nump->rn_id[nump->rn_len - 1] == 0 &&
+	    cvs_cmdop != CVS_OP_LOG) {
 #else
-	if ((nump->rn_len > 2) && (nump->rn_id[nump->rn_len - 1] == 0)) {
+	if (nump->rn_len > 2 && nump->rn_id[nump->rn_len - 1] == 0) {
 #endif
 		/*
 		 * Look for ".0.x" at the end of the branch number.
