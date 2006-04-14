@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.42 2006/04/14 15:02:15 ray Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.43 2006/04/14 15:04:36 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -30,7 +30,7 @@
 #include "rcsprog.h"
 #include "diff.h"
 
-static void	rlog_file(const char *, const char *);
+static void	rlog_file(const char *);
 static void	rlog_rev_print(struct rcs_delta *);
 static u_int	rlog_rev_select(void);
 
@@ -152,7 +152,7 @@ rlog_main(int argc, char **argv)
 			continue;
 		}
 
-		rlog_file(argv[i], fpath);
+		rlog_file(argv[i]);
 
 		rcs_close(file);
 	}
@@ -161,7 +161,7 @@ rlog_main(int argc, char **argv)
 }
 
 static void
-rlog_file(const char *fname, const char *fpath)
+rlog_file(const char *fname)
 {
 	char numb[64];
 	u_int nrev;
@@ -175,7 +175,7 @@ rlog_file(const char *fname, const char *fpath)
 	else
 		nrev = file->rf_ndelta;
 
-	printf("\nRCS file: %s", fpath);
+	printf("\nRCS file: %s", file->rf_path);
 	printf("\nWorking file: %s", fname);
 	printf("\nhead:");
 	if (file->rf_head != NULL)
