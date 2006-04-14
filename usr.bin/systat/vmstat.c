@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.58 2006/03/31 18:19:44 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.59 2006/04/14 01:08:15 dlg Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.58 2006/03/31 18:19:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.59 2006/04/14 01:08:15 dlg Exp $";
 #endif /* not lint */
 
 /*
@@ -266,7 +266,7 @@ labelkre(void)
 	mvprintw(GENSTATROW, GENSTATCOL, "   Csw   Trp   Sys   Int   Sof  Flt");
 
 	mvprintw(GRAPHROW, GRAPHCOL,
-	    "    . %% Sys    . %% User    . %% Nice    . %% Idle");
+	    "    . %%Int    . %%Sys    . %%Usr    . %%Nic    . %%Idle");
 	mvprintw(PROCSROW, PROCSCOL, "Proc:r  d  s  w");
 	mvprintw(GRAPHROW + 1, GRAPHCOL,
 	    "|    |    |    |    |    |    |    |    |    |    |");
@@ -303,8 +303,8 @@ labelkre(void)
 	putint((int)((float)s.fld/etime + 0.5), l, c, w)
 #define MAXFAIL 5
 
-static	char cpuchar[CPUSTATES] = { '=' , '>', '-', ' ' };
-static	char cpuorder[CPUSTATES] = { CP_SYS, CP_USER, CP_NICE, CP_IDLE };
+static	char cpuchar[CPUSTATES] = { '|', '=', '>', '-', ' ' };
+static	char cpuorder[CPUSTATES] = { CP_INTR, CP_SYS, CP_USER, CP_NICE, CP_IDLE };
 
 void
 showkre(void)
@@ -376,16 +376,12 @@ showkre(void)
 	/*
 	 * Last CPU state not calculated yet.
 	 */
-	for (c = 0; c < CPUSTATES - 1; c++) {
+	for (c = 0; c < CPUSTATES; c++) {
 		i = cpuorder[c];
 		f1 = cputime(i);
 		f2 += f1;
 		l = (int) ((f2 + 1.0) / 2.0) - psiz;
-		if (c == 0)
-			putfloat(f1, GRAPHROW, GRAPHCOL + 1, 5, 1, 0);
-		else
-			putfloat(f1, GRAPHROW, GRAPHCOL + 12 * c,
-			    5, 1, 0);
+		putfloat(f1, GRAPHROW, GRAPHCOL + 1 + (10 * c), 5, 1, 0);
 		move(GRAPHROW + 2, psiz);
 		psiz += l;
 		while (l-- > 0)
