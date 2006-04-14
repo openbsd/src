@@ -41,7 +41,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include "slc.h"
-#include "slc-gram.h"
+#include "y.tab.h"
 unsigned lineno = 1;
 
 static void handle_comment(void);

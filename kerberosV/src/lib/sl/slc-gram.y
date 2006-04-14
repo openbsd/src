@@ -43,7 +43,6 @@ RCSID("$KTH: slc-gram.y,v 1.7 2005/04/19 10:28:28 lha Exp $");
 #include <ctype.h>
 #include <limits.h>
 #include <getarg.h>
-#include <vers.h>
 #include <roken.h>
 
 #include "slc.h"
@@ -683,7 +682,6 @@ main(int argc, char **argv)
 
     int optind = 0;
 
-    setprogname(argv[0]);
     if(getarg(args, num_args, argc, argv, &optind))
 	usage(1);
     if(help_flag)
