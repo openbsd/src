@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.60 2006/04/13 19:55:41 joris Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.61 2006/04/14 22:33:15 niallo Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -101,6 +101,7 @@ struct rcs_kw {
 
 #define RCSNUM_ISBRANCH(n)	((n)->rn_len % 2)
 #define RCSNUM_ISBRANCHREV(n)	(!((n)->rn_len % 2) && ((n)->rn_len >= 4))
+#define RCSNUM_NO_MAGIC		(1<<0)
 
 /* file flags */
 #define RCS_READ	  (1<<0)
@@ -277,5 +278,6 @@ extern char *timezone_flag;
 #if defined(RCSPROG)
 extern char *rcs_tmpdir;
 #endif
+extern int rcsnum_flags;
 
 #endif	/* RCS_H */
