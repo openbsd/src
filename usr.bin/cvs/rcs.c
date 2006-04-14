@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.168 2006/04/14 02:45:35 deraadt Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.169 2006/04/14 02:49:43 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1214,7 +1214,7 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 
 	/*
 	 * If a branch was passed, get the latest revision on it.
-	 */ 
+	 */
 	if (RCSNUM_ISBRANCH(rev)) {
 		brev = rev;
 		rdp = rcs_findrev(rfp, rev);

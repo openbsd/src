@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.96 2006/04/14 02:45:35 deraadt Exp $	*/
+/*	$OpenBSD: proto.c,v 1.97 2006/04/14 02:49:43 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -913,7 +913,7 @@ cvs_sendentry(struct cvsroot *root, const CVSFILE *file)
  * output.
  * Returns 0 on success, or -1 on failure.
  */
-static void 
+static void
 cvs_initlog(void)
 {
 	int l;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcstime.c,v 1.3 2006/04/13 19:16:15 joris Exp $	*/
+/*	$OpenBSD: rcstime.c,v 1.4 2006/04/14 02:49:44 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -49,7 +49,7 @@ rcs_set_tz(char *tz, struct rcs_delta *rdp, struct tm *tb)
 		case '-':
 			neg = 1;
 			break;
-		case '+': 
+		case '+':
 			pos = 1;
 			break;
 		default:

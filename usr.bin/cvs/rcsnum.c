@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.34 2006/04/14 02:45:35 deraadt Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.35 2006/04/14 02:49:44 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -125,7 +125,7 @@ rcsnum_itoa(u_int16_t num, char *buf, size_t len)
 
 	if (num == 0)
 		return "0";
-		
+
 	p = buf + len - 1;
 	i = num;
 	bzero(buf, len);

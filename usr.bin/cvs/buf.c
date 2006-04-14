@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.49 2006/04/14 02:45:35 deraadt Exp $	*/
+/*	$OpenBSD: buf.c,v 1.50 2006/04/14 02:49:43 deraadt Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -381,7 +381,7 @@ cvs_buf_write_stmp(BUF *b, char *template, mode_t mode)
 #if defined(RCSPROG)
 	cvs_worklist_add(template, &rcs_temp_files);
 #endif
-	
+
 	if (cvs_buf_write_fd(b, fd) == -1) {
 		(void)unlink(template);
 		fatal("cvs_buf_write_stmp: cvs_buf_write_fd: `%s'", template);
