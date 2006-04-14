@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.33 2006/04/14 01:11:07 deraadt Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.34 2006/04/14 16:16:02 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -132,20 +132,21 @@ rcsclean_file(char *fname, const char *rev_str)
 	char fpath[MAXPATHLEN], numb[64];
 	RCSNUM *rev;
 	BUF *b1, *b2;
-	char *c1, *c2;
 	struct stat st;
 	time_t rcs_mtime = -1;
 
-	match = 1;
+	b1 = b2 = NULL;
+	file = NULL;
+	rev = NULL;
 
 	if (stat(fname, &st) == -1)
-		return;
+		goto out;
 
 	if (rcs_statfile(fname, fpath, sizeof(fpath)) < 0)
-		return;
+		goto out;
 
 	if ((file = rcs_open(fpath, RCS_RDWR)) == NULL)
-		return;
+		goto out;
 
 	if (flags & PRESERVETIME)
 		rcs_mtime = rcs_get_mtime(file->rf_path);
@@ -157,34 +158,33 @@ rcsclean_file(char *fname, const char *rev_str)
 	else if ((rev = rcs_getrevnum(rev_str, file)) == NULL) {
 		cvs_log(LP_ERR, "%s: Symbolic name `%s' is undefined.",
 		    fpath, rev_str);
-		rcs_close(file);
-		return;
+		goto out;
 	}
 
 	if ((b1 = rcs_getrev(file, rev)) == NULL) {
 		cvs_log(LP_ERR, "failed to get needed revision");
-		rcs_close(file);
-		return;
+		goto out;
 	}
-
-	if ((b2 = cvs_buf_load(fname, BUF_AUTOEXT)) == NULL) {
+	if ((b2 = cvs_buf_load(fname, 0)) == NULL) {
 		cvs_log(LP_ERRNO, "failed to load '%s'", fname);
-		rcs_close(file);
-		return;
+		goto out;
 	}
 
-	cvs_buf_putc(b1, '\0');
-	cvs_buf_putc(b2, '\0');
-
-	c1 = cvs_buf_release(b1);
-	c2 = cvs_buf_release(b2);
-
-	/* XXX - Compare using cvs_buf_len() first. */
-	if (strcmp(c1, c2) != 0)
+	/* If buffer lengths are the same, compare contents as well. */
+	if (cvs_buf_len(b1) != cvs_buf_len(b2))
 		match = 0;
+	else {
+		size_t len, n;
 
-	xfree(c1);
-	xfree(c2);
+		len = cvs_buf_len(b1);
+
+		match = 1;
+		for (n = 0; n < len; ++n)
+			if (cvs_buf_getc(b1, n) != cvs_buf_getc(b2, n)) {
+				match = 0;
+				break;
+			}
+	}
 
 	if (match == 1) {
 		if (uflag == 1 && !TAILQ_EMPTY(&(file->rf_locks))) {
@@ -205,8 +205,14 @@ rcsclean_file(char *fname, const char *rev_str)
 		}
 	}
 
-	rcs_close(file);
-
 	if (flags & PRESERVETIME)
 		rcs_set_mtime(fpath, rcs_mtime);
+
+out:
+	if (b1 != NULL)
+		cvs_buf_free(b1);
+	if (b2 != NULL)
+		cvs_buf_free(b2);
+	if (file != NULL)
+		rcs_close(file);
 }
