@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.59 2006/04/14 01:08:15 dlg Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.60 2006/04/14 01:14:56 dlg Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.59 2006/04/14 01:08:15 dlg Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.60 2006/04/14 01:14:56 dlg Exp $";
 #endif /* not lint */
 
 /*
@@ -373,9 +373,6 @@ showkre(void)
 	psiz = 0;
 	f2 = 0.0;
 
-	/*
-	 * Last CPU state not calculated yet.
-	 */
 	for (c = 0; c < CPUSTATES; c++) {
 		i = cpuorder[c];
 		f1 = cputime(i);
@@ -387,16 +384,6 @@ showkre(void)
 		while (l-- > 0)
 			addch(cpuchar[c]);
 	}
-
-	/*
-	 * The above code does not account for time in the CP_INTR state.
-	 * Thus the total may be less than 100%.  If the total is less than
-	 * the previous total old data may be left on the graph.  The graph
-	 * assumes one character position for every 2 percentage points for
-	 * a total of 50 positions.  Ensure all positions have been filled.
-	 */
-	while ( psiz++ <= 50 )
-		addch(' ');
 
 	putint(ucount(), STATROW, STATCOL, 3);
 	putfloat(avenrun[0], STATROW, STATCOL + 17, 6, 2, 0);
