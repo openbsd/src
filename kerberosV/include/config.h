@@ -237,7 +237,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define HAVE_DLFCN_H 1
 
 /* Define to 1 if you have the `dlopen' function. */
-#define HAVE_DLOPEN 1
+/* #undef HAVE_DLOPEN 1 */
 
 /* Define to 1 if you have the `dn_expand' function. */
 #define HAVE_DN_EXPAND 1
