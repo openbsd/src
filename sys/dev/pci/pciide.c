@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.232 2006/04/09 00:51:58 brad Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.233 2006/04/15 00:15:12 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -847,6 +847,10 @@ const struct pciide_product_desc pciide_nvidia_products[] = {
 };
 
 const struct pciide_product_desc pciide_ite_products[] = {
+	{ PCI_PRODUCT_ITEXPRESS_IT8211F,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  ite_chip_map
+	},
 	{ PCI_PRODUCT_ITEXPRESS_IT8212F,
 	  IDE_PCI_CLASS_OVERRIDE,
 	  ite_chip_map
