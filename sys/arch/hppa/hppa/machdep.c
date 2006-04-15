@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.149 2005/10/26 18:35:44 martin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.150 2006/04/15 15:35:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -531,7 +531,9 @@ cpuid()
 		else if (pmap_hptsize && pmap_hptsize < pdc_hwtlb.min_size)
 			pmap_hptsize = pdc_hwtlb.min_size;
 	} else {
+#ifdef DEBUG
 		printf("WARNING: no HPT support, fine!\n");
+#endif
 		pmap_hptsize = 0;
 	}
 
