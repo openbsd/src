@@ -1,8 +1,6 @@
-/*	$OpenBSD: dartreg.h,v 1.5 2004/04/15 12:34:42 miod Exp $	*/
+/*	$OpenBSD: dartreg.h,v 1.6 2006/04/15 22:32:42 miod Exp $	*/
 
 #define MAXPORTS	2		/* max count of PORTS/DUART */
-
-#define MVME188_DUART	0xfff82000	/* M68692 DUART chip */
 
 #define  A_PORT   0  /* flag for port a */
 #define  B_PORT   1  /* flag for port b */
@@ -12,7 +10,6 @@
 #define DELAY_CR   do { volatile int i; for (i = 0; i < 250; ++i); } while (0)
 
 /*********************** MC68681 DEFINITIONS ************************/
-#define PORTOFFSET	0x10	/* offset for port b address space */
 
 /* mode register 1: MR1x operations */
 #define RXRTS        0x80  /* enable receiver RTS */
@@ -147,101 +144,38 @@
 #define MAXREG       18 /* max count of registers */
 
 /*
- *	Structure of MC68681 hardware read registers.
+ *	MC68681 hardware registers.
  */
-struct dart_rd_reg
-{
-	volatile unsigned int	rd_mra;     /* mode register a */
-	volatile unsigned int	rd_sra;     /* status register a*/
-	volatile unsigned int	dummy5;     /* do not access */
-	volatile unsigned int	rd_rba;     /* receiver buffer a */
-	volatile unsigned int	rd_ipcr;    /* input port change register */
-	volatile unsigned int	rd_isr;     /* interrupt status register */
-	volatile unsigned int	rd_cur;     /* current MSB of counter */
-	volatile unsigned int	rd_clr;	    /* current LSB of counter */
-	volatile unsigned int	rd_mrb;     /* mode register b */
-	volatile unsigned int	rd_srb;     /* status register b*/
-	volatile unsigned int	dummyxb;    /* do not access */
-	volatile unsigned int	rd_rbb;     /* receiver buffer b */
-	volatile unsigned int	rd_ivr;     /* interrupt vector register */
-	volatile unsigned int	rd_ip;      /* input port (unlatched) */
-	volatile unsigned int	rd_ctstart; /* start-counter command */
-	volatile unsigned int	rd_ctstop;  /* stop-counter command */
-};
 
-/*
- *	Structure of MC68681 hardware write registers.
- */
-struct dart_wr_reg
-{
-	volatile unsigned int	wr_mra;     /* mode register a */
-	volatile unsigned int	wr_csra;    /* clock-select register a*/
-	volatile unsigned int	wr_cra;     /* command register a */
-	volatile unsigned int	wr_tba;     /* transmitter buffer a */
-	volatile unsigned int	wr_acr;     /* auxiliary control register*/
-	volatile unsigned int	wr_imr;     /* interrupt mask register */
-	volatile unsigned int	wr_ctur;    /* counter/timer upper reg */
-	volatile unsigned int	wr_ctlr;    /* counter/timer lower reg */
-	volatile unsigned int	wr_mrb;     /* mode register b */
-	volatile unsigned int	wr_csrb;    /* clock-select register b*/
-	volatile unsigned int	wr_crb;     /* command register b */
-	volatile unsigned int	wr_tbb;     /* transmitter buffer b */
-	volatile unsigned int	wr_ivr;     /* interrupt vector register */
-	volatile unsigned int	wr_opcr;    /* output port config reg */
-	volatile unsigned int	wr_oprset;  /* output port: bit set cmd */
-	volatile unsigned int	wr_oprreset;/* output port: bit reset cmd */
-};
+#define	DART_MR1A	0x00	/* RW: mode register A */
+#define	DART_MR2A	0x00	/* RW: mode register A */
+#define	DART_SRA	0x01	/* R: status register A */
+#define	DART_CSRA	0x01	/* W: clock select register A */
+#define	DART_CRA	0x02	/* W: command register A */
+#define	DART_RBA	0x03	/* R: receiver buffer A */
+#define	DART_TBA	0x03	/* W: transmit buffer A */
+#define	DART_IPCR	0x04	/* R: input port change register */
+#define	DART_ACR	0x04	/* W: auxiliary control register */
+#define	DART_ISR	0x05	/* R: interrupt status register */
+#define	DART_IMR	0x05	/* W: interrupt mask register */
+#define	DART_CUR	0x06	/* R: count upper register */
+#define	DART_CTUR	0x06	/* W: counter/timer upper register */
+#define	DART_CLR	0x07	/* R: count lower register */
+#define	DART_CTLR	0x07	/* W: counter/timer lower register */
+#define	DART_MR1B	0x08	/* RW: mode register B */
+#define	DART_MR2B	0x08	/* RW: mode register B */
+#define	DART_SRB	0x09	/* R: status register B */
+#define	DART_CSRB	0x09	/* W: clock select register B */
+#define	DART_CRB	0x0a	/* W: command register B */
+#define	DART_RBB	0x0b	/* R: receiver buffer B */
+#define	DART_TBB	0x0b	/* W: transmit buffer B */
+#define	DART_IVR	0x0c	/* RW: interrupt vector register */
+#define	DART_IP		0x0d	/* R: input port (unlatched) */
+#define	DART_OPCR	0x0d	/* W: output port configuration register */
+#define	DART_CTSTART	0x0e	/* R: start counter command */
+#define	DART_OPRS	0x0e	/* W: output port bit set */
+#define	DART_CTSTOP	0x0f	/* R: stop counter command */
+#define	DART_OPRR	0x0f	/* W: output port bit reset */
 
-union dartreg {
-	struct dart_rd_reg	read;		/* read registers */
-	struct dart_wr_reg	write;		/* write registers */
-};
-
-/*
- *	Structure of MC68681 hardware port dependent read registers.
- */
-struct dart_prd_reg
-{
-	volatile unsigned int	rd_mr;		/* mode register */
-	volatile unsigned int	rd_sr;		/* status register */
-	volatile unsigned int	dummy5;
-	volatile unsigned int	rd_rb;		/* receiver buffer */
-	volatile unsigned int	dummy9;
-	volatile unsigned int	dummy11;
-	volatile unsigned int	dummy13;
-	volatile unsigned int	dummy15;
-};
-
-/*
- *	Structure of MC68681 hardware port dependent write registers.
- */
-struct dart_pwr_reg
-{
-	volatile unsigned int	wr_mr;		/* mode register */
-	volatile unsigned int	wr_csr;		/* clock-select register */
-	volatile unsigned int	wr_cr;		/* command register */
-	volatile unsigned int	wr_tb;		/* transmitter buffer */
-	volatile unsigned int	dummy9;
-	volatile unsigned int	dummy11;
-	volatile unsigned int	dummy13;
-	volatile unsigned int	dummy15;
-};
-
-union dart_pt_io {
-	struct dart_prd_reg	read;		/* read registers */
-	struct dart_pwr_reg	write;		/* write registers */
-};
-
-/*
- *	Structure of saved registers
- */
-struct dart_sv_reg
-{
-	volatile unsigned char	sv_mr1[MAXPORTS];	/* mode register 1 a */
-	volatile unsigned char	sv_mr2[MAXPORTS];	/* mode register 2 a */
-	volatile unsigned char	sv_csr[MAXPORTS];	/* clock-select register a*/
-	volatile unsigned char	sv_cr[MAXPORTS];	/* command register a */
-	volatile unsigned char	sv_acr;		/* auxiliary control register*/
-	volatile unsigned char	sv_imr;		/* interrupt mask register */
-	volatile unsigned char	sv_ivr;		/* interrupt vector register */
-};
+#define	DART_A_BASE	0x00
+#define	DART_B_BASE	0x08
