@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disktab.5,v 1.10 2005/02/20 21:29:15 jaredy Exp $
+.\"	$OpenBSD: disktab.5,v 1.11 2006/04/15 22:53:00 jmc Exp $
 .\"	$NetBSD: disktab.5,v 1.4 1994/11/30 19:31:15 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -89,6 +89,7 @@ floppy).
 .Dv BBSIZE ) .
 .It "\&sb	num	Superblock size (default: "
 .Dv SBSIZE ) .
+.Pp
 .It "\&ba	num	Block size for partition"
 .Dq a
 (bytes).
@@ -98,15 +99,11 @@ floppy).
 .It "\&be	num	Block size for partition"
 .Dq e
 (bytes).
-.It "\&bf	num	Block size for partition"
-.Dq f
+.It [...]
+.It "\&bp	num	Block size for partition"
+.Dq p
 (bytes).
-.It "\&bg	num	Block size for partition"
-.Dq g
-(bytes).
-.It "\&bh	num	Block size for partition"
-.Dq h
-(bytes).
+.Pp
 .It "\&fa	num	Fragment size for partition"
 .Dq a
 (bytes).
@@ -116,15 +113,11 @@ floppy).
 .It "\&fe	num	Fragment size for partition"
 .Dq e
 (bytes).
-.It "\&ff	num	Fragment size for partition"
-.Dq f
+.It [...]
+.It "\&fp	num	Fragment size for partition"
+.Dq p
 (bytes).
-.It "\&fg	num	Fragment size for partition"
-.Dq g
-(bytes).
-.It "\&fh	num	Fragment size for partition"
-.Dq h
-(bytes).
+.Pp
 .It "\&oa	num	Offset of partition"
 .Dq a
 (sectors).
@@ -134,21 +127,11 @@ floppy).
 .It "\&oc	num	Offset of partition"
 .Dq c
 (sectors).
-.It "\&od	num	Offset of partition"
-.Dq d
+.It [...]
+.It "\&op	num	Offset of partition"
+.Dq p
 (sectors).
-.It "\&oe	num	Offset of partition"
-.Dq e
-(sectors).
-.It "\&of	num	Offset of partition"
-.Dq f
-(sectors).
-.It "\&og	num	Offset of partition"
-.Dq g
-(sectors).
-.It "\&oh	num	Offset of partition"
-.Dq h
-(sectors).
+.Pp
 .It "\&pa	num	Size of partition"
 .Dq a
 (sectors).
@@ -158,21 +141,11 @@ floppy).
 .It "\&pc	num	Size of partition"
 .Dq c
 (sectors).
-.It "\&pd	num	Size of partition"
-.Dq d
+.It [...]
+.It "\&pp	num	Size of partition"
+.Dq p
 (sectors).
-.It "\&pe	num	Size of partition"
-.Dq e
-(sectors).
-.It "\&pf	num	Size of partition"
-.Dq f
-(sectors).
-.It "\&pg	num	Size of partition"
-.Dq g
-(sectors).
-.It "\&ph	num	Size of partition"
-.Dq h
-(sectors).
+.Pp
 .It "\&ta	str	Type of partition"
 .Dq a
 (4.2BSD, swap, etc.).
@@ -180,16 +153,9 @@ floppy).
 .Dq b .
 .It "\&tc	str	Type of partition"
 .Dq c .
-.It "\&td	str	Type of partition"
-.Dq d .
-.It "\&te	str	Type of partition"
-.Dq e .
-.It "\&tf	str	Type of partition"
-.Dq f .
-.It "\&tg	str	Type of partition"
-.Dq g .
-.It "\&th	str	Type of partition"
-.Dq h .
+.It [...]
+.It "\&tp	str	Type of partition"
+.Dq p .
 .El
 .Sh FILES
 .Bl -tag -width /etc/disktab -compact
