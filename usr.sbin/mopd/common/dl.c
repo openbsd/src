@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl.c,v 1.5 2004/04/14 20:37:28 henning Exp $ */
+/*	$OpenBSD: dl.c,v 1.6 2006/04/15 11:55:48 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #ifndef LINT
 static const char rcsid[] =
-    "$OpenBSD: dl.c,v 1.5 2004/04/14 20:37:28 henning Exp $";
+    "$OpenBSD: dl.c,v 1.6 2006/04/15 11:55:48 maja Exp $";
 #endif
 
 #include "os.h"
@@ -238,7 +238,7 @@ mopDumpDL(FILE *fd, u_char *pkt, int trans)
 			c = mopGetChar(pkt, &index);	/* Parameter Length */
 			switch (tmpc) {
 			case MOP_K_PLTP_TSN:		/* Target Name */
-				fprintf(fd, "Target Name  :   %02x '", tmpc);
+				fprintf(fd, "Target Name  :   %02x '", c);
 				for (i = 0; i < c; i++)
 					fprintf(fd, "%c",
 					    mopGetChar(pkt, &index));
@@ -252,7 +252,7 @@ mopDumpDL(FILE *fd, u_char *pkt, int trans)
 				fprintf(fd, "\n");
 				break;
 			case MOP_K_PLTP_HSN:		/* Host Name */
-				fprintf(fd, "Host Name    :   %02x '", tmpc);
+				fprintf(fd, "Host Name    :   %02x '", c);
 				for (i = 0; i < c; i++)
 					fprintf(fd, "%c",
 					    mopGetChar(pkt, &index));

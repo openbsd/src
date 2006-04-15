@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.8 2004/09/20 17:51:07 miod Exp $ */
+/*	$OpenBSD: print.c,v 1.9 2006/04/15 11:55:48 maja Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #ifndef LINT
 static const char rcsid[] =
-    "$OpenBSD: print.c,v 1.8 2004/09/20 17:51:07 miod Exp $";
+    "$OpenBSD: print.c,v 1.9 2006/04/15 11:55:48 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -559,7 +559,7 @@ mopPrintInfo(FILE *fd, u_char *pkt, int *index, u_short moplen, u_char mopcode,
 			break;
 		case MOP_K_INFO_DLTY:
 			tmpc = mopGetChar(pkt, index);
-			fprintf(fd, "Data Link Type:   %02x ", tmpc);
+			fprintf(fd, "DLnk Type    :   %02x ", tmpc);
 			switch (tmpc) {
 			case MOP_K_DLTY_NI:
 				fprintf(fd, "Ethernet\n");
@@ -577,20 +577,20 @@ mopPrintInfo(FILE *fd, u_char *pkt, int *index, u_short moplen, u_char mopcode,
 			break;
 		case MOP_K_INFO_DLBSZ:
 			tmps = mopGetShort(pkt, index);
-			fprintf(fd, "DL Buff Size : %04x (%d)\n", tmps, tmps);
+			fprintf(fd, "DLnk Buf Size: %04x (%d)\n", tmps, tmps);
 			break;
 		default:
-			if (((device = NMA_C_SOFD_LCS) ||   /* DECserver 100 */
-			     (device = NMA_C_SOFD_DS2) ||   /* DECserver 200 */
-			     (device = NMA_C_SOFD_DP2) ||   /* DECserver 250 */
-			     (device = NMA_C_SOFD_DS3)) &&  /* DECserver 300 */
+			if (((device == NMA_C_SOFD_LCS) ||  /* DECserver 100 */
+			     (device == NMA_C_SOFD_DS2) ||  /* DECserver 200 */
+			     (device == NMA_C_SOFD_DP2) ||  /* DECserver 250 */
+			     (device == NMA_C_SOFD_DS3)) && /* DECserver 300 */
 			    ((itype > 101) && (itype < 107)))
 			{
 			switch (itype) {
 				case 102:
 					ucp = pkt + *index;
 					*index = *index + ilen;
-					fprintf(fd, "ROM Sftwr Ver:   %02x '",
+					fprintf(fd, "ROM SW Ver   :   %02x '",
 					    ilen);
 					for (i = 0; i < ilen; i++)
 						fprintf(fd, "%c", ucp[i]);
@@ -599,7 +599,7 @@ mopPrintInfo(FILE *fd, u_char *pkt, int *index, u_short moplen, u_char mopcode,
 				case 103:
 					ucp = pkt + *index;
 					*index = *index + ilen;
-					fprintf(fd, "Software Ver :   %02x '",
+					fprintf(fd, "Loaded SW Ver:   %02x '",
 					    ilen);
 					for (i = 0; i < ilen; i++)
 						fprintf(fd, "%c", ucp[i]);
