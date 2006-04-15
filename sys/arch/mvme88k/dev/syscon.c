@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.23 2005/07/18 02:43:25 fgsch Exp $ */
+/*	$OpenBSD: syscon.c,v 1.24 2006/04/15 15:45:21 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -175,8 +175,8 @@ int
 sysconabort(eframe)
 	void *eframe;
 {
-	ISR_RESET_NMI;
-	nmihand((struct frame *)eframe);
+	*(volatile u_int32_t *)MVME188_CLRINT = ISTATE_ABORT;
+	nmihand(eframe);
 	return (1);
 }
 
@@ -184,8 +184,8 @@ int
 sysconsysfail(eframe)
 	void *eframe;
 {
-	ISR_RESET_SYSFAIL;
-	nmihand((struct frame *)eframe);
+	*(volatile u_int32_t *)MVME188_CLRINT = ISTATE_SYSFAIL;
+	printf("WARNING: SYSFAIL* ASSERTED\n");
 	return (1);
 }
 
@@ -193,8 +193,8 @@ int
 sysconacfail(eframe)
 	void *eframe;
 {
-	ISR_RESET_ACFAIL;
-	nmihand((struct frame *)eframe);
+	*(volatile u_int32_t *)MVME188_CLRINT = ISTATE_ACFAIL;
+	printf("WARNING: ACFAIL* ASSERTED\n");
 	return (1);
 }
 
@@ -202,6 +202,7 @@ int
 sysconm188(eframe)
 	void *eframe;
 {
-	printf("MVME188 interrupting?\n");
+	/* shouldn't happen! */
+	printf("MVME188: self-inflicted interrupt\n");
 	return (1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.13 2006/04/13 21:16:17 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.14 2006/04/15 15:45:24 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -75,19 +75,27 @@ u_int	m188_setipl(u_int);
 void	m188_startup(void);
 
 /*
- * *int_mask_reg[CPU]
- * Points to the hardware interrupt status register for each CPU.
+ * The MVME188 interrupt arbiter has 25 orthogonal interrupt sources.
+ * We fold this model in the 8-level spl model this port uses, enforcing
+ * priorities manually with the interrupt masks.
+ */
+
+/*
+ * interrupt status register for each CPU.
  */
 unsigned int *volatile int_mask_reg[] = {
-	(unsigned int *)IEN0_REG,
-	(unsigned int *)IEN1_REG,
-	(unsigned int *)IEN2_REG,
-	(unsigned int *)IEN3_REG
+	(unsigned int *)MVME188_IEN0,
+	(unsigned int *)MVME188_IEN1,
+	(unsigned int *)MVME188_IEN2,
+	(unsigned int *)MVME188_IEN3
 };
 
 unsigned int m188_curspl[] = {0, 0, 0, 0};
 
-unsigned int int_mask_val[INT_LEVEL] = {
+/*
+ * external interrupt masks per spl.
+ */
+const unsigned int int_mask_val[INT_LEVEL] = {
 	MASK_LVL_0,
 	MASK_LVL_1,
 	MASK_LVL_2,
@@ -119,8 +127,8 @@ m188_memsize()
 
 #define	MVME188_MAX_MEMORY	((4 * 64) / 4)	/* 4 64MB boards */
 	for (pgnum = 0; pgnum <	MVME188_MAX_MEMORY; pgnum++) {
-		*(volatile int32_t *)RMAD_REG = (pgnum << 22);
-		rmad = *(volatile int32_t *)RMAD_REG;
+		*(volatile int32_t *)MVME188_RMAD = (pgnum << 22);
+		rmad = *(volatile int32_t *)MVME188_RMAD;
 
 		if (rmad & 0x04)	/* not a memory board */
 			break;
@@ -156,10 +164,7 @@ m188_bootstrap()
 	md_raiseipl = &m188_raiseipl;
 
 	/* clear and disable all interrupts */
-	*(volatile u_int32_t *)IEN0_REG = 0;
-	*(volatile u_int32_t *)IEN1_REG = 0;
-	*(volatile u_int32_t *)IEN2_REG = 0;
-	*(volatile u_int32_t *)IEN3_REG = 0;
+	*(volatile u_int32_t *)MVME188_IENALL = 0;
 
 	/* supply a vector base for m188ih */
 	*(volatile u_int8_t *)MVME188_VIRQV = M188_IVEC;
@@ -171,23 +176,20 @@ m188_reset()
 	volatile int cnt;
 
 	/* clear and disable all interrupts */
-	*(volatile u_int32_t *)IEN0_REG = 0;
-	*(volatile u_int32_t *)IEN1_REG = 0;
-	*(volatile u_int32_t *)IEN2_REG = 0;
-	*(volatile u_int32_t *)IEN3_REG = 0;
+	*(volatile u_int32_t *)MVME188_IENALL = 0;
 
 	if ((*(volatile u_int8_t *)GLB1) & M188_SYSCON) {
 		/* Force a complete VMEbus reset */
-		*(volatile u_int32_t *)GLBRES_REG = 1;
+		*(volatile u_int32_t *)MVME188_GLBRES = 1;
 	} else {
 		/* Force only a local reset */
 		*(volatile u_int8_t *)GLB1 |= M188_LRST;
 	}
 
-	*(volatile u_int32_t *)UCSR_REG |= 0x2000;	/* clear SYSFAIL */
+	*(volatile u_int32_t *)MVME188_UCSR |= 0x2000;	/* clear SYSFAIL */
 	for (cnt = 0; cnt < 5*1024*1024; cnt++)
 		;
-	*(volatile u_int32_t *)UCSR_REG |= 0x2000;	/* clear SYSFAIL */
+	*(volatile u_int32_t *)MVME188_UCSR |= 0x2000;	/* clear SYSFAIL */
 
 	printf("reset failed\n");
 }
@@ -201,12 +203,11 @@ safe_level(u_int mask, u_int curlevel)
 	int i;
 
 	for (i = curlevel; i < INT_LEVEL; i++)
-		if (!(int_mask_val[i] & mask))
-			return i;
+		if ((int_mask_val[i] & mask) == 0)
+			return (i);
 
-	panic("safe_level: no safe level for mask 0x%08x level %d found",
-	       mask, curlevel);
-	/* NOTREACHED */
+	/* NOTREACHED since int_mask_val[INT_LEVEL - 1] is zero */
+	return (INT_LEVEL - 1);
 }
 
 u_int
@@ -226,7 +227,7 @@ m188_setipl(u_int level)
 	mask = int_mask_val[level];
 #ifdef MULTIPROCESSOR
 	if (cpu != master_cpu)
-		mask &= SLAVE_MASK;
+		mask &= ~SLAVE_MASK;
 #endif
 
 	*int_mask_reg[cpu] = mask;
@@ -246,7 +247,7 @@ m188_raiseipl(u_int level)
 		mask = int_mask_val[level];
 #ifdef MULTIPROCESSOR
 		if (cpu != master_cpu)
-			mask &= SLAVE_MASK;
+			mask &= ~SLAVE_MASK;
 #endif
 
 		*int_mask_reg[cpu] = mask;
@@ -259,17 +260,47 @@ m188_raiseipl(u_int level)
  * Device interrupt handler for MVME188
  */
 
-/* Hard coded vector table for onboard devices. */
+/*
+ * Hard coded vector table for onboard devices and hardware failure
+ * interrupts.
+ */
 const unsigned int obio_vec[32] = {
-	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0,
-        0, SYSCV_SCC, 0, 0, SYSCV_SYSF, SYSCV_TIMER2, 0, 0,
-	0, 0, 0, 0, SYSCV_TIMER1, 0, SYSCV_ACF, SYSCV_ABRT
+	0,		/* SWI0 */
+	0,		/* SWI1 */
+	0,		/* SWI2 */
+	0,		/* SWI3 */
+	0,		/* VME1 */
+	0,
+	0,		/* VME2 */
+	0,		/* SIGLPI */	/* no vector, but always masked */
+	0,		/* LMI */	/* no vector, but always masked */
+	0,
+	0,		/* VME3 */
+	0,
+	0,		/* VME4 */
+	0,
+	0,		/* VME5 */
+	0,
+	0,		/* SIGHPI */	/* no vector, but always masked */
+	SYSCV_SCC,	/* DI */
+	0,
+	0,		/* VME6 */
+	SYSCV_SYSF,	/* SF */
+	SYSCV_TIMER2,	/* CIOI */
+	0,
+	0,		/* VME7 */
+	0,		/* SWI4 */
+	0,		/* SWI5 */
+	0,		/* SWI6 */
+	0,		/* SWI7 */
+	SYSCV_TIMER1,	/* DTI */
+	0,		/* ARBTO */	/* no vector, but always masked */
+	SYSCV_ACF,	/* ACF */
+	SYSCV_ABRT	/* ABORT */
 };
 
-#define GET_MASK(cpu, val)	*int_mask_reg[cpu] & (val)
-#define VME_VECTOR_MASK		0x1ff 		/* mask into VIACK register */
-#define VME_BERR_MASK		0x100 		/* timeout during VME IACK cycle */
+#define VME_VECTOR_MASK		0x1ff 	/* mask into VIACK register */
+#define VME_BERR_MASK		0x100 	/* timeout during VME IACK cycle */
 
 void
 m188_ext_int(u_int v, struct trapframe *eframe)
@@ -341,7 +372,7 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 		 * For now, only the timer interrupt requires its condition
 		 * to be cleared before interrupts are enabled.
 		 */
-		if (unmasked == 0 && (cur_mask & DTI_BIT) == 0) {
+		if (unmasked == 0 && (cur_mask & IRQ_DTI) == 0) {
 			set_psr(get_psr() & ~PSR_IND);
 			unmasked = 1;
 		}
