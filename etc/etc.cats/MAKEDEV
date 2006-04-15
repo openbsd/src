@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.cats/MAKEDEV.md,v 1.12 2006/03/15 02:20:28 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.23 2005/12/27 19:02:42 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.25 2006/04/15 18:19:12 todd Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.77 2005/10/06 06:43:19 otto Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -453,7 +453,7 @@ local)
 
 ramdisk)
 	R pty0 rd0 cd0 cd1 st0 st1 wd0 wd1 wd2 wd3 wd4 sd0 sd1 sd2
-	R sd3 sd4 bpf0 std
+	R sd3 sd4 tty00 tty01 bpf0 std
 	;;
 
 all)
