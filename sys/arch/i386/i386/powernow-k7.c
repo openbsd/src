@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.16 2006/04/15 05:13:54 gwk Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.17 2006/04/15 05:17:17 gwk Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -224,9 +224,6 @@ k7pnow_decode_pst(struct k7pnow_cpu_state * cstate, uint8_t *p, int npst)
 {
 	int i, j, n;
 	struct k7pnow_state state;
-
-	for (i = 0; i < POWERNOW_MAX_STATES; ++i)
-		cstate->state_table[i].freq = -1;
 
 	for (n = 0, i = 0; i < npst; ++i) {
 		state.fid = *p++;
