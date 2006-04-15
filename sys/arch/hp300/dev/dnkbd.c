@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnkbd.c,v 1.10 2005/12/21 19:40:42 miod Exp $	*/
+/*	$OpenBSD: dnkbd.c,v 1.11 2006/04/15 23:56:48 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -67,6 +67,7 @@
  * Keyboard key codes
  */
 
+#define	DNKEY_CAPSLOCK	0x7e
 #define	DNKEY_REPEAT	0x7f
 #define	DNKEY_RELEASE	0x80
 #define	DNKEY_CHANNEL	0xff
@@ -206,6 +207,7 @@ struct wskbd_mapdata dnkbd_keymapdata = {
 typedef enum { EVENT_NONE, EVENT_KEYBOARD, EVENT_MOUSE } dnevent;
 
 void	dnevent_kbd(struct dnkbd_softc *, int);
+void	dnevent_kbd_internal(struct dnkbd_softc *, int);
 void	dnevent_mouse(struct dnkbd_softc *, u_int8_t *);
 void	dnkbd_attach_subdevices(struct dnkbd_softc *);
 void	dnkbd_bellstop(void *);
@@ -574,10 +576,6 @@ dnkbd_decode(int keycode, u_int *type, int *key)
 void
 dnevent_kbd(struct dnkbd_softc *sc, int dat)
 {
-	u_int type;
-	int key;
-	int s;
-
 	if (!ISSET(sc->sc_flags, SF_PLUGGED))
 		return;
 
@@ -586,6 +584,29 @@ dnevent_kbd(struct dnkbd_softc *sc, int dat)
 
 	if (!ISSET(sc->sc_flags, SF_ENABLED))
 		return;
+
+	/*
+	 * Even in raw mode, the caps lock key is treated specially:
+	 * first key press causes event 0x7e, release causes no event;
+	 * then a new key press causes nothing, and release causes
+	 * event 0xfe. Moreover, while kept down, it does not produce
+	 * repeat events.
+	 *
+	 * So the best we can do is fake the missed events, but this
+	 * will not allow the capslock key to be remapped as a control
+	 * key since it will not be possible to chord it with anything.
+	 */
+	dnevent_kbd_internal(sc, dat);
+	if ((dat & ~DNKEY_RELEASE) == DNKEY_CAPSLOCK)
+		dnevent_kbd_internal(sc, dat ^ DNKEY_RELEASE);
+}
+
+void
+dnevent_kbd_internal(struct dnkbd_softc *sc, int dat)
+{
+	u_int type;
+	int key;
+	int s;
 
 	dnkbd_decode(dat, &type, &key);
 
@@ -943,20 +964,28 @@ dnmouse_disable(void *v)
 void
 dnkbd_cngetc(void *v, u_int *type, int *data)
 {
+	static int lastdat = 0;
 	struct dnkbd_softc *sc = v;
 	int s;
 	int dat;
 
-	for (;;) {
-		s = splhigh();
-		dat = dnkbd_pollin(sc->sc_regs, 10000);
-		if (dat != -1) {
-			if (dnkbd_input(sc, dat) == EVENT_KEYBOARD) {
-				splx(s);
-				break;
+	/* Take care of caps lock */
+	if ((lastdat & ~DNKEY_RELEASE) == DNKEY_CAPSLOCK) {
+		dat = lastdat ^ DNKEY_RELEASE;
+		lastdat = 0;
+	} else {
+		for (;;) {
+			s = splhigh();
+			dat = dnkbd_pollin(sc->sc_regs, 10000);
+			if (dat != -1) {
+				if (dnkbd_input(sc, dat) == EVENT_KEYBOARD) {
+					splx(s);
+					break;
+				}
 			}
+			splx(s);
 		}
-		splx(s);
+		lastdat = dat;
 	}
 
 	dnkbd_decode(dat, type, data);
