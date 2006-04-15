@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa_machdep.c,v 1.8 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: eisa_machdep.c,v 1.9 2006/04/15 01:44:06 weingart Exp $	*/
 /*	$NetBSD: eisa_machdep.c,v 1.10.22.2 2000/06/25 19:36:58 sommerfeld Exp $	*/
 
 /*-
@@ -176,14 +176,14 @@ eisa_intr_string(ec, ih)
 	eisa_chipset_tag_t ec;
 	eisa_intr_handle_t ih;
 {
-	static char irqstr[8];		/* 4 + 2 + NUL + sanity */
+	static char irqstr[64];
 
 	if (ih == 0 || (ih & 0xff) >= ICU_LEN || ih == 2)
 		panic("eisa_intr_string: bogus handle 0x%x", ih);
 
 #if NIOAPIC > 0
 	if (ih & APIC_INT_VIA_APIC) {
-		sprintf(irqstr, "apic %d int %d (irq %d)",
+		snprintf(irqstr, sizeof irqstr, "apic %d int %d (irq %d)",
 		    APIC_IRQ_APIC(ih), APIC_IRQ_PIN(ih), ih & 0xff);
 		return (irqstr);
 	}
