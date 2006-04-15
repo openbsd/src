@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.67 2005/11/19 02:18:00 pedro Exp $	*/
+/*	$OpenBSD: apm.c,v 1.68 2006/04/15 20:43:36 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -760,6 +760,7 @@ apm_disconnect(sc)
 		apm_perror("disconnect failed", &regs);
 	else
 		printf("%s: disconnected\n", sc->sc_dev.dv_xname);
+	apm_flags |= APM_BIOS_PM_DISABLED;
 }
 
 int
@@ -983,6 +984,9 @@ apmopen(dev, flag, mode, p)
 	/* apm0 only */
 	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 ||
 	    !(sc = apm_cd.cd_devs[APMUNIT(dev)]))
+		return ENXIO;
+
+	if (apm_flags & APM_BIOS_PM_DISABLED)
 		return ENXIO;
 
 	DPRINTF(("apmopen: dev %d pid %d flag %x mode %x\n",
