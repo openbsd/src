@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.24 2006/04/15 18:17:11 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.25 2006/04/15 18:19:12 todd Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -244,12 +244,15 @@ _mkdev(ss, ss*, {-M ss$U c major_ss_c Mult($U,16) 640 operator
 	MKlist[${#MKlist[*]}]=";umask 77;ln -s ss$U scan$U"-})dnl
 dnl XXX see ramdisk above
 __devitem(ramd, ramdisk, Ramdisk kernel devices,nothing)dnl
+dnl
 _mkdev(ramd, ramdisk, {-dnl
 show_target(ramd)dnl
 -})dnl
+dnl
 target(ramd, std)dnl
-target(ramd, random)dnl
 target(ramd, bpf, 0)dnl
+twrget(ramd, com, tty0, 0, 1)dnl
+dnl
 __devitem(rd, {-rd*-}, quote(rd)pseudo-disks)dnl
 _mkdev(rd, rd*, {-dodisk2 rd $U major_rd_b major_rd_c $U 0{--}ifstep(rd)-})dnl
 __devitem(xd, xd*, Xylogic 753/7053 disks)dnl
