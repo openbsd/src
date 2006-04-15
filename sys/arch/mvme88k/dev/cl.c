@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.50 2006/01/01 11:59:39 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.51 2006/04/15 22:29:49 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -231,7 +231,7 @@ clprobe(parent, self, aux)
 		    0, &ioh) != 0)
 			return 0;
 		rc = badvaddr((vaddr_t)bus_space_vaddr(ca->ca_iot, ioh), 1);
-		bus_space_unmap(ca->ca_iot, ca->ca_paddr, CD2400_SIZE);
+		bus_space_unmap(ca->ca_iot, ioh, CD2400_SIZE);
 		return rc == 0;
 	}
 
