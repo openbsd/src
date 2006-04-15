@@ -1,4 +1,4 @@
-.\"	$OpenBSD: emu.4,v 1.12 2005/12/29 17:30:28 jmc Exp $
+.\"	$OpenBSD: emu.4,v 1.13 2006/04/15 17:00:30 jmc Exp $
 .\"	$NetBSD: emuxki.4,v 1.1 2001/10/18 18:40:16 jdolecek Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,21 +37,22 @@
 .Os
 .Sh NAME
 .Nm emu
-.Nd Creative Labs SBLive! and PCI 512 audio device driver
+.Nd "Creative Labs SBLive!, PCI 512, and Audigy audio device driver"
 .Sh SYNOPSIS
 .Cd "emu* at pci?"
 .Cd "audio* at emu?"
 .Sh DESCRIPTION
 The
 .Nm
-device driver supports Creative
-Sound Blaster Live! cards as well as the Sound Blaster PCI 512.
+device driver supports Creative Labs SoundBlaster Live!,
+Sound Blaster PCI 512,
+and SoundBlaster Audigy cards.
 .Pp
 These Environmental Audio cards are based upon the programmable EMU10K1
 digital-processing chip.
 .Pp
 Hardware features:
-.Bl -bullet -compact
+.Bl -bullet -offset indent
 .It
 E-mu Systems, Inc. EMU10K1 music synthesis engine
 .It
@@ -105,5 +106,12 @@ and not possible to disable.
 Potential damage ranges from frying the card to frying
 motherboard or external equipment connected to its outputs.
 .Sh BUGS
-Currently, this driver does not support MIDI, joystick input
+Currently this driver does not support MIDI, joystick input,
 or the multi-voice capability.
+.Pp
+There is currently no way to control the volume of the DAC for
+SoundBlaster Audigy cards.
+.Pp
+S-PDIF digital output does not work for
+SoundBlaster Live! and
+SoundBlaster Audigy cards.
