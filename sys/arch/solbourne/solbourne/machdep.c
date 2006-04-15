@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.1 2005/04/19 21:30:18 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.2 2006/04/15 17:36:47 miod Exp $	*/
 /*	OpenBSD: machdep.c,v 1.105 2005/04/11 15:13:01 deraadt Exp 	*/
 
 /*
@@ -402,6 +402,11 @@ setregs(p, pack, stack, retval)
 	tf->tf_npc = pack->ep_entry & ~3;
 	tf->tf_global[1] = (int)PS_STRINGS;
 	tf->tf_global[2] = tf->tf_global[7] = tf->tf_npc;
+	/* XXX exec of init(8) returns via proc_trampoline() */
+	if (p->p_pid == 1) {
+		tf->tf_pc = tf->tf_npc;
+		tf->tf_npc += 4;
+	}
 	stack -= sizeof(struct rwindow);
 	tf->tf_out[6] = stack;
 	retval[1] = 0;

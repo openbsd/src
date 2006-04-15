@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.7 2006/03/23 02:29:35 ray Exp $	*/
+/*	$OpenBSD: locore.s,v 1.8 2006/04/15 17:36:47 miod Exp $	*/
 /*	OpenBSD: locore.s,v 1.64 2005/04/17 18:47:50 miod Exp 	*/
 
 /*
@@ -1804,8 +1804,8 @@ sparc_interruptkap:
 nmi:
 	INTR_SETUP(-CCFSZ-80)
 	INCR(_C_LABEL(uvmexp)+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
-	/* XXX MIOD We should check for NMI set in the iGLU BSR, and clear
-	 * it if set.
+	/* XXX
+	 * We should check for NMI set in the iGLU BSR, and clear it if set.
 	 */
 
 	/*
@@ -3719,9 +3719,9 @@ ENTRY(proc_trampoline)
 	 */
 	mov	PSR_S, %l0		! user psr (no need to load it)
 	!?wr	%g0, 2, %wim		! %wim = 2
-	ld	[%sp + CCFSZ + 8], %l1	! pc = tf->tf_npc from execve/fork
+	ld	[%sp + CCFSZ + 4], %l1	! pc
 	b	return_from_syscall
-	 add	%l1, 4, %l2		! npc = pc+4
+	 ld	[%sp + CCFSZ + 8], %l2	! npc
 
 /* probeget is meant to be used during autoconfiguration */
 
