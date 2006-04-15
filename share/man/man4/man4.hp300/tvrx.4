@@ -1,7 +1,6 @@
-.\"	$OpenBSD: hyper.4,v 1.8 2006/04/15 17:34:38 miod Exp $
+.\"	$OpenBSD: tvrx.4,v 1.1 2006/04/15 17:34:38 miod Exp $
 .\"
-.\" Copyright (c) 2003, Miodrag Vallat.
-.\" All rights reserved.
+.\" Copyright (c) 2006, Miodrag Vallat
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -24,50 +23,48 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 12, 2005
-.Dt HYPER 4 hp300
+.Dd April 14, 2006
+.Dt TVRX 4 hp300
 .Os
 .Sh NAME
-.Nm hyper
-.Nd
-.Tn HP A1096A
-Hyperion frame buffer
+.Nm tvrx
+.Nd HP98705 TurboVRX
+.Dq TigerShark
+frame buffer
 .Sh SYNOPSIS
-.Cd "hyper*     at dio?"
-.Cd "wsdisplay* at hyper?"
+.Cd "tvrx*      at dio?"
+.Cd "wsdisplay* at tvrx?"
 .Sh DESCRIPTION
-The Hyperion is a monochrome, high-resolution frame buffer.
+The TurboVRX frame buffer is an accelerated, high resolution
+.Pq 1280x1024
+external display, connected to a 98702 DIO-II interface board.
+Models 98705A and 98705C are 8-bit color frame buffers, while model
+98705B is 16-bit color with a 16-bit Z-buffer.
+All models also have four overlay planes.
 .Pp
 The
 .Nm
 driver provides a frame buffer abstraction to the
 .Xr wscons 4
 console framework.
-.Sh SELECT CODE
-The
-.Dq select code
-for the Hyperion card can be set with the JP01 and JP02 jumpers.
-These jumpers are located in the upper right corner of the board, when it is
-placed component side up, with the video connector to the left.
-Numbering the jumper pins from 1 to 3 from left to right,
-the following combinations are available:
-.Bl -column "JP02" "JP01" -offset indent
-.It Sy "JP02" Ta Sy "JP01" Ta Sy "Select code"
-.It " "
-.It Li "1-2" Ta "1-2" Ta 135
-.It Li "1-2" Ta "2-3" Ta 134
-.It Li "2-3" Ta "1-2" Ta "133 (factory settings)"
-.It Li "2-3" Ta "2-3" Ta 132
-.El
 .Pp
-Leaving a jumper open is equivalent to shorting pins 1 and 2.
+Currently, the driver can only use one overlay plane, and will run as an
+unaccelerated monochrome frame buffer.
+.Pp
+The TurboVRX cards can be configured using the 5 DIP switches selector on
+the interface board to define the
+.Dq select code .
+The select code value is computed by adding 133 to the number made from the
+five binary digits.
+The default settings, with the two MSB switches set to 1 and the three LSB
+switches set to 0, provide a select code of 157.
 .Sh SEE ALSO
 .Xr dvbox 4 ,
 .Xr gbox 4 ,
+.Xr hyper 4 ,
 .Xr intro 4 ,
 .Xr rbox 4 ,
 .Xr sti 4 ,
 .Xr topcat 4 ,
-.Xr tvrx 4 ,
 .Xr wscons 4 ,
 .Xr wsdisplay 4

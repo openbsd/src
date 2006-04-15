@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dio.4,v 1.5 2005/01/14 22:39:21 miod Exp $
+.\"	$OpenBSD: dio.4,v 1.6 2006/04/15 17:34:38 miod Exp $
 .\"     $NetBSD: dio.4,v 1.2 2002/01/15 01:31:30 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 27, 2004
+.Dd April 14, 2006
 .Dt DIO 4 hp300
 .Os
 .Sh NAME
@@ -78,6 +78,11 @@ and
 .Tn A1416A
 .Dq Kathmandu
 frame buffers
+.It Xr tvrx 4
+HP98705
+TurboVRX
+.Dq Tigershark
+frame buffer
 .El
 .Ss Serial interfaces
 .Bl -tag -width XXXXXX_4_ -offset indent -compact
@@ -120,4 +125,5 @@ HP 98658 SCSI host adaptor
 .Xr rbox 4 ,
 .Xr sgc 4 ,
 .Xr spc 4 ,
-.Xr topcat 4
+.Xr topcat 4 ,
+.Xr tvrx 4
