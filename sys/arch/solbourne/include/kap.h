@@ -1,4 +1,4 @@
-/*	$OpenBSD: kap.h,v 1.1 2005/04/19 21:30:18 miod Exp $	*/
+/*	$OpenBSD: kap.h,v 1.2 2006/04/15 17:35:48 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
  *
@@ -145,13 +145,13 @@
  */
 
 #define	ROM_WINDOW	0x00
-#define	PTW0_BASE	(ROM_WINDOW << PTW_WINDOW_SHIFT)
+#define	PTW0_BASE	(vaddr_t)(ROM_WINDOW << PTW_WINDOW_SHIFT)
 #define	PHYSMEM_WINDOW	0xf0
-#define	PHYSMEM_BASE	(PHYSMEM_WINDOW << PTW_WINDOW_SHIFT)
+#define	PHYSMEM_BASE	(vaddr_t)(PHYSMEM_WINDOW << PTW_WINDOW_SHIFT)
 #define	PTW1_WINDOW	0xfd
-#define	PTW1_BASE	(PTW1_WINDOW << PTW_WINDOW_SHIFT)
+#define	PTW1_BASE	(vaddr_t)(PTW1_WINDOW << PTW_WINDOW_SHIFT)
 #define	PTW2_WINDOW	0xfe
-#define	PTW2_BASE	(PTW2_WINDOW << PTW_WINDOW_SHIFT)
+#define	PTW2_BASE	(vaddr_t)(PTW2_WINDOW << PTW_WINDOW_SHIFT)
 #define	PTW0_DEFAULT	\
 	PTW_TEMPLATE(ROM_WINDOW, ROM_WINDOW, 0x10000000) | PTW_S | PTW_V
 #define	PTW1_DEFAULT	PTW_CACHEABLE | \
@@ -159,13 +159,13 @@
 #define	PTW2_DEFAULT	PTW_SHARED | \
 	PTW_TEMPLATE(PTW2_WINDOW, PHYSMEM_WINDOW, 0x01000000) | PTW_S | PTW_V
 
-#define	PTW0_TO_PHYS(va)	(va)
-#define	PTW1_TO_PHYS(va)	((va) - PTW1_BASE + PHYSMEM_BASE)
-#define	PTW2_TO_PHYS(va)	((va) - PTW2_BASE + PHYSMEM_BASE)
+#define	PTW0_TO_PHYS(va)	(paddr_t)(va)
+#define	PTW1_TO_PHYS(va)	(paddr_t)((va) - PTW1_BASE + PHYSMEM_BASE)
+#define	PTW2_TO_PHYS(va)	(paddr_t)((va) - PTW2_BASE + PHYSMEM_BASE)
 
-#define	PHYS_TO_PTW0(pa)	(pa)
-#define	PHYS_TO_PTW1(pa)	((pa) - PHYSMEM_BASE + PTW1_BASE)
-#define	PHYS_TO_PTW2(pa)	((pa) - PHYSMEM_BASE + PTW2_BASE)
+#define	PHYS_TO_PTW0(pa)	(vaddr_t)(pa)
+#define	PHYS_TO_PTW1(pa)	(vaddr_t)((pa) - PHYSMEM_BASE + PTW1_BASE)
+#define	PHYS_TO_PTW2(pa)	(vaddr_t)((pa) - PHYSMEM_BASE + PTW2_BASE)
 
 #endif	/* _KERNEL */
 
