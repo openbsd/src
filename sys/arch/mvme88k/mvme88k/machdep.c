@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.177 2006/04/13 21:16:18 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.178 2006/04/15 15:43:36 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -86,6 +86,7 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
+#include <ddb/db_var.h>
 #endif /* DDB */
 
 typedef struct {
@@ -892,6 +893,16 @@ intr_establish(int vec, struct intrhand *ihand, const char *name)
 	    &evcount_intr);
 	SLIST_INSERT_HEAD(list, ihand, ih_link);
 	return (0);
+}
+
+void
+nmihand(void *frame)
+{
+#ifdef DDB
+	printf("Abort switch pressed\n");
+	if (db_console)
+		Debugger();
+#endif
 }
 
 int

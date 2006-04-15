@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.13 2005/12/11 21:36:06 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.14 2006/04/15 15:43:33 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -91,8 +91,6 @@ struct cpu_info m88k_cpus[MAX_CPUS];
 u_int	max_cpus;
 
 struct cmmu_p *cmmu;
-
-int longformat = 1;  /* for regdump() */
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -238,20 +236,8 @@ remrunqueue(vp)
 		whichqs &= ~(1 << which);
 }
 
-void
-nmihand(void *framep)
-{
 #ifdef DDB
-	printf("Abort Pressed\n");
-	Debugger();
-#else
-	struct trapframe *frame = framep;
-
-	printf("Spurious NMI?\n");
-	regdump(frame);
-#endif /* DDB */
-}
-
+int longformat = 1;
 void
 regdump(struct trapframe *f)
 {
@@ -315,6 +301,7 @@ regdump(struct trapframe *f)
 	}
 #endif
 }
+#endif	/* DDB */
 
 /*
  * Set up the cpu_info pointer and the cpu number for the current processor.
