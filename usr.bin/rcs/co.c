@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.77 2006/04/14 01:11:07 deraadt Exp $	*/
+/*	$OpenBSD: co.c,v 1.78 2006/04/15 16:28:07 pat Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -36,18 +36,16 @@ static void	checkout_err_nobranch(RCSFILE *, const char *, const char *,
 int
 checkout_main(int argc, char **argv)
 {
-	int i, ch, flags, kflag, status;
-	RCSNUM *frev, *rev;
+	int i, ch, flags, kflag, status, warg;
+	RCSNUM *rev;
 	RCSFILE *file;
 	char fpath[MAXPATHLEN];
-	char *author, *date, *rev_str, *username;
-	const char *state;
+	char *author, *date, *rev_str, *username, *state;
 	time_t rcs_mtime = -1;
 
-	flags = status = 0;
+	warg = flags = status = 0;
 	kflag = RCS_KWEXP_ERR;
 	rev = RCS_HEAD_REV;
-	frev = NULL;
 	rev_str = NULL;
 	state = NULL;
 	author = NULL;
@@ -123,8 +121,10 @@ checkout_main(int argc, char **argv)
 			if (rcs_optarg == NULL) {
 				if ((author = getlogin()) == NULL)
 					fatal("getlogin failed");
-			} else
+			} else {
 				author = xstrdup(rcs_optarg);
+				warg = 1;
+			}
 			flags |= CO_AUTHOR;
 			break;
 		case 'x':
@@ -155,7 +155,6 @@ checkout_main(int argc, char **argv)
 	}
 
 	for (i = 0; i < argc; i++) {
-		frev = NULL;
 		if (rcs_statfile(argv[i], fpath, sizeof(fpath)) < 0)
 			continue;
 
@@ -208,8 +207,14 @@ checkout_main(int argc, char **argv)
 			rcs_set_mtime(fpath, rcs_mtime);
 	}
 
-	if (rev != RCS_HEAD_REV && frev != NULL)
-		rcsnum_free(frev);
+	if (author != NULL && warg)
+		xfree(author);
+
+	if (date != NULL)
+		xfree(date);
+
+	if (state != NULL)
+		xfree(state);
 
 	return (status);
 }
