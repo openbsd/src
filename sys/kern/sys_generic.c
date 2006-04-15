@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.53 2006/03/26 17:47:10 mickey Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.54 2006/04/15 20:02:19 miod Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -594,14 +594,14 @@ sys_ioctl(struct proc *p, void *v, register_t *retval)
 
 	default:
 		error = (*fp->f_ops->fo_ioctl)(fp, com, data, p);
-		/*
-		 * Copy any data to user, size was
-		 * already set and checked above.
-		 */
-		if (error == 0 && (com&IOC_OUT) && size)
-			error = copyout(data, SCARG(uap, data), (u_int)size);
 		break;
 	}
+	/*
+	 * Copy any data to user, size was
+	 * already set and checked above.
+	 */
+	if (error == 0 && (com&IOC_OUT) && size)
+		error = copyout(data, SCARG(uap, data), (u_int)size);
 out:
 	FRELE(fp);
 	if (memp)
