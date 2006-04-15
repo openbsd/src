@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.103 2006/04/14 23:29:01 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.104 2006/04/15 19:35:19 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -66,7 +66,6 @@ struct cvs_wklhead rcs_temp_files;
 void sighdlr(int);
 static void  rcs_set_description(RCSFILE *, const char *);
 static void  rcs_attach_symbol(RCSFILE *, const char *);
-static u_int rcs_rev_select(RCSFILE *, char *);
 
 /* ARGSUSED */
 void
@@ -905,7 +904,7 @@ rcs_set_description(RCSFILE *file, const char *in)
 	xfree(content);
 }
 
-static u_int
+u_int
 rcs_rev_select(RCSFILE *file, char *range)
 {
 	int i;

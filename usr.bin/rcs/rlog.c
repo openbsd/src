@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.45 2006/04/14 23:29:01 joris Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.46 2006/04/15 19:35:19 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -32,7 +32,6 @@
 
 static void	rlog_file(const char *, RCSFILE *);
 static void	rlog_rev_print(struct rcs_delta *);
-static u_int	rlog_rev_select(RCSFILE *);
 
 #define RLOG_OPTSTRING	"hLl::NqRr::s:TtVw::x::z::"
 #define REVSEP		"----------------------------"
@@ -173,7 +172,7 @@ rlog_file(const char *fname, RCSFILE *file)
 	char *workfile, *p;
 
 	if (rflag == 1)
-		nrev = rlog_rev_select(file);
+		nrev = rcs_rev_select(file, revisions);
 	else
 		nrev = file->rf_ndelta;
 
@@ -341,79 +340,4 @@ rlog_rev_print(struct rcs_delta *rdp)
 	    rdp->rd_state);
 
 	printf("%s", rdp->rd_log);
-}
-
-static u_int
-rlog_rev_select(RCSFILE *file)
-{
-	int i;
-	u_int nrev;
-	char *ep;
-	char *lstr, *rstr;
-	struct rcs_delta *rdp;
-	struct cvs_argvector *revargv, *revrange;
-	RCSNUM lnum, rnum;
-
-	nrev = 0;
-	(void)memset(&lnum, 0, sizeof(lnum));
-	(void)memset(&rnum, 0, sizeof(rnum));
-
-	if (revisions == NULL) {
-		TAILQ_FOREACH(rdp, &file->rf_delta, rd_list)
-			if (rcsnum_cmp(rdp->rd_num, file->rf_head, 0) == 0) {
-				rdp->rd_flags |= RCS_RD_SELECT;
-				return (1);
-			}
-		return (0);
-	}
-
-	revargv = cvs_strsplit(revisions, ",");
-	for (i = 0; revargv->argv[i] != NULL; i++) {
-		revrange = cvs_strsplit(revargv->argv[i], ":");
-		if (revrange->argv[0] == NULL)
-			/* should not happen */
-			fatal("invalid revision range: %s", revargv->argv[i]);
-		else if (revrange->argv[1] == NULL)
-			lstr = rstr = revrange->argv[0];
-		else {
-			if (revrange->argv[2] != NULL)
-				fatal("invalid revision range: %s",
-					revargv->argv[i]);
-			lstr = revrange->argv[0];
-			rstr = revrange->argv[1];
-			if (strcmp(lstr, "") == 0)
-				lstr = NULL;
-			if (strcmp(rstr, "") == 0)
-				rstr = NULL;
-		}
-
-		if (lstr == NULL)
-			lstr = RCS_HEAD_INIT;
-		if (rcsnum_aton(lstr, &ep, &lnum) == 0 || (*ep != '\0'))
-			fatal("invalid revision: %s", lstr);
-
-		if (rstr != NULL) {
-			if (rcsnum_aton(rstr, &ep, &rnum) == 0 || (*ep != '\0'))
-				fatal("invalid revision: %s", rstr);
-		} else
-			rcsnum_cpy(file->rf_head, &rnum, 0);
-
-		cvs_argv_destroy(revrange);
-
-		TAILQ_FOREACH(rdp, &file->rf_delta, rd_list)
-			if (rcsnum_cmp(rdp->rd_num, &lnum, 0) <= 0 &&
-			    rcsnum_cmp(rdp->rd_num, &rnum, 0) >= 0 &&
-			    !(rdp->rd_flags & RCS_RD_SELECT)) {
-				rdp->rd_flags |= RCS_RD_SELECT;
-				nrev++;
-			}
-	}
-	cvs_argv_destroy(revargv);
-
-	if (lnum.rn_id != NULL)
-		xfree(lnum.rn_id);
-	if (rnum.rn_id != NULL)
-		xfree(rnum.rn_id);
-
-	return (nrev);
 }
