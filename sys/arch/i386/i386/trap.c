@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.72 2005/10/26 20:32:59 marco Exp $	*/
+/*	$OpenBSD: trap.c,v 1.73 2006/04/15 02:52:40 weingart Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -259,7 +259,8 @@ trap(frame)
 			return;
 #endif
 		if (frame.tf_trapno < trap_types)
-			printf("fatal %s", trap_type[frame.tf_trapno]);
+			printf("fatal %s (%d)", trap_type[frame.tf_trapno],
+				frame.tf_trapno);
 		else
 			printf("unknown trap %d", frame.tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
