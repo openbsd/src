@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.20 2006/04/09 12:11:11 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.21 2006/04/15 15:44:06 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -249,17 +249,6 @@ m8820x_cmmu_wait(int cpu)
 	}
 }
 
-const char *mmutypes[8] = {
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	"M88200 (16K)",
-	"M88204 (64K)",
-	NULL
-};
-
 /*
  * Should only be called after the calling cpus knows its cpu
  * number and main/secondary status. Should be called first
@@ -302,10 +291,17 @@ m8820x_cpu_configuration_print(int main)
 			else
 				printf(", ");
 
-			if (mmutypes[mmuid] == NULL)
-				printf("unknown model id 0x%x", mmuid);
-			else
-				printf("%s", mmutypes[mmuid]);
+			switch (mmuid) {
+			case M88200_ID:
+				printf("M88200 (16K)");
+				break;
+			case M88204_ID:
+				printf("M88204 (64K)");
+				break;
+			default:
+				printf("unknown CMMU id 0x%x", mmuid);
+				break;
+			}
 			printf(" rev 0x%x,", CMMU_VERSION(idr));
 #ifdef M88200_HAS_SPLIT_ADDRESS
 			/*
