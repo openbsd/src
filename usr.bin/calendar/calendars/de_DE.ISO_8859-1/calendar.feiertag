@@ -1,7 +1,7 @@
 /*
  * Feiertage
  *
- * $OpenBSD: calendar.feiertag,v 1.2 2005/09/12 21:07:28 sturm Exp $
+ * $OpenBSD: calendar.feiertag,v 1.3 2006/04/15 18:20:43 bernd Exp $
  */
 
 #ifndef _de_DE_ISO_8859_1_feiertag_
@@ -16,7 +16,7 @@ LANG=de_DE.ISO_8859-1
 
 /*  arbeitsfreie christliche Feiertage */
 Easter-2	Karfreitag
-Easter		Ostersonntag
+Easter   	Ostersonntag
 Easter+1 	Ostermontag
 Easter+49	Pfingstsonntag
 Easter+50	Pfingstmontag
