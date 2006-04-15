@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.12 2006/04/04 03:32:56 uwe Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.13 2006/04/15 04:25:12 gwk Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -282,7 +282,7 @@ k7pnow_states(struct k7pnow_cpu_state *cstate, uint32_t cpusig,
 
 			p += sizeof(struct psb_s);
 
-			for (maxpst = 0; maxpst < 200; maxpst++) {
+			for (maxpst = 0; maxpst < psb->n_pst; maxpst++) {
 				pst = (struct pst_s*) p;
 
 				if (cpusig == pst->signature && fid == pst->fid
