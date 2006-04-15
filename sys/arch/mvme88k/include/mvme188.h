@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.22 2006/04/15 15:45:24 miod Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.23 2006/04/15 22:31:47 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -270,38 +270,7 @@
 #define CIO_CIP			0x20	/* CTC Clear interrupt pending */
 #define CIO_IP			0x20	/* CTC Interrupt pending */
 
-/* these are the DART read registers */
 #define DART_BASE		0xfff82000
-#define DART_MRA		0xfff82000	/* mode A */
-#define DART_SRA		0xfff82004	/* status A */
-#define DART_RBA		0xfff8200c	/* receive buffer A */
-#define DART_IPCR		0xfff82010	/* input port change */
-#define DART_ISR		0xfff82014	/* interrupt status */
-#define DART_CUR		0xfff82018	/* count upper */
-#define DART_CLR		0xfff8201c	/* count lower */
-#define DART_MR1B		0xfff82020	/* mode B */
-#define DART_SRB		0xfff82024	/* status B */
-#define DART_RBB		0xfff8202c	/* receive buffer B */
-#define DART_IVR		0xfff82030	/* interrupt vector */
-#define DART_INP		0xfff82034	/* input port */
-#define DART_STARTC		0xfff82038	/* start counter cmd */
-#define DART_STOPC		0xfff8203c	/* stop counter cmd */
-
-/* these are the DART write registers */
-#define DART_CSRA		0xfff82004	/* clock select A */
-#define DART_CRA		0xfff82008	/* command A */
-#define DART_TBA		0xfff8200c	/* transmit buffer A */
-#define DART_ACR		0xfff82010	/* auxiliary control */
-#define DART_IMR		0xfff82014	/* interrupt mask reg*/
-#define DART_CTUR		0xfff82018	/* counter/timer MSB */
-#define DART_CTLR		0xfff8201c	/* counter/timer LSB */
-#define DART_MRB		0xfff82020	/* mode B */
-#define DART_CSRB		0xfff82024	/* clock select B */
-#define DART_CRB		0xfff82028	/* command B */
-#define DART_TBB		0xfff8202c	/* transmit buffer B */
-#define DART_OPCR		0xfff82034	/* output port config*/
-#define DART_OPRS		0xfff82038	/* output port set */
-#define DART_OPRR		0xfff8203c	/* output port reset */
 
 /*
  * HYPERmodule CMMU addresses

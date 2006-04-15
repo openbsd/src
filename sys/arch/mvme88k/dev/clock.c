@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.44 2004/12/24 22:50:30 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.45 2006/04/15 22:31:46 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -358,10 +358,19 @@ sbc_statintr(void *eframe)
  * counters interrupt at the same time...
  */
 
+#define	DART_ISR		0xfff82017	/* interrupt status */
+#define	DART_IVR		0xfff82033	/* interrupt vector */
+#define	DART_STARTC		0xfff8203b	/* start counter cmd */
+#define	DART_STOPC		0xfff8203f	/* stop counter cmd */
+#define	DART_ACR		0xfff82013	/* auxiliary control */
+#define	DART_CTUR		0xfff8201b	/* counter/timer MSB */
+#define	DART_CTLR		0xfff8201f	/* counter/timer LSB */
+#define	DART_OPCR		0xfff82037	/* output port config*/
+
 void
 m188_init_clocks(void)
 {
-	volatile u_int32_t imr;
+	volatile u_int8_t imr;
 	int statint, minint;
 
 #ifdef DIAGNOSTIC
@@ -395,19 +404,19 @@ m188_init_clocks(void)
 	statmin = statint - (statvar >> 1);
 
 	/* clear the counter/timer output OP3 while we program the DART */
-	*(volatile u_int32_t *)DART_OPCR = 0x00;
+	*(volatile u_int8_t *)DART_OPCR = 0x00;
 	/* set interrupt vec */
-	*(volatile u_int32_t *)DART_IVR = SYSCON_VECT + SYSCV_TIMER1;
+	*(volatile u_int8_t *)DART_IVR = SYSCON_VECT + SYSCV_TIMER1;
 	/* do the stop counter/timer command */
-	imr = *(volatile u_int32_t *)DART_STOPC;
+	imr = *(volatile u_int8_t *)DART_STOPC;
 	/* set counter/timer to counter mode, PCLK/16 */
-	*(volatile u_int32_t *)DART_ACR = 0x30;
-	*(volatile u_int32_t *)DART_CTUR = (statint >> 8);
-	*(volatile u_int32_t *)DART_CTLR = (statint & 0xff);
+	*(volatile u_int8_t *)DART_ACR = 0x30;
+	*(volatile u_int8_t *)DART_CTUR = (statint >> 8);
+	*(volatile u_int8_t *)DART_CTLR = (statint & 0xff);
 	/* set the counter/timer output OP3 */
-	*(volatile u_int32_t *)DART_OPCR = 0x04;
+	*(volatile u_int8_t *)DART_OPCR = 0x04;
 	/* give the start counter/timer command */
-	imr = *(volatile u_int32_t *)DART_STARTC;
+	imr = *(volatile u_int8_t *)DART_STARTC;
 }
 
 int
@@ -431,12 +440,12 @@ m188_clockintr(void *eframe)
 int
 m188_statintr(void *eframe)
 {
-	volatile u_int32_t tmp;
+	volatile u_int8_t tmp;
 	u_long newint, r, var;
 
 	/* stop counter and acknowledge interrupt */
-	tmp = *(volatile u_int32_t *)DART_STOPC;
-	tmp = *(volatile u_int32_t *)DART_ISR;
+	tmp = *(volatile u_int8_t *)DART_STOPC;
+	tmp = *(volatile u_int8_t *)DART_ISR;
 
 	statclock((struct clockframe *)eframe);
 
@@ -452,9 +461,9 @@ m188_statintr(void *eframe)
 	newint = statmin + r;
 
 	/* setup new value and restart counter */
-	*(volatile u_int32_t *)DART_CTUR = (newint >> 8);
-	*(volatile u_int32_t *)DART_CTLR = (newint & 0xff);
-	tmp = *(volatile u_int32_t *)DART_STARTC;
+	*(volatile u_int8_t *)DART_CTUR = (newint >> 8);
+	*(volatile u_int8_t *)DART_CTLR = (newint & 0xff);
+	tmp = *(volatile u_int8_t *)DART_STARTC;
 
 	return (1);
 }
