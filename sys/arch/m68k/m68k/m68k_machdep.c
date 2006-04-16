@@ -1,4 +1,4 @@
-/*	$OpenBSD: m68k_machdep.c,v 1.7 2005/11/06 17:59:57 miod Exp $	*/
+/*	$OpenBSD: m68k_machdep.c,v 1.8 2006/04/16 22:36:44 miod Exp $	*/
 /*	$NetBSD: m68k_machdep.c,v 1.3 1997/06/12 09:57:04 veego Exp $	*/
 
 /*-
@@ -106,7 +106,8 @@ child_return(arg)
 	userret(p, f, p->p_sticks, 0, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, SYS_fork, 0, 0);
+		ktrsysret(p,
+		    (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 #endif
 }
 
