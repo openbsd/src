@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.38 2005/03/08 20:00:25 tdeval Exp $
+#	$OpenBSD: files.pcmcia,v 1.39 2006/04/16 20:45:00 miod Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -95,3 +95,8 @@ file	dev/pcmcia/if_an_pcmcia.c		an_pcmcia
 device	gpr
 attach	gpr at pcmcia with gpr
 file	dev/pcmcia/gpr.c			gpr needs-flag
+
+# IODATA CFXGA Compact flash VGA card
+device	cfxga: wsemuldisplaydev, rasops16
+attach	cfxga at pcmcia with cfxga
+file	dev/pcmcia/cfxga.c			cfxga

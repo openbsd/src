@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.39 2006/04/14 21:05:44 miod Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.40 2006/04/16 20:45:00 miod Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -289,6 +289,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_MAC68K	49	/* Generic mac68k framebuffer */
 #define		WSDISPLAY_TYPE_SUNLEO	50	/* Sun ZX/Leo */
 #define		WSDISPLAY_TYPE_TVRX	51	/* HP TurboVRX */
+#define		WSDISPLAY_TYPE_CFXGA	52	/* CF VoyagerVGA */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
@@ -407,7 +408,8 @@ struct wsdisplay_addscreendata {
 struct wsdisplay_delscreendata {
 	int idx; /* screen index */
 	int flags;
-#define WSDISPLAY_DELSCR_FORCE 1
+#define	WSDISPLAY_DELSCR_FORCE	0x01
+#define	WSDISPLAY_DELSCR_QUIET	0x02
 };
 #define WSDISPLAYIO_DELSCREEN	_IOW('W', 84, struct wsdisplay_delscreendata)
 
