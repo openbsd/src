@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.11 2006/04/16 17:10:08 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.12 2006/04/16 17:15:36 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -117,7 +117,7 @@ mfi_read(struct mfi_softc *sc, bus_size_t r)
 	    BUS_SPACE_BARRIER_READ);
 	rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, r);
 
-	DNPRINTF(MFI_D_RW, "ar 0x%x 0x08%x ", r, rv);
+	DNPRINTF(MFI_D_RW, "mr 0x%x 0x08%x ", r, rv);
 	return (rv);
 }
 
