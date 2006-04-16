@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.11 2006/01/26 09:53:46 moritz Exp $	*/
+/*	$OpenBSD: net.c,v 1.12 2006/04/16 19:28:36 moritz Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -165,7 +165,7 @@ net_setup_listeners(void)
 		listeners = (int *)calloc(2, sizeof(int));
 		if (!listeners) {
 			perror("net_setup_listeners: calloc()");
-			return -1;
+			goto errout;
 		}
 		listeners[1] = -1;
 		listeners[0] = net_add_listener(sa);
@@ -184,7 +184,7 @@ net_setup_listeners(void)
 
 	if (getifaddrs(&ifap) != 0) {
 		perror("net_setup_listeners: getifaddrs()"); 
-		return -1;
+		goto errout;
 	}
 
 	/* How many addresses matches? */
@@ -204,14 +204,14 @@ net_setup_listeners(void)
 	if (!count) {
 		log_msg(0, "net_setup_listeners: no listeners found for %s",
 		    cfgstate.listen_on);
-		return -1;
+		goto errout;
 	}
 
 	/* Allocate one extra slot and set to -1, marking end of array. */
 	listeners = (int *)calloc(count + 1, sizeof(int));
 	if (!listeners) {
 		perror("net_setup_listeners: calloc()");
-		return -1;
+		goto errout;
 	}
 	for (i = 0; i <= count; i++)
 		listeners[i] = -1;
@@ -261,9 +261,11 @@ net_setup_listeners(void)
   errout:
 	if (ifap)
 		freeifaddrs(ifap);
-	for (i = 0; listeners[i] != -1; i++)
-		close(listeners[i]);
-	free(listeners);
+	if (listeners) {
+		for (i = 0; listeners[i] != -1; i++)
+			close(listeners[i]);
+		free(listeners);
+	}
 	return -1;
 }
 
