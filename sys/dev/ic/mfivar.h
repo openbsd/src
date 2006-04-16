@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.7 2006/04/16 16:34:35 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.8 2006/04/16 17:10:08 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -50,25 +50,6 @@ struct mfi_prod_cons {
 	uint32_t		mpc_reply_q[1]; /* compensate for 1 extra reply per spec */
 };
 
-struct mfi_softc {
-	struct device		sc_dev;
-	void			*sc_ih;
-	struct scsi_link	sc_link;
-
-	u_int32_t		sc_flags;
-
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-	bus_dma_tag_t		sc_dmat;
-
-	/* firmware determined max and totals */
-	uint32_t		sc_max_cmds;
-	uint32_t		sc_max_sgl;
-
-	/* producer/consumer pointers and reply queue */
-	struct mfi_mem		*sc_pcq;
-};
-
 struct mfi_ccb {
 	struct mfi_softc	*ccb_sc;
 
@@ -96,7 +77,30 @@ struct mfi_ccb {
 	}			ccb_state;
 	uint32_t		ccb_flags;
 #define MFI_CCB_F_ERR			(1<<0)
-	TAILQ_ENTRY(MFI_ccb)	ccb_link;
+	TAILQ_ENTRY(mfi_ccb)	ccb_link;
+};
+
+typedef TAILQ_HEAD(mfi_queue_head, mfi_ccb)	mfi_queue_head;
+
+struct mfi_softc {
+	struct device		sc_dev;
+	void			*sc_ih;
+	struct scsi_link	sc_link;
+
+	u_int32_t		sc_flags;
+
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+	bus_dma_tag_t		sc_dmat;
+
+	/* firmware determined max and totals */
+	uint32_t		sc_max_cmds;
+	uint32_t		sc_max_sgl;
+
+	/* producer/consumer pointers and reply queue */
+	struct mfi_mem		*sc_pcq;
+
+	mfi_queue_head		sc_ccb_freeq;
 };
 
 int	mfi_attach(struct mfi_softc *sc);

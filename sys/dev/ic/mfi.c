@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.10 2006/04/16 16:53:55 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.11 2006/04/16 17:10:08 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -67,11 +67,46 @@ struct scsi_device mfi_dev = {
 	NULL, NULL, NULL, NULL
 };
 
+struct mfi_ccb	*mfi_get_ccb(struct mfi_softc *);
+void		mfi_put_ccb(struct mfi_ccb *);
+
 u_int32_t	mfi_read(struct mfi_softc *, bus_size_t);
 void		mfi_write(struct mfi_softc *, bus_size_t, u_int32_t);
 struct mfi_mem	*mfi_allocmem(struct mfi_softc *, size_t);
 void		mfi_freemem(struct mfi_softc *, struct mfi_mem *);
 int		mfi_transition_firmware(struct mfi_softc *);
+
+struct mfi_ccb *
+mfi_get_ccb(struct mfi_softc *sc)
+{
+	struct mfi_ccb		*ccb;
+	int			s;
+
+	s = splbio();
+	ccb = TAILQ_LAST(&sc->sc_ccb_freeq, mfi_queue_head);
+	if (ccb) {
+		TAILQ_REMOVE(&sc->sc_ccb_freeq, ccb, ccb_link);
+		ccb->ccb_state = MFI_CCB_READY;
+	}
+	splx(s);
+
+	return (ccb);
+}
+
+void
+mfi_put_ccb(struct mfi_ccb *ccb)
+{
+	struct mfi_softc	*sc = ccb->ccb_sc;
+	int			s;
+
+	s = splbio();
+	ccb->ccb_state = MFI_CCB_FREE;
+	ccb->ccb_xs = NULL;
+	ccb->ccb_flags = 0;
+	ccb->ccb_done = NULL;
+	TAILQ_INSERT_TAIL(&sc->sc_ccb_freeq, ccb, ccb_link);
+	splx(s);
+}
 
 u_int32_t
 mfi_read(struct mfi_softc *sc, bus_size_t r)
