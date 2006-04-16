@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.13 2006/04/16 18:14:23 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.14 2006/04/16 23:35:43 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -256,7 +256,7 @@ mfiminphys(struct buf *bp)
 int
 mfi_attach(struct mfi_softc *sc)
 {
-	uint32_t	status;
+	uint32_t	status, frames;
 
 	if (mfi_transition_firmware(sc))
 		return (1);
@@ -273,13 +273,38 @@ mfi_attach(struct mfi_softc *sc)
 	if (sc->sc_pcq == NULL) {
 		printf("%s: unable to allocate reply queue memory\n",
 		    DEVNAME(sc));
-		return (1);
+		goto nopcq;
+	}
+
+	/* frame memory */
+	/* we are not doing 64 bit IO so only calculate # of 32 bit frames */
+	frames = (sizeof(struct mfi_sg32) * sc->sc_max_sgl +
+	    MFI_FRAME_SIZE - 1) / MFI_FRAME_SIZE + 1;
+	sc->sc_frames = mfi_allocmem(sc, frames * MFI_FRAME_SIZE);
+	if (sc->sc_frames == NULL) {
+		printf("%s: unable to allocate frame memory\n",
+		    DEVNAME(sc));
+		goto noframe;
+	}
+
+	/* sense memory */
+	sc->sc_sense = mfi_allocmem(sc, sc->sc_max_cmds * MFI_SENSE_SIZE);
+	if (sc->sc_sense == NULL) {
+		printf("%s: unable to allocate sense memory\n",
+		    DEVNAME(sc));
+		goto nosense;
 	}
 
 	/* enable interrupts */
 	mfi_write(sc, MFI_OMSK, MFI_ENABLE_INTR);
 
 	return (0);
+nosense:
+	mfi_freemem(sc, sc->sc_frames);
+noframe:
+	mfi_freemem(sc, sc->sc_pcq);
+nopcq:
+	return (1);
 }
 
 int

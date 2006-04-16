@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.8 2006/04/16 17:10:08 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.9 2006/04/16 23:35:43 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -99,6 +99,12 @@ struct mfi_softc {
 
 	/* producer/consumer pointers and reply queue */
 	struct mfi_mem		*sc_pcq;
+
+	/* frame memory */
+	struct mfi_mem		*sc_frames;
+
+	/* sense memory */
+	struct mfi_mem		*sc_sense;
 
 	mfi_queue_head		sc_ccb_freeq;
 };

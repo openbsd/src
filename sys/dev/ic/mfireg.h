@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.5 2006/04/16 16:41:29 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.6 2006/04/16 23:35:43 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -17,6 +17,7 @@
 
 
 #define MFI_FRAME_SIZE				64
+#define MFI_SENSE_SIZE				128
 #define MFI_OSTS_INTR_VALID			0x00000002 /* valid interrupt */
 #define MFI_INVALID_CTX				0xffffffff
 #define MFI_ENABLE_INTR				0x01
