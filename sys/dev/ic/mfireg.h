@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.3 2006/04/07 16:10:14 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.4 2006/04/16 16:34:35 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -31,6 +31,11 @@
 #define MFI_OMSK				0x34 /* outbound inter mask */
 #define MFI_IQP					0x40 /* inbound queue port */
 #define MFI_OQP					0x44 /* outbound queue port */
+
+/* valid interrupt */
+#define MFI_OSTS_INTR_VALID			0x00000002
+
+#define MFI_INVALID_CTX				0xffffffff
 
 /* * firmware states */
 #define MFI_STATE_MASK				0xf0000000

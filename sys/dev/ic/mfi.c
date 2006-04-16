@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.7 2006/04/07 20:27:51 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.8 2006/04/16 16:34:35 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -233,9 +233,9 @@ mfi_attach(struct mfi_softc *sc)
 	    DEVNAME(sc), sc->sc_max_cmds, sc->sc_max_sgl);
 
 	/* reply queue memory */
-	sc->sc_reply_q = mfi_allocmem(sc,
-	    sizeof(uint32_t) * (sc->sc_max_cmds + 1));
-	if (sc->sc_reply_q == NULL) {
+	sc->sc_pcq = mfi_allocmem(sc, (sizeof(uint32_t) * sc->sc_max_cmds) +
+	    sizeof(struct mfi_prod_cons));
+	if (sc->sc_pcq == NULL) {
 		printf("%s: unable to allocate reply queue memory\n",
 		    DEVNAME(sc));
 		return (1);
@@ -248,9 +248,42 @@ mfi_attach(struct mfi_softc *sc)
 }
 
 int
-mfi_intr(void *v)
+mfi_intr(void *arg)
 {
-	return (0); /* XXX unclaimed */
+	struct mfi_softc	*sc = arg;
+	struct mfi_prod_cons	*pcq;
+	uint32_t		status, producer, consumer, ctx;
+	int			s, claimed = 0;
+
+	status = mfi_read(sc, MFI_OSTS);
+	if ((status & MFI_OSTS_INTR_VALID) == 0)
+		return (claimed);
+	/* write status back to acknowledge interrupt */
+	mfi_write(sc, MFI_OSTS, status);
+
+	pcq = (struct mfi_prod_cons *)sc->sc_pcq->am_kva;
+	producer = pcq->mpc_producer;
+	consumer = pcq->mpc_consumer;
+
+	s = splbio();
+	while (consumer != producer) {
+		ctx = pcq->mpc_reply_q[consumer];
+		pcq->mpc_reply_q[consumer] = MFI_INVALID_CTX;
+		if (ctx == MFI_INVALID_CTX)
+			printf("%s: invalid context\n", DEVNAME(sc));
+		else {
+			/* remove from queue and call scsi_done */
+			claimed = 1;
+		}
+		consumer++;
+		if (consumer == sc->sc_max_cmds)
+			consumer = 0;
+	}
+	splx(s);
+
+	pcq->mpc_consumer = consumer;
+
+	return (claimed);
 }
 
 int

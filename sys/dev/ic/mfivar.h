@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.6 2006/04/16 14:40:00 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.7 2006/04/16 16:34:35 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -44,6 +44,12 @@ struct mfi_mem {
 #define MFIMEM_DVA(_am)		((_am)->am_map->dm_segs[0].ds_addr)
 #define MFIMEM_KVA(_am)		((void *)(_am)->am_kva)
 
+struct mfi_prod_cons {
+	uint32_t		mpc_producer;
+	uint32_t		mpc_consumer;
+	uint32_t		mpc_reply_q[1]; /* compensate for 1 extra reply per spec */
+};
+
 struct mfi_softc {
 	struct device		sc_dev;
 	void			*sc_ih;
@@ -59,8 +65,8 @@ struct mfi_softc {
 	uint32_t		sc_max_cmds;
 	uint32_t		sc_max_sgl;
 
-	/* reply queue */
-	struct mfi_mem		*sc_reply_q;
+	/* producer/consumer pointers and reply queue */
+	struct mfi_mem		*sc_pcq;
 };
 
 struct mfi_ccb {
