@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.49 2006/03/15 16:13:30 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.50 2006/04/16 20:46:14 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -145,6 +145,8 @@ com*		at pcmcia?		# PCMCIA modems/serial ports
 wi*		at pcmcia?		# WaveLAN IEEE 802.11DS
 ne*		at pcmcia?		# PCMCIA based NE2000 ethernet
 wdc*		at pcmcia?		# hard disk controller
+#cfxga*		at pcmcia?		# VoyagerVGA frame buffer
+#wsdisplay*	at cfxga?
 
 # IDE hard drives
 wd*		at wdc? flags 0x0000
