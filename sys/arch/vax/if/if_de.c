@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.18 2005/12/10 11:45:43 miod Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.19 2006/04/16 00:46:32 pascoe Exp $	*/
 /*	$NetBSD: if_de.c,v 1.27 1997/04/19 15:02:29 ragge Exp $	*/
 
 /*
@@ -542,11 +542,6 @@ deread(ds, ifrw, len)
 	struct ether_header *eh;
 	struct mbuf *m;
 
-	/*
-	 * Deal with trailer protocol: if type is trailer type
-	 * get true type from first 16-bit word past data.
-	 * Remember that type was trailer by setting off.
-	 */
 	eh = (struct ether_header *)ifrw->ifrw_addr;
 	if (len == 0)
 		return;
@@ -557,8 +552,17 @@ deread(ds, ifrw, len)
 	 * information to be at the front.
 	 */
 	m = if_ubaget(&ds->ds_deuba, ifrw, len, &ds->ds_if);
-	if (m)
-		ether_input(&ds->ds_if, eh, m);
+	if (m) {
+		/*
+		 * XXX not exactly sure what if_ubaget does.  Manually 
+		 * add the ethernet header to the start of the mbuf chain.
+		 */
+		M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
+		if (m) {
+			*mtod(m, struct ether_header *) = *eh;
+			ether_input_mbuf(&ds->ds_if, m);
+		}
+	}
 }
 /*
  * Process an ioctl request.

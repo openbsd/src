@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.10 2006/03/25 22:41:42 djm Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.11 2006/04/16 00:46:32 pascoe Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -449,9 +449,7 @@ sgec_intr(sc)
 				continue;
 			}
 
-			/* m_adj() the ethernet header out of the way and pass up */
-			m_adj(m, sizeof(struct ether_header));
-			ether_input(ifp, eh, m);
+			ether_input_mbuf(ifp, m);
 		}
 
 	if (csr & ZE_NICSR5_TI) {

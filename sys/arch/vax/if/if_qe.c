@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.19 2006/03/25 22:41:42 djm Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.20 2006/04/16 00:46:32 pascoe Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -581,11 +581,9 @@ qeintr(void *arg)
 				continue;
 			}
 
-			if ((status1 & QE_ESETUP) == 0) {
-				/* m_adj() the ethernet header out of the way and pass up */
-				m_adj(m, sizeof(struct ether_header));
-				ether_input(ifp, eh, m);
-			} else
+			if ((status1 & QE_ESETUP) == 0)
+				ether_input_mbuf(ifp, m);
+			else
 				m_freem(m);
 		}
 
