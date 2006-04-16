@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.42 2005/02/27 22:10:57 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.43 2006/04/16 21:03:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -479,6 +479,26 @@ sti_end_attach(void *v)
 	}
 
 	config_found(&sc->sc_dev, &waa, wsemuldisplaydevprint);
+}
+
+u_int
+sti_rom_size(bus_space_tag_t iot, bus_space_handle_t ioh)
+{
+	int devtype;
+	u_int romend;
+
+	devtype = bus_space_read_1(iot, ioh, 3);
+	if (devtype == STI_DEVTYPE4) {
+		romend = bus_space_read_4(iot, ioh, 0x18);
+	} else {
+		romend =
+		    (bus_space_read_1(iot, ioh, 0x50 +  3) << 24) |
+		    (bus_space_read_1(iot, ioh, 0x50 +  7) << 16) |
+		    (bus_space_read_1(iot, ioh, 0x50 + 11) <<  8) |
+		    (bus_space_read_1(iot, ioh, 0x50 + 15));
+	}
+
+	return (round_page(romend));
 }
 
 int
@@ -1023,8 +1043,7 @@ sti_cnattach(struct sti_screen *scr, bus_space_tag_t iot, bus_addr_t base,
     u_int codebase)
 {
 	bus_space_handle_t ioh;
-	int devtype;
-	u_int32_t romend;
+	u_int romend;
 	int error;
 	long defattr;
 
@@ -1034,20 +1053,10 @@ sti_cnattach(struct sti_screen *scr, bus_space_tag_t iot, bus_addr_t base,
 	/*
 	 * Compute real PROM size
 	 */
-	devtype = bus_space_read_1(iot, ioh, 3);
-	if (devtype == STI_DEVTYPE4) {
-		romend = bus_space_read_4(iot, ioh, 0x18);
-	} else {
-		romend =
-		    (bus_space_read_1(iot, ioh, 0x50 +  3) << 24) |
-		    (bus_space_read_1(iot, ioh, 0x50 +  7) << 16) |
-		    (bus_space_read_1(iot, ioh, 0x50 + 11) <<  8) |
-		    (bus_space_read_1(iot, ioh, 0x50 + 15));
-	}
+	romend = sti_rom_size(iot, ioh);
 
 	bus_space_unmap(iot, ioh, PAGE_SIZE);
 
-	romend = round_page(romend);
 	if ((error = bus_space_map(iot, base, romend, 0, &ioh)) != 0)
 		return (error);
 

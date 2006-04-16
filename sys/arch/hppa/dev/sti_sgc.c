@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.31 2006/04/01 22:50:29 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.32 2006/04/16 21:03:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -116,7 +116,7 @@ sti_sgc_probe(parent, match, aux)
 	struct confargs *ca = aux;
 	bus_space_handle_t romh;
 	paddr_t rom;
-	u_int32_t id, romend;
+	u_int32_t id;
 	u_char devtype;
 	int rv = 0, romunmapped = 0;
 
@@ -160,25 +160,18 @@ sti_sgc_probe(parent, match, aux)
 	switch (devtype) {
 	case STI_DEVTYPE4:
 		id = bus_space_read_4(ca->ca_iot, romh, 0x8);
-		romend = bus_space_read_4(ca->ca_iot, romh, 0x18);
 		break;
 	case STI_DEVTYPE1:
 		id = (bus_space_read_1(ca->ca_iot, romh, 0x10 +  3) << 24) |
 		     (bus_space_read_1(ca->ca_iot, romh, 0x10 +  7) << 16) |
 		     (bus_space_read_1(ca->ca_iot, romh, 0x10 + 11) <<  8) |
 		     (bus_space_read_1(ca->ca_iot, romh, 0x10 + 15));
-		romend =
-		     (bus_space_read_1(ca->ca_iot, romh, 0x50 +  3) << 24) |
-		     (bus_space_read_1(ca->ca_iot, romh, 0x50 +  7) << 16) |
-		     (bus_space_read_1(ca->ca_iot, romh, 0x50 + 11) <<  8) |
-		     (bus_space_read_1(ca->ca_iot, romh, 0x50 + 15));
 		break;
 	default:
 #ifdef STIDEBUG
 		printf("sti: unknown type (%x)\n", devtype);
 #endif
 		rv = 0;
-		romend = 0;
 	}
 
 	if (rv &&
@@ -195,7 +188,7 @@ sti_sgc_probe(parent, match, aux)
 	}
 
 	ca->ca_addrs[ca->ca_naddrs].addr = rom;
-	ca->ca_addrs[ca->ca_naddrs].size = round_page(romend);
+	ca->ca_addrs[ca->ca_naddrs].size = sti_rom_size(ca->ca_iot, romh);
 	ca->ca_naddrs++;
 
 	if (!romunmapped)

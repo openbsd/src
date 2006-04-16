@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.6 2005/12/31 18:13:41 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.7 2006/04/16 21:03:43 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -79,8 +79,7 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 	struct sgc_attach_args *saa = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	int devtype;
-	u_int32_t romend;
+	u_int romend;
 
 	/*
 	 * If we already probed it succesfully as a console device, go ahead,
@@ -105,21 +104,11 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 		/*
 		 * Compute real PROM size
 		 */
-		devtype = bus_space_read_1(iot, ioh, 3);
-		if (devtype == STI_DEVTYPE4) {
-			romend = bus_space_read_4(iot, ioh, 0x18);
-		} else {
-			romend =
-			    (bus_space_read_1(iot, ioh, 0x50 +  3) << 24) |
-			    (bus_space_read_1(iot, ioh, 0x50 +  7) << 16) |
-			    (bus_space_read_1(iot, ioh, 0x50 + 11) <<  8) |
-			    (bus_space_read_1(iot, ioh, 0x50 + 15));
-		}
+		romend = sti_rom_size(iot, ioh);
 
 		bus_space_unmap(iot, ioh, PAGE_SIZE);
 
-		if (bus_space_map(iot, sc->base, round_page(romend), 0,
-		    &ioh)) {
+		if (bus_space_map(iot, sc->base, romend, 0, &ioh)) {
 			printf(": can't map frame buffer");
 			return;
 		}
@@ -127,7 +116,8 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 		sc->memt = sc->iot = iot;
 		sc->romh = ioh;
 
-		sti_attach_common(sc, STI_CODEBASE_M68K);
+		if (sti_attach_common(sc, STI_CODEBASE_M68K) != 0)
+			return;
 	}
 
 	sti_end_attach(sc);
