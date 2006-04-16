@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.11 2006/01/22 18:37:58 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.12 2006/04/16 19:07:35 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.9 1998/01/13 18:32:15 scottr Exp $	*/
 
 /*-
@@ -90,9 +90,6 @@ typedef struct	bus_space_handle_s {
 	u_int8_t	(*bsr1)(bus_space_tag_t, BSH_T *, bus_size_t);
 	u_int16_t	(*bsr2)(bus_space_tag_t, BSH_T *, bus_size_t);
 	u_int32_t	(*bsr4)(bus_space_tag_t, BSH_T *, bus_size_t);
-	u_int8_t	(*bsrs1)(bus_space_tag_t, BSH_T *, bus_size_t);
-	u_int16_t	(*bsrs2)(bus_space_tag_t, BSH_T *, bus_size_t);
-	u_int32_t	(*bsrs4)(bus_space_tag_t, BSH_T *, bus_size_t);
 	void		(*bsrm1)(bus_space_tag_t, BSH_T *, bus_size_t,
 				u_int8_t *, size_t);
 	void		(*bsrm2)(bus_space_tag_t, BSH_T *, bus_size_t,
@@ -119,12 +116,6 @@ typedef struct	bus_space_handle_s {
 	void		(*bsw2)(bus_space_tag_t, BSH_T *, bus_size_t,
 				u_int16_t);
 	void		(*bsw4)(bus_space_tag_t, BSH_T *, bus_size_t,
-				u_int32_t);
-	void		(*bsws1)(bus_space_tag_t, BSH_T *, bus_size_t,
-				u_int8_t);
-	void		(*bsws2)(bus_space_tag_t, BSH_T *, bus_size_t,
-				u_int16_t);
-	void		(*bsws4)(bus_space_tag_t, BSH_T *, bus_size_t,
 				u_int32_t);
 	void		(*bswm1)(bus_space_tag_t, BSH_T *, bus_size_t,
 				const u_int8_t *, size_t);
@@ -260,9 +251,6 @@ u_int32_t mac68k_bsr4_swap(bus_space_tag_t tag, bus_space_handle_t *bsh,
 #define	bus_space_read_1(t,h,o) (h).bsr1((t), &(h), (o))
 #define	bus_space_read_2(t,h,o) (h).bsr2((t), &(h), (o))
 #define	bus_space_read_4(t,h,o) (h).bsr4((t), &(h), (o))
-#define bus_space_read_stream_1(t,h,o)  (h).bsrs1((t), &(h), (o))
-#define bus_space_read_stream_2(t,h,o)  (h).bsrs2((t), &(h), (o))
-#define bus_space_read_stream_4(t,h,o)  (h).bsrs4((t), &(h), (o))
 
 /*
  *	void bus_space_read_multi_N(bus_space_tag_t tag,
@@ -335,9 +323,6 @@ void mac68k_bsw4_swap(bus_space_tag_t, bus_space_handle_t *, bus_size_t,
 #define bus_space_write_1(t, h, o, v) (h).bsw1(t, &(h), o, v)
 #define bus_space_write_2(t, h, o, v) (h).bsw2(t, &(h), o, v)
 #define bus_space_write_4(t, h, o, v) (h).bsw4(t, &(h), o, v)
-#define bus_space_write_stream_1(t, h, o, v) (h).bsws1(t, &(h), o, v)
-#define bus_space_write_stream_2(t, h, o, v) (h).bsws2(t, &(h), o, v)
-#define bus_space_write_stream_4(t, h, o, v) (h).bsws4(t, &(h), o, v)
 
 /*
  *	void bus_space_write_multi_N(bus_space_tag_t tag,
@@ -434,49 +419,6 @@ void mac68k_bssr4_swap(bus_space_tag_t t, bus_space_handle_t *h,
 #define bus_space_set_region_1(t, h, o, val, c) (h).bssr1(t, &(h), o, val, c)
 #define bus_space_set_region_2(t, h, o, val, c) (h).bssr2(t, &(h), o, val, c)
 #define bus_space_set_region_4(t, h, o, val, c) (h).bssr4(t, &(h), o, val, c)
-
-/*
- *	void bus_space_copy_N(bus_space_tag_t tag,
- *	    bus_space_handle_t bsh1, bus_size_t off1,
- *	    bus_space_handle_t bsh2, bus_size_t off2,
- *	    size_t count);
- *
- * Copy `count' 1, 2, 4, or 8 byte values from bus space starting
- * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
- */
-
-#define	__MAC68K_copy_region_N(BYTES)					\
-static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
-	    (bus_space_tag_t,						\
-	    bus_space_handle_t bsh1, bus_size_t off1,			\
-	    bus_space_handle_t bsh2, bus_size_t off2,			\
-	    bus_size_t count);						\
-									\
-static __inline void							\
-__CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h1, h2;					\
-	bus_size_t o1, o2, c;						\
-{									\
-	bus_size_t o;							\
-									\
-	if ((h1.base + o1) >= (h2.base + o2)) {			\
-		/* src after dest: copy forward */			\
-		for (o = 0; c != 0; c--, o += BYTES)			\
-			__CONCAT(bus_space_write_,BYTES)(t, h2, o2 + o,	\
-			    __CONCAT(bus_space_read_,BYTES)(t, h1, o1 + o)); \
-	} else {							\
-		/* dest after src: copy backwards */			\
-		for (o = (c - 1) * BYTES; c != 0; c--, o -= BYTES)	\
-			__CONCAT(bus_space_write_,BYTES)(t, h2, o2 + o,	\
-			    __CONCAT(bus_space_read_,BYTES)(t, h1, o1 + o)); \
-	}								\
-}
-__MAC68K_copy_region_N(1)
-__MAC68K_copy_region_N(2)
-__MAC68K_copy_region_N(4)
-
-#undef __MAC68K_copy_region_N
 
 /*
  * Bus read/write barrier methods.
