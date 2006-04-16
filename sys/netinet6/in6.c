@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.64 2006/03/05 21:48:57 miod Exp $	*/
+/*	$OpenBSD: in6.c,v 1.65 2006/04/16 19:09:56 canacar Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1701,8 +1701,8 @@ in6_restoremkludge(ia, ifp)
 		if (mk->mk_ifp == ifp) {
 			struct in6_multi *in6m, *next;
 
-			for (in6m = LIST_FIRST(&ia->ia6_multiaddrs);
-			    in6m != LIST_END(&ia->ia6_multiaddrs);
+			for (in6m = LIST_FIRST(&mk->mk_head);
+			    in6m != LIST_END(&mk->mk_head);
 			    in6m = next) {
 				next = LIST_NEXT(in6m, in6m_entry);
 				in6m->in6m_ia = ia;
