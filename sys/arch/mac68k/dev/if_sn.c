@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn.c,v 1.43 2006/04/14 09:36:49 martin Exp $        */
+/*    $OpenBSD: if_sn.c,v 1.44 2006/04/16 20:37:23 miod Exp $        */
 /*    $NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $        */
 
 /*
@@ -81,23 +81,6 @@ static __inline__ struct mbuf *sonic_get(struct sn_softc *, caddr_t, int);
 struct cfdriver sn_cd = {
 	NULL, "sn", DV_IFNET
 };
-
-#undef assert
-#undef _assert
-
-#ifdef NDEBUG
-#define	assert(e)	((void)0)
-#define	_assert(e)	((void)0)
-#else
-#define	_assert(e)	assert(e)
-#ifdef __STDC__
-#define	assert(e)	((e) ? (void)0 : __assert("sn ", __FILE__, __LINE__, #e))
-#else	/* PCC */
-#define	assert(e)	((e) ? (void)0 : __assert("sn "__FILE__, __LINE__, "e"))
-#endif
-#endif
-
-int sndebug = 0;
 
 /*
  * SONIC buffers need to be aligned 16 or 32 bit aligned.
