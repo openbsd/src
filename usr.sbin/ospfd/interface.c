@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.49 2006/03/23 18:37:34 norby Exp $ */
+/*	$OpenBSD: interface.c,v 1.50 2006/04/16 11:40:54 henning Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -635,7 +635,7 @@ if_to_ctl(struct iface *iface)
 	ictl.rxmt_interval = iface->rxmt_interval;
 	ictl.type = iface->type;
 	ictl.linkstate = iface->linkstate;
- 	ictl.mediatype = iface->media_type;
+	ictl.mediatype = iface->media_type;
 	ictl.priority = iface->priority;
 	ictl.passive = iface->passive;
 	ictl.auth_type = iface->auth_type;

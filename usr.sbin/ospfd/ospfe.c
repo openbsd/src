@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.43 2006/03/09 09:03:22 norby Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.44 2006/04/16 11:40:55 henning Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -285,7 +285,8 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 			LIST_FOREACH(area, &oeconf->area_list, entry) {
 				LIST_FOREACH(iface, &area->iface_list, entry) {
 					if (kif->ifindex == iface->ifindex &&
-					    iface->type != IF_TYPE_VIRTUALLINK) {
+					    iface->type !=
+					    IF_TYPE_VIRTUALLINK) {
 						iface->flags = kif->flags;
 						iface->linkstate =
 						    kif->link_state;
