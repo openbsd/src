@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.5 2006/04/07 20:27:51 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.6 2006/04/16 14:40:00 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -61,6 +61,36 @@ struct mfi_softc {
 
 	/* reply queue */
 	struct mfi_mem		*sc_reply_q;
+};
+
+struct mfi_ccb {
+	struct mfi_softc	*ccb_sc;
+
+	union mfi_frame		ccb_frame;
+	paddr_t			ccb_pframe;
+
+#if 0
+	struct ami_iocmd	ccb_cmd;
+	struct ami_passthrough	*ccb_pt;
+	paddr_t			ccb_ptpa;
+	struct ami_sgent	*ccb_sglist;
+	paddr_t			ccb_sglistpa;
+	int			ccb_offset;
+	bus_dmamap_t		ccb_dmamap;
+#endif
+	struct scsi_xfer	*ccb_xs;
+	void			(*ccb_done)(struct mfi_softc *sc,
+				    struct mfi_ccb *ccb);
+
+	volatile enum {
+		MFI_CCB_FREE,
+		MFI_CCB_READY,
+		MFI_CCB_QUEUED,
+		MFI_CCB_PREQUEUED
+	}			ccb_state;
+	uint32_t		ccb_flags;
+#define MFI_CCB_F_ERR			(1<<0)
+	TAILQ_ENTRY(MFI_ccb)	ccb_link;
 };
 
 int	mfi_attach(struct mfi_softc *sc);
