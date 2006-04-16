@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.9 2006/04/16 16:41:29 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.10 2006/04/16 16:53:55 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -270,7 +270,8 @@ mfi_intr(void *arg)
 		ctx = pcq->mpc_reply_q[consumer];
 		pcq->mpc_reply_q[consumer] = MFI_INVALID_CTX;
 		if (ctx == MFI_INVALID_CTX)
-			printf("%s: invalid context\n", DEVNAME(sc));
+			printf("%s: invalid context, p: %d c: %d\n",
+			    DEVNAME(sc), producer, consumer);
 		else {
 			/* remove from queue and call scsi_done */
 			claimed = 1;
