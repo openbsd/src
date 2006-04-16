@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.14 2006/04/16 23:35:43 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.15 2006/04/16 23:39:43 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -144,7 +144,7 @@ mfi_allocmem(struct mfi_softc *sc, size_t size)
 	memset(mm, 0, sizeof(struct mfi_mem));
 	mm->am_size = size;
 
-	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 64,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &mm->am_map) != 0)
 		goto amfree; 
 
