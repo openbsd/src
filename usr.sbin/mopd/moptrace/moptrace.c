@@ -1,4 +1,4 @@
-/*	$OpenBSD: moptrace.c,v 1.8 2003/12/01 00:56:51 avsm Exp $ */
+/*	$OpenBSD: moptrace.c,v 1.9 2006/04/16 11:48:19 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -24,8 +24,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static const char rcsid[] = "$OpenBSD: moptrace.c,v 1.8 2003/12/01 00:56:51 avsm Exp $";
+#ifndef lint
+static const char rcsid[] = "$OpenBSD: moptrace.c,v 1.9 2006/04/16 11:48:19 maja Exp $";
 #endif
 
 /*
@@ -60,28 +60,16 @@ int     DebugFlag = 0;		/* print debugging messages    */
 int	Not3Flag = 0;		/* Ignore MOP V3 messages      */
 int	Not4Flag = 0;		/* Ignore MOP V4 messages      */ 
 int	promisc = 1;		/* Need promisc mode           */
-char	*Program;
+extern char *__progname;
 
 int
-main(argc, argv)
-	int     argc;
-	char  **argv;
+main(int argc, char *argv[])
 {
 	int     op;
 	char   *interface;
 
-	extern int optind, opterr;
-
-	if ((Program = strrchr(argv[0], '/')))
-		Program++;
-	else
-		Program = argv[0];
-	
-	if (*Program == '-')
-		Program++;
-
 	/* All error reporting is done through syslogs. */
-	openlog(Program, LOG_PID | LOG_CONS, LOG_DAEMON);
+	openlog(__progname, LOG_PID | LOG_CONS, LOG_DAEMON);
 
 	opterr = 0;
 	while ((op = getopt(argc, argv, "34ad")) != -1) {
@@ -117,24 +105,24 @@ main(argc, argv)
 		deviceInitOne(interface);
 
 	Loop();
+	/* NOTREACHED */
 }
 
 void
 Usage()
 {
-	(void) fprintf(stderr, "usage: %s -a [ -d ] [ -3 | -4 ]\n",Program);
-	(void) fprintf(stderr, "       %s [ -d ] [ -3 | -4 ] interface\n",
-		       Program);
+	fprintf(stderr, "usage: %s -a [ -d ] [ -3 | -4 ]\n", __progname);
+	fprintf(stderr, "       %s [ -d ] [ -3 | -4 ] interface\n",
+	    __progname);
 	exit(1);
 }
 
 /*
  * Process incoming packages.
  */
+/* ARGSUSED */
 void
-mopProcess(ii, pkt)
-	struct if_info *ii;
-	u_char *pkt;
+mopProcess(struct if_info *ii, u_char *pkt)
 {
 	int	 trans;
 
@@ -147,6 +135,7 @@ mopProcess(ii, pkt)
 	if ((trans == TRANS_ETHER) && Not3Flag) return;
 	if ((trans == TRANS_8023) && Not4Flag)	return;
 
+	fprintf(stdout, "Interface    : %s", ii->if_name);
 	mopPrintHeader(stdout, pkt, trans);
 	mopPrintMopHeader(stdout, pkt, trans);
 	
@@ -156,5 +145,3 @@ mopProcess(ii, pkt)
 	fprintf(stdout, "\n");
 	fflush(stdout);
 }
-
-
