@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.25 2006/04/15 18:19:12 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.26 2006/04/16 02:49:52 todd Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -252,6 +252,12 @@ dnl
 target(ramd, std)dnl
 target(ramd, bpf, 0)dnl
 twrget(ramd, com, tty0, 0, 1)dnl
+target(ramd, sd, 0, 1, 2, 3, 4)dnl
+target(ramd, wd, 0, 1, 2, 3, 4)dnl
+target(ramd, st, 0, 1)dnl
+target(ramd, cd, 0, 1)dnl
+target(ramd, wt, 0)dnl
+target(ramd, rd, 0)dnl
 dnl
 __devitem(rd, {-rd*-}, quote(rd)pseudo-disks)dnl
 _mkdev(rd, rd*, {-dodisk2 rd $U major_rd_b major_rd_c $U 0{--}ifstep(rd)-})dnl

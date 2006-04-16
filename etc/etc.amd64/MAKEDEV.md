@@ -1,8 +1,8 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.13 2005/08/01 22:22:12 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.14 2006/04/16 02:49:52 todd Exp $-},
 etc.MACHINE)dnl
 dnl
-dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
+dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
 dnl Permission to use, copy, modify, and distribute this software for any
 dnl purpose with or without fee is hereby granted, provided that the above
@@ -129,11 +129,5 @@ target(all, ccd, 0, 1, 2, 3)dnl
 target(all, bktr, 0)dnl
 target(ramd, tty0, 0, 1, 2, 3)dnl
 twrget(ramd, wsdisp, ttyC, 0)dnl
-target(ramd, wt, 0)dnl
 target(ramd, fd, 0)dnl
-target(ramd, rd, 0)dnl
-target(ramd, wd, 0, 1, 2, 3)dnl
-target(ramd, sd, 0, 1, 2, 3)dnl
-target(ramd, cd, 0, 1)dnl
-target(ramd, st, 0, 1)dnl
 target(ramd, mcd, 0)dnl
