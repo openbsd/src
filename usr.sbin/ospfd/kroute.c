@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.26 2006/03/08 13:49:07 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.27 2006/04/16 11:38:11 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -973,7 +973,7 @@ dispatch_rtmsg(void)
 	struct in_addr		 prefix, nexthop;
 	u_int8_t		 prefixlen;
 	int			 flags;
-	u_short			 ifindex;
+	u_short			 ifindex = 0;
 
 	if ((n = read(kr_state.fd, &buf, sizeof(buf))) == -1) {
 		log_warn("dispatch_rtmsg: read error");
@@ -988,24 +988,26 @@ dispatch_rtmsg(void)
 	lim = buf + n;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
-		sa = (struct sockaddr *)(rtm + 1);
-		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
 		prefix.s_addr = 0;
 		prefixlen = 0;
 		flags = F_KERNEL;
 		nexthop.s_addr = 0;
 
-		if (rtm->rtm_pid == kr_state.pid)	/* cause by us */
-			continue;
-
-		if (rtm->rtm_errno)			/* failed attempts... */
-			continue;
-
 		if (rtm->rtm_type == RTM_ADD || rtm->rtm_type == RTM_CHANGE ||
 		    rtm->rtm_type == RTM_DELETE) {
+			sa = (struct sockaddr *)(rtm + 1);
+			get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
+
+			if (rtm->rtm_pid == kr_state.pid)	/* cause by us */
+				continue;
+
+			if (rtm->rtm_errno)			/* failed attempts... */
+				continue;
+
 			if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
 				continue;
+
 			switch (sa->sa_family) {
 			case AF_INET:
 				prefix.s_addr =
@@ -1031,19 +1033,20 @@ dispatch_rtmsg(void)
 			default:
 				continue;
 			}
-		}
 
-		ifindex = rtm->rtm_index;
-		if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
-			switch (sa->sa_family) {
-			case AF_INET:
-				nexthop.s_addr =
-				    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
-				break;
-			case AF_LINK:
-				flags |= F_CONNECTED;
-				break;
+			ifindex = rtm->rtm_index;
+			if ((sa = rti_info[RTAX_GATEWAY]) != NULL) {
+				switch (sa->sa_family) {
+				case AF_INET:
+					nexthop.s_addr =
+					    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
+					break;
+				case AF_LINK:
+					flags |= F_CONNECTED;
+					break;
+				}
 			}
+		}
 
 		switch (rtm->rtm_type) {
 		case RTM_ADD:
