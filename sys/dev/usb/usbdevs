@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.191 2006/04/15 04:34:36 jsg Exp $
+$OpenBSD: usbdevs,v 1.192 2006/04/16 04:01:12 brad Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -649,6 +649,7 @@ product ASIX AX88772		0x7720	AX88772
 /* ASUS products */
 product ASUS RT2570		0x1706	RT2570
 product ASUS RT2570_2		0x1707	RT2570
+product ASUS MYPAL_A730		0x4202	MyPal A730
 
 /* ASUSTeK Computer products */
 product ASUSTEK WL140		0x3300	WL-140
