@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.19 2004/04/08 01:11:21 deraadt Exp $	*/
+/*	$OpenBSD: clock.c,v 1.20 2006/04/16 22:24:44 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
@@ -383,13 +383,9 @@ clockattach(parent, self, aux)
 	if (CPU_ISSUN4)
 		prop = "mk48t02";
 
-	if (CPU_ISSUN4COR4M)
+	else if (CPU_ISSUN4COR4M)
 		prop = getpropstring(ra->ra_node, "model");
 
-#ifdef DIAGNOSTIC
-	if (prop == NULL)
-		panic("no prop");
-#endif
 	printf(": %s (eeprom)\n", prop);
 
 	/*
