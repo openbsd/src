@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.36 2006/03/13 18:17:40 fgsch Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.37 2006/04/16 20:43:12 miod Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -180,14 +180,14 @@ pcmcia_card_attach(dev)
 
 	pcmcia_check_cis_quirks(sc);
 
-#if 1
 	/*
-	 * Bail now if the card has no functions, or if there was an error in
-	 * the CIS.
+	 * Bail now if there was an error in the CIS.
 	 */
 
 	if (sc->card.error)
 		return (1);
+
+#if 0
 	if (SIMPLEQ_EMPTY(&sc->card.pf_head))
 		return (1);
 #endif
@@ -336,11 +336,12 @@ pcmcia_print(arg, pnp)
 	if (pnp) {
 		for (i = 0; i < 4 && card->cis1_info[i]; i++)
 			printf("%s%s", i ? ", " : "\"", card->cis1_info[i]);
-		printf("\"");
+		if (i != 0)
+			printf("\"");
 
 		if (card->manufacturer != PCMCIA_VENDOR_INVALID &&
 		    card->product != PCMCIA_PRODUCT_INVALID) {
-			if (i)
+			if (i != 0)
 				printf(" ");
 			printf("(");
 			if (card->manufacturer != PCMCIA_VENDOR_INVALID)
@@ -353,7 +354,7 @@ pcmcia_print(arg, pnp)
 				    card->product);
 			printf(")");
 		}
-		if (i)
+		if (i != 0)
 			printf(" ");
 		printf("at %s", pnp);
 	}
@@ -362,7 +363,8 @@ pcmcia_print(arg, pnp)
 	if (!pnp) {
 		for (i = 0; i < 3 && card->cis1_info[i]; i++)
 			printf("%s%s", i ? ", " : " \"", card->cis1_info[i]);
-		printf("\"");
+		if (i != 0)
+			printf("\"");
 	}
 
 	return (UNCONF);
