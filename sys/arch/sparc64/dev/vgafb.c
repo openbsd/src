@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.43 2006/04/09 12:22:56 matthieu Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.44 2006/04/16 22:28:02 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -109,8 +109,6 @@ struct cfdriver vgafb_cd = {
 	NULL, "vgafb", DV_DULL
 };
 
-int defective_fb_node;
-
 #ifdef APERTURE
 extern int allowaperture;
 #endif
@@ -152,18 +150,10 @@ vgafbattach(parent, self, aux)
 
 	printf("\n");
 
-	sc->sc_console = vgafb_is_console(sc->sc_node);
-
-	if (vgafb_mapregs(sc, pa)) {
-		/*
-		 * If we are the console device, but can't attach,
-		 * we'll let the next video device hijack the console
-		 * even if it is not, from the PROMs point of view.
-		 */
-		if (sc->sc_console)
-			defective_fb_node = sc->sc_node;
+	if (vgafb_mapregs(sc, pa))
 		return;
-	}
+
+	sc->sc_console = vgafb_is_console(sc->sc_node);
 
 	fb_setsize(&sc->sc_sunfb, 8, 1152, 900, sc->sc_node, 0);
 	if (sc->sc_sunfb.sf_depth == 24) {
@@ -419,7 +409,7 @@ vgafb_is_console(node)
 {
 	extern int fbnode;
 
-	return (fbnode == node || defective_fb_node != 0);
+	return (fbnode == node);
 }
 
 int
