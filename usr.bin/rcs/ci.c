@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.147 2006/04/14 01:11:07 deraadt Exp $	*/
+/*	$OpenBSD: ci.c,v 1.148 2006/04/16 12:30:00 niallo Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -281,6 +281,8 @@ checkin_main(int argc, char **argv)
 			    NULL)
 				fatal("invalid revision: %s", rev_str);
 
+		if (!(pb.flags & NEWFILE))
+			pb.flags |= CI_SKIPDESC;
 		/* XXX - support for commiting to a file without revisions */
 		if (pb.file->rf_ndelta == 0) {
 			pb.flags |= NEWFILE;
@@ -665,7 +667,7 @@ checkin_init(struct checkin_params *pb)
 		checkin_keywordscan(filec, &pb->newrev, &pb->date, &pb->state,
 		    &pb->author);
 
-	if (pb->file->rf_ndelta == 0)
+	if (pb->flags & CI_SKIPDESC)
 		goto skipdesc;
 
 	/* Get description from user */
