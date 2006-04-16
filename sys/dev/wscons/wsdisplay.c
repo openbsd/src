@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.66 2006/03/15 20:04:37 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.67 2006/04/16 20:43:36 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -204,6 +204,7 @@ extern struct cfdriver wsdisplay_cd;
 /* Autoconfiguration definitions. */
 int	wsdisplay_emul_match(struct device *, void *, void *);
 void	wsdisplay_emul_attach(struct device *, struct device *, void *);
+int	wsdisplay_emul_detach(struct device *, int);
 
 struct cfdriver wsdisplay_cd = {
 	NULL, "wsdisplay", DV_TTY
@@ -211,7 +212,7 @@ struct cfdriver wsdisplay_cd = {
 
 struct cfattach wsdisplay_emul_ca = {
 	sizeof(struct wsdisplay_softc), wsdisplay_emul_match,
-	    wsdisplay_emul_attach,
+	    wsdisplay_emul_attach, wsdisplay_emul_detach
 };
 
 void	wsdisplaystart(struct tty *);
@@ -229,6 +230,7 @@ void	wsdisplay_common_attach(struct wsdisplay_softc *sc,
 	    int console, int mux, const struct wsscreen_list *,
 	    const struct wsdisplay_accessops *accessops,
 	    void *accesscookie);
+int	wsdisplay_common_detach(struct wsdisplay_softc *, int);
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 int	wsdisplay_update_rawkbd(struct wsdisplay_softc *, struct wsscreen *);
@@ -490,7 +492,7 @@ wsdisplay_delscreen(struct wsdisplay_softc *sc, int idx, int flags)
 	if (scr->scr_dconf == &wsdisplay_console_conf ||
 	    scr->scr_syncops ||
 	    ((scr->scr_flags & SCR_OPEN) && !(flags & WSDISPLAY_DELSCR_FORCE)))
-		return(EBUSY);
+		return (EBUSY);
 
 	wsdisplay_closescreen(sc, scr);
 
@@ -523,7 +525,8 @@ wsdisplay_delscreen(struct wsdisplay_softc *sc, int idx, int flags)
 
 	(*sc->sc_accessops->free_screen)(sc->sc_accesscookie, cookie);
 
-	printf("%s: screen %d deleted\n", sc->sc_dv.dv_xname, idx);
+	if ((flags & WSDISPLAY_DELSCR_QUIET) == 0)
+		printf("%s: screen %d deleted\n", sc->sc_dv.dv_xname, idx);
 	return (0);
 }
 
@@ -571,6 +574,62 @@ wsdisplay_emul_attach(struct device *parent, struct device *self, void *aux)
 
 		cn_tab->cn_dev = makedev(maj, WSDISPLAYMINOR(self->dv_unit, 0));
 	}
+}
+
+/*
+ * Detach a display.
+ */
+int
+wsdisplay_emul_detach(struct device *self, int flags)
+{
+	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)self;
+
+	return (wsdisplay_common_detach(sc, flags));
+}
+
+int
+wsdisplay_common_detach(struct wsdisplay_softc *sc, int flags)
+{
+	int i;
+	int rc;
+
+	/* We don't support detaching the console display yet. */
+	if (sc->sc_isconsole)
+		return (EBUSY);
+
+	/* Delete all screens managed by this display */
+	for (i = 0; i < WSDISPLAY_MAXSCREEN; i++)
+		if (sc->sc_scr[i] != NULL) {
+			if ((rc = wsdisplay_delscreen(sc, i,
+			    WSDISPLAY_DELSCR_QUIET | (flags & DETACH_FORCE ?
+			     WSDISPLAY_DELSCR_FORCE : 0))) != 0)
+				return (rc);
+		}
+
+#ifdef BURNER_SUPPORT
+	timeout_del(&sc->sc_burner);
+#endif
+
+#if NWSKBD > 0
+	if (sc->sc_input != NULL) {
+#if NWSMUX > 0
+		wsmux_detach_sc(sc->sc_input);	/* XXX not exactly correct */
+		/*
+		 * XXX
+		 * If we created a standalone mux (dmux), we should destroy it
+		 * there, but there is currently no support for this in wsmux.
+		 */
+#else
+		extern int wskbd_set_display(struct device *, struct wsevsrc *);
+
+		if ((rc = wskbd_set_display((struct device *)sc->sc_input,
+		    NULL)) != 0)
+			return (rc);
+#endif
+	}
+#endif
+
+	return (0);
 }
 
 /* Print function (for parent devices). */
