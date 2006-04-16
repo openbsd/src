@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_cardbus.c,v 1.12 2006/01/01 19:06:43 brad Exp $ */
+/*	$OpenBSD: if_fxp_cardbus.c,v 1.13 2006/04/16 22:33:32 miod Exp $ */
 /*	$NetBSD: if_fxp_cardbus.c,v 1.12 2000/05/08 18:23:36 thorpej Exp $	*/
 
 /*
@@ -130,8 +130,6 @@ fxp_cardbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	static const char thisfunc[] = "fxp_cardbus_attach";
-
 	char intrstr[16];
 	struct fxp_softc *sc = (struct fxp_softc *) self;
 	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *) self;
@@ -165,7 +163,7 @@ fxp_cardbus_attach(parent, self, aux)
 		sc->sc_sh = memh;
 		csc->size = size;
 	} else
-		panic("%s: failed to allocate mem and io space", thisfunc);
+		panic("%s: failed to allocate mem and io space", __func__);
 
 	if (ca->ca_cis.cis1_info[0] && ca->ca_cis.cis1_info[1])
 		printf(": %s %s", ca->ca_cis.cis1_info[0],
