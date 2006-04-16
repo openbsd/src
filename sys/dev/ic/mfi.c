@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.8 2006/04/16 16:34:35 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.9 2006/04/16 16:41:29 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -232,7 +232,7 @@ mfi_attach(struct mfi_softc *sc)
 	DNPRINTF(MFI_D_MISC, "%s: max commands: %u, max sgl: %u\n",
 	    DEVNAME(sc), sc->sc_max_cmds, sc->sc_max_sgl);
 
-	/* reply queue memory */
+	/* consumer/producer and reply queue memory */
 	sc->sc_pcq = mfi_allocmem(sc, (sizeof(uint32_t) * sc->sc_max_cmds) +
 	    sizeof(struct mfi_prod_cons));
 	if (sc->sc_pcq == NULL) {
@@ -242,7 +242,7 @@ mfi_attach(struct mfi_softc *sc)
 	}
 
 	/* enable interrupts */
-	mfi_write(sc, MFI_OMSK, 0x01);
+	mfi_write(sc, MFI_OMSK, MFI_ENABLE_INTR);
 
 	return (0);
 }
