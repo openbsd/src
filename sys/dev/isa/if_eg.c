@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.28 2006/03/25 22:41:44 djm Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.29 2006/04/16 16:30:56 miod Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -370,7 +370,6 @@ egprobe(parent, match, aux)
 	return (1);
 
 lose:
-	sc->sc_bst = sc->sc_bsh = 0;
 	bus_space_unmap(bst, bsh, EG_IO_PORTS);
 	return (0);
 }
