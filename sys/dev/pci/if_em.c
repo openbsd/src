@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.113 2006/04/12 07:11:28 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.114 2006/04/16 03:54:30 brad Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -713,9 +713,7 @@ em_intr(void *arg)
 	struct em_softc  *sc = arg;
 	struct ifnet	*ifp;
 	u_int32_t	reg_icr, test_icr;
-	int s, claimed = 0;
-
-	s = splnet();
+	int claimed = 0;
 
 	ifp = &sc->interface_data.ac_if;
 
@@ -750,7 +748,6 @@ em_intr(void *arg)
 	    IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		em_start(ifp);
 
-	splx(s);
 	return (claimed);
 }
 
