@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopprobe.c,v 1.9 2003/12/01 00:56:51 avsm Exp $ */
+/*	$OpenBSD: mopprobe.c,v 1.10 2006/04/16 20:18:27 maja Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -24,8 +24,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static const char rcsid[] = "$OpenBSD: mopprobe.c,v 1.9 2003/12/01 00:56:51 avsm Exp $";
+#ifndef lint
+static const char rcsid[] = "$OpenBSD: mopprobe.c,v 1.10 2006/04/16 20:18:27 maja Exp $";
 #endif
 
 /*
@@ -46,8 +46,7 @@ static const char rcsid[] = "$OpenBSD: mopprobe.c,v 1.9 2003/12/01 00:56:51 avsm
 #include "common/nmadef.h"
 
 /*
- * The list of all interfaces that are being listened to.  rarp_loop()
- * "selects" on the descriptors in this list.
+ * The list of all interfaces that are being listened to.
  */
 struct if_info *iflist;
 
@@ -66,28 +65,17 @@ int	Not4Flag = 0;		/* Not MOP V4 messages         */
 int	VerboseFlag = 0;	/* Print All Announces	       */
 int     OnceFlag = 0;		/* print only once             */
 int	promisc = 1;		/* Need promisc mode           */
-char	*Program;
+extern char *__progname;
 struct once *root = NULL;
 
 int
-main(argc, argv)
-	int     argc;
-	char  **argv;
+main(int argc, char *argv[])
 {
 	int     op;
 	char   *interface;
 
-	extern int optind, opterr;
-
-	if ((Program = strrchr(argv[0], '/')))
-		Program++;
-	else
-		Program = argv[0];
-	if (*Program == '-')
-		Program++;
-
 	/* All error reporting is done through syslogs. */
-	openlog(Program, LOG_PID | LOG_CONS, LOG_DAEMON);
+	openlog(__progname, LOG_PID | LOG_CONS, LOG_DAEMON);
 
 	opterr = 0;
 	while ((op = getopt(argc, argv, "34aov")) != -1) {
@@ -125,13 +113,15 @@ main(argc, argv)
 		deviceInitOne(interface);
 
 	Loop();
+	/* NOTREACHED */
 }
 
 void
 Usage()
 {
-	(void) fprintf(stderr, "usage: %s -a [ -3 | -4 ] [-v] [-o]\n",Program);
-	(void) fprintf(stderr, "       %s [ -3 | -4 ] [-v] [-o] interface\n",Program);
+	fprintf(stderr, "usage: %s -a [ -3 | -4 ] [-v] [-o]\n", __progname);
+	fprintf(stderr, "       %s [ -3 | -4 ] [-v] [-o] interface\n",
+	    __progname);
 	exit(1);
 }
 
@@ -139,13 +129,11 @@ Usage()
  * Process incomming packages.
  */
 void
-mopProcess(ii, pkt)
-	struct if_info *ii;
-	u_char *pkt;
+mopProcess(struct if_info *ii, u_char *pkt)
 {
 	u_char	*dst, *src, mopcode, tmpc, device, ilen;
-	u_short	 ptype, moplen = 0, tmps, itype;
-	int	 index, trans, len, i, hwa = 0;
+	u_short	 ptype, moplen = 0, itype;
+	int	 idx, trans, len, i, hwa = 0;
 	struct once *o = NULL;
 	
 	/* We don't known with transport, Guess! */
@@ -157,8 +145,8 @@ mopProcess(ii, pkt)
 	if ((trans == TRANS_ETHER) && Not3Flag) return;
 	if ((trans == TRANS_8023) && Not4Flag)	return;
 
-	index = 0;
-	mopGetHeader(pkt, &index, &dst, &src, &ptype, &len, trans);
+	idx = 0;
+	mopGetHeader(pkt, &idx, &dst, &src, &ptype, &len, trans);
 
 	/* Ignore our own transmissions */
 
@@ -197,7 +185,7 @@ mopProcess(ii, pkt)
 	}
 
 	moplen  = mopGetLength(pkt, trans);
-	mopcode	= mopGetChar(pkt,&index);
+	mopcode	= mopGetChar(pkt,&idx);
 
 	/* Just process System Information */
 
@@ -205,8 +193,8 @@ mopProcess(ii, pkt)
 		return;
 	}
 	
-	tmpc = mopGetChar(pkt,&index);		/* Reserved */
-	tmps = mopGetShort(pkt,&index);		/* Receipt # */
+	mopGetChar(pkt,&idx);			/* Reserved */
+	mopGetShort(pkt,&idx);			/* Receipt # */
 		
 	device = 0;
 
@@ -219,42 +207,35 @@ mopProcess(ii, pkt)
 		break;
 	}
 
-	itype = mopGetShort(pkt,&index); 
+	itype = mopGetShort(pkt,&idx); 
 
-	while (index < (int)(moplen)) {
-		ilen  = mopGetChar(pkt,&index);
+	while (idx < (int)(moplen)) {
+		ilen  = mopGetChar(pkt,&idx);
 		switch (itype) {
 		case 0:
-			tmpc  = mopGetChar(pkt,&index);
-			index = index + tmpc;
+			tmpc  = mopGetChar(pkt,&idx);
+			idx = idx + tmpc;
 			break;
 		case MOP_K_INFO_VER:
-			index = index + 3;
+			idx = idx + 3;
 			break;
 		case MOP_K_INFO_MFCT:
-			index = index + 2;
-			break;
-		case MOP_K_INFO_CNU:
-			index = index + 6;
-			break;
 		case MOP_K_INFO_RTM:
-			index = index + 2;
-			break;
 		case MOP_K_INFO_CSZ:
-			index = index + 2;
-			break;
 		case MOP_K_INFO_RSZ:
-			index = index + 2;
+			idx = idx + 2;
 			break;
 		case MOP_K_INFO_HWA:
-			hwa = index;
-			index = index + 6;
+			hwa = idx;
+			/* FALLTHROUGH */
+		case MOP_K_INFO_CNU:
+			idx = idx + 6;
 			break;
 		case MOP_K_INFO_TIME:
-			index = index + 10;
+			idx = idx + 10;
 			break;
 	        case MOP_K_INFO_SOFD:
-			device = mopGetChar(pkt,&index);
+			device = mopGetChar(pkt,&idx);
 			if (VerboseFlag && 
 			    (device != NMA_C_SOFD_LCS) &&   /* DECserver 100 */
 			    (device != NMA_C_SOFD_DS2) &&   /* DECserver 200 */
@@ -262,62 +243,57 @@ mopProcess(ii, pkt)
 			    (device != NMA_C_SOFD_DS3))     /* DECserver 300 */
 			{
 				mopPrintHWA(stdout, src);
-				(void)fprintf(stdout," # ");
+				fprintf(stdout," # ");
 				mopPrintDevice(stdout, device);
-				(void)fprintf(stdout," ");
+				fprintf(stdout," ");
 				mopPrintHWA(stdout, &pkt[hwa]);
-				(void)fprintf(stdout,"\n");
+				fprintf(stdout,"\n");
 			}
 			break;
 		case MOP_K_INFO_SFID:
-			tmpc = mopGetChar(pkt,&index);
-			if ((index > 0) && (index < 17)) 
-			  index = index + tmpc;
+			tmpc = mopGetChar(pkt,&idx);
+			if ((tmpc > 0) && (tmpc < 17)) 
+				idx = idx + tmpc;
 			break;
 		case MOP_K_INFO_PRTY:
-			index = index + 1;
+			idx = idx + 1;
 			break;
 		case MOP_K_INFO_DLTY:
-			index = index + 1;
+			idx = idx + 1;
 			break;
 	        case MOP_K_INFO_DLBSZ:
-			index = index + 2;
+			idx = idx + 2;
 			break;
 		default:
-			if (((device = NMA_C_SOFD_LCS) ||   /* DECserver 100 */
-			     (device = NMA_C_SOFD_DS2) ||   /* DECserver 200 */
-			     (device = NMA_C_SOFD_DP2) ||   /* DECserver 250 */
-			     (device = NMA_C_SOFD_DS3)) &&  /* DECserver 300 */
+			if (((device == NMA_C_SOFD_LCS) ||  /* DECserver 100 */
+			     (device == NMA_C_SOFD_DS2) ||  /* DECserver 200 */
+			     (device == NMA_C_SOFD_DP2) ||  /* DECserver 250 */
+			     (device == NMA_C_SOFD_DS3)) && /* DECserver 300 */
 			    ((itype > 101) && (itype < 107)))
 			{
 				switch (itype) {
 				case 102:
-					index = index + ilen;
-					break;
 				case 103:
-					index = index + ilen;
+				case 106:
+					idx = idx + ilen;
 					break;
 				case 104:
-					index = index + 2;
+					idx = idx + 2;
 					break;
 				case 105:
 					mopPrintHWA(stdout, src);
-					(void)fprintf(stdout," ");
+					fprintf(stdout," ");
 					for (i = 0; i < ilen; i++) {
-					  (void)fprintf(stdout, "%c",pkt[index+i]);
+						fprintf(stdout, "%c",pkt[idx+i]);
 					}
-					index = index + ilen;
-					(void)fprintf(stdout, "\n");
-					break;
-				case 106:
-					index = index + ilen;
+					idx = idx + ilen;
+					fprintf(stdout, "\n");
 					break;
 				};
 			} else {
-				index = index + ilen;
+				idx = idx + ilen;
 			};
 		}
-		itype = mopGetShort(pkt,&index); 
+		itype = mopGetShort(pkt,&idx); 
 	}
 }
-
