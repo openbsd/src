@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.13 2006/04/07 22:41:32 jsg Exp $	*/
+/*	$OpenBSD: midi.c,v 1.14 2006/04/16 03:24:27 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -90,7 +90,6 @@ midi_iintr(void *addr, int data)
 {
 	struct midi_softc  *sc = (struct midi_softc *)addr;
 	struct midi_buffer *mb = &sc->inbuf;
-	int 		    s;
 	
 	if (sc->isdying || !sc->isopen || !(sc->flags & FREAD)) return;
 	
@@ -102,18 +101,16 @@ midi_iintr(void *addr, int data)
 #endif
 	if (MIDIBUF_ISFULL(mb))
 		return; /* discard data */
-	
-	s = splaudio();
+	if (MIDIBUF_ISEMPTY(mb)) {
+		if (sc->rchan) {
+			sc->rchan = 0;
+			wakeup(&sc->rchan);
+		}	
+		selwakeup(&sc->rsel);
+		if (sc->async)
+			psignal(sc->async, SIGIO);
+	}
 	MIDIBUF_WRITE(mb, data);
-	splx(s);
-	
-	if (sc->rchan) {
-		sc->rchan = 0;
-		wakeup(&sc->rchan);
-	}	
-	selwakeup(&sc->rsel);
-	if (sc->async)
-		psignal(sc->async, SIGIO);
 }
 
 
