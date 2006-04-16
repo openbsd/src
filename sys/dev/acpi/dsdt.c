@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.39 2006/03/21 21:11:10 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.40 2006/04/16 22:23:37 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1510,7 +1510,7 @@ aml_efield(struct acpi_context *ctx, struct aml_value *e_fld,
 			}
 			if (pb != rv->v_buffer) {
 				aml_bufcpy(rv->v_buffer, 0, pb,
-				    e_fld->v_field.bitpos,
+				    aml_bitpos(e_fld->v_field.bitpos),
 				    e_fld->v_field.bitlen);
 
 				acpi_os_freemem(pb);
