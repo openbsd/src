@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.4 2003/06/02 23:27:57 millert Exp $	*/
+/*	$OpenBSD: proc.h,v 1.5 2006/04/17 20:44:45 miod Exp $	*/
 /*	$NetBSD: proc.h,v 1.2 1994/10/26 08:02:21 cgd Exp $	*/
 
 /*
@@ -36,11 +36,4 @@
  * Machine-dependent part of the proc structure for vax.
  */
 struct mdproc {
-	int	md_flags;		/* machine-dependent flags */
-#if 0
-	int	*md_regs;		/* registers on current frame */
-#endif
 };
-
-/* md_flags */
-#define	MDP_AST		0x0001	/* async trap pending */
