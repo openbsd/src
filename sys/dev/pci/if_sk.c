@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.97 2006/04/17 04:45:02 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.98 2006/04/17 10:11:29 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -423,6 +423,9 @@ sk_marv_miibus_writereg(dev, phy, reg, val)
 		if (SK_YU_READ_2(sc_if, YUKON_SMICR) & YU_SMICR_BUSY)
 			break;
 	}
+
+	if (i == SK_TIMEOUT)
+		printf("%s: phy write timed out\n", sc_if->sk_dev.dv_xname);
 }
 
 void
