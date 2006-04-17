@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopd.c,v 1.14 2006/04/17 16:23:01 deraadt Exp $ */
+/*	$OpenBSD: mopd.c,v 1.15 2006/04/17 18:55:36 maja Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: mopd.c,v 1.14 2006/04/17 16:23:01 deraadt Exp $";
+    "$OpenBSD: mopd.c,v 1.15 2006/04/17 18:55:36 maja Exp $";
 #endif
 
 /*
@@ -154,6 +154,7 @@ main(int argc, char *argv[])
 	endpwent();
 
 	Loop();
+	/* NOTREACHED */
 }
 
 void
@@ -173,7 +174,7 @@ mopProcess(struct if_info *ii, u_char *pkt)
 {
 	u_char	*dst, *src;
 	u_short  ptype;
-	int	 index, trans, len;
+	int	 idx, trans, len;
 
 	/* We don't known with transport, Guess! */
 	trans = mopGetTrans(pkt, 0);
@@ -182,8 +183,8 @@ mopProcess(struct if_info *ii, u_char *pkt)
 	if ((trans == TRANS_ETHER) && Not3Flag) return;
 	if ((trans == TRANS_8023) && Not4Flag)	return;
 
-	index = 0;
-	mopGetHeader(pkt, &index, &dst, &src, &ptype, &len, trans);
+	idx = 0;
+	mopGetHeader(pkt, &idx, &dst, &src, &ptype, &len, trans);
 
 	/*
 	 * Ignore our own transmissions
@@ -194,10 +195,10 @@ mopProcess(struct if_info *ii, u_char *pkt)
 
 	switch (ptype) {
 	case MOP_K_PROTO_DL:
-		mopProcessDL(stdout, ii, pkt, &index, dst, src, trans, len);
+		mopProcessDL(stdout, ii, pkt, &idx, dst, src, trans, len);
 		break;
 	case MOP_K_PROTO_RC:
-		mopProcessRC(stdout, ii, pkt, &index, dst, src, trans, len);
+		mopProcessRC(stdout, ii, pkt, &idx, dst, src, trans, len);
 		break;
 	default:
 		break;

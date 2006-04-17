@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.15 2006/04/17 16:23:01 deraadt Exp $ */
+/*	$OpenBSD: process.c,v 1.16 2006/04/17 18:55:36 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: process.c,v 1.15 2006/04/17 16:23:01 deraadt Exp $";
+    "$OpenBSD: process.c,v 1.16 2006/04/17 18:55:36 maja Exp $";
 #endif
 
 #include "os.h"
@@ -42,18 +42,16 @@ static const char rcsid[] =
 #include "common/rc.h"
 #include "common/file.h"
 
-extern u_char	buf[];
 extern int	DebugFlag;
 
 struct dllist dllist[MAXDL];		/* dump/load list		*/
 
 void
-mopProcessInfo(u_char *pkt, int *index, u_short moplen, struct dllist *dl_rpr,
+mopProcessInfo(u_char *pkt, int *idx, u_short moplen, struct dllist *dl_rpr,
     int trans)
 {
 	u_short	itype, tmps;
 	u_char	ilen, tmpc, device;
-	u_char	uc1, uc2, uc3, *ucp;
 
 	device = 0;
 
@@ -66,108 +64,82 @@ mopProcessInfo(u_char *pkt, int *index, u_short moplen, struct dllist *dl_rpr,
 		break;
 	}
 
-	itype = mopGetShort(pkt, index);
+	itype = mopGetShort(pkt, idx);
 
-	while (*index < (int)(moplen)) {
-		ilen  = mopGetChar(pkt, index);
+	while (*idx < (int)(moplen)) {
+		ilen  = mopGetChar(pkt, idx);
 		switch (itype) {
 		case 0:
-			tmpc  = mopGetChar(pkt, index);
-			*index = *index + tmpc;
+			tmpc = mopGetChar(pkt, idx);
+			*idx = *idx + tmpc;
 			break;
 		case MOP_K_INFO_VER:
-			uc1 = mopGetChar(pkt, index);
-			uc2 = mopGetChar(pkt, index);
-			uc3 = mopGetChar(pkt, index);
+			*idx = *idx + 3;
 			break;
 		case MOP_K_INFO_MFCT:
-			tmps = mopGetShort(pkt, index);
+		case MOP_K_INFO_RTM:
+		case MOP_K_INFO_CSZ:
+		case MOP_K_INFO_RSZ:
+			mopGetShort(pkt, idx);
 			break;
 		case MOP_K_INFO_CNU:
-			ucp = pkt + *index; *index = *index + 6;
-			break;
-		case MOP_K_INFO_RTM:
-			tmps = mopGetShort(pkt, index);
-			break;
-		case MOP_K_INFO_CSZ:
-			tmps = mopGetShort(pkt, index);
-			break;
-		case MOP_K_INFO_RSZ:
-			tmps = mopGetShort(pkt, index);
-			break;
 		case MOP_K_INFO_HWA:
-			ucp = pkt + *index; *index = *index + 6;
+			*idx = *idx + 6;
 			break;
 		case MOP_K_INFO_TIME:
-			ucp = pkt + *index; *index = *index + 10;
+			*idx = *idx + 10;
 			break;
 		case MOP_K_INFO_SOFD:
-			device = mopGetChar(pkt, index);
+			device = mopGetChar(pkt, idx);
 			break;
 		case MOP_K_INFO_SFID:
-			tmpc = mopGetChar(pkt, index);
-			ucp = pkt + *index; *index = *index + tmpc;
+			tmpc = mopGetChar(pkt, idx);
+			*idx = *idx + tmpc;
 			break;
 		case MOP_K_INFO_PRTY:
-			tmpc = mopGetChar(pkt, index);
-			break;
 		case MOP_K_INFO_DLTY:
-			tmpc = mopGetChar(pkt, index);
+			mopGetChar(pkt, idx);
 			break;
 		case MOP_K_INFO_DLBSZ:
-			tmps = mopGetShort(pkt, index);
+			tmps = mopGetShort(pkt, idx);
 			dl_rpr->dl_bsz = tmps;
 			break;
 		default:
-			if (((device = NMA_C_SOFD_LCS) ||   /* DECserver 100 */
-			    (device = NMA_C_SOFD_DS2) ||   /* DECserver 200 */
-			    (device = NMA_C_SOFD_DP2) ||   /* DECserver 250 */
-			    (device = NMA_C_SOFD_DS3)) &&  /* DECserver 300 */
+			if (((device == NMA_C_SOFD_LCS) ||  /* DECserver 100 */
+			     (device == NMA_C_SOFD_DS2) ||  /* DECserver 200 */
+			     (device == NMA_C_SOFD_DP2) ||  /* DECserver 250 */
+			     (device == NMA_C_SOFD_DS3)) && /* DECserver 300 */
 			    ((itype > 101) && (itype < 107))) {
 				switch (itype) {
 				case 102:
-					ucp = pkt + *index;
-					*index = *index + ilen;
-					break;
 				case 103:
-					ucp = pkt + *index;
-					*index = *index + ilen;
+				case 105:
+				case 106:
+					*idx = *idx + ilen;
 					break;
 				case 104:
-					tmps = mopGetShort(pkt, index);
-					break;
-				case 105:
-					ucp = pkt + *index;
-					*index = *index + ilen;
-					break;
-				case 106:
-					ucp = pkt + *index;
-					*index = *index + ilen;
+					mopGetShort(pkt, idx);
 					break;
 				}
 			} else
-				ucp = pkt + *index; *index = *index + ilen;
+				*idx = *idx + ilen;
 		}
-		itype = mopGetShort(pkt, index);
+		itype = mopGetShort(pkt, idx);
 	}
 }
 
 void
 mopSendASV(u_char *dst, u_char *src, struct if_info *ii, int trans)
 {
-	u_char	 pkt[200], *p;
-	int	 index;
-	u_char	 mopcode = MOP_K_CODE_ASV;
-	u_short	 newlen = 0, ptype = MOP_K_PROTO_DL;
+	u_char	 pkt[200];
+	int	 idx;
 
-	index = 0;
-	mopPutHeader(pkt, &index, dst, src, ptype, trans);
+	idx = 0;
+	mopPutHeader(pkt, &idx, dst, src, MOP_K_PROTO_DL, trans);
 
-	p = &pkt[index];
-	mopPutChar(pkt, &index, mopcode);
+	mopPutChar(pkt, &idx, MOP_K_CODE_ASV);
 
-	mopPutLength(pkt, trans, index);
-	newlen = mopGetLength(pkt, trans);
+	mopPutLength(pkt, trans, idx);
 
 	if ((DebugFlag == DEBUG_ONELINE))
 		mopPrintOneline(stdout, pkt, trans);
@@ -180,7 +152,7 @@ mopSendASV(u_char *dst, u_char *src, struct if_info *ii, int trans)
 	if ((DebugFlag >= DEBUG_INFO))
 		mopDumpDL(stdout, pkt, trans);
 
-	if (pfWrite(ii->fd, pkt, index, trans) != index)
+	if (pfWrite(ii->fd, pkt, idx, trans) != idx)
 		if (DebugFlag)
 			warnx("pfWrite() error");
 }
@@ -190,10 +162,9 @@ mopStartLoad(u_char *dst, u_char *src, struct dllist *dl_rpr, int trans)
 {
 	int	 len;
 	int	 i, slot;
-	u_char	 pkt[BUFSIZE], *p;
-	int	 index;
+	u_char	 pkt[BUFSIZE];
+	int	 idx;
 	u_char	 mopcode = MOP_K_CODE_MLD;
-	u_short	 newlen, ptype = MOP_K_PROTO_DL;
 
 	slot = -1;
 
@@ -239,21 +210,19 @@ mopStartLoad(u_char *dst, u_char *src, struct dllist *dl_rpr, int trans)
 	if (trans == TRANS_8023)
 		dllist[slot].dl_bsz = dllist[slot].dl_bsz - 8;
 
-	index = 0;
-	mopPutHeader(pkt, &index, dst, src, ptype, trans);
-	p = &pkt[index];
-	mopPutChar(pkt, &index, mopcode);
+	idx = 0;
+	mopPutHeader(pkt, &idx, dst, src, MOP_K_PROTO_DL, trans);
+	mopPutChar(pkt, &idx, mopcode);
 
-	mopPutChar(pkt, &index, dllist[slot].count);
-	mopPutLong(pkt, &index, dllist[slot].loadaddr);
+	mopPutChar(pkt, &idx, dllist[slot].count);
+	mopPutLong(pkt, &idx, dllist[slot].loadaddr);
 
-	len = mopFileRead(&dllist[slot], &pkt[index]);
+	len = mopFileRead(&dllist[slot], &pkt[idx]);
 
 	dllist[slot].nloadaddr = dllist[slot].loadaddr + len;
-	index = index + len;
+	idx = idx + len;
 
-	mopPutLength(pkt, trans, index);
-	newlen = mopGetLength(pkt, trans);
+	mopPutLength(pkt, trans, idx);
 
 	if ((DebugFlag == DEBUG_ONELINE))
 		mopPrintOneline(stdout, pkt, trans);
@@ -266,7 +235,7 @@ mopStartLoad(u_char *dst, u_char *src, struct dllist *dl_rpr, int trans)
 	if ((DebugFlag >= DEBUG_INFO))
 		mopDumpDL(stdout, pkt, trans);
 
-	if (pfWrite(dllist[slot].ii->fd, pkt, index, trans) != index)
+	if (pfWrite(dllist[slot].ii->fd, pkt, idx, trans) != idx)
 		if (DebugFlag)
 			warnx("pfWrite() error");
 
@@ -278,11 +247,9 @@ mopNextLoad(u_char *dst, u_char *src, u_char new_count, int trans)
 {
 	int	 len;
 	int	 i, slot;
-	u_char	 pkt[BUFSIZE], *p;
-	int	 index, pindex;
-	char	 line[100];
-	u_short  newlen = 0, ptype = MOP_K_PROTO_DL;
-	u_char	 mopcode;
+	u_char	 pkt[BUFSIZE];
+	int	 idx, pidx;
+	char	 line[100],hname[17],*p;
 
 	slot = -1;
 
@@ -318,42 +285,42 @@ mopNextLoad(u_char *dst, u_char *src, u_char new_count, int trans)
 	if (dllist[slot].dl_bsz >= 1492)
 		dllist[slot].dl_bsz = 1492;
 
-	index = 0;
-	mopPutHeader(pkt, &index, dst, src, ptype, trans);
-	p = &pkt[index];
-	mopcode = MOP_K_CODE_MLD;
-	pindex = index;
-	mopPutChar(pkt, &index, mopcode);
-	mopPutChar(pkt, &index, dllist[slot].count);
-	mopPutLong(pkt, &index, dllist[slot].loadaddr);
+	idx = 0;
+	mopPutHeader(pkt, &idx, dst, src, MOP_K_PROTO_DL, trans);
+	pidx = idx;
+	mopPutChar(pkt, &idx, MOP_K_CODE_MLD);
+	mopPutChar(pkt, &idx, dllist[slot].count);
+	mopPutLong(pkt, &idx, dllist[slot].loadaddr);
 
-	len = mopFileRead(&dllist[slot], &pkt[index]);
+	len = mopFileRead(&dllist[slot], &pkt[idx]);
 
 	if (len > 0) {
 		dllist[slot].nloadaddr = dllist[slot].loadaddr + len;
-		index = index + len;
+		idx = idx + len;
 
-		mopPutLength(pkt, trans, index);
-		newlen = mopGetLength(pkt, trans);
+		mopPutLength(pkt, trans, idx);
 	} else {
 		if (len == 0) {
-			index = pindex;
-			mopcode = MOP_K_CODE_PLT;
-			mopPutChar(pkt, &index, mopcode);
-			mopPutChar(pkt, &index, dllist[slot].count);
-			mopPutChar(pkt, &index, MOP_K_PLTP_HSN);
-			mopPutChar(pkt, &index, 3);
-			mopPutMulti(pkt, &index, (u_char *) "ipc", 3);
-			mopPutChar(pkt, &index, MOP_K_PLTP_HSA);
-			mopPutChar(pkt, &index, 6);
-			mopPutMulti(pkt, &index, src, 6);
-			mopPutChar(pkt, &index, MOP_K_PLTP_HST);
-			mopPutTime(pkt, &index, 0);
-			mopPutChar(pkt, &index, 0);
-			mopPutLong(pkt, &index, dllist[slot].xferaddr);
+			i = gethostname(hname, sizeof(hname));
+			p = index(hname, '.');
+			if (p != NULL)
+				*p = 0;
 
-			mopPutLength(pkt, trans, index);
-			newlen = mopGetLength(pkt, trans);
+			idx = pidx;
+			mopPutChar(pkt, &idx, MOP_K_CODE_PLT);
+			mopPutChar(pkt, &idx, dllist[slot].count);
+			mopPutChar(pkt, &idx, MOP_K_PLTP_HSN);
+			mopPutChar(pkt, &idx, (int)strlen(hname));
+			mopPutMulti(pkt, &idx, (u_char *)hname, (int)strlen(hname));
+			mopPutChar(pkt, &idx, MOP_K_PLTP_HSA);
+			mopPutChar(pkt, &idx, 6);
+			mopPutMulti(pkt, &idx, src, 6);
+			mopPutChar(pkt, &idx, MOP_K_PLTP_HST);
+			mopPutTime(pkt, &idx, 0);
+			mopPutChar(pkt, &idx, 0);
+			mopPutLong(pkt, &idx, dllist[slot].xferaddr);
+
+			mopPutLength(pkt, trans, idx);
 
 			dllist[slot].status = DL_STATUS_SENT_PLT;
 		} else {
@@ -373,13 +340,14 @@ mopNextLoad(u_char *dst, u_char *src, u_char new_count, int trans)
 	if ((DebugFlag >= DEBUG_INFO))
 		mopDumpDL(stdout, pkt, trans);
 
-	if (pfWrite(dllist[slot].ii->fd, pkt, index, trans) != index)
+	if (pfWrite(dllist[slot].ii->fd, pkt, idx, trans) != idx)
 		if (DebugFlag)
 			warnx("pfWrite() error");
 }
 
+/* ARGSUSED */
 void
-mopProcessDL(FILE *fd, struct if_info *ii, u_char *pkt, int *index, u_char *dst,
+mopProcessDL(FILE *fd, struct if_info *ii, u_char *pkt, int *idx, u_char *dst,
     u_char *src, int trans, u_short len)
 {
 	u_char		tmpc;
@@ -387,9 +355,9 @@ mopProcessDL(FILE *fd, struct if_info *ii, u_char *pkt, int *index, u_char *dst,
 	u_char		pfile[129], mopcode;
 	char		filename[FILENAME_MAX];
 	char		line[100];
-	int		i, nfd, iindex;
+	int		i, nfd;
 	struct dllist	dl, *dl_rpr;
-	u_char		rpr_pgty, load;
+	u_char		load;
 
 	if ((DebugFlag == DEBUG_ONELINE))
 		mopPrintOneline(stdout, pkt, trans);
@@ -403,7 +371,7 @@ mopProcessDL(FILE *fd, struct if_info *ii, u_char *pkt, int *index, u_char *dst,
 		mopDumpDL(stdout, pkt, trans);
 
 	moplen  = mopGetLength(pkt, trans);
-	mopcode = mopGetChar(pkt, index);
+	mopcode = mopGetChar(pkt, idx);
 
 	switch (mopcode) {
 	case MOP_K_CODE_MLT:
@@ -417,8 +385,8 @@ mopProcessDL(FILE *fd, struct if_info *ii, u_char *pkt, int *index, u_char *dst,
 	case MOP_K_CODE_RMD:
 		break;
 	case MOP_K_CODE_RPR:
-		tmpc = mopGetChar(pkt, index);		/* Device Type */
-		tmpc = mopGetChar(pkt, index);		/* Format Version */
+		mopGetChar(pkt, idx);			/* Device Type */
+		tmpc = mopGetChar(pkt, idx);		/* Format Version */
 		if ((tmpc != MOP_K_RPR_FORMAT) &&
 		    (tmpc != MOP_K_RPR_FORMAT_V3)) {
 			fprintf(stderr, "mopd: Unknown RPR Format (%d) from ",
@@ -427,13 +395,13 @@ mopProcessDL(FILE *fd, struct if_info *ii, u_char *pkt, int *index, u_char *dst,
 			fprintf(stderr, "\n");
 		}
 
-		rpr_pgty = mopGetChar(pkt, index);	/* Program Type */
+		mopGetChar(pkt, idx);			/* Program Type */
 
-		tmpc = mopGetChar(pkt, index);		/* Software ID Len */
+		tmpc = mopGetChar(pkt, idx);		/* Software ID Len */
 		if (tmpc > sizeof(pfile) - 1)
 			return;
 		for (i = 0; i < tmpc; i++) {
-			pfile[i] = mopGetChar(pkt, index);
+			pfile[i] = mopGetChar(pkt, idx);
 			pfile[i+1] = '\0';
 		}
 
@@ -450,14 +418,13 @@ mopProcessDL(FILE *fd, struct if_info *ii, u_char *pkt, int *index, u_char *dst,
 			    src[0], src[1], src[2], src[3], src[4], src[5], 0);
 		}
 
-		tmpc = mopGetChar(pkt, index);		/* Processor */
+		mopGetChar(pkt, idx);			/* Processor */
 
-		iindex = *index;
 		dl_rpr = &dl;
 		bzero(dl_rpr, sizeof(*dl_rpr));
 		dl_rpr->ii = ii;
 		bcopy(src, dl_rpr->eaddr, 6);
-		mopProcessInfo(pkt, index, moplen, dl_rpr, trans);
+		mopProcessInfo(pkt, idx, moplen, dl_rpr, trans);
 
 		snprintf(filename, sizeof(filename), "%s.SYS", pfile);
 		if ((mopCmpEAddr(dst, dl_mcst) == 0)) {
@@ -488,8 +455,8 @@ mopProcessDL(FILE *fd, struct if_info *ii, u_char *pkt, int *index, u_char *dst,
 		}
 		break;
 	case MOP_K_CODE_RML:
-		load = mopGetChar(pkt, index);		/* Load Number	*/
-		tmpc = mopGetChar(pkt, index);		/* Error	*/
+		load = mopGetChar(pkt, idx);		/* Load Number	*/
+		mopGetChar(pkt, idx);			/* Error	*/
 		if ((mopCmpEAddr(dst, ii->eaddr) == 0))
 			mopNextLoad(src, ii->eaddr, load, trans);
 		break;
@@ -506,8 +473,9 @@ mopProcessDL(FILE *fd, struct if_info *ii, u_char *pkt, int *index, u_char *dst,
 	}
 }
 
+/* ARGSUSED */
 void
-mopProcessRC(FILE *fd, struct if_info *ii, u_char *pkt, int *index, u_char dst,
+mopProcessRC(FILE *fd, struct if_info *ii, u_char *pkt, int *idx, u_char dst,
     u_char *src, int trans, u_short len)
 {
 	u_char		tmpc;
@@ -527,7 +495,7 @@ mopProcessRC(FILE *fd, struct if_info *ii, u_char *pkt, int *index, u_char dst,
 		mopDumpRC(stdout, pkt, trans);
 
 	moplen  = mopGetLength(pkt, trans);
-	mopcode = mopGetChar(pkt, index);
+	mopcode = mopGetChar(pkt, idx);
 
 	switch (mopcode) {
 	case MOP_K_CODE_RID:
@@ -535,20 +503,20 @@ mopProcessRC(FILE *fd, struct if_info *ii, u_char *pkt, int *index, u_char dst,
 	case MOP_K_CODE_BOT:
 		break;
 	case MOP_K_CODE_SID:
-		tmpc = mopGetChar(pkt, index);		/* Reserved */
+		tmpc = mopGetChar(pkt, idx);		/* Reserved */
 
 		if ((DebugFlag >= DEBUG_INFO))
 			fprintf(stderr, "Reserved     :   %02x\n", tmpc);
 
-		tmps = mopGetShort(pkt, index);		/* Receipt # */
+		tmps = mopGetShort(pkt, idx);		/* Receipt # */
 		if ((DebugFlag >= DEBUG_INFO))
-			fprintf(stderr, "Receipt Nbr  : %04x\n", tmpc);
+			fprintf(stderr, "Receipt Nbr  : %04x\n", tmps);
 
 		dl_rpr = &dl;
 		bzero(dl_rpr, sizeof(*dl_rpr));
 		dl_rpr->ii = ii;
 		bcopy(src, dl_rpr->eaddr, 6);
-		mopProcessInfo(pkt, index, moplen, dl_rpr, trans);
+		mopProcessInfo(pkt, idx, moplen, dl_rpr, trans);
 		break;
 	case MOP_K_CODE_RQC:
 		break;
