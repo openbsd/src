@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.21 2006/04/15 15:44:06 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.22 2006/04/17 16:08:01 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -366,6 +366,7 @@ m8820x_init()
 void
 m8820x_initialize_cpu(cpuid_t cpu)
 {
+	struct cpu_info *ci;
 	struct m8820x_cmmu *cmmu;
 	u_int line, cnt;
 	int cssp, sctr, type;
@@ -375,6 +376,27 @@ m8820x_initialize_cpu(cpuid_t cpu)
 	    ~APR_V;
 
 	cmmu = m8820x_cmmu + (cpu << cmmu_shift);
+
+	/*
+	 * Setup CMMU pointers for faster exception processing.
+	 * This relies on the board-dependent code putting instruction
+	 * CMMUs and data CMMUs interleaved with instruction CMMUs first.
+	 */
+	ci = &m88k_cpus[cpu];
+	switch (cmmu_shift) {
+	default:
+		/* exception code does not use ci_pfsr_* fields */
+		break;
+	case 2:
+		ci->ci_pfsr_d1 = (u_int)cmmu[3].cmmu_regs + CMMU_PFSR * 4;
+		ci->ci_pfsr_i1 = (u_int)cmmu[2].cmmu_regs + CMMU_PFSR * 4;
+		/* FALLTHROUGH */
+	case 1:
+		ci->ci_pfsr_d0 = (u_int)cmmu[1].cmmu_regs + CMMU_PFSR * 4;
+		ci->ci_pfsr_i0 = (u_int)cmmu[0].cmmu_regs + CMMU_PFSR * 4;
+		break;
+	}
+
 	for (cnt = 1 << cmmu_shift; cnt != 0; cnt--, cmmu++) {
 		type = CMMU_TYPE(cmmu->cmmu_regs[CMMU_IDR]);
 

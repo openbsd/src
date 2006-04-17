@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.13 2006/04/15 15:43:36 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.14 2006/04/17 16:08:01 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -85,6 +85,8 @@ struct cpu_info {
 
 	u_int	ci_cpuid;			/* cpu number */
 	u_int	ci_primary;			/* set if master cpu */
+	u_int	ci_pfsr_i0, ci_pfsr_i1;		/* instruction... */
+	u_int	ci_pfsr_d0, ci_pfsr_d1;		/* ... and data CMMU PFSRs */
 
 	struct schedstate_percpu ci_schedstate;	/* scheduling state */
 	int	ci_want_resched;		/* need_resched() invoked */
