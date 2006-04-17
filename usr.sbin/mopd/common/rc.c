@@ -1,4 +1,4 @@
-/*	$OpenBSD: rc.c,v 1.5 2004/04/14 20:37:28 henning Exp $ */
+/*	$OpenBSD: rc.c,v 1.6 2006/04/17 13:17:07 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -24,9 +24,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
+#ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: rc.c,v 1.5 2004/04/14 20:37:28 henning Exp $";
+    "$OpenBSD: rc.c,v 1.6 2006/04/17 13:17:07 maja Exp $";
 #endif
 
 #include "os.h"
@@ -37,7 +37,7 @@ static const char rcsid[] =
 void
 mopDumpRC(FILE *fd, u_char *pkt, int trans)
 {
-	int	i, index = 0;
+	int	i, idx = 0;
 	long	tmpl;
 	u_char	tmpc, code, control;
 	u_short	len, tmps, moplen;
@@ -46,40 +46,40 @@ mopDumpRC(FILE *fd, u_char *pkt, int trans)
 
 	switch (trans) {
 	case TRANS_8023:
-		index = 22;
+		idx = 22;
 		moplen = len - 8;
 		break;
 	default:
-		index = 16;
+		idx = 16;
 		moplen = len;
 	}
-	code = mopGetChar(pkt, &index);
+	code = mopGetChar(pkt, &idx);
 
 	switch (code) {
 	case MOP_K_CODE_RID:
 
-		tmpc = mopGetChar(pkt, &index);
+		tmpc = mopGetChar(pkt, &idx);
 		fprintf(fd, "Reserved     :   %02x\n", tmpc);
 
-		tmps = mopGetShort(pkt, &index);
+		tmps = mopGetShort(pkt, &idx);
 		fprintf(fd, "Receipt Nbr  : %04x\n", tmps);
 
 		break;
 	case MOP_K_CODE_BOT:
 
 		if ((moplen == 5)) {
-			tmps = mopGetShort(pkt, &index);
+			tmps = mopGetShort(pkt, &idx);
 			fprintf(fd, "Verification : %04x\n", tmps);
 		} else {
 
-			tmpl = mopGetLong(pkt, &index);
+			tmpl = mopGetLong(pkt, &idx);
 			fprintf(fd, "Verification : %08lx\n", tmpl);
 
-			tmpc = mopGetChar(pkt, &index);	/* Processor */
+			tmpc = mopGetChar(pkt, &idx);	/* Processor */
 			fprintf(fd, "Processor    :   %02x ", tmpc);
 			mopPrintBPTY(fd, tmpc);  fprintf(fd, "\n");
 
-			control = mopGetChar(pkt, &index);	/* Control */
+			control = mopGetChar(pkt, &idx);	/* Control */
 			fprintf(fd, "Control    :   %02x ", control);
 			if ((control & (1>>MOP_K_BOT_CNTL_SERVER)))
 				fprintf(fd, "Bootserver Requesting system ");
@@ -92,15 +92,15 @@ mopDumpRC(FILE *fd, u_char *pkt, int trans)
 			fprintf(fd, "\n");
 
 			if ((control & (1>>MOP_K_BOT_CNTL_DEVICE))) {
-				tmpc = mopGetChar(pkt, &index);/* Device ID */
+				tmpc = mopGetChar(pkt, &idx);/* Device ID */
 				fprintf(fd, "Device ID    :   %02x '", tmpc);
 				for (i = 0; i < ((int) tmpc); i++)
 					fprintf(fd, "%c",
-					    mopGetChar(pkt, &index));
+					    mopGetChar(pkt, &idx));
 				fprintf(fd, "'\n");
 			}
 
-			tmpc = mopGetChar(pkt, &index);      /* Software ID */
+			tmpc = mopGetChar(pkt, &idx);      /* Software ID */
 			fprintf(fd, "Software ID  :   %02x ", tmpc);
 			if ((tmpc == 0))
 				fprintf(fd, "No software id");
@@ -116,7 +116,7 @@ mopDumpRC(FILE *fd, u_char *pkt, int trans)
 				fprintf(fd, "'");
 				for (i = 0; i < ((int) tmpc); i++)
 					fprintf(fd, "%c",
-					    mopGetChar(pkt, &index));
+					    mopGetChar(pkt, &idx));
 				fprintf(fd, "'");
 			}
 			fprintf(fd, "'\n");
@@ -125,60 +125,60 @@ mopDumpRC(FILE *fd, u_char *pkt, int trans)
 		break;
 	case MOP_K_CODE_SID:
 
-		tmpc = mopGetChar(pkt, &index);		/* Reserved */
+		tmpc = mopGetChar(pkt, &idx);		/* Reserved */
 		fprintf(fd, "Reserved     :   %02x\n", tmpc);
 
-		tmps = mopGetShort(pkt, &index);		/* Receipt # */
+		tmps = mopGetShort(pkt, &idx);		/* Receipt # */
 		fprintf(fd, "Receipt Nbr  : %04x\n", tmpc);
 
-		mopPrintInfo(fd, pkt, &index, moplen, code, trans);
+		mopPrintInfo(fd, pkt, &idx, moplen, code, trans);
 
 		break;
 	case MOP_K_CODE_RQC:
 
-		tmps = mopGetShort(pkt, &index);
+		tmps = mopGetShort(pkt, &idx);
 		fprintf(fd, "Receipt Nbr  : %04x\n", tmps);
 
 		break;
 	case MOP_K_CODE_CNT:
 
-		tmps = mopGetShort(pkt, &index);
+		tmps = mopGetShort(pkt, &idx);
 		fprintf(fd, "Receipt Nbr  : %04x %d\n", tmps, tmps);
 
-		tmps = mopGetShort(pkt, &index);
+		tmps = mopGetShort(pkt, &idx);
 		fprintf(fd, "Last Zeroed  : %04x %d\n", tmps, tmps);
 
-		tmpl = mopGetLong(pkt, &index);
+		tmpl = mopGetLong(pkt, &idx);
 		fprintf(fd, "Bytes rec    : %08lx %ld\n", tmpl, tmpl);
 
-		tmpl = mopGetLong(pkt, &index);
+		tmpl = mopGetLong(pkt, &idx);
 		fprintf(fd, "Bytes snd    : %08lx %ld\n", tmpl, tmpl);
 
-		tmpl = mopGetLong(pkt, &index);
+		tmpl = mopGetLong(pkt, &idx);
 		fprintf(fd, "Frames rec   : %08lx %ld\n", tmpl, tmpl);
 
-		tmpl = mopGetLong(pkt, &index);
+		tmpl = mopGetLong(pkt, &idx);
 		fprintf(fd, "Frames snd   : %08lx %ld\n", tmpl, tmpl);
 
-		tmpl = mopGetLong(pkt, &index);
+		tmpl = mopGetLong(pkt, &idx);
 		fprintf(fd, "Mcst Bytes re: %08lx %ld\n", tmpl, tmpl);
 
-		tmpl = mopGetLong(pkt, &index);
+		tmpl = mopGetLong(pkt, &idx);
 		fprintf(fd, "Mcst Frame re: %08lx %ld\n", tmpl, tmpl);
 
-		tmpl = mopGetLong(pkt, &index);
+		tmpl = mopGetLong(pkt, &idx);
 		fprintf(fd, "Frame snd, def: %08lx %ld\n", tmpl, tmpl);
 
-		tmpl = mopGetLong(pkt, &index);
+		tmpl = mopGetLong(pkt, &idx);
 		fprintf(fd, "Frame snd, col: %08lx %ld\n", tmpl, tmpl);
 
-		tmpl = mopGetLong(pkt, &index);
+		tmpl = mopGetLong(pkt, &idx);
 		fprintf(fd, "Frame snd, mcl: %08lx %ld\n", tmpl, tmpl);
 
-		tmps = mopGetShort(pkt, &index);
+		tmps = mopGetShort(pkt, &idx);
 		fprintf(fd, "Snd failure  : %04x %d\n", tmps, tmps);
 
-		tmps = mopGetShort(pkt, &index);
+		tmps = mopGetShort(pkt, &idx);
 		fprintf(fd, "Snd fail reas: %04x ", tmps);
 		if (tmps & 1)
 			fprintf(fd, "Excess col  ");
@@ -194,10 +194,10 @@ mopDumpRC(FILE *fd, u_char *pkt, int trans)
 			fprintf(fd, "Rem fail to defer  ");
 		fprintf(fd, "\n");
 
-		tmps = mopGetShort(pkt, &index);
+		tmps = mopGetShort(pkt, &idx);
 		fprintf(fd, "Rec failure  : %04x %d\n", tmps, tmps);
 
-		tmps = mopGetShort(pkt, &index);
+		tmps = mopGetShort(pkt, &idx);
 		fprintf(fd, "Rec fail reas: %04x ", tmps);
 		if (tmps & 1)
 			fprintf(fd, "Block chk err  ");
@@ -207,22 +207,22 @@ mopDumpRC(FILE *fd, u_char *pkt, int trans)
 			fprintf(fd, "Frm to long  ");
 		fprintf(fd, "\n");
 
-		tmps = mopGetShort(pkt, &index);
+		tmps = mopGetShort(pkt, &idx);
 		fprintf(fd, "Unrec frm dst: %04x %d\n", tmps, tmps);
 
-		tmps = mopGetShort(pkt, &index);
+		tmps = mopGetShort(pkt, &idx);
 		fprintf(fd, "Data overrun : %04x %d\n", tmps, tmps);
 
-		tmps = mopGetShort(pkt, &index);
+		tmps = mopGetShort(pkt, &idx);
 		fprintf(fd, "Sys Buf Unava: %04x %d\n", tmps, tmps);
 
-		tmps = mopGetShort(pkt, &index);
+		tmps = mopGetShort(pkt, &idx);
 		fprintf(fd, "Usr Buf Unava: %04x %d\n", tmps, tmps);
 
 		break;
 	case MOP_K_CODE_RVC:
 
-		tmpl = mopGetLong(pkt, &index);
+		tmpl = mopGetLong(pkt, &idx);
 		fprintf(fd, "Verification : %08lx\n", tmpl);
 
 		break;
@@ -232,14 +232,13 @@ mopDumpRC(FILE *fd, u_char *pkt, int trans)
 
 		break;
 	case MOP_K_CODE_CCP:
-		tmpc = mopGetChar(pkt, &index);
+		tmpc = mopGetChar(pkt, &idx);
 		fprintf(fd, "Control Flags: %02x Message %d ", tmpc, tmpc & 1);
 		if (tmpc & 2)
 			fprintf(fd, "Break");
 		fprintf(fd, "\n");
 
 		if (moplen > 2) {
-#ifndef SHORT_PRINT
 			for (i = 0; i < (moplen - 2); i++) {
 				if ((i % 16) == 0) {
 					if ((i / 16) == 0)
@@ -250,21 +249,18 @@ mopDumpRC(FILE *fd, u_char *pkt, int trans)
 						fprintf(fd,
 						    "                    ");
 				}
-				fprintf(fd, "%02x ", mopGetChar(pkt, &index));
+				fprintf(fd, "%02x ", mopGetChar(pkt, &idx));
 				if ((i % 16) == 15)
 					fprintf(fd, "\n");
 			}
 			if ((i % 16) != 15)
 				fprintf(fd, "\n");
-#else
-			index = index + moplen - 2;
-#endif
 		}
 
 		break;
 	case MOP_K_CODE_CRA:
 
-		tmpc = mopGetChar(pkt, &index);
+		tmpc = mopGetChar(pkt, &idx);
 		fprintf(fd, "Control Flags: %02x Message %d ", tmpc, tmpc & 1);
 		if (tmpc & 2)
 			fprintf(fd, "Cmd Data Lost ");
@@ -273,7 +269,6 @@ mopDumpRC(FILE *fd, u_char *pkt, int trans)
 		fprintf(fd, "\n");
 
 		if (moplen > 2) {
-#ifndef SHORT_PRINT
 			for (i = 0; i < (moplen - 2); i++) {
 				if ((i % 16) == 0) {
 					if ((i / 16) == 0)
@@ -284,15 +279,12 @@ mopDumpRC(FILE *fd, u_char *pkt, int trans)
 						fprintf(fd,
 						    "                    ");
 				}
-				fprintf(fd, "%02x ", mopGetChar(pkt, &index));
+				fprintf(fd, "%02x ", mopGetChar(pkt, &idx));
 				if ((i % 16) == 15)
 					fprintf(fd, "\n");
 			}
 			if ((i % 16) != 15)
 				fprintf(fd, "\n");
-#else
-			index = index + moplen - 2;
-#endif
 		}
 
 		break;
@@ -300,4 +292,3 @@ mopDumpRC(FILE *fd, u_char *pkt, int trans)
 		break;
 	}
 }
-

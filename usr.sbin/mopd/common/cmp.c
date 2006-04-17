@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmp.c,v 1.7 2004/04/14 20:37:28 henning Exp $ */
+/*	$OpenBSD: cmp.c,v 1.8 2006/04/17 13:17:07 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -24,9 +24,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
+#ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: cmp.c,v 1.7 2004/04/14 20:37:28 henning Exp $";
+    "$OpenBSD: cmp.c,v 1.8 2006/04/17 13:17:07 maja Exp $";
 #endif
 
 #include "os.h"
