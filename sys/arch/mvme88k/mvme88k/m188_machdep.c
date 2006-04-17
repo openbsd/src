@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.14 2006/04/15 15:45:24 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.15 2006/04/17 18:26:28 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -178,12 +178,12 @@ m188_reset()
 	/* clear and disable all interrupts */
 	*(volatile u_int32_t *)MVME188_IENALL = 0;
 
-	if ((*(volatile u_int8_t *)GLB1) & M188_SYSCON) {
+	if ((*(volatile u_int8_t *)MVME188_GLOBAL1) & M188_SYSCON) {
 		/* Force a complete VMEbus reset */
 		*(volatile u_int32_t *)MVME188_GLBRES = 1;
 	} else {
 		/* Force only a local reset */
-		*(volatile u_int8_t *)GLB1 |= M188_LRST;
+		*(volatile u_int8_t *)MVME188_GLOBAL1 |= M188_LRST;
 	}
 
 	*(volatile u_int32_t *)MVME188_UCSR |= 0x2000;	/* clear SYSFAIL */

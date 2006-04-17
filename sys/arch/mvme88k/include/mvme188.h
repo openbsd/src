@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.23 2006/04/15 22:31:47 miod Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.24 2006/04/17 18:26:28 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -84,13 +84,16 @@
 #define	MVME188_VIRQV	0xfff85020
 #define M188_IVEC		0x40	/* vector returned upon MVME188 int */
 
-#define MVME188_GCSR	0xfff86000	/* global control and status reg */
-#define GLB0		0xfff86001
-#define GLB1		0xfff86003
-#define GLB2		0xfff86005
-#define GLB3		0xfff86007
-#define	M188_LRST	0x00000080
-#define	M188_SYSCON	0x00000040
+#define	MVME188_GLOBAL0	0xfff86001	/* global control and status regs */
+#define	MVME188_GLOBAL1	0xfff86003
+#define	M188_LRST		0x80
+#define	M188_SYSCON		0x40
+#define	MVME188_BRDID	0xfff86005
+#define	MVME188_CGCSR0	0xfff86007
+#define	MVME188_CGCSR1	0xfff86009
+#define	MVME188_CGCSR2	0xfff8600b
+#define	MVME188_CGCSR3	0xfff8600d
+#define	MVME188_CGCSR4	0xfff8600f
 #define MVME188_UCSR	0xfff87000	/* utility control and status reg */
 #define	MVME188_BASAD	0xfff87004	/* base address reg */
 #define MVME188_GLBRES	0xfff8700c	/* global reset reg */
