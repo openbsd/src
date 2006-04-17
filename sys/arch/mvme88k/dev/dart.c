@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.46 2006/04/15 22:32:42 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.47 2006/04/17 13:30:02 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -389,7 +389,7 @@ dartmctl(dev_t dev, int flags, int how)
 	if (dart_cd.cd_ndevs == 0 || port >= NDARTPORTS)
 		return (ENODEV);
 
-	sc = (struct dartsoftc *) dart_cd.cd_devs[0];
+	sc = (struct dartsoftc *)dart_cd.cd_devs[0];
 	dart = &sc->sc_dart[port];
 
 	s = spltty();
@@ -426,8 +426,8 @@ dartioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct dart_info *dart;
 	struct dartsoftc *sc;
 
-	sc = (struct dartsoftc *) dart_cd.cd_devs[0];
 	port = DART_PORT(dev);
+	sc = (struct dartsoftc *)dart_cd.cd_devs[0];
 	dart = &sc->sc_dart[port];
 
 	tp = dart->tty;
@@ -634,8 +634,10 @@ dartopen(dev_t dev, int flag, int mode, struct proc *p)
 	struct dartsoftc *sc;
 	struct tty *tp;
 
-	sc = (struct dartsoftc *) dart_cd.cd_devs[0]; /* the only one */
 	port = DART_PORT(dev);
+	if (dart_cd.cd_ndevs == 0 || port >= NDARTPORTS)
+		return (ENODEV);
+	sc = (struct dartsoftc *)dart_cd.cd_devs[0]; /* the only one */
 	dart = &sc->sc_dart[port];
 
 	s = spltty();
@@ -686,7 +688,7 @@ dartclose(dev_t dev, int flag, int mode, struct proc *p)
 	struct dartsoftc *sc;
 	int port;
 
-	sc = (struct dartsoftc *) dart_cd.cd_devs[0];
+	sc = (struct dartsoftc *)dart_cd.cd_devs[0];
 	port = DART_PORT(dev);
 	dart = &sc->sc_dart[port];
 
@@ -705,7 +707,7 @@ dartread(dev_t dev, struct uio *uio, int flag)
 	struct dart_info *dart;
 	struct dartsoftc *sc;
 
-	sc = (struct dartsoftc *) dart_cd.cd_devs[0];
+	sc = (struct dartsoftc *)dart_cd.cd_devs[0];
 	port = DART_PORT(dev);
 	dart = &sc->sc_dart[port];
 
