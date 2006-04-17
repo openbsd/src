@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.35 2006/04/14 16:28:24 ray Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.36 2006/04/17 04:50:08 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -133,15 +133,11 @@ rcsclean_file(char *fname, const char *rev_str)
 	char fpath[MAXPATHLEN], numb[64];
 	RCSNUM *rev;
 	BUF *b1, *b2;
-	struct stat st;
 	time_t rcs_mtime = -1;
 
 	b1 = b2 = NULL;
 	file = NULL;
 	rev = NULL;
-
-	if (stat(fname, &st) == -1)
-		goto out;
 
 	if (rcs_statfile(fname, fpath, sizeof(fpath)) < 0)
 		goto out;
