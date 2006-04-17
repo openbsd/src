@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcsncpy.c,v 1.3 2005/08/08 08:05:37 espie Exp $	*/
+/*	$OpenBSD: wcsncpy.c,v 1.4 2006/04/17 18:05:35 espie Exp $	*/
 /*	$NetBSD: wcsncpy.c,v 1.2 2001/01/03 14:29:37 lukem Exp $	*/
 
 /*-
@@ -35,16 +35,16 @@ wchar_t *
 wcsncpy(wchar_t *s1, const wchar_t *s2, size_t n)
 {
 	wchar_t *p;
-	const wchar_t *q;
 
-	*s1 = '\0';
 	p = s1;
-	q = s2;
-	while (n && *q) {
-		*p++ = *q++;
+	while (n && *s2) {
+		*p++ = *s2++;
 		n--;
 	}
-	*p = '\0';
+	while (n) {
+		*p++ = L'\0';
+		n--;
+	}
 
 	return s1;
 }
