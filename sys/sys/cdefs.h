@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.22 2005/12/15 17:48:32 millert Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.23 2006/04/17 16:36:43 cloder Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -121,6 +121,8 @@
 #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
 #define	__dead		__volatile
 #define	__pure		__const
+#elif defined(lint)
+#define __dead		/* NORETURN */
 #endif
 #elif !defined(__STRICT_ANSI__)
 #define __dead		__attribute__((__noreturn__))
