@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.148 2006/04/16 12:30:00 niallo Exp $	*/
+/*	$OpenBSD: ci.c,v 1.149 2006/04/17 12:03:19 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -289,10 +289,13 @@ checkin_main(int argc, char **argv)
 			pb.file->rf_flags |= RCS_CREATE;
 		}
 
-		if (pb.flags & NEWFILE)
-			status = checkin_init(&pb);
-		else
-			status = checkin_update(&pb);
+		if (pb.flags & NEWFILE) {
+			if (checkin_init(&pb) == -1)
+				status = 1;
+		} else {
+			if (checkin_update(&pb) == -1)
+				status = 1;
+		}
 
 		/* reset NEWFILE flag */
 		pb.flags &= ~NEWFILE;
@@ -465,9 +468,11 @@ checkin_getinput(const char *prompt)
 static int
 checkin_update(struct checkin_params *pb)
 {
-	char  *filec, numb1[64], numb2[64];
+	char *filec, numb1[64], numb2[64];
 	struct stat st;
 	BUF *bp;
+
+	filec = NULL;
 
 	/*
 	 * XXX this is wrong, we need to get the revision the user
@@ -477,10 +482,8 @@ checkin_update(struct checkin_params *pb)
 	pb->frev = pb->file->rf_head;
 
 	/* Load file contents */
-	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
-		rcs_close(pb->file);
-		return (-1);
-	}
+	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL)
+		goto fail;
 
 	cvs_buf_putc(bp, '\0');
 	filec = (char *)cvs_buf_release(bp);
@@ -624,7 +627,8 @@ checkin_update(struct checkin_params *pb)
 	return (0);
 
 fail:
-	xfree(filec);
+	if (filec != NULL)
+		xfree(filec);
 	if (pb->deltatext != NULL)
 		xfree(pb->deltatext);
 	return (-1);
@@ -645,6 +649,8 @@ checkin_init(struct checkin_params *pb)
 	const char *rcs_desc;
 	struct stat st;
 
+	filec = NULL;
+
 	/* If this is a zero-ending RCSNUM eg 4.0, increment it (eg to 4.1) */
 	if (pb->newrev != NULL && RCSNUM_ZERO_ENDING(pb->newrev)) {
 		pb->frev = rcsnum_alloc();
@@ -654,10 +660,8 @@ checkin_init(struct checkin_params *pb)
 	}
 
 	/* Load file contents */
-	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL) {
-		rcs_close(pb->file);
-		return (-1);
-	}
+	if ((bp = cvs_buf_load(pb->filename, BUF_AUTOEXT)) == NULL)
+		goto fail;
 
 	cvs_buf_putc(bp, '\0');
 	filec = (char *)cvs_buf_release(bp);
@@ -772,7 +776,8 @@ skipdesc:
 
 	return (0);
 fail:
-	xfree(filec);
+	if (filec != NULL)
+		xfree(filec);
 	return (-1);
 }
 
