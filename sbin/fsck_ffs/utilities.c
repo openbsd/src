@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.29 2006/04/17 19:22:29 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.30 2006/04/17 19:33:54 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: utilities.c,v 1.29 2006/04/17 19:22:29 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: utilities.c,v 1.30 2006/04/17 19:33:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -475,8 +475,9 @@ getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 	memcpy(namebuf, cp, (size_t)(&namebuf[MAXPATHLEN] - cp));
 }
 
+/*ARGSUSED*/
 void
-catch(int n)
+catch(int signo)
 {
 	if (!doinglevel2)
 		ckfini(0);			/* XXX signal race */
@@ -488,8 +489,9 @@ catch(int n)
  * a special exit after filesystem checks complete
  * so that reboot sequence may be interrupted.
  */
+/*ARGSUSED*/
 void
-catchquit(int n)
+catchquit(int signo)
 {
 	extern volatile sig_atomic_t returntosingle;
 	char buf[1024];
@@ -505,13 +507,16 @@ catchquit(int n)
  * Ignore a single quit signal; wait and flush just in case.
  * Used by child processes in preen.
  */
+/*ARGSUSED*/
 void
-voidquit(int n)
+voidquit(int signo)
 {
+	int save_errno = errno;
 
 	sleep(1);
 	(void)signal(SIGQUIT, SIG_IGN);
 	(void)signal(SIGQUIT, SIG_DFL);
+	errno = save_errno;
 }
 
 /*
