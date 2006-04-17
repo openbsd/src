@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs.c,v 1.16 2005/05/15 13:19:14 jmc Exp $	*/
+/*	$OpenBSD: rs.c,v 1.17 2006/04/17 09:45:00 moritz Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: rs.c,v 1.16 2005/05/15 13:19:14 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: rs.c,v 1.17 2006/04/17 09:45:00 moritz Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,15 +71,10 @@ long	flags;
 #define	NULLPAD		002000
 #define	RECYCLE		004000
 #define	SKIPPRINT	010000
-#define	ICOLBOUNDS	020000
-#define	OCOLBOUNDS	040000
 #define ONEPERCHAR	0100000
 #define NOARGS		0200000
 
 short	*colwidths;
-short	*cord;
-short	*icbd;
-short	*ocbd;
 int	nelem;
 char	**elem;
 char	**endelem;
@@ -98,7 +93,6 @@ void	  usage(void);
 void	  getargs(int, char *[]);
 void	  getfile(void);
 int	  getline(void);
-char	 *getlist(short **, char *);
 char	**getptrs(char **);
 void	  prepfile(void);
 void	  prints(char *, int);
@@ -469,17 +463,6 @@ getargs(int ac, char *av[])
 		case 'z':			/* squeeze col width */
 			flags |= SQUEEZE;
 			break;
-		case 'o':			/* col order */
-			getlist(&cord, optarg);
-			break;
-		case 'b':
-			flags |= ICOLBOUNDS;
-			getlist(&icbd, optarg);
-			break;
-		case 'B':
-			flags |= OCOLBOUNDS;
-			getlist(&ocbd, optarg);
-			break;
 		default:
 			usage();
 		}
@@ -494,56 +477,17 @@ getargs(int ac, char *av[])
 			warnx("columns value %s", errstr);
 			usage();
 		}
+		/* FALLTHROUGH */
 	case 1:
 		orows = strtonum(av[0], 0, INT_MAX, &errstr);
 		if (errstr) {
 			warnx("columns value %s", errstr);
 			usage();
 		}
+		/* FALLTHROUGH */
 	case 0:
 		break;
 	default:
 		usage();
 	}
-}
-
-char *
-getlist(short **list, char *p)
-{
-	int count = 1;
-	char *t, *ep;
-	long l;
-
-	for (t = p + 1; *t; t++) {
-		if (!isdigit(*t)) {
-			warnx("option -%c requires a list of unsigned numbers separated by commas", *t);
-			usage();
-		}
-		count++;
-		while (*t && isdigit(*t))
-			t++;
-		if (*t != ',')
-			break;
-	}
-	if (!(*list = (short *) malloc(count * sizeof(short))))
-		errx(1, "No list space");
-	count = 0;
-	for (t = p + 1; *t; t++) {
-		errno = 0;
-		l = strtol(t, &ep, 10);
-		if (t == ep)
-			break;		/* can't happen */
-		if ((errno == ERANGE && (l == LONG_MAX || l == LONG_MIN)) ||
-		    (l > SHRT_MAX || l < SHRT_MIN)) {
-			warnx("list value out of range");
-			usage();
-		}
-		(*list)[count++] = (short)l;
-		printf("++ %d ", (*list)[count-1]);
-		fflush(stdout);
-		if (*(t = ep) != ',')
-			break;
-	}
-	(*list)[count] = 0;
-	return(t - 1);
 }
