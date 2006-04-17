@@ -1,4 +1,4 @@
-/* $OpenBSD: mouse_protocols.c,v 1.10 2004/12/05 04:03:53 jsg Exp $ */
+/* $OpenBSD: mouse_protocols.c,v 1.11 2006/04/17 08:42:41 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -72,7 +72,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <setjmp.h>
 #include <signal.h>
 #include <poll.h>
 #include <stdio.h>
