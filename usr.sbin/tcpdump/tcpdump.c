@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.50 2006/03/13 19:05:56 moritz Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.51 2006/04/17 23:49:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.50 2006/03/13 19:05:56 moritz Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.51 2006/04/17 23:49:59 deraadt Exp $ (LBL)";
 #endif
 
 /*
@@ -213,30 +213,24 @@ extern char *optarg;
 int
 main(int argc, char **argv)
 {
-	register int cnt, op, i;
+	int cnt = -1, op, i;
 	bpf_u_int32 localnet, netmask;
-	register char *cp, *infile, *device, *RFileName, *WFileName;
+	char *cp, *infile = NULL, *device = NULL, *RFileName = NULL;
+	char ebuf[PCAP_ERRBUF_SIZE], *WFileName = NULL;
 	pcap_handler printer;
 	struct bpf_program *fcode;
 	RETSIGTYPE (*oldhandler)(int);
 	u_char *pcap_userdata;
-	char ebuf[PCAP_ERRBUF_SIZE];
 	u_int dlt = (u_int) -1;
-
-	cnt = -1;
-	device = NULL;
-	infile = NULL;
-	RFileName = NULL;
-	WFileName = NULL;
-
-	if (priv_init(argc, argv))
-		error("Failed to setup privsep");
 
 	/* state: STATE_INIT */
 	if ((cp = strrchr(argv[0], '/')) != NULL)
 		program_name = cp + 1;
 	else
 		program_name = argv[0];
+
+	if (priv_init(argc, argv))
+		error("Failed to setup privsep");
 
 	if (abort_on_misalignment(ebuf, sizeof(ebuf)) < 0)
 		error("%s", ebuf);
