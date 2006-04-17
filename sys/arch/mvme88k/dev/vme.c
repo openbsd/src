@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.41 2006/04/17 18:26:26 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.42 2006/04/17 18:27:30 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -584,11 +584,16 @@ void
 vmesyscon_init(sc)
 	struct vmesoftc *sc;
 {
+	u_int32_t ucsr;
+
 	/*
-	 * Nothing to do - though we ought to check the settings and
-	 * print them.  Abort button vector has already been setup in
-	 * sysconattach().
+	 * Force a reasonable timeout for VME data transfers.
+	 * We can not disable this, this would cause autoconf to hang
+	 * on the first missing device we'll probe.
 	 */
+	ucsr = *(volatile u_int32_t*)MVME188_UCSR;
+	ucsr = (ucsr & ~VTOSELBITS) | VTO128US;
+	*(volatile u_int32_t *)MVME188_UCSR = ucsr;
 }
 #endif /* NSYSCON */
 

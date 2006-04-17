@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.24 2006/04/15 15:45:21 miod Exp $ */
+/*	$OpenBSD: syscon.c,v 1.25 2006/04/17 18:27:30 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -128,6 +128,11 @@ sysconattach(parent, self, args)
 	struct sysconsoftc *sc = (struct sysconsoftc *)self;
 
 	printf("\n");
+
+	/*
+	 * Clear SYSFAIL if lit.
+	 */
+	*(volatile u_int32_t *)MVME188_UCSR |= UCSR_DRVSFBIT;
 
 	/*
 	 * pseudo driver, abort interrupt handler
