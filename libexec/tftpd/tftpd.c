@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.41 2006/01/23 17:29:22 millert Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.42 2006/04/17 08:42:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.41 2006/01/23 17:29:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.42 2006/04/17 08:42:05 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -220,7 +220,7 @@ main(int argc, char *argv[])
 		syslog(LOG_ERR, "getsockname: %m");
 		exit(1);
 	}
-	
+
 	switch (s_in.ss_family) {
 	case AF_INET:
 		if (setsockopt(fd, IPPROTO_IP, IP_RECVDSTADDR, &on,
@@ -247,7 +247,7 @@ main(int argc, char *argv[])
 	msg.msg_iovlen = 1;
 	msg.msg_control = cbuf;
 	msg.msg_controllen = CMSG_LEN(sizeof(struct sockaddr_storage));
-	
+
 	n = recvmsg(fd, &msg, 0);
 	if (n < 0) {
 		syslog(LOG_ERR, "recvmsg: %m");
@@ -334,7 +334,7 @@ main(int argc, char *argv[])
 			break;
 		}
 	}
-			
+
 	if (bind(peer, (struct sockaddr *)&s_in, s_in.ss_len) < 0) {
 		syslog(LOG_ERR, "bind: %m");
 		exit(1);
@@ -427,8 +427,7 @@ option_fail:
 		if (to < 1 || to > 255) {
 			nak(EBADOP);
 			exit(1);
-		}
-		else if (to <= max_rexmtval)
+		} else if (to <= max_rexmtval)
 			options[OPT_TIMEOUT].o_reply = rexmtval = to;
 		else
 			options[OPT_TIMEOUT].o_request = NULL;
@@ -677,7 +676,8 @@ send_ack:
 		if (size != (n-4)) {			/* ahem */
 			if (size < 0)
 				nak(errno + 100);
-			else nak(ENOSPACE);
+			else
+				nak(ENOSPACE);
 			goto abort;
 		}
 	} while (size == SEGSIZE);
