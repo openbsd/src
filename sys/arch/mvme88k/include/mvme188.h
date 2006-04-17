@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.24 2006/04/17 18:26:28 miod Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.25 2006/04/17 18:28:19 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -181,7 +181,7 @@
 #define MASK_LVL_4		(LVL7 | LVL6 | LVL5)
 #define MASK_LVL_5		(LVL7 | LVL6)
 #define MASK_LVL_6		(LVL7)
-#define MASK_LVL_7		0x00000000 /* all ints disabled */
+#define MASK_LVL_7		(IRQ_ABORT)
 
 #define INT_LEVEL	        8		/* # of interrupt level + 1 */
 #define ISR_GET_CURRENT_MASK(cpu) \
