@@ -1,4 +1,4 @@
-/*	$OpenBSD: adt7460.c,v 1.12 2006/04/14 15:48:41 deraadt Exp $	*/
+/*	$OpenBSD: adt7460.c,v 1.13 2006/04/17 06:20:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -61,9 +61,9 @@
 
 struct adt_chip {
 	const char	*name;
-	short	ratio[5];
-	int	type;
-	short	vcc;
+	short		ratio[5];
+	int		type;
+	short		vcc;
 } adt_chips[] = {
 	/* register	0x20  0x21  0x22  0x23  0x24	type	*/
 	/* 		2.5v  vccp   vcc    5v   12v		*/
@@ -76,14 +76,13 @@ struct adt_chip {
 	{ "emc6d100",	{ 2500, 2250, 3300, 5000, 12000 },	6100,	   0 },
 	{ "emc6w201",	{ 2500, 2250, 3300, 5000, 12000 },	6201,	   0 },
 	{ "lm96000",	{ 2500, 2250, 3300, 5000, 12000 },	96000,	   0 },
-	{ "sch5017",	{ 2500, 2250, 3300, 5000, 12000 },	5017,	   0 }
+	{ "sch5017",	{ 5000, 2250, 3300, 5000, 12000 },	5017,	   0 }
 };
 
 struct adt_softc {
 	struct device sc_dev;
 	i2c_tag_t sc_tag;
 	i2c_addr_t sc_addr;
-	int	sc_chip;
 	u_int8_t sc_conf;
 	struct adt_chip *chip;
 
@@ -151,7 +150,7 @@ adt_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (sc->sc_chip == 7460) {
+	if (sc->chip->type == 7460) {
 		data = 1;
 		cmd = ADT7460_CONFIG;
 		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
@@ -174,6 +173,9 @@ adt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sensor[ADT_2_5V].type = SENSOR_VOLTS_DC;
 	strlcpy(sc->sc_sensor[ADT_2_5V].desc, "+2.5Vin",
 	    sizeof(sc->sc_sensor[ADT_2_5V].desc));
+	if (sc->chip->type == 5017)
+		strlcpy(sc->sc_sensor[ADT_2_5V].desc, "+5VTR",
+		    sizeof(sc->sc_sensor[ADT_2_5V].desc));
 
 	sc->sc_sensor[ADT_VCCP].type = SENSOR_VOLTS_DC;
 	strlcpy(sc->sc_sensor[ADT_VCCP].desc, "Vccp",
