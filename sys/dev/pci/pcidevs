@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1056 2006/04/17 01:45:35 jsg Exp $
+$OpenBSD: pcidevs,v 1.1057 2006/04/17 05:03:37 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -284,6 +284,7 @@ vendor	ADDTRON		0x4033	Addtron
 vendor	INDCOMPSRC	0x494f	Industrial Computer Source
 vendor	NETVIN		0x4a14	NetVin
 vendor	GEMTEK		0x5046	Gemtek
+vendor	TURTLEBEACH	0x5053	Turtle Beach
 vendor	S3		0x5333	S3
 vendor	C4T		0x6374	c't Magazin
 vendor	INTEL		0x8086	Intel
@@ -1076,6 +1077,7 @@ product CIRRUS CL_GD7541	0x1204	CL-GD7541
 product CIRRUS CS4610		0x6001	CS4610 SoundFusion
 product CIRRUS CS4615		0x6004	CS4615
 product CIRRUS CS4280		0x6003	CS4280/46xx CrystalClear
+product CIRRUS CS4615		0x6004	CS4615
 product CIRRUS CS4281		0x6005	CS4281 CrystalClear
 
 /* CMD Technology products -- info gleaned from www.cmd.com */
@@ -3224,6 +3226,9 @@ product TVIA CP5000		0x5000	CyberPro 5000
 product TVIA CP5050		0x5050	CyberPro 5050
 product TVIA CP5202		0x5202	CyberPro 5202
 product TVIA CP5252		0x5252	CyberPro 5252
+
+/* Turtle Beach products */
+product TURTLEBEACH SANTA_CRUZ	0x3357	Santa Cruz
 
 /* UMC products */
 product UMC UM82C881		0x0001	UM82C881 486
