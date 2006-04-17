@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2006/04/17 12:03:19 ray Exp $
+#	$OpenBSD: Makefile,v 1.21 2006/04/17 15:52:18 xsa Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -467,7 +467,7 @@ test-rcs-iflag: clean
 	@test -f file
 	@test ! -s file
 	@rm -f file
-	@${CO} -l file
+	@${CO} -q -l file
 	@echo text >> file
 	@${CI} -q file
 	@fgrep -q 1.1 RCS/file,v
