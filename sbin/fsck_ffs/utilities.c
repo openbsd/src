@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.28 2006/04/17 19:18:09 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.29 2006/04/17 19:22:29 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: utilities.c,v 1.28 2006/04/17 19:18:09 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: utilities.c,v 1.29 2006/04/17 19:22:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -478,10 +478,9 @@ getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 void
 catch(int n)
 {
-	/* XXX signal race */
 	if (!doinglevel2)
-		ckfini(0);
-	exit(12);
+		ckfini(0);			/* XXX signal race */
+	_exit(12);
 }
 
 /*
