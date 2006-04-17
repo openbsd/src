@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.16 2006/04/17 00:48:14 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.17 2006/04/17 16:46:39 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -45,9 +45,11 @@ uint32_t	mfi_debug = 0
 		    | MFI_D_CMD
 		    | MFI_D_INTR
 		    | MFI_D_MISC
-/*		    | MFI_D_DMA */
-/*		    | MFI_D_IOCTL */
+		    | MFI_D_DMA
+		    | MFI_D_IOCTL
 /*		    | MFI_D_RW */
+		    | MFI_D_MEM
+		    | MFI_D_CCB
 		;
 #endif
 
@@ -91,6 +93,8 @@ mfi_get_ccb(struct mfi_softc *sc)
 	}
 	splx(s);
 
+	DNPRINTF(MFI_D_CCB, "%s: mfi_get_ccb: %p\n", DEVNAME(sc), ccb);
+
 	return (ccb);
 }
 
@@ -99,6 +103,8 @@ mfi_put_ccb(struct mfi_ccb *ccb)
 {
 	struct mfi_softc	*sc = ccb->ccb_sc;
 	int			s;
+
+	DNPRINTF(MFI_D_CCB, "%s: mfi_put_ccb: %p\n", DEVNAME(sc), ccb);
 
 	s = splbio();
 	ccb->ccb_state = MFI_CCB_FREE;
@@ -115,6 +121,8 @@ mfi_init_ccb(struct mfi_softc *sc)
 	struct mfi_ccb		*ccb;
 	uint32_t		i;
 	int			error;
+
+	DNPRINTF(MFI_D_CCB, "%s: mfi_init_ccb\n", DEVNAME(sc));
 
 	sc->sc_ccb = malloc(sizeof(struct mfi_ccb) * sc->sc_max_cmds,
 	    M_DEVBUF, M_WAITOK);
@@ -185,6 +193,9 @@ mfi_allocmem(struct mfi_softc *sc, size_t size)
 	struct mfi_mem		*mm;
 	int			nsegs;
 
+	DNPRINTF(MFI_D_MEM, "%s: mfi_allocmem: %d\n", DEVNAME(sc),
+	    size);
+
 	mm = malloc(sizeof(struct mfi_mem), M_DEVBUF, M_NOWAIT);
 	if (mm == NULL)
 		return (NULL);
@@ -192,7 +203,7 @@ mfi_allocmem(struct mfi_softc *sc, size_t size)
 	memset(mm, 0, sizeof(struct mfi_mem));
 	mm->am_size = size;
 
-	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 64,
+	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &mm->am_map) != 0)
 		goto amfree; 
 
@@ -226,6 +237,8 @@ amfree:
 void
 mfi_freemem(struct mfi_softc *sc, struct mfi_mem *mm)
 {
+	DNPRINTF(MFI_D_MEM, "%s: mfi_freemem: %p\n", DEVNAME(sc), mm);
+
 	bus_dmamap_unload(sc->sc_dmat, mm->am_map);
 	bus_dmamem_unmap(sc->sc_dmat, mm->am_kva, mm->am_size);
 	bus_dmamem_free(sc->sc_dmat, &mm->am_seg, 1);
@@ -295,6 +308,8 @@ mfi_transition_firmware(struct mfi_softc *sc)
 void
 mfiminphys(struct buf *bp)
 {
+	DNPRINTF(MFI_D_MISC, "mfiminphys: %d\n", bp->b_bcount);
+
 #define MFI_MAXFER 4096
 	if (bp->b_bcount > MFI_MAXFER)
 		bp->b_bcount = MFI_MAXFER;
@@ -305,6 +320,8 @@ int
 mfi_attach(struct mfi_softc *sc)
 {
 	uint32_t	status, frames;
+
+	DNPRINTF(MFI_D_MISC, "%s: mfi_attach\n", DEVNAME(sc));
 
 	if (mfi_transition_firmware(sc))
 		return (1);
@@ -332,6 +349,12 @@ mfi_attach(struct mfi_softc *sc)
 	sc->sc_frames = mfi_allocmem(sc, sc->sc_frames_size * sc->sc_max_cmds);
 	if (sc->sc_frames == NULL) {
 		printf("%s: unable to allocate frame memory\n", DEVNAME(sc));
+		goto noframe;
+	}
+	/* XXX hack, fix this */
+	if (MFIMEM_DVA(sc->sc_frames) & 0x3f) {
+		printf("%s: improper frame alignment (%#x) FIXME\n",
+		    DEVNAME(sc), MFIMEM_DVA(sc->sc_pcq));
 		goto noframe;
 	}
 
@@ -376,6 +399,8 @@ mfi_intr(void *arg)
 	/* write status back to acknowledge interrupt */
 	mfi_write(sc, MFI_OSTS, status);
 
+	DNPRINTF(MFI_D_INTR, "%s: mfi_intr\n", DEVNAME(sc));
+
 	pcq = MFIMEM_KVA(sc->sc_pcq);
 	producer = pcq->mpc_producer;
 	consumer = pcq->mpc_consumer;
@@ -406,6 +431,7 @@ int
 mfi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
     struct proc *p)
 {
+	DNPRINTF(MFI_D_IOCTL, "mfi_scsi_ioctl\n");
 #if 0
 	struct ami_softc *sc = (struct ami_softc *)link->adapter_softc;
 
@@ -420,6 +446,7 @@ mfi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
 int
 mfi_scsi_cmd(struct scsi_xfer *xs)
 {
+	DNPRINTF(MFI_D_CMD, "mfi_scsi_cmd\n");
 #if 0
 	struct scsi_link *link = xs->sc_link;
 	struct ami_softc *sc = link->adapter_softc;

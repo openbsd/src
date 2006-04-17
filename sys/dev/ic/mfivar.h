@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.10 2006/04/17 00:48:14 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.11 2006/04/17 16:46:39 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -28,6 +28,8 @@ extern uint32_t			mfi_debug;
 #define	MFI_D_DMA		0x0008
 #define	MFI_D_IOCTL		0x0010
 #define	MFI_D_RW		0x0020
+#define	MFI_D_MEM		0x0040
+#define	MFI_D_CCB		0x0080
 #else
 #define DPRINTF(x...)
 #define DNPRINTF(n,x...)
