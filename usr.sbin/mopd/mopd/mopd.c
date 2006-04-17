@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopd.c,v 1.13 2005/05/02 02:29:27 djm Exp $ */
+/*	$OpenBSD: mopd.c,v 1.14 2006/04/17 16:23:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -24,9 +24,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
+#ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: mopd.c,v 1.13 2005/05/02 02:29:27 djm Exp $";
+    "$OpenBSD: mopd.c,v 1.14 2006/04/17 16:23:01 deraadt Exp $";
 #endif
 
 /*
@@ -73,9 +73,8 @@ extern char *__progname;
 int
 main(int argc, char *argv[])
 {
-	int		 c, devnull, f;
+	int		 c;
 	char		*interface;
-	pid_t		 pid;
 	struct passwd	*pw;
 
 	extern char version[];

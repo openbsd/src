@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.c,v 1.12 2004/04/14 20:37:28 henning Exp $ */
+/*	$OpenBSD: device.c,v 1.13 2006/04/17 16:23:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -24,9 +24,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
+#ifndef lint
 static const char rcsid[] =
-    "$OpenBSD: device.c,v 1.12 2004/04/14 20:37:28 henning Exp $";
+    "$OpenBSD: device.c,v 1.13 2006/04/17 16:23:01 deraadt Exp $";
 #endif
 
 #include "os.h"

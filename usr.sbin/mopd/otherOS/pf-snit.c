@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf-snit.c,v 1.6 2003/12/01 00:56:51 avsm Exp $ */
+/*	$OpenBSD: pf-snit.c,v 1.7 2006/04/17 16:23:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -24,8 +24,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static const char rcsid[] = "$OpenBSD: pf-snit.c,v 1.6 2003/12/01 00:56:51 avsm Exp $";
+#ifndef lint
+static const char rcsid[] = "$OpenBSD: pf-snit.c,v 1.7 2006/04/17 16:23:01 deraadt Exp $";
 #endif
 
 #include <stdio.h>
