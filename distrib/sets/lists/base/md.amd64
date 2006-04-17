@@ -1268,6 +1268,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pckbc/psmreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pckbc/wskbdmap_mfii.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pcmcia
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pcmcia/cfxgareg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pcmcia/gprio.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pcmcia/if_cnwreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pcmcia/if_rayreg.ph
