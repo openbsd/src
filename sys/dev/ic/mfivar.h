@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.9 2006/04/16 23:35:43 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.10 2006/04/17 00:48:14 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -53,19 +53,16 @@ struct mfi_prod_cons {
 struct mfi_ccb {
 	struct mfi_softc	*ccb_sc;
 
-	union mfi_frame		ccb_frame;
+	union mfi_frame		*ccb_frame;
 	paddr_t			ccb_pframe;
 
-#if 0
-	struct ami_iocmd	ccb_cmd;
-	struct ami_passthrough	*ccb_pt;
-	paddr_t			ccb_ptpa;
-	struct ami_sgent	*ccb_sglist;
-	paddr_t			ccb_sglistpa;
-	int			ccb_offset;
+	struct mfi_sense	*ccb_sense;
+	paddr_t			ccb_psense;
+
 	bus_dmamap_t		ccb_dmamap;
-#endif
+
 	struct scsi_xfer	*ccb_xs;
+
 	void			(*ccb_done)(struct mfi_softc *sc,
 				    struct mfi_ccb *ccb);
 
@@ -97,11 +94,15 @@ struct mfi_softc {
 	uint32_t		sc_max_cmds;
 	uint32_t		sc_max_sgl;
 
+	/* all commands */
+	struct mfi_ccb		*sc_ccb;
+
 	/* producer/consumer pointers and reply queue */
 	struct mfi_mem		*sc_pcq;
 
 	/* frame memory */
 	struct mfi_mem		*sc_frames;
+	uint32_t		sc_frames_size;
 
 	/* sense memory */
 	struct mfi_mem		*sc_sense;

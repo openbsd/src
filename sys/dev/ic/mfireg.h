@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.6 2006/04/16 23:35:43 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.7 2006/04/17 00:48:14 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -215,6 +215,11 @@ typedef enum {
 #define MFI_DEFAULT_ID				-1
 #define MFI_MAX_LUN				8
 #define MFI_MAX_LD				64
+
+/* sense buffer */
+struct mfi_sense {
+	uint8_t			mse_data[MFI_SENSE_SIZE];
+} __packed;
 
 /* scatter gather elements */
 struct mfi_sg32 {

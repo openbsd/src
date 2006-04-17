@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.15 2006/04/16 23:39:43 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.16 2006/04/17 00:48:14 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -69,6 +69,7 @@ struct scsi_device mfi_dev = {
 
 struct mfi_ccb	*mfi_get_ccb(struct mfi_softc *);
 void		mfi_put_ccb(struct mfi_ccb *);
+int		mfi_init_ccb(struct mfi_softc *);
 
 u_int32_t	mfi_read(struct mfi_softc *, bus_size_t);
 void		mfi_write(struct mfi_softc *, bus_size_t, u_int32_t);
@@ -106,6 +107,53 @@ mfi_put_ccb(struct mfi_ccb *ccb)
 	ccb->ccb_done = NULL;
 	TAILQ_INSERT_TAIL(&sc->sc_ccb_freeq, ccb, ccb_link);
 	splx(s);
+}
+
+int
+mfi_init_ccb(struct mfi_softc *sc)
+{
+	struct mfi_ccb		*ccb;
+	uint32_t		i;
+	int			error;
+
+	sc->sc_ccb = malloc(sizeof(struct mfi_ccb) * sc->sc_max_cmds,
+	    M_DEVBUF, M_WAITOK);
+	memset(sc->sc_ccb, 0, sizeof(struct mfi_ccb) * sc->sc_max_cmds);
+
+	for (i = 0; i < sc->sc_max_cmds; i++) {
+		ccb = &sc->sc_ccb[i];
+
+		ccb->ccb_sc = sc;
+
+		/* select i'th frame */
+		ccb->ccb_frame = (union mfi_frame *)
+		    (MFIMEM_KVA(sc->sc_frames) + sc->sc_frames_size * i);
+		ccb->ccb_pframe = htole32(
+		    MFIMEM_DVA(sc->sc_frames) + sc->sc_frames_size * i);
+		ccb->ccb_frame->mfr_header.mfh_context = i;
+
+		/* select i'th sense */
+		ccb->ccb_sense = (struct mfi_sense *)
+		    (MFIMEM_KVA(sc->sc_sense) + MFI_SENSE_SIZE * i);
+		ccb->ccb_psense = htole32(
+		    (MFIMEM_DVA(sc->sc_sense) + MFI_SENSE_SIZE * i));
+
+		/* create a dma map for transfer */
+		error = bus_dmamap_create(sc->sc_dmat,
+		    sc->sc_max_sgl * PAGE_SIZE,
+		    sc->sc_max_sgl, sc->sc_max_sgl * PAGE_SIZE, 0,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ccb->ccb_dmamap);
+		if (error) {
+			printf("%s: cannot create ccb dmamap (%d)\n",
+			    DEVNAME(sc), error);
+			goto destroy;
+		}
+	}
+
+	return (0);
+destroy:
+	/* XXX free dma maps */
+	return (1);
 }
 
 u_int32_t
@@ -280,25 +328,32 @@ mfi_attach(struct mfi_softc *sc)
 	/* we are not doing 64 bit IO so only calculate # of 32 bit frames */
 	frames = (sizeof(struct mfi_sg32) * sc->sc_max_sgl +
 	    MFI_FRAME_SIZE - 1) / MFI_FRAME_SIZE + 1;
-	sc->sc_frames = mfi_allocmem(sc, frames * MFI_FRAME_SIZE);
+	sc->sc_frames_size = frames * MFI_FRAME_SIZE;
+	sc->sc_frames = mfi_allocmem(sc, sc->sc_frames_size * sc->sc_max_cmds);
 	if (sc->sc_frames == NULL) {
-		printf("%s: unable to allocate frame memory\n",
-		    DEVNAME(sc));
+		printf("%s: unable to allocate frame memory\n", DEVNAME(sc));
 		goto noframe;
 	}
 
 	/* sense memory */
 	sc->sc_sense = mfi_allocmem(sc, sc->sc_max_cmds * MFI_SENSE_SIZE);
 	if (sc->sc_sense == NULL) {
-		printf("%s: unable to allocate sense memory\n",
-		    DEVNAME(sc));
+		printf("%s: unable to allocate sense memory\n", DEVNAME(sc));
 		goto nosense;
+	}
+
+	/* now that we have all memory bits go initialize ccbs */
+	if (mfi_init_ccb(sc)) {
+		printf("%s: could not init ccb list\n", DEVNAME(sc));
+		goto noinit;
 	}
 
 	/* enable interrupts */
 	mfi_write(sc, MFI_OMSK, MFI_ENABLE_INTR);
 
 	return (0);
+noinit:
+	mfi_freemem(sc, sc->sc_sense);
 nosense:
 	mfi_freemem(sc, sc->sc_frames);
 noframe:
