@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.28 2003/06/11 23:42:12 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.29 2006/04/17 16:17:03 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.28 2003/06/11 23:42:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.29 2006/04/17 16:17:03 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,8 +95,10 @@ int mutex = 0;			/* if set, signals set "sigflags" */
 int red = 0;			/* if set, restrict shell/directory access */
 int scripted = 0;		/* if set, suppress diagnostics */
 int sigflags = 0;		/* if set, signals received while mutex set */
-int sigactive = 0;		/* if set, signal handlers are enabled */
 int interactive = 0;		/* if set, we are in interactive mode */
+
+/* if set, signal handlers are enabled */
+volatile sig_atomic_t sigactive = 0;
 
 char old_filename[MAXPATHLEN] = "";	/* default filename */
 int current_addr;		/* current address in editor buffer */
@@ -1417,6 +1419,7 @@ handle_hup(int signo)
 	if (!sigactive)
 		quit(1);
 	sigflags &= ~(1 << (signo - 1));
+	/* XXX signal race */
 	if (addr_last && write_file("ed.hup", "w", 1, addr_last) < 0 &&
 	    home != NULL &&
 	    strlen(home) + sizeof("/ed.hup") <= MAXPATHLEN) {
