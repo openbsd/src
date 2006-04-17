@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.27 2006/04/07 11:25:37 pedro Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.28 2006/04/17 19:18:09 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: utilities.c,v 1.27 2006/04/07 11:25:37 pedro Exp $";
+static const char rcsid[] = "$OpenBSD: utilities.c,v 1.28 2006/04/17 19:18:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,6 @@ int
 ftypeok(struct ufs1_dinode *dp)
 {
 	switch (dp->di_mode & IFMT) {
-
 	case IFDIR:
 	case IFREG:
 	case IFBLK:
@@ -75,7 +74,6 @@ ftypeok(struct ufs1_dinode *dp)
 	case IFSOCK:
 	case IFIFO:
 		return (1);
-
 	default:
 		if (debug)
 			printf("bad file type 0%o\n", dp->di_mode);
@@ -86,8 +84,7 @@ ftypeok(struct ufs1_dinode *dp)
 int
 reply(char *question)
 {
-	int persevere;
-	int c;
+	int persevere, c;
 
 	if (preen)
 		pfatal("INTERNAL ERROR: GOT TO reply()");
@@ -102,6 +99,7 @@ reply(char *question)
 		printf("%s? yes\n\n", question);
 		return (1);
 	}
+
 	do {
 		printf("%s? [Fyn?] ", question);
 		(void) fflush(stdout);
@@ -151,7 +149,6 @@ bufinit(void)
 			if (i >= MINBUFS) {
 				free(bp);
 				free(bufp);
-				
 				break;
 			}
 			errexit("cannot allocate buffer pool\n");
@@ -254,6 +251,7 @@ ckfini(int markclean)
 
 	if (fswritefd < 0) {
 		(void)close(fsreadfd);
+		fsreadfd = -1;
 		return;
 	}
 	sblock.fs_flags &= ~FS_FLAGS_UPDATED; /* Force update on next mount */
@@ -294,7 +292,9 @@ ckfini(int markclean)
 		printf("cache missed %ld of %ld (%d%%)\n", diskreads,
 		    totalreads, (int)(diskreads * 100 / totalreads));
 	(void)close(fsreadfd);
+	fsreadfd = -1;
 	(void)close(fswritefd);
+	fswritefd = -1;
 }
 
 int
@@ -560,10 +560,9 @@ char *info_filesys = "?";
 void
 catchinfo(int signo)
 {
-	int save_errno = errno;
-	char buf[1024];
+	int save_errno = errno, fd;
 	struct iovec iov[4];
-	int fd;
+	char buf[1024];
 
 	if (info_fn != NULL && info_fn(buf, sizeof buf)) {
 		fd = open(_PATH_TTY, O_WRONLY);

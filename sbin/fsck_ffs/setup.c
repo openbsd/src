@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.23 2006/03/09 13:35:02 pedro Exp $	*/
+/*	$OpenBSD: setup.c,v 1.24 2006/04/17 19:18:08 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static const char rcsid[] = "$OpenBSD: setup.c,v 1.23 2006/03/09 13:35:02 pedro Exp $";
+static const char rcsid[] = "$OpenBSD: setup.c,v 1.24 2006/04/17 19:18:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,8 +73,7 @@ long numdirs, listmax, inplast;
 int
 setup(char *dev)
 {
-	long cg, size, asked, i, j;
-	long bmapsize;
+	long cg, size, asked, i, j, bmapsize;
 	struct disklabel *lp;
 	off_t sizepb;
 	struct stat statb;
@@ -135,12 +134,12 @@ setup(char *dev)
 		}
 		if (cg >= proto.fs_ncg) {
 			printf("%s %s\n%s %s\n%s %s\n",
-				"SEARCH FOR ALTERNATE SUPER-BLOCK",
-				"FAILED. YOU MUST USE THE",
-				"-b OPTION TO FSCK_FFS TO SPECIFY THE",
-				"LOCATION OF AN ALTERNATE",
-				"SUPER-BLOCK TO SUPPLY NEEDED",
-				"INFORMATION; SEE fsck_ffs(8).");
+			    "SEARCH FOR ALTERNATE SUPER-BLOCK",
+			    "FAILED. YOU MUST USE THE",
+			    "-b OPTION TO FSCK_FFS TO SPECIFY THE",
+			    "LOCATION OF AN ALTERNATE",
+			    "SUPER-BLOCK TO SUPPLY NEEDED",
+			    "INFORMATION; SEE fsck_ffs(8).");
 			return(0);
 		}
 		doskipclean = 0;
@@ -177,7 +176,7 @@ setup(char *dev)
 	}
 	if ((sblock.fs_minfree < 0 || sblock.fs_minfree > 99)) {
 		pfatal("IMPOSSIBLE MINFREE=%d IN SUPERBLOCK",
-			sblock.fs_minfree);
+		    sblock.fs_minfree);
 		if (reply("SET TO DEFAULT") == 1) {
 			sblock.fs_minfree = 10;
 			sbdirty();
@@ -186,7 +185,7 @@ setup(char *dev)
 	if (sblock.fs_interleave < 1 ||
 	    sblock.fs_interleave > sblock.fs_nsect) {
 		pwarn("IMPOSSIBLE INTERLEAVE=%d IN SUPERBLOCK",
-			sblock.fs_interleave);
+		    sblock.fs_interleave);
 		sblock.fs_interleave = 1;
 		if (preen)
 			printf(" (FIXED)\n");
@@ -198,7 +197,7 @@ setup(char *dev)
 	if (sblock.fs_npsect < sblock.fs_nsect ||
 	    sblock.fs_npsect > sblock.fs_nsect*2) {
 		pwarn("IMPOSSIBLE NPSECT=%d IN SUPERBLOCK",
-			sblock.fs_npsect);
+		    sblock.fs_npsect);
 		sblock.fs_npsect = sblock.fs_nsect;
 		if (preen)
 			printf(" (FIXED)\n");
@@ -209,7 +208,7 @@ setup(char *dev)
 	}
 	if (sblock.fs_bmask != ~(sblock.fs_bsize - 1)) {
 		pwarn("INCORRECT BMASK=%x IN SUPERBLOCK",
-			sblock.fs_bmask);
+		    sblock.fs_bmask);
 		sblock.fs_bmask = ~(sblock.fs_bsize - 1);
 		if (preen)
 			printf(" (FIXED)\n");
@@ -220,7 +219,7 @@ setup(char *dev)
 	}
 	if (sblock.fs_fmask != ~(sblock.fs_fsize - 1)) {
 		pwarn("INCORRECT FMASK=%x IN SUPERBLOCK",
-			sblock.fs_fmask);
+		    sblock.fs_fmask);
 		sblock.fs_fmask = ~(sblock.fs_fsize - 1);
 		if (preen)
 			printf(" (FIXED)\n");
@@ -232,7 +231,7 @@ setup(char *dev)
 	if (sblock.fs_inodefmt >= FS_44INODEFMT) {
 		if (sblock.fs_maxfilesize != maxfilesize) {
 			pwarn("INCORRECT MAXFILESIZE=%llu IN SUPERBLOCK",
-				(unsigned long long)sblock.fs_maxfilesize);
+			    (unsigned long long)sblock.fs_maxfilesize);
 			sblock.fs_maxfilesize = maxfilesize;
 			if (preen)
 				printf(" (FIXED)\n");
@@ -243,7 +242,7 @@ setup(char *dev)
 		}
 		if (sblock.fs_maxsymlinklen != MAXSYMLINKLEN_UFS1) {
 			pwarn("INCORRECT MAXSYMLINKLEN=%d IN SUPERBLOCK",
-				sblock.fs_maxsymlinklen);
+			    sblock.fs_maxsymlinklen);
 			sblock.fs_maxsymlinklen = MAXSYMLINKLEN_UFS1;
 			if (preen)
 				printf(" (FIXED)\n");
@@ -254,7 +253,7 @@ setup(char *dev)
 		}
 		if (sblock.fs_qbmask != ~sblock.fs_bmask) {
 			pwarn("INCORRECT QBMASK=%lx IN SUPERBLOCK",
-				(unsigned long)sblock.fs_qbmask);
+			    (unsigned long)sblock.fs_qbmask);
 			sblock.fs_qbmask = ~sblock.fs_bmask;
 			if (preen)
 				printf(" (FIXED)\n");
@@ -265,7 +264,7 @@ setup(char *dev)
 		}
 		if (sblock.fs_qfmask != ~sblock.fs_fmask) {
 			pwarn("INCORRECT QFMASK=%lx IN SUPERBLOCK",
-				(unsigned long)sblock.fs_qfmask);
+			    (unsigned long)sblock.fs_qfmask);
 			sblock.fs_qfmask = ~sblock.fs_fmask;
 			if (preen)
 				printf(" (FIXED)\n");
@@ -411,17 +410,28 @@ readsb(int listerr)
 	/*
 	 * run a few consistency checks of the super block
 	 */
-	if (sblock.fs_magic != FS_MAGIC)
-		{ badsb(listerr, "MAGIC NUMBER WRONG"); return (0); }
-	if (sblock.fs_ncg < 1)
-		{ badsb(listerr, "NCG OUT OF RANGE"); return (0); }
-	if (sblock.fs_cpg < 1)
-		{ badsb(listerr, "CPG OUT OF RANGE"); return (0); }
+	if (sblock.fs_magic != FS_MAGIC) {
+		badsb(listerr, "MAGIC NUMBER WRONG");
+		return (0);
+	}
+	if (sblock.fs_ncg < 1) {
+		badsb(listerr, "NCG OUT OF RANGE");
+		return (0);
+	}
+	if (sblock.fs_cpg < 1) {
+		badsb(listerr, "CPG OUT OF RANGE");
+		return (0);
+	}
 	if (sblock.fs_ncg * sblock.fs_cpg < sblock.fs_ncyl ||
-	    (sblock.fs_ncg - 1) * sblock.fs_cpg >= sblock.fs_ncyl)
-		{ badsb(listerr, "NCYL LESS THAN NCG*CPG"); return (0); }
-	if (sblock.fs_sbsize > SBSIZE)
-		{ badsb(listerr, "SIZE PREPOSTEROUSLY LARGE"); return (0); }
+	    (sblock.fs_ncg - 1) * sblock.fs_cpg >= sblock.fs_ncyl) {
+		badsb(listerr, "NCYL LESS THAN NCG*CPG");
+		return (0);
+	}
+	if (sblock.fs_sbsize > SBSIZE) {
+		badsb(listerr, "SIZE PREPOSTEROUSLY LARGE");
+		return (0);
+	}
+
 	/*
 	 * Compute block size that the filesystem is based on,
 	 * according to fsbtodb, and adjust superblock block number
@@ -453,7 +463,7 @@ readsb(int listerr)
 			}
 		}
 		badsb(listerr,
-		"VALUES IN SUPER BLOCK DISAGREE WITH THOSE IN FIRST ALTERNATE");
+		    "VALUES IN SUPER BLOCK DISAGREE WITH THOSE IN FIRST ALTERNATE");
 		return (0);
 	}
 	havesb = 1;
@@ -497,8 +507,8 @@ calcsb(char *dev, int devfd, struct fs *fs)
 		pp = &lp->d_partitions[*cp - 'a'];
 	if (pp->p_fstype != FS_BSDFFS) {
 		pfatal("%s: NOT LABELED AS A BSD FILE SYSTEM (%s)\n",
-			dev, pp->p_fstype < FSMAXTYPES ?
-			fstypenames[pp->p_fstype] : "unknown");
+		    dev, pp->p_fstype < FSMAXTYPES ?
+		    fstypenames[pp->p_fstype] : "unknown");
 		return (0);
 	}
 	memset(fs, 0, sizeof(struct fs));
