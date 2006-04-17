@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1056 2006/04/17 01:45:35 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1057 2006/04/17 05:03:37 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -289,6 +289,7 @@
 #define	PCI_VENDOR_INDCOMPSRC	0x494f		/* Industrial Computer Source */
 #define	PCI_VENDOR_NETVIN	0x4a14		/* NetVin */
 #define	PCI_VENDOR_GEMTEK	0x5046		/* Gemtek */
+#define	PCI_VENDOR_TURTLEBEACH	0x5053		/* Turtle Beach */
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
 #define	PCI_VENDOR_C4T	0x6374		/* c't Magazin */
 #define	PCI_VENDOR_INTEL	0x8086		/* Intel */
@@ -1081,6 +1082,7 @@
 #define	PCI_PRODUCT_CIRRUS_CS4610	0x6001		/* CS4610 SoundFusion */
 #define	PCI_PRODUCT_CIRRUS_CS4615	0x6004		/* CS4615 */
 #define	PCI_PRODUCT_CIRRUS_CS4280	0x6003		/* CS4280/46xx CrystalClear */
+#define	PCI_PRODUCT_CIRRUS_CS4615	0x6004		/* CS4615 */
 #define	PCI_PRODUCT_CIRRUS_CS4281	0x6005		/* CS4281 CrystalClear */
 
 /* CMD Technology products -- info gleaned from www.cmd.com */
@@ -3229,6 +3231,9 @@
 #define	PCI_PRODUCT_TVIA_CP5050	0x5050		/* CyberPro 5050 */
 #define	PCI_PRODUCT_TVIA_CP5202	0x5202		/* CyberPro 5202 */
 #define	PCI_PRODUCT_TVIA_CP5252	0x5252		/* CyberPro 5252 */
+
+/* Turtle Beach products */
+#define	PCI_PRODUCT_TURTLEBEACH_SANTA_CRUZ	0x3357		/* Santa Cruz */
 
 /* UMC products */
 #define	PCI_PRODUCT_UMC_UM82C881	0x0001		/* UM82C881 486 */

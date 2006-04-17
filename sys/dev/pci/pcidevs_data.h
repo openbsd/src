@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1056 2006/04/17 01:45:35 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1057 2006/04/17 05:03:37 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2717,6 +2717,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4280,
 	    "CS4280/46xx CrystalClear",
+	},
+	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4615,
+	    "CS4615",
 	},
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4281,
@@ -9951,6 +9955,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CyberPro 5252",
 	},
 	{
+	    PCI_VENDOR_TURTLEBEACH, PCI_PRODUCT_TURTLEBEACH_SANTA_CRUZ,
+	    "Santa Cruz",
+	},
+	{
 	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM82C881,
 	    "UM82C881 486",
 	},
@@ -12061,6 +12069,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_GEMTEK,
 	    "Gemtek",
+	},
+	{
+	    PCI_VENDOR_TURTLEBEACH,
+	    "Turtle Beach",
 	},
 	{
 	    PCI_VENDOR_S3,
