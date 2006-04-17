@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.80 2006/03/22 21:03:40 kettenis Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.81 2006/04/17 18:33:00 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -426,19 +426,9 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		 * that some employee was smart enough to keep the numbers
 		 * unique.
 		 */
-		if (iicprobe(0x3f) == 0x52 && iicprobe(0xff) == 0x01 &&
-		    (iicprobe(0xfe) == 0x4c || iicprobe(0xfe) == 0x4d))
-			name = "lm89";		/* lm89 "alike" */
-		else if (iicprobe(0x3f) == 0x33 && iicprobe(0xff) == 0x01 &&
-		    iicprobe(0xfe) == 0x21)
-			name = "lm90";		/* lm90 "alike" */
-		else if (iicprobe(0x3f) == 0x49 && iicprobe(0xff) == 0x01 &&
-		    (iicprobe(0xfe) == 0x31 || iicprobe(0xfe) == 0x34))
-			name = "lm99";		/* lm99 "alike" */
-		else if (iicprobe(0x3f) == 0x73)
+		if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
+		    iicprobe(0x3f) == 0x73)
 			name = "lm93";
-		else if (iicprobe(0x3f) == 0x17)
-			name = "lm86";
 		else if ((addr == 0x2c || addr == 0x2d || addr == 0x2e) &&
 		    iicprobe(0x3f) == 0x68)
 			name = "lm96000";	/* adt7460 compat? */
@@ -478,6 +468,7 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 			name = "ds1780";	/* lm87 clones */
 		break;
 	}
+
 	switch (iicprobe(0x4e)) {
 	case 0x41:		/* Analog Devices */
 		if ((addr == 0x48 || addr == 0x4a || addr == 0x4b) &&
@@ -487,34 +478,77 @@ iic_probe(struct device *self, struct i2cbus_attach_args *iba, u_int8_t addr)
 		break;
 	}
 
-	if (iicprobe(0xfe) == 0x01) {
-		/* Some more National devices ...*/
-		if (iicprobe(0xff) == 0x21 && (iicprobe(0x03) & 0x2a) == 0 &&
-		    iicprobe(0x04) <= 0x09 && iicprobe(0xff))
-			name = "lm90";		/* complete check */
-		else if (addr == 0x4c && iicprobe(0xff) == 0x31 &&
-		    (iicprobe(0x03) & 0x2a) == 0 && iicprobe(0x04) <= 0x09)
-			name = "lm99";
-		else if (addr == 0x4d && iicprobe(0xff) == 0x34 &&
-		    (iicprobe(0x03) & 0x2a) == 0 && iicprobe(0x04) <= 0x09)
-			name = "lm99-1";
-		else if (iicprobe(0xff) == 0x11 &&
-		    (iicprobe(0x03) & 0x2a) == 0 && iicprobe(0x04) <= 0x09)
+	switch(iicprobe(0xfe)) {
+	case 0x01:		/* National Semiconductor */
+		if (addr == 0x4c &&
+		    iicprobe(0xff) == 0x11 && (iicprobe(0x03) & 0x2a) == 0 &&
+		    iicprobe(0x04) <= 0x09 && (iicprobe(0xbf) & 0xf8) == 0)
 			name = "lm86";
-	} else if (iicprobe(0xfe) == 0x4d && iicprobe(0xff) == 0x08) {
-		name = "max6690";	/* somewhat similar to lm90 */
-	} else if ((addr == 0x4c || addr == 0x4d) &&
-	    iicprobe(0xfe) == 0x41 && (iicprobe(0x03) & 0x2a) == 0 &&
-	    iicprobe(0x04) <= 0x09) {
-		name = "adm1032";
-		skip_fc = 1;
-	} else if ((addr == 0x18 || addr == 0x19 || addr == 0x1a ||
-	    addr == 0x29 || addr == 0x2a || addr == 0x2b ||
-	    addr == 0x4c || addr == 0x4d || addr == 0x4e) &&
-	    iicprobe(0xfe) == 0x41 && iicprobe(0x3c) == 0x00) {
-		name = "adm1021";	/* lots of addresses... bleah */
-		skip_fc = 1;
-	} else if (addr == iicprobe(0x48) &&
+		if (addr == 0x4c &&
+		    iicprobe(0xff) == 0x31 && (iicprobe(0x03) & 0x2a) == 0 &&
+		    iicprobe(0x04) <= 0x09 && (iicprobe(0xbf) & 0xf8) == 0)
+			name = "lm89";		/* or lm99 */
+		else if (addr == 0x4d &&
+		    iicprobe(0xff) == 0x34 && (iicprobe(0x03) & 0x2a) == 0 &&
+		    iicprobe(0x04) <= 0x09 && (iicprobe(0xbf) & 0xf8) == 0)
+			name = "lm89-1";	/* or lm99-1 */
+		else if (addr == 0x4c &&
+		    iicprobe(0xff) == 0x21 && (iicprobe(0x03) & 0x2a) == 0 &&
+		    iicprobe(0x04) <= 0x09 && (iicprobe(0xbf) & 0xf8) == 0)
+			name = "lm90";
+		break;
+	case 0x4d:		/* Maxim */
+		if ((addr == 0x18 || addr == 0x19 || addr == 0x1a ||
+		     addr == 0x29 || addr == 0x2a || addr == 0x2b ||
+		     addr == 0x4c || addr == 0x4d || addr == 0x4e) &&
+		    iicprobe(0xff) == 0x08 && (iicprobe(0x02) & 0x03) == 0 &&
+		    (iicprobe(0x03) & 0x07) == 0 && iicprobe(0x04) <= 0x08)
+			name = "max6690";
+		else if ((addr == 0x4c || addr == 0x4d || addr == 0x4e) &&
+		    iicprobe(0xff) == 0x59 && (iicprobe(0x03) & 0x1f) == 0 &&
+		    iicprobe(0x04) <= 0x07)
+			name = "max6646";	/* max6647/8/9, max6692 */
+		else if ((addr == 0x4c || addr == 0x4d || addr == 0x4e) &&
+		    (iicprobe(0x02) & 0x2b) == 0 &&
+		    (iicprobe(0x03) & 0x0f) == 0 && iicprobe(0x04) <= 0x09)
+			name = "max6657";	/* max6658, max6659 */
+		else if ((addr >= 0x48 && addr <= 0x4f) &&
+		    (iicprobe(0x02) & 0x2b) == 0 &&
+		    (iicprobe(0x03) & 0x0f) == 0)
+			name = "max6642";
+		break;
+	case 0x41:
+		if ((addr == 0x4c || addr == 0x4d) &&
+		    iicprobe(0xff) == 0x51 &&
+		    (iicprobe(0x03) & 0x1f) == 0x04 &&
+		    iicprobe(0x04) <= 0x0a) {
+			/* If not in adm1032 compatibility mode. */
+			name = "adt7461";
+		} else if ((addr == 0x18 || addr == 0x19 || addr == 0x1a ||
+		    addr == 0x29 || addr == 0x2a || addr == 0x2b ||
+		    addr == 0x4c || addr == 0x4d || addr == 0x4e) &&
+		    (iicprobe(0xff) & 0xf0) == 0x00 &&
+		    (iicprobe(0x03) & 0x3f) == 0x00 &&
+		    iicprobe(0x04) <= 0x07) {
+			name = "adm1021";
+			skip_fc = 1;
+		} else if ((addr == 0x18 || addr == 0x19 || addr == 0x1a ||
+		    addr == 0x29 || addr == 0x2a || addr == 0x2b ||
+		    addr == 0x4c || addr == 0x4d || addr == 0x4e) &&
+		    (iicprobe(0xff) & 0xf0) == 0x30 &&
+		    (iicprobe(0x03) & 0x3f) == 0x00 &&
+		    iicprobe(0x04) <= 0x07) {
+			name = "adm1023";	/* or adm1021a */
+			skip_fc = 1;
+		} else if ((addr == 0x4c || addr == 0x4d || addr == 0x4e) &&
+		    (iicprobe(0x03) & 0x3f) == 0x00 &&
+		    iicprobe(0x04) <= 0x0a) {
+			name = "adm1032";	/* or adm1020 */
+			skip_fc = 1;
+		}
+	}
+
+	if (addr == iicprobe(0x48) &&
 	    ((iicprobe(0x4f) == 0x5c && (iicprobe(0x4e) & 0x80)) ||
 	    (iicprobe(0x4f) == 0xa3 && !(iicprobe(0x4e) & 0x80)))) {
 		/*
