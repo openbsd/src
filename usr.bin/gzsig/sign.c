@@ -1,4 +1,4 @@
-/* $OpenBSD: sign.c,v 1.6 2005/08/05 14:17:55 jmc Exp $ */
+/* $OpenBSD: sign.c,v 1.7 2006/04/17 09:36:56 moritz Exp $ */
 
 /*
  * sign.c
@@ -222,7 +222,7 @@ sign(int argc, char *argv[])
 
 	qflag = 0;
 	
-	while ((i = getopt(argc, argv, "qvh?f:")) != -1) {
+	while ((i = getopt(argc, argv, "qvf:")) != -1) {
 		switch (i) {
 		case 'q':
 			qflag = 1;
