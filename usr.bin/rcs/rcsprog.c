@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.104 2006/04/15 19:35:19 xsa Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.105 2006/04/17 12:11:07 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -798,6 +798,9 @@ rcs_main(int argc, char **argv)
 
 	if (nflag != NULL)
 		xfree(nflag);
+
+	if (orange != NULL)
+		xfree(orange);
 
 	return (0);
 }
