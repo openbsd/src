@@ -1,4 +1,4 @@
-/*	$OpenBSD: lint1.h,v 1.12 2006/03/08 07:18:51 moritz Exp $	*/
+/*	$OpenBSD: lint1.h,v 1.13 2006/04/18 02:59:40 cloder Exp $	*/
 /*	$NetBSD: lint1.h,v 1.6 1995/10/02 17:31:41 jpo Exp $	*/
 
 /*
@@ -382,5 +382,15 @@ typedef struct cstk {
 	pos_t	c_cfpos;	        /* same for csrc_pos */
 	struct	cstk *c_nxt;		/* outer control statement */
 } cstk_t;
+
+/*
+ * Used to keep information about arguments passed to functions with
+ * prototypes.
+ */
+typedef struct farg {
+	int	fa_num;			/* argument number (1-basde) */
+	sym_t	*fa_sym;		/* argument symbol */
+	tnode_t	*fa_func;		/* function name */
+} farg_t;
 
 #include "externs1.h"

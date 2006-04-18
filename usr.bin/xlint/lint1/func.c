@@ -1,4 +1,4 @@
-/*	$OpenBSD: func.c,v 1.11 2006/03/13 21:12:32 moritz Exp $	*/
+/*	$OpenBSD: func.c,v 1.12 2006/04/18 02:59:40 cloder Exp $	*/
 /*	$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: func.c,v 1.11 2006/03/13 21:12:32 moritz Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.12 2006/04/18 02:59:40 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -488,7 +488,7 @@ label(int typ, sym_t *sym, tnode_t *tn)
 			 */
 			v = constant(tn);
 			nv = xcalloc(1, sizeof (val_t));
-			cvtcon(CASE, 0, ci->c_swtype, nv, v);
+			cvtcon(CASE, NULL, ci->c_swtype, nv, v);
 			free(v);
 
 			/* look if we had this value already */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.7 2005/11/29 20:15:04 cloder Exp $	*/
+/*	$OpenBSD: init.c,v 1.8 2006/04/18 02:59:40 cloder Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/10/02 17:21:37 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: init.c,v 1.7 2005/11/29 20:15:04 cloder Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.8 2006/04/18 02:59:40 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -400,7 +400,7 @@ mkinit(tnode_t *tn)
 	if (!issclt(lt))
 		lerror("mkinit() 1");
 
-	if (!typeok(INIT, 0, ln, tn))
+	if (!typeok(INIT, NULL, ln, tn))
 		goto end;
 
 	/*
@@ -422,7 +422,7 @@ mkinit(tnode_t *tn)
 	}
 
 	if (lt != rt || (initstk->i_type->t_isfield && tn->tn_op == CON))
-		tn = convert(INIT, 0, initstk->i_type, tn);
+		tn = convert(INIT, NULL, initstk->i_type, tn);
 
 	if (tn != NULL && tn->tn_op != CON) {
 		sym = NULL;

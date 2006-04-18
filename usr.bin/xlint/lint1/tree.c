@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.31 2006/03/20 05:05:30 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.32 2006/04/18 02:59:40 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.31 2006/03/20 05:05:30 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.32 2006/04/18 02:59:40 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -50,18 +50,18 @@ static	mod_t	modtab[NOPS];
 
 static	tnode_t	*getinode(tspec_t, quad_t);
 static	void	ptrcmpok(op_t, tnode_t *, tnode_t *);
-static	int	asgntypok(op_t, int, tnode_t *, tnode_t *);
+static	int	asgntypok(op_t, farg_t *, tnode_t *, tnode_t *);
 static	void	chkbeop(op_t, tnode_t *, tnode_t *);
-static	void	chkeop2(op_t, int, tnode_t *, tnode_t *);
-static	void	chkeop1(op_t, int, tnode_t *, tnode_t *);
+static	void	chkeop2(op_t, farg_t *, tnode_t *, tnode_t *);
+static	void	chkeop1(op_t, farg_t *, tnode_t *, tnode_t *);
 static	tnode_t	*mktnode(op_t, type_t *, tnode_t *, tnode_t *);
 static	void	balance(op_t, tnode_t **, tnode_t **);
 static	void	incompat(op_t, tspec_t, tspec_t);
 static	void	illptrc(mod_t *, type_t *, type_t *);
 static	void	mrgqual(type_t **, type_t *, type_t *);
 static	int	conmemb(type_t *);
-static	void	ptconv(int, tspec_t, tspec_t, type_t *, tnode_t *);
-static	void	iiconv(op_t, int, tspec_t, tspec_t, type_t *, tnode_t *);
+static	void	ptconv(farg_t *, tspec_t, tspec_t, type_t *, tnode_t *);
+static	void	iiconv(op_t, farg_t *, tspec_t, tspec_t, type_t *, tnode_t *);
 static	void	piconv(op_t, tspec_t, type_t *, tnode_t *);
 static	void	ppconv(op_t, tnode_t *, type_t *);
 static	tnode_t	*bldstr(op_t, tnode_t *, tnode_t *);
@@ -75,8 +75,8 @@ static	tnode_t	*plength(type_t *);
 static	tnode_t	*fold(tnode_t *);
 static	tnode_t	*foldtst(tnode_t *);
 static	tnode_t	*foldflt(tnode_t *);
-static	tnode_t	*chkfarg(type_t *, tnode_t *);
-static	tnode_t	*parg(int, type_t *, tnode_t *);
+static	tnode_t	*chkfarg(tnode_t *, tnode_t *);
+static	tnode_t	*parg(farg_t *, tnode_t *);
 static	int	chkdbz(op_t, tnode_t *);
 static	void	nulleff(tnode_t *);
 static	void	chkaidx(tnode_t *, int);
@@ -598,7 +598,7 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	 * Check types for compatibility with the operation and mutual
 	 * compatibility. Return if there are serious problems.
 	 */
-	if (!typeok(op, 0, ln, rn))
+	if (!typeok(op, NULL, ln, rn))
 		return (NULL);
 
 	/* And now create the node. */
@@ -748,13 +748,14 @@ cconv(tnode_t *tn)
  * If the types are ok, typeok() returns 1, otherwise 0.
  */
 int
-typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
+typeok(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 {
 	mod_t	*mp;
 	tspec_t	lt, rt = NOTSPEC, lst = NOTSPEC, rst = NOTSPEC,
 		olt = NOTSPEC, ort = NOTSPEC;
 	type_t	*ltp, *rtp, *lstp, *rstp;
 	tnode_t	*tn;
+	int arg = (farg) ? farg->fa_num : 0;
 
 	mp = &modtab[op];
 
@@ -1073,7 +1074,7 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	case INIT:
 	case FARG:
 	case RETURN:
-		if (!asgntypok(op, arg, ln, rn))
+		if (!asgntypok(op, farg, ln, rn))
 			return (0);
 		goto assign;
 	case MULASS:
@@ -1133,9 +1134,9 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	    (ltp->t_isenum || (mp->m_binary && rtp->t_isenum))) {
 		chkbeop(op, ln, rn);
 	} else if (mp->m_enumop && (ltp->t_isenum && rtp->t_isenum)) {
-		chkeop2(op, arg, ln, rn);
+		chkeop2(op, farg, ln, rn);
 	} else if (mp->m_enumop && (ltp->t_isenum || rtp->t_isenum)) {
-		chkeop1(op, arg, ln, rn);
+		chkeop1(op, farg, ln, rn);
 	}
 
 	return (1);
@@ -1180,12 +1181,13 @@ ptrcmpok(op_t op, tnode_t *ln, tnode_t *rn)
  * If the types are (almost) compatible, 1 is returned, otherwise 0.
  */
 static int
-asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
+asgntypok(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 {
 	tspec_t	lt, rt, lst = NOTSPEC, rst = NOTSPEC;
 	type_t	*ltp, *rtp, *lstp, *rstp;
 	mod_t	*mp;
 	const	char *lts, *rts;
+	int	arg = (farg) ? farg->fa_num : 0;
 
 	if ((lt = (ltp = ln->tn_type)->t_tspec) == PTR)
 		lst = (lstp = ltp->t_subt)->t_tspec;
@@ -1360,9 +1362,10 @@ chkbeop(op_t op, tnode_t *ln, tnode_t *rn)
  * Prints a warning if an operator is applied to two different enum types.
  */
 static void
-chkeop2(op_t op, int arg, tnode_t *ln, tnode_t *rn)
+chkeop2(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 {
 	mod_t	*mp;
+	int	arg = (farg) ? farg->fa_num : 0;
 
 	mp = &modtab[op];
 
@@ -1399,8 +1402,10 @@ chkeop2(op_t op, int arg, tnode_t *ln, tnode_t *rn)
  * types.
  */
 static void
-chkeop1(op_t op, int arg, tnode_t *ln, tnode_t *rn)
+chkeop1(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 {
+	int	arg = (farg) ? farg->fa_num : 0;
+
 	if (!eflag)
 		return;
 
@@ -1535,7 +1540,7 @@ promote(op_t op, int farg, tnode_t *tn)
 		 * Keep t_isenum so we are later able to check compatibility
 		 * of enum types.
 		 */
-		tn = convert(op, 0, ntp, tn);
+		tn = convert(op, NULL, ntp, tn);
 	}
 
 	return (tn);
@@ -1606,25 +1611,26 @@ balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 	if (t != lt) {
 		ntp = tduptyp((*lnp)->tn_type);
 		ntp->t_tspec = t;
-		*lnp = convert(op, 0, ntp, *lnp);
+		*lnp = convert(op, NULL, ntp, *lnp);
 	}
 	if (t != rt) {
 		ntp = tduptyp((*rnp)->tn_type);
 		ntp->t_tspec = t;
-		*rnp = convert(op, 0, ntp, *rnp);
+		*rnp = convert(op, NULL, ntp, *rnp);
 	}
 }
 
 /*
  * Insert a conversion operator, which converts the type of the node
  * to another given type.
- * If op is FARG, arg is the number of the argument (used for warnings).
+ * If op is FARG, farg contains the passed argument information.
  */
 tnode_t *
-convert(op_t op, int arg, type_t *tp, tnode_t *tn)
+convert(op_t op, farg_t *farg, type_t *tp, tnode_t *tn)
 {
 	tnode_t	*ntn;
 	tspec_t	nt, ot, ost = NOTSPEC;
+	int arg = (farg) ? farg->fa_num : 0;
 
 	if (tn->tn_lvalue)
 		lerror("convert() 1");
@@ -1634,9 +1640,9 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 		ost = tn->tn_type->t_subt->t_tspec;
 
 	if (!tflag && !sflag && op == FARG)
-		ptconv(arg, nt, ot, tp, tn);
+		ptconv(farg, nt, ot, tp, tn);
 	if (isityp(nt) && isityp(ot)) {
-		iiconv(op, arg, nt, ot, tp, tn);
+		iiconv(op, farg, nt, ot, tp, tn);
 	} else if (nt == PTR && ((ot == PTR && ost == VOID) || isityp(ot)) &&
 		   tn->tn_op == CON && tn->tn_val->v_quad == 0) {
 		/* 0, 0L and (void *)0 may be assigned to any pointer. */
@@ -1655,7 +1661,7 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 	} else {
 		ntn->tn_op = CON;
 		ntn->tn_val = tgetblk(sizeof (val_t));
-		cvtcon(op, arg, ntn->tn_type, ntn->tn_val, tn->tn_val);
+		cvtcon(op, farg, ntn->tn_type, ntn->tn_val, tn->tn_val);
 	}
 
 	return (ntn);
@@ -1670,9 +1676,10 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
  * in asgntypok().
  */
 static void
-ptconv(int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
+ptconv(farg_t *farg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 {
 	tnode_t	*ptn;
+	int arg = farg->fa_num;
 
 	if (!isatyp(nt) || !isatyp(ot))
 		return;
@@ -1727,8 +1734,10 @@ ptconv(int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
  */
 /* ARGSUSED */
 static void
-iiconv(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
+iiconv(op_t op, farg_t *farg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 {
+	int arg = (farg) ? farg->fa_num : 0;
+
 	if (tn->tn_op == CON)
 		return;
 
@@ -1842,19 +1851,19 @@ ppconv(op_t op, tnode_t *tn, type_t *tp)
  * Converts a typed constant to a constant of another type.
  *
  * op		operator which requires conversion
- * arg		if op is FARG, # of argument
+ * farg		if op is FARG, the passed argument info (else NULL)
  * tp		type to which to convert the constant
  * nv		new constant
  * v		old constant
  */
 void
-cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
+cvtcon(op_t op, farg_t *farg, type_t *tp, val_t *nv, val_t *v)
 {
 	tspec_t	ot, nt;
 	ldbl_t	max = 0, min = 0;
 	int	sz, rchk;
 	quad_t	xmask, xmsk1;
-	int	osz, nsz;
+	int	osz, nsz, arg = (farg) ? farg->fa_num : 0;
 
 	ot = v->v_tspec;
 	nt = nv->v_tspec = tp->t_tspec;
@@ -2273,7 +2282,7 @@ bldstr(op_t op, tnode_t *ln, tnode_t *rn)
 	} else if (ln->tn_type->t_tspec != PTR) {
 		if (!tflag || !isityp(ln->tn_type->t_tspec))
 			lerror("bldstr() 4");
-		ln = convert(NOOP, 0, tincref(gettyp(VOID), PTR), ln);
+		ln = convert(NOOP, NULL, tincref(gettyp(VOID), PTR), ln);
 	}
 
 #if PTRDIFF_IS_LONG
@@ -2370,7 +2379,7 @@ bldplmi(op_t op, tnode_t *ln, tnode_t *rn)
 
 		ctn = plength(ln->tn_type);
 		if (rn->tn_type->t_tspec != ctn->tn_type->t_tspec)
-			rn = convert(NOOP, 0, ctn->tn_type, rn);
+			rn = convert(NOOP, NULL, ctn->tn_type, rn);
 		rn = mktnode(MULT, rn->tn_type, rn, ctn);
 		if (rn->tn_left->tn_op == CON)
 			rn = fold(rn);
@@ -2410,7 +2419,7 @@ bldshft(op_t op, tnode_t *ln, tnode_t *rn)
 	tnode_t	*ntn;
 
 	if ((t = rn->tn_type->t_tspec) != INT && t != UINT)
-		rn = convert(CVT, 0, gettyp(INT), rn);
+		rn = convert(CVT, NULL, gettyp(INT), rn);
 	ntn = mktnode(op, ln->tn_type, ln, rn);
 	return (ntn);
 }
@@ -2455,13 +2464,13 @@ bldcol(tnode_t *ln, tnode_t *rn)
 		rtp = ln->tn_type;
 	} else if (lt == PTR && isityp(rt)) {
 		if (rt != pdt) {
-			rn = convert(NOOP, 0, gettyp(pdt), rn);
+			rn = convert(NOOP, NULL, gettyp(pdt), rn);
 			rt = pdt;
 		}
 		rtp = ln->tn_type;
 	} else if (rt == PTR && isityp(lt)) {
 		if (lt != pdt) {
-			ln = convert(NOOP, 0, gettyp(pdt), ln);
+			ln = convert(NOOP, NULL, gettyp(pdt), ln);
 			lt = pdt;
 		}
 		rtp = rn->tn_type;
@@ -2513,7 +2522,7 @@ bldasgn(op_t op, tnode_t *ln, tnode_t *rn)
 			lerror("bldasgn() 2");
 		ctn = plength(ln->tn_type);
 		if (rn->tn_type->t_tspec != ctn->tn_type->t_tspec)
-			rn = convert(NOOP, 0, ctn->tn_type, rn);
+			rn = convert(NOOP, NULL, ctn->tn_type, rn);
 		rn = mktnode(MULT, rn->tn_type, rn, ctn);
 		if (rn->tn_left->tn_op == CON)
 			rn = fold(rn);
@@ -2536,14 +2545,14 @@ bldasgn(op_t op, tnode_t *ln, tnode_t *rn)
 
 	if (op == SHLASS || op == SHRASS) {
 		if (rt != INT) {
-			rn = convert(NOOP, 0, gettyp(INT), rn);
+			rn = convert(NOOP, NULL, gettyp(INT), rn);
 			rt = INT;
 		}
 	} else {
 		if (op == ASSIGN || lt != PTR) {
 			if (lt != rt ||
 			    (ln->tn_type->t_isfield && rn->tn_op == CON)) {
-				rn = convert(op, 0, ln->tn_type, rn);
+				rn = convert(op, NULL, ln->tn_type, rn);
 				rt = lt;
 			}
 		}
@@ -3083,7 +3092,7 @@ cast(tnode_t *tn, type_t *tp)
 		return (NULL);
 	}
 
-	tn = convert(CVT, 0, tp, tn);
+	tn = convert(CVT, NULL, tp, tn);
 	tn->tn_cast = 1;
 
 	return (tn);
@@ -3147,7 +3156,7 @@ funccall(tnode_t *func, tnode_t *args)
 		return (NULL);
 	}
 
-	args = chkfarg(func->tn_type->t_subt, args);
+	args = chkfarg(func, args);
 
 	ntn = mktnode(fcop, func->tn_type->t_subt->t_subt, func, args);
 
@@ -3158,16 +3167,20 @@ funccall(tnode_t *func, tnode_t *args)
  * Check types of all function arguments and insert conversions,
  * if necessary.
  *
- * ftp: type of called function
+ * func: called function
  * args: arguments to function
  */
 static tnode_t *
-chkfarg(type_t *ftp, tnode_t *args)
+chkfarg(tnode_t *func, tnode_t *args)
 {
+	type_t	*ftp;
 	tnode_t	*arg;
 	sym_t	*asym;
+	farg_t	farg;
 	tspec_t	at;
 	int	narg, npar, n, i;
+
+	ftp = func->tn_type->t_subt;
 
 	/* get # of args in the prototype */
 	npar = 0;
@@ -3212,9 +3225,11 @@ chkfarg(type_t *ftp, tnode_t *args)
 
 		/* class conversions (arg in value context) */
 		arg->tn_left = cconv(arg->tn_left);
-
+		farg.fa_num = n;
+		farg.fa_sym = asym;
+		farg.fa_func = func;
 		if (asym != NULL) {
-			arg->tn_left = parg(n, asym->s_type, arg->tn_left);
+			arg->tn_left = parg(&farg, arg->tn_left);
 		} else {
 			arg->tn_left = promote(NOOP, 1, arg->tn_left);
 		}
@@ -3238,18 +3253,21 @@ chkfarg(type_t *ftp, tnode_t *args)
  * tn:	argument
  */
 static tnode_t *
-parg(int n, type_t *tp, tnode_t *tn)
+parg(farg_t *farg, tnode_t *tn)
 {
 	tnode_t	*ln;
-	int	warn;
+	type_t	*tp;
+	int	warn, n;
 
+	tp = farg->fa_sym->s_type;
+	n = farg->fa_num;
 	ln = xcalloc(1, sizeof (tnode_t));
 	ln->tn_type = tduptyp(tp);
 	ln->tn_type->t_const = 0;
 	ln->tn_lvalue = 1;
-	if (typeok(FARG, n, ln, tn)) {
+	if (typeok(FARG, farg, ln, tn)) {
 		if (!eqtype(tp, tn->tn_type, 1, 0, (warn = 0, &warn)) || warn)
-			tn = convert(FARG, n, tp, tn);
+			tn = convert(FARG, farg, tp, tn);
 	}
 	free(ln);
 	return (tn);
