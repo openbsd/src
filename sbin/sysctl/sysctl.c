@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.135 2006/04/13 01:05:59 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.136 2006/04/18 03:07:44 marco Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.135 2006/04/13 01:05:59 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.136 2006/04/18 03:07:44 marco Exp $";
 #endif
 #endif /* not lint */
 
@@ -2183,7 +2183,7 @@ print_sensor(struct sensor *s)
 				name = "failed";
 				break;
 			case SENSOR_DRIVE_PFAIL:
-				name = "pfailed";
+				name = "degraded";
 				break;
 			default:
 				name = "unknown";
