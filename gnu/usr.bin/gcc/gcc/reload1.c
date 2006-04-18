@@ -6923,6 +6923,10 @@ do_input_reload (chain, rl, j)
      actually no need to store the old value in it.  */
 
   if (optimize
+      /* Only attempt this for input reloads; for RELOAD_OTHER we miss
+	 that there may be multiple uses of the previous output reload.
+	 Restricting to RELOAD_FOR_INPUT is mostly paranoia.  */
+      && rl->when_needed == RELOAD_FOR_INPUT
       && (reload_inherited[j] || reload_override_in[j])
       && rl->reg_rtx
       && GET_CODE (rl->reg_rtx) == REG
