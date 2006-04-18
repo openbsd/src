@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.4 2006/03/16 02:39:57 dlg Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.5 2006/04/18 04:58:41 gwk Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * All rights reserved.
@@ -63,8 +63,8 @@
 #include <machine/cpufunc.h>
 #include <machine/bus.h>
 
-#define BIOS_START		0xe0000
-#define	BIOS_LEN		0x20000
+#define BIOS_START			0xe0000
+#define	BIOS_LEN			0x20000
 
 extern int cpuspeed;
 
@@ -280,8 +280,11 @@ k8_powernow_setperf(int level)
 	}
 
 	/* Check if transition failed. */
-	if (cfid != fid || cvid != vid)
-		return (1);
+	if (cfid != fid || cvid != vid) {
+		printf("%s transition to fid: %d vid: %d failed.", __func__,
+		    fid, vid);
+		return (0);
+	}
 
 	cpuspeed = cstate->state_table[i].freq;
 	return (0);
