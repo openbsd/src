@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhctoken.h,v 1.2 2004/04/14 01:09:52 henning Exp $	*/
+/*	$OpenBSD: dhctoken.h,v 1.3 2006/04/18 19:18:32 deraadt Exp $	*/
 
 /* Tokens for config file lexer and parser. */
 
@@ -40,97 +40,61 @@
  * Enterprises, see ``http://www.vix.com''.
  */
 
-#define SEMI ';'
-#define DOT '.'
-#define COLON ':'
-#define COMMA ','
-#define SLASH '/'
-#define LBRACE '{'
-#define RBRACE '}'
+#define TOK_FIRST_TOKEN	TOK_HOST
+#define TOK_HOST	256
+#define TOK_HARDWARE	257
+#define TOK_FILENAME	258
+#define TOK_FIXED_ADDR	259
+#define TOK_OPTION		260
+#define TOK_ETHERNET	261
+#define TOK_STRING		262
+#define TOK_NUMBER		263
+#define TOK_NUMBER_OR_NAME	264
+#define TOK_NAME		265
+#define TOK_TIMESTAMP	266
+#define TOK_STARTS		267
+#define TOK_ENDS		268
+#define TOK_UID		269
+#define TOK_CLASS		270
+#define TOK_LEASE		271
+#define TOK_RANGE		272
+#define TOK_SUBNET		278
+#define TOK_NETMASK		279
+#define TOK_DEFAULT_LEASE_TIME 280
+#define TOK_MAX_LEASE_TIME	281
+#define TOK_VENDOR_CLASS	282
+#define TOK_USER_CLASS	283
+#define TOK_SHARED_NETWORK	284
+#define TOK_SERVER_NAME	285
+#define TOK_DYNAMIC_BOOTP	286
+#define TOK_SERVER_IDENTIFIER 287
+#define TOK_DYNAMIC_BOOTP_LEASE_CUTOFF 288
+#define TOK_DYNAMIC_BOOTP_LEASE_LENGTH 289
+#define TOK_BOOT_UNKNOWN_CLIENTS 290
+#define TOK_NEXT_SERVER	291
+#define TOK_TOKEN_RING	292
+#define TOK_GROUP		293
+#define TOK_ONE_LEASE_PER_CLIENT 294
+#define TOK_GET_LEASE_HOSTNAMES 295
+#define TOK_USE_HOST_DECL_NAMES 296
+#define TOK_SEND		297
+#define TOK_TIMEOUT		301
+#define TOK_UNKNOWN_CLIENTS	309
+#define	TOK_ALLOW		310
+#define TOK_BOOTP		311
+#define TOK_DENY		312
+#define TOK_BOOTING		313
+#define TOK_ABANDONED	319
+#define TOK_DOMAIN		323
+#define TOK_HOSTNAME	328
+#define TOK_CLIENT_HOSTNAME	329
+#define TOK_FDDI		331
+#define TOK_USE_LEASE_ADDR_FOR_DEFAULT_ROUTE 332
+#define TOK_AUTHORITATIVE	333
+#define TOK_TOKEN_NOT	334
+#define TOK_ALWAYS_REPLY_RFC1048 335
 
-#define FIRST_TOKEN	HOST
-#define HOST		256
-#define HARDWARE	257
-#define FILENAME	258
-#define FIXED_ADDR	259
-#define OPTION		260
-#define ETHERNET	261
-#define STRING		262
-#define NUMBER		263
-#define NUMBER_OR_NAME	264
-#define NAME		265
-#define TIMESTAMP	266
-#define STARTS		267
-#define ENDS		268
-#define UID		269
-#define CLASS		270
-#define LEASE		271
-#define RANGE		272
-#define PACKET		273
-#define CIADDR		274
-#define YIADDR		275
-#define SIADDR		276
-#define GIADDR		277
-#define SUBNET		278
-#define NETMASK		279
-#define DEFAULT_LEASE_TIME 280
-#define MAX_LEASE_TIME	281
-#define VENDOR_CLASS	282
-#define USER_CLASS	283
-#define SHARED_NETWORK	284
-#define SERVER_NAME	285
-#define DYNAMIC_BOOTP	286
-#define SERVER_IDENTIFIER 287
-#define DYNAMIC_BOOTP_LEASE_CUTOFF 288
-#define DYNAMIC_BOOTP_LEASE_LENGTH 289
-#define BOOT_UNKNOWN_CLIENTS 290
-#define NEXT_SERVER	291
-#define TOKEN_RING	292
-#define GROUP		293
-#define ONE_LEASE_PER_CLIENT 294
-#define GET_LEASE_HOSTNAMES 295
-#define USE_HOST_DECL_NAMES 296
-#define SEND		297
-#define CLIENT_IDENTIFIER 298
-#define REQUEST		299
-#define REQUIRE		300
-#define TIMEOUT		301
-#define RETRY		302
-#define SELECT_TIMEOUT	303
-#define SCRIPT		304
-#define INTERFACE	305
-#define RENEW		306
-#define	REBIND		307
-#define EXPIRE		308
-#define UNKNOWN_CLIENTS	309
-#define	ALLOW		310
-#define BOOTP		311
-#define DENY		312
-#define BOOTING		313
-#define DEFAULT		314
-#define MEDIA		315
-#define MEDIUM		316
-#define ALIAS		317
-#define REBOOT		318
-#define ABANDONED	319
-#define	BACKOFF_CUTOFF	320
-#define	INITIAL_INTERVAL 321
-#define NAMESERVER	322
-#define	DOMAIN		323
-#define SEARCH		324
-#define SUPERSEDE	325
-#define APPEND		326
-#define PREPEND		327
-#define HOSTNAME	328
-#define CLIENT_HOSTNAME	329
-#define REJECT		330
-#define FDDI		331
-#define USE_LEASE_ADDR_FOR_DEFAULT_ROUTE 332
-#define AUTHORITATIVE	333
-#define TOKEN_NOT	334
-#define ALWAYS_REPLY_RFC1048 335
-
-#define is_identifier(x)	((x) >= FIRST_TOKEN &&	\
-				 (x) != STRING &&	\
-				 (x) != NUMBER &&	\
+#define is_identifier(x)	((x) >= TOK_FIRST_TOKEN &&	\
+				 (x) != TOK_STRING &&	\
+				 (x) != TOK_NUMBER &&	\
 				 (x) != EOF)

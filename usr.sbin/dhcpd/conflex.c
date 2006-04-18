@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.6 2005/11/25 16:24:12 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.7 2006/04/18 19:18:31 deraadt Exp $	*/
 
 /* Lexical scanner for dhcpd config file... */
 
@@ -251,13 +251,13 @@ read_string(FILE *cfile)
 	}
 	tokbuf[i] = 0;
 	tval = tokbuf;
-	return (STRING);
+	return (TOK_STRING);
 }
 
 static int
 read_number(int c, FILE *cfile)
 {
-	int	seenx = 0, i = 0, token = NUMBER;
+	int	seenx = 0, i = 0, token = TOK_NUMBER;
 
 	tokbuf[i++] = c;
 	for (; i < sizeof(tokbuf); i++) {
@@ -285,7 +285,7 @@ static int
 read_num_or_name(int c, FILE *cfile)
 {
 	int	i = 0;
-	int	rv = NUMBER_OR_NAME;
+	int	rv = TOK_NUMBER_OR_NAME;
 
 	tokbuf[i++] = c;
 	for (; i < sizeof(tokbuf); i++) {
@@ -296,7 +296,7 @@ read_num_or_name(int c, FILE *cfile)
 			break;
 		}
 		if (!isxdigit(c))
-			rv = NAME;
+			rv = TOK_NAME;
 		tokbuf[i] = c;
 	}
 	if (i == sizeof(tokbuf)) {
@@ -309,218 +309,72 @@ read_num_or_name(int c, FILE *cfile)
 	return (intern(tval, rv));
 }
 
+static const struct keywords {
+	const char	*k_name;
+	int		k_val;
+} keywords[] = {
+	{ "abandoned",				TOK_ABANDONED },
+	{ "allow",				TOK_ALLOW },
+	{ "always-reply-rfc1048",		TOK_ALWAYS_REPLY_RFC1048 },
+	{ "authoritative",			TOK_AUTHORITATIVE },
+	{ "booting",				TOK_BOOTING },
+	{ "bootp",				TOK_BOOTP },
+	{ "class",				TOK_CLASS },
+	{ "client-hostname",			TOK_CLIENT_HOSTNAME },
+	{ "default-lease-time",			TOK_DEFAULT_LEASE_TIME },
+	{ "deny",				TOK_DENY },
+	{ "domain",				TOK_DOMAIN },
+	{ "dynamic-bootp",			TOK_DYNAMIC_BOOTP },
+	{ "dynamic-bootp-lease-cutoff",		TOK_DYNAMIC_BOOTP_LEASE_CUTOFF },
+	{ "dynamic-bootp-lease-length",		TOK_DYNAMIC_BOOTP_LEASE_LENGTH },
+	{ "ends",				TOK_ENDS },
+	{ "ethernet",				TOK_ETHERNET },
+	{ "fddi",				TOK_FDDI },
+	{ "filename",				TOK_FILENAME },
+	{ "fixed-address",			TOK_FIXED_ADDR },
+	{ "get-lease-hostnames",		TOK_GET_LEASE_HOSTNAMES },
+	{ "group",				TOK_GROUP },
+	{ "hardware",				TOK_HARDWARE },
+	{ "host",				TOK_HOST },
+	{ "hostname",				TOK_HOSTNAME },
+	{ "lease",				TOK_LEASE },
+	{ "max-lease-time",			TOK_MAX_LEASE_TIME },
+	{ "netmask",				TOK_NETMASK },
+	{ "next-server",			TOK_NEXT_SERVER },
+	{ "not",				TOK_TOKEN_NOT },
+	{ "one-lease-per-client",		TOK_ONE_LEASE_PER_CLIENT },
+	{ "option",				TOK_OPTION },
+	{ "range",				TOK_RANGE },
+	{ "server-identifier",			TOK_SERVER_IDENTIFIER },
+	{ "server-name",			TOK_SERVER_NAME },
+	{ "shared-network",			TOK_SHARED_NETWORK },
+	{ "starts",				TOK_STARTS },
+	{ "subnet",				TOK_SUBNET },
+	{ "timeout",				TOK_TIMEOUT },
+	{ "timestamp",				TOK_TIMESTAMP },
+	{ "token-ring",				TOK_TOKEN_RING },
+	{ "uid",				TOK_UID },
+	{ "unknown-clients",			TOK_UNKNOWN_CLIENTS },
+	{ "user-class",				TOK_USER_CLASS },
+	{ "use-host-decl-names",		TOK_USE_HOST_DECL_NAMES },
+	{ "use-lease-addr-for-default-route",	TOK_USE_LEASE_ADDR_FOR_DEFAULT_ROUTE },
+	{ "vendor-class",			TOK_VENDOR_CLASS }
+};
+
+int
+kw_cmp(const void *k, const void *e)
+{
+	return (strcasecmp(k, ((const struct keywords *)e)->k_name));
+}
+
 static int
 intern(char *atom, int dfv)
 {
-	if (!isascii(atom[0]))
-		return (dfv);
+	const struct keywords *p;
 
-	switch (tolower(atom[0])) {
-	case 'a':
-		if (!strcasecmp(atom + 1, "lways-reply-rfc1048"))
-			return (ALWAYS_REPLY_RFC1048);
-		if (!strcasecmp(atom + 1, "ppend"))
-			return (APPEND);
-		if (!strcasecmp(atom + 1, "llow"))
-			return (ALLOW);
-		if (!strcasecmp(atom + 1, "lias"))
-			return (ALIAS);
-		if (!strcasecmp(atom + 1, "bandoned"))
-			return (ABANDONED);
-		if (!strcasecmp(atom + 1, "uthoritative"))
-			return (AUTHORITATIVE);
-		break;
-	case 'b':
-		if (!strcasecmp(atom + 1, "ackoff-cutoff"))
-			return (BACKOFF_CUTOFF);
-		if (!strcasecmp(atom + 1, "ootp"))
-			return (BOOTP);
-		if (!strcasecmp(atom + 1, "ooting"))
-			return (BOOTING);
-		if (!strcasecmp(atom + 1, "oot-unknown-clients"))
-			return (BOOT_UNKNOWN_CLIENTS);
-		break;
-	case 'c':
-		if (!strcasecmp(atom + 1, "lass"))
-			return (CLASS);
-		if (!strcasecmp(atom + 1, "iaddr"))
-			return (CIADDR);
-		if (!strcasecmp(atom + 1, "lient-identifier"))
-			return (CLIENT_IDENTIFIER);
-		if (!strcasecmp(atom + 1, "lient-hostname"))
-			return (CLIENT_HOSTNAME);
-		break;
-	case 'd':
-		if (!strcasecmp(atom + 1, "omain"))
-			return (DOMAIN);
-		if (!strcasecmp(atom + 1, "eny"))
-			return (DENY);
-		if (!strncasecmp(atom + 1, "efault", 6)) {
-			if (!atom[7])
-				return (DEFAULT);
-			if (!strcasecmp(atom + 7, "-lease-time"))
-				return (DEFAULT_LEASE_TIME);
-			break;
-		}
-		if (!strncasecmp(atom + 1, "ynamic-bootp", 12)) {
-			if (!atom[13])
-				return (DYNAMIC_BOOTP);
-			if (!strcasecmp(atom + 13, "-lease-cutoff"))
-				return (DYNAMIC_BOOTP_LEASE_CUTOFF);
-			if (!strcasecmp(atom + 13, "-lease-length"))
-				return (DYNAMIC_BOOTP_LEASE_LENGTH);
-			break;
-		}
-		break;
-	case 'e':
-		if (!strcasecmp(atom + 1, "thernet"))
-			return (ETHERNET);
-		if (!strcasecmp(atom + 1, "nds"))
-			return (ENDS);
-		if (!strcasecmp(atom + 1, "xpire"))
-			return (EXPIRE);
-		break;
-	case 'f':
-		if (!strcasecmp(atom + 1, "ilename"))
-			return (FILENAME);
-		if (!strcasecmp(atom + 1, "ixed-address"))
-			return (FIXED_ADDR);
-		if (!strcasecmp(atom + 1, "ddi"))
-			return (FDDI);
-		break;
-	case 'g':
-		if (!strcasecmp(atom + 1, "iaddr"))
-			return (GIADDR);
-		if (!strcasecmp(atom + 1, "roup"))
-			return (GROUP);
-		if (!strcasecmp(atom + 1, "et-lease-hostnames"))
-			return (GET_LEASE_HOSTNAMES);
-		break;
-	case 'h':
-		if (!strcasecmp(atom + 1, "ost"))
-			return (HOST);
-		if (!strcasecmp(atom + 1, "ardware"))
-			return (HARDWARE);
-		if (!strcasecmp(atom + 1, "ostname"))
-			return (HOSTNAME);
-		break;
-	case 'i':
-		if (!strcasecmp(atom + 1, "nitial-interval"))
-			return (INITIAL_INTERVAL);
-		if (!strcasecmp(atom + 1, "nterface"))
-			return (INTERFACE);
-		break;
-	case 'l':
-		if (!strcasecmp(atom + 1, "ease"))
-			return (LEASE);
-		break;
-	case 'm':
-		if (!strcasecmp(atom + 1, "ax-lease-time"))
-			return (MAX_LEASE_TIME);
-		if (!strncasecmp(atom + 1, "edi", 3)) {
-			if (!strcasecmp(atom + 4, "a"))
-				return (MEDIA);
-			if (!strcasecmp(atom + 4, "um"))
-				return (MEDIUM);
-			break;
-		}
-		break;
-	case 'n':
-		if (!strcasecmp(atom + 1, "ameserver"))
-			return (NAMESERVER);
-		if (!strcasecmp(atom + 1, "etmask"))
-			return (NETMASK);
-		if (!strcasecmp(atom + 1, "ext-server"))
-			return (NEXT_SERVER);
-		if (!strcasecmp(atom + 1, "ot"))
-			return (TOKEN_NOT);
-		break;
-	case 'o':
-		if (!strcasecmp(atom + 1, "ption"))
-			return (OPTION);
-		if (!strcasecmp(atom + 1, "ne-lease-per-client"))
-			return (ONE_LEASE_PER_CLIENT);
-		break;
-	case 'p':
-		if (!strcasecmp(atom + 1, "repend"))
-			return (PREPEND);
-		if (!strcasecmp(atom + 1, "acket"))
-			return (PACKET);
-		break;
-	case 'r':
-		if (!strcasecmp(atom + 1, "ange"))
-			return (RANGE);
-		if (!strcasecmp(atom + 1, "equest"))
-			return (REQUEST);
-		if (!strcasecmp(atom + 1, "equire"))
-			return (REQUIRE);
-		if (!strcasecmp(atom + 1, "etry"))
-			return (RETRY);
-		if (!strcasecmp(atom + 1, "enew"))
-			return (RENEW);
-		if (!strcasecmp(atom + 1, "ebind"))
-			return (REBIND);
-		if (!strcasecmp(atom + 1, "eboot"))
-			return (REBOOT);
-		if (!strcasecmp(atom + 1, "eject"))
-			return (REJECT);
-		break;
-	case 's':
-		if (!strcasecmp(atom + 1, "earch"))
-			return (SEARCH);
-		if (!strcasecmp(atom + 1, "tarts"))
-			return (STARTS);
-		if (!strcasecmp(atom + 1, "iaddr"))
-			return (SIADDR);
-		if (!strcasecmp(atom + 1, "ubnet"))
-			return (SUBNET);
-		if (!strcasecmp(atom + 1, "hared-network"))
-			return (SHARED_NETWORK);
-		if (!strcasecmp(atom + 1, "erver-name"))
-			return (SERVER_NAME);
-		if (!strcasecmp(atom + 1, "erver-identifier"))
-			return (SERVER_IDENTIFIER);
-		if (!strcasecmp(atom + 1, "elect-timeout"))
-			return (SELECT_TIMEOUT);
-		if (!strcasecmp(atom + 1, "end"))
-			return (SEND);
-		if (!strcasecmp(atom + 1, "cript"))
-			return (SCRIPT);
-		if (!strcasecmp(atom + 1, "upersede"))
-			return (SUPERSEDE);
-		break;
-	case 't':
-		if (!strcasecmp(atom + 1, "imestamp"))
-			return (TIMESTAMP);
-		if (!strcasecmp(atom + 1, "imeout"))
-			return (TIMEOUT);
-		if (!strcasecmp(atom + 1, "oken-ring"))
-			return (TOKEN_RING);
-		break;
-	case 'u':
-		if (!strncasecmp(atom + 1, "se", 2)) {
-			if (!strcasecmp(atom + 3, "r-class"))
-				return (USER_CLASS);
-			if (!strcasecmp(atom + 3, "-host-decl-names"))
-				return (USE_HOST_DECL_NAMES);
-			if (!strcasecmp(atom + 3,
-					 "-lease-addr-for-default-route"))
-				return (USE_LEASE_ADDR_FOR_DEFAULT_ROUTE);
-			break;
-		}
-		if (!strcasecmp(atom + 1, "id"))
-			return (UID);
-		if (!strcasecmp(atom + 1, "nknown-clients"))
-			return (UNKNOWN_CLIENTS);
-		break;
-	case 'v':
-		if (!strcasecmp(atom + 1, "endor-class"))
-			return (VENDOR_CLASS);
-		break;
-	case 'y':
-		if (!strcasecmp(atom + 1, "iaddr"))
-			return (YIADDR);
-		break;
-	}
+	p = bsearch(atom, keywords, sizeof(keywords)/sizeof(keywords[0]),
+	    sizeof(keywords[0]), kw_cmp);
+	if (p)
+		return (p->k_val);
 	return (dfv);
 }

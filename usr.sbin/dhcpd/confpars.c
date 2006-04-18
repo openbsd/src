@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.13 2006/03/13 19:57:42 otto Exp $ */
+/*	$OpenBSD: confpars.c,v 1.14 2006/04/18 19:18:32 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -120,7 +120,7 @@ read_leases(void)
 		token = next_token(&val, cfile);
 		if (token == EOF)
 			break;
-		if (token != LEASE) {
+		if (token != TOK_LEASE) {
 			warning("Corrupt lease file - possible data loss!");
 			skip_to_semi(cfile);
 		} else {
@@ -182,7 +182,7 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 	struct hardware hardware;
 
 	switch (next_token(&val, cfile)) {
-	case HOST:
+	case TOK_HOST:
 		if (type != HOST_DECL)
 			parse_host_declaration(cfile, group);
 		else {
@@ -191,7 +191,7 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 		}
 		return 1;
 
-	case GROUP:
+	case TOK_GROUP:
 		if (type != HOST_DECL)
 			parse_group_declaration(cfile, group);
 		else {
@@ -200,10 +200,10 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 		}
 		return 1;
 
-	case TIMESTAMP:
+	case TOK_TIMESTAMP:
 		break;
 
-	case SHARED_NETWORK:
+	case TOK_SHARED_NETWORK:
 		if (type == SHARED_NET_DECL ||
 		    type == HOST_DECL ||
 		    type == SUBNET_DECL) {
@@ -216,7 +216,7 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 		parse_shared_net_declaration(cfile, group);
 		return 1;
 
-	case SUBNET:
+	case TOK_SUBNET:
 		if (type == HOST_DECL || type == SUBNET_DECL) {
 			parse_warn("subnet declarations not allowed here.");
 			skip_to_semi(cfile);
@@ -262,67 +262,67 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 		}
 		return 1;
 
-	case VENDOR_CLASS:
+	case TOK_VENDOR_CLASS:
 		parse_class_declaration(cfile, group, 0);
 		return 1;
 
-	case USER_CLASS:
+	case TOK_USER_CLASS:
 		parse_class_declaration(cfile, group, 1);
 		return 1;
 
-	case DEFAULT_LEASE_TIME:
+	case TOK_DEFAULT_LEASE_TIME:
 		parse_lease_time(cfile, &group->default_lease_time);
 		break;
 
-	case MAX_LEASE_TIME:
+	case TOK_MAX_LEASE_TIME:
 		parse_lease_time(cfile, &group->max_lease_time);
 		break;
 
-	case DYNAMIC_BOOTP_LEASE_CUTOFF:
+	case TOK_DYNAMIC_BOOTP_LEASE_CUTOFF:
 		group->bootp_lease_cutoff = parse_date(cfile);
 		break;
 
-	case DYNAMIC_BOOTP_LEASE_LENGTH:
+	case TOK_DYNAMIC_BOOTP_LEASE_LENGTH:
 		parse_lease_time(cfile, &group->bootp_lease_length);
 		break;
 
-	case BOOT_UNKNOWN_CLIENTS:
+	case TOK_BOOT_UNKNOWN_CLIENTS:
 		if (type == HOST_DECL)
 			parse_warn("boot-unknown-clients not allowed here.");
 		group->boot_unknown_clients = parse_boolean(cfile);
 		break;
 
-	case ONE_LEASE_PER_CLIENT:
+	case TOK_ONE_LEASE_PER_CLIENT:
 		if (type == HOST_DECL)
 			parse_warn("one-lease-per-client not allowed here.");
 		group->one_lease_per_client = parse_boolean(cfile);
 		break;
 
-	case GET_LEASE_HOSTNAMES:
+	case TOK_GET_LEASE_HOSTNAMES:
 		if (type == HOST_DECL)
 			parse_warn("get-lease-hostnames not allowed here.");
 		group->get_lease_hostnames = parse_boolean(cfile);
 		break;
 
-	case ALWAYS_REPLY_RFC1048:
+	case TOK_ALWAYS_REPLY_RFC1048:
 		group->always_reply_rfc1048 = parse_boolean(cfile);
 		break;
 
-	case USE_HOST_DECL_NAMES:
+	case TOK_USE_HOST_DECL_NAMES:
 		if (type == HOST_DECL)
 			parse_warn("use-host-decl-names not allowed here.");
 		group->use_host_decl_names = parse_boolean(cfile);
 		break;
 
-	case USE_LEASE_ADDR_FOR_DEFAULT_ROUTE:
+	case TOK_USE_LEASE_ADDR_FOR_DEFAULT_ROUTE:
 		group->use_lease_addr_for_default_route =
 			parse_boolean(cfile);
 		break;
 
-	case TOKEN_NOT:
+	case TOK_TOKEN_NOT:
 		token = next_token(&val, cfile);
 		switch (token) {
-		case AUTHORITATIVE:
+		case TOK_AUTHORITATIVE:
 			if (type == HOST_DECL)
 			    parse_warn("authority makes no sense here.");
 			group->authoritative = 0;
@@ -335,14 +335,14 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 		}
 		break;
 
-	case AUTHORITATIVE:
+	case TOK_AUTHORITATIVE:
 		if (type == HOST_DECL)
 		    parse_warn("authority makes no sense here.");
 		group->authoritative = 1;
 		parse_semi(cfile);
 		break;
 
-	case NEXT_SERVER:
+	case TOK_NEXT_SERVER:
 		tree = parse_ip_addr_or_hostname(cfile, 0);
 		if (!tree)
 			break;
@@ -355,11 +355,11 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 		parse_semi(cfile);
 		break;
 
-	case OPTION:
+	case TOK_OPTION:
 		parse_option_param(cfile, group);
 		break;
 
-	case SERVER_IDENTIFIER:
+	case TOK_SERVER_IDENTIFIER:
 		tree = parse_ip_addr_or_hostname(cfile, 0);
 		if (!tree)
 			return declaration;
@@ -367,15 +367,15 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 		token = next_token(&val, cfile);
 		break;
 
-	case FILENAME:
+	case TOK_FILENAME:
 		group->filename = parse_string(cfile);
 		break;
 
-	case SERVER_NAME:
+	case TOK_SERVER_NAME:
 		group->server_name = parse_string(cfile);
 		break;
 
-	case HARDWARE:
+	case TOK_HARDWARE:
 		parse_hardware_param(cfile, &hardware);
 		if (host_decl)
 			host_decl->interface = hardware;
@@ -384,7 +384,7 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 				    "not allowed here.");
 		break;
 
-	case FIXED_ADDR:
+	case TOK_FIXED_ADDR:
 		cache = parse_fixed_addr_param(cfile);
 		if (host_decl)
 			host_decl->fixed_addr = cache;
@@ -393,7 +393,7 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 				    "allowed here.");
 		break;
 
-	case RANGE:
+	case TOK_RANGE:
 		if (type != SUBNET_DECL || !group->subnet) {
 			parse_warn("range declaration not allowed here.");
 			skip_to_semi(cfile);
@@ -402,11 +402,11 @@ int parse_statement(cfile, group, type, host_decl, declaration)
 		parse_address_range(cfile, group->subnet);
 		return declaration;
 
-	case ALLOW:
+	case TOK_ALLOW:
 		parse_allow_deny(cfile, group, 1);
 		break;
 
-	case DENY:
+	case TOK_DENY:
 		parse_allow_deny(cfile, group, 0);
 		break;
 
@@ -442,19 +442,19 @@ void parse_allow_deny(cfile, group, flag)
 
 	token = next_token(&val, cfile);
 	switch (token) {
-	case BOOTP:
+	case TOK_BOOTP:
 		group->allow_bootp = flag;
 		break;
 
-	case BOOTING:
+	case TOK_BOOTING:
 		group->allow_booting = flag;
 		break;
 
-	case DYNAMIC_BOOTP:
+	case TOK_DYNAMIC_BOOTP:
 		group->dynamic_bootp = flag;
 		break;
 
-	case UNKNOWN_CLIENTS:
+	case TOK_UNKNOWN_CLIENTS:
 		group->boot_unknown_clients = flag;
 		break;
 
@@ -498,7 +498,7 @@ parse_lbrace(FILE *cfile)
 	char *val;
 
 	token = next_token(&val, cfile);
-	if (token != LBRACE) {
+	if (token != '{') {
 		parse_warn("expecting left brace.");
 		skip_to_semi(cfile);
 		return 0;
@@ -507,7 +507,7 @@ parse_lbrace(FILE *cfile)
 }
 
 
-/* host-declaration :== hostname RBRACE parameters declarations LBRACE */
+/* host-declaration :== hostname '{' parameters declarations '}' */
 
 void parse_host_declaration(cfile, group)
 	FILE *cfile;
@@ -535,7 +535,7 @@ void parse_host_declaration(cfile, group)
 
 	do {
 		token = peek_token(&val, cfile);
-		if (token == RBRACE) {
+		if (token == '}') {
 			token = next_token(&val, cfile);
 			break;
 		}
@@ -568,7 +568,7 @@ void parse_host_declaration(cfile, group)
 	enter_host(host);
 }
 
-/* class-declaration :== STRING LBRACE parameters declarations RBRACE
+/* class-declaration :== STRING '{' parameters declarations '}'
 */
 
 void parse_class_declaration(cfile, group, type)
@@ -582,7 +582,7 @@ void parse_class_declaration(cfile, group, type)
 	int declaration = 0;
 
 	token = next_token(&val, cfile);
-	if (token != STRING) {
+	if (token != TOK_STRING) {
 		parse_warn("Expecting class name");
 		skip_to_semi(cfile);
 		return;
@@ -598,7 +598,7 @@ void parse_class_declaration(cfile, group, type)
 
 	do {
 		token = peek_token(&val, cfile);
-		if (token == RBRACE) {
+		if (token == '}') {
 			token = next_token(&val, cfile);
 			break;
 		} else if (token == EOF) {
@@ -638,7 +638,7 @@ void parse_shared_net_declaration(cfile, group)
 
 	/* Get the name of the shared network... */
 	token = peek_token(&val, cfile);
-	if (token == STRING) {
+	if (token == TOK_STRING) {
 		token = next_token(&val, cfile);
 
 		if (val[0] == 0) {
@@ -661,7 +661,7 @@ void parse_shared_net_declaration(cfile, group)
 
 	do {
 		token = peek_token(&val, cfile);
-		if (token == RBRACE) {
+		if (token == '}') {
 			token = next_token(&val, cfile);
 			if (!share->subnets) {
 				parse_warn("empty shared-network decl");
@@ -703,21 +703,21 @@ void parse_subnet_declaration(cfile, share)
 	subnet->group->subnet = subnet;
 
 	/* Get the network number... */
-	if (!parse_numeric_aggregate(cfile, addr, &len, DOT, 10, 8))
+	if (!parse_numeric_aggregate(cfile, addr, &len, '.', 10, 8))
 		return;
 	memcpy(iaddr.iabuf, addr, len);
 	iaddr.len = len;
 	subnet->net = iaddr;
 
 	token = next_token(&val, cfile);
-	if (token != NETMASK) {
+	if (token != TOK_NETMASK) {
 		parse_warn("Expecting netmask");
 		skip_to_semi(cfile);
 		return;
 	}
 
 	/* Get the netmask... */
-	if (!parse_numeric_aggregate(cfile, addr, &len, DOT, 10, 8))
+	if (!parse_numeric_aggregate(cfile, addr, &len, '.', 10, 8))
 		return;
 	memcpy(iaddr.iabuf, addr, len);
 	iaddr.len = len;
@@ -730,7 +730,7 @@ void parse_subnet_declaration(cfile, share)
 
 	do {
 		token = peek_token(&val, cfile);
-		if (token == RBRACE) {
+		if (token == '}') {
 			token = next_token(&val, cfile);
 			break;
 		} else if (token == EOF) {
@@ -787,7 +787,7 @@ void parse_group_declaration(cfile, group)
 
 	do {
 		token = peek_token(&val, cfile);
-		if (token == RBRACE) {
+		if (token == '}') {
 			token = next_token(&val, cfile);
 			break;
 		} else if (token == EOF) {
@@ -833,16 +833,16 @@ struct tree *parse_ip_addr_or_hostname(cfile, uniform)
 		rv = tree_const(h->h_addr_list[0], h->h_length);
 		if (!uniform)
 			rv = tree_limit(rv, 4);
-	} else if (token == NUMBER) {
-		if (!parse_numeric_aggregate(cfile, addr, &len, DOT, 10, 8))
+	} else if (token == TOK_NUMBER) {
+		if (!parse_numeric_aggregate(cfile, addr, &len, '.', 10, 8))
 			return NULL;
 		rv = tree_const(addr, len);
 	} else {
-		if (token != RBRACE && token != LBRACE)
+		if (token != '{' && token != '}')
 			token = next_token(&val, cfile);
 		parse_warn("%s (%d): expecting IP address or hostname",
 			    val, token);
-		if (token != SEMI)
+		if (token != ';')
 			skip_to_semi(cfile);
 		return NULL;
 	}
@@ -870,9 +870,9 @@ struct tree_cache *parse_fixed_addr_param(cfile)
 		else
 			tree = tmp;
 		token = peek_token(&val, cfile);
-		if (token == COMMA)
+		if (token == ',')
 			token = next_token(&val, cfile);
-	} while (token == COMMA);
+	} while (token == ',');
 
 	if (!parse_semi(cfile))
 		return NULL;
@@ -903,7 +903,7 @@ void parse_option_param(cfile, group)
 	token = next_token(&val, cfile);
 	if (!is_identifier(token)) {
 		parse_warn("expecting identifier after option keyword.");
-		if (token != SEMI)
+		if (token != ';')
 			skip_to_semi(cfile);
 		return;
 	}
@@ -912,7 +912,7 @@ void parse_option_param(cfile, group)
 		error("no memory for vendor token.");
 	strlcpy(vendor, val, strlen(val) + 1);
 	token = peek_token(&val, cfile);
-	if (token == DOT) {
+	if (token == '.') {
 		/* Go ahead and take the DOT token... */
 		token = next_token(&val, cfile);
 
@@ -920,7 +920,7 @@ void parse_option_param(cfile, group)
 		token = next_token(&val, cfile);
 		if (!is_identifier(token)) {
 			parse_warn("expecting identifier after '.'");
-			if (token != SEMI)
+			if (token != ';')
 				skip_to_semi(cfile);
 			return;
 		}
@@ -974,16 +974,16 @@ void parse_option_param(cfile, group)
 			switch (*fmt) {
 			case 'X':
 				token = peek_token(&val, cfile);
-				if (token == NUMBER_OR_NAME ||
-				    token == NUMBER) {
+				if (token == TOK_NUMBER_OR_NAME ||
+				    token == TOK_NUMBER) {
 					do {
 						token = next_token
 							(&val, cfile);
-						if (token != NUMBER &&
-						    token != NUMBER_OR_NAME) {
+						if (token != TOK_NUMBER &&
+						    token != TOK_NUMBER_OR_NAME) {
 							parse_warn("expecting "
 							    "number.");
-							if (token != SEMI)
+							if (token != ';')
 								skip_to_semi(
 								    cfile);
 							return;
@@ -992,11 +992,11 @@ void parse_option_param(cfile, group)
 						tree = tree_concat(tree,
 						    tree_const(buf, 1));
 						token = peek_token(&val, cfile);
-						if (token == COLON)
+						if (token == ':')
 							token = next_token(&val,
 							    cfile);
-					} while (token == COLON);
-				} else if (token == STRING) {
+					} while (token == ':');
+				} else if (token == TOK_STRING) {
 					token = next_token(&val, cfile);
 					tree = tree_concat(tree,
 					    tree_const((unsigned char *)val,
@@ -1011,10 +1011,10 @@ void parse_option_param(cfile, group)
 
 			case 't': /* Text string... */
 				token = next_token(&val, cfile);
-				if (token != STRING
+				if (token != TOK_STRING
 				    && !is_identifier(token)) {
 					parse_warn("expecting string.");
-					if (token != SEMI)
+					if (token != ';')
 						skip_to_semi(cfile);
 					return;
 				}
@@ -1033,9 +1033,9 @@ void parse_option_param(cfile, group)
 			case 'L': /* Unsigned 32-bit integer... */
 			case 'l':	/* Signed 32-bit integer... */
 				token = next_token(&val, cfile);
-				if (token != NUMBER) {
+				if (token != TOK_NUMBER) {
 					parse_warn("expecting number.");
-					if (token != SEMI)
+					if (token != ';')
 						skip_to_semi(cfile);
 					return;
 				}
@@ -1045,9 +1045,9 @@ void parse_option_param(cfile, group)
 			case 's':	/* Signed 16-bit integer. */
 			case 'S':	/* Unsigned 16-bit integer. */
 				token = next_token(&val, cfile);
-				if (token != NUMBER) {
+				if (token != TOK_NUMBER) {
 					parse_warn("expecting number.");
-					if (token != SEMI)
+					if (token != ';')
 						skip_to_semi(cfile);
 					return;
 				}
@@ -1057,9 +1057,9 @@ void parse_option_param(cfile, group)
 			case 'b':	/* Signed 8-bit integer. */
 			case 'B':	/* Unsigned 8-bit integer. */
 				token = next_token(&val, cfile);
-				if (token != NUMBER) {
+				if (token != TOK_NUMBER) {
 					parse_warn("expecting number.");
-					if (token != SEMI)
+					if (token != ';')
 						skip_to_semi(cfile);
 					return;
 				}
@@ -1070,7 +1070,7 @@ void parse_option_param(cfile, group)
 				token = next_token(&val, cfile);
 				if (!is_identifier(token)) {
 					parse_warn("expecting identifier.");
-					if (token != SEMI)
+					if (token != ';')
 						skip_to_semi(cfile);
 					return;
 				}
@@ -1082,7 +1082,7 @@ void parse_option_param(cfile, group)
 					buf[0] = 0;
 				else {
 					parse_warn("expecting boolean.");
-					if (token != SEMI)
+					if (token != ';')
 						skip_to_semi(cfile);
 					return;
 				}
@@ -1097,7 +1097,7 @@ void parse_option_param(cfile, group)
 		}
 		if (*fmt == 'A') {
 			token = peek_token(&val, cfile);
-			if (token == COMMA) {
+			if (token == ',') {
 				token = next_token(&val, cfile);
 				continue;
 			}
@@ -1106,7 +1106,7 @@ void parse_option_param(cfile, group)
 	} while (*fmt == 'A');
 
 	token = next_token(&val, cfile);
-	if (token != SEMI) {
+	if (token != ';') {
 		parse_warn("semicolon expected.");
 		skip_to_semi(cfile);
 		return;
@@ -1146,7 +1146,7 @@ parse_lease_declaration(FILE *cfile)
 	memset(&lease, 0, sizeof lease);
 
 	/* Get the address for which the lease has been issued. */
-	if (!parse_numeric_aggregate(cfile, addr, &len, DOT, 10, 8))
+	if (!parse_numeric_aggregate(cfile, addr, &len, '.', 10, 8))
 		return NULL;
 	memcpy(lease.ip_addr.iabuf, addr, len);
 	lease.ip_addr.len = len;
@@ -1156,7 +1156,7 @@ parse_lease_declaration(FILE *cfile)
 
 	do {
 		token = next_token(&val, cfile);
-		if (token == RBRACE)
+		if (token == '}')
 			break;
 		else if (token == EOF) {
 			parse_warn("unexpected end of file");
@@ -1165,21 +1165,21 @@ parse_lease_declaration(FILE *cfile)
 		strlcpy(tbuf, val, sizeof tbuf);
 
 		/* Parse any of the times associated with the lease. */
-		if (token == STARTS || token == ENDS || token == TIMESTAMP) {
+		if (token == TOK_STARTS || token == TOK_ENDS || token == TOK_TIMESTAMP) {
 			time_t t;
 			t = parse_date(cfile);
 			switch (token) {
-			case STARTS:
+			case TOK_STARTS:
 				seenbit = 1;
 				lease.starts = t;
 				break;
 
-			case ENDS:
+			case TOK_ENDS:
 				seenbit = 2;
 				lease.ends = t;
 				break;
 
-			case TIMESTAMP:
+			case TOK_TIMESTAMP:
 				seenbit = 4;
 				lease.timestamp = t;
 				break;
@@ -1192,10 +1192,10 @@ parse_lease_declaration(FILE *cfile)
 		} else {
 			switch (token) {
 				/* Colon-separated hexadecimal octets... */
-			case UID:
+			case TOK_UID:
 				seenbit = 8;
 				token = peek_token(&val, cfile);
-				if (token == STRING) {
+				if (token == TOK_STRING) {
 					token = next_token(&val, cfile);
 					lease.uid_len = strlen(val);
 					lease.uid = (unsigned char *)
@@ -1226,37 +1226,37 @@ parse_lease_declaration(FILE *cfile)
 					error("No memory for lease uid");
 				break;
 
-			case CLASS:
+			case TOK_CLASS:
 				seenbit = 32;
 				token = next_token(&val, cfile);
 				if (!is_identifier(token)) {
-					if (token != SEMI)
+					if (token != ';')
 						skip_to_semi(cfile);
 					return NULL;
 				}
 				/* for now, we aren't using this. */
 				break;
 
-			case HARDWARE:
+			case TOK_HARDWARE:
 				seenbit = 64;
 				parse_hardware_param(cfile,
 				    &lease.hardware_addr);
 				break;
 
-			case DYNAMIC_BOOTP:
+			case TOK_DYNAMIC_BOOTP:
 				seenbit = 128;
 				lease.flags |= BOOTP_LEASE;
 				break;
 
-			case ABANDONED:
+			case TOK_ABANDONED:
 				seenbit = 256;
 				lease.flags |= ABANDONED_LEASE;
 				break;
 
-			case HOSTNAME:
+			case TOK_HOSTNAME:
 				seenbit = 512;
 				token = peek_token(&val, cfile);
-				if (token == STRING)
+				if (token == TOK_STRING)
 					lease.hostname = parse_string(cfile);
 				else
 					lease.hostname =
@@ -1267,10 +1267,10 @@ parse_lease_declaration(FILE *cfile)
 				}
 				break;
 
-			case CLIENT_HOSTNAME:
+			case TOK_CLIENT_HOSTNAME:
 				seenbit = 1024;
 				token = peek_token(&val, cfile);
-				if (token == STRING)
+				if (token == TOK_STRING)
 					lease.client_hostname =
 					    parse_string(cfile);
 				else
@@ -1284,9 +1284,9 @@ parse_lease_declaration(FILE *cfile)
 				return NULL;
 			}
 
-			if (token != HARDWARE && token != STRING) {
+			if (token != TOK_HARDWARE && token != TOK_STRING) {
 				token = next_token(&val, cfile);
-				if (token != SEMI) {
+				if (token != ';') {
 					parse_warn("semicolon expected.");
 					skip_to_semi(cfile);
 					return NULL;
@@ -1315,31 +1315,31 @@ parse_address_range(FILE *cfile, struct subnet *subnet)
 	int len = sizeof addr, token, dynamic = 0;
 	char *val;
 
-	if ((token = peek_token(&val, cfile)) == DYNAMIC_BOOTP) {
+	if ((token = peek_token(&val, cfile)) == TOK_DYNAMIC_BOOTP) {
 		token = next_token(&val, cfile);
 		subnet->group->dynamic_bootp = dynamic = 1;
 	}
 
 	/* Get the bottom address in the range... */
-	if (!parse_numeric_aggregate(cfile, addr, &len, DOT, 10, 8))
+	if (!parse_numeric_aggregate(cfile, addr, &len, '.', 10, 8))
 		return;
 	memcpy(low.iabuf, addr, len);
 	low.len = len;
 
 	/* Only one address? */
 	token = peek_token(&val, cfile);
-	if (token == SEMI)
+	if (token == ';')
 		high = low;
 	else {
 		/* Get the top address in the range... */
-		if (!parse_numeric_aggregate(cfile, addr, &len, DOT, 10, 8))
+		if (!parse_numeric_aggregate(cfile, addr, &len, '.', 10, 8))
 			return;
 		memcpy(high.iabuf, addr, len);
 		high.len = len;
 	}
 
 	token = next_token(&val, cfile);
-	if (token != SEMI) {
+	if (token != ';') {
 		parse_warn("semicolon expected.");
 		skip_to_semi(cfile);
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.13 2005/07/17 19:33:55 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.14 2006/04/18 19:17:54 deraadt Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -65,16 +65,16 @@ skip_to_semi(FILE *cfile)
 
 	do {
 		token = peek_token(&val, cfile);
-		if (token == RBRACE) {
+		if (token == '}') {
 			if (brace_count) {
 				token = next_token(&val, cfile);
 				if (!--brace_count)
 					return;
 			} else
 				return;
-		} else if (token == LBRACE) {
+		} else if (token == '{') {
 			brace_count++;
-		} else if (token == SEMI && !brace_count) {
+		} else if (token == ';' && !brace_count) {
 			token = next_token(&val, cfile);
 			return;
 		} else if (token == '\n') {
@@ -98,7 +98,7 @@ parse_semi(FILE *cfile)
 	char *val;
 
 	token = next_token(&val, cfile);
-	if (token != SEMI) {
+	if (token != ';') {
 		parse_warn("semicolon expected.");
 		skip_to_semi(cfile);
 		return (0);
@@ -116,7 +116,7 @@ parse_string(FILE *cfile)
 	int token;
 
 	token = next_token(&val, cfile);
-	if (token != STRING) {
+	if (token != TOK_STRING) {
 		parse_warn("filename must be a string");
 		skip_to_semi(cfile);
 		return (NULL);
@@ -135,7 +135,7 @@ int
 parse_ip_addr(FILE *cfile, struct iaddr *addr)
 {
 	addr->len = 4;
-	return (parse_numeric_aggregate(cfile, addr->iabuf, addr->len, DOT,
+	return (parse_numeric_aggregate(cfile, addr->iabuf, addr->len, '.',
 	    10));
 }
 
@@ -151,15 +151,15 @@ parse_hardware_param(FILE *cfile, struct hardware *hardware)
 
 	token = next_token(&val, cfile);
 	switch (token) {
-	case ETHERNET:
+	case TOK_ETHERNET:
 		hardware->htype = HTYPE_ETHER;
 		hardware->hlen = 6;
 		break;
-	case TOKEN_RING:
+	case TOK_TOKEN_RING:
 		hardware->htype = HTYPE_IEEE802;
 		hardware->hlen = 6;
 		break;
-	case FDDI:
+	case TOK_FDDI:
 		hardware->htype = HTYPE_FDDI;
 		hardware->hlen = 6;
 		break;
@@ -170,11 +170,11 @@ parse_hardware_param(FILE *cfile, struct hardware *hardware)
 	}
 
 	if (parse_numeric_aggregate(cfile, hardware->haddr, hardware->hlen,
-	    COLON, 16) == 0)
+	    ':', 16) == 0)
 		return;
 
 	token = next_token(&val, cfile);
-	if (token != SEMI) {
+	if (token != ';') {
 		parse_warn("expecting semicolon.");
 		skip_to_semi(cfile);
 	}
@@ -190,7 +190,7 @@ parse_lease_time(FILE *cfile, time_t *timep)
 	int token;
 
 	token = next_token(&val, cfile);
-	if (token != NUMBER) {
+	if (token != TOK_NUMBER) {
 		parse_warn("Expecting numeric lease time");
 		skip_to_semi(cfile);
 		return;
@@ -222,7 +222,7 @@ parse_numeric_aggregate(FILE *cfile, unsigned char *buf, int max, int separator,
 
 		token = next_token(&val, cfile);
 
-		if (token == NUMBER || (base == 16 && token == NUMBER_OR_NAME))
+		if (token == TOK_NUMBER || (base == 16 && token == TOK_NUMBER_OR_NAME))
 			/* XXX Need to check if conversion was successful. */
 			convert_num(buf, val, base, 8);
 		else
@@ -357,9 +357,9 @@ parse_date(FILE *cfile)
 
 	/* Day of week... */
 	token = next_token(&val, cfile);
-	if (token != NUMBER) {
+	if (token != TOK_NUMBER) {
 		parse_warn("numeric day of week expected.");
-		if (token != SEMI)
+		if (token != ';')
 			skip_to_semi(cfile);
 		return (0);
 	}
@@ -367,9 +367,9 @@ parse_date(FILE *cfile)
 
 	/* Year... */
 	token = next_token(&val, cfile);
-	if (token != NUMBER) {
+	if (token != TOK_NUMBER) {
 		parse_warn("numeric year expected.");
-		if (token != SEMI)
+		if (token != ';')
 			skip_to_semi(cfile);
 		return (0);
 	}
@@ -379,18 +379,18 @@ parse_date(FILE *cfile)
 
 	/* Slash separating year from month... */
 	token = next_token(&val, cfile);
-	if (token != SLASH) {
+	if (token != '/') {
 		parse_warn("expected slash separating year from month.");
-		if (token != SEMI)
+		if (token != ';')
 			skip_to_semi(cfile);
 		return (0);
 	}
 
 	/* Month... */
 	token = next_token(&val, cfile);
-	if (token != NUMBER) {
+	if (token != TOK_NUMBER) {
 		parse_warn("numeric month expected.");
-		if (token != SEMI)
+		if (token != ';')
 			skip_to_semi(cfile);
 		return (0);
 	}
@@ -398,18 +398,18 @@ parse_date(FILE *cfile)
 
 	/* Slash separating month from day... */
 	token = next_token(&val, cfile);
-	if (token != SLASH) {
+	if (token != '/') {
 		parse_warn("expected slash separating month from day.");
-		if (token != SEMI)
+		if (token != ';')
 			skip_to_semi(cfile);
 		return (0);
 	}
 
 	/* Month... */
 	token = next_token(&val, cfile);
-	if (token != NUMBER) {
+	if (token != TOK_NUMBER) {
 		parse_warn("numeric day of month expected.");
-		if (token != SEMI)
+		if (token != ';')
 			skip_to_semi(cfile);
 		return (0);
 	}
@@ -417,9 +417,9 @@ parse_date(FILE *cfile)
 
 	/* Hour... */
 	token = next_token(&val, cfile);
-	if (token != NUMBER) {
+	if (token != TOK_NUMBER) {
 		parse_warn("numeric hour expected.");
-		if (token != SEMI)
+		if (token != ';')
 			skip_to_semi(cfile);
 		return (0);
 	}
@@ -427,18 +427,18 @@ parse_date(FILE *cfile)
 
 	/* Colon separating hour from minute... */
 	token = next_token(&val, cfile);
-	if (token != COLON) {
+	if (token != ':') {
 		parse_warn("expected colon separating hour from minute.");
-		if (token != SEMI)
+		if (token != ';')
 			skip_to_semi(cfile);
 		return (0);
 	}
 
 	/* Minute... */
 	token = next_token(&val, cfile);
-	if (token != NUMBER) {
+	if (token != TOK_NUMBER) {
 		parse_warn("numeric minute expected.");
-		if (token != SEMI)
+		if (token != ';')
 			skip_to_semi(cfile);
 		return (0);
 	}
@@ -446,18 +446,18 @@ parse_date(FILE *cfile)
 
 	/* Colon separating minute from second... */
 	token = next_token(&val, cfile);
-	if (token != COLON) {
+	if (token != ':') {
 		parse_warn("expected colon separating hour from minute.");
-		if (token != SEMI)
+		if (token != ';')
 			skip_to_semi(cfile);
 		return (0);
 	}
 
 	/* Minute... */
 	token = next_token(&val, cfile);
-	if (token != NUMBER) {
+	if (token != TOK_NUMBER) {
 		parse_warn("numeric minute expected.");
-		if (token != SEMI)
+		if (token != ';')
 			skip_to_semi(cfile);
 		return (0);
 	}
@@ -469,7 +469,7 @@ parse_date(FILE *cfile)
 
 	/* Make sure the date ends in a semicolon... */
 	token = next_token(&val, cfile);
-	if (token != SEMI) {
+	if (token != ';') {
 		parse_warn("semicolon expected.");
 		skip_to_semi(cfile);
 		return (0);

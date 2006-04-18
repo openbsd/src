@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.26 2005/08/02 02:34:03 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.27 2006/04/18 19:17:54 deraadt Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -123,7 +123,7 @@ read_client_leases(void)
 		token = next_token(&val, cfile);
 		if (token == EOF)
 			break;
-		if (token != LEASE) {
+		if (token != TOK_LEASE) {
 			warning("Corrupt lease file - possible data loss!");
 			skip_to_semi(cfile);
 			break;
@@ -161,75 +161,75 @@ parse_client_statement(FILE *cfile)
 	int token, code;
 
 	switch (next_token(&val, cfile)) {
-	case SEND:
+	case TOK_SEND:
 		parse_option_decl(cfile, &config->send_options[0]);
 		return;
-	case DEFAULT:
+	case TOK_DEFAULT:
 		code = parse_option_decl(cfile, &config->defaults[0]);
 		if (code != -1)
 			config->default_actions[code] = ACTION_DEFAULT;
 		return;
-	case SUPERSEDE:
+	case TOK_SUPERSEDE:
 		code = parse_option_decl(cfile, &config->defaults[0]);
 		if (code != -1)
 			config->default_actions[code] = ACTION_SUPERSEDE;
 		return;
-	case APPEND:
+	case TOK_APPEND:
 		code = parse_option_decl(cfile, &config->defaults[0]);
 		if (code != -1)
 			config->default_actions[code] = ACTION_APPEND;
 		return;
-	case PREPEND:
+	case TOK_PREPEND:
 		code = parse_option_decl(cfile, &config->defaults[0]);
 		if (code != -1)
 			config->default_actions[code] = ACTION_PREPEND;
 		return;
-	case MEDIA:
+	case TOK_MEDIA:
 		parse_string_list(cfile, &config->media, 1);
 		return;
-	case HARDWARE:
+	case TOK_HARDWARE:
 		parse_hardware_param(cfile, &ifi->hw_address);
 		return;
-	case REQUEST:
+	case TOK_REQUEST:
 		config->requested_option_count =
 			parse_option_list(cfile, config->requested_options);
 		return;
-	case REQUIRE:
+	case TOK_REQUIRE:
 		memset(config->required_options, 0,
 		    sizeof(config->required_options));
 		parse_option_list(cfile, config->required_options);
 		return;
-	case TIMEOUT:
+	case TOK_TIMEOUT:
 		parse_lease_time(cfile, &config->timeout);
 		return;
-	case RETRY:
+	case TOK_RETRY:
 		parse_lease_time(cfile, &config->retry_interval);
 		return;
-	case SELECT_TIMEOUT:
+	case TOK_SELECT_TIMEOUT:
 		parse_lease_time(cfile, &config->select_interval);
 		return;
-	case REBOOT:
+	case TOK_REBOOT:
 		parse_lease_time(cfile, &config->reboot_timeout);
 		return;
-	case BACKOFF_CUTOFF:
+	case TOK_BACKOFF_CUTOFF:
 		parse_lease_time(cfile, &config->backoff_cutoff);
 		return;
-	case INITIAL_INTERVAL:
+	case TOK_INITIAL_INTERVAL:
 		parse_lease_time(cfile, &config->initial_interval);
 		return;
-	case SCRIPT:
+	case TOK_SCRIPT:
 		config->script_name = parse_string(cfile);
 		return;
-	case INTERFACE:
+	case TOK_INTERFACE:
 		parse_interface_declaration(cfile);
 		return;
-	case LEASE:
+	case TOK_LEASE:
 		parse_client_lease_statement(cfile, 1);
 		return;
-	case ALIAS:
+	case TOK_ALIAS:
 		parse_client_lease_statement(cfile, 2);
 		return;
-	case REJECT:
+	case TOK_REJECT:
 		parse_reject_statement(cfile);
 		return;
 	default:
@@ -238,7 +238,7 @@ parse_client_statement(FILE *cfile)
 		break;
 	}
 	token = next_token(&val, cfile);
-	if (token != SEMI) {
+	if (token != ';') {
 		parse_warn("semicolon expected.");
 		skip_to_semi(cfile);
 	}
@@ -252,11 +252,11 @@ parse_X(FILE *cfile, u_int8_t *buf, int max)
 	int	 len;
 
 	token = peek_token(&val, cfile);
-	if (token == NUMBER_OR_NAME || token == NUMBER) {
+	if (token == TOK_NUMBER_OR_NAME || token == TOK_NUMBER) {
 		len = 0;
 		do {
 			token = next_token(&val, cfile);
-			if (token != NUMBER && token != NUMBER_OR_NAME) {
+			if (token != TOK_NUMBER && token != TOK_NUMBER_OR_NAME) {
 				parse_warn("expecting hexadecimal constant.");
 				skip_to_semi(cfile);
 				return (0);
@@ -268,11 +268,11 @@ parse_X(FILE *cfile, u_int8_t *buf, int max)
 				return (0);
 			}
 			token = peek_token(&val, cfile);
-			if (token == COLON)
+			if (token == ':')
 				token = next_token(&val, cfile);
-		} while (token == COLON);
+		} while (token == ':');
 		val = (char *)buf;
-	} else if (token == STRING) {
+	} else if (token == TOK_STRING) {
 		token = next_token(&val, cfile);
 		len = strlen(val);
 		if (len + 1 > max) {
@@ -324,8 +324,8 @@ parse_option_list(FILE *cfile, u_int8_t *list)
 			return (0);
 		}
 		token = next_token(&val, cfile);
-	} while (token == COMMA);
-	if (token != SEMI) {
+	} while (token == ',');
+	if (token != ';') {
 		parse_warn("expecting semicolon.");
 		skip_to_semi(cfile);
 		return (0);
@@ -344,7 +344,7 @@ parse_interface_declaration(FILE *cfile)
 	int token;
 
 	token = next_token(&val, cfile);
-	if (token != STRING) {
+	if (token != TOK_STRING) {
 		parse_warn("expecting interface name (in quotes).");
 		skip_to_semi(cfile);
 		return;
@@ -356,7 +356,7 @@ parse_interface_declaration(FILE *cfile)
 	}
 
 	token = next_token(&val, cfile);
-	if (token != LBRACE) {
+	if (token != '{') {
 		parse_warn("expecting left brace.");
 		skip_to_semi(cfile);
 		return;
@@ -368,7 +368,7 @@ parse_interface_declaration(FILE *cfile)
 			parse_warn("unterminated interface declaration.");
 			return;
 		}
-		if (token == RBRACE)
+		if (token == '}')
 			break;
 		parse_client_statement(cfile);
 	} while (1);
@@ -393,7 +393,7 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 	char			*val;
 
 	token = next_token(&val, cfile);
-	if (token != LBRACE) {
+	if (token != '{') {
 		parse_warn("expecting left brace.");
 		skip_to_semi(cfile);
 		return;
@@ -411,7 +411,7 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 			parse_warn("unterminated lease declaration.");
 			return;
 		}
-		if (token == RBRACE)
+		if (token == '}')
 			break;
 		parse_client_lease_declaration(cfile, lease, &ip);
 	} while (1);
@@ -513,12 +513,12 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 	int token;
 
 	switch (next_token(&val, cfile)) {
-	case BOOTP:
+	case TOK_BOOTP:
 		lease->is_bootp = 1;
 		break;
-	case INTERFACE:
+	case TOK_INTERFACE:
 		token = next_token(&val, cfile);
-		if (token != STRING) {
+		if (token != TOK_STRING) {
 			parse_warn("expecting interface name (in quotes).");
 			skip_to_semi(cfile);
 			break;
@@ -531,29 +531,29 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 		}
 		*ipp = ifi;
 		break;
-	case FIXED_ADDR:
+	case TOK_FIXED_ADDR:
 		if (!parse_ip_addr(cfile, &lease->address))
 			return;
 		break;
-	case MEDIUM:
+	case TOK_MEDIUM:
 		parse_string_list(cfile, &lease->medium, 0);
 		return;
-	case FILENAME:
+	case TOK_FILENAME:
 		lease->filename = parse_string(cfile);
 		return;
-	case SERVER_NAME:
+	case TOK_SERVER_NAME:
 		lease->server_name = parse_string(cfile);
 		return;
-	case RENEW:
+	case TOK_RENEW:
 		lease->renewal = parse_date(cfile);
 		return;
-	case REBIND:
+	case TOK_REBIND:
 		lease->rebind = parse_date(cfile);
 		return;
-	case EXPIRE:
+	case TOK_EXPIRE:
 		lease->expiry = parse_date(cfile);
 		return;
-	case OPTION:
+	case TOK_OPTION:
 		parse_option_decl(cfile, lease->options);
 		return;
 	default:
@@ -562,7 +562,7 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 		break;
 	}
 	token = next_token(&val, cfile);
-	if (token != SEMI) {
+	if (token != ';') {
 		parse_warn("expecting semicolon.");
 		skip_to_semi(cfile);
 	}
@@ -585,7 +585,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 	token = next_token(&val, cfile);
 	if (!is_identifier(token)) {
 		parse_warn("expecting identifier after option keyword.");
-		if (token != SEMI)
+		if (token != ';')
 			skip_to_semi(cfile);
 		return (-1);
 	}
@@ -615,7 +615,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				break;
 			case 't': /* Text string... */
 				token = next_token(&val, cfile);
-				if (token != STRING) {
+				if (token != TOK_STRING) {
 					parse_warn("expecting string.");
 					skip_to_semi(cfile);
 					return (-1);
@@ -649,10 +649,10 @@ alloc:
 			case 'L':	/* Unsigned 32-bit integer... */
 			case 'l':	/* Signed 32-bit integer... */
 				token = next_token(&val, cfile);
-				if (token != NUMBER) {
+				if (token != TOK_NUMBER) {
 need_number:
 					parse_warn("expecting number.");
-					if (token != SEMI)
+					if (token != ';')
 						skip_to_semi(cfile);
 					return (-1);
 				}
@@ -663,7 +663,7 @@ need_number:
 			case 's':	/* Signed 16-bit integer. */
 			case 'S':	/* Unsigned 16-bit integer. */
 				token = next_token(&val, cfile);
-				if (token != NUMBER)
+				if (token != TOK_NUMBER)
 					goto need_number;
 				convert_num(buf, val, 0, 16);
 				len = 2;
@@ -672,7 +672,7 @@ need_number:
 			case 'b':	/* Signed 8-bit integer. */
 			case 'B':	/* Unsigned 8-bit integer. */
 				token = next_token(&val, cfile);
-				if (token != NUMBER)
+				if (token != TOK_NUMBER)
 					goto need_number;
 				convert_num(buf, val, 0, 8);
 				len = 1;
@@ -683,7 +683,7 @@ need_number:
 				if (!is_identifier(token)) {
 					parse_warn("expecting identifier.");
 bad_flag:
-					if (token != SEMI)
+					if (token != ';')
 						skip_to_semi(cfile);
 					return (-1);
 				}
@@ -708,9 +708,9 @@ bad_flag:
 			}
 		}
 		token = next_token(&val, cfile);
-	} while (*fmt == 'A' && token == COMMA);
+	} while (*fmt == 'A' && token == ',');
 
-	if (token != SEMI) {
+	if (token != ';') {
 		parse_warn("semicolon expected.");
 		skip_to_semi(cfile);
 		return (-1);
@@ -740,7 +740,7 @@ parse_string_list(FILE *cfile, struct string_list **lp, int multiple)
 
 	do {
 		token = next_token(&val, cfile);
-		if (token != STRING) {
+		if (token != TOK_STRING) {
 			parse_warn("Expecting media options.");
 			skip_to_semi(cfile);
 			return;
@@ -760,9 +760,9 @@ parse_string_list(FILE *cfile, struct string_list **lp, int multiple)
 		cur = tmp;
 
 		token = next_token(&val, cfile);
-	} while (multiple && token == COMMA);
+	} while (multiple && token == ',');
 
-	if (token != SEMI) {
+	if (token != ';') {
 		parse_warn("expecting semicolon.");
 		skip_to_semi(cfile);
 	}
@@ -793,9 +793,9 @@ parse_reject_statement(FILE *cfile)
 		config->reject_list = list;
 
 		token = next_token(&val, cfile);
-	} while (token == COMMA);
+	} while (token == ',');
 
-	if (token != SEMI) {
+	if (token != ';') {
 		parse_warn("expecting semicolon.");
 		skip_to_semi(cfile);
 	}
