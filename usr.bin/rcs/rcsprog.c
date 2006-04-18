@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.106 2006/04/18 02:46:21 ray Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.107 2006/04/18 03:35:57 ray Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -32,8 +32,7 @@
 #define RCSPROG_OPTSTRING	"A:a:b::c:e::ik:Ll::m:Mn:N:o:qt::TUu::Vx::z::"
 
 #define DESC_PROMPT	"enter description, terminated with single '.' "      \
-			"or end of file:\nNOTE: This is NOT the log message!" \
-			"\n>> "
+			"or end of file:\nNOTE: This is NOT the log message!\n"
 
 const char rcs_version[] = "OpenCVS RCS version 3.6";
 int verbose = 1;
@@ -860,47 +859,55 @@ static void
 rcs_set_description(RCSFILE *file, const char *in)
 {
 	BUF *bp;
-	char *content, buf[128];
+	char *content;
 
-	content = NULL;
 	/* Description is in file <in>. */
-	if (in != NULL && *in != '-')
+	if (in != NULL && *in != '-') {
 		bp = cvs_buf_load(in, BUF_AUTOEXT);
+		cvs_buf_putc(bp, '\0');
+		content = cvs_buf_release(bp);
 	/* Description is in <in>. */
-	else if (in != NULL) {
-		size_t len;
-		const char *desc;
-
+	} else if (in != NULL)
 		/* Skip leading `-'. */
-		desc = in + 1;
-		len = strlen(desc);
-
-		bp = cvs_buf_alloc(len + 1, BUF_AUTOEXT);
-		cvs_buf_append(bp, desc, len);
+		content = xstrdup(in + 1);
 	/* Get description from stdin. */
-	} else {
-		bp = cvs_buf_alloc(64, BUF_AUTOEXT);
-
-		if (isatty(STDIN_FILENO))
-			(void)fprintf(stderr, "%s", DESC_PROMPT);
-		for (;;) {
-			/* XXX - fgetln() may be more elegant. */
-			fgets(buf, sizeof(buf), stdin);
-			if (feof(stdin) || ferror(stdin) ||
-			    strcmp(buf, ".\n") == 0 ||
-			    strcmp(buf, ".") == 0)
-				break;
-			cvs_buf_append(bp, buf, strlen(buf));
-			if (isatty(STDIN_FILENO))
-				(void)fprintf(stderr, ">> ");
-		}
-	}
-
-	cvs_buf_putc(bp, '\0');
-	content = cvs_buf_release(bp);
+	else
+		content = rcs_prompt(DESC_PROMPT);
 
 	rcs_desc_set(file, content);
 	xfree(content);
+}
+
+/*
+ * Prompt for and store user's input in an allocated string.
+ *
+ * Returns the string's pointer.
+ */
+char *
+rcs_prompt(const char *prompt)
+{
+	BUF *bp;
+	size_t len;
+	char *buf;
+
+	bp = cvs_buf_alloc(0, BUF_AUTOEXT);
+	if (isatty(STDIN_FILENO))
+		(void)fprintf(stderr, "%s", prompt);
+	if (isatty(STDIN_FILENO))
+		(void)fprintf(stderr, ">> ");
+	while ((buf = fgetln(stdin, &len)) != NULL) {
+		/* The last line may not be EOL terminated. */
+		if (buf[0] == '.' && (len == 1 || buf[1] == '\n'))
+			break;
+		else
+			cvs_buf_append(bp, buf, len);
+
+		if (isatty(STDIN_FILENO))
+			(void)fprintf(stderr, ">> ");
+	}
+	cvs_buf_putc(bp, '\0');
+
+	return (cvs_buf_release(bp));
 }
 
 u_int

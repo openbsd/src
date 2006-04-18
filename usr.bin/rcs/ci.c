@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.152 2006/04/18 02:52:18 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.153 2006/04/18 03:35:57 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -69,7 +69,6 @@ static int	 checkin_attach_symbol(struct checkin_params *);
 static int	 checkin_checklock(struct checkin_params *);
 static char	*checkin_diff_file(struct checkin_params *);
 static char	*checkin_getdesc(void);
-static char	*checkin_getinput(const char *);
 static char	*checkin_getlogmsg(RCSNUM *, RCSNUM *);
 static int	 checkin_init(struct checkin_params *);
 static int	 checkin_keywordscan(char *, RCSNUM **, time_t *, char **,
@@ -381,6 +380,8 @@ static char *
 checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2)
 {
 	char   *rcs_msg, nrev[16], prev[16];
+	const char *prompt =
+	    "enter log message, terminated with a single '.' or end of file:\n";
 	RCSNUM *tmprev;
 
 	rcs_msg = NULL;
@@ -397,8 +398,8 @@ checkin_getlogmsg(RCSNUM *rev, RCSNUM *rev2)
 		printf("new revision: %s; previous revision: %s\n", nrev,
 		    prev);
 
-	rcs_msg = checkin_getinput("enter log message, terminated with a "
-	    "single '.' or end of file:\n>> ");
+	rcs_msg = rcs_prompt(prompt);
+
 	return (rcs_msg);
 }
 
@@ -413,47 +414,13 @@ static char *
 checkin_getdesc()
 {
 	char *description;
+	const char *prompt =
+	    "enter description, terminated with single '.' or end of file:\n"
+	    "NOTE: This is NOT the log message!\n";
 
-	description = checkin_getinput("enter description, terminated with "
-	    "single '.' or end of file:\n"
-	    "NOTE: This is NOT the log message!\n>> ");
+	description = rcs_prompt(prompt);
+
 	return (description);
-}
-
-/*
- * checkin_getinput()
- *
- * Get some input from the user, in RCS style, prompting with message <prompt>.
- * Returns pointer to a char array on success, NULL on failure.
- */
-static char *
-checkin_getinput(const char *prompt)
-{
-	BUF *inputbuf;
-	char *input, buf[128];
-
-	if ((inputbuf = cvs_buf_alloc((size_t)64, BUF_AUTOEXT)) == NULL) {
-		cvs_log(LP_ERR, "failed to allocate input buffer");
-		return (NULL);
-	}
-
-	if (isatty(STDIN_FILENO))
-		fprintf(stderr, "%s", prompt);
-
-	for (;;) {
-		fgets(buf, (int)sizeof(buf), stdin);
-		if (feof(stdin) || ferror(stdin) || buf[0] == '.')
-			break;
-		cvs_buf_append(inputbuf, buf, strlen(buf));
-
-		if (isatty(STDIN_FILENO))
-			fprintf(stderr, ">> ");
-	}
-
-	cvs_buf_putc(inputbuf, '\0');
-	input = (char *)cvs_buf_release(inputbuf);
-
-	return (input);
 }
 
 /*
