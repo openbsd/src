@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.55 2006/04/14 03:16:02 ray Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.56 2006/04/18 02:57:10 ray Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -1745,7 +1745,7 @@ res_querydomainN(const char *name, const char *domain,
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	char nbuf[MAXDNAME];
 	const char *longname = nbuf;
-	size_t n;
+	size_t len;
 
 	if (_res_init(0) == -1) {
 		h_errno = NETDB_INTERNAL;
@@ -1761,12 +1761,13 @@ res_querydomainN(const char *name, const char *domain,
 		 * Check for trailing '.';
 		 * copy without '.' if present.
 		 */
-		if ((n = strlcpy(nbuf, name, sizeof(nbuf))) >= sizeof(nbuf)) {
+		len = strlcpy(nbuf, name, sizeof(nbuf));
+		if (len >= sizeof(nbuf)) {
 			h_errno = NO_RECOVERY;
 			return (-1);
 		}
-		if (n > 0 && nbuf[n - 1] == '.')
-			nbuf[n - 1] = '\0';
+		if (len > 0 && nbuf[len - 1] == '.')
+			nbuf[len - 1] = '\0';
 	} else {
 		int i;
 
