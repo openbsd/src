@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.28 2006/04/16 11:40:54 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.29 2006/04/18 19:19:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -50,11 +50,6 @@ struct {
 struct kroute_node {
 	RB_ENTRY(kroute_node)	 entry;
 	struct kroute		 r;
-};
-
-struct kif_kr {
-	LIST_ENTRY(kif_kr)	 entry;
-	struct kroute_node	*kr;
 };
 
 struct kif_node {
