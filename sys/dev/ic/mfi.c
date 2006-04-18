@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.18 2006/04/18 00:21:06 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.19 2006/04/18 16:29:54 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -49,7 +49,7 @@ uint32_t	mfi_debug = 0
 		    | MFI_D_IOCTL
 /*		    | MFI_D_RW */
 		    | MFI_D_MEM
-		    | MFI_D_CCB
+/*		    | MFI_D_CCB */
 		;
 #endif
 
@@ -335,6 +335,8 @@ mfi_attach(struct mfi_softc *sc)
 
 	if (mfi_transition_firmware(sc))
 		return (1);
+
+	TAILQ_INIT(&sc->sc_ccb_freeq);
 
 	status = mfi_read(sc, MFI_OMSG0);
 	sc->sc_max_cmds = status & MFI_STATE_MAXCMD_MASK;
