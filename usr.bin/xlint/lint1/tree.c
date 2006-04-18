@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.32 2006/04/18 02:59:40 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.33 2006/04/18 03:10:27 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.32 2006/04/18 02:59:40 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.33 2006/04/18 03:10:27 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -82,6 +82,7 @@ static	void	nulleff(tnode_t *);
 static	void	chkaidx(tnode_t *, int);
 static	void	chkcomp(op_t, tnode_t *, tnode_t *);
 static	void	precconf(tnode_t *);
+static	const char *funcname(tnode_t *);
 
 /*
  * Initialize mods of operators.
@@ -1199,7 +1200,7 @@ asgntypok(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 	if (rn->tn_op == CALL) {
 		if (size(lt) < size(rt) ||
 		    (size(lt) == size(rt) && isutyp(lt) && !isutyp(rt))) {
-			warning(313, rn->tn_left->tn_left->tn_sym->s_name,
+			warning(313, funcname(rn),
 			    tyname(rn->tn_type), tyname(ln->tn_type));
 		}
 	}
@@ -3909,4 +3910,22 @@ precconf(tnode_t *tn)
 		warning(169);
 	}
 
+}
+
+/*
+ * Return the function name of a function (or of a pointer to a
+ * function).
+ */
+const char *
+funcname(tnode_t *tn)
+{
+	/* dereference function pointer */
+	if (tn->tn_op == AMPER)
+		return funcname(tn->tn_left);
+
+	if (tn->tn_op == CALL)
+		return funcname(tn->tn_left);
+
+	// assume tn->tn_op == NAME
+	return tn->tn_sym->s_name;
 }
