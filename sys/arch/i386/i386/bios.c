@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.57 2005/11/13 14:23:26 martin Exp $	*/
+/*	$OpenBSD: bios.c,v 1.58 2006/04/18 23:36:03 gwk Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -95,9 +95,7 @@ void	       *bios_smpinfo;
 bios_diskinfo_t *bios_getdiskinfo(dev_t);
 
 int
-biosprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+biosprobe(struct device *parent, void *match, void *aux)
 {
 	struct bios_attach_args *bia = aux;
 
@@ -117,9 +115,7 @@ biosprobe(parent, match, aux)
 }
 
 void
-biosattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+biosattach(struct device *parent, struct device *self, void *aux)
 {
 	struct bios_softc *sc = (struct bios_softc *) self;
 #if (NPCI > 0 && NPCIBIOS > 0) || NAPM > 0
@@ -347,9 +343,7 @@ bios_getopt()
 }
 
 int
-bios_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+bios_print(void *aux, const char *pnp)
 {
 	struct bios_attach_args *ba = aux;
 
@@ -360,10 +354,7 @@ bios_print(aux, pnp)
 }
 
 int
-bios32_service(service, e, ei)
-	u_int32_t service;
-	bios32_entry_t e;
-	bios32_entry_info_t ei;
+bios32_service(u_int32_t service, bios32_entry_t e, bios32_entry_info_t ei)
 {
 	u_long pa, endpa;
 	vaddr_t va, sva;
@@ -423,10 +414,7 @@ bios32_service(service, e, ei)
 }
 
 int
-biosopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+biosopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct bios_softc *sc = bios_cd.cd_devs[0];
 
@@ -439,10 +427,7 @@ biosopen(dev, flag, mode, p)
 }
 
 int
-biosclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+biosclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct bios_softc *sc = bios_cd.cd_devs[0];
 
@@ -455,12 +440,7 @@ biosclose(dev, flag, mode, p)
 }
 
 int
-biosioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+biosioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct bios_softc *sc = bios_cd.cd_devs[0];
 
@@ -478,8 +458,7 @@ biosioctl(dev, cmd, data, flag, p)
 }
 
 void
-bioscnprobe(cn)
-	struct consdev *cn;
+bioscnprobe(struct consdev *cn)
 {
 #if 0
 	bios_init(I386_BUS_SPACE_MEM); /* XXX */
@@ -495,43 +474,31 @@ bioscnprobe(cn)
 }
 
 void
-bioscninit(cn)
-	struct consdev *cn;
+bioscninit(struct consdev *cn)
 {
 
 }
 
 void
-bioscnputc(dev, ch)
-	dev_t dev;
-	int ch;
+bioscnputc(dev_t dev, int ch)
 {
 
 }
 
 int
-bioscngetc(dev)
-	dev_t dev;
+bioscngetc(dev_t dev)
 {
 	return -1;
 }
 
 void
-bioscnpollc(dev, on)
-	dev_t dev;
-	int on;
+bioscnpollc(dev_t dev, int on)
 {
 }
 
 int
-bios_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+bios_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 	bios_diskinfo_t *pdi;
 	int biosdev;
@@ -564,8 +531,7 @@ bios_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 bios_diskinfo_t *
-bios_getdiskinfo(dev)
-	dev_t dev;
+bios_getdiskinfo(dev_t dev)
 {
 	bios_diskinfo_t *pdi;
 
