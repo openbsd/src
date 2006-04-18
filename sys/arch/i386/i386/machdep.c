@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.351 2006/03/24 12:17:03 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.352 2006/04/18 17:39:15 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1633,8 +1633,6 @@ identifycpu(struct cpu_info *ci)
 		max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
 		modif = (ci->ci_signature >> 12) & 3;
 		family = (ci->ci_signature >> 8) & 15;
-		if (family < CPU_MINFAMILY)
-			panic("identifycpu: strange family value");
 		model = (ci->ci_signature >> 4) & 15;
 		step = ci->ci_signature & 15;
 #ifdef CPUDEBUG
@@ -1644,6 +1642,8 @@ identifycpu(struct cpu_info *ci)
 		    cpu_device, cpuid_level, cpu_cache_eax, cpu_cache_ebx,
 		    cpu_cache_ecx, cpu_cache_edx);
 #endif
+		if (family < CPU_MINFAMILY)
+			panic("identifycpu: strange family value");
 
 		for (i = 0; i < max; i++) {
 			if (!strncmp(cpu_vendor,
