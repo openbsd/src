@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.151 2006/04/18 02:49:31 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.152 2006/04/18 02:52:18 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -160,13 +160,8 @@ checkin_main(int argc, char **argv)
 			pb.flags &= ~INTERACTIVE;
 			break;
 		case 'N':
-			if (pb.symbol != NULL)
-				xfree(pb.symbol);
-			pb.symbol = xstrdup(rcs_optarg);
-			if (rcs_sym_check(pb.symbol) != 1)
-				fatal("invalid symbol `%s'", pb.symbol);
 			pb.flags |= CI_SYMFORCE;
-			break;
+			/* FALLTHROUGH */
 		case 'n':
 			if (pb.symbol != NULL)
 				xfree(pb.symbol);
