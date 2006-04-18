@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.149 2006/04/17 12:03:19 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.150 2006/04/18 02:46:21 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -128,10 +128,6 @@ checkin_main(int argc, char **argv)
 			rcs_setrevstr(&rev_str, rcs_optarg);
 			pb.flags |= FORCE;
 			break;
-		case 'h':
-			(usage)();
-			exit(0);
-			/* NOTREACHED */
 		case 'I':
 			rcs_setrevstr(&rev_str, rcs_optarg);
 			pb.flags |= INTERACTIVE;
