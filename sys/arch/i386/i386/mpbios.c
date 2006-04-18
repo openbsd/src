@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.7 2005/12/12 13:54:09 mickey Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.8 2006/04/18 17:42:24 kettenis Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -740,6 +740,17 @@ mpbios_cpu(ent, self)
 	 * of the flags on at least some MP bioses
 	 */
 	caa.feature_flags = entry->feature_flags;
+
+	/*
+	 * XXX some MP bioses don't specify a valid CPU signature; use
+	 * the result of the 'cpuid' instruction for the processor
+	 * we're running on
+	 */
+	if ((caa.cpu_signature & 0x00000fff) == 0) {
+		extern int cpu_id, cpu_feature;
+		caa.cpu_signature = cpu_id;
+		caa.feature_flags = cpu_feature;
+	}
 #endif
 
 	config_found_sm(self, &caa, mp_print, mp_match);
