@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.150 2006/04/18 02:46:21 ray Exp $	*/
+/*	$OpenBSD: ci.c,v 1.151 2006/04/18 02:49:31 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -62,8 +62,7 @@ struct checkin_params {
 	RCSFILE *file;
 	RCSNUM *frev, *newrev;
 	char fpath[MAXPATHLEN], *rcs_msg, *username, *deltatext, *filename;
-	char *author, *state;
-	const char *symbol, *description;
+	char *author, *description, *state, *symbol;
 };
 
 static int	 checkin_attach_symbol(struct checkin_params *);
@@ -161,12 +160,16 @@ checkin_main(int argc, char **argv)
 			pb.flags &= ~INTERACTIVE;
 			break;
 		case 'N':
+			if (pb.symbol != NULL)
+				xfree(pb.symbol);
 			pb.symbol = xstrdup(rcs_optarg);
 			if (rcs_sym_check(pb.symbol) != 1)
 				fatal("invalid symbol `%s'", pb.symbol);
 			pb.flags |= CI_SYMFORCE;
 			break;
 		case 'n':
+			if (pb.symbol != NULL)
+				xfree(pb.symbol);
 			pb.symbol = xstrdup(rcs_optarg);
 			if (rcs_sym_check(pb.symbol) != 1)
 				fatal("invalid symbol `%s'", pb.symbol);
@@ -187,6 +190,8 @@ checkin_main(int argc, char **argv)
 			pb.flags |= PRESERVETIME;
 			break;
 		case 't':
+			if (pb.description != NULL)
+				xfree(pb.description);
 			pb.description = xstrdup(rcs_optarg);
 			break;
 		case 'u':
@@ -198,6 +203,8 @@ checkin_main(int argc, char **argv)
 			exit(0);
 			/* NOTREACHED */
 		case 'w':
+			if (pb.author != NULL)
+				xfree(pb.author);
 			pb.author = xstrdup(rcs_optarg);
 			break;
 		case 'x':
