@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2001/03/03 23:59:36 markus Exp $
+#	$OpenBSD: Makefile,v 1.6 2006/04/18 10:44:28 dtucker Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -13,6 +13,3 @@ MAN=	sftp-server.8
 SRCS=	sftp-server.c sftp-common.c
 
 .include <bsd.prog.mk>
-
-LDADD+=	-lcrypto
-DPADD+=	${LIBCRYPTO}
