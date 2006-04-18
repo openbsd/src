@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.34 2006/04/18 03:59:46 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.35 2006/04/18 04:10:05 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.34 2006/04/18 03:59:46 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.35 2006/04/18 04:10:05 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1707,8 +1707,9 @@ ptconv(farg_t *farg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 			if (ptn->tn_op == CON) {
 				/* ok. promote() warns if constant out of range */
 			} else {
-				/* %s arg #%d: converted to '%s' */
-				warning(259, funcname(farg->fa_func), arg, tyname(tp));
+				/* %s arg #%d: converted from '%s' to '%s' */
+				warning(259, funcname(farg->fa_func), arg,
+				    tyname(tn->tn_type), tyname(tp));
 			}
 		}
 	} else if (hflag) {
@@ -1723,8 +1724,9 @@ ptconv(farg_t *farg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 		    msb(ptn->tn_val->v_quad, ot, -1) == 0) {
 			/* ok */
 		} else {
-			/* %s arg #%d: converted to '%s' */
-			warning(259, funcname(farg->fa_func), arg, tyname(tp));
+			/* %s arg #%d: converted from '%s' to '%s' */
+			warning(259, funcname(farg->fa_func), arg,
+			    tyname(tn->tn_type), tyname(tp));
 		}
 	}
 }

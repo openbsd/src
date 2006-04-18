@@ -1,4 +1,4 @@
-/*	$OpenBSD: err.c,v 1.21 2006/04/18 03:59:46 cloder Exp $	*/
+/*	$OpenBSD: err.c,v 1.22 2006/04/18 04:10:05 cloder Exp $	*/
 /*	$NetBSD: err.c,v 1.8 1995/10/02 17:37:00 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: err.c,v 1.21 2006/04/18 03:59:46 cloder Exp $";
+static char rcsid[] = "$OpenBSD: err.c,v 1.22 2006/04/18 04:10:05 cloder Exp $";
 #endif
 
 /* number of errors found */
@@ -313,7 +313,7 @@ const	char *msgs[] = {
 	"unterminated comment",					      /* 256 */
 	"extra characters in lint comment",			      /* 257 */
 	"unterminated string constant",				      /* 258 */
-	"%s arg #%d: converted to '%s'",			      /* 259 */
+	"%s arg #%d: converted from '%s' to '%s'",		      /* 259 */
 	"previous declaration of %s",				      /* 260 */
 	"previous definition of %s",				      /* 261 */
 	"\\\" inside character constants undefined in traditional C", /* 262 */
