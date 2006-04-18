@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.144 2006/04/18 04:15:44 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.145 2006/04/18 18:31:04 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -2454,8 +2454,9 @@ ami_refresh(void *arg)
 		for (i = 0; i < sc->sc_nunits; i++) {
 			strlcpy(sc->sc_sens_ld[i].device, sc->sc_hdr[i].dev,
 			    sizeof(sc->sc_sens_ld[i].device));
-			strlcpy(sc->sc_sens_ld[i].desc, "logical disk",
-			    sizeof(sc->sc_sens_ld[i].desc));
+			snprintf(sc->sc_sens_ld[i].desc,
+			    sizeof(sc->sc_sens_ld[i].desc), "%s %d",
+			    DEVNAME(sc), i);
 			sc->sc_sens_ld[i].type = SENSOR_DRIVE;
 			sensor_add(&sc->sc_sens_ld[i]);
 			sc->sc_sens_ld[i].value = SENSOR_DRIVE_ONLINE;
