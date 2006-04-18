@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.143 2006/04/06 10:16:45 dlg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.144 2006/04/18 04:15:44 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -68,6 +68,7 @@
 
 #if NBIO > 0
 #include <dev/biovar.h>
+#include <sys/sensors.h>
 #endif
 
 /*#define	AMI_DEBUG */
@@ -165,6 +166,7 @@ int		ami_ioctl_vol(struct ami_softc *, struct bioc_vol *);
 int		ami_ioctl_disk(struct ami_softc *, struct bioc_disk *);
 int		ami_ioctl_alarm(struct ami_softc *, struct bioc_alarm *);
 int		ami_ioctl_setstate(struct ami_softc *, struct bioc_setstate *);
+void		ami_refresh(void *);
 #endif /* NBIO > 0 */
 
 #define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
@@ -573,6 +575,9 @@ ami_attach(struct ami_softc *sc)
 		printf("%s: controller registration failed", DEVNAME(sc));
 	else
 		sc->sc_ioctl = ami_ioctl;
+
+	if (sensor_task_register(sc, ami_refresh, 10))
+		printf("%s: unable to register update task\n", DEVNAME(sc));
 #endif /* NBIO > 0 */
 
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
@@ -1008,6 +1013,7 @@ ami_runqueue(void *arg)
 	s = splbio();
 	while ((ccb = TAILQ_FIRST(&sc->sc_ccb_preq)) != NULL) {
 		if (sc->sc_exec(sc, &ccb->ccb_cmd) != 0) {
+			/* this is now raceable too with other incomming io */
 			timeout_add(&sc->sc_run_tmo, 1);
 			break;
 		}
@@ -1024,6 +1030,11 @@ ami_poll(struct ami_softc *sc, struct ami_ccb *ccb)
 {
 	int error;
 	int s;
+
+	/* XXX this is broken, shall drain IO or consider this
+	 * a normal completion which can complete async and
+	 * polled commands until the polled commands completes
+	 */
 
 	s = splbio();
 	error = sc->sc_poll(sc, &ccb->ccb_cmd);
@@ -1115,6 +1126,7 @@ ami_stimeout(void *v)
 		break;
 
 	case AMI_CCB_QUEUED:
+		/* XXX create a list to save ccb to and print the whole list */
 		printf("%s: timeout ccb %d\n", DEVNAME(sc), cmd->acc_id);
 		s = splbio();
 		TAILQ_REMOVE(&sc->sc_ccb_runq, ccb, ccb_link);
@@ -2425,6 +2437,61 @@ bail:
 	free(p, M_DEVBUF);
 
 	return (EINVAL);
+}
+
+void
+ami_refresh(void *arg)
+{
+	struct ami_softc *sc = arg;
+	int i;
+
+	if (sc->sc_first_poll == 0) {
+		sc->sc_first_poll = 1;
+		sc->sc_sens_ld = malloc(sizeof(struct sensor) * sc->sc_nunits,
+		    M_DEVBUF, M_WAITOK);
+		sc->sc_bd = malloc(sizeof *sc->sc_bd, M_DEVBUF, M_WAITOK);
+
+		for (i = 0; i < sc->sc_nunits; i++) {
+			strlcpy(sc->sc_sens_ld[i].device, sc->sc_hdr[i].dev,
+			    sizeof(sc->sc_sens_ld[i].device));
+			strlcpy(sc->sc_sens_ld[i].desc, "logical disk",
+			    sizeof(sc->sc_sens_ld[i].desc));
+			sc->sc_sens_ld[i].type = SENSOR_DRIVE;
+			sensor_add(&sc->sc_sens_ld[i]);
+			sc->sc_sens_ld[i].value = SENSOR_DRIVE_ONLINE;
+			sc->sc_sens_ld[i].status = SENSOR_S_OK;
+		}
+	}
+
+	if (ami_mgmt(sc, AMI_FCOP, AMI_FC_RDCONF, 0, 0, sizeof *sc->sc_bd,
+	    sc->sc_bd)) {
+		sc->sc_sens_ld[i].value = 0xffff; /* unknown */
+		sc->sc_sens_ld[i].status = SENSOR_S_UNKNOWN;
+		return;
+	}
+
+	for (i = 0; i < sc->sc_nunits; i++) {
+		switch (sc->sc_bd->ald[i].adl_status) {
+		case AMI_RDRV_OFFLINE:
+			sc->sc_sens_ld[i].value = SENSOR_DRIVE_FAIL;
+			sc->sc_sens_ld[i].status = SENSOR_S_CRIT;
+			break;
+
+		case AMI_RDRV_DEGRADED:
+			sc->sc_sens_ld[i].value = SENSOR_DRIVE_PFAIL;
+			sc->sc_sens_ld[i].status = SENSOR_S_WARN;
+			break;
+
+		case AMI_RDRV_OPTIMAL:
+			sc->sc_sens_ld[i].value = SENSOR_DRIVE_ONLINE;
+			sc->sc_sens_ld[i].status = SENSOR_S_OK;
+			break;
+
+		default:
+			sc->sc_sens_ld[i].value = 0xffff; /* unknown */
+			sc->sc_sens_ld[i].status = SENSOR_S_UNKNOWN;
+		}
+	}
 }
 #endif /* NBIO > 0 */
 

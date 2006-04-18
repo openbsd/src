@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.44 2006/03/29 13:38:05 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.45 2006/04/18 04:15:44 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -138,6 +138,11 @@ struct ami_softc {
 		char			dev[16];
 	}			sc_hdr[AMI_BIG_MAX_LDRIVES];
 	struct ami_rawsoftc	*sc_rawsoftcs;
+#if NBIO > 0
+	int			sc_first_poll;
+	struct sensor		*sc_sens_ld;
+	struct ami_big_diskarray *sc_bd;
+#endif /* NBIO > 0 */
 };
 
 int  ami_attach(struct ami_softc *sc);
