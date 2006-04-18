@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.17 2006/04/15 05:17:17 gwk Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.18 2006/04/18 02:14:33 gwk Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -65,9 +65,9 @@
 #include <dev/isa/isareg.h>
 #include <i386/isa/isa_machdep.h>
 
-#define BIOS_START		0xe0000
-#define	BIOS_LEN		0x20000
-#define BIOS_STEP		16
+#define BIOS_START			0xe0000
+#define	BIOS_LEN			0x20000
+#define BIOS_STEP			16
 
 /*
  * MSRs and bits used by Powernow technology
@@ -210,6 +210,15 @@ k7_powernow_setperf(int level)
 	if (cstate->errata_a0)
 		enable_intr();
 
+	status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
+	cfid = PN7_STA_CFID(status);
+	cvid = PN7_STA_CVID(status);
+	if (cfid != fid || cvid != vid) {
+		printf("%s transition to fid: %d vid: %d failed.", __func__,
+		    fid, vid);
+		return 0;
+	}
+	
 	pentium_mhz = cstate->state_table[i].freq;
 
 	return 0;

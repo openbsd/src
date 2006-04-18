@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.8 2006/03/20 12:08:59 dlg Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.9 2006/04/18 02:14:33 gwk Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -64,9 +64,9 @@
 #include <machine/cpufunc.h>
 #include <machine/bus.h>
 
-#define BIOS_START		0xe0000
-#define	BIOS_LEN		0x20000
-#define BIOS_STEP		16
+#define BIOS_START			0xe0000
+#define	BIOS_LEN			0x20000
+#define BIOS_STEP			16
 
 /*
  * MSRs and bits used by Powernow technology
@@ -282,8 +282,11 @@ k8_powernow_setperf(int level)
 	}
 
 	/* Check if transition failed. */
-	if (cfid != fid || cvid != vid)
-		return (1);
+	if (cfid != fid || cvid != vid) {
+		printf("%s transition to fid: %d vid: %d failed.", __func__,
+		    fid, vid);		
+		return (0);
+	}
 
 	pentium_mhz = cstate->state_table[i].freq;
 	return (0);
