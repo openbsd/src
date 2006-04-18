@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.17 2006/04/17 16:46:39 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.18 2006/04/18 00:21:06 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -148,19 +148,29 @@ mfi_init_ccb(struct mfi_softc *sc)
 
 		/* create a dma map for transfer */
 		error = bus_dmamap_create(sc->sc_dmat,
-		    sc->sc_max_sgl * PAGE_SIZE,
-		    sc->sc_max_sgl, sc->sc_max_sgl * PAGE_SIZE, 0,
+		    MAXPHYS, sc->sc_max_sgl, MAXPHYS, 0,
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ccb->ccb_dmamap);
 		if (error) {
 			printf("%s: cannot create ccb dmamap (%d)\n",
 			    DEVNAME(sc), error);
 			goto destroy;
 		}
+
+		/* add ccb to queue */
+		mfi_put_ccb(ccb);
 	}
 
 	return (0);
 destroy:
-	/* XXX free dma maps */
+	/* free dma maps and ccb memory */
+	while (i) {
+		ccb = &sc->sc_ccb[i];
+		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
+		i--;
+	}
+
+	free(sc->sc_ccb, M_DEVBUF);
+
 	return (1);
 }
 
@@ -413,7 +423,7 @@ mfi_intr(void *arg)
 			printf("%s: invalid context, p: %d c: %d\n",
 			    DEVNAME(sc), producer, consumer);
 		else {
-			/* remove from queue and call scsi_done */
+			/* XXX remove from queue and call scsi_done */
 			claimed = 1;
 		}
 		consumer++;
