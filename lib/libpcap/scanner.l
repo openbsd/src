@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.17 2006/04/18 16:59:02 deraadt Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.18 2006/04/18 18:17:52 otto Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -24,7 +24,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.17 2006/04/18 16:59:02 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.18 2006/04/18 18:17:52 otto Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -268,8 +268,14 @@ action		return PF_ACTION;
 			 yylval.s = sdup((char *)yytext); return ID; }
 [A-Za-z] {		 yylval.s = sdup((char *)yytext); return ID; }
 "\\"[^ !()\n\t]+	{ yylval.s = sdup((char *)yytext + 1); return ID; }
-[^ \[\]\t\n\-_.A-Za-z0-9!<>()&|=]+i {
-			bpf_error("illegal token: %s\n", yytext); }
+[^ \[\]\t\n\-_.A-Za-z0-9!<>()&|=]+ {
+			size_t len = strlen(yytext) * 4 + 1;
+			char *v = malloc(len);
+			if (v != NULL)
+				strnvis(v, yytext, len, 0);
+			bpf_error("illegal token: %s", v);
+			free(v);
+			}
 .			{
 			  char v[5];
 
