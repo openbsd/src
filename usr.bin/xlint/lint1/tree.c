@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.33 2006/04/18 03:10:27 cloder Exp $	*/
+/*	$OpenBSD: tree.c,v 1.34 2006/04/18 03:59:46 cloder Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.33 2006/04/18 03:10:27 cloder Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.34 2006/04/18 03:59:46 cloder Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1256,8 +1256,8 @@ asgntypok(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 				warning(182);
 				break;
 			case FARG:
-				/* argument has incompat. ptr. type, arg #%d */
-				warning(153, arg);
+				/* %s arg #%d: incompatible ptr. type */
+				warning(153, funcname(farg->fa_func), arg);
 				break;
 			default:
 				/* operands have incompat. ptr. types, op %s */
@@ -1276,8 +1276,8 @@ asgntypok(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 			warning(183);
 			break;
 		case FARG:
-			/* illegal comb. of ptr. and int., arg #%d */
-			warning(154, arg);
+			/* %s arg #%d: illegal comb. of ptr. and int. */
+			warning(154, funcname(farg->fa_func), arg);
 			break;
 		default:
 			/* illegal comb. of ptr. and int., op %s */
@@ -1294,8 +1294,8 @@ asgntypok(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 			illptrc(NULL, ltp, rtp);
 			break;
 		case FARG:
-			/* argument has incompatible pointer type, arg #%d */
-			warning(153, arg);
+			/* %s arg #%d: incompatible pointer type */
+			warning(153, funcname(farg->fa_func), arg);
 			break;
 		default:
 			illptrc(mp, ltp, rtp);
@@ -1314,8 +1314,8 @@ asgntypok(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 		error(211);
 		break;
 	case FARG:
-		/* argument is incompatible with prototype, arg #%d */
-		warning(155, arg);
+		/* %s arg #%d: argument is incompatible with prototype */
+		warning(155, funcname(farg->fa_func), arg);
 		break;
 	default:
 		incompat(op, lt, rt);
@@ -1377,8 +1377,8 @@ chkeop2(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 			warning(210);
 			break;
 		case FARG:
-			/* enum type mismatch, arg #%d */
-			warning(156, arg);
+			/* %s arg #%d: enum type mismatch */
+			warning(156, funcname(farg->fa_func), arg);
 			break;
 		case RETURN:
 			/* return value type mismatch */
@@ -1425,8 +1425,8 @@ chkeop1(op_t op, farg_t *farg, tnode_t *ln, tnode_t *rn)
 		warning(277, tyname(ln->tn_type), tyname(rn->tn_type));
 		break;
 	case FARG:
-		/* combination of '%s' and '%s', arg #%d */
-		warning(278, tyname(ln->tn_type), tyname(rn->tn_type), arg);
+		/* %s arg #%d: combination of '%s' and '%s' */
+		warning(278, funcname(farg->fa_func), arg, tyname(ln->tn_type), tyname(rn->tn_type));
 		break;
 	case RETURN:
 		/* combination of '%s' and '%s' in return */
@@ -1707,8 +1707,8 @@ ptconv(farg_t *farg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 			if (ptn->tn_op == CON) {
 				/* ok. promote() warns if constant out of range */
 			} else {
-				/* arg #%d converted to '%s' by prototype */
-				warning(259, arg, tyname(tp));
+				/* %s arg #%d: converted to '%s' */
+				warning(259, funcname(farg->fa_func), arg, tyname(tp));
 			}
 		}
 	} else if (hflag) {
@@ -1723,8 +1723,8 @@ ptconv(farg_t *farg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 		    msb(ptn->tn_val->v_quad, ot, -1) == 0) {
 			/* ok */
 		} else {
-			/* arg #%d converted to '%s' by prototype */
-			warning(259, arg, tyname(tp));
+			/* %s arg #%d: converted to '%s' */
+			warning(259, funcname(farg->fa_func), arg, tyname(tp));
 		}
 	}
 }
@@ -1747,10 +1747,11 @@ iiconv(op_t op, farg_t *farg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 
 #if 0
 	if (psize(nt) > psize(ot) && isutyp(nt) != isutyp(ot)) {
-		/* conversion to %s may sign-extend incorrectly (, arg #%d) */
+		/* conversion to %s may sign-extend incorrectly */
 		if (aflag && pflag) {
 			if (op == FARG) {
-				warning(297, tyname(tp), arg);
+				warning(297, funcname(farg->fa_func), arg,
+				    tyname(tp));
 			} else {
 				warning(131, tyname(tp));
 			}
@@ -1764,7 +1765,8 @@ iiconv(op_t op, farg_t *farg, tspec_t nt, tspec_t ot, type_t *tp, tnode_t *tn)
 		/* conversion from '%s' to '%s' may lose accuracy */
 		if (aflag) {
 			if (op == FARG) {
-				warning(298, tyname(tn->tn_type), tyname(tp), arg);
+				warning(298, funcname(farg->fa_func), arg,
+				    tyname(tn->tn_type), tyname(tp));
 			} else {
 				warning(132, tyname(tn->tn_type), tyname(tp));
 			}
@@ -1910,9 +1912,9 @@ cvtcon(op_t op, farg_t *farg, type_t *tp, val_t *nv, val_t *v)
 			if (nt == LDOUBLE)
 				lerror("cvtcon() 2");
 			if (op == FARG) {
-				/* conv. of %s to %s is out of rng., arg #%d */
-				warning(295, tyname(gettyp(ot)), tyname(tp),
-					arg);
+				/* %s arg #%d: conv. of %s to %s is out of range */
+				warning(295, funcname(farg->fa_func), arg,
+				    tyname(gettyp(ot)), tyname(tp));
 			} else {
 				/* conversion of %s to %s is out of range */
 				warning(119, tyname(gettyp(ot)), tyname(tp));
@@ -2017,8 +2019,8 @@ cvtcon(op_t op, farg_t *farg, type_t *tp, val_t *nv, val_t *v)
 				/* initialisation of unsigned with neg. ... */
 				warning(221);
 			} else if (op == FARG) {
-				/* conversion of neg. const. to ..., arg #%d */
-				warning(296, arg);
+				/* %s arg #%d: conversion of neg. const... */
+				warning(296, funcname(farg->fa_func), arg);
 			} else if (modtab[op].m_comp) {
 				/* we get this warning already in chkcomp() */
 			} else {
@@ -2067,9 +2069,9 @@ cvtcon(op_t op, farg_t *farg, type_t *tp, val_t *nv, val_t *v)
 				/* case label affected by conversion */
 				warning(196);
 			} else if (op == FARG) {
-				/* conv. of %s to %s is out of rng., arg #%d */
-				warning(295, tyname(gettyp(ot)), tyname(tp),
-					arg);
+				/* %s arg #%d: conv. of %s to %s is out of rng. */
+				warning(295, funcname(farg->fa_func), arg,
+				    tyname(gettyp(ot)), tyname(tp));
 			} else {
 				/* conversion of %s to %s is out of range */
 				warning(119, tyname(gettyp(ot)), tyname(tp));
@@ -2092,9 +2094,9 @@ cvtcon(op_t op, farg_t *farg, type_t *tp, val_t *nv, val_t *v)
 				/* case label affected by conversion */
 				warning(196);
 			} else if (op == FARG) {
-				/* conv. of %s to %s is out of rng., arg #%d */
-				warning(295, tyname(gettyp(ot)), tyname(tp),
-					arg);
+				/* %s arg #%d: conv. of %s to %s is out of rng. */
+				warning(295, funcname(farg->fa_func), arg,
+				    tyname(gettyp(ot)), tyname(tp));
 			} else {
 				/* conversion of %s to %s is out of range */
 				warning(119, tyname(gettyp(ot)), tyname(tp));
@@ -3920,12 +3922,17 @@ const char *
 funcname(tnode_t *tn)
 {
 	/* dereference function pointer */
-	if (tn->tn_op == AMPER)
+	switch (tn->tn_op) {
+	case AMPER:
 		return funcname(tn->tn_left);
-
-	if (tn->tn_op == CALL)
+	case LOAD:
+		/* called as (*fptr)(args) */
 		return funcname(tn->tn_left);
-
-	// assume tn->tn_op == NAME
-	return tn->tn_sym->s_name;
+	case CALL:
+		return funcname(tn->tn_left);
+	case NAME:
+		return tn->tn_sym->s_name;
+	default:
+		return "<unknown>";
+	}
 }

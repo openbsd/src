@@ -1,4 +1,4 @@
-/*	$OpenBSD: err.c,v 1.20 2006/03/13 21:12:32 moritz Exp $	*/
+/*	$OpenBSD: err.c,v 1.21 2006/04/18 03:59:46 cloder Exp $	*/
 /*	$NetBSD: err.c,v 1.8 1995/10/02 17:37:00 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: err.c,v 1.20 2006/03/13 21:12:32 moritz Exp $";
+static char rcsid[] = "$OpenBSD: err.c,v 1.21 2006/04/18 03:59:46 cloder Exp $";
 #endif
 
 /* number of errors found */
@@ -207,10 +207,10 @@ const	char *msgs[] = {
 	"argument mismatch: %d arg%s passed, %d expected",	      /* 150 */
 	"void expressions may not be arguments, arg #%d",	      /* 151 */
 	"argument cannot have unknown size, arg #%d",		      /* 152 */
-	"argument has incompatible pointer type, arg #%d",	      /* 153 */
-	"illegal combination of pointer and integer, arg #%d",	      /* 154 */
-	"argument is incompatible with prototype, arg #%d",	      /* 155 */
-	"enum type mismatch, arg #%d",				      /* 156 */
+	"%s arg #%d: incompatible pointer type",		      /* 153 */
+	"%s arg #%d: illegal combination of pointer and integer",     /* 154 */
+	"%s arg #%d: argument is incompatible with prototype",	      /* 155 */
+	"%s arg #%d: enum type mismatch",			      /* 156 */
 	"ANSI C treats constant as unsigned",			      /* 157 */
 	"%s may be used before set",				      /* 158 */
 	"assignment in conditional context",			      /* 159 */
@@ -313,7 +313,7 @@ const	char *msgs[] = {
 	"unterminated comment",					      /* 256 */
 	"extra characters in lint comment",			      /* 257 */
 	"unterminated string constant",				      /* 258 */
-	"arg #%d converted to '%s' by prototype",		      /* 259 */
+	"%s arg #%d: converted to '%s'",			      /* 259 */
 	"previous declaration of %s",				      /* 260 */
 	"previous definition of %s",				      /* 261 */
 	"\\\" inside character constants undefined in traditional C", /* 262 */
@@ -332,7 +332,7 @@ const	char *msgs[] = {
 	"cast discards 'const' from pointer target type",	      /* 275 */
 	"",							      /* 276 */
 	"initialisation of '%s' with '%s'",			      /* 277 */
-	"combination of '%s' and '%s', arg #%d",		      /* 278 */
+	"%s arg #%d: combination of '%s' and '%s'",		      /* 278 */
 	"combination of '%s' and '%s' in return",		      /* 279 */
 	"must be outside function: /* %s */",			      /* 280 */
 	"duplicate use of /* %s */",				      /* 281 */
@@ -349,10 +349,10 @@ const	char *msgs[] = {
 	"cannot concatenate wide and regular string literals",	      /* 292 */
 	"argument %d must be 'char *' for PRINTFLIKE/SCANFLIKE",      /* 293 */
 	"multi-character character constant",			      /* 294 */
-	"conversion of '%s' to '%s' is out of range, arg #%d",	      /* 295 */
-	"conversion of negative constant to unsigned type, arg #%d",  /* 296 */
-	"conversion from '%s' to '%s' may sign-extend incorrectly, arg #%d",    /* 297 */
-	"conversion from '%s' to '%s' may lose accuracy, arg #%d",    /* 298 */
+	"%s arg #%d: conversion of '%s' to '%s' is out of range",     /* 295 */
+	"%s arg #%d: conversion of negative constant to unsigned type",  /* 296 */
+	"%s arg #%d: conversion from '%s' to '%s' may sign-extend incorrectly",    /* 297 */
+	"%s arg #%d: conversion from '%s' to '%s' may lose accuracy",    /* 298 */
 	"prototype does not match old style definition, arg #%d",     /* 299 */
 	"old style definition",					      /* 300 */
 	"array of incomplete type",				      /* 301 */
