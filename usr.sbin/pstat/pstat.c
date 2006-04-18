@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.62 2006/03/27 14:08:14 pedro Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.63 2006/04/18 17:50:51 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.62 2006/03/27 14:08:14 pedro Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.63 2006/04/18 17:50:51 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -701,7 +701,7 @@ loadvnodes(int *avnodes)
 struct e_vnode *
 kinfo_vnodes(int *avnodes)
 {
-	struct mntlist mountlist;
+	struct mntlist kvm_mountlist;
 	struct mount *mp, mount;
 	struct vnode *vp, vnode;
 	char *vbuf, *evbuf, *bp;
@@ -722,8 +722,8 @@ kinfo_vnodes(int *avnodes)
 	bp = vbuf;
 	evbuf = vbuf + (numvnodes + 20) *
 	    (sizeof(struct vnode *) + sizeof(struct vnode));
-	KGET(V_MOUNTLIST, mountlist);
-	for (num = 0, mp = CIRCLEQ_FIRST(&mountlist); ;
+	KGET(V_MOUNTLIST, kvm_mountlist);
+	for (num = 0, mp = CIRCLEQ_FIRST(&kvm_mountlist); ;
 	    mp = CIRCLEQ_NEXT(&mount, mnt_list)) {
 		KGET2(mp, &mount, sizeof(mount), "mount entry");
 		for (vp = LIST_FIRST(&mount.mnt_vnodelist);
@@ -739,7 +739,7 @@ kinfo_vnodes(int *avnodes)
 			bp += sizeof(struct vnode);
 			num++;
 		}
-		if (mp == CIRCLEQ_LAST(&mountlist))
+		if (mp == CIRCLEQ_LAST(&kvm_mountlist))
 			break;
 	}
 	*avnodes = num;
@@ -991,7 +991,7 @@ swapmode(void)
 {
 	char *header;
 	int hlen = 10, nswap;
-	int div, i, avail, nfree, npfree, used;
+	int bdiv, i, avail, nfree, npfree, used;
 	long blocksize;
 	struct swapent *swdev;
 
@@ -1023,7 +1023,7 @@ swapmode(void)
 		    "Used", "Avail", "Capacity", "Priority");
 
 	/* Run through swap list, doing the funky monkey. */
-	div = blocksize / DEV_BSIZE;
+	bdiv = blocksize / DEV_BSIZE;
 	avail = nfree = npfree = 0;
 	for (i = 0; i < nswap; i++) {
 		int xsize, xfree;
@@ -1036,10 +1036,10 @@ swapmode(void)
 				(void)printf("%2d,%-2d       %*d ",
 				    major(swdev[i].se_dev),
 				    minor(swdev[i].se_dev),
-				    hlen, swdev[i].se_nblks / div);
+				    hlen, swdev[i].se_nblks / bdiv);
 			else
 				(void)printf("%-11s %*d ", swdev[i].se_path,
-				    hlen, swdev[i].se_nblks / div);
+				    hlen, swdev[i].se_nblks / bdiv);
 		}
 
 		xsize = swdev[i].se_nblks;
@@ -1051,7 +1051,7 @@ swapmode(void)
 		if (totalflag)
 			continue;
 		(void)printf("%8d %8d %5.0f%%    %d\n",
-		    used / div, xfree / div,
+		    used / bdiv, xfree / bdiv,
 		    (double)used / (double)xsize * 100.0,
 		    swdev[i].se_priority);
 	}
@@ -1070,7 +1070,7 @@ swapmode(void)
 	}
 	if (npfree > 1) {
 		(void)printf("%-11s %*d %8d %8d %5.0f%%\n",
-		    "Total", hlen, avail / div, used / div, nfree / div,
+		    "Total", hlen, avail / bdiv, used / bdiv, nfree / bdiv,
 		    (double)used / (double)avail * 100.0);
 	}
 }
