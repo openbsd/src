@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.46 2005/12/11 21:45:31 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.47 2006/04/18 22:08:05 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -78,6 +78,7 @@
 	text
 
 GLOBAL(kernelstart)
+GLOBAL(kernel_text)
 ASGLOBAL(start)
 	/*
 	 * A few identical jump instructions to make sure the pipeline is
