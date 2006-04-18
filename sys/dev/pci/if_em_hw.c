@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.16 2006/03/28 05:33:03 brad Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.17 2006/04/18 19:06:02 brad Exp $ */
 
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
@@ -333,6 +333,7 @@ em_set_mac_type(struct em_hw *hw)
     case E1000_DEV_ID_82546GB_PCIE:
     case E1000_DEV_ID_82546GB_QUAD_COPPER:
     case E1000_DEV_ID_82546GB_QUAD_COPPER_KSP3:
+    case E1000_DEV_ID_82546GB_2:
         hw->mac_type = em_82546_rev_3;
         break;
     case E1000_DEV_ID_82541EI:
@@ -353,6 +354,8 @@ em_set_mac_type(struct em_hw *hw)
     case E1000_DEV_ID_82547GI:
         hw->mac_type = em_82547_rev_2;
         break;
+    case E1000_DEV_ID_82571EB_AF:
+    case E1000_DEV_ID_82571EB_AT:
     case E1000_DEV_ID_82571EB_COPPER:
     case E1000_DEV_ID_82571EB_FIBER:
     case E1000_DEV_ID_82571EB_SERDES:
@@ -366,7 +369,12 @@ em_set_mac_type(struct em_hw *hw)
         break;
     case E1000_DEV_ID_82573E:
     case E1000_DEV_ID_82573E_IAMT:
+    case E1000_DEV_ID_82573E_KCS:
+    case E1000_DEV_ID_82573E_PM:
     case E1000_DEV_ID_82573L:
+    case E1000_DEV_ID_82573L_PL_1:
+    case E1000_DEV_ID_82573L_PL_2:
+    case E1000_DEV_ID_82573V_PM:
         hw->mac_type = em_82573;
         break;
     case E1000_DEV_ID_80003ES2LAN_COPPER_DPT:

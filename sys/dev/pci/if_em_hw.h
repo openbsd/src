@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.12 2006/03/28 05:33:03 brad Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.13 2006/04/18 19:06:02 brad Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -488,6 +488,7 @@ int32_t em_set_pci_ex_no_snoop(struct em_hw *hw, uint32_t no_snoop);
 #define E1000_DEV_ID_82546GB_FIBER       0x107A
 #define E1000_DEV_ID_82546GB_SERDES      0x107B
 #define E1000_DEV_ID_82546GB_PCIE        0x108A
+#define E1000_DEV_ID_82573E_KCS          0x108E
 #define E1000_DEV_ID_82546GB_QUAD_COPPER 0x1099
 #define E1000_DEV_ID_82547EI             0x1019
 #define E1000_DEV_ID_82547EI_MOBILE      0x101A
@@ -501,6 +502,13 @@ int32_t em_set_pci_ex_no_snoop(struct em_hw *hw, uint32_t no_snoop);
 #define E1000_DEV_ID_82573E              0x108B
 #define E1000_DEV_ID_82573E_IAMT         0x108C
 #define E1000_DEV_ID_82573L              0x109A
+#define E1000_DEV_ID_82546GB_2           0x109B
+#define E1000_DEV_ID_82571EB_AT          0x10A0
+#define E1000_DEV_ID_82571EB_AF          0x10A1
+#define E1000_DEV_ID_82573L_PL_1         0x10B0
+#define E1000_DEV_ID_82573V_PM           0x10B2
+#define E1000_DEV_ID_82573E_PM           0x10B3
+#define E1000_DEV_ID_82573L_PL_2         0x10B4
 #define E1000_DEV_ID_82546GB_QUAD_COPPER_KSP3 0x10B5
 #define E1000_DEV_ID_80003ES2LAN_COPPER_DPT     0x1096
 #define E1000_DEV_ID_80003ES2LAN_SERDES_DPT     0x1098
