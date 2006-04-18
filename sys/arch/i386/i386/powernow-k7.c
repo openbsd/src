@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.18 2006/04/18 02:14:33 gwk Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.19 2006/04/18 03:29:47 gwk Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -75,6 +75,10 @@
 #define MSR_AMDK7_FIDVID_CTL		0xc0010041
 #define MSR_AMDK7_FIDVID_STATUS		0xc0010042
 #define AMD_PN_FID_VID			0x06
+#define AMD_ERRATA_A0_CPUSIG		0x660
+
+#define PN7_FLAG_ERRATA_A0		0x01
+#define PN7_FLAG_DESKTOP_VRM		0x02
 
 /* Bitfields used by K7 */
 #define PN7_PSB_VERSION			0x12
@@ -126,7 +130,7 @@ struct k7pnow_cpu_state {
 	unsigned int sgtc;
 	struct k7pnow_state state_table[POWERNOW_MAX_STATES];
 	unsigned int n_states;
-	int errata_a0;
+	int flags;
 };
 
 struct psb_s {
@@ -194,7 +198,7 @@ k7_powernow_setperf(int level)
 	ctl |= PN7_CTR_VID(vid);
 	ctl |= PN7_CTR_SGTC(cstate->sgtc);
 
-	if (cstate->errata_a0)
+	if (cstate->flags & PN7_FLAG_ERRATA_A0)
 		disable_intr();
 
 	if (k7pnow_fid_to_mult[fid] < k7pnow_fid_to_mult[cfid]) {
@@ -207,7 +211,7 @@ k7_powernow_setperf(int level)
 			wrmsr(MSR_AMDK7_FIDVID_CTL, ctl | PN7_CTR_FIDC);
 	}
 
-	if (cstate->errata_a0)
+	if (cstate->flags & PN7_FLAG_ERRATA_A0)
 		enable_intr();
 
 	status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
@@ -238,7 +242,7 @@ k7pnow_decode_pst(struct k7pnow_cpu_state * cstate, uint8_t *p, int npst)
 		state.fid = *p++;
 		state.vid = *p++;
 		state.freq = k7pnow_fid_to_mult[state.fid]/10 * cstate->fsb;
-		if (cstate->errata_a0 &&
+		if ((cstate->flags & PN7_FLAG_ERRATA_A0) &&
 		    (k7pnow_fid_to_mult[state.fid] % 10) == 5)
 			continue;
 
@@ -285,7 +289,8 @@ k7pnow_states(struct k7pnow_cpu_state *cstate, uint32_t cpusig,
 			cstate->sgtc = psb->ttime * cstate->fsb;
 			if (cstate->sgtc < 100 * cstate->fsb)
 				cstate->sgtc = 100 * cstate->fsb;
-
+			if (psb->flags & 1)
+				cstate->flags |= PN7_FLAG_DESKTOP_VRM;
 			p += sizeof(struct psb_s);
 
 			for (maxpst = 0; maxpst < psb->n_pst; maxpst++) {
@@ -334,12 +339,10 @@ k7_powernow_init(void)
 	cpuid(0x80000007, regs);
 	if (!(regs[3] & AMD_PN_FID_VID))
 		return;
-	
-	cpuid(0x80000001, regs);
-	if ((regs[0] & 0xfff) == 0x760)
-		cstate->errata_a0 = TRUE;
-	else
-		cstate->errata_a0 = FALSE;
+
+	cstate->flags = 0;	
+	if (ci->ci_signature == AMD_ERRATA_A0_CPUSIG)
+		cstate->flags |= PN7_FLAG_ERRATA_A0;
 
 	status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
 	maxfid = PN7_STA_MFID(status);
@@ -347,21 +350,15 @@ k7_powernow_init(void)
 	currentfid = PN7_STA_CFID(status);
 
 	cstate->fsb = pentium_mhz / (k7pnow_fid_to_mult[currentfid]/10);
-	/*
-	 * If start FID is different to max FID, then it is a
-	 * mobile processor.  If not, it is a low powered desktop
-	 * processor.
-	 */
-	if (maxfid != currentfid) {
-		techname = "PowerNow! K7";
-	} else {
-		techname = "Cool`n'Quiet K7";
-	}
 	if (k7pnow_states(cstate, ci->ci_signature, maxfid, startvid)) {
 		if (cstate->n_states) {
+			if (cstate->flags & PN7_FLAG_DESKTOP_VRM)
+				techname = "Cool`n'Quiet K7";
+			else
+				techname = "Powernow! K7";
 			printf("%s: %s %d Mhz: speeds:",
 			    ci->ci_dev.dv_xname, techname, pentium_mhz);
-			for(i = cstate->n_states; i > 0; i--) {
+			for (i = cstate->n_states; i > 0; i--) {
 				state = &cstate->state_table[i-1];
 				printf(" %d", state->freq); 
 			}
