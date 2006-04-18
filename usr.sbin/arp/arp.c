@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.36 2005/04/04 16:14:45 deraadt Exp $ */
+/*	$OpenBSD: arp.c,v 1.37 2006/04/18 22:11:49 moritz Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -100,7 +100,7 @@ main(int argc, char *argv[])
 
 	pid = getpid();
 	opterr = 0;
-	while ((ch = getopt(argc, argv, "andSsFf")) != -1) {
+	while ((ch = getopt(argc, argv, "andsFf")) != -1) {
 		switch (ch) {
 		case 'a':
 			aflag = 1;
