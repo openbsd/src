@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.22 2004/12/28 22:48:30 deraadt Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.23 2006/04/18 21:48:34 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -141,6 +141,11 @@ timeout_startup(void)
 void
 timeout_set(struct timeout *new, void (*fn)(void *), void *arg)
 {
+#ifdef DIAGNOSTIC
+	if (new->to_flags & TIMEOUT_ONQUEUE)
+		panic("timeout_set: already queued");
+#endif
+
 	new->to_func = fn;
 	new->to_arg = arg;
 	new->to_flags = TIMEOUT_INITIALIZED;
