@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.185 2006/04/04 12:03:26 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.186 2006/04/18 19:00:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -690,6 +690,12 @@ peeropts	: REMOTEAS asnumber	{
 				fatal("king bula sees borked AFI");
 			}
 		}
+		| ANNOUNCE CAPABILITIES yesno {
+			curpeer->conf.announce_capa = $3;
+		}
+		| ANNOUNCE SELF {
+			curpeer->conf.announce_type = ANNOUNCE_SELF;
+		}
 		| ANNOUNCE STRING {
 			if (!strcmp($2, "self"))
 				curpeer->conf.announce_type = ANNOUNCE_SELF;
@@ -846,9 +852,6 @@ peeropts	: REMOTEAS asnumber	{
 				curpeer->conf.auth.auth_keylen_out = keylen;
 			}
 			free($7);
-		}
-		| ANNOUNCE CAPABILITIES yesno {
-			curpeer->conf.announce_capa = $3;
 		}
 		| SET filter_set_opt	{
 			struct filter_rule	*r;
