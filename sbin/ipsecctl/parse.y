@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.60 2006/04/19 16:10:50 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.61 2006/04/19 17:19:45 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1288,15 +1288,10 @@ struct ipsec_addr_wrap *
 host_if(const char *s, int mask)
 {
 	struct ipsec_addr_wrap *ipa = NULL;
-	char			*ps;
 
-	if ((ps = strdup(s)) == NULL)
-		err(1, "host_if: strdup");
+	if (ifa_exists(s))
+		ipa = ifa_lookup(s);
 
-	if (ifa_exists(ps))
-		ipa = ifa_lookup(ps);
-
-	free(ps);
 	return (ipa);
 }
 
