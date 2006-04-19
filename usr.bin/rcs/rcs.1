@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.29 2006/04/19 13:50:38 jmc Exp $
+.\"	$OpenBSD: rcs.1,v 1.30 2006/04/19 13:57:06 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -49,7 +49,7 @@
 .Ar str Oc
 .Op Fl u Ns Op Ar rev
 .Op Fl x Ns Ar suffixes
-.Ar file ...
+.Ar
 .Sh DESCRIPTION
 Revision Control System (RCS) is a software tool which lets people
 manage multiple revisions of text that is revised frequently, such as
@@ -237,7 +237,7 @@ Embedded strings of the form $keyword$ and $keyword:...$ in a file
 are replaced with strings of the form $keyword: value$ whenever you
 obtain a new revision of the file.
 The possible keywords are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "XrevisionXX" -offset "XXX"
 .It $\&Author$
 The name of the user who checked in the revision.
 .It $\&Date$
