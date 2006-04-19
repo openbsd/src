@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.10 2006/04/19 15:48:17 mickey Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.11 2006/04/19 15:51:22 mickey Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -83,6 +83,7 @@
 
 #define	fninit()		__asm("fninit")
 #define fwait()			__asm("fwait")
+#define fnclex()		__asm("fnclex")
 #define	fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
 #define	fxrstor(addr)		__asm("fxrstor %0" : : "m" (*addr))
 #define	ldmxcsr(addr)		__asm("ldmxcsr %0" : : "m" (*addr))
