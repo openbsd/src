@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.14 2006/04/19 09:28:45 mickey Exp $
+# $OpenBSD: Makefile.cross,v 1.15 2006/04/19 18:32:39 miod Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-etc-root-var
@@ -149,13 +149,17 @@ ${CROSSBINUTILS}:	${CROSSINCLUDES}
 	ln -sf ${CROSSDIR}/usr/bin/ld \
 	    ${CROSSDIR}/usr/${TARGET_CANON}/bin/ld
 	(cd ${.CURDIR}/usr.bin/ar; \
+	    ELF_TOOLCHAIN=no \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} ${MAKE} NOMAN= depend all; \
+	    ELF_TOOLCHAIN=no \
 	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} NOMAN= install)
 	ln -sf ${CROSSDIR}/usr/bin/ar \
 	    ${CROSSDIR}/usr/${TARGET_CANON}/bin/ar
 	(cd ${.CURDIR}/usr.bin/ranlib; \
+	    ELF_TOOLCHAIN=no \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} ${MAKE} NOMAN= depend all; \
+	    ELF_TOOLCHAIN=no \
 	    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} NOMAN= install)
 	ln -sf ${CROSSDIR}/usr/bin/ranlib \
