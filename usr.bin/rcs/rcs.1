@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.24 2006/04/01 06:19:29 ray Exp $
+.\"	$OpenBSD: rcs.1,v 1.25 2006/04/19 11:00:53 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -74,6 +74,13 @@ and
 .Xr ident 1 .
 See the respective manual pages for more information
 about these utilities.
+.Pp
+.Nm
+also supports
+keyword substitution \(en
+see
+.Sx KEYWORD SUBSTITUTION ,
+below, for more information.
 .Pp
 The following options are supported:
 .Bl -tag -width "-e usersXX"
@@ -208,6 +215,107 @@ Specifies the suffixes for RCS files.
 Suffixes should be separated by the
 .Sq /
 character.
+.El
+.Sh KEYWORD SUBSTITUTION
+As long as you edit source files inside a working directory you
+can always find out the state of your files via the
+.Ic status
+or
+.Ic log
+commands, but as soon as files get exported from
+your local working copy, it becomes harder to identify which
+revisions they are.
+.Pp
+.Nm
+and
+.Xr cvs 1
+can use a mechanism known as
+.Sq keyword substitution
+to help identify the files.
+Embedded strings of the form $keyword$ and $keyword:...$ in a file
+are replaced with strings of the form $keyword: value$ whenever you
+obtain a new revision of the file.
+The possible keywords are as follows:
+.Bl -tag -width Ds
+.It $\&Author$
+The name of the user who checked in the revision.
+.It $\&Date$
+The date and hour (UTC) the revision was checked in.
+.It $\&Header$
+Standard header containing the full pathname of the RCS
+file, the revision number, the date (UTC), the author and the state.
+.It $\&Id$
+The same content as $\&Header$ but without the path
+of the RCS file.
+.It $\&Log$
+The log message supplied during commit, preceded by a header
+containing the RCS filename, the revision number, the
+author, and the date (UTC).
+.It $\&Name$
+The tag name used to check out the file.
+.It $\&RCSfile$
+The name of the RCS file, but without a path.
+.It $\&Revision$
+The revision number assigned to the revision.
+.It $\&Source$
+The full pathname of the RCS file.
+.It $\&State$
+The state assigned to the revision.
+.El
+.Pp
+Keyword substitution has its disadvantages: sometimes the
+literal text string $\&Author$ is wanted inside a file without
+.Nm
+interpreting it as a keyword and expanding it into something like
+$\&Author$.
+The
+.Fl k Ar o
+option can be used to turn off keyword substitution entirely though.
+There is unfortunately no way to selectively turn off keyword substitution.
+.Pp
+Each file and working directory copy of a file have a stored
+default substitution mode.
+Substitution modes on files are set by the
+.Fl k Ns Ar mode
+option.
+.Pp
+The possible substitution modes are as follows:
+.Bl -tag -width Ds -offset 3n
+.It Fl k Ar b
+Like
+.Fl k Ar o ,
+but also avoids the conversion of line endings.
+This option is used to handle binary files.
+.It Fl k Ar k
+Does not substitute the keywords.
+Useful with the
+.Ic diff
+command to avoid displaying the differences between keyword substitutions.
+.It Fl k Ar kv
+The default behaviour.
+Keywords are normally substituted i.e. $\&Revision$ becomes
+$\&Revision: 1.1 $.
+.It Fl k Ar kvl
+Like
+.Fl k Ar kv ,
+except that the locker's name is displayed along with the version
+if the given revision is currently locked.
+This option is normally not useful as
+.Nm
+does not use file locking by default.
+.It Fl k Ar o
+No substitutions are done.
+This option is often used with the
+.Ic import
+command to guarantee that files that already contain external keywords
+do not get modified.
+.It Fl k Ar v
+Substitute the value of keywords instead of keywords themselves
+e.g. instead of $\&Revision$, only insert 1.1 and not $\&Revision: 1.1 $.
+This option must be used with care, as it can only be used once.
+It is often used with the
+.Ic export
+command to freeze the values before releasing software.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width RCSINIT
