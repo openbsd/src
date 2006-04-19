@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rlog.1,v 1.15 2006/03/27 08:39:44 jmc Exp $
+.\"	$OpenBSD: rlog.1,v 1.16 2006/04/19 12:19:58 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -22,7 +22,6 @@
 .Nd display information about RCS files
 .Sh SYNOPSIS
 .Nm
-.Bk -words
 .Op Fl bhLNqRtV
 .Op Fl d Ns Ar dates
 .Op Fl l Ns Op Ar lockers
@@ -31,12 +30,19 @@
 .Op Fl w Ns Op Ar logins
 .Op Fl x Ns Ar suffixes
 .Op Fl z Ns Ar tz
-.Ar file ...
-.Ek
+.Ar
 .Sh DESCRIPTION
 The
 .Nm
 program displays information about RCS files.
+.Pp
+A file's complete RCS history can be displayed
+(the default if no options are specified)
+or a subset of its history log can be requested,
+depending on which options are specified.
+RCS keywords are displayed using the
+.Xr ident 1
+utility.
 .Pp
 The following options are supported:
 .Bl -tag -width Ds
