@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.27 2006/04/19 12:49:55 jmc Exp $
+.\"	$OpenBSD: rcs.1,v 1.28 2006/04/19 13:04:30 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -294,7 +294,9 @@ Does not substitute the keywords.
 Useful with the
 .Xr cvs 1
 .Ic diff
-command to avoid displaying the differences between keyword substitutions.
+and
+.Xr rcsdiff 1
+commands to avoid displaying the differences between keyword substitutions.
 .It Fl k Ns Ar kv
 The default behaviour.
 Keywords are normally substituted i.e. $\&Revision$ becomes
