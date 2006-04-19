@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcs.1,v 1.26 2006/04/19 12:44:00 jmc Exp $
+.\"	$OpenBSD: rcs.1,v 1.27 2006/04/19 12:49:55 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -219,6 +219,7 @@ character.
 .Sh KEYWORD SUBSTITUTION
 As long as you edit source files inside a working directory you
 can always find out the state of your files via the
+.Xr cvs 1
 .Ic status
 or
 .Ic log
@@ -266,6 +267,8 @@ The state assigned to the revision.
 Keyword substitution has its disadvantages: sometimes the
 literal text string $\&Author$ is wanted inside a file without
 .Nm
+or
+.Xr cvs 1
 interpreting it as a keyword and expanding it into something like
 $\&Author$.
 The
@@ -289,6 +292,7 @@ This option is used to handle binary files.
 .It Fl k Ns Ar k
 Does not substitute the keywords.
 Useful with the
+.Xr cvs 1
 .Ic diff
 command to avoid displaying the differences between keyword substitutions.
 .It Fl k Ns Ar kv
@@ -302,10 +306,13 @@ except that the locker's name is displayed along with the version
 if the given revision is currently locked.
 This option is normally not useful as
 .Nm
-does not use file locking by default.
+and
+.Xr cvs 1
+do not use file locking by default.
 .It Fl k Ns Ar o
 No substitutions are done.
 This option is often used with the
+.Xr cvs 1
 .Ic import
 command to guarantee that files that already contain external keywords
 do not get modified.
@@ -314,6 +321,7 @@ Substitute the value of keywords instead of keywords themselves
 e.g. instead of $\&Revision$, only insert 1.1 and not $\&Revision: 1.1 $.
 This option must be used with care, as it can only be used once.
 It is often used with the
+.Xr cvs 1
 .Ic export
 command to freeze the values before releasing software.
 .El
