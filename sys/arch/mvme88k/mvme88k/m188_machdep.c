@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.16 2006/04/19 19:41:26 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.17 2006/04/19 19:54:21 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -441,6 +441,7 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 			printf("%s: spurious interrupt, "
 			    "level %d, vec 0x%x, mask 0x%b\n",
 			    __func__, level, vec, cur_mask, IST_STRING);
+			ign_mask |=  1 << intbit;
 		} else {
 			/*
 			 * Walk through all interrupt handlers in the chain
