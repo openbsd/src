@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.15 2006/04/17 18:26:28 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.16 2006/04/19 19:41:26 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -206,7 +206,6 @@ safe_level(u_int mask, u_int curlevel)
 		if ((int_mask_val[i] & mask) == 0)
 			return (i);
 
-	/* NOTREACHED since int_mask_val[INT_LEVEL - 1] is zero */
 	return (INT_LEVEL - 1);
 }
 
@@ -306,7 +305,7 @@ void
 m188_ext_int(u_int v, struct trapframe *eframe)
 {
 	int cpu = cpu_number();
-	unsigned int cur_mask;
+	unsigned int cur_mask, ign_mask;
 	unsigned int level, old_spl;
 	struct intrhand *intr;
 	intrhand_t *list;
@@ -314,8 +313,12 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 	vaddr_t ivec;
 	u_int vec;
 	int unmasked = 0;
+#ifdef DIAGNOSTIC
+	static int problems = 0;
+#endif
 
 	cur_mask = ISR_GET_CURRENT_MASK(cpu);
+	ign_mask = 0;
 	old_spl = m188_curspl[cpu];
 	eframe->tf_mask = old_spl;
 
@@ -355,12 +358,6 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 			printf("--CPU %d halted--\n", cpu_number());
 			setipl(IPL_ABORT);
 			for(;;) ;
-		}
-#endif
-
-#ifdef DEBUG
-		if (level > 7 || (int)level < 0) {
-			panic("int level (%x) is not between 0 and 7", level);
 		}
 #endif
 
@@ -405,25 +402,45 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 			ivec = MVME188_VIRQLV + (level << 2);
 			vec = *(volatile u_int32_t *)ivec & VME_VECTOR_MASK;
 			if (vec & VME_BERR_MASK) {
-				printf("VME vec timeout, vec = %x, mask = 0x%b\n",
-				    vec, 1 << intbit, IST_STRING);
-				continue;
+				/*
+				 * This could be a self-inflicted interrupt.
+				 * Except that we never write to VIRQV, so
+				 * such things do not happen.
+
+				u_int src = 0x07 &
+				    *(volatile u_int32_t *)MVME188_VIRQLV;
+				if (src == 0)
+					vec = 0xff &
+					    *(volatile u_int32_t *)MVME188_VIRQV;
+				else
+
+				 */
+				{
+					printf("%s: timeout getting VME "
+					    "interrupt vector, "
+					    "level %d, mask 0x%b\n",
+					    __func__, level,
+					   cur_mask, IST_STRING); 
+					ign_mask |=  1 << intbit;
+					continue;
+				}
 			}
 			if (vec == 0) {
-				panic("unknown vme interrupt: mask = 0x%b",
-				    1 << intbit, IST_STRING);
+				panic("%s: invalid VME interrupt vector, "
+				    "level %d, mask 0x%b",
+				    __func__, level, cur_mask, IST_STRING);
 			}
 		} else {
-			panic("unknown interrupt: level = %d intbit = 0x%x "
-			    "mask = 0x%b",
-			    level, intbit, 1 << intbit, IST_STRING);
+			panic("%s: unexpected interrupt source, "
+			    "level %d, mask 0x%b",
+			    __func__, level, cur_mask, IST_STRING);
 		}
 
 		list = &intr_handlers[vec];
 		if (SLIST_EMPTY(list)) {
-			printf("Spurious interrupt: level = %d vec = 0x%x, "
-			    "intbit = %d mask = 0x%b\n",
-			    level, vec, intbit, 1 << intbit, IST_STRING);
+			printf("%s: spurious interrupt, "
+			    "level %d, vec 0x%x, mask 0x%b\n",
+			    __func__, level, vec, cur_mask, IST_STRING);
 		} else {
 			/*
 			 * Walk through all interrupt handlers in the chain
@@ -442,14 +459,22 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 				}
 			}
 			if (ret == 0) {
-				printf("Unclaimed interrupt: level = %d "
-				    "vec = 0x%x, intbit = %d mask = 0x%b\n",
-				    level, vec, intbit,
-				    1 << intbit, IST_STRING);
-				break;
+				printf("%s: unclaimed interrupt, "
+				    "level %d, vec 0x%x, mask 0x%b\n",
+				    __func__, level, vec, cur_mask, IST_STRING);
+				ign_mask |=  1 << intbit;
+				continue;
 			}
 		}
-	} while ((cur_mask = ISR_GET_CURRENT_MASK(cpu)) != 0);
+	} while (((cur_mask = ISR_GET_CURRENT_MASK(cpu)) & ~ign_mask) != 0);
+
+#ifdef DIAGNOSTIC
+	if (ign_mask != 0) {
+		if (++problems >= 10)
+			panic("%s: broken interrupt behaviour", __func__);
+	} else
+		problems = 0;
+#endif
 
 	/*
 	 * process any remaining data access exceptions before
