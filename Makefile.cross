@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.13 2005/12/30 16:41:23 grange Exp $
+# $OpenBSD: Makefile.cross,v 1.14 2006/04/19 09:28:45 mickey Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-etc-root-var
@@ -50,7 +50,7 @@ CROSSINCLUDES=	${CROSSDIR}/usr/include/.includes_done
 CROSSBINUTILS=	${CROSSDIR}/usr/bin/.binutils_done
 CROSSGCC=	${CROSSDIR}/usr/bin/.gcc_done
 NO_CROSS=	isakmpd tn3270 less sudo openssl libkeynote libssl \
-		photurisd keynote sectok ssh
+		keynote sectok ssh
 
 # no libcrypto.... these won't build
 NO_CROSS+=	dc login_krb5 login_krb5-or-pwd passwd ppp tcpdump telnet
